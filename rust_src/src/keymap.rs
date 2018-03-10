@@ -1,5 +1,6 @@
 //! Keymap support
 
+use std::mem;
 use std::ptr;
 
 use libc::c_void;
@@ -9,9 +10,10 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, L
                  CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_internal,
-                 map_keymap_item, maybe_quit};
+use remacs_sys::{access_keymap, c_function, make_save_funcptr_ptr_obj, map_char_table,
+                 map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
+                 map_keymap_internal, map_keymap_internal_test, map_keymap_item, maybe_quit,
+                 voidfuncptr};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -355,32 +357,46 @@ pub extern "C" fn map_keymap_internal_2(
                     if let Some(binding_cons) = binding.as_cons() {
                         let (car, cdr) = binding_cons.as_tuple();
                         unsafe { map_keymap_item(fun, args, car.to_raw(), cdr.to_raw(), data) };
-                    } else if let Some(binding_vec) = binding.as_vectorlike() {
-                        for c in 0..binding_vec.pseudovector_size() {
-                            let character = LispObject::from_natnum(c);
-                            unsafe {
-                                map_keymap_item(
-                                    fun,
-                                    args,
-                                    character.to_raw(),
-                                    aref(binding, c).to_raw(),
-                                    data,
-                                )
-                            };
+                    } else if binding.is_vector() {
+                        if let Some(binding_vec) = binding.as_vectorlike() {
+                            for c in 0..binding_vec.pseudovector_size() {
+                                let character = LispObject::from_natnum(c);
+                                unsafe {
+                                    map_keymap_item(
+                                        fun,
+                                        args,
+                                        character.to_raw(),
+                                        aref(binding, c).to_raw(),
+                                        data,
+                                    )
+                                };
+                            }
                         }
                     } else if binding.is_char_table() {
+                        //unsafe { map_keymap_internal_test(binding.to_raw(), fun, args, data) };
+                        // unsafe {
                         unsafe {
+                            let ptr = fun as *const ();
+                            let funcptr: voidfuncptr = mem::transmute(ptr);
+
+                            //     let ptr_obj = make_save_funcptr_ptr_obj(code, data, args);
+
+                            //     let ptr2 = map_keymap_char_table_item as *const ();
+                            //     let code2: c_function = transmute(ptr2);
+
+                            //     map_char_table(code2, Qnil, binding.to_raw(), ptr_obj);
+                            // };
                             map_char_table(
                                 map_keymap_char_table_item,
                                 Qnil,
                                 binding.to_raw(),
-                                make_save_funcptr_ptr_obj(fun as *const c_void, data, args),
-                            )
-                        };
+                                make_save_funcptr_ptr_obj(funcptr, data, args),
+                            );
+                        }
                     }
-
-                    tail = tail_cons.cdr();
                 }
+
+                tail = tail_cons.cdr();
             }
         };
     }

@@ -373,6 +373,15 @@ map_keymap_internal (Lisp_Object map,
   return tail;
 }
 
+void map_keymap_internal_test(Lisp_Object binding, map_keymap_function_t fun, Lisp_Object args, void *data)
+{
+  if ( CHAR_TABLE_P(binding)) {
+    map_char_table (map_keymap_char_table_item, Qnil, binding,
+		    make_save_funcptr_ptr_obj ((voidfuncptr) fun, data,
+					       args));
+  }
+}
+
 void
 map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
 {

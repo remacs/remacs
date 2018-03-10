@@ -105,6 +105,13 @@
     ;; If one of the elements is a char-table
     (setq keys nil)
     (setq values nil)
+    (should-not (map-keymap-internal test-function `(keymap (24 . lisp-send-defun) ,(make-char-table 'test 0))))
+    (should (equal keys '((0 . 4194303) 24)))
+    (should (equal values '(0 lisp-send-defun)))
+
+    ;; If one of the elements is a char-table
+    (setq keys nil)
+    (setq values nil)
     (should-not (map-keymap-internal-2 test-function `(keymap (24 . lisp-send-defun) ,(make-char-table 'test 0))))
     (should (equal keys '((0 . 4194303) 24)))
     (should (equal values '(0 lisp-send-defun)))
