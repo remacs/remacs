@@ -2972,15 +2972,6 @@ and if the new behavior breaks your code please email
 <32252@debbugs.gnu.org>.  Because '%o' and '%x' can now format signed
 integers, they now support the '+' and space flags.
 
-** To avoid confusion caused by "smart quotes", the reader signals an
-error when reading Lisp symbols which begin with one of the following
-quotation characters: ‘’‛“”‟〞＂＇.  A symbol beginning with such a
-character can be written by escaping the quotation character with a
-backslash.  For example:
-
-    (read "‘smart") => (invalid-read-syntax "strange quote" "‘")
-    (read "\\‘smart") == (intern "‘smart")
-
 +++
 ** Omitting variables after '&optional' and '&rest' is now allowed.
 For example '(defun foo (&optional))' is no longer an error.  This is

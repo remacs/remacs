@@ -2035,8 +2035,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		    || c == ',' || c == '.' || c == '`'
 		    || c == '[' || c == ']' || c == '?' || c <= 040
 		    || c == NO_BREAK_SPACE
-                    || confusing
-		    || (i == 1 && confusable_symbol_character_p (c)))
+                    || confusing)
 		  {
 		    printchar ('\\', printcharfun);
 		    confusing = false;
