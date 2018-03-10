@@ -5164,7 +5164,6 @@ syms_of_buffer (void)
   DEFSYM (Qmodification_hooks, "modification-hooks");
   DEFSYM (Qinsert_in_front_hooks, "insert-in-front-hooks");
   DEFSYM (Qinsert_behind_hooks, "insert-behind-hooks");
-  DEFSYM (Qget_file_buffer, "get-file-buffer");
   DEFSYM (Qpriority, "priority");
   DEFSYM (Qbefore_string, "before-string");
   DEFSYM (Qafter_string, "after-string");

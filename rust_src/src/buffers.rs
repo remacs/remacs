@@ -598,4 +598,6 @@ pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
     None
 }
 
+def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
