@@ -2973,6 +2973,11 @@ and if the new behavior breaks your code please email
 integers, they now support the '+' and space flags.
 
 +++
+** In Emacs Lisp mode, symbols with confusable quotes are highlighted.
+For example, the first character in '‘foo' would be highlighted in
+'font-lock-warning-face'.
+
++++
 ** Omitting variables after '&optional' and '&rest' is now allowed.
 For example '(defun foo (&optional))' is no longer an error.  This is
 sometimes convenient when writing macros.  See the ChangeLog entry

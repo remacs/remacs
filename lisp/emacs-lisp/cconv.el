@@ -591,8 +591,10 @@ FORM is the parent form that binds this var."
               (eq ?_ (aref (symbol-name var) 0))
 	      ;; As a special exception, ignore "ignore".
 	      (eq var 'ignored))
-       (byte-compile-warn "Unused lexical %s `%S'"
-                          varkind var)))
+       (let ((suggestions (help-uni-confusable-suggestions (symbol-name var))))
+         (byte-compile-warn "Unused lexical %s `%S'%s"
+                            varkind var
+                            (if suggestions (concat "\n  " suggestions) "")))))
     ;; If it's unused, there's no point converting it into a cons-cell, even if
     ;; it's captured and mutated.
     (`(,binder ,_ t t ,_)

@@ -3287,7 +3287,8 @@ assigned using the ordering as a guide.
 @table @code
 @item font-lock-warning-face
 @vindex font-lock-warning-face
-for a construct that is peculiar, or that greatly changes the meaning of
+for a construct that is peculiar (e.g., an unescaped confusable quote
+in an Emacs Lisp symbol like @samp{‘foo}), or that greatly changes the meaning of
 other text, like @samp{;;;###autoload} in Emacs Lisp and @samp{#error}
 in C.
 

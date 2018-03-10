@@ -280,6 +280,19 @@ This will generate compile-time constants from BINDINGS."
          `(face ,font-lock-warning-face
                 help-echo "This \\ has no effect"))))
 
+(defun lisp--match-confusable-symbol-character  (limit)
+  ;; Match a confusable character within a Lisp symbol.
+  (catch 'matched
+    (while t
+      (if (re-search-forward uni-confusables-regexp limit t)
+          ;; Skip confusables which are backslash escaped, or inside
+          ;; strings or comments.
+          (save-match-data
+            (unless (or (eq (char-before (match-beginning 0)) ?\\)
+                        (nth 8 (syntax-ppss)))
+              (throw 'matched t)))
+        (throw 'matched nil)))))
+
 (let-when-compile
     ((lisp-fdefs '("defmacro" "defun"))
      (lisp-vdefs '("defvar"))
@@ -463,7 +476,10 @@ This will generate compile-time constants from BINDINGS."
            (3 'font-lock-regexp-grouping-construct prepend))
          (lisp--match-hidden-arg
           (0 '(face font-lock-warning-face
-               help-echo "Hidden behind deeper element; move to another line?")))
+                    help-echo "Hidden behind deeper element; move to another line?")))
+         (lisp--match-confusable-symbol-character
+          0 '(face font-lock-warning-face
+                    help-echo "Confusable character"))
          ))
       "Gaudy level highlighting for Emacs Lisp mode.")
 

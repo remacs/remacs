@@ -20,6 +20,10 @@
 (require 'ert)
 (require 'cl-lib)
 (require 'lisp-mode)
+(require 'faceup)
+
+
+;;; Indentation
 
 (defconst lisp-mode-tests--correctly-indented-sexp "\
 \(a
@@ -289,6 +293,28 @@ Expected initialization file: `%s'\"
   (with-temp-buffer
     (insert "\"\n")
     (lisp-indent-region (point-min) (point-max))))
+
+
+;;; Fontification
+
+(ert-deftest lisp-fontify-confusables ()
+  "Unescaped 'smart quotes' should be fontified in `font-lock-warning-face'."
+  (with-temp-buffer
+    (dolist (ch
+             '(#x2018 ;; LEFT SINGLE QUOTATION MARK
+               #x2019 ;; RIGHT SINGLE QUOTATION MARK
+               #x201B ;; SINGLE HIGH-REVERSED-9 QUOTATION MARK
+               #x201C ;; LEFT DOUBLE QUOTATION MARK
+               #x201D ;; RIGHT DOUBLE QUOTATION MARK
+               #x201F ;; DOUBLE HIGH-REVERSED-9 QUOTATION MARK
+               #x301E ;; DOUBLE PRIME QUOTATION MARK
+               #xFF02 ;; FULLWIDTH QUOTATION MARK
+               #xFF07 ;; FULLWIDTH APOSTROPHE
+               ))
+      (insert (format "«w:%c»foo \\%cfoo\n" ch ch)))
+    (let ((faceup (buffer-string)))
+      (faceup-clean-buffer)
+      (should (faceup-test-font-lock-buffer 'emacs-lisp-mode faceup)))))
 
 (provide 'lisp-mode-tests)
 ;;; lisp-mode-tests.el ends here

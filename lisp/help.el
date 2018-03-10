@@ -1508,6 +1508,55 @@ the same names as used in the original source code, when possible."
     (help--docstring-quote (format "%S" (help--make-usage fn arglist)))))
 
 
+
+;; Just some quote-like characters for now.  TODO: generate this stuff
+;; from official Unicode data.
+(defconst uni-confusables
+  '((#x2018 . "'") ;; LEFT SINGLE QUOTATION MARK
+    (#x2019 . "'") ;; RIGHT SINGLE QUOTATION MARK
+    (#x201B . "'") ;; SINGLE HIGH-REVERSED-9 QUOTATION MARK
+    (#x201C . "\"") ;; LEFT DOUBLE QUOTATION MARK
+    (#x201D . "\"") ;; RIGHT DOUBLE QUOTATION MARK
+    (#x201F . "\"") ;; DOUBLE HIGH-REVERSED-9 QUOTATION MARK
+    (#x301E . "\"") ;; DOUBLE PRIME QUOTATION MARK
+    (#xFF02 . "'") ;; FULLWIDTH QUOTATION MARK
+    (#xFF07 . "'") ;; FULLWIDTH APOSTROPHE
+    ))
+
+(defconst uni-confusables-regexp
+  (concat "[" (mapcar #'car uni-confusables) "]"))
+
+(defun help-uni-confusable-suggestions (string)
+  "Return a message describing confusables in STRING."
+  (let ((i 0)
+        (confusables nil))
+    (while (setq i (string-match uni-confusables-regexp string i))
+      (let ((replacement (alist-get (aref string i) uni-confusables)))
+        (push (aref string i) confusables)
+        (setq string (replace-match replacement t t string))
+        (setq i (+ i (length replacement)))))
+    (when confusables
+      (format-message
+       (if (> (length confusables) 1)
+           "Found confusable characters: %s; perhaps you meant: `%s'?"
+         "Found confusable character: %s, perhaps you meant: `%s'?")
+       (mapconcat (lambda (c) (format-message "`%c'" c))
+                  confusables ", ")
+       string))))
+
+(defun help-command-error-confusable-suggestions (data _context _signal)
+  (pcase data
+    (`(void-variable ,var)
+     (let ((suggestions (help-uni-confusable-suggestions
+                         (symbol-name var))))
+       (when suggestions
+         (princ (concat "\n  " suggestions) t))))
+    (_ nil)))
+
+(add-function :after command-error-function
+              #'help-command-error-confusable-suggestions)
+
+
 (provide 'help)
 
 ;;; help.el ends here
