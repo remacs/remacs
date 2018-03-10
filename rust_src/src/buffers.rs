@@ -578,24 +578,16 @@ pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
 
     if handler.is_nil() {
         let handled_buf = call_raw!(handler.to_raw(), Qget_file_buffer, filename.to_raw());
-        return if handled_buf.is_buffer() {
-            handled_buf.into()
-        } else {
-            None
-        };
+        handled_buf.as_buffer()
+    } else {
+        LispObject::from_raw(unsafe { Vbuffer_alist })
+            .iter_alist_vals()
+            .find(|buf| {
+                let buf_filename = buf.as_buffer_or_error().filename();
+                buf_filename.is_string() && string_equal(buf_filename, filename)
+            })
+            .and_then(|obj| obj.as_buffer())
     }
-
-    for buf in LispObject::from_raw(unsafe { Vbuffer_alist }).iter_alist_vals() {
-        let buf_filename = buf.as_buffer_or_error().filename();
-        if !buf_filename.is_string() {
-            continue;
-        }
-        if string_equal(buf_filename, filename) {
-            return buf.into();
-        }
-    }
-
-    None
 }
 
 def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
