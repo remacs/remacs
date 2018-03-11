@@ -10,9 +10,8 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, L
                  CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, c_function, make_save_funcptr_ptr_obj, map_char_table,
-                 map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
-                 map_keymap_internal, map_keymap_internal_test, map_keymap_item, maybe_quit,
+use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
+                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit,
                  voidfuncptr};
 
 use data::{aref, indirect_function};
@@ -323,7 +322,7 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
 /// Call FUN for every binding in MAP and stop at (and return) the parent.
 /// FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).  */
 #[no_mangle]
-pub extern "C" fn map_keymap_internal_2(
+pub extern "C" fn map_keymap_internal(
     map: Lisp_Object,
     fun: map_keymap_function_t,
     args: Lisp_Object,
@@ -373,19 +372,10 @@ pub extern "C" fn map_keymap_internal_2(
                             }
                         }
                     } else if binding.is_char_table() {
-                        //unsafe { map_keymap_internal_test(binding.to_raw(), fun, args, data) };
-                        // unsafe {
                         unsafe {
                             let ptr = fun as *const ();
                             let funcptr: voidfuncptr = mem::transmute(ptr);
 
-                            //     let ptr_obj = make_save_funcptr_ptr_obj(code, data, args);
-
-                            //     let ptr2 = map_keymap_char_table_item as *const ();
-                            //     let code2: c_function = transmute(ptr2);
-
-                            //     map_char_table(code2, Qnil, binding.to_raw(), ptr_obj);
-                            // };
                             map_char_table(
                                 map_keymap_char_table_item,
                                 Qnil,
@@ -408,10 +398,10 @@ pub extern "C" fn map_keymap_internal_2(
 /// FUNCTION is called with two arguments: the event that is bound, and
 /// the definition it is bound to.  The event may be a character range.
 /// If KEYMAP has a parent, this function returns it without processing it.
-#[lisp_fn(name = "map-keymap-internal-2")]
+#[lisp_fn(name = "map-keymap-internal")]
 pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
     keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, true));
-    LispObject::from_raw(map_keymap_internal_2(
+    LispObject::from_raw(map_keymap_internal(
         keymap.to_raw(),
         map_keymap_call,
         function.to_raw(),

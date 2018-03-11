@@ -333,55 +333,6 @@ map_keymap_char_table_item (Lisp_Object args, Lisp_Object key, Lisp_Object val)
     }
 }
 
-/* Call FUN for every binding in MAP and stop at (and return) the parent.
-   FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).  */
-Lisp_Object
-map_keymap_internal (Lisp_Object map,
-		     map_keymap_function_t fun,
-		     Lisp_Object args,
-		     void *data)
-{
-  Lisp_Object tail
-    = (CONSP (map) && EQ (Qkeymap, XCAR (map))) ? XCDR (map) : map;
-
-  for (; CONSP (tail) && !EQ (Qkeymap, XCAR (tail)); tail = XCDR (tail))
-    {
-      Lisp_Object binding = XCAR (tail);
-
-      if (KEYMAPP (binding))	/* An embedded parent.  */
-	break;
-      else if (CONSP (binding))
-	map_keymap_item (fun, args, XCAR (binding), XCDR (binding), data);
-      else if (VECTORP (binding))
-	{
-	  /* Loop over the char values represented in the vector.  */
-	  int len = ASIZE (binding);
-	  int c;
-	  for (c = 0; c < len; c++)
-	    {
-	      Lisp_Object character;
-	      XSETFASTINT (character, c);
-	      map_keymap_item (fun, args, character, AREF (binding, c), data);
-	    }
-	}
-      else if (CHAR_TABLE_P (binding))
-	map_char_table (map_keymap_char_table_item, Qnil, binding,
-			make_save_funcptr_ptr_obj ((voidfuncptr) fun, data,
-						   args));
-    }
-
-  return tail;
-}
-
-void map_keymap_internal_test(Lisp_Object binding, map_keymap_function_t fun, Lisp_Object args, void *data)
-{
-  if ( CHAR_TABLE_P(binding)) {
-    map_char_table (map_keymap_char_table_item, Qnil, binding,
-		    make_save_funcptr_ptr_obj ((voidfuncptr) fun, data,
-					       args));
-  }
-}
-
 void
 map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
 {
@@ -398,18 +349,6 @@ map_keymap_canonical (Lisp_Object map, map_keymap_function_t fun, Lisp_Object ar
   map = safe_call1 (Qkeymap_canonicalize, map);
   /* No need to use `map_keymap' here because canonical map has no parent.  */
   map_keymap_internal (map, fun, args, data);
-}
-
-DEFUN ("map-keymap-internal", Fmap_keymap_internal, Smap_keymap_internal, 2, 2, 0,
-       doc: /* Call FUNCTION once for each event binding in KEYMAP.
-FUNCTION is called with two arguments: the event that is bound, and
-the definition it is bound to.  The event may be a character range.
-If KEYMAP has a parent, this function returns it without processing it.  */)
-  (Lisp_Object function, Lisp_Object keymap)
-{
-  keymap = get_keymap (keymap, 1, 1);
-  keymap = map_keymap_internal (keymap, map_keymap_call, function, NULL);
-  return keymap;
 }
 
 /* Given OBJECT which was found in a slot in a keymap,
@@ -3297,7 +3236,6 @@ be preferred.  */);
   staticpro (&command_remapping_vector);
 
   defsubr (&Scopy_keymap);
-  defsubr (&Smap_keymap_internal);
   defsubr (&Scommand_remapping);
   defsubr (&Skey_binding);
   defsubr (&Sminor_mode_key_binding);
