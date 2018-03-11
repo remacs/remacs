@@ -1114,6 +1114,31 @@ impl Iterator for CarIter {
     }
 }
 
+/// From `FOR_EACH_ALIST_VALUE` in `lisp.h`
+pub struct AlistValIter {
+    tails: CarIter,
+}
+
+impl AlistValIter {
+    pub fn new(obj: LispObject) -> Self {
+        Self {
+            tails: CarIter::new(obj, Some(Qlistp)),
+        }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        self.tails.rest()
+    }
+}
+
+impl Iterator for AlistValIter {
+    type Item = LispObject;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tails.next().and_then(|o| o.as_cons()).map(|p| p.cdr())
+    }
+}
+
 impl LispObject {
     #[inline]
     pub fn cons(car: LispObject, cdr: LispObject) -> Self {
@@ -1177,6 +1202,12 @@ impl LispObject {
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_cars_safe(self) -> CarIter {
         CarIter::new(self, None)
+    }
+
+    /// Iterate over all values of self.  self should be a list.
+    /// Otherwise a wrong-type-argument error will be signaled.
+    pub fn iter_alist_vals(self) -> AlistValIter {
+        AlistValIter::new(self)
     }
 }
 
