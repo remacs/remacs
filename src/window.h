@@ -408,6 +408,9 @@ wset_window_parameters (struct window *w, Lisp_Object val);
 
 
 
+Lisp_Object
+window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames);
+
 INLINE bool
 WINDOWP (Lisp_Object a)
 {
