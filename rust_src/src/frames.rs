@@ -6,8 +6,9 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
-                 fget_pointer_invisible, fget_root_window, fget_terminal, fget_top_pos,
-                 fget_visible, frame_dimension, Fcons, Fselect_window};
+                 fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
+                 fget_top_pos, fget_visible, frame_dimension, fset_selected_window, Fcons,
+                 Fselect_window};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::{ExternalPtr, LispObject};
@@ -71,8 +72,13 @@ impl LispFrameRef {
     }
 
     #[inline]
+    pub fn selected_window(self) -> LispObject {
+        LispObject::from_raw(unsafe { fget_selected_window(self.as_ptr()) })
+    }
+
+    #[inline]
     pub fn set_selected_window(&mut self, window: LispObject) {
-        self.selected_window = window.to_raw();
+        unsafe { fset_selected_window(self.as_mut(), window.to_raw()) }
     }
 
     #[inline]
@@ -174,7 +180,7 @@ pub fn frame_live_p(object: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_selected_window(frame_or_window: LispObject) -> LispObject {
     let frame = window_frame_live_or_selected(frame_or_window);
-    LispObject::from_raw(frame.selected_window)
+    frame.selected_window()
 }
 
 /// Set selected window of FRAME to WINDOW.
