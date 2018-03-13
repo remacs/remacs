@@ -1078,7 +1078,7 @@ Revert the work file(s) in the current VC fileset to the last revision
 @findex vc-revert
 @vindex vc-revert-show-diff
   If you want to discard all the changes you have made to the current
-VC fileset, type @kbd{C-x v u} (@code{vc-revert-buffer}).  This shows
+VC fileset, type @kbd{C-x v u} (@code{vc-revert}).  This shows
 you a diff between the work file(s) and the revision from which you
 started editing, and asks for confirmation for discarding the changes.
 If you agree, the fileset is reverted.  If you don't want @kbd{C-x v

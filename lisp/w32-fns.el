@@ -260,7 +260,7 @@ bit output with no translation."
                (cons xlfd-charset (cons windows-charset codepage))))
 
 ;; The last charset we add becomes the "preferred" charset for the return
-;; value from w32-select-font etc, so list the most important charsets last.
+;; value from x-select-font etc, so list the most important charsets last.
 (w32-add-charset-info "iso8859-14" 'w32-charset-ansi  28604)
 (w32-add-charset-info "iso8859-15" 'w32-charset-ansi  28605)
 ;; The following two are included for pattern matching.

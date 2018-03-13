@@ -1263,19 +1263,6 @@ You can use this function to do completion of URLs from the history.
 @node Customization
 @chapter Customization
 
-@cindex environment variables
-  The following environment variables affect the @code{url} library's
-operation at startup.
-
-@table @code
-@item TMPDIR
-@vindex TMPDIR
-@vindex url-temporary-directory
-If this is defined, @code{url-temporary-directory} is initialized from
-it.  This variable was obsoleted in 23.1, please use
-@code{temporary-file-directory} instead.
-@end table
-
   The following user options affect the general operation of
 @code{url} library.
 
