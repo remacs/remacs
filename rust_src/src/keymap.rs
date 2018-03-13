@@ -284,9 +284,7 @@ pub extern "C" fn map_keymap(
                 map_keymap(car.to_raw(), fun, args, data, autoload);
                 map = cdr;
             } else {
-                map = LispObject::from_raw(unsafe {
-                    map_keymap_internal(map.to_raw(), fun, args, data)
-                });
+                map = LispObject::from_raw(map_keymap_internal(map.to_raw(), fun, args, data));
             }
         }
 
@@ -328,67 +326,64 @@ pub extern "C" fn map_keymap_internal(
     args: Lisp_Object,
     data: *const c_void,
 ) -> Lisp_Object {
-    let mut tail = LispObject::constant_nil();
     let map = LispObject::from_raw(map);
-    if let Some(cons) = map.as_cons() {
-        let (car, cdr) = cons.as_tuple();
-        if car.eq_raw(Qkeymap) {
-            tail = cdr
-        } else {
-            tail = map
+    let mut tail = match map.as_cons() {
+        None => LispObject::constant_nil(),
+        Some(cons) => {
+            let (car, cdr) = cons.as_tuple();
+            if car.eq_raw(Qkeymap) {
+                cdr
+            } else {
+                map
+            }
         }
     };
 
-    loop {
-        match tail.as_cons() {
-            None => break,
-            Some(tail_cons) => {
-                if tail_cons.car().eq_raw(Qkeymap) {
-                    break;
-                } else {
-                    let binding = tail_cons.car();
+    while let Some(tail_cons) = tail.as_cons() {
+        if tail_cons.car().eq_raw(Qkeymap) {
+            break;
+        } else {
+            let binding = tail_cons.car();
 
-                    // An embedded parent.
-                    if keymapp(binding) {
-                        break;
-                    }
+            // An embedded parent.
+            if keymapp(binding) {
+                break;
+            }
 
-                    if let Some(binding_cons) = binding.as_cons() {
-                        let (car, cdr) = binding_cons.as_tuple();
-                        unsafe { map_keymap_item(fun, args, car.to_raw(), cdr.to_raw(), data) };
-                    } else if binding.is_vector() {
-                        if let Some(binding_vec) = binding.as_vectorlike() {
-                            for c in 0..binding_vec.pseudovector_size() {
-                                let character = LispObject::from_natnum(c);
-                                unsafe {
-                                    map_keymap_item(
-                                        fun,
-                                        args,
-                                        character.to_raw(),
-                                        aref(binding, c).to_raw(),
-                                        data,
-                                    )
-                                };
-                            }
-                        }
-                    } else if binding.is_char_table() {
+            if let Some(binding_cons) = binding.as_cons() {
+                let (car, cdr) = binding_cons.as_tuple();
+                unsafe { map_keymap_item(fun, args, car.to_raw(), cdr.to_raw(), data) };
+            } else if binding.is_vector() {
+                if let Some(binding_vec) = binding.as_vectorlike() {
+                    for c in 0..binding_vec.pseudovector_size() {
+                        let character = LispObject::from_natnum(c);
                         unsafe {
-                            let ptr = fun as *const ();
-                            let funcptr: voidfuncptr = mem::transmute(ptr);
-
-                            map_char_table(
-                                map_keymap_char_table_item,
-                                Qnil,
-                                binding.to_raw(),
-                                make_save_funcptr_ptr_obj(funcptr, data, args),
-                            );
-                        }
+                            map_keymap_item(
+                                fun,
+                                args,
+                                character.to_raw(),
+                                aref(binding, c).to_raw(),
+                                data,
+                            )
+                        };
                     }
                 }
+            } else if binding.is_char_table() {
+                unsafe {
+                    let ptr = fun as *const ();
+                    let funcptr: voidfuncptr = mem::transmute(ptr);
 
-                tail = tail_cons.cdr();
+                    map_char_table(
+                        map_keymap_char_table_item,
+                        Qnil,
+                        binding.to_raw(),
+                        make_save_funcptr_ptr_obj(funcptr, data, args),
+                    );
+                }
             }
-        };
+        }
+
+        tail = tail_cons.cdr();
     }
 
     tail.to_raw()
