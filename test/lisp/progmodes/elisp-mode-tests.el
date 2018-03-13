@@ -676,10 +676,10 @@ to (xref-elisp-test-descr-to-target xref)."
 
 ;; This needs to refer to a function defined in C.
 (xref-elisp-deftest find-defs-defun-c
-  (elisp--xref-find-definitions 'get-file-buffer)
+  (elisp--xref-find-definitions 'get-buffer-create)
   (list
-   (xref-make "(defun get-file-buffer)"
-	      (xref-make-elisp-location 'get-file-buffer nil "src/buffer.c"))))
+    (xref-make "(defun get-buffer-create)"
+      (xref-make-elisp-location 'get-buffer-create nil "src/buffer.c"))))
 
 ;; FIXME: deftype
 

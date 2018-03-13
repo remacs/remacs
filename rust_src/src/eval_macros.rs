@@ -133,3 +133,21 @@ macro_rules! declare_GC_protected_static {
         static mut $var: Lisp_Object = $value;
     }
 }
+
+macro_rules! verify_lisp_type {
+    ($obj:expr, Qarrayp) => {
+        if !$obj.is_array() {
+            wrong_type!(::remacs_sys::Qarrayp, $obj);
+        }
+    };
+    ($n:expr, Qcharacterp) => {
+        if $n < 0 || $n > ($crate::multibyte::MAX_CHAR as EmacsInt) {
+            wrong_type!(::remacs_sys::Qcharacterp, $crate::lisp::LispObject::from($n));
+        }
+    };
+    ($obj:expr, Qstringp) => {
+        if !$obj.is_string() {
+            wrong_type!(::remacs_sys::Qstringp, $obj);
+        }
+    };
+}

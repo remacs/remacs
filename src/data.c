@@ -36,9 +36,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "remacs-lib.h"
 
-static void swap_in_symval_forwarding (struct Lisp_Symbol *,
-				       struct Lisp_Buffer_Local_Value *);
-
 static bool
 BOOLFWDP (union Lisp_Fwd *a)
 {
@@ -96,12 +93,6 @@ set_blv_found (struct Lisp_Buffer_Local_Value *blv, int found)
 {
   eassert (found == !EQ (blv->defcell, blv->valcell));
   blv->found = found;
-}
-
-static Lisp_Object
-blv_value (struct Lisp_Buffer_Local_Value *blv)
-{
-  return XCDR (blv->valcell);
 }
 
 static void
@@ -196,46 +187,6 @@ DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
 
 
 /* Extract and set components of symbols.  */
-
-DEFUN ("boundp", Fboundp, Sboundp, 1, 1, 0,
-       doc: /* Return t if SYMBOL's value is not void.
-Note that if `lexical-binding' is in effect, this refers to the
-global value outside of any lexical scope.  */)
-  (register Lisp_Object symbol)
-{
-  Lisp_Object valcontents;
-  struct Lisp_Symbol *sym;
-  CHECK_SYMBOL (symbol);
-  sym = XSYMBOL (symbol);
-
- start:
-  switch (sym->redirect)
-    {
-    case SYMBOL_PLAINVAL: valcontents = SYMBOL_VAL (sym); break;
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_LOCALIZED:
-      {
-	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-	if (blv->fwd)
-	  /* In set_internal, we un-forward vars when their value is
-	     set to Qunbound.  */
-    	  return Qt;
-	else
-	  {
-	    swap_in_symval_forwarding (sym, blv);
-	    valcontents = blv_value (blv);
-	  }
-	break;
-      }
-    case SYMBOL_FORWARDED:
-      /* In set_internal, we un-forward vars when their value is
-	 set to Qunbound.  */
-      return Qt;
-    default: emacs_abort ();
-    }
-
-  return (EQ (valcontents, Qunbound) ? Qnil : Qt);
-}
 
 DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
        doc: /* Set SYMBOL's function definition to DEFINITION, and return DEFINITION.  */)
@@ -566,7 +517,7 @@ swap_in_global_binding (struct Lisp_Symbol *symbol)
    Return the value forwarded one step past the buffer-local stage.
    This could be another forwarding pointer.  */
 
-static void
+void
 swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_Value *blv)
 {
   register Lisp_Object tem1;
@@ -596,7 +547,7 @@ swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_
       /* Load the new binding.  */
       set_blv_valcell (blv, tem1);
       if (blv->fwd)
-	store_symval_forwarding (blv->fwd, blv_value (blv), NULL);
+	store_symval_forwarding (blv->fwd, get_blv_value (blv), NULL);
     }
 }
 
@@ -623,7 +574,7 @@ find_symbol_value (Lisp_Object symbol)
       {
 	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
 	swap_in_symval_forwarding (sym, blv);
-	return blv->fwd ? do_symval_forwarding (blv->fwd) : blv_value (blv);
+	return blv->fwd ? do_symval_forwarding (blv->fwd) : get_blv_value (blv);
       }
       /* FALLTHROUGH */
     case SYMBOL_FORWARDED:
@@ -1567,103 +1518,37 @@ selected frame's terminal device).  */)
 }
 #endif
 
-DEFUN ("aset", Faset, Saset, 3, 3, 0,
-       doc: /* Store into the element of ARRAY at index IDX the value NEWELT.
-Return NEWELT.  ARRAY may be a vector, a string, a char-table or a
-bool-vector.  IDX starts at 0.  */)
-  (register Lisp_Object array, Lisp_Object idx, Lisp_Object newelt)
+void
+aset_multibyte_string(register Lisp_Object array, EMACS_INT idxval, int c)
 {
-  register EMACS_INT idxval;
+  ptrdiff_t idxval_byte, nbytes;
+  int prev_bytes, new_bytes;
+  unsigned char workbuf[MAX_MULTIBYTE_LENGTH], *p0 = workbuf, *p1;
 
-  CHECK_NUMBER (idx);
-  idxval = XINT (idx);
-  if (! RECORDP (array))
-    CHECK_ARRAY (array, Qarrayp);
-
-  if (VECTORP (array))
+  nbytes = SBYTES (array);
+  idxval_byte = string_char_to_byte (array, idxval);
+  p1 = SDATA (array) + idxval_byte;
+  prev_bytes = BYTES_BY_CHAR_HEAD (*p1);
+  new_bytes = CHAR_STRING (c, p0);
+  if (prev_bytes != new_bytes)
     {
-      CHECK_IMPURE (array, XVECTOR (array));
-      if (idxval < 0 || idxval >= ASIZE (array))
-	args_out_of_range (array, idx);
-      ASET (array, idxval, newelt);
+      /* We must relocate the string data.  */
+      ptrdiff_t nchars = SCHARS (array);
+      USE_SAFE_ALLOCA;
+      unsigned char *str = SAFE_ALLOCA (nbytes);
+
+      memcpy (str, SDATA (array), nbytes);
+      allocate_string_data (XSTRING (array), nchars,
+                            nbytes + new_bytes - prev_bytes);
+      memcpy (SDATA (array), str, idxval_byte);
+      p1 = SDATA (array) + idxval_byte;
+      memcpy (p1 + new_bytes, str + idxval_byte + prev_bytes,
+              nbytes - (idxval_byte + prev_bytes));
+      SAFE_FREE ();
+      clear_string_char_byte_cache ();
     }
-  else if (BOOL_VECTOR_P (array))
-    {
-      if (idxval < 0 || idxval >= bool_vector_size (array))
-	args_out_of_range (array, idx);
-      bool_vector_set (array, idxval, !NILP (newelt));
-    }
-  else if (CHAR_TABLE_P (array))
-    {
-      CHECK_CHARACTER (idx);
-      CHAR_TABLE_SET (array, idxval, newelt);
-    }
-  else if (RECORDP (array))
-    {
-      if (idxval < 0 || idxval >= PVSIZE (array))
-	args_out_of_range (array, idx);
-      ASET (array, idxval, newelt);
-    }
-  else /* STRINGP */
-    {
-      int c;
-
-      CHECK_IMPURE (array, XSTRING (array));
-      if (idxval < 0 || idxval >= SCHARS (array))
-	args_out_of_range (array, idx);
-      CHECK_CHARACTER (newelt);
-      c = XFASTINT (newelt);
-
-      if (STRING_MULTIBYTE (array))
-	{
-	  ptrdiff_t idxval_byte, nbytes;
-	  int prev_bytes, new_bytes;
-	  unsigned char workbuf[MAX_MULTIBYTE_LENGTH], *p0 = workbuf, *p1;
-
-	  nbytes = SBYTES (array);
-	  idxval_byte = string_char_to_byte (array, idxval);
-	  p1 = SDATA (array) + idxval_byte;
-	  prev_bytes = BYTES_BY_CHAR_HEAD (*p1);
-	  new_bytes = CHAR_STRING (c, p0);
-	  if (prev_bytes != new_bytes)
-	    {
-	      /* We must relocate the string data.  */
-	      ptrdiff_t nchars = SCHARS (array);
-	      USE_SAFE_ALLOCA;
-	      unsigned char *str = SAFE_ALLOCA (nbytes);
-
-	      memcpy (str, SDATA (array), nbytes);
-	      allocate_string_data (XSTRING (array), nchars,
-				    nbytes + new_bytes - prev_bytes);
-	      memcpy (SDATA (array), str, idxval_byte);
-	      p1 = SDATA (array) + idxval_byte;
-	      memcpy (p1 + new_bytes, str + idxval_byte + prev_bytes,
-		      nbytes - (idxval_byte + prev_bytes));
-	      SAFE_FREE ();
-	      clear_string_char_byte_cache ();
-	    }
-	  while (new_bytes--)
-	    *p1++ = *p0++;
-	}
-      else
-	{
-	  if (! SINGLE_BYTE_CHAR_P (c))
-	    {
-	      ptrdiff_t i;
-
-	      for (i = SBYTES (array) - 1; i >= 0; i--)
-		if (SREF (array, i) >= 0x80)
-		  args_out_of_range (array, newelt);
-	      /* ARRAY is an ASCII string.  Convert it to a multibyte
-		 string, and try `aset' again.  */
-	      STRING_SET_MULTIBYTE (array);
-	      return Faset (array, idx, newelt);
-	    }
-	  SSET (array, idxval, c);
-	}
-    }
-
-  return newelt;
+  while (new_bytes--)
+    *p1++ = *p0++;
 }
 
 
@@ -2429,7 +2314,6 @@ syms_of_data (void)
 
   defsubr (&Sinteractive_form);
   defsubr (&Smodule_function_p);
-  defsubr (&Sboundp);
   defsubr (&Sfset);
   defsubr (&Sset);
   defsubr (&Sdefault_boundp);
@@ -2446,7 +2330,6 @@ syms_of_data (void)
   defsubr (&Sterminal_local_value);
   defsubr (&Sset_terminal_local_value);
 #endif
-  defsubr (&Saset);
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
   defsubr (&Slsh);

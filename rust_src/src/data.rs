@@ -1,6 +1,9 @@
 //! data helpers
 
+use libc::c_int;
+
 use remacs_macros::lisp_fn;
+use remacs_sys::{aset_multibyte_string, globals, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{EmacsInt, Lisp_Misc_Type, Lisp_Type, PseudovecType};
 use remacs_sys::{Fcons, Ffset, Fpurecopy};
 use remacs_sys::{Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
@@ -11,12 +14,12 @@ use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, 
                  Qmarker, Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qstring,
                  Qsubr, Qsymbol, Qt, Qterminal, Qthread, Quser_ptr, Qvector, Qwindow,
                  Qwindow_configuration};
-use remacs_sys::globals;
 
 use keymap::get_keymap;
 use lisp::{LispObject, LispSubrRef};
 use lisp::{defsubr, is_autoload};
 use lists::{get, put};
+use multibyte::{is_ascii, is_single_byte_char};
 use obarray::loadhist_attach;
 
 /// Find the function at the end of a chain of symbol function indirections.
@@ -180,6 +183,51 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     } else {
         wrong_type!(Qarrayp, array);
     }
+}
+
+/// Store into the element of ARRAY at index IDX the value NEWELT.
+/// Return NEWELT.  ARRAY may be a vector, a string, a char-table or a
+/// bool-vector.  IDX starts at 0.
+#[lisp_fn]
+pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject {
+    if let Some(vl) = array.as_vectorlike() {
+        if let Some(mut v) = vl.as_vector() {
+            unsafe { CHECK_IMPURE(array.to_raw(), array.get_untaggedptr()) };
+            v.set_checked(idx as isize, newelt);
+        } else if let Some(mut bv) = vl.as_bool_vector() {
+            bv.set_checked(idx as isize, newelt.is_not_nil());
+        } else if let Some(_tbl) = vl.as_char_table() {
+            verify_lisp_type!(idx, Qcharacterp);
+            unsafe { CHAR_TABLE_SET(array.to_raw(), idx as c_int, newelt.to_raw()) };
+        } else if let Some(mut record) = vl.as_record() {
+            record.set_checked(idx as isize, newelt);
+        } else {
+            unreachable!();
+        }
+    } else if let Some(mut s) = array.as_string() {
+        unsafe { CHECK_IMPURE(array.to_raw(), array.get_untaggedptr()) };
+        if idx < 0 || idx >= s.len_chars() as EmacsInt {
+            args_out_of_range!(array, LispObject::from(idx));
+        }
+
+        let c = newelt.as_character_or_error();
+
+        if s.is_multibyte() {
+            unsafe { aset_multibyte_string(array.to_raw(), idx, c as c_int) };
+        } else if is_single_byte_char(c) {
+            s.set_byte(idx as isize, c as u8);
+        } else {
+            if s.chars().any(|i| !is_ascii(i)) {
+                args_out_of_range!(array, newelt);
+            }
+            s.mark_as_multibyte();
+            unsafe { aset_multibyte_string(array.to_raw(), idx, c as c_int) };
+        }
+    } else {
+        wrong_type!(Qarrayp, array);
+    }
+
+    newelt
 }
 
 /// Set SYMBOL's function definition to DEFINITION.

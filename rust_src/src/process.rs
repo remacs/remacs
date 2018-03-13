@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
-use remacs_sys::{get_process as cget_process, pget_kill_without_query, pget_pid,
+use remacs_sys::{current_thread, get_process as cget_process, pget_kill_without_query, pget_pid,
                  pget_raw_status_new, pset_kill_without_query, send_process,
                  setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
 use remacs_sys::{QCbuffer, Qcdr, Qclosed, Qexit, Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial,
@@ -318,6 +318,13 @@ pub fn set_process_query_on_exit_flag(mut process: LispProcessRef, flag: LispObj
         pset_kill_without_query(process.as_mut(), flag.is_nil());
     }
     flag
+}
+
+/// Return non-nil if Emacs is waiting for input from the user.
+/// This is intended for use by asynchronous process output filters and sentinels.
+#[lisp_fn]
+pub fn waiting_for_user_input_p() -> bool {
+    unsafe { (*current_thread).m_waiting_for_user_input_p != 0 }
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

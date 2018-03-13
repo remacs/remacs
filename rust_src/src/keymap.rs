@@ -1,17 +1,23 @@
 //! Keymap support
 
+use std::ptr;
+
+use libc::c_void;
+
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, Lisp_Object,
                  CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, maybe_quit};
+use remacs_sys::{access_keymap, map_keymap_call, map_keymap_function_t, map_keymap_internal,
+                 maybe_quit};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
 use keyboard::lucid_event_type_list_p;
 use lisp::{defsubr, LispObject};
 use lists::nth;
+use obarray::intern;
 use threads::ThreadState;
 
 #[inline]
@@ -255,6 +261,59 @@ pub fn keymap_prompt(map: LispObject) -> LispObject {
             }
         }
     }
+    LispObject::constant_nil()
+}
+
+/// Same as `map_keymap_internal`, but traverses parent keymaps as well.
+/// AUTOLOAD indicates that autoloaded keymaps should be loaded.
+#[no_mangle]
+pub extern "C" fn map_keymap(
+    map: Lisp_Object,
+    fun: map_keymap_function_t,
+    args: Lisp_Object,
+    data: *const c_void,
+    autoload: bool,
+) {
+    let mut map = LispObject::from_raw(get_keymap(map, true, autoload));
+    while map.is_cons() {
+        if let Some(cons) = map.as_cons() {
+            let (car, cdr) = cons.as_tuple();
+            if keymapp(car) {
+                map_keymap(car.to_raw(), fun, args, data, autoload);
+                map = cdr;
+            } else {
+                map = LispObject::from_raw(unsafe {
+                    map_keymap_internal(map.to_raw(), fun, args, data)
+                });
+            }
+        }
+
+        if !map.is_cons() {
+            map = LispObject::from_raw(get_keymap(map.to_raw(), false, autoload));
+        }
+    }
+}
+
+/// Call FUNCTION once for each event binding in KEYMAP.
+/// FUNCTION is called with two arguments: the event that is bound, and
+/// the definition it is bound to.  The event may be a character range.
+///
+/// If KEYMAP has a parent, the parent's bindings are included as well.
+/// This works recursively: if the parent has itself a parent, then the
+/// grandparent's bindings are also included and so on.
+/// usage: (map-keymap FUNCTION KEYMAP)
+#[lisp_fn(name = "map-keymap", min = "2")]
+pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
+    if sort_first {
+        return call!(intern("map-keymap-sorted"), function, keymap);
+    }
+    map_keymap(
+        keymap.to_raw(),
+        map_keymap_call,
+        function.to_raw(),
+        ptr::null_mut(),
+        true,
+    );
     LispObject::constant_nil()
 }
 
