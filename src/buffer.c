@@ -369,37 +369,6 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
 }
 
 
-DEFUN ("get-file-buffer", Fget_file_buffer, Sget_file_buffer, 1, 1, 0,
-       doc: /* Return the buffer visiting file FILENAME (a string).
-The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
-If there is no such live buffer, return nil.
-See also `find-buffer-visiting'.  */)
-  (register Lisp_Object filename)
-{
-  register Lisp_Object tail, buf, handler;
-
-  CHECK_STRING (filename);
-  filename = Fexpand_file_name (filename, Qnil);
-
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (filename, Qget_file_buffer);
-  if (!NILP (handler))
-    {
-      Lisp_Object handled_buf = call2 (handler, Qget_file_buffer,
-				       filename);
-      return BUFFERP (handled_buf) ? handled_buf : Qnil;
-    }
-
-  FOR_EACH_LIVE_BUFFER (tail, buf)
-    {
-      if (!STRINGP (BVAR (XBUFFER (buf), filename))) continue;
-      if (!NILP (Fstring_equal (BVAR (XBUFFER (buf), filename), filename)))
-	return buf;
-    }
-  return Qnil;
-}
-
 Lisp_Object
 get_truename_buffer (register Lisp_Object filename)
 {
@@ -5195,7 +5164,6 @@ syms_of_buffer (void)
   DEFSYM (Qmodification_hooks, "modification-hooks");
   DEFSYM (Qinsert_in_front_hooks, "insert-in-front-hooks");
   DEFSYM (Qinsert_behind_hooks, "insert-behind-hooks");
-  DEFSYM (Qget_file_buffer, "get-file-buffer");
   DEFSYM (Qpriority, "priority");
   DEFSYM (Qbefore_string, "before-string");
   DEFSYM (Qafter_string, "after-string");
@@ -5990,7 +5958,6 @@ Functions running this hook are, `get-buffer-create',
   Vbuffer_list_update_hook = Qnil;
   DEFSYM (Qbuffer_list_update_hook, "buffer-list-update-hook");
 
-  defsubr (&Sget_file_buffer);
   defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);

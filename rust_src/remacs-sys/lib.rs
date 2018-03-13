@@ -1702,6 +1702,8 @@ extern "C" {
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
     pub fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: ptrdiff_t) -> ptrdiff_t;
     pub fn swap_in_symval_forwarding(sym: *mut Lisp_Symbol, blv: *mut Lisp_Buffer_Local_Value);
+    pub fn Fexpand_file_name(filename: Lisp_Object, default_directory: Lisp_Object) -> Lisp_Object;
+    pub fn Ffind_file_name_handler(filename: Lisp_Object, operation: Lisp_Object) -> Lisp_Object;
     pub fn window_list_1(
         window: Lisp_Object,
         minibuf: Lisp_Object,
