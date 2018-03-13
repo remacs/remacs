@@ -318,7 +318,7 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
 }
 
 /// Call FUN for every binding in MAP and stop at (and return) the parent.
-/// FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).  */
+/// FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).
 #[no_mangle]
 pub extern "C" fn map_keymap_internal(
     map: Lisp_Object,
