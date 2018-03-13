@@ -902,11 +902,7 @@ impl From<LispWindowRef> for LispObject {
 impl From<LispObject> for Option<LispWindowRef> {
     #[inline]
     fn from(o: LispObject) -> Self {
-        if o.is_window() {
-            Some(o.as_window_or_error())
-        } else {
-            None
-        }
+        o.as_window()
     }
 }
 
@@ -925,11 +921,7 @@ impl From<LispFrameRef> for LispObject {
 impl From<LispObject> for Option<LispFrameRef> {
     #[inline]
     fn from(o: LispObject) -> Self {
-        if o.is_frame() {
-            Some(o.as_frame_or_error())
-        } else {
-            None
-        }
+        o.as_frame()
     }
 }
 
@@ -974,11 +966,7 @@ impl From<LispBufferRef> for LispObject {
 impl From<LispObject> for Option<LispBufferRef> {
     #[inline]
     fn from(o: LispObject) -> Self {
-        if o.is_buffer() {
-            Some(o.as_buffer_or_error())
-        } else {
-            None
-        }
+        o.as_buffer()
     }
 }
 
@@ -1599,7 +1587,7 @@ impl From<LispObject> for Option<LispNumber> {
 }
 
 impl From<LispObject> for LispMarkerRef {
-    fn from(o: LispObject) -> LispMarkerRef {
+    fn from(o: LispObject) -> Self {
         o.as_marker_or_error()
     }
 }
@@ -1611,13 +1599,13 @@ impl From<LispMarkerRef> for LispObject {
 }
 
 impl From<LispObject> for Option<LispMarkerRef> {
-    fn from(o: LispObject) -> Option<LispMarkerRef> {
+    fn from(o: LispObject) -> Self {
         o.as_marker()
     }
 }
 
 impl From<LispObject> for LispOverlayRef {
-    fn from(o: LispObject) -> LispOverlayRef {
+    fn from(o: LispObject) -> Self {
         o.as_overlay_or_error()
     }
 }
@@ -1629,13 +1617,13 @@ impl From<LispOverlayRef> for LispObject {
 }
 
 impl From<LispObject> for Option<LispOverlayRef> {
-    fn from(o: LispObject) -> Option<LispOverlayRef> {
+    fn from(o: LispObject) -> Self {
         o.as_overlay()
     }
 }
 
 impl From<LispObject> for LispProcessRef {
-    fn from(o: LispObject) -> LispProcessRef {
+    fn from(o: LispObject) -> Self {
         o.as_process_or_error()
     }
 }
@@ -1647,7 +1635,7 @@ impl From<LispProcessRef> for LispObject {
 }
 
 impl From<LispObject> for Option<LispProcessRef> {
-    fn from(o: LispObject) -> Option<LispProcessRef> {
+    fn from(o: LispObject) -> Self {
         o.as_process()
     }
 }
