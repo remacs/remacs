@@ -230,6 +230,10 @@ impl LispBufferRef {
         LispObject::from_raw(self.file_truename)
     }
 
+    pub fn case_fold_search(self) -> LispObject {
+        LispObject::from_raw(self.case_fold_search)
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {

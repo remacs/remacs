@@ -2,13 +2,13 @@
 
 use std::ptr;
 
-use libc::{c_uchar, ptrdiff_t};
+use libc::{c_int, c_uchar, ptrdiff_t};
 use std;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use remacs_sys::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, buffer_overflow,
+use remacs_sys::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, buffer_overflow, downcase,
                  find_before_next_newline, find_field, find_newline, globals, insert,
                  insert_and_inherit, make_string_from_bytes, maybe_quit, scan_newline_from_point,
                  set_point, set_point_both};
@@ -21,6 +21,7 @@ use lisp::defsubr;
 use marker::{marker_position_lisp, set_point_from_marker};
 use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, Codepoint, LispStringRef,
                 MAX_MULTIBYTE_LENGTH};
+use multibyte::{is_single_byte_char, unibyte_to_char};
 use textprop::get_char_property;
 use threads::ThreadState;
 use util::clip_to_bounds;
@@ -728,6 +729,43 @@ pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
     }
 
     unsafe { Some(buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) as EmacsInt) }
+}
+
+/// Return t if two characters match, optionally ignoring case.
+/// Both arguments must be characters (i.e. integers).
+/// Case is ignored if `case-fold-search' is non-nil in the current buffer.
+#[lisp_fn]
+pub fn char_equal(c1: LispObject, c2: LispObject) -> bool {
+    // Check they're chars, not just integers, otherwise we could get array
+    // bounds violations in downcase.
+    let mut c1 = c1.as_character_or_error();
+    let mut c2 = c2.as_character_or_error();
+
+    if c1 == c2 {
+        return true;
+    }
+
+    let cur_buf = ThreadState::current_buffer();
+    if cur_buf.case_fold_search().is_nil() {
+        return false;
+    }
+    
+    // FIXME: It is possible to compare multibyte characters even when
+    // the current buffer is unibyte.  Unfortunately this is ambiguous
+    // for characters between 128 and 255, as they could be either
+    // eight-bit raw bytes or Latin-1 characters.  Assume the former for
+    // now.  See Bug#17011, and also see casefiddle.c's casify_object,
+    // which has a similar problem.
+    if cur_buf.multibyte_characters_enabled() {
+        if is_single_byte_char(c1) {
+            c1 = unibyte_to_char(c1);
+        }
+        if is_single_byte_char(c2) {
+            c2 = unibyte_to_char(c2);
+        }
+    }
+
+    unsafe { downcase(c1 as c_int) == downcase(c2 as c_int) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
