@@ -11,8 +11,7 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, L
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
 use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit,
-                 voidfuncptr};
+                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -339,12 +338,11 @@ pub extern "C" fn map_keymap_internal(
         }
     };
 
-    while let Some(tail_cons) = tail.as_cons() {
-        if tail_cons.car().eq_raw(Qkeymap) {
+    for tail_cons in tail.iter_tails_safe() {
+        let binding = tail_cons.car();
+        if binding.eq_raw(Qkeymap) {
             break;
         } else {
-            let binding = tail_cons.car();
-
             // An embedded parent.
             if keymapp(binding) {
                 break;
@@ -371,7 +369,7 @@ pub extern "C" fn map_keymap_internal(
             } else if binding.is_char_table() {
                 unsafe {
                     let ptr = fun as *const ();
-                    let funcptr: voidfuncptr = mem::transmute(ptr);
+                    let funcptr = mem::transmute(ptr);
 
                     map_char_table(
                         map_keymap_char_table_item,

@@ -1363,7 +1363,6 @@ pub struct lisp_time {
 
 pub type map_keymap_function_t =
     unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object, *const c_void);
-pub type c_function = unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object);
 pub type voidfuncptr = unsafe extern "C" fn();
 
 extern "C" {
@@ -1392,7 +1391,7 @@ extern "C" {
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
     pub fn Fmake_char_table(purpose: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
     pub fn map_char_table(
-        c_function: c_function,
+        c_function: unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object),
         function: Lisp_Object,
         table: Lisp_Object,
         arg: Lisp_Object,
