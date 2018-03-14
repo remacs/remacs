@@ -297,9 +297,9 @@ modes only."
 
 (defcustom highlight-changes-global-changes-existing-buffers nil
   "If non-nil, toggling global Highlight Changes mode affects existing buffers.
-Normally, `global-highlight-changes' affects only new buffers (to be
+Normally, `global-highlight-changes-mode' affects only new buffers (to be
 created).  However, if `highlight-changes-global-changes-existing-buffers'
-is non-nil, then turning on `global-highlight-changes' will turn on
+is non-nil, then turning on `global-highlight-changes-mode' will turn on
 Highlight Changes mode in suitable buffers, and turning the mode off will
 remove it from existing buffers."
   :type 'boolean

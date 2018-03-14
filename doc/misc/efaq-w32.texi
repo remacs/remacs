@@ -906,7 +906,7 @@ The doc string contains a list of the system sounds you can use.
 @cindex font XLFD name format
 @cindex fontconfig font names in Emacs 23
 @cindex font dialog, using to find font names
-@findex w32-select-font
+@findex x-select-font
 @findex x-list-fonts
 
 Fonts in Emacs 22 and earlier are named using the X Logical Font
@@ -937,7 +937,7 @@ Fontconfig: Courier New-13
 To find the XFLD name for a font, you can execute the following in the
 @file{*scratch*} buffer by pressing C-j at the end of the line:
 @example
-(w32-select-font nil t)
+(x-select-font nil t)
 @end example
 
 To see a complete list of fonts, execute the following in the
