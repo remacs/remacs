@@ -215,7 +215,7 @@ pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     }
     let buf = ThreadState::current_buffer();
     let toinsert =
-        if byte >= 128 && LispObject::from_raw(buf.enable_multibyte_characters).is_not_nil() {
+        if byte >= 128 && buf.multibyte_characters_enabled() {
             EmacsInt::from(raw_byte_codepoint(byte as c_uchar))
         } else {
             byte
@@ -310,7 +310,7 @@ pub fn preceding_char() -> EmacsInt {
         return EmacsInt::from(0);
     }
 
-    let pos = if buffer_ref.enable_multibyte_characters != Qnil {
+    let pos = if buffer_ref.multibyte_characters_enabled() {
         unsafe { dec_pos(buffer_ref.pt_byte) }
     } else {
         buffer_ref.pt_byte - 1
