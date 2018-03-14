@@ -229,6 +229,9 @@ pub fn is_ascii(c: Codepoint) -> bool {
     c < 0x80
 }
 
+/// Nonzero iff C is a character of code less than 0x100.
+///
+/// Same as the `SINGLE_BYTE_CHAR_P` macro.
 pub fn is_single_byte_char(c: Codepoint) -> bool {
     c < 0x100
 }
