@@ -57,5 +57,11 @@ extern void map_keymap (Lisp_Object, map_keymap_function_t, Lisp_Object,
 extern void map_keymap_canonical (Lisp_Object map,
 				  map_keymap_function_t fun,
 				  Lisp_Object args, void *data);
-
+extern void
+map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy);
+extern Lisp_Object
+map_keymap_internal (Lisp_Object map,
+		     map_keymap_function_t fun,
+		     Lisp_Object args,
+		     void *data);
 #endif
