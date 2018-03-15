@@ -295,8 +295,8 @@ pub fn windowp(object: LispObject) -> bool {
 /// A live window is a window that displays a buffer.
 /// Internal windows and deleted windows are not live.
 #[lisp_fn]
-pub fn window_live_p(object: LispObject) -> bool {
-    object.as_window().map_or(false, |m| m.is_live())
+pub fn window_live_p(object: Option<LispWindowRef>) -> bool {
+    object.map_or(false, |m| m.is_live())
 }
 
 /// Return current value of point in WINDOW.
@@ -344,8 +344,8 @@ pub fn window_buffer(window: LispObject) -> LispObject {
 /// A valid window is either a window that displays a buffer or an internal
 /// window.  Windows that have been deleted are not valid.
 #[lisp_fn]
-pub fn window_valid_p(object: LispObject) -> bool {
-    object.as_window().map_or(false, |w| w.is_valid())
+pub fn window_valid_p(object: Option<LispWindowRef>) -> bool {
+    object.map_or(false, |w| w.is_valid())
 }
 
 /// Return position at which display currently starts in WINDOW.

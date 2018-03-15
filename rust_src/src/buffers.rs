@@ -349,8 +349,8 @@ pub fn overlayp(object: LispObject) -> bool {
 /// Return non-nil if OBJECT is a buffer which has not been killed.
 /// Value is nil if OBJECT is not a buffer or if it has been killed.
 #[lisp_fn]
-pub fn buffer_live_p(object: LispObject) -> bool {
-    object.as_buffer().map_or(false, |m| m.is_live())
+pub fn buffer_live_p(object: Option<LispBufferRef>) -> bool {
+    object.map_or(false, |m| m.is_live())
 }
 
 /// Like Fassoc, but use `Fstring_equal` to compare
