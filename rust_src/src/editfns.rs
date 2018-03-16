@@ -402,14 +402,13 @@ pub fn char_to_string(character: LispObject) -> LispObject {
 
 /// Convert arg BYTE to a unibyte string containing that byte.
 #[lisp_fn]
-pub fn byte_to_string(byte: LispObject) -> LispObject {
-    let b = byte.as_fixnum_or_error();
-    if b < 0 || b > 255 {
+pub fn byte_to_string(byte: EmacsInt) -> LispObject {
+    if byte < 0 || byte > 255 {
         error!("Invalid byte");
     }
-    let b = b as i8;
+    let byte = byte as i8;
 
-    LispObject::from_raw(unsafe { make_string_from_bytes(&b as *const i8, 1, 1) })
+    LispObject::from_raw(unsafe { make_string_from_bytes(&byte as *const i8, 1, 1) })
 }
 
 /// Return the first character in STRING.

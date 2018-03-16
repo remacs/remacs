@@ -118,8 +118,8 @@ pub fn process_buffer(process: LispProcessRef) -> LispObject {
 /// This is the pid of the external process which PROCESS uses or talks to.
 /// For a network, serial, and pipe connections, this value is nil.
 #[lisp_fn]
-pub fn process_id(process: LispObject) -> Option<EmacsInt> {
-    let pid = unsafe { pget_pid(process.as_process_or_error().as_ptr()) };
+pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
+    let pid = unsafe { pget_pid(process.as_ptr()) };
     if pid != 0 {
         Some(EmacsInt::from(pid))
     } else {
