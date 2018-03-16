@@ -7,19 +7,22 @@
                              (28 . forward-line))
                          (3 keymap
                             (25 . run-lisp))))
-        (sample-keymap-with-parent '(keymap
-                                     (3 keymap
-                                        (25 . run-lisp))
-                                     (27 keymap
-                                         (24 . lisp-send-defun))
-                                     keymap
-                                     (127 . backward-delete-char-untabify)
-                                     (26 keymap
-                                         (17 . indent-sexp)))))
+        (sample-keymap-long `(keymap
+                              (3 keymap
+                                 (25 . run-lisp))
+                              (27 keymap
+                                  (24 . lisp-send-defun))
+                              ,(make-char-table 'test 0)
+                              [0 0 0 0 0 0]
+                              keymap
+                              (127 . backward-delete-char-untabify)
+                              (26 keymap
+                                  (17 . indent-sexp))
+                              )))
 
     ;; Test copying
     (should (equal (copy-keymap sample-keymap) sample-keymap))
-    (should (equal (copy-keymap sample-keymap-with-parent) sample-keymap-with-parent))
+    (should (equal (copy-keymap sample-keymap-long) sample-keymap-long))
 
     ;; Test empty keymap
     (should (equal (copy-keymap '(keymap)) '(keymap)))
@@ -28,27 +31,58 @@
     (should-error (copy-keymap nil))
     (should-error (copy-keymap "string"))))
 
-(ert-deftest keymap-tests--map-keymap ()
-  (let* ((sample-keymap '(keymap
+(ert-deftest keymap-tests--copy-keymap-2 ()
+  (let ((sample-keymap '(keymap
                          (27 keymap
                              (24 . lisp-send-defun)
                              (28 . forward-line))
                          (3 keymap
                             (25 . run-lisp))))
-        (sample-keymap-with-parent '(keymap
-                                     (3 keymap
-                                        (25 . run-lisp))
-                                     (27 keymap
-                                         (24 . lisp-send-defun))
-                                     keymap
-                                     (127 . backward-delete-char-untabify)
-                                     (26 keymap
-                                         (17 . indent-sexp))))
-        (keys nil)
-        (values nil)
-        (test-function '(lambda (key value)
-                          (push key keys)
-                          (push value values))))
+        (sample-keymap-long `(keymap
+                              (3 keymap
+                                 (25 . run-lisp))
+                              (27 keymap
+                                  (24 . lisp-send-defun))
+                              ,(make-char-table 'test 0)
+                              [0 0 0 0 0 0]
+                              keymap
+                              (127 . backward-delete-char-untabify)
+                              (26 keymap
+                                  (17 . indent-sexp))
+                              )))
+
+    ;; Test copying
+    (should (equal (copy-keymap-2 sample-keymap) sample-keymap))
+    (should (equal (copy-keymap-2 sample-keymap-long) sample-keymap-long))
+
+    ;; Test empty keymap
+    (should (equal (copy-keymap-2 '(keymap)) '(keymap)))
+    
+    ;; Test invalid inputs
+    (should-error (copy-keymap-2 nil))
+    (should-error (copy-keymap-2 "string"))))
+
+(ert-deftest keymap-tests--map-keymap ()
+  (let* ((sample-keymap '(keymap
+                          (27 keymap
+                              (24 . lisp-send-defun)
+                              (28 . forward-line))
+                          (3 keymap
+                             (25 . run-lisp))))
+         (sample-keymap-with-parent '(keymap
+                                      (3 keymap
+                                         (25 . run-lisp))
+                                      (27 keymap
+                                          (24 . lisp-send-defun))
+                                      keymap
+                                      (127 . backward-delete-char-untabify)
+                                      (26 keymap
+                                          (17 . indent-sexp))))
+         (keys nil)
+         (values nil)
+         (test-function '(lambda (key value)
+                           (push key keys)
+                           (push value values))))
 
     ;; Test simple keymap with children
     (map-keymap test-function sample-keymap)

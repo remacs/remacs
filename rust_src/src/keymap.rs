@@ -287,7 +287,7 @@ pub fn copy_keymap_2(mut keymap: LispObject) -> LispObject {
             }
         } else if let Some(elt_cons) = elt.as_cons() {
             if elt.eq_raw(Qkeymap) {
-                elt = copy_keymap_2(elt);
+                elt = copy_keymap_2(elt); // This is a sub keymap.
             } else {
                 let (elt_car, elt_cdr) = elt_cons.as_tuple();
                 elt = LispObject::from_raw(unsafe {
@@ -299,12 +299,12 @@ pub fn copy_keymap_2(mut keymap: LispObject) -> LispObject {
         if let Some(tail_cons) = tail.as_cons() {
             tail_cons.set_cdr(list!(elt));
             tail = tail_cons.cdr();
+            keymap = keymap_cons.cdr();
         }
-        keymap = keymap_cons.cdr();
     }
 
     if let Some(tail_cons) = tail.as_cons() {
-        tail_cons.set_cdr(list!(keymap));
+        tail_cons.set_cdr(keymap);
     }
     copy
 }
