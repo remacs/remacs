@@ -1,5 +1,33 @@
 (require 'ert)
 
+(ert-deftest keymap-tests--copy-keymap ()
+  (let ((sample-keymap '(keymap
+                         (27 keymap
+                             (24 . lisp-send-defun)
+                             (28 . forward-line))
+                         (3 keymap
+                            (25 . run-lisp))))
+        (sample-keymap-with-parent '(keymap
+                                     (3 keymap
+                                        (25 . run-lisp))
+                                     (27 keymap
+                                         (24 . lisp-send-defun))
+                                     keymap
+                                     (127 . backward-delete-char-untabify)
+                                     (26 keymap
+                                         (17 . indent-sexp)))))
+
+    ;; Test copying
+    (should (equal (copy-keymap sample-keymap) sample-keymap))
+    (should (equal (copy-keymap sample-keymap-with-parent) sample-keymap-with-parent))
+
+    ;; Test empty keymap
+    (should (equal (copy-keymap '(keymap)) '(keymap)))
+    
+    ;; Test invalid inputs
+    (should-error (copy-keymap nil))
+    (should-error (copy-keymap "string"))))
+
 (ert-deftest keymap-tests--map-keymap ()
   (let* ((sample-keymap '(keymap
                          (27 keymap
