@@ -1395,9 +1395,15 @@ extern "C" {
     // Use LispObject::tag_ptr instead of make_lisp_ptr
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
     pub fn Fmake_char_table(purpose: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
+    pub fn map_char_table(
+        c_function: unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object),
+        function: Lisp_Object,
+        table: Lisp_Object,
+        arg: Lisp_Object,
+    );
     pub fn CHAR_TABLE_SET(ct: Lisp_Object, idx: c_int, val: Lisp_Object);
 
-    pub fn aset_multibyte_string(array: Lisp_Object, idxval: EmacsInt, c: c_int);
+    pub fn asetm_ultibyte_string(array: Lisp_Object, idxval: EmacsInt, c: c_int);
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
@@ -1612,6 +1618,9 @@ extern "C" {
         noinherit: bool,
         autoload: bool,
     ) -> Lisp_Object;
+    pub fn copy_keymap_item(elt: Lisp_Object) -> Lisp_Object;
+    pub fn copy_keymap_1(chartable: Lisp_Object, idx: Lisp_Object, elt: Lisp_Object);
+    pub fn aset_multibyte_string(array: Lisp_Object, idxval: EmacsInt, c: c_int);
     pub fn message_with_string(m: *const c_char, string: Lisp_Object, log: bool);
     pub fn maybe_quit();
     pub fn make_lispy_position(

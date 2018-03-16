@@ -7,10 +7,11 @@ use libc::c_void;
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, Lisp_Object,
                  CHAR_META};
-use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
+use remacs_sys::{Fcons, Fcopy_sequence, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy,
+                 Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, map_keymap_call, map_keymap_function_t, map_keymap_internal,
-                 maybe_quit};
+use remacs_sys::{access_keymap, copy_keymap_item, map_char_table, map_keymap_call,
+                 map_keymap_function_t, map_keymap_internal, maybe_quit, copy_keymap_1};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -242,6 +243,70 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
     prev.check_impure();
     prev.set_cdr(parent);
     parent
+}
+
+/// Return a copy of the keymap KEYMAP.
+///
+/// Note that this is almost never needed.  If you want a keymap that's like
+/// another yet with a few changes, you should use map inheritance rather
+/// than copying.  I.e. something like:
+///
+///     (let ((map (make-sparse-keymap)))
+///       (set-keymap-parent map <theirmap>)
+///       (define-key map ...)
+///       ...)
+///
+/// After performing `copy-keymap', the copy starts out with the same definitions
+/// of KEYMAP, but changing either the copy or KEYMAP does not affect the other.
+/// Any key definitions that are subkeymaps are recursively copied.
+/// However, a key definition which is a symbol whose definition is a keymap
+/// is not copied.
+#[lisp_fn]
+pub fn copy_keymap_2(mut keymap: LispObject) -> LispObject {
+    keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, false));
+    let copy = list!(LispObject::from_raw(Qkeymap));
+    let mut tail = copy;
+    keymap = keymap.as_cons_or_error().cdr();
+
+    while let Some(keymap_cons) = keymap.as_cons() {
+        if !keymap_cons.car().eq_raw(Qkeymap) {
+            break;
+        }
+
+        let mut elt = LispObject::from_raw(unsafe { Fcopy_sequence(keymap_cons.car().to_raw()) });
+        if elt.is_char_table() {
+            unsafe { map_char_table(copy_keymap_1, Qnil, elt.to_raw(), elt.to_raw()) };
+        } else if elt.is_vector() {
+            if let Some(elt_pseudovec) = elt.as_vectorlike() {
+                let mut elt_vec = unsafe { elt.as_vector_unchecked() };
+                for i in 0..elt_pseudovec.pseudovector_size() {
+                    let copied_item =
+                        LispObject::from_raw(unsafe { copy_keymap_item(aref(elt, i).to_raw()) });
+                    elt_vec.set(i as usize, copied_item);
+                }
+            }
+        } else if let Some(elt_cons) = elt.as_cons() {
+            if elt.eq_raw(Qkeymap) {
+                elt = copy_keymap_2(elt);
+            } else {
+                let (elt_car, elt_cdr) = elt_cons.as_tuple();
+                elt = LispObject::from_raw(unsafe {
+                    Fcons(elt_car.to_raw(), copy_keymap_item(elt_cdr.to_raw()))
+                });
+            }
+        }
+
+        if let Some(tail_cons) = tail.as_cons() {
+            tail_cons.set_cdr(list!(elt));
+            tail = tail_cons.cdr();
+        }
+        keymap = keymap_cons.cdr();
+    }
+
+    if let Some(tail_cons) = tail.as_cons() {
+        tail_cons.set_cdr(list!(keymap));
+    }
+    copy
 }
 
 /// Return the prompt-string of a keymap MAP.

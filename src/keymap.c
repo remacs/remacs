@@ -636,7 +636,7 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
   return def;
 }
 
-static Lisp_Object
+Lisp_Object
 copy_keymap_item (Lisp_Object elt)
 {
   Lisp_Object res, tem;
@@ -696,7 +696,7 @@ copy_keymap_item (Lisp_Object elt)
   return res;
 }
 
-static void
+void
 copy_keymap_1 (Lisp_Object chartable, Lisp_Object idx, Lisp_Object elt)
 {
   Fset_char_table_range (chartable, idx, copy_keymap_item (elt));
