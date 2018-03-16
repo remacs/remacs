@@ -702,61 +702,6 @@ copy_keymap_1 (Lisp_Object chartable, Lisp_Object idx, Lisp_Object elt)
   Fset_char_table_range (chartable, idx, copy_keymap_item (elt));
 }
 
-DEFUN ("copy-keymap", Fcopy_keymap, Scopy_keymap, 1, 1, 0,
-       doc: /* Return a copy of the keymap KEYMAP.
-
-Note that this is almost never needed.  If you want a keymap that's like
-another yet with a few changes, you should use map inheritance rather
-than copying.  I.e. something like:
-
-    (let ((map (make-sparse-keymap)))
-      (set-keymap-parent map <theirmap>)
-      (define-key map ...)
-      ...)
-
-After performing `copy-keymap', the copy starts out with the same definitions
-of KEYMAP, but changing either the copy or KEYMAP does not affect the other.
-Any key definitions that are subkeymaps are recursively copied.
-However, a key definition which is a symbol whose definition is a keymap
-is not copied.  */)
-  (Lisp_Object keymap)
-{
-  Lisp_Object copy, tail;
-  keymap = get_keymap (keymap, 1, 0);
-  copy = tail = list1 (Qkeymap);
-  keymap = XCDR (keymap);		/* Skip the `keymap' symbol.  */
-
-  while (CONSP (keymap) && !EQ (XCAR (keymap), Qkeymap))
-    {
-      Lisp_Object elt = XCAR (keymap);
-      if (CHAR_TABLE_P (elt))
-	{
-	  elt = Fcopy_sequence (elt);
-	  map_char_table (copy_keymap_1, Qnil, elt, elt);
-	}
-      else if (VECTORP (elt))
-	{
-	  int i;
-	  elt = Fcopy_sequence (elt);
-	  for (i = 0; i < ASIZE (elt); i++)
-	    ASET (elt, i, copy_keymap_item (AREF (elt, i)));
-	}
-      else if (CONSP (elt))
-	{
-	  if (EQ (XCAR (elt), Qkeymap))
-	    /* This is a sub keymap.  */
-	    elt = Fcopy_keymap (elt);
-	  else
-	    elt = Fcons (XCAR (elt), copy_keymap_item (XCDR (elt)));
-	}
-      XSETCDR (tail, list1 (elt));
-      tail = XCDR (tail);
-      keymap = XCDR (keymap);
-    }
-  XSETCDR (tail, keymap);
-  return copy;
-}
-
 /* Simple Keymap mutators and accessors.				*/
 
 /* GC is possible in this function if it autoloads a keymap.  */
@@ -3288,7 +3233,6 @@ be preferred.  */);
   staticpro (&command_remapping_vector);
 
   defsubr (&Smap_keymap_internal);
-  defsubr (&Scopy_keymap);
   defsubr (&Scommand_remapping);
   defsubr (&Skey_binding);
   defsubr (&Sminor_mode_key_binding);

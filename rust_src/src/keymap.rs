@@ -262,7 +262,7 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
 /// However, a key definition which is a symbol whose definition is a keymap
 /// is not copied.
 #[lisp_fn]
-pub fn copy_keymap_2(mut keymap: LispObject) -> LispObject {
+pub fn copy_keymap(mut keymap: LispObject) -> LispObject {
     keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, false));
     let copy = list!(LispObject::from_raw(Qkeymap));
     let mut tail = copy;
@@ -287,7 +287,7 @@ pub fn copy_keymap_2(mut keymap: LispObject) -> LispObject {
             }
         } else if let Some(elt_cons) = elt.as_cons() {
             if elt.eq_raw(Qkeymap) {
-                elt = copy_keymap_2(elt); // This is a sub keymap.
+                elt = copy_keymap(elt); // This is a sub keymap.
             } else {
                 let (elt_car, elt_cdr) = elt_cons.as_tuple();
                 elt = LispObject::from_raw(unsafe {
