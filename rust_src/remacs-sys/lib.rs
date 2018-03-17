@@ -1403,7 +1403,6 @@ extern "C" {
     );
     pub fn CHAR_TABLE_SET(ct: Lisp_Object, idx: c_int, val: Lisp_Object);
 
-    pub fn asetm_ultibyte_string(array: Lisp_Object, idxval: EmacsInt, c: c_int);
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
