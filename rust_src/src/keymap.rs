@@ -343,6 +343,8 @@ pub extern "C" fn map_keymap_internal(
         if binding.eq_raw(Qkeymap) {
             break;
         } else {
+            tail = tail_cons.cdr();
+
             // An embedded parent.
             if keymapp(binding) {
                 break;
@@ -380,8 +382,6 @@ pub extern "C" fn map_keymap_internal(
                 }
             }
         }
-
-        tail = tail_cons.cdr();
     }
 
     tail.to_raw()
