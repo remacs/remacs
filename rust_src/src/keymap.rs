@@ -285,7 +285,8 @@ pub fn copy_keymap(mut keymap: LispObject) -> LispObject {
                     elt_vec.set(i as usize, copied_item);
                 }
             }
-        } else if let Some(elt_cons) = elt.as_cons() {
+        } else if elt.is_cons() {
+            let elt_cons = elt.as_cons_or_error();
             if elt.eq_raw(Qkeymap) {
                 elt = copy_keymap(elt); // This is a sub keymap.
             } else {
@@ -296,11 +297,10 @@ pub fn copy_keymap(mut keymap: LispObject) -> LispObject {
             }
         }
 
-        if let Some(tail_cons) = tail.as_cons() {
-            tail_cons.set_cdr(list!(elt));
-            tail = tail_cons.cdr();
-            keymap = keymap_cons.cdr();
-        }
+        let tail_cons = tail.as_cons_or_error();
+        tail_cons.set_cdr(list!(elt));
+        tail = tail_cons.cdr();
+        keymap = keymap_cons.cdr();
     }
 
     if let Some(tail_cons) = tail.as_cons() {
