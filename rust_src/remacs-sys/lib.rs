@@ -1185,6 +1185,7 @@ pub struct Lisp_Process {
 extern "C" {
     pub fn pget_pid(p: *const Lisp_Process) -> pid_t;
     pub fn pget_kill_without_query(p: *const Lisp_Process) -> BoolBF;
+    pub fn pget_process_inherit_coding_system_flag(p: *const Lisp_Process) -> BoolBF;
 }
 
 /// Functions to set members of `struct Lisp_Process`.
