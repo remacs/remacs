@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{current_thread, get_process as cget_process, pget_kill_without_query, pget_pid,
-                 pget_raw_status_new, pget_process_inherit_coding_system_flag,
+                 pget_process_inherit_coding_system_flag, pget_raw_status_new,
                  pset_kill_without_query, send_process, setup_process_coding_systems,
                  update_status, Fmapcar, STRING_BYTES};
 use remacs_sys::{QCbuffer, Qcdr, Qclosed, Qexit, Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial,
@@ -334,9 +334,8 @@ pub fn waiting_for_user_input_p() -> bool {
 #[lisp_fn]
 pub fn process_inherit_coding_system_flag(process: LispObject) -> LispObject {
     let p_ref = process.as_process_or_error();
-    let process_inherit_coding_system_flag = unsafe {
-        pget_process_inherit_coding_system_flag(p_ref.as_ptr())
-    };
+    let process_inherit_coding_system_flag =
+        unsafe { pget_process_inherit_coding_system_flag(p_ref.as_ptr()) };
     LispObject::from_bool(process_inherit_coding_system_flag)
 }
 
