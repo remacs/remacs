@@ -145,4 +145,9 @@ macro_rules! verify_lisp_type {
             wrong_type!(::remacs_sys::Qcharacterp, $crate::lisp::LispObject::from($n));
         }
     };
+    ($obj:expr, Qstringp) => {
+        if !$obj.is_string() {
+            wrong_type!(::remacs_sys::Qstringp, $obj);
+        }
+    };
 }

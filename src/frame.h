@@ -707,6 +707,8 @@ fset_desired_tool_bar_string (struct frame *f, Lisp_Object val)
 
 /* Accessors for Rust */
 /* enum output_method */
+Lisp_Object
+fget_selected_window (const struct frame *f);
 int
 fget_output_method(const struct frame *f);
 int

@@ -19,24 +19,34 @@ mod function;
 
 #[proc_macro_attribute]
 pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
-    lisp_fn_internal(attr_ts, fn_ts,
-                     quote! {
-                         ::lisp::LispObject::from(ret).to_raw()
-                     })
+    lisp_fn_internal(
+        attr_ts,
+        fn_ts,
+        quote! {
+            ::lisp::LispObject::from(ret).to_raw()
+        },
+    )
 }
 
 #[proc_macro_attribute]
 pub fn lisp_fn_result(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
-    lisp_fn_internal(attr_ts, fn_ts,
-                     quote! {
-                         match ret {
-                             Ok(v) => ::lisp::LispObject::from(v).to_raw(),
-                             Err(e) => ::lisp::Signal::signal(e),
-                         }
-                     })
+    lisp_fn_internal(
+        attr_ts,
+        fn_ts,
+        quote! {
+            match ret {
+                Ok(v) => ::lisp::LispObject::from(v).to_raw(),
+                Err(e) => ::lisp::Signal::signal(e),
+            }
+        },
+    )
 }
 
-fn lisp_fn_internal(attr_ts: TokenStream, fn_ts: TokenStream, return_ts: quote::Tokens) -> TokenStream {
+fn lisp_fn_internal(
+    attr_ts: TokenStream,
+    fn_ts: TokenStream,
+    return_ts: quote::Tokens,
+) -> TokenStream {
     let fn_item = syn::parse_item(&fn_ts.to_string()).unwrap();
     let function = function::parse(&fn_item).unwrap();
     let lisp_fn_args = match remacs_util::parse_lisp_fn(

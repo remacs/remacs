@@ -3245,6 +3245,12 @@ set_symbol_plist (Lisp_Object sym, Lisp_Object plist)
   XSYMBOL (sym)->plist = plist;
 }
 
+INLINE enum symbol_redirect
+get_symbol_redirect(const struct Lisp_Symbol *sym)
+{
+  return sym->redirect;
+}
+
 INLINE void
 set_symbol_next (Lisp_Object sym, struct Lisp_Symbol *next)
 {
@@ -3258,6 +3264,18 @@ make_symbol_constant (Lisp_Object sym)
 }
 
 /* Buffer-local variable access functions.  */
+
+INLINE union Lisp_Fwd*
+get_blv_fwd (struct Lisp_Buffer_Local_Value *blv)
+{
+  return blv->fwd;
+}
+
+INLINE Lisp_Object
+get_blv_value (struct Lisp_Buffer_Local_Value *blv)
+{
+  return XCDR (blv->valcell);
+}
 
 INLINE int
 blv_found (struct Lisp_Buffer_Local_Value *blv)
@@ -3384,6 +3402,8 @@ extern void set_default_internal (Lisp_Object, Lisp_Object,
 
 extern void syms_of_data (void);
 extern void swap_in_global_binding (struct Lisp_Symbol *);
+extern void swap_in_symval_forwarding (struct Lisp_Symbol *symbol,
+                                       struct Lisp_Buffer_Local_Value *blv);
 
 extern void
 aset_multibyte_string(register Lisp_Object array, EMACS_INT idxval, int c);

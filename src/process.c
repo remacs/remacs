@@ -7345,15 +7345,6 @@ kill_buffer_processes (Lisp_Object buffer)
       }
 }
 
-DEFUN ("waiting-for-user-input-p", Fwaiting_for_user_input_p,
-       Swaiting_for_user_input_p, 0, 0, 0,
-       doc: /* Return non-nil if Emacs is waiting for input from the user.
-This is intended for use by asynchronous process output filters and sentinels.  */)
-  (void)
-{
-  return (waiting_for_user_input_p ? Qt : Qnil);
-}
-
 /* Stop reading input from keyboard sources.  */
 
 void
@@ -7744,7 +7735,6 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_running_child_p);
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);
-  defsubr (&Swaiting_for_user_input_p);
   defsubr (&Sprocess_type);
   defsubr (&Sinternal_default_process_sentinel);
   defsubr (&Sinternal_default_process_filter);

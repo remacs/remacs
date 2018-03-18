@@ -249,12 +249,18 @@ pub struct Lisp_String {
     pub data: *mut c_char,
 }
 
+pub type symbol_redirect = u32;
+pub const SYMBOL_PLAINVAL: symbol_redirect = 4;
+pub const SYMBOL_VARALIAS: symbol_redirect = 1;
+pub const SYMBOL_LOCALIZED: symbol_redirect = 2;
+pub const SYMBOL_FORWARDED: symbol_redirect = 3;
+
 #[repr(C)]
 pub union SymbolUnion {
-    value: Lisp_Object,
+    pub value: Lisp_Object,
     pub alias: *mut Lisp_Symbol,
-    blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
-    fwd: *mut c_void, // @TODO implement Lisp_Fwd
+    pub blv: *mut Lisp_Buffer_Local_Value,
+    pub fwd: *mut Lisp_Fwd,
 }
 
 /// This struct has 4 bytes of padding, representing the bitfield that
@@ -272,6 +278,7 @@ pub struct Lisp_Symbol {
 
 extern "C" {
     pub fn get_symbol_declared_special(sym: *const Lisp_Symbol) -> bool;
+    pub fn get_symbol_redirect(sym: *const Lisp_Symbol) -> symbol_redirect;
 
     pub fn set_symbol_declared_special(sym: *mut Lisp_Symbol, value: bool);
 }
@@ -352,6 +359,16 @@ pub enum Lisp_Misc_Type {
 pub struct Lisp_Misc_Any {
     _padding: BitfieldPadding,
 }
+
+/// These are the types of forwarding objects used in the value slot
+/// of symbols for special built-in variables whose value is stored in
+/// C variables.
+pub type Lisp_Fwd_Type = u32;
+pub const Lisp_Fwd_Int: Lisp_Fwd_Type = 0; // Fwd to a C `int' variable.
+pub const Lisp_Fwd_Bool: Lisp_Fwd_Type = 1; // Fwd to a C boolean var.
+pub const Lisp_Fwd_Obj: Lisp_Fwd_Type = 2; // Fwd to a C Lisp_Object variable.
+pub const Lisp_Fwd_Buffer_Obj: Lisp_Fwd_Type = 3; // Fwd to a Lisp_Object field of buffers.
+pub const Lisp_Fwd_Kboard_Obj: Lisp_Fwd_Type = 4; // Fwd to a Lisp_Object field of kboards.
 
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
@@ -734,6 +751,119 @@ extern "C" {
     pub fn bget_overlays_after(b: *const Lisp_Buffer) -> *mut c_void;
 }
 
+/// struct Lisp_Buffer_Local_Value is used in a symbol value cell when
+/// the symbol has buffer-local bindings.  (Exception:
+/// some buffer-local variables are built-in, with their values stored
+/// in the buffer structure itself.  They are handled differently,
+/// using struct Lisp_Buffer_Objfwd.)
+///
+/// The `realvalue' slot holds the variable's current value, or a
+/// forwarding pointer to where that value is kept.  This value is the
+/// one that corresponds to the loaded binding.  To read or set the
+/// variable, you must first make sure the right binding is loaded;
+/// then you can access the value in (or through) `realvalue'.
+///
+/// `buffer' and `frame' are the buffer and frame for which the loaded
+/// binding was found.  If those have changed, to make sure the right
+/// binding is loaded it is necessary to find which binding goes with
+/// the current buffer and selected frame, then load it.  To load it,
+/// first unload the previous binding, then copy the value of the new
+/// binding into `realvalue' (or through it).  Also update
+/// LOADED-BINDING to point to the newly loaded binding.
+///
+/// `local_if_set' indicates that merely setting the variable creates a
+/// local binding for the current buffer.  Otherwise the latter, setting
+/// the variable does not do that; only make-local-variable does that.
+#[repr(C)]
+pub struct Lisp_Buffer_Local_Value {
+    /// True means that merely setting the variable creates a local
+    /// binding for the current buffer.
+    pub local_if_set: bool,
+    /// True means that the binding now loaded was found.
+    /// Presumably equivalent to (defcell!=valcell).
+    pub found: bool,
+    /// If non-NULL, a forwarding to the C var where it should also be set.
+    pub fwd: *mut Lisp_Fwd, // Should never be (Buffer|Kboard)_Objfwd.
+    /// The buffer or frame for which the loaded binding was found.
+    pub where_: Lisp_Object,
+    /// A cons cell that holds the default value.  It has the form
+    /// (SYMBOL . DEFAULT-VALUE).
+    pub defcell: Lisp_Object,
+    /// The cons cell from `where's parameter alist.
+    /// It always has the form (SYMBOL . VALUE)
+    /// Note that if `forward' is non-nil, VALUE may be out of date.
+    /// Also if the currently loaded binding is the default binding, then
+    /// this is `eq'ual to defcell.
+    valcell: Lisp_Object,
+}
+
+extern "C" {
+    pub fn get_blv_fwd(blv: *const Lisp_Buffer_Local_Value) -> *const Lisp_Fwd;
+    pub fn get_blv_value(blv: *const Lisp_Buffer_Local_Value) -> Lisp_Object;
+}
+
+#[repr(C)]
+pub union Lisp_Fwd {
+    pub u_intfwd: Lisp_Intfwd,
+    pub u_boolfwd: Lisp_Boolfwd,
+    pub u_objfwd: Lisp_Objfwd,
+    pub u_buffer_objfwd: Lisp_Buffer_Objfwd,
+    pub u_kboard_objfwd: Lisp_Kboard_Objfwd,
+}
+
+/// Forwarding pointer to an int variable.
+/// This is allowed only in the value cell of a symbol,
+/// and it means that the symbol's value really lives in the
+/// specified int variable.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Intfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Int
+    pub intvar: *mut EmacsInt,
+}
+
+/// Boolean forwarding pointer to an int variable.
+/// This is like Lisp_Intfwd except that the ostensible
+/// "value" of the symbol is t if the bool variable is true,
+/// nil if it is false.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Boolfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Bool
+    pub boolvar: *mut bool,
+}
+
+/// Forwarding pointer to a Lisp_Object variable.
+/// This is allowed only in the value cell of a symbol,
+/// and it means that the symbol's value really lives in the
+/// specified variable.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Obj
+    pub objvar: *mut Lisp_Object,
+}
+
+/// Like Lisp_Objfwd except that value lives in a slot in the
+/// current buffer.  Value is byte index of slot within buffer.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Buffer_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Buffer_Obj
+    pub offset: i32,
+    // One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.
+    pub predicate: Lisp_Object,
+}
+
+/// Like Lisp_Objfwd except that value lives in a slot in the
+/// current kboard.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Kboard_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Kboard_Obj
+    pub offset: i32,
+}
+
 /// Represents text contents of an Emacs buffer. For documentation see
 /// struct buffer_text in buffer.h.
 #[repr(C)]
@@ -1081,6 +1211,18 @@ pub struct Lisp_Frame {
     /// Usually it is nil.
     pub title: Lisp_Object,
 
+    // This struct is incomplete.
+    // It is difficult, if not impossible, to import the rest of this struct.
+    // 1. #IFDEF logic means the proper number of fields is hard to determine.
+    // 2. Bitfields are compiler dependent. How much padding, where?
+    //    The current count is roughly 50 bits.
+    //
+    // Because of this, access functions are written in src/frame.c and
+    // exported here for use in Rust. This means that instead of
+    // frame.foo the proper method is fget_foo(frame).
+    /// This frame's parent frame, if it has one.
+    parent_frame: Lisp_Object,
+
     ///  The frame which should receive keystrokes that occur in this
     /// frame, or nil if they should go to the frame itself.  This is
     /// usually nil, but if the frame is minibufferless, we can use this
@@ -1092,29 +1234,29 @@ pub struct Lisp_Frame {
     /// to shift from one frame to the other, any redirections to the
     /// original frame are shifted to the newly selected frame; if
     /// focus_frame is nil, Fselect_frame will leave it alone.
-    pub focus_frame: Lisp_Object,
+    focus_frame: Lisp_Object,
 
     /// This frame's root window.  Every frame has one.
     /// If the frame has only a minibuffer window, this is it.
     /// Otherwise, if the frame has a minibuffer window, this is its sibling.
-    pub root_window: Lisp_Object,
+    root_window: Lisp_Object,
 
     /// This frame's selected window.
     /// Each frame has its own window hierarchy
     /// and one of the windows in it is selected within the frame.
     /// The selected window of the selected frame is Emacs's selected window.
-    pub selected_window: Lisp_Object,
+    selected_window: Lisp_Object,
 
     /// This frame's minibuffer window.
     /// Most frames have their own minibuffer windows,
     /// but only the selected frame's minibuffer window
     /// can actually appear to exist.
-    pub minibuffer_window: Lisp_Object,
+    minibuffer_window: Lisp_Object,
 
     /// Parameter alist of this frame.
     /// These are the parameters specified when creating the frame
     /// or modified with modify-frame-parameters.
-    pub param_alist: Lisp_Object,
+    param_alist: Lisp_Object,
 
     /// List of scroll bars on this frame.
     /// Actually, we don't specify exactly what is stored here at all; the
@@ -1123,48 +1265,41 @@ pub struct Lisp_Frame {
     /// instead of in the `device' structure so that the garbage
     /// collector doesn't need to look inside the window-system-dependent
     /// structure.
-    pub scroll_bars: Lisp_Object,
-    pub condemned_scroll_bars: Lisp_Object,
+    scroll_bars: Lisp_Object,
+    condemned_scroll_bars: Lisp_Object,
 
     /// Vector describing the items to display in the menu bar.
     /// Each item has four elements in this vector.
     /// They are KEY, STRING, SUBMAP, and HPOS.
     /// (HPOS is not used in when the X toolkit is in use.)
     /// There are four additional elements of nil at the end, to terminate.
-    pub menu_bar_items: Lisp_Object,
+    menu_bar_items: Lisp_Object,
 
     /// Alist of elements (FACE-NAME . FACE-VECTOR-DATA).
-    pub face_alist: Lisp_Object,
+    face_alist: Lisp_Object,
 
     /// A vector that records the entire structure of this frame's menu bar.
     /// For the format of the data, see extensive comments in xmenu.c.
     /// Only the X toolkit version uses this.
-    pub menu_bar_vector: Lisp_Object,
+    menu_bar_vector: Lisp_Object,
 
     /// Predicate for selecting buffers for other-buffer.
-    pub buffer_predicate: Lisp_Object,
+    buffer_predicate: Lisp_Object,
 
     /// List of buffers viewed in this frame, for other-buffer.
-    pub buffer_list: Lisp_Object,
+    buffer_list: Lisp_Object,
 
     /// List of buffers that were viewed, then buried in this frame.  The
     /// most recently buried buffer is first.  For last-buffer.
-    pub buried_buffer_list: Lisp_Object,
-    // This struct is incomplete.
-    // It is difficult, if not impossible, to import the rest of this struct.
-    // 1. #IFDEF logic means the proper number of fields is hard to determine.
-    // 2. Bitfields are compiler dependent. How much padding, where?
-    //    The current count is roughly 50 bits.
-    //
-    // Because of this, access functions are written in src/frame.c and
-    // exported here for use in Rust. This means that instead of
-    // frame.foo the proper method is fget_foo(frame).
+    buried_buffer_list: Lisp_Object,
 }
 
 extern "C" {
     pub fn fget_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_buried_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_internal_border_width(frame: *const Lisp_Frame) -> c_int;
+    pub fn fget_selected_window(frame: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fset_selected_window(frame: *mut Lisp_Frame, window: Lisp_Object);
 }
 
 #[repr(C)]
@@ -1231,6 +1366,9 @@ pub struct lisp_time {
     pub ps: c_int,
 }
 
+pub type map_keymap_function_t =
+    unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object, *const c_void);
+
 extern "C" {
     pub static initialized: bool;
     pub static mut current_global_map: Lisp_Object;
@@ -1250,6 +1388,7 @@ extern "C" {
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
+    pub static Vrun_hooks: Lisp_Object;
 
     pub fn staticpro(varaddress: *const Lisp_Object);
 
@@ -1454,6 +1593,18 @@ extern "C" {
     );
     pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
     pub fn Fevent_convert_list(event_desc: Lisp_Object) -> Lisp_Object;
+    pub fn map_keymap_internal(
+        map: Lisp_Object,
+        fun: map_keymap_function_t,
+        args: Lisp_Object,
+        data: *const c_void,
+    ) -> Lisp_Object;
+    pub fn map_keymap_call(
+        key: Lisp_Object,
+        val: Lisp_Object,
+        fun: Lisp_Object,
+        void: *const c_void,
+    );
     pub fn access_keymap(
         map: Lisp_Object,
         idx: Lisp_Object,
@@ -1551,6 +1702,16 @@ extern "C" {
     pub fn unchain_marker(marker: *mut Lisp_Marker);
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
     pub fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: ptrdiff_t) -> ptrdiff_t;
+    pub fn Fdefault_value(symbol: Lisp_Object) -> Lisp_Object;
+    pub fn swap_in_symval_forwarding(sym: *mut Lisp_Symbol, blv: *mut Lisp_Buffer_Local_Value);
+    pub fn Fexpand_file_name(filename: Lisp_Object, default_directory: Lisp_Object) -> Lisp_Object;
+    pub fn Ffind_file_name_handler(filename: Lisp_Object, operation: Lisp_Object) -> Lisp_Object;
+    pub fn window_list_1(
+        window: Lisp_Object,
+        minibuf: Lisp_Object,
+        all_frames: Lisp_Object,
+    ) -> Lisp_Object;
+
 }
 
 /// Contains C definitions from the font.h header.
@@ -1599,9 +1760,9 @@ pub mod font {
 
 #[cfg(test)]
 macro_rules! offset_of {
-    ($ty:ty, $field:ident) => {
+    ($ty: ty, $field: ident) => {
         unsafe { &(*(0 as *const $ty)).$field as *const _ as usize }
-    }
+    };
 }
 
 #[cfg(windows)]

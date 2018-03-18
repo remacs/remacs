@@ -1343,19 +1343,6 @@ error (const char *m, ...)
   verror (m, ap);
 }
 
-DEFUN ("eval", Feval, Seval, 1, 2, 0,
-       doc: /* Evaluate FORM and return its value.
-If LEXICAL is t, evaluate using lexical scoping.
-LEXICAL can also be an actual lexical environment, in the form of an
-alist mapping symbols to their value.  */)
-  (Lisp_Object form, Lisp_Object lexical)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-  specbind (Qinternal_interpreter_environment,
-	    CONSP (lexical) || NILP (lexical) ? lexical : list1 (Qt));
-  return unbind_to (count, eval_sub (form));
-}
-
 /* Grow the specpdl stack by one entry.
    The caller should have already initialized the entry.
    Signal an error on stack overflow.
@@ -1696,54 +1683,6 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
 
 /* Run hook variables in various ways.  */
 
-static Lisp_Object
-funcall_nil (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Ffuncall (nargs, args);
-  return Qnil;
-}
-
-DEFUN ("run-hooks", Frun_hooks, Srun_hooks, 0, MANY, 0,
-       doc: /* Run each hook in HOOKS.
-Each argument should be a symbol, a hook variable.
-These symbols are processed in the order specified.
-If a hook symbol has a non-nil value, that value may be a function
-or a list of functions to be called to run the hook.
-If the value is a function, it is called with no arguments.
-If it is a list, the elements are called, in order, with no arguments.
-
-Major modes should not use this function directly to run their mode
-hook; they should use `run-mode-hooks' instead.
-
-Do not use `make-local-variable' to make a hook variable buffer-local.
-Instead, use `add-hook' and specify t for the LOCAL argument.
-usage: (run-hooks &rest HOOKS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  ptrdiff_t i;
-
-  for (i = 0; i < nargs; i++)
-    run_hook (args[i]);
-
-  return Qnil;
-}
-
-DEFUN ("run-hook-with-args", Frun_hook_with_args,
-       Srun_hook_with_args, 1, MANY, 0,
-       doc: /* Run HOOK with the specified arguments ARGS.
-HOOK should be a symbol, a hook variable.  The value of HOOK
-may be nil, a function, or a list of functions.  Call each
-function in order with arguments ARGS.  The final return value
-is unspecified.
-
-Do not use `make-local-variable' to make a hook variable buffer-local.
-Instead, use `add-hook' and specify t for the LOCAL argument.
-usage: (run-hook-with-args HOOK &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return run_hook_with_args (nargs, args, funcall_nil);
-}
-
 /* NB this one still documents a specific non-nil return value.
    (As did run-hook-with-args and run-hook-with-args-until-failure
    until they were changed in 24.1.)  */
@@ -1882,14 +1821,6 @@ run_hook_with_args (ptrdiff_t nargs, Lisp_Object *args,
 
       return ret;
     }
-}
-
-/* Run the hook HOOK, giving each function no args.  */
-
-void
-run_hook (Lisp_Object hook)
-{
-  Frun_hook_with_args (1, &hook);
 }
 
 /* Run the hook HOOK, giving each function the two args ARG1 and ARG2.  */
@@ -3320,12 +3251,9 @@ alist of active lexical bindings.  */);
   defsubr (&Sunwind_protect);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
-  defsubr (&Seval);
   defsubr (&Sapply);
   defsubr (&Sfuncall);
   defsubr (&Sfunc_arity);
-  defsubr (&Srun_hooks);
-  defsubr (&Srun_hook_with_args);
   defsubr (&Srun_hook_with_args_until_success);
   defsubr (&Srun_hook_with_args_until_failure);
   defsubr (&Srun_hook_wrapped);
