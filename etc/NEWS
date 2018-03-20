@@ -286,6 +286,14 @@ defines the logic of finding a next-error capable buffer.
 It has an option to use a single such buffer on selected frame, or
 by default use the last buffer that navigated to the current buffer.
 
+
+** nxml-mode
+
+*** Changed default for variable 'nxml-sexp-element-flag' to true.
+This means that pressing C-M-SPACE now selects the entire tree by
+default, and not just the opening element.
+
+
 ** Eshell
 
 ---
