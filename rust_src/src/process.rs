@@ -332,11 +332,8 @@ pub fn waiting_for_user_input_p() -> bool {
 /// t, `buffer-file-coding-system` of the buffer associated with process will
 /// inherit the coding system used to decode the process output.
 #[lisp_fn]
-pub fn process_inherit_coding_system_flag(process: LispObject) -> LispObject {
-    let p_ref = process.as_process_or_error();
-    let process_inherit_coding_system_flag =
-        unsafe { pget_process_inherit_coding_system_flag(p_ref.as_ptr()) };
-    LispObject::from_bool(process_inherit_coding_system_flag)
+pub fn process_inherit_coding_system_flag(process: LispProcessRef) -> bool {
+    unsafe { pget_process_inherit_coding_system_flag(process.as_ptr()) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
