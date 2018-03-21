@@ -990,17 +990,6 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
 }
 
 
-DEFUN ("buffer-base-buffer", Fbuffer_base_buffer, Sbuffer_base_buffer,
-       0, 1, 0,
-       doc: /* Return the base buffer of indirect buffer BUFFER.
-If BUFFER is not indirect, return nil.
-BUFFER defaults to the current buffer.  */)
-  (register Lisp_Object buffer)
-{
-  struct buffer *base = decode_buffer (buffer)->base_buffer;
-  return base ? (XSETBUFFER (buffer, base), buffer) : Qnil;
-}
-
 
 /* Like Fbuffer_local_value, but return Qunbound if the variable is
    locally unbound.  */
@@ -5946,7 +5935,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);
-  defsubr (&Sbuffer_base_buffer);
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sforce_mode_line_update);
   defsubr (&Sset_buffer_modified_p);

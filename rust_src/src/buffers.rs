@@ -185,6 +185,11 @@ impl LispBufferRef {
         LispObject::from_raw(self.filename)
     }
 
+    #[inline]
+    pub fn base_buffer(self) -> Option<LispBufferRef> {
+        Self::from_ptr(self.base_buffer as *mut c_void)
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
@@ -604,6 +609,14 @@ pub fn buffer_local_value_lisp(variable: LispObject, buffer: LispObject) -> Lisp
     }
 
     result
+}
+
+/// Return the base buffer of indirect buffer BUFFER.
+/// If BUFFER is not indirect, return nil.
+/// BUFFER defaults to the current buffer.
+#[lisp_fn(min = "0")]
+pub fn buffer_base_buffer(buffer: LispObject) -> Option<LispBufferRef> {
+    buffer.as_buffer_or_current_buffer().base_buffer()
 }
 
 def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
