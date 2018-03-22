@@ -326,7 +326,7 @@ pub extern "C" fn map_keymap_internal(
     data: *const c_void,
 ) -> Lisp_Object {
     let map = LispObject::from_raw(map);
-    let mut tail = match map.as_cons() {
+    let tail = match map.as_cons() {
         None => LispObject::constant_nil(),
         Some(cons) => {
             let (car, cdr) = cons.as_tuple();
@@ -338,13 +338,12 @@ pub extern "C" fn map_keymap_internal(
         }
     };
 
+    let mut parent = tail;
     for tail_cons in tail.iter_tails_safe() {
         let binding = tail_cons.car();
         if binding.eq_raw(Qkeymap) {
             break;
         } else {
-            tail = tail_cons.cdr();
-
             // An embedded parent.
             if keymapp(binding) {
                 break;
@@ -382,9 +381,11 @@ pub extern "C" fn map_keymap_internal(
                 }
             }
         }
+
+        parent = tail_cons.cdr();
     }
 
-    tail.to_raw()
+    parent.to_raw()
 }
 
 /// Call FUNCTION once for each event binding in KEYMAP.
