@@ -1692,6 +1692,10 @@ x_free_frame_resources (struct frame *f)
     dpyinfo->x_highlight_frame = 0;
   if (f == hlinfo->mouse_face_mouse_frame)
     reset_mouse_highlight (hlinfo);
+  /* Ensure that sendEvent does not attempt to dereference a freed
+     frame. (bug#30800) */
+  if (represented_frame == f)
+    represented_frame = NULL;
 
   if (f->output_data.ns->miniimage != nil)
     [f->output_data.ns->miniimage release];
