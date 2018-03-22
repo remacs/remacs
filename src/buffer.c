@@ -560,25 +560,7 @@ clone_per_buffer_values (struct buffer *from, struct buffer *to)
 }
 
 
-/* If buffer B has markers to record PT, BEGV and ZV when it is not
-   current, update these markers.  */
-
-static void
-record_buffer_markers (struct buffer *b)
-{
-  if (! NILP (BVAR (b, pt_marker)))
-    {
-      Lisp_Object buffer;
-
-      eassert (!NILP (BVAR (b, begv_marker)));
-      eassert (!NILP (BVAR (b, zv_marker)));
-
-      XSETBUFFER (buffer, b);
-      set_marker_both (BVAR (b, pt_marker), buffer, b->pt, b->pt_byte);
-      set_marker_both (BVAR (b, begv_marker), buffer, b->begv, b->begv_byte);
-      set_marker_both (BVAR (b, zv_marker), buffer, b->zv, b->zv_byte);
-    }
-}
+void record_buffer_markers (struct buffer *b);
 
 
 /* If buffer B has markers to record PT, BEGV and ZV when it is not

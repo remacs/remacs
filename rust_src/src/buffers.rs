@@ -17,7 +17,7 @@ use editfns::point;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{car, cdr, Flist, Fmember};
-use marker::{marker_buffer, marker_position_lisp, LispMarkerRef};
+use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::string_char;
 use strings::string_equal;
 use threads::ThreadState;
@@ -79,8 +79,28 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn zv_byte(self) -> ptrdiff_t {
+        self.zv_byte
+    }
+
+    #[inline]
     pub fn pt(self) -> ptrdiff_t {
         self.pt
+    }
+
+    #[inline]
+    pub fn pt_byte(self) -> ptrdiff_t {
+        self.pt_byte
+    }
+
+    #[inline]
+    pub fn begv(self) -> ptrdiff_t {
+        self.begv
+    }
+
+    #[inline]
+    pub fn begv_byte(self) -> ptrdiff_t {
+        self.begv_byte
     }
 
     #[inline]
@@ -167,6 +187,21 @@ impl LispBufferRef {
     #[inline]
     pub fn mark_active(self) -> LispObject {
         LispObject::from_raw(self.mark_active)
+    }
+
+    #[inline]
+    pub fn pt_marker(self) -> LispObject {
+        LispObject::from_raw(self.pt_marker)
+    }
+
+    #[inline]
+    pub fn begv_marker(self) -> LispObject {
+        LispObject::from_raw(self.begv_marker)
+    }
+
+    #[inline]
+    pub fn zv_marker(self) -> LispObject {
+        LispObject::from_raw(self.zv_marker)
     }
 
     #[inline]
@@ -589,6 +624,42 @@ pub extern "C" fn get_truename_buffer(filename: Lisp_Object) -> Lisp_Object {
     get_truename_buffer_1(LispObject::from_raw(filename)).to_raw()
 }
 
+/// If buffer B has markers to record PT, BEGV and ZV when it is not
+/// current, update these markers.
+#[no_mangle]
+pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
+    let buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
+        .unwrap_or_else(|| panic!("Invalid buffer reference."));
+    let pt_marker = buffer_ref.pt_marker();
+
+    if pt_marker.is_not_nil() {
+        let begv_marker = buffer_ref.begv_marker();
+        let zv_marker = buffer_ref.zv_marker();
+
+        assert!(begv_marker.is_not_nil());
+        assert!(zv_marker.is_not_nil());
+
+        let buffer = buffer_ref.as_lisp_obj().to_raw();
+        set_marker_both(
+            pt_marker.to_raw(),
+            buffer,
+            buffer_ref.pt(),
+            buffer_ref.pt_byte(),
+        );
+        set_marker_both(
+            begv_marker.to_raw(),
+            buffer,
+            buffer_ref.begv(),
+            buffer_ref.begv_byte(),
+        );
+        set_marker_both(
+            zv_marker.to_raw(),
+            buffer,
+            buffer_ref.zv(),
+            buffer_ref.zv_byte(),
+        );
+    }
+}
 
 /// Return the buffer visiting file FILENAME (a string).
 /// The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
