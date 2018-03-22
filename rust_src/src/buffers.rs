@@ -8,8 +8,9 @@ use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_
                  Lisp_Overlay, Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
-use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil};
-use remacs_sys::{bget_overlays_after, bget_overlays_before, fget_buffer_list,
+use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
+                 Qvoid_variable};
+use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, fget_buffer_list,
                  fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals, set_buffer_internal};
 
 use editfns::point;
@@ -588,6 +589,21 @@ pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
             })
             .and_then(|obj| obj.as_buffer())
     }
+}
+
+/// Return the value of VARIABLE in BUFFER.
+/// If VARIABLE does not have a buffer-local binding in BUFFER, the value
+/// is the default binding of the variable.
+#[lisp_fn(name = "buffer-local-value", c_name = "buffer_local_value")]
+pub fn buffer_local_value_lisp(variable: LispObject, buffer: LispObject) -> LispObject {
+    let result =
+        LispObject::from_raw(unsafe { buffer_local_value(variable.to_raw(), buffer.to_raw()) });
+
+    if result.eq_raw(Qunbound) {
+        xsignal!(Qvoid_variable, variable);
+    }
+
+    result
 }
 
 def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
