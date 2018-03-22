@@ -1727,7 +1727,7 @@ extern "C" {
         minibuf: Lisp_Object,
         all_frames: Lisp_Object,
     ) -> Lisp_Object;
-
+    pub fn buffer_local_value(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

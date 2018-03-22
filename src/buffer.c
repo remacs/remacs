@@ -1001,21 +1001,6 @@ BUFFER defaults to the current buffer.  */)
   return base ? (XSETBUFFER (buffer, base), buffer) : Qnil;
 }
 
-DEFUN ("buffer-local-value", Fbuffer_local_value,
-       Sbuffer_local_value, 2, 2, 0,
-       doc: /* Return the value of VARIABLE in BUFFER.
-If VARIABLE does not have a buffer-local binding in BUFFER, the value
-is the default binding of the variable.  */)
-  (register Lisp_Object variable, register Lisp_Object buffer)
-{
-  register Lisp_Object result = buffer_local_value (variable, buffer);
-
-  if (EQ (result, Qunbound))
-    xsignal1 (Qvoid_variable, variable);
-
-  return result;
-}
-
 
 /* Like Fbuffer_local_value, but return Qunbound if the variable is
    locally unbound.  */
@@ -5962,7 +5947,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);
   defsubr (&Sbuffer_base_buffer);
-  defsubr (&Sbuffer_local_value);
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sforce_mode_line_update);
   defsubr (&Sset_buffer_modified_p);
