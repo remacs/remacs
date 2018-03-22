@@ -282,6 +282,24 @@ impl LispBufferRef {
     pub fn overlays_after(&self) -> Option<LispOverlayRef> {
         LispOverlayRef::from_ptr(unsafe { bget_overlays_after(self.as_ptr()) })
     }
+
+    #[inline]
+    pub fn set_pt_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
+        self.pt = charpos;
+        self.pt_byte = byte;
+    }
+
+    #[inline]
+    pub fn set_begv_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
+        self.begv = charpos;
+        self.begv_byte = byte;
+    }
+
+    #[inline]
+    pub fn set_zv_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
+        self.zv = charpos;
+        self.zv_byte = byte;
+    }
 }
 
 impl LispOverlayRef {
@@ -658,6 +676,30 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
             buffer_ref.zv(),
             buffer_ref.zv_byte(),
         );
+    }
+}
+
+/// If buffer B has markers to record PT, BEGV and ZV when it is not
+/// current, fetch these values into B->begv etc.
+#[no_mangle]
+pub extern "C" fn fetch_buffer_markers(buffer: *mut Lisp_Buffer) {
+    let mut buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
+        .unwrap_or_else(|| panic!("Invalid buffer reference."));
+
+    if buffer_ref.pt_marker().is_not_nil() {
+        assert!(buffer_ref.begv_marker().is_not_nil());
+        assert!(buffer_ref.zv_marker().is_not_nil());
+
+        let pt_marker = buffer_ref.pt_marker().as_marker_or_error();
+        let begv_marker = buffer_ref.begv_marker().as_marker_or_error();
+        let zv_marker = buffer_ref.zv_marker().as_marker_or_error();
+
+        buffer_ref.set_pt_both(pt_marker.charpos_or_error(), pt_marker.bytepos_or_error());
+        buffer_ref.set_begv_both(
+            begv_marker.charpos_or_error(),
+            begv_marker.bytepos_or_error(),
+        );
+        buffer_ref.set_zv_both(zv_marker.charpos_or_error(), zv_marker.bytepos_or_error());
     }
 }
 
