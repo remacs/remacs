@@ -190,6 +190,11 @@ impl LispBufferRef {
         Self::from_ptr(self.base_buffer as *mut c_void)
     }
 
+    #[inline]
+    pub fn truename(self) -> LispObject {
+        LispObject::from_raw(self.file_truename)
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
@@ -566,6 +571,24 @@ pub fn overlay_lists() -> LispObject {
         .map_or_else(LispObject::constant_nil, &list_overlays);
     unsafe { LispObject::from_raw(Fcons(Fnreverse(before.to_raw()), Fnreverse(after.to_raw()))) }
 }
+
+fn get_truename_buffer_1(filename: LispObject) -> LispObject {
+    LispObject::from_raw(unsafe { Vbuffer_alist })
+        .iter_alist_vals()
+        .find(|buf| {
+            let buf_truename = buf.as_buffer_or_error().truename();
+            buf_truename.is_string() && string_equal(buf_truename, filename)
+        })
+        .and_then(|obj| obj.as_buffer())
+        .into()
+}
+
+// to be removed once all references in C are ported
+#[no_mangle]
+pub extern "C" fn get_truename_buffer(filename: Lisp_Object) -> Lisp_Object {
+    get_truename_buffer_1(LispObject::from_raw(filename)).to_raw()
+}
+
 
 /// Return the buffer visiting file FILENAME (a string).
 /// The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.

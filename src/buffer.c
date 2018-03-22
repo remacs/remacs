@@ -369,20 +369,6 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
 }
 
 
-Lisp_Object
-get_truename_buffer (register Lisp_Object filename)
-{
-  register Lisp_Object tail, buf;
-
-  FOR_EACH_LIVE_BUFFER (tail, buf)
-    {
-      if (!STRINGP (BVAR (XBUFFER (buf), file_truename))) continue;
-      if (!NILP (Fstring_equal (BVAR (XBUFFER (buf), file_truename), filename)))
-	return buf;
-    }
-  return Qnil;
-}
-
 DEFUN ("get-buffer-create", Fget_buffer_create, Sget_buffer_create, 1, 1, 0,
        doc: /* Return the buffer specified by BUFFER-OR-NAME, creating a new one if needed.
 If BUFFER-OR-NAME is a string and a live buffer with that name exists,
