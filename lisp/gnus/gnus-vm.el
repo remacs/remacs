@@ -37,9 +37,6 @@
 (eval-when-compile
   (require 'cl))
 
-(autoload 'vm-mode "vm")
-(autoload 'vm-save-message "vm")
-
 (defvar gnus-vm-inhibit-window-system nil
   "Inhibit loading `win-vm' if using a window-system.
 Has to be set before gnus-vm is loaded.")
@@ -48,6 +45,8 @@ Has to be set before gnus-vm is loaded.")
   (ignore-errors
     (when window-system
       (require 'win-vm))))
+
+(declare-function vm-mode "ext:vm" (&optional read-only))
 
 (defun gnus-vm-make-folder (&optional buffer)
   (require 'vm)
@@ -80,6 +79,8 @@ save those articles instead."
   (require 'gnus-art)
   (let ((gnus-default-article-saver 'gnus-summary-save-in-vm))
     (gnus-summary-save-article arg)))
+
+(declare-function vm-save-message "ext:vm-save" (folder &optional count))
 
 (defun gnus-summary-save-in-vm (&optional folder)
   (interactive)
