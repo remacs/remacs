@@ -10,7 +10,6 @@ use std::ffi::CString;
 use std::cmp::max;
 use std::convert::From;
 use std::fmt::{Debug, Error, Formatter};
-use std::marker::PhantomData;
 use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
@@ -1115,22 +1114,18 @@ impl Iterator for CarIter {
 }
 
 /// From `FOR_EACH_ALIST_VALUE` in `lisp.h`
-pub struct AlistValIter<T> {
-    tails: CarIter,
-    phantom: PhantomData<T>,
-}
-
-/// Implement `Iterator` over all values `$data` and convert into `$iter_item` type.
-/// `$data` should be an `alist` and $`iter_item` type should implement `From<LispObject>`
+/// Implement `Iterator` over all values of `$data` yielding `$iter_item` type.
+/// `$data` should be an `alist` and `$iter_item` type should implement `From<LispObject>`
 macro_rules! impl_alistval_iter {
     ($iter_name:ident, $iter_item:ty, $data: expr) => {
-        pub type $iter_name = AlistValIter<$iter_item>;
+        pub struct $iter_name {
+            tails: CarIter,
+        }
 
         impl $iter_name {
             pub fn new() -> Self {
                 Self {
                     tails: CarIter::new($data, Some(Qlistp)),
-                    phantom: PhantomData,
                 }
             }
         }
