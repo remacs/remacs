@@ -27,7 +27,7 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cl)
+  (require 'cl-lib)
   (require 'subr-x))
 
 (require 'nnheader)
@@ -144,7 +144,7 @@ textual parts.")
 (defvar nnimap-keepalive-timer nil)
 (defvar nnimap-process-buffers nil)
 
-(defstruct nnimap
+(cl-defstruct nnimap
   group process commands capabilities select-result newlinep server
   last-command-time greeting examined stream-type initial-resync)
 
@@ -212,12 +212,12 @@ textual parts.")
 (defun nnimap-transform-headers ()
   (goto-char (point-min))
   (let (article lines size string labels)
-    (block nil
+    (cl-block nil
       (while (not (eobp))
 	(while (not (looking-at "\\* [0-9]+ FETCH"))
 	  (delete-region (point) (progn (forward-line 1) (point)))
 	  (when (eobp)
-	    (return)))
+	    (cl-return)))
 	(goto-char (match-end 0))
 	;; Unfold quoted {number} strings.
 	(while (re-search-forward
@@ -381,7 +381,7 @@ textual parts.")
     (setq nnimap-stream 'ssl))
   (let ((stream
 	 (if (eq nnimap-stream 'undecided)
-	     (loop for type in '(ssl network)
+	     (cl-loop for type in '(ssl network)
 		   for stream = (let ((nnimap-stream type))
 				  (nnimap-open-connection-1 buffer))
 		   while (eq stream 'no-connect)
@@ -794,7 +794,7 @@ textual parts.")
 		      (equal id "1")
 		    (string-match nnimap-fetch-partial-articles type))
 	      (push id parts))))
-	(incf num)))
+	(cl-incf num)))
     (nreverse parts)))
 
 (deffoo nnimap-request-group (group &optional server dont-check info)
@@ -1145,7 +1145,7 @@ If LIMIT, first try to limit the search to the N last articles."
 	;; Just send all the STORE commands without waiting for
 	;; response.  If they're successful, they're successful.
 	(dolist (action actions)
-	  (destructuring-bind (range action marks) action
+	  (cl-destructuring-bind (range action marks) action
 	    (let ((flags (nnimap-marks-to-flags marks)))
 	      (when flags
 		(setq sequence (nnimap-send-command
@@ -1408,7 +1408,7 @@ If LIMIT, first try to limit the search to the N last articles."
 	      (if (and active uidvalidity unexist)
 		  ;; Fetch the last 100 flags.
 		  (setq start (max 1 (- (cdr active) 100)))
-		(incf (nnimap-initial-resync nnimap-object))
+		(cl-incf (nnimap-initial-resync nnimap-object))
 		(setq start 1))
 	      (push (list (nnimap-send-command "%s %S" command
 					       (utf7-encode group t))
@@ -1472,7 +1472,7 @@ If LIMIT, first try to limit the search to the N last articles."
 	(nnimap-update-info info marks)))))
 
 (defun nnimap-update-info (info marks)
-  (destructuring-bind (existing flags high low uidnext start-article
+  (cl-destructuring-bind (existing flags high low uidnext start-article
 				permanent-flags uidvalidity
 				vanished highestmodseq) marks
     (cond
@@ -1725,7 +1725,7 @@ If LIMIT, first try to limit the search to the N last articles."
   (let (start end articles groups uidnext elems permanent-flags
 	      uidvalidity vanished highestmodseq)
     (dolist (elem sequences)
-      (destructuring-bind (group-sequence flag-sequence totalp group command)
+      (cl-destructuring-bind (group-sequence flag-sequence totalp group command)
 	  elem
 	(setq start (point))
 	(when (and
@@ -1869,7 +1869,7 @@ Return the server's response to the SELECT or EXAMINE command."
    (get-buffer-process (current-buffer))
    (nnimap-log-command
     (format "%d %s%s\n"
-	    (incf nnimap-sequence)
+	    (cl-incf nnimap-sequence)
 	    (apply #'format args)
 	    (if (nnimap-newlinep nnimap-object)
 		""
@@ -2166,7 +2166,7 @@ Return the server's response to the SELECT or EXAMINE command."
   (let ((specs nil)
 	entry)
     (dolist (elem list)
-      (destructuring-bind (article spec) elem
+      (cl-destructuring-bind (article spec) elem
 	(dolist (group (delete nil (mapcar #'car spec)))
 	  (unless (setq entry (assoc group specs))
 	    (push (setq entry (list group)) specs))
@@ -2178,12 +2178,12 @@ Return the server's response to the SELECT or EXAMINE command."
 (defun nnimap-transform-split-mail ()
   (goto-char (point-min))
   (let (article bytes)
-    (block nil
+    (cl-block nil
       (while (not (eobp))
 	(while (not (looking-at "\\* [0-9]+ FETCH.+UID \\([0-9]+\\)"))
 	  (delete-region (point) (progn (forward-line 1) (point)))
 	  (when (eobp)
-	    (return)))
+	    (cl-return)))
 	(setq article (match-string 1)
 	      bytes (nnimap-get-length))
 	(delete-region (line-beginning-position) (line-end-position))

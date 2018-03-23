@@ -76,7 +76,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (eval-when-compile (require 'subr-x))
 
 (require 'gnus)
@@ -373,7 +373,7 @@ This is not required after changing `gnus-registry-cache-file'."
          (grouphashtb (registry-lookup-secondary db 'group))
          (old-size (registry-size db)))
     (registry-reindex db)
-    (loop for k being the hash-keys of grouphashtb
+    (cl-loop for k being the hash-keys of grouphashtb
           using (hash-values v)
           when (gnus-registry-ignore-group-p k)
           do (registry-delete db v nil))
@@ -444,14 +444,14 @@ This is not required after changing `gnus-registry-cache-file'."
                   (sender ,sender)
                   (recipient ,@recipients)
                   (subject ,subject)))
-      (when (second kv)
-        (let ((new (or (assq (first kv) entry)
-                       (list (first kv)))))
+      (when (cadr kv)
+        (let ((new (or (assq (car kv) entry)
+                       (list (car kv)))))
           (dolist (toadd (cdr kv))
             (unless (member toadd new)
               (setq new (append new (list toadd)))))
           (setq entry (cons new
-                            (assq-delete-all (first kv) entry))))))
+                            (assq-delete-all (car kv) entry))))))
     (gnus-message 10 "Gnus registry: new entry for %s is %S"
                   id
                   entry)
@@ -505,7 +505,7 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
      :subject subject
      :log-agent "Gnus registry fancy splitting with parent")))
 
-(defun* gnus-registry--split-fancy-with-parent-internal
+(cl-defun gnus-registry--split-fancy-with-parent-internal
     (&rest spec
            &key references refstr sender subject recipients log-agent
            &allow-other-keys)
@@ -525,7 +525,7 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
        log-agent refstr)
       (dolist (reference (nreverse references))
         (gnus-message 9 "%s is looking up %s" log-agent reference)
-        (loop for group in (gnus-registry-get-id-key reference 'group)
+        (cl-loop for group in (gnus-registry-get-id-key reference 'group)
               when (gnus-registry-follow-group-p group)
               do
               (progn
@@ -548,7 +548,7 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
                          (gnus-registry-get-id-key reference 'group))
                        (registry-lookup-secondary-value db 'subject subject)))))
          (setq found
-               (loop for group in groups
+               (cl-loop for group in groups
                      when (gnus-registry-follow-group-p group)
                      do (gnus-message
                          ;; warn more if gnus-registry-track-extra
@@ -575,7 +575,7 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
                          (gnus-registry-get-id-key reference 'group))
                        (registry-lookup-secondary-value db 'sender sender)))))
          (setq found
-               (loop for group in groups
+               (cl-loop for group in groups
                      when (gnus-registry-follow-group-p group)
                      do (gnus-message
                          ;; warn more if gnus-registry-track-extra
@@ -605,7 +605,7 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
                                  (registry-lookup-secondary-value
                                   db 'recipient recp)))))
              (setq found
-                   (loop for group in groups
+                   (cl-loop for group in groups
                          when (gnus-registry-follow-group-p group)
                          do (gnus-message
                              ;; warn more if gnus-registry-track-extra
@@ -641,7 +641,7 @@ possible.  Uses `gnus-registry-split-strategy'."
         out chosen)
     ;; the strategy can be nil, in which case chosen is nil
     (setq chosen
-          (case gnus-registry-split-strategy
+          (cl-case gnus-registry-split-strategy
             ;; default, take only one-element lists into chosen
             ((nil)
              (and (= (length groups) 1)
@@ -693,7 +693,7 @@ possible.  Uses `gnus-registry-split-strategy'."
                  10
                  "%s: stripped group %s to %s"
                  log-agent group short-name))
-              (pushnew short-name out :test #'equal))
+              (cl-pushnew short-name out :test #'equal))
           ;; else...
           (gnus-message
            7
@@ -1086,7 +1086,7 @@ only the last one's marks are returned."
            (expected (length old))
            entry)
       (while (car-safe old)
-        (incf count)
+        (cl-incf count)
         ;; don't use progress reporters for backwards compatibility
         (when (and (< 0 expected)
                    (= 0 (mod count 100)))
@@ -1096,7 +1096,7 @@ only the last one's marks are returned."
               old (cdr-safe old))
         (let* ((id (car-safe entry))
                (rest (cdr-safe entry))
-               (groups (loop for p in rest
+               (groups (cl-loop for p in rest
                              when (stringp p)
                              collect p))
                extra-cell key val)
@@ -1232,7 +1232,7 @@ from your existing entries."
   (when extra
     (let ((db gnus-registry-db))
       (registry-reindex db)
-      (loop for k being the hash-keys of (oref db data)
+      (cl-loop for k being the hash-keys of (oref db data)
 	    using (hash-value v)
 	    do (let ((newv (delq nil (mapcar #'(lambda (entry)
 						 (unless (member (car entry) extra)

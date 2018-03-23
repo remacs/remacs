@@ -37,7 +37,7 @@
 ;;
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'gnus)
 (require 'gnus-art)
@@ -211,7 +211,7 @@ replacement is added."
 
 	 (gnus-article-goto-header header)
 	 (mail-header-narrow-to-field)
-	 (case gnus-picon-style
+	 (cl-case gnus-picon-style
 	       (right
 		(when (= (length addresses) 1)
 		  (setq len (apply '+ (mapcar (lambda (x)

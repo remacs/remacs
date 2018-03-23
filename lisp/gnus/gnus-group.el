@@ -1901,7 +1901,7 @@ If FIRST-TOO, the current line is also eligible as a target."
 	   (insert-char gnus-process-mark 1 t)))
       (unless no-advance
 	(gnus-group-next-group 1))
-      (decf n))
+      (cl-decf n))
     (gnus-group-position-point)
     n))
 
@@ -3924,7 +3924,7 @@ yanked) a list of yanked groups is returned."
   (interactive "p")
   (setq arg (or arg 1))
   (let (info group prev out)
-    (while (>= (decf arg) 0)
+    (while (>= (cl-decf arg) 0)
       (when (not (setq info (pop gnus-list-of-killed-groups)))
 	(error "No more newsgroups to yank"))
       (push (setq group (nth 1 info)) out)

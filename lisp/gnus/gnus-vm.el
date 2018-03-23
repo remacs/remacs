@@ -34,9 +34,6 @@
 (require 'gnus)
 (require 'gnus-msg)
 
-(eval-when-compile
-  (require 'cl))
-
 (defvar gnus-vm-inhibit-window-system nil
   "Inhibit loading `win-vm' if using a window-system.
 Has to be set before gnus-vm is loaded.")

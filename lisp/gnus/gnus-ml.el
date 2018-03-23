@@ -28,7 +28,6 @@
 
 (require 'gnus)
 (require 'gnus-msg)
-(eval-when-compile (require 'cl))
 
 ;;; Mailing list minor mode
 

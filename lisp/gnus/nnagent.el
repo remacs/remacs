@@ -26,7 +26,6 @@
 
 (require 'nnheader)
 (require 'nnoo)
-(eval-when-compile (require 'cl))
 (require 'gnus-agent)
 (require 'nnml)
 

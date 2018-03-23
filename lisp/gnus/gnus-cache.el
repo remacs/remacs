@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'gnus)
 (require 'gnus-sum)
@@ -863,11 +863,11 @@ supported."
 	   (while (setq file (pop files))
 	     (setq attrs (file-attributes file))
 	     (unless (nth 0 attrs)
-	       (incf size (float (nth 7 attrs)))))))
+	       (cl-incf size (float (nth 7 attrs)))))))
 
        (setq gnus-cache-need-update-total-fetched-for t)
 
-       (incf (nth 1 entry) (if subtract (- size) size))))))
+       (cl-incf (nth 1 entry) (if subtract (- size) size))))))
 
 (defun gnus-cache-update-overview-total-fetched-for (group file)
   (when gnus-cache-total-fetched-hashtb

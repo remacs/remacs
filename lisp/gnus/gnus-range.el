@@ -24,8 +24,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-
 ;;; List and range functions
 
 (defsubst gnus-range-normalize (range)
