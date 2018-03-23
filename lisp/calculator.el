@@ -162,7 +162,7 @@ floats, otherwise the Emacs reader will fail on them."
   :type  'boolean
   :group 'calculator)
 (make-obsolete-variable 'calculator-paste-decimals
-                        "it is no longer used." nil)
+                        "it is no longer used." "26.1")
 
 (defcustom calculator-copy-displayer nil
   "If non-nil, this is any value that can be used for
