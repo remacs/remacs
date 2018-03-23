@@ -10,6 +10,7 @@ use std::ffi::CString;
 use std::cmp::max;
 use std::convert::From;
 use std::fmt::{Debug, Error, Formatter};
+use std::marker::PhantomData;
 use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
@@ -23,7 +24,7 @@ use remacs_sys::{Qarrayp, Qautoload, Qbufferp, Qchar_table_p, Qcharacterp, Qcons
                  Qframe_live_p, Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp,
                  Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp,
                  Qstringp, Qsubrp, Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp, Qwholenump,
-                 Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+                 Qwindow_live_p, Qwindow_valid_p, Qwindowp, Vbuffer_alist};
 use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float,
                  misc_get_ty};
 
@@ -1114,29 +1115,41 @@ impl Iterator for CarIter {
 }
 
 /// From `FOR_EACH_ALIST_VALUE` in `lisp.h`
-pub struct AlistValIter {
+pub struct AlistValIter<T> {
     tails: CarIter,
+    phantom: PhantomData<T>,
 }
 
-impl AlistValIter {
-    pub fn new(obj: LispObject) -> Self {
-        Self {
-            tails: CarIter::new(obj, Some(Qlistp)),
+/// Implement `Iterator` over all values `$data` and convert into `$iter_item` type.
+/// `$data` should be an `alist` and $`iter_item` type should implement `From<LispObject>`
+macro_rules! impl_alistval_iter {
+    ($iter_name:ident, $iter_item:ty, $data: expr) => {
+        pub type $iter_name = AlistValIter<$iter_item>;
+
+        impl $iter_name {
+            pub fn new() -> Self {
+                Self {
+                    tails: CarIter::new($data, Some(Qlistp)),
+                    phantom: PhantomData,
+                }
+            }
         }
-    }
 
-    pub fn rest(&self) -> LispObject {
-        self.tails.rest()
-    }
+        impl Iterator for $iter_name {
+            type Item = $iter_item;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                self.tails
+                    .next()
+                    .and_then(|o| o.as_cons())
+                    .map(|p| p.cdr())
+                    .and_then(|q| q.into())
+            }
+        }
+    };
 }
 
-impl Iterator for AlistValIter {
-    type Item = LispObject;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.tails.next().and_then(|o| o.as_cons()).map(|p| p.cdr())
-    }
-}
+impl_alistval_iter! {LiveBufferIter, LispBufferRef, LispObject::from_raw(unsafe { Vbuffer_alist })}
 
 impl LispObject {
     #[inline]
@@ -1201,12 +1214,6 @@ impl LispObject {
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_cars_safe(self) -> CarIter {
         CarIter::new(self, None)
-    }
-
-    /// Iterate over all values of self.  self should be a list.
-    /// Otherwise a wrong-type-argument error will be signaled.
-    pub fn iter_alist_vals(self) -> AlistValIter {
-        AlistValIter::new(self)
     }
 }
 

@@ -14,7 +14,7 @@ use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, 
                  fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals, set_buffer_internal};
 
 use editfns::point;
-use lisp::{ExternalPtr, LispObject};
+use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lisp::defsubr;
 use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
@@ -626,13 +626,11 @@ pub fn overlay_lists() -> LispObject {
 }
 
 fn get_truename_buffer_1(filename: LispObject) -> LispObject {
-    LispObject::from_raw(unsafe { Vbuffer_alist })
-        .iter_alist_vals()
+    LiveBufferIter::new()
         .find(|buf| {
-            let buf_truename = buf.as_buffer_or_error().truename();
+            let buf_truename = buf.truename();
             buf_truename.is_string() && string_equal(buf_truename, filename)
         })
-        .and_then(|obj| obj.as_buffer())
         .into()
 }
 
@@ -722,13 +720,10 @@ pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
         let handled_buf = call_raw!(handler.to_raw(), Qget_file_buffer, filename.to_raw());
         handled_buf.as_buffer()
     } else {
-        LispObject::from_raw(unsafe { Vbuffer_alist })
-            .iter_alist_vals()
-            .find(|buf| {
-                let buf_filename = buf.as_buffer_or_error().filename();
-                buf_filename.is_string() && string_equal(buf_filename, filename)
-            })
-            .and_then(|obj| obj.as_buffer())
+        LiveBufferIter::new().find(|buf| {
+            let buf_filename = buf.filename();
+            buf_filename.is_string() && string_equal(buf_filename, filename)
+        })
     }
 }
 
