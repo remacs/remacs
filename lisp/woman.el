@@ -3663,46 +3663,46 @@ expression in parentheses.  Leaves point after the value."
     (fset 'insert-and-inherit (symbol-function 'insert))
     (fset 'set-text-properties 'ignore)
     (unwind-protect
-	(while
-	    ;; Find next control line:
-            (re-search-forward woman-request-regexp nil t)
-          (cond
-           ;; Construct woman function to call:
-           ((setq fn (intern-soft
-                      (concat "woman2-"
-                              (setq woman-request (match-string 1)))))
-            ;; Delete request or macro name:
-            (woman-delete-match 0))
-           ;; Unrecognized request:
-           ((prog1 nil
-              ;; (WoMan-warn ".%s request ignored!" woman-request)
-              (WoMan-warn-ignored woman-request "ignored!")
-              ;; (setq fn 'woman2-LP)
+        (progn
+          (while
+              ;; Find next control line:
+              (re-search-forward woman-request-regexp nil t)
+            (cond
+             ;; Construct woman function to call:
+             ((setq fn (intern-soft
+                        (concat "woman2-"
+                                (setq woman-request (match-string 1)))))
+              ;; Delete request or macro name:
+              (woman-delete-match 0))
+             ;; Unrecognized request:
+             ((prog1 nil
+                ;; (WoMan-warn ".%s request ignored!" woman-request)
+                (WoMan-warn-ignored woman-request "ignored!")
+                ;; (setq fn 'woman2-LP)
+                ;; AVOID LEAVING A BLANK LINE!
+                ;; (setq fn 'woman2-format-paragraphs)
+                ))
+             ;; .LP assumes it is at eol and leaves a (blank) line,
+             ;; so leave point at end of line before paragraph:
+             ((or (looking-at "[ \t]*$") ; no argument
+                  woman-ignore)          ; ignore all
+              ;; (beginning-of-line) (kill-line)
               ;; AVOID LEAVING A BLANK LINE!
-              ;; (setq fn 'woman2-format-paragraphs)
-              ))
-           ;; .LP assumes it is at eol and leaves a (blank) line,
-           ;; so leave point at end of line before paragraph:
-           ((or (looking-at "[ \t]*$") ; no argument
-                woman-ignore)          ; ignore all
-            ;; (beginning-of-line) (kill-line)
-            ;; AVOID LEAVING A BLANK LINE!
-            (beginning-of-line) (woman-delete-line 1))
-           (t (end-of-line) (insert ?\n))
-           )
-           (if (not (or fn
-                        (and (not (memq (following-char) '(?. ?')))
-                             (setq fn 'woman2-format-paragraphs))))
-               ()
-             ;; Find next control line:
-	     (if (equal woman-request "TS")
-		 (set-marker to (woman-find-next-control-line "TE"))
-	       (set-marker to (woman-find-next-control-line)))
-             ;; Call the appropriate function:
-             (funcall fn to)))
-      (if (not (eobp))			; This should not happen, but ...
-	  (woman2-format-paragraphs (copy-marker (point-max) t)
-                                    woman-left-margin))
+              (beginning-of-line) (woman-delete-line 1))
+             (t (end-of-line) (insert ?\n)))
+            (if (not (or fn
+                         (and (not (memq (following-char) '(?. ?')))
+                              (setq fn 'woman2-format-paragraphs))))
+                ()
+              ;; Find next control line:
+              (if (equal woman-request "TS")
+                  (set-marker to (woman-find-next-control-line "TE"))
+                (set-marker to (woman-find-next-control-line)))
+              ;; Call the appropriate function:
+              (funcall fn to)))
+          (if (not (eobp))             ; This should not happen, but ...
+              (woman2-format-paragraphs (copy-marker (point-max) t)
+                                        woman-left-margin)))
       (fset 'canonically-space-region canonically-space-region)
       (fset 'set-text-properties set-text-properties)
       (fset 'insert-and-inherit insert-and-inherit)
