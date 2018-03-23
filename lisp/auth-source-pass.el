@@ -150,7 +150,7 @@ CONTENTS is the contents of a password-store formatted file."
 (defun auth-source-pass--do-debug (&rest msg)
   "Call `auth-source-do-debug` with MSG and a prefix."
   (apply #'auth-source-do-debug
-         (cons (concat "auth-source-password-store: " (car msg))
+         (cons (concat "auth-source-pass: " (car msg))
                (cdr msg))))
 
 (defun auth-source-pass--select-one-entry (entries user)
