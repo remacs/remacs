@@ -698,7 +698,7 @@ include a valid reply email address, in case we need to ask you for
 more information about your report.  Submissions are moderated, so
 there may be a delay before your report appears.
 
-You do not need to know how the Gnu Bug Tracker works in order to
+You do not need to know how the GNU Bug Tracker works in order to
 report a bug, but if you want to, you can read the tracker's online
 documentation to see the various features you can use.
 
@@ -713,7 +713,7 @@ If your data is more than 500,000 bytes, please don't include it
 directly in the bug report; instead, offer to send it on request, or
 make it available online and say where.
 
-The Gnu Bug Tracker will assign a bug number to your report; please
+The GNU Bug Tracker will assign a bug number to your report; please
 use it in the following discussions.
 
   To enable maintainers to investigate a bug, your report
@@ -1246,7 +1246,7 @@ implement a new feature, and submit a patch.
 
 @item
 develop a package that works with Emacs, and publish it on your own
-or in Gnu ELPA (@url{https://elpa.gnu.org/}).
+or in GNU ELPA (@url{https://elpa.gnu.org/}).
 
 @item
 port Emacs to a new platform, but that is not common nowadays.
@@ -1335,7 +1335,7 @@ the Emacs Lisp Reference Manual
 @end itemize
 
 @menu
-* Coding Standards::        Gnu Emacs coding standards
+* Coding Standards::        GNU Emacs coding standards
 * Copyright Assignment::    assigning copyright to the FSF
 @end menu
 

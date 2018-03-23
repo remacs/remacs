@@ -105,7 +105,7 @@ SCOPE is the scope of the search, such as 'project or 'subdirs."
 (defun cedet-gnu-global-expand-filename (filename)
   "Expand the FILENAME with GNU Global.
 Return a list of absolute filenames or nil if none found.
-Signal an error if Gnu global not available."
+Signal an error if GNU global not available."
   (interactive "sFile: ")
   (let ((ans (with-current-buffer (cedet-gnu-global-call (list "-Pa" filename))
 	       (goto-char (point-min))

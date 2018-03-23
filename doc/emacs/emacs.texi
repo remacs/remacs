@@ -1185,7 +1185,7 @@ Reporting Bugs
 
 Contributing to Emacs Development
 
-* Coding Standards::     Gnu Emacs coding standards.
+* Coding Standards::     GNU Emacs coding standards.
 * Copyright Assignment:: Assigning copyright to the FSF.
 
 Command Line Arguments for Emacs Invocation

@@ -2060,7 +2060,7 @@ You can check syntax in your documents using @code{org-lint} command.
 
 Org comes with a fast and intuitive table editor.  Spreadsheet-like
 calculations are supported using the Emacs @file{calc} package
-(@pxref{Top, Calc, , calc, Gnu Emacs Calculator Manual}).
+(@pxref{Top, Calc, , calc, GNU Emacs Calculator Manual}).
 
 @menu
 * Built-in table editor::       Simple tables
