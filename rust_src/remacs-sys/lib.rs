@@ -1185,6 +1185,7 @@ pub struct Lisp_Process {
 extern "C" {
     pub fn pget_pid(p: *const Lisp_Process) -> pid_t;
     pub fn pget_kill_without_query(p: *const Lisp_Process) -> BoolBF;
+    pub fn pget_process_inherit_coding_system_flag(p: *const Lisp_Process) -> BoolBF;
 }
 
 /// Functions to set members of `struct Lisp_Process`.
@@ -1368,6 +1369,7 @@ pub struct lisp_time {
 
 pub type map_keymap_function_t =
     unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object, *const c_void);
+pub type voidfuncptr = unsafe extern "C" fn();
 
 extern "C" {
     pub static initialized: bool;
@@ -1598,12 +1600,14 @@ extern "C" {
     );
     pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
     pub fn Fevent_convert_list(event_desc: Lisp_Object) -> Lisp_Object;
-    pub fn map_keymap_internal(
-        map: Lisp_Object,
+    pub fn map_keymap_item(
         fun: map_keymap_function_t,
         args: Lisp_Object,
+        key: Lisp_Object,
+        val: Lisp_Object,
         data: *const c_void,
-    ) -> Lisp_Object;
+    );
+    pub fn map_keymap_char_table_item(args: Lisp_Object, key: Lisp_Object, val: Lisp_Object);
     pub fn map_keymap_call(
         key: Lisp_Object,
         val: Lisp_Object,
@@ -1627,6 +1631,12 @@ extern "C" {
         x: Lisp_Object,
         y: Lisp_Object,
         t: Time,
+    ) -> Lisp_Object;
+
+    pub fn make_save_funcptr_ptr_obj(
+        a: voidfuncptr,
+        b: *const c_void,
+        c: Lisp_Object,
     ) -> Lisp_Object;
 
     pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
@@ -1719,7 +1729,7 @@ extern "C" {
         minibuf: Lisp_Object,
         all_frames: Lisp_Object,
     ) -> Lisp_Object;
-
+    pub fn buffer_local_value(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

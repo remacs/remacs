@@ -1,5 +1,6 @@
 //! Keymap support
 
+use std::mem;
 use std::ptr;
 
 use libc::c_void;
@@ -10,8 +11,9 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, L
 use remacs_sys::{Fcons, Fcopy_sequence, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy,
                  Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, copy_keymap_item, map_char_table, map_keymap_call,
-                 map_keymap_function_t, map_keymap_internal, maybe_quit, copy_keymap_1};
+use remacs_sys::{access_keymap, copy_keymap_item, make_save_funcptr_ptr_obj, map_char_table,
+                 map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
+                 map_keymap_item, maybe_quit, copy_keymap_1};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -347,9 +349,7 @@ pub extern "C" fn map_keymap(
                 map_keymap(car.to_raw(), fun, args, data, autoload);
                 map = cdr;
             } else {
-                map = LispObject::from_raw(unsafe {
-                    map_keymap_internal(map.to_raw(), fun, args, data)
-                });
+                map = LispObject::from_raw(map_keymap_internal(map.to_raw(), fun, args, data));
             }
         }
 
@@ -380,6 +380,93 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
         true,
     );
     LispObject::constant_nil()
+}
+
+/// Call FUN for every binding in MAP and stop at (and return) the parent.
+/// FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).
+#[no_mangle]
+pub extern "C" fn map_keymap_internal(
+    map: Lisp_Object,
+    fun: map_keymap_function_t,
+    args: Lisp_Object,
+    data: *const c_void,
+) -> Lisp_Object {
+    let map = LispObject::from_raw(map);
+    let tail = match map.as_cons() {
+        None => LispObject::constant_nil(),
+        Some(cons) => {
+            let (car, cdr) = cons.as_tuple();
+            if car.eq_raw(Qkeymap) {
+                cdr
+            } else {
+                map
+            }
+        }
+    };
+
+    let mut parent = tail;
+    for tail_cons in tail.iter_tails_safe() {
+        let binding = tail_cons.car();
+        if binding.eq_raw(Qkeymap) {
+            break;
+        } else {
+            // An embedded parent.
+            if keymapp(binding) {
+                break;
+            }
+
+            if let Some(binding_cons) = binding.as_cons() {
+                let (car, cdr) = binding_cons.as_tuple();
+                unsafe { map_keymap_item(fun, args, car.to_raw(), cdr.to_raw(), data) };
+            } else if binding.is_vector() {
+                if let Some(binding_vec) = binding.as_vectorlike() {
+                    for c in 0..binding_vec.pseudovector_size() {
+                        let character = LispObject::from_natnum(c);
+                        unsafe {
+                            map_keymap_item(
+                                fun,
+                                args,
+                                character.to_raw(),
+                                aref(binding, c).to_raw(),
+                                data,
+                            )
+                        };
+                    }
+                }
+            } else if binding.is_char_table() {
+                unsafe {
+                    let ptr = fun as *const ();
+                    let funcptr = mem::transmute(ptr);
+
+                    map_char_table(
+                        map_keymap_char_table_item,
+                        Qnil,
+                        binding.to_raw(),
+                        make_save_funcptr_ptr_obj(funcptr, data, args),
+                    );
+                }
+            }
+        }
+
+        parent = tail_cons.cdr();
+    }
+
+    parent.to_raw()
+}
+
+/// Call FUNCTION once for each event binding in KEYMAP.
+/// FUNCTION is called with two arguments: the event that is bound, and
+/// the definition it is bound to.  The event may be a character range.
+/// If KEYMAP has a parent, this function returns it without processing it.
+#[lisp_fn(name = "map-keymap-internal")]
+pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
+    keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, true));
+    LispObject::from_raw(map_keymap_internal(
+        keymap.to_raw(),
+        map_keymap_call,
+        function.to_raw(),
+        ptr::null_mut(),
+    ))
 }
 
 /// Return the binding for command KEYS in current local keymap only.

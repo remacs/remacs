@@ -208,6 +208,9 @@ pget_pid(const struct Lisp_Process *p);
 bool_bf
 pget_kill_without_query(const struct Lisp_Process *p);
 
+bool_bf
+pget_process_inherit_coding_system_flag(const struct Lisp_Process *p);
+
 INLINE bool
 PROCESSP (Lisp_Object a)
 {
