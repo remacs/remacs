@@ -185,8 +185,8 @@ command @kbd{M-x normal-erase-is-backspace-mode}.  This toggles
 between the two modes that Emacs supports for handling @key{DEL}, so
 if Emacs starts in the wrong mode, this should switch to the right
 mode.  On a text terminal, if you want to ask for help when @key{BS}
-is treated as @key{DEL}, use @key{F1}; @kbd{C-?} may also work, if it
-sends character code 127.
+is treated as @key{DEL}, use @key{F1} instead of @kbd{C-h}; @kbd{C-?}
+may also work, if it sends character code 127.
 
   To fix the problem in every Emacs session, put one of the following
 lines into your initialization file (@pxref{Init File}).  For the
@@ -233,10 +233,10 @@ top-level}.  @xref{Recursive Edit}.
 @cindex screen display, wrong
 
   If the text on a text terminal looks wrong, the first thing to do is
-see whether it is wrong in the buffer.  Type @kbd{C-l} to redisplay
-the entire screen.  If the screen appears correct after this, the
-problem was entirely in the previous screen update.  (Otherwise, see
-the following section.)
+see whether it is wrong in the buffer.  Type @kbd{C-l}
+(@code{recenter-top-bottom}) to redisplay the entire screen.  If the
+screen appears correct after this, the problem was entirely in the
+previous screen update.  (Otherwise, see the following section.)
 
   Display updating problems often result from an incorrect terminfo
 entry for the terminal you are using.  The file @file{etc/TERMS} in
@@ -251,16 +251,17 @@ bug in Emacs that appears for certain terminal types.
 @cindex garbled text
 @cindex buffer text garbled
 
-  If @kbd{C-l} shows that the text is wrong, first type @kbd{C-h l} to
-see what commands you typed to produce the observed results.  Then try
-undoing the changes step by step using @kbd{C-x u}, until it gets back
-to a state you consider correct.
+  If @kbd{C-l} shows that the text is wrong, first type @kbd{C-h l}
+(@code{view-lossage}) to see what commands you typed to produce the
+observed results.  Then try undoing the changes step by step using
+@kbd{C-x u} (@code{undo}), until it gets back to a state you consider
+correct.
 
   If a large portion of text appears to be missing at the beginning or
 end of the buffer, check for the word @samp{Narrow} in the mode line.
 If it appears, the text you don't see is probably still present, but
 temporarily off-limits.  To make it accessible again, type @kbd{C-x n
-w}.  @xref{Narrowing}.
+w} (@code{widen}).  @xref{Narrowing}.
 
 @node Memory Full
 @subsection Running out of Memory
@@ -268,12 +269,13 @@ w}.  @xref{Narrowing}.
 @cindex out of memory
 
   If you get the error message @samp{Virtual memory exceeded}, save
-your modified buffers with @kbd{C-x s}.  This method of saving them
-has the smallest need for additional memory.  Emacs keeps a reserve of
-memory which it makes available when this error happens; that should
-be enough to enable @kbd{C-x s} to complete its work.  When the
-reserve has been used, @samp{!MEM FULL!} appears at the beginning of
-the mode line, indicating there is no more reserve.
+your modified buffers with @kbd{C-x s} (@code{save-some-buffers}).
+This method of saving them has the smallest need for additional
+memory.  Emacs keeps a reserve of memory which it makes available when
+this error happens; that should be enough to enable @kbd{C-x s} to
+complete its work.  When the reserve has been used, @samp{!MEM FULL!}
+appears at the beginning of the mode line, indicating there is no more
+reserve.
 
   Once you have saved your modified buffers, you can exit this Emacs
 session and start another, or you can use @kbd{M-x kill-some-buffers}
@@ -589,6 +591,9 @@ important to report documentation bugs as program bugs.
   If the built-in documentation for a function or variable disagrees
 with the manual, one of them must be wrong; that is a bug.
 
+  For problems with packages that are not part of Emacs, it is better
+to begin by reporting them to the package developers.
+
 @node Understanding Bug Reporting
 @subsection Understanding Bug Reporting
 @cindex bug reporting
@@ -706,7 +711,10 @@ tracker.
 
 If your data is more than 500,000 bytes, please don't include it
 directly in the bug report; instead, offer to send it on request, or
-make it available by ftp and say where.
+make it available online and say where.
+
+The Gnu Bug Tracker will assign a bug number to your report; please
+use it in the following discussions.
 
   To enable maintainers to investigate a bug, your report
 should include all these things:
@@ -770,20 +778,21 @@ customizations.
 @cindex dribble file
 @cindex logging keystrokes
 One way to record the input to Emacs precisely is to write a dribble
-file.  To start the file, use the @kbd{M-x open-dribble-file
-@key{RET}} command.  From then on, Emacs copies all your input to the
-specified dribble file until the Emacs process is killed.  Be aware
-that sensitive information (such as passwords) may end up recorded in
-the dribble file.
+file.  To start the file, use the @kbd{M-x open-dribble-file} command.
+From then on, Emacs copies all your input to the specified dribble
+file until the Emacs process is killed.  Be aware that sensitive
+information (such as passwords) may end up recorded in the dribble
+file.
 
 @item
 @findex open-termscript
 @cindex termscript file
 @vindex TERM@r{, environment variable, and display bugs}
-For possible display bugs, the terminal type (the value of environment
-variable @env{TERM}), the complete termcap entry for the terminal from
-@file{/etc/termcap} (since that file is not identical on all machines),
-and the output that Emacs actually sent to the terminal.
+For possible display bugs on text-mode terminals, the terminal type
+(the value of environment variable @env{TERM}), the complete termcap
+entry for the terminal from @file{/etc/termcap} (since that file is
+not identical on all machines), and the output that Emacs actually
+sent to the terminal.
 
 The way to collect the terminal output is to execute the Lisp expression
 
@@ -926,13 +935,13 @@ However, you need to think when you collect the additional information
 if you want it to show what causes the bug.
 
 @cindex backtrace for bug reports
-For example, many people send just a backtrace, but that is not very
-useful by itself.  A simple backtrace with arguments often conveys
-little about what is happening inside GNU Emacs, because most of the
-arguments listed in the backtrace are pointers to Lisp objects.  The
-numeric values of these pointers have no significance whatever; all that
-matters is the contents of the objects they point to (and most of the
-contents are themselves pointers).
+For example, many people send just a C-level backtrace, but that is
+not very useful by itself.  A simple backtrace with arguments often
+conveys little about what is happening inside GNU Emacs, because most
+of the arguments listed in the backtrace are pointers to Lisp objects.
+The numeric values of these pointers have no significance whatever;
+all that matters is the contents of the objects they point to (and
+most of the contents are themselves pointers).
 
 @findex debug_print
 To provide useful information, you need to show the values of Lisp
@@ -1217,8 +1226,8 @@ answer questions on the Emacs user mailing list
 @url{https://lists.gnu.org/mailman/listinfo/help-gnu-emacs}.
 
 @item
-write documentation, either on the wiki, or in the Emacs source
-repository (@pxref{Sending Patches}).
+write documentation, either on the @uref{https://www.emacswiki.org/,
+wiki}, or in the Emacs source repository (@pxref{Sending Patches}).
 
 @item
 check if existing bug reports are fixed in newer versions of Emacs
@@ -1283,7 +1292,7 @@ downloaded the repository source, you should read the file
 from a normal build).
 
 If you would like to make more extensive contributions, see the
-@file{./CONTRIBUTE} file in the Emacs distribution for information on
+@file{CONTRIBUTE} file in the Emacs distribution for information on
 how to be an Emacs developer.
 
 For documentation on Emacs (to understand how to implement your
@@ -1385,9 +1394,10 @@ The FSF is a nonprofit with a worldwide mission to promote computer
 user freedom and to defend the rights of all free software users.
 For general information, see the website @url{https://www.fsf.org/}.
 
-Generally speaking, for non-trivial contributions to GNU Emacs we
-require that the copyright be assigned to the FSF@.  For the reasons
-behind this, see @url{https://www.gnu.org/licenses/why-assign.html}.
+Generally speaking, for non-trivial contributions to GNU Emacs and
+packages stored in GNU ELPA, we require that the copyright be assigned
+to the FSF@.  For the reasons behind this, see
+@url{https://www.gnu.org/licenses/why-assign.html}.
 
 Copyright assignment is a simple process.  Residents of some countries
 can do it entirely electronically.  We can help you get started, and
