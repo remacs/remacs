@@ -492,12 +492,16 @@ displays the next page if you are at the end of the current page.
 @findex doc-view-previous-page
 @kindex n @r{(DocView mode)}
 @kindex p @r{(DocView mode)}
+@kindex PageDown @r{(DocView mode)}
+@kindex PageUp @r{(DocView mode)}
+@kindex next @r{(DocView mode)}
+@kindex prior @r{(DocView mode)}
 @kindex C-x ] @r{(DocView mode)}
 @kindex C-x [ @r{(DocView mode)}
-  You can also display the next page by typing @kbd{n}, @key{next} or
-@kbd{C-x ]} (@code{doc-view-next-page}).  To display the previous
-page, type @kbd{p}, @key{prior} or @kbd{C-x [}
-(@code{doc-view-previous-page}).
+  You can also display the next page by typing @kbd{n},
+@key{PageDown}, @key{next} or @kbd{C-x ]} (@code{doc-view-next-page}).
+To display the previous page, type @kbd{p}, @key{PageUp}, @key{prior}
+or @kbd{C-x [} (@code{doc-view-previous-page}).
 
 @findex doc-view-scroll-up-or-next-page
 @findex doc-view-scroll-down-or-previous-page

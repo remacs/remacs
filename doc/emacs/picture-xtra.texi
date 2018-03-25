@@ -136,13 +136,23 @@ Picture}).
 @findex picture-movement-sw
 @findex picture-movement-se
 @kindex C-c < @r{(Picture mode)}
+@kindex C-c LEFT @r{(Picture mode)}
 @kindex C-c > @r{(Picture mode)}
+@kindex C-c RIGHT @r{(Picture mode)}
 @kindex C-c ^ @r{(Picture mode)}
+@kindex C-c UP @r{(Picture mode)}
 @kindex C-c . @r{(Picture mode)}
+@kindex C-c DOWN @r{(Picture mode)}
 @kindex C-c ` @r{(Picture mode)}
+@kindex C-c Home @r{(Picture mode)}
 @kindex C-c ' @r{(Picture mode)}
+@kindex C-c PageUp @r{(Picture mode)}
+@kindex C-c prior @r{(Picture mode)}
 @kindex C-c / @r{(Picture mode)}
+@kindex C-c End @r{(Picture mode)}
 @kindex C-c \ @r{(Picture mode)}
+@kindex C-c PageDown @r{(Picture mode)}
+@kindex C-c next @r{(Picture mode)}
   Since self-inserting characters in Picture mode overwrite and move
 point, there is no essential restriction on how point should be moved.
 Normally point moves right, but you can specify any of the eight
@@ -166,6 +176,7 @@ Move down after insertion (@code{picture-movement-down}).
 @itemx C-c @key{Home}
 Move up and left (``northwest'') after insertion (@code{picture-movement-nw}).
 @item C-c '
+@itemx C-c @key{PageUp}
 @itemx C-c @key{prior}
 Move up and right (``northeast'') after insertion
 (@code{picture-movement-ne}).
@@ -174,6 +185,7 @@ Move up and right (``northeast'') after insertion
 Move down and left (``southwest'') after insertion
 @*(@code{picture-movement-sw}).
 @item C-c \
+@itemx C-c @key{PageDown}
 @itemx C-c @key{next}
 Move down and right (``southeast'') after insertion
 @*(@code{picture-movement-se}).
