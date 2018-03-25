@@ -2871,33 +2871,33 @@ functionality in Rmail, Gnus and VM article buffers.
 @kindex C-x C-f @r{(FFAP)}
 Find @var{filename}, guessing a default from text around point
 (@code{find-file-at-point}).
-@item C-x C-r
+@item C-x C-r @var{filename} @key{RET}
 @kindex C-x C-r @r{(FFAP)}
 @code{ffap-read-only}, analogous to @code{find-file-read-only}.
-@item C-x C-v
+@item C-x C-v @var{filename} @key{RET}
 @kindex C-x C-v @r{(FFAP)}
 @code{ffap-alternate-file}, analogous to @code{find-alternate-file}.
 @item C-x d @var{directory} @key{RET}
 @kindex C-x d @r{(FFAP)}
 Start Dired on @var{directory}, defaulting to the directory at
 point (@code{dired-at-point}).
-@item C-x C-d
+@item C-x C-d @var{directory} @key{RET}
 @code{ffap-list-directory}, analogous to @code{list-directory}.
-@item C-x 4 f
+@item C-x 4 f @var{filename} @key{RET}
 @kindex C-x 4 f @r{(FFAP)}
 @code{ffap-other-window}, analogous to @code{find-file-other-window}.
-@item C-x 4 r
+@item C-x 4 r @var{filename} @key{RET}
 @code{ffap-read-only-other-window}, analogous to
 @code{find-file-read-only-other-window}.
-@item C-x 4 d
+@item C-x 4 d @var{directory} @key{RET}
 @code{ffap-dired-other-window}, like @code{dired-other-window}.
-@item C-x 5 f
+@item C-x 5 f @var{filename} @key{RET}
 @kindex C-x 5 f @r{(FFAP)}
 @code{ffap-other-frame}, analogous to @code{find-file-other-frame}.
-@item C-x 5 r
+@item C-x 5 r @var{filename} @key{RET}
 @code{ffap-read-only-other-frame}, analogous to
 @code{find-file-read-only-other-frame}.
-@item C-x 5 d
+@item C-x 5 d @var{directory} @key{RET}
 @code{ffap-dired-other-frame}, analogous to @code{dired-other-frame}.
 @item M-x ffap-next
 Search buffer for next file name or URL, then find that file or URL.
@@ -2914,6 +2914,7 @@ find the one you select (@code{ffap-menu}).
 @node Amusements
 @section Games and Other Amusements
 @cindex boredom
+@cindex games
 
 @findex animate-birthday-present
 @cindex animate
@@ -2932,6 +2933,7 @@ guess---to guess a value, type a letter and then the digit you think it
 stands for.  The aim of @code{5x5} is to fill in all the squares.
 
 @findex bubbles
+@cindex bubbles
   @kbd{M-x bubbles} is a game in which the object is to remove as many
 bubbles as you can in the smallest number of moves.
 
@@ -2956,6 +2958,7 @@ character.  Keep dissociwords out of your documentation, if you want
 it to be well userenced and properbose.
 
 @findex dunnet
+@cindex dunnet
   @kbd{M-x dunnet} runs a text-based adventure game.
 
 @findex gomoku
@@ -2998,8 +3001,14 @@ implementations of the well-known Pong, Snake and Tetris games.
 across other pegs.
 
 @findex zone
+@cindex zone
   The command @kbd{M-x zone} plays games with the display when Emacs
 is idle.
+
+@findex butterfly
+@cindex butterfly
+  Real Programmers™ deploy @kbd{M-x butterfly}, which uses butterflies
+to flip a bit on the drive platter, see @uref{https://xkcd.com/378}.
 
 @findex doctor
 @cindex Eliza
