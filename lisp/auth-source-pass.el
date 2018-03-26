@@ -92,7 +92,9 @@ See `auth-source-search' for details on SPEC."
   (when (eq entry 'password-store)
     (auth-source-backend-parse-parameters entry auth-source-pass-backend)))
 
-(add-hook 'auth-source-backend-parser-functions #'auth-source-pass-backend-parse)
+(if (boundp 'auth-source-backend-parser-functions)
+    (add-hook 'auth-source-backend-parser-functions #'auth-source-pass-backend-parse)
+  (advice-add 'auth-source-backend-parse :before-until #'auth-source-pass-backend-parse))
 
 
 (defun auth-source-pass-get (key entry)
