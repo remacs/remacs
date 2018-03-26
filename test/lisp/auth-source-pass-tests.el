@@ -244,6 +244,13 @@ This function is intended to be set to `auth-source-debug`."
     (should (auth-source-pass--entry-valid-p "foo"))
     (should-not (auth-source-pass--entry-valid-p "bar"))))
 
+(ert-deftest auth-source-pass-can-start-from-auth-source-search ()
+  (auth-source-pass--with-store '(("gitlab.com" ("user" . "someone")))
+    (auth-source-pass-enable)
+    (let ((result (car (auth-source-search :host "gitlab.com"))))
+      (should (equal (plist-get result :user) "someone"))
+      (should (equal (plist-get result :host) "gitlab.com")))))
+
 (provide 'auth-source-pass-tests)
 
 ;;; auth-source-pass-tests.el ends here
