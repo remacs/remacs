@@ -4173,7 +4173,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
       ;; to be non-nil for generating tags for all cases. Since
       ;; `byte-compile-depth' will increase by at most 1 after compiling
       ;; all of the clause (which is further enforced by cl-assert below)
-      ;; it should be safe to preserve it's value.
+      ;; it should be safe to preserve its value.
       (let ((byte-compile-depth byte-compile-depth))
         (byte-compile-goto 'byte-goto default-tag))
 
@@ -4191,7 +4191,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
         (let ((byte-compile-depth byte-compile-depth)
               (init-depth byte-compile-depth))
           ;; Since `byte-compile-body' might increase `byte-compile-depth'
-          ;; by 1, not preserving it's value will cause it to potentially
+          ;; by 1, not preserving its value will cause it to potentially
           ;; increase by one for every clause body compiled, causing
           ;; depth/tag conflicts or violating asserts down the road.
           ;; To make sure `byte-compile-body' itself doesn't violate this,
