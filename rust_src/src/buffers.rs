@@ -14,10 +14,10 @@ use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, 
                  fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals, set_buffer_internal};
 
 use editfns::point;
-use lisp::{ExternalPtr, LispObject};
+use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lisp::defsubr;
 use lists::{car, cdr, Flist, Fmember};
-use marker::{marker_buffer, marker_position_lisp, LispMarkerRef};
+use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::string_char;
 use strings::string_equal;
 use threads::ThreadState;
@@ -79,8 +79,28 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn zv_byte(self) -> ptrdiff_t {
+        self.zv_byte
+    }
+
+    #[inline]
     pub fn pt(self) -> ptrdiff_t {
         self.pt
+    }
+
+    #[inline]
+    pub fn pt_byte(self) -> ptrdiff_t {
+        self.pt_byte
+    }
+
+    #[inline]
+    pub fn begv(self) -> ptrdiff_t {
+        self.begv
+    }
+
+    #[inline]
+    pub fn begv_byte(self) -> ptrdiff_t {
+        self.begv_byte
     }
 
     #[inline]
@@ -170,6 +190,21 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn pt_marker(self) -> LispObject {
+        LispObject::from_raw(self.pt_marker)
+    }
+
+    #[inline]
+    pub fn begv_marker(self) -> LispObject {
+        LispObject::from_raw(self.begv_marker)
+    }
+
+    #[inline]
+    pub fn zv_marker(self) -> LispObject {
+        LispObject::from_raw(self.zv_marker)
+    }
+
+    #[inline]
     pub fn mark(self) -> LispObject {
         LispObject::from_raw(self.mark)
     }
@@ -188,6 +223,11 @@ impl LispBufferRef {
     #[inline]
     pub fn base_buffer(self) -> Option<LispBufferRef> {
         Self::from_ptr(self.base_buffer as *mut c_void)
+    }
+
+    #[inline]
+    pub fn truename(self) -> LispObject {
+        LispObject::from_raw(self.file_truename)
     }
 
     // Check if buffer is live
@@ -241,6 +281,24 @@ impl LispBufferRef {
     #[inline]
     pub fn overlays_after(&self) -> Option<LispOverlayRef> {
         LispOverlayRef::from_ptr(unsafe { bget_overlays_after(self.as_ptr()) })
+    }
+
+    #[inline]
+    pub fn set_pt_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
+        self.pt = charpos;
+        self.pt_byte = byte;
+    }
+
+    #[inline]
+    pub fn set_begv_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
+        self.begv = charpos;
+        self.begv_byte = byte;
+    }
+
+    #[inline]
+    pub fn set_zv_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
+        self.zv = charpos;
+        self.zv_byte = byte;
     }
 }
 
@@ -567,6 +625,82 @@ pub fn overlay_lists() -> LispObject {
     unsafe { LispObject::from_raw(Fcons(Fnreverse(before.to_raw()), Fnreverse(after.to_raw()))) }
 }
 
+fn get_truename_buffer_1(filename: LispObject) -> LispObject {
+    LiveBufferIter::new()
+        .find(|buf| {
+            let buf_truename = buf.truename();
+            buf_truename.is_string() && string_equal(buf_truename, filename)
+        })
+        .into()
+}
+
+// to be removed once all references in C are ported
+#[no_mangle]
+pub extern "C" fn get_truename_buffer(filename: Lisp_Object) -> Lisp_Object {
+    get_truename_buffer_1(LispObject::from_raw(filename)).to_raw()
+}
+
+/// If buffer B has markers to record PT, BEGV and ZV when it is not
+/// current, update these markers.
+#[no_mangle]
+pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
+    let buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
+        .unwrap_or_else(|| panic!("Invalid buffer reference."));
+    let pt_marker = buffer_ref.pt_marker();
+
+    if pt_marker.is_not_nil() {
+        let begv_marker = buffer_ref.begv_marker();
+        let zv_marker = buffer_ref.zv_marker();
+
+        assert!(begv_marker.is_not_nil());
+        assert!(zv_marker.is_not_nil());
+
+        let buffer = buffer_ref.as_lisp_obj().to_raw();
+        set_marker_both(
+            pt_marker.to_raw(),
+            buffer,
+            buffer_ref.pt(),
+            buffer_ref.pt_byte(),
+        );
+        set_marker_both(
+            begv_marker.to_raw(),
+            buffer,
+            buffer_ref.begv(),
+            buffer_ref.begv_byte(),
+        );
+        set_marker_both(
+            zv_marker.to_raw(),
+            buffer,
+            buffer_ref.zv(),
+            buffer_ref.zv_byte(),
+        );
+    }
+}
+
+/// If buffer B has markers to record PT, BEGV and ZV when it is not
+/// current, fetch these values into B->begv etc.
+#[no_mangle]
+pub extern "C" fn fetch_buffer_markers(buffer: *mut Lisp_Buffer) {
+    let mut buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
+        .unwrap_or_else(|| panic!("Invalid buffer reference."));
+
+    if buffer_ref.pt_marker().is_not_nil() {
+        assert!(buffer_ref.begv_marker().is_not_nil());
+        assert!(buffer_ref.zv_marker().is_not_nil());
+
+        let pt_marker = buffer_ref.pt_marker().as_marker_or_error();
+        let begv_marker = buffer_ref.begv_marker().as_marker_or_error();
+        let zv_marker = buffer_ref.zv_marker().as_marker_or_error();
+
+        buffer_ref.set_pt_both(pt_marker.charpos_or_error(), pt_marker.bytepos_or_error());
+        buffer_ref.set_begv_both(
+            begv_marker.charpos_or_error(),
+            begv_marker.bytepos_or_error(),
+        );
+        buffer_ref.set_zv_both(zv_marker.charpos_or_error(), zv_marker.bytepos_or_error());
+    }
+}
+
 /// Return the buffer visiting file FILENAME (a string).
 /// The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
 /// If there is no such live buffer, return nil.
@@ -586,13 +720,10 @@ pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
         let handled_buf = call_raw!(handler.to_raw(), Qget_file_buffer, filename.to_raw());
         handled_buf.as_buffer()
     } else {
-        LispObject::from_raw(unsafe { Vbuffer_alist })
-            .iter_alist_vals()
-            .find(|buf| {
-                let buf_filename = buf.as_buffer_or_error().filename();
-                buf_filename.is_string() && string_equal(buf_filename, filename)
-            })
-            .and_then(|obj| obj.as_buffer())
+        LiveBufferIter::new().find(|buf| {
+            let buf_filename = buf.filename();
+            buf_filename.is_string() && string_equal(buf_filename, filename)
+        })
     }
 }
 

@@ -369,20 +369,6 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
 }
 
 
-Lisp_Object
-get_truename_buffer (register Lisp_Object filename)
-{
-  register Lisp_Object tail, buf;
-
-  FOR_EACH_LIVE_BUFFER (tail, buf)
-    {
-      if (!STRINGP (BVAR (XBUFFER (buf), file_truename))) continue;
-      if (!NILP (Fstring_equal (BVAR (XBUFFER (buf), file_truename), filename)))
-	return buf;
-    }
-  return Qnil;
-}
-
 DEFUN ("get-buffer-create", Fget_buffer_create, Sget_buffer_create, 1, 1, 0,
        doc: /* Return the buffer specified by BUFFER-OR-NAME, creating a new one if needed.
 If BUFFER-OR-NAME is a string and a live buffer with that name exists,
@@ -574,50 +560,9 @@ clone_per_buffer_values (struct buffer *from, struct buffer *to)
 }
 
 
-/* If buffer B has markers to record PT, BEGV and ZV when it is not
-   current, update these markers.  */
+void record_buffer_markers (struct buffer *b);
 
-static void
-record_buffer_markers (struct buffer *b)
-{
-  if (! NILP (BVAR (b, pt_marker)))
-    {
-      Lisp_Object buffer;
-
-      eassert (!NILP (BVAR (b, begv_marker)));
-      eassert (!NILP (BVAR (b, zv_marker)));
-
-      XSETBUFFER (buffer, b);
-      set_marker_both (BVAR (b, pt_marker), buffer, b->pt, b->pt_byte);
-      set_marker_both (BVAR (b, begv_marker), buffer, b->begv, b->begv_byte);
-      set_marker_both (BVAR (b, zv_marker), buffer, b->zv, b->zv_byte);
-    }
-}
-
-
-/* If buffer B has markers to record PT, BEGV and ZV when it is not
-   current, fetch these values into B->begv etc.  */
-
-static void
-fetch_buffer_markers (struct buffer *b)
-{
-  if (! NILP (BVAR (b, pt_marker)))
-    {
-      Lisp_Object m;
-
-      eassert (!NILP (BVAR (b, begv_marker)));
-      eassert (!NILP (BVAR (b, zv_marker)));
-
-      m = BVAR (b, pt_marker);
-      SET_BUF_PT_BOTH (b, marker_position (m), marker_byte_position (m));
-
-      m = BVAR (b, begv_marker);
-      SET_BUF_BEGV_BOTH (b, marker_position (m), marker_byte_position (m));
-
-      m = BVAR (b, zv_marker);
-      SET_BUF_ZV_BOTH (b, marker_position (m), marker_byte_position (m));
-    }
-}
+void fetch_buffer_markers (struct buffer *b);
 
 
 DEFUN ("make-indirect-buffer", Fmake_indirect_buffer, Smake_indirect_buffer,
