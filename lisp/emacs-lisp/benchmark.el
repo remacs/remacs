@@ -50,7 +50,7 @@ Return a list of the total elapsed time for execution, the number of
 garbage collections that ran, and the time taken by garbage collection.
 See also `benchmark-run-compiled'."
   (declare (indent 1) (debug t))
-  (unless (natnump repetitions)
+  (unless (or (natnump repetitions) (symbolp repetitions))
     (setq forms (cons repetitions forms)
 	  repetitions 1))
   (let ((i (make-symbol "i"))
@@ -58,7 +58,7 @@ See also `benchmark-run-compiled'."
 	(gc (make-symbol "gc")))
     `(let ((,gc gc-elapsed)
 	   (,gcs gcs-done))
-       (list ,(if (> repetitions 1)
+       (list ,(if (or (symbolp repetitions) (> repetitions 1))
 		  ;; Take account of the loop overhead.
 		  `(- (benchmark-elapse (dotimes (,i ,repetitions)
 					  ,@forms))
@@ -101,7 +101,7 @@ the command prompts for the form to benchmark.
 For non-interactive use see also `benchmark-run' and
 `benchmark-run-compiled'."
   (interactive "p\nxForm: ")
-  (let ((result (eval `(benchmark-run ,repetitions ,form))))
+  (let ((result (eval `(benchmark-run ,repetitions ,form) t)))
     (if (zerop (nth 1 result))
 	(message "Elapsed time: %fs" (car result))
       (message "Elapsed time: %fs (%fs in %d GCs)" (car result)
