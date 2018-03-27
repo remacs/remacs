@@ -4,7 +4,7 @@
 
 ;; Author: Christian Garbs <mitch@cgarbs.de>
 ;; Keywords: literate programming, reproducible research
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;;; License:
 
