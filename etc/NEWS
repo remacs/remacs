@@ -337,6 +337,14 @@ or NextCloud hosted files and directories.
 It was obsolete since Emacs 22.1, replaced by customize.
 
 
+** Message
+
++++
+*** Messages can now be systematically encrypted
+when the PGP keyring contains a public key for every recipient.  To
+achieve this, add 'message-add-encrypt-tag-if-can-encrypt' to
+'message-send-hook'.
+
 * New Modes and Packages in Emacs 27.1
 
 +++
