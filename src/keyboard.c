@@ -8701,10 +8701,19 @@ follow_key (Lisp_Object keymap, Lisp_Object key)
 }
 
 static Lisp_Object
-active_maps (Lisp_Object first_event)
+active_maps (Lisp_Object first_event, Lisp_Object second_event)
 {
   Lisp_Object position
-    = CONSP (first_event) ? CAR_SAFE (XCDR (first_event)) : Qnil;
+    = EVENT_HAS_PARAMETERS (first_event) ? EVENT_START (first_event) : Qnil;
+  /* The position of a click can be in the second event if the first event
+     is a fake_prefixed_key like `header-line` or `mode-line`.  */
+  if (SYMBOLP (first_event)
+      && EVENT_HAS_PARAMETERS (second_event)
+      && EQ (first_event, POSN_POSN (EVENT_START (second_event))))
+    {
+      eassert (NILP (position));
+      position = EVENT_START (second_event);
+    }
   return Fcons (Qkeymap, Fcurrent_active_maps (Qt, position));
 }
 
@@ -9016,13 +9025,14 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   starting_buffer = current_buffer;
   first_unbound = bufsize + 1;
   Lisp_Object first_event = mock_input > 0 ? keybuf[0] : Qnil;
+  Lisp_Object second_event = mock_input > 1 ? keybuf[1] : Qnil;
 
   /* Build our list of keymaps.
      If we recognize a function key and replace its escape sequence in
      keybuf with its symbol, or if the sequence starts with a mouse
      click and we need to switch buffers, we jump back here to rebuild
      the initial keymaps from the current buffer.  */
-  current_binding = active_maps (first_event);
+  current_binding = active_maps (first_event, second_event);
 
   /* Start from the beginning in keybuf.  */
   t = 0;
@@ -9282,7 +9292,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 		  && (XBUFFER (XWINDOW (selected_window)->contents)
 		      != current_buffer))
 		Fset_buffer (XWINDOW (selected_window)->contents);
-	      current_binding = active_maps (first_event);
+	      current_binding = active_maps (first_event, Qnil);
 	    }
 
 	  GROW_RAW_KEYBUF;

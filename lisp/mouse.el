@@ -131,7 +131,12 @@ Expects to be bound to `(double-)mouse-1' in `key-translation-map'."
                (unless (get newup 'event-kind)
                  (put newup 'event-kind
                       (get (car last-input-event) 'event-kind)))
-               (vector (cons newup (cdr last-input-event)))))))))
+               ;; Modify the event in-place, otherwise we can get a prefix
+               ;; added again, so a click on the header-line turns
+               ;; into a [header-line header-line mouse-2] :-(.
+               ;; See fake_prefixed_keys in src/keyboard.c's.
+               (setf (car last-input-event) newup)
+               (vector last-input-event)))))))
 
 (define-key key-translation-map [down-mouse-1]
   #'mouse--down-1-maybe-follows-link)
