@@ -50,7 +50,7 @@ Return a list of the total elapsed time for execution, the number of
 garbage collections that ran, and the time taken by garbage collection.
 See also `benchmark-run-compiled'."
   (declare (indent 1) (debug t))
-  (unless (or (natnump repetitions) (symbolp repetitions))
+  (unless (or (natnump repetitions) (and repetitions (symbolp repetitions)))
     (setq forms (cons repetitions forms)
 	  repetitions 1))
   (let ((i (make-symbol "i"))
@@ -74,7 +74,7 @@ This is like `benchmark-run', but what is timed is a funcall of the
 byte code obtained by wrapping FORMS in a `lambda' and compiling the
 result.  The overhead of the `lambda's is accounted for."
   (declare (indent 1) (debug t))
-  (unless (natnump repetitions)
+  (unless (or (natnump repetitions) (and repetitions (symbolp repetitions)))
     (setq forms (cons repetitions forms)
 	  repetitions 1))
   (let ((i (make-symbol "i"))
@@ -84,7 +84,7 @@ result.  The overhead of the `lambda's is accounted for."
 	(lambda-code (byte-compile `(lambda ()))))
     `(let ((,gc gc-elapsed)
 	   (,gcs gcs-done))
-       (list ,(if (> repetitions 1)
+       (list ,(if (or (symbolp repetitions) (> repetitions 1))
 		  ;; Take account of the loop overhead.
 		  `(- (benchmark-elapse (dotimes (,i ,repetitions)
 					  (funcall ,code)))

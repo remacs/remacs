@@ -326,6 +326,7 @@ names" in the Tramp manual for full documentation of these facilities.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
+** The 'repetitions' argument of 'benchmark-run' can now also be a variable.
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
 longer defaults to 'buffer-file-name'.
 
