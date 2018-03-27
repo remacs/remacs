@@ -27,6 +27,7 @@
 
 (require 'ert)
 (require 'cl-lib)
+(require 'bytecomp)
 
 ;;; Code:
 (defconst byte-opt-testsuite-arith-data
@@ -570,6 +571,38 @@ literals (Bug#20852)."
   (with-current-buffer (get-buffer-create "*Compile-Log*")
     (goto-char (point-min))
     (should-not (search-forward "Warning" nil t))))
+
+(ert-deftest bytecomp-test-featurep-warnings ()
+  (let ((byte-compile-log-buffer (generate-new-buffer " *Compile-Log*")))
+    (unwind-protect
+        (progn
+          (with-temp-buffer
+            (insert "\
+\(defun foo ()
+  (an-undefined-function))
+
+\(defun foo1 ()
+  (if (featurep 'xemacs)
+      (some-undefined-function-if)))
+
+\(defun foo2 ()
+  (and (featurep 'xemacs)
+      (some-undefined-function-and)))
+
+\(defun foo3 ()
+  (if (not (featurep 'emacs))
+      (some-undefined-function-not)))
+
+\(defun foo4 ()
+  (or (featurep 'emacs)
+      (some-undefined-function-or)))
+")
+            (byte-compile-from-buffer (current-buffer)))
+          (with-current-buffer byte-compile-log-buffer
+            (should (search-forward "an-undefined-function" nil t))
+            (should-not (search-forward "some-undefined-function" nil t))))
+      (if (buffer-live-p byte-compile-log-buffer)
+          (kill-buffer byte-compile-log-buffer)))))
 
 ;; Local Variables:
 ;; no-byte-compile: t
