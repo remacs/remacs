@@ -81,7 +81,7 @@
   (progn
     (require 'font-lock)
     (let (font-lock-keywords)
-      (font-lock-compile-keywords '("\\<\\>"))
+      (font-lock-compile-keywords '("a\\`"))
       font-lock-keywords))))
 
 
@@ -1777,8 +1777,8 @@ when it's needed.  The default is the current language taken from
 
     ;; Produce a regexp that matches nothing.
     (if adorn
-	"\\(\\<\\>\\)"
-      "\\<\\>")))
+	"\\(a\\`\\)"
+      "a\\`")))
 
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 

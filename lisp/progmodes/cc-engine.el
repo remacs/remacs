@@ -870,7 +870,7 @@ comment at the start of cc-engine.el for more info."
 	stack
 	;; Regexp which matches "for", "if", etc.
 	(cond-key (or c-opt-block-stmt-key
-		      "\\<\\>"))	; Matches nothing.
+		      "a\\`"))	; Matches nothing.
 	;; Return value.
 	(ret 'same)
 	;; Positions of the last three sexps or bounds we've stopped at.
@@ -7147,7 +7147,7 @@ comment at the start of cc-engine.el for more info."
 		(progn
 		  (c-forward-syntactic-ws)
 		  (when (or (and c-record-type-identifiers all-types)
-			    (not (equal c-inside-<>-type-key "\\(\\<\\>\\)")))
+			    (not (equal c-inside-<>-type-key "\\(a\\`\\)")))
 		    (c-forward-syntactic-ws)
 		    (cond
 		     ((eq (char-after) ??)
@@ -8557,7 +8557,7 @@ comment at the start of cc-engine.el for more info."
       ;; Skip over type decl prefix operators.  (Note similar code in
       ;; `c-forward-declarator'.)
       (if (and c-recognize-typeless-decls
-	       (equal c-type-decl-prefix-key "\\<\\>"))
+	       (equal c-type-decl-prefix-key "a\\`"))
 	  (when (eq (char-after) ?\()
 	    (progn
 	      (setq paren-depth (1+ paren-depth))
@@ -10183,7 +10183,7 @@ comment at the start of cc-engine.el for more info."
 	      ;; legal because it's part of a "compound keyword" like
 	      ;; "enum class".	Of course, if c-after-brace-list-key
 	      ;; is nil, we can skip the test.
-	      (or (equal c-after-brace-list-key "\\<\\>")
+	      (or (equal c-after-brace-list-key "a\\`")
 		  (save-match-data
 		    (save-excursion
 		      (not
