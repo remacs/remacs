@@ -13,8 +13,8 @@ AC_DEFUN([gl_TIME_RZ],
   AC_REQUIRE([gl_HEADER_TIME_H_DEFAULTS])
   AC_REQUIRE([AC_STRUCT_TIMEZONE])
 
-  # Mac OS X 10.6 loops forever with some time_t values less
-  # than -67768038400665599.  See Bug#27706, Bug#27736, and
+  # Mac OS X 10.6 loops forever with some time_t values.
+  # See Bug#27706, Bug#27736, and
   # https://lists.gnu.org/r/bug-gnulib/2017-07/msg00142.html
   AC_CACHE_CHECK([whether localtime loops forever near extrema],
     [gl_cv_func_localtime_infloop_bug],
@@ -26,7 +26,7 @@ AC_DEFUN([gl_TIME_RZ],
             #include <unistd.h>
             #include <time.h>
           ]], [[
-            time_t t = -67768038400665600;
+            time_t t = -67768038400666600;
             struct tm *tm;
             char *tz = getenv ("TZ");
             if (! (tz && strcmp (tz, "QQQ0") == 0))
@@ -36,7 +36,8 @@ AC_DEFUN([gl_TIME_RZ],
             /* Use TM and *TM to suppress over-optimization.  */
             return tm && tm->tm_isdst;
           ]])],
-       [TZ=QQQ0 ./conftest$EXEEXT || gl_cv_func_localtime_infloop_bug=yes],
+       [(TZ=QQQ0 ./conftest$EXEEXT) >/dev/null 2>&1 ||
+           gl_cv_func_localtime_infloop_bug=yes],
        [],
        [gl_cv_func_localtime_infloop_bug="guessing no"])])
   if test "$gl_cv_func_localtime_infloop_bug" = yes; then
