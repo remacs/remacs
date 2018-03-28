@@ -9847,9 +9847,15 @@ comment at the start of cc-engine.el for more info."
   ;; This function might do hidden buffer changes.
   (save-excursion
     (and (zerop (c-backward-token-2 1 t lim))
+	 (if (looking-at c-block-stmt-hangon-key)
+	     (zerop (c-backward-token-2 1 t lim))
+	   t)
 	 (or (looking-at c-block-stmt-1-key)
 	     (and (eq (char-after) ?\()
 		  (zerop (c-backward-token-2 1 t lim))
+		  (if (looking-at c-block-stmt-hangon-key)
+		      (zerop (c-backward-token-2 1 t lim))
+		    t)
 		  (or (looking-at c-block-stmt-2-key)
 		      (looking-at c-block-stmt-1-2-key))))
 	 (point))))

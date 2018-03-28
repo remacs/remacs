@@ -2587,6 +2587,17 @@ Keywords here should also be in `c-block-stmt-1-kwds'."
 				  (c-lang-const c-block-stmt-2-kwds))
 			  :test 'string-equal))
 
+(c-lang-defconst c-block-stmt-hangon-kwds
+  "Keywords which may directly follow a member of `c-block-stmt-1/2-kwds'."
+  t nil
+  c++ '("constexpr"))
+
+(c-lang-defconst c-block-stmt-hangon-key
+  ;; Regexp matching a "hangon" keyword in a `c-block-stmt-1/2-kwds'
+  ;; construct.
+  t (c-make-keywords-re t (c-lang-const c-block-stmt-hangon-kwds)))
+(c-lang-defvar c-block-stmt-hangon-key (c-lang-const c-block-stmt-hangon-key))
+
 (c-lang-defconst c-opt-block-stmt-key
   ;; Regexp matching the start of any statement that has a
   ;; substatement (except a bare block).  Nil in languages that
