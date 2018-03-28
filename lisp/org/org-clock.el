@@ -2239,8 +2239,18 @@ have priority."
     (let* ((start (pcase key
 		    (`interactive (org-read-date nil t nil "Range start? "))
                     ;; In theory, all clocks started after the dawn of
-                    ;; humanity.
-		    (`untilnow (encode-time 0 0 0 0 0 -50000))
+                    ;; humanity.  However, the platform's clock
+                    ;; support might not go back that far.  Choose the
+                    ;; POSIX timestamp -2**41 (approximately 68,000
+                    ;; BCE) if that works, otherwise -2**31 (1901) if
+                    ;; that works, otherwise 0 (1970).  Going back
+                    ;; billions of years would loop forever on Mac OS
+                    ;; X 10.6 with Emacs 26 and earlier (Bug#27736).
+		    (`untilnow
+                     (let ((old 0))
+                       (dolist (older '((-32768 0) (-33554432 0)) old)
+                         (when (ignore-errors (decode-time older))
+			   (setq old older)))))
 		    (_ (encode-time 0 m h d month y))))
 	   (end (pcase key
 		  (`interactive (org-read-date nil t nil "Range end? "))
