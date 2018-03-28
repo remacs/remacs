@@ -4484,6 +4484,7 @@ This requires restrictions of file name syntax."
 	    (when (and (tramp--test-expensive-test) (tramp--test-sh-p))
 	      (dolist (elt files)
 		(let ((envvar (concat "VAR_" (upcase (md5 elt))))
+		      (elt (encode-coding-string elt coding-system-for-read))
 		      (default-directory tramp-test-temporary-file-directory)
 		      (process-environment process-environment))
 		  (setenv envvar elt)
@@ -4643,7 +4644,8 @@ Use the `ls' command."
 	     (setq x (eval (cdr (assoc 'sample-text x))))
 	     (unless (or (null x)
 			 (unencodable-char-position
-			  nil nil file-name-coding-system nil x))
+			  nil nil file-name-coding-system nil x)
+			 (string-match "TaiViet" x))
 	       (replace-regexp-in-string "[\n/]" "" x)))
 	   language-info-alist))
 
