@@ -62,7 +62,7 @@ Don't use this function in programs to choose actions according
 to the system configuration; look at `system-configuration' instead."
   (interactive "P")
   (let ((version-string
-         (format "GNU Emacs %s (build %s, %s%s%s%s)%s"
+         (format "Remacs %s (build %s, %s%s%s%s)%s"
                  emacs-version
                  emacs-build-number
 		 system-configuration
