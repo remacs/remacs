@@ -1625,8 +1625,8 @@ invisible text.
 
 TEXT-BLOCK is a string that identifies a single chunk of visible
 or invisible text of which the current position is a part.  For
-visible portions, it's value is \"nil\". For invisible portions,
-it's value is computed as part of `hfy-invisible-name'.
+visible portions, its value is \"nil\".  For invisible portions,
+its value is computed as part of `hfy-invisible-name'.
 
 TEXT-ID marks a unique position within a block.  It is set to
 value of `point' at the current buffer position.

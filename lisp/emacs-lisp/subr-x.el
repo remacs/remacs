@@ -123,15 +123,8 @@ If ELT is of the form ((EXPR)), listify (EXPR) with a dummy symbol."
 
 (defmacro if-let* (varlist then &rest else)
   "Bind variables according to VARLIST and eval THEN or ELSE.
-Each binding is evaluated in turn, and evaluation stops if a
-binding value is nil.  If all are non-nil, the value of THEN is
-returned, or the last form in ELSE is returned.
-
-Each element of VARLIST is a list (SYMBOL VALUEFORM) which binds
-SYMBOL to the value of VALUEFORM.  An element can additionally
-be of the form (VALUEFORM), which is evaluated and checked for
-nil; i.e. SYMBOL can be omitted if only the test result is of
-interest."
+This is like `if-let' but doesn't handle a VARLIST of the form
+\(SYMBOL SOMETHING) specially."
   (declare (indent 2)
            (debug ((&rest [&or symbolp (symbolp form) (form)])
                    form body)))
@@ -144,11 +137,8 @@ interest."
 
 (defmacro when-let* (varlist &rest body)
   "Bind variables according to VARLIST and conditionally eval BODY.
-Each binding is evaluated in turn, and evaluation stops if a
-binding value is nil.  If all are non-nil, the value of the last
-form in BODY is returned.
-
-VARLIST is the same as in `if-let*'."
+This is like `when-let' but doesn't handle a VARLIST of the form
+\(SYMBOL SOMETHING) specially."
   (declare (indent 1) (debug if-let*))
   (list 'if-let* varlist (macroexp-progn body)))
 
@@ -168,12 +158,25 @@ are non-nil, then the result is non-nil."
 
 (defmacro if-let (spec then &rest else)
   "Bind variables according to SPEC and eval THEN or ELSE.
-Like `if-let*' except SPEC can have the form (SYMBOL VALUEFORM)."
+Each binding is evaluated in turn, and evaluation stops if a
+binding value is nil.  If all are non-nil, the value of THEN is
+returned, or the last form in ELSE is returned.
+
+Each element of SPEC is a list (SYMBOL VALUEFORM) which binds
+SYMBOL to the value of VALUEFORM.  An element can additionally be
+of the form (VALUEFORM), which is evaluated and checked for nil;
+i.e. SYMBOL can be omitted if only the test result is of
+interest.  It can also be of the form SYMBOL, then the binding of
+SYMBOL is checked for nil.
+
+As a special case, a SPEC of the form \(SYMBOL SOMETHING) is
+interpreted like \((SYMBOL SOMETHING)). This exists for backward
+compatibility with the old syntax that accepted only one
+binding."
   (declare (indent 2)
            (debug ([&or (&rest [&or symbolp (symbolp form) (form)])
                         (symbolp form)]
-                   form body))
-           (obsolete "use `if-let*' instead." "26.1"))
+                   form body)))
   (when (and (<= (length spec) 2)
              (not (listp (car spec))))
     ;; Adjust the single binding case
@@ -182,9 +185,12 @@ Like `if-let*' except SPEC can have the form (SYMBOL VALUEFORM)."
 
 (defmacro when-let (spec &rest body)
   "Bind variables according to SPEC and conditionally eval BODY.
-Like `when-let*' except SPEC can have the form (SYMBOL VALUEFORM)."
-  (declare (indent 1) (debug if-let)
-           (obsolete "use `when-let*' instead." "26.1"))
+Each binding is evaluated in turn, and evaluation stops if a
+binding value is nil.  If all are non-nil, the value of the last
+form in BODY is returned.
+
+The variable list SPEC is the same as in `if-let'."
+  (declare (indent 1) (debug if-let))
   (list 'if-let spec (macroexp-progn body)))
 
 (defsubst hash-table-empty-p (hash-table)

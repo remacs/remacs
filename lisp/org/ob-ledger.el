@@ -4,7 +4,7 @@
 
 ;; Author: Eric S Fraga
 ;; Keywords: literate programming, reproducible research, accounting
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 

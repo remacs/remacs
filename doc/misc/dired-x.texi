@@ -338,7 +338,7 @@ inside your @code{dired-mode-hook} to have omitting initially turned on in
 
 To enable omitting automatically only in certain directories you can add
 a directory local setting
-(@pxref{Directory Variables,,,emacs,The Gnu Emacs manual}) for Dired mode
+(@pxref{Directory Variables,,,emacs,The GNU Emacs manual}) for Dired mode
 
 @example
 ((dired-mode . ((dired-omit-mode . t))))
@@ -487,7 +487,7 @@ in your @code{dired-mode-hook}.
 @noindent
 This Dired-X feature is obsolete as of Emacs 24.1.  The standard Emacs
 directory local variables mechanism (@pxref{Directory
-Variables,,,emacs,The Gnu Emacs manual}) replaces it.  For an example of
+Variables,,,emacs,The GNU Emacs manual}) replaces it.  For an example of
 the new mechanisms, @pxref{Omitting Variables}.
 
 When Dired visits a directory, it looks for a file whose name is the

@@ -611,6 +611,8 @@ Here are some examples:
 @end group
 @end example
 
+@cindex override existing functions
+@cindex redefine existing functions
 Be careful not to redefine existing functions unintentionally.
 @code{defun} redefines even primitive functions such as @code{car}
 without any hesitation or notification.  Emacs does not prevent you

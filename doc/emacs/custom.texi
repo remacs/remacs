@@ -1852,10 +1852,10 @@ the corresponding Lisp symbol.  Here are the conventional Lisp names for
 common function keys:
 
 @table @asis
-@item @code{LEFT}, @code{UP}, @code{RIGHT}, @code{DOWN}
+@item @code{left}, @code{up}, @code{right}, @code{down}
 Cursor arrow keys.
 
-@item @code{Begin}, @code{End}, @code{Home}, @code{next}, @code{prior}
+@item @code{begin}, @code{end}, @code{home}, @code{next}, @code{prior}
 Other cursor repositioning keys.
 
 @item @code{select}, @code{print}, @code{execute}, @code{backtab}
@@ -1869,6 +1869,9 @@ Numbered function keys (across the top of the keyboard).
 @item @code{kp-add}, @code{kp-subtract}, @code{kp-multiply}, @code{kp-divide}
 @itemx @code{kp-backtab}, @code{kp-space}, @code{kp-tab}, @code{kp-enter}
 @itemx @code{kp-separator}, @code{kp-decimal}, @code{kp-equal}
+@itemx @code{kp-prior}, @code{kp-next}, @code{kp-end}, @code{kp-home}
+@itemx @code{kp-left}, @code{kp-up}, @code{kp-right}, @code{kp-down}
+@itemx @code{kp-insert }, @code{kp-delete}
 Keypad keys (to the right of the regular keyboard), with names or punctuation.
 
 @item @code{kp-0}, @code{kp-1}, @dots{} @code{kp-9}

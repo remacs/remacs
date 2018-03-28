@@ -1247,7 +1247,7 @@ remains unchanged."
 				     -char-))
 			    (delete-extent ext)))
 		      nil ,from ,to ,value nil -property-))
-    ;; Gnu Emacs
+    ;; GNU Emacs
     `(c-clear-char-property-with-value-on-char-function ,from ,to ,property
 							,value ,char)))
 
