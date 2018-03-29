@@ -121,6 +121,9 @@ regular expression was previously invalid, but is now accepted:
 
    x\{32768\}
 
+---
+** The German prefix and postfix input methods now support Capital sharp S.
+
 
 * Editing Changes in Emacs 27.1
 

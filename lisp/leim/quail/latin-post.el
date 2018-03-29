@@ -1103,6 +1103,7 @@ szz -> sz
  ("UE" ?Ü)
  ("ue" ?ü)
  ("sz" ?ß)
+ ("SZ" ?ẞ)
 
  ("AEE" ["AE"])
  ("aee" ["ae"])
@@ -1111,6 +1112,7 @@ szz -> sz
  ("UEE" ["UE"])
  ("uee" ["ue"])
  ("szz" ["sz"])
+ ("SZZ" ["SZ"])
  ("ge" ["ge"])
  ("eue" ["eue"])
  ("Eue" ["Eue"])
