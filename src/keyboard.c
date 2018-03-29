@@ -3258,7 +3258,10 @@ record_char (Lisp_Object c)
       if (!recorded)
 	{
 	  total_keys += total_keys < NUM_RECENT_KEYS;
-	  ASET (recent_keys, recent_keys_index, c);
+	  ASET (recent_keys, recent_keys_index,
+                /* Copy the event, in case it gets modified by side-effect
+                   by some remapping function (bug#30955).  */
+                CONSP (c) ? Fcopy_sequence (c) : c);
 	  if (++recent_keys_index >= NUM_RECENT_KEYS)
 	    recent_keys_index = 0;
 	}
@@ -9296,7 +9299,10 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	    }
 
 	  GROW_RAW_KEYBUF;
-	  ASET (raw_keybuf, raw_keybuf_count, key);
+	  ASET (raw_keybuf, raw_keybuf_count,
+                /* Copy the event, in case it gets modified by side-effect
+                   by some remapping function (bug#30955).  */
+                CONSP (key) ? Fcopy_sequence (key) : key);
 	  raw_keybuf_count++;
 	}
 
@@ -9343,9 +9349,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 		      && BUFFERP (XWINDOW (window)->contents)
 		      && XBUFFER (XWINDOW (window)->contents) != current_buffer)
 		    {
-		      GROW_RAW_KEYBUF;
-		      ASET (raw_keybuf, raw_keybuf_count, key);
-		      raw_keybuf_count++;
 		      keybuf[t] = key;
 		      mock_input = t + 1;
 
