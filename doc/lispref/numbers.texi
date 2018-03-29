@@ -55,16 +55,13 @@ chapter assume the minimum integer width of 30 bits.
 
   The Lisp reader reads an integer as a nonempty sequence
 of decimal digits with optional initial sign and optional
-final period.  A decimal integer that is out of the
-Emacs range is treated as a floating-point number.
+final period.
 
 @example
  1               ; @r{The integer 1.}
  1.              ; @r{The integer 1.}
 +1               ; @r{Also the integer 1.}
 -1               ; @r{The integer @minus{}1.}
- 9000000000000000000
-                 ; @r{The floating-point number 9e18.}
  0               ; @r{The integer 0.}
 -0               ; @r{The integer 0.}
 @end example
@@ -93,6 +90,15 @@ For example:
 #x2c @result{} 44
 #24r1k @result{} 44
 @end example
+
+  If an integer is outside the Emacs range, the Lisp reader ordinarily
+signals an overflow.  However, if a too-large plain integer ends in a
+period, the Lisp reader treats it as a floating-point number instead.
+This lets an Emacs Lisp program specify a large integer that is
+quietly approximated by a floating-point number on machines with
+limited word width.  For example, @samp{536870912.} is a
+floating-point number if Emacs integers are only 30 bits wide and is
+an integer otherwise.
 
   To understand how various functions work on integers, especially the
 bitwise operators (@pxref{Bitwise Operations}), it is often helpful to

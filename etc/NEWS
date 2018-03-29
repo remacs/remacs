@@ -352,6 +352,13 @@ as new-style, bind the new variable 'force-new-style-backquotes' to t.
 integer, Emacs now signals an error if the number is too large for the
 implementation to format (Bug#30408).
 
++++
+** The Lisp reader now signals an overflow for plain decimal integers
+that do not end in '.' and are outside Emacs range.  Formerly the Lisp
+reader silently converted them to floating-point numbers, and signaled
+overflow only for integers with a radix that are outside machine range
+(Bug#30408).
+
 ---
 ** Some functions and variables obsolete since Emacs 22 have been removed:
 archive-mouse-extract, assoc-ignore-case, assoc-ignore-representation,

@@ -2339,7 +2339,7 @@ character_name_to_code (char const *name, ptrdiff_t name_len)
      monstrosities like "U+-0000".  */
   Lisp_Object code
     = (name[0] == 'U' && name[1] == '+'
-       ? string_to_number (name + 1, 16, false)
+       ? string_to_number (name + 1, 16, 0)
        : call2 (Qchar_from_name, make_unibyte_string (name, name_len), Qt));
 
   if (! RANGED_INTEGERP (0, code, MAX_UNICODE_CHAR)
@@ -2693,7 +2693,7 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
       invalid_syntax (buf);
     }
 
-  return string_to_number (buf, radix, false);
+  return string_to_number (buf, radix, 0);
 }
 
 
@@ -3502,7 +3502,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 	if (!quoted && !uninterned_symbol)
 	  {
-	    Lisp_Object result = string_to_number (read_buffer, 10, false);
+	    Lisp_Object result = string_to_number (read_buffer, 10, 0);
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }
@@ -3667,16 +3667,17 @@ substitute_in_interval (INTERVAL interval, void *arg)
 }
 
 
-/* Convert STRING to a number, assuming base BASE.  Return a fixnum if
-   STRING has integer syntax and fits in a fixnum, else return the
-   nearest float if STRING has either floating point or integer syntax
-   and BASE is 10, else return nil.  If IGNORE_TRAILING, consider just
-   the longest prefix of STRING that has valid floating point syntax.
-   Signal an overflow if BASE is not 10 and the number has integer
-   syntax but does not fit.  */
+/* Convert STRING to a number, assuming base BASE.  When STRING has
+   floating point syntax and BASE is 10, return a nearest float.  When
+   STRING has integer syntax, return a fixnum if the integer fits, and
+   signal an overflow otherwise (unless BASE is 10 and STRING ends in
+   period or FLAGS & S2N_OVERFLOW_TO_FLOAT is nonzero; in this case,
+   return a nearest float instead).  Otherwise, return nil.  If FLAGS
+   & S2N_IGNORE_TRAILING is nonzero, consider just the longest prefix
+   of STRING that has valid syntax.  */
 
 Lisp_Object
-string_to_number (char const *string, int base, bool ignore_trailing)
+string_to_number (char const *string, int base, int flags)
 {
   char const *cp = string;
   bool float_syntax = 0;
@@ -3759,9 +3760,10 @@ string_to_number (char const *string, int base, bool ignore_trailing)
 		      || (state & ~INTOVERFLOW) == (LEAD_INT|E_EXP));
     }
 
-  /* Return nil if the number uses invalid syntax.  If IGNORE_TRAILING, accept
-     any prefix that matches.  Otherwise, the entire string must match.  */
-  if (! (ignore_trailing
+  /* Return nil if the number uses invalid syntax.  If FLAGS &
+     S2N_IGNORE_TRAILING, accept any prefix that matches.  Otherwise,
+     the entire string must match.  */
+  if (! (flags & S2N_IGNORE_TRAILING
 	 ? ((state & LEAD_INT) != 0 || float_syntax)
 	 : (!*cp && ((state & ~(INTOVERFLOW | DOT_CHAR)) == LEAD_INT
 		     || float_syntax))))
@@ -3776,7 +3778,7 @@ string_to_number (char const *string, int base, bool ignore_trailing)
 	  /* Unfortunately there's no simple and accurate way to convert
 	     non-base-10 numbers that are out of C-language range.  */
 	  if (base != 10)
-	    xsignal1 (Qoverflow_error, build_string (string));
+	    flags = 0;
 	}
       else if (n <= (negative ? -MOST_NEGATIVE_FIXNUM : MOST_POSITIVE_FIXNUM))
 	{
@@ -3785,6 +3787,9 @@ string_to_number (char const *string, int base, bool ignore_trailing)
 	}
       else
 	value = n;
+
+      if (! (state & DOT_CHAR) && ! (flags & S2N_OVERFLOW_TO_FLOAT))
+	xsignal1 (Qoverflow_error, build_string (string));
     }
 
   /* Either the number uses float syntax, or it does not fit into a fixnum.
