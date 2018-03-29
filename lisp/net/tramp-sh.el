@@ -327,7 +327,6 @@ The string is used in `tramp-methods'.")
 (add-to-list 'tramp-methods
   `("plink"
     (tramp-login-program        "plink")
-    ;; ("%h") must be a single element, see `tramp-compute-multi-hops'.
     (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh") ("-t")
 				 ("%h") ("\"")
 				 (,(format
@@ -4636,25 +4635,24 @@ Goes through the list `tramp-inline-compress-commands'."
 	   "Method `%s' is not supported for multi-hops."
 	   (tramp-file-name-method item)))))
 
-    ;; In case the host name is not used for the remote shell
-    ;; command, the user could be misguided by applying a random
-    ;; host name.
-    (let* ((v (car target-alist))
-	   (method (tramp-file-name-method v))
-	   (host (tramp-file-name-host v)))
-      (unless
-	  (or
-	   ;; There are multi-hops.
-	   (cdr target-alist)
-	   ;; The host name is used for the remote shell command.
-	   (member '("%h") (tramp-get-method-parameter v 'tramp-login-args))
-	   ;; The host is local.  We cannot use `tramp-local-host-p'
-	   ;; here, because it opens a connection as well.
-	   (string-match tramp-local-host-regexp host))
-	(tramp-error
-	 v 'file-error
-	 "Host `%s' looks like a remote host, `%s' can only use the local host"
-	 host method)))
+    ;; Some methods ("su", "sg", "sudo", "doas", "ksu") do not use the
+    ;; host name in their command template.  In this case, the remote
+    ;; file name must use either a local host name (first hop), or a
+    ;; host name matching the previous hop.
+    (let ((previous-host tramp-local-host-regexp))
+      (setq choices target-alist)
+      (while (setq item (pop choices))
+	(let ((host (tramp-file-name-host item)))
+	  (unless
+	      (or
+	       ;; The host name is used for the remote shell command.
+	       (member
+		'("%h") (tramp-get-method-parameter item 'tramp-login-args))
+	       ;; The host name must match previous hop.
+	       (string-match previous-host host))
+	    (tramp-user-error
+	     item "Host name `%s' does not match `%s'" host previous-host))
+	  (setq previous-host (concat "^" (regexp-quote host) "$")))))
 
     ;; Result.
     target-alist))
