@@ -3502,7 +3502,9 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 	if (!quoted && !uninterned_symbol)
 	  {
-	    Lisp_Object result = string_to_number (read_buffer, 10, 0);
+	    int flags = (read_integer_overflow_as_float
+			 ? S2N_OVERFLOW_TO_FLOAT : 0);
+	    Lisp_Object result = string_to_number (read_buffer, 10, flags);
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }
@@ -4829,6 +4831,13 @@ were read in.  */);
   DEFVAR_LISP ("read-circle", Vread_circle,
 	       doc: /* Non-nil means read recursive structures using #N= and #N# syntax.  */);
   Vread_circle = Qt;
+
+  DEFVAR_BOOL ("read-integer-overflow-as-float",
+	       read_integer_overflow_as_float,
+	       doc: /* Non-nil means `read' quietly treats an out-of-range integer as floating point.
+Nil (the default) means signal an overflow unless the integer ends in `.'.
+This variable is experimental; email 30408@debbugs.gnu.org if you need it.  */);
+  read_integer_overflow_as_float = false;
 
   DEFVAR_LISP ("load-path", Vload_path,
 	       doc: /* List of directories to search for files to load.
