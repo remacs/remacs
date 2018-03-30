@@ -1714,14 +1714,14 @@ Do not call directly!"
 
   ;; Interpret overprinting to indicate bold face:
   (goto-char (point-min))
-  (while (re-search-forward "\\(.\\)\\(\\(+\\1\\)+\\)" nil t)
+  (while (re-search-forward "\\(.\\)\\(\\(\^H+\\1\\)+\\)" nil t)
     (woman-delete-match 2)
     (woman-set-face (1- (point)) (point) 'woman-bold))
 
   ;; Interpret underlining to indicate italic face:
   ;; (Must be AFTER emboldening to interpret bold _ correctly!)
   (goto-char (point-min))
-  (while (search-forward "_" nil t)
+  (while (search-forward "_\^H" nil t)
     (delete-char -2)
     (woman-set-face (point) (1+ (point)) 'woman-italic))
 
@@ -2071,14 +2071,14 @@ alist in `woman-buffer-alist' and return nil."
 
 ;;; Syntax and display tables:
 
-(defconst woman-escaped-escape-char ?
+(defconst woman-escaped-escape-char ?\^\\
   ;; An arbitrary unused control character
   "Internal character representation of escaped escape characters.")
 (defconst woman-escaped-escape-string
   (char-to-string woman-escaped-escape-char)
   "Internal string representation of escaped escape characters.")
 
-(defconst woman-unpadded-space-char ?
+(defconst woman-unpadded-space-char ?\^]
   ;; An arbitrary unused control character
   "Internal character representation of unpadded space characters.")
 (defconst woman-unpadded-space-string

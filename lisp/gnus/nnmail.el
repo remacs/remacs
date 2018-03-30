@@ -723,7 +723,7 @@ If SOURCE is a directory spec, try to return the group name component."
 	 ;; Skip all the headers in case there are more "From "s...
 	 (or (search-forward "\n\n" nil t)
 	     (search-forward-regexp "^[^:]*\\( .*\\|\\)$" nil t)
-	     (search-forward ""))
+	     (search-forward "\^_\^L"))
 	 (point)))
       ;; Unquote the ">From " line, if any.
       (goto-char (point-min))
@@ -763,7 +763,7 @@ If SOURCE is a directory spec, try to return the group name component."
 	(if (or (= (+ (point) content-length) (point-max))
 		(save-excursion
 		  (goto-char (+ (point) content-length))
-		  (looking-at "")))
+		  (looking-at "\^_")))
 	    (progn
 	      (goto-char (+ (point) content-length))
 	      (setq do-search nil))
@@ -772,7 +772,7 @@ If SOURCE is a directory spec, try to return the group name component."
       ;; Go to the beginning of the next article - or to the end
       ;; of the buffer.
       (when do-search
-	(if (re-search-forward "^" nil t)
+	(if (re-search-forward "^\^_" nil t)
 	    (goto-char (match-beginning 0))
 	  (goto-char (1- (point-max)))))
       (delete-char 1)			; delete ^_

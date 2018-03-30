@@ -41,13 +41,13 @@
   '((:around "\300\301\302\003#\207" 5)
     (:before "\300\301\002\"\210\300\302\002\"\207" 4)
     (:after "\300\302\002\"\300\301\003\"\210\207" 5)
-    (:override "\300\301\"\207" 4)
+    (:override "\300\301\002\"\207" 4)
     (:after-until "\300\302\002\"\206\013\000\300\301\002\"\207" 4)
     (:after-while "\300\302\002\"\205\013\000\300\301\002\"\207" 4)
     (:before-until "\300\301\002\"\206\013\000\300\302\002\"\207" 4)
     (:before-while "\300\301\002\"\205\013\000\300\302\002\"\207" 4)
-    (:filter-args "\300\302\301!\"\207" 5)
-    (:filter-return "\301\300\302\"!\207" 5))
+    (:filter-args "\300\302\301\003!\"\207" 5)
+    (:filter-return "\301\300\302\003\"!\207" 5))
   "List of descriptions of how to add a function.
 Each element has the form (WHERE BYTECODE STACK) where:
   WHERE is a keyword indicating where the function is added.
