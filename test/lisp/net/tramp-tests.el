@@ -1727,6 +1727,8 @@ handled properly.  BODY shall not contain a timeout."
   "Check host name rules for host-less methods."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
+  ;; `user-error' has appeared in Emacs 24.3.
+  (skip-unless (fboundp 'user-error))
 
   ;; Host names must match rules in case the command template of a
   ;; method doesn't use them.
@@ -4687,8 +4689,7 @@ Use the `ls' command."
   (skip-unless (not (tramp--test-windows-nt-and-batch)))
   (skip-unless (not (tramp--test-windows-nt-and-pscp-psftp-p)))
 
-  (tramp--test-instrument-test-case 10
-  (tramp--test-utf8)))
+  (tramp--test-utf8))
 
 (ert-deftest tramp-test39-utf8-with-stat ()
   "Check UTF8 encoding in file names and file contents.
@@ -5117,6 +5118,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * file-name-case-insensitive-p
 
 ;; * Work on skipped tests.  Make a comment, when it is impossible.
+;; * Revisit expensive tests, once problems in tramp-error are solved.
 ;; * Fix `tramp-test05-expand-file-name-relative' in `expand-file-name'.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Investigate, why `tramp-test11-copy-file' and `tramp-test12-rename-file'

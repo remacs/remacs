@@ -1691,10 +1691,11 @@ applicable)."
   "Dump a backtrace into the debug buffer.
 If VEC-OR-PROC is nil, the buffer *debug tramp* is used.  This
 function is meant for debugging purposes."
-  (if vec-or-proc
-      (tramp-message vec-or-proc 10 "\n%s" (with-output-to-string (backtrace)))
-    (if (>= tramp-verbose 10)
-	(with-output-to-temp-buffer "*debug tramp*" (backtrace)))))
+  (when (>= tramp-verbose 10)
+    (if vec-or-proc
+	(tramp-message
+	 vec-or-proc 10 "\n%s" (with-output-to-string (backtrace)))
+      (with-output-to-temp-buffer "*debug tramp*" (backtrace)))))
 
 (defsubst tramp-error (vec-or-proc signal fmt-string &rest arguments)
   "Emit an error.
