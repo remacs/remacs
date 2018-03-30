@@ -463,6 +463,47 @@ ns_set_name (struct frame *f, Lisp_Object name, int explicit)
   ns_set_name_internal (f, name);
 }
 
+static void
+ns_set_represented_filename (struct frame *f)
+{
+  Lisp_Object filename, encoded_filename;
+  Lisp_Object buf = XWINDOW (f->selected_window)->contents;
+  NSAutoreleasePool *pool;
+  NSString *fstr;
+  NSView *view = FRAME_NS_VIEW (f);
+
+  NSTRACE ("ns_set_represented_filename");
+
+  if (f->explicit_name || ! NILP (f->title))
+    return;
+
+  block_input ();
+  pool = [[NSAutoreleasePool alloc] init];
+  filename = BVAR (XBUFFER (buf), filename);
+
+  if (! NILP (filename))
+    {
+      encoded_filename = ENCODE_UTF_8 (filename);
+
+      fstr = [NSString stringWithUTF8String: SSDATA (encoded_filename)];
+      if (fstr == nil) fstr = @"";
+    }
+  else
+    fstr = @"";
+
+#ifdef NS_IMPL_COCOA
+  /* Work around a bug observed on 10.3 and later where
+     setTitleWithRepresentedFilename does not clear out previous state
+     if given filename does not exist.  */
+  if (! [[NSFileManager defaultManager] fileExistsAtPath: fstr])
+    [[view window] setRepresentedFilename: @""];
+#endif
+  [[view window] setRepresentedFilename: fstr];
+
+  [pool release];
+  unblock_input ();
+}
+
 
 /* This function should be called when the user's lisp code has
    specified a name for the frame; the name will override any set by the

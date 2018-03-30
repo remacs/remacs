@@ -1237,12 +1237,6 @@ struct input_event;
 extern void ns_init_events (struct input_event *);
 extern void ns_finish_events (void);
 
-#ifdef __OBJC__
-/* Needed in nsfns.m.  */
-extern void
-ns_set_represented_filename (struct frame *f);
-
-#endif
 
 #ifdef NS_IMPL_GNUSTEP
 extern char gnustep_base_version[];  /* version tracking */
