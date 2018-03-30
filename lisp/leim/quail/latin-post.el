@@ -2186,6 +2186,7 @@ Doubling the postfix separates the letter and postfix: e.g. a\\='\\=' -> a\\='
  ("R~" ?Ř)
  ("S'" ?Ś)
  ("S," ?Ş)
+ ("S/" ?ẞ)
  ("S^" ?Ŝ)
  ("S~" ?Š)
  ("T," ?Ţ)

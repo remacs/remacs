@@ -1176,6 +1176,7 @@ of characters from a single Latin-N charset.
  ("\"E" ?Ë)
  ("\"I" ?Ï)
  ("\"O" ?Ö)
+ ("\"S" ?ẞ)
  ("\"U" ?Ü)
  ("\"W" ?Ẅ)
  ("\"Y" ?Ÿ)
