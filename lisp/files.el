@@ -436,8 +436,9 @@ and toggle it if ARG is `toggle'."
            auto-save-visited-interval :repeat
            #'save-some-buffers :no-prompt
            (lambda ()
-             (not (and buffer-auto-save-file-name
-                       auto-save-visited-file-name)))))))
+             (and buffer-file-name
+                  (not (and buffer-auto-save-file-name
+                            auto-save-visited-file-name))))))))
 
 ;; The 'set' part is so we don't get a warning for using this variable
 ;; above, while still catching code that _sets_ the variable to get
