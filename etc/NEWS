@@ -208,6 +208,13 @@ Can be controlled via the new variable 'footnote-align-to-fn-text'.
 formats (e.g. "black" => "#000000" => "rgb(0, 0, 0)") has been added,
 bound to 'C-c C-f'.
 
+** SGML mode
+
+---
+*** 'sgml-quote' now handles double quotes and apostrophes
+when escaping text and in addition all numeric entities when
+unescaping text.
+
 ** Dired
 
 +++

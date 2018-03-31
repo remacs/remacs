@@ -1241,8 +1241,11 @@ See `sgml-tag-alist' for info about attribute rules."
 
 (defun sgml-quote (start end &optional unquotep)
   "Quote SGML text in region START ... END.
-Only &, < and > are quoted, the rest is left untouched.
-With prefix argument UNQUOTEP, unquote the region."
+Only &, <, >, ' and \" characters are quoted, the rest is left
+untouched.  This is sufficient to use quoted text as SGML argument.
+
+With prefix argument UNQUOTEP, unquote the region.  All numeric entities,
+\"amp\", \"lt\", \"gt\" and \"quot\" named entities are unquoted."
   (interactive "r\nP")
   (save-restriction
     (narrow-to-region start end)
@@ -1250,14 +1253,23 @@ With prefix argument UNQUOTEP, unquote the region."
     (if unquotep
 	;; FIXME: We should unquote other named character references as well.
 	(while (re-search-forward
-		"\\(&\\(amp\\|\\(l\\|\\(g\\)\\)t\\)\\)[][<>&;\n\t \"%!'(),/=?]"
+		"\\(&\\(amp\\|quot\\|lt\\|gt\\|#\\([0-9]+\\|[xX][0-9a-fA-F]+\\)\\)\\)\\([][<>&;\n\t \"%!'(),/=?]\\|$\\)"
 		nil t)
-	  (replace-match (if (match-end 4) ">" (if (match-end 3) "<" "&")) t t
-			 nil (if (eq (char-before (match-end 0)) ?\;) 0 1)))
-      (while (re-search-forward "[&<>]" nil t)
+          (replace-match
+           (string
+            (or (cdr (assq (char-after (match-beginning 2))
+                           '((?a . ?&) (?q . ?\") (?l . ?<) (?g . ?>))))
+                (let ((num (match-string 3)))
+                  (if (or (eq ?x (aref num 0)) (eq ?X (aref num 0)))
+                      (string-to-number (substring num 1) 16)
+                    (string-to-number num 10)))))
+           t t nil (if (eq (char-before (match-end 0)) ?\;) 0 1)))
+      (while (re-search-forward "[&<>\"']" nil t)
 	(replace-match (cdr (assq (char-before) '((?& . "&amp;")
 						  (?< . "&lt;")
-						  (?> . "&gt;"))))
+						  (?> . "&gt;")
+                                                  (?\" . "&#34;")
+                                                  (?' . "&#39;"))))
 		       t t)))))
 
 (defun sgml-pretty-print (beg end)
