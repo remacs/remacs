@@ -14,8 +14,8 @@ built either without window system support, with X11, or with the
 Cocoa interface; this section only applies to the Cocoa build.  This
 does not support versions before macOS 10.6.
 
-  GNUstep is free software; MacOS is not.  MacOS a non-free operating
-system; that means it denies its users the freedom that every computer
+  GNUstep is free software; macOS is not.  Because it is a non-free
+operating system, macOS denies its users the freedom that every computer
 user deserves.  That is an injustice.  For your freedom's sake, we
 urge you to switch to a free operating system.
 
