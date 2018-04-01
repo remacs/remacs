@@ -289,7 +289,8 @@ by default use the last buffer that navigated to the current buffer.
 
 ** nxml-mode
 
-*** Changed default for variable 'nxml-sexp-element-flag' to true.
+---
+*** The default value of 'nxml-sexp-element-flag' is now t.
 This means that pressing C-M-SPACE now selects the entire tree by
 default, and not just the opening element.
 
