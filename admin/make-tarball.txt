@@ -87,6 +87,11 @@ General steps (for each step, check for possible errors):
      make -C etc/refcards
      make -C etc/refcards clean
 
+    If etc/refcards does not build you may need to downgrade or
+    upgrade your TeX installation, or do that part of the build by
+    hand.  For clues, search for the string "refcard" in the file
+    admin/release-process.
+
 5.  Copy lisp/loaddefs.el to lisp/ldefs-boot.el.
 
     Commit ChangeLog.N, etc/AUTHORS, lisp/ldefs-boot.el, and the
@@ -231,11 +236,16 @@ as follows:
   gzip --best --no-name <../info/elisp.info >info/elisp.info.gz
   gzip --best --no-name <../info/emacs.info >info/emacs.info.gz
 
+Update the refcards/pdf/ and ps/ directories, and also
+refcards/emacs-refcards.tar.gz (use make -C etc/refcards pdf ps dist).
+
 FIXME: The above instructions are not quite complete, as they do not
-specify how to copy the generated files in the 'manual' directory to
-the corresponding web files.  Also, they are missing some files, e.g.,
+specify the manual procuedure used to copy the generated files in the
+'manual' directory to the corresponding web files, and to cvs remove
+and add files as needed.  Also, they are missing some files, e.g.,
 they generate manual/html_mono/ada-mode.html but do not generate the
-top-level ada-mode.html file for the one-node-per-page version.
+top-level ada-mode.html file for the one-node-per-page version; this
+is currently done by hand.
 
 Browsing <https://web.cvs.savannah.gnu.org/viewvc/?root=emacs> is one
 way to check for any files that still need updating.
