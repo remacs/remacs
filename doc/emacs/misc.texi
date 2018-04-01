@@ -3011,7 +3011,7 @@ is idle.
 
 @findex butterfly
 @cindex butterfly
-  Real Programmers™ deploy @kbd{M-x butterfly}, which uses butterflies
+  ``Real Programmers'' deploy @kbd{M-x butterfly}, which uses butterflies
 to flip a bit on the drive platter, see @uref{https://xkcd.com/378}.
 
 @findex doctor

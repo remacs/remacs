@@ -262,7 +262,14 @@ Clear out the region-rectangle with spaces
 text.
 @item C-c C-w @var{r}
 Similar, but save rectangle contents in register @var{r} first
-(@code{picture-clear-rectangle-to-register}).  @xref{Registers}.
+(@code{picture-clear-rectangle-to-register}).
+@iftex
+@xref{Registers,,, emacs, the Emacs Manual}.
+@end iftex
+@ifnottex
+@xref{Registers}.
+@end ifnottex
+
 @item C-c C-y
 Copy last killed rectangle into the buffer by overwriting, with upper
 left corner at point (@code{picture-yank-rectangle}).  With argument,

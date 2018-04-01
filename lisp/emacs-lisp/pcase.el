@@ -118,7 +118,9 @@ two element list, binding its elements to symbols named `foo' and
 
 A significant difference from `cl-destructuring-bind' is that, if
 a pattern match fails, the next case is tried until either a
-successful match is found or there are no more cases.
+successful match is found or there are no more cases.  The CODE
+expression corresponding to the matching pattern determines the
+return value.  If there is no match the returned value is nil.
 
 Another difference is that pattern elements may be quoted,
 meaning they must match exactly: The pattern \\='(foo bar)
@@ -211,7 +213,8 @@ Emacs Lisp manual for more information and examples."
 
 ;;;###autoload
 (defmacro pcase-exhaustive (exp &rest cases)
-  "The exhaustive version of `pcase' (which see)."
+  "The exhaustive version of `pcase' (which see).
+If EXP fails to match any of the patterns in CASES, an error is signaled."
   (declare (indent 1) (debug pcase))
   (let* ((x (gensym "x"))
          (pcase--dontwarn-upats (cons x pcase--dontwarn-upats)))
