@@ -2078,10 +2078,11 @@ Currently supported properties are all the properties that can appear in
 As is the case with most hooks, the functions are responsible for
 preserving things like point and current buffer.
 
-NOTE: These functions should be cheap to run since they're sometimes run from
-`post-command-hook' and they should ideally only choose which kind of
-completion table to use and not pre-filter it based on the current text between
-START and END (e.g. that would not obey `completion-styles').")
+NOTE: These functions should be cheap to run since they're sometimes
+run from `post-command-hook'; and they should ideally only choose
+which kind of completion table to use, and not pre-filter it based
+on the current text between START and END (e.g., they should not
+obey `completion-styles').")
 
 (defvar completion--capf-misbehave-funs nil
   "List of functions found on `completion-at-point-functions' that misbehave.
