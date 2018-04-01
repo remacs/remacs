@@ -22224,7 +22224,7 @@ QUALITY can be:
 ;;;### (autoloads nil "mwheel" "mwheel.el" (0 0 0 0))
 ;;; Generated autoloads from mwheel.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "mwheel" '("mwheel-" "mouse-wheel-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "mwheel" '("mouse-wheel-" "mwheel-")))
 
 ;;;***
 
@@ -23458,7 +23458,7 @@ Coloring:
 
 ;;;### (autoloads nil "org" "org/org.el" (0 0 0 0))
 ;;; Generated autoloads from org/org.el
-(push (purecopy '(org 9 1 6)) package--builtin-versions)
+(push (purecopy '(org 9 1 9)) package--builtin-versions)
 
 (autoload 'org-babel-do-load-languages "org" "\
 Load the languages defined in `org-babel-load-languages'.
@@ -23667,7 +23667,7 @@ information about your Org version and configuration.
 \(fn)" t nil)
 
 (autoload 'org-reload "org" "\
-Reload all org lisp files.
+Reload all Org Lisp files.
 With prefix arg UNCOMPILED, load the uncompiled versions.
 
 \(fn &optional UNCOMPILED)" t nil)
@@ -24877,7 +24877,9 @@ two element list, binding its elements to symbols named `foo' and
 
 A significant difference from `cl-destructuring-bind' is that, if
 a pattern match fails, the next case is tried until either a
-successful match is found or there are no more cases.
+successful match is found or there are no more cases.  The CODE
+expression corresponding to the matching pattern determines the
+return value.  If there is no match the returned value is nil.
 
 Another difference is that pattern elements may be quoted,
 meaning they must match exactly: The pattern \\='(foo bar)
@@ -24925,6 +24927,7 @@ Emacs Lisp manual for more information and examples.
 
 (autoload 'pcase-exhaustive "pcase" "\
 The exhaustive version of `pcase' (which see).
+If EXP fails to match any of the patterns in CASES, an error is signaled.
 
 \(fn EXP &rest CASES)" nil t)
 
