@@ -58,6 +58,7 @@ The glyph is displayed in face `nxml-glyph'."
 
 (defcustom nxml-sexp-element-flag t
   "Non-nil means sexp commands treat an element as a single expression."
+  :version "27.1"                       ; nil -> t
   :group 'nxml
   :type 'boolean)
 
