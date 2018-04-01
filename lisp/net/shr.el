@@ -934,8 +934,12 @@ size, and full-buffer size."
   (shr-browse-url))
 
 (defun shr-browse-url (&optional external mouse-event)
-  "Browse the URL under point.
-If EXTERNAL, browse the URL using `shr-external-browser'."
+  "Browse the URL at point using `browse-url'.
+If EXTERNAL is non-nil (interactively, the prefix argument), browse
+the URL using `shr-external-browser'.
+If this function is invoked by a mouse click, it will browse the URL
+at the position of the click.  Optional argument MOUSE-EVENT describes
+the mouse click event."
   (interactive (list current-prefix-arg last-nonmenu-event))
   (mouse-set-point mouse-event)
   (let ((url (get-text-property (point) 'shr-url)))
