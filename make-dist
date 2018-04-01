@@ -643,7 +643,9 @@ if [ "${make_tar}" = yes ]; then
        *)  gzip_extension= ;;
   esac
   echo "Creating tar file"
-  taropt='--numeric-owner --owner=0 --group=0 --mode=go+u,go-w --sort=name'
+  taropt='--numeric-owner --owner=0 --group=0 --mode=go+u,go-w'
+  tar --sort=name -cf /dev/null $tempparent/$emacsname/src/lisp.h 2>/tmp/out &&
+    taropt="$taropt --sort=name"
   [ "$verbose" = "yes" ] && taropt="$taropt --verbose"
 
   (cd ${tempparent} ; tar $taropt -cf - ${emacsname} ) \

@@ -210,7 +210,8 @@ longer present.
 
 Tar up the generated html_node/emacs/ and elisp/ directories and update
 the files manual/elisp.html_node.tar.gz and emacs.html_node.tar.gz.
-Use GNU Tar as follows so that the tarballs are reproducible:
+Use GNU Tar 1.28 or later so that the tarballs are more reproducible,
+as follows:
 
   cd manual
   tar='tar --numeric-owner --owner=0 --group=0 --mode=go+u,go-w --sort=name'
