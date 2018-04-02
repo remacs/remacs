@@ -1505,7 +1505,10 @@ library was useless, and we removed it.  GnuPG 2.0 is no longer
 supported by the upstream project.
 
 To adapt to the change, you may need to set 'epa-pinentry-mode' to the
-symbol 'loopback'.
+symbol 'loopback'.  Alternatively, leave 'epa-pinentry-mode' at its
+default value of nil, and remove the 'allow-emacs-pinentry' setting
+from your 'gpg-agent.conf' configuration file, usually found in the
+'~/.gnupg' directory.
 
 Note that previously, it was said that passphrase input through
 minibuffer would be much less secure than other graphical pinentry
