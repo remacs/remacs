@@ -1647,6 +1647,7 @@ white space either before or after the operator, but not both."
   :type 'boolean
   :group 'c)
 
+;; Initialize the next two to a regexp which never matches.
 (defvar c-noise-macro-with-parens-name-re "a\\`")
 (defvar c-noise-macro-name-re "a\\`")
 
@@ -1677,7 +1678,7 @@ These are recognized by CC Mode only in declarations."
   ;; Convert `c-noise-macro-names' and `c-noise-macro-with-parens-names' into
   ;; `c-noise-macro-name-re' and `c-noise-macro-with-parens-name-re'.
   (setq c-noise-macro-with-parens-name-re
-	(cond ((null c-noise-macro-with-parens-names) "a\\`")
+	(cond ((null c-noise-macro-with-parens-names) "a\\`") ; Never matches.
 	      ((consp c-noise-macro-with-parens-names)
 	       (concat (regexp-opt c-noise-macro-with-parens-names t)
 		       "\\([^[:alnum:]_$]\\|$\\)"))
@@ -1686,7 +1687,7 @@ These are recognized by CC Mode only in declarations."
 	      (t (error "c-make-noise-macro-regexps: \
 c-noise-macro-with-parens-names is invalid: %s" c-noise-macro-with-parens-names))))
   (setq c-noise-macro-name-re
-	(cond ((null c-noise-macro-names) "a\\`")
+	(cond ((null c-noise-macro-names) "a\\`") ; Never matches anything.
 	      ((consp c-noise-macro-names)
 	       (concat (regexp-opt c-noise-macro-names t)
 		       "\\([^[:alnum:]_$]\\|$\\)"))
