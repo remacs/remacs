@@ -1246,6 +1246,12 @@ ftfont_close (struct font *font)
   /* FIXME: Although this function can be called while garbage-collecting,
      the function assumes that Lisp data structures are properly-formed.
      This invalid assumption can lead to core dumps (Bug#20890).  */
+#ifdef USE_CAIRO
+  /* Although this works around Bug#20890, it is probably not the
+     right thing to do.  */
+  if (gc_in_progress)
+    return;
+#endif
 
   struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
   Lisp_Object val, cache;
