@@ -474,6 +474,11 @@ depending on the new customizable variable 'read-answer-short'.
 Specifically, it puts the module name into 'load-history', prints
 loading messages if requested, and protects against recursive loads.
 
++++
+** The function 'read-variable' now uses its own history list.
+The history of variable names read by 'read-variable' is recorded in
+the new variable 'custom-variable-history'.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

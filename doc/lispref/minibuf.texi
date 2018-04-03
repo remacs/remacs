@@ -634,6 +634,12 @@ A history list for arguments that are Lisp expressions to evaluate.
 A history list for arguments that are faces.
 @end defvar
 
+@findex read-variable@r{, history list}
+@defvar custom-variable-history
+A history list for variable-name arguments read by
+@code{read-variable}.
+@end defvar
+
 @c Less common: coding-system-history, input-method-history,
 @c command-history, grep-history, grep-find-history,
 @c read-envvar-name-history, setenv-history, yes-or-no-p-history.
