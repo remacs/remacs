@@ -78,6 +78,12 @@ work right without some adjustment:
 * Changes in Emacs 27.1
 
 ---
+** New variable 'xft-ignore-color-fonts'.
+Default t means don't try to load color fonts when using Xft, as they
+often cause crashes.  Set it to nil if you really need those fonts.
+(Bug#30874)
+
+---
 ** The new option 'tooltip-resize-echo-area' avoids truncating tooltip text
 on GUI frames when tooltips are displayed in the echo area.  Instead,
 it resizes the echo area as needed to accommodate the full tool-tip
