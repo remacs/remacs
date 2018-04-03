@@ -5136,8 +5136,8 @@ making.  When that happens, the arguments to
 individual changes are made, but won't necessarily be the minimal such
 region, and the arguments to each successive call of
 @code{after-change-functions} will then delimit the part of text being
-changed exactly.  In general, we advise to use either before- or the
-after-change hooks, but not both.
+changed exactly.  In general, we advise using either the before- or
+the after-change hook, but not both.
 
 @defmac combine-after-change-calls body@dots{}
 The macro executes @var{body} normally, but arranges to call the
@@ -5159,6 +5159,30 @@ the body of a @code{combine-after-change-calls} form.
 parts of the buffer, this will still work, but it is not advisable,
 because it may lead to inefficient behavior for some change hook
 functions.
+@end defmac
+
+@defmac combine-change-calls beg end body@dots{}
+This executes @var{body} normally, except any buffer changes it makes
+do not trigger the calls to @code{before-change-functions} and
+@code{after-change-functions}.  Instead there is a single call of each
+of these hooks for the region enclosed by @var{beg} and @var{end}, the
+parameters supplied to @code{after-change-functions} reflecting the
+changes made to the size of the region by @var{body}.
+
+The result of this macro is the result returned by @var{body}.
+
+This macro is useful when a function makes a possibly large number of
+repetitive changes to the buffer, and the change hooks would otherwise
+take a long time to run, were they to be run for each individual
+buffer modification.  Emacs itself uses this macro, for example, in
+the commands @code{comment-region} and @code{uncomment-region}.
+
+@strong{Warning:} You must not alter the values of
+@code{before-change-functions} or @code{after-change-function} within
+@var{body}.
+
+@strong{Warning:} You must not make any buffer changes outside of the
+region specified by @var{beg} and @var{end}.
 @end defmac
 
 @defvar first-change-hook

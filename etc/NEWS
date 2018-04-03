@@ -451,6 +451,13 @@ socket has been pased to Emacs (Bug#24218).
 instead of just Microsoft platforms.  This fixes a 'get-free-disk-space'
 bug on OS X 10.8 and later (Bug#28639).
 
++++
+** New macro combine-change-calls arranges to call the change hooks
+('before-change-functions' and 'after-change-functions') just once
+each around a sequence of lisp forms, given a region.  This is
+useful when a function makes a possibly large number of repetitive
+changes and the change hooks are time consuming.
+
 ---
 ** The function 'get-free-disk-space' returns now a non-nil value for
 remote systems, which support this check.
