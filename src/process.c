@@ -1657,7 +1657,8 @@ to use a pty, or nil to use the default specified through
 
 :stderr STDERR -- STDERR is either a buffer or a pipe process attached
 to the standard error of subprocess.  Specifying this implies
-`:connection-type' is set to `pipe'.
+`:connection-type' is set to `pipe'.  If STDERR is nil, standard error
+is mixed with standard output and sent to BUFFER or FILTER.
 
 usage: (make-process &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
