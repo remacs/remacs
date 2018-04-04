@@ -1,3 +1,3032 @@
+2018-04-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#31022
+
+	* lisp/cus-start.el (temporary-file-directory): Suppress file name
+	handlers when calling `shell-command-to-string'.  (Bug#31022)
+
+2018-04-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Update "Calendrical Calculations" cites
+
+	* lisp/calendar/calendar.el: Update citations to the book
+	"Calendrical Calculations" and its predecessors.
+
+2018-04-02  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix term.el rendering following a window resize (Bug#30544)
+
+	* lisp/term.el (term-reset-size): Reset cached row and column values
+	before changing point.
+
+2018-04-02  Philipp Stephani  <phst@google.com>
+
+	* lisp/files.el (auto-save-visited-mode): Don't prompt for filenames.
+
+2018-04-01  Philipp Stephani  <phst@google.com>
+
+	Quote a few backticks in docstrings.
+
+	* lisp/emacs-lisp/macroexp.el (macroexp-progn, macroexp-let*)
+	(macroexp-if): Quote backtick in docstrings.
+
+2018-04-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedits of completion-at-point-functions documentation
+
+	* lisp/minibuffer.el (completion-at-point-functions):
+	* doc/lispref/minibuf.texi (Completion in Buffers): Fix wording
+	and filling.
+
+	(cherry picked from commit a8ddd05d7d32946b892b9faaba6c9736ed2ad847)
+
+2018-04-01  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	(completion-at-point-functions): Improve doc
+
+	(cherry picked from commit b56c56f203f8b066dd71e6ae6a254121b3ac3f08)
+
+2018-04-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/net/shr.el (shr-browse-url): Doc fix.  (Bug#30957)
+
+2018-03-31  Hong Xu  <hong@topbug.net>
+
+	Mention `key-description' as inverse of `kbd' (Bug#30942)
+
+	* lisp/subr.el (kbd): Add `key-description' as inverse of `kbd' in the
+	doc.
+
+2018-03-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Document return value of pcase (Bug#30425)
+
+	* doc/lispref/control.texi (Pattern matching case statement):
+	* lisp/emacs-lisp/pcase.el (pcase): State that pcase returns nil if no
+	patterns match.
+	(pcase-exhaustive): State that an error is signaled if no patterns
+	match.
+
+2018-03-31  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* doc/emacs/macos.texi: Tweak grammar and capitalization.
+
+2018-03-31  Richard Stallman  <rms@gnu.org>
+
+	Distinguish free from non-free OSes
+
+2018-03-28  Glenn Morris  <rgm@gnu.org>
+
+	* doc/emacs/misc.texi (Amusements): Avoid non-printing character.
+
+2018-03-28  Glenn Morris  <rgm@gnu.org>
+
+	Fix xrefs in pdf Emacs manual
+
+	* doc/emacs/fortran-xtra.texi (ForIndent Cont, ForIndent Num)
+	(Fortran Columns):
+	* doc/emacs/picture-xtra.texi (Rectangles in Picture):
+	Fix recent changes that neglected the splitting of the pdf manuals.
+
+2018-03-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/misc/org.texi (Installation): Fix clone commands.
+
+2018-03-27  Rasmus  <rasmus@gmx.us>
+
+	Update Org to v9.1.9
+
+	Please note this is a bugfix release. See etc/ORG-NEWS for details.
+
+2018-03-27  Michael Heerdegen  <michael_heerdegen@web.de>
+
+	De-obsolete `if-let' and `when-let'
+
+	For the following release it is planned to make `if-let*' and
+	`when-let*' aliases for `if-let' and `when-let'.  For now we revert
+	declaring `if-let' and `when-let' obsolete and tweak the docstrings.
+
+	* lisp/emacs-lisp/subr-x.el (if-let*, when-let*): Make docstrings
+	refer to those of `if-let' and `when-let'.
+	(if-let, when-let): De-obsolete.  Rewrite documentation.
+
+2018-03-26  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/htmlfontify.el (hfy-begin-span-handler): Doc fix.
+
+2018-03-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/lispref/functions.texi (Defining Functions): Improve indexing.
+
+2018-03-25  Aaron Jensen  <aaronjensen@gmail.com>
+
+	Fix crash after frame is freed on macOS (bug#30800)
+
+	* src/nsterm.m (x_free_frame_resources): Clear represented_frame.
+	(bug#30800)
+
+2018-03-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	More manual editing
+
+	* doc/emacs/basic.texi:
+	* doc/emacs/calendar.texi:
+	* doc/emacs/display.texi:
+	* doc/emacs/mini.texi:
+	* doc/emacs/misc.texi:
+	* doc/emacs/picture-xtra.texi:
+	* doc/misc/info.texi: Prefer <PageDown> and <PageUp> over
+	<next> and <prior>.  Add missing @kindex entries.
+
+	* doc/emacs/custom.texi (Function Keys): Fix and add missing
+	key symbols.
+
+2018-03-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Minor manual changes changes
+
+	* doc/emacs/misc.texi (FFAP): Complete commands.
+	(Amusements): Add some @cindex entries.  Add "M-x butterfly".
+
+2018-03-24  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/calculator.el (calculator-paste-decimals): Add version.
+
+2018-03-23  Eli Zaretskii  <eliz@gnu.org>
+
+	More proofreading of the Emacs manual
+
+	* doc/emacs/trouble.texi (DEL Does Not Delete): Improve wording.
+	(Screen Garbled): Mention the command name.
+	(Bug Criteria): Mention that problems in packages should first be
+	reported to the respective maintainers.
+	(Checklist): Fix wording.
+	(Contributing, Copyright Assignment): Minor copyedits.
+	* doc/emacs/misc.texi (Amusements): Remove Landmark.
+	* doc/emacs/picture-xtra.texi (Tabs in Picture): Improve wording.
+	(Rectangles in Picture): Add a cross-reference to "Registers".
+	* doc/emacs/misc.texi (Gnus Group Buffer, Gnus Summary Buffer):
+	Mention command names in parentheses.
+	(Gnus Summary Buffer): Document "M-r".
+	(Network Security): Document that current NSM works with TLS
+	encryption.  Fix markup.
+	(Document View): Improve wording and fix a typo.
+	(DocView Conversion): Rephrase description of
+	doc-view-cache-directory.
+	(Single Shell): Mention variables that control when shell output
+	appears in the echo area.
+	(Shell Mode): Improve wording.
+	(Shell Prompts): Fix a typo.
+	(Shell Ring, Term Mode): Mention command names.
+	(History References): Add a cross-reference to "Rebinding".
+	(Remote Host): Mention SSH.
+	(TCP Emacs server): Improve wording.
+	(emacsclient Options): Minor improvements.
+	(PostScript): Fix wording.
+	(PostScript Variables): Mention that ps-font-size could be a cons.
+	(Sorting): Minor improvements.  Suggested by Michael Albinus
+	<michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org
+
+2018-03-23  Noam Postavsky  <npostavs@gmail.com>
+
+	* src/lisp.h (struct Lisp_Buffer_Local_Value): Update commentary.
+
+	* doc/emacs/trouble.texi: Fix location of `emacs-version' index.
+
+2018-03-23  Noam Postavsky  <npostavs@gmail.com>
+
+	Explain more about (defvar foo) form (Bug#18059)
+
+	* doc/lispref/variables.texi (Defining Variables)
+	(Using Lexical Binding):
+	* doc/lispref/compile.texi (Compiler Errors): Emphasize that omitting
+	VALUE for `defvar' marks the variable special only locally.
+	* doc/lispref/variables.texi (Using Lexical Binding): Add example of
+	using `defvar' without VALUE.
+
+2018-03-22  Charles A. Roelli  <charles@aurox.ch>
+
+	* doc/lispref/buffers.texi (Buffer List): Fix grammar.
+
+	* doc/lispref/anti.texi (Antinews): Fix grammar.
+
+2018-03-22  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/org/ob-lisp.el (org-babel-lisp-eval-fn): Tweak type.
+
+	Avoids type mismatch when relevant library is not present/loaded.
+
+2018-03-22  Glenn Morris  <rgm@gnu.org>
+
+	sql.el defcustom fixes
+
+	* lisp/progmodes/sql.el (sql-login-params): Update.
+	Avoids type mismatch with postgres and sqlite login params.
+	(sql-postgres-login-params): Bump version.
+
+2018-03-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Document DEFUN attributes
+
+	* doc/lispref/internals.texi (Writing Emacs Primitives): Document
+	specification of function attributes in DEFUN.
+
+2018-03-22  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/NEWS: Add an entry for auth-source-pass.
+
+2018-03-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix the MSDOS build
+
+	* msdos/sed2v2.inp (HAVE_SBRK): Define to 1.
+
+2018-03-22  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	Improve warning and error messages
+
+	* lisp/emacs-lisp/eieio-base.el (eieio-persistent-read,
+	  (eieio-persistent-validate/fix-slot-value): Indicate exactly what
+	  went wrong.
+
+2018-03-22  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	Adjust eieio persistence tests for expected failure
+
+	* test/lisp/emacs-lisp/eieio-tests/eieio-test-persist.el
+	 (eieio-test-persist-hash-and-vector,
+	  eieio-test-persist-interior-lists): Persistence does not currently
+	 handle deeply-nested objects. Expect current failures, and mark for
+	 future fixes.
+
+2018-03-22  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	Let eieio-persistent-read read what object-write has written
+
+	* lisp/emacs-lisp/eieio-base.el (eieio-persistent-validate/fix-slot-value):
+	  `object-write' may quote lists inside hash tables and vectors, so
+	  unquote those lists here.
+
+	This patch allows the eieio-persistent write/restore process to
+	perform a clean round trip. It only handles a very specific and
+	limited range of object structures, but at least the write and read
+	procedures match.
+
+2018-03-22  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	Handle possible classtype values in eieio-persistent-read
+
+	* lisp/emacs-lisp/eieio-base.el (eieio-persistent-validate/fix-slot-value):
+	  The function `eieio-persistent-slot-type-is-class-p' could return
+	  either a single class, or a list of classes.
+
+2018-03-22  Pierre Téchoueyres  <pierre.techoueyres@free.fr>
+
+	Add new tests for eieio persistence
+
+	* test/lisp/emacs-lisp/eieio-tests/eieio-test-persist.el:
+	  (hash-equal): New comparison test for hash-tables.
+	  (persist-test-save-and-compare): Use test for hash-tables.
+	  (eieio-test-persist-hash-and-vector,
+	  eieio-test-persist-interior-lists): New tests.
+
+2018-03-22  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/gnus/gnus-cloud.el (gnus-cloud-synced-files): Fix doc & type.
+
+	* lisp/ibuf-ext.el (ibuffer-never-search-content-mode): Fix type.
+
+2018-03-21  Glenn Morris  <rgm@gnu.org>
+
+	* doc/lispref/windows.texi (Selecting Windows): Fix a typo.
+
+2018-03-21  Charles A. Roelli  <charles@aurox.ch>
+
+	* doc/lispref/internals.texi (Writing Emacs Primitives): Fix grammar.
+
+2018-03-21  Alan Mackenzie  <acm@muc.de>
+
+	Firm up documentation of generalized variables
+
+	* doc/lispref/variables.texi (Generalized Variables)
+	(Setting Generalized Variables): Define a generalized variable as something
+	setf can write to.  Remove the insinuation that hackers have poor memories.
+	State explicitly that the list of GVs given is complete.  Remove the
+	suggestion that `setf' has superseded, or is in the process of superseding,
+	`setq'.  Make minor corrections to the English.
+
+2018-03-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of Auto-Revert mode
+
+	* doc/emacs/files.texi (Reverting): Mention that Aut-Revert
+	applies to Dired buffers as well.  Suggested by Michael Albinus
+	<michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+2018-03-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Improvements in dired.texi
+
+	* doc/emacs/dired.texi (Dired): Mention that Dired works with
+	remote directories.
+	(Dired Enter): ls-lisp is used on some remote systems as well.
+	(Dired Navigation): Mention and index the command names.
+	(Dired Deletion): Document the 'always' value of
+	dired-recursive-deletes.  Mention the alternative deletion method.
+	(Marks vs Flags): Fix spelling of Auto-Revert mode.  Document what
+	marking does on a subdirectory header line.
+	(Operating on Files): Document that 'Z' uses gzip or compress.
+	(Comparison in Dired): Mention ediff-files.
+	(Misc Dired Features): Fix a typo.  Suggested by Michael Albinus
+	<michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+2018-03-21  Noam Postavsky  <npostavs@gmail.com>
+
+	Revert "Support all perl variable declarators and prefixes"
+
+	It highlights normal variable names in perl programs (Bug#30812).
+	* lisp/progmodes/perl-mode.el (perl-imenu-generic-expression)
+	(perl-font-lock-keywords-2): Restore values prior to Bug#27613 fix.
+
+	Don't merge to master, we will fix Bug#27613 properly there (it's too
+	close to release to do that on emacs-26).
+
+2018-03-20  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port to 32-bit sparc64
+
+	Backport from master.
+	Problem reported by Ulrich Mueller; fix suggested by Eli Zaretskii
+	and Andreas Schwab (Bug#30855).
+	* src/alloc.c (mark_memory): Call mark_maybe_object only on
+	pointers that are properly aligned for Lisp_Object.
+
+2018-03-20  Robert Pluim  <rpluim@gmail.com>
+
+	Correct Info link markup
+
+	* lisp/gnus/gnus-agent.el (gnus-agent-auto-agentize-methods):
+	Correct markup for Info link.
+	* src/minibuf.c (Fcompleting_read): Likewise.
+
+2018-03-20  Nick Helm  <nick@tenpoint.co.nz>
+
+	Improve documentation of 'with-help-window'
+
+	* doc/lispref/help.texi (Help Functions): Change variable name
+	to 'buffer-or-name'.
+
+	* lisp/help.el (with-help-window): Change variable name to
+	'buffer-or-name' and rewrite the doc string, adding reference
+	to 'help-window-setup'.  (Bug#30792)
+
+2018-03-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvements in building.texi
+
+	* doc/emacs/building.texi (Compilation Shell): Mention that this
+	section is for local compilation buffers.
+	(Compilation, Compilation Mode): Mention that 'g' is bound to
+	'recompile' in compilation buffers.
+	(Grep Searching): Add a cross-reference to "Compilation Mode".
+	Suggested by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+2018-03-20  Alex Branham  <branham@utexas.edu>
+
+	* lisp/textmodes/bibtex.el (bibtex-mark-entry): activate mark
+
+2018-03-19  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/emacs/building.texi (Starting GUD): Mention 'guiler'.
+
+2018-03-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Yet more proofreading of the Emacs manual
+
+	* doc/emacs/building.texi (Compilation, Grep Searching)
+	(Debuggers, GUD Customization, Source Buffers)
+	(Breakpoints Buffer, Threads Buffer): Minor fixes and updates.
+	Suggested by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+2018-03-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* doc/emacs/rmail.texi: Fix broken link.
+
+2018-03-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix recently-added POP doc glitch
+
+	* doc/emacs/rmail.texi (Remote Mailboxes):
+	POP3 → POP, when talking about POP in general.
+
+2018-03-19  Eli Zaretskii  <eliz@gnu.org>
+
+	More proofreading of the Emacs manual
+
+	* doc/emacs/macos.texi (Mac / GNUstep Basics): Fix typos.  Improve
+	indexing.
+	(Mac / GNUstep Basics, Mac / GNUstep Customization)
+	(Mac / GNUstep Events): Improve indexing.
+
+	* doc/emacs/rmail.texi (Rmail): Mention Gnus.
+	(Rmail Basics, Rmail Scrolling): Improve cross-references and
+	indexing.
+	(Rmail Motion): Minor improvements.
+	(Rmail Inbox): Remove outdated text about Babyl format.
+	(Rmail Files): Formatting changes.  Comment out
+	set-rmail-inbox-list in the table of commands, as it is commented
+	out in the text that follows.
+	(Rmail Output, Rmail Labels, Rmail Reply, Rmail Make Summary):
+	Minor copyedits.
+	(Rmail Summary Edit): Document
+	rmail-summary-scroll-between-messages.
+	(Rmail Editing): Improve indexing.
+	(Movemail): Fix typos.
+	(Remote Mailboxes): Use "POP3" rather than "POP".
+
+2018-03-19  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Fix typo in the Emacs manual's VC chapter
+
+	* doc/emacs/maintaining.texi (VC Directory Buffer): Fix a typo.
+
+2018-03-19  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Pass json-readtable-error data as a list (bug#30489)
+
+	* lisp/json.el (json-readtable-dispatch): Fix error data.
+	* test/lisp/json-tests.el (test-json-read): Check error data is a
+	list.
+
+2018-03-17  Noam Postavsky  <npostavs@gmail.com>
+
+	Improve word motion docs (Bug#30815)
+
+	* doc/lispref/positions.texi (Word Motion): Fix reference to
+	`char-script-table'.
+	* lisp/simple.el (backward-word):
+	* src/syntax.c (forward-word): Mention `char-script-table' and add
+	link to the 'Word Motion' manual section.
+
+2018-03-15  Michael Albinus  <michael.albinus@gmx.de>
+
+	Replace "carriage-return" by "carriage return" in manuals
+
+	* doc/emacs/msdos.texi:
+	* doc/emacs/mule.texi:
+	* doc/emacs/screen.texi:
+	* doc/lispref/nonascii.texi:
+	* doc/misc/calc.texi: Replace "carriage-return" by "carriage
+	return".  Suggested by Richard Stallman <rms@gnu.org> in
+	emacs-manual-bugs@gnu.org.
+
+2018-03-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedits in mule.texi
+
+	* doc/emacs/mule.texi (Recognize Coding, Fontsets): Minor changes
+	in wording.  Suggested by Richard Stallman <rms@gnu.org> in
+	emacs-manual-bugs@gnu.org.
+
+2018-03-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix problems caused by fontconfig-2.13.0
+
+	* src/xterm.c (x_term_init): Call fixup_locale after
+	xg_initialize, to countermand the call to setlocale in some
+	versions of fontconfig.  (Bug#30788)
+
+2018-03-13  Glenn Morris  <rgm@gnu.org>
+
+	Fix some allout.el aliases
+
+	* lisp/allout.el (allout-passphrase-verifier-string)
+	(allout-passphrase-hint-string): Fix alias.
+
+2018-03-13  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/progmodes/ada-mode.el (ada-clean-buffer-before-saving): Doc fix.
+
+2018-03-13  Glenn Morris  <rgm@gnu.org>
+
+	Doc fixes re obsolete items
+
+	* doc/emacs/mini.texi (Completion Commands): Small update re mouse.
+	* doc/misc/htmlfontify.texi (Customization): Replace obsolete alias.
+
+2018-03-13  Glenn Morris  <rgm@gnu.org>
+
+	Replace an obsolete alias in tpu-mapper
+
+	* lisp/obsolete/tpu-mapper.el (tpu-map-key, tpu-mapper):
+	Replace obsolete alias.
+
+2018-03-13  Glenn Morris  <rgm@gnu.org>
+
+	Doc fixes re obsolete items
+
+	* doc/emacs/maintaining.texi (VC Undo):
+	* doc/misc/efaq-w32.texi (Font names): Replace obsolete aliases.
+	* doc/misc/url.texi (Customization):
+	Don't mention url-temporary-directory, it essentially does nothing.
+	* lisp/hilit-chg.el
+	(highlight-changes-global-changes-existing-buffers): Doc fix.
+
+2018-03-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor changes in mule.texi
+
+	* doc/emacs/mule.texi (International, Coding Systems)
+	(Bidirectional Editing): Minor wording changes and typo fixes.
+	Suggested by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+2018-03-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid assertion violation under visual-order-cursor-movement
+
+	* src/xdisp.c (Fmove_point_visually): Don't let point exceed the
+	BEGV..ZV range.  Signal Beginning of buffer error when there's a
+	before-string at BEGV.  (Bug#30787)
+
+2018-03-13  Glenn Morris  <rgm@gnu.org>
+
+	Stop mentioning options.el in doc
+
+	* doc/misc/calc.texi (Customizing Embedded Mode):
+	Remove mentions of the obsolete (since 22.1) options.el.
+	* lisp/progmodes/meta-mode.el: Comment fix.
+
+2018-03-12  Charles A. Roelli  <charles@aurox.ch>
+
+	* lisp/vc/vc-dir.el (vc-dir-unmark): Fix documentation.
+
+2018-03-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/minibuffer.el (completion-cycle-threshold): Doc fix.
+
+2018-03-12  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix last change in Xref documentation
+
+	* doc/emacs/maintaining.texi (Looking Up Identifiers): More
+	accurate wording for the description of xref-etags-mode.
+
+2018-03-11  Eli Zaretskii  <eliz@gnu.org>
+
+	More changes in the Emacs manual
+
+	* doc/emacs/text.texi (Words, Foldout, Table Conversion): Clarify
+	text.  Reported by Gijs Hillenius <gijs@hillenius.net> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/msdos.texi (Windows Keyboard):
+	* doc/emacs/msdos-xtra.texi (MS-DOS Keyboard):
+	* doc/emacs/macos.texi (Mac / GNUstep Basics):
+	* doc/emacs/glossary.texi (Glossary):
+	* doc/emacs/custom.texi (Function Keys, Init Syntax):
+	* doc/emacs/commands.texi (User Input):
+	* doc/emacs/basic.texi (Arguments): Fix capitalization of "Meta".
+	* doc/emacs/msdos.texi (Windows Keyboard):
+	* doc/emacs/dired.texi (Dired Updating):
+	* doc/emacs/custom.texi (Init Rebinding): Fix misuses of @key.
+	Suggested by Richard Stallman <rms@gnu.org>.
+
+2018-03-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of Xref
+
+	* doc/emacs/maintaining.texi (Looking Up Identifiers): Document
+	xref-etags-mode.
+
+2018-03-11  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix create_process bug breaking eudc-expand-inline
+
+	Problem reported by Thomas Fitzsimmons (Bug#30762).
+	* src/process.c (create_process) [HAVE_PTYS]:
+	Call setsid even if !PTY_FLAG.
+
+2018-03-10  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify that nil doesn't match itself as a cl-case clause (Bug#30749)
+
+	* lisp/emacs-lisp/cl-macs.el (cl-case): Mention that the ATOM
+	=> (ATOM) short form is only for non-nil ATOMs.
+
+2018-03-10  Charles A. Roelli  <charles@aurox.ch>
+
+	Improve SVG documentation
+
+	* doc/lispref/display.texi (ImageMagick Images): Remove an
+	outdated comment that references a fixed bug.
+	(SVG Images): Fix grammar, and call functions functions (there are
+	no commands in lisp/svg.el).
+
+2018-03-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Document the "URL" keyword in library headers
+
+	* doc/lispref/tips.texi (Library Headers): "URL" is an alias for
+	"Homepage".  Suggested by Peter Oliver <p.d.oliver@mavit.org.uk>.
+	(Bug#30571)
+
+2018-03-09  Glenn Morris  <rgm@gnu.org>
+
+	* test/lisp/international/mule-tests.el:
+	Avoid local variables confusion.
+
+2018-03-09  Bill Wohler  <wohler@newt.com>
+
+	Add missing findex entries for recently removed kindex entries
+
+	* doc/misc/mh-e.texi:
+
+	(cherry picked from commit a56a3fc6849b89a71c9a00afcb088021ccbe94e5)
+
+2018-03-09  Glenn Morris  <rgm@gnu.org>
+
+	Replace the obsolete process-kill-without-query in documentation
+
+	* lisp/comint.el (comint-exec-hook):
+	* lisp/term.el (term-exec-hook):
+	* lisp/eshell/esh-proc.el (eshell-exec-hook):
+	Doc fixes re the obsolete process-kill-without-query.
+
+2018-03-08  Michael Albinus  <michael.albinus@gmx.de>
+
+	Minor change in the manual
+
+	* doc/emacs/display.texi (Useless Whitespace):
+	Don't upcase "TAB" and "SPC" when alluding to characters.
+
+2018-03-08  Eli Zaretskii  <eliz@gnu.org>
+
+	More minor changes in the manual
+
+	* doc/emacs/display.texi (Useless Whitespace): Don't upcase "TAB"
+	and "SPC" when alluding to characters.  Suggested by Richard
+	Stallman <rms@gnu.org>.
+
+	* doc/emacs/buffers.texi (Misc Buffer): Clarify what "read-only"
+	means for buffers.
+	(Buffers): Define and describe "buffer contents".  Suggested by
+	Richard Stallman <rms@gnu.org>.  (Bug#30685)
+
+2018-03-07  Glenn Morris  <rgm@gnu.org>
+
+	Replace some obsolete aliases in code
+
+	* lisp/net/eudc-bob.el (eudc-bob-mail-keymap):
+	* lisp/textmodes/reftex-toc.el (reftex-make-separate-toc-frame):
+	Replace obsolete aliases.
+
+2018-03-07  Glenn Morris  <rgm@gnu.org>
+
+	Replace some obsolete aliases in documentation
+
+	* doc/misc/efaq-w32.texi (Incoming mail with Rmail):
+	* doc/misc/speedbar.texi (Major Display Modes):
+	* lisp/mh-e/mh-folder.el (mh-restore-desktop-buffer):
+	Doc fixes re obsolete aliases.
+
+2018-03-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvements in manuals
+
+	* doc/lispref/variables.texi (Local Variables): Make more clear
+	that local bindings of 'let' are in effect only within the body.
+	Suggested by Marcin Borkowski <mbork@mbork.pl>, see
+	http://lists.gnu.org/archive/html/emacs-devel/2018-03/msg00217.html
+	for the details.
+
+	* doc/emacs/programs.texi (Matching): Fix a typo.  Reported by
+	Alex Branham <alex.branham@gmail.com> in emacs-manual-bugs@gnu.org.
+	Improve indexing.
+
+2018-03-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedits in display.texi
+
+	* doc/emacs/display.texi (Highlight Interactively)
+	(Useless Whitespace, Line Truncation, Visual Line Mode): Minor
+	changes of wording and typo corrections.  Suggested by Michael
+	Albinus <michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+2018-03-07  Glenn Morris  <rgm@gnu.org>
+
+	Remove some unused spam.el variables
+
+	* lisp/gnus/spam.el (spam-ifile-path, spam-ifile-database-path)
+	(spam-bogofilter-path, spam-bsfilter-path)
+	(spam-spamassassin-path, spam-sa-learn-path):
+	Remove variables that are described as obsolete, but are
+	really completely unused, and have been for years.
+
+2018-03-07  Glenn Morris  <rgm@gnu.org>
+
+	Replace some obsolete aliases in code
+
+	* lisp/emulation/viper.el (viper-set-hooks):
+	* lisp/epa-hook.el (auto-encryption-mode):
+	* lisp/term/pc-win.el (set-frame-font): Replace obsolete aliases.
+	* lisp/net/quickurl.el (quickurl--assoc-function): New.
+	(quickurl-assoc-function): Use it.
+
+2018-03-07  Glenn Morris  <rgm@gnu.org>
+
+	Replace some obsolete aliases in documentation
+
+	* doc/emacs/text.texi (Nroff Mode):
+	* doc/misc/efaq.texi (How to add fonts):
+	* lisp/gnus/nnheader.el (nnheader-insert-file-contents):
+	* lisp/progmodes/pascal.el (pascal-outline-mode):
+	Doc fixes re obsolete aliases.
+
+2018-03-06  Glenn Morris  <rgm@gnu.org>
+
+	Obsolete eshell-cmpl-suffix-list
+
+	* lisp/eshell/em-cmpl.el (eshell-cmpl-suffix-list):
+	Make obsolete, to match pcomplete-suffix-list.
+
+2018-03-06  Eli Zaretskii  <eliz@gnu.org>
+
+	More minor changes in the Glossary of the Emacs manual
+
+	* doc/emacs/glossary.texi (Glossary): Improve cross-references for
+	modifier keys.  Fix typos.  Suggested by Gijs Hillenius
+	<gijs@hillenius.net> in emacs-manual-bugs@gnu.org.
+
+2018-03-06  Michael Heerdegen  <michael_heerdegen@web.de>
+
+	Revert last commit
+
+	This reverts commit af4697faa1f5b643f63a9ea61aa205a4c1432e23.  It's
+	too late for this to be in the release.
+
+2018-03-06  Michael Heerdegen  <michael_heerdegen@web.de>
+
+	Define if-let* and derivatives as aliases for if-let etc
+
+	This commit reverts declaring `if-let' and `when-let' obsolete in
+	favor of the new `if-let*' and `when-let*' versions because of the
+	compiler warning mess (Bug#30039).  Instead we make foo-let* aliases
+	for foo-let.  The old single-tuple variable spec case is still
+	supported for backward compatibility.
+	* lisp/emacs-lisp/subr-x.el (if-let, when-let): Don't declare
+	obsolete.  Tweak edebug specs.
+	(and-let): Renamed from `and-let*' for compatibility with the names
+	`if-let' and `when-let'.
+	(if-let*, when-let*, and-let*): Define as aliases for `if-let',
+	`when-let' and `and-let'.
+	* test/lisp/emacs-lisp/subr-x-tests.el (if-let-single-tuple-case-test)
+	(when-let-single-tuple-case-test): New tests for the single-binding
+	tuple case.
+	In the whole file, prefer the names without "*".
+
+2018-03-05  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor fix in Emacs manual's Glossary
+
+	* doc/emacs/glossary.texi (Glossary): Fix outdated text about
+	primary selection.  Reported by Gijs Hillenius
+	<gijs@hillenius.net> in emacs-manual-bugs@gnu.org.
+
+2018-03-03  Juri Linkov  <juri@linkov.net>
+
+	* lisp/progmodes/grep.el (zrgrep):
+
+	Let-bind grep-use-null-filename-separator to nil (bug#30559).
+
+2018-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedits in doc/emacs/text.texi
+
+	* doc/emacs/text.texi (TeX Mode): Use @code for command markup.
+	(HTML Mode): Add a note about "C-x C-v" binding in HTML mode.
+
+2018-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Remove outdated comment in syntax.el
+
+	* lisp/emacs-lisp/syntax.el (syntax-ppss-toplevel-pos): Remove
+	outdated comment.  (Bug#30617)
+
+2018-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Prevent Flyspell from changing unrelated words
+
+	* lisp/textmodes/flyspell.el (flyspell-auto-correct-word): Avoid
+	using stale cached data from previous invocations of this command.
+	(Bug#30462)
+
+2018-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid errors in flymake in builds --without-x
+
+	* lisp/progmodes/flymake.el: Require 'mwheel'.  (Bug#28732)
+
+2018-03-03  Eli Zaretskii  <eliz@gnu.org>
+
+	More improvements of the Emacs manual
+
+	* doc/emacs/rmail.texi (Rmail Reply, Rmail Sorting): Improve
+	wording.  Suggested by Daniel Chakraborty
+	<danielmchakraborty@gmail.com>.
+
+	* doc/emacs/glossary.texi (Glossary): Add cross-references.
+	Improve and clarify wording.  Suggested by Gijs Hillenius
+	<gijs@hillenius.net> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/text.texi (Org Authoring): Add more supported formats
+	to the list.
+	(TeX Print): Improve wording.  Slightly rearrange stuff.
+	(TeX Misc): Mention doctex-mode-hook.
+	(Two-Column): Minor rearrangement of text.  Suggested by Michael
+	Albinus <michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/misc.texi (Saving Emacs Sessions):
+	* doc/emacs/programs.texi (Program Modes): Remove redundant text
+	and index entries.
+
+2018-03-03  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Backport: xref--next-error-function: Move xref's window point
+
+	* lisp/progmodes/xref.el (xref--next-error-function): Move
+	xref's window point if it's visible.  When we don't do that,
+	navigation can start looping after a while.
+
+	(cherry picked from commit 108ce84432d597f92637ea74bd0a094224d157de)
+
+2018-03-02  Glenn Morris  <rgm@gnu.org>
+
+	mwheel minor consistency fix
+
+	* lisp/mwheel.el (mwheel-scroll-left-function)
+	(mwheel-scroll-right-function):
+	Change from defcustom to defvar, for consistency with pre-existing.
+
+2018-03-02  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/window.c (Frecenter): Improve commentary.
+
+2018-03-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix downloading non-text files in EWW
+
+	* lisp/net/eww.el (eww-download-callback): Bind
+	coding-system-for-read to 'no-conversion', to avoid any code- or
+	EOL-conversions in downloaded files.  (Bug#30664)
+
+2018-03-02  Tak Kunihiro  <tkk@misasa.okayama-u.ac.jp>
+
+	Rename some mwheel options, for consistency
+
+	* lisp/mwheel.el (mouse-wheel-tilt-scroll)
+	(mouse-wheel-flip-direction): Rename from mwheel-tilt-scroll-p,
+	mwheel-flip-direction.
+	(mwheel-scroll): Update for option renaming.
+	* doc/emacs/frames.texi (Mouse Commands):
+	Update for option renaming.
+
+2018-03-01  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/vc/add-log.el (add-change-log-entry): Replace obsolete alias.
+
+2018-03-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the Emacs manual
+
+	* doc/emacs/xresources.texi (Table of Resources): Mention that
+	some resources are ignored by toolkit builds.
+	* doc/emacs/custom.texi (Key Bindings): Improve indexing.
+	(Bug#30530)
+
+2018-03-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/dired-aux.el (dired-do-create-files): Doc fix.  (Bug#30634)
+
+2018-03-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	Further improvements on manuals
+
+	* doc/emacs/xresources.texi:
+	* doc/lispref/display.texi:
+	* doc/lispref/keymaps.texi:
+	* doc/misc/dbus.texi:
+	* doc/misc/efaq-w32.texi: Use "GTK+" where applicable.
+
+	* doc/emacs/xresources.texi (Resources): Mention several use
+	of "-xrm".
+	(Table of Resources) [verticalScrollBars]: Add reference to Scroll Bars.
+
+2018-03-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Require a larger stack size for threads on macOS (bug#30364)
+
+	* src/systhread.c (sys_thread_create)
+	[THREADS_ENABLED && HAVE_PTHREAD && DARWIN_OS]:
+	Require at least 8MB stack size for x64 and 4MB for x86 on macOS.
+	Do not merge to master.
+
+2018-02-28  Glenn Morris  <rgm@gnu.org>
+
+	* doc/lispref/streams.texi (Output Variables): Fix previous.
+
+2018-02-28  Michael Albinus  <michael.albinus@gmx.de>
+
+	Use "GTK+" where applicable in the manual
+
+	* doc/emacs/display.texi (Standard Faces, Standard Faces):
+	* doc/emacs/emacs.texi (Top):
+	* doc/emacs/files.texi (Visiting):
+	* doc/emacs/frames.texi (Scroll Bars):
+	* doc/emacs/xresources.texi: Use "GTK+" where applicable.
+
+2018-02-28  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Document print-escape-control-characters
+
+	* doc/lispref/streams.texi, etc/NEWS: Add doc.
+
+2018-02-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/emacs/killing.texi (Rectangles): Don't use @key for characters.
+
+2018-02-27  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/emulation/viper.el: Unbreak it.
+
+	Since 2017-03-19, M-x viper failed with function void cl-member-if.
+	Perhaps it isn't used much.
+
+2018-02-27  Eli Zaretskii  <eliz@gnu.org>
+
+	More fixes in the Emacs manual
+
+	* doc/emacs/xresources.texi (Table of Resources, Lucid Resources):
+	Sort the resources.
+	(Lucid Resources): Add cross-references.
+	(GTK Resource Basics): Fix wording.
+	(GTK styles): Add empty lines in a @table.  Suggested by Michael
+	Albinus <michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+2018-02-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid aborts in 'md5'
+
+	* src/fns.c (extract_data_from_object): Don't crash if called with
+	an invalid object.  (Bug#30627)
+
+2018-02-26  Michael Albinus  <michael.albinus@gmx.de>
+
+	Mark keys consistently in manuals
+
+	* doc/emacs/killing.texi:
+	* doc/lispintro/emacs-lisp-intro.texi:
+	* doc/misc/calc.texi:
+	* doc/misc/cc-mode.texi:
+	* doc/misc/dired-x.texi:
+	* doc/misc/ede.texi:
+	* doc/misc/edt.texi:
+	* doc/misc/efaq.texi:
+	* doc/misc/erc.texi:
+	* doc/misc/eshell.texi:
+	* doc/misc/gnus-faq.texi:
+	* doc/misc/gnus-news.texi:
+	* doc/misc/idlwave.texi:
+	* doc/misc/ido.texi:
+	* doc/misc/mairix-el.texi:
+	* doc/misc/message.texi:
+	* doc/misc/mh-e.texi:
+	* doc/misc/newsticker.texi:
+	* doc/misc/org.texi:
+	* doc/misc/pcl-cvs.texi:
+	* doc/misc/ses.texi:
+	* doc/misc/sieve.texi:
+	* doc/misc/smtpmail.texi:
+	* doc/misc/speedbar.texi:
+	* doc/misc/srecode.texi:
+	* doc/misc/vhdl-mode.texi:
+	* doc/misc/vip.texi:
+	* doc/misc/viper.texi: Mark keys consistently.
+
+2018-02-26  Michael Albinus  <michael.albinus@gmx.de>
+
+	Remove @key{} markups from @kindex entries in manuals
+
+	* doc/emacs/basic.texi:
+	* doc/emacs/buffers.texi:
+	* doc/emacs/building.texi:
+	* doc/emacs/calendar.texi:
+	* doc/emacs/custom.texi:
+	* doc/emacs/dired.texi:
+	* doc/emacs/display.texi:
+	* doc/emacs/files.texi:
+	* doc/emacs/frames.texi:
+	* doc/emacs/help.texi:
+	* doc/emacs/indent.texi:
+	* doc/emacs/killing.texi:
+	* doc/emacs/kmacro.texi:
+	* doc/emacs/mark.texi:
+	* doc/emacs/mini.texi:
+	* doc/emacs/misc.texi:
+	* doc/emacs/modes.texi:
+	* doc/emacs/msdos-xtra.texi:
+	* doc/emacs/msdos.texi:
+	* doc/emacs/mule.texi:
+	* doc/emacs/picture-xtra.texi:
+	* doc/emacs/programs.texi:
+	* doc/emacs/regs.texi:
+	* doc/emacs/rmail.texi:
+	* doc/emacs/screen.texi:
+	* doc/emacs/search.texi:
+	* doc/emacs/sending.texi:
+	* doc/emacs/text.texi:
+	* doc/emacs/trouble.texi:
+	* doc/misc/calc.texi:
+	* doc/misc/cc-mode.texi:
+	* doc/misc/ediff.texi:
+	* doc/misc/ert.texi:
+	* doc/misc/eww.texi:
+	* doc/misc/forms.texi:
+	* doc/misc/gnus.texi:
+	* doc/misc/idlwave.texi:
+	* doc/misc/info.texi:
+	* doc/misc/message.texi:
+	* doc/misc/mh-e.texi:
+	* doc/misc/newsticker.texi:
+	* doc/misc/org.texi:
+	* doc/misc/pcl-cvs.texi:
+	* doc/misc/rcirc.texi:
+	* doc/misc/reftex.texi:
+	* doc/misc/sc.texi:
+	* doc/misc/sieve.texi:
+	* doc/misc/vhdl-mode.texi:
+	* doc/misc/vip.texi:
+	* doc/misc/viper.texi:
+	* doc/misc/woman.texi: Remove @key{} markups from @kindex entries.
+
+2018-02-25  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/emacs/display.texi (Standard Faces): Fix markup of index entry.
+
+2018-02-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix @kindex entries in manuals
+
+	* doc/emacs/basic.texi:
+	* doc/emacs/buffers.texi:
+	* doc/emacs/building.texi:
+	* doc/emacs/calendar.texi:
+	* doc/emacs/custom.texi:
+	* doc/emacs/dired.texi:
+	* doc/emacs/display.texi:
+	* doc/emacs/files.texi:
+	* doc/emacs/frames.texi:
+	* doc/emacs/help.texi:
+	* doc/emacs/indent.texi:
+	* doc/emacs/killing.texi:
+	* doc/emacs/kmacro.texi:
+	* doc/emacs/mark.texi:
+	* doc/emacs/mini.texi:
+	* doc/emacs/misc.texi:
+	* doc/emacs/modes.texi:
+	* doc/emacs/msdos-xtra.texi:
+	* doc/emacs/msdos.texi:
+	* doc/emacs/mule.texi:
+	* doc/emacs/picture-xtra.texi:
+	* doc/emacs/programs.texi:
+	* doc/emacs/regs.texi:
+	* doc/emacs/rmail.texi:
+	* doc/emacs/screen.texi:
+	* doc/emacs/search.texi:
+	* doc/emacs/sending.texi:
+	* doc/emacs/text.texi:
+	* doc/emacs/trouble.texi:
+	* doc/lispref/files.texi:
+	* doc/misc/calc.texi:
+	* doc/misc/cc-mode.texi:
+	* doc/misc/ediff.texi:
+	* doc/misc/epa.texi:
+	* doc/misc/ert.texi:
+	* doc/misc/eww.texi:
+	* doc/misc/forms.texi:
+	* doc/misc/gnus.texi:
+	* doc/misc/info.texi:
+	* doc/misc/mairix-el.texi:
+	* doc/misc/message.texi:
+	* doc/misc/mh-e.texi:
+	* doc/misc/newsticker.texi:
+	* doc/misc/org.texi:
+	* doc/misc/pcl-cvs.texi:
+	* doc/misc/rcirc.texi:
+	* doc/misc/sc.texi:
+	* doc/misc/sieve.texi:
+	* doc/misc/vhdl-mode.texi:
+	* doc/misc/vip.texi:
+	* doc/misc/viper.texi:
+	* doc/misc/woman.texi: Fix @kindex entries.  Mark keys consistently.
+
+2018-02-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix @cindex entries in manuals
+
+	* doc/emacs/custom.texi:
+	* doc/emacs/dired.texi:
+	* doc/emacs/display.texi:
+	* doc/emacs/files.texi:
+	* doc/emacs/frames.texi:
+	* doc/emacs/killing.texi:
+	* doc/emacs/maintaining.texi:
+	* doc/emacs/misc.texi:
+	* doc/emacs/msdos-xtra.texi:
+	* doc/emacs/msdos.texi:
+	* doc/emacs/search.texi:
+	* doc/emacs/text.texi:
+	* doc/emacs/trouble.texi:
+	* doc/lispintro/emacs-lisp-intro.texi:
+	* doc/lispref/strings.texi:
+	* doc/lispref/text.texi:
+	* doc/misc/cc-mode.texi:
+	* doc/misc/efaq.texi:
+	* doc/misc/eieio.texi:
+	* doc/misc/emacs-mime.texi:
+	* doc/misc/gnus.texi:
+	* doc/misc/htmlfontify.texi:
+	* doc/misc/idlwave.texi:
+	* doc/misc/message.texi:
+	* doc/misc/mh-e.texi:
+	* doc/misc/sem-user.texi:
+	* doc/misc/ses.texi:
+	* doc/misc/tramp.texi:
+	* doc/misc/vhdl-mode.texi: Fix @cindex entries.
+
+2018-02-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix @cindex entries in org.texi
+
+	* doc/misc/org.texi: Fix @cindex entries.  Use consistently
+	@code{} for keywords.
+
+2018-02-24  Eli Zaretskii  <eliz@gnu.org>
+
+	Document reserved keys
+
+	* doc/emacs/custom.texi (Key Bindings): Mention keys reserved for
+	users.  (Bug#30530)
+
+2018-02-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/misc/ebrowse.texi: Use @key{} for keys.
+
+2018-02-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/keyboard.c (syms_of_keyboard): Doc fix.  (Bug#30588)
+
+2018-02-24  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of X resources
+
+	* doc/emacs/xresources.texi (Table of Resources): Add menu-related
+	resources.  Add cross-references to "GTK Resources".
+
+2018-02-23  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/international/mule.el (keyboard-coding-system): Doc fix.
+
+	Since multi-tty, this is always set.
+
+2018-02-23  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Minor doc fixes, mostly for timestamp issues
+
+2018-02-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/emacs/mini.texi (Completion Styles): Improve indexing.
+
+2018-02-23  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix @findex and @vindex entries in manuals
+
+	* doc/emacs/building.texi:
+	* doc/emacs/calendar.texi:
+	* doc/emacs/cmdargs.texi:
+	* doc/emacs/mini.texi:
+	* doc/emacs/misc.texi:
+	* doc/emacs/trouble.texi:
+	* doc/emacs/windows.texi:
+	* doc/lispintro/emacs-lisp-intro.texi:
+	* doc/lispref/edebug.texi:
+	* doc/lispref/frames.texi:
+	* doc/lispref/os.texi:
+	* doc/lispref/windows.texi:
+	* doc/misc/cc-mode.texi:
+	* doc/misc/dired-x.texi:
+	* doc/misc/ediff.texi:
+	* doc/misc/mh-e.texi:
+	* doc/misc/pcl-cvs.texi:
+	* doc/misc/reftex.texi:
+	* doc/misc/sc.texi:
+	* doc/misc/vhdl-mode.texi:
+	* doc/misc/viper.texi: Fix @findex and @vindex entries.
+
+2018-02-22  Alan Mackenzie  <acm@muc.de>
+
+	Document, in the Elisp manual, how to get a character's raw syntax descriptor
+
+	* doc/lispref/syntax.texi (Syntax Table internals): mention the use of `aref'
+	to get a character's raw syntax descriptor.
+
+2018-02-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Improvements in the Emacs manual
+
+	* doc/emacs/custom.texi (Customization Groups)
+	(Changing a Variable, Browsing Custom, Customizing Faces): Fix
+	markup of keys.
+	(Changing a Variable, Saving Customizations): Update the
+	description of buttons in the Custom buffer.
+	(Face Customization): More accurate description.
+	(Specific Customization, Examining, Locals): Add blank lines in
+	the @table.  Reported by Michael Albinus <michael.albinus@gmx.de>
+	in emacs-manual-bugs@gnu.org.
+
+2018-02-22  Glenn Morris  <rgm@gnu.org>
+
+	Tiny doc/misc markup fixes
+
+	* doc/misc/ediff.texi (Patch and Diff Programs):
+	* doc/misc/viper.texi (File and Buffer Handling): Fix markup typos.
+
+2018-02-22  Martin Rudalics  <rudalics@gmx.at>
+
+	Skip mouse-face overlap check when mouse-face is hidden (Bug#30519)
+
+	* src/xdisp.c (note_mouse_highlight): Skip check whether
+	mouse-face highlighting overlay overlaps other mouse-face
+	overlays when mouse-face highlighting is hidden (Bug#30519).
+
+2018-02-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix capitalization of "Mail-Followup-To"
+
+	* doc/emacs/sending.texi (Header Editing, Mail Headers):
+	Standardize on "Mail-Followup-To" as the capitalization.
+
+2018-02-21  Juri Linkov  <juri@linkov.net>
+
+	* lisp/progmodes/grep.el (grep-compute-defaults):
+
+	Add grep-use-null-filename-separator to grep-host-defaults-alist.
+	(Bug#30559)
+
+2018-02-21  Charles A. Roelli  <charles@aurox.ch>
+
+	Semantic manual fixes
+
+	* doc/misc/semantic.texi (Tools): Fix wording and grammar, and
+	remove a reference to "document-vars.el" which, in the Emacs
+	repository, is part of lisp/cedet/srecode/document.el.
+
+2018-02-21  Eli Zaretskii  <eliz@gnu.org>
+
+	More improvements in the Emacs manual
+
+	* doc/emacs/help.texi (Misc Help):
+	* doc/emacs/m-x.texi (M-x):
+	* doc/emacs/mini.texi (Minibuffer File, Repetition): Prevent
+	breaking of command sequences between lines.  Reported by Wojciech
+	Politarczyk <w.politarczyk@gmail.com> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/sending.texi (Header Editing): Fix capitalization.
+
+2018-02-21  tino calancha  <tino.calancha@gmail.com>
+
+	* doc/misc/viper.texi (File and Buffer Handling): Add missing '@'
+
+2018-02-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix documentation of 'x-underline-at-descent-line'
+
+	* doc/emacs/display.texi (Display Custom):
+	* src/nsterm.m (syms_of_nsterm):
+	* src/xterm.c (syms_of_xterm):
+	* src/w32term.c (syms_of_w32term): Mention the effect of
+	'line-spacing' on the underline position.  (Bug#30553)
+
+2018-02-21  Glenn Morris  <rgm@gnu.org>
+
+	* lisp/textmodes/flyspell.el (flyspell-get-word): Doc fix.
+
+2018-02-20  Robert Pluim  <rpluim@gmail.com>
+
+	Correct variable markup in manuals
+
+	* doc/lispref/minibuf.texi (Completion in Buffers): Fix markup.
+	* doc/lispref/text.texi (Filling): Likewise.
+	* doc/misc/dired-x.texi (Advanced Mark Commands): Likewise.
+	* doc/misc/epa.texi (Encrypting/decrypting gpg files): Likewise.
+	(Encrypting/decrypting gpg files): Likewise.
+	* doc/misc/tramp.texi (External methods): Likewise.
+	(Default Method): Likewise.
+	* doc/misc/viper.texi (Editing in Insert State): Likewise.
+	(File and Buffer Handling): Likewise.
+	* doc/misc/gnus.texi (Mail Source Customization): Likewise.
+	* doc/misc/url.texi (Customization): Likewise.  Note obsolete
+	status of url-temporary-directory.
+
+2018-02-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the "Sending Mail" chapter of Emacs manual
+
+	* doc/emacs/sending.texi (Mail Format, Header Editing)
+	(Mail Aliases): Fix capitalization of mail headers.
+	(Mail Aliases): Use ~/.mailrc consistently.
+	(Mail Misc): More accurate description of disposition.  Suggested
+	by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix documentation of 'flyspell-auto-correct-word'
+
+	* lisp/textmodes/flyspell.el (flyspell-get-word): Elaborate in the
+	doc string on how the function looks for the word to spell-check.
+	(flyspell-word, flyspell-auto-correct-word): Refer to
+	'flyspell-get-word' for details about finding the word.
+	(Bug#30462)
+
+2018-02-19  Robert Pluim  <rpluim@gmail.com>
+
+	* doc/emacs/misc.texi (Saving Emacs Sessions): Fix markup.
+
+2018-02-19  Eli Zaretskii  <eliz@gnu.org>
+
+	More changes in the Emacs manuals
+
+	* doc/emacs/custom.texi (Customization Groups, Browsing Custom)
+	(Custom Themes, Keymaps, Prefix Keymaps, Modifier Keys)
+	(Function Keys, Named ASCII Chars, Mouse Buttons, Init Examples):
+	Fix punctuation.  Suggested by Stefan Kamphausen
+	<stefan.kamphausen@acrolinx.com> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/basic.texi (Arguments, Repeating): Avoid breaking
+	commands between lines.  Reported by Wojciech Politarczyk
+	<w.politarczyk@gmail.com> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/custom.texi (Init Rebinding): Move index entries about
+	rebinding keys from "Init File".  (Bug#30528)
+
+2018-02-18  Eli Zaretskii  <eliz@gnu.org>
+
+	More fixes in the Emacs manual
+
+	* doc/emacs/abbrevs.texi (Defining Abbrevs, Expanding Abbrevs)
+	(Editing Abbrevs, Saving Abbrevs): Insert blank lines between
+	@item's.
+	(Expanding Abbrevs): Add 'unexpand-abbrev' to the list of
+	commands.  Suggested by Michael Albinus <michael.albinus@gmx.de>
+	in emacs-manual-bugs@gnu.org.
+
+2018-02-18  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/data.c (Faref): Fix a typo in the doc string.  (Bug#30510)
+
+2018-02-18  Michael Albinus  <michael.albinus@gmx.de>
+
+	Minor edit in tramp.texi
+
+	* doc/misc/tramp.texi (Remote shell setup, Windows setup hints):
+	Improve @cindex entries.
+
+2018-02-17  Eli Zaretskii  <eliz@gnu.org>
+
+	More improvements in the Emacs manual
+
+	* doc/emacs/maintaining.texi (Xref Commands, Identifier Search)
+	(List Identifiers): Insert blank lines between @item's in a
+	@table.
+	(Etags Regexps): More accurate description of escape sequences.
+	(Select Tags Table): Prefer "~/emacs.d/init.el" to "~/.emacs".
+	Suggested by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'electric-pair-mode'
+
+	* lisp/elec-pair.el (electric-pair-mode):
+	* doc/emacs/programs.texi (Matching): Document the operation of
+	electric-pair-mode when there's an active region.  (Bug#30502)
+
+2018-02-17  Charles A. Roelli  <charles@aurox.ch>
+
+	lisp/vc/: documentation fixes
+
+	* lisp/vc/vc.el (vc-region-history): Clarify documentation.
+	* lisp/vc/add-log.el (change-log-get-method-definition):
+	Indent documentation.
+
+2018-02-17  Robert Pluim  <rpluim@gmail.com>
+
+	Document 'desktop-files-not-to-save'
+
+	* doc/emacs/misc.texi (Saving Emacs Sessions): Add description
+	of 'desktop-files-not-to-save'.
+
+	* lisp/desktop.el (desktop-files-not-to-save): Explain that
+	the default value excludes buffers visiting remote files.
+
+2018-02-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of Profiling features
+
+	* doc/lispref/debugging.texi (Profiling): Improve the description
+	of elp.el.  Improve wording of the rest of the section.  (Bug#30491)
+
+	* lisp/emacs-lisp/elp.el (elp-instrument-list): Make the
+	interactive invocation work.  Doc fix.
+
+2018-02-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve indexing of "performance" in ELisp manual
+
+	* doc/lispref/debugging.texi (Profiling):
+	* doc/lispref/edebug.texi (Coverage Testing): Improve indexing of
+	features useful for performance analysis.  (Bug#30490)
+
+2018-02-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor change in Emacs manual's VC chapter
+
+	* doc/emacs/maintaining.texi (Log Buffer): Mention the "Summary"
+	header.  Suggested by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-17  Noam Postavsky  <npostavs@gmail.com>
+
+	Avoid memory corruption with specpdl overflow + edebug (Bug#30481)
+
+	If grow_specpdl fails due to outgrowing max_specpdl_size, it will
+	signal an error *before* growing the specpdl array.  Therefore, when
+	handling the signal, specpdl_ptr points past the end of the specpdl
+	array and any further use of of specpdl before unwinding (e.g., if
+	edebug binds signal-hook-function) will cause memory corruption.
+	* src/eval.c (signal_or_quit): Don't call `signal-hook-function' if
+	the specpdl_ptr is already past the end of the specpdl array.
+	* test/src/eval-tests.el (eval-tests--exceed-specbind-limit)
+	(eval-exceed-specbind-with-signal-hook): New test & helper function.
+
+2018-02-17  Noam Postavsky  <npostavs@gmail.com>
+
+	Document comment-fill-column in the manual (Bug#11636)
+
+	* doc/emacs/programs.texi (Comment Commands)
+	(Options for Comments): Mention comment-fill-column.
+
+2018-02-17  Glenn Morris  <rgm@gnu.org>
+
+	* doc/emacs/dired.texi (Marks vs Flags): Copyedits.
+
+2018-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	More fixes for the Emacs manual
+
+	* doc/emacs/vc1-xtra.texi (Customizing VC): Update the list of
+	backends.
+	* doc/emacs/maintaining.texi (Version Control): Add SRC to the
+	list of VCS.  Remove the description of vc-state-refresh.
+	(Version Control Systems): Update the description of CVS.
+	(VC Change Log): Amend the list of VCS that don't support
+	vc0print-root-log.
+	(VCS Changesets, VCS Repositories, Advanced C-x v v)
+	(VC Change Log): Mention SRC with RCS where appropriate.
+	(VC Directory Commands): More accurate description of
+	vc-dir-hide-up-to-date.  Suggested by Michael Albinus
+	<michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+2018-02-16  Robert Cochran  <robert@cochranmail.com>
+
+	Make 'byte-compile-error-on-warn' a safe file variable
+
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-error-on-warn): Mark
+	as a safe local variable for boolean values.
+
+2018-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix the doc string of flyspell-auto-correct-word
+
+	* lisp/textmodes/flyspell.el (flyspell-auto-correct-word): Doc
+	fix.  (Bug#30462)
+
+2018-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the MS-Windows appendix of the Emacs manual
+
+	* doc/emacs/msdos.texi (Windows Startup): Describe the pinned
+	shortcuts for starting Emacs.
+	(Text and Binary): Minor wording changes.
+	(Windows Files): Mention 'read-file-name-completion-ignore-case'.
+	(ls in Lisp): Update the list of supported 'ls' switches.
+	Document 'ls-lisp-use-string-collate' and
+	'ls-lisp-UCA-like-collation'.
+	(Windows HOME): Mention warnings displayed at startup when
+	deprecated locations of HOME and/or deprecated names for init
+	files are used.
+	(Windows Keyboard): Mention delete-selection-mode.
+
+2018-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix 'vc-git--program-version'
+
+	* lisp/vc/vc-git.el (vc-git--program-version): Fix the function to
+	work with Git for Windows.
+
+2018-02-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix typos and wording in the Emacs manual
+
+	* doc/emacs/dired.texi (Marks vs Flags, Hiding Subdirectories):
+	* doc/emacs/maintaining.texi (Tag Syntax):
+	* doc/emacs/building.texi (Commands of GUD, Threads Buffer)
+	(Lisp Libraries):
+	* doc/emacs/windows.texi (Temporary Displays): Fix typos.
+	* doc/emacs/files.texi (Backup Copying): Fix wording.  Reported by
+	Stefan Kamphausen <stefan.kamphausen@acrolinx.com> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/emacs/programs.texi (Semantic): Order programming languages.
+
+2018-02-15  Eli Zaretskii  <eliz@gnu.org>
+
+	More improvements for the Emacs manual
+
+	* doc/emacs/programs.texi (Basic Indent, Comment Commands): Fix
+	typos.
+	* doc/emacs/text.texi (TeX Print, HTML Mode, Enriched Faces): Fix
+	typos.
+	* doc/emacs/help.texi (Help Files): Improve @uref usage.  Reported
+	by Stefan Kamphausen <stefan.kamphausen@acrolinx.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/fortran-xtra.texi (ForIndent Commands): Fix a typo.
+	(ForIndent Commands, Fortran Columns): Add empty lines between
+	@items in a @table.
+	(ForIndent Cont, ForIndent Num, Fortran Columns): Mention
+	'column-number-indicator-zero-based'.
+	(ForIndent Vars): Fix a typo.
+	(Fortran Comments): Fix punctuation.
+	(ForIndent Cont, Fortran Autofill): Fix markup of keyboard input.
+	* doc/emacs/programs.texi (Comments): Fix a typo.
+	(Comment Commands): More accurate description of the commands.
+	(Options for Comments): Don't mention "hook".
+	(Man Page): Prefer "M-x man" if available.
+	(Hideshow): Fix the command key sequence.
+	(Semantic): Update supported languages.
+	(Semantic, Hungry Delete, Other C Commands): Fix markup of
+	commands.
+	(Misc for Programs): Fix a typo.
+	(Electric C, Hungry Delete): More accurate description of
+	mode-line lighters of CC submodes.
+	(Asm Mode): Add empty lines between @items in a @table.
+	* doc/emacs/programs.texi (Program Modes): Add a few more modes.
+	Reported by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/msdos.texi (Windows Misc): A minor rewording.
+	Suggested by Isaac Carter <icarter1391@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor wording change in Emacs manual
+
+	* doc/emacs/killing.texi (Accumulating Text): Fix spelling.
+	Reported by lyr3 <lyr3@protonmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Another set of changes for the manual
+
+	* doc/emacs/programs.texi (Program Indent): Add a cross-reference
+	to elisp's description of 'pp'.
+	(Program Modes): Add a few more programming modes.  Add index
+	entries.
+	(Basic Indent, Multi-line Indent, C Indent, Comment Commands)
+	(Manipulating Comments): Fix markup of keyboard commands.
+	* doc/emacs/search.texi (Regexps): Add an example with non-ASCII
+	characters.  Suggested by Michael Albinus <michael.albinus@gmx.de>
+	in emacs-manual-bugs@gnu.org.
+
+	* doc/lispref/display.texi (Display Tables): Fix the description
+	of the 5th extra slot of the display table.  (Bug#13473)
+
+	* doc/emacs/regs.texi (Registers): Simplify wording.
+
+	* doc/emacs/custom.texi (Init Non-ASCII): Remove outdated text
+	about perils of encoded keyboard input.
+
+2018-02-14  Michael Albinus  <michael.albinus@gmx.de>
+
+	Improvements on tramp.texi
+
+	* doc/misc/tramp.texi: Use Tramp version in title.  Further
+	improvements on user option indexing.  Finish command examples
+	with @key{RET} where appropriate.
+	(Remote processes): Use 'M-&' for invocation of async shell.
+	(Frequently Asked Questions): Add example with simplified syntax.
+
+2018-02-13  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Tramp minor doc fixes
+
+	* doc/misc/tramp.texi (Remote processes): Spelling fix and minor
+	wording improvement.
+
+2018-02-13  Eli Zaretskii  <eliz@gnu.org>
+
+	More changes in the Emacs manual
+
+	* doc/emacs/search.texi (Regexp Backslash): Say that
+	symbol-constituent characters are determined by the syntax table.
+	(Lax Search): Fix example of case-insensitive search.  Fix a
+	typo.
+	(Unconditional Replace): Improve wording.
+	(Regexp Replace): More consistent wording.  Reported by Michael
+	Albinus <michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/msdos.texi (Windows HOME): Avoid enumerating all the
+	Windows versions.  Reported by Isaac Carter
+	<icarter1391@gmail.com> in emacs-manual-bugs@gnu.org.
+
+2018-02-13  Andreas Schwab  <schwab@suse.de>
+
+	* lisp/vc/vc.el (vc-deduce-backend): Use ignore-errors.
+
+2018-02-13  Andreas Schwab  <schwab@suse.de>
+
+	Don't signal error in vc-deduce-backend
+
+	* lisp/vc/vc.el (vc-deduce-backend): Return nil if
+	vc-responsible-backend signals an error.
+
+2018-02-13  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/misc/tramp.texi: Index more user options.
+
+2018-02-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor change in the Emacs manual
+
+	* doc/emacs/building.texi (Lisp Libraries): Explain why nil in
+	load-path is not a good idea.  Suggested by James Yoo
+	<james.yoo@gmail.com> in emacs-manual-bugs@gnu.org.
+
+2018-02-13  Eli Zaretskii  <eliz@gnu.org>
+
+	NEWS update about 'string-trim'
+
+	* etc/NEWS: Mention changes in string-trim family of functions.
+	(Bug#30442)
+
+2018-02-13  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify TRAMP process-environment interaction (Bug#30419)
+
+	* doc/misc/tramp.texi (Remote processes): Index the
+	tramp-remote-process-environment description.  Clarify the effects of
+	let-binding process-environment and the motivation for that behavior.
+
+2018-02-12  Juri Linkov  <juri@linkov.net>
+
+	* lisp/progmodes/grep.el (grep-num-matches-found): New variable.
+
+	(grep-mode-line-matches): New defconst.
+	(grep-mode-font-lock-keywords): Update the regexp for “Grep finished”
+	to include the number of matches found.
+	(grep-process-setup): Set grep-num-matches-found to 0.
+	(grep-exit-message): New function with body moved from lambda
+	in grep-process-setup.  Use grep-num-matches-found to return
+	the number of matches found.
+	(grep-filter): Increment grep-num-matches-found.
+	(grep-mode): Set compilation-mode-line-errors to grep-mode-line-matches.
+	(Bug#30397, bug#14017)
+
+2018-02-12  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid aborts in cm.c due to too small TTY frame
+
+	* src/frame.c (frame_windows_min_size): Limit TTY frames to a
+	minimum height large enough to allow for a menu bar, the mode
+	line, one text line and one echo-area line.  This avoids aborts in
+	cm.c:cmcheckmagic.  (Bug#30320)
+
+2018-02-12  Eli Zaretskii  <eliz@gnu.org>
+
+	Another set of improvements in the Emacs manual
+
+	* doc/emacs/msdos-xtra.texi (MS-DOS Keyboard):
+	* doc/emacs/msdos.texi (Windows Keyboard):
+	* doc/emacs/mark.texi (Using Region):
+	* doc/emacs/frames.texi (Menu Mouse Clicks):
+	* doc/emacs/macos.texi (Mac / GNUstep Basics): Fix spelling of
+	keys.  Reported by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/glossary.texi (Glossary): Document that "c.f." is a
+	misspelling.  Reported by Robert Pluim <rpluim@gmail.com>.
+	Various minor wording improvements.  Suggested by Toon Claes
+	<toon@iotcl.com> in emacs-manual-bugs@gnu.org.
+	More minor changes.  Suggested by Michael Albinus
+	<michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/cmdargs.texi (Title X): Improve wording.
+
+	* doc/emacs/building.texi (Grep Searching, Compilation): Avoid
+	passive tense.
+
+	* doc/emacs/basic.texi (Moving Point): Move the description of the
+	bidi-related effects of the arrow keys from here ...
+	* doc/emacs/mule.texi (Bidirectional Editing): ... to here.
+	Explain the behavior of arrow keys between paragraphs.
+
+2018-02-12  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix help in mode-line-mode-menu
+
+	* lisp/bindings.el (mode-line-mode-menu) [auto-revert-tail-mode]:
+	Fix help string.
+
+2018-02-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of desktop restoring
+
+	* doc/emacs/misc.texi (Saving Emacs Sessions): Document
+	'desktop-auto-save-timeout', 'desktop-load-locked-desktop', and
+	how to restore desktop in daemon mode.  (Bug#30421)
+
+2018-02-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the Emacs manual's chapter "Frames"
+
+	* doc/emacs/frames.texi (Creating Frames): Add a cross-reference
+	to where frame visibility is described.
+	(Word and Line Mouse): Clarify wording.
+	(Scroll Bars): Qualify scroll-bar behavior.  Reported by Dmitry
+	Gutov <dgutov@yandex.ru> in emacs-manual-bugs@gnu.org.
+
+2018-02-10  Andreas Schwab  <schwab@linux-m68k.org>
+
+	Fix unbound mm-uu-entry in mm-uu
+
+	* lisp/gnus/mm-uu.el (mm-uu-dissect): Rename entry to mm-uu-entry.
+
+2018-02-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve Emacs user manual in fixit.texi
+
+	* doc/emacs/fixit.texi (Undo): Clarify inaccurate description of
+	repeated undo.
+	(Transpose): Describe explicitly what happens at EOL.
+	(Spelling): Use "spell-checking" consistently.  Clarify wording.
+	Suggested by Toon Claes <toon@iotcl.com> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Another minor change in the manual
+
+	* doc/emacs/glossary.texi (Glossary): Add popular Latin
+	abbreviations, such as "e.g.".
+
+2018-02-10  Eli Zaretskii  <eliz@gnu.org>
+
+	More minor changes in the Emacs manual
+
+	* doc/emacs/xresources.texi (GTK resources):
+	* doc/emacs/trouble.texi (Contributing):
+	* doc/emacs/frames.texi (Fonts): Use HTTPS URLs instead of HTTP.
+
+	* doc/emacs/docstyle.texi: Add a few @hyphenation directives,
+	based on reports in emacs-manual-bugs@gnu.org about incorrect
+	hyphenation.
+
+2018-02-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid printing garbled error message from image.el
+
+	* lisp/image.el (image--get-imagemagick-and-warn): Don't use
+	apostrophe in the error message, as that message is shown from a
+	unibyte buffer, and will run afoul of the default style of showing
+	quote characters.  (Bug#30405)
+
+2018-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Doc string fix in latin-alt.el
+
+	* lisp/leim/quail/latin-alt.el ("dutch"): Doc fix.  Reported by
+	Robert Pluim <rpluim@gmail.com>.
+
+2018-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvements in package.texi
+
+	* doc/emacs/package.texi (Package Menu): Minor wording change.
+	(Package Installation): Use HTTPS.  A better @xref to GnuPG
+	manual.  Suggested by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvement in Emacs user manual
+
+	* doc/emacs/files.texi (Directories): Document that
+	'directory-free-space-program' and 'directory-free-space-args' are
+	only for local filesystems.  Suggested by Michael Albinus
+	<michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+2018-02-09  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/lispref/anti.texi (Antinews): Replace 25.2 with 25.3.
+
+2018-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of mini-window resizing
+
+	* doc/lispref/minibuf.texi (Minibuffer Windows): Mention
+	'message-truncate-lines' for preventing resizing of minibuffer
+	windows.  (Bug#19045)
+	(Minibuffer Misc): Remove redundant description of
+	'max-mini-window-height'.
+	* doc/lispref/display.texi (Echo Area Customization): Adjust
+	cross-reference.
+
+2018-02-09  Eli Zaretskii  <eliz@gnu.org>
+
+	More changes in the Emacs manual
+
+	* doc/emacs/fixit.texi (Undo): Mention 'revert-buffer'.
+	(Fixing Case): Fix punctuation.
+	(Spelling): Fix a typo.  Suggested by Toon Claes <toon@iotcl.com>
+	in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/modes.texi (Major Modes): Break a long sentence into
+	2.  Reported by Stefan Kamphausen <stefan.kamphausen@acrolinx.com>
+	in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/indent.texi (Just Spaces): Yet another minor
+	rewording.
+
+	* doc/emacs/building.texi (Watch Expressions): Improve wording.
+	(Multithreaded Debugging): Spell "tool bar" as 2 words.  Reported
+	by Alberto Sartori <alberto.sartori@sissa.it> in
+	emacs-manual-bugs@gnu.org.
+	(Grep Searching): Mention the effect of
+	'compilation-mode-line-errors'.  (Bug#30397)
+
+	* doc/emacs/basic.texi (Moving Point): Minor reformatting and
+	rewording of what <LEFT> and <RIGHT> do.
+
+2018-02-09  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify that text-quoting-style doesn't affect *Info* (Bug#24519)
+
+	* src/doc.c (syms_of_doc) <text-quoting-style>: Clarify that info
+	manual display is unaffected.
+
+2018-02-09  Noam Postavsky  <npostavs@gmail.com>
+
+	Mention that shell quoting of % on w32 may fail (Bug#19350)
+
+	* doc/lispref/os.texi (Security Considerations): Mention that quoting
+	of '%' assumes no '^' in variable names.
+	* test/lisp/subr-tests.el (shell-quote-argument-%-on-w32): New test,
+	demonstrating what doesn't work.
+
+2018-02-09  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix --no-build-details for w32 and macOS
+
+	* src/w32term.c (w32_initialize_display_info): Handle nil system-name.
+	* lisp/term/ns-win.el (window-system-initialization): Don't pass nil
+	to `x-open-connection'.
+
+2018-02-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* doc/lispref/anti.texi (Antinews): Add some more antinews.
+
+2018-02-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix crashes when run with --no-build-details
+
+	* src/xrdb.c (get_environ_db):
+	* src/xterm.c (same_x_server, x_term_init):
+	Don’t assume Fsystem_name returns a string.
+
+2018-02-08  Eli Zaretskii  <eliz@gnu.org>
+
+	More changes for the manual
+
+	* doc/emacs/anti.texi (Antinews): Replace 25.2 with 25.3.
+	Reported by Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/custom.texi (Function Keys): Improve wording.
+	Suggested by clemens.radermacher@posteo.de in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/misc.texi (History References): Improve punctuation.
+	(Terminal emulator): Fix a typo.
+	(Term Mode): Remove redundant repeated text.
+	(Invoking emacsclient): Improve wording.  Suggested by Alberto
+	Sartori <alberto.sartori@sissa.it> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/files.texi (Visiting): Fix last change.
+
+2018-02-08  Noam Postavsky  <npostavs@gmail.com>
+
+	Doc fixes for process functions (Bug#30349)
+
+	* doc/lispref/processes.texi (Asynchronous Processes): Explain what
+	the 'stopped' state means for a pipe process.
+	* src/process.c (Fmake_process, Fmake_pipe_process)
+	(Fmake_serial_process, Fmake_network_process):
+	* lisp/subr.el (start-process):
+	* lisp/net/tls.el (open-tls-stream):
+	* lisp/net/starttls.el (starttls-open-stream):
+	* lisp/net/gnutls.el (open-gnutls-stream): Remove meaningless phrase
+	"specify an output stream" phrase from docstring.
+
+2018-02-07  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Fix shr and CSS 4 color maps
+
+	* lisp/net/shr-color.el (shr-color-html-colors-alist): Fix typos.
+	Add RebeccaPurple.
+	* lisp/textmodes/css-mode.el (css--color-map): Add fuchsia-magenta
+	and aqua-cyan aliases.
+	* test/lisp/textmodes/css-mode-tests.el (css-test-property-values):
+	Bump color count.
+
+2018-02-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Yet another round of improvements in the manual
+
+	* doc/emacs/misc.texi (Document View): Improve wording.  Reported
+	by lyr3 <lyr3@protonmail.com> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/files.texi (Recover): Fix a typo.  Reported by Jorge
+	<jorge+list@disroot.org> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/anti.texi (Antinews): Fix typos.  Reported by Justin
+	Heyes-Jones <justinhj@gmail.com> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/mini.texi (Basic Minibuffer): Clarify wording.
+	Reported by Vivishek Sudhir <vivishek.sudhir@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/cmdargs.texi (MS-Windows Registry): Improve wording
+	regarding registry keys.
+
+	* doc/emacs/macos.texi (Mac OS / GNUstep): Sayu "NeXT Inc."
+	Reported by Cena Mayo <cenazoic@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/screen.texi (Screen): More accurate wording.
+	Suggested by Miloš Polakovič <milos@alphamail.org> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/indent.texi (Just Spaces): Minor wording change.
+	Suggested by David Bonnafous <dbonnafo@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/text.texi (TeX Mode, TeX Editing): Improve and
+	simplify wording.  Suggested by root@vxid.pw <root@vxid.pw> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/cmdargs.texi (Window Size X): Minor wording change.
+
+	* doc/emacs/display.texi (Highlight Interactively): Fill text.
+	(Optional Mode Line): Fix typos.  Suggested by Alberto Sartori
+	<alberto.sartori@sissa.it> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/building.texi (Debugger Operation): Clarify wording.
+
+	* doc/emacs/files.texi (Directories, Comparing Files, Diff Mode)
+	(Remote Files, File Names, Visiting, Backup Deletion)
+	(Customize Save, Interlocking): Improve wording and accuracy of
+	the text.
+	* doc/emacs/maintaining.texi (VC With A Merging VCS): Don't say
+	"his".
+	* doc/emacs/arevert-xtra.texi (Auto Reverting Dired): Minor
+	wording changes.
+	(Supporting additional buffers): Moved to ...
+	* doc/lispref/backups.texi (Reverting): ... here.
+	* doc/emacs/emacs.texi (Top): Remove "Supporting additional
+	buffers" from master menu.
+	* doc/emacs/files.texi (Reverting): Mention use of file
+	notifications.  Suggested by Michael Albinus
+	<michael.albinus@gmx.de> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/rmail.texi (Rmail Motion): Clarify what '-' does to
+	'M-s'.  Suggested by Arthur Milchior <arthur@milchior.fr> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/cmdargs.texi (Initial Options): Capitalize "Emacs".
+	(Action Arguments): Fix a typo.
+	(Emacs Invocation): Replace em-dash with a comma.  Suggested by
+	Justin Heyes-Jones <justinhj@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/m-x.texi (M-x): Add an example.  Suggested by Alberto
+	Sartori <alberto.sartori@sissa.it> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/calendar.texi (Calendar/Diary, Calendar Unit Motion):
+	Minor wording changes.
+
+2018-02-04  Juri Linkov  <juri@linkov.net>
+
+	* lisp/vc/vc-git.el (vc-git-print-log): Restrict file scope to a single file
+
+	when vc-git-print-log-follow is non-nil (bug#19045).
+	(vc-git-print-log-follow): Doc fix.
+
+	* etc/NEWS: Mention 'vc-git-print-log-follow'.
+
+2018-02-04  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/emacs/misc.texi (Interactive Shell): Refer to node "Minibuffer File"
+
+	for hints how to type remote file names effectively.
+
+2018-02-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Yet another round of fixing the Emacs manual
+
+	* doc/emacs/cmdargs.texi (Action Arguments): Rearrange text
+	describing what happens when Emacs is invoked with several file
+	arguments.  Suggested by Grant Rettke <gcr@wisdomandwonder.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/xresources.texi (GTK styles):
+	* doc/emacs/mini.texi (Passwords):
+	* doc/emacs/frames.texi (Scroll Bars): Use "cannot" instead of
+	"can not".
+
+	* doc/emacs/macos.texi (Mac / GNUstep Basics): Clarify the effect
+	of ns-right-alternate-modifier when its value is 'none'.
+	Suggested by Wanderson Ferreira <iagwanderson@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/calendar.texi (Importing Diary, Appointments): Now
+	sub-sections of Diary.
+	* doc/emacs/emacs.texi (Top):
+	* doc/emacs/calendar.texi (Diary): Adjust menus to the above
+	change.  Suggested by Isaac Carter <icarter1391@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/anti.texi (Antinews): Fix grammar.
+
+2018-02-04  Alan Mackenzie  <acm@muc.de>
+
+	* etc/NEWS: Expunge the solecism "allow(s)" + infinitive
+
+2018-02-04  Martin Rudalics  <rudalics@gmx.at>
+
+	Two minor fixes in Antinews
+
+	* doc/emacs/anti.texi (Antinews): Two minor fixes.
+
+2018-02-03  Juri Linkov  <juri@linkov.net>
+
+	* etc/NEWS: Rename image-dired-thumb-job-limit
+
+	to image-dired-queue-active-limit (bug#30279)
+
+2018-02-03  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	* lisp/simple.el (async-shell-command, shell-command): Fix grammar
+
+2018-02-03  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Fix deferred display of async shell-command buffers
+
+	* lisp/simple.el (shell-command): Display async shell buffer on
+	process output for every, not just first, command invocation.  Check
+	buffer liveness, not name, before displaying. (bug#30213, bug#30280)
+
+2018-02-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Mention remote file name completion in Emacs manual
+
+	* doc/emacs/mini.texi (Minibuffer File): Describe the behavior of
+	"//" with remote file names.  (Bug#29149)
+
+2018-02-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Yest another round of manual copyedits
+
+	* doc/emacs/fixit.texi (Transpose, Spelling): Minor stylistic
+	changes.  Suggested by myq larson <myqlarson@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/calendar.texi (Appointments, Time Intervals): Mention
+	relevant Org features.  Suggested by Alex Branham
+	<alex.branham@gmail.com> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/dired.texi (Operating on Files)
+	(Shell Commands in Dired, Image-Dired): Minor stylistic edits.
+	Suggested by Francis Wright <f.j.wright@live.co.uk> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/commands.texi (User Input): Explain "C-M-a".
+	Suggested by Martin Luethi <martin.luethi@geo.uzh.ch> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Update xdisp.c commentary
+
+	* src/xdisp.c: Update commentary regarding "asynchronous" entry
+	into redisplay.  (Bug#30182)
+
+2018-02-03  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#30324
+
+	* lisp/net/rlogin.el (rlogin, rlogin-directory-tracking-mode):
+	Adapt to changed remote file name syntax.  (Bug#30324)
+
+2018-02-03  Glenn Morris  <rgm@gnu.org>
+
+	Recognize Org as builtin package (bug#30310)
+
+	* lisp/org/org.el: Add Version header so detected as builtin package.
+	* test/lisp/org/org-tests.el: New file.
+
+2018-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Another round of manual fixups
+
+	* doc/emacs/killing.texi (Killing by Lines): Clarify wording.
+	Reported by David Bonnafous <dbonnafo@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/windows.texi (Other Window): Improve wording.
+	Reported by Rasmus Sjostrom <ras.sjostrom@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/display.texi (Display Custom): Mention that line
+	numbers are not displayed in the minibuffer and tooltips.
+
+	* doc/emacs/mini.texi (Basic Minibuffer): Improve wording.
+	* doc/emacs/regs.texi (Registers): More comma removal.  Suggested
+	by "root@vxid.pw root@vxid.pw" <root@vxid.pw> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/display.texi (Auto Scrolling): Fix a typo.  Reported
+	by Kevin Foley <kfoley15@gmail.com> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/display.texi (Scrolling): Fix grammar.
+	(Horizontal Scrolling): Mention reasonable limits for hscroll-step
+	float values.  Suggested by Jerome Truong <jerometruong@gmail.com>
+	in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/mini.texi (Minibuffer Edit): Add a missing comma.
+	* doc/emacs/basic.texi (Position Info, Arguments, Repeating):
+	Remove redundant commas.  Suggested by oldgaro
+	<oldgaro@protonmail.com> in emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/kmacro.texi (Save Keyboard Macro): Clarify wording.
+	Suggested by clemens.radermacher@posteo.de in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/building.texi (Compilation Mode): Improve and simplify
+	wording.  Suggested by drone <yoorobot@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+	* doc/emacs/dired.texi (Dired Enter): Clarify wording.
+	(Dired Deletion): Fix a typo.
+	(Marks vs Flags): Mention that M-DEL in Dired asks for the mark
+	character.  Fix typos.
+	* doc/emacs/basic.texi (Moving Point, Erasing, Basic Undo)
+	(Arguments): Some additional information about keys.  Reported by
+	Francis Wright <f.j.wright@live.co.uk> in
+	emacs-manual-bugs@gnu.org.
+
+2018-02-02  Basil L. Contovounesios  <contovob@tcd.ie>  (tiny change)
+
+	* doc/lispref/customize.texi (Custom Themes): Clarify .el preference.
+
+
+	https://lists.gnu.org/archive/html/emacs-devel/2018-01/msg00824.html.
+
+2018-02-02  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/emacs/entering.texi (Entering Emacs): Another wording fix.
+
+2018-02-02  Noam Postavsky  <npostavs@gmail.com>
+
+	* doc/lispref/functions.texi (Inline Functions): Fix typo (Bug#30238).
+
+	* lisp/imenu.el (imenu-generic-expression): Rephrase doc (Bug#30294).
+
+2018-02-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix last change of @key markup
+
+	* doc/lispref/display.texi (Specified Space):
+	* doc/emacs/programs.texi (C Modes):
+	* doc/emacs/killing.texi (Rectangles):
+	* doc/emacs/emacs.texi (Top):
+	* doc/emacs/display.texi (Useless Whitespace): Don't use @key
+	markup for characters and commands, only for keys.
+
+2018-02-01  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/emacs/entering.texi (Entering Emacs): Fix markup.
+
+2018-02-01  Michael Albinus  <michael.albinus@gmx.de>
+
+	Revert a1bbc49015 (Bug#30243), do not merge
+
+	* lisp/files.el:
+	* test/lisp/net/tramp-tests.el: Revert a1bbc49015.  (Bug#30243)
+
+2018-01-31  Michael Albinus  <michael.albinus@gmx.de>
+
+	Use @key{} where it is missing in the manuals
+
+2018-01-31  Eli Zaretskii  <eliz@gnu.org>
+
+	Another round of manual fixes from proofreading
+
+	* doc/emacs/search.texi (Incremental Search)
+	(Nonincremental Search): Mention the menu bar and fix typos.
+	Reported by David Bonnafous <dbonnafo@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+	* doc/emacs/building.texi (Compilation): Improve wording.
+	Suggested by drone <yoorobot@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+	* doc/emacs/kmacro.texi (Basic Keyboard Macro): Clarify text.
+	Suggested by Robert Pluim <rpluim@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+	* doc/emacs/display.texi (Highlight Interactively, Fringes):
+	Improve wording.  Suggested by Justin Heyes-Jones
+	<justinhj@gmail.com> in emacs-manual-bugs@gnu.org.
+	* doc/emacs/commands.texi (User Input, Commands): Add missing
+	commas.
+	* doc/emacs/screen.texi (Menu Bar): Mention keyboard keys to
+	navigate menus.  Suggested by oldgaro <oldgaro@protonmail.com> in
+	emacs-manual-bugs@gnu.org.
+	* doc/emacs/search.texi (Not Exiting Isearch): Fix a typo.
+	Reported by "Kocken, I.J. (Ilja)" <I.J.Kocken@uu.nl> in
+	emacs-manual-bugs@gnu.org.
+	* doc/emacs/basic.texi (Inserting Text): Mention one more label of
+	RET.  Suggested by Francis Wright <f.j.wright@live.co.uk> in
+	emacs-manual-bugs@gnu.org.
+	* doc/emacs/text.texi (Paragraphs): Clarify text.  Reported by
+	Marcin Borkowski <mbork@mbork.pl> in emacs-manual-bugs@gnu.org.
+	* doc/emacs/maintaining.texi (Introduction to VC)
+	(Why Version Control?, VCS Merging): Fix typos and section
+	capitalization.  Suggested by "R. P. Dillon"
+	<rpdillon@killring.org> in emacs-manual-bugs@gnu.org.
+	* doc/emacs/modes.texi (Major Modes, Choosing Modes): Fix typos.
+	Reported by clemens.radermacher@posteo.de in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/emacs/entering.texi (Entering Emacs): Fix last change.
+
+2018-01-31  Martin Rudalics  <rudalics@gmx.at>
+
+	Document 'window-at-side-p' in the Elisp manual
+
+	* doc/lispref/windows.texi (Windows and Frames): Document
+	'window-at-side-p'.
+
+2018-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Document external-debugging-output in the Elisp Manual (Bug#24051)
+
+	* doc/lispref/streams.texi (Output Streams): List
+	external-debugging-output.
+	* src/print.c (Fexternal_debugging_output): Quote `print' in
+	docstring.
+
+2018-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix scroll-margin docstring (Bug#13791)
+
+	* src/xdisp.c (syms_of_xdisp) <scroll-margin>: Explain that entering
+	the margin may trigger any sort of auto scrolling, not recentering
+	specifically.
+
+2018-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify that `ansi-term' is almost the same as `term' (Bug#18106)
+
+	* lisp/term.el (ansi-term): Clarify that it's almost the same as `term'.
+
+2018-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Update manual description of locate-file (Bug#23650)
+
+	* doc/lispref/files.texi (Locating Files): Add example of predicate
+	when searching for a directory.
+
+2018-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify effect of print-gensym (Bug#27776)
+
+	* src/print.c (syms_of_print) <print-gensym>: Clarify that use of #N#
+	and #N= constructs depends on the value of `print-circle'.
+
+2018-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	* lisp/custom.el (defcustom): Fix docstring (Bug#27891).
+
+2018-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Define cl-type-definition button type as needed (Bug#28899)
+
+	* lisp/emacs-lisp/eieio-opt.el (eieio-help-constructor): Require
+	`cl-extra' before using the `cl-type-definition' button type.
+
+2018-01-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Emphasize that GPG passphrase caching is temporary (Bug#29907)
+
+	* doc/misc/epa.texi (Caching Passphrases): Clarify that caching is
+	temporary.
+	(GnuPG version compatibility): Fix typo.
+
+2018-01-30  Alan Mackenzie  <acm@muc.de>
+
+	Fix @examples in cc-mode.info, where lines were getting glued together.
+
+	This happened because of false @c's in macro lines.
+
+	* doc/misc/cc-mode.texi (Line-up Functions): Remove the unneeded @c from
+	macros sssTBasicOffset, sssTsssTBasicOffset, and hereFn.
+
+2018-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor change in "Mode Line" section of Emacs manual
+
+	* doc/emacs/screen.texi (Mode Line): Mention tooltips shown when
+	hovering the mouse over the mode line.  Suggested by Eduardo
+	Mercovich <eduardo@mercovich.net> in emacs-manual-bugs@gnu.org.
+
+2018-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	More fixes in the Emacs manual
+
+	* doc/emacs/screen.texi (Mode Line): Fix markup and
+	cross-references.
+	(Menu Bar): Correct inaccurate description.
+	* doc/emacs/macos.texi (Mac OS / GNUstep, Mac / GNUstep Events):
+	* doc/emacs/frames.texi (Scroll Bars):
+	* doc/emacs/emacs.texi (Top):
+	* doc/emacs/ack.texi (Acknowledgments): Fix spelling of "macOS".
+	* doc/emacs/misc.texi (Invoking emacsclient)
+	(emacsclient Options): Fix markup of 'emacsclient'.  Suggested by
+	Michael Albinus <michael.albinus@gmx.de> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedits in "Distribution" chapter of the Emacs manual
+
+	* doc/emacs/emacs.texi (Distrib): Minor wording changes.
+	Suggested by oldgaro <oldgaro@protonmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedits in "Entering" chapter of Emacs manual.
+
+	* doc/emacs/entering.texi (Entering Emacs): Add a cross-reference
+	to MS-Windows startup procedures.  Clarify wording.  Suggested by
+	Francis Wright <f.j.wright@live.co.uk> in emacs-manual-bugs@gnu.org.
+
+2018-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor wording change in the Emacs manual
+
+	* doc/emacs/screen.texi (Screen): Minor wording change.  Suggested
+	by Wesley Ellis <ellisgen@gmail.com> in emacs-manual-bugs@gnu.org.
+
+2018-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in the Emacs manual
+
+	* doc/emacs/custom.texi (Customization Groups): Fix a typo.
+	Reported by Jonathan Kyle Mitchell <kyle@jonathanmitchell.org> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the "Basic" chapter of the Emacs manual
+
+	* doc/emacs/basic.texi (Inserting Text): De-confuse text.
+	(Position Info): Add a cross-reference to where
+	display-line-numbers-mode is described.  Reported by Joshua
+	Branson <jbranso@fastmail.com> in emacs-manual-bugs@gnu.org.
+
+2018-01-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Resurrect lost text in lispref
+
+	* doc/lispref/files.texi (File Attributes): Resurrect
+	inadvertently lost text.
+
+2018-01-30  Philipp Stephani  <phst@google.com>
+
+	* lisp/emacs-lisp/rx.el (rx): Fix the definition of 'blank'.
+
+2018-01-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Proofread os.texi and files.texi
+
+2018-01-29  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvements in the "International" chapter of Emacs manual
+
+	* doc/emacs/mule.texi (File Name Coding): Stop enumerating all the
+	versions of MS-Windows.
+	(Modifying Fontsets, Unibyte Mode, Bidirectional Editing): Improve
+	wording.  Reported by Francis Wright <f.j.wright@live.co.uk> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-29  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvement in "Text" chapter of Emacs manual
+
+	* doc/emacs/text.texi (Words): Improve wording.  Reported by
+	Marcin Borkowski <mbork@mbork.pl> in
+	http://lists.gnu.org/archive/html/emacs-devel/2018-01/msg00784.html.
+
+2018-01-28  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix some issues in the emacs/lispref manuals
+
+	* doc/emacs/basic.texi (Continuation Lines):
+	* doc/emacs/building.texi (GDB User Interface Layout):
+	* doc/emacs/dired.texi (Misc Dired Features):
+	* doc/emacs/maintaining.texi (Identifier Search):
+	* doc/emacs/mark.texi (Using Region):
+	* doc/emacs/misc.texi (Document View, DocView Conversion):
+	* doc/emacs/modes.texi (Major Modes):
+	* doc/emacs/mule.texi (Input Methods, Unibyte Mode):
+	* doc/emacs/sending.texi (Mail Methods): Replace @code by
+	@kbd.
+	* doc/emacs/frames.texi (Text-Only Mouse):
+	* doc/lispref/maps.texi (Standard Keymaps): Replace @kbd by
+	@key.
+	* doc/lispref/compile.texi (Compiler Errors): Write
+	non-@code{nil} instead of non-nil.
+	* doc/lispref/debugging.texi (Internals of Debugger):
+	'backtrace' is not a command.  'debugger-stack-frame-as-list'
+	is an option.
+	* doc/lispref/display.texi (Size of Displayed Text):
+	'window-lines-pixel-dimensions' has a last argument 'left'.
+	* doc/lispref/display.texi (Attribute Functions):
+	'set-face-underline' and 'set-face-inverse-video' are
+	commands.
+	(Tooltips): 'tooltip-frame-parameters' is an option.
+	(Bidirectional Display): 'bidi-paragraph-direction' is an
+	option.
+	* doc/lispref/frames.texi (Cursor Parameters): 'cursor-type'
+	is an option.
+	(Input Focus): Argument FRAME of 'x-focus-frame' is not
+	optional.
+	(Child Frames): Both arguments of 'frame-ancestor-p' are
+	non-optional.  'iconify-child-frame' is an option.
+	* doc/lispref/os.texi (Killing Emacs):
+	'kill-emacs-query-functions' is an option.
+	* doc/lispref/windows.texi (Mouse Window Auto-selection):
+	'mouse-autoselect-window' is an option.
+
+2018-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix multiple spaces in Emacs manual
+
+	* doc/emacs/search.texi (Lax Search): Fix multiple consecutive
+	spaces in printed manual.
+
+2018-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/files.el (save-some-buffers): Doc fix.  (Bug#30215)
+
+2018-01-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Adjudicate comments to "International" chapter of Emacs manual
+
+	* doc/emacs/mule.texi (International Chars)
+	(Language Environments, Input Methods, Defining Fontsets)
+	(Modifying Fontsets): Minor wording changes and typo fixes.
+	Reported by Francis Wright <f.j.wright@live.co.uk> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-28  Noam Postavsky  <npostavs@gmail.com>
+
+	Revert "Signal error for symbol names with strange quotes (Bug#2967)"
+
+	That commit did not make the corresponding change to printing, thus
+	breaking the (eq (read (prin1-to-string SYM)) SYM) invariant for those
+	symbols.  It's too late in the release cycle to change printing
+	behavior, therefore revert the reader change.
+
+	Don't merge to master, the print function will be updated there (see
+	"Fix round tripping of read->print for symbols with strange quotes").
+
+2018-01-27  Alan Mackenzie  <acm@muc.de>
+
+	Allow read-passwd to hide characters inserted by C-y.  (Security fix.)
+
+	This fixes bug #30186.  The with-silent-modifications was there to prevent
+	records of text property manipulations being put into buffer-undo-list.  These
+	had been causing a significant slowdown in CC Mode with C-_ after a large
+	C-y.  This CC Mode problem has since been solved by a different workaround.
+
+	* lisp/subr.el (remove-yank-excluded-properties): Remove the invocation of
+	with-silent-modifications around the text property manipulations.
+
+2018-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* etc/PROBLEMS: Document issues with double-buffering.  (Bug#30088)
+
+2018-01-27  Charles A. Roelli  <charles@aurox.ch>
+
+	* lisp/window.el (window-largest-empty-rectangle): Fix grammar.
+
+2018-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor changes in the Emacs manual
+
+	* doc/emacs/search.texi (Search Customizations): Minor wording
+	change.
+	* doc/emacs/files.texi (Customize Save): Add a cross-reference
+	for batch mode.
+
+2018-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the "Files" chapter of the Emacs manual
+
+	* doc/emacs/files.texi (File Shadowing): Rearrange text to explain
+	the notion of shadowing before describing the commands.  Suggested
+	by Will Korteland <emacs-devel@korte.land> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the "Search" chapter of the Emacs manual
+
+	* doc/emacs/search.texi (Regexps, Regexp Backslash): Improve and
+	clarify wording.
+	(Search Customizations): Fix a typo.  Reported by Will Korteland
+	<emacs-devel@korte.land> in emacs-manual-bugs@gnu.org.
+
+2018-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/indent.c (Findent_to): Doc fix.  (Bug#30260)
+
+2018-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'edebug-defun'
+
+	* doc/lispref/edebug.texi (Instrumenting): Document a workaround
+	for a failure to instrument due to unknown macros.  (Bug#30243)
+	(Bug#10577)
+
+2018-01-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Mention crashes due to Noto Serif Kannada fonts
+
+	* etc/PROBLEMS: Mention crashes due to Noto Serif Kannada fonts,
+	and the respective workarounds.  (Bug#30193)
+
+2018-01-27  Noam Postavsky  <npostavs@gmail.com>
+
+	* doc/lispref/searching.texi: Document regexp repetition limit.
+
+	* src/syntax.c (char-syntax): Warn about ignoring text properties (Bug#22765).
+
+2018-01-27  Noam Postavsky  <npostavs@gmail.com>
+
+	Load mm-util as needed for url-file and url-data (Bug#30258)
+
+	* lisp/url/url-file.el (url-file):
+	* lisp/url/url-misc.el (url-data): Require `mm-util' before calling
+	`mm-disable-multibyte'.
+	* test/lisp/url/url-file-resources/file.txt:
+	* test/lisp/url/url-file-tests.el:
+	* test/lisp/url/url-misc-tests.el: New tests.
+
+2018-01-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Another minor copyedit in the manual's "Scroll Bars"
+
+	* doc/emacs/frames.texi (Scroll Bars): Mention that up/down and
+	left/right buttons may be absent from the toolkit scroll bars.
+	Reported by Robert Pluim <rpluim@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor fix in documentation of 'equal'
+
+	* doc/lispref/objects.texi (Equality Predicates): Correct the
+	conditions for equality of unibyte and multibyte strings.
+	(Bug#30218)
+
+2018-01-26  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/dired-x.el (dired-guess-shell-alist-user): Doc fix.  (Bug#30192)
+
+2018-01-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor rewording in Emacs manual's "Help Mode" node
+
+	* doc/emacs/help.texi (Help Mode): Minor rewording of description
+	of 'help-follow-symbol'.  Suggested by Richard Stallman
+	<rms@gnu.org> in emacs-manual-bugs@gnu.org.
+
+2018-01-26  Eli Zaretskii  <eliz@gnu.org>
+
+	Fixes for Emacs manual in frames.texi
+
+	* doc/emacs/frames.texi (Scroll Bars, Mouse Commands)
+	(Window Dividers): Minor clarifications and spelling/markup
+	changes.  Suggested by Robert Pluim <rpluim@gmail.com> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-24  Glenn Morris  <rgm@gnu.org>
+
+	* doc/misc/cl.texi (Efficiency Concerns): Fix 2012-10-27 typo.
+
+2018-01-24  Robert Pluim  <rpluim@gmail.com>
+
+	Fix a few issues with latest GTK scaling changes
+
+	* src/xfns.c (Fx_display_monitor_attributes_list): Call
+	gdk_screen_get_monitor_scale_factor only for GTK versions
+	3.10..3.21.
+	* src/xterm.c (x_set_offset): Call xg_get_scale for GTK only.
+
+2018-01-24  Robert Pluim  <rpluim@gmail.com>
+
+	Use scaled coordinates when calling into GTK
+
+	This is part two of a two part fix for the GTK scaling
+	problems.  See the thread starting at
+	http://lists.gnu.org/archive/html/emacs-devel/2018-01/msg00372.html
+	for an explanation of why it has been added to Emacs 26.
+
+	* src/gtkutil.c (xg_set_geometry): Scale down the coordinates that we
+	pass to gtk_window_move and to gtk_window_parse_geometry.
+	* src/xterm.c (x_set_offset): Likewise.
+
+2018-01-24  Robert Pluim  <rpluim@gmail.com>
+
+	Scale monitor dimensions obtained from GTK
+
+	This is part one of a two part fix for the GTK scaling
+	problems.  See the thread starting at
+	http://lists.gnu.org/archive/html/emacs-devel/2018-01/msg00372.html
+	for an explanation of why it has been added to Emacs 26.
+
+	* src/xfns.c (Fx_display_monitor_attributes_list): Take scaling factor
+	into account when using GTK to query the monitor dimensions, which
+	allows frameset-restore to position frames correctly.
+
+2018-01-22  Rasmus  <rasmus@gmx.us>
+
+	Update Org to v9.1.6
+
+	Please note this is a bugfix release. See etc/ORG-NEWS for details.
+
+2018-01-22  Aaron Jensen  <aaronjensen@gmail.com>
+
+	Use text-pixels values only when saving framesets (Bug#30141)
+
+	* lisp/frameset.el (frameset-persistent-filter-alist): Specify
+	that text-pixels values are by default only saved by framesets
+	so the parameter is not set when restoring (Bug#30141).
+
+2018-01-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvement in section "Pages" of the usere manual
+
+	* doc/emacs/text.texi (Pages): Improve wording.  Suggested by Will
+	Korteland <emacs-devel@korte.land> in emacs-manual-bugs@gnu.org.
+
+2018-01-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvements in user manual
+
+	* doc/emacs/trouble.texi (Emergency Escape, Contributing): Clarify
+	text.  Suggested by Jonathan Kyle Mitchell <kyle@jonathanmitchell.org>
+	in emacs-manual-bugs@gnu.org
+
+2018-01-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the "Mark" chapter of the user manual
+
+	* doc/emacs/mark.texi (Setting Mark, Marking Objects): Improve and
+	clarify wording.  Suggested by John Cummings <john@rootabega.net>
+	in emacs-manual-bugs@gnu.org.
+
+2018-01-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the "Buffers" chapter of the user manual
+
+	* doc/emacs/buffers.texi (Several Buffers): Correct description of
+	prefix arguments.  Clarify "bury".
+	(Buffer Menus): Clarify wording.  Reported by John Cummings
+	<john@rootabega.net> in emacs-manual-bugs@gnu.org.
+
+2018-01-21  tino calancha  <tino.calancha@gmail.com>
+
+	* lisp/term.el (term-send-input): Fix text duplication in docstring
+
+2018-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve "Buffers" in the user manual
+
+	Suggested by John Cummings <john@rootabega.net> in
+	emacs-manual-bugs@gnu.org:
+	* doc/emacs/buffers.texi (Select Buffer): Add cross-references to
+	"Windows" and "Frames".
+	(Misc Buffer, Kill Buffer): Use BUFFER consistently in commands
+	that accept buffer names.
+	(Select Buffer): Improve description of "M-g M-g".  Improve
+	wording.
+	(Misc Buffer, Kill Buffer): Improve wording.
+	(Kill Buffer): Fix the response required by kill-some-buffers.
+	Mention customizable options that control what clean-buffer-list
+	does.
+	(Several Buffers): More detail about
+	'Buffer-menu-unmark-all-buffers'.
+
+2018-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Don't mention 'vc-stay-local' in the user manual
+
+	* doc/emacs/vc1-xtra.texi (CVS Options):
+	* doc/emacs/maintaining.texi (VC Directory Buffer): Remove
+	references to 'vc-stay-local', which no longer exists.
+	(Bug#30138)
+
+2018-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in calendar.texi
+
+	* doc/emacs/calendar.texi (Writing Calendar Files): Capitalize
+	"Filofax".  Reported by Will Korteland <emacs-devel@korte.land>
+	in emacs-manual-bugs@gnu.org.
+
+2018-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvement in wording of the Emacs manual
+
+	* doc/emacs/killing.texi (CUA Bindings): Improve wording.
+	Suggested by Will Korteland <emacs-devel@korte.land> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Revert "Fix tempfile creation when byte compiling"
+
+	This reverts commit 4fd446e9f65e5531b18d4a0c5e08a6eeabc292d8:
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-file):
+	Put tempfile next to the target file, as was the original intent.
+
+2018-01-19  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix tempfile creation when byte compiling
+
+	This improves on the recent fix for master failing to build
+	on FreeBSD.  Suggested by Stefan Monnier in:
+	https://lists.gnu.org/r/emacs-devel/2018-01/msg00600.html
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-file):
+	Put tempfile next to the target file, as was the original intent.
+
+2018-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the Emacs manual as suggested in emacs-manual-bugs
+
+	* doc/emacs/killing.texi (Deletion and Killing): Add
+	cross-reference to "Kill Ring".
+	* doc/emacs/help.texi (Help Mode, Package Keywords): Improve
+	wording.  Suggested by Will Korteland <emacs-devel@korte.land> in
+	emacs-manual-bugs@gnu.org.
+
+2018-01-19  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/emacs-lisp/bytecomp.el: Tweak last change
+
+	(byte-compile-file): Move comment closer to the code it describes.
+
+2018-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Unbreak building Emacs on FreeBSD
+
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-file): Don't create
+	the temporary file under temporary-file-directory if the file
+	being compiled is specified by an absolute file name.  This avoids
+	problems with ACL copying from temporary-file-directory on
+	FreeBSD.  For the details, see
+	http://lists.gnu.org/archive/html/emacs-devel/2018-01/msg00513.html.
+
+2018-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Don't unnecessarily use non-ASCII characters in C sources
+
+	* src/xwidget.c (webkit_javascript_finished_cb):
+	* src/gtkutil.c (xg_check_special_colors):
+	* src/emacs-module.c (module_make_string):
+	* src/alloc.c (SET_STACK_TOP_ADDRESS): Don't use non-ASCII quote
+	characters.
+
+2018-01-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Portability fixes in emacs-module-tests
+
+	* test/Makefile.in (abs_top_srcdir): Add variable, needed by
+	CPPFLAGS.
+	* test/data/emacs-module/mod-test.c: Include <limits.h>.
+	(pT, pZ, T_TYPE, Z_TYPE): Compatibility macros, for systems that
+	don't support %td and %zu format specs.
+	(emacs_module_init): Use compatibility macros to make the error
+	messages print meaningful values (and avoid compiler warnings).
+
+2018-01-19  Noam Postavsky  <npostavs@gmail.com>
+
+	Add tests for term.el
+
+	* lisp/term.el (term-mode): Add `name' attribute to
+	window-adjust-process-window-size-function value, so that it can be
+	removed easily by tests.
+	* test/lisp/term-tests.el: New tests.
+
+2018-01-19  Callum Cameron  <cjcameron7@gmail.com>  (tiny change)
+
+	Handle split AnSiT messages for term.el (Bug#17231)
+
+	Check to see if there is an incomplete command at the end of
+	term-emulate-terminal's input string, and, if so, save it so the whole
+	command can be processed when the next string arrives.
+	* lisp/term.el (term-partial-ansi-terminal-message): New variable.
+	(term-mode): Make it buffer local.
+	(term-handle-ansi-terminal-messages): Prepend it to the received
+	message, and set it if a partial message was received.
+
+
+	Do not merge to master, it will be solved differently there, see
+	"Switch term.el to lexical binding, and clean up code a bit".
+
+2018-01-19  Glenn Morris  <rgm@gnu.org>
+
+	* configure.ac (emacs_config_features): Add threads.
+
+2018-01-18  Noam Postavsky  <npostavs@gmail.com>
+
+	Handle case-insensitive filenames for load-path shadows (Bug#5845)
+
+	* lisp/emacs-lisp/shadow.el (load-path-shadows-find): Check for
+	shadowing with case-insensitive matching for files of case-insensitive
+	directories (as determined by `file-name-case-insensitive-p').
+	* test/lisp/emacs-lisp/shadow-tests.el: New test.
+	* test/lisp/emacs-lisp/shadow-resources/p1/foo.el:
+	* test/lisp/emacs-lisp/shadow-resources/p2/FOO.el: New test files.
+
+2018-01-18  Alan Mackenzie  <acm@muc.de>
+
+	CC Mode: stop distinguishing brace blocks from defun blocks by content.
+
+	Don't merge to master; this is a quick fix for the emacs-26 branch.  This is
+	essentially a reversion of the patch from 2017-11-10 which attempted to handle
+	C99's compound literals.
+
+	The bug here was triggered when a defun block contained a declaration ending
+	in a comma, yet without a semicolon.
+
+	* lisp/progmodes/cc-engine.el (c-guess-basic-syntax): At the CASE 9 test,
+	remove from the `or' form the test of a block's contents.
+
+2018-01-17  Philipp Stephani  <phst@google.com>
+
+	Use recommended long options syntax in man page
+
+	* doc/man/emacs.1.in: Specify equals sign for long options, as
+	recommended in the manual.
+
+2018-01-17  Glenn Morris  <rgm@gnu.org>
+
+	An overdue update of GNUstep emacs.tiff
+
+	* nextstep/GNUstep/Emacs.base/Resources/emacs.tiff:
+	Update to the Emacs 25 icon.
+	Converted from hicolor/scalable/apps/emacs.svg using Gimp.
+	* nextstep/GNUstep/Emacs.base/Resources/README: Update.
+
+2018-01-17  Glenn Morris  <rgm@gnu.org>
+
+	Add some test skip conditions
+
+	* test/lisp/vc/vc-bzr-tests.el (vc-bzr-test-bug9726)
+	(vc-bzr-test-bug9781): Skip if bzr is faulty.
+	* test/src/thread-tests.el: Skip if not compiled with threads.
+
+2018-01-17  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Add documentation to ecomplete.el
+
+	* lisp/ecomplete.el: Add doc strings and document the format.
+
+2018-01-17  Glenn Morris  <rgm@gnu.org>
+
+	* admin/authors.el (authors-aliases): Tighten more entries.
+
+2018-01-17  Glenn Morris  <rgm@gnu.org>
+
+	Small startup fix for current-load-list
+
+	* lisp/startup.el (command-line):
+	Avoid current-load-list being non-nil after startup ends.
+
+2018-01-17  Glenn Morris  <rgm@gnu.org>
+
+	authors-aliases is based on regexps, not literals
+
+	* admin/authors.el (authors-aliases): Replace overly-broad entries.
+
+2018-01-15  Charles A. Roelli  <charles@aurox.ch>
+
+	Remove incorrect documentation in comint.el
+
+	* lisp/comint.el (comint-interrupt-subjob, comint-kill-subjob)
+	(comint-quit-subjob, comint-stop-subjob): Remove incorrect
+	documentation.  (Bug#30079)
+
+2018-01-15  Glenn Morris  <rgm@gnu.org>
+
+	An overdue update of src/emacs-icon.h
+
+	* src/emacs-icon.h: Update to the Emacs 25 icon.  (Bug#30047)
+	Converted from hicolor/scalable/apps/emacs.svg using Gimp.
+
+2018-01-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedit in ELisp manual
+
+	* doc/lispref/variables.texi (File Local Variables): Improve
+	wording of last change.
+
+2018-01-14  Shuguang Sun  <shuguang@gmail.com>
+
+	Fix Bug#29149 in dired-aux.el
+
+	* lisp/dired-aux.el (dired-shell-stuff-it): Handle remote
+	commands on w32 properly.  (Bug#29149)
+
+2018-01-14  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#29149 in shell.el
+
+	* lisp/shell.el (shell): Change order of `file-local-name' and
+	`expand-file-name' calls.  Otherwise, the local file name
+	would be extended by a drive letter, even when it is a remote
+	file, seen from w32.  (Bug#29149)
+
+2018-01-13  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* doc/lispref/variables.texi (File Local Variables): Fix last change
+
+2018-01-13  Nicolas Petton  <nicolas@petton.fr>
+
+	* ChangeLog.3: Update
+
+	Update etc/AUTHORS
+
+2018-01-13  Nicolas Petton  <nicolas@petton.fr>
+
+	Fix an entry in authors-aliases
+
+	* admin/authors.el (authors-aliases): Replace regexp from "Max", which
+	is too broad, to an email address ("mu@magi.net.ru").
+
 2018-01-13  Eli Zaretskii  <eliz@gnu.org>
 
 	Mention trace.el facilities in the ELisp manual
@@ -56130,7 +59159,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 5dd0e5c54d29e81c07798a124295c8c3f016d621 (inclusive).
+commit 56794ac6c7fb1ca1dd1fd8dfb0ac40e20901f2c0 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:

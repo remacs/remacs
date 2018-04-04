@@ -1138,6 +1138,11 @@ Entry to this mode runs the hooks on `term-mode-hook'."
       (setq term-current-row nil)
       (setq term-current-column nil)
       (term-set-scroll-region 0 height)
+      ;; `term-set-scroll-region' causes these to be set, we have to
+      ;; clear them again since we're changing point (Bug#30544).
+      (setq term-start-line-column nil)
+      (setq term-current-row nil)
+      (setq term-current-column nil)
       (goto-char point))))
 
 ;; Recursive routine used to check if any string in term-kill-echo-list
