@@ -304,7 +304,8 @@ can get pretty complex."
                                                :tag "Personality/Username"
                                                (const :tag "Any" t)
                                                (string
-                                                :tag "Name")))))))))
+                                                :tag "Name"))))))
+                  (sexp :tag "A data structure (external provider)"))))
 
 (defcustom auth-source-gpg-encrypt-to t
   "List of recipient keys that `authinfo.gpg' encrypted to.
