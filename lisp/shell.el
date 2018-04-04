@@ -568,8 +568,10 @@ buffer."
   (setq list-buffers-directory (expand-file-name default-directory))
   ;; shell-dependent assignments.
   (when (ring-empty-p comint-input-ring)
-    (let ((shell (file-name-nondirectory (car
-		   (process-command (get-buffer-process (current-buffer))))))
+    (let ((shell (if (get-buffer-process (current-buffer))
+                     (file-name-nondirectory
+                      (car (process-command (get-buffer-process (current-buffer)))))
+                   ""))
 	  (hsize (getenv "HISTSIZE")))
       (and (stringp hsize)
 	   (integerp (setq hsize (string-to-number hsize)))
