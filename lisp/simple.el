@@ -2968,12 +2968,12 @@ REASON describes the reason that the boundary is being added; see
   (setq undo-auto--undoably-changed-buffers nil))
 
 (defun undo-auto--boundary-timer ()
-  "Timer which will run `undo--auto-boundary-timer'."
+  "Timer function run by `undo-auto-current-boundary-timer'."
   (setq undo-auto-current-boundary-timer nil)
   (undo-auto--boundaries 'timer))
 
 (defun undo-auto--boundary-ensure-timer ()
-  "Ensure that the `undo-auto-boundary-timer' is set."
+  "Ensure that the `undo-auto-current-boundary-timer' is set."
   (unless undo-auto-current-boundary-timer
     (setq undo-auto-current-boundary-timer
           (run-at-time 10 nil #'undo-auto--boundary-timer))))
