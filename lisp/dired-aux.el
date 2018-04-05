@@ -1864,28 +1864,31 @@ Optional arg HOW-TO determines how to treat the target.
 		    (dired-mark-read-file-name
 		     (concat (if dired-one-file op1 operation) " %s to: ")
 		     target-dir op-symbol arg rfn-list default))))
-	 (into-dir (cond ((null how-to)
-			  ;; Allow users to change the letter case of
-			  ;; a directory on a case-insensitive
-			  ;; filesystem.  If we don't test these
-			  ;; conditions up front, file-directory-p
-			  ;; below will return t on a case-insensitive
-			  ;; filesystem, and Emacs will try to move
-			  ;; foo -> foo/foo, which fails.
-			  (if (and (file-name-case-insensitive-p (car fn-list))
-				   (eq op-symbol 'move)
-				   dired-one-file
-				   (string= (downcase
-					     (expand-file-name (car fn-list)))
-					    (downcase
-					     (expand-file-name target)))
-				   (not (string=
-					 (file-name-nondirectory (car fn-list))
-					 (file-name-nondirectory target))))
-			      nil
-			    (file-directory-p target)))
-			 ((eq how-to t) nil)
-			 (t (funcall how-to target)))))
+	 (into-dir
+          (progn
+            (unless dired-one-file (dired-maybe-create-dirs target))
+            (cond ((null how-to)
+		   ;; Allow users to change the letter case of
+		   ;; a directory on a case-insensitive
+		   ;; filesystem.  If we don't test these
+		   ;; conditions up front, file-directory-p
+		   ;; below will return t on a case-insensitive
+		   ;; filesystem, and Emacs will try to move
+		   ;; foo -> foo/foo, which fails.
+		   (if (and (file-name-case-insensitive-p (car fn-list))
+			    (eq op-symbol 'move)
+			    dired-one-file
+			    (string= (downcase
+				      (expand-file-name (car fn-list)))
+				     (downcase
+				      (expand-file-name target)))
+			    (not (string=
+				  (file-name-nondirectory (car fn-list))
+				  (file-name-nondirectory target))))
+		       nil
+		     (file-directory-p target)))
+		  ((eq how-to t) nil)
+		  (t (funcall how-to target))))))
     (if (and (consp into-dir) (functionp (car into-dir)))
 	(apply (car into-dir) operation rfn-list fn-list target (cdr into-dir))
       (if (not (or dired-one-file into-dir))
