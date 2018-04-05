@@ -113,6 +113,7 @@
                      ("Person 6" "p6@p6.org"))))))
 
 (ert-deftest message-all-epg-keys-available-p ()
+  (skip-unless (epg-check-configuration (epg-find-configuration 'OpenPGP)))
   (let ((person1 '("Person 1" "p1@p1.org"))
         (person2 '("Person 2" "p2@p2.org"))
         (person3 '("Person 3" "p3@p3.org"))
