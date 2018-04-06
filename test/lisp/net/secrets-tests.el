@@ -20,7 +20,7 @@
 ;;; Code:
 
 (require 'ert)
-(when (featurep 'dbusbind) (require 'secrets))
+(require 'secrets)
 (require 'notifications)
 
 ;; We do not want chatty messages.
@@ -28,7 +28,6 @@
 
 (ert-deftest secrets-test00-availability ()
   "Test availability of Secret Service API."
-  (skip-unless (featurep 'dbusbind))
   :expected-result (if secrets-enabled :passed :failed)
   (should secrets-enabled)
   (should (dbus-ping :session secrets-service))
@@ -59,7 +58,6 @@
 
 (ert-deftest secrets-test01-sessions ()
   "Test opening / closing a secrets session."
-  (skip-unless (featurep 'dbusbind))
   (skip-unless secrets-enabled)
   (skip-unless (secrets-empty-path secrets-session-path))
 
@@ -85,7 +83,6 @@
 
 (ert-deftest secrets-test02-collections ()
   "Test creation / deletion a secrets collections."
-  (skip-unless (featurep 'dbusbind))
   (skip-unless secrets-enabled)
   (skip-unless (secrets-empty-path secrets-session-path))
 
@@ -147,7 +144,6 @@
 
 (ert-deftest secrets-test03-items ()
   "Test creation / deletion a secret item."
-  (skip-unless (featurep 'dbusbind))
   (skip-unless secrets-enabled)
   (skip-unless (secrets-empty-path secrets-session-path))
 
@@ -189,7 +185,6 @@
 
 (ert-deftest secrets-test04-search ()
   "Test searching of secret items."
-  (skip-unless (featurep 'dbusbind))
   (skip-unless secrets-enabled)
   (skip-unless (secrets-empty-path secrets-session-path))
 
