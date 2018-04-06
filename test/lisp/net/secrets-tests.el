@@ -20,7 +20,7 @@
 ;;; Code:
 
 (require 'ert)
-(require 'secrets)
+(when (featurep 'dbusbind) (require 'secrets))
 (require 'notifications)
 
 ;; We do not want chatty messages.
