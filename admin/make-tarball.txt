@@ -240,7 +240,7 @@ Update the refcards/pdf/ and ps/ directories, and also
 refcards/emacs-refcards.tar.gz (use make -C etc/refcards pdf ps dist).
 
 FIXME: The above instructions are not quite complete, as they do not
-specify the manual procuedure used to copy the generated files in the
+specify the manual procedure used to copy the generated files in the
 'manual' directory to the corresponding web files, and to cvs remove
 and add files as needed.  Also, they are missing some files, e.g.,
 they generate manual/html_mono/ada-mode.html but do not generate the
