@@ -2969,7 +2969,7 @@ that calls `undo-auto-amalgamate'."
 (defun undo-auto--ensure-boundary (cause)
   "Add an `undo-boundary' to the current buffer if needed.
 REASON describes the reason that the boundary is being added; see
-`undo-auto--last-boundary' for more information."
+`undo-auto--last-boundary-cause' for more information."
   (when (and
          (undo-auto--needs-boundary-p))
     (let ((last-amalgamating
@@ -3018,10 +3018,10 @@ default values.")
   "Add an `undo-boundary' in appropriate buffers."
   (undo-auto--boundaries
    (let ((amal undo-auto--this-command-amalgamating))
-       (setq undo-auto--this-command-amalgamating nil)
-       (if amal
-           'amalgamate
-         'command))))
+     (setq undo-auto--this-command-amalgamating nil)
+     (if amal
+         'amalgamate
+       'command))))
 
 (defun undo-auto-amalgamate ()
   "Amalgamate undo if necessary.
@@ -3034,30 +3034,38 @@ behavior."
   (let ((last-amalgamating-count
          (undo-auto--last-boundary-amalgamating-number)))
     (setq undo-auto--this-command-amalgamating t)
-    (when
-        last-amalgamating-count
-      (if
-          (and
-           (< last-amalgamating-count 20)
-           (eq this-command last-command))
+    (when last-amalgamating-count
+      (if (and (< last-amalgamating-count 20)
+               (eq this-command last-command))
           ;; Amalgamate all buffers that have changed.
+          ;; This may be needed for example if some *-change-functions
+          ;; reflected these changes in some other buffer.
           (dolist (b (cdr undo-auto--last-boundary-cause))
             (when (buffer-live-p b)
               (with-current-buffer
                   b
-                (when
-                    ;; The head of `buffer-undo-list' is nil.
-                    ;; `car-safe' doesn't work because
-                    ;; `buffer-undo-list' need not be a list!
-                    (and (listp buffer-undo-list)
-                         (not (car buffer-undo-list)))
+                (when (and (consp buffer-undo-list)
+                           ;; `car-safe' doesn't work because
+                           ;; `buffer-undo-list' need not be a list!
+                           (null (car buffer-undo-list)))
+                  ;; The head of `buffer-undo-list' is nil.
                   (setq buffer-undo-list
                         (cdr buffer-undo-list))))))
         (setq undo-auto--last-boundary-cause 0)))))
 
 (defun undo-auto--undoable-change ()
   "Called after every undoable buffer change."
-  (add-to-list 'undo-auto--undoably-changed-buffers (current-buffer))
+  (unless (memq (current-buffer) undo-auto--undoably-changed-buffers)
+    (let ((bufs undo-auto--undoably-changed-buffers))
+      ;; Drop dead buffers from the list, to avoid memory leak in
+      ;; (while t (with-temp-buffer (setq buffer-undo-list nil) (insert "a")))
+      (while bufs
+        (let ((next (cdr bufs)))
+          (if (or (buffer-live-p (car bufs)) (null next))
+              (setq bufs next)
+            (setcar bufs (car next))
+            (setcdr bufs (cdr next))))))
+    (push (current-buffer) undo-auto--undoably-changed-buffers))
   (undo-auto--boundary-ensure-timer))
 ;; End auto-boundary section
 
