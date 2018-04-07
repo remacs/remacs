@@ -2420,7 +2420,7 @@ struct it
   /* Face to use.  */
   int face_id;
 
-  /* Setting of buffer-local variable selective-display-ellipsis.  */
+  /* Setting of buffer-local variable selective-display-ellipses.  */
   bool_bf selective_display_ellipsis_p : 1;
 
   /* True means control characters are translated into the form `^C'
