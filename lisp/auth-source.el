@@ -1497,13 +1497,13 @@ Here's an example that looks for the first item in the `Login'
 Secrets collection:
 
  (let ((auth-sources \\='(\"secrets:Login\")))
-    (auth-source-search :max 1)
+    (auth-source-search :max 1))
 
 Here's another that looks for the first item in the `Login'
 Secrets collection whose label contains `gnus':
 
  (let ((auth-sources \\='(\"secrets:Login\")))
-    (auth-source-search :max 1 :label \"gnus\")
+    (auth-source-search :max 1 :label \"gnus\"))
 
 And this one looks for the first item in the `Login' Secrets
 collection that's a Google Chrome entry for the git.gnus.org site
