@@ -360,32 +360,30 @@ Second, any text properties will be stripped from strings."
 		  proposed-value))))
         ;; For hash-tables and vectors, the top-level `read' will not
         ;; "look inside" member values, so we need to do that
-        ;; explicitly.
+        ;; explicitly.  Because `eieio-override-prin1' is recursive in
+        ;; the case of hash-tables and vectors, we recurse
+        ;; `eieio-persistent-validate/fix-slot-value' here as well.
         ((hash-table-p proposed-value)
          (maphash
           (lambda (key value)
-            (cond ((class-p (car-safe value))
-                   (setf (gethash key proposed-value)
-                         (eieio-persistent-convert-list-to-object
-                          value)))
-                  ((and (consp value)
-                        (eq (car value) 'quote))
-                   (setf (gethash key proposed-value)
-                         (cadr value)))))
+            (setf (gethash key proposed-value)
+                  (if (class-p (car-safe value))
+                      (eieio-persistent-convert-list-to-object
+                       value)
+                    (eieio-persistent-validate/fix-slot-value
+                     class slot value))))
           proposed-value)
          proposed-value)
 
         ((vectorp proposed-value)
          (dotimes (i (length proposed-value))
            (let ((val (aref proposed-value i)))
-            (cond ((class-p (car-safe val))
-                   (aset proposed-value i
-                         (eieio-persistent-convert-list-to-object
-                          (aref proposed-value i))))
-                  ((and (consp val)
-                        (eq (car val) 'quote))
-                   (aset proposed-value i
-                         (cadr val))))))
+             (aset proposed-value i
+                   (if (class-p (car-safe val))
+                       (eieio-persistent-convert-list-to-object
+                        val)
+                     (eieio-persistent-validate/fix-slot-value
+                      class slot val)))))
          proposed-value)
 
 	 ((stringp proposed-value)
