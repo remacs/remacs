@@ -108,7 +108,7 @@ BUILD_64=1
 GIT_UP=0
 CONFIG=1
 
-while getopts "36ghnsiV:" opt; do
+while getopts "36gb:hnsiV:" opt; do
   case $opt in
     3)
         BUILD_32=1
@@ -131,6 +131,10 @@ while getopts "36ghnsiV:" opt; do
         ;;
     i)
         BUILD=0
+        ;;
+    b)
+        REQUIRED_BRANCH=$OPTARG
+        echo "Setting Required branch $REQUIRED_BRANCH"
         ;;
     V)
         VERSION=$OPTARG
@@ -183,6 +187,17 @@ else
     BRANCH=master
     CACHE=-C
     OF_VERSION="$VERSION-`date +%Y-%m-%d`"
+fi
+
+echo Checking for required branch
+if [ -n $REQUIRED_BRANCH ];
+then
+    BRANCH=$REQUIRED_BRANCH
+    echo [build] Building from Branch $BRANCH
+    VERSION=$VERSION-$BRANCH
+    OF_VERSION="$VERSION-`date +%Y-%m-%d`"
+    ## Use snapshot dependencies
+    SNAPSHOT=1
 fi
 
 if (($GIT_UP))
