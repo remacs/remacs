@@ -670,8 +670,8 @@ Chao-Hong Liu: changed TUTORIAL.cn TUTORIAL.zh
 
 Charles A. Roelli: changed nsterm.m nsfns.m nsterm.h org-clock.el DEBUG
   INSTALL add-log.el anti.texi buffers.texi comint.el data.c diff-mode.el
-  display.texi eldoc.el fill.el find-func.el flymake.el frame.el
-  internals.texi macfont.m mouse-tests.el and 12 other files
+  display.texi eldoc.el files.el fill.el find-func.el flymake.el frame.el
+  internals.texi macfont.m and 13 other files
 
 Charles Hannum: changed aix3-1.h aix3-2.h configure ibmrs6000.h
   keyboard.c netbsd.h pop.c sysdep.c systime.h systty.h xrdb.c
@@ -3570,7 +3570,7 @@ Nicolas Graner: changed message.el
 Nicolas Petton: wrote map-tests.el map.el seq-tests.el seq.el
   thunk-tests.el thunk.el
 and co-wrote auth-source-pass.el auth-source-tests.el subr-tests.el
-and changed sequences.texi README authors.el configure.ac sed2v2.inp
+and changed sequences.texi README configure.ac sed2v2.inp authors.el
   emacs.png README.W32 emacs23.png arc-mode.el cl-extra.el emacs.svg
   manoj-dark-theme.el Emacs.icns Makefile.in auth-source.el emacs.ico
   fns.c make-tarball.txt obarray-tests.el obarray.el HISTORY
