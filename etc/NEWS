@@ -1375,10 +1375,9 @@ gets evaluated after the new mode's hook has run.  This can be used to
 incorporate configuration changes made in the mode hook into the
 mode's setup.
 
-** Autoload files can be generated without timestamps,
-by setting 'autoload-timestamps' to nil.
-FIXME As an experiment, nil is the current default.
-If no insurmountable problems before next release, it can stay that way.
+** Autoload files are now generated without timestamps.
+Set 'autoload-timestamps' to a non-nil value to get timestamps in
+autoload files.
 
 ** 'gnutls-boot' now takes a parameter ':complete-negotiation' that
 says that negotiation should complete even on non-blocking sockets.
