@@ -580,4 +580,3 @@ ptrdiff_t
 mget_bytepos (struct Lisp_Marker *m) {
   return m->bytepos;
 }
-

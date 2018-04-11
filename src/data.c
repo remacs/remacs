@@ -83,12 +83,6 @@ XOBJFWD (union Lisp_Fwd *a)
 }
 
 static void
-CHECK_SUBR (Lisp_Object x)
-{
-  CHECK_TYPE (SUBRP (x), Qsubrp, x);
-}
-
-static void
 set_blv_found (struct Lisp_Buffer_Local_Value *blv, int found)
 {
   eassert (found == !EQ (blv->defcell, blv->valcell));
@@ -214,35 +208,6 @@ DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
   set_symbol_function (symbol, definition);
 
   return definition;
-}
-
-DEFUN ("subr-arity", Fsubr_arity, Ssubr_arity, 1, 1, 0,
-       doc: /* Return minimum and maximum number of args allowed for SUBR.
-SUBR must be a built-in function.
-The returned value is a pair (MIN . MAX).  MIN is the minimum number
-of args.  MAX is the maximum number or the symbol `many', for a
-function with `&rest' args, or `unevalled' for a special form.  */)
-  (Lisp_Object subr)
-{
-  short minargs, maxargs;
-  CHECK_SUBR (subr);
-  minargs = XSUBR (subr)->min_args;
-  maxargs = XSUBR (subr)->max_args;
-  return Fcons (make_number (minargs),
-		maxargs == MANY ?        Qmany
-		: maxargs == UNEVALLED ? Qunevalled
-		:                        make_number (maxargs));
-}
-
-DEFUN ("subr-name", Fsubr_name, Ssubr_name, 1, 1, 0,
-       doc: /* Return name of subroutine SUBR.
-SUBR must be a built-in function.  */)
-  (Lisp_Object subr)
-{
-  const char *name;
-  CHECK_SUBR (subr);
-  name = XSUBR (subr)->symbol_name;
-  return build_string (name);
 }
 
 DEFUN ("interactive-form", Finteractive_form, Sinteractive_form, 1, 1, 0,
@@ -2335,8 +2300,6 @@ syms_of_data (void)
   defsubr (&Slsh);
   defsubr (&Sash);
   defsubr (&Sbyteorder);
-  defsubr (&Ssubr_arity);
-  defsubr (&Ssubr_name);
 #ifdef HAVE_MODULES
   defsubr (&Suser_ptrp);
 #endif

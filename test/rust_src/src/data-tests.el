@@ -85,5 +85,15 @@
                 'A)))
   )
 
+(ert-deftest data-test--subr-arity ()
+  (should-error (subr-arity 'insert))
+  (should (equal '(0 . many) (subr-arity (symbol-function 'insert))))
+  (should (equal '(2 . 2) (subr-arity (symbol-function 'equal)))))
+
+(ert-deftest data-test--subr-name ()
+  (should-error (subr-name 'insert))
+  (should (equal "insert" (subr-name (symbol-function 'insert))))
+  (should (equal "equal" (subr-name (symbol-function 'equal)))))
+
 (provide 'data-tests)
 ;;; data-tests.el ends here
