@@ -1615,8 +1615,7 @@ empty directories from OLD-PATH."
   "Rescale IMAGE to SIZE if possible.
 SIZE is in format (WIDTH . HEIGHT). Return a new image.
 Sizes are in pixels."
-  (if (or (not (fboundp 'imagemagick-types))
-	  (not (get-buffer-window (current-buffer))))
+  (if (not (fboundp 'imagemagick-types))
       image
     (let ((new-width (car size))
           (new-height (cdr size)))
