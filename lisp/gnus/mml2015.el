@@ -958,6 +958,8 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
     (let* ((pair (mml-secure-epg-sign 'OpenPGP t))
 	   (signature (car pair))
 	   (micalg (cdr pair)))
+      (unless (stringp signature)
+        (error "Signature failed"))
       (goto-char (point-min))
       (insert (format "Content-Type: multipart/signed; boundary=\"%s\";\n"
 		      boundary))

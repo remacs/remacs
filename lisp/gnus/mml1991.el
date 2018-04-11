@@ -275,6 +275,8 @@ Whether the passphrase is cached at all is controlled by
 	(mm-decode-content-transfer-encoding cte)))
     (let* ((pair (mml-secure-epg-sign 'OpenPGP 'clear))
 	   (signature (car pair)))
+      (unless (stringp signature)
+        (error "Signature failed"))
       (delete-region (point-min) (point-max))
       (insert
        (with-temp-buffer
