@@ -8,14 +8,14 @@ path = "lib.rs"
 proc-macro = true
 
 [dependencies]
-quote = "0.3"
-syn = { version = "0.11.11", features = ["full"] }
+quote = "0.5"
+syn = { version = "0.13.1", features = ["full"] }
 remacs-util = { version = "0.1.0", path = "../remacs-util" }
 regex = "0.2"
 lazy_static = "1.0"
 
 [dev-dependencies]
-syn = { version = "0.11.11", features = ["full"] }
+syn = { version = "0.13.1", features = ["full"] }
 
 [profile.release]
 panic = "abort"
