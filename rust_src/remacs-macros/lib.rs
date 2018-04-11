@@ -130,6 +130,10 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         }
     };
 
+    // we could put #fn_item into the quoted code above, but doing so
+    // drops all of the line numbers on the floor and causes the
+    // compiler to attribute any errors in the function to the macro
+    // invocation instead.
     tokens.append_all(fn_item.into_tokens());
     tokens.into()
 }
