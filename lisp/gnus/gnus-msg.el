@@ -535,7 +535,7 @@ instead."
       (progn
 	(message "Gnus not running; using plain Message mode")
 	(message-mail to subject other-headers continue
-		      nil yank-action send-actions return-action))
+                      switch-action yank-action send-actions return-action))
     (let ((buf (current-buffer))
 	  ;; Don't use posting styles corresponding to any existing group.
 	  (group-name gnus-newsgroup-name)
