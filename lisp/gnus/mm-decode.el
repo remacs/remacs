@@ -324,8 +324,9 @@ type inline."
 (defcustom mm-keep-viewer-alive-types
   '("application/postscript" "application/msword" "application/vnd.ms-excel"
     "application/pdf" "application/x-dvi")
-  "List of media types for which the external viewer will not be killed
-when selecting a different article."
+  "Media types for viewers not to be killed when selecting a different article.
+Instead the viewers will be killed on Gnus exit instead.  This is
+a list of regexps."
   :version "22.1"
   :type '(repeat regexp)
   :group 'mime-display)
