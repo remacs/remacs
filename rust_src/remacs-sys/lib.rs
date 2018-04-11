@@ -1798,3 +1798,10 @@ fn basic_size_and_align() {
     assert!(::std::mem::size_of::<ptrdiff_t>() == 8);
     assert!(::std::isize::MAX == 9223372036854775807);
 }
+
+extern "C" {
+    pub fn internal_self_insert(c: EmacsInt, n: EmacsInt) -> EmacsInt;
+    pub fn frame_make_pointer_invisible(frame: *mut Lisp_Frame);
+    pub fn bitch_at_user();
+    pub fn translate_char(table: Lisp_Object, c: EmacsInt) -> EmacsInt;
+}

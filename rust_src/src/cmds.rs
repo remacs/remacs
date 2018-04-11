@@ -3,12 +3,16 @@
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{bitch_at_user, del_range, frame_make_pointer_invisible, globals,
+                 initial_define_key, internal_self_insert, scan_newline_from_point, set_point,
+                 set_point_both, translate_char, Fset};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qkill_forward_chars, Qnil,
-                 Qundo_auto_amalgamate};
-use remacs_sys::{del_range, initial_define_key, scan_newline_from_point, set_point, set_point_both};
+                 Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate};
 use remacs_sys::EmacsInt;
 
+use character::characterp;
 use editfns::{line_beginning_position, line_end_position};
+use frames::selected_frame;
 use keymap::{current_global_map, Ctl};
 use lisp::LispObject;
 use lisp::defsubr;
@@ -229,6 +233,49 @@ pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
         }
     } else {
         call_raw!(Qkill_forward_chars, LispObject::from(n).to_raw());
+    }
+}
+
+// Note that there's code in command_loop_1 which typically avoids
+// calling this.
+
+/// Insert the character you type.
+/// Whichever character you type to run this command is inserted.
+/// The numeric prefix argument N says how many times to repeat the insertion.
+/// Before insertion, `expand-abbrev' is executed if the inserted character does
+/// not have word syntax and the previous character in the buffer does.
+/// After insertion, `internal-auto-fill' is called if
+/// `auto-fill-function' is non-nil and if the `auto-fill-chars' table has
+/// a non-nil value for the inserted character.  At the end, it runs
+/// `post-self-insert-hook'.
+#[lisp_fn(intspec = "p")]
+pub fn self_insert_command(n: EmacsInt) {
+    if n < 0 {
+        error!("Negative repetition argument {}", n);
+    }
+
+    if n < 2 {
+        call_raw!(Qundo_auto_amalgamate);
+    }
+
+    // Barf if the key that invoked this was not a character.
+    if !characterp(
+        LispObject::from_raw(unsafe { globals.f_last_command_event }),
+        LispObject::constant_nil(),
+    ) {
+        unsafe { bitch_at_user() };
+    } else {
+        let character = unsafe {
+            translate_char(
+                globals.f_Vtranslation_table_for_input ,
+                LispObject::from_raw(globals.f_last_command_event).as_fixnum_or_error(),
+            )
+        };
+        let val = unsafe { internal_self_insert(character, n) };
+        if val == 2 {
+            unsafe { Fset(Qundo_auto__this_command_amalgamating, Qnil) };
+        }
+        unsafe { frame_make_pointer_invisible(selected_frame().as_frame_or_error().as_mut()) };
     }
 }
 
