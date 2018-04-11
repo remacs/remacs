@@ -267,7 +267,7 @@ pub fn self_insert_command(n: EmacsInt) {
     } else {
         let character = unsafe {
             translate_char(
-                globals.f_Vtranslation_table_for_input ,
+                globals.f_Vtranslation_table_for_input,
                 LispObject::from_raw(globals.f_last_command_event).as_fixnum_or_error(),
             )
         };
