@@ -30,13 +30,20 @@ pub struct Function {
 }
 
 pub fn parse(item: &syn::Item) -> Result<Function> {
-    match item.node {
-        syn::ItemKind::Fn(ref decl, unsafety, constness, ref abi, _, _) => {
-            if is_unsafe(unsafety) {
+    match *item {
+        syn::Item::Fn(syn::ItemFn {
+            ref decl,
+            ref unsafety,
+            ref constness,
+            ref abi,
+            ref ident,
+            ..
+        }) => {
+            if unsafety.is_some() {
                 return Err("lisp functions cannot be `unsafe`");
             }
 
-            if is_const(constness) {
+            if constness.is_some() {
                 return Err("lisp functions cannot be `const`");
             }
 
@@ -50,7 +57,7 @@ pub fn parse(item: &syn::Item) -> Result<Function> {
                 .collect::<Result<_>>()?;
 
             Ok(Function {
-                name: item.ident.clone(),
+                name: ident.clone(),
                 fntype: parse_function_type(&decl)?,
                 args: args,
             })
@@ -59,34 +66,18 @@ pub fn parse(item: &syn::Item) -> Result<Function> {
     }
 }
 
-fn is_unsafe(unsafety: syn::Unsafety) -> bool {
-    match unsafety {
-        syn::Unsafety::Unsafe => true,
-        syn::Unsafety::Normal => false,
-    }
-}
-
-fn is_const(constness: syn::Constness) -> bool {
-    match constness {
-        syn::Constness::Const => true,
-        syn::Constness::NotConst => false,
-    }
-}
-
 fn is_rust_abi(abi: &Option<syn::Abi>) -> bool {
     match *abi {
-        Some(ref abi) => match *abi {
-            syn::Abi::Named(_) => false,
-            syn::Abi::Rust => true,
-        },
+        Some(syn::Abi { name: Some(_), .. }) => false,
+        Some(syn::Abi { name: None, .. }) => true,
         None => true,
     }
 }
 
 fn get_fn_arg_ident_ty(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
     match *fn_arg {
-        syn::FnArg::Captured(ref pat, _) => match *pat {
-            syn::Pat::Ident(_, ref ident, _) => Ok(ident.clone()),
+        syn::FnArg::Captured(syn::ArgCaptured { ref pat, .. }) => match *pat {
+            syn::Pat::Ident(syn::PatIdent { ref ident, .. }) => Ok(ident.clone()),
             _ => Err("invalid function argument"),
         },
         _ => Err("invalid function argument"),
@@ -97,7 +88,7 @@ fn parse_function_type(fndecl: &syn::FnDecl) -> Result<LispFnType> {
     let nargs = fndecl.inputs.len() as i16;
     for fnarg in &fndecl.inputs {
         match *fnarg {
-            syn::FnArg::Captured(_, ref ty) | syn::FnArg::Ignored(ref ty) => {
+            syn::FnArg::Captured(syn::ArgCaptured { ref ty, .. }) | syn::FnArg::Ignored(ref ty) => {
                 match parse_arg_type(ty) {
                     ArgType::LispObject => {}
                     ArgType::LispObjectSlice => {
@@ -121,28 +112,39 @@ enum ArgType {
     Other,
 }
 
-fn parse_arg_type(fn_arg: &syn::Ty) -> ArgType {
+fn parse_arg_type(fn_arg: &syn::Type) -> ArgType {
     match *fn_arg {
-        syn::Ty::Path(ref qualification, ref path) => if qualification.is_some() {
+        syn::Type::Path(syn::TypePath {
+            qself: ref qualification,
+            ref path,
+        }) => if qualification.is_some() {
             ArgType::Other
         } else {
-            if is_lisp_object(path) {
+            if is_lisp_object(&path) {
                 ArgType::LispObject
             } else {
                 ArgType::Other
             }
         },
-        syn::Ty::Rptr(ref lifetime, ref mut_ty) => if lifetime.is_some() {
+        syn::Type::Reference(syn::TypeReference {
+            elem: ref ty,
+            ref lifetime,
+            ref mutability,
+            ..
+        }) => if lifetime.is_some() {
             ArgType::Other
         } else {
-            match mut_ty.mutability {
-                syn::Mutability::Immutable => ArgType::Other,
-                syn::Mutability::Mutable => match mut_ty.ty {
-                    syn::Ty::Slice(ref ty) => match **ty {
-                        syn::Ty::Path(ref qualification, ref path) => if qualification.is_some() {
+            match *mutability {
+                None => ArgType::Other,
+                Some(_) => match **ty {
+                    syn::Type::Slice(syn::TypeSlice { elem: ref ty, .. }) => match **ty {
+                        syn::Type::Path(syn::TypePath {
+                            qself: ref qualification,
+                            ref path,
+                        }) => if qualification.is_some() {
                             ArgType::Other
                         } else {
-                            if is_lisp_object(path) {
+                            if is_lisp_object(&path) {
                                 ArgType::LispObjectSlice
                             } else {
                                 ArgType::Other

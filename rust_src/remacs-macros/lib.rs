@@ -13,13 +13,14 @@ extern crate remacs_util;
 extern crate syn;
 
 use proc_macro::TokenStream;
+use quote::ToTokens;
 use regex::Regex;
 
 mod function;
 
 #[proc_macro_attribute]
 pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
-    let fn_item = syn::parse_item(&fn_ts.to_string()).unwrap();
+    let fn_item = syn::parse(fn_ts).unwrap();
     let function = function::parse(&fn_item).unwrap();
     let lisp_fn_args = match remacs_util::parse_lisp_fn(
         &attr_ts.to_string(),
@@ -44,17 +45,17 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     match function.fntype {
         function::LispFnType::Normal(_) => for ident in function.args {
             let arg = quote! { #ident: ::remacs_sys::Lisp_Object, };
-            cargs.append(arg);
+            cargs.append_all(arg);
 
             let arg = quote! { ::lisp::LispObject::from_raw(#ident).into(), };
-            rargs.append(arg);
+            rargs.append_all(arg);
         },
         function::LispFnType::Many => {
             let args = quote! {
                 nargs: ::libc::ptrdiff_t,
                 args: *mut ::remacs_sys::Lisp_Object,
             };
-            cargs.append(args);
+            cargs.append_all(args);
 
             let b = quote! {
                 let args = unsafe {
@@ -62,10 +63,10 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                         args, nargs as usize)
                 };
             };
-            body.append(b);
+            body.append_all(b);
 
             let arg = quote! { unsafe { ::std::mem::transmute(args) } };
-            rargs.append(arg);
+            rargs.append_all(arg);
         }
     }
 
@@ -92,7 +93,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         };
     }
 
-    let tokens = quote! {
+    let mut tokens = quote! {
         #[no_mangle]
         pub extern "C" fn #fname(#cargs) -> ::remacs_sys::Lisp_Object {
             #body
@@ -133,10 +134,8 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     // drops all of the line numbers on the floor and causes the
     // compiler to attribute any errors in the function to the macro
     // invocation instead.
-    // Note: TokenStream has a FromIterator trait impl that converts
-    // an iterator over Token{Stream,Tree,Node}s into a single
-    // TokenStream; collect() calls that impl for us.
-    vec![tokens.parse().unwrap(), fn_ts].into_iter().collect()
+    tokens.append_all(fn_item.into_tokens());
+    tokens.into()
 }
 
 struct CByteLiteral<'a>(&'a str);
@@ -149,10 +148,14 @@ impl<'a> quote::ToTokens for CByteLiteral<'a> {
         let s = RE.replace_all(self.0, |caps: &regex::Captures| {
             format!("\\x{:x}", u32::from(caps[0].chars().next().unwrap()))
         });
-        tokens.append(&format!(r#"b"{}\0""#, s));
+        tokens.append_all(
+            (syn::parse_str::<syn::Expr>(&format!(r#"b"{}\0""#, s)))
+                .unwrap()
+                .into_tokens(),
+        );
     }
 }
 
 fn concat_idents(lhs: &str, rhs: &str) -> syn::Ident {
-    syn::Ident::new(format!("{}{}", lhs, rhs))
+    syn::Ident::from(format!("{}{}", lhs, rhs))
 }
