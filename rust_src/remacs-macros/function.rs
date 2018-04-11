@@ -68,28 +68,16 @@ pub fn parse(item: &syn::Item) -> Result<Function> {
 
 fn is_rust_abi(abi: &Option<syn::Abi>) -> bool {
     match *abi {
-        Some(syn::Abi {
-            name: Some(_),
-            ..
-        }) => false,
-        Some(syn::Abi {
-            name: None,
-            ..
-        }) => true,
+        Some(syn::Abi { name: Some(_), .. }) => false,
+        Some(syn::Abi { name: None, .. }) => true,
         None => true,
     }
 }
 
 fn get_fn_arg_ident_ty(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
     match *fn_arg {
-        syn::FnArg::Captured(syn::ArgCaptured {
-            ref pat,
-            ..
-        }) => match *pat {
-            syn::Pat::Ident(syn::PatIdent {
-                ref ident,
-                ..
-            }) => Ok(ident.clone()),
+        syn::FnArg::Captured(syn::ArgCaptured { ref pat, .. }) => match *pat {
+            syn::Pat::Ident(syn::PatIdent { ref ident, .. }) => Ok(ident.clone()),
             _ => Err("invalid function argument"),
         },
         _ => Err("invalid function argument"),
@@ -100,10 +88,7 @@ fn parse_function_type(fndecl: &syn::FnDecl) -> Result<LispFnType> {
     let nargs = fndecl.inputs.len() as i16;
     for fnarg in &fndecl.inputs {
         match *fnarg {
-            syn::FnArg::Captured(syn::ArgCaptured {
-                ref ty,
-                ..
-            }) | syn::FnArg::Ignored(ref ty) => {
+            syn::FnArg::Captured(syn::ArgCaptured { ref ty, .. }) | syn::FnArg::Ignored(ref ty) => {
                 match parse_arg_type(ty) {
                     ArgType::LispObject => {}
                     ArgType::LispObjectSlice => {
@@ -152,28 +137,23 @@ fn parse_arg_type(fn_arg: &syn::Type) -> ArgType {
             match *mutability {
                 None => ArgType::Other,
                 Some(_) => match **ty {
-                    syn::Type::Slice(syn::TypeSlice {
-                        elem: ref ty,
-                        ..
-                    }) => {
-                        match **ty {
-                            syn::Type::Path(syn::TypePath {
-                                qself: ref qualification,
-                                ref path,
-                            }) => if qualification.is_some() {
-                                ArgType::Other
+                    syn::Type::Slice(syn::TypeSlice { elem: ref ty, .. }) => match **ty {
+                        syn::Type::Path(syn::TypePath {
+                            qself: ref qualification,
+                            ref path,
+                        }) => if qualification.is_some() {
+                            ArgType::Other
+                        } else {
+                            if is_lisp_object(&path) {
+                                ArgType::LispObjectSlice
                             } else {
-                                if is_lisp_object(&path) {
-                                    ArgType::LispObjectSlice
-                                } else {
-                                    ArgType::Other
-                                }
-                            },
-                            _ => ArgType::Other,
-                        }
+                                ArgType::Other
+                            }
+                        },
+                        _ => ArgType::Other,
                     },
                     _ => ArgType::Other,
-                }
+                },
             }
         },
         _ => ArgType::Other,

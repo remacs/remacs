@@ -13,8 +13,8 @@ extern crate remacs_util;
 extern crate syn;
 
 use proc_macro::TokenStream;
-use regex::Regex;
 use quote::ToTokens;
+use regex::Regex;
 
 mod function;
 
@@ -148,7 +148,11 @@ impl<'a> quote::ToTokens for CByteLiteral<'a> {
         let s = RE.replace_all(self.0, |caps: &regex::Captures| {
             format!("\\x{:x}", u32::from(caps[0].chars().next().unwrap()))
         });
-        tokens.append_all((syn::parse_str::<syn::Expr>(&format!(r#"b"{}\0""#, s))).unwrap().into_tokens());
+        tokens.append_all(
+            (syn::parse_str::<syn::Expr>(&format!(r#"b"{}\0""#, s)))
+                .unwrap()
+                .into_tokens(),
+        );
     }
 }
 
