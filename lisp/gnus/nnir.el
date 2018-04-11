@@ -30,7 +30,7 @@
 ;;; Commentary:
 
 ;; What does it do?  Well, it allows you to search your mail using
-;; some search engine (imap, namazu, swish-e, gmane and others -- see
+;; some search engine (imap, namazu, swish-e and others -- see
 ;; later) by typing `G G' in the Group buffer.  You will then get a
 ;; buffer which shows all articles matching the query, sorted by
 ;; Retrieval Status Value (score).
@@ -530,8 +530,6 @@ that it is for notmuch, not Namazu."
 	       nnir-imap-search-argument-history  ; the history to use
 	       ,nnir-imap-default-search-key      ; default
 	       )))
-    (gmane   nnir-run-gmane
-	     ((gmane-author . "Gmane Author: ")))
     (swish++ nnir-run-swish++
              ((swish++-group . "Swish++ Group spec (regexp): ")))
     (swish-e nnir-run-swish-e
@@ -561,7 +559,7 @@ needs the variables `nnir-namazu-program',
 
 Add an entry here when adding a new search engine.")
 
-(defcustom nnir-method-default-engines  '((nnimap . imap) (nntp . gmane))
+(defcustom nnir-method-default-engines  '((nnimap . imap))
   "Alist of default search engines keyed by server method."
   :version "24.1"
   :group 'nnir
@@ -1666,54 +1664,6 @@ actually)."
 
 (declare-function mm-url-insert "mm-url" (url &optional follow-refresh))
 (declare-function mm-url-encode-www-form-urlencoded "mm-url" (pairs))
-
-;; gmane interface
-(defun nnir-run-gmane (query srv &optional groups)
-  "Run a search against a gmane back-end server."
-      (let* ((case-fold-search t)
-	     (qstring (cdr (assq 'query query)))
-;;	     (server (cadr (gnus-server-to-method srv)))
-	     (groupspec (mapconcat
-			 (lambda (x)
-			   (if (string-match-p "gmane" x)
-			       (format "group:%s" (gnus-group-short-name x))
-			     (error "Can't search non-gmane groups: %s" x)))
-			   groups " "))
-	     (authorspec
-	      (if (assq 'gmane-author query)
-		  (format "author:%s" (cdr (assq 'gmane-author query))) ""))
-	     (search (format "%s %s %s"
-			     qstring groupspec authorspec))
-	     (gnus-inhibit-demon t)
-	     artlist)
-	(require 'mm-url)
-	(with-current-buffer (get-buffer-create nnir-tmp-buffer)
-	  (erase-buffer)
-	  (mm-url-insert
-	   (concat
-	    "http://search.gmane.org/nov.php"
-	    "?"
-	    (mm-url-encode-www-form-urlencoded
-	     `(("query" . ,search)
-	       ("HITSPERPAGE" . "999")))))
-	  (set-buffer-multibyte t)
-	  (decode-coding-region (point-min) (point-max) 'utf-8)
-	  (goto-char (point-min))
-	  (forward-line 1)
-	  (while (not (eobp))
-	    (unless (or (eolp) (looking-at "\x0d"))
-	      (let ((header (nnheader-parse-nov)))
-		(let ((xref (mail-header-xref header))
-		      (xscore (string-to-number (cdr (assoc 'X-Score
-			       (mail-header-extra header))))))
-		  (when (string-match " \\([^:]+\\)[:/]\\([0-9]+\\)" xref)
-		    (push
-		     (vector
-		      (gnus-group-prefixed-name (match-string 1 xref) srv)
-		      (string-to-number (match-string 2 xref)) xscore)
-		     artlist)))))
-	    (forward-line 1)))
-	(apply #'vector (nreverse (delete-dups artlist)))))
 
 ;;; Util Code:
 

@@ -186,6 +186,10 @@ Of course it will still find it if you have it in ~/.ecompleterc
 *** The function 'gnus-score-find-favorite-words' has been renamed
 from 'gnus-score-find-favourite-words'.
 
+---
+*** Gmane has been removed as an nnir backend, since Gmane no longer
+has a search engine.
+
 ** Htmlfontify
 *** The functions 'hfy-color', 'hfy-color-vals' and
 'hfy-fallback-color-values' and the variables 'hfy-fallback-color-map'
