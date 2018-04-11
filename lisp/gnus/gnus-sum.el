@@ -7802,7 +7802,8 @@ If BACKWARD, the previous article is selected instead of the next."
       (cond
        ((or (not gnus-auto-select-next)
 	    (not cmd))
-	(gnus-message 6 "No more%s articles" (if unread " unread" "")))
+	(unless (eq gnus-auto-select-next 'quietly)
+	  (gnus-message 6 "No more%s articles" (if unread " unread" ""))))
        ((or (eq gnus-auto-select-next 'quietly)
 	    (and (eq gnus-auto-select-next 'slightly-quietly)
 		 push)
@@ -7811,10 +7812,11 @@ If BACKWARD, the previous article is selected instead of the next."
 	;; Select quietly.
 	(if (gnus-ephemeral-group-p gnus-newsgroup-name)
 	    (gnus-summary-exit)
-	  (gnus-message 6 "No more%s articles (%s)..."
-			(if unread " unread" "")
-			(if group (concat "selecting " group)
-			  "exiting"))
+	  (unless (eq gnus-auto-select-next 'quietly)
+	    (gnus-message 6 "No more%s articles (%s)..."
+			  (if unread " unread" "")
+			  (if group (concat "selecting " group)
+			    "exiting")))
 	  (gnus-summary-next-group nil group backward)))
        (t
 	(when (numberp last-input-event)
