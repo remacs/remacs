@@ -1,6 +1,7 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 #![feature(const_size_of)]
+#![feature(repr_transparent)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
 //! This module contains all FFI declarations.
@@ -29,7 +30,7 @@ use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t,
 // and alias it ourselves.
 pub type pid_t = libc::c_int;
 
-#[repr(C)]
+#[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Lisp_Object(EmacsInt);
 
