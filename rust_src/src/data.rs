@@ -3,7 +3,7 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{aset_multibyte_string, globals, CHAR_TABLE_SET, CHECK_IMPURE};
+use remacs_sys::{aset_multibyte_string, build_string, globals, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{EmacsInt, Lisp_Misc_Type, Lisp_Type, PseudovecType};
 use remacs_sys::{Fcons, Ffset, Fpurecopy};
 use remacs_sys::{Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
@@ -11,9 +11,9 @@ use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, 
                  Qcompiled_function, Qcondition_variable, Qcons, Qcyclic_function_indirection,
                  Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity,
                  Qfont_object, Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger,
-                 Qmarker, Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qstring,
-                 Qsubr, Qsymbol, Qt, Qterminal, Qthread, Quser_ptr, Qvector, Qwindow,
-                 Qwindow_configuration};
+                 Qmany, Qmarker, Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess,
+                 Qstring, Qsubr, Qsymbol, Qt, Qterminal, Qthread, Qunevalled, Quser_ptr, Qvector,
+                 Qwindow, Qwindow_configuration};
 
 use keymap::get_keymap;
 use lisp::{LispObject, LispSubrRef};
@@ -285,6 +285,33 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
     // to a call to `defalias', we return `symbol' for backward compatibility
     // (bug#11686).
     sym
+}
+
+/// Return minimum and maximum number of args allowed for SUBR.
+/// SUBR must be a built-in function.
+/// The returned value is a pair (MIN . MAX).  MIN is the minimum number
+/// of args.  MAX is the maximum number or the symbol `many', for a
+/// function with `&rest' args, or `unevalled' for a special form.
+#[lisp_fn]
+pub fn subr_arity(subr: LispSubrRef) -> LispObject {
+    let minargs = subr.min_args();
+    let maxargs = if subr.is_many() {
+        LispObject::from_raw(Qmany)
+    } else if subr.is_unevalled() {
+        LispObject::from_raw(Qunevalled)
+    } else {
+        LispObject::from(subr.max_args() as EmacsInt)
+    };
+
+    LispObject::cons(LispObject::from(minargs as EmacsInt), maxargs)
+}
+
+/// Return name of subroutine SUBR.
+/// SUBR must be a built-in function.
+#[lisp_fn]
+pub fn subr_name(subr: LispSubrRef) -> LispObject {
+    let name = subr.symbol_name();
+    LispObject::from_raw(unsafe { build_string(name) })
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

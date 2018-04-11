@@ -3,7 +3,7 @@
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 
-use libc::{c_void, intptr_t, uintptr_t};
+use libc::{c_char, c_void, intptr_t, uintptr_t};
 use std::ffi::CString;
 
 #[cfg(test)]
@@ -352,8 +352,24 @@ pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
 unsafe impl Sync for LispSubrRef {}
 
 impl LispSubrRef {
+    pub fn is_many(self) -> bool {
+        !self.0.is_null() && self.max_args() == -2
+    }
+
     pub fn is_unevalled(self) -> bool {
-        !self.0.is_null() && unsafe { (*self.0).max_args == -1 }
+        !self.0.is_null() && self.max_args() == -1
+    }
+
+    pub fn max_args(self) -> i16 {
+        unsafe { (*self.0).max_args }
+    }
+
+    pub fn min_args(self) -> i16 {
+        unsafe { (*self.0).min_args }
+    }
+
+    pub fn symbol_name(self) -> *const c_char {
+        unsafe { (*self.0).symbol_name }
     }
 }
 
