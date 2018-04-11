@@ -358,7 +358,7 @@ It was obsolete since Emacs 22.1, replaced by customize.
 +++
 *** Messages can now be systematically encrypted
 when the PGP keyring contains a public key for every recipient.  To
-achieve this, add 'message-add-encrypt-tag-if-can-encrypt' to
+achieve this, add 'message-sign-encrypt-if-all-keys-available' to
 'message-send-hook'.
 
 * New Modes and Packages in Emacs 27.1
