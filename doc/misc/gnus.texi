@@ -3102,6 +3102,21 @@ interest in relation to the sieve parameter.
 The Sieve language is described in RFC 3028.  @xref{Top, Emacs Sieve,
 Top, sieve, Emacs Sieve}.
 
+@item match-list
+@cindex match-list
+If this parameter is set to @code{t} and @code{nnmail-split-method} is
+set to @code{gnus-group-split}, Gnus will match @code{to-address},
+@code{to-list}, @code{extra-aliases} and @code{split-regexp} against
+the @code{list} split abbreviation.  The split regexp is modified to
+match either a @code{@@} or a dot @code{.} in mail addresses to
+conform to RFC2919 @code{List-ID}.
+
+See @code{nnmail-split-abbrev-alist} for the regular expression
+matching mailing-list headers.
+
+See @pxref{Group Mail Splitting} to automatically split on group
+parameters.
+
 @item (agent parameters)
 If the agent has been enabled, you can set any of its parameters to
 control the behavior of the agent in individual groups.  See Agent
@@ -15475,6 +15490,9 @@ Matches the @samp{To}, @samp{Cc}, @samp{Apparently-To},
 @item any
 Is the union of the @code{from} and @code{to} entries.
 @end table
+@item list
+Matches the @samp{List-ID}, @samp{List-Post}, @samp{X-Mailing-List},
+@samp{X-BeenThere} and @samp{X-Loop} fields.
 
 @vindex nnmail-split-fancy-syntax-table
 @code{nnmail-split-fancy-syntax-table} is the syntax table in effect

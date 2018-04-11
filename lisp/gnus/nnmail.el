@@ -488,7 +488,8 @@ Example:
     (to . "to\\|cc\\|apparently-to\\|resent-to\\|resent-cc")
     (from . "from\\|sender\\|resent-from")
     (nato . "to\\|cc\\|resent-to\\|resent-cc")
-    (naany . "from\\|to\\|cc\\|sender\\|resent-from\\|resent-to\\|resent-cc"))
+    (naany . "from\\|to\\|cc\\|sender\\|resent-from\\|resent-to\\|resent-cc")
+    (list . "list-id\\|list-post\\|x-mailing-list\||x-beenthere\\|x-loop"))
   "Alist of abbreviations allowed in `nnmail-split-fancy'."
   :group 'nnmail-split
   :type '(repeat (cons :format "%v" symbol regexp)))

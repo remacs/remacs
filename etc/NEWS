@@ -190,6 +190,11 @@ from 'gnus-score-find-favourite-words'.
 *** Gmane has been removed as an nnir backend, since Gmane no longer
 has a search engine.
 
++++
+*** Splitting mail on common mailing list has been added.  See the
+concept index in the Gnus manual for the `match-list' entry.
+
+
 ** Htmlfontify
 *** The functions 'hfy-color', 'hfy-color-vals' and
 'hfy-fallback-color-values' and the variables 'hfy-fallback-color-map'
