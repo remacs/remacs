@@ -175,6 +175,11 @@ you don't need to set them in your early init file.
 
 *** New function 'package-activate-all'.
 
+** Gnus
+
+*** A prefix argument to 'gnus-summary-limit-to-score' will limit reverse
+Limit to articles with score at below.
+
 ** Ecomplete
 *** The ecomplete sorting has changed to a decay-based algorithm.
 This can be controlled by the new `ecomplete-sort-predicate' variable.

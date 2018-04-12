@@ -6672,7 +6672,8 @@ Limit the summary buffer to the unseen articles
 @kindex / v @r{(Summary)}
 @findex gnus-summary-limit-to-score
 Limit the summary buffer to articles that have a score at or above some
-score (@code{gnus-summary-limit-to-score}).
+score (@code{gnus-summary-limit-to-score}).  If given a prefix, below
+some score.
 
 @item / p
 @kindex / p @r{(Summary)}

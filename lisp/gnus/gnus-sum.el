@@ -8563,14 +8563,22 @@ Returns how many articles were removed."
 	(gnus-summary-limit articles))
     (gnus-summary-position-point)))
 
-(defun gnus-summary-limit-to-score (score)
-  "Limit to articles with score at or above SCORE."
-  (interactive "NLimit to articles with score of at least: ")
+(defun gnus-summary-limit-to-score (score &optional below)
+  "Limit to articles with score at or above SCORE.
+
+With a prefix argument, limit to articles with score at or below
+SCORE."
+  (interactive (list (string-to-number
+                      (read-string
+                       (format "Limit to articles with score of at %s: "
+                               (if current-prefix-arg "most" "least"))))))
   (let ((data gnus-newsgroup-data)
-	articles)
+        (compare (if (or below current-prefix-arg) #'<= #'>=))
+        articles)
     (while data
-      (when (>= (gnus-summary-article-score (gnus-data-number (car data)))
-		score)
+      (when (funcall compare (gnus-summary-article-score
+                              (gnus-data-number (car data)))
+                     score)
 	(push (gnus-data-number (car data)) articles))
       (setq data (cdr data)))
     (prog1
