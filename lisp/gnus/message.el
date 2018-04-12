@@ -603,6 +603,9 @@ Done before generating the new subject of a forward."
 
 (defcustom message-forward-ignored-headers "^Content-Transfer-Encoding:\\|^X-Gnus"
   "All headers that match this regexp will be deleted when forwarding a message.
+This variable is only consulted when forwarding \"normally\", not
+when forwarding as MIME or the like.
+
 This may also be a list of regexps."
   :version "21.1"
   :group 'message-forwarding
