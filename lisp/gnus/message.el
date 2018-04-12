@@ -8396,6 +8396,9 @@ even if NEW-VALUE is empty."
 	(message-position-on-field header))
       (insert new-value))))
 
+(make-obsolete-variable
+ 'message-recipients-without-full-name
+ "Recipients are simplified by default" "27.1")
 (defcustom message-recipients-without-full-name
   (list "ding@gnus.org"
 	"bugs@gnus.org"
@@ -8411,6 +8414,7 @@ Used in `message-simplify-recipients'."
   :version "23.1" ;; No Gnus
   :group 'message-headers)
 
+(make-obsolete 'message-simplify-recipients nil "27.1")
 (defun message-simplify-recipients ()
   (interactive)
   (dolist (hdr '("Cc" "To"))
