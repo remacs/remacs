@@ -548,7 +548,7 @@ The provided functions are:
 		(function-item message-forward-subject-name-subject)
 		(repeat :tag "List of functions" function)))
 
-(defcustom message-forward-as-mime t
+(defcustom message-forward-as-mime nil
   "Non-nil means forward messages as an inline/rfc822 MIME section.
 Otherwise, directly inline the old message in the forwarded
 message.
@@ -556,7 +556,7 @@ message.
 When forwarding as MIME, certain MIME-related headers in the
 forwarded message may be removed/altered to ensure that the
 resulting mail is syntactically valid."
-  :version "21.1"
+  :version "27.1"
   :group 'message-forwarding
   :link '(custom-manual "(message)Forwarding")
   :type 'boolean)
