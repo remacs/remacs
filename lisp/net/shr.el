@@ -1319,10 +1319,6 @@ ones, in case fg and bg are nil."
     (shr-generic dom)
     (put-text-property start (point) 'display '(raise -0.5))))
 
-(defun shr-tag-label (dom)
-  (shr-generic dom)
-  (shr-ensure-paragraph))
-
 (defun shr-tag-p (dom)
   (shr-ensure-paragraph)
   (shr-generic dom)
