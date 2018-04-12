@@ -115,6 +115,9 @@ told that the data would have the associated suffix if saved to a file.")
   (list (file-name-as-directory (expand-file-name "images" data-directory))
         'data-directory 'load-path)
   "List of locations in which to search for image files.
+The images for icons shown in the tool bar are also looked up
+in these locations.
+
 If an element is a string, it defines a directory to search.
 If an element is a variable symbol whose value is a string, that
 value defines a directory to search.
