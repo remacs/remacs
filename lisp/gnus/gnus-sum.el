@@ -11989,7 +11989,8 @@ Argument REVERSE means reverse order."
 
 (defun gnus-summary-sort (predicate reverse)
   "Sort summary buffer by PREDICATE.  REVERSE means reverse order."
-  (let* ((thread (intern (format "gnus-thread-sort-by-%s" predicate)))
+  (let* ((current (gnus-summary-article-number))
+	 (thread (intern (format "gnus-thread-sort-by-%s" predicate)))
 	 (article (intern (format "gnus-article-sort-by-%s" predicate)))
 	 (gnus-thread-sort-functions
 	  (if (not reverse)
@@ -12008,7 +12009,9 @@ Argument REVERSE means reverse order."
     ;; We do the sorting by regenerating the threads.
     (gnus-summary-prepare)
     ;; Hide subthreads if needed.
-    (gnus-summary-maybe-hide-threads)))
+    (gnus-summary-maybe-hide-threads)
+    ;; Restore point.
+    (gnus-summary-goto-subject current)))
 
 ;; Summary saving commands.
 
