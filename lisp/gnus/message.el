@@ -6867,6 +6867,9 @@ want to get rid of this query permanently.")))
 		    (setq recipients (delq recip recipients))))))))
 
       (setq recipients (message-prune-recipients recipients))
+      (setq recipients
+	    (cl-loop for (id . address) in recipients
+		     collect (cons id (message--alter-repeat-address address))))
 
       ;; Build the header alist.  Allow the user to be asked whether
       ;; or not to reply to all recipients in a wide reply.
@@ -6896,6 +6899,15 @@ want to get rid of this query permanently.")))
 		       (string-match dup-match (car recipient)))
 	      (setq recipients (delq recipient recipients))))))))
   recipients)
+
+(defun message--alter-repeat-address (address)
+  "Transform an address on the form \"\"foo@bar.com\"\" <foo@bar.com>\".
+The first bit will be elided if a match is made."
+  (let ((bits (gnus-extract-address-components address)))
+    (if (equal (car bits) (cadr bits))
+	(car bits)
+      ;; Return the original address if we don't have repetition.
+      address)))
 
 (defcustom message-simplify-subject-functions
   '(message-strip-list-identifiers

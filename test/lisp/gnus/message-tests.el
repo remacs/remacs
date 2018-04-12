@@ -145,6 +145,15 @@
       (setq recipients (list person1 person2 person3))
       (should-not (message-all-epg-keys-available-p)))))
 
+(ert-deftest message-alter-repeat-address ()
+  (should (equal (message--alter-repeat-address
+                  "Lars Ingebrigtsen <larsi@gnus.org>")
+                 "Lars Ingebrigtsen <larsi@gnus.org>"))
+
+  (should (equal (message--alter-repeat-address
+                      "\"larsi@gnus.org\" <larsi@gnus.org>")
+                     "larsi@gnus.org")))
+
 (provide 'message-mode-tests)
 
 ;;; message-mode-tests.el ends here

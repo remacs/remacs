@@ -361,6 +361,11 @@ when the PGP keyring contains a public key for every recipient.  To
 achieve this, add 'message-sign-encrypt-if-all-keys-available' to
 'message-send-hook'.
 
+---
+*** When replying a message that have addresses on the form
+'"foo@bar.com" <foo@bar.com>', Message will elide the repeated "name"
+from the address field in the response.
+
 * New Modes and Packages in Emacs 27.1
 
 +++
