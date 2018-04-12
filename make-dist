@@ -358,12 +358,14 @@ fi
 echo "Creating top directory: '${tempdir}'"
 mkdir ${tempdir} || exit
 
+top_level_ChangeLog=
 if [ "$changelog" = yes ]; then
   if test -r .git; then
     ## When making a release or pretest the ChangeLog should already
     ## have been created and edited as needed.  Don't ignore it.
     if test -r ChangeLog; then
       echo "Using existing top-level ChangeLog"
+      top_level_ChangeLog=ChangeLog
     else
       echo "Making top-level ChangeLog"
       make ChangeLog CHANGELOG=${tempdir}/ChangeLog || \
@@ -383,9 +385,9 @@ top_level='
   INSTALL README BUGS
   ChangeLog.*[0-9] Makefile.in autogen.sh configure configure.ac
   config.bat make-dist .dir-locals.el
-  aclocal.m4 CONTRIBUTE ChangeLog
+  aclocal.m4 CONTRIBUTE
 '
-ln $top_level $tempdir || exit
+ln $top_level $top_level_ChangeLog $tempdir || exit
 
 echo "Creating subdirectories"
 for subdir in site-lisp \
