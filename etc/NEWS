@@ -194,6 +194,9 @@ has a search engine.
 *** Splitting mail on common mailing list has been added.  See the
 concept index in the Gnus manual for the `match-list' entry.
 
++++
+*** nil is no longer an allowed value for `mm-text-html-renderer'.
+
 
 ** Htmlfontify
 *** The functions 'hfy-color', 'hfy-color-vals' and

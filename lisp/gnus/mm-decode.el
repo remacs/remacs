@@ -118,8 +118,7 @@
 	((executable-find "w3m") 'gnus-w3m)
 	((executable-find "links") 'links)
 	((executable-find "lynx") 'lynx)
-	((locate-library "html2text") 'html2text)
-	(t nil))
+	((locate-library "html2text") 'html2text))
   "Render of HTML contents.
 It is one of defined renderer types, or a rendering function.
 The defined renderer types are:
@@ -129,9 +128,8 @@ The defined renderer types are:
 `w3m-standalone': use plain w3m;
 `links': use links;
 `lynx': use lynx;
-`html2text': use html2text;
-nil    : use external viewer (default web browser)."
-  :version "24.1"
+`html2text': use html2text."
+  :version "27.1"
   :type '(choice (const shr)
                  (const gnus-w3m)
                  (const w3m :tag "emacs-w3m")
@@ -139,7 +137,6 @@ nil    : use external viewer (default web browser)."
 		 (const links)
 		 (const lynx)
 		 (const html2text)
-		 (const nil :tag "External viewer")
 		 (function))
   :group 'mime-display)
 

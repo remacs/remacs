@@ -3002,9 +3002,6 @@ articles to verify whether you have read the message.  As
 browser without eliminating these \"web bugs\" you should only
 use it for mails from trusted senders.
 
-If you always want to display HTML parts in the browser, set
-`mm-text-html-renderer' to nil.
-
 This command creates temporary files to pass HTML contents including
 images if any to the browser, and deletes them when exiting the group
 \(if you want)."

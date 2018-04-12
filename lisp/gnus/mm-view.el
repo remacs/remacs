@@ -318,6 +318,8 @@
       (if entry
 	  (setq func (cdr entry)))
       (cond
+       ((null func)
+	(mm-insert-inline handle (mm-get-part handle)))
        ((functionp func)
 	(funcall func handle))
        (t

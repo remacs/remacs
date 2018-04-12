@@ -1751,8 +1751,7 @@ score in `gnus-newsgroup-scored' by SCORE."
 	    (mm-display-inline handle)
 	    (goto-char (point-max))))))
 
-    (let (		      ;(mm-text-html-renderer 'w3m-standalone)
-	  (handles (mm-dissect-buffer t)))
+    (let ((handles (mm-dissect-buffer t)))
       (save-excursion
 	(article-goto-body)
 	(delete-region (point) (point-max))

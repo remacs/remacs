@@ -9806,9 +9806,6 @@ this command passes the @acronym{HTML} content to the browser without
 eliminating these ``web bugs'' you should only use it for mails from
 trusted senders.
 
-If you always want to display @acronym{HTML} parts in the browser, set
-@code{mm-text-html-renderer} to @code{nil}.
-
 This command creates temporary files to pass @acronym{HTML} contents
 including images if any to the browser, and deletes them when exiting
 the group (if you want).
