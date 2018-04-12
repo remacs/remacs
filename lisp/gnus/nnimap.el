@@ -1544,6 +1544,8 @@ If LIMIT, first try to limit the search to the N last articles."
 	       info existing (nnimap-imap-ranges-to-gnus-ranges vanished) flags)
 	    ;; Do normal non-QRESYNC flag updates.
 	    ;; Update the list of read articles.
+	    (unless start-article
+	      (setq start-article 1))
 	    (let* ((unread
 		    (gnus-compress-sequence
 		     (gnus-set-difference
