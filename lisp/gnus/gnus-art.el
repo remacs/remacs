@@ -2207,7 +2207,7 @@ unfolded."
       (dolist (elem gnus-article-image-alist)
 	(gnus-delete-images (car elem))))))
 
-(autoload 'w3m-toggle-inline-images "w3m")
+(declare-function w3m-toggle-inline-images "w3m")
 
 (defun gnus-article-show-images ()
   "Show any images that are in the HTML-rendered article buffer.
