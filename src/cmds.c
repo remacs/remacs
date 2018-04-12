@@ -29,52 +29,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "frame.h"
 
-static int internal_self_insert (int, EMACS_INT);
-
-/* Note that there's code in command_loop_1 which typically avoids
-   calling this.  */
-DEFUN ("self-insert-command", Fself_insert_command, Sself_insert_command, 1, 1, "p",
-       doc: /* Insert the character you type.
-Whichever character you type to run this command is inserted.
-The numeric prefix argument N says how many times to repeat the insertion.
-Before insertion, `expand-abbrev' is executed if the inserted character does
-not have word syntax and the previous character in the buffer does.
-After insertion, `internal-auto-fill' is called if
-`auto-fill-function' is non-nil and if the `auto-fill-chars' table has
-a non-nil value for the inserted character.  At the end, it runs
-`post-self-insert-hook'.  */)
-  (Lisp_Object n)
-{
-  CHECK_NUMBER (n);
-
-  if (XINT (n) < 0)
-    error ("Negative repetition argument %"pI"d", XINT (n));
-
-  if (XFASTINT (n) < 2)
-    call0 (Qundo_auto_amalgamate);
-
-  /* Barf if the key that invoked this was not a character.  */
-  if (!CHARACTERP (last_command_event))
-    bitch_at_user ();
-  else {
-    int character = translate_char (Vtranslation_table_for_input,
-				    XINT (last_command_event));
-    int val = internal_self_insert (character, XFASTINT (n));
-    if (val == 2)
-      Fset (Qundo_auto__this_command_amalgamating, Qnil);
-    frame_make_pointer_invisible (SELECTED_FRAME ());
-  }
-
-  return Qnil;
-}
-
 /* Insert N times character C
 
    If this insertion is suitable for direct output (completely simple),
    return 0.  A value of 1 indicates this *might* not have been simple.
    A value of 2 means this did things that call for an undo boundary.  */
 
-static int
+extern int
 internal_self_insert (int c, EMACS_INT n)
 {
   int hairy = 0;
@@ -284,8 +245,6 @@ syms_of_cmds (void)
 	       doc: /* Hook run at the end of `self-insert-command'.
 This is run after inserting the character.  */);
   Vpost_self_insert_hook = Qnil;
-
-  defsubr (&Sself_insert_command);
 }
 
 void
