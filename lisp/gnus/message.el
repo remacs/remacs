@@ -550,7 +550,12 @@ The provided functions are:
 
 (defcustom message-forward-as-mime t
   "Non-nil means forward messages as an inline/rfc822 MIME section.
-Otherwise, directly inline the old message in the forwarded message."
+Otherwise, directly inline the old message in the forwarded
+message.
+
+When forwarding as MIME, certain MIME-related headers in the
+forwarded message may be removed/altered to ensure that the
+resulting mail is syntactically valid."
   :version "21.1"
   :group 'message-forwarding
   :link '(custom-manual "(message)Forwarding")
