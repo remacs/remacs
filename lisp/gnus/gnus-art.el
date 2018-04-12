@@ -2217,7 +2217,9 @@ This only works if the article in question is HTML."
     (save-restriction
       (widen)
       (if (eq mm-text-html-renderer 'w3m)
-	  (w3m-toggle-inline-images)
+	  (progn
+	    (require 'w3m)
+	    (w3m-toggle-inline-images))
 	(dolist (region (gnus-find-text-property-region (point-min) (point-max)
 							'image-displayer))
 	  (cl-destructuring-bind (start end function) region
