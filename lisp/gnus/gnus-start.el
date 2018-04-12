@@ -2828,73 +2828,75 @@ If FORCE is non-nil, the .newsrc file is read."
 	  (erase-buffer)
           (gnus-message 5 "Saving %s.eld..." gnus-current-startup-file)
 
-          ;; check timestamp of `gnus-current-startup-file'.eld against
-          ;; `gnus-save-newsrc-file-last-timestamp'
-          (let* ((checkfile (concat gnus-current-startup-file ".eld"))
-                 (mtime (nth 5 (file-attributes checkfile))))
-            (when (and gnus-save-newsrc-file-last-timestamp
-                       (time-less-p gnus-save-newsrc-file-last-timestamp
-                                    mtime))
-              (unless (y-or-n-p
+          ;; Check timestamp of `gnus-current-startup-file'.eld against
+          ;; `gnus-save-newsrc-file-last-timestamp'.
+	  (if (let* ((checkfile (concat gnus-current-startup-file ".eld"))
+                     (mtime (nth 5 (file-attributes checkfile))))
+		(and gnus-save-newsrc-file-last-timestamp
+                     (time-less-p gnus-save-newsrc-file-last-timestamp
+                                  mtime)
+		     (not
+		      (y-or-n-p
                        (format "%s was updated externally after %s, save?"
                                checkfile
                                (format-time-string
-                                "%c"
-                                gnus-save-newsrc-file-last-timestamp)))
-                (error "Couldn't save %s: updated externally" checkfile))))
-
-          (if gnus-save-startup-file-via-temp-buffer
+				"%c"
+				gnus-save-newsrc-file-last-timestamp))))))
+              (gnus-message
+	       4 "Didn't save %s: updated externally"
+	       (concat gnus-current-startup-file ".eld"))
+            (if gnus-save-startup-file-via-temp-buffer
+		(let ((coding-system-for-write gnus-ding-file-coding-system)
+                      (standard-output (current-buffer)))
+                  (gnus-gnus-to-quick-newsrc-format)
+                  (gnus-run-hooks 'gnus-save-quick-newsrc-hook)
+                  (save-buffer)
+                  (setq gnus-save-newsrc-file-last-timestamp
+                        (nth 5 (file-attributes buffer-file-name))))
               (let ((coding-system-for-write gnus-ding-file-coding-system)
-                    (standard-output (current-buffer)))
-                (gnus-gnus-to-quick-newsrc-format)
-                (gnus-run-hooks 'gnus-save-quick-newsrc-hook)
-                (save-buffer)
-                (setq gnus-save-newsrc-file-last-timestamp
-                            (nth 5 (file-attributes buffer-file-name))))
-            (let ((coding-system-for-write gnus-ding-file-coding-system)
-                  (version-control gnus-backup-startup-file)
-                  (startup-file (concat gnus-current-startup-file ".eld"))
-                  (working-dir (file-name-directory gnus-current-startup-file))
-                  working-file
-                  (i -1))
-              ;; Generate the name of a non-existent file.
-              (while (progn (setq working-file
-                                  (format
-                                   (if (and (eq system-type 'ms-dos)
-                                            (not (gnus-long-file-names)))
-                                       "%s#%d.tm#" ; MSDOS limits files to 8+3
-				     "%s#tmp#%d")
-                                   working-dir (setq i (1+ i))))
-                            (file-exists-p working-file)))
+                    (version-control gnus-backup-startup-file)
+                    (startup-file (concat gnus-current-startup-file ".eld"))
+                    (working-dir (file-name-directory gnus-current-startup-file))
+                    working-file
+                    (i -1))
+		;; Generate the name of a non-existent file.
+		(while (progn (setq working-file
+                                    (format
+                                     (if (and (eq system-type 'ms-dos)
+                                              (not (gnus-long-file-names)))
+					 "%s#%d.tm#" ; MSDOS limits files to 8+3
+				       "%s#tmp#%d")
+                                     working-dir (setq i (1+ i))))
+                              (file-exists-p working-file)))
 
-              (unwind-protect
-                  (progn
-                    (gnus-with-output-to-file working-file
-		      (gnus-gnus-to-quick-newsrc-format)
-		      (gnus-run-hooks 'gnus-save-quick-newsrc-hook))
+		(unwind-protect
+                    (progn
+                      (gnus-with-output-to-file working-file
+			(gnus-gnus-to-quick-newsrc-format)
+			(gnus-run-hooks 'gnus-save-quick-newsrc-hook))
 
-                    ;; These bindings will mislead the current buffer
-                    ;; into thinking that it is visiting the startup
-                    ;; file.
-                    (let ((buffer-backed-up nil)
-                          (buffer-file-name startup-file)
-                          (file-precious-flag t)
-                          (setmodes (file-modes startup-file)))
-                      ;; Backup the current version of the startup file.
-                      (backup-buffer)
+                      ;; These bindings will mislead the current buffer
+                      ;; into thinking that it is visiting the startup
+                      ;; file.
+                      (let ((buffer-backed-up nil)
+                            (buffer-file-name startup-file)
+                            (file-precious-flag t)
+                            (setmodes (file-modes startup-file)))
+			;; Backup the current version of the startup file.
+			(backup-buffer)
 
-                      ;; Replace the existing startup file with the temp file.
-                      (rename-file working-file startup-file t)
-                      (gnus-set-file-modes startup-file setmodes)
-                      (setq gnus-save-newsrc-file-last-timestamp
-                            (nth 5 (file-attributes startup-file)))))
-                (condition-case nil
-                    (delete-file working-file)
-                  (file-error nil)))))
+			;; Replace the existing startup file with the temp file.
+			(rename-file working-file startup-file t)
+			(gnus-set-file-modes startup-file setmodes)
+			(setq gnus-save-newsrc-file-last-timestamp
+                              (nth 5 (file-attributes startup-file)))))
+                  (condition-case nil
+                      (delete-file working-file)
+                    (file-error nil)))))
 
-	  (gnus-kill-buffer (current-buffer))
-	  (gnus-message
-	   5 "Saving %s.eld...done" gnus-current-startup-file))
+	    (gnus-kill-buffer (current-buffer))
+	    (gnus-message
+	     5 "Saving %s.eld...done" gnus-current-startup-file)))
 	(gnus-dribble-delete-file)
 	(gnus-group-set-mode-line)))))
 
