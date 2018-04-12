@@ -4696,6 +4696,10 @@ If ALL-HEADERS is non-nil, no headers are hidden."
 	      (forward-line -1))
 	    (set-window-point (get-buffer-window (current-buffer)) (point))
 	    (gnus-configure-windows 'article)
+	    ;; Make sure the article begins with the top of the header.
+	    (save-selected-window
+	      (select-window (get-buffer-window gnus-article-buffer))
+	      (goto-char (point-min)))
 	    (gnus-run-hooks 'gnus-article-prepare-hook)
 	    t))))))
 
