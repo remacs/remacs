@@ -481,8 +481,13 @@ Lines matching `gnus-cite-attribution-suffix' and perhaps
 (defun gnus-article-fill-cited-article (&optional width long-lines)
   "Do word wrapping in the current article.
 If WIDTH (the numerical prefix), use that text width when
-filling.  If LONG-LINES, only fill sections that have lines
-longer than the frame width."
+filling.
+
+If LONG-LINES, only fill sections that have lines longer than the
+frame width.
+
+Sections that are heuristically interpreted as not being
+text (i.e., computer code and the like) will not be folded."
   (interactive "P")
   (with-current-buffer gnus-article-buffer
     (let ((buffer-read-only nil)
