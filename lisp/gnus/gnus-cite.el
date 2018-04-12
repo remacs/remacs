@@ -502,8 +502,6 @@ longer than the frame width."
 		use-hard-newlines)
 	    (unless do-fill
 	      (setq do-fill (gnus-article-foldable-buffer (cdar marks))))
-	    ;; Note: the XEmacs version of `fill-region' inserts a newline
-	    ;; unless the region ends with a newline.
 	    (when do-fill
 	      (if (not long-lines)
 		  (fill-region (point-min) (point-max))
