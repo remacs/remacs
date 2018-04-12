@@ -15489,10 +15489,10 @@ Matches the @samp{To}, @samp{Cc}, @samp{Apparently-To},
 @samp{Resent-To} and @samp{Resent-Cc} fields.
 @item any
 Is the union of the @code{from} and @code{to} entries.
-@end table
 @item list
 Matches the @samp{List-ID}, @samp{List-Post}, @samp{X-Mailing-List},
 @samp{X-BeenThere} and @samp{X-Loop} fields.
+@end table
 
 @vindex nnmail-split-fancy-syntax-table
 @code{nnmail-split-fancy-syntax-table} is the syntax table in effect
