@@ -1802,6 +1802,6 @@ fn basic_size_and_align() {
 extern "C" {
     pub fn internal_self_insert(c: EmacsInt, n: EmacsInt) -> EmacsInt;
     pub fn frame_make_pointer_invisible(frame: *mut Lisp_Frame);
-    pub fn bitch_at_user();
+    pub fn bitch_at_user() -> !;
     pub fn translate_char(table: Lisp_Object, c: EmacsInt) -> EmacsInt;
 }
