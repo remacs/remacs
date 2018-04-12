@@ -731,7 +731,10 @@ the like."
 		   most-negative-fixnum)
 	       (or (dom-attr result :eww-readability-score)
 		   most-negative-fixnum))
-	(setq result highest)))
+        ;; We set a lower bound to how long we accept that the
+        ;; readable portion of the page is going to be.
+        (when (> (length (split-string (dom-texts highest))) 100)
+	  (setq result highest))))
     result))
 
 (defvar eww-mode-map
