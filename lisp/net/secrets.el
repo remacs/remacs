@@ -158,7 +158,7 @@
 (defvar secrets-enabled nil
   "Whether there is a daemon offering the Secret Service API.")
 
-(defvar secrets-debug t
+(defvar secrets-debug nil
   "Write debug messages")
 
 (defconst secrets-service "org.freedesktop.secrets"
