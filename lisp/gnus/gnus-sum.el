@@ -7067,7 +7067,11 @@ buffer."
 	 'only-article
        'article)
      t)
-    (select-window (get-buffer-window gnus-article-buffer))))
+    (select-window (get-buffer-window gnus-article-buffer))
+    ;; If we've just selected the message, place point at the start of
+    ;; the body because that's probably where we want to be.
+    (when (bobp)
+      (article-goto-body))))
 
 (defun gnus-summary-universal-argument (arg)
   "Perform any operation on all articles that are process/prefixed."
