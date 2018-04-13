@@ -1865,6 +1865,8 @@ Return the server's response to the SELECT or EXAMINE command."
 	(setq nnimap-connection-alist (delq entry nnimap-connection-alist))
 	nil))))
 
+;; Leave room for `open-network-stream' to issue a couple of IMAP
+;; commands before nnimap starts.
 (defvar nnimap-sequence 5)
 
 (defun nnimap-send-command (&rest args)
