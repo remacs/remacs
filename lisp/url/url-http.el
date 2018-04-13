@@ -623,6 +623,12 @@ should be shown to the user."
 	    ;; We do not support agent-driven negotiation, so we just
 	    ;; redirect to the preferred URI if one is provided.
 	    nil)
+           (`found			; 302
+	    ;; 302 Found was ambiguously defined in the standards, but
+	    ;; it's now recommended that it's treated like 303 instead
+	    ;; of 307, since that's what most servers expect.
+	    (setq url-http-method "GET"
+		  url-http-data nil))
            (`see-other			; 303
 	    ;; The response to the request can be found under a different
 	    ;; URI and SHOULD be retrieved using a GET method on that
