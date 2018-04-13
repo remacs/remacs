@@ -36,6 +36,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'puny)
 
 (defgroup gnutls nil
   "Emacs interface to the GnuTLS library."
