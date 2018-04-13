@@ -1221,8 +1221,9 @@ START, and END.  Note that START and END should be markers."
                       ;; decoded version in the mouseover to let the
                       ;; user know that there's something possibly
                       ;; fishy.
-                      (setf (url-host parsed)
-                            (puny-encode-domain (url-host parsed)))
+                      (when (url-host parsed)
+                        (setf (url-host parsed)
+                              (puny-encode-domain (url-host parsed))))
                       (setq iri (url-recreate-url parsed))
 		      (if title
                           (format "%s (%s)" iri title)
