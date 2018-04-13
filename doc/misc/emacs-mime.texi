@@ -1858,8 +1858,8 @@ Emacs-provided viewer settings.
 
 If @code{nil}, Emacs-provided viewer settings have precedence.  Next,
 the most specific viewer has precedence over less specific settings,
-no matter if they're system-provided or private, so @string{image/gif}
-in @file{/etc/mailcap} will ``win'' over a @string{image/*} setting in
+no matter if they're system-provided or private, so @samp{image/gif}
+in @file{/etc/mailcap} will ``win'' over a @samp{image/*} setting in
 @file{~/.mailcap}.
 
 @end table
