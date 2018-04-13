@@ -38,6 +38,7 @@
 (require 'seq)
 (require 'svg)
 (require 'image)
+(require 'puny)
 
 (defgroup shr nil
   "Simple HTML Renderer"
@@ -1209,12 +1210,23 @@ START, and END.  Note that START and END should be markers."
   (add-text-properties
    start (point)
    (list 'shr-url url
-	 'help-echo (let ((iri (or (ignore-errors
-				     (decode-coding-string
-				      (url-unhex-string url)
-				      'utf-8 t))
-				   url)))
-		      (if title (format "%s (%s)" iri title) iri))
+	 'help-echo (let ((parsed (url-generic-parse-url
+                                   (or (ignore-errors
+				         (decode-coding-string
+				          (url-unhex-string url)
+				          'utf-8 t))
+				       url)))
+                          iri)
+                      ;; If we have an IDNA domain, then show the
+                      ;; decoded version in the mouseover to let the
+                      ;; user know that there's something possibly
+                      ;; fishy.
+                      (setf (url-host parsed)
+                            (puny-encode-domain (url-host parsed)))
+                      (setq iri (url-recreate-url parsed))
+		      (if title
+                          (format "%s (%s)" iri title)
+                        iri))
 	 'follow-link t
 	 'mouse-face 'highlight))
   ;; Don't overwrite any keymaps that are already in the buffer (i.e.,
