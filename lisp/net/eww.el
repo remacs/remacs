@@ -272,7 +272,7 @@ word(s) will be searched for via `eww-search-prefix'."
     (insert (format "Loading %s..." url))
     (goto-char (point-min)))
   (url-retrieve url 'eww-render
-		(list url nil (current-buffer))))
+                (list url nil (current-buffer))))
 
 (defun eww--dwim-expand-url (url)
   (setq url (string-trim url))
@@ -370,7 +370,10 @@ Currently this means either text/html or application/xhtml+xml."
       ;; Save the https peer status.
       (plist-put eww-data :peer (plist-get status :peer))
       ;; Make buffer listings more informative.
-      (setq list-buffers-directory url))
+      (setq list-buffers-directory url)
+      ;; Let the URL library have a handle to the current URL for
+      ;; referer purposes.
+      (setq url-current-lastloc (url-generic-parse-url url)))
     (unwind-protect
 	(progn
 	  (cond

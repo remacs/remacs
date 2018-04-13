@@ -54,6 +54,7 @@
 (defvar url-http-target-url)
 (defvar url-http-transfer-encoding)
 (defvar url-show-status)
+(defvar url-http-referer)
 
 (require 'url-gw)
 (require 'url-parse)
@@ -238,6 +239,34 @@ request.")
                                  emacs-info os-info))
                  " ")))
 
+(defun url-http--get-referer (url)
+  (url-http-debug "getting referer from buffer: buffer:%S target-url:%S lastloc:%S" (current-buffer) url url-current-lastloc)
+  (when url-current-lastloc
+    (if (not (url-p url-current-lastloc))
+        (setq url-current-lastloc (url-generic-parse-url url-current-lastloc)))
+    (let* ((referer url-current-lastloc)
+           (referer-string (url-recreate-url referer)))
+      (when (and (not (memq url-privacy-level '(low high paranoid)))
+                 (not (and (listp url-privacy-level)
+                           (memq 'lastloc url-privacy-level))))
+        ;; url-privacy-level allows referer.  But url-lastloc-privacy-level
+        ;; may restrict who we send it to.
+        (cl-case url-lastloc-privacy-level
+          (host-match
+           (let ((referer-host (url-host referer))
+                 (url-host (url-host url)))
+             (when (string= referer-host url-host)
+               referer-string)))
+          (domain-match
+           (let ((referer-domain (url-domain referer))
+                 (url-domain (url-domain url)))
+             (when (and referer-domain
+                        url-domain
+                        (string= referer-domain url-domain))
+               referer-string)))
+          (otherwise
+           referer-string))))))
+
 ;; Building an HTTP request
 (defun url-http-user-agent-string ()
   "Compute a User-Agent string.
@@ -254,8 +283,9 @@ The string is based on `url-privacy-level' and `url-user-agent'."
                 ((eq url-user-agent 'default) (url-http--user-agent-default-string))))))
     (if ua-string (format "User-Agent: %s\r\n" (string-trim ua-string)) "")))
 
-(defun url-http-create-request (&optional ref-url)
-  "Create an HTTP request for `url-http-target-url', referred to by REF-URL."
+(defun url-http-create-request ()
+  "Create an HTTP request for `url-http-target-url', using `url-http-referer'
+as the Referer-header (subject to `url-privacy-level'."
   (let* ((extra-headers)
 	 (request nil)
 	 (no-cache (cdr-safe (assoc "Pragma" url-http-extra-headers)))
@@ -274,7 +304,8 @@ The string is based on `url-privacy-level' and `url-user-agent'."
 		 (url-get-authentication (or
 					  (and (boundp 'proxy-info)
 					       proxy-info)
-					  url-http-target-url) nil 'any nil))))
+					  url-http-target-url) nil 'any nil)))
+         (ref-url url-http-referer))
     (if (equal "" real-fname)
 	(setq real-fname "/"))
     (setq no-cache (and no-cache (string-match "no-cache" no-cache)))
@@ -286,12 +317,6 @@ The string is based on `url-privacy-level' and `url-user-agent'."
     ;; Protection against stupid values in the referrer
     (if (and ref-url (stringp ref-url) (or (string= ref-url "file:nil")
 					   (string= ref-url "")))
-	(setq ref-url nil))
-
-    ;; We do not want to expose the referrer if the user is paranoid.
-    (if (or (memq url-privacy-level '(low high paranoid))
-	    (and (listp url-privacy-level)
-		 (memq 'lastloc url-privacy-level)))
 	(setq ref-url nil))
 
     ;; url-http-extra-headers contains an assoc-list of
@@ -1264,7 +1289,8 @@ The return value of this function is the retrieval buffer."
          (mime-accept-string url-mime-accept-string)
 	 (buffer (or retry-buffer
 		     (generate-new-buffer
-                      (format " *http %s:%d*" (url-host url) (url-port url))))))
+                      (format " *http %s:%d*" (url-host url) (url-port url)))))
+         (referer (url-http--get-referer url)))
     (if (not connection)
 	;; Failed to open the connection for some reason
 	(progn
@@ -1299,7 +1325,8 @@ The return value of this function is the retrieval buffer."
 		       url-http-no-retry
 		       url-http-connection-opened
                        url-mime-accept-string
-		       url-http-proxy))
+		       url-http-proxy
+                       url-http-referer))
 	  (set (make-local-variable var) nil))
 
 	(setq url-http-method (or url-request-method "GET")
@@ -1317,7 +1344,8 @@ The return value of this function is the retrieval buffer."
 	      url-http-no-retry retry-buffer
 	      url-http-connection-opened nil
               url-mime-accept-string mime-accept-string
-	      url-http-proxy url-using-proxy)
+	      url-http-proxy url-using-proxy
+              url-http-referer referer)
 
 	(set-process-buffer connection buffer)
 	(set-process-filter connection 'url-http-generic-filter)
