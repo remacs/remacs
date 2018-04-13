@@ -1291,7 +1291,7 @@ The return value of this function is the retrieval buffer."
 	 (buffer (or retry-buffer
 		     (generate-new-buffer
                       (format " *http %s:%d*" (url-host url) (url-port url)))))
-         (referer (url-http--get-referer url)))
+         (referer (url-http--encode-string (url-http--get-referer url))))
     (if (not connection)
 	;; Failed to open the connection for some reason
 	(progn
