@@ -218,6 +218,7 @@ See also `eww-form-checkbox-selected-symbol'."
 (defvar eww-data nil)
 (defvar eww-history nil)
 (defvar eww-history-position 0)
+(defvar eww-prompt-history nil)
 
 (defvar eww-local-regex "localhost"
   "When this regex is found in the URL, it's not a keyword but an address.")
@@ -250,7 +251,7 @@ word(s) will be searched for via `eww-search-prefix'."
 	  (prompt (concat "Enter URL or keywords"
 			  (if uris (format " (default %s)" (car uris)) "")
 			  ": ")))
-     (list (read-string prompt nil nil uris))))
+     (list (read-string prompt nil 'eww-prompt-history uris))))
   (setq url (eww--dwim-expand-url url))
   (pop-to-buffer-same-window
    (if (eq major-mode 'eww-mode)
