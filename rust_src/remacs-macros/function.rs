@@ -125,18 +125,15 @@ fn parse_arg_type(fn_arg: &syn::Type) -> ArgType {
             }) => if lifetime.is_some() {
                 ArgType::Other
             } else {
-                match *mutability {
-                    None => ArgType::Other,
-                    Some(_) => match **ty {
-                        syn::Type::Slice(syn::TypeSlice { elem: ref ty, .. }) => {
-                            if is_lisp_object(&**ty) {
-                                ArgType::LispObjectSlice
-                            } else {
-                                ArgType::Other
-                            }
+                match **ty {
+                    syn::Type::Slice(syn::TypeSlice { elem: ref ty, .. }) => {
+                        if is_lisp_object(&**ty) {
+                            ArgType::LispObjectSlice
+                        } else {
+                            ArgType::Other
                         }
-                        _ => ArgType::Other,
-                    },
+                    }
+                    _ => ArgType::Other,
                 }
             },
             _ => ArgType::Other,

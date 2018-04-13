@@ -325,7 +325,7 @@ pub fn clrhash(hash_table: LispHashTableRef) -> LispHashTableRef {
 #[lisp_fn]
 pub fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
     let sym = LispObject::from_raw(Qhash_table_test);
-    put(name, sym, list(&mut [test, hash]))
+    put(name, sym, list(&[test, hash]))
 }
 
 include!(concat!(env!("OUT_DIR"), "/hashtable_exports.rs"));

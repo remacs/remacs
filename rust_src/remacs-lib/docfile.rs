@@ -84,7 +84,7 @@ pub extern "C" fn scan_rust_file(
                 sig.extend(line_iter.next().unwrap());
             }
             let sig = sig.split(')').next().unwrap();
-            let has_many_args = sig.contains("&mut");
+            let has_many_args = sig.contains("&mut") || sig.contains("&[");
 
             // Split arg names and types
             let splitters = [':', ','];
@@ -106,7 +106,7 @@ pub extern "C" fn scan_rust_file(
                 if docstring_usage.is_empty() {
                     docstring_usage.push_str("(fn ");
                     for (i, chunk) in args.chunks(2).enumerate() {
-                        if chunk[1].contains("&mut") {
+                        if chunk[1].contains("&mut") || chunk[1].contains("&[") {
                             docstring_usage.push_str("&rest ");
                         } else if i == attr_props.min as usize {
                             docstring_usage.push_str("&optional ");

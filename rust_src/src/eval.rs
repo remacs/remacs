@@ -896,7 +896,7 @@ pub fn autoload_do_load(
 /// Instead, use `add-hook' and specify t for the LOCAL argument.
 /// usage: (run-hooks &rest HOOKS)
 #[lisp_fn]
-pub fn run_hooks(args: &mut [LispObject]) -> () {
+pub fn run_hooks(args: &[LispObject]) -> () {
     for item in args {
         run_hook(item.to_raw());
     }
@@ -916,7 +916,7 @@ pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
     run_hook_with_args_internal(args, funcall_nil)
 }
 
-fn funcall_nil(args: &mut [LispObject]) -> LispObject {
+fn funcall_nil(args: &[LispObject]) -> LispObject {
     let mut obj_array: Vec<Lisp_Object> = args.iter().map(|o| o.to_raw()).collect();
     unsafe { Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr()) };
     LispObject::constant_nil()
@@ -934,7 +934,7 @@ pub extern "C" fn run_hook(hook: Lisp_Object) -> () {
 /// FUNCALL specifies how to call each function on the hook.
 fn run_hook_with_args_internal(
     args: &mut [LispObject],
-    func: fn(&mut [LispObject]) -> LispObject,
+    func: fn(&[LispObject]) -> LispObject,
 ) -> LispObject {
     // If we are dying or still initializing,
     // don't do anything -- it would probably crash if we tried.
