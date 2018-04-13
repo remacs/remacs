@@ -349,9 +349,6 @@ Currently this means either text/html or application/xhtml+xml."
 			 "application/xhtml+xml")))
 
 (defun eww-render (status url &optional point buffer encode)
-  (let ((redirect (plist-get status :redirect)))
-    (when redirect
-      (setq url redirect)))
   (let* ((headers (eww-parse-headers))
 	 (content-type
 	  (mail-header-parse-content-type
@@ -364,7 +361,11 @@ Currently this means either text/html or application/xhtml+xml."
 			(eww-detect-charset (eww-html-p (car content-type)))
 			"utf-8"))))
 	 (data-buffer (current-buffer))
+	 (shr-target-id (url-target (url-generic-parse-url url)))
 	 last-coding-system-used)
+    (let ((redirect (plist-get status :redirect)))
+      (when redirect
+        (setq url redirect)))
     (with-current-buffer buffer
       ;; Save the https peer status.
       (plist-put eww-data :peer (plist-get status :peer))
@@ -460,7 +461,6 @@ Currently this means either text/html or application/xhtml+xml."
       (plist-put eww-data :dom document)
       (let ((inhibit-read-only t)
 	    (inhibit-modification-hooks t)
-	    (shr-target-id (url-target (url-generic-parse-url url)))
 	    (shr-external-rendering-functions
              (append
               shr-external-rendering-functions
