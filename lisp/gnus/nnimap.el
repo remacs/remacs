@@ -220,15 +220,16 @@ textual parts.")
 	    (cl-return)))
 	(goto-char (match-end 0))
 	;; Unfold quoted {number} strings.
-	(while (re-search-forward
-		"[^]][ (]{\\([0-9]+\\)}\r?\n"
-		(save-excursion
-		  ;; Start of the header section.
-		  (or (re-search-forward "] {[0-9]+}\r?\n" nil t)
-		      ;; Start of the next FETCH.
-		      (re-search-forward "\\* [0-9]+ FETCH" nil t)
-		      (point-max)))
-		t)
+	(while (or (looking-at "[ (]{\\([0-9]+\\)}\r?\n")
+		   (re-search-forward
+		    "[^]][ (]{\\([0-9]+\\)}\r?\n"
+		    (save-excursion
+		      ;; Start of the header section.
+		      (or (re-search-forward "] {[0-9]+}\r?\n" nil t)
+			  ;; Start of the next FETCH.
+			  (re-search-forward "\\* [0-9]+ FETCH" nil t)
+			  (point-max)))
+		    t))
 	  (setq size (string-to-number (match-string 1)))
 	  (delete-region (+ (match-beginning 0) 2) (point))
 	  (setq string (buffer-substring (point) (+ (point) size)))
