@@ -142,17 +142,6 @@ to them."
 	     (not (string-match "/\\'" filename)))
 	(setf (url-filename url) (format "%s/" filename)))
 
-
-    ;; If it is a directory, look for an index file first.
-    (if (and (file-directory-p filename)
-	     url-directory-index-file
-	     (setq pos-index (expand-file-name url-directory-index-file filename))
-	     (file-exists-p pos-index)
-	     (file-readable-p pos-index))
-	(setq filename pos-index))
-
-    ;; Find the (possibly compressed) file
-    (setq filename (url-file-find-possibly-compressed-file filename))
     filename))
 
 ;;;###autoload

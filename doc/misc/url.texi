@@ -571,11 +571,6 @@ if it has the file suffix @file{.z}, @file{.gz}, @file{.Z},
 hard-coded, and cannot be altered by customizing
 @code{jka-compr-compression-info-list}.)
 
-@defopt url-directory-index-file
-This option specifies the filename to look for when a @code{file} or
-@code{ftp} URL specifies a directory.  The default is
-@file{index.html}.  If this file exists and is readable, it is viewed.
-Otherwise, Emacs visits the directory using Dired.
 @end defopt
 
 @node info

@@ -540,7 +540,15 @@ For instance, if /etc/mailcap has an entry for image/gif, that one
 will be chosen even if you have an entry for image/* in your
 ~/.mailcap file.  But with the new method, entries from ~/.mailcap
 overrides all system and Emacs-provided defaults.  To get the old
-method back, set `mailcap-prefer-mailcap-viewers' to nil
+method back, set `mailcap-prefer-mailcap-viewers' to nil.
+
+
+** URL
+
+*** The file: handler no longer looks for index.html in directories if
+you ask it for a file:///dir URL.  Since this is a low-level library,
+such decisions (if they are to be made at all) are left to
+higher-level functions.
 
 
 +++
