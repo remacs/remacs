@@ -134,7 +134,7 @@ By default, `semantic-tag-similar-ignorable-attributes' is referenced for
 attributes, and IGNORABLE-ATTRIBUTES will augment this list.
 
 Note that even though :name is not an attribute, it can be used to
-to indicate lax comparison of names via `semantic--tag-similar-names-p'")
+indicate lax comparison of names via `semantic--tag-similar-names-p'")
 
 ;; Note: optional thing is because overloadable fcns don't handle this
 ;; quite right.

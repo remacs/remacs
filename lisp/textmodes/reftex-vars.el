@@ -1616,7 +1616,7 @@ viewing can be useful.  Each entry has the structure
 
 MACRO-RE is matched against the macro.  SEARCH-RE is the regexp used
 to search for cross references.  `%s' in this regexp is replaced with
-with the macro argument at point.  HIGHLIGHT is an integer indicating
+the macro argument at point.  HIGHLIGHT is an integer indicating
 which subgroup of the match should be highlighted."
   :group 'reftex-viewing-cross-references
   :type '(repeat (group (regexp  :tag "Macro  Regexp  ")

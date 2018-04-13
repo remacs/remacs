@@ -807,7 +807,7 @@ and \\[backward-word], which see.
 
 Value is normally t.
 If an edge of the buffer or a field boundary is reached, point is left there
-there and the function returns nil.  Field boundaries are not noticed
+and the function returns nil.  Field boundaries are not noticed
 if `inhibit-field-text-motion' is non-nil."
   (interactive "^p")
   (if (eq (current-bidi-paragraph-direction) 'left-to-right)
@@ -823,7 +823,7 @@ and \\[forward-word], which see.
 
 Value is normally t.
 If an edge of the buffer or a field boundary is reached, point is left there
-there and the function returns nil.  Field boundaries are not noticed
+and the function returns nil.  Field boundaries are not noticed
 if `inhibit-field-text-motion' is non-nil."
   (interactive "^p")
   (if (eq (current-bidi-paragraph-direction) 'left-to-right)
