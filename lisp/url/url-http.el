@@ -244,28 +244,29 @@ request.")
   (when url-current-lastloc
     (if (not (url-p url-current-lastloc))
         (setq url-current-lastloc (url-generic-parse-url url-current-lastloc)))
-    (let* ((referer url-current-lastloc)
-           (referer-string (url-recreate-url referer)))
-      (when (and (not (memq url-privacy-level '(low high paranoid)))
-                 (not (and (listp url-privacy-level)
-                           (memq 'lastloc url-privacy-level))))
-        ;; url-privacy-level allows referer.  But url-lastloc-privacy-level
-        ;; may restrict who we send it to.
-        (cl-case url-lastloc-privacy-level
-          (host-match
-           (let ((referer-host (url-host referer))
-                 (url-host (url-host url)))
-             (when (string= referer-host url-host)
-               referer-string)))
-          (domain-match
-           (let ((referer-domain (url-domain referer))
-                 (url-domain (url-domain url)))
-             (when (and referer-domain
-                        url-domain
-                        (string= referer-domain url-domain))
-               referer-string)))
-          (otherwise
-           referer-string))))))
+    (let ((referer (copy-sequence url-current-lastloc)))
+      (setf (url-host referer) (puny-encode-domain (url-host referer)))
+      (let ((referer-string (url-recreate-url referer)))
+        (when (and (not (memq url-privacy-level '(low high paranoid)))
+                   (not (and (listp url-privacy-level)
+                             (memq 'lastloc url-privacy-level))))
+          ;; url-privacy-level allows referer.  But url-lastloc-privacy-level
+          ;; may restrict who we send it to.
+          (cl-case url-lastloc-privacy-level
+            (host-match
+             (let ((referer-host (url-host referer))
+                   (url-host (url-host url)))
+               (when (string= referer-host url-host)
+                 referer-string)))
+            (domain-match
+             (let ((referer-domain (url-domain referer))
+                   (url-domain (url-domain url)))
+               (when (and referer-domain
+                          url-domain
+                          (string= referer-domain url-domain))
+                 referer-string)))
+            (otherwise
+             referer-string)))))))
 
 ;; Building an HTTP request
 (defun url-http-user-agent-string ()
@@ -298,7 +299,7 @@ as the Referer-header (subject to `url-privacy-level'."
 			      'url-http-proxy-basic-auth-storage))
 			 (url-get-authentication url-http-proxy nil 'any nil))))
 	 (real-fname (url-filename url-http-target-url))
-	 (host (url-http--encode-string (url-host url-http-target-url)))
+	 (host (url-host url-http-target-url))
 	 (auth (if (cdr-safe (assoc "Authorization" url-http-extra-headers))
 		   nil
 		 (url-get-authentication (or

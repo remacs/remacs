@@ -645,7 +645,7 @@ not contain a registered name."
   ;;
   ;; Domain delegations change rarely enough that we won't bother with
   ;; cache invalidation, I think.
-  (let* ((host-parts (split-string (url-host url) "\\."))
+  (let* ((host-parts (split-string (puny-encode-domain (url-host url)) "\\."))
          (result (gethash host-parts url--domain-cache 'not-found)))
     (when (eq result 'not-found)
       (setq result

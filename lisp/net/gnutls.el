@@ -154,12 +154,12 @@ trust and key files, and priority string."
                        (cons 'gnutls-x509pki
                              (gnutls-boot-parameters
                               :type 'gnutls-x509pki
-                              :hostname host))))))
+                              :hostname (puny-encode-domain host)))))))
     (if nowait
         process
       (gnutls-negotiate :process process
                         :type 'gnutls-x509pki
-                        :hostname host))))
+                        :hostname (puny-encode-domain host)))))
 
 (define-error 'gnutls-error "GnuTLS error")
 
