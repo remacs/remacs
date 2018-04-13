@@ -113,55 +113,47 @@ enum ArgType {
 }
 
 fn parse_arg_type(fn_arg: &syn::Type) -> ArgType {
-    match *fn_arg {
-        syn::Type::Path(syn::TypePath {
-            qself: ref qualification,
-            ref path,
-        }) => if qualification.is_some() {
-            ArgType::Other
-        } else {
-            if is_lisp_object(&path) {
-                ArgType::LispObject
-            } else {
+    if is_lisp_object(fn_arg) {
+        ArgType::LispObject
+    } else {
+        match *fn_arg {
+            syn::Type::Reference(syn::TypeReference {
+                elem: ref ty,
+                ref lifetime,
+                ref mutability,
+                ..
+            }) => if lifetime.is_some() {
                 ArgType::Other
-            }
-        },
-        syn::Type::Reference(syn::TypeReference {
-            elem: ref ty,
-            ref lifetime,
-            ref mutability,
-            ..
-        }) => if lifetime.is_some() {
-            ArgType::Other
-        } else {
-            match *mutability {
-                None => ArgType::Other,
-                Some(_) => match **ty {
-                    syn::Type::Slice(syn::TypeSlice { elem: ref ty, .. }) => match **ty {
-                        syn::Type::Path(syn::TypePath {
-                            qself: ref qualification,
-                            ref path,
-                        }) => if qualification.is_some() {
-                            ArgType::Other
-                        } else {
-                            if is_lisp_object(&path) {
+            } else {
+                match *mutability {
+                    None => ArgType::Other,
+                    Some(_) => match **ty {
+                        syn::Type::Slice(syn::TypeSlice { elem: ref ty, .. }) => {
+                            if is_lisp_object(&**ty) {
                                 ArgType::LispObjectSlice
                             } else {
                                 ArgType::Other
                             }
-                        },
+                        }
                         _ => ArgType::Other,
                     },
-                    _ => ArgType::Other,
-                },
-            }
-        },
-        _ => ArgType::Other,
+                }
+            },
+            _ => ArgType::Other,
+        }
     }
 }
 
-fn is_lisp_object(path: &syn::Path) -> bool {
-    let str_path = format!("{}", quote!(#path));
-    str_path == "LispObject" || str_path == "lisp :: LispObject"
-        || str_path == ":: lisp :: LispObject"
+fn is_lisp_object(ty: &syn::Type) -> bool {
+    match *ty {
+        syn::Type::Path(syn::TypePath {
+            qself: None,
+            ref path,
+        }) => {
+            let str_path = format!("{}", quote!(#path));
+            str_path == "LispObject" || str_path == "lisp :: LispObject"
+                || str_path == ":: lisp :: LispObject"
+        }
+        _ => false,
+    }
 }
