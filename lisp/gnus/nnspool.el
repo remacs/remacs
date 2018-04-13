@@ -105,7 +105,7 @@ If nil, nnspool will load the entire file into a buffer and process it
 there.")
 
 (defvoo nnspool-rejected-article-hook nil
-  "*A hook that will be run when an article has been rejected by the server.")
+  "A hook that will be run when an article has been rejected by the server.")
 
 (defvoo nnspool-file-coding-system nnheader-file-coding-system
   "Coding system for nnspool.")

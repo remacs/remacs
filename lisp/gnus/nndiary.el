@@ -232,7 +232,7 @@ through all nnml directories and generate nov databases for them
 all.  This may very well take some time.")
 
 (defvoo nndiary-prepare-save-mail-hook nil
-  "*Hook run narrowed to an article before saving.")
+  "Hook run narrowed to an article before saving.")
 
 (defvoo nndiary-inhibit-expiry nil
   "If non-nil, inhibit expiry.")

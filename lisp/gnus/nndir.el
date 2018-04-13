@@ -37,7 +37,7 @@
   nnml-current-directory nnmh-current-directory)
 
 (defvoo nndir-nov-is-evil nil
-  "*Non-nil means that nndir will never retrieve NOV headers."
+  "Non-nil means that nndir will never retrieve NOV headers."
   nnml-nov-is-evil)
 
 

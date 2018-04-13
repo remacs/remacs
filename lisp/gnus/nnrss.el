@@ -49,7 +49,7 @@
   "Where nnrss will save its files.")
 
 (defvoo nnrss-ignore-article-fields '(slash:comments)
-  "*List of fields that should be ignored when comparing RSS articles.
+  "List of fields that should be ignored when comparing RSS articles.
 Some RSS feeds update article fields during their lives, e.g. to
 indicate the number of comments or the number of times the
 articles have been seen.  However, if there is a difference
