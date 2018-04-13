@@ -1004,12 +1004,13 @@ affect, nor be affected by, any uses of the same variable symbol
 elsewhere in the program.
 
 @item
-Otherwise, define the variable with @code{defvar}, @code{defconst}, or
-@code{defcustom}.  @xref{Defining Variables}.  Usually, the definition
-should be at top-level in an Emacs Lisp file.  As far as possible, it
-should include a documentation string which explains the meaning and
-purpose of the variable.  You should also choose the variable's name
-to avoid name conflicts (@pxref{Coding Conventions}).
+Otherwise, define the variable with @code{defvar}, @code{defconst}
+(@pxref{Defining Variables}), or @code{defcustom} (@pxref{Variable
+Definitions}).  Usually, the definition should be at top-level in an
+Emacs Lisp file.  As far as possible, it should include a
+documentation string which explains the meaning and purpose of the
+variable.  You should also choose the variable's name to avoid name
+conflicts (@pxref{Coding Conventions}).
 
 Then you can bind the variable anywhere in a program, knowing reliably
 what the effect will be.  Wherever you encounter the variable, it will
@@ -1024,7 +1025,7 @@ variables like @code{case-fold-search}:
 @group
 (defun search-for-abc ()
   "Search for the string \"abc\", ignoring case differences."
-  (let ((case-fold-search nil))
+  (let ((case-fold-search t))
     (re-search-forward "abc")))
 @end group
 @end example

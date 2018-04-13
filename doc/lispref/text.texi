@@ -1612,7 +1612,7 @@ that the line ends exactly at @code{fill-column}.  It returns
 
 The argument @var{how}, if non-@code{nil} specifies explicitly the style
 of justification.  It can be @code{left}, @code{right}, @code{full},
-@code{center}, or @code{none}.  If it is @code{t}, that means to do
+@code{center}, or @code{none}.  If it is @code{t}, that means to
 follow specified justification style (see @code{current-justification},
 below).  @code{nil} means to do full justification.
 
@@ -2976,7 +2976,7 @@ If any text in the region already has a non-@code{nil} @code{face} property,
 those face(s) are retained.  This function sets the @code{face}
 property to a list of faces, with @var{face} as the first element (by
 default) and the pre-existing faces as the remaining elements.  If the
-optional argument @var{append} is non-@code{nil}, @var{face} is
+optional argument @var{appendp} is non-@code{nil}, @var{face} is
 appended to the end of the list instead.  Note that in a face list,
 the first occurring value for each attribute takes precedence.
 
@@ -4297,10 +4297,10 @@ read register names use this function.
   This function can be used to transpose stretches of text:
 
 @defun transpose-regions start1 end1 start2 end2 &optional leave-markers
-This function exchanges two nonoverlapping portions of the buffer.
-Arguments @var{start1} and @var{end1} specify the bounds of one portion
-and arguments @var{start2} and @var{end2} specify the bounds of the
-other portion.
+This function exchanges two nonoverlapping portions of the buffer (if
+they overlap, the function signals an error).  Arguments @var{start1}
+and @var{end1} specify the bounds of one portion and arguments
+@var{start2} and @var{end2} specify the bounds of the other portion.
 
 Normally, @code{transpose-regions} relocates markers with the transposed
 text; a marker previously positioned within one of the two transposed
