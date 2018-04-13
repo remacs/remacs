@@ -45,7 +45,7 @@ pub extern "C" fn make_lisp_time(t: c_timespec) -> Lisp_Object {
 fn make_lisp_time_1(t: c_timespec) -> LispObject {
     let s = t.tv_sec;
     let ns = t.tv_nsec;
-    list(&mut [
+    list(&[
         LispObject::from_fixnum(hi_time(s)),
         LispObject::from_fixnum(EmacsInt::from(lo_time(s))),
         LispObject::from_fixnum((ns / 1_000) as EmacsInt),

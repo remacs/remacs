@@ -402,7 +402,7 @@ pub fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispO
 /// Any number of arguments, even zero arguments, are allowed.
 /// usage: (fn &rest OBJECTS)
 #[lisp_fn]
-pub fn list(args: &mut [LispObject]) -> LispObject {
+pub fn list(args: &[LispObject]) -> LispObject {
     args.iter()
         .rev()
         .fold(LispObject::constant_nil(), |list, &arg| {
