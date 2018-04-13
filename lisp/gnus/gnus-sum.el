@@ -7071,7 +7071,8 @@ buffer."
     ;; If we've just selected the message, place point at the start of
     ;; the body because that's probably where we want to be.
     (when (bobp)
-      (article-goto-body))))
+      (article-goto-body)
+      (forward-char -1))))
 
 (defun gnus-summary-universal-argument (arg)
   "Perform any operation on all articles that are process/prefixed."
