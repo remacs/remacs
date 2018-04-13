@@ -1856,7 +1856,7 @@ text/html;\\s-*charset=\\([^\t\n\r \"'>]+\\)[^>]*>" nil t)
 	 'url-link start end
 	 :help-echo (get-text-property start 'help-echo)
 	 :keymap (setq keymap (copy-keymap
-			       (if (mm--images-in-region-p start end)
+			       (if (mm-images-in-region-p start end)
 				   shr-image-map
 				 shr-map)))
 	 (get-text-property start 'shr-url))
@@ -1873,19 +1873,6 @@ text/html;\\s-*charset=\\([^\t\n\r \"'>]+\\)[^>]*>" nil t)
 	(dolist (overlay (overlays-at start))
 	  (overlay-put overlay 'face nil))
 	(setq start end)))))
-
-(defun mm--images-in-region-p (start end)
-  (let ((found nil))
-    (save-excursion
-      (goto-char start)
-      (while (and (not found)
-		  (< (point) end))
-	(let ((display (get-text-property (point) 'display)))
-	  (when (and (consp display)
-		     (eq (car display) 'image))
-	    (setq found t)))
-	(forward-char 1)))
-    found))
 
 (defun mm-handle-filename (handle)
   "Return filename of HANDLE if any."
