@@ -526,10 +526,22 @@ does not fit in a machine integer (Bug#30408).
 'json-insert', 'json-parse-string', and 'json-parse-buffer'.  These
 are implemented in C using the Jansson library.
 
+** Mailcap
+
 ---
-** The new function `mailcap-file-name-to-mime-type' has been added.
+*** The new function `mailcap-file-name-to-mime-type' has been added.
 It's a simple convenience function for looking up MIME types based on
 file name extensions.
+
+*** The default way the list of possible external viewers for MIME
+types is sorted and chosen has changed.  Earlier, the most specific
+viewer was chosen, even if there was a general override in ~/.mailcap.
+For instance, if /etc/mailcap has an entry for image/gif, that one
+will be chosen even if you have an entry for image/* in your
+~/.mailcap file.  But with the new method, entries from ~/.mailcap
+overrides all system and Emacs-provided defaults.  To get the old
+method back, set `mailcap-prefer-mailcap-viewers' to nil
+
 
 +++
 ** The new function 'read-answer' accepts either long or short answers

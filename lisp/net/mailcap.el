@@ -36,6 +36,14 @@
   :version "21.1"
   :group 'mime)
 
+(defcustom mailcap-prefer-mailcap-viewers t
+  "If non-nil, prefer viewers specified in ~/.mailcap.
+If nil, the most specific viewer will be chosen, even if there is
+a general override in ~/.mailcap.  For instance, if /etc/mailcap
+has an entry for \"image/gif\", that one will be chosen even if
+you have an entry for \"image/*\" in your ~/.mailcap file."
+  :type 'boolean)
+
 (defvar mailcap-parse-args-syntax-table
   (let ((table (copy-syntax-table emacs-lisp-mode-syntax-table)))
     (modify-syntax-entry ?' "\"" table)
@@ -784,18 +792,23 @@ If NO-DECODE is non-nil, don't decode STRING."
           (setq passed (list viewer))
         ;; None found, so heuristically select some applicable viewer
         ;; from `mailcap-mime-data'.
+        (mailcap-parse-mailcaps)
         (setq major (split-string (car ctl) "/"))
         (setq minor (cadr major)
               major (car major))
         (when (setq major-info (cdr (assoc major mailcap-mime-data)))
           (when (setq viewers (mailcap-possible-viewers major-info minor))
-            (setq info (mapcar (lambda (a) (cons (symbol-name (car a))
-                                            (cdr a)))
+            (setq info (mapcar (lambda (a)
+                                 (cons (symbol-name (car a)) (cdr a)))
                                (cdr ctl)))
             (dolist (entry viewers)
               (when (mailcap-viewer-passes-test entry info)
                 (push entry passed)))
-            (setq passed (sort passed 'mailcap-viewer-lessp))
+            ;; The data is in "logical" order; entries from ~/.mailcap
+            ;; are first, so we don't need to do any sorting if the
+            ;; user wants ~/.mailcap to be preferred.
+            (unless mailcap-prefer-mailcap-viewers
+              (setq passed (sort passed 'mailcap-viewer-lessp)))
             (setq viewer (car passed))))
         (when (and (stringp (cdr (assq 'viewer viewer)))
                    passed)
