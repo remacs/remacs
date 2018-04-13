@@ -61,9 +61,9 @@ If the value is a list, it should have the form
    ((HOST-REGEX FLAGS...) (HOST-REGEX FLAGS...) ...)
 
 where each HOST-REGEX is a regular expression to be matched
-against the hostname, and FLAGS is either t or a list of
-one or more verification flags.  The supported flags and the
-corresponding conditions to be tested are:
+against the hostname, on a first-match basis, and FLAGS is either
+t or a list of one or more verification flags.  The supported
+flags and the corresponding conditions to be tested are:
 
   :trustfiles -- certificate must be issued by a trusted authority.
   :hostname   -- hostname must match presented certificate's host name.
