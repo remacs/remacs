@@ -170,7 +170,7 @@ domain-match  -- Send last location if the new location is within the
 host-match    -- Send last location if the new location is on the
                  same host
 "
-  :version "26.1"
+  :version "27.1"
   :type '(radio (const :tag "Always send" none)
                 (const :tag "Domains match" domain-match)
                 (const :tag "Hosts match" host-match))
