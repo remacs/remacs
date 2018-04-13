@@ -1368,9 +1368,13 @@ ones, in case fg and bg are nil."
   (shr-ensure-paragraph))
 
 (defun shr-tag-div (dom)
-  (shr-ensure-newline)
-  (shr-generic dom)
-  (shr-ensure-newline))
+  (let ((display (cdr (assq 'display shr-stylesheet))))
+    (if (or (equal display "inline")
+            (equal display "inline-block"))
+        (shr-generic dom)
+      (shr-ensure-newline)
+      (shr-generic dom)
+      (shr-ensure-newline))))
 
 (defun shr-tag-s (dom)
   (shr-fontize-dom dom 'shr-strike-through))
