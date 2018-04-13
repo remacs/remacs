@@ -7353,7 +7353,7 @@ If FORCE (the prefix), also save the .newsrc file(s)."
       (setq gnus-newsgroup-name nil)
       (unless (gnus-ephemeral-group-p group)
 	(gnus-group-update-group group nil t))
-      (when (equal (gnus-group-group-name) group)
+      (when (gnus-group-goto-group group)
 	(gnus-group-next-unread-group 1))
       (gnus-article-stop-animations)
       (when quit-config
