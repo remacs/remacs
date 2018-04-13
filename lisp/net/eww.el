@@ -1486,7 +1486,8 @@ If EXTERNAL is double prefix, browse in new buffer."
      ((string-match "^mailto:" url)
       (browse-url-mail url))
      ((and (consp external) (<= (car external) 4))
-      (funcall shr-external-browser url))
+      (funcall shr-external-browser url)
+      (shr--blink-link))
      ;; This is a #target url in the same page as the current one.
      ((and (url-target (url-generic-parse-url url))
 	   (eww-same-page-p url (plist-get eww-data :url)))

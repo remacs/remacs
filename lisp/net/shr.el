@@ -142,6 +142,11 @@ cid: URL as the argument.")
   "Font for link elements."
   :group 'shr)
 
+(defface shr-selected-link
+  '((t (:inherit shr-link :background "red")))
+  "Font for link elements."
+  :group 'shr)
+
 (defvar shr-inhibit-images nil
   "If non-nil, inhibit loading images.")
 
@@ -343,6 +348,30 @@ If the URL is already at the front of the kill ring act like
   (if (equal url (car kill-ring))
       (shr-probe-and-copy-url url)
     (shr-copy-url url)))
+
+(defun shr--current-link-region ()
+  (let ((current (get-text-property (point) 'shr-url))
+        start)
+    (save-excursion
+      ;; Go to the beginning.
+      (while (and (not (bobp))
+		  (equal (get-text-property (point) 'shr-url) current))
+        (forward-char -1))
+      (unless (equal (get-text-property (point) 'shr-url) current)
+        (forward-char 1))
+      (setq start (point))
+      ;; Go to the end.
+      (while (and (not (eobp))
+                  (equal (get-text-property (point) 'shr-url) current))
+        (forward-char 1))
+      (list start (point)))))
+
+(defun shr--blink-link ()
+  (let* ((region (shr--current-link-region))
+         (overlay (make-overlay (car region) (cadr region))))
+    (overlay-put overlay 'face 'shr-selected-link)
+    (run-at-time 1 nil (lambda ()
+                         (delete-overlay overlay)))))
 
 (defun shr-next-link ()
   "Skip to the next link."
@@ -950,7 +979,9 @@ the mouse click event."
       (browse-url-mail url))
      (t
       (if external
-	  (funcall shr-external-browser url)
+          (progn
+	    (funcall shr-external-browser url)
+            (shr--blink-link))
 	(browse-url url))))))
 
 (defun shr-save-contents (directory)
