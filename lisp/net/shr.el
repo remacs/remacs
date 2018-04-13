@@ -736,13 +736,13 @@ size, and full-buffer size."
       ;; Success; continue.
       (when (= (preceding-char) ?\s)
 	(delete-char -1))
-      (let ((props `(face ,(get-text-property (point) 'face)
-			  ;; Don't break the image-displayer property
-			  ;; as it will cause `gnus-article-show-images'
-			  ;; to show the two or more same images.
-			  image-displayer
-			  ,(get-text-property (point) 'image-displayer)))
+      (let ((props (copy-sequence (text-properties-at (point))))
 	    (gap-start (point)))
+        ;; We don't want to use the faces on the indentation, because
+        ;; that's ugly, but we want all the other properties to be
+        ;; continuous so that links do not split up into many links
+        ;; (which makes navigation awkward).
+        (setq props (plist-put props 'face nil))
 	(insert "\n")
 	(shr-indent)
 	(add-text-properties gap-start (point) props))
