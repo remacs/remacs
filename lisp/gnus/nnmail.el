@@ -1250,10 +1250,10 @@ Return the number of characters in the body."
     (insert (format "Xref: %s" (system-name)))
     (while group-alist
       (insert (if (mm-multibyte-p)
-		  (string-as-multibyte
-		   (format " %s:%d" (caar group-alist) (cdar group-alist)))
-		(string-as-unibyte
-		 (format " %s:%d" (caar group-alist) (cdar group-alist)))))
+		  (format " %s:%d" (caar group-alist) (cdar group-alist))
+		(encode-coding-string
+		 (format " %s:%d" (caar group-alist) (cdar group-alist))
+		 'utf-8)))
       (setq group-alist (cdr group-alist)))
     (insert "\n")))
 
