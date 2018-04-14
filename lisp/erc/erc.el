@@ -3693,8 +3693,10 @@ be displayed."
    ((string-match "^\\s-*\\([&#+!]\\S-+\\)\\s-\\(.*\\)$" topic)
     (let ((ch (match-string 1 topic))
           (topic (match-string 2 topic)))
-      (erc-log (format "cmd: TOPIC [%s]: %s" ch topic))
-      (erc-server-send (format "TOPIC %s :%s" ch topic) nil ch))
+      ;; Ignore all-whitespace topics.
+      (unless (equal (string-trim topic) "")
+	(erc-log (format "cmd: TOPIC [%s]: %s" ch topic))
+	(erc-server-send (format "TOPIC %s :%s" ch topic) nil ch)))
     t)
    ;; /topic #channel
    ((string-match "^\\s-*\\([&#+!]\\S-+\\)" topic)
