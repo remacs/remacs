@@ -1241,7 +1241,7 @@ displays the buffer specified by @var{buffer-or-name} @emph{before}
 running @var{body}.
 @end defmac
 
-A window showing a temporary buffer can be fit to the size of that
+A window showing a temporary buffer can be fitted to the size of that
 buffer using the following mode:
 
 @defopt temp-buffer-resize-mode
@@ -1274,7 +1274,7 @@ positive integer.  At the time the function is called, the window to be
 resized is selected.
 @end defopt
 
-The following function uses the current buffer for temporal display:
+The following function uses the current buffer for temporary display:
 
 @defun momentary-string-display string position &optional char message
 This function momentarily displays @var{string} in the current buffer at

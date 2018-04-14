@@ -165,8 +165,8 @@ s/ *@LIBXPM@//
 /^lisp\.mk:/,/^$/c\
 lisp.mk: $(lispsource)/loadup.el\
 	@rm -f $@\
-	${AM_V_GEN}printf 'shortlisp = \\n' > $@\
-	${AM_V_GEN}sed -n 's/^[ \t]*(load "\([^"]*\)".*/\1/p' $< | sed -e "s/$/.elc \/" -e "s/\.el\.elc/.el/" >> $@\
+	${AM_V_GEN}printf 'shortlisp = \\\\\\n' > $@\
+	${AM_V_GEN}sed -n 's/^[ \t]*(load "\\([^"]*\\)".*/\\1/p' $< | sed -e "s/\$\$/.elc \\\\/" -e "s/\\.el\\.elc/.el/" >> $@\
 	${AM_V_GEN}djecho ""  >> $@
 
 #"

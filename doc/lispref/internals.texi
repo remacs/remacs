@@ -739,7 +739,7 @@ DEFUN ("foo", Ffoo, Sfoo, 0, UNEVALLED, 0
        "(list (read-char-by-name \"Insert character: \")\
               (prefix-numeric-value current-prefix-arg)\
               t))",
-  doc: /* @dots{} /*)
+  doc: /* @dots{} */)
 @end group
 @end example
 
@@ -776,7 +776,7 @@ this:
 @example
 @group
 DEFUN ("bar", Fbar, Sbar, 0, UNEVALLED, 0
-  doc: /* @dots{} /*
+  doc: /* @dots{} */
   attributes: @var{attr1} @var{attr2} @dots{})
 @end group
 @end example
