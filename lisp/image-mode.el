@@ -758,7 +758,7 @@ was inserted."
 	 (edges (and (null image-transform-resize)
 		     (window-inside-pixel-edges
 		      (get-buffer-window (current-buffer)))))
-	 (type (if (fboundp 'imagemagick-types)
+	 (type (if (image--imagemagick-wanted-p filename)
 		   'imagemagick
 		 (image-type file-or-data nil data-p)))
 	 (image (if (not edges)
@@ -802,6 +802,12 @@ was inserted."
     (image-transform-check-size)
     (if (called-interactively-p 'any)
 	(message "Repeat this command to go back to displaying the file as text"))))
+
+(defun image--imagemagick-wanted-p (filename)
+  (and (fboundp 'imagemagick-types)
+       (not (eq imagemagick-types-inhibit t))
+       (not (memq (intern (upcase (file-name-extension filename)) obarray)
+                  imagemagick-types-inhibit))))
 
 (defun image-toggle-hex-display ()
   "Toggle between image and hex display."
