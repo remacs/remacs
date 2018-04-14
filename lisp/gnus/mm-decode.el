@@ -25,7 +25,6 @@
 
 (require 'mail-parse)
 (require 'mm-bodies)
-(require 'shr)
 (eval-when-compile (require 'cl-lib))
 
 (autoload 'gnus-map-function "gnus-util")
@@ -1842,6 +1841,8 @@ text/html;\\s-*charset=\\([^\t\n\r \"'>]+\\)[^>]*>" nil t)
 	   (let ((inhibit-read-only t))
 	     (delete-region min max))))))))
 
+(defvar shr-image-map)
+(defvar shr-map)
 (autoload 'widget-convert-button "wid-edit")
 (defvar widget-keymap)
 
