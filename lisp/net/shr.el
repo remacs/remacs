@@ -734,18 +734,25 @@ size, and full-buffer size."
 	    (skip-chars-forward " ")
 	    (search-forward " " (line-end-position) 'move)))
       ;; Success; continue.
-      (let ((props (copy-sequence (text-properties-at (point))))
-	    (gap-start (point)))
-        (when (= (preceding-char) ?\s)
-	  (delete-char -1))
-        ;; We don't want to use the faces on the indentation, because
-        ;; that's ugly, but we want all the other properties to be
-        ;; continuous so that links do not split up into many links
-        ;; (which makes navigation awkward).
-        (setq props (plist-put props 'face nil))
+      (when (= (preceding-char) ?\s)
+	(delete-char -1))
+      (let ((gap-start (point)))
 	(insert "\n")
 	(shr-indent)
-	(add-text-properties gap-start (point) props))
+        (when (and (> (1- gap-start) (point-min))
+                   ;; The link on both sides of the newline are the
+                   ;; same...
+                   (equal (get-text-property (point) 'shr-url)
+                          (get-text-property (1- gap-start) 'shr-url)))
+          ;; ... so we join the two bits into one link logically, but
+          ;; not visually.  This makes navigation between links work
+          ;; well, but avoids underscores before the link on the next
+          ;; line when indented.
+          (let ((props (copy-sequence (text-properties-at (point)))))
+            ;; We don't want to use the faces on the indentation, because
+            ;; that's ugly.
+            (setq props (plist-put props 'face nil))
+	    (add-text-properties gap-start (point) props))))
       (setq start (point))
       (shr-vertical-motion shr-internal-width)
       (when (looking-at " $")
