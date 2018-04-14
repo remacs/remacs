@@ -734,10 +734,10 @@ size, and full-buffer size."
 	    (skip-chars-forward " ")
 	    (search-forward " " (line-end-position) 'move)))
       ;; Success; continue.
-      (when (= (preceding-char) ?\s)
-	(delete-char -1))
       (let ((props (copy-sequence (text-properties-at (point))))
 	    (gap-start (point)))
+        (when (= (preceding-char) ?\s)
+	  (delete-char -1))
         ;; We don't want to use the faces on the indentation, because
         ;; that's ugly, but we want all the other properties to be
         ;; continuous so that links do not split up into many links
