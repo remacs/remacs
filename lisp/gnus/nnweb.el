@@ -523,10 +523,6 @@ Valid types include `google', `dejanews', and `gmane'.")
 (defun nnweb-insert-html (parse)
   "Insert HTML based on a w3 parse tree."
   (if (stringp parse)
-      ;; We used to call nnheader-string-as-multibyte here, but it cannot
-      ;; be right, so I removed it.  If a bug shows up because of this change,
-      ;; please do not blindly revert the change, but help me find the real
-      ;; cause of the bug instead.  --Stef
       (insert parse)
     (insert "<" (symbol-name (car parse)) " ")
     (insert (mapconcat
