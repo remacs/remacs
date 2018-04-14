@@ -1249,7 +1249,7 @@ Return the number of characters in the body."
 		     (progn (forward-line 1) (point))))
     (insert (format "Xref: %s" (system-name)))
     (while group-alist
-      (insert (if (mm-multibyte-p)
+      (insert (if enable-multibyte-characters
 		  (format " %s:%d" (caar group-alist) (cdar group-alist))
 		(encode-coding-string
 		 (format " %s:%d" (caar group-alist) (cdar group-alist))

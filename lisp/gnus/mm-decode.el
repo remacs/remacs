@@ -760,7 +760,7 @@ MIME-Version header before proceeding."
 (defun mm-copy-to-buffer ()
   "Copy the contents of the current buffer to a fresh buffer."
   (let ((obuf (current-buffer))
-        (mb (mm-multibyte-p))
+        (mb enable-multibyte-characters)
         beg)
     (goto-char (point-min))
     (search-forward-regexp "^\n" nil t)

@@ -559,7 +559,7 @@ nil means ASCII, a single-element list represents an appropriate MIME
 charset, and a longer list means no appropriate charset."
   (let (charsets)
     ;; The return possibilities of this function are a mess...
-    (or (and (mm-multibyte-p)
+    (or (and enable-multibyte-characters
 	     mm-use-find-coding-systems-region
 	     ;; Find the mime-charset of the most preferred coding
 	     ;; system that has one.
@@ -628,7 +628,7 @@ charset, and a longer list means no appropriate charset."
 (defun mm-find-charset-region (b e)
   "Return a list of Emacs charsets in the region B to E."
   (cond
-   ((mm-multibyte-p)
+   (enable-multibyte-characters
     ;; Remove composition since the base charsets have been included.
     ;; Remove eight-bit-*, treat them as ascii.
     (let ((css (find-charset-region b e)))

@@ -1351,7 +1351,8 @@ If nil, Message won't auto-save."
   :link '(custom-manual "(message)Various Message Variables")
   :type '(choice directory (const :tag "Don't auto-save" nil)))
 
-(defcustom message-default-charset (and (not (mm-multibyte-p)) 'iso-8859-1)
+(defcustom message-default-charset (and (not enable-multibyte-characters)
+					'iso-8859-1)
   "Default charset used in non-MULE Emacsen.
 If nil, you might be asked to input the charset."
   :version "21.1"
@@ -4294,7 +4295,7 @@ conformance."
 				(point-max))))
 	       (setq char (char-after)))
 	(when (or (< char 128)
-		  (and (mm-multibyte-p)
+		  (and enable-multibyte-characters
 		       (memq (char-charset char)
 			     '(eight-bit-control eight-bit-graphic
 						 ;; Emacs 23, Bug#1770:
@@ -4326,7 +4327,7 @@ conformance."
 	(while (not (eobp))
 	  (when (let ((char (char-after)))
 		  (or (< char 128)
-		      (and (mm-multibyte-p)
+		      (and enable-multibyte-characters
 			   ;; FIXME: Wrong for Emacs 23 (unicode) and for
 			   ;; things like undecodable utf-8 (in Emacs 21?).
 			   ;; Should at least use find-coding-systems-region.
