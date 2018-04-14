@@ -1608,18 +1608,18 @@ symbol, it may have these values:
     (dolist (candidate (list buf-name (concat buf-name "/" server)))
       (if (and (not buffer-name)
                erc-reuse-buffers
-               (get-buffer candidate)
-               (or target
+               (or (not (get-buffer candidate))
+                   (or target
+                       (with-current-buffer (get-buffer candidate)
+                         (and (erc-server-buffer-p)
+                              (not (erc-server-process-alive)))))
                    (with-current-buffer (get-buffer candidate)
-                     (and (erc-server-buffer-p)
-                          (not (erc-server-process-alive)))))
-               (with-current-buffer (get-buffer candidate)
-                 (and (string= erc-session-server server)
-                      (erc-port-equal erc-session-port port))))
+                     (and (string= erc-session-server server)
+                          (erc-port-equal erc-session-port port)))))
           (setq buffer-name candidate)))
     ;; if buffer-name is unset, neither candidate worked out for us,
     ;; fallback to the old <N> uniquification method:
-    (or buffer-name (generate-new-buffer-name buf-name)) ))
+    (or buffer-name (generate-new-buffer-name (concat buf-name "/" server)))))
 
 (defun erc-get-buffer-create (server port target)
   "Create a new buffer based on the arguments."
