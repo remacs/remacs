@@ -571,8 +571,6 @@ if it has the file suffix @file{.z}, @file{.gz}, @file{.Z},
 hard-coded, and cannot be altered by customizing
 @code{jka-compr-compression-info-list}.)
 
-@end defopt
-
 @node info
 @section info
 @cindex Info
