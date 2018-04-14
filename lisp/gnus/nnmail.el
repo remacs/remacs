@@ -666,7 +666,7 @@ nn*-request-list should have been called before calling this function."
 	      (setq group (symbol-name group)))
 	    (if (and (numberp (setq max (read buffer)))
 		     (numberp (setq min (read buffer))))
-		(push (list (string-as-unibyte group) (cons min max))
+		(push (list group (cons min max))
 		      group-assoc)))
 	(error nil))
       (widen)
