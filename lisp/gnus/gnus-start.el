@@ -1992,7 +1992,7 @@ backend check whether the group actually exists."
   (let ((hashtb (setq gnus-active-hashtb (gnus-make-hashtable 4096))))
     (dolist (list (list gnus-killed-list gnus-zombie-list))
       (dolist (group list)
-	(gnus-sethash (string-as-unibyte group) nil hashtb)))))
+	(gnus-sethash group nil hashtb)))))
 
 (defun gnus-get-killed-groups ()
   "Go through the active hashtb and mark all unknown groups as killed."
