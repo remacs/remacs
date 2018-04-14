@@ -1587,11 +1587,14 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 
   absolute = complete_filename_p (str);
 
-  for (; CONSP (path); path = XCDR (path))
+  do
     {
       ptrdiff_t baselen, prefixlen;
 
-      filename = Fexpand_file_name (str, XCAR (path));
+      if (NILP (path))
+	filename = str;
+      else
+	filename = Fexpand_file_name (str, XCAR (path));
       if (!complete_filename_p (filename))
 	/* If there are non-absolute elts in PATH (eg ".").  */
 	/* Of course, this could conceivably lose if luser sets
@@ -1768,7 +1771,8 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 	}
       if (absolute)
 	break;
-    }
+      path = XCDR (path);
+    } while (CONSP (path));
 
   SAFE_FREE ();
   errno = last_errno;
