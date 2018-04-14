@@ -2450,10 +2450,6 @@ If FORCE is non-nil, the .newsrc file is read."
 	    (setq gnus-format-specs gnus-default-format-specs)))
 	(when gnus-newsrc-assoc
 	  (setq gnus-newsrc-alist gnus-newsrc-assoc))))
-    (dolist (elem gnus-newsrc-alist)
-      ;; Protect against broken .newsrc.el files.
-      (when (car elem)
-	(setcar elem (string-as-unibyte (car elem)))))
     (gnus-make-hashtable-from-newsrc-alist)
     (when (file-newer-than-file-p file ding-file)
       ;; Old format quick file
