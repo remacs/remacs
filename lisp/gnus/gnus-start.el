@@ -1989,15 +1989,10 @@ backend check whether the group actually exists."
 
 ;; Enter all dead groups into the hashtb.
 (defun gnus-update-active-hashtb-from-killed ()
-  (let ((hashtb (setq gnus-active-hashtb (gnus-make-hashtable 4096)))
-	(lists (list gnus-killed-list gnus-zombie-list))
-	killed)
-    (while lists
-      (setq killed (car lists))
-      (while killed
-	(gnus-sethash (string-as-unibyte (car killed)) nil hashtb)
-	(setq killed (cdr killed)))
-      (setq lists (cdr lists)))))
+  (let ((hashtb (setq gnus-active-hashtb (gnus-make-hashtable 4096))))
+    (dolist (list (list gnus-killed-list gnus-zombie-list))
+      (dolist (group list)
+	(gnus-sethash (string-as-unibyte group) nil hashtb)))))
 
 (defun gnus-get-killed-groups ()
   "Go through the active hashtb and mark all unknown groups as killed."
