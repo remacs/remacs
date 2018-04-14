@@ -4724,7 +4724,10 @@ The optional argument @var{base-url}, if non-@code{nil}, should be a
 string specifying the base URL for relative URLs occurring in links.
 
 If the optional argument @var{discard-comments} is non-@code{nil},
-then the parse tree is created without any comments.
+any top-level comment is discarded.  (This argument is obsolete and
+will be removed in future Emacs versions.  To remove comments, use the
+@code{xml-remove-comments} utility function on the data before you
+call the parsing function.)
 
 In the parse tree, each HTML node is represented by a list in which
 the first element is a symbol representing the node name, the second

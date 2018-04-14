@@ -1073,6 +1073,19 @@ The first line is indented with INDENT-STRING."
 	(insert ?\n indent-string))
       (insert ?< ?/ (symbol-name (xml-node-name xml)) ?>))))
 
+;;;###autoload
+(defun xml-remove-comments (beg end)
+  "Remove XML/HTML comments in the region between BEG and END.
+All text between the <!-- ... --> markers will be removed."
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char beg)
+      (while (search-forward "<!--" nil t)
+        (let ((start (match-beginning 0)))
+          (when (search-forward "-->" nil t)
+            (delete-region start (point))))))))
+
 (provide 'xml)
 
 ;;; xml.el ends here

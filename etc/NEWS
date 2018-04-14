@@ -116,6 +116,14 @@ indirectly, e.g., by checking that functions like
 'libxml-parse-html-region' return nil.
 
 +++
+** `libxml-parse-xml-region' and `libxml-parse-html' region take
+a parameter that's called DISCARD-COMMENTS, but it really only
+discards the top-level comment.  Therefore this parameter is now
+obsolete, and the new utility function `xml-remove-comments' can be
+used to remove comments before calling the libxml functions to parse
+the data.
+
++++
 ** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.
 It blocks line breaking after a one-letter word, also in the case when
 this word is preceded by a non-space, but non-alphanumeric character.
