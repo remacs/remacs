@@ -342,9 +342,7 @@ retried once before actually displaying the error report."
   `(let ((string (buffer-substring ,start ,end)))
      (with-current-buffer ,buffer
        (erase-buffer)
-       (insert (if enable-multibyte-characters
-		   (string-to-multibyte string)
-		 string))
+       (insert string)
        (goto-char (point-min))
        nil)))
 

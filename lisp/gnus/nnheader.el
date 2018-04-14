@@ -1071,14 +1071,11 @@ See `find-file-noselect' for the arguments."
 
 (defmacro nnheader-insert-buffer-substring (buffer &optional start end)
   "Copy string from unibyte buffer to multibyte current buffer."
-  `(if enable-multibyte-characters
-       (insert (with-current-buffer ,buffer
-		 (string-to-multibyte
-		  ,(if (or start end)
-		       `(buffer-substring (or ,start (point-min))
-					  (or ,end (point-max)))
-		     '(buffer-string)))))
-     (insert-buffer-substring ,buffer ,start ,end)))
+  `(insert (with-current-buffer ,buffer
+	     ,(if (or start end)
+		  `(buffer-substring (or ,start (point-min))
+				     (or ,end (point-max)))
+		'(buffer-string)))))
 
 (defvar nnheader-last-message-time '(0 0))
 (defun nnheader-message-maybe (&rest args)
