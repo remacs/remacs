@@ -121,11 +121,15 @@ longer than `erc-fill-column'."
   :group 'erc-button
   :type 'string)
 
-(defcustom erc-button-google-url "http://www.google.com/search?q=%s"
+(defcustom erc-button-search-url "http://duckduckgo.com/?q=%s"
   "URL used to browse Google search references.
 %s is replaced by the search string."
+  :version "27.1"
   :group 'erc-button
   :type 'string)
+
+(define-obsolete-variable-alias 'erc-button-google-url
+  'erc-button-search-url "27.1")
 
 (defcustom erc-button-alist
   ;; Since the callback is only executed when the user is clicking on
@@ -148,7 +152,7 @@ longer than `erc-fill-column'."
     ("Lisp:\\([a-zA-Z.+-]+\\)" 0 t erc-browse-emacswiki-lisp 1)
     ("\\bGoogle:\\([^ \t\n\r\f]+\\)"
      0 t (lambda (keywords)
-           (browse-url (format erc-button-google-url keywords)))
+           (browse-url (format erc-button-search-url keywords)))
      1)
     ("\\brfc[#: ]?\\([0-9]+\\)"
      0 t (lambda (num)

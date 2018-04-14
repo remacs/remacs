@@ -210,6 +210,12 @@ concept index in the Gnus manual for the `match-list' entry.
 +++
 *** nil is no longer an allowed value for `mm-text-html-renderer'.
 
+** erc
+
+---
+*** `erc-button-google-url' has been renamed `erc-button-search-url'
+and its value has been changed to Duck Duck Go.
+
 ** eww/shr
 
 *** When opening external links in eww/shr (typically with the
