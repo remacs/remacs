@@ -122,7 +122,7 @@ longer than `erc-fill-column'."
   :type 'string)
 
 (defcustom erc-button-search-url "http://duckduckgo.com/?q=%s"
-  "URL used to browse Google search references.
+  "URL used to search for a term.
 %s is replaced by the search string."
   :version "27.1"
   :group 'erc-button
