@@ -122,7 +122,7 @@ custom function which returns the directory part and set
 		 (function :tag "Other function")))
 
 (defcustom erc-truncate-buffer-on-save nil
-  "Truncate any ERC (channel, query, server) buffer when it is saved."
+  "Erase the contents of any ERC (channel, query, server) buffer when it is saved."
   :group 'erc-log
   :type 'boolean)
 
