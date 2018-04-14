@@ -7037,9 +7037,8 @@ If given a prefix, show the hidden text instead."
             ;; equivalent of string-make-multibyte which amount to decoding
             ;; with locale-coding-system, causing failure of
             ;; subsequent decoding.
-            (insert (string-to-multibyte
-                     (with-current-buffer gnus-original-article-buffer
-                       (buffer-substring (point-min) (point-max)))))
+            (insert (with-current-buffer gnus-original-article-buffer
+                      (buffer-substring (point-min) (point-max))))
 	    'article)
 	   ;; Check the backlog.
 	   ((and gnus-keep-backlog
