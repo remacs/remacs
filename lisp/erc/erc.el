@@ -75,6 +75,7 @@
 (require 'thingatpt)
 (require 'auth-source)
 (require 'erc-compat)
+(require 'subr-x)
 
 (defvar erc-official-location
   "https://www.emacswiki.org/emacs/ERC (mailing list: erc-discuss@gnu.org)"
