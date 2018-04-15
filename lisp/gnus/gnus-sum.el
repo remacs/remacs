@@ -2629,7 +2629,7 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 	["Resend message edit" gnus-summary-resend-message-edit t]
 	["Send bounced mail" gnus-summary-resend-bounced-mail t]
 	["Send a mail" gnus-summary-mail-other-window t]
-	["Attach article to a message" gnus-summary-attach-article t]
+	["Attach article to outgoing message" gnus-summary-attach-article t]
 	["Create a local message" gnus-summary-news-other-window t]
 	["Uuencode and post" gnus-uu-post-news
 	 :help "Post a uuencoded article"]
