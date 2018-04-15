@@ -719,44 +719,47 @@ size, and full-buffer size."
 			   `,(shr-face-background face))))
     (setq start (point))
     (setq shr-indentation (or continuation shr-indentation))
-    (shr-vertical-motion shr-internal-width)
-    (when (looking-at " $")
-      (delete-region (point) (line-end-position)))
-    (while (not (eolp))
-      ;; We have to do some folding.  First find the first
-      ;; previous point suitable for folding.
-      (if (or (not (shr-find-fill-point (line-beginning-position)))
-	      (= (point) start))
-	  ;; We had unbreakable text (for this width), so just go to
-	  ;; the first space and carry on.
-	  (progn
-	    (beginning-of-line)
-	    (skip-chars-forward " ")
-	    (search-forward " " (line-end-position) 'move)))
-      ;; Success; continue.
-      (when (= (preceding-char) ?\s)
-	(delete-char -1))
-      (let ((gap-start (point)))
-	(insert "\n")
-	(shr-indent)
-        (when (and (> (1- gap-start) (point-min))
-                   ;; The link on both sides of the newline are the
-                   ;; same...
-                   (equal (get-text-property (point) 'shr-url)
-                          (get-text-property (1- gap-start) 'shr-url)))
-          ;; ... so we join the two bits into one link logically, but
-          ;; not visually.  This makes navigation between links work
-          ;; well, but avoids underscores before the link on the next
-          ;; line when indented.
-          (let ((props (copy-sequence (text-properties-at (point)))))
-            ;; We don't want to use the faces on the indentation, because
-            ;; that's ugly.
-            (setq props (plist-put props 'face nil))
-	    (add-text-properties gap-start (point) props))))
-      (setq start (point))
+    ;; If we have an indentation that's wider than the width we're
+    ;; trying to fill to, then just give up and don't do any filling.
+    (when (< shr-indentation shr-internal-width)
       (shr-vertical-motion shr-internal-width)
       (when (looking-at " $")
-	(delete-region (point) (line-end-position))))))
+        (delete-region (point) (line-end-position)))
+      (while (not (eolp))
+        ;; We have to do some folding.  First find the first
+        ;; previous point suitable for folding.
+        (if (or (not (shr-find-fill-point (line-beginning-position)))
+	        (= (point) start))
+	    ;; We had unbreakable text (for this width), so just go to
+	    ;; the first space and carry on.
+	    (progn
+	      (beginning-of-line)
+	      (skip-chars-forward " ")
+	      (search-forward " " (line-end-position) 'move)))
+        ;; Success; continue.
+        (when (= (preceding-char) ?\s)
+	  (delete-char -1))
+        (let ((gap-start (point)))
+	  (insert "\n")
+	  (shr-indent)
+          (when (and (> (1- gap-start) (point-min))
+                     ;; The link on both sides of the newline are the
+                     ;; same...
+                     (equal (get-text-property (point) 'shr-url)
+                            (get-text-property (1- gap-start) 'shr-url)))
+            ;; ... so we join the two bits into one link logically, but
+            ;; not visually.  This makes navigation between links work
+            ;; well, but avoids underscores before the link on the next
+            ;; line when indented.
+            (let ((props (copy-sequence (text-properties-at (point)))))
+              ;; We don't want to use the faces on the indentation, because
+              ;; that's ugly.
+              (setq props (plist-put props 'face nil))
+	      (add-text-properties gap-start (point) props))))
+        (setq start (point))
+        (shr-vertical-motion shr-internal-width)
+        (when (looking-at " $")
+	  (delete-region (point) (line-end-position)))))))
 
 (defun shr-find-fill-point (start)
   (let ((bp (point))
