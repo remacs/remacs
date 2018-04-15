@@ -1587,6 +1587,8 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 
   absolute = complete_filename_p (str);
 
+  /* Go through all entries in the path and see whether we find the
+     executable. */
   do {
     ptrdiff_t baselen, prefixlen;
 
