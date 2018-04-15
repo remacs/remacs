@@ -4371,6 +4371,9 @@ The hook `gnus-exit-gnus-hook' is called before actually exiting."
 	  gnus-expert-user
 	  (gnus-y-or-n-p "Are you sure you want to quit reading news? "))
     (gnus-run-hooks 'gnus-exit-gnus-hook)
+    ;; Check whether we have any unsaved Message buffers and offer to
+    ;; save them.
+    (gnus--abort-on-unsaved-message-buffers)
     ;; Offer to save data from non-quitted summary buffers.
     (gnus-offer-save-summaries)
     ;; Save the newsrc file(s).
@@ -4381,6 +4384,18 @@ The hook `gnus-exit-gnus-hook' is called before actually exiting."
     (gnus-clear-system)
     ;; Allow the user to do things after cleaning up.
     (gnus-run-hooks 'gnus-after-exiting-gnus-hook)))
+
+(defun gnus--abort-on-unsaved-message-buffers ()
+  (dolist (buffer (gnus-buffers))
+    (when (gnus-buffer-exists-p buffer)
+      (with-current-buffer buffer
+	(when (and (derived-mode-p 'message-mode)
+		   (buffer-modified-p)
+		   (not (y-or-n-p
+			 (format "Message buffer %s unsaved, continue exit? "
+				 (buffer-name)))))
+	  (error "Gnus exit aborted due to unsaved %s buffer"
+		 (buffer-name)))))))
 
 (defun gnus-group-quit ()
   "Quit reading news without updating .newsrc.eld or .newsrc.
