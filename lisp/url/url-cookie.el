@@ -404,6 +404,11 @@ Use \\<url-cookie-mode-map>\\[url-cookie-delete] to remove cookies."
     (error "No cookies are defined"))
 
   (pop-to-buffer "*url cookies*")
+  (url-cookie-mode)
+  (url-cookie--generate-buffer)
+  (goto-char (point-min)))
+
+(defun url-cookie--generate-buffer ()
   (let ((inhibit-read-only t)
 	(domains (sort
 		  (copy-sequence
@@ -414,7 +419,6 @@ Use \\<url-cookie-mode-map>\\[url-cookie-delete] to remove cookies."
 	(domain-length 0)
 	start name format domain)
     (erase-buffer)
-    (url-cookie-mode)
     (dolist (elem domains)
       (setq domain-length (max domain-length (length (car elem)))))
     (setq format (format "%%-%ds %%-20s %%s" domain-length)
@@ -426,16 +430,15 @@ Use \\<url-cookie-mode-map>\\[url-cookie-delete] to remove cookies."
 			    (lambda (c1 c2)
 			      (string< (url-cookie-name c1)
 				       (url-cookie-name c2)))))
-	(setq start (point)
+        (setq start (point)
 	      name (url-cookie-name cookie))
-	(when (> (length name) 20)
+        (when (> (length name) 20)
 	  (setq name (substring name 0 20)))
-	(insert (format format domain name
-			(url-cookie-value cookie))
-		"\n")
-	(setq domain "")
-	(put-text-property start (1+ start) 'url-cookie cookie)))
-    (goto-char (point-min))))
+        (insert (format format domain name
+		        (url-cookie-value cookie))
+	        "\n")
+        (setq domain "")
+        (put-text-property start (1+ start) 'url-cookie cookie)))))
 
 (defun url-cookie-delete ()
   "Delete the cookie on the current line."
@@ -459,7 +462,11 @@ Use \\<url-cookie-mode-map>\\[url-cookie-delete] to remove cookies."
     (delete-region (line-beginning-position)
 		   (progn
 		     (forward-line 1)
-		     (point)))))
+		     (point)))
+    (let ((point (point)))
+      (erase-buffer)
+      (url-cookie--generate-buffer)
+      (goto-char point))))
 
 (defvar url-cookie-mode-map
   (let ((map (make-sparse-keymap)))
