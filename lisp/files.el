@@ -2019,6 +2019,8 @@ think it does, because \"free\" is pretty hard to define in practice."
 OP-TYPE specifies the file operation being performed (for message to user)."
   (when (and large-file-warning-threshold size
 	     (> size large-file-warning-threshold)
+             ;; No point in warning if we can't read it.
+             (file-readable-p filename)
 	     (not (y-or-n-p (format "File %s is large (%s), really %s? "
 				    (file-name-nondirectory filename)
 				    (file-size-human-readable size) op-type))))
