@@ -712,7 +712,13 @@ one recipients, all but the first is ignored.
 ADDRESS may be a string or a buffer.  If it is a buffer, the visible
 \(narrowed) portion of the buffer will be interpreted as the address.
 \(This feature exists so that the clever caller might be able to avoid
-consing a string.)"
+consing a string.)
+
+This function is primarily meant for when you're displaying the
+result to the user: Many prettifications are applied to the
+result returned.  If you want to decode an address for further
+non-display use, you should probably use
+`mail-header-parse-address' instead."
   (let ((canonicalization-buffer (get-buffer-create " *canonical address*"))
 	(extraction-buffer (get-buffer-create " *extract address components*"))
 	value-list)
