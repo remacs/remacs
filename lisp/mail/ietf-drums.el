@@ -185,7 +185,7 @@ STRING is assumed to be a string that is extracted from
 the Content-Transfer-Encoding header of a mail."
   (ietf-drums-remove-garbage (inline (ietf-drums-strip string))))
 
-(defun ietf-drums-parse-address (string)
+(defun ietf-drums-parse-address (string &optional decode)
   "Parse STRING and return a MAILBOX / DISPLAY-NAME pair."
   (with-temp-buffer
     (let (display-name mailbox c display-string)
@@ -236,7 +236,9 @@ the Content-Transfer-Encoding header of a mail."
 	    (cons
 	     (mapconcat 'identity (nreverse display-name) "")
 	     (ietf-drums-get-comment string)))
-	(cons mailbox display-string)))))
+	(cons mailbox (if decode
+                          (rfc2047-decode-string display-string)
+                        display-string))))))
 
 (defun ietf-drums-parse-addresses (string &optional rawp)
   "Parse STRING and return a list of MAILBOX / DISPLAY-NAME pairs.
