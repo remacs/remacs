@@ -5854,7 +5854,7 @@ process/prefix convention (@pxref{Process/Prefix}).
 @kindex S A @r{(Summary)}
 @findex gnus-summary-attach-article
 Attach the current article into an already existing Message
-composition buffer (@code{gnus-summary-yank-message}).  If no such
+composition buffer (@code{gnus-summary-attach-message}).  If no such
 buffer exists, a new one is created.  This command prompts for what
 message buffer you want to yank into, and understands the
 process/prefix convention (@pxref{Process/Prefix}).
