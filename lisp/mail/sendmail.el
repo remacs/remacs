@@ -505,9 +505,13 @@ This also saves the value of `send-mail-function' via Customize."
   ;; If send-mail-function is already setup, we're incorrectly called
   ;; a second time, probably because someone's using an old value
   ;; of send-mail-function.
-  (when (eq send-mail-function 'sendmail-query-once)
-    (sendmail-query-user-about-smtp))
-  (funcall send-mail-function))
+  (if (not (eq send-mail-function 'sendmail-query-once))
+      (funcall send-mail-function)
+    (let ((function (sendmail-query-user-about-smtp)))
+      (funcall function)
+      (when (y-or-n-p "Save this mail sending choice?")
+        (setq send-mail-function function)
+        (customize-save-variable 'send-mail-function function)))))
 
 (defun sendmail-query-user-about-smtp ()
   (let* ((options `(("mail client" . mailclient-send-it)
@@ -552,8 +556,8 @@ This also saves the value of `send-mail-function' via Customize."
               (completing-read
                (format "Send mail via (default %s): " (caar options))
                options nil 'require-match nil nil (car options))))))
-    (customize-save-variable 'send-mail-function
-			     (cdr (assoc-string choice options t)))))
+    ;; Return the choice.
+    (cdr (assoc-string choice options t))))
 
 (defun sendmail-sync-aliases ()
   (when mail-personal-alias-file
