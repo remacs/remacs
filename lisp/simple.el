@@ -7895,6 +7895,8 @@ To disable this warning, set `compose-mail-user-agent-warnings' to nil."
 					       warn-vars " "))))))
 
   (let ((function (get mail-user-agent 'composefunc)))
+    (unless function
+      (error "Invalid value for `mail-user-agent'"))
     (funcall function to subject other-headers continue switch-function
 	     yank-action send-actions return-action)))
 
