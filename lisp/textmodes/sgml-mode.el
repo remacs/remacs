@@ -618,7 +618,7 @@ Behaves electrically if `sgml-quick-keys' is non-nil."
     (delete-char -1)
     (sgml-close-tag))
    (t
-    (sgml-slash-matching arg))))
+    (insert-char ?/ arg))))
 
 (defun sgml-slash-matching (arg)
   "Insert `/' and display any previous matching `/'.
