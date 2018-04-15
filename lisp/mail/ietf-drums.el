@@ -185,8 +185,12 @@ STRING is assumed to be a string that is extracted from
 the Content-Transfer-Encoding header of a mail."
   (ietf-drums-remove-garbage (inline (ietf-drums-strip string))))
 
+(declare-function rfc2047-decode-string "rfc2047" (string &optional address-mime))
+
 (defun ietf-drums-parse-address (string &optional decode)
-  "Parse STRING and return a MAILBOX / DISPLAY-NAME pair."
+  "Parse STRING and return a MAILBOX / DISPLAY-NAME pair.
+If DECODE, the DISPLAY-NAME will have RFC2047 decoding performed
+(that's the \"=?utf...q...=?\") stuff."
   (with-temp-buffer
     (let (display-name mailbox c display-string)
       (ietf-drums-init string)
