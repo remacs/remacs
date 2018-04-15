@@ -139,7 +139,8 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
     (set var new)))
 
 (defun url-cookie-write-file (&optional fname)
-  (when url-cookies-changed-since-last-save
+  (when (and url-cookies-changed-since-last-save
+             url-cookie-file)
     (or fname (setq fname (expand-file-name url-cookie-file)))
     (if (condition-case nil
             (progn
