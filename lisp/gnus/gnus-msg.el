@@ -393,6 +393,7 @@ Thank you for your help in stamping out bugs.
   "N" gnus-summary-followup-to-mail-with-original
   "m" gnus-summary-mail-other-window
   "u" gnus-uu-post-news
+  "A" gnus-summary-attach-article
   "\M-c" gnus-summary-mail-crosspost-complaint
   "Br" gnus-summary-reply-broken-reply-to
   "BR" gnus-summary-reply-broken-reply-to-with-original
@@ -1999,6 +2000,36 @@ this is a reply."
 			 (message-goto-eoh)
 			 (insert "From: " (message-make-from) "\n"))))
 		  nil 'local)))))
+
+(defun gnus-summary-attach-article (n)
+  "Attach the current article(s) to an outgoing Message buffer.
+If any current in-progress Message buffers exist, the articles
+can be attached to them.  If not, a new Message buffer is
+created.
+
+This command uses the process/prefix convention, so if you
+process-mark several articles, they will all be attached."
+  (interactive "P")
+  (let ((buffers (message-buffers))
+	destination)
+    ;; Set up the destination mail composition buffer.
+    (if (and buffers
+	     (y-or-n-p "Attach files to existing mail composition buffer? "))
+	(setq destination
+	      (if (= (length buffers) 1)
+		  (get-buffer (car buffers))
+		(gnus-completing-read "Attach to buffer"
+                                      buffers t nil nil (car buffers))))
+      (gnus-summary-mail-other-window)
+      (setq destination (current-buffer)))
+    (gnus-summary-iterate n
+      (gnus-summary-select-article)
+      (set-buffer destination)
+      ;; Attach at the end of the buffer.
+      (save-excursion
+	(goto-char (point-max))
+	(message-forward-make-body-mime gnus-original-article-buffer)))
+    (gnus-configure-windows 'message t)))
 
 (provide 'gnus-msg)
 
