@@ -114,7 +114,7 @@ Display the references in `semantic-symref-results-mode'."
     (define-key km "+" 'semantic-symref-list-toggle-showing)
     (define-key km "n" 'semantic-symref-list-next-line)
     (define-key km "p" 'semantic-symref-list-prev-line)
-    (define-key km "q" 'quit-buffer)
+    (define-key km "q" 'quit-window)
     (define-key km "\C-c\C-e" 'semantic-symref-list-expand-all)
     (define-key km "\C-c\C-r" 'semantic-symref-list-contract-all)
     (define-key km "R" 'semantic-symref-list-rename-open-hits)
