@@ -1,6 +1,6 @@
 # remacs-sys
 
-`remacs-sys` is a Rust library containing all the [Foreign Function Interface (FFI)](https://doc.rust-lang.org/book/first-edition/ffi.html) declarations of structs and functions that are defined in C. Then, they can be used in the Rust code. C implementations are in `remacs/src`.
+`remacs-sys` is a Rust module containing all the [Foreign Function Interface (FFI)](https://doc.rust-lang.org/book/first-edition/ffi.html) declarations of structs and functions that are defined in C. Then, they can be used in the Rust code. C implementations are in `remacs/src`.
 
 ## Example: Use `make_float` C function in Rust
 
@@ -26,7 +26,7 @@ make_float (double float_value)
 
 ### On the Rust side
 
-In order to use `make_float` in the Rust code, the "foreign function" needs to be declared in Rust by adding the signature in `remacs/rust_src/remacs-sys/lib.rs`:
+In order to use `make_float` in the Rust code, the "foreign function" needs to be declared in Rust by adding the signature in `remacs/rust_src/src/remacs_sys.rs`:
 
 ```rust
 extern "C" {
@@ -48,10 +48,10 @@ use libc::{c_double, /* ... */ };
 // ...
 ```
 
-Second, `Lisp_Object` is an alias to `EmacsInt`:
+Second, `Lisp_Object` is a struct containing an EmacsInt:
 
 ```rust
-pub type Lisp_Object = EmacsInt;
+pub struct Lisp_Object(EmacsInt);
 ```
 
 The later is a type generated at build time (cf. [build.rs](http://doc.crates.io/build-script.html)) to mimic how they are in C:
@@ -85,7 +85,7 @@ struct Lisp_Hash_Table
 
 ### On the Rust side
 
-Similar to `make_float`, the Rust implementation of the struct should be in `remacs/rust_src/remacs-sys/lib.rs`:
+Similar to `make_float`, the Rust implementation of the struct should be in `remacs/rust_src/src/remacs_sys.rs`:
 
 ```rust
 #[repr(C)]

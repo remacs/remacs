@@ -373,7 +373,6 @@ dependencies = [
  "regex 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "remacs-lib 0.1.0",
  "remacs-macros 0.1.0",
- "remacs-sys 0.1.0",
  "sha1 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -402,13 +401,6 @@ dependencies = [
  "regex 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "remacs-util 0.1.0",
  "syn 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "remacs-sys"
-version = "0.1.0"
-dependencies = [
- "libc 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

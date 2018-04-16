@@ -2,14 +2,17 @@
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 #![cfg_attr(feature = "clippy", allow(not_unsafe_ptr_arg_deref, wrong_self_convention))]
 #![feature(const_fn)]
+#![feature(const_size_of)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(private_no_mangle_fns)]
+#![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 #![feature(proc_macro)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 #![feature(global_allocator)]
 #![feature(concat_idents)]
 #![feature(stmt_expr_attributes)]
+#![feature(repr_transparent)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -28,7 +31,6 @@ extern crate alloc_unexecmacosx;
 // Needed for linking.
 extern crate remacs_lib;
 extern crate remacs_macros;
-extern crate remacs_sys;
 
 #[cfg(test)]
 extern crate mock_derive;
@@ -66,6 +68,7 @@ mod indent;
 mod interactive;
 mod keyboard;
 mod keymap;
+mod libm;
 mod lists;
 mod marker;
 mod math;
@@ -75,6 +78,7 @@ mod numbers;
 mod obarray;
 mod objects;
 mod process;
+mod remacs_sys;
 mod strings;
 mod symbols;
 mod textprop;
