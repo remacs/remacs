@@ -2565,51 +2565,53 @@ If PROMPT (the prefix) is a number, use the prompt specified in
 If FAR, it is likely that the group is not on the current line.
 If TEST-MARKED, the line must be marked."
   (when group
-    (beginning-of-line)
-    (cond
-     ;; It's quite likely that we are on the right line, so
-     ;; we check the current line first.
-     ((and (not far)
-	   (eq (get-text-property (point) 'gnus-group)
-	       (gnus-intern-safe group gnus-active-hashtb))
-	   (or (not test-marked) (gnus-group-mark-line-p)))
-      (point))
-     ;; Previous and next line are also likely, so we check them as well.
-     ((and (not far)
-	   (save-excursion
-	     (forward-line -1)
-	     (and (eq (get-text-property (point) 'gnus-group)
-		      (gnus-intern-safe group gnus-active-hashtb))
-		  (or (not test-marked) (gnus-group-mark-line-p)))))
-      (forward-line -1)
-      (point))
-     ((and (not far)
-	   (save-excursion
-	     (forward-line 1)
-	     (and (eq (get-text-property (point) 'gnus-group)
-		      (gnus-intern-safe group gnus-active-hashtb))
-		  (or (not test-marked) (gnus-group-mark-line-p)))))
-      (forward-line 1)
-      (point))
-     (test-marked
-      (goto-char (point-min))
-      (let (found)
-	(while (and (not found)
-		    (gnus-goto-char
-		     (text-property-any
-		      (point) (point-max)
-		      'gnus-group
-		      (gnus-intern-safe group gnus-active-hashtb))))
-	  (if (gnus-group-mark-line-p)
-	      (setq found t)
-	    (forward-line 1)))
-	found))
-     (t
-      ;; Search through the entire buffer.
-      (gnus-goto-char
-       (text-property-any
-	(point-min) (point-max)
-	'gnus-group (gnus-intern-safe group gnus-active-hashtb)))))))
+    (let ((start (point)))
+      (beginning-of-line)
+      (cond
+       ;; It's quite likely that we are on the right line, so
+       ;; we check the current line first.
+       ((and (not far)
+	     (eq (get-text-property (point) 'gnus-group)
+		 (gnus-intern-safe group gnus-active-hashtb))
+	     (or (not test-marked) (gnus-group-mark-line-p)))
+	(point))
+       ;; Previous and next line are also likely, so we check them as well.
+       ((and (not far)
+	     (save-excursion
+	       (forward-line -1)
+	       (and (eq (get-text-property (point) 'gnus-group)
+			(gnus-intern-safe group gnus-active-hashtb))
+		    (or (not test-marked) (gnus-group-mark-line-p)))))
+	(forward-line -1)
+	(point))
+       ((and (not far)
+	     (save-excursion
+	       (forward-line 1)
+	       (and (eq (get-text-property (point) 'gnus-group)
+			(gnus-intern-safe group gnus-active-hashtb))
+		    (or (not test-marked) (gnus-group-mark-line-p)))))
+	(forward-line 1)
+	(point))
+       (test-marked
+	(goto-char (point-min))
+	(let (found)
+	  (while (and (not found)
+		      (gnus-goto-char
+		       (text-property-any
+			(point) (point-max)
+			'gnus-group
+			(gnus-intern-safe group gnus-active-hashtb))))
+	    (if (gnus-group-mark-line-p)
+		(setq found t)
+	      (forward-line 1)))
+	  found))
+       (t
+	;; Search through the entire buffer.
+	(unless (gnus-goto-char
+		 (text-property-any
+		  (point-min) (point-max)
+		  'gnus-group (gnus-intern-safe group gnus-active-hashtb)))
+	  (goto-char start)))))))
 
 (defun gnus-group-next-group (n &optional silent)
   "Go to next N'th newsgroup.
