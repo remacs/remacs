@@ -737,6 +737,8 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
   sym = XCAR (args);
   tail = XCDR (args);
 
+  CHECK_SYMBOL (sym);
+
   if (!NILP (tail))
     {
       if (!NILP (XCDR (tail)) && !NILP (XCDR (XCDR (tail))))

@@ -113,4 +113,8 @@ crash/abort/malloc assert failure on the next test."
         (signal-hook-function #'ignore))
     (should-error (eval-tests--exceed-specbind-limit))))
 
+(ert-deftest defvar/bug31072 ()
+  "Check that Bug#31072 is fixed."
+  (should-error (eval '(defvar 1) t) :type 'wrong-type-argument))
+
 ;;; eval-tests.el ends here
