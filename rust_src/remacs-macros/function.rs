@@ -120,7 +120,6 @@ fn parse_arg_type(fn_arg: &syn::Type) -> ArgType {
             syn::Type::Reference(syn::TypeReference {
                 elem: ref ty,
                 ref lifetime,
-                ref mutability,
                 ..
             }) => if lifetime.is_some() {
                 ArgType::Other
