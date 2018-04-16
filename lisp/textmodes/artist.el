@@ -1401,7 +1401,9 @@ Keymap summary
 	 (artist-mode-exit))
 	(t
 	 ;; Turn mode on
-	 (artist-mode-init))))
+	 (artist-mode-init)
+         (unless (font-get (face-attribute 'default :font) :spacing)
+           (message "The default font isn't monospaced, so the drawings in this buffer may look odd")))))
 
 ;; Init and exit
 (defun artist-mode-init ()
