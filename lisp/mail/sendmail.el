@@ -784,8 +784,10 @@ Concretely: replace the first blank line in the header with the separator."
 (defun mail-sendmail-undelimit-header ()
   "Remove header separator to put the message in correct form for sendmail.
 Leave point at the start of the delimiter line."
-  (rfc822-goto-eoh)
-  (delete-region (point) (progn (end-of-line) (point))))
+  (goto-char (point-min))
+  (when (re-search-forward (concat "^" (regexp-quote mail-header-separator) "\n"))
+    (replace-match "\n"))
+  (rfc822-goto-eoh))
 
 (defun mail-mode-auto-fill ()
   "Carry out Auto Fill for Mail mode.
