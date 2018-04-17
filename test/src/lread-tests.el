@@ -194,4 +194,9 @@ literals (Bug#20852)."
     (lread--substitute-object-in-subtree x 1 t)
     (should (eq x (cdr x)))))
 
+(ert-deftest lread-long-hex-integer ()
+  (should-error
+   (read "#xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+   :type 'overflow-error))
+
 ;;; lread-tests.el ends here

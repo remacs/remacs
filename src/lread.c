@@ -2644,14 +2644,13 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
      Also, room for invalid syntax diagnostic.  */
   char buf[max (1 + 1 + UINTMAX_WIDTH + 1,
 		sizeof "integer, radix " + INT_STRLEN_BOUND (EMACS_INT))];
-
+  char *p = buf;
   int valid = -1; /* 1 if valid, 0 if not, -1 if incomplete.  */
 
   if (radix < 2 || radix > 36)
     valid = 0;
   else
     {
-      char *p = buf;
       int c, digit;
 
       c = READCHAR;
@@ -2679,17 +2678,12 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
 	    valid = 0;
 	  if (valid < 0)
 	    valid = 1;
-
-	  if (p < buf + sizeof buf - 1)
-	    *p++ = c;
-	  else
-	    valid = 0;
-
+	  *p = c;
+	  p += p < buf + sizeof buf;
 	  c = READCHAR;
 	}
 
       UNREAD (c);
-      *p = '\0';
     }
 
   if (valid != 1)
@@ -2698,6 +2692,13 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
       invalid_syntax (buf);
     }
 
+  if (p == buf + sizeof buf)
+    {
+      memset (p - 3, '.', 3);
+      xsignal1 (Qoverflow_error, make_unibyte_string (buf, sizeof buf));
+    }
+
+  *p = '\0';
   return string_to_number (buf, radix, 0);
 }
 
