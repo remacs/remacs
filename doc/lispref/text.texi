@@ -3180,6 +3180,95 @@ buffer to scan.  Positions are relative to @var{object}.  The default
 for @var{object} is the current buffer.
 @end defun
 
+@defun text-property-search-forward prop &optional value predicate not-current
+Search for the next region that has text property @var{prop} set to
+@var{value} according to @var{predicate}.
+
+This function is modelled after @code{search-forward} and friends in
+that it moves point, but it returns a structure that describes the
+match instead of returning it in @code{match-beginning} and friends.
+
+If the text property can't be found, the function returns @code{nil}.
+If it's found, point is placed at the end of the region that has this
+text property match, and a @code{prop-match} structure is returned.
+
+@var{predicate} can either be @code{t} (which is a synonym for
+@code{equal}), @code{nil} (which means ``not equal''), or a predicate
+that will be called with two parameters: The first is @var{value}, and
+the second is the value of the text property we're inspecting.
+
+If @var{not-current}, if point is in a region where we have a match,
+then skip past that and find the next instance instead.
+
+The @code{prop-match} structure has the following accessors:
+@code{prop-match-beginning} (the start of the match),
+@code{prop-match-end} (the end of the match), and
+@code{prop-match-value} (the value of @var{property} at the start of
+the match).
+
+In the examples below, imagine that you're in a buffer that looks like
+this:
+
+@example
+This is a bold and here's bolditalic and this is the end.
+@end example
+
+That is, the ``bold'' words are the @code{bold} face, and the
+``italic'' word is in the @code{italic} face.
+
+With point at the start:
+
+@lisp
+(while (setq match (text-property-search-forward 'face 'bold t))
+  (push (buffer-substring (prop-match-beginning match)
+                          (prop-match-end match))
+        words))
+@end lisp
+
+This will pick out all the words that use the @code{bold} face.
+
+@lisp
+(while (setq match (text-property-search-forward 'face nil t))
+  (push (buffer-substring (prop-match-beginning match)
+                          (prop-match-end match))
+        words))
+@end lisp
+
+This will pick out all the bits that have no face properties, which
+will result in the list @samp{("This is a " "and here's " "and this is
+the end")} (only reversed, since we used @code{push}).
+
+@lisp
+(while (setq match (text-property-search-forward 'face nil nil))
+  (push (buffer-substring (prop-match-beginning match)
+                          (prop-match-end match))
+        words))
+@end lisp
+
+This will pick out all the regions where @code{face} is set to
+something, but this is split up into where the properties change, so
+the result here will be @samp{("bold" "bold" "italic")}.
+
+For a more realistic example where you might use this, consider that
+you have a buffer where certain sections represent URLs, and these are
+tagged with @code{shr-url}.
+
+@lisp
+(while (setq match (text-property-search-forward 'shr-url nil nil))
+  (push (prop-match-value match) urls))
+@end lisp
+
+This will give you a list of all those URLs.
+
+@end defun
+
+@defun text-property-search-backward prop &optional value predicate not-current
+This is just like @code{text-property-search-backward}, but searches
+backward instead.  Point is placed at the beginning of the matched
+region instead of the end, though.
+@end defun
+
+
 @node Special Properties
 @subsection Properties with Special Meanings
 

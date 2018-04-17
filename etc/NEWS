@@ -164,6 +164,11 @@ non-text modes.
 'write-abbrev-file' now writes special properties like ':case-fixed'
 for abbrevs that have them.
 
++++
+** The new functions and commands `text-property-search-forward' and
+`text-property-search-backward' have been added.  These provide an
+interface that's more like functions like @code{search-forward}.
+
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
