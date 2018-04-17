@@ -868,10 +868,13 @@ In standalone mode, \\<Info-mode-map>\\[Info-exit] exits Emacs itself."
 	 (forward-line 1)		; does the line after delimiter match REGEXP?
 	 (re-search-backward regexp beg t))))
 
-(defun Info-find-file (filename &optional noerror)
+(defun Info-find-file (filename &optional noerror no-pop-to-dir)
   "Return expanded FILENAME, or t if FILENAME is \"dir\".
 Optional second argument NOERROR, if t, means if file is not found
-just return nil (no error)."
+just return nil (no error).
+
+If NO-POP-TO-DIR, don't try to pop to the info buffer if we can't
+find a node."
   ;; Convert filename to lower case if not found as specified.
   ;; Expand it.
   (cond
@@ -930,7 +933,8 @@ just return nil (no error)."
 	(if noerror
 	    (setq filename nil)
 	  ;; If there is no previous Info file, go to the directory.
-	  (unless Info-current-file
+	  (when (and (not no-pop-to-dir)
+                     (not Info-current-file))
 	    (Info-directory))
 	  (user-error "Info file %s does not exist" filename)))
       filename))))
@@ -1868,7 +1872,7 @@ See `completing-read' for a description of arguments and usage."
          (lambda (string pred action)
            (complete-with-action
             action
-            (Info-build-node-completions (Info-find-file file1))
+            (Info-build-node-completions (Info-find-file file1 nil t))
             string pred))
 	 nodename predicate code))))
    ;; Otherwise use Info-read-node-completion-table.
