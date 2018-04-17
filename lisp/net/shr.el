@@ -135,17 +135,17 @@ cid: URL as the argument.")
 (defvar shr-put-image-function 'shr-put-image
   "Function called to put image and alt string.")
 
-(defface shr-strike-through '((t (:strike-through t)))
+(defface shr-strike-through '((t :strike-through t))
   "Font for <s> elements."
   :group 'shr)
 
 (defface shr-link
-  '((t (:inherit link)))
+  '((t :inherit link))
   "Font for link elements."
   :group 'shr)
 
 (defface shr-selected-link
-  '((t (:inherit shr-link :background "red")))
+  '((t :inherit shr-link :background "red"))
   "Font for link elements."
   :group 'shr)
 

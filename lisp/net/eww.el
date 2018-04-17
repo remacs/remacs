@@ -186,17 +186,17 @@ See also `eww-form-checkbox-selected-symbol'."
   :group 'eww)
 
 (defface eww-form-text
-  '((t (:background "#505050"
-		    :foreground "white"
-		    :box (:line-width 1))))
+  '((t :background "#505050"
+       :foreground "white"
+       :box (:line-width 1)))
   "Face for eww text inputs."
   :version "24.4"
   :group 'eww)
 
 (defface eww-form-textarea
-  '((t (:background "#C0C0C0"
-		    :foreground "black"
-		    :box (:line-width 1))))
+  '((t :background "#C0C0C0"
+       :foreground "black"
+       :box (:line-width 1)))
   "Face for eww textarea inputs."
   :version "24.4"
   :group 'eww)
