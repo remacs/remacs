@@ -1945,8 +1945,9 @@ spell-check."
     (let ((pos     (point))
           (old-max (point-max)))
       ;; Flush a possibly stale cache from previous invocations of
-      ;; flyspell-auto-correct-word.
-      (if (not (eq last-command 'flyspell-auto-correct-word))
+      ;; flyspell-auto-correct-word/flyspell-auto-correct-previous-word.
+      (if (not (memq last-command '(flyspell-auto-correct-word
+                                    flyspell-auto-correct-previous-word)))
           (setq flyspell-auto-correct-region nil))
       ;; Use the correct dictionary.
       (flyspell-accept-buffer-local-defs)
