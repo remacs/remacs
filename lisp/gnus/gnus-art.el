@@ -6673,7 +6673,7 @@ not have a face in `gnus-article-boring-faces'."
   (interactive "P")
   (gnus-article-check-buffer)
   (let ((nosaves
-	 '("q" "Q"  "c" "r" "\C-c\C-f" "m"  "a" "f" "WDD" "WDW"
+	 '("q" "Q" "r" "\C-c\C-f" "m"  "a" "f" "WDD" "WDW"
 	   "Zc" "ZC" "ZE" "ZQ" "ZZ" "Zn" "ZR" "ZG" "ZN" "ZP"
 	   "=" "^" "\M-^" "|"))
 	(nosave-but-article
@@ -6739,7 +6739,8 @@ not have a face in `gnus-article-boring-faces'."
 	;; We disable the pick minor mode commands.
 	(setq func (let (gnus-pick-mode)
 		     (key-binding keys t)))
-	(when (get func 'disabled)
+	(when (and (symbolp func)
+		   (get func 'disabled))
 	  (error "Function %s disabled" func))
 	(if (and func
 		 (functionp func)
