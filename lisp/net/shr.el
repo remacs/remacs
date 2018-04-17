@@ -137,16 +137,19 @@ cid: URL as the argument.")
 
 (defface shr-strike-through '((t :strike-through t))
   "Face for <s> elements."
+  :version "24.1"
   :group 'shr)
 
 (defface shr-link
   '((t :inherit link))
   "Face for link elements."
+  :version "24.1"
   :group 'shr)
 
 (defface shr-selected-link
   '((t :inherit shr-link :background "red"))
   "Face for link elements."
+  :version "27.1"
   :group 'shr)
 
 (defvar shr-inhibit-images nil
