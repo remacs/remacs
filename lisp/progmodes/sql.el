@@ -4031,16 +4031,15 @@ Writes the input history to a history file using
 
 This function is a sentinel watching the SQL interpreter process.
 Sentinels will always get the two parameters PROCESS and EVENT."
-  (when (buffer-live-p (process-buffer process))
-    (with-current-buffer (process-buffer process)
-      (let
-          ((comint-input-ring-separator sql-input-ring-separator)
-           (comint-input-ring-file-name sql-input-ring-file-name))
-        (comint-write-input-ring))
+  (with-current-buffer (process-buffer process)
+    (let
+        ((comint-input-ring-separator sql-input-ring-separator)
+         (comint-input-ring-file-name sql-input-ring-file-name))
+      (comint-write-input-ring))
 
-      (if (not buffer-read-only)
-          (insert (format "\nProcess %s %s\n" process event))
-        (message "Process %s %s" process event)))))
+    (if (not buffer-read-only)
+        (insert (format "\nProcess %s %s\n" process event))
+      (message "Process %s %s" process event))))
 
 
 
