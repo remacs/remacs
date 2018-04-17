@@ -7063,17 +7063,20 @@ buffer."
     (or (get-buffer-window gnus-article-buffer)
 	(eq gnus-current-article (gnus-summary-article-number))
 	(gnus-summary-show-article))
-    (gnus-configure-windows
-     (if gnus-widen-article-window
-	 'only-article
-       'article)
-     t)
-    (select-window (get-buffer-window gnus-article-buffer))
-    ;; If we've just selected the message, place point at the start of
-    ;; the body because that's probably where we want to be.
-    (when (bobp)
-      (article-goto-body)
-      (forward-char -1))))
+    (let ((point (with-current-buffer gnus-article-buffer
+		   (point))))
+      (gnus-configure-windows
+       (if gnus-widen-article-window
+	   'only-article
+	 'article)
+       t)
+      (select-window (get-buffer-window gnus-article-buffer))
+      ;; If we've just selected the message, place point at the start of
+      ;; the body because that's probably where we want to be.
+      (if (not (bobp))
+	  (goto-char point)
+	(article-goto-body)
+	(forward-char -1)))))
 
 (defun gnus-summary-universal-argument (arg)
   "Perform any operation on all articles that are process/prefixed."
