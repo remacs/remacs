@@ -39,6 +39,7 @@
 (require 'svg)
 (require 'image)
 (require 'puny)
+(require 'text-property-search)
 
 (defgroup shr nil
   "Simple HTML Renderer"
@@ -378,49 +379,18 @@ If the URL is already at the front of the kill ring act like
 (defun shr-next-link ()
   "Skip to the next link."
   (interactive)
-  (let ((current (get-text-property (point) 'shr-url))
-        (start (point))
-        skip)
-    (while (and (not (eobp))
-                (equal (get-text-property (point) 'shr-url) current))
-      (forward-char 1))
-    (cond
-     ((and (not (eobp))
-           (get-text-property (point) 'shr-url))
-      ;; The next link is adjacent.
-      (message "%s" (get-text-property (point) 'help-echo)))
-     ((or (eobp)
-          (not (setq skip (text-property-not-all (point) (point-max)
-                                                 'shr-url nil))))
-      (goto-char start)
-      (message "No next link"))
-     (t
-      (goto-char skip)
-      (message "%s" (get-text-property (point) 'help-echo))))))
+  (let ((match (text-property-search-forward 'shr-url nil nil t)))
+    (if (not match)
+        (message "No next link")
+      (goto-char (prop-match-beginning match))
+      (message "%s" (get-text-property (point) 'help-echo)))))
 
 (defun shr-previous-link ()
   "Skip to the previous link."
   (interactive)
-  (let ((start (point))
-	(found nil))
-    ;; Skip past the current link.
-    (while (and (not (bobp))
-		(get-text-property (point) 'help-echo))
-      (forward-char -1))
-    ;; Find the previous link.
-    (while (and (not (bobp))
-		(not (setq found (get-text-property (point) 'help-echo))))
-      (forward-char -1))
-    (if (not found)
-	(progn
-	  (message "No previous link")
-	  (goto-char start))
-      ;; Put point at the start of the link.
-      (while (and (not (bobp))
-		  (get-text-property (point) 'help-echo))
-	(forward-char -1))
-      (forward-char 1)
-      (message "%s" (get-text-property (point) 'help-echo)))))
+  (if (not (text-property-search-backward 'shr-url nil nil t))
+      (message "No previous link")
+    (message "%s" (get-text-property (point) 'help-echo))))
 
 (defun shr-show-alt-text ()
   "Show the ALT text of the image under point."
