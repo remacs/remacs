@@ -1874,11 +1874,13 @@ then `diff-jump-to-old-file' is also set, for the next invocations."
   ;; the old location, and else to the new (i.e. as if reverting).
   ;; This is a convenient detail when using smerge-diff.
   (if event (posn-set-point (event-end event)))
-  (let ((rev (not (save-excursion (beginning-of-line) (looking-at "[-<]")))))
+  (let ((buffer (when event (current-buffer)))
+        (rev (not (save-excursion (beginning-of-line) (looking-at "[-<]")))))
     (pcase-let ((`(,buf ,line-offset ,pos ,src ,_dst ,switched)
                  (diff-find-source-location other-file rev)))
       (pop-to-buffer buf)
       (goto-char (+ (car pos) (cdr src)))
+      (when buffer (next-error-found buffer (current-buffer)))
       (diff-hunk-status-msg line-offset (diff-xor rev switched) t))))
 
 

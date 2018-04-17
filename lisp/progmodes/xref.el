@@ -540,9 +540,11 @@ SELECT is `quit', also quit the *xref* window."
 Non-interactively, non-nil QUIT means to first quit the *xref*
 buffer."
   (interactive)
-  (let ((xref (or (xref--item-at-point)
+  (let ((buffer (current-buffer))
+        (xref (or (xref--item-at-point)
                   (user-error "No reference at point"))))
-    (xref--show-location (xref-item-location xref) (if quit 'quit t))))
+    (xref--show-location (xref-item-location xref) (if quit 'quit t))
+    (next-error-found buffer (current-buffer))))
 
 (defun xref-quit-and-goto-xref ()
   "Quit *xref* buffer, then jump to xref on current line."

@@ -471,6 +471,11 @@ A change log tag is a symbol within a parenthesized,
 comma-separated list.  If no suitable tag can be found nearby,
 try to visit the file for the change under `point' instead."
   (interactive)
+  (let ((buffer (current-buffer)))
+    (change-log-goto-source-internal)
+    (next-error-found buffer (current-buffer))))
+
+(defun change-log-goto-source-internal ()
   (if (and (eq last-command 'change-log-goto-source)
 	   change-log-find-tail)
       (setq change-log-find-tail
@@ -539,7 +544,7 @@ Compatibility function for \\[next-error] invocations."
   ;; if we found a place to visit...
   (when (looking-at change-log-file-names-re)
     (let (change-log-find-window)
-      (change-log-goto-source)
+      (change-log-goto-source-internal)
       (when change-log-find-window
 	;; Select window displaying source file.
 	(select-window change-log-find-window)))))
@@ -1067,8 +1072,7 @@ Runs `change-log-mode-hook'.
   (set (make-local-variable 'end-of-defun-function)
        'change-log-end-of-defun)
   ;; next-error function glue
-  (setq next-error-function 'change-log-next-error)
-  (setq next-error-last-buffer (current-buffer)))
+  (setq next-error-function 'change-log-next-error))
 
 (defun change-log-next-buffer (&optional buffer wrap)
   "Return the next buffer in the series of ChangeLog file buffers.

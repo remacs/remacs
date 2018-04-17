@@ -354,17 +354,6 @@ See `compilation-error-screen-columns'"
 
 (defalias 'kill-grep 'kill-compilation)
 
-;;;; TODO --- refine this!!
-
-;; (defcustom grep-use-compilation-buffer t
-;;   "When non-nil, grep specific commands update `compilation-last-buffer'.
-;; This means that standard compile commands like \\[next-error] and \\[compile-goto-error]
-;; can be used to navigate between grep matches (the default).
-;; Otherwise, the grep specific commands like \\[grep-next-match] must
-;; be used to navigate between grep matches."
-;;   :type 'boolean
-;;   :group 'grep)
-
 ;; override compilation-last-buffer
 (defvar grep-last-buffer nil
   "The most recent grep buffer.
@@ -1083,6 +1072,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 				 (concat command " " null-device)
 			       command)
 			     'grep-mode))
+	;; Set default-directory if we started lgrep in the *grep* buffer.
 	(if (eq next-error-last-buffer (current-buffer))
 	    (setq default-directory dir))))))
 

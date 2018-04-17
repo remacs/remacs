@@ -1192,7 +1192,8 @@ To return to ordinary Occur mode, use \\[occur-cease-edit]."
 (defun occur-mode-goto-occurrence (&optional event)
   "Go to the occurrence on the current line."
   (interactive (list last-nonmenu-event))
-  (let ((pos
+  (let ((buffer (when event (current-buffer)))
+        (pos
          (if (null event)
              ;; Actually `event-end' works correctly with a nil argument as
              ;; well, so we could dispense with this test, but let's not
@@ -1204,26 +1205,31 @@ To return to ordinary Occur mode, use \\[occur-cease-edit]."
                (occur-mode-find-occurrence))))))
     (pop-to-buffer (marker-buffer pos))
     (goto-char pos)
+    (when buffer (next-error-found buffer (current-buffer)))
     (run-hooks 'occur-mode-find-occurrence-hook)))
 
 (defun occur-mode-goto-occurrence-other-window ()
   "Go to the occurrence the current line describes, in another window."
   (interactive)
-  (let ((pos (occur-mode-find-occurrence)))
+  (let ((buffer (current-buffer))
+        (pos (occur-mode-find-occurrence)))
     (switch-to-buffer-other-window (marker-buffer pos))
     (goto-char pos)
+    (next-error-found buffer (current-buffer))
     (run-hooks 'occur-mode-find-occurrence-hook)))
 
 (defun occur-mode-display-occurrence ()
   "Display in another window the occurrence the current line describes."
   (interactive)
-  (let ((pos (occur-mode-find-occurrence))
+  (let ((buffer (current-buffer))
+        (pos (occur-mode-find-occurrence))
 	window)
     (setq window (display-buffer (marker-buffer pos) t))
     ;; This is the way to set point in the proper window.
     (save-selected-window
       (select-window window)
       (goto-char pos)
+      (next-error-found buffer (current-buffer))
       (run-hooks 'occur-mode-find-occurrence-hook))))
 
 (defun occur-find-match (n search message)
@@ -1253,29 +1259,20 @@ To return to ordinary Occur mode, use \\[occur-cease-edit]."
   "Move to the Nth (default 1) next match in an Occur mode buffer.
 Compatibility function for \\[next-error] invocations."
   (interactive "p")
-  ;; we need to run occur-find-match from within the Occur buffer
-  (with-current-buffer
-      ;; Choose the buffer and make it current.
-      (if (next-error-buffer-p (current-buffer))
-	  (current-buffer)
-	(next-error-find-buffer nil nil
-				(lambda ()
-				  (eq major-mode 'occur-mode))))
-
-    (goto-char (cond (reset (point-min))
-		     ((< argp 0) (line-beginning-position))
-		     ((> argp 0) (line-end-position))
-		     ((point))))
-    (occur-find-match
-     (abs argp)
-     (if (> 0 argp)
-	 #'previous-single-property-change
-       #'next-single-property-change)
-     "No more matches")
-    ;; In case the *Occur* buffer is visible in a nonselected window.
-    (let ((win (get-buffer-window (current-buffer) t)))
-      (if win (set-window-point win (point))))
-    (occur-mode-goto-occurrence)))
+  (goto-char (cond (reset (point-min))
+		   ((< argp 0) (line-beginning-position))
+		   ((> argp 0) (line-end-position))
+		   ((point))))
+  (occur-find-match
+   (abs argp)
+   (if (> 0 argp)
+       #'previous-single-property-change
+     #'next-single-property-change)
+   "No more matches")
+  ;; In case the *Occur* buffer is visible in a nonselected window.
+  (let ((win (get-buffer-window (current-buffer) t)))
+    (if win (set-window-point win (point))))
+  (occur-mode-goto-occurrence))
 
 (defface match
   '((((class color) (min-colors 88) (background light))
