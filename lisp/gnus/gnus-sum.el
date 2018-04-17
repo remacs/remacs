@@ -6310,6 +6310,7 @@ The resulting hash table is returned, or nil if no Xrefs were found."
 	     (when ,set-marks
 	       (gnus-request-set-mark
 		,group (list (list ',range 'del '(read)))))
+	     (gnus-group-jump-to-group ,group)
 	     (gnus-group-update-group ,group t))))
       ;; Add the read articles to the range.
       (gnus-info-set-read info range)
@@ -12726,6 +12727,7 @@ UNREAD is a sorted list."
 	      `(progn
 		 (gnus-info-set-marks ',info ',(gnus-info-marks info) t)
 		 (gnus-info-set-read ',info ',(gnus-info-read info))
+		 (gnus-group-jump-to-group ,group)
 		 (gnus-get-unread-articles-in-group ',info
 						    (gnus-active ,group))
 		 (gnus-group-update-group ,group t)

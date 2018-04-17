@@ -2551,14 +2551,15 @@ If PROMPT (the prefix) is a number, use the prompt specified in
   (when (equal group "")
     (error "Empty group name"))
 
-  (unless (gnus-ephemeral-group-p group)
-    ;; Either go to the line in the group buffer...
-    (unless (gnus-group-goto-group group)
-      ;; ... or insert the line.
-      (gnus-group-update-group group)
-      (gnus-group-goto-group group)))
-  ;; Adjust cursor point.
-  (gnus-group-position-point))
+  (prog1
+      (unless (gnus-ephemeral-group-p group)
+	;; Either go to the line in the group buffer...
+	(unless (gnus-group-goto-group group)
+	  ;; ... or insert the line.
+	  (gnus-group-update-group group)
+	  (gnus-group-goto-group group)))
+    ;; Adjust cursor point.
+    (gnus-group-position-point)))
 
 (defun gnus-group-goto-group (group &optional far test-marked)
   "Goto to newsgroup GROUP.
@@ -3560,7 +3561,7 @@ Obeys the process/prefix convention."
 	 (gnus-request-set-mark ,group ',action)
 	 (gnus-info-set-marks ',info ',(gnus-info-marks info) t)
 	 (gnus-info-set-read ',info ',(gnus-info-read info))
-	 (when (gnus-group-goto-group ,group)
+	 (when (gnus-group-jump-to-group ,group)
 	   (gnus-get-unread-articles-in-group ',info ',(gnus-active group) t)
 	   (gnus-group-update-group-line))))
     (setq action (mapcar (lambda (el) (list (nth 0 el) 'del (nth 2 el)))
