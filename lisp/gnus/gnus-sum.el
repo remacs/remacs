@@ -7073,7 +7073,7 @@ buffer."
       (select-window (get-buffer-window gnus-article-buffer))
       ;; If we've just selected the message, place point at the start of
       ;; the body because that's probably where we want to be.
-      (if (not (bobp))
+      (if (not (= point (point-min)))
 	  (goto-char point)
 	(article-goto-body)
 	(forward-char -1)))))
