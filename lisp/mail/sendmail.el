@@ -785,7 +785,9 @@ Concretely: replace the first blank line in the header with the separator."
   "Remove header separator to put the message in correct form for sendmail.
 Leave point at the start of the delimiter line."
   (goto-char (point-min))
-  (when (re-search-forward (concat "^" (regexp-quote mail-header-separator) "\n"))
+  (when (re-search-forward
+	 (concat "^" (regexp-quote mail-header-separator) "\n")
+	 nil t)
     (replace-match "\n"))
   (rfc822-goto-eoh))
 
