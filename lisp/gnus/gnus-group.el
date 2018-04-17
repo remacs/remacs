@@ -2607,11 +2607,13 @@ If TEST-MARKED, the line must be marked."
 	  found))
        (t
 	;; Search through the entire buffer.
-	(unless (gnus-goto-char
-		 (text-property-any
-		  (point-min) (point-max)
-		  'gnus-group (gnus-intern-safe group gnus-active-hashtb)))
-	  (goto-char start)))))))
+	(if (gnus-goto-char
+	     (text-property-any
+	      (point-min) (point-max)
+	      'gnus-group (gnus-intern-safe group gnus-active-hashtb)))
+	    (point)
+	  (goto-char start)
+	  nil))))))
 
 (defun gnus-group-next-group (n &optional silent)
   "Go to next N'th newsgroup.
