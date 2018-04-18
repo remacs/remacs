@@ -1278,11 +1278,13 @@ passphrases, but it was also removed from other pinentry programs as
 the attack is unrealistic on modern computer systems which don't
 utilize swap memory usually.
 
-** The function 'display-buffer-in-major-side-window' is now internal.
-This hitherto undocumented function which existed since Emacs 24.1 has
-been renamed to 'window--make-major-side-window' and its semantics
-changed.  Applications should use the now properly documented function
-'display-buffer-in-side-window' with appropriate arguments instead.
+** The function 'display-⁠buffer-⁠in-⁠major-⁠side-⁠window' no longer exists.
+It has been renamed as internal function 'window--make-major-side-window',
+however applications should instead call 'display-⁠buffer-⁠in-⁠side-⁠window'
+(passing the SIDE and SLOT parameters as elements of ALIST).  This approach
+is backwards-⁠compatible with versions of Emacs in which the old function
+exists.  See the node "(elisp) Displaying Buffers in Side Windows"
+in the ELisp manual for more details.
 
 * Lisp Changes in Emacs 26.1
 
