@@ -4319,12 +4319,11 @@ ring directly.")
   "The tail of the kill ring whose car is the last thing yanked.")
 
 (defcustom save-interprogram-paste-before-kill nil
-  "Save clipboard strings into kill ring before replacing them.
-When one selects something in another program to paste it into Emacs,
-but kills something in Emacs before actually pasting it,
-this selection is gone unless this variable is non-nil,
-in which case the other program's selection is saved in the `kill-ring'
-before the Emacs kill and one can still paste it using \\[yank] \\[yank-pop]."
+  "Save existing clipboard text into kill ring before replacing it.
+A non-nil value ensures that Emacs kill operations do not
+irrevocably overwrite existing clipboard text by saving it to the
+`kill-ring' prior to the kill.  Such text can subsequently be
+retrieved via \\[yank] \\[yank-pop]]."
   :type 'boolean
   :group 'killing
   :version "23.2")
@@ -4344,7 +4343,7 @@ Optional second argument REPLACE non-nil means that STRING will replace
 the front of the kill ring, rather than being added to the list.
 
 When `save-interprogram-paste-before-kill' and `interprogram-paste-function'
-are non-nil, saves the interprogram paste string(s) into `kill-ring' before
+are non-nil, save the interprogram paste string(s) into `kill-ring' before
 STRING.
 
 When the yank handler has a non-nil PARAM element, the original STRING
@@ -4379,20 +4378,24 @@ argument should still be a \"useful\" string for such uses."
   (if interprogram-cut-function
       (funcall interprogram-cut-function string)))
 
-;; It has been argued that this should work similar to `self-insert-command'
-;; which merges insertions in undo-list in groups of 20 (hard-coded in cmds.c).
+;; It has been argued that this should work like `self-insert-command'
+;; which merges insertions in `buffer-undo-list' in groups of 20
+;; (hard-coded in `undo-auto-amalgamate').
 (defcustom kill-append-merge-undo nil
-  "Whether appending to kill ring also makes \\[undo] restore both pieces of text simultaneously."
+  "Amalgamate appending kills with the last kill for undo.
+When non-nil, appending or prepending text to the last kill makes
+\\[undo] restore both pieces of text simultaneously."
   :type 'boolean
   :group 'killing
   :version "25.1")
 
 (defun kill-append (string before-p)
   "Append STRING to the end of the latest kill in the kill ring.
-If BEFORE-P is non-nil, prepend STRING to the kill.
-Also removes the last undo boundary in the current buffer,
- depending on `kill-append-merge-undo'.
-If `interprogram-cut-function' is set, pass the resulting kill to it."
+If BEFORE-P is non-nil, prepend STRING to the kill instead.
+If `interprogram-cut-function' is non-nil, call it with the
+resulting kill.
+If `kill-append-merge-undo' is non-nil, remove the last undo
+boundary in the current buffer."
   (let* ((cur (car kill-ring)))
     (kill-new (if before-p (concat string cur) (concat cur string))
 	      (or (= (length cur) 0)

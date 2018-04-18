@@ -1142,7 +1142,7 @@ If @var{n} is zero, indicating a request for the latest kill,
 @code{current-kill} calls the value of
 @code{interprogram-paste-function} (documented below) before
 consulting the kill ring.  If that value is a function and calling it
-returns a string or a list of several string, @code{current-kill}
+returns a string or a list of several strings, @code{current-kill}
 pushes the strings onto the kill ring and returns the first string.
 It also sets the yanking pointer to point to the kill-ring entry of
 the first string returned by @code{interprogram-paste-function},
@@ -1155,8 +1155,10 @@ move the yanking pointer.
 @defun kill-new string &optional replace
 This function pushes the text @var{string} onto the kill ring and
 makes the yanking pointer point to it.  It discards the oldest entry
-if appropriate.  It also invokes the value of
-@code{interprogram-cut-function} (see below).
+if appropriate.  It also invokes the values of
+@code{interprogram-paste-function} (subject to
+the user option @code{save-interprogram-paste-before-kill})
+and @code{interprogram-cut-function} (see below).
 
 If @var{replace} is non-@code{nil}, then @code{kill-new} replaces the
 first element of the kill ring with @var{string}, rather than pushing
@@ -1168,8 +1170,10 @@ This function appends the text @var{string} to the first entry in the
 kill ring and makes the yanking pointer point to the combined entry.
 Normally @var{string} goes at the end of the entry, but if
 @var{before-p} is non-@code{nil}, it goes at the beginning.  This
-function also invokes the value of @code{interprogram-cut-function}
-(see below).
+function calls @code{kill-new} as a subroutine, thus causing the
+values of @code{interprogram-cut-function} and possibly
+@code{interprogram-paste-function} (see below) to be invoked by
+extension.
 @end defun
 
 @defvar interprogram-paste-function
