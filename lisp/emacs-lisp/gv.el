@@ -217,6 +217,8 @@ to be pure and copyable.  Example use:
   (declare (indent 2) (debug (&define name sexp body)))
   `(gv-define-expander ,name
      (lambda (do &rest args)
+       (declare-function
+        gv--defsetter "gv" (name setter do args &optional vars))
        (gv--defsetter ',name (lambda ,arglist ,@body) do args))))
 
 ;;;###autoload
