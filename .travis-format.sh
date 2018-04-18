@@ -18,9 +18,6 @@ cargo fmt -- --version
 cd "$DIR/rust_src/src"
 cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
 
-cd "$DIR/rust_src/remacs-sys"
-cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
-
 cd "$DIR/rust_src/remacs-lib"
 cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
 
