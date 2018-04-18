@@ -1278,6 +1278,11 @@ passphrases, but it was also removed from other pinentry programs as
 the attack is unrealistic on modern computer systems which don't
 utilize swap memory usually.
 
+** The function 'display-buffer-in-major-side-window' is now internal.
+This hitherto undocumented function which existed since Emacs 24.1 has
+been renamed to 'window--make-major-side-window' and its semantics
+changed.  Applications should use the now properly documented function
+'display-buffer-in-side-window' with appropriate arguments instead.
 
 * Lisp Changes in Emacs 26.1
 
