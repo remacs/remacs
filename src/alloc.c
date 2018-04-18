@@ -6188,11 +6188,7 @@ mark_glyph_matrix (struct glyph_matrix *matrix)
       }
 }
 
-/* Mark reference to a Lisp_Object.
-   If the object referred to has not been seen yet, recursively mark
-   all the references contained in it.  */
-
-#define LAST_MARKED_SIZE 500
+enum { LAST_MARKED_SIZE = 1 << 9 }; /* Must be a power of 2.  */
 Lisp_Object last_marked[LAST_MARKED_SIZE] EXTERNALLY_VISIBLE;
 static int last_marked_index;
 
@@ -6418,8 +6414,7 @@ mark_object (Lisp_Object arg)
     return;
 
   last_marked[last_marked_index++] = obj;
-  if (last_marked_index == LAST_MARKED_SIZE)
-    last_marked_index = 0;
+  last_marked_index &= LAST_MARKED_SIZE - 1;
 
   /* Perform some sanity checks on the objects marked here.  Abort if
      we encounter an object we know is bogus.  This increases GC time
