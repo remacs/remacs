@@ -5191,7 +5191,7 @@ LIBS=$SAVE_LIBS
 
 # Add Rust variables, libs and utilities
 
-RUSTFLAGS=
+RUSTFLAGS=$RUSTFLAGS
 
 AC_SUBST(RUSTFLAGS)
 

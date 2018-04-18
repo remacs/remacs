@@ -34,7 +34,7 @@ jobs:
         - sudo apt install -y texinfo libgif-dev libxpm-dev
         - travis_wait rustup install $(cat rust-toolchain)
       script:
-        - ./autogen.sh && ./configure
+        - ./autogen.sh && RUSTFLAGS="-Dwarnings" ./configure
         - make -j 3 && echo '==> Running tests' && make check
     - 
       <<: *FULL_TEST
@@ -59,7 +59,7 @@ jobs:
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
       script:
-        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
+        - ./autogen.sh && RUSTFLAGS="-Dwarnings" ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
     -
       <<: *NO_WINDOW_SYSTEM_TEST
