@@ -1,5 +1,5 @@
 /* Input event support for Emacs on the Microsoft Windows API.
-   Copyright (C) 1992-1993, 1995, 2001-2017 Free Software Foundation,
+   Copyright (C) 1992-1993, 1995, 2001-2018 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -526,7 +526,7 @@ do_mouse_event (MOUSE_EVENT_RECORD *event,
 			      help_echo_window, help_echo_object,
 			      help_echo_pos);
 	  }
-	/* We already called kbd_buffer_store_event, so indicate the
+	/* We already called kbd_buffer_store_event, so indicate to
 	   the caller it shouldn't.  */
 	return 0;
       }

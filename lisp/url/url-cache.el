@@ -1,6 +1,6 @@
 ;;; url-cache.el --- Uniform Resource Locator retrieval tool
 
-;; Copyright (C) 1996-1999, 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2004-2018 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes, hypermedia
 
@@ -206,7 +206,7 @@ If `url-standalone-mode' is non-nil, cached items never expire."
 	   (time-add
 	    cache-time
 	    (seconds-to-time (or expire-time url-cache-expire-time)))
-	   (current-time))))))
+	   nil)))))
 
 (defun url-cache-prune-cache (&optional directory)
   "Remove all expired files from the cache.

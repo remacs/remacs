@@ -1,6 +1,6 @@
 ;;; xterm.el --- define function key sequences and standard colors for xterm  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1995, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: FSF
 ;; Keywords: terminals
@@ -68,7 +68,7 @@ string bytes that can be copied is 3/4 of this value."
   :version "25.1"
   :type 'integer)
 
-(defcustom xterm-set-window-title t
+(defcustom xterm-set-window-title nil
   "Whether Emacs should set window titles to an Emacs frame in an XTerm."
   :version "27.1"
   :type 'boolean)
@@ -675,8 +675,13 @@ Return the pasted text as a string."
         (when (and (> version 2000) (equal (match-string 1 str) "1"))
           ;; Hack attack!  bug#16988: gnome-terminal reports "1;NNNN;0"
           ;; with a large NNNN but is based on a rather old xterm code.
-          ;; Gnome terminal 3.6.1 reports 1;3406;0
           ;; Gnome terminal 2.32.1 reports 1;2802;0
+          ;; Gnome terminal 3.6.1 reports 1;3406;0
+          ;; Gnome terminal 3.22.2 reports 1;4601;0 and *does* support
+          ;; background color querying (Bug#29716).
+          (when (> version 4000)
+            (xterm--query "\e]11;?\e\\"
+                          '(("\e]11;" .  xterm--report-background-handler))))
           (setq version 200))
         (when (equal (match-string 1 str) "83")
           ;; `screen' (which returns 83;40003;0) seems to also lack support for

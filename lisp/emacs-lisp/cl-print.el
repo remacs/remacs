@@ -1,6 +1,6 @@
 ;;; cl-print.el --- CL-style generic printing  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017  Free Software Foundation, Inc.
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords:
@@ -268,13 +268,14 @@ into a button whose action shows the function's disassembly.")
 Output is further controlled by the variables
 `cl-print-readably', `cl-print-compiled', along with output
 variables for the standard printing functions.  See Info
-node `(elisp)Output Variables'. "
-  (cond
-   (cl-print-readably (prin1 object stream))
-   ((not print-circle) (cl-print-object object stream))
-   (t
-    (let ((cl-print--number-table (cl-print--preprocess object)))
-      (cl-print-object object stream)))))
+node `(elisp)Output Variables'."
+  (if cl-print-readably
+      (prin1 object stream)
+    (with-demoted-errors "cl-prin1: %S"
+      (if (not print-circle)
+          (cl-print-object object stream)
+        (let ((cl-print--number-table (cl-print--preprocess object)))
+          (cl-print-object object stream))))))
 
 ;;;###autoload
 (defun cl-prin1-to-string (object)

@@ -1,5 +1,5 @@
 # sys_types_h.m4 serial 9
-dnl Copyright (C) 2011-2017 Free Software Foundation, Inc.
+dnl Copyright (C) 2011-2018 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -35,7 +35,7 @@ AC_DEFUN([gl_SYS_TYPES_H_DEFAULTS],
 ])
 
 # This works around a buggy version in autoconf <= 2.69.
-# See <https://lists.gnu.org/archive/html/autoconf/2016-08/msg00014.html>
+# See <https://lists.gnu.org/r/autoconf/2016-08/msg00014.html>
 
 m4_version_prereq([2.70], [], [
 

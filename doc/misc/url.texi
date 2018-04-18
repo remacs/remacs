@@ -21,7 +21,7 @@
 @copying
 This is the manual for the @code{url} Emacs Lisp library.
 
-Copyright @copyright{} 1993--1999, 2002, 2004--2017 Free Software
+Copyright @copyright{} 1993--1999, 2002, 2004--2018 Free Software
 Foundation, Inc.
 
 @quotation
@@ -401,7 +401,7 @@ gateway method to be used.  @xref{Gateways in general}.
 @defopt url-honor-refresh-requests
 If this option is non-@code{nil} (the default), the @code{url} library
 honors the HTTP @samp{Refresh} header, which is used by servers to
-direct clients to reload documents from the same URL or a or different
+direct clients to reload documents from the same URL or a different
 one.  If the value is @code{nil}, the @samp{Refresh} header is
 ignored; any other value means to ask the user on each request.
 @end defopt
@@ -1271,8 +1271,9 @@ operation at startup.
 @item TMPDIR
 @vindex TMPDIR
 @vindex url-temporary-directory
-If this is defined, @var{url-temporary-directory} is initialized from
-it.
+If this is defined, @code{url-temporary-directory} is initialized from
+it.  This variable was obsoleted in 23.1, please use
+@code{temporary-file-directory} instead.
 @end table
 
   The following user options affect the general operation of

@@ -1,6 +1,6 @@
 ;;; zeroconf.el --- Service browser using Avahi.  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, hardware
@@ -381,6 +381,8 @@ TYPE. The resulting list has the format
   ;; Due to the service browser, all known services are kept in
   ;; `zeroconf-services-hash'.
   (gethash (concat name "/" type) zeroconf-services-hash nil))
+
+(defvar dbus-debug)
 
 (defun zeroconf-resolve-service (service)
   "Return all service attributes SERVICE as list.

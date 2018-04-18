@@ -1,6 +1,6 @@
 ;;; simple-test.el --- Tests for simple.el           -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 ;; Author: Artur Malabarba <bruce.connor.am@gmail.com>
 
@@ -188,7 +188,7 @@
 ;; From 24 Oct - 21 Nov 2015, `open-line' took a second argument
 ;; INTERACTIVE and ran `post-self-insert-hook' if the argument was
 ;; true.  This test tested that.  Currently, however, `open-line'
-;; does not run run `post-self-insert-hook' at all, so for now
+;; does not run `post-self-insert-hook' at all, so for now
 ;; this test just makes sure that it doesn't.
 (ert-deftest open-line-hook ()
   (let* ((x 0)
@@ -280,7 +280,7 @@
      (undo-auto--boundaries 'test))))
 
 ;; Test for a regression introduced by undo-auto--boundaries changes.
-;; https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg01652.html
+;; https://lists.gnu.org/r/emacs-devel/2015-11/msg01652.html
 (defun undo-test-kill-c-a-then-undo ()
   (with-temp-buffer
     (switch-to-buffer (current-buffer))
@@ -510,6 +510,31 @@ See Bug#21722."
     (insert "foo bar")
     (do-auto-fill)
     (should (string-equal (buffer-string) "foo bar"))))
+
+(ert-deftest simple-tests-async-shell-command-30280 ()
+  "Test for https://debbugs.gnu.org/30280 ."
+  :expected-result :failed
+  (let* ((async-shell-command-buffer 'new-buffer)
+         (async-shell-command-display-buffer nil)
+         (str "*Async Shell Command*")
+         (buffers-name
+          (cl-loop repeat 2
+                   collect (buffer-name
+                            (generate-new-buffer str))))
+         (inhibit-message t))
+    (mapc #'kill-buffer buffers-name)
+    (async-shell-command
+     (format "%s -Q -batch -eval '(progn (sleep-for 3600) (message \"foo\"))'"
+             invocation-name))
+    (async-shell-command
+     (format "%s -Q -batch -eval '(progn (sleep-for 1) (message \"bar\"))'"
+             invocation-name))
+    (let ((buffers (mapcar #'get-buffer buffers-name))
+          (processes (mapcar #'get-buffer-process buffers-name)))
+      (unwind-protect
+          (should (memq (cadr buffers) (mapcar #'window-buffer (window-list))))
+        (mapc #'delete-process processes)
+        (mapc #'kill-buffer buffers)))))
 
 (provide 'simple-test)
 ;;; simple-test.el ends here

@@ -1,5 +1,5 @@
 /* Substitute for and wrapper around <unistd.h>.
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -134,9 +134,8 @@
 /* The definition of _GL_WARN_ON_USE is copied here.  */
 
 
-/* Get getopt(), optarg, optind, opterr, optopt.
-   But avoid namespace pollution on glibc systems.  */
-#if @GNULIB_UNISTD_H_GETOPT@ && !defined __GLIBC__ && !defined _GL_SYSTEM_GETOPT
+/* Get getopt(), optarg, optind, opterr, optopt.  */
+#if @GNULIB_UNISTD_H_GETOPT@ && !defined _GL_SYSTEM_GETOPT
 # include <getopt-cdefs.h>
 # include <getopt-pfx-core.h>
 #endif
@@ -401,6 +400,13 @@ _GL_WARN_ON_USE (dup3, "dup3 is unportable - "
 
 
 #if @GNULIB_ENVIRON@
+# if defined __CYGWIN__ && !defined __i386__
+/* The 'environ' variable is defined in a DLL. Therefore its declaration needs
+   the '__declspec(dllimport)' attribute, but the system's <unistd.h> lacks it.
+   This leads to a link error on 64-bit Cygwin when the option
+   -Wl,--disable-auto-import is in use.  */
+_GL_EXTERN_C __declspec(dllimport) char **environ;
+# endif
 # if !@HAVE_DECL_ENVIRON@
 /* Set of environment variables and values.  An array of strings of the form
    "VARIABLE=VALUE", terminated with a NULL.  */
@@ -462,13 +468,25 @@ _GL_WARN_ON_USE (euidaccess, "euidaccess is unportable - "
 
 
 #if @GNULIB_FACCESSAT@
-# if !@HAVE_FACCESSAT@
+# if @REPLACE_FACCESSAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef faccessat
+#   define faccessat rpl_faccessat
+#  endif
+_GL_FUNCDECL_RPL (faccessat, int,
+                  (int fd, char const *name, int mode, int flag)
+                  _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (faccessat, int,
+                  (int fd, char const *name, int mode, int flag));
+# else
+#  if !@HAVE_FACCESSAT@
 _GL_FUNCDECL_SYS (faccessat, int,
                   (int fd, char const *file, int mode, int flag)
                   _GL_ARG_NONNULL ((2)));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (faccessat, int,
                   (int fd, char const *file, int mode, int flag));
+# endif
 _GL_CXXALIASWARN (faccessat);
 #elif defined GNULIB_POSIXCHECK
 # undef faccessat

@@ -1,6 +1,6 @@
 ;;; org-duration.el --- Library handling durations   -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -51,7 +51,7 @@
 
 (require 'cl-lib)
 (require 'org-macs)
-(declare-function org-trim "org-trim" (s &optional keep-lead))
+(declare-function org-trim "org" (s &optional keep-lead))
 
 
 ;;; Public variables
@@ -99,8 +99,8 @@ sure to call the following command:
   :set (lambda (var val) (set-default var val) (org-duration-set-regexps))
   :initialize 'custom-initialize-changed
   :type '(choice
-	  (const :tag "H:MM" 'h:mm)
-	  (const :tag "H:MM:SS" 'h:mm:ss)
+	  (const :tag "H:MM" h:mm)
+	  (const :tag "H:MM:SS" h:mm:ss)
 	  (alist :key-type (string :tag "Unit")
 		 :value-type (number :tag "Modifier"))))
 

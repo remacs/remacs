@@ -1,6 +1,6 @@
 /* Functions for the X window system.
 
-Copyright (C) 1989, 1992-2017 Free Software Foundation, Inc.
+Copyright (C) 1989, 1992-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -215,8 +215,9 @@ x_real_pos_and_offsets (struct frame *f,
   int win_x = 0, win_y = 0, outer_x = 0, outer_y = 0;
   int real_x = 0, real_y = 0;
   bool had_errors = false;
-  Window win = (FRAME_PARENT_FRAME (f)
-		? FRAME_X_WINDOW (FRAME_PARENT_FRAME (f))
+  struct frame *parent_frame = FRAME_PARENT_FRAME (f);
+  Window win = (parent_frame
+		? FRAME_X_WINDOW (parent_frame)
 		: f->output_data.x->parent_desc);
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   long max_len = 400;
@@ -355,8 +356,8 @@ x_real_pos_and_offsets (struct frame *f,
 	outer_geom_cookie = xcb_get_geometry (xcb_conn,
 					      FRAME_OUTER_WINDOW (f));
 
-      if ((dpyinfo->root_window == f->output_data.x->parent_desc)
-	  && !FRAME_PARENT_FRAME (f))
+      if (!parent_frame
+	  && dpyinfo->root_window == f->output_data.x->parent_desc)
 	/* Try _NET_FRAME_EXTENTS if our parent is the root window.  */
 	prop_cookie = xcb_get_property (xcb_conn, 0, win,
 					dpyinfo->Xatom_net_frame_extents,
@@ -470,8 +471,7 @@ x_real_pos_and_offsets (struct frame *f,
 #endif
     }
 
-  if ((dpyinfo->root_window == f->output_data.x->parent_desc)
-      && !FRAME_PARENT_FRAME (f))
+  if (!parent_frame && dpyinfo->root_window == f->output_data.x->parent_desc)
     {
       /* Try _NET_FRAME_EXTENTS if our parent is the root window.  */
 #ifdef USE_XCB
@@ -4125,7 +4125,7 @@ x_focus_frame (struct frame *f, bool noactivate)
 
 
 DEFUN ("xw-color-defined-p", Fxw_color_defined_p, Sxw_color_defined_p, 1, 2, 0,
-       doc: /* Internal function called by `color-defined-p', which see.
+       doc: /* Internal function called by `color-defined-p'.
 \(Note that the Nextstep version of this function ignores FRAME.)  */)
   (Lisp_Object color, Lisp_Object frame)
 {
@@ -4141,7 +4141,8 @@ DEFUN ("xw-color-defined-p", Fxw_color_defined_p, Sxw_color_defined_p, 1, 2, 0,
 }
 
 DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
-       doc: /* Internal function called by `color-values', which see.  */)
+       doc: /* Internal function called by `color-values'.
+\(Note that the Nextstep version of this function ignores FRAME.)  */)
   (Lisp_Object color, Lisp_Object frame)
 {
   XColor foo;
@@ -4156,7 +4157,7 @@ DEFUN ("xw-color-values", Fxw_color_values, Sxw_color_values, 1, 2, 0,
 }
 
 DEFUN ("xw-display-color-p", Fxw_display_color_p, Sxw_display_color_p, 0, 1, 0,
-       doc: /* Internal function called by `display-color-p', which see.  */)
+       doc: /* Internal function called by `display-color-p'.  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -4212,6 +4213,7 @@ DEFUN ("x-display-pixel-width", Fx_display_pixel_width, Sx_display_pixel_width,
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.
+\(On MS Windows, this function does not accept terminal objects.)
 
 On \"multi-monitor\" setups this refers to the pixel width for all
 physical monitors associated with TERMINAL.  To get information for
@@ -4229,6 +4231,7 @@ DEFUN ("x-display-pixel-height", Fx_display_pixel_height,
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.
+\(On MS Windows, this function does not accept terminal objects.)
 
 On \"multi-monitor\" setups this refers to the pixel height for all
 physical monitors associated with TERMINAL.  To get information for
@@ -4245,7 +4248,8 @@ DEFUN ("x-display-planes", Fx_display_planes, Sx_display_planes,
        doc: /* Return the number of bitplanes of the X display TERMINAL.
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
-If omitted or nil, that stands for the selected frame's display.  */)
+If omitted or nil, that stands for the selected frame's display.
+\(On MS Windows, this function does not accept terminal objects.)  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -4258,7 +4262,8 @@ DEFUN ("x-display-color-cells", Fx_display_color_cells, Sx_display_color_cells,
        doc: /* Return the number of color cells of the X display TERMINAL.
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
-If omitted or nil, that stands for the selected frame's display.  */)
+If omitted or nil, that stands for the selected frame's display.
+\(On MS Windows, this function does not accept terminal objects.)  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -4282,7 +4287,10 @@ DEFUN ("x-server-max-request-size", Fx_server_max_request_size,
        doc: /* Return the maximum request size of the X server of display TERMINAL.
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
-If omitted or nil, that stands for the selected frame's display.  */)
+If omitted or nil, that stands for the selected frame's display.
+
+On MS Windows, this function just returns 1.
+On Nextstep, this function just returns nil.  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -4297,8 +4305,8 @@ DEFUN ("x-server-vendor", Fx_server_vendor, Sx_server_vendor, 0, 1, 0,
 that operating systems cannot be developed and distributed noncommercially.)
 The optional argument TERMINAL specifies which display to ask about.
 
-For GNU and Unix systems, this queries the X server software; for
-MS-Windows, this queries the OS.
+For GNU and Unix systems, this queries the X server software.
+For MS Windows and Nextstep the result is hard-coded.
 
 TERMINAL should be a terminal object, a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.  */)
@@ -4318,8 +4326,9 @@ software in use.
 
 For GNU and Unix system, the first 2 numbers are the version of the X
 Protocol used on TERMINAL and the 3rd number is the distributor-specific
-release number.  For MS-Windows, the 3 numbers report the version and
-the build number of the OS.
+release number.  For MS Windows, the 3 numbers report the OS major and
+minor version and build number.  For Nextstep, the first 2 numbers are
+hard-coded and the 3rd represents the OS version.
 
 See also the function `x-server-vendor'.
 
@@ -4339,7 +4348,12 @@ DEFUN ("x-display-screens", Fx_display_screens, Sx_display_screens, 0, 1, 0,
        doc: /* Return the number of screens on the X server of display TERMINAL.
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
-If omitted or nil, that stands for the selected frame's display.  */)
+If omitted or nil, that stands for the selected frame's display.
+
+On MS Windows, this function just returns 1.
+On Nextstep, "screen" is in X terminology, not that of Nextstep.
+For the number of physical monitors, use `(length
+\(display-monitor-attributes-list TERMINAL))' instead.  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -4352,6 +4366,7 @@ DEFUN ("x-display-mm-height", Fx_display_mm_height, Sx_display_mm_height, 0, 1, 
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.
+\(On MS Windows, this function does not accept terminal objects.)
 
 On \"multi-monitor\" setups this refers to the height in millimeters for
 all physical monitors associated with TERMINAL.  To get information
@@ -4368,6 +4383,7 @@ DEFUN ("x-display-mm-width", Fx_display_mm_width, Sx_display_mm_width, 0, 1, 0,
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
 If omitted or nil, that stands for the selected frame's display.
+\(On MS Windows, this function does not accept terminal objects.)
 
 On \"multi-monitor\" setups this refers to the width in millimeters for
 all physical monitors associated with TERMINAL.  To get information
@@ -4382,10 +4398,13 @@ for each physical monitor, use `display-monitor-attributes-list'.  */)
 DEFUN ("x-display-backing-store", Fx_display_backing_store,
        Sx_display_backing_store, 0, 1, 0,
        doc: /* Return an indication of whether X display TERMINAL does backing store.
-The value may be `always', `when-mapped', or `not-useful'.
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
-If omitted or nil, that stands for the selected frame's display.  */)
+If omitted or nil, that stands for the selected frame's display.
+
+The value may be `always', `when-mapped', or `not-useful'.
+On Nextstep, the value may be `buffered', `retained', or `non-retained'.
+On MS Windows, this returns nothing useful.  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -4417,10 +4436,12 @@ DEFUN ("x-display-visual-class", Fx_display_visual_class,
        doc: /* Return the visual class of the X display TERMINAL.
 The value is one of the symbols `static-gray', `gray-scale',
 `static-color', `pseudo-color', `true-color', or `direct-color'.
+\(On MS Windows, the second and last result above are not possible.)
 
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should a terminal object, a frame or a display name (a string).
-If omitted or nil, that stands for the selected frame's display.  */)
+If omitted or nil, that stands for the selected frame's display.
+\(On MS Windows, this function does not accept terminal objects.)  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -4458,7 +4479,9 @@ DEFUN ("x-display-save-under", Fx_display_save_under,
        doc: /* Return t if the X display TERMINAL supports the save-under feature.
 The optional argument TERMINAL specifies which display to ask about.
 TERMINAL should be a terminal object, a frame or a display name (a string).
-If omitted or nil, that stands for the selected frame's display.  */)
+If omitted or nil, that stands for the selected frame's display.
+
+On MS Windows, this just returns nil.  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -4612,8 +4635,9 @@ x_make_monitor_attribute_list (struct MonitorInfo *monitors,
     {
       struct frame *f = XFRAME (frame);
 
-      if (FRAME_X_P (f) && FRAME_DISPLAY_INFO (f) == dpyinfo
-	  && !EQ (frame, tip_frame))
+      if (FRAME_X_P (f)
+	  && FRAME_DISPLAY_INFO (f) == dpyinfo
+	  && !FRAME_TOOLTIP_P (f))
 	{
 	  int i = x_get_monitor_for_frame (f, monitors, n_monitors);
 	  ASET (monitor_frames, i, Fcons (frame, AREF (monitor_frames, i)));
@@ -4914,8 +4938,9 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
     {
       struct frame *f = XFRAME (frame);
 
-      if (FRAME_X_P (f) && FRAME_DISPLAY_INFO (f) == dpyinfo
-	  && !EQ (frame, tip_frame))
+      if (FRAME_X_P (f)
+	  && FRAME_DISPLAY_INFO (f) == dpyinfo
+	  && !FRAME_TOOLTIP_P (f))
 	{
 	  GdkWindow *gwin = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
 
@@ -4936,6 +4961,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       gint width_mm = -1, height_mm = -1;
       GdkRectangle rec, work;
       struct MonitorInfo *mi = &monitors[i];
+      int scale = 1;
 
 #if GTK_CHECK_VERSION (3, 22, 0)
       GdkMonitor *monitor = gdk_display_get_monitor (gdpy, i);
@@ -4981,6 +5007,16 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       }
 #endif
 
+      /* GTK returns scaled sizes for the workareas.  */
+#if GTK_CHECK_VERSION (3, 22, 0)
+      scale = gdk_monitor_get_scale_factor (monitor);
+#elif GTK_CHECK_VERSION (3, 10, 0)
+      scale = gdk_screen_get_monitor_scale_factor (gscreen, i);
+#endif
+      rec.width *= scale;
+      rec.height *= scale;
+      work.width *= scale;
+      work.height *= scale;
 
       mi->geom.x = rec.x;
       mi->geom.y = rec.y;
@@ -5639,8 +5675,8 @@ DEFUN ("x-close-connection", Fx_close_connection,
        Sx_close_connection, 1, 1, 0,
        doc: /* Close the connection to TERMINAL's X server.
 For TERMINAL, specify a terminal object, a frame or a display name (a
-string).  If TERMINAL is nil, that stands for the selected frame's
-terminal.  */)
+string).  If TERMINAL is nil, that stands for the selected frame's terminal.
+\(On MS Windows, this function does not accept terminal objects.)  */)
   (Lisp_Object terminal)
 {
   struct x_display_info *dpyinfo = check_x_display_info (terminal);
@@ -5913,8 +5949,6 @@ FRAME.  The number 0 denotes the root window.
 If DELETE-P is non-nil, delete the property after retrieving it.
 If VECTOR-RET-P is non-nil, don't return a string but a vector of values.
 
-On MS Windows, this function accepts but ignores those optional arguments.
-
 Value is nil if FRAME hasn't a property with name PROP or if PROP has
 no value of TYPE (always string in the MS Windows case).  */)
   (Lisp_Object prop, Lisp_Object frame, Lisp_Object type,
@@ -6048,22 +6082,27 @@ Otherwise, the return value is a vector with the following fields:
  ***********************************************************************/
 
 static void compute_tip_xy (struct frame *, Lisp_Object, Lisp_Object,
-                            Lisp_Object, int, int, int *, int *);
+			    Lisp_Object, int, int, int *, int *);
 
-/* The frame of a currently visible tooltip.  */
+/* The frame of the currently visible tooltip.  */
+static Lisp_Object tip_frame;
 
-Lisp_Object tip_frame;
-
-/* If non-nil, a timer started that hides the last tooltip when it
-   fires.  */
-
-static Lisp_Object tip_timer;
+/* The window-system window corresponding to the frame of the
+   currently visible tooltip.  */
 Window tip_window;
 
-/* If non-nil, a vector of 3 elements containing the last args
-   with which x-show-tip was called.  See there.  */
+/* A timer that hides or deletes the currently visible tooltip when it
+   fires.  */
+static Lisp_Object tip_timer;
 
-static Lisp_Object last_show_tip_args;
+/* STRING argument of last `x-show-tip' call.  */
+static Lisp_Object tip_last_string;
+
+/* Normalized FRAME argument of last `x-show-tip' call.  */
+static Lisp_Object tip_last_frame;
+
+/* PARMS argument of last `x-show-tip' call.  */
+static Lisp_Object tip_last_parms;
 
 
 static void
@@ -6137,6 +6176,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
   f->output_data.x->white_relief.pixel = -1;
   f->output_data.x->black_relief.pixel = -1;
 
+  f->tooltip = true;
   fset_icon_name (f, Qnil);
   FRAME_DISPLAY_INFO (f) = dpyinfo;
   f->output_data.x->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
@@ -6328,7 +6368,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
     }
 
   /* FIXME - can this be done in a similar way to normal frames?
-     https://lists.gnu.org/archive/html/emacs-devel/2007-10/msg00641.html */
+     https://lists.gnu.org/r/emacs-devel/2007-10/msg00641.html */
 
   /* Set the `display-type' frame parameter before setting up faces. */
   {
@@ -6401,7 +6441,9 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
    the display in *ROOT_X, and *ROOT_Y.  */
 
 static void
-compute_tip_xy (struct frame *f, Lisp_Object parms, Lisp_Object dx, Lisp_Object dy, int width, int height, int *root_x, int *root_y)
+compute_tip_xy (struct frame *f,
+		Lisp_Object parms, Lisp_Object dx, Lisp_Object dy,
+		int width, int height, int *root_x, int *root_y)
 {
   Lisp_Object left, top, right, bottom;
   int win_x, win_y;
@@ -6498,7 +6540,19 @@ compute_tip_xy (struct frame *f, Lisp_Object parms, Lisp_Object dx, Lisp_Object 
 }
 
 
-/* Hide tooltip.  Delete its frame if DELETE is true.  */
+/**
+ * x_hide_tip:
+ *
+ * Hide currently visible tooltip and cancel its timer.
+ *
+ * If GTK+ system tooltips are used, this will try to hide the tooltip
+ * referenced by the x_output structure of tooltip_last_frame.  For
+ * Emacs tooltips this will try to make tooltip_frame invisible (if
+ * DELETE is false) or delete tooltip_frame (if DELETE is true).
+ *
+ * Return Qt if the tooltip was either deleted or made invisible, Qnil
+ * otherwise.
+ */
 static Lisp_Object
 x_hide_tip (bool delete)
 {
@@ -6508,9 +6562,80 @@ x_hide_tip (bool delete)
       tip_timer = Qnil;
     }
 
+#ifdef USE_GTK
+  /* Any GTK+ system tooltip can be found via the x_output structure of
+     tip_last_frame, provided that frame is still live.  Any Emacs
+     tooltip is found via the tip_frame variable.  Note that the current
+     value of x_gtk_use_system_tooltips might not be the same as used
+     for the tooltip we have to hide, see Bug#30399.  */
+  if ((NILP (tip_last_frame) && NILP (tip_frame))
+      || (!x_gtk_use_system_tooltips
+	  && !delete
+	  && FRAMEP (tip_frame)
+	  && FRAME_LIVE_P (XFRAME (tip_frame))
+	  && !FRAME_VISIBLE_P (XFRAME (tip_frame))))
+    /* Either there's no tooltip to hide or it's an already invisible
+       Emacs tooltip and we don't want to change its type.  Return
+       quickly.  */
+    return Qnil;
+  else
+    {
+      ptrdiff_t count;
+      Lisp_Object was_open = Qnil;
 
+      count = SPECPDL_INDEX ();
+      specbind (Qinhibit_redisplay, Qt);
+      specbind (Qinhibit_quit, Qt);
+
+      /* Try to hide the GTK+ system tip first.  */
+      if (FRAMEP (tip_last_frame))
+	{
+	  struct frame *f = XFRAME (tip_last_frame);
+
+	  if (FRAME_LIVE_P (f))
+	    {
+	      if (xg_hide_tooltip (f))
+		was_open = Qt;
+	    }
+	}
+
+      /* Reset tip_last_frame, it will be reassigned when showing the
+	 next GTK+ system tooltip.  */
+      tip_last_frame = Qnil;
+
+      /* Now look whether there's an Emacs tip around.  */
+      if (FRAMEP (tip_frame))
+	{
+	  struct frame *f = XFRAME (tip_frame);
+
+	  if (FRAME_LIVE_P (f))
+	    {
+	      if (delete || x_gtk_use_system_tooltips)
+		{
+		  /* Delete the Emacs tooltip frame when DELETE is true
+		     or we change the tooltip type from an Emacs one to
+		     a GTK+ system one.  */
+		  delete_frame (tip_frame, Qnil);
+		  tip_frame = Qnil;
+		}
+	      else
+		x_make_frame_invisible (f);
+
+	      was_open = Qt;
+	    }
+	  else
+	    tip_frame = Qnil;
+	}
+      else
+	tip_frame = Qnil;
+
+      return unbind_to (count, was_open);
+    }
+#else /* not USE_GTK */
   if (NILP (tip_frame)
-      || (!delete && FRAMEP (tip_frame)
+      || (!delete
+	  && FRAMEP (tip_frame)
+	  && FRAME_LIVE_P (XFRAME (tip_frame))
 	  && !FRAME_VISIBLE_P (XFRAME (tip_frame))))
     return Qnil;
   else
@@ -6522,60 +6647,56 @@ x_hide_tip (bool delete)
       specbind (Qinhibit_redisplay, Qt);
       specbind (Qinhibit_quit, Qt);
 
-#ifdef USE_GTK
-      {
-	/* When using system tooltip, tip_frame is the Emacs frame on
-	   which the tip is shown.  */
-	struct frame *f = XFRAME (tip_frame);
-
-	if (FRAME_LIVE_P (f) && xg_hide_tooltip (f))
-	  {
-	    tip_frame = Qnil;
-	    was_open = Qt;
-	  }
-      }
-#endif
-
       if (FRAMEP (tip_frame))
 	{
-	  if (delete)
-	    {
-	      delete_frame (tip_frame, Qnil);
-	      tip_frame = Qnil;
-	    }
-	  else
-	    x_make_frame_invisible (XFRAME (tip_frame));
+	  struct frame *f = XFRAME (tip_frame);
 
-	  was_open = Qt;
+	  if (FRAME_LIVE_P (f))
+	    {
+	      if (delete)
+		{
+		  delete_frame (tip_frame, Qnil);
+		  tip_frame = Qnil;
+		}
+	      else
+		x_make_frame_invisible (XFRAME (tip_frame));
 
 #ifdef USE_LUCID
-	  /* Bloodcurdling hack alert: The Lucid menu bar widget's
-	     redisplay procedure is not called when a tip frame over
-	     menu items is unmapped.  Redisplay the menu manually...  */
-	  {
-	    Widget w;
-	    struct frame *f = SELECTED_FRAME ();
-	    if (FRAME_X_P (f) && FRAME_LIVE_P (f))
+	      /* Bloodcurdling hack alert: The Lucid menu bar widget's
+		 redisplay procedure is not called when a tip frame over
+		 menu items is unmapped.  Redisplay the menu manually...  */
 	      {
-		w = f->output_data.x->menubar_widget;
+		Widget w;
+		struct frame *f = SELECTED_FRAME ();
 
-		if (!DoesSaveUnders (FRAME_DISPLAY_INFO (f)->screen)
-		    && w != NULL)
+		if (FRAME_X_P (f) && FRAME_LIVE_P (f))
 		  {
-		    block_input ();
-		    xlwmenu_redisplay (w);
-		    unblock_input ();
+		    w = f->output_data.x->menubar_widget;
+
+		    if (!DoesSaveUnders (FRAME_DISPLAY_INFO (f)->screen)
+			&& w != NULL)
+		      {
+			block_input ();
+			xlwmenu_redisplay (w);
+			unblock_input ();
+		      }
 		  }
 	      }
-	  }
 #endif /* USE_LUCID */
+
+	      was_open = Qt;
+	    }
+	  else
+	    tip_frame = Qnil;
 	}
       else
 	tip_frame = Qnil;
 
       return unbind_to (count, was_open);
     }
+#endif /* USE_GTK */
 }
+
 
 DEFUN ("x-show-tip", Fx_show_tip, Sx_show_tip, 1, 6, 0,
        doc: /* Show STRING in a "tooltip" window on frame FRAME.
@@ -6607,7 +6728,8 @@ with offset DY added (default is -10).
 
 A tooltip's maximum size is specified by `x-max-tooltip-size'.
 Text larger than the specified size is clipped.  */)
-  (Lisp_Object string, Lisp_Object frame, Lisp_Object parms, Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
+  (Lisp_Object string, Lisp_Object frame, Lisp_Object parms,
+   Lisp_Object timeout, Lisp_Object dx, Lisp_Object dy)
 {
   struct frame *f, *tip_f;
   struct window *w;
@@ -6618,7 +6740,7 @@ Text larger than the specified size is clipped.  */)
   int old_windows_or_buffers_changed = windows_or_buffers_changed;
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count_1;
-  Lisp_Object window, size;
+  Lisp_Object window, size, tip_buf;
   AUTO_STRING (tip, " *tip*");
 
   specbind (Qinhibit_redisplay, Qt);
@@ -6627,7 +6749,10 @@ Text larger than the specified size is clipped.  */)
   if (SCHARS (string) == 0)
     string = make_unibyte_string (" ", 1);
 
+  if (NILP (frame))
+    frame = selected_frame;
   f = decode_window_system_frame (frame);
+
   if (NILP (timeout))
     timeout = make_number (5);
   else
@@ -6657,36 +6782,27 @@ Text larger than the specified size is clipped.  */)
         {
 	  compute_tip_xy (f, parms, dx, dy, width, height, &root_x, &root_y);
           xg_show_tooltip (f, root_x, root_y);
-          /* This is used in Fx_hide_tip.  */
-          XSETFRAME (tip_frame, f);
+	  tip_last_frame = frame;
         }
+
       unblock_input ();
       if (ok) goto start_timer;
     }
 #endif /* USE_GTK */
 
-  if (NILP (last_show_tip_args))
-    last_show_tip_args = Fmake_vector (make_number (3), Qnil);
-
   if (FRAMEP (tip_frame) && FRAME_LIVE_P (XFRAME (tip_frame)))
     {
-      Lisp_Object last_string = AREF (last_show_tip_args, 0);
-      Lisp_Object last_frame = AREF (last_show_tip_args, 1);
-      Lisp_Object last_parms = AREF (last_show_tip_args, 2);
-
       if (FRAME_VISIBLE_P (XFRAME (tip_frame))
-	  && EQ (frame, last_frame)
-	  && !NILP (Fequal_including_properties (last_string, string))
-	  && !NILP (Fequal (last_parms, parms)))
+	  && EQ (frame, tip_last_frame)
+	  && !NILP (Fequal_including_properties (tip_last_string, string))
+	  && !NILP (Fequal (tip_last_parms, parms)))
 	{
 	  /* Only DX and DY have changed.  */
 	  tip_f = XFRAME (tip_frame);
 	  if (!NILP (tip_timer))
 	    {
-	      Lisp_Object timer = tip_timer;
-
+	      call1 (Qcancel_timer, tip_timer);
 	      tip_timer = Qnil;
-	      call1 (Qcancel_timer, timer);
 	    }
 
 	  block_input ();
@@ -6698,15 +6814,14 @@ Text larger than the specified size is clipped.  */)
 
 	  goto start_timer;
 	}
-      else if (tooltip_reuse_hidden_frame && EQ (frame, last_frame))
+      else if (tooltip_reuse_hidden_frame && EQ (frame, tip_last_frame))
 	{
 	  bool delete = false;
 	  Lisp_Object tail, elt, parm, last;
 
 	  /* Check if every parameter in PARMS has the same value in
-	     last_parms unless it should be ignored by means of
-	     Vtooltip_reuse_hidden_frame_parameters.  This may destruct
-	     last_parms which, however, will be recreated below.  */
+	     tip_last_parms.  This may destruct tip_last_parms which,
+	     however, will be recreated below.  */
 	  for (tail = parms; CONSP (tail); tail = XCDR (tail))
 	    {
 	      elt = XCAR (tail);
@@ -6716,7 +6831,7 @@ Text larger than the specified size is clipped.  */)
 	      if (!EQ (parm, Qleft) && !EQ (parm, Qtop)
 		  && !EQ (parm, Qright) && !EQ (parm, Qbottom))
 		{
-		  last = Fassq (parm, last_parms);
+		  last = Fassq (parm, tip_last_parms);
 		  if (NILP (Fequal (Fcdr (elt), Fcdr (last))))
 		    {
 		      /* We lost, delete the old tooltip.  */
@@ -6724,17 +6839,18 @@ Text larger than the specified size is clipped.  */)
 		      break;
 		    }
 		  else
-		    last_parms = call2 (Qassq_delete_all, parm, last_parms);
+		    tip_last_parms =
+		      call2 (Qassq_delete_all, parm, tip_last_parms);
 		}
 	      else
-		last_parms = call2 (Qassq_delete_all, parm, last_parms);
+		tip_last_parms =
+		  call2 (Qassq_delete_all, parm, tip_last_parms);
 	    }
 
-	  /* Now check if every parameter in what is left of last_parms
-	     with a non-nil value has an association in PARMS unless it
-	     should be ignored by means of
-	     Vtooltip_reuse_hidden_frame_parameters.  */
-	  for (tail = last_parms; CONSP (tail); tail = XCDR (tail))
+	  /* Now check if every parameter in what is left of
+	     tip_last_parms with a non-nil value has an association in
+	     PARMS.  */
+	  for (tail = tip_last_parms; CONSP (tail); tail = XCDR (tail))
 	    {
 	      elt = XCAR (tail);
 	      parm = Fcar (elt);
@@ -6755,9 +6871,9 @@ Text larger than the specified size is clipped.  */)
   else
     x_hide_tip (true);
 
-  ASET (last_show_tip_args, 0, string);
-  ASET (last_show_tip_args, 1, frame);
-  ASET (last_show_tip_args, 2, parms);
+  tip_last_frame = frame;
+  tip_last_string = string;
+  tip_last_parms = parms;
 
   if (!FRAMEP (tip_frame) || !FRAME_LIVE_P (XFRAME (tip_frame)))
     {
@@ -6783,7 +6899,12 @@ Text larger than the specified size is clipped.  */)
 
   tip_f = XFRAME (tip_frame);
   window = FRAME_ROOT_WINDOW (tip_f);
-  set_window_buffer (window, Fget_buffer_create (tip), false, false);
+  tip_buf = Fget_buffer_create (tip);
+  /* We will mark the tip window a "pseudo-window" below, and such
+     windows cannot have display margins.  */
+  bset_left_margin_cols (XBUFFER (tip_buf), make_number (0));
+  bset_right_margin_cols (XBUFFER (tip_buf), make_number (0));
+  set_window_buffer (window, tip_buf, false, false);
   w = XWINDOW (window);
   w->pseudo_window_p = true;
 
@@ -6939,18 +7060,7 @@ clean_up_file_dialog (void *arg)
 
 
 DEFUN ("x-file-dialog", Fx_file_dialog, Sx_file_dialog, 2, 5, 0,
-       doc: /* Read file name, prompting with PROMPT in directory DIR.
-Use a file selection dialog.  Select DEFAULT-FILENAME in the dialog's file
-selection box, if specified.  If MUSTMATCH is non-nil, the returned file
-or directory must exist.
-
-This function is only defined on NS, MS Windows, and X Windows with the
-Motif or Gtk toolkits.  With the Motif toolkit, ONLY-DIR-P is ignored.
-Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.
-On Windows 7 and later, the file selection dialog "remembers" the last
-directory where the user selected a file, and will open that directory
-instead of DIR on subsequent invocations of this function with the same
-value of DIR as in previous invocations; this is standard Windows behavior.  */)
+       doc: /* SKIP: real doc in USE_GTK definition in xfns.c.  */)
   (Lisp_Object prompt, Lisp_Object dir, Lisp_Object default_filename,
    Lisp_Object mustmatch, Lisp_Object only_dir_p)
 {
@@ -7119,10 +7229,10 @@ or directory must exist.
 This function is only defined on NS, MS Windows, and X Windows with the
 Motif or Gtk toolkits.  With the Motif toolkit, ONLY-DIR-P is ignored.
 Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.
-On Windows 7 and later, the file selection dialog "remembers" the last
+On MS Windows 7 and later, the file selection dialog "remembers" the last
 directory where the user selected a file, and will open that directory
 instead of DIR on subsequent invocations of this function with the same
-value of DIR as in previous invocations; this is standard Windows behavior.  */)
+value of DIR as in previous invocations; this is standard MS Windows behavior.  */)
   (Lisp_Object prompt, Lisp_Object dir, Lisp_Object default_filename, Lisp_Object mustmatch, Lisp_Object only_dir_p)
 {
   struct frame *f = SELECTED_FRAME ();
@@ -7697,9 +7807,9 @@ unless you set it to something else.  */);
 	       Vx_pixel_size_width_font_regexp,
     doc: /* Regexp matching a font name whose width is the same as `PIXEL_SIZE'.
 
-Since Emacs gets width of a font matching with this regexp from
-PIXEL_SIZE field of the name, font finding mechanism gets faster for
-such a font.  This is especially effective for such large fonts as
+Since Emacs gets the width of a font matching this regexp from the
+PIXEL_SIZE field of the name, the font-finding mechanism gets faster for
+such a font.  This is especially effective for large fonts such as
 Chinese, Japanese, and Korean.  */);
   Vx_pixel_size_width_font_regexp = Qnil;
 
@@ -7813,7 +7923,6 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   defsubr (&Sx_display_list);
   defsubr (&Sx_synchronize);
   defsubr (&Sx_backspace_delete_keys_p);
-
   defsubr (&Sx_show_tip);
   defsubr (&Sx_hide_tip);
   defsubr (&Sx_double_buffered_p);
@@ -7821,9 +7930,12 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   staticpro (&tip_timer);
   tip_frame = Qnil;
   staticpro (&tip_frame);
-
-  last_show_tip_args = Qnil;
-  staticpro (&last_show_tip_args);
+  tip_last_frame = Qnil;
+  staticpro (&tip_last_frame);
+  tip_last_string = Qnil;
+  staticpro (&tip_last_string);
+  tip_last_parms = Qnil;
+  staticpro (&tip_last_parms);
 
   defsubr (&Sx_uses_old_gtk_dialog);
 #if defined (USE_MOTIF) || defined (USE_GTK)

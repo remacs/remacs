@@ -1,6 +1,6 @@
 ;;; lread-tests.el --- tests for lread.c -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2018 Free Software Foundation, Inc.
 
 ;; Author: Philipp Stephani <phst@google.com>
 
@@ -173,13 +173,20 @@ literals (Bug#20852)."
     (should (string-suffix-p "/somelib.el" (caar load-history)))))
 
 (ert-deftest lread-tests--old-style-backquotes ()
-  "Check that loading warns about old-style backquotes."
+  "Check that loading doesn't accept old-style backquotes."
   (lread-tests--with-temp-file file-name
     (write-region "(` (a b))" nil file-name)
-    (should (equal (load file-name nil :nomessage :nosuffix) t))
-    (should (equal (lread-tests--last-message)
-                   (concat (format-message "Loading `%s': " file-name)
-                           "old-style backquotes detected!")))))
+    (let ((data (should-error (load file-name nil :nomessage :nosuffix))))
+      (should (equal (cdr data)
+                     (list (concat (format-message "Loading `%s': " file-name)
+                                   "old-style backquotes detected!")))))))
+
+(ert-deftest lread-tests--force-new-style-backquotes ()
+  (let ((data (should-error (read "(` (a b))"))))
+    (should (equal (cdr data) '("Old-style backquotes detected!"))))
+  (should (equal (let ((force-new-style-backquotes t))
+                   (read "(` (a b))"))
+                 '(`(a b)))))
 
 (ert-deftest lread-lread--substitute-object-in-subtree ()
   (let ((x (cons 0 1)))

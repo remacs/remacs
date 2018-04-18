@@ -1,5 +1,5 @@
 /* Definitions and headers for communication with NeXT/Open/GNUstep API.
-   Copyright (C) 1989, 1993, 2005, 2008-2017 Free Software Foundation,
+   Copyright (C) 1989, 1993, 2005, 2008-2018 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -585,6 +585,8 @@ typedef id instancetype;
   }
 - (instancetype) init;
 - (void) setText: (char *)text;
+- (void) setBackgroundColor: (NSColor *)col;
+- (void) setForegroundColor: (NSColor *)col;
 - (void) showAtX: (int)x Y: (int)y for: (int)seconds;
 - (void) hide;
 - (BOOL) isActive;
@@ -646,6 +648,8 @@ typedef id instancetype;
 - (NSColor *)stippleMask;
 - (Lisp_Object)getMetadata;
 - (BOOL)setFrame: (unsigned int) index;
+- (void)setSizeFromSpec: (Lisp_Object) spec;
+- (instancetype)rotate: (double)rotation;
 @end
 
 
@@ -1073,11 +1077,11 @@ struct x_output
    window or, if there is no parent window, the screen. */
 #define NS_PARENT_WINDOW_LEFT_POS(f)                                    \
   (FRAME_PARENT_FRAME (f) != NULL                                       \
-   ? [[FRAME_NS_VIEW (f) window] parentWindow].frame.origin.x : 0)
+   ? [FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window].frame.origin.x : 0)
 #define NS_PARENT_WINDOW_TOP_POS(f)                                     \
   (FRAME_PARENT_FRAME (f) != NULL                                       \
-   ? ([[FRAME_NS_VIEW (f) window] parentWindow].frame.origin.y          \
-      + [[FRAME_NS_VIEW (f) window] parentWindow].frame.size.height     \
+   ? ([FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window].frame.origin.y    \
+      + [FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window].frame.size.height \
       - FRAME_NS_TITLEBAR_HEIGHT (FRAME_PARENT_FRAME (f)))              \
    : [[[NSScreen screens] objectAtIndex: 0] frame].size.height)
 
@@ -1233,7 +1237,7 @@ extern void ns_finish_events (void);
 #ifdef __OBJC__
 /* Needed in nsfns.m.  */
 extern void
-ns_set_represented_filename (NSString *fstr, struct frame *f);
+ns_set_represented_filename (struct frame *f);
 
 #endif
 
@@ -1306,6 +1310,7 @@ extern char gnustep_base_version[];  /* version tracking */
 #define NSWindowStyleMaskUtilityWindow     NSUtilityWindowMask
 #define NSAlertStyleCritical               NSCriticalAlertStyle
 #define NSControlSizeRegular               NSRegularControlSize
+#define NSCompositingOperationCopy         NSCompositeCopy
 
 /* And adds NSWindowStyleMask. */
 #ifdef __OBJC__
@@ -1319,5 +1324,10 @@ enum NSWindowTabbingMode
     NSWindowTabbingModePreferred,
     NSWindowTabbingModeDisallowed
   };
+#endif /* !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_12)  */
+
+#if !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_13)
+/* Deprecated in macOS 10.13.  */
+#define NSPasteboardNameGeneral NSGeneralPboard
 #endif
 #endif	/* HAVE_NS */

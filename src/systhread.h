@@ -1,5 +1,5 @@
 /* System thread definitions
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -100,6 +100,7 @@ extern void sys_cond_broadcast (sys_cond_t *);
 extern void sys_cond_destroy (sys_cond_t *);
 
 extern sys_thread_t sys_thread_self (void);
+extern bool sys_thread_equal (sys_thread_t, sys_thread_t);
 
 extern int sys_thread_create (sys_thread_t *, const char *,
 			      thread_creation_function *,

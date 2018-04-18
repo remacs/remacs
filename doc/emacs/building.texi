@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Building
@@ -58,8 +58,8 @@ compile}.  This reads a shell command line using the minibuffer, and
 then executes the command by running a shell as a subprocess (or
 @dfn{inferior process}) of Emacs.  The output is inserted in a buffer
 named @file{*compilation*}.  The current buffer's default directory is
-used as the working directory for the execution of the command;
-normally, therefore, compilation takes place in this directory.
+used as the working directory for the execution of the command, so by
+default compilation takes place in that directory.
 
 @vindex compile-command
   The default compilation command is @samp{make -k}, which is usually
@@ -90,9 +90,9 @@ inserted above point, which remains at the end.  Otherwise, point
 remains fixed while compilation output is added at the end of the
 buffer.
 
-  While compilation proceeds, the mode line is updated to show the
-number of errors, warnings, and informational messages that have been
-seen so far.
+  While compilation proceeds, the mode line shows the number of
+errors, warnings, and informational messages emitted by the compiler
+so far.
 
 @cindex compilation buffer, keeping point at end
 @vindex compilation-scroll-output
@@ -209,14 +209,13 @@ through errors in the opposite direction.
 act on the errors or matches listed in @file{*compilation*} and
 @file{*grep*} buffers; they also know how to iterate through error or
 match lists produced by other commands, such as @kbd{M-x occur}
-(@pxref{Other Repeating Search}).  If you are already in a buffer
-containing error messages or matches, those are the ones that are
-iterated through; otherwise, Emacs looks for a buffer containing error
-messages or matches amongst the windows of the selected frame, then
-for one that @code{next-error} or @code{previous-error} previously
-iterated through, and finally amongst all other buffers.  If the
-buffer chosen for iterating through is not currently displayed in a
-window, it will be displayed.
+(@pxref{Other Repeating Search}).  If the current buffer contains
+error messages or matches, these commands will iterate through them;
+otherwise, Emacs looks for a buffer containing error messages or
+matches amongst the windows of the selected frame, then for any buffer
+that @code{next-error} or @code{previous-error} previously visited,
+and finally all other buffers.  Any buffer these commands iterate
+through that is not currently displayed in a window will be displayed.
 
 @vindex compilation-skip-threshold
   By default, the @code{next-error} and @code{previous-error} commands
@@ -303,6 +302,11 @@ And here's how to do it in csh:
 if ($?prompt) set prompt = @dots{}
 @end example
 
+@vindex TERM@r{, environment variable, in compilation mode}
+  If you want to customize the value of the @env{TERM} environment
+variable passed to the compilation subshell, customize the variable
+@code{comint-terminfo-terminal} (@pxref{Shell Options}).
+
   Emacs does not expect a compiler process to launch asynchronous
 subprocesses; if it does, and they keep running after the main
 compiler process has terminated, Emacs may kill them or their output
@@ -379,13 +383,18 @@ use of this feature by setting @code{grep-highlight-matches} to
 @code{t}.  When displaying a match in the source buffer, the exact
 match will be highlighted, instead of the entire source line.
 
+  As with compilation commands (@pxref{Compilation}), while the grep
+command runs, the mode line shows the running number of matches found
+and highlighted so far.
+
   The @command{grep} commands will offer to save buffers before
 running.  This is controlled by the @code{grep-save-buffers} variable.
 The possible values are either @code{nil} (don't save), @code{ask}
-(ask before saving), a function which will be used as a predicate (and
-is called with the file name as the parameter and should return
-non-nil if the buffer is to be saved), and any other non-@code{nil}
-value means that all buffers should be saved without asking.
+(ask before saving), or a function which will be used as a predicate
+(and is called with the file name as the parameter and should return
+non-@code{nil} if the buffer is to be saved).  Any other
+non-@code{nil} value means that all buffers should be saved without
+asking.
 
 @findex grep-find
 @findex find-grep
@@ -417,6 +426,15 @@ the variable @code{grep-files-aliases}.
 @code{grep-find-ignored-directories} are automatically skipped by
 @kbd{M-x rgrep}.  The default value includes the data directories used
 by various version control systems.
+
+@vindex grep-find-hide
+  By default, the shell commands constructed for @code{lgrep},
+@code{rgrep}, and @code{zgrep} are abbreviated for display by
+concealing the part that contains a long list of files and directories
+to ignore.  You can reveal the concealed part by clicking on the
+button with ellipsis, which represents them.  To disable this
+abbreviation of the shell commands, customize the option
+@code{grep-find-hide} to a @code{nil} value.
 
 @node Flymake
 @section Finding Syntax Errors On The Fly
@@ -595,15 +613,16 @@ to recompile and restart the program.
 @vindex gud-tooltip-echo-area
   GUD Tooltip mode is a global minor mode that adds tooltip support to
 GUD@.  To toggle this mode, type @kbd{M-x gud-tooltip-mode}.  It is
-disabled by default.  If enabled, you can move the mouse cursor over a
+disabled by default.  If enabled, you can move the mouse pointer over a
 variable, a function, or a macro (collectively called
 @dfn{identifiers}) to show their values in tooltips
-(@pxref{Tooltips}).  Alternatively, mark an identifier or an
-expression by dragging the mouse over it, then leave the mouse in the
-marked area to have the value of the expression displayed in a
-tooltip.  The GUD Tooltip mode takes effect in the GUD interaction
-buffer, and in all source buffers with major modes listed in the
-variable @code{gud-tooltip-modes}.  If the variable
+(@pxref{Tooltips}).  If just placing the mouse pointer over an
+expression doesn't show the value of the expression you had in mind,
+you can tell Emacs more explicitly what expression to evaluate by
+dragging the mouse over the expression, then leaving the mouse inside
+the marked area.  The GUD Tooltip mode takes effect in the GUD
+interaction buffer, and in all source buffers with major modes listed
+in the variable @code{gud-tooltip-modes}.  If the variable
 @code{gud-tooltip-echo-area} is non-@code{nil}, or if you turned off
 the tooltip mode, values are shown in the echo area instead of a
 tooltip.
@@ -632,7 +651,7 @@ Set a breakpoint on the source line that point is on.
 buffer, sets a debugger breakpoint on the current source line.  This
 command is available only after starting GUD@.  If you call it in a
 buffer that is not associated with any debugger subprocess, it signals
-a error.
+an error.
 
 @kindex C-x C-a @r{(GUD)}
   The following commands are available both in the GUD interaction
@@ -903,10 +922,18 @@ layout by typing @kbd{M-x gdb-restore-windows}.  To toggle
 between the many windows layout and a simple layout with just the GUD
 interaction buffer and a source file, type @kbd{M-x gdb-many-windows}.
 
+  If you have an elaborate window setup, and don't want
+@code{gdb-many-windows} to disrupt that, it is better to invoke
+@kbd{M-x gdb} in a separate frame to begin with, then the arrangement
+of windows on your original frame will not be affected.  A separate
+frame for GDB sessions can come in especially handy if you work on a
+text-mode terminal, where the screen estate for windows could be at a
+premium.
+
   You may also specify additional GDB-related buffers to display,
 either in the same frame or a different one.  Select the buffers you
-want by typing @code{M-x gdb-display-@var{buffertype}-buffer} or
-@code{M-x gdb-frame-@var{buffertype}-buffer}, where @var{buffertype}
+want by typing @kbd{M-x gdb-display-@var{buffertype}-buffer} or
+@kbd{M-x gdb-frame-@var{buffertype}-buffer}, where @var{buffertype}
 is the relevant buffer type, such as @samp{breakpoints}.  You can do
 the same with the menu bar, with the @samp{GDB-Windows} and
 @samp{GDB-Frames} sub-menus of the @samp{GUD} menu.
@@ -1071,9 +1098,9 @@ display the corresponding buffer in a new frame.
   When you create a buffer showing information about some specific
 thread, it becomes bound to that thread and keeps showing actual
 information while you debug your program.  The mode indicator for each
-GDB buffer shows the number of thread it is showing information about.
-The thread number is also included in the buffer name of bound
-buffers.
+GDB buffer shows the number of the thread whose information that
+buffer displays.  The thread number is also included in the name of
+each bound buffer.
 
   Further commands are available in the GDB Threads buffer which
 depend on the mode of GDB that is used for controlling execution of
@@ -1197,9 +1224,9 @@ edit its value.
 @vindex gdb-delete-out-of-scope
   If the variable @code{gdb-delete-out-of-scope} is non-@code{nil}
 (the default value), Emacs automatically deletes watch expressions
-which go out of scope.  Sometimes, when re-entering the same function,
-it may be useful to set this value to @code{nil} so that you don't
-need to recreate the watch expression.
+which go out of scope.  Sometimes, when your program re-enters the
+same function many times, it may be useful to set this value to
+@code{nil} so that you don't need to recreate the watch expression.
 
 @vindex gdb-use-colon-colon-notation
   If the variable @code{gdb-use-colon-colon-notation} is
@@ -1264,7 +1291,7 @@ execution control commands.
 value), interruption and continuation commands apply to all threads,
 so you can halt or continue all your threads with one command using
 @code{gud-stop-subjob} and @code{gud-cont}, respectively.  The
-@samp{Go} button is shown on the toolbar when at least one thread is
+@samp{Go} button is shown on the tool bar when at least one thread is
 stopped, whereas @samp{Stop} button is shown when at least one thread
 is running.
 
@@ -1272,8 +1299,8 @@ is running.
 
 When @code{gdb-gud-control-all-threads} is @code{nil}, only the
 current thread is stopped/continued.  @samp{Go} and @samp{Stop}
-buttons on the GUD toolbar are shown depending on the state of current
-thread.
+buttons on the GUD tool bar are shown depending on the state of
+current thread.
 @end table
 
 You can change the current value of @code{gdb-gud-control-all-threads}
@@ -1385,12 +1412,13 @@ Loading,,, elisp, the Emacs Lisp Reference Manual}.
 @code{load-path}.  Its value should be a list of directories
 (strings).  These directories are searched, in the specified order, by
 the @kbd{M-x load-library} command, the lower-level @code{load}
-function, and other Emacs functions that find Emacs Lisp libraries.  A
-list entry in @code{load-path} can also have the special value
+function, and other Emacs functions that find Emacs Lisp libraries.
+An entry in @code{load-path} can also have the special value
 @code{nil}, which stands for the current default directory, but it is
-almost always a bad idea to use this.  (If you find yourself wishing
-that @code{nil} were in the list, most likely what you really want is
-to use @kbd{M-x load-file}.)
+almost always a bad idea to use this, because its meaning will depend
+on the buffer that is current when @code{load-path} is used by Emacs.
+(If you find yourself wishing that @code{nil} were in the list, most
+likely what you really want is to use @kbd{M-x load-file}.)
 
   The default value of @code{load-path} is a list of directories where
 the Lisp code for Emacs itself is stored.  If you have libraries of
@@ -1423,7 +1451,7 @@ buffer).  To disable this feature, change the variable
 @vindex load-dangerous-libraries
 @cindex Lisp files byte-compiled by XEmacs
   By default, Emacs refuses to load compiled Lisp files which were
-compiled with XEmacs, a modified versions of Emacs---they can cause
+compiled with XEmacs, a modified version of Emacs---they can cause
 Emacs to crash.  Set the variable @code{load-dangerous-libraries} to
 @code{t} if you want to try loading them.
 
@@ -1464,7 +1492,7 @@ Evaluate all the Emacs Lisp expressions in the buffer.
 @ifinfo
 @c This uses 'colon' instead of a literal ':' because Info cannot
 @c cope with a ':' in a menu.
-@kindex M-@key{colon}
+@kindex M-colon
 @end ifinfo
 @ifnotinfo
 @kindex M-:

@@ -1,6 +1,6 @@
 ;;; fontset.el --- commands for handling fontset
 
-;; Copyright (C) 1997-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2018 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -823,7 +823,7 @@
                     '("FreeMono" . "iso10646-1") nil 'prepend)
 
   ;; Since standard-fontset-spec on X uses fixed-medium font, which
-  ;; gets mapped to a iso8859-1 variant, we would like to prefer its
+  ;; gets mapped to an iso8859-1 variant, we would like to prefer its
   ;; iso10646-1 variant for symbols, where the coverage is known to be
   ;; good.
   (dolist (symbol-subgroup
@@ -1144,13 +1144,19 @@ given from DEFAULT-SPEC."
 	(setcar (cdr elt) spec)))
     fontlist))
 
+(defvar fontset-alias-alist)
+
 (defun fontset-name-p (fontset)
   "Return non-nil if FONTSET is valid as fontset name.
 A valid fontset name should conform to XLFD (X Logical Font Description)
-with \"fontset\" in `<CHARSET_REGISTRY>' field."
-  (and (string-match xlfd-tight-regexp fontset)
-       (string= (match-string (1+ xlfd-regexp-registry-subnum) fontset)
-		"fontset")))
+with \"fontset-SOMETHING\" in `<CHARSET_REGISTRY>' field.
+A fontset alias name recorded in `fontset-alias-alist' is also a valid
+fontset name."
+  (or (and (string-match xlfd-tight-regexp fontset)
+           (let ((registry
+                  (match-string (1+ xlfd-regexp-registry-subnum) fontset)))
+             (= 0 (string-match "\\`fontset-" registry))))
+      (consp (rassoc fontset fontset-alias-alist))))
 
 (declare-function fontset-list "fontset.c" ())
 

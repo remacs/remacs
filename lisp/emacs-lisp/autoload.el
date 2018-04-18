@@ -1,6 +1,6 @@
 ;; autoload.el --- maintain autoloads in loaddefs.el  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1991-1997, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1991-1997, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Roland McGrath <roland@gnu.org>
 ;; Keywords: maint
@@ -324,6 +324,7 @@ put the output in."
 	    (setcdr p nil)
 	    (princ "\n(" outbuf)
 	    (let ((print-escape-newlines t)
+		  (print-escape-control-characters t)
                   (print-quoted t)
 		  (print-escape-nonascii t))
 	      (dolist (elt form)
@@ -348,6 +349,7 @@ put the output in."
 		       outbuf))
 	      (terpri outbuf)))
 	(let ((print-escape-newlines t)
+	      (print-escape-control-characters t)
               (print-quoted t)
 	      (print-escape-nonascii t))
 	  (print form outbuf)))))))
@@ -497,6 +499,7 @@ Return non-nil in the case where no autoloads were added at point."
 Standard prefixes won't be registered anyway.  I.e. if a file \"foo.el\" defines
 variables or functions that use \"foo-\" as prefix, that will not be registered.
 But all other prefixes will be included.")
+(put 'autoload-compute-prefixes 'safe #'booleanp)
 
 (defconst autoload-def-prefixes-max-entries 5
   "Target length of the list of definition prefixes per file.
@@ -761,6 +764,7 @@ FILE's modification time."
                                      "def-edebug-spec"
                                      ;; Hmm... this is getting ugly:
                                      "define-widget"
+                                     "define-erc-module"
                                      "define-erc-response-handler"
                                      "defun-rcirc-command"))))
                     (push (match-string 2) defs))

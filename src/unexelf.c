@@ -1,4 +1,4 @@
-/* Copyright (C) 1985-1988, 1990, 1992, 1999-2017 Free Software
+/* Copyright (C) 1985-1988, 1990, 1992, 1999-2018 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -58,9 +58,11 @@ what you give them.   Help stamp out software-hoarding!  */
 #include <sys/types.h>
 #include <unistd.h>
 
-#if !defined (__NetBSD__) && !defined (__OpenBSD__)
-#include <elf.h>
-#endif /* not __NetBSD__ and not __OpenBSD__ */
+#ifdef __QNX__
+# include <sys/elf.h>
+#elif !defined __NetBSD__ && !defined __OpenBSD__
+# include <elf.h>
+#endif
 #include <sys/mman.h>
 #if defined (_SYSTYPE_SYSV)
 #include <sys/elf_mips.h>
@@ -222,7 +224,6 @@ unexec (const char *new_name, const char *old_name)
 {
   int new_file, old_file;
   off_t new_file_size;
-  void *new_break;
 
   /* Pointers to the base of the image of the two files.  */
   caddr_t old_base, new_base;
@@ -326,11 +327,13 @@ unexec (const char *new_name, const char *old_name)
   if (old_bss_index == -1)
     fatal ("no bss section found");
 
+  void *no_break = (void *) (intptr_t) -1;
+  void *new_break = no_break;
 #ifdef HAVE_SBRK
   new_break = sbrk (0);
-#else
-  new_break = (byte *) old_bss_addr + old_bss_size;
 #endif
+  if (new_break == no_break)
+    new_break = (byte *) old_bss_addr + old_bss_size;
   new_bss_addr = (ElfW (Addr)) new_break;
   bss_size_growth = new_bss_addr - old_bss_addr;
   new_data2_size = bss_size_growth;

@@ -1,6 +1,6 @@
 ;;; rect.el --- rectangle functions for GNU Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985, 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1999-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: Didier Verna <didier@xemacs.org>
 ;; Keywords: internal
@@ -449,6 +449,10 @@ With a prefix (or a FILL) argument, also fill too short lines."
 (defun string-rectangle (start end string)
   "Replace rectangle contents with STRING on each line.
 The length of STRING need not be the same as the rectangle width.
+
+When called interactively and option `rectangle-preview' is
+non-nil, display the result as the user enters the string into
+the minibuffer.
 
 Called from a program, takes three args; START, END and STRING."
   (interactive

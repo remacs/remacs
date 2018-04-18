@@ -1,6 +1,6 @@
 ;;; cc-fonts.el --- font lock support for CC Mode
 
-;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             2002- Martin Stjernholm
@@ -292,12 +292,17 @@
 			      nil)))))
 	  res))))
 
-  (defun c-make-font-lock-search-form (regexp highlights)
+  (defun c-make-font-lock-search-form (regexp highlights &optional check-point)
     ;; Return a lisp form which will fontify every occurrence of REGEXP
     ;; (a regular expression, NOT a function) between POINT and `limit'
     ;; with HIGHLIGHTS, a list of highlighters as specified on page
-    ;; "Search-based Fontification" in the elisp manual.
-    `(while (re-search-forward ,regexp limit t)
+    ;; "Search-based Fontification" in the elisp manual.  If CHECK-POINT
+    ;; is non-nil, we will check (< (point) limit) in the main loop.
+    `(while
+	 ,(if check-point
+	      `(and (< (point) limit)
+		    (re-search-forward ,regexp limit t))
+	    `(re-search-forward ,regexp limit t))
        (unless (progn
 		 (goto-char (match-beginning 0))
 		 (c-skip-comments-and-strings limit))
@@ -476,7 +481,9 @@
 			,(c-make-font-lock-search-form
 			  regexp highlights)))))
 	     state-stanzas)
-	  ,(c-make-font-lock-search-form (car normal) (cdr normal))
+	  ;; In the next form, check that point hasn't been moved beyond
+	  ;; `limit' in any of the above stanzas.
+	  ,(c-make-font-lock-search-form (car normal) (cdr normal) t)
 	  nil))))
 
 ;  (eval-after-load "edebug" ; 2006-07-09: def-edebug-spec is now in subr.el.
@@ -1062,7 +1069,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
     (while
-	(and pos (setq decl-res (c-forward-declarator limit)))
+	(and pos (setq decl-res (c-forward-declarator)))
       (setq next-pos (point)
 	    id-start (car decl-res)
 	    id-face (if (and (eq (char-after) ?\()
@@ -1091,7 +1098,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					       (throw 'is-function nil))
 					      ((not (eq got-type 'maybe))
 					       (throw 'is-function t)))
-					     (c-forward-declarator limit t)
+					     (c-forward-declarator nil t)
 					     (eq (char-after) ?,))
 					 (forward-char)
 					 (c-forward-syntactic-ws))
@@ -1227,10 +1234,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	   (cons 'decl nil))
 	  ;; We're inside a brace list.
 	  ((and (eq (char-before match-pos) ?{)
-		(save-excursion
-		  (goto-char (1- match-pos))
-		  (consp
-		   (c-looking-at-or-maybe-in-bracelist))))
+		(c-inside-bracelist-p (1- match-pos)
+				      (cdr (c-parse-state))
+				      nil))
 	   (c-put-char-property (1- match-pos) 'c-type
 				'c-not-decl)
 	   (cons 'not-decl nil))
@@ -1244,6 +1250,17 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; Got a cached hit in some other type of arglist.
 	  (type
 	   (cons 'arglist t))
+	  ;; We're at a C++ uniform initialization.
+	  ((and (c-major-mode-is 'c++-mode)
+		(eq (char-before match-pos) ?\()
+		(save-excursion
+		  (goto-char match-pos)
+		  (and
+		   (zerop (c-backward-token-2 2))
+		   (looking-at c-identifier-start)
+		   (c-got-face-at (point)
+				  '(font-lock-variable-name-face)))))
+	   (cons 'not-decl nil))
 	  ((and not-front-decl
 	   ;; The point is within the range of a previously
 	   ;; encountered type decl expression, so the arglist
@@ -1582,7 +1599,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (setq max-type-decl-end (point))))
 		(goto-char start-pos)
 		(c-font-lock-single-decl limit decl-or-cast match-pos
-					 context toplev))
+					 context
+					 (or toplev (nth 4 decl-or-cast))))
 
 	       (t t))))
 
@@ -1730,7 +1748,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(c-syntactic-skip-backward "^;{}" decl-search-lim)
 	(c-forward-syntactic-ws)
 	(setq in-typedef (looking-at c-typedef-key))
-	(if in-typedef (c-forward-token-2))
+	(if in-typedef (c-forward-over-token-and-ws))
 	(when (and c-opt-block-decls-with-vars-key
 		   (looking-at c-opt-block-decls-with-vars-key))
 	  (goto-char ps-elt)
@@ -2651,8 +2669,8 @@ need for `pike-font-lock-extra-types'.")
   ;; This function might do hidden buffer changes.
 
   (let (comment-beg region-beg)
-    (if (eq (get-text-property (point) 'face)
-	    'font-lock-comment-face)
+    (if (memq (get-text-property (point) 'face)
+	      '(font-lock-comment-face font-lock-comment-delimiter-face))
 	;; Handle the case when the fontified region starts inside a
 	;; comment.
 	(let ((start (c-literal-start)))
@@ -2672,8 +2690,15 @@ need for `pike-font-lock-extra-types'.")
 		     (or (not (c-got-face-at comment-beg
 					     c-literal-faces))
 			 (and (/= comment-beg (point-min))
+			      ;; Cheap check which is unreliable (the previous
+			      ;; character could be the end of a previous
+			      ;; comment).
 			      (c-got-face-at (1- comment-beg)
-					     c-literal-faces))))
+					     c-literal-faces)
+			      ;; Expensive reliable check.
+			      (save-excursion
+				(goto-char comment-beg)
+				(c-in-literal)))))
 	      (setq comment-beg nil))
 	    (setq region-beg comment-beg))
 

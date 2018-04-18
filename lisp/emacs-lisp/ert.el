@@ -1,6 +1,6 @@
 ;;; ert.el --- Emacs Lisp Regression Testing  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2008, 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2008, 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Christian Ohler <ohler@gnu.org>
 ;; Keywords: lisp, tools
@@ -1333,6 +1333,9 @@ RESULT must be an `ert-test-result-with-condition'."
 
 ;;; Running tests in batch mode.
 
+(defvar ert-quiet nil
+  "Non-nil makes ERT only print important information in batch mode.")
+
 ;;;###autoload
 (defun ert-run-tests-batch (&optional selector)
   "Run the tests specified by SELECTOR, printing results to the terminal.
@@ -1349,10 +1352,11 @@ Returns the stats object."
    (lambda (event-type &rest event-args)
      (cl-ecase event-type
        (run-started
-        (cl-destructuring-bind (stats) event-args
-          (message "Running %s tests (%s)"
-                   (length (ert--stats-tests stats))
-                   (ert--format-time-iso8601 (ert--stats-start-time stats)))))
+        (unless ert-quiet
+          (cl-destructuring-bind (stats) event-args
+            (message "Running %s tests (%s)"
+                     (length (ert--stats-tests stats))
+                     (ert--format-time-iso8601 (ert--stats-start-time stats))))))
        (run-ended
         (cl-destructuring-bind (stats abortedp) event-args
           (let ((unexpected (ert-stats-completed-unexpected stats))
@@ -1438,16 +1442,17 @@ Returns the stats object."
                         (ert-test-name test)))
               (ert-test-quit
                (message "Quit during %S" (ert-test-name test)))))
-          (let* ((max (prin1-to-string (length (ert--stats-tests stats))))
-                 (format-string (concat "%9s  %"
-                                        (prin1-to-string (length max))
-                                        "s/" max "  %S")))
-            (message format-string
-                     (ert-string-for-test-result result
-                                                 (ert-test-result-expected-p
-                                                  test result))
-                     (1+ (ert--stats-test-pos stats test))
-                     (ert-test-name test)))))))
+          (unless ert-quiet
+            (let* ((max (prin1-to-string (length (ert--stats-tests stats))))
+                   (format-string (concat "%9s  %"
+                                          (prin1-to-string (length max))
+                                          "s/" max "  %S")))
+              (message format-string
+                       (ert-string-for-test-result result
+                                                   (ert-test-result-expected-p
+                                                    test result))
+                       (1+ (ert--stats-test-pos stats test))
+                       (ert-test-name test))))))))
    nil))
 
 ;;;###autoload
@@ -1625,7 +1630,7 @@ default (if any)."
 (defun ert-find-test-other-window (test-name)
   "Find, in another window, the definition of TEST-NAME."
   (interactive (list (ert-read-test-name-at-point "Find test definition: ")))
-  (find-function-do-it test-name 'ert-deftest 'switch-to-buffer-other-window))
+  (find-function-do-it test-name 'ert--test 'switch-to-buffer-other-window))
 
 (defun ert-delete-test (test-name)
   "Make the test TEST-NAME unbound.
@@ -2544,8 +2549,6 @@ To be used in the ERT results buffer."
 (defun ert-describe-test (test-or-test-name)
   "Display the documentation for TEST-OR-TEST-NAME (a symbol or ert-test)."
   (interactive (list (ert-read-test-name-at-point "Describe test")))
-  (when (< emacs-major-version 24)
-    (user-error "Requires Emacs 24 or later"))
   (let (test-name
         test-definition)
     (cl-etypecase test-or-test-name
@@ -2582,7 +2585,9 @@ To be used in the ERT results buffer."
             (insert (substitute-command-keys
                      (or (ert-test-documentation test-definition)
                          "It is not documented."))
-                    "\n")))))))
+                    "\n")
+            ;; For describe-symbol-backends.
+            (buffer-string)))))))
 
 (defun ert-results-describe-test-at-point ()
   "Display the documentation of the test at point.
@@ -2594,7 +2599,12 @@ To be used in the ERT results buffer."
 
 ;;; Actions on load/unload.
 
-(add-to-list 'find-function-regexp-alist '(ert-deftest . ert--find-test-regexp))
+(require 'help-mode)
+(add-to-list 'describe-symbol-backends
+             `("ERT test" ,#'ert-test-boundp
+               ,(lambda (s _b _f) (ert-describe-test s))))
+
+(add-to-list 'find-function-regexp-alist '(ert--test . ert--find-test-regexp))
 (add-to-list 'minor-mode-alist '(ert--current-run-stats
                                  (:eval
                                   (ert--tests-running-mode-line-indicator))))
@@ -2608,7 +2618,7 @@ To be used in the ERT results buffer."
                          'ert--activate-font-lock-keywords)
   nil)
 
-(defvar ert-unload-hook '())
+(defvar ert-unload-hook ())
 (add-hook 'ert-unload-hook #'ert--unload-function)
 
 

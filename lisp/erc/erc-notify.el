@@ -1,6 +1,6 @@
 ;;; erc-notify.el --- Online status change notification  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2002-2004, 2006-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2006-2018 Free Software Foundation, Inc.
 
 ;; Author: Mario Lang <mlang@lexx.delysid.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -92,7 +92,7 @@ strings."
      (notify_on      . "Detected %n on IRC network %m")
      (notify_off     . "%n has left IRC network %m"))))
 
-;;;###autoload (autoload 'erc-notify-mode "erc-notify" nil t)
+;;;###autoload(autoload 'erc-notify-mode "erc-notify" nil t)
 (define-erc-module notify nil
   "Periodically check for the online status of certain users and report
 changes."
@@ -253,6 +253,7 @@ with args, toggle notify status of people."
 ;;; erc-notify.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

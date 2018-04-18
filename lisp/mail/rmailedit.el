@@ -1,6 +1,6 @@
 ;;; rmailedit.el --- "RMAIL edit mode"  Edit the current message
 
-;; Copyright (C) 1985, 1994, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1994, 2001-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail
@@ -312,26 +312,34 @@ This function runs the hooks `text-mode-hook' and `rmail-edit-mode-hook'.
             (data-buffer (current-buffer))
             (start (copy-marker (point) nil)) ; new body will be between
             (end (copy-marker (point) t)))    ; these two markers
-        (with-current-buffer rmail-view-buffer
-          (encode-coding-region headers-end (point-max) coding-system
-                                data-buffer))
-        (delete-region end (point-max))
+        (if mime-state
+            ;; Message is already in encoded state
+            (insert-buffer-substring rmail-view-buffer headers-end
+                                     (with-current-buffer rmail-view-buffer
+                                       (point-max)))
+          (with-current-buffer rmail-view-buffer
+            (encode-coding-region headers-end (point-max) coding-system
+                                  data-buffer)))
 	;; Apply to the mbox buffer any changes in header fields
 	;; that the user made while editing in the view buffer.
-	(rmail-edit-update-headers (rmail-edit-diff-headers
+        (rmail-edit-update-headers (rmail-edit-diff-headers
 				    rmail-old-headers new-headers))
 	;; Re-apply content-transfer-encoding, if any, on the message body.
 	(cond
+	 (mime-state)		    ; if set, already transfer-encoded
 	 ((string= character-coding "quoted-printable")
-	  (mail-quote-printable-region start (point-max)))
+	  (mail-quote-printable-region start end))
 	 ((and (string= character-coding "base64") is-text-message)
-	  (base64-encode-region start (point-max)))
+	  (base64-encode-region start end))
 	 ((and (eq character-coding 'uuencode) is-text-message)
 	  (error "uuencoded messages are not supported")))
         ;; After encoding, make sure buffer ends with a blank line so as not to
         ;; run this message together with the following one.
-        (goto-char (point-max))
-        (rmail-ensure-blank-line))
+        (goto-char end)
+        (rmail-ensure-blank-line)
+        ;; Delete previous body.  This must be after all insertions at the end,
+        ;; so the marker for the beginning of the next message isn't messed up.
+        (delete-region end (point-max)))
       (rmail-set-attribute rmail-edited-attr-index t))
 ;;;??? BROKEN perhaps.
 ;;;    (if (boundp 'rmail-summary-vector)
@@ -402,7 +410,7 @@ or else nil to insert it at the beginning.
 
 DELETED's elements are elements of OLD-HEADERS.
 CHANGED's elements have the form (OLD . NEW)
-where OLD is a element of OLD-HEADERS and NEW is an element of NEW-HEADERS."
+where OLD is an element of OLD-HEADERS and NEW is an element of NEW-HEADERS."
 
   (let ((reverse-new (reverse new-headers))
 	inserted deleted changed)

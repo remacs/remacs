@@ -1,6 +1,6 @@
 ;;; frame.el --- multi-frame management independent of window systems  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1993-1994, 1996-1997, 2000-2017 Free Software
+;; Copyright (C) 1993-1994, 1996-1997, 2000-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -800,7 +800,7 @@ the user during startup."
 	(nreverse frame-initial-geometry-arguments))
   (cdr param-list))
 
-(declare-function x-focus-frame "frame.c" (frame))
+(declare-function x-focus-frame "frame.c" (frame &optional noactivate))
 
 (defun select-frame-set-input-focus (frame &optional norecord)
   "Select FRAME, raise it, and set input focus, if possible.
@@ -892,7 +892,8 @@ Calls `suspend-emacs' if invoked from the controlling tty device,
 
 (defvar frame-name-history nil)
 (defun select-frame-by-name (name)
-  "Select the frame on the current terminal whose name is NAME and raise it.
+  "Select the frame whose name is NAME and raise it.
+Frames on the current terminal are checked first.
 If there is no frame by that name, signal an error."
   (interactive
    (let* ((frame-names-alist (make-frame-names-alist))
@@ -903,11 +904,14 @@ If there is no frame by that name, signal an error."
      (if (= (length input) 0)
 	 (list default)
        (list input))))
-  (let* ((frame-names-alist (make-frame-names-alist))
-	 (frame (cdr (assoc name frame-names-alist))))
-    (if frame
-	(select-frame-set-input-focus frame)
-      (error "There is no frame named `%s'" name))))
+  (select-frame-set-input-focus
+   ;; Prefer frames on the current display.
+   (or (cdr (assoc name (make-frame-names-alist)))
+       (catch 'done
+         (dolist (frame (frame-list))
+           (when (equal (frame-parameter frame 'name) name)
+             (throw 'done frame))))
+       (error "There is no frame named `%s'" name))))
 
 
 ;;;; Background mode.
@@ -1071,7 +1075,7 @@ is given and non-nil, the unwanted frames are iconified instead."
 		 (when mini (setq parms (delq mini parms)))
 		 ;; Leave name in iff it was set explicitly.
 		 ;; This should fix the behavior reported in
-		 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg01632.html
+		 ;; https://lists.gnu.org/r/emacs-devel/2007-08/msg01632.html
 		 (when (and name (not explicit-name))
 		   (setq parms (delq name parms)))
                  parms))
@@ -1480,7 +1484,7 @@ FRAME."
 
 (declare-function w32-mouse-absolute-pixel-position "w32fns.c")
 (declare-function x-mouse-absolute-pixel-position "xfns.c")
-(declare-function ns-mouse-absolute-pixel-position "nsfns.c")
+(declare-function ns-mouse-absolute-pixel-position "nsfns.m")
 
 (defun mouse-absolute-pixel-position ()
   "Return absolute position of mouse cursor in pixels.
@@ -2318,7 +2322,6 @@ command starts, by installing a pre-command hook."
     (blink-cursor-suspend)
     (add-hook 'post-command-hook 'blink-cursor-check)))
 
-
 (defun blink-cursor-end ()
   "Stop cursor blinking.
 This is installed as a pre-command hook by `blink-cursor-start'.
@@ -2380,12 +2383,11 @@ terminals, cursor blinking is controlled by the terminal."
     (add-hook 'focus-out-hook #'blink-cursor-suspend)
     (blink-cursor--start-idle-timer)))
 
-
 
 ;; Frame maximization/fullscreen
 
-(defun toggle-frame-maximized ()
-  "Toggle maximization state of selected frame.
+(defun toggle-frame-maximized (&optional frame)
+  "Toggle maximization state of FRAME.
 Maximize selected frame or un-maximize if it is already maximized.
 
 If the frame is in fullscreen state, don't change its state, but
@@ -2400,19 +2402,19 @@ transitions from one fullscreen state to another.
 
 See also `toggle-frame-fullscreen'."
   (interactive)
-  (let ((fullscreen (frame-parameter nil 'fullscreen)))
+  (let ((fullscreen (frame-parameter frame 'fullscreen)))
     (cond
      ((memq fullscreen '(fullscreen fullboth))
-      (set-frame-parameter nil 'fullscreen-restore 'maximized))
+      (set-frame-parameter frame 'fullscreen-restore 'maximized))
      ((eq fullscreen 'maximized)
-      (set-frame-parameter nil 'fullscreen nil))
+      (set-frame-parameter frame 'fullscreen nil))
      (t
-      (set-frame-parameter nil 'fullscreen 'maximized)))))
+      (set-frame-parameter frame 'fullscreen 'maximized)))))
 
-(defun toggle-frame-fullscreen ()
-  "Toggle fullscreen state of selected frame.
-Make selected frame fullscreen or restore its previous size if it
-is already fullscreen.
+(defun toggle-frame-fullscreen (&optional frame)
+  "Toggle fullscreen state of FRAME.
+Make selected frame fullscreen or restore its previous size
+if it is already fullscreen.
 
 Before making the frame fullscreen remember the current value of
 the frame's `fullscreen' parameter in the `fullscreen-restore'
@@ -2427,14 +2429,19 @@ transitions from one fullscreen state to another.
 
 See also `toggle-frame-maximized'."
   (interactive)
-  (let ((fullscreen (frame-parameter nil 'fullscreen)))
+  (let ((fullscreen (frame-parameter frame 'fullscreen)))
     (if (memq fullscreen '(fullscreen fullboth))
-	(let ((fullscreen-restore (frame-parameter nil 'fullscreen-restore)))
+	(let ((fullscreen-restore (frame-parameter frame 'fullscreen-restore)))
 	  (if (memq fullscreen-restore '(maximized fullheight fullwidth))
-	      (set-frame-parameter nil 'fullscreen fullscreen-restore)
-	    (set-frame-parameter nil 'fullscreen nil)))
+	      (set-frame-parameter frame 'fullscreen fullscreen-restore)
+	    (set-frame-parameter frame 'fullscreen nil)))
       (modify-frame-parameters
-       nil `((fullscreen . fullboth) (fullscreen-restore . ,fullscreen))))))
+       frame `((fullscreen . fullboth) (fullscreen-restore . ,fullscreen))))
+    ;; Manipulating a frame without waiting for the fullscreen
+    ;; animation to complete can cause a crash, or other unexpected
+    ;; behavior, on macOS (bug#28496).
+    (when (featurep 'cocoa) (sleep-for 0.5))))
+
 
 ;;;; Key bindings
 

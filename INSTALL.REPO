@@ -54,7 +54,7 @@ If CPU time is not an issue, 'make bootstrap' is a more thorough way
 to rebuild, avoiding spurious problems.
 
 Occasionally, there are changes that 'make bootstrap' won't be able to
-handle.  The most thorough cleaning can be achieved by 'git clean -fx'
+handle.  The most thorough cleaning can be achieved by 'git clean -fdx'
 which will leave you with only files from the git repository.  Here
 are some faster methods for a couple of particular error cases:
 
@@ -76,7 +76,7 @@ never platform-specific.
 
 
 
-Copyright (C) 2002-2017 Free Software Foundation, Inc.
+Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 

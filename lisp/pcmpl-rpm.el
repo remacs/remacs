@@ -1,6 +1,6 @@
 ;;; pcmpl-rpm.el --- functions for dealing with rpm completions
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Package: pcomplete
 
@@ -96,7 +96,7 @@
 		    (pcomplete-process-result
 		     "rpm" "-q" (car pkgs) flag)))
       (setq pkgs (cdr pkgs)))
-    (pcomplete-uniqify-list (cdr provs))))
+    (pcomplete-uniquify-list (cdr provs))))
 
 (defsubst pcmpl-rpm-files ()
   (pcomplete-dirs-or-entries "\\.rpm\\'"))

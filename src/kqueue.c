@@ -1,6 +1,6 @@
 /* Filesystem notifications support with kqueue API.
 
-Copyright (C) 2015-2017 Free Software Foundation, Inc.
+Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -24,7 +24,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
-#include <sys/file.h>
+#include <fcntl.h>
 #include "lisp.h"
 #include "keyboard.h"
 #include "process.h"

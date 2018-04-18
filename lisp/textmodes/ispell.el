@@ -1,6 +1,6 @@
 ;;; ispell.el --- interface to spell checkers  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1994-1995, 1997-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 1997-2018 Free Software Foundation, Inc.
 
 ;; Author:           Ken Stevens <k.stevens@ieee.org>
 
@@ -712,10 +712,10 @@ Otherwise returns the library directory name, if that is defined."
 	  (error "%s exited with %s %s" ispell-program-name
 		 (if (stringp status) "signal" "code") status))
 
-      ;; Get relevant version strings. Only xx.yy.... format works well
+      ;; Get relevant version strings.
       (let (case-fold-search)
 	(setq ispell-program-version
-	      (and (search-forward-regexp "\\([0-9]+\\.[0-9\\.]+\\)" nil t)
+	      (and (search-forward-regexp "\\([0-9]+\\.[0-9.]+\\)" nil t)
 		   (match-string 1)))
 
 	;; Make sure these variables are (re-)initialized to the default value
@@ -725,19 +725,23 @@ Otherwise returns the library directory name, if that is defined."
 
 	(goto-char (point-min))
 	(or (setq ispell-really-aspell
-		  (and (search-forward-regexp
-			"(but really Aspell \\([0-9]+\\.[0-9\\.-]+\\)?)" nil t)
-		       (match-string 1)))
+		  (and
+                   (search-forward-regexp
+                    "(but really Aspell \\([0-9]+\\.[0-9.]+\\([-._+ ]?[a-zA-Z0-9]+\\)?\\)?)"
+                    nil t)
+		   (match-string 1)))
 	    (setq ispell-really-hunspell
-		  (and (search-forward-regexp
-			"(but really Hunspell \\([0-9]+\\.[0-9\\.-]+\\)?)"
-                        nil t)
-		       (match-string 1)))
+		  (and
+                   (search-forward-regexp
+		    "(but really Hunspell \\([0-9]+\\.[0-9.]+\\([-._+ ]?[a-zA-Z0-9]+\\)?\\)?)"
+                    nil t)
+		   (match-string 1)))
             (setq ispell-really-enchant
-		  (and (search-forward-regexp
-			"(but really Enchant \\([0-9]+\\.[0-9\\.-]+\\)?)"
-                        nil t)
-		       (match-string 1)))))
+		  (and
+                   (search-forward-regexp
+		    "(but really Enchant \\([0-9]+\\.[0-9.]+\\([-._+ ]?[a-zA-Z0-9]+\\)?\\)?)"
+                    nil t)
+		   (match-string 1)))))
 
       (let* ((aspell8-minver   "0.60")
              (ispell-minver    "3.1.12")
@@ -1814,11 +1818,9 @@ Only works for Aspell and Enchant."
 	(setq default-directory defdir)
 	(insert string)
 	(if (not (memq cmd cmds-to-defer))
-	    (let (coding-system-for-read coding-system-for-write status)
-	      (if (and (boundp 'enable-multibyte-characters)
-		       enable-multibyte-characters)
-		  (setq coding-system-for-read (ispell-get-coding-system)
-			coding-system-for-write (ispell-get-coding-system)))
+	    (let* ((coding-system-for-read (ispell-get-coding-system))
+                   (coding-system-for-write coding-system-for-read)
+                   status)
 	      (set-buffer output-buf)
 	      (erase-buffer)
 	      (set-buffer session-buf)

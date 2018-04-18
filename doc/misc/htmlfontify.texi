@@ -10,7 +10,7 @@
 This manual documents Htmlfontify, a source code -> crosslinked +
 formatted + syntax colorized html transformer.
 
-Copyright @copyright{} 2002-2003, 2013-2017 Free Software Foundation,
+Copyright @copyright{} 2002-2003, 2013-2018 Free Software Foundation,
 Inc.
 
 @quotation
@@ -825,7 +825,7 @@ with a class of @code{t} is considered to match any class you specify.
 This matches Emacs's behavior when deciding on which face attributes to
 use, to the best of my understanding ).
 
-If @var{class} is @code{nil}, then you just get get whatever
+If @var{class} is @code{nil}, then you just get whatever
 @code{face-attr-construct} returns; i.e., the current specification in
 effect for @var{face}.
 
@@ -1116,7 +1116,7 @@ Some of the (informal) data structures used in Htmlfontify are detailed here:
 @table @code
 
 @item hfy-style-assoc
-@cindex hfy-style-assoc
+@cindex @code{hfy-style-assoc}
 @anchor{hfy-style-assoc}
 
 An assoc representing/describing an Emacs face.  Properties may be repeated,
@@ -1148,7 +1148,7 @@ Some examples:
 @end lisp
 
 @item hfy-sheet-assoc
-@cindex hfy-sheet-assoc
+@cindex @code{hfy-sheet-assoc}
 @anchor{hfy-sheet-assoc}
 
 An assoc with elements of the form @samp{(face-name style-name . style-string)}.
@@ -1160,7 +1160,7 @@ The actual stylesheet for each page is derived from one of these.
 @end lisp
 
 @item hfy-facemap-assoc
-@cindex hfy-facemap-assoc
+@cindex @code{hfy-facemap-assoc}
 @anchor{hfy-facemap-assoc}
 
 An assoc of @code{(point . @var{face-symbol})} or

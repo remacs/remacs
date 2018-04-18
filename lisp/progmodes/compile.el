@@ -1,6 +1,6 @@
 ;;; compile.el --- run compiler as inferior of Emacs, parse error messages  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1987, 1993-1999, 2001-2017 Free Software
+;; Copyright (C) 1985-1987, 1993-1999, 2001-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Authors: Roland McGrath <roland@gnu.org>,
@@ -919,7 +919,7 @@ from a different message."
 
 ;; COLUMN and LINE are numbers parsed from an error message.  COLUMN and maybe
 ;; LINE will be nil for a message that doesn't contain them.  Then the
-;; location refers to a indented beginning of line or beginning of file.
+;; location refers to an indented beginning of line or beginning of file.
 ;; Once any location in some file has been jumped to, the list is extended to
 ;; (COLUMN LINE FILE-STRUCTURE MARKER TIMESTAMP . VISITED)
 ;; for all LOCs pertaining to that file.
@@ -1740,19 +1740,13 @@ Returns the compilation buffer created."
 	(setq thisdir default-directory))
       (set-buffer-modified-p nil))
     ;; Pop up the compilation buffer.
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01638.html
+    ;; https://lists.gnu.org/r/emacs-devel/2007-11/msg01638.html
     (setq outwin (display-buffer outbuf '(nil (allow-no-window . t))))
     (with-current-buffer outbuf
       (let ((process-environment
 	     (append
 	      compilation-environment
-	      (if (if (boundp 'system-uses-terminfo);`If' for compiler warning.
-		      system-uses-terminfo)
-		  (list "TERM=dumb" "TERMCAP="
-			(format "COLUMNS=%d" (window-width)))
-		(list "TERM=emacs"
-		      (format "TERMCAP=emacs:co#%d:tc=unknown:"
-			      (window-width))))
+              (comint-term-environment)
 	      (list (format "INSIDE_EMACS=%s,compile" emacs-version))
 	      (copy-sequence process-environment))))
 	(set (make-local-variable 'compilation-arguments)
@@ -2328,7 +2322,7 @@ and runs `compilation-filter-hook'."
      (while (,< n 0)
        (setq opt pt)
        (or (setq pt (,property-change pt 'compilation-message))
-	   ;; Handle the case where where the first error message is
+	   ;; Handle the case where the first error message is
 	   ;; at the start of the buffer, and n < 0.
 	   (if (or (eq (get-text-property ,limit 'compilation-message)
 		       (get-text-property opt 'compilation-message))
@@ -2855,7 +2849,7 @@ TRUE-DIRNAME is the `file-truename' of DIRNAME, if given."
 		 ;; The gethash used to not use spec-directory, but
 		 ;; this leads to errors when files in different
 		 ;; directories have the same name:
-		 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00463.html
+		 ;; https://lists.gnu.org/r/emacs-devel/2007-08/msg00463.html
 		 (or (gethash (cons filename spec-directory) compilation-locs)
 		     (puthash (cons filename spec-directory)
 			      (compilation--make-file-struct

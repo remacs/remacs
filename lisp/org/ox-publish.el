@@ -1,5 +1,5 @@
 ;;; ox-publish.el --- Publish Related Org Mode Files as a Website -*- lexical-binding: t; -*-
-;; Copyright (C) 2006-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
 ;; Author: David O'Toole <dto@gnu.org>
 ;; Maintainer: Carsten Dominik <carsten DOT dominik AT gmail DOT com>
@@ -57,10 +57,10 @@ Every function in this hook will be called with two arguments:
 the name of the original file and the name of the file
 produced.")
 
-(defgroup org-publish nil
+(defgroup org-export-publish nil
   "Options for publishing a set of files."
   :tag "Org Publishing"
-  :group 'org)
+  :group 'org-export)
 
 (defcustom org-publish-project-alist nil
   "Association list to control publishing behavior.
@@ -349,7 +349,6 @@ You can overwrite this default per project in your
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Timestamp-related functions
 
 (defun org-publish-timestamp-filename (filename &optional pub-dir pub-func)
@@ -392,7 +391,6 @@ If there is no timestamp, create one."
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Getting project information out of `org-publish-project-alist'
 
 (defun org-publish-property (property project &optional default)
@@ -435,8 +433,8 @@ This splices all the components into the list."
   (let* ((base-dir (file-name-as-directory
 		    (org-publish-property :base-directory project)))
 	 (extension (or (org-publish-property :base-extension project) "org"))
-	 (match (and (not (eq extension 'any))
-		     (concat "^[^\\.].*\\.\\(" extension "\\)$")))
+	 (match (if (eq extension 'any) ""
+		  (format "^[^\\.].*\\.\\(%s\\)$" extension)))
 	 (base-files
 	  (cl-remove-if #'file-directory-p
 			(if (org-publish-property :recursive project)
@@ -525,7 +523,6 @@ publishing FILENAME."
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Tools for publishing functions in back-ends
 
 (defun org-publish-org-to (backend filename extension plist &optional pub-dir)
@@ -899,7 +896,6 @@ representation for the files to include, as returned by
 	  (org-list-to-org list)))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Interactive publishing functions
 
 ;;;###autoload
@@ -1154,7 +1150,8 @@ references with `org-export-get-reference'."
     (let* ((filename (file-truename file))
 	   (crossrefs
 	    (org-publish-cache-get-file-property filename :crossrefs nil t))
-	   (cells (org-export-string-to-search-cell search)))
+	   (cells
+	    (org-export-string-to-search-cell (org-link-unescape search))))
       (or
        ;; Look for reference associated to search cells triggered by
        ;; LINK.  It can match when targeted file has been published
@@ -1168,6 +1165,17 @@ references with `org-export-get-reference'."
 	 (dolist (cell cells) (push (cons cell new) crossrefs))
 	 (org-publish-cache-set-file-property filename :crossrefs crossrefs)
 	 (org-export-format-reference new))))))
+
+(defun org-publish-file-relative-name (filename info)
+  "Convert FILENAME to be relative to current project's base directory.
+INFO is the plist containing the current export state.  The
+function does not change relative file names."
+  (let ((base (plist-get info :base-directory)))
+    (if (and base
+	     (file-name-absolute-p filename)
+	     (file-in-directory-p filename base))
+	(file-relative-name filename base)
+      filename)))
 
 
 

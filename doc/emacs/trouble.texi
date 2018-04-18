@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @iftex
@@ -17,7 +17,6 @@ also considered.
 
 @node Quitting
 @section Quitting and Aborting
-@cindex quitting
 
 @table @kbd
 @item C-g
@@ -507,7 +506,7 @@ The @samp{emacs-pretest-bug} mailing list.  This list is no longer
 used, and is mainly of historical interest.  At one time, it was used
 for bug reports in development (i.e., not yet released) versions of
 Emacs.  You can read the archives for 2003 to mid 2007 at
-@url{https://lists.gnu.org/archive/html/emacs-pretest-bug/}.  Nowadays,
+@url{https://lists.gnu.org/r/emacs-pretest-bug/}.  Nowadays,
 it is an alias for @samp{bug-gnu-emacs}.
 
 @item
@@ -763,7 +762,7 @@ the dribble file.
 @item
 @findex open-termscript
 @cindex termscript file
-@cindex @env{TERM} environment variable
+@vindex TERM@r{, environment variable, and display bugs}
 For possible display bugs, the terminal type (the value of environment
 variable @env{TERM}), the complete termcap entry for the terminal from
 @file{/etc/termcap} (since that file is not identical on all machines),
@@ -790,7 +789,7 @@ stimulates the bug.
 @item
 If non-@acronym{ASCII} text or internationalization is relevant, the locale that
 was current when you started Emacs.  On GNU/Linux and Unix systems, or
-if you use a Posix-style shell such as Bash, you can use this shell
+if you use a POSIX-style shell such as Bash, you can use this shell
 command to view the relevant values:
 
 @smallexample
@@ -1209,8 +1208,7 @@ check if existing bug reports are fixed in newer versions of Emacs
 @url{https://debbugs.gnu.org/cgi/pkgreport.cgi?which=pkg&data=emacs}.
 
 @item
-fix existing bug reports
-@url{https://debbugs.gnu.org/cgi/pkgreport.cgi?which=pkg&data=emacs}.
+fix existing bug reports.
 
 @item
 @c etc/TODO not in WWW_GNU_ORG
@@ -1307,7 +1305,7 @@ the Emacs Lisp Reference Manual
 @url{https://www.gnu.org/software/emacs}
 
 @item
-@url{http://www.emacswiki.org/}
+@url{https://www.emacswiki.org/}
 @end itemize
 
 @menu
@@ -1396,8 +1394,8 @@ patches) over all your contributions.
 @node Service
 @section How To Get Help with GNU Emacs
 @cindex help in using Emacs
-@cindex help-gnu-emacs mailing list
-@cindex gnu.emacs.help newsgroup
+@cindex @samp{help-gnu-emacs} mailing list
+@cindex @samp{gnu.emacs.help} newsgroup
 
 If you need help installing, using or changing GNU Emacs, there are
 two ways to find it:

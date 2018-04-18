@@ -1,6 +1,6 @@
 ;;; holidays.el --- holiday functions for the calendar package
 
-;; Copyright (C) 1989-1990, 1992-1994, 1997, 2001-2017 Free Software
+;; Copyright (C) 1989-1990, 1992-1994, 1997, 2001-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Edward M. Reingold <reingold@cs.uiuc.edu>
@@ -399,7 +399,7 @@ use instead of point."
 (defun holidays (&optional arg)
   "Display the holidays for last month, this month, and next month.
 If called with an optional prefix argument ARG, prompts for month and year.
-This function is suitable for execution in a init file."
+This function is suitable for execution in an init file."
   (interactive "P")
   (save-excursion
     (let* ((completion-ignore-case t)
@@ -522,7 +522,6 @@ strings describing those holidays that apply on DATE, or nil if none do."
           (setq holiday-list (append holiday-list (cdr h)))))))
 
 
-;; Formerly cal-tex-list-holidays.
 (defun holiday-in-range (d1 d2)
   "Generate a list of all holidays in range from absolute date D1 to D2."
   (let* ((start (calendar-gregorian-from-absolute d1))

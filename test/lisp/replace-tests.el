@@ -1,6 +1,6 @@
 ;;; replace-tests.el --- tests for replace.el.
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Richard <youngfrog@members.fsf.org>
 ;; Author: Juri Linkov <juri@jurta.org>
@@ -54,7 +54,7 @@ fx
       6:fx
 ")
     ;; * Test multi-line matches, this is the first test from
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2005-06/msg01008.html
+    ;; https://lists.gnu.org/r/emacs-devel/2005-06/msg01008.html
     ;; where numbers are replaced with letters.
     ("a\na" 0 "\
 a
@@ -70,7 +70,7 @@ a
        :a
 ")
     ;; * Test multi-line matches, this is the second test from
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2005-06/msg01008.html
+    ;; https://lists.gnu.org/r/emacs-devel/2005-06/msg01008.html
     ;; where numbers are replaced with letters.
     ("a\nb" 0 "\
 a

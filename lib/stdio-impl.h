@@ -1,5 +1,5 @@
 /* Implementation details of FILE streams.
-   Copyright (C) 2007-2008, 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2007-2008, 2010-2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@
 #ifdef __TANDEM                     /* NonStop Kernel */
 # ifndef _IOERR
 /* These values were determined by the program 'stdioext-flags' at
-   <https://lists.gnu.org/archive/html/bug-gnulib/2010-12/msg00165.html>.  */
+   <https://lists.gnu.org/r/bug-gnulib/2010-12/msg00165.html>.  */
 #  define _IOERR   0x40
 #  define _IOREAD  0x80
 #  define _IOWRT    0x4
@@ -132,7 +132,7 @@ struct _gl_real_FILE
 # define fp_ ((struct _gl_real_FILE *) fp)
 
 /* These values were determined by a program similar to the one at
-   <https://lists.gnu.org/archive/html/bug-gnulib/2010-12/msg00165.html>.  */
+   <https://lists.gnu.org/r/bug-gnulib/2010-12/msg00165.html>.  */
 # define _IOREAD   0x1
 # define _IOWRT    0x2
 # define _IORW     0x4

@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 
-@c Copyright (C) 2004-2017 Free Software Foundation, Inc.
+@c Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 @c    Permission is granted to anyone to make or distribute verbatim copies
 @c    of this document as received, in any medium, provided that the
@@ -324,7 +324,7 @@ messages are deleted again).
 @itemize @bullet
 
 @item The tool bar has been updated to use GNOME icons.
-You can also customize the tool bars: @kbd{M-x customize-apropos RET
+You can also customize the tool bars: @kbd{M-x customize-apropos @key{RET}
 -tool-bar$} should get you started.  (Only for Emacs, not in XEmacs.)
 @c FIXME: Document this in the manual
 

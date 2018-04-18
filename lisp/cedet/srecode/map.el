@@ -1,6 +1,6 @@
 ;;; srecode/map.el --- Manage a template file map
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -224,10 +224,9 @@ Optional argument RESET forces a reset of the current map."
   (require 'data-debug)
   (let ((start (current-time))
 	(p (srecode-get-maps t)) ;; Time the reset.
-	(end (current-time))
 	)
     (message "Updating the map took %.2f seconds."
-	     (semantic-elapsed-time start end))
+	     (semantic-elapsed-time start nil))
     (data-debug-new-buffer "*SRECODE ADEBUG*")
     (data-debug-insert-stuff-list p "*")))
 

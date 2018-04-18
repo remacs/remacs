@@ -1,6 +1,6 @@
 ;;; auth-source-pass-tests.el --- Tests for auth-source-pass.el  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013, 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2013, 2017-2018 Free Software Foundation, Inc.
 
 ;; Author: Damien Cassou <damien.cassou@gmail.com>
 
@@ -127,6 +127,11 @@ This function is intended to be set to `auth-source-debug`."
   (auth-source-pass--with-store '(("foo.bar.com/foo"))
     (should (equal (auth-source-pass--find-match "foo.bar.com" nil)
                    nil))))
+
+(ert-deftest auth-source-pass-find-match-matching-extracting-user-from-host ()
+  (auth-source-pass--with-store '(("foo.com/bar"))
+    (should (equal (auth-source-pass--find-match "https://bar@foo.com" nil)
+                   "foo.com/bar"))))
 
 (ert-deftest auth-source-pass-search-with-user-first ()
   (auth-source-pass--with-store '(("foo") ("user@foo"))

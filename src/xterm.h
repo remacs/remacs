@@ -1,5 +1,5 @@
 /* Definitions and headers for communication with X protocol.
-   Copyright (C) 1989, 1993-1994, 1998-2017 Free Software Foundation,
+   Copyright (C) 1989, 1993-1994, 1998-2018 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -503,6 +503,8 @@ extern bool x_display_ok (const char *);
 
 extern void select_visual (struct x_display_info *);
 
+extern Window tip_window;
+
 /* Each X frame object points to its own struct x_output object
    in the output_data.x field.  The x_output structure contains
    the information that is specific to X windows.  */
@@ -887,7 +889,7 @@ extern void x_mark_frame_dirty (struct frame *f);
 struct scroll_bar
 {
   /* These fields are shared by all vectors.  */
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* The window we're a scroll bar for.  */
   Lisp_Object window;

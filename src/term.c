@@ -1,5 +1,5 @@
 /* Terminal control module for terminals described by TERMCAP
-   Copyright (C) 1985-1987, 1993-1995, 1998, 2000-2017 Free Software
+   Copyright (C) 1985-1987, 1993-1995, 1998, 2000-2018 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -2064,7 +2064,7 @@ TERMINAL does not refer to a text terminal.  */)
 
 /* Declare here rather than in the function, as in the rest of Emacs,
    to work around an HPUX compiler bug (?). See
-   https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00410.html  */
+   https://lists.gnu.org/r/emacs-devel/2007-08/msg00410.html  */
 static int default_max_colors;
 static int default_no_color_video;
 static char *default_orig_pair;
@@ -4117,16 +4117,24 @@ use the Bourne shell command 'TERM=...; export TERM' (C-shell:\n\
       tty->TN_max_colors = tgetnum ("Co");
 
 #ifdef TERMINFO
-      /* Non-standard support for 24-bit colors. */
       {
 	const char *fg = tigetstr ("setf24");
 	const char *bg = tigetstr ("setb24");
+	/* Non-standard support for 24-bit colors. */
 	if (fg && bg
 	    && fg != (char *) (intptr_t) -1
 	    && bg != (char *) (intptr_t) -1)
 	  {
 	    tty->TS_set_foreground = fg;
 	    tty->TS_set_background = bg;
+	    tty->TN_max_colors = 16777216;
+	  }
+	/* Standard support for 24-bit colors.  */
+	else if (tigetflag ("RGB") > 0)
+	  {
+	    /* If the used Terminfo library supports only 16-bit
+	       signed values, tgetnum("Co") and tigetnum("colors")
+	       could return 32767.  */
 	    tty->TN_max_colors = 16777216;
 	  }
       }

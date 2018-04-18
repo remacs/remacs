@@ -1,6 +1,6 @@
 ;;; ob-python.el --- Babel Functions for Python      -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
 ;; Authors: Eric Schulte
 ;;	 Dan Davison
@@ -239,6 +239,15 @@ def main():
 
 open('%s', 'w').write( pprint.pformat(main()) )")
 
+(defconst org-babel-python--exec-tmpfile
+  (concat
+   "__org_babel_python_fname = '%s'; "
+   "__org_babel_python_fh = open(__org_babel_python_fname); "
+   "exec(compile("
+   "__org_babel_python_fh.read(), __org_babel_python_fname, 'exec'"
+   ")); "
+   "__org_babel_python_fh.close()"))
+
 (defun org-babel-python-evaluate
   (session body &optional result-type result-params preamble)
   "Evaluate BODY as Python code."
@@ -306,16 +315,23 @@ last statement in BODY, as elisp."
          (results
           (pcase result-type
             (`output
-             (mapconcat
-              #'org-trim
-              (butlast
-               (org-babel-comint-with-output
-                   (session org-babel-python-eoe-indicator t body)
-                 (funcall input-body body)
-                 (funcall send-wait) (funcall send-wait)
-                 (insert org-babel-python-eoe-indicator)
-                 (funcall send-wait))
-               2) "\n"))
+	     (let ((body (if (string-match-p ".\n+." body) ; Multiline
+			     (let ((tmp-src-file (org-babel-temp-file
+						  "python-")))
+			       (with-temp-file tmp-src-file (insert body))
+			       (format org-babel-python--exec-tmpfile
+				       tmp-src-file))
+			   body)))
+	       (mapconcat
+		#'org-trim
+		(butlast
+		 (org-babel-comint-with-output
+		     (session org-babel-python-eoe-indicator t body)
+		   (funcall input-body body)
+		   (funcall send-wait) (funcall send-wait)
+		   (insert org-babel-python-eoe-indicator)
+		   (funcall send-wait))
+		 2) "\n")))
             (`value
              (let ((tmp-file (org-babel-temp-file "python-")))
                (org-babel-comint-with-output

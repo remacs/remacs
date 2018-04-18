@@ -1,6 +1,6 @@
 ;;; semantic.el --- Semantic buffer evaluator.
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax tools
@@ -389,10 +389,9 @@ the output buffer."
   (if clear (semantic-clear-toplevel-cache))
   (if (eq clear '-) (setq clear -1))
   (let* ((start (current-time))
-	 (out (semantic-fetch-tags))
-	 (end (current-time)))
+	 (out (semantic-fetch-tags)))
     (message "Retrieving tags took %.2f seconds."
-	     (semantic-elapsed-time start end))
+	     (semantic-elapsed-time start nil))
     (when (or (null clear) (not (listp clear))
 	      (and (numberp clear) (< 0 clear)))
       (pop-to-buffer "*Parser Output*")

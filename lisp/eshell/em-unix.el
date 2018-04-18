@@ -1,6 +1,6 @@
 ;;; em-unix.el --- UNIX command aliases  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -956,16 +956,17 @@ Summarize disk usage of each FILE, recursively for directories.")
        :show-usage
        :usage "COMMAND...
 Show wall-clock time elapsed during execution of COMMAND.")
+     args                 ; suppress "unused lexical variable" warning
      (setq eshell-time-start (float-time))
      (add-hook 'eshell-post-command-hook 'eshell-show-elapsed-time nil t)
      ;; after setting
      (throw 'eshell-replace-command
 	    (eshell-parse-command (car time-args)
-;;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2007-08/msg00205.html
+;;; https://lists.gnu.org/r/bug-gnu-emacs/2007-08/msg00205.html
 				  (eshell-stringify-list
 				   (eshell-flatten-list (cdr time-args))))))))
 
-(defun eshell/whoami (&rest args)
+(defun eshell/whoami (&rest _args)
   "Make \"whoami\" Tramp aware."
   (or (file-remote-p default-directory 'user) (user-login-name)))
 

@@ -1,5 +1,6 @@
+@c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Search
@@ -53,6 +54,9 @@ Incremental search forward (@code{isearch-forward}).
 Incremental search backward (@code{isearch-backward}).
 @end table
 
+You can also invoke incremental search from the menu bar's
+@samp{Edit->Search} menu.
+
 @menu
 * Basic Isearch::        Basic incremental search commands.
 * Repeat Isearch::       Searching for the same string again.
@@ -88,7 +92,7 @@ the first @samp{F} previously found.  After another @kbd{O}, the
 cursor moves to just after the first @samp{FOO}.
 
 @cindex faces for highlighting search matches
-@cindex isearch face
+@cindex @code{isearch} face
   At each step, Emacs highlights the @dfn{current match}---the buffer
 text that matches the search string---using the @code{isearch} face
 (@pxref{Faces}).  @xref{Search Customizations}, for various options
@@ -225,6 +229,13 @@ character or word at point to the search string.  This is an easy way
 to search for another occurrence of the text at point.  (The decision
 of whether to copy a character or a word is heuristic.)
 
+@kindex C-M-w @r{(Incremental search)}
+@findex isearch-yank-symbol-or-char
+  @kbd{C-M-w} (@code{isearch-yank-symbol-or-char}) appends the next
+character or symbol at point to the search string.  This is an easy way
+to search for another occurrence of the symbol at point.  (The decision
+of whether to copy a character or a symbol is heuristic.)
+
 @kindex M-s C-e @r{(Incremental search)}
 @findex isearch-yank-line
   Similarly, @kbd{M-s C-e} (@code{isearch-yank-line}) appends the rest
@@ -246,11 +257,11 @@ appended text with an earlier kill, similar to the usual @kbd{M-y}
 in the echo area appends the current X selection (@pxref{Primary
 Selection}) to the search string (@code{isearch-yank-x-selection}).
 
-@kindex C-M-w @r{(Incremental search)}
+@kindex C-M-d @r{(Incremental search)}
 @kindex C-M-y @r{(Incremental search)}
 @findex isearch-del-char
 @findex isearch-yank-char
-  @kbd{C-M-w} (@code{isearch-del-char}) deletes the last character
+  @kbd{C-M-d} (@code{isearch-del-char}) deletes the last character
 from the search string, and @kbd{C-M-y} (@code{isearch-yank-char})
 appends the character after point to the search string.  An
 alternative method to add the character after point is to enter the
@@ -269,7 +280,7 @@ down-casing.
 @node Error in Isearch
 @subsection Errors in Incremental Search
 
-@cindex isearch-fail face
+@cindex @code{isearch-fail} face
   If your string is not found at all, the echo area says @samp{Failing
 I-Search}, and the cursor moves past the place where Emacs found as
 much of your string as it could.  Thus, if you search for @samp{FOOT},
@@ -425,8 +436,8 @@ of the keymap @code{isearch-mode-map} (@pxref{Keymaps}).
 @subsection Not Exiting Incremental Search
 
 This subsection describes how to control whether typing a command not
-specifically meaningful is searches exits the search before executing
-the command.  It also describes two categories of commands which you
+specifically meaningful in searches exits the search before executing
+the command.  It also describes three categories of commands which you
 can type without exiting the current incremental search, even though
 they are not themselves part of incremental search.
 
@@ -496,6 +507,18 @@ change point, the buffer contents, the match data, the current buffer,
 or the selected window and frame.  The command must not itself attempt
 an incremental search.  This feature is disabled if
 @code{isearch-allow-scroll} is @code{nil} (which it is by default).
+
+@item Motion Commands
+@cindex motion commands, during incremental search
+When @code{search-exit-option} is customized to @code{shift-move},
+you can extend the search string by holding down the shift key while
+typing cursor motion commands.  It will yank text that ends at the new
+position after moving point in the current buffer.
+
+When @code{search-exit-option} is @code{move}, you can extend the
+search string without using the shift key for cursor motion commands,
+but it applies only for certain motion command that have the
+@code{isearch-move} property on their symbols.
 @end table
 
 @node Isearch Minibuffer
@@ -548,7 +571,7 @@ command for nonincremental search, if the string you specify is empty.
 @key{RET}} does likewise, invoking the nonincremental
 backward-searching command.
 
-  Nonincremental search can also be invoked form the menu bar's
+  Nonincremental search can also be invoked from the menu bar's
 @samp{Edit->Search} menu.
 
 @findex search-forward
@@ -776,16 +799,16 @@ Search}.
 @cindex regular expression
 @cindex regexp
 
-  This manual describes regular expression features that users
-typically use.  @xref{Regular Expressions,,, elisp, The Emacs Lisp
-Reference Manual}, for additional features used mainly in Lisp
-programs.
+  This section (and this manual in general) describes regular
+expression features that users typically use.  @xref{Regular
+Expressions,,, elisp, The Emacs Lisp Reference Manual}, for additional
+features used mainly in Lisp programs.
 
   Regular expressions have a syntax in which a few characters are
 special constructs and the rest are @dfn{ordinary}.  An ordinary
 character matches that same character and nothing else.  The special
 characters are @samp{$^.*+?[\}.  The character @samp{]} is special if
-it ends a character alternative (see later).  The character @samp{-}
+it ends a character alternative (see below).  The character @samp{-}
 is special inside a character alternative.  Any other character
 appearing in a regular expression is ordinary, unless a @samp{\}
 precedes it.  (When you use regular expressions in a Lisp program,
@@ -803,11 +826,11 @@ of ``the same string'', rather than an exception.)
   Any two regular expressions @var{a} and @var{b} can be concatenated.
 The result is a regular expression which matches a string if @var{a}
 matches some amount of the beginning of that string and @var{b}
-matches the rest of the string.  For example, concatenating the
-regular expressions @samp{f} and @samp{o} gives the regular expression
-@samp{fo}, which matches only the string @samp{fo}.  Still trivial.
-To do something nontrivial, you need to use one of the special
-characters.  Here is a list of them.
+matches the rest of the string.  As a trivial example, concatenating
+the regular expressions @samp{f} and @samp{o} gives the regular
+expression @samp{fo}, which matches only the string @samp{fo}.  To do
+something less trivial, you need to use one of the special characters.
+Here is a list of them.
 
 @table @asis
 @item @kbd{.}@: @r{(Period)}
@@ -899,7 +922,8 @@ starting and ending characters with a @samp{-} between them.  Thus,
 @samp{[a-z]} matches any lower-case @acronym{ASCII} letter.  Ranges may be
 intermixed freely with individual characters, as in @samp{[a-z$%.]},
 which matches any lower-case @acronym{ASCII} letter or @samp{$}, @samp{%} or
-period.
+period.  As another example, @samp{[α-ωί]} matches all lower-case
+Greek letters.
 
 You can also include certain special @dfn{character classes} in a
 character set.  A @samp{[:} and balancing @samp{:]} enclose a
@@ -1025,13 +1049,13 @@ To record a matched substring for future reference.
 
 This last application is not a consequence of the idea of a
 parenthetical grouping; it is a separate feature that is assigned as a
-second meaning to the same @samp{\( @dots{} \)} construct.  In practice
+second meaning to the same @w{@samp{\( @dots{} \)}} construct.  In practice
 there is usually no conflict between the two meanings; when there is
-a conflict, you can use a shy group.
+a conflict, you can use a shy group, described below.
 
 @item \(?: @dots{} \)
 @cindex shy group, in regexp
-specifies a shy group that does not record the matched substring;
+specifies a @dfn{shy group} that does not record the matched substring;
 you can't refer back to it with @samp{\@var{d}} (see below).  This is
 useful in mechanically combining regular expressions, so that you can
 add groups for syntactic purposes without interfering with the
@@ -1111,7 +1135,8 @@ matches the empty string, but only at the beginning of a symbol.
 A symbol is a sequence of one or more symbol-constituent characters.
 A symbol-constituent character is a character whose syntax is either
 @samp{w} or @samp{_}.  @samp{\_<} matches at the beginning of the
-buffer only if a symbol-constituent character follows.
+buffer only if a symbol-constituent character follows.  As with words,
+the syntax table determines which characters are symbol-constituent.
 
 @item \_>
 matches the empty string, but only at the end of a symbol.  @samp{\_>}
@@ -1187,15 +1212,16 @@ tailor them to your needs.
   By default, search commands perform @dfn{lax space matching}:
 each space, or sequence of spaces, matches any sequence of one or more
 whitespace characters in the text.  (Incremental regexp search has a
-separate default; see @ref{Regexp Search}.)  Hence, @samp{foo bar}
-matches @samp{foo bar}, @samp{foo@w{  }bar}, @samp{foo@w{   }bar}, and
-so on (but not @samp{foobar}).  More precisely, Emacs matches each
-sequence of space characters in the search string to a regular
-expression specified by the variable @code{search-whitespace-regexp}.
-For example, to make spaces match sequences of newlines as well as
-spaces, set it to @samp{"[[:space:]\n]+"}.  The default value of this
-variable depends on the buffer's major mode; most major modes classify
-spaces, tabs, and formfeed characters as whitespace.
+separate default; see @ref{Regexp Search}.)  Hence, @w{@samp{foo bar}}
+matches @w{@samp{foo bar}}, @w{@samp{foo@ @ bar}},
+@w{@samp{foo@ @ @ bar}}, and so on (but not @samp{foobar}).  More
+precisely, Emacs matches each sequence of space characters in the
+search string to a regular expression specified by the variable
+@code{search-whitespace-regexp}.  For example, to make spaces match
+sequences of newlines as well as spaces, set it to
+@samp{"[[:space:]\n]+"}.  The default value of this variable depends
+on the buffer's major mode; most major modes classify spaces, tabs,
+and formfeed characters as whitespace.
 
   If you want whitespace characters to match exactly, you can turn lax
 space matching off by typing @kbd{M-s @key{SPC}}
@@ -1210,7 +1236,7 @@ search string matches exactly one space.
   Searches in Emacs by default ignore the case of the text they are
 searching through, if you specify the search string in lower case.
 Thus, if you specify searching for @samp{foo}, then @samp{Foo} and
-@samp{foo} also match.  Regexps, and in particular character sets,
+@samp{fOO} also match.  Regexps, and in particular character sets,
 behave likewise: @samp{[ab]} matches @samp{a} or @samp{A} or @samp{b}
 or @samp{B}.  This feature is known as @dfn{case folding}, and it is
 supported in both incremental and non-incremental search modes.
@@ -1222,9 +1248,9 @@ case-sensitive.  Thus, searching for @samp{Foo} does not find
 as well as to literal string search.  The effect ceases if you delete
 the upper-case letter from the search string.  The variable
 @code{search-upper-case} controls this: if it is non-@code{nil} (the
-default), an upper-case character in the search string make the search
-case-sensitive; setting it to @code{nil} disables this effect of
-upper-case characters.
+default), an upper-case character in the search string makes the
+search case-sensitive; setting it to @code{nil} disables this effect
+of upper-case characters.
 
 @vindex case-fold-search
   If you set the variable @code{case-fold-search} to @code{nil}, then
@@ -1345,7 +1371,7 @@ activating the mark; use @kbd{C-u C-@key{SPC}} to move back there.
 surrounded by word boundaries.
 
   @xref{Replacement and Lax Matches}, for details about
-case-sensitivity in replace commands.
+case-sensitivity and character folding in replace commands.
 
 @node Regexp Replace
 @subsection Regexp Replacement
@@ -1407,13 +1433,14 @@ symbol name goes with the symbol name, so the value replaces them
 both.
 
   Inside such an expression, you can use some special sequences.
-@samp{\&} and @samp{\@var{n}} refer here, as usual, to the entire
-match as a string, and to a submatch as a string.  @var{n} may be
-multiple digits, and the value of @samp{\@var{n}} is @code{nil} if
-subexpression @var{n} did not match.  You can also use @samp{\#&} and
-@samp{\#@var{n}} to refer to those matches as numbers (this is valid
-when the match or submatch has the form of a numeral).  @samp{\#} here
-too stands for the number of already-completed replacements.
+@samp{\&} and @samp{\@var{d}} refer here, as usual, to the entire
+match as a string, and to a submatch as a string.  @var{d} may be
+multiple digits, and the value of @samp{\@var{d}} is @code{nil} if the
+@var{d}'th parenthesized grouping did not match.  You can also use
+@samp{\#&} and @samp{\#@var{d}} to refer to those matches as numbers
+(this is valid when the match or submatch has the form of a numeral).
+@samp{\#} here too stands for the number of already-completed
+replacements.
 
   Repeating our example to exchange @samp{x} and @samp{y}, we can thus
 do it also this way:
@@ -1537,8 +1564,8 @@ replacements are not added to the command history, and cannot be
 reused.
 
 @cindex faces for highlighting query replace
-@cindex query-replace face
-@cindex lazy-highlight face, in replace
+@cindex @code{query-replace} face
+@cindex @code{lazy-highlight} face, in replace
 @vindex query-replace-highlight
 @vindex query-replace-lazy-highlight
 @vindex query-replace-show-replacement
@@ -1614,6 +1641,14 @@ to go back to the position of the previous occurrence (or what used to
 be an occurrence), in case you changed it by mistake or want to
 reexamine it.
 
+@item u
+to undo the last replacement and go back to where that replacement was
+made.
+
+@item U
+to undo all the replacements and go back to where the first
+replacement was made.
+
 @item C-r
 to enter a recursive editing level, in case the occurrence needs to be
 edited rather than just replaced with @var{newstring}.  When you are
@@ -1663,8 +1698,8 @@ line.  In particular, @kbd{C-g} simply exits the @code{query-replace}.
 
   To restart a @code{query-replace} once it is exited, use @kbd{C-x
 @key{ESC} @key{ESC}}, which repeats the @code{query-replace} because it
-used the minibuffer to read its arguments.  @xref{Repetition, C-x ESC
-ESC}.
+used the minibuffer to read its arguments.  @xref{Repetition, C-x @key{ESC}
+@key{ESC}}.
 
 @cindex invisible text, and query-replace
   The option @code{search-invisible} determines how @code{query-replace}
@@ -1727,7 +1762,8 @@ a multi-file incremental search is activated automatically.
 @cindex match (face name)
 @vindex list-matching-lines-default-context-lines
 @vindex list-matching-lines-jump-to-current-line
-@cindex list-matching-lines-current-line-face (face name)
+@c Too long.
+@c @cindex list-matching-lines-current-line-face (face name)
 @kindex M-s o
 @findex occur
 @item M-x occur
@@ -1738,12 +1774,13 @@ prompt, you can reuse search strings from previous incremental
 searches.  The text that matched is highlighted using the @code{match}
 face.  A numeric argument @var{n} specifies that @var{n} lines of
 context are to be displayed before and after each matching line.
+
 The default number of context lines is specified by the variable
-@code{list-matching-lines-default-context-lines}.
-When @code{list-matching-lines-jump-to-current-line} is non-nil,
-the current line is shown highlighted with face
-@code{list-matching-lines-current-line-face} and the point is set
-at the first match after such line.
+@code{list-matching-lines-default-context-lines}.  When
+@code{list-matching-lines-jump-to-current-line} is non-@code{nil} the
+current line is shown highlighted with face
+@code{list-matching-lines-current-line-face} and the point is set at
+the first match after such line.
 
 You can also run @kbd{M-s o} when an incremental search is active;
 this uses the current search string.
@@ -1844,7 +1881,7 @@ setting the variable @code{search-highlight} to @code{nil}.
 
 @cindex lazy highlighting customizations
 @vindex isearch-lazy-highlight
-@cindex lazy-highlight face
+@cindex @code{lazy-highlight} face
   The other matches for the search string that are visible on display
 are highlighted using the @code{lazy-highlight} face.  Setting the
 variable @code{isearch-lazy-highlight} to @code{nil} disables this
@@ -1898,7 +1935,7 @@ which Emacs will use this display mode.  The variable
 @code{search-slow-window-lines} controls the number of lines in the
 window Emacs pops up for displaying the search results; the default is
 1 line.  Normally, this window will pop up at the bottom of the window
-that displays the buffer where you start searching, bit if the value
+that displays the buffer where you start searching, but if the value
 of @code{search-slow-window-lines} is negative, that means to put the
 window at the top and give it the number of lines that is the absolute
-value of that value.
+value of @code{search-slow-window-lines}.

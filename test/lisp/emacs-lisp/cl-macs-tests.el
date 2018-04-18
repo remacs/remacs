@@ -1,6 +1,6 @@
 ;;; cl-macs-tests.el --- tests for emacs-lisp/cl-macs.el  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -496,5 +496,21 @@ collection clause."
   (should (equal (cl-loop for x in (list 1 2 3 4 5)
                           vconcat (vector (1+ x)))
                  [2 3 4 5 6])))
+
+(ert-deftest cl-macs-loop-for-as-equals-and ()
+  "Test for https://debbugs.gnu.org/29799 ."
+  (let ((arr (make-vector 3 0)))
+    (should (equal '((0 0) (1 1) (2 2))
+                   (cl-loop for k below 3 for x = k and z = (elt arr k)
+                            collect (list k x))))))
+
+
+(ert-deftest cl-defstruct/builtin-type ()
+  (should-error
+   (macroexpand '(cl-defstruct hash-table))
+   :type 'wrong-type-argument)
+  (should-error
+   (macroexpand '(cl-defstruct (hash-table (:predicate hash-table-p))))
+   :type 'wrong-type-argument))
 
 ;;; cl-macs-tests.el ends here

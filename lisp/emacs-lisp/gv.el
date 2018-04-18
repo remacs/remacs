@@ -1,6 +1,6 @@
 ;;; gv.el --- generalized variables  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: extensions
@@ -303,11 +303,14 @@ The return value is the last VAL in the list.
      (lambda (do before index place)
        (gv-letplace (getter setter) place
          (funcall do `(edebug-after ,before ,index ,getter)
-                  setter))))
+                  (lambda (store)
+                    `(progn (edebug-after ,before ,index ,getter)
+                            ,(funcall setter store)))))))
 
 ;;; The common generalized variables.
 
 (gv-define-simple-setter aref aset)
+(gv-define-simple-setter char-table-range set-char-table-range)
 (gv-define-simple-setter car setcar)
 (gv-define-simple-setter cdr setcdr)
 ;; FIXME: add compiler-macros for `cXXr' instead!

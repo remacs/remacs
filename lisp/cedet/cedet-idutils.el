@@ -1,6 +1,6 @@
 ;;; cedet-idutils.el --- ID Utils support for CEDET.
 
-;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 ;; Old-Version: 0.2
@@ -98,7 +98,7 @@ Return the created buffer with program output."
 
 (defun cedet-idutils-lid-call (flags)
   "Call ID Utils lid with the list of FLAGS.
-Return the created buffer with with program output."
+Return the created buffer with program output."
   (let ((b (get-buffer-create "*CEDET lid*"))
 	(cd default-directory)
 	)

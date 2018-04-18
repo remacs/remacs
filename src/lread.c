@@ -1,6 +1,6 @@
 /* Lisp parsing and input streams.
 
-Copyright (C) 1985-1989, 1993-1995, 1997-2017 Free Software Foundation,
+Copyright (C) 1985-1989, 1993-1995, 1997-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -145,10 +145,10 @@ static ptrdiff_t prev_saved_doc_string_length;
 /* This is the file position that string came from.  */
 static file_offset prev_saved_doc_string_position;
 
-/* True means inside a new-style backquote
-   with no surrounding parentheses.
-   Fread initializes this to false, so we need not specbind it
-   or worry about what happens to it when there is an error.  */
+/* True means inside a new-style backquote with no surrounding
+   parentheses.  Fread initializes this to the value of
+   `force_new_style_backquotes', so we need not specbind it or worry
+   about what happens to it when there is an error.  */
 static bool new_backquote_flag;
 
 /* A list of file names for files being loaded in Fload.  Used to
@@ -162,6 +162,8 @@ static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
 static void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
                           Lisp_Object, Lisp_Object,
                           Lisp_Object, Lisp_Object);
+
+static void build_load_history (Lisp_Object, bool);
 
 /* Functions that read one byte from the current source READCHARFUN
    or unreads one byte.  If the integer argument C is -1, it returns
@@ -1001,13 +1003,15 @@ load_error_handler (Lisp_Object data)
   return Qnil;
 }
 
-static void
-load_warn_old_style_backquotes (Lisp_Object file)
+static _Noreturn void
+load_error_old_style_backquotes (void)
 {
-  if (!NILP (Vlread_old_style_backquotes))
+  if (NILP (Vload_file_name))
+    xsignal1 (Qerror, build_string ("Old-style backquotes detected!"));
+  else
     {
       AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
-      CALLN (Fmessage, format, file);
+      xsignal1 (Qerror, CALLN (Fformat_message, format, Vload_file_name));
     }
 }
 
@@ -1117,7 +1121,7 @@ Return t if the file exists and loads successfully.  */)
   (Lisp_Object file, Lisp_Object noerror, Lisp_Object nomessage,
    Lisp_Object nosuffix, Lisp_Object must_suffix)
 {
-  FILE *stream;
+  FILE *stream UNINIT;
   int fd;
   int fd_index UNINIT;
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -1242,8 +1246,9 @@ Return t if the file exists and loads successfully.  */)
     }
 
 #ifdef HAVE_MODULES
-  if (suffix_p (found, MODULES_SUFFIX))
-    return unbind_to (count, Fmodule_load (found));
+  bool is_module = suffix_p (found, MODULES_SUFFIX);
+#else
+  bool is_module = false;
 #endif
 
   /* Check if we're stuck in a recursive load cycle.
@@ -1279,10 +1284,6 @@ Return t if the file exists and loads successfully.  */)
                     : found) ;
 
   version = -1;
-
-  /* Check for the presence of old-style quotes and warn about them.  */
-  specbind (Qlread_old_style_backquotes, Qnil);
-  record_unwind_protect (load_warn_old_style_backquotes, file);
 
   /* Check for the presence of unescaped character literals and warn
      about them. */
@@ -1348,7 +1349,7 @@ Return t if the file exists and loads successfully.  */)
             } /* !load_prefer_newer */
 	}
     }
-  else
+  else if (!is_module)
     {
       /* We are loading a source file (*.el).  */
       if (!NILP (Vload_source_file_function))
@@ -1375,7 +1376,7 @@ Return t if the file exists and loads successfully.  */)
       stream = NULL;
       errno = EINVAL;
     }
-  else
+  else if (!is_module)
     {
 #ifdef WINDOWSNT
       emacs_close (fd);
@@ -1386,9 +1387,23 @@ Return t if the file exists and loads successfully.  */)
       stream = fdopen (fd, fmode);
 #endif
     }
-  if (! stream)
-    report_file_error ("Opening stdio stream", file);
-  set_unwind_protect_ptr (fd_index, close_infile_unwind, stream);
+
+  if (is_module)
+    {
+      /* `module-load' uses the file name, so we can close the stream
+         now.  */
+      if (fd >= 0)
+        {
+          emacs_close (fd);
+          clear_unwind_protect (fd_index);
+        }
+    }
+  else
+    {
+      if (! stream)
+        report_file_error ("Opening stdio stream", file);
+      set_unwind_protect_ptr (fd_index, close_infile_unwind, stream);
+    }
 
   if (! NILP (Vpurify_flag))
     Vpreloaded_file_list = Fcons (Fpurecopy (file), Vpreloaded_file_list);
@@ -1398,6 +1413,8 @@ Return t if the file exists and loads successfully.  */)
       if (!safe_p)
 	message_with_string ("Loading %s (compiled; note unsafe, not compiled in Emacs)...",
 		 file, 1);
+      else if (is_module)
+        message_with_string ("Loading %s (module)...", file, 1);
       else if (!compiled)
 	message_with_string ("Loading %s (source)...", file, 1);
       else if (newer)
@@ -1411,24 +1428,39 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qinhibit_file_name_operation, Qnil);
   specbind (Qload_in_progress, Qt);
 
-  struct infile input;
-  input.stream = stream;
-  input.lookahead = 0;
-  infile = &input;
-
-  if (lisp_file_lexically_bound_p (Qget_file_char))
-    Fset (Qlexical_binding, Qt);
-
-  if (! version || version >= 22)
-    readevalloop (Qget_file_char, &input, hist_file_name,
-		  0, Qnil, Qnil, Qnil, Qnil);
+  if (is_module)
+    {
+#ifdef HAVE_MODULES
+      specbind (Qcurrent_load_list, Qnil);
+      LOADHIST_ATTACH (found);
+      Fmodule_load (found);
+      build_load_history (found, true);
+#else
+      /* This cannot happen.  */
+      emacs_abort ();
+#endif
+    }
   else
     {
-      /* We can't handle a file which was compiled with
-	 byte-compile-dynamic by older version of Emacs.  */
-      specbind (Qload_force_doc_strings, Qt);
-      readevalloop (Qget_emacs_mule_file_char, &input, hist_file_name,
-		    0, Qnil, Qnil, Qnil, Qnil);
+      struct infile input;
+      input.stream = stream;
+      input.lookahead = 0;
+      infile = &input;
+
+      if (lisp_file_lexically_bound_p (Qget_file_char))
+        Fset (Qlexical_binding, Qt);
+
+      if (! version || version >= 22)
+        readevalloop (Qget_file_char, &input, hist_file_name,
+                      0, Qnil, Qnil, Qnil, Qnil);
+      else
+        {
+          /* We can't handle a file which was compiled with
+             byte-compile-dynamic by older version of Emacs.  */
+          specbind (Qload_force_doc_strings, Qt);
+          readevalloop (Qget_emacs_mule_file_char, &input, hist_file_name,
+                        0, Qnil, Qnil, Qnil, Qnil);
+        }
     }
   unbind_to (count, Qnil);
 
@@ -1449,6 +1481,8 @@ Return t if the file exists and loads successfully.  */)
       if (!safe_p)
 	message_with_string ("Loading %s (compiled; note unsafe, not compiled in Emacs)...done",
 		 file, 1);
+      else if (is_module)
+        message_with_string ("Loading %s (module)...done", file, 1);
       else if (!compiled)
 	message_with_string ("Loading %s (source)...done", file, 1);
       else if (newer)
@@ -1666,7 +1700,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 				      AT_EACCESS)
 			   == 0)
 		    {
-		      if (file_directory_p (pfn))
+		      if (file_directory_p (encoded_fn))
 			last_errno = EISDIR;
 		      else
 			fd = 1;
@@ -2192,7 +2226,7 @@ read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
   Lisp_Object retval;
 
   readchar_count = 0;
-  new_backquote_flag = 0;
+  new_backquote_flag = force_new_style_backquotes;
   /* We can get called from readevalloop which may have set these
      already.  */
   if (! HASH_TABLE_P (read_objects_map)
@@ -2267,7 +2301,7 @@ read0 (Lisp_Object readcharfun)
     return val;
 
   xsignal1 (Qinvalid_read_syntax,
-	    Fmake_string (make_number (1), make_number (c)));
+	    Fmake_string (make_number (1), make_number (c), Qnil));
 }
 
 /* Grow a read buffer BUF that contains OFFSET useful bytes of data,
@@ -3176,10 +3210,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	   first_in_list exception (old-style can still be obtained via
 	   "(\`" anyway).  */
 	if (!new_backquote_flag && first_in_list && next_char == ' ')
-	  {
-	    Vlread_old_style_backquotes = Qt;
-	    goto default_label;
-	  }
+	  load_error_old_style_backquotes ();
 	else
 	  {
 	    Lisp_Object value;
@@ -3230,10 +3261,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	    return list2 (comma_type, value);
 	  }
 	else
-	  {
-	    Vlread_old_style_backquotes = Qt;
-	    goto default_label;
-	  }
+	  load_error_old_style_backquotes ();
       }
     case '?':
       {
@@ -3421,7 +3449,6 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	 row.  */
       FALLTHROUGH;
     default:
-    default_label:
       if (c <= 040) goto retry;
       if (c == NO_BREAK_SPACE)
 	goto retry;
@@ -3480,20 +3507,9 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
         if (!quoted && multibyte)
           {
             int ch = STRING_CHAR ((unsigned char *) read_buffer);
-            switch (ch)
-              {
-              case 0x2018: /* LEFT SINGLE QUOTATION MARK */
-              case 0x2019: /* RIGHT SINGLE QUOTATION MARK */
-              case 0x201B: /* SINGLE HIGH-REVERSED-9 QUOTATION MARK */
-              case 0x201C: /* LEFT DOUBLE QUOTATION MARK */
-              case 0x201D: /* RIGHT DOUBLE QUOTATION MARK */
-              case 0x201F: /* DOUBLE HIGH-REVERSED-9 QUOTATION MARK */
-              case 0x301E: /* DOUBLE PRIME QUOTATION MARK */
-              case 0xFF02: /* FULLWIDTH QUOTATION MARK */
-              case 0xFF07: /* FULLWIDTH APOSTROPHE */
-                xsignal2 (Qinvalid_read_syntax, build_string ("strange quote"),
-                          CALLN (Fstring, make_number (ch)));
-              }
+            if (confusable_symbol_character_p (ch))
+              xsignal2 (Qinvalid_read_syntax, build_string ("strange quote"),
+                        CALLN (Fstring, make_number (ch)));
           }
 	{
 	  Lisp_Object result;
@@ -4022,14 +4038,14 @@ intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
 {
   Lisp_Object *ptr;
 
-  XSYMBOL (sym)->interned = (EQ (obarray, initial_obarray)
-			     ? SYMBOL_INTERNED_IN_INITIAL_OBARRAY
-			     : SYMBOL_INTERNED);
+  XSYMBOL (sym)->u.s.interned = (EQ (obarray, initial_obarray)
+				 ? SYMBOL_INTERNED_IN_INITIAL_OBARRAY
+				 : SYMBOL_INTERNED);
 
   if (SREF (SYMBOL_NAME (sym), 0) == ':' && EQ (obarray, initial_obarray))
     {
       make_symbol_constant (sym);
-      XSYMBOL (sym)->redirect = SYMBOL_PLAINVAL;
+      XSYMBOL (sym)->u.s.redirect = SYMBOL_PLAINVAL;
       SET_SYMBOL_VAL (XSYMBOL (sym), sym);
     }
 
@@ -4096,16 +4112,16 @@ usage: (unintern NAME OBARRAY)  */)
   /* if (EQ (tem, Qnil) || EQ (tem, Qt))
        error ("Attempt to unintern t or nil"); */
 
-  XSYMBOL (tem)->interned = SYMBOL_UNINTERNED;
+  XSYMBOL (tem)->u.s.interned = SYMBOL_UNINTERNED;
 
   hash = oblookup_last_bucket_number;
 
   if (EQ (AREF (obarray, hash), tem))
     {
-      if (XSYMBOL (tem)->next)
+      if (XSYMBOL (tem)->u.s.next)
 	{
 	  Lisp_Object sym;
-	  XSETSYMBOL (sym, XSYMBOL (tem)->next);
+	  XSETSYMBOL (sym, XSYMBOL (tem)->u.s.next);
 	  ASET (obarray, hash, sym);
 	}
       else
@@ -4116,13 +4132,13 @@ usage: (unintern NAME OBARRAY)  */)
       Lisp_Object tail, following;
 
       for (tail = AREF (obarray, hash);
-	   XSYMBOL (tail)->next;
+	   XSYMBOL (tail)->u.s.next;
 	   tail = following)
 	{
-	  XSETSYMBOL (following, XSYMBOL (tail)->next);
+	  XSETSYMBOL (following, XSYMBOL (tail)->u.s.next);
 	  if (EQ (following, tem))
 	    {
-	      set_symbol_next (tail, XSYMBOL (following)->next);
+	      set_symbol_next (tail, XSYMBOL (following)->u.s.next);
 	      break;
 	    }
 	}
@@ -4157,13 +4173,13 @@ oblookup (Lisp_Object obarray, register const char *ptr, ptrdiff_t size, ptrdiff
   else if (!SYMBOLP (bucket))
     error ("Bad data in guts of obarray"); /* Like CADR error message.  */
   else
-    for (tail = bucket; ; XSETSYMBOL (tail, XSYMBOL (tail)->next))
+    for (tail = bucket; ; XSETSYMBOL (tail, XSYMBOL (tail)->u.s.next))
       {
 	if (SBYTES (SYMBOL_NAME (tail)) == size_byte
 	    && SCHARS (SYMBOL_NAME (tail)) == size
 	    && !memcmp (SDATA (SYMBOL_NAME (tail)), ptr, size_byte))
 	  return tail;
-	else if (XSYMBOL (tail)->next == 0)
+	else if (XSYMBOL (tail)->u.s.next == 0)
 	  break;
       }
   XSETINT (tem, hash);
@@ -4187,12 +4203,12 @@ init_obarray (void)
   DEFSYM (Qnil, "nil");
   SET_SYMBOL_VAL (XSYMBOL (Qnil), Qnil);
   make_symbol_constant (Qnil);
-  XSYMBOL (Qnil)->declared_special = true;
+  XSYMBOL (Qnil)->u.s.declared_special = true;
 
   DEFSYM (Qt, "t");
   SET_SYMBOL_VAL (XSYMBOL (Qt), Qt);
   make_symbol_constant (Qt);
-  XSYMBOL (Qt)->declared_special = true;
+  XSYMBOL (Qt)->u.s.declared_special = true;
 
   /* Qt is correct even if CANNOT_DUMP.  loadup.el will set to nil at end.  */
   Vpurify_flag = Qt;
@@ -4216,7 +4232,7 @@ defalias (struct Lisp_Subr *sname, char *string)
 {
   Lisp_Object sym;
   sym = intern (string);
-  XSETSUBR (XSYMBOL (sym)->function, sname);
+  XSETSUBR (XSYMBOL (sym)->u.s.function, sname);
 }
 #endif /* NOTDEF */
 
@@ -4231,8 +4247,8 @@ defvar_int (struct Lisp_Intfwd *i_fwd,
   sym = intern_c_string (namestring);
   i_fwd->type = Lisp_Fwd_Int;
   i_fwd->intvar = address;
-  XSYMBOL (sym)->declared_special = 1;
-  XSYMBOL (sym)->redirect = SYMBOL_FORWARDED;
+  XSYMBOL (sym)->u.s.declared_special = true;
+  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)i_fwd);
 }
 
@@ -4246,8 +4262,8 @@ defvar_bool (struct Lisp_Boolfwd *b_fwd,
   sym = intern_c_string (namestring);
   b_fwd->type = Lisp_Fwd_Bool;
   b_fwd->boolvar = address;
-  XSYMBOL (sym)->declared_special = 1;
-  XSYMBOL (sym)->redirect = SYMBOL_FORWARDED;
+  XSYMBOL (sym)->u.s.declared_special = true;
+  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)b_fwd);
   Vbyte_boolean_vars = Fcons (sym, Vbyte_boolean_vars);
 }
@@ -4265,8 +4281,8 @@ defvar_lisp_nopro (struct Lisp_Objfwd *o_fwd,
   sym = intern_c_string (namestring);
   o_fwd->type = Lisp_Fwd_Obj;
   o_fwd->objvar = address;
-  XSYMBOL (sym)->declared_special = 1;
-  XSYMBOL (sym)->redirect = SYMBOL_FORWARDED;
+  XSYMBOL (sym)->u.s.declared_special = true;
+  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)o_fwd);
 }
 
@@ -4289,8 +4305,8 @@ defvar_kboard (struct Lisp_Kboard_Objfwd *ko_fwd,
   sym = intern_c_string (namestring);
   ko_fwd->type = Lisp_Fwd_Kboard_Obj;
   ko_fwd->offset = offset;
-  XSYMBOL (sym)->declared_special = 1;
-  XSYMBOL (sym)->redirect = SYMBOL_FORWARDED;
+  XSYMBOL (sym)->u.s.declared_special = true;
+  XSYMBOL (sym)->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)ko_fwd);
 }
 
@@ -4598,19 +4614,19 @@ dir_warning (char const *use, Lisp_Object dirname)
 bool
 symbol_is_interned (struct Lisp_Symbol *symbol)
 {
-  return symbol->interned == SYMBOL_INTERNED_IN_INITIAL_OBARRAY;
+  return symbol->u.s.interned == SYMBOL_INTERNED_IN_INITIAL_OBARRAY;
 }
 
 bool
 symbol_is_alias (struct Lisp_Symbol *symbol)
 {
-  return symbol->redirect == SYMBOL_VARALIAS;
+  return symbol->u.s.redirect == SYMBOL_VARALIAS;
 }
 
 bool
 symbol_is_constant (struct Lisp_Symbol *symbol)
 {
-  return symbol->trapped_write == SYMBOL_NOWRITE;
+  return symbol->u.s.trapped_write == SYMBOL_NOWRITE;
 }
 
 uint16_t
@@ -4645,7 +4661,7 @@ to find all the symbols in an obarray, use `mapatoms'.  */);
   DEFVAR_LISP ("values", Vvalues,
 	       doc: /* List of values of all expressions which were read, evaluated and printed.
 Order is reverse chronological.  */);
-  XSYMBOL (intern ("values"))->declared_special = 0;
+  XSYMBOL (intern ("values"))->u.s.declared_special = false;
 
   DEFVAR_LISP ("standard-input", Vstandard_input,
 	       doc: /* Stream for read to get input from.
@@ -4710,7 +4726,7 @@ to the specified file name if a suffix is allowed or required.  */);
 			  build_pure_c_string (".el"));
 #endif
   DEFVAR_LISP ("module-file-suffix", Vmodule_file_suffix,
-	       doc: /* Suffix of loadable module file, or nil of modules are not supported.  */);
+	       doc: /* Suffix of loadable module file, or nil if modules are not supported.  */);
 #ifdef HAVE_MODULES
   Vmodule_file_suffix = build_pure_c_string (MODULES_SUFFIX);
 #else
@@ -4782,7 +4798,7 @@ directory.  These file names are converted to absolute at startup.  */);
 If the file loaded had extension `.elc', and the corresponding source file
 exists, this variable contains the name of source file, suitable for use
 by functions like `custom-save-all' which edit the init file.
-While Emacs loads and evaluates the init file, value is the real name
+While Emacs loads and evaluates any init file, value is the real name
 of the file, regardless of whether or not it has the `.elc' extension.  */);
   Vuser_init_file = Qnil;
 
@@ -4872,12 +4888,6 @@ variables, this must be set in the first line of a file.  */);
 	       doc: /* List of buffers being read from by calls to `eval-buffer' and `eval-region'.  */);
   Veval_buffer_list = Qnil;
 
-  DEFVAR_LISP ("lread--old-style-backquotes", Vlread_old_style_backquotes,
-	       doc: /* Set to non-nil when `read' encounters an old-style backquote.
-For internal use only.  */);
-  Vlread_old_style_backquotes = Qnil;
-  DEFSYM (Qlread_old_style_backquotes, "lread--old-style-backquotes");
-
   DEFVAR_LISP ("lread--unescaped-character-literals",
                Vlread_unescaped_character_literals,
                doc: /* List of deprecated unescaped character literals encountered by `read'.
@@ -4901,6 +4911,17 @@ newest.
 Note that if you customize this, obviously it will not affect files
 that are loaded before your customizations are read!  */);
   load_prefer_newer = 0;
+
+  DEFVAR_BOOL ("force-new-style-backquotes", force_new_style_backquotes,
+               doc: /* Non-nil means to always use the current syntax for backquotes.
+If nil, `load' and `read' raise errors when encountering some
+old-style variants of backquote and comma.  If non-nil, these
+constructs are always interpreted as described in the Info node
+`(elisp)Backquotes', even if that interpretation is incompatible with
+previous versions of Emacs.  Setting this variable to non-nil makes
+Emacs compatible with the behavior planned for Emacs 28.  In Emacs 28,
+this variable will become obsolete.  */);
+  force_new_style_backquotes = false;
 
   /* Vsource_directory was initialized in init_lread.  */
 

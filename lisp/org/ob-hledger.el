@@ -1,6 +1,6 @@
-;;  ob-ledger.el --- Babel Functions for hledger      -*- lexical-binding: t; -*-
+;;  ob-hledger.el --- Babel Functions for hledger      -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Simon Michael
 ;; Keywords: literate programming, reproducible research, plain text accounting

@@ -1,6 +1,6 @@
 ;;; mailcap.el --- MIME media types configuration -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
 ;; Author: William M. Perry <wmperry@aventail.com>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -92,13 +92,14 @@ replaced with the file.
 MIME-TYPE is a regular expression being matched against the
 actual MIME type.  It is implicitly surrounded with ^ and $.
 
-TEST is an lisp form which is evaluated in order to test if the
+TEST is a lisp form which is evaluated in order to test if the
 entry should be chosen.  The `test' entry is optional.
 
 When selecting a viewer for a given MIME type, the first viewer
 in this list with a matching MIME-TYPE and successful TEST is
 selected.  Only if none matches, the standard `mailcap-mime-data'
 is consulted."
+  :version "26.1"
   :type '(repeat
 	  (list
 	   (choice (function :tag "Function or mode")
@@ -323,7 +324,7 @@ means the viewer is always valid.  If it is a Lisp function, it is
 called with a list of items from any extra fields from the
 Content-Type header as argument to return a boolean value for the
 validity.  Otherwise, if it is a non-function Lisp symbol or list
-whose car is a symbol, it is `eval'led to yield the validity.  If it
+whose car is a symbol, it is `eval'uated to yield the validity.  If it
 is a string or list of strings, it represents a shell command to run
 to return a true or false shell value for the validity.")
 (put 'mailcap-mime-data 'risky-local-variable t)
@@ -554,7 +555,7 @@ MAILCAPS if set; otherwise (on Unix) use the path from RFC 1524, plus
 (defun mailcap-mailcap-entry-passes-test (info)
   "Replace the test clause of INFO itself with a boolean for some cases.
 This function supports only `test -n $DISPLAY' and `test -z $DISPLAY',
-replaces them with t or nil.  As for others or if INFO has a interactive
+replaces them with t or nil.  As for others or if INFO has an interactive
 spec (needsterm, needsterminal, or needsx11) but DISPLAY is not set,
 the test clause will be unchanged."
   (let ((test (assq 'test info))	; The test clause
@@ -1004,6 +1005,14 @@ If FORCE, re-parse even if already parsed."
 	   (not (eq (string-to-char extn) ?.)))
       (setq extn (concat "." extn)))
   (cdr (assoc (downcase extn) mailcap-mime-extensions)))
+
+(defun mailcap-file-name-to-mime-type (file-name)
+  "Return the MIME content type based on the FILE-NAME's extension.
+For instance, \"foo.png\" will result in \"image/png\"."
+  (mailcap-extension-to-mime
+   (if (string-match "\\(\\.[^.]+\\)\\'" file-name)
+       (match-string 1 file-name)
+     "")))
 
 (defun mailcap-mime-types ()
   "Return a list of MIME media types."

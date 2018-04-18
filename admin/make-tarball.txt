@@ -5,7 +5,7 @@ Instructions to create pretest or release tarballs. -*- coding: utf-8 -*-
 
 Steps to take before starting on the first pretest in any release sequence:
 
-0.  The release branch (e.g. emacs-25) should already have been made
+0.  The release branch (e.g. emacs-26) should already have been made
     and you should use it for all that follows.  Diffs from this
     branch should be going to the emacs-diffs mailing list.
 
@@ -177,6 +177,11 @@ General steps (for each step, check for possible errors):
     See the info-gnu-emacs mailing list archives for the form
     of past announcements.  The first pretest announcement, and the
     release announcement, should have more detail.
+    Use the emacs-devel topic 'emacs-announce'.  The best way to do
+    this is to add a header "Keywords: emacs-announce" to your mail.
+    (You can also put it in the Subject, but this is not as good
+    because replies that invariably are not announcements also get
+    sent out as if they were.)
 
 12. After a release, update the Emacs pages as below.
 
@@ -207,7 +212,7 @@ longer present.
 Tar up the generated html_node/emacs/ and elisp/ directories and update
 the files manual/elisp.html_node.tar.gz and emacs.html_node.tar.gz.
 
-Use M-x make-manuals-dist from from admin/admin.el to update the
+Use M-x make-manuals-dist from admin/admin.el to update the
 manual/texi/ tarfiles.
 
 Add compressed copies of the main info pages from the tarfile to manual/info/.

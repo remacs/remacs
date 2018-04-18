@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Lists
@@ -1141,7 +1141,7 @@ each time you run it!  Here is what happens:
 
 @group
 (symbol-function 'add-foo)
-     @result{} (lambda (x) (nconc (quote (foo)) x))
+     @result{} (lambda (x) (nconc '(foo) x))
 @end group
 
 @group
@@ -1159,7 +1159,7 @@ each time you run it!  Here is what happens:
 
 @group
 (symbol-function 'add-foo)
-     @result{} (lambda (x) (nconc (quote (foo 1 2 3 4) x)))
+     @result{} (lambda (x) (nconc '(foo 1 2 3 4) x))
 @end group
 @end smallexample
 @end defun
@@ -1514,9 +1514,10 @@ of property lists and association lists.
 @defun assoc key alist &optional testfn
 This function returns the first association for @var{key} in
 @var{alist}, comparing @var{key} against the alist elements using
-@var{testfn} if non-nil, or @code{equal} if nil (@pxref{Equality
-Predicates}).  It returns @code{nil} if no association in @var{alist}
-has a @sc{car} equal to @var{key}.  For example:
+@var{testfn} if it is non-@code{nil} and @code{equal} otherwise
+(@pxref{Equality Predicates}).  It returns @code{nil} if no
+association in @var{alist} has a @sc{car} equal to @var{key}.  For
+example:
 
 @smallexample
 (setq trees '((pine . cones) (oak . acorns) (maple . seeds)))
@@ -1730,6 +1731,14 @@ than looking at the saved value of @var{alist}.
 alist
      @result{} ((foo 1) (bar 2) (lose 4))
 @end example
+@end defun
+
+@defun assoc-delete-all key alist &optional test
+This function is like @code{assq-delete-all} except that it accepts
+an optional argument @var{test}, a predicate function to compare the
+keys in @var{alist}. If omitted or @code{nil}, @var{test} defaults to
+@code{equal}.  As @code{assq-delete-all}, this function often modifies
+the original list structure of @var{alist}.
 @end defun
 
 @defun rassq-delete-all value alist

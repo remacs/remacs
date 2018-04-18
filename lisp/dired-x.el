@@ -1,6 +1,6 @@
 ;;; dired-x.el --- extra Dired functionality  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1993-1994, 1997, 2001-2017 Free Software Foundation,
+;; Copyright (C) 1993-1994, 1997, 2001-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>
@@ -57,7 +57,7 @@
 
 (defcustom dired-bind-vm nil
   "Non-nil means \"V\" runs `dired-vm', otherwise \"V\" runs `dired-rmail'.
-RMAIL files in the old Babyl format (used before before Emacs 23.1)
+RMAIL files in the old Babyl format (used before Emacs 23.1)
 contain \"-*- rmail -*-\" at the top, so `dired-find-file'
 will run `rmail' on these files.  New RMAIL files use the standard
 mbox format, and so cannot be distinguished in this way."
@@ -1128,7 +1128,9 @@ Each element of this list looks like
     (REGEXP COMMAND...)
 
 where each COMMAND can either be a string or a Lisp expression that evaluates
-to a string.  This expression can access the file name as the variable `file'.
+to a string.  If this expression needs to consult the name of the file for
+which the shell commands are being requested, it can access that file name
+as the variable `file'.
 If several COMMANDs are given, the first one will be the default
 and the rest will be added temporarily to the history and can be retrieved
 with \\[previous-history-element] (M-p) .
@@ -1333,7 +1335,8 @@ displayed this way is restricted by the height of the current window and
 To keep Dired buffer displayed, type \\[split-window-below] first.
 To display just marked files, type \\[delete-other-windows] first."
   (interactive "P")
-  (dired-simultaneous-find-file (dired-get-marked-files) noselect))
+  (dired-simultaneous-find-file (dired-get-marked-files nil nil nil nil t)
+                                noselect))
 
 (defun dired-simultaneous-find-file (file-list noselect)
   "Visit all files in FILE-LIST and display them simultaneously.

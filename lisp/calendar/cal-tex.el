@@ -1,6 +1,6 @@
 ;;; cal-tex.el --- calendar functions for printing calendars with LaTeX
 
-;; Copyright (C) 1995, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Steve Fisk <fisk@bowdoin.edu>
 ;;         Edward M. Reingold <reingold@cs.uiuc.edu>
@@ -245,8 +245,6 @@ This definition is the heart of the calendar!")
   "LaTeX code for right header.")
 
 (autoload 'holiday-in-range "holidays")
-
-(define-obsolete-function-alias 'cal-tex-list-holidays 'holiday-in-range "24.3")
 
 (autoload 'diary-list-entries "diary-lib")
 

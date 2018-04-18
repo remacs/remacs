@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Processes
@@ -723,8 +723,11 @@ Initialize the process query flag to @var{query-flag}.
 @xref{Query Before Exit}.
 
 @item :stop @var{stopped}
-If @var{stopped} is non-@code{nil}, start the process in the
-stopped state.
+If @var{stopped} is non-@code{nil}, start the process in the stopped
+state.  In the stopped state, a pipe process does not accept incoming
+data, but you can send outgoing data.  The stopped state is set by
+@code{stop-process} and cleared by @code{continue-process}
+(@pxref{Signals to Processes}).
 
 @item :filter @var{filter}
 Initialize the process filter to @var{filter}.  If not specified, a
@@ -2707,8 +2710,7 @@ Initialize the process filter to @var{filter}.
 
 @item :filter-multibyte @var{multibyte}
 If @var{multibyte} is non-@code{nil}, strings given to the process
-filter are multibyte, otherwise they are unibyte.  The default is the
-default value of @code{enable-multibyte-characters}.
+filter are multibyte, otherwise they are unibyte.  The default is @code{t}.
 
 @item :sentinel @var{sentinel}
 Initialize the process sentinel to @var{sentinel}.

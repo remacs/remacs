@@ -1,6 +1,6 @@
 ;;; semantic/analyze/refs.el --- Analysis of the references between tags.
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -317,9 +317,8 @@ Only works for tags in the global namespace."
   (let* ((tag (semantic-current-tag))
 	 (start (current-time))
 	 (sac (semantic-analyze-tag-references tag))
-	 (end (current-time))
 	 )
-    (message "Analysis took %.2f seconds." (semantic-elapsed-time start end))
+    (message "Analysis took %.2f seconds." (semantic-elapsed-time start nil))
     (if sac
 	(progn
 	  (require 'eieio-datadebug)
@@ -348,7 +347,7 @@ Only works for tags in the global namespace."
 
     (push-mark)
     (semantic-go-to-tag target)
-    (switch-to-buffer (current-buffer))
+    (pop-to-buffer-same-window (current-buffer))
     (semantic-momentary-highlight-tag target))
   )
 

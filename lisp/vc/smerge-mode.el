@@ -1,6 +1,6 @@
 ;;; smerge-mode.el --- Minor mode to resolve diff3 conflicts -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: vc, tools, revision control, merge, diff3, cvs, conflict
@@ -104,7 +104,6 @@ Used in `smerge-diff-base-upper' and related functions."
     (((class color))
      :foreground "yellow"))
   "Face for the base code.")
-(define-obsolete-face-alias 'smerge-base-face 'smerge-base "22.1")
 (defvar smerge-base-face 'smerge-base)
 
 (defface smerge-markers
@@ -113,7 +112,6 @@ Used in `smerge-diff-base-upper' and related functions."
     (((background dark))
      (:background "grey30")))
   "Face for the conflict markers.")
-(define-obsolete-face-alias 'smerge-markers-face 'smerge-markers "22.1")
 (defvar smerge-markers-face 'smerge-markers)
 
 (defface smerge-refined-changed
@@ -919,7 +917,7 @@ Its behavior has mainly two restrictions:
   after the newline.
   This only matters if `smerge-refine-ignore-whitespace' is nil.
 - it needs to be unaffected by changes performed by the `preproc' argument
-  to `smerge-refine-subst'.
+  to `smerge-refine-regions'.
   This only matters if `smerge-refine-weight-hack' is nil.")
 
 (defvar smerge-refine-ignore-whitespace t
@@ -1019,7 +1017,7 @@ chars to try and eliminate some spurious differences."
                   (setq s short)))
               (dotimes (_i (1- len)) (insert s)))))))
     (unless (bolp) (error "Smerge refine internal error"))
-    (let ((coding-system-for-write 'emacs-internal))
+    (let ((coding-system-for-write 'utf-8-emacs-unix))
       (write-region (point-min) (point-max) file nil 'nomessage))))
 
 (defun smerge--refine-highlight-change (beg match-num1 match-num2 props)
@@ -1084,7 +1082,9 @@ used to replace chars to try and eliminate some spurious differences."
     ;; Call diff on those files.
     (unwind-protect
         (with-temp-buffer
-          (let ((coding-system-for-read 'emacs-internal))
+          ;; Allow decoding the EOL format, as on MS-Windows the Diff
+          ;; utility might produce CR-LF EOLs.
+          (let ((coding-system-for-read 'utf-8-emacs))
             (call-process diff-command nil t nil
                           (if (and smerge-refine-ignore-whitespace
                                    (not smerge-refine-weight-hack))
@@ -1094,7 +1094,7 @@ used to replace chars to try and eliminate some spurious differences."
                               ;; also and more importantly because otherwise it
                               ;; may happen that diff doesn't behave like
                               ;; smerge-refine-weight-hack expects it to.
-                              ;; See https://lists.gnu.org/archive/html/emacs-devel/2007-11/msg00401.html
+                              ;; See https://lists.gnu.org/r/emacs-devel/2007-11/msg00401.html
                               "-awd" "-ad")
                           file1 file2))
           ;; Process diff's output.
@@ -1188,15 +1188,15 @@ repeating the command will highlight other two parts."
       (put-text-property (match-beginning 0) (1+ (match-beginning 0))
                          'smerge-refine-part
                          (cons (buffer-chars-modified-tick) part)))
-    (smerge-refine-subst (match-beginning n1) (match-end n1)
+    (smerge-refine-regions (match-beginning n1) (match-end n1)
                          (match-beginning n2)  (match-end n2)
                          (if smerge-use-changed-face
-			     '((smerge . refine) (face . smerge-refined-change)))
+			     '((smerge . refine) (font-lock-face . smerge-refined-change)))
 			 nil
 			 (unless smerge-use-changed-face
-			   '((smerge . refine) (face . smerge-refined-removed)))
+			   '((smerge . refine) (font-lock-face . smerge-refined-removed)))
 			 (unless smerge-use-changed-face
-			   '((smerge . refine) (face . smerge-refined-added))))))
+			   '((smerge . refine) (font-lock-face . smerge-refined-added))))))
 
 (defun smerge-swap ()
   "Swap the \"Upper\" and the \"Lower\" chunks.

@@ -1,6 +1,6 @@
 ;;; ob-stan.el --- Babel Functions for Stan          -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 ;; Author: Kyle Meyer
 ;; Keywords: literate programming, reproducible research
@@ -49,11 +49,12 @@
 
 (defcustom org-babel-stan-cmdstan-directory nil
   "CmdStan source directory.
-'make' will be called from this directory to compile the Stan
-block.  When nil, executing Stan blocks dumps the content to a
-plain text file."
+Call \"make\" from this directory to compile the Stan block.
+When nil, executing Stan blocks dumps the content to a file."
   :group 'org-babel
-  :type 'string)
+  :type '(choice
+	  (directory :tag "Compilation directory")
+	  (const :tag "Dump to a file" nil)))
 
 (defvar org-babel-default-header-args:stan
   '((:results . "file")))

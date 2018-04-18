@@ -7,7 +7,7 @@
 @copying
 This file documents the GNU Emacs Common Lisp emulation package.
 
-Copyright @copyright{} 1993, 2001--2017 Free Software Foundation, Inc.
+Copyright @copyright{} 1993, 2001--2018 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -317,7 +317,7 @@ This is analogous to the @code{defsubst} form;
 @code{cl-defsubst} uses a different method (compiler macros) which
 works in all versions of Emacs, and also generates somewhat more
 @c For some examples,
-@c see https://lists.gnu.org/archive/html/emacs-devel/2012-11/msg00009.html
+@c see https://lists.gnu.org/r/emacs-devel/2012-11/msg00009.html
 efficient inline expansions.  In particular, @code{cl-defsubst}
 arranges for the processing of keyword arguments, default values,
 etc., to be done at compile-time whenever possible.
@@ -3124,12 +3124,11 @@ machines, but will fail if the machine's arithmetic is extremely
 unusual, e.g., decimal.
 @end defun
 
-Since true Common Lisp supports up to four different floating-point
-precisions, it has families of constants like
+Since true Common Lisp supports up to four different kinds of floating-point
+numbers, it has families of constants like
 @code{most-positive-single-float}, @code{most-positive-double-float},
 @code{most-positive-long-float}, and so on.  Emacs has only one
-floating-point precision, so this package omits the precision word
-from the constants' names.
+kind of floating-point number, so this package just uses single constants.
 
 @defvar cl-most-positive-float
 This constant equals the largest value a Lisp float can hold.
@@ -4395,7 +4394,7 @@ is expanded at compile-time to the Lisp form
 @end example
 
 @noindent
-which is the most efficient ways of doing this operation
+which is the most efficient way of doing this operation
 in Lisp.  Thus, there is no performance penalty for using the more
 readable @code{cl-incf} form in your compiled code.
 

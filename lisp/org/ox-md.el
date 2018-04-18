@@ -1,6 +1,6 @@
 ;;; ox-md.el --- Markdown Back-End for Org Export Engine -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2012-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <n.goaziou@gmail.com>
 ;; Keywords: org, wp, markdown
@@ -240,7 +240,7 @@ a communication channel."
 		    (format "<a id=\"%s\"></a>"
 			    (or (org-element-property :CUSTOM_ID headline)
 				(org-export-get-reference headline info))))))
-	  (concat (org-md--headline-title style level title anchor tags)
+	  (concat (org-md--headline-title style level heading anchor tags)
 		  contents)))))))
 
 
@@ -500,14 +500,15 @@ TEXT is the string to transcode.  INFO is a plist holding
 contextual information."
   (when (plist-get info :with-smart-quotes)
     (setq text (org-export-activate-smart-quotes text :html info)))
+  ;; The below series of replacements in `text' is order sensitive.
+  ;; Protect `, *, _, and \
+  (setq text (replace-regexp-in-string "[`*_\\]" "\\\\\\&" text))
   ;; Protect ambiguous #.  This will protect # at the beginning of
   ;; a line, but not at the beginning of a paragraph.  See
   ;; `org-md-paragraph'.
   (setq text (replace-regexp-in-string "\n#" "\n\\\\#" text))
   ;; Protect ambiguous !
   (setq text (replace-regexp-in-string "\\(!\\)\\[" "\\\\!" text nil nil 1))
-  ;; Protect `, *, _ and \
-  (setq text (replace-regexp-in-string "[`*_\\]" "\\\\\\&" text))
   ;; Handle special strings, if required.
   (when (plist-get info :with-special-strings)
     (setq text (org-html-convert-special-strings text)))
@@ -582,16 +583,7 @@ contents according to the current headline."
 	      (format "[%s](#%s)"
 		      (org-export-data-with-backend
 		       (org-export-get-alt-title headline info)
-		       ;; Create an anonymous back-end that will
-		       ;; ignore any footnote-reference, link,
-		       ;; radio-target and target in table of
-		       ;; contents.
-		       (org-export-create-backend
-			:parent 'md
-			:transcoders '((footnote-reference . ignore)
-				       (link . (lambda (object c i) c))
-				       (radio-target . (lambda (object c i) c))
-				       (target . ignore)))
+		       (org-export-toc-entry-backend 'md)
 		       info)
 		      (or (org-element-property :CUSTOM_ID headline)
 			  (org-export-get-reference headline info))))

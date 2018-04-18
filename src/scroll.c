@@ -1,6 +1,6 @@
 /* Calculate what line insertion or deletion to do, and do it
 
-Copyright (C) 1985-1986, 1990, 1993-1994, 2001-2017 Free Software
+Copyright (C) 1985-1986, 1990, 1993-1994, 2001-2018 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -457,7 +457,7 @@ calculate_direct_scrolling (struct frame *frame,
   if (baud_rate <= 0)
     extra_cost = 1;
 
-  /* Overhead of setting the scroll window, plus the extra cost
+  /* Overhead of setting the scroll window, plus the extra
      cost of scrolling by a distance of one.  The extra cost is
      added once for consistency with the cost vectors */
   scroll_overhead

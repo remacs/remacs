@@ -1,6 +1,6 @@
 @c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Minibuffer
@@ -57,17 +57,17 @@ the minibuffer (since typing @key{RET} would no longer submit that
 default).  If you ever bring back the original minibuffer text, the
 prompt again shows the default.  Furthermore, if you change the
 variable @code{minibuffer-eldef-shorten-default} to a non-@code{nil}
-value, the default argument is displayed as @samp{[@var{default}]}
-instead of @samp{(default @var{default})}, saving some screen space.
-To enable this minor mode, type @kbd{M-x
+value, the default argument is displayed as @samp{[@var{default-arg}]}
+instead of @samp{(default @var{default-arg})}, saving some screen
+space.  To enable this minor mode, type @kbd{M-x
 minibuffer-electric-default-mode}.
 
   Since the minibuffer appears in the echo area, it can conflict with
 other uses of the echo area.  If an error message or an informative
 message is emitted while the minibuffer is active, the message hides
 the minibuffer for a few seconds, or until you type something; then
-the minibuffer comes back.  While the minibuffer is in use, keystrokes
-do not echo.
+the minibuffer comes back.  While the minibuffer is in use, Emacs does
+not echo keystrokes.
 
 @node Minibuffer File
 @section Minibuffers for File Names
@@ -89,7 +89,10 @@ the default directory.  If you now type @kbd{buffer.c} as input, that
 specifies the file @file{/u2/emacs/src/buffer.c}.  @xref{File Names},
 for information about the default directory.
 
-  You can specify the parent directory with @file{..}:
+  Alternative defaults for the file name you may want are available by
+typing @kbd{M-n}, see @ref{Minibuffer History}.
+
+  You can specify a file in the parent directory with @file{..}:
 @file{/a/b/../foo.el} is equivalent to @file{/a/foo.el}.
 Alternatively, you can use @kbd{M-@key{DEL}} to kill directory names
 backwards (@pxref{Words}).
@@ -114,7 +117,13 @@ second slash in the pair.  In the example above,
 @file{/u2/emacs/src/} is ignored, so the argument you supplied is
 @file{/etc/termcap}.  The ignored part of the file name is dimmed if
 the terminal allows it.  (To disable this dimming, turn off File Name
-Shadow mode with the command @kbd{M-x file-name-shadow-mode}.)
+Shadow mode with the command @w{@kbd{M-x file-name-shadow-mode}}.)
+
+  When completing remote file names (@pxref{Remote Files}), a double
+slash behaves slightly differently: it causes Emacs to ignore only the
+file-name part, leaving the rest (method, host and username, etc.)
+intact.  Typing three slashes in a row ignores everything in remote
+file names.  @xref{File name completion,,, tramp, The Tramp Manual}.
 
 @cindex home directory shorthand
   Emacs interprets @file{~/} as your home directory.  Thus,
@@ -214,7 +223,7 @@ set the variable @code{enable-recursive-minibuffers} to @code{t}.
   When not active, the minibuffer is in @code{minibuffer-inactive-mode},
 and clicking @kbd{mouse-1} there shows the @file{*Messages*} buffer.
 If you use a dedicated frame for minibuffers, Emacs also recognizes
-certain keys there, for example @kbd{n} to make a new frame.
+certain keys there, for example, @kbd{n} to make a new frame.
 
 @node Completion
 @section Completion
@@ -250,7 +259,7 @@ Completion}.
 @node Completion Example
 @subsection Completion Example
 
-@kindex TAB @r{(completion)}
+@kindex TAB @r{(completion example)}
   A simple example may help here.  @kbd{M-x} uses the minibuffer to
 read the name of a command, so completion works by matching the
 minibuffer text against the names of existing Emacs commands.  Suppose
@@ -288,7 +297,6 @@ when completion is allowed.
 
 @table @kbd
 @item @key{TAB}
-@findex minibuffer-complete
 Complete the text in the minibuffer as much as possible; if unable to
 complete, display a list of possible completions
 (@code{minibuffer-complete}).
@@ -449,12 +457,14 @@ Lisp symbol).  The default completion styles are (in order):
 
 @table @code
 @item basic
+@cindex @code{basic}, completion style
 A matching completion alternative must have the same beginning as the
 text in the minibuffer before point.  Furthermore, if there is any
 text in the minibuffer after point, the rest of the completion
 alternative must contain that text as a substring.
 
-@findex partial completion
+@cindex partial completion
+@cindex @code{partial-completion}, completion style
 @item partial-completion
 This aggressive completion style divides the minibuffer text into
 words separated by hyphens or spaces, and completes each word
@@ -466,6 +476,7 @@ Furthermore, a @samp{*} in the minibuffer text is treated as a
 corresponding position in the completion alternative.
 
 @item emacs22
+@cindex @code{emacs22}, completion style
 This completion style is similar to @code{basic}, except that it
 ignores the text in the minibuffer after point.  It is so-named
 because it corresponds to the completion behavior in Emacs 22.
@@ -478,6 +489,7 @@ can add them to @code{completion-styles} if you wish
 
 @table @code
 @item substring
+@cindex @code{substring}, completion style
 A matching completion alternative must contain the text in the
 minibuffer before point, and the text in the minibuffer after point,
 as substrings (in that same order).
@@ -488,6 +500,7 @@ between @samp{foo} and @samp{bar}, that matches
 @var{c} can be any string including the empty string.
 
 @item initials
+@cindex @code{initials}, completion style
 This very aggressive completion style attempts to complete acronyms
 and initialisms.  For example, when completing command names, it
 matches @samp{lch} to @samp{list-command-history}.
@@ -602,8 +615,6 @@ Move to a later item in the minibuffer history that matches
 
 @kindex M-p @r{(minibuffer history)}
 @kindex M-n @r{(minibuffer history)}
-@kindex UP @r{(minibuffer history)}
-@kindex DOWN @r{(minibuffer history)}
 @findex next-history-element
 @findex previous-history-element
   While in the minibuffer, @kbd{M-p} (@code{previous-history-element})
@@ -620,8 +631,25 @@ typed @kbd{M-p}), Emacs tries fetching from a list of default
 arguments: values that you are likely to enter.  You can think of this
 as moving through the ``future history''.
 
+@cindex future history for file names
+@cindex minibuffer defaults for file names
+@vindex file-name-at-point-functions
+  The ``future history'' for file names includes several possible
+alternatives you may find useful, such as the file name or the URL at
+point in the current buffer.  The defaults put into the ``future
+history'' in this case are controlled by the functions mentioned in
+the value of the option @code{file-name-at-point-functions}.  By
+default, its value invokes the @code{ffap} package (@pxref{FFAP}),
+which tries to guess the default file or URL from the text around
+point.  To disable this guessing, customize the option to a @code{nil}
+value, then the ``future history'' of file names will include only the
+file, if any, visited by the current buffer, and the default
+directory.
+
 @findex previous-line-or-history-element
 @findex next-line-or-history-element
+@kindex UP @r{(minibuffer history)}
+@kindex DOWN @r{(minibuffer history)}
   The arrow keys @kbd{@key{UP}} and @kbd{@key{DOWN}} work like
 @kbd{M-p} and @kbd{M-n}, but if the current history item is longer
 than a single line, they allow you to move to the previous or next
@@ -717,7 +745,7 @@ it by typing @key{RET}.
 @vindex isearch-resume-in-command-history
   Incremental search does not, strictly speaking, use the minibuffer.
 Therefore, although it behaves like a complex command, it normally
-does not appear in the history list for @kbd{C-x @key{ESC} @key{ESC}}.
+does not appear in the history list for @w{@kbd{C-x @key{ESC} @key{ESC}}}.
 You can make incremental search commands appear in the history by
 setting @code{isearch-resume-in-command-history} to a non-@code{nil}
 value.  @xref{Incremental Search}.
@@ -743,10 +771,10 @@ you type the required password, press @key{RET} to submit it.  To
 prevent others from seeing your password, every character you type is
 displayed as a dot (@samp{.}) instead of its usual form.
 
-  Most of the features and commands associated with the minibuffer can
-@emph{not} be used when entering a password.  There is no history or
-completion, and you cannot change windows or perform any other action
-with Emacs until you have submitted the password.
+  Most of the features and commands associated with the minibuffer
+@emph{cannot} be used when entering a password.  There is no history
+or completion, and you cannot change windows or perform any other
+action with Emacs until you have submitted the password.
 
   While you are typing the password, you may press @key{DEL} to delete
 backwards, removing the last character entered.  @kbd{C-u} deletes

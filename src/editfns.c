@@ -1,6 +1,6 @@
 /* Lisp functions pertaining to editing.                 -*- coding: utf-8 -*-
 
-Copyright (C) 1985-1987, 1989, 1993-2017 Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1989, 1993-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -56,6 +56,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "composite.h"
 #include "intervals.h"
+#include "ptr-bounds.h"
 #include "character.h"
 #include "buffer.h"
 #include "coding.h"
@@ -74,6 +75,7 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
+static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
 void
 find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
@@ -701,7 +703,7 @@ If you only want to save the current buffer but not point,
 then just use `save-current-buffer', or even `with-current-buffer'.
 
 Before Emacs 25.1, `save-excursion' used to save the mark state.
-To save the marker state as well as the point and buffer, use
+To save the mark state as well as point and the current buffer, use
 `save-mark-and-excursion'.
 
 usage: (save-excursion &rest BODY)  */)
@@ -1250,11 +1252,11 @@ by text that describes the specified date and time in TIME:
  only blank-padded, %l is like %I blank-padded.
 %p is the locale's equivalent of either AM or PM.
 %q is the calendar quarter (1–4).
-%M is the minute.
-%S is the second.
-%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
-%Z is the time zone name, %z is the numeric form.
+%M is the minute (00-59).
+%S is the second (00-59; 00-60 on platforms with leap seconds)
 %s is the number of seconds since 1970-01-01 00:00:00 +0000.
+%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
+%Z is the time zone abbreviation, %z is the numeric form.
 
 %c is the locale's date and time format.
 %x is the locale's "preferred" date format.
@@ -1264,7 +1266,8 @@ by text that describes the specified date and time in TIME:
 %R is like "%H:%M", %T is like "%H:%M:%S", %r is like "%I:%M:%S %p".
 %X is the locale's "preferred" time format.
 
-Finally, %n is a newline, %t is a tab, %% is a literal %.
+Finally, %n is a newline, %t is a tab, %% is a literal %, and
+unrecognized %-sequences stand for themselves.
 
 Certain flags and modifiers are available with some format controls.
 The flags are `_', `-', `^' and `#'.  For certain characters X,
@@ -2835,7 +2838,7 @@ It returns the number of characters changed.  */)
 		}
 	      else
 		{
-		  string = Fmake_string (make_number (1), val);
+		  string = Fmake_string (make_number (1), val, Qnil);
 		}
 	      replace_range (pos, pos + len, string, 1, 0, 1, 0);
 	      pos_byte += SBYTES (string);
@@ -3077,7 +3080,7 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = styled_format (nargs, args, true, false);
+      Lisp_Object val = Fformat_message (nargs, args);
       message3 (val);
       return val;
     }
@@ -3103,7 +3106,7 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = styled_format (nargs, args, true, false);
+      Lisp_Object val = Fformat_message (nargs, args);
       Lisp_Object pane, menu;
 
       pane = list1 (Fcons (build_string ("OK"), Qt));
@@ -3204,8 +3207,8 @@ The # flag means to use an alternate display form for %o, %x, %X, %e,
 %f, and %g sequences: for %o, it ensures that the result begins with
 \"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
 for %e and %f, it causes a decimal point to be included even if the
-the precision is zero; for %g, it causes a decimal point to be
-included even if the the precision is zero, and also forces trailing
+precision is zero; for %g, it causes a decimal point to be
+included even if the precision is zero, and also forces trailing
 zeros after the decimal point to be left in place.
 
 The width specifier supplies a lower limit for the length of the
@@ -3228,7 +3231,7 @@ produced text.
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return styled_format (nargs, args, false, true);
+  return styled_format (nargs, args, false);
 }
 
 DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
@@ -3244,7 +3247,7 @@ and right quote replacement characters are specified by
 usage: (format-message STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return styled_format (nargs, args, true, true);
+  return styled_format (nargs, args, true);
 }
 
 /* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.
@@ -3252,8 +3255,7 @@ usage: (format-message STRING &rest OBJECTS)  */)
    may be one of the arguments.  */
 
 Lisp_Object
-styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
-	       bool new_result)
+styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 {
   ptrdiff_t n;		/* The number of the next arg to substitute.  */
   char initial_buffer[4000];
@@ -3269,6 +3271,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
      multibyte character of the previous string.  This flag tells if we
      must consider such a situation or not.  */
   bool maybe_combine_byte;
+  Lisp_Object val;
   bool arg_intervals = false;
   USE_SAFE_ALLOCA;
   sa_avail -= sizeof initial_buffer;
@@ -3299,9 +3302,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
   ptrdiff_t nspec_bound = SCHARS (args[0]) >> 1;
 
   /* Allocate the info and discarded tables.  */
-  ptrdiff_t alloca_size;
-  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &alloca_size)
-      || INT_ADD_WRAPV (formatlen, alloca_size, &alloca_size)
+  ptrdiff_t info_size, alloca_size;
+  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &info_size)
+      || INT_ADD_WRAPV (formatlen, info_size, &alloca_size)
       || SIZE_MAX < alloca_size)
     memory_full (SIZE_MAX);
   info = SAFE_ALLOCA (alloca_size);
@@ -3309,6 +3312,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
      string was not copied into the output.
      It is 2 if byte I was not the first byte of its character.  */
   char *discarded = (char *) &info[nspec_bound];
+  info = ptr_bounds_clip (info, info_size);
+  discarded = ptr_bounds_clip (discarded, formatlen);
   memset (discarded, 0, formatlen);
 
   /* Try to determine whether the result should be multibyte.
@@ -3328,6 +3333,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 
   ptrdiff_t ispec;
   ptrdiff_t nspec = 0;
+
+  /* True if a string needs to be allocated to hold the result.  */
+  bool new_result = false;
 
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */
@@ -3509,9 +3517,11 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 	  if (conversion == 's')
 	    {
 	      if (format == end && format - format_start == 2
-		  && (!new_result || spec->new_string)
 		  && ! string_intervals (args[0]))
-		return arg;
+		{
+		  val = arg;
+		  goto return_val;
+		}
 
 	      /* handle case (precision[n] >= 0) */
 
@@ -3712,6 +3722,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 		  /* Don't use sprintf here, as it might mishandle prec.  */
 		  sprintf_buf[0] = XINT (arg);
 		  sprintf_bytes = prec != 0;
+		  sprintf_buf[sprintf_bytes] = '\0';
 		}
 	      else if (conversion == 'd' || conversion == 'i')
 		{
@@ -3811,11 +3822,19 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 		  char src0 = src[0];
 		  int exponent_bytes = 0;
 		  bool signedp = src0 == '-' || src0 == '+' || src0 == ' ';
-		  unsigned char after_sign = src[signedp];
-		  if (zero_flag && 0 <= char_hexdigit (after_sign))
+		  int prefix_bytes = (signedp
+				      + ((src[signedp] == '0'
+					  && (src[signedp + 1] == 'x'
+					      || src[signedp + 1] == 'X'))
+					 ? 2 : 0));
+		  if (zero_flag)
 		    {
-		      leading_zeros += padding;
-		      padding = 0;
+		      unsigned char after_prefix = src[prefix_bytes];
+		      if (0 <= char_hexdigit (after_prefix))
+			{
+			  leading_zeros += padding;
+			  padding = 0;
+			}
 		    }
 
 		  if (excess_precision
@@ -3834,13 +3853,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 		      nchars += padding;
 		    }
 
-		  *p = src0;
-		  src += signedp;
-		  p += signedp;
+		  memcpy (p, src, prefix_bytes);
+		  p += prefix_bytes;
+		  src += prefix_bytes;
 		  memset (p, '0', leading_zeros);
 		  p += leading_zeros;
 		  int significand_bytes
-		    = sprintf_bytes - signedp - exponent_bytes;
+		    = sprintf_bytes - prefix_bytes - exponent_bytes;
 		  memcpy (p, src, significand_bytes);
                   p += significand_bytes;
 		  src += significand_bytes;
@@ -3956,11 +3975,14 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
     emacs_abort ();
 
   if (! new_result)
-    return args[0];
+    {
+      val = args[0];
+      goto return_val;
+    }
 
   if (maybe_combine_byte)
     nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);
-  Lisp_Object val = make_specified_string (buf, nchars, p - buf, multibyte);
+  val = make_specified_string (buf, nchars, p - buf, multibyte);
 
   /* If the format string has text properties, or any of the string
      arguments has text properties, set up text properties of the
@@ -4005,7 +4027,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 		  else if (discarded[bytepos] == 1)
 		    {
 		      position++;
-		      if (translated == info[fieldn].start)
+		      if (fieldn < nspec && translated == info[fieldn].start)
 			{
 			  translated += info[fieldn].end - info[fieldn].start;
 			  fieldn++;
@@ -4025,7 +4047,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 		  else if (discarded[bytepos] == 1)
 		    {
 		      position++;
-		      if (translated == info[fieldn].start)
+		      if (fieldn < nspec && translated == info[fieldn].start)
 			{
 			  translated += info[fieldn].end - info[fieldn].start;
 			  fieldn++;
@@ -4058,6 +4080,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 	    }
     }
 
+ return_val:
   /* If we allocated BUF or INFO with malloc, free it too.  */
   SAFE_FREE ();
 
@@ -4366,8 +4389,7 @@ Transposing beyond buffer boundaries is an error.  */)
         {
 	  USE_SAFE_ALLOCA;
 
-          modify_text (start1, end1);
-          modify_text (start2, end2);
+          modify_text (start1, end2);
           record_change (start1, len1);
           record_change (start2, len2);
           tmp_interval1 = copy_intervals (cur_intv, start1, len1);

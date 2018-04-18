@@ -1,5 +1,5 @@
 /* GnuTLS glue for GNU Emacs.
-   Copyright (C) 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -26,18 +26,32 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "buffer.h"
 
-#if 0x030014 <= GNUTLS_VERSION_NUMBER
+#if GNUTLS_VERSION_NUMBER >= 0x030014
 # define HAVE_GNUTLS_X509_SYSTEM_TRUST
 #endif
 
 /* Although AEAD support started in GnuTLS 3.4.0 and works in 3.5.14,
    it was broken through at least GnuTLS 3.4.10; see:
-   https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00992.html
+   https://lists.gnu.org/r/emacs-devel/2017-07/msg00992.html
    The relevant fix seems to have been made in GnuTLS 3.5.1; see:
    https://gitlab.com/gnutls/gnutls/commit/568935848dd6b82b9315d8b6c529d00e2605e03d
    So, require 3.5.1.  */
-#if 0x030501 <= GNUTLS_VERSION_NUMBER
+#if GNUTLS_VERSION_NUMBER >= 0x030501
 # define HAVE_GNUTLS_AEAD
+#endif
+
+/* gnutls_mac_get_nonce_size was added in GnuTLS 3.2.0, but was
+   exported only since 3.3.0. */
+#if GNUTLS_VERSION_NUMBER >= 0x030300
+# define HAVE_GNUTLS_MAC_GET_NONCE_SIZE
+#endif
+
+#if GNUTLS_VERSION_NUMBER >= 0x030501
+# define HAVE_GNUTLS_EXT_GET_NAME
+#endif
+
+#if GNUTLS_VERSION_NUMBER >= 0x030205
+# define HAVE_GNUTLS_EXT__DUMBFW
 #endif
 
 #ifdef HAVE_GNUTLS
@@ -187,7 +201,9 @@ DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
 #  ifdef HAVE_GNUTLS3
 DEF_DLL_FN (int, gnutls_rnd, (gnutls_rnd_level_t, void *, size_t));
 DEF_DLL_FN (const gnutls_mac_algorithm_t *, gnutls_mac_list, (void));
+#   ifdef HAVE_GNUTLS_MAC_GET_NONCE_SIZE
 DEF_DLL_FN (size_t, gnutls_mac_get_nonce_size, (gnutls_mac_algorithm_t));
+#   endif
 DEF_DLL_FN (size_t, gnutls_mac_get_key_size, (gnutls_mac_algorithm_t));
 DEF_DLL_FN (const gnutls_digest_algorithm_t *, gnutls_digest_list, (void));
 DEF_DLL_FN (const char *, gnutls_digest_get_name, (gnutls_digest_algorithm_t));
@@ -229,6 +245,9 @@ DEF_DLL_FN (int, gnutls_hash_get_len, (gnutls_digest_algorithm_t));
 DEF_DLL_FN (int, gnutls_hash, (gnutls_hash_hd_t, const void *, size_t));
 DEF_DLL_FN (void, gnutls_hash_deinit, (gnutls_hash_hd_t, void *));
 DEF_DLL_FN (void, gnutls_hash_output, (gnutls_hash_hd_t, void *));
+#   ifdef HAVE_GNUTLS_EXT_GET_NAME
+DEF_DLL_FN (const char *, gnutls_ext_get_name, (unsigned int));
+#   endif
 #  endif	 /* HAVE_GNUTLS3 */
 
 
@@ -316,7 +335,9 @@ init_gnutls_functions (void)
 #  ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_rnd);
   LOAD_DLL_FN (library, gnutls_mac_list);
+#   ifdef HAVE_GNUTLS_MAC_GET_NONCE_SIZE
   LOAD_DLL_FN (library, gnutls_mac_get_nonce_size);
+#   endif
   LOAD_DLL_FN (library, gnutls_mac_get_key_size);
   LOAD_DLL_FN (library, gnutls_digest_list);
   LOAD_DLL_FN (library, gnutls_digest_get_name);
@@ -346,6 +367,9 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_hash);
   LOAD_DLL_FN (library, gnutls_hash_deinit);
   LOAD_DLL_FN (library, gnutls_hash_output);
+#   ifdef HAVE_GNUTLS_EXT_GET_NAME
+  LOAD_DLL_FN (library, gnutls_ext_get_name);
+#   endif
 #  endif	 /* HAVE_GNUTLS3 */
 
   max_log_level = global_gnutls_log_level;
@@ -427,7 +451,9 @@ init_gnutls_functions (void)
 #  ifdef HAVE_GNUTLS3
 #  define gnutls_rnd fn_gnutls_rnd
 #  define gnutls_mac_list fn_gnutls_mac_list
-#  define gnutls_mac_get_nonce_size fn_gnutls_mac_get_nonce_size
+#   ifdef HAVE_GNUTLS_MAC_GET_NONCE_SIZE
+#    define gnutls_mac_get_nonce_size fn_gnutls_mac_get_nonce_size
+#   endif
 #  define gnutls_mac_get_key_size fn_gnutls_mac_get_key_size
 #  define gnutls_digest_list fn_gnutls_digest_list
 #  define gnutls_digest_get_name fn_gnutls_digest_get_name
@@ -442,10 +468,10 @@ init_gnutls_functions (void)
 #  define gnutls_cipher_decrypt2 fn_gnutls_cipher_decrypt2
 #  define gnutls_cipher_deinit fn_gnutls_cipher_deinit
 #   ifdef HAVE_GNUTLS_AEAD
-#  define gnutls_aead_cipher_encrypt fn_gnutls_aead_cipher_encrypt
-#  define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
-#  define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
-#  define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
+#    define gnutls_aead_cipher_encrypt fn_gnutls_aead_cipher_encrypt
+#    define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
+#    define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
+#    define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
 #   endif
 #  define gnutls_hmac_init fn_gnutls_hmac_init
 #  define gnutls_hmac_get_len fn_gnutls_hmac_get_len
@@ -457,7 +483,11 @@ init_gnutls_functions (void)
 #  define gnutls_hash fn_gnutls_hash
 #  define gnutls_hash_deinit fn_gnutls_hash_deinit
 #  define gnutls_hash_output fn_gnutls_hash_output
+#   ifdef HAVE_GNUTLS_EXT_GET_NAME
+#    define gnutls_ext_get_name fn_gnutls_ext_get_name
+#   endif
 #  endif	 /* HAVE_GNUTLS3 */
+
 
 /* This wrapper is called from fns.c, which doesn't know about the
    LOAD_DLL_FN stuff above.  */
@@ -2178,6 +2208,10 @@ name. */)
       /* A symbol representing the GnuTLS MAC algorithm.  */
       Lisp_Object gma_symbol = intern (gnutls_mac_get_name (gma));
 
+      size_t nonce_size = 0;
+#ifdef HAVE_GNUTLS_MAC_GET_NONCE_SIZE
+      nonce_size = gnutls_mac_get_nonce_size (gma);
+#endif
       Lisp_Object mp = listn (CONSTYPE_HEAP, 11, gma_symbol,
 			      QCmac_algorithm_id, make_number (gma),
 			      QCtype, Qgnutls_type_mac_algorithm,
@@ -2189,7 +2223,7 @@ name. */)
                               make_number (gnutls_mac_get_key_size (gma)),
 
                               QCmac_algorithm_noncesize,
-                              make_number (gnutls_mac_get_nonce_size (gma)));
+			      make_number (nonce_size));
       mac_algorithms = Fcons (mp, mac_algorithms);
     }
 
@@ -2399,12 +2433,29 @@ GnuTLS 3 or higher      : the list will contain `gnutls3'.
 GnuTLS MACs             : the list will contain `macs'.
 GnuTLS digests          : the list will contain `digests'.
 GnuTLS symmetric ciphers: the list will contain `ciphers'.
-GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
+GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.
+%DUMBFW                 : the list will contain `ClientHello\ Padding'.
+Any GnuTLS extension with ID up to 100
+                        : the list will contain its name.  */)
   (void)
 {
   Lisp_Object capabilities = Qnil;
 
 #ifdef HAVE_GNUTLS
+
+# ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+
+  /* Load the GnuTLS DLL and find exported functions.  The external
+     library cache is updated after the capabilities have been
+     determined.  */
+  if (!init_gnutls_functions ())
+    return Qnil;
+# endif /* WINDOWSNT */
+
+  capabilities = Fcons (intern("gnutls"), capabilities);
 
 # ifdef HAVE_GNUTLS3
   capabilities = Fcons (intern("gnutls3"), capabilities);
@@ -2416,19 +2467,25 @@ GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
 #  endif
 
   capabilities = Fcons (intern("macs"), capabilities);
+
+#  ifdef HAVE_GNUTLS_EXT_GET_NAME
+  for (unsigned int ext=0; ext < 100; ext++)
+    {
+      const char* name = gnutls_ext_get_name(ext);
+      if (name != NULL)
+        {
+          capabilities = Fcons (intern(name), capabilities);
+        }
+    }
+#  endif
 # endif	  /* HAVE_GNUTLS3 */
 
+#  ifdef HAVE_GNUTLS_EXT__DUMBFW
+  capabilities = Fcons (intern("ClientHello Padding"), capabilities);
+#  endif
+
 # ifdef WINDOWSNT
-  Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);
-  if (CONSP (found))
-    return XCDR (found);
-  else
-    {
-      Lisp_Object status;
-      status = init_gnutls_functions () ? capabilities : Qnil;
-      Vlibrary_cache = Fcons (Fcons (Qgnutls, status), Vlibrary_cache);
-      return status;
-    }
+  Vlibrary_cache = Fcons (Fcons (Qgnutls, capabilities), Vlibrary_cache);
 # endif /* WINDOWSNT */
 #endif	/* HAVE_GNUTLS */
 
@@ -2472,7 +2529,6 @@ syms_of_gnutls (void)
   DEFSYM (QCcipher_blocksize, ":cipher-blocksize");
   DEFSYM (QCcipher_keysize, ":cipher-keysize");
   DEFSYM (QCcipher_tagsize, ":cipher-tagsize");
-  DEFSYM (QCcipher_keysize, ":cipher-keysize");
   DEFSYM (QCcipher_ivsize, ":cipher-ivsize");
 
   DEFSYM (QCmac_algorithm_id, ":mac-algorithm-id");

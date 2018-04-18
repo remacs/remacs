@@ -1,6 +1,6 @@
 /* Test GNU Emacs modules.
 
-Copyright 2015-2017 Free Software Foundation, Inc.
+Copyright 2015-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -20,9 +20,34 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <emacs-module.h>
 
 int plugin_is_GPL_compatible;
+
+#if INTPTR_MAX <= 0
+# error "INTPTR_MAX misconfigured"
+#elif INTPTR_MAX <= INT_MAX || INTPTR_MAX <= LONG_MAX
+# define pT "ld"
+# define pZ "lu"
+# define T_TYPE long
+# define Z_TYPE unsigned long
+#elif INTPTR_MAX <= INT64_MAX
+# ifdef __MINGW32__
+#  define pT "lld"
+#  define pZ "llu"
+#  define T_TYPE long long
+#  define Z_TYPE unsigned long long
+# else
+#  define pT "ld"
+#  define pZ "lu"
+#  define T_TYPE long
+#  define Z_TYPE unsigned long
+# endif
+#else
+# error "INTPTR_MAX too large"
+#endif
+
 
 /* Always return symbol 't'.  */
 static emacs_value
@@ -274,11 +299,11 @@ provide (emacs_env *env, const char *feature)
 static void
 bind_function (emacs_env *env, const char *name, emacs_value Sfun)
 {
-  emacs_value Qfset = env->intern (env, "fset");
+  emacs_value Qdefalias = env->intern (env, "defalias");
   emacs_value Qsym = env->intern (env, name);
   emacs_value args[] = { Qsym, Sfun };
 
-  env->funcall (env, Qfset, 2, args);
+  env->funcall (env, Qdefalias, 2, args);
 }
 
 /* Module init function.  */
@@ -287,9 +312,9 @@ emacs_module_init (struct emacs_runtime *ert)
 {
   if (ert->size < sizeof *ert)
     {
-      fprintf (stderr, "Runtime size of runtime structure (%td bytes) "
-               "smaller than compile-time size (%zu bytes)",
-               ert->size, sizeof *ert);
+      fprintf (stderr, "Runtime size of runtime structure (%"pT" bytes) "
+               "smaller than compile-time size (%"pZ" bytes)",
+               (T_TYPE) ert->size, (Z_TYPE) sizeof (*ert));
       return 1;
     }
 
@@ -297,9 +322,9 @@ emacs_module_init (struct emacs_runtime *ert)
 
   if (env->size < sizeof *env)
     {
-      fprintf (stderr, "Runtime size of environment structure (%td bytes) "
-               "smaller than compile-time size (%zu bytes)",
-               env->size, sizeof *env);
+      fprintf (stderr, "Runtime size of environment structure (%"pT" bytes) "
+               "smaller than compile-time size (%"pZ" bytes)",
+               (T_TYPE) env->size, (Z_TYPE) sizeof (*env));
       return 2;
     }
 

@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Syntax Tables
@@ -972,6 +972,10 @@ encodes the syntax class and syntax flags, according to the table
 below.  @var{matching-char}, if non-@code{nil}, specifies a matching
 character (similar to the second character in a syntax descriptor).
 
+@cindex syntax tables (accessing elements of)
+Use @code{aref} (@pxref{Array Functions}) to get the raw syntax
+descriptor of a character, e.g. @w{@code{(aref (syntax-table) ch)}}.
+
   Here are the syntax codes corresponding to the various syntax
 classes:
 
@@ -1099,12 +1103,13 @@ bidi-class}).
   (let ((category-table (make-category-table))
         ;; Create a char-table which gives the 'bidi-class' Unicode
         ;; property for each character.
-        (uniprop-table (unicode-property-table-internal 'bidi-class)))
+        (uniprop-table
+         (unicode-property-table-internal 'bidi-class)))
     (define-category ?R "Characters of bidi-class R, AL, or RLO"
                      category-table)
-    ;; Modify the category entry of each character whose 'bidi-class'
-    ;; Unicode property is R, AL, or RLO -- these have a
-    ;; right-to-left directionality.
+    ;; Modify the category entry of each character whose
+    ;; 'bidi-class' Unicode property is R, AL, or RLO --
+    ;; these have a right-to-left directionality.
     (map-char-table
      #'(lambda (key val)
          (if (memq val '(R AL RLO))

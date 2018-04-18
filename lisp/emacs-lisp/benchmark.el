@@ -1,6 +1,6 @@
 ;;; benchmark.el --- support for benchmarking code  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
 ;; Author: Dave Love  <fx@gnu.org>
 ;; Keywords: lisp, extensions
@@ -34,13 +34,11 @@
 (defmacro benchmark-elapse (&rest forms)
   "Return the time in seconds elapsed for execution of FORMS."
   (declare (indent 0) (debug t))
-  (let ((t1 (make-symbol "t1"))
-	(t2 (make-symbol "t2")))
-    `(let (,t1 ,t2)
+  (let ((t1 (make-symbol "t1")))
+    `(let (,t1)
        (setq ,t1 (current-time))
        ,@forms
-       (setq ,t2 (current-time))
-       (float-time (time-subtract ,t2 ,t1)))))
+       (float-time (time-subtract nil ,t1)))))
 
 ;;;###autoload
 (defmacro benchmark-run (&optional repetitions &rest forms)
@@ -98,7 +96,8 @@ result.  The overhead of the `lambda's is accounted for."
 ;;;###autoload
 (defun benchmark (repetitions form)
   "Print the time taken for REPETITIONS executions of FORM.
-Interactively, REPETITIONS is taken from the prefix arg.
+Interactively, REPETITIONS is taken from the prefix arg, and
+the command prompts for the form to benchmark.
 For non-interactive use see also `benchmark-run' and
 `benchmark-run-compiled'."
   (interactive "p\nxForm: ")

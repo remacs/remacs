@@ -1,6 +1,6 @@
 ;;; gnus-group.el --- group mode commands for Gnus
 
-;; Copyright (C) 1996-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -628,7 +628,7 @@ simple manner."
   "\M-e" gnus-group-edit-group-method
   "^" gnus-group-enter-server-mode
   [mouse-2] gnus-mouse-pick-group
-  [follow-link] 'mouse-face
+  [follow-link] mouse-face
   "<" beginning-of-buffer
   ">" end-of-buffer
   "\C-c\C-b" gnus-bug
@@ -1086,6 +1086,8 @@ See `gmm-tool-bar-from-list' for the format of the list."
 
 (defvar image-load-path)
 (defvar tool-bar-map)
+(declare-function image-load-path-for-library "image"
+		  (library image &optional path no-error))
 
 (defun gnus-group-make-tool-bar (&optional force)
   "Make a group mode tool bar from `gnus-group-tool-bar'.
@@ -1359,6 +1361,8 @@ if it is a string, only list groups matching REGEXP."
 		       (and gnus-permanently-visible-groups
 			    (string-match gnus-permanently-visible-groups
 					  group))
+		       ;; Marked groups are always visible.
+		       (member group gnus-group-marked)
 		       (memq 'visible params)
 		       (cdr (assq 'visible params)))))))
 	  (gnus-group-insert-group-line
@@ -2373,7 +2377,10 @@ specified by `gnus-gmane-group-download-format'."
     (with-temp-file tmpfile
       (url-insert-file-contents
        (format gnus-gmane-group-download-format
-	       group start (+ start range)))
+	       group start (+ start range))
+       t)
+      ;; `url-insert-file-contents' sets this because of the 2nd arg.
+      (setq buffer-file-name nil)
       (write-region (point-min) (point-max) tmpfile)
       (gnus-group-read-ephemeral-group
        (format "nndoc+ephemeral:%s.start-%s.range-%s" group start range)
@@ -2463,13 +2470,11 @@ the bug number, and browsing the URL must return mbox output."
 	    (if (and (not gnus-plugged)
 		     (file-exists-p file))
 		(insert-file-contents file)
-	      (url-insert-file-contents (format mbox-url id)))))
+	      (url-insert-file-contents (format mbox-url id) t))))
 	;; Add the debbugs address so that we can respond to reports easily.
 	(let ((address
 	       (format "%s@%s" (car ids)
-		       (replace-regexp-in-string
-			"/.*$" ""
-			(replace-regexp-in-string "^http://" "" mbox-url)))))
+                       (url-host (url-generic-parse-url mbox-url)))))
 	  (goto-char (point-min))
 	  (while (re-search-forward (concat "^" message-unix-mail-delimiter)
 				    nil t)
@@ -2490,7 +2495,9 @@ the bug number, and browsing the URL must return mbox output."
 		    (insert ", " address))
 		(insert "To: " address "\n")))
 	    (goto-char (point-max))
-	    (widen)))))
+	    (widen)))
+	;; `url-insert-file-contents' sets this because of the 2nd arg.
+	(setq buffer-file-name nil)))
     (gnus-group-read-ephemeral-group
      (format "nndoc+ephemeral:bug#%s"
 	     (mapconcat 'number-to-string ids ","))
@@ -2514,6 +2521,8 @@ the bug number, and browsing the URL must return mbox output."
   (interactive (list (string-to-number
 		      (read-string "Enter bug number: "
 				   (thing-at-point 'word) nil))))
+  (when (stringp ids)
+    (setq ids (string-to-number ids)))
   (unless (listp ids)
     (setq ids (list ids)))
   (gnus-read-ephemeral-bug-group
@@ -2993,7 +3002,7 @@ and NEW-NAME will be prompted for."
     ;; Set the info.
     (if (not (and info new-group))
 	(gnus-group-set-info form (or new-group group) part)
-      (setq info (gnus-copy-sequence info))
+      (setq info (copy-tree info))
       (setcar info new-group)
       (unless (gnus-server-equal method "native")
 	(unless (nthcdr 3 info)
@@ -3016,7 +3025,7 @@ and NEW-NAME will be prompted for."
 	   ;; Don't use `caddr' here since macros within the `interactive'
 	   ;; form won't be expanded.
 	   (car (cddr entry)))))
-  (setq method (gnus-copy-sequence method))
+  (setq method (copy-tree method))
   (let (entry)
     (while (setq entry (memq (assq 'eval method) method))
       (setcar entry (eval (cadar entry)))))
@@ -4560,7 +4569,7 @@ or `gnus-group-catchup-group-hook'."
   "Return the offset in seconds from the timestamp for GROUP to the current time, as a floating point number."
   (let* ((time (or (gnus-group-timestamp group)
 		   (list 0 0)))
-	 (delta (time-subtract (current-time) time)))
+	 (delta (time-subtract nil time)))
     (+ (* (nth 0 delta) 65536.0)
        (nth 1 delta))))
 

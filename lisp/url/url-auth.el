@@ -1,6 +1,6 @@
 ;;; url-auth.el --- Uniform Resource Locator authorization modules -*- lexical-binding: t -*-
 
-;; Copyright (C) 1996-1999, 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2004-2018 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes, hypermedia
 
@@ -194,7 +194,7 @@ key cache `url-digest-auth-storage'."
   (base64-encode-string
    (apply 'format "%016x%04x%04x%05x%05x" (random) (current-time)) t))
 
-(defun url-digest-auth-nonce-count (nonce)
+(defun url-digest-auth-nonce-count (_nonce)
   "The number requests sent to server with the given NONCE.
 This count includes the request we're preparing here.
 

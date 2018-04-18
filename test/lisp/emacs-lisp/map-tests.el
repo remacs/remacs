@@ -1,6 +1,6 @@
 ;;; map-tests.el --- Tests for map.el  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2015-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Maintainer: emacs-devel@gnu.org
@@ -36,7 +36,7 @@ Each map is built from the following alist data:
 Evaluate BODY for each created map.
 
 \(fn (var map) body)"
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (symbolp body)))
   (let ((alist (make-symbol "alist"))
         (vec (make-symbol "vec"))
         (ht (make-symbol "ht")))

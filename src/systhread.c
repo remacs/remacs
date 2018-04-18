@@ -1,5 +1,5 @@
 /* System thread definitions
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -72,6 +72,12 @@ sys_thread_t
 sys_thread_self (void)
 {
   return 0;
+}
+
+bool
+sys_thread_equal (sys_thread_t t, sys_thread_t u)
+{
+  return t == u;
 }
 
 int
@@ -155,6 +161,12 @@ sys_thread_self (void)
   return pthread_self ();
 }
 
+bool
+sys_thread_equal (sys_thread_t t, sys_thread_t u)
+{
+  return pthread_equal (t, u);
+}
+
 int
 sys_thread_create (sys_thread_t *thread_ptr, const char *name,
 		   thread_creation_function *func, void *arg)
@@ -164,6 +176,13 @@ sys_thread_create (sys_thread_t *thread_ptr, const char *name,
 
   if (pthread_attr_init (&attr))
     return 0;
+
+  /* Avoid crash on macOS with deeply nested GC (Bug#30364).  */
+  size_t stack_size;
+  size_t required_stack_size = sizeof (void *) * 1024 * 1024;
+  if (pthread_attr_getstacksize (&attr, &stack_size) == 0
+      && stack_size < required_stack_size)
+    pthread_attr_setstacksize (&attr, required_stack_size);
 
   if (!pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED))
     {
@@ -187,7 +206,7 @@ sys_thread_yield (void)
 
 #elif defined (WINDOWSNT)
 
-#include <windows.h>
+#include <w32term.h>
 
 /* Cannot include <process.h> because of the local header by the same
    name, sigh.  */
@@ -323,11 +342,18 @@ sys_thread_self (void)
   return (sys_thread_t) GetCurrentThreadId ();
 }
 
+bool
+sys_thread_equal (sys_thread_t t, sys_thread_t u)
+{
+  return t == u;
+}
+
 static thread_creation_function *thread_start_address;
 
 /* _beginthread wants a void function, while we are passed a function
-   that returns a pointer.  So we use a wrapper.  */
-static void
+   that returns a pointer.  So we use a wrapper.  See the command in
+   w32term.h about the need for ALIGN_STACK attribute.  */
+static void ALIGN_STACK
 w32_beginthread_wrapper (void *arg)
 {
   (void)thread_start_address (arg);

@@ -1,6 +1,6 @@
 ;;; comint.el --- general command interpreter in a window stuff -*- lexical-binding: t -*-
 
-;; Copyright (C) 1988, 1990, 1992-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1988, 1990, 1992-2018 Free Software Foundation, Inc.
 
 ;; Author: Olin Shivers <shivers@cs.cmu.edu>
 ;;	Simon Marshall <simon@gnu.org>
@@ -290,6 +290,7 @@ If `after-input', point will be positioned after the input typed
 by the user, but before the rest of the history entry that has
 been inserted.  If `end-of-line', point will be positioned at the
 end of the current logical (not visual) line after insertion."
+  :version "26.1"
   :type '(radio (const :tag "Stay after input" after-input)
                 (const :tag "Move to end of line" end-of-line))
   :group 'comint)
@@ -363,10 +364,10 @@ This variable is buffer-local."
    "\\(?:" (regexp-opt password-word-equivalents) "\\|Response\\)"
    "\\(?:\\(?:, try\\)? *again\\| (empty for no passphrase)\\| (again)\\)?"
    ;; "[[:alpha:]]" used to be "for", which fails to match non-English.
-   "\\(?: [[:alpha:]]+ .+\\)?[:：៖]\\s *\\'")
+   "\\(?: [[:alpha:]]+ .+\\)?[\\s  ]*[:：៖][\\s  ]*\\'")
   "Regexp matching prompts for passwords in the inferior process.
 This is used by `comint-watch-for-password-prompt'."
-  :version "26.1"
+  :version "27.1"
   :type 'regexp
   :group 'comint)
 
@@ -457,6 +458,12 @@ must be done each time a process is executed in a Comint mode buffer (e.g.,
 executed once when the buffer is created."
   :type 'hook
   :group 'comint)
+
+(defcustom comint-terminfo-terminal "dumb"
+  "Value to use for TERM when the system uses terminfo."
+  :type 'string
+  :group 'comint
+  :version "26.1")
 
 (defvar comint-mode-map
   (let ((map (make-sparse-keymap)))
@@ -678,7 +685,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
   ;; comint-scroll-show-maximum-output is nil, and no-one can remember
   ;; what the original problem was.  If there are problems with point
   ;; not going to the end, consider re-enabling this.
-  ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00827.html
+  ;; https://lists.gnu.org/r/emacs-devel/2007-08/msg00827.html
   ;;
   ;; This makes it really work to keep point at the bottom.
   ;; (make-local-variable 'scroll-conservatively)
@@ -816,19 +823,7 @@ series of processes in the same Comint buffer.  The hook
 (defun comint-exec-1 (name buffer command switches)
   (let ((process-environment
 	 (nconc
-	  ;; If using termcap, we specify `emacs' as the terminal type
-	  ;; because that lets us specify a width.
-	  ;; If using terminfo, we specify `dumb' because that is
-	  ;; a defined terminal type.  `emacs' is not a defined terminal type
-	  ;; and there is no way for us to define it here.
-	  ;; Some programs that use terminfo get very confused
-	  ;; if TERM is not a valid terminal type.
-	  ;; ;; There is similar code in compile.el.
-	  (if (and (boundp 'system-uses-terminfo) system-uses-terminfo)
-	      (list "TERM=dumb" "TERMCAP="
-		    (format "COLUMNS=%d" (window-width)))
-	    (list "TERM=emacs"
-		  (format "TERMCAP=emacs:co#%d:tc=unknown:" (window-width))))
+          (comint-term-environment)
 	  (list (format "INSIDE_EMACS=%s,comint" emacs-version))
 	  process-environment))
 	(default-directory
@@ -856,6 +851,22 @@ series of processes in the same Comint buffer.  The hook
     (if changed
 	(set-process-coding-system proc decoding encoding))
     proc))
+
+(defun comint-term-environment ()
+  "Return an environment variable list for terminal configuration."
+  ;; If using termcap, we specify `emacs' as the terminal type
+  ;; because that lets us specify a width.
+  ;; If using terminfo, we default to `dumb' because that is
+  ;; a defined terminal type.  `emacs' is not a defined terminal type
+  ;; and there is no way for us to define it here.
+  ;; Some programs that use terminfo get very confused
+  ;; if TERM is not a valid terminal type.
+  (if (and (boundp 'system-uses-terminfo) system-uses-terminfo)
+      (list (format "TERM=%s" comint-terminfo-terminal)
+            "TERMCAP="
+            (format "COLUMNS=%d" (window-width)))
+    (list "TERM=emacs"
+          (format "TERMCAP=emacs:co#%d:tc=unknown:" (window-width)))))
 
 (defun comint-nonblank-p (str)
   "Return non-nil if STR contains non-whitespace syntax."
@@ -1423,24 +1434,32 @@ If nil, Isearch operates on the whole comint buffer."
 (defun comint-history-isearch-backward ()
   "Search for a string backward in input history using Isearch."
   (interactive)
-  (let ((comint-history-isearch t))
-    (isearch-backward nil t)))
+  (setq comint-history-isearch t)
+  (isearch-backward nil t))
 
 (defun comint-history-isearch-backward-regexp ()
   "Search for a regular expression backward in input history using Isearch."
   (interactive)
-  (let ((comint-history-isearch t))
-    (isearch-backward-regexp nil t)))
+  (setq comint-history-isearch t)
+  (isearch-backward-regexp nil t))
 
 (defvar-local comint-history-isearch-message-overlay nil)
 
 (defun comint-history-isearch-setup ()
   "Set up a comint for using Isearch to search the input history.
 Intended to be added to `isearch-mode-hook' in `comint-mode'."
-  (when (or (eq comint-history-isearch t)
-	    (and (eq comint-history-isearch 'dwim)
-		 ;; Point is at command line.
-		 (comint-after-pmark-p)))
+  (when (and
+         ;; Prompt is not empty like in Async Shell Command buffers
+         ;; or in finished shell buffers
+         (not (eq (save-excursion
+		    (goto-char (comint-line-beginning-position))
+		    (forward-line 0)
+		    (point))
+		  (comint-line-beginning-position)))
+	 (or (eq comint-history-isearch t)
+	     (and (eq comint-history-isearch 'dwim)
+		  ;; Point is at command line.
+		  (comint-after-pmark-p))))
     (setq isearch-message-prefix-add "history ")
     (setq-local isearch-search-fun-function
                 #'comint-history-isearch-search)
@@ -1461,7 +1480,9 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
   (setq isearch-message-function nil)
   (setq isearch-wrap-function nil)
   (setq isearch-push-state-function nil)
-  (remove-hook 'isearch-mode-end-hook 'comint-history-isearch-end t))
+  (remove-hook 'isearch-mode-end-hook 'comint-history-isearch-end t)
+  (unless isearch-suspended
+    (custom-reevaluate-setting 'comint-history-isearch)))
 
 (defun comint-goto-input (pos)
   "Put input history item of the absolute history position POS."
@@ -2268,8 +2289,10 @@ If this takes us past the end of the current line, don't skip at all."
 
 (defun comint-after-pmark-p ()
   "Return t if point is after the process output marker."
-  (let ((pmark (process-mark (get-buffer-process (current-buffer)))))
-    (<= (marker-position pmark) (point))))
+  (let ((process (get-buffer-process (current-buffer))))
+    (when process
+      (let ((pmark (process-mark process)))
+        (<= (marker-position pmark) (point))))))
 
 (defun comint-simple-send (proc string)
   "Default function for sending to PROC input STRING.
@@ -2466,9 +2489,7 @@ Sets mark to the value of point when this command is run."
     (comint-truncate-buffer)))
 
 (defun comint-interrupt-subjob ()
-  "Interrupt the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Interrupt the current subjob."
   (interactive)
   (comint-skip-input)
   (interrupt-process nil comint-ptyp)
@@ -2476,25 +2497,19 @@ between the process mark and point."
   )
 
 (defun comint-kill-subjob ()
-  "Send kill signal to the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Send kill signal to the current subjob."
   (interactive)
   (comint-skip-input)
   (kill-process nil comint-ptyp))
 
 (defun comint-quit-subjob ()
-  "Send quit signal to the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Send quit signal to the current subjob."
   (interactive)
   (comint-skip-input)
   (quit-process nil comint-ptyp))
 
 (defun comint-stop-subjob ()
   "Stop the current subjob.
-This command also kills the pending input
-between the process mark and point.
 
 WARNING: if there is no current subjob, you can end up suspending
 the top-level process running in the buffer.  If you accidentally do

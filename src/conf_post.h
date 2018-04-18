@@ -1,6 +1,6 @@
 /* conf_post.h --- configure.ac includes this via AH_BOTTOM
 
-Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2017 Free Software
+Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2018 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -31,7 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <stdbool.h>
 
-#if defined DOS_NT && !defined DEFER_MS_W32_H
+#if defined WINDOWSNT && !defined DEFER_MS_W32_H
 # include <ms-w32.h>
 #endif
 

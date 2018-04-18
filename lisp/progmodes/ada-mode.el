@@ -1,6 +1,6 @@
 ;;; ada-mode.el --- major-mode for editing Ada sources
 
-;; Copyright (C) 1994-1995, 1997-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995, 1997-2018 Free Software Foundation, Inc.
 
 ;; Author: Rolf Ebert      <ebert@inf.enst.fr>
 ;;      Markus Heritsch <Markus.Heritsch@studbox.uni-stuttgart.de>
@@ -2479,7 +2479,7 @@ and the offset."
 	    (forward-word-strictly -1))
 
 	  ;; If there is a parameter list, and we have a function declaration
-	  ;; or a access to subprogram declaration
+	  ;; or access to subprogram declaration
 	  (let ((num-back 1))
 	    (if (and (= (following-char) ?\()
 		     (save-excursion

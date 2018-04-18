@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1994, 1996-2017 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1996-2018 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -58,7 +58,7 @@ HTML_OPTS = --no-split --html
 # Options used only when making info output.
 # --no-split is only needed because of MS-DOS.
 # For a possible alternative, see
-# https://lists.gnu.org/archive/html/emacs-devel/2011-01/msg01182.html
+# https://lists.gnu.org/r/emacs-devel/2011-01/msg01182.html
 INFO_OPTS= --no-split
 
 INSTALL = @INSTALL@

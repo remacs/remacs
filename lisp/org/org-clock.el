@@ -1,6 +1,6 @@
 ;;; org-clock.el --- The time clocking code for Org mode -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -487,7 +487,7 @@ to add an effort property.")
                                    "10\\.6\\.[[:digit:]]"
                                    (shell-command-to-string
                                     "sw_vers -productVersion"))
-                                  (<= m -1034058203136))
+                                  (<= m -1034058203135))
                        (ignore-errors (decode-time (list m 0)))))))
 	 (low
 	  (funcall dichotomy
@@ -1394,7 +1394,7 @@ the default behavior."
 ;;;###autoload
 (defun org-clock-in-last (&optional arg)
   "Clock in the last closed clocked item.
-When already clocking in, send an warning.
+When already clocking in, send a warning.
 With a universal prefix argument, select the task you want to
 clock in from the last clocked in tasks.
 With two universal prefix arguments, start clocking using the
@@ -1456,8 +1456,7 @@ The time is always returned as UTC."
 	     (day (nth 3 dt)))
 	(if (< hour org-extend-today-until) (setf (nth 3 dt) (1- day)))
 	(setf (nth 2 dt) org-extend-today-until)
-	(setq dt (append (list 0 0) (nthcdr 2 dt) '(t)))
-	(apply #'encode-time dt)))
+	(apply #'encode-time (append (list 0 0) (nthcdr 2 dt)))))
      ((or (equal cmt "all")
 	  (and (or (not cmt) (equal cmt "auto"))
 	       (not lr)))
@@ -1467,7 +1466,7 @@ The time is always returned as UTC."
 	  (and (or (not cmt) (equal cmt "auto"))
 	       lr))
       (setq org--msg-extra "showing task time since last repeat.")
-      (and lr (org-time-string-to-time lr t)))
+      (and lr (org-time-string-to-time lr)))
      (t nil))))
 
 (defun org-clock-find-position (find-unclosed)
@@ -1604,9 +1603,9 @@ to, overriding the existing value of `org-clock-out-switch-to-state'."
 	  (insert "--")
 	  (setq te (org-insert-time-stamp (or at-time now) 'with-hm 'inactive))
 	  (setq s (- (float-time
-		      (apply #'encode-time (org-parse-time-string te nil t)))
+		      (apply #'encode-time (org-parse-time-string te)))
 		     (float-time
-		      (apply #'encode-time (org-parse-time-string ts nil t))))
+		      (apply #'encode-time (org-parse-time-string ts))))
 		h (floor (/ s 3600))
 		s (- s (* 3600 h))
 		m (floor (/ s 60))
@@ -1820,10 +1819,10 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 	  (lmax 30)
 	  (ltimes (make-vector lmax 0))
 	  (level 0)
-	  (tstart (cond ((stringp tstart) (org-time-string-to-seconds tstart t))
+	  (tstart (cond ((stringp tstart) (org-time-string-to-seconds tstart))
 			((consp tstart) (float-time tstart))
 			(t tstart)))
-	  (tend (cond ((stringp tend) (org-time-string-to-seconds tend t))
+	  (tend (cond ((stringp tend) (org-time-string-to-seconds tend))
 		      ((consp tend) (float-time tend))
 		      (t tend)))
 	  (t1 0)
@@ -1840,11 +1839,10 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 	   (let* ((ts (float-time
 		       (apply #'encode-time
 			      (save-match-data
-				(org-parse-time-string
-				 (match-string 2) nil t)))))
+				(org-parse-time-string (match-string 2))))))
 		  (te (float-time
 		       (apply #'encode-time
-			      (org-parse-time-string (match-string 3) nil t))))
+			      (org-parse-time-string (match-string 3)))))
 		  (dt (- (if tend (min te tend) te)
 			 (if tstart (max ts tstart) ts))))
 	     (when (> dt 0) (cl-incf t1 (floor (/ dt 60))))))
@@ -2725,7 +2723,9 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (setq te (float-time (apply #'encode-time (org-parse-time-string te))))))
     (setq tsb
 	  (if (eq step0 'week)
-	      (- ts (* 86400 (- (nth 6 (decode-time (seconds-to-time ts))) ws)))
+	      (let ((dow (nth 6 (decode-time (seconds-to-time ts)))))
+		(if (< dow ws) ts
+		  (- ts (* 86400 (- dow ws)))))
 	    ts))
     (setq p1 (plist-put p1 :header ""))
     (setq p1 (plist-put p1 :step nil))
@@ -2735,9 +2735,14 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (setq p1 (plist-put p1 :tstart (format-time-string
 				      (org-time-stamp-format nil t)
 				      (seconds-to-time (max tsb ts)))))
+      (cl-incf tsb (let ((dow (nth 6 (decode-time (seconds-to-time tsb)))))
+		     (if (or (eq step0 'day)
+			     (= dow ws))
+			 step
+		       (* 86400 (- ws dow)))))
       (setq p1 (plist-put p1 :tend (format-time-string
 				    (org-time-stamp-format nil t)
-				    (seconds-to-time (min te (setq tsb (+ tsb step)))))))
+				    (seconds-to-time (min te tsb)))))
       (insert "\n" (if (eq step0 'day) "Daily report: "
 		     "Weekly report starting on: ")
 	      (plist-get p1 :tstart) "\n")
@@ -2895,9 +2900,9 @@ Otherwise, return nil."
 	  (setq ts (match-string 1)
 		te (match-string 3))
 	  (setq s (- (float-time
-		      (apply #'encode-time (org-parse-time-string te nil t)))
+		      (apply #'encode-time (org-parse-time-string te)))
 		     (float-time
-		      (apply #'encode-time (org-parse-time-string ts nil t))))
+		      (apply #'encode-time (org-parse-time-string ts))))
 		neg (< s 0)
 		s (abs s)
 		h (floor (/ s 3600))
@@ -2984,6 +2989,7 @@ The details of what will be saved are regulated by the variable
 
 ;; Local variables:
 ;; generated-autoload-file: "org-loaddefs.el"
+;; coding: utf-8
 ;; End:
 
 ;;; org-clock.el ends here

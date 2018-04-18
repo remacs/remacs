@@ -1,6 +1,6 @@
 ;;; eieio-base.el --- Base classes for EIEIO.  -*- lexical-binding:t -*-
 
-;;; Copyright (C) 2000-2002, 2004-2005, 2007-2017 Free Software
+;;; Copyright (C) 2000-2002, 2004-2005, 2007-2018 Free Software
 ;;; Foundation, Inc.
 
 ;; Author: Eric M. Ludlam  <zappo@gnu.org>
@@ -256,8 +256,11 @@ malicious code.
 Note: This function recurses when a slot of :type of some object is
 identified, and needing more object creation."
   (let* ((objclass (nth 0 inputlist))
-	 ;; (objname (nth 1 inputlist))
-	 (slots (nthcdr 2 inputlist))
+         ;; Earlier versions of `object-write' added a string name for
+         ;; the object, now obsolete.
+         (slots (nthcdr
+                 (if (stringp (nth 1 inputlist)) 2 1)
+                 inputlist))
 	 (createslots nil)
 	 (class
 	  (progn
@@ -351,6 +354,26 @@ Second, any text properties will be stripped from strings."
 		   proposed-value))
 		 (t
 		  proposed-value))))
+        ;; For hash-tables and vectors, the top-level `read' will not
+        ;; "look inside" member values, so we need to do that
+        ;; explicitly.
+        ((hash-table-p proposed-value)
+         (maphash
+          (lambda (key value)
+            (when (class-p (car-safe value))
+              (setf (gethash key proposed-value)
+                    (eieio-persistent-convert-list-to-object
+                     value))))
+          proposed-value)
+         proposed-value)
+
+        ((vectorp proposed-value)
+         (dotimes (i (length proposed-value))
+           (when (class-p (car-safe (aref proposed-value i)))
+             (aset proposed-value i
+                   (eieio-persistent-convert-list-to-object
+                    (aref proposed-value i)))))
+         proposed-value)
 
 	 ((stringp proposed-value)
 	  ;; Else, check for strings, remove properties.
@@ -464,7 +487,7 @@ instance."
 (cl-defmethod eieio-object-name-string ((obj eieio-named))
   "Return a string which is OBJ's name."
   (or (slot-value obj 'object-name)
-      (symbol-name (eieio-object-class obj))))
+      (cl-call-next-method)))
 
 (cl-defmethod eieio-object-set-name-string ((obj eieio-named) name)
   "Set the string which is OBJ's NAME."

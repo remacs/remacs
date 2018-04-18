@@ -1,6 +1,6 @@
 ;;; srecode/el.el --- Emacs Lisp specific arguments
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -24,7 +24,7 @@
 ;; Emacs Lisp specific handlers.  To use these handlers in your
 ;; template, add the :name part to your template argument list.
 ;;
-;; Error if not in a Emacs Lisp mode
+;; Error if not in an Emacs Lisp mode
 
 ;;; Code:
 

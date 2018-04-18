@@ -1,5 +1,5 @@
 /* Elisp bindings for D-Bus.
-   Copyright (C) 2007-2017 Free Software Foundation, Inc.
+   Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -237,8 +237,7 @@ static char *
 XD_OBJECT_TO_STRING (Lisp_Object object)
 {
   AUTO_STRING (format, "%s");
-  Lisp_Object args[] = { format, object };
-  return SSDATA (styled_format (ARRAYELTS (args), args, false, false));
+  return SSDATA (CALLN (Fformat, format, object));
 }
 
 #define XD_DBUS_VALIDATE_BUS_ADDRESS(bus)				\
@@ -1402,7 +1401,7 @@ usage: (dbus-message-internal &rest REST)  */)
 
       if ((mtype == DBUS_MESSAGE_TYPE_ERROR)
 	  && (!dbus_message_set_error_name (dmessage, DBUS_ERROR_FAILED)))
-	XD_SIGNAL1 (build_string ("Unable to create a error message"));
+	XD_SIGNAL1 (build_string ("Unable to create an error message"));
     }
 
   /* Check for timeout parameter.  */

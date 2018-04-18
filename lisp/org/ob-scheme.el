@@ -1,6 +1,6 @@
 ;;; ob-scheme.el --- Babel Functions for Scheme      -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Authors: Eric Schulte
 ;;	    Michael Gauland
@@ -40,6 +40,7 @@
 ;;; Code:
 (require 'ob)
 (require 'geiser nil t)
+(require 'geiser-impl nil t)
 (defvar geiser-repl--repl)             ; Defined in geiser-repl.el
 (defvar geiser-impl--implementation)   ; Defined in geiser-impl.el
 (defvar geiser-default-implementation) ; Defined in geiser-impl.el

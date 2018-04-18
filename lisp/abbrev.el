@@ -1,6 +1,6 @@
 ;;; abbrev.el --- abbrev mode commands for Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1987, 1992, 2001-2017 Free Software Foundation,
+;; Copyright (C) 1985-1987, 1992, 2001-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -908,8 +908,14 @@ Presumes that `standard-output' points to `current-buffer'."
     (prin1 (symbol-value sym))
     (insert " ")
     (prin1 (symbol-function sym))
-    (insert " ")
+    (insert " :count ")
     (prin1 (abbrev-get sym :count))
+    (when (abbrev-get sym :case-fixed)
+      (insert " :case-fixed ")
+      (prin1 (abbrev-get sym :case-fixed)))
+    (when (abbrev-get sym :enable-function)
+      (insert " :enable-function ")
+      (prin1 (abbrev-get sym :enable-function)))
     (insert ")\n")))
 
 (defun abbrev--describe (sym)

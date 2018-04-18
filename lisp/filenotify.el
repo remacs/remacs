@@ -1,6 +1,6 @@
 ;;; filenotify.el --- watch files for changes on disk  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2013-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2018 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 
@@ -307,12 +307,12 @@ FILE is the name of the file whose event is being reported."
   (unless (functionp callback)
     (signal 'wrong-type-argument `(,callback)))
 
-  (let* ((handler (find-file-name-handler file 'file-notify-add-watch))
-	 (dir (directory-file-name
-	       (if (file-directory-p file)
-		   file
-		 (file-name-directory file))))
-         desc func l-flags)
+  (let ((handler (find-file-name-handler file 'file-notify-add-watch))
+	(dir (directory-file-name
+	      (if (file-directory-p file)
+		  file
+		(file-name-directory file))))
+        desc func l-flags)
 
     (unless (file-directory-p dir)
       (signal 'file-notify-error `("Directory does not exist" ,dir)))
@@ -362,6 +362,10 @@ FILE is the name of the file whose event is being reported."
                   ;; monitor.  So we must watch the file itself.
                   func (if (eq file-notify--library 'kqueue) file dir)
                   l-flags 'file-notify-callback)))
+
+    ;; We do not want to enter quoted file names into the hash.
+    (setq file (file-name-unquote file)
+          dir  (file-name-unquote dir))
 
     ;; Modify `file-notify-descriptors'.
     (let ((watch (file-notify--watch-make
@@ -419,8 +423,8 @@ DESCRIPTOR should be an object returned by `file-notify-add-watch'."
 
 ;; TODO:
 ;; * Watching a /dir/file may receive events for dir.
-;;   (This may be the desired behaviour.)
-;; * Watching a file in a already watched directory
+;;   (This may be the desired behavior.)
+;; * Watching a file in an already watched directory
 ;;   If the file is created and *then* a watch is added to that file, the
 ;;   watch might receive events which occurred prior to it being created,
 ;;   due to the way events are propagated during idle time.  Note: This

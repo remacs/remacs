@@ -1,6 +1,6 @@
 ;;; package-test.el --- Tests for the Emacs package system
 
-;; Copyright (C) 2013-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2018 Free Software Foundation, Inc.
 
 ;; Author: Daniel Hackney <dan@haxney.org>
 ;; Version: 1.0
@@ -484,14 +484,16 @@ Must called from within a `tar-mode' buffer."
       (package-import-keyring keyring)
       (package-refresh-contents)
       (let ((package-check-signature 'allow-unsigned))
-        (should (package-install 'signed-good))
+        (should (progn (package-install 'signed-good) 'noerror))
         (should-error (package-install 'signed-bad)))
+      (package-delete (car (alist-get 'signed-good package-alist)))
       (let ((package-check-signature t))
-        (should (package-install 'signed-good))
+        (should (progn (package-install 'signed-good) 'noerror))
         (should-error (package-install 'signed-bad)))
+      (package-delete (car (alist-get 'signed-good package-alist)))
       (let ((package-check-signature nil))
-        (should (package-install 'signed-good))
-        (should (package-install 'signed-bad)))
+        (should (progn (package-install 'signed-good) 'noerror))
+        (should (progn (package-install 'signed-bad) 'noerror)))
       ;; Check if the installed package status is updated.
       (let ((buf (package-list-packages)))
 	(package-menu-refresh)

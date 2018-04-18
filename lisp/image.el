@@ -1,6 +1,6 @@
 ;;; image.el --- image API  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: multimedia
@@ -29,13 +29,14 @@
   "Image support."
   :group 'multimedia)
 
+(declare-function image-flush "image.c" (spec &optional frame))
 (defalias 'image-refresh 'image-flush)
 
 (defconst image-type-header-regexps
   `(("\\`/[\t\n\r ]*\\*.*XPM.\\*/" . xpm)
     ("\\`P[1-6]\\(?:\
-\\(?:\\(?:#[^\r\n]*[\r\n]\\)?[[:space:]]\\)+\
-\\(?:\\(?:#[^\r\n]*[\r\n]\\)?[0-9]\\)+\
+\\(?:\\(?:#[^\r\n]*[\r\n]\\)*[[:space:]]\\)+\
+\\(?:\\(?:#[^\r\n]*[\r\n]\\)*[0-9]\\)+\
 \\)\\{2\\}" . pbm)
     ("\\`GIF8[79]a" . gif)
     ("\\`\x89PNG\r\n\x1a\n" . png)
@@ -976,11 +977,12 @@ default is 20%."
     image))
 
 (defun image--get-imagemagick-and-warn ()
-  (unless (fboundp 'imagemagick-types)
-    (error "Can't rescale images without ImageMagick support"))
+  (unless (or (fboundp 'imagemagick-types) (featurep 'ns))
+    (error "Cannot rescale images without ImageMagick support"))
   (let ((image (image--get-image)))
     (image-flush image)
-    (plist-put (cdr image) :type 'imagemagick)
+    (when (fboundp 'imagemagick-types)
+      (plist-put (cdr image) :type 'imagemagick))
     image))
 
 (defun image--change-size (factor)
@@ -999,6 +1001,8 @@ default is 20%."
               (unless (memq key '(:scale :width :height :max-width :max-height))
               (setq new (nconc new (list key val))))))
           new)))
+
+(declare-function image-size "image.c" (spec &optional pixels frame))
 
 (defun image--current-scaling (image new-image)
   ;; The image may be scaled due to many reasons (:scale, :max-width,

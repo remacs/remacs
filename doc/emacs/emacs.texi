@@ -27,7 +27,7 @@ This is the @cite{GNU Emacs Manual},
 @end ifnottex
 updated for Emacs version @value{EMACSVER}.
 
-Copyright @copyright{} 1985--1987, 1993--2017 Free Software Foundation, Inc.
+Copyright @copyright{} 1985--1987, 1993--2018 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -191,8 +191,6 @@ Advanced Features
 * Host Security::       Security issues on a single computer.
 * Network Security::    Managing the network security.
 * Document View::       Viewing PDF, PS and DVI files.
-* EWW::                 A web browser in Emacs.
-* Embedded WebKit Widgets:: Embedding browser widgets in Emacs buffers.
 * Shell::               Executing shell commands from Emacs.
 * Emacs Server::        Using Emacs as an editing server.
 * Printing::            Printing hardcopies of buffers or regions.
@@ -223,7 +221,7 @@ Appendices
 * Emacs Invocation::    Hairy startup options.
 * X Resources::         X resources for customizing Emacs.
 * Antinews::            Information about Emacs version 25.
-* Mac OS / GNUstep::    Using Emacs under Mac OS and GNUstep.
+* Mac OS / GNUstep::     Using Emacs under macOS and GNUstep.
 * Microsoft Windows::   Using Emacs on Microsoft Windows.
 * Manifesto::           What's GNU?  Gnu's Not Unix!
 
@@ -235,9 +233,9 @@ Appendices
 Indexes (each index contains a large menu)
 * Key Index::           An item for each standard Emacs key sequence.
 * Option Index::        An item for every command-line option.
-* Command Index::       An item for each command name.
-* Variable Index::      An item for each documented variable.
-* Concept Index::       An item for each concept.
+* Command Index::       An item for each standard command name.
+* Variable Index::      An item for each variable documented in this manual.
+* Concept Index::       An item for concepts and other general subjects.
 
 @c Do NOT modify the following 3 lines!  They must have this form to
 @c be correctly identified by 'texinfo-multiple-files-update'.  In
@@ -484,7 +482,6 @@ Auto Reverting Non-File Buffers
 
 * Auto Reverting the Buffer Menu:: Auto Revert of the Buffer Menu.
 * Auto Reverting Dired::           Auto Revert of Dired buffers.
-* Supporting additional buffers::  How to add more Auto Revert support.
 @end ifnottex
 
 Auto-Saving: Protection Against Disasters
@@ -956,8 +953,6 @@ The Calendar and the Diary
 * Lunar Phases::        Displaying phases of the moon.
 * Other Calendars::     Converting dates to other calendar systems.
 * Diary::               Displaying events from your diary.
-* Appointments::        Reminders when it's time to do something.
-* Importing Diary::     Converting diary events to/from other formats.
 * Daylight Saving::     How to specify when daylight saving time is active.
 * Time Intervals::      Keeping track of time intervals.
 @ifnottex
@@ -985,6 +980,8 @@ The Diary
 * Date Formats::           Various ways you can specify dates.
 * Adding to Diary::        Commands to create diary entries.
 * Special Diary Entries::  Anniversaries, blocks of dates, cyclic entries, etc.
+* Appointments::           Reminders when it's time to do something.
+* Importing Diary::        Converting diary events to/from other formats.
 
 @ifnottex
 More advanced features of the Calendar and Diary
@@ -1095,6 +1092,8 @@ Printing Hard Copies
 
 Hyperlinking and Navigation Features
 
+* EWW::                 A web browser in Emacs.
+* Embedded WebKit Widgets:: Embedding browser widgets in Emacs buffers.
 * Browse-URL::          Following URLs.
 * Goto Address mode::   Activating URLs.
 * FFAP::                Finding files etc. at point.
@@ -1164,6 +1163,7 @@ The Emacs Initialization File
 * Terminal Init::       Each terminal type can have an init file.
 * Find Init::           How Emacs finds the init file.
 * Init Non-ASCII::      Using non-@acronym{ASCII} characters in an init file.
+* Early Init File::     Another init file, which is read early on.
 
 Dealing with Emacs Trouble
 
@@ -1223,13 +1223,13 @@ GTK resources
 
 * GTK Resource Basics::   Basic usage of GTK+ resources.
 * GTK Widget Names::      How GTK+ widgets are named.
-* GTK Names in Emacs::    GTK widgets used by Emacs.
-* GTK styles::            What can be customized in a GTK widget.
+* GTK Names in Emacs::    GTK+ widgets used by Emacs.
+* GTK styles::            What can be customized in a GTK+ widget.
 
-Emacs and Mac OS / GNUstep
+Emacs and macOS / GNUstep
 
-* Mac / GNUstep Basics::        Basic Emacs usage under GNUstep or Mac OS.
-* Mac / GNUstep Customization:: Customizations under GNUstep or Mac OS.
+* Mac / GNUstep Basics::        Basic Emacs usage under GNUstep or macOS.
+* Mac / GNUstep Customization:: Customizations under GNUstep or macOS.
 * Mac / GNUstep Events::        How window system events are handled.
 * GNUstep Support::             Details on status of GNUstep support.
 
@@ -1331,7 +1331,7 @@ for documentation.  @xref{GNU Free Documentation License}.}.
 @xref{Copying}.
 
 One way to get a copy of GNU Emacs is from someone else who has it.
-You need not ask for our permission to do so, or tell any one else;
+You need not ask for our permission to do so, or tell anyone else;
 just copy it.  If you have access to the Internet, you can get the
 latest distribution version of GNU Emacs by anonymous FTP; see
 @url{https://www.gnu.org/software/emacs} on our website for more
@@ -1347,7 +1347,7 @@ when you get it, not just free for the manufacturer.
 
 If you find GNU Emacs useful, please @strong{send a donation} to the
 Free Software Foundation to support our work.  Donations to the Free
-Software Foundation are tax deductible in the US@.  If you use GNU Emacs
+Software Foundation are tax-deductible in the US@.  If you use GNU Emacs
 at your workplace, please suggest that the company make a donation.
 To donate, see @url{https://my.fsf.org/donate/}.
 For other ways in which you can help, see
@@ -1489,7 +1489,7 @@ Neal Ziring, Teodor Zlatanov, and Detlev Zundel.
 advanced, self-documenting, customizable, extensible editor Emacs.
 (The @samp{G} in
 @c Workaround makeinfo 4 bug.
-@c https://lists.gnu.org/archive/html/bug-texinfo/2004-08/msg00009.html
+@c https://lists.gnu.org/r/bug-texinfo/2004-08/msg00009.html
 @iftex
 @acronym{GNU, @acronym{GNU}'s Not Unix}
 @end iftex

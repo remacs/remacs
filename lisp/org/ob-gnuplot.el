@@ -1,6 +1,6 @@
 ;;; ob-gnuplot.el --- Babel Functions for Gnuplot    -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte
 ;; Keywords: literate programming, reproducible research
@@ -40,7 +40,7 @@
 ;;; Code:
 (require 'ob)
 
-(declare-function org-time-string-to-time "org" (s &optional zone))
+(declare-function org-time-string-to-time "org" (s))
 (declare-function org-combine-plists "org" (&rest plists))
 (declare-function orgtbl-to-generic "org-table" (table params))
 (declare-function gnuplot-mode "ext:gnuplot-mode" ())
@@ -116,6 +116,8 @@ code."
            (timefmt (cdr (assq :timefmt params)))
            (time-ind (or (cdr (assq :timeind params))
                          (when timefmt 1)))
+	   (directory (and (buffer-file-name)
+			   (file-name-directory (buffer-file-name))))
 	   (add-to-body (lambda (text) (setq body (concat text "\n" body)))))
       ;; append header argument settings to body
       (when title (funcall add-to-body (format "set title '%s'" title)))
@@ -161,7 +163,10 @@ code."
 			  (format "\\$%s" (car pair)) (cdr pair) body)))
 	    vars)
       (when prologue (funcall add-to-body prologue))
-      (when epilogue (setq body (concat body "\n" epilogue))))
+      (when epilogue (setq body (concat body "\n" epilogue)))
+      ;; Setting the directory needs to be done first so that
+      ;; subsequent 'output' directive goes to the right place.
+      (when directory (funcall add-to-body (format "cd '%s'" directory))))
     body))
 
 (defun org-babel-execute:gnuplot (body params)

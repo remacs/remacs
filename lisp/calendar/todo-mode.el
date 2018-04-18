@@ -1,6 +1,6 @@
 ;;; todo-mode.el --- facilities for making and maintaining todo lists  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1997, 1999, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 1999, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Oliver Seidel <privat@os10000.net>
 ;;	Stephen Berman <stephen.berman@gmx.net>
@@ -188,25 +188,17 @@ The final element is \"*\", indicating an unspecified month.")
   "Array of abbreviated month names, in order.
 The final element is \"*\", indicating an unspecified month.")
 
-(with-no-warnings
-  ;; FIXME: These vars lack a prefix, but this is out of our control, because
-  ;; they're defined by Calendar, e.g. for calendar-date-display-form.
-  (defvar dayname)
-  (defvar monthname)
-  (defvar day)
-  (defvar month)
-  (defvar year))
-
 (defconst todo-date-pattern
   (let ((dayname (diary-name-pattern calendar-day-name-array nil t)))
     (concat "\\(?4:\\(?5:" dayname "\\)\\|"
-	    (let ((dayname)
-		  (monthname (format "\\(?6:%s\\)" (diary-name-pattern
-						    todo-month-name-array
-						    todo-month-abbrev-array)))
-		  (month "\\(?7:[0-9]+\\|\\*\\)")
-		  (day "\\(?8:[0-9]+\\|\\*\\)")
-		  (year "-?\\(?9:[0-9]+\\|\\*\\)"))
+	    (calendar-dlet*
+                ((dayname)
+		 (monthname (format "\\(?6:%s\\)" (diary-name-pattern
+						   todo-month-name-array
+						   todo-month-abbrev-array)))
+		 (month "\\(?7:[0-9]+\\|\\*\\)")
+		 (day "\\(?8:[0-9]+\\|\\*\\)")
+		 (year "-?\\(?9:[0-9]+\\|\\*\\)"))
 	      (mapconcat #'eval calendar-date-display-form ""))
 	    "\\)"))
   "Regular expression matching a todo item date header.")
@@ -631,7 +623,7 @@ Todo mode revisit this file or, with option
 file was last visited.
 
 If you call this command before you have created any todo file in
-the current format, and you have an todo file in old format, it
+the current format, and you have a todo file in old format, it
 will ask you whether to convert that file and show it.
 Otherwise, calling this command before any todo file exists
 prompts for a file name and an initial category (defaulting to
@@ -956,7 +948,7 @@ called with a prefix argument only moves point to a lower item,
 e.g., with point on the last todo item and called with prefix 1,
 it moves point to the first done item; but if called with point
 on the last todo item without a prefix argument, it moves point
-the the empty line above the done items separator."
+to the empty line above the done items separator."
   (interactive "p")
   ;; It's not worth the trouble to allow prefix arg value < 1, since
   ;; we have the corresponding command.
@@ -976,7 +968,7 @@ If the category's done items are visible, this command called
 with a prefix argument only moves point to a higher item, e.g.,
 with point on the first done item and called with prefix 1, it
 moves to the last todo item; but if called with point on the
-first done item without a prefix argument, it moves point the the
+first done item without a prefix argument, it moves point to the
 empty line above the done items separator."
   (interactive "p")
   ;; Avoid moving to bob if on the first item but not at bob.
@@ -1052,7 +1044,7 @@ empty line above the done items separator."
 (defun todo-toggle-item-header ()
   "Hide or show item date-time headers in the current file.
 With done items, this hides only the done date-time string, not
-the the original date-time string."
+the original date-time string."
   (interactive)
   (unless (catch 'nonempty
 	    (dolist (type '(todo done))
@@ -1756,7 +1748,7 @@ means prompt user and omit comment only on confirmation."
 With positive numerical prefix argument N, change the marking of
 the next N items in the current category.  If both the todo and
 done items sections are visible, the sequence of N items can
-consist of the the last todo items and the first done items."
+consist of the last todo items and the first done items."
   (interactive "p")
   (when (todo-item-string)
     (let ((cat (todo-current-category)))
@@ -2274,8 +2266,8 @@ made in the number or names of categories."
 	;; `todo-edit-item' as e.g. `-' or `C-u'.
 	(inc (prefix-numeric-value inc))
 	(buffer-read-only nil)
-	ndate ntime year monthname month day
-	dayname)	; Needed by calendar-date-display-form.
+	ndate ntime
+        year monthname month day dayname)
     (when marked (todo--user-error-if-marked-done-item))
     (save-excursion
       (or (and marked (goto-char (point-min))) (todo-item-start))
@@ -2416,7 +2408,15 @@ made in the number or names of categories."
 	      ;; If year, month or day date string components were
 	      ;; changed, rebuild the date string.
 	      (when (memq what '(year month day))
-		(setq ndate (mapconcat #'eval calendar-date-display-form ""))))
+		(setq ndate
+                      (calendar-dlet*
+                          ;; Needed by calendar-date-display-form.
+                          ((year year)
+                           (monthname monthname)
+                           (month month)
+                           (day day)
+                           (dayname dayname))
+                        (mapconcat #'eval calendar-date-display-form "")))))
 	    (when ndate (replace-match ndate nil nil nil 1))
 	    ;; Add new time string to the header, if it was supplied.
 	    (when ntime
@@ -4613,12 +4613,13 @@ strings built using the default value of
 (defun todo-convert-legacy-date-time ()
   "Return converted date-time string.
 Helper function for `todo-convert-legacy-files'."
-  (let* ((year (match-string 1))
-	 (month (match-string 2))
-	 (monthname (calendar-month-name (string-to-number month) t))
-	 (day (match-string 3))
-	 (time (match-string 4))
-	 dayname)
+  (calendar-dlet*
+      ((year (match-string 1))
+       (month (match-string 2))
+       (monthname (calendar-month-name (string-to-number month) t))
+       (day (match-string 3))
+       (time (match-string 4))
+       dayname)
     (replace-match "")
     (insert (mapconcat #'eval calendar-date-display-form "")
 	    (when time (concat " " time)))))
@@ -5210,7 +5211,7 @@ If the category's done items are visible, this command called
 with a prefix argument only moves point to a higher item, e.g.,
 with point on the first done item and called with prefix 1, it
 moves to the last todo item; but if called with point on the
-first done item without a prefix argument, it moves point the the
+first done item without a prefix argument, it moves point to the
 empty line above the done items separator."
   (let* ((done (todo-done-item-p)))
     (todo-item-start)
@@ -5990,8 +5991,8 @@ indicating an unspecified month, day, or year.
 
 When ARG is `day', non-nil arguments MO and YR determine the
 number of the last the day of the month."
-  (let (year monthname month day
-	     dayname)			; Needed by calendar-date-display-form.
+  (calendar-dlet*
+      (year monthname month day dayname) ;Needed by calendar-date-display-form.
     (when (or (not arg) (eq arg 'year))
       (while (if (natnump year) (< year 1) (not (eq year '*)))
 	(setq year (read-from-minibuffer

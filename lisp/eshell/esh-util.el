@@ -1,6 +1,6 @@
 ;;; esh-util.el --- general utilities  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -295,7 +295,7 @@ Prepend remote identification of `default-directory', if any."
 	(nconc new-list (list a))))
     (cdr new-list)))
 
-(defun eshell-uniqify-list (l)
+(defun eshell-uniquify-list (l)
   "Remove occurring multiples in L.  You probably want to sort first."
   (let ((m l))
     (while m
@@ -305,6 +305,9 @@ Prepend remote identification of `default-directory', if any."
 	(setcdr m (cddr m)))
       (setq m (cdr m))))
   l)
+(define-obsolete-function-alias
+  'eshell-uniqify-list
+  'eshell-uniquify-list "27.1")
 
 (defun eshell-stringify (object)
   "Convert OBJECT into a string value."

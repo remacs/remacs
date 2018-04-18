@@ -1,7 +1,7 @@
 /* Definitions for data structures and routines for the regular
    expression library, version 0.12.
 
-   Copyright (C) 1985, 1989-1993, 1995, 2000-2017 Free Software
+   Copyright (C) 1985, 1989-1993, 1995, 2000-2018 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -270,8 +270,10 @@ extern ptrdiff_t emacs_re_safe_alloca;
 #ifdef RE_DUP_MAX
 # undef RE_DUP_MAX
 #endif
-/* If sizeof(int) == 2, then ((1 << 15) - 1) overflows.  */
-#define RE_DUP_MAX (0x7fff)
+/* Repeat counts are stored in opcodes as 2 byte integers.  This was
+   previously limited to 7fff because the parsing code uses signed
+   ints.  But Emacs only runs on 32 bit platforms anyway.  */
+#define RE_DUP_MAX (0xffff)
 
 
 /* POSIX `cflags' bits (i.e., information for `regcomp').  */
@@ -337,7 +339,8 @@ typedef enum
   REG_EEND,		/* Premature end.  */
   REG_ESIZE,		/* Compiled pattern bigger than 2^16 bytes.  */
   REG_ERPAREN,		/* Unmatched ) or \); not returned from regcomp.  */
-  REG_ERANGEX		/* Range striding over charsets.  */
+  REG_ERANGEX,		/* Range striding over charsets.  */
+  REG_ESIZEBR           /* n or m too big in \{n,m\} */
 } reg_errcode_t;
 
 /* This data structure represents a compiled pattern.  Before calling

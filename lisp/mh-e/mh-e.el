@@ -1,6 +1,6 @@
 ;;; mh-e.el --- GNU Emacs interface to the MH mail system
 
-;; Copyright (C) 1985-1988, 1990, 1992-1995, 1997, 1999-2017 Free
+;; Copyright (C) 1985-1988, 1990, 1992-1995, 1997, 1999-2018 Free
 ;; Software Foundation, Inc.
 
 ;; Author: Bill Wohler <wohler@newt.com>
@@ -831,7 +831,7 @@ This assumes that a temporary buffer is set up."
                               (expand-file-name "flists" dir)))))))))
 
 (defun mh-file-command-p (file)
-  "Return t if file FILE is the name of a executable regular file."
+  "Return t if file FILE is the name of an executable regular file."
   (and (file-regular-p file) (file-executable-p file)))
 
 (defun mh-variant-set-variant (variant)

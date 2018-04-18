@@ -1,6 +1,6 @@
 ;;; antlr-mode.el --- major mode for ANTLR grammar files
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Christoph Wedler <Christoph.Wedler@sap.com>
 ;; Keywords: languages, ANTLR, code generator
@@ -619,7 +619,7 @@ COUNT starts with 1.  GEN-SEP is used to separate long variable values."
   '((java-mode ("%sTokenTypes.java") ("%s.java"))
     (c++-mode ("%sTokenTypes.hpp") ("%s.cpp" "%s.hpp")))
   "Language dependent formats which specify generated files.
-Each element in this list looks looks like
+Each element in this list looks like
   (MAJOR-MODE (VOCAB-FILE-FORMAT...) (CLASS-FILE-FORMAT...)).
 
 The element whose MAJOR-MODE is equal to `antlr-language' is used to
@@ -1562,7 +1562,7 @@ The search for a correct position is as follows:
 
   * If search is within an area where options can be inserted, use the
     position of point.  Inside the options section and if point is in
-    the middle of a option definition, skip the rest of it.
+    the middle of an option definition, skip the rest of it.
   * If an options section already exists, insert the options at the end.
     If only the beginning of the area is visible, insert at the
     beginning.

@@ -1,6 +1,6 @@
 ;;; edebug-tests.el --- Edebug test suite   -*- lexical-binding:t -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; Author: Gemini Lasswell
 
@@ -898,6 +898,20 @@ test and possibly others should be updated."
    (edebug-tests-run-kbd-macro
     "@g"  (should (equal edebug-tests-@-result
                          '(#("abcd" 1 3 (face italic)) 511))))))
+
+(ert-deftest edebug-tests-dotted-forms ()
+  "Edebug can instrument code matching the tail of a dotted spec (Bug#6415)."
+  (edebug-tests-with-normal-env
+   (edebug-tests-setup-@ "use-destructuring-bind" nil t)
+   (edebug-tests-run-kbd-macro
+    "@ SPC SPC SPC SPC SPC SPC"
+    (edebug-tests-should-be-at "use-destructuring-bind" "x")
+    (edebug-tests-should-match-result-in-messages "2 (#o2, #x2, ?\\C-b)")
+    "SPC"
+    (edebug-tests-should-be-at "use-destructuring-bind" "y")
+    (edebug-tests-should-match-result-in-messages "3 (#o3, #x3, ?\\C-c)")
+    "g"
+    (should (equal edebug-tests-@-result 5)))))
 
 (provide 'edebug-tests)
 ;;; edebug-tests.el ends here

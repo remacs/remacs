@@ -1,5 +1,5 @@
 /* Deal with the X Resource Manager.
-   Copyright (C) 1990, 1993-1994, 2000-2017 Free Software Foundation,
+   Copyright (C) 1990, 1993-1994, 2000-2018 Free Software Foundation,
    Inc.
 
 Author: Joseph Arceneaux
@@ -345,6 +345,7 @@ get_user_db (Display *display)
     db = XrmGetStringDatabase (xdefs);
   else
     {
+      /* Use ~/.Xdefaults.  */
       char *home = gethomedir ();
       ptrdiff_t homelen = strlen (home);
       char *filename = xrealloc (home, homelen + sizeof xdefaults);
@@ -375,13 +376,18 @@ get_environ_db (void)
 
   if (!p)
     {
-      char *home = gethomedir ();
-      ptrdiff_t homelen = strlen (home);
       Lisp_Object system_name = Fsystem_name ();
-      ptrdiff_t filenamesize = (homelen + sizeof xdefaults
-				+ SBYTES (system_name));
-      p = filename = xrealloc (home, filenamesize);
-      lispstpcpy (stpcpy (filename + homelen, xdefaults), system_name);
+      if (STRINGP (system_name))
+	{
+	  /* Use ~/.Xdefaults-HOSTNAME.  */
+	  char *home = gethomedir ();
+	  ptrdiff_t homelen = strlen (home);
+	  ptrdiff_t filenamesize = (homelen + sizeof xdefaults
+				    + 1 + SBYTES (system_name));
+	  p = filename = xrealloc (home, filenamesize);
+	  lispstpcpy (stpcpy (stpcpy (filename + homelen, xdefaults), "-"),
+		      system_name);
+	}
     }
 
   db = XrmGetFileDatabase (p);

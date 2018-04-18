@@ -1,6 +1,6 @@
 ;;; icon.el --- mode for editing Icon code
 
-;; Copyright (C) 1989, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1989, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Chris Smith <csmith@convex.com>
 ;; Created: 15 Feb 89
@@ -90,7 +90,7 @@
   :group 'icon)
 
 (defcustom icon-brace-imaginary-offset 0
-  "Imagined indentation of a Icon open brace that actually follows a statement."
+  "Imagined indentation of an Icon open brace that actually follows a statement."
   :type 'integer
   :group 'icon)
 

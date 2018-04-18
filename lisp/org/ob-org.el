@@ -1,6 +1,6 @@
 ;;; ob-org.el --- Babel Functions for Org Code Blocks -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte
 ;; Keywords: literate programming, reproducible research
@@ -34,7 +34,7 @@
 
 (defvar org-babel-default-header-args:org
   '((:results . "raw silent") (:exports . "code"))
-  "Default arguments for evaluating a org source block.")
+  "Default arguments for evaluating an org source block.")
 
 (defvar org-babel-org-default-header
   "#+TITLE: default empty header\n"

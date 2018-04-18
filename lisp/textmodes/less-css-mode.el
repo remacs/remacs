@@ -1,6 +1,6 @@
 ;;; less-css-mode.el --- Major mode for editing Less CSS files  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;; Maintainer: Simen Heggestøyl <simenheg@gmail.com>
@@ -78,6 +78,7 @@
 
 (defgroup less-css nil
   "Less CSS mode."
+  :version "26.1"
   :prefix "less-css-"
   :group 'css)
 
@@ -105,7 +106,7 @@ Use \"-x\" to minify output."
 This path is expanded relative to the directory of the Less file
 using `expand-file-name', so both relative and absolute paths
 will work as expected."
-  :type 'directory)
+  :type '(choice (const :tag "Same as Less file" nil) directory))
 ;;;###autoload
 (put 'less-css-output-directory 'safe-local-variable 'stringp)
 
@@ -115,7 +116,7 @@ This can be also be set to a full path, or a relative path.  If
 the path is relative, it will be relative to the value of
 `less-css-output-dir', if set, or the current directory by
 default."
-  :type 'file)
+  :type '(choice (const :tag "Default" nil) file))
 (make-variable-buffer-local 'less-css-output-file-name)
 
 (defcustom less-css-input-file-name nil
@@ -129,9 +130,9 @@ variable in most cases is likely to be via directory local
 variables.
 
 This can be also be set to a full path, or a relative path.  If
-the path is relative, it will be relative to the the current
+the path is relative, it will be relative to the current
 directory by default."
-  :type 'file)
+  :type '(choice (const nil) file))
 ;;;###autoload
 (put 'less-css-input-file-name 'safe-local-variable 'stringp)
 (make-variable-buffer-local 'less-css-input-file-name)

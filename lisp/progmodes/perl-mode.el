@@ -1,6 +1,6 @@
 ;;; perl-mode.el --- Perl code editing commands for GNU Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1990, 1994, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1990, 1994, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: William F. Mann
 ;; Maintainer: emacs-devel@gnu.org
@@ -165,7 +165,7 @@
     ;; Fontify function and package names in declarations.
     ("\\<\\(package\\|sub\\)\\>[ \t]*\\(\\sw+\\)?"
      (1 font-lock-keyword-face) (2 font-lock-function-name-face nil t))
-    ("\\<\\(import\\|no\\|require\\|use\\)\\>[ \t]*\\(\\sw+\\)?"
+    ("\\(^\\|[^$@%&\\]\\)\\<\\(import\\|no\\|require\\|use\\)\\>[ \t]*\\(\\sw+\\)?"
      (1 font-lock-keyword-face) (2 font-lock-constant-face nil t)))
   "Subdued level highlighting for Perl mode.")
 
@@ -581,6 +581,74 @@ create a new comment."
 	(match-string-no-properties 1))))
 
 
+;;; Flymake support
+(defcustom perl-flymake-command '("perl" "-w" "-c")
+  "External tool used to check Perl source code.
+This is a non empty list of strings, the checker tool possibly
+followed by required arguments.  Once launched it will receive
+the Perl source to be checked as its standard input."
+  :version "26.1"
+  :group 'perl
+  :type '(repeat string))
+
+(defvar-local perl--flymake-proc nil)
+
+;;;###autoload
+(defun perl-flymake (report-fn &rest _args)
+  "Perl backend for Flymake.  Launches
+`perl-flymake-command' (which see) and passes to its standard
+input the contents of the current buffer.  The output of this
+command is analyzed for error and warning messages."
+  (unless (executable-find (car perl-flymake-command))
+    (error "Cannot find a suitable checker"))
+
+  (when (process-live-p perl--flymake-proc)
+    (kill-process perl--flymake-proc))
+
+  (let ((source (current-buffer)))
+    (save-restriction
+      (widen)
+      (setq
+       perl--flymake-proc
+       (make-process
+        :name "perl-flymake" :noquery t :connection-type 'pipe
+        :buffer (generate-new-buffer " *perl-flymake*")
+        :command perl-flymake-command
+        :sentinel
+        (lambda (proc _event)
+          (when (eq 'exit (process-status proc))
+            (unwind-protect
+                (if (with-current-buffer source (eq proc perl--flymake-proc))
+                    (with-current-buffer (process-buffer proc)
+                      (goto-char (point-min))
+                      (cl-loop
+                       while (search-forward-regexp
+                              "^\\(.+\\) at - line \\([0-9]+\\)"
+                              nil t)
+                       for msg = (match-string 1)
+                       for (beg . end) = (flymake-diag-region
+                                          source
+                                          (string-to-number (match-string 2)))
+                       for type =
+                       (if (string-match
+                            "\\(Scalar value\\|Useless use\\|Unquoted string\\)"
+                            msg)
+                           :warning
+                         :error)
+                       collect (flymake-make-diagnostic source
+                                                        beg
+                                                        end
+                                                        type
+                                                        msg)
+                       into diags
+                       finally (funcall report-fn diags)))
+                  (flymake-log :debug "Canceling obsolete check %s"
+                               proc))
+              (kill-buffer (process-buffer proc)))))))
+      (process-send-region perl--flymake-proc (point-min) (point-max))
+      (process-send-eof perl--flymake-proc))))
+
+
 (defvar perl-mode-hook nil
   "Normal hook to run when entering Perl mode.")
 
@@ -665,7 +733,9 @@ Turning on Perl mode runs the normal hook `perl-mode-hook'."
   ;; Setup outline-minor-mode.
   (setq-local outline-regexp perl-outline-regexp)
   (setq-local outline-level 'perl-outline-level)
-  (setq-local add-log-current-defun-function #'perl-current-defun-name))
+  (setq-local add-log-current-defun-function #'perl-current-defun-name)
+  ;; Setup Flymake
+  (add-hook 'flymake-diagnostic-functions #'perl-flymake nil t))
 
 ;; This is used by indent-for-comment
 ;; to decide how much to indent a comment in Perl code
@@ -678,7 +748,9 @@ Turning on Perl mode runs the normal hook `perl-mode-hook'."
 (define-obsolete-function-alias 'electric-perl-terminator
   'perl-electric-terminator "22.1")
 (defun perl-electric-noindent-p (_char)
-  (unless (eolp) 'no-indent))
+  ;; To reproduce the old behavior, ;, {, }, and : are made electric, but
+  ;; we only want them to be electric at EOL.
+  (unless (or (bolp) (eolp)) 'no-indent))
 
 (defun perl-electric-terminator (arg)
   "Insert character and maybe adjust indentation.

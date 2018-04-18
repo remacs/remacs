@@ -1,6 +1,6 @@
 ;;; loadup.el --- load up standardly loaded Lisp files for Emacs
 
-;; Copyright (C) 1985-1986, 1992, 1994, 2001-2017 Free Software
+;; Copyright (C) 1985-1986, 1992, 1994, 2001-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -76,6 +76,7 @@
       (setq max-lisp-eval-depth 2200)
       (setq load-path (list (expand-file-name "." dir)
 			    (expand-file-name "emacs-lisp" dir)
+			    (expand-file-name "progmodes" dir)
 			    (expand-file-name "language" dir)
 			    (expand-file-name "international" dir)
 			    (expand-file-name "textmodes" dir)

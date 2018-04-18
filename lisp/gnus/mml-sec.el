@@ -1,6 +1,6 @@
 ;;; mml-sec.el --- A package with security functions for MML documents
 
-;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Simon Josefsson <simon@josefsson.org>
 
@@ -647,6 +647,7 @@ The passphrase is read and cached."
       (when passphrase
 	(let ((password-cache-expiry (mml-secure-cache-expiry-interval
 				      (epg-context-protocol context))))
+	  ;; FIXME test passphrase works before caching it.
 	  (password-cache-add password-cache-key-id passphrase))
 	(mml-secure-add-secret-key-id password-cache-key-id)
 	(copy-sequence passphrase)))))
@@ -903,7 +904,7 @@ If no one is selected, symmetric encryption will be performed.  "
 (defun mml-secure-epg-encrypt (protocol cont &optional sign)
   ;; Based on code appearing inside mml2015-epg-encrypt.
   (let* ((context (epg-make-context protocol))
-	 (config (epg-configuration))
+	 (config (epg-find-configuration 'OpenPGP))
 	 (sender (message-options-get 'message-sender))
 	 (recipients (mml-secure-recipients protocol context config sender))
 	 (signer-names (mml-secure-signer-names protocol sender))

@@ -1,6 +1,6 @@
 ;;; minibuffer.el --- Minibuffer completion functions -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Package: emacs
@@ -392,7 +392,7 @@ obeys predicates."
                                   (and (funcall pred1 x) (funcall pred2 x)))))
         ;; If completion failed and we're not applying pred1 strictly, try
         ;; again without pred1.
-        (and (not strict) pred1 pred2
+        (and (not strict) pred1
              (complete-with-action action table string pred2))))))
 
 (defun completion-table-in-turn (&rest tables)
@@ -729,7 +729,8 @@ If ARGS are provided, then pass MESSAGE through `format-message'."
 
 (defun minibuffer-completion-contents ()
   "Return the user input in a minibuffer before point as a string.
-In Emacs-22, that was what completion commands operated on."
+In Emacs 22, that was what completion commands operated on.
+If the current buffer is not a minibuffer, return everything before point."
   (declare (obsolete nil "24.4"))
   (buffer-substring (minibuffer-prompt-end) (point)))
 
@@ -896,8 +897,15 @@ This overrides the defaults specified in `completion-category-defaults'."
   ;; than from completion-extra-properties) because it may apply only to some
   ;; part of the string (e.g. substitute-in-file-name).
   (let ((requote
-         (when (completion-metadata-get metadata 'completion--unquote-requote)
-           (cl-assert (functionp table))
+         (when (and
+                (completion-metadata-get metadata 'completion--unquote-requote)
+                ;; Sometimes a table's metadata is used on another
+                ;; table (typically that other table is just a list taken
+                ;; from the output of `all-completions' or something equivalent,
+                ;; for progressive refinement).  See bug#28898 and bug#16274.
+                ;; FIXME: Rather than do nothing, we should somehow call
+                ;; the original table, in that case!
+                (functionp table))
            (let ((new (funcall table string point 'completion--unquote)))
              (setq string (pop new))
              (setq table (pop new))
@@ -1312,7 +1320,7 @@ Repeated uses step through the possible completions."
 (defvar minibuffer-confirm-exit-commands
   '(completion-at-point minibuffer-complete
     minibuffer-complete-word PC-complete PC-complete-word)
-  "A list of commands which cause an immediately following
+  "List of commands which cause an immediately following
 `minibuffer-complete-and-exit' to ask for extra confirmation.")
 
 (defun minibuffer-complete-and-exit ()
@@ -1816,12 +1824,7 @@ variables.")
              ;; window, mark it as softly-dedicated, so bury-buffer in
              ;; minibuffer-hide-completions will know whether to
              ;; delete the window or not.
-             (display-buffer-mark-dedicated 'soft)
-             ;; Disable `pop-up-windows' temporarily to allow
-             ;; `display-buffer--maybe-pop-up-frame-or-window'
-             ;; in the display actions below to pop up a frame
-             ;; if `pop-up-frames' is non-nil, but not to pop up a window.
-             (pop-up-windows nil))
+             (display-buffer-mark-dedicated 'soft))
         (with-displayed-buffer-window
           "*Completions*"
           ;; This is a copy of `display-buffer-fallback-action'
@@ -1829,7 +1832,7 @@ variables.")
           ;; with `display-buffer-at-bottom'.
           `((display-buffer--maybe-same-window
              display-buffer-reuse-window
-             display-buffer--maybe-pop-up-frame-or-window
+             display-buffer--maybe-pop-up-frame
              ;; Use `display-buffer-below-selected' for inline completions,
              ;; but not in the minibuffer (e.g. in `eval-expression')
              ;; for which `display-buffer-at-bottom' is used.
@@ -2948,6 +2951,8 @@ or a symbol, see `completion-pcm--merge-completions'."
         (`(,(and s1 (pred stringp)) ,(and s2 (pred stringp)) . ,rest)
          (setq p (cons (concat s1 s2) rest)))
         (`(,(and p1 (pred symbolp)) ,(and p2 (guard (eq p1 p2))) . ,_)
+         ;; Unused lexical variable warning due to body not using p1, p2.
+         ;; https://debbugs.gnu.org/16771
          (setq p (cdr p)))
         (`(star ,(pred symbolp) . ,rest) (setq p `(star . ,rest)))
         (`(,(pred symbolp) star . ,rest) (setq p `(star . ,rest)))
@@ -2978,6 +2983,17 @@ or a symbol, see `completion-pcm--merge-completions'."
     (while (string-match "\\.\\*\\?\\(?:\\\\[()]\\)*\\(\\.\\*\\?\\)" re)
       (setq re (replace-match "" t t re 1)))
     re))
+
+(defun completion-pcm--pattern-point-idx (pattern)
+  "Return index of subgroup corresponding to `point' element of PATTERN.
+Return nil if there's no such element."
+  (let ((idx nil)
+        (i 0))
+    (dolist (x pattern)
+      (unless (stringp x)
+        (cl-incf i)
+        (if (eq x 'point) (setq idx i))))
+    idx))
 
 (defun completion-pcm--all-completions (prefix pattern table pred)
   "Find all completions for PATTERN in TABLE obeying PRED.
@@ -3010,7 +3026,8 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
 
 (defun completion-pcm--hilit-commonality (pattern completions)
   (when completions
-    (let* ((re (completion-pcm--pattern->regex pattern '(point)))
+    (let* ((re (completion-pcm--pattern->regex pattern 'group))
+           (point-idx (completion-pcm--pattern-point-idx pattern))
            (case-fold-search completion-ignore-case))
       (mapcar
        (lambda (str)
@@ -3018,8 +3035,16 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
          (setq str (copy-sequence str))
          (unless (string-match re str)
            (error "Internal error: %s does not match %s" re str))
-         (let ((pos (or (match-beginning 1) (match-end 0))))
-           (put-text-property 0 pos
+         (let* ((pos (if point-idx (match-beginning point-idx) (match-end 0)))
+                (md (match-data))
+                (start (pop md))
+                (end (pop md)))
+           (while md
+             (put-text-property start (pop md)
+                                'font-lock-face 'completions-common-part
+                                str)
+             (setq start (pop md)))
+           (put-text-property start end
                               'font-lock-face 'completions-common-part
                               str)
            (if (> (length str) pos)

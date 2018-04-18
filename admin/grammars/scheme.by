@@ -1,6 +1,6 @@
 ;;; scheme.by -- Scheme BNF language specification
 
-;; Copyright (C) 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -19,6 +19,11 @@
 
 %package semantic-scm-by
 %provide semantic/bovine/scm-by
+
+%{
+(declare-function semantic-parse-region "semantic"
+		  (start end &optional nonterminal depth returnonerror))
+}
 
 %languagemode  scheme-mode
 %start         scheme
