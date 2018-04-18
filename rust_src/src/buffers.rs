@@ -321,6 +321,11 @@ impl LispOverlayRef {
         LispObject::from_raw(self.end)
     }
 
+    #[inline]
+    pub fn plist(self) -> LispObject {
+        LispObject::from_raw(self.plist)
+    }
+
     pub fn iter(self) -> LispOverlayIter {
         LispOverlayIter {
             current: Some(self),
@@ -520,6 +525,14 @@ pub fn overlay_end(overlay: LispOverlayRef) -> Option<EmacsInt> {
 #[lisp_fn]
 pub fn overlay_buffer(overlay: LispOverlayRef) -> Option<LispBufferRef> {
     marker_buffer(overlay.start().into())
+}
+
+/// Return a list of the properties on OVERLAY.
+/// This is a copy of OVERLAY's plist; modifying its conses has no
+/// effect on OVERLAY.
+#[lisp_fn]
+pub fn overlay_properties(overlay: LispOverlayRef) -> LispObject {
+    LispObject::from_raw(unsafe { Fcopy_sequence(overlay.plist) })
 }
 
 #[no_mangle]
