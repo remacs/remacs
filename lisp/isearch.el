@@ -525,6 +525,8 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map "\M-r" 'isearch-toggle-regexp)
     (define-key map "\M-e" 'isearch-edit-string)
 
+    (put 'isearch-toggle-case-fold :advertised-binding "\M-sc")
+    (put 'isearch-toggle-regexp    :advertised-binding "\M-sr")
     (put 'isearch-edit-string      :advertised-binding "\M-se")
 
     (define-key map "\M-se" 'isearch-edit-string)
@@ -1129,15 +1131,6 @@ REGEXP if non-nil says use the regexp search ring."
    string
    (if regexp regexp-search-ring-max search-ring-max)))
 
-;; Switching buffers should first terminate isearch-mode.
-;; ;; For Emacs 19, the frame switch event is handled.
-;; (defun isearch-switch-frame-handler ()
-;;   (interactive) ;; Is this necessary?
-;;   ;; First terminate isearch-mode.
-;;   (isearch-done)
-;;   (isearch-clean-overlays)
-;;   (handle-switch-frame (car (cdr last-command-event))))
-
 
 ;; The search status structure and stack.
 
@@ -1577,7 +1570,6 @@ Turning on word search turns off regexp mode.")
 Turning on symbol search turns off regexp mode.")
 (isearch-define-mode-toggle char-fold "'" char-fold-to-regexp "\
 Turning on character-folding turns off regexp mode.")
-(put 'char-fold-to-regexp 'isearch-message-prefix "char-fold ")
 
 (isearch-define-mode-toggle regexp "r" nil nil
   (setq isearch-regexp (not isearch-regexp))
@@ -1775,8 +1767,6 @@ the beginning or the end of the string need not match a symbol boundary."
 	 (mapconcat 'regexp-quote (split-string string not-word-symbol-re t) not-word-symbol-re)
 	 (if (string-match-p (format "%s\\'" not-word-symbol-re) string) not-word-symbol-re
 	   (unless lax "\\_>")))))))
-
-(put 'isearch-symbol-regexp 'isearch-message-prefix "symbol ")
 
 ;; Search with lax whitespace
 
@@ -2938,8 +2928,6 @@ Optional third argument, if t, means if fail just return nil (no error).
       (funcall  (overlay-get ov 'isearch-open-invisible-temporary)  ov nil)
     ;; Store the values for the `invisible' property, and then set it to nil.
     ;; This way the text hidden by this overlay becomes visible.
-
-    ;; In 19.34 this does not exist so I cannot test it.
     (overlay-put ov 'isearch-invisible (overlay-get ov 'invisible))
     (overlay-put ov 'invisible nil)))
 

@@ -1258,7 +1258,7 @@ To return to ordinary Occur mode, use \\[occur-cease-edit]."
            (setq r (funcall search r 'occur-match)))
       (if r
           (goto-char r)
-        (error message))
+        (user-error message))
       (setq n (1- n)))))
 
 (defun occur-next (&optional n)
