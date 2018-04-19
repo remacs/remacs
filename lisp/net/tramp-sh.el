@@ -4634,7 +4634,7 @@ Goes through the list `tramp-inline-compress-commands'."
     ;; host name in their command template.  In this case, the remote
     ;; file name must use either a local host name (first hop), or a
     ;; host name matching the previous hop.
-    (let ((previous-host tramp-local-host-regexp))
+    (let ((previous-host (or tramp-local-host-regexp "")))
       (setq choices target-alist)
       (while (setq item (pop choices))
 	(let ((host (tramp-file-name-host item)))

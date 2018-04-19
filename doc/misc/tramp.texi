@@ -3294,6 +3294,7 @@ Keep the file @option{tramp-persistency-file-name}, which is where
 @value{tramp} caches remote information about hosts and files.  Caching
 is enabled by default.  Don't disable it.
 
+@vindex remote-file-name-inhibit-cache
 Set @code{remote-file-name-inhibit-cache} to @code{nil} if remote
 files are not independently updated outside @value{tramp}'s control.
 That cache cleanup will be necessary if the remote directories or
@@ -3425,6 +3426,16 @@ first saving to a temporary file.
 @end group
 @end lisp
 @end itemize
+
+
+@item
+@value{tramp} fails in a chrooted environment
+
+@vindex tramp-local-host-regexp
+When connecting to a local host, @value{tramp} uses some internal
+optimizations.  They fail, when there is a chrooted environment.  In
+order to disable those optimizations, set user option
+@option{tramp-local-host-regexp} to @code{nil}.
 
 
 @item

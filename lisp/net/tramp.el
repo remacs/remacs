@@ -428,13 +428,19 @@ host runs a registered shell, it shall be added to this list, too."
   :require 'tramp)
 
 ;;;###tramp-autoload
-(defconst tramp-local-host-regexp
+(defcustom tramp-local-host-regexp
   (concat
    "\\`"
    (regexp-opt
     (list "localhost" "localhost6" (system-name) "127.0.0.1" "::1") t)
    "\\'")
-  "Host names which are regarded as local host.")
+  "Host names which are regarded as local host.
+If the local host runs a chrooted environment, set this to nil."
+  :version "27.1"
+  :group 'tramp
+  :type '(choice (const :tag "Chrooted environment" nil)
+		 (regexp :tag "Host regexp"))
+  :require 'tramp)
 
 (defvar tramp-completion-function-alist nil
   "Alist of methods for remote files.
@@ -4239,11 +4245,12 @@ be granted."
 
 ;;;###tramp-autoload
 (defun tramp-local-host-p (vec)
-  "Return t if this points to the local host, nil otherwise."
+  "Return t if this points to the local host, nil otherwise.
+This handles also chrooted environments, which are not regarded as local."
   (let ((host (tramp-file-name-host vec))
 	(port (tramp-file-name-port vec)))
     (and
-     (stringp host)
+     (stringp tramp-local-host-regexp) (stringp host)
      (string-match tramp-local-host-regexp host)
      ;; A port is an indication for an ssh tunnel or alike.
      (null port)
