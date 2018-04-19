@@ -555,17 +555,6 @@ And then rename the system's readline so that it won't be loaded:
 See <https://pypi.python.org/pypi/gnureadline> for more details on
 installation.
 
-*** Emacs startup on GNU/Linux systems (and possibly other systems) is slow.
-
-This can happen if the system is misconfigured and Emacs can't get the
-full qualified domain name, FQDN.  You should have your FQDN in the
-/etc/hosts file, something like this:
-
-127.0.0.1	localhost
-129.187.137.82	nuc04.t30.physik.tu-muenchen.de	nuc04
-
-The way to set this up may vary on non-GNU systems.
-
 *** Visiting files in some auto-mounted directories causes Emacs to print
 'Error reading dir-locals: (file-error "Read error" "is a directory" ...'
 
