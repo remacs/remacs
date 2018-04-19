@@ -182,12 +182,12 @@
         (kill-process process)))))
 
 (ert-deftest make-process/mix-stderr ()
-  "Check that ‘make-process’ mixes the output streams if STDERR is nil."
-  (skip-unless (executable-find shell-file-name))
+  "Check that `make-process' mixes the output streams if STDERR is nil."
+  (skip-unless (executable-find "bash"))
   (with-temp-buffer
     (let ((process (make-process
                     :name "mix-stderr"
-                    :command (list shell-file-name shell-command-switch
+                    :command (list "bash" "-c"
                                    "echo stdout && echo stderr >&2")
                     :buffer (current-buffer)
                     :sentinel #'ignore
