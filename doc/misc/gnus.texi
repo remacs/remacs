@@ -24548,7 +24548,7 @@ determined by either the @code{ham-process-destination} group
 parameter or a match in the @code{gnus-ham-process-destinations}
 variable, which is a list of regular expressions matched with group
 names (it's easiest to customize this variable with @kbd{M-x
-customize-variable @key{@key{RET}} gnus-ham-process-destinations}).  Each
+customize-variable @key{RET} gnus-ham-process-destinations}).  Each
 group name list is a standard Lisp list, if you prefer to customize
 the variable manually.  If the @code{ham-process-destination}
 parameter is not set, ham articles are left in place.  If the
@@ -24584,7 +24584,7 @@ When you leave a @emph{ham} or @emph{unclassified} group, all
 the @code{spam-process-destination} group parameter or a match in the
 @code{gnus-spam-process-destinations} variable, which is a list of
 regular expressions matched with group names (it's easiest to
-customize this variable with @kbd{M-x customize-variable @key{@key{RET}}
+customize this variable with @kbd{M-x customize-variable @key{RET}
 gnus-spam-process-destinations}).  Each group name list is a standard
 Lisp list, if you prefer to customize the variable manually.  If the
 @code{spam-process-destination} parameter is not set, the spam
@@ -28703,7 +28703,7 @@ commonly fetched via the protocol @acronym{NNTP}, whereas mail
 messages could be read from a file on the local disk.  The internal
 architecture of Gnus thus comprises a ``front end'' and a number of
 ``back ends''.  Internally, when you enter a group (by hitting
-@key{@key{RET}}, say), you thereby invoke a function in the front end in
+@key{RET}, say), you thereby invoke a function in the front end in
 Gnus.  The front end then ``talks'' to a back end and says things like
 ``Give me the list of articles in the foo group'' or ``Show me article
 number 4711''.

@@ -134,14 +134,14 @@ used in the FAQ.
 @itemize @bullet
 
 @item
-@kbd{C-x}: press the @key{x} key while holding down the @key{Control} key
+@kbd{C-x}: press the @kbd{x} key while holding down the @key{Control} key
 
 @item
-@kbd{M-x}: press the @key{x} key while holding down the @key{Meta} key
+@kbd{M-x}: press the @kbd{x} key while holding down the @key{Meta} key
 (if your computer doesn't have a @key{Meta} key, @pxref{No Meta key})
 
 @item
-@kbd{M-C-x}: press the @key{x} key while holding down both @key{Control}
+@kbd{M-C-x}: press the @kbd{x} key while holding down both @key{Control}
 and @key{Meta}
 
 @item
@@ -181,10 +181,10 @@ Any real spaces in such a key sequence should be ignored; only @key{SPC}
 really means press the space key.
 
 The @acronym{ASCII} code sent by @kbd{C-x} (except for @kbd{C-?}) is the value
-that would be sent by pressing just @key{x} minus 96 (or 64 for
-upper-case @key{X}) and will be from 0 to 31.  On Unix and GNU/Linux
+that would be sent by pressing just @kbd{x} minus 96 (or 64 for
+upper-case @kbd{X}) and will be from 0 to 31.  On Unix and GNU/Linux
 terminals, the @acronym{ASCII} code sent by @kbd{M-x} is the sum of 128 and the
-@acronym{ASCII} code that would be sent by pressing just @key{x}.  Essentially,
+@acronym{ASCII} code that would be sent by pressing just @kbd{x}.  Essentially,
 @key{Control} turns off bits 5 and 6 and @key{Meta} turns on bit
 7@footnote{
 DOS and Windows terminals don't set bit 7 when the @key{Meta} key is
@@ -211,7 +211,7 @@ what @kbd{M-x} and @key{RET} mean.)
 @code{execute-extended-command}.  This command allows you to run any
 Emacs command if you can remember the command's name.  If you can't
 remember the command's name, you can type @key{TAB} and @key{SPC} for
-completion, @key{?} for a list of possibilities, and @kbd{M-p} and
+completion, @kbd{?} for a list of possibilities, and @kbd{M-p} and
 @kbd{M-n} (or up-arrow and down-arrow) to see previous commands entered.
 An Emacs @dfn{command} is an @dfn{interactive} Emacs function.
 
@@ -235,7 +235,7 @@ read this manual node inside Emacs (assuming nothing is broken) by
 typing @kbd{C-h i m emacs @key{RET} m @var{topic} @key{RET}}.
 
 This invokes Info, the GNU hypertext documentation browser.  If you don't
-already know how to use Info, type @key{?} from within Info.
+already know how to use Info, type @kbd{?} from within Info.
 
 If we refer to @var{topic}:@var{subtopic}, type @kbd{C-h i m emacs
 @key{RET} m @var{topic} @key{RET} m @var{subtopic} @key{RET}}.
@@ -576,7 +576,7 @@ There are several methods for finding out how to do things in Emacs.
 @item
 The complete text of the Emacs manual is available via the Info
 hypertext reader.  Type @kbd{C-h r} to display the manual in Info mode.
-Typing @key{h} immediately after entering Info will provide a short
+Typing @kbd{h} immediately after entering Info will provide a short
 tutorial on how to use it.
 
 @cindex Lookup a subject in a manual
@@ -761,7 +761,7 @@ named @samp{Top} in that file.  For example, to view an Info file named
 @end example
 
 Alternatively, you can feed a file name to the @code{Info-goto-node}
-command (invoked by pressing @key{g} in Info mode) by typing the name
+command (invoked by pressing @kbd{g} in Info mode) by typing the name
 of the file in parentheses, like this:
 
 @example
@@ -946,7 +946,7 @@ status of its latest version.
 @cindex Original version of Emacs
 
 Emacs originally was an acronym for Editor MACroS@.  RMS says he ``picked
-the name Emacs because @key{E} was not in use as an abbreviation on ITS at
+the name Emacs because @kbd{E} was not in use as an abbreviation on ITS at
 the time.''  The first Emacs was a set of macros written in 1976 at MIT
 by RMS for the editor TECO (Text Editor and COrrector, originally Tape
 Editor and COrrector) under ITS (the Incompatible Timesharing System) on
@@ -2210,7 +2210,7 @@ and braces at the same time by modifying the syntax table.)
 
 @cindex Show matching paren as in @code{vi}
 @item
-Here is some Emacs Lisp that will make the @key{%} key show the matching
+Here is some Emacs Lisp that will make the @kbd{%} key show the matching
 parenthesis, like in @code{vi}.  In addition, if the cursor isn't over a
 parenthesis, it simply inserts a % like normal.
 
@@ -3963,8 +3963,8 @@ On many keyboards, the @key{Alt} key acts as @key{Meta}, so try it.
 Instead of typing @kbd{M-a}, you can type @kbd{@key{ESC} a}.  In fact,
 Emacs converts @kbd{M-a} internally into @kbd{@key{ESC} a} anyway
 (depending on the value of @code{meta-prefix-char}).  Note that you
-press @key{Meta} and @key{a} together, but with @key{ESC}, you press
-@key{ESC}, release it, and then press @key{a}.
+press @key{Meta} and @kbd{a} together, but with @key{ESC}, you press
+@key{ESC}, release it, and then press @kbd{a}.
 
 @node No Escape key
 @section What if I don't have an @key{Escape} key?
@@ -4457,9 +4457,9 @@ these systems, you should configure @code{movemail} to use @code{flock}.
 
 @c isaacson@@seas.upenn.edu
 Ron Isaacson says: When you hit
-@key{r} to reply in Rmail, by default it CCs all of the original
+@kbd{r} to reply in Rmail, by default it CCs all of the original
 recipients (everyone on the original @samp{To} and @samp{CC}
-lists). With a prefix argument (i.e., typing @kbd{C-u} before @key{r}),
+lists). With a prefix argument (i.e., typing @kbd{C-u} before @kbd{r}),
 it replies only to the sender.  However, going through the whole
 @kbd{C-u} business every time you want to reply is a pain.  This is the
 best fix I've been able to come up with:

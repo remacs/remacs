@@ -485,7 +485,7 @@ Delete all frames on the current terminal, except the selected one.
 Toggle the maximization state of the current frame.  When a frame is
 maximized, it fills the screen.
 
-@item @key{F11>}
+@item @key{F11}
 @kindex F11
 @findex toggle-frame-fullscreen
 Toggle full-screen mode for the current frame.  (The difference

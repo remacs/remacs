@@ -12422,7 +12422,7 @@ Calculations are normally performed numerically wherever possible.
 For example, the @code{calc-sqrt} command, or @code{sqrt} function in an
 algebraic expression, produces a numeric answer if the argument is a
 number or a symbolic expression if the argument is an expression:
-@kbd{2 Q} pushes 1.4142 but @kbd{@key{'} x+1 @key{RET} Q} pushes @samp{sqrt(x+1)}.
+@kbd{2 Q} pushes 1.4142 but @kbd{' x+1 @key{RET} Q} pushes @samp{sqrt(x+1)}.
 
 @kindex m s
 @pindex calc-symbolic-mode
@@ -16338,7 +16338,7 @@ computes an Nth root:  @kbd{125 @key{RET} 3 I ^} computes the number 5.
 @tindex \
 The @kbd{\} (@code{calc-idiv}) command divides two numbers on the stack
 to produce an integer result.  It is equivalent to dividing with
-@key{/}, then rounding down with @kbd{F} (@code{calc-floor}), only a bit
+@kbd{/}, then rounding down with @kbd{F} (@code{calc-floor}), only a bit
 more convenient and efficient.  Also, since it is an all-integer
 operation when the arguments are integers, it avoids problems that
 @kbd{/ F} would have with floating-point roundoff.
@@ -30289,7 +30289,7 @@ is the same as @key{CONJ}.
 @item INV *
 is the same as @key{y^x}.
 @item INV /
-is the same as @key{INV y^x} (the @expr{x}th root of @expr{y}).
+is the same as @kbd{INV y^x} (the @expr{x}th root of @expr{y}).
 @item HYP/INV 1
 are the same as @key{SIN} / @kbd{INV SIN}.
 @item HYP/INV 2
@@ -30366,9 +30366,9 @@ number.  (@xref{Random Numbers}.)  @key{RAGN} is the ``random
 again'' command; it computes another random number using the
 same limit as last time.
 
-@key{INV GCD} computes the LCM (least common multiple) function.
+@kbd{INV GCD} computes the LCM (least common multiple) function.
 
-@key{INV FACT} is the gamma function.
+@kbd{INV FACT} is the gamma function.
 @texline @math{\Gamma(x) = (x-1)!}.
 @infoline @expr{gamma(x) = (x-1)!}.
 
@@ -30396,14 +30396,14 @@ finds the previous prime.
 @noindent
 The keys in this menu perform operations on binary integers.
 Note that both logical and arithmetic right-shifts are provided.
-@key{INV LSH} rotates one bit to the left.
+@kbd{INV LSH} rotates one bit to the left.
 
-The ``difference'' function (normally on @kbd{b d}) is on @key{INV AND}.
-The ``clip'' function (normally on @w{@kbd{b c}}) is on @key{INV NOT}.
+The ``difference'' function (normally on @kbd{b d}) is on @kbd{INV AND}.
+The ``clip'' function (normally on @w{@kbd{b c}}) is on @kbd{INV NOT}.
 
 The @key{DEC}, @key{HEX}, @key{OCT}, and @key{BIN} keys select the
 current radix for display and entry of numbers:  Decimal, hexadecimal,
-octal, or binary.  The six letter keys @key{A} through @key{F} are used
+octal, or binary.  The six letter keys @kbd{A} through @kbd{F} are used
 for entering hexadecimal numbers.
 
 The @key{WSIZ} key displays the current word size for binary operations
@@ -30461,13 +30461,13 @@ equivalent to @kbd{u +} in normal Calc (@pxref{Statistical Operations}).
 @key{PROD} computes the product of the elements of a vector, and
 @key{MAX} computes the maximum of all the elements of a vector.
 
-@key{INV SUM} computes the alternating sum of the first element
+@kbd{INV SUM} computes the alternating sum of the first element
 minus the second, plus the third, minus the fourth, and so on.
-@key{INV MAX} computes the minimum of the vector elements.
+@kbd{INV MAX} computes the minimum of the vector elements.
 
-@key{HYP SUM} computes the mean of the vector elements.
-@key{HYP PROD} computes the sample standard deviation.
-@key{HYP MAX} computes the median.
+@kbd{HYP SUM} computes the mean of the vector elements.
+@kbd{HYP PROD} computes the sample standard deviation.
+@kbd{HYP MAX} computes the median.
 
 @key{MAP*} multiplies two vectors elementwise.  It is equivalent
 to the @kbd{V M *} command.  @key{MAP^} computes powers elementwise.

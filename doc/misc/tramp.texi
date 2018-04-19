@@ -3604,7 +3604,7 @@ Then specify a method and user name where needed.  Examples:
 @end group
 @end example
 
-In BBDB buffer, access an entry by pressing the key @key{F}.
+In BBDB buffer, access an entry by pressing the key @kbd{F}.
 
 @end enumerate
 

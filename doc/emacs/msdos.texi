@@ -597,7 +597,7 @@ search string against previously sought strings during incremental
 search.  @code{(w32-register-hot-key [s-])} with
 @code{w32-lwindow-modifier} bound to @code{super} disables all the
 Windows' own Windows key based shortcuts.@footnote{There is one known
-exception: The combination @kbd{@key{Windows}-@key{L}} that locks the
+exception: The combination @kbd{@key{Windows}-L} that locks the
 workstation is handled by the system on a lower level.  For this
 reason, @code{w32-register-hot-key} cannot override this key
 combination - it always locks the computer.}
@@ -607,9 +607,9 @@ combination - it always locks the computer.}
 call.  Thus, you can set @code{w32-lwindow-modifier} as @code{super},
 then call @code{(w32-register-hot-key [s-r])}, and finally set
 @code{w32-rwindow-modifier} as @code{super} as well.  The result is
-that the left Windows key together with @key{R} invokes whichever
+that the left Windows key together with @kbd{R} invokes whichever
 function you have bound for the combination in Emacs, and the right
-Windows key and @key{R} opens the Windows @code{Run} dialog.
+Windows key and @kbd{R} opens the Windows @code{Run} dialog.
 
   The hotkey registrations always also include all the shift and
 control modifier combinations for the given hotkey; that is,

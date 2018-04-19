@@ -1356,7 +1356,7 @@ specified by the variable @code{ada-case-exception-file}
 specifies the casing of one word or word fragment. Comments may be
 included, separated from the word by a space.
 
-If the word starts with an asterisk (@key{*}), it defines the casing
+If the word starts with an asterisk (@samp{*}), it defines the casing
 as a word fragment (or ``substring''); part of a word between two
 underscores or word boundary.
 

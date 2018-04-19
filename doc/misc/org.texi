@@ -1470,8 +1470,8 @@ level).
 Move subtree down (swap with next subtree of same level).
 @orgcmd{M-h,org-mark-element}
 Mark the element at point.  Hitting repeatedly will mark subsequent elements
-of the one just marked.  E.g., hitting @key{M-h} on a paragraph will mark it,
-hitting @key{M-h} immediately again will mark the next one.
+of the one just marked.  E.g., hitting @kbd{M-h} on a paragraph will mark it,
+hitting @kbd{M-h} immediately again will mark the next one.
 @orgcmd{C-c @@,org-mark-subtree}
 Mark the subtree at point.  Hitting repeatedly will mark subsequent subtrees
 of the same level than the marked subtree.
@@ -1838,7 +1838,7 @@ this:
 @end example
 
 You can interactively insert drawers at point by calling
-@code{org-insert-drawer}, which is bound to @key{C-c C-x d}.  With an active
+@code{org-insert-drawer}, which is bound to @kbd{C-c C-x d}.  With an active
 region, this command will put the region inside the drawer.  With a prefix
 argument, this command calls @code{org-insert-property-drawer} and add
 a property drawer right below the current headline.  Completion over drawer
@@ -4412,7 +4412,7 @@ Then each time you turn an entry from a TODO (not-done) state into any of the
 DONE states, a line @samp{CLOSED: [timestamp]} will be inserted just after
 the headline.  If you turn the entry back into a TODO item through further
 state cycling, that line will be removed again.  If you turn the entry back
-to a non-TODO state (by pressing @key{C-c C-t @key{SPC}} for example), that line
+to a non-TODO state (by pressing @kbd{C-c C-t @key{SPC}} for example), that line
 will also be removed, unless you set @code{org-closed-keep-when-no-todo} to
 non-@code{nil}.  If you want to record a note along with the timestamp,
 use@footnote{The corresponding in-buffer setting is: @code{#+STARTUP:
@@ -10608,7 +10608,7 @@ In-buffer settings may appear anywhere in the file, either directly or
 indirectly through a file included using @samp{#+SETUPFILE: filename or URL}
 syntax.  Option keyword sets tailored to a particular back-end can be
 inserted from the export dispatcher (@pxref{The export dispatcher}) using the
-@code{Insert template} command by pressing @key{#}.  To insert keywords
+@code{Insert template} command by pressing @kbd{#}.  To insert keywords
 individually, a good way to make sure the keyword is correct is to type
 @code{#+} and then to use @kbd{M-@key{TAB}}@footnote{Many desktops intercept
 @kbd{M-@key{TAB}} to switch windows.  Use @kbd{C-M-i} or @kbd{@key{ESC}
@@ -15247,7 +15247,7 @@ Source code in the dialect of the specified language identifier.
 edit buffer containing the body of the @samp{src} code block, ready for any
 edits.  @kbd{C-c '} again to close the buffer and return to the Org buffer.
 
-@key{C-x C-s} saves the buffer and updates the contents of the Org buffer.
+@kbd{C-x C-s} saves the buffer and updates the contents of the Org buffer.
 
 Set @code{org-edit-src-auto-save-idle-delay} to save the base buffer after
 a certain idle delay time.

@@ -405,7 +405,7 @@ brief list of commands.  When you are finished looking at the list,
 make it go away by typing @key{SPC} repeatedly.
 
 @format
->> Type a @key{?} (or @key{H} in the stand-alone Info reader) now.
+>> Type @kbd{?} (or @kbd{H} in the stand-alone Info reader) now.
    Press @key{SPC} to see consecutive screenfuls of the list
    until finished.  Then type @key{SPC} several times.  If
    you are using Emacs, the help will then go away automatically.
