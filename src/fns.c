@@ -153,6 +153,67 @@ If STRING is multibyte, this may be greater than the length of STRING.  */)
   return make_number (SBYTES (string));
 }
 
+DEFUN ("string-distance", Fstring_distance, Sstring_distance, 2, 3, 0,
+       doc: /* Return Levenshtein distance between STRING1 and STRING2.
+If BYTECOMPARE is nil, compare character of strings.
+If BYTECOMPARE is t, compare byte of strings.
+Case is significant, but text properties are ignored. */)
+  (Lisp_Object string1, Lisp_Object string2, Lisp_Object bytecompare)
+
+{
+  CHECK_STRING (string1);
+  CHECK_STRING (string2);
+
+  bool use_byte_compare = !NILP (bytecompare)
+    || (!STRING_MULTIBYTE (string1) && !STRING_MULTIBYTE (string2));
+  ptrdiff_t len1 = use_byte_compare? SBYTES (string1) : SCHARS (string1);
+  ptrdiff_t len2 = use_byte_compare? SBYTES (string2) : SCHARS (string2);
+  ptrdiff_t x, y, lastdiag, olddiag;
+
+  USE_SAFE_ALLOCA;
+  ptrdiff_t *column = SAFE_ALLOCA ((len1 + 1) * sizeof (ptrdiff_t));
+  for (y = 1; y <= len1; y++)
+    column[y] = y;
+
+  if (use_byte_compare)
+    {
+      char *s1 = SSDATA (string1);
+      char *s2 = SSDATA (string2);
+
+      for (x = 1; x <= len2; x++)
+        {
+          column[0] = x;
+          for (y = 1, lastdiag = x - 1; y <= len1; y++)
+            {
+              olddiag = column[y];
+              column[y] = min (min (column[y] + 1, column[y-1] + 1), lastdiag + (s1[y-1] == s2[x-1]? 0 : 1));
+              lastdiag = olddiag;
+            }
+        }
+    }
+  else
+    {
+      int c1, c2;
+      ptrdiff_t i1, i1_byte, i2 = 0, i2_byte = 0;
+      for (x = 1; x <= len2; x++)
+        {
+          column[0] = x;
+          FETCH_STRING_CHAR_ADVANCE (c2, string2, i2, i2_byte);
+          i1 = i1_byte = 0;
+          for (y = 1, lastdiag = x - 1; y <= len1; y++)
+            {
+              olddiag = column[y];
+              FETCH_STRING_CHAR_ADVANCE (c1, string1, i1, i1_byte);
+              column[y] = min (min (column[y] + 1, column[y-1] + 1), lastdiag + (c1 == c2? 0 : 1));
+              lastdiag = olddiag;
+            }
+        }
+    }
+
+  SAFE_FREE ();
+  return make_number (column[len1]);
+}
+
 DEFUN ("string-equal", Fstring_equal, Sstring_equal, 2, 2, 0,
        doc: /* Return t if two strings have identical contents.
 Case is significant, but text properties are ignored.
@@ -5226,6 +5287,7 @@ this variable.  */);
   defsubr (&Slength);
   defsubr (&Ssafe_length);
   defsubr (&Sstring_bytes);
+  defsubr (&Sstring_distance);
   defsubr (&Sstring_equal);
   defsubr (&Scompare_strings);
   defsubr (&Sstring_lessp);

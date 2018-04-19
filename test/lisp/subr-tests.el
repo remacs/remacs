@@ -281,6 +281,24 @@ indirectly `mapbacktrace'."
   (should (equal (string-match-p "\\`[[:blank:]]\\'" "\u3000") 0))
   (should-not (string-match-p "\\`[[:blank:]]\\'" "\N{LINE SEPARATOR}")))
 
+(ert-deftest subr-tests--string-distance ()
+  "Test `string-distance' behavior."
+  ;; ASCII characters are always fine
+  (should (equal 1 (string-distance "heelo" "hello")))
+  (should (equal 2 (string-distance "aeelo" "hello")))
+  (should (equal 0 (string-distance "ab" "ab" t)))
+  (should (equal 1 (string-distance "ab" "abc" t)))
+
+  ;; string containing hanzi character, compare by byte
+  (should (equal 6 (string-distance "ab" "ab我她" t)))
+  (should (equal 3 (string-distance "ab" "a我b" t)))
+  (should (equal 3 (string-distance "我" "她" t)))
+
+  ;; string containing hanzi character, compare by character
+  (should (equal 2 (string-distance "ab" "ab我她")))
+  (should (equal 1 (string-distance "ab" "a我b")))
+  (should (equal 1 (string-distance "我" "她"))))
+
 (ert-deftest subr-tests--dolist--wrong-number-of-args ()
   "Test that `dolist' doesn't accept wrong types or length of SPEC,
 cf. Bug#25477."
