@@ -498,6 +498,14 @@ derived from the actual arguments of the function.
 arguments written in a macro definition often do not correspond to the
 way users think of the parts of the macro call.
 
+  Do not use this feature if you want to deprecate the calling
+convention and favor the one you advertise by the above specification.
+Instead, use the @code{advertised-calling-convention} declaration
+(@pxref{Declare Form}) or @code{set-advertised-calling-convention}
+(@pxref{Obsolete Functions}), because these two will cause the byte
+compiler emit a warning message when it compiles Lisp programs which
+use the deprecated calling convention.
+
 @node Function Names
 @section Naming a Function
 @cindex function definition
