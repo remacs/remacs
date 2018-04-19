@@ -147,15 +147,26 @@ is highlighted lazily using isearch lazy highlighting (see
 See `replace-regexp' and `query-replace-regexp-eval'.")
 
 (defun query-replace-descr (string)
-  (mapconcat 'isearch-text-char-description string ""))
+  (setq string (copy-sequence string))
+  (dotimes (i (length string) string)
+    (let ((c (aref string i)))
+      (cond
+       ((< c ?\s) (add-text-properties
+                   i (1+ i)
+                   `(display ,(propertize (format "^%c" (+ c 64)) 'face 'escape-glyph))
+                   string))
+       ((= c ?\^?) (add-text-properties
+	            i (1+ i)
+                    `(display ,(propertize "^?" 'face 'escape-glyph))
+                    string))))))
 
 (defun query-replace--split-string (string)
   "Split string STRING at a substring with property `separator'."
   (let* ((length (length string))
          (split-pos (text-property-any 0 length 'separator t string)))
     (if (not split-pos)
-        (substring-no-properties string)
-      (cons (substring-no-properties string 0 split-pos)
+        string
+      (cons (substring string 0 split-pos)
             (substring-no-properties
              string (or (text-property-not-all
                          (1+ split-pos) length 'separator t string)
@@ -301,7 +312,9 @@ the original string if not."
 	 (to (if (consp from) (prog1 (cdr from) (setq from (car from)))
 	       (query-replace-read-to from prompt regexp-flag))))
     (list from to
-	  (and current-prefix-arg (not (eq current-prefix-arg '-)))
+	  (or (and current-prefix-arg (not (eq current-prefix-arg '-)))
+              (and (memq 'isearch-regexp-function (text-properties-at 0 from))
+                   (get-text-property 0 'isearch-regexp-function from)))
 	  (and current-prefix-arg (eq current-prefix-arg '-)))))
 
 (defun query-replace (from-string to-string &optional delimited start end backward region-noncontiguous-p)
@@ -2379,8 +2392,17 @@ characters."
          (message
           (if query-flag
               (apply 'propertize
-                     (substitute-command-keys
-                      "Query replacing %s with %s: (\\<query-replace-map>\\[help] for help) ")
+                     (concat "Query replacing "
+                             (if backward "backward " "")
+                             (if delimited-flag
+                                 (or (and (symbolp delimited-flag)
+                                          (get delimited-flag
+                                               'isearch-message-prefix))
+                                     "word ") "")
+                             (if regexp-flag "regexp " "")
+                             "%s with %s: "
+                             (substitute-command-keys
+                              "(\\<query-replace-map>\\[help] for help) "))
                      minibuffer-prompt-properties))))
 
     ;; Unless a single contiguous chunk is selected, operate on multiple chunks.
@@ -2598,13 +2620,13 @@ characters."
 			 (with-output-to-temp-buffer "*Help*"
 			   (princ
 			    (concat "Query replacing "
+				    (if backward "backward " "")
 				    (if delimited-flag
 					(or (and (symbolp delimited-flag)
 						 (get delimited-flag
                                                       'isearch-message-prefix))
 					    "word ") "")
 				    (if regexp-flag "regexp " "")
-				    (if backward "backward " "")
 				    from-string " with "
 				    next-replacement ".\n\n"
 				    (substitute-command-keys
