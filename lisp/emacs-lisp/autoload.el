@@ -607,7 +607,8 @@ Don't try to split prefixes that are already longer than that.")
                       nil))))
               prefixes)))
         `(if (fboundp 'register-definition-prefixes)
-             (register-definition-prefixes ,file ',(delq nil strings)))))))
+             (register-definition-prefixes ,file ',(sort (delq nil strings)
+							 'string<)))))))
 
 (defun autoload--setup-output (otherbuf outbuf absfile load-name)
   (let ((outbuf
