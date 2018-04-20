@@ -1,4 +1,4 @@
-;;; url-file.el --- File retrieval code
+;;; url-file.el --- File retrieval code  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1996-1999, 2004-2018 Free Software Foundation, Inc.
 
@@ -33,7 +33,7 @@
 (defconst url-file-asynchronous-p t "FTP transfers are asynchronous.")
 (defalias 'url-file-expand-file-name 'url-default-expander)
 
-(defun url-file-find-possibly-compressed-file (fname &rest args)
+(defun url-file-find-possibly-compressed-file (fname &rest _)
   "Find the exact file referenced by `fname'.
 This tries the common compression extensions, because things like
 ange-ftp and efs are not quite smart enough to realize when a server
@@ -63,7 +63,7 @@ to them."
 						(match-beginning 0))
 				   (system-name)))))))
 
-(defun url-file-asynch-callback (x y name buff func args &optional efs)
+(defun url-file-asynch-callback (_x _y name buff func args &optional efs)
   (if (not (featurep 'ange-ftp))
       ;; EFS passes us an extra argument
       (setq name buff
@@ -114,8 +114,7 @@ to them."
 		    ((string-match "\\`/[^/]+:/" file)
 		     (concat "/:" file))
 		    (t
-		     file)))
-	 pos-index)
+		     file))))
 
     (and user pass
 	 (cond
@@ -200,7 +199,7 @@ to them."
 	    (if (featurep 'ange-ftp)
 		(ange-ftp-copy-file-internal filename (expand-file-name new) t
 					     nil t
-					     (list 'url-file-asynch-callback
+					     (list #'url-file-asynch-callback
 						   new (current-buffer)
 						   callback cbargs)
 					     t)
@@ -209,7 +208,7 @@ to them."
                 (efs-copy-file-internal filename (efs-ftp-path filename)
                                         new (efs-ftp-path new)
                                         t nil 0
-                                        (list 'url-file-asynch-callback
+                                        (list #'url-file-asynch-callback
                                               new (current-buffer)
                                               callback cbargs)
                                         0 nil)))))))
