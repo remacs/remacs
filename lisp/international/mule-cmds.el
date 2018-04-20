@@ -281,9 +281,7 @@ wrong, use this command again to toggle back to the right mode."
 (defun view-hello-file ()
   "Display the HELLO file, which lists many languages and characters."
   (interactive)
-  ;; We have to decode the file in any environment.
-  (let ((coding-system-for-read 'utf-8))
-    (view-file (expand-file-name "HELLO" data-directory))))
+  (view-file (expand-file-name "HELLO" data-directory)))
 
 (defun universal-coding-system-argument (coding-system)
   "Execute an I/O command using the specified coding system."
