@@ -32,6 +32,10 @@
 
 ;;; Code:
 
+(define-obsolete-variable-alias
+  'hfy-fallback-colour-map
+  'hfy-fallback-color-map "27.1")
+
 (defconst hfy-fallback-color-map
   '(("snow"                    65535 64250 64250)
     ("ghost white"             63736 63736 65535)
@@ -785,14 +789,12 @@
     ("DarkRed"                 35723     0     0)
     ("light green"             37008 61166 37008)
     ("LightGreen"              37008 61166 37008)) )
-(define-obsolete-variable-alias
-  'hfy-fallback-colour-map
-  'hfy-fallback-color-map "27.1")
 
-(defvar hfy-rgb-txt-color-map nil)
 (define-obsolete-variable-alias
   'hfy-rgb-txt-colour-map
   'hfy-rgb-txt-color-map "27.1")
+
+(defvar hfy-rgb-txt-color-map nil)
 
 (defvar hfy-rgb-load-path
   (list "/etc/X11"

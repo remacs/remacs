@@ -121,15 +121,15 @@ longer than `erc-fill-column'."
   :group 'erc-button
   :type 'string)
 
+(define-obsolete-variable-alias 'erc-button-google-url
+  'erc-button-search-url "27.1")
+
 (defcustom erc-button-search-url "http://duckduckgo.com/?q=%s"
   "URL used to search for a term.
 %s is replaced by the search string."
   :version "27.1"
   :group 'erc-button
   :type 'string)
-
-(define-obsolete-variable-alias 'erc-button-google-url
-  'erc-button-search-url "27.1")
 
 (defcustom erc-button-alist
   ;; Since the callback is only executed when the user is clicking on

@@ -263,6 +263,8 @@ See `comint-preinput-scroll-to-bottom'.  This variable is buffer-local."
 		 (const this))
   :group 'comint)
 
+(defvaralias 'comint-scroll-to-bottom-on-output 'comint-move-point-for-output)
+
 (defcustom comint-move-point-for-output nil
   "Controls whether interpreter output moves point to the end of the output.
 If nil, then output never moves point to the output.
@@ -294,8 +296,6 @@ end of the current logical (not visual) line after insertion."
   :type '(radio (const :tag "Stay after input" after-input)
                 (const :tag "Move to end of line" end-of-line))
   :group 'comint)
-
-(defvaralias 'comint-scroll-to-bottom-on-output 'comint-move-point-for-output)
 
 (defcustom comint-scroll-show-maximum-output t
   "Controls how to scroll due to interpreter output.

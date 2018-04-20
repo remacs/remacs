@@ -562,6 +562,9 @@ This is like `describe-bindings', but displays only Isearch keys."
 
 (defvar isearch-forward nil)	; Searching in the forward direction.
 (defvar isearch-regexp nil)	; Searching for a regexp.
+;; We still support setting this to t for backwards compatibility.
+(define-obsolete-variable-alias 'isearch-word
+  'isearch-regexp-function "25.1")
 (defvar isearch-regexp-function nil
   "Regexp-based search mode for words/symbols.
 If the value is a function (e.g. `isearch-symbol-regexp'), it is
@@ -573,9 +576,6 @@ specifies the prefix string displayed in the search message.
 This variable is set and changed during isearch.  To change the
 default behavior used for searches, see `search-default-mode'
 instead.")
-;; We still support setting this to t for backwards compatibility.
-(define-obsolete-variable-alias 'isearch-word
-  'isearch-regexp-function "25.1")
 
 (defvar isearch-lax-whitespace t
   "If non-nil, a space will match a sequence of whitespace chars.
@@ -1242,13 +1242,14 @@ If MSG is non-nil, use variable `isearch-message', otherwise `isearch-string'."
 	  (length succ-msg)
 	0))))
 
+(define-obsolete-variable-alias 'isearch-new-word
+  'isearch-new-regexp-function "25.1")
+
 (defvar isearch-new-regexp-function nil
   "Holds the next `isearch-regexp-function' inside `with-isearch-suspended'.
 If this is set inside code wrapped by the macro
 `with-isearch-suspended', then the value set will be used as the
 `isearch-regexp-function' once isearch resumes.")
-(define-obsolete-variable-alias 'isearch-new-word
-  'isearch-new-regexp-function "25.1")
 
 (defvar isearch-suspended nil)
 

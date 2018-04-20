@@ -120,9 +120,6 @@ Elements look like (SWITCH-STRING . HANDLER-FUNCTION).
 HANDLER-FUNCTION receives the switch string as its sole argument;
 the remaining command-line args are in the variable `command-line-args-left'.")
 
-(defvar command-line-args-left nil
-  "List of command-line args not yet processed.")
-
 (with-no-warnings
   (defvaralias 'argv 'command-line-args-left
     "List of command-line args not yet processed.
@@ -130,6 +127,9 @@ This is a convenience alias, so that one can write (pop argv)
 inside of --eval command line arguments in order to access
 following arguments."))
 (internal-make-var-non-special 'argv)
+
+(defvar command-line-args-left nil
+  "List of command-line args not yet processed.")
 
 (with-no-warnings
   (defvar argi nil
