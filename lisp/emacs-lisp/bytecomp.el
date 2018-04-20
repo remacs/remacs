@@ -2433,8 +2433,9 @@ list that represents a doc string reference.
   (pcase form
     (`(defvaralias ,_ ',newname . ,_)
      (when (memq newname byte-compile-bound-variables)
-       (byte-compile-warn
-        "Alias for `%S' should be declared before its referent" newname))))
+       (if (byte-compile-warning-enabled-p 'suspicious)
+           (byte-compile-warn
+            "Alias for `%S' should be declared before its referent" newname)))))
   (byte-compile-keep-pending form))
 
 (put 'custom-declare-variable 'byte-hunk-handler
