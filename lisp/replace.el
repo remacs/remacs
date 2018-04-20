@@ -148,7 +148,7 @@ See `replace-regexp' and `query-replace-regexp-eval'.")
 
 (defun query-replace-descr (string)
   (setq string (copy-sequence string))
-  (dotimes (i (length string) string)
+  (dotimes (i (length string))
     (let ((c (aref string i)))
       (cond
        ((< c ?\s) (add-text-properties
@@ -158,7 +158,8 @@ See `replace-regexp' and `query-replace-regexp-eval'.")
        ((= c ?\^?) (add-text-properties
 	            i (1+ i)
                     `(display ,(propertize "^?" 'face 'escape-glyph))
-                    string))))))
+                    string)))))
+  string)
 
 (defun query-replace--split-string (string)
   "Split string STRING at a substring with property `separator'."
