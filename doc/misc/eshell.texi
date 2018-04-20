@@ -1204,7 +1204,7 @@ perform this on-thy-fly rewriting.
 
 @item Write an alias for @command{less} that brings up a @code{view-mode} buffer
 
-Such that the user can press @key{SPC} and @key{DEL}, and then @key{q}
+Such that the user can press @key{SPC} and @key{DEL}, and then @kbd{q}
 to return to Eshell.  It would be equivalent to:
 @samp{X > #<buffer Y>; view-buffer #<buffer Y>}.
 

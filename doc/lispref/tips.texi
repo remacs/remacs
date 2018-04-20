@@ -316,7 +316,7 @@ any context prevents recognition of escape sequences as function keys in
 that context.
 
 @item
-Similarly, don't bind a key sequence ending in @key{C-g}, since that
+Similarly, don't bind a key sequence ending in @kbd{C-g}, since that
 is commonly used to cancel a key sequence.
 
 @item

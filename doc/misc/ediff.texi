@@ -1557,7 +1557,7 @@ selective browsing.  To change the default Ediff function, add a function to
 @strong{Useful hint}: To specify a regexp that matches everything, don't
 simply type @key{RET} in response to a prompt.  Typing @key{RET} tells Ediff
 to accept the default value, which may not be what you want.  Instead, you
-should enter something like @key{^} or @key{$}.  These match every
+should enter something like @kbd{^} or @kbd{$}.  These match every
 line.
 
 You can use the status command, @kbd{i}, to find out whether

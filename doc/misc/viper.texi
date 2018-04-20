@@ -1743,7 +1743,7 @@ lines, etc.  @xref{Movement and Markers}, for more info.
 @item viper-ex-style-editing t
 Set this to @code{nil}, if you want
 @kbd{C-h} and @key{DEL} to not stop
-at the beginning of a line in Insert state, @key{X} and @key{x} to delete
+at the beginning of a line in Insert state, @kbd{X} and @kbd{x} to delete
 characters across lines in Vi command state, etc.
 @item viper-ESC-moves-cursor-back t
 It @code{t}, cursor moves back 1 character when switching from insert state to vi

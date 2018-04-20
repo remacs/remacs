@@ -157,7 +157,7 @@ definition, type @kbd{C-x )} (@code{kmacro-end-macro}).  To execute
 the most recent macro, type @kbd{C-x e}
 (@code{kmacro-end-and-call-macro}).  If you enter @kbd{C-x e} while
 defining a macro, the macro is terminated and executed immediately.
-Immediately after typing @kbd{C-x e}, you can type @key{e} repeatedly
+Immediately after typing @kbd{C-x e}, you can type @kbd{e} repeatedly
 to immediately repeat the macro one or more times.  You can also give
 @kbd{C-x e} a repeat argument, just like @key{F4} (when it is used to
 execute a macro).

@@ -914,17 +914,17 @@ the command in parentheses, like this: @kbd{M-C-\}
 @kbd{M-C-\}.  (You can, if you wish, change the keys that are typed to
 invoke the command; this is called @dfn{rebinding}.  @xref{Keymaps, ,
 Keymaps}.)  The abbreviation @kbd{M-C-\} means that you type your
-@key{META} key, @key{CTRL} key and @key{\} key all at the same time.
+@key{META} key, @key{CTRL} key and @kbd{\} key all at the same time.
 (On many modern keyboards the @key{META} key is labeled
 @key{ALT}.)
 Sometimes a combination like this is called a keychord, since it is
 similar to the way you play a chord on a piano.  If your keyboard does
 not have a @key{META} key, the @key{ESC} key prefix is used in place
 of it.  In this case, @kbd{M-C-\} means that you press and release your
-@key{ESC} key and then type the @key{CTRL} key and the @key{\} key at
+@key{ESC} key and then type the @key{CTRL} key and the @kbd{\} key at
 the same time.  But usually @kbd{M-C-\} means press the @key{CTRL} key
 along with the key that is labeled @key{ALT} and, at the same time,
-press the @key{\} key.
+press the @kbd{\} key.
 
 In addition to typing a lone keychord, you can prefix what you type
 with @kbd{C-u}, which is called the @dfn{universal argument}.  The
@@ -17109,8 +17109,8 @@ This also shows how to set a key globally, for all modes.
 The command is @code{global-set-key}.  It is followed by the
 keybinding.  In a @file{.emacs} file, the keybinding is written as
 shown: @code{\C-c} stands for Control-C, which means to press the
-control key and the @key{c} key at the same time.  The @code{w} means
-to press the @key{w} key.  The keybinding is surrounded by double
+control key and the @kbd{c} key at the same time.  The @code{w} means
+to press the @kbd{w} key.  The keybinding is surrounded by double
 quotation marks.  In documentation, you would write this as
 @w{@kbd{C-c w}}.  (If you were binding a @key{META} key, such as
 @kbd{M-c}, rather than a @key{CTRL} key, you would write

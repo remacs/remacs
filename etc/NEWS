@@ -490,6 +490,13 @@ vc-comment-search-forward, vc-comment-search-reverse, vc-comment-to-change-log,
 vc-diff-switches-list, vc-next-comment, vc-previous-comment, view-todo,
 x-lost-selection-hooks, x-sent-selection-hooks
 
+** The function 'display-buffer-in-major-side-window' no longer exists.
+It has been renamed as internal function 'window--make-major-side-window',
+however applications should instead call 'display-buffer-in-side-window'
+(passing the SIDE and SLOT parameters as elements of ALIST).  This approach
+is backwards-compatible with versions of Emacs in which the old function
+exists.  See the node "Displaying Buffers in Side Windows" in the ELisp
+manual for more details.
 
 * Lisp Changes in Emacs 27.1
 
