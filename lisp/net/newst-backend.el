@@ -874,11 +874,12 @@ Argument BUFFER is the buffer of the retrieval process."
                   (decode-coding-region (point-min) (point-max)
                                         coding-system))
                 (condition-case errordata
-                    ;; The xml parser might fail or the xml might be
-                    ;; bugged
+                    ;; The xml parser might fail or the xml might be bugged.
                     (if (fboundp 'libxml-parse-xml-region)
-                        (list (libxml-parse-xml-region (point-min) (point-max)
-                                                       nil t))
+                        (progn
+                          (xml-remove-comments (point-min) (point-max))
+                          (list (libxml-parse-xml-region (point-min) (point-max)
+                                                         nil)))
                       (xml-parse-region (point-min) (point-max)))
                   (error (message "Could not parse %s: %s"
                                   (buffer-name) (cadr errordata))
