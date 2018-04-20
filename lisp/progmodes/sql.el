@@ -691,6 +691,8 @@ making new SQLi sessions."
   :version "24.1"
   :group 'SQL)
 
+(defvaralias 'sql-dialect 'sql-product)
+
 (defcustom sql-product 'ansi
   "Select the SQL database product used.
 This allows highlighting buffers properly when you open them."
@@ -703,7 +705,6 @@ This allows highlighting buffers properly when you open them."
                     sql-product-alist))
   :group 'SQL
   :safe 'symbolp)
-(defvaralias 'sql-dialect 'sql-product)
 
 ;; misc customization of sql.el behavior
 

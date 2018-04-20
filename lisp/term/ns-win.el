@@ -549,8 +549,9 @@ the last file dropped is selected."
 (defvar ns-right-control-modifier)
 
 ;; You say tomAYto, I say tomAHto..
-(defvaralias 'ns-option-modifier 'ns-alternate-modifier)
-(defvaralias 'ns-right-option-modifier 'ns-right-alternate-modifier)
+(with-no-warnings
+  (defvaralias 'ns-option-modifier 'ns-alternate-modifier)
+  (defvaralias 'ns-right-option-modifier 'ns-right-alternate-modifier))
 
 (defun ns-do-hide-emacs ()
   (interactive)

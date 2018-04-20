@@ -86,6 +86,8 @@ After the communication, this variable is set to nil.")
 ;; Only declared obsolete in 23.3.
 (define-obsolete-function-alias 'x-selection 'x-get-selection "at least 19.34")
 
+(define-obsolete-variable-alias 'x-select-enable-clipboard
+  'select-enable-clipboard "25.1")
 (defcustom select-enable-clipboard t
   "Non-nil means cutting and pasting uses the clipboard.
 This can be in addition to, but in preference to, the primary selection,
@@ -94,9 +96,9 @@ if applicable (i.e. under X11)."
   :group 'killing
   ;; The GNU/Linux version changed in 24.1, the MS-Windows version did not.
   :version "24.1")
-(define-obsolete-variable-alias 'x-select-enable-clipboard
-  'select-enable-clipboard "25.1")
 
+(define-obsolete-variable-alias 'x-select-enable-primary
+  'select-enable-primary "25.1")
 (defcustom select-enable-primary nil
   "Non-nil means cutting and pasting uses the primary selection.
 The existence of a primary selection depends on the underlying GUI you use.
@@ -104,8 +106,6 @@ E.g. it doesn't exist under MS-Windows."
   :type 'boolean
   :group 'killing
   :version "25.1")
-(define-obsolete-variable-alias 'x-select-enable-primary
-  'select-enable-primary "25.1")
 
 ;; We keep track of the last text selected here, so we can check the
 ;; current selection against it, and avoid passing back our own text

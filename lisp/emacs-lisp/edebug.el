@@ -3546,13 +3546,13 @@ This prints the value into current buffer."
 
 ;;; Edebug Minor Mode
 
+(define-obsolete-variable-alias 'gud-inhibit-global-bindings
+  'edebug-inhibit-emacs-lisp-mode-bindings "24.3")
+
 (defvar edebug-inhibit-emacs-lisp-mode-bindings nil
   "If non-nil, inhibit Edebug bindings on the C-x C-a key.
 By default, loading the `edebug' library causes these bindings to
 be installed in `emacs-lisp-mode-map'.")
-
-(define-obsolete-variable-alias 'gud-inhibit-global-bindings
-  'edebug-inhibit-emacs-lisp-mode-bindings "24.3")
 
 ;; Global GUD bindings for all emacs-lisp-mode buffers.
 (unless edebug-inhibit-emacs-lisp-mode-bindings

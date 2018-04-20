@@ -6641,6 +6641,7 @@ represents a live window, nil otherwise."
                        ))
 	frame))))
 
+(defvaralias 'even-window-heights 'even-window-sizes)
 (defcustom even-window-sizes t
   "If non-nil `display-buffer' will try to even window sizes.
 Otherwise `display-buffer' will leave the window configuration
@@ -6654,7 +6655,6 @@ any of them."
 	  (const :tag "Always" t))
   :version "25.1"
   :group 'windows)
-(defvaralias 'even-window-heights 'even-window-sizes)
 
 (defun window--even-window-sizes (window)
   "Even sizes of WINDOW and selected window.

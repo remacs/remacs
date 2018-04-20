@@ -315,6 +315,8 @@ for Shell mode only."
   "List of directories saved by pushd in this buffer's shell.
 Thus, this does not include the shell's current directory.")
 
+(defvaralias 'shell-dirtrack-mode 'shell-dirtrackp)
+
 (defvar shell-dirtrackp t
   "Non-nil in a shell buffer means directory tracking is enabled.")
 
@@ -961,7 +963,6 @@ Environment variables are expanded, see function `substitute-in-file-name'."
   (and (string-match "^\\+[1-9][0-9]*$" str)
        (string-to-number str)))
 
-(defvaralias 'shell-dirtrack-mode 'shell-dirtrackp)
 (define-minor-mode shell-dirtrack-mode
   "Toggle directory tracking in this shell buffer (Shell Dirtrack mode).
 With a prefix argument ARG, enable Shell Dirtrack mode if ARG is

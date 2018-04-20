@@ -318,12 +318,13 @@ The following values are supported:
   :type 'boolean
   :group 'ispell)
 
+(defvaralias 'ispell-format-word 'ispell-format-word-function)
+
 (defcustom ispell-format-word-function (function upcase)
   "Formatting function for displaying word being spell checked.
 The function must take one string argument and return a string."
   :type 'function
   :group 'ispell)
-(defvaralias 'ispell-format-word 'ispell-format-word-function)
 
 (defcustom ispell-use-framepop-p nil
   "When non-nil ispell uses framepop to display choices in a dedicated frame.

@@ -796,6 +796,9 @@ Return ADO if so or signal an error otherwise."
 
 ;; Public class methods
 
+(define-obsolete-variable-alias
+  'rst-preferred-decorations 'rst-preferred-adornments "rst 1.0.0")
+
 (defvar rst-preferred-adornments) ; Forward declaration.
 
 (defun rst-Hdr-preferred-adornments ()
@@ -1481,8 +1484,6 @@ for modes derived from Text mode, like Mail mode."
   :group 'rst
   :version "21.1")
 
-(define-obsolete-variable-alias
-  'rst-preferred-decorations 'rst-preferred-adornments "rst 1.0.0")
 ;; FIXME: Default must match suggestion in
 ;;        http://sphinx-doc.org/rest.html#sections for Python documentation.
 (defcustom rst-preferred-adornments '((?= over-and-under 1)

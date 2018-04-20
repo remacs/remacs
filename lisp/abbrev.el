@@ -68,6 +68,8 @@ be replaced by its expansion."
 (put 'abbrev-mode 'safe-local-variable 'booleanp)
 
 
+(define-obsolete-variable-alias 'edit-abbrevs-map
+  'edit-abbrevs-mode-map "24.4")
 (defvar edit-abbrevs-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-x\C-s" 'abbrev-edit-save-buffer)
@@ -75,8 +77,6 @@ be replaced by its expansion."
     (define-key map "\C-c\C-c" 'edit-abbrevs-redefine)
     map)
   "Keymap used in `edit-abbrevs'.")
-(define-obsolete-variable-alias 'edit-abbrevs-map
-  'edit-abbrevs-mode-map "24.4")
 
 (defun kill-all-abbrevs ()
   "Undefine all defined abbrevs."

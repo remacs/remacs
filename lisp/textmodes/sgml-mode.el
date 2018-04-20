@@ -76,6 +76,8 @@ a DOCTYPE or an XML declaration."
   :version "22.1"
   :group 'sgml)
 
+(defvaralias 'sgml-transformation 'sgml-transformation-function)
+
 (defcustom sgml-transformation-function 'identity
   "Default value for `skeleton-transformation-function' in SGML mode."
   :type 'function
@@ -92,7 +94,6 @@ a DOCTYPE or an XML declaration."
 
 (put 'sgml-transformation-function 'variable-interactive
      "aTransformation function: ")
-(defvaralias 'sgml-transformation 'sgml-transformation-function)
 
 (defcustom sgml-mode-hook nil
   "Hook run by command `sgml-mode'.

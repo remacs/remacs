@@ -37,13 +37,13 @@
 ;; page 2:	paired insertion
 ;; page 3:	mirror-mode, an example for setting up paired insertion
 
+(defvaralias 'skeleton-transformation 'skeleton-transformation-function)
 
 (defvar skeleton-transformation-function 'identity
   "If non-nil, function applied to literal strings before they are inserted.
 It should take strings and characters and return them transformed, or nil
 which means no transformation.
 Typical examples might be `upcase' or `capitalize'.")
-(defvaralias 'skeleton-transformation 'skeleton-transformation-function)
 
 ; this should be a fourth argument to defvar
 (put 'skeleton-transformation-function 'variable-interactive
@@ -65,11 +65,11 @@ region.")
   "Hook called at end of skeleton but before going to point of interest.
 The variables `v1' and `v2' are still set when calling this.")
 
+(defvaralias 'skeleton-filter 'skeleton-filter-function)
 
 ;;;###autoload
 (defvar skeleton-filter-function 'identity
   "Function for transforming a skeleton proxy's aliases' variable value.")
-(defvaralias 'skeleton-filter 'skeleton-filter-function)
 
 (defvar skeleton-untabify nil		; bug#12223
   "When non-nil untabifies when deleting backwards with element -ARG.")

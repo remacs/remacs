@@ -63,6 +63,9 @@ string or function value that this variable has."
   :version "23.1"
   :group 'initialization)
 
+(defvaralias 'inhibit-splash-screen 'inhibit-startup-screen)
+(defvaralias 'inhibit-startup-message 'inhibit-startup-screen)
+
 (defcustom inhibit-startup-screen nil
   "Non-nil inhibits the startup screen.
 
@@ -70,9 +73,6 @@ This is for use in your personal init file (but NOT site-start.el),
 once you are familiar with the contents of the startup screen."
   :type 'boolean
   :group 'initialization)
-
-(defvaralias 'inhibit-splash-screen 'inhibit-startup-screen)
-(defvaralias 'inhibit-startup-message 'inhibit-startup-screen)
 
 (defvar startup-screen-inhibit-startup-screen nil)
 

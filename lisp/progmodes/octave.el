@@ -639,6 +639,9 @@ mode, include \"-q\" and \"--traditional\"."
   :type '(repeat string)
   :version "24.4")
 
+(define-obsolete-variable-alias 'inferior-octave-startup-hook
+  'inferior-octave-mode-hook "24.4")
+
 (defcustom inferior-octave-mode-hook nil
   "Hook to be run when Inferior Octave mode is started."
   :type 'hook)
@@ -692,9 +695,6 @@ mode, include \"-q\" and \"--traditional\"."
 (defvar inferior-octave-output-list nil)
 (defvar inferior-octave-output-string nil)
 (defvar inferior-octave-receive-in-progress nil)
-
-(define-obsolete-variable-alias 'inferior-octave-startup-hook
-  'inferior-octave-mode-hook "24.4")
 
 (defvar inferior-octave-dynamic-complete-functions
   '(inferior-octave-completion-at-point comint-filename-completion)

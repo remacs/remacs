@@ -1038,6 +1038,9 @@ See `bibtex-generate-autokey' for details."
   :type '(repeat (cons (regexp :tag "Old")
                        (string :tag "New"))))
 
+(defvaralias 'bibtex-autokey-name-case-convert
+  'bibtex-autokey-name-case-convert-function)
+
 (defcustom bibtex-autokey-name-case-convert-function 'downcase
   "Function called for each name to perform case conversion.
 See `bibtex-generate-autokey' for details."
@@ -1049,8 +1052,6 @@ See `bibtex-generate-autokey' for details."
                  (function :tag "Conversion function")))
 (put 'bibtex-autokey-name-case-convert-function 'safe-local-variable
      (lambda (x) (memq x '(upcase downcase capitalize identity))))
-(defvaralias 'bibtex-autokey-name-case-convert
-  'bibtex-autokey-name-case-convert-function)
 
 (defcustom bibtex-autokey-name-length 'infty
   "Number of characters from name to incorporate into key.
@@ -1113,6 +1114,9 @@ Case is significant.  See `bibtex-generate-autokey' for details."
   :group 'bibtex-autokey
   :type '(repeat regexp))
 
+(defvaralias 'bibtex-autokey-titleword-case-convert
+  'bibtex-autokey-titleword-case-convert-function)
+
 (defcustom bibtex-autokey-titleword-case-convert-function 'downcase
   "Function called for each titleword to perform case conversion.
 See `bibtex-generate-autokey' for details."
@@ -1122,8 +1126,6 @@ See `bibtex-generate-autokey' for details."
                  (const :tag "Capitalize" capitalize)
                  (const :tag "Upcase" upcase)
                  (function :tag "Conversion function")))
-(defvaralias 'bibtex-autokey-titleword-case-convert
-  'bibtex-autokey-titleword-case-convert-function)
 
 (defcustom bibtex-autokey-titleword-abbrevs nil
   "Determines exceptions to the usual abbreviation mechanism.

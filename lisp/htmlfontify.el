@@ -448,6 +448,7 @@ and so on."
              (background (choice (const :tag "Dark"          dark     )
                                  (const :tag "Bright"        light    ))) ))
 
+(define-obsolete-variable-alias 'hfy-optimisations 'hfy-optimizations "25.1")
 (defcustom hfy-optimizations (list 'keep-overlays)
   "Optimizations to turn on: So far, the following have been implemented:\n
   merge-adjacent-tags: If two (or more) span tags are adjacent, identical and
@@ -483,7 +484,6 @@ which can never slow you down, but may result in incomplete fontification."
                (const :tag "body-text-only"       body-text-only      ))
   :group 'htmlfontify
   :tag   "optimizations")
-(define-obsolete-variable-alias 'hfy-optimisations 'hfy-optimizations "25.1")
 
 (defvar hfy-tags-cache nil
   "Alist of the form:\n

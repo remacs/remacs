@@ -88,6 +88,9 @@ The functions get one argument, the first locked buffer found."
   :group 'emacs-lock
   :version "24.3")
 
+(define-obsolete-variable-alias 'emacs-lock-from-exiting
+  'emacs-lock-mode "24.1")
+
 (defvar-local emacs-lock-mode nil
   "If non-nil, the current buffer is locked.
 It can be one of the following values:
@@ -181,9 +184,6 @@ Return a value appropriate for `kill-buffer-query-functions' (which see)."
               (t
                ;; anything else (turn off)
                mode))))
-
-(define-obsolete-variable-alias 'emacs-lock-from-exiting
-  'emacs-lock-mode "24.1")
 
 ;;;###autoload
 (define-minor-mode emacs-lock-mode

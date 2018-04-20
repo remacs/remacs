@@ -1401,6 +1401,9 @@ current display in the agenda."
   :group 'org-agenda-daily/weekly
   :type 'plist)
 
+(defvaralias 'org-agenda-search-view-search-words-only
+  'org-agenda-search-view-always-boolean)
+
 (defcustom org-agenda-search-view-always-boolean nil
   "Non-nil means the search string is interpreted as individual parts.
 
@@ -1428,9 +1431,6 @@ boolean search."
   :group 'org-agenda-search-view
   :version "24.1"
   :type 'boolean)
-
-(defvaralias 'org-agenda-search-view-search-words-only
-  'org-agenda-search-view-always-boolean)
 
 (defcustom org-agenda-search-view-force-full-words nil
   "Non-nil means, search words must be matches as complete words.
@@ -1873,6 +1873,9 @@ Nil means don't hide any tags."
 	  (const  :tag "Hide none" nil)
 	  (string :tag "Regexp   ")))
 
+(defvaralias 'org-agenda-remove-tags-when-in-prefix
+  'org-agenda-remove-tags)
+
 (defcustom org-agenda-remove-tags nil
   "Non-nil means remove the tags from the headline copy in the agenda.
 When this is the symbol `prefix', only remove tags when
@@ -1883,8 +1886,7 @@ When this is the symbol `prefix', only remove tags when
 	  (const :tag "Never" nil)
 	  (const :tag "When prefix format contains %T" prefix)))
 
-(defvaralias 'org-agenda-remove-tags-when-in-prefix
-  'org-agenda-remove-tags)
+(defvaralias 'org-agenda-align-tags-to-column 'org-agenda-tags-column)
 
 (defcustom org-agenda-tags-column 'auto
   "Shift tags in agenda items to this column.
@@ -1901,8 +1903,6 @@ character screen."
 	  (integer :tag "Specific column" -80))
   :package-version '(Org . "9.1")
   :version "26.1")
-
-(defvaralias 'org-agenda-align-tags-to-column 'org-agenda-tags-column)
 
 (defcustom org-agenda-fontify-priorities 'cookies
   "Non-nil means highlight low and high priorities in agenda.
@@ -2067,9 +2067,9 @@ works you probably want to add it to `org-agenda-custom-commands' for good."
 
 ;;; Define the org-agenda-mode
 
+(defvaralias 'org-agenda-keymap 'org-agenda-mode-map)
 (defvar org-agenda-mode-map (make-sparse-keymap)
   "Keymap for `org-agenda-mode'.")
-(defvaralias 'org-agenda-keymap 'org-agenda-mode-map)
 
 (defvar org-agenda-menu) ; defined later in this file.
 (defvar org-agenda-restrict nil) ; defined later in this file.

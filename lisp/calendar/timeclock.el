@@ -144,6 +144,9 @@ This variable only has effect if set with \\[customize]."
 (defvar timeclock-update-timer nil
   "The timer used to update `timeclock-mode-string'.")
 
+(define-obsolete-variable-alias 'timeclock-modeline-display
+  'timeclock-mode-line-display "24.3")
+
 ;; For byte-compiler.
 (defvar display-time-hook)
 (defvar timeclock-mode-line-display)
@@ -270,8 +273,6 @@ The time is bracketed by <> if you are clocked in, otherwise by [].")
 ;;; User Functions:
 
 (define-obsolete-function-alias 'timeclock-modeline-display
-  'timeclock-mode-line-display "24.3")
-(define-obsolete-variable-alias 'timeclock-modeline-display
   'timeclock-mode-line-display "24.3")
 
 ;;;###autoload

@@ -115,12 +115,12 @@ such as `edebug-defun' to work with such inputs."
   :type 'boolean
   :group 'ielm)
 
+(defvaralias 'inferior-emacs-lisp-mode-hook 'ielm-mode-hook)
 (defcustom ielm-mode-hook nil
   "Hooks to be run when IELM (`inferior-emacs-lisp-mode') is started."
   :options '(eldoc-mode)
   :type 'hook
   :group 'ielm)
-(defvaralias 'inferior-emacs-lisp-mode-hook 'ielm-mode-hook)
 
 (defvar * nil
   "Most recent value evaluated in IELM.")
@@ -165,6 +165,7 @@ This variable is buffer-local.")
   "*** Welcome to IELM ***  Type (describe-mode) for help.\n"
   "Message to display when IELM is started.")
 
+(defvaralias 'inferior-emacs-lisp-mode-map 'ielm-map)
 (defvar ielm-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\t" 'ielm-tab)
@@ -183,7 +184,6 @@ This variable is buffer-local.")
     (define-key map "\C-c\C-v" 'ielm-print-working-buffer)
     map)
   "Keymap for IELM mode.")
-(defvaralias 'inferior-emacs-lisp-mode-map 'ielm-map)
 
 (easy-menu-define ielm-menu ielm-map
   "IELM mode menu."

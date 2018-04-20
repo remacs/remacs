@@ -3181,9 +3181,9 @@ since they have special meaning in a regexp."
 (defvar isearch-lazy-highlight-regexp nil)
 (defvar isearch-lazy-highlight-lax-whitespace nil)
 (defvar isearch-lazy-highlight-regexp-lax-whitespace nil)
-(defvar isearch-lazy-highlight-regexp-function nil)
 (define-obsolete-variable-alias 'isearch-lazy-highlight-word
   'isearch-lazy-highlight-regexp-function "25.1")
+(defvar isearch-lazy-highlight-regexp-function nil)
 (defvar isearch-lazy-highlight-forward nil)
 (defvar isearch-lazy-highlight-error nil)
 

@@ -158,6 +158,9 @@ Convert it to Flymake internal format."
 	  (setq converted-list (cons (list regexp file line col) converted-list)))))
     converted-list))
 
+(define-obsolete-variable-alias 'flymake-err-line-patterns
+  'flymake-proc-err-line-patterns "26.1")
+
 (defvar flymake-proc-err-line-patterns ; regexp file-idx line-idx col-idx (optional) text-idx(optional), match-end to end of string is error text
   (append
    '(
@@ -334,6 +337,9 @@ to the beginning of the list (File.h -> File.cpp moved to top)."
   (and (equal (file-name-sans-extension flymake-proc--included-file-name)
 	      (file-name-base file-one))
        (not (equal file-one file-two))))
+
+(define-obsolete-variable-alias 'flymake-check-file-limit
+  'flymake-proc-check-file-limit "26.1")
 
 (defvar flymake-proc-check-file-limit 8192
   "Maximum number of chars to look at when checking possible master file.
@@ -1148,12 +1154,8 @@ Use CREATE-TEMP-F for creating temp copy."
 
 ;;;;
 
-(define-obsolete-variable-alias 'flymake-check-file-limit
-  'flymake-proc-check-file-limit "26.1")
 (define-obsolete-function-alias 'flymake-reformat-err-line-patterns-from-compile-el
   'flymake-proc-reformat-err-line-patterns-from-compile-el "26.1")
-(define-obsolete-variable-alias 'flymake-err-line-patterns
-  'flymake-proc-err-line-patterns "26.1")
 (define-obsolete-function-alias 'flymake-parse-line
   'flymake-proc-parse-line "26.1")
 (define-obsolete-function-alias 'flymake-get-include-dirs
