@@ -627,6 +627,7 @@ Creates FILE and its parent directories if they do not exist."
          (error "Danger: `%s' is a symbolic link" file))
      (set-file-modes file #o0600))))
 
+(autoload 'puny-encode-domain "puny")
 (autoload 'dns-query "dns")
 
 (defvar url--domain-cache (make-hash-table :test 'equal :size 17)
