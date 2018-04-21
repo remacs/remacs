@@ -1796,7 +1796,7 @@ In the @file{*Occur*} buffer, you can click on each entry, or move
 point there and type @key{RET}, to visit the corresponding position in
 the buffer that was searched.  @kbd{o} and @kbd{C-o} display the match
 in another window; @kbd{C-o} does not select it.  Alternatively, you
-can use the @kbd{C-x `} (@code{next-error}) command to visit the
+can use the @kbd{M-g M-n} (@code{next-error}) command to visit the
 occurrences one by one (@pxref{Compilation Mode}).
 
 @cindex Occur Edit mode

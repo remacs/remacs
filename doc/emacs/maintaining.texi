@@ -1640,11 +1640,14 @@ entry is considered a page.  This facilitates editing the entries.
 @kbd{C-j} and auto-fill indent each new line like the previous line;
 this is convenient for entering the contents of an entry.
 
-You can use the @code{next-error} command (by default bound to
-@kbd{C-x `}) to move between entries in the Change Log, when Change
-Log mode is on.  You will jump to the actual site in the file that was
-changed, not just to the next Change Log entry.  You can also use
-@code{previous-error} to move back in the same list.
+You can use the @code{change-log-goto-source} command (by default
+bound to @kbd{C-c C-c}) to go to the source location of the change log
+entry near point, when Change Log mode is on.  Then subsequent
+invocations of the @code{next-error} command (by default bound to
+@kbd{M-g M-n}) will move between entries in the change log.  You will
+jump to the actual site in the file that was changed, not just to the
+next change log entry.  You can also use @code{previous-error} to move
+back in the same list.
 
 @findex change-log-merge
   You can use the command @kbd{M-x change-log-merge} to merge other
@@ -1654,7 +1657,7 @@ ordering of entries.
   Version control systems are another way to keep track of changes in
 your program and keep a change log.  In the VC log buffer, typing
 @kbd{C-c C-a} (@code{log-edit-insert-changelog}) inserts the relevant
-Change Log entry, if one exists.  @xref{Log Buffer}.
+change log entry, if one exists.  @xref{Log Buffer}.
 
 @node Format of ChangeLog
 @subsection Format of ChangeLog

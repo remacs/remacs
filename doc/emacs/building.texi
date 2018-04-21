@@ -202,11 +202,11 @@ Re-run the last command whose output is shown in the
 This command can be invoked from any buffer, not just a Compilation
 mode buffer.  The first time you invoke it after a compilation, it
 visits the locus of the first error message.  Each subsequent
-@w{@kbd{C-x `}} visits the next error, in a similar fashion.  If you
+@w{@kbd{M-g M-n}} visits the next error, in a similar fashion.  If you
 visit a specific error with @key{RET} or a mouse click in the
-@file{*compilation*} buffer, subsequent @w{@kbd{C-x `}} commands
-advance from there.  When @w{@kbd{C-x `}} finds no more error messages
-to visit, it signals an error.  @w{@kbd{C-u C-x `}} starts again from
+@file{*compilation*} buffer, subsequent @w{@kbd{M-g M-n}} commands
+advance from there.  When @w{@kbd{M-g M-n}} finds no more error messages
+to visit, it signals an error.  @w{@kbd{C-u M-g M-n}} starts again from
 the beginning of the compilation buffer, and visits the first locus.
 
   @kbd{M-g M-p} or @kbd{M-g p} (@code{previous-error}) iterates
@@ -219,10 +219,15 @@ match lists produced by other commands, such as @kbd{M-x occur}
 (@pxref{Other Repeating Search}).  If the current buffer contains
 error messages or matches, these commands will iterate through them;
 otherwise, Emacs looks for a buffer containing error messages or
-matches amongst the windows of the selected frame, then for any buffer
-that @code{next-error} or @code{previous-error} previously visited,
-and finally all other buffers.  Any buffer these commands iterate
-through that is not currently displayed in a window will be displayed.
+matches amongst the windows of the selected frame (if the variable
+@code{next-error-find-buffer-function} is customized to the value
+@code{next-error-buffer-on-selected-frame}), then for a buffer used
+previously by @code{next-error} or @code{previous-error}, and finally
+all other buffers.  Any buffer these commands iterate through that is
+not currently displayed in a window will be displayed.  You can use
+the @command{next-error-select-buffer} command to switch to
+a different buffer to be used by the subsequent invocation of
+@code{next-error}.
 
 @vindex compilation-skip-threshold
   By default, the @code{next-error} and @code{previous-error} commands
@@ -394,8 +399,8 @@ grep -nH -e foo *.el | grep bar | grep toto
 @end example
 
   The output from @command{grep} goes in the @file{*grep*} buffer.  You
-can find the corresponding lines in the original files using @w{@kbd{C-x
-`}}, @key{RET}, and so forth, just like compilation errors.
+can find the corresponding lines in the original files using @w{@kbd{M-g
+M-n}}, @key{RET}, and so forth, just like compilation errors.
 @xref{Compilation Mode}, for detailed description of commands and key
 bindings available in the @file{*grep*} buffer.
 

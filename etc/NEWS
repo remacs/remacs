@@ -292,6 +292,7 @@ can now be searched via 'C-s'.
 
 ** Search and Replace
 
++++
 *** 'search-exit-option' provides new options 'move' and 'shift-move'
 to extend the search string by yanking text that ends at the new
 position after moving point in the current buffer.  'shift-move'
@@ -317,6 +318,7 @@ by default.
 
 ** grep
 
++++
 *** rgrep, lgrep and zrgrep now hide part of the command line
 that contains a list of ignored directories and files.
 Clicking on the button with ellipsis unhides it.
@@ -347,6 +349,7 @@ are evaluated lazily.
 
 ** next-error
 
++++
 *** New customizable variable 'next-error-find-buffer-function'.
 This variable defines the logic of finding a next-error capable
 buffer.  It has an option to use a single such buffer on selected

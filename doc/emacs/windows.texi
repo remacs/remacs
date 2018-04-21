@@ -354,7 +354,7 @@ various help commands (@pxref{Help}), work by calling
 
   Other commands do the same as @code{display-buffer}, and
 additionally select the displaying window so that you can begin
-editing its buffer.  The command @kbd{C-x `} (@code{next-error}) is
+editing its buffer.  The command @kbd{M-g M-n} (@code{next-error}) is
 one example (@pxref{Compilation Mode}).  Such commands work by calling
 the function @code{pop-to-buffer} internally.  @xref{Switching
 Buffers,,Switching to a Buffer in a Window, elisp, The Emacs Lisp

@@ -178,7 +178,10 @@ rejected, and the function returns nil."
 		(funcall extra-test-inclusive))))))
 
 (defcustom next-error-find-buffer-function #'ignore
-  "Function called to find a `next-error' capable buffer."
+  "Function called to find a `next-error' capable buffer.
+This functions takes the same three arguments as the function
+`next-error-find-buffer', and returns the buffer to be used
+by the subsequent invocation of the command `next-error'."
   :type '(choice (const :tag "No default" ignore)
                  (const :tag "Single next-error capable buffer on selected frame"
                         next-error-buffer-on-selected-frame)
@@ -287,8 +290,9 @@ more generally, on any buffer in Compilation mode or with
 Compilation Minor mode enabled, or any buffer in which
 `next-error-function' is bound to an appropriate function.
 To specify use of a particular buffer for error messages, type
-\\[next-error] in that buffer when it is the only one displayed
-in the current frame.
+\\[next-error] in that buffer.  You can also use the command
+`next-error-select-buffer' to select the buffer to use for the subsequent
+invocation of `next-error'.
 
 Once \\[next-error] has chosen the buffer for error messages, it
 runs `next-error-hook' with `run-hooks', and stays with that buffer
@@ -334,7 +338,11 @@ and TO-BUFFER is a target buffer."
   (run-hooks 'next-error-hook))
 
 (defun next-error-select-buffer (buffer)
-  "Select a `next-error' capable buffer and set it as the last used."
+  "Select a `next-error' capable BUFFER and set it as the last used.
+This means that the selected buffer becomes the source of locations
+for the subsequent invocation of `next-error'.  Interactively, this command
+allows selection only among buffers where `next-error-function' is bound to
+an appropriate function."
   (interactive
    (list (get-buffer
           (read-buffer "Select next-error buffer: " nil nil
