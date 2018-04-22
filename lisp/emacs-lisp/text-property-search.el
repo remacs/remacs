@@ -50,8 +50,8 @@ returned, but instead the next instance is returned, if any.
 
 The return value (if a match is made) is a `prop-match'
 structure.  The accessor avaliable are
-`prop-match-beginning'/`prop-match-end' (which are the region in
-the buffer that's matching, and `prop-match-value', which is the
+`prop-match-beginning'/`prop-match-end' (which is the region in
+the buffer that's matching), and `prop-match-value', which is the
 value of PROPERTY at the start of the region."
   (interactive
    (list
