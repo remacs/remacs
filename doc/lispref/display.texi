@@ -7235,8 +7235,8 @@ Characters of Unicode General Category [Cf], such as @samp{U+200E}
 images, such as @samp{U+00AD} (Soft Hyphen).
 
 @item no-font
-Characters for there is no suitable font, or which cannot be encoded
-by the terminal's coding system.
+Characters for which there is no suitable font, or which cannot be
+encoded by the terminal's coding system.
 @end table
 
 @c FIXME: this can also be 'acronym', but that's not currently
