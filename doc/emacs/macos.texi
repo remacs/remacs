@@ -169,9 +169,9 @@ the requested line (@code{ns-open-file-select-line}).
 @item ns-drag-n-drop
 This event occurs when a user drags an object from another application
 into an Emacs frame.  The default behavior is to open a file in the
-current window, or to insert text in the buffer it is dropped into.
-It may sometimes be necessary to use the @key{META} key in conjunction
-with dragging to force text insertion.
+window under the mouse, or to insert text at point of the window under
+the mouse.  It may sometimes be necessary to use the @key{META} key in
+conjunction with dragging to force text insertion.
 
 @item ns-change-font
 This event occurs when the user selects a font in a Nextstep font
