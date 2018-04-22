@@ -49,10 +49,10 @@ If `not-immediate', if the match is under point, it will not be
 returned, but instead the next instance is returned, if any.
 
 The return value (if a match is made) is a `prop-match'
-structure.  The accessor avaliable are
-`prop-match-beginning'/`prop-match-end' (which is the region in
-the buffer that's matching), and `prop-match-value', which is the
-value of PROPERTY at the start of the region."
+structure.  The accessors available are
+`prop-match-beginning'/`prop-match-end' (the region in the buffer
+that's matching), and `prop-match-value' (the value of PROPERTY
+at the start of the region)."
   (interactive
    (list
     (let ((string (completing-read "Search for property: " obarray)))
