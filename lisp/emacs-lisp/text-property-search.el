@@ -58,12 +58,17 @@ value of PROPERTY at the start of the region."
     (let ((string (completing-read "Search for property: " obarray)))
       (when (> (length string) 0)
         (intern string obarray)))))
-  ;; We're standing in the property we're looking for, so find the
-  ;; end.
-  (if (and (text-property--match-p value (get-text-property (point) property)
-                                   predicate)
-           (not not-immediate))
-      (text-property--find-end-forward (point) property value predicate)
+  (cond
+   ;; No matches at the end of the buffer.
+   ((eobp)
+    nil)
+   ;; We're standing in the property we're looking for, so find the
+   ;; end.
+   ((and (text-property--match-p value (get-text-property (point) property)
+                                 predicate)
+         (not not-immediate))
+    (text-property--find-end-forward (point) property value predicate))
+   (t
     (let ((origin (point))
           (ended nil)
           pos)
@@ -86,7 +91,7 @@ value of PROPERTY at the start of the region."
               (goto-char origin)
               (setq ended t)))))
       (and (not (eq ended t))
-           ended))))
+           ended)))))
 
 (defun text-property--find-end-forward (start property value predicate)
   (let (end)
