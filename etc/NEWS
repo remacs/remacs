@@ -141,11 +141,6 @@ regular expression was previously invalid, but is now accepted:
 
 * Editing Changes in Emacs 27.1
 
-+++
-** New isearch bindings.
-'C-M-w' in isearch changed from isearch-del-char to the new function
-isearch-yank-symbol-or-char. isearch-del-char is now bound to 'C-M-d'.
-
 ---
 ** New variable 'x-wait-for-event-timeout'.
 This controls how long Emacs will wait for updates to the graphical
@@ -168,6 +163,10 @@ for abbrevs that have them.
 ** The new functions and commands `text-property-search-forward' and
 `text-property-search-backward' have been added.  These provide an
 interface that's more like functions like @code{search-forward}.
+
+---
+** More commands support noncontiguous rectangular regions, namely
+‘upcase-dwim’, ‘downcase-dwim’, ‘replace-string’, ‘replace-regexp’.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
@@ -293,11 +292,20 @@ can now be searched via 'C-s'.
 ** Search and Replace
 
 +++
+*** New isearch bindings.
+'C-M-w' in isearch changed from isearch-del-char to the new function
+isearch-yank-symbol-or-char. isearch-del-char is now bound to 'C-M-d'.
+
++++
 *** 'search-exit-option' provides new options 'move' and 'shift-move'
 to extend the search string by yanking text that ends at the new
 position after moving point in the current buffer.  'shift-move'
 extends the search string by motion commands while holding down
 the shift key.
+
+---
+*** Isearch now remembers the regexp-based search mode for words/symbols
+and case-sensitivity together with search strings in the search ring.
 
 ** Edebug
 

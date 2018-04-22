@@ -1099,9 +1099,17 @@ file were isearch was started."
     ;; If there are no files that match the default pattern ChangeLog.[0-9],
     ;; return the current buffer to force isearch wrapping to its beginning.
     ;; If file is nil, multi-isearch-search-fun will signal "end of multi".
-    (if (and file (file-exists-p file))
-	(find-file-noselect file)
-      (current-buffer))))
+    (cond
+     ;; Wrapping doesn't catch errors from the nil arg of file-exists-p,
+     ;; so handle it explicitly.
+     ((and wrap (null file))
+      (current-buffer))
+     ;; When there is no next file, file-exists-p raises the error to be
+     ;; catched by the search function that displays the error message.
+     ((file-exists-p file)
+      (find-file-noselect file))
+     (t
+      (current-buffer)))))
 
 (defun change-log-fill-forward-paragraph (n)
   "Cut paragraphs so filling preserves open parentheses at beginning of lines."

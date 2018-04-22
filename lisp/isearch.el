@@ -1143,10 +1143,10 @@ REGEXP if non-nil says use the regexp search ring."
 
 (defun isearch-update-from-string-properties (string)
   "Update isearch properties from the isearch string"
-  (when (memq 'isearch-case-fold-search (text-properties-at 0 string))
+  (when (plist-member (text-properties-at 0 string) 'isearch-case-fold-search)
     (setq isearch-case-fold-search
 	  (get-text-property 0 'isearch-case-fold-search string)))
-  (when (memq 'isearch-regexp-function (text-properties-at 0 string))
+  (when (plist-member (text-properties-at 0 string) 'isearch-regexp-function)
     (setq isearch-regexp-function
 	  (get-text-property 0 'isearch-regexp-function string))))
 
@@ -1602,10 +1602,10 @@ Turning on character-folding turns off regexp mode.")
 (defun isearch--momentary-message (string)
   "Print STRING at the end of the isearch prompt for 1 second"
   (let ((message-log-max nil))
-    (message "%s%s [%s]"
+    (message "%s%s%s"
              (isearch-message-prefix nil isearch-nonincremental)
              isearch-message
-             string))
+             (propertize (format " [%s]" string) 'face 'minibuffer-prompt)))
   (sit-for 1))
 
 (isearch-define-mode-toggle lax-whitespace " " nil
@@ -2693,12 +2693,16 @@ the word mode."
          (cond
           ;; 1. Do not use a description on the default search mode,
           ;;    but only if the default search mode is non-nil.
-          ((or (and search-default-mode
-                    (equal search-default-mode regexp-function))
-               ;; Special case where `search-default-mode' is t
-               ;; (defaults to regexp searches).
-               (and (eq search-default-mode t)
-                    (eq search-default-mode isearch-regexp))) "")
+          ((and (or (and search-default-mode
+                         (equal search-default-mode regexp-function))
+                    ;; Special case where `search-default-mode' is t
+                    ;; (defaults to regexp searches).
+                    (and (eq search-default-mode t)
+                         (eq search-default-mode isearch-regexp)))
+                ;; Also do not omit description in case of error
+                ;; in default non-literal search.
+                (or isearch-success (not (or regexp-function isearch-regexp))))
+           "")
           ;; 2. Use the `isearch-message-prefix' set for
           ;;    `regexp-function' if available.
           (regexp-function
@@ -2741,6 +2745,8 @@ the word mode."
 			      (< (point) isearch-opoint)))
 		       "over")
 		   (if isearch-wrapped "wrapped ")
+                   (if (and (not isearch-success) (not isearch-case-fold-search))
+                       "case-sensitive ")
                    (let ((prefix ""))
                      (advice-function-mapc
                       (lambda (_ props)
@@ -2768,11 +2774,12 @@ the word mode."
 		'face 'minibuffer-prompt)))
 
 (defun isearch-message-suffix (&optional c-q-hack)
-  (concat (if c-q-hack "^Q" "")
-	  (if isearch-error
-	      (concat " [" isearch-error "]")
-	    "")
-	  (or isearch-message-suffix-add "")))
+  (propertize (concat (if c-q-hack "^Q" "")
+	              (if isearch-error
+	                  (concat " [" isearch-error "]")
+	                "")
+	              (or isearch-message-suffix-add ""))
+              'face 'minibuffer-prompt))
 
 
 ;; Searching
@@ -2808,25 +2815,18 @@ Can be changed via `isearch-search-fun-function' for special needs."
                                        (isearch-regexp isearch-regexp-lax-whitespace)
                                        (t isearch-lax-whitespace))
                                   search-whitespace-regexp)))
-      (condition-case er
-          (funcall
-           (if isearch-forward #'re-search-forward #'re-search-backward)
-           (cond (isearch-regexp-function
-                  (let ((lax (and (not bound) (isearch--lax-regexp-function-p))))
-                    (when lax
-                      (setq isearch-adjusted t))
-                    (if (functionp isearch-regexp-function)
-                        (funcall isearch-regexp-function string lax)
-                      (word-search-regexp string lax))))
-                 (isearch-regexp string)
-                 (t (regexp-quote string)))
-           bound noerror count)
-        (search-failed
-         (signal (car er)
-                 (let ((prefix (get isearch-regexp-function 'isearch-message-prefix)))
-                   (if (and isearch-regexp-function (stringp prefix))
-                       (list (format "%s   [using %ssearch]" string prefix))
-                     (cdr er)))))))))
+      (funcall
+       (if isearch-forward #'re-search-forward #'re-search-backward)
+       (cond (isearch-regexp-function
+              (let ((lax (and (not bound) (isearch--lax-regexp-function-p))))
+                (when lax
+                  (setq isearch-adjusted t))
+                (if (functionp isearch-regexp-function)
+                    (funcall isearch-regexp-function string lax)
+                  (word-search-regexp string lax))))
+             (isearch-regexp string)
+             (t (regexp-quote string)))
+       bound noerror count))))
 
 (defun isearch-search-string (string bound noerror)
   "Search for the first occurrence of STRING or its translation.

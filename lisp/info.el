@@ -2017,7 +2017,7 @@ If DIRECTION is `backward', search in the reverse direction."
                   Info-isearch-initial-node
                   bound
                   (and found (> found opoint-min) (< found opoint-max)))
-	(signal 'user-search-failed (list regexp "(end of node)")))
+	(signal 'user-search-failed (list regexp "end of node")))
 
       ;; If no subfiles, give error now.
       (unless (or found Info-current-subfile)

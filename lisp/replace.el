@@ -314,7 +314,7 @@ the original string if not."
 	       (query-replace-read-to from prompt regexp-flag))))
     (list from to
 	  (or (and current-prefix-arg (not (eq current-prefix-arg '-)))
-              (and (memq 'isearch-regexp-function (text-properties-at 0 from))
+              (and (plist-member (text-properties-at 0 from) 'isearch-regexp-function)
                    (get-text-property 0 'isearch-regexp-function from)))
 	  (and current-prefix-arg (eq current-prefix-arg '-)))))
 
