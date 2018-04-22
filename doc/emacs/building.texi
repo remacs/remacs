@@ -190,6 +190,9 @@ compilation buffer produce automatic source display.
 @item g
 Re-run the last command whose output is shown in the
 @file{*compilation*} buffer.
+@item M-x next-error-select-buffer
+Select a buffer to be used by next invocation of @code{next-error} and
+@code{previous-error}.
 @end table
 
 @kindex M-g M-n
@@ -212,6 +215,8 @@ the beginning of the compilation buffer, and visits the first locus.
   @kbd{M-g M-p} or @kbd{M-g p} (@code{previous-error}) iterates
 through errors in the opposite direction.
 
+@vindex next-error-find-buffer-function
+@findex next-error-select-buffer
   The @code{next-error} and @code{previous-error} commands don't just
 act on the errors or matches listed in @file{*compilation*} and
 @file{*grep*} buffers; they also know how to iterate through error or

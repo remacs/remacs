@@ -1640,14 +1640,15 @@ entry is considered a page.  This facilitates editing the entries.
 @kbd{C-j} and auto-fill indent each new line like the previous line;
 this is convenient for entering the contents of an entry.
 
-You can use the @code{change-log-goto-source} command (by default
+@findex change-log-goto-source
+  You can use the command @code{change-log-goto-source} (by default
 bound to @kbd{C-c C-c}) to go to the source location of the change log
 entry near point, when Change Log mode is on.  Then subsequent
 invocations of the @code{next-error} command (by default bound to
-@kbd{M-g M-n}) will move between entries in the change log.  You will
-jump to the actual site in the file that was changed, not just to the
-next change log entry.  You can also use @code{previous-error} to move
-back in the same list.
+@kbd{M-g M-n} and @kbd{C-x `}) will move between entries in the change
+log.  You will jump to the actual site in the file that was changed,
+not just to the next change log entry.  You can also use
+@code{previous-error} to move back through the change log entries.
 
 @findex change-log-merge
   You can use the command @kbd{M-x change-log-merge} to merge other

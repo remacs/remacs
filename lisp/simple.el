@@ -180,8 +180,12 @@ rejected, and the function returns nil."
 (defcustom next-error-find-buffer-function #'ignore
   "Function called to find a `next-error' capable buffer.
 This functions takes the same three arguments as the function
-`next-error-find-buffer', and returns the buffer to be used
-by the subsequent invocation of the command `next-error'."
+`next-error-find-buffer', and should return the buffer to be
+used by the subsequent invocation of the command `next-error'
+and `previous-error'.
+If the function returns nil, `next-error-find-buffer' will
+try to use the buffer it used previously, and failing that
+all other buffers."
   :type '(choice (const :tag "No default" ignore)
                  (const :tag "Single next-error capable buffer on selected frame"
                         next-error-buffer-on-selected-frame)
@@ -340,9 +344,9 @@ and TO-BUFFER is a target buffer."
 (defun next-error-select-buffer (buffer)
   "Select a `next-error' capable BUFFER and set it as the last used.
 This means that the selected buffer becomes the source of locations
-for the subsequent invocation of `next-error'.  Interactively, this command
-allows selection only among buffers where `next-error-function' is bound to
-an appropriate function."
+for the subsequent invocation of `next-error' or `previous-error'.
+Interactively, this command allows selection only among buffers
+where `next-error-function' is bound to an appropriate function."
   (interactive
    (list (get-buffer
           (read-buffer "Select next-error buffer: " nil nil
@@ -358,7 +362,9 @@ an appropriate function."
 Prefix arg N says how many error messages to move backwards (or
 forwards, if negative).
 
-This operates on the output from the \\[compile] and \\[grep] commands."
+This operates on the output from the \\[compile] and \\[grep] commands.
+
+See `next-error' for the details."
   (interactive "p")
   (next-error (- (or n 1))))
 
