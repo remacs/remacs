@@ -4157,7 +4157,10 @@ process to set up.  VEC specifies the connection."
     (with-current-buffer (process-buffer proc)
       ;; Use MULE to select the right EOL convention for communicating
       ;; with the process.
-      (let ((cs (or (and (memq 'utf-8 (coding-system-list))
+      (let ((cs (or (and (memq 'utf-8-hfs (coding-system-list))
+			 (string-match "^Darwin" uname)
+			 (cons 'utf-8-hfs 'utf-8-hfs))
+		    (and (memq 'utf-8 (coding-system-list))
 			 (string-match "utf-?8" (tramp-get-remote-locale vec))
 			 (cons 'utf-8 'utf-8))
 		    (process-coding-system proc)
@@ -4173,11 +4176,6 @@ process to set up.  VEC specifies the connection."
 	(goto-char (point-min))
 	(when (search-forward "\r" nil t)
 	  (setq cs-decode (coding-system-change-eol-conversion cs-decode 'dos)))
-	;; Special setting for macOS.
-	(when (and (string-match "^Darwin" uname)
-		   (memq 'utf-8-hfs (coding-system-list)))
-	  (setq cs-decode 'utf-8-hfs
-		cs-encode 'utf-8-hfs))
 	(set-process-coding-system proc cs-decode cs-encode)
 	(tramp-message
 	 vec 5 "Setting coding system to `%s' and `%s'" cs-decode cs-encode)))
