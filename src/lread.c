@@ -1772,7 +1772,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 	      }
 	  }
       }
-    if (absolute)
+    if (absolute || NILP (path))
       break;
     path = XCDR (path);
   } while (CONSP (path));
