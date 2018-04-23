@@ -9,7 +9,7 @@ use multibyte::LispStringRef;
 /// Return non-nil if NAME ends with a directory separator character.
 #[lisp_fn]
 pub fn directory_name_p(name: LispStringRef) -> bool {
-    if name.len_bytes() <= 0 {
+    if name.len_bytes() == 0 {
         return false;
     }
 
