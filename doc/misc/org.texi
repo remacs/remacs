@@ -19694,8 +19694,8 @@ mentioned in the manual.  For a complete list, use @kbd{M-x org-customize
 @c Local variables:
 @c fill-column: 77
 @c indent-tabs-mode: nil
-@c paragraph-start:    "\\|^@[a-zA-Z]*[ \n]\\|^@x?org\\(key\\|cmd\\)\\|\f\\|[ 	]*$"
-@c paragraph-separate: "\\|^@[a-zA-Z]*[ \n]\\|^@x?org\\(key\\|cmd\\)\\|[ 	\f]*$"
+@c paragraph-start:    "^@[a-zA-Z]*[ \n]\\|^@x?org\\(key\\|cmd\\)\\|\f\\|[ 	]*$"
+@c paragraph-separate: "^@[a-zA-Z]*[ \n]\\|^@x?org\\(key\\|cmd\\)\\|[ 	\f]*$"
 @c End:
 
 

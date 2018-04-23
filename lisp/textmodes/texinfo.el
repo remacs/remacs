@@ -596,9 +596,9 @@ value of `texinfo-mode-hook'."
   (setq-local require-final-newline mode-require-final-newline)
   (setq-local indent-tabs-mode nil)
   (setq-local paragraph-separate
-	      (concat "\b\\|@[a-zA-Z]*[ \n]\\|"
+	      (concat "@[a-zA-Z]*[ \n]\\|"
 		      paragraph-separate))
-  (setq-local paragraph-start (concat "\b\\|@[a-zA-Z]*[ \n]\\|"
+  (setq-local paragraph-start (concat "@[a-zA-Z]*[ \n]\\|"
 				      paragraph-start))
   (setq-local sentence-end-base "\\(@\\(end\\)?dots{}\\|[.?!]\\)[]\"'”)}]*")
   (setq-local fill-column 70)
