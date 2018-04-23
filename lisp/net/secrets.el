@@ -331,9 +331,7 @@ It returns t if not."
 	     ;; Properties.
 	     `(:array
 	       (:dict-entry ,(concat secrets-interface-item ".Label")
-			    (:variant "dummy"))
-	       (:dict-entry ,(concat secrets-interface-item ".Type")
-			    (:variant ,secrets-interface-item-type-generic)))
+			    (:variant " ")))
 	     ;; Secret.
 	     `(:struct :object-path ,path
 		       (:array :signature "y")
@@ -649,11 +647,24 @@ keys are keyword symbols, starting with a colon.  Example:
   (secrets-create-item \"Tramp collection\" \"item\" \"geheim\"
    :method \"sudo\" :user \"joe\" :host \"remote-host\")
 
+The key `:xdg:schema' determines the scope of the item to be
+generated, i.e. for which applications the item is intended for.
+This is just a string like \"org.freedesktop.NetworkManager.Mobile\"
+or \"org.gnome.OnlineAccounts\", the other required keys are
+determined by this.  If no `:xdg:schema' is given,
+\"org.freedesktop.Secret.Generic\" is used by default.
+
 The object path of the created item is returned."
   (unless (member item (secrets-list-items collection))
     (let ((collection-path (secrets-unlock-collection collection))
 	  result props)
       (unless (secrets-empty-path collection-path)
+        ;; Set default type if needed.
+        (unless (member :xdg:schema attributes)
+          (setq attributes
+                (append
+                 attributes
+                 `(:xdg:schema ,secrets-interface-item-type-generic))))
 	;; Create attributes list.
 	(while (consp (cdr attributes))
 	  (unless (keywordp (car attributes))
@@ -675,9 +686,7 @@ The object path of the created item is returned."
 	       (append
 		`(:array
 		  (:dict-entry ,(concat secrets-interface-item ".Label")
-			       (:variant ,item))
-		  (:dict-entry ,(concat secrets-interface-item ".Type")
-			       (:variant ,secrets-interface-item-type-generic)))
+			       (:variant ,item)))
 		(when props
 		  `((:dict-entry ,(concat secrets-interface-item ".Attributes")
 				 (:variant ,(append '(:array) props))))))

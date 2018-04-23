@@ -1732,9 +1732,44 @@ authentication tokens:
             (item (plist-get artificial :label))
             (secret (plist-get artificial :secret))
             (secret (if (functionp secret) (funcall secret) secret)))
-       (lambda () (apply 'secrets-create-item collection item secret args))))
+       (lambda ()
+	 (apply 'auth-source-secrets-saver collection item secret args))))
 
     (list artificial)))
+
+(defun auth-source-secrets-saver (collection item secret args)
+  "Wrapper around `secrets-create-item', prompting along the way.
+Respects `auth-source-save-behavior'."
+  (let ((prompt (format "Save auth info to secrets collection %s? " collection))
+        (done (not (eq auth-source-save-behavior 'ask)))
+        (bufname "*auth-source Help*")
+        doit k)
+    (while (not done)
+      (setq k (auth-source-read-char-choice prompt '(?y ?n ?N ??)))
+      (cl-case k
+        (?y (setq done t doit t))
+        (?? (save-excursion
+              (with-output-to-temp-buffer bufname
+                (princ
+                 (concat "(y)es, save\n"
+                         "(n)o but use the info\n"
+                         "(N)o and don't ask to save again\n"
+                         "(?) for help as you can see.\n"))
+                ;; Why?  Doesn't with-output-to-temp-buffer already do
+                ;; the exact same thing anyway?  --Stef
+                (set-buffer standard-output)
+                (help-mode))))
+        (?n (setq done t doit nil))
+        (?N (setq done t doit nil)
+            (customize-save-variable 'auth-source-save-behavior nil))
+        (t nil)))
+
+    (when doit
+      (progn
+        (auth-source-do-debug
+         "secrets-create-item: wrote 1 new item to %s" collection)
+        (message "Saved new authentication information to %s" collection)
+	(apply 'secrets-create-item collection item secret args)))))
 
 ;;; Backend specific parsing: Mac OS Keychain (using /usr/bin/security) backend
 

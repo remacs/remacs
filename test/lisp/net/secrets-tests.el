@@ -169,9 +169,16 @@
 	(should
 	 (equal
 	  (secrets-get-attributes "session" "bar")
-	  '((:host . "remote-host") (:user . "joe")
-	    (:method . "sudo")
-	    (:xdg:schema . "org.freedesktop.Secret.Generic"))))
+	  '((:xdg:schema . "org.freedesktop.Secret.Generic")
+            (:host . "remote-host") (:user . "joe") (:method . "sudo"))))
+
+	;; Create an item with another schema.
+	(secrets-create-item
+         "session" "baz" "secret" :xdg:schema "org.gnu.Emacs.foo")
+	(should
+	 (equal
+	  (secrets-get-attributes "session" "baz")
+	  '((:xdg:schema . "org.gnu.Emacs.foo"))))
 
 	;; Delete them.
 	(dolist (item (secrets-list-items "session"))
@@ -206,6 +213,8 @@
 
 	;; Search the items.
 	(should-not (secrets-search-items "session" :user "john"))
+	(should-not
+         (secrets-search-items "session" :xdg:schema "org.gnu.Emacs.foo"))
 	(should
 	 (equal
 	  (sort (secrets-search-items "session" :user "joe") 'string-lessp)

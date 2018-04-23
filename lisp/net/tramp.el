@@ -1192,6 +1192,11 @@ means to use always cached values for the directory contents."
 (defvar tramp-current-connection nil
   "Last connection timestamp.")
 
+(defvar tramp-password-save-function nil
+  "Password save function.
+Will be called once the password has been verified by successful
+authentication.")
+
 (defconst tramp-completion-file-name-handler-alist
   '((file-name-all-completions
      . tramp-completion-handle-file-name-all-completions)
@@ -3852,7 +3857,9 @@ connection buffer."
 	(with-current-buffer (tramp-get-connection-buffer vec)
 	  (widen)
 	  (tramp-message vec 6 "\n%s" (buffer-string)))
-	(unless (eq exit 'ok)
+	(if (eq exit 'ok)
+	    (ignore-errors (funcall tramp-password-save-function))
+	  ;; Not successful.
 	  (tramp-clear-passwd vec)
 	  (delete-process proc)
 	  (tramp-error-with-buffer
@@ -4458,12 +4465,14 @@ Invokes `password-read' if available, `read-passwd' else."
 	      (with-current-buffer (process-buffer proc)
 		(tramp-check-for-regexp proc tramp-password-prompt-regexp)
 		(format "%s for %s " (capitalize (match-string 1)) key))))
+	 (auth-source-creation-prompts `((secret . ,pw-prompt)))
 	 ;; We suspend the timers while reading the password.
          (stimers (with-timeout-suspend))
 	 auth-info auth-passwd)
 
     (unwind-protect
 	(with-parsed-tramp-file-name key nil
+	  (setq tramp-password-save-function nil)
 	  (setq user
 		(or user (tramp-get-connection-property key "login-as" nil)))
 	  (prog1
@@ -4474,31 +4483,38 @@ Invokes `password-read' if available, `read-passwd' else."
 		       v "first-password-request" nil)
 		      ;; Try with Tramp's current method.
 		      (setq auth-info
-			    (auth-source-search
-			     :max 1
-			     (and user :user)
-			     (if domain
-				 (concat user tramp-prefix-domain-format domain)
-			       user)
-			     :host
-			     (if port
-				 (concat host tramp-prefix-port-format port)
-			       host)
-			     :port method
-			     :require (cons :secret (and user '(:user))))
-			    auth-passwd (plist-get
-					 (nth 0 auth-info) :secret)
+			    (car
+			     (auth-source-search
+			      :max 1
+			      (and user :user)
+			      (if domain
+				  (concat
+				   user tramp-prefix-domain-format domain)
+				user)
+			      :host
+			      (if port
+				  (concat
+				   host tramp-prefix-port-format port)
+				host)
+			      :port method
+			      :require (cons :secret (and user '(:user)))
+			      :create t))
+			    tramp-password-save-function
+			    (plist-get auth-info :save-function)
+			    auth-passwd (plist-get auth-info :secret)
 			    auth-passwd (if (functionp auth-passwd)
 					    (funcall auth-passwd)
 					  auth-passwd))))
+
 	       ;; Try the password cache.
 	       (let ((password (password-read pw-prompt key)))
-		 ;; FIXME test password works before caching it.
-		 (password-cache-add key password)
+		 (setq tramp-password-save-function
+		       (lambda () (password-cache-add key password)))
 		 password)
 	       ;; Else, get the password interactively.
 	       (read-passwd pw-prompt))
 	    (tramp-set-connection-property v "first-password-request" nil)))
+
       ;; Reenable the timers.
       (with-timeout-unsuspend stimers))))
 

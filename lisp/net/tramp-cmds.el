@@ -181,7 +181,9 @@ This includes password cache, file cache, connection cache, buffers."
   "Submit a bug report to the Tramp developers."
   (interactive)
   (catch 'dont-send
-    (let ((reporter-prompt-for-summary-p t))
+    (let ((reporter-prompt-for-summary-p t)
+	  ;; In rare cases, it could contain the password.  So we make it nil.
+	  tramp-password-save-function)
       (reporter-submit-bug-report
        tramp-bug-report-address		; to-address
        (format "tramp (%s)" tramp-version) ; package name and version

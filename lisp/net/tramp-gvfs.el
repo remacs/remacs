@@ -2041,6 +2041,9 @@ connection if a previous connection has died for some reason."
 	       (tramp-get-file-property vec "/" "fuse-mountpoint" "") "/")
 	  (tramp-error vec 'file-error "FUSE mount denied"))
 
+	;; Save the password.
+	(ignore-errors (funcall tramp-password-save-function))
+
 	;; Set connection-local variables.
 	(tramp-set-connection-local-variables vec)
 
