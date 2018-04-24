@@ -306,7 +306,7 @@ as the Referer-header (subject to `url-privacy-level'."
 					  (and (boundp 'proxy-info)
 					       proxy-info)
 					  url-http-target-url) nil 'any nil)))
-         (ref-url url-http-referer))
+         (ref-url (url-http--encode-string url-http-referer)))
     (if (equal "" real-fname)
 	(setq real-fname "/"))
     (setq no-cache (and no-cache (string-match "no-cache" no-cache)))
@@ -355,9 +355,11 @@ as the Referer-header (subject to `url-privacy-level'."
                      (url-scheme-get-property
                       (url-type url-http-target-url) 'default-port))
                  (format
-                  "Host: %s:%d\r\n" (puny-encode-domain host)
+                  "Host: %s:%d\r\n" (url-http--encode-string
+                                     (puny-encode-domain host))
                   (url-port url-http-target-url))
-               (format "Host: %s\r\n" (puny-encode-domain host)))
+               (format "Host: %s\r\n"
+                       (url-http--encode-string (puny-encode-domain host))))
              ;; Who its from
              (if url-personal-mail-address
                  (concat
