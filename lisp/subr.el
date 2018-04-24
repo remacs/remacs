@@ -4333,7 +4333,8 @@ that can be added.
 If `buffer-invisibility-spec' isn't a list before calling this
 function, `buffer-invisibility-spec' will afterwards be a list
 with the value `(t ELEMENT)'.  This means that if text exists
-with non-`t' invisibility values, that text will become visible."
+that invisibility values that aren't either `t' or ELEMENT, that
+text will become visible."
   (if (eq buffer-invisibility-spec t)
       (setq buffer-invisibility-spec (list t)))
   (setq buffer-invisibility-spec
