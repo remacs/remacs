@@ -1009,14 +1009,14 @@ instead of deleted."
        (t
         (filter-buffer-substring (region-beginning) (region-end) method)))))
   "Function to get the region's content.
-Called with one argument METHOD.
-If METHOD is `delete-only', then delete the region; the return value
-is undefined.  If METHOD is nil, then return the content as a string.
-If METHOD is `bounds', then return the boundaries of the region
-as a list of cons cells of the form (START . END).
-If METHOD is anything else, delete the region and return its content
-as a string, after filtering it with `filter-buffer-substring', which
-is called with METHOD as its 3rd argument.")
+Called with one argument METHOD which can be:
+- nil: return the content as a string.
+- `delete-only': delete the region; the return value is undefined.
+- `bounds': return the boundaries of the region as a list of cons
+  cells of the form (START . END).
+- anything else: delete the region and return its content
+  as a string, after filtering it with `filter-buffer-substring', which
+  is called with METHOD as its 3rd argument.")
 
 (defvar region-insert-function
   (lambda (lines)
