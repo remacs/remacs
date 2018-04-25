@@ -741,13 +741,6 @@ DIRECTORY-EXPRESSION to `speedbar-ignored-directory-expressions'."
   (setq speedbar-ignored-directory-regexp (speedbar-extension-list-to-regex
 				      speedbar-ignored-directory-expressions)))
 
-;; If we don't have custom, then we set it here by hand.
-(if (not (fboundp 'custom-declare-variable))
-    (setq speedbar-file-regexp (speedbar-extension-list-to-regex
-				speedbar-supported-extension-expressions)
-	  speedbar-ignored-directory-regexp (speedbar-extension-list-to-regex
-					speedbar-ignored-directory-expressions)))
-
 (defcustom speedbar-update-flag dframe-have-timer-flag
   "Non-nil means to automatically update the display.
 When this is nil then speedbar will not follow the attached frame's directory.
