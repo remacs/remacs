@@ -2715,17 +2715,6 @@ adds a fontification pattern to fontify identifiers ending in
   (sql-highlight-product))
 
 
-;;; Compatibility functions
-
-(if (not (fboundp 'comint-line-beginning-position))
-    ;; comint-line-beginning-position is defined in Emacs 21
-    (defun comint-line-beginning-position ()
-      "Return the buffer position of the beginning of the line, after any prompt.
-The prompt is assumed to be any text at the beginning of the line
-matching the regular expression `comint-prompt-regexp', a buffer
-local variable."
-      (save-excursion (comint-bol nil) (point))))
-
 ;;; SMIE support
 
 ;; Needs a lot more love than I can provide.  --Stef
