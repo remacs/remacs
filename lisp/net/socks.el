@@ -36,22 +36,6 @@
   (require 'wid-edit))
 (require 'custom)
 
-(eval-and-compile
-  (if (featurep 'emacs)
-      (defalias 'socks-split-string 'split-string) ; since at least 21.1
-    (if (fboundp 'split-string)
-	(defalias 'socks-split-string 'split-string)
-      (defun socks-split-string (string &optional pattern)
-	"Return a list of substrings of STRING which are separated by PATTERN.
-If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
-	(or pattern
-	    (setq pattern "[ \f\t\n\r\v]+"))
-	(let (parts (start 0))
-	  (while (string-match pattern string start)
-	    (setq parts (cons (substring string start
-					 (match-beginning 0)) parts)
-		  start (match-end 0)))
-	  (nreverse (cons (substring string start) parts)))))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Custom widgets
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -652,7 +636,7 @@ version.")
 		(setq res (buffer-substring (match-beginning 2)
 					    (match-end 2))
 		      res (mapcar 'string-to-number
-				  (socks-split-string res "\\.")))))
+				  (split-string res "\\.")))))
 	  (kill-buffer (current-buffer)))
 	res)
     host))
