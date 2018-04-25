@@ -209,10 +209,6 @@
 
 (require 'outline)
 
-;; something has gone very wrong if outline-minor-mode isn't bound now.
-(if (not (boundp 'outline-minor-mode))
-    (error "Can't find outline-minor-mode"))
-
 (defvar foldout-fold-list nil
   "List of start and end markers for the folds currently entered.
 An end marker of nil means the fold ends after (point-max).")
