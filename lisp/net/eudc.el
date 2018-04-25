@@ -158,25 +158,6 @@ properties on the list."
       (setq plist (cdr (cdr plist))))
     default))
 
-(if (not (fboundp 'split-string))
-    (defun split-string (string &optional pattern)
-      "Return a list of substrings of STRING which are separated by PATTERN.
-If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
-  (or pattern
-      (setq pattern "[ \f\t\n\r\v]+"))
-  (let (parts (start 0))
-    (when (string-match pattern string 0)
-      (if (> (match-beginning 0) 0)
-	  (setq parts (cons (substring string 0 (match-beginning 0)) nil)))
-      (setq start (match-end 0))
-      (while (and (string-match pattern string start)
-		  (> (match-end 0) start))
-	(setq parts (cons (substring string start (match-beginning 0)) parts)
-	      start (match-end 0))))
-    (nreverse (if (< start (length string))
-		  (cons (substring string start) parts)
-		parts)))))
-
 (defun eudc-replace-in-string (str regexp newtext)
   "Replace all matches in STR for REGEXP with NEWTEXT.
 Value is the new string."
