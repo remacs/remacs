@@ -1,7 +1,7 @@
 //! Minibuffer input and completion.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{minibuf_level, minibuf_window};
+use remacs_sys::{minibuf_level, minibuf_prompt, minibuf_window, EmacsInt, Fcopy_sequence};
 use remacs_sys::Vminibuffer_list;
 
 use buffers::{current_buffer, get_buffer};
@@ -49,6 +49,20 @@ pub fn set_minibuffer_window(window: LispObject) -> LispObject {
     }
 
     window
+}
+
+/// Return current depth of activations of minibuffer,
+/// a nonnegative integer.
+#[lisp_fn]
+pub fn minibuffer_depth() -> EmacsInt {
+    unsafe { minibuf_level }
+}
+
+/// Return the prompt string of the currently active
+/// minibuffer. If no minibuffer is active return nil.
+#[lisp_fn]
+pub fn minibuffer_prompt() -> LispObject {
+    unsafe { Fcopy_sequence(minibuf_prompt) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));

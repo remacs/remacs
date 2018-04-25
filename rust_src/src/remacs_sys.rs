@@ -1369,6 +1369,7 @@ extern "C" {
     pub static mut last_per_buffer_idx: usize;
     pub static lispsym: Lisp_Symbol;
     pub static minibuf_level: EmacsInt;
+    pub static minibuf_prompt: LispObject;
     pub static minibuf_selected_window: LispObject;
     pub static mut minibuf_window: LispObject;
     pub static selected_frame: LispObject;
