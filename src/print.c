@@ -2447,10 +2447,8 @@ priorities.  */);
   defsubr (&Sredirect_debugging_output);
   defsubr (&Sprint_preprocess);
 
-  DEFSYM (Qprint_escape_newlines, "print-escape-newlines");
   DEFSYM (Qprint_escape_multibyte, "print-escape-multibyte");
   DEFSYM (Qprint_escape_nonascii, "print-escape-nonascii");
-  DEFSYM (Qprint_escape_control_characters, "print-escape-control-characters");
 
   print_prune_charset_plist = Qnil;
   staticpro (&print_prune_charset_plist);

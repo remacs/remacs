@@ -595,13 +595,6 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   XWINDOW (minibuf_window)->hscroll = 0;
   XWINDOW (minibuf_window)->suspend_auto_hscroll = 0;
 
-  /* Why does this code set print-escape-newlines?  No call to Fprin1
-     or to Fprint is anywhere in sight.  FIXME: Either remove the next
-     two lines of code along with this comment, or replace this
-     comment with an explanation for why the two lines are needed.  */
-  Fmake_local_variable (Qprint_escape_newlines);
-  print_escape_newlines = 1;
-
   /* Erase the buffer.  */
   {
     ptrdiff_t count1 = SPECPDL_INDEX ();
