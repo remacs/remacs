@@ -1517,7 +1517,8 @@ line."
      (insert (propertize
               (format (format "%%%dd" calendar-day-digit-width) day)
               'mouse-face 'highlight
-              'help-echo (eval calendar-date-echo-text)
+              'help-echo (calendar-dlet* ((day day) (month month) (year year))
+                           (eval calendar-date-echo-text))
               ;; 'date property prevents intermonth text confusing re-searches.
               ;; (Tried intangible, it did not really work.)
               'date t)
