@@ -15,6 +15,7 @@ rust:
 stages:
   - rustfmt
   - test
+  - cerrors
 
 jobs:
   include:
@@ -36,7 +37,7 @@ jobs:
       script:
         - ./autogen.sh && RUSTFLAGS="-Dwarnings" ./configure
         - make -j 3 && echo '==> Running tests' && make check
-    - 
+    -
       <<: *FULL_TEST
       os: osx
       env:
@@ -66,6 +67,15 @@ jobs:
       os: osx
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
+    - stage: cerrors
+      os: linux  # No need to run this everywhere
+      before_script:
+        - sudo apt install -y texinfo libgif-dev libxpm-dev
+        - travis_wait rustup install $(cat rust-toolchain)
+        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings --with-gif=no
+        - make -j 3
+      script:
+        - ./.travis-cerrors.sh
 
 notifications:
   fast_finish: true

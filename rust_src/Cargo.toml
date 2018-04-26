@@ -43,5 +43,6 @@ panic = "abort"
 panic = "abort"
 
 [features]
+compile-errors = []
 # Treat warnings as a build error on Travis.
 strict = []

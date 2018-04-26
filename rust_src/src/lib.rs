@@ -104,3 +104,14 @@ include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
 pub use functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
+
+#[cfg(feature = "compile-errors")]
+mod compile_errors {
+    use lisp::LispObject;
+    use remacs_macros::lisp_fn;
+
+    #[lisp_fn]
+    fn dummy(x: LispObject) -> LispObject {
+        compile_error!("error 001");
+    }
+}

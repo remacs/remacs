@@ -13,14 +13,13 @@ extern crate remacs_util;
 extern crate syn;
 
 use proc_macro::TokenStream;
-use quote::ToTokens;
 use regex::Regex;
 
 mod function;
 
 #[proc_macro_attribute]
 pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
-    let fn_item = syn::parse(fn_ts).unwrap();
+    let fn_item = syn::parse(fn_ts.clone()).unwrap();
     let function = function::parse(&fn_item).unwrap();
     let lisp_fn_args = match remacs_util::parse_lisp_fn(
         &attr_ts.to_string(),
@@ -93,7 +92,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         };
     }
 
-    let mut tokens = quote! {
+    let tokens = quote! {
         #[no_mangle]
         pub extern "C" fn #fname(#cargs) -> ::remacs_sys::Lisp_Object {
             #body
@@ -134,8 +133,8 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     // drops all of the line numbers on the floor and causes the
     // compiler to attribute any errors in the function to the macro
     // invocation instead.
-    tokens.append_all(fn_item.into_tokens());
-    tokens.into()
+    let tokens: TokenStream = tokens.into();
+    tokens.into_iter().chain(fn_ts.into_iter()).collect()
 }
 
 struct CByteLiteral<'a>(&'a str);
