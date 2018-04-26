@@ -625,11 +625,12 @@ This may also be a list of regexps."
 			      (widget-editable-list-match widget value)))
 		 regexp))
 
-(defcustom message-forward-included-headers nil
+(defcustom message-forward-included-headers
+  '("^From:" "^Subject:" "^Date:")
   "If non-nil, delete non-matching headers when forwarding a message.
 Only headers that match this regexp will be included.  This
 variable should be a regexp or a list of regexps."
-  :version "25.1"
+  :version "27.1"
   :group 'message-forwarding
   :type '(repeat :value-to-internal (lambda (widget value)
 				      (custom-split-regexp-maybe value))
@@ -7436,7 +7437,8 @@ Optional DIGEST will use digest to forward."
       (when message-forward-included-headers
 	(message-remove-header
 	 (if (listp message-forward-included-headers)
-	     (regexp-opt message-forward-included-headers)
+	     (mapconcat #'identity (cons "^$" message-forward-included-headers)
+			"\\|")
 	   message-forward-included-headers)
 	 t nil t)))))
 

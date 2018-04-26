@@ -316,7 +316,7 @@ when forwarding a message.
 @item message-forward-included-headers
 @vindex message-forward-included-headers
 In non-@code{nil}, only headers that match this regexp will be kept
-when forwarding a message.
+when forwarding a message.  This can also be a list of regexps.
 
 @item message-make-forward-subject-function
 @vindex message-make-forward-subject-function

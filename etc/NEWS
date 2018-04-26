@@ -425,9 +425,14 @@ achieve this, add 'message-sign-encrypt-if-all-keys-available' to
 '"foo@bar.com" <foo@bar.com>', Message will elide the repeated "name"
 from the address field in the response.
 
+---
 *** The default of 'message-forward-as-mime' has changed from t to nil
 as it has been reported that many recipients can't read forwards that
 are formatted as MIME digests.
+
++++
+*** `message-forward-included-headers' has changed its default to
+exclude most headers when forwarding.
 
 * New Modes and Packages in Emacs 27.1
 
