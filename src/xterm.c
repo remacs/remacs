@@ -360,17 +360,12 @@ x_begin_cr_clip (struct frame *f, GC gc)
 
       if (! FRAME_CR_SURFACE (f))
         {
-          cairo_surface_t *surface;
-          surface = cairo_xlib_surface_create (FRAME_X_DISPLAY (f),
-                                               FRAME_X_DRAWABLE (f),
-                                               FRAME_DISPLAY_INFO (f)->visual,
-                                               FRAME_PIXEL_WIDTH (f),
-                                               FRAME_PIXEL_HEIGHT (f));
-          cr = cairo_create (surface);
-          cairo_surface_destroy (surface);
-        }
-      else
-        cr = cairo_create (FRAME_CR_SURFACE (f));
+	  FRAME_CR_SURFACE (f) =
+	    cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
+					FRAME_PIXEL_WIDTH (f),
+					FRAME_PIXEL_HEIGHT (f));
+	}
+      cr = cairo_create (FRAME_CR_SURFACE (f));
       FRAME_CR_CONTEXT (f) = cr;
     }
   cairo_save (cr);
@@ -1239,32 +1234,24 @@ x_update_end (struct frame *f)
 #ifdef USE_CAIRO
   if (FRAME_CR_SURFACE (f))
     {
-      cairo_t *cr = 0;
-      block_input();
-#if defined (USE_GTK) && defined (HAVE_GTK3)
-      if (FRAME_GTK_WIDGET (f))
-        {
-          GdkWindow *w = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
-          cr = gdk_cairo_create (w);
-        }
-      else
-#endif
-        {
-          cairo_surface_t *surface;
-          int width = FRAME_PIXEL_WIDTH (f);
-          int height = FRAME_PIXEL_HEIGHT (f);
-          if (! FRAME_EXTERNAL_TOOL_BAR (f))
-            height += FRAME_TOOL_BAR_HEIGHT (f);
-          if (! FRAME_EXTERNAL_MENU_BAR (f))
-            height += FRAME_MENU_BAR_HEIGHT (f);
-          surface = cairo_xlib_surface_create (FRAME_X_DISPLAY (f),
-                                               FRAME_X_DRAWABLE (f),
-                                               FRAME_DISPLAY_INFO (f)->visual,
-                                               width,
-                                               height);
-          cr = cairo_create (surface);
-          cairo_surface_destroy (surface);
-        }
+      cairo_t *cr;
+      cairo_surface_t *surface;
+      int width, height;
+
+      block_input ();
+      width = FRAME_PIXEL_WIDTH (f);
+      height = FRAME_PIXEL_HEIGHT (f);
+      if (! FRAME_EXTERNAL_TOOL_BAR (f))
+	height += FRAME_TOOL_BAR_HEIGHT (f);
+      if (! FRAME_EXTERNAL_MENU_BAR (f))
+	height += FRAME_MENU_BAR_HEIGHT (f);
+      surface = cairo_xlib_surface_create (FRAME_X_DISPLAY (f),
+					   FRAME_X_DRAWABLE (f),
+					   FRAME_DISPLAY_INFO (f)->visual,
+					   width,
+					   height);
+      cr = cairo_create (surface);
+      cairo_surface_destroy (surface);
 
       cairo_set_source_surface (cr, FRAME_CR_SURFACE (f), 0, 0);
       cairo_paint (cr);
@@ -4256,7 +4243,28 @@ x_scroll_run (struct window *w, struct run *run)
   x_clear_cursor (w);
 
 #ifdef USE_CAIRO
-  SET_FRAME_GARBAGED (f);
+  if (FRAME_CR_CONTEXT (f))
+    {
+      cairo_surface_t *s = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
+						       width, height);
+      cairo_t *cr = cairo_create (s);
+      cairo_set_source_surface (cr, cairo_get_target (FRAME_CR_CONTEXT (f)),
+				-x, -from_y);
+      cairo_paint (cr);
+      cairo_destroy (cr);
+
+      cr = FRAME_CR_CONTEXT (f);
+      cairo_save (cr);
+      cairo_set_source_surface (cr, s, 0, to_y);
+      cairo_rectangle (cr, x, to_y, width, height);
+      cairo_fill (cr);
+      cairo_restore (cr);
+      cairo_surface_destroy (s);
+    }
+  else
+    {
+      SET_FRAME_GARBAGED (f);
+    }
 #else
   XCopyArea (FRAME_X_DISPLAY (f),
              FRAME_X_DRAWABLE (f), FRAME_X_DRAWABLE (f),

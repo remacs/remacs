@@ -4629,6 +4629,8 @@ lookup_rgb_color (struct frame *f, int r, int g, int b)
   return PALETTERGB (r >> 8, g >> 8, b >> 8);
 #elif defined HAVE_NS
   return RGB_TO_ULONG (r >> 8, g >> 8, b >> 8);
+#elif defined USE_CAIRO
+  return (0xffu << 24) | (r << 16) | (g << 8) | b;
 #else
   xsignal1 (Qfile_error,
 	    build_string ("This Emacs mishandles this image file type"));
@@ -6702,10 +6704,10 @@ jpeg_load_body (struct frame *f, struct image *img,
   FILE *volatile fp = NULL;
   JSAMPARRAY buffer;
   int row_stride, x, y;
-  unsigned long *colors;
   int width, height;
   int i, ir, ig, ib;
 #ifndef USE_CAIRO
+  unsigned long *colors;
   XImagePtr ximg = NULL;
 #endif
 
@@ -6823,7 +6825,7 @@ jpeg_load_body (struct frame *f, struct image *img,
     else
       ir = 0, ig = 0, ib = 0;
 
-#ifndef CAIRO
+#ifndef USE_CAIRO
     /* Use the color table mechanism because it handles colors that
        cannot be allocated nicely.  Such colors will be replaced with
        a default color, and we don't have to care about which colors
@@ -8537,7 +8539,9 @@ imagemagick_load_image (struct frame *f, struct image *img,
   int width, height;
   size_t image_width, image_height;
   MagickBooleanType status;
+#ifndef USE_CAIRO
   XImagePtr ximg;
+#endif
   int x, y;
   MagickWand *image_wand;
   PixelIterator *iterator;
@@ -8551,6 +8555,9 @@ imagemagick_load_image (struct frame *f, struct image *img,
   double rotation;
   char hint_buffer[MaxTextExtent];
   char *filename_hint = NULL;
+#ifdef USE_CAIRO
+  void *data = NULL;
+#endif
 
   /* Initialize the ImageMagick environment.  */
   static bool imagemagick_initialized;
@@ -8759,6 +8766,12 @@ imagemagick_load_image (struct frame *f, struct image *img,
       /* Magicexportimage is normally faster than pixelpushing.  This
          method is also well tested.  Some aspects of this method are
          ad-hoc and needs to be more researched. */
+      void *dataptr;
+#ifdef USE_CAIRO
+      data = xmalloc (width * height * 4);
+      const char *exportdepth = "BGRA";
+      dataptr = data;
+#else
       int imagedepth = 24; /*MagickGetImageDepth(image_wand);*/
       const char *exportdepth = imagedepth <= 8 ? "I" : "BGRP"; /*"RGBP";*/
       /* Try to create a x pixmap to hold the imagemagick pixmap.  */
@@ -8771,6 +8784,8 @@ imagemagick_load_image (struct frame *f, struct image *img,
 	  image_error ("Imagemagick X bitmap allocation failure");
 	  goto imagemagick_error;
 	}
+      dataptr = ximg->data;
+#endif /* not USE_CAIRO */
 
       /* Oddly, the below code doesn't seem to work:*/
       /* switch(ximg->bitmap_unit){ */
@@ -8793,14 +8808,17 @@ imagemagick_load_image (struct frame *f, struct image *img,
       */
       int pixelwidth = CharPixel; /*??? TODO figure out*/
       MagickExportImagePixels (image_wand, 0, 0, width, height,
-			       exportdepth, pixelwidth, ximg->data);
+			       exportdepth, pixelwidth, dataptr);
     }
   else
 #endif /* HAVE_MAGICKEXPORTIMAGEPIXELS */
     {
       size_t image_height;
       MagickRealType color_scale = 65535.0 / QuantumRange;
-
+#ifdef USE_CAIRO
+      data = xmalloc (width * height * 4);
+      color_scale /= 256;
+#else
       /* Try to create a x pixmap to hold the imagemagick pixmap.  */
       if (!image_create_x_image_and_pixmap (f, img, width, height, 0,
 					    &ximg, 0))
@@ -8811,6 +8829,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
           image_error ("Imagemagick X bitmap allocation failure");
           goto imagemagick_error;
         }
+#endif
 
       /* Copy imagemagick image to x with primitive yet robust pixel
          pusher loop.  This has been tested a lot with many different
@@ -8823,7 +8842,9 @@ imagemagick_load_image (struct frame *f, struct image *img,
 #ifdef COLOR_TABLE_SUPPORT
 	  free_color_table ();
 #endif
+#ifndef USE_CAIRO
 	  x_destroy_x_image (ximg);
+#endif
           image_error ("Imagemagick pixel iterator creation failed");
           goto imagemagick_error;
         }
@@ -8839,16 +8860,27 @@ imagemagick_load_image (struct frame *f, struct image *img,
 	  for (x = 0; x < xlim; x++)
             {
               PixelGetMagickColor (pixels[x], &pixel);
+#ifdef USE_CAIRO
+	      ((uint32_t *)data)[width * y + x] =
+		lookup_rgb_color (f,
+				  color_scale * pixel.red,
+				  color_scale * pixel.green,
+				  color_scale * pixel.blue);
+#else
               XPutPixel (ximg, x, y,
                          lookup_rgb_color (f,
 					   color_scale * pixel.red,
 					   color_scale * pixel.green,
 					   color_scale * pixel.blue));
+#endif
             }
         }
       DestroyPixelIterator (iterator);
     }
 
+#ifdef USE_CAIRO
+  create_cairo_image_surface (img, data, width, height);
+#else
 #ifdef COLOR_TABLE_SUPPORT
   /* Remember colors allocated for this image.  */
   img->colors = colors_in_color_table (&img->ncolors);
@@ -8860,6 +8892,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
   /* Put ximg into the image.  */
   image_put_x_image (f, img, ximg, 0);
+#endif
 
   /* Final cleanup. image_wand should be the only resource left. */
   DestroyMagickWand (image_wand);
