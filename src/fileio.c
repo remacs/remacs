@@ -573,16 +573,6 @@ directory_file_name (char *dst, char *src, ptrdiff_t srclen, bool multibyte)
   return srclen;
 }
 
-DEFUN ("directory-name-p", Fdirectory_name_p, Sdirectory_name_p, 1, 1, 0,
-       doc: /* Return non-nil if NAME ends with a directory separator character.  */)
-  (Lisp_Object name)
-{
-  CHECK_STRING (name);
-  ptrdiff_t namelen = SBYTES (name);
-  unsigned char c = namelen ? SREF (name, namelen - 1) : 0;
-  return IS_DIRECTORY_SEP (c) ? Qt : Qnil;
-}
-
 /* Return the expansion of NEWNAME, except that if NEWNAME is a
    directory name then return the expansion of FILE's basename under
    NEWNAME.  This resembles how 'cp FILE NEWNAME' works, except that
@@ -6049,7 +6039,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_name_nondirectory);
   defsubr (&Sunhandled_file_name_directory);
   defsubr (&Sfile_name_as_directory);
-  defsubr (&Sdirectory_name_p);
   defsubr (&Sdirectory_file_name);
   defsubr (&Smake_temp_file_internal);
   defsubr (&Smake_temp_name);

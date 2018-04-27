@@ -59,6 +59,7 @@ mod dispnew;
 mod editfns;
 mod eval;
 mod ffi;
+mod fileio;
 mod floatfns;
 mod fns;
 mod fonts;
