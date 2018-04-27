@@ -396,16 +396,24 @@ To restore the old behavior, use
 Previously eshell/kill would fail if provided a kill signal to send to the
 process.  It now accepts signals specified either by name or by its number.
 
-
 ** Pcomplete
 *** The function 'pcomplete-uniquify-list' has been renamed from
 'pcomplete-uniqify-list'.
+
+
+** Auth-source
+
+---
+*** The Secret Service backend supports the :create key now.
 
 ** Tramp
 
 +++
 *** New connection method "owncloud", which allows to access OwnCloud
 or NextCloud hosted files and directories.
+
++++
+*** Validated passwords are saved by auth-source backends which support this.
 
 ---
 ** The options.el library has been removed.

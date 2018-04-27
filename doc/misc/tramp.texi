@@ -1675,6 +1675,13 @@ file name syntax, must be appended to the machine and login items:
 machine melancholia#4711 port davs login daniel%BIZARRE password geheim
 @end example
 
+@vindex auth-source-save-behavior
+If there doesn't exist a proper entry, the password is read
+interactively.  After successful login (verification of the password),
+it is offered to save a corresponding entry for further use by
+@code{auth-source} backends which support this.  This could be changed
+by setting the variable @code{auth-source-save-behavior} to @code{nil}.
+
 @vindex auth-source-debug
 Set @code{auth-source-debug} to @code{t} to debug messages.
 
