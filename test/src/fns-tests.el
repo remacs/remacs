@@ -575,4 +575,22 @@
                                :type 'wrong-type-argument)
                  '(wrong-type-argument plistp (:foo 1 . :bar)))))
 
+(ert-deftest test-string-distance ()
+  "Test `string-distance' behavior."
+  ;; ASCII characters are always fine
+  (should (equal 1 (string-distance "heelo" "hello")))
+  (should (equal 2 (string-distance "aeelo" "hello")))
+  (should (equal 0 (string-distance "ab" "ab" t)))
+  (should (equal 1 (string-distance "ab" "abc" t)))
+
+  ;; string containing hanzi character, compare by byte
+  (should (equal 6 (string-distance "ab" "ab我她" t)))
+  (should (equal 3 (string-distance "ab" "a我b" t)))
+  (should (equal 3 (string-distance "我" "她" t)))
+
+  ;; string containing hanzi character, compare by character
+  (should (equal 2 (string-distance "ab" "ab我她")))
+  (should (equal 1 (string-distance "ab" "a我b")))
+  (should (equal 1 (string-distance "我" "她"))))
+
 (provide 'fns-tests)

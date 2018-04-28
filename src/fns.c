@@ -155,9 +155,11 @@ If STRING is multibyte, this may be greater than the length of STRING.  */)
 
 DEFUN ("string-distance", Fstring_distance, Sstring_distance, 2, 3, 0,
        doc: /* Return Levenshtein distance between STRING1 and STRING2.
-If BYTECOMPARE is nil, compare character of strings.
-If BYTECOMPARE is t, compare byte of strings.
-Case is significant, but text properties are ignored. */)
+The distance is the number of deletions, insertions, and substitutions
+required to transform STRING1 into STRING2.
+If BYTECOMPARE is nil or omitted, compute distance in terms of characters.
+If BYTECOMPARE is non-nil, compute distance in terms of bytes.
+Letter-case is significant, but text properties are ignored. */)
   (Lisp_Object string1, Lisp_Object string2, Lisp_Object bytecompare)
 
 {

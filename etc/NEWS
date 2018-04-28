@@ -534,7 +534,8 @@ manual for more details.
 +++
 ** New function assoc-delete-all.
 
-** New function string-distance to calculate Levenshtein distance
++++
+** New function 'string-distance' to calculate the Levenshtein distance
 between two strings.
 
 ** 'print-quoted' now defaults to t, so if you want to see
