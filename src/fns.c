@@ -166,10 +166,11 @@ Letter-case is significant, but text properties are ignored. */)
   CHECK_STRING (string1);
   CHECK_STRING (string2);
 
-  bool use_byte_compare = !NILP (bytecompare)
+  bool use_byte_compare =
+    !NILP (bytecompare)
     || (!STRING_MULTIBYTE (string1) && !STRING_MULTIBYTE (string2));
-  ptrdiff_t len1 = use_byte_compare? SBYTES (string1) : SCHARS (string1);
-  ptrdiff_t len2 = use_byte_compare? SBYTES (string2) : SCHARS (string2);
+  ptrdiff_t len1 = use_byte_compare ? SBYTES (string1) : SCHARS (string1);
+  ptrdiff_t len2 = use_byte_compare ? SBYTES (string2) : SCHARS (string2);
   ptrdiff_t x, y, lastdiag, olddiag;
 
   USE_SAFE_ALLOCA;
@@ -188,7 +189,8 @@ Letter-case is significant, but text properties are ignored. */)
           for (y = 1, lastdiag = x - 1; y <= len1; y++)
             {
               olddiag = column[y];
-              column[y] = min (min (column[y] + 1, column[y-1] + 1), lastdiag + (s1[y-1] == s2[x-1]? 0 : 1));
+              column[y] = min (min (column[y] + 1, column[y-1] + 1),
+			       lastdiag + (s1[y-1] == s2[x-1] ? 0 : 1));
               lastdiag = olddiag;
             }
         }
@@ -206,7 +208,8 @@ Letter-case is significant, but text properties are ignored. */)
             {
               olddiag = column[y];
               FETCH_STRING_CHAR_ADVANCE (c1, string1, i1, i1_byte);
-              column[y] = min (min (column[y] + 1, column[y-1] + 1), lastdiag + (c1 == c2? 0 : 1));
+              column[y] = min (min (column[y] + 1, column[y-1] + 1),
+			       lastdiag + (c1 == c2 ? 0 : 1));
               lastdiag = olddiag;
             }
         }
