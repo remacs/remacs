@@ -2721,7 +2721,7 @@ typedef struct tty_menu_struct
 
 /* Create a brand new menu structure.  */
 
-static tty_menu *
+static tty_menu * ATTRIBUTE_MALLOC
 tty_menu_create (void)
 {
   return xzalloc (sizeof *tty_menu_create ());

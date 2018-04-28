@@ -30,7 +30,7 @@ int tgetnum (const char *);
 char *tgetstr (const char *, char **);
 char *tgoto (const char *, int, int);
 
-char *tparam (const char *, char *, int, int, int, int, int);
+char *tparam (const char *, char *, int, int, int, int, int) ATTRIBUTE_MALLOC;
 
 extern char PC;
 extern char *BC;

@@ -212,7 +212,7 @@
 
 /* When used in Emacs's lib-src, we need xmalloc and xrealloc. */
 
-static void *
+static ATTRIBUTE_MALLOC void *
 xmalloc (size_t size)
 {
   void *val = malloc (size);
@@ -4033,8 +4033,7 @@ analyze_first (re_char *p, re_char *pend, char *fastmap,
 	    };
 	  /* Keep `p1' to allow the `on_failure_jump' we are jumping to
 	     to jump back to "just after here".  */
-	  /* Fallthrough */
-
+	  FALLTHROUGH;
 	case on_failure_jump:
 	case on_failure_keep_string_jump:
 	case on_failure_jump_nastyloop:

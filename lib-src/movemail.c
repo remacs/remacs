@@ -145,7 +145,7 @@ static bool mbx_delimit_end (FILE *);
      || (!defined DISABLE_DIRECT_ACCESS && !defined MAIL_USE_SYSTEM_LOCK))
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (size_t size)
 {
   void *result = malloc (size);

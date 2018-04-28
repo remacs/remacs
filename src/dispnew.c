@@ -1280,7 +1280,7 @@ row_equal_p (struct glyph_row *a, struct glyph_row *b, bool mouse_face_p)
    with zeros.  If GLYPH_DEBUG and ENABLE_CHECKING are in effect, the global
    variable glyph_pool_count is incremented for each pool allocated.  */
 
-static struct glyph_pool *
+static struct glyph_pool * ATTRIBUTE_MALLOC
 new_glyph_pool (void)
 {
   struct glyph_pool *result = xzalloc (sizeof *result);

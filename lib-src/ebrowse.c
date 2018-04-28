@@ -494,7 +494,7 @@ yyerror (const char *format, const char *s)
 /* Like malloc but print an error and exit if not enough memory is
    available.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (size_t nbytes)
 {
   void *p = malloc (nbytes);

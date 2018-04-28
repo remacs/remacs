@@ -123,7 +123,7 @@ memory_exhausted (void)
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (ptrdiff_t size)
 {
   void *result = malloc (size);

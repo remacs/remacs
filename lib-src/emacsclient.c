@@ -192,7 +192,7 @@ struct option longopts[] =
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (size_t size)
 {
   void *result = malloc (size);
@@ -219,7 +219,7 @@ xrealloc (void *ptr, size_t size)
 }
 
 /* Like strdup but get a fatal error if memory is exhausted. */
-char *xstrdup (const char *);
+char *xstrdup (const char *) ATTRIBUTE_MALLOC;
 
 char *
 xstrdup (const char *s)
@@ -261,7 +261,7 @@ get_current_dir_name (void)
 #endif
       )
     {
-      buf = (char *) xmalloc (strlen (pwd) + 1);
+      buf = xmalloc (strlen (pwd) + 1);
       strcpy (buf, pwd);
     }
   else
@@ -312,12 +312,15 @@ w32_get_resource (HKEY predefined, const char *key, LPDWORD type)
 
   if (RegOpenKeyEx (predefined, REG_ROOT, 0, KEY_READ, &hrootkey) == ERROR_SUCCESS)
     {
-      if (RegQueryValueEx (hrootkey, key, NULL, NULL, NULL, &cbData) == ERROR_SUCCESS)
+      if (RegQueryValueEx (hrootkey, key, NULL, NULL, NULL, &cbData)
+	  == ERROR_SUCCESS)
 	{
-	  result = (char *) xmalloc (cbData);
+	  result = xmalloc (cbData);
 
-	  if ((RegQueryValueEx (hrootkey, key, NULL, type, (LPBYTE)result, &cbData) != ERROR_SUCCESS)
-	      || (*result == 0))
+	  if ((RegQueryValueEx (hrootkey, key, NULL, type, (LPBYTE) result,
+				&cbData)
+	       != ERROR_SUCCESS)
+	      || *result == 0)
 	    {
 	      free (result);
 	      result = NULL;
@@ -369,7 +372,7 @@ w32_getenv (const char *envvar)
 
       if ((size = ExpandEnvironmentStrings (value, NULL, 0)))
 	{
-	  char *buffer = (char *) xmalloc (size);
+	  char *buffer = xmalloc (size);
 	  if (ExpandEnvironmentStrings (value, buffer, size))
 	    {
 	      /* Found and expanded.  */
@@ -700,7 +703,7 @@ fail (void)
     {
       size_t extra_args_size = (main_argc - optind + 1) * sizeof (char *);
       size_t new_argv_size = extra_args_size;
-      char **new_argv = NULL;
+      char **new_argv = xmalloc (new_argv_size);
       char *s = xstrdup (alternate_editor);
       unsigned toks = 0;
 
@@ -833,7 +836,7 @@ send_to_emacs (HSOCKET s, const char *data)
 static void
 quote_argument (HSOCKET s, const char *str)
 {
-  char *copy = (char *) xmalloc (strlen (str) * 2 + 1);
+  char *copy = xmalloc (strlen (str) * 2 + 1);
   const char *p;
   char *q;
 
@@ -1843,7 +1846,7 @@ main (int argc, char **argv)
 	       careful to expand <relpath> with the default directory
 	       corresponding to <drive>.  */
 	    {
-	      char *filename = (char *) xmalloc (MAX_PATH);
+	      char *filename = xmalloc (MAX_PATH);
 	      DWORD size;
 
 	      size = GetFullPathName (argv[i], MAX_PATH, filename, NULL);
