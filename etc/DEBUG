@@ -42,6 +42,9 @@ created in the 'src' directory.
 
 *** Configuring GDB
 
+To start GDB, you can simply type "gdb RET" at the shell prompt.
+However, we recommend starting GDB from Emacs, see below.
+
 When you debug Emacs with GDB, you should start GDB in the directory
 where the Emacs executable was made (the 'src' directory in the Emacs
 source tree).  That directory has a .gdbinit file that defines various
@@ -51,16 +54,19 @@ Emacs Redisplay problems".)
 
 Starting the debugger from Emacs, via the "M-x gdb" command (described
 below), when the current buffer visits one of the Emacs C source files
-will automatically start GDB in the 'src' directory.
+will automatically start GDB in the 'src' directory.  If you invoke
+"M-x gdb" from a buffer whose default directory is different, such as
+from the "*scratch*" buffer, you can change the default directory with
+the "M-x cd" command before starting the debugger.
 
-Some GDB versions by default do not automatically load .gdbinit files
-in the directory where you invoke GDB.  With those versions of GDB,
-you will see a warning when GDB starts, like this:
+Recent GDB versions by default do not automatically load .gdbinit
+files in the directory where you invoke GDB.  With those versions of
+GDB, you will see a warning when GDB starts, like this:
 
   warning: File ".../src/.gdbinit" auto-loading has been declined by your `auto-load safe-path' set to "$debugdir:$datadir/auto-load".
 
 The simplest way to fix this is to add the following line to your
-~/.gdbinit file:
+~/.gdbinit file (creating such a file if it doesn't already exist):
 
   add-auto-load-safe-path /path/to/emacs/src/.gdbinit
 
@@ -132,9 +138,12 @@ to the debugger".
 
 You are now ready to start your debugging session.
 
+*** Running Emacs from GDB
+
 If you are starting a new Emacs session, type "run", followed by any
 command-line arguments (e.g., "-Q") into the *gud-emacs* buffer and
-press RET.
+press RET.  If you ran GDB outside of Emacs, type "run" followed by
+the command-line arguments at the GDB prompt instead.
 
 If you attached the debugger to a running Emacs, type "continue" into
 the *gud-emacs* buffer and press RET.
