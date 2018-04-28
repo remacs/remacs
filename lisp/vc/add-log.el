@@ -1024,6 +1024,13 @@ the change log file in another window."
 (defvar smerge-resolve-function)
 (defvar copyright-at-end-flag)
 
+(defvar change-log-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    (modify-syntax-entry ?` "'   " table)
+    (modify-syntax-entry ?' "'   " table)
+    table)
+  "Syntax table used while in `change-log-mode'.")
+
 ;;;###autoload
 (define-derived-mode change-log-mode text-mode "Change Log"
   "Major mode for editing change logs; like Indented Text mode.
