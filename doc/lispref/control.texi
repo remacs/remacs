@@ -703,7 +703,8 @@ This construct executes @var{body} once for each integer from 0
 (inclusive) to @var{count} (exclusive), binding the variable @var{var}
 to the integer for the current iteration.  Then it returns the value
 of evaluating @var{result}, or @code{nil} if @var{result} is omitted.
-Here is an example of using @code{dotimes} to do something 100 times:
+Use of @var{result} is deprecated.  Here is an example of using
+@code{dotimes} to do something 100 times:
 
 @example
 (dotimes (i 100)

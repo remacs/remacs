@@ -11013,9 +11013,8 @@ The @code{dotimes} macro is similar to @code{dolist}, except that it
 loops a specific number of times.
 
 The first argument to @code{dotimes} is assigned the numbers 0, 1, 2
-and so forth each time around the loop, and the value of the third
-argument is returned.  You need to provide the value of the second
-argument, which is how many times the macro loops.
+and so forth each time around the loop.  You need to provide the value
+of the second argument, which is how many times the macro loops.
 
 @need 1250
 For example, the following binds the numbers from 0 up to, but not
@@ -11027,17 +11026,18 @@ three numbers in all, starting with zero as the first number.)
 @smallexample
 @group
 (let (value)      ; otherwise a value is a void variable
-  (dotimes (number 3 value)
-    (setq value (cons number value))))
+  (dotimes (number 3)
+    (setq value (cons number value)))
+  value)
 
 @result{} (2 1 0)
 @end group
 @end smallexample
 
 @noindent
-@code{dotimes} returns @code{value}, so the way to use
-@code{dotimes} is to operate on some expression @var{number} number of
-times and then return the result, either as a list or an atom.
+The way to use @code{dotimes} is to operate on some expression
+@var{number} number of times and then return the result, either as
+a list or an atom.
 
 @need 1250
 Here is an example of a @code{defun} that uses @code{dotimes} to add
@@ -11048,8 +11048,9 @@ up the number of pebbles in a triangle.
 (defun triangle-using-dotimes (number-of-rows)
   "Using `dotimes', add up the number of pebbles in a triangle."
 (let ((total 0))  ; otherwise a total is a void variable
-  (dotimes (number number-of-rows total)
-    (setq total (+ total (1+ number))))))
+  (dotimes (number number-of-rows)
+    (setq total (+ total (1+ number))))
+  total))
 
 (triangle-using-dotimes 4)
 @end group

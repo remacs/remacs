@@ -138,8 +138,9 @@ changes."
 
 (defun multiply-string (s n)
   (let ((res ""))
-    (dotimes (i n res)
-      (setq res (concat res s)))))
+    (dotimes (i n)
+      (setq res (concat res s)))
+    res))
 
 (ert-deftest mod-test-globref-make-test ()
   (let ((mod-str (mod-test-globref-make))

@@ -1129,14 +1129,16 @@ delivered."
 	     ;; w32notify fires both `deleted' and `renamed' events.
 	     ((string-equal (file-notify--test-library) "w32notify")
 	      (let (r)
-		(dotimes (_i n r)
-		  (setq r (append '(deleted renamed) r)))))
+		(dotimes (_i n)
+		  (setq r (append '(deleted renamed) r)))
+		r))
 	     ;; cygwin fires `changed' and `deleted' events, sometimes
 	     ;; in random order.
 	     ((eq system-type 'cygwin)
 	      (let (r)
-		(dotimes (_i n (cons :random r))
-		  (setq r (append '(changed deleted) r)))))
+		(dotimes (_i n)
+		  (setq r (append '(changed deleted) r)))
+		(cons :random r)))
 	     (t (make-list n 'renamed)))
           (let ((source-file-list source-file-list)
                 (target-file-list target-file-list))
