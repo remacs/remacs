@@ -16,7 +16,8 @@ make the debugging easier.  Here's the configure-time options we
 recommend (they are in addition to any other options you might need,
 such as --prefix):
 
-  CFLAGS='-O0 -g3' ./configure --enable-checking='yes,glyphs' --enable-check-lisp-object-type
+  ./configure --enable-checking='yes,glyphs' --enable-check-lisp-object-type \
+    CFLAGS='-O0 -g3'
 
 The CFLAGS value is important: debugging optimized code can be very
 hard.  (If the problem only happens with optimized code, you may need

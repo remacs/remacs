@@ -126,7 +126,7 @@ This version of GCC is buggy: see
 You can work around this error in gcc-4.5 by omitting sibling call
 optimization.  To do this, configure Emacs with
 
- CFLAGS="-g -O2 -fno-optimize-sibling-calls" ./configure
+ ./configure CFLAGS="-g -O2 -fno-optimize-sibling-calls"
 
 ** Emacs compiled with GCC 4.6.1 crashes on MS-Windows when C-g is pressed
 
