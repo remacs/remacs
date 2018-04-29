@@ -309,4 +309,30 @@ pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
     !frame_ref.pointer_invisible()
 }
 
+/// Return the next frame in the frame list after `frame`.
+/// By default, skip minibuffer-only frames.
+/// If omitted, `frame` defaults to the selected frame.
+/// If optional argument `miniframe` is nil, exclude minibuffer-only frames.
+/// If `miniframe is a window, include only its own frame
+/// and frame now using that window as the minibuffer.
+/// If `miniframe` is "visible", include all visible frames.
+/// If `miniframe` is 0, include all visible and iconified frames.
+/// Otherwise, include all frames.
+#[lisp_fn(min = "0")]
+pub fn next_frame(frame: Option<LispObject>, miniframe: Option<LispObject>) -> LispObject {
+    let this_frame: LispFrameRef = frame
+        .unwrap_or(selected_frame())
+        .as_frame_or_error();
+
+    let frame_list: ::vectors::LispVectorRef = LispObject::from_raw(
+        unsafe { ::remacs_sys::Vframe_list }  
+    ).as_vector_or_error();
+
+    for fr in frame_list.iter() {
+        
+    }
+
+    return miniframe.unwrap()
+}
+
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
