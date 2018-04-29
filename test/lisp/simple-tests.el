@@ -448,6 +448,17 @@ See Bug#21722."
         (call-interactively #'eval-expression)
         (should (equal (current-message) "66 (#o102, #x42, ?B)"))))))
 
+(ert-deftest command-execute-prune-command-history ()
+  "Check that Bug#31211 is fixed."
+  (let ((history-length 1)
+        (command-history ()))
+    (dotimes (_ (1+ history-length))
+      (command-execute "" t))
+    (should (= (length command-history) history-length))))
+
+
+;;; `line-number-at-pos'
+
 (ert-deftest line-number-at-pos-in-widen-buffer ()
   (let ((target-line 3))
     (with-temp-buffer

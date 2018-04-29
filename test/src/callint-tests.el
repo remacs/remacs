@@ -43,4 +43,12 @@
                                          (list a b))))
                  '("a" "b"))))
 
+(ert-deftest call-interactively-prune-command-history ()
+  "Check that Bug#31211 is fixed."
+  (let ((history-length 1)
+        (command-history ()))
+    (dotimes (_ (1+ history-length))
+      (call-interactively #'ignore t))
+    (should (= (length command-history) history-length))))
+
 ;;; callint-tests.el ends here

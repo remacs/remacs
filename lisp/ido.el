@@ -1793,11 +1793,8 @@ is enabled then some keybindings are changed in the keymap."
 
 (defun ido-record-command (command arg)
   "Add (COMMAND ARG) to `command-history' if `ido-record-commands' is non-nil."
-  (if ido-record-commands		; FIXME: use `when' instead of `if'?
-      (let ((cmd (list command arg)))
-	(if (or (not command-history)	; FIXME: ditto
-		(not (equal cmd (car command-history))))
-	    (setq command-history (cons cmd command-history))))))
+  (when ido-record-commands
+    (add-to-history 'command-history (list command arg))))
 
 (defun ido-make-prompt (item prompt)
   ;; Make the prompt for ido-read-internal

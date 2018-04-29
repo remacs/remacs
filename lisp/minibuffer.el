@@ -2722,17 +2722,9 @@ See `read-file-name' for the meaning of the arguments."
               (if (string= val1 (cadr file-name-history))
                   (pop file-name-history)
                 (setcar file-name-history val1)))
-          (if add-to-history
-              ;; Add the value to the history--but not if it matches
-              ;; the last value already there.
-              (let ((val1 (minibuffer-maybe-quote-filename val)))
-                (unless (and (consp file-name-history)
-                             (equal (car file-name-history) val1))
-                  (setq file-name-history
-                        (cons val1
-                              (if history-delete-duplicates
-                                  (delete val1 file-name-history)
-                                file-name-history)))))))
+          (when add-to-history
+            (add-to-history 'file-name-history
+                            (minibuffer-maybe-quote-filename val))))
 	val))))
 
 (defun internal-complete-buffer-except (&optional buffer)

@@ -1813,13 +1813,9 @@ If CHARSET is nil then use UTF-8."
 (defun eww-save-history ()
   (plist-put eww-data :point (point))
   (plist-put eww-data :text (buffer-string))
-  (push eww-data eww-history)
-  (setq eww-data (list :title ""))
-  ;; Don't let the history grow infinitely.  We store quite a lot of
-  ;; data per page.
-  (when-let* ((tail (and eww-history-limit
-		         (nthcdr eww-history-limit eww-history))))
-    (setcdr tail nil)))
+  (let ((history-delete-duplicates nil))
+    (add-to-history 'eww-history eww-data eww-history-limit t))
+  (setq eww-data (list :title "")))
 
 (defvar eww-current-buffer)
 

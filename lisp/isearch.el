@@ -1049,13 +1049,12 @@ For a failing search, NOPUSH is t.
 For going to the minibuffer to edit the search string,
 NOPUSH is t and EDIT is t."
 
-  (if isearch-resume-in-command-history
-      (let ((command `(isearch-resume ,isearch-string ,isearch-regexp
-				      ,isearch-regexp-function ,isearch-forward
-				      ,isearch-message
-				      ',isearch-case-fold-search)))
-	(unless (equal (car command-history) command)
-	  (setq command-history (cons command command-history)))))
+  (when isearch-resume-in-command-history
+    (add-to-history 'command-history
+                    `(isearch-resume ,isearch-string ,isearch-regexp
+                                     ,isearch-regexp-function ,isearch-forward
+                                     ,isearch-message
+                                     ',isearch-case-fold-search)))
 
   (remove-hook 'pre-command-hook 'isearch-pre-command-hook)
   (remove-hook 'post-command-hook 'isearch-post-command-hook)

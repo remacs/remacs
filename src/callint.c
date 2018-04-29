@@ -262,7 +262,7 @@ to the function `interactive' at the top level of the function body.
 See `interactive'.
 
 Optional second arg RECORD-FLAG non-nil
-means unconditionally put this command in the command-history.
+means unconditionally put this command in the variable `command-history'.
 Otherwise, this is done only if an arg is read using the minibuffer.
 
 Optional third arg KEYS, if given, specifies the sequence of events to
@@ -328,18 +328,8 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	     and turn them into things we can eval.  */
 	  Lisp_Object values = quotify_args (Fcopy_sequence (specs));
 	  fix_command (input, values);
-	  Lisp_Object this_cmd = Fcons (function, values);
-	  if (history_delete_duplicates)
-	    Vcommand_history = Fdelete (this_cmd, Vcommand_history);
-	  Vcommand_history = Fcons (this_cmd, Vcommand_history);
-
-	  /* Don't keep command history around forever.  */
-	  if (INTEGERP (Vhistory_length) && XINT (Vhistory_length) > 0)
-	    {
-	      Lisp_Object teml = Fnthcdr (Vhistory_length, Vcommand_history);
-	      if (CONSP (teml))
-		XSETCDR (teml, Qnil);
-	    }
+          call4 (intern ("add-to-history"), intern ("command-history"),
+                 Fcons (function, values), Qnil, Qt);
 	}
 
       Vthis_command = save_this_command;
@@ -768,15 +758,8 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	visargs[i] = (varies[i] > 0
 		      ? list1 (intern (callint_argfuns[varies[i]]))
 		      : quotify_arg (args[i]));
-      Vcommand_history = Fcons (Flist (nargs - 1, visargs + 1),
-				Vcommand_history);
-      /* Don't keep command history around forever.  */
-      if (INTEGERP (Vhistory_length) && XINT (Vhistory_length) > 0)
-	{
-	  Lisp_Object teml = Fnthcdr (Vhistory_length, Vcommand_history);
-	  if (CONSP (teml))
-	    XSETCDR (teml, Qnil);
-	}
+      call4 (intern ("add-to-history"), intern ("command-history"),
+             Flist (nargs - 1, visargs + 1), Qnil, Qt);
     }
 
   /* If we used a marker to hold point, mark, or an end of the region,

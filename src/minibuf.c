@@ -702,44 +702,8 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
     histstring = Qnil;
 
   /* Add the value to the appropriate history list, if any.  */
-  if (!NILP (Vhistory_add_new_input)
-      && SYMBOLP (Vminibuffer_history_variable)
-      && !NILP (histstring))
-    {
-      /* If the caller wanted to save the value read on a history list,
-	 then do so if the value is not already the front of the list.  */
-
-      /* The value of the history variable must be a cons or nil.  Other
-	 values are unacceptable.  We silently ignore these values.  */
-
-      if (NILP (histval)
-	  || (CONSP (histval)
-	      /* Don't duplicate the most recent entry in the history.  */
-	      && (NILP (Fequal (histstring, Fcar (histval))))))
-	{
-	  Lisp_Object length;
-
-	  if (history_delete_duplicates) Fdelete (histstring, histval);
-	  histval = Fcons (histstring, histval);
-	  Fset (Vminibuffer_history_variable, histval);
-
-	  /* Truncate if requested.  */
-	  length = Fget (Vminibuffer_history_variable, Qhistory_length);
-	  if (NILP (length)) length = Vhistory_length;
-	  if (INTEGERP (length))
-	    {
-	      if (XINT (length) <= 0)
-		Fset (Vminibuffer_history_variable, Qnil);
-	      else
-		{
-		  Lisp_Object temp;
-
-		  temp = Fnthcdr (Fsub1 (length), histval);
-		  if (CONSP (temp)) Fsetcdr (temp, Qnil);
-		}
-	    }
-	}
-    }
+  if (! (NILP (Vhistory_add_new_input) || NILP (histstring)))
+    call2 (intern ("add-to-history"), Vminibuffer_history_variable, histstring);
 
   /* If Lisp form desired instead of string, parse it.  */
   if (expflag)

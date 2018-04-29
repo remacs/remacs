@@ -1646,13 +1646,10 @@ the minibuffer, then read and evaluate the result."
 				     'command-history)
 	     ;; If command was added to command-history as a string,
 	     ;; get rid of that.  We want only evaluable expressions there.
-	     (if (stringp (car command-history))
-		 (setq command-history (cdr command-history)))))))
+             (when (stringp (car command-history))
+               (pop command-history))))))
 
-    ;; If command to be redone does not match front of history,
-    ;; add it to the history.
-    (or (equal command (car command-history))
-	(setq command-history (cons command command-history)))
+    (add-to-history 'command-history command)
     (eval command)))
 
 (defun repeat-complex-command (arg)
@@ -1682,13 +1679,10 @@ to get different commands to edit and resubmit."
 		    ;; If command was added to command-history as a
 		    ;; string, get rid of that.  We want only
 		    ;; evaluable expressions there.
-		    (if (stringp (car command-history))
-			(setq command-history (cdr command-history))))))
+                    (when (stringp (car command-history))
+                      (pop command-history)))))
 
-	  ;; If command to be redone does not match front of history,
-	  ;; add it to the history.
-	  (or (equal newcmd (car command-history))
-	      (setq command-history (cons newcmd command-history)))
+          (add-to-history 'command-history newcmd)
           (apply #'funcall-interactively
 		 (car newcmd)
 		 (mapcar (lambda (e) (eval e t)) (cdr newcmd))))
@@ -1905,11 +1899,8 @@ a special event, so ignore the prefix argument and don't clear it."
           ;; If requested, place the macro in the command history.  For
           ;; other sorts of commands, call-interactively takes care of this.
           (when record-flag
-            (push `(execute-kbd-macro ,final ,prefixarg) command-history)
-            ;; Don't keep command history around forever.
-            (when (and (numberp history-length) (> history-length 0))
-              (let ((cell (nthcdr history-length command-history)))
-                (if (consp cell) (setcdr cell nil)))))
+            (add-to-history
+             'command-history `(execute-kbd-macro ,final ,prefixarg) nil t))
           (execute-kbd-macro final prefixarg))
          (t
           ;; Pass `cmd' rather than `final', for the backtrace's sake.
@@ -4408,9 +4399,8 @@ argument should still be a \"useful\" string for such uses."
 	       (equal-including-properties string (car kill-ring)))
     (if (and replace kill-ring)
 	(setcar kill-ring string)
-      (push string kill-ring)
-      (if (> (length kill-ring) kill-ring-max)
-	  (setcdr (nthcdr (1- kill-ring-max) kill-ring) nil))))
+      (let ((history-delete-duplicates nil))
+        (add-to-history 'kill-ring string kill-ring-max t))))
   (setq kill-ring-yank-pointer kill-ring)
   (if interprogram-cut-function
       (funcall interprogram-cut-function string)))
@@ -5724,10 +5714,11 @@ purposes.  See the documentation of `set-mark' for more information.
 
 In Transient Mark mode, activate mark if optional third arg ACTIVATE non-nil."
   (unless (null (mark t))
-    (setq mark-ring (cons (copy-marker (mark-marker)) mark-ring))
-    (when (> (length mark-ring) mark-ring-max)
-      (move-marker (car (nthcdr mark-ring-max mark-ring)) nil)
-      (setcdr (nthcdr (1- mark-ring-max) mark-ring) nil)))
+    (let ((old (nth mark-ring-max mark-ring))
+          (history-delete-duplicates nil))
+      (add-to-history 'mark-ring (copy-marker (mark-marker)) mark-ring-max t)
+      (when old
+        (set-marker old nil))))
   (set-marker (mark-marker) (or location (point)) (current-buffer))
   ;; Now push the mark on the global mark ring.
   (if (and global-mark-ring
@@ -5735,10 +5726,12 @@ In Transient Mark mode, activate mark if optional third arg ACTIVATE non-nil."
       ;; The last global mark pushed was in this same buffer.
       ;; Don't push another one.
       nil
-    (setq global-mark-ring (cons (copy-marker (mark-marker)) global-mark-ring))
-    (when (> (length global-mark-ring) global-mark-ring-max)
-      (move-marker (car (nthcdr global-mark-ring-max global-mark-ring)) nil)
-      (setcdr (nthcdr (1- global-mark-ring-max) global-mark-ring) nil)))
+    (let ((old (nth global-mark-ring-max global-mark-ring))
+          (history-delete-duplicates nil))
+      (add-to-history
+       'global-mark-ring (copy-marker (mark-marker)) global-mark-ring-max t)
+      (when old
+        (set-marker old nil))))
   (or nomsg executing-kbd-macro (> (minibuffer-depth) 0)
       (message "Mark set"))
   (if (or activate (not transient-mark-mode))
