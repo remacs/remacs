@@ -453,6 +453,9 @@ are formatted as MIME digests.
 *** 'message-forward-included-headers' has changed its default to
 exclude most headers when forwarding.
 
+** 'epa-pinentry-mode' is renamed to 'epg-pinentry-mode'.
+It now applies to epg functions as well as epa functions.
+
 * New Modes and Packages in Emacs 27.1
 
 +++

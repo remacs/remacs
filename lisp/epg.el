@@ -207,7 +207,7 @@
   output-file
   result
   operation
-  pinentry-mode
+  (pinentry-mode epg-pinentry-mode)
   (error-output "")
   error-buffer)
 

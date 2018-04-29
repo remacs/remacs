@@ -69,6 +69,27 @@ instead use \\[customize] (see the info node `Easy Customization')."
   "Coding system to use with messages from `epg-gpg-program'."
   :type 'symbol)
 
+
+;; In the doc string below, we say "symbol `error'" to avoid producing
+;; a hyperlink for `error' the function.
+(defcustom epg-pinentry-mode nil
+  "The pinentry mode.
+
+GnuPG 2.1 or later has an option to control the behavior of
+Pinentry invocation.  The value should be the symbol `error',
+`ask', `cancel', or `loopback'.  See the GnuPG manual for the
+meanings.
+
+A particularly useful mode is `loopback', which redirects all
+Pinentry queries to the caller, so Emacs can query passphrase
+through the minibuffer, instead of external Pinentry program."
+  :type '(choice (const nil)
+		 (const ask)
+		 (const cancel)
+		 (const error)
+		 (const loopback))
+  :version "27.1")
+
 (defcustom epg-debug nil
   "If non-nil, debug output goes to the \" *epg-debug*\" buffer.
 Note that the buffer name starts with a space."
