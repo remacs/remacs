@@ -42,7 +42,9 @@ created in the 'src' directory.
 
 *** Configuring GDB
 
-To start GDB, you can simply type "gdb RET" at the shell prompt.
+To start GDB to debug Emacs, you can simply type "gdb ./emacs RET" at
+the shell prompt (assuming you do that from the directory of the Emacs
+executable, usually the 'src' sub-directory of the Emacs tree).
 However, we recommend starting GDB from Emacs, see below.
 
 When you debug Emacs with GDB, you should start GDB in the directory
