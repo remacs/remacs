@@ -4423,20 +4423,20 @@ If `interprogram-cut-function' is non-nil, call it with the
 resulting kill.
 If `kill-append-merge-undo' is non-nil, remove the last undo
 boundary in the current buffer."
-  (let* ((cur (car kill-ring)))
+  (let ((cur (car kill-ring)))
     (kill-new (if before-p (concat string cur) (concat cur string))
-	      (or (= (length cur) 0)
-		  (equal nil (get-text-property 0 'yank-handler cur))))
-    (when (and kill-append-merge-undo (not buffer-read-only))
-      (let ((prev buffer-undo-list)
-            (next (cdr buffer-undo-list)))
-        ;; find the next undo boundary
-        (while (car next)
-          (pop next)
-          (pop prev))
-        ;; remove this undo boundary
-        (when prev
-          (setcdr prev (cdr next)))))))
+              (or (string= cur "")
+                  (null (get-text-property 0 'yank-handler cur)))))
+  (when (and kill-append-merge-undo (not buffer-read-only))
+    (let ((prev buffer-undo-list)
+          (next (cdr buffer-undo-list)))
+      ;; Find the next undo boundary.
+      (while (car next)
+        (pop next)
+        (pop prev))
+      ;; Remove this undo boundary.
+      (when prev
+        (setcdr prev (cdr next))))))
 
 (defcustom yank-pop-change-selection nil
   "Whether rotating the kill ring changes the window system selection.
@@ -5713,19 +5713,17 @@ Novice Emacs Lisp programmers often try to use the mark for the wrong
 purposes.  See the documentation of `set-mark' for more information.
 
 In Transient Mark mode, activate mark if optional third arg ACTIVATE non-nil."
-  (unless (null (mark t))
+  (when (mark t)
     (let ((old (nth mark-ring-max mark-ring))
           (history-delete-duplicates nil))
       (add-to-history 'mark-ring (copy-marker (mark-marker)) mark-ring-max t)
       (when old
         (set-marker old nil))))
   (set-marker (mark-marker) (or location (point)) (current-buffer))
-  ;; Now push the mark on the global mark ring.
-  (if (and global-mark-ring
-	   (eq (marker-buffer (car global-mark-ring)) (current-buffer)))
-      ;; The last global mark pushed was in this same buffer.
-      ;; Don't push another one.
-      nil
+  ;; Don't push the mark on the global mark ring if the last global
+  ;; mark pushed was in this same buffer.
+  (unless (and global-mark-ring
+               (eq (marker-buffer (car global-mark-ring)) (current-buffer)))
     (let ((old (nth global-mark-ring-max global-mark-ring))
           (history-delete-duplicates nil))
       (add-to-history
@@ -5743,10 +5741,10 @@ In Transient Mark mode, activate mark if optional third arg ACTIVATE non-nil."
 Does not set point.  Does nothing if mark ring is empty."
   (when mark-ring
     (setq mark-ring (nconc mark-ring (list (copy-marker (mark-marker)))))
-    (set-marker (mark-marker) (+ 0 (car mark-ring)) (current-buffer))
-    (move-marker (car mark-ring) nil)
-    (if (null (mark t)) (ding))
-    (setq mark-ring (cdr mark-ring)))
+    (set-marker (mark-marker) (car mark-ring))
+    (set-marker (car mark-ring) nil)
+    (unless (mark t) (ding))
+    (pop mark-ring))
   (deactivate-mark))
 
 (define-obsolete-function-alias
