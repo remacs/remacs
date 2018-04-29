@@ -174,10 +174,6 @@
   (file nil :read-only t)
   (string nil :read-only t))
 
-(defmacro epg--gv-nreverse (place)
-  (gv-letplace (getter setter) place
-    (funcall setter `(nreverse ,getter))))
-
 (cl-defstruct (epg-context
                (:constructor nil)
                (:constructor epg-context--make
@@ -1390,10 +1386,10 @@ NAME is either a string or a list of strings."
     (setq keys (nreverse keys)
 	  pointer keys)
     (while pointer
-      (epg--gv-nreverse (epg-key-sub-key-list (car pointer)))
-      (setq pointer-1 (epg--gv-nreverse (epg-key-user-id-list (car pointer))))
+      (cl-callf nreverse (epg-key-sub-key-list (car pointer)))
+      (setq pointer-1 (cl-callf nreverse (epg-key-user-id-list (car pointer))))
       (while pointer-1
-	(epg--gv-nreverse (epg-user-id-signature-list (car pointer-1)))
+	(cl-callf nreverse (epg-user-id-signature-list (car pointer-1)))
 	(setq pointer-1 (cdr pointer-1)))
       (setq pointer (cdr pointer)))
     keys))
