@@ -5709,8 +5709,7 @@ specifies the window.  This takes precedence over
       && !NILP (Vminibuf_scroll_window))
     window = Vminibuf_scroll_window;
   /* If buffer is specified and live, scroll that buffer.  */
-  else if (!NILP (Vother_window_scroll_buffer)
-	   && BUFFERP (Vother_window_scroll_buffer)
+  else if (BUFFERP (Vother_window_scroll_buffer)
 	   && BUFFER_LIVE_P (XBUFFER (Vother_window_scroll_buffer)))
     {
       window = Fget_buffer_window (Vother_window_scroll_buffer, Qnil);
@@ -5725,11 +5724,8 @@ specifies the window.  This takes precedence over
 
       if (EQ (window, selected_window))
 	/* That didn't get us anywhere; look for a window on another
-           visible frame.  */
-	do
-	  window = Fnext_window (window, Qnil, Qt);
-	while (! FRAME_VISIBLE_P (XFRAME (WINDOW_FRAME (XWINDOW (window))))
-	       && ! EQ (window, selected_window));
+           visible frame on the current terminal.  */
+        window = Fnext_window (window, Qnil, Qvisible);
     }
 
   CHECK_LIVE_WINDOW (window);
