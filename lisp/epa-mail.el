@@ -95,7 +95,7 @@ The buffer is expected to contain a mail message."
 	 (forward-line))
      (setq epa-last-coding-system-specified
 	   (or coding-system-for-write
-	       (epa--select-safe-coding-system (point) (point-max))))
+	       (select-safe-coding-system (point) (point-max))))
      (let ((verbose current-prefix-arg))
        (list (point) (point-max)
 	     (if verbose
@@ -222,7 +222,7 @@ If no one is selected, symmetric encryption will be performed.  "
 
       (setq epa-last-coding-system-specified
 	    (or coding-system-for-write
-		(epa--select-safe-coding-system (point) (point-max)))))
+		(select-safe-coding-system (point) (point-max)))))
 
     ;; Don't let some read-only text stop us from encrypting.
     (let ((inhibit-read-only t))

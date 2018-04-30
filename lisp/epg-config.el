@@ -48,36 +48,30 @@
 Setting this variable directly does not take effect;
 instead use \\[customize] (see the info node `Easy Customization')."
   :version "25.1"
-  :group 'epg
   :type 'string)
 
 (defcustom epg-gpgsm-program "gpgsm"
   "The `gpgsm' executable.
 Setting this variable directly does not take effect;
 instead use \\[customize] (see the info node `Easy Customization')."
-  :group 'epg
   :type 'string)
 
 (defcustom epg-gpgconf-program "gpgconf"
   "The `gpgconf' executable."
   :version "25.1"
-  :group 'epg
   :type 'string)
 
 (defcustom epg-gpg-home-directory nil
   "The directory which contains the configuration files of `epg-gpg-program'."
-  :group 'epg
   :type '(choice (const :tag "Default" nil) directory))
 
 (defcustom epg-passphrase-coding-system nil
   "Coding system to use with messages from `epg-gpg-program'."
-  :group 'epg
   :type 'symbol)
 
 (defcustom epg-debug nil
   "If non-nil, debug output goes to the \" *epg-debug*\" buffer.
 Note that the buffer name starts with a space."
-  :group 'epg
   :type 'boolean)
 
 (defconst epg-gpg-minimum-version "1.4.3")

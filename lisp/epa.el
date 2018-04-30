@@ -307,12 +307,6 @@ You should bind this variable with `let', but do not set it globally.")
 	  (epg-sub-key-id (car (epg-key-sub-key-list
 				(widget-get widget :value))))))
 
-(defalias 'epa--encode-coding-string
-  (if (fboundp 'encode-coding-string) #'encode-coding-string #'identity))
-
-(defalias 'epa--decode-coding-string
-  (if (fboundp 'decode-coding-string) #'decode-coding-string #'identity))
-
 (define-derived-mode epa-key-list-mode special-mode "Keys"
   "Major mode for `epa-list-keys'."
   (buffer-disable-undo)
@@ -879,7 +873,7 @@ For example:
 	 (epa-display-error context)
 	 (signal (car error) (cdr error))))
       (message "Decrypting...done")
-      (setq plain (epa--decode-coding-string
+      (setq plain (decode-coding-string
 		   plain
 		   (or coding-system-for-read
 		       (get-text-property start 'epa-coding-system-used)
@@ -973,7 +967,7 @@ For example:
     (condition-case error
 	(setq plain (epg-verify-string
 		     context
-		     (epa--encode-coding-string
+		     (encode-coding-string
 		      (buffer-substring start end)
 		      (or coding-system-for-write
 			  (get-text-property start 'epa-coding-system-used)))))
@@ -981,7 +975,7 @@ For example:
        (epa-display-error context)
        (signal (car error) (cdr error))))
     (message "Verifying...done")
-    (setq plain (epa--decode-coding-string
+    (setq plain (decode-coding-string
 		 plain
 		 (or coding-system-for-read
 		     (get-text-property start 'epa-coding-system-used)
@@ -1029,12 +1023,6 @@ See the reason described in the `epa-verify-region' documentation."
 	    (error "No cleartext tail"))
 	  (epa-verify-region cleartext-start cleartext-end))))))
 
-(defalias 'epa--select-safe-coding-system
-  (if (fboundp 'select-safe-coding-system)
-      #'select-safe-coding-system
-    (lambda (_from _to)
-      buffer-file-coding-system)))
-
 ;;;###autoload
 (defun epa-sign-region (start end signers mode)
   "Sign the current region between START and END by SIGNERS keys selected.
@@ -1057,7 +1045,7 @@ For example:
    (let ((verbose current-prefix-arg))
      (setq epa-last-coding-system-specified
 	   (or coding-system-for-write
-	       (epa--select-safe-coding-system
+	       (select-safe-coding-system
 		(region-beginning) (region-end))))
      (list (region-beginning) (region-end)
 	   (if verbose
@@ -1086,7 +1074,7 @@ If no one is selected, default secret key is used.  "
       (message "Signing...")
       (condition-case error
 	  (setq signature (epg-sign-string context
-					   (epa--encode-coding-string
+					   (encode-coding-string
 					    (buffer-substring start end)
 					    epa-last-coding-system-specified)
 					   mode))
@@ -1098,7 +1086,7 @@ If no one is selected, default secret key is used.  "
       (goto-char start)
       (add-text-properties (point)
 			   (progn
-			     (insert (epa--decode-coding-string
+			     (insert (decode-coding-string
 				      signature
 				      (or coding-system-for-read
 					  epa-last-coding-system-specified)))
@@ -1146,7 +1134,7 @@ For example:
 	 sign)
      (setq epa-last-coding-system-specified
 	   (or coding-system-for-write
-	       (epa--select-safe-coding-system
+	       (select-safe-coding-system
 		(region-beginning) (region-end))))
      (list (region-beginning) (region-end)
 	   (epa-select-keys context
@@ -1175,7 +1163,7 @@ If no one is selected, symmetric encryption will be performed.  ")
       (message "Encrypting...")
       (condition-case error
 	  (setq cipher (epg-encrypt-string context
-					   (epa--encode-coding-string
+					   (encode-coding-string
 					    (buffer-substring start end)
 					    epa-last-coding-system-specified)
 					   recipients
