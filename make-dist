@@ -596,8 +596,10 @@ for f in `find etc -type f`; do
   ln $f $tempdir/$f || exit
 done
 
-echo "Making links to 'info'"
-ln `find info -type f -print` ${tempdir}/info || exit
+if [ -d info ]; then # Skip in case we've built --without-makeinfo.
+  echo "Making links to 'info'"
+  ln `find info -type f -print` ${tempdir}/info || exit
+fi
 
 echo "Making links to 'doc/emacs'"
 (cd doc/emacs &&
