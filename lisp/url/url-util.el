@@ -628,34 +628,29 @@ Creates FILE and its parent directories if they do not exist."
      (set-file-modes file #o0600))))
 
 (autoload 'puny-encode-domain "puny")
-(autoload 'dns-query "dns")
-
-(defvar url--domain-cache (make-hash-table :test 'equal :size 17)
-  "Cache to minimize dns lookups.")
+(autoload 'url-domsuf-cookie-allowed-p "url-domsuf")
 
 ;;;###autoload
 (defun url-domain (url)
-  "Return the domain of the host of the url, or nil if url does
-not contain a registered name."
-  ;; Determining the domain of a name can not be done with simple
-  ;; textual manipulations.  a.b.c is either host a in domain b.c
-  ;; (www.google.com), or domain a.b.c with no separate host
-  ;; (bbc.co.uk).  Instead of guessing based on tld (which in any case
-  ;; may be inaccurate in the face of subdelegations), we look for
-  ;; domain delegations in DNS.
-  ;;
-  ;; Domain delegations change rarely enough that we won't bother with
-  ;; cache invalidation, I think.
-  (let* ((host-parts (split-string (puny-encode-domain (url-host url)) "\\."))
-         (result (gethash host-parts url--domain-cache 'not-found)))
-    (when (eq result 'not-found)
-      (setq result
-            (cl-loop for parts on host-parts
-                     for dom = (mapconcat #'identity parts ".")
-                     when (dns-query dom 'SOA)
-                     return dom))
-      (puthash host-parts result url--domain-cache))
-    result))
+  "Return the domain of the host of the url.
+Return nil if this can't be determined."
+  (let* ((host (puny-encode-domain (url-host url)))
+         (parts (nreverse (split-string host "\\.")))
+         (candidate (pop parts))
+         found)
+    ;; IP addresses aren't domains.
+    (when (string-match "\\`[0-9.]+\\'" host)
+      (setq parts nil))
+    ;; We assume that the top-level domain is never an appropriate
+    ;; thing as "the domain", so we start at the next one (eg.
+    ;; "fsf.org").
+    (while (and parts
+                (not (setq found
+                           (url-domsuf-cookie-allowed-p
+                            (setq candidate (concat (pop parts) "."
+                                                    candidate))))))
+      )
+    (and found candidate)))
 
 (provide 'url-util)
 

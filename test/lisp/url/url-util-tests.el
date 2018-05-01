@@ -46,6 +46,18 @@
                    ("key2" "val2")
                    ("key1" "val1")))))
 
+(ert-deftest url-domain-tests ()
+  (should (equal (url-domain (url-generic-parse-url "http://www.fsf.co.uk"))
+                 "fsf.co.uk"))
+  (should (equal (url-domain (url-generic-parse-url "http://fsf.co.uk"))
+                 "fsf.co.uk"))
+  (should (equal (url-domain (url-generic-parse-url "http://co.uk"))
+                 nil))
+  (should (equal (url-domain (url-generic-parse-url "http://www.fsf.com"))
+                 "fsf.com"))
+  (should (equal (url-domain (url-generic-parse-url "http://192.168.0.1"))
+                 nil)))
+
 (provide 'url-util-tests)
 
 ;;; url-util-tests.el ends here
