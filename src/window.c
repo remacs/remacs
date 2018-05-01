@@ -5634,35 +5634,54 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
 }
 
 
-/* Scroll selected_window up or down.  If N is nil, scroll a
+/* Scroll WINDOW up or down.  If N is nil, scroll upward by a
    screen-full which is defined as the height of the window minus
-   next_screen_context_lines.  If N is the symbol `-', scroll.
-   DIRECTION may be 1 meaning to scroll down, or -1 meaning to scroll
-   up.  This is the guts of Fscroll_up and Fscroll_down.  */
+   next_screen_context_lines.  If N is the symbol `-', scroll downward
+   by a screen-full.  DIRECTION may be 1 meaning to scroll down, or -1
+   meaning to scroll up.  */
 
 static void
-scroll_command (Lisp_Object n, int direction)
+scroll_command (Lisp_Object window, Lisp_Object n, int direction)
 {
+  struct window *w;
+  bool other_window;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   eassert (eabs (direction) == 1);
 
-  /* If selected window's buffer isn't current, make it current for
+  w = XWINDOW (window);
+  other_window = ! EQ (window, selected_window);
+
+  /* If given window's buffer isn't current, make it current for
      the moment.  But don't screw up if window_scroll gets an error.  */
-  if (XBUFFER (XWINDOW (selected_window)->contents) != current_buffer)
+  if (XBUFFER (w->contents) != current_buffer)
     {
       record_unwind_protect (save_excursion_restore, save_excursion_save ());
-      Fset_buffer (XWINDOW (selected_window)->contents);
+      Fset_buffer (w->contents);
+    }
+
+  if (other_window)
+    {
+      SET_PT_BOTH (marker_position (w->pointm),
+                   marker_byte_position (w->pointm));
+      SET_PT_BOTH (marker_position (w->old_pointm),
+                   marker_byte_position (w->old_pointm));
     }
 
   if (NILP (n))
-    window_scroll (selected_window, direction, true, false);
+    window_scroll (window, direction, true, false);
   else if (EQ (n, Qminus))
-    window_scroll (selected_window, -direction, true, false);
+    window_scroll (window, -direction, true, false);
   else
     {
       n = Fprefix_numeric_value (n);
-      window_scroll (selected_window, XINT (n) * direction, false, false);
+      window_scroll (window, XINT (n) * direction, false, false);
+    }
+
+  if (other_window)
+    {
+      set_marker_both (w->pointm, Qnil, PT, PT_BYTE);
+      set_marker_both (w->old_pointm, Qnil, PT, PT_BYTE);
     }
 
   unbind_to (count, Qnil);
@@ -5677,7 +5696,7 @@ If ARG is the atom `-', scroll downward by nearly full screen.
 When calling from a program, supply as argument a number, nil, or `-'.  */)
   (Lisp_Object arg)
 {
-  scroll_command (arg, 1);
+  scroll_command (selected_window, arg, 1);
   return Qnil;
 }
 
@@ -5690,7 +5709,7 @@ If ARG is the atom `-', scroll upward by nearly full screen.
 When calling from a program, supply as argument a number, nil, or `-'.  */)
   (Lisp_Object arg)
 {
-  scroll_command (arg, -1);
+  scroll_command (selected_window, arg, -1);
   return Qnil;
 }
 
@@ -5750,36 +5769,21 @@ It is determined by the function `other-window-for-scrolling',
 which see.  */)
   (Lisp_Object arg)
 {
-  Lisp_Object window;
-  struct window *w;
   ptrdiff_t count = SPECPDL_INDEX ();
-
-  window = Fother_window_for_scrolling ();
-  w = XWINDOW (window);
-
-  /* Don't screw up if window_scroll gets an error.  */
-  record_unwind_protect (save_excursion_restore, save_excursion_save ());
-
-  Fset_buffer (w->contents);
-  SET_PT_BOTH (marker_position (w->pointm), marker_byte_position (w->pointm));
-  SET_PT_BOTH (marker_position (w->old_pointm), marker_byte_position (w->old_pointm));
-
-  if (NILP (arg))
-    window_scroll (window, 1, true, true);
-  else if (EQ (arg, Qminus))
-    window_scroll (window, -1, true, true);
-  else
-    {
-      if (CONSP (arg))
-	arg = XCAR (arg);
-      CHECK_NUMBER (arg);
-      window_scroll (window, XINT (arg), false, true);
-    }
-
-  set_marker_both (w->pointm, Qnil, PT, PT_BYTE);
-  set_marker_both (w->old_pointm, Qnil, PT, PT_BYTE);
+  scroll_command (Fother_window_for_scrolling (), arg, 1);
   unbind_to (count, Qnil);
+  return Qnil;
+}
 
+DEFUN ("scroll-other-window-down", Fscroll_other_window_down,
+       Sscroll_other_window_down, 0, 1, "P",
+       doc: /* Scroll next window downward ARG lines; or near full screen if no ARG.
+For more details, see the documentation for `scroll-other-window'.  */)
+  (Lisp_Object arg)
+{
+  ptrdiff_t count = SPECPDL_INDEX ();
+  scroll_command (Fother_window_for_scrolling (), arg, -1);
+  unbind_to (count, Qnil);
   return Qnil;
 }
 
@@ -7831,6 +7835,7 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sscroll_right);
   defsubr (&Sother_window_for_scrolling);
   defsubr (&Sscroll_other_window);
+  defsubr (&Sscroll_other_window_down);
   defsubr (&Sminibuffer_selected_window);
   defsubr (&Srecenter);
   defsubr (&Swindow_text_width);
