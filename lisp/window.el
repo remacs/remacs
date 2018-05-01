@@ -8939,19 +8939,12 @@ For more details, see the documentation for `scroll-other-window'."
 Leave mark at previous position.
 With arg N, put point N/10 of the way from the true beginning."
   (interactive "P")
-  (let ((orig-window (selected-window))
-	(window (other-window-for-scrolling)))
-    ;; We use unwind-protect rather than save-window-excursion
-    ;; because the latter would preserve the things we want to change.
-    (unwind-protect
-	(progn
-	  (select-window window)
-	  ;; Set point and mark in that window's buffer.
-	  (with-no-warnings
-	   (beginning-of-buffer arg))
-	  ;; Set point accordingly.
-	  (recenter '(t)))
-      (select-window orig-window))))
+  (with-selected-window (other-window-for-scrolling)
+    ;; Set point and mark in that window's buffer.
+    (with-no-warnings
+      (beginning-of-buffer arg))
+    ;; Set point accordingly.
+    (recenter '(t))))
 
 (defun end-of-buffer-other-window (arg)
   "Move point to the end of the buffer in the other window.
@@ -8959,15 +8952,10 @@ Leave mark at previous position.
 With arg N, put point N/10 of the way from the true end."
   (interactive "P")
   ;; See beginning-of-buffer-other-window for comments.
-  (let ((orig-window (selected-window))
-	(window (other-window-for-scrolling)))
-    (unwind-protect
-	(progn
-	  (select-window window)
-	  (with-no-warnings
-	   (end-of-buffer arg))
-	  (recenter '(t)))
-      (select-window orig-window))))
+  (with-selected-window (other-window-for-scrolling)
+    (with-no-warnings
+      (end-of-buffer arg))
+    (recenter '(t))))
 
 (defvar mouse-autoselect-window-timer nil
   "Timer used by delayed window autoselection.")
