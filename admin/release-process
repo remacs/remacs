@@ -99,6 +99,10 @@ significant changes and new features in the upcoming release, then
 describe the "benefits" from losing those features.  Be funny, use
 humor.  The text written for the previous releases can serve as an example.
 
+The Emacs FAQ (doc/misc/efaq.texi) also has a "What's new" section;
+for major releases a new section should be added listing the
+significant changes.
+
 Check cross-references between the manuals (e.g. from emacs to elisp)
 are correct.  You can use something like the following in the info
 directory in the Emacs build tree:

@@ -930,6 +930,7 @@ status of its latest version.
 @menu
 * Origin of the term Emacs::
 * Latest version of Emacs::
+* New in Emacs 26::
 * New in Emacs 25::
 * New in Emacs 24::
 * New in Emacs 23::
@@ -979,7 +980,7 @@ conventions}).
 Emacs @value{EMACSVER} is the current version as of this writing.  A version
 number with two components (e.g., @samp{24.5}) indicates a released
 version; three components indicate a development
-version (e.g., @samp{26.0.50} is what will eventually become @samp{26.1}).
+version (e.g., @samp{27.0.50} is what will eventually become @samp{27.1}).
 
 Emacs is under active development, hosted at
 @uref{https://savannah.gnu.org/projects/emacs/, Savannah}.
@@ -997,6 +998,80 @@ few Emacs releases.  For full details of the changes in any version of
 Emacs, type @kbd{C-h C-n} (@kbd{M-x view-emacs-news}).  As of Emacs 22,
 you can give this command a prefix argument to read about which features
 were new in older versions.
+
+@node New in Emacs 26
+@section What is different about Emacs 26?
+@cindex Differences between Emacs 25 and Emacs 26
+@cindex Emacs 26, new features in
+
+@itemize
+@cindex threads
+@item
+Emacs now provides a limited form of concurrency with Lisp threads.
+
+@cindex systemd support
+@item
+Emacs now supports @code{systemd}.  The new command-line option
+@option{--fg-daemon} is part of this support, it causes Emacs to run
+in the foreground instead of forking, as under @option{--daemon}.
+
+@item
+Emacs now supports 24-bit true color on text terminals which provide
+that feature.  @xref{Colors on a TTY}.
+
+@cindex double-buffering
+@item
+Emacs on X now supports double-buffering, which eliminates display
+flickering in most situations.
+
+@item
+You can now scroll the Emacs display horizontally using the mouse or
+touchpad.
+
+@cindex line number display
+@item
+Emacs display now includes an optional feature for display of line
+numbers via the @code{display-line-numbers-mode} command.  This
+feature is much faster than the equivalent display offered by packages
+such as @code{linum}, and also provides many optional features like
+relative line numbers.
+
+@cindex horizontal scrolling of current line
+@item
+The automatic horizontal scrolling of the window display when lines
+are truncated can now optionally be enabled only for the current line,
+the line where Emacs shows the cursor.  Under this mode, all the other
+window lines are not scrolled to show characters outside of the
+viewport.
+
+@item
+Letter-case conversions now honor special cases in Turkish and Greek
+scripts.
+
+@cindex Enchant support
+@item
+Support for Enchant is now part of the Emacs spell-checking commands.
+
+@item
+Tramp now supports Google Drive filesystems.
+
+@item
+Emacs can now be built while omitting the details of the machine on
+which it was built, thus making it easier to produce reproducible
+builds.
+
+@item
+Security vulnerability related to Enriched Text mode is removed.
+Enriched mode previously allowed saving @code{display} properties as
+part of text; those properties support evaluating arbitrary Lisp code,
+which opens a vulnerability for Emacs users receiving Enriched Text
+from external sources.  Execution of arbitrary Lisp forms in
+@code{display} properties decoded by Enriched Text mode is now
+disabled by default.
+@end itemize
+
+Consult the Emacs @file{NEWS} file (@kbd{C-h n}) for the full list of
+changes in Emacs 26.
 
 @node New in Emacs 25
 @section What is different about Emacs 25?
