@@ -67,7 +67,7 @@ re-?generate\\|bump version\\|from trunk\\|Auto-commit"
   '((t (:strike-through t)))
   "Face for skipped commits.")
 
-(defconst gitmerge-default-branch "origin/emacs-25"
+(defconst gitmerge-default-branch "origin/emacs-26"
   "Default for branch that should be merged.")
 
 (defconst gitmerge-buffer "*gitmerge*"
