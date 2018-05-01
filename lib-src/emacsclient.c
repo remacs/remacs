@@ -700,7 +700,7 @@ fail (void)
     {
       size_t extra_args_size = (main_argc - optind + 1) * sizeof (char *);
       size_t new_argv_size = extra_args_size;
-      char **new_argv = NULL;
+      char **new_argv = xmalloc (new_argv_size);
       char *s = xstrdup (alternate_editor);
       unsigned toks = 0;
 

@@ -4038,8 +4038,7 @@ analyze_first (const_re_char *p, const_re_char *pend, char *fastmap,
 	    };
 	  /* Keep `p1' to allow the `on_failure_jump' we are jumping to
 	     to jump back to "just after here".  */
-	  /* Fallthrough */
-
+	  FALLTHROUGH;
 	case on_failure_jump:
 	case on_failure_keep_string_jump:
 	case on_failure_jump_nastyloop:

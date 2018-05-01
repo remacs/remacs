@@ -30,7 +30,7 @@ enum {
 };
 
 extern void init_menu_items (void);
-extern void finish_menu_items (void) ATTRIBUTE_CONST;
+extern void finish_menu_items (void);
 extern void discard_menu_items (void);
 extern void save_menu_items (void);
 extern bool parse_single_submenu (Lisp_Object, Lisp_Object, Lisp_Object);
