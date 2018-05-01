@@ -632,8 +632,11 @@ Creates FILE and its parent directories if they do not exist."
 
 ;;;###autoload
 (defun url-domain (url)
-  "Return the domain of the host of the url.
-Return nil if this can't be determined."
+  "Return the domain of the host of the URL.
+Return nil if this can't be determined.
+
+For instance, this function will return \"fsf.co.uk\" if the host in URL
+is \"www.fsf.co.uk\"."
   (let* ((host (puny-encode-domain (url-host url)))
          (parts (nreverse (split-string host "\\.")))
          (candidate (pop parts))
