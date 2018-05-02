@@ -326,11 +326,13 @@ The function must take one string argument and return a string."
   :type 'function
   :group 'ispell)
 
+;; FIXME framepop.el last updated c 2003 (?),
+;; probably something else replaces it these days.
 (defcustom ispell-use-framepop-p nil
   "When non-nil ispell uses framepop to display choices in a dedicated frame.
 You can set this variable to dynamically use framepop if you are in a
 window system by evaluating the following on startup to set this variable:
-  (and window-system (condition-case () (require \\='framepop) (error nil)))"
+  (and (display-graphic-p) (require \\='framepop nil t))"
   :type 'boolean
   :group 'ispell)
 
