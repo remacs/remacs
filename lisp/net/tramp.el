@@ -917,7 +917,7 @@ Used in `tramp-make-tramp-file-name'.")
   "Regexp matching delimiter between host names and localnames.
 Derived from `tramp-postfix-host-format'.")
 
-(defconst tramp-localname-regexp ".*$"
+(defconst tramp-localname-regexp "[^\n\r]*\\'"
   "Regexp matching localnames.")
 
 (defconst tramp-unknown-id-string "UNKNOWN"

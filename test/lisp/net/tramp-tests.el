@@ -52,8 +52,10 @@
 
 (declare-function tramp-find-executable "tramp-sh")
 (declare-function tramp-get-remote-path "tramp-sh")
-(declare-function tramp-get-remote-stat "tramp-sh")
 (declare-function tramp-get-remote-perl "tramp-sh")
+(declare-function tramp-get-remote-stat "tramp-sh")
+(declare-function tramp-method-out-of-band-p "tramp-sh")
+(declare-function tramp-smb-get-localname "tramp-smb")
 (defvar auto-save-file-name-transforms)
 (defvar tramp-copy-size-limit)
 (defvar tramp-persistency-file-name)
@@ -91,7 +93,8 @@
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
 
-(setq password-cache-expiry nil
+(setq auth-source-save-behavior nil
+      password-cache-expiry nil
       tramp-verbose 0
       tramp-cache-read-persistent-data t ;; For auth-sources.
       tramp-copy-size-limit nil
@@ -248,6 +251,9 @@ handled properly.  BODY shall not contain a timeout."
   ;; No strings.
   (should-not (tramp-tramp-file-p nil))
   (should-not (tramp-tramp-file-p 'symbol))
+  ;; No newline or linefeed.
+  (should-not (tramp-tramp-file-p "/method::file\nname"))
+  (should-not (tramp-tramp-file-p "/method::file\rname"))
   ;; Ange-ftp syntax.
   (should-not (tramp-tramp-file-p "/host:"))
   (should-not (tramp-tramp-file-p "/user@host:"))
@@ -1733,18 +1739,36 @@ handled properly.  BODY shall not contain a timeout."
   ;; Host names must match rules in case the command template of a
   ;; method doesn't use them.
   (dolist (m '("su" "sg" "sudo" "doas" "ksu"))
-    ;; Single hop.  The host name must match `tramp-local-host-regexp'.
-    (should-error
-     (find-file (format "/%s:foo:" m))
-     :type 'user-error)
-    ;; Multi hop.  The host name must match the previous hop.
-    (should-error
-     (find-file
-      (format
-       "%s|%s:foo:"
-       (substring (file-remote-p tramp-test-temporary-file-directory) nil -1)
-       m))
-     :type 'user-error)))
+    (let (tramp-default-proxies-alist)
+      ;; Single hop.  The host name must match `tramp-local-host-regexp'.
+      (should-error
+       (find-file (format "/%s:foo:" m))
+       :type 'user-error)
+      ;; Multi hop.  The host name must match the previous hop.
+      (should-error
+       (find-file
+	(format
+	 "%s|%s:foo:"
+	 (substring (file-remote-p tramp-test-temporary-file-directory) 0 -1)
+	 m))
+       :type
+       (if (tramp-method-out-of-band-p
+	    (tramp-dissect-file-name tramp-test-temporary-file-directory) 0)
+	   'file-error 'user-error)))))
+
+(ert-deftest tramp-test03-file-name-method-rules ()
+  "Check file name rules for some methods."
+  (skip-unless (tramp--test-enabled))
+
+  ;; Samba does not support file names with periods followed by
+  ;; spaces, and trailing periods or spaces.
+  (when (tramp-smb-file-name-p tramp-test-temporary-file-directory)
+    (dolist (file '("foo." "foo. bar" "foo "))
+      (should-error
+       (tramp-smb-get-localname
+	(tramp-dissect-file-name
+	 (expand-file-name file tramp-test-temporary-file-directory)))
+       :type 'file-error))))
 
 (ert-deftest tramp-test04-substitute-in-file-name ()
   "Check `substitute-in-file-name'."
@@ -2888,11 +2912,23 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name))))))
 
+;; Method "smb" could run into "NT_STATUS_REVISION_MISMATCH" error.
+(defmacro tramp--test-ignore-add-name-to-file-error (&rest body)
+  "Run BODY, ignoring \"error with add-name-to-file\" file error."
+  (declare (indent defun) (debug t))
+  `(condition-case err
+       (progn ,@body)
+     ((error quit debug)
+      (unless (and (eq (car err) 'file-error)
+		   (string-match "^error with add-name-to-file"
+				 (error-message-string err)))
+	(signal (car err) (cdr err))))))
+
 (ert-deftest tramp-test21-file-links ()
   "Check `file-symlink-p'.
 This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
-  ;; The semantics has changed heavily in Emacs 26.1.  We cannot test
+  ;; The semantics have changed heavily in Emacs 26.1.  We cannot test
   ;; older Emacsen, therefore.
   (skip-unless (tramp--test-emacs26-p))
 
@@ -2990,37 +3026,39 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       ;; Check `add-name-to-file'.
       (unwind-protect
 	  (when (tramp--test-expensive-test)
-	    (write-region "foo" nil tmp-name1)
-	    (should (file-exists-p tmp-name1))
-	    (add-name-to-file tmp-name1 tmp-name2)
-	    (should (file-regular-p tmp-name2))
-	    (should-error
+	    (tramp--test-ignore-add-name-to-file-error
+	     (write-region "foo" nil tmp-name1)
+	     (should (file-exists-p tmp-name1))
 	     (add-name-to-file tmp-name1 tmp-name2)
-	     :type 'file-already-exists)
-	    ;; A number means interactive case.
-	    (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
-	      (should-error
-	       (add-name-to-file tmp-name1 tmp-name2 0)
-	       :type 'file-already-exists))
-	    (cl-letf (((symbol-function 'yes-or-no-p) (lambda (_prompt) t)))
+	     (should (file-regular-p tmp-name2))
+	     (should-error
+	      (add-name-to-file tmp-name1 tmp-name2)
+	      :type 'file-already-exists)
+	     ;; A number means interactive case.
+	     (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
+	       (should-error
+		(add-name-to-file tmp-name1 tmp-name2 0)
+		:type 'file-already-exists))
+	     (cl-letf (((symbol-function 'yes-or-no-p) (lambda (_prompt) t)))
 	       (add-name-to-file tmp-name1 tmp-name2 0)
 	       (should (file-regular-p tmp-name2)))
-	    (add-name-to-file tmp-name1 tmp-name2 'ok-if-already-exists)
-	    (should-not (file-symlink-p tmp-name2))
-	    (should (file-regular-p tmp-name2))
-	    ;; `tmp-name3' is a local file name.
-	    (should-error
-	     (add-name-to-file tmp-name1 tmp-name3)
-	     :type 'file-error)
-	    ;; Check directory as newname.
-	    (make-directory tmp-name4)
-	    (should-error
-	     (add-name-to-file tmp-name1 tmp-name4)
-	     :type 'file-already-exists)
-	    (add-name-to-file tmp-name1 (file-name-as-directory tmp-name4))
-	    (should
-	     (file-regular-p
-	      (expand-file-name (file-name-nondirectory tmp-name1) tmp-name4))))
+	     (add-name-to-file tmp-name1 tmp-name2 'ok-if-already-exists)
+	     (should-not (file-symlink-p tmp-name2))
+	     (should (file-regular-p tmp-name2))
+	     ;; `tmp-name3' is a local file name.
+	     (should-error
+	      (add-name-to-file tmp-name1 tmp-name3)
+	      :type 'file-error)
+	     ;; Check directory as newname.
+	     (make-directory tmp-name4)
+	     (should-error
+	      (add-name-to-file tmp-name1 tmp-name4)
+	      :type 'file-already-exists)
+	     (add-name-to-file tmp-name1 (file-name-as-directory tmp-name4))
+	     (should
+	      (file-regular-p
+	       (expand-file-name
+		(file-name-nondirectory tmp-name1) tmp-name4)))))
 
 	;; Cleanup.
 	(ignore-errors
@@ -4669,9 +4707,11 @@ Use the `ls' command."
 	     (setq x (eval (cdr (assoc 'sample-text x))))
 	     (unless (or (null x)
 			 (unencodable-char-position
-			  nil nil file-name-coding-system nil x)
+			  0 nil file-name-coding-system nil x)
 			 (string-match "TaiViet" x))
-	       (replace-regexp-in-string "[\n/]" "" x)))
+	       ;; ?\n and ?/ shouldn't be part of any file name.  ?\t,
+	       ;; ?. and ?? do not work for "smb" method.
+	       (replace-regexp-in-string "[\t\n/.?]" "" x)))
 	   language-info-alist))
 
        (list

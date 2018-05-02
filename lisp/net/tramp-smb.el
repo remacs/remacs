@@ -123,6 +123,7 @@ call, letting the SMB client use the default one."
 	 "ERRnoaccess"
 	 "ERRnomem"
 	 "ERRnosuchshare"
+	 ;; See /usr/include/samba-4.0/core/ntstatus.h.
 	 ;; Windows 4.0 (Windows NT), Windows 5.0 (Windows 2000),
 	 ;; Windows 5.1 (Windows XP), Windows 5.2 (Windows Server 2003),
 	 ;; Windows 6.0 (Windows Vista), Windows 6.1 (Windows 7),
@@ -154,6 +155,7 @@ call, letting the SMB client use the default one."
 	 "NT_STATUS_OBJECT_PATH_SYNTAX_BAD"
 	 "NT_STATUS_PASSWORD_MUST_CHANGE"
 	 "NT_STATUS_RESOURCE_NAME_NOT_FOUND"
+	 "NT_STATUS_REVISION_MISMATCH"
 	 "NT_STATUS_SHARING_VIOLATION"
 	 "NT_STATUS_TRUSTED_RELATIONSHIP_FAILURE"
 	 "NT_STATUS_UNSUCCESSFUL"
@@ -643,7 +645,12 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (goto-char (point-min))
 	  (search-forward-regexp tramp-smb-errors nil t)
 	  (tramp-error
-	   v 'file-error "%s `%s'" (match-string 0) directory))))))
+	   v 'file-error "%s `%s'" (match-string 0) directory)))
+
+      ;; "rmdir" does not report an error.  So we check ourselves.
+      (when (file-exists-p directory)
+	(tramp-error
+	 v 'file-error "`%s' not removed." directory)))))
 
 (defun tramp-smb-handle-delete-file (filename &optional _trash)
   "Like `delete-file' for Tramp files."
@@ -1620,6 +1627,13 @@ If VEC has no cifs capabilities, exchange \"/\" by \"\\\\\"."
       ;; Sometimes we have discarded `substitute-in-file-name'.
       (when (string-match "\\(\\$\\$\\)\\(/\\|$\\)" localname)
 	(setq localname (replace-match "$" nil nil localname 1)))
+
+      ;; A period followed by a space, or trailing periods and spaces,
+      ;; are not supported.
+      (when (string-match "\\. \\|\\.$\\| $" localname)
+	(tramp-error
+	 vec 'file-error
+	 "Invalid file name %s" (tramp-make-tramp-file-name vec localname)))
 
       localname)))
 
