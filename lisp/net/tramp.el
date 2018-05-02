@@ -4472,8 +4472,8 @@ Invokes `password-read' if available, `read-passwd' else."
 
     (unwind-protect
 	(with-parsed-tramp-file-name key nil
-	  (setq tramp-password-save-function nil)
-	  (setq user
+	  (setq tramp-password-save-function nil
+		user
 		(or user (tramp-get-connection-property key "login-as" nil)))
 	  (prog1
 	      (or
@@ -4501,18 +4501,21 @@ Invokes `password-read' if available, `read-passwd' else."
 			      :create t))
 			    tramp-password-save-function
 			    (plist-get auth-info :save-function)
-			    auth-passwd (plist-get auth-info :secret)
-			    auth-passwd (if (functionp auth-passwd)
-					    (funcall auth-passwd)
-					  auth-passwd))))
+			    auth-passwd (plist-get auth-info :secret)))
+		 (while (functionp auth-passwd)
+		   (setq auth-passwd (funcall auth-passwd)))
+		 auth-passwd)
 
 	       ;; Try the password cache.
-	       (let ((password (password-read pw-prompt key)))
-		 (setq tramp-password-save-function
-		       (lambda () (password-cache-add key password)))
-		 password)
-	       ;; Else, get the password interactively.
+	       (progn
+		 (setq auth-passwd (password-read pw-prompt key)
+		       tramp-password-save-function
+		       (lambda () (password-cache-add key auth-passwd)))
+		 auth-passwd)
+
+	       ;; Else, get the password interactively w/o cache.
 	       (read-passwd pw-prompt))
+
 	    (tramp-set-connection-property v "first-password-request" nil)))
 
       ;; Reenable the timers.
