@@ -242,7 +242,7 @@ for details.
 It's best to customize this with `\\[customize-variable]' because the choices
 can get pretty complex."
   :group 'auth-source
-  :version "26.1" ;; No Gnus
+  :version "26.1" ; neither new nor changed default
   :type `(repeat :tag "Authentication Sources"
                  (choice
                   (string :tag "Just a file")
