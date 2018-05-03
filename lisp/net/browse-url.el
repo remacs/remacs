@@ -878,7 +878,21 @@ The optional NEW-WINDOW argument is not used."
 	   (error "Browsing URLs is not supported on this system")))
 	((eq system-type 'cygwin)
 	 (call-process "cygstart" nil nil nil url))
-	(t (w32-shell-execute "open" (url-unhex-string url)))))
+	(t
+         (w32-shell-execute "open"
+                            ;; w32-shell-execute passes file:// URLs
+                            ;; to APIs that expect file names, so we
+                            ;; need to unhex any %nn encoded
+                            ;; characters in the URL.  We don't do
+                            ;; that for other URLs; in particular,
+                            ;; default Windows mail client barfs on
+                            ;; quotes in the MAILTO URLs, so we prefer
+                            ;; to leave the URL with its embedded %nn
+                            ;; encoding intact.
+                            (if (eq t (compare-strings url nil 7
+                                                       "file://" nil nil))
+                                (url-unhex-string url)
+                              url)))))
 
 (defun browse-url-default-macosx-browser (url &optional _new-window)
   "Invoke the macOS system's default Web browser.
