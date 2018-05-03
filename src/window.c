@@ -5696,11 +5696,12 @@ When calling from a program, supply as argument a number, nil, or `-'.  */)
 
 DEFUN ("other-window-for-scrolling", Fother_window_for_scrolling, Sother_window_for_scrolling, 0, 0, 0,
        doc: /* Return the other window for \"other window scroll\" commands.
-If `other-window-scroll-buffer' is non-nil, a window
-showing that buffer is used.
 If in the minibuffer, `minibuffer-scroll-window' if non-nil
-specifies the window.  This takes precedence over
-`other-window-scroll-buffer'.  */)
+specifies the window.
+Otherwise, if `other-window-scroll-buffer' is non-nil, a window
+showing that buffer is used, popping the buffer up if necessary.
+Finally, look for a neighboring window on the selected frame,
+followed by all visible frames on the current terminal.  */)
   (void)
 {
   Lisp_Object window;
@@ -5739,16 +5740,14 @@ specifies the window.  This takes precedence over
 DEFUN ("scroll-other-window", Fscroll_other_window, Sscroll_other_window, 0, 1, "P",
        doc: /* Scroll next window upward ARG lines; or near full screen if no ARG.
 A near full screen is `next-screen-context-lines' less than a full screen.
-The next window is the one below the current one; or the one at the top
-if the current one is at the bottom.  Negative ARG means scroll downward.
-If ARG is the atom `-', scroll downward by nearly full screen.
-When calling from a program, supply as argument a number, nil, or `-'.
+Negative ARG means scroll downward.  If ARG is the atom `-', scroll
+downward by nearly full screen.  When calling from a program, supply
+as argument a number, nil, or `-'.
 
-If `other-window-scroll-buffer' is non-nil, scroll the window
-showing that buffer, popping the buffer up if necessary.
-If in the minibuffer, `minibuffer-scroll-window' if non-nil
-specifies the window to scroll.  This takes precedence over
-`other-window-scroll-buffer'.  */)
+The next window is usually the one below the current one;
+or the one at the top if the current one is at the bottom.
+It is determined by the function `other-window-for-scrolling',
+which see.  */)
   (Lisp_Object arg)
 {
   Lisp_Object window;

@@ -157,7 +157,9 @@ this option is @code{nil}.
 @item C-x o
 Select another window (@code{other-window}).
 @item C-M-v
-Scroll the next window (@code{scroll-other-window}).
+Scroll the next window upward (@code{scroll-other-window}).
+@item C-M-S-v
+Scroll the next window downward (@code{scroll-other-window-down}).
 @item mouse-1
 @kbd{mouse-1}, in the text area of a window, selects the window and
 moves point to the position clicked.  Clicking in the mode line
@@ -181,13 +183,18 @@ back and finish supplying the minibuffer argument that is requested.
 
 @kindex C-M-v
 @findex scroll-other-window
+@kindex C-M-S-v
+@findex scroll-other-window-down
   The usual scrolling commands (@pxref{Display}) apply to the selected
-window only, but there is one command to scroll the next window.
+window only, but there are also commands to scroll the next window.
 @kbd{C-M-v} (@code{scroll-other-window}) scrolls the window that
-@kbd{C-x o} would select.  It takes arguments, positive and negative,
-like @kbd{C-v}.  (In the minibuffer, @kbd{C-M-v} scrolls the help
-window associated with the minibuffer, if any, rather than the next
-window in the standard cyclic order; @pxref{Minibuffer Edit}.)
+@kbd{C-x o} would select.  In other respects, the command behaves like
+@kbd{C-v}; both move the buffer text upward relative to the window, and
+take positive and negative arguments.  (In the minibuffer, @kbd{C-M-v}
+scrolls the help window associated with the minibuffer, if any, rather
+than the next window in the standard cyclic order; @pxref{Minibuffer
+Edit}.)  @kbd{C-M-S-v} (@code{scroll-other-window-down}) scrolls the
+next window downward in a similar way.
 
 @vindex mouse-autoselect-window
   If you set @code{mouse-autoselect-window} to a non-@code{nil} value,

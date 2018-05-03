@@ -2462,7 +2462,7 @@ locally inside the minibuffer (@pxref{Help Functions}).
 @anchor{Definition of minibuffer-scroll-window}
 If the value of this variable is non-@code{nil}, it should be a window
 object.  When the function @code{scroll-other-window} is called in the
-minibuffer, it scrolls this window.
+minibuffer, it scrolls this window (@pxref{Textual Scrolling}).
 @end defvar
 
 @defun minibuffer-selected-window

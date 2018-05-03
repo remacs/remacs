@@ -4028,6 +4028,13 @@ line reappears after the echo area momentarily displays the message
 @samp{End of buffer}.
 @end deffn
 
+@deffn Command scroll-other-window-down &optional count
+This function scrolls the text in another window downward @var{count}
+lines.  Negative values of @var{count}, or @code{nil}, are handled as
+in @code{scroll-down}.  In other respects, it behaves the same way as
+@code{scroll-other-window} does.
+@end deffn
+
 @defvar other-window-scroll-buffer
 If this variable is non-@code{nil}, it tells @code{scroll-other-window}
 which buffer's window to scroll.
