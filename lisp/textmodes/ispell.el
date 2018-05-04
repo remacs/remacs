@@ -1206,8 +1206,10 @@ Internal use.")
 (defun ispell--get-extra-word-characters (&optional lang)
   "Get the extra word characters for LANG as a character class.
 If LANG is omitted, get the extra word characters for the default language."
-  (concat "[" (string-trim-right (apply 'ispell--call-enchant-lsmod
-                                        (append '("-word-chars") (if lang `(,lang))))) "]"))
+  (let ((extra (string-trim-right
+                (apply 'ispell--call-enchant-lsmod
+                       (append '("-word-chars") (if lang `(,lang)))))))
+    (if (string= extra "") "" (concat "[" extra "]"))))
 
 (defun ispell-find-enchant-dictionaries ()
   "Find Enchant's dictionaries, and record in `ispell-enchant-dictionary-alist'."
