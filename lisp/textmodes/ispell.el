@@ -1237,6 +1237,10 @@ If LANG is omitted, get the extra word characters for the default language."
 (defvar ispell-last-program-name nil
   "Last value of `ispell-program-name'.  Internal use.")
 
+;; Allow dynamically binding ispell-base-dicts-override-alist as
+;; advertised in the doc string of ispell-initialize-spellchecker-hook.
+(defvar ispell-base-dicts-override-alist)
+
 (defvar ispell-initialize-spellchecker-hook nil
   "Normal hook run on spellchecker initialization.
 This hook is run when a spellchecker is used for the first
