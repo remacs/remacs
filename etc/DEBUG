@@ -78,6 +78,14 @@ described in the node "Auto-loading safe path" in the GDB user manual.
 If nothing else helps, type "source /path/to/.gdbinit RET" at the GDB
 prompt, to unconditionally load the GDB init file.
 
+Running GDB on macOS sometimes brings an error message like this:
+
+  Unable to find Mach task port for process-id NNN: (os/kern) failure (0x5).
+
+To overcome this, search the Internet for the phrase "Unable to find
+Mach task port for process-id", and you will find detailed
+instructions to follow.
+
 *** Use the Emacs GDB UI front-end
 
 We recommend using the GUI front-end for GDB provided by Emacs.  With
