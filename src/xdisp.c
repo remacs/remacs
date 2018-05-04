@@ -13924,17 +13924,19 @@ redisplay_internal (void)
   /* Notice any pending interrupt request to change frame size.  */
   do_pending_window_change (true);
 
-  /* do_pending_window_change could change the selected_window due to
-     frame resizing which makes the selected window too small.  */
-  if (WINDOWP (selected_window) && (w = XWINDOW (selected_window)) != sw)
-    sw = w;
-
   /* Clear frames marked as garbaged.  */
   clear_garbaged_frames ();
 
   /* Build menubar and tool-bar items.  */
   if (NILP (Vmemory_full))
     prepare_menu_bars ();
+
+  /* do_pending_window_change could change the selected_window due to
+     frame resizing which makes the selected window too small.
+     prepare_menu_bars may call lisp hooks and hence also change the
+     selected_window.  */
+  if (WINDOWP (selected_window) && (w = XWINDOW (selected_window)) != sw)
+    sw = w;
 
   reconsider_clip_changes (w);
 
