@@ -2906,6 +2906,9 @@ font_open_entity (struct frame *f, Lisp_Object entity, int pixel_size)
       font = XFONT_OBJECT (font_object);
       if (font->average_width > 0 && font->height > 0)
 	break;
+      /* Avoid an infinite loop.  */
+      if (psize > pixel_size + 15)
+	return Qnil;
     }
   ASET (font_object, FONT_SIZE_INDEX, make_number (pixel_size));
   FONT_ADD_LOG ("open", entity, font_object);
