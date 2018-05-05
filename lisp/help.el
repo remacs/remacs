@@ -908,6 +908,10 @@ documentation for the major and minor modes of that buffer."
 		   (push (list fmode pretty-minor-mode
 			       (format-mode-line (assq mode minor-mode-alist)))
 			 minor-modes)))))
+	;; Narrowing is not a minor mode, but its indicator is part of
+	;; mode-line-modes.
+	(when (buffer-narrowed-p)
+	  (push '(narrow-to-region "Narrow" " Narrow") minor-modes))
 	(setq minor-modes
 	      (sort minor-modes
 		    (lambda (a b) (string-lessp (cadr a) (cadr b)))))
