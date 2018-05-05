@@ -51,6 +51,7 @@ clean_up=no
 make_tar=no
 default_gzip=gzip
 newer=""
+with_info=yes
 with_tests=no
 changelog=yes
 verbose=no
@@ -77,6 +78,11 @@ while [ $# -gt 0 ]; do
     "--no-changelog" )
       changelog=no
     ;;
+    ## This options tells make-dist to skip the info files.  This can
+    ## be useful for creating a tarball purely for test purposes.
+    "--no-info" )
+      with_info=no
+      ;;
     ## This option tells make-dist to make the distribution normally, then
     ## remove all files older than the given timestamp file.  This is useful
     ## for creating incremental or patch distributions.
@@ -124,6 +130,7 @@ while [ $# -gt 0 ]; do
       echo "  --no-check	don't check for bad file names etc."
       echo "  --no-update	don't recompile or do analogous things"
       echo "  --no-changelog	don't generate the top-level ChangeLog"
+      echo "  --no-info		don't include info files"
       echo "  --snapshot	same as --clean-up --no-update --tar --no-check"
       echo "  --tar		make a tar file"
       echo "  --tests	include the test/ directory"
@@ -292,7 +299,7 @@ if [ $check = yes ]; then
 
   ## This exits with non-zero status if any .info files need
   ## rebuilding.
-  if [ -r Makefile ]; then
+  if [ -r Makefile ] && [ "$with_info" = "yes" ]; then
       echo "Checking to see if info files are up-to-date..."
       make --question info || error=yes
   fi
@@ -331,8 +338,10 @@ if [ $update = yes ]; then
   rm -f src/stamp-h.in
   echo timestamp > src/stamp-h.in
 
-  echo "Updating Info files"
-  make info
+  if [ "$make_info" = yes ] ; then
+    echo "Updating Info files"
+    make info
+  fi
 
   echo "Updating finder, custom and autoload data"
   (cd lisp && make updates EMACS="$EMACS")
@@ -596,7 +605,7 @@ for f in `find etc -type f`; do
   ln $f $tempdir/$f || exit
 done
 
-if [ -d info ]; then # Skip in case we've built --without-makeinfo.
+if [ "$with_info" = "yes" ]; then
   echo "Making links to 'info'"
   ln `find info -type f -print` ${tempdir}/info || exit
 fi
