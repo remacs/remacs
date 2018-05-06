@@ -5300,12 +5300,16 @@ x_frame_list_z_order (Display* dpy, Window window)
 	  Lisp_Object frame, tail;
 
 	  FOR_EACH_FRAME (tail, frame)
-	    /* With a reparenting window manager the parent_desc field
-	       usually specifies the topmost windows of our frames.
-	       Otherwise FRAME_OUTER_WINDOW should do.  */
-	    if (XFRAME (frame)->output_data.x->parent_desc == children[i]
-		|| FRAME_OUTER_WINDOW (XFRAME (frame)) == children[i])
-	      frames = Fcons (frame, frames);
+            {
+              struct frame *cf = XFRAME (frame);
+              /* With a reparenting window manager the parent_desc
+                 field usually specifies the topmost windows of our
+                 frames.  Otherwise FRAME_OUTER_WINDOW should do.  */
+              if (FRAME_X_P (cf)
+                  && (cf->output_data.x->parent_desc == children[i]
+                      || FRAME_OUTER_WINDOW (cf) == children[i]))
+                frames = Fcons (frame, frames);
+            }
 	}
 
       if (children) XFree ((char *)children);
