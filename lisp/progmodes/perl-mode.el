@@ -678,7 +678,9 @@ Turning on Perl mode runs the normal hook `perl-mode-hook'."
 (define-obsolete-function-alias 'electric-perl-terminator
   'perl-electric-terminator "22.1")
 (defun perl-electric-noindent-p (_char)
-  (unless (eolp) 'no-indent))
+  ;; To reproduce the old behavior, ;, {, }, and : are made electric, but
+  ;; we only want them to be electric at EOL.
+  (unless (or (bolp) (eolp)) 'no-indent))
 
 (defun perl-electric-terminator (arg)
   "Insert character and maybe adjust indentation.

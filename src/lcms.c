@@ -589,12 +589,6 @@ DEFUN ("lcms2-available-p", Flcms2_available_p, Slcms2_available_p, 0, 0, 0,
 void
 syms_of_lcms2 (void)
 {
-  DEFVAR_LISP ("lcms-d65-xyz", Vlcms_d65_xyz,
-               doc: /* D65 illuminant as a CIE XYZ triple.  */);
-  Vlcms_d65_xyz = list3 (make_float (0.950455),
-                         make_float (1.0),
-                         make_float (1.088753));
-
   defsubr (&Slcms_cie_de2000);
   defsubr (&Slcms_xyz_to_jch);
   defsubr (&Slcms_jch_to_xyz);

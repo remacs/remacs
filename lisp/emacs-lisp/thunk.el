@@ -29,9 +29,9 @@
 ;; Thunk provides functions and macros to delay the evaluation of
 ;; forms.
 ;;
-;; Use `thunk-delay' to delay the evaluation of a form, and
-;; `thunk-force' to evaluate it. The result of the evaluation is
-;; cached, and only happens once.
+;; Use `thunk-delay' to delay the evaluation of a form (requires
+;; lexical-binding), and `thunk-force' to evaluate it. The result of
+;; the evaluation is cached, and only happens once.
 ;;
 ;; Here is an example of a form which evaluation is delayed:
 ;;
@@ -44,9 +44,12 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-macs))
+
 (defmacro thunk-delay (&rest body)
   "Delay the evaluation of BODY."
   (declare (debug t))
+  (cl-assert lexical-binding)
   (let ((forced (make-symbol "forced"))
         (val (make-symbol "val")))
     `(let (,forced ,val)

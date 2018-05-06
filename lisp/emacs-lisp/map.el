@@ -73,7 +73,8 @@ KEYS can also be a list of (KEY VARNAME) pairs, in which case
 KEY is an unquoted form.
 
 MAP can be a list, hash-table or array."
-  (declare (indent 2) (debug t))
+  (declare (indent 2)
+           (debug ((&rest &or symbolp ([form symbolp])) form body)))
   `(pcase-let ((,(map--make-pcase-patterns keys) ,map))
      ,@body))
 

@@ -464,7 +464,8 @@ for the duration of the command.")
       (kill-local-variable 'org-previous-header-line-format)
       (remove-hook 'post-command-hook 'org-columns-hscroll-title 'local))
     (set-marker org-columns-begin-marker nil)
-    (set-marker org-columns-top-level-marker nil)
+    (when (markerp org-columns-top-level-marker)
+      (set-marker org-columns-top-level-marker nil))
     (org-with-silent-modifications
      (mapc #'delete-overlay org-columns-overlays)
      (setq org-columns-overlays nil)
@@ -539,7 +540,7 @@ Where possible, use the standard interface for changing this line."
 	 (eol (line-end-position))
 	 (pom (or (get-text-property bol 'org-hd-marker) (point)))
 	 (key (or key (get-char-property (point) 'org-columns-key)))
-	 (org-columns--time (float-time (current-time)))
+	 (org-columns--time (float-time))
 	 (action
 	  (pcase key
 	    ("CLOCKSUM"
@@ -789,7 +790,7 @@ When COLUMNS-FMT-STRING is non-nil, use it as the column format."
   (org-columns-goto-top-level)
   ;; Initialize `org-columns-current-fmt' and
   ;; `org-columns-current-fmt-compiled'.
-  (let ((org-columns--time (float-time (current-time))))
+  (let ((org-columns--time (float-time)))
     (org-columns-get-format columns-fmt-string)
     (unless org-columns-inhibit-recalculation (org-columns-compute-all))
     (save-excursion
@@ -1181,7 +1182,7 @@ column specification."
   "Compute all columns that have operators defined."
   (org-with-silent-modifications
    (remove-text-properties (point-min) (point-max) '(org-summaries t)))
-  (let ((org-columns--time (float-time (current-time)))
+  (let ((org-columns--time (float-time))
 	seen)
     (dolist (spec org-columns-current-fmt-compiled)
       (let ((property (car spec)))
@@ -1493,7 +1494,7 @@ PARAMS is a property list of parameters:
   (if (markerp org-columns-begin-marker)
       (move-marker org-columns-begin-marker (point))
     (setq org-columns-begin-marker (point-marker)))
-  (let* ((org-columns--time (float-time (current-time)))
+  (let* ((org-columns--time (float-time))
 	 (fmt
 	  (cond
 	   ((bound-and-true-p org-agenda-overriding-columns-format))

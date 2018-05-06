@@ -998,7 +998,7 @@ Argument PROMPT is the prompt to use when querying the user for a target."
   (project-add-file this file))
 
 (cl-defmethod project-add-file ((ot ede-target) _file)
-  "Add the current buffer into project project target OT.
+  "Add the current buffer into project target OT.
 Argument FILE is the file to add."
   (error "add-file not supported by %s" (eieio-object-name ot)))
 

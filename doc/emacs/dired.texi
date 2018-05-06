@@ -647,6 +647,14 @@ Copy the specified files (@code{dired-do-copy}).  The argument @var{new}
 is the directory to copy into, or (if copying a single file) the new
 name.  This is like the shell command @code{cp}.
 
+@vindex dired-create-destination-dirs
+The option @code{dired-create-destination-dirs} controls whether Dired
+should create non-existent directories in the destination while
+copying/renaming files.  The default value @code{nil} means Dired
+never creates such missing directories;  the value @code{always},
+means Dired automatically creates them; the value @code{ask}
+means Dired asks you for confirmation before creating them.
+
 @vindex dired-copy-preserve-time
 If @code{dired-copy-preserve-time} is non-@code{nil}, then copying
 with this command preserves the modification time of the old file in
@@ -677,6 +685,9 @@ Rename the specified files (@code{dired-do-rename}).  If you rename a
 single file, the argument @var{new} is the new name of the file.  If
 you rename several files, the argument @var{new} is the directory into
 which to move the files (this is like the shell command @command{mv}).
+
+The option @code{dired-create-destination-dirs} controls whether Dired
+should create non-existent directories in @var{new}.
 
 Dired automatically changes the visited file name of buffers associated
 with renamed files so that they refer to the new names.

@@ -65,4 +65,16 @@
   (should (equal (xdg-desktop-strings " ") nil))
   (should (equal (xdg-desktop-strings "a; ;") '("a" " "))))
 
+(ert-deftest xdg-mime-associations ()
+  "Test reading MIME associations from files."
+  (let* ((apps (expand-file-name "mimeapps.list" xdg-tests-data-dir))
+         (cache (expand-file-name "mimeinfo.cache" xdg-tests-data-dir))
+         (fs (list apps cache)))
+    (should (equal (xdg-mime-collect-associations "x-test/foo" fs)
+                   '("a.desktop" "b.desktop")))
+    (should (equal (xdg-mime-collect-associations "x-test/bar" fs)
+                   '("a.desktop" "c.desktop")))
+    (should (equal (xdg-mime-collect-associations "x-test/baz" fs)
+                   '("a.desktop" "b.desktop" "d.desktop")))))
+
 ;;; xdg-tests.el ends here

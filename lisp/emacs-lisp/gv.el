@@ -303,7 +303,9 @@ The return value is the last VAL in the list.
      (lambda (do before index place)
        (gv-letplace (getter setter) place
          (funcall do `(edebug-after ,before ,index ,getter)
-                  setter))))
+                  (lambda (store)
+                    `(progn (edebug-after ,before ,index ,getter)
+                            ,(funcall setter store)))))))
 
 ;;; The common generalized variables.
 

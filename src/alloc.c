@@ -2884,9 +2884,13 @@ set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
 
 enum
   {
-    /* Alignment of struct Lisp_Vector objects.  */
-    vector_alignment = COMMON_MULTIPLE (FLEXALIGNOF (struct Lisp_Vector),
-					 GCALIGNMENT),
+    /* Alignment of struct Lisp_Vector objects.  Because pseudovectors
+       can contain any C type, align at least as strictly as
+       max_align_t.  On x86 and x86-64 this can waste up to 8 bytes
+       for typical vectors, since alignof (max_align_t) is 16 but
+       typical vectors need only an alignment of 8.  However, it is
+       not worth the hassle to avoid wasting those bytes.  */
+    vector_alignment = COMMON_MULTIPLE (alignof (max_align_t), GCALIGNMENT),
 
     /* Vector size requests are a multiple of this.  */
     roundup_size = COMMON_MULTIPLE (vector_alignment, word_size)
@@ -6988,7 +6992,15 @@ sweep_symbols (void)
           if (!sym->s.gcmarkbit)
             {
               if (sym->s.redirect == SYMBOL_LOCALIZED)
-                xfree (SYMBOL_BLV (&sym->s));
+		{
+                  xfree (SYMBOL_BLV (&sym->s));
+                  /* At every GC we sweep all symbol_blocks and rebuild the
+                     symbol_free_list, so those symbols which stayed unused
+                     between the two will be re-swept.
+                     So we have to make sure we don't re-free this blv next
+                     time we sweep this symbol_block (bug#29066).  */
+                  sym->s.redirect = SYMBOL_PLAINVAL;
+                }
               sym->s.next = symbol_free_list;
               symbol_free_list = &sym->s;
               symbol_free_list->function = Vdead;

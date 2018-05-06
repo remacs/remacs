@@ -1571,6 +1571,8 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 		   (and (c-beginning-of-macro)
 			(progn (c-end-of-macro) (point))))))
 	(when (and (c-forward-declarator lim)
+		   (or (not (eq (char-after) ?\())
+		       (c-go-list-forward nil lim))
 		   (eq (c-forward-token-2 1 nil lim) 0))
 	  (c-backward-syntactic-ws)
 	  (point))))))
@@ -1589,7 +1591,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	    (or (c-fl-decl-start c-new-BEG) (c-point 'bol c-new-BEG))
 	    c-new-END
 	    (or (c-fl-decl-end c-new-END)
-		(c-point 'bonl (max (1- c-new-END) (point-min)))))))
+		(c-point 'bonl c-new-END)))))
 
 (defun c-context-expand-fl-region (beg end)
   ;; Return a cons (NEW-BEG . NEW-END), where NEW-BEG is the beginning of a

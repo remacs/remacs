@@ -103,7 +103,7 @@ tag that contains point, and return that."
       (when (called-interactively-p 'interactive)
 	(message "Found %d occurrences of %s in %.2f seconds"
 		 Lcount (semantic-tag-name target)
-		 (semantic-elapsed-time start (current-time))))
+		 (semantic-elapsed-time start nil)))
       Lcount)))
 
 (defun semantic-symref-rename-local-variable ()

@@ -831,7 +831,7 @@ An expert programmer who reviewed this text said to me:
 @i{I prefer to learn from reference manuals.  I ``dive into'' each
 paragraph, and ``come up for air'' between paragraphs.}
 
-@i{When I get to the end of a paragraph, I assume that that subject is
+@i{When I get to the end of a paragraph, I assume that subject is
 done, finished, that I know everything I need (with the
 possible exception of the case when the next paragraph starts talking
 about it in more detail).  I expect that a well written reference manual

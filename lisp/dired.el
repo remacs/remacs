@@ -198,8 +198,10 @@ The target is used in the prompt for file copy, rename etc."
 
 ; These variables were deleted and the replacements are on files.el.
 ; We leave aliases behind for back-compatibility.
-(defvaralias 'dired-free-space-program 'directory-free-space-program)
-(defvaralias 'dired-free-space-args 'directory-free-space-args)
+(define-obsolete-variable-alias 'dired-free-space-program
+  'directory-free-space-program "27.1")
+(define-obsolete-variable-alias 'dired-free-space-args
+  'directory-free-space-args "27.1")
 
 ;;; Hook variables
 
@@ -1046,7 +1048,7 @@ wildcards, erases the buffer, and builds the subdir-alist anew
   ;; default-directory and dired-actual-switches must be buffer-local
   ;; and initialized by now.
   (let (dirname
-	;; This makes readin much much faster.
+	;; This makes read-in much faster.
 	;; In particular, it prevents the font lock hook from running
 	;; until the directory is all read in.
 	(inhibit-modification-hooks t))
@@ -2226,7 +2228,8 @@ directory in another window."
     (find-file (dired-get-file-for-visit))))
 
 (defun dired-find-alternate-file ()
-  "In Dired, visit this file or directory instead of the Dired buffer."
+  "In Dired, visit file or directory on current line via `find-alternate-file'.
+This kills the Dired buffer, then visits the current line's file or directory."
   (interactive)
   (set-buffer-modified-p nil)
   (find-alternate-file (dired-get-file-for-visit)))

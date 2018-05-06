@@ -226,11 +226,10 @@
 
 (defun rng-time-function (function &rest args)
   (let* ((start (current-time))
-	 (val (apply function args))
-	 (end (current-time)))
+	 (val (apply function args)))
     (message "%s ran in %g seconds"
 	     function
-	     (float-time (time-subtract end start)))
+	     (float-time (time-subtract nil start)))
     val))
 
 (defun rng-time-tokenize-buffer ()

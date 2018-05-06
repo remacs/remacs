@@ -2,7 +2,7 @@
          (sentence-end-double-space . t)
          (fill-column . 70)))
  (c-mode . ((c-file-style . "GNU")
-            (c-noise-macro-names . ("UNINIT"))))
+            (c-noise-macro-names . ("UNINIT" "CALLBACK" "ALIGN_STACK"))))
  (objc-mode . ((c-file-style . "GNU")))
  (log-edit-mode . ((log-edit-font-lock-gnu-style . t)
                    (log-edit-setup-add-author . t)))

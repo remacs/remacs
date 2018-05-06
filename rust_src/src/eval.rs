@@ -730,7 +730,7 @@ pub fn autoload(
 
 def_lisp_sym!(Qautoload, "autoload");
 
-/// Non-nil if OBJECT is a function.
+/// Return t if OBJECT is a function.
 #[lisp_fn(name = "functionp", c_name = "functionp")]
 pub fn functionp_lisp(object: LispObject) -> bool {
     FUNCTIONP(object.to_raw())
@@ -814,8 +814,8 @@ pub fn autoload_do_load(
         return fundef;
     }
 
+    let kind = nth(4, fundef);
     if macro_only.eq_raw(Qmacro) {
-        let kind = nth(4, fundef);
         if !(kind.eq_raw(Qt) || kind.eq_raw(Qmacro)) {
             return fundef;
         }
@@ -823,6 +823,7 @@ pub fn autoload_do_load(
 
     let sym = funname.as_symbol_or_error();
 
+    let mut ignore_errors = macro_only;
     unsafe {
         // This is to make sure that loadup.el gives a clear picture
         // of what files are preloaded and when.
@@ -847,11 +848,15 @@ pub fn autoload_do_load(
 
         record_unwind_protect(un_autoload, Vautoload_queue);
         Vautoload_queue = Qt;
-        // If `macro_only', assume this autoload to be a "best-effort",
+        // If `macro_only' is set and fundef isn't a macro, assume this autoload to
+        // be a "best-effort" (e.g. to try and find a compiler macro),
         // so don't signal an error if autoloading fails.
+        if kind.eq_raw(Qt) || kind.eq_raw(Qmacro) {
+            ignore_errors = LispObject::constant_nil();
+        }
         Fload(
             Fcar(Fcdr(fundef.to_raw())),
-            macro_only.to_raw(),
+            ignore_errors.to_raw(),
             Qt,
             Qnil,
             Qt,
@@ -862,7 +867,7 @@ pub fn autoload_do_load(
         unbind_to(count, Qnil);
     }
 
-    if funname.is_nil() {
+    if funname.is_nil() || !ignore_errors.is_nil() {
         LispObject::constant_nil()
     } else {
         let fun = indirect_function_lisp(funname, LispObject::constant_nil());
