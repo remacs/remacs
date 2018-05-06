@@ -1497,7 +1497,8 @@ Frames are listed from topmost (first) to bottommost (last).  */)
       Lisp_Object frame;
 
       /* Check against [win parentWindow] so that it doesn't match itself. */
-      if (parent == nil || ns_window_is_ancestor (parent, [win parentWindow]))
+      if ([[win delegate] isKindOfClass:[EmacsView class]]
+          && (parent == nil || ns_window_is_ancestor (parent, [win parentWindow])))
         {
           XSETFRAME (frame, ((EmacsView *)[win delegate])->emacsframe);
           frames = Fcons(frame, frames);
