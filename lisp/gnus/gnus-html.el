@@ -99,11 +99,7 @@ fit these criteria."
          (not (file-exists-p (url-cache-create-filename url))))
         (t (let ((cache-time (url-is-cached url)))
              (if cache-time
-                 (time-less-p
-                  (time-add
-                   cache-time
-                   ttl)
-                  (current-time))
+                 (time-less-p (time-add cache-time ttl) nil)
                t)))))
 
 ;;;###autoload

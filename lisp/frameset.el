@@ -446,6 +446,10 @@ DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
      (buffer-list        . :never)
      (buffer-predicate   . :never)
      (buried-buffer-list . :never)
+     ;; Don't save the 'client' parameter to avoid that a subsequent
+     ;; `save-buffers-kill-terminal' in a non-client session barks at
+     ;; the user (Bug#29067).
+     (client             . :never)
      (delete-before      . :never)
      (font               . frameset-filter-font-param)
      (foreground-color   . frameset-filter-sanitize-color)
@@ -638,7 +642,7 @@ see `frameset-filter-alist'."
 When switching from a GUI frame to a tty frame, behave
 as `frameset-filter-shelve-param' does."
   (or saving
-      (if (frameset-switch-to-gui-p parameters)
+      (if (frameset-switch-to-tty-p parameters)
           (frameset-filter-shelve-param current filtered parameters saving
                                         prefix))))
 
@@ -1034,6 +1038,12 @@ Internal use only."
 					 (cons '(visibility)
 					       (frameset--initial-params filtered-cfg))))
       (puthash frame :created frameset--action-map))
+
+    ;; Remove `border-width' from the list of parameters.  If it has not
+    ;; been assigned via `make-frame-on-display', any attempt to assign
+    ;; it now via `modify-frame-parameters' may result in an error on X
+    ;; (Bug#28873).
+    (setq filtered-cfg (assq-delete-all 'border-width filtered-cfg))
 
     ;; Try to assign parent-frame right here - it will improve things
     ;; for minibuffer-less child frames.

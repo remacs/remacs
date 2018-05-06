@@ -5444,6 +5444,19 @@ by this function.  This happens in an interactive call.  */)
   return result;
 }
 
+DEFUN ("minibuffer-selected-window", Fminibuffer_selected_window, Sminibuffer_selected_window, 0, 0, 0,
+       doc: /* Return window selected just before minibuffer window was selected.
+Return nil if the selected window is not a minibuffer window.  */)
+  (void)
+{
+  if (minibuf_level > 0
+      && MINI_WINDOW_P (XWINDOW (selected_window))
+      && WINDOW_LIVE_P (minibuf_selected_window))
+    return minibuf_selected_window;
+
+  return Qnil;
+}
+
 /* Value is the number of lines actually displayed in window W,
    as opposed to its height.  */
 

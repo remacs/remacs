@@ -56,6 +56,11 @@ B is considered the exact value."
   (let ((rgb1 (mapcar (lambda (x) (/ x 255.0)) rgb)))
     (apply #'color-srgb-to-xyz rgb1)))
 
+(defun lcms-rgb255->xyz (rgb)
+  "Return XYZ tristimulus values corresponding to RGB."
+  (let ((rgb1 (mapcar (lambda (x) (/ x 255.0)) rgb)))
+    (apply #'color-srgb-to-xyz rgb1)))
+
 (ert-deftest lcms-cri-cam02-ucs ()
   "Test use of `lcms-cam02-ucs'."
   (skip-unless (featurep 'lcms2))

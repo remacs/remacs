@@ -488,7 +488,7 @@ Clears all imenu menus that may be depending on the database."
 ;;; Which function support
 ;;
 ;; The which-function library will display the current function in the
-;; mode line.  It tries do do this through imenu.  With a semantic parsed
+;; mode line.  It tries to do this through imenu.  With a semantic parsed
 ;; buffer, there is a much more efficient way of doing this.
 ;; Advise `which-function' so that we optionally use semantic tags
 ;; instead, and get better stuff.

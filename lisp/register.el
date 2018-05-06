@@ -182,8 +182,11 @@ Use \\[jump-to-register] to go to that location or restore that configuration.
 Argument is a character, naming the register.
 
 Interactively, reads the register using `register-read-with-preview'."
-  (interactive (list (register-read-with-preview "Point to register: ")
-		     current-prefix-arg))
+  (interactive (list (register-read-with-preview
+                      (if current-prefix-arg
+                          "Frame configuration to register: "
+                        "Point to register: "))
+                     current-prefix-arg))
   ;; Turn the marker into a file-ref if the buffer is killed.
   (add-hook 'kill-buffer-hook 'register-swap-out nil t)
   (set-register register

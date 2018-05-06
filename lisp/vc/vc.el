@@ -2377,6 +2377,7 @@ When called interactively with a prefix argument, prompt for LIMIT."
 
 ;;;###autoload
 (defun vc-print-branch-log (branch)
+  "Show the change log for BRANCH in a window."
   (interactive
    (list
     (vc-read-revision "Branch to log: ")))

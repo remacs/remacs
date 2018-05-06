@@ -1513,7 +1513,7 @@ downloaded into the agent."
         (let* ((fetched-articles (list nil))
                (tail-fetched-articles fetched-articles)
                (dir (gnus-agent-group-pathname group))
-               (date (time-to-days (current-time)))
+               (date (time-to-days nil))
                (case-fold-search t)
                pos crosses
 	       (file-name-coding-system nnmail-pathname-coding-system))
@@ -3089,7 +3089,7 @@ FORCE is equivalent to setting the expiration predicates to true."
 	      (nov-entries-deleted 0)
 	      (info (gnus-get-info group))
 	      (alist gnus-agent-article-alist)
-	      (day (- (time-to-days (current-time))
+	      (day (- (time-to-days nil)
 		      (gnus-agent-find-parameter group 'agent-days-until-old)))
 	      (specials (if (and alist
 				 (not force))
@@ -3824,7 +3824,7 @@ has been fetched."
       ;; be expired later.
       (gnus-agent-load-alist group)
       (gnus-agent-save-alist group (list article)
-			     (time-to-days (current-time))))))
+			     (time-to-days nil)))))
 
 (defun gnus-agent-regenerate-group (group &optional reread)
   "Regenerate GROUP.

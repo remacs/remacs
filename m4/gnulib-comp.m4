@@ -80,6 +80,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module flexmember:
   # Code from module fpending:
   # Code from module fstatat:
+  # Code from module fsusage:
   # Code from module fsync:
   # Code from module getdtablesize:
   # Code from module getgroups:
@@ -240,6 +241,11 @@ AC_DEFUN([gl_INIT],
     AC_LIBOBJ([fstatat])
   fi
   gl_SYS_STAT_MODULE_INDICATOR([fstatat])
+  gl_FSUSAGE
+  if test $gl_cv_fs_space = yes; then
+    AC_LIBOBJ([fsusage])
+    gl_PREREQ_FSUSAGE_EXTRA
+  fi
   gl_FUNC_FSYNC
   if test $HAVE_FSYNC = 0; then
     AC_LIBOBJ([fsync])
@@ -830,6 +836,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/fpending.c
   lib/fpending.h
   lib/fstatat.c
+  lib/fsusage.c
+  lib/fsusage.h
   lib/fsync.c
   lib/ftoastr.c
   lib/ftoastr.h
@@ -947,6 +955,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/flexmember.m4
   m4/fpending.m4
   m4/fstatat.m4
+  m4/fsusage.m4
   m4/fsync.m4
   m4/getdtablesize.m4
   m4/getgroups.m4

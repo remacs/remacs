@@ -227,7 +227,7 @@ file to byte-code before it is loaded."
   (interactive "fFile to load: \nP")
   (let* ((age (lambda (file)
 		(float-time
-		 (time-subtract (current-time)
+		 (time-subtract nil
 				(nth 5 (or (file-attributes (file-truename file))
 					   (file-attributes file)))))))
 	 (base-name (file-name-sans-extension file))
@@ -5597,15 +5597,14 @@ the rounding returns a past time."
 	    (apply 'encode-time
 		   (append (list 0 (* r (floor (+ .5 (/ (float (nth 1 time)) r)))))
 			   (nthcdr 2 time))))
-      (if (and past (< (float-time (time-subtract (current-time) res)) 0))
+      (if (and past (< (float-time (time-subtract nil res)) 0))
 	  (seconds-to-time (- (float-time res) (* r 60)))
 	res))))
 
 (defun org-today ()
   "Return today date, considering `org-extend-today-until'."
   (time-to-days
-   (time-subtract (current-time)
-		  (list 0 (* 3600 org-extend-today-until) 0))))
+   (time-subtract nil (list 0 (* 3600 org-extend-today-until) 0))))
 
 ;;;; Font-Lock stuff, including the activators
 
@@ -13057,8 +13056,7 @@ This function is run automatically after each state change to a DONE state."
 			(while (re-search-forward org-clock-line-re end t)
 			  (when (org-at-clock-log-p) (throw :clock t))))))
 	    (org-entry-put nil "LAST_REPEAT" (format-time-string
-					      (org-time-stamp-format t t)
-					      (current-time))))
+					      (org-time-stamp-format t t))))
 	  (when org-log-repeat
 	    (if (or (memq 'org-add-log-note (default-value 'post-command-hook))
 		    (memq 'org-add-log-note post-command-hook))
@@ -13117,7 +13115,7 @@ has been set"
 			  (let ((nshiftmax 10)
 				(nshift 0))
 			    (while (or (= nshift 0)
-				       (not (time-less-p (current-time) time)))
+				       (not (time-less-p nil time)))
 			      (when (= (cl-incf nshift) nshiftmax)
 				(or (y-or-n-p
 				     (format "%d repeater intervals were not \
@@ -16071,7 +16069,9 @@ automatically performed, such drawers will be silently ignored."
 	   (when (memq (org-element-type element) '(keyword node-property))
 	     (let ((value (org-element-property :value element))
 		   (start 0))
-	       (while (string-match "%[0-9]*\\(\\S-+\\)" value start)
+	       (while (string-match "%[0-9]*\\([[:alnum:]_-]+\\)\\(([^)]+)\\)?\
+\\(?:{[^}]+}\\)?"
+				    value start)
 		 (setq start (match-end 0))
 		 (let ((p (match-string-no-properties 1 value)))
 		   (unless (member-ignore-case p org-special-properties)
@@ -16902,7 +16902,7 @@ user."
   ;; overridden in tests.
   (let ((org-def def)
 	(org-defdecode defdecode)
-	(nowdecode (decode-time (current-time)))
+	(nowdecode (decode-time))
 	delta deltan deltaw deltadef year month day
 	hour minute second wday pm h2 m2 tl wday1
 	iso-year iso-weekday iso-week iso-date futurep kill-year)
@@ -17068,7 +17068,7 @@ user."
 					;      (when (and org-read-date-prefer-future
 					;		 (not iso-year)
 					;		 (< (calendar-absolute-from-gregorian iso-date)
-					;		    (time-to-days (current-time))))
+					;		    (time-to-days nil)))
 					;	(setq year (1+ year)
 					;	      iso-date (calendar-gregorian-from-absolute
 					;			(calendar-iso-to-absolute
@@ -17082,7 +17082,7 @@ user."
 	;; Pass `current-time' result to `decode-time' (instead of
 	;; calling without arguments) so that only `current-time' has
 	;; to be overridden in tests.
-	(let ((now (decode-time (current-time))))
+	(let ((now (decode-time)))
 	  (setq day (nth 3 now) month (nth 4 now) year (nth 5 now))))
       (cond ((member deltaw '("d" "")) (setq day (+ day deltan)))
 	    ((equal deltaw "w") (setq day (+ day (* 7 deltan))))
@@ -17562,7 +17562,7 @@ signaled."
 YEAR is expanded into one of the 30 next years, if possible, or
 into a past one.  Any year larger than 99 is returned unchanged."
   (if (>= year 100) year
-    (let* ((current (string-to-number (format-time-string "%Y" (current-time))))
+    (let* ((current (string-to-number (format-time-string "%Y")))
 	   (century (/ current 100))
 	   (offset (- year (% current 100))))
       (cond ((> offset 30) (+ (* (1- century) 100) year))
@@ -18086,7 +18086,7 @@ A prefix ARG can be used to force the current date."
 	diff)
     (when (or (org-at-timestamp-p 'lax)
 	      (org-match-line (concat ".*" org-ts-regexp)))
-      (let ((d1 (time-to-days (current-time)))
+      (let ((d1 (time-to-days nil))
 	    (d2 (time-to-days (org-time-string-to-time (match-string 1)))))
 	(setq diff (- d2 d1))))
     (calendar)
@@ -19481,7 +19481,6 @@ COMMANDS is a list of alternating OLDDEF NEWDEF command names."
 
 (org-defkey org-mode-map [(shift return)]   'org-table-copy-down)
 (org-defkey org-mode-map [(meta shift return)] 'org-insert-todo-heading)
-(org-defkey org-mode-map [(meta return)]       'org-meta-return)
 (org-defkey org-mode-map (kbd "M-RET") #'org-meta-return)
 
 ;; Cursor keys with modifiers
@@ -24204,16 +24203,25 @@ convenience:
 
   - On an affiliated keyword, jump to the first one.
   - On a table or a property drawer, move to its beginning.
-  - On a verse or source block, stop before blank lines."
+  - On comment, example, export, src and verse blocks, stop
+    before blank lines."
   (interactive)
   (unless (bobp)
     (let* ((deactivate-mark nil)
 	   (element (org-element-at-point))
 	   (type (org-element-type element))
-	   (contents-begin (org-element-property :contents-begin element))
 	   (contents-end (org-element-property :contents-end element))
 	   (post-affiliated (org-element-property :post-affiliated element))
-	   (begin (org-element-property :begin element)))
+	   (begin (org-element-property :begin element))
+	   (special?			;blocks handled specially
+	    (memq type '(comment-block example-block export-block src-block
+				       verse-block)))
+	   (contents-begin
+	    (if special?
+		;; These types have no proper contents.  Fake line
+		;; below the block opening line as contents beginning.
+		(save-excursion (goto-char begin) (line-beginning-position 2))
+	      (org-element-property :contents-begin element))))
       (cond
        ((not element) (goto-char (point-min)))
        ((= (point) begin)
@@ -24224,11 +24232,8 @@ convenience:
 	(goto-char (org-element-property
 		    :post-affiliated (org-element-property :parent element))))
        ((memq type '(property-drawer table)) (goto-char begin))
-       ((memq type '(src-block verse-block))
-	(when (eq type 'src-block)
-	  (setq contents-begin
-		(save-excursion (goto-char begin) (forward-line) (point))))
-	(if (= (point) contents-begin) (goto-char post-affiliated)
+       (special?
+	(if (<= (point) contents-begin) (goto-char post-affiliated)
 	  ;; Inside a verse block, see blank lines as paragraph
 	  ;; separators.
 	  (let ((origin (point)))
@@ -24237,7 +24242,6 @@ convenience:
 	      (skip-chars-forward " \r\t\n" origin)
 	      (if (= (point) origin) (goto-char contents-begin)
 		(beginning-of-line))))))
-       ((not contents-begin) (goto-char (or post-affiliated begin)))
        ((eq type 'paragraph)
 	(goto-char contents-begin)
 	;; When at first paragraph in an item or a footnote definition,

@@ -527,8 +527,10 @@ Creates the directory if necessary and makes sure:
 	   (w32 (eq system-type 'windows-nt))
            (unsafe (cond
                     ((not (eq t (car attrs)))
-                     (format "it is a %s" (if (stringp (car attrs))
-                                              "symlink" "file")))
+                     (if (null attrs) "its attributes can't be checked"
+                       (format "it is a %s"
+                               (if (stringp (car attrs))
+                                   "symlink" "file"))))
                     ((and w32 (zerop uid)) ; on FAT32?
                      (display-warning
                       'server
@@ -546,14 +548,15 @@ See variable `server-auth-dir' for details."
                               ;; group recorded as the owner.
                               (/= uid 544) (/= (user-uid) 500)))
                      (format "it is not owned by you (owner = %s (%d))"
-                             (user-full-name (user-uid)) (user-uid)))
+                             (user-full-name uid) uid))
                     (w32 nil)           ; on NTFS?
                     ((/= 0 (logand ?\077 (file-modes dir)))
                      (format "it is accessible by others (%03o)"
                              (file-modes dir)))
                     (t nil))))
       (when unsafe
-        (error "`%s' is not a safe directory because %s" dir unsafe)))))
+        (error "`%s' is not a safe directory because %s"
+               (expand-file-name dir) unsafe)))))
 
 (defun server-generate-key ()
   "Generate and return a random authentication key.

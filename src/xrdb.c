@@ -345,6 +345,7 @@ get_user_db (Display *display)
     db = XrmGetStringDatabase (xdefs);
   else
     {
+      /* Use ~/.Xdefaults.  */
       char *home = gethomedir ();
       ptrdiff_t homelen = strlen (home);
       char *filename = xrealloc (home, homelen + sizeof xdefaults);
@@ -375,13 +376,15 @@ get_environ_db (void)
 
   if (!p)
     {
+      /* Use ~/.Xdefaults-HOSTNAME.  */
       char *home = gethomedir ();
       ptrdiff_t homelen = strlen (home);
       Lisp_Object system_name = Fsystem_name ();
       ptrdiff_t filenamesize = (homelen + sizeof xdefaults
-				+ SBYTES (system_name));
+				+ 1 + SBYTES (system_name));
       p = filename = xrealloc (home, filenamesize);
-      lispstpcpy (stpcpy (filename + homelen, xdefaults), system_name);
+      lispstpcpy (stpcpy (stpcpy (filename + homelen, xdefaults), "-"),
+		  system_name);
     }
 
   db = XrmGetFileDatabase (p);

@@ -452,7 +452,8 @@ The following commands are available:
     (if server (error "No such server: %s" server)
       (error "No server on the current line")))
   (unless (assoc server gnus-server-alist)
-    (error "Read-only server %s" server))
+    (error "Server %s must be deleted from your configuration files"
+	   server))
   (gnus-dribble-touch)
   (let ((buffer-read-only nil))
     (gnus-delete-line))
@@ -642,7 +643,8 @@ The following commands are available:
   (unless server
     (error "No server on current line"))
   (unless (assoc server gnus-server-alist)
-    (error "This server can't be edited"))
+    (error "Server %s must be edited in your configuration files"
+	   server))
   (let ((info (cdr (assoc server gnus-server-alist))))
     (gnus-close-server info)
     (gnus-edit-form

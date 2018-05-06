@@ -216,7 +216,6 @@ pub fn logxor(args: &[LispObject]) -> LispObject {
 }
 
 fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
-    assert!(!args.is_empty());
     let mut accum = args[0];
     for &arg in &args[1..] {
         if arithcompare(arg, accum, comparison) {

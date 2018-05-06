@@ -930,7 +930,7 @@ but should be good enough for debugging assertions."
 	    (length result))))
 
 (defun semanticdb-find-result-with-nil-p (resultp)
-  "Non-nil of RESULTP is in the form of a semanticdb search result.
+  "Non-nil if RESULTP is in the form of a semanticdb search result.
 The value nil is valid where a TABLE usually is, but only if the TAG
 results include overlays.
 This query only really tests the first entry in the list that is RESULTP,

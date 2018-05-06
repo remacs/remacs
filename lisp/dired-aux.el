@@ -1548,6 +1548,24 @@ Special value `always' suppresses confirmation."
 
 (declare-function make-symbolic-link "fileio.c")
 
+(defcustom dired-create-destination-dirs nil
+  "Whether Dired should create destination dirs when copying/removing files.
+If nil, don't create them.
+If `always', create them without ask.
+If `ask', ask for user confirmation."
+  :type '(choice (const :tag "Never create non-existent dirs" nil)
+		 (const :tag "Always create non-existent dirs" always)
+		 (const :tag "Ask for user confirmation" ask))
+  :group 'dired
+  :version "27.1")
+
+(defun dired-maybe-create-dirs (dir)
+  "Create DIR if doesn't exist according to `dired-create-destination-dirs'."
+  (when (and dired-create-destination-dirs (not (file-exists-p dir)))
+    (if (or (eq dired-create-destination-dirs 'always)
+            (yes-or-no-p (format "Create destination dir `%s'? " dir)))
+        (dired-create-directory dir))))
+
 (defun dired-copy-file-recursive (from to ok-flag &optional
 				       preserve-time top recursive)
   (when (and (eq t (car (file-attributes from)))
@@ -1564,6 +1582,7 @@ Special value `always' suppresses confirmation."
 	  (if (stringp (car attrs))
 	      ;; It is a symlink
 	      (make-symbolic-link (car attrs) to ok-flag)
+            (dired-maybe-create-dirs (file-name-directory to))
 	    (copy-file from to ok-flag preserve-time))
 	(file-date-error
 	 (push (dired-make-relative from)
@@ -1573,6 +1592,7 @@ Special value `always' suppresses confirmation."
 ;;;###autoload
 (defun dired-rename-file (file newname ok-if-already-exists)
   (dired-handle-overwrite newname)
+  (dired-maybe-create-dirs (file-name-directory newname))
   (rename-file file newname ok-if-already-exists) ; error is caught in -create-files
   ;; Silently rename the visited file of any buffer visiting this file.
   (and (get-file-buffer file)
@@ -1965,6 +1985,7 @@ Optional arg HOW-TO determines how to treat the target.
 ;;;###autoload
 (defun dired-create-directory (directory)
   "Create a directory called DIRECTORY.
+Parent directories of DIRECTORY are created as needed.
 If DIRECTORY already exists, signal an error."
   (interactive
    (list (read-file-name "Create directory: " (dired-current-directory))))

@@ -51,8 +51,9 @@ the middle is discarded, and just the beginning and end are displayed."
 
 (defcustom debugger-print-function #'cl-prin1
   "Function used to print values in the debugger backtraces."
-  :type 'function
-  :options '(cl-prin1 prin1)
+  :type '(choice (const cl-prin1)
+                 (const prin1)
+                 function)
   :version "26.1")
 
 (defcustom debugger-bury-or-kill 'bury
@@ -253,7 +254,9 @@ first will be printed into the backtrace buffer."
 		;; Unshow debugger-buffer.
 		(quit-restore-window debugger-window debugger-bury-or-kill)
 		;; Restore current buffer (Bug#12502).
-		(set-buffer debugger-old-buffer))))
+		(set-buffer debugger-old-buffer)))
+            ;; Forget debugger window, it won't be back (Bug#17882).
+            (setq debugger-previous-window nil))
           ;; Restore previous state of debugger-buffer in case we were
           ;; in a recursive invocation of the debugger, otherwise just
           ;; erase the buffer and put it into fundamental mode.
@@ -270,6 +273,12 @@ first will be printed into the backtrace buffer."
       (setq debug-on-next-call debugger-step-after-exit)
       debugger-value)))
 
+(defun debugger--print (obj &optional stream)
+  (condition-case err
+      (funcall debugger-print-function obj stream)
+    (error
+     (message "Error in debug printer: %S" err)
+     (prin1 obj stream))))
 
 (defun debugger-insert-backtrace (frames do-xrefs)
   "Format and insert the backtrace FRAMES at point.
@@ -284,10 +293,10 @@ Make functions into cross-reference buttons if DO-XREFS is non-nil."
             (fun-pt (point)))
         (cond
          ((and evald (not debugger-stack-frame-as-list))
-          (funcall debugger-print-function fun)
-          (if args (funcall debugger-print-function args) (princ "()")))
+          (debugger--print fun)
+          (if args (debugger--print args) (princ "()")))
          (t
-          (funcall debugger-print-function (cons fun args))
+          (debugger--print (cons fun args))
           (cl-incf fun-pt)))
         (when fun-file
           (make-text-button fun-pt (+ fun-pt (length (symbol-name fun)))
@@ -333,7 +342,7 @@ That buffer should be current already."
        (insert "--returning value: ")
        (setq pos (point))
        (setq debugger-value (nth 1 args))
-       (funcall debugger-print-function debugger-value (current-buffer))
+       (debugger--print debugger-value (current-buffer))
        (setf (cl-getf (nth 3 (car frames)) :debug-on-exit) nil)
        (insert ?\n))
       ;; Watchpoint triggered.
@@ -358,7 +367,7 @@ That buffer should be current already."
       (`error
        (insert "--Lisp error: ")
        (setq pos (point))
-       (funcall debugger-print-function (nth 1 args) (current-buffer))
+       (debugger--print (nth 1 args) (current-buffer))
        (insert ?\n))
       ;; debug-on-call, when the next thing is an eval.
       (`t
@@ -368,7 +377,7 @@ That buffer should be current already."
       (_
        (insert ": ")
        (setq pos (point))
-       (funcall debugger-print-function
+       (debugger--print
                 (if (eq (car args) 'nil)
                     (cdr args) args)
                 (current-buffer))
@@ -414,7 +423,7 @@ will be used, such as in a debug on exit from a frame."
                "from an error" "at function entrance")))
   (setq debugger-value val)
   (princ "Returning " t)
-  (prin1 debugger-value)
+  (debugger--print debugger-value)
   (save-excursion
     ;; Check to see if we've flagged some frame for debug-on-exit, in which
     ;; case we'll probably come back to the debugger soon.
@@ -529,7 +538,7 @@ The environment used is the one when entering the activation frame at point."
     (debugger-env-macro
       (let ((val (backtrace-eval exp nframe base)))
         (prog1
-            (prin1 val t)
+            (debugger--print val t)
           (let ((str (eval-expression-print-format val)))
             (if str (princ str t))))))))
 
@@ -551,7 +560,7 @@ The environment used is the one when entering the activation frame at point."
 	       (insert "\n    ")
 	       (prin1 symbol (current-buffer))
 	       (insert " = ")
-	       (prin1 value (current-buffer))))))))
+	       (debugger--print value (current-buffer))))))))
 
 (defun debugger--show-locals ()
   "For the frame at point, insert locals and add text properties."

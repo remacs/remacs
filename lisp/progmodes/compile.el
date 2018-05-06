@@ -2328,7 +2328,7 @@ and runs `compilation-filter-hook'."
      (while (,< n 0)
        (setq opt pt)
        (or (setq pt (,property-change pt 'compilation-message))
-	   ;; Handle the case where where the first error message is
+	   ;; Handle the case where the first error message is
 	   ;; at the start of the buffer, and n < 0.
 	   (if (or (eq (get-text-property ,limit 'compilation-message)
 		       (get-text-property opt 'compilation-message))

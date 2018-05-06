@@ -77,11 +77,7 @@
          (not (file-exists-p (url-cache-create-filename url))))
         (t (let ((cache-time (url-is-cached url)))
              (if cache-time
-                 (time-less-p
-                  (time-add
-                   cache-time
-                   gravatar-cache-ttl)
-                  (current-time))
+                 (time-less-p (time-add cache-time gravatar-cache-ttl) nil)
                t)))))
 
 (defun gravatar-get-data ()

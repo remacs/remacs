@@ -177,6 +177,8 @@ For a description of possible values, see `vc-check-master-templates'."
 	  (push (list frel state) result))))
     (funcall update-function result)))
 
+(defun vc-rcs-dir-extra-headers (&rest _ignore))
+
 (defun vc-rcs-working-revision (file)
   "RCS-specific version of `vc-working-revision'."
   (or (and vc-consult-headers

@@ -85,7 +85,7 @@ This mode is an extended emacs-lisp mode.
 (defun gnus-score-edit-insert-date ()
   "Insert date in numerical format."
   (interactive)
-  (princ (time-to-days (current-time)) (current-buffer)))
+  (princ (time-to-days nil) (current-buffer)))
 
 (defun gnus-score-pretty-print ()
   "Format the current score file."
