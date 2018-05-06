@@ -1694,8 +1694,7 @@ and source-file directory for your debugger."
   (gud-def gud-up     "up"           "<" "Up one stack frame.")
   (gud-def gud-down   "down"         ">" "Down one stack frame.")
   (gud-def gud-print  "p %e"         "\C-p" "Evaluate Python expression at point.")
-  ;; Is this right?
-  (gud-def gud-statement "! %e"      "\C-e" "Execute Python statement at point.")
+  (gud-def gud-statement "!%e"      "\C-e" "Execute Python statement at point.")
 
   ;; (setq comint-prompt-regexp "^(.*pdb[+]?) *")
   (setq comint-prompt-regexp "^(Pdb) *")
