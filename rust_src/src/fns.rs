@@ -2,10 +2,10 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fcons, Fload, Fmapc};
+use remacs_sys::{Lisp_Object, Lisp_Type};
 use remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
                  Qwrong_number_of_arguments};
-use remacs_sys::{globals, record_unwind_protect, unbind_to};
-use remacs_sys::Lisp_Object;
+use remacs_sys::{concat, globals, record_unwind_protect, unbind_to};
 use remacs_sys::Vautoload_queue;
 
 use eval::un_autoload;
@@ -254,5 +254,22 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     LispObject::from_raw(unsafe { unbind_to(count, feature.to_raw()) })
 }
 def_lisp_sym!(Qrequire, "require");
+
+/// Concatenate all the arguments and make the result a list.
+/// The result is a list whose elements are the elements of all the arguments.
+/// Each argument may be a list, vector or string.
+/// The last argument is not copied, just used as the tail of the new list.
+/// usage: (append &rest SEQUENCES)
+#[lisp_fn()]
+pub fn append(args: &mut [LispObject]) -> LispObject {
+    LispObject::from_raw(unsafe {
+        concat(
+            args.len() as isize,
+            args.as_mut_ptr() as *mut Lisp_Object,
+            Lisp_Type::Lisp_Cons,
+            true,
+        )
+    })
+}
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

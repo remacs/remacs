@@ -267,7 +267,7 @@ Do NOT use this function to compare file names for equality.  */)
 #endif /* !__STDC_ISO_10646__, !WINDOWSNT */
 }
 
-static Lisp_Object concat (ptrdiff_t nargs, Lisp_Object *args,
+extern Lisp_Object concat (ptrdiff_t nargs, Lisp_Object *args,
 			   enum Lisp_Type target_type, bool last_special);
 
 /* ARGSUSED */
@@ -282,17 +282,6 @@ Lisp_Object
 concat3 (Lisp_Object s1, Lisp_Object s2, Lisp_Object s3)
 {
   return concat (3, ((Lisp_Object []) {s1, s2, s3}), Lisp_String, 0);
-}
-
-DEFUN ("append", Fappend, Sappend, 0, MANY, 0,
-       doc: /* Concatenate all the arguments and make the result a list.
-The result is a list whose elements are the elements of all the arguments.
-Each argument may be a list, vector or string.
-The last argument is not copied, just used as the tail of the new list.
-usage: (append &rest SEQUENCES)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return concat (nargs, args, Lisp_Cons, 1);
 }
 
 DEFUN ("concat", Fconcat, Sconcat, 0, MANY, 0,
@@ -360,7 +349,7 @@ struct textprop_rec
   ptrdiff_t to;			/* refer to VAL (the target string) */
 };
 
-static Lisp_Object
+extern Lisp_Object
 concat (ptrdiff_t nargs, Lisp_Object *args,
 	enum Lisp_Type target_type, bool last_special)
 {
@@ -3512,7 +3501,6 @@ this variable.  */);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
-  defsubr (&Sappend);
   defsubr (&Sconcat);
   defsubr (&Svconcat);
   defsubr (&Scopy_sequence);
