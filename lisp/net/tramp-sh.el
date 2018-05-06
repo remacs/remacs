@@ -1301,7 +1301,8 @@ component is used as the target of the symlink."
                ;; On systems which have no quoting style, file names
                ;; with special characters could fail.
                (cond
-                ((tramp-get-ls-command-with vec "--quoting-style=c"))
+                ((tramp-get-ls-command-with
+		  vec "--quoting-style=literal --show-control-chars"))
                 ((tramp-get-ls-command-with vec "-w"))
                 (t ""))
                (tramp-shell-quote-argument localname)))
@@ -1833,7 +1834,8 @@ be non-negative integers."
     ;; On systems which have no quoting style, file names with special
     ;; characters could fail.
     (cond
-     ((tramp-get-ls-command-with vec "--quoting-style=shell"))
+     ((tramp-get-ls-command-with
+       vec "--quoting-style=literal --show-control-chars"))
      ((tramp-get-ls-command-with vec "-w"))
      (t ""))
     (tramp-get-remote-stat vec)
@@ -2635,8 +2637,11 @@ The method used must be an out-of-band method."
 	 filename switches wildcard full-directory-p)
       (when (stringp switches)
         (setq switches (split-string switches)))
-      (when (tramp-get-ls-command-with v "--quoting-style=literal")
-	(setq switches (append switches '("--quoting-style=literal"))))
+      (when (tramp-get-ls-command-with
+	     v "--quoting-style=literal --show-control-chars")
+	(setq switches
+	      (append
+	       switches '("--quoting-style=literal" "--show-control-chars"))))
       (unless (tramp-get-ls-command-with v "--dired")
 	(setq switches (delete "--dired" switches)))
       (when wildcard
@@ -5135,11 +5140,12 @@ Return ATTR."
     (when (string-match "^d" (nth 8 attr))
       (setcar attr t))
     ;; Convert symlink from `tramp-do-file-attributes-with-stat'.
+    ;; Decode also multibyte string.
     (when (consp (car attr))
-      (if (and (stringp (caar attr))
-               (string-match ".+ -> .\\(.+\\)." (caar attr)))
-          (setcar attr (match-string 1 (caar attr)))
-        (setcar attr nil)))
+      (setcar attr
+	      (and (stringp (caar attr))
+		   (string-match ".+ -> .\\(.+\\)." (caar attr))
+		   (decode-coding-string (match-string 1 (caar attr)) 'utf-8))))
     ;; Set file's gid change bit.
     (setcar (nthcdr 9 attr)
             (if (numberp (nth 3 attr))

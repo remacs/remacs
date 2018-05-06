@@ -4697,29 +4697,30 @@ Use the `ls' command."
 	  (coding-system-change-eol-conversion utf8 'unix)))
     (apply
      'tramp--test-check-files
-     (if (tramp--test-expensive-test)
-	 (delete-dups
-	  (mapcar
-	   ;; Use all available language specific snippets.  Filter
-	   ;; out strings which use unencodable characters.  Remove
-	   ;; slash or newline.  Not Tramp's business.
-	   (lambda (x)
-	     (setq x (eval (cdr (assoc 'sample-text x))))
-	     (unless (or (null x)
-			 (unencodable-char-position
-			  0 nil file-name-coding-system nil x)
-			 (string-match "TaiViet" x))
-	       ;; ?\n and ?/ shouldn't be part of any file name.  ?\t,
-	       ;; ?. and ?? do not work for "smb" method.
-	       (replace-regexp-in-string "[\t\n/.?]" "" x)))
-	   language-info-alist))
+     (append
+      (list
+       (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
+       (unless (tramp--test-hpux-p)
+	 "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
+       "银河系漫游指南系列"
+       "Автостопом по гала́ктике"
+       ;; Use codepoints without a name.  See Bug#31272.
+       "bung")
 
-       (list
-	(unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
-	(unless (tramp--test-hpux-p)
-	  "أصبح بوسعك الآن تنزيل نسخة كاملة من موسوعة ويكيبيديا العربية لتصفحها بلا اتصال بالإنترنت")
-	"银河系漫游指南系列"
-	"Автостопом по гала́ктике")))))
+      (when (tramp--test-expensive-test)
+	(delete-dups
+	 (mapcar
+	  ;; Use all available language specific snippets.  Filter out
+	  ;; strings which use unencodable characters.
+	  (lambda (x)
+	    (and
+	     (stringp (setq x (eval (get-language-info (car x) 'sample-text))))
+	     (not (unencodable-char-position
+		   0 nil file-name-coding-system nil x))
+	     ;; ?\n and ?/ shouldn't be part of any file name.  ?\t,
+	     ;; ?. and ?? do not work for "smb" method.
+	     (replace-regexp-in-string "[\t\n/.?]" "" x)))
+	  language-info-alist)))))))
 
 (ert-deftest tramp-test39-utf8 ()
   "Check UTF8 encoding in file names and file contents."
