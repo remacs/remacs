@@ -56,6 +56,11 @@ B is considered the exact value."
   (let ((rgb1 (mapcar (lambda (x) (/ x 255.0)) rgb)))
     (apply #'color-srgb-to-xyz rgb1)))
 
+(defun lcms-rgb255->xyz (rgb)
+  "Return XYZ tristimulus values corresponding to RGB."
+  (let ((rgb1 (mapcar (lambda (x) (/ x 255.0)) rgb)))
+    (apply #'color-srgb-to-xyz rgb1)))
+
 (ert-deftest lcms-cri-cam02-ucs ()
   "Test use of `lcms-cam02-ucs'."
   (skip-unless (featurep 'lcms2))
@@ -94,38 +99,6 @@ B is considered the exact value."
     (apply #'color-xyz-to-xyy (lcms-temp->white-point 7504))
     '(0.29902 0.31485 1.0))))
 
-(ert-deftest lcms-roundtrip ()
-  "Test accuracy of converting to and from different color spaces"
-  (skip-unless (featurep 'lcms2))
-  (should
-   (let ((color '(.5 .3 .7)))
-     (lcms-triple-approx-p (lcms-jch->xyz (lcms-xyz->jch color))
-                           color
-                           0.0001)))
-  (should
-   (let ((color '(.8 -.2 .2)))
-     (lcms-triple-approx-p (lcms-jch->jab (lcms-jab->jch color))
-                           color
-                           0.0001))))
-
-(ert-deftest lcms-ciecam02-gold ()
-  "Test CIE CAM02 JCh gold values"
-  (skip-unless (featurep 'lcms2))
-  (should
-   (lcms-triple-approx-p
-    (lcms-xyz->jch '(0.1931 0.2393 0.1014)
-                   '(0.9888 0.900 0.3203)
-                   '(18 200 1 1.0))
-    '(48.0314 38.7789 191.0452)
-    0.02))
-  (should
-   (lcms-triple-approx-p
-    (lcms-xyz->jch '(0.1931 0.2393 0.1014)
-                   '(0.9888 0.90 0.3203)
-                   '(18 20 1 1.0))
-    '(47.6856 36.0527 185.3445)
-    0.09)))
-
 (ert-deftest lcms-dE-cam02-ucs-silver ()
   "Test CRI-CAM02-UCS deltaE metric values from colorspacious."
   (skip-unless (featurep 'lcms2))
@@ -145,17 +118,5 @@ B is considered the exact value."
                     (list 20 (/ 64 float-pi 5) 1 1))
     8.503323264883667
     0.04)))
-
-(ert-deftest lcms-jmh->cam02-ucs-silver ()
-  "Compare JCh conversion to CAM02-UCS to values from colorspacious."
-  (skip-unless (featurep 'lcms2))
-  (should
-   (lcms-triple-approx-p (lcms-jch->jab '(50 20 10))
-                         '(62.96296296 16.22742674 2.86133316)
-                         0.05))
-  (should
-   (lcms-triple-approx-p (lcms-jch->jab '(10 60 100))
-                         '(15.88785047 -6.56546789 37.23461867)
-                         0.04)))
 
 ;;; lcms-tests.el ends here
