@@ -117,6 +117,8 @@
 
 (defalias 'check-ispell-version 'ispell-check-version)
 
+(declare-function flyspell-unhighlight-at "flyspell" (pos))
+
 ;;; **********************************************************************
 ;;; The following variables should be set according to personal preference
 ;;; and location of binaries:
@@ -2090,10 +2092,7 @@ If so, ask if it needs to be saved."
 	     (or no-query
 		 (y-or-n-p "Personal dictionary modified.  Save? ")))
     (ispell-send-string "#\n")	; save dictionary
-    (message "Personal dictionary saved.")
-    (when flyspell-mode
-      (flyspell-mode 0)
-      (flyspell-mode 1)))
+    (message "Personal dictionary saved."))
   ;; unassert variable, even if not saved to avoid questioning.
   (setq ispell-pdict-modified-p nil))
 
@@ -2221,15 +2220,16 @@ Global `ispell-quit' set to start location to continue spell session."
 		   ((= char ?i)		; accept and insert word into pers dict
 		    (ispell-send-string (concat "*" word "\n"))
 		    (setq ispell-pdict-modified-p '(t)) ; dictionary modified!
-		    (when (fboundp 'flyspell-unhighlight-at)
-                          (flyspell-unhighlight-at start))
+
+                    (when flyspell-mode
+                      (flyspell-unhighlight-at start))
 		    nil)
 		   ((or (= char ?a) (= char ?A)) ; accept word without insert
 		    (ispell-send-string (concat "@" word "\n"))
 		    (cl-pushnew word ispell-buffer-session-localwords
                                 :test #'equal)
-		    (when (fboundp 'flyspell-unhighlight-at)
-                          (flyspell-unhighlight-at start))
+		    (when flyspell-mode
+                      (flyspell-unhighlight-at start))
 		    (or ispell-buffer-local-name ; session localwords might conflict
 			(setq ispell-buffer-local-name (buffer-name)))
 		    (if (null ispell-pdict-modified-p)
