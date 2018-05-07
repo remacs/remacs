@@ -1212,8 +1212,10 @@ Internal use.")
 (defun ispell--get-extra-word-characters (&optional lang)
   "Get the extra word characters for LANG as a character class.
 If LANG is omitted, get the extra word characters for the default language."
-  (concat "[" (string-trim-right (apply 'ispell--call-enchant-lsmod
-                                        (append '("-word-chars") (if lang `(,lang))))) "]"))
+  (let ((extra (string-trim-right
+                (apply 'ispell--call-enchant-lsmod
+                       (append '("-word-chars") (if lang `(,lang)))))))
+    (if (string= extra "") "" (concat "[" extra "]"))))
 
 (defun ispell-find-enchant-dictionaries ()
   "Find Enchant's dictionaries, and record in `ispell-enchant-dictionary-alist'."
@@ -1242,6 +1244,10 @@ If LANG is omitted, get the extra word characters for the default language."
 
 (defvar ispell-last-program-name nil
   "Last value of `ispell-program-name'.  Internal use.")
+
+;; Allow dynamically binding ispell-base-dicts-override-alist as
+;; advertised in the doc string of ispell-initialize-spellchecker-hook.
+(defvar ispell-base-dicts-override-alist)
 
 (defvar ispell-initialize-spellchecker-hook nil
   "Normal hook run on spellchecker initialization.

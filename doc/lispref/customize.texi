@@ -257,6 +257,13 @@ customizable variable @code{custom-unlispify-remove-prefixes} is
 non-@code{nil}, the item's tag will omit @var{prefix}.  A group can
 have any number of prefixes.
 @end table
+
+@cindex @code{custom-group} property
+The variables and subgroups of a group are stored in the
+@code{custom-group} property of the group's symbol.  @xref{Symbol
+Plists}.  The value of that property is a list of pairs whose
+@code{car} is the variable or subgroup symbol and the @code{cdr} is
+either @code{custom-variable} or @code{custom-group}.
 @end defmac
 
 @defopt custom-unlispify-remove-prefixes
