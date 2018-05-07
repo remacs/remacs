@@ -5,7 +5,7 @@ use std::ptr;
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{ChartabSize, Lisp_Char_Table, Lisp_Object, Lisp_Sub_Char_Table, Lisp_Type};
+use remacs_sys::{ChartabSize, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type};
 use remacs_sys::PSEUDOVECTOR_SIZE_MASK;
 use remacs_sys::Qchar_code_property_table;
 use remacs_sys::uniprop_table_uncompress;
@@ -100,7 +100,7 @@ impl LispSubCharTableAsciiRef {
     }
 
     fn _get(self, idx: isize) -> LispObject {
-        let tmp = &self.0.contents as *const [Lisp_Object; 1] as *const LispObject;
+        let tmp = &self.0.contents as *const [LispObject; 1] as *const LispObject;
         unsafe { ptr::read(tmp.offset(idx)) }
     }
 
@@ -115,7 +115,7 @@ impl LispSubCharTableRef {
     }
 
     fn _get(self, idx: isize) -> LispObject {
-        let tmp = &self.contents as *const [Lisp_Object; 1] as *const LispObject;
+        let tmp = &self.contents as *const [LispObject; 1] as *const LispObject;
         unsafe { ptr::read(tmp.offset(idx)) }
     }
 

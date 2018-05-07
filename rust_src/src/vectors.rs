@@ -190,7 +190,7 @@ macro_rules! impl_vectorlike_ref {
             pub fn as_slice(&self) -> &[LispObject] {
                 unsafe {
                     slice::from_raw_parts(
-                        &self.contents as *const [::remacs_sys::Lisp_Object; 1]
+                        &self.contents as *const [::lisp::LispObject; 1]
                             as *const LispObject,
                         self.len(),
                     )
@@ -201,7 +201,7 @@ macro_rules! impl_vectorlike_ref {
             pub fn as_mut_slice(&mut self) -> &mut [LispObject] {
                 unsafe {
                     slice::from_raw_parts_mut(
-                        &mut self.contents as *mut [::remacs_sys::Lisp_Object; 1]
+                        &mut self.contents as *mut [::lisp::LispObject; 1]
                             as *mut LispObject,
                         self.len(),
                     )
@@ -217,7 +217,7 @@ macro_rules! impl_vectorlike_ref {
             #[inline]
             pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
                 ptr::read(
-                    (&self.contents as *const [::remacs_sys::Lisp_Object; 1]
+                    (&self.contents as *const [::lisp::LispObject; 1]
                      as *const LispObject).offset(idx),
                 )
             }
@@ -239,7 +239,7 @@ macro_rules! impl_vectorlike_ref {
             #[inline]
             pub unsafe fn set_unchecked(&mut self, idx: ptrdiff_t, item: LispObject) {
                 ptr::write(
-                    (&mut self.contents as *mut [::remacs_sys::Lisp_Object; 1]
+                    (&mut self.contents as *mut [::lisp::LispObject; 1]
                      as *mut LispObject).offset(idx),
                     item,
                 )
@@ -564,7 +564,7 @@ lazy_static! {
         unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) }
     };
     pub static ref WORD_SIZE: usize = {
-        ::std::mem::size_of::<::remacs_sys::Lisp_Object>()
+        ::std::mem::size_of::<::lisp::LispObject>()
     };
 }
 

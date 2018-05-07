@@ -5,7 +5,7 @@ use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{BoolBF, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Object};
+use remacs_sys::{BoolBF, EmacsInt, Lisp_Buffer, Lisp_Marker};
 use remacs_sys::{buf_charpos_to_bytepos, mget_buffer, mget_bytepos, mget_charpos,
                  mget_insertion_type, mget_next_marker, mset_buffer, mset_insertion_type,
                  mset_next_marker, set_marker_internal, set_point_both, unchain_marker,
@@ -134,7 +134,7 @@ pub fn marker_buffer(marker: LispMarkerRef) -> Option<LispBufferRef> {
 
 /// Set PT from MARKER's clipped position.
 #[no_mangle]
-pub extern "C" fn set_point_from_marker(marker: Lisp_Object) {
+pub extern "C" fn set_point_from_marker(marker: LispObject) {
     let marker = LispObject::from_raw(marker).as_marker_or_error();
     let cur_buf = ThreadState::current_buffer();
     let charpos = clip_to_bounds(
@@ -270,10 +270,10 @@ pub extern "C" fn attach_marker(
 /// Like set-marker, but won't let the position be outside the visible part.
 #[no_mangle]
 pub extern "C" fn set_marker_restricted(
-    marker: Lisp_Object,
-    position: Lisp_Object,
-    buffer: Lisp_Object,
-) -> Lisp_Object {
+    marker: LispObject,
+    position: LispObject,
+    buffer: LispObject,
+) -> LispObject {
     unsafe { set_marker_internal(marker, position, buffer, true) }
 }
 
@@ -281,11 +281,11 @@ pub extern "C" fn set_marker_restricted(
 /// character position and the corresponding byte position.
 #[no_mangle]
 pub extern "C" fn set_marker_both(
-    marker: Lisp_Object,
-    buffer: Lisp_Object,
+    marker: LispObject,
+    buffer: LispObject,
     charpos: ptrdiff_t,
     bytepos: ptrdiff_t,
-) -> Lisp_Object {
+) -> LispObject {
     let mut m = LispObject::from_raw(marker).as_marker_or_error();
     let b = live_buffer(buffer);
     if !b.is_null() {
@@ -299,11 +299,11 @@ pub extern "C" fn set_marker_both(
 /// Like set_marker_both, but won't let the position be outside the visible part.
 #[no_mangle]
 pub extern "C" fn set_marker_restricted_both(
-    marker: Lisp_Object,
-    buffer: Lisp_Object,
+    marker: LispObject,
+    buffer: LispObject,
     charpos: ptrdiff_t,
     bytepos: ptrdiff_t,
-) -> Lisp_Object {
+) -> LispObject {
     let mut m = LispObject::from_raw(marker).as_marker_or_error();
     let b = live_buffer(buffer);
 
@@ -325,14 +325,14 @@ pub extern "C" fn set_marker_restricted_both(
 // use charpos_or_error and bytepos_or_error in rust.
 /// Return the char position of marker MARKER, as a C integer.
 #[no_mangle]
-pub extern "C" fn marker_position(marker: Lisp_Object) -> ptrdiff_t {
+pub extern "C" fn marker_position(marker: LispObject) -> ptrdiff_t {
     let m = LispObject::from_raw(marker).as_marker_or_error();
     m.charpos_or_error()
 }
 
 /// Return the byte position of marker MARKER, as a C integer.
 #[no_mangle]
-pub extern "C" fn marker_byte_position(marker: Lisp_Object) -> ptrdiff_t {
+pub extern "C" fn marker_byte_position(marker: LispObject) -> ptrdiff_t {
     let m = LispObject::from_raw(marker).as_marker_or_error();
     m.bytepos_or_error()
 }
@@ -341,7 +341,7 @@ pub extern "C" fn marker_byte_position(marker: Lisp_Object) -> ptrdiff_t {
 /// whether BUFFER is a buffer object and return buffer pointer
 /// corresponding to BUFFER if BUFFER is live, or NULL otherwise.
 #[no_mangle]
-pub extern "C" fn live_buffer(buffer: Lisp_Object) -> *mut Lisp_Buffer {
+pub extern "C" fn live_buffer(buffer: LispObject) -> *mut Lisp_Buffer {
     let mut b = LispObject::from_raw(buffer).as_buffer_or_current_buffer();
     if b.is_live() {
         b.as_mut()

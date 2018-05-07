@@ -17,8 +17,8 @@ use std::slice;
 use remacs_sys::{font, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecType,
                  CHECK_IMPURE, INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM,
                  USE_LSB_TAG, VALBITS, VALMASK};
-use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
-                 Lisp_Symbol, Lisp_Type};
+use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Symbol,
+                 Lisp_Type};
 use remacs_sys::{Qarrayp, Qautoload, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp,
                  Qframe_live_p, Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp,
                  Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp,
@@ -63,9 +63,25 @@ use windows::LispWindowRef;
 /// Under casual systems, they're the type isize and usize respectively.
 #[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy)]
-pub struct LispObject(Lisp_Object);
+pub struct LispObject(pub EmacsInt);
 
 impl LispObject {
+    pub fn from_C(n: EmacsInt) -> LispObject {
+        LispObject(n)
+    }
+
+    pub fn from_C_unsigned(n: EmacsUint) -> LispObject {
+        Self::from_C(n as EmacsInt)
+    }
+
+    pub fn to_C(self) -> EmacsInt {
+        self.0
+    }
+
+    pub fn to_C_unsigned(self) -> EmacsUint {
+        self.0 as EmacsUint
+    }
+
     #[inline]
     pub fn constant_unbound() -> LispObject {
         LispObject::from_raw(Qunbound)
@@ -96,13 +112,13 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn from_raw(i: Lisp_Object) -> LispObject {
-        LispObject(i)
+    pub fn from_raw(i: LispObject) -> LispObject {
+        i
     }
 
     #[inline]
-    pub fn to_raw(self) -> Lisp_Object {
-        self.0
+    pub fn to_raw(self) -> LispObject {
+        self
     }
 }
 
@@ -163,7 +179,7 @@ impl<'a> From<&'a str> for LispObject {
     #[inline]
     fn from(s: &str) -> Self {
         let cs = CString::new(s).unwrap();
-        LispObject(unsafe { build_string(cs.as_ptr()) })
+        unsafe { build_string(cs.as_ptr()) }
     }
 }
 
@@ -190,7 +206,7 @@ impl LispObject {
             ((tag << VALBITS) + ptr) as EmacsInt
         };
 
-        LispObject::from_raw(Lisp_Object::from_C(res))
+        LispObject::from_raw(LispObject::from_C(res))
     }
 
     #[inline]
@@ -432,7 +448,7 @@ impl LispObject {
         } else {
             (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << VALBITS)
         };
-        LispObject::from_raw(Lisp_Object::from_C(o as EmacsInt))
+        LispObject::from_raw(LispObject::from_C(o as EmacsInt))
     }
 
     /// Convert a positive integer into its LispObject representation.
@@ -1040,14 +1056,14 @@ pub struct TailsIter {
     list: LispObject,
     tail: LispObject,
     tortoise: LispObject,
-    errsym: Option<Lisp_Object>,
+    errsym: Option<LispObject>,
     max: isize,
     n: isize,
     q: u16,
 }
 
 impl TailsIter {
-    fn new(list: LispObject, errsym: Option<Lisp_Object>) -> Self {
+    fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
         Self {
             list,
             tail: list,
@@ -1116,7 +1132,7 @@ pub struct CarIter {
 }
 
 impl CarIter {
-    pub fn new(list: LispObject, errsym: Option<Lisp_Object>) -> Self {
+    pub fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
         Self {
             tails: TailsIter::new(list, errsym),
         }
@@ -1599,7 +1615,7 @@ impl LispObject {
         self == other
     }
 
-    pub fn eq_raw(self, other: Lisp_Object) -> bool {
+    pub fn eq_raw(self, other: LispObject) -> bool {
         self.to_raw() == other
     }
 
