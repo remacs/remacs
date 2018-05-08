@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fcons, Fload, Fmapc};
-use remacs_sys::{Lisp_Object, Lisp_Type};
+use remacs_sys::{LispObject, Lisp_Type};
 use remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
                  Qwrong_number_of_arguments};
 use remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
@@ -266,7 +266,7 @@ pub fn append(args: &mut [LispObject]) -> LispObject {
     LispObject::from_raw(unsafe {
         lisp_concat(
             args.len() as isize,
-            args.as_mut_ptr() as *mut Lisp_Object,
+            args.as_mut_ptr() as *mut LispObject,
             Lisp_Type::Lisp_Cons,
             true,
         )
