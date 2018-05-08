@@ -80,6 +80,10 @@ arguments, some do not.  The recognized :KEYWORDS are:
   If present, do not pass MACRO-ARGS through `eshell-flatten-list'
 and `eshell-stringify-list'.
 
+:parse-leading-options-only
+  If present, do not parse dash or switch arguments after the first
+positional argument.  Instead, treat them as positional arguments themselves.
+
 For example, OPTIONS might look like:
 
    ((?C  nil         nil multi-column    \"multi-column display\")
@@ -245,12 +249,19 @@ switch is unrecognized."
                                              (list sym)))))
 				     options)))
          (ai 0) arg
-         (eshell--args args))
-    (while (< ai (length eshell--args))
+         (eshell--args args)
+         (pos-argument-found nil))
+    (while (and (< ai (length eshell--args))
+                ;; Abort if we saw the first pos argument and option is set
+                (not (and pos-argument-found
+                          (memq :parse-leading-options-only options))))
       (setq arg (nth ai eshell--args))
       (if (not (and (stringp arg)
 		    (string-match "^-\\(-\\)?\\(.*\\)" arg)))
-	  (setq ai (1+ ai))
+          ;; Positional argument found, skip
+	  (setq ai (1+ ai)
+                pos-argument-found t)
+        ;; dash or switch argument found, parse
 	(let* ((dash (match-string 1 arg))
 	       (switch (match-string 2 arg)))
 	  (if (= ai 0)

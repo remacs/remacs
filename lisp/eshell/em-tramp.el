@@ -107,6 +107,7 @@ Uses the system sudo through TRAMP's sudo method."
      '((?h "help" nil nil "show this usage screen")
        (?u "user" t user "execute a command as another USER")
        :show-usage
+       :parse-leading-options-only
        :usage "[(-u | --user) USER] COMMAND
 Execute a COMMAND as the superuser or another USER.")
      (throw 'eshell-external
