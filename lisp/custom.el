@@ -1233,43 +1233,47 @@ Return t if THEME was successfully loaded, nil otherwise."
     (put theme 'theme-settings nil)
     (put theme 'theme-feature nil)
     (put theme 'theme-documentation nil))
-  (let ((fn (locate-file (concat (symbol-name theme) "-theme.el")
-			 (custom-theme--load-path)
-			 '("" "c"))))
-    (unless fn
-      (error "Unable to find theme file for `%s'" theme))
-    (with-temp-buffer
-      (insert-file-contents fn)
-      ;; Check file safety with `custom-safe-themes', prompting the
-      ;; user if necessary.
-      (when (or no-confirm
-		(eq custom-safe-themes t)
-		(and (memq 'default custom-safe-themes)
-		     (equal (file-name-directory fn)
-			    (expand-file-name "themes/" data-directory)))
-                (let ((hash (secure-hash 'sha256 (current-buffer))))
-                  (or (member hash custom-safe-themes)
-                      (custom-theme-load-confirm hash))))
-	(let ((custom--inhibit-theme-enable t)
-              (buffer-file-name fn))    ;For load-history.
-	  (eval-buffer))
-	;; Optimization: if the theme changes the `default' face, put that
-	;; entry first.  This avoids some `frame-set-background-mode' rigmarole
-	;; by assigning the new background immediately.
-	(let* ((settings (get theme 'theme-settings))
-	       (tail settings)
-	       found)
-	  (while (and tail (not found))
-	    (and (eq (nth 0 (car tail)) 'theme-face)
-		 (eq (nth 1 (car tail)) 'default)
-		 (setq found (car tail)))
-	    (setq tail (cdr tail)))
-	  (if found
-	      (put theme 'theme-settings (cons found (delq found settings)))))
-	;; Finally, enable the theme.
-	(unless no-enable
-	  (enable-theme theme))
-	t))))
+  (let ((file (locate-file (concat (symbol-name theme) "-theme.el")
+                           (custom-theme--load-path)
+                           '("" "c")))
+        (custom--inhibit-theme-enable t))
+    ;; Check file safety with `custom-safe-themes', prompting the
+    ;; user if necessary.
+    (cond ((not file)
+           (error "Unable to find theme file for `%s'" theme))
+          ((or no-confirm
+               (eq custom-safe-themes t)
+               (and (memq 'default custom-safe-themes)
+                    (equal (file-name-directory file)
+                           (expand-file-name "themes/" data-directory))))
+           ;; Theme is safe; load byte-compiled version if available.
+           (load (file-name-sans-extension file) nil t nil t))
+          ((with-temp-buffer
+             (insert-file-contents file)
+             (let ((hash (secure-hash 'sha256 (current-buffer))))
+               (when (or (member hash custom-safe-themes)
+                         (custom-theme-load-confirm hash))
+                 (eval-buffer nil nil file)
+                 t))))
+          (t
+           (error "Unable to load theme `%s'" theme))))
+  ;; Optimization: if the theme changes the `default' face, put that
+  ;; entry first.  This avoids some `frame-set-background-mode' rigmarole
+  ;; by assigning the new background immediately.
+  (let* ((settings (get theme 'theme-settings))
+         (tail settings)
+         found)
+    (while (and tail (not found))
+      (and (eq (nth 0 (car tail)) 'theme-face)
+           (eq (nth 1 (car tail)) 'default)
+           (setq found (car tail)))
+      (setq tail (cdr tail)))
+    (when found
+      (put theme 'theme-settings (cons found (delq found settings)))))
+  ;; Finally, enable the theme.
+  (unless no-enable
+    (enable-theme theme))
+  t)
 
 (defun custom-theme-load-confirm (hash)
   "Query the user about loading a Custom theme that may not be safe.
