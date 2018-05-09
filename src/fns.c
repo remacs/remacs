@@ -284,16 +284,6 @@ concat3 (Lisp_Object s1, Lisp_Object s2, Lisp_Object s3)
   return concat (3, ((Lisp_Object []) {s1, s2, s3}), Lisp_String, 0);
 }
 
-DEFUN ("concat", Fconcat, Sconcat, 0, MANY, 0,
-       doc: /* Concatenate all the arguments and make the result a string.
-The result is a string whose elements are the elements of all the arguments.
-Each argument may be a string or a list or vector of characters (integers).
-usage: (concat &rest SEQUENCES)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return concat (nargs, args, Lisp_String, 0);
-}
-
 DEFUN ("vconcat", Fvconcat, Svconcat, 0, MANY, 0,
        doc: /* Concatenate all the arguments and make the result a vector.
 The result is a vector whose elements are the elements of all the arguments.
@@ -3501,7 +3491,6 @@ this variable.  */);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
-  defsubr (&Sconcat);
   defsubr (&Svconcat);
   defsubr (&Scopy_sequence);
   defsubr (&Sstring_make_multibyte);

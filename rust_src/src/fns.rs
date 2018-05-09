@@ -260,7 +260,7 @@ def_lisp_sym!(Qrequire, "require");
 /// Each argument may be a list, vector or string.
 /// The last argument is not copied, just used as the tail of the new list.
 /// usage: (append &rest SEQUENCES)
-#[lisp_fn()]
+#[lisp_fn]
 pub fn append(args: &mut [LispObject]) -> LispObject {
     LispObject::from_raw(unsafe {
         lisp_concat(
@@ -268,6 +268,22 @@ pub fn append(args: &mut [LispObject]) -> LispObject {
             args.as_mut_ptr() as *mut Lisp_Object,
             Lisp_Type::Lisp_Cons,
             true,
+        )
+    })
+}
+
+/// Concatenate all the arguments and make the result a string.
+/// The result is a string whose elements are the elements of all the arguments.
+/// Each argument may be a string or a list or vector of characters (integers).
+/// usage: (concat &rest SEQUENCES)
+#[lisp_fn]
+pub fn concat(args: &mut [LispObject]) -> LispObject {
+    LispObject::from_raw(unsafe {
+        lisp_concat(
+            args.len() as isize,
+            args.as_mut_ptr() as *mut Lisp_Object,
+            Lisp_Type::Lisp_String,
+            false,
         )
     })
 }
