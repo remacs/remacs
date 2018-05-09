@@ -103,8 +103,4 @@
 
 (provide-theme 'misterioso)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; misterioso-theme.el  ends here

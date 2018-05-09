@@ -122,8 +122,4 @@ Ansi-Color faces are included.")
 
 (provide-theme 'dichromacy)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; dichromacy-theme.el ends here

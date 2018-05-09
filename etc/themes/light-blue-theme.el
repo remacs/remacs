@@ -61,8 +61,4 @@
 
 (provide-theme 'light-blue)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; light-blue-theme.el ends here

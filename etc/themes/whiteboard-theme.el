@@ -100,8 +100,4 @@
 
 (provide-theme 'whiteboard)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; whiteboard-theme.el ends here

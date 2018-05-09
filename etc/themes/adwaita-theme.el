@@ -99,8 +99,4 @@ default look of the Gnome 3 desktop.")
    `(diff-added ((,class (:bold t :foreground "#4E9A06"))))
    `(diff-removed ((,class (:bold t :foreground "#F5666D"))))))
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; adwaita-theme.el  ends here

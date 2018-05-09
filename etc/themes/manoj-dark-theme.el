@@ -700,8 +700,4 @@ jarring angry fruit salad look to reduce eye fatigue.")
 
 (provide-theme 'manoj-dark)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; manoj-dark.el ends here

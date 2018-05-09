@@ -102,8 +102,4 @@ are included.")
 
 (provide-theme 'wombat)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; wombat-theme.el ends here

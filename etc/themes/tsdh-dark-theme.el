@@ -144,8 +144,4 @@
 
 (provide-theme 'tsdh-dark)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; tsdh-dark-theme.el ends here
