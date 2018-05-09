@@ -9,8 +9,11 @@
 /// This module is only for testing, and you should add all
 /// definitions to remacs-sys first and foremost.
 use libc::*;
+
 use mock_derive::mock;
 use remacs_sys::*;
+
+use lisp::LispObject;
 
 // The linker needs the symbol "lispsym" to exist, since certain
 // codepaths lead to it's usage.
