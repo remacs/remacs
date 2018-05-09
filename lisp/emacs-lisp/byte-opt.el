@@ -1281,7 +1281,10 @@
 ;; errors to compile time.
 
 (let ((pure-fns
-       '(concat symbol-name regexp-opt regexp-quote string-to-syntax)))
+       '(concat symbol-name regexp-opt regexp-quote string-to-syntax
+         string-to-char
+         ash lsh logb lognot logior logxor
+         ceiling floor)))
   (while pure-fns
     (put (car pure-fns) 'pure t)
     (setq pure-fns (cdr pure-fns)))
