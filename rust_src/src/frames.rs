@@ -25,6 +25,26 @@ pub const output_ns: OutputMethod = 5;
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
+enum FrameType {
+    Termcap,
+    X,
+    W32,
+    Ns,
+    None,
+}
+
+impl From<LispFrameRef> for FrameType {
+    fn from(frame: LispFrameRef) -> FrameType {
+        match unsafe { fget_output_method(frame.as_ptr()) } {
+            output_initial | output_termcap => FrameType::Termcap,
+            output_x_window => FrameType::X,
+            output_w32 => FrameType::W32,
+            output_msdos_raw => FrameType::Ns,
+            _ => FrameType::None,
+        }
+    }
+}
+
 impl LispFrameRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
@@ -320,19 +340,43 @@ pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
 /// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
 pub fn next_frame(frame: Option<LispObject>, miniframe: Option<LispObject>) -> LispObject {
-    let this_frame: LispFrameRef = frame
-        .unwrap_or(selected_frame())
-        .as_frame_or_error();
+    let frame: LispObject = frame.unwrap_or(selected_frame());
 
-    let frame_list: ::vectors::LispVectorRef = LispObject::from_raw(
-        unsafe { ::remacs_sys::Vframe_list }  
-    ).as_vector_or_error();
+    if let Some(frame_ref) = frame.as_frame() {
+        if !frame_ref.is_live() {
+            return LispObject::constant_nil();
+        }
 
-    for fr in frame_list.iter() {
-        
+        return get_next_frame(frame, miniframe).unwrap_or(LispObject::constant_nil());
+    } else {
+        return LispObject::constant_nil();
     }
+}
 
-    return miniframe.unwrap()
+pub fn frame_list() -> ::vectors::LispVectorRef {
+    LispObject::from_raw(unsafe { ::remacs_sys::Vframe_list }).as_vector_or_error()
+}
+
+/// Return the next frame in the frame list after `frame`
+fn get_next_frame(
+    frame: LispObject,
+    minibuf: Option<LispObject>,
+) -> Result<LispObject, &'static str> {
+    frame_list().iter().find(|f| {
+        match candidate_frame(*f, frame, minibuf) {
+            Some(candidate) => candidate == frame,
+            None => false,
+        }
+    }).ok_or("could not find next frame")
+}
+
+/// Return 
+fn candidate_frame(
+    candidate: LispObject,
+    frame: LispObject,
+    minibuf: Option<LispObject>,
+) -> Option<LispObject> {
+    return None;
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
