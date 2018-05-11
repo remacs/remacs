@@ -60,6 +60,7 @@ mod editfns;
 mod eval;
 mod ffi;
 mod fileio;
+mod syntax;
 mod floatfns;
 mod fns;
 mod fonts;
