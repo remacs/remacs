@@ -16,7 +16,7 @@ install:
   - rustc -Vv
   - cargo -V
   - C:\msys64\usr\bin\bash --login -c "pacman -Syy"
-  - C:\msys64\usr\bin\bash --login -c "pacman -Rns --noconfirm catgets"
+  - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm catgets"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm base-devel"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-toolchain"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff"
