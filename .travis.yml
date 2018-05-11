@@ -81,3 +81,8 @@ jobs:
 notifications:
   fast_finish: true
   email: false
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - os: osx
