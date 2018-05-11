@@ -784,7 +784,8 @@ text in the buffer.  To give input to the subshell, go to the end of
 the buffer and type the input, terminated by @key{RET}.
 
   By default, when the subshell is invoked interactively, the
-@file{*shell*} buffer is displayed in a new window.  This behavior can
+@file{*shell*} buffer is displayed in a new window, unless the current
+window already shows the @file{*shell*} buffer.  This behavior can
 be customized via @code{display-buffer-alist} (@pxref{Window Choice}).
 
   While the subshell is waiting or running a command, you can switch
@@ -1071,7 +1072,7 @@ Emacs Lisp Reference Manual}).
 @vindex comint-use-prompt-regexp
 @vindex shell-prompt-pattern
   If you change the variable @code{comint-use-prompt-regexp} to a
-non-@code{nil} value, then Comint mode recognize prompts using a
+non-@code{nil} value, then Comint mode will recognize prompts using a
 regular expression (@pxref{Regexps}).  In Shell mode, the regular
 expression is specified by the variable @code{shell-prompt-pattern}.
 The default value of @code{comint-use-prompt-regexp} is @code{nil},
