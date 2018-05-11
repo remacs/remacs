@@ -2248,14 +2248,16 @@ current line, if point is on an output field.
 If `comint-use-prompt-regexp' is non-nil, then return
 the current line with any initial string matching the regexp
 `comint-prompt-regexp' removed."
-  (let (bof)
+  (let (field-prop bof)
     (if (and (not comint-use-prompt-regexp)
              ;; Make sure we're in an input rather than output field.
-             (null (get-char-property (setq bof (field-beginning)) 'field)))
+             (not (setq field-prop (get-char-property
+                                    (setq bof (field-beginning)) 'field))))
 	(field-string-no-properties bof)
       (comint-bol)
       (buffer-substring-no-properties (point)
-				      (if comint-use-prompt-regexp
+                                      (if (or comint-use-prompt-regexp
+                                              (eq field-prop 'output))
 					  (line-end-position)
 					(field-end))))))
 
