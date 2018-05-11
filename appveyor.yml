@@ -15,6 +15,7 @@ install:
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin;C:\msys64\usr\bin
   - rustc -Vv
   - cargo -V
+  - set MSYSTEM=MINGW64
   - C:\msys64\usr\bin\bash --login -c "pacman -Syy"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm base-devel"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-toolchain"
@@ -30,7 +31,7 @@ install:
 # https://github.com/starkat99/appveyor-rust/blob/master/appveyor.yml#L113
 build: false
 
-# Equivalent to Travis' `script` phase
+# Equivalent to Travis's `script` phase
 test_script:
   - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && ./autogen.sh"
   - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
