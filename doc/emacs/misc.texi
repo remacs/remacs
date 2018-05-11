@@ -1145,10 +1145,11 @@ Display the buffer's history of shell commands in another window
 
   Shell buffers provide a history of previously entered shell
 commands.  To reuse shell commands from the history, use the editing
-commands @kbd{M-p}, @kbd{M-n}, @kbd{M-r} and @kbd{M-s}.  These work
-just like the minibuffer history commands (@pxref{Minibuffer
+commands @kbd{M-p}, @kbd{M-n}, and @kbd{M-r}.  These work
+similar to the minibuffer history commands (@pxref{Minibuffer
 History}), except that they operate within the Shell buffer rather
-than the minibuffer.
+than the minibuffer, and @code{M-r} in a Shell buffer invokes
+incremental search through shell command history.
 
   @kbd{M-p} fetches an earlier shell command to the end of the shell
 buffer.  Successive use of @kbd{M-p} fetches successively earlier
