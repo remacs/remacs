@@ -1,4 +1,4 @@
-;;; cus-theme.el -- custom theme creation user interface
+;;; cus-theme.el -- custom theme creation user interface  -*- lexical-binding: t -*-
 ;;
 ;; Copyright (C) 2001-2018 Free Software Foundation, Inc.
 ;;
@@ -47,7 +47,7 @@
 Do not call this mode function yourself.  It is meant for internal use."
   (use-local-map custom-new-theme-mode-map)
   (custom--initialize-widget-variables)
-  (set (make-local-variable 'revert-buffer-function) 'custom-theme-revert))
+  (set (make-local-variable 'revert-buffer-function) #'custom-theme-revert))
 (put 'custom-new-theme-mode 'mode-class 'special)
 
 (defvar custom-theme-name nil)
@@ -118,13 +118,13 @@ remove them from your saved Custom file.\n\n"))
 		 :tag " Visit Theme "
 		 :help-echo "Insert the settings of a pre-defined theme."
 		 :action (lambda (_widget &optional _event)
-			   (call-interactively 'custom-theme-visit-theme)))
+                           (call-interactively #'custom-theme-visit-theme)))
   (widget-insert "  ")
   (widget-create 'push-button
 		 :tag " Merge Theme "
 		 :help-echo "Merge in the settings of a pre-defined theme."
 		 :action (lambda (_widget &optional _event)
-			   (call-interactively 'custom-theme-merge-theme)))
+                           (call-interactively #'custom-theme-merge-theme)))
   (widget-insert "  ")
   (widget-create 'push-button
 		 :tag " Revert "
@@ -142,7 +142,7 @@ remove them from your saved Custom file.\n\n"))
 	(widget-create 'text
 		       :value (format-time-string "Created %Y-%m-%d.")))
   (widget-create 'push-button
-     		 :notify (function custom-theme-write)
+                 :notify #'custom-theme-write
      		 " Save Theme ")
   (when (eq theme 'user)
     (setq custom-theme--migrate-settings t)
@@ -188,7 +188,7 @@ remove them from your saved Custom file.\n\n"))
 		   :mouse-face 'highlight
 		   :pressed-face 'highlight
 		   :action (lambda (_widget &optional _event)
-			     (call-interactively 'custom-theme-add-face)))
+                             (call-interactively #'custom-theme-add-face)))
 
     ;; If THEME is non-nil, insert all of that theme's variables.
     (widget-insert "\n\n  Theme variables:\n ")
@@ -207,7 +207,7 @@ remove them from your saved Custom file.\n\n"))
 		   :mouse-face 'highlight
 		   :pressed-face 'highlight
 		   :action (lambda (_widget &optional _event)
-			     (call-interactively 'custom-theme-add-variable)))
+                             (call-interactively #'custom-theme-add-variable)))
     (widget-insert ?\n)
     (widget-setup)
     (goto-char (point-min))
@@ -254,7 +254,7 @@ interactively, this defaults to the current value of VAR."
 			     :tag (custom-unlispify-tag-name symbol)
 			     :value symbol
 			     :shown-value (list val)
-			     :notify 'ignore
+                             :notify #'ignore
 			     :custom-level 0
 			     :custom-state 'hidden
 			     :custom-style 'simple))
@@ -313,7 +313,7 @@ SPEC, if non-nil, should be a face spec to which to set the widget."
   (interactive
    (list
     (intern (completing-read "Find custom theme: "
-			     (mapcar 'symbol-name
+                             (mapcar #'symbol-name
 				     (custom-available-themes))))))
   (unless (custom-theme-name-valid-p theme)
     (error "No valid theme named `%s'" theme))
@@ -328,7 +328,7 @@ SPEC, if non-nil, should be a face spec to which to set the widget."
   (interactive
    (list
     (intern (completing-read "Merge custom theme: "
-			     (mapcar 'symbol-name
+                             (mapcar #'symbol-name
 				     (custom-available-themes))))))
   (unless (eq theme 'user)
     (unless (custom-theme-name-valid-p theme)
@@ -343,8 +343,8 @@ SPEC, if non-nil, should be a face spec to which to set the widget."
 		     (memq name '(custom-enabled-themes
 				  custom-safe-themes)))
 	  (funcall (if option
-		       'custom-theme-add-variable
-		     'custom-theme-add-face)
+                       #'custom-theme-add-variable
+                     #'custom-theme-add-face)
 		   name value)))))
   theme)
 
@@ -475,7 +475,7 @@ It includes all faces in list FACES."
   (interactive
    (list
     (intern (completing-read "Describe custom theme: "
-			     (mapcar 'symbol-name
+                             (mapcar #'symbol-name
 				     (custom-available-themes))))))
   (unless (custom-theme-name-valid-p theme)
     (error "Invalid theme name `%s'" theme))
@@ -616,11 +616,11 @@ Theme files are named *-theme.el in `"))
   (widget-create 'push-button
 		 :tag " Save Theme Settings "
 		 :help-echo "Save the selected themes for future sessions."
-		 :action 'custom-theme-save)
+                 :action #'custom-theme-save)
   (widget-insert ?\n)
   (widget-create 'checkbox
 		 :value custom-theme-allow-multiple-selections
-		 :action 'custom-theme-selections-toggle)
+                 :action #'custom-theme-selections-toggle)
   (widget-insert (propertize " Select more than one theme at a time"
 			     'face '(variable-pitch (:height 0.9))))
 
@@ -632,13 +632,13 @@ Theme files are named *-theme.el in `"))
 				  :value (custom-theme-enabled-p theme)
 				  :theme-name theme
 				  :help-echo help-echo
-				  :action 'custom-theme-checkbox-toggle))
+                                  :action #'custom-theme-checkbox-toggle))
       (push (cons theme widget) custom--listed-themes)
       (widget-create-child-and-convert widget 'push-button
 				       :button-face-get 'ignore
 				       :mouse-face-get 'ignore
 				       :value (format " %s" theme)
-				       :action 'widget-parent-action
+                                       :action #'widget-parent-action
 				       :help-echo help-echo)
       (widget-insert " -- "
 		     (propertize (custom-theme-summary theme)
