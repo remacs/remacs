@@ -1317,8 +1317,7 @@ print_check_string_charset_prop (INTERVAL interval, Lisp_Object string)
 	  || CONSP (XCDR (XCDR (val))))
 	print_check_string_result |= PRINT_STRING_NON_CHARSET_FOUND;
     }
-  if (NILP (Vprint_charset_text_property)
-      || ! (print_check_string_result & PRINT_STRING_UNSAFE_CHARSET_FOUND))
+  if (! (print_check_string_result & PRINT_STRING_UNSAFE_CHARSET_FOUND))
     {
       int i, c;
       ptrdiff_t charpos = interval->position;
@@ -1348,7 +1347,8 @@ print_prune_string_charset (Lisp_Object string)
   print_check_string_result = 0;
   traverse_intervals (string_intervals (string), 0,
 		      print_check_string_charset_prop, string);
-  if (! (print_check_string_result & PRINT_STRING_UNSAFE_CHARSET_FOUND))
+  if (NILP (Vprint_charset_text_property)
+      || ! (print_check_string_result & PRINT_STRING_UNSAFE_CHARSET_FOUND))
     {
       string = Fcopy_sequence (string);
       if (print_check_string_result & PRINT_STRING_NON_CHARSET_FOUND)
@@ -2423,7 +2423,7 @@ that need to be recorded in the table.  */);
 
   DEFVAR_LISP ("print-charset-text-property", Vprint_charset_text_property,
 	       doc: /* A flag to control printing of `charset' text property on printing a string.
-The value must be nil, t, or `default'.
+The value should be nil, t, or `default'.
 
 If the value is nil, don't print the text property `charset'.
 
@@ -2431,7 +2431,8 @@ If the value is t, always print the text property `charset'.
 
 If the value is `default', print the text property `charset' only when
 the value is different from what is guessed in the current charset
-priorities.  */);
+priorities.  Values other than nil or t are also treated as
+`default'.  */);
   Vprint_charset_text_property = Qdefault;
 
   /* prin1_to_string_buffer initialized in init_buffer_once in buffer.c */
