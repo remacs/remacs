@@ -1,4 +1,4 @@
-;;; custom.el --- tools for declaring and initializing options
+;;; custom.el --- tools for declaring and initializing options  -*- lexical-binding: t -*-
 ;;
 ;; Copyright (C) 1996-1997, 1999, 2001-2018 Free Software Foundation,
 ;; Inc.
@@ -150,7 +150,7 @@ set to nil, as the value is no longer rogue."
     (put symbol 'force-value nil))
   (if (keywordp doc)
       (error "Doc string is missing"))
-  (let ((initialize 'custom-initialize-reset)
+  (let ((initialize #'custom-initialize-reset)
 	(requests nil))
     (unless (memq :group args)
       (custom-add-to-group (custom-current-group) symbol 'custom-variable))
@@ -426,7 +426,7 @@ information."
 (defun custom-declare-group (symbol members doc &rest args)
   "Like `defgroup', but SYMBOL is evaluated as a normal argument."
   (while members
-    (apply 'custom-add-to-group symbol (car members))
+    (apply #'custom-add-to-group symbol (car members))
     (setq members (cdr members)))
   (when doc
     ;; This text doesn't get into DOC.
@@ -618,11 +618,8 @@ VARIABLE is a symbol that names a user option.
 The result is that the change is treated as having been made through Custom."
   (put variable 'customized-value (list (custom-quote (eval variable)))))
 
-
-;;; Custom Themes
-
-;;; Loading files needed to customize a symbol.
-;;; This is in custom.el because menu-bar.el needs it for toggle cmds.
+;; Loading files needed to customize a symbol.
+;; This is in custom.el because menu-bar.el needs it for toggle cmds.
 
 (defvar custom-load-recursion nil
   "Hack to avoid recursive dependencies.")
@@ -715,7 +712,7 @@ To actually save the value, call `custom-save-all'.
 
 Return non-nil if the `saved-value' property actually changed."
   (custom-load-symbol symbol)
-  (let* ((get (or (get symbol 'custom-get) 'default-value))
+  (let* ((get (or (get symbol 'custom-get) #'default-value))
 	 (value (funcall get symbol))
 	 (saved (get symbol 'saved-value))
 	 (standard (get symbol 'standard-value))
@@ -744,7 +741,7 @@ default value.  Otherwise, set it to nil.
 
 Return non-nil if the `customized-value' property actually changed."
   (custom-load-symbol symbol)
-  (let* ((get (or (get symbol 'custom-get) 'default-value))
+  (let* ((get (or (get symbol 'custom-get) #'default-value))
 	 (value (funcall get symbol))
 	 (customized (get symbol 'customized-value))
 	 (old (or (get symbol 'saved-value) (get symbol 'standard-value))))
@@ -776,7 +773,7 @@ E.g. dumped variables whose default depends on run-time information."
   ;; always do the funcall step, even if symbol was not bound before.
   (or (default-boundp symbol)
       (eval `(defvar ,symbol nil))) ; reset below, so any value is fine
-  (funcall (or (get symbol 'custom-set) 'set-default)
+  (funcall (or (get symbol 'custom-set) #'set-default)
 	   symbol
 	   (eval (car (or (get symbol 'saved-value) (get symbol 'standard-value))))))
 
@@ -946,7 +943,7 @@ the default value for the SYMBOL to the value of EXP.
 REQUEST is a list of features we must require in order to
 handle SYMBOL properly.
 COMMENT is a comment string about SYMBOL."
-  (apply 'custom-theme-set-variables 'user args))
+  (apply #'custom-theme-set-variables 'user args))
 
 (defun custom-theme-set-variables (theme &rest args)
   "Initialize variables for theme THEME according to settings in ARGS.
@@ -994,8 +991,8 @@ COMMENT is a comment string about SYMBOL."
 	       set)
 	  (when requests
 	    (put symbol 'custom-requests requests)
-	    (mapc 'require requests))
-	  (setq set (or (get symbol 'custom-set) 'custom-set-default))
+            (mapc #'require requests))
+          (setq set (or (get symbol 'custom-set) #'custom-set-default))
 	  (put symbol 'saved-value (list value))
 	  (put symbol 'saved-variable-comment comment)
 	  ;; Allow for errors in the case where the setter has
@@ -1091,26 +1088,29 @@ list, in which A occurs before B if B was defined with a
 ;; they were used to supply keyword-value pairs like `:immediate',
 ;; `:variable-reset-string', etc.  We don't use any of these, so ignore them.
 
-(defmacro deftheme (theme &optional doc &rest ignored)
+(defmacro deftheme (theme &optional doc &rest _ignored)
   "Declare THEME to be a Custom theme.
 The optional argument DOC is a doc string describing the theme.
 
 Any theme `foo' should be defined in a file called `foo-theme.el';
 see `custom-make-theme-feature' for more information."
-  (declare (doc-string 2))
+  (declare (doc-string 2)
+           (advertised-calling-convention (theme &optional doc) "22.1"))
   (let ((feature (custom-make-theme-feature theme)))
     ;; It is better not to use backquote in this file,
     ;; because that makes a bootstrapping problem
     ;; if you need to recompile all the Lisp files using interpreted code.
     (list 'custom-declare-theme (list 'quote theme) (list 'quote feature) doc)))
 
-(defun custom-declare-theme (theme feature &optional doc &rest ignored)
+(defun custom-declare-theme (theme feature &optional doc &rest _ignored)
   "Like `deftheme', but THEME is evaluated as a normal argument.
 FEATURE is the feature this theme provides.  Normally, this is a symbol
 created from THEME by `custom-make-theme-feature'."
+  (declare (advertised-calling-convention (theme feature &optional doc) "22.1"))
   (unless (custom-theme-name-valid-p theme)
     (error "Custom theme cannot be named %S" theme))
-  (add-to-list 'custom-known-themes theme)
+  (unless (memq theme custom-known-themes)
+    (push theme custom-known-themes))
   (put theme 'theme-feature feature)
   (when doc (put theme 'theme-documentation doc)))
 
@@ -1218,7 +1218,7 @@ Return t if THEME was successfully loaded, nil otherwise."
   (interactive
    (list
     (intern (completing-read "Load custom theme: "
-			     (mapcar 'symbol-name
+                             (mapcar #'symbol-name
 				     (custom-available-themes))))
     nil nil))
   (unless (custom-theme-name-valid-p theme)
@@ -1411,9 +1411,9 @@ Setting this variable through Customize calls `enable-theme' or
 			    themes (delq theme themes)))))
 	   (enable-theme 'user)
 	   (custom-set-default symbol themes)
-	   (if failures
-	       (message "Failed to enable theme: %s"
-			(mapconcat 'symbol-name failures ", "))))))
+           (when failures
+             (message "Failed to enable theme(s): %s"
+                      (mapconcat #'symbol-name failures ", "))))))
 
 (defsubst custom-theme-enabled-p (theme)
   "Return non-nil if THEME is enabled."
@@ -1425,7 +1425,7 @@ See `custom-enabled-themes' for a list of enabled themes."
   (interactive (list (intern
 		      (completing-read
 		       "Disable custom theme: "
-		       (mapcar 'symbol-name custom-enabled-themes)
+                       (mapcar #'symbol-name custom-enabled-themes)
 		       nil t))))
   (when (custom-theme-enabled-p theme)
     (let ((settings (get theme 'theme-settings)))
@@ -1491,7 +1491,7 @@ This function returns nil if no custom theme specifies a value for VARIABLE."
     (if (and valspec
 	     (or (get variable 'force-value)
 		 (default-boundp variable)))
-	(funcall (or (get variable 'custom-set) 'set-default) variable
+        (funcall (or (get variable 'custom-set) #'set-default) variable
 		 (eval (car valspec))))))
 
 (defun custom-theme-recalc-face (face)
@@ -1532,7 +1532,7 @@ Each of the arguments ARGS has this form:
     (VARIABLE IGNORED)
 
 This means reset VARIABLE.  (The argument IGNORED is ignored)."
-    (apply 'custom-theme-reset-variables 'user args))
+    (apply #'custom-theme-reset-variables 'user args))
 
 ;;; The End.
 
