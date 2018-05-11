@@ -1158,6 +1158,18 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 	(setq dirp (if (equal "directory" (cdr (assoc "type" attributes))) t))
 	(setq res-symlink-target
 	      (cdr (assoc "standard::symlink-target" attributes)))
+	(when (stringp res-symlink-target)
+	  (setq res-symlink-target
+		;; Parse unibyte codes "\xNN".  We assume they are
+		;; non-ASCII codepoints in the range #x80 through #xff.
+		;; Convert them to multibyte.
+		(decode-coding-string
+		 (replace-regexp-in-string
+		  "\\\\x\\([[:xdigit:]]\\{2\\}\\)"
+		  (lambda (x)
+		    (unibyte-string (string-to-number (match-string 1 x) 16)))
+		  res-symlink-target)
+		 'utf-8)))
 	;; ... number links
 	(setq res-numlinks
 	      (string-to-number

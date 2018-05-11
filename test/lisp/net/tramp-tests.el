@@ -4716,7 +4716,7 @@ Use the `ls' command."
 	    (and
 	     (stringp (setq x (eval (get-language-info (car x) 'sample-text))))
 	     (not (unencodable-char-position
-		   0 nil file-name-coding-system nil x))
+		   0 (length x) file-name-coding-system nil x))
 	     ;; ?\n and ?/ shouldn't be part of any file name.  ?\t,
 	     ;; ?. and ?? do not work for "smb" method.
 	     (replace-regexp-in-string "[\t\n/.?]" "" x)))
