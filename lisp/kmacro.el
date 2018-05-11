@@ -233,12 +233,19 @@ macro to be executed before appending to it."
 ;;; Keyboard macro counter
 
 (defvar kmacro-counter 0
-  "Current keyboard macro counter.")
+  "Current keyboard macro counter.
+
+This is normally initialized to zero when the macro is defined,
+and incremented each time the value of the counter is inserted
+into a buffer.  See `kmacro-start-macro-or-insert-counter' for
+more details.")
 
 (defvar kmacro-default-counter-format "%d")
 
 (defvar kmacro-counter-format "%d"
-  "Current keyboard macro counter format.")
+  "Current keyboard macro counter format.
+
+Can be set directly via `kmacro-set-format', which see.")
 
 (defvar kmacro-counter-format-start kmacro-counter-format
   "Macro format at start of macro execution.")
@@ -254,9 +261,9 @@ macro to be executed before appending to it."
 
 
 (defun kmacro-insert-counter (arg)
-  "Insert macro counter, then increment it by ARG.
+  "Insert current value of `kmacro-counter', then increment it by ARG.
 Interactively, ARG defaults to 1.  With \\[universal-argument], insert
-previous `kmacro-counter', and do not modify counter."
+current value of `kmacro-counter', but do not increment it."
   (interactive "P")
   (if kmacro-initial-counter-value
       (setq kmacro-counter kmacro-initial-counter-value
@@ -268,7 +275,7 @@ previous `kmacro-counter', and do not modify counter."
 
 
 (defun kmacro-set-format (format)
-  "Set macro counter FORMAT."
+  "Set the format of `kmacro-counter' to FORMAT."
   (interactive "sMacro Counter Format: ")
   (setq kmacro-counter-format
 	(if (equal format "") "%d" format))
@@ -284,7 +291,7 @@ previous `kmacro-counter', and do not modify counter."
 
 
 (defun kmacro-set-counter (arg)
-  "Set `kmacro-counter' to ARG or prompt if missing.
+  "Set the value of `kmacro-counter' to ARG, or prompt for value if no argument.
 With \\[universal-argument] prefix, reset counter to its value prior to this iteration of the macro."
   (interactive "NMacro counter value: ")
   (if (not (or defining-kbd-macro executing-kbd-macro))
@@ -298,7 +305,7 @@ With \\[universal-argument] prefix, reset counter to its value prior to this ite
 
 
 (defun kmacro-add-counter (arg)
-  "Add numeric prefix arg (prompt if missing) to macro counter.
+  "Add the value of numeric prefix arg (prompt if missing) to `kmacro-counter'.
 With \\[universal-argument], restore previous counter value."
   (interactive "NAdd to macro counter: ")
   (if kmacro-initial-counter-value
@@ -677,18 +684,21 @@ use \\[kmacro-name-last-macro]."
   "Record subsequent keyboard input, defining a keyboard macro.
 The commands are recorded even as they are executed.
 
-Sets the `kmacro-counter' to ARG (or 0 if no prefix arg) before defining the
-macro.
+Initializes the macro's `kmacro-counter' to ARG (or 0 if no prefix arg)
+before defining the macro.
 
 With \\[universal-argument], appends to current keyboard macro (keeping
 the current value of `kmacro-counter').
 
-When defining/executing macro, inserts macro counter and increments
-the counter with ARG or 1 if missing.  With \\[universal-argument],
-inserts previous `kmacro-counter' (but do not modify counter).
+When used during defining/executing a macro, inserts the current value
+of `kmacro-counter' and increments the counter value by ARG (or by 1 if no
+prefix argument).  With just \\[universal-argument], inserts the current value
+of `kmacro-counter', but does not modify the counter; this is the
+same as incrementing the counter by zero.
 
-The macro counter can be modified via \\[kmacro-set-counter] and \\[kmacro-add-counter].
-The format of the counter can be modified via \\[kmacro-set-format]."
+The macro counter can be set directly via \\[kmacro-set-counter] and \\[kmacro-add-counter].
+The format of the inserted value of the counter can be controlled
+via \\[kmacro-set-format]."
   (interactive "P")
   (if (or defining-kbd-macro executing-kbd-macro)
       (kmacro-insert-counter arg)
