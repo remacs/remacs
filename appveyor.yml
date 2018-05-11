@@ -9,13 +9,14 @@ image: Visual Studio 2015
 # Install Rust and Cargo
 # (Based on from https://github.com/rust-lang/libc/blob/master/appveyor.yml)
 install:
-  - curl -sSf -o rustup-init.exe https://win.rustup.rs
-  - rustup-init.exe --default-host %TARGET% --default-toolchain nightly-2018-02-08 -y
+  - set /p REMACS_RUST_VERSION=<rust-toolchain
+  - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - rustup-init.exe --default-host %TARGET% --default-toolchain %REMACS_RUST_VERSION% -y
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin;C:\msys64\usr\bin
   - rustc -Vv
   - cargo -V
-  - C:\msys64\usr\bin\bash --login -c "pacman -Rns --noconfirm catgets"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syy"
+  - C:\msys64\usr\bin\bash --login -c "pacman -Rns --noconfirm catgets"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm base-devel"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-toolchain"
   - C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff"
