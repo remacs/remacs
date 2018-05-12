@@ -200,11 +200,7 @@ will be modified."
             (if (eq (nth 2 opt) t)
                 (if (> ai (length eshell--args))
                     (error "%s: missing option argument" name)
-                  (prog1 (nth ai eshell--args)
-                    (if (> ai 0)
-                        (setcdr (nthcdr (1- ai) eshell--args)
-                                (nthcdr (1+ ai) eshell--args))
-                      (setq eshell--args (cdr eshell--args)))))
+                  (pop (nthcdr ai eshell--args)))
               (or (nth 2 opt) t)))))
 
 (defun eshell--process-option (name switch kind ai options opt-vals)
@@ -264,10 +260,7 @@ switch is unrecognized."
         ;; dash or switch argument found, parse
 	(let* ((dash (match-string 1 arg))
 	       (switch (match-string 2 arg)))
-	  (if (= ai 0)
-	      (setq eshell--args (cdr eshell--args))
-	    (setcdr (nthcdr (1- ai) eshell--args)
-                    (nthcdr (1+ ai) eshell--args)))
+	  (pop (nthcdr ai eshell--args))
 	  (if dash
 	      (if (> (length switch) 0)
 		  (eshell--process-option name switch 1 ai options opt-vals)
