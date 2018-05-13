@@ -1962,7 +1962,15 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
       child = [FRAME_NS_VIEW (f) window];
 
       if ([child parentWindow] != nil)
-        [[child parentWindow] removeChildWindow:child];
+        {
+          [[child parentWindow] removeChildWindow:child];
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101000
+          if ([child respondsToSelector:@selector(setAccessibilitySubrole:)]
+#endif
+              [child setAccessibilitySubrole:NSAccessibilityStandardWindowSubrole];
+#endif
+        }
 
       if (!NILP (new_value))
         {
@@ -1970,6 +1978,12 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 
           [parent addChildWindow: child
                          ordered: NSWindowAbove];
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101000
+          if ([child respondsToSelector:@selector(setAccessibilitySubrole:)]
+#endif
+              [child setAccessibilitySubrole:NSAccessibilityFloatingWindowSubrole];
+#endif
         }
 
       unblock_input ();
