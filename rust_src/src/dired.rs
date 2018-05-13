@@ -1,12 +1,14 @@
 //! Lisp functions for making directory listings.
 
+use std::ffi::CStr;
+
 use libc;
-use lisp::LispObject;
-use lisp::defsubr;
-use lists::list;
+
 use remacs_macros::lisp_fn;
 use remacs_sys::Fuser_real_login_name;
-use std::ffi::CStr;
+
+use lisp::{defsubr, LispObject};
+use lists::list;
 
 /// Return a list of user names currently registered in the system.
 /// If we don't know how to determine that on this platform, just
