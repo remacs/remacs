@@ -1958,12 +1958,20 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 
   if (p != FRAME_PARENT_FRAME (f))
     {
-      parent = [FRAME_NS_VIEW (p) window];
+      block_input ();
       child = [FRAME_NS_VIEW (f) window];
 
-      block_input ();
-      [parent addChildWindow: child
-                     ordered: NSWindowAbove];
+      if ([child parentWindow] != nil)
+        [[child parentWindow] removeChildWindow:child];
+
+      if (!NILP (new_value))
+        {
+          parent = [FRAME_NS_VIEW (p) window];
+
+          [parent addChildWindow: child
+                         ordered: NSWindowAbove];
+        }
+
       unblock_input ();
 
       fset_parent_frame (f, new_value);
