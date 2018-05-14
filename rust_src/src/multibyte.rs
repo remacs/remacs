@@ -12,7 +12,7 @@
 //!
 //! The uniqueness of the Multibyte encoding is due to these features:
 //!
-//! * Codepoints up to 0x10FFFF coindice with Unicode.  However, the
+//! * Codepoints up to 0x10FFFF coincide with Unicode.  However, the
 //!   maximum codepoint is 0x3FFFFF.  The additional codepoints are
 //!   used for "characters not unified with Unicode" and for 8-bit
 //!   bytes, see below.
@@ -733,4 +733,20 @@ pub extern "C" fn str_to_unibyte(
         };
     }
     chars
+}
+
+pub fn char_byte8_p(c: Codepoint) -> bool {
+    c > MAX_5_BYTE_CHAR
+}
+
+pub fn char_to_byte8(c: Codepoint) -> u8 {
+    if char_byte8_p(c) {
+        (c - 0x3FFF00) as u8
+    } else {
+        (c & 0xFF) as u8
+    }
+}
+
+pub fn single_byte_charp(c: Codepoint) -> bool {
+    c < 0x100
 }

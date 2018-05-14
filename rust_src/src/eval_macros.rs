@@ -55,8 +55,7 @@ macro_rules! call_raw {
     ($func:expr) => {{
         #[allow(unused_unsafe)]
         unsafe {
-            LispObject::from_raw(::remacs_sys::Ffuncall(1, &mut $func)
-            )
+            LispObject::from_raw(::remacs_sys::Ffuncall(1, &mut $func))
         }
     }}
 }
@@ -123,6 +122,9 @@ macro_rules! list {
     () => { $crate::lisp::LispObject::constant_nil() };
 }
 
+/// Macro that expands to nothing, but is used at build time to
+/// generate the starting symbol table. Equivalent to the DEFSYM
+/// macro. See also lib-src/make-docfile.c
 macro_rules! def_lisp_sym {
     ($name:expr, $value:expr) => {};
 }

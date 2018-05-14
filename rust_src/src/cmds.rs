@@ -1,21 +1,29 @@
 //! Commands
 
+use libc;
+use std;
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{bitch_at_user, del_range, frame_make_pointer_invisible, globals,
-                 initial_define_key, internal_self_insert, scan_newline_from_point, set_point,
-                 set_point_both, translate_char, Fset};
-use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qkill_forward_chars, Qnil,
+use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column, Fset};
+use remacs_sys::{bitch_at_user, current_column, del_range, frame_make_pointer_invisible, globals,
+                 initial_define_key, insert_and_inherit, memory_full, replace_range, run_hook,
+                 scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
+                 translate_char, concat2, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
+                 Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
                  Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate};
 use remacs_sys::EmacsInt;
 
-use character::characterp;
-use editfns::{line_beginning_position, line_end_position};
+use character::{self, characterp};
+use editfns::{line_beginning_position, line_end_position, preceding_char};
 use frames::selected_frame;
 use keymap::{current_global_map, Ctl};
 use lisp::LispObject;
 use lisp::defsubr;
+use multibyte::{single_byte_charp, unibyte_to_char, write_codepoint, Codepoint, char_to_byte8,
+                MAX_MULTIBYTE_LENGTH};
+use obarray::intern;
 use threads::ThreadState;
 
 /// Add N to point; or subtract N if FORWARD is false. N defaults to 1.
@@ -189,21 +197,6 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
     }
 }
 
-pub fn initial_keys() {
-    let global_map = current_global_map().to_raw();
-
-    unsafe {
-        let A = CString::new("beginning-of-line").unwrap();
-        initial_define_key(global_map, Ctl('A'), A.as_ptr());
-        let B = CString::new("backward-char").unwrap();
-        initial_define_key(global_map, Ctl('B'), B.as_ptr());
-        let E = CString::new("end-of-line").unwrap();
-        initial_define_key(global_map, Ctl('E'), E.as_ptr());
-        let F = CString::new("forward-char").unwrap();
-        initial_define_key(global_map, Ctl('F'), F.as_ptr());
-    }
-}
-
 /// Delete the following N characters (previous if N is negative).
 /// Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
 /// Interactively, N is the prefix arg, and KILLFLAG is set if
@@ -271,12 +264,276 @@ pub fn self_insert_command(n: EmacsInt) {
                 LispObject::from_raw(globals.f_last_command_event).as_fixnum_or_error(),
             )
         };
-        let val = unsafe { internal_self_insert(character, n) };
+        let val = internal_self_insert(character as Codepoint, n as usize);
         if val == 2 {
             unsafe { Fset(Qundo_auto__this_command_amalgamating, Qnil) };
         }
         unsafe { frame_make_pointer_invisible(selected_frame().as_frame_or_error().as_mut()) };
     }
+}
+
+//enum Hairyness {
+//    Simple,
+//    Maybe,
+//    Very,
+//}
+
+/// Insert N times character C
+///
+/// If this insertion is suitable for direct output (completely simple),
+/// return 0.  A value of 1 indicates this *might* not have been simple.
+/// A value of 2 means this did things that call for an undo boundary.
+fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
+    let mut hairy: EmacsInt = 0;
+    let synt: syntaxcode;
+    // Length of multi-byte form of C.
+    let len: usize;
+    // Working buffer and pointer for multi-byte form of C.
+    let mut str = [0_u8; MAX_MULTIBYTE_LENGTH];
+    let mut chars_to_delete: usize = 0;
+    let mut spaces_to_insert: usize = 0;
+
+    let mut current_buffer = ThreadState::current_buffer();
+    let overwrite = current_buffer.overwrite_mode;
+    if LispObject::from_raw(unsafe { globals.f_Vbefore_change_functions }).is_not_nil()
+        || LispObject::from_raw(unsafe { globals.f_Vafter_change_functions }).is_not_nil()
+    {
+        hairy = 1;
+    }
+
+    // At first, get multi-byte form of C in STR.
+    if LispObject::from_raw(current_buffer.enable_multibyte_characters).is_not_nil() {
+        len = write_codepoint(&mut str, c);
+        if len == 1 {
+            c = str[0] as Codepoint;
+        }
+    } else {
+        str[0] = if single_byte_charp(c) {
+            c as u8
+        } else {
+            char_to_byte8(c)
+        };
+        len = 1;
+    }
+    if LispObject::from_raw(overwrite).is_not_nil() && current_buffer.pt() < current_buffer.zv() {
+        // In overwrite-mode, we substitute a character at point (C2,
+        // hereafter) by C.  For that, we delete C2 in advance.  But,
+        // just substituting C2 by C may move a remaining text in the
+        // line to the right or to the left, which is not preferable.
+        // So we insert more spaces or delete more characters in the
+        // following cases: if C is narrower than C2, after deleting C2,
+        // we fill columns with spaces, if C is wider than C2, we delete
+        // C2 and several characters following C2.
+
+        // This is the character after point.
+        let c2 = current_buffer.fetch_char(current_buffer.pt_byte()) as Codepoint;
+
+        // Overwriting in binary-mode always replaces C2 by C.
+        // Overwriting in textual-mode doesn't always do that.
+        // It inserts newlines in the usual way,
+        // and inserts any character at end of line
+        // or before a tab if it doesn't use the whole width of the tab.  */
+        if overwrite == Qoverwrite_mode_binary {
+            chars_to_delete = n as usize;
+        } else if c != '\n' as Codepoint && c2 != '\n' as Codepoint {
+            let cwidth = LispObject::from_raw(unsafe { Fchar_width(LispObject::from(c).to_raw()) })
+                .as_fixnum_or_error() as usize;
+            if cwidth > 0 {
+                let pos = current_buffer.pt;
+                let pos_byte = current_buffer.pt_byte;
+                let curcol = unsafe { current_column() } as usize;
+
+                if n <= (MOST_POSITIVE_FIXNUM as usize - curcol) / cwidth {
+                    // Column the cursor should be placed at after this insertion.
+                    // The value should be calculated only when necessary.
+                    let target_clm = curcol + (n * cwidth);
+
+                    // The actual cursor position after the trial of moving
+                    // to column TARGET_CLM.  It is greater than TARGET_CLM
+                    // if the TARGET_CLM is middle of multi-column
+                    // character.  In that case, the new point is set after
+                    // that character.
+                    let actual_clm = LispObject::from_raw(unsafe {
+                        Fmove_to_column(LispObject::from(target_clm).to_raw(), Qnil)
+                    }).as_fixnum_or_error() as usize;
+                    chars_to_delete = (current_buffer.pt - pos) as usize;
+                    if actual_clm > target_clm {
+                        // We will delete too many columns.  Let's fill columns
+                        // by spaces so that the remaining text won't move.
+                        let actual = unsafe { character::dec_pos(current_buffer.pt_byte) };
+                        if current_buffer.fetch_char(actual) as Codepoint == '\t' as Codepoint {
+                            // Rather than add spaces, let's just keep the tab.
+                            chars_to_delete -= 1;
+                        } else {
+                            spaces_to_insert = actual_clm - target_clm;
+                        }
+                    }
+                    current_buffer.set_pt_both(pos, pos_byte);
+                }
+            }
+        }
+        hairy = 2;
+    }
+    synt = unsafe { syntax_property(c as i32, true) };
+
+    let previous_char =
+        if LispObject::from_raw(current_buffer.enable_multibyte_characters).is_not_nil() {
+            preceding_char() as Codepoint
+        } else {
+            unibyte_to_char(preceding_char() as Codepoint)
+        };
+    if LispObject::from_raw(current_buffer.abbrev_mode).is_not_nil() && synt != syntaxcode::Word
+        && LispObject::from_raw(current_buffer.read_only).is_not_nil()
+        && current_buffer.pt > current_buffer.begv && unsafe {
+        syntax_property(previous_char as libc::c_int, true)
+    } == syntaxcode::Word
+    {
+        let modiff = unsafe { (*current_buffer.text).modiff };
+
+        let sym = call_raw!(Qexpand_abbrev);
+
+        // If we expanded an abbrev which has a hook,
+        // and the hook has a non-nil `no-self-insert' property,
+        // return right away--don't really self-insert.  */
+        if let Some(s) = sym.as_symbol() {
+            if let Some(f) = LispObject::from_raw(s.function).as_symbol() {
+                let prop = LispObject::from_raw(unsafe {
+                    Fget(
+                        LispObject::from(f).to_raw(),
+                        intern("no-self-insert").to_raw(),
+                    )
+                });
+                if prop.is_not_nil() {
+                    return 1;
+                }
+            }
+        }
+
+        if unsafe { (*current_buffer.text).modiff != modiff } {
+            hairy = 2;
+        }
+    }
+
+    if chars_to_delete > 0 {
+        let mc = if LispObject::from_raw(current_buffer.enable_multibyte_characters).is_not_nil()
+            && single_byte_charp(c)
+        {
+            unibyte_to_char(c)
+        } else {
+            c
+        };
+        let mut string = LispObject::from_raw(unsafe {
+            Fmake_string(LispObject::from(n).to_raw(), LispObject::from(mc).to_raw())
+        });
+        if spaces_to_insert > 0 {
+            let tem = LispObject::from_raw(unsafe {
+                Fmake_string(
+                    LispObject::from(spaces_to_insert).to_raw(),
+                    LispObject::from(' ' as Codepoint).to_raw(),
+                )
+            });
+            string = LispObject::from_raw(unsafe { concat2(string.to_raw(), tem.to_raw()) });
+        }
+
+        unsafe {
+            replace_range(
+                current_buffer.pt,
+                current_buffer.pt + chars_to_delete as isize,
+                string.to_raw(),
+                true,
+                true,
+                true,
+                false,
+            )
+        };
+        forward_char(LispObject::from(n));
+    } else if n > 1 {
+        let mut strn: Vec<libc::c_uchar> = match n.checked_mul(len) {
+            Some(size_bytes) => Vec::with_capacity(size_bytes),
+            None => unsafe { memory_full(std::usize::MAX) },
+        };
+        for _ in 0..n {
+            strn.extend_from_slice(&str[0..len]);
+        }
+        unsafe {
+            insert_and_inherit(
+                strn.as_mut_slice().as_mut_ptr() as *mut i8,
+                strn.len() as isize,
+            )
+        };
+    } else if n > 0 {
+        unsafe { insert_and_inherit(str.as_mut_ptr() as *mut i8, len as isize) };
+    }
+
+    if let Some(t) = LispObject::from_raw(unsafe { globals.f_Vauto_fill_chars }).as_char_table() {
+        if t.get(c as isize).is_not_nil() && (c == ' ' as Codepoint || c == '\n' as Codepoint)
+            && LispObject::from_raw(current_buffer.auto_fill_function).is_not_nil()
+        {
+            if c == '\n' as Codepoint {
+                // After inserting a newline, move to previous line and fill
+                // that.  Must have the newline in place already so filling and
+                // justification, if any, know where the end is going to be.
+                let newpt = current_buffer.pt - 1;
+                let newpt_byte = current_buffer.pt_byte - 1;
+                current_buffer.set_pt_both(newpt, newpt_byte);
+            }
+            let auto_fill_result = call_raw!(Qinternal_auto_fill);
+            // Test PT < ZV in case the auto-fill-function is strange.
+            if c == '\n' as Codepoint && current_buffer.pt < current_buffer.zv {
+                let newpt = current_buffer.pt + 1;
+                let newpt_byte = current_buffer.pt_byte + 1;
+                current_buffer.set_pt_both(newpt, newpt_byte);
+            }
+            if auto_fill_result.is_not_nil() {
+                hairy = 2;
+            }
+        }
+    }
+
+    // Run hooks for electric keys.
+    unsafe { run_hook(Qpost_self_insert_hook) };
+
+    hairy
+}
+
+// module initialization
+
+#[no_mangle]
+pub extern "C" fn keys_of_cmds() {
+    let global_map = current_global_map().to_raw();
+
+    unsafe {
+        let sic = CString::new("self-insert-command").unwrap();
+        initial_define_key(global_map, Ctl('I'), sic.as_ptr());
+        for n in 0x20..0x7e {
+            initial_define_key(global_map, n, sic.as_ptr());
+        }
+        for n in 0xa0..0xff {
+            initial_define_key(global_map, n, sic.as_ptr());
+        }
+
+        let bol = CString::new("beginning-of-line").unwrap();
+        initial_define_key(global_map, Ctl('A'), bol.as_ptr());
+        let bc = CString::new("backward-char").unwrap();
+        initial_define_key(global_map, Ctl('B'), bc.as_ptr());
+        let eol = CString::new("end-of-line").unwrap();
+        initial_define_key(global_map, Ctl('E'), eol.as_ptr());
+        let fc = CString::new("forward-char").unwrap();
+        initial_define_key(global_map, Ctl('F'), fc.as_ptr());
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn rust_syms_of_cmds() {
+    def_lisp_sym!(Qinternal_auto_fill, "internal-auto-fill");
+    def_lisp_sym!(Qundo_auto_amalgamate, "undo-auto-amalgamate");
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    def_lisp_sym!(Qundo_auto__this_command_amalgamating, "undo-auto--this-command-amalgamating");
+    def_lisp_sym!(Qkill_forward_chars, "kill-forward-chars");
+    // A possible value for a buffer's overwrite-mode variable.
+    def_lisp_sym!(Qoverwrite_mode_binary, "overwrite-mode-binary");
+    def_lisp_sym!(Qexpand_abbrev, "expand-abbrev");
+    def_lisp_sym!(Qpost_self_insert_hook, "post-self-insert-hook");
 }
 
 include!(concat!(env!("OUT_DIR"), "/cmds_exports.rs"));
