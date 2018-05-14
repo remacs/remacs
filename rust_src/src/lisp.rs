@@ -592,6 +592,12 @@ impl From<isize> for LispObject {
     }
 }
 
+impl From<u32> for LispObject {
+    fn from(v: u32) -> Self {
+        LispObject::from_fixnum(v as EmacsInt)
+    }
+}
+
 // Vectorlike support (LispType == 5)
 
 impl LispObject {

@@ -1798,7 +1798,6 @@ fn basic_size_and_align() {
 }
 
 extern "C" {
-    pub fn internal_self_insert(c: EmacsInt, n: EmacsInt) -> EmacsInt;
     pub fn frame_make_pointer_invisible(frame: *mut Lisp_Frame);
     pub fn bitch_at_user() -> !;
     pub fn translate_char(table: Lisp_Object, c: EmacsInt) -> EmacsInt;
@@ -1808,4 +1807,46 @@ extern "C" {
         target_type: Lisp_Type,
         last_special: bool,
     ) -> Lisp_Object;
+}
+
+#[repr(u8)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[allow(non_camel_case_types, dead_code)]
+pub enum syntaxcode {
+    Whitespace,    // for a whitespace character
+    Punct,         // for random punctuation characters
+    Word,          // for a word constituent
+    Symbol,        // symbol constituent but not word constituent
+    Open,          // for a beginning delimiter
+    Close,         // for an ending delimiter
+    Quote,         // for a prefix character like Lisp '
+    String,        // for a string-grouping character like Lisp "
+    Math,          // for delimiters like $ in Tex.
+    Escape,        // for a character that begins a C-style escape
+    Charquote,     // for a character that quotes the following character
+    Comment,       // for a comment-starting character
+    Endcomment,    // for a comment-ending character
+    Inherit,       // use the standard syntax table for this character
+    Comment_fence, // Starts/ends comment which is delimited on the other side by any char with the same syntaxcode.
+    String_fence, // Starts/ends string which is delimited on the other side by any char with the same syntaxcode.
+}
+
+extern "C" {
+    pub fn syntax_property(c: libc::c_int, via_property: bool) -> syntaxcode;
+    pub fn concat2(s1: Lisp_Object, s2: Lisp_Object) -> Lisp_Object;
+    pub fn replace_range(
+        from: ptrdiff_t,
+        to: ptrdiff_t,
+        new: Lisp_Object,
+        prepare: bool,
+        inherit: bool,
+        markers: bool,
+        adjust_match_data: bool,
+    );
+    pub fn memory_full(nbytes: libc::size_t) -> !;
+    pub fn run_hook(symbol: Lisp_Object);
+    pub fn Fchar_width(ch: Lisp_Object) -> Lisp_Object;
+    pub fn Fget(symbol: Lisp_Object, propname: Lisp_Object) -> Lisp_Object;
+    pub fn Fmove_to_column(column: Lisp_Object, force: Lisp_Object) -> Lisp_Object;
+    pub fn Fmake_string(length: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
 }
