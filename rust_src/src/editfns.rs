@@ -749,7 +749,7 @@ pub fn char_equal(c1: LispObject, c2: LispObject) -> bool {
     if cur_buf.case_fold_search().is_nil() {
         return false;
     }
-    
+
     // FIXME: It is possible to compare multibyte characters even when
     // the current buffer is unibyte.  Unfortunately this is ambiguous
     // for characters between 128 and 255, as they could be either
