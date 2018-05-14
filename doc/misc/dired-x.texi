@@ -92,7 +92,6 @@ For @file{dired-x.el} as distributed with GNU Emacs @value{EMACSVER}.
 * Introduction::
 * Installation::
 * Omitting Files in Dired::
-* Local Variables::
 * Shell Command Guessing::
 * Virtual Dired::
 * Advanced Mark Commands::
@@ -477,77 +476,6 @@ Loading @file{dired-x.el} will install Dired Omit by putting
 @code{dired-omit-expunge} on your @code{dired-after-readin-hook}, and will
 call @code{dired-extra-startup}, which in turn calls @code{dired-omit-startup}
 in your @code{dired-mode-hook}.
-
-@node Local Variables
-@chapter Local Variables for Dired Directories
-
-@cindex Local Variables for Dired Directories
-@vindex dired-local-variables-file
-@vindex dired-enable-local-variables
-@noindent
-This Dired-X feature is obsolete as of Emacs 24.1.  The standard Emacs
-directory local variables mechanism (@pxref{Directory
-Variables,,,emacs,The GNU Emacs manual}) replaces it.  For an example of
-the new mechanisms, @pxref{Omitting Variables}.
-
-When Dired visits a directory, it looks for a file whose name is the
-value of variable @code{dired-local-variables-file} (default: @file{.dired}).
-If such a file is found, Dired will temporarily insert it into the Dired
-buffer and run @code{hack-local-variables}.
-
-@noindent
-For example, if the user puts
-
-@example
-Local Variables:
-dired-actual-switches: "-lat"
-dired-omit-mode: t
-End:
-@end example
-
-@noindent
-into a file called @file{.dired} in a directory then when that directory is
-viewed it will be
-
-@enumerate
-@item
-sorted by date
-@item
-omitted automatically
-@end enumerate
-
-@noindent
-You can set @code{dired-local-variables-file} to @code{nil} to suppress this.
-The value of @code{dired-enable-local-variables} controls if and how these
-local variables are read.  This variable exists so that it may override the
-default value of @code{enable-local-variables}.
-
-@noindent
-Please see the GNU Emacs Manual to learn more about local variables.
-@xref{File Variables,Local Variables in Files,Local Variables in
-Files,emacs,The GNU Emacs Manual}.
-
-@noindent
-The following variables affect Dired Local Variables
-
-@table @code
-@vindex dired-local-variables-file
-@item dired-local-variables-file
-Default: @code{".dired"}
-
-If non-@code{nil}, file name for local variables for Dired.  If Dired finds a
-file with that name in the current directory, it will temporarily insert it
-into the Dired buffer and run @code{hack-local-variables}.
-
-@vindex dired-enable-local-variables
-@item dired-enable-local-variables
-Default: @code{t}
-
-Controls the use of local-variables lists in Dired.  This variable
-temporarily overrides the value of @code{enable-local-variables} when
-the Dired Local Variables are hacked.  It takes the same values as that
-variable.  A value of @code{nil} means to ignore any Dired Local Variables.
-@end table
 
 @node Shell Command Guessing
 @chapter Shell Command Guessing
