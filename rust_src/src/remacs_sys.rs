@@ -1724,6 +1724,7 @@ extern "C" {
         all_frames: Lisp_Object,
     ) -> Lisp_Object;
     pub fn buffer_local_value(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
+    pub fn downcase(c: c_int) -> c_int;
 
 }
 

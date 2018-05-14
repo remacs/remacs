@@ -230,6 +230,10 @@ impl LispBufferRef {
         LispObject::from_raw(self.file_truename)
     }
 
+    pub fn case_fold_search(self) -> LispObject {
+        LispObject::from_raw(self.case_fold_search)
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
@@ -266,11 +270,16 @@ impl LispBufferRef {
 
     #[inline]
     pub fn fetch_char(self, n: ptrdiff_t) -> c_int {
-        if LispObject::from_raw(self.enable_multibyte_characters).is_not_nil() {
+        if self.multibyte_characters_enabled() {
             self.fetch_multibyte_char(n)
         } else {
             c_int::from(self.fetch_byte(n))
         }
+    }
+
+    #[inline]
+    pub fn multibyte_characters_enabled(self) -> bool {
+        LispObject::from_raw(self.enable_multibyte_characters).is_not_nil()
     }
 
     #[inline]

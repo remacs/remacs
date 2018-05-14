@@ -111,7 +111,7 @@ fn get_coding_system_for_buffer(
                 Qbuffer_file_coding_system,
                 LispObject::constant_nil().to_raw(),
             )
-        }).is_nil()) && LispObject::from_raw(buffer.enable_multibyte_characters).is_nil()
+        }).is_nil()) && !buffer.multibyte_characters_enabled()
     {
         return LispObject::from_raw(Qraw_text);
     }
