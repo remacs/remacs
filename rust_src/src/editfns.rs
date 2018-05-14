@@ -214,12 +214,11 @@ pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
         )
     }
     let buf = ThreadState::current_buffer();
-    let toinsert =
-        if byte >= 128 && buf.multibyte_characters_enabled() {
-            EmacsInt::from(raw_byte_codepoint(byte as c_uchar))
-        } else {
-            byte
-        };
+    let toinsert = if byte >= 128 && buf.multibyte_characters_enabled() {
+        EmacsInt::from(raw_byte_codepoint(byte as c_uchar))
+    } else {
+        byte
+    };
     insert_char(toinsert as Codepoint, count, inherit);
 }
 
