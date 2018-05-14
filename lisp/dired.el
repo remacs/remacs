@@ -1443,7 +1443,8 @@ ARG and NOCONFIRM, passed from `revert-buffer', are ignored."
       (dolist (dir hidden-subdirs)
 	(if (dired-goto-subdir dir)
 	    (dired-hide-subdir 1))))
-    (unless modflag (restore-buffer-modified-p nil)))
+    (unless modflag (restore-buffer-modified-p nil))
+    (hack-dir-local-variables-non-file-buffer))
   ;; outside of the let scope
 ;;;  Might as well not override the user if the user changed this.
 ;;;  (setq buffer-read-only t)
