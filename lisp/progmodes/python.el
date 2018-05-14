@@ -2842,10 +2842,12 @@ process buffer for a list of commands.)"
         (y-or-n-p "Make dedicated process? ")
         (= (prefix-numeric-value current-prefix-arg) 4))
      (list (python-shell-calculate-command) nil t)))
-  (get-buffer-process
-   (python-shell-make-comint
-    (or cmd (python-shell-calculate-command))
-    (python-shell-get-process-name dedicated) show)))
+  (let ((buffer
+         (python-shell-make-comint
+          (or cmd (python-shell-calculate-command))
+          (python-shell-get-process-name dedicated) show)))
+    (pop-to-buffer buffer)
+    (get-buffer-process buffer)))
 
 (defun run-python-internal ()
   "Run an inferior Internal Python process.
