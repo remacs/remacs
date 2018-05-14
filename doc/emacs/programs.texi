@@ -1696,7 +1696,9 @@ chaotically indented code.  If you are new to CC Mode, you might find
 it disconcerting.  You can toggle electric action with the command
 @kbd{C-c C-l}; when it is enabled, @samp{/@var{c}l} appears in the
 mode line after the mode name (where @var{c}, if present, is @samp{*}
-or @samp{/}):
+or @samp{/}, depending on whether the comment style is block or line).
+@xref{Minor Modes,,, ccmode, The CC Mode Manual}, for more about
+mode-line indicators in CC Mode.
 
 @table @kbd
 @item C-c C-l
