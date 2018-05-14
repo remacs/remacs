@@ -1540,25 +1540,25 @@ prev_frame (Lisp_Object frame, Lisp_Object minibuf)
     return prev;
 }
 
-
-DEFUN ("next-frame", Fnext_frame, Snext_frame, 0, 2, 0,
-       doc: /* Return the next frame in the frame list after FRAME.
-It considers only frames on the same terminal as FRAME.
-By default, skip minibuffer-only frames.
-If omitted, FRAME defaults to the selected frame.
-If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
-If MINIFRAME is a window, include only its own frame
-and any frame now using that window as the minibuffer.
-If MINIFRAME is `visible', include all visible frames.
-If MINIFRAME is 0, include all visible and iconified frames.
-Otherwise, include all frames.  */)
-  (Lisp_Object frame, Lisp_Object miniframe)
-{
-  if (NILP (frame))
-    frame = selected_frame;
-  CHECK_LIVE_FRAME (frame);
-  return next_frame (frame, miniframe);
-}
+// TODO: port
+/* DEFUN ("next-frame", Fnext_frame, Snext_frame, 0, 2, 0, */
+/*        doc: /\* Return the next frame in the frame list after FRAME. */
+/* It considers only frames on the same terminal as FRAME. */
+/* By default, skip minibuffer-only frames. */
+/* If omitted, FRAME defaults to the selected frame. */
+/* If optional argument MINIFRAME is nil, exclude minibuffer-only frames. */
+/* If MINIFRAME is a window, include only its own frame */
+/* and any frame now using that window as the minibuffer. */
+/* If MINIFRAME is `visible', include all visible frames. */
+/* If MINIFRAME is 0, include all visible and iconified frames. */
+/* Otherwise, include all frames.  *\/) */
+/*   (Lisp_Object frame, Lisp_Object miniframe) */
+/* { */
+/*   if (NILP (frame)) */
+/*     frame = selected_frame; */
+/*   CHECK_LIVE_FRAME (frame); */
+/*   return next_frame (frame, miniframe); */
+/* } */
 
 DEFUN ("previous-frame", Fprevious_frame, Sprevious_frame, 0, 2, 0,
        doc: /* Return the previous frame in the frame list before FRAME.
@@ -5946,7 +5946,7 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_list);
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
-  defsubr (&Snext_frame);
+  /* defsubr (&Snext_frame); */
   defsubr (&Sprevious_frame);
   defsubr (&Slast_nonminibuf_frame);
   defsubr (&Sdelete_frame);
