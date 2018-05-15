@@ -505,10 +505,10 @@ pub extern "C" fn keys_of_cmds() {
     unsafe {
         let sic = CString::new("self-insert-command").unwrap();
         initial_define_key(global_map, Ctl('I'), sic.as_ptr());
-        for n in 0x20..0x7e {
+        for n in 0x20..0x7f {
             initial_define_key(global_map, n, sic.as_ptr());
         }
-        for n in 0xa0..0xff {
+        for n in 0xa0..0x100 {
             initial_define_key(global_map, n, sic.as_ptr());
         }
 
