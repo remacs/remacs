@@ -641,8 +641,9 @@ The object labels of the found items are returned as list."
 
 (defun secrets-create-item (collection item password &rest attributes)
   "Create a new item in COLLECTION with label ITEM and password PASSWORD.
-ATTRIBUTES are key-value pairs set for the created item.  The
-keys are keyword symbols, starting with a colon.  Example:
+The label ITEM must not be unique in COLLECTION.  ATTRIBUTES are
+key-value pairs set for the created item.  The keys are keyword
+symbols, starting with a colon.  Example:
 
   (secrets-create-item \"Tramp collection\" \"item\" \"geheim\"
    :method \"sudo\" :user \"joe\" :host \"remote-host\")
@@ -655,67 +656,73 @@ determined by this.  If no `:xdg:schema' is given,
 \"org.freedesktop.Secret.Generic\" is used by default.
 
 The object path of the created item is returned."
-  (unless (member item (secrets-list-items collection))
-    (let ((collection-path (secrets-unlock-collection collection))
-	  result props)
-      (unless (secrets-empty-path collection-path)
-        ;; Set default type if needed.
-        (unless (member :xdg:schema attributes)
-          (setq attributes
-                (append
-                 attributes
-                 `(:xdg:schema ,secrets-interface-item-type-generic))))
-	;; Create attributes list.
-	(while (consp (cdr attributes))
-	  (unless (keywordp (car attributes))
-	    (error 'wrong-type-argument (car attributes)))
-          (unless (stringp (cadr attributes))
-            (error 'wrong-type-argument (cadr attributes)))
-	  (setq props (append
-		       props
-		       `((:dict-entry
-			  ,(substring (symbol-name (car attributes)) 1)
-			  ,(cadr attributes))))
-		attributes (cddr attributes)))
-	;; Create the item.
-	(setq result
-	      (dbus-call-method
-	       :session secrets-service collection-path
-	       secrets-interface-collection "CreateItem"
-	       ;; Properties.
-	       (append
-		`(:array
-		  (:dict-entry ,(concat secrets-interface-item ".Label")
-			       (:variant ,item)))
-		(when props
-		  `((:dict-entry ,(concat secrets-interface-item ".Attributes")
-				 (:variant ,(append '(:array) props))))))
-	       ;; Secret.
-	       (append
-		`(:struct :object-path ,secrets-session-path
-			  (:array :signature "y") ;; No parameters.
-			  ,(dbus-string-to-byte-array password))
-		;; We add the content_type.  In backward compatibility
-		;; mode, nil is appended, which means nothing.
-		secrets-struct-secret-content-type)
-	       ;; Do not replace. Replace does not seem to work.
-	       nil))
-	(secrets-prompt (cadr result))
-	;; Return the object path.
-	(car result)))))
+  (let ((collection-path (secrets-unlock-collection collection))
+	result props)
+    (unless (secrets-empty-path collection-path)
+      ;; Set default type if needed.
+      (unless (member :xdg:schema attributes)
+        (setq attributes
+              (append
+               attributes `(:xdg:schema ,secrets-interface-item-type-generic))))
+      ;; Create attributes list.
+      (while (consp (cdr attributes))
+	(unless (keywordp (car attributes))
+	  (error 'wrong-type-argument (car attributes)))
+        (unless (stringp (cadr attributes))
+          (error 'wrong-type-argument (cadr attributes)))
+	(setq props (append
+		     props
+		     `((:dict-entry
+			,(substring (symbol-name (car attributes)) 1)
+			,(cadr attributes))))
+	      attributes (cddr attributes)))
+      ;; Create the item.
+      (setq result
+	    (dbus-call-method
+	     :session secrets-service collection-path
+	     secrets-interface-collection "CreateItem"
+	     ;; Properties.
+	     (append
+	      `(:array
+		(:dict-entry ,(concat secrets-interface-item ".Label")
+			     (:variant ,item)))
+	      (when props
+		`((:dict-entry ,(concat secrets-interface-item ".Attributes")
+			       (:variant ,(append '(:array) props))))))
+	     ;; Secret.
+	     (append
+	      `(:struct :object-path ,secrets-session-path
+			(:array :signature "y") ;; No parameters.
+			,(dbus-string-to-byte-array password))
+	      ;; We add the content_type.  In backward compatibility
+	      ;; mode, nil is appended, which means nothing.
+	      secrets-struct-secret-content-type)
+	     ;; Do not replace. Replace does not seem to work.
+	     nil))
+      (secrets-prompt (cadr result))
+      ;; Return the object path.
+      (car result))))
 
 (defun secrets-item-path (collection item)
   "Return the object path of item labeled ITEM in COLLECTION.
-If there is no such item, return nil."
+If there are several items labeled ITEM, it is undefined which
+one is returned.  If there is no such item, return nil.
+
+ITEM can also be an object path, which is returned if contained in COLLECTION."
   (let ((collection-path (secrets-unlock-collection collection)))
-    (catch 'item-found
-      (dolist (item-path (secrets-get-items collection-path))
-	(when (string-equal item (secrets-get-item-property item-path "Label"))
-	  (throw 'item-found item-path))))))
+    (or (and (member item (secrets-get-items collection-path)) item)
+        (catch 'item-found
+          (dolist (item-path (secrets-get-items collection-path))
+	    (when (string-equal
+                   item (secrets-get-item-property item-path "Label"))
+	         (throw 'item-found item-path)))))))
 
 (defun secrets-get-secret (collection item)
   "Return the secret of item labeled ITEM in COLLECTION.
-If there is no such item, return nil."
+If there are several items labeled ITEM, it is undefined which
+one is returned.  If there is no such item, return nil.
+
+ITEM can also be an object path, which is used if contained in COLLECTION."
   (let ((item-path (secrets-item-path collection item)))
     (unless (secrets-empty-path item-path)
       (dbus-byte-array-to-string
@@ -726,8 +733,11 @@ If there is no such item, return nil."
 
 (defun secrets-get-attributes (collection item)
   "Return the lookup attributes of item labeled ITEM in COLLECTION.
-If there is no such item, or the item has no attributes, return nil."
-  (unless (stringp collection) (setq collection "default"))
+If there are several items labeled ITEM, it is undefined which
+one is returned.  If there is no such item, or the item has no
+attributes, return nil.
+
+ITEM can also be an object path, which is used if contained in COLLECTION."
   (let ((item-path (secrets-item-path collection item)))
     (unless (secrets-empty-path item-path)
       (mapcar
@@ -739,11 +749,19 @@ If there is no such item, or the item has no attributes, return nil."
 
 (defun secrets-get-attribute (collection item attribute)
   "Return the value of ATTRIBUTE of item labeled ITEM in COLLECTION.
-If there is no such item, or the item doesn't own this attribute, return nil."
+If there are several items labeled ITEM, it is undefined which
+one is returned.  If there is no such item, or the item doesn't
+own this attribute, return nil.
+
+ITEM can also be an object path, which is used if contained in COLLECTION."
   (cdr (assoc attribute (secrets-get-attributes collection item))))
 
 (defun secrets-delete-item (collection item)
-  "Delete ITEM in COLLECTION."
+  "Delete item labeled ITEM in COLLECTION.
+If there are several items labeled ITEM, it is undefined which
+one is deleted.
+
+ITEM can also be an object path, which is used if contained in COLLECTION."
   (let ((item-path (secrets-item-path collection item)))
     (unless (secrets-empty-path item-path)
       (secrets-prompt

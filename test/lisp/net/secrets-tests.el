@@ -148,37 +148,48 @@
   (skip-unless (secrets-empty-path secrets-session-path))
 
   (unwind-protect
-      (progn
+      (let (item-path)
 	;; There shall be no items in the "session" collection.
 	(should-not (secrets-list-items "session"))
 	;; There shall be items in the "Login" collection.
 	(should (secrets-list-items "Login"))
 
 	;; Create a new item.
-	(secrets-create-item "session" "foo" "secret")
-	(should (string-equal (secrets-get-secret "session" "foo") "secret"))
+	(should (setq item-path (secrets-create-item "session" "foo" "secret")))
+        (dolist (item `("foo" ,item-path))
+	  (should (string-equal (secrets-get-secret "session" item) "secret")))
+
+	;; Create another item with same label.
+	(should (secrets-create-item "session" "foo" "geheim"))
+	(should (equal (secrets-list-items "session") '("foo" "foo")))
 
 	;; Create an item with attributes.
-	(secrets-create-item
-	 "session" "bar" "secret"
-	 :method "sudo" :user "joe" :host "remote-host")
 	(should
-	 (string-equal (secrets-get-attribute "session" "bar" :method) "sudo"))
-	;; The attributes are collected in reverse order.  :xdg:schema
-	;; is added silently.
-	(should
-	 (equal
-	  (secrets-get-attributes "session" "bar")
-	  '((:xdg:schema . "org.freedesktop.Secret.Generic")
-            (:host . "remote-host") (:user . "joe") (:method . "sudo"))))
+         (setq item-path
+               (secrets-create-item
+	        "session" "bar" "secret"
+	        :method "sudo" :user "joe" :host "remote-host")))
+        (dolist (item `("bar" ,item-path))
+	  (should
+	   (string-equal (secrets-get-attribute "session" item :method) "sudo"))
+	  ;; The attributes are collected in reverse order.
+	  ;; :xdg:schema is added silently.
+	  (should
+	   (equal
+	    (secrets-get-attributes "session" item)
+	    '((:xdg:schema . "org.freedesktop.Secret.Generic")
+              (:host . "remote-host") (:user . "joe") (:method . "sudo")))))
 
 	;; Create an item with another schema.
-	(secrets-create-item
-         "session" "baz" "secret" :xdg:schema "org.gnu.Emacs.foo")
 	(should
-	 (equal
-	  (secrets-get-attributes "session" "baz")
-	  '((:xdg:schema . "org.gnu.Emacs.foo"))))
+         (setq item-path
+               (secrets-create-item
+                "session" "baz" "secret" :xdg:schema "org.gnu.Emacs.foo")))
+        (dolist (item `("baz" ,item-path))
+	  (should
+	   (equal
+	    (secrets-get-attributes "session" item)
+	    '((:xdg:schema . "org.gnu.Emacs.foo")))))
 
 	;; Delete them.
 	(dolist (item (secrets-list-items "session"))
@@ -201,15 +212,18 @@
 	(should-not (secrets-list-items "session"))
 
 	;; Create some items.
-	(secrets-create-item
-	 "session" "foo" "secret"
-	 :method "sudo" :user "joe" :host "remote-host")
-	(secrets-create-item
-	 "session" "bar" "secret"
-	 :method "sudo" :user "smith" :host "remote-host")
-	(secrets-create-item
-	 "session" "baz" "secret"
-	 :method "ssh" :user "joe" :host "other-host")
+	(should
+         (secrets-create-item
+	  "session" "foo" "secret"
+	  :method "sudo" :user "joe" :host "remote-host"))
+	(should
+         (secrets-create-item
+	  "session" "bar" "secret"
+	  :method "sudo" :user "smith" :host "remote-host"))
+	(should
+         (secrets-create-item
+	  "session" "baz" "secret"
+	  :method "ssh" :user "joe" :host "other-host"))
 
 	;; Search the items.
 	(should-not (secrets-search-items "session" :user "john"))
