@@ -282,7 +282,7 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
     LispObject::from_raw(unsafe {
         lisp_concat(
             args.len() as isize,
-            args.as_mut_ptr() as *mut Lisp_Object,
+            args.as_mut_ptr() as *mut LispObject,
             Lisp_Type::Lisp_String,
             false,
         )

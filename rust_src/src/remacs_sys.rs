@@ -1800,20 +1800,20 @@ pub enum syntaxcode {
 
 extern "C" {
     pub fn syntax_property(c: libc::c_int, via_property: bool) -> syntaxcode;
-    pub fn concat2(s1: Lisp_Object, s2: Lisp_Object) -> Lisp_Object;
+    pub fn concat2(s1: LispObject, s2: LispObject) -> LispObject;
     pub fn replace_range(
         from: ptrdiff_t,
         to: ptrdiff_t,
-        new: Lisp_Object,
+        new: LispObject,
         prepare: bool,
         inherit: bool,
         markers: bool,
         adjust_match_data: bool,
     );
     pub fn memory_full(nbytes: libc::size_t) -> !;
-    pub fn run_hook(symbol: Lisp_Object);
-    pub fn Fchar_width(ch: Lisp_Object) -> Lisp_Object;
-    pub fn Fget(symbol: Lisp_Object, propname: Lisp_Object) -> Lisp_Object;
-    pub fn Fmove_to_column(column: Lisp_Object, force: Lisp_Object) -> Lisp_Object;
-    pub fn Fmake_string(length: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
+    pub fn run_hook(symbol: LispObject);
+    pub fn Fchar_width(ch: LispObject) -> LispObject;
+    pub fn Fget(symbol: LispObject, propname: LispObject) -> LispObject;
+    pub fn Fmove_to_column(column: LispObject, force: LispObject) -> LispObject;
+    pub fn Fmake_string(length: LispObject, init: LispObject) -> LispObject;
 }
