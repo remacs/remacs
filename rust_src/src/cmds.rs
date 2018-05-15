@@ -25,7 +25,7 @@ use multibyte::{single_byte_charp, unibyte_to_char, write_codepoint, Codepoint, 
                 MAX_MULTIBYTE_LENGTH};
 use obarray::intern;
 use threads::ThreadState;
-
+
 /// Add N to point; or subtract N if FORWARD is false. N defaults to 1.
 /// Validate the new location. Return nil.
 fn move_point(n: LispObject, forward: bool) -> () {
@@ -63,6 +63,13 @@ fn move_point(n: LispObject, forward: bool) -> () {
     }
 }
 
+/// Return buffer position N characters after (before if N negative) point.
+#[lisp_fn]
+pub fn forward_point(n: EmacsInt) -> EmacsInt {
+    let pt = ThreadState::current_buffer().pt();
+    n + pt as EmacsInt
+}
+
 /// Move point N characters forward (backward if N is negative).
 /// On reaching end or beginning of buffer, stop and signal error.
 /// Interactively, N is the numeric prefix argument.
@@ -89,11 +96,48 @@ pub fn backward_char(n: LispObject) -> () {
     move_point(n, false)
 }
 
-/// Return buffer position N characters after (before if N negative) point.
-#[lisp_fn]
-pub fn forward_point(n: EmacsInt) -> EmacsInt {
-    let pt = ThreadState::current_buffer().pt();
-    n + pt as EmacsInt
+/// Move N lines forward (backward if N is negative).
+/// Precisely, if point is on line I, move to the start of line I + N
+/// ("start of line" in the logical order).
+/// If there isn't room, go as far as possible (no error).
+///
+/// Returns the count of lines left to move.  If moving forward,
+/// that is N minus number of lines moved; if backward, N plus number
+/// moved.
+///
+/// Exception: With positive N, a non-empty line at the end of the
+/// buffer, or of its accessible portion, counts as one line
+/// successfully moved (for the return value).  This means that the
+/// function will move point to the end of such a line and will count
+/// it as a line moved across, even though there is no next line to
+/// go to its beginning.
+#[lisp_fn(min = "0", intspec = "^p")]
+pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
+    let count: isize = n.unwrap_or(1) as isize;
+
+    let cur_buf = ThreadState::current_buffer();
+    let opoint = cur_buf.pt();
+
+    let (mut pos, mut pos_byte) = (0, 0);
+
+    let mut shortage: EmacsInt =
+        unsafe { scan_newline_from_point(count, &mut pos, &mut pos_byte) as EmacsInt };
+
+    unsafe { set_point_both(pos, pos_byte) };
+
+    if shortage > 0
+        && (count <= 0
+            || (cur_buf.zv() > cur_buf.begv && cur_buf.pt() != opoint
+                && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != b'\n'))
+    {
+        shortage -= 1
+    }
+
+    if count <= 0 {
+        -shortage
+    } else {
+        shortage
+    }
 }
 
 /// Move point to beginning of current line (in the logical order).
@@ -150,50 +194,6 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
         } else {
             break;
         }
-    }
-}
-
-/// Move N lines forward (backward if N is negative).
-/// Precisely, if point is on line I, move to the start of line I + N
-/// ("start of line" in the logical order).
-/// If there isn't room, go as far as possible (no error).
-///
-/// Returns the count of lines left to move.  If moving forward,
-/// that is N minus number of lines moved; if backward, N plus number
-/// moved.
-///
-/// Exception: With positive N, a non-empty line at the end of the
-/// buffer, or of its accessible portion, counts as one line
-/// successfully moved (for the return value).  This means that the
-/// function will move point to the end of such a line and will count
-/// it as a line moved across, even though there is no next line to
-/// go to its beginning.
-#[lisp_fn(min = "0", intspec = "^p")]
-pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
-    let count: isize = n.unwrap_or(1) as isize;
-
-    let cur_buf = ThreadState::current_buffer();
-    let opoint = cur_buf.pt();
-
-    let (mut pos, mut pos_byte) = (0, 0);
-
-    let mut shortage: EmacsInt =
-        unsafe { scan_newline_from_point(count, &mut pos, &mut pos_byte) as EmacsInt };
-
-    unsafe { set_point_both(pos, pos_byte) };
-
-    if shortage > 0
-        && (count <= 0
-            || (cur_buf.zv() > cur_buf.begv && cur_buf.pt() != opoint
-                && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != b'\n'))
-    {
-        shortage -= 1
-    }
-
-    if count <= 0 {
-        -shortage
-    } else {
-        shortage
     }
 }
 
@@ -495,7 +495,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
     hairy
 }
-
+
 // module initialization
 
 #[no_mangle]
