@@ -5352,6 +5352,15 @@ buffer with overlapping strings."
                     (python-nav-end-of-statement)))
     (should (eolp))))
 
+;; After call `run-python' the buffer running the python process is current.
+(ert-deftest python-tests--bug31398 ()
+  "Test for https://debbugs.gnu.org/31398 ."
+  (skip-unless (executable-find python-tests-shell-interpreter))
+  (let ((buffer (process-buffer (run-python nil nil 'show))))
+    (should (eq buffer (current-buffer)))
+    (pop-to-buffer (other-buffer))
+    (run-python nil nil 'show)
+    (should (eq buffer (current-buffer)))))
 
 (provide 'python-tests)
 

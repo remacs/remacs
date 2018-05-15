@@ -3400,6 +3400,8 @@ a shell (with its need to quote arguments)."
     (setq command (concat command " &")))
   (shell-command command output-buffer error-buffer))
 
+(declare-function comint-output-filter "comint" (process string))
+
 (defun shell-command (command &optional output-buffer error-buffer)
   "Execute string COMMAND in inferior shell; display output, if any.
 With prefix argument, insert the COMMAND's output at point.
@@ -3477,12 +3479,11 @@ impose the use of a shell (with its need to quote arguments)."
 	       (not (or (bufferp output-buffer)  (stringp output-buffer))))
 	  ;; Output goes in current buffer.
 	  (let ((error-file
-		 (if error-buffer
-		     (make-temp-file
-		      (expand-file-name "scor"
-					(or small-temporary-file-directory
-					    temporary-file-directory)))
-		   nil)))
+                 (and error-buffer
+                      (make-temp-file
+                       (expand-file-name "scor"
+                                         (or small-temporary-file-directory
+                                             temporary-file-directory))))))
 	    (barf-if-buffer-read-only)
 	    (push-mark nil t)
 	    ;; We do not use -f for csh; we will not support broken use of
@@ -3490,24 +3491,22 @@ impose the use of a shell (with its need to quote arguments)."
 	    ;; "if ($?prompt) exit" before things which are not useful
 	    ;; non-interactively.  Besides, if someone wants their other
 	    ;; aliases for shell commands then they can still have them.
-	    (call-process shell-file-name nil
-			  (if error-file
-			      (list t error-file)
-			    t)
-			  nil shell-command-switch command)
+            (call-process-shell-command command nil (if error-file
+                                                        (list t error-file)
+                                                      t))
 	    (when (and error-file (file-exists-p error-file))
-	      (if (< 0 (nth 7 (file-attributes error-file)))
-		  (with-current-buffer (get-buffer-create error-buffer)
-		    (let ((pos-from-end (- (point-max) (point))))
-		      (or (bobp)
-			  (insert "\f\n"))
-		      ;; Do no formatting while reading error file,
-		      ;; because that can run a shell command, and we
-		      ;; don't want that to cause an infinite recursion.
-		      (format-insert-file error-file nil)
-		      ;; Put point after the inserted errors.
-		      (goto-char (- (point-max) pos-from-end)))
-		    (display-buffer (current-buffer))))
+              (when (< 0 (file-attribute-size (file-attributes error-file)))
+                (with-current-buffer (get-buffer-create error-buffer)
+                  (let ((pos-from-end (- (point-max) (point))))
+                    (or (bobp)
+                        (insert "\f\n"))
+                    ;; Do no formatting while reading error file,
+                    ;; because that can run a shell command, and we
+                    ;; don't want that to cause an infinite recursion.
+                    (format-insert-file error-file nil)
+                    ;; Put point after the inserted errors.
+                    (goto-char (- (point-max) pos-from-end)))
+                  (display-buffer (current-buffer))))
 	      (delete-file error-file))
 	    ;; This is like exchange-point-and-mark, but doesn't
 	    ;; activate the mark.  It is cleaner to avoid activation,
@@ -3526,12 +3525,11 @@ impose the use of a shell (with its need to quote arguments)."
               (let* ((buffer (get-buffer-create
                               (or output-buffer "*Async Shell Command*")))
                      (bname (buffer-name buffer))
-                     (directory default-directory)
-                     proc)
+                     (proc (get-buffer-process buffer))
+                     (directory default-directory))
 		;; Remove the ampersand.
 		(setq command (substring command 0 (match-beginning 0)))
 		;; Ask the user what to do with already running process.
-		(setq proc (get-buffer-process buffer))
 		(when proc
 		  (cond
 		   ((eq async-shell-command-buffer 'confirm-kill-process)
@@ -3563,14 +3561,14 @@ impose the use of a shell (with its need to quote arguments)."
 		(with-current-buffer buffer
                   (shell-command--save-pos-or-erase)
 		  (setq default-directory directory)
-		  (setq proc (start-process "Shell" buffer shell-file-name
-					    shell-command-switch command))
+                  (setq proc
+                        (start-process-shell-command "Shell" buffer command))
 		  (setq mode-line-process '(":%s"))
 		  (require 'shell) (shell-mode)
-		  (set-process-sentinel proc 'shell-command-sentinel)
+                  (set-process-sentinel proc #'shell-command-sentinel)
 		  ;; Use the comint filter for proper handling of
 		  ;; carriage motion (see comint-inhibit-carriage-motion).
-		  (set-process-filter proc 'comint-output-filter)
+                  (set-process-filter proc #'comint-output-filter)
                   (if async-shell-command-display-buffer
                       ;; Display buffer immediately.
                       (display-buffer buffer '(nil (allow-no-window . t)))

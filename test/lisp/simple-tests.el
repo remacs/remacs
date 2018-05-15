@@ -521,30 +521,51 @@ See Bug#21722."
     (do-auto-fill)
     (should (string-equal (buffer-string) "foo bar"))))
 
+
+;;; Shell command.
+
 (ert-deftest simple-tests-async-shell-command-30280 ()
   "Test for https://debbugs.gnu.org/30280 ."
-  :expected-result :failed
   (let* ((async-shell-command-buffer 'new-buffer)
          (async-shell-command-display-buffer nil)
-         (str "*Async Shell Command*")
-         (buffers-name
-          (cl-loop repeat 2
-                   collect (buffer-name
-                            (generate-new-buffer str))))
+         (base "name")
+         (first (buffer-name (generate-new-buffer base)))
+         (second (generate-new-buffer-name base))
+         ;; `save-window-excursion' doesn't restore frame configurations.
+         (pop-up-frames nil)
          (inhibit-message t))
-    (mapc #'kill-buffer buffers-name)
-    (async-shell-command
-     (format "%s -Q -batch -eval '(progn (sleep-for 3600) (message \"foo\"))'"
-             invocation-name))
-    (async-shell-command
-     (format "%s -Q -batch -eval '(progn (sleep-for 1) (message \"bar\"))'"
-             invocation-name))
-    (let ((buffers (mapcar #'get-buffer buffers-name))
-          (processes (mapcar #'get-buffer-process buffers-name)))
-      (unwind-protect
-          (should (memq (cadr buffers) (mapcar #'window-buffer (window-list))))
-        (mapc #'delete-process processes)
-        (mapc #'kill-buffer buffers)))))
+    ;; Let `shell-command' create the buffer as needed.
+    (kill-buffer first)
+    (unwind-protect
+        (save-window-excursion
+          ;; One command has no output, the other does.
+          ;; Removing the -eval argument also yields no output, but
+          ;; then both commands exit simultaneously when
+          ;; `accept-process-output' is called on the second command.
+          (dolist (form '("(sleep-for 8)" "(message \"\")"))
+            (async-shell-command (format "%s -Q -batch -eval '%s'"
+                                         invocation-name form)
+                                 first))
+          ;; First command should neither have nor display output.
+          (let* ((buffer (get-buffer first))
+                 (process (get-buffer-process buffer)))
+            (should (buffer-live-p buffer))
+            (should process)
+            (should (zerop (buffer-size buffer)))
+            (should (not (get-buffer-window buffer))))
+          ;; Second command should both have and display output.
+          (let* ((buffer (get-buffer second))
+                 (process (get-buffer-process buffer)))
+            (should (buffer-live-p buffer))
+            (should process)
+            (should (accept-process-output process 4 nil t))
+            (should (> (buffer-size buffer) 0))
+            (should (get-buffer-window buffer))))
+      (dolist (name (list first second))
+        (let* ((buffer (get-buffer name))
+               (process (and buffer (get-buffer-process buffer))))
+          (when process (delete-process process))
+          (when buffer (kill-buffer buffer)))))))
 
 (provide 'simple-test)
 ;;; simple-test.el ends here
