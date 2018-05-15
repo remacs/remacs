@@ -186,7 +186,7 @@ Otherwise, a reverse search (@kbd{C-r}) is often the best way.
 dragging the word preceding or containing point forward as well.  The
 punctuation characters between the words do not move.  For example,
 @w{@samp{FOO, BAR}} transposes into @w{@samp{BAR, FOO}} rather than
-@samp{@w{BAR FOO,}}.  When point is at the end of the line, it will
+@w{@samp{BAR FOO,}}.  When point is at the end of the line, it will
 transpose the word before point with the first word on the next line.
 
 @findex transpose-sentences
