@@ -210,6 +210,25 @@
                     ("login" . "user1")
                     ("machine" . "mymachine1"))))))
 
+(ert-deftest auth-source-test-netrc-parse-one ()
+  (should (equal (auth-source--test-netrc-parse-one--all
+                  "machine host1\n# comment\n")
+                 '("machine" "host1")))
+  (should (equal (auth-source--test-netrc-parse-one--all
+                  "machine host1\n  \n  \nmachine host2\n")
+                 '("machine" "host1" "machine" "host2"))))
+
+(defun auth-source--test-netrc-parse-one--all (text)
+  "Parse TEXT with `auth-source-netrc-parse-one' until end,return list."
+  (with-temp-buffer
+    (insert text)
+    (goto-char (point-min))
+    (let ((one (auth-source-netrc-parse-one)) all)
+      (while one
+        (push one all)
+        (setq one (auth-source-netrc-parse-one)))
+      (nreverse all))))
+
 (ert-deftest auth-source-test-format-prompt ()
   (should (equal (auth-source-format-prompt "test %u %h %p" '((?u "user") (?h "host")))
                  "test user host %p")))
