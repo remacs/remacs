@@ -9,8 +9,11 @@
 /// This module is only for testing, and you should add all
 /// definitions to remacs-sys first and foremost.
 use libc::*;
+
 use mock_derive::mock;
 use remacs_sys::*;
+
+use lisp::LispObject;
 
 // The linker needs the symbol "lispsym" to exist, since certain
 // codepaths lead to it's usage.
@@ -19,10 +22,10 @@ pub static mut lispsym: EmacsInt = 0;
 
 #[mock]
 extern "C" {
-    pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
-    pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object);
-    pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
-    pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
+    pub fn Fcons(car: LispObject, cdr: LispObject) -> LispObject;
+    pub fn Fsignal(error_symbol: LispObject, data: LispObject);
+    pub fn make_string(s: *const c_char, length: ptrdiff_t) -> LispObject;
+    pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> LispObject;
 }
 
 macro_rules! mock_float {

@@ -20,32 +20,11 @@ extern crate std;
 
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
            size_t, time_t, timespec};
+use lisp::LispObject;
 
 // libc prefers not to merge pid_t as an alias for c_int in Windows, so we will not use libc::pid_t
 // and alias it ourselves.
 pub type pid_t = libc::c_int;
-
-#[repr(transparent)]
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Lisp_Object(EmacsInt);
-
-impl Lisp_Object {
-    pub fn from_C(n: EmacsInt) -> Lisp_Object {
-        Lisp_Object(n)
-    }
-
-    pub fn from_C_unsigned(n: EmacsUint) -> Lisp_Object {
-        Self::from_C(n as EmacsInt)
-    }
-
-    pub fn to_C(self) -> EmacsInt {
-        self.0
-    }
-
-    pub fn to_C_unsigned(self) -> EmacsUint {
-        self.0 as EmacsUint
-    }
-}
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 include!(concat!(env!("OUT_DIR"), "/globals.rs"));
@@ -70,7 +49,7 @@ pub const PSEUDOVECTOR_REST_MASK: ptrdiff_t =
 pub const PSEUDOVECTOR_AREA_BITS: ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
 pub const PVEC_TYPE_MASK: ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
-// Number of bits in a Lisp_Object tag.
+// Number of bits in a LispObject tag.
 pub const VALBITS: EmacsInt = EMACS_INT_SIZE * 8 - GCTYPEBITS;
 pub const INTTYPEBITS: EmacsInt = GCTYPEBITS - 1;
 pub const FIXNUM_BITS: EmacsInt = VALBITS + 1;
@@ -253,7 +232,7 @@ pub const SYMBOL_FORWARDED: symbol_redirect = 3;
 
 #[repr(C)]
 pub union SymbolUnion {
-    pub value: Lisp_Object,
+    pub value: LispObject,
     pub alias: *mut Lisp_Symbol,
     pub blv: *mut Lisp_Buffer_Local_Value,
     pub fwd: *mut Lisp_Fwd,
@@ -265,10 +244,10 @@ pub union SymbolUnion {
 #[repr(C)]
 pub struct Lisp_Symbol {
     _padding: BitfieldPadding,
-    pub name: Lisp_Object,
+    pub name: LispObject,
     pub val: SymbolUnion,
-    pub function: Lisp_Object,
-    pub plist: Lisp_Object,
+    pub function: LispObject,
+    pub plist: LispObject,
     pub next: *mut Lisp_Symbol,
 }
 
@@ -287,17 +266,17 @@ extern "C" {
   of slots) of the vector.
 - If PSEUDOVECTOR_FLAG is 1, the rest is subdivided into three fields:
   - a) pseudovector subtype held in PVEC_TYPE_MASK field;
-  - b) number of Lisp_Objects slots at the beginning of the object
+  - b) number of LispObjects slots at the beginning of the object
     held in PSEUDOVECTOR_SIZE_MASK field.  These objects are always
     traced by the GC;
   - c) size of the rest fields held in PSEUDOVECTOR_REST_MASK and
     measured in word_size units.  Rest fields may also include
-    Lisp_Objects, but these objects usually needs some special treatment
+    LispObjects, but these objects usually needs some special treatment
     during GC.
   There are some exceptions.  For PVEC_FREE, b) is always zero.  For
   PVEC_BOOL_VECTOR and PVEC_SUBR, both b) and c) are always zero.
   Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
-  4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
+  4095 LispObjects in GC-ed area and 4095 word-sized other slots.  */
 
 #[repr(C)]
 pub struct Lisp_Vectorlike_Header {
@@ -314,7 +293,7 @@ pub struct Lisp_Vectorlike {
 pub struct Lisp_Vector {
     pub header: Lisp_Vectorlike_Header,
     // actually any number of items... not sure how to express this
-    pub contents: [Lisp_Object; 1],
+    pub contents: [LispObject; 1],
 }
 
 // No C equivalent.  Generic type for a vectorlike with one or more
@@ -323,7 +302,7 @@ pub struct Lisp_Vector {
 pub struct Lisp_Vectorlike_With_Slots {
     pub header: Lisp_Vectorlike_Header,
     // actually any number of items... not sure how to express this
-    pub contents: [Lisp_Object; 1],
+    pub contents: [LispObject; 1],
 }
 
 #[repr(C)]
@@ -362,9 +341,9 @@ pub struct Lisp_Misc_Any {
 pub type Lisp_Fwd_Type = u32;
 pub const Lisp_Fwd_Int: Lisp_Fwd_Type = 0; // Fwd to a C `int' variable.
 pub const Lisp_Fwd_Bool: Lisp_Fwd_Type = 1; // Fwd to a C boolean var.
-pub const Lisp_Fwd_Obj: Lisp_Fwd_Type = 2; // Fwd to a C Lisp_Object variable.
-pub const Lisp_Fwd_Buffer_Obj: Lisp_Fwd_Type = 3; // Fwd to a Lisp_Object field of buffers.
-pub const Lisp_Fwd_Kboard_Obj: Lisp_Fwd_Type = 4; // Fwd to a Lisp_Object field of kboards.
+pub const Lisp_Fwd_Obj: Lisp_Fwd_Type = 2; // Fwd to a C LispObject variable.
+pub const Lisp_Fwd_Buffer_Obj: Lisp_Fwd_Type = 3; // Fwd to a LispObject field of buffers.
+pub const Lisp_Fwd_Kboard_Obj: Lisp_Fwd_Type = 4; // Fwd to a LispObject field of kboards.
 
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
@@ -393,9 +372,9 @@ extern "C" {
 pub struct Lisp_Overlay {
     _padding: BitfieldPadding,
     pub next: *const Lisp_Overlay,
-    pub start: Lisp_Object,
-    pub end: Lisp_Object,
-    pub plist: Lisp_Object,
+    pub start: LispObject,
+    pub end: LispObject,
+    pub plist: LispObject,
 }
 
 /// Represents the cursor position within an Emacs window. For
@@ -433,7 +412,7 @@ pub struct glyph {
     /// a buffer or a string; or nil if the glyph was inserted by
     /// redisplay for its own purposes, such as padding, truncation, or
     /// continuation glyphs, or the overlay-arrow glyphs on TTYs.
-    object: Lisp_Object,
+    object: LispObject,
 
     /// Width in pixels.
     pixel_width: i16,
@@ -531,33 +510,33 @@ pub const BASIC_FACE_ID_SENTINEL: face_id = 16;
 #[repr(C)]
 pub struct Lisp_Window {
     pub header: Lisp_Vectorlike_Header,
-    pub frame: Lisp_Object,
-    pub next: Lisp_Object,
-    pub prev: Lisp_Object,
-    pub parent: Lisp_Object,
-    pub normal_lines: Lisp_Object,
-    pub normal_cols: Lisp_Object,
-    pub new_total: Lisp_Object,
-    pub new_normal: Lisp_Object,
-    pub new_pixel: Lisp_Object,
-    pub contents: Lisp_Object,
-    pub start: Lisp_Object,
-    pub pointm: Lisp_Object,
-    pub old_pointm: Lisp_Object,
-    pub temslot: Lisp_Object,
-    pub vertical_scroll_bar: Lisp_Object,
-    pub vertical_scroll_bar_type: Lisp_Object,
-    pub horizontal_scroll_bar: Lisp_Object,
-    pub horizontal_scroll_bar_type: Lisp_Object,
-    pub display_table: Lisp_Object,
-    pub dedicated: Lisp_Object,
-    pub redisplay_end_trigger: Lisp_Object,
-    pub combination_limit: Lisp_Object,
-    pub window_parameters: Lisp_Object,
+    pub frame: LispObject,
+    pub next: LispObject,
+    pub prev: LispObject,
+    pub parent: LispObject,
+    pub normal_lines: LispObject,
+    pub normal_cols: LispObject,
+    pub new_total: LispObject,
+    pub new_normal: LispObject,
+    pub new_pixel: LispObject,
+    pub contents: LispObject,
+    pub start: LispObject,
+    pub pointm: LispObject,
+    pub old_pointm: LispObject,
+    pub temslot: LispObject,
+    pub vertical_scroll_bar: LispObject,
+    pub vertical_scroll_bar_type: LispObject,
+    pub horizontal_scroll_bar: LispObject,
+    pub horizontal_scroll_bar_type: LispObject,
+    pub display_table: LispObject,
+    pub dedicated: LispObject,
+    pub redisplay_end_trigger: LispObject,
+    pub combination_limit: LispObject,
+    pub window_parameters: LispObject,
     pub current_matrix: *mut c_void,
     pub desired_matrix: *mut c_void,
-    pub prev_buffers: Lisp_Object,
-    pub next_buffers: Lisp_Object,
+    pub prev_buffers: LispObject,
+    pub next_buffers: LispObject,
     pub use_time: EmacsInt,
     pub sequence_number: EmacsInt,
     pub pixel_left: c_int,
@@ -608,13 +587,13 @@ pub struct Lisp_Window {
 extern "C" {
     pub fn wget_current_matrix(w: *const Lisp_Window) -> *mut glyph_matrix;
     pub fn wget_mode_line_height(w: *const Lisp_Window) -> c_int;
-    pub fn wget_parent(w: *const Lisp_Window) -> Lisp_Object;
+    pub fn wget_parent(w: *const Lisp_Window) -> LispObject;
     pub fn wget_pixel_height(w: *const Lisp_Window) -> c_int;
     pub fn wget_pseudo_window_p(w: *const Lisp_Window) -> bool;
 
     pub fn wset_mode_line_height(w: *mut Lisp_Window, height: c_int);
 
-    pub fn window_parameter(w: *const Lisp_Window, parameter: Lisp_Object) -> Lisp_Object;
+    pub fn window_parameter(w: *const Lisp_Window, parameter: LispObject) -> LispObject;
 }
 
 /// Area in window glyph matrix.  If values are added or removed,
@@ -631,79 +610,79 @@ pub const LAST_AREA: glyph_row_area = 3;
 #[repr(C)]
 pub struct Lisp_Buffer {
     pub header: Lisp_Vectorlike_Header,
-    pub name: Lisp_Object,
-    pub filename: Lisp_Object,
-    pub directory: Lisp_Object,
-    pub backed_up: Lisp_Object,
-    pub save_length: Lisp_Object,
-    pub auto_save_file_name: Lisp_Object,
-    pub read_only: Lisp_Object,
-    pub mark: Lisp_Object,
-    pub local_var_alist: Lisp_Object,
-    pub major_mode: Lisp_Object,
-    pub mode_name: Lisp_Object,
-    pub mode_line_format: Lisp_Object,
-    pub header_line_format: Lisp_Object,
-    pub keymap: Lisp_Object,
-    pub abbrev_table: Lisp_Object,
-    pub syntax_table: Lisp_Object,
-    pub category_table: Lisp_Object,
-    pub case_fold_search: Lisp_Object,
-    pub tab_width: Lisp_Object,
-    pub fill_column: Lisp_Object,
-    pub left_margin: Lisp_Object,
-    pub auto_fill_function: Lisp_Object,
-    pub downcase_table: Lisp_Object,
-    pub upcase_table: Lisp_Object,
-    pub case_canon_table: Lisp_Object,
-    pub case_eqv_table: Lisp_Object,
-    pub truncate_lines: Lisp_Object,
-    pub word_wrap: Lisp_Object,
-    pub ctl_arrow: Lisp_Object,
-    pub bidi_display_reordering: Lisp_Object,
-    pub bidi_paragraph_direction: Lisp_Object,
-    pub bidi_paragraph_separate_re: Lisp_Object,
-    pub bidi_paragraph_start_re: Lisp_Object,
-    pub selective_display: Lisp_Object,
-    pub selective_display_ellipses: Lisp_Object,
-    pub minor_modes: Lisp_Object,
-    pub overwrite_mode: Lisp_Object,
-    pub abbrev_mode: Lisp_Object,
-    pub display_table: Lisp_Object,
-    pub mark_active: Lisp_Object,
-    pub enable_multibyte_characters: Lisp_Object,
-    pub buffer_file_coding_system: Lisp_Object,
-    pub file_format: Lisp_Object,
-    pub auto_save_file_format: Lisp_Object,
-    pub cache_long_scans: Lisp_Object,
-    pub width_table: Lisp_Object,
-    pub pt_marker: Lisp_Object,
-    pub begv_marker: Lisp_Object,
-    pub zv_marker: Lisp_Object,
-    pub point_before_scroll: Lisp_Object,
-    pub file_truename: Lisp_Object,
-    pub invisibility_spec: Lisp_Object,
-    pub last_selected_window: Lisp_Object,
-    pub display_count: Lisp_Object,
-    pub left_margin_cols: Lisp_Object,
-    pub right_margin_cols: Lisp_Object,
-    pub left_fringe_width: Lisp_Object,
-    pub right_fringe_width: Lisp_Object,
-    pub fringes_outside_margins: Lisp_Object,
-    pub scroll_bar_width: Lisp_Object,
-    pub scroll_bar_height: Lisp_Object,
-    pub vertical_scroll_bar_type: Lisp_Object,
-    pub horizontal_scroll_bar_type: Lisp_Object,
-    pub indicate_empty_lines: Lisp_Object,
-    pub indicate_buffer_boundaries: Lisp_Object,
-    pub fringe_indicator_alist: Lisp_Object,
-    pub fringe_cursor_alist: Lisp_Object,
-    pub display_time: Lisp_Object,
-    pub scroll_up_aggressively: Lisp_Object,
-    pub scroll_down_aggressively: Lisp_Object,
-    pub cursor_type: Lisp_Object,
-    pub extra_line_spacing: Lisp_Object,
-    pub cursor_in_non_selected_windows: Lisp_Object,
+    pub name: LispObject,
+    pub filename: LispObject,
+    pub directory: LispObject,
+    pub backed_up: LispObject,
+    pub save_length: LispObject,
+    pub auto_save_file_name: LispObject,
+    pub read_only: LispObject,
+    pub mark: LispObject,
+    pub local_var_alist: LispObject,
+    pub major_mode: LispObject,
+    pub mode_name: LispObject,
+    pub mode_line_format: LispObject,
+    pub header_line_format: LispObject,
+    pub keymap: LispObject,
+    pub abbrev_table: LispObject,
+    pub syntax_table: LispObject,
+    pub category_table: LispObject,
+    pub case_fold_search: LispObject,
+    pub tab_width: LispObject,
+    pub fill_column: LispObject,
+    pub left_margin: LispObject,
+    pub auto_fill_function: LispObject,
+    pub downcase_table: LispObject,
+    pub upcase_table: LispObject,
+    pub case_canon_table: LispObject,
+    pub case_eqv_table: LispObject,
+    pub truncate_lines: LispObject,
+    pub word_wrap: LispObject,
+    pub ctl_arrow: LispObject,
+    pub bidi_display_reordering: LispObject,
+    pub bidi_paragraph_direction: LispObject,
+    pub bidi_paragraph_separate_re: LispObject,
+    pub bidi_paragraph_start_re: LispObject,
+    pub selective_display: LispObject,
+    pub selective_display_ellipses: LispObject,
+    pub minor_modes: LispObject,
+    pub overwrite_mode: LispObject,
+    pub abbrev_mode: LispObject,
+    pub display_table: LispObject,
+    pub mark_active: LispObject,
+    pub enable_multibyte_characters: LispObject,
+    pub buffer_file_coding_system: LispObject,
+    pub file_format: LispObject,
+    pub auto_save_file_format: LispObject,
+    pub cache_long_scans: LispObject,
+    pub width_table: LispObject,
+    pub pt_marker: LispObject,
+    pub begv_marker: LispObject,
+    pub zv_marker: LispObject,
+    pub point_before_scroll: LispObject,
+    pub file_truename: LispObject,
+    pub invisibility_spec: LispObject,
+    pub last_selected_window: LispObject,
+    pub display_count: LispObject,
+    pub left_margin_cols: LispObject,
+    pub right_margin_cols: LispObject,
+    pub left_fringe_width: LispObject,
+    pub right_fringe_width: LispObject,
+    pub fringes_outside_margins: LispObject,
+    pub scroll_bar_width: LispObject,
+    pub scroll_bar_height: LispObject,
+    pub vertical_scroll_bar_type: LispObject,
+    pub horizontal_scroll_bar_type: LispObject,
+    pub indicate_empty_lines: LispObject,
+    pub indicate_buffer_boundaries: LispObject,
+    pub fringe_indicator_alist: LispObject,
+    pub fringe_cursor_alist: LispObject,
+    pub display_time: LispObject,
+    pub scroll_up_aggressively: LispObject,
+    pub scroll_down_aggressively: LispObject,
+    pub cursor_type: LispObject,
+    pub extra_line_spacing: LispObject,
+    pub cursor_in_non_selected_windows: LispObject,
 
     pub own_text: Lisp_Buffer_Text,
     pub text: *mut Lisp_Buffer_Text,
@@ -739,7 +718,7 @@ pub struct Lisp_Buffer {
     overlays_after: *mut c_void,
     overlay_center: ptrdiff_t,
 
-    undo_list: Lisp_Object,
+    undo_list: LispObject,
 }
 
 extern "C" {
@@ -781,21 +760,21 @@ pub struct Lisp_Buffer_Local_Value {
     /// If non-NULL, a forwarding to the C var where it should also be set.
     pub fwd: *mut Lisp_Fwd, // Should never be (Buffer|Kboard)_Objfwd.
     /// The buffer or frame for which the loaded binding was found.
-    pub where_: Lisp_Object,
+    pub where_: LispObject,
     /// A cons cell that holds the default value.  It has the form
     /// (SYMBOL . DEFAULT-VALUE).
-    pub defcell: Lisp_Object,
+    pub defcell: LispObject,
     /// The cons cell from `where's parameter alist.
     /// It always has the form (SYMBOL . VALUE)
     /// Note that if `forward' is non-nil, VALUE may be out of date.
     /// Also if the currently loaded binding is the default binding, then
     /// this is `eq'ual to defcell.
-    valcell: Lisp_Object,
+    valcell: LispObject,
 }
 
 extern "C" {
     pub fn get_blv_fwd(blv: *const Lisp_Buffer_Local_Value) -> *const Lisp_Fwd;
-    pub fn get_blv_value(blv: *const Lisp_Buffer_Local_Value) -> Lisp_Object;
+    pub fn get_blv_value(blv: *const Lisp_Buffer_Local_Value) -> LispObject;
 }
 
 #[repr(C)]
@@ -829,7 +808,7 @@ pub struct Lisp_Boolfwd {
     pub boolvar: *mut bool,
 }
 
-/// Forwarding pointer to a Lisp_Object variable.
+/// Forwarding pointer to a LispObject variable.
 /// This is allowed only in the value cell of a symbol,
 /// and it means that the symbol's value really lives in the
 /// specified variable.
@@ -837,7 +816,7 @@ pub struct Lisp_Boolfwd {
 #[derive(Clone, Copy)]
 pub struct Lisp_Objfwd {
     pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Obj
-    pub objvar: *mut Lisp_Object,
+    pub objvar: *mut LispObject,
 }
 
 /// Like Lisp_Objfwd except that value lives in a slot in the
@@ -848,7 +827,7 @@ pub struct Lisp_Buffer_Objfwd {
     pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Buffer_Obj
     pub offset: i32,
     // One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.
-    pub predicate: Lisp_Object,
+    pub predicate: LispObject,
 }
 
 /// Like Lisp_Objfwd except that value lives in a slot in the
@@ -918,9 +897,9 @@ pub struct Lisp_Float {
 #[repr(C)]
 pub struct Lisp_Cons {
     /// Car of this cons cell.
-    pub car: Lisp_Object,
+    pub car: LispObject,
     /// Cdr of this cons cell, or the chain used for the free list.
-    pub cdr: Lisp_Object,
+    pub cdr: LispObject,
 }
 
 /// Type of comparison for `internal_equal()`.
@@ -944,22 +923,22 @@ pub struct thread_state {
     /// The buffer in which the last search was performed, or
     /// Qt if the last search was done in a string;
     /// Qnil if no searching has been done yet.
-    pub m_last_thing_searched: Lisp_Object,
+    pub m_last_thing_searched: LispObject,
 
-    pub m_saved_last_thing_searched: Lisp_Object,
+    pub m_saved_last_thing_searched: LispObject,
     /// The thread's name.
-    pub name: Lisp_Object,
+    pub name: LispObject,
 
     /// The thread's function.
-    pub function: Lisp_Object,
+    pub function: LispObject,
 
     /// If non-nil, this thread has been signaled.
-    pub error_symbol: Lisp_Object,
-    pub error_data: Lisp_Object,
+    pub error_symbol: LispObject,
+    pub error_data: LispObject,
 
     /// If we are waiting for some event, this holds the object we are
     /// waiting on.
-    pub event_object: Lisp_Object,
+    pub event_object: LispObject,
 
     /// m_stack_bottom must be the first non-Lisp field.
     /// An address near the bottom of the stack.
@@ -1017,7 +996,7 @@ pub struct thread_state {
     /// If the value is a Lisp string object, we are matching text in that
     /// string; if it's nil, we are matching text in the current buffer; if
     /// it's t, we are matching text in a C string.
-    pub m_re_match_object: Lisp_Object,
+    pub m_re_match_object: LispObject,
     /// This member is different from waiting_for_input.
     /// It is used to communicate to a lisp process-filter/sentinel (via the
     /// function Fwaiting_for_user_input_p) whether Emacs was waiting
@@ -1059,26 +1038,26 @@ pub struct Lisp_Char_Table {
 
     /// This holds a default value,
     /// which is used whenever the value for a specific character is nil.
-    pub default: Lisp_Object,
+    pub default: LispObject,
 
     /// This points to another char table, which we inherit from when the
     /// value for a specific character is nil.  The `defalt' slot takes
     /// precedence over this.
-    pub parent: Lisp_Object,
+    pub parent: LispObject,
 
     /// This is a symbol which says what kind of use this char-table is
     /// meant for.
-    pub purpose: Lisp_Object,
+    pub purpose: LispObject,
 
     /// The bottom sub char-table for characters of the range 0..127.  It
     /// is nil if none of ASCII character has a specific value.
-    pub ascii: Lisp_Object,
+    pub ascii: LispObject,
 
-    pub contents: [Lisp_Object; 1 << ChartabSize::Bits0 as u8],
+    pub contents: [LispObject; 1 << ChartabSize::Bits0 as u8],
 
     /// These hold additional data.  It is a vector.
     // actually any number of items
-    pub extras: [Lisp_Object; 1],
+    pub extras: [LispObject; 1],
 }
 
 #[repr(C)]
@@ -1099,11 +1078,11 @@ pub struct Lisp_Sub_Char_Table {
     pub min_char: libc::c_int,
 
     /// Use set_sub_char_table_contents to set this.
-    pub contents: [Lisp_Object; 1],
+    pub contents: [LispObject; 1],
 }
 
 extern "C" {
-    pub fn uniprop_table_uncompress(table: Lisp_Object, idx: libc::c_int) -> Lisp_Object;
+    pub fn uniprop_table_uncompress(table: LispObject, idx: libc::c_int) -> LispObject;
 }
 
 #[repr(C)]
@@ -1111,42 +1090,42 @@ pub struct Lisp_Process {
     pub header: Lisp_Vectorlike_Header,
 
     /// Name of subprocess terminal.
-    pub tty_name: Lisp_Object,
+    pub tty_name: LispObject,
 
     /// Name of this process.
-    pub name: Lisp_Object,
+    pub name: LispObject,
 
     /// List of command arguments that this process was run with.
     /// Is set to t for a stopped network process; nil otherwise.
-    pub command: Lisp_Object,
+    pub command: LispObject,
 
     /// (funcall FILTER PROC STRING)  (if FILTER is non-nil)
     /// to dispose of a bunch of chars from the process all at once.
-    pub filter: Lisp_Object,
+    pub filter: LispObject,
 
     /// (funcall SENTINEL PROCESS) when process state changes.
-    pub sentinel: Lisp_Object,
+    pub sentinel: LispObject,
 
     /// (funcall LOG SERVER CLIENT MESSAGE) when a server process
     /// accepts a connection from a client.
-    pub log: Lisp_Object,
+    pub log: LispObject,
 
     /// Buffer that output is going to.
-    pub buffer: Lisp_Object,
+    pub buffer: LispObject,
 
     /// t if this is a real child process.  For a network or serial
     /// connection, it is a plist based on the arguments to
     /// make-network-process or make-serial-process.
-    pub childp: Lisp_Object,
+    pub childp: LispObject,
 
     /// Plist for programs to keep per-process state information, parameters, etc.
-    pub plist: Lisp_Object,
+    pub plist: LispObject,
 
     /// Symbol indicating the type of process: real, network, serial.
-    pub process_type: Lisp_Object,
+    pub process_type: LispObject,
 
     /// Marker set to end of last buffer-inserted output from this process.
-    pub mark: Lisp_Object,
+    pub mark: LispObject,
 
     /// Symbol indicating status of process.
     /// This may be a symbol: run, open, closed, listen, or failed.
@@ -1156,22 +1135,22 @@ pub struct Lisp_Process {
     /// Or it may be a list, whose car is stop, exit or signal
     /// and whose cdr is a pair (EXIT_CODE . COREDUMP_FLAG)
     /// or (SIGNAL_NUMBER . COREDUMP_FLAG).
-    pub status: Lisp_Object,
+    pub status: LispObject,
 
     /// Coding-system for decoding the input from this process.
-    pub decode_coding_system: Lisp_Object,
+    pub decode_coding_system: LispObject,
 
     /// Working buffer for decoding.
-    pub decoding_buf: Lisp_Object,
+    pub decoding_buf: LispObject,
 
     /// Coding-system for encoding the output to this process.
-    pub encode_coding_system: Lisp_Object,
+    pub encode_coding_system: LispObject,
 
     /// Working buffer for encoding.
-    pub encoding_buf: Lisp_Object,
+    pub encoding_buf: LispObject,
 
     /// Queue for storing waiting writes.
-    pub write_queue: Lisp_Object,
+    pub write_queue: LispObject,
     // This struct is incomplete.
     // To access remaining fields use access functions written in
     // src/process.c and export them here for use in Rust.
@@ -1193,20 +1172,20 @@ extern "C" {
 pub struct Lisp_Frame {
     pub header: Lisp_Vectorlike_Header,
 
-    /// All Lisp_Object components must come first.
+    /// All LispObject components must come first.
     /// That ensures they are all aligned normally.
 
     /// Name of this frame: a Lisp string.  It is used for looking up resources,
     /// as well as for the title in some cases.
-    pub name: Lisp_Object,
+    pub name: LispObject,
 
     /// The name to use for the icon, the last time
     /// it was refreshed.  nil means not explicitly specified.
-    pub icon_name: Lisp_Object,
+    pub icon_name: LispObject,
 
     /// This is the frame title specified explicitly, if any.
     /// Usually it is nil.
-    pub title: Lisp_Object,
+    pub title: LispObject,
 
     // This struct is incomplete.
     // It is difficult, if not impossible, to import the rest of this struct.
@@ -1218,7 +1197,7 @@ pub struct Lisp_Frame {
     // exported here for use in Rust. This means that instead of
     // frame.foo the proper method is fget_foo(frame).
     /// This frame's parent frame, if it has one.
-    parent_frame: Lisp_Object,
+    parent_frame: LispObject,
 
     ///  The frame which should receive keystrokes that occur in this
     /// frame, or nil if they should go to the frame itself.  This is
@@ -1231,29 +1210,29 @@ pub struct Lisp_Frame {
     /// to shift from one frame to the other, any redirections to the
     /// original frame are shifted to the newly selected frame; if
     /// focus_frame is nil, Fselect_frame will leave it alone.
-    focus_frame: Lisp_Object,
+    focus_frame: LispObject,
 
     /// This frame's root window.  Every frame has one.
     /// If the frame has only a minibuffer window, this is it.
     /// Otherwise, if the frame has a minibuffer window, this is its sibling.
-    root_window: Lisp_Object,
+    root_window: LispObject,
 
     /// This frame's selected window.
     /// Each frame has its own window hierarchy
     /// and one of the windows in it is selected within the frame.
     /// The selected window of the selected frame is Emacs's selected window.
-    selected_window: Lisp_Object,
+    selected_window: LispObject,
 
     /// This frame's minibuffer window.
     /// Most frames have their own minibuffer windows,
     /// but only the selected frame's minibuffer window
     /// can actually appear to exist.
-    minibuffer_window: Lisp_Object,
+    minibuffer_window: LispObject,
 
     /// Parameter alist of this frame.
     /// These are the parameters specified when creating the frame
     /// or modified with modify-frame-parameters.
-    param_alist: Lisp_Object,
+    param_alist: LispObject,
 
     /// List of scroll bars on this frame.
     /// Actually, we don't specify exactly what is stored here at all; the
@@ -1262,41 +1241,41 @@ pub struct Lisp_Frame {
     /// instead of in the `device' structure so that the garbage
     /// collector doesn't need to look inside the window-system-dependent
     /// structure.
-    scroll_bars: Lisp_Object,
-    condemned_scroll_bars: Lisp_Object,
+    scroll_bars: LispObject,
+    condemned_scroll_bars: LispObject,
 
     /// Vector describing the items to display in the menu bar.
     /// Each item has four elements in this vector.
     /// They are KEY, STRING, SUBMAP, and HPOS.
     /// (HPOS is not used in when the X toolkit is in use.)
     /// There are four additional elements of nil at the end, to terminate.
-    menu_bar_items: Lisp_Object,
+    menu_bar_items: LispObject,
 
     /// Alist of elements (FACE-NAME . FACE-VECTOR-DATA).
-    face_alist: Lisp_Object,
+    face_alist: LispObject,
 
     /// A vector that records the entire structure of this frame's menu bar.
     /// For the format of the data, see extensive comments in xmenu.c.
     /// Only the X toolkit version uses this.
-    menu_bar_vector: Lisp_Object,
+    menu_bar_vector: LispObject,
 
     /// Predicate for selecting buffers for other-buffer.
-    buffer_predicate: Lisp_Object,
+    buffer_predicate: LispObject,
 
     /// List of buffers viewed in this frame, for other-buffer.
-    buffer_list: Lisp_Object,
+    buffer_list: LispObject,
 
     /// List of buffers that were viewed, then buried in this frame.  The
     /// most recently buried buffer is first.  For last-buffer.
-    buried_buffer_list: Lisp_Object,
+    buried_buffer_list: LispObject,
 }
 
 extern "C" {
-    pub fn fget_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
-    pub fn fget_buried_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_buffer_list(frame: *const Lisp_Frame) -> LispObject;
+    pub fn fget_buried_buffer_list(frame: *const Lisp_Frame) -> LispObject;
     pub fn fget_internal_border_width(frame: *const Lisp_Frame) -> c_int;
-    pub fn fget_selected_window(frame: *const Lisp_Frame) -> Lisp_Object;
-    pub fn fset_selected_window(frame: *mut Lisp_Frame, window: Lisp_Object);
+    pub fn fget_selected_window(frame: *const Lisp_Frame) -> LispObject;
+    pub fn fset_selected_window(frame: *mut Lisp_Frame, window: LispObject);
 }
 
 #[repr(C)]
@@ -1308,8 +1287,8 @@ pub struct terminal {
 extern "C" {
     pub fn fget_column_width(f: *const Lisp_Frame) -> c_int;
     pub fn fget_line_height(f: *const Lisp_Frame) -> c_int;
-    pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
-    pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> LispObject;
+    pub fn fget_root_window(f: *const Lisp_Frame) -> LispObject;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
     pub fn fget_output_method(f: *const Lisp_Frame) -> c_int;
     pub fn fget_visible(f: *const Lisp_Frame) -> bool;
@@ -1327,26 +1306,26 @@ extern "C" {
 
 #[repr(C)]
 pub struct hash_table_test {
-    pub name: Lisp_Object,
-    pub user_hash_function: Lisp_Object,
-    pub user_cmp_function: Lisp_Object,
-    pub cmpfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object, b: Lisp_Object) -> bool,
-    pub hashfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object) -> EmacsUint,
+    pub name: LispObject,
+    pub user_hash_function: LispObject,
+    pub user_cmp_function: LispObject,
+    pub cmpfn: extern "C" fn(t: *mut hash_table_test, a: LispObject, b: LispObject) -> bool,
+    pub hashfn: extern "C" fn(t: *mut hash_table_test, a: LispObject) -> EmacsUint,
 }
 
 #[repr(C)]
 pub struct Lisp_Hash_Table {
     pub header: Lisp_Vectorlike_Header,
-    pub weak: Lisp_Object,
-    pub hash: Lisp_Object,
-    pub next: Lisp_Object,
-    pub index: Lisp_Object,
+    pub weak: LispObject,
+    pub hash: LispObject,
+    pub next: LispObject,
+    pub index: LispObject,
     pub count: ptrdiff_t,
     pub next_free: ptrdiff_t,
     pub pure_: bool, // pure is a reserved keyword in Rust
     pub rehash_threshold: c_float,
     pub rehash_size: c_float,
-    pub key_and_value: Lisp_Object,
+    pub key_and_value: LispObject,
     pub test: hash_table_test,
     pub next_weak: *mut Lisp_Hash_Table,
 }
@@ -1364,102 +1343,101 @@ pub struct lisp_time {
 }
 
 pub type map_keymap_function_t =
-    unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object, *const c_void);
+    unsafe extern "C" fn(LispObject, LispObject, LispObject, *const c_void);
 pub type voidfuncptr = unsafe extern "C" fn();
 
 extern "C" {
     pub static initialized: bool;
-    pub static mut current_global_map: Lisp_Object;
+    pub static mut current_global_map: LispObject;
     pub static current_thread: *mut thread_state;
-    pub static empty_unibyte_string: Lisp_Object;
+    pub static empty_unibyte_string: LispObject;
     pub static fatal_error_in_progress: bool;
     pub static mut globals: emacs_globals;
-    pub static initial_obarray: Lisp_Object;
+    pub static initial_obarray: LispObject;
     pub static lispsym: Lisp_Symbol;
     pub static minibuf_level: EmacsInt;
-    pub static minibuf_selected_window: Lisp_Object;
-    pub static mut minibuf_window: Lisp_Object;
-    pub static selected_frame: Lisp_Object;
-    pub static selected_window: Lisp_Object;
+    pub static minibuf_selected_window: LispObject;
+    pub static mut minibuf_window: LispObject;
+    pub static selected_frame: LispObject;
+    pub static selected_window: LispObject;
 
-    pub static mut Vautoload_queue: Lisp_Object;
-    pub static Vbuffer_alist: Lisp_Object;
-    pub static Vminibuffer_list: Lisp_Object;
-    pub static Vprocess_alist: Lisp_Object;
-    pub static Vrun_hooks: Lisp_Object;
+    pub static mut Vautoload_queue: LispObject;
+    pub static Vbuffer_alist: LispObject;
+    pub static Vminibuffer_list: LispObject;
+    pub static Vprocess_alist: LispObject;
+    pub static Vrun_hooks: LispObject;
 
-    pub fn staticpro(varaddress: *const Lisp_Object);
+    pub fn staticpro(varaddress: *const LispObject);
 
     // Use LispObject::tag_ptr instead of make_lisp_ptr
-    pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
-    pub fn Fmake_char_table(purpose: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
+    pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> LispObject;
+    pub fn Fmake_char_table(purpose: LispObject, init: LispObject) -> LispObject;
     pub fn map_char_table(
-        c_function: unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object),
-        function: Lisp_Object,
-        table: Lisp_Object,
-        arg: Lisp_Object,
+        c_function: unsafe extern "C" fn(LispObject, LispObject, LispObject),
+        function: LispObject,
+        table: LispObject,
+        arg: LispObject,
     );
-    pub fn CHAR_TABLE_SET(ct: Lisp_Object, idx: c_int, val: Lisp_Object);
+    pub fn CHAR_TABLE_SET(ct: LispObject, idx: c_int, val: LispObject);
 
-    pub fn aset_multibyte_string(array: Lisp_Object, idxval: EmacsInt, c: c_int);
-    pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
-    pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
-    pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
-    pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
-    pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
-    pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
-    pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
-    pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
-    pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
-    pub fn Fset_default(symbol: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
-    pub fn Fconcat(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
-    pub fn Fnconc(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
+    pub fn aset_multibyte_string(array: LispObject, idxval: EmacsInt, c: c_int);
+    pub fn Fcons(car: LispObject, cdr: LispObject) -> LispObject;
+    pub fn Fsignal(error_symbol: LispObject, data: LispObject) -> !;
+    pub fn Fcopy_sequence(seq: LispObject) -> LispObject;
+    pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject;
+    pub fn Flocal_variable_p(variable: LispObject, buffer: LispObject) -> LispObject;
+    pub fn Ffuncall(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject;
+    pub fn Fpurecopy(string: LispObject) -> LispObject;
+    pub fn Fmapcar(function: LispObject, sequence: LispObject) -> LispObject;
+    pub fn Fset(symbol: LispObject, newval: LispObject) -> LispObject;
+    pub fn Fset_default(symbol: LispObject, value: LispObject) -> LispObject;
+    pub fn Fconcat(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject;
+    pub fn Fnconc(nargs: ptrdiff_t, args: *mut LispObject) -> LispObject;
 
-    pub fn make_float(float_value: c_double) -> Lisp_Object;
-    pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
+    pub fn make_float(float_value: c_double) -> LispObject;
+    pub fn make_string(s: *const c_char, length: ptrdiff_t) -> LispObject;
     pub fn make_string_from_bytes(
         contents: *const c_char,
         nchars: ptrdiff_t,
         nbytes: ptrdiff_t,
-    ) -> Lisp_Object;
-    pub fn make_pure_c_string(data: *const c_char, nchars: ptrdiff_t) -> Lisp_Object;
+    ) -> LispObject;
+    pub fn make_pure_c_string(data: *const c_char, nchars: ptrdiff_t) -> LispObject;
 
-    pub fn make_lisp_symbol(ptr: *mut Lisp_Symbol) -> Lisp_Object;
-    pub fn build_string(s: *const c_char) -> Lisp_Object;
-    pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
-    pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
-    pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
+    pub fn make_lisp_symbol(ptr: *mut Lisp_Symbol) -> LispObject;
+    pub fn build_string(s: *const c_char) -> LispObject;
+    pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> LispObject;
+    pub fn make_uninit_string(length: EmacsInt) -> LispObject;
+    pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> LispObject;
     pub fn make_specified_string(
         contents: *const c_char,
         nchars: ptrdiff_t,
         nbytes: ptrdiff_t,
         multibyte: bool,
-    ) -> Lisp_Object;
-    pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
-    pub fn initial_define_key(keymap: Lisp_Object, key: c_int, defname: *const c_char);
+    ) -> LispObject;
+    pub fn string_to_multibyte(string: LispObject) -> LispObject;
+    pub fn initial_define_key(keymap: LispObject, key: c_int, defname: *const c_char);
 
-    pub fn eval_sub(form: Lisp_Object) -> Lisp_Object;
+    pub fn eval_sub(form: LispObject) -> LispObject;
 
-    pub fn preferred_coding_system() -> Lisp_Object;
-    pub fn Fcoding_system_p(o: Lisp_Object) -> Lisp_Object;
+    pub fn preferred_coding_system() -> LispObject;
+    pub fn Fcoding_system_p(o: LispObject) -> LispObject;
     pub fn code_convert_string(
-        string: Lisp_Object,
-        coding_system: Lisp_Object,
-        dst_object: Lisp_Object,
+        string: LispObject,
+        coding_system: LispObject,
+        dst_object: LispObject,
         encodep: bool,
         nocopy: bool,
         norecord: bool,
-    ) -> Lisp_Object;
+    ) -> LispObject;
     pub fn validate_subarray(
-        array: Lisp_Object,
-        from: Lisp_Object,
-        to: Lisp_Object,
+        array: LispObject,
+        from: LispObject,
+        to: LispObject,
         size: libc::ptrdiff_t,
         ifrom: &mut libc::ptrdiff_t,
         ito: &mut libc::ptrdiff_t,
     );
-    pub fn string_char_to_byte(string: Lisp_Object, char_index: libc::ptrdiff_t)
-        -> libc::ptrdiff_t;
+    pub fn string_char_to_byte(string: LispObject, char_index: libc::ptrdiff_t) -> libc::ptrdiff_t;
 
     pub fn record_unwind_current_buffer();
     pub fn set_buffer_internal(buffer: *mut Lisp_Buffer);
@@ -1467,23 +1445,23 @@ extern "C" {
         start: libc::ptrdiff_t,
         end: libc::ptrdiff_t,
         props: bool,
-    ) -> Lisp_Object;
+    ) -> LispObject;
 
-    pub fn intern_sym(sym: Lisp_Object, obarray: Lisp_Object, index: Lisp_Object) -> Lisp_Object;
+    pub fn intern_sym(sym: LispObject, obarray: LispObject, index: LispObject) -> LispObject;
     pub fn oblookup(
-        obarray: Lisp_Object,
+        obarray: LispObject,
         s: *const c_char,
         size: ptrdiff_t,
         size_bytes: ptrdiff_t,
-    ) -> Lisp_Object;
+    ) -> LispObject;
 
-    pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const c_void);
+    pub fn CHECK_IMPURE(obj: LispObject, ptr: *const c_void);
     pub fn internal_equal(
-        o1: Lisp_Object,
-        o2: Lisp_Object,
+        o1: LispObject,
+        o2: LispObject,
         kind: EqualKind,
         depth: c_int,
-        ht: Lisp_Object,
+        ht: LispObject,
     ) -> bool;
 
     pub fn emacs_abort() -> !;
@@ -1511,34 +1489,31 @@ extern "C" {
     ) -> *mut Lisp_Vector;
 
     pub fn extract_data_from_object(
-        spec: Lisp_Object,
+        spec: LispObject,
         start_byte: *mut ptrdiff_t,
         end_byte: *mut ptrdiff_t,
     ) -> *mut c_char;
 
-    pub fn hash_lookup(
-        h: *mut Lisp_Hash_Table,
-        key: Lisp_Object,
-        hash: *mut EmacsUint,
-    ) -> ptrdiff_t;
+    pub fn hash_lookup(h: *mut Lisp_Hash_Table, key: LispObject, hash: *mut EmacsUint)
+        -> ptrdiff_t;
 
     pub fn hash_put(
         h: *mut Lisp_Hash_Table,
-        key: Lisp_Object,
-        value: Lisp_Object,
+        key: LispObject,
+        value: LispObject,
         hash: EmacsUint,
     ) -> ptrdiff_t;
     pub fn hash_clear(h: *mut Lisp_Hash_Table);
 
-    pub fn gc_aset(array: Lisp_Object, idx: ptrdiff_t, val: Lisp_Object);
+    pub fn gc_aset(array: LispObject, idx: ptrdiff_t, val: LispObject);
 
-    pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
+    pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: LispObject);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
     pub fn set_point(charpos: ptrdiff_t);
     pub fn buf_charpos_to_bytepos(buffer: *const Lisp_Buffer, charpos: ptrdiff_t) -> ptrdiff_t;
 
-    pub fn insert(string: *const c_char, nbytes: ptrdiff_t) -> Lisp_Object;
-    pub fn insert_and_inherit(string: *const c_char, nbytes: ptrdiff_t) -> Lisp_Object;
+    pub fn insert(string: *const c_char, nbytes: ptrdiff_t) -> LispObject;
+    pub fn insert_and_inherit(string: *const c_char, nbytes: ptrdiff_t) -> LispObject;
     pub fn buffer_overflow();
 
     pub fn wait_reading_process_output(
@@ -1546,7 +1521,7 @@ extern "C" {
         nsecs: c_int,
         read_kbd: c_int,
         do_display: bool,
-        wait_for_cell: Lisp_Object,
+        wait_for_cell: LispObject,
         wait_proc: *const Lisp_Process,
         just_wait_proc: c_int,
     ) -> c_int;
@@ -1558,14 +1533,14 @@ extern "C" {
     pub fn current_column() -> ptrdiff_t;
 
     pub fn Fadd_text_properties(
-        start: Lisp_Object,
-        end: Lisp_Object,
-        properties: Lisp_Object,
-        object: Lisp_Object,
-    ) -> Lisp_Object;
+        start: LispObject,
+        end: LispObject,
+        properties: LispObject,
+        object: LispObject,
+    ) -> LispObject;
 
-    pub fn Fmake_symbol(name: Lisp_Object) -> Lisp_Object;
-    pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
+    pub fn Fmake_symbol(name: LispObject) -> LispObject;
+    pub fn find_symbol_value(symbol: LispObject) -> LispObject;
     pub fn symbol_is_interned(symbol: *const Lisp_Symbol) -> bool;
     pub fn symbol_is_alias(symbol: *const Lisp_Symbol) -> bool;
     pub fn symbol_is_constant(symbol: *const Lisp_Symbol) -> bool;
@@ -1573,69 +1548,61 @@ extern "C" {
     pub fn is_minibuffer(w: *const Lisp_Window) -> bool;
     pub fn xmalloc(size: size_t) -> *mut c_void;
 
-    pub fn Fmapc(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
+    pub fn Fmapc(function: LispObject, sequence: LispObject) -> LispObject;
 
     pub fn Fpos_visible_in_window_p(
-        pos: Lisp_Object,
-        window: Lisp_Object,
-        partially: Lisp_Object,
-    ) -> Lisp_Object;
+        pos: LispObject,
+        window: LispObject,
+        partially: LispObject,
+    ) -> LispObject;
     pub fn find_before_next_newline(
         from: ptrdiff_t,
         to: ptrdiff_t,
         cnt: ptrdiff_t,
         bytepos: *mut ptrdiff_t,
     ) -> ptrdiff_t;
-    pub fn get_process(name: Lisp_Object) -> Lisp_Object;
+    pub fn get_process(name: LispObject) -> LispObject;
     pub fn update_status(p: *const Lisp_Process);
-    pub fn setup_process_coding_systems(process: Lisp_Object);
+    pub fn setup_process_coding_systems(process: LispObject);
     pub fn send_process(
-        process: Lisp_Object,
+        process: LispObject,
         buf: *const c_char,
         len: ptrdiff_t,
-        object: Lisp_Object,
+        object: LispObject,
     );
     pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
-    pub fn Fevent_convert_list(event_desc: Lisp_Object) -> Lisp_Object;
+    pub fn Fevent_convert_list(event_desc: LispObject) -> LispObject;
     pub fn map_keymap_item(
         fun: map_keymap_function_t,
-        args: Lisp_Object,
-        key: Lisp_Object,
-        val: Lisp_Object,
+        args: LispObject,
+        key: LispObject,
+        val: LispObject,
         data: *const c_void,
     );
-    pub fn map_keymap_char_table_item(args: Lisp_Object, key: Lisp_Object, val: Lisp_Object);
-    pub fn map_keymap_call(
-        key: Lisp_Object,
-        val: Lisp_Object,
-        fun: Lisp_Object,
-        void: *const c_void,
-    );
+    pub fn map_keymap_char_table_item(args: LispObject, key: LispObject, val: LispObject);
+    pub fn map_keymap_call(key: LispObject, val: LispObject, fun: LispObject, void: *const c_void);
     pub fn access_keymap(
-        map: Lisp_Object,
-        idx: Lisp_Object,
+        map: LispObject,
+        idx: LispObject,
         ok: bool,
         noinherit: bool,
         autoload: bool,
-    ) -> Lisp_Object;
-    pub fn message_with_string(m: *const c_char, string: Lisp_Object, log: bool);
+    ) -> LispObject;
+    pub fn message_with_string(m: *const c_char, string: LispObject, log: bool);
     pub fn maybe_quit();
     pub fn make_lispy_position(
         f: *const Lisp_Frame,
-        x: Lisp_Object,
-        y: Lisp_Object,
+        x: LispObject,
+        y: LispObject,
         t: Time,
-    ) -> Lisp_Object;
+    ) -> LispObject;
 
-    pub fn make_save_funcptr_ptr_obj(
-        a: voidfuncptr,
-        b: *const c_void,
-        c: Lisp_Object,
-    ) -> Lisp_Object;
+    pub fn make_save_funcptr_ptr_obj(a: voidfuncptr, b: *const c_void, c: LispObject)
+        -> LispObject;
 
-    pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
+    pub fn Fselect_window(window: LispObject, norecord: LispObject) -> LispObject;
 
-    pub fn Ffset(symbol: Lisp_Object, definition: Lisp_Object) -> Lisp_Object;
+    pub fn Ffset(symbol: LispObject, definition: LispObject) -> LispObject;
 
     pub fn frame_dimension(x: c_int) -> c_int;
     pub fn window_box_left_offset(w: *const Lisp_Window, area: glyph_row_area) -> c_int;
@@ -1648,19 +1615,19 @@ extern "C" {
     ) -> ptrdiff_t;
 
     pub fn set_marker_internal(
-        marker: Lisp_Object,
-        position: Lisp_Object,
-        buffer: Lisp_Object,
+        marker: LispObject,
+        position: LispObject,
+        buffer: LispObject,
         restricted: bool,
-    ) -> Lisp_Object;
-    pub fn Fmake_marker() -> Lisp_Object;
+    ) -> LispObject;
+    pub fn Fmake_marker() -> LispObject;
 
     pub fn find_field(
-        pos: Lisp_Object,
-        merge_at_boundary: Lisp_Object,
-        beg_limit: Lisp_Object,
+        pos: LispObject,
+        merge_at_boundary: LispObject,
+        beg_limit: LispObject,
         beg: *mut ptrdiff_t,
-        end_limit: Lisp_Object,
+        end_limit: LispObject,
         end: *mut ptrdiff_t,
     );
     pub fn find_newline(
@@ -1675,55 +1642,55 @@ extern "C" {
     ) -> ptrdiff_t;
 
     pub fn Fget_pos_property(
-        position: Lisp_Object,
-        prop: Lisp_Object,
-        object: Lisp_Object,
-    ) -> Lisp_Object;
+        position: LispObject,
+        prop: LispObject,
+        object: LispObject,
+    ) -> LispObject;
     pub fn Fget_text_property(
-        position: Lisp_Object,
-        prop: Lisp_Object,
-        object: Lisp_Object,
-    ) -> Lisp_Object;
+        position: LispObject,
+        prop: LispObject,
+        object: LispObject,
+    ) -> LispObject;
 
     pub fn get_char_property_and_overlay(
-        position: Lisp_Object,
-        prop: Lisp_Object,
-        object: Lisp_Object,
-        overlay: *mut Lisp_Object,
-    ) -> Lisp_Object;
-    pub fn specbind(symbol: Lisp_Object, value: Lisp_Object);
-    pub fn unbind_to(count: ptrdiff_t, value: Lisp_Object) -> Lisp_Object;
-    pub fn Fapply(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
+        position: LispObject,
+        prop: LispObject,
+        object: LispObject,
+        overlay: *mut LispObject,
+    ) -> LispObject;
+    pub fn specbind(symbol: LispObject, value: LispObject);
+    pub fn unbind_to(count: ptrdiff_t, value: LispObject) -> LispObject;
+    pub fn Fapply(nargs: ptrdiff_t, args: *const LispObject) -> LispObject;
 
-    pub fn wset_window_parameters(w: *const Lisp_Window, val: Lisp_Object);
-    pub fn wget_window_parameters(w: *const Lisp_Window) -> Lisp_Object;
+    pub fn wset_window_parameters(w: *const Lisp_Window, val: LispObject);
+    pub fn wget_window_parameters(w: *const Lisp_Window) -> LispObject;
 
-    pub fn Fnreverse(seq: Lisp_Object) -> Lisp_Object;
+    pub fn Fnreverse(seq: LispObject) -> LispObject;
 
     pub fn Fload(
-        file: Lisp_Object,
-        noerror: Lisp_Object,
-        nomessage: Lisp_Object,
-        nosuffix: Lisp_Object,
-        must_suffix: Lisp_Object,
-    ) -> Lisp_Object;
-    pub fn record_unwind_protect(function: unsafe extern "C" fn(Lisp_Object), arg: Lisp_Object);
+        file: LispObject,
+        noerror: LispObject,
+        nomessage: LispObject,
+        nosuffix: LispObject,
+        must_suffix: LispObject,
+    ) -> LispObject;
+    pub fn record_unwind_protect(function: unsafe extern "C" fn(LispObject), arg: LispObject);
     pub fn record_unwind_save_match_data();
-    pub fn un_autoload(oldqueue: Lisp_Object);
+    pub fn un_autoload(oldqueue: LispObject);
 
     pub fn unchain_marker(marker: *mut Lisp_Marker);
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
     pub fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: ptrdiff_t) -> ptrdiff_t;
-    pub fn Fdefault_value(symbol: Lisp_Object) -> Lisp_Object;
+    pub fn Fdefault_value(symbol: LispObject) -> LispObject;
     pub fn swap_in_symval_forwarding(sym: *mut Lisp_Symbol, blv: *mut Lisp_Buffer_Local_Value);
-    pub fn Fexpand_file_name(filename: Lisp_Object, default_directory: Lisp_Object) -> Lisp_Object;
-    pub fn Ffind_file_name_handler(filename: Lisp_Object, operation: Lisp_Object) -> Lisp_Object;
+    pub fn Fexpand_file_name(filename: LispObject, default_directory: LispObject) -> LispObject;
+    pub fn Ffind_file_name_handler(filename: LispObject, operation: LispObject) -> LispObject;
     pub fn window_list_1(
-        window: Lisp_Object,
-        minibuf: Lisp_Object,
-        all_frames: Lisp_Object,
-    ) -> Lisp_Object;
-    pub fn buffer_local_value(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
+        window: LispObject,
+        minibuf: LispObject,
+        all_frames: LispObject,
+    ) -> LispObject;
+    pub fn buffer_local_value(variable: LispObject, buffer: LispObject) -> LispObject;
     pub fn downcase(c: c_int) -> c_int;
 
 }
@@ -1785,7 +1752,7 @@ fn basic_size_and_align() {
     assert!(::std::mem::size_of::<Lisp_Symbol>() == 56);
     assert!(::std::mem::size_of::<Lisp_Marker>() == 48);
     assert!(::std::mem::size_of::<Lisp_Overlay>() == 48);
-    assert!(::std::mem::size_of::<SymbolUnion>() == ::std::mem::size_of::<Lisp_Object>());
+    assert!(::std::mem::size_of::<SymbolUnion>() == ::std::mem::size_of::<LispObject>());
     assert!(offset_of!(Lisp_Symbol, name) == 16);
     assert!(offset_of!(Lisp_Symbol, next) == 48);
     assert!(offset_of!(Lisp_Symbol, function) == 32);
@@ -1800,13 +1767,13 @@ fn basic_size_and_align() {
 extern "C" {
     pub fn frame_make_pointer_invisible(frame: *mut Lisp_Frame);
     pub fn bitch_at_user() -> !;
-    pub fn translate_char(table: Lisp_Object, c: EmacsInt) -> EmacsInt;
+    pub fn translate_char(table: LispObject, c: EmacsInt) -> EmacsInt;
     pub fn concat(
         nargs: ptrdiff_t,
-        args: *mut Lisp_Object,
+        args: *mut LispObject,
         target_type: Lisp_Type,
         last_special: bool,
-    ) -> Lisp_Object;
+    ) -> LispObject;
 }
 
 #[repr(u8)]
@@ -1833,20 +1800,20 @@ pub enum syntaxcode {
 
 extern "C" {
     pub fn syntax_property(c: libc::c_int, via_property: bool) -> syntaxcode;
-    pub fn concat2(s1: Lisp_Object, s2: Lisp_Object) -> Lisp_Object;
+    pub fn concat2(s1: LispObject, s2: LispObject) -> LispObject;
     pub fn replace_range(
         from: ptrdiff_t,
         to: ptrdiff_t,
-        new: Lisp_Object,
+        new: LispObject,
         prepare: bool,
         inherit: bool,
         markers: bool,
         adjust_match_data: bool,
     );
     pub fn memory_full(nbytes: libc::size_t) -> !;
-    pub fn run_hook(symbol: Lisp_Object);
-    pub fn Fchar_width(ch: Lisp_Object) -> Lisp_Object;
-    pub fn Fget(symbol: Lisp_Object, propname: Lisp_Object) -> Lisp_Object;
-    pub fn Fmove_to_column(column: Lisp_Object, force: Lisp_Object) -> Lisp_Object;
-    pub fn Fmake_string(length: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
+    pub fn run_hook(symbol: LispObject);
+    pub fn Fchar_width(ch: LispObject) -> LispObject;
+    pub fn Fget(symbol: LispObject, propname: LispObject) -> LispObject;
+    pub fn Fmove_to_column(column: LispObject, force: LispObject) -> LispObject;
+    pub fn Fmake_string(length: LispObject, init: LispObject) -> LispObject;
 }

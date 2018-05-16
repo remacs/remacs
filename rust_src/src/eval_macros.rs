@@ -132,7 +132,7 @@ macro_rules! def_lisp_sym {
 #[allow(unused_macros)]
 macro_rules! declare_GC_protected_static {
     ($var: ident, $value: expr) => {
-        static mut $var: Lisp_Object = $value;
+        static mut $var: LispObject = $value;
     }
 }
 

@@ -6,8 +6,7 @@ use std::ptr;
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, Lisp_Object,
-                 CHAR_META};
+use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
 use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
@@ -31,13 +30,13 @@ declare_GC_protected_static!(where_is_cache, Qnil);
 
 /// Allows the C code to get the value of `where_is_cache`
 #[no_mangle]
-pub extern "C" fn get_where_is_cache() -> Lisp_Object {
+pub extern "C" fn get_where_is_cache() -> LispObject {
     unsafe { where_is_cache }
 }
 
 /// Allows the C code to set the value of `where_is_cache`
 #[no_mangle]
-pub extern "C" fn set_where_is_cache(val: Lisp_Object) {
+pub extern "C" fn set_where_is_cache(val: LispObject) {
     unsafe {
         where_is_cache = val;
     }
@@ -48,13 +47,13 @@ declare_GC_protected_static!(where_is_cache_keymaps, Qt);
 
 /// Allows the C code to get the value of `where_is_cache_keymaps`
 #[no_mangle]
-pub extern "C" fn get_where_is_cache_keymaps() -> Lisp_Object {
+pub extern "C" fn get_where_is_cache_keymaps() -> LispObject {
     unsafe { where_is_cache_keymaps }
 }
 
 /// Allows the C code to set the value of `where_is_cache_keymaps`
 #[no_mangle]
-pub extern "C" fn set_where_is_cache_keymaps(val: Lisp_Object) {
+pub extern "C" fn set_where_is_cache_keymaps(val: LispObject) {
     unsafe {
         where_is_cache_keymaps = val;
     }
@@ -81,10 +80,10 @@ pub extern "C" fn set_where_is_cache_keymaps(val: Lisp_Object) {
 /// `Fautoload_do_load` which can GC.
 #[no_mangle]
 pub extern "C" fn get_keymap(
-    object: Lisp_Object,
+    object: LispObject,
     error_if_not_keymap: bool,
     autoload: bool,
-) -> Lisp_Object {
+) -> LispObject {
     let object = LispObject::from_raw(object);
 
     let mut autoload_retry = true;
@@ -168,7 +167,7 @@ pub fn keymapp(object: LispObject) -> bool {
 /// Return the parent map of KEYMAP, or nil if it has none.
 /// We assume that KEYMAP is a valid keymap.
 #[no_mangle]
-pub extern "C" fn keymap_parent(keymap: Lisp_Object, autoload: bool) -> Lisp_Object {
+pub extern "C" fn keymap_parent(keymap: LispObject, autoload: bool) -> LispObject {
     let map = LispObject::from_raw(get_keymap(keymap, true, autoload));
     let mut current = LispObject::constant_nil();
     for elt in map.iter_tails_safe() {
@@ -189,7 +188,7 @@ pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
 
 /// Check whether MAP is one of MAPS parents.
 #[no_mangle]
-pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
+pub extern "C" fn keymap_memberp(map: LispObject, maps: LispObject) -> bool {
     let map = LispObject::from_raw(map);
     let mut maps = LispObject::from_raw(maps);
     if map.is_nil() {
@@ -269,9 +268,9 @@ pub fn keymap_prompt(map: LispObject) -> LispObject {
 /// AUTOLOAD indicates that autoloaded keymaps should be loaded.
 #[no_mangle]
 pub extern "C" fn map_keymap(
-    map: Lisp_Object,
+    map: LispObject,
     fun: map_keymap_function_t,
-    args: Lisp_Object,
+    args: LispObject,
     data: *const c_void,
     autoload: bool,
 ) {
@@ -320,11 +319,11 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
 /// FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).
 #[no_mangle]
 pub extern "C" fn map_keymap_internal(
-    map: Lisp_Object,
+    map: LispObject,
     fun: map_keymap_function_t,
-    args: Lisp_Object,
+    args: LispObject,
     data: *const c_void,
-) -> Lisp_Object {
+) -> LispObject {
     let map = LispObject::from_raw(map);
     let tail = match map.as_cons() {
         None => LispObject::constant_nil(),

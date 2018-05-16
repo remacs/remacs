@@ -7,7 +7,7 @@ use libc::timespec as c_timespec;
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
-use remacs_sys::{lisp_time, EmacsInt, Lisp_Object};
+use remacs_sys::{lisp_time, EmacsInt};
 use remacs_sys::MOST_NEGATIVE_FIXNUM;
 
 use lisp::LispObject;
@@ -38,7 +38,7 @@ pub extern "C" fn lo_time(t: time_t) -> i32 {
 /// `UNKNOWN_MODTIME_NSECS`; in that case, the Lisp list contains a
 /// correspondingly negative picosecond count.
 #[no_mangle]
-pub extern "C" fn make_lisp_time(t: c_timespec) -> Lisp_Object {
+pub extern "C" fn make_lisp_time(t: c_timespec) -> LispObject {
     make_lisp_time_1(t).to_raw()
 }
 
@@ -59,11 +59,11 @@ fn make_lisp_time_1(t: c_timespec) -> LispObject {
 /// if successful, 0 if unsuccessful.
 #[no_mangle]
 pub extern "C" fn disassemble_lisp_time(
-    specified_time: Lisp_Object,
-    phigh: *mut Lisp_Object,
-    plow: *mut Lisp_Object,
-    pusec: *mut Lisp_Object,
-    ppsec: *mut Lisp_Object,
+    specified_time: LispObject,
+    phigh: *mut LispObject,
+    plow: *mut LispObject,
+    pusec: *mut LispObject,
+    ppsec: *mut LispObject,
 ) -> c_int {
     let specified_time = LispObject::from_raw(specified_time);
 
@@ -129,10 +129,10 @@ pub extern "C" fn disassemble_lisp_time(
 /// wrong type, and -1 if the time is out of range.
 #[no_mangle]
 pub extern "C" fn decode_time_components(
-    high: Lisp_Object,
-    low: Lisp_Object,
-    usec: Lisp_Object,
-    psec: Lisp_Object,
+    high: LispObject,
+    low: LispObject,
+    usec: LispObject,
+    psec: LispObject,
     result: *mut lisp_time,
     dresult: *mut f64,
 ) -> c_int {
@@ -292,11 +292,11 @@ pub extern "C" fn lisp_to_timespec(t: lisp_time) -> c_timespec {
 /// If `SPECIFIED_TIME` is nil, use the current time.
 /// Signal an error if `SPECIFIED_TIME` does not represent a time.
 #[no_mangle]
-pub extern "C" fn lisp_time_struct(specified_time: Lisp_Object, plen: *mut c_int) -> lisp_time {
-    let mut high = Lisp_Object::from_C(0);
-    let mut low = Lisp_Object::from_C(0);
-    let mut usec = Lisp_Object::from_C(0);
-    let mut psec = Lisp_Object::from_C(0);
+pub extern "C" fn lisp_time_struct(specified_time: LispObject, plen: *mut c_int) -> lisp_time {
+    let mut high = LispObject::from_C(0);
+    let mut low = LispObject::from_C(0);
+    let mut usec = LispObject::from_C(0);
+    let mut psec = LispObject::from_C(0);
 
     let len = disassemble_lisp_time(specified_time, &mut high, &mut low, &mut usec, &mut psec);
     if len == 0 {
@@ -358,10 +358,10 @@ pub fn current_time() -> LispObject {
 /// or (if you need time as a string) `format-time-string'.
 #[lisp_fn(min = "0")]
 pub fn float_time(time: LispObject) -> LispObject {
-    let mut high = Lisp_Object::from_C(0);
-    let mut low = Lisp_Object::from_C(0);
-    let mut usec = Lisp_Object::from_C(0);
-    let mut psec = Lisp_Object::from_C(0);
+    let mut high = LispObject::from_C(0);
+    let mut low = LispObject::from_C(0);
+    let mut usec = LispObject::from_C(0);
+    let mut psec = LispObject::from_C(0);
 
     let mut t = 0.0;
 

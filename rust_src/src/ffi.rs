@@ -1,5 +1,5 @@
 //! Module that is used for FFI exports.These calls should NOT be used in Rust directly.
-use remacs_sys::{Lisp_Object, Lisp_Window};
+use remacs_sys::Lisp_Window;
 
 use data;
 use keyboard;
@@ -9,12 +9,12 @@ use math;
 use windows;
 
 #[no_mangle]
-pub extern "C" fn circular_list(obj: Lisp_Object) -> ! {
+pub extern "C" fn circular_list(obj: LispObject) -> ! {
     lists::circular_list(LispObject::from_raw(obj))
 }
 
 #[no_mangle]
-pub extern "C" fn merge(l1: Lisp_Object, l2: Lisp_Object, pred: Lisp_Object) -> Lisp_Object {
+pub extern "C" fn merge(l1: LispObject, l2: LispObject, pred: LispObject) -> LispObject {
     let result = lists::merge(
         LispObject::from_raw(l1),
         LispObject::from_raw(l2),
@@ -24,17 +24,17 @@ pub extern "C" fn merge(l1: Lisp_Object, l2: Lisp_Object, pred: Lisp_Object) -> 
 }
 
 #[no_mangle]
-pub extern "C" fn indirect_function(object: Lisp_Object) -> Lisp_Object {
+pub extern "C" fn indirect_function(object: LispObject) -> LispObject {
     let result = data::indirect_function(LispObject::from_raw(object));
     result.to_raw()
 }
 
 #[no_mangle]
 pub extern "C" fn arithcompare(
-    obj1: Lisp_Object,
-    obj2: Lisp_Object,
+    obj1: LispObject,
+    obj2: LispObject,
     comparison: math::ArithComparison,
-) -> Lisp_Object {
+) -> LispObject {
     let result = math::arithcompare(
         LispObject::from_raw(obj1),
         LispObject::from_raw(obj2),
@@ -44,7 +44,7 @@ pub extern "C" fn arithcompare(
 }
 
 #[no_mangle]
-pub extern "C" fn lucid_event_type_list_p(event: Lisp_Object) -> bool {
+pub extern "C" fn lucid_event_type_list_p(event: LispObject) -> bool {
     keyboard::lucid_event_type_list_p(LispObject::from_raw(event).as_cons())
 }
 
