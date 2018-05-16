@@ -31,8 +31,9 @@
   :expected-result (if secrets-enabled :passed :failed)
   (should secrets-enabled)
   (should (dbus-ping :session secrets-service))
-  ;; We do not test when there's an open session.
-  (should (secrets-empty-path secrets-session-path)))
+
+  ;; Exit.
+  (secrets--test-close-all-sessions))
 
 (defun secrets--test-get-all-sessions ()
   "Return all object paths for existing secrets sessions."
@@ -88,6 +89,8 @@
 
   (unwind-protect
       (progn
+	(should (secrets-open-session))
+
 	;; There must be at least the collections "Login" and "session".
 	(should (member "Login" (secrets-list-collections)))
 	(should (member "session" (secrets-list-collections)))
@@ -149,6 +152,8 @@
 
   (unwind-protect
       (let (item-path)
+	(should (secrets-open-session))
+
 	;; There shall be no items in the "session" collection.
 	(should-not (secrets-list-items "session"))
 	;; There shall be items in the "Login" collection.
@@ -208,6 +213,8 @@
 
   (unwind-protect
       (progn
+	(should (secrets-open-session))
+
 	;; There shall be no items in the "session" collection.
 	(should-not (secrets-list-items "session"))
 

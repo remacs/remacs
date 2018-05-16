@@ -575,7 +575,6 @@ If successful, return the object path of the collection."
 (defun secrets-get-items (collection-path)
   "Return the object paths of all available items in COLLECTION-PATH."
   (unless (secrets-empty-path collection-path)
-    (secrets-open-session)
     (dbus-get-property
      :session secrets-service collection-path
      secrets-interface-collection "Items")))
@@ -910,6 +909,8 @@ to their attributes."
 ;;; Initialization.
 
 (when (dbus-ping :session secrets-service 100)
+
+  (secrets-open-session)
 
   ;; We must reset all variables, when there is a new instance of the
   ;; "org.freedesktop.secrets" service.

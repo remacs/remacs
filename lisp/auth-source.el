@@ -1733,7 +1733,7 @@ authentication tokens:
             (secret (plist-get artificial :secret))
             (secret (if (functionp secret) (funcall secret) secret)))
        (lambda ()
-	 (apply 'auth-source-secrets-saver collection item secret args))))
+	 (auth-source-secrets-saver collection item secret args))))
 
     (list artificial)))
 
@@ -1742,8 +1742,9 @@ authentication tokens:
 Respects `auth-source-save-behavior'."
   (let ((prompt (format "Save auth info to secrets collection %s? " collection))
         (done (not (eq auth-source-save-behavior 'ask)))
+        (doit (eq auth-source-save-behavior t))
         (bufname "*auth-source Help*")
-        doit k)
+        k)
     (while (not done)
       (setq k (auth-source-read-char-choice prompt '(?y ?n ?N ??)))
       (cl-case k

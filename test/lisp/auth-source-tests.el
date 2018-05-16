@@ -292,6 +292,7 @@
   ;; The "session" collection is temporary for the lifetime of the
   ;; Emacs process.  Therefore, we don't care to delete it.
   (let ((auth-sources '((:source (:secrets "session"))))
+        (auth-source-save-behavior t)
         (host (md5 (concat (prin1-to-string process-environment)
 			   (current-time-string))))
         (passwd (md5 (concat (prin1-to-string process-environment)
@@ -315,7 +316,14 @@
 			  (funcall auth-passwd)
 			auth-passwd))
     (should (string-equal (plist-get auth-info :user) (user-login-name)))
-    (should (string-equal auth-passwd passwd))))
+    (should (string-equal (plist-get auth-info :host) host))
+    (should (string-equal auth-passwd passwd))
+
+    ;; Cleanup.
+    ;; Should use `auth-source-delete' when implemented for :secrets backend.
+    (secrets-delete-item
+     "session"
+     (format "%s@%s" (plist-get auth-info :user) (plist-get auth-info :host)))))
 
 (provide 'auth-source-tests)
 ;;; auth-source-tests.el ends here
