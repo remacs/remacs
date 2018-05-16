@@ -1322,7 +1322,7 @@ extern "C" {
 }
 
 extern "C" {
-    pub fn pget_raw_status_new(p: *const Lisp_Process) -> c_int;
+    pub fn pget_raw_status_new(p: *const Lisp_Process) -> bool;
 }
 
 #[repr(C)]
