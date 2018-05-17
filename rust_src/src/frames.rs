@@ -3,8 +3,8 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{candidate_frame, selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame,
-                 Lisp_Type};
+use remacs_sys::{next_frame as get_next_frame, selected_frame as current_frame, BoolBF, EmacsInt,
+                 Lisp_Frame, Lisp_Type};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
                  fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
@@ -349,7 +349,14 @@ pub fn next_frame(frame: Option<LispObject>, miniframe: Option<LispObject>) -> L
             return LispObject::constant_nil();
         }
 
-        return get_next_frame(frame, miniframe).unwrap_or(LispObject::constant_nil());
+        let f = unsafe {
+            get_next_frame(
+                frame.to_raw(),
+                miniframe.unwrap_or(LispObject::constant_nil()).to_raw(),
+            )
+        };
+
+        return LispObject::from_raw(f);
     } else {
         return LispObject::constant_nil();
     }
@@ -359,21 +366,21 @@ pub fn frame_list() -> ::vectors::LispVectorRef {
     LispObject::from_raw(unsafe { ::remacs_sys::Vframe_list }).as_vector_or_error()
 }
 
-/// Return the next frame in the frame list after `frame`
-fn get_next_frame(
-    frame: LispObject,
-    minibuf: Option<LispObject>,
-) -> Result<LispObject, &'static str> {
-    let minibuf = minibuf.unwrap_or(LispObject::constant_nil());
+// /// Return the next frame in the frame list after `frame`
+// fn get_next_frame(
+//     frame: LispObject,
+//     minibuf: Option<LispObject>,
+// ) -> Result<LispObject, &'static str> {
+//     let minibuf = minibuf.unwrap_or(LispObject::constant_nil());
 
-    let minibuf = minibuf.to_raw();
-    let frame = frame.to_raw();
+//     let minibuf = minibuf.to_raw();
+//     let frame = frame.to_raw();
 
-    frame_list()
-        .iter()
-        .find(|f| unsafe { candidate_frame(f.to_raw(), frame, minibuf) } == frame)
-        .ok_or("could not find next frame")
-}
+//     frame_list()
+//         .iter()
+//         .find(|f| unsafe { candidate_frame(f.to_raw(), frame, minibuf) } == frame)
+//         .ok_or("could not find next frame")
+// }
 
 // TODO: port candidate_frame
 // /// Return `candidate` if it can be used as 'other-than-`frame`' from
