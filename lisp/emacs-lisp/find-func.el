@@ -297,13 +297,17 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
                      (indirect-function
                       (find-function-advised-original identifier))))))
            (rust-fname (replace-regexp-in-string "-" "_" fname))
-           ;; XXX: also find #[lisp_fn(name = "fname")]
            (regex (rx-to-string
-                   `(and "fn" (+ space) ,rust-fname "("))))
+                   `(and "fn" (+ space) ,rust-fname "(")))
+           (lisp-fn-name-regex (rx-to-string
+                                `(and "#[" (* space) "lisp_fn" (* space)
+                                      "(" (* space) "name" (* space) "="
+                                      (* space) "\"" ,fname))))
       (with-current-buffer (find-file-noselect file)
         (goto-char (point-min))
         (unless (re-search-forward regex nil t)
-          (error "Can't find source for %s" identifier))
+          (unless (re-search-forward lisp-fn-name-regex nil t)
+            (error "Can't find source for %s" identifier)))
         (cons (current-buffer) (match-beginning 0))))))
 
 
