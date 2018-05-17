@@ -4064,43 +4064,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
   return val;
 }
 
-DEFUN ("char-equal", Fchar_equal, Schar_equal, 2, 2, 0,
-       doc: /* Return t if two characters match, optionally ignoring case.
-Both arguments must be characters (i.e. integers).
-Case is ignored if `case-fold-search' is non-nil in the current buffer.  */)
-  (register Lisp_Object c1, Lisp_Object c2)
-{
-  int i1, i2;
-  /* Check they're chars, not just integers, otherwise we could get array
-     bounds violations in downcase.  */
-  CHECK_CHARACTER (c1);
-  CHECK_CHARACTER (c2);
-
-  if (XINT (c1) == XINT (c2))
-    return Qt;
-  if (NILP (BVAR (current_buffer, case_fold_search)))
-    return Qnil;
-
-  i1 = XFASTINT (c1);
-  i2 = XFASTINT (c2);
-
-  /* FIXME: It is possible to compare multibyte characters even when
-     the current buffer is unibyte.  Unfortunately this is ambiguous
-     for characters between 128 and 255, as they could be either
-     eight-bit raw bytes or Latin-1 characters.  Assume the former for
-     now.  See Bug#17011, and also see casefiddle.c's casify_object,
-     which has a similar problem.  */
-  if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
-    {
-      if (SINGLE_BYTE_CHAR_P (i1))
-	i1 = UNIBYTE_TO_CHAR (i1);
-      if (SINGLE_BYTE_CHAR_P (i2))
-	i2 = UNIBYTE_TO_CHAR (i2);
-    }
-
-  return (downcase (i1) == downcase (i2) ? Qt :  Qnil);
-}
-
 /* Transpose the markers in two regions of the current buffer, and
    adjust the ones between them if necessary (i.e.: if the regions
    differ in size).
@@ -4540,7 +4503,6 @@ functions if all the text being accessed has this property.  */);
   DEFVAR_LISP ("operating-system-release", Voperating_system_release,
 	       doc: /* The release of the operating system Emacs is running on.  */);
 
-  defsubr (&Schar_equal);
   defsubr (&Sbuffer_substring);
   defsubr (&Sbuffer_substring_no_properties);
   defsubr (&Sbuffer_string);

@@ -275,8 +275,8 @@ handles these definitions for us:
 
 /// Return t if OBJECT is a number.
 #[lisp_fn]
-fn numberp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_number())
+fn numberp(object: LispObject) -> bool {
+    object.is_number()
 }
 ```
 

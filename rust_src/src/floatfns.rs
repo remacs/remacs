@@ -7,8 +7,7 @@ use libc;
 
 use libm;
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, MOST_NEGATIVE_FIXNUM,
-                 MOST_POSITIVE_FIXNUM};
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qarith_error, Qinteger_or_marker_p, Qnumberp, Qrange_error};
 
 use lisp::{LispNumber, LispObject};
@@ -18,8 +17,7 @@ use math::ArithOp;
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
 /// TODO this is used from C in a few places; remove afterwards.
 #[no_mangle]
-pub extern "C" fn extract_float(f: Lisp_Object) -> EmacsDouble {
-    let f = LispObject::from_raw(f);
+pub extern "C" fn extract_float(f: LispObject) -> EmacsDouble {
     f.any_to_float_or_error()
 }
 
