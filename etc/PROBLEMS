@@ -3213,6 +3213,15 @@ them to DOS 8+3 limits.  To be useful on NT, the MSDOS port of Emacs
 must be unzipped by a DOS utility, so that long file names are
 properly truncated.
 
+** Apple Macintosh operating systems
+
+*** OS X 10.9 and earlier: symlinks autocomplete as directories
+
+Autocompleting the name of a symbolic link incorrectly appends "/".
+Building and running Emacs on OS X 10.10 (or later) fixes the problem.
+Older operating systems are no longer supported by Apple.
+https://bugs.gnu.org/31305
+
 ** Archaic window managers and toolkits
 
 *** Open Look: Under Open Look, the Emacs window disappears when you type M-q.
