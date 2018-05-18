@@ -154,6 +154,11 @@ macro_rules! verify_lisp_type {
     };
 }
 
+/// Get the index of `ident` into buffer's `local_flags` array. This
+/// value will be stored in the variable `buffer_local_flags` of type
+/// buffer
+
+// This is equivalent to C's PER_BUFFER_VAR_IDX
 macro_rules! per_buffer_var_idx {
     ($field: ident) => {
         #[allow(unused_unsafe)]
