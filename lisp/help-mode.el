@@ -474,7 +474,7 @@ that."
                             (and sym (charsetp sym)
                                  (help-xref-button 7 'help-character-set sym)))
                            ((assoc data input-method-alist)
-                            (help-xref-button 7 'help-character-set data))
+                            (help-xref-button 7 'help-input-method data))
                            ((and sym (coding-system-p sym))
                             (help-xref-button 7 'help-coding-system sym))
                            ((and sym (charsetp sym))
