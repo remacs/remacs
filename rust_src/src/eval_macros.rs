@@ -151,3 +151,11 @@ macro_rules! verify_lisp_type {
         }
     };
 }
+
+macro_rules! per_buffer_var_idx {
+    ($field: ident) => {
+        #[allow(unused_unsafe)]
+        ($crate::lisp::LispObject::from_raw(
+            unsafe{buffer_local_flags.$field})).as_natnum_or_error() as usize
+    }
+}

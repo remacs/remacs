@@ -188,13 +188,6 @@ static void internalize_parse_state (Lisp_Object, struct lisp_parse_state *);
 static bool in_classes (int, Lisp_Object);
 static void parse_sexp_propertize (ptrdiff_t charpos);
 
-/* This setter is used only in this file, so it can be private.  */
-static void
-bset_syntax_table (struct buffer *b, Lisp_Object val)
-{
-  b->syntax_table_ = val;
-}
-
 /* Whether the syntax of the character C has the prefix flag set.  */
 bool
 syntax_prefix_flag_p (int c)
@@ -1021,20 +1014,6 @@ It is a copy of the TABLE, which defaults to the standard syntax table.  */)
   return copy;
 }
 
-DEFUN ("set-syntax-table", Fset_syntax_table, Sset_syntax_table, 1, 1, 0,
-       doc: /* Select a new syntax table for the current buffer.
-One argument, a syntax table.  */)
-  (Lisp_Object table)
-{
-  int idx;
-  check_syntax_table (table);
-  bset_syntax_table (current_buffer, table);
-  /* Indicate that this buffer now has a specified syntax table.  */
-  idx = PER_BUFFER_VAR_IDX (syntax_table);
-  SET_PER_BUFFER_VALUE_P (current_buffer, idx, 1);
-  return table;
-}
-
 /* Convert a letter which signifies a syntax code
  into the code it signifies.
  This is used by modify-syntax-entry, and other things.  */
@@ -3726,7 +3705,6 @@ In both cases, LIMIT bounds the search. */);
   defsubr (&Ssyntax_table_p);
   defsubr (&Sstandard_syntax_table);
   defsubr (&Scopy_syntax_table);
-  defsubr (&Sset_syntax_table);
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);
   defsubr (&Sstring_to_syntax);

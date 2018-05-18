@@ -10,9 +10,11 @@ use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handl
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
                  Qvoid_variable};
-use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, fget_buffer_list,
-                 fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals, set_buffer_internal};
+use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, emacs_abort,
+                 fget_buffer_list, fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
+                 last_per_buffer_idx, set_buffer_internal};
 
+use chartable::LispCharTableRef;
 use editfns::point;
 use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lisp::defsubr;
@@ -299,6 +301,23 @@ impl LispBufferRef {
     pub fn set_zv_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
         self.zv = charpos;
         self.zv_byte = byte;
+    }
+
+    #[inline]
+    pub fn set_syntax_table(&mut self, table: LispCharTableRef) {
+        self.syntax_table = LispObject::from(table).to_raw();
+    }
+    ///Set whether per-buffer variable with index IDX has a buffer-local
+    ///value in buffer.  VAL zero means it does't.
+    // Similar to SET_PER_BUFFER_VALUE_P macro in C
+    #[inline]
+    pub fn set_per_buffer_value_p(&mut self, idx: usize, val: c_uchar) {
+        unsafe {
+            if idx >= last_per_buffer_idx {
+                emacs_abort()
+            }
+        }
+        self.local_flags[idx] = val;
     }
 }
 

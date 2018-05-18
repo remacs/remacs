@@ -1730,6 +1730,8 @@ extern "C" {
         depth: EmacsInt,
         sexpflag: bool,
     ) -> Lisp_Object;
+    pub static mut last_per_buffer_idx: usize;
+    pub static mut buffer_local_flags: Lisp_Buffer;
 }
 
 /// Contains C definitions from the font.h header.

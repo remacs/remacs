@@ -1,5 +1,6 @@
+use chartable::LispCharTableRef;
 use remacs_macros::lisp_fn;
-use remacs_sys::{scan_lists, EmacsInt};
+use remacs_sys::{buffer_local_flags, scan_lists, EmacsInt, Qsyntax_table, Qsyntax_table_p};
 use threads::ThreadState;
 
 use lisp::LispObject;
@@ -36,6 +37,24 @@ pub fn syntax_table() -> LispObject {
 #[lisp_fn(name = "scan-lists")]
 pub fn scan_lists_defun(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
     LispObject::from_raw(unsafe { scan_lists(from, count, depth, false) })
+}
+
+/// Select a new syntax table for the current buffer.
+/// One argument, a syntax table.
+#[lisp_fn]
+pub fn set_syntax_table(table: LispCharTableRef) -> LispCharTableRef {
+    check_syntax_table_p(table);
+    let mut buf = ThreadState::current_buffer();
+    buf.set_syntax_table(table);
+    let idx = per_buffer_var_idx!(syntax_table);
+    buf.set_per_buffer_value_p(idx, 1);
+    table
+}
+
+fn check_syntax_table_p(table: LispCharTableRef) {
+    if table.purpose != Qsyntax_table {
+        wrong_type!(Qsyntax_table_p, LispObject::from(table))
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/syntax_exports.rs"));
