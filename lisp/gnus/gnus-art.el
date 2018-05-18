@@ -1635,6 +1635,16 @@ It is a string, such as \"PGP\". If nil, ask user."
 
 (defcustom gnus-blocked-images 'gnus-block-private-groups
   "Images that have URLs matching this regexp will be blocked.
+Note that the main reason external images are included in HTML
+emails (these days) is to allow tracking whether you've read the
+email message or not.  If you allow loading images in HTML
+emails, you give up privacy.
+
+The default value of this variable blocks loading external
+resources when reading email groups (and therefore stops
+tracking), but allows loading external resources when reading
+from NNTP newsgroups and the like.
+
 This can also be a function to be evaluated.  If so, it will be
 called with the group name as the parameter, and should return a
 regexp."
