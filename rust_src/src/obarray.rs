@@ -5,7 +5,6 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
 use remacs_sys::{fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
                  make_pure_c_string, make_unibyte_string, oblookup};
-use remacs_sys::Lisp_Object;
 use remacs_sys::Qvectorp;
 
 use lisp::LispObject;
@@ -79,7 +78,7 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
 }
 
 #[no_mangle]
-pub extern "C" fn loadhist_attach(x: Lisp_Object) {
+pub extern "C" fn loadhist_attach(x: LispObject) {
     unsafe {
         if initialized {
             globals.f_Vcurrent_load_list = Fcons(x, globals.f_Vcurrent_load_list);
@@ -90,7 +89,7 @@ pub extern "C" fn loadhist_attach(x: Lisp_Object) {
 /// Get an error if OBARRAY is not an obarray.
 /// If it is one, return it.
 #[no_mangle]
-pub extern "C" fn check_obarray(obarray: Lisp_Object) -> Lisp_Object {
+pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
     // We don't want to signal a wrong-type error when we are shutting
     // down due to a fatal error and we don't want to hit assertions
     // if the fatal error was during GC.
@@ -113,9 +112,9 @@ pub extern "C" fn check_obarray(obarray: Lisp_Object) -> Lisp_Object {
 
 #[no_mangle]
 pub extern "C" fn map_obarray(
-    obarray: Lisp_Object,
-    func: extern "C" fn(Lisp_Object, Lisp_Object),
-    arg: Lisp_Object,
+    obarray: LispObject,
+    func: extern "C" fn(LispObject, LispObject),
+    arg: LispObject,
 ) {
     let v = LispObject::from_raw(obarray).as_vector_or_error();
     for item in v.iter().rev() {
@@ -130,7 +129,7 @@ pub extern "C" fn map_obarray(
 /// Intern the C string `s`: return a symbol with that name, interned in the
 /// current obarray.
 #[no_mangle]
-pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> Lisp_Object {
+pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
     let obarray = LispObarrayRef::global().as_lisp_obj().to_raw();
     let tem = LispObject::from_raw(unsafe { oblookup(obarray, s, len, len) });
 
@@ -150,7 +149,7 @@ pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> Lisp
 /// Intern the C string STR: return a symbol with that name,
 /// interned in the current obarray.
 #[no_mangle]
-pub extern "C" fn intern_c_string_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> Lisp_Object {
+pub extern "C" fn intern_c_string_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
     let obarray = LispObarrayRef::global().as_lisp_obj().to_raw();
     let tem = LispObject::from_raw(unsafe { oblookup(obarray, s, len, len) });
 
@@ -167,10 +166,10 @@ pub extern "C" fn intern_c_string_1(s: *const libc::c_char, len: libc::ptrdiff_t
 /// Intern a symbol with name STRING in OBARRAY using bucket INDEX.
 #[no_mangle]
 pub extern "C" fn intern_driver(
-    string: Lisp_Object,
-    obarray: Lisp_Object,
-    index: Lisp_Object,
-) -> Lisp_Object {
+    string: LispObject,
+    obarray: LispObject,
+    index: LispObject,
+) -> LispObject {
     unsafe { intern_sym(Fmake_symbol(string), obarray, index) }
 }
 
@@ -201,7 +200,7 @@ pub fn lisp_intern(string: LispObject, obarray: Option<LispObarrayRef>) -> LispO
     obarray.intern(string)
 }
 
-extern "C" fn mapatoms_1(sym: Lisp_Object, function: Lisp_Object) {
+extern "C" fn mapatoms_1(sym: LispObject, function: LispObject) {
     call_raw!(function, sym);
 }
 

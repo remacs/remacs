@@ -2,14 +2,15 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fcons, Fload, Fmapc};
-use remacs_sys::{Lisp_Object, Lisp_Type};
 use remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
                  Qwrong_number_of_arguments};
 use remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
+use remacs_sys::Lisp_Type;
 use remacs_sys::Vautoload_queue;
 
 use eval::un_autoload;
-use lisp::{LispCons, LispObject};
+use lisp::LispCons;
+use lisp::LispObject;
 use lisp::defsubr;
 use lists::{assq, car, get, member, memq, put};
 use obarray::loadhist_attach;
@@ -115,7 +116,7 @@ pub fn quote(args: LispCons) -> LispObject {
 
 declare_GC_protected_static!(require_nesting_list, Qnil);
 
-unsafe extern "C" fn require_unwind(old_value: Lisp_Object) {
+unsafe extern "C" fn require_unwind(old_value: LispObject) {
     require_nesting_list = old_value;
 }
 
@@ -260,14 +261,30 @@ def_lisp_sym!(Qrequire, "require");
 /// Each argument may be a list, vector or string.
 /// The last argument is not copied, just used as the tail of the new list.
 /// usage: (append &rest SEQUENCES)
-#[lisp_fn()]
+#[lisp_fn]
 pub fn append(args: &mut [LispObject]) -> LispObject {
     LispObject::from_raw(unsafe {
         lisp_concat(
             args.len() as isize,
-            args.as_mut_ptr() as *mut Lisp_Object,
+            args.as_mut_ptr() as *mut LispObject,
             Lisp_Type::Lisp_Cons,
             true,
+        )
+    })
+}
+
+/// Concatenate all the arguments and make the result a string.
+/// The result is a string whose elements are the elements of all the arguments.
+/// Each argument may be a string or a list or vector of characters (integers).
+/// usage: (concat &rest SEQUENCES)
+#[lisp_fn]
+pub fn concat(args: &mut [LispObject]) -> LispObject {
+    LispObject::from_raw(unsafe {
+        lisp_concat(
+            args.len() as isize,
+            args.as_mut_ptr() as *mut LispObject,
+            Lisp_Type::Lisp_String,
+            false,
         )
     })
 }

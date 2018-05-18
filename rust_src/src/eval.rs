@@ -1,7 +1,7 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Object, PseudovecType};
+use remacs_sys::{EmacsInt, PseudovecType};
 use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Ffuncall, Fload, Fpurecopy, Fset,
                  Fset_default};
 use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
@@ -122,7 +122,7 @@ pub fn progn(body: LispObject) -> LispObject {
 
 /// Evaluate BODY sequentially, discarding its value.
 #[no_mangle]
-pub extern "C" fn prog_ignore(body: Lisp_Object) {
+pub extern "C" fn prog_ignore(body: LispObject) {
     progn(LispObject::from_raw(body));
 }
 
@@ -341,7 +341,7 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
 // ((a 1)) -> (a, 1)
 // ((a)) -> (a, nil)
 // ((a (* 5 (+ 2 1)))) -> (a, 15)
-fn let_binding_value(obj: LispObject) -> (LispObject, Lisp_Object) {
+fn let_binding_value(obj: LispObject) -> (LispObject, LispObject) {
     if obj.is_symbol() {
         (obj, Qnil)
     } else {
@@ -589,7 +589,7 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
 
 /// Apply fn to arg.
 #[no_mangle]
-pub extern "C" fn apply1(mut func: Lisp_Object, arg: Lisp_Object) -> Lisp_Object {
+pub extern "C" fn apply1(mut func: LispObject, arg: LispObject) -> LispObject {
     if arg == Qnil {
         unsafe { Ffuncall(1, &mut func) }
     } else {
@@ -737,7 +737,7 @@ pub fn functionp_lisp(object: LispObject) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn FUNCTIONP(object: Lisp_Object) -> bool {
+pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
     let mut obj = LispObject::from_raw(object);
 
     if let Some(sym) = obj.as_symbol() {
@@ -776,7 +776,7 @@ pub extern "C" fn FUNCTIONP(object: Lisp_Object) -> bool {
     }
 }
 
-pub unsafe extern "C" fn un_autoload(oldqueue: Lisp_Object) {
+pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     // Queue to unwind is current value of Vautoload_queue.
     // oldqueue is the shadowed value to leave in Vautoload_queue.
     let queue = Vautoload_queue;
@@ -917,14 +917,14 @@ pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
 }
 
 fn funcall_nil(args: &[LispObject]) -> LispObject {
-    let mut obj_array: Vec<Lisp_Object> = args.iter().map(|o| o.to_raw()).collect();
+    let mut obj_array: Vec<LispObject> = args.iter().map(|o| o.to_raw()).collect();
     unsafe { Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr()) };
     LispObject::constant_nil()
 }
 
 /// Run the hook HOOK, giving each function no args.
 #[no_mangle]
-pub extern "C" fn run_hook(hook: Lisp_Object) -> () {
+pub extern "C" fn run_hook(hook: LispObject) -> () {
     run_hook_with_args(&mut [LispObject::from_raw(hook)]);
 }
 

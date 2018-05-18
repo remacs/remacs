@@ -4,8 +4,8 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_Object,
-                 Lisp_Overlay, Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_Overlay,
+                 Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
@@ -232,6 +232,10 @@ impl LispBufferRef {
         LispObject::from_raw(self.file_truename)
     }
 
+    pub fn case_fold_search(self) -> LispObject {
+        LispObject::from_raw(self.case_fold_search)
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
@@ -268,11 +272,16 @@ impl LispBufferRef {
 
     #[inline]
     pub fn fetch_char(self, n: ptrdiff_t) -> c_int {
-        if LispObject::from_raw(self.enable_multibyte_characters).is_not_nil() {
+        if self.multibyte_characters_enabled() {
             self.fetch_multibyte_char(n)
         } else {
             c_int::from(self.fetch_byte(n))
         }
+    }
+
+    #[inline]
+    pub fn multibyte_characters_enabled(self) -> bool {
+        LispObject::from_raw(self.enable_multibyte_characters).is_not_nil()
     }
 
     #[inline]
@@ -402,7 +411,7 @@ impl LispBufferLocalValueRef {
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
 pub fn buffer_list(frame: LispObject) -> LispObject {
-    let mut buffers: Vec<Lisp_Object> = LispObject::from_raw(unsafe { Vbuffer_alist })
+    let mut buffers: Vec<LispObject> = LispObject::from_raw(unsafe { Vbuffer_alist })
         .iter_cars_safe()
         .map(|o| cdr(o).to_raw())
         .collect();
@@ -555,7 +564,7 @@ pub fn overlay_properties(overlay: LispOverlayRef) -> LispObject {
 }
 
 #[no_mangle]
-pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
+pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
     let start = LispObject::from_raw(unsafe { *b });
     let stop = LispObject::from_raw(unsafe { *e });
 
@@ -621,7 +630,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
 
 /// No such buffer error.
 #[no_mangle]
-pub extern "C" fn nsberror(spec: Lisp_Object) -> ! {
+pub extern "C" fn nsberror(spec: LispObject) -> ! {
     let spec = LispObject::from_raw(spec);
     if let Some(s) = spec.as_string() {
         error!("No buffer named {}", s);
@@ -668,7 +677,7 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
 
 // to be removed once all references in C are ported
 #[no_mangle]
-pub extern "C" fn get_truename_buffer(filename: Lisp_Object) -> Lisp_Object {
+pub extern "C" fn get_truename_buffer(filename: LispObject) -> LispObject {
     get_truename_buffer_1(LispObject::from_raw(filename)).to_raw()
 }
 

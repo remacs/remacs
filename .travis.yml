@@ -1,7 +1,6 @@
 ---
 sudo: required
 dist: trusty
-group: deprecated-2017Q4
 language: rust
 cache:
   cargo: true
@@ -32,6 +31,7 @@ jobs:
         - CARGO_FLAGS="--features 'strict'"
       os: linux
       before_script:
+        - sudo apt update
         - sudo apt install -y texinfo libgif-dev libxpm-dev
         - travis_wait rustup install $(cat rust-toolchain)
       script:
@@ -70,6 +70,7 @@ jobs:
     - stage: cerrors
       os: linux  # No need to run this everywhere
       before_script:
+        - sudo apt update
         - sudo apt install -y texinfo libgif-dev libxpm-dev
         - travis_wait rustup install $(cat rust-toolchain)
         - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings --with-gif=no
@@ -80,3 +81,8 @@ jobs:
 notifications:
   fast_finish: true
   email: false
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - os: osx

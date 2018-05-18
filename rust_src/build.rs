@@ -295,12 +295,6 @@ impl<'a> ModuleParser<'a> {
                 self.lineno,
                 "'no_mangle' functions exported for C need 'extern \"C\"' too.".to_string(),
             ))
-        } else if line.contains(": LispObject") || line.contains("-> LispObject") {
-            Err(LintMsg::new(
-                &self.info.name,
-                self.lineno,
-                "functions exported to C must use 'Lisp_Object' not 'LispObject'".to_string(),
-            ))
         } else {
             Ok(())
         }
@@ -562,6 +556,7 @@ fn generate_globals() {
                         match vtype {
                             "EMACS_INT" => "EmacsInt",
                             "bool_bf" => "BoolBF",
+                            "Lisp_Object" => "LispObject",
                             t => t,
                         }
                     ).expect("Write error!");
@@ -582,7 +577,7 @@ fn generate_globals() {
                     let value = parts.next().unwrap();
                     write!(
                         out_file,
-                        "pub const {}: Lisp_Object = Lisp_Object( \
+                        "pub const {}: LispObject = ::lisp::LispObject( \
                          {} * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt));\n",
                         symbol_name, value
                     ).expect("Write error in reading symbols stage");

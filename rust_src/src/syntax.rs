@@ -36,7 +36,7 @@ pub fn syntax_table() -> LispObject {
 // with the same name
 #[lisp_fn(name = "scan-lists")]
 pub fn scan_lists_defun(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
-    LispObject::from_raw(unsafe { scan_lists(from, count, depth, false) })
+    unsafe { scan_lists(from, count, depth, false) }
 }
 
 /// Select a new syntax table for the current buffer.
