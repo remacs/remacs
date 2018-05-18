@@ -198,6 +198,31 @@ supports it in developing GNU and promoting software freedom.''
 @end ifset
 @end ifnothtml
 
+@c If you think this manual is too large for an introduction, please
+@c consider this email exchange:
+@c
+@c       >> The intro is almost 300 pages in full.  I had expected 60 pages.
+@c       >
+@c       > This is an important point in its own right.  Could you
+@c       > write a simplified introduction that is only 50 pages or so?
+@c       > That would be helpful to many potential users, I'd think.
+@c
+@c   > The problem with the introduction is that it was written when
+@c   > programming was only starting to be a skill "normal" people could
+@c   > have access to.  So the text is extremely verbose and is
+@c   > sometimes hard to follow because of that.  The gist of the
+@c   > document could be summarized in 50 pages.
+@c
+@c This book is intentionally addressed to people who don't know how to
+@c program.  That is its purpose.  We recommend people start learning to
+@c program using this book.
+@c
+@c If you DO know how to program in some other language, you can probably
+@c learn Emacs Lisp starting with the Emacs Lisp Reference Manual.
+@c
+@c        Richard Stallman <rms@gnu.org>,
+@c        https://lists.gnu.org/archive/html/emacs-devel/2018-05/msg00374.html
+
 @shortcontents
 @contents
 
