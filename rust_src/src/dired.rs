@@ -9,7 +9,7 @@ use lisp::{defsubr, LispObject};
 use lists::list;
 
 fn get_user_real_login_name() -> LispObject {
-    LispObject::from_raw(unsafe { globals.f_Vuser_real_login_name })
+    unsafe { globals.f_Vuser_real_login_name }
 }
 
 #[cfg(windows)]
@@ -27,7 +27,7 @@ fn get_users() -> LispObject {
         if pw.is_null() {
             done = true;
         } else {
-            unames.push(LispObject::from_raw(unsafe { build_string((*pw).pw_name) }))
+            unames.push(unsafe { build_string((*pw).pw_name) })
         }
     }
     unsafe { libc::endpwent() };
