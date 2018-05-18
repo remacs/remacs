@@ -1348,12 +1348,14 @@ pub type voidfuncptr = unsafe extern "C" fn();
 
 extern "C" {
     pub static initialized: bool;
+    pub static mut buffer_local_flags: Lisp_Buffer;
     pub static mut current_global_map: LispObject;
     pub static current_thread: *mut thread_state;
     pub static empty_unibyte_string: LispObject;
     pub static fatal_error_in_progress: bool;
     pub static mut globals: emacs_globals;
     pub static initial_obarray: LispObject;
+    pub static mut last_per_buffer_idx: usize;
     pub static lispsym: Lisp_Symbol;
     pub static minibuf_level: EmacsInt;
     pub static minibuf_selected_window: LispObject;
@@ -1698,8 +1700,6 @@ extern "C" {
         depth: EmacsInt,
         sexpflag: bool,
     ) -> LispObject;
-    pub static mut last_per_buffer_idx: usize;
-    pub static mut buffer_local_flags: Lisp_Buffer;
 }
 
 /// Contains C definitions from the font.h header.
