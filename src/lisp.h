@@ -900,7 +900,7 @@ INLINE bool
   return lisp_h_SYMBOLP (x);
 }
 
-INLINE struct Lisp_Symbol *
+INLINE struct Lisp_Symbol * ATTRIBUTE_NO_SANITIZE_UNDEFINED
 (XSYMBOL) (Lisp_Object a)
 {
 #if USE_LSB_TAG

@@ -503,18 +503,34 @@ pointer_align (void *ptr, int alignment)
   return (void *) ROUNDUP ((uintptr_t) ptr, alignment);
 }
 
-/* Extract the pointer hidden within O.  Define this as a function, as
-   functions are cleaner and can be used in debuggers.  Also, define
-   it as a macro if being compiled with GCC without optimization, for
-   performance in that case.  macro_XPNTR is private to this section
-   of code.  */
+/* Define PNTR_ADD and XPNTR as functions, which are cleaner and can
+   be used in debuggers.  Also, define them as macros if
+   DEFINE_KEY_OPS_AS_MACROS, for performance in that case.
+   The macro_* macros are private to this section of code.  */
+
+/* Add a pointer an an integer without complaint about a pointer going
+   out of range of the underlying array.  */
+
+#define macro_PNTR_ADD(p, i) ((p) + (i))
+
+static char * ATTRIBUTE_NO_SANITIZE_UNDEFINED ATTRIBUTE_UNUSED
+PNTR_ADD (char *p, EMACS_UINT i)
+{
+  return macro_PNTR_ADD (p, i);
+}
+
+#if DEFINE_KEY_OPS_AS_MACROS
+# define PNTR_ADD(p, i) macro_PNTR_ADD (p, i)
+#endif
+
+/* Extract the pointer hidden within O.  */
 
 #define macro_XPNTR(o)                                                 \
   ((void *) \
    (SYMBOLP (o)							       \
-    ? ((char *) lispsym						       \
-       - ((EMACS_UINT) Lisp_Symbol << (USE_LSB_TAG ? 0 : VALBITS))     \
-       + XLI (o))						       \
+    ? PNTR_ADD ((char *) lispsym,				       \
+		(XLI (o)						\
+		 - ((EMACS_UINT) Lisp_Symbol << (USE_LSB_TAG ? 0 : VALBITS)))) \
     : (char *) XLP (o) - (XLI (o) & ~VALMASK)))
 
 static ATTRIBUTE_UNUSED void *

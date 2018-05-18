@@ -67,6 +67,7 @@ typedef bool bool_bf;
 # define __has_attribute_externally_visible GNUC_PREREQ (4, 1, 0)
 # define __has_attribute_no_address_safety_analysis false
 # define __has_attribute_no_sanitize_address GNUC_PREREQ (4, 8, 0)
+# define __has_attribute_no_sanitize_undefined GNUC_PREREQ (4, 9, 0)
 #endif
 
 /* Simulate __has_builtin on compilers that lack it.  It is used only
@@ -336,6 +337,17 @@ extern int emacs_setenv_TZ (char const *);
     __attribute__ ((no_address_safety_analysis)) ADDRESS_SANITIZER_WORKAROUND
 #else
 # define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+
+/* Attribute of functions whose undefined behavior should not be sanitized.  */
+
+#if __has_attribute (no_sanitize_undefined)
+# define ATTRIBUTE_NO_SANITIZE_UNDEFINED __attribute__ ((no_sanitize_undefined))
+#elif __has_attribute (no_sanitize)
+# define ATTRIBUTE_NO_SANITIZE_UNDEFINED \
+    __attribute__ ((no_sanitize ("undefined")))
+#else
+# define ATTRIBUTE_NO_SANITIZE_UNDEFINED
 #endif
 
 /* gcc -fsanitize=address does not work with vfork in Fedora 25 x86-64.
