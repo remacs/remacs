@@ -508,8 +508,8 @@ pointer_align (void *ptr, int alignment)
    DEFINE_KEY_OPS_AS_MACROS, for performance in that case.
    The macro_* macros are private to this section of code.  */
 
-/* Add a pointer an an integer without complaint about a pointer going
-   out of range of the underlying array.  */
+/* Add a pointer P to an integer I without gcc -fsanitize complaining
+   about the result being out of range of the underlying array.  */
 
 #define macro_PNTR_ADD(p, i) ((p) + (i))
 
