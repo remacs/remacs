@@ -233,12 +233,19 @@ and its value has been changed to Duck Duck Go.
 'shr-selected-link' face to give the user feedback that the command
 has been executed.
 
-
 ** Htmlfontify
 *** The functions 'hfy-color', 'hfy-color-vals' and
 'hfy-fallback-color-values' and the variables 'hfy-fallback-color-map'
 and 'hfy-rgb-txt-color-map' have been renamed from names that used
 'colour' instead of 'color'.
+
++++
+** Enriched mode supports the 'charset' text property.
+You can add or modify the 'charset' text properties of text using the
+Edit->Text Properties->Special Properties menu, or by invoking the
+'facemenu-set-charset' command.  Documents in Enriched mode will be
+saved with the charset properties, and those properties will be
+restored when the file is visited.
 
 ** Smtpmail
 Authentication mechanisms can be added via external packages, by
