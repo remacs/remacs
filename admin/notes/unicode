@@ -232,10 +232,6 @@ nontrivial changes to the build process.
 
  * iso-2022-7bit
 
-     This file switches between CJK charsets, which is not encoded in UTF-8.
-
-	etc/HELLO
-
      Each of these files contains just one CJK charset, but Emacs
      currently has no easy way to specify set-charset-priority on a
      per-file basis, so converting any of these files to UTF-8 might
