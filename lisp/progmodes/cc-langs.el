@@ -472,21 +472,24 @@ so that all identifiers are recognized as words.")
 (c-lang-defconst c-get-state-before-change-functions
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
-  t nil
+  t 'c-before-change-check-unbalanced-strings
   c++ '(c-extend-region-for-CPP
 	c-before-change-check-raw-strings
 	c-before-change-check-<>-operators
 	c-depropertize-CPP
 	c-invalidate-macro-cache
 	c-truncate-bs-cache
+	c-before-change-check-unbalanced-strings
 	c-parse-quotes-before-change)
   (c objc) '(c-extend-region-for-CPP
 	     c-depropertize-CPP
 	     c-invalidate-macro-cache
 	     c-truncate-bs-cache
+	     c-before-change-check-unbalanced-strings
 	     c-parse-quotes-before-change)
-  java 'c-parse-quotes-before-change
-       ;; 'c-before-change-check-<>-operators
+  java '(c-parse-quotes-before-change
+	 c-before-change-check-unbalanced-strings
+	 c-before-change-check-<>-operators)
   awk 'c-awk-record-region-clear-NL)
 (c-lang-defvar c-get-state-before-change-functions
 	       (let ((fs (c-lang-const c-get-state-before-change-functions)))
@@ -514,14 +517,17 @@ parameters \(point-min) and \(point-max).")
   ;; For documentation see the following c-lang-defvar of the same name.
   ;; The value here may be a list of functions or a single function.
   t '(c-depropertize-new-text
+      c-after-change-re-mark-unbalanced-strings
       c-change-expand-fl-region)
   (c objc) '(c-depropertize-new-text
 	     c-parse-quotes-after-change
+	     c-after-change-re-mark-unbalanced-strings
 	     c-extend-font-lock-region-for-macros
 	     c-neutralize-syntax-in-CPP
 	     c-change-expand-fl-region)
   c++ '(c-depropertize-new-text
 	c-parse-quotes-after-change
+	c-after-change-re-mark-unbalanced-strings
 	c-extend-font-lock-region-for-macros
 	c-after-change-re-mark-raw-strings
 	c-neutralize-syntax-in-CPP
@@ -529,6 +535,7 @@ parameters \(point-min) and \(point-max).")
 	c-change-expand-fl-region)
   java '(c-depropertize-new-text
 	 c-parse-quotes-after-change
+	 c-after-change-re-mark-unbalanced-strings
 	 c-restore-<>-properties
 	 c-change-expand-fl-region)
   awk '(c-depropertize-new-text
@@ -610,6 +617,19 @@ EOL terminated statements."
   t nil
   (c c++ objc) t)
 (c-lang-defvar c-has-bitfields (c-lang-const c-has-bitfields))
+
+(c-lang-defconst c-single-quotes-quote-strings
+  "Whether the language uses single quotes for multi-char strings."
+  t nil)
+(c-lang-defvar c-single-quotes-quote-strings
+	       (c-lang-const c-single-quotes-quote-strings))
+
+(c-lang-defconst c-string-delims
+  "A list of characters which can delimit arbitrary length strings"
+  t (if (c-lang-const c-single-quotes-quote-strings)
+	'(?\" ?\')
+      '(?\")))
+(c-lang-defvar c-string-delims (c-lang-const c-string-delims))
 
 (c-lang-defconst c-has-quoted-numbers
   "Whether the language has numbers quoted like 4'294'967'295."
@@ -855,6 +875,28 @@ literal are multiline."
   pike ?#)
 (c-lang-defvar c-multiline-string-start-char
   (c-lang-const c-multiline-string-start-char))
+
+(c-lang-defconst c-string-innards-re-alist
+  ;; An alist of regexps matching the innards of a string, the key being the
+  ;; string's delimiter.
+  ;;
+  ;; The regexps' matches extend up to, but not including, the closing string
+  ;; delimiter or an unescaped NL.  An EOL is part of the string only if it is
+  ;; escaped.
+  t (mapcar (lambda (delim)
+	      (cons
+	       delim
+	       (concat "\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\\\n\r"
+		       (string delim)
+		       "]\\)*")))
+	    (and
+	     (or (null (c-lang-const c-multiline-string-start-char))
+		 (c-characterp (c-lang-const c-multiline-string-start-char)))
+	     (if (c-lang-const c-single-quotes-quote-strings)
+		 '(?\" ?\')
+	       '(?\")))))
+(c-lang-defvar c-string-innards-re-alist
+  (c-lang-const c-string-innards-re-alist))
 
 (c-lang-defconst c-opt-cpp-symbol
   "The symbol which starts preprocessor constructs when in the margin."

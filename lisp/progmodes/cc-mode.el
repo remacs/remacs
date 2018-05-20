@@ -499,9 +499,10 @@ preferably use the `c-mode-menu' language constant directly."
 ;; `basic-save-buffer' does (insert ?\n) when `require-final-newline' is
 ;; non-nil; (ii) to detect when Emacs fails to invoke
 ;; `before-change-functions'.  This can happen when reverting a buffer - see
-;; bug #24094.  It seems these failures happen only in GNU Emacs; XEmacs
-;; seems to maintain the strict alternation of calls to
-;; `before-change-functions' and `after-change-functions'.
+;; bug #24094.  It seems these failures happen only in GNU Emacs; XEmacs seems
+;; to maintain the strict alternation of calls to `before-change-functions'
+;; and `after-change-functions'.  Note that this variable is not set when
+;; `c-before-change' is invoked by a change to text properties.
 
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
@@ -563,7 +564,7 @@ that requires a literal mode spec at compile time."
 
   (when (or c-recognize-<>-arglists
 	    (c-major-mode-is 'awk-mode)
-	    (c-major-mode-is '(java-mode c-mode c++-mode objc-mode)))
+	    (c-major-mode-is '(java-mode c-mode c++-mode objc-mode pike-mode)))
     ;; We'll use the syntax-table text property to change the syntax
     ;; of some chars for this language, so do the necessary setup for
     ;; that.
@@ -996,9 +997,9 @@ Note that the style variables are always made local to the buffer."
   ;; characters, ones which would interact syntactically with stuff outside
   ;; this region.
   ;;
-  ;; These are unmatched string delimiters, or unmatched
-  ;; parens/brackets/braces.  An unclosed comment is regarded as valid, NOT
-  ;; obtrusive.
+  ;; These are unmatched parens/brackets/braces.  An unclosed comment is
+  ;; regarded as valid, NOT obtrusive.  Unbalanced strings are handled
+  ;; elsewhere.
   (save-excursion
     (let (s)
       (while
@@ -1008,9 +1009,11 @@ Note that the style variables are always made local to the buffer."
 	     ((< (nth 0 s) 0)		; found an unmated ),},]
 	      (c-put-char-property (1- (point)) 'syntax-table '(1))
 	      t)
-	     ((nth 3 s)			; In a string
-	      (c-put-char-property (nth 8 s) 'syntax-table '(1))
-	      t)
+	     ;; Unbalanced strings are now handled by
+	     ;; `c-before-change-check-unbalanced-strings', etc.
+	     ;; ((nth 3 s)			; In a string
+	     ;;  (c-put-char-property (nth 8 s) 'syntax-table '(1))
+	     ;;  t)
 	     ((> (nth 0 s) 0)		; In a (,{,[
 	      (c-put-char-property (nth 1 s) 'syntax-table '(1))
 	      t)
@@ -1069,6 +1072,205 @@ Note that the style variables are always made local to the buffer."
 	      (c-neutralize-CPP-line mbeg (point)) ; "punctuation" properties
 	    (forward-line))	      ; no infinite loop with, e.g., "#//"
 	  )))))
+
+(defun c-unescaped-nls-in-string-p (&optional quote-pos)
+  ;; Return whether unescaped newlines can be inside strings.
+  ;;
+  ;; QUOTE-POS, if present, is the position of the opening quote of a string.
+  ;; Depending on the language, there might be a special character before it
+  ;; signifying the validity of such NLs.
+  (cond
+   ((null c-multiline-string-start-char) nil)
+   ((c-characterp c-multiline-string-start-char)
+    (and quote-pos
+	 (eq (char-before quote-pos) c-multiline-string-start-char)))
+   (t t)))
+
+(defun c-multiline-string-start-is-being-detached (end)
+  ;; If (e.g.), the # character in Pike is being detached from the string
+  ;; opener it applies to, return t.  Else return nil.  END is the argument
+  ;; supplied to every before-change function.
+  (and (memq (char-after end) c-string-delims)
+       (c-characterp c-multiline-string-start-char)
+       (eq (char-before end) c-multiline-string-start-char)))
+
+(defun c-pps-to-string-delim (end)
+  ;; parse-partial-sexp forward to the next string quote, which is deemed to
+  ;; be a closing quote.  Return nil.
+  ;;
+  ;; We remove string-fence syntax-table text properties from characters we
+  ;; pass over.
+  (let* ((start (point))
+	 (no-st-s `(0 nil nil ?\" nil nil 0 nil ,start nil nil))
+	 (st-s `(0 nil nil t nil nil 0 nil ,start nil nil))
+	 no-st-pos st-pos
+	 )
+    (parse-partial-sexp start end nil nil no-st-s 'syntax-table)
+    (setq no-st-pos (point))
+    (goto-char start)
+    (while (progn
+	     (parse-partial-sexp (point) end nil nil st-s 'syntax-table)
+	     (c-clear-char-property (1- (point)) 'syntax-table)
+	     (setq st-pos (point))
+	     (and (< (point) end)
+		  (not (eq (char-before) ?\")))))
+    (goto-char (min no-st-pos st-pos))
+    nil))
+
+(defun c-before-change-check-unbalanced-strings (beg end)
+  ;; If BEG or END is inside an unbalanced string, remove the syntax-table
+  ;; text property from respectively the start or end of the string.  Also
+  ;; extend the region (c-new-BEG c-new-END) as necessary to cope with the
+  ;; change being the insertion of an odd number of quotes.
+  ;;
+  ;; POINT is undefined both at entry to and exit from this function, the
+  ;; buffer will have been widened, and match data will have been saved.
+  ;;
+  ;; This function is called exclusively as a before-change function via
+  ;; `c-get-state-before-change-functions'.
+  (c-save-buffer-state
+      ((end-limits
+	(progn
+	  (goto-char (if (c-multiline-string-start-is-being-detached end)
+			 (1+ end)
+		       end))
+	  (c-literal-limits)))
+       (end-literal-type (and end-limits
+		       	      (c-literal-type end-limits)))
+       (beg-limits
+	(progn
+	  (goto-char beg)
+	  (c-literal-limits)))
+       (beg-literal-type (and beg-limits
+		       	      (c-literal-type beg-limits))))
+
+    (when (eq end-literal-type 'string)
+      (setq c-new-END (max c-new-END (cdr end-limits))))
+    ;; It is possible the buffer change will include inserting a string quote.
+    ;; This could have the effect of flipping the meaning of any following
+    ;; quotes up until the next unescaped EOL.  Also guard against the change
+    ;; being the insertion of \ before an EOL, escaping it.
+    (cond
+     ((c-characterp c-multiline-string-start-char)
+      ;; The text about to be inserted might contain a multiline string
+      ;; opener.  Set c-new-END after anything which might be affected.
+      ;; Go to the end of the putative multiline string.
+      (goto-char end)
+      (c-pps-to-string-delim (point-max))
+      (when (< (point) (point-max))
+	(while
+	    (and
+	     (progn
+	       (while
+		   (and
+		    (c-syntactic-re-search-forward
+		     "\"\\|\\s|" (point-max) t t)
+		    (progn
+		      (c-clear-char-property (1- (point)) 'syntax-table)
+		      (not (eq (char-before) ?\")))))
+	       (eq (char-before) ?\"))
+	     (if (eq (char-before (1- (point)))
+		     c-multiline-string-start-char)
+		 (progn
+		   (c-pps-to-string-delim (point-max))
+		   (< (point) (point-max)))
+	       (c-pps-to-string-delim (c-point 'eoll))
+	       (< (point) (c-point 'eoll))))))
+      (setq c-new-END (max (point) c-new-END)))
+
+     ((< c-new-END (point-max))
+      (goto-char (1+ c-new-END))	; might be a newline.
+      ;; In the following regexp, the initial \n caters for a newline getting
+      ;; joined to a preceding \ by the removal of what comes between.
+      (re-search-forward "\n?\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\\\n\r]\\)*" nil t)
+      ;; We're at an EOLL or point-max.
+      (setq c-new-END (min (1+ (point)) (point-max)))
+      ;; FIXME!!!  Write a clever comment here.
+      (goto-char c-new-END)
+      (when (equal (c-get-char-property (1- (point)) 'syntax-table) '(15))
+	(backward-sexp)
+	(c-clear-char-property (1- c-new-END) 'syntax-table)
+	(c-clear-char-property (point) 'syntax-table)))
+
+     (t (if (memq (char-before c-new-END) c-string-delims)
+	    (c-clear-char-property (1- c-new-END) 'syntax-table))))
+
+    (when (eq end-literal-type 'string)
+      (c-clear-char-property (1- (cdr end-limits)) 'syntax-table))
+
+    (when (eq beg-literal-type 'string)
+      (setq c-new-BEG (min c-new-BEG (car beg-limits)))
+      (c-clear-char-property (car beg-limits) 'syntax-table))))
+
+(defun c-after-change-re-mark-unbalanced-strings (beg _end _old-len)
+  ;; Mark any unbalanced strings in the region (c-new-BEG c-new-END) with
+  ;; string fence syntax-table text properties.
+  ;;
+  ;; POINT is undefined both at entry to and exit from this function, the
+  ;; buffer will have been widened, and match data will have been saved.
+  ;;
+  ;; This function is called exclusively as an after-change function via
+  ;; `c-before-font-lock-functions'.
+  (c-save-buffer-state
+      ((cll (progn (goto-char c-new-BEG)
+		   (c-literal-limits)))
+       (beg-literal-type (and cll (c-literal-type cll)))
+       (beg-limits
+	(cond
+	 ((and (eq beg-literal-type 'string)
+	       (c-unescaped-nls-in-string-p (car cll)))
+	  (cons
+	   (car cll)
+	   (progn
+	     (goto-char (1+ (car cll)))
+	     (search-forward-regexp
+	      (cdr (assq (char-after (car cll)) c-string-innards-re-alist))
+	      nil t)
+	     (min (1+ (point)) (point-max)))))
+	 ((and (null beg-literal-type)
+	       (goto-char beg)
+	       (eq (char-before) c-multiline-string-start-char)
+	       (memq (char-after) c-string-delims))
+	  (cons (point)
+		(progn
+		  (forward-char)
+		  (search-forward-regexp
+		   (cdr (assq (char-before) c-string-innards-re-alist)) nil t)
+		  (1+ (point)))))
+	 (cll)))
+       s)
+    (goto-char
+     (cond ((null beg-literal-type)
+	    c-new-BEG)
+	   ((eq beg-literal-type 'string)
+	    (car beg-limits))
+	   (t				; comment
+	    (cdr beg-limits))))
+    (while
+	(and
+	 (< (point) c-new-END)
+	 (progn
+	   ;; Skip over any comments before the next string.
+	   (while (progn
+		    (setq s (parse-partial-sexp (point) c-new-END nil
+						nil s 'syntax-table))
+		    (and (not (nth 3 s))
+			 (< (point) c-new-END)
+			 (not (memq (char-before) c-string-delims)))))
+	   ;; We're at the start of a string.
+	   (memq (char-before) c-string-delims)))
+      (if (c-unescaped-nls-in-string-p (1- (point)))
+	  (looking-at "[^\"]*")
+	(looking-at (cdr (assq (char-before) c-string-innards-re-alist))))
+      (cond
+       ((memq (char-after (match-end 0)) '(?\n ?\r))
+	(c-put-char-property (1- (point)) 'syntax-table '(15))
+	(c-put-char-property (match-end 0) 'syntax-table '(15)))
+       ((or (eq (match-end 0) (point-max))
+	    (eq (char-after (match-end 0)) ?\\)) ; \ at EOB
+	(c-put-char-property (1- (point)) 'syntax-table '(15))))
+      (goto-char (min (1+ (match-end 0)) (point-max)))
+      (setq s nil))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Parsing of quotes.
@@ -1418,7 +1620,8 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; without an intervening call to `before-change-functions' when reverting
   ;; the buffer (see bug #24094).  Whatever the cause, assume that the entire
   ;; buffer has changed.
-  (when (not c-just-done-before-change)
+  (when (and (not c-just-done-before-change)
+	     (not (c-called-from-text-property-change-p)))
     (save-restriction
       (widen)
       (c-before-change (point-min) (point-max))

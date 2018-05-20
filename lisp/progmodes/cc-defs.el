@@ -219,6 +219,7 @@ one of the following symbols:
 
 `bol'   -- beginning of line
 `eol'   -- end of line
+`eoll'  -- end of logical line (i.e. without escaped NL)
 `bod'   -- beginning of defun
 `eod'   -- end of defun
 `boi'   -- beginning of indentation
@@ -253,6 +254,16 @@ to it is returned.  This function does not modify the point or the mark."
 	       ,@(if point `((goto-char ,point)))
 	       (end-of-line)
 	       (point))))
+
+	 ((eq position 'eoll)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (while (progn
+		      (end-of-line)
+		      (prog1 (eq (logand 1 (skip-chars-backward "\\\\")) 1)))
+	       (beginning-of-line 2))
+	     (end-of-line)
+	     (point)))
 
 	 ((eq position 'boi)
 	  `(save-excursion
@@ -452,6 +463,13 @@ to it is returned.  This function does not modify the point or the mark."
   (if (fboundp 'int-to-char)
       `(int-to-char ,integer)
     integer))
+
+(defmacro c-characterp (arg)
+  ;; Return t when ARG is a character (XEmacs) or integer (Emacs), otherwise
+  ;; return nil.
+  (if (integerp ?c)
+      `(integerp ,arg)
+    `(characterp ,arg)))
 
 (defmacro c-last-command-char ()
   ;; The last character just typed.  Note that `last-command-event' exists in

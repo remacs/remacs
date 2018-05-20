@@ -682,33 +682,6 @@ stuff.  Used on level 1 and higher."
 		   ''c-nonbreakable-space-face)))
       ))
 
-(defun c-font-lock-invalid-string ()
-  ;; Assuming the point is after the opening character of a string,
-  ;; fontify that char with `font-lock-warning-face' if the string
-  ;; decidedly isn't terminated properly.
-  ;;
-  ;; This function does hidden buffer changes.
-  (let ((start (1- (point))))
-    (save-excursion
-      (and (eq (elt (parse-partial-sexp start (c-point 'eol)) 8) start)
-	   (if (if (eval-when-compile (integerp ?c))
-		   ;; Emacs
-		   (integerp c-multiline-string-start-char)
-		 ;; XEmacs
-		 (characterp c-multiline-string-start-char))
-	       ;; There's no multiline string start char before the
-	       ;; string, so newlines aren't allowed.
-	       (not (eq (char-before start) c-multiline-string-start-char))
-	     ;; Multiline strings are allowed anywhere if
-	     ;; c-multiline-string-start-char is t.
-	     (not c-multiline-string-start-char))
-	   (if c-string-escaped-newlines
-	       ;; There's no \ before the newline.
-	       (not (eq (char-before (point)) ?\\))
-	     ;; Escaped newlines aren't supported.
-	     t)
-	   (c-put-font-lock-face start (1+ start) 'font-lock-warning-face)))))
-
 (defun c-font-lock-invalid-single-quotes (limit)
   ;; This function will be called from font-lock for a region bounded by POINT
   ;; and LIMIT, as though it were to identify a keyword for
@@ -749,16 +722,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; `c-recognize-<>-arglists' is set.
 
   t `(;; Put a warning face on the opener of unclosed strings that
-      ;; can't span lines.  Later font
+      ;; can't span lines and on the "terminating" newlines.  Later font
       ;; lock packages have a `font-lock-syntactic-face-function' for
       ;; this, but it doesn't give the control we want since any
       ;; fontification done inside the function will be
       ;; unconditionally overridden.
-      ,(c-make-font-lock-search-function
-	;; Match a char before the string starter to make
-	;; `c-skip-comments-and-strings' work correctly.
-	(concat ".\\(" c-string-limit-regexp "\\)")
-	'((c-font-lock-invalid-string)))
+      ("\\s|" 0 font-lock-warning-face t nil)
 
       ;; Invalid single quotes.
       c-font-lock-invalid-single-quotes
