@@ -183,7 +183,7 @@ are not shown in the @kbd{l} or @kbd{L} listings.
 @kindex DEL @r{(Gnus Group mode)}
 @item @key{DEL}
 Move point to the previous group containing unread articles
-(@code{gnus-group-prev-unread-group}.)
+(@code{gnus-group-prev-unread-group}).
 
 @kindex n @r{(Gnus Group mode)}
 @findex gnus-group-next-unread-group
@@ -686,7 +686,7 @@ either in the echo area (if it is short), or in an Emacs buffer named
 @file{*Shell Command Output*}, displayed in another window (if the
 output is long).  The variables @code{resize-mini-windows} and
 @code{max-mini-window-height} (@pxref{Minibuffer Edit}) control when
-the output is considered too long for the echo area.
+Emacs should consider the output to be too long for the echo area.
 
   For instance, one way to decompress a file named @file{foo.gz} is to
 type @kbd{M-! gunzip foo.gz @key{RET}}.  That shell command normally
@@ -1512,8 +1512,8 @@ interface is similar to the @code{more} program.
 @cindex Rlogin
 
   You can login to a remote computer, using whatever commands you
-would from a regular terminal (e.g., using the @code{ssh} or
-@code{telnet} or @code{rlogin} commands), from a Term window.
+would from a regular terminal (e.g., using the @command{ssh} or
+@command{telnet} or @code{rlogin} commands), from a Term window.
 
   A program that asks you for a password will normally suppress
 echoing of the password, so the password will not show up in the
