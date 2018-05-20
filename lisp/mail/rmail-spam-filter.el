@@ -251,7 +251,7 @@ it from rmail file.  Called for each new message retrieved by
         (setq message-subject (mail-fetch-field "Subject"))
         (setq message-content-type (mail-fetch-field "Content-Type"))
         (setq message-spam-status (mail-fetch-field "X-Spam-Status")))
-      ;; Check for blind CC condition.  Set vars such that while
+      ;; Check for blind cc condition.  Set vars such that while
       ;; loop will be bypassed and spam condition will trigger.
       (and rsf-no-blind-cc
            (null message-recipients)

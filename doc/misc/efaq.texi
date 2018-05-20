@@ -4463,11 +4463,11 @@ appropriate regexp.
 @cindex Automatic filing of outgoing mail
 @cindex Mail, saving outgoing automatically
 
-You can either mail yourself a copy by including a @samp{BCC} header in the
+You can either mail yourself a copy by including a @samp{Bcc} header in the
 mail message, or store a copy of the message directly to a file by
-including an @samp{FCC} header.
+including an @samp{Fcc} header.
 
-If you use standard mail, you can automatically create a @samp{BCC} to
+If you use standard mail, you can automatically create a @samp{Bcc} to
 yourself by putting
 
 @lisp
@@ -4475,7 +4475,7 @@ yourself by putting
 @end lisp
 
 @noindent
-in your @file{.emacs} file.  You can automatically include an @samp{FCC}
+in your @file{.emacs} file.  You can automatically include an @samp{Fcc}
 field by putting something like the following in your @file{.emacs}
 file:
 
@@ -4485,7 +4485,7 @@ file:
 
 The output file will be in Unix mail format.
 
-If you use @code{mh-e}, add an @samp{FCC} or @samp{BCC} field to your
+If you use @code{mh-e}, add an @samp{Fcc} or @samp{Bcc} field to your
 components file.
 
 It does not work to put @samp{set record filename} in the @file{.mailrc}
@@ -4562,8 +4562,8 @@ these systems, you should configure @code{movemail} to use @code{flock}.
 
 @c isaacson@@seas.upenn.edu
 Ron Isaacson says: When you hit
-@kbd{r} to reply in Rmail, by default it CCs all of the original
-recipients (everyone on the original @samp{To} and @samp{CC}
+@kbd{r} to reply in Rmail, by default it Ccs all of the original
+recipients (everyone on the original @samp{To} and @samp{Cc}
 lists). With a prefix argument (i.e., typing @kbd{C-u} before @kbd{r}),
 it replies only to the sender.  However, going through the whole
 @kbd{C-u} business every time you want to reply is a pain.  This is the

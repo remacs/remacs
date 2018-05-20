@@ -851,7 +851,7 @@ that knows the exact ordering of the \\( \\) subexpressions.")
 	       (beginning-of-line) (end-of-line)
 	       (1 font-lock-comment-delimiter-face nil t)
 	       (5 font-lock-comment-face nil t)))
-	    '("^\\(X-[a-z0-9-]+\\|In-reply-to\\|Date\\):.*\\(\n[ \t]+.*\\)*$"
+	    '("^\\(X-[a-z0-9-]+\\|In-Reply-To\\|Date\\):.*\\(\n[ \t]+.*\\)*$"
 	      . 'rmail-header-name))))
   "Additional expressions to highlight in Rmail mode.")
 
@@ -3789,7 +3789,7 @@ original message into it."
 
 (defun rmail-reply (just-sender)
   "Reply to the current message.
-Normally include CC: to all other recipients of original message;
+Normally include Cc: to all other recipients of original message;
 prefix argument means ignore them.  While composing the reply,
 use \\[mail-yank-original] to yank the original message into it."
   (interactive "P")
@@ -3823,7 +3823,7 @@ use \\[mail-yank-original] to yank the original message into it."
        (unless just-sender
 	 (if (mail-fetch-field "mail-followup-to" nil t)
 	     ;; If this header field is present, use it instead of the
-	     ;; To and CC fields.
+	     ;; To and Cc fields.
 	     (setq to (mail-fetch-field "mail-followup-to" nil t))
 	   (setq cc (or (mail-fetch-field "cc" nil t) "")
 		 to (or (mail-fetch-field "to" nil t) ""))))))
@@ -4275,7 +4275,7 @@ specifying headers which should not be copied into the new message."
 	      (if mail-self-blind
 		  (if resending
 		      (insert "Resent-Bcc: " (user-login-name) "\n")
-		    (insert "BCC: " (user-login-name) "\n"))))
+		    (insert "Bcc: " (user-login-name) "\n"))))
 	    (goto-char (point-min))
 	    (mail-position-on-field (if resending "Resent-To" "To") t))))))
 

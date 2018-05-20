@@ -708,7 +708,7 @@ RFC822 date when the part was read (@code{Content-Disposition}).
 
 @item recipients
 Who to encrypt/sign the part to.  This field is used to override any
-auto-detection based on the To/CC headers.
+auto-detection based on the To/Cc headers.
 
 @item sender
 Identity used to sign the part.  This field is used to override the

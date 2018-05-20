@@ -338,7 +338,7 @@ You might need to set `uce-mail-reader' before using this."
 	(if mail-default-headers
 	    (insert mail-default-headers))
 	(if mail-default-reply-to
-	    (insert "Reply-to: " mail-default-reply-to "\n"))
+	    (insert "Reply-To: " mail-default-reply-to "\n"))
 	(insert mail-header-separator "\n")
 	;; Insert all our text.  Then go back to the place where we started.
 	(if to (setq to (point)))

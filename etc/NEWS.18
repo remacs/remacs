@@ -201,10 +201,10 @@ is carried over to the expansion that replaces it.
 has the syntax of an ordinary punctuation character.  As a result,
 \[...\] and such like are considered to balance each other.
 
-* Mail-mode automatic Reply-to field.
+* Mail-mode automatic Reply-To field.
 
 If the variable `mail-default-reply-to' is non-`nil', then each time
-you start to compose a message, a Reply-to field is inserted with
+you start to compose a message, a Reply-To field is inserted with
 its contents taken from the value of `mail-default-reply-to'.
 
 * Where is your .emacs file?

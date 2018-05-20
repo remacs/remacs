@@ -438,7 +438,7 @@ The other accent characters, not needed for the chosen language,
 remain normal.
 
 ** Posting articles and sending mail now has M-TAB completion on various
-header fields (Newsgroups, To, CC, ...).
+header fields (Newsgroups, To, Cc, ...).
 
 Completion in the Newsgroups header depends on the list of groups
 known to your news reader.  Completion in the Followup-To header
@@ -2087,7 +2087,7 @@ arguments are ARGS.
 for mail-default-reply-to.
 
 ** When you send a message in Emacs, if you specify an Rmail file with
-the FCC: header field, Emacs converts the message to Rmail format
+the Fcc: header field, Emacs converts the message to Rmail format
 before writing it.  Thus, the file never contains anything but Rmail
 format messages.
 

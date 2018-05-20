@@ -293,7 +293,7 @@ Should be called narrowed to the head of the message."
 		(if mail-parse-charset
 		    (encode-coding-region (point) (point-max)
 					  mail-parse-charset)))
-	       ;; We get this when CC'ing messages to newsgroups with
+	       ;; We get this when Cc'ing messages to newsgroups with
 	       ;; 8-bit names.  The group name mail copy just got
 	       ;; unconditionally encoded.  Previously, it would ask
 	       ;; whether to encode, which was quite confusing for the

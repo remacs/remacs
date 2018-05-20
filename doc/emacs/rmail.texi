@@ -753,24 +753,24 @@ Try sending a bounced message a second time (@code{rmail-retry-failure}).
 to the message you are reading.  To do this, type @kbd{r}
 (@code{rmail-reply}).  This displays a mail composition buffer in
 another window, much like @kbd{C-x 4 m}, but preinitializes the
-@samp{Subject}, @samp{To}, @samp{CC}, @samp{In-reply-to} and
+@samp{Subject}, @samp{To}, @samp{Cc}, @samp{In-Reply-To} and
 @samp{References} header fields based on the message you are replying
 to.  The @samp{To} field starts out as the address of the person who
-sent the message you received, and the @samp{CC} field starts out with
+sent the message you received, and the @samp{Cc} field starts out with
 all the other recipients of that message.
 
 @vindex mail-dont-reply-to-names
   You can exclude certain recipients from being included automatically
 in replies, using the variable @code{mail-dont-reply-to-names}.  Its
 value should be a regular expression; any recipients that match are
-excluded from the @samp{CC} field.  They are also excluded from the
+excluded from the @samp{Cc} field.  They are also excluded from the
 @samp{To} field, unless this would leave the field empty.  If this
 variable is @code{nil}, then the first time you compose a reply it is
 initialized to a default value that matches your own address.
 
   To reply only to the sender of the original message, enter
 the reply command with a numeric argument: @kbd{C-u r} or @kbd{1 r}.
-This omits the @samp{CC} field completely for a particular reply.
+This omits the @samp{Cc} field completely for a particular reply.
 
   Once the mail composition buffer has been initialized, editing and
 sending the mail goes as usual (@pxref{Sending Mail}).  You can edit
@@ -939,8 +939,8 @@ commas.
   @kbd{C-M-r @var{rcpts} @key{RET}} (@code{rmail-summary-by-recipients})
 makes a partial summary mentioning only the messages that have one or
 more recipients matching the regular expression @var{rcpts}.  This is matched
-against the @samp{To}, @samp{From}, and @samp{CC} headers (supply a prefix
-argument to exclude the @samp{CC} header).
+against the @samp{To}, @samp{From}, and @samp{Cc} headers (supply a prefix
+argument to exclude the @samp{Cc} header).
 
 @kindex C-M-t @r{(Rmail)}
 @findex rmail-summary-by-topic

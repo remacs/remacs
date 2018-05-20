@@ -5592,7 +5592,7 @@ command uses the process/prefix convention.
 Mail a wide reply to the author of the current article
 (@code{gnus-summary-wide-reply}).  A @dfn{wide reply} is a reply that
 goes out to all people listed in the @code{To}, @code{From} (or
-@code{Reply-to}) and @code{Cc} headers.  If @code{Mail-Followup-To} is
+@code{Reply-To}) and @code{Cc} headers.  If @code{Mail-Followup-To} is
 present, that's used instead.
 
 @item S W
@@ -5616,7 +5616,7 @@ message to the mailing list, and include the original message
 Mail a very wide reply to the author of the current article
 (@code{gnus-summary-wide-reply}).  A @dfn{very wide reply} is a reply
 that goes out to all people listed in the @code{To}, @code{From} (or
-@code{Reply-to}) and @code{Cc} headers in all the process/prefixed
+@code{Reply-To}) and @code{Cc} headers in all the process/prefixed
 articles.  This command uses the process/prefix convention.
 
 @item S V

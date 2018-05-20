@@ -174,7 +174,7 @@ inserted into the head of the outgoing mail.
 The @code{message-wide-reply} pops up a message buffer that's a wide
 reply to the message in the current buffer.  A @dfn{wide reply} is a
 reply that goes out to all people listed in the @code{To}, @code{From}
-(or @code{Reply-to}) and @code{Cc} headers.
+(or @code{Reply-To}) and @code{Cc} headers.
 
 @vindex message-wide-reply-to-function
 Message uses the normal methods to determine where wide replies are to go,
@@ -2056,7 +2056,7 @@ Check whether the @code{Newsgroups} header exists and is not empty.
 @item quoting-style
 Check whether text follows last quoted portion.
 @item repeated-newsgroups
-Check whether the @code{Newsgroups} and @code{Followup-to} headers
+Check whether the @code{Newsgroups} and @code{Followup-To} headers
 contains repeated group names.
 @item reply-to
 Check whether the @code{Reply-To} header looks ok.
@@ -2069,7 +2069,7 @@ Check for the existence of version and sendsys commands.
 @item shoot
 Check whether the domain part of the @code{Message-ID} header looks ok.
 @item shorten-followup-to
-Check whether to add a @code{Followup-to} header to shorten the number
+Check whether to add a @code{Followup-To} header to shorten the number
 of groups to post to.
 @item signature
 Check the length of the signature.
@@ -2080,7 +2080,7 @@ Check whether the @code{Subject} header exists and is not empty.
 @item subject-cmsg
 Check the subject for commands.
 @item valid-newsgroups
-Check whether the @code{Newsgroups} and @code{Followup-to} headers
+Check whether the @code{Newsgroups} and @code{Followup-To} headers
 are valid syntactically.
 @end table
 

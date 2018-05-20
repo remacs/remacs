@@ -324,7 +324,7 @@ message and scan line."
       ;; message in your +outbox, and best of all doesn't break threading for
       ;; the recipient if you reply to a message in your +outbox.
       (setq mh-send-args (concat "-msgid " mh-send-args))
-      ;; The default BCC encapsulation will make a MIME message unreadable.
+      ;; The default Bcc encapsulation will make a MIME message unreadable.
       ;; With nmh use the -mime arg to prevent this.
       (if (and (mh-variant-p 'nmh)
                (mh-goto-header-field "Bcc:")

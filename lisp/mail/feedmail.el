@@ -1396,7 +1396,7 @@ It shows the simple addresses and gets a confirmation.  Use as:
 When this hook runs, the current buffer is already the appropriate
 buffer.  It has already had all the header prepping from the standard
 package.  The next step after running the hook will be to save the
-message via FCC: processing. The hook might be interested in these:
+message via Fcc: processing. The hook might be interested in these:
 \(1) `feedmail-prepped-text-buffer' contains the header and body of the
 message, ready to go; (2) `feedmail-address-list' contains a list
 of simplified recipients of addresses which are to be given to the
@@ -1607,7 +1607,7 @@ Feeds the buffer to it."
   "Function which actually calls sendmail as a subprocess.
 Feeds the buffer to it.  Probably has some flaws for Resent-* and other
 complicated cases.  Takes addresses from message headers and
-might disappoint you with BCC: handling.  In case of odd results, consult
+might disappoint you with Bcc: handling.  In case of odd results, consult
 local gurus."
   (require 'sendmail)
   (feedmail-say-debug ">in-> feedmail-buffer-to-sendmail %s" addr-listoid)

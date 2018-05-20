@@ -321,11 +321,11 @@ for `smtpmail-try-auth-method'.")
 	    (goto-char (1+ delimline))
 	    (if (eval mail-mailer-swallows-blank-line)
 		(newline))
-	    ;; Find and handle any FCC fields.
+	    ;; Find and handle any Fcc fields.
 	    (goto-char (point-min))
-	    (if (re-search-forward "^FCC:" delimline t)
+	    (if (re-search-forward "^Fcc:" delimline t)
 		;; Force `mail-do-fcc' to use the encoding of the mail
-		;; buffer to encode outgoing messages on FCC files.
+		;; buffer to encode outgoing messages on Fcc files.
 		(let ((coding-system-for-write
 		       ;; mbox files must have Unix EOLs.
 		       (coding-system-change-eol-conversion
@@ -992,9 +992,9 @@ Returns an error if the server cannot be contacted."
 	  ;; RESENT-* fields should stop processing of regular fields.
 	  (save-excursion
 	    (setq addr-regexp
-		  (if (re-search-forward "^Resent-\\(to\\|cc\\|bcc\\):"
+		  (if (re-search-forward "^Resent-\\(To\\|Cc\\|Bcc\\):"
 					 header-end t)
-		      "^Resent-\\(to\\|cc\\|bcc\\):"
+		      "^Resent-\\(To\\|Cc\\|Bcc\\):"
 		    "^\\(To:\\|Cc:\\|Bcc:\\)")))
 
 	  (while (re-search-forward addr-regexp header-end t)
@@ -1027,14 +1027,14 @@ Returns an error if the server cannot be contacted."
 	    (setq smtpmail-recipient-address-list recipient-address-list))))))
 
 (defun smtpmail-do-bcc (header-end)
-  "Delete [Resent-]BCC: and their continuation lines from the header area.
-There may be multiple BCC: lines, and each may have arbitrarily
+  "Delete [Resent-]Bcc: and their continuation lines from the header area.
+There may be multiple Bcc: lines, and each may have arbitrarily
 many continuation lines."
   (let ((case-fold-search t))
     (save-excursion
       (goto-char (point-min))
-      ;; iterate over all BCC: lines
-      (while (re-search-forward "^\\(RESENT-\\)?BCC:" header-end t)
+      ;; iterate over all Bcc: lines
+      (while (re-search-forward "^\\(RESENT-\\)?Bcc:" header-end t)
 	(delete-region (match-beginning 0)
 		       (progn (forward-line 1) (point)))
 	;; get rid of any continuation lines

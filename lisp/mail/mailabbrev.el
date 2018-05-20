@@ -25,7 +25,7 @@
 
 ;;; Commentary:
 
-;; This file ensures that, when the point is in a To:, CC:, BCC:, or From:
+;; This file ensures that, when the point is in a To:, Cc:, Bcc:, or From:
 ;; field, word-abbrevs are defined for each of your mail aliases.  These
 ;; aliases will be defined from your .mailrc file (or the file specified by
 ;; `mail-personal-alias-file') if it exists.  Your mail aliases will
@@ -414,7 +414,7 @@ with a space."
 ;;; Syntax tables and abbrev-expansion
 
 (defcustom mail-abbrev-mode-regexp
-  "^\\(Resent-\\)?\\(To\\|From\\|CC\\|BCC\\|Reply-to\\):"
+  "^\\(Resent-\\)?\\(To\\|From\\|Cc\\|Bcc\\|Reply-To\\):"
   "Regexp matching mail headers in which mail abbrevs should be expanded.
 This string will be handed to `looking-at' with point at the beginning
 of the current line; if it matches, abbrev mode will be turned on, otherwise
@@ -477,7 +477,7 @@ of a mail alias.  The value is set up, buffer-local, when first needed.")
 	      ;; Necessary for `message-read-from-minibuffer' to work.
 	      (window-minibuffer-p))
 
-          ;; We are in a To: (or CC:, or whatever) header or a minibuffer,
+          ;; We are in a To: (or Cc:, or whatever) header or a minibuffer,
           ;; and should use word-abbrevs to expand mail aliases.
           (let ((local-abbrev-table mail-abbrevs))
 

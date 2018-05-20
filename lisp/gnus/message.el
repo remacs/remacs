@@ -1252,13 +1252,13 @@ called and its result is inserted."
   ;; Ease the transition from mail-mode to message-mode.  See bugs#4431, 5555.
   (concat (if (and (boundp 'mail-default-reply-to)
 		   (stringp mail-default-reply-to))
-	      (format "Reply-to: %s\n" mail-default-reply-to))
+	      (format "Reply-To: %s\n" mail-default-reply-to))
 	  (if (and (boundp 'mail-self-blind)
 		   mail-self-blind)
-	      (format "BCC: %s\n" user-mail-address))
+	      (format "Bcc: %s\n" user-mail-address))
 	  (if (and (boundp 'mail-archive-file-name)
 		   (stringp mail-archive-file-name))
-	      (format "FCC: %s\n" mail-archive-file-name))
+	      (format "Fcc: %s\n" mail-archive-file-name))
 	  mail-default-headers)
   "A string of header lines to be inserted in outgoing mails."
   :version "23.2"
@@ -2597,7 +2597,7 @@ PGG manual, depending on the value of `mml2015-use'."
 		       'message)))))
 
 (defun message-all-recipients ()
-  "Return a list of all recipients in the message, looking at TO, CC and BCC.
+  "Return a list of all recipients in the message, looking at TO, Cc and Bcc.
 
 Each recipient is in the format of `mail-extract-address-components'."
   (mapcan (lambda (header)
@@ -3563,7 +3563,7 @@ Note that this should not be used in newsgroups."
       (message-remove-header "Disposition-Notification-To"))
     (message-goto-eoh)
     (insert (format "Disposition-Notification-To: %s\n"
-		    (or (message-field-value "Reply-to")
+		    (or (message-field-value "Reply-To")
 			(message-field-value "From")
 			(message-make-from))))))
 
@@ -5439,7 +5439,7 @@ Otherwise, generate and save a value for `canlock-password' first."
 	       (concat "^" (regexp-quote mail-header-separator) "$")
 	       nil t)
 	  (replace-match "" t t ))
-	;; Process FCC operations.
+	;; Process Fcc operations.
 	(while list
 	  (setq file (pop list))
 	  (if (string-match "^[ \t]*|[ \t]*\\(.*\\)[ \t]*$" file)

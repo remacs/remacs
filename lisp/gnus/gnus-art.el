@@ -198,9 +198,9 @@ Possible values in this list are:
   `newsgroups'  Newsgroup identical to Gnus group.
   `to-address'  To identical to To-address.
   `to-list'     To identical to To-list.
-  `cc-list'     CC identical to To-list.
-  `followup-to' Followup-to identical to Newsgroups.
-  `reply-to'    Reply-to identical to From.
+  `cc-list'     Cc identical to To-list.
+  `followup-to' Followup-To identical to Newsgroups.
+  `reply-to'    Reply-To identical to From.
   `date'        Date less than four days old.
   `long-to'     To and/or Cc longer than 1024 characters.
   `many-to'     Multiple To and/or Cc."
@@ -208,9 +208,9 @@ Possible values in this list are:
 	      (const :tag "Newsgroups identical to Gnus group." newsgroups)
 	      (const :tag "To identical to To-address." to-address)
 	      (const :tag "To identical to To-list." to-list)
-	      (const :tag "CC identical to To-list." cc-list)
-	      (const :tag "Followup-to identical to Newsgroups." followup-to)
-	      (const :tag "Reply-to identical to From." reply-to)
+	      (const :tag "Cc identical to To-list." cc-list)
+	      (const :tag "Followup-To identical to Newsgroups." followup-to)
+	      (const :tag "Reply-To identical to From." reply-to)
 	      (const :tag "Date less than four days old." date)
 	      (const :tag "To and/or Cc longer than 1024 characters." long-to)
 	      (const :tag "Multiple To and/or Cc headers." many-to))
@@ -1947,7 +1947,7 @@ always hide."
 		(when (and cc to-list
 			   (ignore-errors
 			     (gnus-string-equal
-			      ;; only one address in CC
+			      ;; only one address in Cc
 			      (nth 1 (mail-extract-address-components cc))
 			      to-list)))
 		  (gnus-article-hide-header "cc"))))
