@@ -4263,9 +4263,17 @@ the call to \\[sql-product-interactive] with
                 (funcall (sql-get-product-feature product :sqli-comint-func)
                          product
                          (sql-get-product-feature product :sqli-options)
-                         (if (and new-name (string-prefix-p "SQL" new-name t))
-                             new-name
-                           (concat "SQL: " new-name))))
+                         (cond
+                          ((zerop new-name)
+                           "*SQL*")
+                          ((stringp new-name)
+                           (if (string-prefix-p "*SQL: " new-name t)
+                               new-name
+                             (concat "*SQL: " new-name "*")))
+                          ((eq new-name '(4))
+                           (sql-rename-buffer new-name))
+                          (t
+                           (format "*SQL: %s*" new-name)))))
 
               ;; Set SQLi mode.
               (let ((sql-interactive-product product))
