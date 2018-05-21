@@ -991,6 +991,14 @@ This regexp should match Tramp file names but no other file
 names.  When calling `tramp-register-file-name-handlers', the
 initial value is overwritten by the car of `tramp-file-name-structure'.")
 
+;;;###autoload
+(defcustom tramp-ignored-file-name-regexp nil
+  "Regular expression matching file names that are not under Tramp’s control."
+  :version "27.1"
+  :group 'tramp
+  :type '(choice (const nil) string)
+  :require 'tramp)
+
 (defconst tramp-completion-file-name-regexp-default
   (concat
    "\\`/\\("
@@ -1279,12 +1287,15 @@ entry does not exist, return nil."
 ;;;###tramp-autoload
 (defun tramp-tramp-file-p (name)
   "Return t if NAME is a string with Tramp file name syntax."
-  (and (stringp name)
+  (and tramp-mode (stringp name)
        ;; No "/:" and "/c:".  This is not covered by `tramp-file-name-regexp'.
        (not (string-match-p
 	     (if (memq system-type '(cygwin windows-nt))
 		 "^/[[:alpha:]]?:" "^/:")
 	     name))
+       ;; Excluded file names.
+       (or (null tramp-ignored-file-name-regexp)
+	   (not (string-match-p tramp-ignored-file-name-regexp name)))
        (string-match-p tramp-file-name-regexp name)
        t))
 
@@ -2254,7 +2265,7 @@ preventing reentrant calls of Tramp.")
   "Invoke Tramp file name handler.
 Falls back to normal file name handler if no Tramp file name handler exists."
   (let ((filename (apply 'tramp-file-name-for-operation operation args)))
-    (if (and tramp-mode (tramp-tramp-file-p filename))
+    (if (tramp-tramp-file-p filename)
 	(save-match-data
           (setq filename (tramp-replace-environment-variables filename))
           (with-parsed-tramp-file-name filename nil

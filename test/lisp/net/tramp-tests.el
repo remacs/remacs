@@ -267,6 +267,12 @@ handled properly.  BODY shall not contain a timeout."
   (should-not (tramp-tramp-file-p "/::"))
   (should-not (tramp-tramp-file-p "/:@:"))
   (should-not (tramp-tramp-file-p "/:[]:"))
+  ;; When `tramp-mode' is nil, Tramp is not activated.
+  (let (tramp-mode)
+    (should-not (tramp-tramp-file-p "/method:user@host:")))
+  ;; `tramp-ignored-file-name-regexp' suppresses Tramp.
+  (let ((tramp-ignored-file-name-regexp "^/method:user@host:"))
+    (should-not (tramp-tramp-file-p "/method:user@host:")))
   ;; Methods shall be at least two characters on MS Windows, except
   ;; the default method.
   (let ((system-type 'windows-nt))

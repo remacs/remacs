@@ -422,6 +422,10 @@ or NextCloud hosted files and directories.
 +++
 *** Validated passwords are saved by auth-source backends which support this.
 
++++
+*** The user option 'tramp-ignored-file-name-regexp' allows to disable
+Tramp for some look-alike remote file names.
+
 ---
 ** The options.el library has been removed.
 It was obsolete since Emacs 22.1, replaced by customize.

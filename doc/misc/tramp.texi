@@ -3994,6 +3994,7 @@ in @file{.emacs}:
 @end lisp
 
 @item
+@vindex tramp-mode
 To disable both @value{tramp} (and Ange FTP), set @code{tramp-mode} to
 @code{nil} in @file{.emacs}.  @strong{Note}, that we don't use
 @code{customize-set-variable}, in order to avoid loading @value{tramp}.
@@ -4001,6 +4002,21 @@ To disable both @value{tramp} (and Ange FTP), set @code{tramp-mode} to
 @lisp
 (setq tramp-mode nil)
 @end lisp
+
+@item
+@vindex tramp-ignored-file-name-regexp
+To deactivate @value{tramp} for some look-alike remote file names, set
+@code{tramp-ignored-file-name-regexp} to a proper regexp in
+@file{.emacs}.  @strong{Note}, that we don't use
+@code{customize-set-variable}, in order to avoid loading
+@value{tramp}.
+
+@lisp
+(setq tramp-ignored-file-name-regexp "\\`/ssh:example\\.com:")
+@end lisp
+
+This is needed, if you mount for example a virtual file system on your
+local host's root directory as @file{/ssh:example.com:}.
 
 @item
 To unload @value{tramp}, type @kbd{M-x tramp-unload-tramp @key{RET}}.
