@@ -118,6 +118,7 @@ SEVERITY-PREDICATE is used to setup
     (flymake-goto-prev-error)
     (should (eq 'flymake-error (face-at-point)))))
 
+(defvar ruby-mode-hook)
 (ert-deftest ruby-backend ()
   "Test the ruby backend"
   (skip-unless (executable-find "ruby"))
@@ -129,11 +130,14 @@ SEVERITY-PREDICATE is used to setup
          ;; for this particular yuckiness
          (abbreviated-home-dir nil))
     (unwind-protect
-        (flymake-tests--with-flymake ("test.rb")
-          (flymake-goto-next-error)
-          (should (eq 'flymake-warning (face-at-point)))
-          (flymake-goto-next-error)
-          (should (eq 'flymake-error (face-at-point))))
+        (let ((ruby-mode-hook
+               (lambda ()
+                 (setq flymake-diagnostic-functions '(ruby-flymake-simple)))))
+          (flymake-tests--with-flymake ("test.rb")
+            (flymake-goto-next-error)
+            (should (eq 'flymake-warning (face-at-point)))
+            (flymake-goto-next-error)
+            (should (eq 'flymake-error (face-at-point)))))
       (delete-directory tempdir t))))
 
 (ert-deftest different-diagnostic-types ()
