@@ -475,13 +475,10 @@ Control Structures
 * Sequencing::              Evaluation in textual order.
 * Conditionals::            @code{if}, @code{cond}, @code{when}, @code{unless}.
 * Combining Conditions::    @code{and}, @code{or}, @code{not}.
+* Pattern-Matching Conditional::  How to use @code{pcase} and friends.
 * Iteration::               @code{while} loops.
 * Generators::              Generic sequences and coroutines.
 * Nonlocal Exits::          Jumping out of a sequence.
-
-Conditionals
-
-* Pattern matching case statement::  How to use @code{pcase}.
 
 Nonlocal Exits
 
