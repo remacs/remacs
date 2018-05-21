@@ -108,7 +108,7 @@
 
 ;;;###autoload
 (defmacro pcase (exp &rest cases)
-  "Evaluate EXP and attempt to match it against structural patterns.
+  "Evaluate EXP to get EXPVAL; try passing control to one of CASES.
 CASES is a list of elements of the form (PATTERN CODE...).
 
 A structural PATTERN describes a template that identifies a class
@@ -427,7 +427,11 @@ any kind of error."
 (defmacro pcase-defmacro (name args &rest body)
   "Define a new kind of pcase PATTERN, by macro expansion.
 Patterns of the form (NAME ...) will be expanded according
-to this macro."
+to this macro.
+
+By convention, DOC should use \"EXPVAL\" to stand
+for the result of evaluating EXP (first arg to `pcase').
+\n(fn NAME ARGS [DOC] &rest BODY...)"
   (declare (indent 2) (debug defun) (doc-string 3))
   ;; Add the function via `fsym', so that an autoload cookie placed
   ;; on a pcase-defmacro will cause the macro to be loaded on demand.
