@@ -4264,7 +4264,7 @@ the call to \\[sql-product-interactive] with
                          product
                          (sql-get-product-feature product :sqli-options)
                          (cond
-                          ((zerop new-name)
+                          ((null new-name)
                            "*SQL*")
                           ((stringp new-name)
                            (if (string-prefix-p "*SQL: " new-name t)
