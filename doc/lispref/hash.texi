@@ -293,8 +293,8 @@ This function returns a hash code for Lisp object @var{obj}.  Its
 result reflects identity of @var{obj}, but not its contents.
 
 If two objects @var{obj1} and @var{obj2} are @code{eq}, then
-@code{(xhash @var{obj1})} and @code{(xhash @var{obj2})} are the same
-integer.
+@code{(sxhash-eq @var{obj1})} and @code{(sxhash-eq @var{obj2})} are
+the same integer.
 @end defun
 
 @defun sxhash-eql obj
@@ -304,8 +304,8 @@ except for the case where the object is a float number, in which case
 hash code is generated for the value.
 
 If two objects @var{obj1} and @var{obj2} are @code{eql}, then
-@code{(xhash @var{obj1})} and @code{(xhash @var{obj2})} are the same
-integer.
+@code{(sxhash-eql @var{obj1})} and @code{(sxhash-eql @var{obj2})} are
+the same integer.
 @end defun
 
   This example creates a hash table whose keys are strings that are
