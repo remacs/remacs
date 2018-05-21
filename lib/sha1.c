@@ -122,21 +122,29 @@ sha1_finish_ctx (struct sha1_ctx *ctx, void *resbuf)
 }
 #endif
 
+#ifdef GL_COMPILE_CRYPTO_STREAM
+
+#include "af_alg.h"
+
 /* Compute SHA1 message digest for bytes read from STREAM.  The
-   resulting message digest number will be written into the 16 bytes
+   resulting message digest number will be written into the 20 bytes
    beginning at RESBLOCK.  */
 int
 sha1_stream (FILE *stream, void *resblock)
 {
-  struct sha1_ctx ctx;
-  size_t sum;
+  switch (afalg_stream (stream, "sha1", resblock, SHA1_DIGEST_SIZE))
+    {
+    case 0: return 0;
+    case -EIO: return 1;
+    }
 
   char *buffer = malloc (BLOCKSIZE + 72);
   if (!buffer)
     return 1;
 
-  /* Initialize the computation context.  */
+  struct sha1_ctx ctx;
   sha1_init_ctx (&ctx);
+  size_t sum;
 
   /* Iterate over full file contents.  */
   while (1)
@@ -194,6 +202,7 @@ sha1_stream (FILE *stream, void *resblock)
   free (buffer);
   return 0;
 }
+#endif
 
 #if ! HAVE_OPENSSL_SHA1
 /* Compute SHA1 message digest for LEN bytes beginning at BUFFER.  The

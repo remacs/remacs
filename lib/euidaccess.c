@@ -29,7 +29,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+#if defined _WIN32 && ! defined __CYGWIN__
 # include <io.h>
 #else
 # include "root-uid.h"
@@ -87,7 +87,7 @@ euidaccess (const char *file, int mode)
   return accessx (file, mode, ACC_SELF);
 #elif HAVE_EACCESS                      /* FreeBSD */
   return eaccess (file, mode);
-#elif (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__  /* mingw */
+#elif defined _WIN32 && ! defined __CYGWIN__  /* mingw */
   return _access (file, mode);
 #else              /* Mac OS X, NetBSD, OpenBSD, HP-UX, Solaris, Cygwin, BeOS */
 

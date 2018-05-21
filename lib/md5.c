@@ -134,21 +134,29 @@ md5_finish_ctx (struct md5_ctx *ctx, void *resbuf)
 }
 #endif
 
+#if defined _LIBC || defined GL_COMPILE_CRYPTO_STREAM
+
+#include "af_alg.h"
+
 /* Compute MD5 message digest for bytes read from STREAM.  The
    resulting message digest number will be written into the 16 bytes
    beginning at RESBLOCK.  */
 int
 md5_stream (FILE *stream, void *resblock)
 {
-  struct md5_ctx ctx;
-  size_t sum;
+  switch (afalg_stream (stream, "md5", resblock, MD5_DIGEST_SIZE))
+    {
+    case 0: return 0;
+    case -EIO: return 1;
+    }
 
   char *buffer = malloc (BLOCKSIZE + 72);
   if (!buffer)
     return 1;
 
-  /* Initialize the computation context.  */
+  struct md5_ctx ctx;
   md5_init_ctx (&ctx);
+  size_t sum;
 
   /* Iterate over full file contents.  */
   while (1)
@@ -206,6 +214,7 @@ process_partial_block:
   free (buffer);
   return 0;
 }
+#endif
 
 #if ! HAVE_OPENSSL_MD5
 /* Compute MD5 message digest for LEN bytes beginning at BUFFER.  The

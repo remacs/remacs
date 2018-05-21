@@ -24,6 +24,9 @@
 
 #include "stdio-impl.h"
 
+/* This file is not used on systems that already have the __fpending function,
+   namely glibc >= 2.2, Solaris >= 7, Android API >= 23.  */
+
 /* Return the number of pending (aka buffered, unflushed)
    bytes on the stream, FP, that is open for writing.  */
 size_t

@@ -32,7 +32,7 @@
 #endif
 #undef fcntl
 
-#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+#if defined _WIN32 && ! defined __CYGWIN__
 /* Get declarations of the native Windows API functions.  */
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
@@ -376,7 +376,7 @@ rpl_fcntl (int fd, int action, /* arg */...)
 #if !HAVE_FCNTL
     case F_GETFD:
       {
-# if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+# if defined _WIN32 && ! defined __CYGWIN__
         HANDLE handle = (HANDLE) _get_osfhandle (fd);
         DWORD flags;
         if (handle == INVALID_HANDLE_VALUE

@@ -58,10 +58,10 @@ AC_DEFUN([gl_EARLY],
   # Code from module count-leading-zeros:
   # Code from module count-one-bits:
   # Code from module count-trailing-zeros:
-  # Code from module crypto/md5:
-  # Code from module crypto/sha1:
-  # Code from module crypto/sha256:
-  # Code from module crypto/sha512:
+  # Code from module crypto/md5-buffer:
+  # Code from module crypto/sha1-buffer:
+  # Code from module crypto/sha256-buffer:
+  # Code from module crypto/sha512-buffer:
   # Code from module d-type:
   # Code from module diffseq:
   # Code from module dirent:
