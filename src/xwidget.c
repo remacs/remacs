@@ -683,6 +683,7 @@ DEFUN ("xwidget-webkit-goto-uri",
 {
   WEBKIT_FN_INIT ();
   CHECK_STRING (uri);
+  uri = ENCODE_FILE (uri);
   webkit_web_view_load_uri (WEBKIT_WEB_VIEW (xw->widget_osr), SSDATA (uri));
   return Qnil;
 }
