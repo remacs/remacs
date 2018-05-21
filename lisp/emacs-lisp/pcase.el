@@ -199,15 +199,30 @@ Emacs Lisp manual for more information and examples."
     (require 'help-fns)
     (with-temp-buffer
       (insert (or (cdr ud) main))
-      (mapatoms
-       (lambda (symbol)
-         (let ((me (get symbol 'pcase-macroexpander)))
-           (when me
-             (insert "\n\n-- ")
-             (let* ((doc (documentation me 'raw)))
-               (setq doc (help-fns--signature symbol doc me
-                                              (indirect-function me) nil))
-               (insert "\n" (or doc "Not documented.")))))))
+      ;; Presentation Note: For conceptual continuity, we guarantee
+      ;; that backquote doc immediately follows main pcase doc.
+      ;; (The order of the other extensions is unimportant.)
+      (let (more)
+        ;; Collect all the extensions.
+        (mapatoms (lambda (symbol)
+                    (let ((me (get symbol 'pcase-macroexpander)))
+                      (when me
+                        (push (cons symbol me)
+                              more)))))
+        ;; Ensure backquote is first.
+        (let ((x (assq '\` more)))
+          (setq more (cons x (delq x more))))
+        ;; Do the output.
+        (while more
+          (let* ((pair (pop more))
+                 (symbol (car pair))
+                 (me (cdr pair))
+                 (doc (documentation me 'raw)))
+            (insert "\n\n-- ")
+            (setq doc (help-fns--signature symbol doc me
+                                           (indirect-function me)
+                                           nil))
+            (insert "\n" (or doc "Not documented.")))))
       (let ((combined-doc (buffer-string)))
         (if ud (help-add-fundoc-usage combined-doc (car ud)) combined-doc)))))
 
