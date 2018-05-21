@@ -4270,8 +4270,13 @@ the call to \\[sql-product-interactive] with
                            (if (string-prefix-p "*SQL: " new-name t)
                                new-name
                              (concat "*SQL: " new-name "*")))
-                          ((eq new-name '(4))
-                           (sql-rename-buffer new-name))
+                          ((equal new-name '(4))
+                           (concat
+                            "*SQL: "
+                            (read-string
+                             "Buffer name (\"*SQL: XXX*\"; enter `XXX'): "
+                             sql-alternate-buffer-name)
+                            "*"))
                           (t
                            (format "*SQL: %s*" new-name)))))
 
