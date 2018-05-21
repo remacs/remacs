@@ -196,6 +196,8 @@ If not found, return nil."
 
 (eval-and-compile
   (pcase-defmacro radix-tree-leaf (vpat)
+    "Build a `pcase' pattern that matches radix-tree leaf EXPVAL.
+VPAT is a `pcase' pattern to extract the value."
     ;; FIXME: We'd like to use a negative pattern (not consp), but pcase
     ;; doesn't support it.  Using `atom' works but generates sub-optimal code.
     `(or `(t . ,,vpat) (and (pred atom) ,vpat))))

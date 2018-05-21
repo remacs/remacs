@@ -1177,7 +1177,7 @@ enclosed in `(and ...)'.
 (pcase-defmacro rx (&rest regexps)
   "Build a `pcase' pattern matching `rx' regexps.
 The REGEXPS are interpreted as by `rx'.  The pattern matches if
-the regular expression so constructed matches the object, as if
+the regular expression so constructed matches EXPVAL, as if
 by `string-match'.
 
 In addition to the usual `rx' constructs, REGEXPS can contain the
