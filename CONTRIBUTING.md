@@ -106,11 +106,5 @@ guidelines:
 
 Below are a list of common mistakes we catch in code review.
 
-* Lisp_Object v. LispObject. The name `Lisp_Object` is from C code and
-  it represents an `int`. It will be a 64bit number on 64bit systems
-  and 32bit on 32bit systems. `LispObject` is a Rust wrapper which
-  provides methods. C functions need the C representation. Rust
-  functions usually take `LispObject` but sometimes they use
-  `Lisp_Object` instead.
 * Prefer `EmacsInt::from(foo)` over `foo as EmacsInt`. The compiler will
   be able to warn you if the conversion is lossy.
