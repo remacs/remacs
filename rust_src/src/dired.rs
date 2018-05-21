@@ -1,12 +1,13 @@
 //! Lisp functions for making directory listings.
 
-use libc;
+#[cfg(not(windows))] use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{build_string, globals};
+#[cfg(not(windows))] use remacs_sys::{build_string};
+use remacs_sys::{globals};
 
 use lisp::{defsubr, LispObject};
-use lists::list;
+#[cfg(not(windows))] use lists::list;
 
 fn get_user_real_login_name() -> LispObject {
     unsafe { globals.f_Vuser_real_login_name }
