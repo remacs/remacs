@@ -822,10 +822,10 @@ programming language, the examples and guided tours will give you an
 opportunity to get acquainted with Emacs as a Lisp programming
 environment.  GNU Emacs supports programming and provides tools that
 you will want to become comfortable using, such as @kbd{M-.} (the key
-which invokes the @code{find-tag} command).  You will also learn about
-buffers and other objects that are part of the environment.
-Learning about these features of Emacs is like learning new routes
-around your home town.
+which invokes the @code{xref-find-definitions} command).  You will
+also learn about buffers and other objects that are part of the
+environment.  Learning about these features of Emacs is like learning
+new routes around your home town.
 
 @ignore
 In addition, I have written several programs as extended examples.
@@ -5357,7 +5357,7 @@ Here is a brief summary of the various functions discussed in this chapter.
 Print the documentation for a function or variable.
 Conventionally bound to @kbd{C-h f} and @kbd{C-h v}.
 
-@item find-tag
+@item xref-find-definitions
 Find the file containing the source for a function or variable and
 switch buffers to it, positioning point at the beginning of the item.
 Conventionally bound to @kbd{M-.} (that's a period following the
@@ -5411,8 +5411,8 @@ Use @code{if} and @code{get-buffer} to write a function that prints a
 message telling you whether a buffer exists.
 
 @item
-Using @code{find-tag}, find the source for the @code{copy-to-buffer}
-function.
+Using @code{xref-find-definitions}, find the source for the
+@code{copy-to-buffer} function.
 @end itemize
 
 @node More Complex
@@ -14753,10 +14753,11 @@ creating one if none already exists."
 
 @noindent
 (The most recent version of the @code{find-file} function definition
-permits you to specify optional wildcards to visit multiple files; that
-makes the definition more complex and we will not discuss it here,
-since it is not relevant.  You can see its source using either
-@kbd{M-.} (@code{find-tag}) or @kbd{C-h f} (@code{describe-function}).)
+permits you to specify optional wildcards to visit multiple files;
+that makes the definition more complex and we will not discuss it
+here, since it is not relevant.  You can see its source using either
+@kbd{M-.} (@code{xref-find-definitions}) or @kbd{C-h f}
+(@code{describe-function}).)
 
 @ignore
 In Emacs 22
@@ -18543,8 +18544,8 @@ introduction, it comes as a Texinfo source file, so you can read it
 on your computer and as a typeset, printed book.)
 
 Go to the other built-in help that is part of GNU Emacs: the built-in
-documentation for all functions and variables, and @code{find-tag},
-the program that takes you to sources.
+documentation for all functions and variables, and
+@code{xref-find-definitions}, the program that takes you to sources.
 
 Here is an example of how I explore the sources.  Because of its name,
 @file{simple.el} is the file I looked at first, a long time ago.  As
@@ -18580,7 +18581,7 @@ contains the name of the library containing the function's source.
 You can put point over the name of the library and press the @key{RET} key,
 which in this situation is bound to @code{help-follow}, and be taken
 directly to the source, in the same way as @kbd{M-.}
-(@code{find-tag}).
+(@code{xref-find-definitions}).
 
 The definition for @code{describe-function} illustrates how to
 customize the @code{interactive} expression without using the standard
@@ -18588,13 +18589,14 @@ character codes; and it shows how to create a temporary buffer.
 
 (The @code{indent-to} function is written in C rather than Emacs Lisp;
 it is a built-in function.  @code{help-follow} takes you to its
-source as does @code{find-tag}, when properly set up.)
+source as does @code{xref-find-definitions}, when properly set up.)
 
-You can look at a function's source using @code{find-tag}, which is
-bound to @kbd{M-.}  Finally, you can find out what the Reference
-Manual has to say by visiting the manual in Info, and typing @kbd{i}
-(@code{Info-index}) and the name of the function, or by looking up the
-function in the index to a printed copy of the manual.
+You can look at a function's source using
+@code{xref-find-definitions}, which is bound to @kbd{M-.}  Finally,
+you can find out what the Reference Manual has to say by visiting the
+manual in Info, and typing @kbd{i} (@code{Info-index}) and the name of
+the function, or by looking up the function in the index to a printed
+copy of the manual.
 
 Similarly, you can find out what is meant by
 @code{insert-and-inherit}.
