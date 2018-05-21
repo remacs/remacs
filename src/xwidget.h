@@ -47,6 +47,9 @@ struct xwidget
   /* A title used for button labels, for instance.  */
   Lisp_Object title;
 
+  /* Vector of currently executing scripts with callbacks.  */
+  Lisp_Object script_callbacks;
+
   /* Here ends the Lisp part.  "height" is the marker field.  */
 
   int height;

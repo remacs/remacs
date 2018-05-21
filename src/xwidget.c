@@ -362,7 +362,7 @@ webkit_js_to_lisp (JSContextRef context, JSValueRef value)
 static void
 webkit_javascript_finished_cb (GObject      *webview,
                                GAsyncResult *result,
-                               gpointer      lisp_callback)
+                               gpointer      arg)
 {
     WebKitJavascriptResult *js_result;
     JSValueRef value;
@@ -370,6 +370,11 @@ webkit_javascript_finished_cb (GObject      *webview,
     GError *error = NULL;
     struct xwidget *xw = g_object_get_data (G_OBJECT (webview),
                                             XG_XWIDGET);
+    ptrdiff_t script_idx = (ptrdiff_t) arg;
+    Lisp_Object script_callback = AREF (xw->script_callbacks, script_idx);
+    ASET (xw->script_callbacks, script_idx, Qnil);
+    if (!NILP (script_callback))
+      xfree (XSAVE_POINTER (XCAR (script_callback), 0));
 
     js_result = webkit_web_view_run_javascript_finish
       (WEBKIT_WEB_VIEW (webview), result, &error);
@@ -381,18 +386,19 @@ webkit_javascript_finished_cb (GObject      *webview,
         return;
       }
 
-    context = webkit_javascript_result_get_global_context (js_result);
-    value = webkit_javascript_result_get_value (js_result);
-    Lisp_Object lisp_value = webkit_js_to_lisp (context, value);
-    webkit_javascript_result_unref (js_result);
+    if (!NILP (script_callback) && !NILP (XCDR (script_callback)))
+      {
+	context = webkit_javascript_result_get_global_context (js_result);
+	value = webkit_javascript_result_get_value (js_result);
+	Lisp_Object lisp_value = webkit_js_to_lisp (context, value);
 
-    /* Register an xwidget event here, which then runs the callback.
-       This ensures that the callback runs in sync with the Emacs
-       event loop.  */
-    /* FIXME: This might lead to disaster if LISP_CALLBACK's object
-       was garbage collected before now.  See the FIXME in
-       Fxwidget_webkit_execute_script.  */
-    store_xwidget_js_callback_event (xw, XPL (lisp_callback), lisp_value);
+	/* Register an xwidget event here, which then runs the callback.
+	   This ensures that the callback runs in sync with the Emacs
+	   event loop.  */
+	store_xwidget_js_callback_event (xw, XCDR (script_callback), lisp_value);
+      }
+
+    webkit_javascript_result_unref (js_result);
 }
 
 
@@ -684,8 +690,7 @@ DEFUN ("xwidget-webkit-goto-uri",
 DEFUN ("xwidget-webkit-zoom",
        Fxwidget_webkit_zoom, Sxwidget_webkit_zoom,
        2, 2, 0,
-       doc: /* Change the zoom factor of the xwidget webkit instance
-referenced by XWIDGET.  */)
+       doc: /* Change the zoom factor of the xwidget webkit instance referenced by XWIDGET.  */)
   (Lisp_Object xwidget, Lisp_Object factor)
 {
   WEBKIT_FN_INIT ();
@@ -700,12 +705,46 @@ referenced by XWIDGET.  */)
   return Qnil;
 }
 
+/* Save script and fun in the script/callback save vector and return
+   its index.  */
+static ptrdiff_t
+save_script_callback (struct xwidget *xw, Lisp_Object script, Lisp_Object fun)
+{
+  ptrdiff_t script_bytes = STRING_BYTES (XSTRING (script));
+  char *script_data = xmalloc (script_bytes + 1);
+  memcpy (script_data, SSDATA (script), script_bytes + 1);
+
+  ptrdiff_t idx;
+  Lisp_Object cbs = xw->script_callbacks;
+  if (NILP (cbs))
+    xw->script_callbacks = cbs = Fmake_vector (make_number (32), Qnil);
+
+  /* Find first free index.  */
+  for (idx = 0; ; idx++)
+    {
+      if (idx >= ASIZE (cbs))
+	{
+	  /* Resize script/callback save vector.  */
+	  Lisp_Object new_cbs = Fmake_vector (make_number (idx + 32), Qnil);
+	  ptrdiff_t n;
+	  for (n = 0; n < idx; n++)
+	    ASET (new_cbs, n, AREF (cbs, n));
+	  xw->script_callbacks = cbs = new_cbs;
+	}
+      if (NILP (AREF (cbs, idx)))
+	{
+	  ASET (cbs, idx, Fcons (make_save_ptr (script_data), fun));
+	  break;
+	}
+    }
+  return idx;
+}
 
 DEFUN ("xwidget-webkit-execute-script",
        Fxwidget_webkit_execute_script, Sxwidget_webkit_execute_script,
        2, 3, 0,
-       doc: /* Make the Webkit XWIDGET execute JavaScript SCRIPT.  If
-FUN is provided, feed the JavaScript return value to the single
+       doc: /* Make the Webkit XWIDGET execute JavaScript SCRIPT.
+If FUN is provided, feed the JavaScript return value to the single
 argument procedure FUN.*/)
   (Lisp_Object xwidget, Lisp_Object script, Lisp_Object fun)
 {
@@ -714,28 +753,24 @@ argument procedure FUN.*/)
   if (!NILP (fun) && !FUNCTIONP (fun))
     wrong_type_argument (Qinvalid_function, fun);
 
-  GAsyncReadyCallback callback
-    = FUNCTIONP (fun) ? webkit_javascript_finished_cb : NULL;
+  script = ENCODE_SYSTEM (script);
 
-  /* FIXME: The following hack assumes USE_LSB_TAG.  */
-  verify (USE_LSB_TAG);
-  /* FIXME: This hack might lead to disaster if FUN is garbage
-     collected before store_xwidget_js_callback_event makes it visible
-     to Lisp again.  See the FIXME in webkit_javascript_finished_cb.  */
-  gpointer callback_arg = XLP (fun);
+  /* Protect script and fun during GC.  */
+  ptrdiff_t idx = save_script_callback (xw, script, fun);
 
   /* JavaScript execution happens asynchronously.  If an elisp
      callback function is provided we pass it to the C callback
      procedure that retrieves the return value.  */
   webkit_web_view_run_javascript (WEBKIT_WEB_VIEW (xw->widget_osr),
-                                  SSDATA (script),
+                                  XSAVE_POINTER (XCAR (AREF (xw->script_callbacks, idx)), 0),
                                   NULL, /* cancelable */
-                                  callback, callback_arg);
+                                  webkit_javascript_finished_cb,
+				  (gpointer) idx);
   return Qnil;
 }
 
 DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
-       doc: /* Resize XWIDGET.  NEW_WIDTH, NEW_HEIGHT define the new size.  */ )
+       doc: /* Resize XWIDGET to NEW_WIDTH, NEW_HEIGHT.  */ )
   (Lisp_Object xwidget, Lisp_Object new_width, Lisp_Object new_height)
 {
   CHECK_XWIDGET (xwidget);
@@ -1197,6 +1232,16 @@ kill_buffer_xwidgets (Lisp_Object buffer)
             gtk_widget_destroy (xw->widget_osr);
             gtk_widget_destroy (xw->widgetwindow_osr);
           }
+	if (!NILP (xw->script_callbacks))
+	  {
+	    ptrdiff_t idx;
+	    for (idx = 0; idx < ASIZE (xw->script_callbacks); idx++)
+	      {
+		if (!NILP (AREF (xw->script_callbacks, idx)))
+		  xfree (XSAVE_POINTER (XCAR (AREF (xw->script_callbacks, idx)), 0));
+		ASET (xw->script_callbacks, idx, Qnil);
+	      }
+	  }
       }
     }
 }
