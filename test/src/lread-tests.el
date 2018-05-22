@@ -207,4 +207,8 @@ literals (Bug#20852)."
      ;; bug was fixed.
      (eval-buffer))))
 
+(ert-deftest lread-invalid-bytecodes ()
+  (should-error
+   (let ((load-force-doc-strings t)) (read "#[0 \"\"]"))))
+
 ;;; lread-tests.el ends here

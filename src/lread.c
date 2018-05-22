@@ -3829,9 +3829,11 @@ read_vector (Lisp_Object readcharfun, bool bytecodeflag)
 
   tem = read_list (1, readcharfun);
   len = Flength (tem);
+  if (bytecodeflag && XFASTINT (len) <= COMPILED_STACK_DEPTH)
+    error ("Invalid byte code");
   vector = Fmake_vector (len, Qnil);
 
-  size = ASIZE (vector);
+  size = XFASTINT (len);
   ptr = XVECTOR (vector)->contents;
   for (i = 0; i < size; i++)
     {
