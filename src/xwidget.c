@@ -370,7 +370,7 @@ webkit_javascript_finished_cb (GObject      *webview,
     GError *error = NULL;
     struct xwidget *xw = g_object_get_data (G_OBJECT (webview),
                                             XG_XWIDGET);
-    ptrdiff_t script_idx = (ptrdiff_t) arg;
+    ptrdiff_t script_idx = (intptr_t) arg;
     Lisp_Object script_callback = AREF (xw->script_callbacks, script_idx);
     ASET (xw->script_callbacks, script_idx, Qnil);
     if (!NILP (script_callback))
@@ -711,33 +711,20 @@ DEFUN ("xwidget-webkit-zoom",
 static ptrdiff_t
 save_script_callback (struct xwidget *xw, Lisp_Object script, Lisp_Object fun)
 {
-  ptrdiff_t script_bytes = STRING_BYTES (XSTRING (script));
-  char *script_data = xmalloc (script_bytes + 1);
-  memcpy (script_data, SSDATA (script), script_bytes + 1);
-
-  ptrdiff_t idx;
   Lisp_Object cbs = xw->script_callbacks;
   if (NILP (cbs))
     xw->script_callbacks = cbs = Fmake_vector (make_number (32), Qnil);
 
   /* Find first free index.  */
-  for (idx = 0; ; idx++)
-    {
-      if (idx >= ASIZE (cbs))
-	{
-	  /* Resize script/callback save vector.  */
-	  Lisp_Object new_cbs = Fmake_vector (make_number (idx + 32), Qnil);
-	  ptrdiff_t n;
-	  for (n = 0; n < idx; n++)
-	    ASET (new_cbs, n, AREF (cbs, n));
-	  xw->script_callbacks = cbs = new_cbs;
-	}
-      if (NILP (AREF (cbs, idx)))
-	{
-	  ASET (cbs, idx, Fcons (make_save_ptr (script_data), fun));
-	  break;
-	}
-    }
+  ptrdiff_t idx;
+  for (idx = 0; !NILP (AREF (cbs, idx)); idx++)
+    if (idx + 1 == ASIZE (cbs))
+      {
+	xw->script_callbacks = cbs = larger_vector (cbs, 1, -1);
+	break;
+      }
+
+  ASET (cbs, idx, Fcons (make_save_ptr (xlispstrdup (script)), fun));
   return idx;
 }
 
@@ -757,7 +744,7 @@ argument procedure FUN.*/)
   script = ENCODE_SYSTEM (script);
 
   /* Protect script and fun during GC.  */
-  ptrdiff_t idx = save_script_callback (xw, script, fun);
+  intptr_t idx = save_script_callback (xw, script, fun);
 
   /* JavaScript execution happens asynchronously.  If an elisp
      callback function is provided we pass it to the C callback
