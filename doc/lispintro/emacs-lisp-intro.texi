@@ -245,6 +245,10 @@ This master menu first lists each chapter and index; then it lists
 every node in every chapter.
 @end ifnottex
 
+@c Uncomment the 3 lines below, starting with @iftex, if you want the
+@c pages of Preface to be numbered in roman numerals.  Use -9 instead
+@c of -11 for smallbook format.
+
 @c >>>> Set pageno appropriately <<<<
 
 @c The first page of the Preface is a roman numeral; it is the first
@@ -1012,6 +1016,8 @@ bob@@gnu.org
 @c makes a link to something in the first 4 pages though?).
 @c E.g., note that the Emacs manual has a preface, but does not bother
 @c resetting the page numbers back to 1 after that.
+@c Alternatively, uncomment the 3 lines above (search for ``pageno'')
+@c to have the preface numbered in roman numerals.
 @iftex
 @headings off
 @evenheading @thispage @| @| @thischapter
