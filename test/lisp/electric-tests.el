@@ -114,14 +114,30 @@
                                      mode
                                      extra-desc))
            ()
-         ,(format "With |%s|, try input %c at point %d. \
-Should %s |%s| and point at %d"
-                  fixture
-                  char
+         ,(format "Electricity test in a `%s' buffer.\n
+Start with point at %d in a %d-char-long buffer
+like this one:
+
+  |%s|   (buffer start and end are denoted by `|')
+%s
+%s
+Now press the key for: %c
+
+The buffer's contents should %s:
+
+  |%s|
+
+, and point should be at %d."
+                  mode
                   (1+ pos)
-                  (if (string= fixture expected-string)
-                      "stay"
-                    "become")
+                  (length fixture)
+                  fixture
+                  (if fixture-fn (format "\nNow call this:\n\n%s"
+                                         (pp-to-string fixture-fn)) "")
+                  (if bindings (format "\nEnsure the following bindings:\n\n%s"
+                                       (pp-to-string bindings)) "")
+                  char
+                  (if (string= fixture expected-string) "stay" "become")
                   (replace-regexp-in-string "\n" "\\\\n" expected-string)
                   expected-point)
          (electric-pair-test-for ,fixture
