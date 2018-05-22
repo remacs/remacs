@@ -69,9 +69,8 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
         &mut nbytes,
     );
 
-    let new_string = LispObject::from_raw(unsafe {
-        make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt)
-    });
+    let new_string =
+        unsafe { make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt) };
     let mut new_s = new_string.as_string().unwrap();
     unsafe {
         ptr::copy_nonoverlapping(
@@ -103,7 +102,7 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
 /// correct sequence.
 #[lisp_fn]
 pub fn string_to_multibyte(string: LispStringRef) -> LispObject {
-    unsafe { LispObject::from_raw(c_string_to_multibyte(string.as_lisp_obj().to_raw())) }
+    unsafe { c_string_to_multibyte(string.as_lisp_obj().to_raw()) }
 }
 
 /// Return a unibyte string with the same individual chars as STRING.
@@ -124,8 +123,7 @@ pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
             error!("Can't convert {}th character to unibyte", converted_size);
         }
 
-        let raw_ptr = unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) };
-        LispObject::from_raw(raw_ptr)
+        unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) }
     } else {
         string.as_lisp_obj()
     }

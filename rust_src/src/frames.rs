@@ -63,17 +63,17 @@ impl LispFrameRef {
 
     #[inline]
     pub fn minibuffer_window(self) -> LispObject {
-        LispObject::from_raw(unsafe { fget_minibuffer_window(self.as_ptr()) })
+        unsafe { fget_minibuffer_window(self.as_ptr()) }
     }
 
     #[inline]
     pub fn root_window(self) -> LispObject {
-        LispObject::from_raw(unsafe { fget_root_window(self.as_ptr()) })
+        unsafe { fget_root_window(self.as_ptr()) }
     }
 
     #[inline]
     pub fn selected_window(self) -> LispObject {
-        LispObject::from_raw(unsafe { fget_selected_window(self.as_ptr()) })
+        unsafe { fget_selected_window(self.as_ptr()) }
     }
 
     #[inline]
@@ -153,7 +153,7 @@ pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
 /// Return the frame that is now selected.
 #[lisp_fn]
 pub fn selected_frame() -> LispObject {
-    unsafe { LispObject::from_raw(current_frame) }
+    unsafe { current_frame }
 }
 
 /// Return non-nil if OBJECT is a frame which has not been deleted.
@@ -202,7 +202,7 @@ pub fn set_frame_selected_window(
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if frame_ref == selected_frame().as_frame().unwrap() {
-        unsafe { LispObject::from_raw(Fselect_window(window.to_raw(), norecord.to_raw())) }
+        unsafe { Fselect_window(window.to_raw(), norecord.to_raw()) }
     } else {
         frame_ref.set_selected_window(window);
         window
@@ -224,14 +224,14 @@ pub fn framep(object: LispObject) -> LispObject {
 }
 
 fn framep_1(frame: LispFrameRef) -> LispObject {
-    LispObject::from_raw(match unsafe { fget_output_method(frame.as_ptr()) } {
+    match unsafe { fget_output_method(frame.as_ptr()) } {
         output_initial | output_termcap => Qt,
         output_x_window => Qx,
         output_w32 => Qw32,
         output_msdos_raw => Qpc,
         output_ns => Qns,
         _ => panic!("Invalid frame output_method!"),
-    })
+    }
 }
 
 /// The name of the window system that FRAME is displaying through.
@@ -278,7 +278,7 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
     if frame.is_visible() {
         LispObject::constant_t()
     } else if frame.is_iconified() {
-        LispObject::from_raw(Qicon)
+        Qicon
     } else {
         LispObject::constant_nil()
     }
@@ -293,10 +293,10 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 pub fn frame_position(frame: LispObject) -> LispObject {
     let frame_ref = frame_live_or_selected(frame);
     unsafe {
-        LispObject::from_raw(Fcons(
+        Fcons(
             LispObject::from_fixnum(EmacsInt::from(frame_ref.left_pos())).to_raw(),
             LispObject::from_fixnum(EmacsInt::from(frame_ref.top_pos())).to_raw(),
-        ))
+        )
     }
 }
 
