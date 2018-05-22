@@ -1313,16 +1313,13 @@ accomplished with @dfn{directory-local variables}.
 
 @cindex @file{.dir-locals.el} file
   The usual way to define directory-local variables is to put a file
-named @file{.dir-locals.el}@footnote{ On MS-DOS, the name of this file
-should be @file{_dir-locals.el}, due to limitations of the DOS
-filesystems.  If the filesystem is limited to 8+3 file names, the name
-of the file will be truncated by the OS to @file{_dir-loc.el}.
-}@footnote{ You can also use @file{.dir-locals-2.el}, which
-is loaded in addition.  This is useful when @file{.dir-locals.el} is
-under version control in a shared repository and can't be used for
-personal customizations.  } in a
-directory.  Whenever Emacs visits any file in that directory or any of
-its subdirectories, it will apply the directory-local variables
+named @file{.dir-locals.el}@footnote{
+On MS-DOS, the name of this file should be @file{_dir-locals.el}, due
+to limitations of the DOS filesystems.  If the filesystem is limited
+to 8+3 file names, the name of the file will be truncated by the OS to
+@file{_dir-loc.el}.
+}in a directory.  Whenever Emacs visits any file in that directory or
+any of its subdirectories, it will apply the directory-local variables
 specified in @file{.dir-locals.el}, as though they had been defined as
 file-local variables for that file (@pxref{File Variables}).  Emacs
 searches for @file{.dir-locals.el} starting in the directory of the
@@ -1330,6 +1327,11 @@ visited file, and moving up the directory tree.  To avoid slowdown,
 this search is skipped for remote files.  If needed, the search can be
 extended for remote files by setting the variable
 @code{enable-remote-dir-locals} to @code{t}.
+
+  You can also use @file{.dir-locals-2.el}; if found, Emacs loads it
+in addition to @file{.dir-locals.el}.  This is useful when
+@file{.dir-locals.el} is under version control in a shared repository
+and can't be used for personal customizations.
 
   The @file{.dir-locals.el} file should hold a specially-constructed
 list, which maps major mode names (symbols) to alists
