@@ -232,7 +232,10 @@
 	  "session" "baz" "secret"
 	  :method "ssh" :user "joe" :host "other-host"))
 
-	;; Search the items.
+	;; Search the items.  `secrets-search-items' uses
+	;; `secrets-search-item-paths' internally, it is sufficient to
+	;; test only one of them.
+	(should-not (secrets-search-item-paths "session" :user "john"))
 	(should-not (secrets-search-items "session" :user "john"))
 	(should-not
          (secrets-search-items "session" :xdg:schema "org.gnu.Emacs.foo"))

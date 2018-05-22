@@ -602,16 +602,16 @@ If successful, return the object path of the collection."
 	 (secrets-get-item-property item-path "Label"))
        (secrets-get-items collection-path)))))
 
-(defun secrets-search-items (collection &rest attributes)
+(defun secrets-search-item-paths (collection &rest attributes)
   "Search items in COLLECTION with ATTRIBUTES.
 ATTRIBUTES are key-value pairs.  The keys are keyword symbols,
 starting with a colon.  Example:
 
-  (secrets-search-items \"Tramp collection\" :user \"joe\")
+  (secrets-search-item-paths \"Tramp collection\" :user \"joe\")
 
-The object labels of the found items are returned as list."
+The object paths of the found items are returned as list."
   (let ((collection-path (secrets-unlock-collection collection))
-	result props)
+	props)
     (unless (secrets-empty-path collection-path)
       ;; Create attributes list.
       (while (consp (cdr attributes))
@@ -626,23 +626,30 @@ The object labels of the found items are returned as list."
 			,(cadr attributes))))
 	      attributes (cddr attributes)))
       ;; Search.  The result is a list of object paths.
-      (setq result
-	    (dbus-call-method
-	     :session secrets-service collection-path
-	     secrets-interface-collection "SearchItems"
-	     (if props
-		 (cons :array props)
-	       '(:array :signature "{ss}"))))
-      ;; Return the found items.
-      (mapcar
-       (lambda (item-path) (secrets-get-item-property item-path "Label"))
-       result))))
+      (dbus-call-method
+       :session secrets-service collection-path
+       secrets-interface-collection "SearchItems"
+       (if props
+	   (cons :array props)
+	 '(:array :signature "{ss}"))))))
+
+(defun secrets-search-items (collection &rest attributes)
+  "Search items in COLLECTION with ATTRIBUTES.
+ATTRIBUTES are key-value pairs.  The keys are keyword symbols,
+starting with a colon.  Example:
+
+  (secrets-search-items \"Tramp collection\" :user \"joe\")
+
+The object labels of the found items are returned as list."
+  (mapcar
+   (lambda (item-path) (secrets-get-item-property item-path "Label"))
+   (apply 'secrets-search-item-paths collection attributes)))
 
 (defun secrets-create-item (collection item password &rest attributes)
   "Create a new item in COLLECTION with label ITEM and password PASSWORD.
-The label ITEM must not be unique in COLLECTION.  ATTRIBUTES are
-key-value pairs set for the created item.  The keys are keyword
-symbols, starting with a colon.  Example:
+The label ITEM does not have to be unique in COLLECTION.
+ATTRIBUTES are key-value pairs set for the created item.  The
+keys are keyword symbols, starting with a colon.  Example:
 
   (secrets-create-item \"Tramp collection\" \"item\" \"geheim\"
    :method \"sudo\" :user \"joe\" :host \"remote-host\")
