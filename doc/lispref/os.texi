@@ -2314,7 +2314,7 @@ to be outputting to an erasable screen.  The idea is that you specify
 Lisp programs to run; when they are finished, Emacs should exit.  The
 way to specify the programs to run is with @samp{-l @var{file}}, which
 loads the library named @var{file}, or @samp{-f @var{function}}, which
-calls @var{function} with no arguments, or @samp{--eval @var{form}}.
+calls @var{function} with no arguments, or @samp{--eval=@var{form}}.
 
   Any Lisp program output that would normally go to the echo area,
 either using @code{message}, or using @code{prin1}, etc., with
