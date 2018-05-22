@@ -513,7 +513,7 @@ pointer_align (void *ptr, int alignment)
 
 #define macro_PNTR_ADD(p, i) ((p) + (i))
 
-static char * ATTRIBUTE_NO_SANITIZE_UNDEFINED ATTRIBUTE_UNUSED
+static ATTRIBUTE_NO_SANITIZE_UNDEFINED ATTRIBUTE_UNUSED char *
 PNTR_ADD (char *p, EMACS_UINT i)
 {
   return macro_PNTR_ADD (p, i);
