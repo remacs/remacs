@@ -30,13 +30,13 @@ In order to use `make_float` in the Rust code, the "foreign function" needs to b
 
 ```rust
 extern "C" {
-    pub fn make_float(float_value: c_double) -> Lisp_Object;
+    pub fn make_float(float_value: c_double) -> LispObject;
 }
 ```
 
 There are two remaining unknowns:
 1. `c_double`
-2. `Lisp_Object`
+2. `LispObject`
 
 First, `c_double` is a type representing a C `double`. It is defined in the [`libc`](https://doc.rust-lang.org/book/first-edition/ffi.html#a-note-about-libc) crate and imported in Remacs as follows:
 
@@ -48,10 +48,10 @@ use libc::{c_double, /* ... */ };
 // ...
 ```
 
-Second, `Lisp_Object` is a struct containing an EmacsInt:
+Second, `LispObject` is a struct containing an EmacsInt:
 
 ```rust
-pub struct Lisp_Object(EmacsInt);
+pub struct LispObject(EmacsInt);
 ```
 
 The later is a type generated at build time (cf. [build.rs](http://doc.crates.io/build-script.html)) to mimic how they are in C:
@@ -61,7 +61,7 @@ Now everything is defined, `make_float` can be used in Rust. For example in `rem
 ```rust
     #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
-        LispObject::from_raw(unsafe { make_float(v) })
+        unsafe { make_float(v) }
     }
 ```
 
