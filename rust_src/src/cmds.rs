@@ -524,7 +524,7 @@ pub extern "C" fn keys_of_cmds() {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_syms_of_cmds() {
+pub extern "C" fn syms_of_cmds() {
     def_lisp_sym!(Qinternal_auto_fill, "internal-auto-fill");
     def_lisp_sym!(Qundo_auto_amalgamate, "undo-auto-amalgamate");
     #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -534,6 +534,10 @@ pub extern "C" fn rust_syms_of_cmds() {
     def_lisp_sym!(Qoverwrite_mode_binary, "overwrite-mode-binary");
     def_lisp_sym!(Qexpand_abbrev, "expand-abbrev");
     def_lisp_sym!(Qpost_self_insert_hook, "post-self-insert-hook");
+
+    /// Hook run at the end of `self-insert-command'.
+    /// This is run after inserting the character.
+    defvar_lisp!(f_Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/cmds_exports.rs"));

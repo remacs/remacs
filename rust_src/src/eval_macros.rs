@@ -129,6 +129,84 @@ macro_rules! def_lisp_sym {
     ($name:expr, $value:expr) => {};
 }
 
+/// Macros we use to define forwarded Lisp variables.
+/// These are used in the syms_of_FILENAME functions.
+///
+/// An ordinary (not in buffer_defaults, per-buffer, or per-keyboard)
+/// lisp variable is actually a field in `struct emacs_globals'.  The
+/// field's name begins with "f_", which is a convention enforced by
+/// these macros.  Each such global has a corresponding #define in
+/// globals.h; the plain name should be used in the code.
+///
+/// E.g., the global "cons_cells_consed" is declared as "int
+/// f_cons_cells_consed" in globals.h, but there is a define:
+///
+///    #define cons_cells_consed globals.f_cons_cells_consed
+///
+/// All C code uses the `cons_cells_consed' name.  This is all done
+/// this way to support indirection for multi-threaded Emacs.
+#[macro_export]
+macro_rules! defvar_lisp {
+    ($fvname:ident, $lname:expr, $value:expr) => {
+        {
+            static mut o_fwd: ::remacs_sys::Lisp_Objfwd = ::remacs_sys::Lisp_Objfwd {
+                ty: ::remacs_sys::Lisp_Fwd_Obj,
+                objvar: std::ptr::null_mut(),
+            };
+            unsafe { ::remacs_sys::defvar_lisp(&mut o_fwd,
+                                               $lname.as_ptr() as *const i8,
+                                               &mut ::remacs_sys::globals.$fvname);
+            }
+            unsafe { ::remacs_sys::globals.$fvname = $value; }
+        }
+    };
+}
+#[macro_export]
+macro_rules! defvar_lisp_nopro {
+    ($fvname:ident, $lname:expr, $value:expr) => {
+        {
+            static mut o_fwd: ::remacs_sys::Lisp_Objfwd = ::remacs_sys::Lisp_Objfwd {
+                ty: ::remacs_sys::Lisp_Fwd_Obj,
+                objvar: std::ptr::null_mut(),
+            };
+            unsafe { ::remacs_sys::defvar_lisp_nopro(&mut o_fwd,
+                                                     $lname.as_ptr() as *const i8,
+                                                     &mut ::remacs_sys::globals.$fvname); }
+            unsafe { ::remacs_sys::globals.$fvname = $value; }
+        }
+    };
+}
+#[macro_export]
+macro_rules! defvar_bool {
+    ($fvname:ident, $lname:expr, $value:expr) => {
+        {
+            static mut o_fwd: ::remacs_sys::Lisp_Boolfwd = ::remacs_sys::Lisp_Boolfwd {
+                ty: ::remacs_sys::Lisp_Fwd_Bool,
+                boolvar: std::ptr::null_mut(),
+            };
+            unsafe { ::remacs_sys::defvar_bool(&mut o_fwd,
+                                               $lname.as_ptr() as *const i8,
+                                               &mut ::remacs_sys::globals.$fvname); }
+            unsafe { ::remacs_sys::globals.$fvname = $value; }
+        }
+    };
+}
+#[macro_export]
+macro_rules! defvar_int {
+    ($fvname:ident, $lname:expr, $value:expr) => {
+        {
+            static mut o_fwd: ::remacs_sys::Lisp_Intfwd = ::remacs_sys::Lisp_Intfwd {
+                ty: ::remacs_sys::Lisp_Fwd_Int,
+                intvar: std::ptr::null_mut(),
+            };
+            unsafe { ::remacs_sys::defvar_int(&mut o_fwd,
+                                              $lname.as_ptr() as *const i8,
+                                              &mut ::remacs_sys::globals.$fvname); }
+            unsafe { ::remacs_sys::globals.$fvname = $value; }
+        }
+    };
+}
+
 #[allow(unused_macros)]
 macro_rules! declare_GC_protected_static {
     ($var: ident, $value: expr) => {

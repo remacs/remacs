@@ -137,6 +137,25 @@ pub extern "C" fn scan_rust_file(
             let name = CString::new(&caps[1]).unwrap();
             let value = CString::new(&caps[2]).unwrap();
             add_global(SYMBOL, name.as_ptr(), 0, value.as_ptr());
+        } else if line.starts_with("defvar_") {
+            // defvar_lisp!(f_Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
+            lazy_static! {
+                static ref RE: Regex = Regex::new(r#"defvar_(.+?)!\((.+?),\s+"(.+?)",\s+(.+?)\);"#).unwrap();
+            }
+            let caps = RE.captures(line).unwrap();
+            let kindstr = &caps[1];
+            let kind = match kindstr {
+                "lisp" => LISP_OBJECT,
+                "lisp_nopro" => LISP_OBJECT,
+                "bool" => BOOLEAN,
+                "int" => EMACS_INTEGER,
+                _ => panic!("unknown macro 'defvar_{}' found; either you have a typo in {} or you need to update docfile.rs`",
+                            kindstr, filename),
+            };
+            let fvname = &caps[2];
+            assert!(fvname.starts_with("f_V"));
+            let vname = CString::new(fvname.splitn(2, "_").nth(1).unwrap()).unwrap();
+            add_global(kind, vname.as_ptr() as *const i8, 0, ptr::null());
         }
     }
     stdout().flush().unwrap();

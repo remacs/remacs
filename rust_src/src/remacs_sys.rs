@@ -1817,3 +1817,19 @@ extern "C" {
     pub fn Fmove_to_column(column: LispObject, force: LispObject) -> LispObject;
     pub fn Fmake_string(length: LispObject, init: LispObject) -> LispObject;
 }
+
+extern "C" {
+    pub fn defvar_lisp(
+        objfwd: *mut Lisp_Objfwd,
+        lname: *const libc::c_char,
+        place: *mut LispObject,
+    );
+    pub fn defvar_lisp_nopro(
+        objfwd: *mut Lisp_Objfwd,
+        lname: *const libc::c_char,
+        place: *mut LispObject,
+    );
+    pub fn defvar_bool(objfwd: *mut Lisp_Boolfwd, lname: *const libc::c_char, place: *mut bool);
+    pub fn defvar_int(objfwd: *mut Lisp_Intfwd, lname: *const libc::c_char, place: *mut EmacsInt);
+    pub fn defvar_kboard(objfwd: *mut Lisp_Kboard_Objfwd, lname: *const libc::c_char, index: u32);
+}
