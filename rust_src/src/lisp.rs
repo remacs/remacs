@@ -29,6 +29,7 @@ use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, ma
 
 use buffers::{LispBufferRef, LispOverlayRef};
 use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
+use eval::FUNCTIONP;
 use fonts::LispFontRef;
 use frames::LispFrameRef;
 use hashtable::LispHashTableRef;
@@ -1642,6 +1643,10 @@ impl LispObject {
     #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
         unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil) }
+    }
+
+    pub fn is_function(self) -> bool {
+        FUNCTIONP(self)
     }
 }
 

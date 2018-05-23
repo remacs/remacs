@@ -310,7 +310,7 @@ do_symval_forwarding (register union Lisp_Fwd *valcontents)
 /* Used to signal a user-friendly error when symbol WRONG is
    not a member of CHOICE, which should be a list of symbols.  */
 
-void
+extern void
 wrong_choice (Lisp_Object choice, Lisp_Object wrong)
 {
   ptrdiff_t i = 0, len = XINT (Flength (choice));
@@ -340,7 +340,7 @@ wrong_choice (Lisp_Object choice, Lisp_Object wrong)
 /* Used to signal a user-friendly error if WRONG is not a number or
    integer/floating-point number outsize of inclusive MIN..MAX range.  */
 
-static void
+extern void
 wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 {
   AUTO_STRING (value_should_be_from, "Value should be from ");
@@ -351,104 +351,32 @@ wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 	    wrong);
 }
 
-/* Store NEWVAL into SYMBOL, where VALCONTENTS is found in the value cell
-   of SYMBOL.  If SYMBOL is buffer-local, VALCONTENTS should be the
-   buffer-independent contents of the value cell: forwarded just one
-   step past the buffer-localness.
-
-   BUF non-zero means set the value in buffer BUF instead of the
-   current buffer.  This only plays a role for per-buffer variables.  */
-
-static void
-store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newval, struct buffer *buf)
+extern void update_buffer_defaults(Lisp_Object* objvar, Lisp_Object newval)
 {
-  switch (XFWDTYPE (valcontents))
+  /* If this variable is a default for something stored
+     in the buffer itself, such as default-fill-column,
+     find the buffers that don't have local values for it
+     and update them.  */
+  if (objvar > (Lisp_Object *) &buffer_defaults
+      && objvar < (Lisp_Object *) (&buffer_defaults + 1))
+  {
+    int offset = ((char *) objvar
+                  - (char *) &buffer_defaults);
+    int idx = PER_BUFFER_IDX (offset);
+
+    Lisp_Object tail, buf;
+
+    if (idx <= 0)
+      return;
+
+    FOR_EACH_LIVE_BUFFER (tail, buf)
     {
-    case Lisp_Fwd_Int:
-      CHECK_NUMBER (newval);
-      *XINTFWD (valcontents)->intvar = XINT (newval);
-      break;
+      struct buffer *b = XBUFFER (buf);
 
-    case Lisp_Fwd_Bool:
-      *XBOOLFWD (valcontents)->boolvar = !NILP (newval);
-      break;
-
-    case Lisp_Fwd_Obj:
-      *XOBJFWD (valcontents)->objvar = newval;
-
-      /* If this variable is a default for something stored
-	 in the buffer itself, such as default-fill-column,
-	 find the buffers that don't have local values for it
-	 and update them.  */
-      if (XOBJFWD (valcontents)->objvar > (Lisp_Object *) &buffer_defaults
-	  && XOBJFWD (valcontents)->objvar < (Lisp_Object *) (&buffer_defaults + 1))
-	{
-	  int offset = ((char *) XOBJFWD (valcontents)->objvar
-			- (char *) &buffer_defaults);
-	  int idx = PER_BUFFER_IDX (offset);
-
-	  Lisp_Object tail, buf;
-
-	  if (idx <= 0)
-	    break;
-
-	  FOR_EACH_LIVE_BUFFER (tail, buf)
-	    {
-	      struct buffer *b = XBUFFER (buf);
-
-	      if (! PER_BUFFER_VALUE_P (b, idx))
-		set_per_buffer_value (b, offset, newval);
-	    }
-	}
-      break;
-
-    case Lisp_Fwd_Buffer_Obj:
-      {
-	int offset = XBUFFER_OBJFWD (valcontents)->offset;
-	Lisp_Object predicate = XBUFFER_OBJFWD (valcontents)->predicate;
-
-	if (!NILP (newval))
-	  {
-	    if (SYMBOLP (predicate))
-	      {
-		Lisp_Object prop;
-
-		if ((prop = Fget (predicate, Qchoice), !NILP (prop)))
-		  {
-		    if (NILP (Fmemq (newval, prop)))
-		      wrong_choice (prop, newval);
-		  }
-		else if ((prop = Fget (predicate, Qrange), !NILP (prop)))
-		  {
-		    Lisp_Object min = XCAR (prop), max = XCDR (prop);
-		    if (! NUMBERP (newval)
-			|| NILP (CALLN (Fleq, min, newval, max)))
-		      wrong_range (min, max, newval);
-		  }
-		else if (FUNCTIONP (predicate))
-		  {
-		    if (NILP (call1 (predicate, newval)))
-		      wrong_type_argument (predicate, newval);
-		  }
-	      }
-	  }
-	if (buf == NULL)
-	  buf = current_buffer;
-	set_per_buffer_value (buf, offset, newval);
-      }
-      break;
-
-    case Lisp_Fwd_Kboard_Obj:
-      {
-	char *base = (char *) FRAME_KBOARD (SELECTED_FRAME ());
-	char *p = base + XKBOARD_OBJFWD (valcontents)->offset;
-	*(Lisp_Object *) p = newval;
-      }
-      break;
-
-    default:
-      emacs_abort (); /* goto def; */
+      if (! PER_BUFFER_VALUE_P (b, idx))
+        set_per_buffer_value (b, offset, newval);
     }
+  }
 }
 
 /* Set up SYMBOL to refer to its global binding.  This makes it safe

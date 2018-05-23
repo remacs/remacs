@@ -1,26 +1,33 @@
 //! data helpers
 
-use libc::c_int;
+use libc::{self, c_int};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{aset_multibyte_string, build_string, globals, CHAR_TABLE_SET, CHECK_IMPURE};
+use remacs_sys::{aset_multibyte_string, build_string, emacs_abort, fget_terminal, globals,
+                 set_per_buffer_value, update_buffer_defaults, wrong_choice, wrong_range,
+                 CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{EmacsInt, Lisp_Misc_Type, Lisp_Type, PseudovecType};
-use remacs_sys::{Fcons, Ffset, Fpurecopy};
-use remacs_sys::{Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
+use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
+use remacs_sys::{Lisp_Buffer, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj, Lisp_Fwd_Int,
+                 Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
 use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
-                 Qcompiled_function, Qcondition_variable, Qcons, Qcyclic_function_indirection,
-                 Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity,
-                 Qfont_object, Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger,
-                 Qmany, Qmarker, Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess,
-                 Qstring, Qsubr, Qsymbol, Qt, Qterminal, Qthread, Qunevalled, Quser_ptr, Qvector,
-                 Qwindow, Qwindow_configuration};
+                 Qchoice, Qcompiled_function, Qcondition_variable, Qcons,
+                 Qcyclic_function_indirection, Qdefalias_fset_function, Qdefun, Qfinalizer,
+                 Qfloat, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qframe,
+                 Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker, Qmodule_function,
+                 Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol, Qt,
+                 Qterminal, Qthread, Qunevalled, Quser_ptr, Qvector, Qwindow,
+                 Qwindow_configuration};
 
+use frames::selected_frame;
 use keymap::get_keymap;
 use lisp::{LispObject, LispSubrRef};
 use lisp::{defsubr, is_autoload};
-use lists::{get, put};
+use lists::{get, memq, put};
+use math::leq;
 use multibyte::{is_ascii, is_single_byte_char};
 use obarray::loadhist_attach;
+use threads::ThreadState;
 
 /// Find the function at the end of a chain of symbol function indirections.
 
@@ -312,6 +319,75 @@ pub fn subr_arity(subr: LispSubrRef) -> LispObject {
 pub fn subr_name(subr: LispSubrRef) -> LispObject {
     let name = subr.symbol_name();
     LispObject::from_raw(unsafe { build_string(name) })
+}
+
+/// Store NEWVAL into SYMBOL, where VALCONTENTS is found in the value cell
+/// of SYMBOL.  If SYMBOL is buffer-local, VALCONTENTS should be the
+/// buffer-independent contents of the value cell: forwarded just one
+/// step past the buffer-localness.
+///
+/// BUF non-zero means set the value in buffer BUF instead of the
+/// current buffer.  This only plays a role for per-buffer variables.
+#[no_mangle]
+pub extern "C" fn store_symval_forwarding(
+    valcontents: *mut Lisp_Fwd,
+    newval: LispObject,
+    mut buf: *mut Lisp_Buffer,
+) {
+    match unsafe { (*valcontents).u_intfwd.ty } {
+        Lisp_Fwd_Int => unsafe { (*(*valcontents).u_intfwd.intvar) = newval.as_fixnum_or_error() },
+        Lisp_Fwd_Bool => unsafe { (*(*valcontents).u_boolfwd.boolvar) = newval.is_not_nil() },
+        Lisp_Fwd_Obj => {
+            unsafe { (*(*valcontents).u_objfwd.objvar) = newval };
+            unsafe { update_buffer_defaults((*valcontents).u_objfwd.objvar, newval) };
+        }
+        Lisp_Fwd_Buffer_Obj => {
+            let offset = unsafe { (*valcontents).u_buffer_objfwd.offset };
+            let predicate = unsafe { (*valcontents).u_buffer_objfwd.predicate };
+
+            if newval.is_not_nil() {
+                if predicate.is_symbol() {
+                    let mut prop = unsafe { Fget(predicate, Qchoice) };
+                    if prop.is_not_nil() {
+                        if memq(newval, prop).is_not_nil() {
+                            unsafe { wrong_choice(prop, newval) };
+                        }
+                    } else {
+                        prop = unsafe { Fget(predicate, Qrange) };
+                        if prop.is_cons() {
+                            let (min, max) = prop.as_cons_or_error().as_tuple();
+                            let args = [min, newval, max];
+                            if !newval.is_number() || leq(&args) {
+                                unsafe { wrong_range(min, max, newval) };
+                            }
+                        } else if predicate.is_function() {
+                            if call!(predicate, newval).is_nil() {
+                                wrong_type!(predicate, newval);
+                            }
+                        }
+                    }
+                }
+            }
+            if buf.is_null() {
+                buf = ThreadState::current_buffer().as_mut();
+            }
+            unsafe { set_per_buffer_value(buf, offset as isize, newval) };
+        }
+        Lisp_Fwd_Kboard_Obj => {
+            let frame = selected_frame().as_frame_or_error();
+            if !frame.is_live() {
+                unsafe { emacs_abort() };
+            }
+            unsafe {
+                let kboard = (*fget_terminal(frame.as_ptr())).kboard;
+                let base = kboard as *mut libc::c_schar;
+                let offset = (*valcontents).u_kboard_objfwd.offset as isize;
+                let p: *mut libc::c_schar = base.offset(offset);
+                *(p as *mut LispObject) = newval;
+            }
+        }
+        _ => unsafe { emacs_abort() },
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

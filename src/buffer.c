@@ -5920,3 +5920,9 @@ bget_overlays_after(const struct buffer *b)
 {
   return b->overlays_after;
 }
+
+extern void
+set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
+{
+  *(Lisp_Object *)(offset + (char *) b) = value;
+}
