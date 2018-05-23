@@ -999,8 +999,8 @@ summary buffer using @key{SPC} and @key{DEL}.  However, in the summary
 buffer scrolling past the end or the beginning of a message with
 @key{SPC} or @key{DEL} goes, respectively, to the next or previous
 undeleted message.  Customize the
-@code{rmail-summary-scroll-between-messages} option to nil to disable
-scrolling to next/previous messages.
+@code{rmail-summary-scroll-between-messages} option to @code{nil} to
+disable scrolling to next/previous messages.
 
 @findex rmail-summary-undelete-many
 @kbd{M-u} (@code{rmail-summary-undelete-many}) undeletes all deleted

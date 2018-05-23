@@ -719,6 +719,13 @@ breakpoint (e.g. with "f" and "o") by customizing the new option
 This allows you to enlarge the maximum recursion depth when
 instrumenting code.
 
+*** 'edebug-prin1-to-string' now aliases 'cl-prin1-to-string'.
+This means edebug output is affected by variables 'cl-print-readably'
+and 'cl-print-compiled'.  To completely restore the previous printing
+behavior, use
+
+    (fset 'edebug-prin1-to-string #'prin1-to-string)
+
 ** Eshell
 
 *** 'eshell-input-filter's value is now a named function
