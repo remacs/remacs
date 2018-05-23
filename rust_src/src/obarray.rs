@@ -97,8 +97,8 @@ pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
         return obarray;
     }
 
-    let obarray = LispObject::from_raw(obarray);
-    let v = unsafe { obarray.as_vectorlike_unchecked().as_vector() };
+    // A valid obarray is a non-empty vector.
+    let v = obarray.as_vector();
     if v.map_or(0, |v_1| v_1.len()) == 0 {
         // If Vobarray is now invalid, force it to be valid.
         if LispObject::from_raw(unsafe { globals.f_Vobarray }).eq(obarray) {
@@ -107,7 +107,7 @@ pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
         wrong_type!(Qvectorp, obarray);
     }
 
-    obarray.to_raw()
+    obarray
 }
 
 #[no_mangle]
@@ -195,9 +195,14 @@ pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObj
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(name = "intern", c_name = "intern", min = "1")]
-pub fn lisp_intern(string: LispObject, obarray: Option<LispObarrayRef>) -> LispObject {
-    let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
-    obarray.intern(string)
+pub fn lisp_intern(string: LispObject, obarray: LispObject) -> LispObject {
+    let obarray_ref = if obarray.is_nil() {
+        LispObarrayRef::global()
+    } else {
+        obarray.as_obarray_or_error()
+    };
+
+    obarray_ref.intern(string)
 }
 
 extern "C" fn mapatoms_1(sym: LispObject, function: LispObject) {
