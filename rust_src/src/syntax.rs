@@ -19,7 +19,7 @@ pub fn syntax_table() -> LispObject {
 /// Scan forward if COUNT is positive, backward if COUNT is negative.
 /// Return the character number of the position thus found.
 ///
-/// A \"list", in this context, refers to a balanced parenthetical
+/// A "list", in this context, refers to a balanced parenthetical
 /// grouping, as determined by the syntax table.
 ///
 /// If DEPTH is nonzero, treat that as the nesting depth of the starting

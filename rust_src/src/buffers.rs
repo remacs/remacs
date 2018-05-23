@@ -317,8 +317,8 @@ impl LispBufferRef {
         self.syntax_table = LispObject::from(table).to_raw();
     }
 
-    ///Set whether per-buffer variable with index IDX has a buffer-local
-    ///value in buffer.  VAL zero means it does't.
+    /// Set whether per-buffer variable with index IDX has a buffer-local
+    /// value in buffer.  VAL zero means it does't.
     // Similar to SET_PER_BUFFER_VALUE_P macro in C
     #[inline]
     pub fn set_per_buffer_value_p(&mut self, idx: usize, val: c_uchar) {
