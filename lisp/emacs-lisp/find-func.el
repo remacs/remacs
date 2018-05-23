@@ -305,8 +305,8 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
                                       (* space) "\"" ,fname))))
       (with-current-buffer (find-file-noselect file)
         (goto-char (point-min))
-        (unless (re-search-forward regex nil t)
-          (unless (re-search-forward lisp-fn-name-regex nil t)
+        (unless (re-search-forward lisp-fn-name-regex nil t)
+          (unless (re-search-forward regex nil t)
             (error "Can't find source for %s" identifier)))
         (cons (current-buffer) (match-beginning 0))))))
 
