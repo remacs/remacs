@@ -948,7 +948,7 @@ fn run_hook_with_args_internal(
 
     if val.eq_raw(Qunbound) || val.is_nil() {
         LispObject::constant_nil()
-    } else if !val.is_cons() || val.is_module_function() {
+    } else if !val.is_cons() || FUNCTIONP(val) {
         args[0] = val;
         func(args)
     } else {
