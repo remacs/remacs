@@ -1037,7 +1037,14 @@ putting them between parentheses.  The parentheses mark the boundaries
 of the list.  Sometimes a list is preceded by an apostrophe @samp{'},
 called a @dfn{single-quote} in Lisp.@footnote{A single-quote is an
 abbreviation for the special form @code{quote}; you need not think
-about special forms now.  @xref{Complications}.}  Lists are the basis
+about special forms now.
+@ifnottex
+@xref{Complications}.
+@end ifnottex
+@iftex
+@xref{Lisp Interpreter}.
+@end iftex
+}  Lists are the basis
 of Lisp.
 
 @menu
@@ -16400,9 +16407,9 @@ Install @code{graph-symbol}, @code{graph-blank},
 @iftex
 @ref{Readying a Graph, , Readying a Graph},
 @end iftex
-@ifinfo
+@ifnottex
 @ref{Columns of a graph},
-@end ifinfo
+@end ifnottex
 and @code{graph-body-print}.
 
 @need 800
@@ -19181,11 +19188,14 @@ Local variables can only be accessed
 within the @code{let} that defines them or the function that specifies
 them in an argument list (and within expressions called by them).
 
-@ignore
 @c texi2dvi fails when the name of the section is within ifnottex ...
+@ifnottex
 (@xref{Prevent confusion, , @code{let} Prevents Confusion}, and
+@end ifnottex
+@iftex
+(@xref{Permanent Installation, , @code{let} Prevents Confusion}, and
+@end iftex
 @ref{defun, , The @code{defun} Macro}.)
-@end ignore
 
 @node yank
 @appendixsec @code{yank}
