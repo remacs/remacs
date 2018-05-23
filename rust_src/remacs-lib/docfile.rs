@@ -142,20 +142,21 @@ pub extern "C" fn scan_rust_file(
             lazy_static! {
                 static ref RE: Regex = Regex::new(r#"defvar_(.+?)!\((.+?),\s+"(.+?)",\s+(.+?)\);"#).unwrap();
             }
-            let caps = RE.captures(line).unwrap();
-            let kindstr = &caps[1];
-            let kind = match kindstr {
-                "lisp" => LISP_OBJECT,
-                "lisp_nopro" => LISP_OBJECT,
-                "bool" => BOOLEAN,
-                "int" => EMACS_INTEGER,
-                _ => panic!("unknown macro 'defvar_{}' found; either you have a typo in {} or you need to update docfile.rs`",
-                            kindstr, filename),
-            };
-            let fvname = &caps[2];
-            assert!(fvname.starts_with("f_V"));
-            let vname = CString::new(fvname.splitn(2, "_").nth(1).unwrap()).unwrap();
-            add_global(kind, vname.as_ptr() as *const i8, 0, ptr::null());
+            for caps in RE.captures_iter(line) {
+                let kindstr = &caps[1];
+                let kind = match kindstr {
+                    "lisp" => LISP_OBJECT,
+                    "lisp_nopro" => LISP_OBJECT,
+                    "bool" => BOOLEAN,
+                    "int" => EMACS_INTEGER,
+                    _ => panic!("unknown macro 'defvar_{}' found; either you have a typo in {} or you need to update docfile.rs`",
+                                kindstr, filename),
+                };
+                let fvname = &caps[2];
+                assert!(fvname.starts_with("f_V"));
+                let vname = CString::new(fvname.splitn(2, "_").nth(1).unwrap()).unwrap();
+                add_global(kind, vname.as_ptr() as *const i8, 0, ptr::null());
+            }
         }
     }
     stdout().flush().unwrap();

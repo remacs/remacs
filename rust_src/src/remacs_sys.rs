@@ -254,6 +254,7 @@ pub struct Lisp_Symbol {
 extern "C" {
     pub fn get_symbol_declared_special(sym: *const Lisp_Symbol) -> bool;
     pub fn get_symbol_redirect(sym: *const Lisp_Symbol) -> symbol_redirect;
+    pub fn set_symbol_redirect(sym: *const Lisp_Symbol, v: symbol_redirect);
 
     pub fn set_symbol_declared_special(sym: *mut Lisp_Symbol, value: bool);
 }
