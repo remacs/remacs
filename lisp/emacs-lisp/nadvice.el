@@ -288,6 +288,9 @@ a special meaning:
 If PLACE is a symbol, its `default-value' will be affected.
 Use (local \\='SYMBOL) if you want to apply FUNCTION to SYMBOL buffer-locally.
 Use (var VAR) if you want to apply FUNCTION to the (lexical) VAR.
+If you are trying to modify an existing named function rather
+than a function value, you probably want to use `advice-add'
+instead (see Info node `(elisp) Advising Named Functions').
 
 If one of FUNCTION or OLDFUN is interactive, then the resulting function
 is also interactive.  There are 3 cases:
