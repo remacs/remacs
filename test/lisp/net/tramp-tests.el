@@ -1939,6 +1939,14 @@ This checks also `file-name-as-directory', `file-name-directory',
     (file-name-directory "/method:host:/path/to/file/")
     "/method:host:/path/to/file/"))
   (should
+   (string-equal (file-name-directory "/method:host:file") "/method:host:"))
+  (should
+   (string-equal
+    (file-name-directory "/method:host:path/") "/method:host:path/"))
+  (should
+   (string-equal
+    (file-name-directory "/method:host:path/to") "/method:host:path/"))
+  (should
    (string-equal (file-name-nondirectory "/method:host:/path/to/file") "file"))
   (should
    (string-equal (file-name-nondirectory "/method:host:/path/to/file/") ""))

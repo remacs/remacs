@@ -3153,15 +3153,11 @@ User is always nil."
 
 (defun tramp-handle-file-name-directory (file)
   "Like `file-name-directory' but aware of Tramp files."
-  ;; Everything except the last filename thing is the directory.  We
-  ;; cannot apply `with-parsed-tramp-file-name', because this expands
-  ;; the remote file name parts.  This is a problem when we are in
-  ;; file name completion.
-  (let ((v (tramp-dissect-file-name file t)))
+  (with-parsed-tramp-file-name file nil
+    (setf (tramp-file-name-localname v) nil)
     ;; Run the command on the localname portion only.
     (tramp-make-tramp-file-name
-     v (tramp-run-real-handler
-	'file-name-directory (list (or (tramp-file-name-localname v) ""))))))
+     v (tramp-run-real-handler'file-name-directory (list localname)))))
 
 (defun tramp-handle-file-name-nondirectory (file)
   "Like `file-name-nondirectory' but aware of Tramp files."
