@@ -1302,11 +1302,13 @@ hand parenthesis of the following list and then type @kbd{C-x C-e}:
 
 @c use code for the number four, not samp.
 @noindent
-You will see the number @code{4} appear in the echo area.  (What
-you have just done is evaluate the list.  The echo area
-is the line at the bottom of the screen that displays or echoes
-text.)  Now try the same thing with a quoted list:  place the cursor
-right after the following list and type @kbd{C-x C-e}:
+You will see the number @code{4} appear in the echo area@footnote{
+Emacs shows integer values in decimal, in octal and in hex, and also
+as a character, but let's ignore this convenience feature for now.
+}.  (What you have just done is evaluate the list.  The echo area is
+the line at the bottom of the screen that displays or echoes text.)
+Now try the same thing with a quoted list: place the cursor right
+after the following list and type @kbd{C-x C-e}:
 
 @smallexample
 '(this is a quoted list)
