@@ -321,6 +321,54 @@ pub fn subr_name(subr: LispSubrRef) -> LispObject {
     LispObject::from_raw(unsafe { build_string(name) })
 }
 
+/***********************************************************************
+                Getting and Setting Values of Symbols
+ ***********************************************************************/
+
+/// Given the raw contents of a symbol value cell,
+/// return the Lisp value of the symbol.
+/// This does not handle buffer-local variables; use
+/// swap_in_symval_forwarding for that.
+#[no_mangle]
+pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject {
+    unsafe {
+        match (*valcontents).u_intfwd.ty {
+            Lisp_Fwd_Int => LispObject::from(*(*valcontents).u_intfwd.intvar),
+            Lisp_Fwd_Bool => LispObject::from(*(*valcontents).u_boolfwd.boolvar),
+            Lisp_Fwd_Obj => (*(*valcontents).u_objfwd.objvar),
+            Lisp_Fwd_Buffer_Obj => {
+                let base = ThreadState::current_buffer().as_mut() as *const libc::c_schar;
+                let offset = (*valcontents).u_buffer_objfwd.offset;
+                let p: *const libc::c_schar = base.offset(offset as isize);
+                *(p as *const LispObject)
+            }
+            Lisp_Fwd_Kboard_Obj => {
+                // We used to simply use current_kboard here, but from Lisp
+                // code, its value is often unexpected.  It seems nicer to
+                // allow constructions like this to work as intuitively expected:
+                //
+                // (with-selected-frame frame
+                // (define-key local-function-map "\eOP" [f1]))
+                //
+                // On the other hand, this affects the semantics of
+                // last-command and real-last-command, and people may rely on
+                // that.  I took a quick look at the Lisp codebase, and I
+                // don't think anything will break.  --lorentey
+                let frame = selected_frame().as_frame_or_error();
+                if !frame.is_live() {
+                    emacs_abort();
+                }
+                let kboard = (*fget_terminal(frame.as_ptr())).kboard;
+                let base = kboard as *const libc::c_schar;
+                let offset = (*valcontents).u_kboard_objfwd.offset as isize;
+                let p: *const libc::c_schar = base.offset(offset);
+                *(p as *const LispObject)
+            }
+            _ => emacs_abort(),
+        }
+    }
+}
+
 /// Store NEWVAL into SYMBOL, where VALCONTENTS is found in the value cell
 /// of SYMBOL.  If SYMBOL is buffer-local, VALCONTENTS should be the
 /// buffer-independent contents of the value cell: forwarded just one

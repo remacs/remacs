@@ -264,49 +264,6 @@ Value, if non-nil, is a list (interactive SPEC).  */)
 		Getting and Setting Values of Symbols
  ***********************************************************************/
 
-/* Given the raw contents of a symbol value cell,
-   return the Lisp value of the symbol.
-   This does not handle buffer-local variables; use
-   swap_in_symval_forwarding for that.  */
-
-Lisp_Object
-do_symval_forwarding (register union Lisp_Fwd *valcontents)
-{
-  register Lisp_Object val;
-  switch (XFWDTYPE (valcontents))
-    {
-    case Lisp_Fwd_Int:
-      XSETINT (val, *XINTFWD (valcontents)->intvar);
-      return val;
-
-    case Lisp_Fwd_Bool:
-      return (*XBOOLFWD (valcontents)->boolvar ? Qt : Qnil);
-
-    case Lisp_Fwd_Obj:
-      return *XOBJFWD (valcontents)->objvar;
-
-    case Lisp_Fwd_Buffer_Obj:
-      return per_buffer_value (current_buffer,
-			       XBUFFER_OBJFWD (valcontents)->offset);
-
-    case Lisp_Fwd_Kboard_Obj:
-      /* We used to simply use current_kboard here, but from Lisp
-	 code, its value is often unexpected.  It seems nicer to
-	 allow constructions like this to work as intuitively expected:
-
-	 (with-selected-frame frame
-	 (define-key local-function-map "\eOP" [f1]))
-
-	 On the other hand, this affects the semantics of
-	 last-command and real-last-command, and people may rely on
-	 that.  I took a quick look at the Lisp codebase, and I
-	 don't think anything will break.  --lorentey  */
-      return *(Lisp_Object *)(XKBOARD_OBJFWD (valcontents)->offset
-			      + (char *)FRAME_KBOARD (SELECTED_FRAME ()));
-    default: emacs_abort ();
-    }
-}
-
 /* Used to signal a user-friendly error when symbol WRONG is
    not a member of CHOICE, which should be a list of symbols.  */
 

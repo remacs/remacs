@@ -1,8 +1,8 @@
 use libc;
 use lisp::LispObject;
 use obarray::intern_c_string_1;
-use remacs_sys::{EmacsInt, Lisp_Boolfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Int, Lisp_Fwd_Obj,
-                 Lisp_Intfwd, Lisp_Objfwd};
+use remacs_sys::{EmacsInt, Lisp_Boolfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Int,
+                 Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd, Lisp_Objfwd};
 use remacs_sys::SYMBOL_FORWARDED;
 use remacs_sys::staticpro;
 
@@ -81,4 +81,24 @@ pub extern "C" fn defvar_lisp(
 ) {
     defvar_lisp_nopro(o_fwd, namestring, address);
     unsafe { staticpro(address) };
+}
+
+/// Similar but define a variable whose value is the Lisp Object stored
+/// at a particular offset in the current kboard object.
+#[no_mangle]
+pub extern "C" fn defvar_kboard(
+    ko_fwd: *mut Lisp_Kboard_Objfwd,
+    namestring: *const libc::c_schar,
+    offset: i32,
+) {
+    unsafe {
+        (*ko_fwd).ty = Lisp_Fwd_Kboard_Obj;
+        (*ko_fwd).offset = offset;
+    }
+    let sym = intern_c_string_1(namestring, unsafe {
+        libc::strlen(namestring) as libc::ptrdiff_t
+    }).as_symbol_or_error();
+    sym.set_declared_special(true);
+    sym.set_redirect(SYMBOL_FORWARDED);
+    sym.set_fwd(ko_fwd as *mut Lisp_Fwd);
 }
