@@ -2233,8 +2233,11 @@ DEFUN ("re-search-backward", Fre_search_backward, Sre_search_backward, 1, 4,
 This function is almost identical to `re-search-forward', except that
 by default it searches backward instead of forward, and the sign of
 COUNT also indicates exactly the opposite searching direction.
+See `re-search-forward' for details.
 
-See `re-search-forward' for details.  */)
+Note that searching backwards may give a shorter match than expected,
+because REGEXP is still matched in the forward direction.  See Info
+anchor `(elisp) re-search-backward' for details.  */)
   (Lisp_Object regexp, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
 {
   return search_command (regexp, bound, noerror, count, -1, 1, 0);

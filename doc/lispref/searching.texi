@@ -1102,6 +1102,8 @@ comes back" twice.
 @end example
 @end deffn
 
+@c This anchor is referenced by re-search-backward's docstring.
+@anchor{re-search-backward}
 @deffn Command re-search-backward regexp &optional limit noerror count
 This function searches backward in the current buffer for a string of
 text that is matched by the regular expression @var{regexp}, leaving
