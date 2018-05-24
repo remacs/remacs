@@ -1225,7 +1225,11 @@ The region will be defined with mark and point."
 	 (bounds (window-edges start-window))
 	 (make-cursor-line-fully-visible nil)
 	 (top (nth 1 bounds))
-	 (bottom (if (window-minibuffer-p start-window)
+	 (bottom (if (or (window-minibuffer-p start-window)
+                         ;; Do not account for the mode line if there
+                         ;; is no mode line, which is common for child
+                         ;; frames.
+                         (not mode-line-format))
 		     (nth 3 bounds)
 		   ;; Don't count the mode line.
 		   (1- (nth 3 bounds))))
