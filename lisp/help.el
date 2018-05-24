@@ -1376,8 +1376,8 @@ This construct is like `with-temp-buffer-window' but unlike that
 puts the buffer specified by BUFFER-OR-NAME in `help-mode' and
 displays a message about how to delete the help window when it's no
 longer needed.  The help window will be selected if
-`help-window-select' is non-nil.  See `help-window-setup' for
-more options."
+`help-window-select' is non-nil.
+Most of this  is done by `help-window-setup', which see."
   (declare (indent 1) (debug t))
   `(progn
      ;; Make `help-window-point-marker' point nowhere.  The only place
