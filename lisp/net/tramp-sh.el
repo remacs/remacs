@@ -48,8 +48,7 @@ When inline transfer, compress transferred data of file
 whose size is this value or above (up to `tramp-copy-size-limit').
 If it is nil, no compression at all will be applied."
   :group 'tramp
-  :type '(choice (const nil) integer)
-  :require 'tramp)
+  :type '(choice (const nil) integer))
 
 ;;;###tramp-autoload
 (defcustom tramp-copy-size-limit 10240
@@ -57,8 +56,7 @@ If it is nil, no compression at all will be applied."
 out-of-the-band copy.
 If it is nil, out-of-the-band copy will be used without a check."
   :group 'tramp
-  :type '(choice (const nil) integer)
-  :require 'tramp)
+  :type '(choice (const nil) integer))
 
 ;;;###tramp-autoload
 (defcustom tramp-terminal-type "dumb"
@@ -67,8 +65,7 @@ Because Tramp wants to parse the output of the remote shell, it is easily
 confused by ANSI color escape sequences and suchlike.  Often, shell init
 files conditionalize this setup based on the TERM environment variable."
   :group 'tramp
-  :type 'string
-  :require 'tramp)
+  :type 'string)
 
 ;;;###tramp-autoload
 (defcustom tramp-histfile-override "~/.tramp_history"
@@ -85,8 +82,7 @@ the default storage location, e.g. \"$HOME/.sh_history\"."
   :version "25.2"
   :type '(choice (const :tag "Do not override HISTFILE" nil)
                  (const :tag "Unset HISTFILE" t)
-                 (string :tag "Redirect to a file"))
-  :require 'tramp)
+                 (string :tag "Redirect to a file")))
 
 ;;;###tramp-autoload
 (defconst tramp-display-escape-sequence-regexp "\e[[;0-9]+m"
@@ -120,8 +116,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
   "Whether to use `tramp-ssh-controlmaster-options'."
   :group 'tramp
   :version "24.4"
-  :type 'boolean
-  :require 'tramp)
+  :type 'boolean)
 
 (defvar tramp-ssh-controlmaster-options nil
   "Which ssh Control* arguments to use.
@@ -528,8 +523,7 @@ the list by the special value `tramp-own-remote-path'."
   :type '(repeat (choice
 		  (const :tag "Default Directories" tramp-default-remote-path)
 		  (const :tag "Private Directories" tramp-own-remote-path)
-		  (string :tag "Directory")))
-  :require 'tramp)
+		  (string :tag "Directory"))))
 
 ;;;###tramp-autoload
 (defcustom tramp-remote-process-environment
@@ -553,8 +547,7 @@ The INSIDE_EMACS environment variable will automatically be set
 based on the TRAMP and Emacs versions, and should not be set here."
   :group 'tramp
   :version "26.1"
-  :type '(repeat string)
-  :require 'tramp)
+  :type '(repeat string))
 
 ;;;###tramp-autoload
 (defcustom tramp-sh-extra-args '(("/bash\\'" . "-norc -noprofile"))
@@ -567,8 +560,7 @@ This variable is only used when Tramp needs to start up another shell
 for tilde expansion.  The extra arguments should typically prevent the
 shell from reading its init file."
   :group 'tramp
-  :type '(alist :key-type regexp :value-type string)
-  :require 'tramp)
+  :type '(alist :key-type regexp :value-type string))
 
 (defconst tramp-actions-before-shell
   '((tramp-login-prompt-regexp tramp-action-login)

@@ -143,8 +143,7 @@
 			 (const "owncloud")
 			 (const "sftp")
 			 (const "smb")
-			 (const "synce")))
-  :require 'tramp)
+			 (const "synce"))))
 
 (defconst tramp-goa-methods '("gdrive" "owncloud")
   "List of methods which require registration at GNOME Online Accounts.")
@@ -171,8 +170,7 @@
   "Zeroconf domain to be used for discovering services, like host names."
   :group 'tramp
   :version "23.2"
-  :type 'string
-  :require 'tramp)
+  :type 'string)
 
 ;; Add the methods to `tramp-methods', in order to allow minibuffer
 ;; completion.
@@ -569,8 +567,7 @@ completion, nil means to use always cached values for discovered
 devices."
   :group 'tramp
   :version "23.2"
-  :type '(choice (const nil) integer)
-  :require 'tramp)
+  :type '(choice (const nil) integer))
 
 (defvar tramp-bluez-discovery nil
   "Indicator for a running bluetooth device discovery.

@@ -67,16 +67,14 @@
 (defcustom tramp-smb-program "smbclient"
   "Name of SMB client to run."
   :group 'tramp
-  :type 'string
-  :require 'tramp)
+  :type 'string)
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-acl-program "smbcacls"
   "Name of SMB acls to run."
   :group 'tramp
   :type 'string
-  :version "24.4"
-  :require 'tramp)
+  :version "24.4")
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-conf "/dev/null"
@@ -84,8 +82,7 @@
 If it is nil, no smb.conf will be added to the `tramp-smb-program'
 call, letting the SMB client use the default one."
   :group 'tramp
-  :type '(choice (const nil) (file :must-match t))
-  :require 'tramp)
+  :type '(choice (const nil) (file :must-match t)))
 
 (defvar tramp-smb-version nil
   "Version string of the SMB client.")
@@ -300,8 +297,7 @@ If it isn't found in the local $PATH, the absolute path of winexe
 shall be given.  This is needed for remote processes."
   :group 'tramp
   :type 'string
-  :version "24.3"
-  :require 'tramp)
+  :version "24.3")
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-winexe-shell-command "powershell.exe"
@@ -309,8 +305,7 @@ shall be given.  This is needed for remote processes."
 This must be Powershell V2 compatible."
   :group 'tramp
   :type 'string
-  :version "24.3"
-  :require 'tramp)
+  :version "24.3")
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-winexe-shell-command-switch "-file -"
@@ -318,8 +313,7 @@ This must be Powershell V2 compatible."
 This can be used to disable echo etc."
   :group 'tramp
   :type 'string
-  :version "24.3"
-  :require 'tramp)
+  :version "24.3")
 
 ;; It must be a `defsubst' in order to push the whole code into
 ;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
