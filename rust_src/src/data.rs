@@ -1,11 +1,12 @@
 //! data helpers
+extern crate field_offset;
 
-use libc::{self, c_int};
+use libc::c_int;
 
 use remacs_macros::lisp_fn;
+use remacs_sys;
 use remacs_sys::{aset_multibyte_string, build_string, emacs_abort, fget_terminal, globals,
-                 set_per_buffer_value, update_buffer_defaults, wrong_choice, wrong_range,
-                 CHAR_TABLE_SET, CHECK_IMPURE};
+                 update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{EmacsInt, Lisp_Misc_Type, Lisp_Type, PseudovecType};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
 use remacs_sys::{Lisp_Buffer, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj, Lisp_Fwd_Int,
@@ -28,6 +29,8 @@ use math::leq;
 use multibyte::{is_ascii, is_single_byte_char};
 use obarray::loadhist_attach;
 use threads::ThreadState;
+
+use self::field_offset::FieldOffset;
 
 /// Find the function at the end of a chain of symbol function indirections.
 
@@ -337,10 +340,10 @@ pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject
             Lisp_Fwd_Bool => LispObject::from(*(*valcontents).u_boolfwd.boolvar),
             Lisp_Fwd_Obj => (*(*valcontents).u_objfwd.objvar),
             Lisp_Fwd_Buffer_Obj => {
-                let base = ThreadState::current_buffer().as_mut() as *const libc::c_schar;
-                let offset = (*valcontents).u_buffer_objfwd.offset;
-                let p: *const libc::c_schar = base.offset(offset as isize);
-                *(p as *const LispObject)
+                let offset = FieldOffset::<Lisp_Buffer, LispObject>::new_from_offset(
+                    (*valcontents).u_buffer_objfwd.offset as usize,
+                );
+                *offset.apply_ptr(ThreadState::current_buffer().as_mut())
             }
             Lisp_Fwd_Kboard_Obj => {
                 // We used to simply use current_kboard here, but from Lisp
@@ -359,10 +362,10 @@ pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject
                     emacs_abort();
                 }
                 let kboard = (*fget_terminal(frame.as_ptr())).kboard;
-                let base = kboard as *const libc::c_schar;
-                let offset = (*valcontents).u_kboard_objfwd.offset as isize;
-                let p: *const libc::c_schar = base.offset(offset);
-                *(p as *const LispObject)
+                let offset = FieldOffset::<remacs_sys::kboard, LispObject>::new_from_offset(
+                    (*valcontents).u_kboard_objfwd.offset as usize,
+                );
+                *offset.apply_ptr(kboard)
             }
             _ => emacs_abort(),
         }
@@ -385,12 +388,11 @@ pub extern "C" fn store_symval_forwarding(
     match unsafe { (*valcontents).u_intfwd.ty } {
         Lisp_Fwd_Int => unsafe { (*(*valcontents).u_intfwd.intvar) = newval.as_fixnum_or_error() },
         Lisp_Fwd_Bool => unsafe { (*(*valcontents).u_boolfwd.boolvar) = newval.is_not_nil() },
-        Lisp_Fwd_Obj => {
-            unsafe { (*(*valcontents).u_objfwd.objvar) = newval };
-            unsafe { update_buffer_defaults((*valcontents).u_objfwd.objvar, newval) };
-        }
+        Lisp_Fwd_Obj => unsafe {
+            (*(*valcontents).u_objfwd.objvar) = newval;
+            update_buffer_defaults((*valcontents).u_objfwd.objvar, newval);
+        },
         Lisp_Fwd_Buffer_Obj => {
-            let offset = unsafe { (*valcontents).u_buffer_objfwd.offset };
             let predicate = unsafe { (*valcontents).u_buffer_objfwd.predicate };
 
             if newval.is_not_nil() {
@@ -416,10 +418,16 @@ pub extern "C" fn store_symval_forwarding(
                     }
                 }
             }
+
             if buf.is_null() {
                 buf = ThreadState::current_buffer().as_mut();
             }
-            unsafe { set_per_buffer_value(buf, offset as isize, newval) };
+            unsafe {
+                let offset = FieldOffset::<Lisp_Buffer, LispObject>::new_from_offset(
+                    (*valcontents).u_buffer_objfwd.offset as usize,
+                );
+                *offset.apply_ptr_mut(buf) = newval;
+            }
         }
         Lisp_Fwd_Kboard_Obj => {
             let frame = selected_frame().as_frame_or_error();
@@ -428,10 +436,10 @@ pub extern "C" fn store_symval_forwarding(
             }
             unsafe {
                 let kboard = (*fget_terminal(frame.as_ptr())).kboard;
-                let base = kboard as *mut libc::c_schar;
-                let offset = (*valcontents).u_kboard_objfwd.offset as isize;
-                let p: *mut libc::c_schar = base.offset(offset);
-                *(p as *mut LispObject) = newval;
+                let offset = FieldOffset::<remacs_sys::kboard, LispObject>::new_from_offset(
+                    (*valcontents).u_kboard_objfwd.offset as usize,
+                );
+                *offset.apply_ptr_mut(kboard) = newval;
             }
         }
         _ => unsafe { emacs_abort() },

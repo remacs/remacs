@@ -20,6 +20,7 @@ mock_derive = "0.7.0"
 rand = "0.3.15"
 sha1 = "0.2.0"
 sha2 = "0.4.2"
+field-offset = "0.1.1"
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]
