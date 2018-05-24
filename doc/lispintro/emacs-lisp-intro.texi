@@ -4626,16 +4626,25 @@ file, you can use the @code{xref-find-definitions} function to jump to
 it.  @code{xref-find-definitions} works with a wide variety of
 languages, not just Lisp, and C, and it works with non-programming
 text as well.  For example, @code{xref-find-definitions} will jump to
-the various nodes in the Texinfo source file of this document.
+the various nodes in the Texinfo source file of this document
+(provided that you've run the @command{etags} utility to record all
+the nodes in the manuals that come with Emacs; @pxref{Create tags
+Table,,, emacs, The GNU Emacs Manual}).
 
 To use the @code{xref-find-definitions} command, type @kbd{M-.}
 (i.e., press the period key while holding down the @key{META} key, or
 else type the @key{ESC} key and then type the period key), and then,
 at the prompt, type in the name of the function whose source code you
 want to see, such as @code{mark-whole-buffer}, and then type
-@key{RET}.  Emacs will switch buffers and display the source code for
-the function on your screen.  To switch back to your current buffer,
-type @kbd{C-x b @key{RET}}.  (On some keyboards, the @key{META} key is
+@key{RET}.  (If the command doesn't prompt, invoke it with an
+argument: @kbd{C-u M-.}; @pxref{Interactive Options}.)  Emacs will
+switch buffers and display the source code for the function on your
+screen@footnote{
+If instead of showing the source code for a Lisp function, Emacs asks
+you which tags table to visit, invoke @kbd{M-.} from a buffer whose
+major mode is Emacs Lisp or Lisp Interaction.
+}.  To switch back to your current buffer, type @kbd{M-,} or
+@kbd{C-x b @key{RET}}.  (On some keyboards, the @key{META} key is
 labeled @key{ALT}.)
 
 @cindex Library, as term for ``file''
@@ -5307,8 +5316,8 @@ in GNU Emacs 22
 
 The @code{append-to-buffer} function definition inserts text from the
 buffer in which you are currently to a named buffer.  It happens that
-@code{insert-buffer-substring} copies text from another buffer to the
-current buffer, just the reverse---that is why the
+@code{insert-buffer-substring} does just the reverse---it copies text
+from another buffer to the current buffer---that is why the
 @code{append-to-buffer} definition starts out with a @code{let} that
 binds the local symbol @code{oldbuf} to the value returned by
 @code{current-buffer}.
