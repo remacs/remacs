@@ -36,51 +36,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "remacs-lib.h"
 
-static bool
-BOOLFWDP (union Lisp_Fwd *a)
-{
-  return XFWDTYPE (a) == Lisp_Fwd_Bool;
-}
-static bool
-INTFWDP (union Lisp_Fwd *a)
-{
-  return XFWDTYPE (a) == Lisp_Fwd_Int;
-}
-static bool
-KBOARD_OBJFWDP (union Lisp_Fwd *a)
-{
-  return XFWDTYPE (a) == Lisp_Fwd_Kboard_Obj;
-}
-static bool
-OBJFWDP (union Lisp_Fwd *a)
-{
-  return XFWDTYPE (a) == Lisp_Fwd_Obj;
-}
-
-static struct Lisp_Boolfwd *
-XBOOLFWD (union Lisp_Fwd *a)
-{
-  eassert (BOOLFWDP (a));
-  return &a->u_boolfwd;
-}
-static struct Lisp_Kboard_Objfwd *
-XKBOARD_OBJFWD (union Lisp_Fwd *a)
-{
-  eassert (KBOARD_OBJFWDP (a));
-  return &a->u_kboard_objfwd;
-}
-static struct Lisp_Intfwd *
-XINTFWD (union Lisp_Fwd *a)
-{
-  eassert (INTFWDP (a));
-  return &a->u_intfwd;
-}
-static struct Lisp_Objfwd *
-XOBJFWD (union Lisp_Fwd *a)
-{
-  eassert (OBJFWDP (a));
-  return &a->u_objfwd;
-}
+extern bool KBOARD_OBJFWDP (union Lisp_Fwd *a);
+extern bool OBJFWDP (union Lisp_Fwd *a);
 
 static void
 set_blv_found (struct Lisp_Buffer_Local_Value *blv, int found)

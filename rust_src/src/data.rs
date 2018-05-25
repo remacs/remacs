@@ -32,6 +32,17 @@ use threads::ThreadState;
 
 use self::field_offset::FieldOffset;
 
+// Lisp_Fwd predicates which can go away as the callers are ported to Rust
+#[no_mangle]
+pub extern "C" fn KBOARD_OBJFWDP(a: *const Lisp_Fwd) -> bool {
+    unsafe { (*a).u_intfwd.ty == Lisp_Fwd_Kboard_Obj }
+}
+
+#[no_mangle]
+pub extern "C" fn OBJFWDP(a: *const Lisp_Fwd) -> bool {
+    unsafe { (*a).u_intfwd.ty == Lisp_Fwd_Obj }
+}
+
 /// Find the function at the end of a chain of symbol function indirections.
 
 /// If OBJECT is a symbol, find the end of its function chain and
