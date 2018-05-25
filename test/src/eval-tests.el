@@ -26,6 +26,7 @@
 ;;; Code:
 
 (require 'ert)
+(eval-when-compile (require 'cl-lib))
 
 (ert-deftest eval-tests--bug24673 ()
   "Check that Bug#24673 has been fixed."
@@ -116,5 +117,26 @@ crash/abort/malloc assert failure on the next test."
 (ert-deftest defvar/bug31072 ()
   "Check that Bug#31072 is fixed."
   (should-error (eval '(defvar 1) t) :type 'wrong-type-argument))
+
+(ert-deftest defvaralias-overwrite-warning ()
+  "Test for Bug#5950."
+  (defvar eval-tests--foo)
+  (setq eval-tests--foo 2)
+  (defvar eval-tests--foo-alias)
+  (setq eval-tests--foo-alias 1)
+  (cl-letf (((symbol-function 'display-warning)
+             (lambda (type &rest _)
+               (throw 'got-warning type))))
+    ;; Warn if we lose a value through aliasing.
+    (should (equal
+             '(defvaralias losing-value eval-tests--foo-alias)
+             (catch 'got-warning
+               (defvaralias 'eval-tests--foo-alias 'eval-tests--foo))))
+    ;; Don't warn if we don't.
+    (makunbound 'eval-tests--foo-alias)
+    (should (eq 'no-warning
+                (catch 'got-warning
+                  (defvaralias 'eval-tests--foo-alias 'eval-tests--foo)
+                  'no-warning)))))
 
 ;;; eval-tests.el ends here

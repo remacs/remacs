@@ -623,6 +623,16 @@ The return value is BASE-VARIABLE.  */)
   if (NILP (Fboundp (base_variable)))
     set_internal (base_variable, find_symbol_value (new_alias),
                   Qnil, SET_INTERNAL_BIND);
+  else if (!NILP (Fboundp (new_alias))
+           && !EQ (find_symbol_value (new_alias),
+                   find_symbol_value (base_variable)))
+    call2 (intern ("display-warning"),
+           list3 (intern ("defvaralias"), intern ("losing-value"), new_alias),
+           CALLN (Fformat_message,
+                  build_string
+                  ("Overwriting value of `%s' by aliasing to `%s'"),
+                  new_alias, base_variable));
+
   {
     union specbinding *p;
 
