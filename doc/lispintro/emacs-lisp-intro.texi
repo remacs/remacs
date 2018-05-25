@@ -1379,10 +1379,12 @@ following in it:
 ---------- Buffer: *Backtrace* ----------
 Debugger entered--Lisp error: (void-function this)
   (this is an unquoted list)
-  eval((this is an unquoted list))
-  eval-last-sexp-1(nil)
+  eval((this is an unquoted list) nil)
+  elisp--eval-last-sexp(nil)
   eval-last-sexp(nil)
-  call-interactively(eval-last-sexp)
+  funcall-interactively(eval-last-sexp nil)
+  call-interactively(eval-last-sexp nil nil)
+  command-execute(eval-last-sexp)
 ---------- Buffer: *Backtrace* ----------
 @end group
 @end smallexample
