@@ -1,3 +1,524 @@
+2018-05-25  Noam Postavsky  <npostavs@gmail.com>
+
+	Note caveat for backward regexp searching in docstring (Bug#31584)
+
+	* src/search.c (Fre_search_backward): Emphasize that backwards
+	searches may give shorter than expected matches.
+	* doc/lispref/searching.texi (Regexp Search): Add an anchor for
+	re-search-backward to reference.
+
+2018-05-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Update backtrace in Emacs Lisp Intro
+
+	* doc/lispintro/emacs-lisp-intro.texi (Making Errors): Update the
+	backtrace to match Emacs 26.  (Bug#31589)
+
+2018-05-24  Roland Winkler  <winkler@gnu.org>
+
+	Move window-point in bibtex-search-entry
+
+	* lisp/textmodes/bibtex.el (bibtex-search-entry): Move window-point
+	to record found.
+
+2018-05-24  Eli Zaretskii  <eliz@gnu.org>
+
+	More fixes of Intro to Emacs Lisp
+
+	* doc/lispintro/emacs-lisp-intro.texi (Finding More): Tell the
+	reader how to invoke 'M-.' without a tags table.  Add a
+	cross-reference to the Emacs manual for when a tags table does
+	need to be created.
+	(append save-excursion): Rephrase a confusing sentence.
+	(Bug#31578)
+
+2018-05-24  Eli Zaretskii  <eliz@gnu.org>
+
+	Add a footnote to Emacs Lisp Intro
+
+	* doc/lispintro/emacs-lisp-intro.texi (Run a Program): Describe
+	the detailed output of integer value evaluation in a footnote, to
+	prevent confusion.  (Bug#31579)
+
+2018-05-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/help.el (with-help-window): Doc fix.  (Bug#31574)
+
+2018-05-23  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix some cross-references in emacs-lisp-intro.texi
+
+	* doc/lispintro/emacs-lisp-intro.texi (List Processing)
+	(Determining the Element, graph-body-print): Fix cross-references
+	to subsections that don't exist in the printed version of the
+	manual.  (Bug#31567)
+
+2018-05-23  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor copyedits in Emacs manual in macos.texi
+
+	* doc/emacs/macos.texi (Mac / GNUstep Basics)
+	(Mac / GNUstep Events): Fix markup and capitalization.
+	(Bug#31568)
+
+2018-05-23  Noam Postavsky  <npostavs@gmail.com>
+
+	Clarify when to use advice-add vs add-function
+
+	* lisp/emacs-lisp/nadvice.el (add-function): Note in docstring that
+	advice-add should be used for named functions.
+
+2018-05-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor formatting tweak in the Emacs manual
+
+	* doc/emacs/custom.texi (Directory Variables): Don't have 2
+	footnotes back to back, it looks bad in HTML.  (Bug#31555)
+
+2018-05-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Update comments in Intro to Emacs Lisp
+
+	* doc/lispintro/emacs-lisp-intro.texi: Explain in the comments
+	what are roman page numbers in Preface about.  (Bug#31541)
+
+2018-05-21  Noam Postavsky  <npostavs@gmail.com>
+
+	* etc/NEWS: Mention change in `edebug-prin1-to-string'.
+
+2018-05-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Another attempt to fix sql.el
+
+	* lisp/progmodes/sql.el (sql-product-interactive): Fix calculation
+	of the SQL buffer name.  (Bug#31446)
+
+2018-05-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Update binding of 'M-.' in Intro to Emacs Lisp
+
+	* doc/lispintro/emacs-lisp-intro.texi (On Reading this Text)
+	(Finding More, Buffer Related Review, Buffer Exercises)
+	(Find a File, Conclusion): 'M-.' is now bound to
+	'xref-find-definitions'.  (Bug#31542)
+
+2018-05-21  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in last change in sql.el
+
+	* lisp/progmodes/sql.el (sql-product-interactive): Use 'null',
+	not 'zerop'.  (Bug#31446)
+
+2018-05-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix capitalization of mail headers
+
+	* doc/emacs/sending.texi (Mail Format, Mail Headers)
+	(Mail Aliases, Header Editing): Use consistent capitalization of
+	CC, BCC, and FCC.  (Bug#31532)
+
+2018-05-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix buffer names in sql.el
+
+	* lisp/progmodes/sql.el (sql-product-interactive): Fix the way the
+	buffer name is determined by prefix arg.  (Bug#31446)
+
+2018-05-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor fixes in the Emacs manual
+
+	* doc/emacs/misc.texi (Gnus Group Buffer): Fix a typo.  (Bug#31534)
+	(Single Shell): Rephrase an unclear sentence.  (Bug#31535)
+	(Remote Host): Use @command where appropriate.  (Bug#31536)
+
+2018-05-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in rmail.texi
+
+	* doc/emacs/rmail.texi (Rmail Summary Edit): Add markup to 'nil'.
+	(Bug#31533)
+
+2018-05-18  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etc/PROBLEMS: Document Bug#31305.
+
+2018-05-18  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	(gnus-blocked-images): Clarify privacy implications
+
+	* lisp/gnus/gnus-art.el (gnus-blocked-images): Clarify the privacy
+	implication of altering the value of this variable.
+
+	(cherry picked from commit f4d9fd3dd45f767eca33fbf1beee40da790fa74e)
+
+2018-05-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in describing input methods
+
+	* lisp/help-mode.el (help-make-xrefs): Fix a typo.  (Bug#31448)
+
+2018-05-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify the mode-line indicators in CC Mode
+
+	* doc/emacs/programs.texi (Electric C): Explain '*' and '/' in the
+	CC Mode mode-line.  (Bug31445)
+
+2018-05-12  João Távora  <joaotavora@gmail.com>
+
+	Fix filesystem littering by Flymake's legacy backend
+
+	The Flymake legacy "proc" backend, which is active by default will try
+	to syntax-check foo.c/foo.cpp and many other types of files, but on
+	failing to find a suitable Makefile target, will fail.  There's
+	nothing wrong with that except that it used to leave behind the
+	foo_flymake.c and foo_flymake.cpp auxiliary files behind, littering
+	the filesystem.
+
+	* lisp/progmodes/flymake-proc.el (flymake-proc-legacy-flymake):
+	Call init-function inside of the unwind-protect.
+
+2018-05-12  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* doc/emacs/help.texi: Fix paren typo.
+
+2018-05-11  Eli Zaretskii  <eliz@gnu.org>
+
+	More minor changes in shell-related nodes of Emacs manual
+
+	* doc/emacs/misc.texi (Interactive Shell): Clarify how the window
+	that displays "*shell*" is selected.
+	(Shell Prompts): Fix a typo.  Reported by Jorge
+	<jorge+list@disroot.org> in emacs-manual-bugs.
+
+2018-05-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix inaccuracies in "Shell Ring" node of Emacs manual
+
+	* doc/emacs/misc.texi (Shell Ring): Don't mention 'M-s' and don't
+	insist on Shell history commands being "jsut like" similar
+	commands that operate on minibuffer history.  Reported by Jorge
+	<jorge+list@disroot.org> in emacs-manual-bugs.
+
+2018-05-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of kmacro commands and variables.
+
+	* lisp/kmacro.el (kmacro-start-macro-or-insert-counter)
+	(kmacro-counter, kmacro-set-format, kmacro-set-counter)
+	(kmacro-add-counter, kmacro-counter-format)
+	(kmacro-insert-counter): Clarify and improve the doc strings.
+	(Bug#31243)
+
+2018-05-11  Noam Postavsky  <npostavs@gmail.com>
+
+	* doc/man/emacs.1.in: Document --fg-daemon and --bg-daemon.
+
+2018-05-08  Noam Postavsky  <npostavs@gmail.com>
+
+	Don't check non-X frames for z order (Bug#31373)
+
+	* src/xfns.c (x_frame_list_z_order): Only use frames with
+	`output_method' set to `output_x_window'.
+
+2018-05-07  Alan Third  <alan@idiocy.org>
+
+	Check NSWindow is actually a frame
+
+	* src/nsfns.m (Fns_frame_list_z_order): Check NSWindow is an instance
+	of EmacsView before treating it as one.
+
+2018-05-06  Xu Chunyang  <mail@xuchunyang.me>
+
+	Fix gud-statement for pdb
+
+	* lisp/progmodes/gud.el (pdb): Fix the gud-print implementation.
+	(Bug#31363)
+
+2018-05-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Document 'custom-group'
+
+	* doc/lispref/customize.texi (Group Definitions): Document the
+	'custom-group' property.
+
+2018-05-04  Eli Zaretskii  <eliz@gnu.org>
+
+	A minor addition to etc/DEBUG
+
+	* etc/DEBUG: Add a note for macOS users who get error messages
+	when trying to run GDB.
+
+2018-05-04  Daniel Pittman  <slippycheeze@google.com>  (tiny change)
+
+	Avoid errors in ispell.el when Enchant returns empty extra chars
+
+	* lisp/textmodes/ispell.el (ispell--get-extra-word-characters):
+	Handle the case of empty extra characters returned by the
+	Enchant '-lsmod' command. (Bug#31344)
+
+2018-05-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Make 'ispell-initialize-spellchecker-hook' work again
+
+	* lisp/textmodes/ispell.el (ispell-base-dicts-override-alist):
+	Defvar it to allow dynamic binding.  (Bug#31341)
+
+2018-05-04  Noam Postavsky  <npostavs@gmail.com>
+
+	Handle selected_window change in prepare_menu_bars (Bug#31312)
+
+	* src/xdisp.c (redisplay_internal): Check selected_window after
+	calling prepare_menu_bars, since it can call lisp hooks.
+
+2018-05-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix report-emacs-bug via mailclient on MS-Windows
+
+	* lisp/net/browse-url.el (browse-url-default-windows-browser):
+	On MS-Windows, call url-unhex-string only for file:// URLs.
+	(Bug#31351)
+
+2018-05-02  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port collation tests to glibc 2.27
+
+	* test/src/fns-tests.el (fns-tests-collate-strings)
+	(fns-tests-collate-sort): Don’t make unportable assumptions
+	about how en_US.UTF-8 collation works.  These assumptions
+	are not true on Fedora 28, which ships with glibc 2.27.
+
+2018-05-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port --enable-gcc-warnings to GCC 8
+
+	Backport from master.
+	* lib-src/emacsclient.c (fail):
+	Do not dereference a null pointer.
+	* src/frame.c (delete_frame):
+	Add a decl with UNINIT to work around GCC bug 85563.
+	* src/menu.h (finish_menu_items):
+	Do not use attribute const.
+	* src/regex.c (analyze_first): Use FALLTHROUGH, not a comment.
+
+2018-04-30  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Advise CFLAGS= operand, not in environment, when configuring
+
+	Backport from master.
+
+2018-04-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Update the Emacs FAQ
+
+	* doc/misc/efaq.texi (Latest version of Emacs): Update versions.
+	(New in Emacs 26): New node.
+
+	* admin/release-process: Mention the FAQ update as part of the
+	release.
+
+2018-04-28  Eli Zaretskii  <eliz@gnu.org>
+
+	* etc/DEBUG: Minor copyedits.
+
+2018-04-26  Alan Third  <alan@idiocy.org>
+
+	Clarify wording of NS drag n drop documentation
+
+	* doc/emacs/macos.texi (Mac / GNUstep Events): Clarify wording of
+	ns-drag-n-drop description.
+
+2018-04-25  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Improve kill-related documentation (bug#31209)
+
+	* doc/lispref/text.texi (Low-Level Kill Ring): Fix typo under
+	current-kill.  Mention interprogram-paste-function under kill-new
+	and kill-append.
+	* lisp/simple.el (save-interprogram-paste-before-kill, kill-new)
+	(kill-append-merge-undo, kill-append): Touch-up docstrings.
+
+2018-04-24  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/simple.el (region-extract-function): Don't hide the 'nil' case.
+
+2018-04-22  Karl Otness  <karl@karlotness.com>  (tiny change)
+
+	Fix pre- and post-command-hook errors in term.el
+
+	Before this patch, after the terminal process dies the command
+	hooks added in term-mode's char mode would produce errors.
+	This fix removes these hooks when the process dies.
+	* lisp/term.el (term-handle-exit): Remove pre-command-hook and
+	post-command-hook because the process is dead.  (Bug#31236)
+
+2018-04-22  Charles A. Roelli  <charles@aurox.ch>
+
+	* doc/lispref/display.texi (Glyphless Chars): Fix grammar.
+
+2018-04-21  Alan Third  <alan@idiocy.org>
+
+	Fix macOS drag n drop event documentation
+
+	* doc/emacs/macos.texi (Mac / GNUstep Customization): Remove
+	references to color panel.
+	(Mac / GNUstep Events): Remove ns-drag-file, and add ns-drag-n-drop.
+
+2018-04-20  Eli Zaretskii  <eliz@gnu.org>
+
+	Update the documentation of 'perform-replace'
+
+	* doc/lispref/searching.texi (Search and Replace): Update the
+	documentation of 'perform-replace'.
+
+2018-04-20  Martin Rudalics  <rudalics@gmx.at>
+
+	* etc/NEWS: Another fix for the last change (noted by Juri Linkov)
+
+2018-04-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix use of @key in Texinfo manuals
+
+	* doc/misc/efaq-w32.texi (Location of init file):
+	* doc/misc/org.texi (Editing source code, Export settings)
+	(Closing items, Drawers, Structure editing):
+	* doc/misc/gnus.texi (Spam and Ham Processors, Terminology):
+	* doc/misc/calc.texi (Keypad Functions Menu, Keypad Binary Menu)
+	(Keypad Vectors Menu, Keypad Main Menu, Basic Arithmetic)
+	(Symbolic Mode):
+	* doc/misc/sc.texi (Electric References):
+	* doc/misc/info.texi (Help-^L):
+	* doc/misc/reftex.texi (Reference Styles):
+	* doc/misc/idlwave.texi (Troubleshooting, Examining Variables)
+	(Lesson III---User Catalog, Using the Shell):
+	* doc/misc/eshell.texi (Bugs and ideas):
+	* doc/misc/ada-mode.texi (Automatic Casing):
+	* doc/misc/ediff.texi (Selective Browsing):
+	* doc/misc/vip.texi (Customizing Constants):
+	* doc/misc/pcl-cvs.texi (Selected files):
+	* doc/misc/efaq.texi (Replying to the sender of a message)
+	(Basic keys, No Meta key, Matching parentheses)
+	(Origin of the term Emacs, Installing Texinfo documentation)
+	(Learning how to do something, Emacs manual, Extended commands):
+	* doc/misc/viper.texi (Rudimentary Changes):
+	* doc/misc/tramp.texi (Frequently Asked Questions):
+	* doc/emacs/kmacro.texi (Basic Keyboard Macro):
+	* doc/emacs/frames.texi (Frame Commands):
+	* doc/emacs/msdos.texi (Windows Keyboard):
+	* doc/emacs/search.texi (Query Replace):
+	* doc/lispintro/emacs-lisp-intro.texi (Keybindings)
+	(Note for Novices):
+	* doc/lispref/tips.texi (Key Binding Conventions): Fix use of
+	@key.  For the details, see
+	http://lists.gnu.org/archive/html/emacs-devel/2018-04/msg00390.html.
+
+2018-04-19  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of actual arglist
+
+	* doc/lispref/functions.texi (Function Documentation): Advise
+	against using '(fn ARGLIST)' method of advertising a calling
+	convention when the old calling convention is deprecated.
+	(Bug#31191)
+
+2018-04-18  Noam Postavsky  <npostavs@gmail.com>
+
+	Don't assume term-current-row cache is valid (Bug#31193)
+
+	* lisp/term.el (term-down): Call `term-current-row' instead of
+	directly accessing the variable `term-current-row.  Following a resize
+	of the terminal's window, `term-current-row' is reset to nil, so it is
+	not safe to assume it is a number.
+
+2018-04-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix flyspell-auto-correct-previous-word broken by recent change
+
+	* lisp/textmodes/flyspell.el (flyspell-auto-correct-word): Keep
+	flyspell-auto-correct-region also when repeatedly invoking
+	flyspell-auto-correct-previous-word.  (Bug#31188)
+
+2018-04-17  Eli Zaretskii  <eliz@gnu.org>
+
+	* test/src/lread-tests.el (lread-test-bug-31186): New test.
+
+2018-04-17  Andreas Schwab  <schwab@suse.de>
+
+	Fix undefined behaviour while looking for lexical-binding file variable (bug 31186)
+
+	* src/lread.c (lisp_file_lexically_bound_p): Reset
+	beg_end_state before reading variable or value.
+
+2018-04-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor wording improvement in "Bookmarks"
+
+	* doc/emacs/regs.texi (Bookmarks): Improve wording.  Suggested by
+	"Siraphob (Ben) Phipathananunth" <siraben@disroot.org>.
+
+2018-04-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix building etc/DOC in the MSDOS port
+
+	* msdos/sed1v2.inp (lisp.mk): Fix escaping in Sed commands.
+
+2018-04-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/select.el (gui-get-selection): Doc fix.
+
+2018-04-13  Alan Mackenzie  <acm@muc.de>
+
+	Complete documentation of syntax flags by adding `c'
+
+	* doc/lispref/syntax.texi ("Syntax Table Internals"): Add entry for `c'
+	as `(1 lsh 23)'.
+
+2018-04-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix typos and minor wording issues in ELisp manual
+
+	* doc/lispref/internals.texi (Writing Emacs Primitives):
+	* doc/lispref/display.texi (Temporary Displays): Fix typos.
+	* doc/lispref/text.texi (Filling, Changing Properties)
+	(Transposition): Clarify and fix typos.
+	* doc/lispref/positions.texi (Screen Lines): Improve wording.
+	* doc/lispref/modes.texi (Minor Mode Conventions)
+	(Font Lock Multiline): Fix typos.
+	* doc/lispref/variables.texi (Dynamic Binding Tips): Fix a
+	cross-reference.  Fix a typo.
+	* doc/lispref/sequences.texi (Sequence Functions): Fix typos.
+	(Bug#31143)
+
+2018-04-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid segfault in processes of type 'pipe'
+
+	* src/process.c (Fmake_pipe_process): Set up the decoding and
+	encoding buffers.  For the details, see
+	http://lists.gnu.org/archive/html/emacs-devel/2018-04/msg00295.html.
+
+2018-04-13  Robert Pluim  <rpluim@gmail.com>
+
+	Remove repetitions in documentation strings
+
+	* lisp/bindings.el (right-word): Remove repetition
+	(left-word): Likewise.
+
+	* lisp/image-mode.el (image-mode-as-hex): Likewise.
+
+	* lisp/cedet/semantic/tag-ls.el (semantic-tag-similar-p): Likewise.
+
+	* lisp/textmodes/reftex-vars.el (reftex-view-crossref-extra): Likewise
+
+2018-04-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/image.el (image-load-path): Doc fix.
+
+2018-04-09  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Regenerate.
+
 2018-04-09  Charles A. Roelli  <charles@aurox.ch>
 
 	* lisp/files.el (kept-new-versions): Improve documentation string.
@@ -59211,7 +59732,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit c8ffca525c60e4a17d9687d92e3304bb27a8d446 (inclusive).
+commit 35574609dd09e2eab0301309b0e3bf831f627fcc (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:

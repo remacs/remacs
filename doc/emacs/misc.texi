@@ -2854,7 +2854,7 @@ which has a similar feature of its own.
 @cindex finding file at point
 
   The FFAP package replaces certain key bindings for finding files,
-such as @kbd{C-x C-f}, with commands that provide more sensitive
+such as @kbd{C-x C-f}, with commands that provide more sensible
 defaults.  These commands behave like the ordinary ones when given a
 prefix argument.  Otherwise, they get the default file name or URL
 from the text around point.  If what is found in the buffer has the
