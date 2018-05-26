@@ -2904,7 +2904,6 @@ pub type voidfuncptr = unsafe extern "C" fn();
 
 extern "C" {
     pub static initialized: bool;
-    pub static mut buffer_local_flags: Lisp_Buffer;
     pub static mut current_global_map: LispObject;
     pub static current_thread: *mut thread_state;
     pub static empty_unibyte_string: LispObject;
