@@ -1125,7 +1125,7 @@ component is used as the target of the symlink."
        'file-name-as-directory 'identity)
    (with-parsed-tramp-file-name (expand-file-name filename) nil
      (tramp-make-tramp-file-name
-      method user domain host port
+      v
       (with-tramp-file-property v localname "file-truename"
 	(let ((result nil)			; result steps in reverse order
 	      (quoted (tramp-compat-file-name-quoted-p localname))
@@ -1177,12 +1177,13 @@ component is used as the target of the symlink."
 			(tramp-compat-file-attribute-type
 			 (file-attributes
 			  (tramp-make-tramp-file-name
-			   method user domain host port
+			   v
 			   (mapconcat 'identity
 				      (append '("")
 					      (reverse result)
 					      (list thisstep))
-				     "/")))))
+				      "/")
+			   'nohop))))
 		  (cond ((string= "." thisstep)
 			 (tramp-message v 5 "Ignoring step `.'"))
 			((string= ".." thisstep)
@@ -1226,7 +1227,8 @@ component is used as the target of the symlink."
 	    (let (file-name-handler-alist)
 	      (setq result (tramp-compat-file-name-quote result))))
 	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
-	  result))))))
+	  result))
+      'nohop))))
 
 ;; Basic functions.
 
@@ -2804,11 +2806,9 @@ the result will be a local, non-Tramp, file name."
       ;; be problems with UNC shares or Cygwin mounts.
       (let ((default-directory (tramp-compat-temporary-file-directory)))
 	(tramp-make-tramp-file-name
-	 method user domain host port
-	 (tramp-drop-volume-letter
-	  (tramp-run-real-handler
-	   'expand-file-name (list localname)))
-	 hop)))))
+	 v (tramp-drop-volume-letter
+	    (tramp-run-real-handler
+	     'expand-file-name (list localname))))))))
 
 ;;; Remote commands:
 
@@ -2997,8 +2997,7 @@ the result will be a local, non-Tramp, file name."
 	    (setq input (with-parsed-tramp-file-name infile nil localname))
 	  ;; INFILE must be copied to remote host.
 	  (setq input (tramp-make-tramp-temp-file v)
-		tmpinput
-		(tramp-make-tramp-file-name method user domain host port input))
+		tmpinput (tramp-make-tramp-file-name v input 'nohop))
 	  (copy-file infile tmpinput t)))
       (when input (setq command (format "%s <%s" command input)))
 
@@ -3031,8 +3030,7 @@ the result will be a local, non-Tramp, file name."
 	    ;; stderr must be copied to remote host.  The temporary
 	    ;; file must be deleted after execution.
 	    (setq stderr (tramp-make-tramp-temp-file v)
-		  tmpstderr (tramp-make-tramp-file-name
-			     method user domain host port stderr))))
+		  tmpstderr (tramp-make-tramp-file-name v stderr 'nohop))))
 	 ;; stderr to be discarded.
 	 ((null (cadr destination))
 	  (setq stderr "/dev/null"))))
@@ -5294,7 +5292,7 @@ Nonexistent directories are removed from spec."
 	(lambda (x)
 	  (and
 	   (stringp x)
-	   (file-directory-p (tramp-make-tramp-file-name vec x))
+	   (file-directory-p (tramp-make-tramp-file-name vec x 'nohop))
 	   x))
 	remote-path)))))
 

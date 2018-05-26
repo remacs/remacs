@@ -1462,7 +1462,7 @@ necessary only.  This function will be used in file name completion."
 	 vec "process-buffer"
 	 (tramp-get-connection-property vec "process-buffer" nil))
 	(setq buffer-undo-list t
-	      default-directory (tramp-make-tramp-file-name vec "/" 'nohop))
+	      default-directory (tramp-make-tramp-file-name vec 'noloc 'nohop))
 	(current-buffer))))
 
 (defun tramp-get-connection-buffer (vec)
@@ -3072,11 +3072,11 @@ User is always nil."
     ;; Run the command on the localname portion only unless we are in
     ;; completion mode.
     (tramp-make-tramp-file-name
-     v (unless (and (zerop (length (tramp-file-name-localname v)))
-		    (not (tramp-connectable-p file)))
-	 (tramp-run-real-handler
-	  'file-name-as-directory
-	  (list (or (tramp-file-name-localname v) "")))))))
+     v (or (and (zerop (length (tramp-file-name-localname v)))
+		(not (tramp-connectable-p file)))
+	   (tramp-run-real-handler
+	    'file-name-as-directory
+	    (list (tramp-file-name-localname v)))))))
 
 (defun tramp-handle-file-name-case-insensitive-p (filename)
   "Like `file-name-case-insensitive-p' for Tramp files."
@@ -3153,11 +3153,16 @@ User is always nil."
 
 (defun tramp-handle-file-name-directory (file)
   "Like `file-name-directory' but aware of Tramp files."
-  (with-parsed-tramp-file-name file nil
-    (setf (tramp-file-name-localname v) nil)
-    ;; Run the command on the localname portion only.
+  ;; Everything except the last filename thing is the directory.  We
+  ;; cannot apply `with-parsed-tramp-file-name', because this expands
+  ;; the remote file name parts.
+  (let ((v (tramp-dissect-file-name file t)))
+    ;; Run the command on the localname portion only.  If this returns
+    ;; nil, mark also the localname part of `v' as nil.
     (tramp-make-tramp-file-name
-     v (tramp-run-real-handler'file-name-directory (list localname)))))
+     v (or (tramp-run-real-handler
+	    'file-name-directory (list (tramp-file-name-localname v)))
+	   'noloc))))
 
 (defun tramp-handle-file-name-nondirectory (file)
   "Like `file-name-nondirectory' but aware of Tramp files."
@@ -3202,8 +3207,7 @@ User is always nil."
 		((eq identification 'host) (tramp-file-name-host-port v))
 		((eq identification 'localname) localname)
 		((eq identification 'hop) hop)
-		(t (tramp-make-tramp-file-name
-		    method user domain host port "" hop)))))))))
+		(t (tramp-make-tramp-file-name v 'noloc)))))))))
 
 (defun tramp-handle-file-selinux-context (_filename)
   "Like `file-selinux-context' for Tramp files."
@@ -3237,7 +3241,7 @@ User is always nil."
 		 result
 		 (with-parsed-tramp-file-name (expand-file-name result) v2
 		   (tramp-make-tramp-file-name
-		    v2-method v2-user v2-domain v2-host v2-port
+		    v2
 		    (funcall
 		     (if (tramp-compat-file-name-quoted-p v2-localname)
 			 'tramp-compat-file-name-quote 'identity)
@@ -3248,7 +3252,8 @@ User is always nil."
 			       (tramp-compat-file-name-quote symlink-target))
 			   (expand-file-name
 			    symlink-target (file-name-directory v2-localname)))
-		       v2-localname)))))
+		       v2-localname))
+		    'nohop)))
 	   (when (>= numchase numchase-limit)
 	     (tramp-error
 	      v1 'file-error
@@ -3267,8 +3272,7 @@ User is always nil."
 		   (if (and (stringp (cdr x))
 			    (file-name-absolute-p (cdr x))
 			    (not (tramp-tramp-file-p (cdr x))))
-		       (tramp-make-tramp-file-name
-			method user domain host port (cdr x) hop)
+		       (tramp-make-tramp-file-name v (cdr x))
 		     (cdr x))))
 		tramp-backup-directory-alist)
 	     backup-directory-alist)))
@@ -3373,7 +3377,7 @@ User is always nil."
 			     ((stringp remote-copy)
 			      (file-local-copy
 			       (tramp-make-tramp-file-name
-				method user domain host port remote-copy)))
+				v remote-copy 'nohop)))
 			     ((stringp tramp-temp-buffer-file-name)
 			      (copy-file
 			       filename tramp-temp-buffer-file-name 'ok)
@@ -3417,9 +3421,7 @@ User is always nil."
 		     (or remote-copy (null tramp-temp-buffer-file-name)))
 	    (delete-file local-copy))
 	  (when (stringp remote-copy)
-	    (delete-file
-	     (tramp-make-tramp-file-name
-	      method user domain host port remote-copy)))))
+	    (delete-file (tramp-make-tramp-file-name v remote-copy 'nohop)))))
 
       ;; Result.
       (list (expand-file-name filename)
