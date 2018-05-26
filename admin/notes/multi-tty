@@ -305,7 +305,7 @@ THINGS TO DO
    multidisplay (and don't mind core dumps), you can edit src/config.h
    and define HAVE_GTK_MULTIDISPLAY there by hand.
 
-	http://bugzilla.gnome.org/show_bug.cgi?id=85715
+	https://gitlab.gnome.org/GNOME/gtk/issues/221
 
    Update: Han reports that GTK+ version 2.8.9 almost gets display
    disconnects right.  GTK will probably be fully fixed by the time
