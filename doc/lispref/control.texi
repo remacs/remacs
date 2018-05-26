@@ -148,9 +148,11 @@ following @var{forms}, in textual order, returning the result of
 @cindex conditional evaluation
 
   Conditional control structures choose among alternatives.  Emacs Lisp
-has four conditional forms: @code{if}, which is much the same as in
+has five conditional forms: @code{if}, which is much the same as in
 other languages; @code{when} and @code{unless}, which are variants of
-@code{if}; and @code{cond}, which is a generalized case statement.
+@code{if}; @code{cond}, which is a generalized case statement;
+and @code{pcase}, which is a generalization of @code{cond}
+(@pxref{Pattern-Matching Conditional}).
 
 @defspec if condition then-form else-forms@dots{}
 @code{if} chooses between the @var{then-form} and the @var{else-forms}
