@@ -453,8 +453,17 @@ are formatted as MIME digests.
 *** 'message-forward-included-headers' has changed its default to
 exclude most headers when forwarding.
 
-** 'epa-pinentry-mode' is renamed to 'epg-pinentry-mode'.
+** EasyPG
+
+---
+*** 'epa-pinentry-mode' is renamed to 'epg-pinentry-mode'.
 It now applies to epg functions as well as epa functions.
+
+---
+*** The alias functions 'epa--encode-coding-string',
+'epa--decode-coding-string', and 'epa--select-safe-coding-system' have
+been removed.  Use 'encode-coding-string', 'decode-coding-string', and
+'select-safe-coding-system' instead.
 
 * New Modes and Packages in Emacs 27.1
 
