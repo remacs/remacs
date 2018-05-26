@@ -425,9 +425,10 @@ pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject
             Lisp_Fwd_Int => LispObject::from(*(*valcontents).u_intfwd.intvar),
             Lisp_Fwd_Bool => LispObject::from(*(*valcontents).u_boolfwd.boolvar),
             Lisp_Fwd_Obj => (*(*valcontents).u_objfwd.objvar),
-            Lisp_Fwd_Buffer_Obj => {
-                *(*valcontents).u_buffer_objfwd.offset.apply_ptr(ThreadState::current_buffer().as_mut())
-            }
+            Lisp_Fwd_Buffer_Obj => *(*valcontents)
+                .u_buffer_objfwd
+                .offset
+                .apply_ptr(ThreadState::current_buffer().as_mut()),
             Lisp_Fwd_Kboard_Obj => {
                 // We used to simply use current_kboard here, but from Lisp
                 // code, its value is often unexpected.  It seems nicer to

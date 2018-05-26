@@ -149,15 +149,15 @@ macro_rules! def_lisp_sym {
 macro_rules! defvar_lisp {
     ($fvname:ident, $lname:expr, $value:expr) => {
         {
-            static mut o_fwd: ::data::Lisp_Objfwd = ::data::Lisp_Objfwd {
-                ty: ::data::Lisp_Fwd_Obj,
-                objvar: std::ptr::null_mut(),
-            };
-            unsafe { ::remacs_sys::defvar_lisp(&mut o_fwd,
-                                               $lname.as_ptr() as *const i8,
-                                               &mut ::remacs_sys::globals.$fvname);
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Objfwd = unsafe { ::hacks::uninitialized() };
+                ::remacs_sys::defvar_lisp(&mut o_fwd,
+                                          $lname.as_ptr() as *const i8,
+                                          &mut ::remacs_sys::globals.$fvname);
+                ::remacs_sys::globals.$fvname = $value;
             }
-            unsafe { ::remacs_sys::globals.$fvname = $value; }
         }
     };
 }
@@ -165,14 +165,15 @@ macro_rules! defvar_lisp {
 macro_rules! defvar_lisp_nopro {
     ($fvname:ident, $lname:expr, $value:expr) => {
         {
-            static mut o_fwd: ::data::Lisp_Objfwd = ::data::Lisp_Objfwd {
-                ty: ::data::Lisp_Fwd_Obj,
-                objvar: std::ptr::null_mut(),
-            };
-            unsafe { ::remacs_sys::defvar_lisp_nopro(&mut o_fwd,
-                                                     $lname.as_ptr() as *const i8,
-                                                     &mut ::remacs_sys::globals.$fvname); }
-            unsafe { ::remacs_sys::globals.$fvname = $value; }
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Objfwd = unsafe { ::hacks::uninitialized() };
+                ::remacs_sys::defvar_lisp_nopro(&mut o_fwd,
+                                                $lname.as_ptr() as *const i8,
+                                                &mut ::remacs_sys::globals.$fvname);
+                ::remacs_sys::globals.$fvname = $value;
+            }
         }
     };
 }
@@ -180,14 +181,15 @@ macro_rules! defvar_lisp_nopro {
 macro_rules! defvar_bool {
     ($fvname:ident, $lname:expr, $value:expr) => {
         {
-            static mut o_fwd: ::data::Lisp_Boolfwd = ::data::Lisp_Boolfwd {
-                ty: ::data::Lisp_Fwd_Bool,
-                boolvar: std::ptr::null_mut(),
-            };
-            unsafe { ::remacs_sys::defvar_bool(&mut o_fwd,
-                                               $lname.as_ptr() as *const i8,
-                                               &mut ::remacs_sys::globals.$fvname); }
-            unsafe { ::remacs_sys::globals.$fvname = $value; }
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Boolfwd = unsafe { ::hacks::uninitialized() };
+                ::remacs_sys::defvar_bool(&mut o_fwd,
+                                          $lname.as_ptr() as *const i8,
+                                          &mut ::remacs_sys::globals.$fvname);
+                ::remacs_sys::globals.$fvname = $value;
+            }
         }
     };
 }
@@ -195,14 +197,15 @@ macro_rules! defvar_bool {
 macro_rules! defvar_int {
     ($fvname:ident, $lname:expr, $value:expr) => {
         {
-            static mut o_fwd: ::data::Lisp_Intfwd = ::data::Lisp_Intfwd {
-                ty: ::data::Lisp_Fwd_Int,
-                intvar: std::ptr::null_mut(),
-            };
-            unsafe { ::remacs_sys::defvar_int(&mut o_fwd,
-                                              $lname.as_ptr() as *const i8,
-                                              &mut ::remacs_sys::globals.$fvname); }
-            unsafe { ::remacs_sys::globals.$fvname = $value; }
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Intfwd = unsafe { ::hacks::uninitialized() };
+                ::remacs_sys::defvar_int(&mut o_fwd,
+                                         $lname.as_ptr() as *const i8,
+                                         &mut ::remacs_sys::globals.$fvname);
+                ::remacs_sys::globals.$fvname = $value;
+            }
         }
     };
 }
@@ -211,15 +214,15 @@ macro_rules! defvar_int {
 macro_rules! defvar_kboard {
     ($vname:ident, $lname:expr) => {
         {
-            #[allow(const_err)]
-            static mut o_fwd: ::data::Lisp_Kboard_Objfwd = ::data::Lisp_Kboard_Objfwd {
-                ty: ::data::Lisp_Fwd_Kboard_Obj,
-                offset: unsafe { ::hacks::uninitialized::<::field_offset::FieldOffset<::remacs_sys::kboard, ::lisp::LispObject>>() }
-            };
             #[allow(unused_unsafe)]
-            unsafe { ::lread::defvar_kboard_offset(&mut o_fwd,
-                                                   $lname.as_ptr() as *const i8,
-                                                   ::field_offset::offset_of!(::remacs_sys::kboard => $vname)); }
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Kboard_Objfwd = unsafe { ::hacks::uninitialized() };
+                ::lread::defvar_kboard_offset(&mut o_fwd,
+                                              $lname.as_ptr() as *const i8,
+                                              ::field_offset::offset_of!(
+                                                  ::remacs_sys::kboard => $vname));
+                }
         }
     };
 }
@@ -241,7 +244,8 @@ macro_rules! defvar_per_buffer {
                 static mut o_fwd: ::data::Lisp_Buffer_Objfwd = unsafe { ::hacks::uninitialized() };
                 ::lread::defvar_per_buffer_offset(&mut o_fwd,
                                                   $lname.as_ptr() as *const i8,
-                                                  ::field_offset::offset_of!(::remacs_sys::Lisp_Buffer => $vname),
+                                                  ::field_offset::offset_of!(
+                                                      ::remacs_sys::Lisp_Buffer => $vname),
                                                   $pred);
             }
         }

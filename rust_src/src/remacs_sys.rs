@@ -18,11 +18,11 @@
 extern crate libc;
 extern crate std;
 
+use data::{Lisp_Boolfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj,
+           Lisp_Intfwd, Lisp_Kboard_Objfwd, Lisp_Objfwd};
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
            size_t, time_t, timespec};
 use lisp::LispObject;
-use data::{Lisp_Boolfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Int,
-           Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd, Lisp_Objfwd};
 
 // libc prefers not to merge pid_t as an alias for c_int in Windows, so we will not use libc::pid_t
 // and alias it ourselves.

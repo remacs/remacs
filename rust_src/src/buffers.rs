@@ -4,8 +4,8 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Overlay,
-                 Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Overlay, Lisp_Type,
+                 Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
@@ -13,6 +13,7 @@ use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, 
 use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, fget_buffer_list,
                  fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals, set_buffer_internal};
 
+use data::Lisp_Fwd;
 use editfns::point;
 use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lisp::defsubr;
@@ -21,7 +22,6 @@ use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef
 use multibyte::string_char;
 use strings::string_equal;
 use threads::ThreadState;
-use data::Lisp_Fwd;
 
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;

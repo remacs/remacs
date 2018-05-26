@@ -2,12 +2,13 @@ use libc;
 use lisp::LispObject;
 use obarray::intern_c_string_1;
 use remacs_sys;
-use remacs_sys::{EmacsInt};
+use remacs_sys::EmacsInt;
 use remacs_sys::SYMBOL_FORWARDED;
 use remacs_sys::staticpro;
 
-use data::{Lisp_Boolfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Int, Lisp_Buffer_Objfwd, Lisp_Fwd_Buffer_Obj,
-           Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd, Lisp_Objfwd};
+use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj,
+           Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd,
+           Lisp_Objfwd};
 use field_offset::FieldOffset;
 
 // Define an "integer variable"; a symbol whose value is forwarded to a
@@ -95,7 +96,9 @@ pub extern "C" fn defvar_kboard(
     namestring: *const libc::c_schar,
     offset: i32,
 ) {
-    defvar_kboard_offset(ko_fwd, namestring, unsafe { FieldOffset::<remacs_sys::kboard, LispObject>::new_from_offset(offset as usize) })
+    defvar_kboard_offset(ko_fwd, namestring, unsafe {
+        FieldOffset::<remacs_sys::kboard, LispObject>::new_from_offset(offset as usize)
+    })
 }
 
 pub fn defvar_kboard_offset(
@@ -116,15 +119,21 @@ pub fn defvar_kboard_offset(
 }
 
 #[no_mangle]
-pub extern "C" fn defvar_per_buffer(bo_fwd: *mut Lisp_Buffer_Objfwd, namestring: *const libc::c_schar,
-                                    offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>, predicate: LispObject)
-{
+pub extern "C" fn defvar_per_buffer(
+    bo_fwd: *mut Lisp_Buffer_Objfwd,
+    namestring: *const libc::c_schar,
+    offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
+    predicate: LispObject,
+) {
     defvar_per_buffer_offset(bo_fwd, namestring, offset, predicate);
 }
 
-pub fn defvar_per_buffer_offset(bo_fwd: *mut Lisp_Buffer_Objfwd, namestring: *const libc::c_schar,
-                                offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>, predicate: LispObject)
-{
+pub fn defvar_per_buffer_offset(
+    bo_fwd: *mut Lisp_Buffer_Objfwd,
+    namestring: *const libc::c_schar,
+    offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
+    predicate: LispObject,
+) {
     unsafe {
         (*bo_fwd).ty = Lisp_Fwd_Buffer_Obj;
         (*bo_fwd).offset = offset;
@@ -143,6 +152,6 @@ pub fn defvar_per_buffer_offset(bo_fwd: *mut Lisp_Buffer_Objfwd, namestring: *co
     if flags.is_nil() {
         /* Did a DEFVAR_PER_BUFFER without initializing the corresponding
            slot of buffer_local_flags.  */
-        unsafe { remacs_sys::emacs_abort () };
+        unsafe { remacs_sys::emacs_abort() };
     }
 }
