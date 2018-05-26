@@ -3401,10 +3401,6 @@ extern "C" {
 }
 
 extern "C" {
-    #[link_name = "\u{1}buffer_local_flags"]
     pub static mut buffer_local_flags: Lisp_Buffer;
-}
-extern "C" {
-    #[link_name = "\u{1}buffer_local_symbols"]
     pub static mut buffer_local_symbols: Lisp_Buffer;
 }
