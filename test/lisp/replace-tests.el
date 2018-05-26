@@ -23,7 +23,6 @@
 ;;; Code:
 
 (require 'ert)
-(eval-when-compile (require 'subr-x))
 
 (ert-deftest query-replace--split-string-tests ()
   (let ((sep (propertize "\0" 'separator t)))
@@ -359,75 +358,23 @@ Each element has the format:
 (dotimes (i (length replace-occur-tests))
   (replace-occur-test-create i))
 
-
-;;; Tests for `query-replace' undo feature.
-(defun replace-tests-clauses (char-nums def-chr)
-  "Build the clauses of the `pcase' in `replace-tests-with-undo'.
-CHAR-NUMS is a list of elements (CHAR . NUMS).
-CHAR is one of the chars ?, ?\s ?u ?U ?E ?q.
-NUMS is a list of integers; they are the patters to match,
-while CHAR is the return value.
-DEF-CHAR is the default character to return in the `pcase'
-when any of the clauses match."
-  (append
-   (delq nil
-         (mapcar (lambda (chr)
-                   (when-let (it (cadr (assq chr char-nums)))
-                     (if (cdr it)
-                         `(,(cons 'or it) ,chr)
-                       `(,(car it) ,chr))))
-                 '(?, ?\s ?u ?U ?E ?q)))
-   `((_ ,def-chr))))
-
-(defvar replace-tests-bind-read-string nil
-  "A string to bind `read-string' and avoid the prompt.")
-
-(defmacro replace-tests-with-undo (input from to char-nums def-chr &rest body)
-  "Helper to test `query-replace' undo feature.
-INPUT is a string to insert in a temporary buffer.
-FROM is the string to match for replace.
-TO is the replacement string.
-CHAR-NUMS is a list of elements (CHAR . NUMS).
-CHAR is one of the chars ?, ?\s ?u ?U ?E ?q.
-NUMS is a list of integers.
-DEF-CHAR is the char ?\s or ?q.
-BODY is a list of forms.
-Return the last evaled form in BODY."
-  (declare (indent 5) (debug (stringp stringp stringp form characterp body)))
-  (let ((text (gensym "text"))
-        (count (gensym "count")))
-    `(let* ((,text ,input)
-            (,count 0)
-            (inhibit-message t))
-       (with-temp-buffer
-         (insert ,text)
-         (goto-char 1)
-         ;; Bind `read-event' to simulate user input.
-         ;; If `replace-tests-bind-read-string' is non-nil, then
-         ;; bind `read-string' as well.
-         (cl-letf (((symbol-function 'read-event)
-                    (lambda (&rest args)
-                      (cl-incf ,count)
-                      (let ((val
-                             (pcase ,count
-                               ,@(replace-tests-clauses char-nums def-chr))))
-                        val)))
-                   ((symbol-function 'read-string)
-                    (if replace-tests-bind-read-string
-                        (lambda (&rest args) replace-tests-bind-read-string)
-                      (symbol-function 'read-string))))
-           (perform-replace ,from ,to t t nil))
-         ,@body))))
-
 (defun replace-tests--query-replace-undo (&optional comma)
-  (let ((input "111"))
-    (if comma
-        (should
-         (replace-tests-with-undo
-          input "1" "2" ((?, (2)) (?u (3)) (?q (4))) ?\s (buffer-string)))
-      (should
-       (replace-tests-with-undo
-        input "1" "2" ((?\s (2)) (?u (3)) (?q (4))) ?\s (buffer-string))))))
+  (with-temp-buffer
+    (insert "111")
+    (goto-char 1)
+    (let ((count 0))
+      ;; Don't wait for user input.
+      (cl-letf (((symbol-function 'read-event)
+                 (lambda (&rest args)
+                   (cl-incf count)
+                   (let ((val (pcase count
+                                ('2 (if comma ?, ?\s)) ; replace and: ',' no move; '\s' go next
+                                ('3 ?u) ; undo
+                                ('4 ?q) ; exit
+                                (_ ?\s)))) ; replace current and go next
+                     val))))
+        (perform-replace "1" "2" t nil nil)))
+    (buffer-string)))
 
 (ert-deftest query-replace--undo ()
   (should (string= "211" (replace-tests--query-replace-undo)))
@@ -435,28 +382,64 @@ Return the last evaled form in BODY."
 
 (ert-deftest query-replace-undo-bug31073 ()
   "Test for https://debbugs.gnu.org/31073 ."
-  (let ((input "aaa aaa"))
-    (should
-     (replace-tests-with-undo
-      input "a" "B" ((?\s (1 2 3)) (?U (4))) ?q
-      (string= input (buffer-string))))))
+  (let ((text "aaa aaa")
+        (count 0))
+    (with-temp-buffer
+      (insert text)
+      (goto-char 1)
+      (cl-letf (((symbol-function 'read-event)
+                 (lambda (&rest args)
+                   (cl-incf count)
+                   (let ((val (pcase count
+                                ((or 1 2 3) ?\s) ; replace current and go next
+                                (4 ?U) ; undo-all
+                                (_ ?q)))) ; exit
+                     val))))
+        (perform-replace "a" "B" t nil nil))
+      ;; After undo text must be the same.
+      (should (string= text (buffer-string))))))
 
 (ert-deftest query-replace-undo-bug31492 ()
   "Test for https://debbugs.gnu.org/31492 ."
-  (let ((input "a\nb\nc\n"))
-    (should
-     (replace-tests-with-undo
-      input "^\\|\b\\|$" "foo" ((?\s (1 2)) (?U (3))) ?q
-      (string= input (buffer-string))))))
+  (let ((text "a\nb\nc\n")
+        (count 0)
+        (inhibit-message t))
+    (with-temp-buffer
+      (insert text)
+      (goto-char 1)
+      (cl-letf (((symbol-function 'read-event)
+                 (lambda (&rest args)
+                   (cl-incf count)
+                   (let ((val (pcase count
+                                ((or 1 2) ?\s) ; replace current and go next
+                                (3 ?U) ; undo-all
+                                (_ ?q)))) ; exit
+                     val))))
+        (perform-replace "^\\|\b\\|$" "foo" t t nil))
+      ;; After undo text must be the same.
+      (should (string= text (buffer-string))))))
 
 (ert-deftest query-replace-undo-bug31538 ()
   "Test for https://debbugs.gnu.org/31538 ."
-  (let ((input "aaa aaa")
-        (replace-tests-bind-read-string "Bfoo"))
-    (should
-     (replace-tests-with-undo
-      input "a" "B" ((?\s (1 2 3)) (?E (4)) (?U (5))) ?q
-      (string= input (buffer-string))))))
-
+  (let ((text "aaa aaa")
+        (count 0)
+        (inhibit-message t))
+    (with-temp-buffer
+      (insert text)
+      (goto-char 1)
+      (cl-letf (((symbol-function 'read-event)
+                 (lambda (&rest args)
+                   (cl-incf count)
+                   (let ((val (pcase count
+                                ((or 1 2 3) ?\s) ; replace current and go next
+                                (4 ?E) ; edit string
+                                (5 ?U) ; undo-all
+                                (_ ?q)))) ; exit
+                     val)))
+                ((symbol-function 'read-string)
+                 (lambda (&rest _) "Bfoo")))
+        (perform-replace "a" "B" t t nil))
+      ;; After undo text must be the same.
+      (should (string= text (buffer-string))))))
 
 ;;; replace-tests.el ends here
