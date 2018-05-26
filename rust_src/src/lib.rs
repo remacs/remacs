@@ -13,6 +13,7 @@
 #![feature(concat_idents)]
 #![feature(stmt_expr_attributes)]
 #![feature(repr_transparent)]
+#![feature(untagged_unions)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -23,6 +24,8 @@ extern crate md5;
 extern crate rand;
 extern crate sha1;
 extern crate sha2;
+
+extern crate field_offset;
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
 #[cfg(all(not(test), target_os = "macos"))]
@@ -110,5 +113,17 @@ mod compile_errors {
     #[lisp_fn]
     fn dummy(x: LispObject) -> LispObject {
         compile_error!("error 001");
+    }
+}
+
+mod hacks {
+    #[allow(unions_with_drop_fields)]
+    union Hack<T> {
+        t: T,
+        u: (),
+    }
+    #[allow(const_err)]
+    pub const unsafe fn uninitialized<T>() -> T {
+        Hack { u: () }.t
     }
 }

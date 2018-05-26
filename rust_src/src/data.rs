@@ -1,6 +1,4 @@
 //! data helpers
-extern crate field_offset;
-
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
@@ -9,8 +7,7 @@ use remacs_sys::{aset_multibyte_string, build_string, emacs_abort, fget_terminal
                  update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{EmacsInt, Lisp_Misc_Type, Lisp_Type, PseudovecType};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
-use remacs_sys::{Lisp_Buffer, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj, Lisp_Fwd_Int,
-                 Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
+use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
 use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
                  Qchoice, Qcompiled_function, Qcondition_variable, Qcons,
                  Qcyclic_function_indirection, Qdefalias_fset_function, Qdefun, Qfinalizer,
@@ -30,7 +27,7 @@ use multibyte::{is_ascii, is_single_byte_char};
 use obarray::loadhist_attach;
 use threads::ThreadState;
 
-use self::field_offset::FieldOffset;
+use field_offset::FieldOffset;
 
 // Lisp_Fwd predicates which can go away as the callers are ported to Rust
 #[no_mangle]
@@ -339,6 +336,84 @@ pub fn subr_name(subr: LispSubrRef) -> LispObject {
                 Getting and Setting Values of Symbols
  ***********************************************************************/
 
+/// These are the types of forwarding objects used in the value slot
+/// of symbols for special built-in variables whose value is stored in
+/// C/Rust static variables.
+pub type Lisp_Fwd_Type = u32;
+pub const Lisp_Fwd_Int: Lisp_Fwd_Type = 0; // Fwd to a C `int' variable.
+pub const Lisp_Fwd_Bool: Lisp_Fwd_Type = 1; // Fwd to a C boolean var.
+pub const Lisp_Fwd_Obj: Lisp_Fwd_Type = 2; // Fwd to a C LispObject variable.
+pub const Lisp_Fwd_Buffer_Obj: Lisp_Fwd_Type = 3; // Fwd to a LispObject field of buffers.
+pub const Lisp_Fwd_Kboard_Obj: Lisp_Fwd_Type = 4; // Fwd to a LispObject field of kboards.
+
+// these structs will still need to be compatible with their C
+// counterparts until all the C callers of the DEFVAR macros are
+// ported to Rust. However, as do_symval_forwarding and
+// store_symval_forwarding have been ported, some Rust-isms have
+// started to happen.
+
+#[repr(C)]
+pub union Lisp_Fwd {
+    pub u_intfwd: Lisp_Intfwd,
+    pub u_boolfwd: Lisp_Boolfwd,
+    pub u_objfwd: Lisp_Objfwd,
+    pub u_buffer_objfwd: Lisp_Buffer_Objfwd,
+    pub u_kboard_objfwd: Lisp_Kboard_Objfwd,
+}
+
+/// Forwarding pointer to an int variable.
+/// This is allowed only in the value cell of a symbol,
+/// and it means that the symbol's value really lives in the
+/// specified int variable.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Intfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Int
+    pub intvar: *mut EmacsInt,
+}
+
+/// Boolean forwarding pointer to an int variable.
+/// This is like Lisp_Intfwd except that the ostensible
+/// "value" of the symbol is t if the bool variable is true,
+/// nil if it is false.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Boolfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Bool
+    pub boolvar: *mut bool,
+}
+
+/// Forwarding pointer to a LispObject variable.
+/// This is allowed only in the value cell of a symbol,
+/// and it means that the symbol's value really lives in the
+/// specified variable.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Obj
+    pub objvar: *mut LispObject,
+}
+
+/// Like Lisp_Objfwd except that value lives in a slot in the
+/// current buffer.  Value is byte index of slot within buffer.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Buffer_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Buffer_Obj
+    pub offset: FieldOffset<remacs_sys::Lisp_Buffer, LispObject>,
+    // One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.
+    pub predicate: LispObject,
+}
+
+/// Like Lisp_Objfwd except that value lives in a slot in the
+/// current kboard.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Kboard_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Kboard_Obj
+    pub offset: FieldOffset<remacs_sys::kboard, LispObject>,
+}
+
 /// Given the raw contents of a symbol value cell,
 /// return the Lisp value of the symbol.
 /// This does not handle buffer-local variables; use
@@ -351,10 +426,7 @@ pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject
             Lisp_Fwd_Bool => LispObject::from(*(*valcontents).u_boolfwd.boolvar),
             Lisp_Fwd_Obj => (*(*valcontents).u_objfwd.objvar),
             Lisp_Fwd_Buffer_Obj => {
-                let offset = FieldOffset::<Lisp_Buffer, LispObject>::new_from_offset(
-                    (*valcontents).u_buffer_objfwd.offset as usize,
-                );
-                *offset.apply_ptr(ThreadState::current_buffer().as_mut())
+                *(*valcontents).u_buffer_objfwd.offset.apply_ptr(ThreadState::current_buffer().as_mut())
             }
             Lisp_Fwd_Kboard_Obj => {
                 // We used to simply use current_kboard here, but from Lisp
@@ -373,10 +445,7 @@ pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject
                     emacs_abort();
                 }
                 let kboard = (*fget_terminal(frame.as_ptr())).kboard;
-                let offset = FieldOffset::<remacs_sys::kboard, LispObject>::new_from_offset(
-                    (*valcontents).u_kboard_objfwd.offset as usize,
-                );
-                *offset.apply_ptr(kboard)
+                *(*valcontents).u_kboard_objfwd.offset.apply_ptr(kboard)
             }
             _ => emacs_abort(),
         }
@@ -434,10 +503,7 @@ pub extern "C" fn store_symval_forwarding(
                 buf = ThreadState::current_buffer().as_mut();
             }
             unsafe {
-                let offset = FieldOffset::<Lisp_Buffer, LispObject>::new_from_offset(
-                    (*valcontents).u_buffer_objfwd.offset as usize,
-                );
-                *offset.apply_ptr_mut(buf) = newval;
+                *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
             }
         }
         Lisp_Fwd_Kboard_Obj => {
@@ -447,10 +513,7 @@ pub extern "C" fn store_symval_forwarding(
             }
             unsafe {
                 let kboard = (*fget_terminal(frame.as_ptr())).kboard;
-                let offset = FieldOffset::<remacs_sys::kboard, LispObject>::new_from_offset(
-                    (*valcontents).u_kboard_objfwd.offset as usize,
-                );
-                *offset.apply_ptr_mut(kboard) = newval;
+                *(*valcontents).u_kboard_objfwd.offset.apply_ptr_mut(kboard) = newval;
             }
         }
         _ => unsafe { emacs_abort() },

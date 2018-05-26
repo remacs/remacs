@@ -149,8 +149,8 @@ macro_rules! def_lisp_sym {
 macro_rules! defvar_lisp {
     ($fvname:ident, $lname:expr, $value:expr) => {
         {
-            static mut o_fwd: ::remacs_sys::Lisp_Objfwd = ::remacs_sys::Lisp_Objfwd {
-                ty: ::remacs_sys::Lisp_Fwd_Obj,
+            static mut o_fwd: ::data::Lisp_Objfwd = ::data::Lisp_Objfwd {
+                ty: ::data::Lisp_Fwd_Obj,
                 objvar: std::ptr::null_mut(),
             };
             unsafe { ::remacs_sys::defvar_lisp(&mut o_fwd,
@@ -165,8 +165,8 @@ macro_rules! defvar_lisp {
 macro_rules! defvar_lisp_nopro {
     ($fvname:ident, $lname:expr, $value:expr) => {
         {
-            static mut o_fwd: ::remacs_sys::Lisp_Objfwd = ::remacs_sys::Lisp_Objfwd {
-                ty: ::remacs_sys::Lisp_Fwd_Obj,
+            static mut o_fwd: ::data::Lisp_Objfwd = ::data::Lisp_Objfwd {
+                ty: ::data::Lisp_Fwd_Obj,
                 objvar: std::ptr::null_mut(),
             };
             unsafe { ::remacs_sys::defvar_lisp_nopro(&mut o_fwd,
@@ -180,8 +180,8 @@ macro_rules! defvar_lisp_nopro {
 macro_rules! defvar_bool {
     ($fvname:ident, $lname:expr, $value:expr) => {
         {
-            static mut o_fwd: ::remacs_sys::Lisp_Boolfwd = ::remacs_sys::Lisp_Boolfwd {
-                ty: ::remacs_sys::Lisp_Fwd_Bool,
+            static mut o_fwd: ::data::Lisp_Boolfwd = ::data::Lisp_Boolfwd {
+                ty: ::data::Lisp_Fwd_Bool,
                 boolvar: std::ptr::null_mut(),
             };
             unsafe { ::remacs_sys::defvar_bool(&mut o_fwd,
@@ -195,14 +195,55 @@ macro_rules! defvar_bool {
 macro_rules! defvar_int {
     ($fvname:ident, $lname:expr, $value:expr) => {
         {
-            static mut o_fwd: ::remacs_sys::Lisp_Intfwd = ::remacs_sys::Lisp_Intfwd {
-                ty: ::remacs_sys::Lisp_Fwd_Int,
+            static mut o_fwd: ::data::Lisp_Intfwd = ::data::Lisp_Intfwd {
+                ty: ::data::Lisp_Fwd_Int,
                 intvar: std::ptr::null_mut(),
             };
             unsafe { ::remacs_sys::defvar_int(&mut o_fwd,
                                               $lname.as_ptr() as *const i8,
                                               &mut ::remacs_sys::globals.$fvname); }
             unsafe { ::remacs_sys::globals.$fvname = $value; }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! defvar_kboard {
+    ($vname:ident, $lname:expr) => {
+        {
+            #[allow(const_err)]
+            static mut o_fwd: ::data::Lisp_Kboard_Objfwd = ::data::Lisp_Kboard_Objfwd {
+                ty: ::data::Lisp_Fwd_Kboard_Obj,
+                offset: unsafe { ::hacks::uninitialized::<::field_offset::FieldOffset<::remacs_sys::kboard, ::lisp::LispObject>>() }
+            };
+            #[allow(unused_unsafe)]
+            unsafe { ::lread::defvar_kboard_offset(&mut o_fwd,
+                                                   $lname.as_ptr() as *const i8,
+                                                   ::field_offset::offset_of!(::remacs_sys::kboard => $vname)); }
+        }
+    };
+}
+
+/// Similar to defvar_lisp but define a variable whose value is the
+/// Lisp_Object stored in the current buffer.  LNAME is the Lisp-level
+/// variable name.  VNAME is the name of the buffer slot.  PREDICATE
+/// is nil for a general Lisp variable.  If PREDICATE is non-nil, then
+/// only Lisp values that satisfies the PREDICATE are allowed (except
+/// that nil is allowed too).  DOC is a dummy where you write the doc
+/// string as a comment.
+#[macro_export]
+macro_rules! defvar_per_buffer {
+    ($vname:ident, $lname:expr, $pred:ident) => {
+        {
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Buffer_Objfwd = unsafe { ::hacks::uninitialized() };
+                ::lread::defvar_per_buffer_offset(&mut o_fwd,
+                                                  $lname.as_ptr() as *const i8,
+                                                  ::field_offset::offset_of!(::remacs_sys::Lisp_Buffer => $vname),
+                                                  $pred);
+            }
         }
     };
 }

@@ -12,6 +12,8 @@ use std::ptr;
 use remacs_util::parse_lisp_fn;
 
 #[allow(dead_code)]
+const INVALID: c_int = 0;
+#[allow(dead_code)]
 const LISP_OBJECT: c_int = 1;
 #[allow(dead_code)]
 const EMACS_INTEGER: c_int = 2;
@@ -149,13 +151,17 @@ pub extern "C" fn scan_rust_file(
                     "lisp_nopro" => LISP_OBJECT,
                     "bool" => BOOLEAN,
                     "int" => EMACS_INTEGER,
+                    "per_buffer" => INVALID, // not really invalid, we just skip them here
+                    "kboard" => INVALID,
                     _ => panic!("unknown macro 'defvar_{}' found; either you have a typo in {} or you need to update docfile.rs`",
                                 kindstr, filename),
                 };
-                let fvname = &caps[2];
-                assert!(fvname.starts_with("f_V"));
-                let vname = CString::new(fvname.splitn(2, "_").nth(1).unwrap()).unwrap();
-                add_global(kind, vname.as_ptr() as *const i8, 0, ptr::null());
+                if kind != INVALID {
+                    let fvname = &caps[2];
+                    assert!(fvname.starts_with("f_V"));
+                    let vname = CString::new(fvname.splitn(2, "_").nth(1).unwrap()).unwrap();
+                    add_global(kind, vname.as_ptr() as *const i8, 0, ptr::null());
+                }
             }
         }
     }

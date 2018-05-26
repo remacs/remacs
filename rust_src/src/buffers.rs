@@ -4,7 +4,7 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_Overlay,
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Overlay,
                  Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
@@ -21,6 +21,7 @@ use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef
 use multibyte::string_char;
 use strings::string_equal;
 use threads::ThreadState;
+use data::Lisp_Fwd;
 
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
@@ -772,6 +773,14 @@ pub fn buffer_base_buffer(buffer: LispObject) -> Option<LispBufferRef> {
     buffer.as_buffer_or_current_buffer().base_buffer()
 }
 
-def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+#[no_mangle]
+pub extern "C" fn rust_syms_of_buffer() {
+    def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+
+    /// Analogous to `mode-line-format', but controls the header line.
+    /// The header line appears, optionally, at the top of a window;
+    /// the mode line appears at the bottom.
+    defvar_per_buffer!(header_line_format, "header-line-format", Qnil);
+}
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
