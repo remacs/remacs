@@ -69,6 +69,8 @@ instead use \\[customize] (see the info node `Easy Customization')."
   "Coding system to use with messages from `epg-gpg-program'."
   :type 'symbol)
 
+(define-obsolete-variable-alias
+  'epa-pinentry-mode 'epg-pinentry-mode "27.1")
 
 ;; In the doc string below, we say "symbol `error'" to avoid producing
 ;; a hyperlink for `error' the function.

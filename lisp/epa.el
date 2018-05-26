@@ -56,9 +56,6 @@ If neither t nor nil, ask user for confirmation."
   :type 'integer
   :group 'epa)
 
-(define-obsolete-variable-alias
-  'epa-pinentry-mode 'epg-pinentry-mode "27.1")
-
 (defgroup epa-faces nil
   "Faces for epa-mode."
   :version "23.1"
