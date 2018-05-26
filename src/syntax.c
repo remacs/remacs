@@ -180,7 +180,7 @@ static EMACS_INT find_start_modiff;
 
 static Lisp_Object skip_chars (bool, Lisp_Object, Lisp_Object, bool);
 static Lisp_Object skip_syntaxes (bool, Lisp_Object, Lisp_Object);
-static Lisp_Object scan_lists (EMACS_INT, EMACS_INT, EMACS_INT, bool);
+Lisp_Object scan_lists (EMACS_INT, EMACS_INT, EMACS_INT, bool);
 static void scan_sexps_forward (struct lisp_parse_state *,
                                 ptrdiff_t, ptrdiff_t, ptrdiff_t, EMACS_INT,
                                 bool, int);
@@ -188,13 +188,6 @@ static void internalize_parse_state (Lisp_Object, struct lisp_parse_state *);
 static bool in_classes (int, Lisp_Object);
 static void parse_sexp_propertize (ptrdiff_t charpos);
 
-/* This setter is used only in this file, so it can be private.  */
-static void
-bset_syntax_table (struct buffer *b, Lisp_Object val)
-{
-  b->syntax_table_ = val;
-}
-
 /* Whether the syntax of the character C has the prefix flag set.  */
 bool
 syntax_prefix_flag_p (int c)
@@ -986,14 +979,6 @@ check_syntax_table (Lisp_Object obj)
 	      Qsyntax_table_p, obj);
 }
 
-DEFUN ("syntax-table", Fsyntax_table, Ssyntax_table, 0, 0, 0,
-       doc: /* Return the current syntax table.
-This is the one specified by the current buffer.  */)
-  (void)
-{
-  return BVAR (current_buffer, syntax_table);
-}
-
 DEFUN ("standard-syntax-table", Fstandard_syntax_table,
    Sstandard_syntax_table, 0, 0, 0,
        doc: /* Return the standard syntax table.
@@ -1029,20 +1014,6 @@ It is a copy of the TABLE, which defaults to the standard syntax table.  */)
   return copy;
 }
 
-DEFUN ("set-syntax-table", Fset_syntax_table, Sset_syntax_table, 1, 1, 0,
-       doc: /* Select a new syntax table for the current buffer.
-One argument, a syntax table.  */)
-  (Lisp_Object table)
-{
-  int idx;
-  check_syntax_table (table);
-  bset_syntax_table (current_buffer, table);
-  /* Indicate that this buffer now has a specified syntax table.  */
-  idx = PER_BUFFER_VAR_IDX (syntax_table);
-  SET_PER_BUFFER_VALUE_P (current_buffer, idx, 1);
-  return table;
-}
-
 /* Convert a letter which signifies a syntax code
  into the code it signifies.
  This is used by modify-syntax-entry, and other things.  */
@@ -2610,7 +2581,7 @@ syntax_multibyte (int c, bool multibyte_symbol_p)
   return ASCII_CHAR_P (c) || !multibyte_symbol_p ? SYNTAX (c) : Ssymbol;
 }
 
-static Lisp_Object
+Lisp_Object
 scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
 {
   Lisp_Object val;
@@ -3003,34 +2974,6 @@ scan_lists (EMACS_INT from, EMACS_INT count, EMACS_INT depth, bool sexpflag)
   xsignal3 (Qscan_error,
 	    build_string ("Unbalanced parentheses"),
 	    make_number (last_good), make_number (from));
-}
-
-DEFUN ("scan-lists", Fscan_lists, Sscan_lists, 3, 3, 0,
-       doc: /* Scan from character number FROM by COUNT lists.
-Scan forward if COUNT is positive, backward if COUNT is negative.
-Return the character number of the position thus found.
-
-A \"list", in this context, refers to a balanced parenthetical
-grouping, as determined by the syntax table.
-
-If DEPTH is nonzero, treat that as the nesting depth of the starting
-point (i.e. the starting point is DEPTH parentheses deep).  This
-function scans over parentheses until the depth goes to zero COUNT
-times.  Hence, positive DEPTH moves out that number of levels of
-parentheses, while negative DEPTH moves to a deeper level.
-
-Comments are ignored if `parse-sexp-ignore-comments' is non-nil.
-
-If we reach the beginning or end of the accessible part of the buffer
-before we have scanned over COUNT lists, return nil if the depth at
-that point is zero, and signal a error if the depth is nonzero.  */)
-  (Lisp_Object from, Lisp_Object count, Lisp_Object depth)
-{
-  CHECK_NUMBER (from);
-  CHECK_NUMBER (count);
-  CHECK_NUMBER (depth);
-
-  return scan_lists (XINT (from), XINT (count), XINT (depth), 0);
 }
 
 DEFUN ("scan-sexps", Fscan_sexps, Sscan_sexps, 2, 2, 0,
@@ -3760,10 +3703,8 @@ In both cases, LIMIT bounds the search. */);
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
 
   defsubr (&Ssyntax_table_p);
-  defsubr (&Ssyntax_table);
   defsubr (&Sstandard_syntax_table);
   defsubr (&Scopy_syntax_table);
-  defsubr (&Sset_syntax_table);
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);
   defsubr (&Sstring_to_syntax);
@@ -3778,7 +3719,6 @@ In both cases, LIMIT bounds the search. */);
   defsubr (&Sskip_syntax_backward);
 
   defsubr (&Sforward_comment);
-  defsubr (&Sscan_lists);
   defsubr (&Sscan_sexps);
   defsubr (&Sbackward_prefix_chars);
   defsubr (&Sparse_partial_sexp);

@@ -236,4 +236,15 @@
   (let ((f (lambda () nil)))
     (should (functionp f))))
 
+(ert-deftest eval-tests--run-hooks-base ()
+  ;; We can't use let construct here because run-hooks takes a symbol
+  ;; as an argument and because of lexical binding, that symbol's
+  ;; value will always be nil
+  (setq function-hook '(lambda () (+ 1 1)))
+  (setq list-of-functions '((lambda () (+ 2 2))
+                            (lambda () (+ 3 3))))
+  (run-hooks 'function-hook 'list-of-functions)
+  (makunbound 'function-hook)
+  (makunbound 'list-of-functions))
+
 ;;; eval-tests.el ends here
