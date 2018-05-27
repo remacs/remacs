@@ -114,6 +114,14 @@ pub enum Lisp_Type {
 }
 
 #[repr(C)]
+pub enum CaseAction {
+    CaseUp = 0,
+    CaseDown,
+    CaseCapitalize,
+    CaseCapitalizeUp,
+}
+
+#[repr(C)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum PseudovecType {
     PVEC_NORMAL_VECTOR = 0,
@@ -1368,6 +1376,9 @@ extern "C" {
     pub static Vminibuffer_list: LispObject;
     pub static Vprocess_alist: LispObject;
     pub static Vrun_hooks: LispObject;
+
+
+    pub fn casify_object(case_action: CaseAction, object: LispObject) -> LispObject;
 
     pub fn staticpro(varaddress: *const LispObject);
 
