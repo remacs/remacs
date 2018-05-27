@@ -5136,7 +5136,7 @@ that Org can parse this line correctly:
 
 In this example, @samp{GTD} is the @emph{group tag} and it is related to two
 other tags: @samp{Control}, @samp{Persp}.  Defining @samp{Control} and
-@samp{Persp} as group tags creates an hierarchy of tags:
+@samp{Persp} as group tags creates a hierarchy of tags:
 
 @example
 #+TAGS: [ Control : Context Task ]
@@ -11180,7 +11180,7 @@ Org exports text in this block only when using ASCII back-end.
 @cindex horizontal rules, in ASCII export
 
 ASCII back-end recognizes only one attribute, @code{:width}, which specifies
-the width of an horizontal rule in number of characters.  The keyword and
+the width of a horizontal rule in number of characters.  The keyword and
 syntax for specifying widths is:
 
 @example

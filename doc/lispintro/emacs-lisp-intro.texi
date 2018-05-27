@@ -484,7 +484,7 @@ Narrowing and Widening
 
 @code{car}, @code{cdr}, @code{cons}: Fundamental Functions
 
-* Strange Names::               An historical aside: why the strange names?
+* Strange Names::               A historical aside: why the strange names?
 * car & cdr::                   Functions for extracting part of a list.
 * cons::                        Constructing a list.
 * nthcdr::                      Calling @code{cdr} repeatedly.
@@ -6797,7 +6797,7 @@ will see @code{cons} as well as two variants on @code{cdr},
 namely, @code{setcdr} and @code{nthcdr}.  (@xref{copy-region-as-kill}.)
 
 @menu
-* Strange Names::               An historical aside: why the strange names?
+* Strange Names::               A historical aside: why the strange names?
 * car & cdr::                   Functions for extracting part of a list.
 * cons::                        Constructing a list.
 * nthcdr::                      Calling @code{cdr} repeatedly.
@@ -7678,7 +7678,7 @@ The first part of the code looks like this:
 @end smallexample
 
 @noindent
-@code{char-table-p} is an hitherto unseen function.  It determines
+@code{char-table-p} is a hitherto unseen function.  It determines
 whether its argument is a character table.  When it is, it sets the
 character passed to @code{zap-to-char} to one of them, if that
 character exists, or to the character itself.  (This becomes important

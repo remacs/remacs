@@ -1048,7 +1048,7 @@ commands operate as if that portion did not exist, allowing a single
 @code{next-line} command to skip any number of hidden lines.
 However, character movement commands (such as @code{forward-char}) do
 not skip the hidden portion, and it is possible (if tricky) to insert
-or delete text in an hidden portion.
+or delete text in a hidden portion.
 
 In the examples below, we show the @emph{display appearance} of the
 buffer @code{foo}, which changes with the value of
