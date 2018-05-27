@@ -1377,7 +1377,6 @@ extern "C" {
     pub static Vprocess_alist: LispObject;
     pub static Vrun_hooks: LispObject;
 
-
     pub fn casify_object(case_action: CaseAction, object: LispObject) -> LispObject;
 
     pub fn staticpro(varaddress: *const LispObject);
@@ -1759,7 +1758,7 @@ pub mod font {
 
 #[cfg(test)]
 macro_rules! offset_of {
-    ($ty: ty, $field: ident) => {
+    ($ty:ty, $field:ident) => {
         unsafe { &(*(0 as *const $ty)).$field as *const _ as usize }
     };
 }
