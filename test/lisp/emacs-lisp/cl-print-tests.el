@@ -47,6 +47,31 @@
                "\\`(#1=#s(foo 1 2 3) #1#)\\'"
                (cl-prin1-to-string (list x x)))))))
 
+(cl-defstruct (cl-print-tests-struct
+               (:constructor cl-print-tests-con))
+  a b c d e)
+
+(ert-deftest cl-print-tests-3 ()
+  "CL printing observes `print-length'."
+  (let ((long-list (make-list 5 'a))
+        (long-vec (make-vector 5 'b))
+        (long-struct (cl-print-tests-con))
+        (print-length 4))
+    (should (equal "(a a a a ...)" (cl-prin1-to-string long-list)))
+    (should (equal "[b b b b ...]" (cl-prin1-to-string long-vec)))
+    (should (equal "#s(cl-print-tests-struct :a nil :b nil :c nil :d nil ...)"
+                   (cl-prin1-to-string long-struct)))))
+
+(ert-deftest cl-print-tests-4 ()
+  "CL printing observes `print-level'."
+  (let ((deep-list '(a (b (c (d (e))))))
+        (deep-struct (cl-print-tests-con))
+        (print-level 4))
+    (setf (cl-print-tests-struct-a deep-struct) deep-list)
+    (should (equal "(a (b (c (d ...))))" (cl-prin1-to-string deep-list)))
+    (should (equal "#s(cl-print-tests-struct :a (a (b (c ...))) :b nil :c nil :d nil :e nil)"
+                   (cl-prin1-to-string deep-struct)))))
+
 (ert-deftest cl-print-circle ()
   (let ((x '(#1=(a . #1#) #1#)))
     (let ((print-circle nil))

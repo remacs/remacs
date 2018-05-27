@@ -40,6 +40,10 @@
 
 (defvar cl-print--number-table nil)
 (defvar cl-print--currently-printing nil)
+(defvar cl-print--depth nil
+  "Depth of recursion within cl-print functions.
+Compared to `print-level' to determine when to stop recursing.")
+
 
 ;;;###autoload
 (cl-defgeneric cl-print-object (object stream)
@@ -52,33 +56,45 @@ call other entry points instead, such as `cl-prin1'."
   (prin1 object stream))
 
 (cl-defmethod cl-print-object ((object cons) stream)
-  (let ((car (pop object)))
-    (if (and (memq car '(\, quote \` \,@ \,.))
-             (consp object)
-             (null (cdr object)))
-        (progn
-          (princ (if (eq car 'quote) '\' car) stream)
-          (cl-print-object (car object) stream))
-      (princ "(" stream)
-      (cl-print-object car stream)
-      (while (and (consp object)
-                  (not (cond
-                        (cl-print--number-table
-                         (numberp (gethash object cl-print--number-table)))
-                        ((memq object cl-print--currently-printing))
-                        (t (push object cl-print--currently-printing)
-                           nil))))
-        (princ " " stream)
-        (cl-print-object (pop object) stream))
-      (when object
-        (princ " . " stream) (cl-print-object object stream))
-      (princ ")" stream))))
+  (if (and cl-print--depth (natnump print-level)
+           (> cl-print--depth print-level))
+      (princ "..." stream)
+    (let ((car (pop object))
+          (count 1))
+      (if (and (memq car '(\, quote \` \,@ \,.))
+               (consp object)
+               (null (cdr object)))
+          (progn
+            (princ (if (eq car 'quote) '\' car) stream)
+            (cl-print-object (car object) stream))
+        (princ "(" stream)
+        (cl-print-object car stream)
+        (while (and (consp object)
+                    (not (cond
+                          (cl-print--number-table
+                           (numberp (gethash object cl-print--number-table)))
+                          ((memq object cl-print--currently-printing))
+                          (t (push object cl-print--currently-printing)
+                             nil))))
+          (princ " " stream)
+          (if (or (not (natnump print-length)) (> print-length count))
+              (cl-print-object (pop object) stream)
+            (princ "..." stream)
+            (setq object nil))
+          (cl-incf count))
+        (when object
+          (princ " . " stream) (cl-print-object object stream))
+        (princ ")" stream)))))
 
 (cl-defmethod cl-print-object ((object vector) stream)
   (princ "[" stream)
-  (dotimes (i (length object))
-    (unless (zerop i) (princ " " stream))
-    (cl-print-object (aref object i) stream))
+  (let ((count (length object)))
+    (dotimes (i (if (natnump print-length)
+                    (min print-length count) count))
+      (unless (zerop i) (princ " " stream))
+      (cl-print-object (aref object i) stream))
+    (when (and (natnump print-length) (< print-length count))
+      (princ " ..." stream)))
   (princ "]" stream))
 
 (cl-defmethod cl-print-object ((object hash-table) stream)
@@ -180,14 +196,18 @@ into a button whose action shows the function's disassembly.")
 (cl-defmethod cl-print-object ((object cl-structure-object) stream)
   (princ "#s(" stream)
   (let* ((class (cl-find-class (type-of object)))
-         (slots (cl--struct-class-slots class)))
+         (slots (cl--struct-class-slots class))
+         (count (length slots)))
     (princ (cl--struct-class-name class) stream)
-    (dotimes (i (length slots))
+    (dotimes (i (if (natnump print-length)
+                    (min print-length count) count))
       (let ((slot (aref slots i)))
         (princ " :" stream)
         (princ (cl--slot-descriptor-name slot) stream)
         (princ " " stream)
-        (cl-print-object (aref object (1+ i)) stream))))
+        (cl-print-object (aref object (1+ i)) stream)))
+    (when (and (natnump print-length) (< print-length count))
+      (princ " ..." stream)))
   (princ ")" stream))
 
 ;;; Circularity and sharing.
@@ -198,26 +218,27 @@ into a button whose action shows the function's disassembly.")
 
 (cl-defmethod cl-print-object :around (object stream)
   ;; FIXME: Only put such an :around method on types where it's relevant.
-  (cond
-   (print-circle
-    (let ((n (gethash object cl-print--number-table)))
-      (if (not (numberp n))
-          (cl-call-next-method)
-        (if (> n 0)
-            ;; Already printed.  Just print a reference.
-            (progn (princ "#" stream) (princ n stream) (princ "#" stream))
-          (puthash object (- n) cl-print--number-table)
-          (princ "#" stream) (princ (- n) stream) (princ "=" stream)
-          (cl-call-next-method)))))
-   ((let ((already-printing (memq object cl-print--currently-printing)))
-      (when already-printing
-        ;; Currently printing, just print reference to avoid endless
-        ;; recursion.
-        (princ "#" stream)
-        (princ (length (cdr already-printing)) stream))))
-    (t (let ((cl-print--currently-printing
-              (cons object cl-print--currently-printing)))
-         (cl-call-next-method)))))
+  (let ((cl-print--depth (if cl-print--depth (1+ cl-print--depth) 1)))
+    (cond
+     (print-circle
+      (let ((n (gethash object cl-print--number-table)))
+        (if (not (numberp n))
+            (cl-call-next-method)
+          (if (> n 0)
+              ;; Already printed.  Just print a reference.
+              (progn (princ "#" stream) (princ n stream) (princ "#" stream))
+            (puthash object (- n) cl-print--number-table)
+            (princ "#" stream) (princ (- n) stream) (princ "=" stream)
+            (cl-call-next-method)))))
+     ((let ((already-printing (memq object cl-print--currently-printing)))
+        (when already-printing
+          ;; Currently printing, just print reference to avoid endless
+          ;; recursion.
+          (princ "#" stream)
+          (princ (length (cdr already-printing)) stream))))
+     (t (let ((cl-print--currently-printing
+               (cons object cl-print--currently-printing)))
+          (cl-call-next-method))))))
 
 (defvar cl-print--number-index nil)
 
