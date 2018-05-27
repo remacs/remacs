@@ -1355,7 +1355,7 @@ if hasattr(gdb, 'printing'):
       if itype == Lisp_Int0 or itype == Lisp_Int1:
         if USE_LSB_TAG:
           ival = ival >> (GCTYPEBITS - 1)
-        elif (ival >> VALBITS) & 1:
+        if (ival >> VALBITS) & 1:
           ival = ival | (-1 << VALBITS)
         else:
           ival = ival & ((1 << VALBITS) - 1)
