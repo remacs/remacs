@@ -114,6 +114,14 @@ pub enum Lisp_Type {
 }
 
 #[repr(C)]
+pub enum CaseAction {
+    CaseUp = 0,
+    CaseDown,
+    CaseCapitalize,
+    CaseCapitalizeUp,
+}
+
+#[repr(C)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum PseudovecType {
     PVEC_NORMAL_VECTOR = 0,
@@ -1820,4 +1828,5 @@ extern "C" {
     pub fn Fget(symbol: LispObject, propname: LispObject) -> LispObject;
     pub fn Fmove_to_column(column: LispObject, force: LispObject) -> LispObject;
     pub fn Fmake_string(length: LispObject, init: LispObject) -> LispObject;
+    pub fn casify_object(case_action: CaseAction, object: LispObject) -> LispObject;
 }
