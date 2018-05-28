@@ -1038,27 +1038,6 @@ Comparison is in lexicographic order and case is significant.  */)
 }
 
 
-DEFUN ("system-users", Fsystem_users, Ssystem_users, 0, 0, 0,
-       doc: /* Return a list of user names currently registered in the system.
-If we don't know how to determine that on this platform, just
-return a list with one element, taken from `user-real-login-name'.  */)
-     (void)
-{
-  Lisp_Object users = Qnil;
-#if defined HAVE_GETPWENT && defined HAVE_ENDPWENT
-  struct passwd *pw;
-
-  while ((pw = getpwent ()))
-    users = Fcons (DECODE_SYSTEM (build_string (pw->pw_name)), users);
-
-  endpwent ();
-#endif
-  if (EQ (users, Qnil))
-    /* At least current user is always known. */
-    users = list1 (Vuser_real_login_name);
-  return users;
-}
-
 DEFUN ("system-groups", Fsystem_groups, Ssystem_groups, 0, 0, 0,
        doc: /* Return a list of user group names currently registered in the system.
 The value may be nil if not supported on this platform.  */)
@@ -1094,7 +1073,6 @@ syms_of_dired (void)
   defsubr (&Sfile_name_all_completions);
   defsubr (&Sfile_attributes);
   defsubr (&Sfile_attributes_lessp);
-  defsubr (&Ssystem_users);
   defsubr (&Ssystem_groups);
 
   DEFVAR_LISP ("completion-ignored-extensions", Vcompletion_ignored_extensions,
