@@ -1377,8 +1377,6 @@ extern "C" {
     pub static Vprocess_alist: LispObject;
     pub static Vrun_hooks: LispObject;
 
-    pub fn casify_object(case_action: CaseAction, object: LispObject) -> LispObject;
-
     pub fn staticpro(varaddress: *const LispObject);
 
     // Use LispObject::tag_ptr instead of make_lisp_ptr
@@ -1758,7 +1756,7 @@ pub mod font {
 
 #[cfg(test)]
 macro_rules! offset_of {
-    ($ty:ty, $field:ident) => {
+    ($ty: ty, $field: ident) => {
         unsafe { &(*(0 as *const $ty)).$field as *const _ as usize }
     };
 }
@@ -1812,7 +1810,7 @@ pub enum syntaxcode {
     Endcomment,    // for a comment-ending character
     Inherit,       // use the standard syntax table for this character
     Comment_fence, // Starts/ends comment which is delimited on the other side by any char with the same syntaxcode.
-    String_fence, // Starts/ends string which is delimited on the other side by any char with the same syntaxcode.
+    String_fence,  // Starts/ends string which is delimited on the other side by any char with the same syntaxcode.
 }
 
 extern "C" {
@@ -1833,4 +1831,5 @@ extern "C" {
     pub fn Fget(symbol: LispObject, propname: LispObject) -> LispObject;
     pub fn Fmove_to_column(column: LispObject, force: LispObject) -> LispObject;
     pub fn Fmake_string(length: LispObject, init: LispObject) -> LispObject;
+    pub fn casify_object(case_action: CaseAction, object: LispObject) -> LispObject;
 }
