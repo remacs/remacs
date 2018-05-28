@@ -1810,7 +1810,7 @@ pub enum syntaxcode {
     Endcomment,    // for a comment-ending character
     Inherit,       // use the standard syntax table for this character
     Comment_fence, // Starts/ends comment which is delimited on the other side by any char with the same syntaxcode.
-    String_fence,  // Starts/ends string which is delimited on the other side by any char with the same syntaxcode.
+    String_fence, // Starts/ends string which is delimited on the other side by any char with the same syntaxcode.
 }
 
 extern "C" {

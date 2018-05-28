@@ -1,10 +1,10 @@
 ;;; Test `casefiddle-tests'.
-(ert-deftest upcase ()
-  (dolist (it '(("ONE" . "one")
-                ("12 A 3C!" . "12 a 3C!")
-                ("~!2 " . "~!2 ")
+(ert-deftest capitalize ()
+  (dolist (it '(("One" . "ONE")
+                ("One" . "one")
+                ("12 A 3c!" . "12 a 3C!")
                 ("" . "")))
-    (should (equal (upcase (cdr it)) (car it)))))
+    (should (equal (capitalize (cdr it)) (car it)))))
 
 (ert-deftest downcase ()
   (dolist (it '(("one" . "ONE")
@@ -12,3 +12,10 @@
                 ("~!2 " . "~!2 ")
                 ("" . "")))
     (should (equal (downcase (cdr it)) (car it)))))
+
+(ert-deftest upcase ()
+  (dolist (it '(("ONE" . "one")
+                ("12 A 3C!" . "12 a 3C!")
+                ("~!2 " . "~!2 ")
+                ("" . "")))
+    (should (equal (upcase (cdr it)) (car it)))))
