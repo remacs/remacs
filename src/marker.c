@@ -127,12 +127,6 @@ clear_charpos_cache (struct buffer *b)
     }									\
 }
 
-static void
-CHECK_MARKER (Lisp_Object x)
-{
-  CHECK_TYPE (MARKERP (x), Qmarkerp, x);
-}
-
 /* Return the byte position corresponding to CHARPOS in B.  */
 
 ptrdiff_t
@@ -391,71 +385,6 @@ buf_bytepos_to_charpos (struct buffer *b, ptrdiff_t bytepos)
 
 /* Operations on markers. */
 
-/* Internal function to set MARKER in BUFFER at POSITION.  Non-zero
-   RESTRICTED means limit the POSITION by the visible part of BUFFER.  */
-
-Lisp_Object
-set_marker_internal (Lisp_Object marker, Lisp_Object position,
-		     Lisp_Object buffer, bool restricted)
-{
-  struct Lisp_Marker *m;
-  struct buffer *b = live_buffer (buffer);
-
-  CHECK_MARKER (marker);
-  m = XMARKER (marker);
-
-  /* Set MARKER to point nowhere if BUFFER is dead, or
-     POSITION is nil or a marker points to nowhere.  */
-  if (NILP (position)
-      || (MARKERP (position) && !XMARKER (position)->buffer)
-      || !b)
-    unchain_marker (m);
-
-  /* Optimize the special case where we are copying the position of
-     an existing marker, and MARKER is already in the same buffer.  */
-  else if (MARKERP (position) && b == XMARKER (position)->buffer
-	   && b == m->buffer)
-    {
-      m->bytepos = XMARKER (position)->bytepos;
-      m->charpos = XMARKER (position)->charpos;
-    }
-
-  else
-    {
-      register ptrdiff_t charpos, bytepos;
-
-      /* Do not use CHECK_NUMBER_COERCE_MARKER because we
-	 don't want to call buf_charpos_to_bytepos if POSITION
-	 is a marker and so we know the bytepos already.  */
-      if (INTEGERP (position))
-	charpos = XINT (position), bytepos = -1;
-      else if (MARKERP (position))
-	{
-	  charpos = XMARKER (position)->charpos;
-	  bytepos = XMARKER (position)->bytepos;
-	}
-      else
-	wrong_type_argument (Qinteger_or_marker_p, position);
-
-      charpos = clip_to_bounds
-	(restricted ? BUF_BEGV (b) : BUF_BEG (b), charpos,
-	 restricted ? BUF_ZV (b) : BUF_Z (b));
-      /* Don't believe BYTEPOS if it comes from a different buffer,
-	 since that buffer might have a very different correspondence
-	 between character and byte positions.  */
-      if (bytepos == -1
-	  || !(MARKERP (position) && XMARKER (position)->buffer == b))
-	bytepos = buf_charpos_to_bytepos (b, charpos);
-      else
-	bytepos = clip_to_bounds
-	  (restricted ? BUF_BEGV_BYTE (b) : BUF_BEG_BYTE (b),
-	   bytepos, restricted ? BUF_ZV_BYTE (b) : BUF_Z_BYTE (b));
-
-      attach_marker (m, b, charpos, bytepos);
-    }
-  return marker;
-}
-
 /* Remove MARKER from the chain of whatever buffer it is in,
    leaving it points to nowhere.  This is called during garbage
    collection, so we must be careful to ignore and preserve
@@ -576,7 +505,17 @@ mget_charpos (struct Lisp_Marker *m) {
   return m->charpos;
 }
 
+void
+mset_charpos (struct Lisp_Marker *m, ptrdiff_t charpos) {
+  m->charpos = charpos;
+}
+
 ptrdiff_t
 mget_bytepos (struct Lisp_Marker *m) {
   return m->bytepos;
+}
+
+void
+mset_bytepos (struct Lisp_Marker *m, ptrdiff_t bytepos) {
+  m->bytepos = bytepos;
 }
