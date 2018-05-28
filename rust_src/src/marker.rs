@@ -7,9 +7,10 @@ use std::ptr;
 use remacs_macros::lisp_fn;
 use remacs_sys::{BoolBF, EmacsInt, Lisp_Buffer, Lisp_Marker};
 use remacs_sys::{buf_charpos_to_bytepos, mget_buffer, mget_bytepos, mget_charpos,
-                 mget_insertion_type, mget_next_marker, mset_buffer, mset_insertion_type,
-                 mset_next_marker, set_marker_internal, set_point_both, unchain_marker,
+                 mget_insertion_type, mget_next_marker, mset_buffer, mset_bytepos, mset_charpos,
+                 mset_insertion_type, mset_next_marker, set_point_both, unchain_marker,
                  Fmake_marker};
+use remacs_sys::Qinteger_or_marker_p;
 
 use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
@@ -42,6 +43,10 @@ impl LispMarkerRef {
         }
     }
 
+    pub fn set_charpos(&mut self, charpos: ptrdiff_t) -> () {
+        unsafe { mset_charpos(self.as_mut(), charpos) }
+    }
+
     pub fn bytepos(self) -> Option<ptrdiff_t> {
         match self.buffer() {
             None => None,
@@ -54,6 +59,10 @@ impl LispMarkerRef {
             None => error!("Marker does not point anywhere"),
             Some(_) => unsafe { mget_bytepos(self.as_ptr()) },
         }
+    }
+
+    pub fn set_bytepos(&mut self, bytepos: ptrdiff_t) -> () {
+        unsafe { mset_bytepos(self.as_mut(), bytepos) }
     }
 
     pub fn buffer(self) -> Option<LispBufferRef> {
@@ -175,14 +184,7 @@ pub fn set_marker_insertion_type(mut marker: LispMarkerRef, itype: LispObject) -
 /// editing in any buffer.  Returns MARKER.
 #[lisp_fn(min = "2")]
 pub fn set_marker(marker: LispObject, position: LispObject, buffer: LispObject) -> LispObject {
-    unsafe {
-        LispObject::from_raw(set_marker_internal(
-            marker.to_raw(),
-            position.to_raw(),
-            buffer.to_raw(),
-            false,
-        ))
-    }
+    set_marker_internal(marker, position, buffer, false)
 }
 
 /// Return a new marker pointing at the same place as MARKER.
@@ -229,8 +231,7 @@ pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
 }
 
 /// Change M so it points to B at CHARPOS and BYTEPOS.
-#[no_mangle]
-pub extern "C" fn attach_marker(
+pub fn attach_marker(
     marker: *mut Lisp_Marker,
     buffer: *mut Lisp_Buffer,
     charpos: ptrdiff_t,
@@ -274,7 +275,12 @@ pub extern "C" fn set_marker_restricted(
     position: LispObject,
     buffer: LispObject,
 ) -> LispObject {
-    unsafe { set_marker_internal(marker, position, buffer, true) }
+    set_marker_internal(
+        LispObject::from_raw(marker),
+        LispObject::from_raw(position),
+        LispObject::from_raw(buffer),
+        true,
+    ).to_raw()
 }
 
 /// Set the position of MARKER, specifying both the
@@ -287,9 +293,8 @@ pub extern "C" fn set_marker_both(
     bytepos: ptrdiff_t,
 ) -> LispObject {
     let mut m = LispObject::from_raw(marker).as_marker_or_error();
-    let b = live_buffer(buffer);
-    if !b.is_null() {
-        attach_marker(m.as_mut(), b, charpos, bytepos);
+    if let Some(mut b) = live_buffer(LispObject::from_raw(buffer)) {
+        attach_marker(m.as_mut(), b.as_mut(), charpos, bytepos);
     } else {
         unsafe { unchain_marker(m.as_mut()) };
     }
@@ -305,14 +310,13 @@ pub extern "C" fn set_marker_restricted_both(
     bytepos: ptrdiff_t,
 ) -> LispObject {
     let mut m = LispObject::from_raw(marker).as_marker_or_error();
-    let b = live_buffer(buffer);
 
-    if !b.is_null() {
+    if let Some(mut b) = live_buffer(LispObject::from_raw(buffer)) {
         let cur_buf = ThreadState::current_buffer();
         let clipped_charpos = clip_to_bounds(cur_buf.begv, charpos as EmacsInt, cur_buf.zv);
         let clipped_bytepos =
             clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
-        attach_marker(m.as_mut(), b, clipped_charpos, clipped_bytepos);
+        attach_marker(m.as_mut(), b.as_mut(), clipped_charpos, clipped_bytepos);
     } else {
         unsafe {
             unchain_marker(m.as_mut());
@@ -340,13 +344,126 @@ pub extern "C" fn marker_byte_position(marker: LispObject) -> ptrdiff_t {
 /// If BUFFER is nil, return current buffer pointer.  Next, check
 /// whether BUFFER is a buffer object and return buffer pointer
 /// corresponding to BUFFER if BUFFER is live, or NULL otherwise.
-#[no_mangle]
-pub extern "C" fn live_buffer(buffer: LispObject) -> *mut Lisp_Buffer {
-    let mut b = LispObject::from_raw(buffer).as_buffer_or_current_buffer();
+pub fn live_buffer(buffer: LispObject) -> Option<LispBufferRef> {
+    let b = buffer.as_buffer_or_current_buffer();
     if b.is_live() {
-        b.as_mut()
+        Some(b)
     } else {
-        ptr::null_mut()
+        None
+    }
+}
+
+impl LispObject {
+    pub fn has_buffer(self) -> bool {
+        self.as_marker().map_or(false, |m| m.buffer().is_some())
+    }
+}
+
+/// Internal function to set MARKER in BUFFER at POSITION.  Non-zero
+/// RESTRICTED means limit the POSITION by the visible part of BUFFER.
+fn set_marker_internal(
+    marker: LispObject,
+    position: LispObject,
+    buffer: LispObject,
+    restricted: bool,
+) -> LispObject {
+    let buf = live_buffer(buffer);
+
+    let mut m = marker.as_marker_or_error();
+
+    // Set MARKER to point nowhere if BUFFER is dead, or
+    // POSITION is nil or a marker points to nowhere.
+    if position.is_nil() || (position.is_marker() && !position.has_buffer()) || buf.is_none() {
+        unsafe {
+            unchain_marker(m.as_mut());
+        }
+
+    // Optimize the special case where we are copying the position of
+    // an existing marker, and MARKER is already in the same buffer.
+    } else if position.as_marker().map_or(false, |p| p.buffer() == buf) && m.buffer() == buf {
+        let pos = position.as_marker_or_error();
+        m.set_charpos(pos.charpos_or_error());
+        m.set_bytepos(pos.bytepos_or_error());
+    } else {
+        let b = buf.unwrap_or_else(|| panic!("Invalid buffer reference."));
+        set_marker_internal_else(m, position, restricted, b);
+    }
+    marker
+}
+
+fn set_marker_internal_else(
+    mut marker: LispMarkerRef,
+    position: LispObject,
+    restricted: bool,
+    mut buf: LispBufferRef,
+) {
+    let mut charpos: ptrdiff_t;
+    let mut bytepos: ptrdiff_t;
+
+    // Do not use CHECK_NUMBER_COERCE_MARKER because we
+    // don't want to call buf_charpos_to_bytepos if POSITION
+    // is a marker and so we know the bytepos already.
+    if let Some(num) = position.as_fixnum() {
+        charpos = num as ptrdiff_t;
+        bytepos = -1;
+    } else if let Some(m) = position.as_marker() {
+        charpos = m.charpos_or_error();
+        bytepos = m.bytepos_or_error();
+    } else {
+        wrong_type!(Qinteger_or_marker_p, position)
+    }
+    let beg = buf.buffer_beg(restricted);
+    let end = buf.buffer_end(restricted);
+    charpos = clip_to_bounds(beg, charpos as EmacsInt, end);
+
+    // Don't believe BYTEPOS if it comes from a different buffer,
+    // since that buffer might have a very different correspondence
+    // between character and byte positions.
+    if bytepos == -1
+        || !position
+            .as_marker()
+            .map_or(false, |m| m.buffer() == Some(buf))
+    {
+        bytepos = unsafe { buf_charpos_to_bytepos(buf.as_mut(), charpos) };
+    } else {
+        let beg = buf.buffer_beg_byte(restricted);
+        let end = buf.buffer_end_byte(restricted);
+        bytepos = clip_to_bounds(beg, bytepos as EmacsInt, end);
+    }
+    attach_marker(marker.as_mut(), buf.as_mut(), charpos, bytepos);
+}
+
+impl LispBufferRef {
+    pub fn buffer_beg(self, visible: bool) -> ptrdiff_t {
+        if visible {
+            self.begv
+        } else {
+            self.beg()
+        }
+    }
+
+    pub fn buffer_end(self, visible: bool) -> ptrdiff_t {
+        if visible {
+            self.zv
+        } else {
+            self.z()
+        }
+    }
+
+    pub fn buffer_beg_byte(self, visible: bool) -> ptrdiff_t {
+        if visible {
+            self.begv_byte
+        } else {
+            self.beg_byte()
+        }
+    }
+
+    pub fn buffer_end_byte(self, visible: bool) -> ptrdiff_t {
+        if visible {
+            self.zv_byte
+        } else {
+            self.z_byte()
+        }
     }
 }
 

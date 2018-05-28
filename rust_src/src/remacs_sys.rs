@@ -365,6 +365,8 @@ extern "C" {
     pub fn mset_buffer(m: *const Lisp_Marker, b: *mut Lisp_Buffer);
     pub fn mget_charpos(m: *const Lisp_Marker) -> ptrdiff_t;
     pub fn mget_bytepos(m: *const Lisp_Marker) -> ptrdiff_t;
+    pub fn mset_charpos(m: *const Lisp_Marker, charpos: ptrdiff_t);
+    pub fn mset_bytepos(m: *const Lisp_Marker, bytepos: ptrdiff_t);
 }
 
 // TODO: write a docstring based on the docs in lisp.h.
@@ -724,6 +726,7 @@ pub struct Lisp_Buffer {
 extern "C" {
     pub fn bget_overlays_before(b: *const Lisp_Buffer) -> *mut c_void;
     pub fn bget_overlays_after(b: *const Lisp_Buffer) -> *mut c_void;
+    pub fn bset_markers(b: *mut Lisp_Buffer, m: *mut Lisp_Marker);
 }
 
 /// struct Lisp_Buffer_Local_Value is used in a symbol value cell when
@@ -1616,12 +1619,6 @@ extern "C" {
         bytepos: *mut ptrdiff_t,
     ) -> ptrdiff_t;
 
-    pub fn set_marker_internal(
-        marker: LispObject,
-        position: LispObject,
-        buffer: LispObject,
-        restricted: bool,
-    ) -> LispObject;
     pub fn Fmake_marker() -> LispObject;
 
     pub fn find_field(
