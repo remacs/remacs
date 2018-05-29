@@ -61,11 +61,16 @@ call other entry points instead, such as `cl-prin1'."
       (princ "..." stream)
     (let ((car (pop object))
           (count 1))
-      (if (and (memq car '(\, quote \` \,@ \,.))
+      (if (and print-quoted
+               (memq car '(\, quote function \` \,@ \,.))
                (consp object)
                (null (cdr object)))
           (progn
-            (princ (if (eq car 'quote) '\' car) stream)
+            (princ (cond
+                    ((eq car 'quote) '\')
+                    ((eq car 'function) "#'")
+                    (t car))
+                   stream)
             (cl-print-object (car object) stream))
         (princ "(" stream)
         (cl-print-object car stream)

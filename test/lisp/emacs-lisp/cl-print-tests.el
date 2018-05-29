@@ -72,6 +72,16 @@
     (should (equal "#s(cl-print-tests-struct :a (a (b (c ...))) :b nil :c nil :d nil :e nil)"
                    (cl-prin1-to-string deep-struct)))))
 
+(ert-deftest cl-print-tests-5 ()
+  "CL printing observes `print-quoted'."
+  (let ((quoted-stuff '('a #'b `(,c ,@d))))
+    (let ((print-quoted t))
+      (should (equal "('a #'b `(,c ,@d))"
+                     (cl-prin1-to-string quoted-stuff))))
+    (let ((print-quoted nil))
+      (should (equal "((quote a) (function b) (\\` ((\\, c) (\\,@ d))))"
+                     (cl-prin1-to-string quoted-stuff))))))
+
 (ert-deftest cl-print-circle ()
   (let ((x '(#1=(a . #1#) #1#)))
     (let ((print-circle nil))
