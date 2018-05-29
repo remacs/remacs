@@ -10059,6 +10059,78 @@ DEFUN ("w32-notification-close",
 #endif	/* WINDOWSNT && !HAVE_DBUS */
 
 
+#ifdef WINDOWSNT
+/***********************************************************************
+			  Reading Registry
+ ***********************************************************************/
+DEFUN ("w32-read-registry",
+       Fw32_read_registry, Sw32_read_registry,
+       3, 3, 0,
+       doc: /* Return the value stored in MS-Windows Registry under ROOT/KEY/NAME.
+
+ROOT is a symbol, one of `HKCR', `HKCU', `HKLM', `HKU', or `HKCC'.
+It can also be nil, which means try `HKCU', and if that fails, try `HKLM'.
+
+KEY and NAME must be strings, and NAME must not include slashes.
+KEY can use either forward- or back-slashes.
+
+If the the named KEY or its subkey called NAME don't exist, or cannot
+be accessed by the current user, the function returns nil.  Otherwise,
+the return value depends on the type of the data stored in Registry:
+
+  If the data type is REG_NONE, the function returns t.
+  If the data type is REG_DWORD or REG_QWORD, the function returns
+    its integer value.  If the value is too large for a Lisp integer,
+    the function returns a cons (HIGH . LOW) of 2 integers, with LOW
+    the low 16 bits and HIGH the high bits.  If HIGH is too large for
+    a Lisp integer, the function returns (HIGH MIDDLE . LOW), first
+    the high bits, then the middle 24 bits, and finally the low 16 bits.
+  If the data type is REG_BINARY, the function returns a vector whose
+    elements are individual bytes of the value.
+  If the data type is REG_SZ, the function returns a string.
+  If the data type REG_EXPAND_SZ, the function returns a string with
+    all the %..% references to environment variables replaced by the
+    values of those variables.  If the expansion fails, or some
+    variables are not defined in the environment, some or all of
+    the environment variables will remain unexpanded.
+  If the data type is REG_MULTI_SZ, the function returns a list whose
+    elements are the individual strings.
+
+Note that this function doesn't know whether a string value is a file
+name, so file names will be returned with backslashes, which may need
+to be converted to forward slashes by the caller.  */)
+  (Lisp_Object root, Lisp_Object key, Lisp_Object name)
+{
+  CHECK_SYMBOL (root);
+  CHECK_STRING (key);
+  CHECK_STRING (name);
+
+  HKEY rootkey;
+  if (EQ (root, QHKCR))
+    rootkey = HKEY_CLASSES_ROOT;
+  else if (EQ (root, QHKCU))
+    rootkey = HKEY_CURRENT_USER;
+  else if (EQ (root, QHKLM))
+    rootkey = HKEY_LOCAL_MACHINE;
+  else if (EQ (root, QHKU))
+    rootkey = HKEY_USERS;
+  else if (EQ (root, QHKCC))
+    rootkey = HKEY_CURRENT_CONFIG;
+  else if (!NILP (root))
+    error ("unknown root key: %s", SDATA (SYMBOL_NAME (root)));
+
+  Lisp_Object val = w32_read_registry (NILP (root)
+				       ? HKEY_CURRENT_USER
+				       : rootkey,
+				       key, name);
+  if (NILP (val) && NILP (root))
+    val = w32_read_registry (HKEY_LOCAL_MACHINE, key, name);
+
+  return val;
+}
+
+#endif	/* WINDOWSNT */
+
 /***********************************************************************
 			    Initialization
  ***********************************************************************/
@@ -10149,6 +10221,14 @@ syms_of_w32fns (void)
   DEFSYM (Qwarning, "warning");
   DEFSYM (QCtitle, ":title");
   DEFSYM (QCbody, ":body");
+#endif
+
+#ifdef WINDOWSNT
+  DEFSYM (QHKCR, "HKCR");
+  DEFSYM (QHKCU, "HKCU");
+  DEFSYM (QHKLM, "HKLM");
+  DEFSYM (QHKU,  "HKU");
+  DEFSYM (QHKCC, "HKCC");
 #endif
 
   /* Symbols used elsewhere, but only in MS-Windows-specific code.  */
@@ -10508,6 +10588,7 @@ tip frame.  */);
 #endif
 
 #ifdef WINDOWSNT
+  defsubr (&Sw32_read_registry);
   defsubr (&Sfile_system_info);
   defsubr (&Sdefault_printer_name);
 #endif

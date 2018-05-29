@@ -326,6 +326,9 @@ static BOOL g_b_init_set_file_security_a;
 static BOOL g_b_init_set_named_security_info_w;
 static BOOL g_b_init_set_named_security_info_a;
 static BOOL g_b_init_get_adapters_info;
+static BOOL g_b_init_reg_open_key_ex_w;
+static BOOL g_b_init_reg_query_value_ex_w;
+static BOOL g_b_init_expand_environment_strings_w;
 
 BOOL g_b_init_compare_string_w;
 BOOL g_b_init_debug_break_process;
@@ -504,6 +507,9 @@ typedef DWORD (WINAPI *GetAdaptersInfo_Proc) (
 int (WINAPI *pMultiByteToWideChar)(UINT,DWORD,LPCSTR,int,LPWSTR,int);
 int (WINAPI *pWideCharToMultiByte)(UINT,DWORD,LPCWSTR,int,LPSTR,int,LPCSTR,LPBOOL);
 DWORD multiByteToWideCharFlags;
+typedef LONG (WINAPI *RegOpenKeyExW_Proc) (HKEY,LPCWSTR,DWORD,REGSAM,PHKEY);
+typedef LONG (WINAPI *RegQueryValueExW_Proc) (HKEY,LPCWSTR,LPDWORD,LPDWORD,LPBYTE,LPDWORD);
+typedef DWORD (WINAPI *ExpandEnvironmentStringsW_Proc) (LPCWSTR,LPWSTR,DWORD);
 
   /* ** A utility function ** */
 static BOOL
@@ -1374,6 +1380,79 @@ get_adapters_info (PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
   if (s_pfn_Get_Adapters_Info == NULL)
     return ERROR_NOT_SUPPORTED;
   return s_pfn_Get_Adapters_Info (pAdapterInfo, pOutBufLen);
+}
+
+static LONG WINAPI
+reg_open_key_ex_w (HKEY hkey, LPCWSTR lpSubKey, DWORD ulOptions,
+		   REGSAM samDesired, PHKEY phkResult)
+{
+  static RegOpenKeyExW_Proc s_pfn_Reg_Open_Key_Ex_w = NULL;
+  HMODULE hm_advapi32 = NULL;
+
+  if (is_windows_9x () == TRUE)
+    return ERROR_NOT_SUPPORTED;
+
+  if (g_b_init_reg_open_key_ex_w == 0)
+    {
+      g_b_init_reg_open_key_ex_w = 1;
+      hm_advapi32 = LoadLibrary ("Advapi32.dll");
+      if (hm_advapi32)
+	s_pfn_Reg_Open_Key_Ex_w = (RegOpenKeyExW_Proc)
+	  GetProcAddress (hm_advapi32, "RegOpenKeyExW");
+    }
+  if (s_pfn_Reg_Open_Key_Ex_w == NULL)
+    return ERROR_NOT_SUPPORTED;
+  return s_pfn_Reg_Open_Key_Ex_w (hkey, lpSubKey, ulOptions,
+				  samDesired, phkResult);
+}
+
+static LONG WINAPI
+reg_query_value_ex_w (HKEY hkey, LPCWSTR lpValueName, LPDWORD lpReserved,
+		      LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+{
+  static RegQueryValueExW_Proc s_pfn_Reg_Query_Value_Ex_w = NULL;
+  HMODULE hm_advapi32 = NULL;
+
+  if (is_windows_9x () == TRUE)
+    return ERROR_NOT_SUPPORTED;
+
+  if (g_b_init_reg_query_value_ex_w == 0)
+    {
+      g_b_init_reg_query_value_ex_w = 1;
+      hm_advapi32 = LoadLibrary ("Advapi32.dll");
+      if (hm_advapi32)
+	s_pfn_Reg_Query_Value_Ex_w = (RegQueryValueExW_Proc)
+	  GetProcAddress (hm_advapi32, "RegQueryValueExW");
+    }
+  if (s_pfn_Reg_Query_Value_Ex_w == NULL)
+    return ERROR_NOT_SUPPORTED;
+  return s_pfn_Reg_Query_Value_Ex_w (hkey, lpValueName, lpReserved,
+				     lpType, lpData, lpcbData);
+}
+
+static DWORD WINAPI
+expand_environment_strings_w (LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSize)
+{
+  static ExpandEnvironmentStringsW_Proc s_pfn_Expand_Environment_Strings_w = NULL;
+  HMODULE hm_kernel32 = NULL;
+
+  if (is_windows_9x () == TRUE)
+    return ERROR_NOT_SUPPORTED;
+
+  if (g_b_init_expand_environment_strings_w == 0)
+    {
+      g_b_init_expand_environment_strings_w = 1;
+      hm_kernel32 = LoadLibrary ("Kernel32.dll");
+      if (hm_kernel32)
+	s_pfn_Expand_Environment_Strings_w = (ExpandEnvironmentStringsW_Proc)
+	  GetProcAddress (hm_kernel32, "ExpandEnvironmentStringsW");
+    }
+  if (s_pfn_Expand_Environment_Strings_w == NULL)
+    {
+      errno = ENOSYS;
+      return FALSE;
+    }
+  return s_pfn_Expand_Environment_Strings_w (lpSrc, lpDst, nSize);
 }
 
 
@@ -9269,6 +9348,215 @@ network_interface_info (Lisp_Object ifname)
 }
 
 
+/* Workhorse for w32-read-registry, which see.  */
+Lisp_Object
+w32_read_registry (HKEY rootkey, Lisp_Object lkey, Lisp_Object lname)
+{
+  HKEY hkey = NULL;
+  LONG status;
+  DWORD vsize, vtype;
+  LPBYTE pvalue;
+  Lisp_Object val, retval;
+  const char *key, *value_name;
+  /* The following sizes are according to size limitations
+     documented in MSDN.  */
+  wchar_t key_w[255+1];
+  wchar_t value_w[16*1024+1];
+  bool use_unicode = is_windows_9x () == 0;
+
+  if (use_unicode)
+    {
+      Lisp_Object encoded_key, encoded_vname;
+
+      /* Convert input strings to UTF-16.  */
+      encoded_key = code_convert_string_norecord (lkey, Qutf_16le, 1);
+      memcpy (key_w, SSDATA (encoded_key), SBYTES (encoded_key));
+      /* wchar_t strings need to be terminated by 2 null bytes.  */
+      key_w [SBYTES (encoded_key)/2] = L'\0';
+      encoded_vname = code_convert_string_norecord (lname, Qutf_16le, 1);
+      memcpy (value_w, SSDATA (encoded_vname), SBYTES (encoded_vname));
+      value_w[SBYTES (encoded_vname)/2] = L'\0';
+
+      /* Mirror the slashes, if required.  */
+      for (int i = 0; i < SBYTES (encoded_key)/2; i++)
+	{
+	  if (key_w[i] == L'/')
+	    key_w[i] = L'\\';
+	}
+      if ((status = reg_open_key_ex_w (rootkey, key_w, 0,
+				       KEY_READ, &hkey)) == ERROR_NOT_SUPPORTED
+	  || (status = reg_query_value_ex_w (hkey, value_w, NULL, NULL, NULL,
+					     &vsize)) == ERROR_NOT_SUPPORTED
+	  || status != ERROR_SUCCESS)
+	{
+	  if (hkey)
+	    RegCloseKey (hkey);
+	  if (status != ERROR_NOT_SUPPORTED)
+	    return Qnil;
+	  use_unicode = 0;	/* fall back to non-Unicode calls */
+	}
+    }
+  if (!use_unicode)
+    {
+      /* Need to copy LKEY because we are going to modify it.  */
+      Lisp_Object local_lkey = Fcopy_sequence (lkey);
+
+      /* Mirror the slashes.  Note: this has to be done before
+	 encoding, because after encoding we cannot guarantee that a
+	 slash '/' always stands for itself, it could be part of some
+	 multibyte sequence.  */
+      for (int i = 0; i < SBYTES (local_lkey); i++)
+	{
+	  if (SSDATA (local_lkey)[i] == '/')
+	    SSDATA (local_lkey)[i] = '\\';
+	}
+
+      key = SSDATA (ENCODE_SYSTEM (local_lkey));
+      value_name = SSDATA (ENCODE_SYSTEM (lname));
+
+      if ((status = RegOpenKeyEx (rootkey, key, 0,
+				  KEY_READ, &hkey)) != ERROR_SUCCESS
+	  || (status = RegQueryValueEx (hkey, value_name, NULL,
+					NULL, NULL, &vsize)) != ERROR_SUCCESS)
+	{
+	  if (hkey)
+	    RegCloseKey (hkey);
+	  return Qnil;
+	}
+    }
+
+  pvalue = xzalloc (vsize);
+  if (use_unicode)
+    status = reg_query_value_ex_w (hkey, value_w, NULL, &vtype, pvalue, &vsize);
+  else
+    status = RegQueryValueEx (hkey, value_name, NULL, &vtype, pvalue, &vsize);
+  if (status != ERROR_SUCCESS)
+    {
+      xfree (pvalue);
+      RegCloseKey (hkey);
+      return Qnil;
+    }
+
+  switch (vtype)
+    {
+      case REG_NONE:
+	retval = Qt;
+	break;
+      case REG_DWORD:
+	retval = INTEGER_TO_CONS (*((DWORD *)pvalue));
+	break;
+      case REG_QWORD:
+	retval = INTEGER_TO_CONS (*((long long *)pvalue));
+	break;
+      case REG_BINARY:
+	{
+	  int i;
+	  unsigned char *dbuf = (unsigned char *)pvalue;
+
+	  val = make_uninit_vector (vsize);
+	  for (i = 0; i < vsize; i++)
+	    ASET (val, i, make_number (dbuf[i]));
+
+	  retval = val;
+	  break;
+	}
+      case REG_SZ:
+	if (use_unicode)
+	  {
+	    /* pvalue ends with 2 null bytes, but we need only one,
+	       and AUTO_STRING_WITH_LEN will add it.  */
+	    if (pvalue[vsize - 1] == '\0')
+	      vsize -= 2;
+	    AUTO_STRING_WITH_LEN (sval, (char *)pvalue, vsize);
+	    retval = from_unicode (sval);
+	  }
+	else
+	  {
+	    /* Don't waste a byte on the terminating null character,
+	       since make_unibyte_string will add one anyway.  */
+	    if (pvalue[vsize - 1] == '\0')
+	      vsize--;
+	    retval = DECODE_SYSTEM (make_unibyte_string (pvalue, vsize));
+	  }
+	break;
+      case REG_EXPAND_SZ:
+	if (use_unicode)
+	  {
+	    wchar_t expanded_w[32*1024];
+	    DWORD dsize = sizeof (expanded_w) / 2;
+	    DWORD produced = expand_environment_strings_w ((wchar_t *)pvalue,
+							   expanded_w,
+							   dsize);
+	    if (produced > 0 && produced < dsize)
+	      {
+		AUTO_STRING_WITH_LEN (sval, (char *)expanded_w,
+				      produced * 2 - 2);
+		retval = from_unicode (sval);
+	      }
+	    else
+	      {
+		if (pvalue[vsize - 1] == '\0')
+		  vsize -= 2;
+		AUTO_STRING_WITH_LEN (sval, (char *)pvalue, vsize);
+		retval = from_unicode (sval);
+	      }
+	  }
+	else
+	  {
+	    char expanded[32*1024]; /* size limitation according to MSDN */
+	    DWORD produced = ExpandEnvironmentStrings ((char *)pvalue,
+						       expanded,
+						       sizeof (expanded));
+	    if (produced > 0 && produced < sizeof (expanded))
+	      retval = make_unibyte_string (expanded, produced - 1);
+	    else
+	      {
+		if (pvalue[vsize - 1] == '\0')
+		  vsize--;
+		retval = make_unibyte_string (pvalue, vsize);
+	      }
+
+	    retval = DECODE_SYSTEM (retval);
+	  }
+	break;
+      case REG_MULTI_SZ:
+	if (use_unicode)
+	  {
+	    wchar_t *wp = (wchar_t *)pvalue;
+
+	    val = Qnil;
+	    do {
+	      size_t wslen = wcslen (wp);
+	      AUTO_STRING_WITH_LEN (sval, (char *)wp, wslen * 2);
+	      val = Fcons (from_unicode (sval), val);
+	      wp += wslen + 1;
+	    } while (*wp);
+	  }
+	else
+	  {
+	    char *p = (char *)pvalue;
+
+	    val = Qnil;
+	    do {
+	      size_t slen = strlen (p);
+
+	      val = Fcons (DECODE_SYSTEM (make_unibyte_string (p, slen)), val);
+	      p += slen + 1;
+	    } while (*p);
+	  }
+
+	retval = Fnreverse (val);
+	break;
+      default:
+	error ("unsupported registry data type: %d", (int)vtype);
+    }
+
+  xfree (pvalue);
+  RegCloseKey (hkey);
+  return retval;
+}
+
+
 /* The Windows CRT functions are "optimized for speed", so they don't
    check for timezone and DST changes if they were last called less
    than 1 minute ago (see http://support.microsoft.com/kb/821231).  So
@@ -9699,6 +9987,9 @@ globals_of_w32 (void)
   g_b_init_set_named_security_info_w = 0;
   g_b_init_set_named_security_info_a = 0;
   g_b_init_get_adapters_info = 0;
+  g_b_init_reg_open_key_ex_w = 0;
+  g_b_init_reg_query_value_ex_w = 0;
+  g_b_init_expand_environment_strings_w = 0;
   g_b_init_compare_string_w = 0;
   g_b_init_debug_break_process = 0;
   num_of_processors = 0;

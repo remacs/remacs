@@ -682,6 +682,13 @@ to 't' would enable the macOS proxy icon has been replaced with a
 separate variable, 'ns-use-proxy-icon'.  'frame-title-format' will now
 work as on other platforms.
 
+---
+** New primitive 'w32-read-registry'.
+This primitive lets Lisp programs access the MS-Windows Registry by
+retrieving values stored under a given key.  It is intended to be used
+for supporting features such as XDG-like location of important files
+and directories.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.

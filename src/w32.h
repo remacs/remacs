@@ -227,6 +227,8 @@ extern int w32_compare_strings (const char *, const char *, char *, int);
 /* Return a cryptographically secure seed for PRNG.  */
 extern int w32_init_random (void *, ptrdiff_t);
 
+extern Lisp_Object w32_read_registry (HKEY, Lisp_Object, Lisp_Object);
+
 #ifdef HAVE_GNUTLS
 #include <gnutls/gnutls.h>
 
