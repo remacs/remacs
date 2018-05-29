@@ -3500,7 +3500,7 @@ first saving to a temporary file.
 When connecting to a local host, @value{tramp} uses some internal
 optimizations.  They fail, when there is a chrooted environment.  In
 order to disable those optimizations, set user option
-@option{tramp-local-host-regexp} to @code{nil}.
+@code{tramp-local-host-regexp} to @code{nil}.
 
 
 @item
