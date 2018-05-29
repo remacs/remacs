@@ -1697,6 +1697,9 @@ extern "C" {
         depth: EmacsInt,
         sexpflag: bool,
     ) -> LispObject;
+    pub fn pset_sentinel(p: *mut Lisp_Process, val: LispObject);
+
+    pub fn pset_childp(p: *mut Lisp_Process, val: LispObject);
 }
 
 /// Contains C definitions from the font.h header.
