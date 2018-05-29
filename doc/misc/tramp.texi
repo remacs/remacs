@@ -1020,6 +1020,7 @@ can.
 @cindex android (with adb method)
 
 @vindex tramp-adb-program
+@vindex PATH@r{, environment variable}
 This method uses Android Debug Bridge program for accessing Android
 devices.  The Android Debug Bridge must be installed locally for
 @value{tramp} to work.  Some GNU/Linux distributions provide Android
@@ -1877,15 +1878,64 @@ example below:
 Similar localization may be necessary for handling wrong password
 prompts, for which @value{tramp} uses @option{tramp-wrong-passwd-regexp}.
 
+@item @code{tramp-terminal-type}
+@vindex tramp-terminal-type
+@vindex TERM@r{, environment variable}
+
+@value{tramp} uses the user option @code{tramp-terminal-type} to set
+the remote environment variable @env{TERM} for the shells it runs.
+Per default, it is @samp{"dumb"}, but this could be changed.  A dumb
+terminal is best suited to run the background sessions of
+@value{tramp}.  However, running interactive remote shells might
+require a different setting.  This could be achieved by tweaking the
+@env{TERM} environment variable in @code{process-environment}.
+
+@lisp
+@group
+(let ((process-environment
+       (cons "TERM=xterm-256color" process-environment)))
+  (shell))
+@end group
+@end lisp
+
+@item Determining a @value{tramp} session
+@vindex TERM@r{, environment variable}
+@vindex INSIDE_EMACS@r{, environment variable}
+
+Sometimes, it is needed to identify whether a shell runs under
+@value{tramp} control.  The setting of environment variable @env{TERM}
+will help:
+
+@example
+@group
+if test "$TERM" = "dumb"; then
+   ...
+fi
+@end group
+@end example
+
+Another possibility is to check the environment variable
+@env{INSIDE_EMACS}.  Like for all subprocesses of Emacs, this is set
+to the version of the parent Emacs process, @xref{Interactive Shell, ,
+, emacs}.  @value{tramp} adds its own package version to this string,
+which could be used for further tests in an inferior shell.  The
+string of that environment variable loooks always like
+
+@example
+@group
+echo $INSIDE_EMACS
+@result{} 26.2,tramp:2.3.4
+@end group
+@end example
+
 @item @command{tset} and other questions
 @cindex unix command @command{tset}
 @cindex @command{tset} unix command
 
-@vindex tramp-terminal-type
 To suppress inappropriate prompts for terminal type, @value{tramp}
-sets the @env{TERM} to @code{dumb} before the remote login process
-begins via the user option @option{tramp-terminal-type}.  This will
-silence common @command{tset} related prompts.
+sets the @env{TERM} environment variable before the remote login
+process begins via the user option @option{tramp-terminal-type} (see
+above).  This will silence common @command{tset} related prompts.
 
 @value{tramp}'s strategy for handling such prompts (commonly triggered
 from login scripts on remote hosts) is to set the environment
@@ -1958,6 +2008,9 @@ shell-specific config files.  For example, bash can use
 
 @item Interactive shell prompt
 
+@vindex INSIDE_EMACS@r{, environment variable}
+@vindex SHELLNAME@r{, environment variable}
+@vindex ESHELL@r{, environment variable}
 @value{tramp} redefines the remote shell prompt internally for robust
 parsing.  This redefinition affects the looks of a prompt in an
 interactive remote shell through commands, such as @kbd{M-x shell
@@ -2248,6 +2301,7 @@ Windows file names to Cygwin file names.
 
 @cindex cygwin and @command{ssh-agent}
 @cindex @env{SSH_AUTH_SOCK} and emacs on ms windows
+@vindex SSH_AUTH_SOCK@r{, environment variable}
 
 When using the @command{ssh-agent} on MS Windows for password-less
 interaction, @option{ssh} methods depend on the environment variable
@@ -2620,6 +2674,7 @@ Use @code{add-to-list} to add entries:
 (add-to-list 'tramp-remote-process-environment "JAVA_HOME=/opt/java")
 @end lisp
 
+@vindex HISTORY@r{, environment variable}
 Modifying or deleting already existing values in the
 @option{tramp-remote-process-environment} list may not be feasible on
 restricted remote hosts.  For example, some system administrators
@@ -2636,6 +2691,7 @@ local @file{.emacs} file:
 @end group
 @end lisp
 
+@vindex ENV@r{, environment variable}
 Setting the @env{ENV} environment variable instructs some shells to
 read an initialization file.  Per default, @value{tramp} has disabled
 this.  You could overwrite this behavior by evaluating
@@ -2663,6 +2719,7 @@ For example:
 @end group
 @end lisp
 
+@vindex HGPLAIN@r{, environment variable}
 Let-binding in this way works regardless of whether the process to be
 called is local or remote, since @value{tramp} would add just the
 @env{HGPLAIN} setting and local processes would take whole value of
@@ -2674,6 +2731,7 @@ remotely, please file a bug report.  @xref{Bug Reports}.
 
 @subsection Running remote programs that create local X11 windows
 
+@vindex DISPLAY@r{, environment variable}
 To allow a remote program to create an X11 window on the local host,
 set the @env{DISPLAY} environment variable for the remote host as
 follows in the local @file{.emacs} file:
@@ -3098,7 +3156,7 @@ uses left-hand side and right-hand side prompts in parallel.  Add the
 following line to @file{~/.zshrc}:
 
 @example
-[ $TERM = "dumb" ] && unsetopt zle && PS1='$ '
+[[ $TERM == "dumb" ]] && unsetopt zle && PS1='$ ' && return
 @end example
 
 When using fish shell on remote hosts, disable fancy formatting by
@@ -3321,6 +3379,9 @@ then set them with a hook as follows:
 Why is @file{~/.sh_history} file on the remote host growing?
 
 @vindex tramp-histfile-override
+@vindex HISTFILE@r{, environment variable}
+@vindex HISTFILESIZE@r{, environment variable}
+@vindex HISTSIZE@r{, environment variable}
 Due to the remote shell saving tilde expansions triggered by
 @value{tramp}, the history file is probably growing rapidly.
 @value{tramp} can suppress this behavior with the user option
@@ -3668,6 +3729,7 @@ emacsclient @trampfn{ssh,$(whoami)@@$(hostname --fqdn),$1}
 @end group
 @end example
 
+@vindex EDITOR@r{, environment variable}
 Then change the environment variable @env{EDITOR} to point to the
 wrapper script:
 
