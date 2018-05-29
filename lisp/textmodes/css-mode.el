@@ -35,6 +35,7 @@
 (require 'cl-lib)
 (require 'color)
 (require 'eww)
+(require 'imenu)
 (require 'seq)
 (require 'sgml-mode)
 (require 'smie)
@@ -1516,6 +1517,55 @@ rgb()/rgba()."
       (css--rgb-to-named-color-or-hex)
       (message "It doesn't look like a color at point")))
 
+(defun css--join-nested-selectors (selectors)
+  "Join a list of nested CSS selectors."
+  (let ((processed '())
+        (prev nil))
+    (dolist (sel selectors)
+      (cond
+       ((seq-contains sel ?&)
+        (setq sel (replace-regexp-in-string "&" prev sel))
+        (pop processed))
+       ;; Unless this is the first selector, separate this one and the
+       ;; previous one by a space.
+       (processed
+        (push " " processed)))
+      (push sel processed)
+      (setq prev sel))
+    (apply #'concat (nreverse processed))))
+
+(defun css--prev-index-position ()
+  (when (nth 7 (syntax-ppss))
+    (goto-char (comment-beginning)))
+  (forward-comment (- (point)))
+  (when (search-backward "{" (point-min) t)
+    (if (re-search-backward "}\\|;\\|{" (point-min) t)
+        (forward-char)
+      (goto-char (point-min)))
+    (forward-comment (point-max))
+    (save-excursion (re-search-forward "[^{;]*"))))
+
+(defun css--extract-index-name ()
+  (save-excursion
+    (let ((res (list (match-string-no-properties 0))))
+      (condition-case nil
+          (while t
+            (goto-char (nth 1 (syntax-ppss)))
+            (if (re-search-backward "}\\|;\\|{" (point-min) t)
+                (forward-char)
+              (goto-char (point-min)))
+            (forward-comment (point-max))
+            (when (save-excursion
+                    (re-search-forward "[^{;]*"))
+              (push (match-string-no-properties 0) res)))
+        (error
+         (css--join-nested-selectors
+          (mapcar
+           (lambda (s)
+             (string-trim
+              (replace-regexp-in-string "[\n ]+" " " s)))
+           res)))))))
+
 ;;;###autoload
 (define-derived-mode css-mode prog-mode "CSS"
   "Major mode to edit Cascading Style Sheets (CSS).
@@ -1551,7 +1601,13 @@ Network (MDN).
               (append css-electric-keys electric-indent-chars))
   (setq-local font-lock-fontify-region-function #'css--fontify-region)
   (add-hook 'completion-at-point-functions
-            #'css-completion-at-point nil 'local))
+            #'css-completion-at-point nil 'local)
+  ;; The default "." creates ambiguity with class selectors.
+  (setq-local imenu-space-replacement " ")
+  (setq-local imenu-prev-index-position-function
+              #'css--prev-index-position)
+  (setq-local imenu-extract-index-name-function
+              #'css--extract-index-name))
 
 (defvar comment-continue)
 
@@ -1648,12 +1704,8 @@ Network (MDN).
 (defun css-current-defun-name ()
   "Return the name of the CSS section at point, or nil."
   (save-excursion
-    (let ((max (max (point-min) (- (point) 1600))))  ; approx 20 lines back
-      (when (search-backward "{" max t)
-	(skip-chars-backward " \t\r\n")
-	(beginning-of-line)
-	(if (looking-at "^[ \t]*\\([^{\r\n]*[^ {\t\r\n]\\)")
-	    (match-string-no-properties 1))))))
+    (when (css--prev-index-position)
+      (css--extract-index-name))))
 
 ;;; SCSS mode
 

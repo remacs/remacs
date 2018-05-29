@@ -263,6 +263,9 @@ Can be controlled via the new variable 'footnote-align-to-fn-text'.
 formats (e.g. "black" => "#000000" => "rgb(0, 0, 0)") has been added,
 bound to 'C-c C-f'.
 
+---
+*** CSS mode, SCSS mode, and Less CSS mode now have support for Imenu.
+
 ** SGML mode
 
 ---
