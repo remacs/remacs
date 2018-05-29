@@ -49,7 +49,7 @@ SYNTAX can be one of the symbols `default' (default),
      (unless (string-equal input "")
        (list (intern input)))))
   (when syntax
-    (custom-set-variables `(tramp-syntax ',syntax))))
+    (customize-set-variable 'tramp-syntax syntax)))
 
 (defun tramp-list-tramp-buffers ()
   "Return a list of all Tramp connection buffers."

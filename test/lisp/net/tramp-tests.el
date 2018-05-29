@@ -33,12 +33,17 @@
 ;; remote host, set this environment variable to "/dev/null" or
 ;; whatever is appropriate on your system.
 
+;; For slow remote connections, `tramp-test41-asynchronous-requests'
+;; might be too heavy.  Setting $REMOTE_PARALLEL_PROCESSES to a proper
+;; value less than 10 could help.
+
 ;; A whole test run can be performed calling the command `tramp-test-all'.
 
 ;;; Code:
 
 (require 'dired)
 (require 'ert)
+(require 'ert-x)
 (require 'tramp)
 (require 'vc)
 (require 'vc-bzr)
@@ -1862,6 +1867,23 @@ This checks also `file-name-as-directory', `file-name-directory',
 	      (insert-file-contents tmp-name)
 	      (should (string-equal (buffer-string) "34")))
 
+	    ;; Check message.
+	    ;; Macro `ert-with-message-capture' was introduced in Emacs 26.1.
+	    (with-no-warnings (when (symbol-plist 'ert-with-message-capture)
+	      (let ((tramp-message-show-message t))
+		(dolist (noninteractive '(nil t))
+		  (dolist (visit '(nil t "string" no-message))
+		    (ert-with-message-capture tramp--test-messages
+		      (write-region "foo" nil tmp-name nil visit)
+		      ;; We must check the last line.  There could be
+		      ;; other messages from the progress reporter.
+		      (should
+		       (string-match
+			(if (and (null noninteractive)
+				 (or (eq visit t) (null visit) (stringp visit)))
+			    (format "^Wrote %s\n\\'" tmp-name) "^\\'")
+			tramp--test-messages))))))))
+
 	    ;; Do not overwrite if excluded.
 	    (cl-letf (((symbol-function 'y-or-n-p) (lambda (_prompt) t)))
 	      (write-region "foo" nil tmp-name nil nil nil 'mustbenew))
@@ -1882,9 +1904,9 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `copy-file'."
   (skip-unless (tramp--test-enabled))
 
-  ;; TODO: The quoted case does not work.  Copy local file to remote.
-  ;;(dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
-  (let (quoted)
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name3 (tramp--test-make-temp-name 'local quoted)))
@@ -1984,9 +2006,9 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `rename-file'."
   (skip-unless (tramp--test-enabled))
 
-  ;; TODO: The quoted case does not work.
-  ;;(dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
-  (let (quoted)
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name3 (tramp--test-make-temp-name 'local quoted)))
@@ -2718,9 +2740,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (file-symlink-p tmp-name2)))
 	    ;; `tmp-name3' is a local file name.  Therefore, the link
 	    ;; target remains unchanged, even if quoted.
-	    (make-symbolic-link tmp-name1 tmp-name3)
-	    (should
-	     (string-equal tmp-name1 (file-symlink-p tmp-name3)))
+	    ;; `make-symbolic-link' might not be permitted on w32 systems.
+	    (unless (tramp--test-windows-nt)
+	      (make-symbolic-link tmp-name1 tmp-name3)
+	      (should
+	       (string-equal tmp-name1 (file-symlink-p tmp-name3))))
 	    ;; Check directory as newname.
 	    (make-directory tmp-name4)
 	    (should-error
@@ -2810,7 +2834,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Symbolic links could look like a remote file name.
 	    ;; They must be quoted then.
 	    (delete-file tmp-name2)
-	    (make-symbolic-link "/penguin:motd:" tmp-name2)
+	    (make-symbolic-link
+	     (funcall
+	      (if quoted 'tramp-compat-file-name-unquote 'identity)
+	      "/penguin:motd:")
+	     tmp-name2)
 	    (should (file-symlink-p tmp-name2))
 	    (should
 	     (string-equal
@@ -2818,15 +2846,20 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (tramp-compat-file-name-quote
 	       (concat (file-remote-p tmp-name2) "/penguin:motd:"))))
 	    ;; `tmp-name3' is a local file name.
-	    (make-symbolic-link tmp-name1 tmp-name3)
-	    (should (file-symlink-p tmp-name3))
-            (should-not (string-equal tmp-name3 (file-truename tmp-name3)))
-	    ;; `file-truename' returns a quoted file name for `tmp-name3'.
-	    ;; We must unquote it.
-	    (should
-	     (string-equal
-	      (file-truename tmp-name1)
-	      (tramp-compat-file-name-unquote (file-truename tmp-name3)))))
+	    ;; `make-symbolic-link' might not be permitted on w32 systems.
+	    (unless (tramp--test-windows-nt)
+	      (make-symbolic-link tmp-name1 tmp-name3)
+	      (should (file-symlink-p tmp-name3))
+              (should-not (string-equal tmp-name3 (file-truename tmp-name3)))
+	      ;; `file-truename' returns a quoted file name for `tmp-name3'.
+	      ;; We must unquote it.
+	      (should
+	       (string-equal
+		(funcall
+		 (if (tramp--test-emacs27-p)
+		     'tramp-compat-file-name-unquote 'identity)
+		 (file-truename tmp-name1))
+		(tramp-compat-file-name-unquote (file-truename tmp-name3))))))
 
 	;; Cleanup.
 	(ignore-errors
@@ -2951,9 +2984,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (file-acl tramp-test-temporary-file-directory))
 
-  ;; TODO: The quoted case does not work.  Copy local file to remote.
-  ;;(dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
-  (let (quoted)
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name3 (tramp--test-make-temp-name 'local quoted)))
@@ -3029,9 +3062,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
    (not (equal (file-selinux-context tramp-test-temporary-file-directory)
 	       '(nil nil nil nil))))
 
-  ;; TODO: The quoted case does not work.  Copy local file to remote.
-  ;;(dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
-  (let (quoted)
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name3 (tramp--test-make-temp-name 'local quoted)))
@@ -3911,9 +3944,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(expand-file-name
 		 (format
 		  "%s~"
-		  ;; This is taken from `make-backup-file-name-1'.
+		  ;; This is taken from `make-backup-file-name-1'.  We
+		  ;; call `convert-standard-filename', because on MS
+		  ;; Windows the (local) colons must be replaced by
+		  ;; exclamation marks.
 		  (subst-char-in-string
-		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		   ?/ ?!
+		   (replace-regexp-in-string
+		    "!" "!!" (convert-standard-filename tmp-name1))))
 		 tmp-name2)))))
 	    ;; The backup directory is created.
 	    (should (file-directory-p tmp-name2)))
@@ -3934,9 +3972,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(expand-file-name
 		 (format
 		  "%s~"
-		  ;; This is taken from `make-backup-file-name-1'.
+		  ;; This is taken from `make-backup-file-name-1'.  We
+		  ;; call `convert-standard-filename', because on MS
+		  ;; Windows the (local) colons must be replaced by
+		  ;; exclamation marks.
 		  (subst-char-in-string
-		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		   ?/ ?!
+		   (replace-regexp-in-string
+		    "!" "!!" (convert-standard-filename tmp-name1))))
 		 tmp-name2)))))
 	    ;; The backup directory is created.
 	    (should (file-directory-p tmp-name2)))
@@ -3958,9 +4001,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(expand-file-name
 		 (format
 		  "%s~"
-		  ;; This is taken from `make-backup-file-name-1'.
+		  ;; This is taken from `make-backup-file-name-1'.  We
+		  ;; call `convert-standard-filename', because on MS
+		  ;; Windows the (local) colons must be replaced by
+		  ;; exclamation marks.
 		  (subst-char-in-string
-		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		   ?/ ?!
+		   (replace-regexp-in-string
+		    "!" "!!" (convert-standard-filename tmp-name1))))
 		 tmp-name2)))))
 	    ;; The backup directory is created.
 	    (should (file-directory-p tmp-name2)))
@@ -4010,6 +4058,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 Some semantics has been changed for there, w/o new functions or
 variables, so we check the Emacs version directly."
   (>= emacs-major-version 26))
+
+(defun tramp--test-emacs27-p ()
+  "Check for Emacs version >= 27.1.
+Some semantics has been changed for there, w/o new functions or
+variables, so we check the Emacs version directly."
+  (>= emacs-major-version 27))
 
 (defun tramp--test-adb-p ()
   "Check, whether the remote host runs Android.
@@ -4061,6 +4115,10 @@ This does not support special file names."
    (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
    'tramp-sh-file-name-handler))
 
+(defun tramp--test-windows-nt ()
+  "Check, whether the locale host runs MS Windows."
+  (eq system-type 'windows-nt))
+
 (defun tramp--test-windows-nt-and-batch ()
   "Check, whether the locale host runs MS Windows in batch mode.
 This does not support special characters."
@@ -4082,9 +4140,9 @@ This requires restrictions of file name syntax."
 
 (defun tramp--test-check-files (&rest files)
   "Run a simple but comprehensive test over every file in FILES."
-  ;; TODO: The quoted case does not work.
-  ;;(dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
-  (let (quoted)
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
+		      '(nil t) '(nil)))
     ;; We must use `file-truename' for the temporary directory,
     ;; because it could be located on a symlinked directory.  This
     ;; would let the test fail.
@@ -4493,8 +4551,13 @@ process sentinels.  They shall not disturb each other."
            (inhibit-message t)
 	   ;; Do not run delayed timers.
 	   (timer-max-repeats 0)
-	   ;; Number of asynchronous processes for test.
-           (number-proc 10)
+	   ;; Number of asynchronous processes for test.  Tests on
+	   ;; some machines handle less parallel processes.
+           (number-proc
+            (or
+             (ignore-errors
+               (string-to-number (getenv "REMOTE_PARALLEL_PROCESSES")))
+             10))
            ;; On hydra, timings are bad.
            (timer-repeat
             (cond
@@ -4558,11 +4621,13 @@ process sentinels.  They shall not disturb each other."
                    (with-current-buffer (process-buffer proc)
                      (insert string))
                    (unless (zerop (length string))
+		     (dired-uncache (process-get proc 'foo))
                      (should (file-attributes (process-get proc 'foo))))))
                 ;; Add process sentinel.
                 (set-process-sentinel
                  proc
                  (lambda (proc _state)
+		   (dired-uncache (process-get proc 'foo))
                    (should-not (file-attributes (process-get proc 'foo)))))))
 
             ;; Send a string.  Use a random order of the buffers.  Mix
@@ -4576,6 +4641,7 @@ process sentinels.  They shall not disturb each other."
                        (file (process-get proc 'foo))
                        (count (process-get proc 'bar)))
                   ;; Regular operation prior process action.
+		  (dired-uncache file)
                   (if (= count 0)
                       (should-not (file-attributes file))
                     (should (file-attributes file)))
@@ -4585,6 +4651,7 @@ process sentinels.  They shall not disturb each other."
                   ;; Give the watchdog a chance.
                   (read-event nil nil 0.01)
                   ;; Regular operation post process action.
+		  (dired-uncache file)
                   (if (= count 2)
                       (should-not (file-attributes file))
                     (should (file-attributes file)))
@@ -4625,7 +4692,8 @@ process sentinels.  They shall not disturb each other."
       (shell-command-to-string
        (format
 	"%s -batch -Q -L %s --eval %s"
-	(expand-file-name invocation-name invocation-directory)
+	(shell-quote-argument
+	 (expand-file-name invocation-name invocation-directory))
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
@@ -4657,7 +4725,8 @@ process sentinels.  They shall not disturb each other."
 	(shell-command-to-string
 	 (format
 	  "%s -batch -Q -L %s --eval %s"
-	  (expand-file-name invocation-name invocation-directory)
+	  (shell-quote-argument
+	   (expand-file-name invocation-name invocation-directory))
 	  (mapconcat 'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument (format code tm)))))))))
 
@@ -4680,7 +4749,8 @@ process sentinels.  They shall not disturb each other."
 	(shell-command-to-string
 	 (format
 	  "%s -batch -Q -L %s --eval %s"
-	  (expand-file-name invocation-name invocation-directory)
+	  (shell-quote-argument
+	   (expand-file-name invocation-name invocation-directory))
 	  (mapconcat 'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument code))))))))
 
@@ -4707,7 +4777,8 @@ process sentinels.  They shall not disturb each other."
       (shell-command-to-string
        (format
 	"%s -batch -Q -L %s -l tramp-sh --eval %s"
-	(expand-file-name invocation-name invocation-directory)
+	(shell-quote-argument
+	 (expand-file-name invocation-name invocation-directory))
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 

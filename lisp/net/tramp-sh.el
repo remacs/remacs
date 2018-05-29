@@ -47,8 +47,7 @@ When inline transfer, compress transferred data of file
 whose size is this value or above (up to `tramp-copy-size-limit').
 If it is nil, no compression at all will be applied."
   :group 'tramp
-  :type '(choice (const nil) integer)
-  :require 'tramp)
+  :type '(choice (const nil) integer))
 
 ;;;###tramp-autoload
 (defcustom tramp-copy-size-limit 10240
@@ -56,8 +55,7 @@ If it is nil, no compression at all will be applied."
 out-of-the-band copy.
 If it is nil, out-of-the-band copy will be used without a check."
   :group 'tramp
-  :type '(choice (const nil) integer)
-  :require 'tramp)
+  :type '(choice (const nil) integer))
 
 ;;;###tramp-autoload
 (defcustom tramp-terminal-type "dumb"
@@ -66,8 +64,7 @@ Because Tramp wants to parse the output of the remote shell, it is easily
 confused by ANSI color escape sequences and suchlike.  Often, shell init
 files conditionalize this setup based on the TERM environment variable."
   :group 'tramp
-  :type 'string
-  :require 'tramp)
+  :type 'string)
 
 ;;;###tramp-autoload
 (defcustom tramp-histfile-override "~/.tramp_history"
@@ -84,8 +81,7 @@ the default storage location, e.g. \"$HOME/.sh_history\"."
   :version "25.2"
   :type '(choice (const :tag "Do not override HISTFILE" nil)
                  (const :tag "Unset HISTFILE" t)
-                 (string :tag "Redirect to a file"))
-  :require 'tramp)
+                 (string :tag "Redirect to a file")))
 
 ;;;###tramp-autoload
 (defconst tramp-display-escape-sequence-regexp "\e[[;0-9]+m"
@@ -119,8 +115,7 @@ detected as prompt when being sent on echoing hosts, therefore.")
   "Whether to use `tramp-ssh-controlmaster-options'."
   :group 'tramp
   :version "24.4"
-  :type 'boolean
-  :require 'tramp)
+  :type 'boolean)
 
 (defvar tramp-ssh-controlmaster-options nil
   "Which ssh Control* arguments to use.
@@ -528,8 +523,7 @@ the list by the special value `tramp-own-remote-path'."
   :type '(repeat (choice
 		  (const :tag "Default Directories" tramp-default-remote-path)
 		  (const :tag "Private Directories" tramp-own-remote-path)
-		  (string :tag "Directory")))
-  :require 'tramp)
+		  (string :tag "Directory"))))
 
 ;;;###tramp-autoload
 (defcustom tramp-remote-process-environment
@@ -553,8 +547,7 @@ The INSIDE_EMACS environment variable will automatically be set
 based on the TRAMP and Emacs versions, and should not be set here."
   :group 'tramp
   :version "26.1"
-  :type '(repeat string)
-  :require 'tramp)
+  :type '(repeat string))
 
 ;;;###tramp-autoload
 (defcustom tramp-sh-extra-args '(("/bash\\'" . "-norc -noprofile"))
@@ -567,8 +560,7 @@ This variable is only used when Tramp needs to start up another shell
 for tilde expansion.  The extra arguments should typically prevent the
 shell from reading its init file."
   :group 'tramp
-  :type '(alist :key-type regexp :value-type string)
-  :require 'tramp)
+  :type '(alist :key-type regexp :value-type string))
 
 (defconst tramp-actions-before-shell
   '((tramp-login-prompt-regexp tramp-action-login)
@@ -2481,7 +2473,9 @@ The method used must be an out-of-band method."
 	      ;; The default directory must be remote.
 	      (let ((default-directory
 		      (file-name-directory (if t1 filename newname)))
-		    (process-environment (copy-sequence process-environment)))
+		    (process-environment (copy-sequence process-environment))
+		    ;; We do not want to run timers.
+		    timer-list timer-idle-list)
 		;; Set the transfer process properties.
 		(tramp-set-connection-property
 		 v "process-name" (buffer-name (current-buffer)))
@@ -2908,7 +2902,9 @@ the result will be a local, non-Tramp, file name."
 	   ;; We do not want to raise an error when
 	   ;; `start-file-process' has been started several times in
 	   ;; `eshell' and friends.
-	   (tramp-current-connection nil)
+	   tramp-current-connection
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list
 	   p)
 
       (while (get-process name1)
@@ -3420,7 +3416,8 @@ the result will be a local, non-Tramp, file name."
 	;; Set the ownership.
         (when need-chown
           (tramp-set-file-uid-gid filename uid gid))
-	(when (or (eq visit t) (null visit) (stringp visit))
+	(when (and (null noninteractive)
+		   (or (eq visit t) (null visit) (stringp visit)))
 	  (tramp-message v 0 "Wrote %s" filename))
 	(run-hooks 'tramp-handle-write-region-hook)))))
 
@@ -4103,7 +4100,10 @@ process to set up.  VEC specifies the connection."
     (with-current-buffer (process-buffer proc)
       ;; Use MULE to select the right EOL convention for communicating
       ;; with the process.
-      (let ((cs (or (and (memq 'utf-8 (coding-system-list))
+      (let ((cs (or (and (memq 'utf-8-hfs (coding-system-list))
+			 (string-match "^Darwin" uname)
+			 (cons 'utf-8-hfs 'utf-8-hfs))
+		    (and (memq 'utf-8 (coding-system-list))
 			 (string-match "utf-?8" (tramp-get-remote-locale vec))
 			 (cons 'utf-8 'utf-8))
 		    (process-coding-system proc)
@@ -4115,16 +4115,11 @@ process to set up.  VEC specifies the connection."
 	      cs-encode
 	      (coding-system-change-eol-conversion
 	       cs-encode (if (string-match "^Darwin" uname) 'mac 'unix)))
-	(tramp-send-command vec "echo foo ; echo bar" t)
+	(tramp-send-command vec "(echo foo ; echo bar)" t)
 	(goto-char (point-min))
 	(when (search-forward "\r" nil t)
 	  (setq cs-decode (coding-system-change-eol-conversion cs-decode 'dos)))
-	;; Special setting for macOS.
-	(when (and (string-match "^Darwin" uname)
-		   (memq 'utf-8-hfs (coding-system-list)))
-	  (setq cs-decode 'utf-8-hfs
-		cs-encode 'utf-8-hfs))
-	(set-buffer-process-coding-system cs-decode cs-encode)
+	(set-process-coding-system proc cs-decode cs-encode)
 	(tramp-message
 	 vec 5 "Setting coding system to `%s' and `%s'" cs-decode cs-encode)))
 
@@ -4470,13 +4465,14 @@ Goes through the list `tramp-inline-compress-commands'."
 	      (zerop
 	       (tramp-call-local-coding-command
 		(format
+		 "echo %s | %s | %s" magic
 		 ;; Windows shells need the program file name after
 		 ;; the pipe symbol be quoted if they use forward
 		 ;; slashes as directory separators.
-		 (if (memq system-type '(windows-nt))
-		     "echo %s | \"%s\" | \"%s\""
-		   "echo %s | %s | %s")
-		 magic compress decompress)
+		 (mapconcat
+		  'shell-quote-argument (split-string compress) " ")
+		 (mapconcat
+		  'shell-quote-argument (split-string decompress) " "))
 		nil nil))
 	    (throw 'next nil))
 	  (tramp-message

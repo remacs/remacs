@@ -66,16 +66,14 @@
 (defcustom tramp-smb-program "smbclient"
   "Name of SMB client to run."
   :group 'tramp
-  :type 'string
-  :require 'tramp)
+  :type 'string)
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-acl-program "smbcacls"
   "Name of SMB acls to run."
   :group 'tramp
   :type 'string
-  :version "24.4"
-  :require 'tramp)
+  :version "24.4")
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-conf "/dev/null"
@@ -83,8 +81,7 @@
 If it is nil, no smb.conf will be added to the `tramp-smb-program'
 call, letting the SMB client use the default one."
   :group 'tramp
-  :type '(choice (const nil) (file :must-match t))
-  :require 'tramp)
+  :type '(choice (const nil) (file :must-match t)))
 
 (defvar tramp-smb-version nil
   "Version string of the SMB client.")
@@ -151,6 +148,7 @@ call, letting the SMB client use the default one."
 	 "NT_STATUS_OBJECT_NAME_NOT_FOUND"
 	 "NT_STATUS_OBJECT_PATH_SYNTAX_BAD"
 	 "NT_STATUS_PASSWORD_MUST_CHANGE"
+	 "NT_STATUS_RESOURCE_NAME_NOT_FOUND"
 	 "NT_STATUS_SHARING_VIOLATION"
 	 "NT_STATUS_TRUSTED_RELATIONSHIP_FAILURE"
 	 "NT_STATUS_UNSUCCESSFUL"
@@ -295,8 +293,7 @@ If it isn't found in the local $PATH, the absolute path of winexe
 shall be given.  This is needed for remote processes."
   :group 'tramp
   :type 'string
-  :version "24.3"
-  :require 'tramp)
+  :version "24.3")
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-winexe-shell-command "powershell.exe"
@@ -304,8 +301,7 @@ shall be given.  This is needed for remote processes."
 This must be Powershell V2 compatible."
   :group 'tramp
   :type 'string
-  :version "24.3"
-  :require 'tramp)
+  :version "24.3")
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-winexe-shell-command-switch "-file -"
@@ -313,8 +309,7 @@ This must be Powershell V2 compatible."
 This can be used to disable echo etc."
   :group 'tramp
   :type 'string
-  :version "24.3"
-  :require 'tramp)
+  :version "24.3")
 
 ;; It must be a `defsubst' in order to push the whole code into
 ;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
@@ -464,7 +459,9 @@ pass to the OPERATION."
 			       (expand-file-name
 				tramp-temp-name-prefix
 				(tramp-compat-temporary-file-directory))))
-		   (args      (list (concat "//" host "/" share) "-E")))
+		   (args      (list (concat "//" host "/" share) "-E"))
+		   ;; We do not want to run timers.
+		   timer-list timer-idle-list)
 
 	      (if (not (zerop (length user)))
 		  (setq args (append args (list "-U" user)))
@@ -752,7 +749,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	(let* ((share     (tramp-smb-get-share v))
 	       (localname (replace-regexp-in-string
 			   "\\\\" "/" (tramp-smb-get-localname v)))
-	       (args      (list (concat "//" host "/" share) "-E")))
+		 (args      (list (concat "//" host "/" share) "-E"))
+		 ;; We do not want to run timers.
+		 timer-list timer-idle-list)
 
 	  (if (not (zerop (length user)))
 	      (setq args (append args (list "-U" user)))
@@ -1235,6 +1234,8 @@ component is used as the target of the symlink."
     (let* ((name (file-name-nondirectory program))
 	   (name1 name)
 	   (i 0)
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list
 	   input tmpinput outbuf command ret)
 
       ;; Determine input.
@@ -1417,7 +1418,9 @@ component is used as the target of the symlink."
 			   "\\\\" "/" (tramp-smb-get-localname v)))
 	       (args      (list (concat "//" host "/" share) "-E" "-S"
 				(replace-regexp-in-string
-				 "\n" "," acl-string))))
+				 "\n" "," acl-string)))
+	       ;; We do not want to run timers.
+	       timer-list timer-idle-list)
 
 	  (if (not (zerop (length user)))
 	      (setq args (append args (list "-U" user)))
@@ -1497,7 +1500,9 @@ component is used as the target of the symlink."
 	   (command (mapconcat 'identity (cons program args) " "))
 	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	   (name1 name)
-	   (i 0))
+	   (i 0)
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list)
       (unwind-protect
 	  (save-excursion
 	    (save-restriction
@@ -1589,9 +1594,18 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
 	(tramp-error
 	 v 'file-error
 	 "Buffer has changed from `%s' to `%s'" curbuf (current-buffer)))
-      (when (eq visit t)
-	(set-visited-file-modtime)))))
 
+      ;; Set file modification time.
+      (when (or (eq visit t) (stringp visit))
+	(set-visited-file-modtime
+	 (tramp-compat-file-attribute-modification-time
+	  (file-attributes filename))))
+
+      ;; The end.
+      (when (and (null noninteractive)
+		 (or (eq visit t) (null visit) (stringp visit)))
+	(tramp-message v 0 "Wrote %s" filename))
+      (run-hooks 'tramp-handle-write-region-hook))))
 
 ;; Internal file name functions.
 
