@@ -3159,6 +3159,11 @@ following line to @file{~/.zshrc}:
 [[ $TERM == "dumb" ]] && unsetopt zle && PS1='$ ' && return
 @end example
 
+This uses the default value of @code{tramp-terminal-type},
+@samp{"dumb"}, as value of the @env{TERM} environment variable.  If
+you want to use another value for @env{TERM}, change
+@code{tramp-terminal-type} accordingly.
+
 When using fish shell on remote hosts, disable fancy formatting by
 adding the following to @file{~/.config/fish/config.fish}:
 
