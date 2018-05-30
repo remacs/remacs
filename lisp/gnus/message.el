@@ -2431,7 +2431,9 @@ Return the number of headers removed."
     (while (and (not (eobp))
 		(not last))
       (if (if reverse
-	      (not (looking-at regexp))
+	      (and (not (looking-at regexp))
+		   ;; Don't remove things not looking like header.
+		   (looking-at "[!-9;-~]+:"))
 	    (looking-at regexp))
 	  (progn
 	    (incf number)
