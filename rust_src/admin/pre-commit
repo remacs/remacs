@@ -47,9 +47,32 @@ else
 	errors=1
 fi
 
+OVERRIDE_TEXT="To commit anyway, pass --no-verify to git commit."
+
+# Check if emacs_abort is used
+EMACS_ABORT_PATTERN='\+.*emacs_abort'
+if [ "$(git diff --cached --diff-filter=ACM | grep $EMACS_ABORT_PATTERN)" != "" ]; then
+    cat <<EOF
+Some files use emacs_abort. Use panic! with a string explaining cause instead. See $GIT_ROOT/rust_src/src/buffers.rs for examples.
+EOF
+    errors=1
+fi
+
+# Check if eassert is used
+EASSERT_PATTERN='\+.*eassert'
+# Check for eassert
+if [ "$(git diff --cached --diff-filter=ACM | grep $EASSERT_PATTERN)" != "" ]; then
+    cat <<EOF
+Some files use eassert. Use debug_assert! instead. See $GIT_ROOT/rust_src/lisp.rs for examples.
+EOF
+    errors=1
+fi
+
+
 if [ "$errors" != 0 ]; then
-	echo "Failed"
-	exit 1
+    echo "pre-commit checks failed"
+    echo $OVERRIDE_TEXT
+    exit 1
 else
 	echo "OK"
 fi
