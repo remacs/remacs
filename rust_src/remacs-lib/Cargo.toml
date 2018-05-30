@@ -9,7 +9,7 @@ errno = "0.2.3"
 lazy_static = "0.2.2"
 libc = "0.2"
 rand = "0.3.15"
-regex = "0.2"
+regex = "0.2.5"
 syn = { version = "0.11.11", features = ["full"] }
 time = "0.1"
 
