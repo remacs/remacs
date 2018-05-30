@@ -1104,8 +1104,15 @@ This function is assumed to be used as callback function for `hl-line-mode'."
   "Return a string ruler for Hexl mode."
   (let* ((highlight (mod (hexl-current-address) 16))
 	 (s (cdr (assq hexl-bits hexl-rulers)))
-	 (pos 0))
+	 (pos 0)
+         (lnum-width
+          (if display-line-numbers
+              (round (line-number-display-width 'columns))
+            0)))
     (set-text-properties 0 (length s) nil s)
+    (when (> lnum-width 0)
+      (setq s (concat (make-string lnum-width ?  ) s))
+      (setq pos (+ pos lnum-width)))
     ;; Turn spaces in the header into stretch specs so they work
     ;; regardless of the header-line face.
     (while (string-match "[ \t]+" s pos)
@@ -1116,10 +1123,11 @@ This function is assumed to be used as callback function for `hl-line-mode'."
 			 s))
     ;; Highlight the current column.
     (let ( (offset (+ (* 2 highlight) (/ (* 8 highlight) hexl-bits))) )
+      (if (> lnum-width 0) (setq offset (+ offset lnum-width)))
       (put-text-property (+ 11 offset) (+ 13 offset) 'face 'highlight s))
     ;; Highlight the current ascii column
-    (put-text-property (+ (hexl-ascii-start-column) highlight 1)
-                       (+ (hexl-ascii-start-column) highlight 2)
+    (put-text-property (+ (hexl-ascii-start-column) lnum-width highlight 1)
+                       (+ (hexl-ascii-start-column) lnum-width highlight 2)
                        'face 'highlight s)
     s))
 
