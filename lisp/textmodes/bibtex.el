@@ -3850,11 +3850,13 @@ Return the new location of point."
       (re-search-forward "[\n\C-m]" nil 'end (1- arg))
     (forward-line (1- arg))))
 
-(defun bibtex-reposition-window ()
+(defun bibtex-reposition-window (&optional pos)
   "Make the current BibTeX entry visible.
 If entry is smaller than `window-body-height', entry is centered in window.
-Otherwise display the beginning of entry."
+Otherwise display the beginning of entry.
+Optional arg POS is the position of the BibTeX entry to use."
   (interactive)
+  (if pos (goto-char pos))
   (let ((pnt (point))
         (beg (line-number-at-pos (bibtex-beginning-of-entry)))
         (end (line-number-at-pos (bibtex-end-of-entry))))
@@ -4063,8 +4065,7 @@ for a crossref key, t otherwise."
                (message "Key `%s' is current entry" crossref-key)
              (if eqb (select-window (split-window))
                (pop-to-buffer buffer))
-             (goto-char pos)
-             (bibtex-reposition-window)
+             (bibtex-reposition-window pos)
              (beginning-of-line)
              (if (and eqb (> pnt pos) (not noerror))
                  (error "The referencing entry must precede the crossrefed entry!"))))
@@ -4112,9 +4113,14 @@ A prefix arg negates the value of `bibtex-search-entry-globally'."
             (if (cdr (assoc-string key bibtex-reference-keys))
                 (setq found (bibtex-search-entry key)))))
         (cond ((and found display)
-	       (switch-to-buffer buffer)
-               (goto-char found)
-	       (bibtex-reposition-window))
+               ;; If possible, reuse the window displaying BUFFER.
+               (let ((window (get-buffer-window buffer t)))
+                 (if window
+                     (progn
+                       (select-frame-set-input-focus (window-frame window))
+                       (select-window window))
+	           (switch-to-buffer buffer)))
+	       (bibtex-reposition-window found))
               (found (set-buffer buffer))
               (display (message "Key `%s' not found" key)))
         found)
