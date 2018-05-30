@@ -2345,7 +2345,8 @@ Formats current entry according to variable `bibtex-entry-format'."
                 (when (memq 'sort-fields format)
                   (goto-char (point-min))
                   (let ((beg-fields (save-excursion (bibtex-beginning-first-field)))
-                        (fields-alist (bibtex-parse-entry))
+                        (fields-alist (bibtex-parse-entry
+                                       nil (not (memq 'opts-or-alts format))))
                         bibtex-help-message elt)
                     (delete-region beg-fields (point))
                     (dolist (field default-field-list)
@@ -2367,7 +2368,8 @@ Formats current entry according to variable `bibtex-entry-format'."
                        (end-text  (copy-marker (bibtex-end-of-text-in-field bounds) t))
                        (empty-field (equal "" (bibtex-text-in-field-bounds bounds t)))
                        (field-name (buffer-substring-no-properties beg-name end-name))
-                       (opt-alt   (and (string-match "\\`\\(OPT\\|ALT\\)" field-name)
+                       (opt-alt   (and (memq 'opts-or-alts format)
+                                       (string-match "\\`\\(OPT\\|ALT\\)" field-name)
                                        (not (and bibtex-no-opt-remove-re
                                                  (string-match bibtex-no-opt-remove-re
                                                                field-name)))))
@@ -3641,20 +3643,20 @@ When called interactively with a prefix arg, query for a value of ENTRY-TYPE."
         (mapc 'bibtex-make-field required)
         (mapc 'bibtex-make-optional-field optional)))))
 
-(defun bibtex-parse-entry (&optional content)
+(defun bibtex-parse-entry (&optional content keep-opt-alt)
   "Parse entry at point, return an alist.
 The alist elements have the form (FIELD . TEXT), where FIELD can also be
 the special strings \"=type=\" and \"=key=\".  For the FIELD \"=key=\"
-TEXT may be nil.  Remove \"OPT\" and \"ALT\" from FIELD.
-Move point to the end of the last field.
-If optional arg CONTENT is non-nil extract content of text fields."
+TEXT may be nil.  Move point to the end of the last field.
+If optional arg CONTENT is non-nil extract content of text fields.
+Remove \"OPT\" and \"ALT\" from FIELD unless KEEP-OPT-ALT is non-nil."
   (let (alist bounds)
     (when (looking-at bibtex-entry-maybe-empty-head)
       (push (cons "=type=" (bibtex-type-in-head)) alist)
       (push (cons "=key=" (bibtex-key-in-head)) alist)
       (goto-char (match-end 0))
       (while (setq bounds (bibtex-parse-field))
-	(push (cons (bibtex-name-in-field bounds t)
+	(push (cons (bibtex-name-in-field bounds (not keep-opt-alt))
 		    (bibtex-text-in-field-bounds bounds content))
 	      alist)
 	(goto-char (bibtex-end-of-field bounds))))
