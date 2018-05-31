@@ -84,7 +84,7 @@ pub extern "C" fn get_keymap(
     error_if_not_keymap: bool,
     autoload: bool,
 ) -> LispObject {
-    let object = LispObject::from_raw(object);
+    let object = object;
 
     let mut autoload_retry = true;
     while autoload_retry {
@@ -148,7 +148,7 @@ pub fn make_keymap(string: LispObject) -> LispObject {
     };
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
-    LispObject::from_raw(unsafe { Fcons(Qkeymap, Fcons(char_table, tail.to_raw())) })
+    unsafe { Fcons(Qkeymap, Fcons(char_table, tail.to_raw())) }
 }
 
 /// Return t if OBJECT is a keymap.
@@ -160,7 +160,7 @@ pub fn make_keymap(string: LispObject) -> LispObject {
 /// is also allowed as an element.
 #[lisp_fn]
 pub fn keymapp(object: LispObject) -> bool {
-    let map = LispObject::from_raw(get_keymap(object.to_raw(), false, false));
+    let map = get_keymap(object.to_raw(), false, false);
     map.is_not_nil()
 }
 
@@ -168,7 +168,7 @@ pub fn keymapp(object: LispObject) -> bool {
 /// We assume that KEYMAP is a valid keymap.
 #[no_mangle]
 pub extern "C" fn keymap_parent(keymap: LispObject, autoload: bool) -> LispObject {
-    let map = LispObject::from_raw(get_keymap(keymap, true, autoload));
+    let map = get_keymap(keymap, true, autoload);
     let mut current = LispObject::constant_nil();
     for elt in map.iter_tails_safe() {
         current = elt.cdr();
@@ -183,19 +183,19 @@ pub extern "C" fn keymap_parent(keymap: LispObject, autoload: bool) -> LispObjec
 /// If KEYMAP has no parent, return nil.
 #[lisp_fn(name = "keymap-parent", c_name = "keymap_parent")]
 pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
-    LispObject::from_raw(keymap_parent(keymap.to_raw(), true))
+    keymap_parent(keymap.to_raw(), true)
 }
 
 /// Check whether MAP is one of MAPS parents.
 #[no_mangle]
 pub extern "C" fn keymap_memberp(map: LispObject, maps: LispObject) -> bool {
-    let map = LispObject::from_raw(map);
-    let mut maps = LispObject::from_raw(maps);
+    let map = map;
+    let mut maps = maps;
     if map.is_nil() {
         return false;
     }
     while keymapp(maps) && map.ne(maps) {
-        maps = LispObject::from_raw(keymap_parent(maps.to_raw(), false));
+        maps = keymap_parent(maps.to_raw(), false);
     }
     map.eq(maps)
 }
@@ -211,9 +211,9 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
     }
 
     let mut parent = parent;
-    let keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, true));
+    let keymap = get_keymap(keymap.to_raw(), true, true);
     if parent.is_not_nil() {
-        parent = LispObject::from_raw(get_keymap(parent.to_raw(), true, false));
+        parent = get_keymap(parent.to_raw(), true, false);
 
         // Check for cycles
         if keymap_memberp(keymap.to_raw(), parent.to_raw()) {
@@ -249,7 +249,7 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
 /// when reading a key-sequence to be looked-up in this keymap.
 #[lisp_fn]
 pub fn keymap_prompt(map: LispObject) -> LispObject {
-    let map = LispObject::from_raw(get_keymap(map.to_raw(), false, false));
+    let map = get_keymap(map.to_raw(), false, false);
     for elt in map.iter_cars_safe() {
         let mut tem = elt;
         if tem.is_string() {
@@ -274,7 +274,7 @@ pub extern "C" fn map_keymap(
     data: *const c_void,
     autoload: bool,
 ) {
-    let mut map = LispObject::from_raw(get_keymap(map, true, autoload));
+    let mut map = get_keymap(map, true, autoload);
     while map.is_cons() {
         if let Some(cons) = map.as_cons() {
             let (car, cdr) = cons.as_tuple();
@@ -282,12 +282,12 @@ pub extern "C" fn map_keymap(
                 map_keymap(car.to_raw(), fun, args, data, autoload);
                 map = cdr;
             } else {
-                map = LispObject::from_raw(map_keymap_internal(map.to_raw(), fun, args, data));
+                map = map_keymap_internal(map.to_raw(), fun, args, data);
             }
         }
 
         if !map.is_cons() {
-            map = LispObject::from_raw(get_keymap(map.to_raw(), false, autoload));
+            map = get_keymap(map.to_raw(), false, autoload);
         }
     }
 }
@@ -324,7 +324,7 @@ pub extern "C" fn map_keymap_internal(
     args: LispObject,
     data: *const c_void,
 ) -> LispObject {
-    let map = LispObject::from_raw(map);
+    let map = map;
     let tail = match map.as_cons() {
         None => LispObject::constant_nil(),
         Some(cons) => {
@@ -393,13 +393,13 @@ pub extern "C" fn map_keymap_internal(
 /// If KEYMAP has a parent, this function returns it without processing it.
 #[lisp_fn(name = "map-keymap-internal")]
 pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
-    keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, true));
-    LispObject::from_raw(map_keymap_internal(
+    keymap = get_keymap(keymap.to_raw(), true, true);
+    map_keymap_internal(
         keymap.to_raw(),
         map_keymap_call,
         function.to_raw(),
         ptr::null_mut(),
-    ))
+    )
 }
 
 /// Return the binding for command KEYS in current local keymap only.
@@ -421,7 +421,7 @@ pub fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispOb
 /// Normally the local keymap is set by the major mode with `use-local-map'.
 #[lisp_fn]
 pub fn current_local_map() -> LispObject {
-    LispObject::from_raw(ThreadState::current_buffer().keymap)
+    ThreadState::current_buffer().keymap
 }
 
 /// Select KEYMAP as the local keymap.
@@ -430,7 +430,7 @@ pub fn current_local_map() -> LispObject {
 pub fn use_local_map(mut keymap: LispObject) -> () {
     if !keymap.is_nil() {
         let map = get_keymap(keymap.to_raw(), true, true);
-        keymap = LispObject::from_raw(map);
+        keymap = map;
     }
 
     ThreadState::current_buffer().keymap = keymap.to_raw();
@@ -457,7 +457,7 @@ pub fn global_key_binding(keys: LispObject, accept_default: LispObject) -> LispO
 /// Return the current global keymap.
 #[lisp_fn]
 pub fn current_global_map() -> LispObject {
-    unsafe { LispObject::from_raw(_current_global_map) }
+    unsafe { _current_global_map }
 }
 
 /// Select KEYMAP as the global keymap.
@@ -490,7 +490,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
     let mut keymap = get_keymap(keymap.to_raw(), true, true);
     let length = key.as_vector_or_string_length() as EmacsInt;
     if length == 0 {
-        return LispObject::from_raw(keymap);
+        return keymap;
     }
 
     let mut idx = 0;
@@ -499,7 +499,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
         idx += 1;
 
         if c.is_cons() && lucid_event_type_list_p(c.as_cons()) {
-            c = LispObject::from_raw(unsafe { Fevent_convert_list(c.to_raw()) });
+            c = unsafe { Fevent_convert_list(c.to_raw()) };
         }
 
         // Turn the 8th bit of string chars into a meta modifier.
@@ -520,11 +520,11 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
 
         let cmd = unsafe { access_keymap(keymap, c.to_raw(), ok, false, true) };
         if idx == length {
-            return LispObject::from_raw(cmd);
+            return cmd;
         }
 
         keymap = get_keymap(cmd, false, true);
-        if !LispObject::from_raw(keymap).is_cons() {
+        if !keymap.is_cons() {
             return LispObject::from_natnum(idx);
         }
 
@@ -571,14 +571,14 @@ pub fn define_prefix_command(
 #[lisp_fn(min = "0")]
 pub fn make_sparse_keymap(string: LispObject) -> LispObject {
     if string.is_not_nil() {
-        let s = if LispObject::from_raw(unsafe { globals.f_Vpurify_flag }).is_not_nil() {
-            unsafe { LispObject::from_raw(Fpurecopy(string.to_raw())) }
+        let s = if unsafe { globals.f_Vpurify_flag }.is_not_nil() {
+            unsafe { Fpurecopy(string.to_raw()) }
         } else {
             string
         };
-        list!(LispObject::from_raw(Qkeymap), s)
+        list!(Qkeymap, s)
     } else {
-        list!(LispObject::from_raw(Qkeymap))
+        list!(Qkeymap)
     }
 }
 

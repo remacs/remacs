@@ -35,9 +35,7 @@ macro_rules! call {
         let mut argsarray = [$func.to_raw(), $($arg.to_raw()),*];
         #[allow(unused_unsafe)]
         unsafe {
-            LispObject::from_raw(
-                ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
-            )
+            ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
         }
     }}
 }
@@ -47,15 +45,13 @@ macro_rules! call_raw {
         let mut argsarray = [$func, $($arg),*];
         #[allow(unused_unsafe)]
         unsafe {
-            LispObject::from_raw(
-                ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
-            )
+            ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
         }
     }};
     ($func:expr) => {{
         #[allow(unused_unsafe)]
         unsafe {
-            LispObject::from_raw(::remacs_sys::Ffuncall(1, &mut $func))
+            ::remacs_sys::Ffuncall(1, &mut $func)
         }
     }}
 }
@@ -65,9 +61,7 @@ macro_rules! callN_raw {
         let mut argsarray = [$($arg),*];
         #[allow(unused_unsafe)]
         unsafe {
-            LispObject::from_raw(
-                $func(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
-            )
+            $func(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
         }
     }}
 }
@@ -92,7 +86,7 @@ macro_rules! error {
             ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
                                       $str.len() as ::libc::ptrdiff_t)
         };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
+        xsignal!(::remacs_sys::Qerror, strobj);
     }};
     ($fmtstr:expr, $($arg:expr),*) => {{
         let formatted = format!($fmtstr, $($arg),*);
@@ -101,14 +95,14 @@ macro_rules! error {
             ::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
                                       formatted.len() as ::libc::ptrdiff_t)
         };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
+        xsignal!(::remacs_sys::Qerror, strobj);
     }};
 }
 
 /// Macro to format a "wrong argument type" error message.
 macro_rules! wrong_type {
     ($pred:expr, $arg:expr) => {
-        xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from_raw($pred), $arg);
+        xsignal!(::remacs_sys::Qwrong_type_argument, $pred, $arg);
     };
 }
 
@@ -162,7 +156,6 @@ macro_rules! verify_lisp_type {
 macro_rules! per_buffer_var_idx {
     ($field: ident) => {
         #[allow(unused_unsafe)]
-        ($crate::lisp::LispObject::from_raw(
-            unsafe{buffer_local_flags.$field})).as_natnum_or_error() as usize
+        (unsafe{buffer_local_flags.$field}).as_natnum_or_error() as usize
     }
 }

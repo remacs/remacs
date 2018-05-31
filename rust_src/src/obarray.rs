@@ -20,9 +20,7 @@ impl LispObarrayRef {
 
     /// Return a reference to the Lisp variable `obarray`.
     pub fn global() -> LispObarrayRef {
-        LispObarrayRef(LispObject::from_raw(check_obarray(unsafe {
-            globals.f_Vobarray
-        })))
+        LispObarrayRef(check_obarray(unsafe { globals.f_Vobarray }))
     }
 
     pub fn as_lisp_obj(&self) -> LispObject {
@@ -35,14 +33,14 @@ impl LispObarrayRef {
     pub fn lookup(&self, name: LispObject) -> LispObject {
         let string = name.symbol_or_string_as_string();
         let obj = self.as_lisp_obj();
-        LispObject::from_raw(unsafe {
+        unsafe {
             oblookup(
                 obj.to_raw(),
                 string.const_sdata_ptr(),
                 string.len_chars(),
                 string.len_bytes(),
             )
-        })
+        }
     }
 
     /// Intern the string or symbol STRING. That is, return the new or existing
@@ -54,16 +52,16 @@ impl LispObarrayRef {
         let obj = self.as_lisp_obj();
         if tem.is_symbol() {
             tem
-        } else if LispObject::from_raw(unsafe { globals.f_Vpurify_flag }).is_not_nil() {
+        } else if unsafe { globals.f_Vpurify_flag }.is_not_nil() {
             // When Emacs is running lisp code to dump to an executable, make
             // use of pure storage.
-            LispObject::from_raw(intern_driver(
+            intern_driver(
                 unsafe { Fpurecopy(string.to_raw()) },
                 obj.to_raw(),
                 tem.to_raw(),
-            ))
+            )
         } else {
-            LispObject::from_raw(intern_driver(string.to_raw(), obj.to_raw(), tem.to_raw()))
+            intern_driver(string.to_raw(), obj.to_raw(), tem.to_raw())
         }
     }
 }
@@ -71,10 +69,10 @@ impl LispObarrayRef {
 /// Intern (e.g. create a symbol from) a string.
 pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
     let s = string.as_ref();
-    LispObject::from_raw(intern_1(
+    intern_1(
         s.as_ptr() as *const libc::c_char,
         s.len() as libc::ptrdiff_t,
-    ))
+    )
 }
 
 #[no_mangle]
@@ -101,7 +99,7 @@ pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
     let v = obarray.as_vector();
     if v.map_or(0, |v_1| v_1.len()) == 0 {
         // If Vobarray is now invalid, force it to be valid.
-        if LispObject::from_raw(unsafe { globals.f_Vobarray }).eq(obarray) {
+        if unsafe { globals.f_Vobarray }.eq(obarray) {
             unsafe { globals.f_Vobarray = initial_obarray };
         }
         wrong_type!(Qvectorp, obarray);
@@ -116,7 +114,7 @@ pub extern "C" fn map_obarray(
     func: extern "C" fn(LispObject, LispObject),
     arg: LispObject,
 ) {
-    let v = LispObject::from_raw(obarray).as_vector_or_error();
+    let v = obarray.as_vector_or_error();
     for item in v.iter().rev() {
         if let Some(sym) = item.as_symbol() {
             for s in sym.iter() {
@@ -131,7 +129,7 @@ pub extern "C" fn map_obarray(
 #[no_mangle]
 pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
     let obarray = LispObarrayRef::global().as_lisp_obj().to_raw();
-    let tem = LispObject::from_raw(unsafe { oblookup(obarray, s, len, len) });
+    let tem = unsafe { oblookup(obarray, s, len, len) };
 
     if tem.is_symbol() {
         tem.to_raw()
@@ -151,14 +149,14 @@ pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> Lisp
 #[no_mangle]
 pub extern "C" fn intern_c_string_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
     let obarray = LispObarrayRef::global().as_lisp_obj().to_raw();
-    let tem = LispObject::from_raw(unsafe { oblookup(obarray, s, len, len) });
+    let tem = unsafe { oblookup(obarray, s, len, len) };
 
     if tem.is_symbol() {
         tem.to_raw()
     } else {
         // Creating a non-pure string from a string literal not implemented yet.
         // We could just use make_string here and live with the extra copy.
-        assert!(LispObject::from_raw(unsafe { globals.f_Vpurify_flag }).is_not_nil());
+        assert!(unsafe { globals.f_Vpurify_flag }.is_not_nil());
         intern_driver(unsafe { make_pure_c_string(s, len) }, obarray, tem.to_raw())
     }
 }
