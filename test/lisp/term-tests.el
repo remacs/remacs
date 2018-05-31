@@ -89,6 +89,13 @@ first line\r_next line\r\n"))
                                               "\e[2;1Hc"
                                               "\e[1;2Hb"
                                               "\e[1;1Ha") "" t))))
+  (should (equal "abcde    j"
+                 (term-test-screen-from-input
+                  10 12 '("abcdefghij"
+                          "\e[H"  ;move back to point-min
+                          "abcde"
+                          "    j"))))
+
   ;; Relative positioning.
   (should (equal "ab\ncd"
                  (term-test-screen-from-input

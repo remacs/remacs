@@ -2904,7 +2904,8 @@ See `term-prompt-regexp'."
                   (when (not (or (eobp) term-insert-mode))
                     (let ((pos (point)))
                       (term-move-columns columns)
-                      (delete-region pos (point))))
+                      (delete-region pos (point))
+                      (setq term-current-column nil)))
                   ;; In insert mode if the current line
                   ;; has become too long it needs to be
                   ;; chopped off.
