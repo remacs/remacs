@@ -77,10 +77,7 @@ impl LispWindowRef {
             let frame = self.frame().as_frame_or_error();
             let window = selected_window().as_window_or_error();
             let mode_line_height = unsafe {
-                estimate_mode_line_height(
-                    frame.as_ptr(),
-                    CURRENT_MODE_LINE_FACE_ID_3(*self, window, *self),
-                )
+                estimate_mode_line_height(frame.as_ptr(), CURRENT_MODE_LINE_FACE_ID(window))
             };
             unsafe { wset_mode_line_height(self.as_mut(), mode_line_height) };
             mode_line_height
@@ -590,20 +587,19 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
 
     unsafe {
         if !globals.f_mode_line_in_non_selected_windows {
-            if selw == current {
-                return MODE_LINE_FACE_ID;
-            } else if minibuf_level > 0 {
-                let minibuf = current_minibuf_window;
-                if let Some(minibuf_window) = minibuf.as_window() {
-                    if mbw == minibuf_window && scrw == minibuf_window {
-                        return MODE_LINE_FACE_ID;
-                    }
+            return MODE_LINE_FACE_ID;
+        } else if selw == current {
+            return MODE_LINE_FACE_ID;
+        } else if minibuf_level > 0 {
+            if let Some(minibuf_window) = current_minibuf_window.as_window() {
+                if mbw == minibuf_window && scrw == minibuf_window {
+                    return MODE_LINE_FACE_ID;
                 }
             }
         }
-    }
 
-    MODE_LINE_INACTIVE_FACE_ID
+        MODE_LINE_INACTIVE_FACE_ID
+    }
 }
 
 /// Return the desired face id for the mode line of window W.

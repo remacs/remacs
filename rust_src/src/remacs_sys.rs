@@ -450,7 +450,111 @@ pub struct glyph_matrix {
     /* more to come */
 }
 
+/// Text positions
 #[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct text_pos {
+    pub charpos: isize,
+    pub bytepos: isize,
+}
+#[test]
+fn bindgen_test_layout_text_pos() {
+    assert_eq!(
+        ::std::mem::size_of::<text_pos>(),
+        16usize,
+        concat!("Size of: ", stringify!(text_pos))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<text_pos>(),
+        8usize,
+        concat!("Alignment of ", stringify!(text_pos))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const text_pos)).charpos as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(text_pos),
+            "::",
+            stringify!(charpos)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const text_pos)).bytepos as *const _ as usize },
+        8usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(text_pos),
+            "::",
+            stringify!(bytepos)
+        )
+    );
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct display_pos {
+    pub pos: text_pos,
+    pub overlay_string_index: isize,
+    pub string_pos: text_pos,
+    pub dpvec_index: ::libc::c_int,
+}
+#[test]
+fn bindgen_test_layout_display_pos() {
+    assert_eq!(
+        ::std::mem::size_of::<display_pos>(),
+        48usize,
+        concat!("Size of: ", stringify!(display_pos))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<display_pos>(),
+        8usize,
+        concat!("Alignment of ", stringify!(display_pos))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const display_pos)).pos as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(display_pos),
+            "::",
+            stringify!(pos)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const display_pos)).overlay_string_index as *const _ as usize },
+        16usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(display_pos),
+            "::",
+            stringify!(overlay_string_index)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const display_pos)).string_pos as *const _ as usize },
+        24usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(display_pos),
+            "::",
+            stringify!(string_pos)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const display_pos)).dpvec_index as *const _ as usize },
+        40usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(display_pos),
+            "::",
+            stringify!(dpvec_index)
+        )
+    );
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct glyph_row {
     /// Pointers to beginnings of areas.  The end of an area A is found at
     /// A + 1 in the vector.  The last element of the vector is the end
@@ -466,15 +570,15 @@ pub struct glyph_row {
     /// See also start, end, displays_text_p and ends_at_zv_p for cleaner
     /// ways to do it.  The special meaning of positions 0 and -1 will be
     /// removed some day, so don't use it in new code.
-    glyphs: *mut glyph, // really an array
+    pub glyphs: [*mut glyph; 4usize],
 
     /// Number of glyphs actually filled in areas. This could have size
     /// LAST_AREA, but it's 1 + LAST_AREA to simplify offset calculations.
-    used: *mut i16, // really an array
+    pub used: [::libc::c_short; 4usize],
 
     /// Hash code. This hash code is available as soon as the row
     /// is constructed, i.e. after a call to display_line.
-    hash: u32,
+    pub hash: ::libc::c_uint,
 
     /// Window-relative x and y-position of the top-left corner of this
     /// row. If y < 0, this means that eabs (y) pixels of the row are
@@ -482,18 +586,222 @@ pub struct glyph_row {
     /// If x < 0, this means that eabs (x) pixels of the first glyph of
     /// the text area of the row are invisible because the glyph is
     /// partially visible.
-    x: c_int,
-    y: c_int,
+    pub x: ::libc::c_int,
+    pub y: ::libc::c_int,
 
     /// Width of the row in pixels without taking face extension at the
     /// end of the row into account, and without counting truncation
     /// and continuation glyphs at the end of a row on ttys.
-    pixel_width: c_int,
+    pub pixel_width: ::libc::c_int,
 
-    /// Logical ascent/height of this line. The value of ascent is zero
     /// and height is 1 on terminal frames.
-    ascent: c_int,
-    pub height: c_int,
+    pub ascent: ::libc::c_int,
+
+    pub height: ::libc::c_int,
+    pub phys_ascent: ::libc::c_int,
+    pub phys_height: ::libc::c_int,
+    pub visible_height: ::libc::c_int,
+    pub extra_line_spacing: ::libc::c_int,
+    pub start: display_pos,
+    pub end: display_pos,
+    pub minpos: text_pos,
+    pub maxpos: text_pos,
+    pub overlay_arrow_bitmap: ::libc::c_int,
+    pub _bitfield_1: [u32; 8usize],
+    pub continuation_lines_width: ::libc::c_int,
+}
+#[test]
+fn bindgen_test_layout_glyph_row() {
+    assert_eq!(
+        ::std::mem::size_of::<glyph_row>(),
+        248usize,
+        concat!("Size of: ", stringify!(glyph_row))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<glyph_row>(),
+        8usize,
+        concat!("Alignment of ", stringify!(glyph_row))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).glyphs as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(glyphs)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).used as *const _ as usize },
+        32usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(used)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).hash as *const _ as usize },
+        40usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(hash)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).x as *const _ as usize },
+        44usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(x)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).y as *const _ as usize },
+        48usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(y)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).pixel_width as *const _ as usize },
+        52usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(pixel_width)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).ascent as *const _ as usize },
+        56usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(ascent)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).height as *const _ as usize },
+        60usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(height)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).phys_ascent as *const _ as usize },
+        64usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(phys_ascent)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).phys_height as *const _ as usize },
+        68usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(phys_height)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).visible_height as *const _ as usize },
+        72usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(visible_height)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).extra_line_spacing as *const _ as usize },
+        76usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(extra_line_spacing)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).start as *const _ as usize },
+        80usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(start)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).end as *const _ as usize },
+        128usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(end)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).minpos as *const _ as usize },
+        176usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(minpos)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).maxpos as *const _ as usize },
+        192usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(maxpos)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).overlay_arrow_bitmap as *const _ as usize },
+        208usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(overlay_arrow_bitmap)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const glyph_row)).continuation_lines_width as *const _ as usize },
+        244usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(glyph_row),
+            "::",
+            stringify!(continuation_lines_width)
+        )
+    );
 }
 
 pub type face_id = i32;
