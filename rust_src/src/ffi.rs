@@ -10,22 +10,18 @@ use windows;
 
 #[no_mangle]
 pub extern "C" fn circular_list(obj: LispObject) -> ! {
-    lists::circular_list(LispObject::from_raw(obj))
+    lists::circular_list(obj)
 }
 
 #[no_mangle]
 pub extern "C" fn merge(l1: LispObject, l2: LispObject, pred: LispObject) -> LispObject {
-    let result = lists::merge(
-        LispObject::from_raw(l1),
-        LispObject::from_raw(l2),
-        LispObject::from_raw(pred),
-    );
+    let result = lists::merge(l1, l2, pred);
     result.to_raw()
 }
 
 #[no_mangle]
 pub extern "C" fn indirect_function(object: LispObject) -> LispObject {
-    let result = data::indirect_function(LispObject::from_raw(object));
+    let result = data::indirect_function(object);
     result.to_raw()
 }
 
@@ -35,17 +31,13 @@ pub extern "C" fn arithcompare(
     obj2: LispObject,
     comparison: math::ArithComparison,
 ) -> LispObject {
-    let result = math::arithcompare(
-        LispObject::from_raw(obj1),
-        LispObject::from_raw(obj2),
-        comparison,
-    );
+    let result = math::arithcompare(obj1, obj2, comparison);
     LispObject::from(result).to_raw()
 }
 
 #[no_mangle]
 pub extern "C" fn lucid_event_type_list_p(event: LispObject) -> bool {
-    keyboard::lucid_event_type_list_p(LispObject::from_raw(event).as_cons())
+    keyboard::lucid_event_type_list_p(event.as_cons())
 }
 
 #[no_mangle]

@@ -12,7 +12,7 @@ use threads::ThreadState;
 /// current buffer.
 #[lisp_fn]
 pub fn syntax_table() -> LispObject {
-    LispObject::from_raw(ThreadState::current_buffer().syntax_table)
+    ThreadState::current_buffer().syntax_table
 }
 
 /// Scan from character number FROM by COUNT lists.

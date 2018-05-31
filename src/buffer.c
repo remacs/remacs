@@ -5936,3 +5936,9 @@ set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
 {
   *(Lisp_Object *)(offset + (char *) b) = value;
 }
+
+void
+bset_markers (struct buffer *b, struct Lisp_Marker *m)
+{
+  b->text->markers = m;
+}

@@ -38,6 +38,9 @@ bget_overlays_before(const struct buffer *b);
 struct Lisp_Overlay*
 bget_overlays_after(const struct buffer *b);
 
+void
+bset_markers (struct buffer *b, struct Lisp_Marker *m);
+
 
 /* Accessing the parameters of the current buffer.  */
 
@@ -264,10 +267,6 @@ extern void temp_set_point_both (struct buffer *,
 				 ptrdiff_t, ptrdiff_t);
 extern void set_point_from_marker (Lisp_Object);
 extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
-
-extern void
-attach_marker (struct Lisp_Marker *m, struct buffer *b,
-	       ptrdiff_t charpos, ptrdiff_t bytepos);
 
 
 /* Macros for setting the BEGV, ZV or PT of a given buffer.

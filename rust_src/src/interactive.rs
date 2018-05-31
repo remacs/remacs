@@ -13,7 +13,7 @@ use lisp::defsubr;
 pub fn prefix_numeric_value(raw: LispObject) -> EmacsInt {
     if raw.is_nil() {
         1
-    } else if raw.eq(LispObject::from_raw(Qminus)) {
+    } else if raw.eq(Qminus) {
         -1
     } else if raw.is_integer() {
         raw.as_fixnum_or_error()

@@ -62,10 +62,10 @@ fn hash_alg(algorithm: LispObject) -> HashAlg {
 }
 
 fn check_coding_system_or_error(coding_system: LispObject, noerror: LispObject) -> LispObject {
-    if LispObject::from_raw(unsafe { Fcoding_system_p(coding_system.to_raw()) }).is_nil() {
+    if unsafe { Fcoding_system_p(coding_system.to_raw()) }.is_nil() {
         /* Invalid coding system. */
         if noerror.is_not_nil() {
-            LispObject::from_raw(Qraw_text)
+            Qraw_text
         } else {
             xsignal!(Qcoding_system_error, coding_system);
         }
@@ -79,9 +79,9 @@ fn get_coding_system_for_string(string: LispStringRef, coding_system: LispObject
         /* Decide the coding-system to encode the data with. */
         if string.is_multibyte() {
             /* use default, we can't guess correct value */
-            LispObject::from_raw(unsafe { preferred_coding_system() })
+            unsafe { preferred_coding_system() }
         } else {
-            LispObject::from_raw(Qraw_text)
+            Qraw_text
         }
     } else {
         coding_system
@@ -102,18 +102,17 @@ fn get_coding_system_for_buffer(
     if coding_system.is_not_nil() {
         return coding_system;
     }
-    if LispObject::from_raw(unsafe { globals.Vcoding_system_for_write }).is_not_nil() {
-        return LispObject::from_raw(unsafe { globals.Vcoding_system_for_write });
+    if unsafe { globals.Vcoding_system_for_write }.is_not_nil() {
+        return unsafe { globals.Vcoding_system_for_write };
     }
-    if (LispObject::from_raw(buffer.buffer_file_coding_system).is_nil()
-        || LispObject::from_raw(unsafe {
-            Flocal_variable_p(
-                Qbuffer_file_coding_system,
-                LispObject::constant_nil().to_raw(),
-            )
-        }).is_nil()) && !buffer.multibyte_characters_enabled()
+    if (buffer.buffer_file_coding_system.is_nil() || unsafe {
+        Flocal_variable_p(
+            Qbuffer_file_coding_system,
+            LispObject::constant_nil().to_raw(),
+        )
+    }.is_nil()) && !buffer.multibyte_characters_enabled()
     {
-        return LispObject::from_raw(Qraw_text);
+        return Qraw_text;
     }
     if buffer_file_name(object).is_not_nil() {
         /* Check file-coding-system-alist. */
@@ -123,18 +122,17 @@ fn get_coding_system_for_buffer(
             end.to_raw(),
             buffer_file_name(object).to_raw(),
         ];
-        let val =
-            LispObject::from_raw(unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) });
+        let val = unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) };
         if val.is_cons() && val.as_cons_or_error().cdr().is_not_nil() {
             return val.as_cons_or_error().cdr();
         }
     }
-    if LispObject::from_raw(buffer.buffer_file_coding_system).is_not_nil() {
+    if buffer.buffer_file_coding_system.is_not_nil() {
         /* If we still have not decided a coding system, use the
            default value of buffer-file-coding-system. */
-        return LispObject::from_raw(buffer.buffer_file_coding_system);
+        return buffer.buffer_file_coding_system;
     }
-    let sscsf = LispObject::from_raw(unsafe { globals.Vselect_safe_coding_system_function });
+    let sscsf = unsafe { globals.Vselect_safe_coding_system_function };
     if fboundp(sscsf.as_symbol_or_error()) {
         /* Confirm that VAL can surely encode the current region. */
         return call!(
@@ -184,14 +182,14 @@ fn get_input_from_string(
     if start_byte == 0 && end_byte == size {
         object
     } else {
-        LispObject::from_raw(unsafe {
+        unsafe {
             make_specified_string(
                 string.const_sdata_ptr().offset(start_byte),
                 -1 as ptrdiff_t,
                 end_byte - start_byte,
                 string.is_multibyte(),
             )
-        })
+        }
     }
 }
 
@@ -227,7 +225,7 @@ fn get_input_from_buffer(
     if !(buffer.begv <= *start_byte && *end_byte <= buffer.zv) {
         args_out_of_range!(start, end);
     }
-    let string = LispObject::from_raw(unsafe { make_buffer_string(*start_byte, *end_byte, false) });
+    let string = unsafe { make_buffer_string(*start_byte, *end_byte, false) };
     unsafe { set_buffer_internal(prev_buffer) };
     // TODO: this needs to be std::mem::size_of<specbinding>()
     unsafe { (*current_thread).m_specpdl_ptr = (*current_thread).m_specpdl_ptr.offset(-40) };
@@ -250,7 +248,7 @@ fn get_input(
                 noerror,
             );
             *string = Some(
-                LispObject::from_raw(unsafe {
+                unsafe {
                     code_convert_string(
                         object.to_raw(),
                         coding_system.to_raw(),
@@ -259,7 +257,7 @@ fn get_input(
                         false,
                         true,
                     )
-                }).as_string_or_error(),
+                }.as_string_or_error(),
             )
         }
         get_input_from_string(object, string.unwrap(), start, end).as_string_or_error()
@@ -281,7 +279,7 @@ fn get_input(
                 ),
                 noerror,
             );
-            LispObject::from_raw(unsafe {
+            unsafe {
                 code_convert_string(
                     s.to_raw(),
                     coding_system.to_raw(),
@@ -290,7 +288,7 @@ fn get_input(
                     false,
                     false,
                 )
-            }).as_string_or_error()
+            }.as_string_or_error()
         } else {
             ss
         }
@@ -414,7 +412,7 @@ fn _secure_hash(
     } else {
         digest_size as EmacsInt
     };
-    let digest = LispObject::from_raw(unsafe { make_uninit_string(buffer_size as EmacsInt) });
+    let digest = unsafe { make_uninit_string(buffer_size as EmacsInt) };
     let mut digest_str = digest.as_string_or_error();
     hash_func(input_slice, digest_str.as_mut_slice());
     if binary.is_nil() {
@@ -515,7 +513,7 @@ pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     }
 
     let formatted = ctx.digest().to_string();
-    let digest = LispObject::from_raw(unsafe { make_uninit_string(formatted.len() as EmacsInt) });
+    let digest = unsafe { make_uninit_string(formatted.len() as EmacsInt) };
     digest
         .as_string()
         .unwrap()

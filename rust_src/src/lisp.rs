@@ -85,17 +85,17 @@ impl LispObject {
 
     #[inline]
     pub fn constant_unbound() -> LispObject {
-        LispObject::from_raw(Qunbound)
+        Qunbound
     }
 
     #[inline]
     pub fn constant_t() -> LispObject {
-        LispObject::from_raw(Qt)
+        Qt
     }
 
     #[inline]
     pub fn constant_nil() -> LispObject {
-        LispObject::from_raw(Qnil)
+        Qnil
     }
 
     #[inline]
@@ -109,12 +109,7 @@ impl LispObject {
 
     #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
-        LispObject::from_raw(unsafe { make_float(v) })
-    }
-
-    #[inline]
-    pub fn from_raw(i: LispObject) -> LispObject {
-        i
+        unsafe { make_float(v) }
     }
 
     #[inline]
@@ -207,7 +202,7 @@ impl LispObject {
             ((tag << VALBITS) + ptr) as EmacsInt
         };
 
-        LispObject::from_raw(LispObject::from_C(res))
+        LispObject::from_C(res)
     }
 
     #[inline]
@@ -219,7 +214,7 @@ impl LispObject {
 // Obarray support
 impl LispObject {
     pub fn as_obarray_or_error(self) -> LispObarrayRef {
-        LispObarrayRef::new(LispObject::from_raw(check_obarray(self.to_raw())))
+        LispObarrayRef::new(check_obarray(self.to_raw()))
     }
 }
 
@@ -449,7 +444,7 @@ impl LispObject {
         } else {
             (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << VALBITS)
         };
-        LispObject::from_raw(LispObject::from_C(o as EmacsInt))
+        LispObject::from_C(o as EmacsInt)
     }
 
     /// Convert a positive integer into its LispObject representation.
@@ -1183,12 +1178,12 @@ macro_rules! impl_alistval_iter {
     };
 }
 
-impl_alistval_iter! {LiveBufferIter, LispBufferRef, LispObject::from_raw(unsafe { Vbuffer_alist })}
+impl_alistval_iter! {LiveBufferIter, LispBufferRef, unsafe { Vbuffer_alist }}
 
 impl LispObject {
     #[inline]
     pub fn cons(car: LispObject, cdr: LispObject) -> Self {
-        unsafe { LispObject::from_raw(Fcons(car.to_raw(), cdr.to_raw())) }
+        unsafe { Fcons(car.to_raw(), cdr.to_raw()) }
     }
 
     #[inline]
@@ -1290,12 +1285,12 @@ impl LispCons {
 
     /// Return the car (first cell).
     pub fn car(self) -> LispObject {
-        LispObject::from_raw(unsafe { (*self._extract()).car })
+        unsafe { (*self._extract()).car }
     }
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        LispObject::from_raw(unsafe { (*self._extract()).cdr })
+        unsafe { (*self._extract()).cdr }
     }
 
     pub fn as_tuple(self) -> (LispObject, LispObject) {
@@ -1451,7 +1446,7 @@ impl LispObject {
 
     #[inline]
     pub fn empty_unibyte_string() -> LispStringRef {
-        LispStringRef::from(LispObject::from_raw(unsafe { empty_unibyte_string }))
+        LispStringRef::from(unsafe { empty_unibyte_string })
     }
 }
 

@@ -145,7 +145,7 @@ pub fn type_of(object: LispObject) -> LispObject {
             }
         }
     };
-    LispObject::from_raw(ty)
+    ty
 }
 
 #[lisp_fn]
@@ -267,7 +267,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
             // If `definition' is a keymap, immutable (and copying) is wrong.
             && get_keymap(definition.to_raw(), false, false) == Qnil
         {
-            definition = LispObject::from_raw(Fpurecopy(definition.to_raw()));
+            definition = Fpurecopy(definition.to_raw());
         }
     }
 
@@ -276,7 +276,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
         // Only add autoload entries after dumping, because the ones before are
         // not useful and else we get loads of them from the loaddefs.el.
 
-        if is_autoload(LispObject::from_raw(symbol.function)) {
+        if is_autoload(symbol.function) {
             // Remember that the function was already an autoload.
             loadhist_attach(unsafe { Fcons(Qt, sym.to_raw()) });
         }
@@ -284,7 +284,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
     }
 
     // Handle automatic advice activation.
-    let hook = get(symbol, LispObject::from_raw(Qdefalias_fset_function));
+    let hook = get(symbol, Qdefalias_fset_function);
     if hook.is_not_nil() {
         call!(hook, sym, definition);
     } else {
@@ -292,11 +292,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
     }
 
     if docstring.is_not_nil() {
-        put(
-            sym,
-            LispObject::from_raw(Qfunction_documentation),
-            docstring,
-        );
+        put(sym, Qfunction_documentation, docstring);
     }
 
     // We used to return `definition', but now that `defun' and `defmacro' expand
@@ -314,9 +310,9 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
 pub fn subr_arity(subr: LispSubrRef) -> LispObject {
     let minargs = subr.min_args();
     let maxargs = if subr.is_many() {
-        LispObject::from_raw(Qmany)
+        Qmany
     } else if subr.is_unevalled() {
-        LispObject::from_raw(Qunevalled)
+        Qunevalled
     } else {
         LispObject::from(subr.max_args() as EmacsInt)
     };
@@ -329,7 +325,7 @@ pub fn subr_arity(subr: LispSubrRef) -> LispObject {
 #[lisp_fn]
 pub fn subr_name(subr: LispSubrRef) -> LispObject {
     let name = subr.symbol_name();
-    LispObject::from_raw(unsafe { build_string(name) })
+    unsafe { build_string(name) }
 }
 
 /***********************************************************************

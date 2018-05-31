@@ -61,7 +61,7 @@ impl LispCharTableRef {
 
     pub fn get(self, c: isize) -> LispObject {
         let mut val = if is_ascii(c) {
-            let tmp = LispObject::from_raw(self.ascii);
+            let tmp = self.ascii;
             if let Some(sub) = tmp.as_sub_char_table_ascii() {
                 sub.get(c)
             } else {
@@ -70,10 +70,7 @@ impl LispCharTableRef {
         } else {
             let tmp = self.contents
                 .get(chartab_idx(c, 0, 0) as usize)
-                .map_or_else(
-                    || error!("Index out of range"),
-                    |tmp| LispObject::from_raw(*tmp),
-                );
+                .map_or_else(|| error!("Index out of range"), |tmp| *tmp);
             if let Some(sub) = tmp.as_sub_char_table() {
                 sub.get(c, self.is_uniprop())
             } else {
@@ -82,9 +79,9 @@ impl LispCharTableRef {
         };
 
         if val.is_nil() {
-            val = LispObject::from_raw(self.default);
+            val = self.default;
             if val.is_nil() {
-                if let Some(parent) = LispObject::from_raw(self.parent).as_char_table() {
+                if let Some(parent) = self.parent.as_char_table() {
                     val = parent.get(c);
                 }
             }
@@ -125,9 +122,9 @@ impl LispSubCharTableRef {
         let mut val = self._get(idx);
 
         if is_uniprop && uniprop_compressed_form_p(val) {
-            val = LispObject::from_raw(unsafe {
+            val = unsafe {
                 uniprop_table_uncompress(self.as_lisp_obj().to_raw(), idx as libc::c_int)
-            });
+            };
         }
 
         if let Some(sub) = val.as_sub_char_table() {
@@ -145,7 +142,7 @@ fn is_ascii(c: isize) -> bool {
 /// Return the subtype of char-table CHARTABLE.  The value is a symbol.
 #[lisp_fn]
 pub fn char_table_subtype(chartable: LispCharTableRef) -> LispObject {
-    LispObject::from_raw(chartable.purpose)
+    chartable.purpose
 }
 
 /// Return the parent char-table of CHARTABLE.
@@ -155,7 +152,7 @@ pub fn char_table_subtype(chartable: LispCharTableRef) -> LispObject {
 /// (or from its parents, if necessary).
 #[lisp_fn]
 pub fn char_table_parent(chartable: LispCharTableRef) -> Option<LispCharTableRef> {
-    LispObject::from_raw(chartable.parent).as_char_table()
+    chartable.parent.as_char_table()
 }
 
 /// Set the parent char-table of CHARTABLE to PARENT.

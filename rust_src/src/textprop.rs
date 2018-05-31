@@ -19,14 +19,14 @@ use lisp::defsubr;
 /// overlays are considered only if they are associated with OBJECT.
 #[lisp_fn(min = "2")]
 pub fn get_char_property(position: EmacsInt, prop: LispObject, object: LispObject) -> LispObject {
-    LispObject::from_raw(unsafe {
+    unsafe {
         get_char_property_and_overlay(
             LispObject::from(position).to_raw(),
             prop.to_raw(),
             object.to_raw(),
             ptr::null_mut(),
         )
-    })
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/textprop_exports.rs"));
