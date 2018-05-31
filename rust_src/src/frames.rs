@@ -3,8 +3,7 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{next_frame as get_next_frame, selected_frame as current_frame, BoolBF, EmacsInt,
-                 Lisp_Frame, Lisp_Type};
+use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
                  fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
@@ -335,7 +334,7 @@ pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
 /// By default, skip minibuffer-only frames.
 /// If omitted, `frame` defaults to the selected frame.
 /// If optional argument `miniframe` is nil, exclude minibuffer-only frames.
-/// If `miniframe is a window, include only its own frame
+/// If `miniframe` is a window, include only its own frame
 /// and frame now using that window as the minibuffer.
 /// If `miniframe` is "visible", include all visible frames.
 /// If `miniframe` is 0, include all visible and iconified frames.
@@ -350,10 +349,10 @@ pub fn next_frame(frame: Option<LispObject>, miniframe: Option<LispObject>) -> L
         }
 
         let f = unsafe {
-            get_next_frame(
-                frame.to_raw(),
-                miniframe.unwrap_or(LispObject::constant_nil()).to_raw(),
-            )
+            // get_next_frame(
+            //     frame.to_raw(),
+            //     miniframe.unwrap_or(LispObject::constant_nil()).to_raw(),
+            // )
         };
 
         return LispObject::from_raw(f);
@@ -383,76 +382,76 @@ pub fn frame_list() -> ::vectors::LispVectorRef {
 // }
 
 // TODO: port candidate_frame
-// /// Return `candidate` if it can be used as 'other-than-`frame`' from
-// /// on the same tty (for tty frames) or among frames which use `frame`'s
-// /// keyboard.
-// /// If `minibuf` is 'visible', do not consider an invisible candidate.
-// /// If `minibuf` is a window, consider only its own frame and candidate now
-// /// using that window as the minibuffer.
-// /// If `minibuf` is `None` consider `candidate` if it is visible or iconified.
-// /// Otherwise consider any candidate and return None if `candidate` is not
-// /// acceptable.
-// // TODO
-// fn candidate_frame(
-//     candidate: LispObject,
-//     frame: LispObject,
-//     minibuf: Option<LispObject>,
-// ) -> Option<LispObject> {
-//     // TODO: what is XFRAME(p)?
-//     // assert that p is a frame.
-//     // assert that p is a
-//     // TODO: what is FRAMEP(p)?
-//     // FRAMEP returns true if `p` is a frame
-//     // TODO: what is XUNTAG?
-//     // struct frame *c = XFRAME (candidate), *f = XFRAME (frame);
+/// Return `candidate` if it can be used as 'other-than-`frame`' from
+/// on the same tty (for tty frames) or among frames which use `frame`'s
+/// keyboard.
+/// If `minibuf` is 'visible', do not consider an invisible candidate.
+/// If `minibuf` is a window, consider only its own frame and candidate now
+/// using that window as the minibuffer.
+/// If `minibuf` is `None` consider `candidate` if it is visible or iconified.
+/// Otherwise consider any candidate and return None if `candidate` is not
+/// acceptable.
+// TODO
+fn candidate_frame(
+    candidate: LispObject,
+    frame: LispObject,
+    minibuf: Option<LispObject>,
+) -> Option<LispObject> {
+    // TODO: what is XFRAME(p)?
+    // assert that p is a frame.
+    // assert that p is a
+    // TODO: what is FRAMEP(p)?
+    // FRAMEP returns true if `p` is a frame
+    // TODO: what is XUNTAG?
+    // struct frame *c = XFRAME (candidate), *f = XFRAME (frame);
 
-//     let candidate_ref: LispFrameRef = match candidate.as_frame() {
-//         Some(candidate_ref) => candidate_ref,
-//         None => return None,
-//     };
-//     let frame_ref: LispFrameRef = match frame.as_frame() {
-//         Some(frame_ref) => frame_ref,
-//         None => return None,
-//     };
-//     let minibuf_ref: Option<LispFrameRef> = minibuf.and_then(|object| object.as_frame());
+    let candidate_ref: LispFrameRef = match candidate.as_frame() {
+        Some(candidate_ref) => candidate_ref,
+        None => return None,
+    };
+    let frame_ref: LispFrameRef = match frame.as_frame() {
+        Some(frame_ref) => frame_ref,
+        None => return None,
+    };
+    let minibuf_ref: Option<LispFrameRef> = minibuf.and_then(|object| object.as_frame());
 
-//     let candidate_type: FrameType = candidate_ref.clone().into();
-//     let frame_type: FrameType = frame_ref.clone().into();
+    let candidate_type: FrameType = candidate_ref.clone().into();
+    let frame_type: FrameType = frame_ref.clone().into();
 
-//     // if ((!FRAME_TERMCAP_P (c) && !FRAME_TERMCAP_P (f)
-//     //      && FRAME_KBOARD (c) == FRAME_KBOARD (f))
-//     //     || (FRAME_TERMCAP_P (c) && FRAME_TERMCAP_P (f)
-//     //         && FRAME_TTY (c) == FRAME_TTY (f)))
+    // if ((!FRAME_TERMCAP_P (c) && !FRAME_TERMCAP_P (f)
+    //      && FRAME_KBOARD (c) == FRAME_KBOARD (f))
+    //     || (FRAME_TERMCAP_P (c) && FRAME_TERMCAP_P (f)
+    //         && FRAME_TTY (c) == FRAME_TTY (f)))
 
-//     if (candidate_type != FrameType::Termcap && frame_type != FrameType::Termcap
-//         // && frames have the same keyboard
-//     )
-//         || (candidate_type == FrameType::Termcap && frame_type == FrameType::Termcap
-//           // && frames are both the same tty
-//         ) {
-//         // if (!NILP (get_frame_param (c, Qno_other_frame)))
-//         // return None
+    if (candidate_type != FrameType::Termcap && frame_type != FrameType::Termcap
+        // && frames have the same keyboard
+    )
+        || (candidate_type == FrameType::Termcap && frame_type == FrameType::Termcap
+          // && frames are both the same tty
+        ) {
+        // if (!NILP (get_frame_param (c, Qno_other_frame)))
+        // return None
 
-//         let minibuf_ref = minibuf.and_then(|object| object.as_frame());
-//         match minibuf_ref {
-//             Some(minibuf_ref) => {
-//                 // else if (EQ (minibuf, Qvisible))
-//                 //   {
-//                 //     if (FRAME_VISIBLE_P (c))
-//                 //       return candidate;
-//                 //   }
-//                 if minibuf_ref.is_visible() && candidate_ref.is_visible() {
-//                     return Some(candidate);
-//                 }
-//             }
-//             None => {
-//                 // if (!FRAME_MINIBUF_ONLY_P (c))
-//                 //   return candidate;
-//             }
-//         }
-//     }
+        let minibuf_ref = minibuf.and_then(|object| object.as_frame());
+        match minibuf_ref {
+            Some(minibuf_ref) => {
+                // else if (EQ (minibuf, Qvisible))
+                //   {
+                //     if (FRAME_VISIBLE_P (c))
+                //       return candidate;
+                //   }
+                if minibuf_ref.is_visible() && candidate_ref.is_visible() {
+                    return Some(candidate);
+                }
+            }
+            None => {
+                // if (!FRAME_MINIBUF_ONLY_P (c))
+                //   return candidate;
+            }
+        }
+    }
 
-//     return None;
-// }
+    return None;
+}
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

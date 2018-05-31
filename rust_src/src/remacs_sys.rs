@@ -1600,7 +1600,11 @@ extern "C" {
 #[repr(C)]
 pub struct terminal {
     pub header: Lisp_Vectorlike_Header,
+    pub kboard: kboard,
 }
+
+#[repr(C)]
+pub struct kboard;
 
 /// Functions to access members of `struct frame`.
 extern "C" {
