@@ -623,7 +623,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
     let pos = position.unwrap_or_else(point);
 
     let inhibit_read_only: bool =
-        unsafe { LispObject::from_raw(globals.f_Vinhibit_read_only).into() };
+        unsafe { LispObject::from_raw(globals.Vinhibit_read_only).into() };
     let prop = LispObject::from_raw(unsafe {
         Fget_text_property(LispObject::from(pos).to_raw(), Qinhibit_read_only, Qnil)
     });

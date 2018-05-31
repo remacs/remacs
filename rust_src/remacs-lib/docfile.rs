@@ -157,10 +157,10 @@ pub extern "C" fn scan_rust_file(
                                 kindstr, filename),
                 };
                 if kind != INVALID {
-                    let fvname = &caps[2];
-                    assert!(fvname.starts_with("f_V"));
-                    let vname = CString::new(fvname.splitn(2, "_").nth(1).unwrap()).unwrap();
-                    add_global(kind, vname.as_ptr() as *const i8, 0, ptr::null());
+                    let field_name = &caps[2];
+                    assert!(!field_name.starts_with("f_"));
+                    let field_name = CString::new(&caps[2]).unwrap();
+                    add_global(kind, field_name.as_ptr(), 0, ptr::null());
                 }
             }
         }

@@ -588,7 +588,7 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
     };
 
     unsafe {
-        if !globals.f_mode_line_in_non_selected_windows {
+        if !globals.mode_line_in_non_selected_windows {
             if selw == current {
                 return MODE_LINE_FACE_ID;
             } else if minibuf_level > 0 {

@@ -253,15 +253,15 @@ pub fn self_insert_command(n: EmacsInt) {
 
     // Barf if the key that invoked this was not a character.
     if !characterp(
-        LispObject::from_raw(unsafe { globals.f_last_command_event }),
+        LispObject::from_raw(unsafe { globals.last_command_event }),
         LispObject::constant_nil(),
     ) {
         unsafe { bitch_at_user() };
     } else {
         let character = unsafe {
             translate_char(
-                globals.f_Vtranslation_table_for_input,
-                LispObject::from_raw(globals.f_last_command_event).as_fixnum_or_error(),
+                globals.Vtranslation_table_for_input,
+                LispObject::from_raw(globals.last_command_event).as_fixnum_or_error(),
             )
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
@@ -295,8 +295,8 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
     let mut current_buffer = ThreadState::current_buffer();
     let overwrite = current_buffer.overwrite_mode;
-    if LispObject::from_raw(unsafe { globals.f_Vbefore_change_functions }).is_not_nil()
-        || LispObject::from_raw(unsafe { globals.f_Vafter_change_functions }).is_not_nil()
+    if LispObject::from_raw(unsafe { globals.Vbefore_change_functions }).is_not_nil()
+        || LispObject::from_raw(unsafe { globals.Vafter_change_functions }).is_not_nil()
     {
         hairy = 1;
     }
@@ -465,7 +465,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         unsafe { insert_and_inherit(str.as_mut_ptr() as *mut i8, len as isize) };
     }
 
-    if let Some(t) = LispObject::from_raw(unsafe { globals.f_Vauto_fill_chars }).as_char_table() {
+    if let Some(t) = LispObject::from_raw(unsafe { globals.Vauto_fill_chars }).as_char_table() {
         if t.get(c as isize).is_not_nil() && (c == ' ' as Codepoint || c == '\n' as Codepoint)
             && LispObject::from_raw(current_buffer.auto_fill_function).is_not_nil()
         {
@@ -537,7 +537,7 @@ pub extern "C" fn syms_of_cmds() {
 
     /// Hook run at the end of `self-insert-command'.
     /// This is run after inserting the character.
-    defvar_lisp!(f_Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
+    defvar_lisp!(Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/cmds_exports.rs"));

@@ -571,7 +571,7 @@ pub fn define_prefix_command(
 #[lisp_fn(min = "0")]
 pub fn make_sparse_keymap(string: LispObject) -> LispObject {
     if string.is_not_nil() {
-        let s = if LispObject::from_raw(unsafe { globals.f_Vpurify_flag }).is_not_nil() {
+        let s = if LispObject::from_raw(unsafe { globals.Vpurify_flag }).is_not_nil() {
             unsafe { LispObject::from_raw(Fpurecopy(string.to_raw())) }
         } else {
             string

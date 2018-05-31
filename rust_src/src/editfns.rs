@@ -105,8 +105,8 @@ pub fn gap_size() -> EmacsInt {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> EmacsInt {
     let current_buf = ThreadState::current_buffer();
-    if LispObject::from_raw(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil()
-        && LispObject::from_raw(unsafe { globals.f_Vmark_even_if_inactive }).is_nil()
+    if LispObject::from_raw(unsafe { globals.Vtransient_mark_mode }).is_not_nil()
+        && LispObject::from_raw(unsafe { globals.Vmark_even_if_inactive }).is_nil()
         && current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);
@@ -605,7 +605,7 @@ pub fn constrain_to_field(
     let prev_new = new_pos - 1;
     let begv = ThreadState::current_buffer().begv as EmacsInt;
 
-    if unsafe { globals.f_Vinhibit_field_text_motion == Qnil } && new_pos != old_pos
+    if unsafe { globals.Vinhibit_field_text_motion == Qnil } && new_pos != old_pos
         && (get_char_property(
             new_pos,
             LispObject::from_raw(Qfield),
