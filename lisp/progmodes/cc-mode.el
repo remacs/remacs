@@ -1121,7 +1121,8 @@ Note that the style variables are always made local to the buffer."
   ;; If BEG or END is inside an unbalanced string, remove the syntax-table
   ;; text property from respectively the start or end of the string.  Also
   ;; extend the region (c-new-BEG c-new-END) as necessary to cope with the
-  ;; change being the insertion of an odd number of quotes.
+  ;; coming change involving the insertion or deletion of an odd number of
+  ;; quotes.
   ;;
   ;; POINT is undefined both at entry to and exit from this function, the
   ;; buffer will have been widened, and match data will have been saved.
@@ -1169,31 +1170,37 @@ Note that the style variables are always made local to the buffer."
 		      (c-clear-char-property (1- (point)) 'syntax-table)
 		      (not (eq (char-before) ?\")))))
 	       (eq (char-before) ?\"))
-	     (if (eq (char-before (1- (point)))
-		     c-multiline-string-start-char)
-		 (progn
-		   (c-pps-to-string-delim (point-max))
-		   (< (point) (point-max)))
-	       (c-pps-to-string-delim (c-point 'eoll))
-	       (< (point) (c-point 'eoll))))))
+	     (progn
+	       (c-pps-to-string-delim (point-max))
+	       (< (point) (point-max))))))
       (setq c-new-END (max (point) c-new-END)))
 
      ((< c-new-END (point-max))
       (goto-char (1+ c-new-END))	; might be a newline.
       ;; In the following regexp, the initial \n caters for a newline getting
       ;; joined to a preceding \ by the removal of what comes between.
-      (re-search-forward "\n?\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\\\n\r]\\)*" nil t)
+      (re-search-forward "[\n\r]?\\(\\\\\\(.\\|\n\\|\r\\)\\|[^\\\n\r]\\)*"
+			 nil t)
       ;; We're at an EOLL or point-max.
       (setq c-new-END (min (1+ (point)) (point-max)))
       ;; FIXME!!!  Write a clever comment here.
       (goto-char c-new-END)
-      (when (equal (c-get-char-property (1- (point)) 'syntax-table) '(15))
-	(backward-sexp)
-	(c-clear-char-property (1- c-new-END) 'syntax-table)
-	(c-clear-char-property (point) 'syntax-table)))
+      (if (equal (c-get-char-property (1- (point)) 'syntax-table) '(15))
+	  (if (memq (char-before) '(?\n ?\r))
+	      ;; Normally terminated invalid string.
+	      (progn
+		(backward-sexp)
+		(c-clear-char-property (1- c-new-END) 'syntax-table)
+		(c-clear-char-property (point) 'syntax-table))
+	    ;; Opening " at EOB.
+	    (c-clear-char-property (1- (point)) 'syntax-table))
+	(if (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
+	    ;; Opening " on last line of text (without EOL).
+	    (c-clear-char-property (point) 'syntax-table))))
 
-     (t (if (memq (char-before c-new-END) c-string-delims)
-	    (c-clear-char-property (1- c-new-END) 'syntax-table))))
+     (t (goto-char c-new-END)
+	(if (c-search-backward-char-property 'syntax-table '(15) c-new-BEG)
+	    (c-clear-char-property (point) 'syntax-table))))
 
     (when (eq end-literal-type 'string)
       (c-clear-char-property (1- (cdr end-limits)) 'syntax-table))
