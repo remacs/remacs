@@ -43,13 +43,38 @@ if [ -z "$stripped_diff" ]; then
 	echo -e "success."
 else
 	echo -e "FAIL!"
-	echo "$diff"
+	echo -e "Following code is not formatted with rustfmt. Make sure to run 'make rustfmt' from git root.\n"
+	echo -e "$diff\n"
 	errors=1
 fi
 
+
+# Check if emacs_abort is used
+EMACS_ABORT_PATTERN='\+.*emacs_abort'
+if [ "$(git diff --cached --diff-filter=ACM | grep $EMACS_ABORT_PATTERN)" != "" ]; then
+    cat <<EOF
+Some files use emacs_abort. Use panic! with a string explaining cause instead. See $GIT_TOPLEVEL/rust_src/src/buffers.rs for examples.
+
+EOF
+    errors=1
+fi
+
+# Check if eassert is used
+EASSERT_PATTERN='\+.*eassert'
+# Check for eassert
+if [ "$(git diff --cached --diff-filter=ACM | grep $EASSERT_PATTERN)" != "" ]; then
+    cat <<EOF
+Some files use eassert. Use debug_assert! instead. See $GIT_TOPLEVEL/rust_src/lisp.rs for examples.
+
+EOF
+    errors=1
+fi
+
+
 if [ "$errors" != 0 ]; then
-	echo "Failed"
-	exit 1
+    echo "pre-commit checks failed"
+    echo "To commit anyway, pass --no-verify to git commit."
+    exit 1
 else
 	echo "OK"
 fi
