@@ -26,9 +26,7 @@ use windows::window_or_selected_unchecked;
 pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     let window = window_or_selected_unchecked(window);
 
-    let tem = LispObject::from_raw(unsafe {
-        Fpos_visible_in_window_p(pos.to_raw(), window.to_raw(), Qt)
-    });
+    let tem = unsafe { Fpos_visible_in_window_p(pos.to_raw(), window.to_raw(), Qt) };
     if tem.is_nil() {
         return LispObject::constant_nil();
     }
@@ -96,14 +94,14 @@ pub fn posn_at_x_y(
         y = w.frame_pixel_y(y);
     });
 
-    LispObject::from_raw(unsafe {
+    unsafe {
         make_lispy_position(
             frame.as_ptr(),
             LispObject::from_fixnum(EmacsInt::from(x)).to_raw(),
             LispObject::from_natnum(EmacsInt::from(y)).to_raw(),
             0,
         )
-    })
+    }
 }
 
 /// Return true if EVENT is a list whose elements are all integers or symbols.
@@ -112,10 +110,8 @@ pub fn posn_at_x_y(
 pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
     event.map_or(false, |event| {
         let first = event.car();
-        if first.eq(LispObject::from_raw(Qhelp_echo))
-            || first.eq(LispObject::from_raw(Qvertical_line))
-            || first.eq(LispObject::from_raw(Qmode_line))
-            || first.eq(LispObject::from_raw(Qheader_line))
+        if first.eq(Qhelp_echo) || first.eq(Qvertical_line) || first.eq(Qmode_line)
+            || first.eq(Qheader_line)
         {
             return false;
         }

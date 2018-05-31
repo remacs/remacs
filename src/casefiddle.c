@@ -30,8 +30,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "composite.h"
 #include "keymap.h"
 
-enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
-
 /* State for casing individual characters.  */
 struct casing_context
 {
@@ -313,7 +311,9 @@ do_casify_unibyte_string (struct casing_context *ctx, Lisp_Object obj)
   return obj;
 }
 
-static Lisp_Object
+/* Common case-conversion routine, used by upcase, capitalize, etc. */
+
+Lisp_Object
 casify_object (enum case_action flag, Lisp_Object obj)
 {
   struct casing_context ctx;
@@ -329,40 +329,6 @@ casify_object (enum case_action flag, Lisp_Object obj)
     return do_casify_multibyte_string (&ctx, obj);
   else
     return do_casify_unibyte_string (&ctx, obj);
-}
-
-DEFUN ("upcase", Fupcase, Supcase, 1, 1, 0,
-       doc: /* Convert argument to upper case and return that.
-The argument may be a character or string.  The result has the same type.
-The argument object is not altered--the value is a copy.  If argument
-is a character, characters which map to multiple code points when
-cased, e.g. ﬁ, are returned unchanged.
-See also `capitalize', `downcase' and `upcase-initials'.  */)
-  (Lisp_Object obj)
-{
-  return casify_object (CASE_UP, obj);
-}
-
-DEFUN ("downcase", Fdowncase, Sdowncase, 1, 1, 0,
-       doc: /* Convert argument to lower case and return that.
-The argument may be a character or string.  The result has the same type.
-The argument object is not altered--the value is a copy.  */)
-  (Lisp_Object obj)
-{
-  return casify_object (CASE_DOWN, obj);
-}
-
-DEFUN ("capitalize", Fcapitalize, Scapitalize, 1, 1, 0,
-       doc: /* Convert argument to capitalized form and return that.
-This means that each word's first character is converted to either
-title case or upper case, and the rest to lower case.
-The argument may be a character or string.  The result has the same type.
-The argument object is not altered--the value is a copy.  If argument
-is a character, characters which map to multiple code points when
-cased, e.g. ﬁ, are returned unchanged.  */)
-  (Lisp_Object obj)
-{
-  return casify_object (CASE_CAPITALIZE, obj);
 }
 
 /* Like Fcapitalize but change only the initials.  */
@@ -658,9 +624,6 @@ syms_of_casefiddle (void)
   DEFSYM (Qspecial_lowercase, "special-lowercase");
   DEFSYM (Qspecial_titlecase, "special-titlecase");
 
-  defsubr (&Supcase);
-  defsubr (&Sdowncase);
-  defsubr (&Scapitalize);
   defsubr (&Supcase_initials);
   defsubr (&Supcase_region);
   defsubr (&Sdowncase_region);

@@ -548,11 +548,6 @@ extern void char_table_set (Lisp_Object, int, Lisp_Object);
 /* Defined in data.c.  */
 extern _Noreturn void wrong_type_argument (Lisp_Object, Lisp_Object);
 
-/* Defined in marker.c.  */
-extern Lisp_Object
-set_marker_internal (Lisp_Object marker, Lisp_Object position,
-		     Lisp_Object buffer, bool restricted);
-
 #ifdef CANNOT_DUMP
 enum { might_dump = false };
 #elif defined DOUG_LEA_MALLOC
@@ -2182,9 +2177,6 @@ struct Lisp_Marker
 };
 
 /* Accessors to enable Rust code to get data from the Lisp_Marker struct */
-
-struct buffer *
-live_buffer (Lisp_Object buffer);
 
 bool_bf
 mget_insertion_type(const struct Lisp_Marker *m);
@@ -4122,6 +4114,8 @@ extern void syms_of_callint (void);
 
 /* Defined in casefiddle.c.  */
 
+enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
+Lisp_Object casify_object (enum case_action flag, Lisp_Object obj);
 extern void syms_of_casefiddle (void);
 extern void keys_of_casefiddle (void);
 

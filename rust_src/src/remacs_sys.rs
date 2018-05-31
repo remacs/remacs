@@ -114,6 +114,14 @@ pub enum Lisp_Type {
 }
 
 #[repr(C)]
+pub enum CaseAction {
+    CaseUp = 0,
+    CaseDown,
+    CaseCapitalize,
+    CaseCapitalizeUp,
+}
+
+#[repr(C)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum PseudovecType {
     PVEC_NORMAL_VECTOR = 0,
@@ -365,6 +373,8 @@ extern "C" {
     pub fn mset_buffer(m: *const Lisp_Marker, b: *mut Lisp_Buffer);
     pub fn mget_charpos(m: *const Lisp_Marker) -> ptrdiff_t;
     pub fn mget_bytepos(m: *const Lisp_Marker) -> ptrdiff_t;
+    pub fn mset_charpos(m: *const Lisp_Marker, charpos: ptrdiff_t);
+    pub fn mset_bytepos(m: *const Lisp_Marker, bytepos: ptrdiff_t);
 }
 
 // TODO: write a docstring based on the docs in lisp.h.
@@ -1032,6 +1042,7 @@ pub struct Lisp_Buffer {
 extern "C" {
     pub fn bget_overlays_before(b: *const Lisp_Buffer) -> *mut c_void;
     pub fn bget_overlays_after(b: *const Lisp_Buffer) -> *mut c_void;
+    pub fn bset_markers(b: *mut Lisp_Buffer, m: *mut Lisp_Marker);
 }
 
 /// struct Lisp_Buffer_Local_Value is used in a symbol value cell when
@@ -1656,12 +1667,14 @@ pub type voidfuncptr = unsafe extern "C" fn();
 
 extern "C" {
     pub static initialized: bool;
+    pub static mut buffer_local_flags: Lisp_Buffer;
     pub static mut current_global_map: LispObject;
     pub static current_thread: *mut thread_state;
     pub static empty_unibyte_string: LispObject;
     pub static fatal_error_in_progress: bool;
     pub static mut globals: emacs_globals;
     pub static initial_obarray: LispObject;
+    pub static mut last_per_buffer_idx: usize;
     pub static lispsym: Lisp_Symbol;
     pub static minibuf_level: EmacsInt;
     pub static minibuf_selected_window: LispObject;
@@ -1922,12 +1935,6 @@ extern "C" {
         bytepos: *mut ptrdiff_t,
     ) -> ptrdiff_t;
 
-    pub fn set_marker_internal(
-        marker: LispObject,
-        position: LispObject,
-        buffer: LispObject,
-        restricted: bool,
-    ) -> LispObject;
     pub fn Fmake_marker() -> LispObject;
 
     pub fn find_field(
@@ -2000,7 +2007,12 @@ extern "C" {
     ) -> LispObject;
     pub fn buffer_local_value(variable: LispObject, buffer: LispObject) -> LispObject;
     pub fn downcase(c: c_int) -> c_int;
-
+    pub fn scan_lists(
+        from: EmacsInt,
+        count: EmacsInt,
+        depth: EmacsInt,
+        sexpflag: bool,
+    ) -> LispObject;
 }
 
 /// Contains C definitions from the font.h header.
@@ -2124,4 +2136,5 @@ extern "C" {
     pub fn Fget(symbol: LispObject, propname: LispObject) -> LispObject;
     pub fn Fmove_to_column(column: LispObject, force: LispObject) -> LispObject;
     pub fn Fmake_string(length: LispObject, init: LispObject) -> LispObject;
+    pub fn casify_object(case_action: CaseAction, object: LispObject) -> LispObject;
 }
