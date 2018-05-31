@@ -159,8 +159,13 @@ pub extern "C" fn scan_rust_file(
                 if kind != INVALID {
                     let field_name = &caps[2];
                     assert!(!field_name.starts_with("f_"));
-                    let field_name = CString::new(&caps[2]).unwrap();
-                    add_global(kind, field_name.as_ptr(), 0, ptr::null());
+                    if generate_globals != 0 {
+                        let field_name = CString::new(&caps[2]).unwrap();
+                        add_global(kind, field_name.as_ptr(), 0, ptr::null());
+                    } else {
+                        let lisp_name = &caps[3];
+                        print!("\x1fV{}\n{}", lisp_name, docstring)
+                    }
                 }
             }
         }
