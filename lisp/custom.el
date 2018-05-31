@@ -630,14 +630,12 @@ The result is that the change is treated as having been made through Custom."
     (let ((custom-load-recursion t))
       ;; Load these files if not already done,
       ;; to make sure we know all the dependencies of SYMBOL.
-      (condition-case nil
-	  (require 'cus-load)
-	(error nil))
-      (condition-case nil
-	  (require 'cus-start)
-	(error nil))
+      (ignore-errors
+        (require 'cus-load))
+      (ignore-errors
+        (require 'cus-start))
       (dolist (load (get symbol 'custom-loads))
-	(cond ((symbolp load) (condition-case nil (require load) (error nil)))
+        (cond ((symbolp load) (ignore-errors (require load)))
 	      ;; This is subsumed by the test below, but it's much faster.
 	      ((assoc load load-history))
 	      ;; This was just (assoc (locate-library load) load-history)
@@ -655,7 +653,7 @@ The result is that the change is treated as having been made through Custom."
 	      ;; We are still loading it when we call this,
 	      ;; and it is not in load-history yet.
 	      ((equal load "cus-edit"))
-	      (t (condition-case nil (load load) (error nil))))))))
+              (t (ignore-errors (load load))))))))
 
 (defvar custom-local-buffer nil
   "Non-nil, in a Customization buffer, means customize a specific buffer.
@@ -688,16 +686,12 @@ this sets the local binding in that buffer instead."
 
 (defun custom-quote (sexp)
   "Quote SEXP if it is not self quoting."
-  (if (or (memq sexp '(t nil))
-	  (keywordp sexp)
-	  (and (listp sexp)
-	       (memq (car sexp) '(lambda)))
-	  (stringp sexp)
-	  (numberp sexp)
-	  (vectorp sexp)
-;;;  	  (and (fboundp 'characterp)
-;;;  	       (characterp sexp))
-	  )
+  ;; Can't use `macroexp-quote' because it is loaded after `custom.el'
+  ;; during bootstrap.  See `loadup.el'.
+  (if (and (not (consp sexp))
+           (or (keywordp sexp)
+               (not (symbolp sexp))
+               (booleanp sexp)))
       sexp
     (list 'quote sexp)))
 
@@ -718,12 +712,10 @@ Return non-nil if the `saved-value' property actually changed."
 	 (standard (get symbol 'standard-value))
 	 (comment (get symbol 'customized-variable-comment)))
     ;; Save default value if different from standard value.
-    (if (or (null standard)
-	    (not (equal value (condition-case nil
-				  (eval (car standard))
-				(error nil)))))
-	(put symbol 'saved-value (list (custom-quote value)))
-      (put symbol 'saved-value nil))
+    (put symbol 'saved-value
+         (unless (and standard
+                      (equal value (ignore-errors (eval (car standard)))))
+           (list (custom-quote value))))
     ;; Clear customized information (set, but not saved).
     (put symbol 'customized-value nil)
     ;; Save any comment that might have been set.
@@ -747,9 +739,8 @@ Return non-nil if the `customized-value' property actually changed."
 	 (old (or (get symbol 'saved-value) (get symbol 'standard-value))))
     ;; Mark default value as set if different from old value.
     (if (not (and old
-                  (equal value (condition-case nil
-                                   (eval (car old))
-                                 (error nil)))))
+                  (equal value (ignore-errors
+                                 (eval (car old))))))
 	(progn (put symbol 'customized-value (list (custom-quote value)))
 	       (custom-push-theme 'theme-value symbol 'user 'set
 				  (custom-quote value)))
@@ -1296,11 +1287,9 @@ query also about adding HASH to `custom-safe-themes'."
 (defun custom-theme-name-valid-p (name)
   "Return t if NAME is a valid name for a Custom theme, nil otherwise.
 NAME should be a symbol."
-  (and (symbolp name)
-       name
-       (not (or (zerop (length (symbol-name name)))
-		(eq name 'user)
-		(eq name 'changed)))))
+  (and (not (memq name '(nil user changed)))
+       (symbolp name)
+       (not (string= "" (symbol-name name)))))
 
 (defun custom-available-themes ()
   "Return a list of Custom themes available for loading.
@@ -1356,8 +1345,8 @@ function runs.  To disable other themes, use `disable-theme'."
 		      (completing-read
 		       "Enable custom theme: "
 		       obarray (lambda (sym) (get sym 'theme-settings)) t))))
-  (if (not (custom-theme-p theme))
-      (error "Undefined Custom theme %s" theme))
+  (unless (custom-theme-p theme)
+    (error "Undefined Custom theme %s" theme))
   (let ((settings (get theme 'theme-settings)))
     ;; Loop through theme settings, recalculating vars/faces.
     (dolist (s settings)
@@ -1397,18 +1386,18 @@ Setting this variable through Customize calls `enable-theme' or
 	 (let (failures)
 	   (setq themes (delq 'user (delete-dups themes)))
 	   ;; Disable all themes not in THEMES.
-	   (if (boundp symbol)
-	       (dolist (theme (symbol-value symbol))
-		 (if (not (memq theme themes))
-		     (disable-theme theme))))
+           (dolist (theme (and (boundp symbol)
+                               (symbol-value symbol)))
+             (unless (memq theme themes)
+               (disable-theme theme)))
 	   ;; Call `enable-theme' or `load-theme' on each of THEMES.
 	   (dolist (theme (reverse themes))
 	     (condition-case nil
 		 (if (custom-theme-p theme)
 		     (enable-theme theme)
 		   (load-theme theme))
-	       (error (setq failures (cons theme failures)
-			    themes (delq theme themes)))))
+               (error (push theme failures)
+                      (setq themes (delq theme themes)))))
 	   (enable-theme 'user)
 	   (custom-set-default symbol themes)
            (when failures
@@ -1441,23 +1430,23 @@ See `custom-enabled-themes' for a list of enabled themes."
 	    ;; If the face spec specified by this theme is in the
 	    ;; saved-face property, reset that property.
 	    (when (equal (nth 3 s) (get symbol 'saved-face))
-	      (put symbol 'saved-face (and val (cadr (car val)))))))))
-      ;; Recompute faces on all frames.
-      (dolist (frame (frame-list))
-	;; We must reset the fg and bg color frame parameters, or
-	;; `face-set-after-frame-default' will use the existing
-	;; parameters, which could be from the disabled theme.
-	(set-frame-parameter frame 'background-color
-			     (custom--frame-color-default
-			      frame :background "background" "Background"
-			      "unspecified-bg" "white"))
-	(set-frame-parameter frame 'foreground-color
-			     (custom--frame-color-default
-			      frame :foreground "foreground" "Foreground"
-			      "unspecified-fg" "black"))
-	(face-set-after-frame-default frame))
-      (setq custom-enabled-themes
-	    (delq theme custom-enabled-themes)))))
+              (put symbol 'saved-face (cadar val))))))))
+    ;; Recompute faces on all frames.
+    (dolist (frame (frame-list))
+      ;; We must reset the fg and bg color frame parameters, or
+      ;; `face-set-after-frame-default' will use the existing
+      ;; parameters, which could be from the disabled theme.
+      (set-frame-parameter frame 'background-color
+                           (custom--frame-color-default
+                            frame :background "background" "Background"
+                            "unspecified-bg" "white"))
+      (set-frame-parameter frame 'foreground-color
+                           (custom--frame-color-default
+                            frame :foreground "foreground" "Foreground"
+                            "unspecified-fg" "black"))
+      (face-set-after-frame-default frame))
+    (setq custom-enabled-themes
+          (delq theme custom-enabled-themes))))
 
 ;; Only used if window-system not null.
 (declare-function x-get-resource "frame.c"
