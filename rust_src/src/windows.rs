@@ -70,7 +70,7 @@ impl LispWindowRef {
 
         if mode_line_height >= 0 {
             mode_line_height
-        } else if matrix_mode_line_height != 0 {
+        } else if matrix_mode_line_height > 1 {
             unsafe { wset_mode_line_height(self.as_mut(), matrix_mode_line_height) };
             matrix_mode_line_height
         } else {
