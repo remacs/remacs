@@ -381,12 +381,12 @@ pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
 /// If `miniframe` is 0, include all visible and iconified frames.
 /// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
-pub fn next_frame(frame: Option<LispFrameRef>, miniframe: Option<LispObject>) -> LispObject {
+pub fn next_frame(frame: Option<LispFrameRef>, miniframe: Option<LispObject>) -> LispFrameRef {
     let frame = frame.unwrap_or_default();
     if !frame.is_live() {
-        return LispObject::constant_nil();
+        wrong_type!(Qframe_live_p, LispObject::from(frame));
     }
-    return get_next_frame(frame, miniframe).unwrap_or(LispObject::constant_nil());
+    return get_next_frame(frame, miniframe);
 }
 
 pub fn frame_list() -> CarIter {
@@ -397,8 +397,33 @@ pub fn frame_list() -> CarIter {
 /// Return the next frame in the frame list after `frame`.
 ///
 /// Port of `next_frame` in  `frame.c`.
-fn get_next_frame(frame: LispFrameRef, minibuf: Option<LispObject>) -> Option<LispObject> {
-    frame_list().find(|f| candidate_frame(f.as_frame_or_error(), frame, minibuf) != None)
+fn get_next_frame(frame: LispFrameRef, minibuf: Option<LispObject>) -> LispFrameRef {
+    let mut passed = 0;
+    while passed < 2 {
+        for candidate in frame_list().map(|f| f.as_frame_or_error()) {
+            if passed > 0 {
+                if let Some(f) = candidate_frame(candidate, frame, minibuf) {
+                    return f;
+                }
+            }
+            if frame == candidate {
+                passed += 1;
+            }
+        }
+    }
+    return frame;
+}
+
+/// Look through the entire `frame_list` and return the last available frame
+fn get_prev_frame(frame: LispFrameRef, minibuf: Option<LispObject>) -> Option<LispFrameRef> {
+    let mut prev: Option<LispFrameRef> = None;
+    for candidate in frame_list().map(|f| f.as_frame_or_error()) {
+        if candidate == frame && prev.is_some() {
+            return prev;
+        }
+        prev = candidate_frame(candidate, frame, minibuf);
+    }
+    return prev;
 }
 
 /// Return `candidate` if it can be used as 'other-than-`frame`' from
