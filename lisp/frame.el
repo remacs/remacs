@@ -2475,6 +2475,9 @@ See also `toggle-frame-maximized'."
 ;; F5 then produces the correct effect, the variable doesn't need
 ;; to be in this list; otherwise, it does.
 (mapc (lambda (var)
+        ;; Using symbol-function here tells the watcher machinery to
+        ;; call the C function set-buffer-redisplay directly, thus
+        ;; avoiding a potential GC.
         (add-variable-watcher var (symbol-function 'set-buffer-redisplay)))
       '(line-spacing
         overline-margin
