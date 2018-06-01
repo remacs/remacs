@@ -849,7 +849,10 @@ syms_of_filelock (void)
   Vtemporary_file_directory = Qnil;
 
   DEFVAR_BOOL ("create-lockfiles", create_lockfiles,
-	       doc: /* Non-nil means use lockfiles to avoid editing collisions.  */);
+	       doc: /* Non-nil means use lockfiles to avoid editing collisions.
+The name of the (per-buffer) lockfile is constructed by prepending a
+'.#' to the name of the file being locked.  See also `lock-buffer' and
+Info node `(emacs)Interlocking'.  */);
   create_lockfiles = 1;
 
   defsubr (&Sunlock_buffer);
