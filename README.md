@@ -150,6 +150,7 @@ more Emacs-y.
 
         cd /path/to/remacs
         rustup install `cat rust-toolchain`
+        rustup override set `cat rust-toolchain`
 
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like `apt-get install build-essential automake`. On
