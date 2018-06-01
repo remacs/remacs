@@ -1529,7 +1529,7 @@ pub struct Lisp_Frame {
     /// to shift from one frame to the other, any redirections to the
     /// original frame are shifted to the newly selected frame; if
     /// focus_frame is nil, Fselect_frame will leave it alone.
-    focus_frame: LispObject,
+    pub focus_frame: LispObject,
 
     /// This frame's root window.  Every frame has one.
     /// If the frame has only a minibuffer window, this is it.

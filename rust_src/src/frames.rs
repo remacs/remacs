@@ -63,6 +63,11 @@ impl LispFrameRef {
         unsafe { fget_column_width(self.as_ptr()) }
     }
 
+    #[inline]
+    pub fn focus_frame(self) -> LispObject {
+        unsafe { (*self.as_ptr()).focus_frame }
+    }
+
     // Pixel-width of internal border lines.
     #[inline]
     pub fn internal_border_width(self) -> i32 {
@@ -119,11 +124,10 @@ impl LispFrameRef {
         }
     }
 
-    // #define FRAME_TTY(f)                            \
-    //   (((f)->output_method == output_termcap	\
-    //     || (f)->output_method == output_msdos_raw)	\
-    //    ? (f)->terminal->display_info.tty            \
-    //    : (emacs_abort (), (struct tty_display_info *) 0))
+    #[inline]
+    pub fn is_minibuffer_only(self) -> bool {
+        return self.root_window() == self.minibuffer_window();
+    }
 
     #[inline]
     pub fn is_visible(self) -> bool {
@@ -421,14 +425,6 @@ fn candidate_frame(
     frame: LispObject,
     minibuf: Option<LispObject>,
 ) -> Option<LispObject> {
-    // TODO: what is XFRAME(p)?
-    // assert that p is a frame.
-    // assert that p is a
-    // TODO: what is FRAMEP(p)?
-    // FRAMEP returns true if `p` is a frame
-    // TODO: what is XUNTAG?
-    // struct frame *c = XFRAME (candidate), *f = XFRAME (frame);
-
     let candidate_ref: LispFrameRef = match candidate.as_frame() {
         Some(candidate_ref) => candidate_ref,
         None => return None,
@@ -438,14 +434,10 @@ fn candidate_frame(
         None => return None,
     };
 
-    let frames: [LispFrameRef; 2] = [candidate_ref, frame_ref];
-
     let candidate_type: FrameType = candidate_ref.clone().into();
     let frame_type: FrameType = frame_ref.clone().into();
-
     let candidate_terminal: Terminal = candidate_ref.terminal();
     let frame_terminal: Terminal = frame_ref.terminal();
-
     if (candidate_type != FrameType::Termcap && frame_type != FrameType::Termcap
         && candidate_terminal.kboard() == frame_terminal.kboard())
         || (candidate_type == FrameType::Termcap && frame_type == FrameType::Termcap
@@ -458,25 +450,29 @@ fn candidate_frame(
 
         match minibuf {
             Some(minibuf) => {
-                // else if (EQ (minibuf, Qvisible))
-                //   {
-                //     if (FRAME_VISIBLE_P (c))
-                //       return candidate;
-                //   }
                 if minibuf == Qvisible && candidate_ref.is_visible() {
                     return Some(candidate);
-                } else if minibuf.is_window() {
-
-                    // if (EQ (FRAME_MINIBUF_WINDOW (c), minibuf)
-                    //     || EQ (WINDOW_FRAME (XWINDOW (minibuf)), candidate)
-                    //     || EQ (WINDOW_FRAME (XWINDOW (minibuf)),
-                    //            FRAME_FOCUS_FRAME (c)))
-                    //   return candidate;
+                } else if let Some(minibuf_window) = minibuf.as_window() {
+                    if candidate_ref.minibuffer_window() == minibuf
+                        || minibuf_window.frame() == candidate
+                        || minibuf_window.frame() == candidate_ref.focus_frame()
+                    {
+                        return Some(candidate);
+                    }
+                } else if let Some(minibuf_num) = minibuf.as_fixnum() {
+                    if minibuf_num == 0 && candidate_ref.is_visible()
+                        && candidate_ref.is_iconified()
+                    {
+                        return Some(candidate);
+                    }
+                } else {
+                    return Some(candidate);
                 }
             }
             None => {
-                // if (!FRAME_MINIBUF_ONLY_P (c))
-                //   return candidate;
+                if candidate_ref.is_minibuffer_only() {
+                    return Some(candidate);
+                }
             }
         }
     }
