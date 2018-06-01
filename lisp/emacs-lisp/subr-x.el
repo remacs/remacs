@@ -211,7 +211,7 @@ The variable list SPEC is the same as in `if-let'."
 
 (defsubst string-join (strings &optional separator)
   "Join all STRINGS using SEPARATOR."
-  (mapconcat 'identity strings separator))
+  (mapconcat #'identity strings separator))
 
 (define-obsolete-function-alias 'string-reverse 'reverse "25.1")
 
@@ -219,17 +219,17 @@ The variable list SPEC is the same as in `if-let'."
   "Trim STRING of leading string matching REGEXP.
 
 REGEXP defaults to \"[ \\t\\n\\r]+\"."
-  (if (string-match (concat "\\`\\(?:" (or  regexp "[ \t\n\r]+")"\\)") string)
-      (replace-match "" t t string)
+  (if (string-match (concat "\\`\\(?:" (or regexp "[ \t\n\r]+") "\\)") string)
+      (substring string (match-end 0))
     string))
 
 (defsubst string-trim-right (string &optional regexp)
   "Trim STRING of trailing string matching REGEXP.
 
 REGEXP defaults to  \"[ \\t\\n\\r]+\"."
-  (if (string-match (concat "\\(?:" (or regexp "[ \t\n\r]+") "\\)\\'") string)
-      (replace-match "" t t string)
-    string))
+  (let ((i (string-match-p (concat "\\(?:" (or regexp "[ \t\n\r]+") "\\)\\'")
+                           string)))
+    (if i (substring string 0 i) string)))
 
 (defsubst string-trim (string &optional trim-left trim-right)
   "Trim STRING of leading and trailing strings matching TRIM-LEFT and TRIM-RIGHT.
