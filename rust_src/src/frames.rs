@@ -355,7 +355,8 @@ pub fn next_frame(frame: Option<LispObject>, miniframe: Option<LispObject>) -> L
             // )
         };
 
-        return LispObject::from_raw(f);
+        //return LispObject::from_raw(f);
+        return LispObject::constant_nil();
     } else {
         return LispObject::constant_nil();
     }
