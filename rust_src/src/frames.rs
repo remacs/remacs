@@ -4,7 +4,7 @@ use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{get_frame_param, selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame,
-                 Lisp_Type};
+                 Lisp_Type, Vframe_list};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
                  fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
@@ -12,7 +12,7 @@ use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, 
                  Fselect_window};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qno_other_frame, Qns, Qpc, Qt, Qvisible, Qw32, Qx};
 
-use lisp::{ExternalPtr, LispObject};
+use lisp::{CarIter, ExternalPtr, LispObject};
 use lisp::defsubr;
 use terminal::{DisplayInfo, DisplayType, Terminal};
 use windows::{selected_window, LispWindowRef};
@@ -149,6 +149,13 @@ impl LispFrameRef {
     #[inline]
     pub fn pointer_invisible(self) -> bool {
         unsafe { fget_pointer_invisible(self.as_ptr()) }
+    }
+}
+
+impl Default for LispFrameRef {
+    #[inline]
+    fn default() -> LispFrameRef {
+        return selected_frame().as_frame_or_error();
     }
 }
 
@@ -374,33 +381,24 @@ pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
 /// If `miniframe` is 0, include all visible and iconified frames.
 /// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
-pub fn next_frame(frame: Option<LispObject>, miniframe: Option<LispObject>) -> LispObject {
-    let frame: LispObject = frame.unwrap_or(selected_frame());
-
-    if let Some(frame_ref) = frame.as_frame() {
-        if !frame_ref.is_live() {
-            return LispObject::constant_nil();
-        }
-
-        return get_next_frame(frame, miniframe).unwrap_or(LispObject::constant_nil());
-    } else {
+pub fn next_frame(frame: Option<LispFrameRef>, miniframe: Option<LispObject>) -> LispObject {
+    let frame = frame.unwrap_or_default();
+    if !frame.is_live() {
         return LispObject::constant_nil();
     }
+    return get_next_frame(frame, miniframe).unwrap_or(LispObject::constant_nil());
 }
 
-pub fn frame_list() -> ::vectors::LispVectorRef {
-    let list: LispObject = unsafe { ::remacs_sys::Vframe_list };
-    eprintln!("")
-    return list;
+pub fn frame_list() -> CarIter {
+    let list: LispObject = unsafe { Vframe_list };
+    return list.iter_cars();
 }
 
 /// Return the next frame in the frame list after `frame`.
 ///
 /// Port of `next_frame` in  `frame.c`.
-fn get_next_frame(frame: LispObject, minibuf: Option<LispObject>) -> Option<LispObject> {
-    frame_list()
-        .iter()
-        .find(|f| candidate_frame(f.to_raw(), frame, minibuf) != None)
+fn get_next_frame(frame: LispFrameRef, minibuf: Option<LispObject>) -> Option<LispObject> {
+    frame_list().find(|f| candidate_frame(f.as_frame_or_error(), frame, minibuf) != None)
 }
 
 /// Return `candidate` if it can be used as 'other-than-`frame`' from
@@ -413,47 +411,36 @@ fn get_next_frame(frame: LispObject, minibuf: Option<LispObject>) -> Option<Lisp
 /// Otherwise consider any candidate and return `None` if `candidate` is not
 /// acceptable.
 fn candidate_frame(
-    candidate: LispObject,
-    frame: LispObject,
+    candidate: LispFrameRef,
+    frame: LispFrameRef,
     minibuf: Option<LispObject>,
-) -> Option<LispObject> {
-    let candidate_ref: LispFrameRef = match candidate.as_frame() {
-        Some(candidate_ref) => candidate_ref,
-        None => return None,
-    };
-    let frame_ref: LispFrameRef = match frame.as_frame() {
-        Some(frame_ref) => frame_ref,
-        None => return None,
-    };
-
-    let candidate_type: FrameType = candidate_ref.clone().into();
-    let frame_type: FrameType = frame_ref.clone().into();
-    let candidate_terminal: Terminal = candidate_ref.terminal();
-    let frame_terminal: Terminal = frame_ref.terminal();
+) -> Option<LispFrameRef> {
+    let candidate_type: FrameType = candidate.clone().into();
+    let frame_type: FrameType = frame.clone().into();
+    let candidate_terminal: Terminal = candidate.terminal();
+    let frame_terminal: Terminal = frame.terminal();
     if (candidate_type != FrameType::Termcap && frame_type != FrameType::Termcap
         && candidate_terminal.kboard() == frame_terminal.kboard())
         || (candidate_type == FrameType::Termcap && frame_type == FrameType::Termcap
             && candidate_terminal.tty() == frame_terminal.tty())
     {
-        if unsafe { !get_frame_param(candidate_ref.as_ptr(), Qno_other_frame).is_nil() } {
+        if unsafe { !get_frame_param(candidate.as_ptr(), Qno_other_frame).is_nil() } {
             return None;
         }
 
         match minibuf {
             Some(minibuf) => {
-                if minibuf == Qvisible && candidate_ref.is_visible() {
+                if minibuf == Qvisible && candidate.is_visible() {
                     return Some(candidate);
                 } else if let Some(minibuf_window) = minibuf.as_window() {
-                    if candidate_ref.minibuffer_window() == minibuf
-                        || minibuf_window.frame() == candidate
-                        || minibuf_window.frame() == candidate_ref.focus_frame()
+                    if candidate.minibuffer_window() == minibuf
+                        || minibuf_window.frame().as_frame_or_error() == candidate
+                        || minibuf_window.frame() == candidate.focus_frame()
                     {
                         return Some(candidate);
                     }
                 } else if let Some(minibuf_num) = minibuf.as_fixnum() {
-                    if minibuf_num == 0 && candidate_ref.is_visible()
-                        && candidate_ref.is_iconified()
-                    {
+                    if minibuf_num == 0 && candidate.is_visible() && candidate.is_iconified() {
                         return Some(candidate);
                     }
                 } else {
@@ -461,7 +448,7 @@ fn candidate_frame(
                 }
             }
             None => {
-                if candidate_ref.is_minibuffer_only() {
+                if candidate.is_minibuffer_only() {
                     return Some(candidate);
                 }
             }
