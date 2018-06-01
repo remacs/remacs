@@ -1604,6 +1604,7 @@ pub struct terminal {
 }
 
 #[repr(C)]
+#[derive(PartialEq)]
 pub struct kboard;
 
 /// Functions to access members of `struct frame`.
@@ -1687,6 +1688,13 @@ extern "C" {
     pub static selected_window: LispObject;
 
     pub static mut Vautoload_queue: LispObject;
+    pub static Vbuffer_alist: LispObject;
+    pub static Vframe_list: LispObject;
+    pub static Vminibuffer_list: LispObject;
+    pub static Vprocess_alist: LispObject;
+    pub static Vrun_hooks: LispObject;
+
+    pub fn staticpro(varaddress: *const LispObject);
 
     // Use LispObject::tag_ptr instead of make_lisp_ptr
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> LispObject;

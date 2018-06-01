@@ -3,7 +3,8 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type};
+use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type,
+                 kboard as Kboard, terminal as Terminal};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
                  fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
@@ -78,6 +79,11 @@ impl LispFrameRef {
     }
 
     #[inline]
+    pub fn kboard(&self) -> &Kboard {
+        unsafe { &(*fget_terminal(self.as_ptr())).kboard }
+    }
+
+    #[inline]
     pub fn left_pos(self) -> i32 {
         unsafe { fget_left_pos(self.as_ptr()) }
     }
@@ -100,6 +106,11 @@ impl LispFrameRef {
     #[inline]
     pub fn set_selected_window(&mut self, window: LispObject) {
         unsafe { fset_selected_window(self.as_mut(), window.to_raw()) }
+    }
+
+    #[inline]
+    pub fn terminal(&self) -> *const Terminal {
+        unsafe { fget_terminal(self.as_ptr()) }
     }
 
     #[inline]
@@ -425,8 +436,7 @@ fn candidate_frame(
     //         && FRAME_TTY (c) == FRAME_TTY (f)))
 
     if (candidate_type != FrameType::Termcap && frame_type != FrameType::Termcap
-        // && frames have the same keyboard
-    )
+        && candidate_ref.kboard() == candidate_ref.kboard())
         || (candidate_type == FrameType::Termcap && frame_type == FrameType::Termcap
           // && frames are both the same tty
         ) {
