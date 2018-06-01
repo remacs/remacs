@@ -85,6 +85,7 @@ mod remacs_sys;
 mod strings;
 mod symbols;
 mod syntax;
+mod terminal;
 mod textprop;
 mod threads;
 mod time;

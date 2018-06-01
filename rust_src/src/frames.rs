@@ -4,7 +4,7 @@ use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type,
-                 kboard as Kboard, terminal as Terminal};
+                 kboard as Kboard, tty_display_info as TtyDisplayInfo};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
                  fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
@@ -14,6 +14,7 @@ use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use terminal::{DisplayInfo, DisplayType, Terminal};
 use windows::{selected_window, LispWindowRef};
 
 pub type OutputMethod = c_int;
@@ -79,11 +80,6 @@ impl LispFrameRef {
     }
 
     #[inline]
-    pub fn kboard(&self) -> &Kboard {
-        unsafe { &(*fget_terminal(self.as_ptr())).kboard }
-    }
-
-    #[inline]
     pub fn left_pos(self) -> i32 {
         unsafe { fget_left_pos(self.as_ptr()) }
     }
@@ -109,9 +105,25 @@ impl LispFrameRef {
     }
 
     #[inline]
-    pub fn terminal(&self) -> *const Terminal {
-        unsafe { fget_terminal(self.as_ptr()) }
+    pub fn terminal(&self) -> Terminal {
+        unsafe { Terminal::new(fget_terminal(self.as_ptr())) }
     }
+
+    #[inline]
+    pub fn tty(&self) -> Result<DisplayInfo, &'static str> {
+        match FrameType::from(self.clone()) {
+            FrameType::Termcap | FrameType::MsDosRaw => {
+                Ok(self.terminal().display_info(DisplayType::Tty))
+            }
+            _ => return Err("frame is not a tty"),
+        }
+    }
+
+    // #define FRAME_TTY(f)                            \
+    //   (((f)->output_method == output_termcap	\
+    //     || (f)->output_method == output_msdos_raw)	\
+    //    ? (f)->terminal->display_info.tty            \
+    //    : (emacs_abort (), (struct tty_display_info *) 0))
 
     #[inline]
     pub fn is_visible(self) -> bool {
@@ -427,19 +439,32 @@ fn candidate_frame(
     };
     let minibuf_ref: Option<LispFrameRef> = minibuf.and_then(|object| object.as_frame());
 
+    let frames: [LispFrameRef; 2] = [candidate_ref, frame_ref];
+
     let candidate_type: FrameType = candidate_ref.clone().into();
     let frame_type: FrameType = frame_ref.clone().into();
 
+    let candidate_terminal: Terminal = candidate_ref.terminal();
+    let frame_terminal: Terminal = frame_ref.terminal();
+
     // if ((!FRAME_TERMCAP_P (c) && !FRAME_TERMCAP_P (f)
     //      && FRAME_KBOARD (c) == FRAME_KBOARD (f))
-    //     || (FRAME_TERMCAP_P (c) && FRAME_TERMCAP_P (f)
+    //     ||
+    //     (FRAME_TERMCAP_P (c) && FRAME_TERMCAP_P (f)
     //         && FRAME_TTY (c) == FRAME_TTY (f)))
 
+    // #define FRAME_TTY(f)                            \
+    //   (((f)->output_method == output_termcap	\
+    //     || (f)->output_method == output_msdos_raw)	\
+    //    ? (f)->terminal->display_info.tty            \
+    //    : (emacs_abort (), (struct tty_display_info *) 0))
+
     if (candidate_type != FrameType::Termcap && frame_type != FrameType::Termcap
-        && candidate_ref.kboard() == candidate_ref.kboard())
+        && candidate_terminal.kboard() == frame_terminal.kboard())
         || (candidate_type == FrameType::Termcap && frame_type == FrameType::Termcap
-          // && frames are both the same tty
-        ) {
+            && candidate_terminal.display_info(DisplayType::Tty)
+                == frame_terminal.display_info(DisplayType::Tty))
+    {
         // if (!NILP (get_frame_param (c, Qno_other_frame)))
         // return None
 

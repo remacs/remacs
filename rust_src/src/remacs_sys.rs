@@ -1598,14 +1598,35 @@ extern "C" {
 }
 
 #[repr(C)]
+pub union display_info {
+    pub tty: *const tty_display_info,
+    pub x: *const x_display_info,
+    pub w32: *const w32_display_info,
+    pub ns: *const ns_display_info,
+}
+
+#[repr(C)]
 pub struct terminal {
     pub header: Lisp_Vectorlike_Header,
     pub kboard: kboard,
+    pub display_info: display_info,
 }
 
 #[repr(C)]
 #[derive(PartialEq)]
 pub struct kboard;
+
+#[repr(C)]
+pub struct tty_display_info;
+
+#[repr(C)]
+pub struct x_display_info;
+
+#[repr(C)]
+pub struct w32_display_info;
+
+#[repr(C)]
+pub struct ns_display_info;
 
 /// Functions to access members of `struct frame`.
 extern "C" {
@@ -1613,7 +1634,7 @@ extern "C" {
     pub fn fget_line_height(f: *const Lisp_Frame) -> c_int;
     pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> LispObject;
     pub fn fget_root_window(f: *const Lisp_Frame) -> LispObject;
-    pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
+    pub fn fget_terminal(f: *const Lisp_Frame) -> *mut terminal;
     pub fn fget_output_method(f: *const Lisp_Frame) -> c_int;
     pub fn fget_visible(f: *const Lisp_Frame) -> bool;
     pub fn fget_iconified(f: *const Lisp_Frame) -> BoolBF;
