@@ -4,7 +4,7 @@ use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{get_frame_param, selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame,
-                 Lisp_Type, kboard as Kboard, tty_display_info as TtyDisplayInfo};
+                 Lisp_Type};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
                  fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
@@ -63,6 +63,7 @@ impl LispFrameRef {
         unsafe { fget_column_width(self.as_ptr()) }
     }
 
+    /// port of `FRAME_FOCUS_FRAME`
     #[inline]
     pub fn focus_frame(self) -> LispObject {
         unsafe { (*self.as_ptr()).focus_frame }
@@ -114,16 +115,22 @@ impl LispFrameRef {
         unsafe { Terminal::new(fget_terminal(self.as_ptr())) }
     }
 
+    /// Return `DisplayInfo` about `self` if `self` is a TTY or MSDOS raw display,
+    ///
+    /// Port of `FRAME_TTY` in `termchar.h`.
     #[inline]
-    pub fn tty(&self) -> Result<DisplayInfo, &'static str> {
+    pub fn tty(&self) -> Option<DisplayInfo> {
         match FrameType::from(self.clone()) {
             FrameType::Termcap | FrameType::MsDosRaw => {
-                Ok(self.terminal().display_info(DisplayType::Tty))
+                Some(self.terminal().display_info(DisplayType::Tty))
             }
-            _ => return Err("frame is not a tty"),
+            _ => return None,
         }
     }
 
+    /// Returns `true` if `self` is a minibuffer-only frame.
+    ///
+    /// Port of `FRAME_MINIBUF_ONLY_P`
     #[inline]
     pub fn is_minibuffer_only(self) -> bool {
         return self.root_window() == self.minibuffer_window();
@@ -375,41 +382,27 @@ pub fn next_frame(frame: Option<LispObject>, miniframe: Option<LispObject>) -> L
             return LispObject::constant_nil();
         }
 
-        let f = unsafe {
-            // get_next_frame(
-            //     frame.to_raw(),
-            //     miniframe.unwrap_or(LispObject::constant_nil()).to_raw(),
-            // )
-        };
-
-        //return LispObject::from_raw(f);
-        return LispObject::constant_nil();
+        return get_next_frame(frame, miniframe).unwrap_or(LispObject::constant_nil());
     } else {
         return LispObject::constant_nil();
     }
 }
 
 pub fn frame_list() -> ::vectors::LispVectorRef {
-    LispObject::from_raw(unsafe { ::remacs_sys::Vframe_list }).as_vector_or_error()
+    let list: LispObject = unsafe { ::remacs_sys::Vframe_list };
+    eprintln!("")
+    return list;
 }
 
-// /// Return the next frame in the frame list after `frame`
-// fn get_next_frame(
-//     frame: LispObject,
-//     minibuf: Option<LispObject>,
-// ) -> Result<LispObject, &'static str> {
-//     let minibuf = minibuf.unwrap_or(LispObject::constant_nil());
+/// Return the next frame in the frame list after `frame`.
+///
+/// Port of `next_frame` in  `frame.c`.
+fn get_next_frame(frame: LispObject, minibuf: Option<LispObject>) -> Option<LispObject> {
+    frame_list()
+        .iter()
+        .find(|f| candidate_frame(f.to_raw(), frame, minibuf) != None)
+}
 
-//     let minibuf = minibuf.to_raw();
-//     let frame = frame.to_raw();
-
-//     frame_list()
-//         .iter()
-//         .find(|f| unsafe { candidate_frame(f.to_raw(), frame, minibuf) } == frame)
-//         .ok_or("could not find next frame")
-// }
-
-// TODO: port candidate_frame
 /// Return `candidate` if it can be used as 'other-than-`frame`' from
 /// on the same tty (for tty frames) or among frames which use `frame`'s
 /// keyboard.
@@ -417,9 +410,8 @@ pub fn frame_list() -> ::vectors::LispVectorRef {
 /// If `minibuf` is a window, consider only its own frame and candidate now
 /// using that window as the minibuffer.
 /// If `minibuf` is `None` consider `candidate` if it is visible or iconified.
-/// Otherwise consider any candidate and return None if `candidate` is not
+/// Otherwise consider any candidate and return `None` if `candidate` is not
 /// acceptable.
-// TODO
 fn candidate_frame(
     candidate: LispObject,
     frame: LispObject,
@@ -441,8 +433,7 @@ fn candidate_frame(
     if (candidate_type != FrameType::Termcap && frame_type != FrameType::Termcap
         && candidate_terminal.kboard() == frame_terminal.kboard())
         || (candidate_type == FrameType::Termcap && frame_type == FrameType::Termcap
-            && candidate_terminal.display_info(DisplayType::Tty)
-                == frame_terminal.display_info(DisplayType::Tty))
+            && candidate_terminal.tty() == frame_terminal.tty())
     {
         if unsafe { !get_frame_param(candidate_ref.as_ptr(), Qno_other_frame).is_nil() } {
             return None;
