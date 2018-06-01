@@ -24870,58 +24870,43 @@ Check if KEY is in the cache.
 ;;; Generated autoloads from emacs-lisp/pcase.el
 
 (autoload 'pcase "pcase" "\
-Evaluate EXP and attempt to match it against structural patterns.
+Evaluate EXP to get EXPVAL; try passing control to one of CASES.
 CASES is a list of elements of the form (PATTERN CODE...).
+For the first CASE whose PATTERN \"matches\" EXPVAL,
+evaluate its CODE..., and return the value of the last form.
+If no CASE has a PATTERN that matches, return nil.
 
-A structural PATTERN describes a template that identifies a class
-of values.  For example, the pattern \\=`(,foo ,bar) matches any
-two element list, binding its elements to symbols named `foo' and
-`bar' -- in much the same way that `cl-destructuring-bind' would.
+Each PATTERN expands, in essence, to a predicate to call
+on EXPVAL.  When the return value of that call is non-nil,
+PATTERN matches.  PATTERN can take one of the forms:
 
-A significant difference from `cl-destructuring-bind' is that, if
-a pattern match fails, the next case is tried until either a
-successful match is found or there are no more cases.  The CODE
-expression corresponding to the matching pattern determines the
-return value.  If there is no match the returned value is nil.
+  _                matches anything.
+  \\='VAL             matches if EXPVAL is `equal' to VAL.
+  KEYWORD          shorthand for \\='KEYWORD
+  INTEGER          shorthand for \\='INTEGER
+  STRING           shorthand for \\='STRING
+  SYMBOL           matches anything and binds it to SYMBOL.
+                   If a SYMBOL is used twice in the same pattern
+                   the second occurrence becomes an `eq'uality test.
+  (pred FUN)       matches if FUN called on EXPVAL returns non-nil.
+  (app FUN PAT)    matches if FUN called on EXPVAL matches PAT.
+  (guard BOOLEXP)  matches if BOOLEXP evaluates to non-nil.
+  (let PAT EXPR)   matches if EXPR matches PAT.
+  (and PAT...)     matches if all the patterns match.
+  (or PAT...)      matches if any of the patterns matches.
 
-Another difference is that pattern elements may be quoted,
-meaning they must match exactly: The pattern \\='(foo bar)
-matches only against two element lists containing the symbols
-`foo' and `bar' in that order.  (As a short-hand, atoms always
-match themselves, such as numbers or strings, and need not be
-quoted.)
+FUN in `pred' and `app' can take one of the forms:
+  SYMBOL  or  (lambda ARGS BODY)
+     call it with one argument
+  (F ARG1 .. ARGn)
+     call F with ARG1..ARGn and EXPVAL as n+1'th argument
 
-Lastly, a pattern can be logical, such as (pred numberp), that
-matches any number-like element; or the symbol `_', that matches
-anything.  Also, when patterns are backquoted, a comma may be
-used to introduce logical patterns inside backquoted patterns.
-
-The complete list of standard patterns is as follows:
-
-  _		matches anything.
-  SYMBOL	matches anything and binds it to SYMBOL.
-                If a SYMBOL is used twice in the same pattern
-                the second occurrence becomes an `eq'uality test.
-  (or PAT...)	matches if any of the patterns matches.
-  (and PAT...)	matches if all the patterns match.
-  \\='VAL		matches if the object is `equal' to VAL.
-  ATOM		is a shorthand for \\='ATOM.
-		   ATOM can be a keyword, an integer, or a string.
-  (pred FUN)	matches if FUN applied to the object returns non-nil.
-  (guard BOOLEXP)	matches if BOOLEXP evaluates to non-nil.
-  (let PAT EXP)	matches if EXP matches PAT.
-  (app FUN PAT)	matches if FUN applied to the object matches PAT.
+FUN, BOOLEXP, EXPR, and subsequent PAT can refer to variables
+bound earlier in the pattern by a SYMBOL pattern.
 
 Additional patterns can be defined using `pcase-defmacro'.
 
-The FUN argument in the `app' pattern may have the following forms:
-  SYMBOL or (lambda ARGS BODY)  in which case it's called with one argument.
-  (F ARG1 .. ARGn) in which case F gets called with an n+1'th argument
-                        which is the value being matched.
-So a FUN of the form SYMBOL is equivalent to (FUN).
-FUN can refer to variables bound earlier in the pattern.
-
-See Info node `(elisp) Pattern matching case statement' in the
+See Info node `(elisp) Pattern-Matching Conditional' in the
 Emacs Lisp manual for more information and examples.
 
 \(fn EXP &rest CASES)" nil t)
@@ -24981,7 +24966,10 @@ Define a new kind of pcase PATTERN, by macro expansion.
 Patterns of the form (NAME ...) will be expanded according
 to this macro.
 
-\(fn NAME ARGS &rest BODY)" nil t)
+By convention, DOC should use \"EXPVAL\" to stand
+for the result of evaluating EXP (first arg to `pcase').
+
+\(fn NAME ARGS [DOC] &rest BODY...)" nil t)
 
 (function-put 'pcase-defmacro 'lisp-indent-function '2)
 
@@ -28216,12 +28204,12 @@ than appending to it.  Deletes the message after writing if
 Ask user a multiple choice question.
 PROMPT should be a string that will be displayed as the prompt.
 
-CHOICES is an alist where the first element in each entry is a
-character to be entered, the second element is a short name for
-the entry to be displayed while prompting (if there's room, it
-might be shortened), and the third, optional entry is a longer
-explanation that will be displayed in a help buffer if the user
-requests more help.
+CHOICES is a list of (KEY NAME [DESCRIPTION]).  KEY is a
+character to be entered.  NAME is a short name for the entry to
+be displayed while prompting (if there's room, it might be
+shortened).  DESCRIPTION is an optional longer explanation that
+will be displayed in a help buffer if the user requests more
+help.
 
 This function translates user input into responses by consulting
 the bindings in `query-replace-map'; see the documentation of
@@ -28232,9 +28220,9 @@ perform the requested window recentering or scrolling and ask
 again.
 
 When `use-dialog-box' is t (the default), this function can pop
-up a dialog window to collect the user input. That functionality
-requires `display-popup-menus-p' to return t. Otherwise, a text
-dialog will be used.
+up a dialog window to collect the user input.  That functionality
+requires `display-popup-menus-p' to return t.  Otherwise, a
+text dialog will be used.
 
 The return value is the matching entry from the CHOICES list.
 
@@ -34594,7 +34582,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 3 3 26 1)) package--builtin-versions)
+(push (purecopy '(tramp 2 3 4 -1)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
