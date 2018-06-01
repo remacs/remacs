@@ -18,6 +18,13 @@ with a prefix argument or by typing C-u C-h C-n.
 
 * Installation Changes in Emacs 26.2
 
+---
+** Building Emacs with the '--with-xwidgets' option now requires WebKit2
+To build Emacs with xwidgets support, you will need to install the
+webkit2gtk-4.0 package; version 2.12 or later is required.
+(This change was actually made in Emacs 26.1, but was not called out
+in its NEWS.)
+
 
 * Startup Changes in Emacs 26.2
 
@@ -29,6 +36,17 @@ with a prefix argument or by typing C-u C-h C-n.
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.2
+
+** Shell mode
+
+---
+*** Shell mode buffers now have 'scroll-conservatively' set to 101.
+This is so as to better emulate the scrolling behavior of a text
+terminal when new output is added to the screen buffer.  To get back
+the previous behavior, reset 'scroll-conservatively' to zero (or any
+other value you like) in a function and add it to 'shell-mode-hook'.
+(This change was actually made in Emacs 26.1, but was not called out
+in its NEWS.)
 
 
 * New Modes and Packages in Emacs 26.2
