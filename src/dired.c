@@ -358,7 +358,14 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 DEFUN ("directory-files-and-attributes", Fdirectory_files_and_attributes,
        Sdirectory_files_and_attributes, 1, 5, 0,
        doc: /* Return a list of names of files and their attributes in DIRECTORY.
-There are four optional arguments:
+Value is a list of the form:
+
+  ((FILE1 FILE1-ATTRS) (FILE2 FILE2-ATTRS) ...)
+
+where each FILEn-ATTRS is the attributes of FILEn as returned
+by `file-attributes'.
+
+This function accepts four optional arguments:
 If FULL is non-nil, return absolute file names.  Otherwise return names
  that are relative to the specified directory.
 If MATCH is non-nil, mention only file names that match the regexp MATCH.
