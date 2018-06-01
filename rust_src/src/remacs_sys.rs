@@ -1715,6 +1715,7 @@ extern "C" {
     pub static Vprocess_alist: LispObject;
     pub static Vrun_hooks: LispObject;
 
+    pub fn get_frame_param(frame: *const Lisp_Frame, property: LispObject) -> LispObject;
     pub fn staticpro(varaddress: *const LispObject);
 
     // Use LispObject::tag_ptr instead of make_lisp_ptr

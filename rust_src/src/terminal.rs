@@ -1,5 +1,5 @@
 use lisp::ExternalPtr;
-use remacs_sys::{display_info, terminal, kboard as Kboard, ns_display_info as NsDisplayInfo,
+use remacs_sys::{terminal, kboard as Kboard, ns_display_info as NsDisplayInfo,
                  tty_display_info as TtyDisplayInfo, w32_display_info as W32DisplayInfo,
                  x_display_info as XDisplayInfo};
 

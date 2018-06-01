@@ -3,14 +3,14 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type,
-                 kboard as Kboard, tty_display_info as TtyDisplayInfo};
+use remacs_sys::{get_frame_param, selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame,
+                 Lisp_Type, kboard as Kboard, tty_display_info as TtyDisplayInfo};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
                  fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
                  fget_top_pos, fget_visible, frame_dimension, fset_selected_window, Fcons,
                  Fselect_window};
-use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
+use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qno_other_frame, Qns, Qpc, Qt, Qvisible, Qw32, Qx};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -437,7 +437,6 @@ fn candidate_frame(
         Some(frame_ref) => frame_ref,
         None => return None,
     };
-    let minibuf_ref: Option<LispFrameRef> = minibuf.and_then(|object| object.as_frame());
 
     let frames: [LispFrameRef; 2] = [candidate_ref, frame_ref];
 
@@ -447,37 +446,32 @@ fn candidate_frame(
     let candidate_terminal: Terminal = candidate_ref.terminal();
     let frame_terminal: Terminal = frame_ref.terminal();
 
-    // if ((!FRAME_TERMCAP_P (c) && !FRAME_TERMCAP_P (f)
-    //      && FRAME_KBOARD (c) == FRAME_KBOARD (f))
-    //     ||
-    //     (FRAME_TERMCAP_P (c) && FRAME_TERMCAP_P (f)
-    //         && FRAME_TTY (c) == FRAME_TTY (f)))
-
-    // #define FRAME_TTY(f)                            \
-    //   (((f)->output_method == output_termcap	\
-    //     || (f)->output_method == output_msdos_raw)	\
-    //    ? (f)->terminal->display_info.tty            \
-    //    : (emacs_abort (), (struct tty_display_info *) 0))
-
     if (candidate_type != FrameType::Termcap && frame_type != FrameType::Termcap
         && candidate_terminal.kboard() == frame_terminal.kboard())
         || (candidate_type == FrameType::Termcap && frame_type == FrameType::Termcap
             && candidate_terminal.display_info(DisplayType::Tty)
                 == frame_terminal.display_info(DisplayType::Tty))
     {
-        // if (!NILP (get_frame_param (c, Qno_other_frame)))
-        // return None
+        if unsafe { !get_frame_param(candidate_ref.as_ptr(), Qno_other_frame).is_nil() } {
+            return None;
+        }
 
-        let minibuf_ref = minibuf.and_then(|object| object.as_frame());
-        match minibuf_ref {
-            Some(minibuf_ref) => {
+        match minibuf {
+            Some(minibuf) => {
                 // else if (EQ (minibuf, Qvisible))
                 //   {
                 //     if (FRAME_VISIBLE_P (c))
                 //       return candidate;
                 //   }
-                if minibuf_ref.is_visible() && candidate_ref.is_visible() {
+                if minibuf == Qvisible && candidate_ref.is_visible() {
                     return Some(candidate);
+                } else if minibuf.is_window() {
+
+                    // if (EQ (FRAME_MINIBUF_WINDOW (c), minibuf)
+                    //     || EQ (WINDOW_FRAME (XWINDOW (minibuf)), candidate)
+                    //     || EQ (WINDOW_FRAME (XWINDOW (minibuf)),
+                    //            FRAME_FOCUS_FRAME (c)))
+                    //   return candidate;
                 }
             }
             None => {
