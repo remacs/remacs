@@ -19,7 +19,8 @@ Thank you for contributing to Remacs!
   you have the correct version by using rustup (it will use the
   correct version based on our [toolchain
   file](https://github.com/rust-lang-nursery/rustup.rs#the-toolchain-file))
-  and running `rustup component add rustfmt-preview`
+  and running `rustup component add rustfmt-preview`. See
+  [Helpful Hooks](#helpful-hooks) for help to automatate this verification.
 * Add docstrings to your Rust functions `/// This function does ...`
 * _Really_ great PRs include tests. See
   [Writing Tests](#writing-tests) for more information.
@@ -51,6 +52,20 @@ if you ported a function from keyboard.c to keyboard.rs the tests
 would belong in `test/rust_src/src/keyboard-tests.el`. If you wrote
 the tests in `test/src/` while porting just copy the code over to the
 equivalent file in `test/rust_src/src` before submitting the PR.
+
+## Helpful Hooks
+
+The script `rust_src/src/admin/pre-commit` performs some basic checks
+to see if any style rule is violated. To run it automatically before
+every commit, go to the git root level and run the following commands:
+
+```sh
+cd .git/hooks
+ln -s ../../rust_src/admin/pre-commit pre-commit
+```
+
+Among other things, the script will ensure that the code is formatted
+properly in line with the project's guidelines.
 
 ## Getting your PRs merged
 
