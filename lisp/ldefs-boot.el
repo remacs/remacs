@@ -19192,18 +19192,21 @@ use \\[kmacro-name-last-macro].
 Record subsequent keyboard input, defining a keyboard macro.
 The commands are recorded even as they are executed.
 
-Sets the `kmacro-counter' to ARG (or 0 if no prefix arg) before defining the
-macro.
+Initializes the macro's `kmacro-counter' to ARG (or 0 if no prefix arg)
+before defining the macro.
 
 With \\[universal-argument], appends to current keyboard macro (keeping
 the current value of `kmacro-counter').
 
-When defining/executing macro, inserts macro counter and increments
-the counter with ARG or 1 if missing.  With \\[universal-argument],
-inserts previous `kmacro-counter' (but do not modify counter).
+When used during defining/executing a macro, inserts the current value
+of `kmacro-counter' and increments the counter value by ARG (or by 1 if no
+prefix argument).  With just \\[universal-argument], inserts the current value
+of `kmacro-counter', but does not modify the counter; this is the
+same as incrementing the counter by zero.
 
-The macro counter can be modified via \\[kmacro-set-counter] and \\[kmacro-add-counter].
-The format of the counter can be modified via \\[kmacro-set-format].
+The macro counter can be set directly via \\[kmacro-set-counter] and \\[kmacro-add-counter].
+The format of the inserted value of the counter can be controlled
+via \\[kmacro-set-format].
 
 \(fn ARG)" t nil)
 
@@ -19982,7 +19985,7 @@ Regexp specifying addresses to prune from a reply message.
 If this is nil, it is set the first time you compose a reply, to
 a value which excludes your own email address.
 
-Matching addresses are excluded from the CC field in replies, and
+Matching addresses are excluded from the Cc field in replies, and
 also the To field, unless this would leave an empty To field.")
 
 (custom-autoload 'mail-dont-reply-to-names "mail-utils" t)
@@ -20112,7 +20115,7 @@ If `angles', they look like:
 (autoload 'expand-mail-aliases "mailalias" "\
 Expand all mail aliases in suitable header fields found between BEG and END.
 If interactive, expand in header fields.
-Suitable header fields are `To', `From', `CC' and `BCC', `Reply-to', and
+Suitable header fields are `To', `From', `Cc' and `Bcc', `Reply-To', and
 their `Resent-' variants.
 
 Optional second arg EXCLUDE may be a regular expression defining text to be
@@ -24665,58 +24668,43 @@ Check if KEY is in the cache.
 ;;; Generated autoloads from emacs-lisp/pcase.el
 
 (autoload 'pcase "pcase" "\
-Evaluate EXP and attempt to match it against structural patterns.
+Evaluate EXP to get EXPVAL; try passing control to one of CASES.
 CASES is a list of elements of the form (PATTERN CODE...).
+For the first CASE whose PATTERN \"matches\" EXPVAL,
+evaluate its CODE..., and return the value of the last form.
+If no CASE has a PATTERN that matches, return nil.
 
-A structural PATTERN describes a template that identifies a class
-of values.  For example, the pattern \\=`(,foo ,bar) matches any
-two element list, binding its elements to symbols named `foo' and
-`bar' -- in much the same way that `cl-destructuring-bind' would.
+Each PATTERN expands, in essence, to a predicate to call
+on EXPVAL.  When the return value of that call is non-nil,
+PATTERN matches.  PATTERN can take one of the forms:
 
-A significant difference from `cl-destructuring-bind' is that, if
-a pattern match fails, the next case is tried until either a
-successful match is found or there are no more cases.  The CODE
-expression corresponding to the matching pattern determines the
-return value.  If there is no match the returned value is nil.
+  _                matches anything.
+  \\='VAL             matches if EXPVAL is `equal' to VAL.
+  KEYWORD          shorthand for \\='KEYWORD
+  INTEGER          shorthand for \\='INTEGER
+  STRING           shorthand for \\='STRING
+  SYMBOL           matches anything and binds it to SYMBOL.
+                   If a SYMBOL is used twice in the same pattern
+                   the second occurrence becomes an `eq'uality test.
+  (pred FUN)       matches if FUN called on EXPVAL returns non-nil.
+  (app FUN PAT)    matches if FUN called on EXPVAL matches PAT.
+  (guard BOOLEXP)  matches if BOOLEXP evaluates to non-nil.
+  (let PAT EXPR)   matches if EXPR matches PAT.
+  (and PAT...)     matches if all the patterns match.
+  (or PAT...)      matches if any of the patterns matches.
 
-Another difference is that pattern elements may be quoted,
-meaning they must match exactly: The pattern \\='(foo bar)
-matches only against two element lists containing the symbols
-`foo' and `bar' in that order.  (As a short-hand, atoms always
-match themselves, such as numbers or strings, and need not be
-quoted.)
+FUN in `pred' and `app' can take one of the forms:
+  SYMBOL  or  (lambda ARGS BODY)
+     call it with one argument
+  (F ARG1 .. ARGn)
+     call F with ARG1..ARGn and EXPVAL as n+1'th argument
 
-Lastly, a pattern can be logical, such as (pred numberp), that
-matches any number-like element; or the symbol `_', that matches
-anything.  Also, when patterns are backquoted, a comma may be
-used to introduce logical patterns inside backquoted patterns.
-
-The complete list of standard patterns is as follows:
-
-  _		matches anything.
-  SYMBOL	matches anything and binds it to SYMBOL.
-                If a SYMBOL is used twice in the same pattern
-                the second occurrence becomes an `eq'uality test.
-  (or PAT...)	matches if any of the patterns matches.
-  (and PAT...)	matches if all the patterns match.
-  \\='VAL		matches if the object is `equal' to VAL.
-  ATOM		is a shorthand for \\='ATOM.
-		   ATOM can be a keyword, an integer, or a string.
-  (pred FUN)	matches if FUN applied to the object returns non-nil.
-  (guard BOOLEXP)	matches if BOOLEXP evaluates to non-nil.
-  (let PAT EXP)	matches if EXP matches PAT.
-  (app FUN PAT)	matches if FUN applied to the object matches PAT.
+FUN, BOOLEXP, EXPR, and subsequent PAT can refer to variables
+bound earlier in the pattern by a SYMBOL pattern.
 
 Additional patterns can be defined using `pcase-defmacro'.
 
-The FUN argument in the `app' pattern may have the following forms:
-  SYMBOL or (lambda ARGS BODY)  in which case it's called with one argument.
-  (F ARG1 .. ARGn) in which case F gets called with an n+1'th argument
-                        which is the value being matched.
-So a FUN of the form SYMBOL is equivalent to (FUN).
-FUN can refer to variables bound earlier in the pattern.
-
-See Info node `(elisp) Pattern matching case statement' in the
+See Info node `(elisp) Pattern-Matching Conditional' in the
 Emacs Lisp manual for more information and examples.
 
 \(fn EXP &rest CASES)" nil t)
@@ -24776,7 +24764,10 @@ Define a new kind of pcase PATTERN, by macro expansion.
 Patterns of the form (NAME ...) will be expanded according
 to this macro.
 
-\(fn NAME ARGS &rest BODY)" nil t)
+By convention, DOC should use \"EXPVAL\" to stand
+for the result of evaluating EXP (first arg to `pcase').
+
+\(fn NAME ARGS [DOC] &rest BODY...)" nil t)
 
 (function-put 'pcase-defmacro 'lisp-indent-function '2)
 
@@ -29588,9 +29579,9 @@ variable `feedmail-deduce-envelope-from'.")
 (custom-autoload 'mail-specify-envelope-from "sendmail" t)
 
 (defvar mail-self-blind nil "\
-Non-nil means insert BCC to self in messages to be sent.
+Non-nil means insert Bcc to self in messages to be sent.
 This is done when the message is initialized,
-so you can remove or alter the BCC field to override the default.")
+so you can remove or alter the Bcc field to override the default.")
 
 (custom-autoload 'mail-self-blind "sendmail" t)
 
@@ -29623,7 +29614,7 @@ be a Babyl file.")
 (custom-autoload 'mail-archive-file-name "sendmail" t)
 
 (defvar mail-default-reply-to nil "\
-Address to insert as default Reply-to field of outgoing messages.
+Address to insert as default Reply-To field of outgoing messages.
 If nil, it will be initialized from the REPLYTO environment variable
 when you first send mail.")
 
@@ -29737,8 +29728,8 @@ Like Text Mode but with these additional commands:
 
 Here are commands that move to a header field (and create it if there isn't):
 	 \\[mail-to]  move to To:	\\[mail-subject]  move to Subj:
-	 \\[mail-bcc]  move to BCC:	\\[mail-cc]  move to CC:
-	 \\[mail-fcc]  move to FCC:	\\[mail-reply-to] move to Reply-To:
+	 \\[mail-bcc]  move to Bcc:	\\[mail-cc]  move to Cc:
+	 \\[mail-fcc]  move to Fcc:	\\[mail-reply-to] move to Reply-To:
          \\[mail-mail-reply-to]  move to Mail-Reply-To:
          \\[mail-mail-followup-to] move to Mail-Followup-To:
 \\[mail-text]  move to message text.
@@ -29791,13 +29782,13 @@ Various special commands starting with C-c are available in sendmail mode
 to move to message header fields:
 \\{mail-mode-map}
 
-If `mail-self-blind' is non-nil, a BCC to yourself is inserted
+If `mail-self-blind' is non-nil, a Bcc to yourself is inserted
 when the message is initialized.
 
 If `mail-default-reply-to' is non-nil, it should be an address (a string);
-a Reply-to: field with that address is inserted.
+a Reply-To: field with that address is inserted.
 
-If `mail-archive-file-name' is non-nil, an FCC field with that file name
+If `mail-archive-file-name' is non-nil, an Fcc field with that file name
 is inserted.
 
 The normal hook `mail-setup-hook' is run after the message is
@@ -34289,6 +34280,11 @@ This regexp should match Tramp file names but no other file
 names.  When calling `tramp-register-file-name-handlers', the
 initial value is overwritten by the car of `tramp-file-name-structure'.")
 
+(defvar tramp-ignored-file-name-regexp nil "\
+Regular expression matching file names that are not under Tramp’s control.")
+
+(custom-autoload 'tramp-ignored-file-name-regexp "tramp" t)
+
 (defconst tramp-autoload-file-name-regexp (concat "\\`/" (if (memq system-type '(cygwin windows-nt)) "\\(-\\|[^/|:]\\{2,\\}\\)" "[^/|:]+") ":") "\
 Regular expression matching file names handled by Tramp autoload.
 It must match the initial `tramp-syntax' settings.  It should not
@@ -35571,8 +35567,11 @@ This uses `url-current-object', set locally to the buffer.
 \(fn &optional NO-SHOW)" t nil)
 
 (autoload 'url-domain "url-util" "\
-Return the domain of the host of the url, or nil if url does
-not contain a registered name.
+Return the domain of the host of the URL.
+Return nil if this can't be determined.
+
+For instance, this function will return \"fsf.co.uk\" if the host in URL
+is \"www.fsf.co.uk\".
 
 \(fn URL)" nil nil)
 
