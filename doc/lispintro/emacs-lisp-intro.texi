@@ -1818,10 +1818,12 @@ You will create a @file{*Backtrace*} buffer that says:
 ---------- Buffer: *Backtrace* ----------
 Debugger entered--Lisp error: (void-function fill-column)
   (fill-column)
-  eval((fill-column))
-  eval-last-sexp-1(nil)
+  eval((fill-column) nil)
+  elisp--eval-last-sexp(nil)
   eval-last-sexp(nil)
-  call-interactively(eval-last-sexp)
+  funcall-interactively(eval-last-sexp nil)
+  call-interactively(eval-last-sexp nil nil)
+  command-execute(eval-last-sexp)
 ---------- Buffer: *Backtrace* ----------
 @end group
 @end smallexample
@@ -1868,9 +1870,11 @@ says:
 ---------- Buffer: *Backtrace* ----------
 Debugger entered--Lisp error: (void-variable +)
   eval(+)
-  eval-last-sexp-1(nil)
+  elisp--eval-last-sexp(nil)
   eval-last-sexp(nil)
-  call-interactively(eval-last-sexp)
+  funcall-interactively(eval-last-sexp nil)
+  call-interactively(eval-last-sexp nil nil)
+  command-execute(eval-last-sexp)
 ---------- Buffer: *Backtrace* ----------
 @end group
 @end smallexample
@@ -2137,10 +2141,12 @@ You will create and enter a @file{*Backtrace*} buffer that says:
 Debugger entered--Lisp error:
          (wrong-type-argument number-or-marker-p hello)
   +(2 hello)
-  eval((+ 2 (quote hello)))
-  eval-last-sexp-1(nil)
+  eval((+ 2 'hello) nil)
+  elisp--eval-last-sexp(t)
   eval-last-sexp(nil)
-  call-interactively(eval-last-sexp)
+  funcall-interactively(eval-print-last-sexp nil)
+  call-interactively(eval-print-last-sexp nil nil)
+  command-execute(eval-print-last-sexp)
 ---------- Buffer: *Backtrace* ----------
 @end group
 @end smallexample
@@ -18103,10 +18109,11 @@ Debugger entered--Lisp error: (void-function 1=)
   triangle-bugged(4)
 @end group
 @group
-  eval((triangle-bugged 4))
-  eval-last-sexp-1(nil)
-  eval-last-sexp(nil)
-  call-interactively(eval-last-sexp)
+  eval((triangle-bugged 4) nil)
+  eval-expression((triangle-bugged 4) nil nil 127)
+  funcall-interactively(eval-expression (triangle-bugged 4) nil nil 127)
+  call-interactively(eval-expression nil nil)
+  command-execute(eval-expression)
 ---------- Buffer: *Backtrace* ----------
 @end group
 @end smallexample
@@ -18220,12 +18227,13 @@ function:
 ---------- Buffer: *Backtrace* ----------
 Debugger entered--entering a function:
 * triangle-bugged(5)
-  eval((triangle-bugged 5))
+  eval((triangle-bugged 5) nil)
 @end group
 @group
-  eval-last-sexp-1(nil)
-  eval-last-sexp(nil)
-  call-interactively(eval-last-sexp)
+  eval-expression((triangle-bugged 5) nil nil 127)
+  funcall-interactively(eval-expression (triangle-bugged 5) nil nil 127)
+  call-interactively(eval-expression nil nil)
+  command-execute(eval-expression)
 ---------- Buffer: *Backtrace* ----------
 @end group
 @end smallexample
@@ -18244,9 +18252,11 @@ Debugger entered--beginning evaluation of function call form:
   eval((triangle-bugged 5))
 @end group
 @group
-  eval-last-sexp-1(nil)
-  eval-last-sexp(nil)
-  call-interactively(eval-last-sexp)
+  eval((triangle-bugged 5) nil)
+  eval-expression((triangle-bugged 5) nil nil 127)
+  funcall-interactively(eval-expression (triangle-bugged 5) nil nil 127)
+  call-interactively(eval-expression nil nil)
+  command-execute(eval-expression)
 ---------- Buffer: *Backtrace* ----------
 @end group
 @end smallexample
@@ -18271,12 +18281,13 @@ Debugger entered--beginning evaluation of function call form:
 * (let ((total 0)) (while (> number 0) (setq total ...)
         (setq number ...)) total)
 * triangle-bugged(5)
-  eval((triangle-bugged 5))
+  eval((triangle-bugged 5) nil)
 @group
 @end group
-  eval-last-sexp-1(nil)
-  eval-last-sexp(nil)
-  call-interactively(eval-last-sexp)
+  eval-expression((triangle-bugged 5) nil nil 127)
+  funcall-interactively(eval-expression (triangle-bugged 5) nil nil 127)
+  call-interactively(eval-expression nil nil)
+  command-execute(eval-expression)
 ---------- Buffer: *Backtrace* ----------
 @end group
 @end smallexample
