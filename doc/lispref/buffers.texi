@@ -587,6 +587,20 @@ in between the calls.  If @var{buffer} is @code{nil} (or omitted), the
 current buffer is used.
 @end defun
 
+Sometimes there's a need for modifying buffer in a way that doesn't
+really change its text, like if only its text properties are changed.
+If your program needs to modify a buffer without triggering any hooks
+and features that react to buffer modifications, use the
+@code{with-silent-modifications} macro.
+
+@defmac with-silent-modifications body@dots{}
+Execute @var{body} pretending it does not modify the buffer.  This
+includes checking whether the buffer's file is locked (@pxref{File
+Locks}), running buffer modification hooks (@pxref{Change Hooks}),
+etc.  Note that if @var{body} actually modifies the buffer text, its
+undo data may become corrupted.
+@end defmac
+
 @node Modification Time
 @section Buffer Modification Time
 @cindex comparing file modification time
@@ -1167,10 +1181,10 @@ the current buffer's base buffer and copies the rest of the current
 buffer's attributes.  (If the current buffer is not indirect, it is
 used as the base buffer.)
 
-If @var{display-flag} is non-@code{nil}, that means to display the new
-buffer by calling @code{pop-to-buffer}.  If @var{norecord} is
-non-@code{nil}, that means not to put the new buffer to the front of
-the buffer list.
+If @var{display-flag} is non-@code{nil}, as it always is in
+interactive calls, that means to display the new buffer by calling
+@code{pop-to-buffer}.  If @var{norecord} is non-@code{nil}, that means
+not to put the new buffer to the front of the buffer list.
 @end deffn
 
 @defun buffer-base-buffer &optional buffer

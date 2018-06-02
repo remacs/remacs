@@ -895,7 +895,7 @@ If N is `re', a regexp is returned instead, that would match
 (defun uncomment-region (beg end &optional arg)
   "Uncomment each line in the BEG .. END region.
 The numeric prefix ARG can specify a number of chars to remove from the
-comment markers."
+comment delimiters."
   (interactive "*r\nP")
   (comment-normalize-vars)
   (when (> beg end) (setq beg (prog1 end (setq end beg))))
@@ -909,7 +909,8 @@ comment markers."
 (defun uncomment-region-default-1 (beg end &optional arg)
   "Uncomment each line in the BEG .. END region.
 The numeric prefix ARG can specify a number of chars to remove from the
-comment markers."
+comment delimiters.
+This function is the default value of `uncomment-region-function'."
   (goto-char beg)
   (setq end (copy-marker end))
   (let* ((numarg (prefix-numeric-value arg))
