@@ -339,11 +339,13 @@ same style will be recognized.  For a two-character comment delimiter,
 @cindex comment style
 Emacs supports several comment styles simultaneously in any one syntax
 table.  A comment style is a set of flags @samp{b}, @samp{c}, and
-@samp{n}, so there can be up to 8 different comment styles.
-Each comment delimiter has a style and only matches comment delimiters
-of the same style.  Thus if a comment starts with the comment-start
-sequence of style ``bn'', it will extend until the next matching
-comment-end sequence of style ``bn''.
+@samp{n}, so there can be up to 8 different comment styles, each one
+named by the set of its flags.  Each comment delimiter has a style and
+only matches comment delimiters of the same style.  Thus if a comment
+starts with the comment-start sequence of style ``bn'', it will extend
+until the next matching comment-end sequence of style ``bn''.  When
+the set of flags has neither flag @samp{b} nor flag @samp{c} set, the
+resulting style is called the ``a'' style.
 
 The appropriate comment syntax settings for C++ can be as follows:
 
