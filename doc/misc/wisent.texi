@@ -1937,7 +1937,7 @@ rule:
 @end example
 
 Set the @code{reparse-symbol} property of the expanded tag to
-@samp{rule}.  A important consequence is that:
+@samp{rule}.  An important consequence is that:
 
 @strong{Every nonterminal having any rule that calls @code{EXPANDTAG}
 in a semantic action, should be declared as a start symbol!}

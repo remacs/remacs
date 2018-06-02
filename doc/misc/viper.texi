@@ -4330,7 +4330,7 @@ Same as @code{tabstop}, but affects all buffers.
 @cindex auto fill
 @cindex word wrap
 wrapmargin: In append mode Vi automatically
-puts a <lf> whenever there is a <sp> or <ht>
+puts an <lf> whenever there is an <sp> or <ht>
 within <wm> columns from the right margin.
 @item wrapscan
 @itemx ws
