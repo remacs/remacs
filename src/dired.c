@@ -358,17 +358,14 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 DEFUN ("directory-files-and-attributes", Fdirectory_files_and_attributes,
        Sdirectory_files_and_attributes, 1, 5, 0,
        doc: /* Return a list of names of files and their attributes in DIRECTORY.
-The list returned has elements that contain the data from
-`file-attributes' for each file -- with the file name prepended.  So
-the structure of each element is
-`(FILE-NAME FILE-ATTRIBUTE1 FILE-ATTRIBUTE2 ...)'.
+Value is a list of the form:
 
-For instance, to get the size of the fourth element in a directory,
-you could say:
+  ((FILE1 FILE1-ATTRS) (FILE2 FILE2-ATTRS) ...)
 
-  (file-attribute-size (cdr (nth 3 (directory-files-and-attributes "/"))))
+where each FILEn-ATTRS is the attributes of FILEn as returned
+by `file-attributes'.
 
-There are four optional arguments:
+This function accepts four optional arguments:
 If FULL is non-nil, return absolute file names.  Otherwise return names
  that are relative to the specified directory.
 If MATCH is non-nil, mention only file names that match the regexp MATCH.
