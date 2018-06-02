@@ -670,6 +670,13 @@ loading messages if requested, and protects against recursive loads.
 The history of variable names read by 'read-variable' is recorded in
 the new variable 'custom-variable-history'.
 
+---
+** The function 'string-to-unibyte' is no longer declared obsolete.
+We have found that there are legitimate use cases for this function,
+where there's no better alternative.  We believe that the incorrect
+uses of this function all but disappeared by now, so we are
+un-obsoleting it.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
