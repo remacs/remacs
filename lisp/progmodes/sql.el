@@ -344,7 +344,8 @@ file.  Since that is a plaintext file, this could be dangerous."
                             (const :format "" :completion)
                             (sexp :tag ":completion")
                             (const :format "" :must-match)
-                            (symbol :tag ":must-match")))
+                            (restricted-sexp
+                             :match-alternatives (listp stringp))))
               (const port)))
 
 ;; SQL Product support
@@ -760,16 +761,20 @@ Globally should be set to nil; it will be non-nil in `sql-mode',
 (defvar sql-login-delay 7.5 ;; Secs
   "Maximum number of seconds you are willing to wait for a login connection.")
 
-(defcustom sql-pop-to-buffer-after-send-region nil
-  "When non-nil, pop to the buffer SQL statements are sent to.
+(defvaralias 'sql-pop-to-buffer-after-send-region 'sql-display-sqli-buffer-function)
 
-After a call to `sql-sent-string', `sql-send-region',
-`sql-send-paragraph' or `sql-send-buffer', the window is split
-and the SQLi buffer is shown.  If this variable is not nil, that
-buffer's window will be selected by calling `pop-to-buffer'.  If
-this variable is nil, that buffer is shown using
-`display-buffer'."
-  :type 'boolean
+(defcustom sql-display-sqli-buffer-function 'display-buffer
+  "Function to be called to display a SQLi buffer after `sql-send-*'.
+
+When set to a function, it will be called to display the buffer.
+When set to t, the default function `pop-to-buffer' will be
+called.  If not set, no attempt will be made to display the
+buffer."
+
+  :type '(choice (const :tag "Default" t)
+                 (const :tag "No display" nil)
+		 (function :tag "Display Buffer function"))
+  :version "27.1"
   :group 'SQL)
 
 ;; imenu support for sql-mode.
@@ -789,7 +794,7 @@ this variable is nil, that buffer is shown using
 
 This is used to set `imenu-generic-expression' when SQL mode is
 entered.  Subsequent changes to `sql-imenu-generic-expression' will
-not affect existing SQL buffers because imenu-generic-expression is
+not affect existing SQL buffers because `imenu-generic-expression' is
 a local variable.")
 
 ;; history file
@@ -1104,8 +1109,11 @@ add your name with a \"-U\" prefix (such as \"-Umark\") to the list."
   (when (executable-find sql-postgres-program)
     (let ((res '()))
       (ignore-errors
-        (dolist (row (process-lines sql-postgres-program "-ltX"))
-          (when (string-match "^ \\([[:alnum:]-_]+\\) +|.*" row)
+        (dolist (row (process-lines sql-postgres-program
+                                    "--list"
+                                    "--no-psqlrc"
+                                    "--tuples-only"))
+          (when (string-match "^ \\([^ |]+\\) +|.*" row)
             (push (match-string 1 row) res))))
       (nreverse res))))
 
@@ -1237,8 +1245,8 @@ specified, it's `sql-product' or `sql-connection' must match."
            (and (derived-mode-p 'sql-interactive-mode)
                 (or (not product)
                     (eq product sql-product))
-                (or (not connection)
-                    (eq connection sql-connection)))))))
+                (or (stringp connection)
+                    (string= connection sql-connection)))))))
 
 ;; Keymap for sql-interactive-mode.
 
@@ -2713,7 +2721,52 @@ adds a fontification pattern to fontify identifiers ending in
   ;; Save product setting and fontify.
   (setq sql-product product)
   (sql-highlight-product))
+(defalias 'sql-set-dialect 'sql-set-product)
 
+(defun sql-buffer-hidden-p (buf)
+  "Is the buffer hidden?"
+  (string-prefix-p " "
+                   (cond
+                    ((stringp buf)
+                     (when (get-buffer buf)
+                       buf))
+                    ((bufferp buf)
+                     (buffer-name buf))
+                    (t nil))))
+
+(defun sql-display-buffer (buf)
+  "Display a SQLi buffer based on `sql-display-sqli-buffer-function'.
+
+If BUF is hidden or `sql-display-sqli-buffer-function' is nil,
+then the buffer will not be displayed. Otherwise the BUF is
+displayed."
+  (unless (sql-buffer-hidden-p buf)
+    (cond
+     ((eq sql-display-sqli-buffer-function t)
+      (pop-to-buffer buf))
+     ((not sql-display-sqli-buffer-function)
+      nil)
+     ((functionp sql-display-sqli-buffer-function)
+      (funcall sql-display-sqli-buffer-function buf))
+     (t
+      (message "Invalid setting of `sql-display-sqli-buffer-function'")
+      (pop-to-buffer buf)))))
+
+(defun sql-make-progress-reporter (buf message &optional min-value max-value current-value min-change min-time)
+  "Make a progress reporter if BUF is not hidden."
+  (unless (or (sql-buffer-hidden-p buf)
+              (not sql-display-sqli-buffer-function))
+    (make-progress-reporter message min-value max-value current-value min-change min-time)))
+
+(defun sql-progress-reporter-update (reporter &optional value)
+  "Report progress of an operation in the echo area."
+  (when reporter
+    (progress-reporter-update reporter value)))
+
+(defun sql-progress-reporter-done (reporter)
+  "Print reporter’s message followed by word \"done\" in echo area."
+  (when reporter
+    (progress-reporter-done reporter)))
 
 ;;; SMIE support
 
@@ -2750,8 +2803,8 @@ adds a fontification pattern to fontify identifiers ending in
          (prod-stmt (sql-get-product-feature prod  :statement)))
     (concat "^\\<"
             (if prod-stmt
-                ansi-stmt
-              (concat "\\(" ansi-stmt "\\|" prod-stmt "\\)"))
+                (concat "\\(" ansi-stmt "\\|" prod-stmt "\\)")
+              ansi-stmt)
             "\\>")))
 
 (defun sql-beginning-of-statement (arg)
@@ -2942,7 +2995,12 @@ regexp pattern specified in its value.
 
 The `:completion' property prompts for a string specified by its
 value.  (The property value is used as the PREDICATE argument to
-`completing-read'.)"
+`completing-read'.)
+
+For both `:file' and `:completion', there can also be a
+`:must-match' property that controls REQUIRE-MATCH parameter to
+`completing-read'."
+
   (set-default
    symbol
    (let* ((default (plist-get plist :default))
@@ -2962,7 +3020,9 @@ value.  (The property value is used as the PREDICATE argument to
               (read-file-name prompt
                               (file-name-directory last-value)
                               default
-                              (plist-get plist :must-match)
+                              (if (plist-member plist :must-match)
+                                  (plist-get plist :must-match)
+                                t)
                               (file-name-nondirectory last-value)
                               (when (plist-get plist :file)
                                 `(lambda (f)
@@ -2979,7 +3039,9 @@ value.  (The property value is used as the PREDICATE argument to
        (completing-read prompt-def
                         (plist-get plist :completion)
                         nil
-                        (plist-get plist :must-match)
+                        (if (plist-member plist :must-match)
+                            (plist-get plist :must-match)
+                          t)
                         last-value
                         history-var
                         default))
@@ -3119,7 +3181,7 @@ See also `sql-help' on how to create such a buffer."
     (sql-set-sqli-buffer))
   (display-buffer sql-buffer))
 
-(defun sql-make-alternate-buffer-name ()
+(defun sql-make-alternate-buffer-name (&optional product)
   "Return a string that can be used to rename a SQLi buffer.
 This is used to set `sql-alternate-buffer-name' within
 `sql-interactive-mode'.
@@ -3141,7 +3203,7 @@ server/database name."
                  (cdr
                   (apply #'append nil
                          (sql-for-each-login
-                          (sql-get-product-feature sql-product :sqli-login)
+                          (sql-get-product-feature (or product sql-product) :sqli-login)
                           (lambda (token plist)
                               (pcase token
                                 (`user
@@ -3188,6 +3250,34 @@ server/database name."
         ;; Use the name we've got
         name))))
 
+(defun sql-generate-unique-sqli-buffer-name (product base)
+  "Generate a new, unique buffer name for a SQLi buffer.
+
+Append a sequence number until a unique name is found."
+  (let ((base-name (when (stringp base)
+                     (substring-no-properties
+                      (or base
+                          (sql-get-product-feature product :name)
+                          (symbol-name product)))))
+        buf-fmt-1st buf-fmt-rest)
+
+    ;; Calculate buffer format
+    (if base-name
+        (setq buf-fmt-1st  (format "*SQL: %s*" base-name)
+              buf-fmt-rest (format "*SQL: %s-%%d*" base-name))
+      (setq buf-fmt-1st  "*SQL*"
+            buf-fmt-rest "*SQL-%d*"))
+
+    ;; See if we can find an unused buffer
+    (let ((buf-name buf-fmt-1st)
+          (i 1))
+      (while (sql-buffer-live-p buf-name)
+        ;; Check a sequence number on the BASE
+        (setq buf-name (format buf-fmt-rest i)
+              i (1+ i)))
+
+      buf-name)))
+
 (defun sql-rename-buffer (&optional new-name)
   "Rename a SQL interactive buffer.
 
@@ -3203,18 +3293,20 @@ NEW-NAME is empty, then the buffer name will be \"*SQL*\"."
       (user-error "Current buffer is not a SQL interactive buffer")
 
     (setq sql-alternate-buffer-name
-          (cond
-           ((stringp new-name) new-name)
-           ((consp new-name)
-            (read-string "Buffer name (\"*SQL: XXX*\"; enter `XXX'): "
-                         sql-alternate-buffer-name))
-           (t                  sql-alternate-buffer-name)))
+          (substring-no-properties
+           (cond
+            ((stringp new-name)
+             new-name)
+            ((consp new-name)
+             (read-string "Buffer name (\"*SQL: XXX*\"; enter `XXX'): "
+                          sql-alternate-buffer-name))
+            (t
+             sql-alternate-buffer-name))))
 
-    (setq sql-alternate-buffer-name (substring-no-properties sql-alternate-buffer-name))
-    (rename-buffer (if (string= "" sql-alternate-buffer-name)
-                       "*SQL*"
-                     (format "*SQL: %s*" sql-alternate-buffer-name))
-                   t)))
+    (rename-buffer
+     (sql-generate-unique-sqli-buffer-name sql-product
+                                           sql-alternate-buffer-name)
+     t)))
 
 (defun sql-copy-column ()
   "Copy current column to the end of buffer.
@@ -3429,15 +3521,14 @@ to avoid deleting non-prompt output."
 	      (sql-input-sender (get-buffer-process sql-buffer) s)
 
 	      ;; Send a command terminator if we must
-	      (if sql-send-terminator
-		  (sql-send-magic-terminator sql-buffer s sql-send-terminator))
+	      (when sql-send-terminator
+		(sql-send-magic-terminator sql-buffer s sql-send-terminator))
 
-	      (message "Sent string to buffer %s" sql-buffer)))
+              (when sql-pop-to-buffer-after-send-region
+	        (message "Sent string to buffer %s" sql-buffer))))
 
 	  ;; Display the sql buffer
-	  (if sql-pop-to-buffer-after-send-region
-	      (pop-to-buffer sql-buffer)
-	    (display-buffer sql-buffer)))
+	  (sql-display-buffer sql-buffer))
 
     ;; We don't have no stinkin' sql
     (user-error "No SQL process started"))))
@@ -3536,15 +3627,22 @@ of commands accepted by the SQLi program.  COMMAND may also be a
 list of SQLi command strings."
 
   (let* ((visible (and outbuf
-                       (not (string= " " (substring outbuf 0 1))))))
+                       (not (sql-buffer-hidden-p outbuf))))
+         (this-save  save-prior)
+         (next-save  t))
+
     (when visible
       (message "Executing SQL command..."))
+
     (if (consp command)
-        (mapc (lambda (c) (sql-redirect-one sqlbuf c outbuf save-prior))
-              command)
+        (dolist (onecmd command)
+          (sql-redirect-one sqlbuf onecmd outbuf this-save)
+          (setq this-save next-save))
       (sql-redirect-one sqlbuf command outbuf save-prior))
+
     (when visible
-      (message "Executing SQL command...done"))))
+      (message "Executing SQL command...done"))
+    nil))
 
 (defun sql-redirect-one (sqlbuf command outbuf save-prior)
   (when command
@@ -3593,7 +3691,7 @@ list of SQLi command strings."
                 (replace-match "" t t))
               (goto-char start))))))))
 
-(defun sql-redirect-value (sqlbuf command regexp &optional regexp-groups)
+(defun sql-redirect-value (sqlbuf command &optional regexp regexp-groups)
   "Execute the SQL command and return part of result.
 
 SQLBUF must be an active SQL interactive buffer.  COMMAND should
@@ -3608,7 +3706,7 @@ for each match."
         (results nil))
     (sql-redirect sqlbuf command outbuf nil)
     (with-current-buffer outbuf
-      (while (re-search-forward regexp nil t)
+      (while (re-search-forward (or regexp "^.+$") nil t)
 	(push
          (cond
           ;; no groups-return all of them
@@ -4206,31 +4304,30 @@ the call to \\[sql-product-interactive] with
 
   ;; Handle universal arguments if specified
   (when (not (or executing-kbd-macro noninteractive))
-    (when (and (consp product)
-               (not (cdr product))
-               (numberp (car product)))
-      (when (>= (prefix-numeric-value product) 16)
-        (when (not new-name)
-          (setq new-name '(4)))
-        (setq product '(4)))))
+    (when (>= (prefix-numeric-value product) 16)
+      (when (not new-name)
+        (setq new-name '(4)))
+      (setq product '(4))))
 
   ;; Get the value of product that we need
   (setq product
         (cond
          ((= (prefix-numeric-value product) 4) ; C-u, prompt for product
           (sql-read-product "SQL product: " sql-product))
-         ((and product                  ; Product specified
-               (symbolp product)) product)
+         ((assoc product sql-product-alist) ; Product specified
+          product)
          (t sql-product)))              ; Default to sql-product
 
   ;; If we have a product and it has an interactive mode
   (if product
       (when (sql-get-product-feature product :sqli-comint-func)
-        ;; If no new name specified, try to pop to an active SQL
-        ;; interactive for the same product
+        ;; If no new name specified or new name in buffer name,
+        ;; try to pop to an active SQL interactive for the same product
         (let ((buf (sql-find-sqli-buffer product sql-connection)))
-          (if (and (not new-name) buf)
-              (pop-to-buffer buf)
+          (if (and buf (or (not new-name)
+                           (and (stringp new-name)
+                                (string-match-p (regexp-quote new-name) buf))))
+              (sql-display-buffer buf)
 
             ;; We have a new name or sql-buffer doesn't exist or match
             ;; Start by remembering where we start
@@ -4242,34 +4339,37 @@ the call to \\[sql-product-interactive] with
                      (sql-get-product-feature product :sqli-login))
 
               ;; Connect to database.
-              (setq rpt (make-progress-reporter "Login"))
+              (setq rpt (sql-make-progress-reporter nil "Login"))
 
               (let ((sql-user       (default-value 'sql-user))
                     (sql-password   (default-value 'sql-password))
                     (sql-server     (default-value 'sql-server))
                     (sql-database   (default-value 'sql-database))
                     (sql-port       (default-value 'sql-port))
-                    (default-directory (or sql-default-directory
-                                           default-directory)))
+                    (default-directory
+                                    (or sql-default-directory
+                                        default-directory)))
+
+                ;; Call the COMINT service
                 (funcall (sql-get-product-feature product :sqli-comint-func)
                          product
                          (sql-get-product-feature product :sqli-options)
+                         ;; generate a buffer name
                          (cond
-                          ((null new-name)
-                           "*SQL*")
-                          ((stringp new-name)
-                           (if (string-prefix-p "*SQL: " new-name t)
-                               new-name
-                             (concat "*SQL: " new-name "*")))
-                          ((equal new-name '(4))
-                           (concat
-                            "*SQL: "
+                          ((not new-name)
+                           (sql-generate-unique-sqli-buffer-name product nil))
+                          ((consp new-name)
+                           (sql-generate-unique-sqli-buffer-name product
                             (read-string
                              "Buffer name (\"*SQL: XXX*\"; enter `XXX'): "
-                             sql-alternate-buffer-name)
-                            "*"))
+                             (sql-make-alternate-buffer-name product))))
+                          ((or (string-prefix-p " " new-name)
+                               (string-match-p "\\`[*].*[*]\\'" new-name))
+                           new-name)
+                          ((stringp new-name)
+                           (sql-generate-unique-sqli-buffer-name product new-name))
                           (t
-                           (format "*SQL: %s*" new-name)))))
+                           (sql-generate-unique-sqli-buffer-name product nil)))))
 
               ;; Set SQLi mode.
               (let ((sql-interactive-product product))
@@ -4297,25 +4397,26 @@ the call to \\[sql-product-interactive] with
                                 (<= 0.0 (setq secs (- secs step))))
                             (progn (goto-char (point-max))
                                    (not (re-search-backward sql-prompt-regexp 0 t))))
-                  (progress-reporter-update rpt)))
+                  (sql-progress-reporter-update rpt)))
 
               (goto-char (point-max))
               (when (re-search-backward sql-prompt-regexp nil t)
                 (run-hooks 'sql-login-hook))
 
               ;; All done.
-              (progress-reporter-done rpt)
-              (pop-to-buffer new-sqli-buffer)
+              (sql-progress-reporter-done rpt)
               (goto-char (point-max))
-              (current-buffer)))))
-    (user-error "No default SQL product defined.  Set `sql-product'.")))
+              (let ((sql-display-sqli-buffer-function t))
+                (sql-display-buffer new-sqli-buffer))
+              (get-buffer new-sqli-buffer)))))
+    (user-error "No default SQL product defined: set `sql-product'")))
 
 (defun sql-comint (product params &optional buf-name)
   "Set up a comint buffer to run the SQL processor.
 
 PRODUCT is the SQL product.  PARAMS is a list of strings which are
 passed as command line arguments.  BUF-NAME is the name of the new
-buffer. If nil, a name is chosen for it."
+buffer.  If nil, a name is chosen for it."
 
   (let ((program (sql-get-product-feature product :sqli-program)))
     ;; Make sure we can find the program.  `executable-find' does not
@@ -4328,15 +4429,10 @@ buffer. If nil, a name is chosen for it."
     ;;   if not specified, try *SQL* then *SQL-product*, then *SQL-product1*, ...
     ;;   otherwise, use *buf-name*
     (if buf-name
-        (unless (string-match-p "\\`[*].*[*]\\'" buf-name)
+        (unless (or (string-prefix-p " " buf-name)
+                    (string-match-p "\\`[*].*[*]\\'" buf-name))
           (setq buf-name (concat "*" buf-name "*")))
-      (setq buf-name "*SQL*")
-      (when (sql-buffer-live-p buf-name)
-        (setq buf-name (format "*SQL-%s*" product)))
-      (let ((i 1))
-        (while (sql-buffer-live-p buf-name)
-          (setq buf-name (format "*SQL-%s%d*" product i)
-                i (1+ i)))))
+      (setq buf-name (sql-generate-unique-sqli-buffer-name product nil)))
     (set-text-properties 0 (length buf-name) nil buf-name)
 
     ;; Start the command interpreter in the buffer
