@@ -11,8 +11,8 @@ proc-macro = true
 quote = "0.5"
 syn = { version = "0.13.1", features = ["full"] }
 remacs-util = { version = "0.1.0", path = "../remacs-util" }
-regex = "0.2"
-lazy_static = "1.0"
+regex = "0.2.5"
+lazy_static = "0.2.2"
 
 [dev-dependencies]
 syn = { version = "0.13.1", features = ["full"] }
