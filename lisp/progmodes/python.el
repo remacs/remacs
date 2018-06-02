@@ -1518,7 +1518,7 @@ of the statement."
                        ;; are somehow out of whack.  This has been
                        ;; observed when using `syntax-ppss' during
                        ;; narrowing.
-                       (cl-assert (> string-start last-string-end)
+                       (cl-assert (>= string-start last-string-end)
                                   :show-args
                                   "\
 Overlapping strings detected (start=%d, last-end=%d)")
