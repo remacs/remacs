@@ -263,6 +263,15 @@ pub fn process_thread(process: LispProcessRef) -> LispObject {
     process.thread
 }
 
+/// Return the connection type of PROCESS.
+/// The value is either the symbol `real', `network', `serial', or `pipe'.
+/// PROCESS may be a process, a buffer, the name of a process or buffer, or
+/// nil, indicating the current buffer's process.
+#[lisp_fn]
+pub fn process_type(process: LispProcessRef) -> LispObject {
+    process.process_type()
+}
+
 /// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
 /// Return BUFFER.
 #[lisp_fn]
