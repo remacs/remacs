@@ -366,7 +366,7 @@ pset_plist (struct Lisp_Process *p, Lisp_Object val)
 {
   p->plist = val;
 }
-static void
+void
 pset_sentinel (struct Lisp_Process *p, Lisp_Object val)
 {
   p->sentinel = NILP (val) ? Qinternal_default_process_sentinel : val;
@@ -1131,27 +1131,6 @@ The string argument is normally a multibyte string, except:
     pset_childp (p, Fplist_put (p->childp, QCfilter, filter));
   setup_process_coding_systems (process);
   return filter;
-}
-
-DEFUN ("set-process-sentinel", Fset_process_sentinel, Sset_process_sentinel,
-       2, 2, 0,
-       doc: /* Give PROCESS the sentinel SENTINEL; nil for default.
-The sentinel is called as a function when the process changes state.
-It gets two arguments: the process, and a string describing the change.  */)
-  (register Lisp_Object process, Lisp_Object sentinel)
-{
-  struct Lisp_Process *p;
-
-  CHECK_PROCESS (process);
-  p = XPROCESS (process);
-
-  if (NILP (sentinel))
-    sentinel = Qinternal_default_process_sentinel;
-
-  pset_sentinel (p, sentinel);
-  if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
-    pset_childp (p, Fplist_put (p->childp, QCsentinel, sentinel));
-  return sentinel;
 }
 
 DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
@@ -7681,7 +7660,6 @@ returns non-`nil'.  */);
 
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_filter);
-  defsubr (&Sset_process_sentinel);
   defsubr (&Sset_process_thread);
   defsubr (&Sprocess_thread);
   defsubr (&Sset_process_window_size);

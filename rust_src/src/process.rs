@@ -4,10 +4,10 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{current_thread, get_process as cget_process, pget_kill_without_query, pget_pid,
                  pget_process_inherit_coding_system_flag, pget_raw_status_new,
-                 pset_kill_without_query, send_process, setup_process_coding_systems,
-                 update_status, Fmapcar, STRING_BYTES};
-use remacs_sys::{QCbuffer, Qcdr, Qclosed, Qexit, Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial,
-                 Qstop};
+                 pset_kill_without_query, pset_sentinel, send_process,
+                 setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
+use remacs_sys::{QCbuffer, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_process_sentinel,
+                 Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial, Qstop};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -279,6 +279,28 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
     }
     unsafe { setup_process_coding_systems(process.to_raw()) };
     buffer
+}
+
+/// Give PROCESS the sentinel SENTINEL; nil for default.
+/// The sentinel is called as a function when the process changes state.
+/// It gets two arguments: the process, and a string describing the change.
+#[lisp_fn]
+pub fn set_process_sentinel(process: LispObject, mut sentinel: LispObject) -> LispObject {
+    let mut p_ref = process.as_process_or_error();
+    if sentinel.is_nil() {
+        sentinel = Qinternal_default_process_sentinel;
+    }
+    unsafe { pset_sentinel(p_ref.as_mut(), sentinel) }
+    let process_type = p_ref.process_type;
+    let netconn1_p = process_type.eq(Qnetwork);
+    let serialconn1_p = process_type.eq(Qserial);
+    let pipeconn1_p = process_type.eq(Qpipe);
+
+    if netconn1_p || serialconn1_p || pipeconn1_p {
+        let childp = p_ref.childp;
+        p_ref.set_childp(plist_put(childp, QCsentinel, sentinel));
+    }
+    sentinel
 }
 
 /// Send PROCESS the contents of STRING as input.
