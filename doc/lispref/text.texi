@@ -3037,9 +3037,10 @@ construct each part with @code{propertize} and then combine them with
 buffer but does not copy its properties.
 
 @findex with-silent-modifications
-  If you wish to add or remove text properties to a buffer without
-marking the buffer as modified, you can wrap the calls above in the
-@code{with-silent-modifications} macro.
+  If you wish to add text properties to a buffer or remove them
+without marking the buffer as modified, you can wrap the calls above
+in the @code{with-silent-modifications} macro.  @xref{Buffer
+Modification}.
 
 @node Property Search
 @subsection Text Property Search Functions
