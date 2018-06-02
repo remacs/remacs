@@ -1279,18 +1279,6 @@ a socket connection.  */)
 }
 #endif
 
-DEFUN ("process-type", Fprocess_type, Sprocess_type, 1, 1, 0,
-       doc: /* Return the connection type of PROCESS.
-The value is either the symbol `real', `network', `serial', or `pipe'.
-PROCESS may be a process, a buffer, the name of a process or buffer, or
-nil, indicating the current buffer's process.  */)
-  (Lisp_Object process)
-{
-  Lisp_Object proc;
-  proc = get_process (process);
-  return XPROCESS (proc)->type;
-}
-
 DEFUN ("format-network-address", Fformat_network_address, Sformat_network_address,
        1, 2, 0,
        doc: /* Convert network ADDRESS from internal format to a string.
@@ -7689,7 +7677,6 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_running_child_p);
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);
-  defsubr (&Sprocess_type);
   defsubr (&Sinternal_default_process_sentinel);
   defsubr (&Sinternal_default_process_filter);
   defsubr (&Sset_process_coding_system);

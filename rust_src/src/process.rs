@@ -64,6 +64,11 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn process_type(self) -> LispObject {
+        self.process_type
+    }
+
+    #[inline]
     fn raw_status_new(&self) -> bool {
         unsafe { pget_raw_status_new(self.as_ptr()) }
     }
@@ -261,6 +266,15 @@ pub fn process_status(process: LispObject) -> LispObject {
         }
     }
     status
+}
+
+/// Return the connection type of PROCESS.
+/// The value is either the symbol `real', `network', `serial', or `pipe'.
+/// PROCESS may be a process, a buffer, the name of a process or buffer, or
+/// nil, indicating the current buffer's process.
+#[lisp_fn]
+pub fn process_type(process: LispProcessRef) -> LispObject {
+    process.process_type()
 }
 
 /// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
