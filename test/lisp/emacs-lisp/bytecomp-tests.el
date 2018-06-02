@@ -540,7 +540,9 @@ literals (Bug#20852)."
         (should (equal (cdr err)
                        (list (concat "unescaped character literals "
                                      "`?\"', `?(', `?)', `?;', `?[', `?]' "
-                                     "detected!"))))))))
+                                     "detected, "
+                                     "`?\\\"', `?\\(', `?\\)', `?\\;', `?\\[', "
+                                     "`?\\]' expected!"))))))))
 
 (ert-deftest bytecomp-tests--old-style-backquotes ()
   "Check that byte compiling warns about old-style backquotes."

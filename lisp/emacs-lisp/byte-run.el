@@ -495,6 +495,21 @@ is enabled."
   (car (last body)))
 
 
+(defun byte-run--unescaped-character-literals-warning ()
+  "Return a warning about unescaped character literals.
+If there were any unescaped character literals in the last form
+read, return an appropriate warning message as a string.
+Otherwise, return nil.  For internal use only."
+  ;; This is called from lread.c and therefore needs to be preloaded.
+  (if lread--unescaped-character-literals
+      (let ((sorted (sort lread--unescaped-character-literals #'<)))
+        (format-message "unescaped character literals %s detected, %s expected!"
+                        (mapconcat (lambda (char) (format "`?%c'" char))
+                                   sorted ", ")
+                        (mapconcat (lambda (char) (format "`?\\%c'" char))
+                                   sorted ", ")))))
+
+
 ;; I nuked this because it's not a good idea for users to think of using it.
 ;; These options are a matter of installation preference, and have nothing to
 ;; with particular source files; it's a mistake to suggest to users

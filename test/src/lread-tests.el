@@ -140,7 +140,9 @@ literals (Bug#20852)."
     (should (equal (lread-tests--last-message)
                    (concat (format-message "Loading `%s': " file-name)
                            "unescaped character literals "
-                           "`?\"', `?(', `?)', `?;', `?[', `?]' detected!")))))
+                           "`?\"', `?(', `?)', `?;', `?[', `?]' detected, "
+                           "`?\\\"', `?\\(', `?\\)', `?\\;', `?\\[', `?\\]' "
+                           "expected!")))))
 
 (ert-deftest lread-tests--funny-quote-symbols ()
   "Check that 'smart quotes' or similar trigger errors in symbol names."

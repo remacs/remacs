@@ -1034,18 +1034,12 @@ load_error_old_style_backquotes (void)
 static void
 load_warn_unescaped_character_literals (Lisp_Object file)
 {
-  if (NILP (Vlread_unescaped_character_literals)) return;
-  CHECK_CONS (Vlread_unescaped_character_literals);
-  Lisp_Object format =
-    build_string ("Loading `%s': unescaped character literals %s detected!");
-  Lisp_Object separator = build_string (", ");
-  Lisp_Object inner_format = build_string ("`?%c'");
-  CALLN (Fmessage,
-         format, file,
-         Fmapconcat (list3 (Qlambda, list1 (Qchar),
-                            list3 (Qformat, inner_format, Qchar)),
-                     Fsort (Vlread_unescaped_character_literals, Qlss),
-                     separator));
+  Lisp_Object warning
+    = call0 (Qbyte_run_unescaped_character_literals_warning);
+  if (NILP (warning))
+    return;
+  Lisp_Object format = build_string ("Loading `%s': %s");
+  CALLN (Fmessage, format, file, warning);
 }
 
 DEFUN ("get-load-suffixes", Fget_load_suffixes, Sget_load_suffixes, 0, 0, 0,
@@ -5014,9 +5008,9 @@ For internal use only.  */);
   DEFSYM (Qlread_unescaped_character_literals,
           "lread--unescaped-character-literals");
 
-  DEFSYM (Qlss, "<");
-  DEFSYM (Qchar, "char");
-  DEFSYM (Qformat, "format");
+  /* Defined in lisp/emacs-lisp/byte-run.el.  */
+  DEFSYM (Qbyte_run_unescaped_character_literals_warning,
+          "byte-run--unescaped-character-literals-warning");
 
   DEFVAR_BOOL ("load-prefer-newer", load_prefer_newer,
                doc: /* Non-nil means `load' prefers the newest version of a file.
