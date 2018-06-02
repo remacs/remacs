@@ -32424,7 +32424,12 @@ syms_of_xdisp (void)
 
   DEFVAR_BOOL("inhibit-message", inhibit_message,
               doc:  /* Non-nil means calls to `message' are not displayed.
-They are still logged to the *Messages* buffer.  */);
+They are still logged to the *Messages* buffer.
+
+Do NOT set this globally to a non-nil value, as doing that will
+disable messages everywhere, including in I-search and other
+places where they are necessary.  This variable is intended to
+be let-bound around code that needs to disable messages temporarily. */);
   inhibit_message = 0;
 
   message_dolog_marker1 = Fmake_marker ();
