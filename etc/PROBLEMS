@@ -1293,7 +1293,7 @@ the resource prevents the problem.
 Version 2.6.4 of the FVWM can make a frame sticky (appear on all user
 desktops) when setting the 'sticky' frame parameter to nil.  This may
 happen without any special user interaction, for example, when Emacs
-restores a saved desktop.  A fix is to install version 2.6.7 of FVWM,
+restores a saved desktop.  A fix is to install version 2.6.8 of FVWM,
 see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=31650.
 
 ** General X problems
