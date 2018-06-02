@@ -1288,6 +1288,14 @@ do not know what.  If it is an Emacs bug, we hope someone can
 explain what the bug is so we can fix it.  In the mean time, removing
 the resource prevents the problem.
 
+*** FVWM: Some versions of FVWM incorrectly set the 'sticky' frame parameter.
+
+Version 2.6.4 of the FVWM can make a frame sticky (appear on all user
+desktops) when setting the 'sticky' frame parameter to nil.  This may
+happen without any special user interaction, for example, when Emacs
+restores a saved desktop.  A fix is to install version 2.6.7 of FVWM,
+see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=31650.
+
 ** General X problems
 
 *** Redisplay using X is much slower than previous Emacs versions.
