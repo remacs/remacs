@@ -389,6 +389,25 @@ pub fn next_frame(frame: Option<LispFrameRef>, miniframe: Option<LispObject>) ->
     return get_next_frame(frame, miniframe);
 }
 
+/// Return the previous frame in the frame list before FRAME.
+/// It only considers frames on the same terminal as FRAME.
+/// By default, skip minibuffer-only frames.
+/// If omitted, FRAME default to the selected frame.
+/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+/// If MINIFRAME is a window, include only its own frame
+/// and any frame now using that window as the minibuffer.
+/// If MINIFRAME is 'visible', include all visible frames.
+/// If MINIFRAME is 0, include all visible and iconified frames.
+/// Otherwise, inlcude all frames.
+#[lisp_fn(min = "0")]
+pub fn previous_frame(frame: Option<LispFrameRef>, miniframe: Option<LispObject>) -> LispFrameRef {
+    let frame = frame.unwrap_or_default();
+    if !frame.is_live() {
+        wrong_type!(Qframe_live_p, LispObject::from(frame));
+    }
+    return get_prev_frame(frame, miniframe).unwrap_or(frame);
+}
+
 pub fn frame_list() -> CarIter {
     let list: LispObject = unsafe { Vframe_list };
     return list.iter_cars();
