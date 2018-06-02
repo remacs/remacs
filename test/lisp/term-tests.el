@@ -124,6 +124,27 @@ line6\r
                     40 12 (list "\eAnSiTc /f" "oo/\n") 'default-directory)
                    "/foo/"))))
 
+(ert-deftest term-to-margin ()
+  "Test cursor movement at the scroll margin.
+This is a reduced example from GNU nano's initial screen."
+  (let* ((width 10)
+         (x (make-string width ?x))
+         (y (make-string width ?y)))
+    (should (equal (term-test-screen-from-input
+                    width 3
+                    `("\e[1;3r"       ; Setup 3 line scrolling region.
+                      "\e[2;1H"       ; Move to 2nd last line.
+                      ,x              ; Fill with 'x'.
+                      "\r\e[1B"       ; Next line.
+                      ,y))            ; Fill with 'y'.
+                   (concat "\n" x "\n" y)))
+    ;; Same idea, but moving upwards.
+    (should (equal (term-test-screen-from-input
+                    width 3
+                    `("\e[1;3r" "\e[2;1H" ,x "\r\e[1A" ,y))
+                   (concat y "\n" x)))))
+
+
 (provide 'term-tests)
 
 ;;; term-tests.el ends here

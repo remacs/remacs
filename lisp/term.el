@@ -3387,11 +3387,10 @@ option is enabled.  See `term-set-goto-process-mark'."
    ;; \E[B - cursor down (terminfo: cud)
    ((eq char ?B)
     (let ((tcr (term-current-row)))
-      (unless (= tcr (1- term-scroll-end))
+      (unless (>= tcr term-scroll-end)
 	(term-down
-	 (if (> (+ tcr term-terminal-parameter) term-scroll-end)
-	     (- term-scroll-end 1 tcr)
-	   (max 1 term-terminal-parameter)) t))))
+         (min (- term-scroll-end tcr) (max 1 term-terminal-parameter))
+         t))))
    ;; \E[C - cursor right (terminfo: cuf, cuf1)
    ((eq char ?C)
     (term-move-columns
