@@ -55,7 +55,7 @@ Lisp_Object last_minibuf_string;
 
 /* Prompt to display in front of the mini-buffer contents.  */
 
-static Lisp_Object minibuf_prompt;
+Lisp_Object minibuf_prompt;
 
 /* Width of current mini-buffer prompt.  Only set after display_line
    of the line that contains the prompt.  */
@@ -1858,22 +1858,6 @@ single string, rather than a cons cell whose car is a string.  */)
 }
 
 
-DEFUN ("minibuffer-depth", Fminibuffer_depth, Sminibuffer_depth, 0, 0, 0,
-       doc: /* Return current depth of activations of minibuffer, a nonnegative integer.  */)
-  (void)
-{
-  return make_number (minibuf_level);
-}
-
-DEFUN ("minibuffer-prompt", Fminibuffer_prompt, Sminibuffer_prompt, 0, 0, 0,
-       doc: /* Return the prompt string of the currently-active minibuffer.
-If no minibuffer is active, return nil.  */)
-  (void)
-{
-  return Fcopy_sequence (minibuf_prompt);
-}
-
-
 void
 init_minibuf_once (void)
 {
@@ -2074,8 +2058,6 @@ characters.  This variable should never be set globally.  */);
   defsubr (&Sinternal_complete_buffer);
   defsubr (&Sread_buffer);
   defsubr (&Sread_no_blanks_input);
-  defsubr (&Sminibuffer_depth);
-  defsubr (&Sminibuffer_prompt);
 
   defsubr (&Sminibuffer_prompt_end);
   defsubr (&Sminibuffer_contents);
