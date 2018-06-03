@@ -1882,7 +1882,6 @@ extern "C" {
         cnt: ptrdiff_t,
         bytepos: *mut ptrdiff_t,
     ) -> ptrdiff_t;
-    pub fn get_process(name: LispObject) -> LispObject;
     pub fn update_status(p: *const Lisp_Process);
     pub fn setup_process_coding_systems(process: LispObject);
     pub fn send_process(

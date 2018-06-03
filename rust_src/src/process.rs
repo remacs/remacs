@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
-use remacs_sys::{current_thread, get_process as cget_process, pget_kill_without_query, pget_pid,
+use remacs_sys::{current_thread, pget_kill_without_query, pget_pid,
                  pget_process_inherit_coding_system_flag, pget_raw_status_new,
                  pset_kill_without_query, pset_sentinel, send_process,
                  setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
@@ -12,7 +12,7 @@ use remacs_sys::{QCbuffer, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_p
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 
-use buffers::get_buffer;
+use buffers::{current_buffer, get_buffer};
 use lists::{assoc, car, cdr, plist_put};
 use multibyte::LispStringRef;
 
@@ -89,6 +89,27 @@ impl LispProcessRef {
     }
 }
 
+/// This is how commands for the user decode process arguments.  It
+/// accepts a process, a process name, a buffer, a buffer name, or nil.
+/// Buffers denote the first process in the buffer, and nil denotes the
+/// current buffer.
+pub fn get_process(process: LispObject) -> LispProcessRef {
+    let process = if process.is_string() {
+        let p = lisp_get_process(process);
+        if p.is_nil() {
+            get_buffer_process(process)
+        } else {
+            p
+        }
+    } else if process.is_nil() {
+        get_buffer_process(current_buffer())
+    } else {
+        process
+    };
+
+    process.as_process_or_error()
+}
+
 /// Return t if OBJECT is a process.
 #[lisp_fn]
 pub fn processp(object: LispObject) -> bool {
@@ -96,8 +117,8 @@ pub fn processp(object: LispObject) -> bool {
 }
 
 /// Return the process named NAME, or nil if there is none.
-#[lisp_fn]
-pub fn get_process(name: LispObject) -> LispObject {
+#[lisp_fn(name = "get_process")]
+pub fn lisp_get_process(name: LispObject) -> LispObject {
     if name.is_process() {
         name
     } else {
@@ -238,15 +259,8 @@ pub fn set_process_plist(process: LispObject, plist: LispObject) -> LispObject {
 /// nil, indicating the current buffer's process.
 #[lisp_fn]
 pub fn process_status(process: LispObject) -> LispObject {
-    let p = if process.is_string() {
-        get_process(process)
-    } else {
-        unsafe { cget_process(process.to_raw()) }
-    };
-    if p.is_nil() {
-        return p;
-    }
-    let p_ref = p.as_process_or_error();
+    let p_ref = get_process(process);
+
     if p_ref.raw_status_new() {
         unsafe { update_status(p_ref.as_ptr()) };
     }
@@ -274,23 +288,7 @@ pub fn process_status(process: LispObject) -> LispObject {
 /// nil, indicating the current buffer's process.
 #[lisp_fn]
 pub fn process_type(process: LispObject) -> LispObject {
-    let mut p;
-
-    if process.is_string() {
-        p = get_process(process);
-        if p.is_nil() {
-            p = get_buffer_process(process);
-        }
-    } else {
-        p = unsafe { cget_process(process.to_raw()) }
-    };
-
-    if p.is_nil() {
-        return p;
-    }
-
-    let p_ref = p.as_process_or_error();
-
+    let p_ref = get_process(process);
     p_ref.process_type()
 }
 
