@@ -24,4 +24,5 @@
     (should (equal 'real (process-type "*test*")))
     (delete-process real-proc)
     (delete-process network-proc)
-    (delete-process pipe-proc)))
+    (delete-process pipe-proc)
+    (delete-process buffer-proc)))
