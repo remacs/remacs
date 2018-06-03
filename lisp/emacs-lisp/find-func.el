@@ -466,6 +466,7 @@ If TYPE is nil, defaults using `function-called-at-point',
 otherwise uses `variable-at-point'."
   (let* ((symb1 (cond ((null type) (function-called-at-point))
                       ((eq type 'defvar) (variable-at-point))
+                      ((eq type 'defface) (face-at-point t))
                       (t (variable-at-point t))))
          (symb  (unless (eq symb1 0) symb1))
          (predicate (cdr (assq type '((nil . fboundp)
