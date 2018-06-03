@@ -2587,18 +2587,15 @@ struct Lisp_Buffer_Objfwd
    in the buffer structure itself.  They are handled differently,
    using struct Lisp_Buffer_Objfwd.)
 
-   The `realvalue' slot holds the variable's current value, or a
-   forwarding pointer to where that value is kept.  This value is the
-   one that corresponds to the loaded binding.  To read or set the
-   variable, you must first make sure the right binding is loaded;
-   then you can access the value in (or through) `realvalue'.
+   The `valcell' slot holds the variable's current value (unless `fwd'
+   is set).  This value is the one that corresponds to the loaded binding.
+   To read or set the variable, you must first make sure the right binding
+   is loaded; then you can access the value in (or through) `valcell'.
 
-   `where' is the buffer for which the loaded binding was found.  If
-   it has changed, to make sure the right binding is loaded it is
+   `where' is the buffer for which the loaded binding was found.
+   If it has changed, to make sure the right binding is loaded it is
    necessary to find which binding goes with the current buffer, then
-   load it.  To load it, first unload the previous binding, then copy
-   the value of the new binding into `realvalue' (or through it).
-   Also update LOADED-BINDING to point to the newly loaded binding.
+   load it.  To load it, first unload the previous binding.
 
    `local_if_set' indicates that merely setting the variable creates a
    local binding for the current buffer.  Otherwise the latter, setting
@@ -3728,7 +3725,6 @@ extern Lisp_Object make_save_funcptr_ptr_obj (void (*) (void), void *,
 extern Lisp_Object make_save_memory (Lisp_Object *, ptrdiff_t);
 extern void free_save_value (Lisp_Object);
 extern Lisp_Object build_overlay (Lisp_Object, Lisp_Object, Lisp_Object);
-extern void free_marker (Lisp_Object);
 extern void free_cons (struct Lisp_Cons *);
 extern void init_alloc_once (void);
 extern void init_alloc (void);
@@ -4019,7 +4015,8 @@ extern ptrdiff_t marker_byte_position (Lisp_Object);
 extern void clear_charpos_cache (struct buffer *);
 extern ptrdiff_t buf_charpos_to_bytepos (struct buffer *, ptrdiff_t);
 extern ptrdiff_t buf_bytepos_to_charpos (struct buffer *, ptrdiff_t);
-extern void unchain_marker (struct Lisp_Marker *marker);
+extern void detach_marker (Lisp_Object);
+extern void unchain_marker (struct Lisp_Marker *);
 extern Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object set_marker_both (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
