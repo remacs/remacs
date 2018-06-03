@@ -2309,7 +2309,8 @@ This function ensures that none of these modifications will take place."
          ;; FIXME: Yuck!!  We should turn insert-file-contents-literally
          ;; into a file operation instead!
          (append '(jka-compr-handler image-file-handler epa-file-handler)
-                 inhibit-file-name-handlers))
+	         (and (eq inhibit-file-name-operation 'insert-file-contents)
+		      inhibit-file-name-handlers)))
         (inhibit-file-name-operation 'insert-file-contents))
     (insert-file-contents filename visit beg end replace)))
 
@@ -6992,99 +6993,100 @@ only these files will be asked to be saved."
 ;; operations, which return a file name.  See Bug#29579.
 
 (defun file-name-non-special (operation &rest arguments)
-  (let* ((op-returns-file-name-list
-          '(expand-file-name file-name-directory file-name-as-directory
-                             directory-file-name file-name-sans-versions
-                             find-backup-file-name file-remote-p))
-         (file-name-handler-alist
-          (and
-           (not (memq operation op-returns-file-name-list))
-           file-name-handler-alist))
-	 (default-directory
-           ;; Some operations respect file name handlers in
-           ;; `default-directory'.  Because core function like
-           ;; `call-process' don't care about file name handlers in
-           ;; `default-directory', we here have to resolve the
-           ;; directory into a local one.  For `process-file',
-           ;; `start-file-process', and `shell-command', this fixes
-           ;; Bug#25949.
-	   (if (memq operation
-                     '(insert-directory process-file start-file-process
-                                        shell-command temporary-file-directory))
-	       (directory-file-name
-	        (expand-file-name
-		 (unhandled-file-name-directory default-directory)))
-	     default-directory))
-	 ;; Get a list of the indices of the args which are file names.
-	 (file-arg-indices
-	  (cdr (or (assq operation
-			 ;; The first seven are special because they
-			 ;; return a file name.  We want to include the /:
-			 ;; in the return value.
-			 ;; So just avoid stripping it in the first place.
-                         (append
-                          (mapcar 'list op-returns-file-name-list)
-			  '(;; `identity' means just return the first arg
-			    ;; not stripped of its quoting.
-			    (substitute-in-file-name identity)
-			    ;; `add' means add "/:" to the result.
-			    (file-truename add 0)
-			    (insert-file-contents insert-file-contents 0)
-			    ;; `unquote-then-quote' means set buffer-file-name
-			    ;; temporarily to unquoted filename.
-			    (verify-visited-file-modtime unquote-then-quote)
-			    ;; List the arguments which are filenames.
-			    (file-name-completion 0 1)
-			    (file-name-all-completions 0 1)
-                            (file-equal-p 0 1)
-                            (file-newer-than-file-p 0 1)
-			    (write-region 2 5)
-			    (rename-file 0 1)
-			    (copy-file 0 1)
-			    (copy-directory 0 1)
-			    (file-in-directory-p 0 1)
-			    (make-symbolic-link 0 1)
-			    (add-name-to-file 0 1)
-                            (make-auto-save-file-name buffer-file-name)
-                            (set-visited-file-modtime buffer-file-name)
-                            ;; These file-notify-* operations take a
-                            ;; descriptor.
-                            (file-notify-rm-watch . nil)
-                            (file-notify-valid-p . nil))))
-		   ;; For all other operations, treat the first argument only
-		   ;; as the file name.
-		   '(nil 0))))
-	 method
-	 ;; Copy ARGUMENTS so we can replace elements in it.
-	 (arguments (copy-sequence arguments)))
+  (let (;; In general, we don't want any file name handler.  For some
+        ;; few cases, operations with two file name arguments which
+        ;; might be bound to different file name handlers, we still
+        ;; need this.
+        (saved-file-name-handler-alist file-name-handler-alist)
+        file-name-handler-alist
+        ;; Some operations respect file name handlers in
+        ;; `default-directory'.  Because core function like
+        ;; `call-process' don't care about file name handlers in
+        ;; `default-directory', we here have to resolve the directory
+        ;; into a local one.  For `process-file',
+        ;; `start-file-process', and `shell-command', this fixes
+        ;; Bug#25949.
+        (default-directory
+	  (if (memq operation
+                    '(insert-directory process-file start-file-process
+                                       shell-command temporary-file-directory))
+	      (directory-file-name
+	       (expand-file-name
+		(unhandled-file-name-directory default-directory)))
+	    default-directory))
+	;; Get a list of the indices of the args which are file names.
+	(file-arg-indices
+	 (cdr (or (assq operation
+			'(;; The first seven are special because they
+			  ;; return a file name.  We want to include
+			  ;; the /: in the return value.  So just
+			  ;; avoid stripping it in the first place.
+                          (directory-file-name)
+                          (expand-file-name)
+                          (file-name-as-directory)
+                          (file-name-directory)
+                          (file-name-sans-versions)
+                          (file-remote-p)
+                          (find-backup-file-name)
+	                  ;; `identity' means just return the first
+			  ;; arg not stripped of its quoting.
+			  (substitute-in-file-name identity)
+			  ;; `add' means add "/:" to the result.
+			  (file-truename add 0)
+                          ;;`insert-file-contents' needs special handling.
+			  (insert-file-contents insert-file-contents 0)
+			  ;; `unquote-then-quote' means set buffer-file-name
+			  ;; temporarily to unquoted filename.
+			  (verify-visited-file-modtime unquote-then-quote)
+                          ;; Unquote `buffer-file-name' temporarily.
+                          (make-auto-save-file-name buffer-file-name)
+                          (set-visited-file-modtime buffer-file-name)
+                          ;; Use a temporary local copy.
+			  (copy-file local-copy)
+			  (rename-file local-copy)
+                          ;;`copy-directory' needs special handling.
+                          (copy-directory copy-directory)
+			  ;; List the arguments which are filenames.
+			  (file-name-completion 0 1)
+			  (file-name-all-completions 0 1)
+                          (file-equal-p 0 1)
+                          (file-newer-than-file-p 0 1)
+			  (write-region 2 5)
+			  (file-in-directory-p 0 1)
+			  (make-symbolic-link 0 1)
+			  (add-name-to-file 0 1)
+                          ;; These file-notify-* operations take a
+                          ;; descriptor.
+                          (file-notify-rm-watch)
+                          (file-notify-valid-p)))
+		  ;; For all other operations, treat the first
+		  ;; argument only as the file name.
+		  '(nil 0))))
+	method
+	;; Copy ARGUMENTS so we can replace elements in it.
+	(arguments (copy-sequence arguments)))
     (if (symbolp (car file-arg-indices))
 	(setq method (pop file-arg-indices)))
     ;; Strip off the /: from the file names that have it.
     (save-match-data
       (while (consp file-arg-indices)
 	(let ((pair (nthcdr (car file-arg-indices) arguments)))
-	  (and (car pair)
-	       (string-match "\\`/:" (car pair))
-	       (setcar pair
-		       (if (= (length (car pair)) 2)
-			   "/"
-			 (substring (car pair) 2)))))
+	  (when (car pair)
+	    (setcar pair (file-name-unquote-non-special (car pair)))))
 	(setq file-arg-indices (cdr file-arg-indices))))
     (pcase method
       (`identity (car arguments))
       (`add (file-name-quote (apply operation arguments)))
       (`buffer-file-name
        (let ((buffer-file-name
-              (if (string-match "\\`/:" buffer-file-name)
-                  (substring buffer-file-name (match-end 0))
-                buffer-file-name)))
+              (file-name-unquote-non-special buffer-file-name)))
          (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect
              (apply operation arguments)
            (when (and visit buffer-file-name)
-             (setq buffer-file-name (concat "/:" buffer-file-name))))))
+             (setq buffer-file-name (file-name-quote buffer-file-name))))))
       (`unquote-then-quote
        ;; We can't use `cl-letf' with `(buffer-local-value)' here
        ;; because it wouldn't work during bootstrapping.
@@ -7093,11 +7095,44 @@ only these files will be asked to be saved."
          ;; `verify-visited-file-modtime' action, which takes a buffer
          ;; as only optional argument.
          (with-current-buffer (or (car arguments) buffer)
-           (let ((buffer-file-name (substring buffer-file-name 2)))
+           (let ((buffer-file-name
+                  (file-name-unquote-non-special buffer-file-name)))
              ;; Make sure to hide the temporary buffer change from the
              ;; underlying operation.
              (with-current-buffer buffer
                (apply operation arguments))))))
+      (`local-copy
+       (let* ((file-name-handler-alist saved-file-name-handler-alist)
+              (source (car arguments))
+              (target (car (cdr arguments)))
+              (tmpfile (file-local-copy source)))
+         (let ((handler (find-file-name-handler target 'copy-file)))
+           (unless (and handler (not (eq handler 'file-name-non-special)))
+             (setq target (file-name-unquote-non-special target))))
+         (setcar arguments (or tmpfile (file-name-unquote-non-special source)))
+         (setcar (cdr arguments) target)
+         (apply operation arguments)
+         (when (and tmpfile (file-exists-p tmpfile)) (delete-file tmpfile))))
+      (`copy-directory
+       (let* ((file-name-handler-alist saved-file-name-handler-alist)
+              (source (car arguments))
+              (target (car (cdr arguments)))
+              tmpdir)
+         (let ((handler (find-file-name-handler source 'copy-directory)))
+           (if (and handler (not (eq handler 'file-name-non-special)))
+               (progn
+                 (setq tmpdir (make-temp-name temporary-file-directory))
+                 (setcar (cdr arguments) tmpdir)
+                 (apply operation arguments)
+                 (setq source tmpdir))
+             (setq source (file-name-unquote-non-special source))))
+         (let ((handler (find-file-name-handler target 'copy-directory)))
+           (unless (and handler (not (eq handler 'file-name-non-special)))
+             (setq target (file-name-unquote-non-special target))))
+         (setcar arguments source)
+         (setcar (cdr arguments) target)
+         (apply operation arguments)
+         (when tmpdir (delete-directory tmpdir 'recursive))))
       (_
        (apply operation arguments)))))
 
@@ -7114,14 +7149,18 @@ If NAME is already a quoted file name, NAME is returned unchanged."
       name
     (concat (file-remote-p name) "/:" (file-local-name name))))
 
+(defsubst file-name-unquote-non-special (name)
+  "Remove quotation prefix \"/:\" from file NAME, if any."
+  (let (file-name-handler-alist)
+    (if (file-name-quoted-p name)
+        (if (= (length name) 2) "/" (substring name 2))
+      name)))
+
 (defsubst file-name-unquote (name)
   "Remove quotation prefix \"/:\" from file NAME, if any.
 If NAME is a remote file name, the local part of NAME is unquoted."
-  (let ((localname (file-local-name name)))
-    (when (file-name-quoted-p localname)
-      (setq
-       localname (if (= (length localname) 2) "/" (substring localname 2))))
-    (concat (file-remote-p name) localname)))
+  (concat
+   (file-remote-p name) (file-name-unquote-non-special (file-local-name name))))
 
 ;; Symbolic modes and read-file-modes.
 
