@@ -80,6 +80,27 @@ impl From<LispObject> for Option<LispProcessRef> {
     }
 }
 
+/// This is how commands for the user decode process arguments.  It
+/// accepts a process, a process name, a buffer, a buffer name, or nil.
+/// Buffers denote the first process in the buffer, and nil denotes the
+/// current buffer.
+pub fn get_process(process: LispObject) -> LispProcessRef {
+    let process = if process.is_string() {
+        let p = lisp_get_process(process);
+        if p.is_nil() {
+            get_buffer_process(process)
+        } else {
+            p
+        }
+    } else if process.is_nil() {
+        get_buffer_process(current_buffer())
+    } else {
+        process
+    };
+
+    process.as_process_or_error()
+}
+
 /// Return t if OBJECT is a process.
 #[lisp_fn]
 pub fn processp(object: LispObject) -> bool {
@@ -87,8 +108,8 @@ pub fn processp(object: LispObject) -> bool {
 }
 
 /// Return the process named NAME, or nil if there is none.
-#[lisp_fn]
-pub fn get_process(name: LispObject) -> LispObject {
+#[lisp_fn(name = "get_process")]
+pub fn lisp_get_process(name: LispObject) -> LispObject {
     if name.is_process() {
         name
     } else {
@@ -269,23 +290,7 @@ pub fn process_thread(process: LispProcessRef) -> LispObject {
 /// nil, indicating the current buffer's process.
 #[lisp_fn]
 pub fn process_type(process: LispObject) -> LispObject {
-    let mut p;
-
-    if process.is_string() {
-        p = get_process(process);
-        if p.is_nil() {
-            p = get_buffer_process(process);
-        }
-    } else {
-        p = unsafe { cget_process(process.to_raw()) }
-    };
-
-    if p.is_nil() {
-        return p;
-    }
-
-    let p_ref = p.as_process_or_error();
-
+    let p_ref = get_process(process);
     p_ref.process_type()
 }
 
