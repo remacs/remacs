@@ -976,12 +976,14 @@ CHAR
      matches whitespace and graphic characters.
 
 `alphanumeric', `alnum'
-     matches alphabetic characters and digits.  (For multibyte characters,
-     it matches according to Unicode character properties.)
+     matches alphabetic characters and digits.  For multibyte characters,
+     it matches characters whose Unicode `general-category' property
+     indicates they are alphabetic or decimal number characters.
 
 `letter', `alphabetic', `alpha'
-     matches alphabetic characters.  (For multibyte characters,
-     it matches according to Unicode character properties.)
+     matches alphabetic characters.  For multibyte characters,
+     it matches characters whose Unicode `general-category' property
+     indicates they are alphabetic characters.
 
 `ascii'
      matches ASCII (unibyte) characters.
@@ -990,10 +992,14 @@ CHAR
      matches non-ASCII (multibyte) characters.
 
 `lower', `lower-case'
-     matches anything lower-case.
+     matches anything lower-case, as determined by the current case
+     table.  If `case-fold-search' is non-nil, this also matches any
+     upper-case letter.
 
 `upper', `upper-case'
-     matches anything upper-case.
+     matches anything upper-case, as determined by the current case
+     table.  If `case-fold-search' is non-nil, this also matches any
+     lower-case letter.
 
 `punctuation', `punct'
      matches punctuation.  (But at present, for multibyte characters,
