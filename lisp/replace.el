@@ -2721,7 +2721,8 @@ It must return a string."
 				 (replace-match-maybe-edit
 				  next-replacement nocasify literal noedit
 				  real-match-data backward)
-				 replaced t))
+				 replaced t)
+			   (setq next-replacement-replaced next-replacement))
 			 (setq done t))
 
 			((eq def 'delete-and-edit)
