@@ -268,8 +268,25 @@ pub fn process_thread(process: LispProcessRef) -> LispObject {
 /// PROCESS may be a process, a buffer, the name of a process or buffer, or
 /// nil, indicating the current buffer's process.
 #[lisp_fn]
-pub fn process_type(process: LispProcessRef) -> LispObject {
-    process.process_type()
+pub fn process_type(process: LispObject) -> LispObject {
+    let mut p;
+
+    if process.is_string() {
+        p = get_process(process);
+        if p.is_nil() {
+            p = get_buffer_process(process);
+        }
+    } else {
+        p = unsafe { cget_process(process.to_raw()) }
+    };
+
+    if p.is_nil() {
+        return p;
+    }
+
+    let p_ref = p.as_process_or_error();
+
+    p_ref.process_type()
 }
 
 /// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
