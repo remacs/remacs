@@ -2039,6 +2039,7 @@ Key bindings:
   (c-common-init 'c-mode)
   (easy-menu-add c-c-menu)
   (cc-imenu-init cc-imenu-c-generic-expression)
+  (add-hook 'flymake-diagnostic-functions 'flymake-cc nil t)
   (c-run-mode-hooks 'c-mode-common-hook))
 
 (defconst c-or-c++-mode--regexp
@@ -2126,6 +2127,7 @@ Key bindings:
   (c-common-init 'c++-mode)
   (easy-menu-add c-c++-menu)
   (cc-imenu-init cc-imenu-c++-generic-expression)
+  (add-hook 'flymake-diagnostic-functions 'flymake-cc nil t)
   (c-run-mode-hooks 'c-mode-common-hook))
 
 
