@@ -1239,6 +1239,9 @@ Only used if `ido-use-virtual-buffers' is non-nil.")
 ;; Dynamically bound in ido-read-internal.
 (defvar ido-completing-read)
 
+;; If dynamically set when ido-exit is 'fallback, overrides fallback command.
+(defvar ido-fallback nil)
+
 ;;; FUNCTIONS
 
 (defun ido-active (&optional merge)
@@ -2220,6 +2223,7 @@ If cursor is not at the end of the user input, move to end of input."
 	(run-hook-with-args 'ido-before-fallback-functions
 			    (or fallback 'switch-to-buffer))
 	(call-interactively (or fallback 'switch-to-buffer)))
+    (setq ido-fallback nil)
     (let* ((ido-context-switch-command switch-cmd)
 	   (ido-current-directory nil)
 	   (ido-directory-nonreadable nil)
@@ -2245,7 +2249,7 @@ If cursor is not at the end of the user input, move to end of input."
 
        ((eq ido-exit 'fallback)
 	(let ((read-buffer-function nil))
-	  (setq this-command (or fallback 'switch-to-buffer))
+	  (setq this-command (or ido-fallback fallback 'switch-to-buffer))
 	  (run-hook-with-args 'ido-before-fallback-functions this-command)
 	  (call-interactively this-command)))
 
@@ -2341,6 +2345,7 @@ If cursor is not at the end of the user input, move to end of input."
   ;; Internal function for ido-find-file and friends
   (unless item
     (setq item 'file))
+  (setq ido-fallback nil)
   (let ((ido-current-directory (ido-expand-directory default))
 	(ido-context-switch-command switch-cmd)
 	ido-directory-nonreadable ido-directory-too-big
@@ -2412,7 +2417,7 @@ If cursor is not at the end of the user input, move to end of input."
 	;; we don't want to change directory of current buffer.
 	(let ((default-directory ido-current-directory)
 	      (read-file-name-function nil))
-	  (setq this-command (or fallback 'find-file))
+	  (setq this-command (or ido-fallback fallback 'find-file))
 	  (run-hook-with-args 'ido-before-fallback-functions this-command)
 	  (call-interactively this-command)))
 
@@ -2821,13 +2826,15 @@ If no buffer or file exactly matching the prompt exists, maybe create a new one.
   (setq ido-exit 'takeprompt)
   (exit-minibuffer))
 
-(defun ido-fallback-command ()
-  "Fallback to non-Ido version of current command."
+(defun ido-fallback-command (&optional fallback-command)
+  "Fallback to non-Ido version of current command.
+The optional FALLBACK-COMMAND argument indicates which command to run."
   (interactive)
   (let ((i (length ido-text)))
     (while (> i 0)
       (push (aref ido-text (setq i (1- i))) unread-command-events)))
   (setq ido-exit 'fallback)
+  (setq ido-fallback fallback-command)
   (exit-minibuffer))
 
 (defun ido-enter-find-file ()
