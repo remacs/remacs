@@ -1311,19 +1311,25 @@ The returned symbols may not correspond to themes that have been
 loaded, and no effort is made to check that the files contain
 valid Custom themes.  For a list of loaded themes, check the
 variable `custom-known-themes'."
-  (let (sym themes)
+  (let ((suffix "-theme\\.el\\'")
+        themes)
     (dolist (dir (custom-theme--load-path))
-      (when (file-directory-p dir)
-	(dolist (file (file-expand-wildcards
-		       (expand-file-name "*-theme.el" dir) t))
-	  (setq file (file-name-nondirectory file))
-	  (and (string-match "\\`\\(.+\\)-theme.el\\'" file)
-	       (setq sym (intern (match-string 1 file)))
-	       (custom-theme-name-valid-p sym)
-	       (push sym themes)))))
-    (nreverse (delete-dups themes))))
+      ;; `custom-theme--load-path' promises DIR exists and is a
+      ;; directory, but `custom.el' is loaded too early during
+      ;; bootstrap to use `cl-lib' macros, so guard with
+      ;; `file-directory-p' instead of calling `cl-assert'.
+      (dolist (file (and (file-directory-p dir)
+                         (directory-files dir nil suffix)))
+        (let ((theme (intern (substring file 0 (string-match-p suffix file)))))
+          (and (custom-theme-name-valid-p theme)
+               (not (memq theme themes))
+               (push theme themes)))))
+    (nreverse themes)))
 
 (defun custom-theme--load-path ()
+  "Expand `custom-theme-load-path' into a list of directories.
+Members of `custom-theme-load-path' that either don't exist or
+are not directories are omitted from the expansion."
   (let (lpath)
     (dolist (f custom-theme-load-path)
       (cond ((eq f 'custom-theme-directory)
