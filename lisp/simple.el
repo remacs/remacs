@@ -639,8 +639,9 @@ buffer if the variable `delete-trailing-lines' is non-nil."
           (while (re-search-forward "\\s-$" end-marker t)
             (skip-syntax-backward "-" (line-beginning-position))
             (let ((b (point)) (e (match-end 0)))
-              (when (region-modifiable-p b e)
-                (delete-region b e)))))
+              (if (region-modifiable-p b e)
+                  (delete-region b e)
+                (goto-char e)))))
         (if end
             (set-marker end-marker nil)
           ;; Delete trailing empty lines.
