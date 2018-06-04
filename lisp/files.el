@@ -7044,8 +7044,7 @@ only these files will be asked to be saved."
                           ;; Use a temporary local copy.
 			  (copy-file local-copy)
 			  (rename-file local-copy)
-                          ;;`copy-directory' needs special handling.
-                          (copy-directory copy-directory)
+                          (copy-directory local-copy)
 			  ;; List the arguments which are filenames.
 			  (file-name-completion 0 1)
 			  (file-name-all-completions 0 1)
@@ -7072,21 +7071,20 @@ only these files will be asked to be saved."
       (while (consp file-arg-indices)
 	(let ((pair (nthcdr (car file-arg-indices) arguments)))
 	  (when (car pair)
-	    (setcar pair (file-name-unquote-non-special (car pair)))))
+	    (setcar pair (file-name-unquote (car pair) t))))
 	(setq file-arg-indices (cdr file-arg-indices))))
     (pcase method
       (`identity (car arguments))
-      (`add (file-name-quote (apply operation arguments)))
+      (`add (file-name-quote (apply operation arguments) t))
       (`buffer-file-name
-       (let ((buffer-file-name
-              (file-name-unquote-non-special buffer-file-name)))
+       (let ((buffer-file-name (file-name-unquote buffer-file-name t)))
          (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect
              (apply operation arguments)
            (when (and visit buffer-file-name)
-             (setq buffer-file-name (file-name-quote buffer-file-name))))))
+             (setq buffer-file-name (file-name-quote buffer-file-name t))))))
       (`unquote-then-quote
        ;; We can't use `cl-letf' with `(buffer-local-value)' here
        ;; because it wouldn't work during bootstrapping.
@@ -7095,8 +7093,7 @@ only these files will be asked to be saved."
          ;; `verify-visited-file-modtime' action, which takes a buffer
          ;; as only optional argument.
          (with-current-buffer (or (car arguments) buffer)
-           (let ((buffer-file-name
-                  (file-name-unquote-non-special buffer-file-name)))
+           (let ((buffer-file-name (file-name-unquote buffer-file-name t)))
              ;; Make sure to hide the temporary buffer change from the
              ;; underlying operation.
              (with-current-buffer buffer
@@ -7105,62 +7102,67 @@ only these files will be asked to be saved."
        (let* ((file-name-handler-alist saved-file-name-handler-alist)
               (source (car arguments))
               (target (car (cdr arguments)))
-              (tmpfile (file-local-copy source)))
-         (let ((handler (find-file-name-handler target 'copy-file)))
-           (unless (and handler (not (eq handler 'file-name-non-special)))
-             (setq target (file-name-unquote-non-special target))))
-         (setcar arguments (or tmpfile (file-name-unquote-non-special source)))
-         (setcar (cdr arguments) target)
-         (apply operation arguments)
-         (when (and tmpfile (file-exists-p tmpfile)) (delete-file tmpfile))))
-      (`copy-directory
-       (let* ((file-name-handler-alist saved-file-name-handler-alist)
-              (source (car arguments))
-              (target (car (cdr arguments)))
-              tmpdir)
-         (let ((handler (find-file-name-handler source 'copy-directory)))
-           (if (and handler (not (eq handler 'file-name-non-special)))
-               (progn
-                 (setq tmpdir (make-temp-name temporary-file-directory))
-                 (setcar (cdr arguments) tmpdir)
-                 (apply operation arguments)
-                 (setq source tmpdir))
-             (setq source (file-name-unquote-non-special source))))
-         (let ((handler (find-file-name-handler target 'copy-directory)))
-           (unless (and handler (not (eq handler 'file-name-non-special)))
-             (setq target (file-name-unquote-non-special target))))
+              (prefix (expand-file-name
+                       "file-name-non-special" temporary-file-directory))
+              tmpfile)
+         (cond
+          ;; If source is remote, we must create a local copy.
+          ((file-remote-p source)
+           (setq tmpfile (make-temp-name prefix))
+           (apply operation source tmpfile (cddr arguments))
+           (setq source tmpfile))
+          ;; If source is quoted, and the unquoted source looks
+          ;; remote, we must create a local copy.
+          ((file-name-quoted-p source t)
+           (setq source (file-name-unquote source t))
+           (when (file-remote-p source)
+             (setq tmpfile (make-temp-name prefix))
+             (let (file-name-handler-alist)
+               (apply operation source tmpfile (cddr arguments)))
+             (setq source tmpfile))))
+         ;; If target is quoted, and the unquoted target looks remote,
+         ;; we must disable the file name handler.
+         (when (file-name-quoted-p target t)
+           (setq target (file-name-unquote target t))
+           (when (file-remote-p target)
+             (setq file-name-handler-alist nil)))
+         ;; Do it.
          (setcar arguments source)
          (setcar (cdr arguments) target)
          (apply operation arguments)
-         (when tmpdir (delete-directory tmpdir 'recursive))))
+         ;; Cleanup.
+         (when (and tmpfile (file-exists-p tmpfile))
+           (if (file-directory-p tmpfile)
+               (delete-directory tmpfile 'recursive) (delete-file tmpfile)))))
       (_
        (apply operation arguments)))))
 
-(defsubst file-name-quoted-p (name)
+(defsubst file-name-quoted-p (name &optional top)
   "Whether NAME is quoted with prefix \"/:\".
-If NAME is a remote file name, check the local part of NAME."
-  (string-prefix-p "/:" (file-local-name name)))
+If NAME is a remote file name and TOP is nil, check the local part of NAME."
+  (let ((file-name-handler-alist (unless top file-name-handler-alist)))
+    (string-prefix-p "/:" (file-local-name name))))
 
-(defsubst file-name-quote (name)
+(defsubst file-name-quote (name &optional top)
   "Add the quotation prefix \"/:\" to file NAME.
-If NAME is a remote file name, the local part of NAME is quoted.
-If NAME is already a quoted file name, NAME is returned unchanged."
-  (if (file-name-quoted-p name)
-      name
-    (concat (file-remote-p name) "/:" (file-local-name name))))
+If NAME is a remote file name and TOP is nil, the local part of
+NAME is quoted.  If NAME is already a quoted file name, NAME is
+returned unchanged."
+  (let ((file-name-handler-alist (unless top file-name-handler-alist)))
+    (if (file-name-quoted-p name top)
+        name
+      (concat (file-remote-p name) "/:" (file-local-name name)))))
 
-(defsubst file-name-unquote-non-special (name)
-  "Remove quotation prefix \"/:\" from file NAME, if any."
-  (let (file-name-handler-alist)
-    (if (file-name-quoted-p name)
-        (if (= (length name) 2) "/" (substring name 2))
-      name)))
-
-(defsubst file-name-unquote (name)
+(defsubst file-name-unquote (name &optional top)
   "Remove quotation prefix \"/:\" from file NAME, if any.
-If NAME is a remote file name, the local part of NAME is unquoted."
-  (concat
-   (file-remote-p name) (file-name-unquote-non-special (file-local-name name))))
+If NAME is a remote file name and TOP is nil, the local part of
+NAME is unquoted."
+  (let* ((file-name-handler-alist (unless top file-name-handler-alist))
+         (localname (file-local-name name)))
+    (when (file-name-quoted-p localname top)
+      (setq
+       localname (if (= (length localname) 2) "/" (substring localname 2))))
+    (concat (file-remote-p name) localname)))
 
 ;; Symbolic modes and read-file-modes.
 
