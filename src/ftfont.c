@@ -61,6 +61,9 @@ struct ftfont_info
   bool maybe_otf;	/* Flag to tell if this may be OTF or not.  */
   OTF *otf;
 #endif	/* HAVE_LIBOTF */
+#ifdef HAVE_HARFBUZZ
+  hb_font_t *hb_font;
+#endif  /* HAVE_HARFBUZZ */
   FT_Size ft_size;
   int index;
   FT_Matrix matrix;
@@ -472,6 +475,35 @@ ftfont_get_otf (struct ftfont_info *ftfont_info)
   return otf;
 }
 #endif	/* HAVE_LIBOTF */
+
+#ifdef HAVE_HARFBUZZ
+
+#ifndef HAVE_HB_FT_FONT_CREATE_REFERENCED
+static void
+ft_face_destroy (void *data)
+{
+  FT_Done_Face ((FT_Face) data);
+}
+#endif
+
+static hb_font_t *
+ftfont_get_hb_font (struct ftfont_info *ftfont_info)
+{
+  if (! ftfont_info->hb_font)
+    {
+      hb_font_t *hb_font;
+#ifdef HAVE_HB_FT_FONT_CREATE_REFERENCED
+      hb_font = hb_ft_font_create_referenced (ftfont_info->ft_size->face);
+#else
+      FT_Reference_Face (ftfont_info->ft_size->face);
+      hb_font = hb_ft_font_create (ftfont_info->ft_size->face, ft_face_destroy);
+#endif
+      ftfont_info->hb_font = hb_font;
+    }
+  return ftfont_info->hb_font;
+}
+
+#endif	/* HAVE_HARFBUZZ */
 
 Lisp_Object
 ftfont_get_cache (struct frame *f)
@@ -1153,6 +1185,9 @@ ftfont_open2 (struct frame *f,
   ftfont_info->maybe_otf = (ft_face->face_flags & FT_FACE_FLAG_SFNT) != 0;
   ftfont_info->otf = NULL;
 #endif	/* HAVE_LIBOTF */
+#ifdef HAVE_HARFBUZZ
+  ftfont_info->hb_font = NULL;
+#endif	/* HAVE_HARFBUZZ */
   /* This means that there's no need of transformation.  */
   ftfont_info->matrix.xx = 0;
   font->pixel_size = size;
@@ -1262,6 +1297,10 @@ ftfont_close (struct font *font)
 #ifdef HAVE_LIBOTF
       if (ftfont_info->otf)
 	OTF_close (ftfont_info->otf);
+#endif
+#ifdef HAVE_HARFBUZZ
+      if (ftfont_info->hb_font)
+	hb_font_destroy (ftfont_info->hb_font);
 #endif
       cache_data->ft_face = NULL;
     }
@@ -2648,17 +2687,9 @@ ftfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 
 #ifdef HAVE_HARFBUZZ
 
-#ifndef HAVE_HB_FT_FONT_CREATE_REFERENCED
-static void
-ft_face_destroy (void *data)
-{
-  FT_Done_Face ((FT_Face) data);
-}
-#endif
-
 static Lisp_Object
-ftfont_shape_by_hb (Lisp_Object lgstring,
-		    FT_Face ft_face, FT_Matrix *matrix)
+ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
+                    FT_Matrix *matrix)
 {
   ptrdiff_t glyph_len = 0, text_len = LGSTRING_GLYPH_LEN (lgstring);
   ptrdiff_t i;
@@ -2666,15 +2697,8 @@ ftfont_shape_by_hb (Lisp_Object lgstring,
   hb_glyph_info_t *info;
   hb_glyph_position_t *pos;
 
-  /* FIXME: cache the buffer and the font */
+  /* FIXME: cache the buffer */
   hb_buffer_t *hb_buffer = hb_buffer_create ();
-#ifdef HAVE_HB_FT_FONT_CREATE_REFERENCED
-  hb_font_t *hb_font = hb_ft_font_create_referenced (ft_face);
-#else
-  FT_Reference_Face (ft_face);
-  hb_font_t *hb_font = hb_ft_font_create (ft_face, ft_face_destroy);
-#endif
-
   hb_buffer_pre_allocate (hb_buffer, text_len);
 
   for (i = 0; i < text_len; i++)
@@ -2768,7 +2792,6 @@ ftfont_shape_by_hb (Lisp_Object lgstring,
     }
 
 done:
-  hb_font_destroy (hb_font);
   hb_buffer_destroy (hb_buffer);
 
   return make_fixnum (glyph_len);
@@ -2786,8 +2809,10 @@ ftfont_shape (Lisp_Object lgstring)
 #ifdef HAVE_HARFBUZZ
   if (getenv ("EMACS_NO_HARFBUZZ") == NULL)
     {
+      hb_font_t *hb_font = ftfont_get_hb_font (ftfont_info);
+
       return ftfont_shape_by_hb (lgstring, ftfont_info->ft_size->face,
-				 &ftfont_info->matrix);
+				 hb_font, &ftfont_info->matrix);
     }
   else
 #endif  /* HAVE_HARFBUZZ */

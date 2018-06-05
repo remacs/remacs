@@ -48,6 +48,9 @@ struct xftfont_info
   bool maybe_otf;	  /* Flag to tell if this may be OTF or not.  */
   OTF *otf;
 #endif	/* HAVE_LIBOTF */
+#ifdef HAVE_HARFBUZZ
+  hb_font_t *hb_font;
+#endif  /* HAVE_HARFBUZZ */
   FT_Size ft_size;
   int index;
   FT_Matrix matrix;
@@ -430,6 +433,9 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
   xftfont_info->maybe_otf = (ft_face->face_flags & FT_FACE_FLAG_SFNT) != 0;
   xftfont_info->otf = NULL;
 #endif	/* HAVE_LIBOTF */
+#ifdef HAVE_HARFBUZZ
+  xftfont_info->hb_font = NULL;
+#endif	/* HAVE_HARFBUZZ */
   xftfont_info->ft_size = ft_face->size;
 
   font->baseline_offset = 0;
@@ -467,6 +473,13 @@ xftfont_close (struct font *font)
     {
       OTF_close (xftfont_info->otf);
       xftfont_info->otf = NULL;
+    }
+#endif
+#ifdef HAVE_HARFBUZZ
+  if (xftfont_info->hb_font)
+    {
+      hb_font_destroy (xftfont_info->hb_font);
+      xftfont_info->hb_font = NULL;
     }
 #endif
 
