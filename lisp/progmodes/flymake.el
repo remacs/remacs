@@ -222,18 +222,22 @@ generated it."
 
 (cl-defstruct (flymake--diag
                (:constructor flymake--diag-make))
-  buffer beg end type text backend)
+  buffer beg end type text backend data)
 
 ;;;###autoload
 (defun flymake-make-diagnostic (buffer
                                 beg
                                 end
                                 type
-                                text)
+                                text
+                                &optional data)
   "Make a Flymake diagnostic for BUFFER's region from BEG to END.
 TYPE is a key to `flymake-diagnostic-types-alist' and TEXT is a
-description of the problem detected in this region."
-  (flymake--diag-make :buffer buffer :beg beg :end end :type type :text text))
+description of the problem detected in this region.  DATA is any
+object that the caller wishes to attach to the created diagnostic
+for later retrieval."
+  (flymake--diag-make :buffer buffer :beg beg :end end
+                      :type type :text text :data data))
 
 ;;;###autoload
 (defun flymake-diagnostics (&optional beg end)
@@ -257,6 +261,7 @@ diagnostics at BEG."
 (flymake--diag-accessor flymake-diagnostic-beg flymake--diag-beg beg)
 (flymake--diag-accessor flymake-diagnostic-end flymake--diag-end end)
 (flymake--diag-accessor flymake-diagnostic-backend flymake--diag-backend backend)
+(flymake--diag-accessor flymake-diagnostic-data flymake--diag-data backend)
 
 (cl-defun flymake--overlays (&key beg end filter compare key)
   "Get flymake-related overlays.
