@@ -1068,14 +1068,17 @@ applied."
       ,@(unless (or all-disabled
                     (null known))
           (cl-loop
+           with get-severity = (lambda (type)
+                                 (flymake--lookup-type-property
+                                  type
+                                  'severity
+                                  (warning-numeric-level :error)))
            for (type . severity)
            in (cl-sort (mapcar (lambda (type)
-                                 (cons type (flymake--lookup-type-property
-                                             type
-                                             'severity
-                                             (warning-numeric-level :error))))
+                                 (cons type (funcall get-severity type)))
                                (cl-union (hash-table-keys diags-by-type)
-                                         '(:error :warning)))
+                                         '(:error :warning)
+                                         :key get-severity))
                        #'>
                        :key #'cdr)
            for diags = (gethash type diags-by-type)
