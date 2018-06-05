@@ -1,8 +1,8 @@
 \input texinfo   @c -*-texinfo; coding: utf-8 -*-
 @comment %**start of header
 @setfilename ../../info/flymake.info
-@set VERSION 0.3
-@set UPDATED April 2004
+@set VERSION 1.0
+@set UPDATED June 2018
 @settitle GNU Flymake @value{VERSION}
 @include docstyle.texi
 @syncodeindex pg cp
@@ -37,7 +37,7 @@ modify this GNU manual.''
 @titlepage
 @title GNU Flymake
 @subtitle for version @value{VERSION}, @value{UPDATED}
-@author Pavel Kobiakov(@email{pk_at_work@@yahoo.com}) and João Távora.
+@author João Távora and Pavel Kobiakov(@email{pk_at_work@@yahoo.com}).
 @page
 @vskip 0pt plus 1filll
 @insertcopying

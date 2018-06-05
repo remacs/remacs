@@ -3,8 +3,8 @@
 ;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
 ;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
-;; Maintainer: Leo Liu <sdl.web@gmail.com>
-;; Version: 0.3
+;; Maintainer: João Távora <joaotavora@gmail.com>
+;; Version: 1.0
 ;; Keywords: c languages tools
 
 ;; This file is part of GNU Emacs.
