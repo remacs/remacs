@@ -2784,14 +2784,19 @@ ftfont_shape (Lisp_Object lgstring)
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
 #ifdef HAVE_HARFBUZZ
-  return ftfont_shape_by_hb (lgstring, ftfont_info->ft_size->face,
-			     &ftfont_info->matrix);
-#else
-  OTF *otf = ftfont_get_otf (ftfont_info);
+  if (getenv ("EMACS_NO_HARFBUZZ") == NULL)
+    {
+      return ftfont_shape_by_hb (lgstring, ftfont_info->ft_size->face,
+				 &ftfont_info->matrix);
+    }
+  else
+#endif  /* HAVE_HARFBUZZ */
+    {
+      OTF *otf = ftfont_get_otf (ftfont_info);
 
-  return ftfont_shape_by_flt (lgstring, font, ftfont_info->ft_size->face, otf,
-			      &ftfont_info->matrix);
-#endif
+      return ftfont_shape_by_flt (lgstring, font, ftfont_info->ft_size->face,
+				  otf, &ftfont_info->matrix);
+    }
 }
 
 #endif /* defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ */
