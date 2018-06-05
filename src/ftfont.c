@@ -1310,6 +1310,24 @@ ftfont_encode_char (struct font *font, int c)
   return (code > 0 ? code : FONT_INVALID_CODE);
 }
 
+static bool
+ftfont_glyph_metrics (FT_Face ft_face, int c, int *advance, int *lbearing,
+                      int *rbearing, int *ascent, int *descent)
+{
+  if (FT_Load_Glyph (ft_face, c, FT_LOAD_DEFAULT) == 0)
+    {
+      FT_Glyph_Metrics *m = &ft_face->glyph->metrics;
+      *advance = m->horiAdvance >> 6;
+      *lbearing = m->horiBearingX >> 6;
+      *rbearing = (m->horiBearingX + m->width) >> 6;
+      *ascent = m->horiBearingY >> 6;
+      *descent = (m->height - m->horiBearingY) >> 6;
+      return true;
+    }
+
+  return false;
+}
+
 void
 ftfont_text_extents (struct font *font, unsigned int *code,
 		     int nglyphs, struct font_metrics *metrics)
@@ -1324,29 +1342,27 @@ ftfont_text_extents (struct font *font, unsigned int *code,
 
   for (i = 0, first = 1; i < nglyphs; i++)
     {
-      if (FT_Load_Glyph (ft_face, code[i], FT_LOAD_DEFAULT) == 0)
+      int advance, lbearing, rbearing, ascent, descent;
+      if (ftfont_glyph_metrics (ft_face, code[i], &advance, &lbearing,
+                                &rbearing, &ascent, &descent))
 	{
-	  FT_Glyph_Metrics *m = &ft_face->glyph->metrics;
-
 	  if (first)
 	    {
-	      metrics->lbearing = m->horiBearingX >> 6;
-	      metrics->rbearing = (m->horiBearingX + m->width) >> 6;
-	      metrics->ascent = m->horiBearingY >> 6;
-	      metrics->descent = (m->height - m->horiBearingY) >> 6;
+	      metrics->lbearing = lbearing;
+	      metrics->rbearing = rbearing;
+	      metrics->ascent = ascent;
+	      metrics->descent = descent;
 	      first = 0;
 	    }
-	  if (metrics->lbearing > width + (m->horiBearingX >> 6))
-	    metrics->lbearing = width + (m->horiBearingX >> 6);
-	  if (metrics->rbearing
-	      < width + ((m->horiBearingX + m->width) >> 6))
-	    metrics->rbearing
-	      = width + ((m->horiBearingX + m->width) >> 6);
-	  if (metrics->ascent < (m->horiBearingY >> 6))
-	    metrics->ascent = m->horiBearingY >> 6;
-	  if (metrics->descent > ((m->height - m->horiBearingY) >> 6))
-	    metrics->descent = (m->height - m->horiBearingY) >> 6;
-	  width += m->horiAdvance >> 6;
+	  if (metrics->lbearing > width + lbearing)
+	    metrics->lbearing = width + lbearing;
+	  if (metrics->rbearing < width + rbearing)
+	    metrics->rbearing = width + rbearing;
+	  if (metrics->ascent < ascent)
+	    metrics->ascent = ascent;
+	  if (metrics->descent > descent)
+	    metrics->descent = descent;
+	  width += advance;
 	}
       else
 	width += font->space_width;
@@ -2612,17 +2628,6 @@ ftfont_shape_by_flt (Lisp_Object lgstring, struct font *font,
   return make_fixnum (i);
 }
 
-Lisp_Object
-ftfont_shape (Lisp_Object lgstring)
-{
-  struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
-  struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
-  OTF *otf = ftfont_get_otf (ftfont_info);
-
-  return ftfont_shape_by_flt (lgstring, font, ftfont_info->ft_size->face, otf,
-			      &ftfont_info->matrix);
-}
-
 #endif	/* HAVE_M17N_FLT */
 
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS
@@ -2640,6 +2645,156 @@ ftfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 
 #endif	/* HAVE_OTF_GET_VARIATION_GLYPHS */
 #endif	/* HAVE_LIBOTF */
+
+#ifdef HAVE_HARFBUZZ
+
+#ifndef HAVE_HB_FT_FONT_CREATE_REFERENCED
+static void
+ft_face_destroy (void *data)
+{
+  FT_Done_Face ((FT_Face) data);
+}
+#endif
+
+static Lisp_Object
+ftfont_shape_by_hb (Lisp_Object lgstring,
+		    FT_Face ft_face, FT_Matrix *matrix)
+{
+  ptrdiff_t glyph_len = 0, text_len = LGSTRING_GLYPH_LEN (lgstring);
+  ptrdiff_t i;
+
+  hb_glyph_info_t *info;
+  hb_glyph_position_t *pos;
+
+  /* FIXME: cache the buffer and the font */
+  hb_buffer_t *hb_buffer = hb_buffer_create ();
+#ifdef HAVE_HB_FT_FONT_CREATE_REFERENCED
+  hb_font_t *hb_font = hb_ft_font_create_referenced (ft_face);
+#else
+  FT_Reference_Face (ft_face);
+  hb_font_t *hb_font = hb_ft_font_create (ft_face, ft_face_destroy);
+#endif
+
+  hb_buffer_pre_allocate (hb_buffer, text_len);
+
+  for (i = 0; i < text_len; i++)
+    {
+      Lisp_Object g = LGSTRING_GLYPH (lgstring, i);
+      int c;
+
+      if (NILP (g))
+	break;
+      c = LGLYPH_CHAR (g);
+      hb_buffer_add (hb_buffer, c, i);
+    }
+
+  text_len = i;
+  if (!text_len)
+    goto done;
+
+  hb_buffer_set_content_type (hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
+
+  /* FIXME: guess_segment_properties is BAD BAD BAD.
+   * we need to get these properties with the LGSTRING. */
+#if 1
+  hb_buffer_guess_segment_properties (hb_buffer);
+#else
+  hb_buffer_set_direction (hb_buffer, XXX);
+  hb_buffer_set_script (hb_buffer, XXX);
+  hb_buffer_set_language (hb_buffer, XXX);
+#endif
+
+  if (!hb_shape_full (hb_font, hb_buffer, NULL, 0, NULL))
+    goto done;
+
+  glyph_len = hb_buffer_get_length (hb_buffer);
+  /* FIXME: number of output glyphs can legitimately be larger than number of
+   * output characters, what to do in this case? */
+  if (glyph_len > LGSTRING_GLYPH_LEN (lgstring))
+    return Qnil;
+
+  /* FIXME: Emacs wants the buffer reversed, WHY! */
+  if (HB_DIRECTION_IS_BACKWARD (hb_buffer_get_direction (hb_buffer)))
+    hb_buffer_reverse_clusters (hb_buffer);
+
+  info = hb_buffer_get_glyph_infos (hb_buffer, NULL);
+  pos = hb_buffer_get_glyph_positions (hb_buffer, NULL);
+  for (i = 0; i < glyph_len; i++)
+    {
+      Lisp_Object lglyph = LGSTRING_GLYPH (lgstring, i);
+      EMACS_INT from, to;
+      int advance = 0, lbearing, rbearing, ascent, descent;
+      ptrdiff_t j = i;
+
+      if (NILP (lglyph))
+	{
+	  lglyph = LGLYPH_NEW ();
+	  LGSTRING_SET_GLYPH (lgstring, i, lglyph);
+	}
+
+      from = to = info[i].cluster;
+      /* FIXME: what does “from” mean here? */
+      LGLYPH_SET_FROM (lglyph, from);
+
+      /* FIXME: what does “to” mean here? */
+      for (j = i; j < glyph_len && info[j].cluster == info[i].cluster; j++)
+        ;
+      to = (j == glyph_len) ? text_len - 1 : info[j].cluster - 1;
+      LGLYPH_SET_TO (lglyph, to);
+
+      /* FIXME: is this really needed? Not all glyphs map directly to a single character */
+      LGLYPH_SET_CHAR (lglyph, LGLYPH_CHAR (LGSTRING_GLYPH (lgstring, from)));
+      LGLYPH_SET_CODE (lglyph, info[i].codepoint);
+
+      if (ftfont_glyph_metrics (ft_face, info[i].codepoint, &advance, &lbearing,
+                                &rbearing, &ascent, &descent))
+        {
+          LGLYPH_SET_WIDTH (lglyph, advance);
+          LGLYPH_SET_LBEARING (lglyph, lbearing);
+          LGLYPH_SET_RBEARING (lglyph, rbearing);
+          LGLYPH_SET_ASCENT (lglyph, ascent);
+          LGLYPH_SET_DESCENT (lglyph, descent);
+        }
+
+      if (pos[i].x_offset || pos[i].y_offset ||
+          (pos[i].x_advance >> 6) != advance)
+      {
+        Lisp_Object vec = make_uninit_vector (3);
+        ASET (vec, 0, make_fixnum (pos[i].x_offset >> 6));
+        ASET (vec, 1, make_fixnum (-(pos[i].y_offset >> 6)));
+        ASET (vec, 2, make_fixnum (pos[i].x_advance >> 6));
+        LGLYPH_SET_ADJUSTMENT (lglyph, vec);
+      }
+    }
+
+done:
+  hb_font_destroy (hb_font);
+  hb_buffer_destroy (hb_buffer);
+
+  return make_fixnum (glyph_len);
+}
+
+#endif /* HAVE_HARFBUZZ */
+
+#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
+
+Lisp_Object
+ftfont_shape (Lisp_Object lgstring)
+{
+  struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
+  struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
+#ifdef HAVE_HARFBUZZ
+  return ftfont_shape_by_hb (lgstring, ftfont_info->ft_size->face,
+			     &ftfont_info->matrix);
+#else
+  OTF *otf = ftfont_get_otf (ftfont_info);
+
+  return ftfont_shape_by_flt (lgstring, font, ftfont_info->ft_size->face, otf,
+			      &ftfont_info->matrix);
+#endif
+}
+
+#endif /* defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ */
 
 static const char *const ftfont_booleans [] = {
   ":antialias",
@@ -2695,7 +2850,7 @@ ftfont_filter_properties (Lisp_Object font, Lisp_Object alist)
 Lisp_Object
 ftfont_combining_capability (struct font *font)
 {
-#ifdef HAVE_M17N_FLT
+#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
   return Qt;
 #else
   return Qnil;
@@ -2720,7 +2875,7 @@ static struct font_driver const ftfont_driver =
 #ifdef HAVE_LIBOTF
   .otf_capability = ftfont_otf_capability,
 #endif
-#if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
+#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
   .shape = ftfont_shape,
 #endif
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS

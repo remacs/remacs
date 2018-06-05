@@ -299,7 +299,7 @@ struct font_driver const ftcrfont_driver =
 #ifdef HAVE_LIBOTF
   .otf_capability = ftfont_otf_capability,
 #endif
-#if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
+#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
   .shape = ftfont_shape,
 #endif
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS

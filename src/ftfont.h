@@ -29,6 +29,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include FT_BDF_H
 #endif
 
+#ifdef HAVE_HARFBUZZ
+#include <hb.h>
+#include <hb-ft.h>
+#endif  /* HAVE_HARFBUZZ */
+
 #ifdef HAVE_LIBOTF
 #include <otf.h>
 #ifdef HAVE_M17N_FLT
