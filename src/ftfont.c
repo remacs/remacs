@@ -2717,6 +2717,7 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
     goto done;
 
   hb_buffer_set_content_type (hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
+  hb_buffer_set_cluster_level (hb_buffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
 
   /* FIXME: guess_segment_properties is BAD BAD BAD.
    * we need to get these properties with the LGSTRING. */
