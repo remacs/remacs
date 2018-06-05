@@ -1,5 +1,5 @@
 //! Base64 de- and encoding functions.
-use std::ptr;
+use                 std::ptr;
 use std::slice;
 
 use base64_crate;
