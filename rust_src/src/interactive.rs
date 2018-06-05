@@ -1,6 +1,6 @@
 //! Call a Lisp function interactively.
 
-use remacs_macros::lisp_fn;
+use     remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qminus};
 
 use lisp::LispObject;
