@@ -87,7 +87,7 @@ notifications:
     on_failure: always
     on_success: never
     on_start: never
-    on_cancel: always
+    on_cancel: never
     on_error: always
 
 matrix:
