@@ -998,7 +998,8 @@ unquoted file names."
       (set-file-selinux-context nospecial (file-selinux-context nospecial))))
   (files-tests--with-temp-non-special-and-file-name-handler (tmpfile nospecial)
     (unless (equal (file-selinux-context tmpfile) '(nil nil nil nil))
-      (set-file-selinux-context nospecial (file-selinux-context nospecial)))))
+      (should-error
+       (set-file-selinux-context nospecial (file-selinux-context nospecial))))))
 
 (ert-deftest files-tests-file-name-non-special-set-file-times ()
   (files-tests--with-temp-non-special (tmpfile nospecial)
