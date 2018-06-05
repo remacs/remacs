@@ -81,6 +81,14 @@ jobs:
 notifications:
   fast_finish: true
   email: false
+  webhooks:
+    urls:
+      - https://remacs-rustfmt-check.herokuapp.com/verify-results
+    on_failure: always
+    on_success: never
+    on_start: never
+    on_cancel: never
+    on_error: always
 
 matrix:
   fast_finish: true

@@ -1,5 +1,5 @@
 //! Case conversion functions.
-use remacs_macros::lisp_fn;
+use                    remacs_macros::lisp_fn;
 
 use lisp::LispObject;
 use lisp::defsubr;
