@@ -358,6 +358,7 @@ OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
 OPTION_DEFAULT_ON([json], [don't compile with native JSON support])
 
 OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
+OPTION_DEFAULT_OFF([harfbuzz],[use HarfBuzz for text shaping (experimental)])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
 OPTION_DEFAULT_ON([m17n-flt],[don't use m17n-flt for text shaping])
 
@@ -3307,10 +3308,24 @@ if test "${HAVE_X11}" = "yes"; then
        test "$HAVE_FREETYPE" = "no" && AC_MSG_ERROR(libxft requires libfreetype)
     fi
 
+    HAVE_HARFBUZZ=no
     HAVE_LIBOTF=no
     if test "${HAVE_FREETYPE}" = "yes"; then
       AC_DEFINE(HAVE_FREETYPE, 1,
 		[Define to 1 if using the freetype and fontconfig libraries.])
+      if test "${with_harfbuzz}" != "no"; then
+	EMACS_CHECK_MODULES([HARFBUZZ], [harfbuzz])
+	if test "$HAVE_HARFBUZZ" = "yes"; then
+	  AC_DEFINE(HAVE_HARFBUZZ, 1, [Define to 1 if using HarfBuzz.])
+	  AC_CHECK_LIB(harfbuzz, hb_ft_font_create_referenced,
+		       HAVE_HB_FT_FONT_CREATE_REFERENCED=yes,
+		       HAVE_HB_FT_FONT_CREATE_REFERENCED=no)
+	  if test "${HAVE_HB_FT_FONT_CREATE_REFERENCED}" = "yes"; then
+	    AC_DEFINE(HAVE_HB_FT_FONT_CREATE_REFERENCED, 1,
+		      [Define to 1 if HarfBuzz has hb_ft_font_create_referenced.])
+	  fi
+	fi
+      fi
       if test "${with_libotf}" != "no"; then
 	EMACS_CHECK_MODULES([LIBOTF], [libotf])
 	if test "$HAVE_LIBOTF" = "yes"; then
@@ -3344,6 +3359,7 @@ if test "${HAVE_X11}" = "yes"; then
 else
     HAVE_XFT=no
     HAVE_FREETYPE=no
+    HAVE_HARFBUZZ=no
     HAVE_LIBOTF=no
     HAVE_M17N_FLT=no
 fi
@@ -3354,6 +3370,8 @@ AC_SUBST(FREETYPE_CFLAGS)
 AC_SUBST(FREETYPE_LIBS)
 AC_SUBST(FONTCONFIG_CFLAGS)
 AC_SUBST(FONTCONFIG_LIBS)
+AC_SUBST(HARFBUZZ_CFLAGS)
+AC_SUBST(HARFBUZZ_LIBS)
 AC_SUBST(LIBOTF_CFLAGS)
 AC_SUBST(LIBOTF_LIBS)
 AC_SUBST(M17N_FLT_CFLAGS)
@@ -5461,7 +5479,7 @@ Configured for '${canonical}'.
 optsep=
 emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
-  GCONF GSETTINGS GLIB NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
+  GCONF GSETTINGS GLIB NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE HARFBUZZ M17N_FLT \
   LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 XDBE XIM \
   NS MODULES THREADS XWIDGETS LIBSYSTEMD JSON CANNOT_DUMP LCMS2 GMP; do
 
@@ -5520,6 +5538,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use -lgnutls?                                ${HAVE_GNUTLS}
   Does Emacs use -lxml2?                                  ${HAVE_LIBXML2}
   Does Emacs use -lfreetype?                              ${HAVE_FREETYPE}
+  Does Emacs use HarfBuzz?                                ${HAVE_HARFBUZZ}
   Does Emacs use -lm17n-flt?                              ${HAVE_M17N_FLT}
   Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
   Does Emacs use -lxft?                                   ${HAVE_XFT}
