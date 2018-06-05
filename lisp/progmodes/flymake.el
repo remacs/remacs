@@ -540,6 +540,11 @@ associated `flymake-category' return DEFAULT."
          (cadr cat-probe))
        default))))
 
+(defun flymake--severity (type)
+  "Get the severity for diagnostic TYPE."
+  (flymake--lookup-type-property type 'severity
+                                 (warning-numeric-level :error)))
+
 (defun flymake--fringe-overlay-spec (bitmap &optional recursed)
   (if (and (symbolp bitmap)
            (boundp bitmap)
@@ -980,8 +985,9 @@ arg, skip any diagnostics with a severity less than `:warning'.
 If `flymake-wrap-around' is non-nil and no more next diagnostics,
 resumes search from top.
 
-FILTER is a list of diagnostic types, or nil, if no filter is to
-be applied."
+FILTER is a list of diagnostic types.  Only diagnostics with
+matching severities matching are considered.  If nil (the
+default) no filter is applied."
   ;; TODO: let filter be a number, a severity below which diags are
   ;; skipped.
   (interactive (list 1
@@ -995,9 +1001,12 @@ be applied."
                                                 ov
                                                 'flymake-diagnostic)))
                                      (and diag
-                                          (or (not filter)
-                                              (memq (flymake--diag-type diag)
-                                                    filter)))))
+                                          (or
+                                           (not filter)
+                                           (cl-find
+                                            (flymake--severity
+                                             (flymake--diag-type diag))
+                                            filter :key #'flymake--severity)))))
                                  :compare (if (cl-plusp n) #'< #'>)
                                  :key #'overlay-start))
          (tail (cl-member-if (lambda (ov)
@@ -1021,10 +1030,10 @@ be applied."
               (funcall (overlay-get target 'help-echo)
                        (selected-window) target (point)))))
           (interactive
-           (user-error "No more Flymake errors%s"
+           (user-error "No more Flymake diagnostics%s"
                        (if filter
-                           (format " of types %s" filter)
-                         ""))))))
+                           (format " of %s severity"
+                                   (mapconcat #'symbol-name filter ", ")) ""))))))
 
 (defun flymake-goto-prev-error (&optional n filter interactive)
   "Go to Nth previous Flymake diagnostic that matches FILTER.
@@ -1035,8 +1044,9 @@ prefix arg, skip any diagnostics with a severity less than
 If `flymake-wrap-around' is non-nil and no more previous
 diagnostics, resumes search from bottom.
 
-FILTER is a list of diagnostic types found in, or nil, if no
-filter is to be applied."
+FILTER is a list of diagnostic types.  Only diagnostics with
+matching severities matching are considered.  If nil (the
+default) no filter is applied."
   (interactive (list 1 (if current-prefix-arg
                            '(:error :warning))
                      t))
@@ -1117,17 +1127,12 @@ filter is to be applied."
       ,@(unless (or all-disabled
                     (null known))
           (cl-loop
-           with get-severity = (lambda (type)
-                                 (flymake--lookup-type-property
-                                  type
-                                  'severity
-                                  (warning-numeric-level :error)))
            for (type . severity)
            in (cl-sort (mapcar (lambda (type)
-                                 (cons type (funcall get-severity type)))
+                                 (cons type (flymake--severity type)))
                                (cl-union (hash-table-keys diags-by-type)
                                          '(:error :warning)
-                                         :key get-severity))
+                                         :key #'flymake--severity))
                        #'>
                        :key #'cdr)
            for diags = (gethash type diags-by-type)
