@@ -176,6 +176,13 @@ interface that's more like functions like @code{search-forward}.
 It now treats the optional 2nd argument to mean that the URL should be
 shown in the currently selected window.
 
+** Flymake
+
++++
+*** The variable 'flymake-diagnostic-types-alist' is obsolete
+You should instead set properties on known diagnostic symbols, like
+':error' and ':warning', as demonstrated in the Flymake manual.
+
 ** Package
 *** New 'package-quickstart' feature
 When 'package-quickstart' is non-nil, package.el precomputes a big autoloads

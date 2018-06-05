@@ -34,13 +34,77 @@
 ;; results produced by these backends, as well as entry points for
 ;; backends to hook on to.
 ;;
-;; The main entry points are `flymake-mode' and `flymake-start'
+;; The main interactive entry point is the `flymake-mode' minor mode,
+;; which periodically and automatically initiates checks as the user
+;; is editing the buffer.  The variables `flymake-no-changes-timeout',
+;; `flymake-start-syntax-check-on-newline' and
+;; `flymake-start-on-flymake-mode' give finer control over the events
+;; triggering a check, as does the interactive command
+;; `flymake-start', which immediately starts a check.
 ;;
-;; The docstrings of these variables are relevant to understanding how
-;; Flymake works for both the user and the backend programmer:
+;; Shortly after each check, a summary of collected diagnostics should
+;; appear in the mode-line.  If it doesn't, there might not be a
+;; suitable Flymake backend for the current buffer's major mode, in
+;; which case Flymake will indicate this in the mode-line.  The
+;; indicator will be `!' (exclamation mark), if all the configured
+;; backends errored (or decided to disable themselves) and `?'
+;; (question mark) if no backends were even configured.
 ;;
-;; * `flymake-diagnostic-functions'
-;; * `flymake-diagnostic-types-alist'
+;; For programmers interested in writing a new Flymake backend, the
+;; docstring of `flymake-diagnostic-functions', the Flymake manual,
+;; and the code of existing backends are probably a good starting
+;; point.
+;;
+;; The user wishing to customize the appearance of error types should
+;; set properties on the symbols associated with each diagnostic type.
+;; The standard diagnostic symbols are `:error', `:warning' and
+;; `:note' (though a specific backend may define and use more).  The
+;; following properties can be set:
+;;
+;; * `flymake-bitmap', an image displayed in the fringe according to
+;; `flymake-fringe-indicator-position'.  The value actually follows
+;; the syntax of `flymake-error-bitmap' (which see).  It is overridden
+;; by any `before-string' overlay property.
+;;
+;; * `flymake-severity', a non-negative integer specifying the
+;; diagnostic's severity.  The higher, the more serious.  If the
+;; overlay property `priority' is not specified, `severity' is used to
+;; set it and help sort overlapping overlays.
+;;
+;; * `flymake-overlay-control', an alist ((OVPROP . VALUE) ...) of
+;; further properties used to affect the appearance of Flymake
+;; annotations.  With the exception of `category' and `evaporate',
+;; these properties are applied directly to the created overlay.  See
+;; Info Node `(elisp)Overlay Properties'.
+;;
+;; * `flymake-category', a symbol whose property list is considered a
+;; default for missing values of any other properties.  This is useful
+;; to backend authors when creating new diagnostic types that differ
+;; from an existing type by only a few properties.  The category
+;; symbols `flymake-error', `flymake-warning' and `flymake-note' make
+;; good candidates for values of this property.
+;;
+;; For instance, to omit the fringe bitmap displayed for the standard
+;; `:note' type, set its `flymake-bitmap' property to nil:
+;;
+;;   (put :note 'flymake-bitmap nil)
+;;
+;; To change the face for `:note' type, add a `face' entry to its
+;; `flymake-overlay-control' property.
+;;
+;;   (push '(face . highlight) (get :note 'flymake-overlay-control))
+;;
+;; If you push another alist entry in front, it overrides the previous
+;; one.  So this effectively removes the face from `:note'
+;; diagnostics.
+;;
+;;   (push '(face . nil) (get :note 'flymake-overlay-control))
+;;
+;; To erase customizations and go back to the original look for
+;; `:note' types:
+;;
+;;   (cl-remf (symbol-plist :note) 'flymake-overlay-control)
+;;   (cl-remf (symbol-plist :note) 'flymake-bitmap)
 ;;
 ;;; Code:
 
@@ -232,10 +296,9 @@ generated it."
                                 text
                                 &optional data)
   "Make a Flymake diagnostic for BUFFER's region from BEG to END.
-TYPE is a key to `flymake-diagnostic-types-alist' and TEXT is a
-description of the problem detected in this region.  DATA is any
-object that the caller wishes to attach to the created diagnostic
-for later retrieval."
+TYPE is a key to symbol and TEXT is a description of the problem
+detected in this region.  DATA is any object that the caller
+wishes to attach to the created diagnostic for later retrieval."
   (flymake--diag-make :buffer buffer :beg beg :end end
                       :type type :text text :data data))
 
@@ -426,74 +489,56 @@ Currently accepted REPORT-KEY arguments are:
 
 (put 'flymake-diagnostic-functions 'safe-local-variable #'null)
 
-(defvar flymake-diagnostic-types-alist
-  `((:error
-     . ((flymake-category . flymake-error)))
-    (:warning
-     . ((flymake-category . flymake-warning)))
-    (:note
-     . ((flymake-category . flymake-note))))
-  "Alist ((KEY . PROPS)*) of properties of Flymake diagnostic types.
-KEY designates a kind of diagnostic can be anything passed as
-`:type' to `flymake-make-diagnostic'.
+(put :error 'flymake-category 'flymake-error)
+(put :warning 'flymake-category 'flymake-warning)
+(put :note 'flymake-category 'flymake-note)
 
-PROPS is an alist of properties that are applied, in order, to
-the diagnostics of the type designated by KEY.  The recognized
-properties are:
-
-* Every property pertaining to overlays, except `category' and
-  `evaporate' (see Info Node `(elisp)Overlay Properties'), used
-  to affect the appearance of Flymake annotations.
-
-* `bitmap', an image displayed in the fringe according to
-  `flymake-fringe-indicator-position'.  The value actually
-  follows the syntax of `flymake-error-bitmap' (which see).  It
-  is overridden by any `before-string' overlay property.
-
-* `severity', a non-negative integer specifying the diagnostic's
-  severity.  The higher, the more serious.  If the overlay
-  property `priority' is not specified, `severity' is used to set
-  it and help sort overlapping overlays.
-
-* `flymake-category', a symbol whose property list is considered
-  a default for missing values of any other properties.  This is
-  useful to backend authors when creating new diagnostic types
-  that differ from an existing type by only a few properties.")
+(defvar flymake-diagnostic-types-alist `() "")
+(make-obsolete-variable
+ 'flymake-diagnostic-types-alist
+ "Set properties on the diagnostic symbols instead. See Info
+Node `(Flymake)Flymake error types'"
+ "27.1")
 
 (put 'flymake-error 'face 'flymake-error)
-(put 'flymake-error 'bitmap 'flymake-error-bitmap)
+(put 'flymake-error 'flymake-bitmap 'flymake-error-bitmap)
 (put 'flymake-error 'severity (warning-numeric-level :error))
 (put 'flymake-error 'mode-line-face 'compilation-error)
 
 (put 'flymake-warning 'face 'flymake-warning)
-(put 'flymake-warning 'bitmap 'flymake-warning-bitmap)
+(put 'flymake-warning 'flymake-bitmap 'flymake-warning-bitmap)
 (put 'flymake-warning 'severity (warning-numeric-level :warning))
 (put 'flymake-warning 'mode-line-face 'compilation-warning)
 
 (put 'flymake-note 'face 'flymake-note)
-(put 'flymake-note 'bitmap 'flymake-note-bitmap)
+(put 'flymake-note 'flymake-bitmap 'flymake-note-bitmap)
 (put 'flymake-note 'severity (warning-numeric-level :debug))
 (put 'flymake-note 'mode-line-face 'compilation-info)
 
 (defun flymake--lookup-type-property (type prop &optional default)
-  "Look up PROP for TYPE in `flymake-diagnostic-types-alist'.
-If TYPE doesn't declare PROP in either
-`flymake-diagnostic-types-alist' or in the symbol of its
+  "Look up PROP for diagnostic TYPE.
+If TYPE doesn't declare PROP in its plist or in the symbol of its
 associated `flymake-category' return DEFAULT."
-  (let ((alist-probe (assoc type flymake-diagnostic-types-alist)))
-    (cond (alist-probe
-           (let* ((alist (cdr alist-probe))
-                  (prop-probe (assoc prop alist)))
-             (if prop-probe
-                 (cdr prop-probe)
-               (if-let* ((cat (assoc-default 'flymake-category alist))
-                         (plist (and (symbolp cat)
-                                     (symbol-plist cat)))
-                         (cat-probe (plist-member plist prop)))
-                   (cadr cat-probe)
-                 default))))
-          (t
-           default))))
+  ;; This function also consults `flymake-diagnostic-types-alist' for
+  ;; backward compatibility.
+  ;;
+  (if (plist-member (symbol-plist type) prop)
+      ;; allow nil values to survive
+      (get type prop)
+    (let (alist)
+      (or
+       (alist-get
+        prop (setq
+              alist
+              (alist-get type flymake-diagnostic-types-alist)))
+       (when-let* ((cat (or
+                         (get type 'flymake-category)
+                         (alist-get 'flymake-category alist)))
+                   (plist (and (symbolp cat)
+                               (symbol-plist cat)))
+                   (cat-probe (plist-member plist prop)))
+         (cadr cat-probe))
+       default))))
 
 (defun flymake--fringe-overlay-spec (bitmap &optional recursed)
   (if (and (symbolp bitmap)
@@ -510,34 +555,38 @@ associated `flymake-category' return DEFAULT."
                              (list bitmap)))))))
 
 (defun flymake--highlight-line (diagnostic)
-  "Highlight buffer with info in DIAGNOSTIC."
-  (when-let* ((ov (make-overlay
+  "Highlight buffer with info in DIGNOSTIC."
+  (when-let* ((type (flymake--diag-type diagnostic))
+              (ov (make-overlay
                    (flymake--diag-beg diagnostic)
                    (flymake--diag-end diagnostic))))
-    ;; First set `category' in the overlay, then copy over every other
-    ;; property.
+    ;; First set `category' in the overlay
     ;;
-    (let ((alist (assoc-default (flymake--diag-type diagnostic)
-                                flymake-diagnostic-types-alist)))
-      (overlay-put ov 'category (assoc-default 'flymake-category alist))
-      (cl-loop for (k . v) in alist
-               unless (eq k 'category)
-               do (overlay-put ov k v)))
+    (overlay-put ov 'category
+                 (flymake--lookup-type-property type 'flymake-category))
+    ;; Now "paint" the overlay with all the other non-category
+    ;; properties.
+    (cl-loop
+     for (ov-prop . value) in
+     (append (reverse ; ensure ealier props override later ones
+              (flymake--lookup-type-property type 'flymake-overlay-control))
+             (alist-get type flymake-diagnostic-types-alist))
+     do (overlay-put ov ov-prop value))
     ;; Now ensure some essential defaults are set
     ;;
     (cl-flet ((default-maybe
                 (prop value)
-                (unless (or (plist-member (overlay-properties ov) prop)
-                            (let ((cat (overlay-get ov
-                                                    'flymake-category)))
-                              (and cat
-                                   (plist-member (symbol-plist cat) prop))))
-                  (overlay-put ov prop value))))
-      (default-maybe 'bitmap 'flymake-error-bitmap)
+                (unless (plist-member (overlay-properties ov) prop)
+                  (overlay-put ov prop (flymake--lookup-type-property
+                                        type prop value)))))
       (default-maybe 'face 'flymake-error)
       (default-maybe 'before-string
         (flymake--fringe-overlay-spec
-         (overlay-get ov 'bitmap)))
+         (flymake--lookup-type-property
+          type
+          'flymake-bitmap
+          (alist-get 'bitmap (alist-get type ; backward compat
+                                        flymake-diagnostic-types-alist)))))
       (default-maybe 'help-echo
         (lambda (window _ov pos)
           (with-selected-window window
@@ -825,7 +874,9 @@ The commands `flymake-goto-next-error' and
 diagnostics annotated in the buffer.
 
 The visual appearance of each type of diagnostic can be changed
-in the variable `flymake-diagnostic-types-alist'.
+by setting properties `flymake-overlay-control', `flymake-bitmap'
+and `flymake-severity' on the symbols of diagnostic types (like
+`:error', `:warning' and `:note').
 
 Activation or deactivation of backends used by Flymake in each
 buffer happens via the special hook
@@ -929,9 +980,8 @@ arg, skip any diagnostics with a severity less than `:warning'.
 If `flymake-wrap-around' is non-nil and no more next diagnostics,
 resumes search from top.
 
-FILTER is a list of diagnostic types found in
-`flymake-diagnostic-types-alist', or nil, if no filter is to be
-applied."
+FILTER is a list of diagnostic types, or nil, if no filter is to
+be applied."
   ;; TODO: let filter be a number, a severity below which diags are
   ;; skipped.
   (interactive (list 1
@@ -985,9 +1035,8 @@ prefix arg, skip any diagnostics with a severity less than
 If `flymake-wrap-around' is non-nil and no more previous
 diagnostics, resumes search from bottom.
 
-FILTER is a list of diagnostic types found in
-`flymake-diagnostic-types-alist', or nil, if no filter is to be
-applied."
+FILTER is a list of diagnostic types found in, or nil, if no
+filter is to be applied."
   (interactive (list 1 (if current-prefix-arg
                            '(:error :warning))
                      t))

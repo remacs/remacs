@@ -5209,9 +5209,10 @@ be used."
 (defcustom python-flymake-msg-alist
   '(("\\(^redefinition\\|.*unused.*\\|used$\\)" . :warning))
   "Alist used to associate messages to their types.
-Each element should be a cons-cell (REGEXP . TYPE), where TYPE must be
-one defined in the variable `flymake-diagnostic-types-alist'.
-For example, when using `flake8' a possible configuration could be:
+Each element should be a cons-cell (REGEXP . TYPE), where TYPE
+should be a diagnostic type symbol like `:error', `:warning' or
+`:note'.  For example, when using `flake8' a possible
+configuration could be:
 
   ((\"\\(^redefinition\\|.*unused.*\\|used$\\)\" . :warning)
    (\"^E999\" . :error)
