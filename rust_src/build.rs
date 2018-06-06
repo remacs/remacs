@@ -637,6 +637,9 @@ fn run_bindgen() {
                 .blacklist_type("USE_LSB_TAG")
                 .blacklist_type("VALMASK")
                 .blacklist_type("PSEUDOVECTOR_FLAG")
+                // these two are found by bindgen on mac, but not linux
+                .blacklist_type("EMACS_INT_MAX")
+                .blacklist_type("VAL_MAX")
                 //.blacklist_type("staticpro")
                 // this is wallpaper for a bug in bindgen, we don't lose much by it
                 // https://github.com/servo/rust-bindgen/issues/687
