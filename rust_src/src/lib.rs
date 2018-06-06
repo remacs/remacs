@@ -15,6 +15,7 @@
 #![feature(stmt_expr_attributes)]
 #![feature(repr_transparent)]
 #![feature(untagged_unions)]
+#![feature(never_type)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -104,6 +105,7 @@ use alloc_unexecmacosx::OsxUnexecAlloc;
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
+#[cfg(not(test))]
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]

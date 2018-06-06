@@ -64,12 +64,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define file_tell ftell
 #endif
 
-// Used by Rust to interact with bitfield properties.
-bool symbol_is_interned(struct Lisp_Symbol *symbol);
-bool symbol_is_alias(struct Lisp_Symbol *symbol);
-bool symbol_is_constant(struct Lisp_Symbol *symbol);
-uint16_t misc_get_ty(struct Lisp_Misc_Any *any);
-
 /* The objects or placeholders read with the #n=object form.
 
    A hash table maps a number to either a placeholder (while the

@@ -38,8 +38,7 @@ use std::slice;
 
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
-use remacs_sys::{EmacsInt, Lisp_String, Lisp_Type, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK,
-                 CHAR_SHIFT};
+use remacs_sys::{char_bits, EmacsInt, Lisp_String, Lisp_Type};
 use remacs_sys::emacs_abort;
 
 use lisp::{ExternalPtr, LispObject};
@@ -50,7 +49,7 @@ pub type LispStringRef = ExternalPtr<Lisp_String>;
 pub type Codepoint = u32;
 
 /// Maximum character code
-pub const MAX_CHAR: Codepoint = (1 << CHARACTERBITS) - 1;
+pub const MAX_CHAR: Codepoint = (1 << char_bits::CHARACTERBITS as usize) - 1;
 
 /// Maximum character codes for several encoded lengths
 pub const MAX_1_BYTE_CHAR: Codepoint = 0x7F;
@@ -348,13 +347,13 @@ pub fn write_codepoint(to: &mut [c_uchar], cp: Codepoint) -> usize {
 pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
     let mut cp = ch as Codepoint;
     // A non-ASCII character can't reflect modifier bits to the code.
-    if !is_ascii(cp & !CHAR_MODIFIER_MASK) {
+    if !is_ascii(cp & !char_bits::CHAR_MODIFIER_MASK) {
         return EmacsInt::from(cp);
     }
     let ascii = (cp & 0x7F) as u8;
     // For Meta, Shift, and Control modifiers, we need special care.
-    if cp & CHAR_SHIFT != 0 {
-        let unshifted = cp & !CHAR_SHIFT;
+    if cp & char_bits::CHAR_SHIFT != 0 {
+        let unshifted = cp & !char_bits::CHAR_SHIFT;
         // Shift modifier is valid only with [A-Za-z].
         // Shift modifier for control characters and SPC is ignored.
         if (ascii >= b'A' && ascii <= b'Z') || ascii <= b' ' {
@@ -364,16 +363,16 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
         }
     }
     // Simulate the code in lread.c.
-    if cp & CHAR_CTL != 0 {
+    if cp & char_bits::CHAR_CTL != 0 {
         // Allow `\C- ' and `\C-?'.
         if ascii == b' ' {
-            cp &= !0x7F & !CHAR_CTL;
+            cp &= !0x7F & !char_bits::CHAR_CTL;
         } else if ascii == b'?' {
-            cp = 0x7F | (cp & !0x7F & !CHAR_CTL);
+            cp = 0x7F | (cp & !0x7F & !char_bits::CHAR_CTL);
         } else if ascii >= b'@' && ascii <= b'_' {
             // ASCII control chars are made from letters (both cases),
             // as well as the non-letters within 0o100...0o137.
-            cp &= 0x1F | (!0x7F & !CHAR_CTL);
+            cp &= 0x1F | (!0x7F & !char_bits::CHAR_CTL);
         }
     }
     EmacsInt::from(cp)
@@ -383,9 +382,9 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
 /// handle them appropriately.
 #[no_mangle]
 pub extern "C" fn char_string(mut cp: c_uint, to: *mut c_uchar) -> c_int {
-    if cp & CHAR_MODIFIER_MASK != 0 {
+    if cp & char_bits::CHAR_MODIFIER_MASK != 0 {
         cp = char_resolve_modifier_mask(EmacsInt::from(cp)) as Codepoint;
-        cp &= !CHAR_MODIFIER_MASK;
+        cp &= !char_bits::CHAR_MODIFIER_MASK;
     }
     write_codepoint(
         unsafe { slice::from_raw_parts_mut(to, MAX_MULTIBYTE_LENGTH) },

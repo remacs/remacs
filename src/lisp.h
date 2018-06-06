@@ -453,9 +453,7 @@ enum Lisp_Misc_Type
     Lisp_Misc_Overlay,
     Lisp_Misc_Save_Value,
     Lisp_Misc_Finalizer,
-#ifdef HAVE_MODULES
     Lisp_Misc_User_Ptr,
-#endif
     /* This is not a type code.  It is for range checking.  */
     Lisp_Misc_Limit
   };
@@ -1796,7 +1794,7 @@ struct Lisp_Subr
     const char *symbol_name;
     const char *intspec;
     EMACS_INT doc;
-    int lang;
+    enum Lisp_Subr_Lang lang;
   };
 
 INLINE bool
@@ -4784,6 +4782,12 @@ maybe_gc (void)
 	  && consing_since_gc > memory_full_cons_threshold))
     Fgarbage_collect ();
 }
+
+// Used by Rust to interact with bitfield properties.
+bool symbol_is_interned(struct Lisp_Symbol *symbol);
+bool symbol_is_alias(struct Lisp_Symbol *symbol);
+bool symbol_is_constant(struct Lisp_Symbol *symbol);
+uint16_t misc_get_ty(struct Lisp_Misc_Any *any);
 
 INLINE_HEADER_END
 

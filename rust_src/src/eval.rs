@@ -1,7 +1,7 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, PseudovecType};
+use remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled};
 use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Ffuncall, Fload, Fpurecopy, Fset,
                  Fset_default};
 use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
@@ -11,7 +11,6 @@ use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinter
 use remacs_sys::{Vautoload_queue, Vrun_hooks};
 use remacs_sys::{build_string, eval_sub, find_symbol_value, globals, maybe_quit,
                  record_unwind_protect, record_unwind_save_match_data, specbind, unbind_to};
-use remacs_sys::COMPILED_INTERACTIVE;
 
 use data::{defalias, indirect_function, indirect_function_lisp};
 use lisp::{LispCons, LispObject};
@@ -634,8 +633,8 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
         // Bytecode objects are interactive if they are long enough to
         // have an element whose index is COMPILED_INTERACTIVE, which is
         // where the interactive spec is stored.
-        return (vl.is_pseudovector(PseudovecType::PVEC_COMPILED)
-            && vl.pseudovector_size() > EmacsInt::from(COMPILED_INTERACTIVE))
+        return (vl.is_pseudovector(pvec_type::PVEC_COMPILED)
+            && vl.pseudovector_size() > EmacsInt::from(Lisp_Compiled::COMPILED_INTERACTIVE))
             || has_interactive_prop;
     } else if let Some(cell) = fun.as_cons() {
         // Lists may represent commands.
@@ -815,7 +814,7 @@ pub fn autoload_do_load(
         //
         // The value saved here is to be restored into Vautoload_queue.
 
-        record_unwind_protect(un_autoload, Vautoload_queue);
+        record_unwind_protect(Some(un_autoload), Vautoload_queue);
         Vautoload_queue = Qt;
         // If `macro_only', assume this autoload to be a "best-effort",
         // so don't signal an error if autoloading fails.

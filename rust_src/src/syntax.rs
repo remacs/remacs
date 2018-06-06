@@ -12,7 +12,7 @@ use threads::ThreadState;
 /// current buffer.
 #[lisp_fn]
 pub fn syntax_table() -> LispObject {
-    ThreadState::current_buffer().syntax_table
+    ThreadState::current_buffer().syntax_table_
 }
 
 /// Scan from character number FROM by COUNT lists.
@@ -48,7 +48,7 @@ pub fn set_syntax_table(table: LispCharTableRef) -> LispCharTableRef {
     check_syntax_table_p(table);
     let mut buf = ThreadState::current_buffer();
     buf.set_syntax_table(table);
-    let idx = per_buffer_var_idx!(syntax_table);
+    let idx = per_buffer_var_idx!(syntax_table_);
     buf.set_per_buffer_value_p(idx, 1);
     table
 }

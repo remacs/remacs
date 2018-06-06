@@ -6,7 +6,6 @@ use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{MODE_LINE_FACE_ID, MODE_LINE_INACTIVE_FACE_ID};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
@@ -39,8 +38,8 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn is_pseudo(self) -> bool {
-        unsafe { wget_pseudo_window_p(self.as_ptr()) }
+    pub fn is_pseudo(mut self) -> bool {
+        unsafe { wget_pseudo_window_p(self.as_mut()) }
     }
 
     /// A window of any sort, leaf or interior, is "valid" if its
@@ -74,10 +73,10 @@ impl LispWindowRef {
             unsafe { wset_mode_line_height(self.as_mut(), matrix_mode_line_height) };
             matrix_mode_line_height
         } else {
-            let frame = self.frame().as_frame_or_error();
+            let mut frame = self.frame().as_frame_or_error();
             let window = selected_window().as_window_or_error();
             let mode_line_height = unsafe {
-                estimate_mode_line_height(frame.as_ptr(), CURRENT_MODE_LINE_FACE_ID(window))
+                estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
             };
             unsafe { wset_mode_line_height(self.as_mut(), mode_line_height) };
             mode_line_height
@@ -105,17 +104,17 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn is_menu_bar(self) -> bool {
-        unsafe { window_menu_bar_p(self.as_ptr()) }
+    pub fn is_menu_bar(mut self) -> bool {
+        unsafe { window_menu_bar_p(self.as_mut()) }
     }
 
     #[inline]
-    pub fn is_tool_bar(self) -> bool {
-        unsafe { window_tool_bar_p(self.as_ptr()) }
+    pub fn is_tool_bar(mut self) -> bool {
+        unsafe { window_tool_bar_p(self.as_mut()) }
     }
 
-    pub fn pixel_height(self) -> i32 {
-        unsafe { wget_pixel_height(self.as_ptr()) }
+    pub fn pixel_height(mut self) -> i32 {
+        unsafe { wget_pixel_height(self.as_mut()) }
     }
 
     pub fn total_width(self, round: LispObject) -> i32 {
@@ -199,15 +198,15 @@ impl LispWindowRef {
     /// parameter must not be 'none' and either that parameter or W's
     /// buffer's 'mode-line-format' value must be non-nil.  Finally, W must
     /// be higher than its frame's canonical character height.
-    pub fn wants_mode_line(self) -> bool {
-        let window_mode_line_format = unsafe { window_parameter(self.as_ptr(), Qmode_line_format) };
+    pub fn wants_mode_line(mut self) -> bool {
+        let window_mode_line_format = unsafe { window_parameter(self.as_mut(), Qmode_line_format) };
 
         self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
             && !window_mode_line_format.eq(Qnone)
             && (window_mode_line_format.is_not_nil()
                 || self.contents()
                     .as_buffer_or_error()
-                    .mode_line_format
+                    .mode_line_format_
                     .is_not_nil())
             && self.pixel_height() > self.frame().as_frame_or_error().line_height()
     }
@@ -221,9 +220,9 @@ impl LispWindowRef {
     /// buffer's 'header-line-format' value must be non-nil.  Finally, window must
     /// be higher than its frame's canonical character height and be able to
     /// accommodate a mode line too if necessary (the mode line prevails).
-    pub fn wants_header_line(self) -> bool {
+    pub fn wants_header_line(mut self) -> bool {
         let window_header_line_format =
-            unsafe { window_parameter(self.as_ptr(), Qheader_line_format) };
+            unsafe { window_parameter(self.as_mut(), Qheader_line_format) };
 
         let mut height = self.frame().as_frame_or_error().line_height();
         if self.wants_mode_line() {
@@ -233,7 +232,7 @@ impl LispWindowRef {
         self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
             && !window_header_line_format.eq(Qnone)
             && (window_header_line_format.is_not_nil()
-                || (self.contents().as_buffer_or_error().header_line_format).is_not_nil())
+                || (self.contents().as_buffer_or_error().header_line_format_).is_not_nil())
             && self.pixel_height() > height
     }
 }
@@ -492,7 +491,7 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject 
 /// Return nil for a window with no parent (e.g. a root window).
 #[lisp_fn(min = "0")]
 pub fn window_parent(window: LispObject) -> LispObject {
-    (unsafe { wget_parent(window_valid_or_selected(window).as_ptr()) })
+    (unsafe { wget_parent(window_valid_or_selected(window).as_mut()) })
 }
 
 /// Return the frame that window WINDOW is on.
@@ -548,13 +547,13 @@ pub fn set_window_parameter(
     parameter: LispObject,
     value: LispObject,
 ) -> LispObject {
-    let w = window_or_selected(window);
+    let mut w = window_or_selected(window);
     let w_params = unsafe { wget_window_parameters(w.as_ptr()) };
     let old_alist_elt = assq(parameter, w_params);
     if old_alist_elt.is_nil() {
         unsafe {
             wset_window_parameters(
-                w.as_ptr(),
+                w.as_mut(),
                 Fcons(Fcons(parameter.to_raw(), value.to_raw()), w_params),
             )
         }
@@ -578,7 +577,7 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
     selw: LispWindowRef,
     mbw: LispWindowRef,
     scrw: LispWindowRef,
-) -> i32 {
+) -> face_id {
     let current = if let Some(w) = selected_window().as_window() {
         w
     } else {
@@ -587,18 +586,18 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
 
     unsafe {
         if !globals.mode_line_in_non_selected_windows {
-            return MODE_LINE_FACE_ID;
+            return face_id::MODE_LINE_FACE_ID;
         } else if selw == current {
-            return MODE_LINE_FACE_ID;
+            return face_id::MODE_LINE_FACE_ID;
         } else if minibuf_level > 0 {
             if let Some(minibuf_window) = current_minibuf_window.as_window() {
                 if mbw == minibuf_window && scrw == minibuf_window {
-                    return MODE_LINE_FACE_ID;
+                    return face_id::MODE_LINE_FACE_ID;
                 }
             }
         }
 
-        MODE_LINE_INACTIVE_FACE_ID
+        face_id::MODE_LINE_INACTIVE_FACE_ID
     }
 }
 

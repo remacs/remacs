@@ -5,9 +5,9 @@ use remacs_macros::lisp_fn;
 use remacs_sys;
 use remacs_sys::{aset_multibyte_string, build_string, emacs_abort, fget_terminal, globals,
                  update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
-use remacs_sys::{EmacsInt, Lisp_Misc_Type, Lisp_Type, PseudovecType};
+use remacs_sys::{pvec_type, EmacsInt, Lisp_Misc_Type, Lisp_Type};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
-use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
+use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang};
 use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
                  Qchoice, Qcompiled_function, Qcondition_variable, Qcons,
                  Qcyclic_function_indirection, Qdefalias_fset_function, Qdefun, Qfinalizer,
@@ -95,33 +95,33 @@ pub fn type_of(object: LispObject) -> LispObject {
         Lisp_Type::Lisp_Misc => {
             let m = object.as_misc().unwrap();
             match m.get_type() {
-                Lisp_Misc_Type::Marker => Qmarker,
-                Lisp_Misc_Type::Overlay => Qoverlay,
-                Lisp_Misc_Type::Finalizer => Qfinalizer,
-                Lisp_Misc_Type::UserPtr => Quser_ptr,
+                Lisp_Misc_Type::Lisp_Misc_Marker => Qmarker,
+                Lisp_Misc_Type::Lisp_Misc_Overlay => Qoverlay,
+                Lisp_Misc_Type::Lisp_Misc_Finalizer => Qfinalizer,
+                Lisp_Misc_Type::Lisp_Misc_User_Ptr => Quser_ptr,
                 _ => Qnone,
             }
         }
         Lisp_Type::Lisp_Vectorlike => {
             let vec = unsafe { object.as_vectorlike_unchecked() };
             match vec.pseudovector_type() {
-                PseudovecType::PVEC_NORMAL_VECTOR => Qvector,
-                PseudovecType::PVEC_WINDOW_CONFIGURATION => Qwindow_configuration,
-                PseudovecType::PVEC_PROCESS => Qprocess,
-                PseudovecType::PVEC_WINDOW => Qwindow,
-                PseudovecType::PVEC_SUBR => Qsubr,
-                PseudovecType::PVEC_COMPILED => Qcompiled_function,
-                PseudovecType::PVEC_BUFFER => Qbuffer,
-                PseudovecType::PVEC_CHAR_TABLE => Qchar_table,
-                PseudovecType::PVEC_BOOL_VECTOR => Qbool_vector,
-                PseudovecType::PVEC_FRAME => Qframe,
-                PseudovecType::PVEC_HASH_TABLE => Qhash_table,
-                PseudovecType::PVEC_THREAD => Qthread,
-                PseudovecType::PVEC_MUTEX => Qmutex,
-                PseudovecType::PVEC_CONDVAR => Qcondition_variable,
-                PseudovecType::PVEC_TERMINAL => Qterminal,
-                PseudovecType::PVEC_MODULE_FUNCTION => Qmodule_function,
-                PseudovecType::PVEC_FONT => if object.is_font_spec() {
+                pvec_type::PVEC_NORMAL_VECTOR => Qvector,
+                pvec_type::PVEC_WINDOW_CONFIGURATION => Qwindow_configuration,
+                pvec_type::PVEC_PROCESS => Qprocess,
+                pvec_type::PVEC_WINDOW => Qwindow,
+                pvec_type::PVEC_SUBR => Qsubr,
+                pvec_type::PVEC_COMPILED => Qcompiled_function,
+                pvec_type::PVEC_BUFFER => Qbuffer,
+                pvec_type::PVEC_CHAR_TABLE => Qchar_table,
+                pvec_type::PVEC_BOOL_VECTOR => Qbool_vector,
+                pvec_type::PVEC_FRAME => Qframe,
+                pvec_type::PVEC_HASH_TABLE => Qhash_table,
+                pvec_type::PVEC_THREAD => Qthread,
+                pvec_type::PVEC_MUTEX => Qmutex,
+                pvec_type::PVEC_CONDVAR => Qcondition_variable,
+                pvec_type::PVEC_TERMINAL => Qterminal,
+                pvec_type::PVEC_MODULE_FUNCTION => Qmodule_function,
+                pvec_type::PVEC_FONT => if object.is_font_spec() {
                     Qfont_spec
                 } else if object.is_font_entity() {
                     Qfont_entity
@@ -130,7 +130,7 @@ pub fn type_of(object: LispObject) -> LispObject {
                 } else {
                     Qfont
                 },
-                PseudovecType::PVEC_RECORD => unsafe {
+                pvec_type::PVEC_RECORD => unsafe {
                     let vec = object.as_vector_unchecked();
                     let t = vec.get_unchecked(0);
                     if t.is_record() {
@@ -150,9 +150,9 @@ pub fn type_of(object: LispObject) -> LispObject {
 
 #[lisp_fn]
 pub fn subr_lang(subr: LispSubrRef) -> LispObject {
-    if subr.lang == Lisp_Subr_Lang_C {
+    if subr.lang == Lisp_Subr_Lang::Lisp_Subr_Lang_C {
         LispObject::from("C")
-    } else if subr.lang == Lisp_Subr_Lang_Rust {
+    } else if subr.lang == Lisp_Subr_Lang::Lisp_Subr_Lang_Rust {
         LispObject::from("Rust")
     } else {
         unreachable!()
@@ -168,7 +168,6 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
         xsignal!(Qargs_out_of_range, array, idx.into());
     }
 
-    let idx_i = idx as isize;
     let idx_u = idx as usize;
 
     if let Some(s) = array.as_string() {
@@ -190,14 +189,14 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
         if idx_u >= v.len() {
             xsignal!(Qargs_out_of_range, array, idx.into());
         }
-        unsafe { v.get_unchecked(idx_i) }
+        unsafe { v.get_unchecked(idx_u) }
     } else if array.is_byte_code_function() || array.is_record() {
         let vl = array.as_vectorlike().unwrap();
         if idx >= vl.pseudovector_size() {
             xsignal!(Qargs_out_of_range, array, idx.into());
         }
         let v = unsafe { vl.as_vector_unchecked() };
-        unsafe { v.get_unchecked(idx_i) }
+        unsafe { v.get_unchecked(idx_u) }
     } else {
         wrong_type!(Qarrayp, array);
     }
@@ -211,14 +210,14 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
     if let Some(vl) = array.as_vectorlike() {
         if let Some(mut v) = vl.as_vector() {
             unsafe { CHECK_IMPURE(array.to_raw(), array.get_untaggedptr()) };
-            v.set_checked(idx as isize, newelt);
+            v.set_checked(idx as usize, newelt);
         } else if let Some(mut bv) = vl.as_bool_vector() {
-            bv.set_checked(idx as isize, newelt.is_not_nil());
+            bv.set_checked(idx as usize, newelt.is_not_nil());
         } else if let Some(_tbl) = vl.as_char_table() {
             verify_lisp_type!(idx, Qcharacterp);
             unsafe { CHAR_TABLE_SET(array.to_raw(), idx as c_int, newelt.to_raw()) };
         } else if let Some(mut record) = vl.as_record() {
-            record.set_checked(idx as isize, newelt);
+            record.set_checked(idx as usize, newelt);
         } else {
             unreachable!();
         }

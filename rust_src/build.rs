@@ -1,6 +1,7 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
+extern crate bindgen;
 #[macro_use]
 extern crate lazy_static;
 extern crate libc;
@@ -15,7 +16,7 @@ use std::fs::OpenOptions;
 use std::io;
 use std::io::{BufRead, BufReader, Write};
 use std::mem::size_of;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 
 use regex::Regex;
@@ -345,7 +346,7 @@ fn env_var(name: &str) -> String {
 
 // What to ignore when walking the list of files
 fn ignore(path: &str) -> bool {
-    path == "" || path.starts_with('.') || path == "lib.rs"
+    path == "" || path.starts_with('.') || path == "lib.rs" || path == "functions.rs"
 }
 
 fn generate_include_files() -> Result<(), BuildError> {
@@ -514,8 +515,6 @@ fn generate_definitions() {
 
     let bits = 8; // bits in a byte.
     let gc_type_bits = 3;
-    write!(file, "pub const GCTYPEBITS: EmacsInt = {};\n", gc_type_bits).expect("Write error!");
-
     let uint_max_len = integer_type_item.2 * bits;
     let int_max_len = uint_max_len - 1;
     let val_max_len = int_max_len - (gc_type_bits - 1);
@@ -594,6 +593,526 @@ fn generate_globals() {
     }
 }
 
+fn run_bindgen() {
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
+    let cflags = std::env::var_os("EMACS_CFLAGS");
+    match cflags {
+        None => {
+            if out_path.exists() {
+                println!("No EMACS_CFLAGS specified, but {:?} already exists so we'll just skip the bindgen step this time.", out_path);
+            } else {
+                panic!("No EMACS_CFLAGS were specified, and we need them in order to run bindgen.");
+            }
+        }
+        Some(cflags) => {
+            let mut builder = bindgen::Builder::default()
+                .rust_target(bindgen::RustTarget::Nightly)
+                .generate_comments(true);
+
+            let cflags_str = cflags.to_string_lossy();
+            let mut processed_args: Vec<String> = Vec::new();
+            for arg in cflags_str.split(' ') {
+                if arg.starts_with("-I") {
+                    // we're running clang from a different directory, so we have to adjust any relative include paths
+                    let path = Path::new("../src").join(arg.get(2..).unwrap());
+                    let buf = std::fs::canonicalize(path).unwrap();
+                    processed_args.push(String::from("-I") + &buf.to_string_lossy());
+                } else {
+                    if !arg.is_empty() && !arg.starts_with("-M") && !arg.ends_with(".d") {
+                        processed_args.push(arg.into());
+                    }
+                };
+            }
+            builder = builder.clang_args(processed_args);
+
+            builder = builder.clang_arg("-Demacs")
+                .header("wrapper.h")
+                .generate_inline_functions(true)
+                .derive_default(true)
+                .ctypes_prefix("::libc")
+                // we define these ourselves, for various reasons
+                .blacklist_type("Lisp_Object")
+                .blacklist_type("emacs_globals")
+                .blacklist_type("Q.*") // symbols like Qnil and so on
+                .blacklist_type("USE_LSB_TAG")
+                .blacklist_type("VALMASK")
+                .blacklist_type("PSEUDOVECTOR_FLAG")
+                //.blacklist_type("staticpro")
+                // this is wallpaper for a bug in bindgen, we don't lose much by it
+                // https://github.com/servo/rust-bindgen/issues/687
+                .blacklist_type("BOOL_VECTOR_BITS_PER_CHAR")
+                // this is wallpaper for a function argument that shadows a static of the same name
+                // https://github.com/servo/rust-bindgen/issues/804
+                .blacklist_type("face_change")
+                // these never return, and bindgen doesn't yet detect that, so we will do them manually
+                .blacklist_type("error")
+                .blacklist_type("circular_list")
+                .blacklist_type("wrong_type_argument")
+                .blacklist_type("nsberror")
+                .blacklist_type("emacs_abort")
+                .blacklist_type("Fsignal")
+                .blacklist_type("memory_full")
+                .blacklist_type("bitch_at_user")
+                .blacklist_type("wrong_choice")
+                .blacklist_type("wrong_range")
+                // these are defined in data.rs
+                .blacklist_type("Lisp_Fwd")
+                .blacklist_type("Lisp_.*fwd")
+                // these are defined in remacs_lib
+                .blacklist_type("timespec")
+                .blacklist_type("current_timespec")
+                .blacklist_type("timex")
+                .blacklist_type("clock_adjtime")
+                // bindgen fails to generate this one correctly; it's hard
+                // https://github.com/rust-lang-nursery/rust-bindgen/issues/1318
+                .blacklist_type("max_align_t")
+                // these enums are better as simple constants
+                .constified_enum("EMACS_INT_WIDTH")
+                .constified_enum("BOOL_VECTOR_BITS_PER_CHAR")
+                .constified_enum("BITS_PER_BITS_WORD")
+                // these enums all meet the requirements to also be Rust enums (in theory). 90% of
+                // these are present in struct fields, return values, etc; we don't have much
+                // choice but to inspect each one or just hope that they're correct; guess which
+                // I've done?
+                .rustified_enum("Arith_Comparison")
+                .rustified_enum("AtkCoordType")
+                .rustified_enum("AtkLayer")
+                .rustified_enum("AtkRelationType")
+                .rustified_enum("AtkRole")
+                .rustified_enum("AtkStateType")
+                .rustified_enum("AtkTextAttribute")
+                .rustified_enum("AtkTextBoundary")
+                .rustified_enum("AtkTextClipType")
+                .rustified_enum("AtkTextGranularity")
+                .rustified_enum("AtkValueType")
+                .rustified_enum("GAppInfoCreateFlags")
+                .rustified_enum("GApplicationFlags")
+                .rustified_enum("GAskPasswordFlags")
+                .rustified_enum("GBindingFlags")
+                .rustified_enum("GBusNameOwnerFlags")
+                .rustified_enum("GBusNameWatcherFlags")
+                .rustified_enum("GBusType")
+                .rustified_enum("GChecksumType")
+                .rustified_enum("GConnectFlags")
+                .rustified_enum("GConverterFlags")
+                .rustified_enum("GConverterResult")
+                .rustified_enum("GCredentialsType")
+                .rustified_enum("GDBusCallFlags")
+                .rustified_enum("GDBusCapabilityFlags")
+                .rustified_enum("GDBusConnectionFlags")
+                .rustified_enum("GDBusInterfaceSkeletonFlags")
+                .rustified_enum("GDBusMessageByteOrder")
+                .rustified_enum("GDBusMessageFlags")
+                .rustified_enum("GDBusMessageHeaderField")
+                .rustified_enum("GDBusMessageType")
+                .rustified_enum("GDBusObjectManagerClientFlags")
+                .rustified_enum("GDBusPropertyInfoFlags")
+                .rustified_enum("GDBusProxyFlags")
+                .rustified_enum("GDBusSendMessageFlags")
+                .rustified_enum("GDBusServerFlags")
+                .rustified_enum("GDBusSignalFlags")
+                .rustified_enum("GDBusSubtreeFlags")
+                .rustified_enum("GDataStreamByteOrder")
+                .rustified_enum("GDataStreamNewlineType")
+                .rustified_enum("GDateMonth")
+                .rustified_enum("GDateWeekday")
+                .rustified_enum("GDriveStartFlags")
+                .rustified_enum("GDriveStartStopType")
+                .rustified_enum("GEmblemOrigin")
+                .rustified_enum("GFileAttributeInfoFlags")
+                .rustified_enum("GFileAttributeStatus")
+                .rustified_enum("GFileAttributeType")
+                .rustified_enum("GFileCopyFlags")
+                .rustified_enum("GFileCreateFlags")
+                .rustified_enum("GFileError")
+                .rustified_enum("GFileMeasureFlags")
+                .rustified_enum("GFileMonitorEvent")
+                .rustified_enum("GFileMonitorFlags")
+                .rustified_enum("GFileQueryInfoFlags")
+                .rustified_enum("GFileTest")
+                .rustified_enum("GFileType")
+                .rustified_enum("GFormatSizeFlags")
+                .rustified_enum("GIOChannelError")
+                .rustified_enum("GIOCondition")
+                .rustified_enum("GIOError")
+                .rustified_enum("GIOErrorEnum")
+                .rustified_enum("GIOFlags")
+                .rustified_enum("GIOModuleScopeFlags")
+                .rustified_enum("GIOStatus")
+                .rustified_enum("GIOStreamSpliceFlags")
+                .rustified_enum("GKeyFileFlags")
+                .rustified_enum("GLogLevelFlags")
+                .rustified_enum("GLogWriterOutput")
+                .rustified_enum("GMarkupCollectType")
+                .rustified_enum("GMarkupParseFlags")
+                .rustified_enum("GModuleFlags")
+                .rustified_enum("GMountMountFlags")
+                .rustified_enum("GMountOperationResult")
+                .rustified_enum("GMountUnmountFlags")
+                .rustified_enum("GNetworkConnectivity")
+                .rustified_enum("GNormalizeMode")
+                .rustified_enum("GNotificationPriority")
+                .rustified_enum("GOnceStatus")
+                .rustified_enum("GOptionArg")
+                .rustified_enum("GOptionFlags")
+                .rustified_enum("GOutputStreamSpliceFlags")
+                .rustified_enum("GParamFlags")
+                .rustified_enum("GPasswordSave")
+                .rustified_enum("GRegexCompileFlags")
+                .rustified_enum("GRegexMatchFlags")
+                .rustified_enum("GResolverRecordType")
+                .rustified_enum("GResourceLookupFlags")
+                .rustified_enum("GSeekType")
+                .rustified_enum("GSettingsBindFlags")
+                .rustified_enum("GSignalFlags")
+                .rustified_enum("GSignalMatchType")
+                .rustified_enum("GSliceConfig")
+                .rustified_enum("GSocketClientEvent")
+                .rustified_enum("GSocketFamily")
+                .rustified_enum("GSocketListenerEvent")
+                .rustified_enum("GSocketProtocol")
+                .rustified_enum("GSocketType")
+                .rustified_enum("GSpawnFlags")
+                .rustified_enum("GSubprocessFlags")
+                .rustified_enum("GTestDBusFlags")
+                .rustified_enum("GTestFileType")
+                .rustified_enum("GTestLogType")
+                .rustified_enum("GTestSubprocessFlags")
+                .rustified_enum("GTestTrapFlags")
+                .rustified_enum("GThreadPriority")
+                .rustified_enum("GTimeType")
+                .rustified_enum("GTlsCertificateFlags")
+                .rustified_enum("GTlsCertificateRequestFlags")
+                .rustified_enum("GTlsDatabaseLookupFlags")
+                .rustified_enum("GTlsDatabaseVerifyFlags")
+                .rustified_enum("GTlsInteractionResult")
+                .rustified_enum("_GTlsPasswordFlags")
+                .rustified_enum("GTlsRehandshakeMode")
+                .rustified_enum("GTokenType")
+                .rustified_enum("GTraverseFlags")
+                .rustified_enum("GTraverseType")
+                .rustified_enum("GTypeDebugFlags")
+                .rustified_enum("GTypeFlags")
+                .rustified_enum("GTypeFundamentalFlags")
+                .rustified_enum("GUnicodeBreakType")
+                .rustified_enum("GUnicodeScript")
+                .rustified_enum("GUnicodeType")
+                .rustified_enum("GUserDirectory")
+                .rustified_enum("GVariantClass")
+                .rustified_enum("GZlibCompressorFormat")
+                .rustified_enum("GdkAxisFlags")
+                .rustified_enum("GdkAxisUse")
+                .rustified_enum("GdkByteOrder")
+                .rustified_enum("GdkColorspace")
+                .rustified_enum("GdkCrossingMode")
+                .rustified_enum("GdkCursorType")
+                .rustified_enum("GdkDevicePadFeature")
+                .rustified_enum("GdkDeviceToolType")
+                .rustified_enum("GdkDeviceType")
+                .rustified_enum("GdkDragAction")
+                .rustified_enum("GdkDragProtocol")
+                .rustified_enum("GdkEventMask")
+                .rustified_enum("GdkEventType")
+                .rustified_enum("GdkFilterReturn")
+                .rustified_enum("GdkFrameClockPhase")
+                .rustified_enum("GdkFullscreenMode")
+                .rustified_enum("GdkGrabOwnership")
+                .rustified_enum("GdkGrabStatus")
+                .rustified_enum("GdkGravity")
+                .rustified_enum("GdkInputMode")
+                .rustified_enum("GdkInputSource")
+                .rustified_enum("GdkInterpType")
+                .rustified_enum("GdkModifierIntent")
+                .rustified_enum("GdkModifierType")
+                .rustified_enum("GdkNotifyType")
+                .rustified_enum("GdkOwnerChange")
+                .rustified_enum("GdkPixbufRotation")
+                .rustified_enum("GdkPropMode")
+                .rustified_enum("GdkScrollDirection")
+                .rustified_enum("GdkSeatCapabilities")
+                .rustified_enum("GdkSettingAction")
+                .rustified_enum("GdkSubpixelLayout")
+                .rustified_enum("GdkVisibilityState")
+                .rustified_enum("GdkVisualType")
+                .rustified_enum("GdkWMDecoration")
+                .rustified_enum("GdkWMFunction")
+                .rustified_enum("GdkWindowEdge")
+                .rustified_enum("GdkWindowHints")
+                .rustified_enum("GdkWindowState")
+                .rustified_enum("GdkWindowType")
+                .rustified_enum("GdkWindowTypeHint")
+                .rustified_enum("GdkWindowWindowClass")
+                .rustified_enum("Gpm_Etype")
+                .rustified_enum("Gpm_Margin")
+                .rustified_enum("GtkAccelFlags")
+                .rustified_enum("GtkAlign")
+                .rustified_enum("GtkApplicationInhibitFlags")
+                .rustified_enum("GtkArrowType")
+                .rustified_enum("GtkAssistantPageType")
+                .rustified_enum("GtkAttachOptions")
+                .rustified_enum("GtkBaselinePosition")
+                .rustified_enum("GtkButtonBoxStyle")
+                .rustified_enum("GtkButtonsType")
+                .rustified_enum("GtkCalendarDisplayOptions")
+                .rustified_enum("GtkCellRendererState")
+                .rustified_enum("GtkCornerType")
+                .rustified_enum("GtkCssSectionType")
+                .rustified_enum("GtkDeleteType")
+                .rustified_enum("GtkDestDefaults")
+                .rustified_enum("GtkDialogFlags")
+                .rustified_enum("GtkDirectionType")
+                .rustified_enum("GtkDragResult")
+                .rustified_enum("GtkEntryIconPosition")
+                .rustified_enum("GtkEventSequenceState")
+                .rustified_enum("GtkExpanderStyle")
+                .rustified_enum("GtkFileChooserAction")
+                .rustified_enum("GtkFileFilterFlags")
+                .rustified_enum("GtkIconLookupFlags")
+                .rustified_enum("GtkIconSize")
+                .rustified_enum("GtkIconViewDropPosition")
+                .rustified_enum("GtkImageType")
+                .rustified_enum("GtkInputHints")
+                .rustified_enum("GtkInputPurpose")
+                .rustified_enum("GtkJunctionSides")
+                .rustified_enum("GtkJustification")
+                .rustified_enum("GtkLevelBarMode")
+                .rustified_enum("GtkLicense")
+                .rustified_enum("GtkMenuDirectionType")
+                .rustified_enum("GtkMessageType")
+                .rustified_enum("GtkMovementStep")
+                .rustified_enum("GtkNotebookTab")
+                .rustified_enum("GtkNumberUpLayout")
+                .rustified_enum("GtkOrientation")
+                .rustified_enum("GtkPackDirection")
+                .rustified_enum("GtkPackType")
+                .rustified_enum("GtkPadActionType")
+                .rustified_enum("GtkPageOrientation")
+                .rustified_enum("GtkPageSet")
+                .rustified_enum("GtkPathPriorityType")
+                .rustified_enum("GtkPathType")
+                .rustified_enum("GtkPlacesOpenFlags")
+                .rustified_enum("GtkPolicyType")
+                .rustified_enum("GtkPopoverConstraint")
+                .rustified_enum("GtkPositionType")
+                .rustified_enum("GtkPrintDuplex")
+                .rustified_enum("GtkPrintOperationAction")
+                .rustified_enum("GtkPrintOperationResult")
+                .rustified_enum("GtkPrintPages")
+                .rustified_enum("GtkPrintQuality")
+                .rustified_enum("GtkPrintStatus")
+                .rustified_enum("GtkPropagationPhase")
+                .rustified_enum("GtkRcFlags")
+                .rustified_enum("GtkRecentFilterFlags")
+                .rustified_enum("GtkRecentSortType")
+                .rustified_enum("GtkRegionFlags")
+                .rustified_enum("GtkReliefStyle")
+                .rustified_enum("GtkResizeMode")
+                .rustified_enum("GtkRevealerTransitionType")
+                .rustified_enum("GtkScrollType")
+                .rustified_enum("GtkScrollablePolicy")
+                .rustified_enum("GtkSelectionMode")
+                .rustified_enum("GtkSensitivityType")
+                .rustified_enum("GtkShadowType")
+                .rustified_enum("GtkSizeGroupMode")
+                .rustified_enum("GtkSizeRequestMode")
+                .rustified_enum("GtkSortType")
+                .rustified_enum("GtkSpinButtonUpdatePolicy")
+                .rustified_enum("GtkSpinType")
+                .rustified_enum("GtkStackTransitionType")
+                .rustified_enum("GtkStateFlags")
+                .rustified_enum("GtkStateType")
+                .rustified_enum("GtkStyleContextPrintFlags")
+                .rustified_enum("GtkTextDirection")
+                .rustified_enum("GtkTextExtendSelection")
+                .rustified_enum("GtkTextSearchFlags")
+                .rustified_enum("GtkTextViewLayer")
+                .rustified_enum("GtkTextWindowType")
+                .rustified_enum("GtkToolPaletteDragTargets")
+                .rustified_enum("GtkToolbarStyle")
+                .rustified_enum("GtkTreeModelFlags")
+                .rustified_enum("GtkTreeViewColumnSizing")
+                .rustified_enum("GtkTreeViewDropPosition")
+                .rustified_enum("GtkTreeViewGridLines")
+                .rustified_enum("GtkUIManagerItemType")
+                .rustified_enum("GtkUnit")
+                .rustified_enum("GtkWidgetHelpType")
+                .rustified_enum("GtkWindowPosition")
+                .rustified_enum("GtkWindowType")
+                .rustified_enum("GtkWrapMode")
+                .rustified_enum("Lisp_Fwd_Type")
+                .rustified_enum("Lisp_Misc_Type")
+                .rustified_enum("Lisp_Save_Type")
+                .rustified_enum("Lisp_Subr_Lang")
+                .rustified_enum("Lisp_Type")
+                .rustified_enum("PangoAlignment")
+                .rustified_enum("PangoAttrType")
+                .rustified_enum("PangoBidiType")
+                .rustified_enum("PangoCoverageLevel")
+                .rustified_enum("PangoDirection")
+                .rustified_enum("PangoEllipsizeMode")
+                .rustified_enum("PangoFontMask")
+                .rustified_enum("PangoGravity")
+                .rustified_enum("PangoGravityHint")
+                .rustified_enum("PangoRenderPart")
+                .rustified_enum("PangoScript")
+                .rustified_enum("PangoStretch")
+                .rustified_enum("PangoStyle")
+                .rustified_enum("PangoTabAlign")
+                .rustified_enum("PangoUnderline")
+                .rustified_enum("PangoVariant")
+                .rustified_enum("PangoWeight")
+                .rustified_enum("PangoWrapMode")
+                .rustified_enum("Set_Internal_Bind")
+                .rustified_enum("XEventQueueOwner")
+                .rustified_enum("XICCEncodingStyle")
+                .rustified_enum("XIMCaretDirection")
+                .rustified_enum("XIMCaretStyle")
+                .rustified_enum("XIMStatusDataType")
+                .rustified_enum("XOrientation")
+                .rustified_enum("XrmBinding")
+                .rustified_enum("XrmOptionKind")
+                .rustified_enum("XtAddressMode")
+                .rustified_enum("XtCallbackStatus")
+                .rustified_enum("XtGeometryResult")
+                .rustified_enum("XtGrabKind")
+                .rustified_enum("XtListPosition")
+                .rustified_enum("__itimer_which")
+                .rustified_enum("__pid_type")
+                .rustified_enum("atimer_type")
+                .rustified_enum("bidi_dir_t")
+                .rustified_enum("bidi_type_t")
+                .rustified_enum("button_type")
+                .rustified_enum("_cairo_antialias")
+                .rustified_enum("_cairo_content")
+                .rustified_enum("_cairo_device_type")
+                .rustified_enum("_cairo_extend")
+                .rustified_enum("_cairo_fill_rule")
+                .rustified_enum("_cairo_filter")
+                .rustified_enum("_cairo_font_slant")
+                .rustified_enum("_cairo_font_type")
+                .rustified_enum("_cairo_font_weight")
+                .rustified_enum("_cairo_format")
+                .rustified_enum("_cairo_hint_metrics")
+                .rustified_enum("_cairo_hint_style")
+                .rustified_enum("_cairo_line_cap")
+                .rustified_enum("_cairo_line_join")
+                .rustified_enum("_cairo_operator")
+                .rustified_enum("_cairo_path_data_type")
+                .rustified_enum("_cairo_pattern_type")
+                .rustified_enum("_cairo_region_overlap")
+                .rustified_enum("_cairo_status")
+                .rustified_enum("_cairo_subpixel_order")
+                .rustified_enum("cairo_surface_observer_mode_t")
+                .rustified_enum("_cairo_surface_type")
+                .rustified_enum("_cairo_text_cluster_flags")
+                .rustified_enum("case_action")
+                .rustified_enum("charset_attr_index")
+                .rustified_enum("charset_method")
+                .rustified_enum("coding_result_code")
+                .rustified_enum("coding_result_type")
+                .rustified_enum("composition_method")
+                .rustified_enum("composition_state")
+                .rustified_enum("constype")
+                .rustified_enum("display_element_type")
+                .rustified_enum("draw_glyphs_face")
+                .rustified_enum("emacs_funcall_exit")
+                .rustified_enum("event_kind")
+                .rustified_enum("face_box_type")
+                .rustified_enum("face_id")
+                .rustified_enum("face_underline_type")
+                .rustified_enum("font_property_index")
+                .rustified_enum("fullscreen_type")
+                .rustified_enum("glyph_row_area")
+                .rustified_enum("glyphless_display_method")
+                .rustified_enum("gnutls_alert_description_t")
+                .rustified_enum("gnutls_alert_level_t")
+                .rustified_enum("gnutls_certificate_print_formats")
+                .rustified_enum("gnutls_certificate_request_t")
+                .rustified_enum("gnutls_certificate_type_t")
+                .rustified_enum("gnutls_channel_binding_t")
+                .rustified_enum("gnutls_cipher_algorithm")
+                .rustified_enum("gnutls_close_request_t")
+                .rustified_enum("gnutls_compression_method_t")
+                .rustified_enum("gnutls_credentials_type_t")
+                .rustified_enum("gnutls_digest_algorithm_t")
+                .rustified_enum("gnutls_ecc_curve_t")
+                .rustified_enum("gnutls_ext_parse_type_t")
+                .rustified_enum("gnutls_group_t")
+                .rustified_enum("gnutls_handshake_description_t")
+                .rustified_enum("gnutls_initstage_t")
+                .rustified_enum("gnutls_keygen_types_t")
+                .rustified_enum("gnutls_kx_algorithm_t")
+                .rustified_enum("gnutls_mac_algorithm_t")
+                .rustified_enum("gnutls_openpgp_crt_status_t")
+                .rustified_enum("gnutls_params_type_t")
+                .rustified_enum("gnutls_pk_algorithm_t")
+                .rustified_enum("gnutls_privkey_type_t")
+                .rustified_enum("gnutls_protocol_t")
+                .rustified_enum("gnutls_psk_key_flags")
+                .rustified_enum("gnutls_random_art")
+                .rustified_enum("gnutls_rnd_level")
+                .rustified_enum("gnutls_sec_param_t")
+                .rustified_enum("gnutls_server_name_type_t")
+                .rustified_enum("gnutls_sign_algorithm_t")
+                .rustified_enum("gnutls_srtp_profile_t")
+                .rustified_enum("gnutls_supplemental_data_format_type_t")
+                .rustified_enum("gnutls_vdata_types_t")
+                .rustified_enum("gnutls_x509_crt_fmt_t")
+                .rustified_enum("gnutls_x509_qualifier_t")
+                .rustified_enum("gnutls_x509_subject_alt_name_t")
+                .rustified_enum("handlertype")
+                .rustified_enum("idtype_t")
+                .rustified_enum("internal_border_part")
+                .rustified_enum("it_method")
+                .rustified_enum("lface_attribute_index")
+                .rustified_enum("line_wrap_method")
+                .rustified_enum("margin_unit")
+                .rustified_enum("move_operation_enum")
+                .rustified_enum("output_method")
+                .rustified_enum("pvec_type")
+                .rustified_enum("re_wctype_t")
+                .rustified_enum("reg_errcode_t")
+                .rustified_enum("resource_types")
+                .rustified_enum("scroll_bar_part")
+                .rustified_enum("specbind_tag")
+                .rustified_enum("symbol_interned")
+                .rustified_enum("symbol_redirect")
+                .rustified_enum("symbol_trapped_write")
+                .rustified_enum("syntaxcode")
+                .rustified_enum("text_cursor_kinds")
+                .rustified_enum("text_quoting_style")
+                .rustified_enum("utf_16_endian_type")
+                .rustified_enum("utf_bom_type")
+                .rustified_enum("vertical_scroll_bar_type")
+                .rustified_enum("window_part")
+                .rustified_enum("x_display_info__bindgen_ty_1")
+                .rustified_enum("z_group")
+                // the others are either unchecked, or definitely would cause undefined behavior
+                .default_enum_style(bindgen::EnumVariation::ModuleConsts);
+
+            //builder
+            //    .dump_preprocessed_input()
+            //    .expect("Unable to dump preprocessed bindings");
+            let bindings = builder
+                .rustfmt_bindings(true)
+                .rustfmt_configuration_file(std::fs::canonicalize("rustfmt.toml").ok())
+                .generate()
+                .expect("Unable to generate bindings");
+
+            // https://github.com/servo/rust-bindgen/issues/839
+            let source = bindings.to_string();
+            let re = regex::Regex::new(
+                r"pub use self\s*::\s*gnutls_cipher_algorithm_t as gnutls_cipher_algorithm\s*;",
+            );
+            let munged = re.unwrap().replace_all(&source, "");
+            let file = File::create(out_path);
+            file.unwrap()
+                .write_all(munged.into_owned().as_bytes())
+                .unwrap();
+        }
+    }
+}
+
 fn main() {
     if let Err(e) = generate_include_files() {
         match e {
@@ -607,5 +1126,6 @@ fn main() {
         }
     }
     generate_definitions();
+    run_bindgen();
     generate_globals();
 }

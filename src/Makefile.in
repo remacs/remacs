@@ -607,8 +607,14 @@ MACOSX_ALLOC_INPUTS=$(macosx_alloc_dir)/src/** $(macosx_alloc_dir)/Cargo.*
 cargo_manifest=$(rust_srcdir)/Cargo.toml
 LIBREMACS_ARCHIVE=$(rust_srcdir)/target/$(CARGO_BUILD_DIR)/$(REMACSLIB_NAME)
 $(LIBREMACS_ARCHIVE): globals.h $(rust_srcdir)/src/** $(rust_srcdir)/Cargo.* $(MACOSX_ALLOC_INPUTS)
-	RUSTFLAGS=$(RUSTFLAGS) \
+	RUSTFLAGS="$(RUSTFLAGS)" \
+	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
+
+check check-maybe check-expensive:
+	RUSTFLAGS="$(RUSTFLAGS)" \
+	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
+	$(CARGO_TEST) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
 $(ALLOBJS): globals.h
 

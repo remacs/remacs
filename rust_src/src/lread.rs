@@ -3,8 +3,8 @@ use lisp::LispObject;
 use obarray::intern_c_string_1;
 use remacs_sys;
 use remacs_sys::EmacsInt;
-use remacs_sys::SYMBOL_FORWARDED;
 use remacs_sys::staticpro;
+use remacs_sys::symbol_redirect;
 
 use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj,
            Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd,
@@ -29,7 +29,7 @@ pub extern "C" fn defvar_int(
             .as_symbol_or_error()
     };
     sym.set_declared_special(true);
-    sym.set_redirect(SYMBOL_FORWARDED);
+    sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(i_fwd as *mut Lisp_Fwd);
 }
 
@@ -50,7 +50,7 @@ pub extern "C" fn defvar_bool(
             .as_symbol_or_error()
     };
     sym.set_declared_special(true);
-    sym.set_redirect(SYMBOL_FORWARDED);
+    sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(b_fwd as *mut Lisp_Fwd);
 }
 
@@ -74,7 +74,7 @@ pub extern "C" fn defvar_lisp_nopro(
             .as_symbol_or_error()
     };
     sym.set_declared_special(true);
-    sym.set_redirect(SYMBOL_FORWARDED);
+    sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(o_fwd as *mut Lisp_Fwd);
 }
 
@@ -114,7 +114,7 @@ pub fn defvar_kboard_offset(
         libc::strlen(namestring) as libc::ptrdiff_t
     }).as_symbol_or_error();
     sym.set_declared_special(true);
-    sym.set_redirect(SYMBOL_FORWARDED);
+    sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(ko_fwd as *mut Lisp_Fwd);
 }
 
@@ -144,7 +144,7 @@ pub fn defvar_per_buffer_offset(
             .as_symbol_or_error()
     };
     sym.set_declared_special(true);
-    sym.set_redirect(SYMBOL_FORWARDED);
+    sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(bo_fwd as *mut Lisp_Fwd);
     let local = offset.apply_mut(unsafe { &mut remacs_sys::buffer_local_symbols });
     *local = sym.as_lisp_obj();

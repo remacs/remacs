@@ -4,7 +4,7 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, PseudovecType, CHECK_IMPURE};
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, CHECK_IMPURE};
 use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
                  Fcopy_sequence};
 use remacs_sys::Qhash_table_test;
@@ -18,8 +18,7 @@ pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
 impl LispHashTableRef {
     pub fn allocate() -> LispHashTableRef {
-        let vec_ptr =
-            allocate_pseudovector!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE);
+        let vec_ptr = allocate_pseudovector!(Lisp_Hash_Table, count, pvec_type::PVEC_HASH_TABLE);
         LispHashTableRef::new(vec_ptr)
     }
 

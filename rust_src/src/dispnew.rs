@@ -29,7 +29,7 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> () {
                     0,
                     true,
                     LispObject::constant_nil().to_raw(),
-                    ptr::null(),
+                    ptr::null_mut(),
                     0,
                 )
             };

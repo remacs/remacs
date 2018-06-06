@@ -1,12 +1,12 @@
 //! Keymap support
 
-use std::mem;
+use std;
 use std::ptr;
 
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
+use remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
 use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
@@ -271,7 +271,7 @@ pub extern "C" fn map_keymap(
     map: LispObject,
     fun: map_keymap_function_t,
     args: LispObject,
-    data: *const c_void,
+    data: *mut c_void,
     autoload: bool,
 ) {
     let mut map = get_keymap(map, true, autoload);
@@ -307,7 +307,7 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
     }
     map_keymap(
         keymap.to_raw(),
-        map_keymap_call,
+        Some(map_keymap_call),
         function.to_raw(),
         ptr::null_mut(),
         true,
@@ -322,7 +322,7 @@ pub extern "C" fn map_keymap_internal(
     map: LispObject,
     fun: map_keymap_function_t,
     args: LispObject,
-    data: *const c_void,
+    data: *mut c_void,
 ) -> LispObject {
     let map = map;
     let tail = match map.as_cons() {
@@ -368,14 +368,17 @@ pub extern "C" fn map_keymap_internal(
                 }
             } else if binding.is_char_table() {
                 unsafe {
-                    let ptr = fun as *const ();
-                    let funcptr = mem::transmute(ptr);
-
+                    let saved = match fun {
+                        Some(f) => {
+                            make_save_funcptr_ptr_obj(Some(std::mem::transmute(f)), data, args)
+                        }
+                        None => make_save_funcptr_ptr_obj(None, data, args),
+                    };
                     map_char_table(
-                        map_keymap_char_table_item,
+                        Some(map_keymap_char_table_item),
                         Qnil,
                         binding.to_raw(),
-                        make_save_funcptr_ptr_obj(funcptr, data, args),
+                        saved,
                     );
                 }
             }
@@ -396,7 +399,7 @@ pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) ->
     keymap = get_keymap(keymap.to_raw(), true, true);
     map_keymap_internal(
         keymap.to_raw(),
-        map_keymap_call,
+        Some(map_keymap_call),
         function.to_raw(),
         ptr::null_mut(),
     )
@@ -421,7 +424,7 @@ pub fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispOb
 /// Normally the local keymap is set by the major mode with `use-local-map'.
 #[lisp_fn]
 pub fn current_local_map() -> LispObject {
-    ThreadState::current_buffer().keymap
+    ThreadState::current_buffer().keymap_
 }
 
 /// Select KEYMAP as the local keymap.
@@ -433,7 +436,7 @@ pub fn use_local_map(mut keymap: LispObject) -> () {
         keymap = map;
     }
 
-    ThreadState::current_buffer().keymap = keymap.to_raw();
+    ThreadState::current_buffer().keymap_ = keymap.to_raw();
 }
 
 /// Return the binding for command KEYS in current global keymap only.
@@ -507,7 +510,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
             if let Some(x) = c.as_fixnum() {
                 let x = x as u32;
                 if x & 0x80 != 0 && !k.is_multibyte() {
-                    c = LispObject::from_fixnum(EmacsInt::from((x | CHAR_META) & !0x80));
+                    c = LispObject::from_fixnum(EmacsInt::from((x | char_bits::CHAR_META) & !0x80));
                 }
             }
         }

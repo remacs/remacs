@@ -261,7 +261,7 @@ pub fn self_insert_command(n: EmacsInt) {
         let character = unsafe {
             translate_char(
                 globals.Vtranslation_table_for_input,
-                globals.last_command_event.as_fixnum_or_error(),
+                globals.last_command_event.as_fixnum_or_error() as i32,
             )
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
@@ -294,7 +294,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     let mut spaces_to_insert: usize = 0;
 
     let mut current_buffer = ThreadState::current_buffer();
-    let overwrite = current_buffer.overwrite_mode;
+    let overwrite = current_buffer.overwrite_mode_;
     if unsafe { globals.Vbefore_change_functions }.is_not_nil() || unsafe {
         globals.Vafter_change_functions
     }.is_not_nil()
@@ -303,7 +303,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     // At first, get multi-byte form of C in STR.
-    if current_buffer.enable_multibyte_characters.is_not_nil() {
+    if current_buffer.enable_multibyte_characters_.is_not_nil() {
         len = write_codepoint(&mut str, c);
         if len == 1 {
             c = str[0] as Codepoint;
@@ -377,14 +377,14 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
     synt = unsafe { syntax_property(c as i32, true) };
 
-    let previous_char = if current_buffer.enable_multibyte_characters.is_not_nil() {
+    let previous_char = if current_buffer.enable_multibyte_characters_.is_not_nil() {
         preceding_char() as Codepoint
     } else {
         unibyte_to_char(preceding_char() as Codepoint)
     };
-    if current_buffer.abbrev_mode.is_not_nil() && synt != syntaxcode::Word
-        && current_buffer.read_only.is_not_nil() && current_buffer.pt > current_buffer.begv
-        && unsafe { syntax_property(previous_char as libc::c_int, true) } == syntaxcode::Word
+    if current_buffer.abbrev_mode_.is_not_nil() && synt != syntaxcode::Sword
+        && current_buffer.read_only_.is_not_nil() && current_buffer.pt > current_buffer.begv
+        && unsafe { syntax_property(previous_char as libc::c_int, true) } == syntaxcode::Sword
     {
         let modiff = unsafe { (*current_buffer.text).modiff };
 
@@ -413,7 +413,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     if chars_to_delete > 0 {
-        let mc = if current_buffer.enable_multibyte_characters.is_not_nil() && single_byte_charp(c)
+        let mc = if current_buffer.enable_multibyte_characters_.is_not_nil() && single_byte_charp(c)
         {
             unibyte_to_char(c)
         } else {
@@ -463,7 +463,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
     if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
         if t.get(c as isize).is_not_nil() && (c == ' ' as Codepoint || c == '\n' as Codepoint)
-            && current_buffer.auto_fill_function.is_not_nil()
+            && current_buffer.auto_fill_function_.is_not_nil()
         {
             if c == '\n' as Codepoint {
                 // After inserting a newline, move to previous line and fill

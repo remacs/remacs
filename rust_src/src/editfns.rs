@@ -168,9 +168,9 @@ pub fn goto_char(position: LispObject) -> LispObject {
     if position.is_marker() {
         set_point_from_marker(position.to_raw());
     } else if let Some(num) = position.as_fixnum() {
-        let cur_buf = ThreadState::current_buffer();
+        let mut cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -183,10 +183,10 @@ pub fn goto_char(position: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
     let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
-    let cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -322,7 +322,7 @@ pub fn preceding_char() -> EmacsInt {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
-    let buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer();
     if pos.is_nil() {
         pos = LispObject::from(point());
     }
@@ -340,7 +340,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv() {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_ptr(), p) };
+            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }

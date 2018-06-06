@@ -29,17 +29,17 @@ impl LispMarkerRef {
         unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 
-    pub fn charpos(self) -> Option<ptrdiff_t> {
+    pub fn charpos(mut self) -> Option<ptrdiff_t> {
         match self.buffer() {
             None => None,
-            Some(_) => unsafe { Some(mget_charpos(self.as_ptr())) },
+            Some(_) => unsafe { Some(mget_charpos(self.as_mut())) },
         }
     }
 
-    pub fn charpos_or_error(self) -> ptrdiff_t {
+    pub fn charpos_or_error(mut self) -> ptrdiff_t {
         match self.buffer() {
             None => error!("Marker does not point anywhere"),
-            Some(_) => unsafe { mget_charpos(self.as_ptr()) },
+            Some(_) => unsafe { mget_charpos(self.as_mut()) },
         }
     }
 
@@ -47,17 +47,17 @@ impl LispMarkerRef {
         unsafe { mset_charpos(self.as_mut(), charpos) }
     }
 
-    pub fn bytepos(self) -> Option<ptrdiff_t> {
+    pub fn bytepos(mut self) -> Option<ptrdiff_t> {
         match self.buffer() {
             None => None,
-            Some(_) => unsafe { Some(mget_bytepos(self.as_ptr())) },
+            Some(_) => unsafe { Some(mget_bytepos(self.as_mut())) },
         }
     }
 
-    pub fn bytepos_or_error(self) -> ptrdiff_t {
+    pub fn bytepos_or_error(mut self) -> ptrdiff_t {
         match self.buffer() {
             None => error!("Marker does not point anywhere"),
-            Some(_) => unsafe { mget_bytepos(self.as_ptr()) },
+            Some(_) => unsafe { mget_bytepos(self.as_mut()) },
         }
     }
 
@@ -65,15 +65,15 @@ impl LispMarkerRef {
         unsafe { mset_bytepos(self.as_mut(), bytepos) }
     }
 
-    pub fn buffer(self) -> Option<LispBufferRef> {
+    pub fn buffer(mut self) -> Option<LispBufferRef> {
         unsafe {
-            let buffer = mget_buffer(self.as_ptr());
+            let buffer = mget_buffer(self.as_mut());
             buffer.as_ref().map(|b| mem::transmute(b))
         }
     }
 
-    pub fn set_buffer(self, b: *mut Lisp_Buffer) -> () {
-        unsafe { mset_buffer(self.as_ptr(), b) }
+    pub fn set_buffer(mut self, b: *mut Lisp_Buffer) -> () {
+        unsafe { mset_buffer(self.as_mut(), b) }
     }
 
     #[inline]
@@ -94,8 +94,8 @@ impl LispMarkerRef {
         }
     }
 
-    pub fn set_next(self, m: *mut Lisp_Marker) -> () {
-        unsafe { mset_next_marker(self.as_ptr(), m) }
+    pub fn set_next(mut self, m: *mut Lisp_Marker) -> () {
+        unsafe { mset_next_marker(self.as_mut(), m) }
     }
 }
 
@@ -145,7 +145,7 @@ pub fn marker_buffer(marker: LispMarkerRef) -> Option<LispBufferRef> {
 #[no_mangle]
 pub extern "C" fn set_point_from_marker(marker: LispObject) {
     let marker = marker.as_marker_or_error();
-    let cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer();
     let charpos = clip_to_bounds(
         cur_buf.begv,
         marker.charpos_or_error() as EmacsInt,
@@ -155,7 +155,7 @@ pub extern "C" fn set_point_from_marker(marker: LispObject) {
     // Don't trust the byte position if the marker belongs to a
     // different buffer.
     if marker.buffer().map_or(false, |b| b != cur_buf) {
-        bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), charpos) };
+        bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), charpos) };
     } else {
         bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
     };

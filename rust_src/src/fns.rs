@@ -174,11 +174,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     unsafe {
         // Update the list for any nested `require's that occur.
-        record_unwind_protect(require_unwind, require_nesting_list);
+        record_unwind_protect(Some(require_unwind), require_nesting_list);
         require_nesting_list = Fcons(feature.to_raw(), require_nesting_list);
 
         // Value saved here is to be restored into Vautoload_queue
-        record_unwind_protect(un_autoload, Vautoload_queue);
+        record_unwind_protect(Some(un_autoload), Vautoload_queue);
         Vautoload_queue = Qt;
 
         // Load the file.

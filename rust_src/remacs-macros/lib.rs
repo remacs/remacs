@@ -75,6 +75,27 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let rname = function.name;
     let min_args = lisp_fn_args.min;
     let mut windows_header = quote!{};
+
+    let functype = if lisp_fn_args.unevalled {
+        quote! { aUNEVALLED }
+    } else {
+        match function.fntype {
+            function::LispFnType::Normal(_) => match max_args {
+                0 => quote! { a0 },
+                1 => quote! { a1 },
+                2 => quote! { a2 },
+                3 => quote! { a3 },
+                4 => quote! { a4 },
+                5 => quote! { a5 },
+                6 => quote! { a6 },
+                7 => quote! { a7 },
+                8 => quote! { a8 },
+                _ => panic!("max_args too high"),
+            },
+            function::LispFnType::Many => quote! { aMANY },
+        }
+    };
+
     let max_args = if lisp_fn_args.unevalled {
         quote! { -1 }
     } else {
@@ -104,17 +125,20 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         lazy_static! {
             pub static ref #sname: ::lisp::LispSubrRef = {
                 let subr = ::remacs_sys::Lisp_Subr {
-                    header: ::remacs_sys::Lisp_Vectorlike_Header {
-                        size: ((::remacs_sys::PseudovecType::PVEC_SUBR as ::libc::ptrdiff_t)
-                               << ::remacs_sys::PSEUDOVECTOR_AREA_BITS) #windows_header,
+                    header: ::remacs_sys::vectorlike_header {
+                        size: ((::remacs_sys::pvec_type::PVEC_SUBR as ::libc::ptrdiff_t)
+                               << ::remacs_sys::More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS)
+                            #windows_header,
                     },
-                    function: self::#fname as *const ::libc::c_void,
+                    function: ::remacs_sys::Lisp_Subr__bindgen_ty_1 {
+                        #functype: (Some(self::#fname))
+                    },
                     min_args: #min_args,
                     max_args: #max_args,
                     symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,
                     intspec: #intspec,
-                    doc: ::std::ptr::null(),
-                    lang: ::remacs_sys::Lisp_Subr_Lang_Rust,
+                    doc: 0,
+                    lang: ::remacs_sys::Lisp_Subr_Lang::Lisp_Subr_Lang_Rust,
                 };
 
                 unsafe {

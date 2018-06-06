@@ -9,8 +9,7 @@
 /// This module is only for testing, and you should add all
 /// definitions to remacs-sys first and foremost.
 use libc::*;
-
-use mock_derive::mock;
+//use mock_derive::mock;
 use remacs_sys::*;
 
 use lisp::LispObject;
@@ -20,27 +19,31 @@ use lisp::LispObject;
 #[no_mangle]
 pub static mut lispsym: EmacsInt = 0;
 
-#[mock]
-extern "C" {
-    pub fn Fcons(car: LispObject, cdr: LispObject) -> LispObject;
-    pub fn Fsignal(error_symbol: LispObject, data: LispObject);
-    pub fn make_string(s: *const c_char, length: ptrdiff_t) -> LispObject;
-    pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> LispObject;
-}
+//#[mock]
+//extern "C" {
+//    pub fn Fcons(car: LispObject, cdr: LispObject) -> LispObject;
+//    pub fn Fsignal(error_symbol: LispObject, data: LispObject) -> !;
+//    pub fn make_string(s: *const c_char, length: isize) -> LispObject;
+//    pub fn make_unibyte_string(s: *const c_char, length: isize) -> LispObject;
+//}
 
+#[warn(unused_macros)]
 macro_rules! mock_float {
     () => { mock_float!(0.0) };
 
     ($f: expr) => {{
         // Fake an allocated float by just putting it on the heap and leaking it.
         let boxed = Box::new(::remacs_sys::Lisp_Float {
-            data: unsafe { ::std::mem::transmute($f) },
+            u: ::remacs_sys::Lisp_Float__bindgen_ty_1 {
+                data: unsafe { ::std::mem::transmute($f) },
+            },
         });
         let raw = ::lisp::ExternalPtr::new(Box::into_raw(boxed));
         ::lisp::LispObject::tag_ptr(raw, ::remacs_sys::Lisp_Type::Lisp_Float)
     }};
 }
 
+#[macro_export]
 macro_rules! mock_unibyte_string {
     () => { mock_unibyte_string!("") };
     ($string: expr) => {{
@@ -50,7 +53,7 @@ macro_rules! mock_unibyte_string {
             size: len,
             size_byte: -1,
             intervals: ::std::ptr::null_mut(),
-            data: strcopy.into_raw(),
+            data: strcopy.into_raw() as *mut u8,
         });
 
         let ptr = ::lisp::ExternalPtr::new(Box::into_raw(boxed));
@@ -58,6 +61,7 @@ macro_rules! mock_unibyte_string {
     }};
 }
 
+#[macro_export]
 macro_rules! mock_multibyte_string {
     () => { mock_multibyte_string!("") };
     ($string: expr) => {{
@@ -67,7 +71,7 @@ macro_rules! mock_multibyte_string {
             size: len,
             size_byte: len,
             intervals: ::std::ptr::null_mut(),
-            data: strcopy.into_raw(),
+            data: strcopy.into_raw() as *mut u8,
         });
 
         let ptr = ::lisp::ExternalPtr::new(Box::into_raw(boxed));
@@ -83,4 +87,36 @@ macro_rules! assert_t {
 #[allow(unused_macros)]
 macro_rules! assert_nil {
     ($arg: expr) => {{ assert!($arg == ::lisp::LispObject::constant_nil()); }};
+}
+
+#[cfg(test)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[no_mangle]
+pub extern "C" fn Fcons(car: LispObject, cdr: LispObject) -> LispObject {
+    return Qnil;
+}
+
+#[cfg(test)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[no_mangle]
+pub extern "C" fn Fsignal(error_symbol: LispObject, data: LispObject) -> ! {
+    panic!("Fsignal called during tests");
+}
+
+#[cfg(test)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[no_mangle]
+pub extern "C" fn make_string(s: *const c_char, length: isize) -> LispObject {
+    mock_multibyte_string!()
+}
+
+#[cfg(test)]
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[no_mangle]
+pub extern "C" fn make_unibyte_string(s: *const c_char, length: isize) -> LispObject {
+    mock_unibyte_string!()
 }
