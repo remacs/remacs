@@ -8,6 +8,8 @@
 #![allow(private_no_mangle_fns)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 #![allow(improper_ctypes)] // we need this to be able to inclde FieldOffsets in C structs
+// we have a bunch of unused code during testing at the moment, somehow
+#![cfg_attr(test, allow(unused_code))]
 #![feature(proc_macro)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 #![feature(global_allocator)]
