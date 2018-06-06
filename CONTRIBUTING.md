@@ -20,7 +20,7 @@ Thank you for contributing to Remacs!
   correct version based on our [toolchain
   file](https://github.com/rust-lang-nursery/rustup.rs#the-toolchain-file))
   and running `rustup component add rustfmt-preview`. See
-  [Helpful Hooks](#helpful-hooks) for help to automatate this verification.
+  [Helpful Hooks](#helpful-hooks) for help to automate this verification.
 * Add docstrings to your Rust functions `/// This function does ...`
 * _Really_ great PRs include tests. See
   [Writing Tests](#writing-tests) for more information.
