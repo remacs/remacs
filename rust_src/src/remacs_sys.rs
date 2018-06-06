@@ -1,4 +1,5 @@
 #![allow(unused)]
+#![allow(improper_ctypes)]
 
 //! This module contains all FFI declarations.
 //!
