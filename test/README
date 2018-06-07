@@ -42,7 +42,10 @@ except the tests tagged as expensive.
 
 If your test file contains the tests "test-foo", "test2-foo" and
 "test-foo-remote", and you want to run only the former two tests, you
-could use a selector regexp: "make <filename> SELECTOR='\"foo$$\"'".
+could use a selector regexp (note that the "$" needs to be doubled to
+protect against "make" variable expansion):
+
+    make <filename> SELECTOR='"foo$$"'
 
 Note that although the test files are always compiled (unless they set
 no-byte-compile), the source files will be run by default, to give
