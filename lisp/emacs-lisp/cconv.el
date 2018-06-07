@@ -206,7 +206,6 @@ Returns a form where all lambdas don't have any free variables."
   (cl-assert (equal body (caar cconv-freevars-alist)))
   (let* ((fvs (cdr (pop cconv-freevars-alist)))
          (body-new '())
-         (letbind '())
          (envector ())
          (i 0)
          (new-env ()))
@@ -227,25 +226,8 @@ Returns a form where all lambdas don't have any free variables."
     (setq envector (nreverse envector))
     (setq new-env (nreverse new-env))
 
-    (dolist (arg args)
-      (if (not (member (cons (list arg) parentform) cconv-captured+mutated))
-          (if (assq arg new-env) (push `(,arg) new-env))
-        (push `(,arg . (car-safe ,arg)) new-env)
-        (push `(,arg (list ,arg)) letbind)))
-
-    (setq body-new (mapcar (lambda (form)
-                             (cconv-convert form new-env nil))
-                           body))
-
-    (when letbind
-      (let ((special-forms '()))
-        ;; Keep special forms at the beginning of the body.
-        (while (or (stringp (car body-new)) ;docstring.
-                   (memq (car-safe (car body-new)) '(interactive declare)))
-          (push (pop body-new) special-forms))
-        (setq body-new
-              `(,@(nreverse special-forms) (let ,letbind . ,body-new)))))
-
+    (setq body-new (cconv--convert-funcbody
+                     args body new-env parentform))
     (cond
      ((not (or envector docstring))     ;If no freevars - do nothing.
       `(function (lambda ,args . ,body-new)))
@@ -279,6 +261,30 @@ Returns a form where all lambdas don't have any free variables."
                           (nthcdr 3 mapping)))))
           new-env))
 
+(defun cconv--convert-funcbody (funargs funcbody env parentform)
+  "Run `cconv-convert' on FUNCBODY, the forms of a lambda expression.
+PARENTFORM is the form containing the lambda expression.  ENV is a
+lexical environment (same format as for `cconv-convert'), not
+including FUNARGS, the function's argument list.  Return a list
+of converted forms."
+  (let ((letbind ()))
+    (dolist (arg funargs)
+      (if (not (member (cons (list arg) parentform) cconv-captured+mutated))
+          (if (assq arg env) (push `(,arg . nil) env))
+        (push `(,arg . (car-safe ,arg)) env)
+        (push `(,arg (list ,arg)) letbind)))
+    (setq funcbody (mapcar (lambda (form)
+                             (cconv-convert form env nil))
+                           funcbody))
+    (if letbind
+        (let ((special-forms '()))
+          ;; Keep special forms at the beginning of the body.
+          (while (or (stringp (car funcbody)) ;docstring.
+                     (memq (car-safe (car funcbody)) '(interactive declare)))
+            (push (pop funcbody) special-forms))
+          `(,@(nreverse special-forms) (let ,letbind . ,funcbody)))
+      funcbody)))
+
 (defun cconv-convert (form env extend)
   ;; This function actually rewrites the tree.
   "Return FORM with all its lambdas changed so they are closed.
@@ -292,6 +298,9 @@ ENV is a list where each entry takes the shape either:
     environment's Nth slot.
  (VAR . (apply-partially F ARG1 ARG2 ..)): VAR has been λ-lifted and takes
     additional arguments ARGs.
+ (VAR . nil): VAR is accessed normally.  This is the same as VAR
+    being absent from ENV, but an explicit nil entry is useful
+    for shadowing VAR for a specific scope.
 EXTEND is a list of variables which might need to be accessed even from places
 where they are shadowed, because some part of ENV causes them to be used at
 places where they originally did not directly appear."
@@ -360,10 +369,8 @@ places where they originally did not directly appear."
                                 (not (memq fv funargs)))
                            (push `(,fv . (car-safe ,fv)) funcbody-env)))
                      `(function (lambda ,funcvars .
-                                  ,(mapcar (lambda (form)
-                                             (cconv-convert
-                                              form funcbody-env nil))
-                                           funcbody)))))
+                                  ,(cconv--convert-funcbody
+                                    funargs funcbody funcbody-env value)))))
 
                   ;; Check if it needs to be turned into a "ref-cell".
                   ((member (cons binder form) cconv-captured+mutated)
