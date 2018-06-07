@@ -573,6 +573,11 @@ manual for more details.
 * Lisp Changes in Emacs 27.1
 
 +++
+** Face specifications (of the kind used in `face-remapping-alist')
+   now support filters, allowing faces to vary between windows display
+   the same buffer.
+
++++
 ** New function assoc-delete-all.
 
 +++
