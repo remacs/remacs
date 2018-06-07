@@ -430,6 +430,10 @@ process.  It now accepts signals specified either by name or by its number.
 or NextCloud hosted files and directories.
 
 +++
+*** Connection methods "obex" and "synce" are removed, because they
+are obsoleted in GVFS.
+
++++
 *** Validated passwords are saved by auth-source backends which support this.
 
 +++
