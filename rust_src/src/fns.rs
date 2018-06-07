@@ -28,7 +28,7 @@ use vectors::length;
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> bool {
-    let mut tem = memq(feature.as_lisp_obj(), unsafe { globals.f_Vfeatures });
+    let mut tem = memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures });
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(subfeature, get(feature, Qsubfeatures));
     }
@@ -46,28 +46,28 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     unsafe {
         if Vautoload_queue.is_not_nil() {
             Vautoload_queue = Fcons(
-                Fcons(LispObject::from_fixnum(0).to_raw(), globals.f_Vfeatures),
+                Fcons(LispObject::from_fixnum(0).to_raw(), globals.Vfeatures),
                 Vautoload_queue,
             );
         }
     }
-    if memq(feature.as_lisp_obj(), unsafe { globals.f_Vfeatures }).is_nil() {
+    if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.f_Vfeatures = Fcons(feature.as_lisp_obj().to_raw(), globals.f_Vfeatures);
+            globals.Vfeatures = Fcons(feature.as_lisp_obj().to_raw(), globals.Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
         put(feature.as_lisp_obj(), Qsubfeatures, subfeature);
     }
     unsafe {
-        globals.f_Vcurrent_load_list = Fcons(
+        globals.Vcurrent_load_list = Fcons(
             Fcons(Qprovide, feature.as_lisp_obj().to_raw()),
-            globals.f_Vcurrent_load_list,
+            globals.Vcurrent_load_list,
         );
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.as_lisp_obj(), globals.f_Vafter_load_alist).as_cons() {
+        if let Some(c) = assq(feature.as_lisp_obj(), globals.Vafter_load_alist).as_cons() {
             Fmapc(Qfuncall, c.cdr().to_raw());
         }
     }
@@ -123,13 +123,13 @@ unsafe extern "C" fn require_unwind(old_value: LispObject) {
 #[lisp_fn(min = "1")]
 pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -> LispObject {
     let feature_sym = feature.as_symbol_or_error();
-    let current_load_list = unsafe { globals.f_Vcurrent_load_list };
+    let current_load_list = unsafe { globals.Vcurrent_load_list };
 
     // Record the presence of `require' in this file
     // even if the feature specified is already loaded.
     // But not more than once in any file,
     // and not when we aren't loading or reading from a file.
-    let from_file = unsafe { globals.f_load_in_progress }
+    let from_file = unsafe { globals.load_in_progress }
         || current_load_list
             .iter_cars_safe()
             .last()
@@ -142,7 +142,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         }
     }
 
-    if memq(feature, unsafe { globals.f_Vfeatures }).is_not_nil() {
+    if memq(feature, unsafe { globals.Vfeatures }).is_not_nil() {
         return feature;
     }
 
@@ -150,7 +150,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     // This is to make sure that loadup.el gives a clear picture
     // of what files are preloaded and when.
-    if unsafe { globals.f_Vpurify_flag != Qnil } {
+    if unsafe { globals.Vpurify_flag != Qnil } {
         error!(
             "(require {}) while preparing to dump",
             feature_sym.symbol_name().as_string_or_error()
@@ -200,9 +200,9 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         }
     }
 
-    let tem = memq(feature, unsafe { globals.f_Vfeatures });
+    let tem = memq(feature, unsafe { globals.Vfeatures });
     if tem.is_nil() {
-        let tem3 = car(car(unsafe { globals.f_Vload_history }));
+        let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {
             error!(

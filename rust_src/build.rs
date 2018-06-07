@@ -548,7 +548,8 @@ fn generate_globals() {
                 if line.starts_with("  ") {
                     let mut parts = line.trim().trim_matches(';').split(' ');
                     let vtype = parts.next().unwrap();
-                    let vname = parts.next().unwrap();
+                    let vname = parts.next().unwrap().splitn(2, "_").nth(1).unwrap();
+
                     write!(
                         out_file,
                         "    pub {}: {},\n",

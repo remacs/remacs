@@ -12,7 +12,7 @@ use lisp::{defsubr, LispObject};
 use lists::list;
 
 fn get_user_real_login_name() -> LispObject {
-    unsafe { globals.f_Vuser_real_login_name }
+    unsafe { globals.Vuser_real_login_name }
 }
 
 #[cfg(windows)]

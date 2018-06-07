@@ -20,7 +20,7 @@ impl LispObarrayRef {
 
     /// Return a reference to the Lisp variable `obarray`.
     pub fn global() -> LispObarrayRef {
-        LispObarrayRef(check_obarray(unsafe { globals.f_Vobarray }))
+        LispObarrayRef(check_obarray(unsafe { globals.Vobarray }))
     }
 
     pub fn as_lisp_obj(&self) -> LispObject {
@@ -52,7 +52,7 @@ impl LispObarrayRef {
         let obj = self.as_lisp_obj();
         if tem.is_symbol() {
             tem
-        } else if unsafe { globals.f_Vpurify_flag }.is_not_nil() {
+        } else if unsafe { globals.Vpurify_flag }.is_not_nil() {
             // When Emacs is running lisp code to dump to an executable, make
             // use of pure storage.
             intern_driver(
@@ -79,7 +79,7 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
 pub extern "C" fn loadhist_attach(x: LispObject) {
     unsafe {
         if initialized {
-            globals.f_Vcurrent_load_list = Fcons(x, globals.f_Vcurrent_load_list);
+            globals.Vcurrent_load_list = Fcons(x, globals.Vcurrent_load_list);
         }
     }
 }
@@ -99,8 +99,8 @@ pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
     let v = obarray.as_vector();
     if v.map_or(0, |v_1| v_1.len()) == 0 {
         // If Vobarray is now invalid, force it to be valid.
-        if unsafe { globals.f_Vobarray }.eq(obarray) {
-            unsafe { globals.f_Vobarray = initial_obarray };
+        if unsafe { globals.Vobarray }.eq(obarray) {
+            unsafe { globals.Vobarray = initial_obarray };
         }
         wrong_type!(Qvectorp, obarray);
     }
@@ -156,7 +156,7 @@ pub extern "C" fn intern_c_string_1(s: *const libc::c_char, len: libc::ptrdiff_t
     } else {
         // Creating a non-pure string from a string literal not implemented yet.
         // We could just use make_string here and live with the extra copy.
-        assert!(unsafe { globals.f_Vpurify_flag }.is_not_nil());
+        assert!(unsafe { globals.Vpurify_flag }.is_not_nil());
         intern_driver(unsafe { make_pure_c_string(s, len) }, obarray, tem.to_raw())
     }
 }

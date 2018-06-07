@@ -4,8 +4,8 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_Overlay,
-                 Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Overlay, Lisp_Type,
+                 Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
@@ -15,6 +15,7 @@ use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, 
                  last_per_buffer_idx, set_buffer_internal};
 
 use chartable::LispCharTableRef;
+use data::Lisp_Fwd;
 use editfns::point;
 use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lisp::defsubr;
@@ -620,7 +621,7 @@ pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
 pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
     let pos = position.unwrap_or_else(point);
 
-    let inhibit_read_only: bool = unsafe { globals.f_Vinhibit_read_only.into() };
+    let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
     let prop =
         unsafe { Fget_text_property(LispObject::from(pos).to_raw(), Qinhibit_read_only, Qnil) };
 
@@ -789,6 +790,14 @@ pub fn buffer_base_buffer(buffer: LispObject) -> Option<LispBufferRef> {
     buffer.as_buffer_or_current_buffer().base_buffer()
 }
 
-def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+#[no_mangle]
+pub extern "C" fn rust_syms_of_buffer() {
+    def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+
+    /// Analogous to `mode-line-format', but controls the header line.
+    /// The header line appears, optionally, at the top of a window;
+    /// the mode line appears at the bottom.
+    defvar_per_buffer!(header_line_format, "header-line-format", Qnil);
+}
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

@@ -123,6 +123,138 @@ macro_rules! def_lisp_sym {
     ($name:expr, $value:expr) => {};
 }
 
+/// Macros we use to define forwarded Lisp variables.
+/// These are used in the syms_of_FILENAME functions.
+///
+/// An ordinary (not in buffer_defaults, per-buffer, or per-keyboard)
+/// lisp variable is actually a field in `struct emacs_globals'.
+///
+/// In the C code, the field's name begins with "f_", which is a
+/// convention enforced by these macros.  Each such global has a
+/// corresponding #define in globals.h; the plain name should be used
+/// in the C code.
+///
+/// E.g., the global "cons_cells_consed" is declared as "int
+/// f_cons_cells_consed" in globals.h, but there is a define:
+///
+///    #define cons_cells_consed globals.f_cons_cells_consed
+///
+/// All C code uses the `cons_cells_consed' name.
+///
+/// As the Rust macro system has identifier hygine, the Rust code's
+/// version of the struct emacs_globals does not include the f_ prefix
+/// on the field names, and Rust code accesses the fields directly,
+/// rather than through a macro.
+///
+/// This is all done this way to support indirection for
+/// multi-threaded Emacs.
+#[macro_export]
+macro_rules! defvar_lisp {
+    ($field_name:ident, $lisp_name:expr, $value:expr) => {
+        {
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Objfwd = unsafe { ::hacks::uninitialized() };
+                ::remacs_sys::defvar_lisp(&mut o_fwd,
+                                          $lisp_name.as_ptr() as *const i8,
+                                          &mut ::remacs_sys::globals.$field_name);
+                ::remacs_sys::globals.$field_name = $value;
+            }
+        }
+    };
+}
+#[macro_export]
+macro_rules! defvar_lisp_nopro {
+    ($field_name:ident, $lisp_name:expr, $value:expr) => {
+        {
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Objfwd = unsafe { ::hacks::uninitialized() };
+                ::remacs_sys::defvar_lisp_nopro(&mut o_fwd,
+                                                $lisp_name.as_ptr() as *const i8,
+                                                &mut ::remacs_sys::globals.$field_name);
+                ::remacs_sys::globals.$field_name = $value;
+            }
+        }
+    };
+}
+#[macro_export]
+macro_rules! defvar_bool {
+    ($field_name:ident, $lisp_name:expr, $value:expr) => {
+        {
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Boolfwd = unsafe { ::hacks::uninitialized() };
+                ::remacs_sys::defvar_bool(&mut o_fwd,
+                                          $lisp_name.as_ptr() as *const i8,
+                                          &mut ::remacs_sys::globals.$field_name);
+                ::remacs_sys::globals.$field_name = $value;
+            }
+        }
+    };
+}
+#[macro_export]
+macro_rules! defvar_int {
+    ($field_name:ident, $lisp_name:expr, $value:expr) => {
+        {
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Intfwd = unsafe { ::hacks::uninitialized() };
+                ::remacs_sys::defvar_int(&mut o_fwd,
+                                         $lisp_name.as_ptr() as *const i8,
+                                         &mut ::remacs_sys::globals.$field_name);
+                ::remacs_sys::globals.$field_name = $value;
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! defvar_kboard {
+    ($vname:ident, $lisp_name:expr) => {
+        {
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Kboard_Objfwd = unsafe { ::hacks::uninitialized() };
+                ::lread::defvar_kboard_offset(&mut o_fwd,
+                                              $lisp_name.as_ptr() as *const i8,
+                                              ::field_offset::offset_of!(
+                                                  ::remacs_sys::kboard => $vname));
+                }
+        }
+    };
+}
+
+/// Similar to defvar_lisp but define a variable whose value is the
+/// Lisp_Object stored in the current buffer.  LNAME is the Lisp-level
+/// variable name.  VNAME is the name of the buffer slot.  PREDICATE
+/// is nil for a general Lisp variable.  If PREDICATE is non-nil, then
+/// only Lisp values that satisfies the PREDICATE are allowed (except
+/// that nil is allowed too).  DOC is a dummy where you write the doc
+/// string as a comment.
+#[macro_export]
+macro_rules! defvar_per_buffer {
+    ($vname:ident, $lname:expr, $pred:ident) => {
+        {
+            #[allow(unused_unsafe)]
+            unsafe {
+                #[allow(const_err)]
+                static mut o_fwd: ::data::Lisp_Buffer_Objfwd = unsafe { ::hacks::uninitialized() };
+                ::lread::defvar_per_buffer_offset(&mut o_fwd,
+                                                  $lname.as_ptr() as *const i8,
+                                                  ::field_offset::offset_of!(
+                                                      ::remacs_sys::Lisp_Buffer => $vname),
+                                                  $pred);
+            }
+        }
+    };
+}
+
 #[allow(unused_macros)]
 macro_rules! declare_GC_protected_static {
     ($var: ident, $value: expr) => {

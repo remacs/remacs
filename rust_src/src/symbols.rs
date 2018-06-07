@@ -5,12 +5,14 @@ use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoi
 use remacs_sys::{symbol_redirect, SYMBOL_FORWARDED, SYMBOL_LOCALIZED, SYMBOL_PLAINVAL,
                  SYMBOL_VARALIAS};
 use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
-                 make_lisp_symbol, set_symbol_declared_special, swap_in_symval_forwarding,
-                 symbol_is_alias, symbol_is_constant, symbol_is_interned};
+                 make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
+                 swap_in_symval_forwarding, symbol_is_alias, symbol_is_constant,
+                 symbol_is_interned};
 use remacs_sys::Fset;
 use remacs_sys::Lisp_Symbol;
 
 use buffers::LispBufferLocalValueRef;
+use data::Lisp_Fwd;
 use data::indirect_function;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -104,12 +106,25 @@ impl LispSymbolRef {
         unsafe { get_symbol_redirect(self.as_ptr()) }
     }
 
+    pub fn set_redirect(self, v: symbol_redirect) {
+        unsafe { set_symbol_redirect(self.as_ptr(), v) }
+    }
+
     pub fn get_value(self) -> LispObject {
         unsafe { self.val.value }
     }
 
     pub fn get_blv(self) -> LispBufferLocalValueRef {
         LispBufferLocalValueRef::new(unsafe { self.val.blv })
+    }
+
+    pub fn get_fwd(self) -> *mut Lisp_Fwd {
+        unsafe { self.val.fwd }
+    }
+
+    pub fn set_fwd(mut self, fwd: *mut Lisp_Fwd) {
+        assert!(self.get_redirect() == SYMBOL_FORWARDED && !fwd.is_null());
+        self.val.fwd = fwd;
     }
 
     pub fn iter(self) -> LispSymbolIter {

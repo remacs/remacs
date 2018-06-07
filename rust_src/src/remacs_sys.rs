@@ -18,6 +18,8 @@
 extern crate libc;
 extern crate std;
 
+use data::{Lisp_Boolfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj,
+           Lisp_Intfwd, Lisp_Kboard_Objfwd, Lisp_Objfwd};
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
            size_t, time_t, timespec};
 use lisp::LispObject;
@@ -262,6 +264,7 @@ pub struct Lisp_Symbol {
 extern "C" {
     pub fn get_symbol_declared_special(sym: *const Lisp_Symbol) -> bool;
     pub fn get_symbol_redirect(sym: *const Lisp_Symbol) -> symbol_redirect;
+    pub fn set_symbol_redirect(sym: *const Lisp_Symbol, v: symbol_redirect);
 
     pub fn set_symbol_declared_special(sym: *mut Lisp_Symbol, value: bool);
 }
@@ -342,16 +345,6 @@ pub enum Lisp_Misc_Type {
 pub struct Lisp_Misc_Any {
     _padding: BitfieldPadding,
 }
-
-/// These are the types of forwarding objects used in the value slot
-/// of symbols for special built-in variables whose value is stored in
-/// C variables.
-pub type Lisp_Fwd_Type = u32;
-pub const Lisp_Fwd_Int: Lisp_Fwd_Type = 0; // Fwd to a C `int' variable.
-pub const Lisp_Fwd_Bool: Lisp_Fwd_Type = 1; // Fwd to a C boolean var.
-pub const Lisp_Fwd_Obj: Lisp_Fwd_Type = 2; // Fwd to a C LispObject variable.
-pub const Lisp_Fwd_Buffer_Obj: Lisp_Fwd_Type = 3; // Fwd to a LispObject field of buffers.
-pub const Lisp_Fwd_Kboard_Obj: Lisp_Fwd_Type = 4; // Fwd to a LispObject field of kboards.
 
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
@@ -1096,68 +1089,6 @@ extern "C" {
     pub fn get_blv_value(blv: *const Lisp_Buffer_Local_Value) -> LispObject;
 }
 
-#[repr(C)]
-pub union Lisp_Fwd {
-    pub u_intfwd: Lisp_Intfwd,
-    pub u_boolfwd: Lisp_Boolfwd,
-    pub u_objfwd: Lisp_Objfwd,
-    pub u_buffer_objfwd: Lisp_Buffer_Objfwd,
-    pub u_kboard_objfwd: Lisp_Kboard_Objfwd,
-}
-
-/// Forwarding pointer to an int variable.
-/// This is allowed only in the value cell of a symbol,
-/// and it means that the symbol's value really lives in the
-/// specified int variable.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct Lisp_Intfwd {
-    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Int
-    pub intvar: *mut EmacsInt,
-}
-
-/// Boolean forwarding pointer to an int variable.
-/// This is like Lisp_Intfwd except that the ostensible
-/// "value" of the symbol is t if the bool variable is true,
-/// nil if it is false.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct Lisp_Boolfwd {
-    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Bool
-    pub boolvar: *mut bool,
-}
-
-/// Forwarding pointer to a LispObject variable.
-/// This is allowed only in the value cell of a symbol,
-/// and it means that the symbol's value really lives in the
-/// specified variable.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct Lisp_Objfwd {
-    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Obj
-    pub objvar: *mut LispObject,
-}
-
-/// Like Lisp_Objfwd except that value lives in a slot in the
-/// current buffer.  Value is byte index of slot within buffer.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct Lisp_Buffer_Objfwd {
-    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Buffer_Obj
-    pub offset: i32,
-    // One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.
-    pub predicate: LispObject,
-}
-
-/// Like Lisp_Objfwd except that value lives in a slot in the
-/// current kboard.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct Lisp_Kboard_Objfwd {
-    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Kboard_Obj
-    pub offset: i32,
-}
-
 /// Represents text contents of an Emacs buffer. For documentation see
 /// struct buffer_text in buffer.h.
 #[repr(C)]
@@ -1597,9 +1528,1634 @@ extern "C" {
     pub fn fset_selected_window(frame: *mut Lisp_Frame, window: LispObject);
 }
 
+pub type KBOARD = kboard;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct kboard {
+    pub next_kboard: *mut KBOARD,
+    pub Voverriding_terminal_local_map_: LispObject,
+    pub Vlast_command_: LispObject,
+    pub Vreal_last_command_: LispObject,
+    pub Vkeyboard_translate_table_: LispObject,
+    pub Vlast_repeatable_command_: LispObject,
+    pub Vprefix_arg_: LispObject,
+    pub Vlast_prefix_arg_: LispObject,
+    pub kbd_queue_: LispObject,
+    pub defining_kbd_macro_: LispObject,
+    pub kbd_macro_buffer: *mut LispObject,
+    pub kbd_macro_ptr: *mut LispObject,
+    pub kbd_macro_end: *mut LispObject,
+    pub kbd_macro_bufsize: isize,
+    pub Vlast_kbd_macro_: LispObject,
+    pub Vsystem_key_alist_: LispObject,
+    pub system_key_syms_: LispObject,
+    pub Vwindow_system_: LispObject,
+    pub Vlocal_function_key_map_: LispObject,
+    pub Vinput_decode_map_: LispObject,
+    pub Vdefault_minibuffer_frame_: LispObject,
+    pub reference_count: ::libc::c_int,
+    pub echo_string_: LispObject,
+    pub kbd_queue_has_data: BoolBF,
+    pub _bitfield_1: u8,
+    pub echo_prompt_: LispObject,
+}
+#[test]
+fn bindgen_test_layout_kboard() {
+    assert_eq!(
+        ::std::mem::size_of::<kboard>(),
+        200usize,
+        concat!("Size of: ", stringify!(kboard))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<kboard>(),
+        8usize,
+        concat!("Alignment of ", stringify!(kboard))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).next_kboard as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(next_kboard)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Voverriding_terminal_local_map_ as *const _ as usize },
+        8usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Voverriding_terminal_local_map_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vlast_command_ as *const _ as usize },
+        16usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vlast_command_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vreal_last_command_ as *const _ as usize },
+        24usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vreal_last_command_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vkeyboard_translate_table_ as *const _ as usize },
+        32usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vkeyboard_translate_table_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vlast_repeatable_command_ as *const _ as usize },
+        40usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vlast_repeatable_command_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vprefix_arg_ as *const _ as usize },
+        48usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vprefix_arg_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vlast_prefix_arg_ as *const _ as usize },
+        56usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vlast_prefix_arg_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).kbd_queue_ as *const _ as usize },
+        64usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(kbd_queue_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).defining_kbd_macro_ as *const _ as usize },
+        72usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(defining_kbd_macro_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).kbd_macro_buffer as *const _ as usize },
+        80usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(kbd_macro_buffer)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).kbd_macro_ptr as *const _ as usize },
+        88usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(kbd_macro_ptr)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).kbd_macro_end as *const _ as usize },
+        96usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(kbd_macro_end)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).kbd_macro_bufsize as *const _ as usize },
+        104usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(kbd_macro_bufsize)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vlast_kbd_macro_ as *const _ as usize },
+        112usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vlast_kbd_macro_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vsystem_key_alist_ as *const _ as usize },
+        120usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vsystem_key_alist_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).system_key_syms_ as *const _ as usize },
+        128usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(system_key_syms_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vwindow_system_ as *const _ as usize },
+        136usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vwindow_system_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vlocal_function_key_map_ as *const _ as usize },
+        144usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vlocal_function_key_map_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vinput_decode_map_ as *const _ as usize },
+        152usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vinput_decode_map_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).Vdefault_minibuffer_frame_ as *const _ as usize },
+        160usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(Vdefault_minibuffer_frame_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).reference_count as *const _ as usize },
+        168usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(reference_count)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).echo_string_ as *const _ as usize },
+        176usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(echo_string_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).kbd_queue_has_data as *const _ as usize },
+        184usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(kbd_queue_has_data)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const kboard)).echo_prompt_ as *const _ as usize },
+        192usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(kboard),
+            "::",
+            stringify!(echo_prompt_)
+        )
+    );
+}
+impl kboard {
+    #[inline]
+    pub fn immediate_echo(&self) -> BoolBF {
+        let mut unit_field_val: u8 = unsafe { ::std::mem::uninitialized() };
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &self._bitfield_1 as *const _ as *const u8,
+                &mut unit_field_val as *mut u8 as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            )
+        };
+        let mask = 0x1 as u8;
+        let val = (unit_field_val & mask) >> 0usize;
+        unsafe { ::std::mem::transmute(val as u8) }
+    }
+    #[inline]
+    pub fn set_immediate_echo(&mut self, val: BoolBF) {
+        let mask = 0x1 as u8;
+        let val = val as u8 as u8;
+        let mut unit_field_val: u8 = unsafe { ::std::mem::uninitialized() };
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &self._bitfield_1 as *const _ as *const u8,
+                &mut unit_field_val as *mut u8 as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            )
+        };
+        unit_field_val &= !mask;
+        unit_field_val |= (val << 0usize) & mask;
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &unit_field_val as *const _ as *const u8,
+                &mut self._bitfield_1 as *mut _ as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            );
+        }
+    }
+    #[inline]
+    pub const fn new_bitfield_1(immediate_echo: BoolBF) -> u8 {
+        (0 | ((immediate_echo as u8 as u8) << 0usize) & (0x1 as u8))
+    }
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum output_method {
+    output_initial = 0,
+    output_termcap = 1,
+    output_x_window = 2,
+    output_msdos_raw = 3,
+    output_w32 = 4,
+    output_ns = 5,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy)]
+pub struct image_cache {
+    pub buckets: *mut *mut image,
+    pub images: *mut *mut image,
+    pub size: isize,
+    pub used: isize,
+    pub refcount: isize,
+}
+#[test]
+fn bindgen_test_layout_image_cache() {
+    assert_eq!(
+        ::std::mem::size_of::<image_cache>(),
+        40usize,
+        concat!("Size of: ", stringify!(image_cache))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<image_cache>(),
+        8usize,
+        concat!("Alignment of ", stringify!(image_cache))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_cache)).buckets as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_cache),
+            "::",
+            stringify!(buckets)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_cache)).images as *const _ as usize },
+        8usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_cache),
+            "::",
+            stringify!(images)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_cache)).size as *const _ as usize },
+        16usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_cache),
+            "::",
+            stringify!(size)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_cache)).used as *const _ as usize },
+        24usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_cache),
+            "::",
+            stringify!(used)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_cache)).refcount as *const _ as usize },
+        32usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_cache),
+            "::",
+            stringify!(refcount)
+        )
+    );
+}
+impl Clone for image_cache {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Copy)]
+pub struct image_type {
+    pub type_: ::libc::c_int,
+    pub valid_p: ::std::option::Option<unsafe extern "C" fn(spec: LispObject) -> bool>,
+    pub load:
+        ::std::option::Option<unsafe extern "C" fn(f: *mut Lisp_Frame, img: *mut image) -> bool>,
+    pub free: ::std::option::Option<unsafe extern "C" fn(f: *mut Lisp_Frame, img: *mut image)>,
+    pub init: ::std::option::Option<unsafe extern "C" fn() -> bool>,
+    pub next: *mut image_type,
+}
+#[test]
+fn bindgen_test_layout_image_type() {
+    assert_eq!(
+        ::std::mem::size_of::<image_type>(),
+        48usize,
+        concat!("Size of: ", stringify!(image_type))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<image_type>(),
+        8usize,
+        concat!("Alignment of ", stringify!(image_type))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_type)).type_ as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_type),
+            "::",
+            stringify!(type_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_type)).valid_p as *const _ as usize },
+        8usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_type),
+            "::",
+            stringify!(valid_p)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_type)).load as *const _ as usize },
+        16usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_type),
+            "::",
+            stringify!(load)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_type)).free as *const _ as usize },
+        24usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_type),
+            "::",
+            stringify!(free)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_type)).init as *const _ as usize },
+        32usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_type),
+            "::",
+            stringify!(init)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image_type)).next as *const _ as usize },
+        40usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image_type),
+            "::",
+            stringify!(next)
+        )
+    );
+}
+impl Clone for image_type {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+pub type XID = ::libc::c_ulong;
+pub type XPointer = *mut ::libc::c_char;
+pub type XImagePtr = *mut ::libc::c_void;
+pub type Pixmap = XID;
+
+#[repr(C)]
+#[derive(Copy)]
+pub struct image {
+    pub timestamp: timespec,
+    pub pixmap: Pixmap,
+    pub mask: Pixmap,
+    pub ximg: XImagePtr,
+    pub mask_img: XImagePtr,
+    pub colors: *mut ::libc::c_ulong,
+    pub ncolors: ::libc::c_int,
+    pub background: ::libc::c_ulong,
+    pub frame_foreground: ::libc::c_ulong,
+    pub frame_background: ::libc::c_ulong,
+    pub _bitfield_1: u8,
+    pub width: ::libc::c_int,
+    pub height: ::libc::c_int,
+    pub corners: [::libc::c_int; 4usize],
+    pub ascent: ::libc::c_int,
+    pub spec: LispObject,
+    pub dependencies: LispObject,
+    pub relief: ::libc::c_int,
+    pub hmargin: ::libc::c_int,
+    pub vmargin: ::libc::c_int,
+    pub type_: *mut image_type,
+    pub load_failed_p: bool,
+    pub lisp_data: LispObject,
+    pub hash: EmacsUint,
+    pub id: isize,
+    pub next: *mut image,
+    pub prev: *mut image,
+}
+#[test]
+fn bindgen_test_layout_image() {
+    assert_eq!(
+        ::std::mem::size_of::<image>(),
+        208usize,
+        concat!("Size of: ", stringify!(image))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<image>(),
+        8usize,
+        concat!("Alignment of ", stringify!(image))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).timestamp as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(timestamp)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).pixmap as *const _ as usize },
+        16usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(pixmap)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).mask as *const _ as usize },
+        24usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(mask)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).ximg as *const _ as usize },
+        32usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(ximg)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).mask_img as *const _ as usize },
+        40usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(mask_img)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).colors as *const _ as usize },
+        48usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(colors)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).ncolors as *const _ as usize },
+        56usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(ncolors)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).background as *const _ as usize },
+        64usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(background)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).frame_foreground as *const _ as usize },
+        72usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(frame_foreground)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).frame_background as *const _ as usize },
+        80usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(frame_background)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).width as *const _ as usize },
+        92usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(width)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).height as *const _ as usize },
+        96usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(height)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).corners as *const _ as usize },
+        100usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(corners)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).ascent as *const _ as usize },
+        116usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(ascent)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).spec as *const _ as usize },
+        120usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(spec)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).dependencies as *const _ as usize },
+        128usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(dependencies)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).relief as *const _ as usize },
+        136usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(relief)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).hmargin as *const _ as usize },
+        140usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(hmargin)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).vmargin as *const _ as usize },
+        144usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(vmargin)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).type_ as *const _ as usize },
+        152usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(type_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).load_failed_p as *const _ as usize },
+        160usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(load_failed_p)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).lisp_data as *const _ as usize },
+        168usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(lisp_data)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).hash as *const _ as usize },
+        176usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(hash)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).id as *const _ as usize },
+        184usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(id)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).next as *const _ as usize },
+        192usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(next)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const image)).prev as *const _ as usize },
+        200usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(image),
+            "::",
+            stringify!(prev)
+        )
+    );
+}
+impl Clone for image {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl image {
+    #[inline]
+    pub fn background_transparent(&self) -> BoolBF {
+        let mut unit_field_val: u8 = unsafe { ::std::mem::uninitialized() };
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &self._bitfield_1 as *const _ as *const u8,
+                &mut unit_field_val as *mut u8 as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            )
+        };
+        let mask = 1u64 as u8;
+        let val = (unit_field_val & mask) >> 0usize;
+        unsafe { ::std::mem::transmute(val as u8) }
+    }
+    #[inline]
+    pub fn set_background_transparent(&mut self, val: BoolBF) {
+        let mask = 1u64 as u8;
+        let val = val as u8 as u8;
+        let mut unit_field_val: u8 = unsafe { ::std::mem::uninitialized() };
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &self._bitfield_1 as *const _ as *const u8,
+                &mut unit_field_val as *mut u8 as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            )
+        };
+        unit_field_val &= !mask;
+        unit_field_val |= (val << 0usize) & mask;
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &unit_field_val as *const _ as *const u8,
+                &mut self._bitfield_1 as *mut _ as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            );
+        }
+    }
+    #[inline]
+    pub fn background_valid(&self) -> BoolBF {
+        let mut unit_field_val: u8 = unsafe { ::std::mem::uninitialized() };
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &self._bitfield_1 as *const _ as *const u8,
+                &mut unit_field_val as *mut u8 as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            )
+        };
+        let mask = 2u64 as u8;
+        let val = (unit_field_val & mask) >> 1usize;
+        unsafe { ::std::mem::transmute(val as u8) }
+    }
+    #[inline]
+    pub fn set_background_valid(&mut self, val: BoolBF) {
+        let mask = 2u64 as u8;
+        let val = val as u8 as u8;
+        let mut unit_field_val: u8 = unsafe { ::std::mem::uninitialized() };
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &self._bitfield_1 as *const _ as *const u8,
+                &mut unit_field_val as *mut u8 as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            )
+        };
+        unit_field_val &= !mask;
+        unit_field_val |= (val << 1usize) & mask;
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &unit_field_val as *const _ as *const u8,
+                &mut self._bitfield_1 as *mut _ as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            );
+        }
+    }
+    #[inline]
+    pub fn background_transparent_valid(&self) -> BoolBF {
+        let mut unit_field_val: u8 = unsafe { ::std::mem::uninitialized() };
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &self._bitfield_1 as *const _ as *const u8,
+                &mut unit_field_val as *mut u8 as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            )
+        };
+        let mask = 4u64 as u8;
+        let val = (unit_field_val & mask) >> 2usize;
+        unsafe { ::std::mem::transmute(val as u8) }
+    }
+    #[inline]
+    pub fn set_background_transparent_valid(&mut self, val: BoolBF) {
+        let mask = 4u64 as u8;
+        let val = val as u8 as u8;
+        let mut unit_field_val: u8 = unsafe { ::std::mem::uninitialized() };
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &self._bitfield_1 as *const _ as *const u8,
+                &mut unit_field_val as *mut u8 as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            )
+        };
+        unit_field_val &= !mask;
+        unit_field_val |= (val << 2usize) & mask;
+        unsafe {
+            ::std::ptr::copy_nonoverlapping(
+                &unit_field_val as *const _ as *const u8,
+                &mut self._bitfield_1 as *mut _ as *mut u8,
+                ::std::mem::size_of::<u8>(),
+            );
+        }
+    }
+    #[inline]
+    pub const fn new_bitfield_1(
+        background_transparent: BoolBF,
+        background_valid: BoolBF,
+        background_transparent_valid: BoolBF,
+    ) -> u8 {
+        ({
+            ({ ({ 0 } | ((background_transparent as u8 as u8) << 0usize) & (1u64 as u8)) }
+                | ((background_valid as u8 as u8) << 1usize) & (2u64 as u8))
+        } | ((background_transparent_valid as u8 as u8) << 2usize) & (4u64 as u8))
+    }
+}
+
+type tty_display_info = *mut ::libc::c_void;
+type x_display_info = *mut ::libc::c_void;
+type w32_display_info = *mut ::libc::c_void;
+type ns_display_info = *mut ::libc::c_void;
+
+#[repr(C)]
+#[derive(Copy)]
+pub union terminal_display_info {
+    pub tty: *mut tty_display_info,
+    pub x: *mut x_display_info,
+    pub w32: *mut w32_display_info,
+    pub ns: *mut ns_display_info,
+}
+#[test]
+fn bindgen_test_layout_terminal_display_info() {
+    assert_eq!(
+        ::std::mem::size_of::<terminal_display_info>(),
+        8usize,
+        concat!("Size of: ", stringify!(terminal_display_info))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<terminal_display_info>(),
+        8usize,
+        concat!("Alignment of ", stringify!(terminal_display_info))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal_display_info)).tty as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal_display_info),
+            "::",
+            stringify!(tty)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal_display_info)).x as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal_display_info),
+            "::",
+            stringify!(x)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal_display_info)).w32 as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal_display_info),
+            "::",
+            stringify!(w32)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal_display_info)).ns as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal_display_info),
+            "::",
+            stringify!(ns)
+        )
+    );
+}
+impl Clone for terminal_display_info {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+#[test]
+fn bindgen_test_layout_terminal() {
+    assert_eq!(
+        ::std::mem::size_of::<terminal>(),
+        376usize,
+        concat!("Size of: ", stringify!(terminal))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<terminal>(),
+        8usize,
+        concat!("Alignment of ", stringify!(terminal))
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).header as *const _ as usize },
+        0usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(header)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).param_alist as *const _ as usize },
+        8usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(param_alist)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).charset_list as *const _ as usize },
+        16usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(charset_list)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).Vselection_alist as *const _ as usize },
+        24usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(Vselection_alist)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).glyph_code_table as *const _ as usize },
+        32usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(glyph_code_table)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).next_terminal as *const _ as usize },
+        40usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(next_terminal)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).id as *const _ as usize },
+        48usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(id)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).reference_count as *const _ as usize },
+        52usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(reference_count)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).type_ as *const _ as usize },
+        56usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(type_)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).name as *const _ as usize },
+        64usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(name)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).kboard as *const _ as usize },
+        72usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(kboard)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).image_cache as *const _ as usize },
+        80usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(image_cache)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).display_info as *const _ as usize },
+        88usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(display_info)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).terminal_coding as *const _ as usize },
+        96usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(terminal_coding)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).keyboard_coding as *const _ as usize },
+        104usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(keyboard_coding)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).rif as *const _ as usize },
+        112usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(rif)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).cursor_to_hook as *const _ as usize },
+        120usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(cursor_to_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).raw_cursor_to_hook as *const _ as usize },
+        128usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(raw_cursor_to_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).clear_to_end_hook as *const _ as usize },
+        136usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(clear_to_end_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).clear_frame_hook as *const _ as usize },
+        144usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(clear_frame_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).clear_end_of_line_hook as *const _ as usize },
+        152usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(clear_end_of_line_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).ins_del_lines_hook as *const _ as usize },
+        160usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(ins_del_lines_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).insert_glyphs_hook as *const _ as usize },
+        168usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(insert_glyphs_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).write_glyphs_hook as *const _ as usize },
+        176usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(write_glyphs_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).delete_glyphs_hook as *const _ as usize },
+        184usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(delete_glyphs_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).ring_bell_hook as *const _ as usize },
+        192usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(ring_bell_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).toggle_invisible_pointer_hook as *const _ as usize },
+        200usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(toggle_invisible_pointer_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).reset_terminal_modes_hook as *const _ as usize },
+        208usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(reset_terminal_modes_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).set_terminal_modes_hook as *const _ as usize },
+        216usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(set_terminal_modes_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).update_begin_hook as *const _ as usize },
+        224usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(update_begin_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).update_end_hook as *const _ as usize },
+        232usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(update_end_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).set_terminal_window_hook as *const _ as usize },
+        240usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(set_terminal_window_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).mouse_position_hook as *const _ as usize },
+        248usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(mouse_position_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).frame_rehighlight_hook as *const _ as usize },
+        256usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(frame_rehighlight_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).frame_raise_lower_hook as *const _ as usize },
+        264usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(frame_raise_lower_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).fullscreen_hook as *const _ as usize },
+        272usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(fullscreen_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).menu_show_hook as *const _ as usize },
+        280usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(menu_show_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).popup_dialog_hook as *const _ as usize },
+        288usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(popup_dialog_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).set_vertical_scroll_bar_hook as *const _ as usize },
+        296usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(set_vertical_scroll_bar_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).set_horizontal_scroll_bar_hook as *const _ as usize },
+        304usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(set_horizontal_scroll_bar_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).condemn_scroll_bars_hook as *const _ as usize },
+        312usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(condemn_scroll_bars_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).redeem_scroll_bar_hook as *const _ as usize },
+        320usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(redeem_scroll_bar_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).judge_scroll_bars_hook as *const _ as usize },
+        328usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(judge_scroll_bars_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).read_socket_hook as *const _ as usize },
+        336usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(read_socket_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).frame_up_to_date_hook as *const _ as usize },
+        344usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(frame_up_to_date_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).buffer_flipping_unblocked_hook as *const _ as usize },
+        352usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(buffer_flipping_unblocked_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).delete_frame_hook as *const _ as usize },
+        360usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(delete_frame_hook)
+        )
+    );
+    assert_eq!(
+        unsafe { &(*(0 as *const terminal)).delete_terminal_hook as *const _ as usize },
+        368usize,
+        concat!(
+            "Alignment of field: ",
+            stringify!(terminal),
+            "::",
+            stringify!(delete_terminal_hook)
+        )
+    );
+}
+
+type coding_system = ::libc::c_void;
+type redisplay_interface = ::libc::c_void;
+type scroll_bar_part = ::libc::c_void;
+type input_event = ::libc::c_void;
+
 #[repr(C)]
 pub struct terminal {
     pub header: Lisp_Vectorlike_Header,
+    pub param_alist: LispObject,
+    pub charset_list: LispObject,
+    pub Vselection_alist: LispObject,
+    pub glyph_code_table: LispObject,
+    pub next_terminal: *mut terminal,
+    pub id: ::libc::c_int,
+    pub reference_count: ::libc::c_int,
+    pub type_: output_method,
+    pub name: *mut ::libc::c_char,
+    pub kboard: *mut kboard,
+    pub image_cache: *mut image_cache,
+    pub display_info: terminal_display_info,
+    pub terminal_coding: *mut coding_system,
+    pub keyboard_coding: *mut coding_system,
+    pub rif: *mut redisplay_interface,
+    pub cursor_to_hook: ::std::option::Option<
+        unsafe extern "C" fn(f: *mut Lisp_Frame, vpos: ::libc::c_int, hpos: ::libc::c_int),
+    >,
+    pub raw_cursor_to_hook: ::std::option::Option<
+        unsafe extern "C" fn(arg1: *mut Lisp_Frame, arg2: ::libc::c_int, arg3: ::libc::c_int),
+    >,
+    pub clear_to_end_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame)>,
+    pub clear_frame_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame)>,
+    pub clear_end_of_line_hook:
+        ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame, arg2: ::libc::c_int)>,
+    pub ins_del_lines_hook: ::std::option::Option<
+        unsafe extern "C" fn(f: *mut Lisp_Frame, arg1: ::libc::c_int, arg2: ::libc::c_int),
+    >,
+    pub insert_glyphs_hook: ::std::option::Option<
+        unsafe extern "C" fn(f: *mut Lisp_Frame, s: *mut glyph, n: ::libc::c_int),
+    >,
+    pub write_glyphs_hook: ::std::option::Option<
+        unsafe extern "C" fn(f: *mut Lisp_Frame, s: *mut glyph, n: ::libc::c_int),
+    >,
+    pub delete_glyphs_hook:
+        ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame, arg2: ::libc::c_int)>,
+    pub ring_bell_hook: ::std::option::Option<unsafe extern "C" fn(f: *mut Lisp_Frame)>,
+    pub toggle_invisible_pointer_hook:
+        ::std::option::Option<unsafe extern "C" fn(f: *mut Lisp_Frame, invisible: bool)>,
+    pub reset_terminal_modes_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut terminal)>,
+    pub set_terminal_modes_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut terminal)>,
+    pub update_begin_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame)>,
+    pub update_end_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame)>,
+    pub set_terminal_window_hook:
+        ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame, arg2: ::libc::c_int)>,
+    pub mouse_position_hook: ::std::option::Option<
+        unsafe extern "C" fn(
+            f: *mut *mut Lisp_Frame,
+            arg1: ::libc::c_int,
+            bar_window: *mut LispObject,
+            part: *mut scroll_bar_part,
+            x: *mut LispObject,
+            y: *mut LispObject,
+            arg2: *mut Time,
+        ),
+    >,
+    pub frame_rehighlight_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame)>,
+    pub frame_raise_lower_hook:
+        ::std::option::Option<unsafe extern "C" fn(f: *mut Lisp_Frame, raise_flag: bool)>,
+    pub fullscreen_hook: ::std::option::Option<unsafe extern "C" fn(f: *mut Lisp_Frame)>,
+    pub menu_show_hook: ::std::option::Option<
+        unsafe extern "C" fn(
+            f: *mut Lisp_Frame,
+            x: ::libc::c_int,
+            y: ::libc::c_int,
+            menuflags: ::libc::c_int,
+            title: LispObject,
+            error_name: *mut *const ::libc::c_char,
+        ) -> LispObject,
+    >,
+    pub popup_dialog_hook: ::std::option::Option<
+        unsafe extern "C" fn(f: *mut Lisp_Frame, header: LispObject, contents: LispObject)
+            -> LispObject,
+    >,
+    pub set_vertical_scroll_bar_hook: ::std::option::Option<
+        unsafe extern "C" fn(
+            window: *mut Lisp_Window,
+            portion: ::libc::c_int,
+            whole: ::libc::c_int,
+            position: ::libc::c_int,
+        ),
+    >,
+    pub set_horizontal_scroll_bar_hook: ::std::option::Option<
+        unsafe extern "C" fn(
+            window: *mut Lisp_Window,
+            portion: ::libc::c_int,
+            whole: ::libc::c_int,
+            position: ::libc::c_int,
+        ),
+    >,
+    pub condemn_scroll_bars_hook:
+        ::std::option::Option<unsafe extern "C" fn(frame: *mut Lisp_Frame)>,
+    pub redeem_scroll_bar_hook:
+        ::std::option::Option<unsafe extern "C" fn(window: *mut Lisp_Window)>,
+    pub judge_scroll_bars_hook: ::std::option::Option<unsafe extern "C" fn(FRAME: *mut Lisp_Frame)>,
+    pub read_socket_hook: ::std::option::Option<
+        unsafe extern "C" fn(terminal: *mut terminal, hold_quit: *mut input_event) -> ::libc::c_int,
+    >,
+    pub frame_up_to_date_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame)>,
+    pub buffer_flipping_unblocked_hook:
+        ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame)>,
+    pub delete_frame_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut Lisp_Frame)>,
+    pub delete_terminal_hook: ::std::option::Option<unsafe extern "C" fn(arg1: *mut terminal)>,
 }
 
 /// Functions to access members of `struct frame`.
@@ -1667,7 +3223,6 @@ pub type voidfuncptr = unsafe extern "C" fn();
 
 extern "C" {
     pub static initialized: bool;
-    pub static mut buffer_local_flags: Lisp_Buffer;
     pub static mut current_global_map: LispObject;
     pub static current_thread: *mut thread_state;
     pub static empty_unibyte_string: LispObject;
@@ -2141,4 +3696,29 @@ extern "C" {
     pub fn Fmove_to_column(column: LispObject, force: LispObject) -> LispObject;
     pub fn Fmake_string(length: LispObject, init: LispObject) -> LispObject;
     pub fn casify_object(case_action: CaseAction, object: LispObject) -> LispObject;
+}
+
+extern "C" {
+    pub fn defvar_lisp(
+        objfwd: *mut Lisp_Objfwd,
+        lname: *const libc::c_char,
+        place: *mut LispObject,
+    );
+    pub fn defvar_lisp_nopro(
+        objfwd: *mut Lisp_Objfwd,
+        lname: *const libc::c_char,
+        place: *mut LispObject,
+    );
+    pub fn defvar_bool(objfwd: *mut Lisp_Boolfwd, lname: *const libc::c_char, place: *mut bool);
+    pub fn defvar_int(objfwd: *mut Lisp_Intfwd, lname: *const libc::c_char, place: *mut EmacsInt);
+    pub fn defvar_kboard(objfwd: *mut Lisp_Kboard_Objfwd, lname: *const libc::c_char, index: u32);
+    pub fn update_buffer_defaults(objvar: *mut LispObject, newval: LispObject);
+    pub fn wrong_choice(choice: LispObject, wrong: LispObject) -> !;
+    pub fn wrong_range(min: LispObject, max: LispObject, wrong: LispObject) -> !;
+    pub fn set_per_buffer_value(b: *mut Lisp_Buffer, offset: isize, value: LispObject);
+}
+
+extern "C" {
+    pub static mut buffer_local_flags: Lisp_Buffer;
+    pub static mut buffer_local_symbols: Lisp_Buffer;
 }

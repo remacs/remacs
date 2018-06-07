@@ -126,4 +126,34 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
     })
 }
 
+#[no_mangle]
+pub extern "C" fn rust_syms_of_keyboard() {
+    /// The last command executed.
+    /// Normally a symbol with a function definition, but can be whatever was found
+    /// in the keymap, or whatever the variable `this-command' was set to by that
+    /// command.
+    ///
+    /// The value `mode-exit' is special; it means that the previous command
+    /// read an event that told it to exit, and it did so and unread that event.
+    /// In other words, the present command is the event that made the previous
+    /// command exit.
+    ///
+    /// The value `kill-region' is special; it means that the previous command
+    /// was a kill command.
+    ///
+    /// `last-command' has a separate binding for each terminal device.
+    /// See Info node `(elisp)Multiple Terminals'.
+    defvar_kboard!(Vlast_command_, "last-command");
+
+    /// Same as `last-command', but never altered by Lisp code.
+    /// Taken from the previous value of `real-this-command'.
+    defvar_kboard!(Vreal_last_command_, "real-last-command");
+
+    /// Last command that may be repeated.
+    /// The last command executed that was not bound to an input event.
+    /// This is the command `repeat' will try to repeat.
+    /// Taken from a previous value of `real-this-command'.  */
+    defvar_kboard!(Vlast_repeatable_command_, "last-repeatable-command");
+}
+
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));

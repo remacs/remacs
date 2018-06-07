@@ -1378,11 +1378,8 @@ per_buffer_value (struct buffer *b, int offset)
   return *(Lisp_Object *)(offset + (char *) b);
 }
 
-INLINE void
-set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
-{
-  *(Lisp_Object *)(offset + (char *) b) = value;
-}
+extern void
+set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value);
 
 /* Downcase a character C, or make no change if that cannot be done.  */
 INLINE int

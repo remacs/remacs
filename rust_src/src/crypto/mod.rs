@@ -102,8 +102,8 @@ fn get_coding_system_for_buffer(
     if coding_system.is_not_nil() {
         return coding_system;
     }
-    if unsafe { globals.f_Vcoding_system_for_write }.is_not_nil() {
-        return unsafe { globals.f_Vcoding_system_for_write };
+    if unsafe { globals.Vcoding_system_for_write }.is_not_nil() {
+        return unsafe { globals.Vcoding_system_for_write };
     }
     if (buffer.buffer_file_coding_system.is_nil() || unsafe {
         Flocal_variable_p(
@@ -132,7 +132,7 @@ fn get_coding_system_for_buffer(
            default value of buffer-file-coding-system. */
         return buffer.buffer_file_coding_system;
     }
-    let sscsf = unsafe { globals.f_Vselect_safe_coding_system_function };
+    let sscsf = unsafe { globals.Vselect_safe_coding_system_function };
     if fboundp(sscsf.as_symbol_or_error()) {
         /* Confirm that VAL can surely encode the current region. */
         return call!(

@@ -10876,6 +10876,8 @@ static const struct event_head head_table[] = {
   {SYMBOL_INDEX (Qselect_window),       SYMBOL_INDEX (Qswitch_frame)}
 };
 
+extern void rust_syms_of_keyboard(void);
+
 void
 syms_of_keyboard (void)
 {
@@ -11199,32 +11201,7 @@ If there's an active input method, the events are given to
 Meta-foo as command input turns into this character followed by foo.  */);
   XSETINT (meta_prefix_char, 033);
 
-  DEFVAR_KBOARD ("last-command", Vlast_command,
-		 doc: /* The last command executed.
-Normally a symbol with a function definition, but can be whatever was found
-in the keymap, or whatever the variable `this-command' was set to by that
-command.
-
-The value `mode-exit' is special; it means that the previous command
-read an event that told it to exit, and it did so and unread that event.
-In other words, the present command is the event that made the previous
-command exit.
-
-The value `kill-region' is special; it means that the previous command
-was a kill command.
-
-`last-command' has a separate binding for each terminal device.
-See Info node `(elisp)Multiple Terminals'.  */);
-
-  DEFVAR_KBOARD ("real-last-command", Vreal_last_command,
-		 doc: /* Same as `last-command', but never altered by Lisp code.
-Taken from the previous value of `real-this-command'.  */);
-
-  DEFVAR_KBOARD ("last-repeatable-command", Vlast_repeatable_command,
-		 doc: /* Last command that may be repeated.
-The last command executed that was not bound to an input event.
-This is the command `repeat' will try to repeat.
-Taken from a previous value of `real-this-command'.  */);
+  rust_syms_of_keyboard();
 
   DEFVAR_LISP ("this-command", Vthis_command,
 	       doc: /* The command now being executed.

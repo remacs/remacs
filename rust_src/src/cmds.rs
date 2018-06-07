@@ -253,15 +253,15 @@ pub fn self_insert_command(n: EmacsInt) {
 
     // Barf if the key that invoked this was not a character.
     if !characterp(
-        unsafe { globals.f_last_command_event },
+        unsafe { globals.last_command_event },
         LispObject::constant_nil(),
     ) {
         unsafe { bitch_at_user() };
     } else {
         let character = unsafe {
             translate_char(
-                globals.f_Vtranslation_table_for_input,
-                globals.f_last_command_event.as_fixnum_or_error(),
+                globals.Vtranslation_table_for_input,
+                globals.last_command_event.as_fixnum_or_error(),
             )
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
@@ -295,8 +295,8 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
     let mut current_buffer = ThreadState::current_buffer();
     let overwrite = current_buffer.overwrite_mode;
-    if unsafe { globals.f_Vbefore_change_functions }.is_not_nil() || unsafe {
-        globals.f_Vafter_change_functions
+    if unsafe { globals.Vbefore_change_functions }.is_not_nil() || unsafe {
+        globals.Vafter_change_functions
     }.is_not_nil()
     {
         hairy = 1;
@@ -461,7 +461,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         unsafe { insert_and_inherit(str.as_mut_ptr() as *mut i8, len as isize) };
     }
 
-    if let Some(t) = unsafe { globals.f_Vauto_fill_chars }.as_char_table() {
+    if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
         if t.get(c as isize).is_not_nil() && (c == ' ' as Codepoint || c == '\n' as Codepoint)
             && current_buffer.auto_fill_function.is_not_nil()
         {
@@ -520,7 +520,7 @@ pub extern "C" fn keys_of_cmds() {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_syms_of_cmds() {
+pub extern "C" fn syms_of_cmds() {
     def_lisp_sym!(Qinternal_auto_fill, "internal-auto-fill");
     def_lisp_sym!(Qundo_auto_amalgamate, "undo-auto-amalgamate");
     #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -530,6 +530,10 @@ pub extern "C" fn rust_syms_of_cmds() {
     def_lisp_sym!(Qoverwrite_mode_binary, "overwrite-mode-binary");
     def_lisp_sym!(Qexpand_abbrev, "expand-abbrev");
     def_lisp_sym!(Qpost_self_insert_hook, "post-self-insert-hook");
+
+    /// Hook run at the end of `self-insert-command'.
+    /// This is run after inserting the character.
+    defvar_lisp!(Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/cmds_exports.rs"));

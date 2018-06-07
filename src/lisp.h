@@ -2534,7 +2534,7 @@ struct Lisp_Objfwd
 struct Lisp_Buffer_Objfwd
   {
     enum Lisp_Fwd_Type type;	/* = Lisp_Fwd_Buffer_Obj */
-    int offset;
+    size_t offset;
     /* One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.  */
     Lisp_Object predicate;
   };
@@ -2591,7 +2591,7 @@ struct Lisp_Buffer_Local_Value
 struct Lisp_Kboard_Objfwd
   {
     enum Lisp_Fwd_Type type;	/* = Lisp_Fwd_Kboard_Obj */
-    int offset;
+    size_t offset;
   };
 
 union Lisp_Fwd
@@ -3241,6 +3241,12 @@ INLINE enum symbol_redirect
 get_symbol_redirect(const struct Lisp_Symbol *sym)
 {
   return sym->redirect;
+}
+
+INLINE void
+set_symbol_redirect(struct Lisp_Symbol *sym, enum symbol_redirect v)
+{
+  sym->redirect = v;
 }
 
 INLINE void
