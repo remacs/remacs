@@ -12,8 +12,10 @@ install:
   - set /p REMACS_RUST_VERSION=<rust-toolchain
   - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
   - rustup-init.exe --default-host %TARGET% --default-toolchain %REMACS_RUST_VERSION% -y
+  - rustup component add rustfmt-preview
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin;C:\msys64\usr\bin
   - rustc -Vv
+  - rustfmt --version
   - cargo -V
   - set MSYSTEM=MINGW64
   - C:\msys64\usr\bin\bash --login -c "pacman -Syy"

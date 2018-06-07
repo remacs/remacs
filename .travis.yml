@@ -34,6 +34,7 @@ jobs:
         - sudo apt update
         - sudo apt install -y texinfo libgif-dev libxpm-dev
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt-preview
       script:
         - ./autogen.sh && RUSTFLAGS="-Dwarnings" ./configure
         - make -j 3 && echo '==> Running tests' && make check
@@ -50,6 +51,7 @@ jobs:
         - brew update
         - brew install texinfo
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt-preview
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
       os: linux
@@ -59,6 +61,7 @@ jobs:
         - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt-preview
       script:
         - ./autogen.sh && RUSTFLAGS="-Dwarnings" ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
@@ -67,12 +70,14 @@ jobs:
       os: osx
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt-preview
     - stage: cerrors
       os: linux  # No need to run this everywhere
       before_script:
         - sudo apt update
         - sudo apt install -y texinfo libgif-dev libxpm-dev
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt-preview
         - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings --with-gif=no
         - make -C src globals.h
       script:
