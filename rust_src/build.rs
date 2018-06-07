@@ -624,6 +624,9 @@ fn run_bindgen() {
                 };
             }
             builder = builder.clang_args(processed_args);
+            if cfg!(target_os = "windows") {
+                builder = builder.clang_arg("-I../nt/inc");
+            }
 
             builder = builder.clang_arg("-Demacs")
                 .header("wrapper.h")
