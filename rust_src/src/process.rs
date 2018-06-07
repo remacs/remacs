@@ -243,7 +243,7 @@ pub fn process_status(process: LispObject) -> LispObject {
     let p = if process.is_string() {
         get_process(process)
     } else {
-        unsafe { cget_process(process.to_raw()) }
+        unsafe { cget_process(process) }
     };
     if p.is_nil() {
         return p;
@@ -395,10 +395,10 @@ fn pset_sentinel(mut process: LispProcessRef, val: LispObject) -> LispObject {
 pub fn process_send_string(process: LispObject, mut string: LispStringRef) -> () {
     unsafe {
         send_process(
-            cget_process(process.to_raw()),
+            cget_process(process),
             string.data as *mut libc::c_char,
             STRING_BYTES(string.as_mut()),
-            string.as_lisp_obj().to_raw(),
+            string.as_lisp_obj(),
         )
     };
 }

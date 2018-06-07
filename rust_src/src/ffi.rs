@@ -15,14 +15,12 @@ pub extern "C" fn circular_list(obj: LispObject) -> ! {
 
 #[no_mangle]
 pub extern "C" fn merge(l1: LispObject, l2: LispObject, pred: LispObject) -> LispObject {
-    let result = lists::merge(l1, l2, pred);
-    result.to_raw()
+    lists::merge(l1, l2, pred)
 }
 
 #[no_mangle]
 pub extern "C" fn indirect_function(object: LispObject) -> LispObject {
-    let result = data::indirect_function(object);
-    result.to_raw()
+    data::indirect_function(object)
 }
 
 #[no_mangle]
@@ -32,7 +30,7 @@ pub extern "C" fn arithcompare(
     comparison: math::ArithComparison,
 ) -> LispObject {
     let result = math::arithcompare(obj1, obj2, comparison);
-    LispObject::from(result).to_raw()
+    LispObject::from(result)
 }
 
 #[no_mangle]

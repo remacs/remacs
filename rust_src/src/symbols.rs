@@ -30,11 +30,11 @@ impl LispSymbolRef {
     }
 
     pub fn set_plist(&mut self, plist: LispObject) {
-        self.plist = plist.to_raw();
+        self.plist = plist;
     }
 
     pub fn set_function(&mut self, function: LispObject) {
-        self.function = function.to_raw();
+        self.function = function;
     }
 
     pub fn is_interned_in_initial_obarray(self) -> bool {
@@ -285,7 +285,7 @@ pub fn makunbound(symbol: LispObject) -> LispSymbolRef {
         xsignal!(Qsetting_constant, symbol);
     }
     unsafe {
-        Fset(symbol.to_raw(), Qunbound);
+        Fset(symbol, Qunbound);
     }
     sym
 }
@@ -295,9 +295,9 @@ pub fn makunbound(symbol: LispObject) -> LispSymbolRef {
 /// outside of any lexical scope.
 #[lisp_fn]
 pub fn symbol_value(symbol: LispObject) -> LispObject {
-    let raw_symbol = symbol.to_raw();
+    let raw_symbol = symbol;
     let val = unsafe { find_symbol_value(raw_symbol) };
-    if val == LispObject::constant_unbound().to_raw() {
+    if val == LispObject::constant_unbound() {
         xsignal!(Qvoid_variable, symbol);
     }
     val

@@ -78,7 +78,7 @@ impl LispFrameRef {
 
     #[inline]
     pub fn set_selected_window(&mut self, window: LispObject) {
-        unsafe { fset_selected_window(self.as_mut(), window.to_raw()) }
+        unsafe { fset_selected_window(self.as_mut(), window) }
     }
 
     #[inline]
@@ -202,7 +202,7 @@ pub fn set_frame_selected_window(
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if frame_ref == selected_frame().as_frame().unwrap() {
-        unsafe { Fselect_window(window.to_raw(), norecord.to_raw()) }
+        unsafe { Fselect_window(window, norecord) }
     } else {
         frame_ref.set_selected_window(window);
         window
@@ -294,8 +294,8 @@ pub fn frame_position(frame: LispObject) -> LispObject {
     let frame_ref = frame_live_or_selected(frame);
     unsafe {
         Fcons(
-            LispObject::from(frame_ref.left_pos()).to_raw(),
-            LispObject::from(frame_ref.top_pos()).to_raw(),
+            LispObject::from(frame_ref.left_pos()),
+            LispObject::from(frame_ref.top_pos()),
         )
     }
 }

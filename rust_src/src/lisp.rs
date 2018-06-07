@@ -110,11 +110,6 @@ impl LispObject {
     pub fn from_float(v: EmacsDouble) -> LispObject {
         unsafe { make_float(v) }
     }
-
-    #[inline]
-    pub fn to_raw(self) -> LispObject {
-        self
-    }
 }
 
 impl<T> From<Option<T>> for LispObject
@@ -180,7 +175,7 @@ impl<'a> From<&'a str> for LispObject {
 
 impl LispObject {
     pub fn get_type(self) -> Lisp_Type {
-        let raw = self.to_raw().to_C_unsigned();
+        let raw = self.to_C_unsigned();
         let res = (if USE_LSB_TAG {
             raw & (!VALMASK as EmacsUint)
         } else {
@@ -206,14 +201,14 @@ impl LispObject {
 
     #[inline]
     pub fn get_untaggedptr(self) -> *mut c_void {
-        (self.to_raw().to_C() & VALMASK) as intptr_t as *mut c_void
+        (self.to_C() & VALMASK) as intptr_t as *mut c_void
     }
 }
 
 // Obarray support
 impl LispObject {
     pub fn as_obarray_or_error(self) -> LispObarrayRef {
-        LispObarrayRef::new(check_obarray(self.to_raw()))
+        LispObarrayRef::new(check_obarray(self))
     }
 }
 
@@ -271,7 +266,7 @@ impl LispObject {
     #[inline]
     fn symbol_ptr_value(self) -> EmacsInt {
         let ptr_value = if USE_LSB_TAG {
-            self.to_raw().to_C()
+            self.to_C()
         } else {
             self.get_untaggedptr() as EmacsInt
         };
@@ -475,7 +470,7 @@ impl LispObject {
 
     #[inline]
     pub unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
-        let raw = self.to_raw().to_C();
+        let raw = self.to_C();
         if !USE_LSB_TAG {
             raw & INTMASK
         } else {
@@ -1209,7 +1204,7 @@ impl_alistval_iter! {LiveBufferIter, LispBufferRef, unsafe { Vbuffer_alist }}
 impl LispObject {
     #[inline]
     pub fn cons(car: LispObject, cdr: LispObject) -> Self {
-        unsafe { Fcons(car.to_raw(), cdr.to_raw()) }
+        unsafe { Fcons(car, cdr) }
     }
 
     #[inline]
@@ -1326,21 +1321,21 @@ impl LispCons {
     /// Set the car of the cons cell.
     pub fn set_car(self, n: LispObject) {
         unsafe {
-            (*self._extract()).car = n.to_raw();
+            (*self._extract()).car = n;
         }
     }
 
     /// Set the car of the cons cell.
     pub fn set_cdr(self, n: LispObject) {
         unsafe {
-            (*self._extract()).u.cdr = n.to_raw();
+            (*self._extract()).u.cdr = n;
         }
     }
 
     /// Check that "self" is an impure (i.e. not readonly) cons cell.
     pub fn check_impure(self) {
         unsafe {
-            CHECK_IMPURE(self.0.to_raw(), self._extract() as *mut c_void);
+            CHECK_IMPURE(self.0, self._extract() as *mut c_void);
         }
     }
 }
@@ -1558,17 +1553,17 @@ impl LispObject {
 
     #[inline]
     pub fn is_nil(self) -> bool {
-        self.to_raw() == Qnil
+        self == Qnil
     }
 
     #[inline]
     pub fn is_not_nil(self) -> bool {
-        self.to_raw() != Qnil
+        self != Qnil
     }
 
     #[inline]
     pub fn is_t(self) -> bool {
-        self.to_raw() == Qt
+        self == Qt
     }
 
     #[inline]
@@ -1638,7 +1633,7 @@ impl LispObject {
     }
 
     pub fn eq_raw(self, other: LispObject) -> bool {
-        self.to_raw() == other
+        self == other
     }
 
     #[allow(dead_code)]
@@ -1658,12 +1653,12 @@ impl LispObject {
 
     #[inline]
     pub fn equal(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::Plain, 0, Qnil) }
+        unsafe { internal_equal(self, other, EqualKind::Plain, 0, Qnil) }
     }
 
     #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil) }
+        unsafe { internal_equal(self, other, EqualKind::NoQuit, 0, Qnil) }
     }
 
     pub fn is_function(self) -> bool {
@@ -1757,7 +1752,7 @@ impl Debug for LispObject {
                 f,
                 "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
                 self_ptr,
-                self.to_raw().to_C()
+                self.to_C()
             )?;
             return Ok(());
         }
@@ -1798,7 +1793,7 @@ impl Debug for LispObject {
                         f,
                         "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
                         self_ptr,
-                        self.to_raw().to_C()
+                        self.to_C()
                     )?;
                 }
             }
@@ -1806,12 +1801,7 @@ impl Debug for LispObject {
                 write!(f, "{}", self.as_fixnum().unwrap())?;
             }
             Lisp_Type::Lisp_Misc => {
-                write!(
-                    f,
-                    "#<MISC @ {:#X}: VAL({:#X})>",
-                    self_ptr,
-                    self.to_raw().to_C()
-                )?;
+                write!(f, "#<MISC @ {:#X}: VAL({:#X})>", self_ptr, self.to_C())?;
             }
             Lisp_Type::Lisp_String => {
                 write!(f, "{:?}", display_string(*self))?;

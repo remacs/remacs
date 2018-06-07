@@ -23,7 +23,7 @@ macro_rules! xsignal {
     ($symbol:expr, $($tt:tt)+) => {
         #[allow(unused_unsafe)]
         unsafe {
-            ::remacs_sys::Fsignal($symbol, list!($($tt)+).to_raw());
+            ::remacs_sys::Fsignal($symbol, list!($($tt)+));
         }
     };
 }
@@ -32,7 +32,7 @@ macro_rules! xsignal {
 /// Replaces call0, call1, etc. in the C layer.
 macro_rules! call {
     ($func:expr, $($arg:expr),*) => {{
-        let mut argsarray = [$func.to_raw(), $($arg.to_raw()),*];
+        let mut argsarray = [$func, $($arg),*];
         #[allow(unused_unsafe)]
         unsafe {
             ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
@@ -71,7 +71,7 @@ macro_rules! message_with_string {
         #[allow(unused_unsafe)]
         unsafe {
             ::remacs_sys::message_with_string($str.as_ptr() as *const ::libc::c_char,
-                                              $obj.to_raw(),
+                                              $obj,
                                               $should_log);
         }
     }

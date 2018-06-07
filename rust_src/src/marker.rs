@@ -275,7 +275,7 @@ pub extern "C" fn set_marker_restricted(
     position: LispObject,
     buffer: LispObject,
 ) -> LispObject {
-    set_marker_internal(marker, position, buffer, true).to_raw()
+    set_marker_internal(marker, position, buffer, true)
 }
 
 /// Set the position of MARKER, specifying both the

@@ -39,7 +39,7 @@ pub extern "C" fn lo_time(t: time_t) -> i32 {
 /// correspondingly negative picosecond count.
 #[no_mangle]
 pub extern "C" fn make_lisp_time(t: c_timespec) -> LispObject {
-    make_lisp_time_1(t).to_raw()
+    make_lisp_time_1(t)
 }
 
 fn make_lisp_time_1(t: c_timespec) -> LispObject {
@@ -108,10 +108,10 @@ pub extern "C" fn disassemble_lisp_time(
     }
 
     unsafe {
-        *phigh = high.to_raw();
-        *plow = low.to_raw();
-        *pusec = usec.to_raw();
-        *ppsec = psec.to_raw();
+        *phigh = high;
+        *plow = low;
+        *pusec = usec;
+        *ppsec = psec;
     }
 
     len
@@ -365,7 +365,7 @@ pub fn float_time(time: LispObject) -> LispObject {
 
     let mut t = 0.0;
 
-    if disassemble_lisp_time(time.to_raw(), &mut high, &mut low, &mut usec, &mut psec) == 0
+    if disassemble_lisp_time(time, &mut high, &mut low, &mut usec, &mut psec) == 0
         || decode_time_components(high, low, usec, psec, ptr::null_mut(), &mut t) == 0
     {
         invalid_time();

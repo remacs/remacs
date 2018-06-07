@@ -28,7 +28,7 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> () {
                     t.tv_nsec as i32,
                     0,
                     true,
-                    LispObject::constant_nil().to_raw(),
+                    LispObject::constant_nil(),
                     ptr::null_mut(),
                     0,
                 )

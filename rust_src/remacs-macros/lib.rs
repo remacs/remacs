@@ -119,7 +119,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
             #body
 
             let ret = #rname(#rargs);
-            ::lisp::LispObject::from(ret).to_raw()
+            ::lisp::LispObject::from(ret)
         }
 
         lazy_static! {

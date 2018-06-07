@@ -20,12 +20,7 @@ use lisp::defsubr;
 #[lisp_fn(min = "2")]
 pub fn get_char_property(position: EmacsInt, prop: LispObject, object: LispObject) -> LispObject {
     unsafe {
-        get_char_property_and_overlay(
-            LispObject::from(position).to_raw(),
-            prop.to_raw(),
-            object.to_raw(),
-            ptr::null_mut(),
-        )
+        get_char_property_and_overlay(LispObject::from(position), prop, object, ptr::null_mut())
     }
 }
 

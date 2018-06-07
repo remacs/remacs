@@ -225,7 +225,7 @@ pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
             unsafe { del_range(buffer.pt(), pos) };
         }
     } else {
-        call_raw!(Qkill_forward_chars, LispObject::from(n).to_raw());
+        call_raw!(Qkill_forward_chars, LispObject::from(n));
     }
 }
 
@@ -337,8 +337,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         if overwrite == Qoverwrite_mode_binary {
             chars_to_delete = n as usize;
         } else if c != '\n' as Codepoint && c2 != '\n' as Codepoint {
-            let cwidth =
-                unsafe { Fchar_width(LispObject::from(c).to_raw()) }.as_fixnum_or_error() as usize;
+            let cwidth = unsafe { Fchar_width(LispObject::from(c)) }.as_fixnum_or_error() as usize;
             if cwidth > 0 {
                 let pos = current_buffer.pt;
                 let pos_byte = current_buffer.pt_byte;
@@ -354,9 +353,8 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                     // if the TARGET_CLM is middle of multi-column
                     // character.  In that case, the new point is set after
                     // that character.
-                    let actual_clm = unsafe {
-                        Fmove_to_column(LispObject::from(target_clm).to_raw(), Qnil)
-                    }.as_fixnum_or_error() as usize;
+                    let actual_clm = unsafe { Fmove_to_column(LispObject::from(target_clm), Qnil) }
+                        .as_fixnum_or_error() as usize;
                     chars_to_delete = (current_buffer.pt - pos) as usize;
                     if actual_clm > target_clm {
                         // We will delete too many columns.  Let's fill columns
@@ -395,12 +393,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // return right away--don't really self-insert.  */
         if let Some(s) = sym.as_symbol() {
             if let Some(f) = s.function.as_symbol() {
-                let prop = unsafe {
-                    Fget(
-                        LispObject::from(f).to_raw(),
-                        intern("no-self-insert").to_raw(),
-                    )
-                };
+                let prop = unsafe { Fget(LispObject::from(f), intern("no-self-insert")) };
                 if prop.is_not_nil() {
                     return 1;
                 }
@@ -418,23 +411,22 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         } else {
             c
         };
-        let mut string =
-            unsafe { Fmake_string(LispObject::from(n).to_raw(), LispObject::from(mc).to_raw()) };
+        let mut string = unsafe { Fmake_string(LispObject::from(n), LispObject::from(mc)) };
         if spaces_to_insert > 0 {
             let tem = unsafe {
                 Fmake_string(
-                    LispObject::from(spaces_to_insert).to_raw(),
-                    LispObject::from(' ' as Codepoint).to_raw(),
+                    LispObject::from(spaces_to_insert),
+                    LispObject::from(' ' as Codepoint),
                 )
             };
-            string = unsafe { concat2(string.to_raw(), tem.to_raw()) };
+            string = unsafe { concat2(string, tem) };
         }
 
         unsafe {
             replace_range(
                 current_buffer.pt,
                 current_buffer.pt + chars_to_delete as isize,
-                string.to_raw(),
+                string,
                 true,
                 true,
                 true,
@@ -495,7 +487,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
 #[no_mangle]
 pub extern "C" fn keys_of_cmds() {
-    let global_map = current_global_map().to_raw();
+    let global_map = current_global_map();
 
     unsafe {
         let sic = CString::new("self-insert-command").unwrap();

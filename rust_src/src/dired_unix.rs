@@ -319,7 +319,7 @@ impl FileAttrs {
 }
 
 pub fn file_attributes_intro(filename: LispObject, id_format: LispObject) -> LispObject {
-    let fnexp = unsafe { Fexpand_file_name(filename.to_raw(), Qnil) };
+    let fnexp = unsafe { Fexpand_file_name(filename, Qnil) };
     let handler = unsafe { Ffind_file_name_handler(fnexp, Qfile_attributes) };
     if handler.is_not_nil() {
         if id_format.is_not_nil() {

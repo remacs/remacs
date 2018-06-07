@@ -413,7 +413,7 @@ pub fn set_window_combination_limit(mut window: LispWindowRef, limit: LispObject
         error!("Combination limit is meaningful for internal windows only");
     }
 
-    window.combination_limit = limit.to_raw();
+    window.combination_limit = limit;
 
     limit
 }
@@ -553,12 +553,7 @@ pub fn set_window_parameter(
     let w_params = unsafe { wget_window_parameters(w.as_ptr()) };
     let old_alist_elt = assq(parameter, w_params);
     if old_alist_elt.is_nil() {
-        unsafe {
-            wset_window_parameters(
-                w.as_mut(),
-                Fcons(Fcons(parameter.to_raw(), value.to_raw()), w_params),
-            )
-        }
+        unsafe { wset_window_parameters(w.as_mut(), Fcons(Fcons(parameter, value), w_params)) }
     } else {
         setcdr(old_alist_elt.as_cons_or_error(), value);
     }
@@ -657,7 +652,7 @@ pub fn window_list(
         error!("Window is on a different frame");
     }
 
-    unsafe { (window_list_1(w_obj.to_raw(), minibuf.to_raw(), f_obj.to_raw())) }
+    unsafe { (window_list_1(w_obj, minibuf, f_obj)) }
 }
 
 /// Return a list of all live windows.
@@ -696,7 +691,7 @@ pub fn window_list_one(
     minibuf: LispObject,
     all_frames: LispObject,
 ) -> LispObject {
-    unsafe { (window_list_1(window.to_raw(), minibuf.to_raw(), all_frames.to_raw())) }
+    unsafe { (window_list_1(window, minibuf, all_frames)) }
 }
 
 /// Return non-nil when WINDOW is dedicated to its buffer.
