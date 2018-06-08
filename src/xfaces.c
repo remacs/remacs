@@ -6694,7 +6694,6 @@ REPLACEMENT is a face specification, i.e. one of the following:
 
   (1) a face name
   (2) a property list of attribute/value pairs, or
-  (3)
   (3) a list in which each element has one of the above forms.
 
 List values for REPLACEMENT are merged to form the final face
