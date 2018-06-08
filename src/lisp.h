@@ -3186,6 +3186,8 @@ extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
 
 enum specbind_tag {
   SPECPDL_UNWIND,		/* An unwind_protect function on Lisp_Object.  */
+  SPECPDL_UNWIND_ARRAY,		/* Likewise, on an array that needs freeing.
+				   Its elements are potential Lisp_Objects.  */
   SPECPDL_UNWIND_PTR,		/* Likewise, on void *.  */
   SPECPDL_UNWIND_INT,		/* Likewise, on int.  */
   SPECPDL_UNWIND_EXCURSION,	/* Likewise, on an execursion.  */
@@ -3205,6 +3207,12 @@ union specbinding
       void (*func) (Lisp_Object);
       Lisp_Object arg;
     } unwind;
+    struct {
+      ENUM_BF (specbind_tag) kind : CHAR_BIT;
+      void (*func) (Lisp_Object);
+      Lisp_Object *array;
+      ptrdiff_t nelts;
+    } unwind_array;
     struct {
       ENUM_BF (specbind_tag) kind : CHAR_BIT;
       void (*func) (void *);
@@ -3702,6 +3710,7 @@ extern void refill_memory_reserve (void);
 #endif
 extern void alloc_unexec_pre (void);
 extern void alloc_unexec_post (void);
+extern void mark_maybe_objects (Lisp_Object *, ptrdiff_t);
 extern void mark_stack (char *, char *);
 extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
 extern const char *pending_malloc_warning;
@@ -4016,6 +4025,7 @@ extern struct handler *push_handler (Lisp_Object, enum handlertype);
 extern struct handler *push_handler_nosignal (Lisp_Object, enum handlertype);
 extern void specbind (Lisp_Object, Lisp_Object);
 extern void record_unwind_protect (void (*) (Lisp_Object), Lisp_Object);
+extern void record_unwind_protect_array (Lisp_Object *, ptrdiff_t);
 extern void record_unwind_protect_ptr (void (*) (void *), void *);
 extern void record_unwind_protect_int (void (*) (int), int);
 extern void record_unwind_protect_void (void (*) (void));
@@ -4710,11 +4720,9 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
       (buf) = AVAIL_ALLOCA (alloca_nbytes);		       \
     else						       \
       {							       \
-	Lisp_Object arg_;				       \
 	(buf) = xmalloc (alloca_nbytes);		       \
-	arg_ = make_save_memory (buf, nelt);		       \
+	record_unwind_protect_array (buf, nelt);	       \
 	sa_must_free = true;				       \
-	record_unwind_protect (free_save_value, arg_);	       \
       }							       \
   } while (false)
 

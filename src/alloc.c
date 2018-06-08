@@ -4845,6 +4845,13 @@ mark_maybe_object (Lisp_Object obj)
     }
 }
 
+void
+mark_maybe_objects (Lisp_Object *array, ptrdiff_t nelts)
+{
+  for (Lisp_Object *lim = array + nelts; array < lim; array++)
+    mark_maybe_object (*array);
+}
+
 /* Return true if P might point to Lisp data that can be garbage
    collected, and false otherwise (i.e., false if it is easy to see
    that P cannot point to Lisp data that can be garbage collected).
