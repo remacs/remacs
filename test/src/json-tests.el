@@ -26,8 +26,8 @@
 (require 'cl-lib)
 (require 'map)
 
-(declare-function json-serialize "json.c" (object))
-(declare-function json-insert "json.c" (object))
+(declare-function json-serialize "json.c" (object &rest args))
+(declare-function json-insert "json.c" (object &rest args))
 (declare-function json-parse-string "json.c" (string &rest args))
 (declare-function json-parse-buffer "json.c" (&rest args))
 
@@ -210,8 +210,10 @@ Test with both unibyte and multibyte strings."
     (should (looking-at-p (rx " [456]" eos)))))
 
 (ert-deftest json-parse-with-custom-null-and-false-objects ()
-  (let ((input
-         "{ \"abc\" : [1, 2, true], \"def\" : null, \"abc\" : [9, false] }\n"))
+  (let* ((input
+          "{ \"abc\" : [9, false] , \"def\" : null }")
+         (output
+          (replace-regexp-in-string " " "" input)))
     (should (equal (json-parse-string input
                                       :object-type 'plist
                                       :null-object :json-null
@@ -236,7 +238,13 @@ Test with both unibyte and multibyte strings."
                                       :false-object thingy
                                       :null-object nil)))
       (should (equal retval `((abc . [9 ,thingy]) (def))))
-      (should (eq (elt (cdr (car retval)) 1) thingy)))))
+      (should (eq (elt (cdr (car retval)) 1) thingy)))
+    (should (equal output
+                   (json-serialize '((abc . [9 :myfalse]) (def . :mynull))
+                                   :false-object :myfalse
+                                   :null-object :mynull)))
+    ;; :object-type is not allowed in json-serialize
+    (should-error (json-serialize '() :object-type 'alist))))
 
 (ert-deftest json-insert/signal ()
   (skip-unless (fboundp 'json-insert))
