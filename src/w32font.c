@@ -718,7 +718,7 @@ w32font_draw (struct glyph_string *s, int from, int to,
 }
 
 /* w32 implementation of free_entity for font backend.
-   Optional (if FONT_EXTRA_INDEX is not Lisp_Save_Value).
+   Optional.
    Free FONT_EXTRA_INDEX field of FONT_ENTITY.
 static void
 w32font_free_entity (Lisp_Object entity);

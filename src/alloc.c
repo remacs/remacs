@@ -3827,6 +3827,14 @@ free_save_value (Lisp_Object save)
   free_misc (save);
 }
 
+Lisp_Object
+make_misc_ptr (void *a)
+{
+  Lisp_Object val = allocate_misc (Lisp_Misc_Ptr);
+  XUNTAG (val, Lisp_Misc, struct Lisp_Misc_Ptr)->pointer = a;
+  return val;
+}
+
 /* Return a Lisp_Misc_Overlay object with specified START, END and PLIST.  */
 
 Lisp_Object
@@ -6690,6 +6698,10 @@ mark_object (Lisp_Object arg)
 	case Lisp_Misc_Save_Value:
 	  XMISCANY (obj)->gcmarkbit = 1;
 	  mark_save_value (XSAVE_VALUE (obj));
+	  break;
+
+	case Lisp_Misc_Ptr:
+	  XMISCANY (obj)->gcmarkbit = true;
 	  break;
 
 	case Lisp_Misc_Overlay:

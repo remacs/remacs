@@ -2178,6 +2178,13 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  print_c_string ("#<misc free cell>", printcharfun);
 	  break;
 
+	case Lisp_Misc_Ptr:
+	  {
+	    int i = sprintf (buf, "#<ptr %p>", xmint_pointer (obj));
+	    strout (buf, i, i, printcharfun);
+	  }
+	  break;
+
 	case Lisp_Misc_Save_Value:
 	  {
 	    int i;

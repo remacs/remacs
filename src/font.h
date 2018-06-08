@@ -613,7 +613,7 @@ struct font_driver
      (symbols).  */
   Lisp_Object (*list_family) (struct frame *f);
 
-  /* Optional (if FONT_EXTRA_INDEX is not Lisp_Save_Value).
+  /* Optional.
      Free FONT_EXTRA_INDEX field of FONT_ENTITY.  */
   void (*free_entity) (Lisp_Object font_entity);
 
