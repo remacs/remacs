@@ -785,7 +785,7 @@ struct Lisp_Symbol
     GCALIGNED_UNION
   } u;
 };
-verify (alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
+verify (!USE_LSB_TAG || alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
 
 /* Declare a Lisp-callable function.  The MAXARGS parameter has the same
    meaning as in the DEFUN macro, and is used to construct a prototype.  */
@@ -898,7 +898,7 @@ union vectorlike_header
     ptrdiff_t size;
     GCALIGNED_UNION
   };
-verify (alignof (union vectorlike_header) % GCALIGNMENT == 0);
+verify (!USE_LSB_TAG || alignof (union vectorlike_header) % GCALIGNMENT == 0);
 
 INLINE bool
 (SYMBOLP) (Lisp_Object x)
@@ -1259,7 +1259,7 @@ struct Lisp_Cons
     GCALIGNED_UNION
   } u;
 };
-verify (alignof (struct Lisp_Cons) % GCALIGNMENT == 0);
+verify (!USE_LSB_TAG || alignof (struct Lisp_Cons) % GCALIGNMENT == 0);
 
 INLINE bool
 (NILP) (Lisp_Object x)
@@ -1381,7 +1381,7 @@ struct Lisp_String
     GCALIGNED_UNION
   } u;
 };
-verify (alignof (struct Lisp_String) % GCALIGNMENT == 0);
+verify (!USE_LSB_TAG || alignof (struct Lisp_String) % GCALIGNMENT == 0);
 
 INLINE bool
 STRINGP (Lisp_Object x)
