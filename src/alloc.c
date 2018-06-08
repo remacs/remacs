@@ -172,6 +172,7 @@ malloc_initialize_hook (void)
 
 /* Declare the malloc initialization hook, which runs before 'main' starts.
    EXTERNALLY_VISIBLE works around Bug#22522.  */
+typedef void (*voidfuncptr) (void);
 # ifndef __MALLOC_HOOK_VOLATILE
 #  define __MALLOC_HOOK_VOLATILE
 # endif
@@ -3710,123 +3711,6 @@ allocate_misc (enum Lisp_Misc_Type type)
   return val;
 }
 
-/* Free a Lisp_Misc object.  */
-
-void
-free_misc (Lisp_Object misc)
-{
-  XMISCANY (misc)->type = Lisp_Misc_Free;
-  XMISC (misc)->u_free.chain = misc_free_list;
-  misc_free_list = XMISC (misc);
-  consing_since_gc -= sizeof (union Lisp_Misc);
-  total_free_markers++;
-}
-
-/* Verify properties of Lisp_Save_Value's representation
-   that are assumed here and elsewhere.  */
-
-verify (SAVE_UNUSED == 0);
-verify (((SAVE_INTEGER | SAVE_POINTER | SAVE_FUNCPOINTER | SAVE_OBJECT)
-	 >> SAVE_SLOT_BITS)
-	== 0);
-
-/* Return Lisp_Save_Value objects for the various combinations
-   that callers need.  */
-
-Lisp_Object
-make_save_int_int_int (ptrdiff_t a, ptrdiff_t b, ptrdiff_t c)
-{
-  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
-  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
-  p->save_type = SAVE_TYPE_INT_INT_INT;
-  p->data[0].integer = a;
-  p->data[1].integer = b;
-  p->data[2].integer = c;
-  return val;
-}
-
-Lisp_Object
-make_save_obj_obj_obj_obj (Lisp_Object a, Lisp_Object b, Lisp_Object c,
-			   Lisp_Object d)
-{
-  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
-  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
-  p->save_type = SAVE_TYPE_OBJ_OBJ_OBJ_OBJ;
-  p->data[0].object = a;
-  p->data[1].object = b;
-  p->data[2].object = c;
-  p->data[3].object = d;
-  return val;
-}
-
-Lisp_Object
-make_save_ptr (void *a)
-{
-  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
-  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
-  p->save_type = SAVE_POINTER;
-  p->data[0].pointer = a;
-  return val;
-}
-
-Lisp_Object
-make_save_ptr_int (void *a, ptrdiff_t b)
-{
-  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
-  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
-  p->save_type = SAVE_TYPE_PTR_INT;
-  p->data[0].pointer = a;
-  p->data[1].integer = b;
-  return val;
-}
-
-Lisp_Object
-make_save_ptr_ptr (void *a, void *b)
-{
-  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
-  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
-  p->save_type = SAVE_TYPE_PTR_PTR;
-  p->data[0].pointer = a;
-  p->data[1].pointer = b;
-  return val;
-}
-
-Lisp_Object
-make_save_funcptr_ptr_obj (void (*a) (void), void *b, Lisp_Object c)
-{
-  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
-  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
-  p->save_type = SAVE_TYPE_FUNCPTR_PTR_OBJ;
-  p->data[0].funcpointer = a;
-  p->data[1].pointer = b;
-  p->data[2].object = c;
-  return val;
-}
-
-/* Return a Lisp_Save_Value object that represents an array A
-   of N Lisp objects.  */
-
-Lisp_Object
-make_save_memory (Lisp_Object *a, ptrdiff_t n)
-{
-  Lisp_Object val = allocate_misc (Lisp_Misc_Save_Value);
-  struct Lisp_Save_Value *p = XSAVE_VALUE (val);
-  p->save_type = SAVE_TYPE_MEMORY;
-  p->data[0].pointer = a;
-  p->data[1].integer = n;
-  return val;
-}
-
-/* Free a Lisp_Save_Value object.  Do not use this function
-   if SAVE contains pointer other than returned by xmalloc.  */
-
-void
-free_save_value (Lisp_Object save)
-{
-  xfree (XSAVE_POINTER (save, 0));
-  free_misc (save);
-}
-
 Lisp_Object
 make_misc_ptr (void *a)
 {
@@ -5281,10 +5165,8 @@ valid_pointer_p (void *p)
 
 /* Return 2 if OBJ is a killed or special buffer object, 1 if OBJ is a
    valid lisp object, 0 if OBJ is NOT a valid lisp object, or -1 if we
-   cannot validate OBJ.  This function can be quite slow, so its primary
-   use is the manual debugging.  The only exception is print_object, where
-   we use it to check whether the memory referenced by the pointer of
-   Lisp_Save_Value object contains valid objects.  */
+   cannot validate OBJ.  This function can be quite slow, and is used
+   only in debugging.  */
 
 int
 valid_lisp_object_p (Lisp_Object obj)
@@ -6363,30 +6245,6 @@ mark_localized_symbol (struct Lisp_Symbol *ptr)
   mark_object (blv->defcell);
 }
 
-NO_INLINE /* To reduce stack depth in mark_object.  */
-static void
-mark_save_value (struct Lisp_Save_Value *ptr)
-{
-  /* If `save_type' is zero, `data[0].pointer' is the address
-     of a memory area containing `data[1].integer' potential
-     Lisp_Objects.  */
-  if (ptr->save_type == SAVE_TYPE_MEMORY)
-    {
-      Lisp_Object *p = ptr->data[0].pointer;
-      ptrdiff_t nelt;
-      for (nelt = ptr->data[1].integer; nelt > 0; nelt--, p++)
-	mark_maybe_object (*p);
-    }
-  else
-    {
-      /* Find Lisp_Objects in `data[N]' slots and mark them.  */
-      int i;
-      for (i = 0; i < SAVE_VALUE_SLOTS; i++)
-	if (save_type (ptr, i) == SAVE_OBJECT)
-	  mark_object (ptr->data[i].object);
-    }
-}
-
 /* Remove killed buffers or items whose car is a killed buffer from
    LIST, and mark other items.  Return changed LIST, which is marked.  */
 
@@ -6693,11 +6551,6 @@ mark_object (Lisp_Object arg)
 	     The buffer's markers chain does not preserve markers from gc;
 	     instead, markers are removed from the chain when freed by gc.  */
 	  XMISCANY (obj)->gcmarkbit = 1;
-	  break;
-
-	case Lisp_Misc_Save_Value:
-	  XMISCANY (obj)->gcmarkbit = 1;
-	  mark_save_value (XSAVE_VALUE (obj));
 	  break;
 
 	case Lisp_Misc_Ptr:

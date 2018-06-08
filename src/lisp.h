@@ -511,7 +511,6 @@ enum Lisp_Misc_Type
     Lisp_Misc_Free = 0x5eab,
     Lisp_Misc_Marker,
     Lisp_Misc_Overlay,
-    Lisp_Misc_Save_Value,
     Lisp_Misc_Finalizer,
     Lisp_Misc_Ptr,
 #ifdef HAVE_MODULES
@@ -560,9 +559,8 @@ enum Lisp_Fwd_Type
    members that are accessible only from C.  A Lisp_Misc object is a
    wrapper for a C struct that can contain anything you like.
 
-   Explicit freeing is discouraged for Lisp objects in general.  But if
-   you really need to exploit this, use Lisp_Misc (check free_misc in
-   alloc.c to see why).  There is no way to free a vectorlike object.
+   There is no way to explicitly free a Lisp Object; only the garbage
+   collector frees them.
 
    To add a new pseudovector type, extend the pvec_type enumeration;
    to add a new Lisp_Misc, extend the Lisp_Misc_Type enumeration.
@@ -2362,140 +2360,6 @@ struct Lisp_Overlay
     Lisp_Object plist;
   };
 
-/* Number of bits needed to store one of the values
-   SAVE_UNUSED..SAVE_OBJECT.  */
-enum { SAVE_SLOT_BITS = 3 };
-
-/* Number of slots in a save value where save_type is nonzero.  */
-enum { SAVE_VALUE_SLOTS = 4 };
-
-/* Bit-width and values for struct Lisp_Save_Value's save_type member.  */
-
-enum { SAVE_TYPE_BITS = SAVE_VALUE_SLOTS * SAVE_SLOT_BITS + 1 };
-
-/* Types of data which may be saved in a Lisp_Save_Value.  */
-
-enum Lisp_Save_Type
-  {
-    SAVE_UNUSED,
-    SAVE_INTEGER,
-    SAVE_FUNCPOINTER,
-    SAVE_POINTER,
-    SAVE_OBJECT,
-    SAVE_TYPE_INT_INT = SAVE_INTEGER + (SAVE_INTEGER << SAVE_SLOT_BITS),
-    SAVE_TYPE_INT_INT_INT
-      = (SAVE_INTEGER + (SAVE_TYPE_INT_INT << SAVE_SLOT_BITS)),
-    SAVE_TYPE_OBJ_OBJ = SAVE_OBJECT + (SAVE_OBJECT << SAVE_SLOT_BITS),
-    SAVE_TYPE_OBJ_OBJ_OBJ = SAVE_OBJECT + (SAVE_TYPE_OBJ_OBJ << SAVE_SLOT_BITS),
-    SAVE_TYPE_OBJ_OBJ_OBJ_OBJ
-      = SAVE_OBJECT + (SAVE_TYPE_OBJ_OBJ_OBJ << SAVE_SLOT_BITS),
-    SAVE_TYPE_PTR_INT = SAVE_POINTER + (SAVE_INTEGER << SAVE_SLOT_BITS),
-    SAVE_TYPE_PTR_OBJ = SAVE_POINTER + (SAVE_OBJECT << SAVE_SLOT_BITS),
-    SAVE_TYPE_PTR_PTR = SAVE_POINTER + (SAVE_POINTER << SAVE_SLOT_BITS),
-    SAVE_TYPE_FUNCPTR_PTR_OBJ
-      = SAVE_FUNCPOINTER + (SAVE_TYPE_PTR_OBJ << SAVE_SLOT_BITS),
-
-    /* This has an extra bit indicating it's raw memory.  */
-    SAVE_TYPE_MEMORY = SAVE_TYPE_PTR_INT + (1 << (SAVE_TYPE_BITS - 1))
-  };
-
-/* SAVE_SLOT_BITS must be large enough to represent these values.  */
-verify (((SAVE_UNUSED | SAVE_INTEGER | SAVE_FUNCPOINTER
-	  | SAVE_POINTER | SAVE_OBJECT)
-	 >> SAVE_SLOT_BITS)
-	== 0);
-
-/* Special object used to hold a different values for later use.
-
-   This is mostly used to package C integers and pointers to call
-   record_unwind_protect when two or more values need to be saved.
-   For example:
-
-   ...
-     struct my_data *md = get_my_data ();
-     ptrdiff_t mi = get_my_integer ();
-     record_unwind_protect (my_unwind, make_save_ptr_int (md, mi));
-   ...
-
-   Lisp_Object my_unwind (Lisp_Object arg)
-   {
-     struct my_data *md = XSAVE_POINTER (arg, 0);
-     ptrdiff_t mi = XSAVE_INTEGER (arg, 1);
-     ...
-   }
-
-   If ENABLE_CHECKING is in effect, XSAVE_xxx macros do type checking of the
-   saved objects and raise eassert if type of the saved object doesn't match
-   the type which is extracted.  In the example above, XSAVE_INTEGER (arg, 2)
-   and XSAVE_OBJECT (arg, 0) are wrong because nothing was saved in slot 2 and
-   slot 0 is a pointer.  */
-
-typedef void (*voidfuncptr) (void);
-
-struct Lisp_Save_Value
-  {
-    ENUM_BF (Lisp_Misc_Type) type : 16;	/* = Lisp_Misc_Save_Value */
-    bool_bf gcmarkbit : 1;
-    unsigned spacer : 32 - (16 + 1 + SAVE_TYPE_BITS);
-
-    /* V->data may hold up to SAVE_VALUE_SLOTS entries.  The type of
-       V's data entries are determined by V->save_type.  E.g., if
-       V->save_type == SAVE_TYPE_PTR_OBJ, V->data[0] is a pointer,
-       V->data[1] is an integer, and V's other data entries are unused.
-
-       If V->save_type == SAVE_TYPE_MEMORY, V->data[0].pointer is the address of
-       a memory area containing V->data[1].integer potential Lisp_Objects.  */
-    ENUM_BF (Lisp_Save_Type) save_type : SAVE_TYPE_BITS;
-    union {
-      void *pointer;
-      voidfuncptr funcpointer;
-      ptrdiff_t integer;
-      Lisp_Object object;
-    } data[SAVE_VALUE_SLOTS];
-  };
-
-INLINE bool
-SAVE_VALUEP (Lisp_Object x)
-{
-  return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Save_Value;
-}
-
-INLINE struct Lisp_Save_Value *
-XSAVE_VALUE (Lisp_Object a)
-{
-  eassert (SAVE_VALUEP (a));
-  return XUNTAG (a, Lisp_Misc, struct Lisp_Save_Value);
-}
-
-/* Return the type of V's Nth saved value.  */
-INLINE int
-save_type (struct Lisp_Save_Value *v, int n)
-{
-  eassert (0 <= n && n < SAVE_VALUE_SLOTS);
-  return (v->save_type >> (SAVE_SLOT_BITS * n) & ((1 << SAVE_SLOT_BITS) - 1));
-}
-
-/* Get and set the Nth saved pointer.  */
-
-INLINE void *
-XSAVE_POINTER (Lisp_Object obj, int n)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_POINTER);
-  return XSAVE_VALUE (obj)->data[n].pointer;
-}
-INLINE void
-set_save_pointer (Lisp_Object obj, int n, void *val)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_POINTER);
-  XSAVE_VALUE (obj)->data[n].pointer = val;
-}
-INLINE voidfuncptr
-XSAVE_FUNCPOINTER (Lisp_Object obj, int n)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_FUNCPOINTER);
-  return XSAVE_VALUE (obj)->data[n].funcpointer;
-}
-
 struct Lisp_Misc_Ptr
   {
     ENUM_BF (Lisp_Misc_Type) type : 16;	/* = Lisp_Misc_Ptr */
@@ -2541,30 +2405,6 @@ xmint_pointer (Lisp_Object a)
   if (INTEGERP (a))
     return XINTPTR (a);
   return XUNTAG (a, Lisp_Misc, struct Lisp_Misc_Ptr)->pointer;
-}
-
-/* Get and set the Nth saved integer.  */
-
-INLINE ptrdiff_t
-XSAVE_INTEGER (Lisp_Object obj, int n)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_INTEGER);
-  return XSAVE_VALUE (obj)->data[n].integer;
-}
-INLINE void
-set_save_integer (Lisp_Object obj, int n, ptrdiff_t val)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_INTEGER);
-  XSAVE_VALUE (obj)->data[n].integer = val;
-}
-
-/* Extract Nth saved object.  */
-
-INLINE Lisp_Object
-XSAVE_OBJECT (Lisp_Object obj, int n)
-{
-  eassert (save_type (XSAVE_VALUE (obj), n) == SAVE_OBJECT);
-  return XSAVE_VALUE (obj)->data[n].object;
 }
 
 #ifdef HAVE_MODULES
@@ -2625,7 +2465,6 @@ union Lisp_Misc
     struct Lisp_Free u_free;
     struct Lisp_Marker u_marker;
     struct Lisp_Overlay u_overlay;
-    struct Lisp_Save_Value u_save_value;
     struct Lisp_Finalizer u_finalizer;
     struct Lisp_Misc_Ptr u_misc_ptr;
 #ifdef HAVE_MODULES
@@ -3708,7 +3547,6 @@ extern void parse_str_as_multibyte (const unsigned char *, ptrdiff_t,
 /* Defined in alloc.c.  */
 extern void *my_heap_start (void);
 extern void check_pure_size (void);
-extern void free_misc (Lisp_Object);
 extern void allocate_string_data (struct Lisp_String *, EMACS_INT, EMACS_INT);
 extern void malloc_warning (const char *);
 extern _Noreturn void memory_full (size_t);
@@ -3862,16 +3700,6 @@ extern bool gc_in_progress;
 extern Lisp_Object make_float (double);
 extern void display_malloc_warning (void);
 extern ptrdiff_t inhibit_garbage_collection (void);
-extern Lisp_Object make_save_int_int_int (ptrdiff_t, ptrdiff_t, ptrdiff_t);
-extern Lisp_Object make_save_obj_obj_obj_obj (Lisp_Object, Lisp_Object,
-					      Lisp_Object, Lisp_Object);
-extern Lisp_Object make_save_ptr (void *);
-extern Lisp_Object make_save_ptr_int (void *, ptrdiff_t);
-extern Lisp_Object make_save_ptr_ptr (void *, void *);
-extern Lisp_Object make_save_funcptr_ptr_obj (void (*) (void), void *,
-					      Lisp_Object);
-extern Lisp_Object make_save_memory (Lisp_Object *, ptrdiff_t);
-extern void free_save_value (Lisp_Object);
 extern Lisp_Object build_overlay (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void free_cons (struct Lisp_Cons *);
 extern void init_alloc_once (void);
