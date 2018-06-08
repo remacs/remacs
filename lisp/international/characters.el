@@ -1403,7 +1403,9 @@ Setup char-width-table appropriate for non-CJK language environment."
 
 (defun update-glyphless-char-display (&optional variable value)
   "Make the setting of `glyphless-char-display-control' take effect.
-This function updates the char-table `glyphless-char-display'."
+This function updates the char-table `glyphless-char-display',
+and is intended to be used in the `:set' attribute of the
+option `glyphless-char-display'."
   (when value
     (set-default variable value))
   (dolist (elt value)
