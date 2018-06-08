@@ -2144,6 +2144,21 @@ Symbols}.
      @result{} nil
 @end group
 @end example
+
+@noindent
+@cindex identical-contents objects, and byte-compiler
+@cindex objects with identical contents, and byte-compiler
+The Emacs Lisp byte compiler may collapse identical literal objects,
+such as literal strings, into references to the same object, with the
+effect that the byte-compiled code will compare such objects as
+@code{eq}, while the interpreted version of the same code will not.
+Therefore, your code should never rely on objects with the same
+literal contents being either @code{eq} or not @code{eq}, it should
+instead use functions that compare object contents such as
+@code{equal}, described below.  Similarly, your code should not modify
+literal objects (e.g., put text properties on literal strings), since
+doing that might affect other literal objects of the same contents, if
+the byte compiler collapses them.
 @end defun
 
 @defun equal object1 object2
