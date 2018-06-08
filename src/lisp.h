@@ -229,7 +229,7 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
    USE_LSB_TAG not only requires the least 3 bits of pointers returned by
    malloc to be 0 but also needs to be able to impose a mult-of-8 alignment
    on some non-GC Lisp_Objects, all of which are aligned via
-   'char alignas (GCALIGNMENT) gcaligned;' inside a union.  */
+   GCALIGNED_UNION at the end of a union.  */
 
 enum Lisp_Bits
   {
@@ -275,6 +275,12 @@ DEFINE_GDB_SYMBOL_END (VALMASK)
 # error "USE_LSB_TAG not supported on this platform; please report this." \
 	"Try 'configure --with-wide-int' to work around the problem."
 error !;
+#endif
+
+#if USE_LSB_TAG
+# define GCALIGNED_UNION char alignas (GCALIGNMENT) gcaligned;
+#else
+# define GCALIGNED_UNION
 #endif
 
 /* Lisp_Word is a scalar word suitable for holding a tagged pointer or
@@ -776,7 +782,7 @@ struct Lisp_Symbol
       /* Next symbol in obarray bucket, if the symbol is interned.  */
       struct Lisp_Symbol *next;
     } s;
-    char alignas (GCALIGNMENT) gcaligned;
+    GCALIGNED_UNION
   } u;
 };
 verify (alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
@@ -890,7 +896,7 @@ union vectorlike_header
 	 Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
 	 4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
     ptrdiff_t size;
-    char alignas (GCALIGNMENT) gcaligned;
+    GCALIGNED_UNION
   };
 verify (alignof (union vectorlike_header) % GCALIGNMENT == 0);
 
@@ -1250,7 +1256,7 @@ struct Lisp_Cons
 	struct Lisp_Cons *chain;
       } u;
     } s;
-    char alignas (GCALIGNMENT) gcaligned;
+    GCALIGNED_UNION
   } u;
 };
 verify (alignof (struct Lisp_Cons) % GCALIGNMENT == 0);
@@ -1372,7 +1378,7 @@ struct Lisp_String
       unsigned char *data;
     } s;
     struct Lisp_String *next;
-    char alignas (GCALIGNMENT) gcaligned;
+    GCALIGNED_UNION
   } u;
 };
 verify (alignof (struct Lisp_String) % GCALIGNMENT == 0);
