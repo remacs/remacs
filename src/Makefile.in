@@ -606,15 +606,20 @@ macosx_alloc_dir=$(rust_srcdir)/alloc_unexecmacosx
 MACOSX_ALLOC_INPUTS=$(macosx_alloc_dir)/src/** $(macosx_alloc_dir)/Cargo.*
 cargo_manifest=$(rust_srcdir)/Cargo.toml
 LIBREMACS_ARCHIVE=$(rust_srcdir)/target/$(CARGO_BUILD_DIR)/$(REMACSLIB_NAME)
-$(LIBREMACS_ARCHIVE): globals.h $(rust_srcdir)/src/** $(rust_srcdir)/Cargo.* $(MACOSX_ALLOC_INPUTS)
+$(LIBREMACS_ARCHIVE): globals.h $(rust_srcdir)/src/** $(rust_srcdir)/Cargo.* $(MACOSX_ALLOC_INPUTS) $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
+	SRC_HASH="$(shell EMACS_CFLAGS="-I../rust_src $(EMACS_CFLAGS)" ../lib-src/hashdir/target/$(CARGO_BUILD_DIR)/hashdir)" \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
-check check-maybe check-expensive:
+check check-maybe check-expensive: $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
+	SRC_HASH="$(shell EMACS_CFLAGS="-I../rust_src $(EMACS_CFLAGS)" ../lib-src/hashdir)" \
 	$(CARGO_TEST) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
+
+$(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT): ${libsrc}/hashdir/Cargo.toml ${libsrc}/hashdir/src/main.rs
+	RUSTFLAGS="$(RUSTFLAGS)" $(CARGO_BUILD) --manifest-path=${libsrc}/hashdir/Cargo.toml
 
 $(ALLOBJS): globals.h
 

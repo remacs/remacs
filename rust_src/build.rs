@@ -1125,6 +1125,10 @@ fn run_bindgen() {
 }
 
 fn main() {
+    for varname in ["EMACS_CFLAGS", "SRC_HASH"].iter() {
+        println!("cargo:rerun-if-env-changed={}", varname);
+    }
+
     if let Err(e) = generate_include_files() {
         match e {
             BuildError::IOError(msg) => {
