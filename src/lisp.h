@@ -228,7 +228,7 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
 
    USE_LSB_TAG not only requires the least 3 bits of pointers returned by
    malloc to be 0 but also needs to be able to impose a mult-of-8 alignment
-   on the few static Lisp_Objects used, all of which are aligned via
+   on some non-GC Lisp_Objects, all of which are aligned via
    'char alignas (GCALIGNMENT) gcaligned;' inside a union.  */
 
 enum Lisp_Bits
@@ -4680,13 +4680,14 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
 #define SAFE_ALLOCA_LISP(buf, nelt) SAFE_ALLOCA_LISP_EXTRA (buf, nelt, 0)
 
 
-/* If USE_STACK_LISP_OBJECTS, define macros that and functions that allocate
-   block-scoped conses and strings.  These objects are not
-   managed by the garbage collector, so they are dangerous: passing them
-   out of their scope (e.g., to user code) results in undefined behavior.
-   Conversely, they have better performance because GC is not involved.
+/* If USE_STACK_LISP_OBJECTS, define macros and functions that
+   allocate some Lisp objects on the C stack.  As the storage is not
+   managed by the garbage collector, these objects are dangerous:
+   passing them to user code could result in undefined behavior if the
+   objects are in use after the C function returns.  Conversely, these
+   objects have better performance because GC is not involved.
 
-   This feature is experimental and requires careful debugging.
+   While debugging you may want to disable allocation on the C stack.
    Build with CPPFLAGS='-DUSE_STACK_LISP_OBJECTS=0' to disable it.  */
 
 #if (!defined USE_STACK_LISP_OBJECTS \
@@ -4751,7 +4752,8 @@ enum
    Take its unibyte value from the null-terminated string STR,
    an expression that should not have side effects.
    STR's value is not necessarily copied.  The resulting Lisp string
-   should not be modified or made visible to user code.  */
+   should not be modified or given text properties or made visible to
+   user code.  */
 
 #define AUTO_STRING(name, str) \
   AUTO_STRING_WITH_LEN (name, str, strlen (str))
@@ -4760,7 +4762,8 @@ enum
    Take its unibyte value from the null-terminated string STR with length LEN.
    STR may have side effects and may contain null bytes.
    STR's value is not necessarily copied.  The resulting Lisp string
-   should not be modified or made visible to user code.  */
+   should not be modified or given text properties or made visible to
+   user code.  */
 
 #define AUTO_STRING_WITH_LEN(name, str, len)				\
   Lisp_Object name =							\
