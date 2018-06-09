@@ -1282,7 +1282,7 @@ comment at the start of cc-engine.el for more info."
 	       (c-backward-syntactic-ws)
 	       ;; protect AWK post-inc/decrement operators, etc.
 	       (and (not (c-at-vsemi-p (point)))
-		    (/= (skip-chars-backward "-+!*&~@`#") 0)))
+		    (/= (skip-chars-backward "-.+!*&~@`#") 0)))
 	(setq pos (point)))
       (goto-char pos)
       ret)))
@@ -12608,18 +12608,21 @@ comment at the start of cc-engine.el for more info."
 	    (c-add-stmt-syntax 'brace-list-close nil t lim paren-state)))
 
 	 (t
-	  ;; Prepare for the rest of the cases below by going to the
-	  ;; token following the opening brace
-	  (if (consp special-brace-list)
-	      (progn
-		(goto-char (car (car special-brace-list)))
-		(c-forward-token-2 1 nil indent-point))
-	    (goto-char containing-sexp))
-	  (forward-char)
-	  (let ((start (point)))
-	    (c-forward-syntactic-ws indent-point)
-	    (goto-char (max start (c-point 'bol))))
-	  (c-skip-ws-forward indent-point)
+	  ;; Prepare for the rest of the cases below by going back to the
+	  ;; previous entry, or BOI before that, providing that this is
+	  ;; inside the enclosing brace.
+	  (goto-char indent-point)
+	  (c-beginning-of-statement-1 containing-sexp nil nil t)
+	  (when (/= (point) indent-point)
+	    (if (> (c-point 'boi) containing-sexp)
+	    	(goto-char (c-point 'boi))
+	      (if (consp special-brace-list)
+	    	  (progn
+	    	    (goto-char (caar special-brace-list))
+	    	    (c-forward-token-2 1 nil indent-point))
+	    	(goto-char containing-sexp))
+	      (forward-char)
+	      (c-skip-ws-forward indent-point)))
 	  (cond
 
 	   ;; CASE 9C: we're looking at the first line in a brace-list
