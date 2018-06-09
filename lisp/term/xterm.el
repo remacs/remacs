@@ -95,24 +95,41 @@ Return the pasted text as a string."
 	(decode-coding-region (point-min) (point) (keyboard-coding-system)
                               t)))))
 
-(defun xterm-paste ()
+(defun xterm-paste (event)
   "Handle the start of a terminal paste operation."
-  (interactive)
-  (let* ((pasted-text (xterm--pasted-text))
+  (interactive "e")
+  (unless (eq (car-safe event) 'xterm-paste)
+    (error "xterm-paste must be found to xterm-paste event"))
+  (let* ((pasted-text (nth 1 event))
          (interprogram-paste-function (lambda () pasted-text)))
     (yank)))
 
+;; Put xterm-paste itself in global-map because, after translation,
+;; it's just a normal input event.
 (define-key global-map [xterm-paste] #'xterm-paste)
 
-(defun xterm-handle-focus-in ()
-  (interactive)
-  (handle-focus-in))
-(define-key global-map [xterm-focus-in] #'xterm-handle-focus-in)
+;; By returning an empty key sequence, these two functions perform the
+;; moral equivalent of the kind of transparent event processing done
+;; by read-event's handling of special-event-map, but inside
+;; read-key-sequence (which can recognize multi-character terminal
+;; notifications) instead of read-event (which can't).
 
-(defun xterm-handle-focus-out ()
-  (interactive)
-  (handle-focus-out))
-(define-key global-map [xterm-focus-out] #'xterm-handle-focus-out)
+(defun xterm-translate-focus-in (_prompt)
+  (handle-focus-in)
+  [])
+
+(defun xterm-translate-focus-out (_prompt)
+  (handle-focus-out)
+  [])
+
+;; Similarly, we want to transparently slurp the entirety of a
+;; bracketed paste and encapsulate it into a single event.  We used to
+;; just slurp up the bracketed paste content in the event handler, but
+;; this strategy can produce unexpected results in a caller manually
+;; looping on read-key and buffering input for later processing.
+
+(defun xterm-translate-bracketed-paste (_prompt)
+  (vector (list 'xterm-paste (xterm--pasted-text))))
 
 (defvar xterm-rxvt-function-map
   (let ((map (make-sparse-keymap)))
@@ -142,12 +159,15 @@ Return the pasted text as a string."
     (define-key map "\e[13~" [f3])
     (define-key map "\e[14~" [f4])
 
-    ;; Recognize the start of a bracketed paste sequence.  The handler
-    ;; internally recognizes the end.
-    (define-key map "\e[200~" [xterm-paste])
+    ;; Recognize the start of a bracketed paste sequence.
+    ;; The translation function internally recognizes the end.
+    (define-key map "\e[200~" #'xterm-translate-bracketed-paste)
 
-    (define-key map "\e[I" [xterm-focus-in])
-    (define-key map "\e[O" [xterm-focus-out])
+    ;; These translation functions actually call the focus handlers
+    ;; internally and return an empty sequence, causing us to go on to
+    ;; read the next event.
+    (define-key map "\e[I" #'xterm-translate-focus-in)
+    (define-key map "\e[O" #'xterm-translate-focus-out)
 
     map)
   "Keymap of escape sequences, shared between xterm and rxvt support.")
