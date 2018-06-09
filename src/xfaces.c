@@ -2193,8 +2193,10 @@ merge_named_face (struct window *w,
    (:window PARAMETER VALUE), which matches if the current window has
    a PARAMETER EQ to VALUE.
 
-   If the filter is invalid, set *OK to false and, if ERR_MSGS is
-   true, log an error message.  */
+   This function returns true if the face filter matches and false if
+   it doesn't or if the function encountered an error.  If the filter
+   is invalid, set *OK to false and, if ERR_MSGS is true, log an error
+   message.  On success, *OK is untouched.  */
 static bool
 evaluate_face_filter (Lisp_Object filter, struct window *w,
                       bool *ok, bool err_msgs)
@@ -2211,7 +2213,7 @@ evaluate_face_filter (Lisp_Object filter, struct window *w,
     if (!CONSP (filter))
       goto err;
 
-    if (!EQ (XCAR (filter), Qwindow_kw))
+    if (!EQ (XCAR (filter), QCwindow))
       goto err;
     filter = XCDR (filter);
 
@@ -2226,11 +2228,12 @@ evaluate_face_filter (Lisp_Object filter, struct window *w,
       goto err;
 
     bool match = false;
-    if (w) {
-      Lisp_Object found = assq_no_quit (parameter, w->window_parameters);
-      if (!NILP (found) && EQ (XCDR (found), value))
-        match = true;
-    }
+    if (w)
+      {
+        Lisp_Object found = assq_no_quit (parameter, w->window_parameters);
+        if (!NILP (found) && EQ (XCDR (found), value))
+          match = true;
+      }
 
     return match;
   }
@@ -2243,15 +2246,16 @@ evaluate_face_filter (Lisp_Object filter, struct window *w,
 }
 
 /* Determine whether FACE_REF is a "filter" face specification (case
-   #4 in merge_face_ref). If it is, evaluate the filter, and if the
-   filter matches, return the filtered expression. Otherwise, return
-   the original expression.
+   #4 in merge_face_ref).  If it is, evaluate the filter, and if the
+   filter matches, return the filtered expression.  If the filter does
+   not match, return `nil'.  If FACE_REF is not a filtered face
+   specification, return FACE_REF.
 
    On error, set *OK to false, having logged an error message if
-   ERR_MSGS is true, with return value unspecified.
+   ERR_MSGS is true, and return `nil'.
 
-   W is either NULL or a window used to evaluate filters. If W is
-   null, no window-based face specification filter matches.
+   W is either NULL or a window used to evaluate filters.  If W is
+   NULL, no window-based face specification filter matches.
 */
 static Lisp_Object
 filter_face_ref (Lisp_Object face_ref,
@@ -2263,8 +2267,10 @@ filter_face_ref (Lisp_Object face_ref,
   if (!CONSP (face_ref))
     return face_ref;
 
+  /* Inner braces keep compiler happy about the goto skipping variable
+     initialization.  */
   {
-    if (!EQ (XCAR (face_ref), Qfiltered_kw))
+    if (!EQ (XCAR (face_ref), QCfiltered))
       return face_ref;
     face_ref = XCDR (face_ref);
 
@@ -2336,7 +2342,8 @@ merge_face_ref (struct window *w,
     {
       face_ref = filtered_face_ref;
       filtered_face_ref = filter_face_ref (face_ref, w, &ok, err_msgs);
-    } while (ok && !EQ (face_ref, filtered_face_ref));
+    }
+  while (ok && !EQ (face_ref, filtered_face_ref));
 
   if (!ok)
     return false;
@@ -4569,8 +4576,8 @@ face_for_font (struct frame *f, Lisp_Object font_object, struct face *base_face)
    frame F suitable for displaying ASCII characters.  Value is -1 if
    the face couldn't be determined, which might happen if the default
    face isn't realized and cannot be realized.  If window W is given,
-   consider face remappings specified for W or for W's buffer. If W is
-   NULL, consider only frame-level face configuration.  */
+   consider face remappings specified for W or for W's buffer.  If W
+   is NULL, consider only frame-level face configuration.  */
 int
 lookup_named_face (struct window *w, struct frame *f,
                    Lisp_Object symbol, bool signal_p)
@@ -6564,8 +6571,8 @@ syms_of_xfaces (void)
 
   /* Used for limiting character attributes to windows with specific
      characteristics.  */
-  DEFSYM (Qwindow_kw, ":window");
-  DEFSYM (Qfiltered_kw, ":filtered");
+  DEFSYM (QCwindow, ":window");
+  DEFSYM (QCfiltered, ":filtered");
 
   /* The symbol `face-alias'.  A symbol having that property is an
      alias for another face.  Value of the property is the name of
@@ -6643,8 +6650,10 @@ syms_of_xfaces (void)
 #endif
 
   DEFVAR_BOOL ("face-filters-always-match", face_filters_always_match,
-               doc: /* Non-nil means that face filters are always deemed to
-match. Use only when evaluating face attributes.  */);
+               doc: /* Non-nil means that face filters are always
+deemed to match. This variable is intended for use only by code that
+evaluates the "specifity" of a face specification and should be
+let-bound only for this purpose.  */);
 
   DEFVAR_LISP ("face-new-frame-defaults", Vface_new_frame_defaults,
     doc: /* List of global face definitions (for internal use only.)  */);
