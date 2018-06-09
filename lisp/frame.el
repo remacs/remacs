@@ -129,7 +129,7 @@ appended when the minibuffer frame is created."
       ;; Gildea@x.org says it is ok to ask questions before terminating.
       (save-buffers-kill-emacs))))
 
-(defun handle-focus-in (_event)
+(defun handle-focus-in (&optional _event)
   "Handle a focus-in event.
 Focus-in events are usually bound to this function.
 Focus-in events occur when a frame has focus, but a switch-frame event
@@ -138,7 +138,7 @@ This function runs the hook `focus-in-hook'."
   (interactive "e")
   (run-hooks 'focus-in-hook))
 
-(defun handle-focus-out (_event)
+(defun handle-focus-out (&optional _event)
   "Handle a focus-out event.
 Focus-out events are usually bound to this function.
 Focus-out events occur when no frame has focus.
@@ -2339,7 +2339,8 @@ frame receives focus."
 This is done when a frame gets focus.  Blink timers may be stopped by
 `blink-cursor-suspend'."
   (when (and blink-cursor-mode
-	     (not blink-cursor-idle-timer))
+	     (not blink-cursor-idle-timer)
+             (display-graphic-p))
     (remove-hook 'post-command-hook 'blink-cursor-check)
     (blink-cursor--start-idle-timer)))
 

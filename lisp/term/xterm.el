@@ -104,6 +104,16 @@ Return the pasted text as a string."
 
 (define-key global-map [xterm-paste] #'xterm-paste)
 
+(defun xterm-handle-focus-in ()
+  (interactive)
+  (handle-focus-in))
+(define-key global-map [xterm-focus-in] #'xterm-handle-focus-in)
+
+(defun xterm-handle-focus-out ()
+  (interactive)
+  (handle-focus-out))
+(define-key global-map [xterm-focus-out] #'xterm-handle-focus-out)
+
 (defvar xterm-rxvt-function-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\e[2~" [insert])
@@ -135,6 +145,9 @@ Return the pasted text as a string."
     ;; Recognize the start of a bracketed paste sequence.  The handler
     ;; internally recognizes the end.
     (define-key map "\e[200~" [xterm-paste])
+
+    (define-key map "\e[I" [xterm-focus-in])
+    (define-key map "\e[O" [xterm-focus-out])
 
     map)
   "Keymap of escape sequences, shared between xterm and rxvt support.")
@@ -817,6 +830,8 @@ We run the first FUNCTION whose STRING matches the input events."
   ;; Unconditionally enable bracketed paste mode: terminals that don't
   ;; support it just ignore the sequence.
   (xterm--init-bracketed-paste-mode)
+  ;; We likewise unconditionally enable support for focus tracking.
+  (xterm--init-focus-tracking)
 
   (run-hooks 'terminal-init-xterm-hook))
 
@@ -831,6 +846,12 @@ We run the first FUNCTION whose STRING matches the input events."
   (send-string-to-terminal "\e[?2004h")
   (push "\e[?2004l" (terminal-parameter nil 'tty-mode-reset-strings))
   (push "\e[?2004h" (terminal-parameter nil 'tty-mode-set-strings)))
+
+(defun xterm--init-focus-tracking ()
+  "Terminal initialization for focus tracking mode."
+  (send-string-to-terminal "\e[?1004h")
+  (push "\e[?1004l" (terminal-parameter nil 'tty-mode-reset-strings))
+  (push "\e[?1004h" (terminal-parameter nil 'tty-mode-set-strings)))
 
 (defun xterm--init-activate-get-selection ()
   "Terminal initialization for `gui-get-selection'."
