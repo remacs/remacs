@@ -119,6 +119,12 @@ Print the value of the lisp variable given as argument.
 Works only when an inferior emacs is executing.
 end
 
+# Format the value and print it as a string. Works in
+# an rr session and during live debugging. Calls into lisp.
+define xfmt
+  printf "%s\n", debug_format("%S", $arg0)
+end
+
 # Print out current buffer point and boundaries
 define ppt
   set $b = current_buffer

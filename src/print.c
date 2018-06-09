@@ -855,6 +855,17 @@ safe_debug_print (Lisp_Object arg)
     }
 }
 
+/* This function formats the given object and returns the result as a
+   string. Use this in contexts where you can inspect strings, but
+   where stderr output won't work --- e.g., while replaying rr
+   recordings.  */
+const char * debug_format (const char *, Lisp_Object) EXTERNALLY_VISIBLE;
+const char *
+debug_format (const char *fmt, Lisp_Object arg)
+{
+  return SSDATA (CALLN (Fformat, build_string (fmt), arg));
+}
+
 
 DEFUN ("error-message-string", Ferror_message_string, Serror_message_string,
        1, 1, 0,
