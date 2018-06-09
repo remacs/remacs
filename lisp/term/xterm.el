@@ -74,7 +74,7 @@ string bytes that can be copied is 3/4 of this value."
   :type 'boolean)
 
 (defconst xterm-paste-ending-sequence "\e[201~"
-  "Characters send by the terminal to end a bracketed paste.")
+  "Characters sent by the terminal to end a bracketed paste.")
 
 (defun xterm--pasted-text ()
   "Handle the rest of a terminal paste operation.
