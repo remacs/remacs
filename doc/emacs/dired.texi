@@ -238,19 +238,21 @@ the buffer, and no files actually deleted.
 @cindex recursive deletion
 @vindex dired-recursive-deletes
   You can delete empty directories just like other files, but normally
-Dired cannot delete directories that are nonempty.  If the variable
-@code{dired-recursive-deletes} is non-@code{nil}, then Dired can
-delete nonempty directories including all their contents.  That can be
-somewhat risky.  If the value of the variable is @code{always}, Dired
-will delete nonempty directories recursively, which is even more
-risky.  Even if you have set @code{dired-recursive-deletes} to
-@code{nil}, you might want sometimes to delete recursively directories
-without being asked for confirmation for all of them.  This is handy
-when you have marked many directories for deletion and you are very
-sure that all of them can safely be deleted.  For every nonempty
-directory you are asked for confirmation; if you answer @code{all},
-then all the remaining directories will be deleted without more
-questions.
+Dired cannot delete directories that are nonempty.  However, if the
+variable @code{dired-recursive-deletes} is non-@code{nil}, then Dired
+is allowed to delete nonempty directories including all their
+contents.  That can be somewhat risky.  If the value of the variable
+is @code{always}, Dired will delete nonempty directories recursively,
+which is even more risky.
+
+Even if you have set @code{dired-recursive-deletes} to @code{nil}, you
+might want sometimes to delete directories recursively without being
+asked for confirmation for all of them.  For example, you may want
+that when you have marked many directories for deletion and you are
+very sure that all of them can safely be deleted.  For every nonempty
+directory you are asked for confirmation to delete, if you answer
+@code{all}, then all the remaining directories will be deleted without
+any further questions.
 
 @vindex delete-by-moving-to-trash@r{, and Dired}
   If you change the variable @code{delete-by-moving-to-trash} to
