@@ -111,7 +111,7 @@ impl Iterator for LispMarkerIter {
         match c {
             None => None,
             Some(m) => {
-                self.current = m.next();
+                self.current = LispMarkerRef::from_ptr(m.next as *mut c_void);
                 c
             }
         }
