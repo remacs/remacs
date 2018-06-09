@@ -2934,7 +2934,7 @@ on encoding."
 	       (#x4DC0 . #x4DFF)
 	       ;; (#x4E00 . #x9FFF) CJK Unified Ideographs
 	       (#xA000 . #xD7FF)
-	       ;; (#xD800 . #xFAFF) Surrogate/Private
+	       ;; (#xD800 . #xF8FF) Surrogate/Private
 	       (#xFB00 . #x134FF)
 	       ;; (#x13500 . #x143FF) unused
                (#x14400 . #x14646)

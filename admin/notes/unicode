@@ -46,7 +46,7 @@ Any new scripts added by UnicodeData.txt will also need updates to
 script-representative-chars defined in fontset.el, and also the list
 of OTF script tags in otf-script-alist, whose source is on this page:
 
-  https://www.microsoft.com/typography/otspec/scripttags.htm
+  https://docs.microsoft.com/en-us/typography/opentype/spec/scripttags
 
 Other databases in fontset.el might also need to be updated as needed.
 
