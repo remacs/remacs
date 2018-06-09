@@ -350,7 +350,8 @@ extern int emacs_setenv_TZ (char const *);
 # define ATTRIBUTE_NO_SANITIZE_UNDEFINED
 #endif
 
-/* gcc -fsanitize=address does not work with vfork in Fedora 25 x86-64.
+/* gcc -fsanitize=address does not work with vfork in Fedora 28 x86-64.  See:
+   https://lists.gnu.org/r/emacs-devel/2017-05/msg00464.html
    For now, assume that this problem occurs on all platforms.  */
 #if ADDRESS_SANITIZER && !defined vfork
 # define vfork fork
