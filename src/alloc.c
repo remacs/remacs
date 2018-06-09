@@ -1146,11 +1146,10 @@ lisp_free (void *block)
 verify (POWER_OF_2 (BLOCK_ALIGN));
 
 /* Use aligned_alloc if it or a simple substitute is available.
-   Address sanitization breaks aligned allocation, as of gcc 4.8.2 and
-   clang 3.3 anyway.  Aligned allocation is incompatible with
-   unexmacosx.c, so don't use it on Darwin.  */
+   Aligned allocation is incompatible with unexmacosx.c, so don't use
+   it on Darwin unless CANNOT_DUMP.  */
 
-#if ! ADDRESS_SANITIZER && !defined DARWIN_OS
+#if !defined DARWIN_OS || defined CANNOT_DUMP
 # if (defined HAVE_ALIGNED_ALLOC					\
       || (defined HYBRID_MALLOC						\
 	  ? defined HAVE_POSIX_MEMALIGN					\
@@ -1446,7 +1445,7 @@ laligned (void *p, size_t size)
 static void *
 lmalloc (size_t size)
 {
-#if USE_ALIGNED_ALLOC
+#ifdef USE_ALIGNED_ALLOC
   if (! MALLOC_IS_GC_ALIGNED && size % GCALIGNMENT == 0)
     return aligned_alloc (GCALIGNMENT, size);
 #endif
