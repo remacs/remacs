@@ -868,12 +868,11 @@ returned if there's no template argument on the first line.
 
 Works with: template-args-cont."
   (save-excursion
-    (c-with-syntax-table c++-template-syntax-table
-      (beginning-of-line)
-      (backward-up-list 1)
-      (if (and (eq (char-after) ?<)
-	       (zerop (c-forward-token-2 1 nil (c-point 'eol))))
-	  (vector (current-column))))))
+    (beginning-of-line)
+    (backward-up-list 1)
+    (if (and (eq (char-after) ?<)
+	     (zerop (c-forward-token-2 1 nil (c-point 'eol))))
+	(vector (current-column)))))
 
 (defun c-lineup-ObjC-method-call (langelem)
   "Line up selector args as Emacs Lisp mode does with function args:

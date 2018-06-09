@@ -9510,11 +9510,10 @@ comment at the start of cc-engine.el for more info."
   ;; back we should search.
   ;;
   ;; This function might do hidden buffer changes.
-  (c-with-syntax-table c++-template-syntax-table
-    (c-backward-token-2 0 t lim)
-    (while (and (or (looking-at c-symbol-start)
-		    (looking-at "[<,]\\|::"))
-		(zerop (c-backward-token-2 1 t lim))))))
+  (c-backward-token-2 0 t lim)
+  (while (and (or (looking-at c-symbol-start)
+		  (looking-at "[<,]\\|::"))
+	      (zerop (c-backward-token-2 1 t lim)))))
 
 (defun c-in-method-def-p ()
   ;; Return nil if we aren't in a method definition, otherwise the
@@ -9890,11 +9889,10 @@ comment at the start of cc-engine.el for more info."
 		   (and (c-safe (c-backward-sexp) t)
 			(looking-at c-opt-op-identifier-prefix)))
 		 (and (eq (char-before) ?<)
-		      (c-with-syntax-table c++-template-syntax-table
-			(if (c-safe (goto-char (c-up-list-forward (point))))
-			    t
-			  (goto-char (point-max))
-			  nil)))))
+		      (if (c-safe (goto-char (c-up-list-forward (point))))
+			  t
+			(goto-char (point-max))
+			nil))))
 	  (setq base (point)))
 
       (while (and
@@ -9987,28 +9985,25 @@ comment at the start of cc-engine.el for more info."
       ;; potentially can search over a large amount of text.).  Take special
       ;; pains not to get mislead by C++'s "operator=", and the like.
       (if (and (eq move 'previous)
-	       (c-with-syntax-table (if (c-major-mode-is 'c++-mode)
-					c++-template-syntax-table
-				      (syntax-table))
-		 (save-excursion
-		   (and
-		    (progn
-		      (while  ; keep going back to "[;={"s until we either find
-                           ; no more, or get to one which isn't an "operator ="
-			  (and (c-syntactic-re-search-forward "[;={]" start t t t)
-			       (eq (char-before) ?=)
-			       c-overloadable-operators-regexp
-			       c-opt-op-identifier-prefix
-			       (save-excursion
-				 (eq (c-backward-token-2) 0)
-				 (looking-at c-overloadable-operators-regexp)
-				 (eq (c-backward-token-2) 0)
-				 (looking-at c-opt-op-identifier-prefix))))
-		      (eq (char-before) ?=))
-		    (c-syntactic-re-search-forward "[;{]" start t t)
-		    (eq (char-before) ?{)
-		    (c-safe (goto-char (c-up-list-forward (point))) t)
-		    (not (c-syntactic-re-search-forward ";" start t t))))))
+	       (save-excursion
+		 (and
+		  (progn
+		    (while   ; keep going back to "[;={"s until we either find
+			     ; no more, or get to one which isn't an "operator ="
+			(and (c-syntactic-re-search-forward "[;={]" start t t t)
+			     (eq (char-before) ?=)
+			     c-overloadable-operators-regexp
+			     c-opt-op-identifier-prefix
+			     (save-excursion
+			       (eq (c-backward-token-2) 0)
+			       (looking-at c-overloadable-operators-regexp)
+			       (eq (c-backward-token-2) 0)
+			       (looking-at c-opt-op-identifier-prefix))))
+		    (eq (char-before) ?=))
+		  (c-syntactic-re-search-forward "[;{]" start t t)
+		  (eq (char-before) ?{)
+		  (c-safe (goto-char (c-up-list-forward (point))) t)
+		  (not (c-syntactic-re-search-forward ";" start t t)))))
 	  (cons 'same nil)
 	(cons move nil)))))
 
@@ -10023,10 +10018,7 @@ comment at the start of cc-engine.el for more info."
   ;; `c-end-of-macro' instead in those cases.
   ;;
   ;; This function might do hidden buffer changes.
-  (let ((start (point))
-	(decl-syntax-table (if (c-major-mode-is 'c++-mode)
-			       c++-template-syntax-table
-			     (syntax-table))))
+  (let ((start (point)))
     (catch 'return
       (c-search-decl-header-end)
 
@@ -10047,34 +10039,32 @@ comment at the start of cc-engine.el for more info."
 		 (throw 'return nil)))
 	(if (or (not c-opt-block-decls-with-vars-key)
 		(save-excursion
-		  (c-with-syntax-table decl-syntax-table
-		    (let ((lim (point)))
-		      (goto-char start)
-		      (not (and
-			    ;; Check for `c-opt-block-decls-with-vars-key'
-			    ;; before the first paren.
-			    (c-syntactic-re-search-forward
-			     (concat "[;=([{]\\|\\("
-				     c-opt-block-decls-with-vars-key
-				     "\\)")
-			     lim t t t)
-			    (match-beginning 1)
-			    (not (eq (char-before) ?_))
-			    ;; Check that the first following paren is
-			    ;; the block.
-			    (c-syntactic-re-search-forward "[;=([{]"
-							   lim t t t)
-			    (eq (char-before) ?{)))))))
+		  (let ((lim (point)))
+		    (goto-char start)
+		    (not (and
+			  ;; Check for `c-opt-block-decls-with-vars-key'
+			  ;; before the first paren.
+			  (c-syntactic-re-search-forward
+			   (concat "[;=\(\[{]\\|\\("
+				   c-opt-block-decls-with-vars-key
+				   "\\)")
+			   lim t t t)
+			  (match-beginning 1)
+			  (not (eq (char-before) ?_))
+			  ;; Check that the first following paren is
+			  ;; the block.
+			  (c-syntactic-re-search-forward "[;=\(\[{]"
+							 lim t t t)
+			  (eq (char-before) ?{))))))
 	    ;; The declaration doesn't have any of the
 	    ;; `c-opt-block-decls-with-vars' keywords in the
 	    ;; beginning, so it ends here at the end of the block.
 	    (throw 'return t)))
 
-      (c-with-syntax-table decl-syntax-table
-	(while (progn
-		 (if (eq (char-before) ?\;)
-		     (throw 'return t))
-		 (c-syntactic-re-search-forward ";" nil 'move t))))
+      (while (progn
+	       (if (eq (char-before) ?\;)
+		   (throw 'return t))
+	       (c-syntactic-re-search-forward ";" nil 'move t)))
       nil)))
 
 (defun c-looking-at-decl-block (_containing-sexp goto-start &optional limit)
@@ -11460,17 +11450,15 @@ comment at the start of cc-engine.el for more info."
      ((and (c-major-mode-is 'c++-mode)
 	   (save-excursion
 	     (goto-char indent-point)
-	     (c-with-syntax-table c++-template-syntax-table
-	       (setq placeholder (c-up-list-backward)))
+	     (setq placeholder (c-up-list-backward))
 	     (and placeholder
 		  (eq (char-after placeholder) ?<)
 		  (/= (char-before placeholder) ?<)
 		  (progn
 		    (goto-char (1+ placeholder))
 		    (not (looking-at c-<-op-cont-regexp))))))
-      (c-with-syntax-table c++-template-syntax-table
-	(goto-char placeholder)
-	(c-beginning-of-statement-1 containing-sexp t))
+      (goto-char placeholder)
+      (c-beginning-of-statement-1 containing-sexp t)
       (if (save-excursion
 	    (c-backward-syntactic-ws containing-sexp)
 	    (eq (char-before) ?<))
@@ -12130,21 +12118,38 @@ comment at the start of cc-engine.el for more info."
 	      ;; NB: No c-after-special-operator-id stuff in this
 	      ;; clause - we assume only C++ needs it.
 	      (c-syntactic-skip-backward "^;,=" lim t))
+	    (setq placeholder (point))
 	    (memq (char-before) '(?, ?= ?<)))
 	  (cond
+
+	   ;; CASE 5D.6: Something like C++11's "using foo = <type-exp>"
+	   ((save-excursion
+	      (and (eq (char-before placeholder) ?=)
+		   (goto-char placeholder)
+		   (eq (c-backward-token-2 1 nil lim) 0)
+		   (eq (point) (1- placeholder))
+		   (eq (c-beginning-of-statement-1 lim) 'same)
+		   (looking-at c-equals-type-clause-key)
+		   (let ((preserve-point (point)))
+		     (when
+			 (and
+			  (eq (c-forward-token-2 1 nil nil) 0)
+			  (c-on-identifier))
+		       (setq placeholder preserve-point)))))
+	    (c-add-syntax
+	     'statement-cont placeholder)
+		   )
 
 	   ;; CASE 5D.3: perhaps a template list continuation?
 	   ((and (c-major-mode-is 'c++-mode)
 		 (save-excursion
 		   (save-restriction
-		     (c-with-syntax-table c++-template-syntax-table
-		       (goto-char indent-point)
-		       (setq placeholder (c-up-list-backward))
-		       (and placeholder
-			    (eq (char-after placeholder) ?<))))))
-	    (c-with-syntax-table c++-template-syntax-table
-	      (goto-char placeholder)
-	      (c-beginning-of-statement-1 lim t))
+		     (goto-char indent-point)
+		     (setq placeholder (c-up-list-backward))
+		     (and placeholder
+			  (eq (char-after placeholder) ?<)))))
+	    (goto-char placeholder)
+	    (c-beginning-of-statement-1 lim t)
 	    (if (save-excursion
 		  (c-backward-syntactic-ws lim)
 		  (eq (char-before) ?<))
@@ -12168,8 +12173,7 @@ comment at the start of cc-engine.el for more info."
 		   (and (looking-at c-class-key)
 			(zerop (c-forward-token-2 2 nil indent-point))
 			(if (eq (char-after) ?<)
-			    (c-with-syntax-table c++-template-syntax-table
-			      (zerop (c-forward-token-2 1 t indent-point)))
+			    (zerop (c-forward-token-2 1 t indent-point))
 			  t)
 			(eq (char-after) ?:))))
 	    (goto-char placeholder)

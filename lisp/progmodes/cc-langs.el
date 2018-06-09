@@ -392,27 +392,6 @@ The syntax tables aren't stored directly since they're quite large."
   ;; the constants in this file are evaluated.
   t (funcall (c-lang-const c-make-mode-syntax-table)))
 
-(c-lang-defconst c++-make-template-syntax-table
-  ;; A variant of `c++-mode-syntax-table' that defines `<' and `>' as
-  ;; parenthesis characters.  Used temporarily when template argument
-  ;; lists are parsed.  Note that this encourages incorrect parsing of
-  ;; templates since they might contain normal operators that uses the
-  ;; '<' and '>' characters.  Therefore this syntax table might go
-  ;; away when CC Mode handles templates correctly everywhere.  WHILE
-  ;; THIS SYNTAX TABLE IS CURRENT, `c-parse-state' MUST _NOT_ BE
-  ;; CALLED!!!
-  t   nil
-  (java c++) `(lambda ()
-	 (let ((table (funcall ,(c-lang-const c-make-mode-syntax-table))))
-	   (modify-syntax-entry ?< "(>" table)
-	   (modify-syntax-entry ?> ")<" table)
-	   table)))
-(c-lang-defvar c++-template-syntax-table
-  (and (c-lang-const c++-make-template-syntax-table)
-       ;; The next eval remove a superfluous ' from '(lambda.  This
-       ;; gets rid of compilation warnings.
-       (funcall (eval (c-lang-const c++-make-template-syntax-table)))))
-
 (c-lang-defconst c-make-no-parens-syntax-table
   ;; A variant of the standard syntax table which is used to find matching
   ;; "<"s and ">"s which have been marked as parens using syntax table
@@ -2209,6 +2188,18 @@ will be handled."
 		 "facet"))
   pike (append (c-lang-const c-class-decl-kwds)
 	       '("constant")))
+
+(c-lang-defconst c-equals-type-clause-kwds
+  "Keywords which are followed by an identifier then an \"=\"
+  sign, which declares the identifier to be a type."
+  t nil
+  c++ '("using"))
+
+(c-lang-defconst c-equals-type-clause-key
+  ;; A regular expression which matches any member of
+  ;; `c-equals-type-clause-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-equals-type-clause-kwds)))
+(c-lang-defvar c-equals-type-clause-key (c-lang-const c-equals-type-clause-key))
 
 (c-lang-defconst c-modifier-kwds
   "Keywords that can prefix normal declarations of identifiers
