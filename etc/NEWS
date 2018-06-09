@@ -54,6 +54,33 @@ other value you like) in a function and add it to 'shell-mode-hook'.
 (This change was actually made in Emacs 26.1, but was not called out
 in its NEWS.)
 
+** VC
+
+*** VC support for Mercurial was improved.
+Emacs now avoids invoking 'hg' as much as possible, for faster operation.
+(This and the following changes were actually made in Emacs 26.1, but
+were not called out in its NEWS.)
+
+---
+**** New vc-hg options.
+The new option 'vc-hg-parse-hg-data-structures' controls whether vc-hg
+will try parsing the Mercurial data structures directly instead of
+running 'hg'; it defaults to t (set to nil if you want the pre-26.1
+behavior).
+The new option 'vc-hg-symbolic-revision-styles' controls how versions
+in a Mercurial repository are presented symbolically on the mode line.
+The new option 'vc-hg-use-file-version-for-mode-line-version' controls
+whether the version shown on the mode line is that of the visited file
+or of the repository working copy.
+
+---
+**** Display of Mercurial revisions in the mode-line has changed.
+Previously, the mode line displayed the local number (1, 2, 3, ...) of
+the revision.  Starting with Emacs 26.1, the default has changed, and
+it now shows the global revision number, in the form of its changeset
+hash value.  To get back the previous behavior, customize the new
+option 'vc-hg-symbolic-revision-styles' to the value '("{rev}")'.
+
 
 * New Modes and Packages in Emacs 26.2
 
