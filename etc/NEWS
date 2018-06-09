@@ -482,6 +482,13 @@ It now applies to epg functions as well as epa functions.
 been removed.  Use 'encode-coding-string', 'decode-coding-string', and
 'select-safe-coding-system' instead.
 
+** Rmail
+
++++
+*** New user option 'rmail-output-reset-deleted-flag'.
+If this option is non-nil, messages appended to an output file by the
+'rmail-output' command have their Deleted flag reset.
+
 * New Modes and Packages in Emacs 27.1
 
 +++
