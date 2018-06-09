@@ -652,7 +652,7 @@ Return the pasted text as a string."
   (let ((str "")
         chr)
     ;; The reply should be: \e ] 11 ; rgb: NUMBER1 / NUMBER2 / NUMBER3 \e \\
-    (while (and (setq chr (read-event nil nil 2)) (not (equal chr ?\\)))
+    (while (and (setq chr (xterm--read-event-for-query)) (not (equal chr ?\\)))
       (setq str (concat str (string chr))))
     (when (string-match
            "rgb:\\([a-f0-9]+\\)/\\([a-f0-9]+\\)/\\([a-f0-9]+\\)" str)
@@ -680,7 +680,7 @@ Return the pasted text as a string."
     ;; respond to this escape sequence.  RMS' opinion was to remove
     ;; it completely.  That might be right, but let's first try to
     ;; see if by using a longer timeout we get rid of most issues.
-    (while (and (setq chr (read-event nil nil 2)) (not (equal chr ?c)))
+    (while (and (setq chr (xterm--read-event-for-query)) (not (equal chr ?c)))
       (setq str (concat str (string chr))))
     ;; Since xterm-280, the terminal type (NUMBER1) is now 41 instead of 0.
     (when (string-match "\\([0-9]+\\);\\([0-9]+\\);0" str)
@@ -730,6 +730,24 @@ Return the pasted text as a string."
   "Seconds to wait for an answer from the terminal.
 Can be nil to mean \"no timeout\".")
 
+(defvar xterm-query-redisplay-timeout 0.2
+  "Seconds to wait before allowing redisplay during terminal
+  query." )
+
+(defun xterm--read-event-for-query ()
+  "Like read-event, but inhibit redisplay.
+
+By not redisplaying right away for xterm queries, we can avoid
+unsightly flashing during initialization. Give up and redisplay
+anyway if we've been waiting a little while."
+  (let ((start-time (float-time)))
+    (or (let ((inhibit-redisplay t))
+          (read-event nil nil xterm-query-redisplay-timeout))
+        (read-event nil nil
+                    (and xterm-query-timeout
+                         (max 0 (+ start-time xterm-query-timeout
+                                   (- (float-time)))))))))
+
 (defun xterm--query (query handlers &optional no-async)
   "Send QUERY string to the terminal and watch for a response.
 HANDLERS is an alist with elements of the form (STRING . FUNCTION).
@@ -762,7 +780,7 @@ We run the first FUNCTION whose STRING matches the input events."
         (let ((handler (pop handlers))
               (i 0))
           (while (and (< i (length (car handler)))
-                      (let ((evt (read-event nil nil xterm-query-timeout)))
+                      (let ((evt (xterm--read-event-for-query)))
                         (if (and (null evt) (= i 0) (not no-async))
                             ;; Timeout on the first event: fallback on async.
                             (progn
