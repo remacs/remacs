@@ -93,21 +93,37 @@ impl LispProcessRef {
 /// accepts a process, a process name, a buffer, a buffer name, or nil.
 /// Buffers denote the first process in the buffer, and nil denotes the
 /// current buffer.
-pub fn get_process(process: LispObject) -> LispProcessRef {
-    let process = if process.is_string() {
-        let p = lisp_get_process(process);
-        if p.is_nil() {
-            get_buffer_process(process)
-        } else {
-            p
-        }
-    } else if process.is_nil() {
-        get_buffer_process(current_buffer())
-    } else {
-        process
-    };
+pub fn get_process(name: LispObject) -> LispProcessRef {
+    let proc_or_buf = name.is_string() {
+        let process = lisp_get_process(name);
 
-    process.as_process_or_error()
+        if process.is_nil() {
+            let buffer = get_buffer(name);
+
+            if buffer.is_nil() {
+                panic!("Process {} does not exist", name.as_string_or_error())
+            } else {
+                buffer
+            }
+        } else {
+            process
+        }
+    } else if name.is_nil() {
+        // check if buffer is dead
+        get_buffer(current_buffer())
+    } else {
+        name
+    }
+
+    if proc_or_buf.is_buffer() {
+        let proc = get_buffer_process(proc_or_buf);
+        if proc.is_nil() {
+            panic!("Buffer {} has no process", name.as_string_or_error())
+        }
+        proc
+    } else {
+        // check process
+    }
 }
 
 /// Return t if OBJECT is a process.
@@ -345,7 +361,7 @@ pub fn set_process_sentinel(process: LispObject, mut sentinel: LispObject) -> Li
 pub fn process_send_string(process: LispObject, string: LispStringRef) -> () {
     unsafe {
         send_process(
-            cget_process(process.to_raw()),
+            process,
             string.data,
             STRING_BYTES(string.as_ptr()),
             string.as_lisp_obj().to_raw(),
