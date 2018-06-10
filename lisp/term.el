@@ -3306,11 +3306,9 @@ option is enabled.  See `term-set-goto-process-mark'."
    ((eq char ?B)
     (let ((tcr (term-current-row))
           (scroll-amount (car params)))
-      (unless (= tcr (1- term-scroll-end))
+      (unless (>= tcr term-scroll-end)
 	(term-down
-         (if (> (+ tcr scroll-amount) term-scroll-end)
-	     (- term-scroll-end 1 tcr)
-           (max 1 scroll-amount))
+         (min (- term-scroll-end tcr) (max 1 scroll-amount))
          t))))
    ;; \E[C - cursor right (terminfo: cuf, cuf1)
    ((eq char ?C)
