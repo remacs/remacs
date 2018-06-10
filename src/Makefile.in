@@ -443,7 +443,7 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 ## All object files linked into temacs.  $(VMLIMIT_OBJ) should be first.
 ## (On MinGW, firstfile.o should be before vm-limit.o.)
 FIRSTFILE_OBJ=@FIRSTFILE_OBJ@
-ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) $(otherobj)
+ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) -lremacs $(otherobj)
 
 AUTO_DEPEND = @AUTO_DEPEND@
 DEPDIR = deps

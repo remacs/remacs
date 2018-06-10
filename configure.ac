@@ -5233,7 +5233,7 @@ if test "${HAVE_W32}" = "yes"; then
     CARGO_TEST="true"
 fi
 
-LIB_REMACS="-lremacs $RUST_DEPS"
+LIB_REMACS="$RUST_DEPS"
 
 LDFLAGS_REMACS="-L../$srcdir/rust_src/target/\${CARGO_BUILD_DIR}"
 
