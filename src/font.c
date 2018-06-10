@@ -4354,10 +4354,9 @@ clear_font_cache (struct frame *f)
 	Lisp_Object val, tmp, cache = driver_list->driver->get_cache (f);
 
 	val = XCDR (cache);
-	while (! NILP (val)
-	       && ! EQ (XCAR (XCAR (val)), driver_list->driver->type))
+	while (eassert (CONSP (val)),
+	       ! EQ (XCAR (XCAR (val)), driver_list->driver->type))
 	  val = XCDR (val);
-	eassert (! NILP (val));
 	tmp = XCDR (XCAR (val));
 	if (XINT (XCAR (tmp)) == 0)
 	  {

@@ -94,7 +94,7 @@ struct xwidget_view
 /* Test for xwidget pseudovector.  */
 #define XWIDGETP(x) PSEUDOVECTORP (x, PVEC_XWIDGET)
 #define XXWIDGET(a) (eassert (XWIDGETP (a)), \
-                     (struct xwidget *) XUNTAG (a, Lisp_Vectorlike))
+		     XUNTAG (a, Lisp_Vectorlike, struct xwidget))
 
 #define CHECK_XWIDGET(x) \
   CHECK_TYPE (XWIDGETP (x), Qxwidgetp, x)
@@ -102,7 +102,7 @@ struct xwidget_view
 /* Test for xwidget_view pseudovector.  */
 #define XWIDGET_VIEW_P(x) PSEUDOVECTORP (x, PVEC_XWIDGET_VIEW)
 #define XXWIDGET_VIEW(a) (eassert (XWIDGET_VIEW_P (a)), \
-                          (struct xwidget_view *) XUNTAG (a, Lisp_Vectorlike))
+			  XUNTAG (a, Lisp_Vectorlike, struct xwidget_view))
 
 #define CHECK_XWIDGET_VIEW(x) \
   CHECK_TYPE (XWIDGET_VIEW_P (x), Qxwidget_view_p, x)

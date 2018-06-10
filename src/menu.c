@@ -1152,7 +1152,7 @@ x_popup_menu_1 (Lisp_Object position, Lisp_Object menu)
 	else
 	  {
 	    menuflags |= MENU_FOR_CLICK;
-	    tem = Fcar (Fcdr (position));  /* EVENT_START (position) */
+	    tem = Fcar (XCDR (position));    /* EVENT_START (position) */
 	    window = Fcar (tem);	     /* POSN_WINDOW (tem) */
 	    tem2 = Fcar (Fcdr (tem));	     /* POSN_POSN (tem) */
 	    /* The MENU_KBD_NAVIGATION field is set when the menu
@@ -1168,7 +1168,7 @@ x_popup_menu_1 (Lisp_Object position, Lisp_Object menu)
 	       event.  */
 	    if (!EQ (POSN_POSN (last_nonmenu_event),
 		     POSN_POSN (position))
-		&& CONSP (tem2) && EQ (Fcar (tem2), Qmenu_bar))
+		&& CONSP (tem2) && EQ (XCAR (tem2), Qmenu_bar))
 	      menuflags |= MENU_KBD_NAVIGATION;
 	    tem = Fcar (Fcdr (Fcdr (tem))); /* POSN_WINDOW_POSN (tem) */
 	    x = Fcar (tem);

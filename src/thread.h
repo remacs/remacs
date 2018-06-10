@@ -208,7 +208,7 @@ INLINE struct thread_state *
 XTHREAD (Lisp_Object a)
 {
   eassert (THREADP (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct thread_state);
 }
 
 /* A mutex in lisp is represented by a system condition variable.
@@ -255,7 +255,7 @@ INLINE struct Lisp_Mutex *
 XMUTEX (Lisp_Object a)
 {
   eassert (MUTEXP (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Mutex);
 }
 
 /* A condition variable as a lisp object.  */
@@ -289,7 +289,7 @@ INLINE struct Lisp_CondVar *
 XCONDVAR (Lisp_Object a)
 {
   eassert (CONDVARP (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_CondVar);
 }
 
 extern struct thread_state *current_thread;

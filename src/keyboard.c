@@ -377,6 +377,15 @@ static void deliver_user_signal (int);
 static char *find_user_signal_name (int);
 static void store_user_signal_events (void);
 
+/* Like EVENT_START, but assume EVENT is an event.
+   This pacifies gcc -Wnull-dereference, which might otherwise
+   complain about earlier checks that EVENT is indeed an event.  */
+static Lisp_Object
+xevent_start (Lisp_Object event)
+{
+  return XCAR (XCDR (event));
+}
+
 /* These setters are used only in this file, so they can be private.  */
 static void
 kset_echo_string (struct kboard *kb, Lisp_Object val)
@@ -2910,8 +2919,8 @@ read_char (int commandflag, Lisp_Object map,
      so we won't do this twice, then queue it up.  */
   if (EVENT_HAS_PARAMETERS (c)
       && CONSP (XCDR (c))
-      && CONSP (EVENT_START (c))
-      && CONSP (XCDR (EVENT_START (c))))
+      && CONSP (xevent_start (c))
+      && CONSP (XCDR (xevent_start (c))))
     {
       Lisp_Object posn;
 
@@ -9397,12 +9406,12 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 		}
 	    }
 	  else if (CONSP (XCDR (key))
-		   && CONSP (EVENT_START (key))
-		   && CONSP (XCDR (EVENT_START (key))))
+		   && CONSP (xevent_start (key))
+		   && CONSP (XCDR (xevent_start (key))))
 	    {
 	      Lisp_Object posn;
 
-	      posn = POSN_POSN (EVENT_START (key));
+	      posn = POSN_POSN (xevent_start (key));
 	      /* Handle menu-bar events:
 		 insert the dummy prefix event `menu-bar'.  */
 	      if (EQ (posn, Qmenu_bar) || EQ (posn, Qtool_bar))
@@ -9414,7 +9423,7 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 
 		  /* Zap the position in key, so we know that we've
 		     expanded it, and don't try to do so again.  */
-		  POSN_SET_POSN (EVENT_START (key), list1 (posn));
+		  POSN_SET_POSN (xevent_start (key), list1 (posn));
 
 		  mock_input = t + 2;
 		  goto replay_sequence;

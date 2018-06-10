@@ -207,10 +207,10 @@ xd_symbol_to_dbus_type (Lisp_Object object)
    : (STRINGP (object)) ? DBUS_TYPE_STRING				\
    : (XD_DBUS_TYPE_P (object)) ? xd_symbol_to_dbus_type (object)	\
    : (CONSP (object))							\
-   ? ((XD_DBUS_TYPE_P (CAR_SAFE (object)))				\
-      ? ((XD_BASIC_DBUS_TYPE (xd_symbol_to_dbus_type (CAR_SAFE (object)))) \
+   ? ((XD_DBUS_TYPE_P (XCAR (object)))					\
+      ? ((XD_BASIC_DBUS_TYPE (xd_symbol_to_dbus_type (XCAR (object))))	\
 	 ? DBUS_TYPE_ARRAY						\
-	 : xd_symbol_to_dbus_type (CAR_SAFE (object)))			\
+	 : xd_symbol_to_dbus_type (XCAR (object)))			\
       : DBUS_TYPE_ARRAY)						\
    : DBUS_TYPE_INVALID)
 
@@ -396,7 +396,7 @@ xd_signature (char *signature, int dtype, int parent_type, Lisp_Object object)
       CHECK_CONS (object);
 
       /* Type symbol is optional.  */
-      if (EQ (QCarray, CAR_SAFE (elt)))
+      if (EQ (QCarray, XCAR (elt)))
 	elt = XD_NEXT_VALUE (elt);
 
       /* If the array is empty, DBUS_TYPE_STRING is the default
@@ -416,10 +416,12 @@ xd_signature (char *signature, int dtype, int parent_type, Lisp_Object object)
       /* If the element type is DBUS_TYPE_SIGNATURE, and this is the
 	 only element, the value of this element is used as the
 	 array's element signature.  */
-      if ((subtype == DBUS_TYPE_SIGNATURE)
-	  && STRINGP (CAR_SAFE (XD_NEXT_VALUE (elt)))
-	  && NILP (CDR_SAFE (XD_NEXT_VALUE (elt))))
-	subsig = SSDATA (CAR_SAFE (XD_NEXT_VALUE (elt)));
+      if (subtype == DBUS_TYPE_SIGNATURE)
+	{
+	  Lisp_Object elt1 = XD_NEXT_VALUE (elt);
+	  if (CONSP (elt1) && STRINGP (XCAR (elt1)) && NILP (XCDR (elt1)))
+	    subsig = SSDATA (XCAR (elt1));
+	}
 
       while (!NILP (elt))
 	{

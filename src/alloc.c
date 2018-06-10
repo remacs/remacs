@@ -2916,7 +2916,7 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
 static struct Lisp_Vector *
 next_vector (struct Lisp_Vector *v)
 {
-  return XUNTAG (v->contents[0], Lisp_Int0);
+  return XUNTAG (v->contents[0], Lisp_Int0, struct Lisp_Vector);
 }
 
 static void

@@ -375,7 +375,7 @@ typedef EMACS_INT Lisp_Word;
 #define lisp_h_XCAR(c) XCONS (c)->u.s.car
 #define lisp_h_XCDR(c) XCONS (c)->u.s.u.cdr
 #define lisp_h_XCONS(a) \
-   (eassert (CONSP (a)), (struct Lisp_Cons *) XUNTAG (a, Lisp_Cons))
+   (eassert (CONSP (a)), XUNTAG (a, Lisp_Cons, struct Lisp_Cons))
 #define lisp_h_XHASH(a) XUINT (a)
 #ifndef GC_CHECK_CONS_LIST
 # define lisp_h_check_cons_list() ((void) 0)
@@ -388,7 +388,8 @@ typedef EMACS_INT Lisp_Word;
 # ifdef __CHKP__
 #  define lisp_h_XSYMBOL(a) \
     (eassert (SYMBOLP (a)), \
-     (struct Lisp_Symbol *) ((char *) XUNTAG (a, Lisp_Symbol) \
+     (struct Lisp_Symbol *) ((char *) XUNTAG (a, Lisp_Symbol, \
+					      struct Lisp_Symbol) \
 			     + (intptr_t) lispsym))
 # else
    /* If !__CHKP__ this is equivalent, and is a bit faster as of GCC 7.  */
@@ -398,8 +399,6 @@ typedef EMACS_INT Lisp_Word;
 			     + (char *) lispsym))
 # endif
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
-# define lisp_h_XUNTAG(a, type) \
-    __builtin_assume_aligned ((char *) XLP (a) - (type), GCALIGNMENT)
 #endif
 
 /* When compiling via gcc -O0, define the key operations as macros, as
@@ -447,7 +446,6 @@ typedef EMACS_INT Lisp_Word;
 #  define XINT(a) lisp_h_XINT (a)
 #  define XSYMBOL(a) lisp_h_XSYMBOL (a)
 #  define XTYPE(a) lisp_h_XTYPE (a)
-#  define XUNTAG(a, type) lisp_h_XUNTAG (a, type)
 # endif
 #endif
 
@@ -691,20 +689,11 @@ INLINE void
   lisp_h_CHECK_TYPE (ok, predicate, x);
 }
 
-/* Extract A's pointer value, assuming A's type is TYPE.  */
+/* Extract A's pointer value, assuming A's Lisp type is TYPE and the
+   extracted pointer's type is CTYPE *.  */
 
-INLINE void *
-(XUNTAG) (Lisp_Object a, int type)
-{
-#if USE_LSB_TAG
-  return lisp_h_XUNTAG (a, type);
-#else
-  EMACS_UINT utype = type;
-  char *p = XLP (a);
-  return p - (utype << (USE_LSB_TAG ? 0 : VALBITS));
-#endif
-}
-
+#define XUNTAG(a, type, ctype) ((ctype *) \
+				((char *) XLP (a) - LISP_WORD_TAG (type)))
 
 /* Interned state of a symbol.  */
 
@@ -812,10 +801,9 @@ verify (!USE_LSB_TAG || alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
 #define DEFUN_ARGS_8	(Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
 			 Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object)
 
-/* Typedefs useful for implementing TAG_PTR.  untagged_ptr represents
-   a pointer before tagging, and Lisp_Word_tag contains a
-   possibly-shifted tag to be added to an untagged_ptr to convert it
-   to a Lisp_Word.  */
+/* untagged_ptr represents a pointer before tagging, and Lisp_Word_tag
+   contains a possibly-shifted tag to be added to an untagged_ptr to
+   convert it to a Lisp_Word.  */
 #if LISP_WORDS_ARE_POINTERS
 /* untagged_ptr is a pointer so that the compiler knows that TAG_PTR
    yields a pointer; this can help with gcc -fcheck-pointer-bounds.
@@ -830,11 +818,13 @@ typedef uintptr_t untagged_ptr;
 typedef EMACS_UINT Lisp_Word_tag;
 #endif
 
+/* A integer value tagged with TAG, and otherwise all zero.  */
+#define LISP_WORD_TAG(tag) \
+  ((Lisp_Word_tag) (tag) << (USE_LSB_TAG ? 0 : VALBITS))
+
 /* An initializer for a Lisp_Object that contains TAG along with PTR.  */
 #define TAG_PTR(tag, ptr) \
-  LISP_INITIALLY ((Lisp_Word) \
-		  ((untagged_ptr) (ptr) \
-		   + ((Lisp_Word_tag) (tag) << (USE_LSB_TAG ? 0 : VALBITS))))
+  LISP_INITIALLY ((Lisp_Word) ((untagged_ptr) (ptr) + LISP_WORD_TAG (tag)))
 
 /* LISPSYM_INITIALLY (Qfoo) is equivalent to Qfoo except it is
    designed for use as an initializer, even for a constant initializer.  */
@@ -913,7 +903,7 @@ INLINE struct Lisp_Symbol * ATTRIBUTE_NO_SANITIZE_UNDEFINED
   return lisp_h_XSYMBOL (a);
 #else
   eassert (SYMBOLP (a));
-  intptr_t i = (intptr_t) XUNTAG (a, Lisp_Symbol);
+  intptr_t i = (intptr_t) XUNTAG (a, Lisp_Symbol, struct Lisp_Symbol);
   void *p = (char *) lispsym + i;
 # ifdef __CHKP__
   /* Bypass pointer checking.  Although this could be improved it is
@@ -1159,7 +1149,7 @@ INLINE Lisp_Object
 make_lisp_ptr (void *ptr, enum Lisp_Type type)
 {
   Lisp_Object a = TAG_PTR (type, ptr);
-  eassert (XTYPE (a) == type && XUNTAG (a, type) == ptr);
+  eassert (XTYPE (a) == type && XUNTAG (a, type, char) == ptr);
   return a;
 }
 
@@ -1191,8 +1181,8 @@ INLINE bool
 /* The cast to union vectorlike_header * avoids aliasing issues.  */
 #define XSETPSEUDOVECTOR(a, b, code) \
   XSETTYPED_PSEUDOVECTOR (a, b,					\
-			  (((union vectorlike_header *)	\
-			    XUNTAG (a, Lisp_Vectorlike))	\
+			  (XUNTAG (a, Lisp_Vectorlike,		\
+				   union vectorlike_header)	\
 			   ->size),				\
 			  code)
 #define XSETTYPED_PSEUDOVECTOR(a, b, size, code)			\
@@ -1223,7 +1213,7 @@ INLINE bool
 INLINE void *
 XINTPTR (Lisp_Object a)
 {
-  return XUNTAG (a, Lisp_Int0);
+  return XUNTAG (a, Lisp_Int0, char);
 }
 
 INLINE Lisp_Object
@@ -1399,7 +1389,7 @@ INLINE struct Lisp_String *
 XSTRING (Lisp_Object a)
 {
   eassert (STRINGP (a));
-  return XUNTAG (a, Lisp_String);
+  return XUNTAG (a, Lisp_String, struct Lisp_String);
 }
 
 /* True if STR is a multibyte string.  */
@@ -1524,7 +1514,7 @@ INLINE struct Lisp_Vector *
 XVECTOR (Lisp_Object a)
 {
   eassert (VECTORLIKEP (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Vector);
 }
 
 INLINE ptrdiff_t
@@ -1584,8 +1574,9 @@ PSEUDOVECTORP (Lisp_Object a, int code)
   else
     {
       /* Converting to union vectorlike_header * avoids aliasing issues.  */
-      union vectorlike_header *h = XUNTAG (a, Lisp_Vectorlike);
-      return PSEUDOVECTOR_TYPEP (h, code);
+      return PSEUDOVECTOR_TYPEP (XUNTAG (a, Lisp_Vectorlike,
+					 union vectorlike_header),
+				 code);
     }
 }
 
@@ -1647,7 +1638,7 @@ INLINE struct Lisp_Bool_Vector *
 XBOOL_VECTOR (Lisp_Object a)
 {
   eassert (BOOL_VECTOR_P (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Bool_Vector);
 }
 
 INLINE EMACS_INT
@@ -1845,7 +1836,7 @@ INLINE struct Lisp_Char_Table *
 XCHAR_TABLE (Lisp_Object a)
 {
   eassert (CHAR_TABLE_P (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Char_Table);
 }
 
 struct Lisp_Sub_Char_Table
@@ -1879,7 +1870,7 @@ INLINE struct Lisp_Sub_Char_Table *
 XSUB_CHAR_TABLE (Lisp_Object a)
 {
   eassert (SUB_CHAR_TABLE_P (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Sub_Char_Table);
 }
 
 INLINE Lisp_Object
@@ -1957,7 +1948,7 @@ INLINE struct Lisp_Subr *
 XSUBR (Lisp_Object a)
 {
   eassert (SUBRP (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Subr);
 }
 
 enum char_table_specials
@@ -2210,7 +2201,7 @@ INLINE struct Lisp_Hash_Table *
 XHASH_TABLE (Lisp_Object a)
 {
   eassert (HASH_TABLE_P (a));
-  return XUNTAG (a, Lisp_Vectorlike);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Hash_Table);
 }
 
 #define XSET_HASH_TABLE(VAR, PTR) \
@@ -2294,7 +2285,7 @@ INLINE struct Lisp_Misc_Any *
 XMISCANY (Lisp_Object a)
 {
   eassert (MISCP (a));
-  return XUNTAG (a, Lisp_Misc);
+  return XUNTAG (a, Lisp_Misc, struct Lisp_Misc_Any);
 }
 
 INLINE enum Lisp_Misc_Type
@@ -2470,7 +2461,7 @@ INLINE struct Lisp_Save_Value *
 XSAVE_VALUE (Lisp_Object a)
 {
   eassert (SAVE_VALUEP (a));
-  return XUNTAG (a, Lisp_Misc);
+  return XUNTAG (a, Lisp_Misc, struct Lisp_Save_Value);
 }
 
 /* Return the type of V's Nth saved value.  */
@@ -2563,7 +2554,7 @@ INLINE struct Lisp_Finalizer *
 XFINALIZER (Lisp_Object a)
 {
   eassert (FINALIZERP (a));
-  return XUNTAG (a, Lisp_Misc);
+  return XUNTAG (a, Lisp_Misc, struct Lisp_Finalizer);
 }
 
 /* A miscellaneous object, when it's on the free list.  */
@@ -2594,7 +2585,7 @@ union Lisp_Misc
 INLINE union Lisp_Misc *
 XMISC (Lisp_Object a)
 {
-  return XUNTAG (a, Lisp_Misc);
+  return XUNTAG (a, Lisp_Misc, union Lisp_Misc);
 }
 
 INLINE bool
@@ -2607,7 +2598,7 @@ INLINE struct Lisp_Marker *
 XMARKER (Lisp_Object a)
 {
   eassert (MARKERP (a));
-  return XUNTAG (a, Lisp_Misc);
+  return XUNTAG (a, Lisp_Misc, struct Lisp_Marker);
 }
 
 INLINE bool
@@ -2620,7 +2611,7 @@ INLINE struct Lisp_Overlay *
 XOVERLAY (Lisp_Object a)
 {
   eassert (OVERLAYP (a));
-  return XUNTAG (a, Lisp_Misc);
+  return XUNTAG (a, Lisp_Misc, struct Lisp_Overlay);
 }
 
 #ifdef HAVE_MODULES
@@ -2634,7 +2625,7 @@ INLINE struct Lisp_User_Ptr *
 XUSER_PTR (Lisp_Object a)
 {
   eassert (USER_PTRP (a));
-  return XUNTAG (a, Lisp_Misc);
+  return XUNTAG (a, Lisp_Misc, struct Lisp_User_Ptr);
 }
 #endif
 
@@ -2778,7 +2769,7 @@ INLINE struct Lisp_Float *
 XFLOAT (Lisp_Object a)
 {
   eassert (FLOATP (a));
-  return XUNTAG (a, Lisp_Float);
+  return XUNTAG (a, Lisp_Float, struct Lisp_Float);
 }
 
 INLINE double
@@ -4055,7 +4046,7 @@ INLINE struct Lisp_Module_Function *
 XMODULE_FUNCTION (Lisp_Object o)
 {
   eassert (MODULE_FUNCTIONP (o));
-  return XUNTAG (o, Lisp_Vectorlike);
+  return XUNTAG (o, Lisp_Vectorlike, struct Lisp_Module_Function);
 }
 
 #ifdef HAVE_MODULES

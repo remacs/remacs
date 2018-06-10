@@ -8542,7 +8542,7 @@ DEFUN ("w32-unregister-hot-key", Fw32_unregister_hot_key,
       eassert (CONSP (item));
       /* Pass the tail of the list as a pointer to a Lisp_Cons cell,
 	 so that it works in a --with-wide-int build as well.  */
-      lparam = (LPARAM) XUNTAG (item, Lisp_Cons);
+      lparam = (LPARAM) XUNTAG (item, Lisp_Cons, struct Lisp_Cons);
 
       /* Notify input thread about hot-key definition being removed, so
 	 that it takes effect without needing focus switch.  */

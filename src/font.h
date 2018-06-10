@@ -494,42 +494,42 @@ INLINE struct font_spec *
 XFONT_SPEC (Lisp_Object p)
 {
   eassert (FONT_SPEC_P (p));
-  return XUNTAG (p, Lisp_Vectorlike);
+  return XUNTAG (p, Lisp_Vectorlike, struct font_spec);
 }
 
 INLINE struct font_spec *
 GC_XFONT_SPEC (Lisp_Object p)
 {
   eassert (GC_FONT_SPEC_P (p));
-  return XUNTAG (p, Lisp_Vectorlike);
+  return XUNTAG (p, Lisp_Vectorlike, struct font_spec);
 }
 
 INLINE struct font_entity *
 XFONT_ENTITY (Lisp_Object p)
 {
   eassert (FONT_ENTITY_P (p));
-  return XUNTAG (p, Lisp_Vectorlike);
+  return XUNTAG (p, Lisp_Vectorlike, struct font_entity);
 }
 
 INLINE struct font_entity *
 GC_XFONT_ENTITY (Lisp_Object p)
 {
   eassert (GC_FONT_ENTITY_P (p));
-  return XUNTAG (p, Lisp_Vectorlike);
+  return XUNTAG (p, Lisp_Vectorlike, struct font_entity);
 }
 
 INLINE struct font *
 XFONT_OBJECT (Lisp_Object p)
 {
   eassert (FONT_OBJECT_P (p));
-  return XUNTAG (p, Lisp_Vectorlike);
+  return XUNTAG (p, Lisp_Vectorlike, struct font);
 }
 
 INLINE struct font *
 GC_XFONT_OBJECT (Lisp_Object p)
 {
   eassert (GC_FONT_OBJECT_P (p));
-  return XUNTAG (p, Lisp_Vectorlike);
+  return XUNTAG (p, Lisp_Vectorlike, struct font);
 }
 
 #define XSETFONT(a, b) (XSETPSEUDOVECTOR (a, b, PVEC_FONT))

@@ -813,17 +813,14 @@ the root directory.  */)
 #endif
     }
 
-  if (!NILP (default_directory))
+  handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
+  if (!NILP (handler))
     {
-      handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
-      if (!NILP (handler))
-	{
-	  handled_name = call3 (handler, Qexpand_file_name,
-				name, default_directory);
-	  if (STRINGP (handled_name))
-	    return handled_name;
-	  error ("Invalid handler in `file-name-handler-alist'");
-	}
+      handled_name = call3 (handler, Qexpand_file_name,
+			    name, default_directory);
+      if (STRINGP (handled_name))
+	return handled_name;
+      error ("Invalid handler in `file-name-handler-alist'");
     }
 
   {

@@ -1407,7 +1407,8 @@ add_menu_item (HMENU menu, widget_value *wv, HMENU item)
 		 Windows alike.  MSVC headers get it right; hopefully,
 		 MinGW headers will, too.  */
 	      eassert (STRINGP (wv->help));
-	      info.dwItemData = (ULONG_PTR) XUNTAG (wv->help, Lisp_String);
+	      info.dwItemData = (ULONG_PTR) XUNTAG (wv->help, Lisp_String,
+						    struct Lisp_String);
 	    }
 	  if (wv->button_type == BUTTON_TYPE_RADIO)
 	    {
