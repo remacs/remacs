@@ -327,36 +327,35 @@ json_check_utf8 (Lisp_Object string)
 
 static json_t *lisp_to_json (Lisp_Object);
 
-/* Convert a Lisp object to a toplevel JSON object (array or object).
-   This returns Lisp_Object so we can use unbind_to.  The return value
-   is always nil.  */
+/* Convert a Lisp object to a toplevel JSON object (array or object).  */
 
-static _GL_ARG_NONNULL ((2)) Lisp_Object
-lisp_to_json_toplevel_1 (Lisp_Object lisp, json_t **json)
+static json_t *
+lisp_to_json_toplevel_1 (Lisp_Object lisp)
 {
+  json_t *json;
+  ptrdiff_t count;
+
   if (VECTORP (lisp))
     {
       ptrdiff_t size = ASIZE (lisp);
-      *json = json_check (json_array ());
-      ptrdiff_t count = SPECPDL_INDEX ();
+      json = json_check (json_array ());
+      count = SPECPDL_INDEX ();
       record_unwind_protect_ptr (json_release_object, json);
       for (ptrdiff_t i = 0; i < size; ++i)
         {
           int status
-            = json_array_append_new (*json, lisp_to_json (AREF (lisp, i)));
+            = json_array_append_new (json, lisp_to_json (AREF (lisp, i)));
           if (status == -1)
             json_out_of_memory ();
         }
-      eassert (json_array_size (*json) == size);
-      clear_unwind_protect (count);
-      return unbind_to (count, Qnil);
+      eassert (json_array_size (json) == size);
     }
   else if (HASH_TABLE_P (lisp))
     {
       struct Lisp_Hash_Table *h = XHASH_TABLE (lisp);
-      *json = json_check (json_object ());
-      ptrdiff_t count = SPECPDL_INDEX ();
-      record_unwind_protect_ptr (json_release_object, *json);
+      json = json_check (json_object ());
+      count = SPECPDL_INDEX ();
+      record_unwind_protect_ptr (json_release_object, json);
       for (ptrdiff_t i = 0; i < HASH_TABLE_SIZE (h); ++i)
         if (!NILP (HASH_HASH (h, i)))
           {
@@ -367,9 +366,9 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp, json_t **json)
             const char *key_str = SSDATA (key);
             /* Reject duplicate keys.  These are possible if the hash
                table test is not `equal'.  */
-            if (json_object_get (*json, key_str) != NULL)
+            if (json_object_get (json, key_str) != NULL)
               wrong_type_argument (Qjson_value_p, lisp);
-            int status = json_object_set_new (*json, key_str,
+            int status = json_object_set_new (json, key_str,
                                               lisp_to_json (HASH_VALUE (h, i)));
             if (status == -1)
               {
@@ -379,20 +378,15 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp, json_t **json)
                 json_out_of_memory ();
               }
           }
-      clear_unwind_protect (count);
-      return unbind_to (count, Qnil);
     }
   else if (NILP (lisp))
-    {
-      *json = json_check (json_object ());
-      return Qnil;
-    }
+    return json_check (json_object ());
   else if (CONSP (lisp))
     {
       Lisp_Object tail = lisp;
-      *json = json_check (json_object ());
-      ptrdiff_t count = SPECPDL_INDEX ();
-      record_unwind_protect_ptr (json_release_object, *json);
+      json = json_check (json_object ());
+      count = SPECPDL_INDEX ();
+      record_unwind_protect_ptr (json_release_object, json);
       bool is_plist = !CONSP (XCAR (tail));
       FOR_EACH_TAIL (tail)
         {
@@ -427,19 +421,22 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp, json_t **json)
               key_str = &key_str[1];
             }
           /* Only add element if key is not already present.  */
-          if (json_object_get (*json, key_str) == NULL)
+          if (json_object_get (json, key_str) == NULL)
             {
               int status
-                = json_object_set_new (*json, key_str, lisp_to_json (value));
+                = json_object_set_new (json, key_str, lisp_to_json (value));
               if (status == -1)
                 json_out_of_memory ();
             }
         }
       CHECK_LIST_END (tail, lisp);
-      clear_unwind_protect (count);
-      return unbind_to (count, Qnil);
     }
-  wrong_type_argument (Qjson_value_p, lisp);
+  else
+    wrong_type_argument (Qjson_value_p, lisp);
+
+  clear_unwind_protect (count);
+  unbind_to (count, Qnil);
+  return json;
 }
 
 /* Convert LISP to a toplevel JSON object (array or object).  Signal
@@ -451,8 +448,7 @@ lisp_to_json_toplevel (Lisp_Object lisp)
 {
   if (++lisp_eval_depth > max_lisp_eval_depth)
     xsignal0 (Qjson_object_too_deep);
-  json_t *json;
-  lisp_to_json_toplevel_1 (lisp, &json);
+  json_t *json = lisp_to_json_toplevel_1 (lisp);
   --lisp_eval_depth;
   return json;
 }
