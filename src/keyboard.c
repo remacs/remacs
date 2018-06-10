@@ -788,35 +788,6 @@ recursive_edit_unwind (Lisp_Object buffer)
 }
 
 
-#if 0  /* These two functions are now replaced with
-          temporarily_switch_to_single_kboard.  */
-static void
-any_kboard_state ()
-{
-#if 0 /* Theory: if there's anything in Vunread_command_events,
-	 it will right away be read by read_key_sequence,
-	 and then if we do switch KBOARDS, it will go into the side
-	 queue then.  So we don't need to do anything special here -- rms.  */
-  if (CONSP (Vunread_command_events))
-    {
-      current_kboard->kbd_queue
-	= nconc2 (Vunread_command_events, current_kboard->kbd_queue);
-      current_kboard->kbd_queue_has_data = true;
-    }
-  Vunread_command_events = Qnil;
-#endif
-  single_kboard = false;
-}
-
-/* Switch to the single-kboard state, making current_kboard
-   the only KBOARD from which further input is accepted.  */
-
-void
-single_kboard_state ()
-{
-  single_kboard = true;
-}
-#endif
 
 /* If we're in single_kboard state for kboard KBOARD,
    get out of it.  */
@@ -914,16 +885,6 @@ temporarily_switch_to_single_kboard (struct frame *f)
   single_kboard = true;
   record_unwind_protect_int (restore_kboard_configuration, was_locked);
 }
-
-#if 0 /* This function is not needed anymore.  */
-void
-record_single_kboard_state ()
-{
-  if (single_kboard)
-    push_kboard (current_kboard);
-  record_unwind_protect_int (restore_kboard_configuration, single_kboard);
-}
-#endif
 
 static void
 restore_kboard_configuration (int was_locked)
