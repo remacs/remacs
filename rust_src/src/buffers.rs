@@ -10,8 +10,8 @@ use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handl
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
                  Qvoid_variable};
-use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, fget_buffer_list,
-                 fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
+use remacs_sys::{allocate_buffer, bget_overlays_after, bget_overlays_before, buffer_local_value,
+                 fget_buffer_list, fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
                  last_per_buffer_idx, set_buffer_internal};
 
 use chartable::LispCharTableRef;
@@ -333,6 +333,34 @@ impl LispBufferRef {
         }
         self.local_flags[idx] = val;
     }
+
+    pub fn get_new(buffer_or_name: LispObject) -> LispBufferRef {
+        let obj = get_buffer(buffer_or_name);
+        if obj.is_not_nil() {
+            return obj.as_buffer_or_error();
+        }
+        // At this point, buffer_or_name must be a string. Otherwise
+        // get_buffer would have thrown an error
+        let name = buffer_or_name.as_string_or_error();
+        if name.len_chars() == 0 {
+            error!("Empty string for buffer name is not allowed");
+        }
+        let b = unsafe { &mut (*allocate_buffer()) };
+        /* An ordinary buffer uses its own struct buffer_text.  */
+        b.text = &mut b.own_text;
+        b.base_buffer = ptr::null_mut();
+        /* No one shares the text with us now.  */
+        b.indirections = 0;
+        /* No one shows us now.  */
+        b.window_count = 0;
+        let initial_gap_size = 20;
+
+        let buffer_text = unsafe { &mut (*b.text) };
+        buffer_text.gap_size = initial_gap_size;
+
+        let c: *mut Lisp_Buffer = b;
+        ExternalPtr::new(c)
+    }
 }
 
 impl LispOverlayRef {
@@ -485,8 +513,8 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
 
 /// Return the current buffer as a Lisp object.
 #[lisp_fn]
-pub fn current_buffer() -> LispObject {
-    ThreadState::current_buffer().as_lisp_obj()
+pub fn current_buffer() -> LispBufferRef {
+    ThreadState::current_buffer()
 }
 
 /// Return name of file BUFFER is visiting, or nil if none.
@@ -589,7 +617,7 @@ pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
     let zv = buf.zv as EmacsInt;
 
     if !(begv <= beg && end <= zv) {
-        args_out_of_range!(current_buffer(), start, stop);
+        args_out_of_range!(current_buffer().as_lisp_obj(), start, stop);
     }
 }
 
@@ -626,7 +654,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
         unsafe { Fget_text_property(LispObject::from(pos).to_raw(), Qinhibit_read_only, Qnil) };
 
     if ThreadState::current_buffer().is_read_only() && !inhibit_read_only && prop.is_nil() {
-        xsignal!(Qbuffer_read_only, current_buffer())
+        xsignal!(Qbuffer_read_only, current_buffer().as_lisp_obj())
     }
 }
 

@@ -488,16 +488,16 @@ fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 /// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
 pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
-    let buffer = if buffer_or_name.is_nil() {
+    let b = if buffer_or_name.is_nil() {
         current_buffer()
     } else {
-        get_buffer(buffer_or_name)
+        let b = get_buffer(buffer_or_name);
+        if b.is_nil() {
+            nsberror(buffer_or_name.to_raw());
+        }
+        b.as_buffer_or_error()
     };
 
-    if buffer.is_nil() {
-        nsberror(buffer_or_name.to_raw());
-    }
-    let b = buffer.as_buffer().unwrap();
     let mut ctx = sha1::Sha1::new();
 
     ctx.update(unsafe {

@@ -3572,6 +3572,7 @@ extern "C" {
     pub fn pset_sentinel(p: *mut Lisp_Process, val: LispObject);
 
     pub fn pset_childp(p: *mut Lisp_Process, val: LispObject);
+    pub fn allocate_buffer() -> *mut Lisp_Buffer;
 }
 
 /// Contains C definitions from the font.h header.

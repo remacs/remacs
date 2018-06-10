@@ -15,7 +15,7 @@ use lists::memq;
 #[lisp_fn(min = "0")]
 pub fn minibufferp(object: LispObject) -> bool {
     let buffer = if object.is_nil() {
-        current_buffer()
+        current_buffer().as_lisp_obj()
     } else if object.is_string() {
         get_buffer(object)
     } else {
