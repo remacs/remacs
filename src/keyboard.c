@@ -2924,13 +2924,13 @@ read_char (int commandflag, Lisp_Object map,
     {
       Lisp_Object posn;
 
-      posn = POSN_POSN (EVENT_START (c));
+      posn = POSN_POSN (xevent_start (c));
       /* Handle menu-bar events:
 	 insert the dummy prefix event `menu-bar'.  */
       if (EQ (posn, Qmenu_bar) || EQ (posn, Qtool_bar))
 	{
 	  /* Change menu-bar to (menu-bar) as the event "position".  */
-	  POSN_SET_POSN (EVENT_START (c), list1 (posn));
+	  POSN_SET_POSN (xevent_start (c), list1 (posn));
 
 	  also_record = c;
 	  Vunread_command_events = Fcons (c, Vunread_command_events);
