@@ -2680,8 +2680,8 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
 	    valid = 0;
 	  if (valid < 0)
 	    valid = 1;
-	  *p = c;
-	  p += p < buf + sizeof buf;
+	  if (p < buf + sizeof buf)
+	    *p++ = c;
 	  c = READCHAR;
 	}
 
