@@ -1693,7 +1693,7 @@ or as help on variables `cperl-tips', `cperl-problems',
   (set (make-local-variable 'comment-end) "")
   (set (make-local-variable 'comment-column) cperl-comment-column)
   (set (make-local-variable 'comment-start-skip) "#+ *")
-  
+
 ;;       "[ \t]*sub"
 ;;	  (cperl-after-sub-regexp 'named nil) ; 8=name 11=proto 14=attr-start
 ;;	  cperl-maybe-white-and-comment-rex	; 15=pre-block

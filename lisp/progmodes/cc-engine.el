@@ -12619,12 +12619,12 @@ comment at the start of cc-engine.el for more info."
 	  (c-beginning-of-statement-1 containing-sexp nil nil t)
 	  (when (/= (point) indent-point)
 	    (if (> (c-point 'boi) containing-sexp)
-	    	(goto-char (c-point 'boi))
-	      (if (consp special-brace-list)
-	    	  (progn
-	    	    (goto-char (caar special-brace-list))
-	    	    (c-forward-token-2 1 nil indent-point))
-	    	(goto-char containing-sexp))
+                (goto-char (c-point 'boi))
+              (if (consp special-brace-list)
+                  (progn
+                    (goto-char (caar special-brace-list))
+                    (c-forward-token-2 1 nil indent-point))
+                (goto-char containing-sexp))
 	      (forward-char)
 	      (c-skip-ws-forward indent-point)))
 	  (cond
