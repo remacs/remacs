@@ -345,7 +345,7 @@ impl LispBufferRef {
         if name.len_chars() == 0 {
             error!("Empty string for buffer name is not allowed");
         }
-        let b = unsafe { &mut (*allocate_buffer()) };
+        let mut b = unsafe { ExternalPtr::new(allocate_buffer()) };
         /* An ordinary buffer uses its own struct buffer_text.  */
         b.text = &mut b.own_text;
         b.base_buffer = ptr::null_mut();
@@ -358,8 +358,23 @@ impl LispBufferRef {
         let buffer_text = unsafe { &mut (*b.text) };
         buffer_text.gap_size = initial_gap_size;
 
-        let c: *mut Lisp_Buffer = b;
-        ExternalPtr::new(c)
+        // TODO: Bring in buffer text allocation code
+
+        let beg = 1;
+        let beg_byte = 1;
+        b.set_pt_both(beg, beg_byte);
+        b.set_begv_both(beg, beg_byte);
+        b.set_zv_both(beg, beg_byte);
+        buffer_text.gpt = beg;
+        buffer_text.gpt_byte = beg_byte;
+        buffer_text.z = beg;
+        buffer_text.z_byte = beg_byte;
+        buffer_text.modiff = 1;
+        buffer_text.overlay_modiff = 1;
+        buffer_text.save_modiff = 1;
+        buffer_text.compact = 1;
+
+        b
     }
 }
 
