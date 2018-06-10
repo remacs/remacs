@@ -219,6 +219,9 @@
 	(lydian #x10920)
 	(kharoshthi #x10A00)
 	(manichaean #x10AC0)
+        (hanifi-rohingya #x10D00)
+        (old-sogdian #x10F00)
+        (sogdian #x10F30)
 	(mahajani #x11150)
 	(sinhala-archaic-number #x111E1)
 	(khojki #x11200)
@@ -229,6 +232,7 @@
 	(siddham #x11580)
 	(modi #x11600)
 	(takri #x11680)
+        (dogra #x11800)
 	(warang-citi #x118A1)
         (zanabazar-square #x11A00)
         (soyombo #x11A50)
@@ -236,11 +240,14 @@
         (bhaiksuki #x11C00)
         (marchen #x11C72)
         (masaram-gondi #x11D00)
+        (gunjala-gondi #x11D60)
+        (makasar #x11EE0)
 	(cuneiform #x12000)
 	(cuneiform-numbers-and-punctuation #x12400)
 	(mro #x16A40)
 	(bassa-vah #x16AD0)
 	(pahawh-hmong #x16B11)
+        (medefaidrin #x16E40)
         (tangut #x17000)
         (tangut-components #x18800)
         (nushu #x1B170)
@@ -257,7 +264,7 @@
 
 (defvar otf-script-alist)
 
-;; The below was synchronized with the latest Feb 25, 2016 version of
+;; The below was synchronized with the latest Jul 23, 2017 version of
 ;; https://www.microsoft.com/typography/otspec/scripttags.htm.
 (setq otf-script-alist
       '((adlm . adlam)
@@ -312,6 +319,7 @@
 	(hano . hanunoo)
         (hatr . hatran)
 	(hebr . hebrew)
+        (hung . old-hungarian)
 	(phli . inscriptional-pahlavi)
 	(prti . inscriptional-parthian)
 	(java . javanese)

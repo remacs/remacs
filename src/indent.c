@@ -2278,7 +2278,9 @@ whether or not it is currently displayed in some window.  */)
 	  overshoot_handled = 1;
 	}
       if (lcols_given)
-	to_x = window_column_x (w, window, extract_float (lcols), lcols);
+	to_x =
+	  window_column_x (w, window, extract_float (lcols), lcols)
+	  + lnum_pixel_width;
       if (nlines <= 0)
 	{
 	  it.vpos = vpos_init;
@@ -2330,12 +2332,6 @@ whether or not it is currently displayed in some window.  */)
 	 an addition to the hscroll amount.  */
       if (lcols_given)
 	{
-	  /* If we are displaying line numbers, we could cross the
-	     line where the width of the line-number display changes,
-	     in which case we need to fix up the pixel coordinate
-	     accordingly.  */
-	  if (lnum_pixel_width > 0)
-	    to_x += it.lnum_pixel_width - lnum_pixel_width;
 	  move_it_in_display_line (&it, ZV, first_x + to_x, MOVE_TO_X);
 	  /* If we find ourselves in the middle of an overlay string
 	     which includes a newline after current string position,

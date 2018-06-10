@@ -1253,7 +1253,7 @@ customize the variable @code{whitespace-line-column}.
 Highlight newlines.
 
 @item empty
-Highlight empty lines.
+Highlight empty lines at the beginning and/or end of the buffer.
 
 @item big-indent
 @vindex whitespace-big-indent-regexp

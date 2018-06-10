@@ -25,7 +25,7 @@
  </description>
  <screenshots>
   <screenshot type="default">
-  <image type="source" width="632" height="354">https://www.gnu.org/software/emacs/images/appdata.png</image>
+  <image type="source" width="632" height="354">https://www.gnu.org/software/emacs/images/appdata-26.png</image>
  </screenshot>
  </screenshots>
  <launchable type="desktop-id">emacs</launchable>
