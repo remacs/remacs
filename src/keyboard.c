@@ -8858,6 +8858,31 @@ void init_raw_keybuf_count (void)
   raw_keybuf_count = 0;
 }
 
+/* Grow a vector to fit.
+
+  On entry, *VECTOR is nil or a bool vector.  Upon return, *VECTOR
+  contains a bool vector of size at least NEEDED_LENGTH, with any new
+  values to false.  Return the new value of *VECTOR.  */
+static Lisp_Object
+grow_bool_vector (Lisp_Object *vector, int needed_length)
+{
+  EMACS_INT old_length = NILP (*vector) ? 0 : bool_vector_size (*vector);
+  if (NILP (*vector) || old_length < needed_length)
+    {
+      EMACS_INT new_length = old_length ? old_length : 64;
+      while (new_length < needed_length)
+        new_length *= 2;
+      Lisp_Object new_vector =
+        Fmake_bool_vector (make_number (needed_length), Qnil);
+      if (old_length)
+        memcpy (bool_vector_data (new_vector),
+                bool_vector_data (*vector),
+                bool_vector_bytes (old_length));
+      *vector = new_vector;
+    }
+  return *vector;
+}
+
 /* Read a sequence of keys that ends with a non prefix character,
    storing it in KEYBUF, a buffer of size BUFSIZE.
    Prompt with PROMPT.
@@ -8934,6 +8959,11 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
      reading characters from the keyboard.  */
   int mock_input = 0;
 
+  /* This bool vector remembers whether each event in the mocked input
+     came from a mouse menu.  We ordinarily leave it nil and create it
+     the first time we remember a mouse event.  */
+  Lisp_Object used_mouse_menu_history = Qnil;
+
   /* If the sequence is unbound in submaps[], then
      keybuf[fkey.start..fkey.end-1] is a prefix in Vfunction_key_map,
      and fkey.map is its binding.
@@ -8973,8 +9003,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
      mouse menus) a spurious initialization doesn't erase the contents
      of raw_keybuf created by the outer call.  */
   /* raw_keybuf_count = 0; */
-
-  last_nonmenu_event = Qnil;
 
   delayed_switch_frame = Qnil;
 
@@ -9039,11 +9067,12 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 
   /* Start from the beginning in keybuf.  */
   t = 0;
+  last_nonmenu_event = Qnil;
 
   /* These are no-ops the first time through, but if we restart, they
      revert the echo area and this_command_keys to their original state.  */
   this_command_key_count = keys_start;
-  if (INTERACTIVE && t < mock_input)
+  if (INTERACTIVE)
     echo_truncate (echo_start);
 
   /* If the best binding for the current key sequence is a keymap, or
@@ -9137,6 +9166,9 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	      current_kboard->immediate_echo = false;
 	      echo_now ();
 	    }
+          used_mouse_menu = !NILP (used_mouse_menu_history) &&
+            t < bool_vector_size (used_mouse_menu_history) &&
+            bool_vector_bitref (used_mouse_menu_history, t);
 	}
 
       /* If not, we should actually read a character.  */
@@ -9150,6 +9182,10 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	    key = read_char (prevent_redisplay ? -2 : NILP (prompt),
 		             current_binding, last_nonmenu_event,
                              &used_mouse_menu, NULL);
+            if (used_mouse_menu || !NILP (used_mouse_menu_history))
+              bool_vector_set (
+                grow_bool_vector (&used_mouse_menu_history, t + 1),
+                t, used_mouse_menu);
 	    if ((INTEGERP (key) && XINT (key) == -2) /* wrong_kboard_jmpbuf */
 		/* When switching to a new tty (with a new keyboard),
 		   read_char returns the new buffer, rather than -2
