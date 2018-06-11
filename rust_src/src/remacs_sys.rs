@@ -3621,6 +3621,10 @@ extern "C" {
     pub fn pset_childp(p: *mut Lisp_Process, val: LispObject);
     pub fn allocate_buffer() -> *mut Lisp_Buffer;
     pub fn nconc2(s1: LispObject, s2: LispObject) -> LispObject;
+    pub fn block_input();
+    pub fn unblock_input();
+    pub fn alloc_buffer_text(pointer: *mut Lisp_Buffer, nbytes: ptrdiff_t);
+    pub fn buffer_memory_full(nbytes: ptrdiff_t);
 }
 
 /// Contains C definitions from the font.h header.

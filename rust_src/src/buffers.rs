@@ -10,9 +10,10 @@ use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handl
                  Fget_text_property, Fmake_marker, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_list_update_hook, Qbuffer_read_only, Qget_file_buffer,
                  Qinhibit_read_only, Qnil, Qt, Qunbound, Qvoid_variable};
-use remacs_sys::{allocate_buffer, bget_overlays_after, bget_overlays_before, buffer_local_value,
-                 fget_buffer_list, fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
-                 last_per_buffer_idx, set_buffer_internal, nconc2};
+use remacs_sys::{alloc_buffer_text, allocate_buffer, bget_overlays_after, bget_overlays_before,
+                 block_input, buffer_local_value, buffer_memory_full, fget_buffer_list,
+                 fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
+                 last_per_buffer_idx, set_buffer_internal, unblock_input, nconc2};
 
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
@@ -391,7 +392,14 @@ impl LispBufferRef {
         let buffer_text = unsafe { &mut (*b.text) };
         buffer_text.gap_size = initial_gap_size;
 
-        // TODO: Bring in buffer text allocation code
+        unsafe {
+            block_input();
+            alloc_buffer_text(b.as_mut(), initial_gap_size + 1);
+            unblock_input();
+            if b.beg_addr().is_null() {
+                buffer_memory_full(initial_gap_size + 1);
+            }
+        }
 
         b.set_pt_both(BEG, BEG_BYTE);
         b.set_begv_both(BEG, BEG_BYTE);
