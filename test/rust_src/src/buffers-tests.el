@@ -21,3 +21,16 @@
     (should (null (overlay-properties overlay)))
     (overlay-put overlay 'priority 2)
     (should (equal (overlay-properties overlay) '(priority 2)))))
+
+(ert-deftest test-get-buffer-create ()
+  (should-error (eval '(get-buffer-create 23)) :type 'wrong-type-argument)
+  (should-error (eval '(get-buffer-create nil)) :type 'wrong-type-argument)
+  (let* ((new-name (generate-new-buffer-name "start"))
+         (generated-buffer (generate-new-buffer new-name)))
+    ;; Function call with a non-existing buffer name
+    (should (bufferp generated-buffer))
+    ;; Function call with a buffer
+    (should (eq generated-buffer (get-buffer-create generated-buffer)))
+    ;; Function call with an existing buffer name
+    (should (eq generated-buffer (get-buffer-create new-name)))))
+    
