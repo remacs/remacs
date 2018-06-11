@@ -221,6 +221,7 @@
 ;; Roman Scherer <roman.scherer@nugg.ad> -- Connection documentation
 ;; Mark Wilkinson <wilkinsonmr@gmail.com> -- file-local variables ignored
 ;; Simen Heggestøyl <simenheg@gmail.com> -- Postgres database completion
+;; Robert Cochran <robert-emacs@cochranmail.com> -- MariaDB support
 ;;
 
 
@@ -415,6 +416,21 @@ file.  Since that is a plaintext file, this could be dangerous."
      :sqli-comint-func sql-comint-linter
      :prompt-regexp "^SQL>"
      :prompt-length 4)
+
+    (mariadb
+     :name "MariaDB"
+     :free-software t
+     :font-lock sql-mode-mariadb-font-lock-keywords
+     :sqli-program sql-mariadb-program
+     :sqli-options sql-mariadb-options
+     :sqli-login sql-mariadb-login-params
+     :sqli-comint-func sql-comint-mariadb
+     :list-all "SHOW TABLES;"
+     :list-table "DESCRIBE %s;"
+     :prompt-regexp "^MariaDB \\[.*]> "
+     :prompt-cont-regexp "^    [\"'`-]> "
+     :syntax-alist ((?# . "< b"))
+     :input-filter sql-remove-tabs-filter)
 
     (ms
      :name "Microsoft"
@@ -959,10 +975,19 @@ Starts `sql-interactive-mode' after doing some setup."
   :version "26.1"
   :group 'SQL)
 
+;; Customization for MariaDB
+
+;; MariaDB is a drop-in replacement for MySQL, so just make the
+;; MariaDB variables aliases of the MySQL ones.
+
+(defvaralias 'sql-mariadb-program 'sql-mysql-program)
+(defvaralias 'sql-mariadb-options 'sql-mysql-options)
+(defvaralias 'sql-mariadb-login-params 'sql-mysql-login-params)
+
 ;; Customization for MySQL
 
 (defcustom sql-mysql-program "mysql"
-  "Command to start mysql by TcX.
+  "Command to start mysql by Oracle.
 
 Starts `sql-interactive-mode' after doing some setup."
   :type 'file
@@ -2321,75 +2346,148 @@ regular expressions are created during compilation by calling the
 function `regexp-opt'.  Therefore, take a look at the source before
 you define your own `sql-mode-solid-font-lock-keywords'.")
 
+(defvaralias 'sql-mode-mariadb-font-lock-keywords 'sql-mode-mysql-font-lock-keywords
+  "MariaDB is SQL compatible with MySQL.")
+
 (defvar sql-mode-mysql-font-lock-keywords
   (eval-when-compile
     (list
      ;; MySQL Functions
      (sql-font-lock-keywords-builder 'font-lock-builtin-face nil
-"ascii" "avg" "bdmpolyfromtext" "bdmpolyfromwkb" "bdpolyfromtext"
-"bdpolyfromwkb" "benchmark" "bin" "bit_and" "bit_length" "bit_or"
-"bit_xor" "both" "cast" "char_length" "character_length" "coalesce"
-"concat" "concat_ws" "connection_id" "conv" "convert" "count"
-"curdate" "current_date" "current_time" "current_timestamp" "curtime"
-"elt" "encrypt" "export_set" "field" "find_in_set" "found_rows" "from"
+"acos" "adddate" "addtime" "aes_decrypt" "aes_encrypt" "area"
+"asbinary" "ascii" "asin" "astext" "aswkb" "aswkt" "atan" "atan2"
+"avg" "bdmpolyfromtext" "bdmpolyfromwkb" "bdpolyfromtext"
+"bdpolyfromwkb" "benchmark" "bin" "binlog_gtid_pos" "bit_and"
+"bit_count" "bit_length" "bit_or" "bit_xor" "both" "boundary" "buffer"
+"cast" "ceil" "ceiling" "centroid" "character_length" "char_length"
+"charset" "coalesce" "coercibility" "column_add" "column_check"
+"column_create" "column_delete" "column_exists" "column_get"
+"column_json" "column_list" "compress" "concat" "concat_ws"
+"connection_id" "conv" "convert" "convert_tz" "convexhull" "cos" "cot"
+"count" "crc32" "crosses" "cume_dist" "cume_dist" "curdate"
+"current_date" "current_time" "current_timestamp" "curtime" "date_add"
+"datediff" "date_format" "date_sub" "dayname" "dayofmonth" "dayofweek"
+"dayofyear" "decode" "decode_histogram" "degrees" "dense_rank"
+"dense_rank" "des_decrypt" "des_encrypt" "dimension" "disjoint" "div"
+"elt" "encode" "encrypt" "endpoint" "envelope" "exp" "export_set"
+"exteriorring" "extractvalue" "field" "find_in_set" "floor" "format"
+"found_rows" "from" "from_base64" "from_days" "from_unixtime"
 "geomcollfromtext" "geomcollfromwkb" "geometrycollectionfromtext"
 "geometrycollectionfromwkb" "geometryfromtext" "geometryfromwkb"
-"geomfromtext" "geomfromwkb" "get_lock" "group_concat" "hex" "ifnull"
-"instr" "interval" "isnull" "last_insert_id" "lcase" "leading"
-"length" "linefromtext" "linefromwkb" "linestringfromtext"
-"linestringfromwkb" "load_file" "locate" "lower" "lpad" "ltrim"
-"make_set" "master_pos_wait" "max" "mid" "min" "mlinefromtext"
-"mlinefromwkb" "mpointfromtext" "mpointfromwkb" "mpolyfromtext"
-"mpolyfromwkb" "multilinestringfromtext" "multilinestringfromwkb"
+"geometryn" "geometrytype" "geomfromtext" "geomfromwkb" "get_format"
+"get_lock" "glength" "greatest" "group_concat" "hex" "ifnull"
+"inet6_aton" "inet6_ntoa" "inet_aton" "inet_ntoa" "instr"
+"interiorringn" "intersects" "interval" "isclosed" "isempty"
+"is_free_lock" "is_ipv4" "is_ipv4_compat" "is_ipv4_mapped" "is_ipv6"
+"isnull" "isring" "issimple" "is_used_lock" "json_array"
+"json_array_append" "json_array_insert" "json_compact" "json_contains"
+"json_contains_path" "json_depth" "json_detailed" "json_exists"
+"json_extract" "json_insert" "json_keys" "json_length" "json_loose"
+"json_merge" "json_object" "json_query" "json_quote" "json_remove"
+"json_replace" "json_search" "json_set" "json_type" "json_unquote"
+"json_valid" "json_value" "lag" "last_day" "last_insert_id" "lastval"
+"last_value" "last_value" "lcase" "lead" "leading" "least" "length"
+"linefromtext" "linefromwkb" "linestringfromtext" "linestringfromwkb"
+"ln" "load_file" "locate" "log" "log10" "log2" "lower" "lpad" "ltrim"
+"makedate" "make_set" "maketime" "master_gtid_wait" "master_pos_wait"
+"max" "mbrcontains" "mbrdisjoint" "mbrequal" "mbrintersects"
+"mbroverlaps" "mbrtouches" "mbrwithin" "md5" "median"
+"mid" "min" "mlinefromtext" "mlinefromwkb" "monthname"
+"mpointfromtext" "mpointfromwkb" "mpolyfromtext" "mpolyfromwkb"
+"multilinestringfromtext" "multilinestringfromwkb"
 "multipointfromtext" "multipointfromwkb" "multipolygonfromtext"
-"multipolygonfromwkb" "now" "nullif" "oct" "octet_length" "ord"
-"pointfromtext" "pointfromwkb" "polyfromtext" "polyfromwkb"
-"polygonfromtext" "polygonfromwkb" "position" "quote" "rand"
-"release_lock" "repeat" "replace" "reverse" "rpad" "rtrim" "soundex"
-"space" "std" "stddev" "substring" "substring_index" "sum" "sysdate"
-"trailing" "trim" "ucase" "unix_timestamp" "upper" "user" "variance"
+"multipolygonfromwkb" "name_const" "nextval" "now" "nth_value" "ntile"
+"ntile" "nullif" "numgeometries" "numinteriorrings" "numpoints" "oct"
+"octet_length" "old_password" "ord" "percentile_cont"
+"percentile_disc" "percent_rank" "percent_rank" "period_add"
+"period_diff" "pi" "pointfromtext" "pointfromwkb" "pointn"
+"pointonsurface" "polyfromtext" "polyfromwkb" "polygonfromtext"
+"polygonfromwkb" "position" "pow" "power" "quote" "radians"
+"rand" "rank" "rank" "regexp" "regexp_instr" "regexp_replace"
+"regexp_substr" "release_lock" "repeat" "replace" "reverse" "rlike"
+"row_number" "row_number" "rpad" "rtrim" "sec_to_time" "setval" "sha"
+"sha1" "sha2" "sign" "sin" "sleep" "soundex" "space"
+"spider_bg_direct_sql" "spider_copy_tables" "spider_direct_sql"
+"spider_flush_table_mon_cache" "sqrt" "srid" "st_area" "startpoint"
+"st_asbinary" "st_astext" "st_aswkb" "st_aswkt" "st_boundary"
+"st_buffer" "st_centroid" "st_contains" "st_convexhull" "st_crosses"
+"std" "stddev" "stddev_pop" "stddev_samp" "st_difference"
+"st_dimension" "st_disjoint" "st_distance" "st_endpoint" "st_envelope"
+"st_equals" "st_exteriorring" "st_geomcollfromtext"
+"st_geomcollfromwkb" "st_geometrycollectionfromtext"
+"st_geometrycollectionfromwkb" "st_geometryfromtext"
+"st_geometryfromwkb" "st_geometryn" "st_geometrytype"
+"st_geomfromtext" "st_geomfromwkb" "st_interiorringn"
+"st_intersection" "st_intersects" "st_isclosed" "st_isempty"
+"st_isring" "st_issimple" "st_length" "st_linefromtext"
+"st_linefromwkb" "st_linestringfromtext" "st_linestringfromwkb"
+"st_numgeometries" "st_numinteriorrings" "st_numpoints" "st_overlaps"
+"st_pointfromtext" "st_pointfromwkb" "st_pointn" "st_pointonsurface"
+"st_polyfromtext" "st_polyfromwkb" "st_polygonfromtext"
+"st_polygonfromwkb" "strcmp" "st_relate" "str_to_date" "st_srid"
+"st_startpoint" "st_symdifference" "st_touches" "st_union" "st_within"
+"st_x" "st_y" "subdate" "substr" "substring" "substring_index"
+"subtime" "sum" "sysdate" "tan" "timediff" "time_format"
+"timestampadd" "timestampdiff" "time_to_sec" "to_base64" "to_days"
+"to_seconds" "touches" "trailing" "trim" "ucase" "uncompress"
+"uncompressed_length" "unhex" "unix_timestamp" "updatexml" "upper"
+"user" "utc_date" "utc_time" "utc_timestamp" "uuid" "uuid_short"
+"variance" "var_pop" "var_samp" "version" "weekday"
+"weekofyear" "weight_string" "within"
 )
 
      ;; MySQL Keywords
      (sql-font-lock-keywords-builder 'font-lock-keyword-face nil
-"action" "add" "after" "against" "all" "alter" "and" "as" "asc"
-"auto_increment" "avg_row_length" "bdb" "between" "by" "cascade"
-"case" "change" "character" "check" "checksum" "close" "collate"
-"collation" "column" "columns" "comment" "committed" "concurrent"
-"constraint" "create" "cross" "data" "database" "default"
-"delay_key_write" "delayed" "delete" "desc" "directory" "disable"
-"distinct" "distinctrow" "do" "drop" "dumpfile" "duplicate" "else" "elseif"
-"enable" "enclosed" "end" "escaped" "exists" "fields" "first" "for"
-"force" "foreign" "from" "full" "fulltext" "global" "group" "handler"
-"having" "heap" "high_priority" "if" "ignore" "in" "index" "infile"
-"inner" "insert" "insert_method" "into" "is" "isam" "isolation" "join"
-"key" "keys" "last" "left" "level" "like" "limit" "lines" "load"
-"local" "lock" "low_priority" "match" "max_rows" "merge" "min_rows"
-"mode" "modify" "mrg_myisam" "myisam" "natural" "next" "no" "not"
-"null" "offset" "oj" "on" "open" "optionally" "or" "order" "outer"
-"outfile" "pack_keys" "partial" "password" "prev" "primary"
-"procedure" "quick" "raid0" "raid_type" "read" "references" "rename"
-"repeatable" "restrict" "right" "rollback" "rollup" "row_format"
-"savepoint" "select" "separator" "serializable" "session" "set"
-"share" "show" "sql_big_result" "sql_buffer_result" "sql_cache"
-"sql_calc_found_rows" "sql_no_cache" "sql_small_result" "starting"
-"straight_join" "striped" "table" "tables" "temporary" "terminated"
-"then" "to" "transaction" "truncate" "type" "uncommitted" "union"
-"unique" "unlock" "update" "use" "using" "values" "when" "where"
-"with" "write" "xor"
+"accessible" "action" "add" "after" "against" "all" "alter" "analyze"
+"and" "as" "asc" "auto_increment" "avg_row_length" "bdb" "between"
+"body" "by" "cascade" "case" "change" "character" "check" "checksum"
+"close" "collate" "collation" "column" "columns" "comment" "committed"
+"concurrent" "condition" "constraint" "create" "cross" "data"
+"database" "databases" "default" "delayed" "delay_key_write" "delete"
+"desc" "directory" "disable" "distinct" "distinctrow" "do" "drop"
+"dual" "dumpfile" "duplicate" "else" "elseif" "elsif" "enable"
+"enclosed" "end" "escaped" "exists" "exit" "explain" "fields" "first"
+"for" "force" "foreign" "from" "full" "fulltext" "global" "group"
+"handler" "having" "heap" "high_priority" "history" "if" "ignore"
+"ignore_server_ids" "in" "index" "infile" "inner" "insert"
+"insert_method" "into" "is" "isam" "isolation" "join" "key" "keys"
+"kill" "last" "leave" "left" "level" "like" "limit" "linear" "lines"
+"load" "local" "lock" "long" "loop" "low_priority"
+"master_heartbeat_period" "master_ssl_verify_server_cert" "match"
+"max_rows" "maxvalue" "merge" "min_rows" "mode" "modify" "mrg_myisam"
+"myisam" "natural" "next" "no" "not" "no_write_to_binlog" "null"
+"offset" "oj" "on" "open" "optimize" "optionally" "or" "order" "outer"
+"outfile" "over" "package" "pack_keys" "partial" "partition"
+"password" "period" "prev" "primary" "procedure" "purge" "quick"
+"raid0" "raid_type" "raise" "range" "read" "read_write" "references"
+"release" "rename" "repeatable" "require" "resignal" "restrict"
+"returning" "right" "rollback" "rollup" "row_format" "rowtype"
+"savepoint" "schemas" "select" "separator" "serializable" "session"
+"set" "share" "show" "signal" "slow" "spatial" "sql_big_result"
+"sql_buffer_result" "sql_cache" "sql_calc_found_rows" "sql_no_cache"
+"sql_small_result" "ssl" "starting" "straight_join" "striped"
+"system_time" "table" "tables" "temporary" "terminated" "then" "to"
+"transaction" "truncate" "type" "uncommitted" "undo" "union" "unique"
+"unlock" "update" "use" "using" "values" "versioning" "when" "where"
+"while" "window" "with" "write" "xor"
 )
 
      ;; MySQL Data Types
      (sql-font-lock-keywords-builder 'font-lock-type-face nil
-"bigint" "binary" "bit" "blob" "bool" "boolean" "char" "curve" "date"
-"datetime" "dec" "decimal" "double" "enum" "fixed" "float" "geometry"
-"geometrycollection" "int" "integer" "line" "linearring" "linestring"
-"longblob" "longtext" "mediumblob" "mediumint" "mediumtext"
+"bigint" "binary" "bit" "blob" "bool" "boolean" "byte" "char" "curve"
+"date" "datetime" "day" "day_hour" "day_microsecond" "day_minute"
+"day_second" "dec" "decimal" "double" "enum" "fixed" "float" "float4"
+"float8" "geometry" "geometrycollection" "hour" "hour_microsecond"
+"hour_minute" "hour_second" "int" "int1" "int2" "int3" "int4" "int8"
+"integer" "json" "line" "linearring" "linestring" "longblob"
+"longtext" "mediumblob" "mediumint" "mediumtext" "microsecond"
+"middleint" "minute" "minute_microsecond" "minute_second" "month"
 "multicurve" "multilinestring" "multipoint" "multipolygon"
 "multisurface" "national" "numeric" "point" "polygon" "precision"
-"real" "smallint" "surface" "text" "time" "timestamp" "tinyblob"
-"tinyint" "tinytext" "unsigned" "varchar" "year" "year2" "year4"
-"zerofill"
+"quarter" "real" "second" "second_microsecond" "signed" "smallint"
+"surface" "text" "time" "timestamp" "tinyblob" "tinyint" "tinytext"
+"unsigned" "varbinary" "varchar" "varcharacter" "week" "year" "year2"
+"year4" "year_month" "zerofill"
 )))
 
   "MySQL SQL keywords used by font-lock.
@@ -4874,6 +4972,46 @@ The default comes from `process-coding-system-alist' and
           (if (not (string= "" sql-database))
               (list sql-database)))))
     (sql-comint product params buf-name)))
+
+;;;###autoload
+(defun sql-mariadb (&optional buffer)
+    "Run mysql by MariaDB as an inferior process.
+
+MariaDB is free software.
+
+If buffer `*SQL*' exists but no process is running, make a new process.
+If buffer exists and a process is running, just switch to buffer
+`*SQL*'.
+
+Interpreter used comes from variable `sql-mariadb-program'.  Login uses
+the variables `sql-user', `sql-password', `sql-database', and
+`sql-server' as defaults, if set.  Additional command line parameters
+can be stored in the list `sql-mariadb-options'.
+
+The buffer is put in SQL interactive mode, giving commands for sending
+input.  See `sql-interactive-mode'.
+
+To set the buffer name directly, use \\[universal-argument]
+before \\[sql-mariadb].  Once session has started,
+\\[sql-rename-buffer] can be called separately to rename the
+buffer.
+
+To specify a coding system for converting non-ASCII characters
+in the input and output to the process, use \\[universal-coding-system-argument]
+before \\[sql-mariadb].  You can also specify this with \\[set-buffer-process-coding-system]
+in the SQL buffer, after you start the process.
+The default comes from `process-coding-system-alist' and
+`default-process-coding-system'.
+
+\(Type \\[describe-mode] in the SQL buffer for a list of commands.)"
+  (interactive "P")
+  (sql-product-interactive 'mariadb buffer))
+
+(defun sql-comint-mariadb (product options &optional buf-name)
+  "Create comint buffer and connect to MariaDB.
+
+Use the MySQL comint driver since the two are compatible."
+  (sql-comint-mysql product options buf-name))
 
 
 
