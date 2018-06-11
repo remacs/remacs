@@ -2416,40 +2416,33 @@ frame receives focus."
     (cancel-timer blink-cursor-idle-timer)
     (setq blink-cursor-idle-timer nil)))
 
-(defun blink-cursor--should-blink (&optional ignored-frame)
+(defun blink-cursor--should-blink ()
   "Determine whether we should be blinking.
-Returns whether we have any focused non-TTY frame.  IGNORED-FRAME
-is a frame to ignore during the scan, used when we want to ignore
-a frame about to be deleted."
+Returns whether we have any focused non-TTY frame."
   (and blink-cursor-mode
        (let ((frame-list (frame-list))
              (any-graphical-focused nil))
          (while frame-list
            (let ((frame (pop frame-list)))
-             (when (and (not (eq frame ignored-frame))
-                        (display-graphic-p frame)
-                        (frame-focus-state frame))
+             (when (and (display-graphic-p frame) (frame-focus-state frame))
                (setf any-graphical-focused t)
                (setf frame-list nil))))
          any-graphical-focused)))
 
-(defun blink-cursor-check (&optional ignored-frame)
+(defun blink-cursor-check ()
   "Check if cursor blinking shall be restarted.
 This is done when a frame gets focus.  Blink timers may be
 stopped by `blink-cursor-suspend'.  Internally calls
 `blink-cursor--should-blink' and returns its result."
-  (let ((should-blink (blink-cursor--should-blink ignored-frame)))
+  (let ((should-blink (blink-cursor--should-blink)))
     (when (and should-blink (not blink-cursor-idle-timer))
       (remove-hook 'post-command-hook 'blink-cursor-check)
       (blink-cursor--start-idle-timer))
     should-blink))
 
-(defun blink-cursor--rescan-frames (&optional ignored-frame)
-  "Called when the set of focused frames changes or when we
-delete a frame.  Re-check whether we want to enable blinking.
-IGNORED-FRAME is there so we ignore a frame about to be deleted
-when we're called under via `delete-frame-functions'."
-  (unless (blink-cursor-check ignored-frame)
+(defun blink-cursor--rescan-frames (&optional _ign)
+  "Called when the set of focused frames changes or when we delete a frame."
+  (unless (blink-cursor-check)
     (blink-cursor-suspend)))
 
 (define-minor-mode blink-cursor-mode
@@ -2474,11 +2467,11 @@ terminals, cursor blinking is controlled by the terminal."
   :group 'cursor
   :global t
   (blink-cursor-suspend)
-  (remove-hook 'delete-frame-functions #'blink-cursor--rescan-frames)
+  (remove-hook 'after-delete-frame-functions #'blink-cursor--rescan-frames)
   (remove-function after-focus-change-function #'blink-cursor--rescan-frames)
   (when blink-cursor-mode
     (add-function :after after-focus-change-function #'blink-cursor--rescan-frames)
-    (add-hook 'delete-frame-functions #'blink-cursor--rescan-frames)
+    (add-hook 'after-delete-frame-functions #'blink-cursor--rescan-frames)
     (blink-cursor--start-idle-timer)))
 
 

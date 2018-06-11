@@ -2530,6 +2530,7 @@ it.
 
 @deffn Command delete-frame &optional frame force
 @vindex delete-frame-functions
+@vindex after-delete-frame-functions
 This function deletes the frame @var{frame}.  The argument @var{frame}
 must specify a live frame (see below) and defaults to the selected
 frame.
@@ -2541,7 +2542,9 @@ performed recursively; so this step makes sure that no other frames with
 @var{frame} as their ancestor will exist.  Then, unless @var{frame}
 specifies a tooltip, this function runs the hook
 @code{delete-frame-functions} (each function getting one argument,
-@var{frame}) before actually killing the frame.
+@var{frame}) before actually killing the frame.  After actually killing
+the frame and removing the frame from the frame list, @code{delete-frame}
+runs @code{after-delete-frame-functions}.
 
 Note that a frame cannot be deleted as long as its minibuffer serves as
 surrogate minibuffer for another frame (@pxref{Minibuffers and Frames}).

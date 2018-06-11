@@ -2161,6 +2161,16 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   if (!is_tooltip_frame)
     update_mode_lines = 15;
 
+  /* Now run the post-deletion hooks.  */
+  if (NILP (Vrun_hooks) || is_tooltip_frame)
+    ;
+  else if (EQ (force, Qnoelisp))
+    pending_funcalls
+      = Fcons (list3 (Qrun_hook_with_args, Qafter_delete_frame_functions, frame),
+	       pending_funcalls);
+  else
+      safe_call2 (Qrun_hook_with_args, Qafter_delete_frame_functions, frame);
+
   return Qnil;
 }
 
@@ -5896,6 +5906,14 @@ in `delete-frame-functions' (indirectly) calls `delete-frame'
 recursively).  */);
   Vdelete_frame_functions = Qnil;
   DEFSYM (Qdelete_frame_functions, "delete-frame-functions");
+
+  DEFVAR_LISP ("after-delete-frame-functions",
+               Vafter_delete_frame_functions,
+               doc: /* Functions run after deleting a frame.
+The functions are run with one arg, the frame that was deleted and
+which is now dead.  */);
+  Vafter_delete_frame_functions = Qnil;
+  DEFSYM (Qafter_delete_frame_functions, "after-delete-frame-functions");
 
   DEFVAR_LISP ("menu-bar-mode", Vmenu_bar_mode,
                doc: /* Non-nil if Menu-Bar mode is enabled.
