@@ -4516,30 +4516,6 @@ dir_warning (char const *use, Lisp_Object dirname)
     }
 }
 
-bool
-symbol_is_interned (struct Lisp_Symbol *symbol)
-{
-  return symbol->interned == SYMBOL_INTERNED_IN_INITIAL_OBARRAY;
-}
-
-bool
-symbol_is_alias (struct Lisp_Symbol *symbol)
-{
-  return symbol->redirect == SYMBOL_VARALIAS;
-}
-
-bool
-symbol_is_constant (struct Lisp_Symbol *symbol)
-{
-  return symbol->trapped_write == SYMBOL_NOWRITE;
-}
-
-uint16_t
-misc_get_ty (struct Lisp_Misc_Any *any)
-{
-  return any->type;
-}
-
 void
 syms_of_lread (void)
 {

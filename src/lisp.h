@@ -4783,12 +4783,6 @@ maybe_gc (void)
     Fgarbage_collect ();
 }
 
-// Used by Rust to interact with bitfield properties.
-bool symbol_is_interned(struct Lisp_Symbol *symbol);
-bool symbol_is_alias(struct Lisp_Symbol *symbol);
-bool symbol_is_constant(struct Lisp_Symbol *symbol);
-uint16_t misc_get_ty(struct Lisp_Misc_Any *any);
-
 INLINE_HEADER_END
 
 #endif /* EMACS_LISP_H */
