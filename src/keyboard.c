@@ -2823,6 +2823,7 @@ read_char (int commandflag, Lisp_Object map,
 
       if (CONSP (c)
           && (EQ (XCAR (c), Qselect_window)
+              || EQ (XCAR (c), Qfocus_out)
 #ifdef HAVE_DBUS
 	      || EQ (XCAR (c), Qdbus_event)
 #endif
