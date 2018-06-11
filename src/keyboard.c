@@ -5331,45 +5331,10 @@ make_lispy_event (struct input_event *event)
       }
 
     case FOCUS_IN_EVENT:
-      {
-	/* Notification of a FocusIn event.  The frame receiving the
-	   focus is in event->frame_or_window.  Generate a
-	   switch-frame event if necessary.  */
-
-        Lisp_Object frame = event->frame_or_window;
-        Lisp_Object focus = FRAME_FOCUS_FRAME (XFRAME (frame));
-        if (FRAMEP (focus))
-          frame = focus;
-        bool switching
-          = (
-#ifdef HAVE_X11
-            ! NILP (event->arg)
-            &&
-#endif
-            !EQ (frame, internal_last_event_frame)
-            && !EQ (frame, selected_frame));
-        internal_last_event_frame = frame;
-
-        return (switching ? make_lispy_switch_frame (frame)
-                : make_lispy_focus_in (frame));
-      }
+        return make_lispy_focus_in (event->frame_or_window);
 
     case FOCUS_OUT_EVENT:
-      {
-#ifdef HAVE_WINDOW_SYSTEM
-
-        Display_Info *di;
-        Lisp_Object frame = event->frame_or_window;
-        bool focused = false;
-
-        for (di = x_display_list; di && ! focused; di = di->next)
-          focused = di->x_highlight_frame != 0;
-
-        return focused ? Qnil
-               : make_lispy_focus_out (frame);
-
-#endif /* HAVE_WINDOW_SYSTEM */
-      }
+        return make_lispy_focus_out (event->frame_or_window);
 
     /* A simple keystroke.  */
     case ASCII_KEYSTROKE_EVENT:
@@ -6635,6 +6600,31 @@ has the same base event type and all the specified modifiers.  */)
     return apply_modifiers (modifiers, base);
   else
     error ("Invalid base event");
+}
+
+DEFUN ("internal-handle-focus-in", Finternal_handle_focus_in,
+       Sinternal_handle_focus_in, 1, 1, 0,
+       doc: /* Internally handle focus-in events, possibly generating
+an artifical switch-frame event.  */)
+     (Lisp_Object event)
+{
+  Lisp_Object frame;
+  if (!EQ (CAR_SAFE (event), Qfocus_in) ||
+      !CONSP (XCDR (event)) ||
+      !FRAMEP ((frame = XCAR (XCDR (event)))))
+    error ("invalid focus-in event");
+
+  /* Conceptually, the concept of window manager focus on a particular
+   frame and the Emacs selected frame shouldn't be related, but for a
+   long time, we automatically switched the selected frame in response
+   to focus events, so let's keep doing that.  */
+  bool switching = (!EQ (frame, internal_last_event_frame)
+                    && !EQ (frame, selected_frame));
+  internal_last_event_frame = frame;
+  if (switching || !NILP (unread_switch_frame))
+    unread_switch_frame = make_lispy_switch_frame (frame);
+
+  return Qnil;
 }
 
 /* Try to recognize SYMBOL as a modifier name.
@@ -11277,6 +11267,7 @@ syms_of_keyboard (void)
   defsubr (&Scurrent_idle_time);
   defsubr (&Sevent_symbol_parse_modifiers);
   defsubr (&Sevent_convert_list);
+  defsubr (&Sinternal_handle_focus_in);
   defsubr (&Sread_key_sequence);
   defsubr (&Sread_key_sequence_vector);
   defsubr (&Srecursive_edit);

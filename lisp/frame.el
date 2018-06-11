@@ -129,22 +129,104 @@ appended when the minibuffer frame is created."
       ;; Gildea@x.org says it is ok to ask questions before terminating.
       (save-buffers-kill-emacs))))
 
-(defun handle-focus-in (&optional _event)
-  "Handle a focus-in event.
-Focus-in events are usually bound to this function.
-Focus-in events occur when a frame has focus, but a switch-frame event
-is not generated.
-This function runs the hook `focus-in-hook'."
-  (interactive "e")
-  (run-hooks 'focus-in-hook))
+(defun frame-focus-state (&optional frame)
+  "Return FRAME's last known focus state.
+Return nil if the frame is definitely known not be focused, t if
+the frame is known to be focused, and 'unknown if we don't know.  If
+FRAME is nil, query the selected frame."
+  (let* ((frame (or frame (selected-frame)))
+         (tty-top-frame (tty-top-frame frame)))
+    (if (not tty-top-frame)
+        (frame-parameter frame 'last-focus-update)
+      ;; All tty frames are frame-visible-p if the terminal is
+      ;; visible, so check whether the frame is the top tty frame
+      ;; before checking visibility.
+      (cond ((not (eq tty-top-frame frame)) nil)
+            ((not (frame-visible-p frame)) nil)
+            (t (let ((tty-focus-state
+                      (terminal-parameter frame 'tty-focus-state)))
+                 (cond ((eq tty-focus-state 'focused) t)
+                       ((eq tty-focus-state 'defocused) nil)
+                       (t 'unknown))))))))
 
-(defun handle-focus-out (&optional _event)
-  "Handle a focus-out event.
-Focus-out events are usually bound to this function.
-Focus-out events occur when no frame has focus.
-This function runs the hook `focus-out-hook'."
+(defvar after-focus-change-function #'ignore
+  "Function called after frame focus may have changed.
+
+This function is called with no arguments when Emacs notices that
+the set of focused frames may have changed.  Code wanting to do
+something when frame focus changes should use `add-function' to
+add a function to this one, and in this added function, re-scan
+the set of focused frames, calling `frame-focus-state' to
+retrieve the last known focus state of each frame.  Focus events
+are delivered asynchronously, and frame input focus according to
+an external system may not correspond to the notion of the Emacs
+selected frame.  Multiple frames may appear to have input focus
+simultaneously due to focus event delivery differences, the
+presence of multiple Emacs terminals, and other factors, and code
+should be robust in the face of this situation.
+
+Depending on window system, focus events may also be delivered
+repeatedly and with different focus states before settling to the
+expected values.  Code relying on focus notifications should
+\"debounce\" any user-visible updates arising from focus changes,
+perhaps by deferring work until redisplay.
+
+This function may be called in arbitrary contexts, including from
+inside `read-event', so take the same care as you might when
+writing a process filter.")
+
+(defvar focus-in-hook nil
+  "Normal hook run when a frame gains focus.
+The frame gaining focus is selected at the time this hook is run.
+
+This hook is obsolete.  Despite its name, this hook may be run in
+situations other than when a frame obtains input focus: for
+example, we also run this hook when switching the selected frame
+internally to handle certain input events (like mouse wheel
+scrolling) even when the user's notion of input focus
+hasn't changed.
+
+Prefer using `after-focus-change-function'.")
+(make-obsolete-variable
+ 'focus-in-hook "after-focus-change-function" "27.1" 'set)
+
+(defvar focus-out-hook nil
+  "Normal hook run when all frames lost input focus.
+
+This hook is obsolete; see `focus-in-hook'.  Depending on timing,
+this hook may be delivered when a frame does in fact have focus.
+Prefer `after-focus-change-function'.")
+(make-obsolete-variable
+ 'focus-out-hook "after-focus-change-function" "27.1" 'set)
+
+(defun handle-focus-in (event)
+  "Handle a focus-in event.
+Focus-in events are bound to this function; do not change this
+binding.  Focus-in events occur when a frame receives focus from
+the window system."
+  ;; N.B. tty focus goes down a different path; see xterm.el.
   (interactive "e")
-  (run-hooks 'focus-out-hook))
+  (unless (eq (car-safe event) 'focus-in)
+    (error "handle-focus-in should handle focus-in events"))
+  (internal-handle-focus-in event)
+  (let ((frame (nth 1 event)))
+    (setf (frame-parameter frame 'last-focus-update) t)
+  (run-hooks 'focus-in-hook)
+  (funcall after-focus-change-function)))
+
+(defun handle-focus-out (event)
+  "Handle a focus-out event.
+Focus-out events are bound to this function; do not change this
+binding.  Focus-out events occur when a frame loses focus, but
+that's not the whole story: see `after-focus-change-function'."
+  ;; N.B. tty focus goes down a different path; see xterm.el.
+  (interactive "e")
+  (unless (eq (car event) 'focus-out)
+    (error "handle-focus-out should handle focus-out events"))
+  (let ((frame (nth 1 event)))
+    (setf (frame-parameter frame 'last-focus-update) nil)
+    (run-hooks 'focus-out-hook)
+    (funcall after-focus-change-function)))
 
 (defun handle-move-frame (event)
   "Handle a move-frame event.

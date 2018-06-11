@@ -2886,20 +2886,6 @@ x_focus_changed (int type, int state, struct w32_display_info *dpyinfo,
         {
           x_new_focus_frame (dpyinfo, frame);
           dpyinfo->w32_focus_event_frame = frame;
-
-          /* Don't stop displaying the initial startup message
-             for a switch-frame event we don't need.  */
-          if (NILP (Vterminal_frame)
-              && CONSP (Vframe_list)
-              && !NILP (XCDR (Vframe_list)))
-            {
-              bufp->arg = Qt;
-            }
-          else
-            {
-              bufp->arg = Qnil;
-            }
-
           bufp->kind = FOCUS_IN_EVENT;
           XSETFRAME (bufp->frame_or_window, frame);
         }

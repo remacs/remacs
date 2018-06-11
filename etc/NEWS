@@ -583,6 +583,12 @@ manual for more details.
 * Lisp Changes in Emacs 27.1
 
 +++
+** New focus state inspection interface: `focus-in-hook' and
+   `focus-out-hook' are marked obsolete.  Instead, attach to
+   `after-focus-change-function' using `add-function' and inspect the
+   focus state of each frame using `frame-focus-state'.
+
++++
 ** Emacs now requests and recognizes focus-change notifications from
    terminals that support the feature, meaning that `focus-in-hook'
    and `focus-out-hook' may run for TTY frames.

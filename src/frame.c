@@ -1455,23 +1455,15 @@ This function returns FRAME, or nil if FRAME has been deleted.  */)
 DEFUN ("handle-switch-frame", Fhandle_switch_frame, Shandle_switch_frame, 1, 1, "^e",
        doc: /* Handle a switch-frame event EVENT.
 Switch-frame events are usually bound to this function.
-A switch-frame event tells Emacs that the window manager has requested
-that the user's events be directed to the frame mentioned in the event.
-This function selects the selected window of the frame of EVENT.
-
-If EVENT is frame object, handle it as if it were a switch-frame event
-to that frame.  */)
+A switch-frame event is an event Emacs sends itself to
+indicate that input is arriving in a new frame. It does not
+necessarily represent user-visible input focus.  */)
   (Lisp_Object event)
 {
-  Lisp_Object value;
-
   /* Preserve prefix arg that the command loop just cleared.  */
   kset_prefix_arg (current_kboard, Vcurrent_prefix_arg);
   run_hook (Qmouse_leave_buffer_hook);
-  /* `switch-frame' implies a focus in.  */
-  value = do_switch_frame (event, 0, 0, Qnil);
-  call1 (intern ("handle-focus-in"), event);
-  return value;
+  return do_switch_frame (event, 0, 0, Qnil);
 }
 
 DEFUN ("selected-frame", Fselected_frame, Sselected_frame, 0, 0, 0,
@@ -5887,15 +5879,6 @@ when the mouse is over clickable text.  */);
                doc: /* If non-nil, make pointer invisible while typing.
 The pointer becomes visible again when the mouse is moved.  */);
   Vmake_pointer_invisible = Qt;
-
-  DEFVAR_LISP ("focus-in-hook", Vfocus_in_hook,
-               doc: /* Normal hook run when a frame gains input focus.
-The frame gaining focus is selected at the time this hook is run.  */);
-  Vfocus_in_hook = Qnil;
-
-  DEFVAR_LISP ("focus-out-hook", Vfocus_out_hook,
-               doc: /* Normal hook run when all frames lost input focus.  */);
-  Vfocus_out_hook = Qnil;
 
   DEFVAR_LISP ("move-frame-functions", Vmove_frame_functions,
                doc: /* Functions run after a frame was moved.

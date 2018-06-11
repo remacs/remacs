@@ -115,12 +115,19 @@ Return the pasted text as a string."
 ;; notifications) instead of read-event (which can't).
 
 (defun xterm-translate-focus-in (_prompt)
-  (handle-focus-in)
+  (setf (terminal-parameter nil 'tty-focus-state) 'focused)
+  (funcall after-focus-change-function)
   [])
 
 (defun xterm-translate-focus-out (_prompt)
-  (handle-focus-out)
+  (setf (terminal-parameter nil 'tty-focus-state) 'defocused)
+  (funcall after-focus-change-function)
   [])
+
+(defun xterm--suspend-tty-function (_tty)
+  ;; We can't know what happens to the tty after we're suspended
+  (setf (terminal-parameter nil 'tty-focus-state) nil)
+  (funcall after-focus-change-function))
 
 ;; Similarly, we want to transparently slurp the entirety of a
 ;; bracketed paste and encapsulate it into a single event.  We used to
