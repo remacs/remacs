@@ -13,6 +13,6 @@ RUSTFMT_CONFIG_DIR=$DIR/rust_src
 
 echo "Checking compile errors"
 cd "$DIR/rust_src"
-cargo build --features compile-errors 2> err.out || true
+SKIP_BINDGEN=yes cargo build --features compile-errors 2> err.out || true
 cat err.out
 grep -q 'compile_error!("error 001");' err.out

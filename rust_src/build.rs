@@ -595,6 +595,10 @@ fn generate_globals() {
 
 fn run_bindgen() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
+    let skip = std::env::var_os("SKIP_BINDINGS");
+    if skip.is_some() {
+        return;
+    }
     let cflags = std::env::var_os("EMACS_CFLAGS");
     match cflags {
         None => {
