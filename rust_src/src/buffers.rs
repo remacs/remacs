@@ -13,7 +13,8 @@ use remacs_sys::{Qbuffer_list_update_hook, Qbuffer_read_only, Qget_file_buffer,
 use remacs_sys::{alloc_buffer_text, allocate_buffer, bget_overlays_after, bget_overlays_before,
                  block_input, buffer_local_value, buffer_memory_full, fget_buffer_list,
                  fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
-                 last_per_buffer_idx, set_buffer_internal, unblock_input, nconc2};
+                 last_per_buffer_idx, reset_buffer, reset_buffer_local_variables,
+                 set_buffer_internal, unblock_input, nconc2};
 
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
@@ -352,6 +353,16 @@ impl LispBufferRef {
         self.mark = mark;
     }
 
+    #[inline]
+    pub fn set_filename(&mut self, name: LispObject) {
+        self.filename = name;
+    }
+
+    #[inline]
+    pub fn set_file_truename(&mut self, name: LispObject) {
+        self.file_truename = name;
+    }
+
     /// Set whether per-buffer variable with index IDX has a buffer-local
     /// value in buffer.  VAL zero means it does't.
     // Similar to SET_PER_BUFFER_VALUE_P macro in C
@@ -368,7 +379,7 @@ impl LispBufferRef {
         self.local_flags[idx] = val;
     }
 
-    pub fn get_new(buffer_or_name: LispObject) -> LispBufferRef {
+    pub fn create_new(buffer_or_name: LispObject) -> LispBufferRef {
         let obj = get_buffer(buffer_or_name);
         if obj.is_not_nil() {
             return obj.as_buffer_or_error();
@@ -446,9 +457,10 @@ impl LispBufferRef {
         b.set_name(name.as_lisp_obj());
         b.set_undo_list(if name.byte_at(0) != 0x20 { Qnil } else { Qt });
 
-        // TODO: Uncomment this
-        // b.reset();
-        // reset_buffer_local_variables(b, 1);
+        unsafe {
+            reset_buffer(b.as_mut());
+            reset_buffer_local_variables(b.as_mut(), true);
+        }
 
         b.set_mark(unsafe { Fmake_marker() });
         buffer_text.markers = ptr::null_mut();

@@ -3625,6 +3625,8 @@ extern "C" {
     pub fn unblock_input();
     pub fn alloc_buffer_text(pointer: *mut Lisp_Buffer, nbytes: ptrdiff_t);
     pub fn buffer_memory_full(nbytes: ptrdiff_t);
+    pub fn reset_buffer(b: *mut Lisp_Buffer);
+    pub fn reset_buffer_local_variables(b: *mut Lisp_Buffer, permanent_too: bool);
 }
 
 /// Contains C definitions from the font.h header.
