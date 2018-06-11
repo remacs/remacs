@@ -5,14 +5,14 @@ use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Interval, Lisp_Overlay,
-                 Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
+                 Lisp_Type, Vbuffer_alist, Vrun_hooks, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fmake_marker, Fnconc, Fnreverse};
-use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qt, Qunbound,
-                 Qvoid_variable};
+use remacs_sys::{Qbuffer_list_update_hook, Qbuffer_read_only, Qget_file_buffer,
+                 Qinhibit_read_only, Qnil, Qt, Qunbound, Qvoid_variable};
 use remacs_sys::{allocate_buffer, bget_overlays_after, bget_overlays_before, buffer_local_value,
                  fget_buffer_list, fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
-                 last_per_buffer_idx, set_buffer_internal};
+                 last_per_buffer_idx, set_buffer_internal, nconc2};
 
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
@@ -445,6 +445,16 @@ impl LispBufferRef {
         b.set_mark(unsafe { Fmake_marker() });
         buffer_text.markers = ptr::null_mut();
 
+        // TODO: XSETBUFFER
+        unsafe {
+            nconc2(
+                Vbuffer_alist,
+                list!(Fcons(name.as_lisp_obj(), b.as_lisp_obj())),
+            );
+            if Vrun_hooks.is_not_nil() {
+                call!(Vrun_hooks, Qbuffer_list_update_hook);
+            }
+        }
         b
     }
 }
