@@ -1560,6 +1560,10 @@ The preference is a float determined from `shr-prefer-media-type'."
 	(when (zerop (length alt))
 	  (setq alt "*"))
 	(cond
+         ((null url)
+          ;; After further expansion, there turned out to be no valid
+          ;; src in the img after all.
+          )
 	 ((or (member (dom-attr dom 'height) '("0" "1"))
 	      (member (dom-attr dom 'width) '("0" "1")))
 	  ;; Ignore zero-sized or single-pixel images.
