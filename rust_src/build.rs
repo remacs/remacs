@@ -597,6 +597,12 @@ fn run_bindgen() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
     let skip = std::env::var_os("SKIP_BINDINGS");
     if skip.is_some() {
+        // create bindings.rs if it doesn't already exist, leaving it empty.
+        OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(out_path)
+            .expect("Could not create bindings.rs");
         return;
     }
     let cflags = std::env::var_os("EMACS_CFLAGS");
