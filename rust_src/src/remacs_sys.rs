@@ -1023,7 +1023,9 @@ pub struct Lisp_Buffer {
     pub bidi_paragraph_cache: *mut c_void,
 
     // XXX in C, bitfield with two bools
-    flags: u8,
+    // TODO: Same as with Lisp_Buffer_Text
+    pub prevent_redisplay_optimizations_p: BoolBF,
+    pub clip_changed: BoolBF,
 
     overlays_before: *mut c_void,
     overlays_after: *mut c_void,
@@ -1089,6 +1091,50 @@ extern "C" {
     pub fn get_blv_value(blv: *const Lisp_Buffer_Local_Value) -> LispObject;
 }
 
+#[repr(C)]
+/// Parent in the tree, or the Lisp_Object containing this interval tree.
+pub union IntervalUnion {
+    interval: *const Lisp_Interval,
+    obj: LispObject,
+}
+
+/// Basic data type for use of intervals.
+#[repr(C)]
+pub struct Lisp_Interval {
+    // The first group of entries deal with the tree structure.
+
+    // Length of myself and both children.
+    pub total_length: ptrdiff_t,
+    // Cache of interval's character position. This field is usually
+    // updated simultaneously with an interval traversal, there is no
+    // guarantee that it is valid for a random interval.
+    pub position: ptrdiff_t,
+
+    // Intervals which precede me.
+    pub left: *const Lisp_Interval,
+    // Intervals which succeed me.
+    pub right: *const Lisp_Interval,
+
+    up: IntervalUnion,
+    up_obj: BoolBF,
+    gcmarkbit: BoolBF,
+
+    // The remaining components are `properties' of the interval.
+    // The first four are duplicates for things which can be on the list,
+    // for purposes of speed.
+
+    // True means can't modify.
+    write_protect: BoolBF,
+    /* False means don't display.  */
+    visible: BoolBF,
+    // True means text inserted just before this interval goes into it.
+    front_sticky: BoolBF,
+    // Likewise for just after it.
+    rear_sticky: BoolBF,
+    // Other properties.
+    plist: LispObject,
+}
+
 /// Represents text contents of an Emacs buffer. For documentation see
 /// struct buffer_text in buffer.h.
 #[repr(C)]
@@ -1112,12 +1158,13 @@ pub struct Lisp_Buffer_Text {
 
     pub unchanged_modified: EmacsInt,
     pub overlay_unchanged_modified: EmacsInt,
-    // until we define struct interval
-    pub intervals: *mut c_void,
+    pub intervals: *mut Lisp_Interval,
     pub markers: *mut Lisp_Marker,
 
     // XXX: in Emacs, a bitfield of 2 booleans
-    flags: u8,
+    // TODO: Ask for input. Why are multiple fields combined to a single field argument?
+    pub redisplay: BoolBF,
+    pub inhibit_shrinking: BoolBF,
 }
 
 /// Represents a floating point value in elisp, or GC bookkeeping for

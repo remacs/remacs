@@ -4,8 +4,8 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Overlay, Lisp_Type,
-                 Vbuffer_alist, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Interval, Lisp_Overlay,
+                 Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
@@ -143,6 +143,11 @@ impl LispBufferRef {
                 .beg
                 .offset((*self.text).gpt_byte + (*self.text).gap_size - BEG_BYTE)
         }
+    }
+
+    #[inline]
+    pub fn gap_beg_addr(self) -> *mut c_uchar {
+        unsafe { (*self.text).beg.offset((*self.text).gpt_byte - BEG_BYTE) }
     }
 
     #[inline]
@@ -318,6 +323,19 @@ impl LispBufferRef {
         self.syntax_table = LispObject::from(table).to_raw();
     }
 
+    #[inline]
+    pub fn set_intervals(&mut self, interval: *mut Lisp_Interval) {
+        debug_assert!(!self.text.is_null());
+        unsafe {
+            (*self.text).intervals = interval;
+        }
+    }
+
+    #[inline]
+    pub fn set_width_table(&mut self, table: LispObject) {
+        self.width_table = table;
+    }
+
     /// Set whether per-buffer variable with index IDX has a buffer-local
     /// value in buffer.  VAL zero means it does't.
     // Similar to SET_PER_BUFFER_VALUE_P macro in C
@@ -360,19 +378,44 @@ impl LispBufferRef {
 
         // TODO: Bring in buffer text allocation code
 
-        let beg = 1;
-        let beg_byte = 1;
-        b.set_pt_both(beg, beg_byte);
-        b.set_begv_both(beg, beg_byte);
-        b.set_zv_both(beg, beg_byte);
-        buffer_text.gpt = beg;
-        buffer_text.gpt_byte = beg_byte;
-        buffer_text.z = beg;
-        buffer_text.z_byte = beg_byte;
+        b.set_pt_both(BEG, BEG_BYTE);
+        b.set_begv_both(BEG, BEG_BYTE);
+        b.set_zv_both(BEG, BEG_BYTE);
+        buffer_text.gpt = BEG;
+        buffer_text.gpt_byte = BEG_BYTE;
+        buffer_text.z = BEG;
+        buffer_text.z_byte = BEG_BYTE;
         buffer_text.modiff = 1;
         buffer_text.overlay_modiff = 1;
         buffer_text.save_modiff = 1;
         buffer_text.compact = 1;
+
+        b.set_intervals(ptr::null_mut());
+        buffer_text.unchanged_modified = 1;
+        buffer_text.overlay_unchanged_modified = 1;
+        buffer_text.end_unchanged = 0;
+        buffer_text.beg_unchanged = 0;
+        unsafe {
+            // Put an anchor '\0'.
+            *(b.z_addr()) = 0;
+            *(b.gap_beg_addr()) = 0;
+        }
+        buffer_text.inhibit_shrinking = false;
+        buffer_text.redisplay = false;
+
+        b.newline_cache = ptr::null_mut();
+        b.width_run_cache = ptr::null_mut();
+        b.bidi_paragraph_cache = ptr::null_mut();
+
+        b.set_width_table(Qnil);
+        b.prevent_redisplay_optimizations_p = true;
+
+        // An ordinary buffer normally doesn't need markers to handle
+        // BEGV and ZV.
+
+        b.pt_marker = Qnil;
+        b.begv_marker = Qnil;
+        b.zv_marker = Qnil;
 
         b
     }
