@@ -934,6 +934,19 @@ pub fn buffer_base_buffer(buffer: LispObject) -> Option<LispBufferRef> {
     buffer.as_buffer_or_current_buffer().base_buffer()
 }
 
+/// Return the buffer specified by BUFFER-OR-NAME, creating a new one if needed.
+/// If BUFFER-OR-NAME is a string and a live buffer with that name exists,
+/// return that buffer.  If no such buffer exists, create a new buffer with
+/// that name and return it.  If BUFFER-OR-NAME starts with a space, the new
+/// buffer does not keep undo information.
+
+/// If BUFFER-OR-NAME is a buffer instead of a string, return it as given,
+/// even if it is dead.  The return value is never nil.
+#[lisp_fn]
+pub fn get_buffer_create(buffer_or_name: LispObject) -> LispBufferRef {
+    LispBufferRef::create_new(buffer_or_name)
+}
+
 #[no_mangle]
 pub extern "C" fn rust_syms_of_buffer() {
     def_lisp_sym!(Qget_file_buffer, "get-file-buffer");

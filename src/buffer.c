@@ -109,7 +109,7 @@ static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
                                     bool after, Lisp_Object arg1,
                                     Lisp_Object arg2, Lisp_Object arg3);
 static void swap_out_buffer_local_variables (struct buffer *b);
-static void reset_buffer_local_variables (struct buffer *, bool);
+void reset_buffer_local_variables (struct buffer *, bool);
 
 /* Alist of all buffer names vs the buffers.  This used to be
    a Lisp-visible variable, but is no longer, to prevent lossage
@@ -118,7 +118,7 @@ Lisp_Object Vbuffer_alist;
 
 static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 
-static void alloc_buffer_text (struct buffer *, ptrdiff_t);
+void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
 static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
 static void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
@@ -369,106 +369,6 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
 }
 
 
-DEFUN ("get-buffer-create", Fget_buffer_create, Sget_buffer_create, 1, 1, 0,
-       doc: /* Return the buffer specified by BUFFER-OR-NAME, creating a new one if needed.
-If BUFFER-OR-NAME is a string and a live buffer with that name exists,
-return that buffer.  If no such buffer exists, create a new buffer with
-that name and return it.  If BUFFER-OR-NAME starts with a space, the new
-buffer does not keep undo information.
-
-If BUFFER-OR-NAME is a buffer instead of a string, return it as given,
-even if it is dead.  The return value is never nil.  */)
-  (register Lisp_Object buffer_or_name)
-{
-  register Lisp_Object buffer, name;
-  register struct buffer *b;
-
-  buffer = Fget_buffer (buffer_or_name);
-  if (!NILP (buffer))
-    return buffer;
-
-  if (SCHARS (buffer_or_name) == 0)
-    error ("Empty string for buffer name is not allowed");
-
-  b = allocate_buffer ();
-
-  /* An ordinary buffer uses its own struct buffer_text.  */
-  b->text = &b->own_text;
-  b->base_buffer = NULL;
-  /* No one shares the text with us now.  */
-  b->indirections = 0;
-  /* No one shows us now.  */
-  b->window_count = 0;
-
-  BUF_GAP_SIZE (b) = 20;
-  block_input ();
-  /* We allocate extra 1-byte at the tail and keep it always '\0' for
-     anchoring a search.  */
-  alloc_buffer_text (b, BUF_GAP_SIZE (b) + 1);
-  unblock_input ();
-  if (! BUF_BEG_ADDR (b))
-    buffer_memory_full (BUF_GAP_SIZE (b) + 1);
-
-  b->pt = BEG;
-  b->begv = BEG;
-  b->zv = BEG;
-  b->pt_byte = BEG_BYTE;
-  b->begv_byte = BEG_BYTE;
-  b->zv_byte = BEG_BYTE;
-
-  BUF_GPT (b) = BEG;
-  BUF_GPT_BYTE (b) = BEG_BYTE;
-
-  BUF_Z (b) = BEG;
-  BUF_Z_BYTE (b) = BEG_BYTE;
-  BUF_MODIFF (b) = 1;
-  BUF_CHARS_MODIFF (b) = 1;
-  BUF_OVERLAY_MODIFF (b) = 1;
-  BUF_SAVE_MODIFF (b) = 1;
-  BUF_COMPACT (b) = 1;
-  set_buffer_intervals (b, NULL);
-  BUF_UNCHANGED_MODIFIED (b) = 1;
-  BUF_OVERLAY_UNCHANGED_MODIFIED (b) = 1;
-  BUF_END_UNCHANGED (b) = 0;
-  BUF_BEG_UNCHANGED (b) = 0;
-  *(BUF_GPT_ADDR (b)) = *(BUF_Z_ADDR (b)) = 0; /* Put an anchor '\0'.  */
-  b->text->inhibit_shrinking = false;
-  b->text->redisplay = false;
-
-  b->newline_cache = 0;
-  b->width_run_cache = 0;
-  b->bidi_paragraph_cache = 0;
-  bset_width_table (b, Qnil);
-  b->prevent_redisplay_optimizations_p = 1;
-
-  /* An ordinary buffer normally doesn't need markers
-     to handle BEGV and ZV.  */
-  bset_pt_marker (b, Qnil);
-  bset_begv_marker (b, Qnil);
-  bset_zv_marker (b, Qnil);
-
-  name = Fcopy_sequence (buffer_or_name);
-  set_string_intervals (name, NULL);
-  bset_name (b, name);
-
-  bset_undo_list (b, SREF (name, 0) != ' ' ? Qnil : Qt);
-
-  reset_buffer (b);
-  reset_buffer_local_variables (b, 1);
-
-  bset_mark (b, Fmake_marker ());
-  BUF_MARKERS (b) = NULL;
-
-  /* Put this in the alist of all live buffers.  */
-  XSETBUFFER (buffer, b);
-  Vbuffer_alist = nconc2 (Vbuffer_alist, list1 (Fcons (name, buffer)));
-  /* And run buffer-list-update-hook.  */
-  if (!NILP (Vrun_hooks))
-    call1 (Vrun_hooks, Qbuffer_list_update_hook);
-
-  return buffer;
-}
-
 
 /* Return a list of overlays which is a copy of the overlay list
    LIST, but for buffer B.  */
@@ -787,7 +687,7 @@ reset_buffer (register struct buffer *b)
    If PERMANENT_TOO, reset permanent buffer-local variables.
    If not, preserve those.  */
 
-static void
+void
 reset_buffer_local_variables (struct buffer *b, bool permanent_too)
 {
   int offset, i;
@@ -4610,7 +4510,7 @@ mmap_realloc (void **var, size_t nbytes)
 
 /* Allocate NBYTES bytes for buffer B's text buffer.  */
 
-static void
+void
 alloc_buffer_text (struct buffer *b, ptrdiff_t nbytes)
 {
   void *p;
@@ -5876,7 +5776,6 @@ Functions running this hook are, `get-buffer-create',
   Vbuffer_list_update_hook = Qnil;
   DEFSYM (Qbuffer_list_update_hook, "buffer-list-update-hook");
 
-  defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);
   defsubr (&Sbuffer_local_variables);
