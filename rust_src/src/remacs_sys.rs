@@ -230,7 +230,7 @@ pub struct Lisp_String {
     // TODO: Use correct definition for this.
     //
     // Maybe use rust nightly unions?
-    pub intervals: *mut c_void, // @TODO implement
+    pub intervals: *mut Lisp_Interval,
     pub data: *mut c_char,
 }
 
@@ -1031,7 +1031,7 @@ pub struct Lisp_Buffer {
     overlays_after: *mut c_void,
     overlay_center: ptrdiff_t,
 
-    undo_list: LispObject,
+    pub undo_list: LispObject,
 }
 
 extern "C" {

@@ -7,8 +7,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Interval, Lisp_Overlay,
                  Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
-                 Fget_text_property, Fnconc, Fnreverse};
-use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
+                 Fget_text_property, Fmake_marker, Fnconc, Fnreverse};
+use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qt, Qunbound,
                  Qvoid_variable};
 use remacs_sys::{allocate_buffer, bget_overlays_after, bget_overlays_before, buffer_local_value,
                  fget_buffer_list, fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
@@ -336,6 +336,21 @@ impl LispBufferRef {
         self.width_table = table;
     }
 
+    #[inline]
+    pub fn set_name(&mut self, name: LispObject) {
+        self.name = name;
+    }
+
+    #[inline]
+    pub fn set_undo_list(&mut self, obj: LispObject) {
+        self.undo_list = obj;
+    }
+
+    #[inline]
+    pub fn set_mark(&mut self, mark: LispObject) {
+        self.mark = mark;
+    }
+
     /// Set whether per-buffer variable with index IDX has a buffer-local
     /// value in buffer.  VAL zero means it does't.
     // Similar to SET_PER_BUFFER_VALUE_P macro in C
@@ -416,6 +431,19 @@ impl LispBufferRef {
         b.pt_marker = Qnil;
         b.begv_marker = Qnil;
         b.zv_marker = Qnil;
+
+        let name = unsafe { Fcopy_sequence(buffer_or_name) };
+        let mut name = name.as_string_or_error();
+        name.set_intervals(ptr::null_mut());
+        b.set_name(name.as_lisp_obj());
+        b.set_undo_list(if name.byte_at(0) != 0x20 { Qnil } else { Qt });
+
+        // TODO: Uncomment this
+        // b.reset();
+        // reset_buffer_local_variables(b, 1);
+
+        b.set_mark(unsafe { Fmake_marker() });
+        buffer_text.markers = ptr::null_mut();
 
         b
     }

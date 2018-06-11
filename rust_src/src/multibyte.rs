@@ -38,8 +38,8 @@ use std::slice;
 
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
-use remacs_sys::{EmacsInt, Lisp_String, Lisp_Type, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK,
-                 CHAR_SHIFT};
+use remacs_sys::{EmacsInt, Lisp_Interval, Lisp_String, Lisp_Type, CHARACTERBITS, CHAR_CTL,
+                 CHAR_MODIFIER_MASK, CHAR_SHIFT};
 use remacs_sys::emacs_abort;
 
 use lisp::{ExternalPtr, LispObject};
@@ -159,6 +159,10 @@ impl LispStringRef {
 
     pub fn set_byte(&mut self, idx: ptrdiff_t, elt: c_uchar) {
         unsafe { ptr::write(self.data_ptr().offset(idx), elt) };
+    }
+
+    pub fn set_intervals(&mut self, interval: *mut Lisp_Interval) {
+        self.intervals = interval;
     }
 }
 
