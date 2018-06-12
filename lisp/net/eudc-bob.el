@@ -25,8 +25,15 @@
 
 ;;; Commentary:
 
+;; eudc-bob.el presents binary entries in LDAP results in interactive
+;; ways.  For example, it will display JPEG binary data as an inline
+;; image in the results buffer.  See also
+;; https://tools.ietf.org/html/rfc2798.
+
 ;;; Usage:
-;;    See the corresponding info file
+
+;; The eudc-bob interactive functions are invoked when the user
+;; interacts with an `eudc-query-form' results buffer.
 
 ;;; Code:
 
