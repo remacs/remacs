@@ -6605,8 +6605,8 @@ has the same base event type and all the specified modifiers.  */)
 
 DEFUN ("internal-handle-focus-in", Finternal_handle_focus_in,
        Sinternal_handle_focus_in, 1, 1, 0,
-       doc: /* Internally handle focus-in events, possibly generating
-an artifical switch-frame event.  */)
+       doc: /* Internally handle focus-in events.
+This function potentially generates an artifical switch-frame event.  */)
      (Lisp_Object event)
 {
   Lisp_Object frame;
@@ -6616,9 +6616,9 @@ an artifical switch-frame event.  */)
     error ("invalid focus-in event");
 
   /* Conceptually, the concept of window manager focus on a particular
-   frame and the Emacs selected frame shouldn't be related, but for a
-   long time, we automatically switched the selected frame in response
-   to focus events, so let's keep doing that.  */
+     frame and the Emacs selected frame shouldn't be related, but for
+     a long time, we automatically switched the selected frame in
+     response to focus events, so let's keep doing that.  */
   bool switching = (!EQ (frame, internal_last_event_frame)
                     && !EQ (frame, selected_frame));
   internal_last_event_frame = frame;

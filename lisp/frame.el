@@ -131,9 +131,10 @@ appended when the minibuffer frame is created."
 
 (defun frame-focus-state (&optional frame)
   "Return FRAME's last known focus state.
+If nil or omitted, FRAME defaults to the selected frame.
+
 Return nil if the frame is definitely known not be focused, t if
-the frame is known to be focused, and 'unknown if we don't know.  If
-FRAME is nil, query the selected frame."
+the frame is known to be focused, and `unknown' if we don't know."
   (let* ((frame (or frame (selected-frame)))
          (tty-top-frame (tty-top-frame frame)))
     (if (not tty-top-frame)
