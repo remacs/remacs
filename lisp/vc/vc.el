@@ -2256,8 +2256,9 @@ earlier revisions.  Show up to LIMIT entries (non-nil means unlimited)."
 	 (vc-call-backend bk 'print-log files-arg buf shortlog
                           (when is-start-revision working-revision) limit))
        (lambda (_bk _files-arg ret)
-	 (vc-print-log-setup-buttons working-revision
-				     is-start-revision limit ret))
+         (save-excursion
+           (vc-print-log-setup-buttons working-revision
+                                       is-start-revision limit ret)))
        ;; When it's nil, point really shouldn't move (bug#15322).
        (when working-revision
          (lambda (bk)
