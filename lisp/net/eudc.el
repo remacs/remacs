@@ -1196,8 +1196,7 @@ This does nothing except loading eudc by autoload side-effect."
   nil)
 
 ;;;###autoload
-(cond
- ((not (featurep 'xemacs))
+(progn
   (defvar eudc-tools-menu
     (let ((map (make-sparse-keymap "Directory Servers")))
       (define-key map [phone]
@@ -1222,34 +1221,6 @@ This does nothing except loading eudc by autoload side-effect."
 		    :help ,(purecopy "Load the Emacs Unified Directory Client")))
       map))
   (fset 'eudc-tools-menu (symbol-value 'eudc-tools-menu)))
- (t
-  (let ((menu  '("Directory Servers"
-		 ["Load Hotlist of Servers" eudc-load-eudc t]
-		 ["New Server" eudc-set-server t]
-		 ["---" nil nil]
-		 ["Query with Form" eudc-query-form t]
-		 ["Expand Inline Query" eudc-expand-inline t]
-		 ["---" nil nil]
-		 ["Get Email" eudc-get-email t]
-		 ["Get Phone" eudc-get-phone t])))
-    (if (not (featurep 'eudc-autoloads))
-	(if (featurep 'xemacs)
-	    (if (and (featurep 'menubar)
-		     (not (featurep 'infodock)))
-		(add-submenu '("Tools") menu))
-	  (require 'easymenu)
-	  (cond
-	   ((fboundp 'easy-menu-add-item)
-	    (easy-menu-add-item nil '("tools")
-				(easy-menu-create-menu (car menu)
-						       (cdr menu))))
-	   ((fboundp 'easy-menu-create-keymaps)
-	    (define-key
-	      global-map
-	      [menu-bar tools eudc]
-	      (cons "Directory Servers"
-		    (easy-menu-create-keymaps "Directory Servers"
-					      (cdr menu)))))))))))
 
 ;;}}}
 
