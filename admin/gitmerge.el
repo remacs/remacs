@@ -483,8 +483,12 @@ Throw an user-error if we cannot resolve automatically."
 (defun gitmerge-maybe-resume ()
   "Check if we have to resume a merge.
 If so, add no longer conflicted files and commit."
-  (let ((mergehead (file-exists-p
-		    (expand-file-name ".git/MERGE_HEAD" default-directory)))
+  (let ((mergehead
+         (file-exists-p
+          (expand-file-name
+           "MERGE_HEAD"
+           (car (process-lines
+                 "git" "rev-parse" "--no-flags" "--git-dir")))))
 	(statusexist (file-exists-p gitmerge-status-file)))
     (when (and mergehead (not statusexist))
       (user-error "Unfinished merge, but no record of a previous gitmerge run"))
