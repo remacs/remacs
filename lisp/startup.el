@@ -1126,11 +1126,11 @@ please check its value")
   ;; Re-evaluate predefined variables whose initial value depends on
   ;; the runtime context.
   (let (current-load-list) ; c-r-s may call defvar, and hence LOADHIST_ATTACH
-    (mapc 'custom-reevaluate-setting
+    (setq custom-delayed-init-variables
           ;; Initialize them in the same order they were loaded, in case there
           ;; are dependencies between them.
-          (prog1 (nreverse custom-delayed-init-variables)
-            (setq custom-delayed-init-variables nil))))
+          (nreverse custom-delayed-init-variables))
+    (mapc 'custom-reevaluate-setting custom-delayed-init-variables))
 
   ;; Warn for invalid user name.
   (when init-file-user
@@ -1261,6 +1261,13 @@ please check its value")
   (unless noninteractive
     (startup--setup-quote-display)
     (setq internal--text-quoting-flag t))
+
+  ;; Re-evaluate again the predefined variables whose initial value
+  ;; depends on the runtime context, in case some of them depend on
+  ;; the window-system features.  Example: blink-cursor-mode.
+  (let (current-load-list) ; c-r-s may call defvar, and hence LOADHIST_ATTACH
+    (mapc 'custom-reevaluate-setting custom-delayed-init-variables)
+    (setq custom-delayed-init-variables nil))
 
   (normal-erase-is-backspace-setup-frame)
 

@@ -2606,7 +2606,7 @@ Type @kbd{C-q}, followed by the key you want to bind, to insert @var{char}.
 @subsection The Early Init File
 @cindex early init file
 
-  Most customizations for Emacs can be put in the normal init file,
+  Most customizations for Emacs should be put in the normal init file,
 @file{.emacs} or @file{~/.emacs.d/init.el}.  However, it is sometimes desirable
 to have customizations that take effect during Emacs startup earlier than the
 normal init file is processed.  Such customizations can be put in the early
@@ -2618,6 +2618,16 @@ such as @code{package-enable-at-startup}, @code{package-load-list}, and
 which only affect the installation of new packages, and not the process of
 making already-installed packages available, may be customized in the regular
 init file.  @xref{Package Installation}.
+
+  We do not recommend that you move into @file{early-init.el}
+customizations that can be left in the normal init files.  That is
+because the early init file is read before the GUI is initialized, so
+customizations related to GUI features will not work reliably in
+@file{early-init.el}.  By contrast, the normal init files are read
+after the GUI is initialized.  If you must have customizations in the
+early init file that rely on GUI features, make them run off hooks
+provided by the Emacs startup, such as @code{window-setup-hook} or
+@code{tty-setup-hook}.  @xref{Hooks}.
 
   For more information on the early init file, @pxref{Init File,,,
 elisp, The Emacs Lisp Reference Manual}.
