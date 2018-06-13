@@ -9,7 +9,6 @@
 /// This module is only for testing, and you should add all
 /// definitions to remacs-sys first and foremost.
 use libc::*;
-//use mock_derive::mock;
 use remacs_sys::*;
 
 use lisp::LispObject;
@@ -18,14 +17,6 @@ use lisp::LispObject;
 // codepaths lead to it's usage.
 #[no_mangle]
 pub static mut lispsym: EmacsInt = 0;
-
-//#[mock]
-//extern "C" {
-//    pub fn Fcons(car: LispObject, cdr: LispObject) -> LispObject;
-//    pub fn Fsignal(error_symbol: LispObject, data: LispObject) -> !;
-//    pub fn make_string(s: *const c_char, length: isize) -> LispObject;
-//    pub fn make_unibyte_string(s: *const c_char, length: isize) -> LispObject;
-//}
 
 #[warn(unused_macros)]
 macro_rules! mock_float {
@@ -89,6 +80,7 @@ macro_rules! assert_nil {
     ($arg: expr) => {{ assert!($arg == ::lisp::LispObject::constant_nil()); }};
 }
 
+// Note(db48x): see if we can go back to using mock-derive for these
 #[cfg(test)]
 #[allow(unused_variables)]
 #[allow(dead_code)]

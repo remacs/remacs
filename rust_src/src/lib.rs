@@ -40,9 +40,6 @@ extern crate remacs_lib;
 extern crate remacs_macros;
 
 #[cfg(test)]
-extern crate mock_derive;
-
-#[cfg(test)]
 #[macro_use]
 mod functions;
 

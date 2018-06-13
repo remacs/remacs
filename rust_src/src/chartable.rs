@@ -21,7 +21,7 @@ fn chartab_size(depth: i32) -> usize {
         1 => 1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_1 as isize,
         2 => 1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_2 as isize,
         3 => 1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_3 as isize,
-        _ => panic!("oops"),
+        _ => panic!("Invalid depth for chartab"),
     }
 }
 

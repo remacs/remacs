@@ -77,7 +77,7 @@ end
 # variables because that could cause the replay to diverge from the
 # recording. However, if we call a function instead, rr will fork a
 # copy of the process and then discard any changes that function
-# made. Thus instead of simply setting pring_output_debug_flag, we
+# made. Thus instead of simply setting print_output_debug_flag, we
 # actually call debug_output_compilation_hack instead.
 define pr
   pp $

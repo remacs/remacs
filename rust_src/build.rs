@@ -656,7 +656,6 @@ fn run_bindgen() {
                 // these two are found by bindgen on mac, but not linux
                 .blacklist_type("EMACS_INT_MAX")
                 .blacklist_type("VAL_MAX")
-                //.blacklist_type("staticpro")
                 // this is wallpaper for a bug in bindgen, we don't lose much by it
                 // https://github.com/servo/rust-bindgen/issues/687
                 .blacklist_type("BOOL_VECTOR_BITS_PER_CHAR")
@@ -1182,9 +1181,6 @@ fn run_bindgen() {
                     .blacklist_type(".*IMAGE_LINENUMBER");
             }
 
-            //builder
-            //    .dump_preprocessed_input()
-            //    .expect("Unable to dump preprocessed bindings");
             let bindings = builder
                 .rustfmt_bindings(true)
                 .rustfmt_configuration_file(std::fs::canonicalize("rustfmt.toml").ok())
