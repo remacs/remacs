@@ -1919,7 +1919,7 @@ Another possibility is to check the environment variable
 to the version of the parent Emacs process, @xref{Interactive Shell, ,
 , emacs}.  @value{tramp} adds its own package version to this string,
 which could be used for further tests in an inferior shell.  The
-string of that environment variable loooks always like
+string of that environment variable looks always like
 
 @example
 @group
