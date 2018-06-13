@@ -1184,7 +1184,7 @@ This variable cannot be set in a Custom theme."
   :version "24.1")
 
 (defun load-theme (theme &optional no-confirm no-enable)
-  "Load Custom theme named THEME from its file.
+  "Load Custom theme named THEME from its file and possibly enable it.
 The theme file is named THEME-theme.el, in one of the directories
 specified by `custom-theme-load-path'.
 
@@ -1196,6 +1196,11 @@ prompting.
 Normally, this function also enables THEME.  If optional arg
 NO-ENABLE is non-nil, load the theme but don't enable it, unless
 the theme was already enabled.
+
+Note that enabling THEME does not disable any other
+already-enabled themes.  If THEME is enabled, it has the highest
+precedence (after `user') among enabled themes.  To disable other
+themes, use `disable-theme'.
 
 This function is normally called through Customize when setting
 `custom-enabled-themes'.  If used directly in your init file, it
@@ -1324,8 +1329,12 @@ variable `custom-known-themes'."
 (defun enable-theme (theme)
   "Reenable all variable and face settings defined by THEME.
 THEME should be either `user', or a theme loaded via `load-theme'.
+
 After this function completes, THEME will have the highest
-precedence (after `user')."
+precedence (after `user') among enabled themes.
+
+Note that any already-enabled themes remain enabled after this
+function runs.  To disable other themes, use `disable-theme'."
   (interactive (list (intern
 		      (completing-read
 		       "Enable custom theme: "
