@@ -209,11 +209,12 @@ the window system."
   (interactive "e")
   (unless (eq (car-safe event) 'focus-in)
     (error "handle-focus-in should handle focus-in events"))
-  (internal-handle-focus-in event)
   (let ((frame (nth 1 event)))
-    (setf (frame-parameter frame 'last-focus-update) t)
-  (run-hooks 'focus-in-hook)
-  (funcall after-focus-change-function)))
+    (when (frame-live-p frame)
+      (internal-handle-focus-in event)
+      (setf (frame-parameter frame 'last-focus-update) t)
+      (run-hooks 'focus-in-hook)))
+  (funcall after-focus-change-function))
 
 (defun handle-focus-out (event)
   "Handle a focus-out event.
@@ -225,9 +226,10 @@ that's not the whole story: see `after-focus-change-function'."
   (unless (eq (car event) 'focus-out)
     (error "handle-focus-out should handle focus-out events"))
   (let ((frame (nth 1 event)))
-    (setf (frame-parameter frame 'last-focus-update) nil)
-    (run-hooks 'focus-out-hook)
-    (funcall after-focus-change-function)))
+    (when (frame-live-p frame)
+      (setf (frame-parameter frame 'last-focus-update) nil)
+      (run-hooks 'focus-out-hook)))
+  (funcall after-focus-change-function))
 
 (defun handle-move-frame (event)
   "Handle a move-frame event.
