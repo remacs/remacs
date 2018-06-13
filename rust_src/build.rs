@@ -636,6 +636,8 @@ fn run_bindgen() {
             builder = builder.clang_args(processed_args);
             if cfg!(target_os = "windows") {
                 builder = builder.clang_arg("-I../nt/inc");
+                builder = builder.clang_arg("-Ic:\\Program Files\\LLVM\\lib\\clang\\6.0.0\\include");
+                builder = builder.clang_arg("-I../lwlib");
             }
 
             builder = builder.clang_arg("-Demacs")
@@ -682,14 +684,16 @@ fn run_bindgen() {
                 // bindgen fails to generate this one correctly; it's hard
                 // https://github.com/rust-lang-nursery/rust-bindgen/issues/1318
                 .blacklist_type("max_align_t")
-                // these enums are better as simple constants
+
+                // by default we want C enums to be converted into a Rust module with constants in it
+                .default_enum_style(bindgen::EnumVariation::ModuleConsts)
+
+                // enums with only one variant are better as simple constants
                 .constified_enum("EMACS_INT_WIDTH")
                 .constified_enum("BOOL_VECTOR_BITS_PER_CHAR")
                 .constified_enum("BITS_PER_BITS_WORD")
-                // these enums all meet the requirements to also be Rust enums (in theory). 90% of
-                // these are present in struct fields, return values, etc; we don't have much
-                // choice but to inspect each one or just hope that they're correct; guess which
-                // I've done?
+                
+                // TODO(db48x): verify that all of these enums meet Rust's requirements (primarily that they have no duplicate variants)
                 .rustified_enum("Arith_Comparison")
                 .rustified_enum("AtkCoordType")
                 .rustified_enum("AtkLayer")
@@ -1107,9 +1111,75 @@ fn run_bindgen() {
                 .rustified_enum("vertical_scroll_bar_type")
                 .rustified_enum("window_part")
                 .rustified_enum("x_display_info__bindgen_ty_1")
-                .rustified_enum("z_group")
-                // the others are either unchecked, or definitely would cause undefined behavior
-                .default_enum_style(bindgen::EnumVariation::ModuleConsts);
+                .rustified_enum("z_group");
+
+            if cfg!(target_os = "windows") {
+                builder = builder
+                    .rustified_enum("_SOCKET_SECURITY_PROTOCOL")
+                    .rustified_enum("_MULTICAST_MODE_TYPE")
+                    .rustified_enum("_ACL_INFORMATION_CLASS")
+                    .rustified_enum("ACTCTX_COMPATIBILITY_ELEMENT_TYPE")
+                    .rustified_enum("ACTCTX_REQUESTED_RUN_LEVEL")
+                    .rustified_enum("AUDIT_EVENT_TYPE")
+                    .rustified_enum("COMPARTMENT_ID")
+                    .rustified_enum("_COMPUTER_NAME_FORMAT")
+                    .rustified_enum("_DEP_SYSTEM_POLICY_TYPE")
+                    .rustified_enum("DEVICE_POWER_STATE")
+                    .rustified_enum("_FINDEX_INFO_LEVELS")
+                    .rustified_enum("_FINDEX_SEARCH_OPS")
+                    .rustified_enum("_GET_FILEEX_INFO_LEVELS")
+                    .rustified_enum("HARDWARE_COUNTER_TYPE")
+                    .rustified_enum("_HEAP_INFORMATION_CLASS")
+                    .rustified_enum("_JOBOBJECTINFOCLASS")
+                    .rustified_enum("_JOBOBJECT_RATE_CONTROL_TOLERANCE")
+                    .rustified_enum("_JOBOBJECT_RATE_CONTROL_TOLERANCE_INTERVAL")
+                    .rustified_enum("LATENCY_TIME")
+                    .rustified_enum("_LOGICAL_PROCESSOR_RELATIONSHIP")
+                    .rustified_enum("_MEMORY_RESOURCE_NOTIFICATION_TYPE")
+                    .rustified_enum("MULTICAST_MODE_TYPE")
+                    .rustified_enum("POWER_ACTION")
+                    .rustified_enum("POWER_MONITOR_REQUEST_REASON")
+                    .rustified_enum("POWER_USER_PRESENCE_TYPE")
+                    .rustified_enum("_PROCESSOR_CACHE_TYPE")
+                    .rustified_enum("RTL_UMS_SCHEDULER_REASON")
+                    .rustified_enum("_SC_ACTION_TYPE")
+                    .rustified_enum("_SC_ENUM_TYPE")
+                    .rustified_enum("SECURITY_IMPERSONATION_LEVEL")
+                    .rustified_enum("SOCKET_SECURITY_PROTOCOL")
+                    .rustified_enum("_STREAM_INFO_LEVELS")
+                    .rustified_enum("SYSTEM_POWER_CONDITION")
+                    .rustified_enum("SYSTEM_POWER_STATE")
+                    .rustified_enum("TOKEN_INFORMATION_CLASS")
+                    .rustified_enum("_TOKEN_TYPE")
+                    .rustified_enum("WELL_KNOWN_SID_TYPE")
+                    .rustified_enum("WSACOMPLETIONTYPE")
+                    .rustified_enum("WSAECOMPARATOR")
+                    .rustified_enum("WSAESETSERVICEOP")
+                    .rustified_enum("_AUDIT_EVENT_TYPE")
+                    .rustified_enum("_DEVICE_POWER_STATE")
+                    .rustified_enum("_FIRMWARE_TYPE")
+                    .rustified_enum("_HARDWARE_COUNTER_TYPE")
+                    .rustified_enum("_KTMOBJECT_TYPE")
+                    .rustified_enum("_MANDATORY_LEVEL")
+                    .rustified_enum("_MONITOR_DISPLAY_STATE")
+                    .rustified_enum("_POWER_PLATFORM_ROLE")
+                    .rustified_enum("_POWER_REQUEST_TYPE")
+                    .rustified_enum("_PROCESS_MITIGATION_POLICY")
+                    .rustified_enum("_RTL_UMS_SCHEDULER_REASON")
+                    .rustified_enum("_RTL_UMS_THREAD_INFO_CLASS")
+                    .rustified_enum("_SECURITY_IMPERSONATION_LEVEL")
+                    .rustified_enum("_SID_NAME_USE")
+                    .rustified_enum("_SYSTEM_POWER_STATE")
+                    .rustified_enum("_TOKEN_ELEVATION_TYPE")
+                    .rustified_enum("_TOKEN_INFORMATION_CLASS")
+                    .rustified_enum("_USER_ACTIVITY_PRESENCE")
+                    .rustified_enum("_WSACOMPLETIONTYPE")
+                    .rustified_enum("_WSAESETSERVICEOP")
+                    .rustified_enum("_WSAEcomparator")
+                    .blacklist_type(".*QOS_SD_MODE")
+                    .blacklist_type(".*QOS_SHAPING_RATE")
+                    .blacklist_type(".*IMAGE_LINENUMBER");
+            }
 
             //builder
             //    .dump_preprocessed_input()

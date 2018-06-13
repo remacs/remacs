@@ -14,8 +14,6 @@
 #include "coding.h"
 #include "commands.h"
 #include "composite.h"
-#include "config.h"
-#include "conf_post.h"
 #include "dispextern.h"
 #include "disptab.h"
 #include "dynlib.h"
