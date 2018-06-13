@@ -3551,6 +3551,8 @@ The reduced typing: @kbd{C-x C-f /xy @key{RET}}.
 
 @strong{Note} that file name cannot be edited here because the
 abbreviations are not expanded during editing in the minibuffer.
+Furthermore, the abbreviation is not expanded during @key{TAB}
+completion.
 
 @item
 Define own abbreviation (2):
