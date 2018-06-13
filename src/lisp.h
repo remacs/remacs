@@ -233,10 +233,6 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
 
 enum Lisp_Bits
   {
-    /* 2**GCTYPEBITS.  This must be a macro that expands to a literal
-       integer constant, for older versions of GCC (through at least 4.9).  */
-#define GCALIGNMENT 8
-
     /* Number of bits in a Lisp_Object value, not counting the tag.  */
     VALBITS = EMACS_INT_WIDTH - GCTYPEBITS,
 
@@ -246,10 +242,6 @@ enum Lisp_Bits
     /* Number of bits in a Lisp fixnum value, not counting the tag.  */
     FIXNUM_BITS = VALBITS + 1
   };
-
-#if GCALIGNMENT != 1 << GCTYPEBITS
-# error "GCALIGNMENT and GCTYPEBITS are inconsistent"
-#endif
 
 /* The maximum value that can be stored in a EMACS_INT, assuming all
    bits other than the type bits contribute to a nonnegative signed value.
@@ -277,11 +269,20 @@ DEFINE_GDB_SYMBOL_END (VALMASK)
 error !;
 #endif
 
+/* Minimum alignment requirement for Lisp objects, imposed by the
+   internal representation of tagged pointers.  It is 2**GCTYPEBITS if
+   USE_LSB_TAG, 1 otherwise.  It must be a literal integer constant,
+   for older versions of GCC (through at least 4.9).  */
 #if USE_LSB_TAG
-# define GCALIGNED_UNION char alignas (GCALIGNMENT) gcaligned;
+# define GCALIGNMENT 8
+# if GCALIGNMENT != 1 << GCTYPEBITS
+#  error "GCALIGNMENT and GCTYPEBITS are inconsistent"
+# endif
 #else
-# define GCALIGNED_UNION
+# define GCALIGNMENT 1
 #endif
+
+#define GCALIGNED_UNION char alignas (GCALIGNMENT) gcaligned;
 
 /* Lisp_Word is a scalar word suitable for holding a tagged pointer or
    integer.  Usually it is a pointer to a deliberately-incomplete type
@@ -774,7 +775,7 @@ struct Lisp_Symbol
     GCALIGNED_UNION
   } u;
 };
-verify (!USE_LSB_TAG || alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
+verify (alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
 
 /* Declare a Lisp-callable function.  The MAXARGS parameter has the same
    meaning as in the DEFUN macro, and is used to construct a prototype.  */
@@ -888,7 +889,7 @@ union vectorlike_header
     ptrdiff_t size;
     GCALIGNED_UNION
   };
-verify (!USE_LSB_TAG || alignof (union vectorlike_header) % GCALIGNMENT == 0);
+verify (alignof (union vectorlike_header) % GCALIGNMENT == 0);
 
 INLINE bool
 (SYMBOLP) (Lisp_Object x)
@@ -1249,7 +1250,7 @@ struct Lisp_Cons
     GCALIGNED_UNION
   } u;
 };
-verify (!USE_LSB_TAG || alignof (struct Lisp_Cons) % GCALIGNMENT == 0);
+verify (alignof (struct Lisp_Cons) % GCALIGNMENT == 0);
 
 INLINE bool
 (NILP) (Lisp_Object x)
@@ -1371,7 +1372,7 @@ struct Lisp_String
     GCALIGNED_UNION
   } u;
 };
-verify (!USE_LSB_TAG || alignof (struct Lisp_String) % GCALIGNMENT == 0);
+verify (alignof (struct Lisp_String) % GCALIGNMENT == 0);
 
 INLINE bool
 STRINGP (Lisp_Object x)

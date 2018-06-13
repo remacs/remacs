@@ -924,7 +924,7 @@ value_to_lisp_bits (emacs_value v)
      makes TAG_PTR faster.  */
 
   intptr_t i = (intptr_t) v;
-  EMACS_UINT tag = i & (GCALIGNMENT - 1);
+  EMACS_UINT tag = i & ((1 << GCTYPEBITS) - 1);
   EMACS_UINT untagged = i - tag;
   switch (tag)
     {

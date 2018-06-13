@@ -633,6 +633,27 @@ buffer_memory_full (ptrdiff_t nbytes)
 #define COMMON_MULTIPLE(a, b) \
   ((a) % (b) == 0 ? (a) : (b) % (a) == 0 ? (b) : (a) * (b))
 
+/* LISP_ALIGNMENT is the alignment of Lisp objects.  It must be at
+   least GCALIGNMENT so that pointers can be tagged.  It also must be
+   at least as strict as the alignment of all the C types used to
+   implement Lisp objects; since pseudovectors can contain any C type,
+   this is max_align_t.  On recent GNU/Linux x86 and x86-64 this can
+   often waste up to 8 bytes, since alignof (max_align_t) is 16 but
+   typical vectors need only an alignment of 8.  However, it is not
+   worth the hassle to avoid this waste.  */
+enum { LISP_ALIGNMENT = alignof (union { max_align_t x; GCALIGNED_UNION }) };
+verify (LISP_ALIGNMENT % GCALIGNMENT == 0);
+
+/* True if malloc (N) is known to return storage suitably aligned for
+   Lisp objects whenever N is a multiple of LISP_ALIGNMENT.  In
+   practice this is true whenever alignof (max_align_t) is also a
+   multiple of LISP_ALIGNMENT.  This works even for x86, where some
+   platform combinations (e.g., GCC 7 and later, glibc 2.25 and
+   earlier) have bugs where alignof (max_align_t) is 16 even though
+   the malloc alignment is only 8, and where Emacs still works because
+   it never does anything that requires an alignment of 16.  */
+enum { MALLOC_IS_LISP_ALIGNED = alignof (max_align_t) % LISP_ALIGNMENT == 0 };
+
 #ifndef XMALLOC_OVERRUN_CHECK
 #define XMALLOC_OVERRUN_CHECK_OVERHEAD 0
 #else
@@ -653,18 +674,13 @@ buffer_memory_full (ptrdiff_t nbytes)
 #define XMALLOC_OVERRUN_CHECK_OVERHEAD \
   (2 * XMALLOC_OVERRUN_CHECK_SIZE + XMALLOC_OVERRUN_SIZE_SIZE)
 
-#define XMALLOC_BASE_ALIGNMENT alignof (max_align_t)
-
-#define XMALLOC_HEADER_ALIGNMENT \
-   COMMON_MULTIPLE (GCALIGNMENT, XMALLOC_BASE_ALIGNMENT)
-
 /* Define XMALLOC_OVERRUN_SIZE_SIZE so that (1) it's large enough to
    hold a size_t value and (2) the header size is a multiple of the
    alignment that Emacs needs for C types and for USE_LSB_TAG.  */
 #define XMALLOC_OVERRUN_SIZE_SIZE				\
    (((XMALLOC_OVERRUN_CHECK_SIZE + sizeof (size_t)		\
-      + XMALLOC_HEADER_ALIGNMENT - 1)				\
-     / XMALLOC_HEADER_ALIGNMENT * XMALLOC_HEADER_ALIGNMENT)	\
+      + LISP_ALIGNMENT - 1)					\
+     / LISP_ALIGNMENT * LISP_ALIGNMENT)				\
     - XMALLOC_OVERRUN_CHECK_SIZE)
 
 static char const xmalloc_overrun_check_header[XMALLOC_OVERRUN_CHECK_SIZE] =
@@ -1165,9 +1181,11 @@ aligned_alloc (size_t alignment, size_t size)
      Verify this for all arguments this function is given.  */
   verify (BLOCK_ALIGN % sizeof (void *) == 0
 	  && POWER_OF_2 (BLOCK_ALIGN / sizeof (void *)));
-  verify (GCALIGNMENT % sizeof (void *) == 0
-	  && POWER_OF_2 (GCALIGNMENT / sizeof (void *)));
-  eassert (alignment == BLOCK_ALIGN || alignment == GCALIGNMENT);
+  verify (MALLOC_IS_LISP_ALIGNED
+	  || (LISP_ALIGNMENT % sizeof (void *) == 0
+	      && POWER_OF_2 (LISP_ALIGNMENT / sizeof (void *))));
+  eassert (alignment == BLOCK_ALIGN
+	   || (!MALLOC_IS_LISP_ALIGNED && alignment == LISP_ALIGNMENT));
 
   void *p;
   return posix_memalign (&p, alignment, size) == 0 ? p : 0;
@@ -1399,31 +1417,15 @@ lisp_align_free (void *block)
   MALLOC_UNBLOCK_INPUT;
 }
 
-#if !defined __GNUC__ && !defined __alignof__
-# define __alignof__(type) alignof (type)
-#endif
-
-/* True if malloc (N) is known to return a multiple of GCALIGNMENT
-   whenever N is also a multiple.  In practice this is true if
-   __alignof__ (max_align_t) is a multiple as well, assuming
-   GCALIGNMENT is 8; other values of GCALIGNMENT have not been looked
-   into.  Use __alignof__ if available, as otherwise
-   MALLOC_IS_GC_ALIGNED would be false on GCC x86 even though the
-   alignment is OK there.
-
-   This is a macro, not an enum constant, for portability to HP-UX
-   10.20 cc and AIX 3.2.5 xlc.  */
-#define MALLOC_IS_GC_ALIGNED \
-  (GCALIGNMENT == 8 && __alignof__ (max_align_t) % GCALIGNMENT == 0)
-
 /* True if a malloc-returned pointer P is suitably aligned for SIZE,
-   where Lisp alignment may be needed if SIZE is Lisp-aligned.  */
+   where Lisp object alignment may be needed if SIZE is a multiple of
+   LISP_ALIGNMENT.  */
 
 static bool
 laligned (void *p, size_t size)
 {
-  return (MALLOC_IS_GC_ALIGNED || (intptr_t) p % GCALIGNMENT == 0
-	  || size % GCALIGNMENT != 0);
+  return (MALLOC_IS_LISP_ALIGNED || (intptr_t) p % LISP_ALIGNMENT == 0
+	  || size % LISP_ALIGNMENT != 0);
 }
 
 /* Like malloc and realloc except that if SIZE is Lisp-aligned, make
@@ -1446,8 +1448,8 @@ static void *
 lmalloc (size_t size)
 {
 #ifdef USE_ALIGNED_ALLOC
-  if (! MALLOC_IS_GC_ALIGNED && size % GCALIGNMENT == 0)
-    return aligned_alloc (GCALIGNMENT, size);
+  if (! MALLOC_IS_LISP_ALIGNED && size % LISP_ALIGNMENT == 0)
+    return aligned_alloc (LISP_ALIGNMENT, size);
 #endif
 
   while (true)
@@ -1456,7 +1458,7 @@ lmalloc (size_t size)
       if (laligned (p, size))
 	return p;
       free (p);
-      size_t bigger = size + GCALIGNMENT;
+      size_t bigger = size + LISP_ALIGNMENT;
       if (size < bigger)
 	size = bigger;
     }
@@ -1470,7 +1472,7 @@ lrealloc (void *p, size_t size)
       p = realloc (p, size);
       if (laligned (p, size))
 	return p;
-      size_t bigger = size + GCALIGNMENT;
+      size_t bigger = size + LISP_ALIGNMENT;
       if (size < bigger)
 	size = bigger;
     }
@@ -2931,16 +2933,8 @@ set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
 
 #define VECTOR_BLOCK_SIZE 4096
 
-/* Alignment of struct Lisp_Vector objects.  Because pseudovectors
-   can contain any C type, align at least as strictly as
-   max_align_t.  On x86 and x86-64 this can waste up to 8 bytes
-   for typical vectors, since alignof (max_align_t) is 16 but
-   typical vectors need only an alignment of 8.  However, it is
-   not worth the hassle to avoid wasting those bytes.  */
-enum {vector_alignment = COMMON_MULTIPLE (alignof (max_align_t), GCALIGNMENT)};
-
 /* Vector size requests are a multiple of this.  */
-enum { roundup_size = COMMON_MULTIPLE (vector_alignment, word_size) };
+enum { roundup_size = COMMON_MULTIPLE (LISP_ALIGNMENT, word_size) };
 
 /* Verify assumptions described above.  */
 verify (VECTOR_BLOCK_SIZE % roundup_size == 0);
@@ -3007,7 +3001,7 @@ struct large_vector
 
 enum
 {
-  large_vector_offset = ROUNDUP (sizeof (struct large_vector), vector_alignment)
+  large_vector_offset = ROUNDUP (sizeof (struct large_vector), LISP_ALIGNMENT)
 };
 
 static struct Lisp_Vector *
@@ -3656,8 +3650,8 @@ Its value is void, and its function definition and property list are nil.  */)
 union aligned_Lisp_Misc
 {
   union Lisp_Misc m;
-  unsigned char c[(sizeof (union Lisp_Misc) + GCALIGNMENT - 1)
-		  & -GCALIGNMENT];
+  unsigned char c[(sizeof (union Lisp_Misc) + LISP_ALIGNMENT - 1)
+		  & -LISP_ALIGNMENT];
 };
 
 /* Allocation of markers and other objects that share that structure.
@@ -4851,14 +4845,16 @@ mark_maybe_object (Lisp_Object obj)
     }
 }
 
-/* Return true if P can point to Lisp data, and false otherwise.
+/* Return true if P might point to Lisp data that can be garbage
+   collected, and false otherwise (i.e., false if it is easy to see
+   that P cannot point to Lisp data that can be garbage collected).
    Symbols are implemented via offsets not pointers, but the offsets
-   are also multiples of GCALIGNMENT.  */
+   are also multiples of LISP_ALIGNMENT.  */
 
 static bool
 maybe_lisp_pointer (void *p)
 {
-  return (uintptr_t) p % GCALIGNMENT == 0;
+  return (uintptr_t) p % LISP_ALIGNMENT == 0;
 }
 
 #ifndef HAVE_MODULES
@@ -4887,7 +4883,7 @@ mark_maybe_pointer (void *p)
     {
       /* For the wide-int case, also mark emacs_value tagged pointers,
 	 which can be generated by emacs-module.c's value_to_lisp.  */
-      p = (void *) ((uintptr_t) p & ~(GCALIGNMENT - 1));
+      p = (void *) ((uintptr_t) p & ~((1 << GCTYPEBITS) - 1));
     }
 
   m = mem_find (p);
@@ -5358,7 +5354,7 @@ pure_alloc (size_t size, int type)
     {
       /* Allocate space for a Lisp object from the beginning of the free
 	 space with taking account of alignment.  */
-      result = pointer_align (purebeg + pure_bytes_used_lisp, GCALIGNMENT);
+      result = pointer_align (purebeg + pure_bytes_used_lisp, LISP_ALIGNMENT);
       pure_bytes_used_lisp = ((char *)result - (char *)purebeg) + size;
     }
   else
