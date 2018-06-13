@@ -1090,12 +1090,10 @@ Matches if @var{expval} is a vector of length @var{m} whose
 
 @item @var{symbol}
 @itemx @var{keyword}
-@itemx @var{integer}
+@itemx @var{number}
 @itemx @var{string}
 Matches if the corresponding element of @var{expval} is
 @code{equal} to the specified literal object.
-Note that, aside from @var{symbol}, this is the same set of
-self-quoting literal objects that are acceptable as a core pattern.
 
 @item ,@var{pattern}
 Matches if the corresponding element of @var{expval}

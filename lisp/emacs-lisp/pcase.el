@@ -919,7 +919,7 @@ QPAT can take the following forms:
   ,PAT                  matches if the `pcase' pattern PAT matches.
   SYMBOL                matches if EXPVAL is `equal' to SYMBOL.
   KEYWORD               likewise for KEYWORD.
-  INTEGER               likewise for INTEGER.
+  NUMBER                likewise for NUMBER.
   STRING                likewise for STRING.
 
 The list or vector QPAT is a template.  The predicate formed
@@ -949,7 +949,10 @@ The predicate is the logical-AND of:
     `(and (pred consp)
           (app car ,(list '\` (car qpat)))
           (app cdr ,(list '\` (cdr qpat)))))
-   ((or (stringp qpat) (integerp qpat) (symbolp qpat)) `',qpat)
+   ((or (stringp qpat) (numberp qpat) (symbolp qpat)) `',qpat)
+   ;; In all other cases just raise an error so we can't break
+   ;; backward compatibility when adding \` support for other
+   ;; compounded values that are not `consp'
    (t (error "Unknown QPAT: %S" qpat))))
 
 (provide 'pcase)
