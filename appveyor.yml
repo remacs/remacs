@@ -4,12 +4,12 @@ environment:
   matrix:
     - TARGET: x86_64-pc-windows-gnu
 
-image: Visual Studio 2015
+image: Visual Studio 2017
 
 # Install Rust and Cargo
 # (Based on from https://github.com/rust-lang/libc/blob/master/appveyor.yml)
 install:
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" /clean_env
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxillary\Build\vcvarsall.bat" /clean_env
   - set /p REMACS_RUST_VERSION=<rust-toolchain
   - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
   - rustup-init.exe --default-host %TARGET% --default-toolchain %REMACS_RUST_VERSION% -y
