@@ -636,7 +636,8 @@ fn run_bindgen() {
             builder = builder.clang_args(processed_args);
             if cfg!(target_os = "windows") {
                 builder = builder.clang_arg("-I../nt/inc");
-                builder = builder.clang_arg("-Ic:\\Program Files\\LLVM\\lib\\clang\\6.0.0\\include");
+                builder =
+                    builder.clang_arg("-Ic:\\Program Files\\LLVM\\lib\\clang\\6.0.0\\include");
                 builder = builder.clang_arg("-I../lwlib");
             }
 
@@ -692,7 +693,7 @@ fn run_bindgen() {
                 .constified_enum("EMACS_INT_WIDTH")
                 .constified_enum("BOOL_VECTOR_BITS_PER_CHAR")
                 .constified_enum("BITS_PER_BITS_WORD")
-                
+
                 // TODO(db48x): verify that all of these enums meet Rust's requirements (primarily that they have no duplicate variants)
                 .rustified_enum("Arith_Comparison")
                 .rustified_enum("AtkCoordType")

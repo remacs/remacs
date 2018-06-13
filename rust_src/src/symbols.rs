@@ -4,7 +4,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
 use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
                  make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
-                 swap_in_symval_forwarding, symbol_redirect, symbol_trapped_write, symbol_interned};
+                 swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
 use remacs_sys::Fset;
 use remacs_sys::Lisp_Symbol;
 
@@ -37,15 +37,15 @@ impl LispSymbolRef {
         self.function = function.to_raw();
     }
 
-    pub fn is_interned_in_initial_obarray(mut self) -> bool {
+    pub fn is_interned_in_initial_obarray(self) -> bool {
         self.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
     }
 
-    pub fn is_alias(mut self) -> bool {
+    pub fn is_alias(self) -> bool {
         self.redirect() == symbol_redirect::SYMBOL_VARALIAS
     }
 
-    pub fn is_constant(mut self) -> bool {
+    pub fn is_constant(self) -> bool {
         self.trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
     }
 
