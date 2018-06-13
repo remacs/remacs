@@ -3550,8 +3550,7 @@ Abbreviation list expansion can be used to reduce typing long file names:
 The reduced typing: @kbd{C-x C-f /xy @key{RET}}.
 
 @strong{Note} that file name cannot be edited here because the
-environment variables are not expanded during editing in the
-minibuffer.
+abbreviations are not expanded during editing in the minibuffer.
 
 @item
 Define own abbreviation (2):
