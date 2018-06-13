@@ -10,9 +10,8 @@ use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handl
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
                  Qvoid_variable};
-use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, fget_buffer_list,
-                 fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
-                 last_per_buffer_idx, set_buffer_internal};
+use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, globals,
+                 last_per_buffer_idx, set_buffer_internal_1};
 
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
@@ -73,7 +72,7 @@ impl LispBufferRef {
     }
 
     pub fn is_read_only(&self) -> bool {
-        self.read_only.into()
+        self.read_only_.into()
     }
 
     #[inline]
@@ -189,38 +188,38 @@ impl LispBufferRef {
 
     #[inline]
     pub fn mark_active(self) -> LispObject {
-        self.mark_active
+        self.mark_active_
     }
 
     #[inline]
     pub fn pt_marker(self) -> LispObject {
-        self.pt_marker
+        self.pt_marker_
     }
 
     #[inline]
     pub fn begv_marker(self) -> LispObject {
-        self.begv_marker
+        self.begv_marker_
     }
 
     #[inline]
     pub fn zv_marker(self) -> LispObject {
-        self.zv_marker
+        self.zv_marker_
     }
 
     #[inline]
     pub fn mark(self) -> LispObject {
-        self.mark
+        self.mark_
     }
 
     #[allow(dead_code)]
     #[inline]
     pub fn name(self) -> LispObject {
-        self.name
+        self.name_
     }
 
     #[inline]
     pub fn filename(self) -> LispObject {
-        self.filename
+        self.filename_
     }
 
     #[inline]
@@ -230,17 +229,17 @@ impl LispBufferRef {
 
     #[inline]
     pub fn truename(self) -> LispObject {
-        self.file_truename
+        self.file_truename_
     }
 
     pub fn case_fold_search(self) -> LispObject {
-        self.case_fold_search
+        self.case_fold_search_
     }
 
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
-        self.name.is_not_nil()
+        self.name_.is_not_nil()
     }
 
     #[inline]
@@ -282,17 +281,27 @@ impl LispBufferRef {
 
     #[inline]
     pub fn multibyte_characters_enabled(self) -> bool {
-        self.enable_multibyte_characters.is_not_nil()
+        self.enable_multibyte_characters_.is_not_nil()
     }
 
     #[inline]
     pub fn overlays_before(&self) -> Option<LispOverlayRef> {
-        LispOverlayRef::from_ptr(unsafe { bget_overlays_before(self.as_ptr()) })
+        let p = unsafe { bget_overlays_before(self.as_ptr()) };
+        if p == ptr::null_mut() {
+            None
+        } else {
+            Some(ExternalPtr::new(p))
+        }
     }
 
     #[inline]
     pub fn overlays_after(&self) -> Option<LispOverlayRef> {
-        LispOverlayRef::from_ptr(unsafe { bget_overlays_after(self.as_ptr()) })
+        let p = unsafe { bget_overlays_after(self.as_ptr()) };
+        if p == ptr::null_mut() {
+            None
+        } else {
+            Some(ExternalPtr::new(p))
+        }
     }
 
     #[inline]
@@ -315,16 +324,16 @@ impl LispBufferRef {
 
     #[inline]
     pub fn set_syntax_table(&mut self, table: LispCharTableRef) {
-        self.syntax_table = LispObject::from(table).to_raw();
+        self.syntax_table_ = LispObject::from(table).to_raw();
     }
 
     /// Set whether per-buffer variable with index IDX has a buffer-local
     /// value in buffer.  VAL zero means it does't.
     // Similar to SET_PER_BUFFER_VALUE_P macro in C
     #[inline]
-    pub fn set_per_buffer_value_p(&mut self, idx: usize, val: c_uchar) {
+    pub fn set_per_buffer_value_p(&mut self, idx: usize, val: libc::c_char) {
         unsafe {
-            if idx >= last_per_buffer_idx {
+            if idx >= last_per_buffer_idx as usize {
                 panic!(
                     "set_per_buffer_value_p called with index greater than {}",
                     last_per_buffer_idx
@@ -402,11 +411,11 @@ pub type LispBufferLocalValueRef = ExternalPtr<Lisp_Buffer_Local_Value>;
 
 impl LispBufferLocalValueRef {
     pub fn get_fwd(self) -> *const Lisp_Fwd {
-        unsafe { get_blv_fwd(self.as_ptr()) }
+        self.fwd
     }
 
     pub fn get_value(self) -> LispObject {
-        unsafe { get_blv_value(self.as_ptr()) }
+        self.valcell.as_cons_or_error().cdr()
     }
 }
 
@@ -425,8 +434,8 @@ pub fn buffer_list(frame: LispObject) -> LispObject {
         None => Flist(buffers.len() as isize, buffers.as_mut_ptr()),
 
         Some(frame) => unsafe {
-            let framelist = Fcopy_sequence(fget_buffer_list(frame.as_ptr()));
-            let prevlist = Fnreverse(Fcopy_sequence(fget_buried_buffer_list(frame.as_ptr())));
+            let framelist = Fcopy_sequence(frame.buffer_list);
+            let prevlist = Fnreverse(Fcopy_sequence(frame.buried_buffer_list));
 
             // Remove any buffer that duplicates one in
             // FRAMELIST or PREVLIST.
@@ -499,7 +508,7 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
         buffer.as_buffer_or_error()
     };
 
-    buf.filename
+    buf.filename_
 }
 
 /// Return t if BUFFER was modified since its file was last read or saved.
@@ -515,7 +524,7 @@ pub fn buffer_modified_p(buffer: LispObject) -> bool {
 /// Return nil if BUFFER has been killed.
 #[lisp_fn(min = "0")]
 pub fn buffer_name(buffer: LispObject) -> LispObject {
-    buffer.as_buffer_or_current_buffer().name
+    buffer.as_buffer_or_current_buffer().name_
 }
 
 /// Return BUFFER's tick counter, incremented for each change in text.
@@ -610,7 +619,7 @@ pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     if !buf.is_live() {
         error!("Selecting deleted buffer");
     };
-    unsafe { set_buffer_internal(buf.as_mut()) };
+    unsafe { set_buffer_internal_1(buf.as_mut()) };
     buffer
 }
 
@@ -797,7 +806,7 @@ pub extern "C" fn rust_syms_of_buffer() {
     /// Analogous to `mode-line-format', but controls the header line.
     /// The header line appears, optionally, at the top of a window;
     /// the mode line appears at the bottom.
-    defvar_per_buffer!(header_line_format, "header-line-format", Qnil);
+    defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

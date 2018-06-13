@@ -19,7 +19,7 @@ pub fn category_table_p(arg: LispObject) -> bool {
 #[lisp_fn]
 pub fn category_table() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
-    buffer_ref.category_table
+    buffer_ref.category_table_
 }
 
 include!(concat!(env!("OUT_DIR"), "/category_exports.rs"));

@@ -3,7 +3,7 @@ use remacs_macros::lisp_fn;
 
 use lisp::LispObject;
 use lisp::defsubr;
-use remacs_sys::{casify_object, CaseAction};
+use remacs_sys::{case_action, casify_object};
 
 /// Convert argument to capitalized form and return that.
 /// This means that each word's first character is converted to either
@@ -14,7 +14,7 @@ use remacs_sys::{casify_object, CaseAction};
 /// cased, e.g. ﬁ, are returned unchanged.
 #[lisp_fn]
 pub fn capitalize(object: LispObject) -> LispObject {
-    unsafe { casify_object(CaseAction::CaseCapitalize, object) }
+    unsafe { casify_object(case_action::CASE_CAPITALIZE, object) }
 }
 
 /// Convert argument to lower case and return that.
@@ -22,7 +22,7 @@ pub fn capitalize(object: LispObject) -> LispObject {
 /// The argument object is not altered--the value is a copy.
 #[lisp_fn]
 pub fn downcase(object: LispObject) -> LispObject {
-    unsafe { casify_object(CaseAction::CaseDown, object) }
+    unsafe { casify_object(case_action::CASE_DOWN, object) }
 }
 
 /// Convert argument to upper case and return that.
@@ -33,7 +33,7 @@ pub fn downcase(object: LispObject) -> LispObject {
 /// See also `capitalize', `downcase' and `upcase-initials'.
 #[lisp_fn]
 pub fn upcase(object: LispObject) -> LispObject {
-    unsafe { casify_object(CaseAction::CaseUp, object) }
+    unsafe { casify_object(case_action::CASE_UP, object) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/casefiddle_exports.rs"));

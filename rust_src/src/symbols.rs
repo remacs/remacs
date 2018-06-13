@@ -2,12 +2,9 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
-use remacs_sys::{symbol_redirect, SYMBOL_FORWARDED, SYMBOL_LOCALIZED, SYMBOL_PLAINVAL,
-                 SYMBOL_VARALIAS};
 use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
                  make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
-                 swap_in_symval_forwarding, symbol_is_alias, symbol_is_constant,
-                 symbol_is_interned};
+                 swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
 use remacs_sys::Fset;
 use remacs_sys::Lisp_Symbol;
 
@@ -41,15 +38,15 @@ impl LispSymbolRef {
     }
 
     pub fn is_interned_in_initial_obarray(self) -> bool {
-        unsafe { symbol_is_interned(self.as_ptr()) }
+        self.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
     }
 
     pub fn is_alias(self) -> bool {
-        unsafe { symbol_is_alias(self.as_ptr()) }
+        self.redirect() == symbol_redirect::SYMBOL_VARALIAS
     }
 
     pub fn is_constant(self) -> bool {
-        unsafe { symbol_is_constant(self.as_ptr()) }
+        self.trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
     }
 
     pub fn get_alias(self) -> LispSymbolRef {
@@ -106,8 +103,8 @@ impl LispSymbolRef {
         unsafe { get_symbol_redirect(self.as_ptr()) }
     }
 
-    pub fn set_redirect(self, v: symbol_redirect) {
-        unsafe { set_symbol_redirect(self.as_ptr(), v) }
+    pub fn set_redirect(mut self, v: symbol_redirect) {
+        unsafe { set_symbol_redirect(self.as_mut(), v) }
     }
 
     pub fn get_value(self) -> LispObject {
@@ -123,7 +120,7 @@ impl LispSymbolRef {
     }
 
     pub fn set_fwd(mut self, fwd: *mut Lisp_Fwd) {
-        assert!(self.get_redirect() == SYMBOL_FORWARDED && !fwd.is_null());
+        assert!(self.get_redirect() == symbol_redirect::SYMBOL_FORWARDED && !fwd.is_null());
         self.val.fwd = fwd;
     }
 
@@ -174,13 +171,13 @@ pub fn symbol_name(symbol: LispSymbolRef) -> LispObject {
 /// global value outside of any lexical scope.
 #[lisp_fn]
 pub fn boundp(mut symbol: LispSymbolRef) -> bool {
-    while symbol.get_redirect() == SYMBOL_VARALIAS {
+    while symbol.get_redirect() == symbol_redirect::SYMBOL_VARALIAS {
         symbol = symbol.get_indirect_variable();
     }
 
     let valcontents = match symbol.get_redirect() {
-        SYMBOL_PLAINVAL => symbol.get_value(),
-        SYMBOL_LOCALIZED => {
+        symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+        symbol_redirect::SYMBOL_LOCALIZED => {
             let mut blv = symbol.get_blv();
             if blv.get_fwd().is_null() {
                 unsafe {
@@ -193,7 +190,7 @@ pub fn boundp(mut symbol: LispSymbolRef) -> bool {
                 return true;
             }
         }
-        SYMBOL_FORWARDED => {
+        symbol_redirect::SYMBOL_FORWARDED => {
             // In set_internal, we un-forward vars when their value is
             // set to Qunbound.
             return true;

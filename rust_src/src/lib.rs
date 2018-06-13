@@ -8,6 +8,8 @@
 #![allow(private_no_mangle_fns)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 #![allow(improper_ctypes)] // we need this to be able to inclde FieldOffsets in C structs
+// we have a bunch of unused code during testing at the moment, somehow
+#![cfg_attr(test, allow(unused))]
 #![feature(proc_macro)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 #![feature(global_allocator)]
@@ -15,6 +17,7 @@
 #![feature(stmt_expr_attributes)]
 #![feature(repr_transparent)]
 #![feature(untagged_unions)]
+#![feature(never_type)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -35,9 +38,6 @@ extern crate alloc_unexecmacosx;
 // Needed for linking.
 extern crate remacs_lib;
 extern crate remacs_macros;
-
-#[cfg(test)]
-extern crate mock_derive;
 
 #[cfg(test)]
 #[macro_use]
@@ -104,6 +104,7 @@ use alloc_unexecmacosx::OsxUnexecAlloc;
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
+#[cfg(not(test))]
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]

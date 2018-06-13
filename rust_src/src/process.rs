@@ -1,4 +1,5 @@
 //! Functions operating on process.
+use libc;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
@@ -241,15 +242,15 @@ pub fn process_status(process: LispObject) -> LispObject {
     if p.is_nil() {
         return p;
     }
-    let p_ref = p.as_process_or_error();
+    let mut p_ref = p.as_process_or_error();
     if p_ref.raw_status_new() {
-        unsafe { update_status(p_ref.as_ptr()) };
+        unsafe { update_status(p_ref.as_mut()) };
     }
     let mut status = p_ref.status;
     if let Some(c) = status.as_cons() {
         status = c.car();
     };
-    let process_type = p_ref.process_type;
+    let process_type = p_ref.type_;
     if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
         let process_command = p_ref.command;
         if status.eq(Qexit) {
@@ -272,7 +273,7 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
         buffer.as_buffer_or_error();
     }
     p_ref.set_buffer(buffer);
-    let process_type = p_ref.process_type;
+    let process_type = p_ref.type_;
     if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
         let childp = p_ref.childp;
         p_ref.set_childp(plist_put(childp, QCbuffer, buffer));
@@ -291,7 +292,7 @@ pub fn set_process_sentinel(process: LispObject, mut sentinel: LispObject) -> Li
         sentinel = Qinternal_default_process_sentinel;
     }
     unsafe { pset_sentinel(p_ref.as_mut(), sentinel) }
-    let process_type = p_ref.process_type;
+    let process_type = p_ref.type_;
     let netconn1_p = process_type.eq(Qnetwork);
     let serialconn1_p = process_type.eq(Qserial);
     let pipeconn1_p = process_type.eq(Qpipe);
@@ -313,12 +314,12 @@ pub fn set_process_sentinel(process: LispObject, mut sentinel: LispObject) -> Li
 /// If PROCESS is a non-blocking network process that hasn't been fully
 /// set up yet, this function will block until socket setup has completed.
 #[lisp_fn]
-pub fn process_send_string(process: LispObject, string: LispStringRef) -> () {
+pub fn process_send_string(process: LispObject, mut string: LispStringRef) -> () {
     unsafe {
         send_process(
             cget_process(process.to_raw()),
-            string.data,
-            STRING_BYTES(string.as_ptr()),
+            string.data as *mut libc::c_char,
+            STRING_BYTES(string.as_mut()),
             string.as_lisp_obj().to_raw(),
         )
     };
@@ -360,9 +361,9 @@ pub fn process_inherit_coding_system_flag(process: LispProcessRef) -> bool {
 /// Return the exit status of PROCESS or the signal number that killed it.
 /// If PROCESS has not yet exited or died, return 0.
 #[lisp_fn]
-pub fn process_exit_status(process: LispProcessRef) -> LispObject {
+pub fn process_exit_status(mut process: LispProcessRef) -> LispObject {
     if process.raw_status_new() {
-        unsafe { update_status(process.as_ptr()) };
+        unsafe { update_status(process.as_mut()) };
     }
     let status = process.status;
     status
