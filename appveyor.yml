@@ -9,9 +9,6 @@ image: Visual Studio 2017
 # Install Rust and Cargo
 # (Based on from https://github.com/rust-lang/libc/blob/master/appveyor.yml)
 install:
-  - set LIB=
-  - set LIBPATH=
-  - set INCLUDE=
   - set /p REMACS_RUST_VERSION=<rust-toolchain
   - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
   - rustup-init.exe --default-host %TARGET% --default-toolchain %REMACS_RUST_VERSION% -y
@@ -39,7 +36,7 @@ build: false
 # Equivalent to Travis's `script` phase
 test_script:
   - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && ./autogen.sh"
-  - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
+  - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && INCLUDE= LIBS= LIBPATH= PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
   - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && make"
   - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && make check"
 
