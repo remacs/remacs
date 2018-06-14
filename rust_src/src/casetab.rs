@@ -10,10 +10,12 @@ use remacs_sys::Qcase_table;
 pub fn case_table_p(object: LispObject) -> bool {
     let char_table = match object.as_char_table() {
         Some(ct) => ct,
-        None => { return false; }
+        None => {
+            return false;
+        }
     };
 
-    if ! eq(char_table.purpose, Qcase_table) {
+    if !eq(char_table.purpose, Qcase_table) {
         return false;
     }
 
@@ -22,13 +24,13 @@ pub fn case_table_p(object: LispObject) -> bool {
     let canon = extras[1];
     let eqv = extras[2];
 
-    (up.is_nil() || up.is_char_table()) &&
-        ((canon.is_nil() && eqv.is_nil()) ||
-         (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
+    (up.is_nil() || up.is_char_table())
+        && ((canon.is_nil() && eqv.is_nil())
+            || (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
 }
 
 #[no_mangle]
-pub extern "C" fn rust_syms_of_casetab(){
+pub extern "C" fn rust_syms_of_casetab() {
     def_lisp_sym!(Qcase_table_p, "case-table-p");
 }
 
