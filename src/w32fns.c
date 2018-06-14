@@ -6296,7 +6296,7 @@ w32_monitor_enum (HMONITOR monitor, HDC hdc, RECT *rcMonitor, LPARAM dwData)
 {
   Lisp_Object *monitor_list = (Lisp_Object *) dwData;
 
-  *monitor_list = Fcons (make_save_ptr (monitor), *monitor_list);
+  *monitor_list = Fcons (make_mint_ptr (monitor), *monitor_list);
 
   return TRUE;
 }
@@ -6325,7 +6325,7 @@ w32_display_monitor_attributes_list (void)
   monitors = xmalloc (n_monitors * sizeof (*monitors));
   for (i = 0; i < n_monitors; i++)
     {
-      monitors[i] = XSAVE_POINTER (XCAR (monitor_list), 0);
+      monitors[i] = xmint_pointer (XCAR (monitor_list));
       monitor_list = XCDR (monitor_list);
     }
 

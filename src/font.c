@@ -1897,11 +1897,11 @@ otf_open (Lisp_Object file)
   OTF *otf;
 
   if (! NILP (val))
-    otf = XSAVE_POINTER (XCDR (val), 0);
+    otf = xmint_pointer (XCDR (val));
   else
     {
       otf = STRINGP (file) ? OTF_open (SSDATA (file)) : NULL;
-      val = make_save_ptr (otf);
+      val = make_mint_ptr (otf);
       otf_list = Fcons (Fcons (file, val), otf_list);
     }
   return otf;
@@ -3632,10 +3632,10 @@ font_put_frame_data (struct frame *f, Lisp_Object driver, void *data)
   else
     {
       if (NILP (val))
-	fset_font_data (f, Fcons (Fcons (driver, make_save_ptr (data)),
+	fset_font_data (f, Fcons (Fcons (driver, make_mint_ptr (data)),
 				  f->font_data));
       else
-	XSETCDR (val, make_save_ptr (data));
+	XSETCDR (val, make_mint_ptr (data));
     }
 }
 
@@ -3644,7 +3644,7 @@ font_get_frame_data (struct frame *f, Lisp_Object driver)
 {
   Lisp_Object val = assq_no_quit (driver, f->font_data);
 
-  return NILP (val) ? NULL : XSAVE_POINTER (XCDR (val), 0);
+  return NILP (val) ? NULL : xmint_pointer (XCDR (val));
 }
 
 #endif /* HAVE_XFT || HAVE_FREETYPE */

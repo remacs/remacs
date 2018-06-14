@@ -1019,9 +1019,9 @@ struct x_output
 #define FRAME_FONT(f) ((f)->output_data.ns->font)
 
 #ifdef __OBJC__
-#define XNS_SCROLL_BAR(vec) ((id) XSAVE_POINTER (vec, 0))
+#define XNS_SCROLL_BAR(vec) ((id) xmint_pointer (vec))
 #else
-#define XNS_SCROLL_BAR(vec) XSAVE_POINTER (vec, 0)
+#define XNS_SCROLL_BAR(vec) xmint_pointer (vec)
 #endif
 
 /* Compute pixel height of the frame's titlebar.  */

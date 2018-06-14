@@ -943,8 +943,8 @@ macfont_invalidate_family_cache (void)
 	  {
 	    Lisp_Object value = HASH_VALUE (h, i);
 
-	    if (SAVE_VALUEP (value))
-	      CFRelease (XSAVE_POINTER (value, 0));
+	    if (mint_ptrp (value))
+	      CFRelease (xmint_pointer (value));
 	  }
       macfont_family_cache = Qnil;
     }
@@ -962,7 +962,7 @@ macfont_get_family_cache_if_present (Lisp_Object symbol, CFStringRef *string)
 	{
 	  Lisp_Object value = HASH_VALUE (h, i);
 
-	  *string = SAVE_VALUEP (value) ? XSAVE_POINTER (value, 0) : NULL;
+	  *string = mint_ptrp (value) ? xmint_pointer (value) : NULL;
 
 	  return true;
 	}
@@ -984,13 +984,13 @@ macfont_set_family_cache (Lisp_Object symbol, CFStringRef string)
 
   h = XHASH_TABLE (macfont_family_cache);
   i = hash_lookup (h, symbol, &hash);
-  value = string ? make_save_ptr ((void *) CFRetain (string)) : Qnil;
+  value = string ? make_mint_ptr (CFRetain (string)) : Qnil;
   if (i >= 0)
     {
       Lisp_Object old_value = HASH_VALUE (h, i);
 
-      if (SAVE_VALUEP (old_value))
-	CFRelease (XSAVE_POINTER (old_value, 0));
+      if (mint_ptrp (old_value))
+	CFRelease (xmint_pointer (old_value));
       set_hash_value_slot (h, i, value);
     }
   else

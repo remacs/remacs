@@ -4819,7 +4819,7 @@ ns_set_vertical_scroll_bar (struct window *window,
 	ns_clear_frame_area (f, left, top, width, height);
 
       bar = [[EmacsScroller alloc] initFrame: r window: win];
-      wset_vertical_scroll_bar (window, make_save_ptr (bar));
+      wset_vertical_scroll_bar (window, make_mint_ptr (bar));
       update_p = YES;
     }
   else
@@ -4898,7 +4898,7 @@ ns_set_horizontal_scroll_bar (struct window *window,
 	ns_clear_frame_area (f, left, top, width, height);
 
       bar = [[EmacsScroller alloc] initFrame: r window: win];
-      wset_horizontal_scroll_bar (window, make_save_ptr (bar));
+      wset_horizontal_scroll_bar (window, make_mint_ptr (bar));
       update_p = YES;
     }
   else
