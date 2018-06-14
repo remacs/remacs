@@ -3362,20 +3362,27 @@ decide_coding_unwind (Lisp_Object unwind_data)
   bset_undo_list (current_buffer, undo_list);
 }
 
-/* Read from a non-regular file.  STATE is a Lisp_Save_Value
-   object where slot 0 is the file descriptor, slot 1 specifies
-   an offset to put the read bytes, and slot 2 is the maximum
-   amount of bytes to read.  Value is the number of bytes read.  */
+/* Read from a non-regular file.  Return the number of bytes read.  */
+
+union read_non_regular
+{
+  struct
+  {
+    int fd;
+    ptrdiff_t inserted, trytry;
+  } s;
+  GCALIGNED_UNION
+};
+verify (alignof (union read_non_regular) % GCALIGNMENT == 0);
 
 static Lisp_Object
 read_non_regular (Lisp_Object state)
 {
-  int nbytes = emacs_read_quit (XSAVE_INTEGER (state, 0),
+  union read_non_regular *data = XINTPTR (state);
+  int nbytes = emacs_read_quit (data->s.fd,
 				((char *) BEG_ADDR + PT_BYTE - BEG_BYTE
-				 + XSAVE_INTEGER (state, 1)),
-				XSAVE_INTEGER (state, 2));
-  /* Fast recycle this object for the likely next call.  */
-  free_misc (state);
+				 + data->s.inserted),
+				data->s.trytry);
   return make_number (nbytes);
 }
 
@@ -4230,9 +4237,9 @@ by calling `format-decode', which see.  */)
 	    /* Read from the file, capturing `quit'.  When an
 	       error occurs, end the loop, and arrange for a quit
 	       to be signaled after decoding the text we read.  */
+	    union read_non_regular data = {{fd, inserted, trytry}};
 	    nbytes = internal_condition_case_1
-	      (read_non_regular,
-	       make_save_int_int_int (fd, inserted, trytry),
+	      (read_non_regular, make_pointer_integer (&data),
 	       Qerror, read_non_regular_quit);
 
 	    if (NILP (nbytes))
