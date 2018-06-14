@@ -908,7 +908,7 @@ macfont_descriptor_entity (CTFontDescriptorRef desc, Lisp_Object extra,
   ASET (entity, FONT_EXTRA_INDEX, Fcopy_sequence (extra));
   name = CTFontDescriptorCopyAttribute (desc, kCTFontNameAttribute);
   font_put_extra (entity, QCfont_entity,
-                  make_save_ptr_int ((void *) name, sym_traits));
+		  Fcons (make_mint_ptr (name), make_number (traits)));
   if (synth_sym_traits & kCTFontTraitItalic)
     FONT_SET_STYLE (entity, FONT_SLANT_INDEX,
                     make_number (FONT_SLANT_SYNTHETIC_ITALIC));
@@ -2505,7 +2505,7 @@ macfont_free_entity (Lisp_Object entity)
 {
   Lisp_Object val = assq_no_quit (QCfont_entity,
                                   AREF (entity, FONT_EXTRA_INDEX));
-  CFStringRef name = XSAVE_POINTER (XCDR (val), 0);
+  CFStringRef name = xmint_pointer (XCAR (XCDR (val)));
 
   block_input ();
   CFRelease (name);
@@ -2528,11 +2528,10 @@ macfont_open (struct frame * f, Lisp_Object entity, int pixel_size)
 
   val = assq_no_quit (QCfont_entity, AREF (entity, FONT_EXTRA_INDEX));
   if (! CONSP (val)
-      || XTYPE (XCDR (val)) != Lisp_Misc
-      || XMISCTYPE (XCDR (val)) != Lisp_Misc_Save_Value)
+      || ! CONSP (XCDR (val)))
     return Qnil;
-  font_name = XSAVE_POINTER (XCDR (val), 0);
-  sym_traits = XSAVE_INTEGER (XCDR (val), 1);
+  font_name = xmint_pointer (XCAR (XCDR (val)));
+  sym_traits = XINT (XCDR (XCDR (val)));
 
   size = XINT (AREF (entity, FONT_SIZE_INDEX));
   if (size == 0)
@@ -2711,7 +2710,7 @@ macfont_has_char (Lisp_Object font, int c)
 
       val = assq_no_quit (QCfont_entity, AREF (font, FONT_EXTRA_INDEX));
       val = XCDR (val);
-      name = XSAVE_POINTER (val, 0);
+      name = xmint_pointer (XCAR (val));
       charset = macfont_get_cf_charset_for_name (name);
     }
   else
