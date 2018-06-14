@@ -1167,15 +1167,11 @@ module_handle_throw (emacs_env *env, Lisp_Object tag_val)
 void
 init_module_assertions (bool enable)
 {
+  /* If enabling module assertions, use a hidden environment for
+     storing the globals.  This environment is never freed.  */
   module_assertions = enable;
   if (enable)
-    {
-      /* We use a hidden environment for storing the globals.  This
-         environment is never freed.  */
-      emacs_env env;
-      global_env = initialize_environment (&env, &global_env_private);
-      eassert (global_env != &env);
-    }
+    global_env = initialize_environment (NULL, &global_env_private);
 }
 
 static _Noreturn void
