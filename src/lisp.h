@@ -3188,6 +3188,7 @@ enum specbind_tag {
   SPECPDL_UNWIND,		/* An unwind_protect function on Lisp_Object.  */
   SPECPDL_UNWIND_PTR,		/* Likewise, on void *.  */
   SPECPDL_UNWIND_INT,		/* Likewise, on int.  */
+  SPECPDL_UNWIND_EXCURSION,	/* Likewise, on an execursion.  */
   SPECPDL_UNWIND_VOID,		/* Likewise, with no arg.  */
   SPECPDL_BACKTRACE,		/* An element of the backtrace.  */
   SPECPDL_LET,			/* A plain and simple dynamic let-binding.  */
@@ -3214,6 +3215,10 @@ union specbinding
       void (*func) (int);
       int arg;
     } unwind_int;
+    struct {
+      ENUM_BF (specbind_tag) kind : CHAR_BIT;
+      Lisp_Object marker, window;
+    } unwind_excursion;
     struct {
       ENUM_BF (specbind_tag) kind : CHAR_BIT;
       void (*func) (void);
@@ -4106,9 +4111,9 @@ extern void mark_threads (void);
 
 /* Defined in editfns.c.  */
 extern void insert1 (Lisp_Object);
-extern Lisp_Object save_excursion_save (void);
+extern void save_excursion_save (union specbinding *);
+extern void save_excursion_restore (Lisp_Object, Lisp_Object);
 extern Lisp_Object save_restriction_save (void);
-extern void save_excursion_restore (Lisp_Object);
 extern void save_restriction_restore (Lisp_Object);
 extern _Noreturn void time_overflow (void);
 extern Lisp_Object make_buffer_string (ptrdiff_t, ptrdiff_t, bool);

@@ -995,30 +995,24 @@ This function does not move point.  */)
 			      Qnil, Qt, Qnil);
 }
 
-/* Save current buffer state for `save-excursion' special form.
-   We (ab)use Lisp_Misc_Save_Value to allow explicit free and so
-   offload some work from GC.  */
+/* Save current buffer state for save-excursion special form.  */
 
-Lisp_Object
-save_excursion_save (void)
+void
+save_excursion_save (union specbinding *pdl)
 {
-  return make_save_obj_obj_obj_obj
-    (Fpoint_marker (),
-     Qnil,
-     /* Selected window if current buffer is shown in it, nil otherwise.  */
-     (EQ (XWINDOW (selected_window)->contents, Fcurrent_buffer ())
-      ? selected_window : Qnil),
-     Qnil);
+  eassert (pdl->unwind_excursion.kind == SPECPDL_UNWIND_EXCURSION);
+  pdl->unwind_excursion.marker = Fpoint_marker ();
+  /* Selected window if current buffer is shown in it, nil otherwise.  */
+  pdl->unwind_excursion.window
+    = (EQ (XWINDOW (selected_window)->contents, Fcurrent_buffer ())
+       ? selected_window : Qnil);
 }
 
 /* Restore saved buffer before leaving `save-excursion' special form.  */
 
 void
-save_excursion_restore (Lisp_Object info)
+save_excursion_restore (Lisp_Object marker, Lisp_Object window)
 {
-  Lisp_Object marker = XSAVE_OBJECT (info, 0);
-  Lisp_Object window = XSAVE_OBJECT (info, 2);
-  free_misc (info);
   Lisp_Object buffer = Fmarker_buffer (marker);
   /* If we're unwinding to top level, saved buffer may be deleted.  This
      means that all of its markers are unchained and so BUFFER is nil.  */
@@ -1027,6 +1021,7 @@ save_excursion_restore (Lisp_Object info)
 
   Fset_buffer (buffer);
 
+  /* Point marker.  */
   Fgoto_char (marker);
   unchain_marker (XMARKER (marker));
 
