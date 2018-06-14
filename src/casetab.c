@@ -32,29 +32,6 @@ static void set_canon (Lisp_Object case_table, Lisp_Object range, Lisp_Object el
 static void set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
 static void shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
 
-DEFUN ("case-table-p", Fcase_table_p, Scase_table_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a case table.
-See `set-case-table' for more information on these data structures.  */)
-  (Lisp_Object object)
-{
-  Lisp_Object up, canon, eqv;
-
-  if (! CHAR_TABLE_P (object))
-    return Qnil;
-  if (! EQ (XCHAR_TABLE (object)->purpose, Qcase_table))
-    return Qnil;
-
-  up = XCHAR_TABLE (object)->extras[0];
-  canon = XCHAR_TABLE (object)->extras[1];
-  eqv = XCHAR_TABLE (object)->extras[2];
-
-  return ((NILP (up) || CHAR_TABLE_P (up))
-	  && ((NILP (canon) && NILP (eqv))
- 	      || (CHAR_TABLE_P (canon)
-		  && (NILP (eqv) || CHAR_TABLE_P (eqv))))
-	  ? Qt : Qnil);
-}
-
 static Lisp_Object
 check_case_table (Lisp_Object obj)
 {
@@ -287,16 +264,15 @@ init_casetab_once (void)
 void
 syms_of_casetab (void)
 {
-  DEFSYM (Qcase_table_p, "case-table-p");
-
   staticpro (&Vascii_canon_table);
   staticpro (&Vascii_downcase_table);
   staticpro (&Vascii_eqv_table);
   staticpro (&Vascii_upcase_table);
 
-  defsubr (&Scase_table_p);
   defsubr (&Scurrent_case_table);
   defsubr (&Sstandard_case_table);
   defsubr (&Sset_case_table);
   defsubr (&Sset_standard_case_table);
+
+  rust_syms_of_casetab();
 }
