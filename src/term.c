@@ -3408,15 +3408,20 @@ tty_menu_help_callback (char const *help_string, int pane, int item)
  		  Qnil, menu_object, make_number (item));
 }
 
-static void
-tty_pop_down_menu (Lisp_Object arg)
+struct tty_pop_down_menu
 {
-  tty_menu *menu = XSAVE_POINTER (arg, 0);
-  struct buffer *orig_buffer = XSAVE_POINTER (arg, 1);
+  tty_menu *menu;
+  struct buffer *buffer;
+};
+
+static void
+tty_pop_down_menu (void *arg)
+{
+  struct tty_pop_down_menu *data = arg;
 
   block_input ();
-  tty_menu_destroy (menu);
-  set_buffer_internal (orig_buffer);
+  tty_menu_destroy (data->menu);
+  set_buffer_internal (data->buffer);
   unblock_input ();
 }
 
@@ -3697,8 +3702,9 @@ tty_menu_show (struct frame *f, int x, int y, int menuflags,
 
   /* We save and restore the current buffer because tty_menu_activate
      triggers redisplay, which switches buffers at will.  */
-  record_unwind_protect (tty_pop_down_menu,
-			 make_save_ptr_ptr (menu, current_buffer));
+  record_unwind_protect_ptr (tty_pop_down_menu,
+			     &((struct tty_pop_down_menu)
+			       {menu, current_buffer}));
 
   specbind (Qoverriding_terminal_local_map,
 	    Fsymbol_value (Qtty_menu_navigation_map));

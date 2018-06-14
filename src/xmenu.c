@@ -2033,11 +2033,18 @@ menu_help_callback (char const *help_string, int pane, int item)
  		  Qnil, menu_object, make_number (item));
 }
 
-static void
-pop_down_menu (Lisp_Object arg)
+struct pop_down_menu
 {
-  struct frame *f = XSAVE_POINTER (arg, 0);
-  XMenu *menu = XSAVE_POINTER (arg, 1);
+  struct frame *frame;
+  XMenu *menu;
+};
+
+static void
+pop_down_menu (void *arg)
+{
+  union pop_down_menu *data = arg;
+  struct frame *f = data->frame;
+  XMenu *menu = data->menu;
 
   block_input ();
 #ifndef MSDOS
@@ -2283,7 +2290,8 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
   XMenuActivateSetWaitFunction (x_menu_wait_for_event, FRAME_X_DISPLAY (f));
 #endif
 
-  record_unwind_protect (pop_down_menu, make_save_ptr_ptr (f, menu));
+  record_unwind_protect_pointer (pop_down_menu,
+				 &(struct pop_down_menu) {f, menu});
 
   /* Help display under X won't work because XMenuActivate contains
      a loop that doesn't give Emacs a chance to process it.  */
