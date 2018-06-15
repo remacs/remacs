@@ -1225,7 +1225,10 @@ detect_coding_utf_8 (struct coding_system *coding,
       ONE_MORE_BYTE (c4);
       if (c4 < 0 || ! UTF_8_EXTRA_OCTET_P (c4))
 	break;
-      if (UTF_8_5_OCTET_LEADING_P (c))
+      if (UTF_8_5_OCTET_LEADING_P (c)
+	  /* If we ever need to increase MAX_CHAR, the below may need
+	     to be reviewed.  */
+	  && c < MAX_MULTIBYTE_LEADING_CODE)
 	{
 	  nchars++;
 	  continue;
