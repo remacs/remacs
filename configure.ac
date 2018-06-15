@@ -1226,50 +1226,52 @@ AC_SUBST([FIND_DELETE])
 
 PAXCTL_dumped=
 PAXCTL_notdumped=
-if test $opsys = gnu-linux; then
-  if test "${SETFATTR+set}" != set; then
-    AC_CACHE_CHECK([for setfattr],
-      [emacs_cv_prog_setfattr],
-      [touch conftest.tmp
-       if (setfattr -n user.pax.flags conftest.tmp) >/dev/null 2>&1; then
-	 emacs_cv_prog_setfattr=yes
-       else
-	 emacs_cv_prog_setfattr=no
-       fi])
-    if test "$emacs_cv_prog_setfattr" = yes; then
-      PAXCTL_notdumped='$(SETFATTR) -n user.pax.flags -v er'
-      SETFATTR=setfattr
-    else
-      SETFATTR=
-    fi
-    rm -f conftest.tmp
-    AC_SUBST([SETFATTR])
-  fi
-fi
-case $opsys,$PAXCTL_notdumped,$emacs_uname_r in
-  gnu-linux,,* | netbsd,,[0-7].*)
-    AC_PATH_PROG([PAXCTL], [paxctl], [],
-      [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin])
-    if test -n "$PAXCTL"; then
-      if test "$opsys" = netbsd; then
-	PAXCTL_dumped='$(PAXCTL) +a'
-	PAXCTL_notdumped=$PAXCTL_dumped
+if test "$CANNOT_DUMP" != yes; then
+  if test $opsys = gnu-linux; then
+    if test "${SETFATTR+set}" != set; then
+      AC_CACHE_CHECK([for setfattr],
+	[emacs_cv_prog_setfattr],
+	[touch conftest.tmp
+	 if (setfattr -n user.pax.flags conftest.tmp) >/dev/null 2>&1; then
+	   emacs_cv_prog_setfattr=yes
+	 else
+	   emacs_cv_prog_setfattr=no
+	 fi])
+      if test "$emacs_cv_prog_setfattr" = yes; then
+	PAXCTL_notdumped='$(SETFATTR) -n user.pax.flags -v er'
+	SETFATTR=setfattr
       else
-	AC_MSG_CHECKING([whether binaries have a PT_PAX_FLAGS header])
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-	  [if $PAXCTL -v conftest$EXEEXT >/dev/null 2>&1; then
-	     AC_MSG_RESULT([yes])
-	   else
-	     AC_MSG_RESULT([no])
-	     PAXCTL=
-	   fi])
-	if test -n "$PAXCTL"; then
-	  PAXCTL_dumped='$(PAXCTL) -zex'
-	  PAXCTL_notdumped='$(PAXCTL) -r'
-	fi
+	SETFATTR=
       fi
-    fi;;
-esac
+      rm -f conftest.tmp
+      AC_SUBST([SETFATTR])
+    fi
+  fi
+  case $opsys,$PAXCTL_notdumped,$emacs_uname_r in
+    gnu-linux,,* | netbsd,,[0-7].*)
+      AC_PATH_PROG([PAXCTL], [paxctl], [],
+	[$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin])
+      if test -n "$PAXCTL"; then
+	if test "$opsys" = netbsd; then
+	  PAXCTL_dumped='$(PAXCTL) +a'
+	  PAXCTL_notdumped=$PAXCTL_dumped
+	else
+	  AC_MSG_CHECKING([whether binaries have a PT_PAX_FLAGS header])
+	  AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+	    [if $PAXCTL -v conftest$EXEEXT >/dev/null 2>&1; then
+	       AC_MSG_RESULT([yes])
+	     else
+	       AC_MSG_RESULT([no])
+	       PAXCTL=
+	     fi])
+	  if test -n "$PAXCTL"; then
+	    PAXCTL_dumped='$(PAXCTL) -zex'
+	    PAXCTL_notdumped='$(PAXCTL) -r'
+	  fi
+	fi
+      fi;;
+  esac
+fi
 AC_SUBST([PAXCTL_dumped])
 AC_SUBST([PAXCTL_notdumped])
 
@@ -5287,19 +5289,25 @@ esac
 AC_CACHE_CHECK(
   [for $CC option to disable position independent executables],
   [emacs_cv_prog_cc_no_pie],
-  [emacs_save_c_werror_flag=$ac_c_werror_flag
-   emacs_save_LDFLAGS=$LDFLAGS
-   ac_c_werror_flag=yes
-   for emacs_cv_prog_cc_no_pie in -no-pie -nopie no; do
-     test $emacs_cv_prog_cc_no_pie = no && break
-     LDFLAGS="$emacs_save_LDFLAGS $emacs_cv_prog_cc_no_pie"
-     AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [break])
-   done
-   ac_c_werror_flag=$emacs_save_c_werror_flag
-   LDFLAGS=$emacs_save_LDFLAGS])
-if test "$emacs_cv_prog_cc_no_pie" != no; then
-  LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS $emacs_cv_prog_cc_no_pie"
-fi
+  [if test "$CANNOT_DUMP" = yes; then
+     emacs_cv_prog_cc_no_pie='not needed'
+   else
+     emacs_save_c_werror_flag=$ac_c_werror_flag
+     emacs_save_LDFLAGS=$LDFLAGS
+     ac_c_werror_flag=yes
+     for emacs_cv_prog_cc_no_pie in -no-pie -nopie no; do
+       test $emacs_cv_prog_cc_no_pie = no && break
+       LDFLAGS="$emacs_save_LDFLAGS $emacs_cv_prog_cc_no_pie"
+       AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [break])
+     done
+     ac_c_werror_flag=$emacs_save_c_werror_flag
+     LDFLAGS=$emacs_save_LDFLAGS
+   fi])
+case $emacs_cv_prog_cc_no_pie in
+  -*)
+    LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS $emacs_cv_prog_cc_no_pie"
+    ;;
+esac
 
 if test x$ac_enable_profiling != x ; then
   case $opsys in
