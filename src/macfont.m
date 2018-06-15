@@ -908,7 +908,7 @@ macfont_descriptor_entity (CTFontDescriptorRef desc, Lisp_Object extra,
   ASET (entity, FONT_EXTRA_INDEX, Fcopy_sequence (extra));
   name = CTFontDescriptorCopyAttribute (desc, kCTFontNameAttribute);
   font_put_extra (entity, QCfont_entity,
-		  Fcons (make_mint_ptr (name), make_number (traits)));
+		  Fcons (make_mint_ptr ((void *) name), make_number (traits)));
   if (synth_sym_traits & kCTFontTraitItalic)
     FONT_SET_STYLE (entity, FONT_SLANT_INDEX,
                     make_number (FONT_SLANT_SYNTHETIC_ITALIC));
@@ -984,7 +984,7 @@ macfont_set_family_cache (Lisp_Object symbol, CFStringRef string)
 
   h = XHASH_TABLE (macfont_family_cache);
   i = hash_lookup (h, symbol, &hash);
-  value = string ? make_mint_ptr (CFRetain (string)) : Qnil;
+  value = string ? make_mint_ptr ((void *) CFRetain (string)) : Qnil;
   if (i >= 0)
     {
       Lisp_Object old_value = HASH_VALUE (h, i);
