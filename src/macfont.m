@@ -908,7 +908,8 @@ macfont_descriptor_entity (CTFontDescriptorRef desc, Lisp_Object extra,
   ASET (entity, FONT_EXTRA_INDEX, Fcopy_sequence (extra));
   name = CTFontDescriptorCopyAttribute (desc, kCTFontNameAttribute);
   font_put_extra (entity, QCfont_entity,
-		  Fcons (make_mint_ptr ((void *) name), make_number (traits)));
+		  Fcons (make_mint_ptr ((void *) name),
+			 make_number (sym_traits)));
   if (synth_sym_traits & kCTFontTraitItalic)
     FONT_SET_STYLE (entity, FONT_SLANT_INDEX,
                     make_number (FONT_SLANT_SYNTHETIC_ITALIC));
