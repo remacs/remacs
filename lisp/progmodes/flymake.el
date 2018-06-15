@@ -14,10 +14,10 @@
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; GNU Emacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
@@ -292,7 +292,7 @@ generated it."
 
 (cl-defstruct (flymake--diag
                (:constructor flymake--diag-make))
-  buffer beg end type text backend data)
+  buffer beg end type text backend data overlay)
 
 ;;;###autoload
 (defun flymake-make-diagnostic (buffer
@@ -353,10 +353,6 @@ verify FILTER, a function, and sort them by COMPARE (using KEY)."
           (cl-sort ovs compare :key (or key
                                         #'identity))
         ovs))))
-
-(defun flymake--delete-own-overlays (&optional filter beg end)
-  "Delete Flymake overlays matching FILTER between BEG and END."
-  (mapc #'delete-overlay (flymake--overlays :filter filter :beg beg :end end)))
 
 (defface flymake-error
   '((((supports :underline (:style wave)))
@@ -630,7 +626,8 @@ associated `flymake-category' return DEFAULT."
     ;; Some properties can't be overridden.
     ;;
     (overlay-put ov 'evaporate t)
-    (overlay-put ov 'flymake-diagnostic diagnostic)))
+    (overlay-put ov 'flymake-diagnostic diagnostic)
+    ov))
 
 ;; Nothing in Flymake uses this at all any more, so this is just for
 ;; third-party compatibility.
@@ -717,21 +714,28 @@ report applies to that region."
         (setq new-diags report-action)
         (save-restriction
           (widen)
-          ;; Decide whether to delete some of this backend's overlays
-          (let ((ov-filter
-                 (lambda (ov)
-                   (eq backend
-                       (flymake--diag-backend
-                        (overlay-get ov 'flymake-diagnostic))))))
-            (cond
-             (region       (flymake--delete-own-overlays ov-filter
-                                                         (car region)
-                                                         (cdr region)))
-             (first-report (flymake--delete-own-overlays ov-filter))))
+          ;; Before adding to backend's diagnostic list, decide if
+          ;; some or all must be deleted.  When deleting, also delete
+          ;; the associated overlay.
+          (cond
+           (region
+            (dolist (diag (flymake--backend-state-diags state))
+              (let ((diag-beg (flymake--diag-beg diag))
+                    (diag-end (flymake--diag-beg diag)))
+                (when (and (< diag-beg (cdr region))
+                           (> diag-end (car region)))
+                  (delete-overlay (flymake--diag-overlay diag))
+                  (setf (flymake--backend-state-diags state)
+                        (delq diag (flymake--backend-state-diags state)))))))
+           (first-report
+            (dolist (diag (flymake--backend-state-diags state))
+              (delete-overlay (flymake--diag-overlay diag)))
+            (setf (flymake--backend-state-diags state) nil)))
           ;; Now make new ones
           (mapc (lambda (diag)
-                  (flymake--highlight-line diag)
-                  (setf (flymake--diag-backend diag) backend))
+                  (let ((overlay (flymake--highlight-line diag)))
+                    (setf (flymake--diag-backend diag) backend
+                          (flymake--diag-overlay diag) overlay)))
                 new-diags)
           (setf (flymake--backend-state-diags state)
                 (append new-diags (flymake--backend-state-diags state)))
@@ -812,7 +816,6 @@ with a report function."
     (flymake--with-backend-state backend state
       (setf (flymake--backend-state-running state) run-token
             (flymake--backend-state-disabled state) nil
-            (flymake--backend-state-diags state) nil
             (flymake--backend-state-reported-p state) nil))
     ;; FIXME: Should use `condition-case-unless-debug' here, but don't
     ;; for two reasons: (1) that won't let me catch errors from inside
@@ -963,7 +966,7 @@ special *Flymake log* buffer."  :group 'flymake :lighter
     (remove-hook 'kill-buffer-hook 'flymake-kill-buffer-hook t)
     ;;+(remove-hook 'find-file-hook (function flymake-find-file-hook) t)
 
-    (flymake--delete-own-overlays)
+    (mapc #'delete-overlay (flymake--overlays))
 
     (when flymake-timer
       (cancel-timer flymake-timer)
