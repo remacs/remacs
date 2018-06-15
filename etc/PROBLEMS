@@ -192,18 +192,6 @@ Upgrading to a newer version of Exceed has been reported to prevent
 these crashes.  You should consider switching to a free X server, such
 as Xming or Cygwin/X.
 
-** Emacs crashes with SIGSEGV in XtInitializeWidgetClass.
-
-It crashes on X, but runs fine when called with option "-nw".
-
-This has been observed when Emacs is linked with GNU ld but without passing
-the -z nocombreloc flag.  Emacs normally knows to pass the -z nocombreloc
-flag when needed, so if you come across a situation where the flag is
-necessary but missing, please report it via M-x report-emacs-bug.
-
-On platforms such as Solaris, you can also work around this problem by
-configuring your compiler to use the native linker instead of GNU ld.
-
 ** When Emacs is compiled with Gtk+, closing a display kills Emacs.
 
 There is a long-standing bug in GTK that prevents it from recovering

@@ -1333,39 +1333,6 @@ else
     ac_link="$ac_link $NON_GCC_LINK_TEST_OPTIONS"
 fi
 
-dnl We need -znocombreloc if we're using a relatively recent GNU ld.
-dnl If we can link with the flag, it shouldn't do any harm anyhow.
-dnl Treat GCC specially since it just gives a non-fatal 'unrecognized option'
-dnl if not built to support GNU ld.
-
-dnl For a long time, -znocombreloc was added to LDFLAGS rather than
-dnl LD_SWITCH_SYSTEM_TEMACS.  That is:
-dnl * inappropriate, as LDFLAGS is a user option but this is essential.
-dnl   Eg "make LDFLAGS=... all" could run into problems,
-dnl   https://bugs.debian.org/684788
-dnl * unnecessary, since temacs is the only thing that actually needs it.
-dnl   Indeed this is where it was originally, prior to:
-dnl   https://lists.gnu.org/r/emacs-pretest-bug/2004-03/msg00170.html
-if test x$GCC = xyes; then
-  LDFLAGS_NOCOMBRELOC="-Wl,-znocombreloc"
-else
-  LDFLAGS_NOCOMBRELOC="-znocombreloc"
-fi
-
-AC_CACHE_CHECK([for -znocombreloc], [emacs_cv_znocombreloc],
-[late_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LDFLAGS_NOCOMBRELOC"
-
-AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-  [emacs_cv_znocombreloc=yes], [emacs_cv_znocombreloc=no])
-
-LDFLAGS="$late_LDFLAGS"])
-
-if test x$emacs_cv_znocombreloc = xno; then
-  LDFLAGS_NOCOMBRELOC=
-fi
-
-
 AC_CACHE_CHECK([whether addresses are sanitized],
   [emacs_cv_sanitize_address],
   [AC_COMPILE_IFELSE(
@@ -5340,8 +5307,6 @@ if test x$ac_enable_profiling != x ; then
     *) LD_SWITCH_SYSTEM_TEMACS="$LD_SWITCH_SYSTEM_TEMACS -pg" ;;
   esac
 fi
-
-LD_SWITCH_SYSTEM_TEMACS="$LDFLAGS_NOCOMBRELOC $LD_SWITCH_SYSTEM_TEMACS"
 
 AC_SUBST(LD_SWITCH_SYSTEM_TEMACS)
 
