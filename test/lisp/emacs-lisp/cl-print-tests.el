@@ -64,11 +64,15 @@
 
 (ert-deftest cl-print-tests-4 ()
   "CL printing observes `print-level'."
-  (let ((deep-list '(a (b (c (d (e))))))
-        (deep-struct (cl-print-tests-con))
-        (print-level 4))
+  (let* ((deep-list '(a (b (c (d (e))))))
+         (buried-vector '(a (b (c (d [e])))))
+         (deep-struct (cl-print-tests-con))
+         (buried-struct `(a (b (c (d ,deep-struct)))))
+         (print-level 4))
     (setf (cl-print-tests-struct-a deep-struct) deep-list)
     (should (equal "(a (b (c (d ...))))" (cl-prin1-to-string deep-list)))
+    (should (equal "(a (b (c (d ...))))" (cl-prin1-to-string buried-vector)))
+    (should (equal "(a (b (c (d ...))))" (cl-prin1-to-string buried-struct)))
     (should (equal "#s(cl-print-tests-struct :a (a (b (c ...))) :b nil :c nil :d nil :e nil)"
                    (cl-prin1-to-string deep-struct)))))
 
@@ -81,6 +85,85 @@
     (let ((print-quoted nil))
       (should (equal "((quote a) (function b) (\\` ((\\, c) (\\,@ d))))"
                      (cl-prin1-to-string quoted-stuff))))))
+
+(ert-deftest cl-print-tests-ellipsis-cons ()
+  "Ellipsis expansion works in conses."
+  (let ((print-length 4)
+        (print-level 3))
+    (cl-print-tests-check-ellipsis-expansion
+     '(0 1 2 3 4 5) "(0 1 2 3 ...)" "4 5")
+    (cl-print-tests-check-ellipsis-expansion
+     '(0 1 2 3 4 5 6 7 8 9) "(0 1 2 3 ...)" "4 5 6 7 ...")
+    (cl-print-tests-check-ellipsis-expansion
+     '(a (b (c (d (e))))) "(a (b (c ...)))" "(d (e))")
+    (cl-print-tests-check-ellipsis-expansion
+     (let ((x (make-list 6 'b)))
+       (setf (nthcdr 6 x) 'c)
+       x)
+     "(b b b b ...)" "b b . c")))
+
+(ert-deftest cl-print-tests-ellipsis-vector ()
+  "Ellipsis expansion works in vectors."
+  (let ((print-length 4)
+        (print-level 3))
+    (cl-print-tests-check-ellipsis-expansion
+     [0 1 2 3 4 5] "[0 1 2 3 ...]" "4 5")
+    (cl-print-tests-check-ellipsis-expansion
+     [0 1 2 3 4 5 6 7 8 9] "[0 1 2 3 ...]" "4 5 6 7 ...")
+    (cl-print-tests-check-ellipsis-expansion
+     [a [b [c [d [e]]]]] "[a [b [c ...]]]" "[d [e]]")))
+
+(ert-deftest cl-print-tests-ellipsis-struct ()
+  "Ellipsis expansion works in structures."
+  (let ((print-length 4)
+        (print-level 3)
+        (struct (cl-print-tests-con)))
+    (cl-print-tests-check-ellipsis-expansion
+     struct "#s(cl-print-tests-struct :a nil :b nil :c nil :d nil ...)" ":e nil")
+    (let ((print-length 2))
+      (cl-print-tests-check-ellipsis-expansion
+       struct "#s(cl-print-tests-struct :a nil :b nil ...)" ":c nil :d nil ..."))
+    (cl-print-tests-check-ellipsis-expansion
+     `(a (b (c ,struct)))
+     "(a (b (c ...)))"
+     "#s(cl-print-tests-struct :a nil :b nil :c nil :d nil ...)")))
+
+(ert-deftest cl-print-tests-ellipsis-circular ()
+  "Ellipsis expansion works with circular objects."
+  (let ((wide-obj (list 0 1 2 3 4))
+        (deep-obj `(0 (1 (2 (3 (4))))))
+        (print-length 4)
+        (print-level 3))
+    (setf (nth 4 wide-obj) wide-obj)
+    (setf (car (cadadr (cadadr deep-obj))) deep-obj)
+    (let ((print-circle nil))
+      (cl-print-tests-check-ellipsis-expansion-rx
+       wide-obj (regexp-quote "(0 1 2 3 ...)") "\\`#[0-9]\\'")
+      (cl-print-tests-check-ellipsis-expansion-rx
+       deep-obj (regexp-quote "(0 (1 (2 ...)))") "\\`(3 (#[0-9]))\\'"))
+    (let ((print-circle t))
+      (cl-print-tests-check-ellipsis-expansion
+       wide-obj "#1=(0 1 2 3 ...)" "#1#")
+      (cl-print-tests-check-ellipsis-expansion
+       deep-obj "#1=(0 (1 (2 ...)))" "(3 (#1#))"))))
+
+(defun cl-print-tests-check-ellipsis-expansion (obj expected expanded)
+  (let* ((result (cl-prin1-to-string obj))
+         (pos (next-single-property-change 0 'cl-print-ellipsis result))
+         value)
+    (should pos)
+    (setq value (get-text-property pos 'cl-print-ellipsis result))
+    (should (equal expected result))
+    (should (equal expanded (with-output-to-string (cl-print-expand-ellipsis
+                                                    value nil))))))
+
+(defun cl-print-tests-check-ellipsis-expansion-rx (obj expected expanded)
+  (let* ((result (cl-prin1-to-string obj))
+         (pos (next-single-property-change 0 'cl-print-ellipsis result))
+         (value (get-text-property pos 'cl-print-ellipsis result)))
+    (should (string-match expected result))
+    (should (string-match expanded (with-output-to-string
+                                     (cl-print-expand-ellipsis value nil))))))
 
 (ert-deftest cl-print-circle ()
   (let ((x '(#1=(a . #1#) #1#)))
