@@ -3304,8 +3304,17 @@ buffer_chars_equal (struct context *ctx,
   eassert (pos_b >= BUF_BEGV (ctx->buffer_b));
   eassert (pos_b < BUF_ZV (ctx->buffer_b));
 
-  return BUF_FETCH_CHAR_AS_MULTIBYTE (ctx->buffer_a, pos_a)
-    == BUF_FETCH_CHAR_AS_MULTIBYTE (ctx->buffer_b, pos_b);
+  ptrdiff_t bpos_a =
+    NILP (BVAR (ctx->buffer_a, enable_multibyte_characters))
+    ? pos_a
+    : buf_charpos_to_bytepos (ctx->buffer_a, pos_a);
+  ptrdiff_t bpos_b =
+    NILP (BVAR (ctx->buffer_b, enable_multibyte_characters))
+    ? pos_b
+    : buf_charpos_to_bytepos (ctx->buffer_b, pos_b);
+
+  return BUF_FETCH_CHAR_AS_MULTIBYTE (ctx->buffer_a, bpos_a)
+    == BUF_FETCH_CHAR_AS_MULTIBYTE (ctx->buffer_b, bpos_b);
 }
 
 

@@ -247,6 +247,17 @@
                  (buffer-string)
                  "foo bar baz qux"))))))
 
+(ert-deftest replace-buffer-contents-bug31837 ()
+  (switch-to-buffer "a")
+  (insert-char (char-from-name "SMILE"))
+  (insert "1234")
+  (switch-to-buffer "b")
+  (insert-char (char-from-name "SMILE"))
+  (insert "5678")
+  (replace-buffer-contents "a")
+  (should (equal (buffer-substring-no-properties (point-min) (point-max))
+                 (concat (string (char-from-name "SMILE")) "1234"))))
+
 (ert-deftest delete-region-undo-markers-1 ()
   "Make sure we don't end up with freed markers reachable from Lisp."
   ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=30931#40
