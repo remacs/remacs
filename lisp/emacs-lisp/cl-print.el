@@ -285,6 +285,95 @@ into a button whose action shows the function's disassembly.")
       (princ " " stream)
       (cl-print-insert-ellipsis object limit stream))))
 
+(cl-defmethod cl-print-object ((object string) stream)
+  (unless stream (setq stream standard-output))
+  (let* ((has-properties (or (text-properties-at 0 object)
+                             (next-property-change 0 object)))
+         (len (length object))
+         (limit (if (natnump print-length) (min print-length len) len)))
+    (if (and has-properties
+             cl-print--depth
+             (natnump print-level)
+             (> cl-print--depth print-level))
+        (cl-print-insert-ellipsis object 0 stream)
+      ;; Print all or part of the string
+      (when has-properties
+        (princ "#(" stream))
+      (if (= limit len)
+          (prin1 (if has-properties (substring-no-properties object) object)
+                 stream)
+        (let ((part (concat (substring-no-properties object 0 limit) "...")))
+          (prin1 part stream)
+          (when (bufferp stream)
+            (with-current-buffer stream
+              (cl-print-propertize-ellipsis object limit
+                                            (- (point) 4)
+                                            (- (point) 1) stream)))))
+      ;; Print the property list.
+      (when has-properties
+        (let* ((interval-limit (and (natnump print-length)
+                                    (max 1 (/ print-length 3))))
+               (interval-count 0)
+               (start-pos (if (text-properties-at 0 object)
+                              0 (next-property-change 0 object)))
+               (end-pos (next-property-change start-pos object len)))
+          (while (and (or (null interval-limit)
+                          (< interval-count interval-limit))
+                      (< start-pos len))
+            (let ((props (text-properties-at start-pos object)))
+              (when props
+                (princ " " stream) (princ start-pos stream)
+                (princ " " stream) (princ end-pos stream)
+                (princ " " stream) (cl-print-object props stream)
+                (cl-incf interval-count))
+              (setq start-pos end-pos
+                    end-pos (next-property-change start-pos object len))))
+          (when (< start-pos len)
+            (princ " " stream)
+            (cl-print-insert-ellipsis object (list start-pos) stream)))
+        (princ ")" stream)))))
+
+(cl-defmethod cl-print-object-contents ((object string) start stream)
+  ;; If START is an integer, it is an index into the string, and the
+  ;; ellipsis that needs to be expanded is part of the string.  If
+  ;; START is a cons, its car is an index into the string, and the
+  ;; ellipsis that needs to be expanded is in the property list.
+  (let* ((len (length object)))
+    (if (atom start)
+        ;; Print part of the string.
+        (let* ((limit (if (natnump print-length)
+                          (min (+ start print-length) len) len))
+               (substr (substring-no-properties object start limit))
+               (printed (prin1-to-string substr))
+               (trimmed (substring printed 1 (1- (length printed)))))
+          (princ trimmed)
+          (when (< limit len)
+            (cl-print-insert-ellipsis object limit stream)))
+
+      ;; Print part of the property list.
+      (let* ((first t)
+             (interval-limit (and (natnump print-length)
+                                  (max 1 (/ print-length 3))))
+             (interval-count 0)
+             (start-pos (car start))
+             (end-pos (next-property-change start-pos object len)))
+        (while (and (or (null interval-limit)
+                        (< interval-count interval-limit))
+                    (< start-pos len))
+          (let ((props (text-properties-at start-pos object)))
+            (when props
+              (if first
+                  (setq first nil)
+                (princ " " stream))
+              (princ start-pos stream)
+              (princ " " stream) (princ end-pos stream)
+              (princ " " stream) (cl-print-object props stream)
+              (cl-incf interval-count))
+            (setq start-pos end-pos
+                  end-pos (next-property-change start-pos object len))))
+        (when (< start-pos len)
+          (princ " " stream)
+          (cl-print-insert-ellipsis object (list start-pos) stream))))))
 
 ;;; Circularity and sharing.
 
@@ -346,8 +435,17 @@ into a button whose action shows the function's disassembly.")
                  (push cdr stack)
                  (push car stack))
                 ((pred stringp)
-                 ;; We presumably won't print its text-properties.
-                 nil)
+                 (let* ((len (length object))
+                        (start (if (text-properties-at 0 object)
+                                   0 (next-property-change 0 object)))
+                        (end (and start
+                                  (next-property-change start object len))))
+                   (while (and start (< start len))
+                     (let ((props (text-properties-at start object)))
+                       (when props
+                         (push props stack))
+                       (setq start end
+                             end (next-property-change start object len))))))
                 ((or (pred arrayp) (pred byte-code-function-p))
                  ;; FIXME: Inefficient for char-tables!
                  (dotimes (i (length object))
