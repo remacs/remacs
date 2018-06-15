@@ -4145,7 +4145,7 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 	   ;; Update buttons.
 	   (widget-put widget :buttons buttons)
 	   ;; Insert documentation.
-	   (if (and (eq custom-buffer-style 'links) (> level 1))
+	   (when (eq custom-buffer-style 'links)
 	       (widget-put widget :documentation-indent
 			   custom-group-doc-align-col))
 	   (widget-add-documentation-string-button
