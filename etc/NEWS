@@ -46,6 +46,16 @@ often cause crashes.  Set it to nil if you really need those fonts.
 
 * Changes in Specialized Modes and Packages in Emacs 26.2
 
+** Gnus
+
+---
+*** Mailutils movemail will now be used if found at runtime.
+The default value of mail-source-movemail-program is now "movemail".
+This ensures that the movemail program from GNU Mailutils will be used
+if found in 'exec-path', even if it was not found at build time.  To
+use a different program, customize mail-source-movemail-program to the
+absolute file name of the desired executable.
+
 ** Shell mode
 
 ---
