@@ -416,20 +416,14 @@ Use the @code{:set} function to initialize the variable, if it is
 already set or has been customized; otherwise, just use
 @code{set-default}.
 
-@item custom-initialize-safe-set
-@itemx custom-initialize-safe-default
-These functions behave like @code{custom-initialize-set}
-(@code{custom-initialize-default}, respectively), but catch errors.
-If an error occurs during initialization, they set the variable to
-@code{nil} using @code{set-default}, and signal no error.
-
-These functions are meant for options defined in pre-loaded files,
-where the @var{standard} expression may signal an error because some
-required variable or function is not yet defined.  The value normally
-gets updated in @file{startup.el}, ignoring the value computed by
-@code{defcustom}.  After startup, if one unsets the value and
-reevaluates the @code{defcustom}, the @var{standard} expression can be
-evaluated without error.
+@item custom-initialize-delay
+This functions behaves like @code{custom-initialize-set}, but it
+delays the actual initialization to the next Emacs start.  This should
+be used in files that are preloaded (or for autoloaded variables), so
+that the initialization is done in the run-time context rather than
+the build-time context.  This also has the side-effect that the
+(delayed) initialization is performed with the @code{:set} function.
+@xref{Building Emacs}.
 @end table
 
 @item :risky @var{value}
