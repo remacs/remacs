@@ -115,9 +115,9 @@ impl LispFrameRef {
         unsafe { Terminal::new(fget_terminal(self.as_ptr())) }
     }
 
-    /// Return `DisplayInfo` about `self` if `self` is a TTY or MSDOS raw display,
+    /// Return `DisplayInfo' about SELF if SELF is a TTY or MSDOS raw display,
     ///
-    /// Port of `FRAME_TTY` in `termchar.h`.
+    /// Port of `FRAME_TTY' in `termchar.h'.
     #[inline]
     pub fn tty(&self) -> Option<DisplayInfo> {
         match FrameType::from(self.clone()) {
@@ -128,9 +128,9 @@ impl LispFrameRef {
         }
     }
 
-    /// Returns `true` if `self` is a minibuffer-only frame.
+    /// Returns `true' if SELF is a minibuffer-only frame.
     ///
-    /// Port of `FRAME_MINIBUF_ONLY_P`
+    /// Port of `FRAME_MINIBUF_ONLY_P'
     #[inline]
     pub fn is_minibuffer_only(self) -> bool {
         return self.root_window() == self.minibuffer_window();
@@ -371,14 +371,14 @@ pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
     !frame_ref.pointer_invisible()
 }
 
-/// Return the next frame in the frame list after `frame`.
+/// Return the next frame in the frame list after FRAME.
 /// By default, skip minibuffer-only frames.
-/// If omitted, `frame` defaults to the selected frame.
-/// If optional argument `miniframe` is nil, exclude minibuffer-only frames.
-/// If `miniframe` is a window, include only its own frame
+/// If omitted, FRAME defaults to the selected frame.
+/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+/// If MINIFRAME is a window, include only its own frame
 /// and frame now using that window as the minibuffer.
-/// If `miniframe` is "visible", include all visible frames.
-/// If `miniframe` is 0, include all visible and iconified frames.
+/// If MINIFRAME is `visible', include all visible frames.
+/// If MINIFRAME is 0, include all visible and iconified frames.
 /// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
 pub fn next_frame(frame: Option<LispFrameRef>, miniframe: Option<LispObject>) -> LispFrameRef {
@@ -393,12 +393,12 @@ pub fn next_frame(frame: Option<LispFrameRef>, miniframe: Option<LispObject>) ->
 /// It only considers frames on the same terminal as FRAME.
 /// By default, skip minibuffer-only frames.
 /// If omitted, FRAME default to the selected frame.
-/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+/// If optional argument MINIFRAME is `None', exclude minibuffer-only frames.
 /// If MINIFRAME is a window, include only its own frame
 /// and any frame now using that window as the minibuffer.
-/// If MINIFRAME is 'visible', include all visible frames.
+/// If MINIFRAME is `visible', include all visible frames.
 /// If MINIFRAME is 0, include all visible and iconified frames.
-/// Otherwise, inlcude all frames.
+/// Otherwise, include all frames.
 #[lisp_fn(min = "0")]
 pub fn previous_frame(frame: Option<LispFrameRef>, miniframe: Option<LispObject>) -> LispFrameRef {
     let frame = frame.unwrap_or_default();
@@ -413,9 +413,9 @@ pub fn frame_list() -> CarIter {
     return list.iter_cars();
 }
 
-/// Return the next frame in the frame list after `frame`.
+/// Return the next frame in the frame list after FRAME.
 ///
-/// Port of `next_frame` in  `frame.c`.
+/// Port of `next_frame' in  `frame.c'.
 fn get_next_frame(frame: LispFrameRef, minibuf: Option<LispObject>) -> LispFrameRef {
     let mut passed = 0;
     while passed < 2 {
@@ -433,7 +433,7 @@ fn get_next_frame(frame: LispFrameRef, minibuf: Option<LispObject>) -> LispFrame
     return frame;
 }
 
-/// Look through the entire `frame_list` and return the last available frame
+/// Look through the entire `frame_list' and return the last available frame
 fn get_prev_frame(frame: LispFrameRef, minibuf: Option<LispObject>) -> Option<LispFrameRef> {
     let mut prev: Option<LispFrameRef> = None;
     for candidate in frame_list().map(|f| f.as_frame_or_error()) {
@@ -445,14 +445,14 @@ fn get_prev_frame(frame: LispFrameRef, minibuf: Option<LispObject>) -> Option<Li
     return prev;
 }
 
-/// Return `candidate` if it can be used as 'other-than-`frame`' from
-/// on the same tty (for tty frames) or among frames which use `frame`'s
+/// Return CANDIDATE if it can be used as 'other-than-FRAME' from
+/// on the same tty (for tty frames) or among frames which use FRAME's
 /// keyboard.
-/// If `minibuf` is 'visible', do not consider an invisible candidate.
-/// If `minibuf` is a window, consider only its own frame and candidate now
+/// If MINIBUF is `visible', do not consider an invisible candidate.
+/// If MINIBUF is a window, consider only its own frame and candidate now
 /// using that window as the minibuffer.
-/// If `minibuf` is `None` consider `candidate` if it is visible or iconified.
-/// Otherwise consider any candidate and return `None` if `candidate` is not
+/// If MINIBUF is `None' consider `candidate' if it is visible or iconified.
+/// Otherwise consider any candidate and return `None' if CANDIDATE is not
 /// acceptable.
 fn candidate_frame(
     candidate: LispFrameRef,

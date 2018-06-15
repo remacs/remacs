@@ -1,4 +1,5 @@
 #![allow(unused)]
+// Temporarily allow ZSTs for display_info.
 #![allow(improper_ctypes)]
 
 //! This module contains all FFI declarations.
@@ -1617,6 +1618,9 @@ pub struct terminal {
 #[derive(PartialEq)]
 pub struct kboard;
 
+// These are representations of the `display_info` union.
+// They are ZSTs and not ideal. They need to be filled out
+// or ported.
 #[repr(C)]
 pub struct tty_display_info;
 
