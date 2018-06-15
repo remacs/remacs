@@ -437,18 +437,35 @@ calling convention: one for calls made by Flymake into the backend via
 the backend function, the other in the reverse direction via a
 callback.  To be usable, backends must adhere to both.
 
-Backend functions must accept an arbitrary number of arguments:
+The first argument passed to a backend function is always
+@var{report-fn}, a callback function detailed below.  Beyond it,
+functions must be prepared to accept (and possibly ignore) an
+arbitrary number of keyword-value pairs of the form
+@w{@code{(@var{:key} @var{value} @var{:key2} @var{value2}...)}}.
+
+Currently, Flymake may pass the following keywords and values to the
+backend function:
 
 @itemize
-@item
-the first argument is always @var{report-fn}, a callback function
-detailed below;
 
-@item
-the remaining arguments are keyword-value pairs of the form
-@w{@code{(@var{:key} @var{value} @var{:key2} @var{value2}...)}}.
-Currently, Flymake provides no such arguments, but backend functions
-must be prepared to accept (and possibly ignore) any number of them.
+@item @code{:recent-changes}
+The value is a list recent changes since the last time the backend
+function was called for the buffer.  If the list is empty, this
+indicates that no changes have been recorded.  If it is the first time
+that this backend function is called for this activation of
+@code{flymake-mode}, then this argument isn't provided at all
+(i.e. it's not merely nil).
+
+Each element is in the form (@var{beg} @var{end} @var{text}) where
+@var{beg} and @var{end} are buffer positions, and @var{text} is a
+string containing the text contained between those positions (if any),
+after the change was performed.
+
+@item @code{:changes-start} and @code{:changes-end}
+The value is, repectively, the minimum and maximum buffer positions
+touched by the recent changes.  These are provided for convenience and
+only if @code{:recent-changes} is also provided.
+
 @end itemize
 
 Whenever Flymake or the user decide to re-check the buffer, backend
@@ -504,6 +521,11 @@ details of the situation encountered, if any.
 @code{:force}, whose value should be a boolean suggesting
 that Flymake consider the report even if it was somehow
 unexpected.
+
+@item
+@code{:region}, a cons (@var{beg} . @var{end}) of buffer positions
+indicating that the report applies to that region and that previous
+reports targeting other parts of the buffer remain valid.
 @end itemize
 
 @menu

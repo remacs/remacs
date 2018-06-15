@@ -193,6 +193,10 @@ You should instead set properties on known diagnostic symbols, like
 *** New customizable variable 'flymake-start-on-save-buffer'
 Control whether Flymake starts checking the buffer on save.
 
+*** Flymake and backend functions may exchange hints about buffer changes
+This enables more efficient backends.  See the docstring of
+'flymake-diagnostic-functions' or the Flymake manual for details.
+
 ** Package
 *** New 'package-quickstart' feature
 When 'package-quickstart' is non-nil, package.el precomputes a big autoloads
