@@ -1532,7 +1532,7 @@ similar to an entry in `package-alist'.  Save the cached copy to
            (content (buffer-string))
            (dir (expand-file-name (format "archives/%s" name) package-user-dir))
            (local-file (expand-file-name file dir)))
-      (when (listp (read-from-string content))
+      (when (listp (read content))
         (make-directory dir t)
         (if (or (not package-check-signature)
                 (member name package-unsigned-archives))
