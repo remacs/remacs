@@ -2313,8 +2313,8 @@ See `font-lock-syntax-table'.")
       (process-send-eof ruby--flymake-proc))))
 
 (defcustom ruby-flymake-use-rubocop-if-available t
-  "Non-nil to use the Rubocop Flymake backend.
-Only takes effect if Rubocop is installed."
+  "Non-nil to use the RuboCop Flymake backend.
+Only takes effect if RuboCop is installed."
   :version "26.1"
   :type 'boolean
   :group 'ruby
@@ -2328,7 +2328,7 @@ Only takes effect if Rubocop is installed."
   :safe 'stringp)
 
 (defun ruby-flymake-rubocop (report-fn &rest _args)
-  "Rubocop backend for Flymake."
+  "RuboCop backend for Flymake."
   (unless (executable-find "rubocop")
     (error "Cannot find the rubocop executable"))
 
@@ -2354,7 +2354,7 @@ Only takes effect if Rubocop is installed."
          (when (eq (process-exit-status proc) 127)
            ;; Not sure what to do in this case.  Maybe ideally we'd
            ;; switch back to ruby-flymake-simple.
-           (flymake-log :warning "Rubocop returned status 127: %s"
+           (flymake-log :warning "RuboCop returned status 127: %s"
                         (buffer-string)))
          (goto-char (point-min))
          (cl-loop
