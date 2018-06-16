@@ -544,7 +544,7 @@ x_cr_accumulate_data (void *closure, const unsigned char *data,
 }
 
 static void
-x_cr_destroy (void *cr);
+x_cr_destroy (void *cr)
 {
   block_input ();
   cairo_destroy (cr);
@@ -604,7 +604,7 @@ x_cr_export_frames (Lisp_Object frames, cairo_surface_type_t surface_type)
 
   cr = cairo_create (surface);
   cairo_surface_destroy (surface);
-  record_unwind_protect_pointer (x_cr_destroy, cr);
+  record_unwind_protect_ptr (x_cr_destroy, cr);
 
   while (1)
     {
