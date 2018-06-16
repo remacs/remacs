@@ -612,9 +612,9 @@ The object labels of the found items are returned as list."
           (error 'wrong-type-argument (cadr attributes)))
 	(setq props (append
 		     props
-		     (list :dict-entry
-			   (substring (symbol-name (car attributes)) 1)
-			   (cadr attributes)))
+		     `((:dict-entry
+			,(substring (symbol-name (car attributes)) 1)
+			,(cadr attributes))))
 	      attributes (cddr attributes)))
       ;; Search.  The result is a list of object paths.
       (setq result
@@ -650,9 +650,9 @@ The object path of the created item is returned."
             (error 'wrong-type-argument (cadr attributes)))
 	  (setq props (append
 		       props
-		       (list :dict-entry
-			     (substring (symbol-name (car attributes)) 1)
-			     (cadr attributes)))
+		       `((:dict-entry
+			  ,(substring (symbol-name (car attributes)) 1)
+			  ,(cadr attributes))))
 		attributes (cddr attributes)))
 	;; Create the item.
 	(setq result
