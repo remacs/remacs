@@ -2290,8 +2290,8 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
   XMenuActivateSetWaitFunction (x_menu_wait_for_event, FRAME_X_DISPLAY (f));
 #endif
 
-  record_unwind_protect_pointer (pop_down_menu,
-				 &(struct pop_down_menu) {f, menu});
+  record_unwind_protect_ptr (pop_down_menu,
+			     &(struct pop_down_menu) {f, menu});
 
   /* Help display under X won't work because XMenuActivate contains
      a loop that doesn't give Emacs a chance to process it.  */
