@@ -155,7 +155,8 @@
 # define PTR_TO_OFFSET(d) POS_AS_IN_BUFFER (POINTER_TO_OFFSET (d))
 /* Strings are 0-indexed, buffers are 1-indexed; we pun on the boolean
    result to get the right base index.  */
-# define POS_AS_IN_BUFFER(p) ((p) + (NILP (re_match_object) || BUFFERP (re_match_object)))
+# define POS_AS_IN_BUFFER(p)                                    \
+  ((p) + (NILP (gl_state.object) || BUFFERP (gl_state.object)))
 
 # define RE_MULTIBYTE_P(bufp) ((bufp)->multibyte)
 # define RE_TARGET_MULTIBYTE_P(bufp) ((bufp)->target_multibyte)
@@ -1231,6 +1232,15 @@ static const char *re_error_msgid[] =
    so REL_ALLOC should not affect this.  */
 #if defined REGEX_MALLOC && defined emacs
 # undef MATCH_MAY_ALLOCATE
+#endif
+
+/* While regex matching of a single compiled pattern isn't reentrant
+   (because we compile regexes to bytecode programs, and the bytecode
+   programs are self-modifying), the regex machinery must nevertheless
+   be reentrant with respect to _different_ patterns, and we do that
+   by avoiding global variables and using MATCH_MAY_ALLOCATE.  */
+#if !defined MATCH_MAY_ALLOCATE && defined emacs
+# error "Emacs requires MATCH_MAY_ALLOCATE"
 #endif
 
 
@@ -5895,12 +5905,12 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #ifdef emacs
 		ssize_t offset = PTR_TO_OFFSET (d - 1);
 		ssize_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
-		UPDATE_SYNTAX_TABLE_FAST (charpos);
+		UPDATE_SYNTAX_TABLE (charpos);
 #endif
 		GET_CHAR_BEFORE_2 (c1, d, string1, end1, string2, end2);
 		s1 = SYNTAX (c1);
 #ifdef emacs
-		UPDATE_SYNTAX_TABLE_FORWARD_FAST (charpos + 1);
+		UPDATE_SYNTAX_TABLE_FORWARD (charpos + 1);
 #endif
 		PREFETCH_NOLIMIT ();
 		GET_CHAR_AFTER (c2, d, dummy);
@@ -5937,7 +5947,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #ifdef emacs
 	      ssize_t offset = PTR_TO_OFFSET (d);
 	      ssize_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
-	      UPDATE_SYNTAX_TABLE_FAST (charpos);
+	      UPDATE_SYNTAX_TABLE (charpos);
 #endif
 	      PREFETCH ();
 	      GET_CHAR_AFTER (c2, d, dummy);
@@ -5982,7 +5992,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #ifdef emacs
 	      ssize_t offset = PTR_TO_OFFSET (d) - 1;
 	      ssize_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
-	      UPDATE_SYNTAX_TABLE_FAST (charpos);
+	      UPDATE_SYNTAX_TABLE (charpos);
 #endif
 	      GET_CHAR_BEFORE_2 (c1, d, string1, end1, string2, end2);
 	      s1 = SYNTAX (c1);
@@ -5997,7 +6007,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		  PREFETCH_NOLIMIT ();
 		  GET_CHAR_AFTER (c2, d, dummy);
 #ifdef emacs
-		  UPDATE_SYNTAX_TABLE_FORWARD_FAST (charpos);
+		  UPDATE_SYNTAX_TABLE_FORWARD (charpos);
 #endif
 		  s2 = SYNTAX (c2);
 
@@ -6026,7 +6036,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #ifdef emacs
 	      ssize_t offset = PTR_TO_OFFSET (d);
 	      ssize_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
-	      UPDATE_SYNTAX_TABLE_FAST (charpos);
+	      UPDATE_SYNTAX_TABLE (charpos);
 #endif
 	      PREFETCH ();
 	      c2 = RE_STRING_CHAR (d, target_multibyte);
@@ -6069,7 +6079,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 #ifdef emacs
 	      ssize_t offset = PTR_TO_OFFSET (d) - 1;
 	      ssize_t charpos = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
-	      UPDATE_SYNTAX_TABLE_FAST (charpos);
+	      UPDATE_SYNTAX_TABLE (charpos);
 #endif
 	      GET_CHAR_BEFORE_2 (c1, d, string1, end1, string2, end2);
 	      s1 = SYNTAX (c1);
@@ -6084,7 +6094,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		  PREFETCH_NOLIMIT ();
 		  c2 = RE_STRING_CHAR (d, target_multibyte);
 #ifdef emacs
-		  UPDATE_SYNTAX_TABLE_FORWARD_FAST (charpos + 1);
+		  UPDATE_SYNTAX_TABLE_FORWARD (charpos + 1);
 #endif
 		  s2 = SYNTAX (c2);
 
@@ -6107,7 +6117,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    {
 	      ssize_t offset = PTR_TO_OFFSET (d);
 	      ssize_t pos1 = SYNTAX_TABLE_BYTE_TO_CHAR (offset);
-	      UPDATE_SYNTAX_TABLE_FAST (pos1);
+	      UPDATE_SYNTAX_TABLE (pos1);
 	    }
 #endif
 	    {

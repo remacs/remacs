@@ -137,15 +137,6 @@ struct thread_state
   struct re_registers m_saved_search_regs;
 #define saved_search_regs (current_thread->m_saved_search_regs)
 
-  /* This is the string or buffer in which we
-     are matching.  It is used for looking up syntax properties.
-
-     If the value is a Lisp string object, we are matching text in that
-     string; if it's nil, we are matching text in the current buffer; if
-     it's t, we are matching text in a C string.  */
-  Lisp_Object m_re_match_object;
-#define re_match_object (current_thread->m_re_match_object)
-
   /* This member is different from waiting_for_input.
      It is used to communicate to a lisp process-filter/sentinel (via the
      function Fwaiting_for_user_input_p) whether Emacs was waiting
