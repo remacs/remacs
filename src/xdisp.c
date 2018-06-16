@@ -20231,9 +20231,8 @@ extend_face_to_end_of_line (struct it *it)
     return;
 
   /* The default face, possibly remapped. */
-  default_face = FACE_FROM_ID_OR_NULL (
-    f,
-    lookup_basic_face (it->w, f, DEFAULT_FACE_ID));
+  default_face =
+    FACE_FROM_ID_OR_NULL (f, lookup_basic_face (it->w, f, DEFAULT_FACE_ID));
 
   /* Face extension extends the background and box of IT->face_id
      to the end of the line.  If the background equals the background

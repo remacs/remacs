@@ -2203,6 +2203,8 @@ evaluate_face_filter (Lisp_Object filter, struct window *w,
 {
   Lisp_Object orig_filter = filter;
 
+  /* Inner braces keep compiler happy about the goto skipping variable
+     initialization.  */
   {
     if (NILP (filter))
       return true;
@@ -2356,7 +2358,7 @@ merge_face_ref (struct window *w,
       Lisp_Object first = XCAR (face_ref);
 
       if (EQ (first, Qforeground_color)
-               || EQ (first, Qbackground_color))
+	  || EQ (first, Qbackground_color))
 	{
 	  /* One of (FOREGROUND-COLOR . COLOR) or (BACKGROUND-COLOR
 	     . COLOR).  COLOR must be a string.  */
@@ -6650,10 +6652,10 @@ syms_of_xfaces (void)
 #endif
 
   DEFVAR_BOOL ("face-filters-always-match", face_filters_always_match,
-               doc: /* Non-nil means that face filters are always
-deemed to match. This variable is intended for use only by code that
-evaluates the "specifity" of a face specification and should be
-let-bound only for this purpose.  */);
+    doc: /* Non-nil means that face filters are always deemed to match.
+This variable is intended for use only by code that evaluates
+the "specifity" of a face specification and should be let-bound
+only for this purpose.  */);
 
   DEFVAR_LISP ("face-new-frame-defaults", Vface_new_frame_defaults,
     doc: /* List of global face definitions (for internal use only.)  */);
