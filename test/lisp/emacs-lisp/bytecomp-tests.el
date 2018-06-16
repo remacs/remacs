@@ -286,7 +286,14 @@
             (t)))
     (let ((a))
       (cond ((eq a 'foo) 'incorrect)
-            ('correct))))
+            ('correct)))
+    ;; Bug#31734
+    (let ((variable 0))
+      (cond
+       ((eq variable 'default)
+	(message "equal"))
+       (t
+	(message "not equal")))))
   "List of expression for test.
 Each element will be executed by interpreter and with
 bytecompiled code, and their results compared.")
