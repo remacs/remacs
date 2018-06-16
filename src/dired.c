@@ -40,7 +40,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "systime.h"
 #include "buffer.h"
 #include "coding.h"
-#include "regex.h"
 
 #ifdef MSDOS
 #include "msdos.h"	/* for fstatat */
@@ -171,7 +170,6 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 {
   ptrdiff_t directory_nbytes;
   Lisp_Object list, dirfilename, encoded_directory;
-  struct re_pattern_buffer *bufp = NULL;
   bool needsep = 0;
   ptrdiff_t count = SPECPDL_INDEX ();
 #ifdef WINDOWSNT
@@ -187,32 +185,11 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   list = encoded_directory = dirfilename = Qnil;
   dirfilename = Fdirectory_file_name (directory);
 
-  if (!NILP (match))
-    {
-      CHECK_STRING (match);
-
-      /* MATCH might be a flawed regular expression.  Rather than
-	 catching and signaling our own errors, we just call
-	 compile_pattern to do the work for us.  */
-      /* Pass 1 for the MULTIBYTE arg
-	 because we do make multibyte strings if the contents warrant.  */
-# ifdef WINDOWSNT
-      /* Windows users want case-insensitive wildcards.  */
-      bufp = compile_pattern (match, 0,
-			      BVAR (&buffer_defaults, case_canon_table), 0, 1);
-# else	/* !WINDOWSNT */
-      bufp = compile_pattern (match, 0, Qnil, 0, 1);
-# endif	 /* !WINDOWSNT */
-    }
-
   /* Note: ENCODE_FILE and DECODE_FILE can GC because they can run
      run_pre_post_conversion_on_str which calls Lisp directly and
      indirectly.  */
   dirfilename = ENCODE_FILE (dirfilename);
   encoded_directory = ENCODE_FILE (directory);
-
-  /* Now *bufp is the compiled form of MATCH; don't call anything
-     which might compile a new regexp until we're done with the loop!  */
 
   int fd;
   DIR *d = open_directory (dirfilename, &fd);
@@ -250,6 +227,15 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
       || !IS_ANY_SEP (SREF (directory, directory_nbytes - 1)))
     needsep = 1;
 
+  /* Windows users want case-insensitive wildcards.  */
+  Lisp_Object case_table =
+#ifdef WINDOWSNT
+    BVAR (&buffer_defaults, case_canon_table)
+#else
+    Qnil
+#endif
+    ;
+
   /* Loop reading directory entries.  */
   for (struct dirent *dp; (dp = read_dirent (d, directory)); )
     {
@@ -266,8 +252,9 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	 allow matching to be interrupted.  */
       maybe_quit ();
 
-      bool wanted = (NILP (match)
-		     || re_search (bufp, SSDATA (name), len, 0, len, 0) >= 0);
+      bool wanted = (NILP (match) ||
+                     fast_string_match_internal (
+                       match, name, case_table) >= 0);
 
       if (wanted)
 	{
