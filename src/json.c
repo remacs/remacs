@@ -574,7 +574,7 @@ represent a JSON false value.  It defaults to `:false'.
 In you specify the same value for `:null-object' and `:false-object',
 a potentially ambiguous situation, the JSON output will not contain
 any JSON false values.
-usage: (json-serialize STRING &rest ARGS) */)
+usage: (json-serialize OBJECT &rest ARGS)  */)
      (ptrdiff_t nargs, Lisp_Object *args)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -658,7 +658,8 @@ DEFUN ("json-insert", Fjson_insert, Sjson_insert, 1, MANY,
        doc: /* Insert the JSON representation of OBJECT before point.
 This is the same as (insert (json-serialize OBJECT)), but potentially
 faster.  See the function `json-serialize' for allowed values of
-OBJECT.  */)
+OBJECT.
+usage: (json-insert OBJECT &rest ARGS)  */)
      (ptrdiff_t nargs, Lisp_Object *args)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
