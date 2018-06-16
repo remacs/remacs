@@ -257,8 +257,7 @@ the statement:
     qux
   end
 
-Only has effect when `ruby-use-smie' is t.
-"
+Only has effect when `ruby-use-smie' is t."
   :type `(choice
           (const :tag "None" nil)
           (const :tag "All" t)
