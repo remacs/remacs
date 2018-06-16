@@ -2783,11 +2783,15 @@ could switch to a different terminal without switching back when
 you're done.
 @end deffn
 
+@cindex text-terminal focus notification
 Emacs cooperates with the window system by arranging to select frames
 as the server and window manager request.  When a window system
 informs Emacs that one of its frames has been selected, Emacs
-internally generates a @dfn{focus-in} event.  Focus events are
-normally handled by @code{handle-focus-in}.
+internally generates a @dfn{focus-in} event.  When an Emacs frame is
+displayed on a text-terminal emulator, such as @command{xterm}, which
+supports reporting of focus-change notification, the focus-in and
+focus-out events are available even for text-mode frames.  Focus
+events are normally handled by @code{handle-focus-in}.
 
 @deffn Command handle-focus-in event
 This function handles focus-in events from window systems and

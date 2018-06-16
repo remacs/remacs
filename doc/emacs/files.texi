@@ -206,7 +206,10 @@ saved it.  If the file has changed, Emacs offers to reread it.
   If you try to visit a file larger than
 @code{large-file-warning-threshold} (the default is 10000000, which is
 about 10 megabytes), Emacs asks you for confirmation first.  You can
-answer @kbd{y} to proceed with visiting the file.  Note, however, that
+answer @kbd{y} to proceed with visiting the file or @kbd{l} to visit
+the file literally (see below).  Visiting large files literally speeds
+up navigation and editing of such files, because various
+potentially-expensive features are turned off.  Note, however, that
 Emacs cannot visit files that are larger than the maximum Emacs buffer
 size, which is limited by the amount of memory Emacs can allocate and
 by the integers that Emacs can represent (@pxref{Buffers}).  If you

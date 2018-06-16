@@ -3325,6 +3325,17 @@ foreground or background color, similar to @code{(:foreground
 @var{color-name})} or @code{(:background @var{color-name})}.  This
 form is supported for backward compatibility only, and should be
 avoided.
+
+@item
+A cons cell of the form @w{@code{(:filtered @var{filter}
+@var{face-spec})}}, that specifies the face given by @var{face-spec},
+but only if @var{filter} matches when the face is used for display.
+The @var{face-spec} can use any of the forms mentioned above.  The
+@var{filter} should be of the form @w{@code{(:window @var{param}
+@var{value})}}, which matches for windows whose parameter @var{param}
+is @code{eq} to @var{value}.  If the variable
+@code{face-filters-always-match} is non-@code{nil}, all face filters
+are deemed to have matched.
 @end itemize
 
 Font Lock mode (@pxref{Font Lock Mode}) works in most buffers by
@@ -3697,6 +3708,12 @@ string to display, which is passed through
 @code{substitute-command-keys} before being given to the function; see
 @ref{Keys in Documentation}.  Tooltip mode (@pxref{Tooltips,,, emacs,
 The GNU Emacs Manual}) provides an example.
+@end defvar
+
+@defvar face-filters-always-match
+If this variable is non-@code{nil}, face filters that specify
+attributes applied only when certain conditions are met will be deemed
+to match always.
 @end defvar
 
 @node Format Properties

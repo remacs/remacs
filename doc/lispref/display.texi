@@ -2938,7 +2938,13 @@ the remapped face---it replaces the normal definition of @var{face},
 instead of modifying it.
 
 If @code{face-remapping-alist} is buffer-local, its local value takes
-effect only within that buffer.
+effect only within that buffer.  If @code{face-remapping-alist}
+includes faces applicable only to certain windows, by using the
+@w{@code{(:filtered (:window @var{param} @var{val}) @var{spec})}},
+that face takes effect only in windows that match the filter
+conditions (@pxref{Special Properties}).  To turn off face filtering
+temporarily, bind @code{face-filters-always-match} to a non-@code{nil}
+value, then all face filters will match any window.
 
 Note: face remapping is non-recursive.  If @var{remapping} references
 the same face name @var{face}, either directly or via the

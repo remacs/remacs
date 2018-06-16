@@ -2031,19 +2031,19 @@ think it does, because \"free\" is pretty hard to define in practice."
                   (x-popup-dialog t `(,prompt
                                       ("Yes" . ?y)
                                       ("No" . ?n)
-                                      ("Open in raw mode" . ?r)))
+                                      ("Open literally" . ?l)))
                 (read-char-choice
-                 (concat prompt " (y)es or (n)o or (r)aw ")
-                 '(?y ?Y ?n ?N ?r ?R)))))
+                 (concat prompt " (y)es or (n)o or (l)iterally ")
+                 '(?y ?Y ?n ?N ?l ?L)))))
         (cond ((memq choice '(?y ?Y)) nil)
-              ((memq choice '(?r ?R)) 'raw)
+              ((memq choice '(?l ?L)) 'raw)
               (t 'abort))))))
 
 (defun abort-if-file-too-large (size op-type filename &optional offer-raw)
   "If file SIZE larger than `large-file-warning-threshold', allow user to abort.
 OP-TYPE specifies the file operation being performed (for message
 to user).  If OFFER-RAW is true, give user the additional option
-to open the file in raw mode. If the user chooses this option,
+to open the file literally. If the user chooses this option,
 `abort-if-file-too-large' returns the symbol `raw'. Otherwise, it
 returns nil or exits non-locally."
   (let ((choice (and large-file-warning-threshold size

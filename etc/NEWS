@@ -175,6 +175,13 @@ interface that's more like functions like @code{search-forward}.
 ** More commands support noncontiguous rectangular regions, namely
 'upcase-dwim', 'downcase-dwim', 'replace-string', 'replace-regexp'.
 
++++
+** When asked to visit a large file, Emacs now offers visiting it literally.
+Previously, Emacs would only ask for confirmation before visiting
+large files.  Now it also offers a third alternative: to visit the
+file literally, as in 'find-file-literally', which speeds up
+navigation and editing of large files.
+
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
@@ -613,7 +620,8 @@ On terminal emulators that support the feature, Emacs can now support
 ** Window-specific face remapping.
 Face specifications (of the kind used in 'face-remapping-alist')
 now support filters, allowing faces to vary between different windows
-displaying the same buffer.
+displaying the same buffer.  See the Info node "Face Remapping" of the
+Emacs Lisp Reference manual for more detail.
 
 +++
 ** New function assoc-delete-all.
