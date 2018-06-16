@@ -8888,9 +8888,6 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
   /* Whether each event in the mocked input came from a mouse menu.  */
   bool used_mouse_menu_history[READ_KEY_ELTS] = {0};
 
-  /* Distinguish first time through from replay with mock_input == 0.  */
-  bool is_replay = false;
-
   /* If the sequence is unbound in submaps[], then
      keybuf[fkey.start..fkey.end-1] is a prefix in Vfunction_key_map,
      and fkey.map is its binding.
@@ -8999,9 +8996,8 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
   /* These are no-ops the first time through, but if we restart, they
      revert the echo area and this_command_keys to their original state.  */
   this_command_key_count = keys_start;
-  if (INTERACTIVE && is_replay)
+  if (INTERACTIVE && t < mock_input)
     echo_truncate (echo_start);
-  is_replay = true;
 
   /* If the best binding for the current key sequence is a keymap, or
      we may be looking at a function key's escape sequence, keep on
