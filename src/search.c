@@ -144,12 +144,6 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
   else
     cp->f_whitespace_regexp = Qnil;
 
-  /* rms: I think BLOCK_INPUT is not needed here any more,
-     because regex.c defines malloc to call xmalloc.
-     Using BLOCK_INPUT here means the debugger won't run if an error occurs.
-     So let's turn it off.  */
-  /*  BLOCK_INPUT;  */
-
   whitespace_regexp = STRINGP (Vsearch_spaces_regexp) ?
     SSDATA (Vsearch_spaces_regexp) : NULL;
 
@@ -160,7 +154,6 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
      syntax-table, it can only be reused with *this* syntax table.  */
   cp->syntax_table = cp->buf.used_syntax ? BVAR (current_buffer, syntax_table) : Qt;
 
-  /* unblock_input ();  */
   if (val)
     xsignal1 (Qinvalid_regexp, build_string (val));
 
