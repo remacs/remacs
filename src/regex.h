@@ -367,7 +367,10 @@ struct re_pattern_buffer
 	/* Number of bytes actually used in `buffer'.  */
   size_t used;
 
-#ifndef emacs
+#ifdef emacs
+        /* Charset of unibyte characters at compiling time. */
+  int charset_unibyte;
+#else
         /* Syntax setting with which the pattern was compiled.  */
   reg_syntax_t syntax;
 #endif
@@ -427,9 +430,6 @@ struct re_pattern_buffer
   /* If true, multi-byte form in the target of match should be
      recognized as a multibyte character.  */
   unsigned target_multibyte : 1;
-
-  /* Charset of unibyte characters at compiling time. */
-  int charset_unibyte;
 #endif
 
 /* [[[end pattern_buffer]]] */
