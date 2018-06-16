@@ -843,6 +843,11 @@ to the front of this list.")
   (unless (custom-theme-p theme)
     (error "Unknown theme `%s'" theme)))
 
+(defun custom--should-apply-setting (theme)
+  (or (null custom--inhibit-theme-enable)
+      (and (eq custom--inhibit-theme-enable 'apply-only-user)
+           (eq theme 'user))))
+
 (defun custom-push-theme (prop symbol theme mode &optional value)
   "Record VALUE for face or variable SYMBOL in custom theme THEME.
 PROP is `theme-face' for a face, `theme-value' for a variable.
@@ -882,7 +887,7 @@ See `custom-known-themes' for a list of known themes."
 	(setcar (cdr setting) value)))
      ;; Add a new setting:
      (t
-      (unless custom--inhibit-theme-enable
+      (when (custom--should-apply-setting theme)
 	(unless old
 	  ;; If the user changed a variable outside of Customize, save
 	  ;; the value to a fake theme, `changed'.  If the theme is
@@ -981,7 +986,7 @@ COMMENT is a comment string about SYMBOL."
     (let* ((symbol (indirect-variable (nth 0 entry)))
 	   (value (nth 1 entry)))
       (custom-push-theme 'theme-value symbol theme 'set value)
-      (unless custom--inhibit-theme-enable
+      (when (custom--should-apply-setting theme)
 	;; Now set the variable.
 	(let* ((now (nth 2 entry))
 	       (requests (nth 3 entry))
@@ -1149,11 +1154,13 @@ This variable is designed for use in lisp code (including
 external packages).  For manual user customizations, use
 `custom-theme-directory' instead.")
 
-(defvar custom--inhibit-theme-enable nil
+(defvar custom--inhibit-theme-enable 'apply-only-user
   "Whether the custom-theme-set-* functions act immediately.
 If nil, `custom-theme-set-variables' and `custom-theme-set-faces'
 change the current values of the given variable or face.  If
-non-nil, they just make a record of the theme settings.")
+t, they just make a record of the theme settings.  If the
+value is `apply-only-user', then apply setting to the
+`user' theme immediately and defer other updates.")
 
 (defun provide-theme (theme)
   "Indicate that this file provides THEME.

@@ -518,6 +518,15 @@ names" in the Tramp manual for full documentation of these facilities.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
++++
+** Theme settings generally aren't actually applied until a call to
+`enable-theme-, either one made explicitly or implicitly through
+`load-theme' with NO-ENABLE nil.  This change has the effect of not
+applying theme changes just because we load a lisp file containing a
+theme specification.  The previous behavior is preserved for the
+special case of the `user' theme, which is frequently used for
+ad-hoc customization.
+
 ** The 'repetitions' argument of 'benchmark-run' can now also be a variable.
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
 longer defaults to 'buffer-file-name'.
