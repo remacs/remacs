@@ -507,10 +507,8 @@ function @code{memory-limit} provides information on the total amount of
 memory Emacs is currently using.
 
 @defun memory-limit
-This function returns the address of the last byte Emacs has allocated,
-divided by 1024.  We divide the value by 1024 to make sure it fits in a
-Lisp integer.
-
+This function returns an estimate of the total amount of bytes of
+virtual memory that Emacs is currently using, divided by 1024.
 You can use this to get a general idea of how your actions affect the
 memory usage.
 @end defun

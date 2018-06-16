@@ -7120,24 +7120,6 @@ or memory information can't be obtained, return nil.  */)
 
 /* Debugging aids.  */
 
-DEFUN ("memory-limit", Fmemory_limit, Smemory_limit, 0, 0, 0,
-       doc: /* Return the address of the last byte Emacs has allocated, divided by 1024.
-This may be helpful in debugging Emacs's memory usage.
-We divide the value by 1024 to make sure it fits in a Lisp integer.  */)
-  (void)
-{
-  Lisp_Object end;
-
-#if defined HAVE_NS || defined __APPLE__ || !HAVE_SBRK
-  /* Avoid warning.  sbrk has no relation to memory allocated anyway.  */
-  XSETINT (end, 0);
-#else
-  XSETINT (end, (intptr_t) (char *) sbrk (0) / 1024);
-#endif
-
-  return end;
-}
-
 DEFUN ("memory-use-counts", Fmemory_use_counts, Smemory_use_counts, 0, 0, 0,
        doc: /* Return a list of counters that measure how much consing there has been.
 Each of these counters increments for a certain kind of object.
@@ -7495,7 +7477,6 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Smake_finalizer);
   defsubr (&Spurecopy);
   defsubr (&Sgarbage_collect);
-  defsubr (&Smemory_limit);
   defsubr (&Smemory_info);
   defsubr (&Smemory_use_counts);
   defsubr (&Ssuspicious_object);

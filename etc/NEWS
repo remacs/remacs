@@ -665,6 +665,9 @@ instead of just Microsoft platforms.  This fixes a 'get-free-disk-space'
 bug on OS X 10.8 and later (Bug#28639).
 
 +++
+** 'memory-limit' now returns a better estimate of memory consumption.
+
++++
 ** New macro 'combine-change-calls' arranges to call the change hooks
 ('before-change-functions' and 'after-change-functions') just once
 each around a sequence of lisp forms, given a region.  This is
