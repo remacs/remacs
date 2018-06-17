@@ -533,7 +533,9 @@ See Bug#21722."
          (second (generate-new-buffer-name base))
          ;; `save-window-excursion' doesn't restore frame configurations.
          (pop-up-frames nil)
-         (inhibit-message t))
+         (inhibit-message t)
+         (emacs (expand-file-name invocation-name invocation-directory)))
+    (skip-unless (file-executable-p emacs))
     ;; Let `shell-command' create the buffer as needed.
     (kill-buffer first)
     (unwind-protect
@@ -544,7 +546,7 @@ See Bug#21722."
           ;; `accept-process-output' is called on the second command.
           (dolist (form '("(sleep-for 8)" "(message \"\")"))
             (async-shell-command (format "%s -Q -batch -eval '%s'"
-                                         invocation-name form)
+                                         emacs form)
                                  first))
           ;; First command should neither have nor display output.
           (let* ((buffer (get-buffer first))
