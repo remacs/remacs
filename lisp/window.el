@@ -1144,15 +1144,16 @@ explicitly provided via a `window-parameters' entry in ALIST."
 		    buffer best-window 'reuse alist dedicated)))))))))
 
 (defun window-toggle-side-windows (&optional frame)
-  "Toggle side windows on specified FRAME.
+  "Toggle display of side windows on specified FRAME.
 FRAME must be a live frame and defaults to the selected one.
 
-If FRAME has at least one side window, save FRAME's state in the
-FRAME's `window-state' frame parameter and delete all side
-windows on FRAME afterwards.  Otherwise, if FRAME has a
-`window-state' parameter, use that to restore any side windows on
-FRAME leaving FRAME's main window alone.  Signal an error if
-FRAME has no side window and no saved state is found."
+If FRAME has at least one side window, delete all side
+windows on FRAME after saving FRAME's state in the
+FRAME's `window-state' frame parameter.  Otherwise,
+restore any side windows recorded in FRAME's `window-state'
+parameter, leaving FRAME's main window alone.  Signal an
+error if FRAME has no side windows and no saved state for
+it is found."
   (interactive)
   (let* ((frame (window-normalize-frame frame))
          (window--sides-inhibit-check t)
