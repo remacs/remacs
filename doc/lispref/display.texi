@@ -472,43 +472,51 @@ Secondly, @samp{done} is more explicit.
 @defmac dotimes-with-progress-reporter (var count [result]) reporter-or-message body@dots{}
 This is a convenience macro that works the same way as @code{dotimes}
 does, but also reports loop progress using the functions described
-above.  It allows you to save some typing.
+above.  It allows you to save some typing.  The argument
+@var{reporter-or-message} can be either a string or a progress
+reporter object.
 
-You can rewrite the example in the beginning of this node using
-this macro this way:
+You can rewrite the example in the beginning of this subsection using
+this macro as follows:
 
 @example
+@group
 (dotimes-with-progress-reporter
     (k 500)
     "Collecting some mana for Emacs..."
   (sit-for 0.01))
+@end group
 @end example
 
+Using a reporter object as the @var{reporter-or-message} argument is
+useful if you want to specify the optional arguments in
+@var{make-progress-reporter}.  For instance, you can write the
+previous example as follows:
 
-The second argument @code{reporter-or-message} might be a progress
-reporter object.  This is useful if you want to specify the optional
-arguments in @code{make-progress-reporter}.
-For instance, you can write previous example as follows:
 @example
+@group
 (dotimes-with-progress-reporter
     (k 500)
     (make-progress-reporter "Collecting some mana for Emacs..." 0 500 0 1 1.5)
   (sit-for 0.01))
+@end group
 @end example
 @end defmac
 
 @defmac dolist-with-progress-reporter (var count [result]) reporter-or-message body@dots{}
 This is another convenience macro that works the same way as @code{dolist}
 does, but also reports loop progress using the functions described
-above.  As in @code{dotimes-with-progress-reporter}, @code{reporter-or-message} can be
-a progress reporter or an string.
-We can rewrite our previous example with this macro as follows:
+above.  As in @code{dotimes-with-progress-reporter},
+@code{reporter-or-message} can be a progress reporter or a string.
+You can rewrite the previous example with this macro as follows:
 
 @example
+@group
 (dolist-with-progress-reporter
     (k (number-sequence 0 500))
     "Collecting some mana for Emacs..."
   (sit-for 0.01))
+@end group
 @end example
 @end defmac
 

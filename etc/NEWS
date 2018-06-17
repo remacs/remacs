@@ -617,7 +617,9 @@ manual for more details.
 * Lisp Changes in Emacs 27.1
 
 +++
-** New macro dolist-with-progress-reporter.
+** New macro 'dolist-with-progress-reporter'.
+This works like 'dolist', but reports progress similar to
+'dotimes-with-progress-reporter'.
 
 +++
 ** New hook 'after-delete-frame-functions'.

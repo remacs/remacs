@@ -5050,11 +5050,11 @@ case, use this string to create a progress reporter.
 
 At each iteration, print the reporter message followed by progress
 percentage in the echo area.  After the loop is finished,
-print the reporter message followed by word \"done\".
+print the reporter message followed by the word \"done\".
 
 This macro is a convenience wrapper around `make-progress-reporter' and friends.
 
-\(fn (VAR COUNT [RESULT]) MESSAGE BODY...)"
+\(fn (VAR COUNT [RESULT]) REPORTER-OR-MESSAGE BODY...)"
   (declare (indent 2) (debug ((symbolp form &optional form) form body)))
   (let ((prep (make-symbol "--dotimes-prep--"))
         (end (make-symbol "--dotimes-end--")))
@@ -5078,9 +5078,9 @@ case, use this string to create a progress reporter.
 
 At each iteration, print the reporter message followed by progress
 percentage in the echo area.  After the loop is finished,
-print the reporter message followed by word \"done\".
+print the reporter message followed by the word \"done\".
 
-\(fn (VAR LIST [RESULT]) MESSAGE BODY...)"
+\(fn (VAR LIST [RESULT]) REPORTER-OR-MESSAGE BODY...)"
   (declare (indent 2) (debug ((symbolp form &optional form) form body)))
   (let ((prep (make-symbol "--dolist-progress-reporter--"))
         (count (make-symbol "--dolist-count--"))
