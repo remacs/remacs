@@ -452,11 +452,11 @@ Currently, Flymake may provide these keyword-value pairs:
   at all (i.e. it's not merely nil).
 
   Each element is in the form (BEG END TEXT) where BEG and END
-  are buffer positions, and text is a string containing the text
+  are buffer positions, and TEXT is a string containing the text
   contained between those positions (if any) after the change was
   performed.
 
-* `:changes-start' and `:changes-end' the minimum and maximum
+* `:changes-start' and `:changes-end', the minimum and maximum
   buffer positions touched by the recent changes.  These are only
   provided if `:recent-changes' is also provided.
 
@@ -470,8 +470,9 @@ asynchronous processes or other asynchronous mechanisms.
 In any case, backend functions are expected to return quickly or
 signal an error, in which case the backend is disabled.  Flymake
 will not try disabled backends again for any future checks of
-this buffer.  Certain commands, like turning `flymake-mode' off
-and on again, reset the list of disabled backends.
+this buffer.  To reset the list of disabled backends, turn
+`flymake-mode' off and on again, or interactively call
+`flymake-start' with a prefix argument.
 
 If the function returns, Flymake considers the backend to be
 \"running\". If it has not done so already, the backend is
@@ -482,8 +483,9 @@ pairs in the form (:REPORT-KEY VALUE :REPORT-KEY2 VALUE2...).
 Currently accepted values for REPORT-ACTION are:
 
 * A (possibly empty) list of diagnostic objects created with
-  `flymake-make-diagnostic', causing Flymake to annotate the
-  buffer with this information.
+  `flymake-make-diagnostic', causing Flymake to delete all
+  previous diagnostic annotations in the buffer and create new
+  ones from this list.
 
   A backend may call REPORT-FN repeatedly in this manner, but
   only until Flymake considers that the most recently requested
@@ -506,8 +508,10 @@ Currently accepted REPORT-KEY arguments are:
   consider the report even if it was somehow unexpected.
 
 * `:region': a cons (BEG . END) of buffer positions indicating
-  that the report applies to that region and that previous
-  reports targeting other buffer regions are still valid.")
+  that the report applies to that region only.  Specifically,
+  this means that Flymake will only delete diagnostic annotations
+  of past reports if they intersect the region by at least one
+  character.")
 
 (put 'flymake-diagnostic-functions 'safe-local-variable #'null)
 
@@ -838,7 +842,7 @@ with a report function."
   "Start a syntax check for the current buffer.
 DEFERRED is a list of symbols designating conditions to wait for
 before actually starting the check.  If it is nil (the list is
-                                                       empty), start it immediately, else defer the check to when those
+empty), start it immediately, else defer the check to when those
 conditions are met.  Currently recognized conditions are
 `post-command', for waiting until the current command is over,
 `on-display', for waiting until the buffer is actually displayed
