@@ -3730,6 +3730,7 @@ argument @var{window}, then returns its result.
 @end defun
 
 @cindex window end position
+@cindex last visible position in a window
 @defun window-end &optional window update
 This function returns the position where display of its buffer ends in
 @var{window}.  The default for @var{window} is the selected window.
@@ -3752,7 +3753,8 @@ Even if @var{update} is non-@code{nil}, @code{window-end} does not
 attempt to scroll the display if point has moved off the screen, the
 way real redisplay would do.  It does not alter the
 @code{window-start} value.  In effect, it reports where the displayed
-text will end if scrolling is not required.
+text will end if scrolling is not required.  Note that the position it
+returns might be only partially visible.
 @end defun
 
 @vindex window-group-end-function
