@@ -4221,19 +4221,14 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 			    custom-buffer-order-groups))
 		  (prefixes (widget-get widget :custom-prefixes))
 		  (custom-prefix-list (custom-prefix-add symbol prefixes))
-		  (len (length members))
-		  (count 0)
-		  (reporter (make-progress-reporter
-			     "Creating group entries..." 0 len))
 		  (have-subtitle (and (not (eq symbol 'emacs))
 				      (eq custom-buffer-order-groups 'last)))
 		  prev-type
 		  children)
 
-	     (dolist (entry members)
+	     (dolist-with-progress-reporter (entry members) "Creating group entries..."
 	       (unless (eq prev-type 'custom-group)
 		 (widget-insert "\n"))
-	       (progress-reporter-update reporter (setq count (1+ count)))
 	       (let ((sym (nth 0 entry))
 		     (type (nth 1 entry)))
 		 (when (and have-subtitle (eq type 'custom-group))
@@ -4255,8 +4250,7 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 	     (setq children (nreverse children))
 	     (mapc 'custom-magic-reset children)
 	     (widget-put widget :children children)
-	     (custom-group-state-update widget)
-	     (progress-reporter-done reporter))
+	     (custom-group-state-update widget))
 	   ;; End line
 	   (let ((p (1+ (point))))
 	     (insert "\n\n")

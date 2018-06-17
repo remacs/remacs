@@ -617,6 +617,9 @@ manual for more details.
 * Lisp Changes in Emacs 27.1
 
 +++
+** New macro dolist-with-progress-reporter.
+
++++
 ** New hook 'after-delete-frame-functions'.
 This works like 'delete-frame-functions', but runs after the frame to
 be deleted has been made dead and removed from the frame list.

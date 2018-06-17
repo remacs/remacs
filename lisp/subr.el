@@ -5068,6 +5068,34 @@ This macro is a convenience wrapper around `make-progress-reporter' and friends.
        (progress-reporter-done ,prep)
        (or ,@(cdr (cdr spec)) nil))))
 
+(defmacro dolist-with-progress-reporter (spec reporter-or-message &rest body)
+  "Loop over a list and report progress in the echo area.
+Evaluate BODY with VAR bound to each car from LIST, in turn.
+Then evaluate RESULT to get return value, default nil.
+
+REPORTER-OR-MESSAGE is a progress reporter object or a string.  In the latter
+case, use this string to create a progress reporter.
+
+At each iteration, print the reporter message followed by progress
+percentage in the echo area.  After the loop is finished,
+print the reporter message followed by word \"done\".
+
+\(fn (VAR LIST [RESULT]) MESSAGE BODY...)"
+  (declare (indent 2) (debug ((symbolp form &optional form) form body)))
+  (let ((prep (make-symbol "--dolist-progress-reporter--"))
+        (count (make-symbol "--dolist-count--"))
+        (list (make-symbol "--dolist-list--")))
+    `(let ((,prep ,reporter-or-message)
+           (,count 0)
+           (,list ,(cadr spec)))
+       (when (stringp ,prep)
+         (setq ,prep (make-progress-reporter ,prep 0 (1- (length ,list)))))
+       (dolist (,(car spec) ,list)
+         ,@body
+         (progress-reporter-update ,prep (setq ,count (1+ ,count))))
+       (progress-reporter-done ,prep)
+       (or ,@(cdr (cdr spec)) nil))))
+
 
 ;;;; Comparing version strings.
 

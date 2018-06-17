@@ -497,6 +497,21 @@ For instance, you can write previous example as follows:
 @end example
 @end defmac
 
+@defmac dolist-with-progress-reporter (var count [result]) reporter-or-message body@dots{}
+This is another convenience macro that works the same way as @code{dolist}
+does, but also reports loop progress using the functions described
+above.  As in @code{dotimes-with-progress-reporter}, @code{reporter-or-message} can be
+a progress reporter or an string.
+We can rewrite our previous example with this macro as follows:
+
+@example
+(dolist-with-progress-reporter
+    (k (number-sequence 0 500))
+    "Collecting some mana for Emacs..."
+  (sit-for 0.01))
+@end example
+@end defmac
+
 @node Logging Messages
 @subsection Logging Messages in @file{*Messages*}
 @cindex logging echo-area messages

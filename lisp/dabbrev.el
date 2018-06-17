@@ -327,9 +327,6 @@ this list."
 ;; The regexp for recognizing a character in an abbreviation.
 (defvar dabbrev--abbrev-char-regexp nil)
 
-;; The progress reporter for buffer-scanning progress.
-(defvar dabbrev--progress-reporter nil)
-
 ;;----------------------------------------------------------------
 ;; Macros
 ;;----------------------------------------------------------------
@@ -739,21 +736,19 @@ of the start of the occurrence."
 	 ;; Put that list in dabbrev--friend-buffer-list.
 	 (unless dabbrev--friend-buffer-list
            (setq dabbrev--friend-buffer-list
-                 (dabbrev--make-friend-buffer-list))
-           (setq dabbrev--progress-reporter
-                 (make-progress-reporter
-                  "Scanning for dabbrevs..."
-                  (- (length dabbrev--friend-buffer-list)) 0 0 1 1.5))))
+                 (dabbrev--make-friend-buffer-list))))
        ;; Walk through the buffers till we find a match.
        (let (expansion)
-	 (while (and (not expansion) dabbrev--friend-buffer-list)
+	 (dolist-with-progress-reporter
+	     (_ dabbrev--friend-buffer-list)
+	     (make-progress-reporter
+	      "Scanning for dabbrevs..."
+	      0 (length dabbrev--friend-buffer-list) 0 1 1.5)
 	   (setq dabbrev--last-buffer (pop dabbrev--friend-buffer-list))
 	   (set-buffer dabbrev--last-buffer)
-           (progress-reporter-update dabbrev--progress-reporter
-                                     (- (length dabbrev--friend-buffer-list)))
 	   (setq dabbrev--last-expansion-location (point-min))
-	   (setq expansion (dabbrev--try-find abbrev nil 1 ignore-case)))
-	 (progress-reporter-done dabbrev--progress-reporter)
+	   (setq expansion (dabbrev--try-find abbrev nil 1 ignore-case))
+	   (unless expansion (setq dabbrev--friend-buffer-list '())))
 	 expansion)))))
 
 ;; Compute the list of buffers to scan.
