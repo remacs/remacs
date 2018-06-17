@@ -154,6 +154,9 @@
       (let (item-path)
 	(should (secrets-open-session))
 
+        ;; Cleanup.  There could be items in the "session" collection.
+        (secrets--test-delete-all-session-items)
+
 	;; There shall be no items in the "session" collection.
 	(should-not (secrets-list-items "session"))
 	;; There shall be items in the "Login" collection.
@@ -214,6 +217,9 @@
   (unwind-protect
       (progn
 	(should (secrets-open-session))
+
+        ;; Cleanup.  There could be items in the "session" collection.
+        (secrets--test-delete-all-session-items)
 
 	;; There shall be no items in the "session" collection.
 	(should-not (secrets-list-items "session"))
