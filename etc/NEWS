@@ -518,14 +518,21 @@ names" in the Tramp manual for full documentation of these facilities.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
-+++
-** Theme settings generally aren't actually applied until a call to
-`enable-theme-, either one made explicitly or implicitly through
-`load-theme' with NO-ENABLE nil.  This change has the effect of not
-applying theme changes just because we load a lisp file containing a
-theme specification.  The previous behavior is preserved for the
-special case of the `user' theme, which is frequently used for
-ad-hoc customization.
+---
+** Just loading a theme's file no longer activates the theme's settings.
+Loading a theme with 'M-x load-theme' still activates the theme, as it
+did before.  However, loading the theme's file with "M-x load-file",
+or using 'require' or 'load' in a Lisp program, doesn't actually apply
+the theme's settings until you either invoke 'M-x enable-theme' or
+type 'M-x load-theme'.  (In a Lisp program, calling 'enable-theme' or
+invoking 'load-theme' with NO-ENABLE argument omitted or nil has the
+same effect of activating a theme whose file has been loaded.)  The
+special case of the 'user' theme is an exception: it is frequently
+used for ad-hoc customizations, so the settings of that theme are by
+default applied immediately.
+
+The variable 'custom--inhibit-theme-enable' controls this behavior;
+its default value changed in Emacs 27.1.
 
 ** The 'repetitions' argument of 'benchmark-run' can now also be a variable.
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
