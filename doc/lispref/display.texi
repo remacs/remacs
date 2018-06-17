@@ -469,7 +469,7 @@ never print it, there are many good reasons for this not to happen.
 Secondly, @samp{done} is more explicit.
 @end defun
 
-@defmac dotimes-with-progress-reporter (var count [result]) message body@dots{}
+@defmac dotimes-with-progress-reporter (var count [result]) reporter-or-message body@dots{}
 This is a convenience macro that works the same way as @code{dotimes}
 does, but also reports loop progress using the functions described
 above.  It allows you to save some typing.
@@ -481,6 +481,18 @@ this macro this way:
 (dotimes-with-progress-reporter
     (k 500)
     "Collecting some mana for Emacs..."
+  (sit-for 0.01))
+@end example
+
+
+The second argument @code{reporter-or-message} might be a progress
+reporter object.  This is useful if you want to specify the optional
+arguments in @code{make-progress-reporter}.
+For instance, you can write previous example as follows:
+@example
+(dotimes-with-progress-reporter
+    (k 500)
+    (make-progress-reporter "Collecting some mana for Emacs..." 0 500 0 1 1.5)
   (sit-for 0.01))
 @end example
 @end defmac

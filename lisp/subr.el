@@ -5039,32 +5039,34 @@ NEW-MESSAGE, if non-nil, sets a new message for the reporter."
   "Print reporter's message followed by word \"done\" in echo area."
   (message "%sdone" (aref (cdr reporter) 3)))
 
-(defmacro dotimes-with-progress-reporter (spec message &rest body)
+(defmacro dotimes-with-progress-reporter (spec reporter-or-message &rest body)
   "Loop a certain number of times and report progress in the echo area.
 Evaluate BODY with VAR bound to successive integers running from
 0, inclusive, to COUNT, exclusive.  Then evaluate RESULT to get
 the return value (nil if RESULT is omitted).
 
-At each iteration MESSAGE followed by progress percentage is
-printed in the echo area.  After the loop is finished, MESSAGE
-followed by word \"done\" is printed.  This macro is a
-convenience wrapper around `make-progress-reporter' and friends.
+REPORTER-OR-MESSAGE is a progress reporter object or a string.  In the latter
+case, use this string to create a progress reporter.
+
+At each iteration, print the reporter message followed by progress
+percentage in the echo area.  After the loop is finished,
+print the reporter message followed by word \"done\".
+
+This macro is a convenience wrapper around `make-progress-reporter' and friends.
 
 \(fn (VAR COUNT [RESULT]) MESSAGE BODY...)"
   (declare (indent 2) (debug ((symbolp form &optional form) form body)))
-  (let ((temp (make-symbol "--dotimes-temp--"))
-	(temp2 (make-symbol "--dotimes-temp2--"))
-	(start 0)
-	(end (nth 1 spec)))
-    `(let ((,temp ,end)
-	   (,(car spec) ,start)
-	   (,temp2 (make-progress-reporter ,message ,start ,end)))
-       (while (< ,(car spec) ,temp)
-	 ,@body
-	 (progress-reporter-update ,temp2
-				   (setq ,(car spec) (1+ ,(car spec)))))
-       (progress-reporter-done ,temp2)
-       nil ,@(cdr (cdr spec)))))
+  (let ((prep (make-symbol "--dotimes-prep--"))
+        (end (make-symbol "--dotimes-end--")))
+    `(let ((,prep ,reporter-or-message)
+           (,end ,(cadr spec)))
+       (when (stringp ,prep)
+         (setq ,prep (make-progress-reporter ,prep 0 ,end)))
+       (dotimes (,(car spec) ,end)
+         ,@body
+         (progress-reporter-update ,prep (1+ ,(car spec))))
+       (progress-reporter-done ,prep)
+       (or ,@(cdr (cdr spec)) nil))))
 
 
 ;;;; Comparing version strings.
