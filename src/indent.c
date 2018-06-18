@@ -2147,8 +2147,7 @@ whether or not it is currently displayed in some window.  */)
 	 will sometimes err by one column.  */
       int lnum_width = 0;
       int lnum_pixel_width = 0;
-      if (!NILP (Vdisplay_line_numbers)
-	  && !EQ (Vdisplay_line_numbers, Qvisual))
+      if (!NILP (Vdisplay_line_numbers))
 	line_number_display_width (w, &lnum_width, &lnum_pixel_width);
       SET_TEXT_POS (pt, PT, PT_BYTE);
       itdata = bidi_shelve_cache ();

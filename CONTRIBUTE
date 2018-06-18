@@ -78,8 +78,15 @@ admin/notes/bug-triage.
 ** Documenting your changes
 
 Any change that matters to end-users should have an entry in etc/NEWS.
+Try to start each NEWS entry with a sentence that summarizes the entry
+and takes just one line -- this will allow to read NEWS in Outline
+mode after hiding the body of each entry.
 
 Doc-strings should be updated together with the code.
+
+New defcustom's should always have a ':version' tag stating the first
+Emacs version in which they will appear.  Likewise with defcustom's
+whose value is changed -- update their ':version' tag.
 
 Think about whether your change requires updating the manuals.  If you
 know it does not, mark the NEWS entry with "---".  If you know
