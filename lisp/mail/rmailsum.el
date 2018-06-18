@@ -390,8 +390,17 @@ SUBJECT is a regular expression."
 ;;;###autoload
 (defun rmail-summary-by-senders (senders)
   "Display a summary of all messages whose \"From\" field matches SENDERS.
-SENDERS is a regular expression."
-  (interactive "sSenders to summarize by: ")
+SENDERS is a regular expression.  The default for SENDERS matches the
+sender of the current messsage."
+  (interactive
+   (let* ((def (rmail-get-header "From"))
+          ;; We quote the default argument, because if it contains regexp
+          ;; special characters (eg "?"), it can fail to match itself.
+          (sender (regexp-quote def))
+	  (prompt (concat "Senders to summarize by (regexp"
+			  (if sender ", default this message's sender" "")
+			  "): ")))
+     (list (read-string prompt nil nil sender))))
   (rmail-new-summary
    (concat "senders " senders)
    (list 'rmail-summary-by-senders senders) 'rmail-message-senders-p senders))

@@ -522,6 +522,10 @@ been removed.  Use 'encode-coding-string', 'decode-coding-string', and
 If this option is non-nil, messages appended to an output file by the
 'rmail-output' command have their Deleted flag reset.
 
+*** The command 'rmail-summary-by-senders' with an empty argument
+selects the messages to summarize with a regexp that matches the
+sender of the current message.
+
 * New Modes and Packages in Emacs 27.1
 
 +++
