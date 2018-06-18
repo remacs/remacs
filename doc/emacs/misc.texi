@@ -1133,7 +1133,7 @@ Fetch the next subsequent command from the history
 
 @item C-c .
 @kindex C-c . @r{(Shell mode)}
-@findex comint-input-previous-argument
+@findex comint-insert-previous-argument
 Fetch one argument from an old shell command
 (@code{comint-input-previous-argument}).
 
@@ -1180,14 +1180,20 @@ you just repeated.  Then type @key{RET} to reexecute this command.  You
 can reexecute several successive commands by typing @kbd{C-c C-x
 @key{RET}} over and over.
 
-  The command @kbd{C-c .}@: (@code{comint-input-previous-argument})
+  The command @kbd{C-c .}@: (@code{comint-insert-previous-argument})
 copies an individual argument from a previous command, like
-@kbd{@key{ESC} .} in Bash.  The simplest use copies the last argument from the
-previous shell command.  With a prefix argument @var{n}, it copies the
-@var{n}th argument instead.  Repeating @kbd{C-c .} copies from an
-earlier shell command instead, always using the same value of @var{n}
-(don't give a prefix argument when you repeat the @kbd{C-c .}
-command).
+@kbd{@key{ESC} .}@: in Bash and @command{zsh}.  The simplest use
+copies the last argument from the previous shell command.  With a
+prefix argument @var{n}, it copies the @var{n}th argument instead.
+Repeating @kbd{C-c .} copies from an earlier shell commands, always
+using the same value of @var{n}  (don't give a prefix argument when
+you repeat the @kbd{C-c .} command).
+
+@vindex comint-insert-previous-argument-from-end
+  If you set @code{comint-insert-previous-argument-from-end} to a
+non-@code{nil} value, @kbd{C-c .}@: will instead copy the @var{n}th
+argument counting from the last one; this emulates @kbd{@key{ESC} .}@:
+in @command{zsh}.
 
   These commands get the text of previous shell commands from a special
 history list, not from the shell buffer itself.  Thus, editing the shell

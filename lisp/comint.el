@@ -1682,8 +1682,9 @@ characters), and are not considered to be delimiters."
 
 (defun comint-arguments (string nth mth)
   "Return from STRING the NTH to MTH arguments.
-NTH and/or MTH can be nil, which means the last argument.  NTH
-and MTH can be <0 to count from the end; -1 means last argument.
+NTH and/or MTH can be nil, which means the last argument.
+NTH and MTH can be negative to count from the end; -1 means
+the last argument.
 Returned arguments are separated by single spaces.  We assume
 whitespace separates arguments, except within quotes and except
 for a space or tab that immediately follows a backslash.  Also, a
@@ -2660,14 +2661,15 @@ text matching `comint-prompt-regexp'."
 (defvar-local comint-insert-previous-argument-last-index nil)
 
 (defcustom comint-insert-previous-argument-from-end nil
-  "If nil, the INDEX argument to
-`comint-insert-previous-argument' refers to the INDEX-th
-argument, counting from the beginning; if non-nil, counting from
-the end.  This exists to emulate the bahavior of `M-number M-.'
-in bash and zsh: in bash, `number' counts from the
-beginning (variable in nil), while in zsh it counts from the end."
+  "If non-nil, `comint-insert-previous-argument' counts args from the end.
+If this variable is nil, the default, `comint-insert-previous-argument'
+counts the arguments from the beginning; if non-nil, it counts from
+the end instead.  This allows to emulate the behavior of `ESC-NUM ESC-.'
+in both Bash and zsh: in Bash, `number' counts from the
+beginning (variable is nil), while in zsh, it counts from the end."
   :type 'boolean
-  :group 'comint)
+  :group 'comint
+  :version "27.1")
 
 (defun comint-insert-previous-argument (index)
   "Insert the INDEXth argument from the previous Comint command-line at point.
@@ -2676,8 +2678,9 @@ necessary to ensure that it's separated from adjacent arguments.
 Interactively, if no prefix argument is given, the last argument is inserted.
 Repeated interactive invocations will cycle through the same argument
 from progressively earlier commands (using the value of INDEX specified
-with the first command).  Values of INDEX<0 count from the end, so INDEX=-1
-is the last argument.  This command is like `M-.' in bash and zsh."
+with the first command).  Values of INDEX < 0 count from the end, so
+INDEX = -1 is the last argument.  This command is like `M-.' in
+Bash and zsh."
   (interactive "P")
   (unless (null index)
     (setq index (prefix-numeric-value index)))

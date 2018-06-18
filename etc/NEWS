@@ -186,24 +186,29 @@ navigation and editing of large files.
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
 ** Browse-url
+
 *** The function 'browse-url-emacs' can now visit a URL in selected window.
 It now treats the optional 2nd argument to mean that the URL should be
 shown in the currently selected window.
 
 ** Comint
-*** 'comint-insert-previous-argument' no longer interprets &.
-This worked strangely in shell-mode in the presence of &&.  And omitting this
-logic makes sense since 'comint-insert-previous-argument' exists to emulate M-.
-in bash and zsh, and neither of those treat & specially.
 
-*** 'comint-insert-previous-argument' knows how to count args
-from the beginning or from the end.  This is useful because
-'comint-insert-previous-argument' exists to emulate M-. in bash and zsh; and
-bash counts from the start while zsh counts from the end.
++++
+*** 'C-c .' (comint-insert-previous-argument) no longer interprets '&'.
+This feature caused problems when '&&' was present in the previous
+command.  Since this command emulates 'M-.' in Bash and zsh, neither
+of which treats '&' specially, the feature was removed for
+compatibility with these shells.
 
-*** New variable 'comint-insert-previous-argument-from-end' controls whether
-args passed to 'comint-insert-previous-argument' count from the beginning or
-from the end
++++
+*** 'comint-insert-previous-argument' can now count arguments from the end.
+By default, invoking 'C-c .' with a numeric argument N would copy the
+Nth argument, counting from the first one.  But if the new option
+'comint-insert-previous-argument-from-end' is non-nil, it will copy
+the Nth argument counting from the last one.  Thus 'C-c .' can now
+better emulate 'M-.' in both Bash and zsh, since the former counts
+from the beginning of the arguments, while the latter counts from the
+end.
 
 ** Flymake
 
