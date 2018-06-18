@@ -131,6 +131,6 @@ FORCE:
 .PHONY: tags FORCE
 tags: TAGS
 TAGS: ${ETAGS} $(ctagsfiles)
-	${ETAGS} $(ctagsfiles)
+	$(AM_V_GEN)${ETAGS} $(ctagsfiles)
 
 ### Makefile.in ends here
