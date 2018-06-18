@@ -57,7 +57,8 @@ INLINE_HEADER_BEGIN
 
 /* Minimum leading code of multibyte characters.  */
 #define MIN_MULTIBYTE_LEADING_CODE 0xC0
-/* Maximum leading code of multibyte characters.  */
+/* Maximum leading code of multibyte characters.  Note: this must be
+   updated if we ever increase MAX_CHAR above.  */
 #define MAX_MULTIBYTE_LEADING_CODE 0xF8
 
 /* Unicode character values.  */

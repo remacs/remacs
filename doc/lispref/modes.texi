@@ -1839,10 +1839,13 @@ recursion.
 
 @item (:propertize @var{elt} @var{props}@dots{})
 A list whose first element is the symbol @code{:propertize} says to
-process the mode line construct @var{elt} recursively, then add the text
-properties specified by @var{props} to the result.  The argument
+process the mode line construct @var{elt} recursively, then add the
+text properties specified by @var{props} to the result.  The argument
 @var{props} should consist of zero or more pairs @var{text-property}
-@var{value}.
+@var{value}.  If @var{elt} is or produces a string with text
+properties, all the characters of that string should have the same
+properties, or else some of them might be removed by
+@code{:propertize}.
 
 @item (@var{symbol} @var{then} @var{else})
 A list whose first element is a symbol that is not a keyword specifies

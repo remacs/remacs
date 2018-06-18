@@ -301,9 +301,9 @@ number."
   :group 'mail-source
   :type 'number)
 
-(defcustom mail-source-movemail-program nil
+(defcustom mail-source-movemail-program "movemail"
   "If non-nil, name of program for fetching new mail."
-  :version "22.1"
+  :version "26.2"
   :group 'mail-source
   :type '(choice (const nil) string))
 
@@ -682,12 +682,16 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
 	      (setq errors (generate-new-buffer " *mail source loss*"))
 	      (let ((default-directory "/"))
 		(setq result
+		      ;; call-process looks in exec-path, which
+		      ;; contains exec-directory, so will find
+		      ;; Mailutils movemail if it exists, else it will
+		      ;; find "our" movemail in exec-directory.
+		      ;; Bug#31737
 		      (apply
 		       'call-process
 		       (append
 			(list
-			 (or mail-source-movemail-program
-			     (expand-file-name "movemail" exec-directory))
+			 mail-source-movemail-program
 			 nil errors nil from to)))))
 	      (when (file-exists-p to)
 		(set-file-modes to mail-source-default-file-modes))
