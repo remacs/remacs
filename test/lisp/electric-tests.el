@@ -391,6 +391,16 @@ baz\"\""
   :bindings '((electric-pair-skip-whitespace . chomp))
   :test-in-comments nil)
 
+
+;; A test failure introduced by some changes in CC mode.  Hopefully CC
+;; mode will sort this out eventually, using some new e-p-m machinery.
+;; See
+;; https://lists.gnu.org/archive/html/emacs-devel/2018-06/msg00535.html
+(setf
+ (ert-test-expected-result-type
+  (ert-get-test 'electric-pair-whitespace-chomping-2-at-point-4-in-c++-mode-in-strings))
+ :failed)
+
 (define-electric-pair-test whitespace-chomping-dont-cross-comments
   " ( \n\t\t\n  )  " "--)------" :expected-string " () \n\t\t\n  )  "
   :expected-point 4
