@@ -4,6 +4,7 @@
 
 ;; Author: Simon Josefsson <simon@josefsson.org>
 ;; Keywords: comm, tls, gnutls, ssl
+;; Obsolete-since: 27.1
 
 ;; This file is part of GNU Emacs.
 

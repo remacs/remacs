@@ -6,6 +6,7 @@
 ;; Author: Simon Josefsson <simon@josefsson.org>
 ;; Created: 1999/11/20
 ;; Keywords: TLS, SSL, OpenSSL, GnuTLS, mail, news
+;; Obsolete-since: 27.1
 
 ;; This file is part of GNU Emacs.
 
