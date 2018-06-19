@@ -152,8 +152,8 @@ are non-nil, then the result is non-nil."
   (let (res)
     (if varlist
         `(let* ,(setq varlist (internal--build-bindings varlist))
-           (if ,(setq res (caar (last varlist)))
-               ,@(or body `(,res))))
+           (when ,(setq res (caar (last varlist)))
+             ,@(or body `(,res))))
       `(let* () ,@(or body '(t))))))
 
 (defmacro if-let (spec then &rest else)
