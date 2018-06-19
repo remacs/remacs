@@ -210,6 +210,8 @@ Test with both unibyte and multibyte strings."
     (should (looking-at-p (rx " [456]" eos)))))
 
 (ert-deftest json-parse-with-custom-null-and-false-objects ()
+  (skip-unless (and (fboundp 'json-serialize)
+                    (fboundp 'json-parse-string)))
   (let* ((input
           "{ \"abc\" : [9, false] , \"def\" : null }")
          (output
