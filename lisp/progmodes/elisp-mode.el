@@ -1717,7 +1717,7 @@ current buffer state and calls REPORT-FN when done."
                            (format "byte-compile process %s died" proc))))
               (ignore-errors (delete-file temp-file))
               (kill-buffer output-buffer))))
-        :stderr null-device
+        :stderr " *stderr of elisp-flymake-byte-compile*"
         :noquery t)))))
 
 (defun elisp-flymake--batch-compile-for-flymake (&optional file)
