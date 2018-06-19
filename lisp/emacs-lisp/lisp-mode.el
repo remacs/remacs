@@ -517,6 +517,16 @@ This will generate compile-time constants from BINDINGS."
 (defvar lisp-cl-font-lock-keywords lisp-cl-font-lock-keywords-1
   "Default expressions to highlight in Lisp modes.")
 
+;; Support backtrace mode.
+(defconst lisp-el-font-lock-keywords-for-backtraces lisp-el-font-lock-keywords
+  "Default highlighting from Emacs Lisp mod used in Backtrace mode.")
+(defconst lisp-el-font-lock-keywords-for-backtraces-1 lisp-el-font-lock-keywords-1
+  "Subdued highlighting from Emacs Lisp mode used in Backtrace mode.")
+(defconst lisp-el-font-lock-keywords-for-backtraces-2
+  (remove (assoc 'lisp--match-hidden-arg lisp-el-font-lock-keywords-2)
+          lisp-el-font-lock-keywords-2)
+  "Gaudy highlighting from Emacs Lisp mode used in Backtrace mode.")
+
 (defun lisp-string-in-doc-position-p (listbeg startpos)
    "Return true if a doc string may occur at STARTPOS inside a list.
 LISTBEG is the position of the start of the innermost list

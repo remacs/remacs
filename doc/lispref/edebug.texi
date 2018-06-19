@@ -442,8 +442,8 @@ Redisplay the most recently known expression result in the echo area
 Display a backtrace, excluding Edebug's own functions for clarity
 (@code{edebug-backtrace}).
 
-You cannot use debugger commands in the backtrace buffer in Edebug as
-you would in the standard debugger.
+@xref{Debugging,, Backtraces, elisp}, for the commands which work
+in a backtrace buffer.
 
 The backtrace buffer is killed automatically when you continue
 execution.

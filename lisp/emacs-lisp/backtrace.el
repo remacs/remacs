@@ -1,0 +1,767 @@
+;;; backtrace.el --- generic major mode for Elisp backtraces -*- lexical-binding: t -*-
+
+;; Copyright (C) 2018 Free Software Foundation, Inc.
+
+;; Author: Gemini Lasswell
+;; Keywords: lisp, tools, maint
+;; Version: 1.0
+
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; This file defines Backtrace mode, a generic major mode for displaying
+;; Elisp stack backtraces, which can be used as is or inherited from
+;; by another mode.
+
+;; For usage information, see the documentation of `backtrace-mode'.
+
+;;; Code:
+
+(eval-when-compile (require 'cl-lib))
+(eval-when-compile (require 'pcase))
+(eval-when-compile (require 'subr-x))        ; if-let
+(require 'help-mode)     ; Define `help-function-def' button type.
+(require 'lisp-mode)
+
+;;; Options
+
+(defgroup backtrace nil
+  "Viewing of Elisp backtraces."
+  :group 'lisp)
+
+(defcustom backtrace-fontify t
+  "If non-nil, fontify Backtrace buffers.
+Set to nil to disable fontification, which may be necessary in
+order to debug the code that does fontification."
+  :type 'boolean
+  :group 'backtrace
+  :version "27.1")
+
+(defcustom backtrace-line-length 5000
+  "Target length for lines in Backtrace buffers.
+Backtrace mode will attempt to abbreviate printing of backtrace
+frames to make them shorter than this, but success is not
+guaranteed."
+  :type 'integer
+  :group 'backtrace
+  :version "27.1")
+
+;;; Backtrace frame data structure
+
+(cl-defstruct
+    (backtrace-frame
+     (:constructor backtrace-make-frame))
+  evald fun args flags locals pos)
+
+(cl-defun backtrace-get-frames
+    (&optional base &key (constructor #'backtrace-make-frame))
+  "Collect all frames of current backtrace into a list.
+The list will contain objects made by CONSTRUCTOR, which
+defaults to `backtrace-make-frame' and which, if provided, should
+be the constructor of a structure which includes
+`backtrace-frame'.  If non-nil, BASE should be a function, and
+frames before its nearest activation frame are discarded."
+  (let ((frames nil)
+        (eval-buffers eval-buffer-list))
+    (mapbacktrace (lambda (evald fun args flags)
+                    (push (funcall constructor
+                                   :evald evald :fun fun
+                                   :args args :flags flags)
+                          frames))
+                  (or base 'backtrace-get-frames))
+    (setq frames (nreverse frames))
+    ;; Add local variables to each frame, and the buffer position
+    ;; to frames containing eval-buffer or eval-region.
+    (dotimes (idx (length frames))
+      (let ((frame (nth idx frames)))
+        ;; `backtrace--locals' gives an error when idx is 0.  But the
+        ;; locals for frame 0 are not needed, because when we get here
+        ;; from debug-on-entry, the locals aren't bound yet, and when
+        ;; coming from Edebug or ERT there is an Edebug or ERT
+        ;; function at frame 0.
+        (when (> idx 0)
+          (setf (backtrace-frame-locals frame)
+                (backtrace--locals idx (or base 'backtrace-get-frames))))
+        (when (and eval-buffers (memq (backtrace-frame-fun frame)
+                                      '(eval-buffer eval-region)))
+          ;; This will get the wrong result if there are two nested
+          ;; eval-region calls for the same buffer.  That's not a very
+          ;; useful case.
+          (with-current-buffer (pop eval-buffers)
+            (setf (backtrace-frame-pos frame) (point))))))
+    frames))
+
+;; Font Locking support
+
+(defconst backtrace--font-lock-keywords
+  '((backtrace--match-ellipsis-in-string
+     (1 'button prepend)))
+  "Expressions to fontify in Backtrace mode.
+Fontify these in addition to the expressions Emacs Lisp mode
+fontifies.")
+
+(defconst backtrace-font-lock-keywords
+  (append lisp-el-font-lock-keywords-for-backtraces
+          backtrace--font-lock-keywords)
+  "Default expressions to highlight in Backtrace mode.")
+(defconst backtrace-font-lock-keywords-1
+  (append lisp-el-font-lock-keywords-for-backtraces-1
+          backtrace--font-lock-keywords)
+  "Subdued level highlighting for Backtrace mode.")
+(defconst backtrace-font-lock-keywords-2
+  (append lisp-el-font-lock-keywords-for-backtraces-2
+          backtrace--font-lock-keywords)
+  "Gaudy level highlighting for Backtrace mode.")
+
+(defun backtrace--match-ellipsis-in-string (bound)
+  ;; Fontify ellipses within strings as buttons.
+  (when (re-search-forward "\\(\\.\\.\\.\\)\"" bound t)
+    (and (get-text-property (- (point) 2) 'cl-print-ellipsis)
+         (get-text-property (- (point) 3) 'cl-print-ellipsis)
+         (get-text-property (- (point) 4) 'cl-print-ellipsis))))
+
+;;; Xref support
+
+(defun backtrace--xref-backend () 'elisp)
+
+;;; Backtrace mode variables
+
+(defvar-local backtrace-frames nil
+  "Stack frames displayed in the current Backtrace buffer.
+This should be a list of `backtrace-frame' objects.")
+
+(defvar-local backtrace-view nil
+  "A plist describing how to render backtrace frames.
+Possible entries are :show-flags, :do-xrefs and :print-circle.")
+
+(defvar-local backtrace-insert-header-function nil
+  "Function for inserting a header for the current Backtrace buffer.
+If nil, no header will be created.  Note that Backtrace buffers
+are fontified as in Emacs Lisp Mode, the header text included.")
+
+(defvar backtrace-revert-hook nil
+  "Hook run before reverting a Backtrace buffer.
+This is commonly used to recompute `backtrace-frames'.")
+
+(defvar-local backtrace-print-function #'cl-prin1
+  "Function used to print values in the current Backtrace buffer.")
+
+(defvar backtrace-mode-map
+  (let ((map (copy-keymap special-mode-map)))
+    (set-keymap-parent map button-buffer-map)
+    (define-key map "n" 'backtrace-forward-frame)
+    (define-key map "p" 'backtrace-backward-frame)
+    (define-key map "v" 'backtrace-toggle-locals)
+    (define-key map "#" 'backtrace-toggle-print-circle)
+    (define-key map "\C-m" 'backtrace-help-follow-symbol)
+    (define-key map "+" 'backtrace-pretty-print)
+    (define-key map "=" 'backtrace-collapse)
+    (define-key map [follow-link] 'mouse-face)
+    (define-key map [mouse-2] 'mouse-select-window)
+    map)
+  "Local keymap for `backtrace-mode' buffers.")
+
+;;; Navigation and Text Properties
+
+;; This mode uses the following text properties:
+;; backtrace-index: The index into the buffer-local variable
+;;   `backtrace-frames' for the frame at point, or nil if outside of a
+;;   frame (in the buffer header).
+;; backtrace-view: A plist describing how the frame is printed.  See
+;;   the docstring for the buffer-local variable `backtrace-view.
+;; backtrace-section: The part of a frame which point is in.  Either
+;;   `func' or `locals'.  At the moment just used to show and hide the
+;;   local variables.  Derived modes which do additional printing
+;;   could define their own frame sections.
+;; backtrace-form: A value applied to each printed representation of a
+;;   top-level s-expression, which needs to be different for sexps
+;;   printed adjacent to each other, so the limits can be quickly
+;;   found for pretty-printing.  The value chosen is a list contining
+;;   the values of print-level and print-length used to print the
+;;   sexp, and those values are used when expanding ellipses.
+
+(defsubst backtrace-get-index (&optional pos)
+  "Return the index of the backtrace frame at POS.
+The value is an index into `backtrace-frames', or nil.
+POS, if omitted or nil, defaults to point."
+  (get-text-property (or pos (point)) 'backtrace-index))
+
+(defsubst backtrace-get-section (&optional pos)
+  "Return the section of a backtrace frame at POS.
+POS, if omitted or nil, defaults to point."
+  (get-text-property (or pos (point)) 'backtrace-section))
+
+(defsubst backtrace-get-view (&optional pos)
+  "Return the view plist of the backtrace frame at POS.
+POS, if omitted or nil, defaults to point."
+  (get-text-property (or pos (point)) 'backtrace-view))
+
+(defsubst backtrace-get-form (&optional pos)
+  "Return the backtrace form data for the form printed at POS.
+POS, if omitted or nil, defaults to point."
+  (get-text-property (or pos (point)) 'backtrace-form))
+
+(defun backtrace-get-frame-start (&optional pos)
+  "Return the beginning position of the frame at POS in the buffer.
+POS, if omitted or nil, defaults to point."
+  (let ((posn (or pos (point))))
+    (if (or (= (point-min) posn)
+            (not (eq (backtrace-get-index posn)
+                     (backtrace-get-index (1- posn)))))
+        posn
+      (previous-single-property-change posn 'backtrace-index nil (point-min)))))
+
+(defun backtrace-get-frame-end (&optional pos)
+  "Return the position of the end of the frame at POS in the buffer.
+POS, if omitted or nil, defaults to point."
+  (next-single-property-change (or pos (point))
+                                    'backtrace-index nil (point-max)))
+
+(defun backtrace-get-section-end (&optional pos)
+  "Return the position of the end of the frame section at POS.
+POS, if omitted or nil, defaults to point."
+  (let* ((frame-end (backtrace-get-frame-end pos))
+         (section-end (next-single-property-change
+                       (or pos (point)) 'backtrace-section nil frame-end)))
+    (min frame-end section-end)))
+
+(defun backtrace-forward-frame ()
+  "Move forward to the beginning of the next frame."
+  (interactive)
+  (let ((max (backtrace-get-frame-end)))
+    (when (= max (point-max))
+      (user-error "No next stack frame"))
+    (goto-char max)))
+
+(defun backtrace-backward-frame ()
+  "Move backward to the start of a stack frame."
+  (interactive)
+  (let ((current-index (backtrace-get-index))
+        (min (backtrace-get-frame-start)))
+    (if (or (and (/= (point) (point-max)) (null current-index))
+            (= min (point-min))
+            (and (= min (point))
+                 (null (backtrace-get-index (1- min)))))
+        (user-error "No previous stack frame"))
+    (if (= min (point))
+        (goto-char (backtrace-get-frame-start (1- min)))
+      (goto-char min))))
+
+;; Other Backtrace mode commands
+
+(defun backtrace-revert (&rest _ignored)
+  "The `revert-buffer-function' for `backtrace-mode'.
+It runs `backtrace-revert-hook', then calls `backtrace-print'."
+  (interactive)
+  (unless (derived-mode-p 'backtrace-mode)
+    (error "The current buffer is not in Backtrace mode"))
+  (run-hooks 'backtrace-revert-hook)
+  (backtrace-print t))
+
+(defun backtrace-toggle-locals ()
+  "Toggle the display of local variables for the backtrace frame at point.
+TODO with argument, toggle all frames."
+  (interactive)
+  (let ((index (backtrace-get-index)))
+    (unless index
+      (user-error "Not in a stack frame"))
+    (let ((pos (point)))
+      (goto-char (backtrace-get-frame-start))
+      (while (and (eq index (backtrace-get-index))
+                  (not (eq (backtrace-get-section) 'locals)))
+        (goto-char (next-single-property-change (point) 'backtrace-section)))
+      (let ((end (backtrace-get-section-end)))
+        (backtrace--set-locals-visible (point) end (invisible-p (point)))
+
+        (goto-char (if (invisible-p pos) end pos))))))
+
+(defun backtrace--set-locals-visible (beg end visible)
+  (backtrace--change-button-skip beg end (not visible))
+  (if visible
+      (remove-overlays beg end 'invisible t)
+    (let ((o (make-overlay beg end)))
+      (overlay-put o 'invisible t)
+      (overlay-put o 'evaporate t))))
+
+(defun backtrace--change-button-skip (beg end value)
+  "Change the skip property on all buttons between BEG and END.
+Set it to VALUE unless the button is a `backtrace-ellipsis' button."
+  (let ((inhibit-read-only t))
+    (setq beg (next-button beg))
+    (while (and beg (< beg end))
+      (unless (eq (button-type beg) 'backtrace-ellipsis)
+          (button-put beg 'skip value))
+      (setq beg (next-button beg)))))
+
+(defun backtrace-toggle-print-circle ()
+  "Toggle `print-circle' for the backtrace frame at point."
+  ;; TODO with argument, toggle the whole buffer.
+  (interactive)
+  (backtrace--toggle-feature :print-circle))
+
+(defun backtrace--toggle-feature (feature)
+  "Toggle FEATURE for the backtrace frame at point.
+FEATURE should be one of the options in `backtrace-view'.
+After toggling the feature, reprint the frame and position
+point at the start of the section of the frame it was in
+before."
+  ;; TODO preserve (in)visibility of locals
+  (let ((index (backtrace-get-index))
+        (view (copy-sequence (backtrace-get-view))))
+    (unless index
+      (user-error "Not in a stack frame"))
+    (setq view (plist-put view feature (not (plist-get view feature))))
+    (let ((inhibit-read-only t)
+          (index (backtrace-get-index))
+          (section (backtrace-get-section))
+          (min (backtrace-get-frame-start))
+          (max (backtrace-get-frame-end)))
+      (delete-region min max)
+      (goto-char min)
+      (backtrace-print-frame (nth index backtrace-frames) view)
+      (add-text-properties min (point)
+                           `(backtrace-index ,index backtrace-view ,view))
+      (goto-char min)
+      (when (not (eq section (backtrace-get-section)))
+        (if-let ((pos (text-property-any (backtrace-get-frame-start)
+                                         (backtrace-get-frame-end)
+                                         'backtrace-section section)))
+            (goto-char pos))))))
+
+(defmacro backtrace--with-output-variables (view &rest body)
+  "Bind output variables according to VIEW and execute BODY."
+  (declare (indent 1))
+  `(let ((print-escape-control-characters t)
+         (print-escape-newlines t)
+         (print-circle (plist-get ,view :print-circle))
+         (standard-output (current-buffer)))
+     ,@body))
+
+(defun backtrace-expand-ellipsis (button)
+  "Expand display of the elided form at BUTTON."
+  ;; TODO a command to expand all ... in form at point
+  ;; with argument, don't bind print-level, length??
+  ;; Enable undo so there's a way to go back?
+  (interactive)
+  (goto-char (button-start button))
+  (unless (get-text-property (point) 'cl-print-ellipsis)
+    (if (and (> (point) (point-min))
+             (get-text-property (1- (point)) 'cl-print-ellipsis))
+        (backward-char)
+      (user-error "No ellipsis to expand here")))
+  (let* ((end (next-single-property-change (point) 'cl-print-ellipsis))
+         (begin (previous-single-property-change end 'cl-print-ellipsis))
+         (value (get-text-property begin 'cl-print-ellipsis))
+         (props (backtrace-get-text-properties begin))
+         (tag (backtrace-get-form begin))
+         (length (nth 0 tag))  ; TODO should this work with a target char count
+         (level (nth 1 tag))   ; like backtrace-print-to-string?
+         (inhibit-read-only t))
+    (backtrace--with-output-variables (backtrace-get-view)
+      (let ((print-level level)
+            (print-length length))
+        (delete-region begin end)
+        (cl-print-expand-ellipsis value (current-buffer))
+        (setq end (point))
+        (goto-char begin)
+        (while (< (point) end)
+          (let ((next (next-single-property-change (point) 'cl-print-ellipsis
+                                                   nil end)))
+            (when (get-text-property (point) 'cl-print-ellipsis)
+              (make-text-button (point) next :type 'backtrace-ellipsis))
+            (goto-char next)))
+        (goto-char begin)
+        (add-text-properties begin end props)))))
+
+(defun backtrace-pretty-print ()
+  "Pretty-print the top level s-expression at point."
+  (interactive)
+  (backtrace--reformat-sexp #'backtrace--pretty-print
+                            "No form here to pretty-print"))
+
+(defun backtrace--pretty-print ()
+  "Pretty print the current buffer, then remove the trailing newline."
+  (set-syntax-table emacs-lisp-mode-syntax-table)
+  (pp-buffer)
+  (goto-char (1- (point-max)))
+  (delete-char 1))
+
+(defun backtrace-collapse ()
+  "Collapse the top level s-expression at point onto one line."
+  (interactive)
+  (backtrace--reformat-sexp #'backtrace--collapse "No form here to collapse"))
+
+(defun backtrace--collapse ()
+  "Replace line breaks and following indentation with spaces.
+Works on the current buffer."
+  (goto-char (point-min))
+  (while (re-search-forward "\n[[:blank:]]*" nil t)
+    (replace-match " ")))
+
+(defun backtrace--reformat-sexp (format-function error-message)
+  "Reformat the top level sexp at point.
+Locate the top level sexp at or following point on the same line,
+and reformat it with FORMAT-FUNCTION, preserving the location of
+point within the sexp.  If no sexp is found before the end of
+the line or buffer, show ERROR-MESSAGE instead.
+
+FORMAT-FUNCTION will be called without arguments, with the
+current buffer set to a temporary buffer containing only the
+content of the sexp."
+  (let* ((orig-pos (point))
+         (pos (point))
+         (tag (backtrace-get-form pos))
+         (end (next-single-property-change pos 'backtrace-form))
+         (begin (previous-single-property-change end 'backtrace-form
+                                                 nil (point-min))))
+    (unless tag
+      (when (or (= end (point-max)) (> end (point-at-eol)))
+        (user-error error-message))
+      (goto-char end)
+      (setq pos end
+            end (next-single-property-change pos 'backtrace-form)
+            begin (previous-single-property-change end 'backtrace-form
+                                                   nil (point-min))))
+    (let* ((offset (when (>= orig-pos begin) (- orig-pos begin)))
+           (offset-marker (when offset (make-marker)))
+           (content (buffer-substring begin end))
+           (props (backtrace-get-text-properties begin))
+           (inhibit-read-only t))
+      (delete-region begin end)
+      (insert (with-temp-buffer
+                (insert content)
+                (when offset
+                  (set-marker-insertion-type offset-marker t)
+                  (set-marker offset-marker (+ (point-min) offset)))
+                (funcall format-function)
+                (when offset
+                  (setq offset (- (marker-position offset-marker) (point-min))))
+                (buffer-string)))
+      (when offset
+        (set-marker offset-marker (+ begin offset)))
+      (save-excursion
+        (goto-char begin)
+        (indent-sexp))
+      (add-text-properties begin (point) props)
+      (if offset
+          (goto-char (marker-position offset-marker))
+        (goto-char orig-pos)))))
+
+(defun backtrace-get-text-properties (pos)
+  "Return a plist of backtrace-mode's text properties at POS."
+  (apply #'append
+         (mapcar (lambda (prop)
+                   (list prop (get-text-property pos prop)))
+                 '(backtrace-section backtrace-index backtrace-view
+                                     backtrace-form))))
+
+(defun backtrace-help-follow-symbol (&optional pos)
+  "Follow cross-reference at POS, defaulting to point.
+For the cross-reference format, see `help-make-xrefs'."
+  (interactive "d")
+  (unless pos
+    (setq pos (point)))
+  (unless (push-button pos)
+    ;; Check if the symbol under point is a function or variable.
+    (let ((sym
+	   (intern
+	    (save-excursion
+	      (goto-char pos) (skip-syntax-backward "w_")
+	      (buffer-substring (point)
+				(progn (skip-syntax-forward "w_")
+				       (point)))))))
+      (when (or (boundp sym) (fboundp sym) (facep sym))
+        (describe-symbol sym)))))
+
+;; Print backtrace frames
+
+(defun backtrace-print (&optional remember-pos)
+  "Populate the current Backtrace mode buffer.
+This erases the buffer and inserts printed representations of the
+frames.  Optional argument REMEMBER-POS, if non-nil, means to
+move point to the entry with the same ID element as the current
+line and recenter window line accordingly."
+  (let ((inhibit-read-only t)
+	entry-index saved-pt window-line)
+    (and remember-pos
+	 (setq entry-index (backtrace-get-index))
+         (when (eq (window-buffer) (current-buffer))
+           (setq window-line
+                 (count-screen-lines (window-start) (point)))))
+    (erase-buffer)
+    (when backtrace-insert-header-function
+      (funcall backtrace-insert-header-function))
+    (dotimes (idx (length backtrace-frames))
+      (let ((beg (point))
+            (elt (nth idx backtrace-frames)))
+        (and entry-index
+             (equal entry-index idx)
+             (setq entry-index nil
+                   saved-pt (point)))
+        (backtrace-print-frame elt backtrace-view)
+        (add-text-properties
+         beg (point)
+         `(backtrace-index ,idx backtrace-view ,backtrace-view))))
+    (set-buffer-modified-p nil)
+    ;; If REMEMBER-POS was specified, move to the "old" location.
+    (if saved-pt
+	(progn (goto-char saved-pt)
+	       (when window-line
+                 (recenter window-line)))
+      (goto-char (point-min)))))
+
+;; Define button type used for ...'s.
+;; Set skip property so you don't have to TAB through 100 of them to
+;; get to the next function name.
+(define-button-type 'backtrace-ellipsis
+  'skip t 'action #'backtrace-expand-ellipsis
+  'help-echo "mouse-2, RET: expand this ellipsis")
+
+(defun backtrace-print-to-string (obj &optional limit)
+  "Return a printed representation of OBJ formatted for backtraces.
+Attempt to get the length of the returned string under LIMIT
+charcters with appropriate settings of `print-level' and
+`print-length.'  Attach the settings used with the text property
+`backtrace-form'.  LIMIT defaults to `backtrace-line-length'."
+  (backtrace--with-output-variables backtrace-view
+    (backtrace--print-to-string obj limit)))
+
+(defun backtrace--print-to-string (sexp &optional limit)
+  ;; This is for use by callers who wrap the call with
+  ;; backtrace--with-output-variables.
+  (setq limit (or limit backtrace-line-length))
+  (let* ((length 50)  ; (/ backtrace-line-length 100) ??
+         (level (truncate (log limit)))
+         (delta (truncate (/ length level))))
+    (with-temp-buffer
+       (catch 'done
+         (while t
+           (erase-buffer)
+           (let ((standard-output (current-buffer))
+                 (print-length length)
+                 (print-level level))
+             (backtrace--print sexp))
+           ;; Stop when either the level is too low or the sexp is
+           ;; successfully printed in the space allowed.
+           (when (or (< (- (point-max) (point-min)) limit) (= level 2))
+             (throw 'done nil))
+           (cl-decf level)
+           (cl-decf length delta)))
+       (put-text-property (point-min) (point)
+                          'backtrace-form (list length level))
+       ;; Make buttons from all the "..."s.
+       ;; TODO should this be under control of :do-ellipses in the view
+       ;; plist?
+       (goto-char (point-min))
+       (while (< (point) (point-max))
+         (let ((end (next-single-property-change (point) 'cl-print-ellipsis
+                                                 nil (point-max))))
+           (when (get-text-property (point) 'cl-print-ellipsis)
+             (make-text-button (point) end :type 'backtrace-ellipsis))
+           (goto-char end)))
+       (buffer-string))))
+
+(defun backtrace-print-frame (frame view)
+  "Insert a backtrace FRAME at point formatted according to VIEW.
+Tag the sections of the frame with the `backtrace-section' text
+property for use by navigation."
+  (backtrace--with-output-variables view
+   (backtrace--print-flags frame view)
+   (backtrace--print-func-and-args frame view)
+   (backtrace--print-locals frame view)))
+
+(defun backtrace--print-flags (frame view)
+  "Print the flags of a backtrace FRAME if enabled in VIEW."
+  (let ((beg (point))
+        (flag (plist-get (backtrace-frame-flags frame) :debug-on-exit)))
+    (insert (if (and (plist-get view :show-flags) flag) "* " "  "))
+    (put-text-property beg (point) 'backtrace-section 'func)))
+
+(defun backtrace--print-func-and-args (frame view)
+  "Print the function, arguments and buffer position of a backtrace FRAME.
+Format it according to VIEW."
+  (let* ((beg (point))
+         (evald (backtrace-frame-evald frame))
+         (fun   (backtrace-frame-fun frame))
+         (args  (backtrace-frame-args frame))
+         (fun-file (and (plist-get view :do-xrefs) (symbol-file fun 'defun)))
+         (fun-pt (point)))
+    (cond
+     ((and evald (not debugger-stack-frame-as-list))
+      (if (atom fun)
+          (funcall backtrace-print-function fun)
+        (insert
+         (backtrace--print-to-string fun (when args (/ backtrace-line-length 2)))))
+      (if args
+          (insert (backtrace--print-to-string
+                   args (max (truncate (/ backtrace-line-length 5))
+                             (- backtrace-line-length (- (point) beg)))))
+        ;; The backtrace-form property is so that
+        ;; backtrace-pretty-print will find it.
+        ;; backtrace-pretty-print doesn't do anything useful with it,
+        ;; just being consistent.
+        (let ((start (point)))
+          (insert "()")
+          (put-text-property start (point) 'backtrace-form t))))
+     (t
+      (let ((fun-and-args (cons fun args)))
+        (insert (backtrace--print-to-string fun-and-args)))
+      (cl-incf fun-pt)))
+    (when fun-file
+      (make-text-button fun-pt (+ fun-pt (length (symbol-name fun)))
+                        :type 'help-function-def
+                        'help-args (list fun fun-file)))
+    ;; After any frame that uses eval-buffer, insert a comment that
+    ;; states the buffer position it's reading at.
+    (when (backtrace-frame-pos frame)
+      (insert (format "  ; Reading at buffer position %d"
+                      (backtrace-frame-pos frame))))
+    (insert "\n")
+    (put-text-property beg (point) 'backtrace-section 'func)))
+
+(defun backtrace--print-locals (frame _view)
+  "Print a backtrace FRAME's local variables.
+Make them invisible initially."
+  (let* ((beg (point))
+         (locals (backtrace-frame-locals frame)))
+    (if (null locals)
+	(insert "    [no locals]\n")
+      (pcase-dolist (`(,symbol . ,value) locals)
+        (insert "    ")
+        (backtrace--print symbol)
+	(insert " = ")
+        (insert (backtrace--print-to-string value))
+        (insert "\n")))
+    (put-text-property beg (point) 'backtrace-section 'locals)
+    (backtrace--set-locals-visible beg (point) nil)))
+
+(defun backtrace--print (obj)
+  "Attempt to print OBJ using `backtrace-print-function'.
+Fall back to `prin1' if there is an error."
+  (condition-case err
+      (funcall backtrace-print-function obj)
+    (error
+     (message "Error in backtrace printer: %S" err)
+     (prin1 obj))))
+
+(defun backtrace-update-flags ()
+  "Update the display of the flags in the backtrace frame at point."
+  (let ((view (backtrace-get-view))
+        (begin (backtrace-get-frame-start)))
+    (when (plist-get view :show-flags)
+      (save-excursion
+        (goto-char begin)
+        (let ((props (backtrace-get-text-properties begin))
+              (inhibit-read-only t)
+              (standard-output (current-buffer)))
+          (delete-char 2)
+          (backtrace--print-flags (nth (backtrace-get-index) backtrace-frames)
+                                  view)
+          (add-text-properties begin (point) props))))))
+
+(defun backtrace--filter-visible (beg end &optional _delete)
+  "Return the visible text between BEG and END."
+  (let ((result ""))
+    (while (< beg end)
+      (let ((next (next-single-char-property-change beg 'invisible)))
+        (unless (get-char-property beg 'invisible)
+          (setq result (concat result (buffer-substring beg (min end next)))))
+        (setq beg next)))
+    result))
+
+;;; The mode definition
+
+(define-derived-mode backtrace-mode special-mode "Backtrace"
+  "Generic major mode for examining an Elisp stack backtrace.
+This mode can be used directly, or other major modes can be
+derived from it, using `define-derived-mode'.
+
+In this major mode, the buffer contains some optional lines of
+header text followed by backtrace frames, each consisting of one
+or more whole lines.
+
+Letters in this mode do not insert themselves; instead they are
+commands.
+\\<backtrace-mode-map>
+\\{backtrace-mode-map}
+
+A mode which inherits from Backtrace mode, or a command which
+creates a backtrace-mode buffer, should usually do the following:
+
+ - Set `backtrace-revert-hook', if the buffer contents need
+   to be specially recomputed prior to `revert-buffer'.
+ - Maybe set `backtrace-insert-header-function' to a function to create
+   header text for the buffer.
+ - Set `backtrace-frames' (see below).
+ - Set `backtrace-view' if desired (see below).
+ - Maybe set `backtrace-print-function'.
+
+A command which creates or switches to a Backtrace mode buffer,
+such as `ert-results-pop-to-backtrace-for-test-at-point', should
+initialize `backtrace-frames' to a list of `backtrace-frame'
+objects (`backtrace-get-frames' is provided for that purpose, if
+desired), and `backtrace-view' to a plist describing how it wants
+the backtrace to appear.  Finally, it should call `backtrace-print'.
+
+`backtrace-print' calls `backtrace-insert-header-function'
+followed by `backtrace-print-frame', once for each stack frame."
+  :syntax-table emacs-lisp-mode-syntax-table
+  (when backtrace-fontify
+    (setq font-lock-defaults
+          '((backtrace-font-lock-keywords
+             backtrace-font-lock-keywords-1
+             backtrace-font-lock-keywords-2)
+            nil nil nil nil
+            ;; TODO This one doesn't look necessary:
+            ;; (font-lock-mark-block-function . mark-defun)
+	    (font-lock-syntactic-face-function
+	     . lisp-font-lock-syntactic-face-function))))
+  (setq truncate-lines t)
+  (buffer-disable-undo)
+  ;; In debug.el, from 1998 to 2009 this was set to nil, reason stated
+  ;; was because of bytecode. Since 2009 it's been set to t, but the
+  ;; default is t so I think this isn't necessary.
+  ;; (set-buffer-multibyte t)
+  (setq-local revert-buffer-function #'backtrace-revert)
+  (setq-local filter-buffer-substring-function #'backtrace--filter-visible)
+  (add-hook 'xref-backend-functions #'backtrace--xref-backend nil t))
+
+(put 'backtrace-mode 'mode-class 'special)
+
+;;; Backtrace printing
+
+(defun backtrace-backtrace ()
+  "Print a trace of Lisp function calls currently active.
+Output stream used is value of `standard-output'."
+  (princ (backtrace-to-string (backtrace-get-frames 'backtrace-backtrace))))
+
+(defun backtrace-to-string(frames)
+  "Format FRAMES, a list of `backtrace-frame' objects, for output.
+Return the result as a string."
+  (let ((backtrace-fontify nil))
+    (with-temp-buffer
+      (backtrace-mode)
+      (setq backtrace-view '(:show-flags t)
+            backtrace-frames frames
+            backtrace-print-function #'cl-prin1)
+      (backtrace-print)
+      (substring-no-properties (filter-buffer-substring (point-min)
+                                                        (point-max))))))
+
+(provide 'backtrace)
+
+;;; backtrace.el ends here
