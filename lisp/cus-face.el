@@ -342,7 +342,7 @@ argument list."
 	;; is aliased to.
 	(if (get face 'face-alias)
 	    (setq face (get face 'face-alias)))
-	(if (custom--should-apply-setting theme)
+	(if (not (custom--should-apply-setting theme))
 	    ;; Just update theme settings.
 	    (custom-push-theme 'theme-face face theme 'set spec)
 	  ;; Update theme settings and set the face spec.
