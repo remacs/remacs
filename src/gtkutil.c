@@ -764,7 +764,7 @@ xg_show_tooltip (struct frame *f, int root_x, int root_y)
       block_input ();
       gtk_window_move (x->ttip_window, root_x / xg_get_scale (f),
 		       root_y / xg_get_scale (f));
-      gtk_widget_show_all (GTK_WIDGET (x->ttip_window));
+      gtk_widget_show (GTK_WIDGET (x->ttip_window));
       unblock_input ();
     }
 #endif
