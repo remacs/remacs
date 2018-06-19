@@ -155,6 +155,13 @@ return value is considered instead."
                       (const :tag "Newline" ?\n))
                  (list character)))
 
+(defvar-local electric-pair-skip-whitespace-function
+  #'electric-pair--skip-whitespace
+  "Function to use to skip whitespace forward.
+Before attempting a skip, if `electric-pair-skip-whitespace' is
+non-nil, this function is called. It move point to a new buffer
+position, presumably skipping only whitespace in between.")
+
 (defun electric-pair--skip-whitespace ()
   "Skip whitespace forward, not crossing comment or string boundaries."
   (let ((saved (point))
@@ -501,7 +508,7 @@ happened."
                                                (functionp electric-pair-skip-whitespace))
                                           (funcall electric-pair-skip-whitespace)
                                         electric-pair-skip-whitespace)))
-                       (electric-pair--skip-whitespace))
+                       (funcall electric-pair-skip-whitespace-function))
                      (eq (char-after) last-command-event))))
          ;; This is too late: rather than insert&delete we'd want to only
          ;; skip (or insert in overwrite mode).  The difference is in what
@@ -509,7 +516,7 @@ happened."
          ;; be visible to other post-self-insert-hook.  We'll just have to
          ;; live with it for now.
          (when skip-whitespace-info
-           (electric-pair--skip-whitespace))
+           (funcall electric-pair-skip-whitespace-function))
          (delete-region (1- pos) (if (eq skip-whitespace-info 'chomp)
                                      (point)
                                    pos))
