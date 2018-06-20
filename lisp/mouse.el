@@ -2515,9 +2515,9 @@ is copied instead of being cut."
             (setq drag-but-negligible
                   (and (eq (overlay-buffer mouse-drag-and-drop-overlay)
                            buffer-to-paste)
-                       (< (overlay-start mouse-drag-and-drop-overlay)
+                       (<= (overlay-start mouse-drag-and-drop-overlay)
                           point-to-paste)
-                       (< point-to-paste
+                       (<= point-to-paste
                           (overlay-end mouse-drag-and-drop-overlay)))))
 
           ;; Show a tooltip.
