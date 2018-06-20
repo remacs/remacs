@@ -468,6 +468,8 @@ Shell buffers.  It implements `shell-completion-execonly' for
   (set (make-local-variable 'comint-file-name-chars) shell-file-name-chars)
   (set (make-local-variable 'comint-file-name-quote-list)
        shell-file-name-quote-list)
+  (set (make-local-variable 'comint-file-name-prefix)
+       (file-remote-p default-directory))
   (set (make-local-variable 'comint-dynamic-complete-functions)
        shell-dynamic-complete-functions)
   (setq-local comint-unquote-function #'shell--unquote-argument)
@@ -1170,9 +1172,12 @@ Returns t if successful."
          (start (if (zerop (length filename)) (point) (match-beginning 0)))
          (end (if (zerop (length filename)) (point) (match-end 0)))
 	 (filenondir (file-name-nondirectory filename))
-	 ; why cdr? see `shell-dynamic-complete-command'
-	 (path-dirs (append (cdr (reverse exec-path))
-	   (if (memq system-type '(windows-nt ms-dos)) '("."))))
+	 (path-dirs
+	  ;; Ignore `exec-directory', the last entry in `exec-path'.
+          (append (cdr (reverse (exec-path)))
+	          (if (and (memq system-type '(windows-nt ms-dos))
+                           (not (file-remote-p default-directory)))
+                      '("."))))
 	 (cwd (file-name-as-directory (expand-file-name default-directory)))
 	 (ignored-extensions
 	  (and comint-completion-fignore

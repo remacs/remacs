@@ -145,6 +145,14 @@ regular expression was previously invalid, but is now accepted:
 ---
 ** The German prefix and postfix input methods now support Capital sharp S.
 
++++
+** The new function 'exec-path' returns a directory list from a remote host.
+
++++
+** Function 'executable-find' supports an optional argument REMOTE.
+This triggers to search a program name on the remote host indicated by
+'default-directory'.
+
 
 * Editing Changes in Emacs 27.1
 
@@ -436,7 +444,6 @@ It can be used to set any buffer as the next one to be used by
 This means that pressing C-M-SPACE now selects the entire tree by
 default, and not just the opening element.
 
-
 ** Eshell
 
 ---
@@ -454,10 +461,14 @@ To restore the old behavior, use
 Previously eshell/kill would fail if provided a kill signal to send to the
 process.  It now accepts signals specified either by name or by its number.
 
+** Shell
+
+---
+*** Program name completion inside remote shells works now as expected.
+
 ** Pcomplete
 *** The function 'pcomplete-uniquify-list' has been renamed from
 'pcomplete-uniqify-list'.
-
 
 ** Auth-source
 
@@ -755,7 +766,6 @@ will be chosen even if you have an entry for image/* in your
 overrides all system and Emacs-provided defaults.  To get the old
 method back, set 'mailcap-prefer-mailcap-viewers' to nil.
 
-
 ** URL
 
 *** The file: handler no longer looks for index.html in directories if
@@ -763,13 +773,11 @@ you ask it for a file:///dir URL.  Since this is a low-level library,
 such decisions (if they are to be made at all) are left to
 higher-level functions.
 
-
 ** image-mode
 
 *** image-mode started using ImageMagick by default for all images
 some years back.  It now respects 'imagemagick-types-inhibit' as a way
 to disable that.
-
 
 +++
 ** The new function 'read-answer' accepts either long or short answers

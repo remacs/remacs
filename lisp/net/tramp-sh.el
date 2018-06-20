@@ -990,6 +990,7 @@ of command line.")
      . tramp-sh-handle-directory-files-and-attributes)
     (dired-compress-file . tramp-sh-handle-dired-compress-file)
     (dired-uncache . tramp-handle-dired-uncache)
+    (exec-path . tramp-sh-handle-exec-path)
     (expand-file-name . tramp-sh-handle-expand-file-name)
     (file-accessible-directory-p . tramp-handle-file-accessible-directory-p)
     (file-acl . tramp-sh-handle-file-acl)
@@ -3082,6 +3083,13 @@ the result will be a local, non-Tramp, file name."
       (if (equal ret -1)
 	  (keyboard-quit)
 	ret))))
+
+(defun tramp-sh-handle-exec-path ()
+  "Like `exec-path' for Tramp files."
+  (append
+   (tramp-get-remote-path (tramp-dissect-file-name default-directory))
+   ;; The equivalent to `exec-directory'.
+   `(,(file-local-name default-directory))))
 
 (defun tramp-sh-handle-file-local-copy (filename)
   "Like `file-local-copy' for Tramp files."

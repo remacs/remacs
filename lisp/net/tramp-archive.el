@@ -220,6 +220,7 @@ It must be supported by libarchive(3).")
      . tramp-handle-directory-files-and-attributes)
     (dired-compress-file . tramp-archive-handle-not-implemented)
     (dired-uncache . tramp-archive-handle-dired-uncache)
+    (exec-path . ignore)
     ;; `expand-file-name' performed by default handler.
     (file-accessible-directory-p . tramp-handle-file-accessible-directory-p)
     (file-acl . ignore)

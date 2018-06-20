@@ -2163,7 +2163,9 @@ ARGS are the arguments OPERATION has been called with."
    ((member operation
 	    '(process-file shell-command start-file-process
 	      ;; Emacs 26+ only.
-	      make-nearby-temp-file temporary-file-directory))
+	      make-nearby-temp-file temporary-file-directory
+	      ;; Emacs 27+ only.
+	      exec-path))
     default-directory)
    ;; PROC.
    ((member operation
@@ -4616,19 +4618,9 @@ Only works for Bourne-like shells."
 ;; when `default-directory' points to another host.
 (defun tramp-eshell-directory-change ()
   "Set `eshell-path-env' to $PATH of the host related to `default-directory'."
+  ;; Remove last element of `(exec-path)', which is `exec-directory'.
   (setq eshell-path-env
-	(if (tramp-tramp-file-p default-directory)
-	    (with-parsed-tramp-file-name default-directory nil
-	      (mapconcat
-	       'identity
-	       (or
-		;; When `tramp-own-remote-path' is in `tramp-remote-path',
-		;; the remote path is only set in the session cache.
-		(tramp-get-connection-property
-		 (tramp-get-connection-process v) "remote-path" nil)
-		(tramp-get-connection-property v "remote-path" nil))
-	       ":"))
-	  (getenv "PATH"))))
+	(mapconcat 'identity (butlast (tramp-compat-exec-path)) ":")))
 
 (eval-after-load "esh-util"
   '(progn

@@ -1024,13 +1024,33 @@ customize the variable `user-emacs-directory-warning'."
 					errtype user-emacs-directory)))))
        bestname))))
 
+(defun exec-path ()
+  "List of directories to search programs to run in remote subprocesses.
+The remote host is identified by `default-directory'.  For remote
+hosts which do not support subprocesses, this returns `nil'.
+If `default-directory' is a local directory, the value of the variable
+`exec-path' is returned."
+  (let ((handler (find-file-name-handler default-directory 'exec-path)))
+    (if handler
+	(funcall handler 'exec-path)
+      exec-path)))
 
-(defun executable-find (command)
+(defun executable-find (command &optional remote)
   "Search for COMMAND in `exec-path' and return the absolute file name.
-Return nil if COMMAND is not found anywhere in `exec-path'."
-  ;; Use 1 rather than file-executable-p to better match the behavior of
-  ;; call-process.
-  (locate-file command exec-path exec-suffixes 1))
+Return nil if COMMAND is not found anywhere in `exec-path'.  If
+REMOTE is non-nil, search on the remote host indicated by
+`default-directory' instead."
+  (if (and remote (file-remote-p default-directory))
+      (let ((res (locate-file
+	          command
+	          (mapcar
+	           (lambda (x) (concat (file-remote-p default-directory) x))
+	           (exec-path))
+	          exec-suffixes 'file-executable-p)))
+        (when (stringp res) (file-local-name res)))
+    ;; Use 1 rather than file-executable-p to better match the
+    ;; behavior of call-process.
+    (locate-file command exec-path exec-suffixes 1)))
 
 (defun load-library (library)
   "Load the Emacs Lisp library named LIBRARY.

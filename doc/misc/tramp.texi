@@ -1816,9 +1816,9 @@ shell supports the login argument @samp{-l}.
 @end defopt
 
 When remote search paths are changed, local @value{tramp} caches must
-be recomputed.  To force @value{tramp} to recompute afresh, exit
-Emacs, remove the persistent file (@pxref{Connection caching}), and
-restart Emacs.
+be recomputed.  To force @value{tramp} to recompute afresh, call
+@kbd{M-x tramp-cleanup-this-connection @key{RET}} or friends
+(@pxref{Cleanup remote connections}).
 
 
 @node Remote shell setup

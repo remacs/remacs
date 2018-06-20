@@ -1567,13 +1567,16 @@ For compatibility, @var{predicate} can also be one of the symbols
 a list of one or more of these symbols.
 @end defun
 
-@defun executable-find program
+@defun executable-find program &optional remote
 This function searches for the executable file of the named
 @var{program} and returns the absolute file name of the executable,
 including its file-name extensions, if any.  It returns @code{nil} if
-the file is not found.  The functions searches in all the directories
+the file is not found.  The function searches in all the directories
 in @code{exec-path}, and tries all the file-name extensions in
 @code{exec-suffixes} (@pxref{Subprocess Creation}).
+
+If @var{remote} is non-@code{nil}, and @code{default-directory} is a
+remote directory, @var{program} is searched on the respective remote host.
 @end defun
 
 @node Changing Files
@@ -3137,8 +3140,8 @@ first, before handlers for jobs such as remote file access.
 @code{directory-file-name},
 @code{directory-files},
 @code{directory-files-and-attributes},
-@code{dired-compress-file}, @code{dired-uncache},@*
-@code{expand-file-name},
+@code{dired-compress-file}, @code{dired-uncache},
+@code{exec-path}, @code{expand-file-name},@*
 @code{file-accessible-directory-p},
 @code{file-acl},
 @code{file-attributes},
@@ -3195,7 +3198,7 @@ first, before handlers for jobs such as remote file access.
 @code{directory-files},
 @code{directory-files-and-at@discretionary{}{}{}tributes},
 @code{dired-compress-file}, @code{dired-uncache},
-@code{expand-file-name},
+@code{exec-path}, @code{expand-file-name},
 @code{file-accessible-direc@discretionary{}{}{}tory-p},
 @code{file-acl},
 @code{file-attributes},

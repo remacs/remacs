@@ -236,6 +236,17 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 (defconst tramp-compat-use-url-tramp-p (fboundp 'temporary-file-directory)
   "Whether to use url-tramp.el.")
 
+;; `exec-path' is new in Emacs 27.1.
+(eval-and-compile
+  (if (fboundp 'exec-path)
+      (defalias 'tramp-compat-exec-path 'exec-path)
+    (defun tramp-compat-exec-path ()
+      "List of directories to search programs to run in remote subprocesses."
+      (let ((handler (find-file-name-handler default-directory 'exec-path)))
+	(if handler
+	    (funcall handler 'exec-path)
+	  exec-path)))))
+
 (add-hook 'tramp-unload-hook
 	  (lambda ()
 	    (unload-feature 'tramp-loaddefs 'force)
