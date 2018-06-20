@@ -282,8 +282,12 @@ call_debugger (Lisp_Object arg)
   /* Do not allow max_specpdl_size less than actual depth (Bug#16603).  */
   EMACS_INT old_max = max (max_specpdl_size, count);
 
-  if (lisp_eval_depth + 40 > max_lisp_eval_depth)
-    max_lisp_eval_depth = lisp_eval_depth + 40;
+  /* The previous value of 40 is too small now that the debugger
+     prints using cl-prin1 instead of prin1.  Printing lists nested 8
+     deep (which is the value of print-level used in the debugger)
+     currently requires 77 additional frames.  See bug#31919.  */
+  if (lisp_eval_depth + 100 > max_lisp_eval_depth)
+    max_lisp_eval_depth = lisp_eval_depth + 100;
 
   /* While debugging Bug#16603, previous value of 100 was found
      too small to avoid specpdl overflow in the debugger itself.  */

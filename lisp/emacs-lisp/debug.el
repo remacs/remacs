@@ -322,6 +322,7 @@ That buffer should be current already."
                  (backtrace-frames 'debug)))
         (print-escape-newlines t)
         (print-escape-control-characters t)
+        ;; If you increase print-level, add more depth in call_debugger.
         (print-level 8)
         (print-length 50)
         (pos (point)))
