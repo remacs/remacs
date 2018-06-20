@@ -1015,6 +1015,8 @@ boundaries."
   (let ((file-name (match-string-no-properties 1))
         (desc      (match-string-no-properties 2))
         (start     (line-beginning-position)))
+    ;; The terminating comment format could be extended to accept a
+    ;; generic string that is not in English.
     (unless (search-forward (concat ";;; " file-name ".el ends here"))
       (error "Package lacks a terminating comment"))
     ;; Try to include a trailing newline.
@@ -1552,7 +1554,7 @@ similar to an entry in `package-alist'.  Save the cached copy to
     (let* ((location (cdr archive))
            (name (car archive))
            (content (buffer-string))
-           (dir (expand-file-name (format "archives/%s" name) package-user-dir))
+           (dir (expand-file-name (concat "archives/" name) package-user-dir))
            (local-file (expand-file-name file dir)))
       (when (listp (read-from-string content))
         (make-directory dir t)
@@ -2034,12 +2036,12 @@ If some packages are not installed propose to install them."
       (cond
        (available
         (when (y-or-n-p
-               (format "%s packages will be installed:\n%s, proceed?"
+               (format "Packages to install: %d (%s), proceed? "
                        (length available)
-                       (mapconcat #'symbol-name available ", ")))
+                       (mapconcat #'symbol-name available " ")))
           (mapc (lambda (p) (package-install p 'dont-select)) available)))
        ((> difference 0)
-        (message "%s packages are not available (the rest already installed), maybe you need to `M-x package-refresh-contents'"
+        (message "Packages that are not available: %d (the rest is already installed), maybe you need to `M-x package-refresh-contents'"
                  difference))
        (t
         (message "All your packages are already installed"))))))
@@ -2158,9 +2160,9 @@ will be deleted."
     (let ((removable (package--removable-packages)))
       (if removable
           (when (y-or-n-p
-                 (format "%s packages will be deleted:\n%s, proceed? "
+                 (format "Packages to delete: %d (%s), proceed? "
                    (length removable)
-                   (mapconcat #'symbol-name removable ", ")))
+                   (mapconcat #'symbol-name removable " ")))
             (mapc (lambda (p)
                     (package-delete (cadr (assq p package-alist)) t))
                   removable))
@@ -2247,12 +2249,10 @@ Otherwise no newline is inserted."
       (setq status "available obsolete"))
     (when incompatible-reason
       (setq status "incompatible"))
-    (prin1 name)
-    (princ " is ")
-    (princ (if (memq (aref status 0) '(?a ?e ?i ?o ?u)) "an " "a "))
-    (princ status)
-    (princ " package.\n\n")
+    (princ (format "Package %S is %s.\n\n" name status))
 
+    ;; TODO: Remove the string decorations and reformat the strings
+    ;; for future l10n.
     (package--print-help-section "Status")
     (cond (built-in
            (insert (propertize (capitalize status)
@@ -2634,9 +2634,9 @@ Installed obsolete packages are always displayed.")
     (user-error "The current buffer is not a Package Menu"))
   (setq package-menu--hide-packages
         (not package-menu--hide-packages))
-  (message "%s packages" (if package-menu--hide-packages
-                             "Hiding obsolete or unwanted"
-                           "Displaying all"))
+  (if package-menu--hide-packages
+      (message "Hiding obsolete or unwanted packages")
+    (message "Displaying all packages"))
   (revert-buffer nil 'no-confirm))
 
 (defun package--remove-hidden (pkg-list)
@@ -2960,11 +2960,11 @@ If optional arg BUTTON is non-nil, describe its associated package."
     (let ((hidden
            (cl-remove-if-not (lambda (e) (string-match re (symbol-name (car e))))
                              package-archive-contents)))
-      (message (substitute-command-keys
-                (concat "Hiding %s packages, type `\\[package-menu-toggle-hiding]'"
-                        " to toggle or `\\[customize-variable] RET package-hidden-regexps'"
-                        " to customize it"))
-        (length hidden)))))
+      (message "Packages to hide: %d.  Type `%s' to toggle or `%s' to customize"
+               (length hidden)
+               (substitute-command-keys "\\[package-menu-toggle-hidding]")
+               (substitute-command-keys "\\[customize-variable] RET package-hidden-regexps")))))
+
 
 (defun package-menu-describe-package (&optional button)
   "Describe the current package.
@@ -3099,7 +3099,7 @@ Implementation of `package-menu-mark-upgrades'."
   (setq package-menu--mark-upgrades-pending nil)
   (let ((upgrades (package-menu--find-upgrades)))
     (if (null upgrades)
-        (message "No packages to upgrade.")
+        (message "No packages to upgrade")
       (widen)
       (save-excursion
         (goto-char (point-min))
@@ -3112,9 +3112,9 @@ Implementation of `package-menu-mark-upgrades'."
                    (package-menu-mark-install))
                   (t
                    (package-menu-mark-delete))))))
-      (message "%d package%s marked for upgrading."
-        (length upgrades)
-        (if (= (length upgrades) 1) "" "s")))))
+      (message "Packages marked for upgrading: %d"
+               (length upgrades)))))
+
 
 (defun package-menu-mark-upgrades ()
   "Mark all upgradable packages in the Package Menu.
@@ -3137,17 +3137,12 @@ immediately."
 PACKAGES is a list of `package-desc' objects.
 Formats the returned string to be usable in a minibuffer
 prompt (see `package-menu--prompt-transaction-p')."
-  (cond
-   ;; None
-   ((not packages) "")
-   ;; More than 1
-   ((cdr packages)
-    (format "these %d packages (%s)"
-      (length packages)
-      (mapconcat #'package-desc-full-name packages ", ")))
-   ;; Exactly 1
-   (t (format-message "package `%s'"
-                      (package-desc-full-name (car packages))))))
+  ;; The case where `package' is empty is handled in
+  ;; `package-menu--prompt-transaction-p' below.
+  (format "%d (%s)"
+          (length packages)
+          (mapconcat #'package-desc-full-name packages " ")))
+
 
 (defun package-menu--prompt-transaction-p (delete install upgrade)
   "Prompt the user about DELETE, INSTALL, and UPGRADE.
@@ -3155,16 +3150,14 @@ DELETE, INSTALL, and UPGRADE are lists of `package-desc' objects.
 Either may be nil, but not all."
   (y-or-n-p
    (concat
-    (when delete "Delete ")
-    (package-menu--list-to-prompt delete)
-    (when (and delete install)
-      (if upgrade "; " "; and "))
-    (when install "Install ")
-    (package-menu--list-to-prompt install)
-    (when (and upgrade (or install delete)) "; and ")
-    (when upgrade "Upgrade ")
-    (package-menu--list-to-prompt upgrade)
-    "? ")))
+    (when delete
+      (format "Packages to delete: %s.  " (package-menu--list-to-prompt delete)))
+    (when install
+      (format "Packages to install: %s.  " (package-menu--list-to-prompt install)))
+    (when upgrade
+      (format "Packages to upgrade: %s.  " (package-menu--list-to-prompt upgrade)))
+    "Proceed? ")))
+
 
 (defun package-menu--partition-transaction (install delete)
   "Return an alist describing an INSTALL DELETE transaction.
@@ -3248,25 +3241,24 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
       (when (or noquery
                 (package-menu--prompt-transaction-p .delete .install .upgrade))
         (let ((message-template
-               (concat "Package menu: Operation %s ["
-                       (when .delete  (format "Delet__ %s" (length .delete)))
-                       (when (and .delete .install) "; ")
-                       (when .install (format "Install__ %s" (length .install)))
-                       (when (and .upgrade (or .install .delete)) "; ")
-                       (when .upgrade (format "Upgrad__ %s" (length .upgrade)))
+               (concat "[ "
+                       (when .delete
+                         (format "Delete %d " (length .delete)))
+                       (when .install
+                         (format "Install %d " (length .install)))
+                       (when .upgrade
+                         (format "Upgrade %d " (length .upgrade)))
                        "]")))
-          (message (replace-regexp-in-string "__" "ing" message-template) "started")
+          (message "Operation %s started" message-template)
           ;; Packages being upgraded are not marked as selected.
           (package--update-selected-packages .install .delete)
           (package-menu--perform-transaction install-list delete-list)
           (when package-selected-packages
             (if-let* ((removable (package--removable-packages)))
-                (message "Package menu: Operation finished.  %d packages %s"
-                  (length removable)
-                  (substitute-command-keys
-                   "are no longer needed, type `\\[package-autoremove]' to remove them"))
-              (message (replace-regexp-in-string "__" "ed" message-template)
-                "finished"))))))))
+                (message "Operation finished.  Packages that are no longer needed: %d.  Type `%s' to remove them"
+                         (length removable)
+                         (substitute-command-keys "\\[package-autoremove]"))
+              (message "Operation %s finished" message-template))))))))
 
 (defun package-menu--version-predicate (A B)
   (let ((vA (or (aref (cadr A) 1)  '(0)))
@@ -3333,11 +3325,10 @@ Store this list in `package-menu--new-package-list'."
 (defun package-menu--find-and-notify-upgrades ()
   "Notify the user of upgradable packages."
   (when-let* ((upgrades (package-menu--find-upgrades)))
-    (message "%d package%s can be upgraded; type `%s' to mark %s for upgrading."
-      (length upgrades)
-      (if (= (length upgrades) 1) "" "s")
-      (substitute-command-keys "\\[package-menu-mark-upgrades]")
-      (if (= (length upgrades) 1) "it" "them"))))
+    (message "Packages that can be upgraded: %d; type `%s' to mark for upgrading."
+             (length upgrades)
+             (substitute-command-keys "\\[package-menu-mark-upgrades]"))))
+
 
 (defun package-menu--post-refresh ()
   "If there's a *Packages* buffer, revert it and check for new packages and upgrades.

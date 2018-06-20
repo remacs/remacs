@@ -414,7 +414,7 @@ Must called from within a `tar-mode' buffer."
   (with-fake-help-buffer
    (describe-package '5x5)
    (goto-char (point-min))
-   (should (search-forward "5x5 is a built-in package." nil t))
+   (should (search-forward "5x5 is built-in." nil t))
    ;; Don't assume the descriptions are in any particular order.
    (save-excursion (should (search-forward "Status: Built-in." nil t)))
    (save-excursion (should (search-forward "Summary: simple little puzzle game" nil t)))
@@ -428,7 +428,7 @@ Must called from within a `tar-mode' buffer."
     (with-fake-help-buffer
      (describe-package 'simple-single)
      (goto-char (point-min))
-     (should (search-forward "simple-single is an installed package." nil t))
+     (should (search-forward "Package simple-single is installed." nil t))
      (save-excursion (should (re-search-forward "Status: Installed in ['`‘]simple-single-1.3/['’] (unsigned)." nil t)))
      (save-excursion (should (search-forward "Version: 1.3" nil t)))
      (save-excursion (should (search-forward "Summary: A single-file package with no dependencies" nil t)))
