@@ -146,11 +146,14 @@ regular expression was previously invalid, but is now accepted:
 ** The German prefix and postfix input methods now support Capital sharp S.
 
 +++
-** The new function 'exec-path' returns a directory list from a remote host.
+** New function 'exec-path'.
+This function by default returns the value of the corresponding
+variable, but can optionally return the equivalent of 'exec-path'
+from a remote host.
 
 +++
-** Function 'executable-find' supports an optional argument REMOTE.
-This triggers to search a program name on the remote host indicated by
+** The function 'executable-find' supports an optional argument REMOTE.
+This triggers to search the program on the remote host as indicated by
 'default-directory'.
 
 

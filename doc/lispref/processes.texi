@@ -178,9 +178,9 @@ independently of @env{PATH} can lead to confusing results.
 @end defopt
 
 @defun exec-path
-The function @code{exec-path} is an extension of the respective
-variable.  If @code{default-directory} indicates a remote directory,
-it returns a list of directories used for searching programs on the
+This function is an extension of the variable @code{exec-path}.  If
+@code{default-directory} indicates a remote directory, this function
+returns a list of directories used for searching programs on the
 respective remote host.  In case of a local @code{default-directory},
 the function returns just the value of the variable @code{exec-path}.
 @end defun
