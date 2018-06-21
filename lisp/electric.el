@@ -260,32 +260,43 @@ or comment."
                 (or (memq act '(nil no-indent))
                     ;; In a string or comment.
                     (unless (eq act 'do-indent) (nth 8 (syntax-ppss))))))))
-      ;; For newline, we want to reindent both lines and basically behave like
-      ;; reindent-then-newline-and-indent (whose code we hence copied).
-      (let ((at-newline (<= pos (line-beginning-position))))
-        (when at-newline
-          (let ((before (copy-marker (1- pos) t)))
-            (save-excursion
-              (unless (or (memq indent-line-function
-                                electric-indent-functions-without-reindent)
-                          electric-indent-inhibit)
-                ;; Don't reindent the previous line if the indentation function
-                ;; is not a real one.
+      ;; If we error during indent, silently give up since this is an
+      ;; automatic action that the user didn't explicitly request.
+      ;; But we don't want to suppress errors from elsewhere in *this*
+      ;; function, hence the `condition-case' and `throw' (Bug#18764).
+      (catch 'indent-error
+        ;; For newline, we want to reindent both lines and basically
+        ;; behave like reindent-then-newline-and-indent (whose code we
+        ;; hence copied).
+        (let ((at-newline (<= pos (line-beginning-position))))
+          (when at-newline
+            (let ((before (copy-marker (1- pos) t)))
+              (save-excursion
+                (unless (or (memq indent-line-function
+                                  electric-indent-functions-without-reindent)
+                            electric-indent-inhibit)
+                  ;; Don't reindent the previous line if the
+                  ;; indentation function is not a real one.
+                  (goto-char before)
+                  (condition-case-unless-debug ()
+                      (indent-according-to-mode)
+                    (error (throw 'indent-error nil))))
+                ;; We are at EOL before the call to
+                ;; `indent-according-to-mode', and after it we usually
+                ;; are as well, but not always.  We tried to address
+                ;; it with `save-excursion' but that uses a normal
+                ;; marker whereas we need `move after insertion', so
+                ;; we do the save/restore by hand.
                 (goto-char before)
-                (indent-according-to-mode))
-              ;; We are at EOL before the call to indent-according-to-mode, and
-              ;; after it we usually are as well, but not always.  We tried to
-              ;; address it with `save-excursion' but that uses a normal marker
-              ;; whereas we need `move after insertion', so we do the
-              ;; save/restore by hand.
-              (goto-char before)
-              (when (eolp)
-                ;; Remove the trailing whitespace after indentation because
-                ;; indentation may (re)introduce the whitespace.
-                (delete-horizontal-space t)))))
-        (unless (and electric-indent-inhibit
-                     (not at-newline))
-          (indent-according-to-mode))))))
+                (when (eolp)
+                  ;; Remove the trailing whitespace after indentation because
+                  ;; indentation may (re)introduce the whitespace.
+                  (delete-horizontal-space t)))))
+          (unless (and electric-indent-inhibit
+                       (not at-newline))
+            (condition-case-unless-debug ()
+                (indent-according-to-mode)
+              (error (throw 'indent-error nil)))))))))
 
 (put 'electric-indent-post-self-insert-function 'priority  60)
 
