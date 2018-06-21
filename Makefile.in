@@ -516,9 +516,11 @@ INSTALL_ARCH_INDEP_EXTRA = @INSTALL_ARCH_INDEP_EXTRA@
 ## https://lists.gnu.org/r/emacs-devel/2007-10/msg01672.html
 ## Needs to be the user running install, so configure can't set it.
 set_installuser=for installuser in $${LOGNAME} $${USERNAME} $${USER} \
-	  `id -un 2> /dev/null`; do \
+	  `(id -u) 2> /dev/null`; do \
 	  [ -n "$${installuser}" ] && break ; \
-	done
+	done; \
+	installgroup=`(id -g) 2>/dev/null` && [ -n "$$installgroup" ] && \
+	  installuser=$$installuser:$$installgroup
 
 ### Install the files that are machine-independent.
 ### Most of them come straight from the distribution; the exception is
