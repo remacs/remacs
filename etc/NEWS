@@ -658,6 +658,10 @@ manual for more details.
 
 * Lisp Changes in Emacs 27.1
 
+** New functions 'major-mode-suspend' and 'major-mode-restore'
+Used when switching temporarily to another major mode, e.g. for hexl-mode,
+or to switch between c-mode and image-mode in XPM.
+
 +++
 ** New macro 'dolist-with-progress-reporter'.
 This works like 'dolist', but reports progress similar to

@@ -412,9 +412,6 @@ call."
 (defvar-local image-multi-frame nil
   "Non-nil if image for the current Image mode buffer has multiple frames.")
 
-(defvar image-mode-previous-major-mode nil
-  "Internal variable to keep the previous non-image major mode.")
-
 (defvar image-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-c" 'image-toggle-display)
@@ -551,7 +548,7 @@ Key bindings:
 	(unless (display-images-p)
 	  (error "Display does not support images"))
 
-	(kill-all-local-variables)
+        (major-mode-suspend)
 	(setq major-mode 'image-mode)
 
 	(if (not (image-get-display-property))
@@ -641,26 +638,7 @@ A non-mage major mode found from `auto-mode-alist' or fundamental mode
 displays an image file as text."
   ;; image-mode-as-text = normal-mode + image-minor-mode
   (let ((previous-image-type image-type)) ; preserve `image-type'
-    (if image-mode-previous-major-mode
-	;; Restore previous major mode that was already found by this
-	;; function and cached in `image-mode-previous-major-mode'
-	(funcall image-mode-previous-major-mode)
-      (let ((auto-mode-alist
-	     (delq nil (mapcar
-			(lambda (elt)
-			  (unless (memq (or (car-safe (cdr elt)) (cdr elt))
-					'(image-mode image-mode-maybe image-mode-as-text))
-			    elt))
-			auto-mode-alist)))
-	    (magic-fallback-mode-alist
-	     (delq nil (mapcar
-			(lambda (elt)
-			  (unless (memq (or (car-safe (cdr elt)) (cdr elt))
-					'(image-mode image-mode-maybe image-mode-as-text))
-			    elt))
-			magic-fallback-mode-alist))))
-	(normal-mode)
-	(setq-local image-mode-previous-major-mode major-mode)))
+    (major-mode-restore '(image-mode image-mode-maybe image-mode-as-text))
     ;; Restore `image-type' after `kill-all-local-variables' in `normal-mode'.
     (setq image-type previous-image-type)
     ;; Enable image minor mode with `C-c C-c'.

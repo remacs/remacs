@@ -354,9 +354,6 @@ of the page moves to the previous page."
 (defvar doc-view--pending-cache-flush nil
   "Only used internally.")
 
-(defvar doc-view--previous-major-mode nil
-  "Only used internally.")
-
 (defvar doc-view--buffer-file-name nil
   "Only used internally.
 The file name used for conversion.  Normally it's the same as
@@ -1752,12 +1749,7 @@ toggle between displaying the document or editing it as text.
       ;; returns nil for tar members.
       (doc-view-fallback-mode)
 
-    (let* ((prev-major-mode (if (derived-mode-p 'doc-view-mode)
-				doc-view--previous-major-mode
-			      (unless (eq major-mode 'fundamental-mode)
-				major-mode))))
-      (kill-all-local-variables)
-      (setq-local doc-view--previous-major-mode prev-major-mode))
+    (major-mode-suspend)
 
     (dolist (var doc-view-saved-settings)
       (set (make-local-variable (car var)) (cdr var)))
@@ -1848,14 +1840,7 @@ toggle between displaying the document or editing it as text.
                           '(doc-view-resolution
                             image-mode-winprops-alist)))))
     (remove-overlays (point-min) (point-max) 'doc-view t)
-    (if doc-view--previous-major-mode
-        (funcall doc-view--previous-major-mode)
-      (let ((auto-mode-alist
-             (rassq-delete-all
-              'doc-view-mode-maybe
-              (rassq-delete-all 'doc-view-mode
-                                (copy-alist auto-mode-alist)))))
-        (normal-mode)))
+    (major-mode-restore '(doc-view-mode-maybe doc-view-mode))
     (when vars
       (setq-local doc-view-saved-settings vars))))
 

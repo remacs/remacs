@@ -1866,7 +1866,7 @@ running their FOO-mode-hook."
 	(push hook delayed-mode-hooks))
     ;; Normal case, just run the hook as before plus any delayed hooks.
     (setq hooks (nconc (nreverse delayed-mode-hooks) hooks))
-    (and syntax-propertize-function
+    (and (bound-and-true-p syntax-propertize-function)
          (not (local-variable-p 'parse-sexp-lookup-properties))
          ;; `syntax-propertize' sets `parse-sexp-lookup-properties' for us, but
          ;; in order for the sexp primitives to automatically call
@@ -1908,6 +1908,36 @@ If you just want to check `major-mode', use `derived-mode-p'."
   "Non-nil if the current major mode is derived from one of MODES.
 Uses the `derived-mode-parent' property of the symbol to trace backwards."
   (apply #'provided-mode-derived-p major-mode modes))
+
+(defvar-local major-mode--suspended nil)
+(put 'major-mode--suspended 'permanent-local t)
+
+(defun major-mode-suspend ()
+  "Exit current major, remembering it."
+  (let* ((prev-major-mode (or major-mode--suspended
+			      (unless (eq major-mode 'fundamental-mode)
+			        major-mode))))
+    (kill-all-local-variables)
+    (setq-local major-mode--suspended prev-major-mode)))
+
+(defun major-mode-restore (&optional avoided-modes)
+  "Restore major mode earlier suspended with `major-mode-suspend'.
+If there was no earlier suspended major mode, then fallback to `normal-mode',
+tho trying to avoid AVOIDED-MODES."
+  (if major-mode--suspended
+      (funcall (prog1 major-mode--suspended
+                 (kill-local-variable 'major-mode--suspended)))
+    (let ((auto-mode-alist
+           (let ((alist (copy-sequence auto-mode-alist)))
+             (dolist (mode avoided-modes)
+               (setq alist (rassq-delete-all mode alist)))
+             alist))
+          (magic-fallback-mode-alist
+           (let ((alist (copy-sequence magic-fallback-mode-alist)))
+             (dolist (mode avoided-modes)
+               (setq alist (rassq-delete-all mode alist)))
+             alist)))
+      (normal-mode))))
 
 ;;;; Minor modes.
 
@@ -3034,6 +3064,8 @@ This function is like `insert', except it honors the variables
 	 (inhibit-read-only inhibit-read-only)
 	 end)
 
+    ;; FIXME: This throws away any yank-undo-function set by previous calls
+    ;; to insert-for-yank-1 within the loop of insert-for-yank!
     (setq yank-undo-function t)
     (if (nth 0 handler) ; FUNCTION
 	(funcall (car handler) param)
