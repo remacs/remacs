@@ -146,7 +146,7 @@ This should be a list of `backtrace-frame' objects.")
 
 (defvar-local backtrace-view nil
   "A plist describing how to render backtrace frames.
-Possible entries are :show-flags and :print-circle.")
+Possible entries are :show-flags, :show-locals and :print-circle.")
 
 (defvar-local backtrace-insert-header-function nil
   "Function for inserting a header for the current Backtrace buffer.
@@ -231,14 +231,6 @@ POS, if omitted or nil, defaults to point."
   (next-single-property-change (or pos (point))
                                     'backtrace-index nil (point-max)))
 
-(defun backtrace-get-section-end (&optional pos)
-  "Return the position of the end of the frame section at POS.
-POS, if omitted or nil, defaults to point."
-  (let* ((frame-end (backtrace-get-frame-end pos))
-         (section-end (next-single-property-change
-                       (or pos (point)) 'backtrace-section nil frame-end)))
-    (min frame-end section-end)))
-
 (defun backtrace-forward-frame ()
   "Move forward to the beginning of the next frame."
   (interactive)
@@ -272,24 +264,74 @@ It runs `backtrace-revert-hook', then calls `backtrace-print'."
   (run-hooks 'backtrace-revert-hook)
   (backtrace-print t))
 
-(defun backtrace-toggle-locals ()
+(defmacro backtrace--with-output-variables (view &rest body)
+  "Bind output variables according to VIEW and execute BODY."
+  (declare (indent 1))
+  `(let ((print-escape-control-characters t)
+         (print-escape-newlines t)
+         (print-circle (plist-get ,view :print-circle))
+         (standard-output (current-buffer)))
+     ,@body))
+
+(defun backtrace-toggle-locals (&optional all)
   "Toggle the display of local variables for the backtrace frame at point.
-TODO with argument, toggle all frames."
-  (interactive)
-  (let ((index (backtrace-get-index)))
-    (unless index
-      (user-error "Not in a stack frame"))
-    (let ((pos (point)))
-      (goto-char (backtrace-get-frame-start))
-      (while (and (eq index (backtrace-get-index))
-                  (not (eq (backtrace-get-section) 'locals)))
-        (goto-char (next-single-property-change (point) 'backtrace-section)))
-      (let ((end (backtrace-get-section-end)))
-        (backtrace--set-locals-visible (point) end (invisible-p (point)))
+With prefix argument ALL, toggle the value of :show-locals in
+`backtrace-view', which affects all of the backtrace frames in
+the buffer."
+  (interactive "P")
+  (if all
+      (let ((pos (make-marker))
+            (visible (not (plist-get backtrace-view :show-locals))))
+        (setq backtrace-view (plist-put backtrace-view :show-locals visible))
+        (set-marker-insertion-type pos t)
+        (set-marker pos (point))
+        (goto-char (point-min))
+        ;; Skip the header.
+        (unless (backtrace-get-index)
+          (goto-char (backtrace-get-frame-end)))
+        (while (< (point) (point-max))
+          (backtrace--set-frame-locals-visible visible)
+          (goto-char (backtrace-get-frame-end)))
+        (goto-char pos)
+        (when (invisible-p pos)
+          (goto-char (backtrace-get-frame-start))))
+    (let ((index (backtrace-get-index)))
+      (unless index
+        (user-error "Not in a stack frame"))
+      (backtrace--set-frame-locals-visible
+       (not (plist-get (backtrace-get-view) :show-locals))))))
 
-        (goto-char (if (invisible-p pos) end pos))))))
+(defun backtrace--set-frame-locals-visible (visible)
+  "Set the visibility of the local vars for the frame at point to VISIBLE."
+  (let ((pos (point))
+        (index (backtrace-get-index))
+        (start (backtrace-get-frame-start))
+        (end (backtrace-get-frame-end))
+        (view (copy-sequence (backtrace-get-view)))
+        (inhibit-read-only t))
+    (setq view (plist-put view :show-locals visible))
+    (goto-char (backtrace-get-frame-start))
+    (while (not (or (= (point) end)
+                    (eq (backtrace-get-section) 'locals)))
+      (goto-char (next-single-property-change (point)
+                                              'backtrace-section nil end)))
+    (cond
+     ((and (= (point) end) visible)
+      ;; The locals section doesn't exist so create it.
+      (let ((standard-output (current-buffer)))
+        (backtrace--with-output-variables view
+          (backtrace--print-locals
+           (nth index backtrace-frames) view))
+        (add-text-properties end (point) `(backtrace-index ,index))
+        (goto-char pos)))
+     ((/= (point) end)
+      ;; The locals section does exist, so add or remove the overlay.
+      (backtrace--set-locals-visible-overlay (point) end visible)
+      (goto-char (if (invisible-p pos) start pos))))
+    (add-text-properties start (backtrace-get-frame-end)
+                         `(backtrace-view ,view))))
 
-(defun backtrace--set-locals-visible (beg end visible)
+(defun backtrace--set-locals-visible-overlay (beg end visible)
   (backtrace--change-button-skip beg end (not visible))
   (if visible
       (remove-overlays beg end 'invisible t)
@@ -319,7 +361,6 @@ FEATURE should be one of the options in `backtrace-view'.
 After toggling the feature, reprint the frame and position
 point at the start of the section of the frame it was in
 before."
-  ;; TODO preserve (in)visibility of locals
   (let ((index (backtrace-get-index))
         (view (copy-sequence (backtrace-get-view))))
     (unless index
@@ -341,15 +382,6 @@ before."
                                          (backtrace-get-frame-end)
                                          'backtrace-section section)))
             (goto-char pos))))))
-
-(defmacro backtrace--with-output-variables (view &rest body)
-  "Bind output variables according to VIEW and execute BODY."
-  (declare (indent 1))
-  `(let ((print-escape-control-characters t)
-         (print-escape-newlines t)
-         (print-circle (plist-get ,view :print-circle))
-         (standard-output (current-buffer)))
-     ,@body))
 
 (defun backtrace-expand-ellipsis (button)
   "Expand display of the elided form at BUTTON."
@@ -633,21 +665,21 @@ Format it according to VIEW."
     (insert "\n")
     (put-text-property beg (point) 'backtrace-section 'func)))
 
-(defun backtrace--print-locals (frame _view)
-  "Print a backtrace FRAME's local variables.
-Make them invisible initially."
-  (let* ((beg (point))
-         (locals (backtrace-frame-locals frame)))
-    (if (null locals)
-	(insert "    [no locals]\n")
-      (pcase-dolist (`(,symbol . ,value) locals)
-        (insert "    ")
-        (backtrace--print symbol)
-	(insert " = ")
-        (insert (backtrace--print-to-string value))
-        (insert "\n")))
-    (put-text-property beg (point) 'backtrace-section 'locals)
-    (backtrace--set-locals-visible beg (point) nil)))
+(defun backtrace--print-locals (frame view)
+  "Print a backtrace FRAME's local variables according to VIEW.
+Print them only if :show-locals is non-nil in the VIEW plist."
+  (when (plist-get view :show-locals)
+    (let* ((beg (point))
+           (locals (backtrace-frame-locals frame)))
+      (if (null locals)
+	  (insert "    [no locals]\n")
+        (pcase-dolist (`(,symbol . ,value) locals)
+          (insert "    ")
+          (backtrace--print symbol)
+	  (insert " = ")
+          (insert (backtrace--print-to-string value))
+          (insert "\n")))
+      (put-text-property beg (point) 'backtrace-section 'locals))))
 
 (defun backtrace--print (obj)
   "Attempt to print OBJ using `backtrace-print-function'.
