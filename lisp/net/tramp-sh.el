@@ -1270,6 +1270,13 @@ component is used as the target of the symlink."
 	      ;; The scripts could fail, for example with huge file size.
 	      (tramp-do-file-attributes-with-ls v localname id-format)))))))))
 
+(defun tramp-sh--quoting-style-options (vec)
+  (or
+   (tramp-get-ls-command-with
+    vec "--quoting-style=literal --show-control-chars")
+   (tramp-get-ls-command-with vec "-w")
+   ""))
+
 (defun tramp-do-file-attributes-with-ls (vec localname &optional id-format)
   "Implement `file-attributes' for Tramp files using the ls(1) command."
   (let (symlinkp dirp
@@ -1295,11 +1302,7 @@ component is used as the target of the symlink."
                (if (eq id-format 'integer) "-ildn" "-ild")
                ;; On systems which have no quoting style, file names
                ;; with special characters could fail.
-               (cond
-                ((tramp-get-ls-command-with
-		  vec "--quoting-style=literal --show-control-chars"))
-                ((tramp-get-ls-command-with vec "-w"))
-                (t ""))
+               (tramp-sh--quoting-style-options vec)
                (tramp-shell-quote-argument localname)))
       ;; Parse `ls -l' output ...
       (with-current-buffer (tramp-get-buffer vec)
@@ -1828,11 +1831,7 @@ be non-negative integers."
     (tramp-get-ls-command vec)
     ;; On systems which have no quoting style, file names with special
     ;; characters could fail.
-    (cond
-     ((tramp-get-ls-command-with
-       vec "--quoting-style=literal --show-control-chars"))
-     ((tramp-get-ls-command-with vec "-w"))
-     (t ""))
+    (tramp-sh--quoting-style-options vec)
     (tramp-get-remote-stat vec)
     tramp-stat-marker tramp-stat-marker
     tramp-stat-marker tramp-stat-marker
@@ -2632,7 +2631,7 @@ The method used must be an out-of-band method."
 	 filename switches wildcard full-directory-p)
       (when (stringp switches)
         (setq switches (split-string switches)))
-      (when (tramp-get-ls-command-with
+      (when (tramp-get-ls-command-with ;FIXME: tramp-sh--quoting-style-options?
 	     v "--quoting-style=literal --show-control-chars")
 	(setq switches
 	      (append
@@ -5334,7 +5333,7 @@ Nonexistent directories are removed from spec."
 	     ;; Check parameters.  On busybox, "ls" output coloring is
 	     ;; enabled by default sometimes.  So we try to disable it
 	     ;; when possible.  $LS_COLORING is not supported there.
-	     ;; Some "ls" versions are sensible wrt the order of
+	     ;; Some "ls" versions are sensitive to the order of
 	     ;; arguments, they fail when "-al" is after the
 	     ;; "--color=never" argument (for example on FreeBSD).
 	     (when (tramp-send-command-and-check
@@ -5351,7 +5350,7 @@ Nonexistent directories are removed from spec."
   "Return OPTION, if the remote `ls' command supports the OPTION option."
   (with-tramp-connection-property vec (concat "ls" option)
     (tramp-message vec 5 "Checking, whether `ls %s' works" option)
-    ;; Some "ls" versions are sensible wrt the order of arguments,
+    ;; Some "ls" versions are sensitive to the order of arguments,
     ;; they fail when "-al" is after the "--dired" argument (for
     ;; example on FreeBSD).  Busybox does not support this kind of
     ;; options.
