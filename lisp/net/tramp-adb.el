@@ -1130,7 +1130,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (read (current-buffer)))
 	":" 'omit)))
    ;; The equivalent to `exec-directory'.
-   `(,(file-local-name default-directory))))
+   `(,(file-remote-p default-directory 'localname))))
 
 (defun tramp-adb-get-device (vec)
   "Return full host name from VEC to be used in shell execution.

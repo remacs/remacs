@@ -4021,13 +4021,15 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       (put 'explicit-shell-file-name 'permanent-local nil)
       (kill-buffer "*shell*"))))
 
-;; The function was introduced in Emacs 27.1.
+;; `exec-path' was introduced in Emacs 27.1.  `executable-find' has
+;; changed the number of parameters, so we use `apply' for older
+;; Emacsen.
 (ert-deftest tramp-test34-exec-path ()
   "Check `exec-path' and `executable-find'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
   ;; Since Emacs 27.1.
-  (skip-unless (boundp 'exec-path))
+  (skip-unless (fboundp 'exec-path))
 
   (let ((tmp-name (tramp--test-make-temp-name))
 	(default-directory tramp-test-temporary-file-directory))
@@ -4038,9 +4040,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should
 	   (string-equal
 	    (car (last (with-no-warnings (exec-path))))
-	    (file-local-name default-directory)))
+	    (file-remote-p default-directory 'localname)))
 	  ;; The shell "sh" shall always exist.
-	  (should (executable-find "sh" 'remote))
+	  (should (apply 'executable-find '("sh" remote)))
 	  ;; Since the last element in `exec-path' is the current
 	  ;; directory, an executable file in that directory will be
 	  ;; found.
@@ -4050,11 +4052,13 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should (file-executable-p tmp-name))
 	  (should
 	   (string-equal
-	    (executable-find (file-name-nondirectory tmp-name) 'remote)
-	    (file-local-name tmp-name)))
+	    (apply
+	     'executable-find `(,(file-name-nondirectory tmp-name) remote))
+	    (file-remote-p tmp-name 'localname)))
 	  (should-not
-	   (executable-find
-	    (concat (file-name-nondirectory tmp-name) "foo") 'remote)))
+	   (apply
+	    'executable-find
+	    `(,(concat (file-name-nondirectory tmp-name) "foo") remote))))
 
       ;; Cleanup.
       (ignore-errors (delete-file tmp-name)))))

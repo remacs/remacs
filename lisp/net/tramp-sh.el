@@ -3089,7 +3089,7 @@ the result will be a local, non-Tramp, file name."
   (append
    (tramp-get-remote-path (tramp-dissect-file-name default-directory))
    ;; The equivalent to `exec-directory'.
-   `(,(file-local-name default-directory))))
+   `(,(file-remote-p default-directory 'localname))))
 
 (defun tramp-sh-handle-file-local-copy (filename)
   "Like `file-local-copy' for Tramp files."
@@ -5349,16 +5349,21 @@ Nonexistent directories are removed from spec."
 
 (defun tramp-get-ls-command-with (vec option)
   "Return OPTION, if the remote `ls' command supports the OPTION option."
-  (save-match-data
-    (with-tramp-connection-property vec (concat "ls" option)
-      (tramp-message vec 5 "Checking, whether `ls %s' works" option)
-      ;; Some "ls" versions are sensible wrt the order of arguments,
-      ;; they fail when "-al" is after the "--dired" argument (for
-      ;; example on FreeBSD).
-      (and
-       (tramp-send-command-and-check
-	vec (format "%s %s -al /dev/null" (tramp-get-ls-command vec) option))
-       option))))
+  (with-tramp-connection-property vec (concat "ls" option)
+    (tramp-message vec 5 "Checking, whether `ls %s' works" option)
+    ;; Some "ls" versions are sensible wrt the order of arguments,
+    ;; they fail when "-al" is after the "--dired" argument (for
+    ;; example on FreeBSD).  Busybox does not support this kind of
+    ;; options.
+    (and
+     (not
+      (tramp-send-command-and-check
+       vec
+       (format
+	"%s ls --help 2>&1 | grep -iq busybox" (tramp-get-ls-command vec))))
+     (tramp-send-command-and-check
+      vec (format "%s %s -al /dev/null" (tramp-get-ls-command vec) option))
+     option)))
 
 (defun tramp-get-test-command (vec)
   "Determine remote `test' command."
