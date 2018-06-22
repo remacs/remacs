@@ -3215,7 +3215,6 @@ buffer stay intact.  */)
   /* Since we didn’t define EARLY_ABORT, we should never abort
      early.  */
   eassert (! early_abort);
-  SAFE_FREE ();
 
   Fundo_boundary ();
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -3261,8 +3260,10 @@ buffer stay intact.  */)
       --i;
       --j;
     }
+  unbind_to (count, Qnil);
+  SAFE_FREE ();
 
-  return unbind_to (count, Qnil);
+  return Qnil;
 }
 
 static void
