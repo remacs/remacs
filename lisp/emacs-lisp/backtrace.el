@@ -349,39 +349,60 @@ Set it to VALUE unless the button is a `backtrace-ellipsis' button."
           (button-put beg 'skip value))
       (setq beg (next-button beg)))))
 
-(defun backtrace-toggle-print-circle ()
-  "Toggle `print-circle' for the backtrace frame at point."
-  ;; TODO with argument, toggle the whole buffer.
-  (interactive)
-  (backtrace--toggle-feature :print-circle))
+(defun backtrace-toggle-print-circle (&optional all)
+  "Toggle `print-circle' for the backtrace frame at point.
+With prefix argument ALL, toggle the value of :print-circle in
+`backtrace-view', which affects all of the backtrace frames in
+the buffer."
+  (interactive "P")
+  (backtrace--toggle-feature :print-circle all))
 
-(defun backtrace--toggle-feature (feature)
-  "Toggle FEATURE for the backtrace frame at point.
-FEATURE should be one of the options in `backtrace-view'.
-After toggling the feature, reprint the frame and position
-point at the start of the section of the frame it was in
-before."
-  (let ((index (backtrace-get-index))
-        (view (copy-sequence (backtrace-get-view))))
-    (unless index
-      (user-error "Not in a stack frame"))
-    (setq view (plist-put view feature (not (plist-get view feature))))
-    (let ((inhibit-read-only t)
-          (index (backtrace-get-index))
-          (section (backtrace-get-section))
-          (min (backtrace-get-frame-start))
-          (max (backtrace-get-frame-end)))
-      (delete-region min max)
-      (goto-char min)
-      (backtrace-print-frame (nth index backtrace-frames) view)
-      (add-text-properties min (point)
-                           `(backtrace-index ,index backtrace-view ,view))
-      (goto-char min)
-      (when (not (eq section (backtrace-get-section)))
-        (if-let ((pos (text-property-any (backtrace-get-frame-start)
-                                         (backtrace-get-frame-end)
-                                         'backtrace-section section)))
-            (goto-char pos))))))
+(defun backtrace--toggle-feature (feature all)
+  "Toggle FEATURE for the current backtrace frame or for the buffer.
+FEATURE should be one of the options in `backtrace-view'.  If ALL
+is non-nil, toggle FEATURE for all frames in the buffer.  After
+toggling the feature, reprint the affected frame(s).  Afterwards
+position point at the start of the frame it was in before."
+  (if all
+      (let ((index (backtrace-get-index))
+            (pos (point))
+            (at-end (= (point) (point-max)))
+            (value (not (plist-get backtrace-view feature))))
+        (setq backtrace-view (plist-put backtrace-view feature value))
+        (goto-char (point-min))
+        ;; Skip the header.
+        (unless (backtrace-get-index)
+          (goto-char (backtrace-get-frame-end)))
+        (while (< (point) (point-max))
+          (backtrace--set-feature feature value)
+          (goto-char (backtrace-get-frame-end)))
+        (if (not index)
+            (goto-char (if at-end (point-max) pos))
+          (goto-char (point-min))
+          (while (and (not (eql index (backtrace-get-index)))
+                      (< (point) (point-max)))
+            (goto-char (backtrace-get-frame-end)))))
+    (let ((index (backtrace-get-index)))
+      (unless index
+        (user-error "Not in a stack frame"))
+      (backtrace--set-feature feature
+                              (not (plist-get (backtrace-get-view) feature))))))
+
+(defun backtrace--set-feature (feature value)
+  "Set FEATURE in the view plist of the frame at point to VALUE.
+Reprint the frame with the new view plist."
+  (let ((inhibit-read-only t)
+        (view (copy-sequence (backtrace-get-view)))
+        (index (backtrace-get-index))
+        (min (backtrace-get-frame-start))
+        (max (backtrace-get-frame-end)))
+    (setq view (plist-put view feature value))
+    (delete-region min max)
+    (goto-char min)
+    (backtrace-print-frame (nth index backtrace-frames) view)
+    (add-text-properties min (point)
+                         `(backtrace-index ,index backtrace-view ,view))
+    (goto-char min)))
 
 (defun backtrace-expand-ellipsis (button)
   "Expand display of the elided form at BUTTON."
@@ -771,6 +792,8 @@ followed by `backtrace-print-frame', once for each stack frame."
   ;; (set-buffer-multibyte t)
   (setq-local revert-buffer-function #'backtrace-revert)
   (setq-local filter-buffer-substring-function #'backtrace--filter-visible)
+  (setq-local indent-line-function 'lisp-indent-line)
+  (setq-local indent-region-function 'lisp-indent-region)
   (add-hook 'xref-backend-functions #'backtrace--xref-backend nil t))
 
 (put 'backtrace-mode 'mode-class 'special)
