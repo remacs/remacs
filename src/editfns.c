@@ -3147,7 +3147,9 @@ SOURCE can be a buffer or a string that names a buffer.
 Interactively, prompt for SOURCE.
 As far as possible the replacement is non-destructive, i.e. existing
 buffer contents, markers, properties, and overlays in the current
-buffer stay intact.  */)
+buffer stay intact.
+Warning: this function can be slow if there's a large number of small
+differences between the two buffers.  */)
   (Lisp_Object source)
 {
   struct buffer *a = current_buffer;
@@ -3227,11 +3229,16 @@ buffer stay intact.  */)
      walk backwards, we don’t have to keep the positions in sync.  */
   while (i >= 0 || j >= 0)
     {
+      /* Allow the user to quit if this gets too slow.  */
+      maybe_quit ();
+
       /* Check whether there is a change (insertion or deletion)
          before the current position.  */
       if ((i > 0 && bit_is_set (ctx.deletions, i - 1)) ||
           (j > 0 && bit_is_set (ctx.insertions, j - 1)))
 	{
+	  maybe_quit ();
+
           ptrdiff_t end_a = min_a + i;
           ptrdiff_t end_b = min_b + j;
           /* Find the beginning of the current change run.  */
@@ -3305,14 +3312,20 @@ buffer_chars_equal (struct context *ctx,
   eassert (pos_b >= BUF_BEGV (ctx->buffer_b));
   eassert (pos_b < BUF_ZV (ctx->buffer_b));
 
+  bool a_unibyte = BUF_ZV (ctx->buffer_a) == BUF_ZV_BYTE (ctx->buffer_a);
+  bool b_unibyte = BUF_ZV (ctx->buffer_b) == BUF_ZV_BYTE (ctx->buffer_b);
+
+  /* Allow the user to escape out of a slow compareseq call.  */
+  maybe_quit ();
+
   ptrdiff_t bpos_a =
-    NILP (BVAR (ctx->buffer_a, enable_multibyte_characters))
-    ? pos_a
-    : buf_charpos_to_bytepos (ctx->buffer_a, pos_a);
+    a_unibyte ? pos_a : buf_charpos_to_bytepos (ctx->buffer_a, pos_a);
   ptrdiff_t bpos_b =
-    NILP (BVAR (ctx->buffer_b, enable_multibyte_characters))
-    ? pos_b
-    : buf_charpos_to_bytepos (ctx->buffer_b, pos_b);
+    b_unibyte ? pos_b : buf_charpos_to_bytepos (ctx->buffer_b, pos_b);
+
+  if (a_unibyte && b_unibyte)
+    return BUF_FETCH_BYTE (ctx->buffer_a, bpos_a)
+      == BUF_FETCH_BYTE (ctx->buffer_b, bpos_b);
 
   return BUF_FETCH_CHAR_AS_MULTIBYTE (ctx->buffer_a, bpos_a)
     == BUF_FETCH_CHAR_AS_MULTIBYTE (ctx->buffer_b, bpos_b);
