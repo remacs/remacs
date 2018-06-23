@@ -5359,7 +5359,7 @@ Nonexistent directories are removed from spec."
       (tramp-send-command-and-check
        vec
        (format
-	"%s ls --help 2>&1 | grep -iq busybox" (tramp-get-ls-command vec))))
+	"%s --help 2>&1 | grep -iq busybox" (tramp-get-ls-command vec))))
      (tramp-send-command-and-check
       vec (format "%s %s -al /dev/null" (tramp-get-ls-command vec) option))
      option)))
