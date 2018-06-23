@@ -39,7 +39,7 @@
 ;;
 ;;     C-x C-f ~/path/to/document RET
 ;;
-;; and the document will be converted and displayed, if your emacs supports png
+;; and the document will be converted and displayed, if your emacs supports PNG
 ;; images.  With `C-c C-c' you can toggle between the rendered images
 ;; representation and the source text representation of the document.
 ;;
@@ -50,7 +50,7 @@
 ;; `doc-view-clear-cache'.  To open the cache with dired, so that you can tidy
 ;; it out use `doc-view-dired-cache'.
 ;;
-;; When conversion in underway the first page will be displayed as soon as it
+;; When conversion is underway the first page will be displayed as soon as it
 ;; is available and the available pages are refreshed every
 ;; `doc-view-conversion-refresh-interval' seconds.  If that variable is nil the
 ;; pages won't be displayed before conversion of the document finished
