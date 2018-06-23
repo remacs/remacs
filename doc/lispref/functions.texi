@@ -412,10 +412,14 @@ variables that tell you whether an argument was explicitly passed.
 binds @code{a} and @code{b} to the first two actual arguments, which are
 required.  If one or two more arguments are provided, @code{c} and
 @code{d} are bound to them respectively; any arguments after the first
-four are collected into a list and @code{e} is bound to that list.  If
-there are only two arguments, @code{c} is @code{nil}; if two or three
-arguments, @code{d} is @code{nil}; if four arguments or fewer, @code{e}
-is @code{nil}.
+four are collected into a list and @code{e} is bound to that list.
+Thus, if there are only two arguments, @code{c}, @code{d} and @code{e}
+are @code{nil}; if two or three arguments, @code{d} and @code{e} are
+@code{nil}; if four arguments or fewer, @code{e} is @code{nil}.  Note
+that exactly five arguments with an explicit @code{nil} argument
+provided for @code{e} will cause that @code{nil} argument to be passed
+as a list with one element, @code{(nil)}, as with any other single
+value for @code{e}.
 
   There is no way to have required arguments following optional
 ones---it would not make sense.  To see why this must be so, suppose
