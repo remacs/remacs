@@ -474,8 +474,8 @@ built-in sequence types, @code{seq-length} behaves like @code{length}.
 @xref{Definition of length}.
 @end defun
 
-@defun seqp sequence
-  This function returns non-@code{nil} if @var{sequence} is a sequence
+@defun seqp object
+  This function returns non-@code{nil} if @var{object} is a sequence
 (a list or array), or any additional type of sequence defined via
 @file{seq.el} generic functions.
 

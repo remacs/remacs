@@ -466,9 +466,12 @@ rather than relying on `lexical-binding'."
 	(push var sets)
 	(push (cons (car binding)
                     `(lambda (&rest cl-labels-args)
-                       (cl-list* 'funcall ',var
-                                 cl-labels-args)))
+                       (if (eq (car cl-labels-args) cl--labels-magic)
+                           (list cl--labels-magic ',var)
+                         (cl-list* 'funcall ',var cl-labels-args))))
               newenv)))
+    ;; `lexical-let' adds `cl--function-convert' (which calls
+    ;; `cl--labels-convert') as a macroexpander for `function'.
     (macroexpand-all `(lexical-let ,vars (setq ,@sets) ,@body) newenv)))
 
 ;; Generalized variables are provided by gv.el, but some details are

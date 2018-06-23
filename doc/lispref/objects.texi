@@ -109,15 +109,15 @@ not be evaluated later.  @xref{Input Functions}, for a description of
 @node Comments
 @section Comments
 @cindex comments
-@cindex @samp{;} in comment
+@cindex @samp{;} for commenting
 
-  A @dfn{comment} is text that is written in a program only for the sake
-of humans that read the program, and that has no effect on the meaning
-of the program.  In Lisp, a semicolon (@samp{;}) starts a comment if it
-is not within a string or character constant.  The comment continues to
-the end of line.  The Lisp reader discards comments; they do not become
-part of the Lisp objects which represent the program within the Lisp
-system.
+  A @dfn{comment} is text that is written in a program only for the
+sake of humans that read the program, and that has no effect on the
+meaning of the program.  In Lisp, an unescaped semicolon (@samp{;})
+starts a comment if it is not within a string or character constant.
+The comment continues to the end of line.  The Lisp reader discards
+comments; they do not become part of the Lisp objects which represent
+the program within the Lisp system.
 
   The @samp{#@@@var{count}} construct, which skips the next @var{count}
 characters, is useful for program-generated comments containing binary
