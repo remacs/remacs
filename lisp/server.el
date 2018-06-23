@@ -599,7 +599,10 @@ running, ask the user for confirmation first, unless optional
 argument INHIBIT-PROMPT is non-nil.
 
 To force-start a server, do \\[server-force-delete] and then
-\\[server-start]."
+\\[server-start].
+
+To check from a Lisp program whether a server is running, use
+the `server-process' variable."
   (interactive "P")
   (when (or (not server-clients)
 	    ;; Ask the user before deleting existing clients---except
@@ -725,7 +728,11 @@ Return values:
   nil              the server is definitely not running.
   t                the server seems to be running.
   something else   we cannot determine whether it's running without using
-                   commands which may have to wait for a long time."
+                   commands which may have to wait for a long time.
+
+This function can return non-nil if the server was started by some other
+Emacs process.  To check from a Lisp program whether a server was started
+by the current Emacs process, use the `server-process' variable."
   (unless name (setq name server-name))
   (condition-case nil
       (if server-use-tcp
