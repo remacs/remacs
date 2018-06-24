@@ -1402,6 +1402,9 @@ Use `\\[info-lookup-symbol]' to look up documentation of CSS properties, at-rule
 pseudo-classes, and pseudo-elements on the Mozilla Developer
 Network (MDN).
 
+Use `\\[fill-paragraph]' to reformat CSS declaration blocks.  It can also
+be used to fill comments.
+
 \\{css-mode-map}"
   (setq-local font-lock-defaults css-font-lock-defaults)
   (setq-local comment-start "/*")
