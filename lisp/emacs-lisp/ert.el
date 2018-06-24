@@ -2449,8 +2449,7 @@ To be used in the ERT results buffer."
            (backtrace-mode))
          (setq backtrace-insert-header-function
                (lambda () (ert--insert-backtrace-header (ert-test-name test)))
-               backtrace-frames (ert-test-result-with-condition-backtrace result)
-               backtrace-view '(:do-xrefs t))
+               backtrace-frames (ert-test-result-with-condition-backtrace result))
          (backtrace-print)
          (goto-char (point-min)))))))
 

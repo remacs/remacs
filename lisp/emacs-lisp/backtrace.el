@@ -146,7 +146,7 @@ This should be a list of `backtrace-frame' objects.")
 
 (defvar-local backtrace-view nil
   "A plist describing how to render backtrace frames.
-Possible entries are :show-flags, :do-xrefs and :print-circle.")
+Possible entries are :show-flags and :print-circle.")
 
 (defvar-local backtrace-insert-header-function nil
   "Function for inserting a header for the current Backtrace buffer.
@@ -591,14 +591,14 @@ property for use by navigation."
     (insert (if (and (plist-get view :show-flags) flag) "* " "  "))
     (put-text-property beg (point) 'backtrace-section 'func)))
 
-(defun backtrace--print-func-and-args (frame view)
+(defun backtrace--print-func-and-args (frame _view)
   "Print the function, arguments and buffer position of a backtrace FRAME.
 Format it according to VIEW."
   (let* ((beg (point))
          (evald (backtrace-frame-evald frame))
          (fun   (backtrace-frame-fun frame))
          (args  (backtrace-frame-args frame))
-         (fun-file (and (plist-get view :do-xrefs) (symbol-file fun 'defun)))
+         (fun-file (symbol-file fun 'defun))
          (fun-pt (point)))
     (cond
      ((and evald (not debugger-stack-frame-as-list))
@@ -707,15 +707,16 @@ creates a backtrace-mode buffer, should usually do the following:
  - Maybe set `backtrace-insert-header-function' to a function to create
    header text for the buffer.
  - Set `backtrace-frames' (see below).
- - Set `backtrace-view' if desired (see below).
+ - Maybe modify `backtrace-view' (see below).
  - Maybe set `backtrace-print-function'.
 
 A command which creates or switches to a Backtrace mode buffer,
 such as `ert-results-pop-to-backtrace-for-test-at-point', should
 initialize `backtrace-frames' to a list of `backtrace-frame'
 objects (`backtrace-get-frames' is provided for that purpose, if
-desired), and `backtrace-view' to a plist describing how it wants
-the backtrace to appear.  Finally, it should call `backtrace-print'.
+desired), and may optionally modify `backtrace-view', which is a
+plist describing the appearance of the backtrace.  Finally, it
+should call `backtrace-print'.
 
 `backtrace-print' calls `backtrace-insert-header-function'
 followed by `backtrace-print-frame', once for each stack frame."

@@ -335,7 +335,7 @@ That buffer should be current already and in debugger-mode."
                    :debug-on-exit)
           nil))
 
-  (setq backtrace-view '(:do-xrefs t :show-flags t)
+  (setq backtrace-view (plist-put backtrace-view :show-flags t)
         backtrace-insert-header-function (lambda ()
                                            (debugger--insert-header args))
         backtrace-print-function debugger-print-function)

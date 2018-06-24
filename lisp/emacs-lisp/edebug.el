@@ -4007,8 +4007,7 @@ Otherwise call `debug' normally."
     (with-current-buffer edebug-backtrace-buffer
       (unless (derived-mode-p 'backtrace-mode)
         (backtrace-mode))
-      (setq backtrace-frames (edebug--backtrace-frames)
-            backtrace-view '(:do-xrefs t))
+      (setq backtrace-frames (edebug--backtrace-frames))
       (backtrace-print)
       (goto-char (point-min)))))
 
