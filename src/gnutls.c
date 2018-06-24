@@ -1268,18 +1268,16 @@ The return value is a property list with top-level keys :warnings and
     {
       Lisp_Object certs = Qnil;
 
-      /* Return the host certificate in its own element for
-	 compatibility reasons. */
-      result = nconc2 (result, list2
-		       (intern (":certificate"),
-			gnutls_certificate_details (XPROCESS (proc)->gnutls_certificates[0])));
-
       /* Return all the certificates in a list. */
       for (int i = 0; i < XPROCESS (proc)->gnutls_certificates_length; i++)
 	certs = nconc2 (certs, list1 (gnutls_certificate_details
 				      (XPROCESS (proc)->gnutls_certificates[i])));
 
       result = nconc2 (result, list2 (intern (":certificates"), certs));
+
+      /* Return the host certificate in its own element for
+	 compatibility reasons. */
+      result = nconc2 (result, list2 (intern (":certificate"), XCAR (certs)));
     }
 
   state = XPROCESS (proc)->gnutls_state;
