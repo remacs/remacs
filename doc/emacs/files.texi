@@ -773,7 +773,7 @@ visiting a file, Emacs records that the file is @dfn{locked} by you.
 (It does this by creating a specially-named symbolic link@footnote{If
 your file system does not support symbolic links, a regular file is
 used.} with special contents in the same directory.  @xref{File
-Locks,,, elisp} for more details.)  Emacs removes the lock when you
+Locks,,, elisp}, for more details.)  Emacs removes the lock when you
 save the changes.  The idea is that the file is locked whenever an
 Emacs buffer visiting it has unsaved changes.
 
