@@ -819,6 +819,19 @@ gnutls_make_error (int err)
   return make_number (err);
 }
 
+static void
+gnutls_deinit_certificates (struct Lisp_Process *p)
+{
+  if (! p->gnutls_certificates)
+    return;
+
+  for (int i = 0; i < p->gnutls_certificates_length; i++)
+    gnutls_x509_crt_deinit (p->gnutls_certificates[i]);
+
+  xfree (p->gnutls_certificates);
+  p->gnutls_certificates = NULL;
+}
+
 Lisp_Object
 emacs_gnutls_deinit (Lisp_Object proc)
 {
@@ -852,6 +865,9 @@ emacs_gnutls_deinit (Lisp_Object proc)
       if (GNUTLS_INITSTAGE (proc) >= GNUTLS_STAGE_INIT)
 	GNUTLS_INITSTAGE (proc) = GNUTLS_STAGE_INIT - 1;
     }
+
+  if (XPROCESS (proc)->gnutls_certificates)
+    gnutls_deinit_certificates (XPROCESS (proc));
 
   XPROCESS (proc)->gnutls_p = false;
   return Qt;
@@ -1238,9 +1254,9 @@ The return value is a property list with top-level keys :warnings and
 
   /* This could get called in the INIT stage, when the certificate is
      not yet set. */
-  if (XPROCESS (proc)->gnutls_certificate != NULL &&
-      gnutls_x509_crt_check_issuer(XPROCESS (proc)->gnutls_certificate,
-                                   XPROCESS (proc)->gnutls_certificate))
+  if (XPROCESS (proc)->gnutls_certificates != NULL &&
+      gnutls_x509_crt_check_issuer(XPROCESS (proc)->gnutls_certificates[0],
+                                   XPROCESS (proc)->gnutls_certificates[0]))
     warnings = Fcons (intern (":self-signed"), warnings);
 
   if (!NILP (warnings))
@@ -1248,10 +1264,23 @@ The return value is a property list with top-level keys :warnings and
 
   /* This could get called in the INIT stage, when the certificate is
      not yet set. */
-  if (XPROCESS (proc)->gnutls_certificate != NULL)
-    result = nconc2 (result, list2
-                     (intern (":certificate"),
-                      gnutls_certificate_details (XPROCESS (proc)->gnutls_certificate)));
+  if (XPROCESS (proc)->gnutls_certificates != NULL)
+    {
+      Lisp_Object certs = Qnil;
+
+      /* Return the host certificate in its own element for
+	 compatibility reasons. */
+      result = nconc2 (result, list2
+		       (intern (":certificate"),
+			gnutls_certificate_details (XPROCESS (proc)->gnutls_certificates[0])));
+
+      /* Return all the certificates in a list. */
+      for (int i = 0; i < XPROCESS (proc)->gnutls_certificates_length; i++)
+	certs = nconc2 (certs, list1 (gnutls_certificate_details
+				      (XPROCESS (proc)->gnutls_certificates[i])));
+
+      result = nconc2 (result, list2 (intern (":certificates"), certs));
+    }
 
   state = XPROCESS (proc)->gnutls_state;
 
@@ -1394,7 +1423,7 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
   if (ret < GNUTLS_E_SUCCESS)
     return gnutls_make_error (ret);
 
-  XPROCESS (proc)->gnutls_peer_verification = peer_verification;
+  p->gnutls_peer_verification = peer_verification;
 
   warnings = Fplist_get (Fgnutls_peer_status (proc), intern (":warnings"));
   if (!NILP (warnings))
@@ -1431,49 +1460,61 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
      can be easily extended to work with openpgp keys as well.  */
   if (gnutls_certificate_type_get (state) == GNUTLS_CRT_X509)
     {
-      gnutls_x509_crt_t gnutls_verify_cert;
-      const gnutls_datum_t *gnutls_verify_cert_list;
-      unsigned int gnutls_verify_cert_list_size;
+      const gnutls_datum_t *cert_list;
+      unsigned int cert_list_length;
+      int failed_import = 0;
 
-      ret = gnutls_x509_crt_init (&gnutls_verify_cert);
-      if (ret < GNUTLS_E_SUCCESS)
-	return gnutls_make_error (ret);
+      cert_list = gnutls_certificate_get_peers (state, &cert_list_length);
 
-      gnutls_verify_cert_list
-	= gnutls_certificate_get_peers (state, &gnutls_verify_cert_list_size);
-
-      if (gnutls_verify_cert_list == NULL)
+      if (cert_list == NULL)
 	{
-	  gnutls_x509_crt_deinit (gnutls_verify_cert);
 	  emacs_gnutls_deinit (proc);
 	  boot_error (p, "No x509 certificate was found\n");
 	  return Qnil;
 	}
 
-      /* Check only the first certificate in the given chain.  */
-      ret = gnutls_x509_crt_import (gnutls_verify_cert,
-				    &gnutls_verify_cert_list[0],
-				    GNUTLS_X509_FMT_DER);
+      /* Check only the first certificate in the given chain, but
+	 store them all.  */
+      p->gnutls_certificates =
+	xmalloc (cert_list_length * sizeof (gnutls_x509_crt_t));
+      p->gnutls_certificates_length = cert_list_length;
 
-      if (ret < GNUTLS_E_SUCCESS)
+      for (int i = cert_list_length - 1; i >= 0; i--)
 	{
-	  gnutls_x509_crt_deinit (gnutls_verify_cert);
-	  return gnutls_make_error (ret);
+	  gnutls_x509_crt_t cert;
+
+	  gnutls_x509_crt_init (&cert);
+
+	  if (ret < GNUTLS_E_SUCCESS)
+	    failed_import = ret;
+	  else
+	    {
+	      ret = gnutls_x509_crt_import (cert, &cert_list[i],
+					    GNUTLS_X509_FMT_DER);
+
+	      if (ret < GNUTLS_E_SUCCESS)
+		failed_import = ret;
+	    }
+
+	  p->gnutls_certificates[i] = cert;
 	}
 
-      XPROCESS (proc)->gnutls_certificate = gnutls_verify_cert;
+      if (failed_import != 0)
+	{
+	  gnutls_deinit_certificates (p);
+	  p->gnutls_certificates = NULL;
+	  return gnutls_make_error (failed_import);
+	}
 
-      int err = gnutls_x509_crt_check_hostname (gnutls_verify_cert,
+      int err = gnutls_x509_crt_check_hostname (p->gnutls_certificates[0],
 						c_hostname);
       check_memory_full (err);
       if (!err)
 	{
-	  XPROCESS (proc)->gnutls_extra_peer_verification
-	    |= CERTIFICATE_NOT_MATCHING;
+	  p->gnutls_extra_peer_verification |= CERTIFICATE_NOT_MATCHING;
           if (verify_error_all
               || !NILP (Fmember (QChostname, verify_error)))
             {
-	      gnutls_x509_crt_deinit (gnutls_verify_cert);
 	      emacs_gnutls_deinit (proc);
 	      boot_error (p, "The x509 certificate does not match \"%s\"",
 			  c_hostname);
@@ -1486,7 +1527,7 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
     }
 
   /* Set this flag only if the whole initialization succeeded.  */
-  XPROCESS (proc)->gnutls_p = true;
+  p->gnutls_p = true;
 
   return gnutls_make_error (ret);
 }
@@ -1855,7 +1896,8 @@ This function may also return `gnutls-e-again', or
 
   state = XPROCESS (proc)->gnutls_state;
 
-  gnutls_x509_crt_deinit (XPROCESS (proc)->gnutls_certificate);
+  if (XPROCESS (proc)->gnutls_certificates)
+    gnutls_deinit_certificates (XPROCESS (proc));
 
   ret = gnutls_bye (state, NILP (cont) ? GNUTLS_SHUT_RDWR : GNUTLS_SHUT_WR);
 
