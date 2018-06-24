@@ -743,6 +743,11 @@ DEFUN ("foo", Ffoo, Sfoo, 0, UNEVALLED, 0
 @end group
 @end example
 
+If you wish to override a primitive interactive specification, just
+set the @code{interactive-form} property of the primitive function's
+symbol (@pxref{Using Interactive}).  There is no need to edit C code
+and recompile Emacs.
+
 @item doc
 This is the documentation string.  It uses C comment syntax rather
 than C string syntax because comment syntax requires nothing special
