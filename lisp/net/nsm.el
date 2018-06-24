@@ -202,8 +202,8 @@ HOST PORT STATUS OPTIONAL-PARAMETER.")
            ;; Skip the check if the user has already said that this
            ;; host is OK for this type of "error".
            when (and (not (memq type (plist-get settings :conditions)))
-                     (< (nsm-level network-security-level)
-                        (nsm-level (cadr check))))
+                     (>= (nsm-level network-security-level)
+                         (nsm-level (cadr check))))
            do (let ((result
                      (funcall (intern (format "nsm-protocol-check--%s"
                                               (car check))
