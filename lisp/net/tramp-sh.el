@@ -2038,7 +2038,9 @@ file names."
   (unless (memq op '(copy rename))
     (error "Unknown operation `%s', must be `copy' or `rename'" op))
 
-  (if (file-directory-p filename)
+  (if (and
+       (file-directory-p filename)
+       (not (tramp-equal-remote filename newname)))
       (progn
 	(copy-directory filename newname keep-date t)
 	(when (eq op 'rename) (delete-directory filename 'recursive)))
@@ -2187,8 +2189,8 @@ the uid and gid from FILENAME."
 		     (file-attributes filename)))
 	(file-modes (tramp-default-file-modes filename)))
     (with-parsed-tramp-file-name (if t1 filename newname) nil
-      (let* ((cmd (cond ((and (eq op 'copy) preserve-uid-gid) "cp -f -p")
-			((eq op 'copy) "cp -f")
+      (let* ((cmd (cond ((and (eq op 'copy) preserve-uid-gid) "cp -f -r -p")
+			((eq op 'copy) "cp -f -r")
 			((eq op 'rename) "mv -f")
 			(t (tramp-error
 			    v 'file-error
