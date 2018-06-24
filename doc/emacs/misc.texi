@@ -402,6 +402,22 @@ This means that one can't casually read the settings file to see what
 servers the user has connected to.  If this variable is @code{t},
 @acronym{NSM} will also save host names in the
 @code{nsm-settings-file}.
+
+@item network-security-protocol-checks
+@vindex network-security-protocol-checks
+The protocol network checks (mostly for @acronym{TLS} weaknesses) is
+controlled via the @code{network-security-protocol-checks} variable.
+
+It's an alist where the first element is the name of the check,
+the second is the security level where the check kicks in, and the
+optional third element is a parameter supplied to the check.
+
+An element like @code{(rc4 medium)} will result in the function
+@code{nsm-protocol-check--rc4} being called like thus:
+@code{(nsm-protocol-check--rc4 host port status optional-parameter)}.
+The function should return non-@code{nil} if the connection should
+proceed and @code{nil} otherwise.
+
 @end table
 
 

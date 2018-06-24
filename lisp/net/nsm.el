@@ -26,6 +26,7 @@
 
 (require 'cl-lib)
 (require 'rmc)                       ; read-multiple-choice
+(require 'subr-x)
 
 (defvar nsm-permanent-host-settings nil)
 (defvar nsm-temporary-host-settings nil)
@@ -118,12 +119,10 @@ unencrypted."
 	  process))))))
 
 (defun nsm-check-tls-connection (process host port status settings)
-  (let ((process (nsm-check-certificate process host port status settings)))
-    (if (and process
-	     (>= (nsm-level network-security-level) (nsm-level 'high)))
-	;; Do further protocol-level checks if the security is high.
-	(nsm-check-protocol process host port status settings)
-      process)))
+  (when-let ((process
+              (nsm-check-certificate process host port status settings)))
+    ;; Do further protocol-level checks.
+    (nsm-check-protocol process host port status settings)))
 
 (declare-function gnutls-peer-status-warning-describe "gnutls.c"
 		  (status-symbol))
@@ -182,57 +181,79 @@ unencrypted."
 	      nil)
 	  process))))))
 
+(defvar network-security-protocol-checks
+  '((diffie-hellman-prime-bits high 1024)
+    (rc4 high)
+    (signature-sha1 high)
+    (ssl high))
+  "This variable specifies what TLS connection checks to perform.
+It's an alist where the first element is the name of the check,
+the second is the security level where the check kicks in, and the
+optional third element is a parameter supplied to the check.
+
+An element like `(rc4 medium)' will result in the function
+`nsm-protocol-check--rc4' being called with the parameters
+HOST PORT STATUS OPTIONAL-PARAMETER.")
+
 (defun nsm-check-protocol (process host port status settings)
-  (let ((prime-bits (plist-get status :diffie-hellman-prime-bits))
-        (signature-algorithm
-         (plist-get (plist-get status :certificate) :signature-algorithm))
-        (encryption (format "%s-%s-%s"
-			    (plist-get status :key-exchange)
-			    (plist-get status :cipher)
-			    (plist-get status :mac)))
-	(protocol (plist-get status :protocol)))
-    (cond
-     ((and prime-bits
-	   (< prime-bits 1024)
-	   (not (memq :diffie-hellman-prime-bits
-		      (plist-get settings :conditions)))
-	   (not
-	    (nsm-query
-	     host port status :diffie-hellman-prime-bits
-	     "The Diffie-Hellman prime bits (%s) used for this connection to %s:%s is less than what is considered safe (%s)."
-	     prime-bits host port 1024)))
-      (delete-process process)
-      nil)
-     ((and (string-match "\\bRC4\\b" encryption)
-	   (not (memq :rc4 (plist-get settings :conditions)))
-	   (not
-	    (nsm-query
-	     host port status :rc4
-	     "The connection to %s:%s uses the RC4 algorithm (%s), which is believed to be unsafe."
-	     host port encryption)))
-      (delete-process process)
-      nil)
-     ((and (string-match "\\bSHA1\\b" signature-algorithm)
-	   (not (memq :signature-sha1 (plist-get settings :conditions)))
-	   (not
-	    (nsm-query
-	     host port status :signature-sha1
-	     "The certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
-	     host port signature-algorithm)))
-      (delete-process process)
-      nil)
-     ((and protocol
-	   (string-match "SSL" protocol)
-	   (not (memq :ssl (plist-get settings :conditions)))
-	   (not
-	    (nsm-query
-	     host port status :ssl
-	     "The connection to %s:%s uses the %s protocol, which is believed to be unsafe."
-	     host port protocol)))
-      (delete-process process)
-      nil)
-     (t
-      process))))
+  (cl-loop for check in network-security-protocol-checks
+           for type = (intern (format ":%s" (car check)) obarray)
+           while process
+           ;; Skip the check if the user has already said that this
+           ;; host is OK for this type of "error".
+           when (and (not (memq type (plist-get settings :conditions)))
+                     (< (nsm-level network-security-level)
+                        (nsm-level (cadr check))))
+           do (let ((result
+                     (funcall (intern (format "nsm-protocol-check--%s"
+                                              (car check))
+                                      obarray)
+                              host port status (nth 2 check))))
+                (unless result
+                  (delete-process process)
+                  (setq process nil))))
+  ;; If a test failed we return nil, otherwise the process object.
+  process)
+
+(defun nsm--encryption (status)
+  (format "%s-%s-%s"
+          (plist-get status :key-exchange)
+	  (plist-get status :cipher)
+	  (plist-get status :mac)))
+
+(defun nsm-protocol-check--diffie-hellman-prime-bits (host port status bits)
+  (let ((prime-bits (plist-get status :diffie-hellman-prime-bits)))
+    (or (not prime-bits)
+        (>= prime-bits bits)
+	(nsm-query
+	 host port status :diffie-hellman-prime-bits
+	 "The Diffie-Hellman prime bits (%s) used for this connection to %s:%s is less than what is considered safe (%s)."
+	 prime-bits host port bits))))
+
+(defun nsm-protocol-check--rc4 (host port status _)
+  (or (not (string-match "\\bRC4\\b" (nsm--encryption status)))
+      (nsm-query
+       host port status :rc4
+       "The connection to %s:%s uses the RC4 algorithm (%s), which is believed to be unsafe."
+       host port (nsm--encryption status))))
+
+(defun nsm-protocol-check--signature-sha1 (host port status _)
+  (let ((signature-algorithm
+         (plist-get (plist-get status :certificate) :signature-algorithm)))
+    (or (not (string-match "\\bSHA1\\b" signature-algorithm))
+        (nsm-query
+         host port status :signature-sha1
+         "The certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
+         host port signature-algorithm))))
+
+(defun nsm-protocol-check--ssl (host port status _)
+  (let ((protocol (plist-get status :protocol)))
+    (or (not protocol)
+	(not (string-match "SSL" protocol))
+	(nsm-query
+	 host port status :ssl
+	 "The connection to %s:%s uses the %s protocol, which is believed to be unsafe."
+	 host port protocol))))
 
 (defun nsm-fingerprint (status)
   (plist-get (plist-get status :certificate) :public-key-id))
