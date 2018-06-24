@@ -379,8 +379,8 @@ will be made, in addition to the above:
 
 @table @asis
 @item @acronym{3DES} cipther
-The @acronym{RC4} stream cipher is believed by some to be of low
-quality and may allow eavesdropping by third parties.
+The @acronym{3DES} stream cipher provides at most 112 bits of
+effective security, which is considered to be towards the low end.
 
 @item a validated certificate changes the public key
 Servers change their keys occasionally, and that is normally nothing
