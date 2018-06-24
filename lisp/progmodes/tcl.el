@@ -611,6 +611,9 @@ already exist."
   (set (make-local-variable 'add-log-current-defun-function)
        'tcl-add-log-defun)
 
+  (setq-local beginning-of-defun-function #'tcl-beginning-of-defun-function)
+  (setq-local end-of-defun-function #'tcl-end-of-defun-function)
+
   (easy-menu-add tcl-mode-menu)
   ;; Append Tcl menu to popup menu for XEmacs.
   (if (boundp 'mode-popup-menu)
@@ -993,15 +996,49 @@ Returns nil if line starts inside a string, t if in a comment."
 ;; Interfaces to other packages.
 ;;
 
-;; FIXME Definition of function is very ad-hoc.  Should use
-;; beginning-of-defun.  Also has incestuous knowledge about the
-;; format of tcl-proc-regexp.
+(defun tcl-beginning-of-defun-function (&optional arg)
+  "`beginning-of-defun-function' for Tcl mode."
+  (when (or (not arg) (= arg 0))
+    (setq arg 1))
+  (let* ((search-fn (if (> arg 0)
+                        ;; Positive arg means to search backward.
+                        #'re-search-backward
+                      #'re-search-forward))
+         (arg (abs arg))
+         (result t))
+    (while (and (> arg 0) result)
+      (unless (funcall search-fn tcl-proc-regexp nil t)
+        (setq result nil))
+      (setq arg (1- arg)))
+    result))
+
+(defun tcl-end-of-defun-function ()
+  "`end-of-defun-function' for Tcl mode."
+  ;; Because we let users redefine tcl-proc-list, we don't really know
+  ;; too much about the exact arguments passed to the "proc"-defining
+  ;; command.  Instead we just skip words and lists until we see
+  ;; either a ";" or a newline, either of which terminates a command.
+  (skip-syntax-forward "-")
+  (while (and (not (eobp))
+              (not (looking-at-p "[\n;]")))
+    (condition-case nil
+        (forward-sexp)
+      (scan-error
+       (goto-char (point-max))))
+    ;; Note that here we do not want to skip \n.
+    (skip-chars-forward " \t")))
+
 (defun tcl-add-log-defun ()
   "Return name of Tcl function point is in, or nil."
   (save-excursion
-    (end-of-line)
-    (if (re-search-backward (concat tcl-proc-regexp "\\([^ \t\n{]+\\)") nil t)
-	(match-string 2))))
+    (let ((orig-point (point)))
+      (when (beginning-of-defun)
+        ;; Only return the name when in the body of the function.
+        (when (save-excursion
+                (end-of-defun)
+                (>= (point) orig-point))
+          (when (looking-at (concat tcl-proc-regexp "\\([^ \t\n{]+\\)"))
+            (match-string 2)))))))
 
 (defun tcl-outline-level ()
   (save-excursion
