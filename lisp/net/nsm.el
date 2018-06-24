@@ -182,10 +182,12 @@ unencrypted."
 	  process))))))
 
 (defvar network-security-protocol-checks
-  '((diffie-hellman-prime-bits high 1024)
-    (rc4 high)
-    (signature-sha1 high)
-    (ssl high))
+  '((diffie-hellman-prime-bits medium 1024)
+    (rc4 medium)
+    (signature-sha1 medium)
+    (intermediary-sha1 medium)
+    (3des high)
+    (ssl medium))
   "This variable specifies what TLS connection checks to perform.
 It's an alist where the first element is the name of the check,
 the second is the security level where the check kicks in, and the
@@ -230,6 +232,13 @@ HOST PORT STATUS OPTIONAL-PARAMETER.")
 	 "The Diffie-Hellman prime bits (%s) used for this connection to %s:%s is less than what is considered safe (%s)."
 	 prime-bits host port bits))))
 
+(defun nsm-protocol-check--3des (host port status _)
+  (or (not (string-match "\\b3DES\\b" (plist-get status :cipher)))
+      (nsm-query
+       host port status :rc4
+       "The connection to %s:%s uses the 3DES cipher (%s), which is believed to be unsafe."
+       host port (plist-get status :cipher))))
+
 (defun nsm-protocol-check--rc4 (host port status _)
   (or (not (string-match "\\bRC4\\b" (nsm--encryption status)))
       (nsm-query
@@ -245,6 +254,21 @@ HOST PORT STATUS OPTIONAL-PARAMETER.")
          host port status :signature-sha1
          "The certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
          host port signature-algorithm))))
+
+(defun nsm-protocol-check--intermediary-sha1 (host port status _)
+  ;; We want to check all intermediary certificates, so we skip the
+  ;; first, reverse the list and then skip the first again, so we miss
+  ;; the first and final certificates in the chain.
+  (cl-loop for certificate in (cdr (reverse
+                                    (cdr (plist-get status :certificates))))
+           for algo = (plist-get certificate :signature-algorithm)
+           when (and (string-match "\\bSHA1\\b" algo)
+                     (not (nsm-query
+                           host port status :signature-sha1
+                           "An intermediary certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
+                           host port algo)))
+           do (cl-return nil)
+           finally (cl-return t)))
 
 (defun nsm-protocol-check--ssl (host port status _)
   (let ((protocol (plist-get status :protocol)))

@@ -136,6 +136,10 @@ of what checks to run via the `network-security-protocol-checks'
 variable.
 
 +++
+** Most of the checks for outdated, believed-to-be-weak TLS algorithms
+and ciphers are now switched on by default.
+
++++
 ** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.
 It blocks line breaking after a one-letter word, also in the case when
 this word is preceded by a non-space, but non-alphanumeric character.
