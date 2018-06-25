@@ -1500,7 +1500,6 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
       if (failed_import != 0)
 	{
 	  gnutls_deinit_certificates (p);
-	  p->gnutls_certificates = NULL;
 	  return gnutls_make_error (failed_import);
 	}
 
