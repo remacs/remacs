@@ -922,18 +922,23 @@ Functions}).  Thus, strings are enclosed in @samp{"} characters, and
 @item %o
 @cindex integer to octal
 Replace the specification with the base-eight representation of an
-unsigned integer.
+unsigned integer.  The object can also be a nonnegative floating-point
+number that is formatted as an integer, dropping any fraction, if the
+integer does not exceed machine limits.
 
 @item %d
 Replace the specification with the base-ten representation of a signed
-integer.
+integer.  The object can also be a floating-point number that is
+formatted as an integer, dropping any fraction.
 
 @item %x
 @itemx %X
 @cindex integer to hexadecimal
 Replace the specification with the base-sixteen representation of an
 unsigned integer.  @samp{%x} uses lower case and @samp{%X} uses upper
-case.
+case.  The object can also be a nonnegative floating-point number that
+is formatted as an integer, dropping any fraction, if the integer does
+not exceed machine limits.
 
 @item %c
 Replace the specification with the character which is the value given.

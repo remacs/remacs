@@ -3425,8 +3425,11 @@ extern Lisp_Object string_make_unibyte (Lisp_Object);
 extern void syms_of_fns (void);
 
 /* Defined in floatfns.c.  */
-extern void syms_of_floatfns (void);
+#ifndef HAVE_TRUNC
+extern double trunc (double);
+#endif
 extern Lisp_Object fmod_float (Lisp_Object x, Lisp_Object y);
+extern void syms_of_floatfns (void);
 
 /* Defined in fringe.c.  */
 extern void syms_of_fringe (void);

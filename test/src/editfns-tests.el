@@ -176,6 +176,14 @@
   (should-error (format "%o" -1e-37)
                 :type 'overflow-error))
 
+;; Bug#31938
+(ert-deftest format-%d-float ()
+  (should (string-equal (format "%d" -1.1) "-1"))
+  (should (string-equal (format "%d" -0.9) "0"))
+  (should (string-equal (format "%d" -0.0) "0"))
+  (should (string-equal (format "%d" 0.0) "0"))
+  (should (string-equal (format "%d" 0.9) "0"))
+  (should (string-equal (format "%d" 1.1) "1")))
 
 ;;; Check format-time-string with various TZ settings.
 ;;; Use only POSIX-compatible TZ values, since the tests should work

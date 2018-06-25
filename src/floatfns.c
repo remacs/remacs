@@ -435,11 +435,9 @@ emacs_rint (double d)
 }
 #endif
 
-#ifdef HAVE_TRUNC
-#define emacs_trunc trunc
-#else
-static double
-emacs_trunc (double d)
+#ifndef HAVE_TRUNC
+double
+trunc (double d)
 {
   return (d < 0 ? ceil : floor) (d);
 }
@@ -482,8 +480,7 @@ Rounds ARG toward zero.
 With optional DIVISOR, truncate ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, emacs_trunc, truncate2,
-			  "truncate");
+  return rounding_driver (arg, divisor, trunc, truncate2, "truncate");
 }
 
 
@@ -543,7 +540,7 @@ DEFUN ("ftruncate", Fftruncate, Sftruncate, 1, 1, 0,
 {
   CHECK_FLOAT (arg);
   double d = XFLOAT_DATA (arg);
-  d = emacs_trunc (d);
+  d = trunc (d);
   return make_float (d);
 }
 

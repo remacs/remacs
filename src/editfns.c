@@ -47,6 +47,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <errno.h>
 #include <float.h>
 #include <limits.h>
+#include <math.h>
 
 #ifdef HAVE_TIMEZONE_T
 # include <sys/param.h>
@@ -4671,6 +4672,12 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		    {
 		      strcpy (f - pMlen - 1, "f");
 		      double x = XFLOAT_DATA (arg);
+
+		      /* Truncate and then convert -0 to 0, to be more
+			 consistent with %x etc.; see Bug#31938.  */
+		      x = trunc (x);
+		      x = x ? x : 0;
+
 		      sprintf_bytes = sprintf (sprintf_buf, convspec, 0, x);
 		      char c0 = sprintf_buf[0];
 		      bool signedp = ! ('0' <= c0 && c0 <= '9');
