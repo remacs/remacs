@@ -651,7 +651,11 @@ Format it according to VIEW."
          (evald (backtrace-frame-evald frame))
          (fun   (backtrace-frame-fun frame))
          (args  (backtrace-frame-args frame))
-         (fun-file (symbol-file fun 'defun))
+         (def   (and (symbolp fun) (fboundp fun) (symbol-function fun)))
+         (fun-file (or (symbol-file fun 'defun)
+                            (and (subrp def)
+                                 (not (eq 'unevalled (cdr (subr-arity def))))
+                                 (find-lisp-object-file-name fun def))))
          (fun-pt (point)))
     (cond
      ((and evald (not debugger-stack-frame-as-list))
