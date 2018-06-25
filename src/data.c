@@ -3311,8 +3311,8 @@ pre_value (bool precondition, int value)
   return precondition ? value : 0;
 }
 
-/* Compute the number of trailing zero bits in VAL.  VAL must not be zero.  */
-
+/* Compute the number of trailing zero bits in val.  If val is zero,
+   return the number of bits in val.  */
 static int
 count_trailing_zero_bits (bits_word val)
 {
