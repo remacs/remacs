@@ -256,13 +256,14 @@ HOST PORT STATUS OPTIONAL-PARAMETER.")
          host port signature-algorithm))))
 
 (defun nsm-protocol-check--intermediary-sha1 (host port status _)
-  ;; We want to check all intermediary certificates, so we skip the
-  ;; first, reverse the list and then skip the first again, so we miss
-  ;; the first and final certificates in the chain.
-  (cl-loop for certificate in (cdr (reverse
-                                    (cdr (plist-get status :certificates))))
+  ;; Skip the first certificate, because that's the host certificate.
+  (cl-loop for certificate in (cdr (plist-get status :certificates))
            for algo = (plist-get certificate :signature-algorithm)
-           when (and (string-match "\\bSHA1\\b" algo)
+           ;; Don't check root certificates -- SHA1 isn't dangerous
+           ;; there.
+           when (and (not (equal (plist-get certificate :issuer)
+                                 (plist-get certificate :subject)))
+                     (string-match "\\bSHA1\\b" algo)
                      (not (nsm-query
                            host port status :signature-sha1
                            "An intermediary certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
