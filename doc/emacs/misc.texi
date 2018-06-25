@@ -378,7 +378,7 @@ If @code{network-security-level} is @code{high}, the following checks
 will be made, in addition to the above:
 
 @table @asis
-@item @acronym{3DES} cipther
+@item @acronym{3DES} cipher
 The @acronym{3DES} stream cipher provides at most 112 bits of
 effective security, which is considered to be towards the low end.
 
