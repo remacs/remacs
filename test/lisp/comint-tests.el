@@ -36,6 +36,7 @@
     "Enter same passphrase again: "     ; ssh-keygen
     "Passphrase for key root@GNU.ORG: " ; plink
     "[sudo] password for user:" ; Ubuntu sudo
+    "[sudo] user 的密码：" ; localized
     "Password (again):"
     "Enter password:"
     "Mot de Passe :" ; localized (Bug#29729)
