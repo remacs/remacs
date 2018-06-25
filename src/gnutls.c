@@ -1277,7 +1277,7 @@ The return value is a property list with top-level keys :warnings and
 
       /* Return the host certificate in its own element for
 	 compatibility reasons. */
-      result = nconc2 (result, list2 (intern (":certificate"), XCAR (certs)));
+      result = nconc2 (result, list2 (intern (":certificate"), Fcar (certs)));
     }
 
   state = XPROCESS (proc)->gnutls_state;
