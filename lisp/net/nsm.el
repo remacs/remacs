@@ -185,7 +185,7 @@ unencrypted."
   '((diffie-hellman-prime-bits medium 1024)
     (rc4 medium)
     (signature-sha1 medium)
-    (intermediary-sha1 medium)
+    (intermediate-sha1 medium)
     (3des high)
     (ssl medium))
   "This variable specifies what TLS connection checks to perform.
@@ -255,7 +255,7 @@ HOST PORT STATUS OPTIONAL-PARAMETER.")
          "The certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
          host port signature-algorithm))))
 
-(defun nsm-protocol-check--intermediary-sha1 (host port status _)
+(defun nsm-protocol-check--intermediate-sha1 (host port status _)
   ;; Skip the first certificate, because that's the host certificate.
   (cl-loop for certificate in (cdr (plist-get status :certificates))
            for algo = (plist-get certificate :signature-algorithm)
@@ -266,7 +266,7 @@ HOST PORT STATUS OPTIONAL-PARAMETER.")
                      (string-match "\\bSHA1\\b" algo)
                      (not (nsm-query
                            host port status :signature-sha1
-                           "An intermediary certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
+                           "An intermediate certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
                            host port algo)))
            do (cl-return nil)
            finally (cl-return t)))

@@ -361,8 +361,8 @@ third parties.  If this number is too low, you will be warned.
 The @acronym{RC4} stream cipher is believed to be of low quality and
 may allow eavesdropping by third parties.
 
-@item @acronym{SHA1} in the host certificate or in intermediary certificates
-It is believed that if an intermediary certificate uses
+@item @acronym{SHA1} in the host certificate or in intermediate certificates
+It is believed that if an intermediate certificate uses
 the @acronym{SHA1} hashing algorithm, then third parties can issue
 certificates pretending to be that issuing instance.  These
 connections are therefore vulnerable to man-in-the-middle attacks.
