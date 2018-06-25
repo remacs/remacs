@@ -4,7 +4,7 @@
 @set VERSION 1.0
 @set UPDATED June 2018
 @settitle GNU Flymake @value{VERSION}
-@include docstyle.texi
+@include ../emacs/docstyle.texi
 @syncodeindex pg cp
 @syncodeindex vr cp
 @syncodeindex fn cp
@@ -99,9 +99,15 @@ some changes were made to the buffer more than @code{0.5} seconds ago
 Syntax check can also be started manually by typing the @kbd{M-x
 flymake-start @key{RET}} command.
 
+If the check detected errors or warnings, the respective buffer
+regions are highlighted.  You can place point on those regions and use
+@kbd{C-h .}  (@code{display-local-help}) to see what the specific
+problem was.  Alternatively, hovering the mouse on those regions
+should also display a tool-tip with the same information.
+
 @code{flymake-goto-next-error} and @code{flymake-goto-prev-error} are
 commands that allow easy navigation to the next/previous erroneous
-line, respectively.  If might be a good idea to map them to @kbd{M-n}
+regions, respectively.  If might be a good idea to map them to @kbd{M-n}
 and @kbd{M-p} in @code{flymake-mode}, by adding to your init file:
 
 @lisp
