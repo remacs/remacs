@@ -2189,8 +2189,8 @@ the uid and gid from FILENAME."
 		     (file-attributes filename)))
 	(file-modes (tramp-default-file-modes filename)))
     (with-parsed-tramp-file-name (if t1 filename newname) nil
-      (let* ((cmd (cond ((and (eq op 'copy) preserve-uid-gid) "cp -f -r -p")
-			((eq op 'copy) "cp -f -r")
+      (let* ((cmd (cond ((and (eq op 'copy) preserve-uid-gid) "cp -f -p")
+			((eq op 'copy) "cp -f")
 			((eq op 'rename) "mv -f")
 			(t (tramp-error
 			    v 'file-error
@@ -2200,6 +2200,8 @@ the uid and gid from FILENAME."
 	     (localname2 (if t2 (file-remote-p newname 'localname) newname))
 	     (prefix (file-remote-p (if t1 filename newname)))
              cmd-result)
+	(when (and (eq op 'copy) (file-directory-p filename))
+	  (setq cmd (concat cmd " -R")))
 
 	(cond
 	 ;; Both files are on a remote host, with same user.
