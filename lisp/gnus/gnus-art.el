@@ -4388,8 +4388,6 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 ;;; Gnus article mode
 ;;;
 
-(put 'gnus-article-mode 'mode-class 'special)
-
 (set-keymap-parent gnus-article-mode-map widget-keymap)
 
 (gnus-define-keys gnus-article-mode-map
@@ -4467,9 +4465,8 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 (defvar bookmark-make-record-function)
 (defvar shr-put-image-function)
 
-(define-derived-mode gnus-article-mode fundamental-mode "Article"
+(define-derived-mode gnus-article-mode gnus-mode "Article"
   "Major mode for displaying an article.
-
 All normal editing commands are switched off.
 
 The following commands are available in addition to all summary mode
@@ -4510,8 +4507,7 @@ commands:
     (setq cursor-in-non-selected-windows nil))
   (gnus-set-default-directory)
   (buffer-disable-undo)
-  (setq buffer-read-only t
-	show-trailing-whitespace nil)
+  (setq show-trailing-whitespace nil)
   (mm-enable-multibyte))
 
 (defun gnus-article-setup-buffer ()

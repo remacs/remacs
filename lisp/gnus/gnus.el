@@ -637,6 +637,12 @@ be set in `.emacs' instead."
   "Face used for low interest read articles."
   :group 'gnus-summary)
 
+;;; Base gnus-mode
+
+(define-derived-mode gnus-mode special-mode nil
+  "Base mode from which all other gnus modes derive.
+This does nothing but derive from `special-mode', and should not
+be used directly.")
 
 ;;;
 ;;; Gnus buffers

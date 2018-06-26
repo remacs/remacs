@@ -36,11 +36,6 @@
 
 (autoload 'gnus-group-make-nnir-group "nnir")
 
-(defcustom gnus-server-mode-hook nil
-  "Hook run in `gnus-server-mode' buffers."
-  :group 'gnus-server
-  :type 'hook)
-
 (defcustom gnus-server-exit-hook nil
   "Hook run when exiting the server buffer."
   :group 'gnus-server
@@ -108,7 +103,7 @@ If nil, a faster, but more primitive, buffer is used instead."
 (defvar gnus-server-mode-line-format-spec nil)
 (defvar gnus-server-killed-servers nil)
 
-(defvar gnus-server-mode-map)
+(defvar gnus-server-mode-map nil)
 
 (defcustom gnus-server-menu-hook nil
   "Hook run after the creation of the server mode menu."
@@ -150,11 +145,8 @@ If nil, a faster, but more primitive, buffer is used instead."
 
     (gnus-run-hooks 'gnus-server-menu-hook)))
 
-(defvar gnus-server-mode-map nil)
-(put 'gnus-server-mode 'mode-class 'special)
-
 (unless gnus-server-mode-map
-  (setq gnus-server-mode-map (make-sparse-keymap))
+  (setq gnus-server-mode-map (make-keymap))
   (suppress-keymap gnus-server-mode-map)
 
   (gnus-define-keys gnus-server-mode-map
@@ -253,9 +245,8 @@ If nil, a faster, but more primitive, buffer is used instead."
     ("(\\(offline\\))" 1 'gnus-server-offline)
     ("(\\(denied\\))" 1 'gnus-server-denied)))
 
-(defun gnus-server-mode ()
+(define-derived-mode gnus-server-mode gnus-mode "Server"
   "Major mode for listing and editing servers.
-
 All normal editing commands are switched off.
 \\<gnus-server-mode-map>
 For more in-depth information on this mode, read the manual
@@ -264,23 +255,16 @@ For more in-depth information on this mode, read the manual
 The following commands are available:
 
 \\{gnus-server-mode-map}"
-  ;; FIXME: Use define-derived-mode.
-  (interactive)
   (when (gnus-visual-p 'server-menu 'menu)
     (gnus-server-make-menu-bar))
-  (kill-all-local-variables)
   (gnus-simplify-mode-line)
-  (setq major-mode 'gnus-server-mode)
-  (setq mode-name "Server")
   (gnus-set-default-directory)
   (setq mode-line-process nil)
-  (use-local-map gnus-server-mode-map)
   (buffer-disable-undo)
   (setq truncate-lines t)
-  (setq buffer-read-only t)
   (set (make-local-variable 'font-lock-defaults)
-       '(gnus-server-font-lock-keywords t))
-  (gnus-run-mode-hooks 'gnus-server-mode-hook))
+       '(gnus-server-font-lock-keywords t)))
+
 
 (defun gnus-server-insert-server-line (name method)
   (let* ((gnus-tmp-name name)
@@ -320,20 +304,14 @@ The following commands are available:
 
 (defun gnus-enter-server-buffer ()
   "Set up the server buffer."
-  (gnus-server-setup-buffer)
   (gnus-configure-windows 'server)
   ;; Usually `gnus-configure-windows' will finish with the
   ;; `gnus-server-buffer' selected as the current buffer, but not always (I
   ;; bumped into it when starting from a dedicated *Group* frame, and
   ;; gnus-configure-windows opened *Server* into its own dedicated frame).
-  (with-current-buffer (get-buffer gnus-server-buffer)
+  (with-current-buffer (get-buffer-create gnus-server-buffer)
+    (gnus-server-mode)
     (gnus-server-prepare)))
-
-(defun gnus-server-setup-buffer ()
-  "Initialize the server buffer."
-  (unless (get-buffer gnus-server-buffer)
-    (with-current-buffer (gnus-get-buffer-create gnus-server-buffer)
-      (gnus-server-mode))))
 
 (defun gnus-server-prepare ()
   (gnus-set-format 'server-mode)
@@ -717,9 +695,7 @@ claim them."
 		function
 		(repeat function)))
 
-(defvar gnus-browse-mode-hook nil)
 (defvar gnus-browse-mode-map nil)
-(put 'gnus-browse-mode 'mode-class 'special)
 
 (unless gnus-browse-mode-map
   (setq gnus-browse-mode-map (make-keymap))
@@ -897,9 +873,8 @@ claim them."
       (gnus-message 5 "Connecting to %s...done" (nth 1 method))
       t))))
 
-(define-derived-mode gnus-browse-mode fundamental-mode "Browse Server"
+(define-derived-mode gnus-browse-mode gnus-mode "Browse Server"
   "Major mode for browsing a foreign server.
-
 All normal editing commands are switched off.
 
 \\<gnus-browse-mode-map>
@@ -918,8 +893,7 @@ buffer.
   (setq mode-line-process nil)
   (buffer-disable-undo)
   (setq truncate-lines t)
-  (gnus-set-default-directory)
-  (setq buffer-read-only t))
+  (gnus-set-default-directory))
 
 (defun gnus-browse-read-group (&optional no-article number)
   "Enter the group at the current line.

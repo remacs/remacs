@@ -2575,9 +2575,6 @@ modified) original contents, they are first saved to their own file."
 ;;; Agent Category Mode
 ;;;
 
-(defvar gnus-category-mode-hook nil
-  "Hook run in `gnus-category-mode' buffers.")
-
 (defvar gnus-category-line-format "     %(%20c%): %g\n"
   "Format of category lines.
 
@@ -2613,7 +2610,6 @@ General format specifiers can also be used.  See Info node
 (defvar gnus-category-mode-line-format-spec nil)
 
 (defvar gnus-category-mode-map nil)
-(put 'gnus-category-mode 'mode-class 'special)
 
 (unless gnus-category-mode-map
   (setq gnus-category-mode-map (make-sparse-keymap))
@@ -2655,9 +2651,8 @@ General format specifiers can also be used.  See Info node
 
     (gnus-run-hooks 'gnus-category-menu-hook)))
 
-(define-derived-mode gnus-category-mode fundamental-mode "Category"
+(define-derived-mode gnus-category-mode gnus-mode "Category"
   "Major mode for listing and editing agent categories.
-
 All normal editing commands are switched off.
 \\<gnus-category-mode-map>
 For more in-depth information on this mode, read the manual
@@ -2672,8 +2667,7 @@ The following commands are available:
   (gnus-set-default-directory)
   (setq mode-line-process nil)
   (buffer-disable-undo)
-  (setq truncate-lines t)
-  (setq buffer-read-only t))
+  (setq truncate-lines t))
 
 (defalias 'gnus-category-position-point 'gnus-goto-colon)
 

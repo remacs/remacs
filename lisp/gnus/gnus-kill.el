@@ -29,11 +29,6 @@
 (require 'gnus-art)
 (require 'gnus-range)
 
-(defcustom gnus-kill-file-mode-hook nil
-  "Hook for Gnus kill file mode."
-  :group 'gnus-score-kill
-  :type 'hook)
-
 (defcustom gnus-kill-expiry-days 7
   "Number of days before expiring unused kill file entries."
   :group 'gnus-score-kill

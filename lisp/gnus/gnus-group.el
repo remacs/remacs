@@ -567,8 +567,6 @@ simple manner."
 ;;; Gnus group mode
 ;;;
 
-(put 'gnus-group-mode 'mode-class 'special)
-
 (gnus-define-keys gnus-group-mode-map
   " " gnus-group-read-group
   "=" gnus-group-select-group
@@ -1106,9 +1104,8 @@ When FORCE, rebuild the tool bar."
 	  (set (make-local-variable 'tool-bar-map) map))))
   gnus-group-tool-bar-map)
 
-(define-derived-mode gnus-group-mode fundamental-mode "Group"
+(define-derived-mode gnus-group-mode gnus-mode "Group"
   "Major mode for reading news.
-
 All normal editing commands are switched off.
 \\<gnus-group-mode-map>
 The group buffer lists (some of) the groups available.  For instance,
@@ -1131,8 +1128,7 @@ The following commands are available:
   (setq mode-line-process nil)
   (buffer-disable-undo)
   (setq truncate-lines t)
-  (setq buffer-read-only t
-	show-trailing-whitespace nil)
+  (setq show-trailing-whitespace nil)
   (gnus-set-default-directory)
   (gnus-update-format-specifications nil 'group 'group-mode)
   (gnus-update-group-mark-positions)

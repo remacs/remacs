@@ -396,11 +396,6 @@ Two predefined functions are available:
 		(function :tag "Other" nil))
   :group 'gnus-summary-tree)
 
-(defcustom gnus-tree-mode-hook nil
-  "Hook run in tree mode buffers."
-  :type 'hook
-  :group 'gnus-summary-tree)
-
 ;;; Internal variables.
 
 (defvar gnus-tmp-name)
@@ -445,8 +440,6 @@ Two predefined functions are available:
      'undefined 'gnus-tree-read-summary-keys map)
     map))
 
-(put 'gnus-tree-mode 'mode-class 'special)
-
 (defun gnus-tree-make-menu-bar ()
   (unless (boundp 'gnus-tree-menu)
     (easy-menu-define
@@ -454,7 +447,7 @@ Two predefined functions are available:
       '("Tree"
 	["Select article" gnus-tree-select-article t]))))
 
-(define-derived-mode gnus-tree-mode fundamental-mode "Tree"
+(define-derived-mode gnus-tree-mode gnus-mode "Tree"
   "Major mode for displaying thread trees."
   (gnus-set-format 'tree-mode)
   (gnus-set-format 'tree t)
