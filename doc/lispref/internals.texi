@@ -724,7 +724,8 @@ less than 8.
 @cindex interactive specification in primitives
 @item interactive
 This is an interactive specification, a string such as might be used
-as the argument of @code{interactive} in a Lisp function.  In the case
+as the argument of @code{interactive} in a Lisp function
+(@pxref{Using Interactive}).  In the case
 of @code{or}, it is 0 (a null pointer), indicating that @code{or}
 cannot be called interactively.  A value of @code{""} indicates a
 function that should receive no arguments when called interactively.

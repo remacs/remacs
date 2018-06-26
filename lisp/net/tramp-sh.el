@@ -2037,7 +2037,9 @@ file names."
   (unless (memq op '(copy rename))
     (error "Unknown operation `%s', must be `copy' or `rename'" op))
 
-  (if (file-directory-p filename)
+  (if (and
+       (file-directory-p filename)
+       (not (tramp-equal-remote filename newname)))
       (progn
 	(copy-directory filename newname keep-date t)
 	(when (eq op 'rename) (delete-directory filename 'recursive)))
@@ -2200,6 +2202,8 @@ the uid and gid from FILENAME."
 	     (localname2 (if t2 (file-remote-p newname 'localname) newname))
 	     (prefix (file-remote-p (if t1 filename newname)))
              cmd-result)
+	(when (and (eq op 'copy) (file-directory-p filename))
+	  (setq cmd (concat cmd " -R")))
 
 	(cond
 	 ;; Both files are on a remote host, with same user.
