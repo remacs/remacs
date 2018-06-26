@@ -1220,12 +1220,6 @@ calling 'eldoc-message' directly.
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
 longer defaults to 'buffer-file-name'.
 
----
-** 'eldoc-message' only accepts one argument now.  Programs that
-called it with multiple arguments before should pass them through
-'format' first.  Even that is discouraged: for ElDoc support, you
-should set 'eldoc-documentation-function' instead of calling
-'eldoc-message' directly.
 
 * Lisp Changes in Emacs 26.1
 

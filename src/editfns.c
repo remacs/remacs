@@ -75,11 +75,6 @@ static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
-void
-find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
-	    Lisp_Object beg_limit,
-	    ptrdiff_t *beg, Lisp_Object end_limit, ptrdiff_t *end);
-
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
 #endif
