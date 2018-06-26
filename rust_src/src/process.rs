@@ -3,12 +3,13 @@ use libc;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
-use remacs_sys::{current_thread, get_process as cget_process, pget_kill_without_query, pget_pid,
-                 pget_process_inherit_coding_system_flag, pget_raw_status_new,
-                 pset_kill_without_query, pset_sentinel, send_process,
+use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, get_process as cget_process,
+                 pget_kill_without_query, pget_pid, pget_process_inherit_coding_system_flag,
+                 pget_raw_status_new, pset_kill_without_query, send_process,
                  setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
-use remacs_sys::{QCbuffer, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_process_sentinel,
-                 Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial, Qstop};
+use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
+                 Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
+                 Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial, Qstop, Qt};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -65,23 +66,28 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn ptype(self) -> LispObject {
+        self.type_
+    }
+
+    #[inline]
     fn raw_status_new(&self) -> bool {
         unsafe { pget_raw_status_new(self.as_ptr()) }
     }
 
     #[inline]
     fn set_plist(&mut self, plist: LispObject) {
-        self.plist = plist.to_raw();
+        self.plist = plist;
     }
 
     #[inline]
     fn set_buffer(&mut self, buffer: LispObject) {
-        self.buffer = buffer.to_raw();
+        self.buffer = buffer;
     }
 
     #[inline]
     fn set_childp(&mut self, childp: LispObject) {
-        self.childp = childp.to_raw();
+        self.childp = childp;
     }
 }
 
@@ -242,17 +248,17 @@ pub fn process_status(process: LispObject) -> LispObject {
     if p.is_nil() {
         return p;
     }
-    let mut p_ref = p.as_process_or_error();
-    if p_ref.raw_status_new() {
-        unsafe { update_status(p_ref.as_mut()) };
+    let mut process = p.as_process_or_error();
+    if process.raw_status_new() {
+        unsafe { update_status(process.as_mut()) };
     }
-    let mut status = p_ref.status;
+    let mut status = process.status;
     if let Some(c) = status.as_cons() {
         status = c.car();
     };
-    let process_type = p_ref.type_;
+    let process_type = process.ptype();
     if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
-        let process_command = p_ref.command;
+        let process_command = process.command;
         if status.eq(Qexit) {
             status = Qclosed;
         } else if process_command.eq(LispObject::constant_t()) {
@@ -273,35 +279,103 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
         buffer.as_buffer_or_error();
     }
     p_ref.set_buffer(buffer);
-    let process_type = p_ref.type_;
-    if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
-        let childp = p_ref.childp;
-        p_ref.set_childp(plist_put(childp, QCbuffer, buffer));
-    }
-    unsafe { setup_process_coding_systems(process.to_raw()) };
-    buffer
-}
-
-/// Give PROCESS the sentinel SENTINEL; nil for default.
-/// The sentinel is called as a function when the process changes state.
-/// It gets two arguments: the process, and a string describing the change.
-#[lisp_fn]
-pub fn set_process_sentinel(process: LispObject, mut sentinel: LispObject) -> LispObject {
-    let mut p_ref = process.as_process_or_error();
-    if sentinel.is_nil() {
-        sentinel = Qinternal_default_process_sentinel;
-    }
-    unsafe { pset_sentinel(p_ref.as_mut(), sentinel) }
-    let process_type = p_ref.type_;
+    let process_type = p_ref.ptype();
     let netconn1_p = process_type.eq(Qnetwork);
     let serialconn1_p = process_type.eq(Qserial);
     let pipeconn1_p = process_type.eq(Qpipe);
 
     if netconn1_p || serialconn1_p || pipeconn1_p {
         let childp = p_ref.childp;
-        p_ref.set_childp(plist_put(childp, QCsentinel, sentinel));
+        p_ref.set_childp(plist_put(childp, QCbuffer, buffer));
+    }
+    unsafe { setup_process_coding_systems(process) };
+    buffer
+}
+
+/// Give PROCESS the filter function FILTER; nil means default.
+/// A value of t means stop accepting output from the process.
+///
+/// When a process has a non-default filter, its buffer is not used for output.
+/// Instead, each time it does output, the entire string of output is
+/// qpassed to the filter.
+///
+/// The filter gets two arguments: the process and the string of output.
+/// The string argument is normally a multibyte string, except:
+/// - if the process's input coding system is no-conversion or raw-text,
+///   it is a unibyte string (the non-converted input), or else
+/// - if `default-enable-multibyte-characters' is nil, it is a unibyte
+///   string (the result of converting the decoded input multibyte
+///   string to unibyte with `string-make-unibyte').
+#[lisp_fn]
+pub fn set_process_filter(process: LispObject, filter: LispObject) -> LispObject {
+    let mut p_ref = process.as_process_or_error();
+
+    // Don't signal an error if the process's input file descriptor
+    // is closed.  This could make debugging Lisp more difficult,
+    // for example when doing something like
+    //
+    // (setq process (start-process ...))
+    // (debug)
+    // (set-process-filter process ...)
+    pset_filter(p_ref, filter);
+    set_process_filter_masks(p_ref);
+
+    let process_type = p_ref.ptype();
+    let netconn1_p = process_type.eq(Qnetwork);
+    let serialconn1_p = process_type.eq(Qserial);
+    let pipeconn1_p = process_type.eq(Qpipe);
+
+    if netconn1_p || serialconn1_p || pipeconn1_p {
+        let childp = p_ref.childp;
+        p_ref.set_childp(plist_put(childp, QCfilter, filter));
+    }
+    unsafe { setup_process_coding_systems(process) };
+    filter
+}
+
+fn pset_filter(mut process: LispProcessRef, val: LispObject) -> () {
+    process.filter = if val.is_nil() {
+        Qinternal_default_process_filter
+    } else {
+        val
+    };
+}
+
+fn set_process_filter_masks(process: LispProcessRef) -> () {
+    if !(process.infd == -1) && process.filter.eq(Qt) {
+        if !process.status.eq(Qlisten) {
+            unsafe { delete_read_fd(process.infd) };
+        // Network or serial process not stopped:
+        } else if process.command.eq(Qt) {
+            unsafe { add_process_read_fd(process.infd) };
+        }
+    }
+}
+
+/// Give PROCESS the sentinel SENTINEL; nil for default.
+/// The sentinel is called as a function when the process changes state.
+/// It gets two arguments: the process, and a string describing the change.
+#[lisp_fn]
+pub fn set_process_sentinel(mut process: LispProcessRef, sentinel: LispObject) -> LispObject {
+    pset_sentinel(process, sentinel);
+    let process_type = process.ptype();
+    let netconn1_p = process_type.eq(Qnetwork);
+    let serialconn1_p = process_type.eq(Qserial);
+    let pipeconn1_p = process_type.eq(Qpipe);
+
+    if netconn1_p || serialconn1_p || pipeconn1_p {
+        let childp = process.childp;
+        process.set_childp(plist_put(childp, QCsentinel, sentinel));
     }
     sentinel
+}
+
+fn pset_sentinel(mut process: LispProcessRef, val: LispObject) -> () {
+    process.sentinel = if val.is_nil() {
+        Qinternal_default_process_sentinel
+    } else {
+        val
+    };
 }
 
 /// Send PROCESS the contents of STRING as input.
