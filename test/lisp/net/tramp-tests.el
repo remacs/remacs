@@ -2771,7 +2771,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
       ;; Check `add-name-to-file'.
       (unwind-protect
-	  (progn
+	  (unless (tramp-smb-file-name-p tramp-test-temporary-file-directory)
 	    (write-region "foo" nil tmp-name1)
 	    (should (file-exists-p tmp-name1))
 	    (add-name-to-file tmp-name1 tmp-name2)
@@ -3802,11 +3802,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		  (vc-register
 		   (list (car vc-handled-backends)
 			 (list (file-name-nondirectory tmp-name2))))
-		;; `vc-register' has changed its arguments in Emacs 25.1.
-		(error
-		 (vc-register
-		  nil (list (car vc-handled-backends)
-			    (list (file-name-nondirectory tmp-name2))))))
+		;; `vc-register' has changed its arguments in Emacs
+		;; 25.1.  Let's skip it for older Emacsen.
+		(error (skip-unless (tramp--test-emacs25-p))))
 	      ;; vc-git uses an own process sentinel, Tramp's sentinel
 	      ;; for flushing the cache isn't used.
 	      (dired-uncache (concat (file-remote-p default-directory) "/"))
@@ -4052,6 +4050,12 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
     (should (file-directory-p tmp-file))
     (delete-directory tmp-file)
     (should-not (file-exists-p tmp-file))))
+
+(defun tramp--test-emacs25-p ()
+  "Check for Emacs version >= 25.1.
+Some semantics has been changed for there, w/o new functions or
+variables, so we check the Emacs version directly."
+  (>= emacs-major-version 25))
 
 (defun tramp--test-emacs26-p ()
   "Check for Emacs version >= 26.1.
