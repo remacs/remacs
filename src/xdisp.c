@@ -32822,8 +32822,10 @@ mouse pointer enters it.
 Autoselection selects the minibuffer only if it is active, and never
 unselects the minibuffer if it is active.
 
-When customizing this variable make sure that the actual value of
-`focus-follows-mouse' matches the behavior of your window manager.  */);
+If you want to use the mouse to autoselect a window on another frame,
+make sure that (1) your window manager has focus follow the mouse and
+(2) the value of the option `focus-follows-mouse' matches the policy
+of your window manager.  */);
   Vmouse_autoselect_window = Qnil;
 
   DEFVAR_LISP ("auto-resize-tool-bars", Vauto_resize_tool_bars,
