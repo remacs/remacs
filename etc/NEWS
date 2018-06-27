@@ -85,12 +85,6 @@ work right without some adjustment:
 * Changes in Emacs 27.1
 
 ---
-*** Info browser can follow ``file:'' protocol URL's URL created with
-The URL's created by the @url Texinfo command, and followed with the
-Info-follow-nearest-node function, can now have 'file:' prototype and
-are passed to 'browse-url' function, like were the other Web protocols
-(namely ftp, http, and https).
----
 ** New variable 'xft-ignore-color-fonts'.
 Default t means don't try to load color fonts when using Xft, as they
 often cause crashes.  Set it to nil if you really need those fonts.
@@ -251,6 +245,7 @@ This enables more efficient backends.  See the docstring of
 'flymake-diagnostic-functions' or the Flymake manual for details.
 
 ** Package
+
 *** New 'package-quickstart' feature
 When 'package-quickstart' is non-nil, package.el precomputes a big autoloads
 file so that activation of packages can be done much faster, which can speed up
@@ -261,7 +256,17 @@ you don't need to set them in your early init file.
 
 *** New function 'package-activate-all'.
 
+** Info
+
+---
+*** Info can now follow 'file://' protocol URLs.
+The 'file://' URLs in Info documents can now be followed by passing
+them to the 'browse-url' function, like the other protocols: ftp,
+http, and https.  This allows to have references to local HTML files,
+for example.
+
 ** Ecomplete
+
 *** The ecomplete sorting has changed to a decay-based algorithm.
 This can be controlled by the new 'ecomplete-sort-predicate' variable.
 
@@ -308,6 +313,7 @@ and its value has been changed to Duck Duck Go.
 has been executed.
 
 ** Htmlfontify
+
 *** The functions 'hfy-color', 'hfy-color-vals' and
 'hfy-fallback-color-values' and the variables 'hfy-fallback-color-map'
 and 'hfy-rgb-txt-color-map' have been renamed from names that used
@@ -326,6 +332,7 @@ Authentication mechanisms can be added via external packages, by
 defining new cl-defmethod of smtpmail-try-auth-method.
 
 ** Footnote-mode
+
 *** Support Hebrew-style footnotes
 *** Footnote text lines are now aligned.
 Can be controlled via the new variable 'footnote-align-to-fn-text'.
