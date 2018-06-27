@@ -13,6 +13,9 @@
   (should-error (eval
                  '(file-attributes-lessp '("rms" t) "wilfred"))
                 :type 'wrong-type-argument)
+  (should (not (file-attributes-lessp '() '())))
+  (should (not (file-attributes-lessp '() '(""))))
+  (should (file-attributes-lessp '("") '()))
   (should (file-attributes-lessp '("rms" t) '("wilfred" t)))
   (should (not (file-attributes-lessp '("wilfred" t) '("rms" t)))))
 
