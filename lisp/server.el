@@ -1673,13 +1673,15 @@ only these files will be asked to be saved."
 	     (save-buffers-kill-emacs arg)))
 	  ((processp proc)
 	   (let ((buffers (process-get proc 'buffers)))
-	     ;; If client is bufferless, emulate a normal Emacs exit
-	     ;; and offer to save all buffers.  Otherwise, offer to
-	     ;; save only the buffers belonging to the client.
 	     (save-some-buffers
 	      arg (if buffers
+                      ;; Only files from emacsclient file list.
 		      (lambda () (memq (current-buffer) buffers))
-		    t))
+                    ;; No emacsclient file list: don't override
+                    ;; `save-some-buffers-default-predicate' (unless
+                    ;; ARG is non-nil), since we're not killing
+                    ;; Emacs (unlike `save-buffers-kill-emacs').
+		    (and arg t)))
 	     (server-delete-client proc)))
 	  (t (error "Invalid client frame")))))
 
