@@ -4138,7 +4138,7 @@ beginning or end of the buffer (depending on scrolling direction);
 only if point is already on that position do they signal an error.
 @end defopt
 
-@deffn Command recenter &optional count
+@deffn Command recenter &optional count redisplay
 @cindex centering point
 This function scrolls the text in the selected window so that point is
 displayed at a specified vertical position within the window.  It does
@@ -4152,8 +4152,9 @@ line in the window.
 
 If @var{count} is @code{nil} (or a non-@code{nil} list),
 @code{recenter} puts the line containing point in the middle of the
-window.  If @var{count} is @code{nil}, this function may redraw the
-frame, according to the value of @code{recenter-redisplay}.
+window.  If @var{count} is @code{nil} and @var{redisplay} is
+non-@code{nil}, this function may redraw the frame, according to the
+value of @code{recenter-redisplay}.
 
 When @code{recenter} is called interactively, @var{count} is the raw
 prefix argument.  Thus, typing @kbd{C-u} as the prefix sets the
@@ -4181,8 +4182,9 @@ respect to the entire window group.
 
 @defopt recenter-redisplay
 If this variable is non-@code{nil}, calling @code{recenter} with a
-@code{nil} argument redraws the frame.  The default value is
-@code{tty}, which means only redraw the frame if it is a tty frame.
+@code{nil} @var{count} argument and non-@code{nil} @var{redisplay}
+argument redraws the frame.  The default value is @code{tty}, which
+means only redraw the frame if it is a tty frame.
 @end defopt
 
 @deffn Command recenter-top-bottom &optional count

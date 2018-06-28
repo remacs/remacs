@@ -690,6 +690,11 @@ manual for more details.
 * Lisp Changes in Emacs 27.1
 
 +++
+** The function 'recenter' accepts an additional optional argument.
+If the optional second argument is nil, recenter will not redisplay
+the frame regardless of the value of 'recenter-redisplay'.
+
++++
 ** New functions 'major-mode-suspend' and 'major-mode-restore'.
 Use them when switching temporarily to another major mode, e.g. for
 'hexl-mode', or to switch between 'c-mode' and 'image-mode' in XPM.
