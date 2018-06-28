@@ -3058,9 +3058,8 @@ union specbinding
     } unwind;
     struct {
       ENUM_BF (specbind_tag) kind : CHAR_BIT;
-      void (*func) (Lisp_Object);
-      Lisp_Object *array;
       ptrdiff_t nelts;
+      Lisp_Object *array;
     } unwind_array;
     struct {
       ENUM_BF (specbind_tag) kind : CHAR_BIT;
@@ -4543,9 +4542,16 @@ safe_free (ptrdiff_t sa_count)
   while (specpdl_ptr != specpdl + sa_count)
     {
       specpdl_ptr--;
-      eassert (specpdl_ptr->kind == SPECPDL_UNWIND_PTR
-	       && specpdl_ptr->unwind_ptr.func == xfree);
-      xfree (specpdl_ptr->unwind_ptr.arg);
+      if (specpdl_ptr->kind == SPECPDL_UNWIND_PTR)
+	{
+	  eassert (specpdl_ptr->unwind_ptr.func == xfree);
+	  xfree (specpdl_ptr->unwind_ptr.arg);
+	}
+      else
+	{
+	  eassert (specpdl_ptr->kind == SPECPDL_UNWIND_ARRAY);
+	  xfree (specpdl_ptr->unwind_array.array);
+	}
     }
 }
 
