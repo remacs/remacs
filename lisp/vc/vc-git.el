@@ -581,7 +581,7 @@ or an empty string if none."
                        "ls-files" "-z" "-c" "-s" "--"))
       (`ls-files-conflict
        (vc-git-command (current-buffer) 'async files
-                       "ls-files" "-z" "-c" "-s" "--"))
+                       "ls-files" "-z" "-u" "--"))
       (`ls-files-unknown
        (vc-git-command (current-buffer) 'async files
                        "ls-files" "-z" "-o" "--directory"
