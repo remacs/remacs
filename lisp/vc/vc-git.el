@@ -298,9 +298,6 @@ in the order given by 'git status'."
                 '("--ignored"))
             "--"))
         (status (apply #'vc-git--run-command-string file args)))
-    ;; Alternatively, the `ignored' state could be detected with 'git
-    ;; ls-files -i -o --exclude-standard', but that's an extra process
-    ;; call, and the `ignored' state is rarely needed.
     (if (null status)
         ;; If status is nil, there was an error calling git, likely because
         ;; the file is not in a git repo.
@@ -565,6 +562,7 @@ or an empty string if none."
 (declare-function vc-set-async-update "vc-dispatcher" (process-buffer))
 
 (defun vc-git-dir-status-goto-stage (git-state)
+  ;; TODO: Look into reimplementing this using `git status --porcelain=v2'.
   (let ((files (vc-git-dir-status-state->files git-state)))
     (erase-buffer)
     (pcase (vc-git-dir-status-state->stage git-state)
@@ -942,9 +940,6 @@ This prompts for a branch to merge from."
           (vc-git--run-command-string directory "status" "--porcelain" "--"))
          (lines (when status (split-string status "\n" 'omit-nulls)))
          files)
-    ;; TODO: Look into reimplementing `vc-git-state', as well as
-    ;; `vc-git-dir-status-files', based on this output, thus making the
-    ;; extra process call in `vc-git-find-file-hook' unnecessary.
     (dolist (line lines files)
       (when (string-match "\\([ MADRCU?!][ MADRCU?!]\\) \\(.+\\)\\(?: -> \\(.+\\)\\)?"
                           line)
@@ -979,10 +974,11 @@ This prompts for a branch to merge from."
 (defun vc-git-find-file-hook ()
   "Activate `smerge-mode' if there is a conflict."
   (when (and buffer-file-name
-             ;; FIXME
+             ;; FIXME:
              ;; 1) the net result is to call git twice per file.
              ;; 2) v-g-c-f is documented to take a directory.
              ;; https://lists.gnu.org/r/emacs-devel/2014-01/msg01126.html
+             ;; FIXME: vc-git-state can return `conflict' now.
              (vc-git-conflicted-files buffer-file-name)
              (save-excursion
                (goto-char (point-min))
