@@ -786,7 +786,6 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
     }
 
   emacs_value ret = func->subr (env, nargs, args, func->data);
-  SAFE_FREE ();
 
   eassert (&priv == env->private_members);
 
@@ -795,7 +794,7 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
   maybe_quit ();
 
   module_signal_or_throw (&priv);
-  return unbind_to (count, value_to_lisp (ret));
+  return SAFE_FREE_UNBIND_TO (count, value_to_lisp (ret));
 }
 
 Lisp_Object

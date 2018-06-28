@@ -3198,6 +3198,8 @@ differences between the two buffers.  */)
       return Qnil;
     }
 
+  ptrdiff_t count = SPECPDL_INDEX ();
+
   /* FIXME: It is not documented how to initialize the contents of the
      context structure.  This code cargo-cults from the existing
      caller in src/analyze.c of GNU Diffutils, which appears to
@@ -3231,7 +3233,6 @@ differences between the two buffers.  */)
   eassert (! early_abort);
 
   Fundo_boundary ();
-  ptrdiff_t count = SPECPDL_INDEX ();
   record_unwind_protect_excursion ();
 
   ptrdiff_t i = size_a;
@@ -3279,10 +3280,8 @@ differences between the two buffers.  */)
       --i;
       --j;
     }
-  unbind_to (count, Qnil);
-  SAFE_FREE ();
 
-  return Qnil;
+  return SAFE_FREE_UNBIND_TO (count, Qnil);
 }
 
 static void
@@ -4885,7 +4884,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
       if (buf == initial_buffer)
 	{
 	  buf = xmalloc (bufsize);
-	  sa_must_free = true;
 	  buf_save_value_index = SPECPDL_INDEX ();
 	  record_unwind_protect_ptr (xfree, buf);
 	  memcpy (buf, initial_buffer, used);

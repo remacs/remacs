@@ -3776,9 +3776,7 @@ tty_menu_show (struct frame *f, int x, int y, int menuflags,
 
  tty_menu_end:
 
-  SAFE_FREE ();
-  unbind_to (specpdl_count, Qnil);
-  return entry;
+  return SAFE_FREE_UNBIND_TO (specpdl_count, entry);
 }
 
 #endif	/* !MSDOS */

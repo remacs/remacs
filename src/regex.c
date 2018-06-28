@@ -455,7 +455,7 @@ ptrdiff_t emacs_re_safe_alloca = MAX_ALLOCA;
 /* Like USE_SAFE_ALLOCA, but use emacs_re_safe_alloca.  */
 #  define REGEX_USE_SAFE_ALLOCA                                        \
   ptrdiff_t sa_avail = emacs_re_safe_alloca;                           \
-  ptrdiff_t sa_count = SPECPDL_INDEX (); bool sa_must_free = false
+  ptrdiff_t sa_count = SPECPDL_INDEX ()
 
 #  define REGEX_SAFE_FREE() SAFE_FREE ()
 #  define REGEX_ALLOCATE SAFE_ALLOCA

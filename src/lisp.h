@@ -4500,7 +4500,7 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
 
 #define USE_SAFE_ALLOCA			\
   ptrdiff_t sa_avail = MAX_ALLOCA;	\
-  ptrdiff_t sa_count = SPECPDL_INDEX (); bool sa_must_free = false
+  ptrdiff_t sa_count = SPECPDL_INDEX ()
 
 #define AVAIL_ALLOCA(size) (sa_avail -= (size), alloca (size))
 
@@ -4508,7 +4508,7 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
 
 #define SAFE_ALLOCA(size) ((size) <= sa_avail				\
 			   ? AVAIL_ALLOCA (size)			\
-			   : (sa_must_free = true, record_xmalloc (size)))
+			   : record_xmalloc (size))
 
 /* SAFE_NALLOCA sets BUF to a newly allocated array of MULTIPLIER *
    NITEMS items, each of the same type as *BUF.  MULTIPLIER must
@@ -4521,7 +4521,6 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
     else							 \
       {								 \
 	(buf) = xnmalloc (nitems, sizeof *(buf) * (multiplier)); \
-	sa_must_free = true;					 \
 	record_unwind_protect_ptr (xfree, buf);			 \
       }								 \
   } while (false)
@@ -4534,15 +4533,37 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
     memcpy (ptr, SDATA (string), SBYTES (string) + 1);	\
   } while (false)
 
-/* SAFE_FREE frees xmalloced memory and enables GC as needed.  */
+/* Free xmalloced memory and enable GC as needed.  */
 
-#define SAFE_FREE()			\
-  do {					\
-    if (sa_must_free) {			\
-      sa_must_free = false;		\
-      unbind_to (sa_count, Qnil);	\
-    }					\
-  } while (false)
+#define SAFE_FREE() safe_free (sa_count)
+
+INLINE void
+safe_free (ptrdiff_t sa_count)
+{
+  while (specpdl_ptr != specpdl + sa_count)
+    {
+      specpdl_ptr--;
+      eassert (specpdl_ptr->kind == SPECPDL_UNWIND_PTR
+	       && specpdl_ptr->unwind_ptr.func == xfree);
+      xfree (specpdl_ptr->unwind_ptr.arg);
+    }
+}
+
+/* Pop the specpdl stack back to COUNT, and return VAL.
+   Prefer this to { SAFE_FREE (); unbind_to (COUNT, VAL); }
+   when COUNT predates USE_SAFE_ALLOCA, as it is a bit more efficient
+   and also lets callers intermix SAFE_ALLOCA calls with other calls
+   that grow the specpdl stack.  */
+
+#define SAFE_FREE_UNBIND_TO(count, val) \
+  safe_free_unbind_to (count, sa_count, val)
+
+INLINE Lisp_Object
+safe_free_unbind_to (ptrdiff_t count, ptrdiff_t sa_count, Lisp_Object val)
+{
+  eassert (count <= sa_count);
+  return unbind_to (count, val);
+}
 
 /* Set BUF to point to an allocated array of NELT Lisp_Objects,
    immediately followed by EXTRA spare bytes.  */
@@ -4560,7 +4581,6 @@ extern void *record_xmalloc (size_t) ATTRIBUTE_ALLOC_SIZE ((1));
       {							       \
 	(buf) = xmalloc (alloca_nbytes);		       \
 	record_unwind_protect_array (buf, nelt);	       \
-	sa_must_free = true;				       \
       }							       \
   } while (false)
 

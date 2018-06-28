@@ -779,8 +779,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
   specbind (Qcommand_debug_status, Qnil);
 
   Lisp_Object val = Ffuncall (nargs, args);
-  SAFE_FREE ();
-  return unbind_to (speccount, val);
+  return SAFE_FREE_UNBIND_TO (speccount, val);
 }
 
 DEFUN ("prefix-numeric-value", Fprefix_numeric_value, Sprefix_numeric_value,

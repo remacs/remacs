@@ -2375,8 +2375,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
 
  return_entry:
   unblock_input ();
-  SAFE_FREE ();
-  return unbind_to (specpdl_count, entry);
+  return SAFE_FREE_UNBIND_TO (specpdl_count, entry);
 }
 
 #endif /* not USE_X_TOOLKIT */

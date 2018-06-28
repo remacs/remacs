@@ -981,8 +981,7 @@ usage: (let VARLIST BODY...)  */)
     specbind (Qinternal_interpreter_environment, lexenv);
 
   elt = Fprogn (XCDR (args));
-  SAFE_FREE ();
-  return unbind_to (count, elt);
+  return SAFE_FREE_UNBIND_TO (count, elt);
 }
 
 DEFUN ("while", Fwhile, Swhile, 1, UNEVALLED, 0,

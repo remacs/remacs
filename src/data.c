@@ -1049,7 +1049,10 @@ wrong_choice (Lisp_Object choice, Lisp_Object wrong)
     }
 
   obj = Fconcat (i, args);
-  SAFE_FREE ();
+
+  /* No need to call SAFE_FREE, since signaling does that for us.  */
+  (void) sa_count;
+
   xsignal2 (Qerror, obj, wrong);
 }
 

@@ -2637,8 +2637,7 @@ safe__call (bool inhibit_quit, ptrdiff_t nargs, Lisp_Object func, va_list ap)
 	 so there is no possibility of wanting to redisplay.  */
       val = internal_condition_case_n (Ffuncall, nargs, args, Qt,
 				       safe_eval_handler);
-      SAFE_FREE ();
-      val = unbind_to (count, val);
+      val = SAFE_FREE_UNBIND_TO (count, val);
     }
 
   return val;
