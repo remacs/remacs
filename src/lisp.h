@@ -3044,15 +3044,13 @@ extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
   } while (false)
 
 
-/* Elisp uses several stacks:
-   - the C stack.
-   - the bytecode stack: used internally by the bytecode interpreter.
-     Allocated from the C stack.
-   - The specpdl stack: keeps track of active unwind-protect and
-     dynamic-let-bindings.  Allocated from the `specpdl' array, a manually
-     managed stack.
-   - The handler stack: keeps track of active catch tags and condition-case
-     handlers.  Allocated in a manually managed stack implemented by a
+/* Elisp uses multiple stacks:
+   - The C stack.
+   - The specpdl stack keeps track of backtraces, unwind-protects and
+     dynamic let-bindings.  It is allocated from the 'specpdl' array,
+     a manually managed stack.
+   - The handler stack keeps track of active catch tags and condition-case
+     handlers.  It is allocated in a manually managed stack implemented by a
      doubly-linked list allocated via xmalloc and never freed.  */
 
 /* Structure for recording Lisp call stack for backtrace purposes.  */
@@ -3131,7 +3129,7 @@ SPECPDL_INDEX (void)
    control structures.  A struct handler contains all the information needed to
    restore the state of the interpreter after a non-local jump.
 
-   handler structures are chained together in a doubly linked list; the `next'
+   Handler structures are chained together in a doubly linked list; the `next'
    member points to the next outer catchtag and the `nextfree' member points in
    the other direction to the next inner element (which is typically the next
    free element since we mostly use it on the deepest handler).
