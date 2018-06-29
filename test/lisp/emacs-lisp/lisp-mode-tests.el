@@ -226,7 +226,6 @@ Expected initialization file: `%s'\"
 
 (ert-deftest lisp-indent-with-read-only-field ()
   "Test indentation on line with read-only field (Bug#32014)."
-  :expected-result :failed
   (with-temp-buffer
     (insert (propertize "prompt> " 'field 'output 'read-only t
                         'rear-nonsticky t 'front-sticky '(read-only)))

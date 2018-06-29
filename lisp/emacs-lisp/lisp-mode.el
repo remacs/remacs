@@ -867,7 +867,9 @@ by more than one line to cross a string literal."
   (interactive)
   (let ((pos (- (point-max) (point)))
         (indent (progn (beginning-of-line)
-                       (or indent (calculate-lisp-indent (lisp-ppss))))))
+                       (or indent (calculate-lisp-indent (lisp-ppss)))))
+	(shift-amt nil)
+	(beg (progn (beginning-of-line) (point))))
     (skip-chars-forward " \t")
     (if (or (null indent) (looking-at "\\s<\\s<\\s<"))
 	;; Don't alter indentation of a ;;; comment line
@@ -879,7 +881,11 @@ by more than one line to cross a string literal."
 	  ;; as comment lines, not as code.
 	  (progn (indent-for-comment) (forward-char -1))
 	(if (listp indent) (setq indent (car indent)))
-        (indent-line-to indent))
+	(setq shift-amt (- indent (current-column)))
+	(if (zerop shift-amt)
+	    nil
+	  (delete-region beg (point))
+	  (indent-to indent)))
       ;; If initial point was within line's indentation,
       ;; position after the indentation.  Else stay at same point in text.
       (if (> (- (point-max) pos) (point))
