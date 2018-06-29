@@ -1412,7 +1412,9 @@ The return value of this function is the retrieval buffer."
                         'url-http-wait-for-headers-change-function)
                   (set-process-filter tls-connection 'url-http-generic-filter)
                   (process-send-string tls-connection
-                                       (url-http-create-request)))
+                                       ;; Use the non-proxy form of the request
+                                       (let (url-http-proxy)
+                                         (url-http-create-request))))
               (gnutls-error
                (url-http-activate-callback)
                (error "gnutls-error: %s" e))
