@@ -285,8 +285,8 @@ The string is based on `url-privacy-level' and `url-user-agent'."
     (if ua-string (format "User-Agent: %s\r\n" (string-trim ua-string)) "")))
 
 (defun url-http-create-request ()
-  "Create an HTTP request for `url-http-target-url', using `url-http-referer'
-as the Referer-header (subject to `url-privacy-level'."
+  "Create an HTTP request for `url-http-target-url'.
+Use `url-http-referer' as the Referer-header (subject to `url-privacy-level')."
   (let* ((extra-headers)
 	 (request nil)
 	 (no-cache (cdr-safe (assoc "Pragma" url-http-extra-headers)))
