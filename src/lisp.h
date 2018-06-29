@@ -3050,6 +3050,8 @@ enum specbind_tag {
 
 union specbinding
   {
+    /* Aligning similar members consistently might help efficiency slightly
+       (Bug#31996#25).  */
     ENUM_BF (specbind_tag) kind : CHAR_BIT;
     struct {
       ENUM_BF (specbind_tag) kind : CHAR_BIT;
