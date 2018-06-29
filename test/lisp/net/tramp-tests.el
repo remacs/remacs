@@ -4883,7 +4883,7 @@ Use the `ls' command."
   "Check parallel asynchronous requests.
 Such requests could arrive from timers, process filters and
 process sentinels.  They shall not disturb each other."
-  :tags '(:expensive-test)
+  :tags '(:expensive-test :unstable)
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 

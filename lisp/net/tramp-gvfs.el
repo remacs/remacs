@@ -1553,18 +1553,19 @@ file-notify events."
 		user (url-user uri)
 		host (url-host uri)
 		port (url-portspec uri)))
-	(with-parsed-tramp-file-name
-	    (tramp-make-tramp-file-name method user domain host port "") nil
-	  (tramp-message
-	   v 6 "%s %s"
-	   signal-name (tramp-gvfs-stringify-dbus-message mount-info))
-	  (tramp-flush-file-property v "/" "list-mounts")
-	  (if (string-equal (downcase signal-name) "unmounted")
-	      (tramp-flush-file-properties v "/")
-	    ;; Set mountpoint and location.
-	    (tramp-set-file-property v "/" "fuse-mountpoint" fuse-mountpoint)
-	    (tramp-set-connection-property
-	     v "default-location" default-location)))))))
+	(when (member method tramp-gvfs-methods)
+	  (with-parsed-tramp-file-name
+	      (tramp-make-tramp-file-name method user domain host port "") nil
+	    (tramp-message
+	     v 6 "%s %s"
+	     signal-name (tramp-gvfs-stringify-dbus-message mount-info))
+	    (tramp-flush-file-property v "/" "list-mounts")
+	    (if (string-equal (downcase signal-name) "unmounted")
+		(tramp-flush-file-properties v "/")
+	      ;; Set mountpoint and location.
+	      (tramp-set-file-property v "/" "fuse-mountpoint" fuse-mountpoint)
+	      (tramp-set-connection-property
+	       v "default-location" default-location))))))))
 
 (when tramp-gvfs-enabled
   (dbus-register-signal
