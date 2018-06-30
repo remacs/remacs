@@ -2729,8 +2729,8 @@ In the old days, when you lacked a @file{~/.emacs} file and started an
 Emacs session by typing the command @code{emacs} alone, without naming
 any files, Emacs started with the @file{*scratch*} buffer visible.
 Nowadays, you will see a splash screen.  You can follow one of the
-commands suggested on the splash screen, visit a file, or press the
-spacebar to reach the @file{*scratch*} buffer.
+commands suggested on the splash screen, visit a file, or press @kbd{q}
+to quit the splash screen and reach the @file{*scratch*} buffer.
 
 If you switch to the @file{*scratch*} buffer, type
 @code{(buffer-name)}, position the cursor after it, and then type
