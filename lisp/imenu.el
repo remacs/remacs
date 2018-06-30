@@ -187,7 +187,9 @@ with name concatenation."
 
 (defcustom imenu-generic-skip-comments-and-strings t
   "When non-nil, ignore text inside comments and strings.
-Only affects `imenu--generic-function'."
+Only affects `imenu-default-create-index-function' (and any
+alternative implementation of `imenu-create-index-function' that
+uses `imenu--generic-function')."
   :type 'boolean
   :group 'imenu
   :version "24.4")
@@ -738,7 +740,7 @@ for modes which use `imenu--generic-function'.  If it is not set, but
 ;; so it needs to be careful never to loop!
 (defun imenu--generic-function (patterns)
   "Return an index alist of the current buffer based on PATTERNS.
-PATTERNS should be an alist with the same form as `imenu-generic-expression'.
+PATTERNS should be an alist of the same form as `imenu-generic-expression'.
 
 If `imenu-generic-skip-comments-and-strings' is non-nil, this ignores
 text inside comments and strings.
