@@ -579,6 +579,15 @@ This feature uses Tramp and works only on systems which support GVFS,
 i.e. GNU/Linux, roughly spoken.  See the chapter "(tramp) Archive file
 names" in the Tramp manual for full documentation of these facilities.
 
++++
+** New library for writing JSONRPC applications (https://jsonrpc.org)
+The 'jsonrpc' library enables writing Emacs Lisp applications that
+rely on this protocol.  Since the protocol is designed to be
+transport-agnostic, the library provides an API to implement new
+transport strategies as well as a separate API to use them.  A
+transport implementation for process-based communication, such as is
+used by the Language Server Protocol (LSP), is readily available.
+
 
 * Incompatible Lisp Changes in Emacs 27.1
 

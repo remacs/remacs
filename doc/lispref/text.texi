@@ -62,6 +62,7 @@ the character after point.
 * GnuTLS Cryptography:: Cryptographic algorithms imported from GnuTLS.
 * Parsing HTML/XML:: Parsing HTML and XML.
 * Parsing JSON::     Parsing and generating JSON values.
+* JSONRPC::          JSON Remote Procedure Call protocol
 * Atomic Changes::   Installing several buffer changes atomically.
 * Change Hooks::     Supplying functions to be run when text is changed.
 @end menu
@@ -5132,6 +5133,192 @@ doesn't move point.  The arguments @var{args} are interpreted as in
 @code{json-parse-string}.
 @end defun
 
+@node JSONRPC
+@section JSONRPC communication
+@cindex JSON remote procedure call protocol
+
+The @code{jsonrpc} library implements the @acronym{JSONRPC}
+specification, version 2.0, as it is described in
+@uref{http://www.jsonrpc.org/}.  As the name suggests, JSONRPC is a
+generic @code{Remote Procedure Call} protocol designed around
+@acronym{JSON} objects, which you can convert to and from Lisp objects
+(@pxref{Parsing JSON}).
+
+@node JSONRPC Overview
+@subsection Overview
+
+Quoting from the @uref{http://www.jsonrpc.org/, spec}, JSONRPC "is
+transport agnostic in that the concepts can be used within the same
+process, over sockets, over http, or in many various message passing
+environments."
+
+To model this agnosticism, the @code{jsonrpc} library uses objects of
+a @code{jsonrpc-connection} class, which represent a connection the
+remote JSON endpoint (for details on Emacs's object system,
+@pxref{Top,EIEIO,,eieio,EIEIO}).  In modern object-oriented parlance,
+this class is ``abstract'', i.e. the actual class of a useful
+connection object used is always a subclass of it.  Nevertheless, we
+can define two distinct API's around the @code{jsonrpc-connection}
+class:
+
+@enumerate
+
+@item A user interface for building JSONRPC applications
+
+In this scenario, the JSONRPC application instantiates
+@code{jsonrpc-connection} objects of one of its concrete subclasses
+using @code{make-instance}.  To initiate a contact to the remote
+endpoint, the JSONRPC application passes this object to the functions
+@code{jsonrpc-notify'}, @code{jsonrpc-request} and
+@code{jsonrpc-async-request}.  For handling remotely initiated
+contacts, which generally come in asynchronously, the instantiation
+should include @code{:request-dispatcher} and
+@code{:notification-dispatcher} initargs, which are both functions of
+3 arguments: the connection object; a symbol naming the JSONRPC method
+invoked remotely; and a JSONRPC "params" object.
+
+The function passed as @code{:request-dispatcher} is responsible for
+handling the remote endpoint's requests, which expect a reply from the
+local endpoint (in this case, the program you're building).  Inside
+that function, you may either return locally (normally) or non-locally
+(error).  A local return value must be a Lisp object serializable as
+JSON (@pxref{Parsing JSON}).  This determines a success response, and
+the object is forwarded to the server as the JSONRPC "result" object.
+A non-local return, achieved by calling the function
+@code{jsonrpc-error}, causes an error response to be sent to the
+server.  The details of the accompanying JSONRPC "error" are filled
+out with whatever was passed to @code{jsonrpc-error}.  A non-local
+return triggered by an unexpected error of any other type also causes
+an error response to be sent (unless you have set
+@code{debug-on-error}, in which case this should land you in the
+debugger, @pxref{Error Debugging}).
+
+@item A inheritance interface for building JSONRPC transport implementations
+
+In this scenario, @code{jsonrpc-connection} is subclassed to implement
+a different underlying transport strategy (for details on how to
+subclass, @pxref{Inheritance,Inheritance,,eieio}).  Users of the
+application-building interface can then instantiate objects of this
+concrete class (using the @code{make-instance} function) and connect
+to JSONRPC endpoints using that strategy.
+
+This API has mandatory and optional parts.
+
+To allow its users to initiate JSONRPC contacts (notifications or
+requests) or reply to endpoint requests, the method
+@code{jsonrpc-connection-send} must be implemented for the subclass.
+
+Likewise, for handling the three types of remote contacts (requests,
+notifications and responses to local requests) the transport
+implementation must arrange for the function
+@code{jsonrpc-connection-receive} to be called after noticing a new
+JSONRPC message on the wire (whatever that "wire" may be).
+
+Finally, and optionally, the @code{jsonrpc-connection} subclass should
+implement @code{jsonrpc-shutdown} and @code{jsonrpc-running-p} if
+these concepts apply to the transport.  If they do, then any system
+resources (e.g. processes, timers, etc..) used listen for messages on
+the wire should be released in @code{jsonrpc-shutdown}, i.e. they
+should only be needed while @code{jsonrpc-running-p} is non-nil.
+
+@end enumerate
+
+@node Process-based JSONRPC connections
+@subsection Process-based JSONRPC connections
+
+For convenience, the @code{jsonrpc} library comes built-in with a
+@code{jsonrpc-process-connection} transport implementation that can
+talk to local subprocesses (using the standard input and standard
+output); or TCP hosts (using sockets); or any other remote endpoint
+that Emacs's process object can represent (@pxref{Processes}).
+
+Using this transport, the JSONRPC messages are encoded on the wire as
+plain text and prefaced by some basic HTTP-style enveloping headers,
+such as ``Content-Length''.
+
+For an example of an application using this transport scheme on top of
+JSONRPC, see the
+@uref{https://microsoft.github.io/language-server-protocol/specification,
+Language Server Protocol}.
+
+Along with the mandatory @code{:request-dispatcher} and
+@code{:notification-dispatcher} initargs, users of the
+@code{jsonrpc-process-connection} class should pass the following
+initargs as keyword-value pairs to @code{make-instance}:
+
+@table @code
+@item :process
+Value must be a live process object or a function of no arguments
+producing one such object.  If passed a process object, that is
+expected to contain an pre-established connection; otherwise, the
+function is called immediately after the object is made.
+
+@item :on-shutdown
+Value must be a function of a single argument, the
+@code{jsonrpc-process-connection} object.  The function is called
+after the underlying process object has been deleted (either
+deliberately by @code{jsonrpc-shutdown} or unexpectedly, because of
+some external cause).
+@end table
+
+@node JSONRPC JSON object format
+@subsection JSON object format
+
+JSON objects are exchanged as Lisp plists (@pxref{Parsing JSON}):
+JSON-compatible plists are handed to the dispatcher functions and,
+likewise, JSON-compatible plists should be given to
+@code{jsonrpc-notify}, @code{jsonrpc-request} and
+@code{jsonrpc-async-request}.
+
+To facilitate handling plists, this library make liberal use of
+@code{cl-lib} library and suggests (but doesn't force) its clients to
+do the same.  A macro @code{jsonrpc-lambda} can be used to create a
+lambda for destructuring a JSON-object like in this example:
+
+@example
+(jsonrpc-async-request
+ myproc :frobnicate `(:foo "trix")
+ :success-fn (jsonrpc-lambda (&key bar baz &allow-other-keys)
+               (message "Server replied back with %s and %s!"
+                        bar baz))
+ :error-fn (jsonrpc-lambda (&key code message _data)
+             (message "Sadly, server reports %s: %s"
+                      code message)))
+@end example
+
+@node JSONRPC deferred requests
+@subsection Deferred requests
+
+In many @acronym{RPC} situations, synchronization between the two
+communicating endpoints is a matter of correctly designing the RPC
+application: when synchronization is needed, requests (which are
+blocking) should be used; when it isn't, notifications should suffice.
+However, when Emacs acts as one of these endpoints, asynchronous
+events (e.g. timer- or process-related) may be triggered while there
+is still uncertainty about the state of the remote endpoint.
+Furthermore, acting on these events may only sometimes demand
+synchronization, depending on the event's specific nature.
+
+The @code{:deferred} keyword argument to @code{jsonrpc-request} and
+@code{jsonrpc-async-request} is designed to let the caller indicate
+that the specific request needs synchronization and its actual
+issuance may be delayed to the future, until some condition is
+satisfied.  Specifying @code{:deferred} for a request doesn't mean it
+@emph{will} be delayed, only that it @emph{can} be.  If the request
+isn't sent immediately, @code{jsonrpc} will make renewed efforts to
+send it at certain key times during communication, such as when
+receiving or sending other messages to the endpoint.
+
+Before any attempt to send the request, the application-specific
+conditions are checked.  Since the @code{jsonrpc} library can't known
+what these conditions are, the programmer may use the
+@code{jsonrpc-connection-ready-p} generic function (@pxref{Generic
+Functions}) to specify them.  The default method for this function
+returns @code{t}, but you can add overriding methods that return
+@code{nil} in some situations, based on the arguments passed to it,
+which are the @code{jsonrpc-connection} object (@pxref{JSONRPC
+Overview}) and whichever value you passed as the @code{:deferred}
+keyword argument.
 
 @node Atomic Changes
 @section Atomic Change Groups
