@@ -5,6 +5,11 @@
 ;; Author: João Távora <joaotavora@gmail.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
+;; Package-Requires: ((emacs "26.1"))
+;; Version: 1.0.0
+
+;; This is an Elpa :core package.  Don't use functionality that is not
+;; compatible with Emacs 26.1.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
