@@ -1713,11 +1713,21 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
 	       set it in the buffers that don't nominally have a local value.  */
 	    if (idx > 0)
 	      {
-		struct buffer *b;
+		Lisp_Object buf, tail;
 
-		FOR_EACH_BUFFER (b)
-		  if (!PER_BUFFER_VALUE_P (b, idx))
-		    set_per_buffer_value (b, offset, value);
+		/* Do this only in live buffers, so that if there are
+		   a lot of buffers which are dead, that doesn't slow
+		   down let-binding of variables that are
+		   automatically local when set, like
+		   case-fold-search.  This is for Lisp programs that
+		   let-bind such variables in their inner loops.  */
+		FOR_EACH_LIVE_BUFFER (tail, buf)
+		  {
+		    struct buffer *b = XBUFFER (buf);
+
+		    if (!PER_BUFFER_VALUE_P (b, idx))
+		      set_per_buffer_value (b, offset, value);
+		  }
 	      }
 	  }
 	else
