@@ -355,7 +355,7 @@ acl_nontrivial (int count, struct acl_entry *entries)
       struct acl_entry *ace = &entries[i];
 
       if (ace->uid != ACL_NSUSER && ace->gid != ACL_NSGROUP)
-	return 1;
+        return 1;
     }
   return 0;
 }

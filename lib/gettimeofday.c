@@ -45,7 +45,7 @@ initialize (void)
   if (kernel32 != NULL)
     {
       GetSystemTimePreciseAsFileTimeFunc =
-	(GetSystemTimePreciseAsFileTimeFuncType) GetProcAddress (kernel32, "GetSystemTimePreciseAsFileTime");
+        (GetSystemTimePreciseAsFileTimeFuncType) GetProcAddress (kernel32, "GetSystemTimePreciseAsFileTime");
     }
   initialized = TRUE;
 }

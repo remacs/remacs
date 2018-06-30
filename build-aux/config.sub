@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2018 Free Software Foundation, Inc.
 
-timestamp='2018-05-19'
+timestamp='2018-05-24'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -149,8 +149,30 @@ case $1 in
 		esac
 		;;
 	*-*)
-		basic_machine=$field1
-		os=$field2
+		# Second component is usually, but not always the OS
+		case $field2 in
+			# Prevent following clause from handling this valid os
+			sun*os*)
+				basic_machine=$field1
+				os=$field2
+				;;
+			# Manufacturers
+			dec* | mips* | sequent* | encore* | pc532* | sgi* | sony* \
+			| att* | 7300* | 3300* | delta* | motorola* | sun[234]* \
+			| unicom* | ibm* | next | hp | isi* | apollo | altos* \
+			| convergent* | ncr* | news | 32* | 3600* | 3100* | hitachi* \
+			| c[123]* | convex* | sun | crds | omron* | dg | ultra | tti* \
+			| harris | dolphin | highlevel | gould | cbm | ns | masscomp \
+			| apple | axis | knuth | cray | microblaze* \
+			| sim | cisco | oki | wec | wrs | winbond)
+				basic_machine=$field1-$field2
+				os=
+				;;
+			*)
+				basic_machine=$field1
+				os=$field2
+				;;
+		esac
 		;;
 	*)
 		# Convert single-component short-hands not valid as part of
@@ -537,110 +559,6 @@ case $1 in
 				os=
 				;;
 		esac
-		;;
-esac
-
-### Let's recognize common machines as not being operating systems so
-### that things like config.sub decstation-3100 work.  We also
-### recognize some manufacturers as not being operating systems, so we
-### can provide default operating systems below.
-case $os in
-	sun*os*)
-		# Prevent following clause from handling this invalid input.
-		;;
-	dec* | mips* | sequent* | encore* | pc532* | sgi* | sony* | \
-	att* | 7300* | 3300* | delta* | motorola* | sun[234]* | \
-	unicom* | ibm* | next | hp | isi* | apollo | altos* | \
-	convergent* | ncr* | news | 32* | 3600* | 3100* | hitachi* |\
-	c[123]* | convex* | sun | crds | omron* | dg | ultra | tti* | \
-	harris | dolphin | highlevel | gould | cbm | ns | masscomp | \
-	apple | axis | knuth | cray | microblaze*)
-		os=
-		basic_machine=$1
-		;;
-	bluegene*)
-		os=cnk
-		;;
-	sim | cisco | oki | wec | winbond)
-		os=
-		basic_machine=$1
-		;;
-	scout)
-		;;
-	wrs)
-		os=vxworks
-		basic_machine=$1
-		;;
-	chorusos*)
-		os=chorusos
-		basic_machine=$1
-		;;
-	chorusrdb)
-		os=chorusrdb
-		basic_machine=$1
-		;;
-	hiux*)
-		os=hiuxwe2
-		;;
-	sco6)
-		os=sco5v6
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	sco5)
-		os=sco3.2v5
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	sco4)
-		os=sco3.2v4
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	sco3.2.[4-9]*)
-		os=`echo $os | sed -e 's/sco3.2./sco3.2v/'`
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	sco3.2v[4-9]*)
-		# Don't forget version if it is 3.2v4 or newer.
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	sco5v6*)
-		# Don't forget version if it is 3.2v4 or newer.
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	sco*)
-		os=sco3.2v2
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	udk*)
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	isc)
-		os=isc2.2
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	clix*)
-		basic_machine=clipper-intergraph
-		;;
-	isc*)
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-pc/'`
-		;;
-	lynx*178)
-		os=lynxos178
-		;;
-	lynx*5)
-		os=lynxos5
-		;;
-	lynx*)
-		os=lynxos
-		;;
-	ptx*)
-		basic_machine=`echo "$1" | sed -e 's/86-.*/86-sequent/'`
-		;;
-	psos*)
-		os=psos
-		;;
-	mint | mint[0-9]*)
-		basic_machine=m68k-atari
-		os=mint
 		;;
 esac
 
@@ -1377,6 +1295,9 @@ case $os in
 	auroraux)
 		os=auroraux
 		;;
+	bluegene*)
+		os=cnk
+		;;
 	solaris1 | solaris1.*)
 		os=`echo $os | sed -e 's|solaris1|sunos4|'`
 		;;
@@ -1393,26 +1314,57 @@ case $os in
 	es1800*)
 		os=ose
 		;;
+	# Some version numbers need modification
+	chorusos*)
+		os=chorusos
+		;;
+	isc)
+		os=isc2.2
+		;;
+	sco6)
+		os=sco5v6
+		;;
+	sco5)
+		os=sco3.2v5
+		;;
+	sco4)
+		os=sco3.2v4
+		;;
+	sco3.2.[4-9]*)
+		os=`echo $os | sed -e 's/sco3.2./sco3.2v/'`
+		;;
+	sco3.2v[4-9]* | sco5v6*)
+		# Don't forget version if it is 3.2v4 or newer.
+		;;
+	scout)
+		# Don't match below
+		;;
+	sco*)
+		os=sco3.2v2
+		;;
+	psos*)
+		os=psos
+		;;
 	# Now accept the basic system types.
 	# The portable systems comes first.
 	# Each alternative MUST end in a * to match a version number.
 	# sysv* is not here because it comes later, after sysvr4.
 	gnu* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
-	     | *vms* | sco* | esix* | isc* | aix* | cnk* | sunos | sunos[34]*\
+	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]*\
 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
 	     | sym* | kopensolaris* | plan9* \
 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
 	     | aos* | aros* | cloudabi* | sortix* \
 	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
 	     | clix* | riscos* | uniplus* | iris* | rtu* | xenix* \
-	     | hiux* | knetbsd* | mirbsd* | netbsd* \
+	     | knetbsd* | mirbsd* | netbsd* \
 	     | bitrig* | openbsd* | solidbsd* | libertybsd* \
 	     | ekkobsd* | kfreebsd* | freebsd* | riscix* | lynxos* \
 	     | bosx* | nextstep* | cxux* | aout* | elf* | oabi* \
 	     | ptx* | coff* | ecoff* | winnt* | domain* | vsta* \
 	     | udi* | eabi* | lites* | ieee* | go32* | aux* | hcos* \
-	     | chorusos* | chorusrdb* | cegcc* | glidix* \
-	     | cygwin* | msys* | pe* | psos* | moss* | proelf* | rtems* \
+	     | chorusrdb* | cegcc* | glidix* \
+	     | cygwin* | msys* | pe* | moss* | proelf* | rtems* \
 	     | midipix* | mingw32* | mingw64* | linux-gnu* | linux-android* \
 	     | linux-newlib* | linux-musl* | linux-uclibc* \
 	     | uxpv* | beos* | mpeix* | udk* | moxiebox* \
@@ -1436,6 +1388,9 @@ case $os in
 			;;
 		esac
 		;;
+	hiux*)
+		os=hiuxwe2
+		;;
 	nto-qnx*)
 		;;
 	nto*)
@@ -1445,26 +1400,35 @@ case $os in
 	    | windows* | osx | abug | netware* | os9* \
 	    | macos* | mpw* | magic* | mmixware* | mon960* | lnews*)
 		;;
-	mac*)
-		os=`echo "$os" | sed -e 's|mac|macos|'`
-		;;
 	linux-dietlibc)
 		os=linux-dietlibc
 		;;
 	linux*)
 		os=`echo $os | sed -e 's|linux|linux-gnu|'`
 		;;
-	sunos5*)
-		os=`echo "$os" | sed -e 's|sunos5|solaris2|'`
+	lynx*178)
+		os=lynxos178
 		;;
-	sunos6*)
-		os=`echo "$os" | sed -e 's|sunos6|solaris3|'`
+	lynx*5)
+		os=lynxos5
+		;;
+	lynx*)
+		os=lynxos
+		;;
+	mac*)
+		os=`echo "$os" | sed -e 's|mac|macos|'`
 		;;
 	opened*)
 		os=openedition
 		;;
 	os400*)
 		os=os400
+		;;
+	sunos5*)
+		os=`echo "$os" | sed -e 's|sunos5|solaris2|'`
+		;;
+	sunos6*)
+		os=`echo "$os" | sed -e 's|sunos6|solaris3|'`
 		;;
 	wince*)
 		os=wince
@@ -1598,6 +1562,9 @@ case $basic_machine in
 		;;
 	c8051-*)
 		os=elf
+		;;
+	clipper-intergraph)
+		os=clix
 		;;
 	hexagon-*)
 		os=elf
@@ -1744,6 +1711,9 @@ case $basic_machine in
 	*-atari*)
 		os=mint
 		;;
+	*-wrs)
+		os=vxworks
+		;;
 	*)
 		os=none
 		;;
@@ -1788,6 +1758,9 @@ case $basic_machine in
 				;;
 			genix*)
 				vendor=ns
+				;;
+			clix*)
+				vendor=intergraph
 				;;
 			mvs* | opened*)
 				vendor=ibm

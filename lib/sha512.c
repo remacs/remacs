@@ -36,18 +36,11 @@
 # include "unlocked-io.h"
 #endif
 
+#include <byteswap.h>
 #ifdef WORDS_BIGENDIAN
 # define SWAP(n) (n)
 #else
-# define SWAP(n) \
-    u64or (u64or (u64or (u64shl (n, 56),                                \
-                         u64shl (u64and (n, u64lo (0x0000ff00)), 40)),  \
-                  u64or (u64shl (u64and (n, u64lo (0x00ff0000)), 24),   \
-                         u64shl (u64and (n, u64lo (0xff000000)),  8))), \
-           u64or (u64or (u64and (u64shr (n,  8), u64lo (0xff000000)),   \
-                         u64and (u64shr (n, 24), u64lo (0x00ff0000))),  \
-                  u64or (u64and (u64shr (n, 40), u64lo (0x0000ff00)),   \
-                         u64shr (n, 56))))
+# define SWAP(n) bswap_64 (n)
 #endif
 
 #define BLOCKSIZE 32768
@@ -216,6 +209,14 @@ shaxxx_stream (FILE *stream, char const *alg, void *resblock,
       /* Read block.  Take care for partial reads.  */
       while (1)
         {
+          /* Either process a partial fread() from this loop,
+             or the fread() in afalg_stream may have gotten EOF.
+             We need to avoid a subsequent fread() as EOF may
+             not be sticky.  For details of such systems, see:
+             https://sourceware.org/bugzilla/show_bug.cgi?id=1190  */
+          if (feof (stream))
+            goto process_partial_block;
+
           n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
 
           sum += n;
@@ -235,12 +236,6 @@ shaxxx_stream (FILE *stream, char const *alg, void *resblock,
                 }
               goto process_partial_block;
             }
-
-          /* We've read at least one byte, so ignore errors.  But always
-             check for EOF, since feof may be true even though N > 0.
-             Otherwise, we could end up calling fread after EOF.  */
-          if (feof (stream))
-            goto process_partial_block;
         }
 
       /* Process buffer with BLOCKSIZE bytes.  Note that

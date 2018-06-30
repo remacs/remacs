@@ -108,7 +108,7 @@ AC_DEFUN([gl_PREREQ_GETLOADAVG],
 [
 # Figure out what our getloadavg.c needs.
 
-AC_CHECK_HEADERS_ONCE([sys/param.h])
+AC_CHECK_HEADERS_ONCE([sys/param.h unistd.h])
 
 # On HPUX9, an unprivileged user can get load averages this way.
 if test $gl_func_getloadavg_done = no; then

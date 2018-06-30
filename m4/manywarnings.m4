@@ -1,4 +1,4 @@
-# manywarnings.m4 serial 14
+# manywarnings.m4 serial 15
 dnl Copyright (C) 2008-2018 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -108,12 +108,11 @@ m4_defun([gl_MANYWARN_ALL_GCC(C)],
   # comm -3 \
   #  <((sed -n 's/^  *\(-[^ 0-9][^ ]*\) .*/\1/p' manywarnings.m4; \
   #     awk '/^[^#]/ {print $1}' ../build-aux/gcc-warning.spec) | sort) \
-  #  <(gcc --help=warnings | sed -n 's/^  \(-[^ ]*\) .*/\1/p' | sort)
+  #  <(LC_ALL=C gcc --help=warnings | sed -n 's/^  \(-[^ ]*\) .*/\1/p' | sort)
 
   gl_manywarn_set=
   for gl_manywarn_item in -fno-common \
     -W \
-    -Wabi \
     -Waddress \
     -Waggressive-loop-optimizations \
     -Wall \
@@ -128,7 +127,6 @@ m4_defun([gl_MANYWARN_ALL_GCC(C)],
     -Wcast-align=strict \
     -Wcast-function-type \
     -Wchar-subscripts \
-    -Wchkp \
     -Wclobbered \
     -Wcomment \
     -Wcomments \
@@ -176,7 +174,6 @@ m4_defun([gl_MANYWARN_ALL_GCC(C)],
     -Wint-to-pointer-cast \
     -Winvalid-memory-model \
     -Winvalid-pch \
-    -Wjump-misses-init \
     -Wlogical-not-parentheses \
     -Wlogical-op \
     -Wmain \

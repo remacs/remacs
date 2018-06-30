@@ -31,7 +31,7 @@
 
 int
 get_permissions (const char *name, int desc, mode_t mode,
-		 struct permission_context *ctx)
+                 struct permission_context *ctx)
 {
   memset (ctx, 0, sizeof *ctx);
   ctx->mode = mode;
@@ -57,7 +57,7 @@ get_permissions (const char *name, int desc, mode_t mode,
     {
       ctx->default_acl = acl_get_file (name, ACL_TYPE_DEFAULT);
       if (ctx->default_acl == NULL)
-	return -1;
+        return -1;
     }
 
 # if HAVE_ACL_TYPE_NFS4  /* FreeBSD */
@@ -115,16 +115,16 @@ get_permissions (const char *name, int desc, mode_t mode,
       int ret;
 
       if (desc != -1)
-	ret = facl (desc, ACE_GETACLCNT, 0, NULL);
+        ret = facl (desc, ACE_GETACLCNT, 0, NULL);
       else
-	ret = acl (name, ACE_GETACLCNT, 0, NULL);
+        ret = acl (name, ACE_GETACLCNT, 0, NULL);
       if (ret < 0)
-	{
-	  if (errno == ENOSYS || errno == EINVAL)
-	    ret = 0;
-	  else
-	    return -1;
-	}
+        {
+          if (errno == ENOSYS || errno == EINVAL)
+            ret = 0;
+          else
+            return -1;
+        }
       ctx->ace_count = ret;
 
       if (ctx->ace_count == 0)
@@ -138,15 +138,15 @@ get_permissions (const char *name, int desc, mode_t mode,
         }
 
       if (desc != -1)
-	ret = facl (desc, ACE_GETACL, ctx->ace_count, ctx->ace_entries);
+        ret = facl (desc, ACE_GETACL, ctx->ace_count, ctx->ace_entries);
       else
-	ret = acl (name, ACE_GETACL, ctx->ace_count, ctx->ace_entries);
+        ret = acl (name, ACE_GETACL, ctx->ace_count, ctx->ace_entries);
       if (ret < 0)
         {
           if (errno == ENOSYS || errno == EINVAL)
             {
-	      free (ctx->ace_entries);
-	      ctx->ace_entries = NULL;
+              free (ctx->ace_entries);
+              ctx->ace_entries = NULL;
               ctx->ace_count = 0;
               break;
             }
@@ -154,10 +154,10 @@ get_permissions (const char *name, int desc, mode_t mode,
             return -1;
         }
       if (ret <= ctx->ace_count)
-	{
-	  ctx->ace_count = ret;
-	  break;
-	}
+        {
+          ctx->ace_count = ret;
+          break;
+        }
       /* Huh? The number of ACL entries has increased since the last call.
          Repeat.  */
       free (ctx->ace_entries);
@@ -170,20 +170,20 @@ get_permissions (const char *name, int desc, mode_t mode,
       int ret;
 
       if (desc != -1)
-	ret = facl (desc, GETACLCNT, 0, NULL);
+        ret = facl (desc, GETACLCNT, 0, NULL);
       else
-	ret = acl (name, GETACLCNT, 0, NULL);
+        ret = acl (name, GETACLCNT, 0, NULL);
       if (ret < 0)
-	{
-	  if (errno == ENOSYS || errno == ENOTSUP || errno == EOPNOTSUPP)
-	    ret = 0;
-	  else
-	    return -1;
-	}
+        {
+          if (errno == ENOSYS || errno == ENOTSUP || errno == EOPNOTSUPP)
+            ret = 0;
+          else
+            return -1;
+        }
       ctx->count = ret;
 
       if (ctx->count == 0)
-	break;
+        break;
 
       ctx->entries = (aclent_t *) malloc (ctx->count * sizeof (aclent_t));
       if (ctx->entries == NULL)
@@ -193,26 +193,26 @@ get_permissions (const char *name, int desc, mode_t mode,
         }
 
       if (desc != -1)
-	ret = facl (desc, GETACL, ctx->count, ctx->entries);
+        ret = facl (desc, GETACL, ctx->count, ctx->entries);
       else
-	ret = acl (name, GETACL, ctx->count, ctx->entries);
+        ret = acl (name, GETACL, ctx->count, ctx->entries);
       if (ret < 0)
-	{
-	  if (errno == ENOSYS || errno == ENOTSUP || errno == EOPNOTSUPP)
-	    {
-	      free (ctx->entries);
-	      ctx->entries = NULL;
-	      ctx->count = 0;
-	      break;
-	    }
-	  else
-	    return -1;
-	}
+        {
+          if (errno == ENOSYS || errno == ENOTSUP || errno == EOPNOTSUPP)
+            {
+              free (ctx->entries);
+              ctx->entries = NULL;
+              ctx->count = 0;
+              break;
+            }
+          else
+            return -1;
+        }
       if (ret <= ctx->count)
-	{
-	  ctx->count = ret;
-	  break;
-	}
+        {
+          ctx->count = ret;
+          break;
+        }
       /* Huh? The number of ACL entries has increased since the last call.
          Repeat.  */
       free (ctx->entries);

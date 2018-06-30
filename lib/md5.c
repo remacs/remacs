@@ -52,9 +52,9 @@
 # define md5_buffer __md5_buffer
 #endif
 
+#include <byteswap.h>
 #ifdef WORDS_BIGENDIAN
-# define SWAP(n)                                                        \
-    (((n) << 24) | (((n) & 0xff00) << 8) | (((n) >> 8) & 0xff00) | ((n) >> 24))
+# define SWAP(n) bswap_32 (n)
 #else
 # define SWAP(n) (n)
 #endif
@@ -170,6 +170,14 @@ md5_stream (FILE *stream, void *resblock)
       /* Read block.  Take care for partial reads.  */
       while (1)
         {
+          /* Either process a partial fread() from this loop,
+             or the fread() in afalg_stream may have gotten EOF.
+             We need to avoid a subsequent fread() as EOF may
+             not be sticky.  For details of such systems, see:
+             https://sourceware.org/bugzilla/show_bug.cgi?id=1190  */
+          if (feof (stream))
+            goto process_partial_block;
+
           n = fread (buffer + sum, 1, BLOCKSIZE - sum, stream);
 
           sum += n;
@@ -189,12 +197,6 @@ md5_stream (FILE *stream, void *resblock)
                 }
               goto process_partial_block;
             }
-
-          /* We've read at least one byte, so ignore errors.  But always
-             check for EOF, since feof may be true even though N > 0.
-             Otherwise, we could end up calling fread after EOF.  */
-          if (feof (stream))
-            goto process_partial_block;
         }
 
       /* Process buffer with BLOCKSIZE bytes.  Note that

@@ -293,10 +293,6 @@ struct permission_context {
 
 int get_permissions (const char *, int, mode_t, struct permission_context *);
 int set_permissions (struct permission_context *, const char *, int);
-void free_permission_context (struct permission_context *)
-#if ! (defined USE_ACL && (HAVE_ACL_GET_FILE || defined GETACL))
-    _GL_ATTRIBUTE_CONST
-#endif
-  ;
+void free_permission_context (struct permission_context *);
 
 _GL_INLINE_HEADER_END

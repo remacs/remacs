@@ -68,7 +68,7 @@
    UMAX
    UMAX4_3
    VMS
-   WINDOWS32                    No-op for Windows95/NT.
+   _WIN32                       Native Windows (possibly also defined on Cygwin)
    __linux__                    Linux: assumes /proc file system mounted.
                                 Support from Michael K. Johnson.
    __CYGWIN__                   Cygwin emulates linux /proc/loadavg.
@@ -96,6 +96,10 @@
 # endif
 
 # include "intprops.h"
+
+# if defined _WIN32 && ! defined __CYGWIN__
+#  define WINDOWS32
+# endif
 
 # if !defined (BSD) && defined (ultrix)
 /* Ultrix behaves like BSD on Vaxen.  */
@@ -324,7 +328,9 @@
 #  define LDAV_SYMBOL "avenrun"
 # endif
 
-# include <unistd.h>
+# ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+# endif
 
 /* LOAD_AVE_TYPE should only get defined if we're going to use the
    nlist method.  */
