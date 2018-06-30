@@ -17,3 +17,19 @@
       ;; change the display table for the current window
       (set-window-display-table (get-buffer-window) disptab)
       (should (eq (window-display-table) disptab)))))
+
+(ert-deftest window-dedicated-set-nil()
+  ;; set window to non-dedicated
+  (should (eq (set-window-dedicated-p (selected-window) nil) nil))
+  (should(eq (window-dedicated-p (selected-window)) nil)))
+
+(ert-deftest window-dedicated-set-not-nil()
+  ;; set widnow to dedicated
+  (should (eq (set-window-dedicated-p (selected-window) 't) 't))
+  (should(eq (window-dedicated-p (selected-window)) 't)))
+
+(ert-deftest window-dedicated-p-default-selected-window()
+  (should(eq (window-dedicated-p) nil))
+  ;; set selected widnow to dedicated
+  (should (eq (set-window-dedicated-p (selected-window) 't) 't))
+  (should(eq (window-dedicated-p) 't)))
