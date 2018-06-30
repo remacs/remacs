@@ -235,6 +235,11 @@ impl LispWindowRef {
                 || (self.contents().as_buffer_or_error().header_line_format_).is_not_nil())
             && self.pixel_height() > height
     }
+
+    #[inline]
+    pub fn dedicated(self) -> LispObject {
+        self.dedicated
+    }
 }
 
 pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
@@ -695,6 +700,27 @@ pub fn window_list_one(
     all_frames: LispObject,
 ) -> LispObject {
     unsafe { (window_list_1(window.to_raw(), minibuf.to_raw(), all_frames.to_raw())) }
+}
+
+/// Return non-nil when WINDOW is dedicated to its buffer.
+/// More precisely, return the value assigned by the last call of
+/// `set-window-dedicated-p' for WINDOW.  Return nil if that function was
+/// never called with WINDOW as its argument, or the value set by that
+/// function was internally reset since its last call.  WINDOW must be a
+/// live window and defaults to the selected one.
+///
+/// When a window is dedicated to its buffer, `display-buffer' will refrain
+/// from displaying another buffer in it.  `get-lru-window' and
+/// `get-largest-window' treat dedicated windows specially.
+/// `delete-windows-on', `replace-buffer-in-windows', `quit-window' and
+/// `kill-buffer' can delete a dedicated window and the containing frame.
+///
+/// Functions like `set-window-buffer' may change the buffer displayed by a
+/// window, unless that window is "strongly" dedicated to its buffer, that
+/// is the value returned by `window-dedicated-p' is t.
+#[lisp_fn(min = "0")]
+pub fn window_dedicated_p(window: LispObject) -> LispObject {
+    window_live_or_selected(window).dedicated()
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
