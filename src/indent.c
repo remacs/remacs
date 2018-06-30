@@ -2356,9 +2356,7 @@ whether or not it is currently displayed in some window.  */)
       bidi_unshelve_cache (itdata, 0);
     }
 
-  unbind_to (count, Qnil);
-
-  return make_number (it.vpos);
+  return unbind_to (count, make_number (it.vpos));
 }
 
 

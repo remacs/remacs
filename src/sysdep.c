@@ -3592,8 +3592,7 @@ system_process_attributes (Lisp_Object pid)
 						  Vlocale_coding_system, 0);
       attrs = Fcons (Fcons (Qargs, decoded_cmd), attrs);
     }
-  unbind_to (count, Qnil);
-  return attrs;
+  return unbind_to (count, attrs);
 }
 
 #elif defined __FreeBSD__

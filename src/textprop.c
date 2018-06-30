@@ -826,7 +826,7 @@ last valid position in OBJECT.  */)
 	      break;
 	  }
 
-      unbind_to (count, Qnil);
+      position = unbind_to (count, position);
     }
 
   return position;
@@ -920,7 +920,7 @@ first valid position in OBJECT.  */)
 	    }
 	}
 
-      unbind_to (count, Qnil);
+      position = unbind_to (count, position);
     }
 
   return position;

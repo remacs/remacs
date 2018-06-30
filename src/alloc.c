@@ -7206,8 +7206,7 @@ which_symbols (Lisp_Object obj, EMACS_INT find_max)
      }
 
   out:
-   unbind_to (gc_count, Qnil);
-   return found;
+   return unbind_to (gc_count, found);
 }
 
 #ifdef SUSPICIOUS_OBJECT_CHECKING

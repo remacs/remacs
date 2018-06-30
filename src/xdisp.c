@@ -4937,7 +4937,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
       specbind (Qposition, make_number (CHARPOS (*position)));
       specbind (Qbuffer_position, make_number (bufpos));
       form = safe_eval (form);
-      unbind_to (count, Qnil);
+      form = unbind_to (count, form);
     }
 
   if (NILP (form))
@@ -5000,7 +5000,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 
 		  specbind (Qheight, face->lface[LFACE_HEIGHT_INDEX]);
 		  value = safe_eval (it->font_height);
-		  unbind_to (count, Qnil);
+		  value = unbind_to (count, value);
 
 		  if (NUMBERP (value))
 		    new_height = XFLOATINT (value);
@@ -24183,8 +24183,7 @@ are the selected window and the WINDOW's buffer).  */)
 			empty_unibyte_string);
     }
 
-  unbind_to (count, Qnil);
-  return str;
+  return unbind_to (count, str);
 }
 
 /* Write a null-terminated, right justified decimal representation of
@@ -24804,7 +24803,7 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 	if (STRINGP (curdir))
 	  val = call1 (intern ("file-remote-p"), curdir);
 
-	unbind_to (count, Qnil);
+	val = unbind_to (count, val);
 
 	if (NILP (val))
 	  return "-";

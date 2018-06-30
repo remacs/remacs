@@ -5771,8 +5771,7 @@ which see.  */)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   scroll_command (Fother_window_for_scrolling (), arg, 1);
-  unbind_to (count, Qnil);
-  return Qnil;
+  return unbind_to (count, Qnil);
 }
 
 DEFUN ("scroll-other-window-down", Fscroll_other_window_down,
@@ -5783,8 +5782,7 @@ For more details, see the documentation for `scroll-other-window'.  */)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   scroll_command (Fother_window_for_scrolling (), arg, -1);
-  unbind_to (count, Qnil);
-  return Qnil;
+  return unbind_to (count, Qnil);
 }
 
 DEFUN ("scroll-left", Fscroll_left, Sscroll_left, 0, 2, "^P\np",

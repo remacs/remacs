@@ -1608,9 +1608,7 @@ like in the respective argument of `key-binding'.  */)
 	keymaps = Fcons (otlp, keymaps);
     }
 
-  unbind_to (count, Qnil);
-
-  return keymaps;
+  return unbind_to (count, keymaps);
 }
 
 /* GC is possible in this function if it autoloads a keymap.  */
