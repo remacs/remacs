@@ -808,6 +808,13 @@ communications with subprocesses to programs that exhibit unusual
 behavior with respect to buffering pipe I/O.
 
 @ifnottex
+@vindex w32-pipe-read-delay
+  If you need to invoke MS-DOS programs as Emacs subprocesses, you may
+see low rate of reading data from such programs.  Setting the variable
+@code{w32-pipe-read-delay} to a non-zero value may improve throughput
+in these cases; we suggest the value of 50 for such situations.  The
+default is zero.
+
 @findex w32-shell-execute
   The function @code{w32-shell-execute} can be useful for writing
 customized commands that run MS-Windows applications registered to

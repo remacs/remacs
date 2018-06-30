@@ -8469,13 +8469,14 @@ _sys_read_ahead (int fd)
     {
       rc = _read (fd, &cp->chr, sizeof (char));
 
-      /* Give subprocess time to buffer some more output for us before
-	 reporting that input is available; we need this because Windows 95
-	 connects DOS programs to pipes by making the pipe appear to be
-	 the normal console stdout - as a result most DOS programs will
-	 write to stdout without buffering, ie. one character at a
-	 time.  Even some W32 programs do this - "dir" in a command
-	 shell on NT is very slow if we don't do this. */
+      /* Optionally give subprocess time to buffer some more output
+	 for us before reporting that input is available; we may need
+	 this because Windows 9X connects DOS programs to pipes by
+	 making the pipe appear to be the normal console stdout -- as
+	 a result most DOS programs will write to stdout without
+	 buffering, i.e., one character at a time.  Even some W32
+	 programs do this -- "dir" in a command shell on NT is very
+	 slow if we don't do this.  */
       if (rc > 0)
 	{
 	  int wait = w32_pipe_read_delay;

@@ -851,6 +851,17 @@ retrieving values stored under a given key.  It is intended to be used
 for supporting features such as XDG-like location of important files
 and directories.
 
++++
+** The default value of 'w32-pipe-read-delay' is now zero.
+This speeds up reading output from sub-processes that produce a lot of
+data.
+
+This variable may need to be non-zero only when running DOS programs
+as Emacs subprocesses, which by now is not supported on modern
+versions of MS-Windows.  Set this variable to 50 if for some reason
+you need the old behavior (and please report such situations to Emacs
+developers).
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.

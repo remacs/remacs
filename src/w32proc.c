@@ -3763,14 +3763,17 @@ them blocking when trying to access unmounted drives etc.  */);
 
   DEFVAR_INT ("w32-pipe-read-delay", w32_pipe_read_delay,
 	      doc: /* Forced delay before reading subprocess output.
-This is done to improve the buffering of subprocess output, by
-avoiding the inefficiency of frequently reading small amounts of data.
+This may need to be done to improve the buffering of subprocess output,
+by avoiding the inefficiency of frequently reading small amounts of data.
+Typically needed only with DOS programs on Windows 9X; set to 50 if
+throughput with such programs is slow.
 
 If positive, the value is the number of milliseconds to sleep before
-reading the subprocess output.  If negative, the magnitude is the number
-of time slices to wait (effectively boosting the priority of the child
-process temporarily).  A value of zero disables waiting entirely.  */);
-  w32_pipe_read_delay = 50;
+signaling that output from a subprocess is ready to be read.
+If negative, the value is the number of time slices to wait (effectively
+boosting the priority of the child process temporarily).
+A value of zero disables waiting entirely.  */);
+  w32_pipe_read_delay = 0;
 
   DEFVAR_INT ("w32-pipe-buffer-size", w32_pipe_buffer_size,
 	      doc: /* Size of buffer for pipes created to communicate with subprocesses.
