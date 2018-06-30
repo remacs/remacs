@@ -40,7 +40,7 @@
 (require 'cl-lib)
 (require 'json)
 (require 'eieio)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 (require 'warnings)
 (require 'pcase)
 (require 'ert) ; to escape a `condition-case-unless-debug'
