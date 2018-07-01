@@ -8767,7 +8767,7 @@ A prefix argument is handled like `recenter':
  With plain `C-u', move current line to window center."
   (interactive "P")
   (cond
-   (arg (recenter arg))			; Always respect ARG.
+   (arg (recenter arg t))                 ; Always respect ARG.
    (t
     (setq recenter-last-op
 	  (if (eq this-command last-command)

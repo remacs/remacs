@@ -5901,7 +5901,7 @@ displayed_window_lines (struct window *w)
 }
 
 
-DEFUN ("recenter", Frecenter, Srecenter, 0, 2, "P",
+DEFUN ("recenter", Frecenter, Srecenter, 0, 2, "P\np",
        doc: /* Center point in selected window and maybe redisplay frame.
 With a numeric prefix argument ARG, recenter putting point on screen line ARG
 relative to the selected window.  If ARG is negative, it counts up from the
@@ -5913,7 +5913,7 @@ non-nil, also erase the entire frame and redraw it (when
 `auto-resize-tool-bars' is set to `grow-only', this resets the
 tool-bar's height to the minimum height needed); if
 `recenter-redisplay' has the special value `tty', then only tty frames
-are redrawn.
+are redrawn.  Interactively, REDISPLAY is always non-nil.
 
 Just C-u as prefix means put point in the center of the window
 and redisplay normally--don't erase and redraw the frame.  */)
