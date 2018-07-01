@@ -1,3 +1,1430 @@
+2018-07-01  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etc/HISTORY: Cite Brinkoff on early history.
+
+2018-07-01  Martin Rudalics  <rudalics@gmx.at>
+
+	Document internal use of 'above-suspended' z-group frame parameter
+
+	* src/w32fns.c (w32_dialog_in_progress, x_set_z_group):
+	* src/xterm.c (x_set_z_group): Clarify the internal use of
+	'above-suspended' when setting a frame's 'z-group' parameter.
+
+2018-06-30  Gemini Lasswell  <gazally@runbox.com>
+
+	Increase max-lisp-eval-depth adjustment while in debugger (bug#31919)
+
+	* src/eval.c (call_debugger): Increase the amount of extra Lisp
+	evaluation depth given to the debugger to allow it to call cl-print.
+	* lisp/emacs-lisp/debug.el (debugger-setup-buffer): Add a comment
+	to suggest updating call_debugger when changing print-level.
+
+2018-06-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve on last change in replace-buffer-contents
+
+	* src/editfns.c (Freplace_buffer_contents): Call modification
+	hooks only for the actual region where changes are made.
+	(Bug#31888)
+
+2018-06-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a factual error in Introduction to Emacs Lisp
+
+	* doc/lispintro/emacs-lisp-intro.texi (Buffer Names): Update the
+	key that exits the splash screen.  (Bug#32019)
+
+2018-06-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor improvements in documentation of imenu.el
+
+	* lisp/imenu.el (imenu-generic-skip-comments-and-strings)
+	(imenu--generic-function): Doc fixes.  (Bug#31962)
+
+2018-06-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid errors with recentering in 'skeleton-insert'
+
+	* lisp/skeleton.el (skeleton-insert): Don't recenter if we are
+	running in a buffer other than the one displayed in the selected
+	window.  (Bug#31950)
+
+2018-06-29  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* src/lisp.h: Omit obsolete comment re bytecode stack.
+
+2018-06-29  Eli Zaretskii  <eliz@gnu.org>
+
+	Speed up replace-buffer-contents
+
+	* src/editfns.c (EXTRA_CONTEXT_FIELDS): Add a_unibyte and
+	b_unibyte members.
+	(rbc_quitcounter): New static variable.
+	(Freplace_buffer_contents): Initialize a_unibyte, b_unibyte, and
+	rbc_quitcounter.  Inhibit modification hooks if they were not
+	already inhibited.  Use rarely_quit to allow user to quit, to
+	avoid calling maybe_quit too frequently (which hurts performance).
+	Remove redundant assertions (which hurt performance too much).
+	Call signal_after_change and update_compositions after all the
+	changes are done.
+	(buffer_chars_equal): Remove redundant assertions (which hurt
+	performance).  Avoid using BUF_FETCH_CHAR_AS_MULTIBYTE, which
+	hurts performance by referencing Lisp symbols; instead, use
+	lower-level macros with explicit tests to select which macro to
+	use.  (Bug#31888)
+
+2018-06-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Remove extra process call from vc-git-find-file-hook
+
+	* lisp/vc/vc-git.el (vc-git-find-file-hook): Resolve FIXMEs.
+
+2018-06-27  Dmitry Gutov  <dgutov@yandex.ru>
+
+	Speed up vc-git-dir-status-files
+
+	* lisp/vc/vc-git.el (vc-git-dir-status-goto-stage): Call 'git
+	ls-files -u' for the ls-files-conflict stage
+	(https://lists.gnu.org/archive/html/emacs-devel/2018-06/msg00885.html).
+
+2018-06-27  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid compiler warning using coding.h
+
+	* src/coding.h: Add INLINE_HEADER_BEGIN..INLINE_HEADER_END, since
+	this header now has an extern INLINE function.
+
+2018-06-27  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.3.4.  Do not merge with master
+
+	* doc/misc/trampver.texi:
+	* lisp/net/trampver.el: Change version to "2.3.4".
+
+	* lisp/net/tramp-smb.el (tramp-smb-handle-delete-directory):
+	Check, that the directory has been removed indeed.
+
+	* test/lisp/net/tramp-tests.el (tramp-test21-file-links): Adapt test.
+	(tramp--test-emacs25-p): New defun.
+	(tramp-test34-vc-registered): Use it.
+
+2018-06-27  Martin Rudalics  <rudalics@gmx.at>
+
+	* src/xdisp.c (Vmouse_autoselect_window): Clarify doc-string (Bug#31975)
+
+2018-06-26  Noam Postavsky  <npostavs@gmail.com>
+
+	Detect a non-list package archive content properly (Bug#22311)
+
+	* lisp/emacs-lisp/package.el (package--download-one-archive): Use
+	`read' instead of `read-from-string'; the latter always returns a
+	cons, so the `listp' check on its return value doesn't make sense.  It
+	was changed from `read' to `read-from-string' in 2015-04-01 "*
+	emacs-lisp/package.el: Implement asynchronous refreshing", but that
+	change was not needed because `read' works fine on strings as well as
+	buffers.
+
+2018-06-25  Christophe Junke  <junke.christophe@gmail.com>  (tiny change)
+
+	Add ido-fallback special variable (Bug#31707)
+
+	Before ido.el switch to lexical-binding, it was possible for other
+	packages to modify the 'fallback' variables declared inside
+	'ido-file-internal' and 'ido-buffer-internal'.
+	* lisp/ido.el (ido-fallback): New variable.
+	(ido-buffer-internal, ido-file-internal): Reset ido-fallback to nil
+	before prompting user.  Use ido-fallback when ido-exit is 'fallback'.
+	(ido-fallback-command): Add optional FALLBACK-COMMAND argument.
+
+2018-06-25  Karl Fogel  <kfogel@red-bean.com>
+
+	Tighten a cross-reference in documentation
+
+	* doc/lispref/internals.texi (Writing Emacs Primitives): Switch to
+	  a simple parenthetical cross-reference, following up to my
+	  commit 9a53b6d426 of 2018-06-24.
+
+	See discussion:
+
+	  https://lists.gnu.org/archive/html/emacs-devel/2018-06/msg00826.html
+	  From: Eli Zaretskii
+	  Subject: Re: [Emacs-diffs] \
+	           emacs-26 9a53b6d: Say how to override a primitive interactive spec
+	  To: Karl Fogel
+	  CC: Stefan Monnier, Emacs Devel
+	  Date: Mon, 25 Jun 2018 17:41:53 +0300
+	  Message-Id: <83r2kvrkr2.fsf@gnu.org>
+
+2018-06-25  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix last change in tramp-sh.el
+
+	* lisp/net/tramp-sh.el (tramp-do-copy-or-rename-file-directly):
+	Use "-R" rather than "-r" for recursive copy of directories.
+
+2018-06-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Revert previous patch; comment was OK after all.
+
+2018-06-24  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix lead comment for count_trailing_zero_bits
+
+	* src/data.c (count_trailing_zero_bits): Fix comment to match code.
+
+2018-06-24  Noam Postavsky  <npostavs@gmail.com>
+
+	* lisp/emacs-lisp/regexp-opt.el (regexp-opt): Fix docstring quotes.
+
+2018-06-24  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Make a minor update to the CSS mode docstring
+
+	* lisp/textmodes/css-mode.el (css-mode): Mention 'fill-paragraph'.
+
+2018-06-24  Karl Fogel  <kfogel@red-bean.com>
+
+	Say how to override a primitive interactive spec
+
+	* doc/lispref/internals.texi (Writing Emacs Primitives): Mention that
+	  the `interactive-form' property can be used to override a primitive
+	  interactive specification, and refer to the detailed documentation
+	  for setting that property.
+
+	From this thread on Emacs Devel:
+
+	  https://lists.gnu.org/archive/html/emacs-devel/2018-03/msg00923.html
+	  From: Eli Zaretskii
+	  To: Karl Fogel
+	  CC: Juri Linkov, Emacs Devel
+	  Subject: Re: [Emacs-diffs] \
+	           master b88e7c8: Make transpose-regions interactive (Bug#30343)
+	  Date: Thu, 29 Mar 2018 14:38:15 +0300
+	  Message-Id: <834lkzdsd4.fsf@gnu.org>
+
+2018-06-24  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#31941
+
+	* lisp/net/tramp-sh.el (tramp-do-copy-or-rename-file): In case of
+	FILENAME being a directory, check whether `copy-directory' could
+	be avoided.  Suggested by Stephen Nutt <stnutt@gmail.com>.  (Bug#31941)
+	(tramp-do-copy-or-rename-file-directly): Call "cp" with "-r".
+
+2018-06-23  Leo Liu  <sdl.web@gmail.com>
+
+	Fix previous change in minibuffer-default-add-dired-shell-commands
+
+	The mailcap minibuffer completion used dynamic binding.  Locally set
+	a dynamic variable.
+	* lisp/dired-aux.el (minibuffer-default-add-dired-shell-commands):
+	Store list of files in 'minibuffer-completion-table'.  (Bug#31794)
+
+2018-06-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/editfns.c (Fformat): Make %x easier to spot in doc string.  (Bug#31945)
+
+2018-06-23  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve responsiveness while in 'replace-buffer-contents'
+
+	* src/editfns.c (buffer_chars_equal): Avoid calling
+	buf_charpos_to_bytepos when the buffer is plain-ASCII.
+	Suggested by Milan Stanojević <mstanojevic@janestreet.com>.
+	Call maybe_quit to improve responsiveness.
+	(Freplace_buffer_contents): Call maybe_quit.  Warn in the doc
+	string that the function could be slow.  (Bug#31888)
+
+2018-06-23  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'server-start' and friends
+
+	* lisp/server.el (server-start, server-running-p): Document how to
+	reliably check that the current Emacs process started the server.
+	(Bug#31859)
+
+2018-06-23  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify wording about functions' argument lists
+
+	* doc/lispref/functions.texi (Argument List): Clarify the
+	wording.  (Bug#31872)
+
+2018-06-23  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/doc-view.el: Fix typos in the commentary.  (Bug#31937)
+
+2018-06-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in emacs-lisp-intro.texi
+
+	* doc/lispintro/emacs-lisp-intro.texi (kill-ring-yank-pointer):
+	Add a missing quote.  Reported by Jean-Christophe Helary
+	<brandelune@gmail.com> in emacs-devel.
+
+2018-06-22  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix doc typo: missing double-quote
+
+2018-06-22  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid segfaults in replace-buffer-contents with large buffers
+
+	* src/editfns.c (Freplace_buffer_contents): Don't release
+	malloc'ed memory as long as we are using it.  (Bug#31888)
+
+2018-06-22  Robert Pluim  <rpluim@gmail.com>
+
+	Adjust for scaling for mode-line popup menus (Bug#31880)
+
+	* src/xmenu.c (menu_position_func) [HAVE_GTK3]: Take scaling
+	into account when calculating screen size.
+
+2018-06-21  Simen Heggestøyl  <simenheg@gmail.com>
+
+	Change name of `seqp' argument (Bug#26411)
+
+	* lisp/emacs-lisp/seq.el (seqp): Change argument name.
+
+	* doc/lispref/sequences.texi: Update the documentation for seqp.
+
+2018-06-20  Noam Postavsky  <npostavs@gmail.com>
+
+	Change index of ";" to better reflect it's usage (Bug#31623)
+
+	* doc/lispref/objects.texi (Comments): "; for commenting" fits better
+	with the following text about how a semicolon begins a comment.  Also
+	mention that only unescaped semicolons start a comment.
+
+2018-06-20  Tak Kunihiro  <tkk@misasa.okayama-u.ac.jp>
+
+	Fix bug of 'mouse-drag-and-drop-region' to detect edges of region (Bug#31905)
+
+	* lisp/mouse.el (mouse-drag-and-drop-region): Detect both the
+	beginning and the end of character of region during dragging
+	text.
+
+2018-06-19  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix #'fun handling inside `labels' (Bug#31792)
+
+	* lisp/emacs-lisp/cl.el (labels): Apply the equivalent of the
+	cl-labels change from 2015-01-16 "* lisp/emacs-lisp/cl-macs.el: Fix
+	last change".
+	* test/lisp/emacs-lisp/cl-tests.el (labels-function-quoting): New
+	test.
+	* lisp/emacs-lisp/cl-macs.el (cl-flet, cl-labels): Improve docstring,
+	link to relevant manual page.
+	* doc/misc/cl.texi (Function Bindings): Don't imply that function
+	cells of symbols are modified by cl-flet.  Don't claim that cl-flet or
+	cl-labels affect references of the form (quote FUNC).
+
+2018-06-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix vertical-motion with 'visual' line-number display
+
+	* src/indent.c (Fvertical_motion): Don't exempt 'visual' sty;e of
+	line-number display from X coordinate adjustments.  (Bug#31875)
+
+2018-06-17  Alan Third  <alan@idiocy.org>
+
+	Handle NSAttributedString inputs (bug#29837)
+
+
+	* src/nsterm.m (EmacsView::insertText): Handle NSAttributedString.
+
+2018-06-17  Philipp Stephani  <phst@google.com>
+
+	Allow inserting non-BMP characters
+
+	* src/coding.h (UTF_16_HIGH_SURROGATE_P, UTF_16_LOW_SURROGATE_P): Move
+	from coding.c and document.
+	(surrogates_to_codepoint): New function.
+
+	* src/nsterm.m (insertText:): Properly handle surrogate pairs.
+
+	(cherry picked from commit 703ac3ea1c1ce381f385469a0e88bc29d3fe83c2)
+
+2018-06-17  Aaron Jensen  <aaronjensen@gmail.com>
+
+	Prevent errant scroll on mouse click (Bug#31546)
+
+	* src/nsterm.m (ns_mouse_position): Use correct frame when determining
+	  mouse position.
+	* lisp/mouse.el (mouse-drag-track): Only account for mode-line height
+	  if `mode-line-format' is non-nil.
+
+2018-06-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Minor documentation fix
+
+	* doc/lispref/windows.texi (Window Start and End): Improve
+	documentation and indexing of window-end.
+
+2018-06-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/window.el (window-toggle-side-windows): Doc fix.  (Bug#31858)
+
+2018-06-16  Paul Eggert  <eggert@Penguin.CS.UCLA.EDU>
+
+	Fix byte compilation of (eq foo 'default)
+
+	Backport from master.
+	Do not use the symbol ‘default’ as a special marker.
+	Instead, use a value that cannot appear in the program,
+	improving on a patch proposed by Robert Cochran (Bug#31718#14).
+	* lisp/emacs-lisp/bytecomp.el (byte-compile--default-val):
+	New constant.
+	(byte-compile-cond-jump-table-info)
+	(byte-compile-cond-jump-table): Use it instead of 'default.
+	* test/lisp/emacs-lisp/bytecomp-tests.el:
+	(byte-opt-testsuite-arith-data): Add a test for the bug.
+
+2018-06-16  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#31846.  Do not merge with master
+
+	* lisp/net/secrets.el (secrets-search-items)
+	(secrets-create-item): Fix format of :dict-entry values.  (Bug#31846)
+
+2018-06-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix documentation of ':propertize' in mode-line-format
+
+	* doc/lispref/modes.texi (Mode Line Data): Make the description of
+	':propertize' more accurate.  (Bug#26291)
+
+2018-06-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Reject invalid 5-byte sequences when detecting UTF-8 encoding
+
+	* src/coding.c (detect_coding_utf_8): Reject multibyte sequences
+	whose leading byte is greater than MAX_MULTIBYTE_LEADING_CODE.
+	(Bug#31829)
+	* src/character.h (MAX_MULTIBYTE_LEADING_CODE): Add commentary
+	about the connection between the value of this macro and MAX_CHAR.
+
+2018-06-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix 'replace-buffer-contents' in multibyte buffers
+
+	* src/editfns.c (buffer_chars_equal): Pass a byte position to
+	BUF_FETCH_CHAR_AS_MULTIBYTE, not a character position.
+	(Bug#31837)
+
+	* test/src/editfns-tests.el (replace-buffer-contents-bug31837):
+	New test.
+
+2018-06-15  Robert Pluim  <rpluim@gmail.com>
+
+	Update etc/NEWS for mail-source-movemail-program change
+
+	* etc/NEWS: Describe change in how we search for
+	mail-source-movemail-program.
+
+2018-06-15  Robert Pluim  <rpluim@gmail.com>
+
+	Improve movemail default
+
+	* lisp/gnus/mail-source.el (mail-source-movemail-program):
+	Change default to "movemail".
+	(mail-source-movemail): Pass just mail-source-movemail-program to
+	call-process instead of fully specifying it relative to
+	exec-directory.  Ensures that we will find Mailutils movemail if
+	it is installed.  (Bug#31737)
+
+2018-06-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Delete description of deleted Customize functions
+
+	* doc/lispref/customize.texi (Variable Definitions): Remove the
+	description of 'custom-initialize-safe-set' and
+	'custom-initialize-safe-default', which were deleted in Emacs
+	23.2, and replace with the description of
+	'custom-initialize-delay'.
+
+2018-06-14  Noam Postavsky  <npostavs@gmail.com>
+
+	Keep vc-print-log from putting point at buffer end (Bug#31764)
+
+	* lisp/vc/vc.el (vc-print-log-internal): Use `save-excursion' around
+	`vc-print-log-setup-buttons'.
+
+2018-06-14  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Don’t set EMACS=t if Bash is 4.4 or newer
+
+	(Backport from master.)
+	(Thanks to Stefan Monnier for improvements to this patch.)
+	* lisp/term.el (term--bash-needs-EMACS-status): New var.
+	(term--bash-needs-EMACSp): New function.
+	(term-exec-1): Use it instead of always setting EMACS.
+
+2018-06-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve commentary in info.el
+
+	* lisp/info.el: Explain in commentary why some commands start with
+	"info-" and others with "Info-".  See also
+	http://lists.gnu.org/archive/html/emacs-devel/2017-11/msg00482.html.
+
+2018-06-13  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix wording in tramp.texi
+
+	* doc/misc/tramp.texi (Frequently Asked Questions):
+	Fix wording for abbreviations.
+
+2018-06-13  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/misc/tramp.texi (Remote shell setup): Fix typo.
+
+2018-06-12  Sam Steingold  <sds@gnu.org>
+
+	Finish the Bug#11728 work: hg & git
+
+	* lisp/vc/vc-git.el (vc-git--pushpull): Make `extra-args' a list.
+	Do not set `compilation-error-regexp-alist', this is done in
+	`vc-compilation-mode'.
+	(vc-git-error-regexp-alist): Tweak the regexp.
+	* lisp/vc/vc-hg.el (vc-hg-error-regexp-alist): Make non-trivial.
+	(vc-hg--pushpull): Accept `post-processing' argument.
+	Call them after the `command'.
+	(vc-hg-pull): Pass the `post-processing' commands that show which
+	are to be modified by the `update', and then run `update'.
+
+2018-06-12  Sam Steingold  <sds@gnu.org>
+
+	Fix Bug#11728: show files updated by git
+
+	* lisp/vc/vc-git.el (vc-git--pushpull): Accept extra-args and set
+	`compilation-error-regexp-alist' to `vc-git-error-regexp-alist'.
+	(vc-git-pull): Pass "--stat" as `extra-args' to `vc-git--pushpull'.
+	(vc-git-push): Pass "" as `extra-args' to `vc-git--pushpull'.
+
+2018-06-12  Noam Postavsky  <npostavs@gmail.com>
+
+	Make 'tags' targets respect --with-silent-rules (Bug#31744)
+
+	* lwlib/Makefile.in (TAGS):
+	* lisp/Makefile.in (TAGS):
+	* src/Makefile.in (TAGS): Use AM_V_GEN and AM_V_at.
+	* src/Makefile.in: Note that TAGS are generated in build dir.
+
+2018-06-11  Thomas Fitzsimmons  <fitzsim@fitzsim.org>
+	    Noam Postavsky  <npostavs@gmail.com>
+
+	soap-client: Add byte-code compatibility function (Bug#31742)
+
+	* lisp/net/soap-client.el: Bump version to 3.1.4.
+	(soap-type-of): New function.
+	(soap-resolve-references, soap-decode-type)
+	(soap-encode-attributes, soap-encode-value): Replace aref
+	calls with calls to soap-type-of.
+
+	* lisp/net/soap-inspect.el (soap-sample-value, soap-inspect):
+	Replace aref calls with calls to soap-type-of.
+
+
+	Backport: (cherry picked from commit
+	1feb2e221349f26ec26bc684e0cce2acecbed3ca)
+
+2018-06-11  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/lispref/files.texi (Unique File Names): Fix a typo.  (Bug#31784)
+
+2018-06-10  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix term.el cursor movement at bottom margin (Bug#31690)
+
+	* lisp/term.el (term-handle-ansi-escape) <\E[B cud>: Allow moving the
+	cursor to the bottom margin line, rather than stopping one line
+	before.
+
+2018-06-10  Reuben Thomas  <rrt@sc3d.org>
+
+	Call enchant-lsmod correctly when Enchant is installed with a suffix
+
+	* lisp/textmodes/ispell.el (ispell--call-enchant-lsmod): Cope with a
+	version suffix on the binary name, so enchant-2 is converted to
+	enchant-lsmod-2, not enchant-2-lsmod.  (Bug#31761)
+
+	(cherry picked from commit a402d9aacbecf4bf0b9afde592a3b90c71f96832)
+
+2018-06-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Enlarge DUMPED_HEAP_SIZE for 64-bit Windows builds
+
+	* src/w32heap.c (DUMPED_HEAP_SIZE): Bump to 23MB.  Reported by
+	Andy Moreton <andrewjmoreton@gmail.com>.
+
+2018-06-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Update Unicode data files to version 11.0.0 of Unicode
+
+	* admin/unidata/UnicodeData.txt:
+	* admin/unidata/SpecialCasing.txt:
+	* admin/unidata/NormalizationTest.txt:
+	* admin/unidata/copyright.html:
+	* admin/unidata/BidiMirroring.txt:
+	* admin/unidata/BidiBrackets.txt: Import from Unicode 11.0.
+	* admin/notes/unicode: Update the URL for OTF script tags.
+
+	* lisp/international/mule-cmds.el (ucs-names): Update unused ranges.
+	* lisp/international/fontset.el (script-representative-chars): Add
+	hanifi-rohingya, old-sogdian, sogdian, dogra, gunjala-gondi,
+	makasar, and medefaidrin.
+	(otf-script-alist): Add old-hungarian.
+	* lisp/international/characters.el (tbl): Add syntax entries for
+	Supplemental Mathematical Operators, Miscellaneous Symbols and
+	Arrows, and Supplemental Punctuation.
+	Update the list of wide characters.
+
+	* test/lisp/international/ucs-normalize-tests.el
+	(ucs-normalize-tests--failing-lines-part2): Update to match
+	admin/unidata/NormalizationTest.txt.
+
+	* doc/lispref/nonascii.texi (Character Properties): Update the
+	reference to the Unicode Standard.
+	* doc/misc/efaq.texi (New in Emacs 26):
+	* etc/NEWS: Mention compatibility with Unicode 11.0.
+
+2018-06-09  Eli Zaretskii  <eliz@gnu.org>
+
+	* etc/NEWS: Belatedly call out vc-hg changes in v26.1.  (Bug#31759)
+
+2018-06-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify the documentation of 'dired-recursive-deletes'
+
+	* doc/emacs/dired.texi (Dired Deletion): Clarify text regarding
+	recursive deletion of non-empty directories.  (Bug#31529)
+
+2018-06-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify doc string of 'update-glyphless-char-display'
+
+	* lisp/international/characters.el
+	(update-glyphless-char-display): Doc fix.  (Bug#31730)
+
+2018-06-08  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify subtle issues with 'eq' in byte-compiled code
+
+	* doc/lispref/objects.texi (Equality Predicates): Explain why
+	byte-compiled code might compare literal objects with identical
+	contents as 'eq'.  (Bug#31688)
+
+2018-06-07  Gemini Lasswell  <gazally@runbox.com>
+
+	Make cl-print respect print-quoted (bug#31649)
+
+	* lisp/emacs-lisp/cl-print.el (cl-print-object) <cons>: Observe
+	print-quoted when printing quote and its relatives.  Add printing of
+	'function' as #'.
+
+2018-06-07  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix unexpected jumps of window-point in 'set-window-configuration' (Bug#31695)
+
+	* src/window.c (Fset_window_configuration): Prevent that the
+	fix for Bug#12208 affects restoration of window points when
+	using separate minibuffer frames (Bug#31695).
+
+2018-06-06  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/emacs.appdata.xml: Update Emacs screenshot.
+
+2018-06-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix cursor movement by 'next-logical-line' after 'next-line'
+
+	* src/indent.c (Fvertical_motion): Adjust TO_X when line-numbers
+	are being displayed.  Remove unneeded "correction" of TO_X at the
+	goal line.
+
+	* lisp/simple.el (last--line-number-width): Remove unneeded
+	variable.
+	(line-move-visual): Account for line-number display width by
+	adjusting the pixel X coordinate that gets converted into
+	canonical columns passed to vertical-motion, instead of adjusting
+	temporary-goal-column (which then affects next commands, including
+	next-logical-line).  (Bug#31723)
+
+2018-06-05  Allen Li  <darkfeline@felesatra.moe>
+
+	Fix prompt in bookmark.el (Bug#24726)
+
+	* lisp/bookmark.el (bookmark-set-internal): Conform to the standard
+	default prompt format (per `minibuffer-electric-default-mode') which
+	does not use a colon.
+
+2018-06-05  Basil L. Contovounesios  <contovob@tcd.ie>
+
+	Improve documentation of 'empty' whitespace-style
+
+	* doc/emacs/display.texi (Useless Whitespace): Clarify that the
+	'empty' whitespace-style option highlights empty lines only at
+	BOB/EOB, as per the docstring of whitespace-style. (bug#31713)
+
+2018-06-05  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Port FC_COLOR change to older fontconfig
+
+	Problem reported by John ff in:
+	https://lists.gnu.org/r/emacs-devel/2018-04/msg00058.html
+	* src/ftfont.c (ftfont_spec_pattern) [!FC_COLOR]:
+	Don’t use FC_COLOR on older fontconfigs that don’t have it.
+
+2018-06-05  Robert Pluim  <rpluim@gmail.com>
+
+	Ignore color fonts when using Xft
+
+	* src/font.c (syms_of_font): New configuration variable
+	xft-ignore-color-fonts, default t.
+	* src/ftfont.c (ftfont_spec_pattern): Tell fontconfig to ignore
+	color fonts if xft-ignore-color-fonts is t.  (Bug#30874, Bug#30045)
+	* etc/NEWS: Document xft-ignore-color-fonts.
+
+2018-06-04  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix comint-get-old-input-default for output field case (Bug#25028)
+
+	* lisp/comint.el (comint-get-old-input-default): Don't return whole
+	field when point was on an output field.
+
+2018-06-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Prevent infloop in 'delete-trailing-whitespace'
+
+	* lisp/simple.el (delete-trailing-whitespace): Avoid inflooping
+	when some region of trailing whitespace is unmodifiable.
+	(Bug#31557)
+
+2018-06-04  Gemini Lasswell  <gazally@runbox.com>
+
+	Make cl-print respect print-level and print-length (bug#31559)
+
+	* lisp/emacs-lisp/cl-print.el (cl-print--depth): New variable.
+	(cl-print-object) <cons>: Print ellipsis if printing depth greater
+	than 'print-level' or length of list greater than 'print-length'.
+	(cl-print-object) <vector>: Truncate printing with ellipsis if
+	vector is longer than 'print-length'.
+	(cl-print-object) <cl-structure-object>: Truncate printing with
+	ellipsis if structure has more slots than 'print-length'.
+	(cl-print-object) <:around>: Bind 'cl-print--depth'.
+	* test/lisp/emacs-lisp/cl-print-tests.el
+	(cl-print-tests-3, cl-print-tests-4): New tests.
+
+	(cherry picked from commit 0f48d18fd2a30f29cc3592a835d2a2254c9b0afb)
+
+2018-06-03  Phil Sainty  <psainty@orcon.net.nz>
+
+	Fix remote-host directory tracking for shells in `term' buffers
+
+	* lisp/term.el (term-handle-ansi-terminal-messages): Use an explicit
+	tramp method when constructing the tramp path for a non-local host,
+	as this is now mandatory.  "-" is a pseudo-method for the user's
+	`tramp-default-method'.  (Bug#31355)
+
+	Specify the remote username explicitly in all cases, as
+	`tramp-default-user' and `tramp-default-user-alist' could cause the
+	previous logic to fail.
+
+	Minor related improvements to the commentary.
+
+2018-06-03  Eli Zaretskii  <eliz@gnu.org>
+
+	Update doc string of 'rx'
+
+	* lisp/emacs-lisp/rx.el (rx): Update the description of some
+	character classes.
+
+2018-06-03  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	Fix bug#30846, along with misc cleanups found along the way
+
+	* test/src/data-tests.el (data-tests-kill-all-local-variables): New test.
+
+	* src/buffer.c (swap_out_buffer_local_variables): Remove.
+	Fuse the body of its loop into that of reset_buffer_local_variables.
+	(Fkill_buffer, Fkill_all_local_variables): Don't call it any more.
+	(reset_buffer_local_variables): Make sure the buffer's local binding
+	is swapped out before removing it from the alist (bug#30846).
+	Call watchers before actually killing the var.
+
+	* src/data.c (Fmake_local_variable): Simplify.
+	Use swap_in_global_binding to swap out any local binding, instead of
+	a mix of find_symbol_value followed by messing with where&found.
+	Don't call swap_in_symval_forwarding since the currently swapped
+	binding is never one we've modified.
+	(Fkill_local_variable): Use swap_in_global_binding rather than messing
+	with where&found to try and trick find_symbol_value into doing the same.
+
+	* src/alloc.c (mark_localized_symbol): 'where' can't be a frame any more.
+
+	(cherry picked from commit 3ddff080341580eb6fc18d907181e9cc2301f62d)
+
+2018-06-03  Jay Kamat  <jaygkamat@gmail.com>
+
+	esh-opt.el: Fix improper parsing of first argument (Bug#28323)
+
+	Examples of broken behavior:
+
+	    sudo -u root whoami
+	    Outputs: -u
+	    ls -I '*.txt' /dev/null
+	    Errors with: *.txt: No such file or directory
+
+	* lisp/eshell/esh-opt.el (eshell--process-args): Refactor usage of
+	args to eshell--args, as we rely on modifications from
+	eshell--process-option and vice versa.  These modifications were not
+	being propogated in the (if (= ai 0)) case, since popping the first
+	element of a list doesn't destructively modify the underlying list
+	object.
+
+	(cherry picked from commit 92a8230e49a65be48442ee95cf50c90514e48f99)
+
+2018-06-03  Noam Postavsky  <npostavs@gmail.com>
+
+	* lisp/epa.el (epa-decrypt-file): Apply epa-pinentry-mode (Bug#30363).
+
+	(cherry picked from commit 217202c084232f36d4fa0fead0f3aca21396d074)
+
+2018-06-03  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix cl-print for circular sublists (Bug#31146)
+
+	* lisp/emacs-lisp/cl-print.el (cl-print-object) <cons>: Push each
+	element of list being printed onto cl-print--currently-printing.
+	* test/lisp/emacs-lisp/cl-print-tests.el (cl-print-circle-2): New
+	test.
+
+	(cherry picked from commit b8aa7ecf54c9b164a59f1b0e9f9fe90531dadd20)
+
+2018-06-03  Lars Ingebrigtsen  <larsi@gnus.org>
+
+	Revert "Make mail-extract-address-components return the user name more"
+
+	This reverts commit 8b50ae8b2284b5652c2843a9d0d076f4f657be28.
+
+	According to tests in bug#27656 by OGAWA Hirofumi, this patch
+	led to wrong results when binding
+
+	(dolist (addr '("Rasmus <rasmus@gmx.us>" "Rasmus <mbox@gmx.us>"))
+	  (dolist (ignore-single '(t nil))
+	    (dolist (ignore-same '(t nil))
+	      (let ((mail-extr-ignore-single-names ignore-single)
+		    (mail-extr-ignore-realname-equals-mailbox-name ignore-same))
+		(message "%s" (mail-extract-address-components addr))))))
+
+	in combination.
+
+	(cherry picked from commit a3a9d5434d56f8736cc47e379a1d011d4c779b7c)
+
+2018-06-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Centralize Bug#30931 fix
+
+	* src/marker.c (detach_marker): New function.
+	* src/editfns.c (save_restriction_restore):
+	* src/insdel.c (signal_before_change): Use it.
+
+	(cherry picked from commit 6f66a43d7ad6cada2b7dbb6d07efe36be1dc7ecb)
+
+2018-06-03  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix another case of freed markers in the undo-list (Bug#30931)
+
+	* src/alloc.c (free_marker): Remove.
+	* src/editfns.c (save_restriction_restore):
+	* src/insdel.c (signal_before_change): Detach the markers from the
+	buffer when we're done with them instead of calling free_marker on
+	them.
+	* test/src/editfns-tests.el (delete-region-undo-markers-1)
+	(delete-region-undo-markers-2): New tests.
+
+	(cherry picked from commit 96b8747d5c5d747af13fd84d8fe0308ef2a0ea7a)
+
+2018-06-03  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix CHECK_ALLOCATED_AND_LIVE abort during GC
+
+	* src/editfns.c (save_restriction_restore):
+	Wait for the GC to free the temporary markers (Bug#30931).
+
+	(cherry picked from commit 670f2ffae718046c0fb37313965a51c040ed096f)
+
+2018-06-03  Noam Postavsky  <npostavs@gmail.com>
+
+	Don't wait for visible frames to become visible
+
+	For discussion, see thread starting at
+	https://lists.gnu.org/archive/html/emacs-devel/2018-03/msg00807.html.
+	* src/xterm.c (x_make_frame_visible): Check FRAME_VISIBLE_P before
+	calling x_wait_for_event.
+
+	(cherry picked from commits 2a192e21cf3b04b7f830b4971c1508c611e13a3c
+	and 00c1f771f2a51ffa675ec5a07ea330f2605cd302)
+
+2018-06-03  Tino Calancha  <tino.calancha@gmail.com>
+
+	query-replace undo: Handle when user edits the replacement string
+
+	* lisp/replace.el (perform-replace): Update the replacement string
+	after the user edit it (Fix Bug#31538).
+
+	* test/lisp/replace-tests.el (query-replace-undo-bug31538): New test.
+
+	Backport: (cherry picked from commits
+	ea133e04f49afa7928e49a3ac4a85b47f6f13f01
+	and
+	7dcfdf5b14325ae7996f272f14c72810d7c84944)
+
+2018-06-03  Tino Calancha  <tino.calancha@gmail.com>
+
+	Backport: Fix corner case in query-replace-regexp undo
+
+	This commit fixes Bug#31492.
+	* lisp/replace.el (replace-match-maybe-edit): Preserve match data.
+
+	* test/lisp/replace-tests.el (query-replace-undo-bug31492): Add test.
+
+	(cherry picked from commit bab73230d1be1fe394b7269c1365ef6fb1a5d9b3)
+
+2018-06-03  Tino Calancha  <tino.calancha@gmail.com>
+
+	Backport: Preserve case in query-replace undo
+
+	If the user query and replaces 'foo' with 'BAR', then
+	undo must comeback to 'foo', not to 'FOO' (Bug#31073).
+	* lisp/replace.el (perform-replace): Bind nocasify to non-nil
+	value during undo/undo-all actions.
+	* test/lisp/replace-tests.el (query-replace-undo-bug31073): Add test.
+
+	(cherry picked from commit 32dc0cb1b5ae895d237c7118ccaeb084715934fd)
+
+2018-06-02  Alan Third  <alan@idiocy.org>
+
+	Set accessibility subroles for child frame (bug#31324)
+
+
+	* src/nsterm.m (x_set_parent_frame): Set subrole depending on whether
+	frame is a child or not.
+
+2018-06-02  Alan Third  <alan@idiocy.org>
+
+	Fix redefinition of child frames on NS
+
+	* src/nsterm.m (x_set_parent_frame): If the NSWindow has an existing
+	parent frame, remove it.
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve ELisp documentation of 'clone-indirect-buffer'
+
+	* doc/lispref/buffers.texi (Indirect Buffers): Be more explicit
+	about the value of DISPLAY-FLAG in interactive usage.  (Bug#31648)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'inhibit-message'
+
+	* src/xdisp.c (syms_of_xdisp) <inhibit-message>: Warn against
+	setting it non-nil globally.  (Bug#31627)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of comment styles
+
+	* doc/lispref/syntax.texi (Syntax Flags): Define the "a" style.
+	(Bug#31624)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Documentation improvements in newcomment.el
+
+	* lisp/newcomment.el (uncomment-region)
+	(uncomment-region-default): Doc fixes.  (Bug#31615)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Imp[rove documentation of 'with-silent-modifications'
+
+	* doc/lispref/buffers.texi (Buffer Modification): Document
+	'with-silent-modifications'.  (Bug#31613)
+	* doc/lispref/text.texi (Changing Properties): Add a
+	cross-reference to "Buffer Modification".  Improve wording.
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix decoding of directories when "~" includes non-ASCII chars
+
+	* src/fileio.c (Fexpand_file_name): Don't build multibyte strings
+	from unibyte non-ASCII strings when NAME and DEFAULT_DIRECTORY
+	have different multibyteness, as this adds bytes to the byte
+	sequence, and in some situations, e.g., when the home directory
+	includes non-ASCII characters, can fail file APIs.  (Bug#30755)
+
+	* lisp/startup.el (normal-top-level): Make sure default-directory
+	is set to a multibyte string when decoded on MS-Windows.
+
+	(cherry picked from commit 3aab8626ba5080bb04d0fdae52d99c850a842a52)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Don't remove highlight of misspelled word on pdict save
+
+	* lisp/textmodes/ispell.el (ispell-pdict-save): Don't restart
+	flyspell-mode, as bug#11963, which this was supposed to fix, is
+	fixed better by ispell-command-loop, when the user types 'i' or
+	'a'.  Restarting Flyspell mode when the personal dictionary is
+	saved caused bug#31372 as side effect.
+	(ispell-command-loop): Test 'flyspell-mode', not whether
+	flyspell-unhighlight-at is fboundp, to determine whether Flyspell
+	mode is turned on in the current buffer.
+	(flyspell-unhighlight-at): Add declare-function form for it.
+
+	(cherry picked from commit 91e582a31ada28fab5ae55bdbf959a9d30796587)
+
+2018-06-02  Ari Roponen  <ari.roponen@gmail.com>
+
+	Fix some problems in the Cairo build
+
+	* src/xterm.c (x_begin_cr_clip): Create image surface.
+	(x_update_end) [USE_CAIRO]: Remove GTK3-specific code.
+	(x_scroll_run) [USE_CAIRO]: Implement scrolling.
+	* src/image.c (lookup_rgb_color) [USE_CAIRO]: Support Cairo.
+	(jpeg_load_body) [USE_CAIRO]: Support Cairo.  Use USE_CAIRO
+	instead of CAIRO for #ifdef's.
+	(imagemagick_load_image) [USE_CAIRO]: Support Cairo.
+	(Bug#31288)
+
+	(cherry picked from commit 2d0eff42b8f1122e00f948759ed01a3be1a8c3fc)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid infloops in font_open_entity
+
+	* src/font.c (font_open_entity): Fail after 15 iterations through
+	the loop that looks for a font whose average_width and height are
+	both positive.  This avoids infinite loops for fonts that, e.g.,
+	report average_width of zero for any possible size we try.
+	(Bug#31316)
+
+	(cherry picked from commit e2879c1f837059335af89022b2a9ac9bc861e96d)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix encoding of characters when using GB18030 fonts
+
+	* lisp/international/fontset.el (font-encoding-alist): Fix the
+	GB18030 entry to encode characters correctly when passing them to
+	the xfont back-end.  (Bug#31315)  See also
+	http://lists.gnu.org/archive/html/emacs-devel/2008-01/msg00754.html.
+
+	(cherry picked from commit bbe2cadc544e63e9378350621887f8fb9bbcc236)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix C-p and C-n when wrap-prefix is too wide
+
+	* src/xdisp.c (move_it_in_display_line_to): Avoid looping in
+	previous/next-line when wrap-prefix is set to a too-wide
+	stretch of whitespace.  (Bug#30432)
+
+	(cherry picked from commit 842b3d7412eaed6b2c9f90c3361abb4932ec0b1d)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid redisplay problems with too wide wrap-prefix
+
+	* src/xdisp.c (display_line): Avoid looping in redisplay when
+	wrap-prefix is set to a too-wide stretch of whitespace.
+	(Bug#30432)
+
+	(cherry picked from commit 2a1fe08307402d6217d073f8ab7737750d253dd4)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix 'posn-at-point' when line numbers are displayed
+
+	* src/xdisp.c (pos_visible_p): For the leftmost glyph, adjust the X
+	coordinate due to line-number display.  (Bug#30834)
+
+	(cherry picked from commit 4a20174d7949028f66b18a92a75d6b74194242a8)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Another followup to fixing 'window-text-pixel-width'
+
+	* src/xdisp.c (Fwindow_text_pixel_size): Adjust the return value
+	when we stop one buffer position short of TO.  (Bug#30746)
+
+	(cherry picked from commit 33cba5405c724566673cf023513bfb1faa963bea)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix mouse-set-point when line numbers are displayed
+
+	* src/xdisp.c (move_it_to): Initialize the line_number_produced_p
+	flag before iterating on a new line.  (Bug#30818)
+
+	(cherry picked from commit 5c585b8b994aad4e6844f8eed80bdfbb396e91bf)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/xdisp.c (Fwindow_text_pixel_size): Fix last change.
+
+	(cherry picked from commit 06911714ef66ea81380b1eda75a9f7cfbc9e0b65)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix 'window-text-pixel-size' when display properties are around
+
+	* src/xdisp.c (Fwindow_text_pixel_size): Correct the result when
+	there's a display property at the  TO position, and the call to
+	move_it_to overshoots.  (Bug#30746)
+
+	(cherry picked from commit 50e2c0fb5180a757d8d533518f68837ffe5909be)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix display of TABs in hscrolled windows with line numbers
+
+	* src/dispextern.h (struct it): New members tab_offset and
+	line_number_produced_p.
+	* src/xdisp.c (display_line): Don't set row->x to a negative value
+	if line numbers are being displayed.  (Bug#30582)
+	Reset the line_number_produced_p flag before laying out the glyph
+	row.
+	(x_produce_glyphs): Use the line_number_produced_p flag to decide
+	whether to offset the X coordinate due to line-number display.
+	Use the tab_offset member to restore the original TAB width for
+	alignment purposes.
+	(move_it_in_display_line_to): Don't produce line numbers when moving
+	in hscrolled window to the left of first_visible_x.
+	(maybe_produce_line_number): Set the line_number_produced_p flag.
+	(Bug#30584)
+	* src/term.c (produce_glyphs): Correct TAB width only when
+	line_number_produced_p flag is set.
+
+	(cherry picked from commit 1ac190553886ff20817d3dd218464e2fc6f9e42a)
+
+2018-06-02  Matthias Dahl  <matthias.dahl@binary-island.eu>
+
+	Fix wait_reading_process_output wait_proc hang
+
+	* src/process.c (read_process_output): Track bytes read from
+	a process.
+	(wait_reading_process_output): If called recursively through
+	timers and/or process filters via accept-process-output, it is
+	possible that the output of wait_proc has already been read by
+	one of those recursive calls, leaving the original call hanging
+	forever if no further output arrives through that fd and no
+	timeout has been set.  Fix that by using the process read
+	accounting to keep track of how many bytes have been read and
+	use that as a condition to break out of the infinite loop and
+	return to the caller as well as to calculate the proper return
+	value (if a wait_proc is given that is).
+
+	* src/process.h (struct Lisp_Process): Add nbytes_read to track
+	bytes read from a process.
+
+	(cherry picked from commit 4ba32858d61eee16f17b51aca01c15211a0912f8)
+
+2018-06-02  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix posn-at-point in Flycheck buffers
+
+	* src/dispnew.c (buffer_posn_from_coords): Improve commentary.
+
+	* src/xdisp.c (move_it_in_display_line_to): Don't exit the loop
+	under truncate-lines if the glyph at TO_CHARPOS was not yet
+	produced.  This avoids bailing out too early when we are at
+	TO_CHARPOS, but didn't yet produce glyphs for that buffer
+	position, because the last call to PRODUCE_GLYPHS at this position
+	was for an object other than the buffer.  For further details, see
+	http://lists.gnu.org/archive/html/emacs-devel/2018-01/msg00537.html.
+
+	(cherry picked from commit c0154ac7c3423f68d8f3a2e85a756c9759219039)
+
+2018-06-02  Martin Rudalics  <rudalics@gmx.at>
+
+	* etc/PROBLEMS: Document stickyness problem with FVWM (Bug#31650)
+
+2018-06-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Update Emacs Lisp Intro to match current behavior
+
+	* doc/lispintro/emacs-lisp-intro.texi (Wrong Type of Argument)
+	(debug, debug-on-entry, Void Function, Void Variable): Update the
+	*Backtrace* buffer display to current Emacs.  (Bug#31654)
+
+2018-06-01  Robert Pluim  <rpluim@gmail.com>
+
+	Fix previous commit
+
+	* doc/emacs/files.texi (Interlocking): Two spaces at end of sentence
+
+2018-06-01  Ville Skyttä  <ville.skytta@iki.fi>  (tiny change)
+
+	Fix typos in several manuals (Bug#31610)
+
+2018-06-01  Robert Pluim  <rpluim@gmail.com>
+
+	Add detailed documentation about lock files
+
+	* doc/emacs/files.texi (Interlocking): Point user at detailed
+	file locking description in lisp reference manual.  Add index
+	entry for '.#' to improve disoverability of information about locking.
+
+	* doc/lispref/files.texi (File Locks): Describe in detail what
+	the form of the lock file is.  Add index entry for '.#' to
+	improve disoverability of information about locking.
+
+	* src/filelock.c (create-lockfiles): Add cross reference to
+	file locking in user manual and to 'lock-buffer'.  Add string
+	'.#' to help users find the doc string.
+
+2018-06-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Add commentary for subtle aspect of frame.el
+
+	* lisp/frame.el: Explain why we use symbol-function when adding
+	watchers for certain variables that need to trigger redisplay.
+
+2018-06-01  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of 'directory-files-and-attributes'
+
+	* doc/lispref/files.texi (Contents of Directories): Fix inaccurate
+	description of the return value of directory-files-and-attributes.
+
+	* src/dired.c (Fdirectory_files_and_attributes): Describe the
+	function's value in more detail.
+
+2018-05-30  Katsumi Yamaoka  <yamaoka@jpl.org>
+
+	* lisp/gnus/message.el (message-remove-header): Don't remove things
+	not looking like header (bug#31651).
+
+2018-05-30  Eli Zaretskii  <eliz@gnu.org>
+
+	Adapt hexl-mode to native line-number display
+
+	* lisp/hexl.el (hexl-mode-ruler): When display-line-numbers is in
+	effect, adjust offsets and columns to account for the line-number
+	display.  (Bug#31595)
+
+2018-05-30  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix example in Tramp manual
+
+	* doc/misc/tramp.texi (Frequently Asked Questions): Fix wording
+	for the zsh example.
+
+2018-05-29  Robert Pluim  <rpluim@gmail.com>
+
+	Handle case where Xft is found but not XRender
+
+	* configure.ac (XFT_LIBS): Ensure that HAVE_XFT is no if
+	XRender is not found.  (Bug#31634)
+
+2018-05-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/misc/tramp.texi (Frequently Asked Questions): Adapt zsh example.
+
+2018-05-29  Damien Cassou  <damien@cassou.me>
+
+	Improve read-multiple-choice docstring (Bug#31628)
+
+	* lisp/emacs-lisp/rmc.el (read-multiple-choice): Improve docstring.
+
+2018-05-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	* doc/misc/tramp.texi (All): Use @code instead of @option for user options.
+
+2018-05-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#31605
+
+	* doc/misc/tramp.texi (All): Add @vindex entries for
+	environment variables.
+	(Remote shell setup): New items `tramp-terminal-type' and
+	"Determining a Tramp session".
+	(Frequently Asked Questions): Adapt zsh example.  (Bug#31605)
+
+2018-05-29  Michael Albinus  <michael.albinus@gmx.de>
+
+	Sync with Tramp 2.3.4-pre
+
+	* doc/misc/trampver.texi: Change version to "2.3.4-pre
+
+	* lisp/net/tramp.el (tramp-mode, tramp-verbose)
+	(tramp-backup-directory-alist, tramp-auto-save-directory)
+	(tramp-encoding-shell, tramp-encoding-command-switch)
+	(tramp-encoding-command-interactive, tramp-default-method)
+	(tramp-default-method-alist, tramp-default-user)
+	(tramp-default-user-alist, tramp-default-host)
+	(tramp-default-host-alist, tramp-default-proxies-alist)
+	(tramp-save-ad-hoc-proxies, tramp-restricted-shell-hosts-alist)
+	(tramp-local-end-of-line, tramp-rsh-end-of-line)
+	(tramp-login-prompt-regexp, tramp-shell-prompt-pattern)
+	(tramp-password-prompt-regexp, tramp-wrong-passwd-regexp)
+	(tramp-yesno-prompt-regexp, tramp-yn-prompt-regexp)
+	(tramp-terminal-prompt-regexp)
+	(tramp-operation-not-permitted-regexp, tramp-copy-failed-regexp)
+	(tramp-process-alive-regexp, tramp-chunksize)
+	(tramp-process-connection-type, tramp-connection-timeout)
+	(tramp-connection-min-time-diff)
+	(tramp-completion-reread-directory-timeout):
+	* lisp/net/tramp-adb.el (tramp-adb-program)
+	(tramp-adb-connect-if-not-connected, tramp-adb-prompt):
+	* lisp/net/tramp-cache.el (tramp-connection-properties)
+	(tramp-persistency-file-name):
+	* lisp/net/tramp-gvfs.el (tramp-gvfs-methods)
+	(tramp-gvfs-zeroconf-domain, tramp-bluez-discover-devices-timeout):
+	* lisp/net/tramp-sh.el (tramp-inline-compress-start-size)
+	(tramp-copy-size-limit, tramp-terminal-type)
+	(tramp-histfile-override, tramp-use-ssh-controlmaster-options)
+	(tramp-remote-path, tramp-remote-process-environment)
+	(tramp-sh-extra-args):
+	* lisp/net/tramp-smb.el (tramp-smb-program, tramp-smb-acl-program)
+	(tramp-smb-conf, tramp-smb-winexe-program)
+	(tramp-smb-winexe-shell-command)
+	(tramp-smb-winexe-shell-command-switch):
+	Dont't require 'tramp.  (Bug#31558)
+
+	* lisp/net/tramp.el (tramp-accept-process-output):
+	* lisp/net/tramp-adb.el (tramp-adb-handle-start-file-process):
+	* lisp/net/tramp-sh.el (tramp-do-copy-or-rename-file-out-of-band)
+	(tramp-sh-handle-start-file-process):
+	* lisp/net/tramp-smb.el (tramp-smb-handle-copy-directory)
+	(tramp-smb-handle-file-acl, tramp-smb-handle-process-file)
+	(tramp-smb-handle-set-file-acl)
+	(tramp-smb-handle-start-file-process): Suppress timers.
+
+	* lisp/net/tramp-adb.el (tramp-adb-handle-write-region):
+	* lisp/net/tramp-gvfs.el (tramp-gvfs-handle-write-region):
+	* lisp/net/tramp-sh.el (tramp-sh-handle-write-region):
+	* lisp/net/tramp-smb.el (tramp-smb-handle-write-region):
+	Write proper message.
+
+	* lisp/net/tramp-cmds.el (tramp-change-syntax):
+	Use `customize-set-variable'.
+
+	* lisp/net/tramp-sh.el (tramp-open-connection-setup-interactive-shell):
+	Ensure proper EOL handling for Darwin.
+	(tramp-find-inline-compress): Improve command quoting for w32.
+	Reported by Chris Zheng <chriszheng99@gmail.com>.
+	(tramp-open-connection-setup-interactive-shell): Wrap both echo
+	calls in parentheses, in order to avoid double prompt.
+
+	* lisp/net/tramp-smb.el (tramp-smb-errors):
+	Add "NT_STATUS_RESOURCE_NAME_NOT_FOUND".
+
+	* lisp/net/tramp.el (tramp-default-user-alist)
+	(tramp-default-host-alist): Fix docstring.
+	(tramp-dissect-file-name): Adapt docstring.  (Bug#30904)
+	(tramp-make-tramp-file-name): Check, that method is
+	not empty.  (Bug#30038)
+	(tramp-message-show-message): Change default.
+
+	* lisp/net/trampver.el: Change version to "2.3.4-pre".
+
+	* test/lisp/net/tramp-tests.el (ert-x): Require it.
+	(tramp-test10-write-region): Extend test.
+	(tramp--test-emacs27-p, tramp--test-windows-nt): New defuns.
+	(tramp-test11-copy-file, tramp-test12-rename-file)
+	(tramp-test21-file-links, tramp-test24-file-acl)
+	(tramp-test25-file-selinux, tramp--test-check-files): Use them.
+	(tramp-test21-file-links): Do not call `make-symbolic-link' on w32.
+	Fix file name quoting test.
+	(tramp-test32-environment-variables-and-port-numbers):
+	Adapt check for systems which do not support "echo -n".  (Bug#29712)
+	(tramp-test36-find-backup-file-name): Call also
+	`convert-standard-filename' due to w32.
+	(tramp-test41-asynchronous-requests):
+	Use $REMOTE_PARALLEL_PROCESSES.  Flush cache prior file operations.
+	(tramp-test42-auto-load, tramp-test42-delay-load)
+	(tramp-test42-recursive-load, tramp-test42-remote-load-path):
+	Quote command due to w32.
+
+2018-05-28  Eli Zaretskii  <eliz@gnu.org>
+
+	Bump Emacs version to 26.1.50
+
+	* msdos/sed2v2.inp:
+	* nt/README.W32:
+	* configure.ac:
+	* README: Bump Emacs version to 26.1.50.
+
+2018-05-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Mention pcase as a fifth conditional form
+
+	* doc/lispref/control.texi (Conditionals): ...here,
+	in first para, w/ xref to "Pattern-Matching Conditional".
+
+2018-05-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Overhaul pcase documentation
+
+	Suggested by Drew Adams (Bug#31311).
+
+	* doc/lispref/control.texi (Control Structures):
+	Add "Pattern-Matching Conditional" to menu, before "Iteration".
+	(Conditionals): Delete menu.
+	(Pattern matching case statement): Delete node/subsection,
+	by actually moving, renaming, and overhauling it to...
+	(Pattern-Matching Conditional): ...new node/section.
+	(pcase Macro): New node/subsection.
+	(Extending pcase): Likewise.
+	(Backquote Patterns): Likewise.
+	* doc/lispref/elisp.texi (Top) In @detailmenu, add
+	"Pattern-Matching Conditional" under "Control Structures"
+	section and delete "Conditionals" section.
+	* lisp/emacs-lisp/pcase.el (pcase): Rewrite docstring.
+	(pcase-defmacro \` (qpat) ...): Likewise.
+
+2018-05-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Use EXPVAL in docstrings of patterns defined using pcase-defmacro
+
+	Suggested by Drew Adams (Bug#31311).
+
+	* lisp/emacs-lisp/cl-macs.el (cl-struct): ...here.
+	* lisp/emacs-lisp/eieio.el (eieio): Likewise.
+	* lisp/emacs-lisp/radix-tree.el (radix-tree-leaf): Likewise.
+	* lisp/emacs-lisp/rx.el (rx): Likewise.
+
+2018-05-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Introduce EXPVAL for pcase, pcase-defmacro docstrings
+
+	Suggested by Drew Adams (Bug#31311).
+
+	* lisp/emacs-lisp/pcase.el (pcase): Use EXPVAL in
+	docstring to stand for the result of evaluating EXP.
+	(pcase-defmacro): Add (fn ...) form in docstring
+	that includes [DOC], and the EXPVAL convention.
+
+2018-05-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Ensure pcase doc shows `QPAT first among extensions
+
+	* lisp/emacs-lisp/pcase.el (pcase--make-docstring):
+	Split extensions display into two phases, collection
+	and display, separated by a reordering step that
+	ensures backquote is the first.
+
+2018-05-25  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/HISTORY: Update for Emacs 26.1 release.
+
+	* etc/AUTHORS: Update.
+
 2018-05-25  Noam Postavsky  <npostavs@gmail.com>
 
 	Note caveat for backward regexp searching in docstring (Bug#31584)
@@ -59730,7 +61157,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 35574609dd09e2eab0301309b0e3bf831f627fcc (inclusive).
+commit f205928d1f93f4373d755ca91805a88e022ac414 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
