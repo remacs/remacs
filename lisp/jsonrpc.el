@@ -49,7 +49,7 @@
 
 ;;; Public API
 ;;;
-;;;###autoload
+
 (defclass jsonrpc-connection ()
   ((name
     :accessor jsonrpc-name
@@ -311,7 +311,7 @@ DEFERRED is passed to `jsonrpc-async-request', which see."
 
 ;;; Specfic to `jsonrpc-process-connection'
 ;;;
-;;;###autoload
+
 (defclass jsonrpc-process-connection (jsonrpc-connection)
   ((-process
     :initarg :process :accessor jsonrpc--process
