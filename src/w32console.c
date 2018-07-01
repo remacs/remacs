@@ -793,7 +793,7 @@ Arguments should be indices between 0 and 15, see w32console.el.  */)
 {
   char_attr_normal = XFASTINT (foreground) + (XFASTINT (background) << 4);
 
-  Frecenter (Qnil);
+  Frecenter (Qnil, Qt);
   return Qt;
 }
 

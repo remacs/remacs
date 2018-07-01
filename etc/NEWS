@@ -690,9 +690,10 @@ manual for more details.
 * Lisp Changes in Emacs 27.1
 
 +++
-** The function 'recenter' accepts an additional optional argument.
-If the optional second argument is nil, recenter will not redisplay
-the frame regardless of the value of 'recenter-redisplay'.
+** The function 'recenter' now accepts an additional optional argument.
+By default, calling 'recenter' will not redraw the frame even if
+'recenter-redisplay' is non-nil.  Call 'recenter' with the new second
+argument non-nil to force redisplay per 'recenter-redisplay's value.
 
 +++
 ** New functions 'major-mode-suspend' and 'major-mode-restore'.
