@@ -1548,7 +1548,7 @@ let-binding.")
 ;;;### (autoloads nil "auth-source-pass" "auth-source-pass.el" (0
 ;;;;;;  0 0 0))
 ;;; Generated autoloads from auth-source-pass.el
-(push (purecopy '(auth-source-pass 2 0 0)) package--builtin-versions)
+(push (purecopy '(auth-source-pass 4 0 1)) package--builtin-versions)
 
 (autoload 'auth-source-pass-enable "auth-source-pass" "\
 Enable auth-source-password-store.
@@ -5917,6 +5917,9 @@ buffers.
 Use `\\[info-lookup-symbol]' to look up documentation of CSS properties, at-rules,
 pseudo-classes, and pseudo-elements on the Mozilla Developer
 Network (MDN).
+
+Use `\\[fill-paragraph]' to reformat CSS declaration blocks.  It can also
+be used to fill comments.
 
 \\{css-mode-map}
 
@@ -12932,7 +12935,7 @@ to get the effect of a C-q.
 
 ;;;### (autoloads nil "flymake" "progmodes/flymake.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/flymake.el
-(push (purecopy '(flymake 0 3)) package--builtin-versions)
+(push (purecopy '(flymake 1 0)) package--builtin-versions)
 
 (autoload 'flymake-log "flymake" "\
 Log, at level LEVEL, the message MSG formatted with ARGS.
@@ -12945,10 +12948,11 @@ generated it.
 
 (autoload 'flymake-make-diagnostic "flymake" "\
 Make a Flymake diagnostic for BUFFER's region from BEG to END.
-TYPE is a key to `flymake-diagnostic-types-alist' and TEXT is a
-description of the problem detected in this region.
+TYPE is a key to symbol and TEXT is a description of the problem
+detected in this region.  DATA is any object that the caller
+wishes to attach to the created diagnostic for later retrieval.
 
-\(fn BUFFER BEG END TYPE TEXT)" nil nil)
+\(fn BUFFER BEG END TYPE TEXT &optional DATA)" nil nil)
 
 (autoload 'flymake-diagnostics "flymake" "\
 Get Flymake diagnostics in region determined by BEG and END.
@@ -12989,7 +12993,9 @@ The commands `flymake-goto-next-error' and
 diagnostics annotated in the buffer.
 
 The visual appearance of each type of diagnostic can be changed
-in the variable `flymake-diagnostic-types-alist'.
+by setting properties `flymake-overlay-control', `flymake-bitmap'
+and `flymake-severity' on the symbols of diagnostic types (like
+`:error', `:warning' and `:note').
 
 Activation or deactivation of backends used by Flymake in each
 buffer happens via the special hook
@@ -13018,10 +13024,26 @@ Turn Flymake mode off.
 
 ;;;***
 
+;;;### (autoloads nil "flymake-cc" "progmodes/flymake-cc.el" (0 0
+;;;;;;  0 0))
+;;; Generated autoloads from progmodes/flymake-cc.el
+
+(autoload 'flymake-cc "flymake-cc" "\
+Flymake backend for GNU-style C compilers.
+This backend uses `flymake-cc-command' (which see) to launch a
+process that is passed the current buffer's contents via stdin.
+REPORT-FN is Flymake's callback.
+
+\(fn REPORT-FN &rest ARGS)" nil nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-cc" '("flymake-cc-")))
+
+;;;***
+
 ;;;### (autoloads nil "flymake-proc" "progmodes/flymake-proc.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from progmodes/flymake-proc.el
-(push (purecopy '(flymake-proc 0 3)) package--builtin-versions)
+(push (purecopy '(flymake-proc 1 0)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-proc" '("flymake-proc-")))
 
@@ -18636,16 +18658,10 @@ If nil, the default personal dictionary for your spelling checker is used.")
 
 (put 'ispell-local-dictionary 'safe-local-variable 'string-or-null-p)
 
-(defvar ispell-menu-map nil "\
+(defconst ispell-menu-map (let ((map (make-sparse-keymap "Spell"))) (define-key map [ispell-change-dictionary] `(menu-item ,(purecopy "Change Dictionary...") ispell-change-dictionary :help ,(purecopy "Supply explicit dictionary file name"))) (define-key map [ispell-kill-ispell] `(menu-item ,(purecopy "Kill Process") (lambda nil (interactive) (ispell-kill-ispell nil 'clear)) :enable (and (boundp 'ispell-process) ispell-process (eq (ispell-process-status) 'run)) :help ,(purecopy "Terminate Ispell subprocess"))) (define-key map [ispell-pdict-save] `(menu-item ,(purecopy "Save Dictionary") (lambda nil (interactive) (ispell-pdict-save t t)) :help ,(purecopy "Save personal dictionary"))) (define-key map [ispell-customize] `(menu-item ,(purecopy "Customize...") (lambda nil (interactive) (customize-group 'ispell)) :help ,(purecopy "Customize spell checking options"))) (define-key map [ispell-help] `(menu-item ,(purecopy "Help") (lambda nil (interactive) (describe-function 'ispell-help)) :help ,(purecopy "Show standard Ispell keybindings and commands"))) (define-key map [flyspell-mode] `(menu-item ,(purecopy "Automatic spell checking (Flyspell)") flyspell-mode :help ,(purecopy "Check spelling while you edit the text") :button (:toggle bound-and-true-p flyspell-mode))) (define-key map [ispell-complete-word] `(menu-item ,(purecopy "Complete Word") ispell-complete-word :help ,(purecopy "Complete word at cursor using dictionary"))) (define-key map [ispell-complete-word-interior-frag] `(menu-item ,(purecopy "Complete Word Fragment") ispell-complete-word-interior-frag :help ,(purecopy "Complete word fragment at cursor"))) (define-key map [ispell-continue] `(menu-item ,(purecopy "Continue Spell-Checking") ispell-continue :enable (and (boundp 'ispell-region-end) (marker-position ispell-region-end) (equal (marker-buffer ispell-region-end) (current-buffer))) :help ,(purecopy "Continue spell checking last region"))) (define-key map [ispell-word] `(menu-item ,(purecopy "Spell-Check Word") ispell-word :help ,(purecopy "Spell-check word at cursor"))) (define-key map [ispell-comments-and-strings] `(menu-item ,(purecopy "Spell-Check Comments") ispell-comments-and-strings :help ,(purecopy "Spell-check only comments and strings"))) (define-key map [ispell-region] `(menu-item ,(purecopy "Spell-Check Region") ispell-region :enable mark-active :help ,(purecopy "Spell-check text in marked region"))) (define-key map [ispell-message] `(menu-item ,(purecopy "Spell-Check Message") ispell-message :visible (eq major-mode 'mail-mode) :help ,(purecopy "Skip headers and included message text"))) (define-key map [ispell-buffer] `(menu-item ,(purecopy "Spell-Check Buffer") ispell-buffer :help ,(purecopy "Check spelling of selected buffer"))) map) "\
 Key map for ispell menu.")
 
-(defvar ispell-menu-map-needed (unless ispell-menu-map 'reload))
-
-(if ispell-menu-map-needed (progn (setq ispell-menu-map (make-sparse-keymap "Spell")) (define-key ispell-menu-map [ispell-change-dictionary] `(menu-item ,(purecopy "Change Dictionary...") ispell-change-dictionary :help ,(purecopy "Supply explicit dictionary file name"))) (define-key ispell-menu-map [ispell-kill-ispell] `(menu-item ,(purecopy "Kill Process") (lambda nil (interactive) (ispell-kill-ispell nil 'clear)) :enable (and (boundp 'ispell-process) ispell-process (eq (ispell-process-status) 'run)) :help ,(purecopy "Terminate Ispell subprocess"))) (define-key ispell-menu-map [ispell-pdict-save] `(menu-item ,(purecopy "Save Dictionary") (lambda nil (interactive) (ispell-pdict-save t t)) :help ,(purecopy "Save personal dictionary"))) (define-key ispell-menu-map [ispell-customize] `(menu-item ,(purecopy "Customize...") (lambda nil (interactive) (customize-group 'ispell)) :help ,(purecopy "Customize spell checking options"))) (define-key ispell-menu-map [ispell-help] `(menu-item ,(purecopy "Help") (lambda nil (interactive) (describe-function 'ispell-help)) :help ,(purecopy "Show standard Ispell keybindings and commands"))) (define-key ispell-menu-map [flyspell-mode] `(menu-item ,(purecopy "Automatic spell checking (Flyspell)") flyspell-mode :help ,(purecopy "Check spelling while you edit the text") :button (:toggle bound-and-true-p flyspell-mode))) (define-key ispell-menu-map [ispell-complete-word] `(menu-item ,(purecopy "Complete Word") ispell-complete-word :help ,(purecopy "Complete word at cursor using dictionary"))) (define-key ispell-menu-map [ispell-complete-word-interior-frag] `(menu-item ,(purecopy "Complete Word Fragment") ispell-complete-word-interior-frag :help ,(purecopy "Complete word fragment at cursor")))))
-
-(if ispell-menu-map-needed (progn (define-key ispell-menu-map [ispell-continue] `(menu-item ,(purecopy "Continue Spell-Checking") ispell-continue :enable (and (boundp 'ispell-region-end) (marker-position ispell-region-end) (equal (marker-buffer ispell-region-end) (current-buffer))) :help ,(purecopy "Continue spell checking last region"))) (define-key ispell-menu-map [ispell-word] `(menu-item ,(purecopy "Spell-Check Word") ispell-word :help ,(purecopy "Spell-check word at cursor"))) (define-key ispell-menu-map [ispell-comments-and-strings] `(menu-item ,(purecopy "Spell-Check Comments") ispell-comments-and-strings :help ,(purecopy "Spell-check only comments and strings")))))
-
-(if ispell-menu-map-needed (progn (define-key ispell-menu-map [ispell-region] `(menu-item ,(purecopy "Spell-Check Region") ispell-region :enable mark-active :help ,(purecopy "Spell-check text in marked region"))) (define-key ispell-menu-map [ispell-message] `(menu-item ,(purecopy "Spell-Check Message") ispell-message :visible (eq major-mode 'mail-mode) :help ,(purecopy "Skip headers and included message text"))) (define-key ispell-menu-map [ispell-buffer] `(menu-item ,(purecopy "Spell-Check Buffer") ispell-buffer :help ,(purecopy "Check spelling of selected buffer"))) (fset 'ispell-menu-map (symbol-value 'ispell-menu-map))))
+(fset 'ispell-menu-map (symbol-value 'ispell-menu-map))
 
 (defvar ispell-skip-region-alist `((ispell-words-keyword forward-line) (ispell-dictionary-keyword forward-line) (ispell-pdict-keyword forward-line) (ispell-parsing-keyword forward-line) (,(purecopy "^---*BEGIN PGP [A-Z ]*--*") \, (purecopy "^---*END PGP [A-Z ]*--*")) (,(purecopy "^begin [0-9][0-9][0-9] [^ \11]+$") \, (purecopy "\nend\n")) (,(purecopy "^%!PS-Adobe-[123].0") \, (purecopy "\n%%EOF\n")) (,(purecopy "^---* \\(Start of \\)?[Ff]orwarded [Mm]essage") \, (purecopy "^---* End of [Ff]orwarded [Mm]essage"))) "\
 Alist expressing beginning and end of regions not to spell check.
@@ -19006,6 +19022,14 @@ locally, like so:
 (push (purecopy '(json 1 4)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "json" '("json-")))
+
+;;;***
+
+;;;### (autoloads nil "jsonrpc" "jsonrpc.el" (0 0 0 0))
+;;; Generated autoloads from jsonrpc.el
+(push (purecopy '(jsonrpc 1 0 0)) package--builtin-versions)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "jsonrpc" '("jrpc-default-request-timeout" "jsonrpc-")))
 
 ;;;***
 
@@ -22613,7 +22637,7 @@ closing requests for requests that are used in matched pairs.
 ;;;### (autoloads nil "nsm" "net/nsm.el" (0 0 0 0))
 ;;; Generated autoloads from net/nsm.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "nsm" '("network-security-level" "nsm-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "nsm" '("network-security-" "nsm-")))
 
 ;;;***
 
@@ -27353,12 +27377,12 @@ than that of a simplified version:
  (defun simplified-regexp-opt (strings &optional paren)
    (let ((parens
           (cond ((stringp paren)       (cons paren \"\\\\)\"))
-                ((eq paren 'words)    '(\"\\\\\\=<\\\\(\" . \"\\\\)\\\\>\"))
-                ((eq paren 'symbols) '(\"\\\\_<\\\\(\" . \"\\\\)\\\\_>\"))
-                ((null paren)          '(\"\\\\(?:\" . \"\\\\)\"))
-                (t                       '(\"\\\\(\" . \"\\\\)\")))))
+                ((eq paren \\='words)    \\='(\"\\\\\\=<\\\\(\" . \"\\\\)\\\\>\"))
+                ((eq paren \\='symbols) \\='(\"\\\\_<\\\\(\" . \"\\\\)\\\\_>\"))
+                ((null paren)          \\='(\"\\\\(?:\" . \"\\\\)\"))
+                (t                       \\='(\"\\\\(\" . \"\\\\)\")))))
      (concat (car paren)
-             (mapconcat 'regexp-quote strings \"\\\\|\")
+             (mapconcat \\='regexp-quote strings \"\\\\|\")
              (cdr paren))))
 
 \(fn STRINGS &optional PAREN)" nil nil)
@@ -27934,9 +27958,15 @@ buffer, updates it accordingly.
 This command always outputs the complete message header, even if
 the header display is currently pruned.
 
+If `rmail-output-reset-deleted-flag' is non-nil, the message's
+deleted flag is reset in the message appended to the destination
+file.  Otherwise, the appended message will remain marked as
+deleted if it was deleted before invoking this command.
+
 Optional prefix argument COUNT (default 1) says to output that
 many consecutive messages, starting with the current one (ignoring
-deleted messages).  If `rmail-delete-after-output' is non-nil, deletes
+deleted messages, unless `rmail-output-reset-deleted-flag' is
+non-nil).  If `rmail-delete-after-output' is non-nil, deletes
 messages after output.
 
 The optional third argument NOATTRIBUTE, if non-nil, says not to
@@ -28002,12 +28032,12 @@ than appending to it.  Deletes the message after writing if
 Ask user a multiple choice question.
 PROMPT should be a string that will be displayed as the prompt.
 
-CHOICES is an alist where the first element in each entry is a
-character to be entered, the second element is a short name for
-the entry to be displayed while prompting (if there's room, it
-might be shortened), and the third, optional entry is a longer
-explanation that will be displayed in a help buffer if the user
-requests more help.
+CHOICES is a list of (KEY NAME [DESCRIPTION]).  KEY is a
+character to be entered.  NAME is a short name for the entry to
+be displayed while prompting (if there's room, it might be
+shortened).  DESCRIPTION is an optional longer explanation that
+will be displayed in a help buffer if the user requests more
+help.
 
 This function translates user input into responses by consulting
 the bindings in `query-replace-map'; see the documentation of
@@ -28018,9 +28048,9 @@ perform the requested window recentering or scrolling and ask
 again.
 
 When `use-dialog-box' is t (the default), this function can pop
-up a dialog window to collect the user input. That functionality
-requires `display-popup-menus-p' to return t. Otherwise, a text
-dialog will be used.
+up a dialog window to collect the user input.  That functionality
+requires `display-popup-menus-p' to return t.  Otherwise, a
+text dialog will be used.
 
 The return value is the matching entry from the CHOICES list.
 
@@ -28452,12 +28482,14 @@ CHAR
      matches whitespace and graphic characters.
 
 `alphanumeric', `alnum'
-     matches alphabetic characters and digits.  (For multibyte characters,
-     it matches according to Unicode character properties.)
+     matches alphabetic characters and digits.  For multibyte characters,
+     it matches characters whose Unicode `general-category' property
+     indicates they are alphabetic or decimal number characters.
 
 `letter', `alphabetic', `alpha'
-     matches alphabetic characters.  (For multibyte characters,
-     it matches according to Unicode character properties.)
+     matches alphabetic characters.  For multibyte characters,
+     it matches characters whose Unicode `general-category' property
+     indicates they are alphabetic characters.
 
 `ascii'
      matches ASCII (unibyte) characters.
@@ -28466,10 +28498,14 @@ CHAR
      matches non-ASCII (multibyte) characters.
 
 `lower', `lower-case'
-     matches anything lower-case.
+     matches anything lower-case, as determined by the current case
+     table.  If `case-fold-search' is non-nil, this also matches any
+     upper-case letter.
 
 `upper', `upper-case'
-     matches anything upper-case.
+     matches anything upper-case, as determined by the current case
+     table.  If `case-fold-search' is non-nil, this also matches any
+     lower-case letter.
 
 `punctuation', `punct'
      matches punctuation.  (But at present, for multibyte characters,
@@ -29865,6 +29901,9 @@ argument INHIBIT-PROMPT is non-nil.
 To force-start a server, do \\[server-force-delete] and then
 \\[server-start].
 
+To check from a Lisp program whether a server is running, use
+the `server-process' variable.
+
 \(fn &optional LEAVE-DEAD INHIBIT-PROMPT)" t nil)
 
 (autoload 'server-force-delete "server" "\
@@ -30636,7 +30675,7 @@ then `snmpv2-mode-hook'.
 
 ;;;### (autoloads nil "soap-client" "net/soap-client.el" (0 0 0 0))
 ;;; Generated autoloads from net/soap-client.el
-(push (purecopy '(soap-client 3 1 3)) package--builtin-versions)
+(push (purecopy '(soap-client 3 1 4)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "soap-client" '("soap-")))
 
@@ -31291,6 +31330,39 @@ The default comes from `process-coding-system-alist' and
 
 \(fn &optional BUFFER)" t nil)
 
+(autoload 'sql-mariadb "sql" "\
+Run mysql by MariaDB as an inferior process.
+
+MariaDB is free software.
+
+If buffer `*SQL*' exists but no process is running, make a new process.
+If buffer exists and a process is running, just switch to buffer
+`*SQL*'.
+
+Interpreter used comes from variable `sql-mariadb-program'.  Login uses
+the variables `sql-user', `sql-password', `sql-database', and
+`sql-server' as defaults, if set.  Additional command line parameters
+can be stored in the list `sql-mariadb-options'.
+
+The buffer is put in SQL interactive mode, giving commands for sending
+input.  See `sql-interactive-mode'.
+
+To set the buffer name directly, use \\[universal-argument]
+before \\[sql-mariadb].  Once session has started,
+\\[sql-rename-buffer] can be called separately to rename the
+buffer.
+
+To specify a coding system for converting non-ASCII characters
+in the input and output to the process, use \\[universal-coding-system-argument]
+before \\[sql-mariadb].  You can also specify this with \\[set-buffer-process-coding-system]
+in the SQL buffer, after you start the process.
+The default comes from `process-coding-system-alist' and
+`default-process-coding-system'.
+
+\(Type \\[describe-mode] in the SQL buffer for a list of commands.)
+
+\(fn &optional BUFFER)" t nil)
+
 (autoload 'sql-solid "sql" "\
 Run solsql by Solid as an inferior process.
 
@@ -31709,31 +31781,6 @@ Major-mode for writing SRecode macros.
 ;;; Generated autoloads from cedet/srecode/texi.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "srecode/texi" '("semantic-insert-foreign-tag" "srecode-texi-")))
-
-;;;***
-
-;;;### (autoloads nil "starttls" "net/starttls.el" (0 0 0 0))
-;;; Generated autoloads from net/starttls.el
-
-(autoload 'starttls-open-stream "starttls" "\
-Open a TLS connection for a port to a host.
-Returns a subprocess object to represent the connection.
-Input and output work as for subprocesses; `delete-process' closes it.
-Args are NAME BUFFER HOST PORT.
-NAME is name for process.  It is modified if necessary to make it unique.
-BUFFER is the buffer (or `buffer-name') to associate with the process.
- Process output goes at end of that buffer, unless you specify
- a filter function to handle the output.
- BUFFER may be also nil, meaning that this process is not associated
- with any buffer
-Third arg is name of the host to connect to, or its IP address.
-Fourth arg PORT is an integer specifying a port to connect to.
-If `starttls-use-gnutls' is nil, this may also be a service name, but
-GnuTLS requires a port number.
-
-\(fn NAME BUFFER HOST PORT)" nil nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "starttls" '("starttls-")))
 
 ;;;***
 
@@ -34001,13 +34048,6 @@ To get complete usage, invoke \"emacs -batch -f batch-titdic-convert -h\".
 
 ;;;***
 
-;;;### (autoloads nil "tls" "net/tls.el" (0 0 0 0))
-;;; Generated autoloads from net/tls.el
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tls" '("open-tls-stream" "tls-")))
-
-;;;***
-
 ;;;### (autoloads nil "tmm" "tmm.el" (0 0 0 0))
 ;;; Generated autoloads from tmm.el
  (define-key global-map "\M-`" 'tmm-menubar)
@@ -34413,7 +34453,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 4 0 -1)) package--builtin-versions)
+(push (purecopy '(tramp 2 4 0)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
