@@ -33,3 +33,7 @@
   ;; set selected widnow to dedicated
   (should (eq (set-window-dedicated-p (selected-window) 't) 't))
   (should(eq (window-dedicated-p) 't)))
+
+(ert-deftest window-old-point()
+  (should (eq (window-old-point) 1))
+  (should (eq (window-old-point (selected-window)) 1)))

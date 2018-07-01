@@ -741,4 +741,12 @@ pub fn set_window_dedicated_p(window: LispObject, flag: LispObject) -> LispObjec
     flag
 }
 
+/// Return old value of point in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_old_point(window: LispObject) -> Option<EmacsInt> {
+    let win = window_live_or_selected(window);
+    marker_position_lisp(win.old_pointm.into())
+}
+
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
