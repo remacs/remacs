@@ -5144,6 +5144,13 @@ generic @code{Remote Procedure Call} protocol designed around
 @acronym{JSON} objects, which you can convert to and from Lisp objects
 (@pxref{Parsing JSON}).
 
+@menu
+* JSONRPC Overview::
+* Process-based JSONRPC connections::
+* JSONRPC JSON object format::
+* JSONRPC deferred requests::
+@end menu
+
 @node JSONRPC Overview
 @subsection Overview
 
