@@ -2192,6 +2192,11 @@ x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_v
  *
  * Some window managers may not honor this parameter.  The value `below'
  * is not supported on Windows.
+ *
+ * Internally, this function also handles a value 'above-suspended'.
+ * That value is used to temporarily remove F from the 'above' group
+ * to make sure that it does not obscure the window of a dialog in
+ * progress.
  */
 static void
 x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
@@ -7726,12 +7731,27 @@ file_dialog_callback (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   return 0;
 }
 
+/**
+ * w32_dialog_in_progress:
+ *
+ * This function is called by Fx_file_dialog and Fx_select_font and
+ * serves to temporarily remove any Emacs frame currently in the
+ * 'above' z-group from that group to assure that such a frame does
+ * not hide the dialog window.  Frames that are temporarily removed
+ * from the 'above' group have their z_group bit-field set to
+ * z_group_above_suspended.  Any such frame is moved back to the
+ * 'above' group as soon as the dialog finishes and has its z_group
+ * bit-field reset to z_group_above.
+ *
+ * This function does not affect the z-order or the z-group state of
+ * the dialog window itself.
+ */
 void
 w32_dialog_in_progress (Lisp_Object in_progress)
 {
   Lisp_Object frames, frame;
 
-  /* Don't let frames in `above' z-group obscure popups.  */
+  /* Don't let frames in `above' z-group obscure dialog windows.  */
   FOR_EACH_FRAME (frames, frame)
     {
       struct frame *f = XFRAME (frame);

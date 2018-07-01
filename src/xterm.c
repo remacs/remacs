@@ -10560,6 +10560,10 @@ x_set_skip_taskbar (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
  * windows that do not have the `below' property set.
  *
  * Some window managers may not honor this parameter.
+ *
+ * Internally, this function also handles a value 'above-suspended'.
+ * That value is used to temporarily remove F from the 'above' group
+ * to make sure that it does not obscure a menu currently popped up.
  */
 void
 x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
