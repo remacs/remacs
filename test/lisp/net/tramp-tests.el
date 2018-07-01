@@ -1745,7 +1745,9 @@ handled properly.  BODY shall not contain a timeout."
   ;; Host names must match rules in case the command template of a
   ;; method doesn't use them.
   (dolist (m '("su" "sg" "sudo" "doas" "ksu"))
-    (let (tramp-default-proxies-alist)
+    (let ((vec (tramp-dissect-file-name tramp-test-temporary-file-directory))
+	  tramp-connection-properties tramp-default-proxies-alist)
+      (ignore-errors (tramp-cleanup-connection vec nil 'keep-password))
       ;; Single hop.  The host name must match `tramp-local-host-regexp'.
       (should-error
        (find-file (format "/%s:foo:" m))
@@ -1758,9 +1760,7 @@ handled properly.  BODY shall not contain a timeout."
 	 (substring (file-remote-p tramp-test-temporary-file-directory) 0 -1)
 	 m))
        :type
-       (if (tramp-method-out-of-band-p
-	    (tramp-dissect-file-name tramp-test-temporary-file-directory) 0)
-	   'file-error 'user-error)))))
+       (if (tramp-method-out-of-band-p vec 0) 'file-error 'user-error)))))
 
 (ert-deftest tramp-test03-file-name-method-rules ()
   "Check file name rules for some methods."
