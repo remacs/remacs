@@ -22,11 +22,11 @@
 ;;; Commentary:
 
 ;; About "deferred" tests, `jsonrpc--test-client' has a flag that we
-;; test this flag in the this `jsonrpc-connection-ready-p' API method.
-;; It holds any `jsonrpc-request's and `jsonrpc-async-request's
-;; explicitly passed `:deferred'.  After clearing the flag, the held
-;; requests are actually sent to the server in the next opportunity
-;; (when receiving or sending something to the server).
+;; test in its `jsonrpc-connection-ready-p' API method.  It holds any
+;; `jsonrpc-request's and `jsonrpc-async-request's explicitly passed
+;; `:deferred'.  After clearing the flag, the held requests are
+;; actually sent to the server in the next opportunity (when receiving
+;; or sending something to the server).
 
 ;;; Code:
 
@@ -40,59 +40,65 @@
 (defclass jsonrpc--test-client (jsonrpc--test-endpoint)
   ((hold-deferred :initform t :accessor jsonrpc--hold-deferred)))
 
+(defun jsonrpc--call-with-emacsrpc-fixture (fn)
+  "Do work for `jsonrpc--with-emacsrpc-fixture'.  Call FN."
+  (let* (listen-server endpoint)
+    (unwind-protect
+        (progn
+          (setq listen-server
+                (make-network-process
+                 :name "Emacs RPC server" :server t :host "localhost"
+                 :service 44444
+                 :log (lambda (listen-server client _message)
+                        (push
+                         (make-instance
+                          'jsonrpc--test-endpoint
+                          :name (process-name client)
+                          :process client
+                          :request-dispatcher
+                          (lambda (_endpoint method params)
+                            (unless (memq method '(+ - * / vconcat append
+                                                     sit-for ignore))
+                              (signal 'jsonrpc-error
+                                      `((jsonrpc-error-message
+                                         . "Sorry, this isn't allowed")
+                                        (jsonrpc-error-code . -32601))))
+                            (apply method (append params nil)))
+                          :on-shutdown
+                          (lambda (conn)
+                            (setf (jsonrpc--shutdown-complete-p conn) t)))
+                         (process-get listen-server 'handlers)))))
+          (setq endpoint
+                (make-instance
+                 'jsonrpc--test-client
+                 "Emacs RPC client"
+                 :process
+                 (open-network-stream "JSONRPC test tcp endpoint"
+                                      nil "localhost"
+                                      (process-contact listen-server
+                                                       :service))
+                 :on-shutdown
+                 (lambda (conn)
+                   (setf (jsonrpc--shutdown-complete-p conn) t))))
+          (funcall fn endpoint))
+      (unwind-protect
+          (when endpoint
+            (kill-buffer (jsonrpc--events-buffer endpoint))
+            (jsonrpc-shutdown endpoint))
+        (when listen-server
+          (cl-loop do (delete-process listen-server)
+                   while (progn (accept-process-output nil 0.1)
+                                (process-live-p listen-server))
+                   do (jsonrpc--message
+                       "test listen-server is still running, waiting"))
+          (cl-loop for handler in (process-get listen-server 'handlers)
+                   do (ignore-errors (jsonrpc-shutdown handler)))
+          (mapc #'kill-buffer
+                (mapcar #'jsonrpc--events-buffer
+                        (process-get listen-server 'handlers))))))))
+
 (cl-defmacro jsonrpc--with-emacsrpc-fixture ((endpoint-sym) &body body)
-  (declare (indent 1) (debug t))
-  (let ((server (gensym "server-")) (listen-server (gensym "listen-server-")))
-    `(let* (,server
-            (,listen-server
-             (make-network-process
-              :name "Emacs RPC server" :server t :host "localhost"
-              :service 0
-              :log (lambda (_server client _message)
-                     (setq ,server
-                           (make-instance
-                            'jsonrpc--test-endpoint
-                            :name (process-name client)
-                            :process client
-                            :request-dispatcher
-                            (lambda (_endpoint method params)
-                              (unless (memq method '(+ - * / vconcat append
-                                                       sit-for ignore))
-                                (signal 'jsonrpc-error
-                                        `((jsonrpc-error-message
-                                           . "Sorry, this isn't allowed")
-                                          (jsonrpc-error-code . -32601))))
-                              (apply method (append params nil)))
-                            :on-shutdown
-                            (lambda (conn)
-                              (setf (jsonrpc--shutdown-complete-p conn) t)))))))
-            (,endpoint-sym (make-instance
-                            'jsonrpc--test-client
-                            "Emacs RPC client"
-                            :process
-                            (open-network-stream "JSONRPC test tcp endpoint"
-                                                 nil "localhost"
-                                                 (process-contact ,listen-server
-                                                                  :service))
-                            :on-shutdown
-                            (lambda (conn)
-                              (setf (jsonrpc--shutdown-complete-p conn) t)))))
-       (unwind-protect
-           (progn
-             (cl-assert ,endpoint-sym)
-             ,@body
-             (kill-buffer (jsonrpc--events-buffer ,endpoint-sym))
-             (when ,server
-               (kill-buffer (jsonrpc--events-buffer ,server))))
-         (unwind-protect
-             (jsonrpc-shutdown ,endpoint-sym)
-           (unwind-protect
-               (jsonrpc-shutdown ,server)
-             (cl-loop do (delete-process ,listen-server)
-                      while (progn (accept-process-output nil 0.1)
-                                   (process-live-p ,listen-server))
-                      do (jsonrpc--message
-                          "test listen-server is still running, waiting"))))))))
+  `(jsonrpc--call-with-emacsrpc-fixture (lambda (,endpoint-sym) ,@body)))
 
 (ert-deftest returns-3 ()
   "A basic test for adding two numbers in our test RPC."
@@ -143,10 +149,10 @@
 (ert-deftest json-el-cant-serialize-this ()
   "Can't serialize a response that is half-vector/half-list."
   (jsonrpc--with-emacsrpc-fixture (conn)
-    (should-error
-     ;; (append [1 2 3] [3 4 5]) => (1 2 3 . [3 4 5]), which can't be
-     ;; serialized
-     (jsonrpc-request conn 'append [[1 2 3] [3 4 5]]))))
+                                  (should-error
+                                   ;; (append [1 2 3] [3 4 5]) => (1 2 3 . [3 4 5]), which can't be
+                                   ;; serialized
+                                   (jsonrpc-request conn 'append [[1 2 3] [3 4 5]]))))
 
 (cl-defmethod jsonrpc-connection-ready-p
   ((conn jsonrpc--test-client) what)
@@ -231,6 +237,10 @@
       (jsonrpc-request conn 'ignore ["third deferred"]
                        :deferred "third deferred"
                        :timeout 1)
+      ;; Wait another 0.5 secs just in case the success handlers of
+      ;; one of these last two requests didn't quite have a chance to
+      ;; run (Emacs 25.2 apparentely needs this).
+      (accept-process-output nil 0.5)
       (should second-deferred-went-through-p)
       (should (eq 1 n-deferred-1))
       (should (eq 2 n-deferred-2))

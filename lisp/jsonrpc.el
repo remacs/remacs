@@ -5,11 +5,11 @@
 ;; Author: João Távora <joaotavora@gmail.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "25.1"))
 ;; Version: 1.0.0
 
 ;; This is an Elpa :core package.  Don't use functionality that is not
-;; compatible with Emacs 26.1.
+;; compatible with Emacs 25.1.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -132,7 +132,7 @@ immediately."
 ;;;
 (cl-defmacro jsonrpc-lambda (cl-lambda-list &body body)
   (declare (indent 1) (debug (sexp &rest form)))
-  (let ((e (gensym "jsonrpc-lambda-elem")))
+  (let ((e (cl-gensym "jsonrpc-lambda-elem")))
     `(lambda (,e) (apply (cl-function (lambda ,cl-lambda-list ,@body)) ,e))))
 
 (defun jsonrpc-events-buffer (connection)
@@ -436,7 +436,9 @@ connection object, called when the process dies .")
 (defun jsonrpc--call-deferred (connection)
   "Call CONNECTION's deferred actions, who may again defer themselves."
   (when-let ((actions (hash-table-values (jsonrpc--deferred-actions connection))))
-    (jsonrpc--debug connection `(:maybe-run-deferred ,(mapcar #'caddr actions)))
+    (jsonrpc--debug connection `(:maybe-run-deferred
+                                 ,(mapcar (lambda (action) (car (cdr (cdr action))))
+                                          actions)))
     (mapc #'funcall (mapcar #'car actions))))
 
 (defun jsonrpc--process-sentinel (proc change)
