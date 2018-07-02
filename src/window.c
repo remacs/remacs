@@ -1344,14 +1344,6 @@ column 0.  */)
 				  0, false);
 }
 
-DEFUN ("window-old-point", Fwindow_old_point, Swindow_old_point, 0, 1, 0,
-       doc: /* Return old value of point in WINDOW.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return Fmarker_position (decode_live_window (window)->old_pointm);
-}
-
 /* This is text temporarily removed from the doc string below.
 
 This function returns nil if the position is not currently known.
@@ -1788,54 +1780,6 @@ though when run from an idle timer with a delay of zero seconds.  */)
     }
 
   return Fnreverse (rows);
-}
-
-DEFUN ("window-dedicated-p", Fwindow_dedicated_p, Swindow_dedicated_p,
-       0, 1, 0,
-       doc: /* Return non-nil when WINDOW is dedicated to its buffer.
-More precisely, return the value assigned by the last call of
-`set-window-dedicated-p' for WINDOW.  Return nil if that function was
-never called with WINDOW as its argument, or the value set by that
-function was internally reset since its last call.  WINDOW must be a
-live window and defaults to the selected one.
-
-When a window is dedicated to its buffer, `display-buffer' will refrain
-from displaying another buffer in it.  `get-lru-window' and
-`get-largest-window' treat dedicated windows specially.
-`delete-windows-on', `replace-buffer-in-windows', `quit-window' and
-`kill-buffer' can delete a dedicated window and the containing frame.
-
-Functions like `set-window-buffer' may change the buffer displayed by a
-window, unless that window is "strongly" dedicated to its buffer, that
-is the value returned by `window-dedicated-p' is t.  */)
-  (Lisp_Object window)
-{
-  return decode_live_window (window)->dedicated;
-}
-
-DEFUN ("set-window-dedicated-p", Fset_window_dedicated_p,
-       Sset_window_dedicated_p, 2, 2, 0,
-       doc: /* Mark WINDOW as dedicated according to FLAG.
-WINDOW must be a live window and defaults to the selected one.  FLAG
-non-nil means mark WINDOW as dedicated to its buffer.  FLAG nil means
-mark WINDOW as non-dedicated.  Return FLAG.
-
-When a window is dedicated to its buffer, `display-buffer' will refrain
-from displaying another buffer in it.  `get-lru-window' and
-`get-largest-window' treat dedicated windows specially.
-`delete-windows-on', `replace-buffer-in-windows', `quit-window',
-`quit-restore-window' and `kill-buffer' can delete a dedicated window
-and the containing frame.
-
-As a special case, if FLAG is t, mark WINDOW as "strongly" dedicated to
-its buffer.  Functions like `set-window-buffer' may change the buffer
-displayed by a window, unless that window is strongly dedicated to its
-buffer.  If and when `set-window-buffer' displays another buffer in a
-window, it also makes sure that the window is no more dedicated.  */)
-  (Lisp_Object window, Lisp_Object flag)
-{
-  wset_dedicated (decode_live_window (window), flag);
-  return flag;
 }
 
 DEFUN ("window-prev-buffers", Fwindow_prev_buffers, Swindow_prev_buffers,
@@ -7369,13 +7313,10 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_scroll_bar_height);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
-  defsubr (&Swindow_old_point);
   defsubr (&Swindow_end);
   defsubr (&Sset_window_point);
   defsubr (&Sset_window_start);
-  defsubr (&Swindow_dedicated_p);
   defsubr (&Swindow_lines_pixel_dimensions);
-  defsubr (&Sset_window_dedicated_p);
   defsubr (&Sset_window_display_table);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
