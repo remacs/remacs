@@ -1582,10 +1582,7 @@ Removes badly formatted data and ignored directories."
   (add-hook 'choose-completion-string-functions 'ido-choose-completion-string))
 
 (define-minor-mode ido-everywhere
-  "Toggle use of Ido for all buffer/file reading.
-With a prefix argument ARG, enable this feature if ARG is
-positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil."
+  "Toggle use of Ido for all buffer/file reading."
   :global t
   :group 'ido
   (remove-function read-file-name-function #'ido-read-file-name)

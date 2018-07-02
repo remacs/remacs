@@ -617,9 +617,6 @@ mouse-3: Previous frame"
 ;;;###autoload
 (define-minor-mode image-minor-mode
   "Toggle Image minor mode in this buffer.
-With a prefix argument ARG, enable Image minor mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Image minor mode provides the key \\<image-mode-map>\\[image-toggle-display],
 to switch back to `image-mode' and display an image file as the

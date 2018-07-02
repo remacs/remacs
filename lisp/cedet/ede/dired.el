@@ -59,9 +59,7 @@
 
 ;;;###autoload
 (define-minor-mode ede-dired-minor-mode
-  "A minor mode that should only be activated in DIRED buffers.
-If ARG is nil or a positive number, force on, if
-negative, force off."
+  "A minor mode that should only be activated in DIRED buffers."
   :lighter " EDE" :keymap ede-dired-keymap
   (unless (derived-mode-p 'dired-mode)
     (setq ede-dired-minor-mode nil)

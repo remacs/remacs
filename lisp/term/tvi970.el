@@ -101,9 +101,6 @@
 ;; Should keypad numbers send ordinary digits or distinct escape sequences?
 (define-minor-mode tvi970-set-keypad-mode
   "Toggle alternate keypad mode on TVI 970 keypad.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 In alternate keypad mode, the keys send distinct escape
 sequences, meaning that they can have their own bindings,

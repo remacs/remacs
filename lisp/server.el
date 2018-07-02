@@ -777,9 +777,6 @@ by the current Emacs process, use the `server-process' variable."
 ;;;###autoload
 (define-minor-mode server-mode
   "Toggle Server mode.
-With a prefix argument ARG, enable Server mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-Server mode if ARG is omitted or nil.
 
 Server mode runs a process that accepts commands from the
 `emacsclient' program.  See Info node `Emacs server' and

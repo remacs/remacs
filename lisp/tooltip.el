@@ -42,9 +42,6 @@
 
 (define-minor-mode tooltip-mode
   "Toggle Tooltip mode.
-With a prefix argument ARG, enable Tooltip mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 When this global minor mode is enabled, Emacs displays help
 text (e.g. for buttons and menu items that you put the mouse on)

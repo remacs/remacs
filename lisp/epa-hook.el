@@ -83,10 +83,7 @@ May either be a string or a list of strings.")
       (auto-save-mode 0)))
 
 (define-minor-mode auto-encryption-mode
-  "Toggle automatic file encryption/decryption (Auto Encryption mode).
-With a prefix argument ARG, enable Auto Encryption mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil."
+  "Toggle automatic file encryption/decryption (Auto Encryption mode)."
   :global t :init-value t :group 'epa-file :version "23.1"
   ;; We'd like to use custom-initialize-set here so the setup is done
   ;; before dumping, but at the point where the defcustom is evaluated,

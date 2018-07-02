@@ -419,14 +419,10 @@ idle for `auto-save-visited-interval' seconds."
 
 (define-minor-mode auto-save-visited-mode
   "Toggle automatic saving to file-visiting buffers on or off.
-With a prefix argument ARG, enable regular saving of all buffers
-visiting a file if ARG is positive, and disable it otherwise.
+
 Unlike `auto-save-mode', this mode will auto-save buffer contents
 to the visited files directly and will also run all save-related
-hooks.  See Info node `Saving' for details of the save process.
-
-If called from Lisp, enable the mode if ARG is omitted or nil,
-and toggle it if ARG is `toggle'."
+hooks.  See Info node `Saving' for details of the save process."
   :group 'auto-save
   :global t
   (when auto-save--timer (cancel-timer auto-save--timer))

@@ -505,9 +505,6 @@ See also `flyspell-duplicate-distance'."
 ;;;###autoload
 (define-minor-mode flyspell-mode
   "Toggle on-the-fly spell checking (Flyspell mode).
-With a prefix argument ARG, enable Flyspell mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Flyspell mode is a buffer-local minor mode.  When enabled, it
 spawns a single Ispell process and checks each word.  The default

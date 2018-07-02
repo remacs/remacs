@@ -299,9 +299,6 @@ After that, changing the prefix key requires manipulating keymaps."
 ;;;###autoload
 (define-minor-mode outline-minor-mode
   "Toggle Outline minor mode.
-With a prefix argument ARG, enable Outline minor mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 See the command `outline-mode' for more information on this mode."
   nil " Outl" (list (cons [menu-bar] outline-minor-mode-menu-bar-map)

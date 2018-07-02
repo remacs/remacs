@@ -150,9 +150,6 @@ but not `C-u X' or `ESC X' since the X is not the prefix key."
 ;;;###autoload
 (define-minor-mode double-mode
   "Toggle special insertion on double keypresses (Double mode).
-With a prefix argument ARG, enable Double mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When Double mode is enabled, some keys will insert different
 strings when pressed twice.  See `double-map' for details."

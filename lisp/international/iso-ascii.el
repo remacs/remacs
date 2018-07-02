@@ -163,10 +163,7 @@
 (iso-ascii-display 255 "\"y") ; small y with diaeresis or umlaut mark
 
 (define-minor-mode iso-ascii-mode
-  "Toggle ISO-ASCII mode.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Toggle ISO-ASCII mode."
   :variable ((eq standard-display-table iso-ascii-display-table)
              . (lambda (v)
                  (setq standard-display-table

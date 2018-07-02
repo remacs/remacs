@@ -1107,9 +1107,6 @@ function is called, the window to be resized is selected."
 
 (define-minor-mode temp-buffer-resize-mode
   "Toggle auto-resizing temporary buffer windows (Temp Buffer Resize Mode).
-With a prefix argument ARG, enable Temp Buffer Resize mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 When Temp Buffer Resize mode is enabled, the windows in which we
 show a temporary buffer are automatically resized in height to

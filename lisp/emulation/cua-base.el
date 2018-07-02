@@ -1318,9 +1318,6 @@ If ARG is the atom `-', scroll upward by nearly full screen."
 ;;;###autoload
 (define-minor-mode cua-mode
   "Toggle Common User Access style editing (CUA mode).
-With a prefix argument ARG, enable CUA mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 CUA mode is a global minor mode.  When enabled, typed text
 replaces the active selection, and you can use C-z, C-x, C-c, and

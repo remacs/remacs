@@ -4251,9 +4251,6 @@ Otherwise, just expand the file name."
 
 (define-minor-mode idlwave-shell-electric-debug-mode
   "Toggle Idlwave Shell Electric Debug mode.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 When Idlwave Shell Electric Debug mode is enabled, the Idlwave
 Shell debugging commands are available as single key sequences."

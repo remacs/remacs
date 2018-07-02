@@ -105,10 +105,7 @@ function returns nil."
 
 ;;;###autoload
 (define-minor-mode pixel-scroll-mode
-  "A minor mode to scroll text pixel-by-pixel.
-With a prefix argument ARG, enable Pixel Scroll mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable Pixel Scroll mode
-if ARG is omitted or nil."
+  "A minor mode to scroll text pixel-by-pixel."
   :init-value nil
   :group 'scrolling
   :global t

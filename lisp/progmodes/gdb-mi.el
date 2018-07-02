@@ -1138,9 +1138,7 @@ Changed values are highlighted with the face `font-lock-warning-face'."
   :version "22.2")
 
 (define-minor-mode gdb-speedbar-auto-raise
-  "Minor mode to automatically raise the speedbar for watch expressions.
-With prefix argument ARG, automatically raise speedbar if ARG is
-positive, otherwise don't automatically raise it."
+  "Minor mode to automatically raise the speedbar for watch expressions."
   :global t
   :group 'gdb
   :version "22.1")

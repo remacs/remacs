@@ -351,9 +351,6 @@ You may want to include buffer names such as *Help*, *Apropos*,
 ;;;###autoload
 (define-minor-mode winner-mode
   "Toggle Winner mode on or off.
-With a prefix argument ARG, enable Winner mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
 
 Winner mode is a global minor mode that records the changes in
 the window configuration (i.e. how the frames are partitioned

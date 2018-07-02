@@ -213,9 +213,6 @@ complex processing.")
 ;;;###autoload
 (define-minor-mode refill-mode
   "Toggle automatic refilling (Refill mode).
-With a prefix argument ARG, enable Refill mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Refill mode is a buffer-local minor mode.  When enabled, the
 current paragraph is refilled as you edit.  Self-inserting

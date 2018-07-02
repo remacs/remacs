@@ -591,10 +591,7 @@ format first."
 
 ;;;###autoload
 (define-minor-mode ruler-mode
-  "Toggle display of ruler in header line (Ruler mode).
-With a prefix argument ARG, enable Ruler mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Toggle display of ruler in header line (Ruler mode)."
   nil nil
   ruler-mode-map
   :group 'ruler-mode

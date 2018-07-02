@@ -100,9 +100,6 @@ its position."
 ;;;###autoload
 (define-minor-mode show-paren-mode
   "Toggle visualization of matching parens (Show Paren mode).
-With a prefix argument ARG, enable Show Paren mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Show Paren mode is a global minor mode.  When enabled, any
 matching parenthesis is highlighted in `show-paren-style' after

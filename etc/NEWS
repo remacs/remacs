@@ -689,6 +689,8 @@ manual for more details.
 
 * Lisp Changes in Emacs 27.1
 
+** define-minor-mode automatically documents the meaning of ARG
+
 +++
 ** The function 'recenter' now accepts an additional optional argument.
 By default, calling 'recenter' will not redraw the frame even if

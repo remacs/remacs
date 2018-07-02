@@ -2164,9 +2164,6 @@ Optional argument MINOR indicates this is called from
 ;;;###autoload
 (define-minor-mode compilation-shell-minor-mode
   "Toggle Compilation Shell minor mode.
-With a prefix argument ARG, enable Compilation Shell minor mode
-if ARG is positive, and disable it otherwise.  If called from
-Lisp, enable the mode if ARG is omitted or nil.
 
 When Compilation Shell minor mode is enabled, all the
 error-parsing commands of the Compilation major mode are
@@ -2181,9 +2178,6 @@ See `compilation-mode'."
 ;;;###autoload
 (define-minor-mode compilation-minor-mode
   "Toggle Compilation minor mode.
-With a prefix argument ARG, enable Compilation minor mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 When Compilation minor mode is enabled, all the error-parsing
 commands of Compilation major mode are available.  See

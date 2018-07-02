@@ -97,9 +97,6 @@ This is used when `longlines-show-hard-newlines' is on."
 ;;;###autoload
 (define-minor-mode longlines-mode
   "Toggle Long Lines mode in this buffer.
-With a prefix argument ARG, enable Long Lines mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When Long Lines mode is enabled, long lines are wrapped if they
 extend beyond `fill-column'.  The soft newlines used for line

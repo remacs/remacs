@@ -512,9 +512,6 @@ engine specific, widget :notify function to visualize xesam:url."
 
 (define-minor-mode xesam-minor-mode
   "Toggle Xesam minor mode.
-With a prefix argument ARG, enable Xesam minor mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When Xesam minor mode is enabled, all text which matches a
 previous Xesam query in this buffer is highlighted."

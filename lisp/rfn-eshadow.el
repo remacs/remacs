@@ -209,9 +209,6 @@ been set up by `rfn-eshadow-setup-minibuffer'."
 
 (define-minor-mode file-name-shadow-mode
   "Toggle file-name shadowing in minibuffers (File-Name Shadow mode).
-With a prefix argument ARG, enable File-Name Shadow mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 File-Name Shadow mode is a global minor mode.  When enabled, any
 part of a filename being read in the minibuffer that would be

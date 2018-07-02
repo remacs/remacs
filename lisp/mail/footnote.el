@@ -945,9 +945,6 @@ being set it is automatically widened."
 ;;;###autoload
 (define-minor-mode footnote-mode
   "Toggle Footnote mode.
-With a prefix argument ARG, enable Footnote mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Footnote mode is a buffer-local minor mode.  If enabled, it
 provides footnote support for `message-mode'.  To get started,

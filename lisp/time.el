@@ -488,9 +488,6 @@ update which can wait for the next redisplay."
 ;;;###autoload
 (define-minor-mode display-time-mode
   "Toggle display of time, load level, and mail flag in mode lines.
-With a prefix argument ARG, enable Display Time mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-it if ARG is omitted or nil.
 
 When Display Time mode is enabled, it updates every minute (you
 can control the number of seconds between updates by customizing

@@ -134,9 +134,6 @@
 ;;;###autoload
 (define-minor-mode mail-abbrevs-mode
   "Toggle abbrev expansion of mail aliases (Mail Abbrevs mode).
-With a prefix argument ARG, enable Mail Abbrevs mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Mail Abbrevs mode is a global minor mode.  When enabled,
 abbrev-like expansion is performed when editing certain mail

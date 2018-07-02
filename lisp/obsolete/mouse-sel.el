@@ -194,9 +194,6 @@ If nil, point will always be placed at the beginning of the region."
 ;;;###autoload
 (define-minor-mode mouse-sel-mode
   "Toggle Mouse Sel mode.
-With a prefix argument ARG, enable Mouse Sel mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Mouse Sel mode is a global minor mode.  When enabled, mouse
 selection is enhanced in various ways:

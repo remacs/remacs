@@ -381,9 +381,6 @@ own View-like bindings."
   ;; bindings instead of using the \\[] construction.  The reason for this
   ;; is that most commands have more than one key binding.
   "Toggle View mode, a minor mode for viewing text but not editing it.
-With a prefix argument ARG, enable View mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable View mode
-if ARG is omitted or nil.
 
 When View mode is enabled, commands that do not change the buffer
 contents are available as usual.  Kill commands insert text in

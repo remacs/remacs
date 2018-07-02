@@ -1693,9 +1693,6 @@ valid values."
 (define-minor-mode allout-mode
 ;;;_    . Doc string:
   "Toggle Allout outline mode.
-With a prefix argument ARG, enable Allout outline mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 \\<allout-mode-map-value>
 Allout outline mode is a minor mode that provides extensive

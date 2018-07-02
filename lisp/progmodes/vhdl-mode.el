@@ -8707,17 +8707,11 @@ project is defined."
 ;;  Enabling/disabling
 
 (define-minor-mode vhdl-electric-mode
-  "Toggle VHDL electric mode.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable it if ARG
-is omitted or nil."
+  "Toggle VHDL electric mode."
   :global t :group 'vhdl-mode)
 
 (define-minor-mode vhdl-stutter-mode
-  "Toggle VHDL stuttering mode.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable it if ARG
-is omitted or nil."
+  "Toggle VHDL stuttering mode."
   :global t :group 'vhdl-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -1859,9 +1859,6 @@ to the next best mode."
 ;;;###autoload
 (define-minor-mode doc-view-minor-mode
   "Toggle displaying buffer via Doc View (Doc View minor mode).
-With a prefix argument ARG, enable Doc View minor mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 See the command `doc-view-mode' for more information on this mode."
   nil " DocView" doc-view-minor-mode-map

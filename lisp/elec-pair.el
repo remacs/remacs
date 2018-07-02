@@ -581,9 +581,6 @@ ARG and KILLP are passed directly to
 ;;;###autoload
 (define-minor-mode electric-pair-mode
   "Toggle automatic parens pairing (Electric Pair mode).
-With a prefix argument ARG, enable Electric Pair mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Electric Pair mode is a global minor mode.  When enabled, typing
 an open parenthesis automatically inserts the corresponding

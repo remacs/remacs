@@ -269,10 +269,7 @@ VALUE is assumed to be a list of widgets."
 
 ;;;###autoload
 (define-minor-mode widget-minor-mode
-  "Minor mode for traversing widgets.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Minor mode for traversing widgets."
   :lighter " Widget")
 
 ;;; The End:

@@ -196,9 +196,6 @@ on the symbol."
 ;;;###autoload
 (define-minor-mode prettify-symbols-mode
   "Toggle Prettify Symbols mode.
-With a prefix argument ARG, enable Prettify Symbols mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When Prettify Symbols mode and font-locking are enabled, symbols are
 prettified (displayed as composed characters) according to the rules

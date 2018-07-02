@@ -210,10 +210,6 @@ The value is a list of \(VAR VALUE VAR VALUE...).")
 These are files with embedded formatting information in the MIME standard
 text/enriched format.
 
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
-
 Turning the mode on or off runs `enriched-mode-hook'.
 
 More information about Enriched mode is available in the file

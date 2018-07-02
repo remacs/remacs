@@ -256,11 +256,10 @@ positions (integers or markers) specifying the region."
 
 (define-minor-mode thai-word-mode
   "Minor mode to make word-oriented commands aware of Thai words.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.  The commands affected are
-\\[forward-word], \\[backward-word], \\[kill-word], \\[backward-kill-word],
-\\[transpose-words], and \\[fill-paragraph]."
+
+The commands affected are \\[forward-word], \\[backward-word],
+\\[kill-word], \\[backward-kill-word], \\[transpose-words], and
+\\[fill-paragraph]."
   :global t :group 'mule
   (cond (thai-word-mode
 	 ;; This enables linebreak between Thai characters.

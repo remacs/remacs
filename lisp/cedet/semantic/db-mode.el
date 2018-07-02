@@ -56,7 +56,6 @@
 ;;;###autoload
 (define-minor-mode global-semanticdb-minor-mode
   "Toggle Semantic DB mode.
-With ARG, turn Semantic DB mode on if ARG is positive, off otherwise.
 
 In Semantic DB mode, Semantic parsers store results in a
 database, which can be saved for future Emacs sessions."

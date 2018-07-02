@@ -102,10 +102,7 @@
 
 ;;;###autoload
 (define-minor-mode url-handler-mode
-  "Toggle using `url' library for URL filenames (URL Handler mode).
-With a prefix argument ARG, enable URL Handler mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil."
+  "Toggle using `url' library for URL filenames (URL Handler mode)."
   :global t :group 'url
   ;; Remove old entry, if any.
   (setq file-name-handler-alist

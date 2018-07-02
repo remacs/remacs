@@ -1405,9 +1405,6 @@ The default is a name found in the buffer around point."
 
 (define-minor-mode pascal-outline-mode
   "Outline-line minor mode for Pascal mode.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 When enabled, portions of the text being edited may be made
 invisible.\\<pascal-outline-map>

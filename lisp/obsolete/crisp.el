@@ -353,10 +353,7 @@ normal CRiSP binding) and when it is nil M-x will run
 
 ;;;###autoload
 (define-minor-mode crisp-mode
-  "Toggle CRiSP/Brief emulation (CRiSP mode).
-With a prefix argument ARG, enable CRiSP mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Toggle CRiSP/Brief emulation (CRiSP mode)."
   :keymap crisp-mode-map
   :lighter crisp-mode-mode-line-string
   (when crisp-mode

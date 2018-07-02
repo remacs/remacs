@@ -967,9 +967,6 @@ Environment variables are expanded, see function `substitute-in-file-name'."
 
 (define-minor-mode shell-dirtrack-mode
   "Toggle directory tracking in this shell buffer (Shell Dirtrack mode).
-With a prefix argument ARG, enable Shell Dirtrack mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 The `dirtrack' package provides an alternative implementation of
 this feature; see the function `dirtrack-mode'."

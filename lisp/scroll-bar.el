@@ -133,9 +133,6 @@ Setting the variable with a customization buffer also takes effect."
 
 (define-minor-mode scroll-bar-mode
   "Toggle vertical scroll bars on all frames (Scroll Bar mode).
-With a prefix argument ARG, enable Scroll Bar mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 This command applies to all frames that exist and frames to be
 created in the future."
@@ -152,9 +149,6 @@ created in the future."
 
 (define-minor-mode horizontal-scroll-bar-mode
   "Toggle horizontal scroll bars on all frames (Horizontal Scroll Bar mode).
-With a prefix argument ARG, enable Horizontal Scroll Bar mode if
-ARG is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 This command applies to all frames that exist and frames to be
 created in the future."

@@ -325,9 +325,6 @@ column specified by the function `current-left-margin'."
 ;;;###autoload
 (define-minor-mode electric-indent-mode
   "Toggle on-the-fly reindentation (Electric Indent mode).
-With a prefix argument ARG, enable Electric Indent mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When enabled, this reindents whenever the hook `electric-indent-functions'
 returns non-nil, or if you insert a character from `electric-indent-chars'.
@@ -411,9 +408,7 @@ newline after CHAR but stay in the same place.")
 ;;;###autoload
 (define-minor-mode electric-layout-mode
   "Automatically insert newlines around some chars.
-With a prefix argument ARG, enable Electric Layout mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
+
 The variable `electric-layout-rules' says when and how to insert newlines."
   :global t :group 'electricity
   (cond (electric-layout-mode
@@ -551,9 +546,6 @@ This requotes when a quoting key is typed."
 ;;;###autoload
 (define-minor-mode electric-quote-mode
   "Toggle on-the-fly requoting (Electric Quote mode).
-With a prefix argument ARG, enable Electric Quote mode if
-ARG is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 When enabled, as you type this replaces \\=` with ‘, \\=' with ’,
 \\=`\\=` with “, and \\='\\=' with ”.  This occurs only in comments, strings,

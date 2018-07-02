@@ -175,9 +175,6 @@ The text being displayed in the echo area is controlled by the variables
 ;;;###autoload
 (define-minor-mode display-battery-mode
   "Toggle battery status display in mode line (Display Battery mode).
-With a prefix argument ARG, enable Display Battery mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 The text displayed in the mode line is controlled by
 `battery-mode-line-format' and `battery-status-function'.

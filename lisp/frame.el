@@ -1382,9 +1382,6 @@ To get the frame's current border color, use `frame-parameters'."
 
 (define-minor-mode auto-raise-mode
   "Toggle whether or not selected frames should auto-raise.
-With a prefix argument ARG, enable Auto Raise mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Auto Raise mode does nothing under most window managers, which
 switch focus on mouse clicks.  It only has an effect if your
@@ -1402,9 +1399,6 @@ often have their own auto-raise feature."
 
 (define-minor-mode auto-lower-mode
   "Toggle whether or not the selected frame should auto-lower.
-With a prefix argument ARG, enable Auto Lower mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Auto Lower mode does nothing under most window managers, which
 switch focus on mouse clicks.  It only has an effect if your
@@ -2297,9 +2291,6 @@ all divider widths to zero."
 
 (define-minor-mode window-divider-mode
   "Display dividers between windows (Window Divider mode).
-With a prefix argument ARG, enable Window Divider mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 The option `window-divider-default-places' specifies on which
 side of a window dividers are displayed.  The options
@@ -2450,9 +2441,6 @@ stopped by `blink-cursor-suspend'.  Internally calls
 
 (define-minor-mode blink-cursor-mode
   "Toggle cursor blinking (Blink Cursor mode).
-With a prefix argument ARG, enable Blink Cursor mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 If the value of `blink-cursor-blinks' is positive (10 by default),
 the cursor stops blinking after that number of blinks, if Emacs

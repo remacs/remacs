@@ -1198,7 +1198,7 @@ PREV-OP-ARG are used when invoked recursively during the build-up."
 ;;;###autoload
 (define-minor-mode artist-mode
   "Toggle Artist mode.
-With argument ARG, turn Artist mode on if ARG is positive.
+
 Artist lets you draw lines, squares, rectangles and poly-lines,
 ellipses and circles with your mouse and/or keyboard.
 

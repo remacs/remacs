@@ -312,9 +312,6 @@ which is the \"1006\" extension implemented in Xterm >= 277."
 ;;;###autoload
 (define-minor-mode xterm-mouse-mode
   "Toggle XTerm mouse mode.
-With a prefix argument ARG, enable XTerm mouse mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Turn it on to use Emacs mouse commands, and off to use xterm mouse commands.
 This works in terminal emulators compatible with xterm.  It only

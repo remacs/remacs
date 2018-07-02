@@ -383,9 +383,6 @@ This is typically set by explicit scrolling commands.")
 ;;;###autoload
 (define-minor-mode follow-mode
   "Toggle Follow mode.
-With a prefix argument ARG, enable Follow mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Follow mode is a minor mode that combines windows into one tall
 virtual window.  This is accomplished by two main techniques:

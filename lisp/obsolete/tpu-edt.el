@@ -980,10 +980,7 @@ and the total number of lines in the buffer."
 ;;;
 ;;;###autoload
 (define-minor-mode tpu-edt-mode
-  "Toggle TPU/edt emulation on or off.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Toggle TPU/edt emulation on or off."
   :global t :group 'tpu
   (if tpu-edt-mode (tpu-edt-on) (tpu-edt-off)))
 

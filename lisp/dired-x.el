@@ -139,9 +139,6 @@ folding to be used on case-insensitive filesystems only."
 
 (define-minor-mode dired-omit-mode
   "Toggle omission of uninteresting files in Dired (Dired-Omit mode).
-With a prefix argument ARG, enable Dired-Omit mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Dired-Omit mode is a buffer-local minor mode.  When enabled in a
 Dired buffer, Dired does not list files whose filenames match

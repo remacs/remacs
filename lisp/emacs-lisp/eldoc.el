@@ -177,9 +177,6 @@ printed after commands contained in this obarray."
 ;;;###autoload
 (define-minor-mode eldoc-mode
   "Toggle echo area display of Lisp objects at point (ElDoc mode).
-With a prefix argument ARG, enable ElDoc mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable ElDoc mode
-if ARG is omitted or nil.
 
 ElDoc mode is a buffer-local minor mode.  When enabled, the echo
 area displays information about a function or variable in the

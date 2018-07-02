@@ -604,6 +604,7 @@ with a prefix argument, prompt for START-AT and FORMAT."
 ;;;###autoload
 (define-minor-mode rectangle-mark-mode
   "Toggle the region as rectangular.
+
 Activates the region if needed.  Only lasts until the region is deactivated."
   nil nil nil
   (rectangle--reset-crutches)

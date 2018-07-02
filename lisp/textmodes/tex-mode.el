@@ -713,9 +713,6 @@ An alternative value is \" . \", if you use a font with a narrow period."
 
 (define-minor-mode latex-electric-env-pair-mode
   "Toggle Latex Electric Env Pair mode.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable it if ARG
-is omitted or nil.
 
 Latex Electric Env Pair mode is a buffer-local minor mode for use
 with `latex-mode'.  When enabled, typing a \\begin or \\end tag

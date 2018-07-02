@@ -3363,10 +3363,7 @@ Treats actions as defuns."
 
 ;;;###autoload
 (define-minor-mode gud-tooltip-mode
-  "Toggle the display of GUD tooltips.
-With a prefix argument ARG, enable the feature if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-it if ARG is omitted or nil."
+  "Toggle the display of GUD tooltips."
   :global t
   :group 'gud
   :group 'tooltip

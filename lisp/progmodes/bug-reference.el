@@ -141,10 +141,7 @@ The second subexpression should match the bug reference (usually a number)."
 
 ;;;###autoload
 (define-minor-mode bug-reference-mode
-  "Toggle hyperlinking bug references in the buffer (Bug Reference mode).
-With a prefix argument ARG, enable Bug Reference mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil."
+  "Toggle hyperlinking bug references in the buffer (Bug Reference mode)."
   nil
   ""
   nil

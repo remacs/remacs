@@ -829,9 +829,6 @@ This function is the default value of `auto-composition-function' (which see)."
 ;;;###autoload
 (define-minor-mode auto-composition-mode
   "Toggle Auto Composition mode.
-With a prefix argument ARG, enable Auto Composition mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 When Auto Composition mode is enabled, text characters are
 automatically composed by functions registered in
@@ -847,9 +844,6 @@ Auto Composition mode in all buffers (this is the default)."
 ;;;###autoload
 (define-minor-mode global-auto-composition-mode
   "Toggle Auto Composition mode in all buffers.
-With a prefix argument ARG, enable it if ARG is positive, and
-disable it otherwise.  If called from Lisp, enable it if ARG is
-omitted or nil.
 
 For more information on Auto Composition mode, see
 `auto-composition-mode' ."

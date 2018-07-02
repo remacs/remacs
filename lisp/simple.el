@@ -401,9 +401,7 @@ select the source buffer."
 
 (define-minor-mode next-error-follow-minor-mode
   "Minor mode for compilation, occur and diff modes.
-With a prefix argument ARG, enable mode if ARG is positive, and
-disable it otherwise.  If called from Lisp, enable mode if ARG is
-omitted or nil.
+
 When turned on, cursor motion in the compilation, grep, occur or diff
 buffer causes automatic display of the corresponding source code location."
   :group 'next-error :init-value nil :lighter " Fol"
@@ -5817,9 +5815,6 @@ its earlier value."
 
 (define-minor-mode transient-mark-mode
   "Toggle Transient Mark mode.
-With a prefix argument ARG, enable Transient Mark mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-Transient Mark mode if ARG is omitted or nil.
 
 Transient Mark mode is a global minor mode.  When enabled, the
 region is highlighted with the `region' face whenever the mark
@@ -6854,12 +6849,6 @@ other purposes."
 
 (define-minor-mode visual-line-mode
   "Toggle visual line based editing (Visual Line mode) in the current buffer.
-Interactively, with a prefix argument, enable
-Visual Line mode if the prefix argument is positive,
-and disable it otherwise.  If called from Lisp, toggle
-the mode if ARG is `toggle', disable the mode if ARG is
-a non-positive integer, and enable the mode otherwise
-\(including if ARG is omitted or nil or a positive integer).
 
 When Visual Line mode is enabled, `word-wrap' is turned on in
 this buffer, and simple editing commands are redefined to act on
@@ -7290,12 +7279,6 @@ Some major modes set this.")
 
 (define-minor-mode auto-fill-mode
   "Toggle automatic line breaking (Auto Fill mode).
-Interactively, with a prefix argument, enable
-Auto Fill mode if the prefix argument is positive,
-and disable it otherwise.  If called from Lisp, toggle
-the mode if ARG is `toggle', disable the mode if ARG is
-a non-positive integer, and enable the mode otherwise
-\(including if ARG is omitted or nil or a positive integer).
 
 When Auto Fill mode is enabled, inserting a space at a column
 beyond `current-fill-column' automatically breaks the line at a
@@ -7410,9 +7393,6 @@ if long lines are truncated."
 
 (define-minor-mode overwrite-mode
   "Toggle Overwrite mode.
-With a prefix argument ARG, enable Overwrite mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When Overwrite mode is enabled, printing characters typed in
 replace existing text on a one-for-one basis, rather than pushing
@@ -7426,9 +7406,6 @@ characters when necessary."
 
 (define-minor-mode binary-overwrite-mode
   "Toggle Binary Overwrite mode.
-With a prefix argument ARG, enable Binary Overwrite mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 When Binary Overwrite mode is enabled, printing characters typed
 in replace existing text.  Newlines are not treated specially, so
@@ -7446,9 +7423,6 @@ a specialization of overwrite mode, entered by setting the
 
 (define-minor-mode line-number-mode
   "Toggle line number display in the mode line (Line Number mode).
-With a prefix argument ARG, enable Line Number mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Line numbers do not appear for very large buffers and buffers
 with very long lines; see variables `line-number-display-limit'
@@ -7456,27 +7430,15 @@ and `line-number-display-limit-width'."
   :init-value t :global t :group 'mode-line)
 
 (define-minor-mode column-number-mode
-  "Toggle column number display in the mode line (Column Number mode).
-With a prefix argument ARG, enable Column Number mode if ARG is
-positive, and disable it otherwise.
-
-If called from Lisp, enable the mode if ARG is omitted or nil."
+  "Toggle column number display in the mode line (Column Number mode)."
   :global t :group 'mode-line)
 
 (define-minor-mode size-indication-mode
-  "Toggle buffer size display in the mode line (Size Indication mode).
-With a prefix argument ARG, enable Size Indication mode if ARG is
-positive, and disable it otherwise.
-
-If called from Lisp, enable the mode if ARG is omitted or nil."
+  "Toggle buffer size display in the mode line (Size Indication mode)."
   :global t :group 'mode-line)
 
 (define-minor-mode auto-save-mode
-  "Toggle auto-saving in the current buffer (Auto Save mode).
-With a prefix argument ARG, enable Auto Save mode if ARG is
-positive, and disable it otherwise.
-
-If called from Lisp, enable the mode if ARG is omitted or nil."
+  "Toggle auto-saving in the current buffer (Auto Save mode)."
   :variable ((and buffer-auto-save-file-name
                   ;; If auto-save is off because buffer has shrunk,
                   ;; then toggling should turn it on.
@@ -8687,9 +8649,6 @@ call `normal-erase-is-backspace-mode' (which see) instead."
 
 (define-minor-mode normal-erase-is-backspace-mode
   "Toggle the Erase and Delete mode of the Backspace and Delete keys.
-With a prefix argument ARG, enable this feature if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 On window systems, when this mode is on, Delete is mapped to C-d
 and Backspace is mapped to DEL; when this mode is off, both
@@ -8766,9 +8725,9 @@ See also `normal-erase-is-backspace'."
 
 (define-minor-mode read-only-mode
   "Change whether the current buffer is read-only.
-With prefix argument ARG, make the buffer read-only if ARG is
-positive, otherwise make it writable.  If buffer is read-only
-and `view-read-only' is non-nil, enter view mode.
+
+If buffer is read-only and `view-read-only' is non-nil, enter
+view mode.
 
 Do not call this from a Lisp program unless you really intend to
 do the same thing as the \\[read-only-mode] command, including
@@ -8792,9 +8751,6 @@ to a non-nil value."
 
 (define-minor-mode visible-mode
   "Toggle making all invisible text temporarily visible (Visible mode).
-With a prefix argument ARG, enable Visible mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 This mode works by saving the value of `buffer-invisibility-spec'
 and setting it to nil."

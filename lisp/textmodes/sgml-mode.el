@@ -941,9 +941,6 @@ Return non-nil if we skipped over matched tags."
 
 (define-minor-mode sgml-electric-tag-pair-mode
   "Toggle SGML Electric Tag Pair mode.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 SGML Electric Tag Pair mode is a buffer-local minor mode for use
 with `sgml-mode' and related major modes.  When enabled, editing
@@ -2379,9 +2376,6 @@ The third `match-string' will be the used in the menu.")
 
 (define-minor-mode html-autoview-mode
   "Toggle viewing of HTML files on save (HTML Autoview mode).
-With a prefix argument ARG, enable HTML Autoview mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 HTML Autoview mode is a buffer-local minor mode for use with
 `html-mode'.  If enabled, saving the file automatically runs

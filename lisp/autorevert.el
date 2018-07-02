@@ -351,9 +351,6 @@ This has been reported by a file notification event.")
 ;;;###autoload
 (define-minor-mode auto-revert-mode
   "Toggle reverting buffer when the file changes (Auto-Revert Mode).
-With a prefix argument ARG, enable Auto-Revert Mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Auto-Revert Mode is a minor mode that affects only the current
 buffer.  When enabled, it reverts the buffer when the file on
@@ -393,9 +390,6 @@ This function is designed to be added to hooks, for example:
 ;;;###autoload
 (define-minor-mode auto-revert-tail-mode
   "Toggle reverting tail of buffer when the file grows.
-With a prefix argument ARG, enable Auto-Revert Tail Mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 When Auto-Revert Tail Mode is enabled, the tail of the file is
 constantly followed, as with the shell command `tail -f'.  This
@@ -460,9 +454,6 @@ This function is designed to be added to hooks, for example:
 ;;;###autoload
 (define-minor-mode global-auto-revert-mode
   "Toggle Global Auto-Revert Mode.
-With a prefix argument ARG, enable Global Auto-Revert Mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 Global Auto-Revert Mode is a global minor mode that reverts any
 buffer associated with a file when the file changes on disk.  Use

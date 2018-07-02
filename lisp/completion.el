@@ -2275,10 +2275,7 @@ TYPE is the type of the wrapper to be added.  Can be :before or :under."
 
 ;;;###autoload
 (define-minor-mode dynamic-completion-mode
-  "Toggle dynamic word-completion on or off.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Toggle dynamic word-completion on or off."
   :global t
   :group 'completion
   ;; This is always good, not specific to dynamic-completion-mode.

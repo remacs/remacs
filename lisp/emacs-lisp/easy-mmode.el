@@ -81,6 +81,26 @@ replacing its case-insensitive matches with the literal string in LIGHTER."
       ;; space.)
       (replace-regexp-in-string (regexp-quote lighter) lighter name t t))))
 
+(defconst easy-mmode--arg-docstring
+  "
+
+If called interactively, enable %s if ARG is positive, and
+disable it if ARG is zero or negative.  If called from Lisp,
+also enable the mode if ARG is omitted or nil, and toggle it
+if ARG is `toggle'; disable the mode otherwise.")
+
+(defun easy-mmode--mode-docstring (doc mode-pretty-name keymap-sym)
+  (let ((doc (or doc (format "Toggle %s on or off.
+
+\\{%s}" mode-pretty-name keymap-sym))))
+    (if (string-match-p "\\bARG\\b" doc)
+        doc
+      (let ((argdoc (format easy-mmode--arg-docstring
+                            mode-pretty-name)))
+        (replace-regexp-in-string "\\(\n\n\\|\\'\\)\\(.\\|\n\\)*\\'"
+                                  (concat argdoc "\\1")
+                                  doc nil nil 1)))))
+
 ;;;###autoload
 (defalias 'easy-mmode-define-minor-mode 'define-minor-mode)
 ;;;###autoload
@@ -101,7 +121,9 @@ non-positive integer, and enables the mode otherwise (including
 if the argument is omitted or nil or a positive integer).
 
 If DOC is nil, give the mode command a basic doc-string
-documenting what its argument does.
+documenting what its argument does.  If the word \"ARG\" does not
+appear in DOC, a paragraph is added to DOC explaining
+usage of the mode argument.
 
 Optional INIT-VALUE is the initial value of the mode's variable.
 Optional LIGHTER is displayed in the mode line when the mode is on.
@@ -270,12 +292,7 @@ or call the function `%s'."))))
 
        ;; The actual function.
        (defun ,modefun (&optional arg ,@extra-args)
-	 ,(or doc
-	      (format (concat "Toggle %s on or off.
-With a prefix argument ARG, enable %s if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
-\\{%s}") pretty-name pretty-name keymap-sym))
+         ,(easy-mmode--mode-docstring doc pretty-name keymap-sym)
 	 ;; Use `toggle' rather than (if ,mode 0 1) so that using
 	 ;; repeat-command still does the toggling correctly.
 	 (interactive (list (or current-prefix-arg 'toggle)))

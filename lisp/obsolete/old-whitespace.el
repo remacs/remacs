@@ -747,7 +747,6 @@ If timer is not set, then set it to scan the files in
 ;;;###autoload
 (define-minor-mode whitespace-global-mode
   "Toggle using Whitespace mode in new buffers.
-With ARG, turn the mode on if ARG is positive, otherwise turn it off.
 
 When this mode is active, `whitespace-buffer' is added to
 `find-file-hook' and `kill-buffer-hook'."

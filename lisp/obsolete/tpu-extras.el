@@ -133,10 +133,7 @@ the previous line when starting from a line beginning."
 
 ;;;###autoload
 (define-minor-mode tpu-cursor-free-mode
-  "Minor mode to allow the cursor to move freely about the screen.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Minor mode to allow the cursor to move freely about the screen."
   :init-value nil
   (if (not tpu-cursor-free-mode)
       (tpu-trim-line-ends))
