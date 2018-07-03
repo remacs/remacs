@@ -28,6 +28,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 
+INLINE_HEADER_BEGIN
+
 /* Index to arguments of Fdefine_coding_system_internal.  */
 
 enum define_coding_system_arg_index
@@ -770,5 +772,7 @@ extern struct coding_system safe_terminal_coding;
 #endif
 
 extern char emacs_mule_bytes[256];
+
+INLINE_HEADER_END
 
 #endif /* EMACS_CODING_H */
