@@ -76,7 +76,7 @@ Otherwise, most addresses look like `angles', but they look like
   :group 'sendmail)
 (make-obsolete-variable
  'mail-from-style
- "Only the `angles' value is valid according to RFC2822" "27.1")
+ "only the `angles' value is valid according to RFC2822." "27.1" 'set)
 
 ;;;###autoload
 (defcustom mail-specify-envelope-from nil
