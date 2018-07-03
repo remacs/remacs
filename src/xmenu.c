@@ -2057,7 +2057,7 @@ struct pop_down_menu
 static void
 pop_down_menu (void *arg)
 {
-  union pop_down_menu *data = arg;
+  struct pop_down_menu *data = arg;
   struct frame *f = data->frame;
   XMenu *menu = data->menu;
 
