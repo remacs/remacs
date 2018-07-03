@@ -48,7 +48,11 @@
           (setq listen-server
                 (make-network-process
                  :name "Emacs RPC server" :server t :host "localhost"
-                 :service 44444
+                 :service (if (version<= emacs-version "26.1")
+                              44444
+                            ;; 26.1 can automatically find ports if
+                            ;; one passes 0 here.
+                            0)
                  :log (lambda (listen-server client _message)
                         (push
                          (make-instance

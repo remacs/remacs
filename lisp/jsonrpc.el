@@ -5,11 +5,11 @@
 ;; Author: João Távora <joaotavora@gmail.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
-;; Package-Requires: ((emacs "25.1"))
+;; Package-Requires: ((emacs "25.2"))
 ;; Version: 1.0.0
 
 ;; This is an Elpa :core package.  Don't use functionality that is not
-;; compatible with Emacs 25.1.
+;; compatible with Emacs 25.2.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -437,8 +437,7 @@ connection object, called when the process dies .")
   "Call CONNECTION's deferred actions, who may again defer themselves."
   (when-let ((actions (hash-table-values (jsonrpc--deferred-actions connection))))
     (jsonrpc--debug connection `(:maybe-run-deferred
-                                 ,(mapcar (lambda (action) (car (cdr (cdr action))))
-                                          actions)))
+                                 ,(mapcar (apply-partially #'nth 2) actions)))
     (mapc #'funcall (mapcar #'car actions))))
 
 (defun jsonrpc--process-sentinel (proc change)
