@@ -11,6 +11,8 @@
 	(snull '("")))
     (should-error (eval '(file-attributes-lessp '(rstr t)))
 		  :type 'wrong-number-of-arguments)
+    (should-error (eval '(file-attributes-lessp '(rstr t) '(wstr t) snull))
+		  :type 'wrong-number-of-arguments)
     (should-error (eval
 		   '(file-attributes-lessp rstr wstr))
 		  :type 'wrong-type-argument)
