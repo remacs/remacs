@@ -925,8 +925,10 @@ CONFIG is the window configuration before sending mail."
                      (list "-form" mh-comp-formfile)))
     (setq new (make-temp-file "comp."))
     (rename-file (concat temp-folder "/" "1") new t)
-    (delete-file (concat temp-folder "/" ".mh_sequences"))
-    (delete-directory temp-folder)
+    ;; The temp folder could contain various metadata files.  Rather
+    ;; than trying to enumerate all the known files, just do a
+    ;; recursive delete on the directory.
+    (delete-directory temp-folder t)
     new))
 
 (defun mh-read-draft (use initial-contents delete-contents-file)
