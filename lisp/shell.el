@@ -469,7 +469,7 @@ Shell buffers.  It implements `shell-completion-execonly' for
   (set (make-local-variable 'comint-file-name-quote-list)
        shell-file-name-quote-list)
   (set (make-local-variable 'comint-file-name-prefix)
-       (file-remote-p default-directory))
+       (or (file-remote-p default-directory) ""))
   (set (make-local-variable 'comint-dynamic-complete-functions)
        shell-dynamic-complete-functions)
   (setq-local comint-unquote-function #'shell--unquote-argument)
