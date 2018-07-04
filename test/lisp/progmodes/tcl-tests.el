@@ -63,6 +63,15 @@
     (insert "proc inthis {} {\n  # nothing\n")
     (should (equal "inthis" (add-log-current-defun)))))
 
+;; From bug#32035
+(ert-deftest tcl-mode-namespace-indent ()
+  (with-temp-buffer
+    (tcl-mode)
+    (let ((text "namespace eval Foo {\n    variable foo\n}\n"))
+      (insert text)
+      (indent-region (point-min) (point-max))
+      (should (equal (buffer-string) text)))))
+
 (provide 'tcl-tests)
 
 ;;; tcl-tests.el ends here

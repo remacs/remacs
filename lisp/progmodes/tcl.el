@@ -360,7 +360,7 @@ Add functions to the hook with `add-hook':
 
 
 (defvar tcl-proc-list
-  '("proc" "method" "itcl_class" "body" "configbody" "class")
+  '("proc" "method" "itcl_class" "body" "configbody" "class" "namespace")
   "List of commands whose first argument defines something.
 This exists because some people (eg, me) use `defvar' et al.
 Call `tcl-set-proc-regexp' and `tcl-set-font-lock-keywords'
