@@ -97,7 +97,7 @@
 
 # include "intprops.h"
 
-# if defined _WIN32 && ! defined __CYGWIN__
+# if defined _WIN32 && ! defined __CYGWIN__ && ! defined WINDOWS32
 #  define WINDOWS32
 # endif
 

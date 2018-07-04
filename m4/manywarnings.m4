@@ -1,4 +1,4 @@
-# manywarnings.m4 serial 15
+# manywarnings.m4 serial 16
 dnl Copyright (C) 2008-2018 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -239,7 +239,6 @@ m4_defun([gl_MANYWARN_ALL_GCC(C)],
     -Wsuggest-final-types \
     -Wswitch \
     -Wswitch-bool \
-    -Wswitch-default \
     -Wswitch-unreachable \
     -Wsync-nand \
     -Wsystem-headers \
