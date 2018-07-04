@@ -959,7 +959,6 @@ AS_IF([test $gl_gcc_warnings = no],
   nw="$nw -Woverlength-strings"     # Not a problem these days
   nw="$nw -Wformat-nonliteral"      # we do this a lot
   nw="$nw -Wvla"                    # Emacs uses <vla.h>.
-  nw="$nw -Wswitch-default"         # Too many warnings for now
   nw="$nw -Wunused-const-variable=2" # lisp.h declares const objects.
   nw="$nw -Winline"                 # OK to ignore 'inline'
   nw="$nw -Wstrict-overflow"        # OK to optimize assuming that
