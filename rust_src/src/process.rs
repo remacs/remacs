@@ -307,7 +307,7 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
 ///   string (the result of converting the decoded input multibyte
 ///   string to unibyte with `string-make-unibyte').
 #[lisp_fn]
-pub fn set_process_filter(process: LispObject, filter: LispObject) -> LispObject {
+pub fn set_process_filter(process: LispObject, mut filter: LispObject) -> LispObject {
     let mut p_ref = process.as_process_or_error();
 
     // Don't signal an error if the process's input file descriptor
@@ -317,7 +317,7 @@ pub fn set_process_filter(process: LispObject, filter: LispObject) -> LispObject
     // (setq process (start-process ...))
     // (debug)
     // (set-process-filter process ...)
-    pset_filter(p_ref, filter);
+    filter = pset_filter(p_ref, filter);
     set_process_filter_masks(p_ref);
 
     let process_type = p_ref.ptype();
@@ -333,12 +333,14 @@ pub fn set_process_filter(process: LispObject, filter: LispObject) -> LispObject
     filter
 }
 
-fn pset_filter(mut process: LispProcessRef, val: LispObject) -> () {
-    process.filter = if val.is_nil() {
+fn pset_filter(mut process: LispProcessRef, val: LispObject) -> LispObject {
+    let filter = if val.is_nil() {
         Qinternal_default_process_filter
     } else {
         val
     };
+    process.filter = filter;
+    filter
 }
 
 fn set_process_filter_masks(process: LispProcessRef) -> () {
@@ -356,8 +358,8 @@ fn set_process_filter_masks(process: LispProcessRef) -> () {
 /// The sentinel is called as a function when the process changes state.
 /// It gets two arguments: the process, and a string describing the change.
 #[lisp_fn]
-pub fn set_process_sentinel(mut process: LispProcessRef, sentinel: LispObject) -> LispObject {
-    pset_sentinel(process, sentinel);
+pub fn set_process_sentinel(mut process: LispProcessRef, mut sentinel: LispObject) -> LispObject {
+    sentinel = pset_sentinel(process, sentinel);
     let process_type = process.ptype();
     let netconn1_p = process_type.eq(Qnetwork);
     let serialconn1_p = process_type.eq(Qserial);
@@ -370,12 +372,14 @@ pub fn set_process_sentinel(mut process: LispProcessRef, sentinel: LispObject) -
     sentinel
 }
 
-fn pset_sentinel(mut process: LispProcessRef, val: LispObject) -> () {
-    process.sentinel = if val.is_nil() {
+fn pset_sentinel(mut process: LispProcessRef, val: LispObject) -> LispObject {
+    let sentinel = if val.is_nil() {
         Qinternal_default_process_sentinel
     } else {
         val
     };
+    process.sentinel = sentinel;
+    sentinel
 }
 
 /// Send PROCESS the contents of STRING as input.
