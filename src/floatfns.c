@@ -67,7 +67,7 @@ CHECK_FLOAT (Lisp_Object x)
 double
 extract_float (Lisp_Object num)
 {
-  CHECK_FIXNUM_OR_FLOAT (num);
+  CHECK_NUMBER (num);
   return XFLOATINT (num);
 }
 
@@ -289,8 +289,10 @@ DEFUN ("float", Ffloat, Sfloat, 1, 1, 0,
        doc: /* Return the floating point number equal to ARG.  */)
   (register Lisp_Object arg)
 {
-  CHECK_FIXNUM_OR_FLOAT (arg);
+  CHECK_NUMBER (arg);
 
+  if (BIGNUMP (arg))
+    return make_float (mpz_get_d (XBIGNUM (arg)->value));
   if (FIXNUMP (arg))
     return make_float ((double) XINT (arg));
   else				/* give 'em the same float back */
