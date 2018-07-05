@@ -23516,6 +23516,17 @@ move_elt_to_front (Lisp_Object elt, Lisp_Object list)
   return list;
 }
 
+/* Subroutine to call Fset_text_properties through
+   internal_condition_case_n.  ARGS are the arguments of
+   Fset_text_properties, in order.  */
+
+static Lisp_Object
+safe_set_text_properties (ptrdiff_t nargs, Lisp_Object *args)
+{
+  eassert (nargs == 4);
+  return Fset_text_properties (args[0], args[1], args[2], args[3]);
+}
+
 /* Contribute ELT to the mode line for window IT->w.  How it
    translates into text depends on its data type.
 
@@ -23610,8 +23621,17 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 			= Fdelq (aelt, mode_line_proptrans_alist);
 
 		    elt = Fcopy_sequence (elt);
-		    Fset_text_properties (make_number (0), Flength (elt),
-					  props, elt);
+		    /* PROPS might cause set-text-properties to signal
+		       an error, so we call it via internal_condition_case_n,
+		       to avoid an infloop in redisplay due to the error.  */
+		    internal_condition_case_n (safe_set_text_properties,
+					       4,
+					       ((Lisp_Object [])
+					       {make_number (0),
+						   Flength (elt),
+						   props,
+						   elt}),
+					       Qt, safe_eval_handler);
 		    /* Add this item to mode_line_proptrans_alist.  */
 		    mode_line_proptrans_alist
 		      = Fcons (Fcons (elt, props),
