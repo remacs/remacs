@@ -3890,12 +3890,15 @@ usage: (make-network-process &rest ARGS)  */)
   filter = Fplist_get (contact, QCfilter);
   sentinel = Fplist_get (contact, QCsentinel);
   use_external_socket_p = Fplist_get (contact, QCuse_external_socket);
+  Lisp_Object server = Fplist_get (contact, QCserver);
+  bool nowait = !NILP (Fplist_get (contact, QCnowait));
 
+  if (!NILP (server) && nowait)
+    error ("`:server' is incompatible with `:nowait'");
   CHECK_STRING (name);
 
   /* :local ADDRESS or :remote ADDRESS */
-  tem = Fplist_get (contact, QCserver);
-  if (NILP (tem))
+  if (!NILP (server))
     address = Fplist_get (contact, QCremote);
   else
     address = Fplist_get (contact, QClocal);
@@ -4009,7 +4012,7 @@ usage: (make-network-process &rest ARGS)  */)
     }
 
 #ifdef HAVE_GETADDRINFO_A
-  if (!NILP (host) && !NILP (Fplist_get (contact, QCnowait)))
+  if (!NILP (host) && nowait)
     {
       ptrdiff_t hostlen = SBYTES (host);
       struct req
@@ -4154,20 +4157,13 @@ usage: (make-network-process &rest ARGS)  */)
 
   set_network_socket_coding_system (proc, host, service, name);
 
-  /* :server BOOL */
-  tem = Fplist_get (contact, QCserver);
-  if (!NILP (tem))
-    {
-      /* Don't support network sockets when non-blocking mode is
-	 not available, since a blocked Emacs is not useful.  */
-      p->is_server = true;
-      if (TYPE_RANGED_INTEGERP (int, tem))
-	p->backlog = XINT (tem);
-    }
+  /* :server QLEN */
+  p->is_server = !NILP (server);
+  if (TYPE_RANGED_INTEGERP (int, server))
+    p->backlog = XINT (server);
 
   /* :nowait BOOL */
-  if (!p->is_server && socktype != SOCK_DGRAM
-      && !NILP (Fplist_get (contact, QCnowait)))
+  if (!p->is_server && socktype != SOCK_DGRAM && nowait)
     p->is_non_blocking_client = true;
 
   bool postpone_connection = false;
