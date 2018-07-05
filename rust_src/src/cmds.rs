@@ -303,7 +303,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     // At first, get multi-byte form of C in STR.
-    if current_buffer.enable_multibyte_characters_.is_not_nil() {
+    if current_buffer.multibyte_characters_enabled() {
         len = write_codepoint(&mut str, c);
         if len == 1 {
             c = str[0] as Codepoint;
@@ -377,7 +377,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
     synt = unsafe { syntax_property(c as i32, true) };
 
-    let previous_char = if current_buffer.enable_multibyte_characters_.is_not_nil() {
+    let previous_char = if current_buffer.multibyte_characters_enabled() {
         preceding_char() as Codepoint
     } else {
         unibyte_to_char(preceding_char() as Codepoint)
@@ -413,8 +413,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     if chars_to_delete > 0 {
-        let mc = if current_buffer.enable_multibyte_characters_.is_not_nil() && single_byte_charp(c)
-        {
+        let mc = if current_buffer.multibyte_characters_enabled() && single_byte_charp(c) {
             unibyte_to_char(c)
         } else {
             c
