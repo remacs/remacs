@@ -38,4 +38,8 @@
   (should (eql (float (+ most-positive-fixnum 1))
                (+ (float most-positive-fixnum) 1))))
 
+(ert-deftest bignum-abs ()
+  (should (= most-positive-fixnum
+             (- (abs most-negative-fixnum) 1))))
+
 (provide 'floatfns-tests)
