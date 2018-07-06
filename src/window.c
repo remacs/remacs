@@ -5654,7 +5654,7 @@ scroll_command (Lisp_Object window, Lisp_Object n, int direction)
 
   /* If given window's buffer isn't current, make it current for
      the moment.  But don't screw up if window_scroll gets an error.  */
-  if (XBUFFER (w->contents) != current_buffer)
+  if (other_window || XBUFFER (w->contents) != current_buffer)
     {
       record_unwind_protect_excursion ();
       Fset_buffer (w->contents);
