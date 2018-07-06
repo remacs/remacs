@@ -2809,16 +2809,25 @@ enum arithop
     Alogxor
   };
 
+static void
+free_mpz_value (void *value_ptr)
+{
+  mpz_clear (*(mpz_t *) value_ptr);
+}
+
 static Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
                                        ptrdiff_t, Lisp_Object *);
+
 static Lisp_Object
 arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object val;
-  ptrdiff_t argnum, ok_args;
-  EMACS_INT accum = 0;
-  EMACS_INT next, ok_accum;
-  bool overflow = 0;
+  Lisp_Object val = Qnil;
+  ptrdiff_t argnum;
+  ptrdiff_t count = SPECPDL_INDEX ();
+  mpz_t accum;
+
+  mpz_init (accum);
+  record_unwind_protect_ptr (free_mpz_value, &accum);
 
   switch (code)
     {
@@ -2826,14 +2835,14 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
     case Alogxor:
     case Aadd:
     case Asub:
-      accum = 0;
+      /* ACCUM is already 0.  */
       break;
     case Amult:
     case Adiv:
-      accum = 1;
+      mpz_set_si (accum, 1);
       break;
     case Alogand:
-      accum = -1;
+      mpz_set_si (accum, -1);
       break;
     default:
       break;
@@ -2841,62 +2850,112 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 
   for (argnum = 0; argnum < nargs; argnum++)
     {
-      if (! overflow)
-	{
-	  ok_args = argnum;
-	  ok_accum = accum;
-	}
-
-      /* Using args[argnum] as argument to CHECK_FIXNUM_... */
+      /* Using args[argnum] as argument to CHECK_NUMBER... */
       val = args[argnum];
-      CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (val);
+      CHECK_NUMBER (val);
 
       if (FLOATP (val))
-	return float_arith_driver (ok_accum, ok_args, code,
-				   nargs, args);
-      args[argnum] = val;
-      next = XINT (args[argnum]);
+	return unbind_to (count,
+			  float_arith_driver (mpz_get_d (accum), argnum, code,
+					      nargs, args));
       switch (code)
 	{
 	case Aadd:
-	  overflow |= INT_ADD_WRAPV (accum, next, &accum);
+	  if (BIGNUMP (val))
+	    mpz_add (accum, accum, XBIGNUM (val)->value);
+	  else if (XINT (val) < 0)
+	    mpz_sub_ui (accum, accum, - XINT (val));
+	  else
+	    mpz_add_ui (accum, accum, XINT (val));
 	  break;
 	case Asub:
 	  if (! argnum)
-	    accum = nargs == 1 ? - next : next;
+	    {
+	      if (BIGNUMP (val))
+		mpz_set (accum, XBIGNUM (val)->value);
+	      else
+		mpz_set_si (accum, XINT (val));
+	      if (nargs == 1)
+		mpz_neg (accum, accum);
+	    }
+	  else if (BIGNUMP (val))
+	    mpz_sub (accum, accum, XBIGNUM (val)->value);
+	  else if (XINT (val) < 0)
+	    mpz_add_ui (accum, accum, - XINT (val));
 	  else
-	    overflow |= INT_SUBTRACT_WRAPV (accum, next, &accum);
+	    mpz_sub_ui (accum, accum, XINT (val));
 	  break;
 	case Amult:
-	  overflow |= INT_MULTIPLY_WRAPV (accum, next, &accum);
+	  if (BIGNUMP (val))
+	    mpz_mul (accum, accum, XBIGNUM (val)->value);
+	  else
+	    mpz_mul_si (accum, accum, XINT (val));
 	  break;
 	case Adiv:
 	  if (! (argnum || nargs == 1))
-	    accum = next;
+	    {
+	      if (BIGNUMP (val))
+		mpz_set (accum, XBIGNUM (val)->value);
+	      else
+		mpz_set_si (accum, XINT (val));
+	    }
 	  else
 	    {
-	      if (next == 0)
+	      /* Note that a bignum can never be 0, so we don't need
+		 to check that case.  */
+	      if (FIXNUMP (val) && XINT (val) == 0)
 		xsignal0 (Qarith_error);
-	      if (INT_DIVIDE_OVERFLOW (accum, next))
-		overflow = true;
+	      if (BIGNUMP (val))
+		mpz_tdiv_q (accum, accum, XBIGNUM (val)->value);
 	      else
-		accum /= next;
+		{
+		  EMACS_INT value = XINT (val);
+		  bool negate = value < 0;
+		  if (negate)
+		    value = -value;
+		  mpz_tdiv_q_ui (accum, accum, value);
+		  if (negate)
+		    mpz_neg (accum, accum);
+		}
 	    }
 	  break;
 	case Alogand:
-	  accum &= next;
+	  if (BIGNUMP (val))
+	    mpz_and (accum, accum, XBIGNUM (val)->value);
+	  else
+	    {
+	      mpz_t tem;
+	      mpz_init_set_ui (tem, XUINT (val));
+	      mpz_and (accum, accum, tem);
+	      mpz_clear (tem);
+	    }
 	  break;
 	case Alogior:
-	  accum |= next;
+	  if (BIGNUMP (val))
+	    mpz_ior (accum, accum, XBIGNUM (val)->value);
+	  else
+	    {
+	      mpz_t tem;
+	      mpz_init_set_ui (tem, XUINT (val));
+	      mpz_ior (accum, accum, tem);
+	      mpz_clear (tem);
+	    }
 	  break;
 	case Alogxor:
-	  accum ^= next;
+	  if (BIGNUMP (val))
+	    mpz_xor (accum, accum, XBIGNUM (val)->value);
+	  else
+	    {
+	      mpz_t tem;
+	      mpz_init_set_ui (tem, XUINT (val));
+	      mpz_xor (accum, accum, tem);
+	      mpz_clear (tem);
+	    }
 	  break;
 	}
     }
 
-  XSETINT (val, accum);
-  return val;
+  return unbind_to (count, make_number (accum));
 }
 
 #ifndef isnan
@@ -2919,6 +2978,8 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 	{
 	  next = XFLOAT_DATA (val);
 	}
+      else if (BIGNUMP (val))
+	next = mpz_get_d (XBIGNUM (val)->value);
       else
 	{
 	  args[argnum] = val;    /* runs into a compiler bug. */
