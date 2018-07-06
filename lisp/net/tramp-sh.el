@@ -544,7 +544,7 @@ The PATH environment variable should be set via `tramp-remote-path'.
 The TERM environment variable should be set via `tramp-terminal-type'.
 
 The INSIDE_EMACS environment variable will automatically be set
-based on the TRAMP and Emacs versions, and should not be set here."
+based on the Tramp and Emacs versions, and should not be set here."
   :group 'tramp
   :version "26.1"
   :type '(repeat string))
