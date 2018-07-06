@@ -1189,11 +1189,11 @@ current buffer.
 Normally, this function truncates long output according to the
 value of the variables `eval-expression-print-length' and
 `eval-expression-print-level'.  With a prefix argument of zero,
-however, there is no such truncation.  Such a prefix argument
-also causes integers to be printed in several additional formats
-\(octal, hexadecimal, and character when the prefix argument is
--1 or the integer is `eval-expression-print-maximum-character' or
-less).
+however, there is no such truncation.
+Integer values are printed in several formats (decimal, octal,
+and hexadecimal).  When the prefix argument is -1 or the value
+doesn't exceed `eval-expression-print-maximum-character', an
+integer value is also printed as a character of that codepoint.
 
 If `eval-expression-debug-on-error' is non-nil, which is the default,
 this command arranges for all errors to enter the debugger."
