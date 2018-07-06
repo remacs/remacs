@@ -203,22 +203,8 @@ For every new release, a banner is displayed on top of the emacs.html
 page.  Uncomment and the release banner in emacs.html.  Keep it on the
 page for about a month, then comment it again.
 
-Use M-x make-manuals from admin/admin.el to regenerate the html
-manuals in manual/.  If there are new manuals, add appropriate index
-pages in manual/ and add them to manual/index.html.  In the
-manual/html_node directory, delete any old manual pages that are no
-longer present.
-
-Tar up the generated html_node/emacs/ and elisp/ directories and update
-the files manual/elisp.html_node.tar.gz and emacs.html_node.tar.gz.
-
-Use M-x make-manuals-dist from admin/admin.el to update the
-manual/texi/ tarfiles.
-
-Add compressed copies of the main info pages from the tarfile to manual/info/.
-
-Update the refcards/pdf/ and ps/ directories, and also
-refcards/emacs-refcards.tar.gz (use make -C etc/refcards pdf ps dist).
+Regenerate the various manuals in manual/.
+The scripts admin/make-manuals and admin/upload-manuals summarize the process.
 
 Browsing <https://web.cvs.savannah.gnu.org/viewvc/?root=emacs> is one
 way to check for any files that still need updating.
