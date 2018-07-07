@@ -60,6 +60,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
+(require 'cl-seq)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -819,7 +820,8 @@ depending on PATTERNS."
 		  ;; Insert the item unless it is already present.
 		  (unless (or (member item (cdr menu))
                               (and imenu-generic-skip-comments-and-strings
-                                   (nth 8 (syntax-ppss))))
+                                   (save-excursion
+                                     (goto-char start) (nth 8 (syntax-ppss)))))
 		    (setcdr menu
 			    (cons item (cdr menu)))))
 		;; Go to the start of the match, to make sure we
@@ -833,7 +835,13 @@ depending on PATTERNS."
 	(setcdr item (sort (cdr item) 'imenu--sort-by-position))))
     (let ((main-element (assq nil index-alist)))
       (nconc (delq main-element (delq 'dummy index-alist))
-	     (cdr main-element)))))
+             (cdr main-element)))
+    ;; Remove any empty menus.  That can happen because of skipping
+    ;; things inside comments or strings.
+    (when (consp (car index-alist))
+      (setq index-alist  (cl-delete-if-not
+                          (lambda (it) (cdr it))
+                          index-alist)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
