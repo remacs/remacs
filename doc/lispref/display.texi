@@ -2531,6 +2531,7 @@ However, if the customizations are subsequently removed, the
 appearance of @var{face} will again be determined by its default face
 spec.
 
+@cindex @code{eval-defun}, and @code{defface} forms
 As an exception, if you evaluate a @code{defface} form with
 @kbd{C-M-x} in Emacs Lisp mode (@code{eval-defun}), a special feature
 of @code{eval-defun} overrides any custom face specs on the face,

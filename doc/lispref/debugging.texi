@@ -336,6 +336,7 @@ which is not currently set up to break on change.
 @cindex debugger, explicit entry
 @cindex force entry to debugger
 
+@cindex @code{eval-defun}, and explicit entry to debugger
   You can cause the debugger to be called at a certain point in your
 program by writing the expression @code{(debug)} at that point.  To do
 this, visit the source file, insert the text @samp{(debug)} at the

@@ -461,6 +461,7 @@ form occurs in a @code{let} form with lexical binding enabled), then
 @code{defvar} sets the dynamic value.  The lexical binding remains in
 effect until its binding construct exits.  @xref{Variable Scoping}.
 
+@cindex @code{eval-defun}, and @code{defvar} forms
 When you evaluate a top-level @code{defvar} form with @kbd{C-M-x} in
 Emacs Lisp mode (@code{eval-defun}), a special feature of
 @code{eval-defun} arranges to set the variable unconditionally, without

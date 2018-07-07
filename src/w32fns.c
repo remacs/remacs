@@ -4550,13 +4550,13 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  set_ime_composition_window_fn (context, &form);
 	  release_ime_context_fn (hwnd, context);
 	}
-      /* We should "goto dflt" here to pass WM_IME_STARTCOMPOSITION to
-	 DefWindowProc, so that the composition window will actually
-	 be displayed.  But doing so causes trouble with displaying
-	 dialog boxes, such as the file selection dialog or font
-	 selection dialog.  So something else is needed to fix the
-	 former without breaking the latter.  See bug#11732.  */
-      break;
+      /* FIXME: somehow "goto dflt" here instead of "break" causes
+	 popup dialogs, such as the ones shown by File->Open File and
+	 w32-select-font, to become hidden behind their parent frame,
+	 when focus-follows-mouse is in effect.  See bug#11732.  But
+	 if we don't "goto dflt", users of IME cannot type text
+	 supported by the input method...  */
+      goto dflt;
 
     case WM_IME_ENDCOMPOSITION:
       ignore_ime_char = 0;

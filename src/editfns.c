@@ -3139,6 +3139,9 @@ static unsigned short rbc_quitcounter;
   /* Buffers to compare.  */                    \
   struct buffer *buffer_a;                      \
   struct buffer *buffer_b;                      \
+  /* BEGV of each buffer */			\
+  ptrdiff_t beg_a;				\
+  ptrdiff_t beg_b;				\
   /* Whether each buffer is unibyte/plain-ASCII or not.  */ \
   bool a_unibyte;				\
   bool b_unibyte;				\
@@ -3222,6 +3225,8 @@ differences between the two buffers.  */)
   struct context ctx = {
     .buffer_a = a,
     .buffer_b = b,
+    .beg_a = min_a,
+    .beg_b = min_b,
     .a_unibyte = BUF_ZV (a) == BUF_ZV_BYTE (a),
     .b_unibyte = BUF_ZV (b) == BUF_ZV_BYTE (b),
     .deletions = SAFE_ALLOCA (del_bytes),
@@ -3361,8 +3366,8 @@ static bool
 buffer_chars_equal (struct context *ctx,
                     ptrdiff_t pos_a, ptrdiff_t pos_b)
 {
-  pos_a += BUF_BEGV (ctx->buffer_a);
-  pos_b += BUF_BEGV (ctx->buffer_b);
+  pos_a += ctx->beg_a;
+  pos_b += ctx->beg_b;
 
   /* Allow the user to escape out of a slow compareseq call.  */
   rarely_quit (++rbc_quitcounter);

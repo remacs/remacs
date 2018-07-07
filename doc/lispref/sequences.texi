@@ -75,9 +75,9 @@ string, bool-vector, or char-table, @code{nil} otherwise.
 @anchor{Definition of length}
 This function returns the number of elements in @var{sequence}.  If
 @var{sequence} is a dotted list, a @code{wrong-type-argument} error is
-signaled.  Circular lists may cause an infinite loop.  For a
-char-table, the value returned is always one more than the maximum
-Emacs character code.
+signaled; if it is a circular list, a @code{circular-list} error is
+signaled.  For a char-table, the value returned is always one more
+than the maximum Emacs character code.
 
 @xref{Definition of safe-length}, for the related function @code{safe-length}.
 

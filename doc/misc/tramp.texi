@@ -2097,8 +2097,8 @@ installed.  Usually, it is sufficient to open the file
 @file{@trampfn{adb,,/}}.  Then you can navigate in the filesystem via
 @code{dired}.
 
-Alternatively, applications such as @code{SSHDroid} that run
-@command{sshd} process on the Android device can accept any
+Alternatively, applications such as @code{Termux} or @code{SSHDroid}
+that run @command{sshd} process on the Android device can accept any
 @option{ssh}-based methods provided these settings are adjusted:
 
 @itemize
