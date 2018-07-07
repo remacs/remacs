@@ -3184,7 +3184,22 @@ of VALUE.  If VALUE is negative, return the number of zero bits in the
 representation.  */)
   (Lisp_Object value)
 {
-  CHECK_FIXNUM (value);
+  CHECK_INTEGER (value);
+
+  if (BIGNUMP (value))
+    {
+      if (mpz_cmp_si (XBIGNUM (value)->value, 0) >= 0)
+	return make_fixnum (mpz_popcount (XBIGNUM (value)->value));
+      mpz_t tem;
+      mpz_init (tem);
+      mpz_neg (tem, XBIGNUM (value)->value);
+      mpz_sub_ui (tem, tem, 1);
+      Lisp_Object result = make_fixnum (mpz_popcount (tem));
+      mpz_clear (tem);
+      return result;
+    }
+
+  eassume (FIXNUMP (value));
   EMACS_INT v = XINT (value) < 0 ? -1 - XINT (value) : XINT (value);
   return make_fixnum (EMACS_UINT_WIDTH <= UINT_WIDTH
 		      ? count_one_bits (v)
