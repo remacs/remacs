@@ -123,7 +123,7 @@ enum
 #define MAX_MULTIBYTE_LENGTH 5
 
 /* Nonzero iff X is a character.  */
-#define CHARACTERP(x) (NATNUMP (x) && XFASTINT (x) <= MAX_CHAR)
+#define CHARACTERP(x) (FIXNATP (x) && XFASTINT (x) <= MAX_CHAR)
 
 /* Nonzero iff C is valid as a character code.  */
 #define CHAR_VALID_P(c) UNSIGNED_CMP (c, <=, MAX_CHAR)

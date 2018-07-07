@@ -59,7 +59,7 @@ enum composition_method {
 INLINE bool
 composition_registered_p (Lisp_Object prop)
 {
-  return INTEGERP (XCAR (prop));
+  return FIXNUMP (XCAR (prop));
 }
 
 /* Return ID number of the already registered composition.  */
@@ -213,7 +213,7 @@ composition_method (Lisp_Object prop)
       Lisp_Object temp = XCDR (XCAR (prop));
       return (NILP (temp)
 	      ? COMPOSITION_RELATIVE
-	      : INTEGERP (temp) || STRINGP (temp)
+	      : FIXNUMP (temp) || STRINGP (temp)
 	      ? COMPOSITION_WITH_ALTCHARS
 	      : COMPOSITION_WITH_RULE_ALTCHARS);
     }
@@ -234,7 +234,7 @@ composition_valid_p (ptrdiff_t start, ptrdiff_t end, Lisp_Object prop)
 		  && (NILP (XCDR (XCAR (prop)))
 		      || STRINGP (XCDR (XCAR (prop)))
 		      || VECTORP (XCDR (XCAR (prop)))
-		      || INTEGERP (XCDR (XCAR (prop)))
+		      || FIXNUMP (XCDR (XCAR (prop)))
 		      || CONSP (XCDR (XCAR (prop))))))
 	  && COMPOSITION_LENGTH (prop) == end - start);
 }
@@ -274,7 +274,7 @@ enum lglyph_indices
     LGLYPH_SIZE
   };
 
-#define LGLYPH_NEW() Fmake_vector (make_number (LGLYPH_SIZE), Qnil)
+#define LGLYPH_NEW() Fmake_vector (make_fixnum (LGLYPH_SIZE), Qnil)
 #define LGLYPH_FROM(g) XINT (AREF ((g), LGLYPH_IX_FROM))
 #define LGLYPH_TO(g) XINT (AREF ((g), LGLYPH_IX_TO))
 #define LGLYPH_CHAR(g) XINT (AREF ((g), LGLYPH_IX_CHAR))
@@ -288,19 +288,19 @@ enum lglyph_indices
 #define LGLYPH_ASCENT(g) XINT (AREF ((g), LGLYPH_IX_ASCENT))
 #define LGLYPH_DESCENT(g) XINT (AREF ((g), LGLYPH_IX_DESCENT))
 #define LGLYPH_ADJUSTMENT(g) AREF ((g), LGLYPH_IX_ADJUSTMENT)
-#define LGLYPH_SET_FROM(g, val) ASET ((g), LGLYPH_IX_FROM, make_number (val))
-#define LGLYPH_SET_TO(g, val) ASET ((g), LGLYPH_IX_TO, make_number (val))
-#define LGLYPH_SET_CHAR(g, val) ASET ((g), LGLYPH_IX_CHAR, make_number (val))
+#define LGLYPH_SET_FROM(g, val) ASET ((g), LGLYPH_IX_FROM, make_fixnum (val))
+#define LGLYPH_SET_TO(g, val) ASET ((g), LGLYPH_IX_TO, make_fixnum (val))
+#define LGLYPH_SET_CHAR(g, val) ASET ((g), LGLYPH_IX_CHAR, make_fixnum (val))
 /* Callers must assure that VAL is not negative!  */
 #define LGLYPH_SET_CODE(g, val)						\
   ASET (g, LGLYPH_IX_CODE,						\
 	val == FONT_INVALID_CODE ? Qnil : INTEGER_TO_CONS (val))
 
-#define LGLYPH_SET_WIDTH(g, val) ASET ((g), LGLYPH_IX_WIDTH, make_number (val))
-#define LGLYPH_SET_LBEARING(g, val) ASET ((g), LGLYPH_IX_LBEARING, make_number (val))
-#define LGLYPH_SET_RBEARING(g, val) ASET ((g), LGLYPH_IX_RBEARING, make_number (val))
-#define LGLYPH_SET_ASCENT(g, val) ASET ((g), LGLYPH_IX_ASCENT, make_number (val))
-#define LGLYPH_SET_DESCENT(g, val) ASET ((g), LGLYPH_IX_DESCENT, make_number (val))
+#define LGLYPH_SET_WIDTH(g, val) ASET ((g), LGLYPH_IX_WIDTH, make_fixnum (val))
+#define LGLYPH_SET_LBEARING(g, val) ASET ((g), LGLYPH_IX_LBEARING, make_fixnum (val))
+#define LGLYPH_SET_RBEARING(g, val) ASET ((g), LGLYPH_IX_RBEARING, make_fixnum (val))
+#define LGLYPH_SET_ASCENT(g, val) ASET ((g), LGLYPH_IX_ASCENT, make_fixnum (val))
+#define LGLYPH_SET_DESCENT(g, val) ASET ((g), LGLYPH_IX_DESCENT, make_fixnum (val))
 #define LGLYPH_SET_ADJUSTMENT(g, val) ASET ((g), LGLYPH_IX_ADJUSTMENT, (val))
 
 #define LGLYPH_XOFF(g) (VECTORP (LGLYPH_ADJUSTMENT (g)) \

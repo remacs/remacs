@@ -274,7 +274,7 @@ static void
 printchar (unsigned int ch, Lisp_Object fun)
 {
   if (!NILP (fun) && !EQ (fun, Qt))
-    call1 (fun, make_number (ch));
+    call1 (fun, make_fixnum (ch));
   else
     {
       unsigned char str[MAX_MULTIBYTE_LENGTH];
@@ -520,7 +520,7 @@ PRINTCHARFUN defaults to the value of `standard-output' (which see).  */)
 {
   if (NILP (printcharfun))
     printcharfun = Vstandard_output;
-  CHECK_NUMBER (character);
+  CHECK_FIXNUM (character);
   PRINTPREPARE;
   printchar (XINT (character), printcharfun);
   PRINTFINISH;
@@ -771,7 +771,7 @@ You can call `print' while debugging emacs, and pass it this function
 to make it write to the debugging output.  */)
   (Lisp_Object character)
 {
-  CHECK_NUMBER (character);
+  CHECK_FIXNUM (character);
   printchar_to_stream (XINT (character), stderr);
   return character;
 }
@@ -1224,11 +1224,11 @@ print_preprocess (Lisp_Object obj)
 		  && SYMBOLP (obj)
 		  && !SYMBOL_INTERNED_P (obj)))
 	    { /* OBJ appears more than once.	Let's remember that.  */
-	      if (!INTEGERP (num))
+	      if (!FIXNUMP (num))
 		{
 		  print_number_index++;
 		  /* Negative number indicates it hasn't been printed yet.  */
-		  Fputhash (obj, make_number (- print_number_index),
+		  Fputhash (obj, make_fixnum (- print_number_index),
 			    Vprint_number_table);
 		}
 	      print_depth--;
@@ -1366,12 +1366,12 @@ print_prune_string_charset (Lisp_Object string)
 	{
 	  if (NILP (print_prune_charset_plist))
 	    print_prune_charset_plist = list1 (Qcharset);
-	  Fremove_text_properties (make_number (0),
-				   make_number (SCHARS (string)),
+	  Fremove_text_properties (make_fixnum (0),
+				   make_fixnum (SCHARS (string)),
 				   print_prune_charset_plist, string);
 	}
       else
-	Fset_text_properties (make_number (0), make_number (SCHARS (string)),
+	Fset_text_properties (make_fixnum (0), make_fixnum (SCHARS (string)),
 			      Qnil, string);
     }
   return string;
@@ -1407,7 +1407,7 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 	/* Don't print more bytes than the specified maximum.
 	   Negative values of print-length are invalid.  Treat them
 	   like a print-length of nil.  */
-	if (NATNUMP (Vprint_length)
+	if (FIXNATP (Vprint_length)
 	    && XFASTINT (Vprint_length) < size_in_bytes)
 	  size_in_bytes = XFASTINT (Vprint_length);
 
@@ -1521,7 +1521,7 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 	ptrdiff_t size = real_size;
 
 	/* Don't print more elements than the specified maximum.  */
-	if (NATNUMP (Vprint_length) && XFASTINT (Vprint_length) < size)
+	if (FIXNATP (Vprint_length) && XFASTINT (Vprint_length) < size)
 	  size = XFASTINT (Vprint_length);
 
 	printchar ('(', printcharfun);
@@ -1652,7 +1652,7 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 
 	/* Don't print more elements than the specified maximum.  */
 	ptrdiff_t n
-	  = (NATNUMP (Vprint_length) && XFASTINT (Vprint_length) < size
+	  = (FIXNATP (Vprint_length) && XFASTINT (Vprint_length) < size
 	     ? XFASTINT (Vprint_length) : size);
 
 	print_c_string ("#s(", printcharfun);
@@ -1713,7 +1713,7 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 	  }
 
 	/* Don't print more elements than the specified maximum.  */
-	if (NATNUMP (Vprint_length)
+	if (FIXNATP (Vprint_length)
 	    && XFASTINT (Vprint_length) < size)
 	  size = XFASTINT (Vprint_length);
 
@@ -1805,7 +1805,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
     {
       /* With the print-circle feature.  */
       Lisp_Object num = Fgethash (obj, Vprint_number_table, Qnil);
-      if (INTEGERP (num))
+      if (FIXNUMP (num))
 	{
 	  EMACS_INT n = XINT (num);
 	  if (n < 0)
@@ -1814,7 +1814,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	      int len = sprintf (buf, "#%"pI"d=", -n);
 	      strout (buf, len, len, printcharfun);
 	      /* OBJ is going to be printed.  Remember that fact.  */
-	      Fputhash (obj, make_number (- n), Vprint_number_table);
+	      Fputhash (obj, make_fixnum (- n), Vprint_number_table);
 	    }
 	  else
 	    {
@@ -2007,7 +2007,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 
     case Lisp_Cons:
       /* If deeper than spec'd depth, print placeholder.  */
-      if (INTEGERP (Vprint_level)
+      if (FIXNUMP (Vprint_level)
 	  && print_depth > XINT (Vprint_level))
 	print_c_string ("...", printcharfun);
       else if (print_quoted && CONSP (XCDR (obj)) && NILP (XCDR (XCDR (obj)))
@@ -2049,7 +2049,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 
 	  /* Negative values of print-length are invalid in CL.
 	     Treat them like nil, as CMUCL does.  */
-	  printmax_t print_length = (NATNUMP (Vprint_length)
+	  printmax_t print_length = (FIXNATP (Vprint_length)
 				     ? XFASTINT (Vprint_length)
 				     : TYPE_MAXIMUM (printmax_t));
 
@@ -2073,7 +2073,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		  if (i != 0)
 		    {
 		      Lisp_Object num = Fgethash (obj, Vprint_number_table, Qnil);
-		      if (INTEGERP (num))
+		      if (FIXNUMP (num))
 			{
 			  print_c_string (" . ", printcharfun);
 			  print_object (obj, printcharfun, escapeflag);
@@ -2223,9 +2223,9 @@ print_interval (INTERVAL interval, Lisp_Object printcharfun)
   if (NILP (interval->plist))
     return;
   printchar (' ', printcharfun);
-  print_object (make_number (interval->position), printcharfun, 1);
+  print_object (make_fixnum (interval->position), printcharfun, 1);
   printchar (' ', printcharfun);
-  print_object (make_number (interval->position + LENGTH (interval)),
+  print_object (make_fixnum (interval->position + LENGTH (interval)),
 		printcharfun, 1);
   printchar (' ', printcharfun);
   print_object (interval->plist, printcharfun, 1);

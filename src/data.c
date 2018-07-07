@@ -132,13 +132,13 @@ set_blv_valcell (struct Lisp_Buffer_Local_Value *blv, Lisp_Object val)
 static _Noreturn void
 wrong_length_argument (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 {
-  Lisp_Object size1 = make_number (bool_vector_size (a1));
-  Lisp_Object size2 = make_number (bool_vector_size (a2));
+  Lisp_Object size1 = make_fixnum (bool_vector_size (a1));
+  Lisp_Object size2 = make_fixnum (bool_vector_size (a2));
   if (NILP (a3))
     xsignal2 (Qwrong_length_argument, size1, size2);
   else
     xsignal3 (Qwrong_length_argument, size1, size2,
-	      make_number (bool_vector_size (a3)));
+	      make_fixnum (bool_vector_size (a3)));
 }
 
 _Noreturn void
@@ -515,7 +515,7 @@ DEFUN ("integerp", Fintegerp, Sintegerp, 1, 1, 0,
        attributes: const)
   (Lisp_Object object)
 {
-  if (INTEGERP (object))
+  if (FIXNUMP (object))
     return Qt;
   return Qnil;
 }
@@ -524,7 +524,7 @@ DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 
        doc: /* Return t if OBJECT is an integer or a marker (editor pointer).  */)
   (register Lisp_Object object)
 {
-  if (MARKERP (object) || INTEGERP (object))
+  if (MARKERP (object) || FIXNUMP (object))
     return Qt;
   return Qnil;
 }
@@ -534,7 +534,7 @@ DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
        attributes: const)
   (Lisp_Object object)
 {
-  if (NATNUMP (object))
+  if (FIXNATP (object))
     return Qt;
   return Qnil;
 }
@@ -544,7 +544,7 @@ DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
        attributes: const)
   (Lisp_Object object)
 {
-  if (NUMBERP (object))
+  if (FIXED_OR_FLOATP (object))
     return Qt;
   else
     return Qnil;
@@ -555,7 +555,7 @@ DEFUN ("number-or-marker-p", Fnumber_or_marker_p,
        doc: /* Return t if OBJECT is a number or a marker.  */)
   (Lisp_Object object)
 {
-  if (NUMBERP (object) || MARKERP (object))
+  if (FIXED_OR_FLOATP (object) || MARKERP (object))
     return Qt;
   return Qnil;
 }
@@ -858,10 +858,10 @@ function with `&rest' args, or `unevalled' for a special form.  */)
   CHECK_SUBR (subr);
   minargs = XSUBR (subr)->min_args;
   maxargs = XSUBR (subr)->max_args;
-  return Fcons (make_number (minargs),
+  return Fcons (make_fixnum (minargs),
 		maxargs == MANY ?        Qmany
 		: maxargs == UNEVALLED ? Qunevalled
-		:                        make_number (maxargs));
+		:                        make_fixnum (maxargs));
 }
 
 DEFUN ("subr-name", Fsubr_name, Ssubr_name, 1, 1, 0,
@@ -1084,7 +1084,7 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
   switch (XFWDTYPE (valcontents))
     {
     case Lisp_Fwd_Int:
-      CHECK_NUMBER (newval);
+      CHECK_FIXNUM (newval);
       *XINTFWD (valcontents)->intvar = XINT (newval);
       break;
 
@@ -1140,7 +1140,7 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
 		else if ((prop = Fget (predicate, Qrange), !NILP (prop)))
 		  {
 		    Lisp_Object min = XCAR (prop), max = XCDR (prop);
-		    if (! NUMBERP (newval)
+		    if (! FIXED_OR_FLOATP (newval)
 			|| NILP (CALLN (Fleq, min, newval, max)))
 		      wrong_range (min, max, newval);
 		  }
@@ -2232,7 +2232,7 @@ or a byte-code object.  IDX starts at 0.  */)
 {
   register EMACS_INT idxval;
 
-  CHECK_NUMBER (idx);
+  CHECK_FIXNUM (idx);
   idxval = XINT (idx);
   if (STRINGP (array))
     {
@@ -2242,11 +2242,11 @@ or a byte-code object.  IDX starts at 0.  */)
       if (idxval < 0 || idxval >= SCHARS (array))
 	args_out_of_range (array, idx);
       if (! STRING_MULTIBYTE (array))
-	return make_number ((unsigned char) SREF (array, idxval));
+	return make_fixnum ((unsigned char) SREF (array, idxval));
       idxval_byte = string_char_to_byte (array, idxval);
 
       c = STRING_CHAR (SDATA (array) + idxval_byte);
-      return make_number (c);
+      return make_fixnum (c);
     }
   else if (BOOL_VECTOR_P (array))
     {
@@ -2283,7 +2283,7 @@ bool-vector.  IDX starts at 0.  */)
 {
   register EMACS_INT idxval;
 
-  CHECK_NUMBER (idx);
+  CHECK_FIXNUM (idx);
   idxval = XINT (idx);
   if (! RECORDP (array))
     CHECK_ARRAY (array, Qarrayp);
@@ -2385,8 +2385,8 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
   bool fneq;
   bool test;
 
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num1);
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num2);
+  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (num1);
+  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (num2);
 
   /* If either arg is floating point, set F1 and F2 to the 'double'
      approximations of the two arguments, and set FNEQ if floating-point
@@ -2532,12 +2532,12 @@ DEFUN ("/=", Fneq, Sneq, 2, 2, 0,
   (eassert (FIXNUM_OVERFLOW_P (i)),				    \
    (! (FIXNUM_OVERFLOW_P ((extremum) >> 16)			    \
        && FIXNUM_OVERFLOW_P ((i) >> 16))			    \
-    ? Fcons (make_number ((i) >> 16), make_number ((i) & 0xffff))   \
+    ? Fcons (make_fixnum ((i) >> 16), make_fixnum ((i) & 0xffff))   \
     : ! (FIXNUM_OVERFLOW_P ((extremum) >> 16 >> 24)		    \
 	 && FIXNUM_OVERFLOW_P ((i) >> 16 >> 24))		    \
-    ? Fcons (make_number ((i) >> 16 >> 24),			    \
-	     Fcons (make_number ((i) >> 16 & 0xffffff),		    \
-		    make_number ((i) & 0xffff)))		    \
+    ? Fcons (make_fixnum ((i) >> 16 >> 24),			    \
+	     Fcons (make_fixnum ((i) >> 16 & 0xffffff),		    \
+		    make_fixnum ((i) & 0xffff)))		    \
     : make_float (i)))
 
 Lisp_Object
@@ -2561,7 +2561,7 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
 {
   bool valid = false;
   uintmax_t val UNINIT;
-  if (INTEGERP (c))
+  if (FIXNUMP (c))
     {
       valid = XINT (c) >= 0;
       val = XINT (c);
@@ -2575,14 +2575,14 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
 	  valid = val == d;
 	}
     }
-  else if (CONSP (c) && NATNUMP (XCAR (c)))
+  else if (CONSP (c) && FIXNATP (XCAR (c)))
     {
       uintmax_t top = XFASTINT (XCAR (c));
       Lisp_Object rest = XCDR (c);
       if (top <= UINTMAX_MAX >> 24 >> 16
 	  && CONSP (rest)
-	  && NATNUMP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
-	  && NATNUMP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
+	  && FIXNATP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
+	  && FIXNATP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
 	{
 	  uintmax_t mid = XFASTINT (XCAR (rest));
 	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
@@ -2592,7 +2592,7 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
 	{
 	  if (CONSP (rest))
 	    rest = XCAR (rest);
-	  if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
+	  if (FIXNATP (rest) && XFASTINT (rest) < 1 << 16)
 	    {
 	      val = top << 16 | XFASTINT (rest);
 	      valid = true;
@@ -2615,7 +2615,7 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 {
   bool valid = false;
   intmax_t val UNINIT;
-  if (INTEGERP (c))
+  if (FIXNUMP (c))
     {
       val = XINT (c);
       valid = true;
@@ -2629,14 +2629,14 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 	  valid = val == d;
 	}
     }
-  else if (CONSP (c) && INTEGERP (XCAR (c)))
+  else if (CONSP (c) && FIXNUMP (XCAR (c)))
     {
       intmax_t top = XINT (XCAR (c));
       Lisp_Object rest = XCDR (c);
       if (top >= INTMAX_MIN >> 24 >> 16 && top <= INTMAX_MAX >> 24 >> 16
 	  && CONSP (rest)
-	  && NATNUMP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
-	  && NATNUMP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
+	  && FIXNATP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
+	  && FIXNATP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
 	{
 	  intmax_t mid = XFASTINT (XCAR (rest));
 	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
@@ -2646,7 +2646,7 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 	{
 	  if (CONSP (rest))
 	    rest = XCAR (rest);
-	  if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
+	  if (FIXNATP (rest) && XFASTINT (rest) < 1 << 16)
 	    {
 	      val = top << 16 | XFASTINT (rest);
 	      valid = true;
@@ -2668,7 +2668,7 @@ NUMBER may be an integer or a floating point number.  */)
   char buffer[max (FLOAT_TO_STRING_BUFSIZE, INT_BUFSIZE_BOUND (EMACS_INT))];
   int len;
 
-  CHECK_NUMBER_OR_FLOAT (number);
+  CHECK_FIXNUM_OR_FLOAT (number);
 
   if (FLOATP (number))
     len = float_to_string (buffer, XFLOAT_DATA (number));
@@ -2696,7 +2696,7 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
     b = 10;
   else
     {
-      CHECK_NUMBER (base);
+      CHECK_FIXNUM (base);
       if (! (XINT (base) >= 2 && XINT (base) <= 16))
 	xsignal1 (Qargs_out_of_range, base);
       b = XINT (base);
@@ -2708,7 +2708,7 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
 
   int flags = S2N_IGNORE_TRAILING | S2N_OVERFLOW_TO_FLOAT;
   Lisp_Object val = string_to_number (p, b, flags);
-  return NILP (val) ? make_number (0) : val;
+  return NILP (val) ? make_fixnum (0) : val;
 }
 
 enum arithop
@@ -2760,9 +2760,9 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	  ok_accum = accum;
 	}
 
-      /* Using args[argnum] as argument to CHECK_NUMBER_... */
+      /* Using args[argnum] as argument to CHECK_FIXNUM_... */
       val = args[argnum];
-      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
+      CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (val);
 
       if (FLOATP (val))
 	return float_arith_driver (ok_accum, ok_args, code,
@@ -2825,8 +2825,8 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 
   for (; argnum < nargs; argnum++)
     {
-      val = args[argnum];    /* using args[argnum] as argument to CHECK_NUMBER_... */
-      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
+      val = args[argnum];    /* using args[argnum] as argument to CHECK_FIXNUM_... */
+      CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (val);
 
       if (FLOATP (val))
 	{
@@ -2917,8 +2917,8 @@ Both must be integers or markers.  */)
 {
   Lisp_Object val;
 
-  CHECK_NUMBER_COERCE_MARKER (x);
-  CHECK_NUMBER_COERCE_MARKER (y);
+  CHECK_FIXNUM_COERCE_MARKER (x);
+  CHECK_FIXNUM_COERCE_MARKER (y);
 
   if (XINT (y) == 0)
     xsignal0 (Qarith_error);
@@ -2936,8 +2936,8 @@ Both X and Y must be numbers or markers.  */)
   Lisp_Object val;
   EMACS_INT i1, i2;
 
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (x);
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (y);
+  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (x);
+  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (y);
 
   if (FLOATP (x) || FLOATP (y))
     return fmod_float (x, y);
@@ -2963,11 +2963,11 @@ minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
 	       enum Arith_Comparison comparison)
 {
   Lisp_Object accum = args[0];
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (accum);
+  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (accum);
   for (ptrdiff_t argnum = 1; argnum < nargs; argnum++)
     {
       Lisp_Object val = args[argnum];
-      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
+      CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (val);
       if (!NILP (arithcompare (val, accum, comparison)))
 	accum = val;
       else if (FLOATP (val) && isnan (XFLOAT_DATA (val)))
@@ -3028,9 +3028,9 @@ of VALUE.  If VALUE is negative, return the number of zero bits in the
 representation.  */)
   (Lisp_Object value)
 {
-  CHECK_NUMBER (value);
+  CHECK_FIXNUM (value);
   EMACS_INT v = XINT (value) < 0 ? -1 - XINT (value) : XINT (value);
-  return make_number (EMACS_UINT_WIDTH <= UINT_WIDTH
+  return make_fixnum (EMACS_UINT_WIDTH <= UINT_WIDTH
 		      ? count_one_bits (v)
 		      : EMACS_UINT_WIDTH <= ULONG_WIDTH
 		      ? count_one_bits_l (v)
@@ -3045,8 +3045,8 @@ ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 
   Lisp_Object val;
 
-  CHECK_NUMBER (value);
-  CHECK_NUMBER (count);
+  CHECK_FIXNUM (value);
+  CHECK_FIXNUM (count);
 
   if (XINT (count) >= EMACS_INT_WIDTH)
     XSETINT (val, 0);
@@ -3083,7 +3083,7 @@ DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
 Markers are converted to integers.  */)
   (register Lisp_Object number)
 {
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (number);
+  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (number);
 
   if (FLOATP (number))
     return (make_float (1.0 + XFLOAT_DATA (number)));
@@ -3097,7 +3097,7 @@ DEFUN ("1-", Fsub1, Ssub1, 1, 1, 0,
 Markers are converted to integers.  */)
   (register Lisp_Object number)
 {
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (number);
+  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (number);
 
   if (FLOATP (number))
     return (make_float (-1.0 + XFLOAT_DATA (number)));
@@ -3110,7 +3110,7 @@ DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
        doc: /* Return the bitwise complement of NUMBER.  NUMBER must be an integer.  */)
   (register Lisp_Object number)
 {
-  CHECK_NUMBER (number);
+  CHECK_FIXNUM (number);
   XSETINT (number, ~XINT (number));
   return number;
 }
@@ -3125,7 +3125,7 @@ lowercase l) for small endian machines.  */
   unsigned i = 0x04030201;
   int order = *(char *)&i == 1 ? 108 : 66;
 
-  return make_number (order);
+  return make_fixnum (order);
 }
 
 /* Because we round up the bool vector allocate size to word_size
@@ -3478,7 +3478,7 @@ value from A's length.  */)
   for (i = 0; i < nwords; i++)
     count += count_one_bits_word (adata[i]);
 
-  return make_number (count);
+  return make_fixnum (count);
 }
 
 DEFUN ("bool-vector-count-consecutive", Fbool_vector_count_consecutive,
@@ -3497,7 +3497,7 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
   ptrdiff_t nr_words;
 
   CHECK_BOOL_VECTOR (a);
-  CHECK_NATNUM (i);
+  CHECK_FIXNAT (i);
 
   nr_bits = bool_vector_size (a);
   if (XFASTINT (i) > nr_bits) /* Allow one past the end for convenience */
@@ -3527,7 +3527,7 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
       count = count_trailing_zero_bits (mword);
       pos++;
       if (count + offset < BITS_PER_BITS_WORD)
-        return make_number (count);
+        return make_fixnum (count);
     }
 
   /* Scan whole words until we either reach the end of the vector or
@@ -3554,7 +3554,7 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
       count -= BITS_PER_BITS_WORD - nr_bits % BITS_PER_BITS_WORD;
     }
 
-  return make_number (count);
+  return make_fixnum (count);
 }
 
 
@@ -3847,13 +3847,13 @@ syms_of_data (void)
   DEFVAR_LISP ("most-positive-fixnum", Vmost_positive_fixnum,
 	       doc: /* The largest value that is representable in a Lisp integer.
 This variable cannot be set; trying to do so will signal an error.  */);
-  Vmost_positive_fixnum = make_number (MOST_POSITIVE_FIXNUM);
+  Vmost_positive_fixnum = make_fixnum (MOST_POSITIVE_FIXNUM);
   make_symbol_constant (intern_c_string ("most-positive-fixnum"));
 
   DEFVAR_LISP ("most-negative-fixnum", Vmost_negative_fixnum,
 	       doc: /* The smallest value that is representable in a Lisp integer.
 This variable cannot be set; trying to do so will signal an error.  */);
-  Vmost_negative_fixnum = make_number (MOST_NEGATIVE_FIXNUM);
+  Vmost_negative_fixnum = make_fixnum (MOST_NEGATIVE_FIXNUM);
   make_symbol_constant (intern_c_string ("most-negative-fixnum"));
 
   DEFSYM (Qwatchers, "watchers");

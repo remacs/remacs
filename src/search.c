@@ -132,7 +132,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 
   eassert (!cp->busy);
   cp->regexp = Qnil;
-  cp->buf.translate = (! NILP (translate) ? translate : make_number (0));
+  cp->buf.translate = (! NILP (translate) ? translate : make_fixnum (0));
   cp->posix = posix;
   cp->buf.multibyte = STRING_MULTIBYTE (pattern);
   cp->buf.charset_unibyte = charset_unibyte;
@@ -238,7 +238,7 @@ compile_pattern (Lisp_Object pattern, struct re_registers *regp,
           && !cp->busy
 	  && STRING_MULTIBYTE (cp->regexp) == STRING_MULTIBYTE (pattern)
 	  && !NILP (Fstring_equal (cp->regexp, pattern))
-	  && EQ (cp->buf.translate, (! NILP (translate) ? translate : make_number (0)))
+	  && EQ (cp->buf.translate, (! NILP (translate) ? translate : make_fixnum (0)))
 	  && cp->posix == posix
 	  && (EQ (cp->syntax_table, Qt)
 	      || EQ (cp->syntax_table, BVAR (current_buffer, syntax_table)))
@@ -401,7 +401,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
     {
       ptrdiff_t len = SCHARS (string);
 
-      CHECK_NUMBER (start);
+      CHECK_FIXNUM (start);
       pos = XINT (start);
       if (pos < 0 && -pos <= len)
 	pos = len + pos;
@@ -446,7 +446,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 	    = string_byte_to_char (string, search_regs.end[i]);
 	}
 
-  return make_number (string_byte_to_char (string, val));
+  return make_fixnum (string_byte_to_char (string, val));
 }
 
 DEFUN ("string-match", Fstring_match, Sstring_match, 2, 3, 0,
@@ -1036,7 +1036,7 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
 
   if (!NILP (count))
     {
-      CHECK_NUMBER (count);
+      CHECK_FIXNUM (count);
       n *= XINT (count);
     }
 
@@ -1050,7 +1050,7 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
     }
   else
     {
-      CHECK_NUMBER_COERCE_MARKER (bound);
+      CHECK_FIXNUM_COERCE_MARKER (bound);
       lim = XINT (bound);
       if (n > 0 ? lim < PT : lim > PT)
 	error ("Invalid search bound (wrong side of point)");
@@ -1096,7 +1096,7 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
   eassert (BEGV <= np && np <= ZV);
   SET_PT (np);
 
-  return make_number (np);
+  return make_fixnum (np);
 }
 
 /* Return true if REGEXP it matches just one constant string.  */
@@ -1151,8 +1151,8 @@ do						\
     if (! NILP (trt))				\
       {						\
 	Lisp_Object temp;			\
-	temp = Faref (trt, make_number (d));	\
-	if (INTEGERP (temp))			\
+	temp = Faref (trt, make_fixnum (d));	\
+	if (FIXNUMP (temp))			\
 	  out = XINT (temp);			\
 	else					\
 	  out = d;				\
@@ -2420,9 +2420,9 @@ since only regular expressions have distinguished subexpressions.  */)
     sub = 0;
   else
     {
-      CHECK_NUMBER (subexp);
+      CHECK_FIXNUM (subexp);
       if (! (0 <= XINT (subexp) && XINT (subexp) < search_regs.num_regs))
-	args_out_of_range (subexp, make_number (search_regs.num_regs));
+	args_out_of_range (subexp, make_fixnum (search_regs.num_regs));
       sub = XINT (subexp);
     }
 
@@ -2431,16 +2431,16 @@ since only regular expressions have distinguished subexpressions.  */)
       if (search_regs.start[sub] < BEGV
 	  || search_regs.start[sub] > search_regs.end[sub]
 	  || search_regs.end[sub] > ZV)
-	args_out_of_range (make_number (search_regs.start[sub]),
-			   make_number (search_regs.end[sub]));
+	args_out_of_range (make_fixnum (search_regs.start[sub]),
+			   make_fixnum (search_regs.end[sub]));
     }
   else
     {
       if (search_regs.start[sub] < 0
 	  || search_regs.start[sub] > search_regs.end[sub]
 	  || search_regs.end[sub] > SCHARS (string))
-	args_out_of_range (make_number (search_regs.start[sub]),
-			   make_number (search_regs.end[sub]));
+	args_out_of_range (make_fixnum (search_regs.start[sub]),
+			   make_fixnum (search_regs.end[sub]));
     }
 
   if (NILP (fixedcase))
@@ -2525,9 +2525,9 @@ since only regular expressions have distinguished subexpressions.  */)
     {
       Lisp_Object before, after;
 
-      before = Fsubstring (string, make_number (0),
-			   make_number (search_regs.start[sub]));
-      after = Fsubstring (string, make_number (search_regs.end[sub]), Qnil);
+      before = Fsubstring (string, make_fixnum (0),
+			   make_fixnum (search_regs.start[sub]));
+      after = Fsubstring (string, make_fixnum (search_regs.end[sub]), Qnil);
 
       /* Substitute parts of the match into NEWTEXT
 	 if desired.  */
@@ -2590,8 +2590,8 @@ since only regular expressions have distinguished subexpressions.  */)
 		    middle = Qnil;
 		  accum = concat3 (accum, middle,
 				   Fsubstring (string,
-					       make_number (substart),
-					       make_number (subend)));
+					       make_fixnum (substart),
+					       make_fixnum (subend)));
 		  lastpos = pos;
 		  lastpos_byte = pos_byte;
 		}
@@ -2780,12 +2780,12 @@ since only regular expressions have distinguished subexpressions.  */)
   }
 
   if (case_action == all_caps)
-    Fupcase_region (make_number (search_regs.start[sub]),
-		    make_number (newpoint),
+    Fupcase_region (make_fixnum (search_regs.start[sub]),
+		    make_fixnum (newpoint),
 		    Qnil);
   else if (case_action == cap_initial)
-    Fupcase_initials_region (make_number (search_regs.start[sub]),
-			     make_number (newpoint));
+    Fupcase_initials_region (make_fixnum (search_regs.start[sub]),
+			     make_fixnum (newpoint));
 
   if (search_regs.start[sub] != sub_start
       || search_regs.end[sub] != sub_end
@@ -2809,16 +2809,16 @@ match_limit (Lisp_Object num, bool beginningp)
 {
   EMACS_INT n;
 
-  CHECK_NUMBER (num);
+  CHECK_FIXNUM (num);
   n = XINT (num);
   if (n < 0)
-    args_out_of_range (num, make_number (0));
+    args_out_of_range (num, make_fixnum (0));
   if (search_regs.num_regs <= 0)
     error ("No match data, because no search succeeded");
   if (n >= search_regs.num_regs
       || search_regs.start[n] < 0)
     return Qnil;
-  return (make_number ((beginningp) ? search_regs.start[n]
+  return (make_fixnum ((beginningp) ? search_regs.start[n]
 		                    : search_regs.end[n]));
 }
 
@@ -2908,11 +2908,11 @@ Return value is undefined if the last search failed.  */)
 	    {
 	      data[2 * i] = Fmake_marker ();
 	      Fset_marker (data[2 * i],
-			   make_number (start),
+			   make_fixnum (start),
 			   last_thing_searched);
 	      data[2 * i + 1] = Fmake_marker ();
 	      Fset_marker (data[2 * i + 1],
-			   make_number (search_regs.end[i]),
+			   make_fixnum (search_regs.end[i]),
 			   last_thing_searched);
 	    }
 	  else
@@ -3037,7 +3037,7 @@ If optional arg RESEAT is non-nil, make markers on LIST point nowhere.  */)
 		  XSETBUFFER (last_thing_searched, XMARKER (marker)->buffer);
 	      }
 
-	    CHECK_NUMBER_COERCE_MARKER (marker);
+	    CHECK_FIXNUM_COERCE_MARKER (marker);
 	    from = marker;
 
 	    if (!NILP (reseat) && MARKERP (m))
@@ -3054,7 +3054,7 @@ If optional arg RESEAT is non-nil, make markers on LIST point nowhere.  */)
 	    if (MARKERP (marker) && XMARKER (marker)->buffer == 0)
 	      XSETFASTINT (marker, 0);
 
-	    CHECK_NUMBER_COERCE_MARKER (marker);
+	    CHECK_FIXNUM_COERCE_MARKER (marker);
 	    if ((XINT (from) < 0
 		 ? TYPE_MINIMUM (regoff_t) <= XINT (from)
 		 : XINT (from) <= TYPE_MAXIMUM (regoff_t))
@@ -3349,11 +3349,11 @@ the buffer.  If the buffer doesn't have a cache, the value is nil.  */)
 				NULL, true);
 	  if (shortage != 0 || i >= nl_count_cache)
 	    break;
-	  ASET (cache_newlines, i, make_number (found - 1));
+	  ASET (cache_newlines, i, make_fixnum (found - 1));
 	}
       /* Fill the rest of slots with an invalid position.  */
       for ( ; i < nl_count_cache; i++)
-	ASET (cache_newlines, i, make_number (-1));
+	ASET (cache_newlines, i, make_fixnum (-1));
     }
 
   /* Now do the same, but without using the cache.  */
@@ -3371,10 +3371,10 @@ the buffer.  If the buffer doesn't have a cache, the value is nil.  */)
 				 NULL, true);
 	  if (shortage != 0 || i >= nl_count_buf)
 	    break;
-	  ASET (buf_newlines, i, make_number (found - 1));
+	  ASET (buf_newlines, i, make_fixnum (found - 1));
 	}
       for ( ; i < nl_count_buf; i++)
-	ASET (buf_newlines, i, make_number (-1));
+	ASET (buf_newlines, i, make_fixnum (-1));
     }
 
   /* Construct the value and return it.  */

@@ -447,7 +447,7 @@ DEFUN ("marker-position", Fmarker_position, Smarker_position, 1, 1, 0,
 {
   CHECK_MARKER (marker);
   if (XMARKER (marker)->buffer)
-    return make_number (XMARKER (marker)->charpos);
+    return make_fixnum (XMARKER (marker)->charpos);
 
   return Qnil;
 }
@@ -521,10 +521,10 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
     {
       register ptrdiff_t charpos, bytepos;
 
-      /* Do not use CHECK_NUMBER_COERCE_MARKER because we
+      /* Do not use CHECK_FIXNUM_COERCE_MARKER because we
 	 don't want to call buf_charpos_to_bytepos if POSITION
 	 is a marker and so we know the bytepos already.  */
-      if (INTEGERP (position))
+      if (FIXNUMP (position))
 	charpos = XINT (position), bytepos = -1;
       else if (MARKERP (position))
 	{
@@ -712,7 +712,7 @@ see `marker-insertion-type'.  */)
   register Lisp_Object new;
 
   if (!NILP (marker))
-  CHECK_TYPE (INTEGERP (marker) || MARKERP (marker), Qinteger_or_marker_p, marker);
+  CHECK_TYPE (FIXNUMP (marker) || MARKERP (marker), Qinteger_or_marker_p, marker);
 
   new = Fmake_marker ();
   Fset_marker (new, marker,

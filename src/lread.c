@@ -463,7 +463,7 @@ unreadchar (Lisp_Object readcharfun, int c)
       unread_char = c;
     }
   else
-    call1 (readcharfun, make_number (c));
+    call1 (readcharfun, make_fixnum (c));
 }
 
 static int
@@ -661,7 +661,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
   delayed_switch_frame = Qnil;
 
   /* Compute timeout.  */
-  if (NUMBERP (seconds))
+  if (FIXED_OR_FLOATP (seconds))
     {
       double duration = XFLOATINT (seconds);
       struct timespec wait_time = dtotimespec (duration);
@@ -672,8 +672,8 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
  retry:
   do
     val = read_char (0, Qnil, (input_method ? Qnil : Qt), 0,
-		     NUMBERP (seconds) ? &end_time : NULL);
-  while (INTEGERP (val) && XINT (val) == -2); /* wrong_kboard_jmpbuf */
+		     FIXED_OR_FLOATP (seconds) ? &end_time : NULL);
+  while (FIXNUMP (val) && XINT (val) == -2); /* wrong_kboard_jmpbuf */
 
   if (BUFFERP (val))
     goto retry;
@@ -691,7 +691,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
       goto retry;
     }
 
-  if (ascii_required && !(NUMBERP (seconds) && NILP (val)))
+  if (ascii_required && !(FIXED_OR_FLOATP (seconds) && NILP (val)))
     {
       /* Convert certain symbols to their ASCII equivalents.  */
       if (SYMBOLP (val))
@@ -709,7 +709,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
 	}
 
       /* If we don't have a character now, deal with it appropriately.  */
-      if (!INTEGERP (val))
+      if (!FIXNUMP (val))
 	{
 	  if (error_nonascii)
 	    {
@@ -766,7 +766,7 @@ floating-point value.  */)
   val = read_filtered_event (1, 1, 1, ! NILP (inherit_input_method), seconds);
 
   return (NILP (val) ? Qnil
-	  : make_number (char_resolve_modifier_mask (XINT (val))));
+	  : make_fixnum (char_resolve_modifier_mask (XINT (val))));
 }
 
 DEFUN ("read-event", Fread_event, Sread_event, 0, 3, 0,
@@ -810,7 +810,7 @@ floating-point value.  */)
   val = read_filtered_event (1, 1, 0, ! NILP (inherit_input_method), seconds);
 
   return (NILP (val) ? Qnil
-	  : make_number (char_resolve_modifier_mask (XINT (val))));
+	  : make_fixnum (char_resolve_modifier_mask (XINT (val))));
 }
 
 DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
@@ -819,7 +819,7 @@ DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
 {
   if (!infile)
     error ("get-file-char misused");
-  return make_number (readbyte_from_stdio ());
+  return make_fixnum (readbyte_from_stdio ());
 }
 
 
@@ -1345,7 +1345,7 @@ Return t if the file exists and loads successfully.  */)
                   if (!NILP (nomessage) && !force_load_messages)
                     {
                       Lisp_Object msg_file;
-                      msg_file = Fsubstring (found, make_number (0), make_number (-1));
+                      msg_file = Fsubstring (found, make_fixnum (0), make_fixnum (-1));
                       message_with_string ("Source file `%s' newer than byte-compiled file",
                                            msg_file, 1);
                     }
@@ -1660,7 +1660,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 	  string = make_string (fn, fnlen);
 	handler = Ffind_file_name_handler (string, Qfile_exists_p);
 	if ((!NILP (handler) || (!NILP (predicate) && !EQ (predicate, Qt)))
-	    && !NATNUMP (predicate))
+	    && !FIXNATP (predicate))
 	  {
 	    bool exists;
 	    if (NILP (predicate) || EQ (predicate, Qt))
@@ -1699,7 +1699,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 	    pfn = SSDATA (encoded_fn);
 
 	    /* Check that we can access or open it.  */
-	    if (NATNUMP (predicate))
+	    if (FIXNATP (predicate))
 	      {
 		fd = -1;
 		if (INT_MAX < XFASTINT (predicate))
@@ -1737,7 +1737,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 
 	    if (fd >= 0)
 	      {
-		if (newer && !NATNUMP (predicate))
+		if (newer && !FIXNATP (predicate))
 		  {
 		    struct timespec mtime = get_stat_mtime (&st);
 
@@ -1988,11 +1988,11 @@ readevalloop (Lisp_Object readcharfun,
 	  /* Set point and ZV around stuff to be read.  */
 	  Fgoto_char (start);
 	  if (!NILP (end))
-	    Fnarrow_to_region (make_number (BEGV), end);
+	    Fnarrow_to_region (make_fixnum (BEGV), end);
 
 	  /* Just for cleanliness, convert END to a marker
 	     if it is an integer.  */
-	  if (INTEGERP (end))
+	  if (FIXNUMP (end))
 	    end = Fpoint_max_marker ();
 	}
 
@@ -2222,7 +2222,7 @@ the end of STRING.  */)
   CHECK_STRING (string);
   /* `read_internal_start' sets `read_from_string_index'.  */
   ret = read_internal_start (string, start, end);
-  return Fcons (ret, make_number (read_from_string_index));
+  return Fcons (ret, make_fixnum (read_from_string_index));
 }
 
 /* Function to set up the global context we need in toplevel read
@@ -2308,7 +2308,7 @@ read0 (Lisp_Object readcharfun)
     return val;
 
   xsignal1 (Qinvalid_read_syntax,
-	    Fmake_string (make_number (1), make_number (c), Qnil));
+	    Fmake_string (make_fixnum (1), make_fixnum (c), Qnil));
 }
 
 /* Grow a read buffer BUF that contains OFFSET useful bytes of data,
@@ -2347,7 +2347,7 @@ character_name_to_code (char const *name, ptrdiff_t name_len)
        ? string_to_number (name + 1, 16, 0)
        : call2 (Qchar_from_name, make_unibyte_string (name, name_len), Qt));
 
-  if (! RANGED_INTEGERP (0, code, MAX_UNICODE_CHAR)
+  if (! RANGED_FIXNUMP (0, code, MAX_UNICODE_CHAR)
       || char_surrogate_p (XINT (code)))
     {
       AUTO_STRING (format, "\\N{%s}");
@@ -2579,7 +2579,7 @@ read_escape (Lisp_Object readcharfun, bool stringp)
                 AUTO_STRING (format,
                              "Invalid character U+%04X in character name");
                 xsignal1 (Qinvalid_read_syntax,
-                          CALLN (Fformat, format, make_natnum (c)));
+                          CALLN (Fformat, format, make_fixed_natnum (c)));
               }
             /* Treat multiple adjacent whitespace characters as a
                single space character.  This makes it easier to use
@@ -2766,7 +2766,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		{
 		  ptrdiff_t size = XINT (Flength (tmp));
 		  Lisp_Object record = Fmake_record (CAR_SAFE (tmp),
-						     make_number (size - 1),
+						     make_fixnum (size - 1),
 						     Qnil);
 		  for (int i = 1; i < size; i++)
 		    {
@@ -2858,7 +2858,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  if (size == 0)
 		    error ("Zero-sized sub char-table");
 
-		  if (! RANGED_INTEGERP (1, XCAR (tmp), 3))
+		  if (! RANGED_FIXNUMP (1, XCAR (tmp), 3))
 		    error ("Invalid depth in sub char-table");
 		  depth = XINT (XCAR (tmp));
 		  if (chartab_size[depth] != size - 2)
@@ -2866,7 +2866,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  cell = XCONS (tmp), tmp = XCDR (tmp), size--;
 		  free_cons (cell);
 
-		  if (! RANGED_INTEGERP (0, XCAR (tmp), MAX_CHAR))
+		  if (! RANGED_FIXNUMP (0, XCAR (tmp), MAX_CHAR))
 		    error ("Invalid minimum character in sub-char-table");
 		  min_char = XINT (XCAR (tmp));
 		  cell = XCONS (tmp), tmp = XCDR (tmp), size--;
@@ -3127,7 +3127,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		      struct Lisp_Hash_Table *h
 			= XHASH_TABLE (read_objects_map);
 		      EMACS_UINT hash;
-		      Lisp_Object number = make_number (n);
+		      Lisp_Object number = make_fixnum (n);
 
 		      ptrdiff_t i = hash_lookup (h, number, &hash);
 		      if (i >= 0)
@@ -3142,7 +3142,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		      /* If it can be recursive, remember it for
 			 future substitutions.  */
 		      if (! SYMBOLP (tem)
-			  && ! NUMBERP (tem)
+			  && ! FIXED_OR_FLOATP (tem)
 			  && ! (STRINGP (tem) && !string_intervals (tem)))
 			{
 			  struct Lisp_Hash_Table *h2
@@ -3178,7 +3178,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		    {
 		      struct Lisp_Hash_Table *h
 			= XHASH_TABLE (read_objects_map);
-		      ptrdiff_t i = hash_lookup (h, make_number (n), NULL);
+		      ptrdiff_t i = hash_lookup (h, make_fixnum (n), NULL);
 		      if (i >= 0)
 			return HASH_VALUE (h, i);
 		    }
@@ -3286,13 +3286,13 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	   Other literal whitespace like NL, CR, and FF are not accepted,
 	   as there are well-established escape sequences for these.  */
 	if (c == ' ' || c == '\t')
-	  return make_number (c);
+	  return make_fixnum (c);
 
 	if (c == '(' || c == ')' || c == '[' || c == ']'
             || c == '"' || c == ';')
 	  {
             CHECK_LIST (Vlread_unescaped_character_literals);
-            Lisp_Object char_obj = make_natnum (c);
+            Lisp_Object char_obj = make_fixed_natnum (c);
             if (NILP (Fmemq (char_obj, Vlread_unescaped_character_literals)))
               Vlread_unescaped_character_literals =
                 Fcons (char_obj, Vlread_unescaped_character_literals);
@@ -3312,7 +3312,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  && strchr ("\"';()[]#?`,.", next_char) != NULL));
 	UNREAD (next_char);
 	if (ok)
-	  return make_number (c);
+	  return make_fixnum (c);
 
 	invalid_syntax ("?");
       }
@@ -3421,7 +3421,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	   return zero instead.  This is for doc strings
 	   that we are really going to find in etc/DOC.nn.nn.  */
 	if (!NILP (Vpurify_flag) && NILP (Vdoc_file_name) && cancel)
-	  return unbind_to (count, make_number (0));
+	  return unbind_to (count, make_fixnum (0));
 
 	if (! force_multibyte && force_singlebyte)
 	  {
@@ -3519,7 +3519,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
             int ch = STRING_CHAR ((unsigned char *) read_buffer);
             if (confusable_symbol_character_p (ch))
               xsignal2 (Qinvalid_read_syntax, build_string ("strange quote"),
-                        CALLN (Fstring, make_number (ch)));
+                        CALLN (Fstring, make_fixnum (ch)));
           }
 	{
 	  Lisp_Object result;
@@ -3562,7 +3562,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  if (EQ (Vread_with_symbol_positions, Qt)
 	      || EQ (Vread_with_symbol_positions, readcharfun))
 	    Vread_symbol_positions_list
-	      = Fcons (Fcons (result, make_number (start_position)),
+	      = Fcons (Fcons (result, make_fixnum (start_position)),
 		       Vread_symbol_positions_list);
 	  return unbind_to (count, result);
 	}
@@ -3599,7 +3599,7 @@ substitute_object_recurse (struct subst *subst, Lisp_Object subtree)
      bother looking them up; we're done.  */
   if (SYMBOLP (subtree)
       || (STRINGP (subtree) && !string_intervals (subtree))
-      || NUMBERP (subtree))
+      || FIXED_OR_FLOATP (subtree))
     return subtree;
 
   /* If we've been to this node before, don't explore it again.  */
@@ -3791,7 +3791,7 @@ string_to_number (char const *string, int base, int flags)
       else if (n <= (negative ? -MOST_NEGATIVE_FIXNUM : MOST_POSITIVE_FIXNUM))
 	{
 	  EMACS_INT signed_n = n;
-	  return make_number (negative ? -signed_n : signed_n);
+	  return make_fixnum (negative ? -signed_n : signed_n);
 	}
       else
 	value = n;
@@ -3969,8 +3969,8 @@ read_list (bool flag, Lisp_Object readcharfun)
 	      if (ch == ')')
 		{
 		  if (doc_reference == 1)
-		    return make_number (0);
-		  if (doc_reference == 2 && INTEGERP (XCDR (val)))
+		    return make_fixnum (0);
+		  if (doc_reference == 2 && FIXNUMP (XCDR (val)))
 		    {
 		      char *saved = NULL;
 		      file_offset saved_position;
@@ -4148,7 +4148,7 @@ define_symbol (Lisp_Object sym, char const *str)
   if (! EQ (sym, Qunbound))
     {
       Lisp_Object bucket = oblookup (initial_obarray, str, len, len);
-      eassert (INTEGERP (bucket));
+      eassert (FIXNUMP (bucket));
       intern_sym (sym, initial_obarray, bucket);
     }
 }
@@ -4194,7 +4194,7 @@ it defaults to the value of `obarray'.  */)
     string = SYMBOL_NAME (name);
 
   tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
-  if (INTEGERP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
+  if (FIXNUMP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
     return Qnil;
   else
     return tem;
@@ -4226,7 +4226,7 @@ usage: (unintern NAME OBARRAY)  */)
   tem = oblookup (obarray, SSDATA (string),
 		  SCHARS (string),
 		  SBYTES (string));
-  if (INTEGERP (tem))
+  if (FIXNUMP (tem))
     return Qnil;
   /* If arg was a symbol, don't delete anything but that symbol itself.  */
   if (SYMBOLP (name) && !EQ (name, tem))
@@ -4252,7 +4252,7 @@ usage: (unintern NAME OBARRAY)  */)
 	  ASET (obarray, hash, sym);
 	}
       else
-	ASET (obarray, hash, make_number (0));
+	ASET (obarray, hash, make_fixnum (0));
     }
   else
     {
@@ -4295,7 +4295,7 @@ oblookup (Lisp_Object obarray, register const char *ptr, ptrdiff_t size, ptrdiff
   hash = hash_string (ptr, size_byte) % obsize;
   bucket = AREF (obarray, hash);
   oblookup_last_bucket_number = hash;
-  if (EQ (bucket, make_number (0)))
+  if (EQ (bucket, make_fixnum (0)))
     ;
   else if (!SYMBOLP (bucket))
     error ("Bad data in guts of obarray"); /* Like CADR error message.  */
@@ -4356,7 +4356,7 @@ OBARRAY defaults to the value of `obarray'.  */)
 void
 init_obarray (void)
 {
-  Vobarray = Fmake_vector (make_number (OBARRAY_SIZE), make_number (0));
+  Vobarray = Fmake_vector (make_fixnum (OBARRAY_SIZE), make_fixnum (0));
   initial_obarray = Vobarray;
   staticpro (&initial_obarray);
 

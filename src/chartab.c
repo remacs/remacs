@@ -118,14 +118,14 @@ the char-table has no extra slot.  */)
     n_extras = 0;
   else
     {
-      CHECK_NATNUM (n);
+      CHECK_FIXNAT (n);
       if (XINT (n) > 10)
 	args_out_of_range (n, Qnil);
       n_extras = XINT (n);
     }
 
   size = CHAR_TABLE_STANDARD_SLOTS + n_extras;
-  vector = Fmake_vector (make_number (size), init);
+  vector = Fmake_vector (make_fixnum (size), init);
   XSETPVECTYPE (XVECTOR (vector), PVEC_CHAR_TABLE);
   set_char_table_parent (vector, Qnil);
   set_char_table_purpose (vector, purpose);
@@ -188,7 +188,7 @@ copy_char_table (Lisp_Object table)
   int size = PVSIZE (table);
   int i;
 
-  copy = Fmake_vector (make_number (size), Qnil);
+  copy = Fmake_vector (make_fixnum (size), Qnil);
   XSETPVECTYPE (XVECTOR (copy), PVEC_CHAR_TABLE);
   set_char_table_defalt (copy, XCHAR_TABLE (table)->defalt);
   set_char_table_parent (copy, XCHAR_TABLE (table)->parent);
@@ -571,7 +571,7 @@ DEFUN ("char-table-extra-slot", Fchar_table_extra_slot, Schar_table_extra_slot,
   (Lisp_Object char_table, Lisp_Object n)
 {
   CHECK_CHAR_TABLE (char_table);
-  CHECK_NUMBER (n);
+  CHECK_FIXNUM (n);
   if (XINT (n) < 0
       || XINT (n) >= CHAR_TABLE_EXTRA_SLOTS (XCHAR_TABLE (char_table)))
     args_out_of_range (char_table, n);
@@ -586,7 +586,7 @@ DEFUN ("set-char-table-extra-slot", Fset_char_table_extra_slot,
   (Lisp_Object char_table, Lisp_Object n, Lisp_Object value)
 {
   CHECK_CHAR_TABLE (char_table);
-  CHECK_NUMBER (n);
+  CHECK_FIXNUM (n);
   if (XINT (n) < 0
       || XINT (n) >= CHAR_TABLE_EXTRA_SLOTS (XCHAR_TABLE (char_table)))
     args_out_of_range (char_table, n);
@@ -783,7 +783,7 @@ map_sub_char_table (void (*c_function) (Lisp_Object, Lisp_Object, Lisp_Object),
       if (SUB_CHAR_TABLE_P (this))
 	{
 	  if (to >= nextc)
-	    XSETCDR (range, make_number (nextc - 1));
+	    XSETCDR (range, make_fixnum (nextc - 1));
 	  val = map_sub_char_table (c_function, function, this, arg,
 				    val, range, top);
 	}
@@ -807,7 +807,7 @@ map_sub_char_table (void (*c_function) (Lisp_Object, Lisp_Object, Lisp_Object),
 		      set_char_table_parent (parent, Qnil);
 		      val = CHAR_TABLE_REF (parent, from);
 		      set_char_table_parent (parent, temp);
-		      XSETCDR (range, make_number (c - 1));
+		      XSETCDR (range, make_fixnum (c - 1));
 		      val = map_sub_char_table (c_function, function,
 						parent, arg, val, range,
 						parent);
@@ -817,7 +817,7 @@ map_sub_char_table (void (*c_function) (Lisp_Object, Lisp_Object, Lisp_Object),
 		}
 	      if (! NILP (val) && different_value)
 		{
-		  XSETCDR (range, make_number (c - 1));
+		  XSETCDR (range, make_fixnum (c - 1));
 		  if (EQ (XCAR (range), XCDR (range)))
 		    {
 		      if (c_function)
@@ -843,10 +843,10 @@ map_sub_char_table (void (*c_function) (Lisp_Object, Lisp_Object, Lisp_Object),
 		}
 	      val = this;
 	      from = c;
-	      XSETCAR (range, make_number (c));
+	      XSETCAR (range, make_fixnum (c));
 	    }
 	}
-      XSETCDR (range, make_number (to));
+      XSETCDR (range, make_fixnum (to));
     }
   return val;
 }
@@ -864,7 +864,7 @@ map_char_table (void (*c_function) (Lisp_Object, Lisp_Object, Lisp_Object),
   Lisp_Object range, val, parent;
   uniprop_decoder_t decoder = UNIPROP_GET_DECODER (table);
 
-  range = Fcons (make_number (0), make_number (MAX_CHAR));
+  range = Fcons (make_fixnum (0), make_fixnum (MAX_CHAR));
   parent = XCHAR_TABLE (table)->parent;
 
   val = XCHAR_TABLE (table)->ascii;
@@ -957,7 +957,7 @@ map_sub_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Object),
 	  {
 	    if (! NILP (XCAR (range)))
 	      {
-		XSETCDR (range, make_number (c - 1));
+		XSETCDR (range, make_fixnum (c - 1));
 		if (c_function)
 		  (*c_function) (arg, range);
 		else
@@ -980,7 +980,7 @@ map_sub_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Object),
 	  {
 	    if (! NILP (XCAR (range)))
 	      {
-		XSETCDR (range, make_number (c - 1));
+		XSETCDR (range, make_fixnum (c - 1));
 		if (c_function)
 		  (*c_function) (arg, range);
 		else
@@ -991,7 +991,7 @@ map_sub_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Object),
 	else
 	  {
 	    if (NILP (XCAR (range)))
-	      XSETCAR (range, make_number (c));
+	      XSETCAR (range, make_fixnum (c));
 	  }
       }
 }
@@ -1041,7 +1041,7 @@ map_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Object),
 	{
 	  if (! NILP (XCAR (range)))
 	    {
-	      XSETCDR (range, make_number (c - 1));
+	      XSETCDR (range, make_fixnum (c - 1));
 	      if (c_function)
 		(*c_function) (arg, range);
 	      else
@@ -1052,7 +1052,7 @@ map_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Object),
     }
   if (! NILP (XCAR (range)))
     {
-      XSETCDR (range, make_number (c - 1));
+      XSETCDR (range, make_fixnum (c - 1));
       if (c_function)
 	(*c_function) (arg, range);
       else
@@ -1125,7 +1125,7 @@ uniprop_table_uncompress (Lisp_Object table, int idx)
 	{
 	  int v = STRING_CHAR_ADVANCE (p);
 	  set_sub_char_table_contents
-	    (sub, idx++, v > 0 ? make_number (v) : Qnil);
+	    (sub, idx++, v > 0 ? make_fixnum (v) : Qnil);
 	}
     }
   else if (*p == 2)
@@ -1150,7 +1150,7 @@ uniprop_table_uncompress (Lisp_Object table, int idx)
 		}
 	    }
 	  while (count-- > 0)
-	    set_sub_char_table_contents (sub, idx++, make_number (v));
+	    set_sub_char_table_contents (sub, idx++, make_fixnum (v));
 	}
     }
 /* It seems that we don't need this function because C code won't need
@@ -1192,7 +1192,7 @@ uniprop_get_decoder (Lisp_Object table)
 {
   EMACS_INT i;
 
-  if (! INTEGERP (XCHAR_TABLE (table)->extras[1]))
+  if (! FIXNUMP (XCHAR_TABLE (table)->extras[1]))
     return NULL;
   i = XINT (XCHAR_TABLE (table)->extras[1]);
   if (i < 0 || i >= uniprop_decoder_count)
@@ -1227,7 +1227,7 @@ uniprop_encode_value_run_length (Lisp_Object table, Lisp_Object value)
       break;
   if (i == size)
     wrong_type_argument (build_string ("Unicode property value"), value);
-  return make_number (i);
+  return make_fixnum (i);
 }
 
 
@@ -1240,17 +1240,17 @@ uniprop_encode_value_numeric (Lisp_Object table, Lisp_Object value)
   Lisp_Object *value_table = XVECTOR (XCHAR_TABLE (table)->extras[4])->contents;
   int i, size = ASIZE (XCHAR_TABLE (table)->extras[4]);
 
-  CHECK_NUMBER (value);
+  CHECK_FIXNUM (value);
   for (i = 0; i < size; i++)
     if (EQ (value, value_table[i]))
       break;
-  value = make_number (i);
+  value = make_fixnum (i);
   if (i == size)
     set_char_table_extras (table, 4,
 			   CALLN (Fvconcat,
 				  XCHAR_TABLE (table)->extras[4],
-				  Fmake_vector (make_number (1), value)));
-  return make_number (i);
+				  Fmake_vector (make_fixnum (1), value)));
+  return make_fixnum (i);
 }
 
 static uniprop_encoder_t uniprop_encoder[] =
@@ -1267,7 +1267,7 @@ uniprop_get_encoder (Lisp_Object table)
 {
   EMACS_INT i;
 
-  if (! INTEGERP (XCHAR_TABLE (table)->extras[2]))
+  if (! FIXNUMP (XCHAR_TABLE (table)->extras[2]))
     return NULL;
   i = XINT (XCHAR_TABLE (table)->extras[2]);
   if (i < 0 || i >= uniprop_encoder_count)
@@ -1300,7 +1300,7 @@ uniprop_table (Lisp_Object prop)
       || ! UNIPROP_TABLE_P (table))
     return Qnil;
   val = XCHAR_TABLE (table)->extras[1];
-  if (INTEGERP (val)
+  if (FIXNUMP (val)
       ? (XINT (val) < 0 || XINT (val) >= uniprop_decoder_count)
       : ! NILP (val))
     return Qnil;

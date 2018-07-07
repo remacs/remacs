@@ -379,7 +379,7 @@ bidi_mirror_char (int c)
     emacs_abort ();
 
   val = CHAR_TABLE_REF (bidi_mirror_table, c);
-  if (INTEGERP (val))
+  if (FIXNUMP (val))
     {
       int v;
 

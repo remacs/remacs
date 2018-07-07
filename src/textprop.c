@@ -137,8 +137,8 @@ validate_interval_range (Lisp_Object object, Lisp_Object *begin,
   ptrdiff_t searchpos;
 
   CHECK_STRING_OR_BUFFER (object);
-  CHECK_NUMBER_COERCE_MARKER (*begin);
-  CHECK_NUMBER_COERCE_MARKER (*end);
+  CHECK_FIXNUM_COERCE_MARKER (*begin);
+  CHECK_FIXNUM_COERCE_MARKER (*end);
 
   /* If we are asked for a point, but from a subr which operates
      on a range, then return nothing.  */
@@ -544,7 +544,7 @@ interval_of (ptrdiff_t position, Lisp_Object object)
     }
 
   if (!(beg <= position && position <= end))
-    args_out_of_range (make_number (position), make_number (position));
+    args_out_of_range (make_fixnum (position), make_fixnum (position));
   if (beg == end || !i)
     return NULL;
 
@@ -604,7 +604,7 @@ get_char_property_and_overlay (Lisp_Object position, register Lisp_Object prop, 
 {
   struct window *w = 0;
 
-  CHECK_NUMBER_COERCE_MARKER (position);
+  CHECK_FIXNUM_COERCE_MARKER (position);
 
   if (NILP (object))
     XSETBUFFER (object, current_buffer);
@@ -714,7 +714,7 @@ before LIMIT.  LIMIT is a no-op if it is greater than (point-max).  */)
   temp = Fnext_overlay_change (position);
   if (! NILP (limit))
     {
-      CHECK_NUMBER_COERCE_MARKER (limit);
+      CHECK_FIXNUM_COERCE_MARKER (limit);
       if (XINT (limit) < XINT (temp))
 	temp = limit;
     }
@@ -740,7 +740,7 @@ before LIMIT.  LIMIT is a no-op if it is less than (point-min).  */)
   temp = Fprevious_overlay_change (position);
   if (! NILP (limit))
     {
-      CHECK_NUMBER_COERCE_MARKER (limit);
+      CHECK_FIXNUM_COERCE_MARKER (limit);
       if (XINT (limit) > XINT (temp))
 	temp = limit;
     }
@@ -774,10 +774,10 @@ last valid position in OBJECT.  */)
       if (NILP (position))
 	{
 	  if (NILP (limit))
-	    position = make_number (SCHARS (object));
+	    position = make_fixnum (SCHARS (object));
 	  else
 	    {
-	      CHECK_NUMBER (limit);
+	      CHECK_FIXNUM (limit);
 	      position = limit;
 	    }
 	}
@@ -796,14 +796,14 @@ last valid position in OBJECT.  */)
 	  Fset_buffer (object);
 	}
 
-      CHECK_NUMBER_COERCE_MARKER (position);
+      CHECK_FIXNUM_COERCE_MARKER (position);
 
       initial_value = Fget_char_property (position, prop, object);
 
       if (NILP (limit))
 	XSETFASTINT (limit, ZV);
       else
-	CHECK_NUMBER_COERCE_MARKER (limit);
+	CHECK_FIXNUM_COERCE_MARKER (limit);
 
       if (XFASTINT (position) >= XFASTINT (limit))
 	{
@@ -859,10 +859,10 @@ first valid position in OBJECT.  */)
       if (NILP (position))
 	{
 	  if (NILP (limit))
-	    position = make_number (0);
+	    position = make_fixnum (0);
 	  else
 	    {
-	      CHECK_NUMBER (limit);
+	      CHECK_FIXNUM (limit);
 	      position = limit;
 	    }
 	}
@@ -880,12 +880,12 @@ first valid position in OBJECT.  */)
 	  Fset_buffer (object);
 	}
 
-      CHECK_NUMBER_COERCE_MARKER (position);
+      CHECK_FIXNUM_COERCE_MARKER (position);
 
       if (NILP (limit))
 	XSETFASTINT (limit, BEGV);
       else
-	CHECK_NUMBER_COERCE_MARKER (limit);
+	CHECK_FIXNUM_COERCE_MARKER (limit);
 
       if (XFASTINT (position) <= XFASTINT (limit))
 	{
@@ -896,7 +896,7 @@ first valid position in OBJECT.  */)
       else
 	{
 	  Lisp_Object initial_value
-	    = Fget_char_property (make_number (XFASTINT (position) - 1),
+	    = Fget_char_property (make_fixnum (XFASTINT (position) - 1),
 				  prop, object);
 
 	  while (true)
@@ -911,7 +911,7 @@ first valid position in OBJECT.  */)
 	      else
 		{
 		  Lisp_Object value
-		    = Fget_char_property (make_number (XFASTINT (position) - 1),
+		    = Fget_char_property (make_fixnum (XFASTINT (position) - 1),
 					  prop, object);
 
 		  if (!EQ (value, initial_value))
@@ -948,7 +948,7 @@ past position LIMIT; return LIMIT if nothing is found before LIMIT.  */)
     XSETBUFFER (object, current_buffer);
 
   if (!NILP (limit) && !EQ (limit, Qt))
-    CHECK_NUMBER_COERCE_MARKER (limit);
+    CHECK_FIXNUM_COERCE_MARKER (limit);
 
   i = validate_interval_range (object, &position, &position, soft);
 
@@ -981,14 +981,14 @@ past position LIMIT; return LIMIT if nothing is found before LIMIT.  */)
 
   if (!next
       || (next->position
-	  >= (INTEGERP (limit)
+	  >= (FIXNUMP (limit)
 	      ? XFASTINT (limit)
 	      : (STRINGP (object)
 		 ? SCHARS (object)
 		 : BUF_ZV (XBUFFER (object))))))
     return limit;
   else
-    return make_number (next->position);
+    return make_fixnum (next->position);
 }
 
 DEFUN ("next-single-property-change", Fnext_single_property_change,
@@ -1015,7 +1015,7 @@ past position LIMIT; return LIMIT if nothing is found before LIMIT.  */)
     XSETBUFFER (object, current_buffer);
 
   if (!NILP (limit))
-    CHECK_NUMBER_COERCE_MARKER (limit);
+    CHECK_FIXNUM_COERCE_MARKER (limit);
 
   i = validate_interval_range (object, &position, &position, soft);
   if (!i)
@@ -1030,14 +1030,14 @@ past position LIMIT; return LIMIT if nothing is found before LIMIT.  */)
 
   if (!next
       || (next->position
-	  >= (INTEGERP (limit)
+	  >= (FIXNUMP (limit)
 	      ? XFASTINT (limit)
 	      : (STRINGP (object)
 		 ? SCHARS (object)
 		 : BUF_ZV (XBUFFER (object))))))
     return limit;
   else
-    return make_number (next->position);
+    return make_fixnum (next->position);
 }
 
 DEFUN ("previous-property-change", Fprevious_property_change,
@@ -1062,7 +1062,7 @@ back past position LIMIT; return LIMIT if nothing is found until LIMIT.  */)
     XSETBUFFER (object, current_buffer);
 
   if (!NILP (limit))
-    CHECK_NUMBER_COERCE_MARKER (limit);
+    CHECK_FIXNUM_COERCE_MARKER (limit);
 
   i = validate_interval_range (object, &position, &position, soft);
   if (!i)
@@ -1080,12 +1080,12 @@ back past position LIMIT; return LIMIT if nothing is found until LIMIT.  */)
 
   if (!previous
       || (previous->position + LENGTH (previous)
-	  <= (INTEGERP (limit)
+	  <= (FIXNUMP (limit)
 	      ? XFASTINT (limit)
 	      : (STRINGP (object) ? 0 : BUF_BEGV (XBUFFER (object))))))
     return limit;
   else
-    return make_number (previous->position + LENGTH (previous));
+    return make_fixnum (previous->position + LENGTH (previous));
 }
 
 DEFUN ("previous-single-property-change", Fprevious_single_property_change,
@@ -1112,7 +1112,7 @@ back past position LIMIT; return LIMIT if nothing is found until LIMIT.  */)
     XSETBUFFER (object, current_buffer);
 
   if (!NILP (limit))
-    CHECK_NUMBER_COERCE_MARKER (limit);
+    CHECK_FIXNUM_COERCE_MARKER (limit);
 
   i = validate_interval_range (object, &position, &position, soft);
 
@@ -1133,12 +1133,12 @@ back past position LIMIT; return LIMIT if nothing is found until LIMIT.  */)
 
   if (!previous
       || (previous->position + LENGTH (previous)
-	  <= (INTEGERP (limit)
+	  <= (FIXNUMP (limit)
 	      ? XFASTINT (limit)
 	      : (STRINGP (object) ? 0 : BUF_BEGV (XBUFFER (object))))))
     return limit;
   else
-    return make_number (previous->position + LENGTH (previous));
+    return make_fixnum (previous->position + LENGTH (previous));
 }
 
 /* Used by add-text-properties and add-face-text-property. */
@@ -1757,7 +1757,7 @@ markers).  If OBJECT is a string, START and END are 0-based indices into it.  */
 	  pos = i->position;
 	  if (pos < XINT (start))
 	    pos = XINT (start);
-	  return make_number (pos);
+	  return make_fixnum (pos);
 	}
       i = next_interval (i);
     }
@@ -1793,7 +1793,7 @@ markers).  If OBJECT is a string, START and END are 0-based indices into it.  */
 	{
 	  if (i->position > s)
 	    s = i->position;
-	  return make_number (s);
+	  return make_fixnum (s);
 	}
       i = next_interval (i);
     }
@@ -1811,7 +1811,7 @@ int
 text_property_stickiness (Lisp_Object prop, Lisp_Object pos, Lisp_Object buffer)
 {
   bool ignore_previous_character;
-  Lisp_Object prev_pos = make_number (XINT (pos) - 1);
+  Lisp_Object prev_pos = make_fixnum (XINT (pos) - 1);
   Lisp_Object front_sticky;
   bool is_rear_sticky = true, is_front_sticky = false; /* defaults */
   Lisp_Object defalt = Fassq (prop, Vtext_property_default_nonsticky);
@@ -1891,7 +1891,7 @@ copy_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object src,
   if (!i)
     return Qnil;
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
   {
     Lisp_Object dest_start, dest_end;
 
@@ -1932,7 +1932,7 @@ copy_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object src,
       if (! NILP (plist))
 	/* Must defer modifications to the interval tree in case
 	   src and dest refer to the same string or buffer.  */
-	stuff = Fcons (list3 (make_number (p), make_number (p + len), plist),
+	stuff = Fcons (list3 (make_fixnum (p), make_fixnum (p + len), plist),
 		       stuff);
 
       i = next_interval (i);
@@ -1999,7 +1999,7 @@ text_property_list (Lisp_Object object, Lisp_Object start, Lisp_Object end, Lisp
 		}
 
 	  if (!NILP (plist))
-	    result = Fcons (list3 (make_number (s), make_number (s + len),
+	    result = Fcons (list3 (make_fixnum (s), make_fixnum (s + len),
 				   plist),
 			    result);
 
@@ -2027,8 +2027,8 @@ add_text_properties_from_list (Lisp_Object object, Lisp_Object list, Lisp_Object
       Lisp_Object item, start, end, plist;
 
       item = XCAR (list);
-      start = make_number (XINT (XCAR (item)) + XINT (delta));
-      end = make_number (XINT (XCAR (XCDR (item))) + XINT (delta));
+      start = make_fixnum (XINT (XCAR (item)) + XINT (delta));
+      end = make_fixnum (XINT (XCAR (XCDR (item))) + XINT (delta));
       plist = XCAR (XCDR (XCDR (item)));
 
       Fadd_text_properties (start, end, plist, object);
@@ -2271,8 +2271,8 @@ verify_interval_modification (struct buffer *buf,
 	  hooks = Fnreverse (hooks);
 	  while (! EQ (hooks, Qnil))
 	    {
-	      call_mod_hooks (Fcar (hooks), make_number (start),
-			      make_number (end));
+	      call_mod_hooks (Fcar (hooks), make_fixnum (start),
+			      make_fixnum (end));
 	      hooks = Fcdr (hooks);
 	    }
 	}

@@ -261,7 +261,7 @@ load_charset_map (struct charset *charset, struct charset_map_entries *entries, 
 		{
 		  int n = CODE_POINT_TO_INDEX (charset, max_code) + 1;
 
-		  vec = Fmake_vector (make_number (n), make_number (-1));
+		  vec = Fmake_vector (make_fixnum (n), make_fixnum (-1));
 		  set_charset_attr (charset, charset_decoder, vec);
 		}
 	      else
@@ -340,12 +340,12 @@ load_charset_map (struct charset *charset, struct charset_map_entries *entries, 
 	{
 	  if (charset->method == CHARSET_METHOD_MAP)
 	    for (; from_index < lim_index; from_index++, from_c++)
-	      ASET (vec, from_index, make_number (from_c));
+	      ASET (vec, from_index, make_fixnum (from_c));
 	  else
 	    for (; from_index < lim_index; from_index++, from_c++)
 	      CHAR_TABLE_SET (Vchar_unify_table,
 			      CHARSET_CODE_OFFSET (charset) + from_index,
-			      make_number (from_c));
+			      make_fixnum (from_c));
 	}
       else if (control_flag == 2)
 	{
@@ -357,13 +357,13 @@ load_charset_map (struct charset *charset, struct charset_map_entries *entries, 
 		code = INDEX_TO_CODE_POINT (charset, code);
 
 		if (NILP (CHAR_TABLE_REF (table, from_c)))
-		  CHAR_TABLE_SET (table, from_c, make_number (code));
+		  CHAR_TABLE_SET (table, from_c, make_fixnum (code));
 	      }
 	  else
 	    for (; from_index < lim_index; from_index++, from_c++)
 	      {
 		if (NILP (CHAR_TABLE_REF (table, from_c)))
-		  CHAR_TABLE_SET (table, from_c, make_number (from_index));
+		  CHAR_TABLE_SET (table, from_c, make_fixnum (from_index));
 	      }
 	}
       else if (control_flag == 3)
@@ -593,7 +593,7 @@ load_charset_map_from_vector (struct charset *charset, Lisp_Object vec, int cont
       else
 	from = to = XFASTINT (val);
       val = AREF (vec, i + 1);
-      CHECK_NATNUM (val);
+      CHECK_FIXNAT (val);
       c = XFASTINT (val);
 
       if (from < min_code || to > max_code || from > to || c > MAX_CHAR)
@@ -675,11 +675,11 @@ map_charset_for_dump (void (*c_function) (Lisp_Object, Lisp_Object),
       if (idx >= from_idx && idx <= to_idx)
 	{
 	  if (NILP (XCAR (range)))
-	    XSETCAR (range, make_number (c));
+	    XSETCAR (range, make_fixnum (c));
 	}
       else if (! NILP (XCAR (range)))
 	{
-	  XSETCDR (range, make_number (c - 1));
+	  XSETCDR (range, make_fixnum (c - 1));
 	  if (c_function)
 	    (*c_function) (arg, range);
 	  else
@@ -692,7 +692,7 @@ map_charset_for_dump (void (*c_function) (Lisp_Object, Lisp_Object),
 	    {
 	      if (! NILP (XCAR (range)))
 		{
-		  XSETCDR (range, make_number (c));
+		  XSETCDR (range, make_fixnum (c));
 		  if (c_function)
 		    (*c_function) (arg, range);
 		  else
@@ -734,7 +734,7 @@ map_charset_chars (void (*c_function)(Lisp_Object, Lisp_Object), Lisp_Object fun
 	    map_charset_for_dump (c_function, function, arg, from, to);
 	}
 
-      range = Fcons (make_number (from_c), make_number (to_c));
+      range = Fcons (make_fixnum (from_c), make_fixnum (to_c));
       if (NILP (function))
 	(*c_function) (arg, range);
       else
@@ -854,9 +854,9 @@ usage: (define-charset-internal ...)  */)
   if (nargs != charset_arg_max)
     Fsignal (Qwrong_number_of_arguments,
 	     Fcons (intern ("define-charset-internal"),
-		    make_number (nargs)));
+		    make_fixnum (nargs)));
 
-  attrs = Fmake_vector (make_number (charset_attr_max), Qnil);
+  attrs = Fmake_vector (make_fixnum (charset_attr_max), Qnil);
 
   CHECK_SYMBOL (args[charset_arg_name]);
   ASET (attrs, charset_name, args[charset_arg_name]);
@@ -867,8 +867,8 @@ usage: (define-charset-internal ...)  */)
       Lisp_Object min_byte_obj, max_byte_obj;
       int min_byte, max_byte;
 
-      min_byte_obj = Faref (val, make_number (i * 2));
-      max_byte_obj = Faref (val, make_number (i * 2 + 1));
+      min_byte_obj = Faref (val, make_fixnum (i * 2));
+      max_byte_obj = Faref (val, make_fixnum (i * 2 + 1));
       CHECK_RANGED_INTEGER (min_byte_obj, 0, 255);
       min_byte = XINT (min_byte_obj);
       CHECK_RANGED_INTEGER (max_byte_obj, min_byte, 255);
@@ -970,7 +970,7 @@ usage: (define-charset-internal ...)  */)
     charset.iso_final = -1;
   else
     {
-      CHECK_NUMBER (val);
+      CHECK_FIXNUM (val);
       if (XINT (val) < '0' || XINT (val) > 127)
 	error ("Invalid iso-final-char: %"pI"d", XINT (val));
       charset.iso_final = XINT (val);
@@ -990,7 +990,7 @@ usage: (define-charset-internal ...)  */)
     charset.emacs_mule_id = -1;
   else
     {
-      CHECK_NATNUM (val);
+      CHECK_FIXNAT (val);
       if ((XINT (val) > 0 && XINT (val) <= 128) || XINT (val) >= 256)
 	error ("Invalid emacs-mule-id: %"pI"d", XINT (val));
       charset.emacs_mule_id = XINT (val);
@@ -1043,14 +1043,14 @@ usage: (define-charset-internal ...)  */)
       val = args[charset_arg_subset];
       parent = Fcar (val);
       CHECK_CHARSET_GET_CHARSET (parent, parent_charset);
-      parent_min_code = Fnth (make_number (1), val);
-      CHECK_NATNUM (parent_min_code);
-      parent_max_code = Fnth (make_number (2), val);
-      CHECK_NATNUM (parent_max_code);
-      parent_code_offset = Fnth (make_number (3), val);
-      CHECK_NUMBER (parent_code_offset);
+      parent_min_code = Fnth (make_fixnum (1), val);
+      CHECK_FIXNAT (parent_min_code);
+      parent_max_code = Fnth (make_fixnum (2), val);
+      CHECK_FIXNAT (parent_max_code);
+      parent_code_offset = Fnth (make_fixnum (3), val);
+      CHECK_FIXNUM (parent_code_offset);
       val = make_uninit_vector (4);
-      ASET (val, 0, make_number (parent_charset->id));
+      ASET (val, 0, make_fixnum (parent_charset->id));
       ASET (val, 1, parent_min_code);
       ASET (val, 2, parent_max_code);
       ASET (val, 3, parent_code_offset);
@@ -1096,7 +1096,7 @@ usage: (define-charset-internal ...)  */)
 	      CHECK_CHARSET_GET_ID (elt, this_id);
 	      offset = 0;
 	    }
-	  XSETCAR (val, Fcons (make_number (this_id), make_number (offset)));
+	  XSETCAR (val, Fcons (make_fixnum (this_id), make_fixnum (offset)));
 
 	  this_charset = CHARSET_FROM_ID (this_id);
 	  if (charset.min_char > this_charset->min_char)
@@ -1158,7 +1158,7 @@ usage: (define-charset-internal ...)  */)
       new_definition_p = 1;
     }
 
-  ASET (attrs, charset_id, make_number (id));
+  ASET (attrs, charset_id, make_fixnum (id));
   charset.id = id;
   charset_table[id] = charset;
 
@@ -1174,7 +1174,7 @@ usage: (define-charset-internal ...)  */)
 			 charset.iso_final) = id;
       if (new_definition_p)
 	Viso_2022_charset_list = nconc2 (Viso_2022_charset_list,
-					 list1 (make_number (id)));
+					 list1 (make_fixnum (id)));
       if (ISO_CHARSET_TABLE (1, 0, 'J') == id)
 	charset_jisx0201_roman = id;
       else if (ISO_CHARSET_TABLE (2, 0, '@') == id)
@@ -1194,7 +1194,7 @@ usage: (define-charset-internal ...)  */)
 	emacs_mule_bytes[charset.emacs_mule_id] = charset.dimension + 2;
       if (new_definition_p)
 	Vemacs_mule_charset_list = nconc2 (Vemacs_mule_charset_list,
-					   list1 (make_number (id)));
+					   list1 (make_fixnum (id)));
     }
 
   if (new_definition_p)
@@ -1202,7 +1202,7 @@ usage: (define-charset-internal ...)  */)
       Vcharset_list = Fcons (args[charset_arg_name], Vcharset_list);
       if (charset.supplementary_p)
 	Vcharset_ordered_list = nconc2 (Vcharset_ordered_list,
-					list1 (make_number (id)));
+					list1 (make_fixnum (id)));
       else
 	{
 	  Lisp_Object tail;
@@ -1215,16 +1215,16 @@ usage: (define-charset-internal ...)  */)
 		break;
 	    }
 	  if (EQ (tail, Vcharset_ordered_list))
-	    Vcharset_ordered_list = Fcons (make_number (id),
+	    Vcharset_ordered_list = Fcons (make_fixnum (id),
 					   Vcharset_ordered_list);
 	  else if (NILP (tail))
 	    Vcharset_ordered_list = nconc2 (Vcharset_ordered_list,
-					    list1 (make_number (id)));
+					    list1 (make_fixnum (id)));
 	  else
 	    {
 	      val = Fcons (XCAR (tail), XCDR (tail));
 	      XSETCDR (tail, val);
-	      XSETCAR (tail, make_number (id));
+	      XSETCAR (tail, make_fixnum (id));
 	    }
 	}
       charset_ordered_list_tick++;
@@ -1254,22 +1254,22 @@ define_charset_internal (Lisp_Object name,
   int i;
 
   args[charset_arg_name] = name;
-  args[charset_arg_dimension] = make_number (dimension);
+  args[charset_arg_dimension] = make_fixnum (dimension);
   val = make_uninit_vector (8);
   for (i = 0; i < 8; i++)
-    ASET (val, i, make_number (code_space[i]));
+    ASET (val, i, make_fixnum (code_space[i]));
   args[charset_arg_code_space] = val;
-  args[charset_arg_min_code] = make_number (min_code);
-  args[charset_arg_max_code] = make_number (max_code);
+  args[charset_arg_min_code] = make_fixnum (min_code);
+  args[charset_arg_max_code] = make_fixnum (max_code);
   args[charset_arg_iso_final]
-    = (iso_final < 0 ? Qnil : make_number (iso_final));
-  args[charset_arg_iso_revision] = make_number (iso_revision);
+    = (iso_final < 0 ? Qnil : make_fixnum (iso_final));
+  args[charset_arg_iso_revision] = make_fixnum (iso_revision);
   args[charset_arg_emacs_mule_id]
-    = (emacs_mule_id < 0 ? Qnil : make_number (emacs_mule_id));
+    = (emacs_mule_id < 0 ? Qnil : make_fixnum (emacs_mule_id));
   args[charset_arg_ascii_compatible_p] = ascii_compatible ? Qt : Qnil;
   args[charset_arg_supplementary_p] = supplementary ? Qt : Qnil;
   args[charset_arg_invalid_code] = Qnil;
-  args[charset_arg_code_offset] = make_number (code_offset);
+  args[charset_arg_code_offset] = make_fixnum (code_offset);
   args[charset_arg_map] = Qnil;
   args[charset_arg_subset] = Qnil;
   args[charset_arg_superset] = Qnil;
@@ -1396,8 +1396,8 @@ static bool
 check_iso_charset_parameter (Lisp_Object dimension, Lisp_Object chars,
 			     Lisp_Object final_char)
 {
-  CHECK_NUMBER (dimension);
-  CHECK_NUMBER (chars);
+  CHECK_FIXNUM (dimension);
+  CHECK_FIXNUM (chars);
   CHECK_CHARACTER (final_char);
 
   if (! (1 <= XINT (dimension) && XINT (dimension) <= 3))
@@ -1428,10 +1428,10 @@ return nil.  */)
   (Lisp_Object dimension, Lisp_Object chars)
 {
   bool chars_flag = check_iso_charset_parameter (dimension, chars,
-						 make_number ('0'));
+						 make_fixnum ('0'));
   for (int final_char = '0'; final_char <= '?'; final_char++)
     if (ISO_CHARSET_TABLE (XINT (dimension), chars_flag, final_char) < 0)
-      return make_number (final_char);
+      return make_fixnum (final_char);
   return Qnil;
 }
 
@@ -1563,7 +1563,7 @@ only `ascii', `eight-bit-control', and `eight-bit-graphic'.  */)
 
   from_byte = CHAR_TO_BYTE (from);
 
-  charsets = Fmake_vector (make_number (charset_table_used), Qnil);
+  charsets = Fmake_vector (make_fixnum (charset_table_used), Qnil);
   while (1)
     {
       find_charsets_in_text (BYTE_POS_ADDR (from_byte), stop - from,
@@ -1600,7 +1600,7 @@ only `ascii', `eight-bit-control', and `eight-bit-graphic'. */)
 
   CHECK_STRING (str);
 
-  charsets = Fmake_vector (make_number (charset_table_used), Qnil);
+  charsets = Fmake_vector (make_fixnum (charset_table_used), Qnil);
   find_charsets_in_text (SDATA (str), SCHARS (str), SBYTES (str),
 			 charsets, table,
 			 STRING_MULTIBYTE (str));
@@ -1621,7 +1621,7 @@ maybe_unify_char (int c, Lisp_Object val)
 {
   struct charset *charset;
 
-  if (INTEGERP (val))
+  if (FIXNUMP (val))
     return XFASTINT (val);
   if (NILP (val))
     return c;
@@ -1762,7 +1762,7 @@ encode_char (struct charset *charset, int c)
 	{
 	  Lisp_Object deunified = CHAR_TABLE_REF (deunifier, c);
 
-	  if (INTEGERP (deunified))
+	  if (FIXNUMP (deunified))
 	    code_index = XINT (deunified);
 	}
       else
@@ -1863,7 +1863,7 @@ CODE-POINT may be a cons (HIGHER-16-BIT-VALUE . LOWER-16-BIT-VALUE).  */)
   code = cons_to_unsigned (code_point, UINT_MAX);
   charsetp = CHARSET_FROM_ID (id);
   c = DECODE_CHAR (charsetp, code);
-  return (c >= 0 ? make_number (c) : Qnil);
+  return (c >= 0 ? make_fixnum (c) : Qnil);
 }
 
 
@@ -1910,9 +1910,9 @@ is specified.  */)
 	    ? 0 : CHARSET_MIN_CODE (charsetp));
   else
     {
-      CHECK_NATNUM (code1);
+      CHECK_FIXNAT (code1);
       if (XFASTINT (code1) >= 0x100)
-	args_out_of_range (make_number (0xFF), code1);
+	args_out_of_range (make_fixnum (0xFF), code1);
       code = XFASTINT (code1);
 
       if (dimension > 1)
@@ -1922,9 +1922,9 @@ is specified.  */)
 	    code |= charsetp->code_space[(dimension - 2) * 4];
 	  else
 	    {
-	      CHECK_NATNUM (code2);
+	      CHECK_FIXNAT (code2);
 	      if (XFASTINT (code2) >= 0x100)
-		args_out_of_range (make_number (0xFF), code2);
+		args_out_of_range (make_fixnum (0xFF), code2);
 	      code |= XFASTINT (code2);
 	    }
 
@@ -1935,9 +1935,9 @@ is specified.  */)
 		code |= charsetp->code_space[(dimension - 3) * 4];
 	      else
 		{
-		  CHECK_NATNUM (code3);
+		  CHECK_FIXNAT (code3);
 		  if (XFASTINT (code3) >= 0x100)
-		    args_out_of_range (make_number (0xFF), code3);
+		    args_out_of_range (make_fixnum (0xFF), code3);
 		  code |= XFASTINT (code3);
 		}
 
@@ -1948,9 +1948,9 @@ is specified.  */)
 		    code |= charsetp->code_space[0];
 		  else
 		    {
-		      CHECK_NATNUM (code4);
+		      CHECK_FIXNAT (code4);
 		      if (XFASTINT (code4) >= 0x100)
-			args_out_of_range (make_number (0xFF), code4);
+			args_out_of_range (make_fixnum (0xFF), code4);
 		      code |= XFASTINT (code4);
 		    }
 		}
@@ -1963,7 +1963,7 @@ is specified.  */)
   c = DECODE_CHAR (charsetp, code);
   if (c < 0)
     error ("Invalid code(s)");
-  return make_number (c);
+  return make_fixnum (c);
 }
 
 
@@ -2028,7 +2028,7 @@ CH in the charset.  */)
   dimension = CHARSET_DIMENSION (charset);
   for (val = Qnil; dimension > 0; dimension--)
     {
-      val = Fcons (make_number (code & 0xFF), val);
+      val = Fcons (make_fixnum (code & 0xFF), val);
       code >>= 8;
     }
   return Fcons (CHARSET_NAME (charset), val);
@@ -2085,7 +2085,7 @@ If POS is out of range, the value is nil.  */)
   struct charset *charset;
 
   ch = Fchar_after (pos);
-  if (! INTEGERP (ch))
+  if (! FIXNUMP (ch))
     return ch;
   charset = CHAR_CHARSET (XINT (ch));
   return (CHARSET_NAME (charset));
@@ -2165,10 +2165,10 @@ usage: (set-charset-priority &rest charsets)  */)
   for (i = 0; i < nargs; i++)
     {
       CHECK_CHARSET_GET_ID (args[i], id);
-      if (! NILP (Fmemq (make_number (id), old_list)))
+      if (! NILP (Fmemq (make_fixnum (id), old_list)))
 	{
-	  old_list = Fdelq (make_number (id), old_list);
-	  new_head = Fcons (make_number (id), new_head);
+	  old_list = Fdelq (make_fixnum (id), old_list);
+	  new_head = Fcons (make_fixnum (id), new_head);
 	}
     }
   Vcharset_non_preferred_head = old_list;
@@ -2211,7 +2211,7 @@ Return charset identification number of CHARSET.  */)
   int id;
 
   CHECK_CHARSET_GET_ID (charset, id);
-  return make_number (id);
+  return make_fixnum (id);
 }
 
 struct charset_sort_data

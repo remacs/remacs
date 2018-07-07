@@ -849,7 +849,7 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
       clone_per_buffer_values (b->base_buffer, b);
       bset_filename (b, Qnil);
       bset_file_truename (b, Qnil);
-      bset_display_count (b, make_number (0));
+      bset_display_count (b, make_fixnum (0));
       bset_backed_up (b, Qnil);
       bset_auto_save_file_name (b, Qnil);
       set_buffer_internal_1 (b);
@@ -939,7 +939,7 @@ reset_buffer (register struct buffer *b)
   bset_file_format (b, Qnil);
   bset_auto_save_file_format (b, Qt);
   bset_last_selected_window (b, Qnil);
-  bset_display_count (b, make_number (0));
+  bset_display_count (b, make_fixnum (0));
   bset_display_time (b, Qnil);
   bset_enable_multibyte_characters
     (b, BVAR (&buffer_defaults, enable_multibyte_characters));
@@ -1103,7 +1103,7 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
       char number[sizeof "-999999"];
 
       /* Use XINT instead of XFASTINT to work around GCC bug 80776.  */
-      int i = XINT (Frandom (make_number (1000000)));
+      int i = XINT (Frandom (make_fixnum (1000000)));
       eassume (0 <= i && i < 1000000);
 
       AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
@@ -1421,7 +1421,7 @@ text in that buffer is changed.  It wraps around occasionally.
 No argument or nil as argument means use current buffer as BUFFER.  */)
   (register Lisp_Object buffer)
 {
-  return make_number (BUF_MODIFF (decode_buffer (buffer)));
+  return make_fixnum (BUF_MODIFF (decode_buffer (buffer)));
 }
 
 DEFUN ("buffer-chars-modified-tick", Fbuffer_chars_modified_tick,
@@ -1436,7 +1436,7 @@ between these calls.  No argument or nil as argument means use current
 buffer as BUFFER.  */)
   (register Lisp_Object buffer)
 {
-  return make_number (BUF_CHARS_MODIFF (decode_buffer (buffer)));
+  return make_fixnum (BUF_CHARS_MODIFF (decode_buffer (buffer)));
 }
 
 DEFUN ("rename-buffer", Frename_buffer, Srename_buffer, 1, 2,
@@ -2203,7 +2203,7 @@ If the text under POSITION (which defaults to point) has the
   if (NILP (position))
     XSETFASTINT (position, PT);
   else
-    CHECK_NUMBER (position);
+    CHECK_FIXNUM (position);
 
   if (!NILP (BVAR (current_buffer, read_only))
       && NILP (Vinhibit_read_only)
@@ -2233,8 +2233,8 @@ so the buffer is truly empty after this.  */)
 void
 validate_region (register Lisp_Object *b, register Lisp_Object *e)
 {
-  CHECK_NUMBER_COERCE_MARKER (*b);
-  CHECK_NUMBER_COERCE_MARKER (*e);
+  CHECK_FIXNUM_COERCE_MARKER (*b);
+  CHECK_FIXNUM_COERCE_MARKER (*e);
 
   if (XINT (*b) > XINT (*e))
     {
@@ -2409,7 +2409,7 @@ results, see Info node `(elisp)Swapping Text'.  */)
 	    && (EQ (XWINDOW (w)->contents, buf1)
 		|| EQ (XWINDOW (w)->contents, buf2)))
 	  Fset_marker (XWINDOW (w)->pointm,
-		       make_number
+		       make_fixnum
 		       (BUF_BEGV (XBUFFER (XWINDOW (w)->contents))),
 		       XWINDOW (w)->contents);
 	/* Blindly copied from pointm part.  */
@@ -2417,14 +2417,14 @@ results, see Info node `(elisp)Swapping Text'.  */)
 	    && (EQ (XWINDOW (w)->contents, buf1)
 		|| EQ (XWINDOW (w)->contents, buf2)))
 	  Fset_marker (XWINDOW (w)->old_pointm,
-		       make_number
+		       make_fixnum
 		       (BUF_BEGV (XBUFFER (XWINDOW (w)->contents))),
 		       XWINDOW (w)->contents);
 	if (MARKERP (XWINDOW (w)->start)
 	    && (EQ (XWINDOW (w)->contents, buf1)
 		|| EQ (XWINDOW (w)->contents, buf2)))
 	  Fset_marker (XWINDOW (w)->start,
-		       make_number
+		       make_fixnum
 		       (XBUFFER (XWINDOW (w)->contents)->last_window_start),
 		       XWINDOW (w)->contents);
 	w = Fnext_window (w, Qt, Qt);
@@ -2547,7 +2547,7 @@ current buffer is cleared.  */)
 	    }
 	}
       if (narrowed)
-	Fnarrow_to_region (make_number (begv), make_number (zv));
+	Fnarrow_to_region (make_fixnum (begv), make_fixnum (zv));
     }
   else
     {
@@ -2628,7 +2628,7 @@ current buffer is cleared.  */)
 	TEMP_SET_PT (pt);
 
       if (narrowed)
-	Fnarrow_to_region (make_number (begv), make_number (zv));
+	Fnarrow_to_region (make_fixnum (begv), make_fixnum (zv));
 
       /* Do this first, so that chars_in_text asks the right question.
 	 set_intervals_multibyte needs it too.  */
@@ -3212,7 +3212,7 @@ sort_overlays (Lisp_Object *overlay_vec, ptrdiff_t noverlays, struct window *w)
 	      sortvec[j].priority = 0;
 	      sortvec[j].spriority = 0;
 	    }
-	  else if (INTEGERP (tem))
+	  else if (FIXNUMP (tem))
 	    {
 	      sortvec[j].priority = XINT (tem);
 	      sortvec[j].spriority = 0;
@@ -3221,8 +3221,8 @@ sort_overlays (Lisp_Object *overlay_vec, ptrdiff_t noverlays, struct window *w)
 	    {
 	      Lisp_Object car = XCAR (tem);
 	      Lisp_Object cdr = XCDR (tem);
-	      sortvec[j].priority  = INTEGERP (car) ? XINT (car) : 0;
-	      sortvec[j].spriority = INTEGERP (cdr) ? XINT (cdr) : 0;
+	      sortvec[j].priority  = FIXNUMP (car) ? XINT (car) : 0;
+	      sortvec[j].spriority = FIXNUMP (cdr) ? XINT (cdr) : 0;
 	    }
 	  j++;
 	}
@@ -3290,7 +3290,7 @@ record_overlay_string (struct sortstrlist *ssl, Lisp_Object str,
   ssl->buf[ssl->used].string = str;
   ssl->buf[ssl->used].string2 = str2;
   ssl->buf[ssl->used].size = size;
-  ssl->buf[ssl->used].priority = (INTEGERP (pri) ? XINT (pri) : 0);
+  ssl->buf[ssl->used].priority = (FIXNUMP (pri) ? XINT (pri) : 0);
   ssl->used++;
 
   if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
@@ -3644,7 +3644,7 @@ fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
       if (endpos < startpos)
 	{
 	  startpos = endpos;
-	  Fset_marker (OVERLAY_START (overlay), make_number (startpos),
+	  Fset_marker (OVERLAY_START (overlay), make_fixnum (startpos),
 		       Qnil);
 	}
 
@@ -3692,7 +3692,7 @@ fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
       if (endpos < startpos)
 	{
 	  startpos = endpos;
-	  Fset_marker (OVERLAY_START (overlay), make_number (startpos),
+	  Fset_marker (OVERLAY_START (overlay), make_fixnum (startpos),
 		       Qnil);
 	}
 
@@ -3867,8 +3867,8 @@ for the rear of the overlay advance when text is inserted there
   if (MARKERP (end) && !EQ (Fmarker_buffer (end), buffer))
     signal_error ("Marker points into wrong buffer", end);
 
-  CHECK_NUMBER_COERCE_MARKER (beg);
-  CHECK_NUMBER_COERCE_MARKER (end);
+  CHECK_FIXNUM_COERCE_MARKER (beg);
+  CHECK_FIXNUM_COERCE_MARKER (end);
 
   if (XINT (beg) > XINT (end))
     {
@@ -3987,8 +3987,8 @@ buffer.  */)
   if (MARKERP (end) && !EQ (Fmarker_buffer (end), buffer))
     signal_error ("Marker points into wrong buffer", end);
 
-  CHECK_NUMBER_COERCE_MARKER (beg);
-  CHECK_NUMBER_COERCE_MARKER (end);
+  CHECK_FIXNUM_COERCE_MARKER (beg);
+  CHECK_FIXNUM_COERCE_MARKER (end);
 
   if (XINT (beg) > XINT (end))
     {
@@ -4156,7 +4156,7 @@ If SORTED is non-nil, then sort them by decreasing priority.  */)
   Lisp_Object *overlay_vec;
   Lisp_Object result;
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
 
   if (!buffer_has_overlays ())
     return Qnil;
@@ -4200,8 +4200,8 @@ end of the buffer.  */)
   Lisp_Object *overlay_vec;
   Lisp_Object result;
 
-  CHECK_NUMBER_COERCE_MARKER (beg);
-  CHECK_NUMBER_COERCE_MARKER (end);
+  CHECK_FIXNUM_COERCE_MARKER (beg);
+  CHECK_FIXNUM_COERCE_MARKER (end);
 
   if (!buffer_has_overlays ())
     return Qnil;
@@ -4232,10 +4232,10 @@ the value is (point-max).  */)
   ptrdiff_t endpos;
   Lisp_Object *overlay_vec;
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
 
   if (!buffer_has_overlays ())
-    return make_number (ZV);
+    return make_fixnum (ZV);
 
   len = 10;
   overlay_vec = xmalloc (len * sizeof *overlay_vec);
@@ -4260,7 +4260,7 @@ the value is (point-max).  */)
     }
 
   xfree (overlay_vec);
-  return make_number (endpos);
+  return make_fixnum (endpos);
 }
 
 DEFUN ("previous-overlay-change", Fprevious_overlay_change,
@@ -4274,10 +4274,10 @@ the value is (point-min).  */)
   Lisp_Object *overlay_vec;
   ptrdiff_t len;
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
 
   if (!buffer_has_overlays ())
-    return make_number (BEGV);
+    return make_fixnum (BEGV);
 
   /* At beginning of buffer, we know the answer;
      avoid bug subtracting 1 below.  */
@@ -4294,7 +4294,7 @@ the value is (point-min).  */)
 	       0, &prevpos, 1);
 
   xfree (overlay_vec);
-  return make_number (prevpos);
+  return make_fixnum (prevpos);
 }
 
 /* These functions are for debugging overlays.  */
@@ -4332,7 +4332,7 @@ for positions far away from POS).  */)
   (Lisp_Object pos)
 {
   ptrdiff_t p;
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
 
   p = clip_to_bounds (PTRDIFF_MIN, XINT (pos), PTRDIFF_MAX);
   recenter_overlay_lists (current_buffer, p);
@@ -5082,41 +5082,41 @@ init_buffer_once (void)
 
   /* 0 means not a lisp var, -1 means always local, else mask.  */
   memset (&buffer_local_flags, 0, sizeof buffer_local_flags);
-  bset_filename (&buffer_local_flags, make_number (-1));
-  bset_directory (&buffer_local_flags, make_number (-1));
-  bset_backed_up (&buffer_local_flags, make_number (-1));
-  bset_save_length (&buffer_local_flags, make_number (-1));
-  bset_auto_save_file_name (&buffer_local_flags, make_number (-1));
-  bset_read_only (&buffer_local_flags, make_number (-1));
-  bset_major_mode (&buffer_local_flags, make_number (-1));
-  bset_mode_name (&buffer_local_flags, make_number (-1));
-  bset_undo_list (&buffer_local_flags, make_number (-1));
-  bset_mark_active (&buffer_local_flags, make_number (-1));
-  bset_point_before_scroll (&buffer_local_flags, make_number (-1));
-  bset_file_truename (&buffer_local_flags, make_number (-1));
-  bset_invisibility_spec (&buffer_local_flags, make_number (-1));
-  bset_file_format (&buffer_local_flags, make_number (-1));
-  bset_auto_save_file_format (&buffer_local_flags, make_number (-1));
-  bset_display_count (&buffer_local_flags, make_number (-1));
-  bset_display_time (&buffer_local_flags, make_number (-1));
-  bset_enable_multibyte_characters (&buffer_local_flags, make_number (-1));
+  bset_filename (&buffer_local_flags, make_fixnum (-1));
+  bset_directory (&buffer_local_flags, make_fixnum (-1));
+  bset_backed_up (&buffer_local_flags, make_fixnum (-1));
+  bset_save_length (&buffer_local_flags, make_fixnum (-1));
+  bset_auto_save_file_name (&buffer_local_flags, make_fixnum (-1));
+  bset_read_only (&buffer_local_flags, make_fixnum (-1));
+  bset_major_mode (&buffer_local_flags, make_fixnum (-1));
+  bset_mode_name (&buffer_local_flags, make_fixnum (-1));
+  bset_undo_list (&buffer_local_flags, make_fixnum (-1));
+  bset_mark_active (&buffer_local_flags, make_fixnum (-1));
+  bset_point_before_scroll (&buffer_local_flags, make_fixnum (-1));
+  bset_file_truename (&buffer_local_flags, make_fixnum (-1));
+  bset_invisibility_spec (&buffer_local_flags, make_fixnum (-1));
+  bset_file_format (&buffer_local_flags, make_fixnum (-1));
+  bset_auto_save_file_format (&buffer_local_flags, make_fixnum (-1));
+  bset_display_count (&buffer_local_flags, make_fixnum (-1));
+  bset_display_time (&buffer_local_flags, make_fixnum (-1));
+  bset_enable_multibyte_characters (&buffer_local_flags, make_fixnum (-1));
 
   /* These used to be stuck at 0 by default, but now that the all-zero value
      means Qnil, we have to initialize them explicitly.  */
-  bset_name (&buffer_local_flags, make_number (0));
-  bset_mark (&buffer_local_flags, make_number (0));
-  bset_local_var_alist (&buffer_local_flags, make_number (0));
-  bset_keymap (&buffer_local_flags, make_number (0));
-  bset_downcase_table (&buffer_local_flags, make_number (0));
-  bset_upcase_table (&buffer_local_flags, make_number (0));
-  bset_case_canon_table (&buffer_local_flags, make_number (0));
-  bset_case_eqv_table (&buffer_local_flags, make_number (0));
-  bset_minor_modes (&buffer_local_flags, make_number (0));
-  bset_width_table (&buffer_local_flags, make_number (0));
-  bset_pt_marker (&buffer_local_flags, make_number (0));
-  bset_begv_marker (&buffer_local_flags, make_number (0));
-  bset_zv_marker (&buffer_local_flags, make_number (0));
-  bset_last_selected_window (&buffer_local_flags, make_number (0));
+  bset_name (&buffer_local_flags, make_fixnum (0));
+  bset_mark (&buffer_local_flags, make_fixnum (0));
+  bset_local_var_alist (&buffer_local_flags, make_fixnum (0));
+  bset_keymap (&buffer_local_flags, make_fixnum (0));
+  bset_downcase_table (&buffer_local_flags, make_fixnum (0));
+  bset_upcase_table (&buffer_local_flags, make_fixnum (0));
+  bset_case_canon_table (&buffer_local_flags, make_fixnum (0));
+  bset_case_eqv_table (&buffer_local_flags, make_fixnum (0));
+  bset_minor_modes (&buffer_local_flags, make_fixnum (0));
+  bset_width_table (&buffer_local_flags, make_fixnum (0));
+  bset_pt_marker (&buffer_local_flags, make_fixnum (0));
+  bset_begv_marker (&buffer_local_flags, make_fixnum (0));
+  bset_zv_marker (&buffer_local_flags, make_fixnum (0));
+  bset_last_selected_window (&buffer_local_flags, make_fixnum (0));
 
   idx = 1;
   XSETFASTINT (BVAR (&buffer_local_flags, mode_line_format), idx); ++idx;
@@ -5443,7 +5443,7 @@ syms_of_buffer (void)
 {
   staticpro (&last_overlay_modification_hooks);
   last_overlay_modification_hooks
-    = Fmake_vector (make_number (10), Qnil);
+    = Fmake_vector (make_fixnum (10), Qnil);
 
   staticpro (&QSFundamental);
   staticpro (&Vbuffer_alist);

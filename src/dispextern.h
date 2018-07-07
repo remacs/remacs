@@ -1837,8 +1837,8 @@ GLYPH_CODE_P (Lisp_Object gc)
 {
   return (CONSP (gc)
 	  ? (CHARACTERP (XCAR (gc))
-	     && RANGED_INTEGERP (0, XCDR (gc), MAX_FACE_ID))
-	  : (RANGED_INTEGERP
+	     && RANGED_FIXNUMP (0, XCDR (gc), MAX_FACE_ID))
+	  : (RANGED_FIXNUMP
 	     (0, gc,
 	      (MAX_FACE_ID < TYPE_MAXIMUM (EMACS_INT) >> CHARACTERBITS
 	       ? ((EMACS_INT) MAX_FACE_ID << CHARACTERBITS) | MAX_CHAR

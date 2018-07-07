@@ -103,7 +103,7 @@ those categories.  */)
   while (--len >= 0)
     {
       unsigned char cat = SREF (categories, len);
-      Lisp_Object category = make_number (cat);
+      Lisp_Object category = make_fixnum (cat);
 
       CHECK_CATEGORY (category);
       set_category_set (val, cat, 1);
@@ -165,7 +165,7 @@ it defaults to the current buffer's category table.  */)
 
   for (i = ' '; i <= '~'; i++)
     if (NILP (CATEGORY_DOCSTRING (table, i)))
-      return make_number (i);
+      return make_fixnum (i);
 
   return Qnil;
 }
@@ -271,8 +271,8 @@ DEFUN ("make-category-table", Fmake_category_table, Smake_category_table,
   set_char_table_defalt (val, MAKE_CATEGORY_SET);
   for (i = 0; i < (1 << CHARTAB_SIZE_BITS_0); i++)
     set_char_table_contents (val, i, MAKE_CATEGORY_SET);
-  Fset_char_table_extra_slot (val, make_number (0),
-			      Fmake_vector (make_number (95), Qnil));
+  Fset_char_table_extra_slot (val, make_fixnum (0),
+			      Fmake_vector (make_fixnum (95), Qnil));
   return val;
 }
 
@@ -346,7 +346,7 @@ then delete CATEGORY from the category set instead of adding it.  */)
   int start, end;
   int from, to;
 
-  if (INTEGERP (character))
+  if (FIXNUMP (character))
     {
       CHECK_CHARACTER (character);
       start = end = XFASTINT (character);
@@ -440,13 +440,13 @@ init_category_once (void)
 {
   /* This has to be done here, before we call Fmake_char_table.  */
   DEFSYM (Qcategory_table, "category-table");
-  Fput (Qcategory_table, Qchar_table_extra_slots, make_number (2));
+  Fput (Qcategory_table, Qchar_table_extra_slots, make_fixnum (2));
 
   Vstandard_category_table = Fmake_char_table (Qcategory_table, Qnil);
   /* Set a category set which contains nothing to the default.  */
   set_char_table_defalt (Vstandard_category_table, MAKE_CATEGORY_SET);
-  Fset_char_table_extra_slot (Vstandard_category_table, make_number (0),
-			      Fmake_vector (make_number (95), Qnil));
+  Fset_char_table_extra_slot (Vstandard_category_table, make_fixnum (0),
+			      Fmake_vector (make_fixnum (95), Qnil));
 }
 
 void

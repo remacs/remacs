@@ -352,14 +352,14 @@ typedef EMACS_INT Lisp_Word;
 # endif
 #endif
 
-#define lisp_h_CHECK_NUMBER(x) CHECK_TYPE (INTEGERP (x), Qintegerp, x)
+#define lisp_h_CHECK_FIXNUM(x) CHECK_TYPE (FIXNUMP (x), Qintegerp, x)
 #define lisp_h_CHECK_SYMBOL(x) CHECK_TYPE (SYMBOLP (x), Qsymbolp, x)
 #define lisp_h_CHECK_TYPE(ok, predicate, x) \
    ((ok) ? (void) 0 : wrong_type_argument (predicate, x))
 #define lisp_h_CONSP(x) (XTYPE (x) == Lisp_Cons)
 #define lisp_h_EQ(x, y) (XLI (x) == XLI (y))
 #define lisp_h_FLOATP(x) (XTYPE (x) == Lisp_Float)
-#define lisp_h_INTEGERP(x) ((XTYPE (x) & (Lisp_Int0 | ~Lisp_Int1)) == Lisp_Int0)
+#define lisp_h_FIXNUMP(x) ((XTYPE (x) & (Lisp_Int0 | ~Lisp_Int1)) == Lisp_Int0)
 #define lisp_h_MARKERP(x) (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Marker)
 #define lisp_h_MISCP(x) (XTYPE (x) == Lisp_Misc)
 #define lisp_h_NILP(x) EQ (x, Qnil)
@@ -382,7 +382,7 @@ typedef EMACS_INT Lisp_Word;
 # define lisp_h_check_cons_list() ((void) 0)
 #endif
 #if USE_LSB_TAG
-# define lisp_h_make_number(n) \
+# define lisp_h_make_fixnum(n) \
     XIL ((EMACS_INT) (((EMACS_UINT) (n) << INTTYPEBITS) + Lisp_Int0))
 # define lisp_h_XFASTINT(a) XINT (a)
 # define lisp_h_XINT(a) (XLI (a) >> INTTYPEBITS)
@@ -418,13 +418,13 @@ typedef EMACS_INT Lisp_Word;
 # define XIL(i) lisp_h_XIL (i)
 # define XLP(o) lisp_h_XLP (o)
 # define XPL(p) lisp_h_XPL (p)
-# define CHECK_NUMBER(x) lisp_h_CHECK_NUMBER (x)
+# define CHECK_FIXNUM(x) lisp_h_CHECK_FIXNUM (x)
 # define CHECK_SYMBOL(x) lisp_h_CHECK_SYMBOL (x)
 # define CHECK_TYPE(ok, predicate, x) lisp_h_CHECK_TYPE (ok, predicate, x)
 # define CONSP(x) lisp_h_CONSP (x)
 # define EQ(x, y) lisp_h_EQ (x, y)
 # define FLOATP(x) lisp_h_FLOATP (x)
-# define INTEGERP(x) lisp_h_INTEGERP (x)
+# define FIXNUMP(x) lisp_h_FIXNUMP (x)
 # define MARKERP(x) lisp_h_MARKERP (x)
 # define MISCP(x) lisp_h_MISCP (x)
 # define NILP(x) lisp_h_NILP (x)
@@ -442,7 +442,7 @@ typedef EMACS_INT Lisp_Word;
 #  define check_cons_list() lisp_h_check_cons_list ()
 # endif
 # if USE_LSB_TAG
-#  define make_number(n) lisp_h_make_number (n)
+#  define make_fixnum(n) lisp_h_make_fixnum (n)
 #  define XFASTINT(a) lisp_h_XFASTINT (a)
 #  define XINT(a) lisp_h_XINT (a)
 #  define XSYMBOL(a) lisp_h_XSYMBOL (a)
@@ -1026,9 +1026,9 @@ enum More_Lisp_Bits
 #if USE_LSB_TAG
 
 INLINE Lisp_Object
-(make_number) (EMACS_INT n)
+(make_fixnum) (EMACS_INT n)
 {
-  return lisp_h_make_number (n);
+  return lisp_h_make_fixnum (n);
 }
 
 INLINE EMACS_INT
@@ -1054,7 +1054,7 @@ INLINE EMACS_INT
 /* Make a Lisp integer representing the value of the low order
    bits of N.  */
 INLINE Lisp_Object
-make_number (EMACS_INT n)
+make_fixnum (EMACS_INT n)
 {
   EMACS_INT int0 = Lisp_Int0;
   if (USE_LSB_TAG)
@@ -1116,13 +1116,13 @@ INLINE EMACS_INT
   return lisp_h_XHASH (a);
 }
 
-/* Like make_number (N), but may be faster.  N must be in nonnegative range.  */
+/* Like make_fixnum (N), but may be faster.  N must be in nonnegative range.  */
 INLINE Lisp_Object
-make_natnum (EMACS_INT n)
+make_fixed_natnum (EMACS_INT n)
 {
   eassert (0 <= n && n <= MOST_POSITIVE_FIXNUM);
   EMACS_INT int0 = Lisp_Int0;
-  return USE_LSB_TAG ? make_number (n) : XIL (n + (int0 << VALBITS));
+  return USE_LSB_TAG ? make_fixnum (n) : XIL (n + (int0 << VALBITS));
 }
 
 /* Return true if X and Y are the same object.  */
@@ -1155,13 +1155,13 @@ make_lisp_ptr (void *ptr, enum Lisp_Type type)
 }
 
 INLINE bool
-(INTEGERP) (Lisp_Object x)
+(FIXNUMP) (Lisp_Object x)
 {
-  return lisp_h_INTEGERP (x);
+  return lisp_h_FIXNUMP (x);
 }
 
-#define XSETINT(a, b) ((a) = make_number (b))
-#define XSETFASTINT(a, b) ((a) = make_natnum (b))
+#define XSETINT(a, b) ((a) = make_fixnum (b))
+#define XSETFASTINT(a, b) ((a) = make_fixed_natnum (b))
 #define XSETCONS(a, b) ((a) = make_lisp_ptr (b, Lisp_Cons))
 #define XSETVECTOR(a, b) ((a) = make_lisp_ptr (b, Lisp_Vectorlike))
 #define XSETSTRING(a, b) ((a) = make_lisp_ptr (b, Lisp_String))
@@ -1221,7 +1221,7 @@ INLINE Lisp_Object
 make_pointer_integer (void *p)
 {
   Lisp_Object a = TAG_PTR (Lisp_Int0, p);
-  eassert (INTEGERP (a) && XINTPTR (a) == p);
+  eassert (FIXNUMP (a) && XINTPTR (a) == p);
   return a;
 }
 
@@ -2389,20 +2389,20 @@ INLINE Lisp_Object
 make_mint_ptr (void *a)
 {
   Lisp_Object val = TAG_PTR (Lisp_Int0, a);
-  return INTEGERP (val) && XINTPTR (val) == a ? val : make_misc_ptr (a);
+  return FIXNUMP (val) && XINTPTR (val) == a ? val : make_misc_ptr (a);
 }
 
 INLINE bool
 mint_ptrp (Lisp_Object x)
 {
-  return INTEGERP (x) || (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Ptr);
+  return FIXNUMP (x) || (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Ptr);
 }
 
 INLINE void *
 xmint_pointer (Lisp_Object a)
 {
   eassert (mint_ptrp (a));
-  if (INTEGERP (a))
+  if (FIXNUMP (a))
     return XINTPTR (a);
   return XUNTAG (a, Lisp_Misc, struct Lisp_Misc_Ptr)->pointer;
 }
@@ -2725,24 +2725,24 @@ enum char_bits
 /* Data type checking.  */
 
 INLINE bool
-NUMBERP (Lisp_Object x)
+FIXED_OR_FLOATP (Lisp_Object x)
 {
-  return INTEGERP (x) || FLOATP (x);
+  return FIXNUMP (x) || FLOATP (x);
 }
 INLINE bool
-NATNUMP (Lisp_Object x)
+FIXNATP (Lisp_Object x)
 {
-  return INTEGERP (x) && 0 <= XINT (x);
+  return FIXNUMP (x) && 0 <= XINT (x);
 }
 
 INLINE bool
-RANGED_INTEGERP (intmax_t lo, Lisp_Object x, intmax_t hi)
+RANGED_FIXNUMP (intmax_t lo, Lisp_Object x, intmax_t hi)
 {
-  return INTEGERP (x) && lo <= XINT (x) && XINT (x) <= hi;
+  return FIXNUMP (x) && lo <= XINT (x) && XINT (x) <= hi;
 }
 
-#define TYPE_RANGED_INTEGERP(type, x) \
-  (INTEGERP (x)			      \
+#define TYPE_RANGED_FIXNUMP(type, x) \
+  (FIXNUMP (x)			      \
    && (TYPE_SIGNED (type) ? TYPE_MINIMUM (type) <= XINT (x) : 0 <= XINT (x)) \
    && XINT (x) <= TYPE_MAXIMUM (type))
 
@@ -2812,9 +2812,9 @@ CHECK_LIST_END (Lisp_Object x, Lisp_Object y)
 }
 
 INLINE void
-(CHECK_NUMBER) (Lisp_Object x)
+(CHECK_FIXNUM) (Lisp_Object x)
 {
-  lisp_h_CHECK_NUMBER (x);
+  lisp_h_CHECK_FIXNUM (x);
 }
 
 INLINE void
@@ -2838,21 +2838,21 @@ CHECK_ARRAY (Lisp_Object x, Lisp_Object predicate)
   CHECK_TYPE (ARRAYP (x), predicate, x);
 }
 INLINE void
-CHECK_NATNUM (Lisp_Object x)
+CHECK_FIXNAT (Lisp_Object x)
 {
-  CHECK_TYPE (NATNUMP (x), Qwholenump, x);
+  CHECK_TYPE (FIXNATP (x), Qwholenump, x);
 }
 
 #define CHECK_RANGED_INTEGER(x, lo, hi)					\
   do {									\
-    CHECK_NUMBER (x);							\
+    CHECK_FIXNUM (x);							\
     if (! ((lo) <= XINT (x) && XINT (x) <= (hi)))			\
       args_out_of_range_3						\
 	(x,								\
-	 make_number ((lo) < 0 && (lo) < MOST_NEGATIVE_FIXNUM		\
+	 make_fixnum ((lo) < 0 && (lo) < MOST_NEGATIVE_FIXNUM		\
 		      ? MOST_NEGATIVE_FIXNUM				\
 		      : (lo)),						\
-	 make_number (min (hi, MOST_POSITIVE_FIXNUM)));			\
+	 make_fixnum (min (hi, MOST_POSITIVE_FIXNUM)));			\
   } while (false)
 #define CHECK_TYPE_RANGED_INTEGER(type, x) \
   do {									\
@@ -2862,12 +2862,12 @@ CHECK_NATNUM (Lisp_Object x)
       CHECK_RANGED_INTEGER (x, 0, TYPE_MAXIMUM (type));			\
   } while (false)
 
-#define CHECK_NUMBER_COERCE_MARKER(x)					\
+#define CHECK_FIXNUM_COERCE_MARKER(x)					\
   do {									\
     if (MARKERP ((x)))							\
       XSETFASTINT (x, marker_position (x));				\
     else								\
-      CHECK_TYPE (INTEGERP (x), Qinteger_or_marker_p, x);		\
+      CHECK_TYPE (FIXNUMP (x), Qinteger_or_marker_p, x);		\
   } while (false)
 
 INLINE double
@@ -2877,34 +2877,34 @@ XFLOATINT (Lisp_Object n)
 }
 
 INLINE void
-CHECK_NUMBER_OR_FLOAT (Lisp_Object x)
+CHECK_FIXNUM_OR_FLOAT (Lisp_Object x)
 {
-  CHECK_TYPE (NUMBERP (x), Qnumberp, x);
+  CHECK_TYPE (FIXED_OR_FLOATP (x), Qnumberp, x);
 }
 
-#define CHECK_NUMBER_OR_FLOAT_COERCE_MARKER(x)				\
+#define CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER(x)				\
   do {									\
     if (MARKERP (x))							\
       XSETFASTINT (x, marker_position (x));				\
     else								\
-      CHECK_TYPE (NUMBERP (x), Qnumber_or_marker_p, x);			\
+      CHECK_TYPE (FIXED_OR_FLOATP (x), Qnumber_or_marker_p, x);			\
   } while (false)
 
 /* Since we can't assign directly to the CAR or CDR fields of a cons
    cell, use these when checking that those fields contain numbers.  */
 INLINE void
-CHECK_NUMBER_CAR (Lisp_Object x)
+CHECK_FIXNUM_CAR (Lisp_Object x)
 {
   Lisp_Object tmp = XCAR (x);
-  CHECK_NUMBER (tmp);
+  CHECK_FIXNUM (tmp);
   XSETCAR (x, tmp);
 }
 
 INLINE void
-CHECK_NUMBER_CDR (Lisp_Object x)
+CHECK_FIXNUM_CDR (Lisp_Object x)
 {
   Lisp_Object tmp = XCDR (x);
-  CHECK_NUMBER (tmp);
+  CHECK_FIXNUM (tmp);
   XSETCDR (x, tmp);
 }
 
@@ -3327,7 +3327,7 @@ extern Lisp_Object arithcompare (Lisp_Object num1, Lisp_Object num2,
    I should not have side effects.  */
 #define INTEGER_TO_CONS(i)					    \
   (! FIXNUM_OVERFLOW_P (i)					    \
-   ? make_number (i)						    \
+   ? make_fixnum (i)						    \
    : EXPR_SIGNED (i) ? intbig_to_lisp (i) : uintbig_to_lisp (i))
 extern Lisp_Object intbig_to_lisp (intmax_t);
 extern Lisp_Object uintbig_to_lisp (uintmax_t);
@@ -3582,20 +3582,20 @@ extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
 INLINE Lisp_Object
 list2i (EMACS_INT x, EMACS_INT y)
 {
-  return list2 (make_number (x), make_number (y));
+  return list2 (make_fixnum (x), make_fixnum (y));
 }
 
 INLINE Lisp_Object
 list3i (EMACS_INT x, EMACS_INT y, EMACS_INT w)
 {
-  return list3 (make_number (x), make_number (y), make_number (w));
+  return list3 (make_fixnum (x), make_fixnum (y), make_fixnum (w));
 }
 
 INLINE Lisp_Object
 list4i (EMACS_INT x, EMACS_INT y, EMACS_INT w, EMACS_INT h)
 {
-  return list4 (make_number (x), make_number (y),
-		make_number (w), make_number (h));
+  return list4 (make_fixnum (x), make_fixnum (y),
+		make_fixnum (w), make_fixnum (h));
 }
 
 extern Lisp_Object make_uninit_bool_vector (EMACS_INT);
@@ -4488,7 +4488,7 @@ extern void init_system_name (void);
    in a Lisp fixnum.  */
 
 #define make_fixnum_or_float(val) \
-   (FIXNUM_OVERFLOW_P (val) ? make_float (val) : make_number (val))
+   (FIXNUM_OVERFLOW_P (val) ? make_float (val) : make_fixnum (val))
 
 /* SAFE_ALLOCA normally allocates memory on the stack, but if size is
    larger than MAX_ALLOCA, use xmalloc to avoid overflowing the stack.  */

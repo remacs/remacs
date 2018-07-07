@@ -385,7 +385,7 @@ parse_sound (Lisp_Object sound, Lisp_Object *attrs)
   /* Volume must be in the range 0..100 or unspecified.  */
   if (!NILP (attrs[SOUND_VOLUME]))
     {
-      if (INTEGERP (attrs[SOUND_VOLUME]))
+      if (FIXNUMP (attrs[SOUND_VOLUME]))
 	{
 	  EMACS_INT volume = XINT (attrs[SOUND_VOLUME]);
 	  if (! (0 <= volume && volume <= 100))
@@ -1400,7 +1400,7 @@ Internal use only, use `play-sound' instead.  */)
   /* Set up a device.  */
   current_sound_device->file = attrs[SOUND_DEVICE];
 
-  if (INTEGERP (attrs[SOUND_VOLUME]))
+  if (FIXNUMP (attrs[SOUND_VOLUME]))
     current_sound_device->volume = XFASTINT (attrs[SOUND_VOLUME]);
   else if (FLOATP (attrs[SOUND_VOLUME]))
     current_sound_device->volume = XFLOAT_DATA (attrs[SOUND_VOLUME]) * 100;
@@ -1423,7 +1423,7 @@ Internal use only, use `play-sound' instead.  */)
 
   file = Fexpand_file_name (attrs[SOUND_FILE], Vdata_directory);
   file = ENCODE_FILE (file);
-  if (INTEGERP (attrs[SOUND_VOLUME]))
+  if (FIXNUMP (attrs[SOUND_VOLUME]))
     {
       ui_volume_tmp = XFASTINT (attrs[SOUND_VOLUME]);
     }

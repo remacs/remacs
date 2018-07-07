@@ -250,7 +250,7 @@ do_casify_natnum (struct casing_context *ctx, Lisp_Object obj)
 
   if (! multibyte)
     MAKE_CHAR_UNIBYTE (cased);
-  return make_natnum (cased | flags);
+  return make_fixed_natnum (cased | flags);
 }
 
 static Lisp_Object
@@ -319,7 +319,7 @@ casify_object (enum case_action flag, Lisp_Object obj)
   struct casing_context ctx;
   prepare_casing_context (&ctx, flag, false);
 
-  if (NATNUMP (obj))
+  if (FIXNATP (obj))
     return do_casify_natnum (&ctx, obj);
   else if (!STRINGP (obj))
     wrong_type_argument (Qchar_or_string_p, obj);
@@ -601,11 +601,11 @@ character positions to operate on.  */)
 static Lisp_Object
 casify_word (enum case_action flag, Lisp_Object arg)
 {
-  CHECK_NUMBER (arg);
+  CHECK_FIXNUM (arg);
   ptrdiff_t farend = scan_words (PT, XINT (arg));
   if (!farend)
     farend = XINT (arg) <= 0 ? BEGV : ZV;
-  SET_PT (casify_region (flag, make_number (PT), make_number (farend)));
+  SET_PT (casify_region (flag, make_fixnum (PT), make_fixnum (farend)));
   return Qnil;
 }
 

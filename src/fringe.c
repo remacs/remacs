@@ -488,7 +488,7 @@ lookup_fringe_bitmap (Lisp_Object bitmap)
   EMACS_INT bn;
 
   bitmap = Fget (bitmap, Qfringe);
-  if (!INTEGERP (bitmap))
+  if (!FIXNUMP (bitmap))
     return 0;
 
   bn = XINT (bitmap);
@@ -519,7 +519,7 @@ get_fringe_bitmap_name (int bn)
     return Qnil;
 
   bitmaps = Vfringe_bitmaps;
-  num = make_number (bn);
+  num = make_fixnum (bn);
 
   while (CONSP (bitmaps))
     {
@@ -748,7 +748,7 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 		{
 		  if (ln1 > ix2)
 		    {
-		      bm = Fnth (make_number (ix2), bm1);
+		      bm = Fnth (make_fixnum (ix2), bm1);
 		      if (!EQ (bm, Qt))
 			goto found;
 		    }
@@ -757,7 +757,7 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 		{
 		  if (ln1 > ix1)
 		    {
-		      bm = Fnth (make_number (ix1), bm1);
+		      bm = Fnth (make_fixnum (ix1), bm1);
 		      if (!EQ (bm, Qt))
 			goto found;
 		    }
@@ -783,7 +783,7 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 		    {
 		      if (ln2 > ix2)
 			{
-			  bm = Fnth (make_number (ix2), bm2);
+			  bm = Fnth (make_fixnum (ix2), bm2);
 			  if (!EQ (bm, Qt))
 			    goto found;
 			}
@@ -795,14 +795,14 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 
   if (ln1 > ix1)
     {
-      bm = Fnth (make_number (ix1), bm1);
+      bm = Fnth (make_fixnum (ix1), bm1);
       if (!EQ (bm, Qt))
 	goto found;
     }
 
   if (ln2 > ix1)
     {
-      bm = Fnth (make_number (ix1), bm2);
+      bm = Fnth (make_fixnum (ix1), bm2);
       if (!EQ (bm, Qt))
 	goto found;
       return NO_FRINGE_BITMAP;
@@ -1509,7 +1509,7 @@ If BITMAP already exists, the existing definition is replaced.  */)
     fb.height = h;
   else
     {
-      CHECK_NUMBER (height);
+      CHECK_FIXNUM (height);
       fb.height = max (0, min (XINT (height), 255));
       if (fb.height > h)
 	{
@@ -1522,7 +1522,7 @@ If BITMAP already exists, the existing definition is replaced.  */)
     fb.width = 8;
   else
     {
-      CHECK_NUMBER (width);
+      CHECK_FIXNUM (width);
       fb.width = max (0, min (XINT (width), 255));
     }
 
@@ -1586,7 +1586,7 @@ If BITMAP already exists, the existing definition is replaced.  */)
 	}
 
       Vfringe_bitmaps = Fcons (bitmap, Vfringe_bitmaps);
-      Fput (bitmap, Qfringe, make_number (n));
+      Fput (bitmap, Qfringe, make_fixnum (n));
     }
 
   fb.dynamic = true;
@@ -1604,8 +1604,8 @@ If BITMAP already exists, the existing definition is replaced.  */)
 	b[j++] = 0;
       for (i = 0; i < h && j < fb.height; i++)
 	{
-	  Lisp_Object elt = Faref (bits, make_number (i));
-	  b[j++] = NUMBERP (elt) ? XINT (elt) : 0;
+	  Lisp_Object elt = Faref (bits, make_fixnum (i));
+	  b[j++] = FIXED_OR_FLOATP (elt) ? XINT (elt) : 0;
 	}
       for (i = 0; i < fill2 && j < fb.height; i++)
 	b[j++] = 0;
@@ -1661,7 +1661,7 @@ Return nil if POS is not visible in WINDOW.  */)
 
   if (!NILP (pos))
     {
-      CHECK_NUMBER_COERCE_MARKER (pos);
+      CHECK_FIXNUM_COERCE_MARKER (pos);
       if (! (BEGV <= XINT (pos) && XINT (pos) <= ZV))
 	args_out_of_range (window, pos);
       textpos = XINT (pos);

@@ -474,7 +474,7 @@ x_load_resources (Display *display, const char *xrm_string,
 
   /* Set double click time of list boxes in the file selection
      dialog from `double-click-time'.  */
-  if (INTEGERP (Vdouble_click_time) && XINT (Vdouble_click_time) > 0)
+  if (FIXNUMP (Vdouble_click_time) && XINT (Vdouble_click_time) > 0)
     {
       sprintf (line, "%s*fsb*DirList.doubleClickInterval: %"pI"d",
 	       myclass, XFASTINT (Vdouble_click_time));

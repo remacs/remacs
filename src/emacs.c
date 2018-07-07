@@ -377,7 +377,7 @@ terminate_due_to_signal (int sig, int backtrace_limit)
 
           totally_unblock_input ();
           if (sig == SIGTERM || sig == SIGHUP || sig == SIGINT)
-            Fkill_emacs (make_number (sig));
+            Fkill_emacs (make_fixnum (sig));
 
           shut_down_emacs (sig, Qnil);
           emacs_backtrace (backtrace_limit);
@@ -446,7 +446,7 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
     {
       Lisp_Object found;
       int yes = openp (Vexec_path, Vinvocation_name,
-		       Vexec_suffixes, &found, make_number (X_OK), false);
+		       Vexec_suffixes, &found, make_fixnum (X_OK), false);
       if (yes == 1)
 	{
 	  /* Add /: to the front of the name
@@ -2048,7 +2048,7 @@ all of which are called before Emacs is actually killed.  */
       unlink (SSDATA (listfile));
     }
 
-  if (INTEGERP (arg))
+  if (FIXNUMP (arg))
     exit_code = (XINT (arg) < 0
 		 ? XINT (arg) | INT_MIN
 		 : XINT (arg) & INT_MAX);
@@ -2412,7 +2412,7 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
               && strncmp (path, emacs_dir_env, emacs_dir_len) == 0)
             element = Fexpand_file_name (Fsubstring
                                          (element,
-                                          make_number (emacs_dir_len),
+                                          make_fixnum (emacs_dir_len),
                                           Qnil),
                                          build_unibyte_string (emacs_dir));
 #endif

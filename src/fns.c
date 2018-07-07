@@ -77,7 +77,7 @@ See Info node `(elisp)Random Numbers' for more details.  */)
     seed_random (SSDATA (limit), SBYTES (limit));
 
   val = get_random ();
-  if (INTEGERP (limit) && 0 < XINT (limit))
+  if (FIXNUMP (limit) && 0 < XINT (limit))
     while (true)
       {
 	/* Return the remainder, except reject the rare case where
@@ -85,10 +85,10 @@ See Info node `(elisp)Random Numbers' for more details.  */)
 	   remainder isn't random.  */
 	EMACS_INT remainder = val % XINT (limit);
 	if (val - remainder <= INTMASK - XINT (limit) + 1)
-	  return make_number (remainder);
+	  return make_fixnum (remainder);
 	val = get_random ();
       }
-  return make_number (val);
+  return make_fixnum (val);
 }
 
 /* Random data-structure functions.  */
@@ -121,7 +121,7 @@ To get the number of bytes, use `string-bytes'.  */)
       CHECK_LIST_END (sequence, sequence);
       if (MOST_POSITIVE_FIXNUM < i)
 	error ("List too long");
-      val = make_number (i);
+      val = make_fixnum (i);
     }
   else if (NILP (sequence))
     XSETFASTINT (val, 0);
@@ -150,7 +150,7 @@ If STRING is multibyte, this may be greater than the length of STRING.  */)
   (Lisp_Object string)
 {
   CHECK_STRING (string);
-  return make_number (SBYTES (string));
+  return make_fixnum (SBYTES (string));
 }
 
 DEFUN ("string-distance", Fstring_distance, Sstring_distance, 2, 3, 0,
@@ -216,7 +216,7 @@ Letter-case is significant, but text properties are ignored. */)
     }
 
   SAFE_FREE ();
-  return make_number (column[len1]);
+  return make_fixnum (column[len1]);
 }
 
 DEFUN ("string-equal", Fstring_equal, Sstring_equal, 2, 2, 0,
@@ -270,10 +270,10 @@ If string STR1 is greater, the value is a positive number N;
 
   /* For backward compatibility, silently bring too-large positive end
      values into range.  */
-  if (INTEGERP (end1) && SCHARS (str1) < XINT (end1))
-    end1 = make_number (SCHARS (str1));
-  if (INTEGERP (end2) && SCHARS (str2) < XINT (end2))
-    end2 = make_number (SCHARS (str2));
+  if (FIXNUMP (end1) && SCHARS (str1) < XINT (end1))
+    end1 = make_fixnum (SCHARS (str1));
+  if (FIXNUMP (end2) && SCHARS (str2) < XINT (end2))
+    end2 = make_fixnum (SCHARS (str2));
 
   validate_subarray (str1, start1, end1, SCHARS (str1), &from1, &to1);
   validate_subarray (str2, start2, end2, SCHARS (str2), &from2, &to2);
@@ -298,8 +298,8 @@ If string STR1 is greater, the value is a positive number N;
 
       if (! NILP (ignore_case))
 	{
-	  c1 = XINT (Fupcase (make_number (c1)));
-	  c2 = XINT (Fupcase (make_number (c2)));
+	  c1 = XINT (Fupcase (make_fixnum (c1)));
+	  c2 = XINT (Fupcase (make_fixnum (c2)));
 	}
 
       if (c1 == c2)
@@ -309,15 +309,15 @@ If string STR1 is greater, the value is a positive number N;
 	 past the character that we are comparing;
 	 hence we don't add or subtract 1 here.  */
       if (c1 < c2)
-	return make_number (- i1 + from1);
+	return make_fixnum (- i1 + from1);
       else
-	return make_number (i1 - from1);
+	return make_fixnum (i1 - from1);
     }
 
   if (i1 < to1)
-    return make_number (i1 - from1 + 1);
+    return make_fixnum (i1 - from1 + 1);
   if (i2 < to2)
-    return make_number (- i1 + from1 - 1);
+    return make_fixnum (- i1 + from1 - 1);
 
   return Qt;
 }
@@ -669,7 +669,7 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 		  some_multibyte = 1;
 	      }
 	  else if (BOOL_VECTOR_P (this) && bool_vector_size (this) > 0)
-	    wrong_type_argument (Qintegerp, Faref (this, make_number (0)));
+	    wrong_type_argument (Qintegerp, Faref (this, make_fixnum (0)));
 	  else if (CONSP (this))
 	    for (; CONSP (this); this = XCDR (this))
 	      {
@@ -709,9 +709,9 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 
   /* Create the output object.  */
   if (target_type == Lisp_Cons)
-    val = Fmake_list (make_number (result_len), Qnil);
+    val = Fmake_list (make_fixnum (result_len), Qnil);
   else if (target_type == Lisp_Vectorlike)
-    val = Fmake_vector (make_number (result_len), Qnil);
+    val = Fmake_vector (make_fixnum (result_len), Qnil);
   else if (some_multibyte)
     val = make_uninit_multibyte_string (result_len, result_len_byte);
   else
@@ -848,15 +848,15 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 	{
 	  this = args[textprops[argnum].argnum];
 	  props = text_property_list (this,
-				      make_number (0),
-				      make_number (SCHARS (this)),
+				      make_fixnum (0),
+				      make_fixnum (SCHARS (this)),
 				      Qnil);
 	  /* If successive arguments have properties, be sure that the
 	     value of `composition' property be the copy.  */
 	  if (last_to_end == textprops[argnum].to)
 	    make_composition_value_copy (props);
 	  add_text_properties_from_list (val, props,
-					 make_number (textprops[argnum].to));
+					 make_fixnum (textprops[argnum].to));
 	  last_to_end = textprops[argnum].to + SCHARS (this);
 	}
     }
@@ -1258,7 +1258,7 @@ validate_subarray (Lisp_Object array, Lisp_Object from, Lisp_Object to,
 {
   EMACS_INT f, t;
 
-  if (INTEGERP (from))
+  if (FIXNUMP (from))
     {
       f = XINT (from);
       if (f < 0)
@@ -1269,7 +1269,7 @@ validate_subarray (Lisp_Object array, Lisp_Object from, Lisp_Object to,
   else
     wrong_type_argument (Qintegerp, from);
 
-  if (INTEGERP (to))
+  if (FIXNUMP (to))
     {
       t = XINT (to);
       if (t < 0)
@@ -1317,8 +1317,8 @@ With one argument, just copy STRING (with properties, if any).  */)
       res = make_specified_string (SSDATA (string) + from_byte,
 				   ito - ifrom, to_byte - from_byte,
 				   STRING_MULTIBYTE (string));
-      copy_text_properties (make_number (ifrom), make_number (ito),
-			    string, make_number (0), res, Qnil);
+      copy_text_properties (make_fixnum (ifrom), make_fixnum (ito),
+			    string, make_fixnum (0), res, Qnil);
     }
   else
     res = Fvector (ito - ifrom, aref_addr (string, ifrom));
@@ -1363,15 +1363,15 @@ substring_both (Lisp_Object string, ptrdiff_t from, ptrdiff_t from_byte,
   ptrdiff_t size = CHECK_VECTOR_OR_STRING (string);
 
   if (!(0 <= from && from <= to && to <= size))
-    args_out_of_range_3 (string, make_number (from), make_number (to));
+    args_out_of_range_3 (string, make_fixnum (from), make_fixnum (to));
 
   if (STRINGP (string))
     {
       res = make_specified_string (SSDATA (string) + from_byte,
 				   to - from, to_byte - from_byte,
 				   STRING_MULTIBYTE (string));
-      copy_text_properties (make_number (from), make_number (to),
-			    string, make_number (0), res, Qnil);
+      copy_text_properties (make_fixnum (from), make_fixnum (to),
+			    string, make_fixnum (0), res, Qnil);
     }
   else
     res = Fvector (to - from, aref_addr (string, from));
@@ -1383,7 +1383,7 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
        doc: /* Take cdr N times on LIST, return the result.  */)
   (Lisp_Object n, Lisp_Object list)
 {
-  CHECK_NUMBER (n);
+  CHECK_FIXNUM (n);
   Lisp_Object tail = list;
   for (EMACS_INT num = XINT (n); 0 < num; num--)
     {
@@ -1410,7 +1410,7 @@ DEFUN ("elt", Felt, Selt, 2, 2, 0,
        doc: /* Return element of SEQUENCE at index N.  */)
   (register Lisp_Object sequence, Lisp_Object n)
 {
-  CHECK_NUMBER (n);
+  CHECK_FIXNUM (n);
   if (CONSP (sequence) || NILP (sequence))
     return Fcar (Fnthcdr (n, sequence));
 
@@ -1645,7 +1645,7 @@ changing the value of a sequence `foo'.  */)
 	      cbytes = 1;
 	    }
 
-	  if (!INTEGERP (elt) || c != XINT (elt))
+	  if (!FIXNUMP (elt) || c != XINT (elt))
 	    {
 	      ++nchars;
 	      nbytes += cbytes;
@@ -1675,7 +1675,7 @@ changing the value of a sequence `foo'.  */)
 		  cbytes = 1;
 		}
 
-	      if (!INTEGERP (elt) || c != XINT (elt))
+	      if (!FIXNUMP (elt) || c != XINT (elt))
 		{
 		  unsigned char *from = SDATA (seq) + ibyte;
 		  unsigned char *to   = SDATA (tem) + nbytes;
@@ -1955,7 +1955,7 @@ sort_vector (Lisp_Object vector, Lisp_Object predicate)
   USE_SAFE_ALLOCA;
   SAFE_ALLOCA_LISP (tmp, halflen);
   for (ptrdiff_t i = 0; i < halflen; i++)
-    tmp[i] = make_number (0);
+    tmp[i] = make_fixnum (0);
   sort_vector_inplace (predicate, len, XVECTOR (vector)->contents, tmp);
   SAFE_FREE ();
 }
@@ -2695,7 +2695,7 @@ if `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.  */)
       Fding (Qnil);
       Fdiscard_input ();
       message1 ("Please answer yes or no.");
-      Fsleep_for (make_number (2), Qnil);
+      Fsleep_for (make_fixnum (2), Qnil);
     }
 }
 
@@ -2727,7 +2727,7 @@ advisable.  */)
   while (loads-- > 0)
     {
       Lisp_Object load = (NILP (use_floats)
-			  ? make_number (100.0 * load_ave[loads])
+			  ? make_fixnum (100.0 * load_ave[loads])
 			  : make_float (load_ave[loads]));
       ret = Fcons (load, ret);
     }
@@ -2763,7 +2763,7 @@ particular subfeatures supported in this version of FEATURE.  */)
   CHECK_SYMBOL (feature);
   CHECK_LIST (subfeatures);
   if (!NILP (Vautoload_queue))
-    Vautoload_queue = Fcons (Fcons (make_number (0), Vfeatures),
+    Vautoload_queue = Fcons (Fcons (make_fixnum (0), Vfeatures),
 			     Vautoload_queue);
   tem = Fmemq (feature, Vfeatures);
   if (NILP (tem))
@@ -3015,7 +3015,7 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 #ifdef DAY_1
   else if (EQ (item, Qdays))	/* e.g. for calendar-day-name-array */
     {
-      Lisp_Object v = Fmake_vector (make_number (7), Qnil);
+      Lisp_Object v = Fmake_vector (make_fixnum (7), Qnil);
       const int days[7] = {DAY_1, DAY_2, DAY_3, DAY_4, DAY_5, DAY_6, DAY_7};
       int i;
       synchronize_system_time_locale ();
@@ -3034,7 +3034,7 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 #ifdef MON_1
   else if (EQ (item, Qmonths))	/* e.g. for calendar-month-name-array */
     {
-      Lisp_Object v = Fmake_vector (make_number (12), Qnil);
+      Lisp_Object v = Fmake_vector (make_fixnum (12), Qnil);
       const int months[12] = {MON_1, MON_2, MON_3, MON_4, MON_5, MON_6, MON_7,
 			      MON_8, MON_9, MON_10, MON_11, MON_12};
       int i;
@@ -3198,7 +3198,7 @@ into shorter lines.  */)
   SET_PT (old_pos);
 
   /* We return the length of the encoded text. */
-  return make_number (encoded_length);
+  return make_fixnum (encoded_length);
 }
 
 DEFUN ("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string,
@@ -3400,7 +3400,7 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
     old_pos = XFASTINT (beg);
   SET_PT (old_pos > ZV ? ZV : old_pos);
 
-  return make_number (inserted_chars);
+  return make_fixnum (inserted_chars);
 }
 
 DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
@@ -3571,7 +3571,7 @@ set_hash_next (struct Lisp_Hash_Table *h, Lisp_Object next)
 static void
 set_hash_next_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, ptrdiff_t val)
 {
-  gc_aset (h->next, idx, make_number (val));
+  gc_aset (h->next, idx, make_fixnum (val));
 }
 static void
 set_hash_hash (struct Lisp_Hash_Table *h, Lisp_Object hash)
@@ -3591,7 +3591,7 @@ set_hash_index (struct Lisp_Hash_Table *h, Lisp_Object index)
 static void
 set_hash_index_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, ptrdiff_t val)
 {
-  gc_aset (h->index, idx, make_number (val));
+  gc_aset (h->index, idx, make_fixnum (val));
 }
 
 /* If OBJ is a Lisp hash table, return a pointer to its struct
@@ -3872,10 +3872,10 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
   h->rehash_threshold = rehash_threshold;
   h->rehash_size = rehash_size;
   h->count = 0;
-  h->key_and_value = Fmake_vector (make_number (2 * size), Qnil);
-  h->hash = Fmake_vector (make_number (size), Qnil);
-  h->next = Fmake_vector (make_number (size), make_number (-1));
-  h->index = Fmake_vector (make_number (index_size), make_number (-1));
+  h->key_and_value = Fmake_vector (make_fixnum (2 * size), Qnil);
+  h->hash = Fmake_vector (make_fixnum (size), Qnil);
+  h->next = Fmake_vector (make_fixnum (size), make_fixnum (-1));
+  h->index = Fmake_vector (make_fixnum (index_size), make_fixnum (-1));
   h->pure = pure;
 
   /* Set up the free list.  */
@@ -3970,8 +3970,8 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       set_hash_key_and_value (h, larger_vector (h->key_and_value,
 						2 * (new_size - old_size), -1));
       set_hash_hash (h, larger_vector (h->hash, new_size - old_size, -1));
-      set_hash_index (h, Fmake_vector (make_number (index_size),
-				       make_number (-1)));
+      set_hash_index (h, Fmake_vector (make_fixnum (index_size),
+				       make_fixnum (-1)));
       set_hash_next (h, larger_vecalloc (h->next, new_size - old_size, -1));
 
       /* Update the free list.  Do it so that new entries are added at
@@ -4060,7 +4060,7 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
   set_hash_value_slot (h, i, value);
 
   /* Remember its hash code.  */
-  set_hash_hash_slot (h, i, make_number (hash));
+  set_hash_hash_slot (h, i, make_fixnum (hash));
 
   /* Add new entry to its collision chain.  */
   start_of_bucket = hash % ASIZE (h->index);
@@ -4130,7 +4130,7 @@ hash_clear (struct Lisp_Hash_Table *h)
 	}
 
       for (i = 0; i < ASIZE (h->index); ++i)
-	ASET (h->index, i, make_number (-1));
+	ASET (h->index, i, make_fixnum (-1));
 
       h->next_free = 0;
       h->count = 0;
@@ -4476,7 +4476,7 @@ DEFUN ("sxhash-eq", Fsxhash_eq, Ssxhash_eq, 1, 1, 0,
 If (eq A B), then (= (sxhash-eq A) (sxhash-eq B)).  */)
   (Lisp_Object obj)
 {
-  return make_number (hashfn_eq (NULL, obj));
+  return make_fixnum (hashfn_eq (NULL, obj));
 }
 
 DEFUN ("sxhash-eql", Fsxhash_eql, Ssxhash_eql, 1, 1, 0,
@@ -4484,7 +4484,7 @@ DEFUN ("sxhash-eql", Fsxhash_eql, Ssxhash_eql, 1, 1, 0,
 If (eql A B), then (= (sxhash-eql A) (sxhash-eql B)).  */)
   (Lisp_Object obj)
 {
-  return make_number (hashfn_eql (NULL, obj));
+  return make_fixnum (hashfn_eql (NULL, obj));
 }
 
 DEFUN ("sxhash-equal", Fsxhash_equal, Ssxhash_equal, 1, 1, 0,
@@ -4492,7 +4492,7 @@ DEFUN ("sxhash-equal", Fsxhash_equal, Ssxhash_equal, 1, 1, 0,
 If (equal A B), then (= (sxhash-equal A) (sxhash-equal B)).  */)
   (Lisp_Object obj)
 {
-  return make_number (hashfn_equal (NULL, obj));
+  return make_fixnum (hashfn_equal (NULL, obj));
 }
 
 DEFUN ("make-hash-table", Fmake_hash_table, Smake_hash_table, 0, MANY, 0,
@@ -4578,7 +4578,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   EMACS_INT size;
   if (NILP (size_arg))
     size = DEFAULT_HASH_SIZE;
-  else if (NATNUMP (size_arg))
+  else if (FIXNATP (size_arg))
     size = XFASTINT (size_arg);
   else
     signal_error ("Invalid hash table size", size_arg);
@@ -4588,7 +4588,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   i = get_key_arg (QCrehash_size, nargs, args, used);
   if (!i)
     rehash_size = DEFAULT_REHASH_SIZE;
-  else if (INTEGERP (args[i]) && 0 < XINT (args[i]))
+  else if (FIXNUMP (args[i]) && 0 < XINT (args[i]))
     rehash_size = - XINT (args[i]);
   else if (FLOATP (args[i]) && 0 < (float) (XFLOAT_DATA (args[i]) - 1))
     rehash_size = (float) (XFLOAT_DATA (args[i]) - 1);
@@ -4638,7 +4638,7 @@ DEFUN ("hash-table-count", Fhash_table_count, Shash_table_count, 1, 1, 0,
        doc: /* Return the number of elements in TABLE.  */)
   (Lisp_Object table)
 {
-  return make_number (check_hash_table (table)->count);
+  return make_fixnum (check_hash_table (table)->count);
 }
 
 
@@ -4651,7 +4651,7 @@ DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
   if (rehash_size < 0)
     {
       EMACS_INT s = -rehash_size;
-      return make_number (min (s, MOST_POSITIVE_FIXNUM));
+      return make_fixnum (min (s, MOST_POSITIVE_FIXNUM));
     }
   else
     return make_float (rehash_size + 1);
@@ -4675,7 +4675,7 @@ without need for resizing.  */)
   (Lisp_Object table)
 {
   struct Lisp_Hash_Table *h = check_hash_table (table);
-  return make_number (HASH_TABLE_SIZE (h));
+  return make_fixnum (HASH_TABLE_SIZE (h));
 }
 
 
@@ -4903,7 +4903,7 @@ extract_data_from_object (Lisp_Object spec,
 	b = BEGV;
       else
 	{
-	  CHECK_NUMBER_COERCE_MARKER (start);
+	  CHECK_FIXNUM_COERCE_MARKER (start);
 	  b = XINT (start);
 	}
 
@@ -4911,7 +4911,7 @@ extract_data_from_object (Lisp_Object spec,
 	e = ZV;
       else
 	{
-	  CHECK_NUMBER_COERCE_MARKER (end);
+	  CHECK_FIXNUM_COERCE_MARKER (end);
 	  e = XINT (end);
 	}
 
@@ -4967,7 +4967,7 @@ extract_data_from_object (Lisp_Object spec,
 		  && !NILP (Ffboundp (Vselect_safe_coding_system_function)))
 		/* Confirm that VAL can surely encode the current region.  */
 		coding_system = call4 (Vselect_safe_coding_system_function,
-				       make_number (b), make_number (e),
+				       make_fixnum (b), make_fixnum (e),
 				       coding_system, Qnil);
 
 	      if (force_raw_text)
@@ -5001,7 +5001,7 @@ extract_data_from_object (Lisp_Object spec,
 #ifdef HAVE_GNUTLS3
       /* Format: (iv-auto REQUIRED-LENGTH).  */
 
-      if (! NATNUMP (start))
+      if (! FIXNATP (start))
         error ("Without a length, `iv-auto' can't be used; see ELisp manual");
       else
         {

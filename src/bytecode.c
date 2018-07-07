@@ -346,7 +346,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
   CHECK_STRING (bytestr);
   CHECK_VECTOR (vector);
-  CHECK_NATNUM (maxdepth);
+  CHECK_FIXNAT (maxdepth);
 
   ptrdiff_t const_length = ASIZE (vector);
 
@@ -378,7 +378,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 
   if (!NILP (args_template))
     {
-      eassert (INTEGERP (args_template));
+      eassert (FIXNUMP (args_template));
       ptrdiff_t at = XINT (args_template);
       bool rest = (at & 128) != 0;
       int mandatory = at & 127;
@@ -386,8 +386,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
       ptrdiff_t maxargs = rest ? PTRDIFF_MAX : nonrest;
       if (! (mandatory <= nargs && nargs <= maxargs))
 	Fsignal (Qwrong_number_of_arguments,
-		 list2 (Fcons (make_number (mandatory), make_number (nonrest)),
-			make_number (nargs)));
+		 list2 (Fcons (make_fixnum (mandatory), make_fixnum (nonrest)),
+			make_fixnum (nargs)));
       ptrdiff_t pushedargs = min (nonrest, nargs);
       for (ptrdiff_t i = 0; i < pushedargs; i++, args++)
 	PUSH (*args);
@@ -621,7 +621,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      {
 		Lisp_Object v1 = TOP;
 		Lisp_Object v2 = Fget (v1, Qbyte_code_meter);
-		if (INTEGERP (v2)
+		if (FIXNUMP (v2)
 		    && XINT (v2) < MOST_POSITIVE_FIXNUM)
 		  {
 		    XSETINT (v2, XINT (v2) + 1);
@@ -832,7 +832,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bnth):
 	  {
 	    Lisp_Object v2 = POP, v1 = TOP;
-	    CHECK_NUMBER (v1);
+	    CHECK_FIXNUM (v1);
 	    for (EMACS_INT n = XINT (v1); 0 < n && CONSP (v2); n--)
 	      {
 		v2 = XCDR (v2);
@@ -972,11 +972,11 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bsub1):
-	  TOP = INTEGERP (TOP) ? make_number (XINT (TOP) - 1) : Fsub1 (TOP);
+	  TOP = FIXNUMP (TOP) ? make_fixnum (XINT (TOP) - 1) : Fsub1 (TOP);
 	  NEXT;
 
 	CASE (Badd1):
-	  TOP = INTEGERP (TOP) ? make_number (XINT (TOP) + 1) : Fadd1 (TOP);
+	  TOP = FIXNUMP (TOP) ? make_fixnum (XINT (TOP) + 1) : Fadd1 (TOP);
 	  NEXT;
 
 	CASE (Beqlsign):
@@ -986,8 +986,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      TOP = arithcompare (v1, v2, ARITH_EQUAL);
 	    else
 	      {
-		CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v1);
-		CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v2);
+		CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (v1);
+		CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (v2);
 		TOP = EQ (v1, v2) ? Qt : Qnil;
 	      }
 	    NEXT;
@@ -1027,7 +1027,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bnegate):
-	  TOP = INTEGERP (TOP) ? make_number (- XINT (TOP)) : Fminus (1, &TOP);
+	  TOP = FIXNUMP (TOP) ? make_fixnum (- XINT (TOP)) : Fminus (1, &TOP);
 	  NEXT;
 
 	CASE (Bplus):
@@ -1063,7 +1063,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (Bpoint):
-	  PUSH (make_natnum (PT));
+	  PUSH (make_fixed_natnum (PT));
 	  NEXT;
 
 	CASE (Bgoto_char):
@@ -1089,7 +1089,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  }
 
 	CASE (Bpoint_min):
-	  PUSH (make_natnum (BEGV));
+	  PUSH (make_fixed_natnum (BEGV));
 	  NEXT;
 
 	CASE (Bchar_after):
@@ -1105,7 +1105,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bcurrent_column):
-	  PUSH (make_natnum (current_column ()));
+	  PUSH (make_fixed_natnum (current_column ()));
 	  NEXT;
 
 	CASE (Bindent_to):
@@ -1262,7 +1262,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	      {
 		/* Exchange args and then do nth.  */
 		Lisp_Object v2 = POP, v1 = TOP;
-		CHECK_NUMBER (v2);
+		CHECK_FIXNUM (v2);
 		for (EMACS_INT n = XINT (v2); 0 < n && CONSP (v1); n--)
 		  {
 		    v1 = XCDR (v1);
@@ -1324,11 +1324,11 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bnumberp):
-	  TOP = NUMBERP (TOP) ? Qt : Qnil;
+	  TOP = FIXED_OR_FLOATP (TOP) ? Qt : Qnil;
 	  NEXT;
 
 	CASE (Bintegerp):
-	  TOP = INTEGERP (TOP) ? Qt : Qnil;
+	  TOP = FIXNUMP (TOP) ? Qt : Qnil;
 	  NEXT;
 
 #if BYTE_CODE_SAFE
@@ -1415,7 +1415,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
               { /* Do a linear search if there are not many cases
                    FIXME: 5 is arbitrarily chosen.  */
                 Lisp_Object hash_code = h->test.cmpfn
-                  ? make_number (h->test.hashfn (&h->test, v1)) : Qnil;
+                  ? make_fixnum (h->test.hashfn (&h->test, v1)) : Qnil;
 
                 for (i = h->count; 0 <= --i; )
                   if (EQ (v1, HASH_KEY (h, i))
@@ -1431,7 +1431,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    if (i >= 0)
 	      {
 		Lisp_Object val = HASH_VALUE (h, i);
-		if (BYTE_CODE_SAFE && !INTEGERP (val))
+		if (BYTE_CODE_SAFE && !FIXNUMP (val))
 		  emacs_abort ();
 		op = XINT (val);
 		goto op_branch;
@@ -1468,14 +1468,14 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 Lisp_Object
 get_byte_code_arity (Lisp_Object args_template)
 {
-  eassert (NATNUMP (args_template));
+  eassert (FIXNATP (args_template));
   EMACS_INT at = XINT (args_template);
   bool rest = (at & 128) != 0;
   int mandatory = at & 127;
   EMACS_INT nonrest = at >> 8;
 
-  return Fcons (make_number (mandatory),
-		rest ? Qmany : make_number (nonrest));
+  return Fcons (make_fixnum (mandatory),
+		rest ? Qmany : make_fixnum (nonrest));
 }
 
 void
@@ -1500,13 +1500,13 @@ If a symbol has a property named `byte-code-meter' whose value is an
 integer, it is incremented each time that symbol's function is called.  */);
 
   byte_metering_on = false;
-  Vbyte_code_meter = Fmake_vector (make_number (256), make_number (0));
+  Vbyte_code_meter = Fmake_vector (make_fixnum (256), make_fixnum (0));
   DEFSYM (Qbyte_code_meter, "byte-code-meter");
   {
     int i = 256;
     while (i--)
       ASET (Vbyte_code_meter, i,
-           Fmake_vector (make_number (256), make_number (0)));
+           Fmake_vector (make_fixnum (256), make_fixnum (0)));
   }
 #endif
 }

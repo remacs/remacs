@@ -193,7 +193,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
     goto invalid_composition;
 
   id = XCAR (prop);
-  if (INTEGERP (id))
+  if (FIXNUMP (id))
     {
       /* PROP should be Form-B.  */
       if (XINT (id) < 0 || XINT (id) >= n_compositions)
@@ -206,7 +206,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
   if (!CONSP (id))
     goto invalid_composition;
   length = XCAR (id);
-  if (!INTEGERP (length) || XINT (length) != nchars)
+  if (!FIXNUMP (length) || XINT (length) != nchars)
     goto invalid_composition;
 
   components = XCDR (id);
@@ -215,8 +215,8 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
      by consulting composition_hash_table.  The key for this table is
      COMPONENTS (converted to a vector COMPONENTS-VEC) or, if it is
      nil, vector of characters in the composition range.  */
-  if (INTEGERP (components))
-    key = Fmake_vector (make_number (1), components);
+  if (FIXNUMP (components))
+    key = Fmake_vector (make_fixnum (1), components);
   else if (STRINGP (components) || CONSP (components))
     key = Fvconcat (1, &components);
   else if (VECTORP (components))
@@ -228,13 +228,13 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
 	for (i = 0; i < nchars; i++)
 	  {
 	    FETCH_STRING_CHAR_ADVANCE (ch, string, charpos, bytepos);
-	    ASET (key, i, make_number (ch));
+	    ASET (key, i, make_fixnum (ch));
 	  }
       else
 	for (i = 0; i < nchars; i++)
 	  {
 	    FETCH_CHAR_ADVANCE (ch, charpos, bytepos);
-	    ASET (key, i, make_number (ch));
+	    ASET (key, i, make_fixnum (ch));
 	  }
     }
   else
@@ -250,7 +250,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
       key = HASH_KEY (hash_table, hash_index);
       id = HASH_VALUE (hash_table, hash_index);
       XSETCAR (prop, id);
-      XSETCDR (prop, Fcons (make_number (nchars), Fcons (key, XCDR (prop))));
+      XSETCDR (prop, Fcons (make_fixnum (nchars), Fcons (key, XCDR (prop))));
       return XINT (id);
     }
 
@@ -289,7 +289,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
          composition rule).  */
       for (i = 0; i < len; i++)
 	{
-	  if (!INTEGERP (key_contents[i]))
+	  if (!FIXNUMP (key_contents[i]))
 	    goto invalid_composition;
 	}
     }
@@ -298,14 +298,14 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
      the cons cell of PROP because it is not shared.  */
   XSETFASTINT (id, n_compositions);
   XSETCAR (prop, id);
-  XSETCDR (prop, Fcons (make_number (nchars), Fcons (key, XCDR (prop))));
+  XSETCDR (prop, Fcons (make_fixnum (nchars), Fcons (key, XCDR (prop))));
 
   /* Register the composition in composition_hash_table.  */
   hash_index = hash_put (hash_table, key, id, hash_code);
 
   method = (NILP (components)
 	    ? COMPOSITION_RELATIVE
-	    : ((INTEGERP (components) || STRINGP (components))
+	    : ((FIXNUMP (components) || STRINGP (components))
 	       ? COMPOSITION_WITH_ALTCHARS
 	       : COMPOSITION_WITH_RULE_ALTCHARS));
 
@@ -431,8 +431,8 @@ find_composition (ptrdiff_t pos, ptrdiff_t limit,
 
   if (limit > pos)		/* search forward */
     {
-      val = Fnext_single_property_change (make_number (pos), Qcomposition,
-					  object, make_number (limit));
+      val = Fnext_single_property_change (make_fixnum (pos), Qcomposition,
+					  object, make_fixnum (limit));
       pos = XINT (val);
       if (pos == limit)
 	return 0;
@@ -442,8 +442,8 @@ find_composition (ptrdiff_t pos, ptrdiff_t limit,
       if (get_property_and_range (pos - 1, Qcomposition, prop, start, end,
 				  object))
 	return 1;
-      val = Fprevious_single_property_change (make_number (pos), Qcomposition,
-					      object, make_number (limit));
+      val = Fprevious_single_property_change (make_fixnum (pos), Qcomposition,
+					      object, make_fixnum (limit));
       pos = XINT (val);
       if (pos == limit)
 	return 0;
@@ -474,7 +474,7 @@ run_composition_function (ptrdiff_t from, ptrdiff_t to, Lisp_Object prop)
       && !composition_valid_p (start, end, prop))
     to = end;
   if (!NILP (Ffboundp (func)))
-    call2 (func, make_number (from), make_number (to));
+    call2 (func, make_fixnum (from), make_fixnum (to));
 }
 
 /* Make invalid compositions adjacent to or inside FROM and TO valid.
@@ -519,7 +519,7 @@ update_compositions (ptrdiff_t from, ptrdiff_t to, int check_mask)
 	  if (end > to)
 	    max_pos = end;
 	  if (from < end)
-	    Fput_text_property (make_number (from), make_number (end),
+	    Fput_text_property (make_fixnum (from), make_fixnum (end),
 				Qcomposition,
 				Fcons (XCAR (prop), XCDR (prop)), Qnil);
 	  run_composition_function (start, end, prop);
@@ -560,7 +560,7 @@ update_compositions (ptrdiff_t from, ptrdiff_t to, int check_mask)
 	     the former to the copy of it.  */
 	  if (to < end)
 	    {
-	      Fput_text_property (make_number (start), make_number (to),
+	      Fput_text_property (make_fixnum (start), make_fixnum (to),
 				  Qcomposition,
 				  Fcons (XCAR (prop), XCDR (prop)), Qnil);
 	      max_pos = end;
@@ -582,8 +582,8 @@ update_compositions (ptrdiff_t from, ptrdiff_t to, int check_mask)
       specbind (Qinhibit_read_only, Qt);
       specbind (Qinhibit_modification_hooks, Qt);
       specbind (Qinhibit_point_motion_hooks, Qt);
-      Fremove_list_of_text_properties (make_number (min_pos),
-				       make_number (max_pos),
+      Fremove_list_of_text_properties (make_fixnum (min_pos),
+				       make_fixnum (max_pos),
 				       list1 (Qauto_composed), Qnil);
       unbind_to (count, Qnil);
     }
@@ -625,9 +625,9 @@ compose_text (ptrdiff_t start, ptrdiff_t end, Lisp_Object components,
 {
   Lisp_Object prop;
 
-  prop = Fcons (Fcons (make_number (end - start), components),
+  prop = Fcons (Fcons (make_fixnum (end - start), components),
 		modification_func);
-  Fput_text_property  (make_number (start), make_number (end),
+  Fput_text_property  (make_fixnum (start), make_fixnum (end),
 		       Qcomposition, prop, string);
 }
 
@@ -669,12 +669,12 @@ composition_gstring_put_cache (Lisp_Object gstring, ptrdiff_t len)
       len = j;
     }
 
-  copy = Fmake_vector (make_number (len + 2), Qnil);
+  copy = Fmake_vector (make_fixnum (len + 2), Qnil);
   LGSTRING_SET_HEADER (copy, Fcopy_sequence (header));
   for (i = 0; i < len; i++)
     LGSTRING_SET_GLYPH (copy, i, Fcopy_sequence (LGSTRING_GLYPH (gstring, i)));
   i = hash_put (h, LGSTRING_HEADER (copy), copy, hash);
-  LGSTRING_SET_ID (copy, make_number (i));
+  LGSTRING_SET_ID (copy, make_fixnum (i));
   return copy;
 }
 
@@ -692,7 +692,7 @@ DEFUN ("clear-composition-cache", Fclear_composition_cache,
 Clear composition cache.  */)
   (void)
 {
-  Lisp_Object args[] = {QCtest, Qequal, QCsize, make_number (311)};
+  Lisp_Object args[] = {QCtest, Qequal, QCsize, make_fixnum (311)};
   gstring_hash_table = CALLMANY (Fmake_hash_table, args);
   /* Fixme: We call Fclear_face_cache to force complete re-building of
      display glyphs.  But, it may be better to call this function from
@@ -716,9 +716,9 @@ composition_gstring_p (Lisp_Object gstring)
 	  && ! CODING_SYSTEM_P (LGSTRING_FONT (gstring))))
     return 0;
   for (i = 1; i < ASIZE (LGSTRING_HEADER (gstring)); i++)
-    if (! NATNUMP (AREF (LGSTRING_HEADER (gstring), i)))
+    if (! FIXNATP (AREF (LGSTRING_HEADER (gstring), i)))
       return 0;
-  if (! NILP (LGSTRING_ID (gstring)) && ! NATNUMP (LGSTRING_ID (gstring)))
+  if (! NILP (LGSTRING_ID (gstring)) && ! FIXNATP (LGSTRING_ID (gstring)))
     return 0;
   for (i = 0; i < LGSTRING_GLYPH_LEN (gstring); i++)
     {
@@ -801,7 +801,7 @@ fill_gstring_header (Lisp_Object header, ptrdiff_t from, ptrdiff_t from_byte,
   if (VECTORP (header))
     {
       if (ASIZE (header) != len + 1)
-	args_out_of_range (header, make_number (len + 1));
+	args_out_of_range (header, make_fixnum (len + 1));
     }
   else
     {
@@ -820,7 +820,7 @@ fill_gstring_header (Lisp_Object header, ptrdiff_t from, ptrdiff_t from_byte,
 	FETCH_CHAR_ADVANCE_NO_CHECK (c, from, from_byte);
       else
 	FETCH_STRING_CHAR_ADVANCE_NO_CHECK (c, string, from, from_byte);
-      ASET (header, i + 1, make_number (c));
+      ASET (header, i + 1, make_fixnum (c));
     }
   return header;
 }
@@ -881,7 +881,7 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
 	       Lisp_Object string)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
-  Lisp_Object pos = make_number (charpos);
+  Lisp_Object pos = make_fixnum (charpos);
   ptrdiff_t to;
   ptrdiff_t pt = PT, pt_byte = PT_BYTE;
   Lisp_Object re, font_object, lgstring;
@@ -917,7 +917,7 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
 	return unbind_to (count, Qnil);
     }
 #endif
-  lgstring = Fcomposition_get_gstring (pos, make_number (to), font_object,
+  lgstring = Fcomposition_get_gstring (pos, make_fixnum (to), font_object,
 				       string);
   if (NILP (LGSTRING_ID (lgstring)))
     {
@@ -926,7 +926,7 @@ autocmp_chars (Lisp_Object rule, ptrdiff_t charpos, ptrdiff_t bytepos,
 	record_unwind_protect (restore_point_unwind,
 			       build_marker (current_buffer, pt, pt_byte));
       lgstring = safe_call (6, Vauto_composition_function, AREF (rule, 2),
-			    pos, make_number (to), font_object, string);
+			    pos, make_fixnum (to), font_object, string);
     }
   return unbind_to (count, lgstring);
 }
@@ -941,7 +941,7 @@ char_composable_p (int c)
   return (c > ' '
 	  && (c == ZERO_WIDTH_NON_JOINER || c == ZERO_WIDTH_JOINER
 	      || (val = CHAR_TABLE_REF (Vunicode_category_table, c),
-		  (INTEGERP (val) && (XINT (val) <= UNICODE_CATEGORY_So)))));
+		  (FIXNUMP (val) && (XINT (val) <= UNICODE_CATEGORY_So)))));
 }
 
 /* Update cmp_it->stop_pos to the next position after CHARPOS (and
@@ -1030,7 +1030,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 		{
 		  Lisp_Object elt = XCAR (val);
 		  if (VECTORP (elt) && ASIZE (elt) == 3
-		      && NATNUMP (AREF (elt, 1))
+		      && FIXNATP (AREF (elt, 1))
 		      && charpos - 1 - XFASTINT (AREF (elt, 1)) >= start)
 		    {
 		      cmp_it->rule_idx = ridx;
@@ -1081,7 +1081,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 	    {
 	      Lisp_Object elt = XCAR (val);
 	      if (VECTORP (elt) && ASIZE (elt) == 3
-		  && NATNUMP (AREF (elt, 1))
+		  && FIXNATP (AREF (elt, 1))
 		  && charpos - XFASTINT (AREF (elt, 1)) > endpos)
 		{
 		  ptrdiff_t back = XFASTINT (AREF (elt, 1));
@@ -1221,7 +1221,7 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	    {
 	      elt = XCAR (val);
 	      if (! VECTORP (elt) || ASIZE (elt) != 3
-		  || ! INTEGERP (AREF (elt, 1)))
+		  || ! FIXNUMP (AREF (elt, 1)))
 		continue;
 	      if (XFASTINT (AREF (elt, 1)) != cmp_it->lookback)
 		goto no_composition;
@@ -1559,7 +1559,7 @@ find_automatic_composition (ptrdiff_t pos, ptrdiff_t limit,
 	    {
 	      Lisp_Object elt = XCAR (val);
 
-	      if (VECTORP (elt) && ASIZE (elt) == 3 && NATNUMP (AREF (elt, 1)))
+	      if (VECTORP (elt) && ASIZE (elt) == 3 && FIXNATP (AREF (elt, 1)))
 		{
 		  EMACS_INT check_pos = cur.pos - XFASTINT (AREF (elt, 1));
 		  struct position_record check;
@@ -1759,7 +1759,7 @@ should be ignored.  */)
     return gstring;
 
   if (LGSTRING_GLYPH_LEN (gstring_work) < topos - frompos)
-    gstring_work = Fmake_vector (make_number (topos - frompos + 2), Qnil);
+    gstring_work = Fmake_vector (make_fixnum (topos - frompos + 2), Qnil);
   LGSTRING_SET_HEADER (gstring_work, header);
   LGSTRING_SET_ID (gstring_work, Qnil);
   fill_gstring_body (gstring_work);
@@ -1780,7 +1780,7 @@ for the composition.  See `compose-region' for more details.  */)
 {
   validate_region (&start, &end);
   if (!NILP (components)
-      && !INTEGERP (components)
+      && !FIXNUMP (components)
       && !CONSP (components)
       && !STRINGP (components))
     CHECK_VECTOR (components);
@@ -1820,10 +1820,10 @@ See `find-composition' for more details.  */)
   ptrdiff_t start, end, from, to;
   int id;
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
   if (!NILP (limit))
     {
-      CHECK_NUMBER_COERCE_MARKER (limit);
+      CHECK_FIXNUM_COERCE_MARKER (limit);
       to = min (XINT (limit), ZV);
     }
   else
@@ -1848,7 +1848,7 @@ See `find-composition' for more details.  */)
 	  && ! NILP (Vauto_composition_mode)
 	  && find_automatic_composition (from, to, &start, &end, &gstring,
 					 string))
-	return list3 (make_number (start), make_number (end), gstring);
+	return list3 (make_fixnum (start), make_fixnum (end), gstring);
       return Qnil;
     }
   if ((end <= XINT (pos) || start > XINT (pos)))
@@ -1857,12 +1857,12 @@ See `find-composition' for more details.  */)
 
       if (find_automatic_composition (from, to, &s, &e, &gstring, string)
 	  && (e <= XINT (pos) ? e > end : s < start))
-	return list3 (make_number (s), make_number (e), gstring);
+	return list3 (make_fixnum (s), make_fixnum (e), gstring);
     }
   if (!composition_valid_p (start, end, prop))
-    return list3 (make_number (start), make_number (end), Qnil);
+    return list3 (make_fixnum (start), make_fixnum (end), Qnil);
   if (NILP (detail_p))
-    return list3 (make_number (start), make_number (end), Qt);
+    return list3 (make_fixnum (start), make_fixnum (end), Qt);
 
   if (composition_registered_p (prop))
     id = COMPOSITION_ID (prop);
@@ -1884,12 +1884,12 @@ See `find-composition' for more details.  */)
       relative_p = (method == COMPOSITION_WITH_RULE_ALTCHARS
 		    ? Qnil : Qt);
       mod_func = COMPOSITION_MODIFICATION_FUNC (prop);
-      tail = list4 (components, relative_p, mod_func, make_number (width));
+      tail = list4 (components, relative_p, mod_func, make_fixnum (width));
     }
   else
     tail = Qnil;
 
-  return Fcons (make_number (start), Fcons (make_number (end), tail));
+  return Fcons (make_fixnum (start), Fcons (make_fixnum (end), tail));
 }
 
 
@@ -1906,7 +1906,7 @@ syms_of_composite (void)
      created compositions are repeatedly used in an Emacs session,
      and thus it's not worth to save memory in such a way.  So, we
      make the table not weak.  */
-  Lisp_Object args[] = {QCtest, Qequal, QCsize, make_number (311)};
+  Lisp_Object args[] = {QCtest, Qequal, QCsize, make_fixnum (311)};
   composition_hash_table = CALLMANY (Fmake_hash_table, args);
   staticpro (&composition_hash_table);
 
@@ -1917,9 +1917,9 @@ syms_of_composite (void)
   staticpro (&gstring_work_headers);
   gstring_work_headers = make_uninit_vector (8);
   for (i = 0; i < 8; i++)
-    ASET (gstring_work_headers, i, Fmake_vector (make_number (i + 2), Qnil));
+    ASET (gstring_work_headers, i, Fmake_vector (make_fixnum (i + 2), Qnil));
   staticpro (&gstring_work);
-  gstring_work = Fmake_vector (make_number (10), Qnil);
+  gstring_work = Fmake_vector (make_fixnum (10), Qnil);
 
   /* Text property `composition' should be nonsticky by default.  */
   Vtext_property_default_nonsticky

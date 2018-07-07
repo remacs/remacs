@@ -86,7 +86,7 @@ init_menu_items (void)
   if (NILP (menu_items))
     {
       menu_items_allocated = 60;
-      menu_items = Fmake_vector (make_number (menu_items_allocated), Qnil);
+      menu_items = Fmake_vector (make_fixnum (menu_items_allocated), Qnil);
     }
 
   menu_items_inuse = Qt;
@@ -148,9 +148,9 @@ void
 save_menu_items (void)
 {
   Lisp_Object saved = list4 (!NILP (menu_items_inuse) ? menu_items : Qnil,
-			     make_number (menu_items_used),
-			     make_number (menu_items_n_panes),
-			     make_number (menu_items_submenu_depth));
+			     make_fixnum (menu_items_used),
+			     make_fixnum (menu_items_n_panes),
+			     make_fixnum (menu_items_submenu_depth));
   record_unwind_protect (restore_menu_items, saved);
   menu_items_inuse = Qnil;
   menu_items = Qnil;
@@ -1202,9 +1202,9 @@ x_popup_menu_1 (Lisp_Object position, Lisp_Object menu)
 		int cur_x, cur_y;
 
 		x_relative_mouse_position (new_f, &cur_x, &cur_y);
-		/* cur_x/y may be negative, so use make_number.  */
-		x = make_number (cur_x);
-		y = make_number (cur_y);
+		/* cur_x/y may be negative, so use make_fixnum.  */
+		x = make_fixnum (cur_x);
+		y = make_fixnum (cur_y);
 	      }
 	  }
 	else

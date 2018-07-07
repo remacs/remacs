@@ -478,7 +478,7 @@ x_set_frame_alpha (struct frame *f)
 
   if (FLOATP (Vframe_alpha_lower_limit))
     alpha_min = XFLOAT_DATA (Vframe_alpha_lower_limit);
-  else if (INTEGERP (Vframe_alpha_lower_limit))
+  else if (FIXNUMP (Vframe_alpha_lower_limit))
     alpha_min = (XINT (Vframe_alpha_lower_limit)) / 100.0;
 
   if (alpha < 0.0)
@@ -1979,13 +1979,13 @@ x_draw_image_relief (struct glyph_string *s)
   if (s->face->id == TOOL_BAR_FACE_ID)
     {
       if (CONSP (Vtool_bar_button_margin)
-	  && INTEGERP (XCAR (Vtool_bar_button_margin))
-	  && INTEGERP (XCDR (Vtool_bar_button_margin)))
+	  && FIXNUMP (XCAR (Vtool_bar_button_margin))
+	  && FIXNUMP (XCDR (Vtool_bar_button_margin)))
 	{
 	  extra_x = XINT (XCAR (Vtool_bar_button_margin));
 	  extra_y = XINT (XCDR (Vtool_bar_button_margin));
 	}
-      else if (INTEGERP (Vtool_bar_button_margin))
+      else if (FIXNUMP (Vtool_bar_button_margin))
 	extra_x = extra_y = XINT (Vtool_bar_button_margin);
     }
 
@@ -2481,7 +2481,7 @@ x_draw_glyph_string (struct glyph_string *s)
 		  Lisp_Object val
 		    = buffer_local_value (Qunderline_minimum_offset,
 					s->w->contents);
-		  if (INTEGERP (val))
+		  if (FIXNUMP (val))
 		    minimum_offset = XFASTINT (val);
 		  else
 		    minimum_offset = 1;
@@ -4769,7 +4769,7 @@ w32_read_socket (struct terminal *terminal,
 
 	  if (f && !FRAME_ICONIFIED_P (f))
 	    {
-	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
+	      if (!hlinfo->mouse_face_hidden && FIXNUMP (Vmouse_highlight)
 		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
@@ -4794,7 +4794,7 @@ w32_read_socket (struct terminal *terminal,
 
 	  if (f && !FRAME_ICONIFIED_P (f))
 	    {
-	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
+	      if (!hlinfo->mouse_face_hidden && FIXNUMP (Vmouse_highlight)
 		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
@@ -4872,7 +4872,7 @@ w32_read_socket (struct terminal *terminal,
 
 	  if (f && !FRAME_ICONIFIED_P (f))
 	    {
-	      if (!hlinfo->mouse_face_hidden && INTEGERP (Vmouse_highlight)
+	      if (!hlinfo->mouse_face_hidden && FIXNUMP (Vmouse_highlight)
 		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
@@ -6142,8 +6142,8 @@ x_calc_absolute_position (struct frame *f)
           geometry = Fassoc (Qgeometry, attributes, Qnil);
           if (!NILP (geometry))
             {
-              monitor_left = Fnth (make_number (1), geometry);
-              monitor_top  = Fnth (make_number (2), geometry);
+              monitor_left = Fnth (make_fixnum (1), geometry);
+              monitor_top  = Fnth (make_fixnum (2), geometry);
 
               display_left = min (display_left, XINT (monitor_left));
               display_top  = min (display_top,  XINT (monitor_top));
@@ -6432,10 +6432,10 @@ x_set_window_size (struct frame *f, bool change_gravity,
     {
       frame_size_history_add
 	(f, Qx_set_window_size_1, width, height,
-	 list2 (Fcons (make_number (pixelwidth),
-		       make_number (pixelheight)),
-		Fcons (make_number (rect.right - rect.left),
-		       make_number (rect.bottom - rect.top))));
+	 list2 (Fcons (make_fixnum (pixelwidth),
+		       make_fixnum (pixelheight)),
+		Fcons (make_fixnum (rect.right - rect.left),
+		       make_fixnum (rect.bottom - rect.top))));
 
       if (!FRAME_PARENT_FRAME (f))
 	my_set_window_pos (FRAME_W32_WINDOW (f), NULL,
@@ -7265,7 +7265,7 @@ w32_initialize (void)
 
   /* Initialize input mode: interrupt_input off, no flow control, allow
      8 bit character input, standard quit char.  */
-  Fset_input_mode (Qnil, Qnil, make_number (2), Qnil);
+  Fset_input_mode (Qnil, Qnil, make_fixnum (2), Qnil);
 
   {
     LCID input_locale_id = LOWORD (GetKeyboardLayout (0));

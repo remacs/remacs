@@ -2321,7 +2321,7 @@ a multibyte string even if INIT is an ASCII character.  */)
   int c;
   EMACS_INT nbytes;
 
-  CHECK_NATNUM (length);
+  CHECK_FIXNAT (length);
   CHECK_CHARACTER (init);
 
   c = XFASTINT (init);
@@ -2415,7 +2415,7 @@ LENGTH must be a number.  INIT matters only in whether it is t or nil.  */)
 {
   Lisp_Object val;
 
-  CHECK_NATNUM (length);
+  CHECK_FIXNAT (length);
   val = make_uninit_bool_vector (XFASTINT (length));
   return bool_vector_fill (val, init);
 }
@@ -2894,7 +2894,7 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
   (Lisp_Object length, Lisp_Object init)
 {
   Lisp_Object val = Qnil;
-  CHECK_NATNUM (length);
+  CHECK_FIXNAT (length);
 
   for (EMACS_INT size = XFASTINT (length); 0 < size; size--)
     {
@@ -3439,7 +3439,7 @@ symbol or a type descriptor.  SLOTS is the number of non-type slots,
 each initialized to INIT.  */)
   (Lisp_Object type, Lisp_Object slots, Lisp_Object init)
 {
-  CHECK_NATNUM (slots);
+  CHECK_FIXNAT (slots);
   EMACS_INT size = XFASTINT (slots) + 1;
   struct Lisp_Vector *p = allocate_record (size);
   p->contents[0] = type;
@@ -3468,7 +3468,7 @@ DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,
 See also the function `vector'.  */)
   (Lisp_Object length, Lisp_Object init)
 {
-  CHECK_NATNUM (length);
+  CHECK_FIXNAT (length);
   struct Lisp_Vector *p = allocate_vector (XFASTINT (length));
   for (ptrdiff_t i = 0; i < XFASTINT (length); i++)
     p->contents[i] = init;
@@ -3795,7 +3795,7 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
     /* The things that fit in a string
        are characters that are in 0...127,
        after discarding the meta bit and all the bits above it.  */
-    if (!INTEGERP (args[i])
+    if (!FIXNUMP (args[i])
 	|| (XINT (args[i]) & ~(-CHAR_META)) >= 0200)
       return Fvector (nargs, args);
 
@@ -3804,7 +3804,7 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
   {
     Lisp_Object result;
 
-    result = Fmake_string (make_number (nargs), make_number (0), Qnil);
+    result = Fmake_string (make_fixnum (nargs), make_fixnum (0), Qnil);
     for (i = 0; i < nargs; i++)
       {
 	SSET (result, i, XINT (args[i]));
@@ -4691,7 +4691,7 @@ mark_maybe_object (Lisp_Object obj)
     VALGRIND_MAKE_MEM_DEFINED (&obj, sizeof (obj));
 #endif
 
-  if (INTEGERP (obj))
+  if (FIXNUMP (obj))
     return;
 
   void *po = XPNTR (obj);
@@ -5171,7 +5171,7 @@ valid_pointer_p (void *p)
 int
 valid_lisp_object_p (Lisp_Object obj)
 {
-  if (INTEGERP (obj))
+  if (FIXNUMP (obj))
     return 1;
 
   void *p = XPNTR (obj);
@@ -5504,7 +5504,7 @@ static struct pinned_object
 static Lisp_Object
 purecopy (Lisp_Object obj)
 {
-  if (INTEGERP (obj)
+  if (FIXNUMP (obj)
       || (! SYMBOLP (obj) && PURE_P (XPNTR (obj)))
       || SUBRP (obj))
     return obj;    /* Already pure.  */
@@ -5614,7 +5614,7 @@ inhibit_garbage_collection (void)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
 
-  specbind (Qgc_cons_threshold, make_number (MOST_POSITIVE_FIXNUM));
+  specbind (Qgc_cons_threshold, make_fixnum (MOST_POSITIVE_FIXNUM));
   return count;
 }
 
@@ -5624,7 +5624,7 @@ inhibit_garbage_collection (void)
 static Lisp_Object
 bounded_number (EMACS_INT number)
 {
-  return make_number (min (MOST_POSITIVE_FIXNUM, number));
+  return make_fixnum (min (MOST_POSITIVE_FIXNUM, number));
 }
 
 /* Calculate total bytes of live objects.  */
@@ -5977,37 +5977,37 @@ garbage_collect_1 (void *end)
   unbind_to (count, Qnil);
 
   Lisp_Object total[] = {
-    list4 (Qconses, make_number (sizeof (struct Lisp_Cons)),
+    list4 (Qconses, make_fixnum (sizeof (struct Lisp_Cons)),
 	   bounded_number (total_conses),
 	   bounded_number (total_free_conses)),
-    list4 (Qsymbols, make_number (sizeof (struct Lisp_Symbol)),
+    list4 (Qsymbols, make_fixnum (sizeof (struct Lisp_Symbol)),
 	   bounded_number (total_symbols),
 	   bounded_number (total_free_symbols)),
-    list4 (Qmiscs, make_number (sizeof (union Lisp_Misc)),
+    list4 (Qmiscs, make_fixnum (sizeof (union Lisp_Misc)),
 	   bounded_number (total_markers),
 	   bounded_number (total_free_markers)),
-    list4 (Qstrings, make_number (sizeof (struct Lisp_String)),
+    list4 (Qstrings, make_fixnum (sizeof (struct Lisp_String)),
 	   bounded_number (total_strings),
 	   bounded_number (total_free_strings)),
-    list3 (Qstring_bytes, make_number (1),
+    list3 (Qstring_bytes, make_fixnum (1),
 	   bounded_number (total_string_bytes)),
     list3 (Qvectors,
-	   make_number (header_size + sizeof (Lisp_Object)),
+	   make_fixnum (header_size + sizeof (Lisp_Object)),
 	   bounded_number (total_vectors)),
-    list4 (Qvector_slots, make_number (word_size),
+    list4 (Qvector_slots, make_fixnum (word_size),
 	   bounded_number (total_vector_slots),
 	   bounded_number (total_free_vector_slots)),
-    list4 (Qfloats, make_number (sizeof (struct Lisp_Float)),
+    list4 (Qfloats, make_fixnum (sizeof (struct Lisp_Float)),
 	   bounded_number (total_floats),
 	   bounded_number (total_free_floats)),
-    list4 (Qintervals, make_number (sizeof (struct interval)),
+    list4 (Qintervals, make_fixnum (sizeof (struct interval)),
 	   bounded_number (total_intervals),
 	   bounded_number (total_free_intervals)),
-    list3 (Qbuffers, make_number (sizeof (struct buffer)),
+    list3 (Qbuffers, make_fixnum (sizeof (struct buffer)),
 	   bounded_number (total_buffers)),
 
 #ifdef DOUG_LEA_MALLOC
-    list4 (Qheap, make_number (1024),
+    list4 (Qheap, make_fixnum (1024),
 	   bounded_number ((mallinfo ().uordblks + 1023) >> 10),
 	   bounded_number ((mallinfo ().fordblks + 1023) >> 10)),
 #endif
@@ -6142,7 +6142,7 @@ mark_char_table (struct Lisp_Vector *ptr, enum pvec_type pvectype)
     {
       Lisp_Object val = ptr->contents[i];
 
-      if (INTEGERP (val) || (SYMBOLP (val) && XSYMBOL (val)->u.s.gcmarkbit))
+      if (FIXNUMP (val) || (SYMBOLP (val) && XSYMBOL (val)->u.s.gcmarkbit))
 	continue;
       if (SUB_CHAR_TABLE_P (val))
 	{

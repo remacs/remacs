@@ -219,7 +219,7 @@ xftfont_add_rendering_parameters (FcPattern *pat, Lisp_Object entity)
 	FcPatternAddBool (pat, FC_AUTOHINT, NILP (val) ? FcFalse : FcTrue);
       else if (EQ (key, QChintstyle))
 	{
-	  if (INTEGERP (val))
+	  if (FIXNUMP (val))
 	    FcPatternAddInteger (pat, FC_HINT_STYLE, XINT (val));
           else if (SYMBOLP (val)
                    && FcNameConstant (SDATA (SYMBOL_NAME (val)), &ival))
@@ -227,7 +227,7 @@ xftfont_add_rendering_parameters (FcPattern *pat, Lisp_Object entity)
 	}
       else if (EQ (key, QCrgba))
 	{
-	  if (INTEGERP (val))
+	  if (FIXNUMP (val))
 	    FcPatternAddInteger (pat, FC_RGBA, XINT (val));
           else if (SYMBOLP (val)
                    && FcNameConstant (SDATA (SYMBOL_NAME (val)), &ival))
@@ -235,7 +235,7 @@ xftfont_add_rendering_parameters (FcPattern *pat, Lisp_Object entity)
 	}
       else if (EQ (key, QClcdfilter))
 	{
-	  if (INTEGERP (val))
+	  if (FIXNUMP (val))
 	    FcPatternAddInteger (pat, FC_LCD_FILTER, ival = XINT (val));
           else if (SYMBOLP (val)
                    && FcNameConstant (SDATA (SYMBOL_NAME (val)), &ival))
@@ -298,7 +298,7 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
       FcPatternAddDouble (pat, FC_DPI, dbl);
     }
   val = AREF (entity, FONT_AVGWIDTH_INDEX);
-  if (INTEGERP (val) && XINT (val) == 0)
+  if (FIXNUMP (val) && XINT (val) == 0)
     FcPatternAddBool (pat, FC_SCALABLE, FcTrue);
   /* This is necessary to identify the exact font (e.g. 10x20.pcf.gz
      over 10x20-ISO8859-1.pcf.gz).  */
@@ -352,7 +352,7 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
       xftfont_info->matrix.xy = 0x10000L * matrix->xy;
       xftfont_info->matrix.yx = 0x10000L * matrix->yx;
     }
-  if (INTEGERP (AREF (entity, FONT_SPACING_INDEX)))
+  if (FIXNUMP (AREF (entity, FONT_SPACING_INDEX)))
     spacing = XINT (AREF (entity, FONT_SPACING_INDEX));
   else
     spacing = FC_PROPORTIONAL;

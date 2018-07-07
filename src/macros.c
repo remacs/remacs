@@ -97,8 +97,8 @@ macro before appending to it.  */)
       for (i = 0; i < len; i++)
 	{
 	  Lisp_Object c;
-	  c = Faref (KVAR (current_kboard, Vlast_kbd_macro), make_number (i));
-	  if (cvt && NATNUMP (c) && (XFASTINT (c) & 0x80))
+	  c = Faref (KVAR (current_kboard, Vlast_kbd_macro), make_fixnum (i));
+	  if (cvt && FIXNATP (c) && (XFASTINT (c) & 0x80))
 	    XSETFASTINT (c, CHAR_META | (XFASTINT (c) & ~0x80));
 	  current_kboard->kbd_macro_buffer[i] = c;
 	}
@@ -110,7 +110,7 @@ macro before appending to it.  */)
 	 for consistency of behavior.  */
       if (NILP (no_exec))
 	Fexecute_kbd_macro (KVAR (current_kboard, Vlast_kbd_macro),
-			    make_number (1), Qnil);
+			    make_fixnum (1), Qnil);
 
       message1 ("Appending to kbd macro...");
     }
@@ -154,7 +154,7 @@ each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.  */)
   if (NILP (repeat))
     XSETFASTINT (repeat, 1);
   else
-    CHECK_NUMBER (repeat);
+    CHECK_FIXNUM (repeat);
 
   if (!NILP (KVAR (current_kboard, defining_kbd_macro)))
     {
@@ -301,7 +301,7 @@ each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.  */)
     error ("Keyboard macros must be strings or vectors");
 
   tem = Fcons (Vexecuting_kbd_macro,
-	       Fcons (make_number (executing_kbd_macro_index),
+	       Fcons (make_fixnum (executing_kbd_macro_index),
 		      Vreal_this_command));
   record_unwind_protect (pop_kbd_macro, tem);
 
