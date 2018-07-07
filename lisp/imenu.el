@@ -207,9 +207,9 @@ string (which specifies the title of a submenu into which the
 matches are put).
 REGEXP is a regular expression matching a definition construct
 which is to be displayed in the menu.  REGEXP may also be a
-function, called without arguments.  It is expected to search
-backwards.  It must return true and set `match-data' if it finds
-another element.
+function of no arguments.  If REGEXP is a function, it is
+expected to search backwards, return non-nil if it finds a
+definition construct, and set `match-data' for that construct.
 INDEX is an integer specifying which subexpression of REGEXP
 matches the definition's name; this subexpression is displayed as
 the menu item.
