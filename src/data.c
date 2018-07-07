@@ -3306,8 +3306,20 @@ DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
        doc: /* Return the bitwise complement of NUMBER.  NUMBER must be an integer.  */)
   (register Lisp_Object number)
 {
-  CHECK_FIXNUM (number);
-  XSETINT (number, ~XINT (number));
+  CHECK_INTEGER (number);
+  if (BIGNUMP (number))
+    {
+      mpz_t value;
+      mpz_init (value);
+      mpz_com (value, XBIGNUM (number)->value);
+      number = make_number (value);
+      mpz_clear (value);
+    }
+  else
+    {
+      eassume (FIXNUMP (number));
+      XSETINT (number, ~XINT (number));
+    }
   return number;
 }
 
