@@ -2174,7 +2174,7 @@ DEFUN ("eql", Feql, Seql, 2, 2, 0,
 Floating-point numbers of equal value are `eql', but they may not be `eq'.  */)
   (Lisp_Object obj1, Lisp_Object obj2)
 {
-  if (FLOATP (obj1))
+  if (FLOATP (obj1) || BIGNUMP (obj1))
     return equal_no_quit (obj1, obj2) ? Qt : Qnil;
   else
     return EQ (obj1, obj2) ? Qt : Qnil;
@@ -2322,6 +2322,8 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 		  && (XMARKER (o1)->buffer == 0
 		      || XMARKER (o1)->bytepos == XMARKER (o2)->bytepos));
 	}
+      if (BIGNUMP (o1))
+	return mpz_cmp (XBIGNUM (o1)->value, XBIGNUM (o2)->value) == 0;
       break;
 
     case Lisp_Vectorlike:
