@@ -873,6 +873,19 @@ With prefix argument, prompt for the identifier."
   (interactive (list (xref--read-identifier "Find references of: ")))
   (xref--find-xrefs identifier 'references identifier nil))
 
+;;;###autoload
+(defun xref-find-definitions-at-mouse (event)
+  "Find the definition of identifier at or around mouse click.
+This command is intended to be bound to a mouse event."
+  (interactive "e")
+  (let ((identifier
+         (save-excursion
+           (mouse-set-point event)
+           (xref-backend-identifier-at-point (xref-find-backend)))))
+    (if identifier
+        (xref-find-definitions identifier)
+      (user-error "No identifier here"))))
+
 (declare-function apropos-parse-pattern "apropos" (pattern))
 
 ;;;###autoload
