@@ -65,7 +65,7 @@ guaranteed."
 (cl-defstruct
     (backtrace-frame
      (:constructor backtrace-make-frame))
-  evald fun args flags locals pos)
+  evald fun args flags locals buffer pos)
 
 (cl-defun backtrace-get-frames
     (&optional base &key (constructor #'backtrace-make-frame))
@@ -102,8 +102,25 @@ frames before its nearest activation frame are discarded."
           ;; eval-region calls for the same buffer.  That's not a very
           ;; useful case.
           (with-current-buffer (pop eval-buffers)
+            (setf (backtrace-frame-buffer frame) (current-buffer))
             (setf (backtrace-frame-pos frame) (point))))))
     frames))
+
+;; Button definition for jumping to a buffer position.
+
+(define-button-type 'backtrace-buffer-pos
+  'action #'backtrace--pop-to-buffer-pos
+  'help-echo "mouse-2, RET: Show reading position")
+
+(defun backtrace--pop-to-buffer-pos (button)
+  "Pop to the buffer and position for the BUTTON at point."
+  (let* ((buffer (button-get button 'backtrace-buffer))
+         (pos (button-get button 'backtrace-pos)))
+    (if (buffer-live-p buffer)
+        (progn
+          (pop-to-buffer buffer)
+          (goto-char (max (point-min) (min (point-max) pos))))
+      (message "Buffer has been killed"))))
 
 ;; Font Locking support
 
@@ -685,8 +702,12 @@ Format it according to VIEW."
     ;; After any frame that uses eval-buffer, insert a comment that
     ;; states the buffer position it's reading at.
     (when (backtrace-frame-pos frame)
-      (insert (format "  ; Reading at buffer position %d"
-                      (backtrace-frame-pos frame))))
+      (insert "  ; Reading at ")
+      (let ((pos (point)))
+        (insert (format "buffer position %d" (backtrace-frame-pos frame)))
+        (make-button pos (point) :type 'backtrace-buffer-pos
+                     'backtrace-buffer (backtrace-frame-buffer frame)
+                     'backtrace-pos (backtrace-frame-pos frame))))
     (insert "\n")
     (put-text-property beg (point) 'backtrace-section 'func)))
 
