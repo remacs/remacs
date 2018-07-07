@@ -579,4 +579,12 @@ comparing the subr with a much slower lisp implementation."
          (v (read s)))
     (should (equal (number-to-string v) s))))
 
+(ert-deftest data-tests-1+ ()
+  (should (> (1+ most-positive-fixnum) most-positive-fixnum))
+  (should (fixnump (1+ (1- most-negative-fixnum)))))
+
+(ert-deftest data-tests-1- ()
+  (should (< (1- most-negative-fixnum) most-negative-fixnum))
+  (should (fixnump (1- (1+ most-positive-fixnum)))))
+
 ;;; data-tests.el ends here

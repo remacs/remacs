@@ -3239,12 +3239,32 @@ DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
 Markers are converted to integers.  */)
   (register Lisp_Object number)
 {
-  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (number);
+  CHECK_NUMBER_COERCE_MARKER (number);
 
   if (FLOATP (number))
     return (make_float (1.0 + XFLOAT_DATA (number)));
 
-  XSETINT (number, XINT (number) + 1);
+  if (BIGNUMP (number))
+    {
+      mpz_t num;
+      mpz_init (num);
+      mpz_add_ui (num, XBIGNUM (number)->value, 1);
+      number = make_number (num);
+      mpz_clear (num);
+    }
+  else
+    {
+      eassume (FIXNUMP (number));
+      if (XINT (number) < MOST_POSITIVE_FIXNUM)
+	XSETINT (number, XINT (number) + 1);
+      else
+	{
+	  mpz_t num;
+	  mpz_init_set_si (num, XINT (number) + 1);
+	  number = make_number (num);
+	  mpz_clear (num);
+	}
+    }
   return number;
 }
 
@@ -3253,12 +3273,32 @@ DEFUN ("1-", Fsub1, Ssub1, 1, 1, 0,
 Markers are converted to integers.  */)
   (register Lisp_Object number)
 {
-  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (number);
+  CHECK_NUMBER_COERCE_MARKER (number);
 
   if (FLOATP (number))
     return (make_float (-1.0 + XFLOAT_DATA (number)));
 
-  XSETINT (number, XINT (number) - 1);
+  if (BIGNUMP (number))
+    {
+      mpz_t num;
+      mpz_init (num);
+      mpz_sub_ui (num, XBIGNUM (number)->value, 1);
+      number = make_number (num);
+      mpz_clear (num);
+    }
+  else
+    {
+      eassume (FIXNUMP (number));
+      if (XINT (number) > MOST_POSITIVE_FIXNUM)
+	XSETINT (number, XINT (number) - 1);
+      else
+	{
+	  mpz_t num;
+	  mpz_init_set_si (num, XINT (number) - 1);
+	  number = make_number (num);
+	  mpz_clear (num);
+	}
+    }
   return number;
 }
 
