@@ -673,6 +673,20 @@ close_output_streams (void)
     _exit (EXIT_FAILURE);
 }
 
+/* Wrapper function for GMP.  */
+static void *
+xrealloc_for_gmp (void *ptr, size_t ignore, size_t size)
+{
+  return xrealloc (ptr, size);
+}
+
+/* Wrapper function for GMP.  */
+static void
+xfree_for_gmp (void *ptr, size_t ignore)
+{
+  xfree (ptr);
+}
+
 /* ARGSUSED */
 int
 main (int argc, char **argv)
@@ -770,6 +784,8 @@ main (int argc, char **argv)
 
   init_standard_fds ();
   atexit (close_output_streams);
+
+  mp_set_memory_functions (xmalloc, xrealloc_for_gmp, xfree_for_gmp);
 
   sort_args (argc, argv);
   argc = 0;

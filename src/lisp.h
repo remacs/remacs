@@ -30,6 +30,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <float.h>
 #include <inttypes.h>
 #include <limits.h>
+#ifdef HAVE_GMP
+#include <gmp.h>
+#else
+#include "mini-gmp.h"
+#endif
 
 #include <intprops.h>
 #include <verify.h>
@@ -516,6 +521,7 @@ enum Lisp_Misc_Type
 #ifdef HAVE_MODULES
     Lisp_Misc_User_Ptr,
 #endif
+    Lisp_Misc_Bignum,
     /* This is not a type code.  It is for range checking.  */
     Lisp_Misc_Limit
   };
@@ -2456,6 +2462,14 @@ struct Lisp_Free
     union Lisp_Misc *chain;
   };
 
+struct Lisp_Bignum
+  {
+    ENUM_BF (Lisp_Misc_Type) type : 16; /* = Lisp_Misc_Bignum */
+    bool_bf gcmarkbit : 1;
+    unsigned spacer : 15;
+    mpz_t value;
+  };
+
 /* To get the type field of a union Lisp_Misc, use XMISCTYPE.
    It uses one of these struct subtypes to get the type field.  */
 
@@ -2470,6 +2484,7 @@ union Lisp_Misc
 #ifdef HAVE_MODULES
     struct Lisp_User_Ptr u_user_ptr;
 #endif
+    struct Lisp_Bignum u_bignum;
   };
 
 INLINE union Lisp_Misc *
@@ -2518,6 +2533,25 @@ XUSER_PTR (Lisp_Object a)
   return XUNTAG (a, Lisp_Misc, struct Lisp_User_Ptr);
 }
 #endif
+
+INLINE bool
+BIGNUMP (Lisp_Object x)
+{
+  return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Bignum;
+}
+
+INLINE struct Lisp_Bignum *
+XBIGNUM (Lisp_Object a)
+{
+  eassert (BIGNUMP (a));
+  return XUNTAG (a, Lisp_Misc, struct Lisp_Bignum);
+}
+
+INLINE bool
+INTEGERP (Lisp_Object x)
+{
+  return FIXNUMP (x) || BIGNUMP (x);
+}
 
 
 /* Forwarding pointer to an int variable.
@@ -2734,6 +2768,18 @@ FIXNATP (Lisp_Object x)
 {
   return FIXNUMP (x) && 0 <= XINT (x);
 }
+INLINE bool
+NATNUMP (Lisp_Object x)
+{
+  if (BIGNUMP (x))
+    return mpz_cmp_si (XBIGNUM (x)->value, 0) >= 0;
+  return FIXNUMP (x) && 0 <= XINT (x);
+}
+INLINE bool
+NUMBERP (Lisp_Object x)
+{
+  return INTEGERP (x) || FLOATP (x) || BIGNUMP (x);
+}
 
 INLINE bool
 RANGED_FIXNUMP (intmax_t lo, Lisp_Object x, intmax_t hi)
@@ -2882,12 +2928,32 @@ CHECK_FIXNUM_OR_FLOAT (Lisp_Object x)
   CHECK_TYPE (FIXED_OR_FLOATP (x), Qnumberp, x);
 }
 
+INLINE void
+CHECK_NUMBER (Lisp_Object x)
+{
+  CHECK_TYPE (NUMBERP (x), Qnumberp, x);
+}
+
+INLINE void
+CHECK_INTEGER (Lisp_Object x)
+{
+  CHECK_TYPE (INTEGERP (x), Qnumberp, x);
+}
+
 #define CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER(x)				\
   do {									\
     if (MARKERP (x))							\
       XSETFASTINT (x, marker_position (x));				\
     else								\
       CHECK_TYPE (FIXED_OR_FLOATP (x), Qnumber_or_marker_p, x);			\
+  } while (false)
+
+#define CHECK_NUMBER_COERCE_MARKER(x)					\
+  do {									\
+    if (MARKERP (x))							\
+      XSETFASTINT (x, marker_position (x));				\
+    else								\
+      CHECK_TYPE (NUMBERP (x), Qnumber_or_marker_p, x);			\
   } while (false)
 
 /* Since we can't assign directly to the CAR or CDR fields of a cons
