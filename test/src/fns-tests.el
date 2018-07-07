@@ -593,4 +593,12 @@
   (should (equal 1 (string-distance "ab" "a我b")))
   (should (equal 1 (string-distance "我" "她"))))
 
+(ert-deftest test-bignum-eql ()
+  "Test that `eql' works for bignums."
+  (let ((x (+ most-positive-fixnum 1))
+        (y (+ most-positive-fixnum 1)))
+    (should (eq x x))
+    (should (eql x y))
+    (should (equal x y))))
+
 (provide 'fns-tests)
