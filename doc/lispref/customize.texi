@@ -321,6 +321,7 @@ If a @code{defcustom} does not specify any @code{:group}, the last group
 defined with @code{defgroup} in the same file will be used.  This way, most
 @code{defcustom} do not need an explicit @code{:group}.
 
+@cindex @code{eval-defun}, and @code{defcustom} forms
 When you evaluate a @code{defcustom} form with @kbd{C-M-x} in Emacs Lisp
 mode (@code{eval-defun}), a special feature of @code{eval-defun}
 arranges to set the variable unconditionally, without testing whether
