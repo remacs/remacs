@@ -265,6 +265,13 @@ them to the 'browse-url' function, like the other protocols: ftp,
 http, and https.  This allows to have references to local HTML files,
 for example.
 
+** Xref
+
++++
+*** New command 'xref-find-definitions-at-mouse'.
+This command finds definitions of the identifier at the place of a
+mouse click event, and is intended to be bound to a mouse event.
+
 ** Ecomplete
 
 *** The ecomplete sorting has changed to a decay-based algorithm.

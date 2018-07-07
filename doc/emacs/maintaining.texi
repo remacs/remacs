@@ -1813,6 +1813,8 @@ Find definitions of identifier, but display it in another window
 @item C-x 5 .@: @key{RET}
 Find definition of identifier, and display it in a new frame
 (@code{xref-find-definitions-other-frame}).
+@item M-x xref-find-definitions-at-mouse
+Find definition of identifier at mouse click.
 @item M-,
 Go back to where you previously invoked @kbd{M-.} and friends
 (@code{xref-pop-marker-stack}).
@@ -1852,6 +1854,11 @@ buffer in another window, and one that makes a new frame for it.  The
 former is @w{@kbd{C-x 4 .}}
 (@code{xref-find-definitions-other-window}), and the latter is
 @w{@kbd{C-x 5 .}}  (@code{xref-find-definitions-other-frame}).
+
+  The command @code{xref-find-definitions-at-mouse} works like
+@code{xref-find-definitions}, but it looks for the identifier name at
+or around the place of a mouse event.  This command is intended to be
+bound to a mouse event, such as @kbd{C-M-mouse-1}, for example.
 
 @findex xref-find-apropos
 @kindex C-M-.
