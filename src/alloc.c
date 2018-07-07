@@ -3780,6 +3780,51 @@ build_marker (struct buffer *buf, ptrdiff_t charpos, ptrdiff_t bytepos)
 }
 
 
+
+Lisp_Object
+make_bignum_str (const char *num, int base)
+{
+  Lisp_Object obj;
+  struct Lisp_Bignum *b;
+  int check;
+
+  obj = allocate_misc (Lisp_Misc_Bignum);
+  b = XBIGNUM (obj);
+  mpz_init (b->value);
+  check = mpz_set_str (b->value, num, base);
+  eassert (check == 0);
+  return obj;
+}
+
+/* Given an mpz_t, make a number.  This may return a bignum or a
+   fixnum depending on VALUE.  */
+
+Lisp_Object
+make_number (mpz_t value)
+{
+  Lisp_Object obj;
+  struct Lisp_Bignum *b;
+
+  if (mpz_fits_slong_p (value))
+    {
+      long l = mpz_get_si (value);
+      if (!FIXNUM_OVERFLOW_P (l))
+	{
+	  XSETINT (obj, l);
+	  return obj;
+	}
+    }
+
+  obj = allocate_misc (Lisp_Misc_Bignum);
+  b = XBIGNUM (obj);
+  /* We could mpz_init + mpz_swap here, to avoid a copy, but the
+     resulting API seemed possibly confusing.  */
+  mpz_init_set (b->value, value);
+
+  return obj;
+}
+
+
 /* Return a newly created vector or string with specified arguments as
    elements.  If all the arguments are characters that can fit
    in a string of events, make a string; otherwise, make a vector.

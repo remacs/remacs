@@ -3643,6 +3643,9 @@ extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
 extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
 
+extern Lisp_Object make_bignum_str (const char *num, int base);
+extern Lisp_Object make_number (mpz_t value);
+
 /* Build a frequently used 2/3/4-integer lists.  */
 
 INLINE Lisp_Object
