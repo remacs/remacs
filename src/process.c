@@ -6842,7 +6842,7 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.  */)
     {
       Lisp_Object tem = Fget_process (process);
       if (NILP (tem))
-	tem = string_to_number (SSDATA (process), 10, S2N_OVERFLOW_TO_FLOAT);
+	tem = string_to_number (SSDATA (process), 10, 0);
       process = tem;
     }
   else if (!FIXED_OR_FLOATP (process))

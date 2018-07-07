@@ -2631,6 +2631,13 @@ digit_to_number (int character, int base)
   return digit < base ? digit : -1;
 }
 
+static void
+free_contents (void *p)
+{
+  void **ptr = (void **) p;
+  xfree (*ptr);
+}
+
 /* Read an integer in radix RADIX using READCHARFUN to read
    characters.  RADIX must be in the interval [2..36]; if it isn't, a
    read error is signaled .  Value is the integer read.  Signals an
@@ -2642,16 +2649,23 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
 {
   /* Room for sign, leading 0, other digits, trailing null byte.
      Also, room for invalid syntax diagnostic.  */
-  char buf[max (1 + 1 + UINTMAX_WIDTH + 1,
-		sizeof "integer, radix " + INT_STRLEN_BOUND (EMACS_INT))];
+  size_t len = max (1 + 1 + UINTMAX_WIDTH + 1,
+		    sizeof "integer, radix " + INT_STRLEN_BOUND (EMACS_INT));
+  char *buf = NULL;
   char *p = buf;
   int valid = -1; /* 1 if valid, 0 if not, -1 if incomplete.  */
+
+  ptrdiff_t count = SPECPDL_INDEX ();
 
   if (radix < 2 || radix > 36)
     valid = 0;
   else
     {
       int c, digit;
+
+      buf = xmalloc (len);
+      record_unwind_protect_ptr (free_contents, &buf);
+      p = buf;
 
       c = READCHAR;
       if (c == '-' || c == '+')
@@ -2678,8 +2692,15 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
 	    valid = 0;
 	  if (valid < 0)
 	    valid = 1;
-	  if (p < buf + sizeof buf)
-	    *p++ = c;
+	  /* Allow 1 extra byte for the \0.  */
+	  if (p + 1 == buf + len)
+	    {
+	      ptrdiff_t where = p - buf;
+	      len *= 2;
+	      buf = xrealloc (buf, len);
+	      p = buf + where;
+	    }
+	  *p++ = c;
 	  c = READCHAR;
 	}
 
@@ -2692,14 +2713,8 @@ read_integer (Lisp_Object readcharfun, EMACS_INT radix)
       invalid_syntax (buf);
     }
 
-  if (p == buf + sizeof buf)
-    {
-      memset (p - 3, '.', 3);
-      xsignal1 (Qoverflow_error, make_unibyte_string (buf, sizeof buf));
-    }
-
   *p = '\0';
-  return string_to_number (buf, radix, 0);
+  return unbind_to (count, string_to_number (buf, radix, 0));
 }
 
 
@@ -3508,9 +3523,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 	if (!quoted && !uninterned_symbol)
 	  {
-	    int flags = (read_integer_overflow_as_float
-			 ? S2N_OVERFLOW_TO_FLOAT : 0);
-	    Lisp_Object result = string_to_number (read_buffer, 10, flags);
+	    Lisp_Object result = string_to_number (read_buffer, 10, 0);
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }
@@ -3677,12 +3690,10 @@ substitute_in_interval (INTERVAL interval, void *arg)
 
 /* Convert STRING to a number, assuming base BASE.  When STRING has
    floating point syntax and BASE is 10, return a nearest float.  When
-   STRING has integer syntax, return a fixnum if the integer fits, and
-   signal an overflow otherwise (unless BASE is 10 and STRING ends in
-   period or FLAGS & S2N_OVERFLOW_TO_FLOAT is nonzero; in this case,
-   return a nearest float instead).  Otherwise, return nil.  If FLAGS
-   & S2N_IGNORE_TRAILING is nonzero, consider just the longest prefix
-   of STRING that has valid syntax.  */
+   STRING has integer syntax, return a fixnum if the integer fits, or
+   else a bignum.  Otherwise, return nil.  If FLAGS &
+   S2N_IGNORE_TRAILING is nonzero, consider just the longest prefix of
+   STRING that has valid syntax.  */
 
 Lisp_Object
 string_to_number (char const *string, int base, int flags)
@@ -3796,13 +3807,7 @@ string_to_number (char const *string, int base, int flags)
       else
 	value = n;
 
-      if (! (state & DOT_CHAR) && ! (flags & S2N_OVERFLOW_TO_FLOAT))
-	{
-	  AUTO_STRING (fmt, ("%s is out of fixnum range; "
-			     "maybe set `read-integer-overflow-as-float'?"));
-	  AUTO_STRING_WITH_LEN (arg, string, cp - string);
-	  xsignal1 (Qoverflow_error, CALLN (Fformat_message, fmt, arg));
-	}
+      return make_bignum_str (string, base);
     }
 
   /* Either the number uses float syntax, or it does not fit into a fixnum.
@@ -4844,13 +4849,6 @@ were read in.  */);
   DEFVAR_LISP ("read-circle", Vread_circle,
 	       doc: /* Non-nil means read recursive structures using #N= and #N# syntax.  */);
   Vread_circle = Qt;
-
-  DEFVAR_BOOL ("read-integer-overflow-as-float",
-	       read_integer_overflow_as_float,
-	       doc: /* Non-nil means `read' quietly treats an out-of-range integer as floating point.
-Nil (the default) means signal an overflow unless the integer ends in `.'.
-This variable is experimental; email 30408@debbugs.gnu.org if you need it.  */);
-  read_integer_overflow_as_float = false;
 
   DEFVAR_LISP ("load-path", Vload_path,
 	       doc: /* List of directories to search for files to load.
