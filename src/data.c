@@ -2397,6 +2397,70 @@ bool-vector.  IDX starts at 0.  */)
 
 /* Arithmetic functions */
 
+static Lisp_Object
+bignumcompare (Lisp_Object num1, Lisp_Object num2,
+	       enum Arith_Comparison comparison)
+{
+  int cmp;
+  bool test;
+
+  if (BIGNUMP (num1))
+    {
+      if (FLOATP (num2))
+	cmp = mpz_cmp_d (XBIGNUM (num1)->value, XFLOAT_DATA (num2));
+      else if (FIXNUMP (num2))
+	cmp = mpz_cmp_si (XBIGNUM (num1)->value, XINT (num2));
+      else
+	{
+	  eassume (BIGNUMP (num2));
+	  cmp = mpz_cmp (XBIGNUM (num1)->value, XBIGNUM (num2)->value);
+	}
+    }
+  else
+    {
+      eassume (BIGNUMP (num2));
+      if (FLOATP (num1))
+	cmp = - mpz_cmp_d (XBIGNUM (num2)->value, XFLOAT_DATA (num1));
+      else
+	{
+	  eassume (FIXNUMP (num1));
+	  cmp = - mpz_cmp_si (XBIGNUM (num2)->value, XINT (num1));
+	}
+    }
+
+  switch (comparison)
+    {
+    case ARITH_EQUAL:
+      test = cmp == 0;
+      break;
+
+    case ARITH_NOTEQUAL:
+      test = cmp != 0;
+      break;
+
+    case ARITH_LESS:
+      test = cmp < 0;
+      break;
+
+    case ARITH_LESS_OR_EQUAL:
+      test = cmp <= 0;
+      break;
+
+    case ARITH_GRTR:
+      test = cmp > 0;
+      break;
+
+    case ARITH_GRTR_OR_EQUAL:
+      test = cmp >= 0;
+      break;
+
+    default:
+      eassume (false);
+    }
+
+  return test ? Qt : Qnil;
+}
+
 Lisp_Object
 arithcompare (Lisp_Object num1, Lisp_Object num2,
 	      enum Arith_Comparison comparison)
@@ -2406,8 +2470,11 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
   bool fneq;
   bool test;
 
-  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (num1);
-  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (num2);
+  CHECK_NUMBER_COERCE_MARKER (num1);
+  CHECK_NUMBER_COERCE_MARKER (num2);
+
+  if (BIGNUMP (num1) || BIGNUMP (num2))
+    return bignumcompare (num1, num2, comparison);
 
   /* If either arg is floating point, set F1 and F2 to the 'double'
      approximations of the two arguments, and set FNEQ if floating-point
