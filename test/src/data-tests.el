@@ -614,4 +614,10 @@ comparing the subr with a much slower lisp implementation."
     (data-tests-check-sign (% -1 -3) (% nb1 nb3))
     (data-tests-check-sign (mod -1 -3) (mod nb1 nb3))))
 
+(ert-deftest data-tests-ash-lsh ()
+  (should (= (ash most-negative-fixnum 1)
+             (* most-negative-fixnum 2)))
+  (should (= (lsh most-negative-fixnum 1)
+             (* (abs most-negative-fixnum) 2))))
+
 ;;; data-tests.el ends here

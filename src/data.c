@@ -3298,18 +3298,37 @@ ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 
   Lisp_Object val;
 
-  CHECK_FIXNUM (value);
+  CHECK_INTEGER (value);
   CHECK_FIXNUM (count);
 
-  if (XINT (count) >= EMACS_INT_WIDTH)
-    XSETINT (val, 0);
-  else if (XINT (count) > 0)
-    XSETINT (val, XUINT (value) << XINT (count));
-  else if (XINT (count) <= -EMACS_INT_WIDTH)
-    XSETINT (val, lsh ? 0 : XINT (value) < 0 ? -1 : 0);
+  if (BIGNUMP (value))
+    {
+      mpz_t result;
+      mpz_init (result);
+      if (XINT (count) >= 0)
+	mpz_mul_2exp (result, XBIGNUM (value)->value, XINT (count));
+      else
+	mpz_tdiv_q_2exp (result, XBIGNUM (value)->value, - XINT (count));
+      val = make_number (result);
+      mpz_clear (result);
+    }
   else
-    XSETINT (val, (lsh ? XUINT (value) >> -XINT (count)
-		   : XINT (value) >> -XINT (count)));
+    {
+      /* Just do the work as bignums to make the code simpler.  */
+      mpz_t result;
+      eassume (FIXNUMP (value));
+      if (lsh)
+	mpz_init_set_ui (result, XUINT (value));
+      else
+	mpz_init_set_si (result, XINT (value));
+      if (XINT (count) >= 0)
+	mpz_mul_2exp (result, result, XINT (count));
+      else
+	mpz_tdiv_q_2exp (result, result, - XINT (count));
+      val = make_number (result);
+      mpz_clear (result);
+    }
+
   return val;
 }
 
