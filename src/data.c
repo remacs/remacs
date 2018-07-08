@@ -3073,13 +3073,47 @@ Both must be integers or markers.  */)
 {
   Lisp_Object val;
 
-  CHECK_FIXNUM_COERCE_MARKER (x);
-  CHECK_FIXNUM_COERCE_MARKER (y);
+  CHECK_INTEGER_COERCE_MARKER (x);
+  CHECK_INTEGER_COERCE_MARKER (y);
 
-  if (XINT (y) == 0)
+  /* Note that a bignum can never be 0, so we don't need to check that
+     case.  */
+  if (FIXNUMP (y) && XINT (y) == 0)
     xsignal0 (Qarith_error);
 
-  XSETINT (val, XINT (x) % XINT (y));
+  if (FIXNUMP (x) && FIXNUMP (y))
+    XSETINT (val, XINT (x) % XINT (y));
+  else
+    {
+      mpz_t xm, ym, *xmp, *ymp;
+      mpz_t result;
+
+      if (BIGNUMP (x))
+	xmp = &XBIGNUM (x)->value;
+      else
+	{
+	  mpz_init_set_si (xm, XINT (x));
+	  xmp = &xm;
+	}
+
+      if (BIGNUMP (y))
+	ymp = &XBIGNUM (y)->value;
+      else
+	{
+	  mpz_init_set_si (ym, XINT (y));
+	  ymp = &ym;
+	}
+
+      mpz_init (result);
+      mpz_tdiv_r (result, *xmp, *ymp);
+      val = make_number (result);
+      mpz_clear (result);
+
+      if (xmp == &xm)
+	mpz_clear (xm);
+      if (ymp == &ym)
+	mpz_clear (ym);
+    }
   return val;
 }
 
@@ -3092,25 +3126,73 @@ Both X and Y must be numbers or markers.  */)
   Lisp_Object val;
   EMACS_INT i1, i2;
 
-  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (x);
-  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (y);
+  CHECK_NUMBER_COERCE_MARKER (x);
+  CHECK_NUMBER_COERCE_MARKER (y);
+
+  /* Note that a bignum can never be 0, so we don't need to check that
+     case.  */
+  if (FIXNUMP (y) && XINT (y) == 0)
+    xsignal0 (Qarith_error);
 
   if (FLOATP (x) || FLOATP (y))
     return fmod_float (x, y);
 
-  i1 = XINT (x);
-  i2 = XINT (y);
+  if (FIXNUMP (x) && FIXNUMP (y))
+    {
+      i1 = XINT (x);
+      i2 = XINT (y);
 
-  if (i2 == 0)
-    xsignal0 (Qarith_error);
+      if (i2 == 0)
+	xsignal0 (Qarith_error);
 
-  i1 %= i2;
+      i1 %= i2;
 
-  /* If the "remainder" comes out with the wrong sign, fix it.  */
-  if (i2 < 0 ? i1 > 0 : i1 < 0)
-    i1 += i2;
+      /* If the "remainder" comes out with the wrong sign, fix it.  */
+      if (i2 < 0 ? i1 > 0 : i1 < 0)
+	i1 += i2;
 
-  XSETINT (val, i1);
+      XSETINT (val, i1);
+    }
+  else
+    {
+      mpz_t xm, ym, *xmp, *ymp;
+      mpz_t result;
+      int cmpr, cmpy;
+
+      if (BIGNUMP (x))
+	xmp = &XBIGNUM (x)->value;
+      else
+	{
+	  mpz_init_set_si (xm, XINT (x));
+	  xmp = &xm;
+	}
+
+      if (BIGNUMP (y))
+	ymp = &XBIGNUM (y)->value;
+      else
+	{
+	  mpz_init_set_si (ym, XINT (y));
+	  ymp = &ym;
+	}
+
+      mpz_init (result);
+      mpz_mod (result, *xmp, *ymp);
+
+      /* Fix the sign if needed.  */
+      cmpr = mpz_cmp_si (result, 0);
+      cmpy = mpz_cmp_si (*ymp, 0);
+      if (cmpy < 0 ? cmpr > 0 : cmpr < 0)
+	mpz_add (result, result, *ymp);
+
+      val = make_number (result);
+      mpz_clear (result);
+
+      if (xmp == &xm)
+	mpz_clear (xm);
+      if (ymp == &ym)
+	mpz_clear (ym);
+    }
+
   return val;
 }
 

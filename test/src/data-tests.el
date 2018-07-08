@@ -597,4 +597,21 @@ comparing the subr with a much slower lisp implementation."
     (should (= (min a b c) a))
     (should (= (max a b c) b))))
 
+(defun data-tests-check-sign (x y)
+  (should (eq (cl-signum x) (cl-signum y))))
+
+(ert-deftest data-tests-%-mod ()
+  (let* ((b1 (+ most-positive-fixnum 1))
+         (nb1 (- b1))
+         (b3 (+ most-positive-fixnum 3))
+         (nb3 (- b3)))
+    (data-tests-check-sign (% 1 3) (% b1 b3))
+    (data-tests-check-sign (mod 1 3) (mod b1 b3))
+    (data-tests-check-sign (% 1 -3) (% b1 nb3))
+    (data-tests-check-sign (mod 1 -3) (mod b1 nb3))
+    (data-tests-check-sign (% -1 3) (% nb1 b3))
+    (data-tests-check-sign (mod -1 3) (mod nb1 b3))
+    (data-tests-check-sign (% -1 -3) (% nb1 nb3))
+    (data-tests-check-sign (mod -1 -3) (mod nb1 nb3))))
+
 ;;; data-tests.el ends here
