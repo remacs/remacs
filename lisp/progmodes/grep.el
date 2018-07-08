@@ -632,22 +632,22 @@ This function is called from `compilation-filter-hook'."
 			  ;; `grep-command' is already set, so
 			  ;; use that for testing.
 			  (grep-probe grep-command
-				      `(nil t nil "^English" ,hello-file)
+				      `(nil t nil "^Copyright" ,hello-file)
 				      #'call-process-shell-command)
 			;; otherwise use `grep-program'
 			(grep-probe grep-program
-				    `(nil t nil "-nH" "^English" ,hello-file)))
+				    `(nil t nil "-nH" "^Copyright" ,hello-file)))
 		      (progn
 			(goto-char (point-min))
 			(looking-at
 			 (concat (regexp-quote hello-file)
-				 ":[0-9]+:English")))))))))
+				 ":[0-9]+:Copyright")))))))))
 
     (when (eq grep-use-null-filename-separator 'auto-detect)
       (setq grep-use-null-filename-separator
             (with-temp-buffer
               (let* ((hello-file (expand-file-name "HELLO" data-directory))
-                     (args `("--null" "-ne" "^English" ,hello-file)))
+                     (args `("--null" "-ne" "^Copyright" ,hello-file)))
                 (if grep-use-null-device
                     (setq args (append args (list null-device)))
                   (push "-H" args))
@@ -656,7 +656,7 @@ This function is called from `compilation-filter-hook'."
                        (goto-char (point-min))
                        (looking-at
                         (concat (regexp-quote hello-file)
-                                "\0[0-9]+:English"))))))))
+                                "\0[0-9]+:Copyright"))))))))
 
     (when (eq grep-highlight-matches 'auto-detect)
       (setq grep-highlight-matches
