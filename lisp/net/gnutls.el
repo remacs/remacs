@@ -50,9 +50,11 @@ set this variable to \"normal:-dhe-rsa\".
 
 This variable can be useful for modifying low-level TLS
 connection parameters (for instance if you need to connect to a
-host that only accepts a specific algorithm), but general Emacs
-network security is handled by the Network Security Manager.  See
-Info node `(emacs) Network Security'."
+host that only accepts a specific algorithm).  However, in
+general, Emacs network security is handled by the Network
+Security Manager (NSM), and the default value of nil delegates
+the job of checking the connection security to the NSM.
+See Info node `(emacs) Network Security'."
   :group 'gnutls
   :type '(choice (const nil)
                  string))
