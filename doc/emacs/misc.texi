@@ -315,26 +315,27 @@ unverified connection, a temporary exception, or refuse the connection
 entirely.
 
 @vindex network-security-protocol-checks
-In addition to the basic certificate corrections checks,
-several @acronym{TLS} algorithm checks are available.  Some encryption
+In addition to the basic certificate correctness checks, several
+@acronym{TLS} algorithm checks are available.  Some encryption
 technologies that were previously thought to be secure have shown
-themselves to be fragile, and Emacs will (by default) warn the users
-about some of these problems.
+themselves to be fragile, so Emacs (by default) warns you about some
+of these problems.
 
 The protocol network checks is controlled via the
 @code{network-security-protocol-checks} variable.
 
-It's an alist where the first element is the name of the check,
-the second is the security level where the check kicks in, and the
-optional third element is a parameter supplied to the check.
+It's an alist where the first element of each association is the name
+of the check, the second element is the security level where the check
+should be used, and the optional third element is a parameter supplied
+to the check.
 
 An element like @code{(rc4 medium)} will result in the function
 @code{nsm-protocol-check--rc4} being called like thus:
-@code{(nsm-protocol-check--rc4 host port status optional-parameter)}.
+@w{@code{(nsm-protocol-check--rc4 host port status optional-parameter)}}.
 The function should return non-@code{nil} if the connection should
 proceed and @code{nil} otherwise.
 
-Below is a list of the checks done on the @code{medium} level.
+Below is a list of the checks done on the default @code{medium} level.
 
 @table @asis
 
@@ -374,8 +375,8 @@ connection to be encrypted.  If the connection isn't encrypted,
 
 @item Diffie-Hellman low prime bits
 When doing the public key exchange, the number of prime bits should be
-high to ensure that the channel can't be eavesdropped on by third
-parties.  If this number is too low, you will be warned.  (This is the
+high enough to ensure that the channel can't be eavesdropped on by third
+parties.  If this number is too low, Emacs will warn you.  (This is the
 @code{diffie-hellman-prime-bits} check in
 @code{network-security-protocol-checks}).
 

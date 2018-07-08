@@ -136,12 +136,15 @@ of what checks to run via the `network-security-protocol-checks'
 variable.
 
 +++
-** Most of the checks for outdated, believed-to-be-weak TLS algorithms
-and ciphers are now switched on by default.  To get the old behaviour
-back (where certificates are checked for validity, but no warnings
-about weak cryptography are issued), you can either set
-`network-security-protocol-checks' to nil, or adjust the elements in
-that variable to only happen on the `high' security level.
+** TLS connections have their security tightened by default.
+Most of the checks for outdated, believed-to-be-weak TLS algorithms
+and ciphers are now switched on by default.  By default, the NSM will
+flag connections using these weak algorithms and ask users whether to
+allow them.  To get the old behavior back (where certificates are
+checked for validity, but no warnings about weak cryptography are
+issued), you can either set 'network-security-protocol-checks' to nil,
+or adjust the elements in that variable to only happen on the 'high'
+security level (assuming you use the 'medium' level).
 
 +++
 ** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.

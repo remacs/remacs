@@ -1217,7 +1217,7 @@ The return value is a property list with top-level keys :warnings and
 The :warnings entry is a list of symbols you can get a description of
 with `gnutls-peer-status-warning-describe', and :certificates is the
 certificate chain for the connection, with the host certificate
-first, and intermediary certificates (if any) follow.
+first, and intermediary certificates (if any) following it.
 
 In addition, for backwards compatibility, the host certificate is also
 returned as the :certificate entry.  */)
