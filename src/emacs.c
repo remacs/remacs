@@ -707,10 +707,12 @@ main (int argc, char **argv)
   bool disable_aslr = dumping;
 # endif
 
-  if (disable_aslr && disable_address_randomization ())
+  if (disable_aslr && disable_address_randomization ()
+      && !getenv ("EMACS_HEAP_EXEC"))
     {
       /* Set this so the personality will be reverted before execs
-	 after this one.  */
+	 after this one, and to work around an re-exec loop on buggy
+	 kernels (Bug#32083).  */
       xputenv ("EMACS_HEAP_EXEC=true");
 
       /* Address randomization was enabled, but is now disabled.
