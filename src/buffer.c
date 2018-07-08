@@ -5584,17 +5584,17 @@ Use the command `abbrev-mode' to change this variable.  */);
 		     doc: /* Non-nil if searches and matches should ignore case.  */);
 
   DEFVAR_PER_BUFFER ("fill-column", &BVAR (current_buffer, fill_column),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Column beyond which automatic line-wrapping should happen.
 Interactively, you can set the buffer local value using \\[set-fill-column].  */);
 
   DEFVAR_PER_BUFFER ("left-margin", &BVAR (current_buffer, left_margin),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Column for the default `indent-line-function' to indent to.
 Linefeed indents to this column in Fundamental mode.  */);
 
   DEFVAR_PER_BUFFER ("tab-width", &BVAR (current_buffer, tab_width),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Distance between tab stops (for display of tab characters), in columns.
 NOTE: This controls the display width of a TAB character, and not
 the size of an indentation step.
@@ -5765,7 +5765,7 @@ If it is nil, that means don't auto-save this buffer.  */);
 Backing up is done before the first time the file is saved.  */);
 
   DEFVAR_PER_BUFFER ("buffer-saved-size", &BVAR (current_buffer, save_length),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Length of current buffer when last read in, saved or auto-saved.
 0 initially.
 -1 means auto-saving turned off until next real save.
@@ -5839,7 +5839,7 @@ In addition, a char-table has six extra slots to control the display of:
 See also the functions `display-table-slot' and `set-display-table-slot'.  */);
 
   DEFVAR_PER_BUFFER ("left-margin-width", &BVAR (current_buffer, left_margin_cols),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Width in columns of left marginal area for display of a buffer.
 A value of nil means no marginal area.
 
@@ -5847,7 +5847,7 @@ Setting this variable does not take effect until a new buffer is displayed
 in a window.  To make the change take effect, call `set-window-buffer'.  */);
 
   DEFVAR_PER_BUFFER ("right-margin-width", &BVAR (current_buffer, right_margin_cols),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Width in columns of right marginal area for display of a buffer.
 A value of nil means no marginal area.
 
@@ -5855,7 +5855,7 @@ Setting this variable does not take effect until a new buffer is displayed
 in a window.  To make the change take effect, call `set-window-buffer'.  */);
 
   DEFVAR_PER_BUFFER ("left-fringe-width", &BVAR (current_buffer, left_fringe_width),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Width of this buffer's left fringe (in pixels).
 A value of 0 means no left fringe is shown in this buffer's window.
 A value of nil means to use the left fringe width from the window's frame.
@@ -5864,7 +5864,7 @@ Setting this variable does not take effect until a new buffer is displayed
 in a window.  To make the change take effect, call `set-window-buffer'.  */);
 
   DEFVAR_PER_BUFFER ("right-fringe-width", &BVAR (current_buffer, right_fringe_width),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Width of this buffer's right fringe (in pixels).
 A value of 0 means no right fringe is shown in this buffer's window.
 A value of nil means to use the right fringe width from the window's frame.
@@ -5881,12 +5881,12 @@ Setting this variable does not take effect until a new buffer is displayed
 in a window.  To make the change take effect, call `set-window-buffer'.  */);
 
   DEFVAR_PER_BUFFER ("scroll-bar-width", &BVAR (current_buffer, scroll_bar_width),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Width of this buffer's vertical scroll bars in pixels.
 A value of nil means to use the scroll bar width from the window's frame.  */);
 
   DEFVAR_PER_BUFFER ("scroll-bar-height", &BVAR (current_buffer, scroll_bar_height),
-		     Qintegerp,
+		     Qfixnump,
 		     doc: /* Height of this buffer's horizontal scroll bars in pixels.
 A value of nil means to use the scroll bar height from the window's frame.  */);
 
@@ -6156,7 +6156,7 @@ Setting this variable is very fast, much faster than scanning all the text in
 the buffer looking for properties to change.  */);
 
   DEFVAR_PER_BUFFER ("buffer-display-count",
-		     &BVAR (current_buffer, display_count), Qintegerp,
+		     &BVAR (current_buffer, display_count), Qfixnump,
 		     doc: /* A number incremented each time this buffer is displayed in a window.
 The function `set-window-buffer' increments it.  */);
 
