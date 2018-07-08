@@ -590,4 +590,11 @@ comparing the subr with a much slower lisp implementation."
 (ert-deftest data-tests-logcount ()
   (should (= (logcount (read "#xffffffffffffffffffffffffffffffff")) 128)))
 
+(ert-deftest data-tests-minmax ()
+  (let ((a (- most-negative-fixnum 1))
+        (b (+ most-positive-fixnum 1))
+        (c 0))
+    (should (= (min a b c) a))
+    (should (= (max a b c) b))))
+
 ;;; data-tests.el ends here

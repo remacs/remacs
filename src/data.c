@@ -3119,11 +3119,11 @@ minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
 	       enum Arith_Comparison comparison)
 {
   Lisp_Object accum = args[0];
-  CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (accum);
+  CHECK_NUMBER_COERCE_MARKER (accum);
   for (ptrdiff_t argnum = 1; argnum < nargs; argnum++)
     {
       Lisp_Object val = args[argnum];
-      CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER (val);
+      CHECK_NUMBER_COERCE_MARKER (val);
       if (!NILP (arithcompare (val, accum, comparison)))
 	accum = val;
       else if (FLOATP (val) && isnan (XFLOAT_DATA (val)))
