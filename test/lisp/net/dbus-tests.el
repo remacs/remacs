@@ -133,7 +133,8 @@ This includes initialization and closing the bus."
   ;; Start bus.
   (let ((output
 	 (ignore-errors
-	   (shell-command-to-string "dbus-launch --sh-syntax")))
+	   (shell-command-to-string
+            "env DISPLAY= dbus-launch --sh-syntax --close-stderr")))
 	bus pid)
     (skip-unless (stringp output))
     (when (string-match "DBUS_SESSION_BUS_ADDRESS='\\(.+\\)';" output)
