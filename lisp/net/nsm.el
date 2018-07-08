@@ -265,7 +265,7 @@ HOST PORT STATUS OPTIONAL-PARAMETER.")
                                  (plist-get certificate :subject)))
                      (string-match "\\bSHA1\\b" algo)
                      (not (nsm-query
-                           host port status :signature-sha1
+                           host port status :intermediate-sha1
                            "An intermediate certificate used to verify the connection to %s:%s uses the SHA1 algorithm (%s), which is believed to be unsafe."
                            host port algo)))
            do (cl-return nil)
