@@ -972,11 +972,15 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bsub1):
-	  TOP = FIXNUMP (TOP) ? make_fixnum (XINT (TOP) - 1) : Fsub1 (TOP);
+	  TOP = (FIXNUMP (TOP) && XINT (TOP) != MOST_NEGATIVE_FIXNUM
+		 ? make_fixnum (XINT (TOP) - 1)
+		 : Fsub1 (TOP));
 	  NEXT;
 
 	CASE (Badd1):
-	  TOP = FIXNUMP (TOP) ? make_fixnum (XINT (TOP) + 1) : Fadd1 (TOP);
+	  TOP = (FIXNUMP (TOP) && XINT (TOP) != MOST_POSITIVE_FIXNUM
+		 ? make_fixnum (XINT (TOP) + 1)
+		 : Fadd1 (TOP));
 	  NEXT;
 
 	CASE (Beqlsign):
@@ -1027,7 +1031,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bnegate):
-	  TOP = FIXNUMP (TOP) ? make_fixnum (- XINT (TOP)) : Fminus (1, &TOP);
+	  TOP = (FIXNUMP (TOP) && XINT (TOP) != MOST_NEGATIVE_FIXNUM
+		 ? make_fixnum (- XINT (TOP))
+		 : Fminus (1, &TOP));
 	  NEXT;
 
 	CASE (Bplus):
@@ -1324,11 +1330,11 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bnumberp):
-	  TOP = FIXED_OR_FLOATP (TOP) ? Qt : Qnil;
+	  TOP = NUMBERP (TOP) ? Qt : Qnil;
 	  NEXT;
 
 	CASE (Bintegerp):
-	  TOP = FIXNUMP (TOP) ? Qt : Qnil;
+	  TOP = INTEGERP (TOP) ? Qt : Qnil;
 	  NEXT;
 
 #if BYTE_CODE_SAFE
