@@ -86,6 +86,8 @@ AC_DEFUN([gl_EARLY],
   # Code from module filevercmp:
   # Code from module flexmember:
   # Code from module fpending:
+  # Code from module fpieee:
+  AC_REQUIRE([gl_FP_IEEE])
   # Code from module fstatat:
   # Code from module fsusage:
   # Code from module fsync:
@@ -1002,6 +1004,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/filemode.m4
   m4/flexmember.m4
   m4/fpending.m4
+  m4/fpieee.m4
   m4/fstatat.m4
   m4/fsusage.m4
   m4/fsync.m4
