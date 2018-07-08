@@ -1210,9 +1210,17 @@ DEFUN ("gnutls-peer-status-warning-describe", Fgnutls_peer_status_warning_descri
 
 DEFUN ("gnutls-peer-status", Fgnutls_peer_status, Sgnutls_peer_status, 1, 1, 0,
        doc: /* Describe a GnuTLS PROC peer certificate and any warnings about it.
+
 The return value is a property list with top-level keys :warnings and
-:certificate.  The :warnings entry is a list of symbols you can describe with
-`gnutls-peer-status-warning-describe'. */)
+:certificates.
+
+The :warnings entry is a list of symbols you can get a description of
+with `gnutls-peer-status-warning-describe', and :certificates is the
+certificate chain for the connection, with the host certificate
+first, and intermediary certificates (if any) follow.
+
+In addition, for backwards compatibility, the host certificate is also
+returned as the :certificate entry.  */)
   (Lisp_Object proc)
 {
   Lisp_Object warnings = Qnil, result = Qnil;

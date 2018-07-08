@@ -137,7 +137,11 @@ variable.
 
 +++
 ** Most of the checks for outdated, believed-to-be-weak TLS algorithms
-and ciphers are now switched on by default.
+and ciphers are now switched on by default.  To get the old behaviour
+back (where certificates are checked for validity, but no warnings
+about weak cryptography are issued), you can either set
+`network-security-protocol-checks' to nil, or adjust the elements in
+that variable to only happen on the `high' security level.
 
 +++
 ** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.
