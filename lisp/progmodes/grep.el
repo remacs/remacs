@@ -379,7 +379,9 @@ Notice that using \\[next-error] or \\[compile-goto-error] modifies
               ;; to handle weird file names (with colons in them) as
               ;; well as possible.  E.g., use [1-9][0-9]* rather than
               ;; [0-9]+ so as to accept ":034:" in file names.
-              "\\(?1:[^\n:]+?[^\n/:]\\):[\t ]*\\(?2:[1-9][0-9]*\\)[\t ]*:"
+              "\\(?1:"
+              "\\(?:[a-zA-Z]:\\)?" ; Allow "C:..." for w32.
+              "[^\n:]+?[^\n/:]\\):[\t ]*\\(?2:[1-9][0-9]*\\)[\t ]*:"
               "\\)")
      1 2
      ;; Calculate column positions (col . end-col) of first grep match on a line
