@@ -2856,11 +2856,11 @@ REGEXP should use constructs supported by your local `grep' command."
   (interactive "sSearch marked files (regexp): ")
   (require 'grep)
   (defvar grep-find-ignored-files)
-  (defvar grep-find-ignored-directories)
+  (declare-function rgrep-find-ignored-directories "grep" (dir))
   (let* ((files (dired-get-marked-files nil nil nil nil t))
          (ignores (nconc (mapcar
                           (lambda (s) (concat s "/"))
-                          grep-find-ignored-directories)
+                          (rgrep-find-ignored-directories default-directory))
                          grep-find-ignored-files))
          (xrefs (mapcan
                  (lambda (file)
