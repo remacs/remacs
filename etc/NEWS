@@ -24,6 +24,9 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Installation Changes in Emacs 27.1
 
+** configure now checks for the GMP library.  If not found, the
+included "mini-gmp" library is used instead.
+
 ** The new configure option '--with-json' adds support for JSON using
 the Jansson library.  It is on by default; use 'configure
 --with-json=no' to build without Jansson support.  The new JSON
@@ -644,15 +647,6 @@ as new-style, bind the new variable 'force-new-style-backquotes' to t.
 integer, Emacs now signals an error if the number is too large for the
 implementation to format (Bug#30408).
 
-+++
-** The Lisp reader now signals an overflow for plain decimal integers
-that do not end in '.' and are outside Emacs range.  Formerly the Lisp
-reader silently converted them to floating-point numbers, and signaled
-overflow only for integers with a radix that are outside machine range.
-To get the old behavior, set the new, experimental variable
-read-integer-overflow-as-float to t and please email
-30408@debbugs.gnu.org if you need that.  (Bug#30408).
-
 ---
 ** Some functions and variables obsolete since Emacs 22 have been removed:
 archive-mouse-extract, assoc-ignore-case, assoc-ignore-representation,
@@ -707,6 +701,11 @@ manual for more details.
 ** New function 'proper-list-p'.
 Given a proper list as argument, this predicate returns its length;
 otherwise, it returns nil.
+
++++
+** Emacs Lisp integers can be of arbitrary precision.  The new
+predicates 'bignump' and 'fixnump' can be used to distinguish between
+the types of integers.
 
 ** define-minor-mode automatically documents the meaning of ARG
 
