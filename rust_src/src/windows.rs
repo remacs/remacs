@@ -749,4 +749,15 @@ pub fn window_old_point(window: LispObject) -> Option<EmacsInt> {
     marker_position_lisp(win.old_pointm.into())
 }
 
+/// Return the use time of window WINDOW.
+/// WINDOW must be a live window and defaults to the selected one. The
+/// window with the highest use time is the most recently selected
+/// one.  The window with the lowest use time is the least recently
+/// selected one.
+#[lisp_fn(min = "0")]
+pub fn window_use_time(window: LispObject) -> LispObject {
+    let use_time = window_live_or_selected(window).use_time;
+    LispObject::from_natnum(use_time)
+}
+
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
