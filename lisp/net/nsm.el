@@ -62,6 +62,26 @@ checked and warned against."
 (when (eq network-security-level 'paranoid)
   (setq network-security-level 'high))
 
+(defcustom nsm-trust-local-network nil
+  "Disable warnings when visiting trusted hosts on local networks.
+
+The default suite of TLS checks in NSM is designed to follow the
+most current security best practices.  Under some situations,
+such as attempting to connect to an email server that do not
+follow these practices inside a school or corporate network, NSM
+may produce warnings for such occasions.  Setting this option to
+a non-nil value, or a zero-argument function that returns non-nil
+tells NSM to skip checking for potential TLS vulnerabilities when
+connecting to hosts on a local network.
+
+Make sure you know what you are doing before enabling this
+option."
+  :version "27.1"
+  :group 'nsm
+  :type '(choice (const :tag "On" t)
+                 (const :tag "Off" nil)
+                 (function :tag "Custom function")))
+
 (defcustom nsm-settings-file (expand-file-name "network-security.data"
 						 user-emacs-directory)
   "The file the security manager settings will be stored in."
@@ -184,6 +204,55 @@ SETTINGS are the same as those supplied to each check function.
 RESULTS is an alist where the keys are the checks run and the
 values the results of the checks.")
 
+(defun nsm-should-check (host)
+  "Determines whether NSM should check for TLS problems for HOST.
+
+If `nsm-trust-local-network' is or returns non-nil, and if the
+host address is a localhost address, a machine address, a direct
+link or a private network address, this function returns
+nil.  Non-nil otherwise."
+  (let* ((address (or (nslookup-host-ipv4 host nil 'vector)
+                      (nslookup-host-ipv6 host nil 'vector)))
+         (ipv4? (eq (length address) 4)))
+    (not
+     (or (if ipv4?
+             (or
+              ;; (0.x.x.x) this machine
+              (eq (aref address 0) 0)
+              ;; (127.x.x.x) localhost
+              (eq (aref address 0) 0))
+           (or
+            ;; (::) IPv6 this machine
+            (not (cl-mismatch address [0 0 0 0 0 0 0 0]))
+            ;; (::1) IPv6 localhost
+            (not (cl-mismatch address [0 0 0 0 0 0 0 1]))))
+         (and (or (and (functionp nsm-trust-local-network)
+                       (funcall nsm-trust-local-network))
+                  nsm-trust-local-network)
+              (if ipv4?
+                  (or
+                   ;; (10.x.x.x) private
+                   (eq (aref address 0) 10)
+                   ;; (172.16.x.x) private
+                   (and (eq (aref address 0) 172)
+                        (eq (aref address 0) 16))
+                   ;; (192.168.x.x) private
+                   (and (eq (aref address 0) 192)
+                        (eq (aref address 0) 168))
+                   ;; (198.18.x.x) private
+                   (and (eq (aref address 0) 198)
+                        (eq (aref address 0) 18))
+                   ;; (169.254.x.x) link-local
+                   (and (eq (aref address 0) 169)
+                        (eq (aref address 0) 254)))
+                (memq (aref address 0)
+                      '(
+                        64512  ;; (fc00::) IPv6 unique local address
+                        64768  ;; (fd00::) IPv6 unique local address
+                        65152  ;; (fe80::) IPv6 link-local
+                        )
+                      )))))))
+
 (defun nsm-check-tls-connection (process host port status settings)
   "Check TLS connection against potential security problems.
 
@@ -204,6 +273,7 @@ This function returns the process PROCESS if no problems are
 found, and nil otherwise.
 
 See also: `nsm-tls-checks' and `nsm-noninteractive'"
+  (when (nsm-should-check host)
     (let* ((results
             (cl-loop for check in nsm-tls-checks
                      for type = (intern (format ":%s"
@@ -234,7 +304,7 @@ See also: `nsm-tls-checks' and `nsm-noninteractive'"
                  (delete-process process)
                  (setq process nil)))
       (run-hook-with-args 'nsm-tls-post-check-functions
-                          host port status settings results))
+                          host port status settings results)))
   process)
 
 
@@ -678,6 +748,7 @@ protocol."
  'nsm-fingerprint-ok-p '(status settings) "27.1")
 
 (defun nsm-check-plain-connection (process host port settings warn-unencrypted)
+  (if (nsm-should-check host)
       ;; If this connection used to be TLS, but is now plain, then it's
       ;; possible that we're being Man-In-The-Middled by a proxy that's
       ;; stripping out STARTTLS announcements.
@@ -703,7 +774,8 @@ protocol."
           (delete-process process)
           nil)
          (t
-          process))))
+          process)))
+    process))
 
 (defun nsm-query (host port status what problems message)
   ;; If there is no user to answer queries, then say `no' to everything.
