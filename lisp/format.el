@@ -1000,9 +1000,7 @@ either strings, or lists of the form (PARAMETER VALUE)."
           (if (not (and (proper-list-p old)
                         (proper-list-p new)))
 	      (format-annotate-atomic-property-change prop-alist old new)
-	    (let* ((old (if (listp old) old (list old)))
-		   (new (if (listp new) new (list new)))
-		   close open)
+	    (let (close open)
 	      (while old
 		(setq close
 		      (append (car (format-annotate-atomic-property-change
