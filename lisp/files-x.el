@@ -578,31 +578,33 @@ strings.  All properties are optional; if CRITERIA is nil, it
 always applies.
 PROFILES is a list of connection profiles (symbols).")
 
-(defsubst connection-local-normalize-criteria (criteria &rest properties)
-  "Normalize plist CRITERIA according to PROPERTIES.
-Return a new ordered plist list containing only property names from PROPERTIES."
-  (delq
-   nil
+(defsubst connection-local-normalize-criteria (criteria)
+  "Normalize plist CRITERIA according to properties.
+Return a reordered plist."
+  (apply
+   'append
    (mapcar
     (lambda (property)
       (when (and (plist-member criteria property) (plist-get criteria property))
         (list property (plist-get criteria property))))
-    properties)))
+    '(:application :protocol :user :machine))))
 
 (defsubst connection-local-get-profiles (criteria)
   "Return the connection profiles list for CRITERIA.
 CRITERIA is a plist identifying a connection and the application
 using this connection, see `connection-local-criteria-alist'."
-  (or (cdr
-       (assoc
-        (connection-local-normalize-criteria
-         criteria :application :protocol :user :machine)
-        connection-local-criteria-alist))
-      ;; Try it without :application.
-      (cdr
-       (assoc
-        (connection-local-normalize-criteria criteria :protocol :user :machine)
-        connection-local-criteria-alist))))
+  (let (profiles)
+    (dolist (crit-alist connection-local-criteria-alist)
+      (let ((crit criteria)
+            (match t))
+        (while (and crit match)
+          (when (plist-member (car crit-alist) (car crit))
+            (setq match (equal (plist-get (car crit-alist) (car crit))
+                               (plist-get criteria (car crit)))))
+          (setq crit (cddr crit)))
+        (when match
+          (setq profiles (append profiles (cdr crit-alist))))))
+    (delete-dups profiles)))
 
 ;;;###autoload
 (defun connection-local-set-profiles (criteria &rest profiles)
@@ -621,8 +623,7 @@ variables for a connection profile are defined using
   (dolist (profile profiles)
     (unless (assq profile connection-local-profile-alist)
       (error "No such connection profile `%s'" (symbol-name profile))))
-  (let* ((criteria (connection-local-normalize-criteria
-                    criteria :application :protocol :user :machine))
+  (let* ((criteria (connection-local-normalize-criteria criteria))
          (slot (assoc criteria connection-local-criteria-alist)))
     (if slot
         (setcdr slot (delete-dups (append (cdr slot) profiles)))

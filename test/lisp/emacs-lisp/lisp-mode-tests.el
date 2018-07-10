@@ -224,6 +224,17 @@ Expected initialization file: `%s'\"
       (comment-indent)
       (should (equal (buffer-string) correct)))))
 
+(ert-deftest lisp-indent-with-read-only-field ()
+  "Test indentation on line with read-only field (Bug#32014)."
+  :expected-result :failed
+  (with-temp-buffer
+    (insert (propertize "prompt> " 'field 'output 'read-only t
+                        'rear-nonsticky t 'front-sticky '(read-only)))
+    (insert " foo")
+    (lisp-indent-line)
+    (should (equal (buffer-string) "prompt> foo"))))
+
+
 
 (provide 'lisp-mode-tests)
 ;;; lisp-mode-tests.el ends here
