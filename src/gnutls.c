@@ -152,6 +152,8 @@ DEF_DLL_FN (int, gnutls_x509_crt_check_hostname,
 DEF_DLL_FN (int, gnutls_x509_crt_check_issuer,
               (gnutls_x509_crt_t, gnutls_x509_crt_t));
 DEF_DLL_FN (void, gnutls_x509_crt_deinit, (gnutls_x509_crt_t));
+DEF_DLL_DN (int, gnutls_x509_crt_export,
+            (gnutls_x509_crt_t, gnutls_x509_crt_fmt_t, void *, size_t *));
 DEF_DLL_FN (int, gnutls_x509_crt_import,
 	    (gnutls_x509_crt_t, const gnutls_datum_t *,
 	     gnutls_x509_crt_fmt_t));
@@ -173,6 +175,9 @@ DEF_DLL_FN (int, gnutls_x509_crt_get_dn,
 	    (gnutls_x509_crt_t, char *, size_t *));
 DEF_DLL_FN (int, gnutls_x509_crt_get_pk_algorithm,
 	    (gnutls_x509_crt_t, unsigned int *));
+DEF_DLL_FN (int, gnutls_x509_crt_print,
+            (gnutls_x509_crt_t, gnutls_certificate_print_formats_t,
+             gnutls_datum_t *));
 DEF_DLL_FN (const char *, gnutls_pk_algorithm_get_name,
 	    (gnutls_pk_algorithm_t));
 DEF_DLL_FN (int, gnutls_pk_bits_to_sec_param,
@@ -317,6 +322,7 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_x509_crt_check_hostname);
   LOAD_DLL_FN (library, gnutls_x509_crt_check_issuer);
   LOAD_DLL_FN (library, gnutls_x509_crt_deinit);
+  LOAD_DLL_FN (library, gnutls_x509_crt_export);
   LOAD_DLL_FN (library, gnutls_x509_crt_import);
   LOAD_DLL_FN (library, gnutls_x509_crt_init);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_fingerprint);
@@ -327,6 +333,7 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_x509_crt_get_expiration_time);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_dn);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_pk_algorithm);
+  LOAD_DLL_FN (library, gnutls_x509_crt_print)
   LOAD_DLL_FN (library, gnutls_pk_algorithm_get_name);
   LOAD_DLL_FN (library, gnutls_pk_bits_to_sec_param);
   LOAD_DLL_FN (library, gnutls_x509_crt_get_issuer_unique_id);
@@ -455,6 +462,7 @@ init_gnutls_functions (void)
 #  define gnutls_x509_crt_check_hostname fn_gnutls_x509_crt_check_hostname
 #  define gnutls_x509_crt_check_issuer fn_gnutls_x509_crt_check_issuer
 #  define gnutls_x509_crt_deinit fn_gnutls_x509_crt_deinit
+#  define gnutls_x509_crt_export fn_gnutls_x509_crt_export
 #  define gnutls_x509_crt_get_activation_time fn_gnutls_x509_crt_get_activation_time
 #  define gnutls_x509_crt_get_dn fn_gnutls_x509_crt_get_dn
 #  define gnutls_x509_crt_get_expiration_time fn_gnutls_x509_crt_get_expiration_time
@@ -463,6 +471,7 @@ init_gnutls_functions (void)
 #  define gnutls_x509_crt_get_issuer_unique_id fn_gnutls_x509_crt_get_issuer_unique_id
 #  define gnutls_x509_crt_get_key_id fn_gnutls_x509_crt_get_key_id
 #  define gnutls_x509_crt_get_pk_algorithm fn_gnutls_x509_crt_get_pk_algorithm
+#  define gnutls_x509_crt_print fn_gnutls_x509_crt_print
 #  define gnutls_x509_crt_get_serial fn_gnutls_x509_crt_get_serial
 #  define gnutls_x509_crt_get_signature_algorithm fn_gnutls_x509_crt_get_signature_algorithm
 #  define gnutls_x509_crt_get_subject_unique_id fn_gnutls_x509_crt_get_subject_unique_id
@@ -1024,7 +1033,34 @@ gnutls_hex_string (unsigned char *buf, ptrdiff_t buf_size, const char *prefix)
 }
 
 static Lisp_Object
-gnutls_certificate_details (gnutls_x509_crt_t cert)
+emacs_gnutls_certificate_export_pem (gnutls_x509_crt_t cert)
+{
+  size_t size = 0;
+  int err = gnutls_x509_crt_export (cert, GNUTLS_X509_FMT_PEM, NULL, &size);
+  check_memory_full (err);
+
+  if (err == GNUTLS_E_SHORT_MEMORY_BUFFER)
+    {
+      unsigned char *buf = xmalloc(size * sizeof (unsigned char));
+      err = gnutls_x509_crt_export (cert, GNUTLS_X509_FMT_PEM, buf, &size);
+      check_memory_full (err);
+
+      if (err < GNUTLS_E_SUCCESS)
+        {
+          xfree (buf);
+          error ("GnuTLS certificate export error: %s", emacs_gnutls_strerror (err));
+        }
+
+      return build_string(buf);
+    }
+  else if (err < GNUTLS_E_SUCCESS)
+    error ("GnuTLS certificate export error: %s", emacs_gnutls_strerror (err));
+
+  return Qnil;
+}
+
+static Lisp_Object
+emacs_gnutls_certificate_details (gnutls_x509_crt_t cert)
 {
   Lisp_Object res = Qnil;
   int err;
@@ -1192,6 +1228,10 @@ gnutls_certificate_details (gnutls_x509_crt_t cert)
       xfree (buf);
     }
 
+  /* PEM */
+  res = nconc2 (res, list2 (intern (":pem"),
+                            emacs_gnutls_certificate_export_pem(cert)));
+
   return res;
 }
 
@@ -1354,7 +1394,7 @@ returned as the :certificate entry.  */)
 
       /* Return all the certificates in a list. */
       for (int i = 0; i < XPROCESS (proc)->gnutls_certificates_length; i++)
-	certs = nconc2 (certs, list1 (gnutls_certificate_details
+	certs = nconc2 (certs, list1 (emacs_gnutls_certificate_details
 				      (XPROCESS (proc)->gnutls_certificates[i])));
 
       result = nconc2 (result, list2 (intern (":certificates"), certs));
@@ -1478,6 +1518,55 @@ boot_error (struct Lisp_Process *p, const char *m, ...)
   else
     verror (m, ap);
   va_end (ap);
+}
+
+DEFUN ("gnutls-format-certificate", Fgnutls_format_certificate, Sgnutls_format_certificate, 1, 1, 0,
+       doc: /* Format a X.509 certificate to a string.
+
+Given a PEM-encoded X.509 certificate CERT, returns a human-readable
+string representation.  */)
+     (Lisp_Object cert)
+{
+  CHECK_STRING (cert);
+
+  int err;
+  gnutls_x509_crt_t crt;
+
+  err = gnutls_x509_crt_init (&crt);
+  check_memory_full (err);
+  if (err < GNUTLS_E_SUCCESS)
+    error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
+
+  unsigned char *crt_buf = SDATA (cert);
+  gnutls_datum_t crt_data = { crt_buf, strlen (crt_buf) };
+  err = gnutls_x509_crt_import (crt, &crt_data, GNUTLS_X509_FMT_PEM);
+  check_memory_full (err);
+  if (err < GNUTLS_E_SUCCESS)
+    {
+      gnutls_x509_crt_deinit (crt);
+      error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
+    }
+
+  gnutls_datum_t out;
+  err = gnutls_x509_crt_print (crt, GNUTLS_CRT_PRINT_FULL, &out);
+  check_memory_full (err);
+  if (err < GNUTLS_E_SUCCESS)
+    {
+      gnutls_x509_crt_deinit (crt);
+      error ("gnutls-format-certificate error: %s", emacs_gnutls_strerror (err));
+    }
+
+  char *out_buf = xmalloc ((out.size + 1) * sizeof (char));
+  memset (out_buf, 0, (out.size + 1) * sizeof (char));
+  memcpy (out_buf, out.data, out.size);
+
+  xfree (out.data);
+  gnutls_x509_crt_deinit (crt);
+
+  Lisp_Object result = build_string (out_buf);
+  xfree (out_buf);
+
+  return result;
 }
 
 Lisp_Object
@@ -2713,6 +2802,7 @@ syms_of_gnutls (void)
   defsubr (&Sgnutls_bye);
   defsubr (&Sgnutls_peer_status);
   defsubr (&Sgnutls_peer_status_warning_describe);
+  defsubr (&Sgnutls_format_certificate);
 
 #ifdef HAVE_GNUTLS3
   defsubr (&Sgnutls_ciphers);
