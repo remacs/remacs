@@ -2310,10 +2310,9 @@ INFO may provide the values of these header arguments (in the
 		       (lambda (r)
 			 ;; Non-nil when result R can be turned into
 			 ;; a table.
-			 (and (listp r)
-			      (null (cdr (last r)))
+                         (and (proper-list-p r)
 			      (cl-every
-			       (lambda (e) (or (atom e) (null (cdr (last e)))))
+                               (lambda (e) (or (atom e) (proper-list-p e)))
 			       result)))))
 		  ;; insert results based on type
 		  (cond

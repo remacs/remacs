@@ -982,8 +982,7 @@
   ;; (if <test> <then> nil) ==> (if <test> <then>)
   (let ((clause (nth 1 form)))
     (cond ((and (eq (car-safe clause) 'progn)
-                ;; `clause' is a proper list.
-                (null (cdr (last clause))))
+                (proper-list-p clause))
            (if (null (cddr clause))
                ;; A trivial `progn'.
                (byte-optimize-if `(if ,(cadr clause) ,@(nthcdr 2 form)))

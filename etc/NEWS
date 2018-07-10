@@ -703,6 +703,11 @@ manual for more details.
 
 * Lisp Changes in Emacs 27.1
 
++++
+** New function 'proper-list-p'.
+Given a proper list as argument, this predicate returns its length;
+otherwise, it returns nil.
+
 ** define-minor-mode automatically documents the meaning of ARG
 
 +++

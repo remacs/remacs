@@ -539,14 +539,6 @@ Compare using `equal'."
 	(setq tail next)))
     (cons acopy bcopy)))
 
-(defun format-proper-list-p (list)
-  "Return t if LIST is a proper list.
-A proper list is a list ending with a nil cdr, not with an atom "
-  (when (listp list)
-    (while (consp list)
-      (setq list (cdr list)))
-    (null list)))
-
 (defun format-reorder (items order)
   "Arrange ITEMS to follow partial ORDER.
 Elements of ITEMS equal to elements of ORDER will be rearranged
@@ -1005,8 +997,8 @@ either strings, or lists of the form (PARAMETER VALUE)."
       ;; If either old or new is a list, have to treat both that way.
       (if (and (or (listp old) (listp new))
 	       (not (get prop 'format-list-atomic-p)))
-	  (if (or (not (format-proper-list-p old))
-		  (not (format-proper-list-p new)))
+          (if (not (and (proper-list-p old)
+                        (proper-list-p new)))
 	      (format-annotate-atomic-property-change prop-alist old new)
 	    (let* ((old (if (listp old) old (list old)))
 		   (new (if (listp new) new (list new)))

@@ -472,18 +472,6 @@ Errors during evaluation are caught and handled like nil."
 ;; buffer.  Perhaps explanations should be reported through `ert-info'
 ;; rather than as part of the condition.
 
-(defun ert--proper-list-p (x)
-  "Return non-nil if X is a proper list, nil otherwise."
-  (cl-loop
-   for firstp = t then nil
-   for fast = x then (cddr fast)
-   for slow = x then (cdr slow) do
-   (when (null fast) (cl-return t))
-   (when (not (consp fast)) (cl-return nil))
-   (when (null (cdr fast)) (cl-return t))
-   (when (not (consp (cdr fast))) (cl-return nil))
-   (when (and (not firstp) (eq fast slow)) (cl-return nil))))
-
 (defun ert--explain-format-atom (x)
   "Format the atom X for `ert--explain-equal'."
   (pcase x
@@ -494,17 +482,17 @@ Errors during evaluation are caught and handled like nil."
 (defun ert--explain-equal-rec (a b)
   "Return a programmer-readable explanation of why A and B are not `equal'.
 Returns nil if they are."
-  (if (not (equal (type-of a) (type-of b)))
+  (if (not (eq (type-of a) (type-of b)))
       `(different-types ,a ,b)
     (pcase-exhaustive a
       ((pred consp)
-       (let ((a-proper-p (ert--proper-list-p a))
-             (b-proper-p (ert--proper-list-p b)))
-         (if (not (eql (not a-proper-p) (not b-proper-p)))
+       (let ((a-length (proper-list-p a))
+             (b-length (proper-list-p b)))
+         (if (not (eq (not a-length) (not b-length)))
              `(one-list-proper-one-improper ,a ,b)
-           (if a-proper-p
-               (if (not (equal (length a) (length b)))
-                   `(proper-lists-of-different-length ,(length a) ,(length b)
+           (if a-length
+               (if (/= a-length b-length)
+                   `(proper-lists-of-different-length ,a-length ,b-length
                                                       ,a ,b
                                                       first-mismatch-at
                                                       ,(cl-mismatch a b :test 'equal))
@@ -523,7 +511,7 @@ Returns nil if they are."
                      (cl-assert (equal a b) t)
                      nil))))))))
       ((pred arrayp)
-       (if (not (equal (length a) (length b)))
+       (if (/= (length a) (length b))
            `(arrays-of-different-length ,(length a) ,(length b)
                                         ,a ,b
                                         ,@(unless (char-table-p a)

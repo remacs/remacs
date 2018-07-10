@@ -153,6 +153,22 @@ considered a list and @code{not} when it is considered a truth value
 @end example
 @end defun
 
+@defun proper-list-p object
+This function returns the length of @var{object} if it is a proper
+list, @code{nil} otherwise (@pxref{Cons Cells}).  In addition to
+satisfying @code{listp}, a proper list is neither circular nor dotted.
+
+@example
+@group
+(proper-list-p '(a b c))
+    @result{} 3
+@end group
+@group
+(proper-list-p '(a b . c))
+    @result{} nil
+@end group
+@end example
+@end defun
 
 @node List Elements
 @section Accessing Elements of Lists

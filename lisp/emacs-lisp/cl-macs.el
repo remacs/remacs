@@ -498,7 +498,7 @@ its argument list allows full Common Lisp conventions."
       ;; `&aux' args aren't arguments, so let's just drop them from the
       ;; usage info.
       (setq arglist (cl-subseq arglist 0 aux))))
-  (if (cdr-safe (last arglist))         ;Not a proper list.
+  (if (not (proper-list-p arglist))
       (let* ((last (last arglist))
              (tail (cdr last)))
         (unwind-protect
