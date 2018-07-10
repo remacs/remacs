@@ -110,6 +110,7 @@ Security'."
     "/etc/ssl/cert.pem"                      ; macOS
     )
   "List of CA bundle location filenames or a function returning said list.
+If a file path contains glob wildcards, they will be expanded.
 The files may be in PEM or DER format, as per the GnuTLS documentation.
 The files may not exist, in which case they will be ignored."
   :group 'gnutls
@@ -137,6 +138,19 @@ node `(emacs) Network Security'."
   :type '(choice (const :tag "Use default value" nil)
                  (integer :tag "Number of bits" 512))
   :group 'gnutls)
+
+(defcustom gnutls-crlfiles
+  '(
+    "/etc/grid-security/certificates/*.crl.pem"
+    )
+  "List of CRL file paths or a function returning said list.
+If a file path contains glob wildcards, they will be expanded.
+The files may be in PEM or DER format, as per the GnuTLS documentation.
+The files may not exist, in which case they will be ignored."
+  :group 'gnutls
+  :type '(choice (function :tag "Function to produce list of CRL filenames")
+                 (repeat (file :tag "CRL filename")))
+  :version "27.1")
 
 (defun open-gnutls-stream (name buffer host service &optional nowait)
   "Open a SSL/TLS connection for a service to a host.
@@ -284,6 +298,7 @@ here's a recent version of the list.
 It must be omitted, a number, or nil; if omitted or nil it
 defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
   (let* ((trustfiles (or trustfiles (gnutls-trustfiles)))
+         (crlfiles (or crlfiles (gnutls-crlfiles)))
          (maybe-dumbfw (if (memq 'ClientHello\ Padding (gnutls-available-p))
                            ":%DUMBFW"
                          ""))
@@ -325,13 +340,18 @@ defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
                 :verify-error ,verify-error
                 :callbacks nil)))
 
+(defun gnutls--get-files (files)
+  (cl-loop for f in files
+           if f do (setq f (if (functionp f) (funcall f) f))
+           append (cl-delete-if-not #'file-exists-p (file-expand-wildcards f t))))
+
 (defun gnutls-trustfiles ()
   "Return a list of usable trustfiles."
-  (delq nil
-        (mapcar (lambda (f) (and f (file-exists-p f) f))
-                (if (functionp gnutls-trustfiles)
-                    (funcall gnutls-trustfiles)
-                  gnutls-trustfiles))))
+  (gnutls--get-files gnutls-trustfiles))
+
+(defun gnutls-crlfiles ()
+  "Return a list of usable CRL files."
+  (gnutls--get-files gnutls-crlfiles))
 
 (declare-function gnutls-error-string "gnutls.c" (error))
 
