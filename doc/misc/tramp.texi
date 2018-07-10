@@ -1091,6 +1091,10 @@ syntax requires a leading volume (share) name, for example:
 based on standard protocols, such as HTTP@.  @option{davs} does the same
 but with SSL encryption.  Both methods support the port numbers.
 
+Paths being part of the WebDAV volume to be mounted by GVFS, as it is
+common for OwnCloud or NextCloud file names, are not supported by
+these methods.
+
 @item @option{gdrive}
 @cindex method gdrive
 @cindex gdrive method
