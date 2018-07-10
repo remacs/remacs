@@ -117,10 +117,7 @@ The files may not exist, in which case they will be ignored."
   :type '(choice (function :tag "Function to produce list of bundle filenames")
                  (repeat (file :tag "Bundle filename"))))
 
-;;;###autoload
-(defcustom gnutls-min-prime-bits 256
-  ;; Several mail servers send fewer bits than the GnuTLS default.
-  ;; Currently, 256 appears to be a reasonable choice (Bug#11267).
+(defcustom gnutls-min-prime-bits nil
   "Minimum number of prime bits accepted by GnuTLS for key exchange.
 During a Diffie-Hellman handshake, if the server sends a prime
 number with fewer than this number of bits, the handshake is
@@ -136,7 +133,7 @@ network security is handled at a higher level via
 `open-network-stream' and the Network Security Manager.  See Info
 node `(emacs) Network Security'."
   :type '(choice (const :tag "Use default value" nil)
-                 (integer :tag "Number of bits" 512))
+                 (integer :tag "Number of bits" 2048))
   :group 'gnutls)
 
 (defcustom gnutls-crlfiles
