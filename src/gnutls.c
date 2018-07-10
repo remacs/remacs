@@ -40,6 +40,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_GNUTLS_AEAD
 #endif
 
+#if GNUTLS_VERSION_NUMBER >= 0x030400
+# define HAVE_GNUTLS_ETM_STATUS
+#endif
+
 /* gnutls_mac_get_nonce_size was added in GnuTLS 3.2.0, but was
    exported only since 3.3.0. */
 #if GNUTLS_VERSION_NUMBER >= 0x030300
@@ -197,6 +201,11 @@ DEF_DLL_FN (const char *, gnutls_cipher_get_name,
 	    (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (gnutls_compression_method_t, gnutls_compression_get,
+            (gnutls_session_t));
+DEF_DLL_FN (const char *, gnutls_compression_get_name,
+            (gnutls_compression_method_t));
+DEF_DLL_FN (unsigned, gnutls_safe_renegotiation_status, (gnutls_session_t));
 
 #  ifdef HAVE_GNUTLS3
 DEF_DLL_FN (int, gnutls_rnd, (gnutls_rnd_level_t, void *, size_t));
@@ -232,6 +241,9 @@ DEF_DLL_FN (int, gnutls_aead_cipher_encrypt,
 DEF_DLL_FN (int, gnutls_aead_cipher_decrypt,
 	    (gnutls_aead_cipher_hd_t, const void *, size_t, const void *,
 	     size_t, size_t, const void *, size_t, void *, size_t *));
+#   endif
+#   ifdef HAVE_GNUTLS_ETM_STATUS
+DEF_DLL_FN (unsigned, gnutls_session_etm_status, (gnutls_session_t));
 #   endif
 DEF_DLL_FN (int, gnutls_hmac_init,
 	    (gnutls_hmac_hd_t *, gnutls_mac_algorithm_t, const void *, size_t));
@@ -332,6 +344,9 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_cipher_get_name);
   LOAD_DLL_FN (library, gnutls_mac_get);
   LOAD_DLL_FN (library, gnutls_mac_get_name);
+  LOAD_DLL_FN (library, gnutls_compression_get);
+  LOAD_DLL_FN (library, gnutls_compression_get_name);
+  LOAD_DLL_FN (library, gnutls_safe_renegotiation_status);
 #  ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_rnd);
   LOAD_DLL_FN (library, gnutls_mac_list);
@@ -356,6 +371,9 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_aead_cipher_deinit);
   LOAD_DLL_FN (library, gnutls_aead_cipher_encrypt);
   LOAD_DLL_FN (library, gnutls_aead_cipher_decrypt);
+#   endif
+#   ifdef HAVE_GNUTLS_ETM_STATUS
+  LOAD_DLL_FN (library, gnutls_session_etm_status);
 #   endif
   LOAD_DLL_FN (library, gnutls_hmac_init);
   LOAD_DLL_FN (library, gnutls_hmac_get_len);
@@ -415,6 +433,9 @@ init_gnutls_functions (void)
 #  define gnutls_kx_get_name fn_gnutls_kx_get_name
 #  define gnutls_mac_get fn_gnutls_mac_get
 #  define gnutls_mac_get_name fn_gnutls_mac_get_name
+#  define gnutls_compression_get fn_gnutls_compression_get
+#  define gnutls_compression_get_name fn_gnutls_compression_get_name
+#  define gnutls_safe_renegotiation_status fn_gnutls_safe_renegotiation_status;
 #  define gnutls_pk_algorithm_get_name fn_gnutls_pk_algorithm_get_name
 #  define gnutls_pk_bits_to_sec_param fn_gnutls_pk_bits_to_sec_param
 #  define gnutls_priority_set_direct fn_gnutls_priority_set_direct
@@ -472,6 +493,9 @@ init_gnutls_functions (void)
 #    define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
 #    define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
 #    define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
+#   endif
+#   ifdef HAVE_GNUTLS_ETM_STATUS
+#    define gnutls_session_etm_status fn_gnutls_session_etm_status
 #   endif
 #  define gnutls_hmac_init fn_gnutls_hmac_init
 #  define gnutls_hmac_get_len fn_gnutls_hmac_get_len
@@ -1205,6 +1229,29 @@ DEFUN ("gnutls-peer-status-warning-describe", Fgnutls_peer_status_warning_descri
   if (EQ (status_symbol, intern (":no-host-match")))
     return build_string ("certificate host does not match hostname");
 
+  if (EQ (status_symbol, intern (":signature-failure")))
+    return build_string ("certificate signature could not be verified");
+
+  if (EQ (status_symbol, intern (":revocation-data-superseded")))
+    return build_string ("certificate revocation data are old and have been "
+                         "superseded");
+
+  if (EQ (status_symbol, intern (":revocation-data-issued-in-future")))
+    return build_string ("certificate revocation data have a future issue date");
+
+  if (EQ (status_symbol, intern (":signer-constraints-failure")))
+    return build_string ("certificate ");
+
+  if (EQ (status_symbol, intern (":purpose-mismatch")))
+    return build_string ("certificate does not match the intended purpose");
+
+  if (EQ (status_symbol, intern (":missing-ocsp-status")))
+    return build_string ("certificate requires the server to send a OCSP "
+                         "certificate status, but no status was received");
+
+  if (EQ (status_symbol, intern (":invalid-ocsp-status")))
+    return build_string ("the received OCSP certificate status is invalid");
+
   return Qnil;
 }
 
@@ -1255,6 +1302,35 @@ returned as the :certificate entry.  */)
 
   if (verification & GNUTLS_CERT_EXPIRED)
     warnings = Fcons (intern (":expired"), warnings);
+
+#if GNUTLS_VERSION_NUMBER >= 0x030100
+  if (verification & GNUTLS_CERT_SIGNATURE_FAILURE)
+    warnings = Fcons (intern (":signature-failure"), warnings);
+
+# if GNUTLS_VERSION_NUMBER >= 0x030114
+  if (verification & GNUTLS_CERT_REVOCATION_DATA_SUPERSEDED)
+    warnings = Fcons (intern (":revocation-data-superseded"), warnings);
+
+  if (verification & GNUTLS_CERT_REVOCATION_DATA_ISSUED_IN_FUTURE)
+    warnings = Fcons (intern (":revocation-data-issued-in-future"), warnings);
+
+  if (verification & GNUTLS_CERT_SIGNER_CONSTRAINTS_FAILURE)
+    warnings = Fcons (intern (":signer-constraints-failure"), warnings);
+
+#  if GNUTLS_VERSION_NUMBER >= 0x030400
+  if (verification & GNUTLS_CERT_PURPOSE_MISMATCH)
+    warnings = Fcons (intern (":purpose-mismatch"), warnings);
+
+#   if GNUTLS_VERSION_NUMBER >= 0x030501
+  if (verification & GNUTLS_CERT_MISSING_OCSP_STATUS)
+    warnings = Fcons (intern (":missing-ocsp-status"), warnings);
+
+  if (verification & GNUTLS_CERT_INVALID_OCSP_STATUS)
+    warnings = Fcons (intern (":invalid-ocsp-status"), warnings);
+#   endif
+#  endif
+# endif
+#endif
 
   if (XPROCESS (proc)->gnutls_extra_peer_verification &
       CERTIFICATE_NOT_MATCHING)
@@ -1323,6 +1399,26 @@ returned as the :certificate entry.  */)
 		    build_string (gnutls_mac_get_name
 				  (gnutls_mac_get (state)))));
 
+  /* Compression name. */
+  result = nconc2
+    (result, list2 (intern (":compression"),
+		    build_string (gnutls_compression_get_name
+				  (gnutls_compression_get (state)))));
+
+  /* Encrypt-then-MAC. */
+  result = nconc2
+    (result, list2 (intern (":encrypt-then-mac"),
+#ifdef HAVE_GNUTLS_ETM_STATUS
+                    gnutls_session_etm_status (state) ? Qt : Qnil
+#else
+                    Qnil
+#endif
+                    ));
+
+  /* Renegotiation Indication */
+  result = nconc2
+    (result, list2 (intern (":safe-renegotiation"),
+                    gnutls_safe_renegotiation_status (state) ? Qt : Qnil));
 
   return result;
 }
