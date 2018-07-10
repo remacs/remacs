@@ -47,7 +47,15 @@
 (defcustom gnutls-algorithm-priority nil
   "If non-nil, this should be a TLS priority string.
 For instance, if you want to skip the \"dhe-rsa\" algorithm,
-set this variable to \"normal:-dhe-rsa\"."
+set this variable to \"normal:-dhe-rsa\".
+
+This variable can be useful for modifying low-level TLS
+connection parameters (for instance if you need to connect to a
+host that only accepts a specific algorithm).  However, in
+general, Emacs network security is handled by the Network
+Security Manager (NSM), and the default value of nil delegates
+the job of checking the connection security to the NSM.
+See Info node `(emacs) Network Security'."
   :group 'gnutls
   :type '(choice (const nil)
                  string))
@@ -73,7 +81,13 @@ flags and the corresponding conditions to be tested are:
 If the condition test fails, an error will be signaled.
 
 If the value of this variable is t, every connection will be subjected
-to all of the tests described above."
+to all of the tests described above.
+
+The default value of this variable is nil, which means that no
+checks are performed at the gnutls level.  Instead the checks are
+performed via `open-network-stream' at a higher level by the
+Network Security Manager.  See Info node `(emacs) Network
+Security'."
   :group 'gnutls
   :version "24.4"
   :type '(choice
@@ -112,7 +126,14 @@ number with fewer than this number of bits, the handshake is
 rejected.  \(The smaller the prime number, the less secure the
 key exchange is against man-in-the-middle attacks.)
 
-A value of nil says to use the default GnuTLS value."
+A value of nil says to use the default GnuTLS value.
+
+The default value of this variable is such that virtually any
+connection can be established, whether this connection can be
+considered cryptographically \"safe\" or not.  However, Emacs
+network security is handled at a higher level via
+`open-network-stream' and the Network Security Manager.  See Info
+node `(emacs) Network Security'."
   :type '(choice (const :tag "Use default value" nil)
                  (integer :tag "Number of bits" 512))
   :group 'gnutls)
