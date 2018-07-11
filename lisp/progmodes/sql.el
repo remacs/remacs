@@ -1270,8 +1270,9 @@ specified, it's `sql-product' or `sql-connection' must match."
            (and (derived-mode-p 'sql-interactive-mode)
                 (or (not product)
                     (eq product sql-product))
-                (or (stringp connection)
-                    (string= connection sql-connection)))))))
+                (or (not connection)
+                    (and (stringp connection)
+                         (string= connection sql-connection))))))))
 
 ;; Keymap for sql-interactive-mode.
 
