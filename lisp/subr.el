@@ -548,6 +548,9 @@ If N is omitted or nil, remove the last element."
 	   (if (> n 0) (setcdr (nthcdr (- (1- m) n) list) nil))
 	   list))))
 
+;; This function appears here instead of under the 'Basic Lisp
+;; functions' heading because during bootstrap its compiler-macro
+;; requires functions defined under the 'List functions' heading.
 (defun zerop (number)
   "Return t if NUMBER is zero."
   ;; Used to be in C, but it's pointless since (= 0 n) is faster anyway because
