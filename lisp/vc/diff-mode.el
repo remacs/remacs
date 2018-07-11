@@ -66,14 +66,12 @@
 
 (defcustom diff-default-read-only nil
   "If non-nil, `diff-mode' buffers default to being read-only."
-  :type 'boolean
-  :group 'diff-mode)
+  :type 'boolean)
 
 (defcustom diff-jump-to-old-file nil
   "Non-nil means `diff-goto-source' jumps to the old file.
 Else, it jumps to the new file."
-  :type 'boolean
-  :group 'diff-mode)
+  :type 'boolean)
 
 (defcustom diff-update-on-the-fly t
   "Non-nil means hunk headers are kept up-to-date on-the-fly.
@@ -82,19 +80,21 @@ need to be kept consistent with the actual diff.  This can
 either be done on the fly (but this sometimes interacts poorly with the
 undo mechanism) or whenever the file is written (can be slow
 when editing big diffs)."
-  :type 'boolean
-  :group 'diff-mode)
+  :type 'boolean)
 
 (defcustom diff-advance-after-apply-hunk t
   "Non-nil means `diff-apply-hunk' will move to the next hunk after applying."
-  :type 'boolean
-  :group 'diff-mode)
+  :type 'boolean)
 
 (defcustom diff-mode-hook nil
   "Run after setting up the `diff-mode' major mode."
   :type 'hook
-  :options '(diff-delete-empty-files diff-make-unified)
-  :group 'diff-mode)
+  :options '(diff-delete-empty-files diff-make-unified))
+
+(defcustom diff-font-lock-refine t
+  "If non-nil, font-lock highlighting includes hunk refinement."
+  :version "27.1"
+  :type 'boolean)
 
 (defvar diff-vc-backend nil
   "The VC backend that created the current Diff buffer, if any.")
@@ -207,8 +207,7 @@ when editing big diffs)."
 
 (defcustom diff-minor-mode-prefix "\C-c="
   "Prefix key for `diff-minor-mode' commands."
-  :type '(choice (string "\e") (string "C-c=") string)
-  :group 'diff-mode)
+  :type '(choice (string "\e") (string "C-c=") string))
 
 (easy-mmode-defmap diff-minor-mode-map
   `((,diff-minor-mode-prefix . ,diff-mode-shared-map))
@@ -238,8 +237,7 @@ well."
     (((class color))
      :foreground "blue1" :weight bold)
     (t :weight bold))
-  "`diff-mode' face inherited by hunk and index header faces."
-  :group 'diff-mode)
+  "`diff-mode' face inherited by hunk and index header faces.")
 
 (defface diff-file-header
   '((((class color) (min-colors 88) (background light))
@@ -249,18 +247,15 @@ well."
     (((class color))
      :foreground "cyan" :weight bold)
     (t :weight bold))			; :height 1.3
-  "`diff-mode' face used to highlight file header lines."
-  :group 'diff-mode)
+  "`diff-mode' face used to highlight file header lines.")
 
 (defface diff-index
   '((t :inherit diff-file-header))
-  "`diff-mode' face used to highlight index header lines."
-  :group 'diff-mode)
+  "`diff-mode' face used to highlight index header lines.")
 
 (defface diff-hunk-header
   '((t :inherit diff-header))
-  "`diff-mode' face used to highlight hunk header lines."
-  :group 'diff-mode)
+  "`diff-mode' face used to highlight hunk header lines.")
 
 (defface diff-removed
   '((default
@@ -271,8 +266,7 @@ well."
      :background "#553333")
     (((class color))
      :foreground "red"))
-  "`diff-mode' face used to highlight removed lines."
-  :group 'diff-mode)
+  "`diff-mode' face used to highlight removed lines.")
 
 (defface diff-added
   '((default
@@ -283,40 +277,34 @@ well."
      :background "#335533")
     (((class color))
      :foreground "green"))
-  "`diff-mode' face used to highlight added lines."
-  :group 'diff-mode)
+  "`diff-mode' face used to highlight added lines.")
 
 (defface diff-changed
   '((t nil))
   "`diff-mode' face used to highlight changed lines."
-  :version "25.1"
-  :group 'diff-mode)
+  :version "25.1")
 
 (defface diff-indicator-removed
   '((t :inherit diff-removed))
   "`diff-mode' face used to highlight indicator of removed lines (-, <)."
-  :group 'diff-mode
   :version "22.1")
 (defvar diff-indicator-removed-face 'diff-indicator-removed)
 
 (defface diff-indicator-added
   '((t :inherit diff-added))
   "`diff-mode' face used to highlight indicator of added lines (+, >)."
-  :group 'diff-mode
   :version "22.1")
 (defvar diff-indicator-added-face 'diff-indicator-added)
 
 (defface diff-indicator-changed
   '((t :inherit diff-changed))
   "`diff-mode' face used to highlight indicator of changed lines."
-  :group 'diff-mode
   :version "22.1")
 (defvar diff-indicator-changed-face 'diff-indicator-changed)
 
 (defface diff-function
   '((t :inherit diff-header))
-  "`diff-mode' face used to highlight function names produced by \"diff -p\"."
-  :group 'diff-mode)
+  "`diff-mode' face used to highlight function names produced by \"diff -p\".")
 
 (defface diff-context
   '((((class color grayscale) (min-colors 88) (background light))
@@ -324,13 +312,11 @@ well."
     (((class color grayscale) (min-colors 88) (background dark))
      :foreground "#dddddd"))
   "`diff-mode' face used to highlight context and other side-information."
-  :version "25.1"
-  :group 'diff-mode)
+  :version "25.1")
 
 (defface diff-nonexistent
   '((t :inherit diff-file-header))
-  "`diff-mode' face used to highlight nonexistent files in recursive diffs."
-  :group 'diff-mode)
+  "`diff-mode' face used to highlight nonexistent files in recursive diffs.")
 
 (defconst diff-yank-handler '(diff-yank-function))
 (defun diff-yank-function (text)
@@ -409,7 +395,8 @@ and the face `diff-added' for added lines.")
     ("^\\(#\\)\\(.*\\)"
      (1 font-lock-comment-delimiter-face)
      (2 font-lock-comment-face))
-    ("^[^-=+*!<>#].*\n" (0 'diff-context))))
+    ("^[^-=+*!<>#].*\n" (0 'diff-context))
+    (,#'diff--font-lock-refined)))
 
 (defconst diff-font-lock-defaults
   '(diff-font-lock-keywords t nil nil nil (font-lock-multiline . nil)))
@@ -1964,8 +1951,7 @@ For use in `add-log-current-defun-function'."
     (((class color) (min-colors 88) (background dark))
      :background "#aaaa22")
     (t :inverse-video t))
-  "Face used for char-based changes shown by `diff-refine-hunk'."
-  :group 'diff-mode)
+  "Face used for char-based changes shown by `diff-refine-hunk'.")
 
 (defface diff-refine-removed
   '((default
@@ -1975,7 +1961,6 @@ For use in `add-log-current-defun-function'."
     (((class color) (min-colors 88) (background dark))
      :background "#aa2222"))
   "Face used for removed characters shown by `diff-refine-hunk'."
-  :group 'diff-mode
   :version "24.3")
 
 (defface diff-refine-added
@@ -1986,7 +1971,6 @@ For use in `add-log-current-defun-function'."
     (((class color) (min-colors 88) (background dark))
      :background "#22aa22"))
   "Face used for added characters shown by `diff-refine-hunk'."
-  :group 'diff-mode
   :version "24.3")
 
 (defun diff-refine-preproc ()
@@ -2013,59 +1997,99 @@ Return new point, if it was moved."
 (defun diff-refine-hunk ()
   "Highlight changes of hunk at point at a finer granularity."
   (interactive)
-  (require 'smerge-mode)
   (when (diff--some-hunks-p)
     (save-excursion
-      (diff-beginning-of-hunk t)
-      (let* ((start (point))
-             (style (diff-hunk-style))    ;Skips the hunk header as well.
-             (beg (point))
-             (props-c '((diff-mode . fine) (face diff-refine-changed)))
-             (props-r '((diff-mode . fine) (face diff-refine-removed)))
-             (props-a '((diff-mode . fine) (face diff-refine-added)))
-             ;; Be careful to go back to `start' so diff-end-of-hunk gets
-             ;; to read the hunk header's line info.
-             (end (progn (goto-char start) (diff-end-of-hunk) (point))))
+      (let ((beg (diff-beginning-of-hunk t))
+            ;; Be careful to start from the hunk header so diff-end-of-hunk
+            ;; gets to read the hunk header's line info.
+            (end (progn (diff-end-of-hunk) (point))))
+        (diff--refine-hunk beg end)))))
 
-        (remove-overlays beg end 'diff-mode 'fine)
+(defun diff--refine-hunk (start end)
+  (require 'smerge-mode)
+  (goto-char start)
+  (let* ((style (diff-hunk-style))      ;Skips the hunk header as well.
+         (beg (point))
+         (props-c '((diff-mode . fine) (face . diff-refine-changed)))
+         (props-r '((diff-mode . fine) (face . diff-refine-removed)))
+         (props-a '((diff-mode . fine) (face . diff-refine-added))))
 
-        (goto-char beg)
-        (pcase style
-          (`unified
-           (while (re-search-forward "^-" end t)
-             (let ((beg-del (progn (beginning-of-line) (point)))
-                   beg-add end-add)
-               (when (and (diff--forward-while-leading-char ?- end)
-                          ;; Allow for "\ No newline at end of file".
-                          (progn (diff--forward-while-leading-char ?\\ end)
-                                 (setq beg-add (point)))
-                          (diff--forward-while-leading-char ?+ end)
-                          (progn (diff--forward-while-leading-char ?\\ end)
-                                 (setq end-add (point))))
-                 (smerge-refine-regions beg-del beg-add beg-add end-add
-                                        nil #'diff-refine-preproc props-r props-a)))))
-          (`context
-           (let* ((middle (save-excursion (re-search-forward "^---")))
-                  (other middle))
-             (while (re-search-forward "^\\(?:!.*\n\\)+" middle t)
-               (smerge-refine-regions (match-beginning 0) (match-end 0)
-                                    (save-excursion
-                                      (goto-char other)
-                                      (re-search-forward "^\\(?:!.*\n\\)+" end)
-                                      (setq other (match-end 0))
-                                      (match-beginning 0))
-                                    other
-                                    (if diff-use-changed-face props-c)
-                                    #'diff-refine-preproc
-                                    (unless diff-use-changed-face props-r)
-                                    (unless diff-use-changed-face props-a)))))
-          (_ ;; Normal diffs.
-           (let ((beg1 (1+ (point))))
-             (when (re-search-forward "^---.*\n" end t)
-               ;; It's a combined add&remove, so there's something to do.
-               (smerge-refine-regions beg1 (match-beginning 0)
-                                    (match-end 0) end
-                                    nil #'diff-refine-preproc props-r props-a)))))))))
+    (remove-overlays beg end 'diff-mode 'fine)
+
+    (goto-char beg)
+    (pcase style
+      (`unified
+       (while (re-search-forward "^-" end t)
+         (let ((beg-del (progn (beginning-of-line) (point)))
+               beg-add end-add)
+           (when (and (diff--forward-while-leading-char ?- end)
+                      ;; Allow for "\ No newline at end of file".
+                      (progn (diff--forward-while-leading-char ?\\ end)
+                             (setq beg-add (point)))
+                      (diff--forward-while-leading-char ?+ end)
+                      (progn (diff--forward-while-leading-char ?\\ end)
+                             (setq end-add (point))))
+             (smerge-refine-regions beg-del beg-add beg-add end-add
+                                    nil #'diff-refine-preproc props-r props-a)))))
+      (`context
+       (let* ((middle (save-excursion (re-search-forward "^---")))
+              (other middle))
+         (while (re-search-forward "^\\(?:!.*\n\\)+" middle t)
+           (smerge-refine-regions (match-beginning 0) (match-end 0)
+                                  (save-excursion
+                                    (goto-char other)
+                                    (re-search-forward "^\\(?:!.*\n\\)+" end)
+                                    (setq other (match-end 0))
+                                    (match-beginning 0))
+                                  other
+                                  (if diff-use-changed-face props-c)
+                                  #'diff-refine-preproc
+                                  (unless diff-use-changed-face props-r)
+                                  (unless diff-use-changed-face props-a)))))
+      (_ ;; Normal diffs.
+       (let ((beg1 (1+ (point))))
+         (when (re-search-forward "^---.*\n" end t)
+           ;; It's a combined add&remove, so there's something to do.
+           (smerge-refine-regions beg1 (match-beginning 0)
+                                  (match-end 0) end
+                                  nil #'diff-refine-preproc props-r props-a)))))))
+
+(defun diff--font-lock-refined (max)
+  "Apply hunk refinement from font-lock."
+  (when diff-font-lock-refine
+    (when (get-char-property (point) 'diff--font-lock-refined)
+      ;; Refinement works over a complete hunk, whereas font-lock limits itself
+      ;; to highlighting smallish chunks between point..max, so we may be
+      ;; called N times for a large hunk in which case we don't want to
+      ;; rehighlight that hunk N times (especially since each highlighting
+      ;; of a large hunk can itself take a long time, adding insult to injury).
+      ;; So, after refining a hunk (including a failed attempt), we place an
+      ;; overlay over the whole hunk to mark it as refined, to avoid redoing
+      ;; the job redundantly when asked to highlight subsequent parts of the
+      ;; same hunk.
+      (goto-char (next-single-char-property-change
+                  (point) 'diff--font-lock-refined nil max)))
+    (let* ((min (point))
+           (beg (or (ignore-errors (diff-beginning-of-hunk))
+                    (ignore-errors (diff-hunk-next) (point))
+                    max)))
+      (while (< beg max)
+        (let ((end
+               (save-excursion (goto-char beg) (diff-end-of-hunk) (point))))
+          (if (< end min) (setq beg min))
+          (unless (or (< end beg)
+                      (get-char-property beg 'diff--font-lock-refined))
+            (diff--refine-hunk beg end)
+            (let ((ol (make-overlay beg end)))
+              (overlay-put ol 'diff--font-lock-refined t)
+              (overlay-put ol 'evaporate t)
+              (overlay-put ol 'modification-hooks
+                           '(diff--font-lock-refine--refresh))))
+          (goto-char (max beg end))
+          (setq beg (or (ignore-errors (diff-hunk-next) (point)) max)))))))
+
+(defun diff--font-lock-refine--refresh (ol _after _beg _end &optional _len)
+  (delete-overlay ol))
 
 (defun diff-undo (&optional arg)
   "Perform `undo', ignoring the buffer's read-only status."
