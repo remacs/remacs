@@ -359,6 +359,13 @@ was called."
   (lambda (&rest args2)
     (apply fun (append args args2))))
 
+(defun zerop (number)
+  "Return t if NUMBER is zero."
+  ;; Used to be in C, but it's pointless since (= 0 n) is faster anyway because
+  ;; = has a byte-code.
+  (declare (compiler-macro (lambda (_) `(= 0 ,number))))
+  (= 0 number))
+
 
 ;;;; List functions.
 
@@ -547,13 +554,6 @@ If N is omitted or nil, remove the last element."
 	 (progn
 	   (if (> n 0) (setcdr (nthcdr (- (1- m) n) list) nil))
 	   list))))
-
-(defun zerop (number)
-  "Return t if NUMBER is zero."
-  ;; Used to be in C, but it's pointless since (= 0 n) is faster anyway because
-  ;; = has a byte-code.
-  (declare (compiler-macro (lambda (_) `(= 0 ,number))))
-  (= 0 number))
 
 (defun proper-list-p (object)
   "Return OBJECT's length if it is a proper list, nil otherwise.
