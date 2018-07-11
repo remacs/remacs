@@ -50,16 +50,19 @@ convention; at the level of cons cells, the @sc{car} and @sc{cdr}
 slots have similar properties).  Hence, the @sc{cdr} slot of each cons
 cell in a list refers to the following cons cell.
 
+@cindex proper list
 @cindex true list
   Also by convention, the @sc{cdr} of the last cons cell in a list is
 @code{nil}.  We call such a @code{nil}-terminated structure a
-@dfn{true list}.  In Emacs Lisp, the symbol @code{nil} is both a
-symbol and a list with no elements.  For convenience, the symbol
-@code{nil} is considered to have @code{nil} as its @sc{cdr} (and also
-as its @sc{car}).
+@dfn{proper list}@footnote{It is sometimes also referred to as a
+@dfn{true list}, but we generally do not use this terminology in this
+manual.}.  In Emacs Lisp, the symbol @code{nil} is both a symbol and a
+list with no elements.  For convenience, the symbol @code{nil} is
+considered to have @code{nil} as its @sc{cdr} (and also as its
+@sc{car}).
 
-  Hence, the @sc{cdr} of a true list is always a true list.  The
-@sc{cdr} of a nonempty true list is a true list containing all the
+  Hence, the @sc{cdr} of a proper list is always a proper list.  The
+@sc{cdr} of a nonempty proper list is a proper list containing all the
 elements except the first.
 
 @cindex dotted list
@@ -71,10 +74,10 @@ Pair Notation}).  There is one other possibility: some cons cell's
 @sc{cdr} could point to one of the previous cons cells in the list.
 We call that structure a @dfn{circular list}.
 
-  For some purposes, it does not matter whether a list is true,
+  For some purposes, it does not matter whether a list is proper,
 circular or dotted.  If a program doesn't look far enough down the
 list to see the @sc{cdr} of the final cons cell, it won't care.
-However, some functions that operate on lists demand true lists and
+However, some functions that operate on lists demand proper lists and
 signal errors if given a dotted list.  Most functions that try to find
 the end of a list enter infinite loops if given a circular list.
 
@@ -522,7 +525,7 @@ object.  The final argument is not copied or converted; it becomes the
 is itself a list, then its elements become in effect elements of the
 result list.  If the final element is not a list, the result is a
 dotted list since its final @sc{cdr} is not @code{nil} as required
-in a true list.
+in a proper list (@pxref{Cons Cells}).
 @end defun
 
   Here is an example of using @code{append}:
