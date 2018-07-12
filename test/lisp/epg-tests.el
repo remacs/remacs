@@ -30,8 +30,19 @@
   (expand-file-name "data/epg" (getenv "EMACS_TEST_DIRECTORY"))
   "Directory containing epg test data.")
 
+(defconst epg-tests--config-program-alist
+  ;; The default `epg-config--program-alist' requires gpg2 2.1 or
+  ;; greater due to some practical problems with pinentry.  But the
+  ;; tests here all work fine with 2.0 as well.
+  (let ((prog-alist (copy-sequence epg-config--program-alist)))
+    (setf (alist-get "gpg2"
+                     (alist-get 'OpenPGP prog-alist)
+                     nil nil #'equal)
+          "2.0")
+    prog-alist))
+
 (defun epg-tests-find-usable-gpg-configuration (&optional _require-passphrase)
-  (epg-find-configuration 'OpenPGP 'no-cache))
+  (epg-find-configuration 'OpenPGP 'no-cache epg-tests--config-program-alist))
 
 (defun epg-tests-passphrase-callback (_c _k _d)
   ;; Need to create a copy here, since the string will be wiped out
