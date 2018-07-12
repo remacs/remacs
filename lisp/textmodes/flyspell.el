@@ -137,7 +137,8 @@ This variable specifies how far to search to find such a duplicate.
 (defcustom flyspell-persistent-highlight t
   "Non-nil means misspelled words remain highlighted until corrected.
 If this variable is nil, only the most recently detected misspelled word
-is highlighted."
+is highlighted, and the highlight is turned off as soon as point moves
+off the misspelled word."
   :group 'flyspell
   :type 'boolean)
 
