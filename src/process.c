@@ -3898,7 +3898,7 @@ usage: (make-network-process &rest ARGS)  */)
   CHECK_STRING (name);
 
   /* :local ADDRESS or :remote ADDRESS */
-  if (!NILP (server))
+  if (NILP (server))
     address = Fplist_get (contact, QCremote);
   else
     address = Fplist_get (contact, QClocal);
