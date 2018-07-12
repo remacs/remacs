@@ -317,6 +317,39 @@ pub fn preceding_char() -> EmacsInt {
     EmacsInt::from(buffer_ref.fetch_char(pos))
 }
 
+/// Return character in current buffer preceding position POS.
+/// POS is an integer or a marker and defaults to point.
+/// If POS is out of range, the value is nil.
+#[lisp_fn(min = "0")]
+pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
+    let mut buffer_ref = ThreadState::current_buffer();
+    let pos_byte: isize;
+
+    if pos.is_nil() {
+        pos_byte = buffer_ref.pt_byte;
+    } else if let Some(m) = pos.as_marker() {
+        pos_byte = m.bytepos_or_error();
+        if pos_byte <= buffer_ref.begv_byte || pos_byte > buffer_ref.zv_byte {
+            return None;
+        }
+    } else {
+        let p = pos.as_fixnum()
+            .unwrap_or_else(|| wrong_type!(Qinteger_or_marker_p, pos)) as isize;
+        if p <= buffer_ref.begv || p > buffer_ref.zv() {
+            return None;
+        }
+        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+    }
+
+    if buffer_ref.multibyte_characters_enabled() {
+        Some(EmacsInt::from(
+            buffer_ref.fetch_char(unsafe { dec_pos(pos_byte) }),
+        ))
+    } else {
+        Some(EmacsInt::from(buffer_ref.fetch_byte(pos_byte - 1)))
+    }
+}
+
 /// Return character in current buffer at position POS.
 /// POS is an integer or a marker and defaults to point.
 /// If POS is out of range, the value is nil.
@@ -326,8 +359,8 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
     if pos.is_nil() {
         pos = LispObject::from(point());
     }
-    if pos.is_marker() {
-        let pos_byte = pos.as_marker().unwrap().bytepos_or_error();
+    if let Some(m) = pos.as_marker() {
+        let pos_byte = m.bytepos_or_error();
         // Note that this considers the position in the current buffer,
         // even if the marker is from another buffer.
         if pos_byte < buffer_ref.begv_byte || pos_byte >= buffer_ref.zv_byte {

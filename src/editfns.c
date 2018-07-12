@@ -741,51 +741,6 @@ is in effect, in which case it is less.  */)
 }
 
 
-DEFUN ("char-before", Fchar_before, Schar_before, 0, 1, 0,
-       doc: /* Return character in current buffer preceding position POS.
-POS is an integer or a marker and defaults to point.
-If POS is out of range, the value is nil.  */)
-  (Lisp_Object pos)
-{
-  register Lisp_Object val;
-  register ptrdiff_t pos_byte;
-
-  if (NILP (pos))
-    {
-      pos_byte = PT_BYTE;
-      XSETFASTINT (pos, PT);
-    }
-
-  if (MARKERP (pos))
-    {
-      pos_byte = marker_byte_position (pos);
-
-      if (pos_byte <= BEGV_BYTE || pos_byte > ZV_BYTE)
-	return Qnil;
-    }
-  else
-    {
-      CHECK_NUMBER_COERCE_MARKER (pos);
-
-      if (XINT (pos) <= BEGV || XINT (pos) > ZV)
-	return Qnil;
-
-      pos_byte = CHAR_TO_BYTE (XINT (pos));
-    }
-
-  if (!NILP (BVAR (current_buffer, enable_multibyte_characters)))
-    {
-      DEC_POS (pos_byte);
-      XSETFASTINT (val, FETCH_CHAR (pos_byte));
-    }
-  else
-    {
-      pos_byte--;
-      XSETFASTINT (val, FETCH_BYTE (pos_byte));
-    }
-   return val;
-}
-
 DEFUN ("user-login-name", Fuser_login_name, Suser_login_name, 0, 1, 0,
        doc: /* Return the name under which the user logged in, as a string.
 This is based on the effective uid, not the real uid.
@@ -4521,7 +4476,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Spoint_min_marker);
   defsubr (&Spoint_max_marker);
 
-  defsubr (&Schar_before);
   defsubr (&Sinsert);
   defsubr (&Sinsert_before_markers);
   defsubr (&Sinsert_and_inherit);
