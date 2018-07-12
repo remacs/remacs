@@ -559,17 +559,6 @@ Return nil if WINDOW has no previous sibling.  */)
   return decode_valid_window (window)->prev;
 }
 
-DEFUN ("window-use-time", Fwindow_use_time, Swindow_use_time, 0, 1, 0,
-       doc: /* Return the use time of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-The window with the highest use time is the most recently selected
-one.  The window with the lowest use time is the least recently
-selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_live_window (window)->use_time);
-}
-
 DEFUN ("window-pixel-width", Fwindow_pixel_width, Swindow_pixel_width, 0, 1, 0,
        doc: /* Return the width of window WINDOW in pixels.
 WINDOW must be a valid window and defaults to the selected one.
@@ -7281,7 +7270,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_next_sibling);
   defsubr (&Swindow_prev_sibling);
-  defsubr (&Swindow_use_time);
   defsubr (&Swindow_pixel_width);
   defsubr (&Swindow_pixel_height);
   defsubr (&Swindow_pixel_width_before_size_change);
