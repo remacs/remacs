@@ -1068,6 +1068,8 @@ syms_of_threads (void)
 
       staticpro (&last_thread_error);
       last_thread_error = Qnil;
+
+      Fprovide (intern_c_string ("threads"), Qnil);
     }
 
   DEFSYM (Qthreadp, "threadp");
