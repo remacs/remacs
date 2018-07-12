@@ -408,11 +408,15 @@ dictionary.
 @cindex mode, Flyspell
 @findex flyspell-mode
   Flyspell mode is a minor mode that performs automatic spell-checking
-as you type.  When it finds a word that it does not recognize, it
-highlights that word.  Type @kbd{M-x flyspell-mode} to toggle Flyspell
-mode in the current buffer.  To enable Flyspell mode in all text mode
-buffers, add @code{flyspell-mode} to @code{text-mode-hook}.
-@xref{Hooks}.
+of the text you type as you type it.  When it finds a word that it
+does not recognize, it highlights that word.  Type @kbd{M-x
+flyspell-mode} to toggle Flyspell mode in the current buffer.  To
+enable Flyspell mode in all text mode buffers, add
+@code{flyspell-mode} to @code{text-mode-hook}.  @xref{Hooks}.  Note
+that, as Flyspell mode needs to check each word across which you move,
+it will slow down cursor motion and scrolling commands.  It also
+doesn't automatically check the text you didn't type or move across;
+use @code{flyspell-region} or @code{flyspell-buffer} for that.
 
 @findex flyspell-correct-word
 @findex flyspell-auto-correct-word

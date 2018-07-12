@@ -31,10 +31,10 @@
 ;;
 ;; To enable Flyspell in text representing computer programs, type
 ;; M-x flyspell-prog-mode.
-;; In that mode only text inside comments is checked.
+;; In that mode only text inside comments and strings is checked.
 ;;
 ;; Some user variables control the behavior of flyspell.  They are
-;; those defined under the `User variables' comment.
+;; those defined under the `User configuration' comment.
 
 ;;; Code:
 
