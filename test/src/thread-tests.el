@@ -253,31 +253,32 @@
      (string= "hi bob"
 	      (condition-name (make-condition-variable (make-mutex)
 						       "hi bob")))))
-(defun call-error ()
+
+(defun threads-call-error ()
   "Call `error'."
   (error "Error is called"))
 
 ;; This signals an error internally; the error should be caught.
-(defun thread-custom ()
-  (defcustom thread-custom-face 'highlight
+(defun threads-custom ()
+  (defcustom threads-custom-face 'highlight
     "Face used for thread customizations."
     :type 'face
     :group 'widget-faces))
 
-(ert-deftest thread-errors ()
+(ert-deftest threads-errors ()
   "Test what happens when a thread signals an error."
   (skip-unless (featurep 'threads))
   (let (th1 th2)
-    (setq th1 (make-thread #'call-error "call-error"))
+    (setq th1 (make-thread #'threads-call-error "call-error"))
     (should (threadp th1))
     (while (thread-alive-p th1)
       (thread-yield))
     (should (equal (thread-last-error)
                    '(error "Error is called")))
-    (setq th2 (make-thread #'thread-custom "thread-custom"))
+    (setq th2 (make-thread #'threads-custom "threads-custom"))
     (should (threadp th2))))
 
-(ert-deftest thread-sticky-point ()
+(ert-deftest threads-sticky-point ()
   "Test bug #25165 with point movement in cloned buffer."
   (skip-unless (featurep 'threads))
   (with-temp-buffer
@@ -288,7 +289,7 @@
     (sit-for 1)
     (should (= (point) 21))))
 
-(ert-deftest thread-signal-early ()
+(ert-deftest threads-signal-early ()
   "Test signaling a thread as soon as it is started by the OS."
   (skip-unless (featurep 'threads))
   (let ((thread
