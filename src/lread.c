@@ -2677,7 +2677,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
   int c;
   bool uninterned_symbol = false;
   bool multibyte;
-  char stackbuf[MAX_ALLOCA];
+  char stackbuf[128];  /* Small, as read1 is recursive (Bug#31995).  */
   current_thread->stack_top = stackbuf;
 
   *pch = 0;
