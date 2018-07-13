@@ -1002,13 +1002,9 @@ protocol."
         (insert
 	 (propertize "Certificate information" 'face 'underline) "\n"
 	 "  Issued by:"
-	 (nsm-certificate-part (plist-get cert :issuer) "CN" t) "\n"
+         (plist-get cert :issuer) "\n"
 	 "  Issued to:"
-	 (or (nsm-certificate-part (plist-get cert :subject) "O")
-	     (nsm-certificate-part (plist-get cert :subject) "OU" t))
-	 "\n"
-	 "  Hostname:"
-	 (nsm-certificate-part (plist-get cert :subject) "CN" t) "\n")
+	 (plist-get cert :subject) "\n")
 	(when (and (plist-get cert :public-key-algorithm)
 		   (plist-get cert :signature-algorithm))
 	  (insert "  Public key:" (plist-get cert :public-key-algorithm) "\n")
@@ -1036,37 +1032,6 @@ protocol."
 	(while (re-search-forward "^[^:]+:" nil t)
 	  (insert (make-string (- 22 (current-column)) ? )))
 	(buffer-string)))))
-
-(defun nsm-certificate-part (string part &optional full)
-  (let ((part (cadr (assoc part (nsm-parse-subject string)))))
-    (cond
-     (part part)
-     (full string)
-     (t nil))))
-
-(defun nsm-parse-subject (string)
-  (with-temp-buffer
-    (insert string)
-    (goto-char (point-min))
-    (let ((start (point))
-	  (result nil))
-      (while (not (eobp))
-	(push (replace-regexp-in-string
-	       "[\\]\\(.\\)" "\\1"
-	       (buffer-substring start
-				 (if (re-search-forward "[^\\]," nil 'move)
-				     (1- (point))
-				   (point))))
-	      result)
-	(setq start (point)))
-      (mapcar
-       (lambda (elem)
-	 (let ((pos (cl-position ?= elem)))
-	   (if pos
-	       (list (substring elem 0 pos)
-		     (substring elem (1+ pos)))
-	     elem)))
-       (nreverse result)))))
 
 (defun nsm-level (symbol)
   "Return a numerical level for SYMBOL for easier comparison."
