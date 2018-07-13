@@ -96,6 +96,11 @@ when editing big diffs)."
   :version "27.1"
   :type 'boolean)
 
+(defcustom diff-font-lock-prettify nil
+  "If non-nil, font-lock will try and make the format prettier."
+  :version "27.1"
+  :type 'boolean)
+
 (defvar diff-vc-backend nil
   "The VC backend that created the current Diff buffer, if any.")
 
@@ -396,6 +401,7 @@ and the face `diff-added' for added lines.")
      (1 font-lock-comment-delimiter-face)
      (2 font-lock-comment-face))
     ("^[^-=+*!<>#].*\n" (0 'diff-context))
+    (,#'diff--font-lock-prettify)
     (,#'diff--font-lock-refined)))
 
 (defconst diff-font-lock-defaults
@@ -2194,6 +2200,35 @@ fixed, visit it in a buffer."
 					     "`%s'" (buffer-name buf)))
 			      modified-buffers ", "))
 	(message "No trailing whitespace to delete.")))))
+
+
+;;; Prettifying from font-lock
+
+(defun diff--font-lock-prettify (limit)
+  ;; Mimicks the output of Magit's diff.
+  ;; FIXME: This has only been tested with Git's diff output.
+  (when diff-font-lock-prettify
+    (while (re-search-forward "^diff " limit t)
+      (when (save-excursion
+                  (forward-line 0)
+                  (looking-at (eval-when-compile
+                                (concat "diff.*\n"
+                                        "\\(?:\\(?:new file\\|deleted\\).*\n\\)?"
+                                        "\\(?:index.*\n\\)?"
+                                        "--- \\(?:/dev/null\\|a/\\(.*\\)\\)\n"
+                                        "\\+\\+\\+ \\(?:/dev/null\\|b/\\(.*\\)\\)\n"))))
+        (put-text-property (match-beginning 0)
+                           (or (match-beginning 2) (match-beginning 1))
+                           'display (propertize
+                                     (cond
+                                      ((null (match-beginning 1)) "new file  ")
+                                      ((null (match-beginning 2)) "deleted   ")
+                                      (t                          "modified  "))
+                                     'face '(diff-file-header diff-header)))
+        (unless (match-beginning 2)
+          (put-text-property (match-end 1) (1- (match-end 0))
+                             'display "")))))
+  nil)
 
 ;;; Support for converting a diff to diff3 markers via `wiggle'.
 

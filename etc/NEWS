@@ -212,6 +212,13 @@ navigation and editing of large files.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** diff-mode
+*** Hunks are now automatically refined by default
+To disable it, set the new defcustom 'diff-font-lock-refine' to nil.
+
+*** File headers can be shortened, mimicking Magit's diff format
+To enable it, set the new defcustom 'diff-font-lock-prettify to t.
+
 ** Browse-url
 
 *** The function 'browse-url-emacs' can now visit a URL in selected window.
