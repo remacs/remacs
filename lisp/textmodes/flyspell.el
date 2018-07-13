@@ -31,10 +31,10 @@
 ;;
 ;; To enable Flyspell in text representing computer programs, type
 ;; M-x flyspell-prog-mode.
-;; In that mode only text inside comments is checked.
+;; In that mode only text inside comments and strings is checked.
 ;;
 ;; Some user variables control the behavior of flyspell.  They are
-;; those defined under the `User variables' comment.
+;; those defined under the `User configuration' comment.
 
 ;;; Code:
 
@@ -137,7 +137,8 @@ This variable specifies how far to search to find such a duplicate.
 (defcustom flyspell-persistent-highlight t
   "Non-nil means misspelled words remain highlighted until corrected.
 If this variable is nil, only the most recently detected misspelled word
-is highlighted."
+is highlighted, and the highlight is turned off as soon as point moves
+off the misspelled word."
   :group 'flyspell
   :type 'boolean)
 

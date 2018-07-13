@@ -3905,7 +3905,7 @@ usage: (make-network-process &rest ARGS)  */)
   CHECK_STRING (name);
 
   /* :local ADDRESS or :remote ADDRESS */
-  if (!NILP (server))
+  if (NILP (server))
     address = Fplist_get (contact, QCremote);
   else
     address = Fplist_get (contact, QClocal);
@@ -4612,12 +4612,11 @@ is nil, from any process) before the timeout expired.  */)
 	{
 	  Lisp_Object proc_thread_name = XTHREAD (proc->thread)->name;
 
-	  if (STRINGP (proc_thread_name))
-	    error ("Attempt to accept output from process %s locked to thread %s",
-		   SDATA (proc->name), SDATA (proc_thread_name));
-	  else
-	    error ("Attempt to accept output from process %s locked to thread %p",
-		   SDATA (proc->name), XTHREAD (proc->thread));
+	  error ("Attempt to accept output from process %s locked to thread %s",
+		 SDATA (proc->name),
+		 STRINGP (proc_thread_name)
+		 ? SDATA (proc_thread_name)
+		 : SDATA (Fprin1_to_string (proc->thread, Qt)));
 	}
     }
   else
