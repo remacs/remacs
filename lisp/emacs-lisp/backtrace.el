@@ -55,7 +55,8 @@ order to debug the code that does fontification."
   "Target length for lines in Backtrace buffers.
 Backtrace mode will attempt to abbreviate printing of backtrace
 frames to make them shorter than this, but success is not
-guaranteed."
+guaranteed.  If set to nil or zero, Backtrace mode will not
+abbreviate the forms it prints."
   :type 'integer
   :group 'backtrace
   :version "27.1")
@@ -146,6 +147,9 @@ fontifies.")
 
 (defun backtrace--match-ellipsis-in-string (bound)
   ;; Fontify ellipses within strings as buttons.
+  ;; This is necessary because ellipses are text property buttons
+  ;; instead of overlay buttons, which is done because there could
+  ;; be a large number of them.
   (when (re-search-forward "\\(\\.\\.\\.\\)\"" bound t)
     (and (get-text-property (- (point) 2) 'cl-print-ellipsis)
          (get-text-property (- (point) 3) 'cl-print-ellipsis)
@@ -187,6 +191,7 @@ This is commonly used to recompute `backtrace-frames'.")
     (define-key map "\C-m" 'backtrace-help-follow-symbol)
     (define-key map "+" 'backtrace-pretty-print)
     (define-key map "-" 'backtrace-collapse)
+    (define-key map "." 'backtrace-expand-ellipses)
     (define-key map [follow-link] 'mouse-face)
     (define-key map [mouse-2] 'mouse-select-window)
     map)
@@ -207,9 +212,7 @@ This is commonly used to recompute `backtrace-frames'.")
 ;; backtrace-form: A value applied to each printed representation of a
 ;;   top-level s-expression, which needs to be different for sexps
 ;;   printed adjacent to each other, so the limits can be quickly
-;;   found for pretty-printing.  The value chosen is a list contining
-;;   the values of print-level and print-length used to print the
-;;   sexp, and those values are used when expanding ellipses.
+;;   found for pretty-printing.
 
 (defsubst backtrace-get-index (&optional pos)
   "Return the index of the backtrace frame at POS.
@@ -423,9 +426,6 @@ Reprint the frame with the new view plist."
 
 (defun backtrace-expand-ellipsis (button)
   "Expand display of the elided form at BUTTON."
-  ;; TODO a command to expand all ... in form at point
-  ;; with argument, don't bind print-level, length??
-  ;; Enable undo so there's a way to go back?
   (interactive)
   (goto-char (button-start button))
   (unless (get-text-property (point) 'cl-print-ellipsis)
@@ -437,25 +437,44 @@ Reprint the frame with the new view plist."
          (begin (previous-single-property-change end 'cl-print-ellipsis))
          (value (get-text-property begin 'cl-print-ellipsis))
          (props (backtrace-get-text-properties begin))
-         (tag (backtrace-get-form begin))
-         (length (nth 0 tag))  ; TODO should this work with a target char count
-         (level (nth 1 tag))   ; like backtrace-print-to-string?
          (inhibit-read-only t))
     (backtrace--with-output-variables (backtrace-get-view)
-      (let ((print-level level)
-            (print-length length))
-        (delete-region begin end)
-        (cl-print-expand-ellipsis value (current-buffer))
-        (setq end (point))
-        (goto-char begin)
-        (while (< (point) end)
-          (let ((next (next-single-property-change (point) 'cl-print-ellipsis
-                                                   nil end)))
-            (when (get-text-property (point) 'cl-print-ellipsis)
-              (make-text-button (point) next :type 'backtrace-ellipsis))
-            (goto-char next)))
-        (goto-char begin)
-        (add-text-properties begin end props)))))
+      (delete-region begin end)
+      (insert (cl-print-to-string-with-limit #'cl-print-expand-ellipsis value
+                                          backtrace-line-length))
+      (setq end (point))
+      (goto-char begin)
+      (while (< (point) end)
+        (let ((next (next-single-property-change (point) 'cl-print-ellipsis
+                                                 nil end)))
+          (when (get-text-property (point) 'cl-print-ellipsis)
+            (make-text-button (point) next :type 'backtrace-ellipsis))
+          (goto-char next)))
+      (goto-char begin)
+      (add-text-properties begin end props))))
+
+(defun backtrace-expand-ellipses (&optional no-limit)
+  "Expand display of all \"...\"s in the backtrace frame at point.
+\\<backtrace-mode-map>
+Each ellipsis will be limited to `backtrace-line-length'
+characters in its expansion.  With optional prefix argument
+NO-LIMIT, do not limit the number of characters.  Note that with
+or without the argument, using this command can result in very
+long lines and very poor display performance.  If this happens
+and is a problem, use `\\[revert-buffer]' to return to the
+initial state of the Backtrace buffer."
+  (interactive "P")
+  (save-excursion
+    (let ((start (backtrace-get-frame-start))
+          (end (backtrace-get-frame-end))
+          (backtrace-line-length (unless no-limit backtrace-line-length)))
+      (goto-char end)
+      (while (> (point) start)
+        (let ((next (previous-single-property-change (point) 'cl-print-ellipsis
+                                                     nil start)))
+          (when (get-text-property (point) 'cl-print-ellipsis)
+            (push-button (point)))
+          (goto-char next))))))
 
 (defun backtrace-pretty-print ()
   "Pretty-print the top level s-expression at point."
@@ -605,8 +624,7 @@ line and recenter window line accordingly."
   "Return a printed representation of OBJ formatted for backtraces.
 Attempt to get the length of the returned string under LIMIT
 charcters with appropriate settings of `print-level' and
-`print-length.'  Attach the settings used with the text property
-`backtrace-form'.  LIMIT defaults to `backtrace-line-length'."
+`print-length.'  LIMIT defaults to `backtrace-line-length'."
   (backtrace--with-output-variables backtrace-view
     (backtrace--print-to-string obj limit)))
 
@@ -614,36 +632,20 @@ charcters with appropriate settings of `print-level' and
   ;; This is for use by callers who wrap the call with
   ;; backtrace--with-output-variables.
   (setq limit (or limit backtrace-line-length))
-  (let* ((length 50)  ; (/ backtrace-line-length 100) ??
-         (level (truncate (log limit)))
-         (delta (truncate (/ length level))))
-    (with-temp-buffer
-       (catch 'done
-         (while t
-           (erase-buffer)
-           (let ((standard-output (current-buffer))
-                 (print-length length)
-                 (print-level level))
-             (backtrace--print sexp))
-           ;; Stop when either the level is too low or the sexp is
-           ;; successfully printed in the space allowed.
-           (when (or (< (- (point-max) (point-min)) limit) (= level 2))
-             (throw 'done nil))
-           (cl-decf level)
-           (cl-decf length delta)))
-       (put-text-property (point-min) (point)
-                          'backtrace-form (list length level))
-       ;; Make buttons from all the "..."s.
-       ;; TODO should this be under control of :do-ellipses in the view
-       ;; plist?
-       (goto-char (point-min))
-       (while (< (point) (point-max))
-         (let ((end (next-single-property-change (point) 'cl-print-ellipsis
-                                                 nil (point-max))))
-           (when (get-text-property (point) 'cl-print-ellipsis)
-             (make-text-button (point) end :type 'backtrace-ellipsis))
-           (goto-char end)))
-       (buffer-string))))
+  (with-temp-buffer
+    (insert (cl-print-to-string-with-limit #'backtrace--print sexp limit))
+    ;; Add a unique backtrace-form property.
+    (put-text-property (point-min) (point) 'backtrace-form (gensym))
+    ;; Make buttons from all the "..."s.  Since there might be many of
+    ;; them, use text property buttons.
+    (goto-char (point-min))
+    (while (< (point) (point-max))
+      (let ((end (next-single-property-change (point) 'cl-print-ellipsis
+                                              nil (point-max))))
+        (when (get-text-property (point) 'cl-print-ellipsis)
+          (make-text-button (point) end :type 'backtrace-ellipsis))
+        (goto-char end)))
+    (buffer-string)))
 
 (defun backtrace-print-frame (frame view)
   "Insert a backtrace FRAME at point formatted according to VIEW.
@@ -727,14 +729,14 @@ Print them only if :show-locals is non-nil in the VIEW plist."
           (insert "\n")))
       (put-text-property beg (point) 'backtrace-section 'locals))))
 
-(defun backtrace--print (obj)
-  "Attempt to print OBJ using `backtrace-print-function'.
+(defun backtrace--print (obj &optional stream)
+  "Attempt to print OBJ to STREAM using `backtrace-print-function'.
 Fall back to `prin1' if there is an error."
   (condition-case err
-      (funcall backtrace-print-function obj)
+      (funcall backtrace-print-function obj stream)
     (error
      (message "Error in backtrace printer: %S" err)
-     (prin1 obj))))
+     (prin1 obj stream))))
 
 (defun backtrace-update-flags ()
   "Update the display of the flags in the backtrace frame at point."
@@ -805,8 +807,6 @@ followed by `backtrace-print-frame', once for each stack frame."
              backtrace-font-lock-keywords-1
              backtrace-font-lock-keywords-2)
             nil nil nil nil
-            ;; TODO This one doesn't look necessary:
-            ;; (font-lock-mark-block-function . mark-defun)
 	    (font-lock-syntactic-face-function
 	     . lisp-font-lock-syntactic-face-function))))
   (setq truncate-lines t)

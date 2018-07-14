@@ -524,5 +524,45 @@ node `(elisp)Output Variables'."
     (cl-prin1 object (current-buffer))
     (buffer-string)))
 
+;;;###autoload
+(defun cl-print-to-string-with-limit (print-function value limit)
+  "Return a string containing a printed representation of VALUE.
+Attempt to get the length of the returned string under LIMIT
+characters with appropriate settings of `print-level' and
+`print-length.'  Use PRINT-FUNCTION to print, which should take
+the arguments VALUE and STREAM and which should respect
+`print-length' and `print-level'.  LIMIT may be nil or zero in
+which case PRINT-FUNCTION will be called with `print-level' and
+`print-length' bound to nil.
+
+Use this function with `cl-prin1' to print an object,
+abbreviating it with ellipses to fit within a size limit.  Use
+this function with `cl-prin1-expand-ellipsis' to expand an
+ellipsis, abbreviating the expansion to stay within a size
+limit."
+  (setq limit (and (natnump limit)
+                   (not (zerop limit))
+                   limit))
+  ;; Since this is used by the debugger when stack space may be
+  ;; limited, if you increase print-level here, add more depth in
+  ;; call_debugger (bug#31919).
+  (let* ((print-length (when limit (min limit 50)))
+         (print-level (when limit (min 8 (truncate (log limit)))))
+         (delta (when limit
+                  (max 1 (truncate (/ print-length print-level))))))
+    (with-temp-buffer
+      (catch 'done
+        (while t
+          (erase-buffer)
+          (funcall print-function value (current-buffer))
+          ;; Stop when either print-level is too low or the value is
+          ;; successfully printed in the space allowed.
+          (when (or (not limit)
+                    (< (- (point-max) (point-min)) limit)
+                    (= print-level 2))
+            (throw 'done (buffer-string)))
+          (cl-decf print-level)
+          (cl-decf print-length delta))))))
+
 (provide 'cl-print)
 ;;; cl-print.el ends here

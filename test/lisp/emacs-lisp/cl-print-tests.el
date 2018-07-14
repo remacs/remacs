@@ -233,5 +233,41 @@
     (let ((print-circle t))
       (should (equal "(0 . #1=(0 . #1#))" (cl-prin1-to-string x))))))
 
+(ert-deftest cl-print-tests-print-to-string-with-limit ()
+  (let* ((thing10 (make-list 10 'a))
+         (thing100 (make-list 100 'a))
+         (thing10x10 (make-list 10 thing10))
+         (nested-thing (let ((val 'a))
+                         (dotimes (_i 20)
+                           (setq val (list val)))
+                         val))
+         ;; Make a consistent environment for this test.
+         (print-circle nil)
+         (print-level nil)
+         (print-length nil))
+
+    ;; Print something that fits in the space given.
+    (should (string= (cl-prin1-to-string thing10)
+                     (cl-print-to-string-with-limit #'cl-prin1 thing10 100)))
+
+    ;; Print something which needs to be abbreviated and which can be.
+    (should (< (length (cl-print-to-string-with-limit #'cl-prin1 thing100 100))
+               100
+               (length (cl-prin1-to-string thing100))))
+
+    ;; Print something resistant to easy abbreviation.
+    (should (string= (cl-prin1-to-string thing10x10)
+                     (cl-print-to-string-with-limit #'cl-prin1 thing10x10 100)))
+
+    ;; Print something which should be abbreviated even if the limit is large.
+    (should (< (length (cl-print-to-string-with-limit #'cl-prin1 nested-thing 1000))
+               (length (cl-prin1-to-string nested-thing))))
+
+    ;; Print with no limits.
+    (dolist (thing (list thing10 thing100 thing10x10 nested-thing))
+      (let ((rep (cl-prin1-to-string thing)))
+        (should (string= rep (cl-print-to-string-with-limit #'cl-prin1 thing 0)))
+        (should (string= rep (cl-print-to-string-with-limit #'cl-prin1 thing nil)))))))
+
 
 ;;; cl-print-tests.el ends here.

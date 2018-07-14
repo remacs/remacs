@@ -349,31 +349,73 @@ digit and replace with #[0-9]."
     (buffer-string)))
 
 (ert-deftest backtrace-tests--expand-ellipsis ()
-  "Backtrace buffers ellipsify large forms and can expand the ellipses."
+  "Backtrace buffers ellipsify large forms as buttons which expand the ellipses."
   ;; make a backtrace with an ellipsis
   ;; expand the ellipsis
   (ert-with-test-buffer (:name "variables")
     (let* ((print-level nil)
            (print-length nil)
-           (arg (let ((long (make-list 100 'a))
-                      (deep '(0 (1 (2 (3 (4 (5 (6 (7 (8 (9))))))))))))
-                  (setf (nth 1 long) deep)
-                  long))
+           (backtrace-line-length 300)
+           (arg (make-list 40 (make-string 10 ?a)))
            (results (backtrace-tests--result arg)))
       (backtrace-tests--make-backtrace arg)
       (backtrace-print)
 
-      ;; There should be two ellipses. Find and expand them.
+      ;; There should be an ellipsis. Find and expand it.
       (goto-char (point-min))
-      (search-forward "...")
-      (backward-char)
-      (push-button)
       (search-forward "...")
       (backward-char)
       (push-button)
 
       (should (string= (backtrace-tests--get-substring (point-min) (point-max))
                        results)))))
+
+(ert-deftest backtrace-tests--expand-ellipses ()
+  "Backtrace buffers ellipsify large forms and can expand the ellipses."
+  (ert-with-test-buffer (:name "variables")
+    (let* ((print-level nil)
+           (print-length nil)
+           (backtrace-line-length 300)
+           (arg (let ((outer (make-list 40 (make-string 10 ?a)))
+                      (nested (make-list 40 (make-string 10 ?b))))
+                  (setf (nth 39 nested) (make-list 40 (make-string 10 ?c)))
+                  (setf (nth 39 outer) nested)
+                  outer))
+           (results (backtrace-tests--result-with-locals arg)))
+
+      ;; Make a backtrace with local variables visible.
+      (backtrace-tests--make-backtrace arg)
+      (backtrace-print)
+      (backtrace-toggle-locals '(4))
+
+      ;; There should be two ellipses.
+      (goto-char (point-min))
+      (should (search-forward "..."))
+      (should (search-forward "..."))
+      (should-error (search-forward "..."))
+
+      ;; Expanding the last frame without argument should expand both
+      ;; ellipses, but the expansions will contain one ellipsis each.
+      (let ((buffer-len (- (point-max) (point-min))))
+        (goto-char (point-max))
+        (backtrace-backward-frame)
+        (backtrace-expand-ellipses)
+        (should (> (- (point-max) (point-min)) buffer-len))
+        (goto-char (point-min))
+        (should (search-forward "..."))
+        (should (search-forward "..."))
+        (should-error (search-forward "...")))
+
+      ;; Expanding with argument should remove all ellipses.
+      (goto-char (point-max))
+      (backtrace-backward-frame)
+      (backtrace-expand-ellipses '(4))
+      (goto-char (point-min))
+
+      (should-error (search-forward "..."))
+      (should (string= (backtrace-tests--get-substring (point-min) (point-max))
+                       results)))))
+
 
 (ert-deftest backtrace-tests--to-string ()
   "Backtraces can be produced as strings."
