@@ -23,6 +23,7 @@
 
 (require 'ert)
 (require 'epg)
+(require 'trace)
 
 (defvar epg-tests-context nil)
 
@@ -42,7 +43,19 @@
     prog-alist))
 
 (defun epg-tests-find-usable-gpg-configuration (&optional _require-passphrase)
-  (epg-find-configuration 'OpenPGP 'no-cache epg-tests--config-program-alist))
+  ;; Tracing for Bug#23561, but only do it once per run.
+  (if (get-buffer "*trace-output*")
+      (epg-find-configuration 'OpenPGP 'no-cache epg-tests--config-program-alist)
+    (dolist (fun '(epg-find-configuration
+                   executable-find
+                   epg-check-configuration
+                   epg-config--make-gpg-configuration))
+      (trace-function-background fun))
+    (prog1 (unwind-protect
+               (epg-find-configuration 'OpenPGP 'no-cache epg-tests--config-program-alist)
+             (untrace-all))
+      (princ (with-current-buffer "*trace-output*" (buffer-string))
+             #'external-debugging-output))))
 
 (defun epg-tests-passphrase-callback (_c _k _d)
   ;; Need to create a copy here, since the string will be wiped out
