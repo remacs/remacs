@@ -42,17 +42,34 @@
           "2.0")
     prog-alist))
 
+(defvar epg-tests--trace nil)
+
 (defun epg-tests-find-usable-gpg-configuration
     (&optional require-passphrase require-public-key)
   ;; Clear config cache because we may be using a different
   ;; program-alist.  We do want to update the cache, so that
   ;; `epg-make-context' can use our result.
   (setq epg--configurations nil)
-  (epg-find-configuration 'OpenPGP nil
-                          ;; The symmetric operations fail on Hydra
-                          ;; with gpg 2.0.
-                          (if (or (not require-passphrase) require-public-key)
-                              epg-tests--config-program-alist)))
+  ;; Tracing for Bug#23561, but only do it once per run.
+  (when epg-tests--trace
+    (dolist (fun '(epg-find-configuration
+                   executable-find
+                   epg-check-configuration
+                   epg-config--make-gpg-configuration))
+      (trace-function-background fun))
+    (setq epg-tests--trace nil))
+  (prog1 (unwind-protect
+             (epg-find-configuration
+              'OpenPGP nil
+              ;; The symmetric operations fail on Hydra
+              ;; with gpg 2.0.
+              (if (or (not require-passphrase) require-public-key)
+                  epg-tests--config-program-alist))
+           (untrace-all))
+    (when (get-buffer "*trace-output*")
+      (princ (with-current-buffer "*trace-output*" (prog1 (buffer-string)
+                                                     (erase-buffer)))
+             #'external-debugging-output))))
 
 (defun epg-tests-passphrase-callback (_c _k _d)
   ;; Need to create a copy here, since the string will be wiped out
@@ -65,7 +82,8 @@
 			    &rest body)
   "Set up temporary locations and variables for testing."
   (declare (indent 1) (debug (sexp body)))
-  `(let* ((epg-tests-home-directory (make-temp-file "epg-tests-homedir" t))
+  `(let* ((epg-debug epg-tests--trace)
+          (epg-tests-home-directory (make-temp-file "epg-tests-homedir" t))
 	  (process-environment
 	   (append
 	    (list "GPG_AGENT_INFO"
@@ -104,10 +122,15 @@
 	     (make-local-variable 'epg-tests-context)
 	     (setq epg-tests-context context)
 	     ,@body))
+       (when epg-debug-buffer
+         (princ (with-current-buffer epg-debug-buffer
+                  (prog1 (buffer-string) (erase-buffer)))
+                #'external-debugging-output))
        (when (file-directory-p epg-tests-home-directory)
 	 (delete-directory epg-tests-home-directory t)))))
 
 (ert-deftest epg-decrypt-1 ()
+  (setq epg-tests--trace t)
   (with-epg-tests (:require-passphrase t)
     (should (equal "test"
 		   (epg-decrypt-string epg-tests-context "\
@@ -119,6 +142,7 @@ jA0EAwMCE19JBLTvvmhgyRrGGglRbnKkK9PJG8fDwO5ccjysrR7IcdNcnA==
 -----END PGP MESSAGE-----")))))
 
 (ert-deftest epg-roundtrip-1 ()
+  (setq epg-tests--trace t)
   (with-epg-tests (:require-passphrase t)
     (let ((cipher (epg-encrypt-string epg-tests-context "symmetric" nil)))
       (should (equal "symmetric"
