@@ -451,7 +451,7 @@ Move to the beginning of the next frame.
 Add line breaks and indentation to the top-level Lisp form at point to
 make it more readable.
 
-@item =
+@item -
 Collapse the top-level Lisp form at point back to a single line.
 
 @item #
