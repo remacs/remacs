@@ -231,6 +231,7 @@ Interactively, reads the register using `register-read-with-preview'."
 (defalias 'register-to-point 'jump-to-register)
 (defun jump-to-register (register &optional delete)
   "Move point to location stored in a register.
+Push the mark if jumping moves point, unless called in succession.
 If the register contains a file name, find that file.
 \(To put a file name in a register, you must use `set-register'.)
 If the register contains a window configuration (one frame) or a frameset
