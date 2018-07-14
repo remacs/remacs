@@ -480,10 +480,10 @@ pub fn window_total_width(window: LispObject, round: LispObject) -> EmacsInt {
 /// WINDOW's frame.  Any other value of ROUND means to return the internal
 /// total height of WINDOW.
 #[lisp_fn(min = "0")]
-pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject {
+pub fn window_total_height(window: LispObject, round: LispObject) -> i32 {
     let win = window_valid_or_selected(window);
 
-    LispObject::from_natnum(EmacsInt::from(win.total_height(round)))
+    win.total_height(round)
 }
 
 /// Return the parent window of window WINDOW.

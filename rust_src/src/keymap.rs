@@ -354,7 +354,7 @@ pub extern "C" fn map_keymap_internal(
             } else if binding.is_vector() {
                 if let Some(binding_vec) = binding.as_vectorlike() {
                     for c in 0..binding_vec.pseudovector_size() {
-                        let character = LispObject::from_natnum(c);
+                        let character = LispObject::from(c);
                         unsafe {
                             map_keymap_item(
                                 fun,
@@ -528,7 +528,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
 
         keymap = get_keymap(cmd, false, true);
         if !keymap.is_cons() {
-            return LispObject::from_natnum(idx);
+            return LispObject::from(idx);
         }
 
         unsafe {

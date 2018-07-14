@@ -404,18 +404,18 @@ impl<'a> ExactSizeIterator for LispBoolVecIterator<'a> {}
 #[lisp_fn]
 pub fn length(sequence: LispObject) -> LispObject {
     if let Some(s) = sequence.as_string() {
-        LispObject::from_natnum(s.len_chars() as EmacsInt)
+        LispObject::from(s.len_chars())
     } else if let Some(vl) = sequence.as_vectorlike() {
         if let Some(v) = vl.as_vector() {
-            LispObject::from_natnum(v.len() as EmacsInt)
+            LispObject::from(v.len())
         } else if let Some(bv) = vl.as_bool_vector() {
-            LispObject::from_natnum(bv.len() as EmacsInt)
+            LispObject::from(bv.len())
         } else if vl.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
-            LispObject::from_natnum(EmacsInt::from(MAX_CHAR))
+            LispObject::from(EmacsInt::from(MAX_CHAR))
         } else if vl.is_pseudovector(pvec_type::PVEC_COMPILED)
             || vl.is_pseudovector(pvec_type::PVEC_RECORD)
         {
-            LispObject::from_natnum(vl.pseudovector_size())
+            LispObject::from(vl.pseudovector_size())
         } else {
             wrong_type!(Qsequencep, sequence);
         }
@@ -424,9 +424,9 @@ pub fn length(sequence: LispObject) -> LispObject {
         if len > MOST_POSITIVE_FIXNUM as usize {
             error!("List too long");
         }
-        LispObject::from_natnum(len as EmacsInt)
+        LispObject::from(len)
     } else if sequence.is_nil() {
-        LispObject::from_natnum(0)
+        LispObject::from(0)
     } else {
         wrong_type!(Qsequencep, sequence);
     }

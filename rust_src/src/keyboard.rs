@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::{glyph_row_area, EmacsInt};
+use remacs_sys::{glyph_row_area, EmacsInt, EmacsUint};
 use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qt, Qvertical_line};
 use remacs_sys::{make_lispy_position, window_box_left_offset};
 use remacs_sys::Fpos_visible_in_window_p;
@@ -97,8 +97,8 @@ pub fn posn_at_x_y(
     unsafe {
         make_lispy_position(
             frame.as_mut(),
-            LispObject::from_fixnum(EmacsInt::from(x)).to_raw(),
-            LispObject::from_natnum(EmacsInt::from(y)).to_raw(),
+            LispObject::from(x).to_raw(),
+            LispObject::from(y).to_raw(),
             0,
         )
     }

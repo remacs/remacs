@@ -375,8 +375,8 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     unsafe {
         Fadd_text_properties(
-            LispObject::from_natnum(0).to_raw(),
-            LispObject::from_natnum(orig_string.len_chars() as EmacsInt).to_raw(),
+            LispObject::from(0).to_raw(),
+            LispObject::from(orig_string.len_chars()).to_raw(),
             properties,
             copy.to_raw(),
         );

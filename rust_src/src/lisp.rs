@@ -453,12 +453,10 @@ impl LispObject {
     // TODO: the C claims that make_natnum is faster, but it does the same
     // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
     // should remove this in favour of make_number.
-    //
-    // TODO: it would be clearer if this function took a u64 or libc::c_int.
     #[inline]
-    pub fn from_natnum(n: EmacsInt) -> LispObject {
-        debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
-        LispObject::from_fixnum_truncated(n)
+    pub fn from_natnum(n: EmacsUint) -> LispObject {
+        debug_assert!(0 <= n && n <= (MOST_POSITIVE_FIXNUM as EmacsUint));
+        LispObject::from_fixnum_truncated(n as EmacsInt)
     }
 
     #[inline]
@@ -585,27 +583,57 @@ impl From<EmacsInt> for LispObject {
     }
 }
 
-impl From<usize> for LispObject {
-    fn from(v: usize) -> Self {
-        LispObject::from_fixnum(v as EmacsInt)
-    }
-}
-
-impl From<u64> for LispObject {
-    fn from(v: u64) -> Self {
-        LispObject::from_fixnum(v as EmacsInt)
-    }
-}
-
 impl From<isize> for LispObject {
     fn from(v: isize) -> Self {
         LispObject::from_fixnum(v as EmacsInt)
     }
 }
 
+impl From<i32> for LispObject {
+    fn from(v: i32) -> Self {
+        LispObject::from_fixnum(v as EmacsInt)
+    }
+}
+
+impl From<i16> for LispObject {
+    fn from(v: i16) -> Self {
+        LispObject::from_fixnum(v as EmacsInt)
+    }
+}
+
+impl From<i8> for LispObject {
+    fn from(v: i8) -> Self {
+        LispObject::from_fixnum(v as EmacsInt)
+    }
+}
+
+impl From<EmacsUint> for LispObject {
+    fn from(v: EmacsUint) -> Self {
+        LispObject::from_natnum(v)
+    }
+}
+
+impl From<usize> for LispObject {
+    fn from(v: usize) -> Self {
+        LispObject::from_natnum(v as EmacsUint)
+    }
+}
+
 impl From<u32> for LispObject {
     fn from(v: u32) -> Self {
-        LispObject::from_fixnum(v as EmacsInt)
+        LispObject::from_natnum(v as EmacsUint)
+    }
+}
+
+impl From<u16> for LispObject {
+    fn from(v: u16) -> Self {
+        LispObject::from_natnum(v as EmacsUint)
+    }
+}
+
+impl From<u8> for LispObject {
+    fn from(v: u8) -> Self {
+        LispObject::from_natnum(v as EmacsUint)
     }
 }
 
