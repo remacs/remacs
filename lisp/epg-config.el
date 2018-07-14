@@ -175,6 +175,8 @@ version requirement is met."
 	     (append (if epg-gpg-home-directory
 			 (list "--homedir" epg-gpg-home-directory))
 		     '("--with-colons" "--list-config")))
+      (when (and (boundp 'trace-level) (> trace-level 0))
+        (trace-values (concat "gpg output:\n" (buffer-string))))
       (goto-char (point-min))
       (while (re-search-forward "^cfg:\\([^:]+\\):\\(.*\\)" nil t)
 	(setq type (intern (match-string 1))
