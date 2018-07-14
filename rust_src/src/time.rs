@@ -46,10 +46,10 @@ fn make_lisp_time_1(t: c_timespec) -> LispObject {
     let s = t.tv_sec;
     let ns = t.tv_nsec;
     list(&[
-        LispObject::from_fixnum(hi_time(s)),
-        LispObject::from_fixnum(EmacsInt::from(lo_time(s))),
-        LispObject::from_fixnum((ns / 1_000) as EmacsInt),
-        LispObject::from_fixnum((ns % 1_000 * 1_000) as EmacsInt),
+        LispObject::from(hi_time(s)),
+        LispObject::from(lo_time(s)),
+        LispObject::from(ns / 1_000),
+        LispObject::from(ns % 1_000 * 1_000),
     ])
 }
 
@@ -67,10 +67,10 @@ pub extern "C" fn disassemble_lisp_time(
 ) -> c_int {
     let specified_time = specified_time;
 
-    let mut high = LispObject::from_fixnum(0);
+    let mut high = LispObject::from(0);
     let mut low = specified_time;
-    let mut usec = LispObject::from_fixnum(0);
-    let mut psec = LispObject::from_fixnum(0);
+    let mut usec = LispObject::from(0);
+    let mut psec = LispObject::from(0);
     let mut len = 4;
 
     if let Some(cons) = specified_time.as_cons() {

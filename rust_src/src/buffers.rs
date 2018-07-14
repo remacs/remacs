@@ -589,8 +589,8 @@ pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
     }
 
     unsafe {
-        *b = LispObject::from_fixnum(beg).to_raw();
-        *e = LispObject::from_fixnum(end).to_raw();
+        *b = LispObject::from(beg).to_raw();
+        *e = LispObject::from(end).to_raw();
     }
 
     let buf = ThreadState::current_buffer();

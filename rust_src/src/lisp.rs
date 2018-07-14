@@ -455,7 +455,7 @@ impl LispObject {
     // should remove this in favour of make_number.
     #[inline]
     pub fn from_natnum(n: EmacsUint) -> LispObject {
-        debug_assert!(0 <= n && n <= (MOST_POSITIVE_FIXNUM as EmacsUint));
+        debug_assert!(n <= (MOST_POSITIVE_FIXNUM as EmacsUint));
         LispObject::from_fixnum_truncated(n as EmacsInt)
     }
 
@@ -1499,7 +1499,7 @@ pub trait IsLispNatnum {
 impl IsLispNatnum for EmacsInt {
     fn check_natnum(self) {
         if self < 0 {
-            wrong_type!(Qwholenump, LispObject::from_fixnum(self));
+            wrong_type!(Qwholenump, LispObject::from(self));
         }
     }
 }

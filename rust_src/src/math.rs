@@ -30,7 +30,7 @@ pub fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
                 i1 += i2;
             }
 
-            LispObject::from_fixnum(i1)
+            LispObject::from(i1)
         }
         (LispNumber::Fixnum(i1), LispNumber::Float(f2)) => {
             LispObject::from(floatfns::fmod_float(i1 as f64, f2))
@@ -227,7 +227,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     }
     // we should return the same object if it's not a marker
     if let Some(m) = accum.as_marker() {
-        LispObject::from_fixnum(m.charpos_or_error() as EmacsInt)
+        LispObject::from(m.charpos_or_error())
     } else {
         accum
     }
@@ -255,7 +255,7 @@ pub fn abs(arg: LispObject) -> LispObject {
     if let Some(f) = arg.as_float() {
         LispObject::from_float(f.abs())
     } else if let Some(n) = arg.as_fixnum() {
-        LispObject::from_fixnum(n.abs())
+        LispObject::from(n.abs())
     } else {
         wrong_type!(Qnumberp, arg);
     }
@@ -396,7 +396,7 @@ pub fn rem(x: LispObject, y: LispObject) -> EmacsInt {
 #[lisp_fn(name = "1+")]
 pub fn add1(number: LispObject) -> LispObject {
     match number.as_number_coerce_marker_or_error() {
-        LispNumber::Fixnum(num) => LispObject::from_fixnum(num + 1),
+        LispNumber::Fixnum(num) => LispObject::from(num + 1),
         LispNumber::Float(num) => LispObject::from_float(num + 1.0),
     }
 }
@@ -406,7 +406,7 @@ pub fn add1(number: LispObject) -> LispObject {
 #[lisp_fn(name = "1-")]
 pub fn sub1(number: LispObject) -> LispObject {
     match number.as_number_coerce_marker_or_error() {
-        LispNumber::Fixnum(num) => LispObject::from_fixnum(num - 1),
+        LispNumber::Fixnum(num) => LispObject::from(num - 1),
         LispNumber::Float(num) => LispObject::from_float(num - 1.0),
     }
 }

@@ -510,7 +510,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
             if let Some(x) = c.as_fixnum() {
                 let x = x as u32;
                 if x & 0x80 != 0 && !k.is_multibyte() {
-                    c = LispObject::from_fixnum(EmacsInt::from((x | char_bits::CHAR_META) & !0x80));
+                    c = LispObject::from((x | char_bits::CHAR_META) & !0x80);
                 }
             }
         }

@@ -3,7 +3,7 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type};
+use remacs_sys::{selected_frame as current_frame, BoolBF, Lisp_Frame, Lisp_Type};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method,
                  fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
@@ -294,8 +294,8 @@ pub fn frame_position(frame: LispObject) -> LispObject {
     let frame_ref = frame_live_or_selected(frame);
     unsafe {
         Fcons(
-            LispObject::from_fixnum(EmacsInt::from(frame_ref.left_pos())).to_raw(),
-            LispObject::from_fixnum(EmacsInt::from(frame_ref.top_pos())).to_raw(),
+            LispObject::from(frame_ref.left_pos()).to_raw(),
+            LispObject::from(frame_ref.top_pos()).to_raw(),
         )
     }
 }

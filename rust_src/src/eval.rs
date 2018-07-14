@@ -681,13 +681,12 @@ pub fn autoload(
         return LispObject::constant_nil();
     }
 
-    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(LispObject::from_fixnum(0)) {
+    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(LispObject::from(0)) {
         // `read1' in lread.c has found the docstring starting with "\
         // and assumed the docstring will be provided by Snarf-documentation, so it
         // passed us 0 instead.  But that leads to accidental sharing in purecopy's
         // hash-consing, so we use a (hopefully) unique integer instead.
-        docstring =
-            LispObject::from_fixnum(unsafe { function.as_lisp_obj().to_fixnum_unchecked() });
+        docstring = LispObject::from(unsafe { function.as_lisp_obj().to_fixnum_unchecked() });
     }
 
     defalias(
@@ -754,7 +753,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     for first in queue.iter_cars_safe() {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
-        if first.eq(LispObject::from_fixnum(0)) {
+        if first.eq(LispObject::from(0)) {
             globals.Vfeatures = second.to_raw();
         } else {
             Ffset(first.to_raw(), second.to_raw());
