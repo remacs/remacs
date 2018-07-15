@@ -194,6 +194,28 @@ This is commonly used to recompute `backtrace-frames'.")
     (define-key map "." 'backtrace-expand-ellipses)
     (define-key map [follow-link] 'mouse-face)
     (define-key map [mouse-2] 'mouse-select-window)
+    (easy-menu-define nil map ""
+      '("Backtrace"
+        ["Next Frame" backtrace-forward-frame
+         :help "Move cursor forwards to the start of a backtrace frame"]
+        ["Previous Frame" backtrace-backward-frame
+         :help "Move cursor backwards to the start of a backtrace frame"]
+        "--"
+        ["Show Variables" backtrace-toggle-locals
+         :style toggle
+         :active (backtrace-get-index)
+         :selected (plist-get (backtrace-get-view) :show-locals)
+         :help "Show or hide the local variables for the frame at point"]
+        ["Expand \"...\"s" backtrace-expand-ellipses
+         :help "Expand all the abbreviated forms in the current frame"]
+        ["Show on Multiple Lines" backtrace-pretty-print
+         :help "Use line breaks and indentation to make a form more readable"]
+        ["Collapse to Single Line" backtrace-collapse]
+        "--"
+        ["Help for Symbol" backtrace-help-follow-symbol
+         :help "Show help for symbol at point"]
+        ["Describe Backtrace Mode" describe-mode
+         :help "Display documentation for backtrace-mode"]))
     map)
   "Local keymap for `backtrace-mode' buffers.")
 

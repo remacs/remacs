@@ -567,8 +567,8 @@ The environment used is the one when entering the activation frame at point."
         "--"
         ["Next Line" next-line
          :help "Move cursor down"]
-        ["Help Follow" backtrace-help-follow-symbol
-         :help "Follow cross-reference"]
+        ["Help for Symbol" backtrace-help-follow-symbol
+         :help "Show help for symbol at point"]
         ["Describe Debugger Mode" describe-mode
          :help "Display documentation for debugger-mode"]
         "--"
