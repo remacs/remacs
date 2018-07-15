@@ -112,7 +112,7 @@
                                            upload-base)
                                 &rest body)
   "Set up temporary locations and variables for testing."
-  (declare (indent 1))
+  (declare (indent 1) (debug (([&rest form]) body)))
   `(let* ((package-test-user-dir (make-temp-file "pkg-test-user-dir-" t))
           (process-environment (cons (format "HOME=%s" package-test-user-dir)
                                      process-environment))
@@ -158,6 +158,7 @@
 
 (defmacro with-fake-help-buffer (&rest body)
   "Execute BODY in a temp buffer which is treated as the \"*Help*\" buffer."
+  (declare (debug body))
   `(with-temp-buffer
     (help-mode)
     ;; Trick `help-buffer' into using the temp buffer.
@@ -504,7 +505,7 @@ Must called from within a `tar-mode' buffer."
       (with-fake-help-buffer
        (describe-package 'signed-good)
        (goto-char (point-min))
-       (should (re-search-forward "signed-good is an? \\(\\S-+\\) package." nil t))
+       (should (re-search-forward "Package signed-good is \\(\\S-+\\)\\." nil t))
        (should (string-equal (match-string-no-properties 1) "installed"))
        (should (re-search-forward
 		"Status: Installed in ['`‘]signed-good-1.0/['’]."
