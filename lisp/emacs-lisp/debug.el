@@ -530,8 +530,7 @@ The environment used is the one when entering the activation frame at point."
 
 
 (defvar debugger-mode-map
-  (let ((map (make-keymap))
-	(menu-map (make-sparse-keymap)))
+  (let ((map (make-keymap)))
     (set-keymap-parent map backtrace-mode-map)
     (define-key map "b" 'debugger-frame)
     (define-key map "c" 'debugger-continue)
@@ -544,49 +543,37 @@ The environment used is the one when entering the activation frame at point."
     (define-key map "e" 'debugger-eval-expression)
     (define-key map "R" 'debugger-record-expression)
     (define-key map [mouse-2] 'push-button)
-    (define-key map [menu-bar debugger] (cons "Debugger" menu-map))
-    (define-key menu-map [deb-top]
-      '(menu-item "Quit" debugger-quit
-		  :help "Quit debugging and return to top level"))
-    (define-key menu-map [deb-s0] '("--"))
-    (define-key menu-map [deb-descr]
-      '(menu-item "Describe Debugger Mode" describe-mode
-		  :help "Display documentation for debugger-mode"))
-    (define-key menu-map [deb-hfol]
-      '(menu-item "Help Follow" backtrace-help-follow-symbol
-		  :help "Follow cross-reference"))
-    (define-key menu-map [deb-nxt]
-      '(menu-item "Next Line" next-line
-		  :help "Move cursor down"))
-    (define-key menu-map [deb-s1] '("--"))
-    (define-key menu-map [deb-lfunc]
-      '(menu-item "List debug on entry functions" debugger-list-functions
-		  :help "Display a list of all the functions now set to debug on entry"))
-    (define-key menu-map [deb-fclear]
-      '(menu-item "Cancel debug frame" debugger-frame-clear
-		  :help "Do not enter debugger when this frame exits"))
-    (define-key menu-map [deb-frame]
-      '(menu-item "Debug frame" debugger-frame
-		  :help "Request entry to debugger when this frame exits"))
-    (define-key menu-map [deb-s2] '("--"))
-    (define-key menu-map [deb-ret]
-      '(menu-item "Return value..." debugger-return-value
-		  :help "Continue, specifying value to return."))
-    (define-key menu-map [deb-rec]
-      '(menu-item "Display and Record Expression" debugger-record-expression
-		  :help "Display a variable's value and record it in `*Backtrace-record*' buffer"))
-    (define-key menu-map [deb-eval]
-      '(menu-item "Eval Expression..." debugger-eval-expression
-		  :help "Eval an expression, in an environment like that outside the debugger"))
-    (define-key menu-map [deb-jump]
-      '(menu-item "Jump" debugger-jump
-		  :help "Continue to exit from this frame, with all debug-on-entry suspended"))
-    (define-key menu-map [deb-cont]
-      '(menu-item "Continue" debugger-continue
-	:help "Continue, evaluating this expression without stopping"))
-    (define-key menu-map [deb-step]
-      '(menu-item "Step through" debugger-step-through
-	:help "Proceed, stepping through subexpressions of this expression"))
+    (easy-menu-define nil map ""
+      '("Debugger"
+        ["Step through" debugger-step-through
+         :help "Proceed, stepping through subexpressions of this expression"]
+        ["Continue" debugger-continue
+         :help "Continue, evaluating this expression without stopping"]
+        ["Jump" debugger-jump
+         :help "Continue to exit from this frame, with all debug-on-entry suspended"]
+        ["Eval Expression..." debugger-eval-expression
+         :help "Eval an expression, in an environment like that outside the debugger"]
+        ["Display and Record Expression" debugger-record-expression
+         :help "Display a variable's value and record it in `*Backtrace-record*' buffer"]
+        ["Return value..." debugger-return-value
+         :help "Continue, specifying value to return."]
+        "--"
+        ["Debug frame" debugger-frame
+         :help "Request entry to debugger when this frame exits"]
+        ["Cancel debug frame" debugger-frame-clear
+         :help "Do not enter debugger when this frame exits"]
+        ["List debug on entry functions" debugger-list-functions
+         :help "Display a list of all the functions now set to debug on entry"]
+        "--"
+        ["Next Line" next-line
+         :help "Move cursor down"]
+        ["Help Follow" backtrace-help-follow-symbol
+         :help "Follow cross-reference"]
+        ["Describe Debugger Mode" describe-mode
+         :help "Display documentation for debugger-mode"]
+        "--"
+        ["Quit" debugger-quit
+         :help "Quit debugging and return to top level"]))
     map))
 
 (put 'debugger-mode 'mode-class 'special)
