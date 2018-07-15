@@ -171,7 +171,8 @@ version requirement is met."
 (defun epg-config--make-gpg-configuration (program)
   (let (config groups type args)
     (with-temp-buffer
-      (apply #'call-process program nil (list t nil) nil
+      (apply #'call-process program nil
+             (list t (and (boundp 'trace-level) (> trace-level 0))) nil
 	     (append (if epg-gpg-home-directory
 			 (list "--homedir" epg-gpg-home-directory))
 		     '("--with-colons" "--list-config")))
