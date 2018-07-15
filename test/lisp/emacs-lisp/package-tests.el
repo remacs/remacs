@@ -467,15 +467,13 @@ Must called from within a `tar-mode' buffer."
 
 (ert-deftest package-test-signed ()
   "Test verifying package signature."
-  (skip-unless (ignore-errors
-		 (let ((homedir (make-temp-file "package-test" t)))
-		   (unwind-protect
-		       (let ((process-environment
-			      (cons (format "HOME=%s" homedir)
-				    process-environment)))
-			 (epg-check-configuration
-                          (epg-find-configuration 'OpenPGP)))
-		     (delete-directory homedir t)))))
+  (skip-unless (let ((homedir (make-temp-file "package-test" t)))
+		 (unwind-protect
+		     (let ((process-environment
+			    (cons (concat "HOME=" homedir)
+				  process-environment)))
+		       (epg-find-configuration 'OpenPGP))
+		   (delete-directory homedir t))))
   (let* ((keyring (expand-file-name "key.pub" package-test-data-dir))
 	 (package-test-data-dir
 	   (expand-file-name "package-resources/signed" package-test-file-dir)))
