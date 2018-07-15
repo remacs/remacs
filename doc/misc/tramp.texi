@@ -1096,7 +1096,7 @@ but with SSL encryption.  Both methods support the port numbers.
 
 Paths being part of the WebDAV volume to be mounted by GVFS, as it is
 common for OwnCloud or NextCloud file names, are not supported by
-these methods.
+these methods.  See method @option{owncloud} for handling them.
 
 @item @option{gdrive}
 @cindex method @option{gdrive}
