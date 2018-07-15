@@ -80,7 +80,7 @@ pub fn random(limit: LispObject) -> LispObject {
             let val: EmacsInt = rng.gen();
             let remainder = val.abs() % limit;
             if val - remainder <= INTMASK - limit + 1 {
-                return LispObject::from_fixnum(remainder);
+                return LispObject::from(remainder);
             }
         }
     } else {

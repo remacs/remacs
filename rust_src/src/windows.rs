@@ -372,7 +372,7 @@ pub fn window_minibuffer_p(window: LispObject) -> bool {
 pub fn window_margins(window: LispObject) -> LispObject {
     fn margin_as_object(margin: c_int) -> LispObject {
         if margin != 0 {
-            LispObject::from_fixnum(EmacsInt::from(margin))
+            LispObject::from(margin)
         } else {
             LispObject::constant_nil()
         }
@@ -480,10 +480,10 @@ pub fn window_total_width(window: LispObject, round: LispObject) -> EmacsInt {
 /// WINDOW's frame.  Any other value of ROUND means to return the internal
 /// total height of WINDOW.
 #[lisp_fn(min = "0")]
-pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject {
+pub fn window_total_height(window: LispObject, round: LispObject) -> i32 {
     let win = window_valid_or_selected(window);
 
-    LispObject::from_natnum(EmacsInt::from(win.total_height(round)))
+    win.total_height(round)
 }
 
 /// Return the parent window of window WINDOW.
@@ -757,7 +757,7 @@ pub fn window_old_point(window: LispObject) -> Option<EmacsInt> {
 #[lisp_fn(min = "0")]
 pub fn window_use_time(window: LispObject) -> LispObject {
     let use_time = window_live_or_selected(window).use_time;
-    LispObject::from_natnum(use_time)
+    LispObject::from(use_time)
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

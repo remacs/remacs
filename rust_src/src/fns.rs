@@ -46,7 +46,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     unsafe {
         if Vautoload_queue.is_not_nil() {
             Vautoload_queue = Fcons(
-                Fcons(LispObject::from_fixnum(0).to_raw(), globals.Vfeatures),
+                Fcons(LispObject::from(0).to_raw(), globals.Vfeatures),
                 Vautoload_queue,
             );
         }

@@ -208,9 +208,9 @@ pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
 pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     if byte < 0 || byte > 255 {
         args_out_of_range!(
-            LispObject::from_fixnum(byte),
-            LispObject::from_fixnum(0),
-            LispObject::from_fixnum(255)
+            LispObject::from(byte),
+            LispObject::from(0),
+            LispObject::from(255)
         )
     }
     let buf = ThreadState::current_buffer();
@@ -375,8 +375,8 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     unsafe {
         Fadd_text_properties(
-            LispObject::from_natnum(0).to_raw(),
-            LispObject::from_natnum(orig_string.len_chars() as EmacsInt).to_raw(),
+            LispObject::from(0).to_raw(),
+            LispObject::from(orig_string.len_chars()).to_raw(),
             properties,
             copy.to_raw(),
         );

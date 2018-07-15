@@ -442,7 +442,7 @@ pub fn process_exit_status(mut process: LispProcessRef) -> LispObject {
     let status = process.status;
     status
         .as_cons()
-        .map_or_else(|| LispObject::from_fixnum(0), |cons| car(cons.cdr()))
+        .map_or_else(|| LispObject::from(0), |cons| car(cons.cdr()))
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

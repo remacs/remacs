@@ -3,7 +3,6 @@
 use libc::{c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::EmacsInt;
 
 use threads::ThreadState;
 
@@ -46,7 +45,7 @@ use multibyte::MAX_CHAR;
 /// Return the character of the maximum code.
 #[lisp_fn]
 pub fn max_char() -> LispObject {
-    LispObject::from_fixnum(EmacsInt::from(MAX_CHAR))
+    LispObject::from(MAX_CHAR)
 }
 
 /// Return non-nil if OBJECT is a character.
@@ -72,7 +71,7 @@ pub fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
     if c >= 0x100 {
         error!("Not a unibyte character: {}", c);
     }
-    LispObject::from_fixnum(EmacsInt::from(make_char_multibyte(c)))
+    LispObject::from(make_char_multibyte(c))
 }
 
 /// Convert the multibyte character CH to a byte.
@@ -85,7 +84,7 @@ pub fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
         // a latin1 char, so let's let it slide.
         ch
     } else {
-        LispObject::from_fixnum(raw_byte_from_codepoint_safe(c))
+        LispObject::from(raw_byte_from_codepoint_safe(c))
     }
 }
 

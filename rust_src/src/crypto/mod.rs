@@ -137,8 +137,8 @@ fn get_coding_system_for_buffer(
         /* Confirm that VAL can surely encode the current region. */
         return call!(
             sscsf,
-            LispObject::from_natnum(start_byte as EmacsInt),
-            LispObject::from_natnum(end_byte as EmacsInt),
+            LispObject::from(start_byte),
+            LispObject::from(end_byte),
             coding_system,
             LispObject::constant_nil()
         );
