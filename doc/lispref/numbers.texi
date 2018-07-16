@@ -888,6 +888,7 @@ On the other hand, shifting one place to the right looks like this:
 @noindent
 As the example illustrates, shifting one place to the right divides the
 value of a positive integer by two, rounding downward.
+@end defun
 
 @defun ash integer1 count
 @cindex arithmetic shift
