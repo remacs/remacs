@@ -84,6 +84,9 @@ work right without some adjustment:
 
 * Changes in Emacs 27.1
 
+** New function 'network-lookup-address-info'.
+This does IPv4 and/or IPv6 address lookups on hostnames.
+
 ---
 ** New variable 'xft-ignore-color-fonts'.
 Default t means don't try to load color fonts when using Xft, as they
