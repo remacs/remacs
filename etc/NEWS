@@ -713,7 +713,8 @@ manual for more details.
 +++
 ** New function 'proper-list-p'.
 Given a proper list as argument, this predicate returns its length;
-otherwise, it returns nil.
+otherwise, it returns nil.  'format-proper-list-p' is now an obsolete
+alias for the new function.
 
 ** define-minor-mode automatically documents the meaning of ARG
 
