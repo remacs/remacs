@@ -539,6 +539,10 @@ are obsoleted in GVFS.
 Tramp for some look-alike remote file names.
 
 ---
+** Register
+*** The return value of method 'register-val-describe' includes the
+names of buffers shown by the windows of a window configuration.
+
 ** The options.el library has been removed.
 It was obsolete since Emacs 22.1, replaced by customize.
 

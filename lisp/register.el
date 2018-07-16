@@ -391,7 +391,20 @@ Interactively, reads the register using `register-read-with-preview'."
 (cl-defmethod register-val-describe ((val cons) verbose)
   (cond
    ((window-configuration-p (car val))
-    (princ "a window configuration."))
+    (let* ((stored-window-config (car val))
+           (window-config-frame (window-configuration-frame stored-window-config))
+           (current-frame (selected-frame)))
+      (princ (format "a window configuration: %s."
+                     (if (frame-live-p window-config-frame)
+                         (with-selected-frame window-config-frame
+                           (save-window-excursion
+                             (set-window-configuration stored-window-config)
+                             (concat
+                              (mapconcat (lambda (w) (buffer-name (window-buffer w)))
+                                         (window-list (selected-frame)) ", ")
+                              (unless (eq current-frame window-config-frame)
+                                " in another frame"))))
+                       "dead frame")))))
 
    ((frame-configuration-p (car val))
     (princ "a frame configuration."))
