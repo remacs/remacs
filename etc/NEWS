@@ -172,6 +172,11 @@ from a remote host.
 This triggers to search the program on the remote host as indicated by
 'default-directory'.
 
++++
+** New variable 'main-thread' holds Emacs's main thread.
+This is handy in Lisp programs that run on a non-main thread and want
+to signal the main thread, e.g., when they encounter an error.
+
 
 * Editing Changes in Emacs 27.1
 
