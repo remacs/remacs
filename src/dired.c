@@ -1028,14 +1028,6 @@ file_attributes (int fd, char const *name,
 		INTEGER_TO_CONS (s.st_ino),
 		INTEGER_TO_CONS (s.st_dev));
 }
-
-DEFUN ("file-attributes-lessp", Ffile_attributes_lessp, Sfile_attributes_lessp, 2, 2, 0,
-       doc: /* Return t if first arg file attributes list is less than second.
-Comparison is in lexicographic order and case is significant.  */)
-  (Lisp_Object f1, Lisp_Object f2)
-{
-  return Fstring_lessp (Fcar (f1), Fcar (f2));
-}
 
 
 DEFUN ("system-groups", Fsystem_groups, Ssystem_groups, 0, 0, 0,
@@ -1072,7 +1064,6 @@ syms_of_dired (void)
   defsubr (&Sfile_name_completion);
   defsubr (&Sfile_name_all_completions);
   defsubr (&Sfile_attributes);
-  defsubr (&Sfile_attributes_lessp);
   defsubr (&Ssystem_groups);
 
   DEFVAR_LISP ("completion-ignored-extensions", Vcompletion_ignored_extensions,

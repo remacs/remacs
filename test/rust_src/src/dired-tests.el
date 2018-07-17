@@ -4,6 +4,27 @@
 
 (require 'ert)
 
+(ert-deftest test-file-attributes-lessp ()
+  (let ((rstr "rms")
+	(wstr "wilfred")
+	(lnull '())
+	(snull '("")))
+    (should-error (eval '(file-attributes-lessp '(rstr t)))
+		  :type 'wrong-number-of-arguments)
+    (should-error (eval '(file-attributes-lessp '(rstr t) '(wstr t) snull))
+		  :type 'wrong-number-of-arguments)
+    (should-error (eval
+		   '(file-attributes-lessp rstr wstr))
+		  :type 'wrong-type-argument)
+    (should-error (eval
+		   '(file-attributes-lessp '(rstr t) wstr))
+		  :type 'wrong-type-argument)
+    (should (not (file-attributes-lessp lnull lnull)))
+    (should (not (file-attributes-lessp lnull snull)))
+    (should (file-attributes-lessp snull lnull))
+    (should (file-attributes-lessp '(rstr t) '(wstr t)))
+    (should (not (file-attributes-lessp '(wstr t) '(rstr t))))))
+
 (ert-deftest test-system-users ()
   (should-error (eval '(system-users 'rms)) :type 'wrong-number-of-arguments)
   ;; The result should be a list of >= 1 user name(s) on all Unix and GNU systems.
