@@ -66,7 +66,14 @@ abbreviate the forms it prints."
 (cl-defstruct
     (backtrace-frame
      (:constructor backtrace-make-frame))
-  evald fun args flags locals buffer pos)
+  evald  ; Non-nil if argument evaluation is complete.
+  fun    ; The function called/to call in this frame.
+  args   ; Either evaluated or unevaluated arguments to the function.
+  flags  ; A plist, possible properties are :debug-on-exit and :source-available.
+  locals ; An alist containing variable names and values.
+  buffer ; If non-nil, the buffer in use by eval-buffer or eval-region.
+  pos    ; The position in the buffer.
+  )
 
 (cl-defun backtrace-get-frames
     (&optional base &key (constructor #'backtrace-make-frame))
@@ -181,6 +188,15 @@ This is commonly used to recompute `backtrace-frames'.")
 (defvar-local backtrace-print-function #'cl-prin1
   "Function used to print values in the current Backtrace buffer.")
 
+(defvar-local backtrace-goto-source-functions nil
+  "Abnormal hook used to jump to the source code for the current frame.
+Each hook function is called with no argument, and should return
+non-nil if it is able to switch to the buffer containing the
+source code.  Execution of the hook will stop if one of the
+functions returns non-nil.  When adding a function to this hook,
+you should also set the :source-available flag for the backtrace
+frames where the source code location is known.")
+
 (defvar backtrace-mode-map
   (let ((map (copy-keymap special-mode-map)))
     (set-keymap-parent map button-buffer-map)
@@ -188,6 +204,7 @@ This is commonly used to recompute `backtrace-frames'.")
     (define-key map "p" 'backtrace-backward-frame)
     (define-key map "v" 'backtrace-toggle-locals)
     (define-key map "#" 'backtrace-toggle-print-circle)
+    (define-key map "s" 'backtrace-goto-source)
     (define-key map "\C-m" 'backtrace-help-follow-symbol)
     (define-key map "+" 'backtrace-pretty-print)
     (define-key map "-" 'backtrace-collapse)
@@ -212,12 +229,21 @@ This is commonly used to recompute `backtrace-frames'.")
          :help "Use line breaks and indentation to make a form more readable"]
         ["Collapse to Single Line" backtrace-collapse]
         "--"
+        ["Go to Source" backtrace-goto-source
+         :active (and (backtrace-get-index)
+                      (plist-get (backtrace-frame-flags
+                                  (nth (backtrace-get-index) backtrace-frames))
+                                 :source-available))
+         :help "Show the source code for the current frame"]
         ["Help for Symbol" backtrace-help-follow-symbol
          :help "Show help for symbol at point"]
         ["Describe Backtrace Mode" describe-mode
          :help "Display documentation for backtrace-mode"]))
     map)
   "Local keymap for `backtrace-mode' buffers.")
+
+(defconst backtrace--flags-width 2
+  "Width in characters of the flags for a backtrace frame.")
 
 ;;; Navigation and Text Properties
 
@@ -580,6 +606,20 @@ content of the sexp."
                  '(backtrace-section backtrace-index backtrace-view
                                      backtrace-form))))
 
+(defun backtrace-goto-source ()
+  "If its location is known, jump to the source code for the frame at point."
+  (interactive)
+  (let* ((index (or (backtrace-get-index) (user-error "Not in a stack frame")))
+         (frame (nth index backtrace-frames))
+         (source-available (plist-get (backtrace-frame-flags frame)
+                                      :source-available)))
+    (unless (and source-available
+                 (catch 'done
+                   (dolist (func backtrace-goto-source-functions)
+                     (when (funcall func)
+                       (throw 'done t)))))
+      (user-error "Source code location not known"))))
+
 (defun backtrace-help-follow-symbol (&optional pos)
   "Follow cross-reference at POS, defaulting to point.
 For the cross-reference format, see `help-make-xrefs'."
@@ -681,8 +721,12 @@ property for use by navigation."
 (defun backtrace--print-flags (frame view)
   "Print the flags of a backtrace FRAME if enabled in VIEW."
   (let ((beg (point))
-        (flag (plist-get (backtrace-frame-flags frame) :debug-on-exit)))
-    (insert (if (and (plist-get view :show-flags) flag) "* " "  "))
+        (flag (plist-get (backtrace-frame-flags frame) :debug-on-exit))
+        (source (plist-get (backtrace-frame-flags frame) :source-available)))
+    (when (plist-get view :show-flags)
+      (when source (insert ">"))
+      (when flag (insert "*")))
+    (insert (make-string (- backtrace--flags-width (- (point) beg)) ?\s))
     (put-text-property beg (point) 'backtrace-section 'func)))
 
 (defun backtrace--print-func-and-args (frame _view)
@@ -770,7 +814,7 @@ Fall back to `prin1' if there is an error."
         (let ((props (backtrace-get-text-properties begin))
               (inhibit-read-only t)
               (standard-output (current-buffer)))
-          (delete-char 2)
+          (delete-char backtrace--flags-width)
           (backtrace--print-flags (nth (backtrace-get-index) backtrace-frames)
                                   view)
           (add-text-properties begin (point) props))))))

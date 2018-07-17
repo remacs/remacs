@@ -41,7 +41,7 @@
 (defun edebug-test-code-range (num)
   !start!(let ((index 0)
         (result nil))
-    (while (< index num)!test!
+    (while !lt!(< index num)!test!
       (push index result)!loop!
       (cl-incf index))!end-loop!
     (nreverse result)))

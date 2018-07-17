@@ -484,10 +484,19 @@ using the new variables 'edebug-behavior-alist',
 globally or for individual definitions.
 
 +++
-*** Edebug's backtrace buffer now uses 'backtrace-mode'.
-Backtrace mode adds fontification, links and commands for changing the
+*** Edebug's backtrace buffer now uses 'backtrace-mode'.  Backtrace
+mode adds fontification, links and commands for changing the
 appearance of backtrace frames. See the node "Backtraces" in the Elisp
 manual for documentation of the new mode and its commands.
+
+The binding of 'd' in Edebug's keymap is now 'edebug-pop-to-backtrace'
+which replaces 'edebug-backtrace'.  Consequently Edebug's backtrace
+windows now behave like those of the Lisp Debugger and of ERT, in that
+when they appear they will be the selected window.
+
+The new 'backtrace-goto-source' command, bound to 's', works in
+Edebug's backtraces on backtrace frames whose source code has
+been instrumented by Edebug.
 
 ** Enhanced xterm support
 

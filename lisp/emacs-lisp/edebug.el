@@ -3692,7 +3692,7 @@ be installed in `emacs-lisp-mode-map'.")
 
     ;; misc
     (define-key map "?" 'edebug-help)
-    (define-key map "d" 'edebug-backtrace)
+    (define-key map "d" 'edebug-pop-to-backtrace)
 
     (define-key map "-" 'negative-argument)
 
@@ -3985,6 +3985,13 @@ Otherwise call `debug' normally."
 
 ;;; Backtrace buffer
 
+(defvar-local edebug-backtrace-frames nil
+  "Stack frames of the current Edebug Backtrace buffer without instrumentation.
+This should be a list of `edebug---frame' objects.")
+(defvar-local edebug-instrumented-backtrace-frames nil
+  "Stack frames of the current Edebug Backtrace buffer with instrumentation.
+This should be a list of `edebug---frame' objects.")
+
 ;; Data structure for backtrace frames with information
 ;; from Edebug instrumentation found in the backtrace.
 (cl-defstruct
@@ -3993,7 +4000,7 @@ Otherwise call `debug' normally."
      (:include backtrace-frame))
   def-name before-index after-index)
 
-(defun edebug-backtrace ()
+(defun edebug-pop-to-backtrace ()
   "Display the current backtrace in a `backtrace-mode' window."
   (interactive)
   (if (or (not edebug-backtrace-buffer)
@@ -4002,31 +4009,33 @@ Otherwise call `debug' normally."
 	    (generate-new-buffer "*Edebug Backtrace*"))
     ;; Else, could just display edebug-backtrace-buffer.
     )
-  (with-output-to-temp-buffer (buffer-name edebug-backtrace-buffer)
-    (setq edebug-backtrace-buffer standard-output)
-    (with-current-buffer edebug-backtrace-buffer
-      (unless (derived-mode-p 'backtrace-mode)
-        (backtrace-mode))
-      (setq backtrace-frames (edebug--backtrace-frames))
-      (backtrace-print)
-      (goto-char (point-min)))))
+  (pop-to-buffer edebug-backtrace-buffer)
+  (unless (derived-mode-p 'backtrace-mode)
+    (backtrace-mode)
+    (add-hook 'backtrace-goto-source-functions 'edebug--backtrace-goto-source))
+  (setq edebug-instrumented-backtrace-frames
+        (backtrace-get-frames 'edebug-debugger
+                              :constructor #'edebug--make-frame)
+        edebug-backtrace-frames (edebug--strip-instrumentation
+                                 edebug-instrumented-backtrace-frames)
+        backtrace-frames edebug-backtrace-frames)
+  (backtrace-print)
+  (goto-char (point-min)))
 
-(defun edebug--backtrace-frames ()
-  "Return backtrace frames with instrumentation removed.
+(defun edebug--strip-instrumentation (frames)
+  "Return a new list of backtrace frames with instrumentation removed.
 Remove frames for Edebug's functions and the lambdas in
-`edebug-enter' wrappers."
-  (let* ((frames (backtrace-get-frames 'edebug-debugger
-                                       :constructor #'edebug--make-frame))
-	 skip-next-lambda def-name before-index after-index
-	 results
-         (index (length frames)))
+`edebug-enter' wrappers.  Fill in the def-name, before-index
+and after-index fields in both FRAMES and the returned list
+of deinstrumented frames, for those frames where the source
+code location is known."
+  (let (skip-next-lambda def-name before-index after-index results
+        (index (length frames)))
     (dolist (frame (reverse frames))
-      (let ((fun (edebug--frame-fun frame))
+      (let ((new-frame (copy-edebug--frame frame))
+            (fun (edebug--frame-fun frame))
             (args (edebug--frame-args frame)))
         (cl-decf index)
-        (when (edebug--frame-evald frame)
-          (setq before-index nil
-                after-index nil))
         (pcase fun
           ('edebug-enter
 	   (setq skip-next-lambda t
@@ -4037,17 +4046,18 @@ Remove frames for Edebug's functions and the lambdas in
                                 (nth 0 args))
                  after-index (nth 1 args)))
           ((pred edebug--symbol-not-prefixed-p)
-           (edebug--unwrap-and-add-info frame def-name before-index after-index)
-           (setf (edebug--frame-def-name frame) (and before-index def-name))
-           (setf (edebug--frame-before-index frame) before-index)
-           (setf (edebug--frame-after-index frame) after-index)
-           (push frame results)
+           (edebug--unwrap-frame new-frame)
+           (edebug--add-source-info new-frame def-name before-index after-index)
+           (edebug--add-source-info frame def-name before-index after-index)
+           (push new-frame results)
            (setq before-index nil
                  after-index nil))
           (`(,(or 'lambda 'closure) . ,_)
 	   (unless skip-next-lambda
-             (edebug--unwrap-and-add-info frame def-name before-index after-index)
-             (push frame results))
+             (edebug--unwrap-frame new-frame)
+             (edebug--add-source-info frame def-name before-index after-index)
+             (edebug--add-source-info new-frame def-name before-index after-index)
+             (push new-frame results))
 	   (setq before-index nil
                  after-index nil
                  skip-next-lambda nil)))))
@@ -4058,14 +4068,9 @@ Remove frames for Edebug's functions and the lambdas in
   (and (symbolp sym)
        (not (string-prefix-p "edebug-" (symbol-name sym)))))
 
-(defun edebug--unwrap-and-add-info (frame def-name before-index after-index)
-  "Update FRAME with the additional info needed by an edebug--frame.
-Save DEF-NAME, BEFORE-INDEX and AFTER-INDEX in FRAME.  Also
-remove Edebug's instrumentation from the function and any
-unevaluated arguments in FRAME."
-  (setf (edebug--frame-def-name frame) (and before-index def-name))
-  (setf (edebug--frame-before-index frame) before-index)
-  (setf (edebug--frame-after-index frame) after-index)
+(defun edebug--unwrap-frame (frame)
+  "Remove Edebug's instrumentation from FRAME.
+Strip it from the function and any unevaluated arguments."
   (setf (edebug--frame-fun frame) (edebug-unwrap* (edebug--frame-fun frame)))
   (unless (edebug--frame-evald frame)
     (let (results)
@@ -4073,6 +4078,41 @@ unevaluated arguments in FRAME."
         (push (edebug-unwrap* arg) results))
       (setf (edebug--frame-args frame) (nreverse results)))))
 
+(defun edebug--add-source-info (frame def-name before-index after-index)
+  "Update FRAME with the additional info needed by an edebug--frame.
+Save DEF-NAME, BEFORE-INDEX and AFTER-INDEX in FRAME."
+  (when (and before-index def-name)
+    (setf (edebug--frame-flags frame)
+          (plist-put (copy-sequence (edebug--frame-flags frame))
+                     :source-available t)))
+  (setf (edebug--frame-def-name frame) (and before-index def-name))
+  (setf (edebug--frame-before-index frame) before-index)
+  (setf (edebug--frame-after-index frame) after-index))
+
+(defun edebug--backtrace-goto-source ()
+  (let* ((index (backtrace-get-index))
+         (frame (nth index backtrace-frames)))
+    (when (edebug--frame-def-name frame)
+      (let* ((data (get (edebug--frame-def-name frame) 'edebug))
+             (marker (nth 0 data))
+             (offsets (nth 2 data)))
+        (pop-to-buffer (marker-buffer marker))
+        (goto-char (+ (marker-position marker)
+                      (aref offsets (edebug--frame-before-index frame))))))))
+
+(defun edebug-backtrace-show-instrumentation ()
+  "Show Edebug's instrumentation in an Edebug Backtrace buffer."
+  (interactive)
+  (unless (eq backtrace-frames edebug-instrumented-backtrace-frames)
+    (setq backtrace-frames edebug-instrumented-backtrace-frames)
+    (revert-buffer)))
+
+(defun edebug-backtrace-hide-instrumentation ()
+  "Show Edebug's instrumentation in an Edebug Backtrace buffer."
+  (interactive)
+  (unless (eq backtrace-frames edebug-backtrace-frames)
+    (setq backtrace-frames edebug-backtrace-frames)
+    (revert-buffer)))
 
 ;;; Trace display
 
@@ -4246,7 +4286,7 @@ It is removed when you hit any char."
      ["Bounce to Current Point" edebug-bounce-point t]
      ["View Outside Windows" edebug-view-outside t]
      ["Previous Result" edebug-previous-result t]
-     ["Show Backtrace" edebug-backtrace t]
+     ["Show Backtrace" edebug-pop-to-backtrace t]
      ["Display Freq Count" edebug-display-freq-count t])
 
     ("Eval"
