@@ -4537,7 +4537,7 @@ network_lookup_address_info_1 (Lisp_Object host, const char *service,
   Lisp_Object msg = Qt;
   int ret;
 
-  if (SBYTES (host) != SCHARS (host))
+  if (STRING_MULTIBYTE (host) && SBYTES (host) != SCHARS (host))
     error ("Non-ASCII hostname %s detected, please use puny-encode-domain",
            SSDATA (host));
   ret = getaddrinfo (SSDATA (host), service, hints, res);

@@ -227,6 +227,10 @@
   (should-error (network-lookup-address-info "faß.de"))
   (should (length (network-lookup-address-info (puny-encode-domain "faß.de")))))
 
+(ert-deftest unibyte-domain-name ()
+  "Unibyte domain names should work"
+  (should (length (network-lookup-address-info (string-to-unibyte "google.com")))))
+
 (ert-deftest lookup-google ()
   "Check that we can look up google IP addresses"
   (let ((addresses-both (network-lookup-address-info "google.com"))
