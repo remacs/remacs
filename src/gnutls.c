@@ -2024,7 +2024,14 @@ gnutls_symmetric (bool encrypting, Lisp_Object cipher,
     cipher = intern (SSDATA (cipher));
 
   if (SYMBOLP (cipher))
-    info = XCDR (Fassq (cipher, Fgnutls_ciphers ()));
+    {
+      info = Fassq (cipher, Fgnutls_ciphers ());
+      if (!CONSP (info))
+	xsignal2 (Qerror,
+		  build_string ("GnuTLS cipher is invalid or not found"),
+		  cipher);
+      info = XCDR (info);
+    }
   else if (TYPE_RANGED_INTEGERP (gnutls_cipher_algorithm_t, cipher))
     gca = XINT (cipher);
   else
@@ -2039,7 +2046,8 @@ gnutls_symmetric (bool encrypting, Lisp_Object cipher,
 
   ptrdiff_t key_size = gnutls_cipher_get_key_size (gca);
   if (key_size == 0)
-    error ("GnuTLS cipher is invalid or not found");
+    xsignal2 (Qerror,
+	      build_string ("GnuTLS cipher is invalid or not found"), cipher);
 
   ptrdiff_t kstart_byte, kend_byte;
   const char *kdata = extract_data_from_object (key, &kstart_byte, &kend_byte);
@@ -2295,7 +2303,14 @@ itself. */)
     hash_method = intern (SSDATA (hash_method));
 
   if (SYMBOLP (hash_method))
-    info = XCDR (Fassq (hash_method, Fgnutls_macs ()));
+    {
+      info = Fassq (hash_method, Fgnutls_macs ());
+      if (!CONSP (info))
+	xsignal2 (Qerror,
+		  build_string ("GnuTLS MAC-method is invalid or not found"),
+		  hash_method);
+      info = XCDR (info);
+    }
   else if (TYPE_RANGED_INTEGERP (gnutls_mac_algorithm_t, hash_method))
     gma = XINT (hash_method);
   else
@@ -2310,7 +2325,9 @@ itself. */)
 
   ptrdiff_t digest_length = gnutls_hmac_get_len (gma);
   if (digest_length == 0)
-    error ("GnuTLS MAC-method is invalid or not found");
+    xsignal2 (Qerror,
+	      build_string ("GnuTLS MAC-method is invalid or not found"),
+	      hash_method);
 
   ptrdiff_t kstart_byte, kend_byte;
   const char *kdata = extract_data_from_object (key, &kstart_byte, &kend_byte);
@@ -2376,7 +2393,14 @@ the number itself. */)
     digest_method = intern (SSDATA (digest_method));
 
   if (SYMBOLP (digest_method))
-    info = XCDR (Fassq (digest_method, Fgnutls_digests ()));
+    {
+      info = Fassq (digest_method, Fgnutls_digests ());
+      if (!CONSP (info))
+	xsignal2 (Qerror,
+		  build_string ("GnuTLS digest-method is invalid or not found"),
+		  digest_method);
+      info = XCDR (info);
+    }
   else if (TYPE_RANGED_INTEGERP (gnutls_digest_algorithm_t, digest_method))
     gda = XINT (digest_method);
   else
@@ -2391,7 +2415,9 @@ the number itself. */)
 
   ptrdiff_t digest_length = gnutls_hash_get_len (gda);
   if (digest_length == 0)
-    error ("GnuTLS digest-method is invalid or not found");
+    xsignal2 (Qerror,
+	      build_string ("GnuTLS digest-method is invalid or not found"),
+	      digest_method);
 
   gnutls_hash_hd_t hash;
   int ret = gnutls_hash_init (&hash, gda);
