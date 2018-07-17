@@ -327,6 +327,10 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
 
     if pos.is_nil() {
         pos_byte = buffer_ref.pt_byte;
+        // In case point is point_min
+        if pos_byte == 1 {
+            return None;
+        }
     } else if let Some(m) = pos.as_marker() {
         pos_byte = m.bytepos_or_error();
         if pos_byte <= buffer_ref.begv_byte || pos_byte > buffer_ref.zv_byte {
