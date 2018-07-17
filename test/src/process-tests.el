@@ -22,6 +22,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'puny)
 
 ;; Timeout in seconds; the test fails if the timeout is reached.
 (defvar process-test-sentinel-wait-timeout 2.0)
@@ -214,6 +215,30 @@
       (should (process-tests--mixable (string-to-list (buffer-string))
                                       (string-to-list "stdout\n")
                                       (string-to-list "stderr\n"))))))
+
+(ert-deftest lookup-family-specification ()
+  "network-lookup-address-info should only accept valid family symbols."
+  (should-error (network-lookup-address-info "google.com" 'both))
+  (should (network-lookup-address-info "google.com" 'ipv4))
+  (should (network-lookup-address-info "google.com" 'ipv6)))
+
+(ert-deftest lookup-unicode-domains ()
+  "Unicode domains should fail"
+  (should-error (network-lookup-address-info "faß.de"))
+  (should (length (network-lookup-address-info (puny-encode-domain "faß.de")))))
+
+(ert-deftest lookup-google ()
+  "Check that we can look up google IP addresses"
+  (let ((addresses-both (network-lookup-address-info "google.com"))
+        (addresses-v4 (network-lookup-address-info "google.com" 'ipv4))
+        (addresses-v6 (network-lookup-address-info "google.com" 'ipv6)))
+    (should (length addresses-both))
+    (should (length addresses-v4))
+    (should (length addresses-v6))))
+
+(ert-deftest non-existent-lookup-failure ()
+  "Check that looking up non-existent domain returns nil"
+  (should (eq nil (network-lookup-address-info "emacs.invalid"))))
 
 (provide 'process-tests)
 ;; process-tests.el ends here.
