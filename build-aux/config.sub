@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2018 Free Software Foundation, Inc.
 
-timestamp='2018-07-03'
+timestamp='2018-07-13'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -739,6 +739,7 @@ case $basic_machine in
 	| mipsr5900-* | mipsr5900el-* \
 	| mipstx39-* | mipstx39el-* \
 	| mmix-* \
+	| moxie-* \
 	| mt-* \
 	| msp430-* \
 	| nds32-* | nds32le-* | nds32be-* \
@@ -1262,9 +1263,6 @@ case $basic_machine in
 		;;
 	pmac | pmac-mpw)
 		basic_machine=powerpc-apple
-		;;
-	*-unknown)
-		# Make sure to match an already-canonicalized machine name.
 		;;
 	*)
 		echo Invalid configuration \`"$1"\': machine \`"$basic_machine"\' not recognized 1>&2
