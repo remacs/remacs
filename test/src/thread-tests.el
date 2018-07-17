@@ -34,10 +34,11 @@
 (declare-function thread--blocker "thread.c" (thread))
 (declare-function thread-alive-p "thread.c" (thread))
 (declare-function thread-join "thread.c" (thread))
-(declare-function thread-last-error "thread.c" ())
+(declare-function thread-last-error "thread.c" (&optional cleanup))
 (declare-function thread-name "thread.c" (thread))
 (declare-function thread-signal "thread.c" (thread error-symbol data))
 (declare-function thread-yield "thread.c" ())
+(defvar main-thread)
 
 (ert-deftest threads-is-one ()
   "Test for existence of a thread."
@@ -70,6 +71,11 @@
   "Simple test for all-threads."
   (skip-unless (featurep 'threads))
   (should (listp (all-threads))))
+
+(ert-deftest threads-main-thread ()
+  "Simple test for all-threads."
+  (skip-unless (featurep 'threads))
+  (should (eq main-thread (car (all-threads)))))
 
 (defvar threads-test-global nil)
 
@@ -275,6 +281,9 @@
       (thread-yield))
     (should (equal (thread-last-error)
                    '(error "Error is called")))
+    (should (equal (thread-last-error 'cleanup)
+                   '(error "Error is called")))
+    (should-not (thread-last-error))
     (setq th2 (make-thread #'threads-custom "threads-custom"))
     (should (threadp th2))))
 

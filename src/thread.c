@@ -973,11 +973,17 @@ DEFUN ("all-threads", Fall_threads, Sall_threads, 0, 0, 0,
   return result;
 }
 
-DEFUN ("thread-last-error", Fthread_last_error, Sthread_last_error, 0, 0, 0,
-       doc: /* Return the last error form recorded by a dying thread.  */)
-  (void)
+DEFUN ("thread-last-error", Fthread_last_error, Sthread_last_error, 0, 1, 0,
+       doc: /* Return the last error form recorded by a dying thread.
+If CLEANUP is non-nil, remove this error form from history.  */)
+     (Lisp_Object cleanup)
 {
-  return last_thread_error;
+  Lisp_Object result = last_thread_error;
+
+  if (!NILP (cleanup))
+    last_thread_error = Qnil;
+
+  return result;
 }
 
 
@@ -1083,4 +1089,13 @@ syms_of_threads (void)
   DEFSYM (Qthreadp, "threadp");
   DEFSYM (Qmutexp, "mutexp");
   DEFSYM (Qcondition_variable_p, "condition-variable-p");
+
+  DEFVAR_LISP ("main-thread",
+	       Vmain_thread,
+    doc: /* The main thread of Emacs.  */);
+#ifdef THREADS_ENABLED
+  XSETTHREAD (Vmain_thread, &main_thread);
+#else
+  Vmain_thread = Qnil;
+#endif
 }
