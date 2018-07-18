@@ -763,7 +763,7 @@ Calls `auth-source-search' with the :delete property in SPEC set to t.
 The backend may not actually delete the entries.
 
 Returns the deleted entries."
-  (auth-source-search (plist-put spec :delete t)))
+  (apply #'auth-source-search (plist-put spec :delete t)))
 
 (defun auth-source-search-collection (collection value)
   "Returns t is VALUE is t or COLLECTION is t or COLLECTION contains VALUE."

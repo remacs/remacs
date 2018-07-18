@@ -289,5 +289,25 @@
         (should (equal found-as-string (concat testname ": " needed)))))
     (delete-file netrc-file)))
 
+(ert-deftest auth-source-delete ()
+  (let* ((netrc-file (make-temp-file "auth-source-test" nil nil "\
+machine a1 port a2 user a3 password a4
+machine b1 port b2 user b3 password b4
+machine c1 port c2 user c3 password c4\n"))
+         (auth-sources (list netrc-file))
+         (auth-source-do-cache nil)
+         (expected '((:host "a1" :port "a2" :user "a3" :secret "a4")))
+         (parameters '(:max 1 :host t)))
+    (unwind-protect
+        (let ((found (apply #'auth-source-delete parameters)))
+          (dolist (f found)
+            (let ((s (plist-get f :secret)))
+              (setf f (plist-put f :secret
+                                 (if (functionp s) (funcall s) s)))))
+          ;; Note: The netrc backend doesn't delete anything, so
+          ;; this is actually the same as `auth-source-search'.
+          (should (equal found expected)))
+      (delete-file netrc-file))))
+
 (provide 'auth-source-tests)
 ;;; auth-source-tests.el ends here
