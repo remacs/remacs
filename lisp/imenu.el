@@ -832,15 +832,14 @@ depending on PATTERNS."
     (dolist (item index-alist)
       (when (listp item)
 	(setcdr item (sort (cdr item) 'imenu--sort-by-position))))
-    (let ((main-element (assq nil index-alist)))
-      (nconc (delq main-element (delq 'dummy index-alist))
-             (cdr main-element)))
     ;; Remove any empty menus.  That can happen because of skipping
     ;; things inside comments or strings.
-    (when (consp (car index-alist))
-      (setq index-alist  (cl-delete-if-not
-                          (lambda (it) (cdr it))
-                          index-alist)))))
+    (setq index-alist (cl-delete-if
+                       (lambda (it) (and (consp it) (null (cdr it))))
+                       index-alist))
+    (let ((main-element (assq nil index-alist)))
+      (nconc (delq main-element (delq 'dummy index-alist))
+             (cdr main-element)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
