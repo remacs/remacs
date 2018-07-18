@@ -73,7 +73,7 @@
 ;; c-c c-o comint-delete-output		   Delete last batch of process output
 ;; c-c c-r comint-show-output		   Show last batch of process output
 ;; c-c c-l comint-dynamic-list-input-ring  List input history
-;;         send-invisible                  Read line w/o echo & send to proc
+;;         comint-send-invisible           Read line w/o echo & send to proc
 ;;         comint-continue-subjob	   Useful if you accidentally suspend
 ;;					        top-level job
 ;; comint-mode-hook is the comint mode hook.
@@ -500,7 +500,7 @@ Shell buffers.  It implements `shell-completion-execonly' for
     the end of process to the end of the current line.
 \\[comint-send-input] before end of process output copies the current line minus the prompt to
     the end of the buffer and sends it (\\[comint-copy-old-input] just copies the current line).
-\\[send-invisible] reads a line of text without echoing it, and sends it to
+\\[comint-send-invisible] reads a line of text without echoing it, and sends it to
     the shell.  This is useful for entering passwords.  Or, add the function
     `comint-watch-for-password-prompt' to `comint-output-filter-functions'.
 

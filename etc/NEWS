@@ -233,6 +233,10 @@ shown in the currently selected window.
 ** Comint
 
 +++
+*** 'send-invisible' is now an obsolete alias for `comint-send-invisible'
+Also, 'shell-strip-ctrl-m' is declared obsolete.
+
++++
 *** 'C-c .' (comint-insert-previous-argument) no longer interprets '&'.
 This feature caused problems when '&&' was present in the previous
 command.  Since this command emulates 'M-.' in Bash and zsh, neither
