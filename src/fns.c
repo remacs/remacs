@@ -1419,6 +1419,29 @@ DEFUN ("elt", Felt, Selt, 2, 2, 0,
   return Faref (sequence, n);
 }
 
+enum { WORDS_PER_DOUBLE = (sizeof (double) / sizeof (EMACS_UINT)
+                          + (sizeof (double) % sizeof (EMACS_UINT) != 0)) };
+union double_and_words
+{
+  double val;
+  EMACS_UINT word[WORDS_PER_DOUBLE];
+};
+
+/* Return true if X and Y are the same floating-point value.
+   This looks at X's and Y's representation, since (unlike '==')
+   it returns true if X and Y are the same NaN.  */
+static bool
+same_float (Lisp_Object x, Lisp_Object y)
+{
+  union double_and_words
+    xu = { .val = XFLOAT_DATA (x) },
+    yu = { .val = XFLOAT_DATA (y) };
+  EMACS_UINT neql = 0;
+  for (int i = 0; i < WORDS_PER_DOUBLE; i++)
+    neql |= xu.word[i] ^ yu.word[i];
+  return !neql;
+}
+
 DEFUN ("member", Fmember, Smember, 2, 2, 0,
        doc: /* Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
 The value is actually the tail of LIST whose car is ELT.  */)
@@ -1457,7 +1480,7 @@ The value is actually the tail of LIST whose car is ELT.  */)
   FOR_EACH_TAIL (tail)
     {
       Lisp_Object tem = XCAR (tail);
-      if (FLOATP (tem) && equal_no_quit (elt, tem))
+      if (FLOATP (tem) && same_float (elt, tem))
 	return tail;
     }
   CHECK_LIST_END (tail, list);
@@ -2175,7 +2198,7 @@ Floating-point numbers of equal value are `eql', but they may not be `eq'.  */)
   (Lisp_Object obj1, Lisp_Object obj2)
 {
   if (FLOATP (obj1))
-    return equal_no_quit (obj1, obj2) ? Qt : Qnil;
+    return FLOATP (obj2) && same_float (obj1, obj2) ? Qt : Qnil;
   else
     return EQ (obj1, obj2) ? Qt : Qnil;
 }
@@ -2266,13 +2289,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
   switch (XTYPE (o1))
     {
     case Lisp_Float:
-      {
-	double d1 = XFLOAT_DATA (o1);
-	double d2 = XFLOAT_DATA (o2);
-	/* If d is a NaN, then d != d. Two NaNs should be `equal' even
-	   though they are not =.  */
-	return d1 == d2 || (d1 != d1 && d2 != d2);
-      }
+      return same_float (o1, o2);
 
     case Lisp_Cons:
       if (equal_kind == EQUAL_NO_QUIT)
@@ -3706,24 +3723,20 @@ HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
   return XINT (AREF (h->index, idx));
 }
 
-/* Compare KEY1 which has hash code HASH1 and KEY2 with hash code
-   HASH2 in hash table H using `eql'.  Value is true if KEY1 and
-   KEY2 are the same.  */
+/* Compare KEY1 and KEY2 in hash table HT using `eql'.  Value is true
+   if KEY1 and KEY2 are the same.  KEY1 and KEY2 must not be eq.  */
 
 static bool
 cmpfn_eql (struct hash_table_test *ht,
 	   Lisp_Object key1,
 	   Lisp_Object key2)
 {
-  return (FLOATP (key1)
-	  && FLOATP (key2)
-	  && XFLOAT_DATA (key1) == XFLOAT_DATA (key2));
+  return FLOATP (key1) && FLOATP (key2) && same_float (key1, key2);
 }
 
 
-/* Compare KEY1 which has hash code HASH1 and KEY2 with hash code
-   HASH2 in hash table H using `equal'.  Value is true if KEY1 and
-   KEY2 are the same.  */
+/* Compare KEY1 and KEY2 in hash table HT using `equal'.  Value is
+   true if KEY1 and KEY2 are the same.  */
 
 static bool
 cmpfn_equal (struct hash_table_test *ht,
@@ -3734,9 +3747,8 @@ cmpfn_equal (struct hash_table_test *ht,
 }
 
 
-/* Compare KEY1 which has hash code HASH1, and KEY2 with hash code
-   HASH2 in hash table H using H->user_cmp_function.  Value is true
-   if KEY1 and KEY2 are the same.  */
+/* Compare KEY1 and KEY2 in hash table HT using HT->user_cmp_function.
+   Value is true if KEY1 and KEY2 are the same.  */
 
 static bool
 cmpfn_user_defined (struct hash_table_test *ht,
@@ -4328,18 +4340,8 @@ static EMACS_UINT
 sxhash_float (double val)
 {
   EMACS_UINT hash = 0;
-  enum {
-    WORDS_PER_DOUBLE = (sizeof val / sizeof hash
-			+ (sizeof val % sizeof hash != 0))
-  };
-  union {
-    double val;
-    EMACS_UINT word[WORDS_PER_DOUBLE];
-  } u;
-  int i;
-  u.val = val;
-  memset (&u.val + 1, 0, sizeof u - sizeof u.val);
-  for (i = 0; i < WORDS_PER_DOUBLE; i++)
+  union double_and_words u = { .val = val };
+  for (int i = 0; i < WORDS_PER_DOUBLE; i++)
     hash = sxhash_combine (hash, u.word[i]);
   return SXHASH_REDUCE (hash);
 }

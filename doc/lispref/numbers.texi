@@ -232,13 +232,18 @@ distinguish them.
 @cindex negative infinity
 @cindex infinity
 @cindex NaN
+@findex eql
+@findex sxhash-eql
   The @acronym{IEEE} floating-point standard supports positive
 infinity and negative infinity as floating-point values.  It also
 provides for a class of values called NaN, or ``not a number'';
 numerical functions return such values in cases where there is no
 correct answer.  For example, @code{(/ 0.0 0.0)} returns a NaN@.
-Although NaN values carry a sign, for practical purposes there is no other
-significant difference between different NaN values in Emacs Lisp.
+A NaN is never numerically equal to any value, not even to itself.
+NaNs carry a sign and a significand, and non-numeric functions like
+@code{eql} and @code{sxhash-eql} treat two NaNs as equal when their
+signs and significands agree.  Significands of NaNs are
+machine-dependent and are not directly visible to Emacs Lisp.
 
 Here are read syntaxes for these special floating-point values:
 
