@@ -678,20 +678,19 @@ of @code{debug} (@pxref{Invoking the Debugger}).
 @cindex run time stack
 @cindex call stack
 This function prints a trace of Lisp function calls currently active.
-This is the function used by @code{debug} to fill up the
-@file{*Backtrace*} buffer.  It is written in C, since it must have access
-to the stack to determine which function calls are active.  The return
-value is always @code{nil}.
+The trace is identical to the one that @code{debug} would show in the
+@file{*Backtrace*} buffer.  The return value is always nil.
 
 In the following example, a Lisp expression calls @code{backtrace}
 explicitly.  This prints the backtrace to the stream
 @code{standard-output}, which, in this case, is the buffer
 @samp{backtrace-output}.
 
-Each line of the backtrace represents one function call.  The line shows
-the values of the function's arguments if they are all known; if they
-are still being computed, the line says so.  The arguments of special
-forms are elided.
+Each line of the backtrace represents one function call.  The line
+shows the function followed by a list of the values of the function's
+arguments if they are all known; if they are still being computed, the
+line consists of a list containing the function and its unevaluated
+arguments. Long lists or deeply nested structures may be elided.
 
 @smallexample
 @group
@@ -708,7 +707,7 @@ forms are elided.
 @group
 ----------- Buffer: backtrace-output ------------
   backtrace()
-  (list ...computing arguments...)
+  (list 'testing (backtrace))
 @end group
   (progn ...)
   eval((progn (1+ var) (list 'testing (backtrace))))
@@ -739,7 +738,7 @@ example would look as follows:
 @group
 ----------- Buffer: backtrace-output ------------
   (backtrace)
-  (list ...computing arguments...)
+  (list 'testing (backtrace))
 @end group
   (progn ...)
   (eval (progn (1+ var) (list 'testing (backtrace))))

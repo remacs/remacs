@@ -891,14 +891,18 @@ followed by `backtrace-print-frame', once for each stack frame."
 
 ;;; Backtrace printing
 
-(defun backtrace-backtrace ()
+;;;###autoload
+(defun backtrace ()
   "Print a trace of Lisp function calls currently active.
 Output stream used is value of `standard-output'."
-  (princ (backtrace-to-string (backtrace-get-frames 'backtrace-backtrace))))
+  (princ (backtrace-to-string (backtrace-get-frames 'backtrace)))
+  nil)
 
-(defun backtrace-to-string(frames)
+(defun backtrace-to-string(&optional frames)
   "Format FRAMES, a list of `backtrace-frame' objects, for output.
-Return the result as a string."
+Return the result as a string.  If FRAMES is nil, use all
+function calls currently active."
+  (unless frames (setq frames (backtrace-get-frames 'backtrace-to-string)))
   (let ((backtrace-fontify nil))
     (with-temp-buffer
       (backtrace-mode)
