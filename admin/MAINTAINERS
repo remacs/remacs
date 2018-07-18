@@ -61,7 +61,7 @@ Michael Albinus
             lisp/net/tramp*.el
             lisp/url/url-tramp.el
             doc/misc/tramp*.texi
-            test/lisp/net/tramp-tests.el
+            test/lisp/net/tramp*-tests.el
             test/lisp/url/url-tramp-tests.el
 
         D-Bus
@@ -210,10 +210,20 @@ Paul Eggert
 Michael Albinus
 	src/inotify.c
         lisp/autorevert.el
+        lisp/files.el (file-name-non-special)
 	lisp/eshell/em-tramp.el
+	lisp/net/ange-ftp.el
 	lisp/notifications.el
+	lisp/shadowfile.el
         test/lisp/autorevert-tests.el
+        test/lisp/files-tests.el (file-name-non-special)
+	test/lisp/shadowfile-tests.el
 	test/src/inotify-test.el
+
+	Secret Service API in
+	    lisp/auth-source.el
+	    doc/misc/auth.texi
+	    test/lisp/auth-source-tests.el
 
 Nicolas Petton
 	lisp/emacs-lisp/subr-x.el
