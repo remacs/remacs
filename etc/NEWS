@@ -829,8 +829,8 @@ remote systems, which support this check.
 ** 'eql', 'make-hash-table', etc. now treat NaNs consistently.
 Formerly, some of these functions ignored signs and significands of
 NaNs.  Now, all these functions treat NaN signs and significands as
-significant.  For example, (eql 0.0e+NaN -0.0e+NaN) now returns t
-because the two NaNs have different signs; formerly it returned nil.
+significant.  For example, (eql 0.0e+NaN -0.0e+NaN) now returns nil
+because the two NaNs have different signs; formerly it returned t.
 
 +++
 ** The function 'make-string' accepts an additional optional argument.
