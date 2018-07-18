@@ -1414,42 +1414,6 @@ if it isn't already recorded.  */)
   return value;
 }
 
-DEFUN ("set-window-point", Fset_window_point, Sset_window_point, 2, 2, 0,
-       doc: /* Make point value in WINDOW be at position POS in WINDOW's buffer.
-WINDOW must be a live window and defaults to the selected one.
-Return POS.  */)
-  (Lisp_Object window, Lisp_Object pos)
-{
-  register struct window *w = decode_live_window (window);
-
-  /* Type of POS is checked by Fgoto_char or set_marker_restricted ...  */
-
-  if (w == XWINDOW (selected_window))
-    {
-      if (XBUFFER (w->contents) == current_buffer)
-	Fgoto_char (pos);
-      else
-	{
-	  struct buffer *old_buffer = current_buffer;
-
-	  /* ... but here we want to catch type error before buffer change.  */
-	  CHECK_NUMBER_COERCE_MARKER (pos);
-	  set_buffer_internal (XBUFFER (w->contents));
-	  Fgoto_char (pos);
-	  set_buffer_internal (old_buffer);
-	}
-    }
-  else
-    {
-      set_marker_restricted (w->pointm, pos, w->contents);
-      /* We have to make sure that redisplay updates the window to show
-	 the new value of point.  */
-      wset_redisplay (w);
-    }
-
-  return pos;
-}
-
 DEFUN ("set-window-start", Fset_window_start, Sset_window_start, 2, 3, 0,
        doc: /* Make display in WINDOW start at position POS in WINDOW's buffer.
 WINDOW must be a live window and defaults to the selected one.  Return
@@ -7302,7 +7266,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_end);
-  defsubr (&Sset_window_point);
   defsubr (&Sset_window_start);
   defsubr (&Swindow_lines_pixel_dimensions);
   defsubr (&Sset_window_display_table);

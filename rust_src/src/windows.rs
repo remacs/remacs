@@ -9,19 +9,20 @@ use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, wget_current_matrix, wget_mode_line_height,
-                 wget_parent, wget_pixel_height, wget_pseudo_window_p, wget_window_parameters,
-                 window_menu_bar_p, window_parameter, window_tool_bar_p, wset_mode_line_height,
-                 wset_window_parameters, window_list_1};
+                 selected_window as current_window, set_buffer_internal, wget_current_matrix,
+                 wget_mode_line_height, wget_parent, wget_pixel_height, wget_pseudo_window_p,
+                 wget_window_parameters, window_menu_bar_p, window_parameter, window_tool_bar_p,
+                 wset_mode_line_height, wset_redisplay, wset_window_parameters, window_list_1};
 use remacs_sys::Fcons;
 use remacs_sys::globals;
 
-use editfns::point;
+use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, window_frame_live_or_selected, LispFrameRef};
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{assq, setcdr};
-use marker::marker_position_lisp;
+use marker::{marker_position_lisp, set_marker_restricted};
+use threads::ThreadState;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
@@ -758,6 +759,44 @@ pub fn window_old_point(window: LispObject) -> Option<EmacsInt> {
 pub fn window_use_time(window: LispObject) -> LispObject {
     let use_time = window_live_or_selected(window).use_time;
     LispObject::from(use_time)
+}
+
+/// Make point value in WINDOW be at position POS in WINDOW's buffer.
+/// WINDOW must be a live window and defaults to the selected one.
+/// Return POS.
+#[lisp_fn]
+pub fn set_window_point(window: LispObject, pos: LispObject) -> LispObject {
+    let mut w = window_live_or_selected(window);
+
+    // Type of POS is checked by Fgoto_char or set_marker_restricted ...
+    if w == selected_window().as_window_or_error() {
+        let mut current_buffer = ThreadState::current_buffer();
+
+        if w.contents()
+            .as_buffer()
+            .map_or(false, |b| b == current_buffer)
+        {
+            goto_char(pos);
+        } else {
+            // ... but here we want to catch type error before buffer change.
+            pos.as_number_coerce_marker_or_error();
+            unsafe {
+                set_buffer_internal(w.contents().as_buffer_or_error().as_mut());
+            }
+            goto_char(pos);
+            unsafe {
+                set_buffer_internal(current_buffer.as_mut());
+            }
+        }
+    } else {
+        set_marker_restricted(w.pointm, pos, w.contents());
+        // We have to make sure that redisplay updates the window to show
+        // the new value of point.
+        unsafe {
+            wset_redisplay(w.as_mut());
+        }
+    }
+    pos
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
