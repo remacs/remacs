@@ -1199,8 +1199,14 @@ ENDPOS is encountered."
     (setq endpos (copy-marker
                   (if endpos endpos
                     ;; Get error now if we don't have a complete sexp
-                    ;; after point.
-                    (save-excursion (forward-sexp 1) (point)))))
+                    ;; after point.  We actually look for a sexp which
+                    ;; ends after the current line so that we properly
+                    ;; indent things like #s(...).  This might not be
+                    ;; needed if Bug#15998 is fixed.
+                    (let ((eol (line-end-position)))
+                      (save-excursion (while (and (< (point) eol) (not (eobp)))
+                                        (forward-sexp 1))
+                                      (point))))))
     (save-excursion
       (while (let ((indent (lisp-indent-calc-next parse-state))
                    (ppss (lisp-indent-state-ppss parse-state)))
