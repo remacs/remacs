@@ -761,6 +761,20 @@ pub fn window_use_time(window: LispObject) -> LispObject {
     LispObject::from(use_time)
 }
 
+/// Return buffers previously shown in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_prev_buffers(window: LispObject) -> LispObject {
+    window_live_or_selected(window).prev_buffers
+}
+
+/// Return list of buffers recently re-shown in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_next_buffers(window: LispObject) -> LispObject {
+    window_live_or_selected(window).next_buffers
+}
+
 /// Make point value in WINDOW be at position POS in WINDOW's buffer.
 /// WINDOW must be a live window and defaults to the selected one.
 /// Return POS.
