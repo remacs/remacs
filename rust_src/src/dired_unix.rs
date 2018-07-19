@@ -8,13 +8,11 @@ use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 use std::slice;
 
-use remacs_macros::lisp_fn;
 use remacs_sys::{build_string, file_attributes_c_internal, filemode_string, globals,
                  Fexpand_file_name, Ffind_file_name_handler, Qfile_attributes, Qnil};
 
-use lisp::{defsubr, LispObject};
-use lists::{car, list};
-use strings::string_lessp;
+use lisp::LispObject;
+use lists::list;
 use time::make_lisp_time;
 
 trait StringExt {
@@ -320,7 +318,7 @@ impl FileAttrs {
     }
 }
 
-fn file_attributes_intro(filename: LispObject, id_format: LispObject) -> LispObject {
+pub fn file_attributes_intro(filename: LispObject, id_format: LispObject) -> LispObject {
     let fnexp = unsafe { Fexpand_file_name(filename.to_raw(), Qnil) };
     let handler = unsafe { Ffind_file_name_handler(fnexp, Qfile_attributes) };
     if handler.is_not_nil() {
@@ -334,7 +332,7 @@ fn file_attributes_intro(filename: LispObject, id_format: LispObject) -> LispObj
     file_attributes_core(fnexp, id_format)
 }
 
-fn file_attributes_rust_internal2(
+pub fn file_attributes_rust_internal2(
     dirname: LispObject,
     filename: LispObject,
     id_format: LispObject,
@@ -359,7 +357,7 @@ fn get_user_real_login_name() -> LispObject {
     unsafe { globals.Vuser_real_login_name }
 }
 
-fn get_users() -> LispObject {
+pub fn get_users() -> LispObject {
     let mut done = false;
     let mut unames = Vec::new();
 

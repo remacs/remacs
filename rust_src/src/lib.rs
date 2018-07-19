@@ -62,6 +62,10 @@ mod cmds;
 mod crypto;
 mod data;
 mod dired;
+#[cfg(unix)]
+mod dired_unix;
+#[cfg(windows)]
+mod dired_windows;
 mod dispnew;
 mod editfns;
 mod eval;

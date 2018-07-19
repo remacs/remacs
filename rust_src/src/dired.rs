@@ -1,10 +1,14 @@
 //! Lisp functions for making directory listings.
 
-#[cfg(unix)]
-include!("dired_unix.rs");
+use remacs_macros::lisp_fn;
 
+#[cfg(unix)]
+use dired_unix::{file_attributes_intro, get_users, file_attributes_rust_internal2};
 #[cfg(windows)]
-include!("dired_windows.rs");
+use dired_windows::{file_attributes_intro, get_users, file_attributes_rust_internal2};
+use lisp::{defsubr, LispObject};
+use lists::car;
+use strings::string_lessp;
 
 /// Return a list of attributes of file FILENAME.
 /// Value is nil if specified file cannot be opened.
