@@ -288,7 +288,8 @@ DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
   else if (FIXNUMP (arg) && XINT (arg) == MOST_NEGATIVE_FIXNUM)
     {
       mpz_t val;
-      mpz_init_set_si (val, - MOST_NEGATIVE_FIXNUM);
+      mpz_init (val);
+      mpz_set_intmax (val, - MOST_NEGATIVE_FIXNUM);
       arg = make_number (val);
       mpz_clear (val);
     }

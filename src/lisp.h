@@ -3655,6 +3655,32 @@ extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
 
 extern Lisp_Object make_bignum_str (const char *num, int base);
 extern Lisp_Object make_number (mpz_t value);
+extern void mpz_set_intmax_slow (mpz_t result, intmax_t v);
+extern void mpz_set_uintmax_slow (mpz_t result, uintmax_t v);
+
+INLINE void
+mpz_set_intmax (mpz_t result, intmax_t v)
+{
+  /* mpz_set_si works in terms of long, but Emacs may use a wider
+     integer type, and so sometimes will have to construct the mpz_t
+     by hand.  */
+  if (sizeof (intmax_t) > sizeof (long) && (long) v != v)
+    mpz_set_intmax_slow (result, v);
+  else
+    mpz_set_si (result, v);
+}
+
+INLINE void
+mpz_set_uintmax (mpz_t result, uintmax_t v)
+{
+  /* mpz_set_ui works in terms of unsigned long, but Emacs may use a
+     wider integer type, and so sometimes will have to construct the
+     mpz_t by hand.  */
+  if (sizeof (uintmax_t) > sizeof (unsigned long) && (unsigned long) v != v)
+    mpz_set_uintmax_slow (result, v);
+  else
+    mpz_set_ui (result, v);
+}
 
 /* Build a frequently used 2/3/4-integer lists.  */
 

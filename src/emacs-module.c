@@ -536,7 +536,8 @@ module_make_integer (emacs_env *env, intmax_t n)
   if (FIXNUM_OVERFLOW_P (n))
     {
       mpz_t val;
-      mpz_init_set_si (val, n);
+      mpz_init (val);
+      mpz_set_intmax (val, n);
       obj = make_number (val);
       mpz_clear (val);
     }

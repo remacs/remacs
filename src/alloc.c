@@ -3824,6 +3824,36 @@ make_number (mpz_t value)
   return obj;
 }
 
+void
+mpz_set_intmax_slow (mpz_t result, intmax_t v)
+{
+  /* If long is larger then a faster path is taken.  */
+  eassert (sizeof (intmax_t) > sizeof (long));
+
+  bool negate = false;
+  if (v < 0)
+    {
+      v = -v;
+      negate = true;
+    }
+  mpz_set_uintmax_slow (result, (uintmax_t) v);
+  if (negate)
+    mpz_neg (result, result);
+}
+
+void
+mpz_set_uintmax_slow (mpz_t result, uintmax_t v)
+{
+  /* If long is larger then a faster path is taken.  */
+  eassert (sizeof (uintmax_t) > sizeof (unsigned long));
+  /* This restriction could be lifted if needed.  */
+  eassert (sizeof (uintmax_t) <= 2 * sizeof (unsigned long));
+
+  mpz_set_ui (result, v >> (CHAR_BIT * sizeof (unsigned long)));
+  mpz_mul_2exp (result, result, CHAR_BIT * sizeof (unsigned long));
+  mpz_add_ui (result, result, v & -1ul);
+}
+
 
 /* Return a newly created vector or string with specified arguments as
    elements.  If all the arguments are characters that can fit

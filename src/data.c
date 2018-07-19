@@ -2882,7 +2882,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	      if (BIGNUMP (val))
 		mpz_set (accum, XBIGNUM (val)->value);
 	      else
-		mpz_set_si (accum, XINT (val));
+		mpz_set_intmax (accum, XINT (val));
 	      if (nargs == 1)
 		mpz_neg (accum, accum);
 	    }
@@ -2905,7 +2905,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	      if (BIGNUMP (val))
 		mpz_set (accum, XBIGNUM (val)->value);
 	      else
-		mpz_set_si (accum, XINT (val));
+		mpz_set_intmax (accum, XINT (val));
 	    }
 	  else
 	    {
@@ -2933,7 +2933,8 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	  else
 	    {
 	      mpz_t tem;
-	      mpz_init_set_ui (tem, XUINT (val));
+	      mpz_init (tem);
+	      mpz_set_uintmax (tem, XUINT (val));
 	      mpz_and (accum, accum, tem);
 	      mpz_clear (tem);
 	    }
@@ -2944,7 +2945,8 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	  else
 	    {
 	      mpz_t tem;
-	      mpz_init_set_ui (tem, XUINT (val));
+	      mpz_init (tem);
+	      mpz_set_uintmax (tem, XUINT (val));
 	      mpz_ior (accum, accum, tem);
 	      mpz_clear (tem);
 	    }
@@ -2955,7 +2957,8 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	  else
 	    {
 	      mpz_t tem;
-	      mpz_init_set_ui (tem, XUINT (val));
+	      mpz_init (tem);
+	      mpz_set_uintmax (tem, XUINT (val));
 	      mpz_xor (accum, accum, tem);
 	      mpz_clear (tem);
 	    }
@@ -3092,7 +3095,8 @@ Both must be integers or markers.  */)
 	xmp = &XBIGNUM (x)->value;
       else
 	{
-	  mpz_init_set_si (xm, XINT (x));
+	  mpz_init (xm);
+	  mpz_set_intmax (xm, XINT (x));
 	  xmp = &xm;
 	}
 
@@ -3100,7 +3104,8 @@ Both must be integers or markers.  */)
 	ymp = &XBIGNUM (y)->value;
       else
 	{
-	  mpz_init_set_si (ym, XINT (y));
+	  mpz_init (ym);
+	  mpz_set_intmax (ym, XINT (y));
 	  ymp = &ym;
 	}
 
@@ -3163,7 +3168,8 @@ Both X and Y must be numbers or markers.  */)
 	xmp = &XBIGNUM (x)->value;
       else
 	{
-	  mpz_init_set_si (xm, XINT (x));
+	  mpz_init (xm);
+	  mpz_set_intmax (xm, XINT (x));
 	  xmp = &xm;
 	}
 
@@ -3171,7 +3177,8 @@ Both X and Y must be numbers or markers.  */)
 	ymp = &XBIGNUM (y)->value;
       else
 	{
-	  mpz_init_set_si (ym, XINT (y));
+	  mpz_init (ym);
+	  mpz_set_intmax (ym, XINT (y));
 	  ymp = &ym;
 	}
 
@@ -3317,10 +3324,11 @@ ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
       /* Just do the work as bignums to make the code simpler.  */
       mpz_t result;
       eassume (FIXNUMP (value));
+      mpz_init (result);
       if (lsh)
-	mpz_init_set_ui (result, XUINT (value));
+	mpz_set_uintmax (result, XUINT (value));
       else
-	mpz_init_set_si (result, XINT (value));
+	mpz_set_intmax (result, XINT (value));
       if (XINT (count) >= 0)
 	mpz_mul_2exp (result, result, XINT (count));
       else
@@ -3376,7 +3384,8 @@ Markers are converted to integers.  */)
       else
 	{
 	  mpz_t num;
-	  mpz_init_set_si (num, XINT (number) + 1);
+	  mpz_init (num);
+	  mpz_set_intmax (num, XINT (number) + 1);
 	  number = make_number (num);
 	  mpz_clear (num);
 	}
@@ -3410,7 +3419,8 @@ Markers are converted to integers.  */)
       else
 	{
 	  mpz_t num;
-	  mpz_init_set_si (num, XINT (number) - 1);
+	  mpz_init (num);
+	  mpz_set_intmax (num, XINT (number) - 1);
 	  number = make_number (num);
 	  mpz_clear (num);
 	}
