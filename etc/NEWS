@@ -384,6 +384,13 @@ bound to 'C-c C-f'.
 when escaping text and in addition all numeric entities when
 unescaping text.
 
+** Python mode
+
+---
+*** Python mode supports three different font lock decoration levels.
+The maximum level is used by default; customize
+'font-lock-maximum-decoration' to tone down the decoration.
+
 ** Dired
 
 +++
