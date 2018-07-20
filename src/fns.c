@@ -2193,8 +2193,10 @@ The PLIST is modified by side effects.  */)
 }
 
 DEFUN ("eql", Feql, Seql, 2, 2, 0,
-       doc: /* Return t if the two args are the same Lisp object.
-Floating-point numbers of equal value are `eql', but they may not be `eq'.  */)
+       doc: /* Return t if the two args are `eq' or are indistinguishable numbers.
+Floating-point values with the same sign, exponent and fraction are `eql'.
+This differs from numeric comparison: (eql 0.0 -0.0) returns nil and
+\(eql 0.0e+NaN 0.0e+NaN) returns t, whereas `=' does the opposite.  */)
   (Lisp_Object obj1, Lisp_Object obj2)
 {
   if (FLOATP (obj1))
@@ -2208,8 +2210,8 @@ DEFUN ("equal", Fequal, Sequal, 2, 2, 0,
 They must have the same data type.
 Conses are compared by comparing the cars and the cdrs.
 Vectors and strings are compared element by element.
-Numbers are compared by value, but integers cannot equal floats.
- (Use `=' if you want integers and floats to be able to be equal.)
+Numbers are compared via `eql', so integers do not equal floats.
+\(Use `=' if you want integers and floats to be able to be equal.)
 Symbols must match exactly.  */)
   (Lisp_Object o1, Lisp_Object o2)
 {
