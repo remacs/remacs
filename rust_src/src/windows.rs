@@ -12,7 +12,8 @@ use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  selected_window as current_window, set_buffer_internal, wget_current_matrix,
                  wget_mode_line_height, wget_parent, wget_pixel_height, wget_pseudo_window_p,
                  wget_window_parameters, window_menu_bar_p, window_parameter, window_tool_bar_p,
-                 wset_mode_line_height, wset_redisplay, wset_window_parameters, window_list_1};
+                 wset_mode_line_height, wset_next_buffers, wset_prev_buffers, wset_redisplay,
+                 wset_window_parameters, window_list_1};
 use remacs_sys::Fcons;
 use remacs_sys::globals;
 
@@ -768,11 +769,37 @@ pub fn window_prev_buffers(window: LispObject) -> LispObject {
     window_live_or_selected(window).prev_buffers
 }
 
+/// Set WINDOW's previous buffers to PREV-BUFFERS.
+/// WINDOW must be a live window and defaults to the selected one.
+/// PREV-BUFFERS should be a list of elements (BUFFER WINDOW-START POS),
+/// where BUFFER is a buffer, WINDOW-START is the start position of the
+/// window for that buffer, and POS is a window-specific point value.
+#[lisp_fn]
+pub fn set_window_prev_buffers(window: LispObject, prev_buffers: LispObject) -> LispObject {
+    let mut w = window_live_or_selected(window);
+    unsafe {
+        wset_prev_buffers(w.as_mut(), prev_buffers);
+    }
+    prev_buffers
+}
+
 /// Return list of buffers recently re-shown in WINDOW.
 /// WINDOW must be a live window and defaults to the selected one.
 #[lisp_fn(min = "0")]
 pub fn window_next_buffers(window: LispObject) -> LispObject {
     window_live_or_selected(window).next_buffers
+}
+
+/// Set WINDOW's next buffers to NEXT-BUFFERS.
+/// WINDOW must be a live window and defaults to the selected one.
+/// NEXT-BUFFERS should be a list of buffers.
+#[lisp_fn]
+pub fn set_window_next_buffers(window: LispObject, next_buffers: LispObject) -> LispObject {
+    let mut w = window_live_or_selected(window);
+    unsafe {
+        wset_next_buffers(w.as_mut(), next_buffers);
+    }
+    next_buffers
 }
 
 /// Make point value in WINDOW be at position POS in WINDOW's buffer.

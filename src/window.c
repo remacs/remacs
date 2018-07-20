@@ -1735,31 +1735,6 @@ though when run from an idle timer with a delay of zero seconds.  */)
   return Fnreverse (rows);
 }
 
-DEFUN ("set-window-prev-buffers", Fset_window_prev_buffers,
-       Sset_window_prev_buffers, 2, 2, 0,
-       doc: /* Set WINDOW's previous buffers to PREV-BUFFERS.
-WINDOW must be a live window and defaults to the selected one.
-
-PREV-BUFFERS should be a list of elements (BUFFER WINDOW-START POS),
-where BUFFER is a buffer, WINDOW-START is the start position of the
-window for that buffer, and POS is a window-specific point value.  */)
-     (Lisp_Object window, Lisp_Object prev_buffers)
-{
-  wset_prev_buffers (decode_live_window (window), prev_buffers);
-  return prev_buffers;
-}
-
-DEFUN ("set-window-next-buffers", Fset_window_next_buffers,
-       Sset_window_next_buffers, 2, 2, 0,
-       doc: /* Set WINDOW's next buffers to NEXT-BUFFERS.
-WINDOW must be a live window and defaults to the selected one.
-NEXT-BUFFERS should be a list of buffers.  */)
-     (Lisp_Object window, Lisp_Object next_buffers)
-{
-  wset_next_buffers (decode_live_window (window), next_buffers);
-  return next_buffers;
-}
-
 DEFUN ("window-parameters", Fwindow_parameters, Swindow_parameters,
        0, 1, 0,
        doc: /* Return the parameters of WINDOW and their values.
@@ -7281,8 +7256,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
   defsubr (&Scompare_window_configurations);
-  defsubr (&Sset_window_prev_buffers);
-  defsubr (&Sset_window_next_buffers);
   defsubr (&Swindow_parameters);
   defsubr (&Swindow_parameter);
 }
