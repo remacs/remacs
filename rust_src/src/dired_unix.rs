@@ -332,7 +332,9 @@ pub fn file_attributes_intro(filename: LispObject, id_format: LispObject) -> Lis
     file_attributes_core(fnexp, id_format)
 }
 
-pub fn file_attributes_rust_internal2(
+// Used by directory-files-and-attributes
+#[no_mangle]
+pub extern "C" fn file_attributes_rust_internal(
     dirname: LispObject,
     filename: LispObject,
     id_format: LispObject,

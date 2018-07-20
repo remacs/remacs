@@ -3,9 +3,9 @@
 use remacs_macros::lisp_fn;
 
 #[cfg(unix)]
-use dired_unix::{file_attributes_intro, get_users, file_attributes_rust_internal2};
+use dired_unix::{file_attributes_intro, get_users};
 #[cfg(windows)]
-use dired_windows::{file_attributes_intro, get_users, file_attributes_rust_internal2};
+use dired_windows::{file_attributes_intro, get_users};
 use lisp::{defsubr, LispObject};
 use lists::car;
 use strings::string_lessp;
@@ -62,16 +62,6 @@ use strings::string_lessp;
 #[lisp_fn(min = "1")]
 pub fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObject {
     file_attributes_intro(filename, id_format)
-}
-
-// Used by directory-files-and-attributes
-#[no_mangle]
-pub extern "C" fn file_attributes_rust_internal(
-    dirname: LispObject,
-    filename: LispObject,
-    id_format: LispObject,
-) -> LispObject {
-    file_attributes_rust_internal2(dirname, filename, id_format)
 }
 
 /// Return t if first arg file attributes list is less than second.
