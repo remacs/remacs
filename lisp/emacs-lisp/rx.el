@@ -1183,24 +1183,28 @@ enclosed in `(and ...)'.
 
 
 (pcase-defmacro rx (&rest regexps)
-  "Build a `pcase' pattern matching `rx' regexps.
-The REGEXPS are interpreted as by `rx'.  The pattern matches if
-the regular expression so constructed matches EXPVAL, as if
-by `string-match'.
+  "Build a `pcase' pattern matching `rx' REGEXPS in sexp form.
+The REGEXPS are interpreted as in `rx'.  The pattern matches any
+string that is a match for the regular expression so constructed,
+as if by `string-match'.
 
 In addition to the usual `rx' constructs, REGEXPS can contain the
 following constructs:
 
-  (let VAR FORM...)  creates a new explicitly numbered submatch
-                     that matches FORM and binds the match to
-                     VAR.
-  (backref VAR)      creates a backreference to the submatch
-                     introduced by a previous (let VAR ...)
-                     construct.
+  (let REF SEXP...)  creates a new explicitly named reference to
+                     a submatch that matches regular expressions
+                     SEXP, and binds the match to REF.
+  (backref REF)      creates a backreference to the submatch
+                     introduced by a previous (let REF ...)
+                     construct.  REF can be the same symbol
+                     in the first argument of the corresponding
+                     (let REF ...) construct, or it can be a
+                     submatch number.  It matches the referenced
+                     submatch.
 
-The VARs are associated with explicitly numbered submatches
-starting from 1.  Multiple occurrences of the same VAR refer to
-the same submatch.
+The REFs are associated with explicitly named submatches starting
+from 1.  Multiple occurrences of the same REF refer to the same
+submatch.
 
 If a case matches, the match data is modified as usual so you can
 use it in the case body, but you still have to pass the correct

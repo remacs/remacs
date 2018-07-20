@@ -2262,8 +2262,9 @@ Global `ispell-quit' set to start location to continue spell session."
 		    (ispell-pdict-save ispell-silently-savep)
 		    (message "%s"
 		     (substitute-command-keys
-		      (concat "Spell-checking suspended;"
-			      " use C-u \\[ispell-word] to resume")))
+		      (concat
+                       "Spell-checking suspended; use "
+		       "\\[universal-argument] \\[ispell-word] to resume")))
 		    (setq ispell-quit start)
 		    nil)
 		   ((= char ?q)
