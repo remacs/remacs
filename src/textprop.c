@@ -2269,7 +2269,7 @@ verify_interval_modification (struct buffer *buf,
       if (!inhibit_modification_hooks)
 	{
 	  hooks = Fnreverse (hooks);
-	  while (! EQ (hooks, Qnil))
+	  while (! NILP (hooks))
 	    {
 	      call_mod_hooks (Fcar (hooks), make_number (start),
 			      make_number (end));

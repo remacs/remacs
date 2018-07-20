@@ -718,7 +718,7 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
     val = make_uninit_string (result_len);
 
   /* In `append', if all but last arg are nil, return last arg.  */
-  if (target_type == Lisp_Cons && EQ (val, Qnil))
+  if (target_type == Lisp_Cons && NILP (val))
     return last_tail;
 
   /* Copy the contents of the args into the result.  */

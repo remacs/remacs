@@ -4608,7 +4608,7 @@ is nil, from any process) before the timeout expired.  */)
 
       /* Can't wait for a process that is dedicated to a different
 	 thread.  */
-      if (!EQ (proc->thread, Qnil) && !EQ (proc->thread, Fcurrent_thread ()))
+      if (!NILP (proc->thread) && !EQ (proc->thread, Fcurrent_thread ()))
 	{
 	  Lisp_Object proc_thread_name = XTHREAD (proc->thread)->name;
 
@@ -5015,7 +5015,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   struct timespec now = invalid_timespec ();
 
   eassert (wait_proc == NULL
-	   || EQ (wait_proc->thread, Qnil)
+	   || NILP (wait_proc->thread)
 	   || XTHREAD (wait_proc->thread) == current_thread);
 
   FD_ZERO (&Available);

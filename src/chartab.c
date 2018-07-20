@@ -605,7 +605,7 @@ a cons of character codes (for characters in the range), or a character code.  *
   Lisp_Object val;
   CHECK_CHAR_TABLE (char_table);
 
-  if (EQ (range, Qnil))
+  if (NILP (range))
     val = XCHAR_TABLE (char_table)->defalt;
   else if (CHARACTERP (range))
     val = CHAR_TABLE_REF (char_table, XFASTINT (range));
@@ -642,7 +642,7 @@ or a character code.  Return VALUE.  */)
       for (i = 0; i < chartab_size[0]; i++)
 	set_char_table_contents (char_table, i, value);
     }
-  else if (EQ (range, Qnil))
+  else if (NILP (range))
     set_char_table_defalt (char_table, value);
   else if (CHARACTERP (range))
     char_table_set (char_table, XINT (range), value);

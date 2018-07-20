@@ -3603,7 +3603,7 @@ substitute_object_recurse (struct subst *subst, Lisp_Object subtree)
     return subtree;
 
   /* If we've been to this node before, don't explore it again.  */
-  if (!EQ (Qnil, Fmemq (subtree, subst->seen)))
+  if (!NILP (Fmemq (subtree, subst->seen)))
     return subtree;
 
   /* If this node can be the entry point to a cycle, remember that
@@ -4236,7 +4236,7 @@ usage: (unintern NAME OBARRAY)  */)
      session if we unintern them, as well as even more ways to use
      `setq' or `fset' or whatnot to make the Emacs session
      unusable.  Let's not go down this silly road.  --Stef  */
-  /* if (EQ (tem, Qnil) || EQ (tem, Qt))
+  /* if (NILP (tem) || EQ (tem, Qt))
        error ("Attempt to unintern t or nil"); */
 
   XSYMBOL (tem)->u.s.interned = SYMBOL_UNINTERNED;

@@ -647,7 +647,7 @@ digest_single_submenu (int start, int end, bool top_level_items)
   i = start;
   while (i < end)
     {
-      if (EQ (AREF (menu_items, i), Qnil))
+      if (NILP (AREF (menu_items, i)))
 	{
 	  submenu_stack[submenu_depth++] = save_wv;
 	  save_wv = prev_wv;
@@ -900,7 +900,7 @@ find_and_call_menu_selection (struct frame *f, int menu_bar_items_used,
 
   while (i < menu_bar_items_used)
     {
-      if (EQ (AREF (vector, i), Qnil))
+      if (NILP (AREF (vector, i)))
 	{
 	  subprefix_stack[submenu_depth++] = prefix;
 	  prefix = entry;
@@ -985,7 +985,7 @@ find_and_return_menu_selection (struct frame *f, bool keymaps, void *client_data
 
   while (i < menu_items_used)
     {
-      if (EQ (AREF (menu_items, i), Qnil))
+      if (NILP (AREF (menu_items, i)))
         {
           subprefix_stack[submenu_depth++] = prefix;
           prefix = entry;

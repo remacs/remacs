@@ -6585,7 +6585,7 @@ mark_object (Lisp_Object arg)
 	CHECK_ALLOCATED_AND_LIVE (live_cons_p);
 	CONS_MARK (ptr);
 	/* If the cdr is nil, avoid recursion for the car.  */
-	if (EQ (ptr->u.s.u.cdr, Qnil))
+	if (NILP (ptr->u.s.u.cdr))
 	  {
 	    obj = ptr->u.s.car;
 	    cdr_count = 0;

@@ -2971,7 +2971,7 @@ FRAME 0 means change the face on all frames, and change the default
       if (!UNSPECIFIEDP (value) && !IGNORE_DEFFACE_P (value))
 	if ((SYMBOLP (value)
 	     && !EQ (value, Qt)
-	     && !EQ (value, Qnil))
+	     && !NILP (value))
 	    /* Overline color.  */
 	    || (STRINGP (value)
 		&& SCHARS (value) == 0))
@@ -2985,7 +2985,7 @@ FRAME 0 means change the face on all frames, and change the default
       if (!UNSPECIFIEDP (value) && !IGNORE_DEFFACE_P (value))
 	if ((SYMBOLP (value)
 	     && !EQ (value, Qt)
-	     && !EQ (value, Qnil))
+	     && !NILP (value))
 	    /* Strike-through color.  */
 	    || (STRINGP (value)
 		&& SCHARS (value) == 0))

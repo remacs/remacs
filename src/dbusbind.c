@@ -200,7 +200,7 @@ xd_symbol_to_dbus_type (Lisp_Object object)
    `dbus-send-signal', into corresponding C values appended as
    arguments to a D-Bus message.  */
 #define XD_OBJECT_TO_DBUS_TYPE(object)					\
-  ((EQ (object, Qt) || EQ (object, Qnil)) ? DBUS_TYPE_BOOLEAN		\
+  ((EQ (object, Qt) || NILP (object)) ? DBUS_TYPE_BOOLEAN		\
    : (NATNUMP (object)) ? DBUS_TYPE_UINT32				\
    : (INTEGERP (object)) ? DBUS_TYPE_INT32				\
    : (FLOATP (object)) ? DBUS_TYPE_DOUBLE				\
@@ -360,7 +360,7 @@ xd_signature (char *signature, int dtype, int parent_type, Lisp_Object object)
       break;
 
     case DBUS_TYPE_BOOLEAN:
-      if (!EQ (object, Qt) && !EQ (object, Qnil))
+      if (!EQ (object, Qt) && !NILP (object))
 	wrong_type_argument (intern ("booleanp"), object);
       sprintf (signature, "%c", dtype);
       break;
