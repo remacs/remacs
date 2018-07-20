@@ -1118,8 +1118,10 @@ component is used as the target of the symlink."
 
 (defun tramp-sh-handle-file-truename (filename)
   "Like `file-truename' for Tramp files."
-  (format
-   "%s%s"
+   ;; Preserve trailing "/".
+  (funcall
+   (if (string-equal (file-name-nondirectory filename) "")
+       'file-name-as-directory 'identity)
    (with-parsed-tramp-file-name (expand-file-name filename) nil
      (tramp-make-tramp-file-name
       method user domain host port
@@ -1223,10 +1225,7 @@ component is used as the target of the symlink."
 	    (let (file-name-handler-alist)
 	      (setq result (tramp-compat-file-name-quote result))))
 	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
-	  result))))
-
-   ;; Preserve trailing "/".
-   (if (string-equal (file-name-nondirectory filename) "") "/" "")))
+	  result))))))
 
 ;; Basic functions.
 

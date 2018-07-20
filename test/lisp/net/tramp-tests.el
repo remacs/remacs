@@ -2855,10 +2855,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      ;; We must unquote it.
 	      (should
 	       (string-equal
-		(funcall
-		 (if (tramp--test-emacs27-p)
-		     'tramp-compat-file-name-unquote 'identity)
-		 (file-truename tmp-name1))
+		(file-truename tmp-name1)
 		(tramp-compat-file-name-unquote (file-truename tmp-name3))))))
 
 	;; Cleanup.
