@@ -345,13 +345,12 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
     }
 
-    if buffer_ref.multibyte_characters_enabled() {
-        Some(EmacsInt::from(
-            buffer_ref.fetch_char(unsafe { dec_pos(pos_byte) }),
-        ))
+    let pos_before = if buffer_ref.multibyte_characters_enabled() {
+        EmacsInt::from(buffer_ref.fetch_char(unsafe { dec_pos(pos_byte) }))
     } else {
-        Some(EmacsInt::from(buffer_ref.fetch_byte(pos_byte - 1)))
-    }
+        EmacsInt::from(buffer_ref.fetch_byte(pos_byte - 1))
+    };
+    Some(pos_before)
 }
 
 /// Return character in current buffer at position POS.
