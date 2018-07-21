@@ -38,7 +38,6 @@ in its NEWS.)
 ** New variable 'xft-ignore-color-fonts'.
 Default t means don't try to load color fonts when using Xft, as they
 often cause crashes.  Set it to nil if you really need those fonts.
-(Bug#30874)
 
 
 * Editing Changes in Emacs 26.2
