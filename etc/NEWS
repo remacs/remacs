@@ -219,10 +219,14 @@ navigation and editing of large files.
 
 ** Change Logs and VC
 
-*** Recording ChangeLog entries doesn't require an actual file
-An existing file will be used if it already exists.  This is
-controlled by the defcustom 'add-log-dont-create-changelog-file',
-which defaults to t.
+*** Recording ChangeLog entries doesn't require an actual file.
+If a ChangeLog file doesn't exist, and if the new variable
+'add-log-dont-create-changelog-file' is non-nil (which is the
+default), commands such as 'C-x 4 a' will add log entries to a
+suitable named temporary buffer.  (An existing ChangeLog file will
+still be used if it exists.)  Set the variable to nil to get the
+previous behavior of always creating a buffer that visits a ChangeLog
+file.
 
 ** diff-mode
 *** Hunks are now automatically refined by default

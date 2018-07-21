@@ -744,7 +744,7 @@ Optional arg BUFFER-FILE overrides `buffer-file-name'."
   file-name)
 
 (defun add-log-file-name (buffer-file log-file)
-  "Compute file-name of BUFFER-FILE as displayed in LOG-FILE."
+  "Compute file-name of BUFFER-FILE to be used in entries in LOG-FILE."
   ;; Never want to add a change log entry for the ChangeLog file itself.
   (unless (or (null buffer-file) (string= buffer-file log-file))
     (if add-log-file-name-function
@@ -770,22 +770,23 @@ Optional arg BUFFER-FILE overrides `buffer-file-name'."
 
 (defcustom add-log-dont-create-changelog-file t
   "If non-nil, don't create ChangeLog files for log entries.
-This applies only if no pre-existing ChangeLog is found."
+If a ChangeLog file does not already exist, a non-nil value
+means to put log entries in a suitably named buffer."
   :type :boolean
   :version "27.1")
 
 (put 'add-log-dont-create-changelog-file 'safe-local-variable 'booleanp)
 
 (defun add-log--pseudo-changelog-buffer-name (changelog-file-name)
-  "Compute suitable name for a non-file ChangeLog buffer.
-  CHANGELOG-FILE-NAME is the file name of the actual ChangeLog file
-  if it were to exist."
+  "Compute a suitable name for a non-file visiting ChangeLog buffer.
+CHANGELOG-FILE-NAME is the file name of the actual ChangeLog file
+if it were to exist."
   (format "*changes to %s*"
           (abbreviate-file-name
            (file-name-directory changelog-file-name))))
 
 (defun add-log--changelog-buffer-p (changelog-file-name buffer)
-  "Tell if BUFFER holds a ChangeLog for CHANGELOG-FILE-NAME."
+  "Return non-nil if BUFFER holds a change log for CHANGELOG-FILE-NAME."
   (with-current-buffer buffer
     (if buffer-file-name
         (equal buffer-file-name changelog-file-name)
@@ -794,7 +795,7 @@ This applies only if no pre-existing ChangeLog is found."
 
 (defun add-log-find-changelog-buffer (changelog-file-name)
   "Find a ChangeLog buffer for CHANGELOG-FILE-NAME.
-  Respect `add-log-use-pseudo-changelog', which see."
+Respect `add-log-use-pseudo-changelog', which see."
   (if (or (file-exists-p changelog-file-name)
           (not add-log-dont-create-changelog-file))
       (find-file-noselect changelog-file-name)
@@ -807,37 +808,38 @@ This applies only if no pre-existing ChangeLog is found."
                                        other-window new-entry
 				       put-new-entry-on-new-line)
   "Find ChangeLog buffer, add an entry for today and an item for this file.
-  Optional arg WHOAMI (interactive prefix) non-nil means prompt for
-  user name and email (stored in `add-log-full-name' and
-                              `add-log-mailing-address').
+Optional arg WHOAMI (interactive prefix) non-nil means prompt for
+user name and email (stored in `add-log-full-name'
+and `add-log-mailing-address').
 
-  Second arg CHANGELOG-FILE-NAME is file name of the change log.
-  If nil, use the value of `change-log-default-name'.  If the file
-  thus named exists, it's used for the new entry.  If it doesn't
-  exist, it is created, unless `add-log-dont-create-changelog-file' is t,
-  in which case a suitably named file-less buffer is used for
-  keeping entries pertaining to CHANGELOG-FILE-NAME's directory.
+Second arg CHANGELOG-FILE-NAME is the file name of the change log.
+If nil, use the value of `change-log-default-name'.  If the file
+thus named exists, it is used for the new entry.  If it doesn't
+exist, it is created, unless `add-log-dont-create-changelog-file' is t,
+in which case a suitably named buffer that doesn't visit any file
+is used for keeping entries pertaining to CHANGELOG-FILE-NAME's
+directory.
 
-  Third arg OTHER-WINDOW non-nil means visit in other window.
+Third arg OTHER-WINDOW non-nil means visit in other window.
 
-  Fourth arg NEW-ENTRY non-nil means always create a new entry at the front;
-  never append to an existing entry.  Option `add-log-keep-changes-together'
-  otherwise affects whether a new entry is created.
+Fourth arg NEW-ENTRY non-nil means always create a new entry at the front;
+never append to an existing entry.  Option `add-log-keep-changes-together'
+otherwise affects whether a new entry is created.
 
-  Fifth arg PUT-NEW-ENTRY-ON-NEW-LINE non-nil means that if a new
-  entry is created, put it on a new line by itself, do not put it
-  after a comma on an existing line.
+Fifth arg PUT-NEW-ENTRY-ON-NEW-LINE non-nil means that if a new
+entry is created, put it on a new line by itself, do not put it
+after a comma on an existing line.
 
-  Option `add-log-always-start-new-record' non-nil means always create a
-  new record, even when the last record was made on the same date and by
-  the same person.
+Option `add-log-always-start-new-record' non-nil means always create a
+new record, even when the last record was made on the same date and by
+the same person.
 
-  The change log file can start with a copyright notice and a copying
-  permission notice.  The first blank line indicates the end of these
-  notices.
+The change log file can start with a copyright notice and a copying
+permission notice.  The first blank line indicates the end of these
+notices.
 
-  Today's date is calculated according to `add-log-time-zone-rule' if
-  non-nil, otherwise in local time."
+Today's date is calculated according to `add-log-time-zone-rule' if
+non-nil, otherwise in local time."
   (interactive (list current-prefix-arg
 		     (prompt-for-change-log-name)))
   (let* ((defun (add-log-current-defun))
