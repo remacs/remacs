@@ -3150,6 +3150,10 @@ help_char_p (Lisp_Object c)
 static void
 record_char (Lisp_Object c)
 {
+  /* quail.el binds this to avoid recording keys twice.  */
+  if (inhibit_record_char)
+    return;
+
   int recorded = 0;
 
   if (CONSP (c) && (EQ (XCAR (c), Qhelp_echo) || EQ (XCAR (c), Qmouse_movement)))
@@ -3256,7 +3260,7 @@ record_char (Lisp_Object c)
   /* Write c to the dribble file.  If c is a lispy event, write
      the event's symbol to the dribble file, in <brackets>.  Bleaugh.
      If you, dear reader, have a better idea, you've got the source.  :-) */
-  if (dribble)
+  if (dribble && NILP (Vexecuting_kbd_macro))
     {
       block_input ();
       if (INTEGERP (c))
@@ -10110,9 +10114,12 @@ DEFUN ("recursion-depth", Frecursion_depth, Srecursion_depth, 0, 0, 0,
 
 DEFUN ("open-dribble-file", Fopen_dribble_file, Sopen_dribble_file, 1, 1,
        "FOpen dribble file: ",
-       doc: /* Start writing all keyboard characters to a dribble file called FILE.
+       doc: /* Start writing input events to a dribble file called FILE.
 If FILE is nil, close any open dribble file.
 The file will be closed when Emacs exits.
+
+The events written to the file include keyboard and mouse input
+events, but not events from executing keyboard macros.
 
 Be aware that this records ALL characters you type!
 This may include sensitive information such as passwords.  */)
@@ -11848,6 +11855,14 @@ signals.  */);
                Vwhile_no_input_ignore_events,
                doc: /* Ignored events from while-no-input.  */);
   Vwhile_no_input_ignore_events = Qnil;
+
+  DEFVAR_BOOL ("inhibit--record-char",
+	       inhibit_record_char,
+	       doc: /* If non-nil, don't record input events.
+This inhibits recording input events for the purposes of keyboard
+macros, dribble file, and `recent-keys'.
+Internal use only.  */);
+  inhibit_record_char = false;
 }
 
 void
