@@ -3798,10 +3798,11 @@ string_to_number (char const *string, int base, int flags)
 
       if (! (state & DOT_CHAR) && ! (flags & S2N_OVERFLOW_TO_FLOAT))
 	{
-	  AUTO_STRING (fmt, ("%s is out of fixnum range; "
+	  AUTO_STRING (fmt, ("%s (base %d) is out of fixnum range; "
 			     "maybe set `read-integer-overflow-as-float'?"));
 	  AUTO_STRING_WITH_LEN (arg, string, cp - string);
-	  xsignal1 (Qoverflow_error, CALLN (Fformat_message, fmt, arg));
+	  xsignal1 (Qoverflow_error,
+		    CALLN (Fformat_message, fmt, arg, make_number (base)));
 	}
     }
 
