@@ -217,6 +217,13 @@ navigation and editing of large files.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Change Logs and VC
+
+*** Recording ChangeLog entries doesn't require an actual file
+An existing file will be used if it already exists.  This is
+controlled by the defcustom 'add-log-dont-create-changelog-file',
+which defaults to t.
+
 ** diff-mode
 *** Hunks are now automatically refined by default
 To disable it, set the new defcustom 'diff-font-lock-refine' to nil.

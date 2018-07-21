@@ -1655,10 +1655,18 @@ not just to the next change log entry.  You can also use
 log files into a buffer in Change Log Mode, preserving the date
 ordering of entries.
 
+@vindex add-log-dont-create-changelog-file
   Version control systems are another way to keep track of changes in
-your program and keep a change log.  In the VC log buffer, typing
-@kbd{C-c C-a} (@code{log-edit-insert-changelog}) inserts the relevant
-change log entry, if one exists.  @xref{Log Buffer}.
+your program and keep a change log.  In these situations, you may not
+want to keep a separate versioned change log file.  If
+@code{add-log-dont-create-changelog-file} is non-@code{nil}, commands
+like @kbd{C-x 4 a} (@code{add-change-log-entry-other-window}) will
+record changes in a suitably named temporary buffer instead of a file,
+unless such a file already exists.
+
+In either case, you can type @kbd{C-c C-a}
+(@code{log-edit-insert-changelog}) in the VC Log buffer to insert the
+relevant change log entries, if they exist.  @xref{Log Buffer}.
 
 @node Format of ChangeLog
 @subsection Format of ChangeLog
