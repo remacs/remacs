@@ -206,8 +206,8 @@ frames where the source code location is known.")
     (define-key map "#" 'backtrace-toggle-print-circle)
     (define-key map "s" 'backtrace-goto-source)
     (define-key map "\C-m" 'backtrace-help-follow-symbol)
-    (define-key map "+" 'backtrace-pretty-print)
-    (define-key map "-" 'backtrace-collapse)
+    (define-key map "+" 'backtrace-multi-line)
+    (define-key map "-" 'backtrace-single-line)
     (define-key map "." 'backtrace-expand-ellipses)
     (define-key map [follow-link] 'mouse-face)
     (define-key map [mouse-2] 'mouse-select-window)
@@ -225,9 +225,9 @@ frames where the source code location is known.")
          :help "Show or hide the local variables for the frame at point"]
         ["Expand \"...\"s" backtrace-expand-ellipses
          :help "Expand all the abbreviated forms in the current frame"]
-        ["Show on Multiple Lines" backtrace-pretty-print
+        ["Show on Multiple Lines" backtrace-multi-line
          :help "Use line breaks and indentation to make a form more readable"]
-        ["Collapse to Single Line" backtrace-collapse]
+        ["Show on Single Line" backtrace-single-line]
         "--"
         ["Go to Source" backtrace-goto-source
          :active (and (backtrace-get-index)
@@ -524,37 +524,36 @@ initial state of the Backtrace buffer."
             (push-button (point)))
           (goto-char next))))))
 
-(defun backtrace-pretty-print ()
-  "Pretty-print the top level s-expression at point."
+(defun backtrace-multi-line ()
+  "Show the top level s-expression at point on multiple lines with indentation."
   (interactive)
-  (backtrace--reformat-sexp #'backtrace--pretty-print
-                            "No form here to pretty-print"))
+  (backtrace--reformat-sexp #'backtrace--multi-line))
 
-(defun backtrace--pretty-print ()
+(defun backtrace--multi-line ()
   "Pretty print the current buffer, then remove the trailing newline."
   (set-syntax-table emacs-lisp-mode-syntax-table)
   (pp-buffer)
   (goto-char (1- (point-max)))
   (delete-char 1))
 
-(defun backtrace-collapse ()
-  "Collapse the top level s-expression at point onto one line."
+(defun backtrace-single-line ()
+  "Show the top level s-expression at point on one line."
   (interactive)
-  (backtrace--reformat-sexp #'backtrace--collapse "No form here to collapse"))
+  (backtrace--reformat-sexp #'backtrace--single-line))
 
-(defun backtrace--collapse ()
+(defun backtrace--single-line ()
   "Replace line breaks and following indentation with spaces.
 Works on the current buffer."
   (goto-char (point-min))
   (while (re-search-forward "\n[[:blank:]]*" nil t)
     (replace-match " ")))
 
-(defun backtrace--reformat-sexp (format-function error-message)
+(defun backtrace--reformat-sexp (format-function)
   "Reformat the top level sexp at point.
 Locate the top level sexp at or following point on the same line,
 and reformat it with FORMAT-FUNCTION, preserving the location of
 point within the sexp.  If no sexp is found before the end of
-the line or buffer, show ERROR-MESSAGE instead.
+the line or buffer, signal an error.
 
 FORMAT-FUNCTION will be called without arguments, with the
 current buffer set to a temporary buffer containing only the
@@ -567,7 +566,7 @@ content of the sexp."
                                                  nil (point-min))))
     (unless tag
       (when (or (= end (point-max)) (> end (point-at-eol)))
-        (user-error error-message))
+        (user-error "No form here to reformat"))
       (goto-char end)
       (setq pos end
             end (next-single-property-change pos 'backtrace-form)
@@ -752,10 +751,9 @@ Format it according to VIEW."
           (insert (backtrace--print-to-string
                    args (max (truncate (/ backtrace-line-length 5))
                              (- backtrace-line-length (- (point) beg)))))
-        ;; The backtrace-form property is so that
-        ;; backtrace-pretty-print will find it.
-        ;; backtrace-pretty-print doesn't do anything useful with it,
-        ;; just being consistent.
+        ;; The backtrace-form property is so that backtrace-multi-line
+        ;; will find it.  backtrace-multi-line doesn't do anything
+        ;; useful with it, just being consistent.
         (let ((start (point)))
           (insert "()")
           (put-text-property start (point) 'backtrace-form t))))

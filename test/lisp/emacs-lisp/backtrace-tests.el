@@ -222,9 +222,9 @@
       (goto-char (point-max))
       (should-error (backtrace-forward-frame)))))
 
-(ert-deftest backtrace-tests--pretty-print-and-collapse ()
-  "Forms in backtrace frames can be pretty-printed and collapsed."
-  (ert-with-test-buffer (:name "pp-and-collapse")
+(ert-deftest backtrace-tests--single-and-multi-line ()
+  "Forms in backtrace frames can be on a single line or on multiple lines."
+  (ert-with-test-buffer (:name "single-multi-line")
     (let* ((arg '(lambda (x)  ; Quote this so it isn't made into a closure.
                    (let ((number (1+ x)))
                      (+ x number))))
@@ -249,25 +249,25 @@
                        results))
       ;; Check pp and collapse for the form in the header.
       (goto-char (point-min))
-      (backtrace-tests--verify-pp-and-collapse header)
+      (backtrace-tests--verify-single-and-multi-line header)
       ;; Check pp and collapse for the last frame.
       (goto-char (point-max))
       (backtrace-backward-frame)
-      (backtrace-tests--verify-pp-and-collapse last-line)
+      (backtrace-tests--verify-single-and-multi-line last-line)
       ;; Check pp and collapse for local variables in the last line.
       (goto-char (point-max))
       (backtrace-backward-frame)
       (backtrace-toggle-locals)
       (forward-line)
-      (backtrace-tests--verify-pp-and-collapse last-line-locals))))
+      (backtrace-tests--verify-single-and-multi-line last-line-locals))))
 
-(defun backtrace-tests--verify-pp-and-collapse (line)
-  "Verify that `backtrace-pretty-print' and `backtrace-collapse' work at point.
+(defun backtrace-tests--verify-single-and-multi-line (line)
+  "Verify that `backtrace-single-line' and `backtrace-multi-line' work at point.
 Point should be at the beginning of a line, and LINE should be a
 string containing the text of the line at point.  Assume that the
 line contains the strings \"lambda\" and \"number\"."
   (let ((pos (point)))
-    (backtrace-pretty-print)
+    (backtrace-multi-line)
     ;; Verify point is still at the start of the line.
     (should (= pos (point))))
 
@@ -276,7 +276,7 @@ line contains the strings \"lambda\" and \"number\"."
     (search-forward "number")
     (should-not (= pos (point-at-bol))))
   ;; Collapse the form.
-  (backtrace-collapse)
+  (backtrace-single-line)
   ;; Verify that the form is now back on one line,
   ;; and that point is at the same place.
   (should (string= (backtrace-tests--get-substring
