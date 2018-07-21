@@ -231,12 +231,12 @@ information defining the cluster.  For interactive use, call
 
 (defun shadow-site-name (site)
   "Return name if SITE has the form \"/name:\", otherwise SITE."
-  (if (string-match "\\`/\\(\\w+\\):\\'" site)
+  (if (string-match "\\`/\\([-.[:word:]]+\\):\\'" site)
       (match-string 1 site) site))
 
 (defun shadow-name-site (name)
   "Return \"/name:\" if NAME has word syntax, otherwise NAME."
-  (if (string-match "\\`\\w+\\'" name)
+  (if (string-match "\\`[-.[:word:]]+\\'" name)
       (format "/%s:"name) name))
 
 (defun shadow-site-primary (site)
