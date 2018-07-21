@@ -3257,9 +3257,7 @@ differences between the two buffers.  */)
       for (l = size_a; l > k && !bit_is_set (ctx.deletions, l - 1); l--)
 	;
       to = BEGV + l;
-      /* If k >= l, it means nothing needs to be deleted.  */
-      if (k < l)
-	prepare_to_modify_buffer (from, to, NULL);
+      prepare_to_modify_buffer (from, to, NULL);
       specbind (Qinhibit_modification_hooks, Qt);
       modification_hooks_inhibited = true;
     }
@@ -3310,16 +3308,11 @@ differences between the two buffers.  */)
   SAFE_FREE ();
   rbc_quitcounter = 0;
 
-  if (modification_hooks_inhibited && from <= to)
+  if (modification_hooks_inhibited)
     {
       ptrdiff_t updated_to = to + ZV - BEGV - size_a;
-      /* Only call after-change-functions if something was actually
-	 inserted.  */
-      if (from < updated_to)
-	{
-	  signal_after_change (from, to - from, updated_to - from);
-	  update_compositions (from, updated_to, CHECK_INSIDE);
-	}
+      signal_after_change (from, to - from, updated_to - from);
+      update_compositions (from, updated_to, CHECK_INSIDE);
     }
 
   return Qnil;
