@@ -913,5 +913,16 @@ test and possibly others should be updated."
     "g"
     (should (equal edebug-tests-@-result 5)))))
 
+(ert-deftest edebug-tests-cl-macrolet ()
+  "Edebug can instrument `cl-macrolet' expressions. (Bug#29919)"
+  (edebug-tests-with-normal-env
+   (edebug-tests-setup-@ "use-cl-macrolet" '(10) t)
+   (edebug-tests-run-kbd-macro
+    "@ SPC SPC"
+    (edebug-tests-should-be-at "use-cl-macrolet" "func")
+    (edebug-tests-should-match-result-in-messages "+")
+    "g"
+    (should (equal edebug-tests-@-result "The result of applying + to (1 x) is 11")))))
+
 (provide 'edebug-tests)
 ;;; edebug-tests.el ends here

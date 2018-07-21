@@ -1198,6 +1198,8 @@ purpose by adding an entry to this alist, and setting
 (defvar edebug-inside-func)  ;; whether code is inside function context.
 ;; Currently def-form sets this to nil; def-body sets it to t.
 
+(defvar edebug--cl-macrolet-defs) ;; Fully defined below.
+
 (defun edebug-interactive-p-name ()
   ;; Return a unique symbol for the variable used to store the
   ;; status of interactive-p for this function.
@@ -1463,6 +1465,11 @@ expressions; a `progn' form will be returned enclosing these forms."
   ;; Helper for edebug-list-form
   (let ((spec (get-edebug-spec head)))
     (cond
+     ;; Treat cl-macrolet bindings like macros with no spec.
+     ((member head edebug--cl-macrolet-defs)
+      (if edebug-eval-macro-args
+	  (edebug-forms cursor)
+	(edebug-sexps cursor)))
      (spec
       (cond
        ((consp spec)
@@ -1651,6 +1658,9 @@ expressions; a `progn' form will be returned enclosing these forms."
 		;; (function . edebug-match-function)
 		(lambda-expr . edebug-match-lambda-expr)
                 (cl-generic-method-args . edebug-match-cl-generic-method-args)
+                (cl-macrolet-expr . edebug-match-cl-macrolet-expr)
+                (cl-macrolet-name . edebug-match-cl-macrolet-name)
+                (cl-macrolet-body . edebug-match-cl-macrolet-body)
 		(&not . edebug-match-&not)
 		(&key . edebug-match-&key)
 		(place . edebug-match-place)
@@ -1953,6 +1963,43 @@ expressions; a `progn' form will be returned enclosing these forms."
           (intern (format "%s %s" edebug-def-name args)))
     (edebug-move-cursor cursor)
     (list args)))
+
+(defvar edebug--cl-macrolet-defs nil
+  "List of symbols found within the bindings of enclosing `cl-macrolet' forms.")
+(defvar edebug--current-cl-macrolet-defs nil
+  "List of symbols found within the bindings of the current `cl-macrolet' form.")
+
+(defun edebug-match-cl-macrolet-expr (cursor)
+  "Match a `cl-macrolet' form at CURSOR."
+  (let (edebug--current-cl-macrolet-defs)
+    (edebug-match cursor
+                  '((&rest (&define cl-macrolet-name cl-macro-list
+                                    cl-declarations-or-string
+                                    def-body))
+                    cl-declarations cl-macrolet-body))))
+
+(defun edebug-match-cl-macrolet-name (cursor)
+  "Match the name in a `cl-macrolet' binding at CURSOR.
+Collect the names in `edebug--cl-macrolet-defs' where they
+will be checked by `edebug-list-form-args' and treated as
+macros without a spec."
+  (let ((name (edebug-top-element-required cursor "Expected name")))
+    (when (not (symbolp name))
+      (edebug-no-match cursor "Bad name:" name))
+    ;; Change edebug-def-name to avoid conflicts with
+    ;; names at global scope.
+    (setq edebug-def-name (gensym "edebug-anon"))
+    (edebug-move-cursor cursor)
+    (push name edebug--current-cl-macrolet-defs)
+    (list name)))
+
+(defun edebug-match-cl-macrolet-body (cursor)
+  "Match the body of a `cl-macrolet' expression at CURSOR.
+Put the definitions collected in `edebug--current-cl-macrolet-defs'
+into `edebug--cl-macrolet-defs' which is checked in `edebug-list-form-args'."
+  (let ((edebug--cl-macrolet-defs (nconc edebug--current-cl-macrolet-defs
+                                         edebug--cl-macrolet-defs)))
+    (edebug-match-body cursor)))
 
 (defun edebug-match-arg (cursor)
   ;; set the def-args bound in edebug-defining-form

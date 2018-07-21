@@ -130,5 +130,12 @@
   (let ((two 2) (three 3))
     (cl-destructuring-bind (x . y) (cons two three) (+ x!x! y!y!))))
 
+(defun edebug-test-code-use-cl-macrolet (x)
+  (cl-macrolet ((wrap (func &rest args)
+		      `(format "The result of applying %s to %s is %S"
+                               ',func!func! ',args
+                               ,(cons func args))))
+    (wrap + 1 x)))
+
 (provide 'edebug-test-code)
 ;;; edebug-test-code.el ends here
