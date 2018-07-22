@@ -1626,6 +1626,12 @@ resources when reading email groups (and therefore stops
 tracking), but allows loading external resources when reading
 from NNTP newsgroups and the like.
 
+People controlling these external resources won't be able to tell
+that any one person in particular has read the message (since
+it's in a public venue, many people will end up loading that
+resource), but they'll be able to tell that somebody from your IP
+address has accessed the resource.
+
 This can also be a function to be evaluated.  If so, it will be
 called with the group name as the parameter, and should return a
 regexp."
