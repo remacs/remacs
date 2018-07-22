@@ -195,8 +195,8 @@ check_writable (const char *filename, int amode)
    list before reporting it; this saves report_file_errno's caller the
    trouble of preserving errno before calling list1.  */
 
-void
-report_file_errno (char const *string, Lisp_Object name, int errorno)
+Lisp_Object
+get_file_errno_data (char const *string, Lisp_Object name, int errorno)
 {
   Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
   char *str = emacs_strerror (errorno);
@@ -206,10 +206,18 @@ report_file_errno (char const *string, Lisp_Object name, int errorno)
   Lisp_Object errdata = Fcons (errstring, data);
 
   if (errorno == EEXIST)
-    xsignal (Qfile_already_exists, errdata);
+    return Fcons (Qfile_already_exists, errdata);
   else
-    xsignal (errorno == ENOENT ? Qfile_missing : Qfile_error,
-	     Fcons (build_string (string), errdata));
+    return Fcons (errorno == ENOENT ? Qfile_missing : Qfile_error,
+		  Fcons (build_string (string), errdata));
+}
+
+void
+report_file_errno (char const *string, Lisp_Object name, int errorno)
+{
+  Lisp_Object data = get_file_errno_data (string, name, errorno);
+
+  xsignal (Fcar (data), Fcdr (data));
 }
 
 /* Signal a file-access failure that set errno.  STRING describes the

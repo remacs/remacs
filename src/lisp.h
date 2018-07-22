@@ -4031,6 +4031,7 @@ extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 extern void close_file_unwind (int);
 extern void fclose_unwind (void *);
 extern void restore_point_unwind (Lisp_Object);
+extern Lisp_Object get_file_errno_data (const char *, Lisp_Object, int);
 extern _Noreturn void report_file_errno (const char *, Lisp_Object, int);
 extern _Noreturn void report_file_error (const char *, Lisp_Object);
 extern _Noreturn void report_file_notify_error (const char *, Lisp_Object);
