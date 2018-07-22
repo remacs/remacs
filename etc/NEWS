@@ -172,11 +172,6 @@ from a remote host.
 This triggers to search the program on the remote host as indicated by
 'default-directory'.
 
-+++
-** New variable 'main-thread' holds Emacs's main thread.
-This is handy in Lisp programs that run on a non-main thread and want
-to signal the main thread, e.g., when they encounter an error.
-
 
 * Editing Changes in Emacs 27.1
 
@@ -578,7 +573,6 @@ It was obsolete since Emacs 22.1, replaced by customize.
 Use of built-in libgnutls based functionality (described in the Emacs
 GnuTLS manual) is recommended instead.
 
-
 ** Message
 
 +++
@@ -624,6 +618,17 @@ If this option is non-nil, messages appended to an output file by the
 selects the messages to summarize with a regexp that matches the
 sender of the current message.
 
+** Threads
+
++++
+*** New variable 'main-thread' holds Emacs's main thread.
+This is handy in Lisp programs that run on a non-main thread and want
+to signal the main thread, e.g., when they encounter an error.
+
++++
+*** 'thread-join' returns the result of the finished thread now.
+
+
 * New Modes and Packages in Emacs 27.1
 
 +++
@@ -739,6 +744,7 @@ however applications should instead call 'display-buffer-in-side-window'
 is backwards-compatible with versions of Emacs in which the old function
 exists.  See the node "Displaying Buffers in Side Windows" in the ELisp
 manual for more details.
+
 
 * Lisp Changes in Emacs 27.1
 

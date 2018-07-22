@@ -52,6 +52,9 @@ struct thread_state
   /* The thread's function.  */
   Lisp_Object function;
 
+  /* The thread's result, if function has finished.  */
+  Lisp_Object result;
+
   /* If non-nil, this thread has been signaled.  */
   Lisp_Object error_symbol;
   Lisp_Object error_data;

@@ -75,8 +75,8 @@ thread, @code{nil} otherwise.
 
 @defun thread-join thread
 Block until @var{thread} exits, or until the current thread is
-signaled.  If @var{thread} has already exited, this returns
-immediately.
+signaled.  It returns the result of the @var{thread} function.  If
+@var{thread} has already exited, this returns immediately.
 @end defun
 
 @defun thread-signal thread error-symbol data

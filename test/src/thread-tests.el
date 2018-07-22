@@ -100,14 +100,23 @@
    (progn
      (setq threads-test-global nil)
      (let ((thread (make-thread #'threads-test-thread1)))
-       (thread-join thread)
-       (and threads-test-global
-	    (not (thread-alive-p thread)))))))
+       (and (= (thread-join thread) 23)
+            (= threads-test-global 23)
+            (not (thread-alive-p thread)))))))
 
 (ert-deftest threads-join-self ()
   "Cannot `thread-join' the current thread."
   (skip-unless (featurep 'threads))
   (should-error (thread-join (current-thread))))
+
+(ert-deftest threads-join-error ()
+  "Test of error signalling from `thread-join'."
+  :tags '(:unstable)
+  (skip-unless (featurep 'threads))
+  (let ((thread (make-thread #'threads-call-error)))
+    (while (thread-alive-p thread)
+      (thread-yield))
+    (should-error (thread-join thread))))
 
 (defvar threads-test-binding nil)
 
@@ -197,7 +206,7 @@
 (ert-deftest threads-mutex-signal ()
   "Test signaling a blocked thread."
   (skip-unless (featurep 'threads))
-  (should
+  (should-error
    (progn
      (setq threads-mutex (make-mutex))
      (setq threads-mutex-key nil)
@@ -206,8 +215,10 @@
        (while (not threads-mutex-key)
 	 (thread-yield))
        (thread-signal thr 'quit nil)
-       (thread-join thr))
-     t)))
+       ;; `quit' is not catched by `should-error'.  We must indicate it.
+       (condition-case nil
+           (thread-join thr)
+         (quit (signal 'error nil)))))))
 
 (defun threads-test-io-switch ()
   (setq threads-test-global 23))
