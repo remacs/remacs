@@ -1025,7 +1025,7 @@ both flags are used, @samp{+} takes precedence.
 
   The flag @samp{#} specifies an alternate form which depends on
 the format in use.  For @samp{%o}, it ensures that the result begins
-with a @samp{0}.  For @samp{%x} and @samp{%X}, it prefixes the result
+with a @samp{0}.  For @samp{%x} and @samp{%X}, it prefixes nonzero results
 with @samp{0x} or @samp{0X}.  For @samp{%e} and @samp{%f}, the
 @samp{#} flag means include a decimal point even if the precision is
 zero.  For @samp{%g}, it always includes a decimal point, and also
