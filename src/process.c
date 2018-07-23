@@ -7067,16 +7067,6 @@ encode subprocess input. */)
   return Qnil;
 }
 
-DEFUN ("process-coding-system",
-       Fprocess_coding_system, Sprocess_coding_system, 1, 1, 0,
-       doc: /* Return a cons of coding systems for decoding and encoding of PROCESS.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return Fcons (XPROCESS (process)->decode_coding_system,
-		XPROCESS (process)->encode_coding_system);
-}
-
 DEFUN ("set-process-filter-multibyte", Fset_process_filter_multibyte,
        Sset_process_filter_multibyte, 2, 2, 0,
        doc: /* Set multibyteness of the strings given to PROCESS's filter.
@@ -7649,7 +7639,6 @@ returns non-`nil'.  */);
   defsubr (&Sinternal_default_process_sentinel);
   defsubr (&Sinternal_default_process_filter);
   defsubr (&Sset_process_coding_system);
-  defsubr (&Sprocess_coding_system);
   defsubr (&Sset_process_filter_multibyte);
   defsubr (&Sprocess_filter_multibyte_p);
 
