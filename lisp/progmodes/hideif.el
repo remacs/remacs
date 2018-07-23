@@ -1625,7 +1625,7 @@ not be expanded."
          ((integerp result)
           (if (or (= 0 result) (= 1 result))
               (message "%S <= `%s'" result exprstring)
-            (message "%S (0x%x) <= `%s'" result result exprstring)))
+            (message "%S (%#x) <= `%s'" result result exprstring)))
          ((null result) (message "%S <= `%s'" 'false exprstring))
          ((eq t result) (message "%S <= `%s'" 'true exprstring))
          (t (message "%S <= `%s'" result exprstring)))
