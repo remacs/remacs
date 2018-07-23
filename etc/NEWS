@@ -46,11 +46,6 @@ option --enable-check-lisp-object-type is therefore no longer as
 useful and so is no longer enabled by default in developer builds,
 to reduce differences between developer and production builds.
 
-** Gnus
-
-+++
-*** The nnimap backend now has support for IMAP namespaces.
-
 
 * Startup Changes in Emacs 27.1
 
