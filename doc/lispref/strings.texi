@@ -1015,11 +1015,11 @@ numbered or unnumbered format specifications but not both, except that
   After the @samp{%} and any field number, you can put certain
 @dfn{flag characters}.
 
-  The flag @samp{+} inserts a plus sign before a positive number, so
+  The flag @samp{+} inserts a plus sign before a nonnegative number, so
 that it always has a sign.  A space character as flag inserts a space
-before a positive number.  (Otherwise, positive numbers start with the
-first digit.)  These flags are useful for ensuring that positive
-numbers and negative numbers use the same number of columns.  They are
+before a nonnegative number.  (Otherwise, nonnegative numbers start with the
+first digit.)  These flags are useful for ensuring that nonnegative
+and negative numbers use the same number of columns.  They are
 ignored except for @samp{%d}, @samp{%e}, @samp{%f}, @samp{%g}, and if
 both flags are used, @samp{+} takes precedence.
 

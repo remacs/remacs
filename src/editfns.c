@@ -4195,8 +4195,8 @@ Nth argument is substituted instead of the next one.  A format can
 contain either numbered or unnumbered %-sequences but not both, except
 that %% can be mixed with numbered %-sequences.
 
-The + flag character inserts a + before any positive number, while a
-space inserts a space before any positive number; these flags only
+The + flag character inserts a + before any nonnegative number, while a
+space inserts a space before any nonnegative number; these flags only
 affect %d, %e, %f, and %g sequences, and the + flag takes precedence.
 The - and 0 flags affect the width specifier, as described below.
 

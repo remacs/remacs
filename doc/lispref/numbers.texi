@@ -853,7 +853,7 @@ reproducing the same pattern moved over.
 bits in @var{integer1} to the left @var{count} places, or to the right
 if @var{count} is negative, bringing zeros into the vacated bits.  If
 @var{count} is negative, @code{lsh} shifts zeros into the leftmost
-(most-significant) bit, producing a positive result even if
+(most-significant) bit, producing a nonnegative result even if
 @var{integer1} is negative.  Contrast this with @code{ash}, below.
 
 Here are two examples of @code{lsh}, shifting a pattern of bits one
@@ -1233,7 +1233,7 @@ returns a NaN.
 
 @defun expt x y
 This function returns @var{x} raised to power @var{y}.  If both
-arguments are integers and @var{y} is positive, the result is an
+arguments are integers and @var{y} is nonnegative, the result is an
 integer; in this case, overflow causes truncation, so watch out.
 If @var{x} is a finite negative number and @var{y} is a finite
 non-integer, @code{expt} returns a NaN.
