@@ -1954,7 +1954,7 @@ started Emacs, set `abbreviated-home-dir' to nil so it will be recalculated)."
 			 (save-match-data
 			   (string-match "^[a-zA-`]:/$" filename))))
                (equal (get 'abbreviated-home-dir 'home)
-                      (expand-file-name "~")))
+                      (save-match-data (expand-file-name "~"))))
 	  (setq filename
 		(concat "~"
 			(match-string 1 filename)

@@ -556,6 +556,8 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test06-literal-groups ()
   "Check literal group definitions."
+  (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
+
   (let ((shadow-info-file shadow-test-info-file)
 	(shadow-todo-file shadow-test-todo-file)
 	shadow-clusters shadow-literal-groups
@@ -618,6 +620,8 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test07-regexp-groups ()
   "Check regexp group definitions."
+  (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
+
   (let ((shadow-info-file shadow-test-info-file)
 	(shadow-todo-file shadow-test-todo-file)
 	shadow-clusters shadow-regexp-groups
@@ -682,6 +686,8 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test08-shadow-todo ()
   "Check that needed shadows are added to todo."
+  (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
+
   (let ((backup-inhibited t)
         (shadow-info-file shadow-test-info-file)
 	(shadow-todo-file shadow-test-todo-file)
@@ -780,6 +786,8 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test09-shadow-copy-files ()
   "Check that needed shadow files are copied."
+  (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
+
   (let ((backup-inhibited t)
         (shadow-info-file shadow-test-info-file)
 	(shadow-todo-file shadow-test-todo-file)

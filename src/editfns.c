@@ -3267,7 +3267,7 @@ differences between the two buffers.  */)
       from = BEGV + k;
 
       /* Find the last character position to be changed.  */
-      for (l = size_a; l > 0 && !bit_is_set (ctx.deletions, l - 1); l--)
+      for (l = size_a; l > k && !bit_is_set (ctx.deletions, l - 1); l--)
 	;
       to = BEGV + l;
       prepare_to_modify_buffer (from, to, NULL);
