@@ -276,6 +276,13 @@ pub fn process_coding_system(process: LispProcessRef) -> LispObject {
     LispObject::cons(process.decode_coding_system, process.encode_coding_system)
 }
 
+/// Return the locking thread of PROCESS.
+/// If PROCESS is unlocked, this function returns nil.
+#[lisp_fn]
+pub fn process_thread(process: LispProcessRef) -> LispObject {
+    process.thread
+}
+
 /// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
 /// Return BUFFER.
 #[lisp_fn]

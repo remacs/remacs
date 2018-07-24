@@ -1118,16 +1118,6 @@ If THREAD is nil, the process is unlocked.  */)
   return thread;
 }
 
-DEFUN ("process-thread", Fprocess_thread, Sprocess_thread,
-       1, 1, 0,
-       doc: /* Ret the locking thread of PROCESS.
-If PROCESS is unlocked, this function returns nil.  */)
-  (Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->thread;
-}
-
 DEFUN ("set-process-window-size", Fset_process_window_size,
        Sset_process_window_size, 3, 3, 0,
        doc: /* Tell PROCESS that it has logical window size WIDTH by HEIGHT.
@@ -7607,7 +7597,6 @@ returns non-`nil'.  */);
 
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_thread);
-  defsubr (&Sprocess_thread);
   defsubr (&Sset_process_window_size);
   defsubr (&Sset_process_inherit_coding_system_flag);
   defsubr (&Sprocess_contact);
