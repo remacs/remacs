@@ -307,14 +307,7 @@ Replace HOST, and NAME when non-nil."
     (if (null (tramp-file-name-method hup))
 	(format
 	 "/%s:%s" (tramp-file-name-host hup) (tramp-file-name-localname hup))
-      (tramp-make-tramp-file-name
-       (tramp-file-name-method hup)
-       (tramp-file-name-user hup)
-       (tramp-file-name-domain hup)
-       (tramp-file-name-host hup)
-       (tramp-file-name-port hup)
-       (tramp-file-name-localname hup)
-       (tramp-file-name-hop hup)))))
+      (tramp-make-tramp-file-name hup))))
 
 (defun shadow-replace-name-component (fullname newname)
   "Return FULLNAME with the name component changed to NEWNAME."

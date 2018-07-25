@@ -696,6 +696,7 @@ guaranteed by the originator of a cluster definition."
         shadow-files-to-copy
 	cluster1 cluster2 primary regexp file)
     (unwind-protect
+        (condition-case err
         (progn
 	  ;; Cleanup.
 	  (when (file-exists-p shadow-info-file)
@@ -773,16 +774,19 @@ guaranteed by the originator of a cluster definition."
              (concat (shadow-site-primary cluster2) file)
              (shadow-contract-file-name (concat "/cluster1:" file)))
             shadow-files-to-copy)))
+        (error (message "Error: %s" err) (signal (car err) (cdr err))))
 
       ;; Cleanup.
       (when (file-exists-p shadow-info-file)
 	(delete-file shadow-info-file))
       (when (file-exists-p shadow-todo-file)
 	(delete-file shadow-todo-file))
-      (when (file-exists-p file)
-	(delete-file file))
-      (when (file-exists-p (concat (shadow-site-primary cluster2) file))
-	(delete-file (concat (shadow-site-primary cluster2) file))))))
+      (ignore-errors
+        (when (file-exists-p file)
+	  (delete-file file)))
+      (ignore-errors
+        (when (file-exists-p (concat (shadow-site-primary cluster2) file))
+	  (delete-file (concat (shadow-site-primary cluster2) file)))))))
 
 (ert-deftest shadow-test09-shadow-copy-files ()
   "Check that needed shadow files are copied."
@@ -864,10 +868,12 @@ guaranteed by the originator of a cluster definition."
 	(delete-file shadow-info-file))
       (when (file-exists-p shadow-todo-file)
 	(delete-file shadow-todo-file))
-      (when (file-exists-p file)
-	(delete-file file))
-      (when (file-exists-p (concat (shadow-site-primary cluster2) file))
-	(delete-file (concat (shadow-site-primary cluster2) file))))))
+      (ignore-errors
+        (when (file-exists-p file)
+	  (delete-file file)))
+      (ignore-errors
+        (when (file-exists-p (concat (shadow-site-primary cluster2) file))
+	  (delete-file (concat (shadow-site-primary cluster2) file)))))))
 
 (defun shadowfile-test-all (&optional interactive)
   "Run all tests for \\[shadowfile]."
