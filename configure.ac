@@ -3470,25 +3470,6 @@ if test "${HAVE_LCMS2}" = "yes"; then
 fi
 AC_SUBST(LIBLCMS2)
 
-HAVE_ZLIB=no
-LIBZ=
-if test "${with_zlib}" != "no"; then
-  OLIBS=$LIBS
-  AC_SEARCH_LIBS([inflateEnd], [z], [HAVE_ZLIB=yes])
-  LIBS=$OLIBS
-  case $ac_cv_search_inflateEnd in
-    -*) LIBZ=$ac_cv_search_inflateEnd ;;
-  esac
-fi
-if test "${HAVE_ZLIB}" = "yes"; then
-  AC_DEFINE([HAVE_ZLIB], 1, [Define to 1 if you have the zlib library (-lz).])
-  ### mingw32 doesn't use -lz, since it loads the library dynamically.
-  if test "${opsys}" = "mingw32"; then
-     LIBZ=
-  fi
-fi
-AC_SUBST(LIBZ)
-
 ### Dynamic modules support
 LIBMODULES=
 HAVE_MODULES=no
@@ -5470,7 +5451,6 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
   Does Emacs use -lxft?                                   ${HAVE_XFT}
   Does Emacs use -lsystemd?                               ${HAVE_LIBSYSTEMD}
-  Does Emacs directly use zlib?                           ${HAVE_ZLIB}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}

@@ -30,6 +30,7 @@ extern crate sha1;
 extern crate sha2;
 
 extern crate field_offset;
+extern crate flate2;
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
 #[cfg(all(not(test), target_os = "macos"))]
@@ -61,6 +62,7 @@ mod chartable;
 mod cmds;
 mod crypto;
 mod data;
+mod decompress;
 mod dired;
 #[cfg(unix)]
 mod dired_unix;
