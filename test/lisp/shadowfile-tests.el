@@ -15,9 +15,21 @@
 ;; General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see `http://www.gnu.org/licenses/'.
+;; along with this program.  If not, see `https://www.gnu.org/licenses/'.
 
 ;;; Commentary:
+
+;; Some of the tests require access to a remote host files.  Since
+;; this could be problematic, a mock-up connection method "mock" is
+;; used.  Emulating a remote connection, it simply calls "sh -i".
+;; Tramp's file name handlers still run, so this test is sufficient
+;; except for connection establishing.
+
+;; If you want to test a real Tramp connection, set
+;; $REMOTE_TEMPORARY_FILE_DIRECTORY to a suitable value in order to
+;; overwrite the default value.  If you want to skip tests accessing a
+;; remote host, set this environment variable to "/dev/null" or
+;; whatever is appropriate on your system.
 
 ;; A whole test run can be performed calling the command `shadowfile-test-all'.
 
@@ -64,6 +76,7 @@
 Per definition, all files are identical on the different hosts of
 a cluster (or site).  This is not tested here; it must be
 guaranteed by the originator of a cluster definition."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((text-quoting-style 'grave) ;; We inspect the *Messages* buffer!
@@ -187,6 +200,7 @@ guaranteed by the originator of a cluster definition."
 Per definition, all files are identical on the different hosts of
 a cluster (or site).  This is not tested here; it must be
 guaranteed by the originator of a cluster definition."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((shadow-info-file shadow-test-info-file)
@@ -293,6 +307,7 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test02-files ()
   "Check file manipulation functions."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((shadow-info-file shadow-test-info-file)
@@ -368,6 +383,7 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test03-expand-cluster-in-file-name ()
   "Check canonical file name of a cluster or site."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((shadow-info-file shadow-test-info-file)
@@ -438,6 +454,7 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test04-contract-file-name ()
   "Check canonical file name of a cluster or site."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((shadow-info-file shadow-test-info-file)
@@ -498,6 +515,7 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test05-file-match ()
   "Check `shadow-same-site' and `shadow-file-match'."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((shadow-info-file shadow-test-info-file)
@@ -556,6 +574,7 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test06-literal-groups ()
   "Check literal group definitions."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((shadow-info-file shadow-test-info-file)
@@ -620,6 +639,7 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test07-regexp-groups ()
   "Check regexp group definitions."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((shadow-info-file shadow-test-info-file)
@@ -686,6 +706,7 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test08-shadow-todo ()
   "Check that needed shadows are added to todo."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((backup-inhibited t)
@@ -786,6 +807,7 @@ guaranteed by the originator of a cluster definition."
 
 (ert-deftest shadow-test09-shadow-copy-files ()
   "Check that needed shadow files are copied."
+  (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
 
   (let ((backup-inhibited t)
