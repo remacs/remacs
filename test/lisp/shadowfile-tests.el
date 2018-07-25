@@ -731,6 +731,9 @@ guaranteed by the originator of a cluster definition."
             (setq buffer-file-name file)
             (insert "foo")
             (save-buffer))
+          (message "%s" file)
+          (message "%s" (shadow-contract-file-name (concat "/cluster2:" file)))
+          (message "%s" shadow-files-to-copy)
 	  (should
            (member
             (cons file (shadow-contract-file-name (concat "/cluster2:" file)))
@@ -739,9 +742,15 @@ guaranteed by the originator of a cluster definition."
           (message "Point 4")
           ;; Save file from "cluster2" definition.
           (with-temp-buffer
-            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+           (message "Point 4.1")
+           (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+          (message "Point 4.2")
             (insert "foo")
             (save-buffer))
+          (message "Point 4.3")
+          (message "%s" (shadow-site-primary cluster2))
+          (message "%s" (shadow-contract-file-name (concat "/cluster1:" file)))
+          (message "%s" shadow-files-to-copy)
 	  (should
            (member
             (cons
