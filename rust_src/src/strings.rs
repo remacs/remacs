@@ -102,7 +102,7 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
 /// correct sequence.
 #[lisp_fn]
 pub fn string_to_multibyte(string: LispStringRef) -> LispObject {
-    unsafe { c_string_to_multibyte(string.as_lisp_obj().to_raw()) }
+    unsafe { c_string_to_multibyte(string.as_lisp_obj()) }
 }
 
 /// Return a unibyte string with the same individual chars as STRING.

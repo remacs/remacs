@@ -26,7 +26,7 @@ use windows::window_or_selected_unchecked;
 pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     let window = window_or_selected_unchecked(window);
 
-    let tem = unsafe { Fpos_visible_in_window_p(pos.to_raw(), window.to_raw(), Qt) };
+    let tem = unsafe { Fpos_visible_in_window_p(pos, window, Qt) };
     if tem.is_nil() {
         return LispObject::constant_nil();
     }
@@ -94,14 +94,7 @@ pub fn posn_at_x_y(
         y = w.frame_pixel_y(y);
     });
 
-    unsafe {
-        make_lispy_position(
-            frame.as_mut(),
-            LispObject::from(x).to_raw(),
-            LispObject::from(y).to_raw(),
-            0,
-        )
-    }
+    unsafe { make_lispy_position(frame.as_mut(), LispObject::from(x), LispObject::from(y), 0) }
 }
 
 /// Return true if EVENT is a list whose elements are all integers or symbols.

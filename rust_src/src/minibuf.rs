@@ -45,7 +45,7 @@ pub fn set_minibuffer_window(window: LispObject) -> LispObject {
     window.as_minibuffer_or_error(); // just for the checks
 
     unsafe {
-        minibuf_window = window.to_raw();
+        minibuf_window = window;
     }
 
     window

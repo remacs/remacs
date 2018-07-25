@@ -50,7 +50,7 @@ impl FontExtraType {
         } else if extra_type.eq(unsafe { Qfont_object }) {
             FontExtraType::Object
         } else {
-            wrong_type!(intern("font-extra-type").to_raw(), extra_type);
+            wrong_type!(intern("font-extra-type"), extra_type);
         }
     }
 }
