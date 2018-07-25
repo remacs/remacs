@@ -3199,6 +3199,14 @@ source "$@{HOME@}/.iterm2_shell_integration.bash"
 @end group
 @end example
 
+And finally, bash's readline shall not use key bindings like
+@samp{C-j} to commands.  Disable reading the readline initialization
+file:
+
+@example
+[ $TERM = "dumb" ] && INPUTRC=/dev/null
+@end example
+
 @item
 Echoed characters after login
 
