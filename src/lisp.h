@@ -4451,11 +4451,6 @@ extern void xml_cleanup_parser (void);
 extern void syms_of_lcms2 (void);
 #endif
 
-#ifdef HAVE_ZLIB
-/* Defined in decompress.c.  */
-extern void syms_of_decompress (void);
-#endif
-
 #ifdef HAVE_DBUS
 /* Defined in dbusbind.c.  */
 void init_dbusbind (void);
