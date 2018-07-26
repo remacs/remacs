@@ -5,7 +5,7 @@ use std::mem;
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_thread, thread_state, SPECPDL_INDEX};
+use remacs_sys::{current_thread as current_thread_pointer, thread_state, Lisp_Type, SPECPDL_INDEX};
 
 use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
@@ -17,7 +17,11 @@ pub struct ThreadState {}
 
 impl ThreadState {
     pub fn current_buffer() -> LispBufferRef {
-        unsafe { mem::transmute((*current_thread).m_current_buffer) }
+        unsafe { mem::transmute((*current_thread_pointer).m_current_buffer) }
+    }
+
+    pub fn current_thread() -> ThreadStateRef {
+        unsafe { mem::transmute(current_thread_pointer) }
     }
 }
 
@@ -30,6 +34,11 @@ impl ThreadStateRef {
     #[inline]
     pub fn is_alive(self) -> bool {
         !self.m_specpdl.is_null()
+    }
+
+    #[inline]
+    pub fn as_lisp_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -51,6 +60,12 @@ pub fn thread_name(thread: ThreadStateRef) -> LispObject {
 #[lisp_fn]
 pub fn thread_alive_p(thread: ThreadStateRef) -> bool {
     thread.is_alive()
+}
+
+/// Return the current thread.
+#[lisp_fn]
+pub fn current_thread() -> LispObject {
+    ThreadState::current_thread().as_lisp_obj()
 }
 
 include!(concat!(env!("OUT_DIR"), "/threads_exports.rs"));

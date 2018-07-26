@@ -808,15 +808,6 @@ If NAME is given, it must be a string; it names the new thread.  */)
   return result;
 }
 
-DEFUN ("current-thread", Fcurrent_thread, Scurrent_thread, 0, 0, 0,
-       doc: /* Return the current thread.  */)
-  (void)
-{
-  Lisp_Object result;
-  XSETTHREAD (result, current_thread);
-  return result;
-}
-
 static void
 thread_signal_callback (void *arg)
 {
@@ -1006,7 +997,6 @@ syms_of_threads (void)
     {
       defsubr (&Sthread_yield);
       defsubr (&Smake_thread);
-      defsubr (&Scurrent_thread);
       defsubr (&Sthread_signal);
       defsubr (&Sthread_join);
       defsubr (&Sthread_blocker);
