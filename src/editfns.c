@@ -5586,9 +5586,9 @@ This variable is experimental; email 32252@debbugs.gnu.org if you need
 it to be non-nil.  */);
   /* For now, default to true if bignums exist, false in traditional Emacs.  */
 #ifdef lisp_h_FIXNUMP
-  binary_as_unsigned = true;
-#else
   binary_as_unsigned = false;
+#else
+  binary_as_unsigned = true;
 #endif
 
   defsubr (&Spropertize);
