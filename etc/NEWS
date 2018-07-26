@@ -812,6 +812,15 @@ between two strings.
 ** 'print-quoted' now defaults to t, so if you want to see
 (quote x) instead of 'x you will have to bind it to nil where applicable.
 
++++
+** Numbers formatted via %o or %x may now be formatted as signed integers.
+This avoids problems in calls like (read (format "#x%x" -1)), and is
+more compatible with bignums, a planned feature.  To get this
+behavior, set the experimental variable binary-as-unsigned to nil,
+and if the new behavior breaks your code please email
+32252@debbugs.gnu.org.  Because %o and %x can now format signed
+integers, they now support the + and space flags.
+
 ** To avoid confusion caused by "smart quotes", the reader signals an
 error when reading Lisp symbols which begin with one of the following
 quotation characters: ‘’‛“”‟〞＂＇.  A symbol beginning with such a

@@ -4196,8 +4196,8 @@ contain either numbered or unnumbered %-sequences but not both, except
 that %% can be mixed with numbered %-sequences.
 
 The + flag character inserts a + before any nonnegative number, while a
-space inserts a space before any nonnegative number; these flags only
-affect %d, %e, %f, and %g sequences, and the + flag takes precedence.
+space inserts a space before any nonnegative number; these flags
+affect only numeric %-sequences, and the + flag takes precedence.
 The - and 0 flags affect the width specifier, as described below.
 
 The # flag means to use an alternate display form for %o, %x, %X, %e,
@@ -4736,10 +4736,22 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 	      else
 		{
-		  /* Don't sign-extend for octal or hex printing.  */
 		  uprintmax_t x;
+		  bool negative;
 		  if (INTEGERP (arg))
-		    x = XUINT (arg);
+		    {
+		      if (binary_as_unsigned)
+			{
+			  x = XUINT (arg);
+			  negative = false;
+			}
+		      else
+			{
+			  EMACS_INT i = XINT (arg);
+			  negative = i < 0;
+			  x = negative ? -i : i;
+			}
+		    }
 		  else
 		    {
 		      double d = XFLOAT_DATA (arg);
@@ -4747,8 +4759,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      if (! (0 <= d && d < uprintmax + 1))
 			xsignal1 (Qoverflow_error, arg);
 		      x = d;
+		      negative = false;
 		    }
-		  sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
+		  sprintf_buf[0] = negative ? '-' : plus_flag ? '+' : ' ';
+		  bool signedp = negative | plus_flag | space_flag;
+		  sprintf_bytes = sprintf (sprintf_buf + signedp,
+					   convspec, prec, x);
+		  sprintf_bytes += signedp;
 		}
 
 	      /* Now the length of the formatted item is known, except it omits
@@ -5557,6 +5574,22 @@ functions if all the text being accessed has this property.  */);
 
   DEFVAR_LISP ("operating-system-release", Voperating_system_release,
 	       doc: /* The release of the operating system Emacs is running on.  */);
+
+  DEFVAR_BOOL ("binary-as-unsigned",
+	       binary_as_unsigned,
+	       doc: /* Non-nil means `format' %x and %o treat integers as unsigned.
+This has machine-dependent results.  Nil means to treat integers as
+signed, which is portable; for example, if N is a negative integer,
+(read (format "#x%x") N) returns N only when this variable is nil.
+
+This variable is experimental; email 32252@debbugs.gnu.org if you need
+it to be non-nil.  */);
+  /* For now, default to true if bignums exist, false in traditional Emacs.  */
+#ifdef lisp_h_FIXNUMP
+  binary_as_unsigned = true;
+#else
+  binary_as_unsigned = false;
+#endif
 
   defsubr (&Spropertize);
   defsubr (&Schar_equal);
