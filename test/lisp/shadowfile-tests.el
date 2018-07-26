@@ -743,6 +743,8 @@ guaranteed by the originator of a cluster definition."
           ;; Save file from "cluster2" definition.
           (with-temp-buffer
            (message "Point 4.1")
+           (message "%s" file)
+           (message "%s" (shadow-site-primary cluster2))
            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
           (message "Point 4.2")
             (insert "foo")
