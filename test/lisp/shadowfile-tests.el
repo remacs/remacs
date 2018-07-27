@@ -687,6 +687,7 @@ guaranteed by the originator of a cluster definition."
 (ert-deftest shadow-test08-shadow-todo ()
   "Check that needed shadows are added to todo."
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
+  (skip-unless (file-writable-p shadow-test-remote-temporary-file-directory))
 
   (let ((backup-inhibited t)
         (shadow-info-file shadow-test-info-file)
@@ -742,12 +743,13 @@ guaranteed by the originator of a cluster definition."
           (message "Point 4")
           ;; Save file from "cluster2" definition.
           (with-temp-buffer
-           (message "Point 4.1")
-           (message "%s" file)
-           (message "%s" (shadow-site-primary cluster2))
-           (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
-          (message "Point 4.2")
+            (message "Point 4.1")
+            (message "%s" file)
+            (message "%s" (shadow-site-primary cluster2))
+            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+            (message "Point 4.2")
             (insert "foo")
+            (message "%s" buffer-file-name)
             (save-buffer))
           (message "Point 4.3")
           (message "%s" (shadow-site-primary cluster2))
