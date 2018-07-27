@@ -164,7 +164,7 @@ octal), which Emacs cannot interpret as part of a known encoding of
 some non-ASCII character.  Such raw bytes are treated as if they
 belonged to a special character set @code{eight-bit}; Emacs displays
 them as escaped octal codes (this can be customized; @pxref{Display
-Custom}).  In this case, @kbd{C-x =} shows @samp{raw byte} instead of
+Custom}).  In this case, @kbd{C-x =} shows @samp{raw-byte} instead of
 @samp{file}.  In addition, @kbd{C-x =} shows the character codes of
 raw bytes as if they were in the range @code{#x3FFF80..#x3FFFFF},
 which is where Emacs maps them to distinguish them from Unicode
