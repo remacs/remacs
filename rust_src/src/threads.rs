@@ -68,4 +68,15 @@ pub fn current_thread() -> LispObject {
     ThreadState::current_thread().as_lisp_obj()
 }
 
+/// Return the object that THREAD is blocking on.
+// If THREAD is blocked in `thread-join' on a second thread, return that
+// thread.
+// If THREAD is blocked in `mutex-lock', return the mutex.
+// If THREAD is blocked in `condition-wait', return the condition variable.
+// Otherwise, if THREAD is not blocked, return nil.
+#[lisp_fn(name = "thread--blocker")]
+pub fn thread_blocker(thread: ThreadStateRef) -> LispObject {
+    thread.event_object
+}
+
 include!(concat!(env!("OUT_DIR"), "/threads_exports.rs"));
