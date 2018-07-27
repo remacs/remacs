@@ -34,6 +34,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "character.h"
 #include "buffer.h"
+#include "dispextern.h"
 #include "composite.h"
 #include "disptab.h"
 
@@ -288,13 +289,15 @@ char_width (int c, struct Lisp_Char_Table *dp)
       if (VECTORP (disp))
 	for (i = 0, width = 0; i < ASIZE (disp); i++)
 	  {
+	    int c;
 	    ch = AREF (disp, i);
-	    if (CHARACTERP (ch))
-	      {
-		int w = CHARACTER_WIDTH (XFASTINT (ch));
-		if (INT_ADD_WRAPV (width, w, &width))
-		  string_overflow ();
-	      }
+	    if (GLYPH_CODE_P (ch))
+	      c = GLYPH_CODE_CHAR (ch);
+	    else if (CHARACTERP (ch))
+	      c = XFASTINT (ch);
+	    int w = CHARACTER_WIDTH (c);
+	    if (INT_ADD_WRAPV (width, w, &width))
+	      string_overflow ();
 	  }
     }
   return width;
