@@ -3243,21 +3243,9 @@ differences between the two buffers.  */)
      Instead, we announce a single modification for the entire
      modified region.  But don't do that if the caller inhibited
      modification hooks, because then they don't want that.  */
-  ptrdiff_t from, to;
   if (!inhibit_modification_hooks)
     {
-      ptrdiff_t k, l;
-
-      /* Find the first character position to be changed.  */
-      for (k = 0; k < size_a && !bit_is_set (ctx.deletions, k); k++)
-	;
-      from = BEGV + k;
-
-      /* Find the last character position to be changed.  */
-      for (l = size_a; l > k && !bit_is_set (ctx.deletions, l - 1); l--)
-	;
-      to = BEGV + l;
-      prepare_to_modify_buffer (from, to, NULL);
+      prepare_to_modify_buffer (BEGV, ZV, NULL);
       specbind (Qinhibit_modification_hooks, Qt);
       modification_hooks_inhibited = true;
     }
@@ -3310,9 +3298,8 @@ differences between the two buffers.  */)
 
   if (modification_hooks_inhibited)
     {
-      ptrdiff_t updated_to = to + ZV - BEGV - size_a;
-      signal_after_change (from, to - from, updated_to - from);
-      update_compositions (from, updated_to, CHECK_INSIDE);
+      signal_after_change (BEGV, size_a, ZV - BEGV);
+      update_compositions (BEGV, ZV, CHECK_INSIDE);
     }
 
   return Qnil;
