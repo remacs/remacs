@@ -3,7 +3,7 @@ use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys;
-use remacs_sys::{aset_multibyte_string, build_string, emacs_abort, fget_terminal, globals,
+use remacs_sys::{aset_multibyte_string, build_string, emacs_abort, globals,
                  update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Misc_Type, Lisp_Type};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
@@ -440,7 +440,7 @@ pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject
                 if !frame.is_live() {
                     emacs_abort();
                 }
-                let kboard = (*fget_terminal(frame.as_ptr())).kboard;
+                let kboard = (*frame.terminal).kboard;
                 *(*valcontents).u_kboard_objfwd.offset.apply_ptr(kboard)
             }
             _ => emacs_abort(),
@@ -508,7 +508,7 @@ pub extern "C" fn store_symval_forwarding(
                 unsafe { emacs_abort() };
             }
             unsafe {
-                let kboard = (*fget_terminal(frame.as_ptr())).kboard;
+                let kboard = (*frame.terminal).kboard;
                 *(*valcontents).u_kboard_objfwd.offset.apply_ptr_mut(kboard) = newval;
             }
         }

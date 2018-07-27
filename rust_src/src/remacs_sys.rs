@@ -98,8 +98,6 @@ extern "C" {
         data: *const c_void,
     );
     pub fn map_keymap_char_table_item(args: LispObject, key: LispObject, val: LispObject);
-    pub fn mset_charpos(m: *const Lisp_Marker, charpos: ptrdiff_t);
-    pub fn mset_bytepos(m: *const Lisp_Marker, bytepos: ptrdiff_t);
     pub static initial_obarray: LispObject;
     pub fn scan_lists(
         from: EmacsInt,

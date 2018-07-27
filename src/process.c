@@ -392,31 +392,6 @@ pset_stderrproc (struct Lisp_Process *p, Lisp_Object val)
   p->stderrproc = val;
 }
 
-/* Accessors to enable Rust code to get data from the Lisp_Process struct */
-pid_t pget_pid(const struct Lisp_Process *p)
-{
-  return p->pid;
-}
-
-bool_bf pget_kill_without_query(const struct Lisp_Process *p)
-{
-  return p->kill_without_query;
-}
-
-bool_bf pget_process_inherit_coding_system_flag(const struct Lisp_Process *p)
-{
-  return p->inherit_coding_system_flag;
-}
-/* End Rust Accessors */
-
-/* Setters to enable Rust code to set data in the Lisp_Process struct */
-void
-pset_kill_without_query (struct Lisp_Process *p, bool_bf val)
-{
-  p->kill_without_query = val;
-}
-/* End Rust Setters */
-
 
 static Lisp_Object
 make_lisp_proc (struct Lisp_Process *p)

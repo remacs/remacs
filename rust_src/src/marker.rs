@@ -5,11 +5,8 @@ use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{BoolBF, EmacsInt, Lisp_Buffer, Lisp_Marker};
-use remacs_sys::{buf_charpos_to_bytepos, mget_buffer, mget_bytepos, mget_charpos,
-                 mget_insertion_type, mget_next_marker, mset_buffer, mset_bytepos, mset_charpos,
-                 mset_insertion_type, mset_next_marker, set_point_both, unchain_marker,
-                 Fmake_marker};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker};
+use remacs_sys::{buf_charpos_to_bytepos, set_point_both, unchain_marker, Fmake_marker};
 use remacs_sys::Qinteger_or_marker_p;
 
 use buffers::LispBufferRef;
@@ -29,56 +26,48 @@ impl LispMarkerRef {
         unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 
-    pub fn charpos(mut self) -> Option<ptrdiff_t> {
+    pub fn charpos(self) -> Option<ptrdiff_t> {
         match self.buffer() {
             None => None,
-            Some(_) => unsafe { Some(mget_charpos(self.as_mut())) },
+            Some(_) => Some(self.charpos),
         }
     }
 
-    pub fn charpos_or_error(mut self) -> ptrdiff_t {
+    pub fn charpos_or_error(self) -> ptrdiff_t {
         match self.buffer() {
             None => error!("Marker does not point anywhere"),
-            Some(_) => unsafe { mget_charpos(self.as_mut()) },
+            Some(_) => self.charpos,
         }
     }
 
     pub fn set_charpos(&mut self, charpos: ptrdiff_t) -> () {
-        unsafe { mset_charpos(self.as_mut(), charpos) }
+        self.charpos = charpos;
     }
 
-    pub fn bytepos(mut self) -> Option<ptrdiff_t> {
+    pub fn bytepos(self) -> Option<ptrdiff_t> {
         match self.buffer() {
             None => None,
-            Some(_) => unsafe { Some(mget_bytepos(self.as_mut())) },
+            Some(_) => Some(self.bytepos),
         }
     }
 
-    pub fn bytepos_or_error(mut self) -> ptrdiff_t {
+    pub fn bytepos_or_error(self) -> ptrdiff_t {
         match self.buffer() {
             None => error!("Marker does not point anywhere"),
-            Some(_) => unsafe { mget_bytepos(self.as_mut()) },
+            Some(_) => self.bytepos,
         }
     }
 
     pub fn set_bytepos(&mut self, bytepos: ptrdiff_t) -> () {
-        unsafe { mset_bytepos(self.as_mut(), bytepos) }
+        self.bytepos = bytepos;
     }
 
-    pub fn buffer(mut self) -> Option<LispBufferRef> {
-        unsafe {
-            let buffer = mget_buffer(self.as_mut());
-            buffer.as_ref().map(|b| mem::transmute(b))
-        }
+    pub fn buffer(self) -> Option<LispBufferRef> {
+        unsafe { self.buffer.as_ref().map(|b| mem::transmute(b)) }
     }
 
     pub fn set_buffer(mut self, b: *mut Lisp_Buffer) -> () {
-        unsafe { mset_buffer(self.as_mut(), b) }
-    }
-
-    #[inline]
-    pub fn insertion_type(self) -> bool {
-        unsafe { mget_insertion_type(self.as_ptr()) as BoolBF }
+        self.buffer = b;
     }
 
     pub fn iter(self) -> LispMarkerIter {
@@ -88,14 +77,11 @@ impl LispMarkerRef {
     }
 
     pub fn next(self) -> Option<LispMarkerRef> {
-        unsafe {
-            let next = mget_next_marker(self.next);
-            next.as_ref().map(|n| mem::transmute(n))
-        }
+        unsafe { self.next.as_ref().map(|n| mem::transmute(n)) }
     }
 
     pub fn set_next(mut self, m: *mut Lisp_Marker) -> () {
-        unsafe { mset_next_marker(self.as_mut(), m) }
+        self.next = m;
     }
 }
 
@@ -174,7 +160,7 @@ pub fn marker_insertion_type(marker: LispMarkerRef) -> bool {
 /// If ITYPE is nil, it means the marker stays behind when you insert text at it.
 #[lisp_fn]
 pub fn set_marker_insertion_type(mut marker: LispMarkerRef, itype: LispObject) -> LispObject {
-    unsafe { mset_insertion_type(marker.as_mut(), itype.is_not_nil() as BoolBF) };
+    marker.set_insertion_type(itype.is_not_nil());
     itype
 }
 
@@ -205,12 +191,8 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
         .map_or(LispObject::constant_nil(), |b| b.as_lisp_obj());
 
     set_marker(new, marker, buffer_or_nil);
-    unsafe {
-        mset_insertion_type(
-            new.as_marker().unwrap().as_mut(),
-            itype.is_not_nil() as BoolBF,
-        )
-    };
+    new.as_marker()
+        .map(|mut m| m.set_insertion_type(itype.is_not_nil()));
     new
 }
 

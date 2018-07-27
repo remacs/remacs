@@ -10,8 +10,7 @@ use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handl
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
                  Qvoid_variable};
-use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, globals,
-                 last_per_buffer_idx, set_buffer_internal_1};
+use remacs_sys::{buffer_local_value, globals, last_per_buffer_idx, set_buffer_internal_1};
 
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
@@ -296,7 +295,7 @@ impl LispBufferRef {
 
     #[inline]
     pub fn overlays_before(&self) -> Option<LispOverlayRef> {
-        let p = unsafe { bget_overlays_before(self.as_ptr()) };
+        let p = self.overlays_before;
         if p == ptr::null_mut() {
             None
         } else {
@@ -306,7 +305,7 @@ impl LispBufferRef {
 
     #[inline]
     pub fn overlays_after(&self) -> Option<LispOverlayRef> {
-        let p = unsafe { bget_overlays_after(self.as_ptr()) };
+        let p = self.overlays_after;
         if p == ptr::null_mut() {
             None
         } else {
