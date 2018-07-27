@@ -1353,7 +1353,7 @@ in *Help* buffer.  See also the command `describe-char'."
 	(if (or (not coding)
 		(eq (coding-system-type coding) t))
 	    (setq coding (default-value 'buffer-file-coding-system)))
-	(if (eq (char-charset char) 'eight-bit)
+	(if (and (>= char #x3fff80) (<= char #x3fffff))
 	    (setq encoding-msg
 		  (format "(%d, #o%o, #x%x, raw-byte)" char char char))
 	  ;; Check if the character is displayed with some `display'
