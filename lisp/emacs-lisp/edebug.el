@@ -4108,7 +4108,7 @@ Save DEF-NAME, BEFORE-INDEX and AFTER-INDEX in FRAME."
     (revert-buffer)))
 
 (defun edebug-backtrace-hide-instrumentation ()
-  "Show Edebug's instrumentation in an Edebug Backtrace buffer."
+  "Hide Edebug's instrumentation in an Edebug Backtrace buffer."
   (interactive)
   (unless (eq backtrace-frames edebug-backtrace-frames)
     (setq backtrace-frames edebug-backtrace-frames)
