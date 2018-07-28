@@ -628,6 +628,10 @@ Consider them as regular expressions if third arg REGEXP is true."
 
 (defun shadow-add-to-todo ()
   "If current buffer has shadows, add them to the list needing to be copied."
+  (message "shadow-add-to-todo 1 %s" (current-buffer))
+  (message "shadow-add-to-todo 2 %s" (buffer-file-name))
+  (message "shadow-add-to-todo 3 %s" (shadow-expand-file-name (buffer-file-name  (current-buffer))))
+  (message "shadow-add-to-todo 4 %s" (shadow-shadows-of (shadow-expand-file-name (buffer-file-name (current-buffer)))))
   (let ((shadows (shadow-shadows-of
 		  (shadow-expand-file-name
 		   (buffer-file-name (current-buffer))))))
