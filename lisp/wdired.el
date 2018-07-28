@@ -543,19 +543,39 @@ and proceed depending on the answer."
     (goto-char (point-max))
     (forward-line -1)
     (let ((done nil)
+	  (failed t)
 	  curr-filename)
       (while (and (not done) (not (bobp)))
         (setq curr-filename (wdired-get-filename nil t))
         (if (equal curr-filename filename-ori)
-            (progn
-              (setq done t)
-              (let ((inhibit-read-only t))
-                (dired-move-to-filename)
-                (search-forward (wdired-get-filename t) nil t)
-                (replace-match (file-name-nondirectory filename-ori) t t))
-              (dired-do-create-files-regexp
-               (function dired-rename-file)
-               "Move" 1 ".*" filename-new nil t))
+	    (unwind-protect
+		(progn
+		  (setq done t)
+		  (let ((inhibit-read-only t))
+                    ;; Remove dired-filename text property in order to
+                    ;; find filename-new when it only partially
+                    ;; replaces filename-ori (bug#32173); the text
+                    ;; property is added again when renaming succeeds.
+		    (remove-text-properties
+		     (line-beginning-position) (line-end-position)
+		     '(dired-filename nil))
+		    (dired-move-to-filename)
+		    (search-forward (wdired-get-filename t) nil t)
+		    (replace-match (file-name-nondirectory filename-ori) t t))
+		  (dired-do-create-files-regexp
+		   (function dired-rename-file)
+		   "Move" 1 ".*" filename-new nil t)
+		  (setq failed nil))
+              ;; If user quits before renaming succeeds, restore the
+              ;; dired-filename text property.
+	      (when failed
+		(beginning-of-line)
+		(let ((beg (re-search-forward
+			    directory-listing-before-filename-regexp
+			    (line-end-position) t))
+		      (end (dired-move-to-end-of-filename))
+		      (inhibit-read-only t))
+		  (add-text-properties beg end '(dired-filename t)))))
 	  (forward-line -1))))))
 
 ;; marks a list of files for deletion
