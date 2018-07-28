@@ -125,6 +125,17 @@ noindent\" 3
 #s(foo
    bar)\n"))))
 
+(ert-deftest indent-sexp-cant-go ()
+  "`indent-sexp' shouldn't error before a sexp."
+  ;; See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=31984#32.
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "(())")
+    (goto-char (1+ (point-min)))
+    ;; Paredit calls `indent-sexp' from this position.
+    (indent-sexp)
+    (should (equal (buffer-string) "(())"))))
+
 (ert-deftest lisp-indent-region ()
   "Test basics of `lisp-indent-region'."
   (with-temp-buffer

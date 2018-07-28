@@ -1110,6 +1110,9 @@ DISPLAY-FUNC would be `switch-to-buffer-other-window'."
   (unless bookmark
     (error "No bookmark specified"))
   (bookmark-maybe-historicize-string bookmark)
+  ;; Don't use `switch-to-buffer' because it would let the
+  ;; window-point override the bookmark's point when
+  ;; `switch-to-buffer-preserve-window-point' is non-nil.
   (bookmark--jump-via bookmark (or display-func 'pop-to-buffer-same-window)))
 
 
