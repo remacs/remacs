@@ -636,12 +636,16 @@ Consider them as regular expressions if third arg REGEXP is true."
 		  (shadow-expand-file-name
 		   (buffer-file-name (current-buffer))))))
     (when shadows
+      (message "shadow-add-to-todo 5 %s" shadows)
+      (message "shadow-add-to-todo 6 %s" shadow-files-to-copy)
+      (message "shadow-add-to-todo 7 %s" (shadow-union shadows shadow-files-to-copy))
       (setq shadow-files-to-copy
 	    (shadow-union shadows shadow-files-to-copy))
       (when (not shadow-inhibit-message)
 	(message "%s" (substitute-command-keys
 		       "Use \\[shadow-copy-files] to update shadows."))
 	(sit-for 1))
+      (message "shadow-add-to-todo 8")
       (shadow-write-todo-file)))
   nil)     ; Return nil for write-file-functions
 
