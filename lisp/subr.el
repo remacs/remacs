@@ -2299,7 +2299,7 @@ some sort of escape sequence, the ambiguity is resolved via `read-key-delay'."
 If optional CONFIRM is non-nil, read the password twice to make sure.
 Optional DEFAULT is a default password to use instead of empty input.
 
-This function echoes `.' for each character that the user types.
+This function echoes `*' for each character that the user types.
 You could let-bind `read-hide-char' to another hiding character, though.
 
 Once the caller uses the password, it can erase the password
@@ -2325,7 +2325,7 @@ by doing (clear-string STRING)."
                                      beg)))
              (dotimes (i (- end beg))
                (put-text-property (+ i beg) (+ 1 i beg)
-                                  'display (string (or read-hide-char ?.))))))
+                                  'display (string (or read-hide-char ?*))))))
           minibuf)
       (minibuffer-with-setup-hook
           (lambda ()
@@ -2340,7 +2340,7 @@ by doing (clear-string STRING)."
             (add-hook 'after-change-functions hide-chars-fun nil 'local))
         (unwind-protect
             (let ((enable-recursive-minibuffers t)
-		  (read-hide-char (or read-hide-char ?.)))
+		  (read-hide-char (or read-hide-char ?*)))
               (read-string prompt nil t default)) ; t = "no history"
           (when (buffer-live-p minibuf)
             (with-current-buffer minibuf

@@ -92,6 +92,9 @@ the new version of the file again.)
 
 * Changes in Emacs 27.1
 
++++
+** The function 'read-passwd' uses '*' as default character to hide passwords.
+
 ---
 ** New variable 'xft-ignore-color-fonts'.
 Default t means don't try to load color fonts when using Xft, as they
