@@ -713,18 +713,25 @@ defined, the old hashtable info is invalid."
   "Write out information to `shadow-todo-file'.
 With non-nil argument also saves the buffer."
   (save-excursion
+    (message "shadow-write-todo-file 1 %s" shadow-todo-buffer)
     (if (not shadow-todo-buffer)
 	(setq shadow-todo-buffer (find-file-noselect shadow-todo-file)))
+    (message "shadow-write-todo-file 2 %s" shadow-todo-buffer)
     (set-buffer shadow-todo-buffer)
+    (message "shadow-write-todo-file 3 %s" shadow-todo-buffer)
     (setq buffer-read-only nil)
     (delete-region (point-min) (point-max))
+    (message "shadow-write-todo-file 4 %s" shadow-todo-buffer)
     (shadow-insert-var 'shadow-files-to-copy)
+    (message "shadow-write-todo-file 5 %s" shadow-todo-buffer)
     (if save (shadow-save-todo-file))))
 
 (defun shadow-save-todo-file ()
+  (message "shadow-save-todo-file 1 %s" shadow-todo-buffer)
   (if (and shadow-todo-buffer (buffer-modified-p shadow-todo-buffer))
       (with-current-buffer shadow-todo-buffer
-	(condition-case nil		; have to continue even in case of
+        (message "shadow-save-todo-file 2 %s" shadow-todo-buffer)
+        (condition-case nil		; have to continue even in case of
 	    (basic-save-buffer)		; error, otherwise kill-emacs might
 	  (error			; not work!
 	   (message "WARNING: Can't save shadow todo file; it is locked!")
