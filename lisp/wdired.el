@@ -611,7 +611,10 @@ Optional arguments are ignored."
       (when (re-search-forward directory-listing-before-filename-regexp
                                (line-end-position) t)
         (setq beg (point)
-              end (line-end-position))
+              end (if (and (file-symlink-p (dired-get-filename))
+                           (search-forward " -> " (line-end-position) t))
+                      (goto-char (match-beginning 0))
+                    (line-end-position)))
         (put-text-property beg end 'dired-filename t)))))
 
 (defun wdired-next-line (arg)
