@@ -34,6 +34,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # ifdef __MINGW64_VERSION_MAJOR
 #  define MINGW_W64
 # endif
+# if defined __MINGW32_VERSION && __MINGW32_VERSION >= 5001000L
+/* Avoid warnings about gettimeofday being deprecated.  */
+#  undef __POSIX_2008_DEPRECATED
+#  define __POSIX_2008_DEPRECATED
+# endif
 #endif
 
 /* #undef const */
