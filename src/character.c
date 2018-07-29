@@ -289,15 +289,18 @@ char_width (int c, struct Lisp_Char_Table *dp)
       if (VECTORP (disp))
 	for (i = 0, width = 0; i < ASIZE (disp); i++)
 	  {
-	    int c;
+	    int c = -1;
 	    ch = AREF (disp, i);
 	    if (GLYPH_CODE_P (ch))
 	      c = GLYPH_CODE_CHAR (ch);
 	    else if (CHARACTERP (ch))
 	      c = XFASTINT (ch);
-	    int w = CHARACTER_WIDTH (c);
-	    if (INT_ADD_WRAPV (width, w, &width))
-	      string_overflow ();
+	    if (c >= 0)
+	      {
+		int w = CHARACTER_WIDTH (c);
+		if (INT_ADD_WRAPV (width, w, &width))
+		  string_overflow ();
+	      }
 	  }
     }
   return width;
