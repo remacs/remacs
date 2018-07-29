@@ -3640,7 +3640,7 @@ static union Lisp_Misc *marker_free_list;
 
 /* Return a newly allocated Lisp_Misc object of specified TYPE.  */
 
-static Lisp_Object
+Lisp_Object
 allocate_misc (enum Lisp_Misc_Type type)
 {
   Lisp_Object val;
@@ -3824,33 +3824,6 @@ DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
   p->insertion_type = 0;
   p->need_adjustment = 0;
   return val;
-}
-
-/* Return a newly allocated marker which points into BUF
-   at character position CHARPOS and byte position BYTEPOS.  */
-
-Lisp_Object
-build_marker (struct buffer *buf, ptrdiff_t charpos, ptrdiff_t bytepos)
-{
-  Lisp_Object obj;
-  struct Lisp_Marker *m;
-
-  /* No dead buffers here.  */
-  eassert (BUFFER_LIVE_P (buf));
-
-  /* Every character is at least one byte.  */
-  eassert (charpos <= bytepos);
-
-  obj = allocate_misc (Lisp_Misc_Marker);
-  m = XMARKER (obj);
-  m->buffer = buf;
-  m->charpos = charpos;
-  m->bytepos = bytepos;
-  m->insertion_type = 0;
-  m->need_adjustment = 0;
-  m->next = BUF_MARKERS (buf);
-  BUF_MARKERS (buf) = m;
-  return obj;
 }
 
 /* Put MARKER back on the free list after using it temporarily.  */

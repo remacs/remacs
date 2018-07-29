@@ -5,8 +5,9 @@ use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker};
-use remacs_sys::{buf_charpos_to_bytepos, set_point_both, unchain_marker, Fmake_marker};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
+use remacs_sys::{allocate_misc, buf_charpos_to_bytepos, set_point_both, unchain_marker,
+                 Fmake_marker};
 use remacs_sys::Qinteger_or_marker_p;
 
 use buffers::LispBufferRef;
@@ -125,6 +126,37 @@ pub fn marker_position_lisp(marker: LispMarkerRef) -> Option<EmacsInt> {
 #[lisp_fn]
 pub fn marker_buffer(marker: LispMarkerRef) -> Option<LispBufferRef> {
     marker.buffer()
+}
+
+/// Return a newly allocated marker which points into BUF
+/// at character position CHARPOS and byte position BYTEPOS.
+#[no_mangle]
+pub extern "C" fn build_marker(
+    buf: *mut Lisp_Buffer,
+    charpos: ptrdiff_t,
+    bytepos: ptrdiff_t,
+) -> LispObject {
+    debug_assert!(unsafe { (*buf).name_.is_not_nil() });
+    debug_assert!(charpos <= bytepos);
+
+    unsafe {
+        let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker);
+        let mut m = obj.as_marker_or_error();
+
+        m.set_buffer(buf);
+        m.set_charpos(charpos);
+        m.set_bytepos(bytepos);
+        m.set_insertion_type(false);
+        m.set_need_adjustment(false);
+
+        let mut buffer_ref = LispBufferRef::from_ptr(buf as *mut c_void)
+            .unwrap_or_else(|| panic!("Invalid buffer reference."));
+
+        m.set_next((*buffer_ref.text).markers);
+        (*buffer_ref.text).markers = m.as_mut();
+
+        obj
+    }
 }
 
 /// Set PT from MARKER's clipped position.
