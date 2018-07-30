@@ -159,6 +159,15 @@ pub extern "C" fn build_marker(
     }
 }
 
+/// Return value of point, as a marker object.
+#[lisp_fn]
+pub fn point_marker() -> LispObject {
+    unsafe {
+        let cur_buf = ThreadState::current_buffer().as_mut();
+        build_marker(cur_buf, (*cur_buf).pt, (*cur_buf).pt_byte)
+    }
+}
+
 /// Set PT from MARKER's clipped position.
 #[no_mangle]
 pub extern "C" fn set_point_from_marker(marker: LispObject) {

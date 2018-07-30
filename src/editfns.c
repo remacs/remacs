@@ -318,13 +318,6 @@ init_editfns (bool dumping)
 #endif
 }
 
-DEFUN ("point-marker", Fpoint_marker, Spoint_marker, 0, 0, 0,
-       doc: /* Return value of point, as a marker object.  */)
-  (void)
-{
-  return build_marker (current_buffer, PT, PT_BYTE);
-}
-
 /* Find all the overlays in the current buffer that touch position POS.
    Return the number found, and store them in a vector in VEC
    of length LEN.  */
@@ -4457,8 +4450,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sbuffer_substring_no_properties);
   defsubr (&Sbuffer_string);
   defsubr (&Sget_pos_property);
-
-  defsubr (&Spoint_marker);
 
   /* Symbol for the text property used to mark fields.  */
   DEFSYM (Qfield, "field");
