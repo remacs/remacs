@@ -716,24 +716,6 @@ usage: (save-current-buffer &rest BODY)  */)
   return unbind_to (count, Fprogn (args));
 }
 
-DEFUN ("point-min-marker", Fpoint_min_marker, Spoint_min_marker, 0, 0, 0,
-       doc: /* Return a marker to the minimum permissible value of point in this buffer.
-This is the beginning, unless narrowing (a buffer restriction) is in effect.  */)
-  (void)
-{
-  return build_marker (current_buffer, BEGV, BEGV_BYTE);
-}
-
-DEFUN ("point-max-marker", Fpoint_max_marker, Spoint_max_marker, 0, 0, 0,
-       doc: /* Return a marker to the maximum permissible value of point in this buffer.
-This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
-is in effect, in which case it is less.  */)
-  (void)
-{
-  return build_marker (current_buffer, ZV, ZV_BYTE);
-}
-
-
 DEFUN ("user-login-name", Fuser_login_name, Suser_login_name, 0, 1, 0,
        doc: /* Return the name under which the user logged in, as a string.
 This is based on the effective uid, not the real uid.
@@ -4463,9 +4445,6 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
-
-  defsubr (&Spoint_min_marker);
-  defsubr (&Spoint_max_marker);
 
   defsubr (&Sinsert);
   defsubr (&Sinsert_before_markers);
