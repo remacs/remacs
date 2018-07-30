@@ -1,27 +1,13 @@
 //! Generic frame functions.
 
-use libc::c_int;
-
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, BoolBF, Lisp_Frame, Lisp_Type};
-use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
-                 fget_line_height, fget_minibuffer_window, fget_output_method,
-                 fget_pointer_invisible, fget_root_window, fget_selected_window, fget_terminal,
-                 fget_top_pos, fget_visible, frame_dimension, fset_selected_window, Fcons,
-                 Fselect_window};
+use remacs_sys::{frame_dimension, output_method, Fcons, Fselect_window};
+use remacs_sys::{selected_frame as current_frame, Lisp_Frame, Lisp_Type};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use windows::{selected_window, LispWindowRef};
-
-pub type OutputMethod = c_int;
-pub const output_initial: OutputMethod = 0;
-pub const output_termcap: OutputMethod = 1;
-pub const output_x_window: OutputMethod = 2;
-pub const output_w32: OutputMethod = 3;
-pub const output_msdos_raw: OutputMethod = 4;
-pub const output_ns: OutputMethod = 5;
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -32,68 +18,18 @@ impl LispFrameRef {
 
     #[inline]
     pub fn is_live(self) -> bool {
-        unsafe { !fget_terminal(self.as_ptr()).is_null() }
-    }
-
-    #[inline]
-    pub fn column_width(self) -> i32 {
-        unsafe { fget_column_width(self.as_ptr()) }
+        !self.terminal.is_null()
     }
 
     // Pixel-width of internal border lines.
     #[inline]
     pub fn internal_border_width(self) -> i32 {
-        unsafe { frame_dimension(fget_internal_border_width(self.as_ptr())) }
-    }
-
-    #[inline]
-    pub fn line_height(self) -> i32 {
-        unsafe { fget_line_height(self.as_ptr()) }
-    }
-
-    #[inline]
-    pub fn top_pos(self) -> i32 {
-        unsafe { fget_top_pos(self.as_ptr()) }
-    }
-
-    #[inline]
-    pub fn left_pos(self) -> i32 {
-        unsafe { fget_left_pos(self.as_ptr()) }
-    }
-
-    #[inline]
-    pub fn minibuffer_window(self) -> LispObject {
-        unsafe { fget_minibuffer_window(self.as_ptr()) }
-    }
-
-    #[inline]
-    pub fn root_window(self) -> LispObject {
-        unsafe { fget_root_window(self.as_ptr()) }
-    }
-
-    #[inline]
-    pub fn selected_window(self) -> LispObject {
-        unsafe { fget_selected_window(self.as_ptr()) }
-    }
-
-    #[inline]
-    pub fn set_selected_window(&mut self, window: LispObject) {
-        unsafe { fset_selected_window(self.as_mut(), window) }
+        unsafe { frame_dimension(self.internal_border_width) }
     }
 
     #[inline]
     pub fn is_visible(self) -> bool {
-        unsafe { fget_visible(self.as_ptr()) }
-    }
-
-    #[inline]
-    pub fn is_iconified(self) -> bool {
-        unsafe { fget_iconified(self.as_ptr()) as BoolBF }
-    }
-
-    #[inline]
-    pub fn pointer_invisible(self) -> bool {
-        unsafe { fget_pointer_invisible(self.as_ptr()) }
+        self.visible() != 0
     }
 }
 
@@ -180,7 +116,7 @@ pub fn frame_live_p(object: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_selected_window(frame_or_window: LispObject) -> LispObject {
     let frame = window_frame_live_or_selected(frame_or_window);
-    frame.selected_window()
+    frame.selected_window
 }
 
 /// Set selected window of FRAME to WINDOW.
@@ -204,7 +140,7 @@ pub fn set_frame_selected_window(
     if frame_ref == selected_frame().as_frame().unwrap() {
         unsafe { Fselect_window(window, norecord) }
     } else {
-        frame_ref.set_selected_window(window);
+        frame_ref.selected_window = window;
         window
     }
 }
@@ -224,13 +160,12 @@ pub fn framep(object: LispObject) -> LispObject {
 }
 
 fn framep_1(frame: LispFrameRef) -> LispObject {
-    match unsafe { fget_output_method(frame.as_ptr()) } {
-        output_initial | output_termcap => Qt,
-        output_x_window => Qx,
-        output_w32 => Qw32,
-        output_msdos_raw => Qpc,
-        output_ns => Qns,
-        _ => panic!("Invalid frame output_method!"),
+    match frame.output_method() {
+        output_method::output_initial | output_method::output_termcap => Qt,
+        output_method::output_x_window => Qx,
+        output_method::output_w32 => Qw32,
+        output_method::output_msdos_raw => Qpc,
+        output_method::output_ns => Qns,
     }
 }
 
@@ -277,7 +212,7 @@ pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
 pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
     if frame.is_visible() {
         LispObject::constant_t()
-    } else if frame.is_iconified() {
+    } else if frame.iconified() {
         Qicon
     } else {
         LispObject::constant_nil()
@@ -294,8 +229,8 @@ pub fn frame_position(frame: LispObject) -> LispObject {
     let frame_ref = frame_live_or_selected(frame);
     unsafe {
         Fcons(
-            LispObject::from(frame_ref.left_pos()),
-            LispObject::from(frame_ref.top_pos()),
+            LispObject::from(frame_ref.left_pos),
+            LispObject::from(frame_ref.top_pos),
         )
     }
 }

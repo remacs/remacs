@@ -5916,29 +5916,8 @@ keys_of_buffer (void)
   initial_define_key (control_x_map, 'k', "kill-buffer");
 }
 
-
-/* Accessors for Rust */
-
-struct Lisp_Overlay*
-bget_overlays_before(const struct buffer *b)
-{
-  return b->overlays_before;
-}
-
-struct Lisp_Overlay*
-bget_overlays_after(const struct buffer *b)
-{
-  return b->overlays_after;
-}
-
 extern void
 set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
 {
   *(Lisp_Object *)(offset + (char *) b) = value;
-}
-
-void
-bset_markers (struct buffer *b, struct Lisp_Marker *m)
-{
-  b->text->markers = m;
 }

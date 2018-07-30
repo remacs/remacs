@@ -4,9 +4,7 @@ use libc;
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, get_process as cget_process,
-                 pget_kill_without_query, pget_pid, pget_process_inherit_coding_system_flag,
-                 pget_raw_status_new, pset_kill_without_query, send_process,
-                 setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
+                 send_process, setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
 use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
                  Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial, Qstop, Qt};
@@ -71,11 +69,6 @@ impl LispProcessRef {
     }
 
     #[inline]
-    fn raw_status_new(&self) -> bool {
-        unsafe { pget_raw_status_new(self.as_ptr()) }
-    }
-
-    #[inline]
     fn set_plist(&mut self, plist: LispObject) {
         self.plist = plist;
     }
@@ -132,9 +125,8 @@ pub fn process_buffer(process: LispProcessRef) -> LispObject {
 /// For a network, serial, and pipe connections, this value is nil.
 #[lisp_fn]
 pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
-    let pid = unsafe { pget_pid(process.as_ptr()) };
-    if pid != 0 {
-        Some(EmacsInt::from(pid))
+    if process.pid != 0 {
+        Some(EmacsInt::from(process.pid))
     } else {
         None
     }
@@ -406,7 +398,7 @@ pub fn process_send_string(process: LispObject, mut string: LispStringRef) -> ()
 /// Return the current value of query-on-exit flag for PROCESS.
 #[lisp_fn]
 pub fn process_query_on_exit_flag(process: LispProcessRef) -> bool {
-    unsafe { !pget_kill_without_query(process.as_ptr()) }
+    !process.kill_without_query()
 }
 
 /// Specify if query is needed for PROCESS when Emacs is exited.
@@ -415,9 +407,7 @@ pub fn process_query_on_exit_flag(process: LispProcessRef) -> bool {
 /// returns FLAG.
 #[lisp_fn]
 pub fn set_process_query_on_exit_flag(mut process: LispProcessRef, flag: LispObject) -> LispObject {
-    unsafe {
-        pset_kill_without_query(process.as_mut(), flag.is_nil());
-    }
+    process.set_kill_without_query(flag.is_nil());
     flag
 }
 
@@ -433,7 +423,7 @@ pub fn waiting_for_user_input_p() -> bool {
 /// inherit the coding system used to decode the process output.
 #[lisp_fn]
 pub fn process_inherit_coding_system_flag(process: LispProcessRef) -> bool {
-    unsafe { pget_process_inherit_coding_system_flag(process.as_ptr()) }
+    process.inherit_coding_system_flag()
 }
 
 /// Return the exit status of PROCESS or the signal number that killed it.

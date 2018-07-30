@@ -40,9 +40,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
-// Used by Rust.
-bool is_minibuffer(struct window *);
-
 static ptrdiff_t count_windows (struct window *);
 static ptrdiff_t get_leaf_windows (struct window *, struct window **,
 				   ptrdiff_t);
@@ -7269,13 +7266,4 @@ keys_of_window (void)
   initial_define_key (global_map, Ctl ('V'), "scroll-up-command");
   initial_define_key (meta_map, Ctl ('V'), "scroll-other-window");
   initial_define_key (meta_map, 'v', "scroll-down-command");
-}
-
-
-/* Accessors to enable Rust code to get data from the Lisp_Process struct */
-
-Lisp_Object
-wget_window_parameters(const struct window *w)
-{
-  return w->window_parameters;
 }

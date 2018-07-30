@@ -9,11 +9,8 @@ use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, set_buffer_internal, wget_current_matrix,
-                 wget_mode_line_height, wget_parent, wget_pixel_height, wget_pseudo_window_p,
-                 wget_window_parameters, window_menu_bar_p, window_parameter, window_tool_bar_p,
-                 wset_mode_line_height, wset_next_buffers, wset_prev_buffers, wset_redisplay,
-                 wset_window_parameters, window_list_1};
+                 selected_window as current_window, set_buffer_internal, window_menu_bar_p,
+                 window_parameter, window_tool_bar_p, window_list_1};
 use remacs_sys::Fcons;
 use remacs_sys::globals;
 
@@ -40,8 +37,8 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn is_pseudo(mut self) -> bool {
-        unsafe { wget_pseudo_window_p(self.as_mut()) }
+    pub fn is_pseudo(self) -> bool {
+        self.pseudo_window_p()
     }
 
     /// A window of any sort, leaf or interior, is "valid" if its
@@ -65,14 +62,14 @@ impl LispWindowRef {
     /// from W->mode_line_height, look at W's current glyph matrix, or return
     /// a default based on the height of the font of the face `mode-line'.
     pub fn current_mode_line_height(&mut self) -> i32 {
-        let mode_line_height = unsafe { wget_mode_line_height(self.as_ptr()) };
-        let matrix = LispGlyphMatrixRef::new(unsafe { wget_current_matrix(self.as_ptr()) });
-        let matrix_mode_line_height = matrix.mode_line_height();
+        let mode_line_height = self.mode_line_height;
+        let matrix_mode_line_height =
+            LispGlyphMatrixRef::new(self.current_matrix).mode_line_height();
 
         if mode_line_height >= 0 {
             mode_line_height
         } else if matrix_mode_line_height != 0 {
-            unsafe { wset_mode_line_height(self.as_mut(), matrix_mode_line_height) };
+            self.mode_line_height = matrix_mode_line_height;
             matrix_mode_line_height
         } else {
             let mut frame = self.frame().as_frame_or_error();
@@ -80,7 +77,7 @@ impl LispWindowRef {
             let mode_line_height = unsafe {
                 estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
             };
-            unsafe { wset_mode_line_height(self.as_mut(), mode_line_height) };
+            self.mode_line_height = mode_line_height;
             mode_line_height
         }
     }
@@ -115,10 +112,6 @@ impl LispWindowRef {
         unsafe { window_tool_bar_p(self.as_mut()) }
     }
 
-    pub fn pixel_height(mut self) -> i32 {
-        unsafe { wget_pixel_height(self.as_mut()) }
-    }
-
     pub fn total_width(self, round: LispObject) -> i32 {
         let qfloor = Qfloor;
         let qceiling = Qceiling;
@@ -127,7 +120,7 @@ impl LispWindowRef {
             self.total_cols
         } else {
             let frame = self.frame().as_frame_or_error();
-            let unit = frame.column_width();
+            let unit = frame.column_width;
 
             if round == qceiling {
                 (self.pixel_width + unit - 1) / unit
@@ -145,7 +138,7 @@ impl LispWindowRef {
             self.total_lines
         } else {
             let frame = self.frame().as_frame_or_error();
-            let unit = frame.line_height();
+            let unit = frame.line_height;
 
             if round == qceiling {
                 (self.pixel_height + unit - 1) / unit
@@ -210,7 +203,7 @@ impl LispWindowRef {
                     .as_buffer_or_error()
                     .mode_line_format_
                     .is_not_nil())
-            && self.pixel_height() > self.frame().as_frame_or_error().line_height()
+            && self.pixel_height > self.frame().as_frame_or_error().line_height
     }
 
     /// True if window wants a header line and is high enough to
@@ -226,7 +219,7 @@ impl LispWindowRef {
         let window_header_line_format =
             unsafe { window_parameter(self.as_mut(), Qheader_line_format) };
 
-        let mut height = self.frame().as_frame_or_error().line_height();
+        let mut height = self.frame().as_frame_or_error().line_height;
         if self.wants_mode_line() {
             height *= 2;
         }
@@ -235,7 +228,7 @@ impl LispWindowRef {
             && !window_header_line_format.eq(Qnone)
             && (window_header_line_format.is_not_nil()
                 || (self.contents().as_buffer_or_error().header_line_format_).is_not_nil())
-            && self.pixel_height() > height
+            && self.pixel_height > height
     }
 }
 
@@ -493,7 +486,7 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> i32 {
 /// Return nil for a window with no parent (e.g. a root window).
 #[lisp_fn(min = "0")]
 pub fn window_parent(window: LispObject) -> LispObject {
-    (unsafe { wget_parent(window_valid_or_selected(window).as_mut()) })
+    window_valid_or_selected(window).parent
 }
 
 /// Return the frame that window WINDOW is on.
@@ -513,7 +506,7 @@ pub fn window_frame(window: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
     let frame = window_frame_live_or_selected(frame_or_window);
-    frame.root_window()
+    frame.root_window
 }
 
 /// Return the minibuffer window for frame FRAME.
@@ -521,7 +514,7 @@ pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn minibuffer_window(frame: LispObject) -> LispObject {
     let frame = frame_live_or_selected(frame);
-    frame.minibuffer_window()
+    frame.minibuffer_window
 }
 
 /// Return the display-table that WINDOW is using.
@@ -550,10 +543,9 @@ pub fn set_window_parameter(
     value: LispObject,
 ) -> LispObject {
     let mut w = window_or_selected(window);
-    let w_params = unsafe { wget_window_parameters(w.as_ptr()) };
-    let old_alist_elt = assq(parameter, w_params);
+    let old_alist_elt = assq(parameter, w.window_parameters);
     if old_alist_elt.is_nil() {
-        unsafe { wset_window_parameters(w.as_mut(), Fcons(Fcons(parameter, value), w_params)) }
+        w.window_parameters = unsafe { Fcons(Fcons(parameter, value), w.window_parameters) };
     } else {
         setcdr(old_alist_elt.as_cons_or_error(), value);
     }
@@ -632,7 +624,7 @@ pub fn window_list(
         Some(w) => w.as_lisp_obj(),
         None => {
             if let Some(f) = frame {
-                f.selected_window()
+                f.selected_window
             } else {
                 selected_window()
             }
@@ -771,10 +763,7 @@ pub fn window_prev_buffers(window: LispObject) -> LispObject {
 /// window for that buffer, and POS is a window-specific point value.
 #[lisp_fn]
 pub fn set_window_prev_buffers(window: LispObject, prev_buffers: LispObject) -> LispObject {
-    let mut w = window_live_or_selected(window);
-    unsafe {
-        wset_prev_buffers(w.as_mut(), prev_buffers);
-    }
+    window_live_or_selected(window).prev_buffers = prev_buffers;
     prev_buffers
 }
 
@@ -790,10 +779,7 @@ pub fn window_next_buffers(window: LispObject) -> LispObject {
 /// NEXT-BUFFERS should be a list of buffers.
 #[lisp_fn]
 pub fn set_window_next_buffers(window: LispObject, next_buffers: LispObject) -> LispObject {
-    let mut w = window_live_or_selected(window);
-    unsafe {
-        wset_next_buffers(w.as_mut(), next_buffers);
-    }
+    window_live_or_selected(window).next_buffers = next_buffers;
     next_buffers
 }
 
@@ -828,9 +814,7 @@ pub fn set_window_point(window: LispObject, pos: LispObject) -> LispObject {
         set_marker_restricted(w.pointm, pos, w.contents());
         // We have to make sure that redisplay updates the window to show
         // the new value of point.
-        unsafe {
-            wset_redisplay(w.as_mut());
-        }
+        w.set_redisplay(true);
     }
     pos
 }
