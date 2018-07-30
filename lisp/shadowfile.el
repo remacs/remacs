@@ -646,7 +646,8 @@ Consider them as regular expressions if third arg REGEXP is true."
 		       "Use \\[shadow-copy-files] to update shadows."))
 	(sit-for 1))
       (message "shadow-add-to-todo 8")
-      (shadow-write-todo-file)))
+      (shadow-write-todo-file)
+      (message "shadow-add-to-todo 9")))
   nil)     ; Return nil for write-file-functions
 
 (defun shadow-remove-from-todo (pair)
@@ -723,8 +724,9 @@ With non-nil argument also saves the buffer."
     (delete-region (point-min) (point-max))
     (message "shadow-write-todo-file 4 %s" shadow-todo-buffer)
     (shadow-insert-var 'shadow-files-to-copy)
-    (message "shadow-write-todo-file 5 %s" shadow-todo-buffer)
-    (if save (shadow-save-todo-file))))
+    (message "shadow-write-todo-file 5 %s" save)
+    (if save (shadow-save-todo-file))
+    (message "shadow-write-todo-file 6 %s" save)))
 
 (defun shadow-save-todo-file ()
   (message "shadow-save-todo-file 1 %s" shadow-todo-buffer)
