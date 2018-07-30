@@ -2216,6 +2216,7 @@ filter and C-g is pressed, this function returns nil rather than a string).
 Note that the keystrokes comprising the text can still be recovered
 \(temporarily) with \\[view-lossage].  This may be a security bug for some
 applications."
+  (declare (obsolete read-passwd "27.1"))
   (let ((ans "")
 	(c 0)
 	(echo-keystrokes 0)

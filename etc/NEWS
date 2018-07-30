@@ -269,6 +269,11 @@ better emulate 'M-.' in both Bash and zsh, since the former counts
 from the beginning of the arguments, while the latter counts from the
 end.
 
+** Term
+
+---
+*** 'term-read-noecho' is now obsolete, use 'read-passwd' instead.
+
 ** Flymake
 
 +++
