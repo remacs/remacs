@@ -21,6 +21,9 @@
 
 (require 'ert)
 (require 'dired)
+(require 'wdired)
+
+(defvar dired-query)                    ; Pacify byte compiler.
 
 (ert-deftest wdired-test-bug32173-01 ()
   "Test using non-nil wdired-use-interactive-rename.
