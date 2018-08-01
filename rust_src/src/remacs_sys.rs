@@ -108,6 +108,7 @@ extern "C" {
     pub fn is_minibuffer(w: *const Lisp_Window) -> bool;
     pub static minibuf_prompt: LispObject;
     pub fn add_process_read_fd(fd: libc::c_int);
+    pub fn allocate_misc(t: Lisp_Misc_Type) -> LispObject;
     #[cfg(windows)]
     pub fn file_attributes_c(filename: LispObject, id_format: LispObject) -> LispObject;
     #[cfg(unix)]
