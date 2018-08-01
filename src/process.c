@@ -1093,16 +1093,6 @@ If THREAD is nil, the process is unlocked.  */)
   return thread;
 }
 
-DEFUN ("process-thread", Fprocess_thread, Sprocess_thread,
-       1, 1, 0,
-       doc: /* Ret the locking thread of PROCESS.
-If PROCESS is unlocked, this function returns nil.  */)
-  (Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->thread;
-}
-
 DEFUN ("set-process-window-size", Fset_process_window_size,
        Sset_process_window_size, 3, 3, 0,
        doc: /* Tell PROCESS that it has logical window size WIDTH by HEIGHT.
@@ -7042,16 +7032,6 @@ encode subprocess input. */)
   return Qnil;
 }
 
-DEFUN ("process-coding-system",
-       Fprocess_coding_system, Sprocess_coding_system, 1, 1, 0,
-       doc: /* Return a cons of coding systems for decoding and encoding of PROCESS.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return Fcons (XPROCESS (process)->decode_coding_system,
-		XPROCESS (process)->encode_coding_system);
-}
-
 DEFUN ("set-process-filter-multibyte", Fset_process_filter_multibyte,
        Sset_process_filter_multibyte, 2, 2, 0,
        doc: /* Set multibyteness of the strings given to PROCESS's filter.
@@ -7592,7 +7572,6 @@ returns non-`nil'.  */);
 
   defsubr (&Sdelete_process);
   defsubr (&Sset_process_thread);
-  defsubr (&Sprocess_thread);
   defsubr (&Sset_process_window_size);
   defsubr (&Sset_process_inherit_coding_system_flag);
   defsubr (&Sprocess_contact);
@@ -7624,7 +7603,6 @@ returns non-`nil'.  */);
   defsubr (&Sinternal_default_process_sentinel);
   defsubr (&Sinternal_default_process_filter);
   defsubr (&Sset_process_coding_system);
-  defsubr (&Sprocess_coding_system);
   defsubr (&Sset_process_filter_multibyte);
   defsubr (&Sprocess_filter_multibyte_p);
 

@@ -808,15 +808,6 @@ If NAME is given, it must be a string; it names the new thread.  */)
   return result;
 }
 
-DEFUN ("current-thread", Fcurrent_thread, Scurrent_thread, 0, 0, 0,
-       doc: /* Return the current thread.  */)
-  (void)
-{
-  Lisp_Object result;
-  XSETTHREAD (result, current_thread);
-  return result;
-}
-
 static void
 thread_signal_callback (void *arg)
 {
@@ -852,23 +843,6 @@ or `thread-join' in the target thread.  */)
     flush_stack_call_func (thread_signal_callback, tstate);
 
   return Qnil;
-}
-
-DEFUN ("thread--blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
-       doc: /* Return the object that THREAD is blocking on.
-If THREAD is blocked in `thread-join' on a second thread, return that
-thread.
-If THREAD is blocked in `mutex-lock', return the mutex.
-If THREAD is blocked in `condition-wait', return the condition variable.
-Otherwise, if THREAD is not blocked, return nil.  */)
-  (Lisp_Object thread)
-{
-  struct thread_state *tstate;
-
-  CHECK_THREAD (thread);
-  tstate = XTHREAD (thread);
-
-  return tstate->event_object;
 }
 
 static void
@@ -1006,10 +980,8 @@ syms_of_threads (void)
     {
       defsubr (&Sthread_yield);
       defsubr (&Smake_thread);
-      defsubr (&Scurrent_thread);
       defsubr (&Sthread_signal);
       defsubr (&Sthread_join);
-      defsubr (&Sthread_blocker);
       defsubr (&Sall_threads);
       defsubr (&Smake_mutex);
       defsubr (&Smutex_lock);
