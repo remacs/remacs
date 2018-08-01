@@ -90,16 +90,16 @@ An EVENT has the format
 ;; doing.  Kids, don't try this at home!
 ;;;###autoload (put 'list-threads 'disabled "Beware: manually canceling threads can ruin your Emacs session.")
 
-(defun thread-list--timer-func (buf)
-  "Revert BUF and set a timer to do it again."
-  (when (buffer-live-p buf)
-    (with-current-buffer buf
+(defun thread-list--timer-func (buffer)
+  "Revert BUFFER and set a timer to do it again."
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
       (revert-buffer))
     (run-at-time thread-list-refresh-seconds nil
-                 #'thread-list--timer-func buf)))
+                 #'thread-list--timer-func buffer)))
 
 (defun thread-list--get-entries ()
-  "Return tabulated list entries for the threads currently active."
+  "Return tabulated list entries for the currently live threads."
   (let (entries)
     (dolist (thread (all-threads))
       (pcase-let ((`(,status ,blocker) (thread-list--get-status thread)))
@@ -112,9 +112,8 @@ An EVENT has the format
 
 (defun thread-list--get-status (thread)
   "Describe the status of THREAD.
-Return a list of two strings, the first describing THREAD's
-status and the second describing what it is blocked on if it is
-blocked."
+Return a list of two strings, one describing THREAD's status, the
+other describing THREAD's blocker, if any."
   (cond
    ((not (thread-alive-p thread)) '("Finished" ""))
    ((eq thread (current-thread)) '("Running" ""))
@@ -132,14 +131,16 @@ blocked."
   (interactive)
   (thread-list--send-signal 'error))
 
-(defun thread-list--send-signal (sgnl)
-  "Send the signal SGNL to the thread at point.
-Confirm with the user first."
+(defun thread-list--send-signal (signal)
+  "Send the specified SIGNAL to the thread at point.
+Ask for user confirmation before signaling the thread."
   (let ((thread (tabulated-list-get-id)))
-    (when (and (threadp thread) (thread-alive-p thread))
-      (when (y-or-n-p (format "Send %s signal to %s? " sgnl thread))
-        (when (and (threadp thread) (thread-alive-p thread))
-          (thread-signal thread sgnl nil))))))
+    (if (and (threadp thread) (thread-alive-p thread))
+        (when (y-or-n-p (format "Send %s signal to %s? " signal thread))
+          (if (and (threadp thread) (thread-alive-p thread))
+              (thread-signal thread signal nil)
+            (message "This thread is no longer alive")))
+      (message "This thread is no longer alive"))))
 
 (provide 'thread)
 ;;; thread.el ends here
