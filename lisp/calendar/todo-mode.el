@@ -1860,15 +1860,18 @@ their associated keys and their effects."
 	  (region (eq where 'region))
 	  (here (eq where 'here))
 	  diary-item)
-      (when copy
-	(cond
-	 ((not (eq major-mode 'todo-mode))
-	  (user-error "You must be in Todo mode to copy a todo item"))
-	 ((todo-done-item-p)
-	  (user-error "You cannot copy a done item as a new todo item"))
-	 ((looking-at "^$")
-	  (user-error "Point must be on a todo item to copy it")))
-	(setq diary-item (todo-diary-item-p)))
+      (when (and arg here)
+        (user-error "Here insertion only valid in current category"))
+      (when (and (or copy here)
+                 (or (not (eq major-mode 'todo-mode)) (todo-done-item-p)
+                     (when copy (looking-at "^$"))
+                     (save-excursion
+                       (beginning-of-line)
+                       ;; Point is on done items separator.
+                       (looking-at todo-category-done))))
+        (user-error (concat "Item " (if copy "copying" "insertion")
+                            " is not valid here")))
+      (when copy (setq diary-item (todo-diary-item-p)))
       (when region
 	(let (use-empty-active-region)
 	  (unless (and todo-use-only-highlighted-region (use-region-p))
@@ -1876,7 +1879,6 @@ their associated keys and their effects."
       (let* ((obuf (current-buffer))
 	     (ocat (todo-current-category))
 	     (opoint (point))
-	     (todo-mm (eq major-mode 'todo-mode))
 	     (cat+file (cond ((equal arg '(4))
 			      (todo-read-category "Insert in category: "))
 			     ((equal arg '(16))
@@ -1931,7 +1933,6 @@ their associated keys and their effects."
 	(unless todo-global-current-todo-file
 	  (setq todo-global-current-todo-file todo-current-todo-file))
 	(let ((buffer-read-only nil)
-	      (called-from-outside (not (and todo-mm (equal cat ocat))))
 	      done-only item-added)
 	  (unless copy
 	    (setq new-item
@@ -1955,14 +1956,8 @@ their associated keys and their effects."
 						     "\n\t" new-item nil nil 1)))
 	  (unwind-protect
 	      (progn
-		;; Make sure the correct category is selected.  There
-		;; are two cases: (i) we just visited the file, so no
-		;; category is selected yet, or (ii) we invoked
-		;; insertion "here" from outside the category we want
-		;; to insert in (with priority insertion, category
-		;; selection is done by todo-set-item-priority).
-		(when (or (= (- (point-max) (point-min)) (buffer-size))
-			  (and here called-from-outside))
+                ;; If we just visited the file, no category is selected yet.
+                (when (= (- (point-max) (point-min)) (buffer-size))
 		  (todo-category-number cat)
 		  (todo-category-select))
 		;; If only done items are displayed in category,
@@ -1973,16 +1968,7 @@ their associated keys and their effects."
 		  (setq done-only t)
 		  (todo-toggle-view-done-only))
 		(if here
-		    (progn
-		      ;; If command was invoked with point in done
-		      ;; items section or outside of the current
-		      ;; category, can't insert "here", so to be
-		      ;; useful give new item top priority.
-		      (when (or (todo-done-item-section-p)
-				called-from-outside
-				done-only)
-			(goto-char (point-min)))
-		      (todo-insert-with-overlays new-item))
+                    (todo-insert-with-overlays new-item)
 		  (todo-set-item-priority new-item cat t))
 		(setq item-added t))
 	    ;; If user cancels before setting priority, restore
@@ -2549,7 +2535,11 @@ whose value can be either of the symbols `raise' or `lower',
 meaning to raise or lower the item's priority by one."
   (interactive)
   (unless (and (or (called-interactively-p 'any) (memq arg '(raise lower)))
-	       (or (todo-done-item-p) (looking-at "^$")))
+               ;; Noop if point is not on a todo (i.e. not done) item.
+	       (or (todo-done-item-p) (looking-at "^$")
+                   ;; On done items separator.
+                   (save-excursion (beginning-of-line)
+                                   (looking-at todo-category-done))))
     (let* ((item (or item (todo-item-string)))
 	   (marked (todo-marked-item-p))
 	   (cat (or cat (cond ((eq major-mode 'todo-mode)
@@ -2697,9 +2687,13 @@ section in the category moved to."
   (interactive "P")
   (let* ((cat1 (todo-current-category))
 	 (marked (assoc cat1 todo-categories-with-marks)))
-    ;; Noop if point is not on an item and there are no marked items.
-    (unless (and (looking-at "^$")
-		 (not marked))
+    (unless
+        ;; Noop if point is not on an item and there are no marked items.
+        (and (or (looking-at "^$")
+                 ;; On done items separator.
+                 (save-excursion (beginning-of-line)
+                                 (looking-at todo-category-done)))
+             (not marked))
       (let* ((buffer-read-only)
 	     (file1 todo-current-todo-file)
 	     (item (todo-item-string))
@@ -2856,10 +2850,14 @@ visible."
   (let* ((cat (todo-current-category))
 	 (marked (assoc cat todo-categories-with-marks)))
     (when marked (todo--user-error-if-marked-done-item))
-    (unless (and (not marked)
-		 (or (todo-done-item-p)
-		     ;; Point is between todo and done items.
-		     (looking-at "^$")))
+    (unless
+        ;; Noop if point is not on a todo (i.e. not done) item and
+        ;; there are no marked items.
+        (and (or (todo-done-item-p) (looking-at "^$")
+                 ;; On done items separator.
+                 (save-excursion (beginning-of-line)
+                                 (looking-at todo-category-done)))
+             (not marked))
       (let* ((date-string (calendar-date-string (calendar-current-date) t t))
 	     (time-string (if todo-always-add-time-string
 			      (concat " " (substring (current-time-string)
@@ -5132,6 +5130,8 @@ but the categories sexp differs from the current value of
 		      (forward-line)
 		      (looking-at (concat "^"
 					  (regexp-quote todo-category-done))))))
+           ;; Point is on done items separator.
+           (save-excursion (beginning-of-line) (looking-at todo-category-done))
 	   ;; Buffer is widened.
 	   (looking-at (regexp-quote todo-category-beg)))
     (goto-char (line-beginning-position))
@@ -5141,8 +5141,11 @@ but the categories sexp differs from the current value of
 
 (defun todo-item-end ()
   "Move to end of current todo item and return its position."
-  ;; Items cannot end with a blank line.
-  (unless (looking-at "^$")
+  (unless (or
+           ;; Items cannot end with a blank line.
+           (looking-at "^$")
+           ;; Point is on done items separator.
+           (save-excursion (beginning-of-line) (looking-at todo-category-done)))
     (let* ((done (todo-done-item-p))
 	   (to-lim nil)
 	   ;; For todo items, end is before the done items section, for done
