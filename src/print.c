@@ -38,6 +38,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <c-ctype.h>
 #include <float.h>
 #include <ftoastr.h>
+#include <math.h>
 
 #ifdef WINDOWSNT
 # include <sys/socket.h> /* for F_DUPFD_CLOEXEC */
@@ -1001,23 +1002,14 @@ float_to_string (char *buf, double data)
   int width;
   int len;
 
-  /* Check for plus infinity in a way that won't lose
-     if there is no plus infinity.  */
-  if (data == data / 2 && data > 1.0)
-    {
-      static char const infinity_string[] = "1.0e+INF";
-      strcpy (buf, infinity_string);
-      return sizeof infinity_string - 1;
-    }
-  /* Likewise for minus infinity.  */
-  if (data == data / 2 && data < -1.0)
+  if (isinf (data))
     {
       static char const minus_infinity_string[] = "-1.0e+INF";
-      strcpy (buf, minus_infinity_string);
-      return sizeof minus_infinity_string - 1;
+      bool positive = 0 < data;
+      strcpy (buf, minus_infinity_string + positive);
+      return sizeof minus_infinity_string - 1 - positive;
     }
-  /* Check for NaN in a way that won't fail if there are no NaNs.  */
-  if (! (data * 0.0 >= 0.0))
+  if (isnan (data))
     {
       /* Prepend "-" if the NaN's sign bit is negative.
 	 The sign bit of a double is the bit that is 1 in -0.0.  */
