@@ -1,10 +1,10 @@
-;;; thread-list.el --- List active threads in a buffer -*- lexical-binding: t -*-
+;;; thread.el --- Thread support in Emacs Lisp -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2018 Free Software Foundation, Inc.
 
 ;; Author: Gemini Lasswell <gazally@runbox.com>
 ;; Maintainer: emacs-devel@gnu.org
-;; Keywords: lisp, tools, maint
+;; Keywords: thread, tools
 
 ;; This file is part of GNU Emacs.
 
@@ -28,6 +28,23 @@
 (require 'cl-lib)
 (require 'pcase)
 (require 'subr-x)
+
+;;;###autoload
+(defun thread-handle-event (event)
+  "Handle thread events, propagated by `thread-signal'.
+An EVENT has the format
+  (thread-event THREAD ERROR-SYMBOL DATA)"
+  (interactive "e")
+  (if (and (consp event)
+           (eq (car event) 'thread-event)
+	   (= (length event) 4))
+      (let ((thread (cadr event))
+            (err (cddr event)))
+        (message "Error %s: %S" thread err))))
+
+(make-obsolete 'thread-alive-p 'thread-live-p "27.1")
+
+;;; The thread list buffer and list-threads command
 
 (defcustom thread-list-refresh-seconds 0.5
   "Seconds between automatic refreshes of the *Threads* buffer."
@@ -124,5 +141,5 @@ Confirm with the user first."
         (when (and (threadp thread) (thread-alive-p thread))
           (thread-signal thread sgnl nil))))))
 
-(provide 'thread-list)
-;;; thread-list.el ends here
+(provide 'thread)
+;;; thread.el ends here
