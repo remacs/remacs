@@ -4015,6 +4015,7 @@ extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 extern void close_file_unwind (int);
 extern void fclose_unwind (void *);
 extern void restore_point_unwind (Lisp_Object);
+extern Lisp_Object get_file_errno_data (const char *, Lisp_Object, int);
 extern _Noreturn void report_file_errno (const char *, Lisp_Object, int);
 extern _Noreturn void report_file_error (const char *, Lisp_Object);
 extern _Noreturn void report_file_notify_error (const char *, Lisp_Object);
@@ -4698,7 +4699,7 @@ enum
 #define FOR_EACH_TAIL(tail) \
   FOR_EACH_TAIL_INTERNAL (tail, circular_list (tail), true)
 
-/* Like FOR_EACH_TAIL (LIST), except do not signal or quit.
+/* Like FOR_EACH_TAIL (TAIL), except do not signal or quit.
    If the loop exits due to a cycle, TAIL’s value is undefined.  */
 
 #define FOR_EACH_TAIL_SAFE(tail) \

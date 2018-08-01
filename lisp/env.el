@@ -113,11 +113,11 @@ Changes ENV by side-effect, and returns its new value."
 	     (not keep-empty)
 	     env
 	     (stringp (car env))
-	     (string-match pattern (car env)))
+             (string-match-p pattern (car env)))
 	(cdr env)
       ;; Try to find existing entry for VARIABLE in ENV.
       (while (and scan (stringp (car scan)))
-	(when (string-match pattern (car scan))
+        (when (string-match-p pattern (car scan))
 	  (if value
 	      (setcar scan (concat variable "=" value))
 	    (if keep-empty
@@ -184,7 +184,7 @@ a side-effect."
       (setq variable (encode-coding-string variable locale-coding-system)))
   (if (and value (multibyte-string-p value))
       (setq value (encode-coding-string value locale-coding-system)))
-  (if (string-match "=" variable)
+  (if (string-match-p "=" variable)
       (error "Environment variable name `%s' contains `='" variable))
   (if (string-equal "TZ" variable)
       (set-time-zone-rule value))

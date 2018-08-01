@@ -200,7 +200,7 @@ fix_command (Lisp_Object input, Lisp_Object values)
 		  carelt = XCAR (elt);
 		  /* If it is (if X Y), look at Y.  */
 		  if (EQ (carelt, Qif)
-		      && EQ (Fnthcdr (make_number (3), elt), Qnil))
+		      && NILP (Fnthcdr (make_number (3), elt)))
 		    elt = Fnth (make_number (2), elt);
 		  /* If it is (when ... Y), look at Y.  */
 		  else if (EQ (carelt, Qwhen))

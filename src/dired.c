@@ -1058,7 +1058,7 @@ return a list with one element, taken from `user-real-login-name'.  */)
 
   endpwent ();
 #endif
-  if (EQ (users, Qnil))
+  if (NILP (users))
     /* At least current user is always known. */
     users = list1 (Vuser_real_login_name);
   return users;

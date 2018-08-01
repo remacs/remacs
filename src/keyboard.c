@@ -3150,6 +3150,10 @@ help_char_p (Lisp_Object c)
 static void
 record_char (Lisp_Object c)
 {
+  /* quail.el binds this to avoid recording keys twice.  */
+  if (inhibit_record_char)
+    return;
+
   int recorded = 0;
 
   if (CONSP (c) && (EQ (XCAR (c), Qhelp_echo) || EQ (XCAR (c), Qmouse_movement)))
@@ -3256,7 +3260,7 @@ record_char (Lisp_Object c)
   /* Write c to the dribble file.  If c is a lispy event, write
      the event's symbol to the dribble file, in <brackets>.  Bleaugh.
      If you, dear reader, have a better idea, you've got the source.  :-) */
-  if (dribble)
+  if (dribble && NILP (Vexecuting_kbd_macro))
     {
       block_input ();
       if (INTEGERP (c))
@@ -10110,9 +10114,12 @@ DEFUN ("recursion-depth", Frecursion_depth, Srecursion_depth, 0, 0, 0,
 
 DEFUN ("open-dribble-file", Fopen_dribble_file, Sopen_dribble_file, 1, 1,
        "FOpen dribble file: ",
-       doc: /* Start writing all keyboard characters to a dribble file called FILE.
+       doc: /* Start writing input events to a dribble file called FILE.
 If FILE is nil, close any open dribble file.
 The file will be closed when Emacs exits.
+
+The events written to the file include keyboard and mouse input
+events, but not events from executing keyboard macros.
 
 Be aware that this records ALL characters you type!
 This may include sensitive information such as passwords.  */)
@@ -11813,10 +11820,10 @@ if the command is in this list, the selection is not updated.  */);
 
   DEFVAR_LISP ("debug-on-event",
                Vdebug_on_event,
-               doc: /* Enter debugger on this event.  When Emacs
-receives the special event specified by this variable, it will try to
-break into the debugger as soon as possible instead of processing the
-event normally through `special-event-map'.
+               doc: /* Enter debugger on this event.
+When Emacs receives the special event specified by this variable,
+it will try to break into the debugger as soon as possible instead
+of processing the event normally through `special-event-map'.
 
 Currently, the only supported values for this
 variable are `sigusr1' and `sigusr2'.  */);
@@ -11824,21 +11831,23 @@ variable are `sigusr1' and `sigusr2'.  */);
 
   DEFVAR_BOOL ("attempt-stack-overflow-recovery",
                attempt_stack_overflow_recovery,
-               doc: /* If non-nil, attempt to recover from C stack
-overflow.  This recovery is unsafe and may lead to deadlocks or data
+               doc: /* If non-nil, attempt to recover from C stack overflows.
+This recovery is potentially unsafe and may lead to deadlocks or data
 corruption, but it usually works and may preserve modified buffers
 that would otherwise be lost.  If nil, treat stack overflow like any
-other kind of crash.  */);
+other kind of crash or fatal error.  */);
   attempt_stack_overflow_recovery = true;
 
   DEFVAR_BOOL ("attempt-orderly-shutdown-on-fatal-signal",
                attempt_orderly_shutdown_on_fatal_signal,
-               doc: /* If non-nil, attempt to perform an orderly
-shutdown when Emacs receives a fatal signal (e.g., a crash).
-This cleanup is unsafe and may lead to deadlocks or data corruption,
-but it usually works and may preserve modified buffers that would
-otherwise be lost.  If nil, crash immediately in response to fatal
-signals.  */);
+               doc: /* If non-nil, attempt orderly shutdown on fatal signals.
+By default this variable is non-nil, and Emacs attempts to perform
+an orderly shutdown when it catches a fatal signal (e.g., a crash).
+The orderly shutdown includes an attempt to auto-save your unsaved edits
+and other useful cleanups.  These cleanups are potentially unsafe and may
+lead to deadlocks or data corruption, but it usually works and may
+preserve data in modified buffers that would otherwise be lost.
+If nil, Emacs crashes immediately in response to fatal signals.  */);
   attempt_orderly_shutdown_on_fatal_signal = true;
 
   /* Create the initial keyboard.  Qt means 'unset'.  */
@@ -11848,6 +11857,14 @@ signals.  */);
                Vwhile_no_input_ignore_events,
                doc: /* Ignored events from while-no-input.  */);
   Vwhile_no_input_ignore_events = Qnil;
+
+  DEFVAR_BOOL ("inhibit--record-char",
+	       inhibit_record_char,
+	       doc: /* If non-nil, don't record input events.
+This inhibits recording input events for the purposes of keyboard
+macros, dribble file, and `recent-keys'.
+Internal use only.  */);
+  inhibit_record_char = false;
 }
 
 void

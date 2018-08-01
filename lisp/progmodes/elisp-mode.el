@@ -45,7 +45,7 @@ It has `lisp-mode-abbrev-table' as its parent."
   "Syntax table used in `emacs-lisp-mode'.")
 
 (defvar emacs-lisp-mode-map
-  (let ((map (make-sparse-keymap "Emacs-Lisp"))
+  (let ((map (make-sparse-keymap))
 	(menu-map (make-sparse-keymap "Emacs-Lisp"))
 	(lint-map (make-sparse-keymap))
 	(prof-map (make-sparse-keymap))

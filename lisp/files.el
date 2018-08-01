@@ -1830,7 +1830,7 @@ killed."
           ;; Don't use `find-file' because it may end up using another window
           ;; in some corner cases, e.g. when the selected window is
           ;; softly-dedicated.
-	  (let ((newbuf (find-file-noselect filename wildcards)))
+	  (let ((newbuf (find-file-noselect filename nil nil wildcards)))
             (switch-to-buffer newbuf)))
       (when (eq obuf (current-buffer))
 	;; This executes if find-file gets an error
@@ -1954,7 +1954,7 @@ started Emacs, set `abbreviated-home-dir' to nil so it will be recalculated)."
 			 (save-match-data
 			   (string-match "^[a-zA-`]:/$" filename))))
                (equal (get 'abbreviated-home-dir 'home)
-                      (expand-file-name "~")))
+                      (save-match-data (expand-file-name "~"))))
 	  (setq filename
 		(concat "~"
 			(match-string 1 filename)

@@ -8384,7 +8384,7 @@ next_element_from_buffer (struct it *it)
   eassert (IT_CHARPOS (*it) >= BEGV);
   eassert (NILP (it->string) && !it->s);
   eassert (!it->bidi_p
-	   || (EQ (it->bidi_it.string.lstring, Qnil)
+	   || (NILP (it->bidi_it.string.lstring)
 	       && it->bidi_it.string.s == NULL));
 
   /* With bidi reordering, the character to display might not be the

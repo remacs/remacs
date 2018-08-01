@@ -526,9 +526,19 @@ The type returned can be `comment', `string' or `paren'."
         font-lock-string-face)
     font-lock-comment-face))
 
-(defvar python-font-lock-keywords
-  ;; Keywords
-  `(,(rx symbol-start
+(defvar python-font-lock-keywords-level-1
+  `((,(rx symbol-start "def" (1+ space) (group (1+ (or word ?_))))
+     (1 font-lock-function-name-face))
+    (,(rx symbol-start "class" (1+ space) (group (1+ (or word ?_))))
+     (1 font-lock-type-face)))
+  "Font lock keywords to use in python-mode for level 1 decoration.
+
+This is the minimum decoration level, including function and
+class declarations.")
+
+(defvar python-font-lock-keywords-level-2
+  `(,@python-font-lock-keywords-level-1
+    ,(rx symbol-start
          (or
           "and" "del" "from" "not" "while" "as" "elif" "global" "or" "with"
           "assert" "else" "if" "pass" "yield" "break" "except" "import" "class"
@@ -548,12 +558,35 @@ The type returned can be `comment', `string' or `paren'."
           ;; Extra:
           "self")
          symbol-end)
-    ;; functions
-    (,(rx symbol-start "def" (1+ space) (group (1+ (or word ?_))))
-     (1 font-lock-function-name-face))
-    ;; classes
-    (,(rx symbol-start "class" (1+ space) (group (1+ (or word ?_))))
-     (1 font-lock-type-face))
+    ;; Builtins
+    (,(rx symbol-start
+          (or
+           "abs" "all" "any" "bin" "bool" "callable" "chr" "classmethod"
+           "compile" "complex" "delattr" "dict" "dir" "divmod" "enumerate"
+           "eval" "filter" "float" "format" "frozenset" "getattr" "globals"
+           "hasattr" "hash" "help" "hex" "id" "input" "int" "isinstance"
+           "issubclass" "iter" "len" "list" "locals" "map" "max" "memoryview"
+           "min" "next" "object" "oct" "open" "ord" "pow" "print" "property"
+           "range" "repr" "reversed" "round" "set" "setattr" "slice" "sorted"
+           "staticmethod" "str" "sum" "super" "tuple" "type" "vars" "zip"
+           "__import__"
+           ;; Python 2:
+           "basestring" "cmp" "execfile" "file" "long" "raw_input" "reduce"
+           "reload" "unichr" "unicode" "xrange" "apply" "buffer" "coerce"
+           "intern"
+           ;; Python 3:
+           "ascii" "bytearray" "bytes" "exec"
+           ;; Extra:
+           "__all__" "__doc__" "__name__" "__package__")
+          symbol-end) . font-lock-builtin-face))
+  "Font lock keywords to use in python-mode for level 2 decoration.
+
+This is the medium decoration level, including everything in
+`python-font-lock-keywords-level-1', as well as keywords and
+builtins.")
+
+(defvar python-font-lock-keywords-maximum-decoration
+  `(,@python-font-lock-keywords-level-2
     ;; Constants
     (,(rx symbol-start
           (or
@@ -596,27 +629,6 @@ The type returned can be `comment', `string' or `paren'."
            "VMSError" "WindowsError"
            )
           symbol-end) . font-lock-type-face)
-    ;; Builtins
-    (,(rx symbol-start
-          (or
-           "abs" "all" "any" "bin" "bool" "callable" "chr" "classmethod"
-           "compile" "complex" "delattr" "dict" "dir" "divmod" "enumerate"
-           "eval" "filter" "float" "format" "frozenset" "getattr" "globals"
-           "hasattr" "hash" "help" "hex" "id" "input" "int" "isinstance"
-           "issubclass" "iter" "len" "list" "locals" "map" "max" "memoryview"
-           "min" "next" "object" "oct" "open" "ord" "pow" "print" "property"
-           "range" "repr" "reversed" "round" "set" "setattr" "slice" "sorted"
-           "staticmethod" "str" "sum" "super" "tuple" "type" "vars" "zip"
-           "__import__"
-           ;; Python 2:
-           "basestring" "cmp" "execfile" "file" "long" "raw_input" "reduce"
-           "reload" "unichr" "unicode" "xrange" "apply" "buffer" "coerce"
-           "intern"
-           ;; Python 3:
-           "ascii" "bytearray" "bytes" "exec"
-           ;; Extra:
-           "__all__" "__doc__" "__name__" "__package__")
-          symbol-end) . font-lock-builtin-face)
     ;; assignments
     ;; support for a = b = c = 5
     (,(lambda (limit)
@@ -640,7 +652,26 @@ The type returned can be `comment', `string' or `paren'."
                       (goto-char (match-end 1))
                       (python-syntax-context 'paren)))
           res))
-     (1 font-lock-variable-name-face nil nil))))
+     (1 font-lock-variable-name-face nil nil)))
+  "Font lock keywords to use in python-mode for maximum decoration.
+
+This decoration level includes everything in
+`python-font-lock-keywords-level-2', as well as constants,
+decorators, exceptions, and assignments.")
+
+(defvar python-font-lock-keywords
+  '(python-font-lock-keywords-level-1   ; When `font-lock-maximum-decoration' is nil.
+    python-font-lock-keywords-level-1   ; When `font-lock-maximum-decoration' is 1.
+    python-font-lock-keywords-level-2   ; When `font-lock-maximum-decoration' is 2.
+    python-font-lock-keywords-maximum-decoration ; When `font-lock-maximum-decoration'
+                                                 ; is more than 1, or t (which it is,
+                                                 ; by default).
+    )
+  "List of font lock keyword specifications to use in python-mode.
+
+Which one will be chosen depends on the value of
+`font-lock-maximum-decoration'.")
+
 
 (defconst python-syntax-propertize-function
   (syntax-propertize-rules
@@ -5325,7 +5356,7 @@ REPORT-FN is Flymake's callback function."
        'python-nav-forward-sexp)
 
   (set (make-local-variable 'font-lock-defaults)
-       '(python-font-lock-keywords
+       `(,python-font-lock-keywords
          nil nil nil nil
          (font-lock-syntactic-face-function
           . python-font-lock-syntactic-face-function)))

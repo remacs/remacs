@@ -196,8 +196,8 @@ check_writable (const char *filename, int amode)
    list before reporting it; this saves report_file_errno's caller the
    trouble of preserving errno before calling list1.  */
 
-void
-report_file_errno (char const *string, Lisp_Object name, int errorno)
+Lisp_Object
+get_file_errno_data (char const *string, Lisp_Object name, int errorno)
 {
   Lisp_Object data = CONSP (name) || NILP (name) ? name : list1 (name);
   char *str = emacs_strerror (errorno);
@@ -207,10 +207,18 @@ report_file_errno (char const *string, Lisp_Object name, int errorno)
   Lisp_Object errdata = Fcons (errstring, data);
 
   if (errorno == EEXIST)
-    xsignal (Qfile_already_exists, errdata);
+    return Fcons (Qfile_already_exists, errdata);
   else
-    xsignal (errorno == ENOENT ? Qfile_missing : Qfile_error,
-	     Fcons (build_string (string), errdata));
+    return Fcons (errorno == ENOENT ? Qfile_missing : Qfile_error,
+		  Fcons (build_string (string), errdata));
+}
+
+void
+report_file_errno (char const *string, Lisp_Object name, int errorno)
+{
+  Lisp_Object data = get_file_errno_data (string, name, errorno);
+
+  xsignal (Fcar (data), Fcdr (data));
 }
 
 /* Signal a file-access failure that set errno.  STRING describes the
@@ -2288,6 +2296,21 @@ The arg must be a string.  */)
   if (!NILP (handler))
     return call2 (handler, Qfile_name_case_insensitive_p, filename);
 
+  /* If the file doesn't exist, move up the filesystem tree until we
+     reach an existing directory or the root.  */
+  if (NILP (Ffile_exists_p (filename)))
+    {
+      filename = Ffile_name_directory (filename);
+      while (NILP (Ffile_exists_p (filename)))
+	{
+	  Lisp_Object newname = expand_and_dir_to_file (filename);
+	  /* Avoid infinite loop if the root is reported as non-existing
+	     (impossible?).  */
+	  if (!NILP (Fstring_equal (newname, filename)))
+	    break;
+	  filename = newname;
+	}
+    }
   filename = ENCODE_FILE (filename);
   return file_name_case_insensitive_p (SSDATA (filename)) ? Qt : Qnil;
 }
@@ -5714,7 +5737,7 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 		   spare the user annoying messages.  */
 		&& XFASTINT (BVAR (b, save_length)) > 5000
 		/* These messages are frequent and annoying for `*mail*'.  */
-		&& !EQ (BVAR (b, filename), Qnil)
+		&& !NILP (BVAR (b, filename))
 		&& NILP (no_message))
 	      {
 		/* It has shrunk too much; turn off auto-saving here.  */

@@ -473,7 +473,17 @@ Must called from within a `tar-mode' buffer."
 		     (let ((process-environment
 			    (cons (concat "HOME=" homedir)
 				  process-environment)))
-		       (epg-find-configuration 'OpenPGP))
+		       (epg-find-configuration
+                        'OpenPGP nil
+                        ;; By default we require gpg2 2.1+ due to some
+                        ;; practical problems with pinentry.  But this
+                        ;; test works fine with 2.0 as well.
+                        (let ((prog-alist (copy-tree epg-config--program-alist)))
+                          (setf (alist-get "gpg2"
+                                           (alist-get 'OpenPGP prog-alist)
+                                           nil nil #'equal)
+                                "2.0")
+                          prog-alist)))
 		   (delete-directory homedir t))))
   (let* ((keyring (expand-file-name "key.pub" package-test-data-dir))
 	 (package-test-data-dir

@@ -105,13 +105,13 @@
   "Format ENTRY in human readable string.  ENTRY would be a
 function name of a function itself."
   (cond ((memq (car-safe entry) '(closure lambda))
-	 (format "#<lambda 0x%x>" (sxhash entry)))
+	 (format "#<lambda %#x>" (sxhash entry)))
 	((byte-code-function-p entry)
-	 (format "#<compiled 0x%x>" (sxhash entry)))
+	 (format "#<compiled %#x>" (sxhash entry)))
 	((or (subrp entry) (symbolp entry) (stringp entry))
 	 (format "%s" entry))
 	(t
-	 (format "#<unknown 0x%x>" (sxhash entry)))))
+	 (format "#<unknown %#x>" (sxhash entry)))))
 
 (defun profiler-fixup-entry (entry)
   (if (symbolp entry)

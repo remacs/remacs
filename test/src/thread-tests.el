@@ -34,10 +34,11 @@
 (declare-function thread--blocker "thread.c" (thread))
 (declare-function thread-alive-p "thread.c" (thread))
 (declare-function thread-join "thread.c" (thread))
-(declare-function thread-last-error "thread.c" ())
+(declare-function thread-last-error "thread.c" (&optional cleanup))
 (declare-function thread-name "thread.c" (thread))
 (declare-function thread-signal "thread.c" (thread error-symbol data))
 (declare-function thread-yield "thread.c" ())
+(defvar main-thread)
 
 (ert-deftest threads-is-one ()
   "Test for existence of a thread."
@@ -71,6 +72,11 @@
   (skip-unless (featurep 'threads))
   (should (listp (all-threads))))
 
+(ert-deftest threads-main-thread ()
+  "Simple test for all-threads."
+  (skip-unless (featurep 'threads))
+  (should (eq main-thread (car (all-threads)))))
+
 (defvar threads-test-global nil)
 
 (defun threads-test-thread1 ()
@@ -94,14 +100,23 @@
    (progn
      (setq threads-test-global nil)
      (let ((thread (make-thread #'threads-test-thread1)))
-       (thread-join thread)
-       (and threads-test-global
-	    (not (thread-alive-p thread)))))))
+       (and (= (thread-join thread) 23)
+            (= threads-test-global 23)
+            (not (thread-alive-p thread)))))))
 
 (ert-deftest threads-join-self ()
   "Cannot `thread-join' the current thread."
   (skip-unless (featurep 'threads))
   (should-error (thread-join (current-thread))))
+
+(ert-deftest threads-join-error ()
+  "Test of error signalling from `thread-join'."
+  :tags '(:unstable)
+  (skip-unless (featurep 'threads))
+  (let ((thread (make-thread #'threads-call-error)))
+    (while (thread-alive-p thread)
+      (thread-yield))
+    (should-error (thread-join thread))))
 
 (defvar threads-test-binding nil)
 
@@ -191,7 +206,7 @@
 (ert-deftest threads-mutex-signal ()
   "Test signaling a blocked thread."
   (skip-unless (featurep 'threads))
-  (should
+  (should-error
    (progn
      (setq threads-mutex (make-mutex))
      (setq threads-mutex-key nil)
@@ -200,8 +215,10 @@
        (while (not threads-mutex-key)
 	 (thread-yield))
        (thread-signal thr 'quit nil)
-       (thread-join thr))
-     t)))
+       ;; `quit' is not catched by `should-error'.  We must indicate it.
+       (condition-case nil
+           (thread-join thr)
+         (quit (signal 'error nil)))))))
 
 (defun threads-test-io-switch ()
   (setq threads-test-global 23))
@@ -275,6 +292,9 @@
       (thread-yield))
     (should (equal (thread-last-error)
                    '(error "Error is called")))
+    (should (equal (thread-last-error 'cleanup)
+                   '(error "Error is called")))
+    (should-not (thread-last-error))
     (setq th2 (make-thread #'threads-custom "threads-custom"))
     (should (threadp th2))))
 

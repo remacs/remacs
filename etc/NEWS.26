@@ -85,11 +85,19 @@ it now shows the global revision number, in the form of its changeset
 hash value.  To get back the previous behavior, customize the new
 option 'vc-hg-symbolic-revision-styles' to the value '("{rev}")'.
 
+---
+** shadowfile.el has been rewritten to support Tramp file names.
+
 
 * New Modes and Packages in Emacs 26.2
 
 
 * Incompatible Lisp Changes in Emacs 26.2
+
+---
+** shadowfile config files have changed their syntax.
+Existing files "~/.emacs.d/shadows" and "~/.emacs.d/shadow_todo" must
+be removed prior using the changed 'shadow-*' commands.
 
 
 * Lisp Changes in Emacs 26.2

@@ -139,14 +139,9 @@ check_window_system (struct frame *f)
 /* Return the value of frame parameter PROP in frame FRAME.  */
 
 Lisp_Object
-get_frame_param (register struct frame *frame, Lisp_Object prop)
+get_frame_param (struct frame *frame, Lisp_Object prop)
 {
-  register Lisp_Object tem;
-
-  tem = Fassq (prop, frame->param_alist);
-  if (EQ (tem, Qnil))
-    return tem;
-  return Fcdr (tem);
+  return Fcdr (Fassq (prop, frame->param_alist));
 }
 
 
@@ -189,9 +184,9 @@ frame_inhibit_resize (struct frame *f, bool horizontal, Lisp_Object parameter)
 	  || (CONSP (frame_inhibit_implied_resize)
 	      && !NILP (Fmemq (parameter, frame_inhibit_implied_resize)))
 	  || (horizontal
-	      && !EQ (fullscreen, Qnil) && !EQ (fullscreen, Qfullheight))
+	      && !NILP (fullscreen) && !EQ (fullscreen, Qfullheight))
 	  || (!horizontal
-	      && !EQ (fullscreen, Qnil) && !EQ (fullscreen, Qfullwidth))
+	      && !NILP (fullscreen) && !EQ (fullscreen, Qfullwidth))
 	  || FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
        : ((horizontal && f->inhibit_horizontal_resize)
 	  || (!horizontal && f->inhibit_vertical_resize)));
@@ -2808,10 +2803,8 @@ frames_discard_buffer (Lisp_Object buffer)
 void
 store_in_alist (Lisp_Object *alistptr, Lisp_Object prop, Lisp_Object val)
 {
-  register Lisp_Object tem;
-
-  tem = Fassq (prop, *alistptr);
-  if (EQ (tem, Qnil))
+  Lisp_Object tem = Fassq (prop, *alistptr);
+  if (NILP (tem))
     *alistptr = Fcons (Fcons (prop, val), *alistptr);
   else
     Fsetcdr (tem, val);
@@ -2975,7 +2968,7 @@ store_frame_param (struct frame *f, Lisp_Object prop, Lisp_Object val)
 
   /* Update the frame parameter alist.  */
   old_alist_elt = Fassq (prop, f->param_alist);
-  if (EQ (old_alist_elt, Qnil))
+  if (NILP (old_alist_elt))
     fset_param_alist (f, Fcons (Fcons (prop, val), f->param_alist));
   else
     Fsetcdr (old_alist_elt, val);
@@ -4516,13 +4509,13 @@ x_set_visibility (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 void
 x_set_autoraise (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
-  f->auto_raise = !EQ (Qnil, arg);
+  f->auto_raise = !NILP (arg);
 }
 
 void
 x_set_autolower (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
-  f->auto_lower = !EQ (Qnil, arg);
+  f->auto_lower = !NILP (arg);
 }
 
 void
@@ -4973,7 +4966,7 @@ x_get_arg (Display_Info *dpyinfo, Lisp_Object alist, Lisp_Object param,
 
   /* If it wasn't specified in ALIST or the Lisp-level defaults,
      look in the X resources.  */
-  if (EQ (tem, Qnil))
+  if (NILP (tem))
     {
       if (attribute && dpyinfo)
 	{

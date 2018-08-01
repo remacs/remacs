@@ -824,10 +824,12 @@ A canonicalized color name is all-lower case, with any blanks removed."
 	(replace-regexp-in-string " +" "" (downcase color))
       color)))
 
-(defun tty-color-24bit (rgb)
-  "Return pixel value on 24-bit terminals. Return nil if RGB is
-nil or not on 24-bit terminal."
-  (when (and rgb (= (display-color-cells) 16777216))
+(defun tty-color-24bit (rgb &optional display)
+  "Return 24-bit color pixel value for RGB value on DISPLAY.
+DISPLAY can be a display name or a frame, and defaults to the
+selected frame's display.
+If DISPLAY is not on a 24-but TTY terminal, return nil."
+  (when (and rgb (= (display-color-cells display) 16777216))
     (let ((r (lsh (car rgb) -8))
 	  (g (lsh (cadr rgb) -8))
 	  (b (lsh (nth 2 rgb) -8)))
@@ -850,7 +852,7 @@ If FRAME is not specified or is nil, it defaults to the selected frame."
       (error "Invalid specification for tty color \"%s\"" name))
   (tty-modify-color-alist
    (append (list (tty-color-canonicalize name)
-		 (or (tty-color-24bit rgb) index))
+		 (or (tty-color-24bit rgb frame) index))
 	   rgb)
    frame))
 
@@ -1026,7 +1028,7 @@ might need to be approximated if it is not supported directly."
 	  (or (assoc color (tty-color-alist frame))
 	      (let ((rgb (tty-color-standard-values color)))
 		(and rgb
-		     (let ((pixel (tty-color-24bit rgb)))
+		     (let ((pixel (tty-color-24bit rgb frame)))
 		       (or (and pixel (cons color (cons pixel rgb)))
 			   (tty-color-approximate rgb frame)))))))))
 

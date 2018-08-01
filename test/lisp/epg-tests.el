@@ -23,7 +23,6 @@
 
 (require 'ert)
 (require 'epg)
-(require 'trace)
 
 (defvar epg-tests-context nil)
 
@@ -33,17 +32,26 @@
 
 (defconst epg-tests--config-program-alist
   ;; The default `epg-config--program-alist' requires gpg2 2.1 or
-  ;; greater due to some practical problems with pinentry.  But the
-  ;; tests here all work fine with 2.0 as well.
-  (let ((prog-alist (copy-sequence epg-config--program-alist)))
+  ;; greater due to some practical problems with pinentry.  But most
+  ;; tests here work fine with 2.0 as well.
+  (let ((prog-alist (copy-tree epg-config--program-alist)))
     (setf (alist-get "gpg2"
                      (alist-get 'OpenPGP prog-alist)
                      nil nil #'equal)
           "2.0")
     prog-alist))
 
-(defun epg-tests-find-usable-gpg-configuration (&optional _require-passphrase)
-  (epg-find-configuration 'OpenPGP 'no-cache epg-tests--config-program-alist))
+(defun epg-tests-find-usable-gpg-configuration
+    (&optional require-passphrase require-public-key)
+  ;; Clear config cache because we may be using a different
+  ;; program-alist.  We do want to update the cache, so that
+  ;; `epg-make-context' can use our result.
+  (setq epg--configurations nil)
+  (epg-find-configuration 'OpenPGP nil
+                          ;; The symmetric operations fail on Hydra
+                          ;; with gpg 2.0.
+                          (if (or (not require-passphrase) require-public-key)
+                              epg-tests--config-program-alist)))
 
 (defun epg-tests-passphrase-callback (_c _k _d)
   ;; Need to create a copy here, since the string will be wiped out
@@ -63,14 +71,12 @@
 		  (format "GNUPGHOME=%s" epg-tests-home-directory))
 	    process-environment)))
      (unwind-protect
-         (let ((context (epg-make-context 'OpenPGP))
-               (epg-config (epg-tests-find-usable-gpg-configuration
-                            ,(if require-passphrase
-                                 `'require-passphrase))))
-           ;; GNUPGHOME is needed to find a usable gpg, so we can't
-           ;; check whether to skip any earlier (Bug#23561).
-           (unless epg-config
-             (ert-skip "No usable gpg config"))
+         ;; GNUPGHOME is needed to find a usable gpg, so we can't
+         ;; check whether to skip any earlier (Bug#23561).
+         (let ((epg-config (or (epg-tests-find-usable-gpg-configuration
+                                ,require-passphrase ,require-public-key)
+                               (ert-skip "No usable gpg config")))
+               (context (epg-make-context 'OpenPGP)))
            (setf (epg-context-program context)
                  (alist-get 'program epg-config))
 	   (setf (epg-context-home-directory context)

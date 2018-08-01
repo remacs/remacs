@@ -75,8 +75,8 @@ thread, @code{nil} otherwise.
 
 @defun thread-join thread
 Block until @var{thread} exits, or until the current thread is
-signaled.  If @var{thread} has already exited, this returns
-immediately.
+signaled.  It returns the result of the @var{thread} function.  If
+@var{thread} has already exited, this returns immediately.
 @end defun
 
 @defun thread-signal thread error-symbol data
@@ -87,6 +87,15 @@ thread, then this just calls @code{signal} immediately.  Otherwise,
 If @var{thread} was blocked by a call to @code{mutex-lock},
 @code{condition-wait}, or @code{thread-join}; @code{thread-signal}
 will unblock it.
+
+Since signal handlers in Emacs are located in the main thread, a
+signal must be propagated there in order to become visible.  The
+second @code{signal} call let the thread die:
+
+@example
+(thread-signal main-thread 'error data)
+(signal 'error data)
+@end example
 @end defun
 
 @defun thread-yield
@@ -127,15 +136,21 @@ Return a list of all the live thread objects.  A new list is returned
 by each invocation.
 @end defun
 
+@defvar main-thread
+This variable keeps the main thread Emacs is running, or @code{nil} if
+Emacs is compiled without thread support.
+@end defvar
+
 When code run by a thread signals an error that is unhandled, the
 thread exits.  Other threads can access the error form which caused
 the thread to exit using the following function.
 
-@defun thread-last-error
+@defun thread-last-error &optional cleanup
 This function returns the last error form recorded when a thread
 exited due to an error.  Each thread that exits abnormally overwrites
 the form stored by the previous thread's error with a new value, so
-only the last one can be accessed.
+only the last one can be accessed.  If @var{cleanup} is
+non-@code{nil}, the stored form is reset to @code{nil}.
 @end defun
 
 @node Mutexes
