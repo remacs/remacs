@@ -880,6 +880,9 @@ Formerly, some of these functions ignored signs and significands of
 NaNs.  Now, all these functions treat NaN signs and significands as
 significant.  For example, (eql 0.0e+NaN -0.0e+NaN) now returns nil
 because the two NaNs have different signs; formerly it returned t.
+Also, on platforms that have <ieee754.h> Emacs now reads and prints
+NaN significands; e.g., if X is a NaN, (format "%s" X) now returns
+"0.0e+NaN", "1.0e+NaN", etc., depending on X's significand.
 
 +++
 ** The function 'make-string' accepts an additional optional argument.

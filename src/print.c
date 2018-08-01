@@ -40,6 +40,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <ftoastr.h>
 #include <math.h>
 
+#if HAVE_IEEE754_H
+# include <ieee754.h>
+#endif
+
 #ifdef WINDOWSNT
 # include <sys/socket.h> /* for F_DUPFD_CLOEXEC */
 #endif
@@ -1011,6 +1015,12 @@ float_to_string (char *buf, double data)
     }
   if (isnan (data))
     {
+#if HAVE_IEEE754_H
+      union ieee754_double u = { .d = data };
+      uprintmax_t hi = u.ieee_nan.mantissa0;
+      return sprintf (buf, &"-%"pMu".0e+NaN"[!u.ieee_nan.negative],
+		      (hi << 31 << 1) + u.ieee_nan.mantissa1);
+#else
       /* Prepend "-" if the NaN's sign bit is negative.
 	 The sign bit of a double is the bit that is 1 in -0.0.  */
       static char const NaN_string[] = "0.0e+NaN";
@@ -1029,6 +1039,7 @@ float_to_string (char *buf, double data)
 
       strcpy (buf + negative, NaN_string);
       return negative + sizeof NaN_string - 1;
+#endif
     }
 
   if (NILP (Vfloat_output_format)
