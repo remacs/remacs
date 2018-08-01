@@ -276,7 +276,7 @@ Pressing @kbd{r} re-runs the test near point on its own.  Pressing
 definition of the test near point (@kbd{@key{RET}} has the same effect
 if point is on the name of the test).  On a failed test, @kbd{b} shows
 the backtrace of the failure.  @xref{Debugging,, Backtraces, elisp,
-the Emacs Lisp Reference Manual}, for more information about
+GNU Emacs Lisp Reference Manual}, for more information about
 backtraces.
 
 @kindex l@r{, in ert results buffer}

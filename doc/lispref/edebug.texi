@@ -442,7 +442,7 @@ Redisplay the most recently known expression result in the echo area
 Display a backtrace, excluding Edebug's own functions for clarity
 (@code{edebug-backtrace}).
 
-@xref{Debugging,, Backtraces, elisp}, for a description of backtraces
+@xref{Backtraces}, for a description of backtraces
 and the commands which work on them.
 
 If you would like to see Edebug's functions in the backtrace,

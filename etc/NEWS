@@ -471,7 +471,7 @@ and case-sensitivity together with search strings in the search ring.
 +++
 *** The Lisp Debugger is now based on 'backtrace-mode'.
 Backtrace mode adds fontification and commands for changing the
-appearance of backtrace frames. See the node "Backtraces" in the Elisp
+appearance of backtrace frames.  See the node "Backtraces" in the Elisp
 manual for documentation of the new mode and its commands.
 
 ** Edebug
@@ -484,9 +484,9 @@ using the new variables 'edebug-behavior-alist',
 globally or for individual definitions.
 
 +++
-*** Edebug's backtrace buffer now uses 'backtrace-mode'.  Backtrace
-mode adds fontification, links and commands for changing the
-appearance of backtrace frames. See the node "Backtraces" in the Elisp
+*** Edebug's backtrace buffer now uses 'backtrace-mode'.
+Backtrace mode adds fontification, links and commands for changing the
+appearance of backtrace frames.  See the node "Backtraces" in the Elisp
 manual for documentation of the new mode and its commands.
 
 The binding of 'd' in Edebug's keymap is now 'edebug-pop-to-backtrace'
@@ -523,7 +523,7 @@ less verbose by removing non-essential information.
 +++
 *** ERT's backtrace buffer now uses 'backtrace-mode'.
 Backtrace mode adds fontification and commands for changing the
-appearance of backtrace frames. See the node "Backtraces" in the Elisp
+appearance of backtrace frames.  See the node "Backtraces" in the Elisp
 manual for documentation of the new mode and its commands.
 
 ** Gamegrid
@@ -702,7 +702,7 @@ used by the Language Server Protocol (LSP), is readily available.
 ** Backtrace mode improves viewing of Elisp backtraces.
 Backtrace mode adds pretty printing, fontification and ellipsis
 expansion to backtrace buffers produced by the Lisp debugger, Edebug
-and ERT. See the node "Backtraces" in the Elisp manual for
+and ERT.  See the node "Backtraces" in the Elisp manual for
 documentation of the new mode and its commands.
 
 
