@@ -2335,7 +2335,7 @@ BOOKMARK is usually a bookmark name (a string).  It can also be a
 bookmark record, but this is usually only done by programmatic callers.
 
 If DISPLAY-FUNC is non-nil, it is a function to invoke to display the
-bookmark.  It defaults to `switch-to-buffer'.  A typical value for
+bookmark.  It defaults to `pop-to-buffer-same-window'.  A typical value for
 DISPLAY-FUNC would be `switch-to-buffer-other-window'.
 
 \(fn BOOKMARK &optional DISPLAY-FUNC)" t nil)
@@ -10081,6 +10081,9 @@ When called from Elisp code, ARG can be any locking mode:
 
 Other values are interpreted as usual.
 
+See also `emacs-lock-unlockable-modes', which exempts buffers under
+some major modes from being locked under some circumstances.
+
 \(fn &optional ARG)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "emacs-lock" '("toggle-emacs-lock" "emacs-lock-")))
@@ -13306,6 +13309,9 @@ Turn Flyspell mode off.
 (autoload 'flyspell-region "flyspell" "\
 Flyspell text between BEG and END.
 
+Make sure `flyspell-mode' is turned on if you want the highlight
+of a misspelled word removed when you've corrected it.
+
 \(fn BEG END)" t nil)
 
 (autoload 'flyspell-buffer "flyspell" "\
@@ -15085,7 +15091,14 @@ number with fewer than this number of bits, the handshake is
 rejected.  (The smaller the prime number, the less secure the
 key exchange is against man-in-the-middle attacks.)
 
-A value of nil says to use the default GnuTLS value.")
+A value of nil says to use the default GnuTLS value.
+
+The default value of this variable is such that virtually any
+connection can be established, whether this connection can be
+considered cryptographically \"safe\" or not.  However, Emacs
+network security is handled at a higher level via
+`open-network-stream' and the Network Security Manager.  See Info
+node `(emacs) Network Security'.")
 
 (custom-autoload 'gnutls-min-prime-bits "gnutls" t)
 
@@ -15215,7 +15228,7 @@ List of hook functions run by `grep-process-setup' (see `run-hooks').")
 
 (custom-autoload 'grep-setup-hook "grep" t)
 
-(defconst grep-regexp-alist `((,(concat "^\\(?:" "\\(?1:[^ \n]+\\)\\(?3: \\)\\(?2:[0-9]+\\):" "\\|" "\\(?1:[^\n:]+?[^\n/:]\\):[	 ]*\\(?2:[1-9][0-9]*\\)[	 ]*:" "\\)") 1 2 (,(lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))) (when mbeg (- mbeg beg))))) \, (lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)) (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end)))) (when mend (- mend beg)))))) nil nil (3 '(face nil display ":"))) ("^Binary file \\(.+\\) matches$" 1 nil nil 0 1)) "\
+(defconst grep-regexp-alist `((,(concat "^\\(?:" "\\(?1:[^ \n]+\\)\\(?3: \\)\\(?2:[0-9]+\\):" "\\|" "\\(?1:" "\\(?:[a-zA-Z]:\\)?" "[^\n:]+?[^\n/:]\\):[	 ]*\\(?2:[1-9][0-9]*\\)[	 ]*:" "\\)") 1 2 (,(lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))) (when mbeg (- mbeg beg))))) \, (lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)) (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end)))) (when mend (- mend beg)))))) nil nil (3 '(face nil display ":"))) ("^Binary file \\(.+\\) matches$" 1 nil nil 0 1)) "\
 Regexp used to match grep hits.
 See `compilation-error-regexp-alist' for format details.")
 
@@ -18103,9 +18116,9 @@ string (which specifies the title of a submenu into which the
 matches are put).
 REGEXP is a regular expression matching a definition construct
 which is to be displayed in the menu.  REGEXP may also be a
-function, called without arguments.  It is expected to search
-backwards.  It must return true and set `match-data' if it finds
-another element.
+function of no arguments.  If REGEXP is a function, it is
+expected to search backwards, return non-nil if it finds a
+definition construct, and set `match-data' for that construct.
 INDEX is an integer specifying which subexpression of REGEXP
 matches the definition's name; this subexpression is displayed as
 the menu item.
@@ -32130,8 +32143,6 @@ called a `subword'.  Here are some examples:
 This mode changes the definition of a word so that word commands
 treat nomenclature boundaries as word boundaries.
 
-\\{subword-mode-map}
-
 \(fn &optional ARG)" t nil)
 
 (defvar global-subword-mode nil "\
@@ -34594,7 +34605,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 3 4)) package--builtin-versions)
+(push (purecopy '(tramp 2 3 4 26 2)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
