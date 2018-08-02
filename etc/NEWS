@@ -185,6 +185,9 @@ This triggers to search the program on the remote host as indicated by
 
 * Editing Changes in Emacs 27.1
 
++++
+** New command 'make-empty-file'.
+
 ---
 ** New variable 'x-wait-for-event-timeout'.
 This controls how long Emacs will wait for updates to the graphical
@@ -221,6 +224,11 @@ navigation and editing of large files.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
+
++++
+** Dired
+
+*** New command 'dired-create-empty-file'.
 
 ** Change Logs and VC
 
