@@ -1066,28 +1066,6 @@ No argument or nil as argument means use current buffer as BUFFER.  */)
   return result;
 }
 
-DEFUN ("force-mode-line-update", Fforce_mode_line_update,
-       Sforce_mode_line_update, 0, 1, 0,
-       doc: /* Force redisplay of the current buffer's mode line and header line.
-With optional non-nil ALL, force redisplay of all mode lines and
-header lines.  This function also forces recomputation of the
-menu bar menus and the frame title.  */)
-     (Lisp_Object all)
-{
-  if (!NILP (all))
-    {
-      update_mode_lines = 10;
-      /* FIXME: This can't be right.  */
-      current_buffer->prevent_redisplay_optimizations_p = true;
-    }
-  else if (buffer_window_count (current_buffer))
-    {
-      bset_update_mode_line (current_buffer);
-      current_buffer->prevent_redisplay_optimizations_p = true;
-    }
-  return all;
-}
-
 DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, Sset_buffer_modified_p,
        1, 1, 0,
        doc: /* Mark current buffer as modified or unmodified according to FLAG.
@@ -5880,7 +5858,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);
   defsubr (&Sbuffer_local_variables);
-  defsubr (&Sforce_mode_line_update);
   defsubr (&Sset_buffer_modified_p);
   defsubr (&Srename_buffer);
   defsubr (&Sother_buffer);
