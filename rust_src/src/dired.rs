@@ -3,12 +3,53 @@
 use remacs_macros::lisp_fn;
 
 #[cfg(unix)]
-use dired_unix::{file_attributes_intro, get_users};
+use dired_unix::{directory_files_and_attributes_intro, directory_files_intro,
+                 file_attributes_intro, get_users};
 #[cfg(windows)]
 use dired_windows::{file_attributes_intro, get_users};
 use lisp::{defsubr, LispObject};
 use lists::car;
 use strings::string_lessp;
+
+/// Return a list of names of files in DIRECTORY.
+/// There are three optional arguments:
+/// If FULL is non-nil, return absolute file names.  Otherwise return names
+///  that are relative to the specified directory.
+/// If MATCH is non-nil, mention only file names that match the regexp MATCH.
+/// If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
+///  Otherwise, the list returned is sorted with `string-lessp'.
+///  NOSORT is useful if you plan to sort the result yourself.
+#[lisp_fn(min = "1")]
+pub fn directory_files(
+    directory: LispObject,
+    full: LispObject,
+    match_re: LispObject,
+    nosort: LispObject,
+) -> LispObject {
+    directory_files_intro(directory, full, match_re, nosort)
+}
+
+/// Return a list of names of files and their attributes in DIRECTORY.
+/// There are four optional arguments:
+/// If FULL is non-nil, return absolute file names.  Otherwise return names
+///  that are relative to the specified directory.
+/// If MATCH is non-nil, mention only file names that match the regexp MATCH.
+/// If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
+///  NOSORT is useful if you plan to sort the result yourself.
+/// ID-FORMAT specifies the preferred format of attributes uid and gid, see
+/// `file-attributes' for further documentation.
+/// On MS-Windows, performance depends on `w32-get-true-file-attributes',
+/// which see.
+#[lisp_fn(min = "1")]
+pub fn directory_files_and_attributes(
+    directory: LispObject,
+    full: LispObject,
+    match_re: LispObject,
+    nosort: LispObject,
+    id_format: LispObject,
+) -> LispObject {
+    directory_files_and_attributes_intro(directory, full, match_re, nosort, id_format)
+}
 
 /// Return a list of attributes of file FILENAME.
 /// Value is nil if specified file cannot be opened.
