@@ -107,8 +107,8 @@ struct DirFiles {
     nosort: bool,
     attrs: bool,
     id_format: LispObject,
-    ents: Vec<String>,
-    ents_attrs: Vec<LispObject>,
+    files: Vec<String>,
+    files_attrs: Vec<LispObject>,
 }
 
 impl DirFiles {
@@ -127,8 +127,8 @@ impl DirFiles {
             nosort,
             attrs,
             id_format,
-            ents: Vec::new(),
-            ents_attrs: Vec::new(),
+            files: Vec::new(),
+            files_attrs: Vec::new(),
         }
     }
 
@@ -144,17 +144,17 @@ impl DirFiles {
         }
 
         if self.match_re.is_nil() {
-            self.ents.push(df.clone());
-            self.ents.push(ddf.clone());
+            self.files.push(df.clone());
+            self.files.push(ddf.clone());
         } else {
             let re = RegEx::new(self.match_re);
 
             // always match dot(s) !fullpath
             if re.is_match(d.as_str()) {
-                self.ents.push(df.clone());
+                self.files.push(df.clone());
             }
             if re.is_match(dd.as_str()) {
-                self.ents.push(ddf.clone());
+                self.files.push(ddf.clone());
             }
         }
     }
@@ -173,9 +173,9 @@ impl DirFiles {
 
         self.add_dots();
 
-        for ent in fs::read_dir(dir_p)? {
-            let ent = ent?;
-            let f_enc = ent.file_name().into_string().unwrap();
+        for file in fs::read_dir(dir_p)? {
+            let file = file?;
+            let f_enc = file.file_name().into_string().unwrap();
             let f_enc_lo = LispObject::from(f_enc.as_str()); // encoded
             let f_dec_lo = unsafe { decode_file_name(f_enc_lo) }; // decoded
             let f = f_dec_lo.to_stdstring();
@@ -186,11 +186,11 @@ impl DirFiles {
             }
 
             if self.match_re.is_nil() {
-                self.ents.push(ff.clone());
+                self.files.push(ff.clone());
             } else {
                 let re = RegEx::new(self.match_re);
                 if re.is_match(f.as_str()) {
-                    self.ents.push(ff.clone());
+                    self.files.push(ff.clone());
                 }
             }
         }
@@ -199,14 +199,14 @@ impl DirFiles {
     }
 
     fn get_attrs(&mut self) {
-        for e in &self.ents {
-            let mut ef = e.clone();
-            // if no full path in ents make it full for file_attributes_core
+        for f in &self.files {
+            let mut ff = f.clone();
+            // if no full path in files make it full for file_attributes_core
             if !self.full {
-                ef = self.get_full(e.to_owned());
+                ff = self.get_full(f.to_owned());
             }
-            let fattrs = file_attributes_core(LispObject::from(ef.as_str()), self.id_format);
-            self.ents_attrs.push(fattrs);
+            let fattrs = file_attributes_core(LispObject::from(ff.as_str()), self.id_format);
+            self.files_attrs.push(fattrs);
         }
     }
 
@@ -223,7 +223,7 @@ impl DirFiles {
     }
 
     fn sort(&mut self) {
-        self.ents.sort_by(|a, b| {
+        self.files.sort_by(|a, b| {
             if a < b {
                 Ordering::Less
             } else {
@@ -234,12 +234,15 @@ impl DirFiles {
 
     fn to_list(&self) -> LispObject {
         if !self.attrs {
-            list(&mut self.ents.iter().map(|x| x.to_bstring()).collect::<Vec<_>>())
-        } else {
-            list(&mut self.ents
+            list(&mut self.files
                 .iter()
                 .map(|x| x.to_bstring())
-                .zip(self.ents_attrs.to_owned())
+                .collect::<Vec<_>>())
+        } else {
+            list(&mut self.files
+                .iter()
+                .map(|x| x.to_bstring())
+                .zip(self.files_attrs.to_owned())
                 .map(|x| LispObject::cons(x.0, x.1))
                 .collect::<Vec<_>>())
         }
