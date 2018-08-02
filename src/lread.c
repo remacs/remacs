@@ -72,7 +72,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define file_tell ftell
 #endif
 
-#if HAVE_IEEE754_H
+#if IEEE_FLOATING_POINT
 # include <ieee754.h>
 #endif
 
@@ -3756,21 +3756,18 @@ string_to_number (char const *string, int base, int flags)
 	      cp += 3;
 	      value = INFINITY;
 	    }
+#if IEEE_FLOATING_POINT
 	  else if (cp[-1] == '+'
 		   && cp[0] == 'N' && cp[1] == 'a' && cp[2] == 'N')
 	    {
 	      state |= E_EXP;
 	      cp += 3;
-#if HAVE_IEEE754_H
 	      union ieee754_double u
 		= { .ieee_nan = { .exponent = -1, .quiet_nan = 1,
 				  .mantissa0 = n >> 31 >> 1, .mantissa1 = n }};
 	      value = u.d;
-#else
-	      /* NAN is a "positive" NaN on all known Emacs hosts.  */
-	      value = NAN;
-#endif
 	    }
+#endif
 	  else
 	    cp = ecp;
 	}

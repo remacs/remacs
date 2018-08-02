@@ -1668,7 +1668,6 @@ fi
 
 dnl checks for header files
 AC_CHECK_HEADERS_ONCE(
-  ieee754.h
   linux/fs.h
   malloc.h
   sys/systeminfo.h
