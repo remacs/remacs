@@ -716,6 +716,12 @@ A symbol 'uuid' can be passed to thing-at-point and it returns the
 UUID at point.
 
 
+** Interactive automatic highlighting
+
++++
+*** 'highlight-regexp' can now highlight subexpressions.
+The command accepts a prefix argument to choose the subexpression.
+
 
 * New Modes and Packages in Emacs 27.1
 
