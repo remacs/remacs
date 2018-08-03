@@ -466,6 +466,14 @@ the shift key.
 *** Isearch now remembers the regexp-based search mode for words/symbols
 and case-sensitivity together with search strings in the search ring.
 
+** Debugger
+
++++
+*** The Lisp Debugger is now based on 'backtrace-mode'.
+Backtrace mode adds fontification and commands for changing the
+appearance of backtrace frames.  See the node "Backtraces" in the Elisp
+manual for documentation of the new mode and its commands.
+
 ** Edebug
 
 +++
@@ -475,13 +483,26 @@ using the new variables 'edebug-behavior-alist',
 'edebug-new-definition-function'.  Edebug's behavior can be changed
 globally or for individual definitions.
 
++++
+*** Edebug's backtrace buffer now uses 'backtrace-mode'.
+Backtrace mode adds fontification, links and commands for changing the
+appearance of backtrace frames.  See the node "Backtraces" in the Elisp
+manual for documentation of the new mode and its commands.
+
+The binding of 'd' in Edebug's keymap is now 'edebug-pop-to-backtrace'
+which replaces 'edebug-backtrace'.  Consequently Edebug's backtrace
+windows now behave like those of the Lisp Debugger and of ERT, in that
+when they appear they will be the selected window.
+
+The new 'backtrace-goto-source' command, bound to 's', works in
+Edebug's backtraces on backtrace frames whose source code has
+been instrumented by Edebug.
+
 ** Enhanced xterm support
 
 *** New variable 'xterm-set-window-title' controls whether Emacs sets
 the XTerm window title.  This feature is experimental and is disabled
 by default.
-
-** Gamegrid
 
 ** grep
 
@@ -498,6 +519,14 @@ The abbreviation can be disabled by the new option
 +++
 *** New variable 'ert-quiet' allows to make ERT output in batch mode
 less verbose by removing non-essential information.
+
++++
+*** ERT's backtrace buffer now uses 'backtrace-mode'.
+Backtrace mode adds fontification and commands for changing the
+appearance of backtrace frames.  See the node "Backtraces" in the Elisp
+manual for documentation of the new mode and its commands.
+
+** Gamegrid
 
 ---
 *** Gamegrid now determines its default glyph size based on display
@@ -668,6 +697,13 @@ transport-agnostic, the library provides an API to implement new
 transport strategies as well as a separate API to use them.  A
 transport implementation for process-based communication, such as is
 used by the Language Server Protocol (LSP), is readily available.
+
++++
+** Backtrace mode improves viewing of Elisp backtraces.
+Backtrace mode adds pretty printing, fontification and ellipsis
+expansion to backtrace buffers produced by the Lisp debugger, Edebug
+and ERT.  See the node "Backtraces" in the Elisp manual for
+documentation of the new mode and its commands.
 
 
 * Incompatible Lisp Changes in Emacs 27.1
