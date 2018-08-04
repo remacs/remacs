@@ -265,7 +265,7 @@ the function cell of `yes-or-no-p' is set to `y-or-on-p'."
   :type '(choice (const :tag "Accept short answers" t)
                  (const :tag "Require long answer" nil)
                  (const :tag "Guess preference" auto))
-  :version "27.1"
+  :version "26.2"
   :group 'minibuffer)
 
 (defconst read-answer-map--memoize (make-hash-table :weakness 'key :test 'equal))
