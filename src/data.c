@@ -2397,6 +2397,10 @@ bool-vector.  IDX starts at 0.  */)
 
 /* Arithmetic functions */
 
+#ifndef isnan
+# define isnan(x) ((x) != (x))
+#endif
+
 static Lisp_Object
 bignumcompare (Lisp_Object num1, Lisp_Object num2,
 	       enum Arith_Comparison comparison)
@@ -2407,7 +2411,13 @@ bignumcompare (Lisp_Object num1, Lisp_Object num2,
   if (BIGNUMP (num1))
     {
       if (FLOATP (num2))
-	cmp = mpz_cmp_d (XBIGNUM (num1)->value, XFLOAT_DATA (num2));
+	{
+	  /* Note that GMP doesn't define comparisons against NaN, so
+	     we need to handle them specially.  */
+	  if (isnan (XFLOAT_DATA (num2)))
+	    return Qnil;
+	  cmp = mpz_cmp_d (XBIGNUM (num1)->value, XFLOAT_DATA (num2));
+	}
       else if (FIXNUMP (num2))
         {
           if (sizeof (EMACS_INT) > sizeof (long) && XINT (num2) > LONG_MAX)
@@ -2431,7 +2441,13 @@ bignumcompare (Lisp_Object num1, Lisp_Object num2,
     {
       eassume (BIGNUMP (num2));
       if (FLOATP (num1))
-	cmp = - mpz_cmp_d (XBIGNUM (num2)->value, XFLOAT_DATA (num1));
+	{
+	  /* Note that GMP doesn't define comparisons against NaN, so
+	     we need to handle them specially.  */
+	  if (isnan (XFLOAT_DATA (num1)))
+	    return Qnil;
+	  cmp = - mpz_cmp_d (XBIGNUM (num2)->value, XFLOAT_DATA (num1));
+	}
       else
         {
 	  eassume (FIXNUMP (num1));
@@ -3020,10 +3036,6 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 
   return unbind_to (count, make_number (accum));
 }
-
-#ifndef isnan
-# define isnan(x) ((x) != (x))
-#endif
 
 static Lisp_Object
 float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,

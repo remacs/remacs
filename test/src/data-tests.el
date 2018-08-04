@@ -105,7 +105,9 @@
   (should (isnan (min 0.0e+NaN)))
   (should (isnan (min 0.0e+NaN 1 2)))
   (should (isnan (min 1.0 0.0e+NaN)))
-  (should (isnan (min 1.0 0.0e+NaN 1.1))))
+  (should (isnan (min 1.0 0.0e+NaN 1.1)))
+  (should (isnan (min 1.0 0.0e+NaN 1.1 (1+ most-positive-fixnum))))
+  (should (isnan (max 1.0 0.0e+NaN 1.1 (1+ most-positive-fixnum)))))
 
 (defun data-tests-popcnt (byte)
   "Calculate the Hamming weight of BYTE."
@@ -618,6 +620,6 @@ comparing the subr with a much slower lisp implementation."
   (should (= (ash most-negative-fixnum 1)
              (* most-negative-fixnum 2)))
   (should (= (lsh most-negative-fixnum 1)
-             (* (abs most-negative-fixnum) 2))))
+             (* most-negative-fixnum 2))))
 
 ;;; data-tests.el ends here

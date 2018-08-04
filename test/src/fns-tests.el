@@ -599,6 +599,7 @@
         (y (+ most-positive-fixnum 1)))
     (should (eq x x))
     (should (eql x y))
-    (should (equal x y))))
+    (should (equal x y))
+    (should-not (eql x 0.0e+NaN))))
 
 (provide 'fns-tests)
