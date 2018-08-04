@@ -598,7 +598,7 @@ process.  It now accepts signals specified either by name or by its number.
 ** Tramp
 
 +++
-*** New connection method "owncloud", which allows to access OwnCloud
+*** New connection method "nextcloud", which allows to access OwnCloud
 or NextCloud hosted files and directories.
 
 +++

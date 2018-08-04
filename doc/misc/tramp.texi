@@ -544,9 +544,9 @@ file system), @file{@trampfn{dav,user@@host,/path/to/file}} and
 @cindex method @option{gdrive}
 @cindex @option{gdrive} method
 @cindex google drive
-@cindex method @option{owncloud}
-@cindex @option{owncloud} method
-@cindex nextcloud
+@cindex method @option{nextcloud}
+@cindex @option{nextcloud} method
+@cindex owncloud
 
 GVFS-based methods include also @acronym{GNOME} Online Accounts, which
 support the @option{Files} service.  These are the Google Drive file
@@ -554,7 +554,7 @@ system, and the OwnCloud/NextCloud file system.  The file name syntax
 is here always
 @file{@trampfn{gdrive,john.doe@@gmail.com,/path/to/file}}
 (@samp{john.doe@@gmail.com} stands here for your Google Drive
-account), or @file{@trampfn{owncloud,user@@host#8081,/path/to/file}}
+account), or @file{@trampfn{nextcloud,user@@host#8081,/path/to/file}}
 (@samp{8081} stands for the port number) for OwnCloud/NextCloud files.
 
 
@@ -1096,7 +1096,7 @@ but with SSL encryption.  Both methods support the port numbers.
 
 Paths being part of the WebDAV volume to be mounted by GVFS, as it is
 common for OwnCloud or NextCloud file names, are not supported by
-these methods.  See method @option{owncloud} for handling them.
+these methods.  See method @option{nextcloud} for handling them.
 
 @item @option{gdrive}
 @cindex method @option{gdrive}
@@ -1114,13 +1114,13 @@ Since Google Drive uses cryptic blob file names internally,
 could produce unexpected behavior in case two files in the same
 directory have the same @code{display-name}, such a situation must be avoided.
 
-@item @option{owncloud}
+@item @option{nextcloud}
 @cindex @acronym{GNOME} Online Accounts
-@cindex method @option{owncloud}
-@cindex @option{owncloud} method
-@cindex nextcloud
+@cindex method @option{nextcloud}
+@cindex @option{nextcloud} method
+@cindex owncloud
 
-As the name indicates, the method @option{owncloud} allows you to
+As the name indicates, the method @option{nextcloud} allows you to
 access OwnCloud or NextCloud hosted files and directories.  Like the
 @option{gdrive} method, your credentials must be populated in your
 @command{Online Accounts} application outside Emacs. The method
@@ -1139,7 +1139,7 @@ that for security reasons refuse @command{ssh} connections.
 @defopt tramp-gvfs-methods
 This user option is a list of external methods for GVFS@.  By default,
 this list includes @option{afp}, @option{dav}, @option{davs},
-@option{gdrive}, @option{owncloud} and @option{sftp}.  Other methods
+@option{gdrive}, @option{nextcloud} and @option{sftp}.  Other methods
 to include are @option{ftp}, @option{http}, @option{https} and
 @option{smb}.  These methods are not intended to be used directly as
 GVFS based method.  Instead, they are added here for the benefit of
