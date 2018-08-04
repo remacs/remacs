@@ -163,14 +163,6 @@ impl DirFiles {
         let dir = self.directory.clone();
         let dir_p = Path::new(&dir);
 
-        if !dir_p.is_dir() {
-            xsignal!(
-                Qfile_missing,
-                LispObject::from("Opening directory: no such file or directory"),
-                self.directory.to_bstring()
-            );
-        }
-
         self.add_dots();
 
         for file in fs::read_dir(dir_p)? {
@@ -296,7 +288,11 @@ fn directory_files_core(
 
     let res = files.get();
     if res.is_err() {
-        Qnil
+        xsignal!(
+            Qfile_missing,
+            format!("Opening directory: {}", res.unwrap_err()).to_bstring(),
+            directory
+        );
     } else {
         if !files.nosort {
             files.sort();
