@@ -8068,8 +8068,11 @@ not_in_argv (NSString *arg)
 
 - (void)drawRect: (NSRect)rect
 {
-  int x = NSMinX (rect), y = NSMinY (rect);
-  int width = NSWidth (rect), height = NSHeight (rect);
+  int x, y, width, height;
+  const NSRect *rects;
+  NSInteger numRects;
+  NSColor *bgCol = ns_lookup_indexed_color
+    (NS_FACE_BACKGROUND (FRAME_DEFAULT_FACE (emacsframe)), emacsframe);
 
   NSTRACE ("[EmacsView drawRect:" NSTRACE_FMT_RECT "]",
            NSTRACE_ARG_RECT(rect));
@@ -8077,9 +8080,25 @@ not_in_argv (NSString *arg)
   if (!emacsframe || !emacsframe->output_data.ns)
     return;
 
-  ns_clear_frame_area (emacsframe, x, y, width, height);
   block_input ();
-  expose_frame (emacsframe, x, y, width, height);
+
+  [self getRectsBeingDrawn:&rects count:&numRects];
+  //NSLog(@"numRects: %d", (int)numRects);
+  for (int i = 0 ; i < numRects ; i++)
+    {
+      //NSLog(@"rect: %@\n", NSStringFromRect(rects[i]));
+      x = NSMinX (rects[i]);
+      y = NSMinY (rects[i]);
+      width = NSWidth (rects[i]);
+      height = NSHeight (rects[i]);
+
+      [bgCol set];
+      NSRectFill (rects[i]);
+
+      //ns_clear_frame_area (emacsframe, x, y, width, height);
+      expose_frame (emacsframe, x, y, width, height);
+    }
+
   unblock_input ();
 
   /*
