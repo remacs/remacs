@@ -184,11 +184,17 @@
 (defvar ccl-current-ic 0
   "The current index for `ccl-program-vector'.")
 
+;; This is needed because CCL assumes the pre-bigint (wrapping)
+;; semantics of integer overflow.
+(defun ccl-fixnum (code)
+  "Convert a CCL code word to a fixnum value."
+  (- (logxor (logand code #x0fffffff) #x08000000) #x08000000))
+
 (defun ccl-embed-data (data &optional ic)
   "Embed integer DATA in `ccl-program-vector' at `ccl-current-ic' and
 increment it.  If IC is specified, embed DATA at IC."
   (if ic
-      (aset ccl-program-vector ic data)
+      (aset ccl-program-vector ic (ccl-fixnum data))
     (let ((len (length ccl-program-vector)))
       (if (>= ccl-current-ic len)
 	  (let ((new (make-vector (* len 2) nil)))
@@ -196,7 +202,7 @@ increment it.  If IC is specified, embed DATA at IC."
 	      (setq len (1- len))
 	      (aset new len (aref ccl-program-vector len)))
 	    (setq ccl-program-vector new))))
-    (aset ccl-program-vector ccl-current-ic data)
+    (aset ccl-program-vector ccl-current-ic (ccl-fixnum data))
     (setq ccl-current-ic (1+ ccl-current-ic))))
 
 (defun ccl-embed-symbol (symbol prop)
@@ -230,7 +236,8 @@ proper index number for SYMBOL.  PROP should be
 `ccl-program-vector' at IC without altering the other bit field."
   (let ((relative (- ccl-current-ic (1+ ic))))
     (aset ccl-program-vector ic
-	  (logior (aref ccl-program-vector ic) (ash relative 8)))))
+	  (logior (aref ccl-program-vector ic)
+                  (ccl-fixnum (ash relative 8))))))
 
 (defun ccl-embed-code (op reg data &optional reg2)
   "Embed CCL code for the operation OP and arguments REG and DATA in
@@ -986,7 +993,8 @@ is a list of CCL-BLOCKs."
 (defun ccl-get-next-code ()
   "Return a CCL code in `ccl-code' at `ccl-current-ic'."
   (prog1
-      (aref ccl-code ccl-current-ic)
+      (let ((code (aref ccl-code ccl-current-ic)))
+        (if (numberp code) (ccl-fixnum code) code))
     (setq ccl-current-ic (1+ ccl-current-ic))))
 
 (defun ccl-dump-1 ()

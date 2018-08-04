@@ -2778,7 +2778,7 @@ NATNUMP (Lisp_Object x)
 INLINE bool
 NUMBERP (Lisp_Object x)
 {
-  return INTEGERP (x) || FLOATP (x) || BIGNUMP (x);
+  return INTEGERP (x) || FLOATP (x);
 }
 
 INLINE bool
@@ -2947,7 +2947,7 @@ CHECK_INTEGER (Lisp_Object x)
     if (MARKERP (x))							\
       XSETFASTINT (x, marker_position (x));				\
     else								\
-      CHECK_TYPE (FIXED_OR_FLOATP (x), Qnumber_or_marker_p, x);			\
+      CHECK_TYPE (FIXED_OR_FLOATP (x), Qnumber_or_marker_p, x);		\
   } while (false)
 
 #define CHECK_NUMBER_COERCE_MARKER(x)					\

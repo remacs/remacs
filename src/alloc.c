@@ -3815,6 +3815,34 @@ make_number (mpz_t value)
 	}
     }
 
+  /* Check if fixnum can be larger than long.  */
+  if (sizeof (EMACS_INT) > sizeof (long))
+    {
+      size_t bits = mpz_sizeinbase (value, 2);
+      int sign = mpz_sgn (value);
+
+      if (bits < FIXNUM_BITS + (sign < 0))
+        {
+          EMACS_INT v = 0;
+          size_t limbs = mpz_size (value);
+          mp_size_t i;
+
+          for (i = 0; i < limbs; i++)
+            {
+              mp_limb_t limb = mpz_getlimbn (value, i);
+              v |= (EMACS_INT) ((EMACS_UINT) limb << (i * GMP_NUMB_BITS));
+            }
+          if (sign < 0)
+            v = -v;
+
+          if (!FIXNUM_OVERFLOW_P (v))
+            {
+              XSETINT (obj, v);
+              return obj;
+            }
+        }
+    }
+
   obj = allocate_misc (Lisp_Misc_Bignum);
   b = XBIGNUM (obj);
   /* We could mpz_init + mpz_swap here, to avoid a copy, but the
