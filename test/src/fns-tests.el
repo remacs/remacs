@@ -602,4 +602,15 @@
     (should (equal x y))
     (should-not (eql x 0.0e+NaN))))
 
+(ert-deftest test-bignum-hash ()
+  "Test that hash tables work for bignums."
+  ;; Make two bignums that are eql but not eq.
+  (let ((b1 (1+ most-positive-fixnum))
+        (b2 (1+ most-positive-fixnum)))
+    (dolist (test '(eq eql equal))
+      (let ((hash (make-hash-table :test test)))
+        (puthash b1 t hash)
+        (should (eq (gethash b2 hash)
+                    (funcall test b1 b2)))))))
+
 (provide 'fns-tests)

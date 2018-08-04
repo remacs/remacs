@@ -3717,9 +3717,13 @@ cmpfn_eql (struct hash_table_test *ht,
 	   Lisp_Object key1,
 	   Lisp_Object key2)
 {
-  return (FLOATP (key1)
-	  && FLOATP (key2)
-	  && XFLOAT_DATA (key1) == XFLOAT_DATA (key2));
+  if (FLOATP (key1)
+      && FLOATP (key2)
+      && XFLOAT_DATA (key1) == XFLOAT_DATA (key2))
+    return true;
+  return (BIGNUMP (key1)
+	  && BIGNUMP (key2)
+	  && mpz_cmp (XBIGNUM (key1)->value, XBIGNUM (key2)->value) == 0);
 }
 
 
@@ -3775,7 +3779,9 @@ hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
 static EMACS_UINT
 hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
 {
-  return FLOATP (key) ? hashfn_equal (ht, key) : hashfn_eq (ht, key);
+  return ((FLOATP (key) || BIGNUMP (key))
+	  ? hashfn_equal (ht, key)
+	  : hashfn_eq (ht, key));
 }
 
 /* Value is a hash code for KEY for use in hash table H which uses as
@@ -4409,6 +4415,20 @@ sxhash_bool_vector (Lisp_Object vec)
   return SXHASH_REDUCE (hash);
 }
 
+/* Return a hash for a bignum.  */
+
+static EMACS_UINT
+sxhash_bignum (struct Lisp_Bignum *bignum)
+{
+  size_t i, nlimbs = mpz_size (bignum->value);
+  EMACS_UINT hash = 0;
+
+  for (i = 0; i < nlimbs; ++i)
+    hash = sxhash_combine (hash, mpz_getlimbn (bignum->value, i));
+
+  return SXHASH_REDUCE (hash);
+}
+
 
 /* Return a hash code for OBJ.  DEPTH is the current depth in the Lisp
    structure.  Value is an unsigned integer clipped to INTMASK.  */
@@ -4428,6 +4448,12 @@ sxhash (Lisp_Object obj, int depth)
       break;
 
     case Lisp_Misc:
+      if (XMISCTYPE (obj) == Lisp_Misc_Bignum)
+	{
+	  hash = sxhash_bignum (XBIGNUM (obj));
+	  break;
+	}
+      FALLTHROUGH;
     case Lisp_Symbol:
       hash = XHASH (obj);
       break;
