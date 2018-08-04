@@ -853,17 +853,17 @@ category.  With non-nil argument BACK, visit the numerically
 previous category (the highest numbered one, if the current
 category is the first)."
   (interactive)
-  (setq todo-category-number
-        (1+ (mod (- todo-category-number (if back 2 0))
-		 (length todo-categories))))
-  (when todo-skip-archived-categories
-    (while (and (zerop (todo-get-count 'todo))
-		(zerop (todo-get-count 'done))
-		(not (zerop (todo-get-count 'archived))))
-      (setq todo-category-number
-	    (funcall (if back #'1- #'1+) todo-category-number))))
-  (todo-category-select)
-  (goto-char (point-min)))
+  (let ((setcatnum (lambda () (1+ (mod (- todo-category-number
+                                          (if back 2 0))
+		                       (length todo-categories))))))
+    (setq todo-category-number (funcall setcatnum))
+    (when todo-skip-archived-categories
+      (while (and (zerop (todo-get-count 'todo))
+                  (zerop (todo-get-count 'done))
+                  (not (zerop (todo-get-count 'archived))))
+        (setq todo-category-number (funcall setcatnum))))
+    (todo-category-select)
+    (goto-char (point-min))))
 
 (defun todo-backward-category ()
   "Visit the numerically previous category in this todo file.
@@ -933,6 +933,7 @@ Categories mode."
         (todo-category-number category)
         (todo-category-select)
         (goto-char (point-min))
+	(if (and (boundp 'hl-line-mode) hl-line-mode) (hl-line-highlight))
         (when add-item (todo-insert-item--basic))))))
 
 (defun todo-next-item (&optional count)
@@ -1896,7 +1897,10 @@ their associated keys and their effects."
 	     (new-item (cond (copy (todo-item-string))
 			     (region (buffer-substring-no-properties
 				      (region-beginning) (region-end)))
-			     (t (read-from-minibuffer "Todo item: "))))
+			     (t (if (eq major-mode 'todo-archive-mode)
+                                    (user-error (concat "Cannot insert a new Todo"
+                                                        " item in an archive"))
+                                  (read-from-minibuffer "Todo item: ")))))
 	     (date-string (cond
 			   ((eq date-type 'date)
 			    (todo-read-date))
@@ -2083,7 +2087,14 @@ the item at point."
 	      (setq todo-categories-with-marks
 		    (assq-delete-all cat todo-categories-with-marks)))
 	    (todo-update-categories-sexp)
-	    (todo-prefix-overlays)))
+	    (todo-prefix-overlays)
+            (when (and (zerop (todo-get-count 'diary))
+                       (save-excursion
+                         (goto-char (point-min))
+                         (re-search-forward
+                          (concat "^" (regexp-quote todo-category-done))
+			  nil t)))
+              (let (todo-show-with-done) (todo-category-select)))))
       (if ov (delete-overlay ov)))))
 
 (defvar todo-edit-item--param-key-alist)
@@ -2326,7 +2337,7 @@ made in the number or names of categories."
 			    ((or (string= omonth "*") (= mm 13))
 			     (user-error "Cannot increment *"))
 			    (t
-			     (let ((mminc (+ mm inc)))
+			     (let ((mminc (+ mm inc (if (< inc 0) 12 0))))
 			       ;; Increment or decrement month by INC
 			       ;; modulo 12.
 			       (setq mm (% mminc 12))
@@ -4030,15 +4041,16 @@ regexp items."
   "Choose a filtered items file and visit it."
   (interactive)
   (let ((files (directory-files todo-directory t "\\.tod[rty]$" t))
-	falist file)
+	falist sfnlist file)
     (dolist (f files)
-      (let ((type (cond ((equal (file-name-extension f) "todr") "regexp")
+      (let ((sf-name (todo-short-file-name f))
+            (type (cond ((equal (file-name-extension f) "todr") "regexp")
 			((equal (file-name-extension f) "todt") "top")
 			((equal (file-name-extension f) "tody") "diary"))))
-	(push (cons (concat (todo-short-file-name f) " (" type ")") f)
-	      falist)))
+	(push (cons (concat sf-name " (" type ")") f) falist)))
+    (setq sfnlist (mapcar #'car falist))
     (setq file (completing-read "Choose a filtered items file: "
-				falist nil t nil nil (car falist)))
+				falist nil t nil 'sfnlist (caar falist)))
     (setq file (cdr (assoc-string file falist)))
     (find-file file)
     (unless (derived-mode-p 'todo-filtered-items-mode)
@@ -4048,25 +4060,26 @@ regexp items."
 (defun todo-go-to-source-item ()
   "Display the file and category of the filtered item at point."
   (interactive)
-  (let* ((str (todo-item-string))
-	 (buf (current-buffer))
-	 (res (todo-find-item str))
-	 (found (nth 0 res))
-	 (file (nth 1 res))
-	 (cat (nth 2 res)))
-    (if (not found)
-	(message "Category %s does not contain this item." cat)
-      (kill-buffer buf)
-      (set-window-buffer (selected-window)
-			 (set-buffer (find-buffer-visiting file)))
-      (setq todo-current-todo-file file)
-      (setq todo-category-number (todo-category-number cat))
-      (let ((todo-show-with-done (if (or todo-filter-done-items
-					  (eq (cdr found) 'done))
-				      t
-				    todo-show-with-done)))
-	(todo-category-select))
-      (goto-char (car found)))))
+  (unless (looking-at "^$")             ; Empty line at EOB.
+    (let* ((str (todo-item-string))
+           (buf (current-buffer))
+           (res (todo-find-item str))
+           (found (nth 0 res))
+           (file (nth 1 res))
+           (cat (nth 2 res)))
+      (if (not found)
+          (message "Category %s does not contain this item." cat)
+        (kill-buffer buf)
+        (set-window-buffer (selected-window)
+                           (set-buffer (find-buffer-visiting file)))
+        (setq todo-current-todo-file file)
+        (setq todo-category-number (todo-category-number cat))
+        (let ((todo-show-with-done (if (or todo-filter-done-items
+                                            (eq (cdr found) 'done))
+                                        t
+                                      todo-show-with-done)))
+          (todo-category-select))
+        (goto-char (car found))))))
 
 (defvar todo-multiple-filter-files nil
   "List of files selected from `todo-multiple-filter-files' widget.")
@@ -4518,8 +4531,11 @@ its priority has changed, and `same' otherwise."
 (defun todo-save-filtered-items-buffer ()
   "Save current Filtered Items buffer to a file.
 If the file already exists, overwrite it only on confirmation."
-  (let ((filename (or (buffer-file-name) (todo-filter-items-filename))))
-    (write-file filename t)))
+  (let ((filename (or (buffer-file-name) (todo-filter-items-filename)))
+        (bufname (buffer-name)))
+    (write-file filename t)
+    (setq buffer-read-only t)
+    (rename-buffer bufname)))
 
 ;; -----------------------------------------------------------------------------
 ;;; Printing Todo mode buffers
@@ -6422,9 +6438,6 @@ Filtered Items mode following todo (not done) items."
     ("N"  todo-toggle-prefix-numbers)
     ("PB" todo-print-buffer)
     ("PF" todo-print-buffer-to-file)
-    ("b"  todo-backward-category)
-    ("d"  todo-item-done)
-    ("f"  todo-forward-category)
     ("j"  todo-jump-to-category)
     ("n"  todo-next-item)
     ("p"  todo-previous-item)
@@ -6439,6 +6452,8 @@ Filtered Items mode following todo (not done) items."
     ("Fc" todo-show-categories-table)
     ("S"  todo-search)
     ("X"  todo-clear-matches)
+    ("b"  todo-backward-category)
+    ("f"  todo-forward-category)
     ("*"  todo-toggle-mark-item)
    )
   "List of key bindings for Todo and Todo Archive modes.")
