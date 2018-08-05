@@ -184,8 +184,10 @@
 (defvar ccl-current-ic 0
   "The current index for `ccl-program-vector'.")
 
-;; This is needed because CCL assumes the pre-bigint (wrapping)
-;; semantics of integer overflow.
+;; The CCL compiled codewords are 28bits, but the CCL implementation
+;; assumes that the codewords are sign-extended, so that data constants in
+;; the upper part of the codeword are signed. This function truncates a
+;; codeword to 28bits, and then sign extends the result to a fixnum.
 (defun ccl-fixnum (code)
   "Convert a CCL code word to a fixnum value."
   (- (logxor (logand code #x0fffffff) #x08000000) #x08000000))

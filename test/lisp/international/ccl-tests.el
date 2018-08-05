@@ -162,7 +162,7 @@ At EOF:
 Main-body:
     2:[read-jump-cond-expr-const] read r0, if !(r0 < 128), jump to 22(+20)
     5:[branch] jump to array[r3] of length 4
-	11 12 15 18 22
+	11 12 15 18 22 
    11:[jump] jump to 2(-9)
    12:[set-register] r1 = r0
    13:[set-register] r0 = r4
