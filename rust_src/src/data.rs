@@ -475,7 +475,7 @@ pub extern "C" fn store_symval_forwarding(
                 if predicate.is_symbol() {
                     let mut prop = unsafe { Fget(predicate, Qchoice) };
                     if prop.is_not_nil() {
-                        if memq(newval, prop).is_not_nil() {
+                        if memq(newval, prop).is_nil() {
                             unsafe { wrong_choice(prop, newval) };
                         }
                     } else {
