@@ -25,6 +25,7 @@ trait StringExt {
     fn to_bstring(&self) -> LispObject;
     fn to_cstring(&self) -> *const c_char;
     fn to_dir_f(&self) -> (String, String);
+    fn to_full(&self, dir: String) -> String;
 }
 
 impl StringExt for String {
@@ -75,6 +76,17 @@ impl StringExt for String {
             (dir_s, stem_s)
         } else {
             (dir_s, stem_s + "." + &ext_s)
+        }
+    }
+    fn to_full(&self, dir: String) -> String {
+        // Assumes expand_file_name haz already run on
+        // dir and it will drop >1 trailing '/'.
+        // So here make sure just one '/' between dir&file.
+        let last_char = dir.as_str().chars().last().unwrap();
+        if last_char == '/' {
+            dir + &self
+        } else {
+            dir + "/" + &self
         }
     }
 }
@@ -136,25 +148,18 @@ impl DirFiles {
     fn add_dots(&mut self) {
         let d = String::from(".");
         let dd = String::from("..");
-        let mut df = d.clone(); // dot final name
-        let mut ddf = dd.clone();
-        if self.full {
-            df = self.get_full(d.to_owned());
-            ddf = self.get_full(dd.to_owned());
-        }
 
         if self.match_re.is_nil() {
-            self.files.push(df.clone());
-            self.files.push(ddf.clone());
+            self.files.push(d.clone());
+            self.files.push(dd.clone());
         } else {
             let re = RegEx::new(self.match_re);
 
-            // always match dot(s) !fullpath
             if re.is_match(d.as_str()) {
-                self.files.push(df.clone());
+                self.files.push(d.clone());
             }
             if re.is_match(dd.as_str()) {
-                self.files.push(ddf.clone());
+                self.files.push(dd.clone());
             }
         }
     }
@@ -172,17 +177,12 @@ impl DirFiles {
             let f_dec_lo = unsafe { decode_file_name(f_enc_lo) }; // decoded
             let f = f_dec_lo.to_stdstring();
 
-            let mut ff = f.clone();
-            if self.full {
-                ff = self.get_full(f.to_owned());
-            }
-
             if self.match_re.is_nil() {
-                self.files.push(ff.clone());
+                self.files.push(f.clone());
             } else {
                 let re = RegEx::new(self.match_re);
                 if re.is_match(f.as_str()) {
-                    self.files.push(ff.clone());
+                    self.files.push(f.clone());
                 }
             }
         }
@@ -192,25 +192,11 @@ impl DirFiles {
 
     fn get_attrs(&mut self) {
         for f in &self.files {
-            let mut ff = f.clone();
-            // if no full path in files make it full for file_attributes_core
-            if !self.full {
-                ff = self.get_full(f.to_owned());
-            }
-            let fattrs = file_attributes_core(LispObject::from(ff.as_str()), self.id_format);
+            let fattrs = file_attributes_core(
+                LispObject::from(f.to_full(self.directory.to_owned()).as_str()),
+                self.id_format,
+            );
             self.files_attrs.push(fattrs);
-        }
-    }
-
-    // Assumes expand_file_name haz already run on
-    // self.directory and it will drop >1 trailing '/'.
-    // So here make sure just one '/' between dir&file.
-    fn get_full(&self, file: String) -> String {
-        let last_char = self.directory.as_str().chars().last().unwrap();
-        if last_char == '/' {
-            self.directory.clone() + &file.clone()
-        } else {
-            self.directory.clone() + "/" + &file.clone()
         }
     }
 
@@ -226,17 +212,35 @@ impl DirFiles {
 
     fn to_list(&self) -> LispObject {
         if !self.attrs {
-            list(&mut self.files
-                .iter()
-                .map(|x| x.to_bstring())
-                .collect::<Vec<_>>())
+            if !self.full {
+                list(&mut self.files
+                    .iter()
+                    .map(|x| x.to_bstring())
+                    .collect::<Vec<_>>())
+            } else {
+                list(&mut self.files
+                    .iter()
+                    .map(|x| x.to_full(self.directory.to_owned()))
+                    .map(|x| x.to_bstring())
+                    .collect::<Vec<_>>())
+            }
         } else {
-            list(&mut self.files
-                .iter()
-                .map(|x| x.to_bstring())
-                .zip(self.files_attrs.to_owned())
-                .map(|x| LispObject::cons(x.0, x.1))
-                .collect::<Vec<_>>())
+            if !self.full {
+                list(&mut self.files
+                    .iter()
+                    .map(|x| x.to_bstring())
+                    .zip(self.files_attrs.to_owned())
+                    .map(|x| LispObject::cons(x.0, x.1))
+                    .collect::<Vec<_>>())
+            } else {
+                list(&mut self.files
+                    .iter()
+                    .map(|x| x.to_full(self.directory.to_owned()))
+                    .map(|x| x.to_bstring())
+                    .zip(self.files_attrs.to_owned())
+                    .map(|x| LispObject::cons(x.0, x.1))
+                    .collect::<Vec<_>>())
+            }
         }
     }
 }
