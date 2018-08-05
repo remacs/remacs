@@ -705,6 +705,12 @@ to signal the main thread, e.g., when they encounter an error.
 +++
 *** 'thread-join' returns the result of the finished thread now.
 
+---
+** thingatpt.el supports a new "thing" called 'uuid'.
+A symbol 'uuid' can be passed to thing-at-point and it returns the
+UUID at point.
+
+
 
 * New Modes and Packages in Emacs 27.1
 
