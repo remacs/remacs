@@ -135,7 +135,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 #endif
 
 #include <getopt.h>
-#include <regex.h>
+#include <regex-emacs.h>
 
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
  Leave it undefined to make the program "etags", which makes emacs-style

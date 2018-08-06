@@ -203,7 +203,7 @@ extern void _DebPrint (const char *fmt, ...);
 #endif
 
 #ifdef emacs /* Don't do this for lib-src.  */
-/* Tell regex.c to use a type compatible with Emacs.  */
+/* Tell regex-emacs.c to use a type compatible with Emacs.  */
 #define RE_TRANSLATE_TYPE Lisp_Object
 #define RE_TRANSLATE(TBL, C) char_table_translate (TBL, C)
 #define RE_TRANSLATE_P(TBL) (!EQ (TBL, make_number (0)))

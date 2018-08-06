@@ -53,7 +53,8 @@
 #include <stdlib.h>
 
 #ifdef emacs
-/* We need this for `regex.h', and perhaps for the Emacs include files.  */
+/* We need this for `regex-emacs.h', and perhaps for the Emacs include
+   files.  */
 # include <sys/types.h>
 #endif
 
@@ -289,7 +290,7 @@ enum syntaxcode { Swhitespace = 0, Sword = 1, Ssymbol = 2 };
 #endif
 
 /* Get the interface, including the syntax bits.  */
-#include "regex.h"
+#include "regex-emacs.h"
 
 /* isalpha etc. are used for the character classes.  */
 #include <ctype.h>
@@ -1157,7 +1158,7 @@ reg_syntax_t re_syntax_options;
    different, incompatible syntaxes.
 
    The argument SYNTAX is a bit mask comprised of the various bits
-   defined in regex.h.  We return the old syntax.  */
+   defined in regex-emacs.h.  We return the old syntax.  */
 
 reg_syntax_t
 re_set_syntax (reg_syntax_t syntax)
@@ -1172,7 +1173,7 @@ WEAK_ALIAS (__re_set_syntax, re_set_syntax)
 #endif
 
 /* This table gives an error message for each of the error codes listed
-   in regex.h.  Obviously the order here has to be same as there.
+   in regex-emacs.h.  Obviously the order here has to be same as there.
    POSIX doesn't require that we do anything for REG_NOERROR,
    but why not be nice?  */
 
@@ -1474,28 +1475,28 @@ do {									\
   char *destination;							\
   /* Must be int, so when we don't save any registers, the arithmetic	\
      of 0 + -1 isn't done as unsigned.  */				\
-  									\
+									\
   DEBUG_STATEMENT (nfailure_points_pushed++);				\
   DEBUG_PRINT ("\nPUSH_FAILURE_POINT:\n");				\
   DEBUG_PRINT ("  Before push, next avail: %zd\n", (fail_stack).avail);	\
   DEBUG_PRINT ("			size: %zd\n", (fail_stack).size);\
-  									\
+									\
   ENSURE_FAIL_STACK (NUM_NONREG_ITEMS);					\
-  									\
+									\
   DEBUG_PRINT ("\n");							\
-  									\
+									\
   DEBUG_PRINT ("  Push frame index: %zd\n", fail_stack.frame);		\
   PUSH_FAILURE_INT (fail_stack.frame);					\
-  									\
+									\
   DEBUG_PRINT ("  Push string %p: \"", string_place);			\
   DEBUG_PRINT_DOUBLE_STRING (string_place, string1, size1, string2, size2);\
   DEBUG_PRINT ("\"\n");							\
   PUSH_FAILURE_POINTER (string_place);					\
-  									\
+									\
   DEBUG_PRINT ("  Push pattern %p: ", pattern);				\
   DEBUG_PRINT_COMPILED_PATTERN (bufp, pattern, pend);			\
   PUSH_FAILURE_POINTER (pattern);					\
-  									\
+									\
   /* Close the frame by moving the frame pointer past it.  */		\
   fail_stack.frame = fail_stack.avail;					\
 } while (0)
@@ -1822,7 +1823,7 @@ struct range_table_work_area
 #define SETUP_ASCII_RANGE(work_area, FROM, TO)			\
   do {								\
     int C0, C1;							\
-    								\
+								\
     for (C0 = (FROM); C0 <= (TO); C0++)				\
       {								\
 	C1 = TRANSLATE (C0);					\
@@ -1843,7 +1844,7 @@ struct range_table_work_area
   do {									       \
     int C0, C1, C2, I;							       \
     int USED = RANGE_TABLE_WORK_USED (work_area);			       \
-    									       \
+									       \
     for (C0 = (FROM); C0 <= (TO); C0++)					       \
       {									       \
 	C1 = RE_CHAR_TO_MULTIBYTE (C0);					       \
@@ -1882,7 +1883,7 @@ struct range_table_work_area
 #define SETUP_MULTIBYTE_RANGE(work_area, FROM, TO)			   \
   do {									   \
     int C0, C1, C2, I, USED = RANGE_TABLE_WORK_USED (work_area);	   \
-    									   \
+									   \
     SET_RANGE_TABLE_WORK_AREA ((work_area), (FROM), (TO));		   \
     for (C0 = (FROM); C0 <= (TO); C0++)					   \
       {									   \
@@ -1896,7 +1897,7 @@ struct range_table_work_area
 	  {								   \
 	    int from = RANGE_TABLE_WORK_ELT (work_area, I);		   \
 	    int to = RANGE_TABLE_WORK_ELT (work_area, I + 1);		   \
-	    								   \
+									   \
 	    if (C1 >= from - 1 && C1 <= to + 1)				   \
 	      {								   \
 		if (C1 == from - 1)					   \
@@ -2371,7 +2372,7 @@ static boolean group_in_compile_stack (compile_stack_type compile_stack,
 				       regnum_t regnum);
 
 /* `regex_compile' compiles PATTERN (of length SIZE) according to SYNTAX.
-   Returns one of error codes defined in `regex.h', or zero for success.
+   Returns one of error codes defined in `regex-emacs.h', or zero for success.
 
    If WHITESPACE_REGEXP is given (only #ifdef emacs), it is used instead of
    a space character in PATTERN.
@@ -2714,15 +2715,15 @@ regex_compile (re_char *pattern, size_t size,
 
 		    if (!zero_times_ok && simple)
 		      { /* Since simple * loops can be made faster by using
-		    	   on_failure_keep_string_jump, we turn simple P+
-		    	   into PP* if P is simple.  */
-		    	unsigned char *p1, *p2;
-		    	startoffset = b - laststart;
-		    	GET_BUFFER_SPACE (startoffset);
-		    	p1 = b; p2 = laststart;
-		    	while (p2 < p1)
-		    	  *b++ = *p2++;
-		    	zero_times_ok = 1;
+			   on_failure_keep_string_jump, we turn simple P+
+			   into PP* if P is simple.  */
+			unsigned char *p1, *p2;
+			startoffset = b - laststart;
+			GET_BUFFER_SPACE (startoffset);
+			p1 = b; p2 = laststart;
+			while (p2 < p1)
+			  *b++ = *p2++;
+			zero_times_ok = 1;
 		      }
 
 		    GET_BUFFER_SPACE (6);
@@ -6217,7 +6218,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
   FREE_VARIABLES ();
 
-  return -1;         			/* Failure to match.  */
+  return -1;				/* Failure to match.  */
 }
 
 /* Subroutine definitions for re_match_2.  */
@@ -6400,7 +6401,7 @@ re_exec (const char *s)
      routine will report only success or failure, and nothing about the
      registers.
 
-   It returns 0 if it succeeds, nonzero if it doesn't.  (See regex.h for
+   It returns 0 if it succeeds, nonzero if it doesn't.  (See regex-emacs.h for
    the return codes and their meanings.)  */
 
 reg_errcode_t

@@ -160,9 +160,9 @@ typedef unsigned long reg_syntax_t;
 
 /* If this bit is set, turn on internal regex debugging.
    If not set, and debugging was on, turn it off.
-   This only works if regex.c is compiled -DDEBUG.
+   This only works if regex-emacs.c is compiled -DDEBUG.
    We define this bit always, so that all that's needed to turn on
-   debugging is to recompile regex.c; the calling code can always have
+   debugging is to recompile regex-emacs.c; the calling code can always have
    this bit set, and it won't affect anything in the normal case. */
 #define RE_DEBUG (RE_NO_NEWLINE_ANCHOR << 1)
 
@@ -317,7 +317,7 @@ extern ptrdiff_t emacs_re_safe_alloca;
 
 
 /* If any error codes are removed, changed, or added, update the
-   `re_error_msg' table in regex.c.  */
+   `re_error_msg' table in regex-emacs.c.  */
 typedef enum
 {
 #ifdef _XOPEN_SOURCE
@@ -650,5 +650,5 @@ typedef int re_wchar_t;
 
 #endif /* not WIDE_CHAR_SUPPORT */
 
-#endif /* regex.h */
+#endif /* regex-emacs.h */
 

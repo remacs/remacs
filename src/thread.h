@@ -19,7 +19,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifndef THREAD_H
 #define THREAD_H
 
-#include "regex.h"
+#include "regex-emacs.h"
 
 #ifdef WINDOWSNT
 #include <sys/socket.h>

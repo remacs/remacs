@@ -30,7 +30,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "intervals.h"
 
-#include "regex.h"
+#include "regex-emacs.h"
 
 #define REGEXP_CACHE_SIZE 20
 
@@ -290,7 +290,8 @@ looking_at_1 (Lisp_Object string, bool posix)
   if (running_asynch_code)
     save_search_regs ();
 
-  /* This is so set_image_of_range_1 in regex.c can find the EQV table.  */
+  /* This is so set_image_of_range_1 in regex-emacs.c can find the EQV
+     table.  */
   set_char_table_extras (BVAR (current_buffer, case_canon_table), 2,
 			 BVAR (current_buffer, case_eqv_table));
 
@@ -410,7 +411,8 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
       pos_byte = string_char_to_byte (string, pos);
     }
 
-  /* This is so set_image_of_range_1 in regex.c can find the EQV table.  */
+  /* This is so set_image_of_range_1 in regex-emacs.c can find the EQV
+     table.  */
   set_char_table_extras (BVAR (current_buffer, case_canon_table), 2,
 			 BVAR (current_buffer, case_eqv_table));
 
@@ -1062,7 +1064,8 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
 	lim_byte = CHAR_TO_BYTE (lim);
     }
 
-  /* This is so set_image_of_range_1 in regex.c can find the EQV table.  */
+  /* This is so set_image_of_range_1 in regex-emacs.c can find the EQV
+     table.  */
   set_char_table_extras (BVAR (current_buffer, case_canon_table), 2,
 			 BVAR (current_buffer, case_eqv_table));
 
