@@ -196,6 +196,11 @@ from a remote host.
 This triggers to search the program on the remote host as indicated by
 'default-directory'.
 
++++
+** New variable 'auto-save-no-message'.
+When set to t, no message will be shown when auto-saving (default
+value: nil).
+
 
 * Editing Changes in Emacs 27.1
 

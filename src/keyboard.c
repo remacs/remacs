@@ -2626,7 +2626,7 @@ read_char (int commandflag, Lisp_Object map,
       && num_nonmacro_input_events - last_auto_save > max (auto_save_interval, 20)
       && !detect_input_pending_run_timers (0))
     {
-      Fdo_auto_save (Qnil, Qnil);
+      Fdo_auto_save (auto_save_no_message ? Qt : Qnil, Qnil);
       /* Hooks can actually change some buffers in auto save.  */
       redisplay ();
     }
@@ -2691,7 +2691,7 @@ read_char (int commandflag, Lisp_Object map,
 	  if (EQ (tem0, Qt)
 	      && ! CONSP (Vunread_command_events))
 	    {
-	      Fdo_auto_save (Qnil, Qnil);
+	      Fdo_auto_save (auto_save_no_message ? Qt : Qnil, Qnil);
 	      redisplay ();
 	    }
 	}
@@ -11390,6 +11390,10 @@ result of looking up the original command in the active keymaps.  */);
 	      doc: /* Number of input events between auto-saves.
 Zero means disable autosaving due to number of characters typed.  */);
   auto_save_interval = 300;
+
+  DEFVAR_BOOL ("auto-save-no-message", auto_save_no_message,
+	       doc: /* Non-nil means do not print any message when auto-saving. */);
+  auto_save_no_message = false;
 
   DEFVAR_LISP ("auto-save-timeout", Vauto_save_timeout,
 	       doc: /* Number of seconds idle time before auto-save.
