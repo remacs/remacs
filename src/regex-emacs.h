@@ -59,7 +59,7 @@ extern ptrdiff_t emacs_re_safe_alloca;
 
 /* This data structure represents a compiled pattern.  Before calling
    the pattern compiler, the fields `buffer', `allocated', `fastmap',
-   `translate', and `no_sub' can be set.  After the pattern has been
+   and `translate' can be set.  After the pattern has been
    compiled, the `re_nsub' field is available.  All other fields are
    private to the regex routines.  */
 
@@ -109,17 +109,6 @@ struct re_pattern_buffer
            by `re_compile_fastmap' if it updates the fastmap.  */
   unsigned fastmap_accurate : 1;
 
-        /* If set, `re_match_2' does not return information about
-           subexpressions.  */
-  unsigned no_sub : 1;
-
-        /* If set, a beginning-of-line anchor doesn't match at the
-           beginning of the string.  */
-  unsigned not_bol : 1;
-
-        /* Similarly for an end-of-line anchor.  */
-  unsigned not_eol : 1;
-
   /* If true, the compilation of the pattern had to look up the syntax table,
      so the compiled pattern is only valid for the current syntax table.  */
   unsigned used_syntax : 1;
@@ -148,7 +137,7 @@ extern const char *re_compile_pattern (const char *pattern, size_t length,
    compiled into BUFFER.  Start searching at position START, for RANGE
    characters.  Return the starting position of the match, -1 for no
    match, or -2 for an internal error.  Also return register
-   information in REGS (if REGS and BUFFER->no_sub are nonzero).  */
+   information in REGS (if REGS is nonzero).  */
 extern ptrdiff_t re_search (struct re_pattern_buffer *buffer,
 			   const char *string, size_t length,
 			   ptrdiff_t start, ptrdiff_t range,

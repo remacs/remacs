@@ -762,9 +762,6 @@ print_compiled_pattern (struct re_pattern_buffer *bufp)
   printf ("re_nsub: %zu\t", bufp->re_nsub);
   printf ("regs_alloc: %d\t", bufp->regs_allocated);
   printf ("can_be_null: %d\t", bufp->can_be_null);
-  printf ("no_sub: %d\t", bufp->no_sub);
-  printf ("not_bol: %d\t", bufp->not_bol);
-  printf ("not_eol: %d\t", bufp->not_eol);
 #ifndef emacs
   printf ("syntax: %lx\n", bufp->syntax);
 #endif
@@ -1683,7 +1680,6 @@ static bool group_in_compile_stack (compile_stack_type, regnum_t);
      `used' is set to the length of the compiled pattern;
      `fastmap_accurate' is zero;
      `re_nsub' is the number of subexpressions in PATTERN;
-     `not_bol' and `not_eol' are zero;
 
    The `fastmap' field is neither examined nor set.  */
 
@@ -1787,7 +1783,6 @@ regex_compile (re_char *pattern, size_t size,
 
   /* Initialize the pattern buffer.  */
   bufp->fastmap_accurate = 0;
-  bufp->not_bol = bufp->not_eol = 0;
   bufp->used_syntax = 0;
 
   /* Set `used' to zero, so that if we return an error, the pattern
@@ -1795,7 +1790,6 @@ regex_compile (re_char *pattern, size_t size,
      at the end.  */
   bufp->used = 0;
 
-  /* Always count groups, whether or not bufp->no_sub is set.  */
   bufp->re_nsub = 0;
 
   if (bufp->allocated == 0)
@@ -3841,9 +3835,8 @@ mutually_exclusive_p (struct re_pattern_buffer *bufp, re_char *p1,
    and SIZE2, respectively).  We start matching at POS, and stop
    matching at STOP.
 
-   If REGS is non-null and the `no_sub' field of BUFP is nonzero, we
-   store offsets for the substring each group matched in REGS.  See the
-   documentation for exactly how many groups we fill.
+   If REGS is non-null, store offsets for the substring each group
+   matched in REGS.
 
    We return -1 if no match, -2 if an internal error (such as the
    failure stack overflowing).  Otherwise, we return the length of the
@@ -4130,7 +4123,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	  DEBUG_PRINT ("Accepting match.\n");
 
 	  /* If caller wants register contents data back, do it.  */
-	  if (regs && !bufp->no_sub)
+	  if (regs)
 	    {
 	      /* Have the register data arrays been allocated?	*/
 	      if (bufp->regs_allocated == REGS_UNALLOCATED)
@@ -4185,7 +4178,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 		 -1 at the end.  */
 	      for (reg = num_regs; reg < regs->num_regs; reg++)
 		regs->start[reg] = regs->end[reg] = -1;
-	    } /* regs && !bufp->no_sub */
+	    }
 
 	  DEBUG_PRINT ("%u failure points pushed, %u popped (%u remain).\n",
 		       nfailure_points_pushed, nfailure_points_popped,
@@ -4482,15 +4475,13 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	  break;
 
 
-	/* begline matches the empty string at the beginning of the string
-	   (unless `not_bol' is set in `bufp'), and after newlines.  */
+	/* begline matches the empty string at the beginning of the string,
+	   and after newlines.  */
 	case begline:
 	  DEBUG_PRINT ("EXECUTING begline.\n");
 
 	  if (AT_STRINGS_BEG (d))
-	    {
-	      if (!bufp->not_bol) break;
-	    }
+	    break;
 	  else
 	    {
 	      unsigned c;
@@ -4498,7 +4489,6 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	      if (c == '\n')
 		break;
 	    }
-	  /* In all other cases, we fail.  */
 	  goto fail;
 
 
@@ -4507,15 +4497,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	  DEBUG_PRINT ("EXECUTING endline.\n");
 
 	  if (AT_STRINGS_END (d))
-	    {
-	      if (!bufp->not_eol) break;
-	    }
-	  else
-	    {
-	      PREFETCH_NOLIMIT ();
-	      if (*d == '\n')
-		break;
-	    }
+	    break;
+	  PREFETCH_NOLIMIT ();
+	  if (*d == '\n')
+	    break;
 	  goto fail;
 
 
@@ -5112,11 +5097,6 @@ re_compile_pattern (const char *pattern, size_t length,
   /* GNU code is written to assume at least RE_NREGS registers will be set
      (and at least one extra will be -1).  */
   bufp->regs_allocated = REGS_UNALLOCATED;
-
-  /* And GNU code determines whether or not to get register information
-     by passing null for the REGS argument to re_search, etc., not by
-     setting no_sub.  */
-  bufp->no_sub = 0;
 
   ret = regex_compile ((re_char *) pattern, length,
 		       posix_backtracking,
