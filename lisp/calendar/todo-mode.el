@@ -933,7 +933,7 @@ Categories mode."
         (todo-category-number category)
         (todo-category-select)
         (goto-char (point-min))
-	(if (and (boundp 'hl-line-mode) hl-line-mode) (hl-line-highlight))
+	(if (bound-and-true-p hl-line-mode) (hl-line-highlight))
         (when add-item (todo-insert-item--basic))))))
 
 (defun todo-next-item (&optional count)
@@ -4037,20 +4037,22 @@ regexp items."
   (interactive "P")
   (todo-filter-items 'regexp arg t))
 
+(defvar todo--fifiles-history nil
+  "List of short file names used by todo-find-filtered-items-file.")
+
 (defun todo-find-filtered-items-file ()
   "Choose a filtered items file and visit it."
   (interactive)
   (let ((files (directory-files todo-directory t "\\.tod[rty]$" t))
-	falist sfnlist file)
+	falist file)
     (dolist (f files)
       (let ((sf-name (todo-short-file-name f))
             (type (cond ((equal (file-name-extension f) "todr") "regexp")
 			((equal (file-name-extension f) "todt") "top")
 			((equal (file-name-extension f) "tody") "diary"))))
 	(push (cons (concat sf-name " (" type ")") f) falist)))
-    (setq sfnlist (mapcar #'car falist))
-    (setq file (completing-read "Choose a filtered items file: "
-				falist nil t nil 'sfnlist (caar falist)))
+    (setq file (completing-read "Choose a filtered items file: " falist nil t nil
+                                'todo--fifiles-history (caar falist)))
     (setq file (cdr (assoc-string file falist)))
     (find-file file)
     (unless (derived-mode-p 'todo-filtered-items-mode)
