@@ -863,6 +863,7 @@ category is the first)."
                   (not (zerop (todo-get-count 'archived))))
         (setq todo-category-number (funcall setcatnum))))
     (todo-category-select)
+    (if transient-mark-mode (deactivate-mark))
     (goto-char (point-min))))
 
 (defun todo-backward-category ()
@@ -928,6 +929,7 @@ Categories mode."
         (when goto-archive (todo-archive-mode))
         (set-window-buffer (selected-window)
                            (set-buffer (find-buffer-visiting file0)))
+        (if transient-mark-mode (deactivate-mark))
         (unless todo-global-current-todo-file
           (setq todo-global-current-todo-file todo-current-todo-file))
         (todo-category-number category)
@@ -1019,15 +1021,17 @@ empty line above the done items separator."
 	  (setq shown (progn
 			(goto-char (point-min))
 			(re-search-forward todo-done-string-start nil t)))
-	  (if (not (pos-visible-in-window-p shown))
-	      (recenter)
-	    (goto-char opoint)))))))
+	  (if (pos-visible-in-window-p shown)
+	      (goto-char opoint)
+	    (recenter)
+            (if transient-mark-mode (deactivate-mark))))))))
 
 (defun todo-toggle-view-done-only ()
   "Switch between displaying only done or only todo items."
   (interactive)
   (setq todo-show-done-only (not todo-show-done-only))
-  (todo-category-select))
+  (todo-category-select)
+  (if transient-mark-mode (deactivate-mark)))
 
 (defun todo-toggle-item-highlighting ()
   "Highlight or unhighlight the todo item the cursor is on."
@@ -2230,7 +2234,8 @@ made in the number or names of categories."
 	  (insert item))
 	(kill-buffer)
 	(unless (eq (current-buffer) buf)
-	  (set-window-buffer (selected-window) (set-buffer buf))))
+	  (set-window-buffer (selected-window) (set-buffer buf)))
+        (if transient-mark-mode (deactivate-mark)))
     ;; We got here via `F e'.
     (when (todo-check-format)
       ;; FIXME: separate out sexp check?
@@ -3839,6 +3844,7 @@ face."
     (goto-char (point-min))
     (while (not (eobp))
       (setq match (re-search-forward regex nil t))
+      (if (and match transient-mark-mode) (deactivate-mark))
       (goto-char (line-beginning-position))
       (unless (or (equal (point) 1)
 		  (looking-at (concat "^" (regexp-quote todo-category-beg))))
@@ -4081,6 +4087,7 @@ regexp items."
                                         t
                                       todo-show-with-done)))
           (todo-category-select))
+        (if transient-mark-mode (deactivate-mark))
         (goto-char (car found))))))
 
 (defvar todo-multiple-filter-files nil
@@ -5314,6 +5321,7 @@ Overrides `diary-goto-entry'."
                               nil t)
 	  (todo-category-number (match-string 1))
 	  (todo-category-select)
+          (if transient-mark-mode (deactivate-mark))
 	  (goto-char opoint))))))
 
 (add-function :override diary-goto-entry-function #'todo-diary-goto-entry)
