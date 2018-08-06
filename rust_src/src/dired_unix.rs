@@ -150,16 +150,16 @@ impl DirFiles {
         let dd = String::from("..");
 
         if self.match_re.is_nil() {
-            self.files.push(d.clone());
-            self.files.push(dd.clone());
+            self.files.push(d);
+            self.files.push(dd);
         } else {
             let re = RegEx::new(self.match_re);
 
             if re.is_match(d.as_str()) {
-                self.files.push(d.clone());
+                self.files.push(d);
             }
             if re.is_match(dd.as_str()) {
-                self.files.push(dd.clone());
+                self.files.push(dd);
             }
         }
     }
@@ -178,11 +178,11 @@ impl DirFiles {
             let f = f_dec_lo.to_stdstring();
 
             if self.match_re.is_nil() {
-                self.files.push(f.clone());
+                self.files.push(f);
             } else {
                 let re = RegEx::new(self.match_re);
                 if re.is_match(f.as_str()) {
-                    self.files.push(f.clone());
+                    self.files.push(f);
                 }
             }
         }
