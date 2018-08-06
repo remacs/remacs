@@ -132,7 +132,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 
   eassert (!cp->busy);
   cp->regexp = Qnil;
-  cp->buf.translate = (! NILP (translate) ? translate : make_number (0));
+  cp->buf.translate = translate;
   cp->posix = posix;
   cp->buf.multibyte = STRING_MULTIBYTE (pattern);
   cp->buf.charset_unibyte = charset_unibyte;
@@ -238,7 +238,7 @@ compile_pattern (Lisp_Object pattern, struct re_registers *regp,
           && !cp->busy
 	  && STRING_MULTIBYTE (cp->regexp) == STRING_MULTIBYTE (pattern)
 	  && !NILP (Fstring_equal (cp->regexp, pattern))
-	  && EQ (cp->buf.translate, (! NILP (translate) ? translate : make_number (0)))
+	  && EQ (cp->buf.translate, translate)
 	  && cp->posix == posix
 	  && (EQ (cp->syntax_table, Qt)
 	      || EQ (cp->syntax_table, BVAR (current_buffer, syntax_table)))

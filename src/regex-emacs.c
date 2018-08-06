@@ -50,133 +50,6 @@
    ints.  But Emacs only runs on 32 bit platforms anyway.  */
 #define RE_DUP_MAX (0xffff)
 
-/* The following bits are used to determine the regexp syntax we
-   recognize.  The set/not-set meanings where historically chosen so
-   that Emacs syntax had the value 0.
-   The bits are given in alphabetical order, and
-   the definitions shifted by one from the previous bit; thus, when we
-   add or remove a bit, only one other definition need change.  */
-typedef unsigned long reg_syntax_t;
-
-/* If this bit is not set, then \ inside a bracket expression is literal.
-   If set, then such a \ quotes the following character.  */
-#define RE_BACKSLASH_ESCAPE_IN_LISTS ((unsigned long int) 1)
-
-/* If this bit is not set, then + and ? are operators, and \+ and \? are
-     literals.
-   If set, then \+ and \? are operators and + and ? are literals.  */
-#define RE_BK_PLUS_QM (RE_BACKSLASH_ESCAPE_IN_LISTS << 1)
-
-/* If this bit is set, then character classes are supported.  They are:
-     [:alpha:], [:upper:], [:lower:],  [:digit:], [:alnum:], [:xdigit:],
-     [:space:], [:print:], [:punct:], [:graph:], and [:cntrl:].
-   If not set, then character classes are not supported.  */
-#define RE_CHAR_CLASSES (RE_BK_PLUS_QM << 1)
-
-/* If this bit is set, then ^ and $ are always anchors (outside bracket
-     expressions, of course).
-   If this bit is not set, then it depends:
-        ^  is an anchor if it is at the beginning of a regular
-           expression or after an open-group or an alternation operator;
-        $  is an anchor if it is at the end of a regular expression, or
-           before a close-group or an alternation operator.
-
-   This bit could be (re)combined with RE_CONTEXT_INDEP_OPS, because
-   POSIX draft 11.2 says that * etc. in leading positions is undefined.
-   We already implemented a previous draft which made those constructs
-   invalid, though, so we haven't changed the code back.  */
-#define RE_CONTEXT_INDEP_ANCHORS (RE_CHAR_CLASSES << 1)
-
-/* If this bit is set, then special characters are always special
-     regardless of where they are in the pattern.
-   If this bit is not set, then special characters are special only in
-     some contexts; otherwise they are ordinary.  Specifically,
-     * + ? and intervals are only special when not after the beginning,
-     open-group, or alternation operator.  */
-#define RE_CONTEXT_INDEP_OPS (RE_CONTEXT_INDEP_ANCHORS << 1)
-
-/* If this bit is set, then *, +, ?, and { cannot be first in an re or
-     immediately after an alternation or begin-group operator.  */
-#define RE_CONTEXT_INVALID_OPS (RE_CONTEXT_INDEP_OPS << 1)
-
-/* If this bit is set, then . matches newline.
-   If not set, then it doesn't.  */
-#define RE_DOT_NEWLINE (RE_CONTEXT_INVALID_OPS << 1)
-
-/* If this bit is set, then . doesn't match NUL.
-   If not set, then it does.  */
-#define RE_DOT_NOT_NULL (RE_DOT_NEWLINE << 1)
-
-/* If this bit is set, nonmatching lists [^...] do not match newline.
-   If not set, they do.  */
-#define RE_HAT_LISTS_NOT_NEWLINE (RE_DOT_NOT_NULL << 1)
-
-/* If this bit is set, either \{...\} or {...} defines an
-     interval, depending on RE_NO_BK_BRACES.
-   If not set, \{, \}, {, and } are literals.  */
-#define RE_INTERVALS (RE_HAT_LISTS_NOT_NEWLINE << 1)
-
-/* If this bit is set, +, ? and | aren't recognized as operators.
-   If not set, they are.  */
-#define RE_LIMITED_OPS (RE_INTERVALS << 1)
-
-/* If this bit is set, newline is an alternation operator.
-   If not set, newline is literal.  */
-#define RE_NEWLINE_ALT (RE_LIMITED_OPS << 1)
-
-/* If this bit is set, then `{...}' defines an interval, and \{ and \}
-     are literals.
-  If not set, then `\{...\}' defines an interval.  */
-#define RE_NO_BK_BRACES (RE_NEWLINE_ALT << 1)
-
-/* If this bit is set, (...) defines a group, and \( and \) are literals.
-   If not set, \(...\) defines a group, and ( and ) are literals.  */
-#define RE_NO_BK_PARENS (RE_NO_BK_BRACES << 1)
-
-/* If this bit is set, then \<digit> matches <digit>.
-   If not set, then \<digit> is a back-reference.  */
-#define RE_NO_BK_REFS (RE_NO_BK_PARENS << 1)
-
-/* If this bit is set, then | is an alternation operator, and \| is literal.
-   If not set, then \| is an alternation operator, and | is literal.  */
-#define RE_NO_BK_VBAR (RE_NO_BK_REFS << 1)
-
-/* If this bit is set, then an ending range point collating higher
-     than the starting range point, as in [z-a], is invalid.
-   If not set, then when ending range point collates higher than the
-     starting range point, the range is ignored.  */
-#define RE_NO_EMPTY_RANGES (RE_NO_BK_VBAR << 1)
-
-/* If this bit is set, then an unmatched ) is ordinary.
-   If not set, then an unmatched ) is invalid.  */
-#define RE_UNMATCHED_RIGHT_PAREN_ORD (RE_NO_EMPTY_RANGES << 1)
-
-/* If this bit is set, succeed as soon as we match the whole pattern,
-   without further backtracking.  */
-#define RE_NO_POSIX_BACKTRACKING (RE_UNMATCHED_RIGHT_PAREN_ORD << 1)
-
-/* If this bit is set, do not process the GNU regex operators.
-   If not set, then the GNU regex operators are recognized. */
-#define RE_NO_GNU_OPS (RE_NO_POSIX_BACKTRACKING << 1)
-
-/* If this bit is set, then *?, +? and ?? match non greedily. */
-#define RE_FRUGAL (RE_NO_GNU_OPS << 1)
-
-/* If this bit is set, then (?:...) is treated as a shy group.  */
-#define RE_SHY_GROUPS (RE_FRUGAL << 1)
-
-/* If this bit is set, ^ and $ only match at beg/end of buffer.  */
-#define RE_NO_NEWLINE_ANCHOR (RE_SHY_GROUPS << 1)
-
-/* This global variable defines the particular regexp syntax to use (for
-   some interfaces).  When a regexp is compiled, the syntax used is
-   stored in the pattern buffer, so changing this does not affect
-   already-compiled regexps.  */
-/* extern reg_syntax_t re_syntax_options; */
-/* Define combinations of the above bits for the standard possibilities.  */
-#define RE_SYNTAX_EMACS							\
-  (RE_CHAR_CLASSES | RE_INTERVALS | RE_SHY_GROUPS | RE_FRUGAL)
-
 /* Make syntax table lookup grant data in gl_state.  */
 #define SYNTAX(c) syntax_property (c, 1)
 
@@ -1299,10 +1172,8 @@ static void insert_op1 (re_opcode_t op, unsigned char *loc,
 			int arg, unsigned char *end);
 static void insert_op2 (re_opcode_t op, unsigned char *loc,
 			int arg1, int arg2, unsigned char *end);
-static bool at_begline_loc_p (re_char *pattern, re_char *p,
-			      reg_syntax_t syntax);
-static bool at_endline_loc_p (re_char *p, re_char *pend,
-			      reg_syntax_t syntax);
+static bool at_begline_loc_p (re_char *pattern, re_char *p);
+static bool at_endline_loc_p (re_char *p, re_char *pend);
 static re_char *skip_one_char (re_char *p);
 static int analyze_first (re_char *p, re_char *pend,
 			  char *fastmap, const int multibyte);
@@ -1319,15 +1190,7 @@ static int analyze_first (re_char *p, re_char *pend,
 
 
 #define RE_TRANSLATE(TBL, C) char_table_translate (TBL, C)
-#define RE_TRANSLATE_P(TBL) (!EQ (TBL, make_number (0)))
-
-/* If `translate' is non-zero, return translate[D], else just D.  We
-   cast the subscript to translate because some data is declared as
-   `char *', to avoid warnings when a string constant is passed.  But
-   when we use a character as a subscript we must make it unsigned.  */
-#define TRANSLATE(d) \
-  (RE_TRANSLATE_P (translate) ? RE_TRANSLATE (translate, (d)) : (d))
-
+#define TRANSLATE(d) (!NILP (translate) ? RE_TRANSLATE (translate, d) : (d))
 
 /* Macros for outputting the compiled pattern into `buffer'.  */
 
@@ -1847,8 +1710,6 @@ regex_compile (re_char *pattern, size_t size,
 	       const char *whitespace_regexp,
 	       struct re_pattern_buffer *bufp)
 {
-  reg_syntax_t syntax = RE_SYNTAX_EMACS;
-
   /* We fetch characters from PATTERN here.  */
   int c, c1;
 
@@ -2011,51 +1872,24 @@ regex_compile (re_char *pattern, size_t size,
 	  }
 
 	case '^':
-	  {
-	    if (   /* If at start of pattern, it's an operator.  */
-		   p == pattern + 1
-		   /* If context independent, it's an operator.  */
-		|| syntax & RE_CONTEXT_INDEP_ANCHORS
-		   /* Otherwise, depends on what's come before.  */
-		|| at_begline_loc_p (pattern, p, syntax))
-	      BUF_PUSH ((syntax & RE_NO_NEWLINE_ANCHOR) ? begbuf : begline);
-	    else
-	      goto normal_char;
-	  }
+	  if (! (p == pattern + 1 || at_begline_loc_p (pattern, p)))
+	    goto normal_char;
+	  BUF_PUSH (begline);
 	  break;
 
-
 	case '$':
-	  {
-	    if (   /* If at end of pattern, it's an operator.  */
-		   p == pend
-		   /* If context independent, it's an operator.  */
-		|| syntax & RE_CONTEXT_INDEP_ANCHORS
-		   /* Otherwise, depends on what's next.  */
-		|| at_endline_loc_p (p, pend, syntax))
-	       BUF_PUSH ((syntax & RE_NO_NEWLINE_ANCHOR) ? endbuf : endline);
-	     else
-	       goto normal_char;
-	   }
-	   break;
+	  if (! (p == pend || at_endline_loc_p (p, pend)))
+	    goto normal_char;
+	  BUF_PUSH (endline);
+	  break;
 
 
 	case '+':
 	case '?':
-	  if ((syntax & RE_BK_PLUS_QM)
-	      || (syntax & RE_LIMITED_OPS))
-	    goto normal_char;
-	  FALLTHROUGH;
 	case '*':
-	handle_plus:
 	  /* If there is no previous pattern...  */
 	  if (!laststart)
-	    {
-	      if (syntax & RE_CONTEXT_INVALID_OPS)
-		FREE_STACK_RETURN (REG_BADRPT);
-	      else if (!(syntax & RE_CONTEXT_INDEP_OPS))
-		goto normal_char;
-	    }
+	    goto normal_char;
 
 	  {
 	    /* 1 means zero (many) matches is allowed.  */
@@ -2069,8 +1903,7 @@ regex_compile (re_char *pattern, size_t size,
 
 	    for (;;)
 	      {
-		if ((syntax & RE_FRUGAL)
-		    && c == '?' && (zero_times_ok || many_times_ok))
+		if (c == '?' && (zero_times_ok || many_times_ok))
 		  greedy = false;
 		else
 		  {
@@ -2078,25 +1911,10 @@ regex_compile (re_char *pattern, size_t size,
 		    many_times_ok |= c != '?';
 		  }
 
-		if (p == pend)
-		  break;
-		else if (*p == '*'
-			 || (!(syntax & RE_BK_PLUS_QM)
-			     && (*p == '+' || *p == '?')))
-		  ;
-		else if (syntax & RE_BK_PLUS_QM	 && *p == '\\')
-		  {
-		    if (p+1 == pend)
-		      FREE_STACK_RETURN (REG_EESCAPE);
-		    if (p[1] == '+' || p[1] == '?')
-		      PATFETCH (c); /* Gobble up the backslash.  */
-		    else
-		      break;
-		  }
-		else
+		if (! (p < pend && (*p == '*' || *p == '+' || *p == '?')))
 		  break;
 		/* If we get here, we found another repeat character.  */
-		PATFETCH (c);
+		c = *p++;
 	       }
 
 	    /* Star, etc. applied to an empty pattern is equivalent
@@ -2228,24 +2046,18 @@ regex_compile (re_char *pattern, size_t size,
 	    /* Clear the whole map.  */
 	    memset (b, 0, (1 << BYTEWIDTH) / BYTEWIDTH);
 
-	    /* charset_not matches newline according to a syntax bit.  */
-	    if ((re_opcode_t) b[-2] == charset_not
-		&& (syntax & RE_HAT_LISTS_NOT_NEWLINE))
-	      SET_LIST_BIT ('\n');
-
 	    /* Read in characters and ranges, setting map bits.  */
 	    for (;;)
 	      {
 		const unsigned char *p2 = p;
-		re_wctype_t cc;
 		int ch;
 
 		if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
 
 		/* See if we're at the beginning of a possible character
 		   class.  */
-		if (syntax & RE_CHAR_CLASSES &&
-		    (cc = re_wctype_parse(&p, pend - p)) != -1)
+		re_wctype_t cc = re_wctype_parse (&p, pend - p);
+		if (cc != -1)
 		  {
 		    if (cc == 0)
 		      FREE_STACK_RETURN (REG_ECTYPE);
@@ -2297,21 +2109,11 @@ regex_compile (re_char *pattern, size_t size,
 		   (let ((case-fold-search t)) (string-match "[A-_]" "A"))  */
 		PATFETCH (c);
 
-		/* \ might escape characters inside [...] and [^...].  */
-		if ((syntax & RE_BACKSLASH_ESCAPE_IN_LISTS) && c == '\\')
-		  {
-		    if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
-
-		    PATFETCH (c);
-		  }
-		else
-		  {
-		    /* Could be the end of the bracket expression.  If it's
-		       not (i.e., when the bracket expression is `[]' so
-		       far), the ']' character bit gets set way below.  */
-		    if (c == ']' && p2 != p1)
-		      break;
-		  }
+		/* Could be the end of the bracket expression.  If it's
+		   not (i.e., when the bracket expression is `[]' so
+		   far), the ']' character bit gets set way below.  */
+		if (c == ']' && p2 != p1)
+		  break;
 
 		if (p < pend && p[0] == '-' && p[1] != ']')
 		  {
@@ -2332,13 +2134,7 @@ regex_compile (re_char *pattern, size_t size,
 		  /* Range from C to C. */
 		  c1 = c;
 
-		if (c > c1)
-		  {
-		    if (syntax & RE_NO_EMPTY_RANGES)
-		      FREE_STACK_RETURN (REG_ERANGEX);
-		    /* Else, repeat the loop.  */
-		  }
-		else
+		if (c <= c1)
 		  {
 		    if (c < 128)
 		      {
@@ -2348,24 +2144,17 @@ regex_compile (re_char *pattern, size_t size,
 			if (CHAR_BYTE8_P (c1))
 			  c = BYTE8_TO_CHAR (128);
 		      }
-		    if (c <= c1)
+		    if (CHAR_BYTE8_P (c))
 		      {
-			if (CHAR_BYTE8_P (c))
-			  {
-			    c = CHAR_TO_BYTE8 (c);
-			    c1 = CHAR_TO_BYTE8 (c1);
-			    for (; c <= c1; c++)
-			      SET_LIST_BIT (c);
-			  }
-			else if (multibyte)
-			  {
-			    SETUP_MULTIBYTE_RANGE (range_table_work, c, c1);
-			  }
-			else
-			  {
-			    SETUP_UNIBYTE_RANGE (range_table_work, c, c1);
-			  }
+			c = CHAR_TO_BYTE8 (c);
+			c1 = CHAR_TO_BYTE8 (c1);
+			for (; c <= c1; c++)
+			  SET_LIST_BIT (c);
 		      }
+		    else if (multibyte)
+		      SETUP_MULTIBYTE_RANGE (range_table_work, c, c1);
+		    else
+		      SETUP_UNIBYTE_RANGE (range_table_work, c, c1);
 		  }
 	      }
 
@@ -2403,41 +2192,6 @@ regex_compile (re_char *pattern, size_t size,
 	  break;
 
 
-	case '(':
-	  if (syntax & RE_NO_BK_PARENS)
-	    goto handle_open;
-	  else
-	    goto normal_char;
-
-
-	case ')':
-	  if (syntax & RE_NO_BK_PARENS)
-	    goto handle_close;
-	  else
-	    goto normal_char;
-
-
-	case '\n':
-	  if (syntax & RE_NEWLINE_ALT)
-	    goto handle_alt;
-	  else
-	    goto normal_char;
-
-
-	case '|':
-	  if (syntax & RE_NO_BK_VBAR)
-	    goto handle_alt;
-	  else
-	    goto normal_char;
-
-
-	case '{':
-	   if (syntax & RE_INTERVALS && syntax & RE_NO_BK_BRACES)
-	     goto handle_interval;
-	   else
-	     goto normal_char;
-
-
 	case '\\':
 	  if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
 
@@ -2449,17 +2203,13 @@ regex_compile (re_char *pattern, size_t size,
 	  switch (c)
 	    {
 	    case '(':
-	      if (syntax & RE_NO_BK_PARENS)
-		goto normal_backslash;
-
-	    handle_open:
 	      {
 		int shy = 0;
 		regnum_t regnum = 0;
 		if (p+1 < pend)
 		  {
 		    /* Look for a special (?...) construct */
-		    if ((syntax & RE_SHY_GROUPS) && *p == '?')
+		    if (*p == '?')
 		      {
 			PATFETCH (c); /* Gobble up the '?'.  */
 			while (!shy)
@@ -2540,27 +2290,14 @@ regex_compile (re_char *pattern, size_t size,
 	      }
 
 	    case ')':
-	      if (syntax & RE_NO_BK_PARENS) goto normal_backslash;
-
 	      if (COMPILE_STACK_EMPTY)
-		{
-		  if (syntax & RE_UNMATCHED_RIGHT_PAREN_ORD)
-		    goto normal_backslash;
-		  else
-		    FREE_STACK_RETURN (REG_ERPAREN);
-		}
+		FREE_STACK_RETURN (REG_ERPAREN);
 
-	    handle_close:
 	      FIXUP_ALT_JUMP ();
 
 	      /* See similar code for backslashed left paren above.  */
 	      if (COMPILE_STACK_EMPTY)
-		{
-		  if (syntax & RE_UNMATCHED_RIGHT_PAREN_ORD)
-		    goto normal_char;
-		  else
-		    FREE_STACK_RETURN (REG_ERPAREN);
-		}
+		FREE_STACK_RETURN (REG_ERPAREN);
 
 	      /* Since we just checked for an empty stack above, this
 		 ``can't happen''.  */
@@ -2593,12 +2330,6 @@ regex_compile (re_char *pattern, size_t size,
 
 
 	    case '|':					/* `\|'.  */
-	      if (syntax & RE_LIMITED_OPS || syntax & RE_NO_BK_VBAR)
-		goto normal_backslash;
-	    handle_alt:
-	      if (syntax & RE_LIMITED_OPS)
-		goto normal_char;
-
 	      /* Insert before the previous alternative a jump which
 		 jumps to this alternative if the former fails.  */
 	      GET_BUFFER_SPACE (3);
@@ -2637,17 +2368,7 @@ regex_compile (re_char *pattern, size_t size,
 
 
 	    case '{':
-	      /* If \{ is a literal.  */
-	      if (!(syntax & RE_INTERVALS)
-		     /* If we're at `\{' and it's not the open-interval
-			operator.  */
-		  || (syntax & RE_NO_BK_BRACES))
-		goto normal_backslash;
-
-	    handle_interval:
 	      {
-		/* If got here, then the syntax allows intervals.  */
-
 		/* At least (most) this many matches must be made.  */
 		int lower_bound = 0, upper_bound = -1;
 
@@ -2662,33 +2383,19 @@ regex_compile (re_char *pattern, size_t size,
 		  upper_bound = lower_bound;
 
 		if (lower_bound < 0
-		    || (0 <= upper_bound && upper_bound < lower_bound))
+		    || (0 <= upper_bound && upper_bound < lower_bound)
+		    || c != '\\')
 		  FREE_STACK_RETURN (REG_BADBR);
-
-		if (!(syntax & RE_NO_BK_BRACES))
-		  {
-		    if (c != '\\')
-		      FREE_STACK_RETURN (REG_BADBR);
-		    if (p == pend)
-		      FREE_STACK_RETURN (REG_EESCAPE);
-		    PATFETCH (c);
-		  }
-
-		if (c != '}')
+		if (p == pend)
+		  FREE_STACK_RETURN (REG_EESCAPE);
+		if (*p++ != '}')
 		  FREE_STACK_RETURN (REG_BADBR);
 
 		/* We just parsed a valid interval.  */
 
 		/* If it's invalid to have no preceding re.  */
 		if (!laststart)
-		  {
-		    if (syntax & RE_CONTEXT_INVALID_OPS)
-		      FREE_STACK_RETURN (REG_BADRPT);
-		    else if (syntax & RE_CONTEXT_INDEP_OPS)
-		      laststart = b;
-		    else
-		      goto unfetch_interval;
-		  }
+		  goto unfetch_interval;
 
 		if (upper_bound == 0)
 		  /* If the upper bound is zero, just drop the sub pattern
@@ -2793,17 +2500,9 @@ regex_compile (re_char *pattern, size_t size,
 	       eassert (beg_interval);
 	       p = beg_interval;
 	       beg_interval = NULL;
-
-	       /* normal_char and normal_backslash need `c'.  */
+	       eassert (p > pattern && p[-1] == '\\');
 	       c = '{';
-
-	       if (!(syntax & RE_NO_BK_BRACES))
-		 {
-		   eassert (p > pattern && p[-1] == '\\');
-		   goto normal_backslash;
-		 }
-	       else
-		 goto normal_char;
+	       goto normal_char;
 
 	    case '=':
 	      laststart = b;
@@ -2835,38 +2534,28 @@ regex_compile (re_char *pattern, size_t size,
 	      break;
 
 	    case 'w':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
 	      laststart = b;
 	      BUF_PUSH_2 (syntaxspec, Sword);
 	      break;
 
 
 	    case 'W':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
 	      laststart = b;
 	      BUF_PUSH_2 (notsyntaxspec, Sword);
 	      break;
 
 
 	    case '<':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
 	      laststart = b;
 	      BUF_PUSH (wordbeg);
 	      break;
 
 	    case '>':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
 	      laststart = b;
 	      BUF_PUSH (wordend);
 	      break;
 
 	    case '_':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
               laststart = b;
               PATFETCH (c);
               if (c == '<')
@@ -2878,38 +2567,25 @@ regex_compile (re_char *pattern, size_t size,
               break;
 
 	    case 'b':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
 	      BUF_PUSH (wordbound);
 	      break;
 
 	    case 'B':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
 	      BUF_PUSH (notwordbound);
 	      break;
 
 	    case '`':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
 	      BUF_PUSH (begbuf);
 	      break;
 
 	    case '\'':
-	      if (syntax & RE_NO_GNU_OPS)
-		goto normal_char;
 	      BUF_PUSH (endbuf);
 	      break;
 
 	    case '1': case '2': case '3': case '4': case '5':
 	    case '6': case '7': case '8': case '9':
 	      {
-		regnum_t reg;
-
-		if (syntax & RE_NO_BK_REFS)
-		  goto normal_backslash;
-
-		reg = c - '0';
+		regnum_t reg = c - '0';
 
 		if (reg > bufp->re_nsub || reg < 1
 		    /* Can't back reference to a subexp before its end.  */
@@ -2921,16 +2597,7 @@ regex_compile (re_char *pattern, size_t size,
 	      }
 	      break;
 
-
-	    case '+':
-	    case '?':
-	      if (syntax & RE_BK_PLUS_QM)
-		goto handle_plus;
-	      else
-		goto normal_backslash;
-
 	    default:
-	    normal_backslash:
 	      /* You might think it would be useful for \ to mean
 		 not to translate; but if we don't translate it
 		 it will never match anything.  */
@@ -2952,14 +2619,9 @@ regex_compile (re_char *pattern, size_t size,
 	      || *pending_exact >= (1 << BYTEWIDTH) - MAX_MULTIBYTE_LENGTH
 
 	      /* If followed by a repetition operator.  */
-	      || (p != pend && (*p == '*' || *p == '^'))
-	      || ((syntax & RE_BK_PLUS_QM)
-		  ? p + 1 < pend && *p == '\\' && (p[1] == '+' || p[1] == '?')
-		  : p != pend && (*p == '+' || *p == '?'))
-	      || ((syntax & RE_INTERVALS)
-		  && ((syntax & RE_NO_BK_BRACES)
-		      ? p != pend && *p == '{'
-		      : p + 1 < pend && p[0] == '\\' && p[1] == '{')))
+	      || (p != pend
+		  && (*p == '*' || *p == '+' || *p == '?' || *p == '^'))
+	      || (p + 1 < pend && p[0] == '\\' && p[1] == '{'))
 	    {
 	      /* Start building a new exactn.  */
 
@@ -3088,40 +2750,35 @@ insert_op2 (re_opcode_t op, unsigned char *loc, int arg1, int arg2, unsigned cha
    least one character before the ^.  */
 
 static bool
-at_begline_loc_p (re_char *pattern, re_char *p, reg_syntax_t syntax)
+at_begline_loc_p (re_char *pattern, re_char *p)
 {
   re_char *prev = p - 2;
-  bool odd_backslashes;
 
-  /* After a subexpression?  */
-  if (*prev == '(')
-    odd_backslashes = (syntax & RE_NO_BK_PARENS) == 0;
-
-  /* After an alternative?  */
-  else if (*prev == '|')
-    odd_backslashes = (syntax & RE_NO_BK_VBAR) == 0;
-
-  /* After a shy subexpression?  */
-  else if (*prev == ':' && (syntax & RE_SHY_GROUPS))
+  switch (*prev)
     {
+    case '(': /* After a subexpression.  */
+    case '|': /* After an alternative.  */
+      break;
+
+    case ':': /* After a shy subexpression.  */
       /* Skip over optional regnum.  */
-      while (prev - 1 >= pattern && prev[-1] >= '0' && prev[-1] <= '9')
+      while (prev > pattern && '0' <= prev[-1] && prev[-1] <= '9')
 	--prev;
 
-      if (!(prev - 2 >= pattern
-	    && prev[-1] == '?' && prev[-2] == '('))
+      if (! (prev > pattern + 1 && prev[-1] == '?' && prev[-2] == '('))
 	return false;
       prev -= 2;
-      odd_backslashes = (syntax & RE_NO_BK_PARENS) == 0;
+      break;
+
+    default:
+      return false;
     }
-  else
-    return false;
 
   /* Count the number of preceding backslashes.  */
   p = prev;
-  while (prev - 1 >= pattern && prev[-1] == '\\')
+  while (prev > pattern && prev[-1] == '\\')
     --prev;
-  return (p - prev) & odd_backslashes;
+  return (p - prev) & 1;
 }
 
 
@@ -3129,19 +2786,10 @@ at_begline_loc_p (re_char *pattern, re_char *p, reg_syntax_t syntax)
    at least one character after the $, i.e., `P < PEND'.  */
 
 static bool
-at_endline_loc_p (re_char *p, re_char *pend, reg_syntax_t syntax)
+at_endline_loc_p (re_char *p, re_char *pend)
 {
-  re_char *next = p;
-  bool next_backslash = *next == '\\';
-  re_char *next_next = p + 1 < pend ? p + 1 : 0;
-
-  return
-       /* Before a subexpression?  */
-       (syntax & RE_NO_BK_PARENS ? *next == ')'
-	: next_backslash && next_next && *next_next == ')')
-       /* Before an alternative?  */
-    || (syntax & RE_NO_BK_VBAR ? *next == '|'
-	: next_backslash && next_next && *next_next == '|');
+  /* Before a subexpression or an alternative?  */
+  return *p == '\\' && p + 1 < pend && (p[1] == ')' || p[1] == '|');
 }
 
 
@@ -3655,7 +3303,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1, size_t size1,
 
 	      /* Written out as an if-else to avoid testing `translate'
 		 inside the loop.  */
-	      if (RE_TRANSLATE_P (translate))
+	      if (!NILP (translate))
 		{
 		  if (multibyte)
 		    while (range > lim)
@@ -4643,12 +4291,11 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	  break;
 
 
-	/* Match any character except possibly a newline or a null.  */
+	/* Match any character except newline.  */
 	case anychar:
 	  {
 	    int buf_charlen;
 	    int buf_ch;
-	    reg_syntax_t syntax;
 
 	    DEBUG_PRINT ("EXECUTING anychar.\n");
 
@@ -4656,11 +4303,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 	    buf_ch = RE_STRING_CHAR_AND_LENGTH (d, buf_charlen,
 						target_multibyte);
 	    buf_ch = TRANSLATE (buf_ch);
-
-	    syntax = RE_SYNTAX_EMACS;
-
-	    if ((!(syntax & RE_DOT_NEWLINE) && buf_ch == '\n')
-		|| ((syntax & RE_DOT_NOT_NULL) && buf_ch == '\000'))
+	    if (buf_ch == '\n')
 	      goto fail;
 
 	    DEBUG_PRINT ("  Matched \"%d\".\n", *d);
@@ -4826,7 +4469,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
 
 		/* Compare that many; failure if mismatch, else move
 		   past them.  */
-		if (RE_TRANSLATE_P (translate)
+		if (!NILP (translate)
 		    ? bcmp_translate (d, d2, dcnt, translate, target_multibyte)
 		    : memcmp (d, d2, dcnt))
 		  {
