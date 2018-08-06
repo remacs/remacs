@@ -219,7 +219,7 @@ extern ptrdiff_t emacs_re_safe_alloca;
   ((RE_SYNTAX_POSIX_EXTENDED | RE_BACKSLASH_ESCAPE_IN_LISTS | RE_DEBUG)	\
    & ~(RE_DOT_NOT_NULL | RE_INTERVALS | RE_CONTEXT_INDEP_OPS))
 
-#define RE_SYNTAX_POSIX_AWK 						\
+#define RE_SYNTAX_POSIX_AWK						\
   (RE_SYNTAX_POSIX_EXTENDED | RE_BACKSLASH_ESCAPE_IN_LISTS		\
    | RE_INTERVALS	    | RE_NO_GNU_OPS)
 
@@ -350,6 +350,11 @@ typedef enum
   REG_ESIZEBR           /* n or m too big in \{n,m\} */
 } reg_errcode_t;
 
+/* Use a type compatible with Emacs.  */
+#define RE_TRANSLATE_TYPE Lisp_Object
+#define RE_TRANSLATE(TBL, C) char_table_translate (TBL, C)
+#define RE_TRANSLATE_P(TBL) (!EQ (TBL, make_number (0)))
+
 /* This data structure represents a compiled pattern.  Before calling
    the pattern compiler, the fields `buffer', `allocated', `fastmap',
    `translate', and `no_sub' can be set.  After the pattern has been
