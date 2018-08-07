@@ -24,7 +24,9 @@ RUN apt-get update && apt-get -y upgrade && apt-get autoremove && apt-get clean
 RUN apt-get update && apt-get install -y \
     automake \
     build-essential \
+    clang \
     curl \
+    libclang-dev \
     libgif-dev \
     libgnutls-dev \
     libgtk-3-dev \
@@ -33,6 +35,7 @@ RUN apt-get update && apt-get install -y \
     libtiff-dev \
     libxml2-dev \
     libxpm-dev \
+    libxt-dev \
     texinfo
 
 
