@@ -381,7 +381,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         unibyte_to_char(preceding_char() as Codepoint)
     };
     if current_buffer.abbrev_mode_.is_not_nil() && synt != syntaxcode::Sword
-        && current_buffer.read_only_.is_not_nil() && current_buffer.pt > current_buffer.begv
+        && current_buffer.read_only_.is_nil() && current_buffer.pt > current_buffer.begv
         && unsafe { syntax_property(previous_char as libc::c_int, true) } == syntaxcode::Sword
     {
         let modiff = unsafe { (*current_buffer.text).modiff };
