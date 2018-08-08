@@ -405,6 +405,11 @@ and its value has been changed to Duck Duck Go.
 'shr-selected-link' face to give the user feedback that the command
 has been executed.
 
++++
+*** New option 'shr-discard-aria-hidden'.
+If set, shr will not render tags with attribute 'aria-hidden="true"'.
+This attribute is meant to tell screen readers to ignore a tag.
+
 ** Htmlfontify
 
 *** The functions 'hfy-color', 'hfy-color-vals' and
