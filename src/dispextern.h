@@ -2482,7 +2482,7 @@ struct it
 
      If `what' is anything else, these two are undefined (will
      probably hold values for the last IT_CHARACTER or IT_COMPOSITION
-     traversed by the iterator.
+     traversed by the iterator).
 
      The values are updated by get_next_display_element, so they are
      out of sync with the value returned by IT_CHARPOS between the
