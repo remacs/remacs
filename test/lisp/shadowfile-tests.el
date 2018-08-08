@@ -720,6 +720,10 @@ guaranteed by the originator of a cluster definition."
     (unwind-protect
         (condition-case err
         (progn
+          (require 'trace)
+          (dolist (elt (all-completions "shadow-" obarray 'functionp))
+            (trace-function-background (intern elt)))
+          (trace-function-background 'save-buffer)
 	  ;; Cleanup.
 	  (when (file-exists-p shadow-info-file)
 	    (delete-file shadow-info-file))
@@ -816,6 +820,9 @@ guaranteed by the originator of a cluster definition."
              (shadow-contract-file-name (concat "/cluster1:" file)))
             shadow-files-to-copy)))
         (error (message "Error: %s" err) (signal (car err) (cdr err))))
+
+      (untrace-all)
+      (message "%s" (with-current-buffer trace-buffer (buffer-string)))
 
       ;; Cleanup.
       (when (file-exists-p shadow-info-file)
