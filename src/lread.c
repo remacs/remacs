@@ -3792,21 +3792,16 @@ string_to_number (char const *string, int base, int flags)
      range, use its value, preferably as a fixnum.  */
   if (leading_digit >= 0 && ! float_syntax)
     {
-      if (state & INTOVERFLOW)
-	{
-	  /* Unfortunately there's no simple and accurate way to convert
-	     non-base-10 numbers that are out of C-language range.  */
-	  if (base != 10)
-	    flags = 0;
-	}
-      else if (n <= (negative ? -MOST_NEGATIVE_FIXNUM : MOST_POSITIVE_FIXNUM))
+      if ((state & INTOVERFLOW) == 0
+	  && n <= (negative ? -MOST_NEGATIVE_FIXNUM : MOST_POSITIVE_FIXNUM))
 	{
 	  EMACS_INT signed_n = n;
 	  return make_fixnum (negative ? -signed_n : signed_n);
 	}
-      else
-	value = n;
 
+      /* Skip a leading "+".  */
+      if (signedp && !negative)
+	++string;
       return make_bignum_str (string, base);
     }
 
