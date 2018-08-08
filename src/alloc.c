@@ -5535,6 +5535,34 @@ make_pure_float (double num)
   return new;
 }
 
+/* Value is a bignum object with value VALUE allocated from pure
+   space.  */
+
+static Lisp_Object
+make_pure_bignum (struct Lisp_Bignum *value)
+{
+  Lisp_Object new;
+  size_t i, nlimbs = mpz_size (value->value);
+  size_t nbytes = nlimbs * sizeof (mp_limb_t);
+  mp_limb_t *pure_limbs;
+  mp_size_t new_size;
+
+  struct Lisp_Bignum *b = pure_alloc (sizeof (struct Lisp_Bignum), Lisp_Misc);
+  b->type = Lisp_Misc_Bignum;
+
+  pure_limbs = pure_alloc (nbytes, -1);
+  for (i = 0; i < nlimbs; ++i)
+    pure_limbs[i] = mpz_getlimbn (value->value, i);
+
+  new_size = nlimbs;
+  if (mpz_sgn (value->value) < 0)
+    new_size = -new_size;
+
+  mpz_roinit_n (b->value, pure_limbs, new_size);
+
+  XSETMISC (new, b);
+  return new;
+}
 
 /* Return a vector with room for LEN Lisp_Objects allocated from
    pure space.  */
@@ -5676,6 +5704,8 @@ purecopy (Lisp_Object obj)
       /* Don't hash-cons it.  */
       return obj;
     }
+  else if (BIGNUMP (obj))
+    obj = make_pure_bignum (XBIGNUM (obj));
   else
     {
       AUTO_STRING (fmt, "Don't know how to purify: %S");
