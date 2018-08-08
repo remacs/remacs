@@ -5056,6 +5056,8 @@ process sentinels.  They shall not disturb each other."
 ;; This test is inspired by Bug#29163.
 (ert-deftest tramp-test43-auto-load ()
   "Check that Tramp autoloads properly."
+  (skip-unless (tramp--test-enabled))
+
   (let ((default-directory (expand-file-name temporary-file-directory))
 	(code
 	 (format
@@ -5160,7 +5162,7 @@ process sentinels.  They shall not disturb each other."
 (ert-deftest tramp-test44-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
-  :tags '(:expensive-test)
+  :tags '(:expensive-test :unstable)
   (skip-unless noninteractive)
   ;; The autoloaded Tramp objects are different since Emacs 26.1.  We
   ;; cannot test older Emacsen, therefore.
@@ -5230,6 +5232,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test29-start-file-process' on MS Windows (`process-send-eof'?).
 ;; * Fix `tramp-test30-interrupt-process', timeout doesn't work reliably.
 ;; * Fix Bug#16928 in `tramp-test42-asynchronous-requests'.
+;; * Check why `tramp-test44-unload' fails when running as only test.
 
 (provide 'tramp-tests)
 ;;; tramp-tests.el ends here
