@@ -5167,10 +5167,14 @@ Since it unloads Tramp, it shall be the last test to run."
   (skip-unless (tramp--test-emacs26-p))
 
   (when (featurep 'tramp)
+    ;; This unloads also tramp-archive.el if needed.
     (unload-feature 'tramp 'force)
     ;; No Tramp feature must be left.
     (should-not (featurep 'tramp))
-    (should-not (all-completions "tramp" (delq 'tramp-tests features)))
+    (should-not (featurep 'tramp-archive))
+    (should-not
+     (all-completions
+      "tramp" (delq 'tramp-tests (delq 'tramp-archive-tests features))))
     ;; `file-name-handler-alist' must be clean.
     (should-not (all-completions "tramp" (mapcar 'cdr file-name-handler-alist)))
     ;; There shouldn't be left a bound symbol, except buffer-local
@@ -5181,7 +5185,7 @@ Since it unloads Tramp, it shall be the last test to run."
        (and (or (and (boundp x) (null (local-variable-if-set-p x)))
 		(and (functionp x) (null (autoloadp (symbol-function x)))))
 	    (string-match "^tramp" (symbol-name x))
-	    (not (string-match "^tramp--?test" (symbol-name x)))
+	    (not (string-match "^tramp\\(-archive\\)?--?test" (symbol-name x)))
 	    (not (string-match "unload-hook$" (symbol-name x)))
 	    (ert-fail (format "`%s' still bound" x)))))
     ;; The defstruct `tramp-file-name' and all its internal functions
@@ -5222,7 +5226,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test05-expand-file-name-relative' in `expand-file-name'.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Investigate, why `tramp-test11-copy-file' and `tramp-test12-rename-file'
-;;   do not work properly for `owncloud'.
+;;   do not work properly for `nextcloud'.
 ;; * Fix `tramp-test29-start-file-process' on MS Windows (`process-send-eof'?).
 ;; * Fix `tramp-test30-interrupt-process', timeout doesn't work reliably.
 ;; * Fix Bug#16928 in `tramp-test42-asynchronous-requests'.
