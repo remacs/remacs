@@ -3195,7 +3195,7 @@ symbolic notation, like the `chmod' command from GNU Coreutils.  */)
 
   encoded_absname = ENCODE_FILE (absname);
 
-  if (chmod (SSDATA (encoded_absname), XINT (mode) & 07777) < 0)
+  if (chmod (SSDATA (encoded_absname), XFIXNUM (mode) & 07777) < 0)
     report_file_error ("Doing chmod", absname);
 
   return Qnil;
@@ -3218,7 +3218,7 @@ by having the corresponding bit in the mask reset.  */)
   mode_t oldrealmask, oldumask, newumask;
   CHECK_FIXNUM (mode);
   oldrealmask = realmask;
-  newumask = ~ XINT (mode) & 0777;
+  newumask = ~ XFIXNUM (mode) & 0777;
 
   block_input ();
   realmask = newumask;
@@ -3378,7 +3378,7 @@ verify (alignof (union read_non_regular) % GCALIGNMENT == 0);
 static Lisp_Object
 read_non_regular (Lisp_Object state)
 {
-  union read_non_regular *data = XINTPTR (state);
+  union read_non_regular *data = XFIXNUMPTR (state);
   int nbytes = emacs_read_quit (data->s.fd,
 				((char *) BEG_ADDR + PT_BYTE - BEG_BYTE
 				 + data->s.inserted),
@@ -3402,7 +3402,7 @@ static off_t
 file_offset (Lisp_Object val)
 {
   if (RANGED_FIXNUMP (0, val, TYPE_MAXIMUM (off_t)))
-    return XINT (val);
+    return XFIXNUM (val);
 
   if (FLOATP (val))
     {
@@ -3462,14 +3462,14 @@ restore_window_points (Lisp_Object window_markers, ptrdiff_t inserted,
 	Lisp_Object marker = XCAR (car);
 	Lisp_Object oldpos = XCDR (car);
 	if (MARKERP (marker) && FIXNUMP (oldpos)
-	    && XINT (oldpos) > same_at_start
-	    && XINT (oldpos) < same_at_end)
+	    && XFIXNUM (oldpos) > same_at_start
+	    && XFIXNUM (oldpos) < same_at_end)
 	  {
 	    ptrdiff_t oldsize = same_at_end - same_at_start;
 	    ptrdiff_t newsize = inserted;
 	    double growth = newsize / (double)oldsize;
 	    ptrdiff_t newpos
-	      = same_at_start + growth * (XINT (oldpos) - same_at_start);
+	      = same_at_start + growth * (XFIXNUM (oldpos) - same_at_start);
 	    Fset_marker (marker, make_fixnum (newpos), Qnil);
 	  }
       }
@@ -3584,7 +3584,7 @@ by calling `format-decode', which see.  */)
 		   visit, beg, end, replace);
       if (CONSP (val) && CONSP (XCDR (val))
 	  && RANGED_FIXNUMP (0, XCAR (XCDR (val)), ZV - PT))
-	inserted = XINT (XCAR (XCDR (val)));
+	inserted = XFIXNUM (XCAR (XCDR (val)));
       goto handled;
     }
 
@@ -4248,7 +4248,7 @@ by calling `format-decode', which see.  */)
 		break;
 	      }
 
-	    this = XINT (nbytes);
+	    this = XFIXNUM (nbytes);
 	  }
 	else
 	  {
@@ -4469,7 +4469,7 @@ by calling `format-decode', which see.  */)
 	{
 	  if (! RANGED_FIXNUMP (0, insval, ZV - PT))
 	    wrong_type_argument (intern ("inserted-chars"), insval);
-	  inserted = XFASTINT (insval);
+	  inserted = XFIXNAT (insval);
 	}
     }
 
@@ -4492,7 +4492,7 @@ by calling `format-decode', which see.  */)
 			  Qnil, make_fixnum (inserted), visit);
 	  if (! RANGED_FIXNUMP (0, insval, ZV - PT))
 	    wrong_type_argument (intern ("inserted-chars"), insval);
-	  inserted = XFASTINT (insval);
+	  inserted = XFIXNAT (insval);
 	}
       else
 	{
@@ -4523,7 +4523,7 @@ by calling `format-decode', which see.  */)
 	  else
 	    /* format_decode modified buffer's characters => consider
 	       entire buffer changed and leave point at point-min.  */
-	    inserted = XFASTINT (insval);
+	    inserted = XFIXNAT (insval);
 	}
 
       /* For consistency with format-decode call these now iff inserted > 0
@@ -4538,7 +4538,7 @@ by calling `format-decode', which see.  */)
 		{
 		  if (! RANGED_FIXNUMP (0, insval, ZV - PT))
 		    wrong_type_argument (intern ("inserted-chars"), insval);
-		  inserted = XFASTINT (insval);
+		  inserted = XFIXNAT (insval);
 		}
 	    }
 	  else
@@ -4566,7 +4566,7 @@ by calling `format-decode', which see.  */)
 		    /* after_insert_file_functions did modify buffer's
 	               characters => consider entire buffer changed and
 	               leave point at point-min.  */
-		    inserted = XFASTINT (insval);
+		    inserted = XFIXNAT (insval);
 		}
 	    }
 
@@ -4584,7 +4584,7 @@ by calling `format-decode', which see.  */)
 	      Lisp_Object tem = XCAR (old_undo);
 	      if (CONSP (tem) && FIXNUMP (XCAR (tem))
 		  && FIXNUMP (XCDR (tem))
-		  && XFASTINT (XCDR (tem)) == PT + old_inserted)
+		  && XFIXNAT (XCDR (tem)) == PT + old_inserted)
 		XSETCDR (tem, make_fixnum (PT + inserted));
 	    }
 	}
@@ -4962,14 +4962,14 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 
   if (STRINGP (start))
     ok = a_write (desc, start, 0, SCHARS (start), &annotations, &coding);
-  else if (XINT (start) != XINT (end))
-    ok = a_write (desc, Qnil, XINT (start), XINT (end) - XINT (start),
+  else if (XFIXNUM (start) != XFIXNUM (end))
+    ok = a_write (desc, Qnil, XFIXNUM (start), XFIXNUM (end) - XFIXNUM (start),
 		  &annotations, &coding);
   else
     {
       /* If file was empty, still need to write the annotations.  */
       coding.mode |= CODING_MODE_LAST_BLOCK;
-      ok = a_write (desc, Qnil, XINT (end), 0, &annotations, &coding);
+      ok = a_write (desc, Qnil, XFIXNUM (end), 0, &annotations, &coding);
     }
   save_errno = errno;
 
@@ -5256,7 +5256,7 @@ a_write (int desc, Lisp_Object string, ptrdiff_t pos,
       tem = Fcar_safe (Fcar (*annot));
       nextpos = pos - 1;
       if (FIXNUMP (tem))
-	nextpos = XFASTINT (tem);
+	nextpos = XFIXNAT (tem);
 
       /* If there are no more annotations in this range,
 	 output the rest of the range all at once.  */
@@ -5458,7 +5458,7 @@ An argument specifies the modification time value to use
       if (FIXNUMP (time_flag))
 	{
 	  CHECK_RANGED_INTEGER (time_flag, -1, 0);
-	  mtime = make_timespec (0, UNKNOWN_MODTIME_NSECS - XINT (time_flag));
+	  mtime = make_timespec (0, UNKNOWN_MODTIME_NSECS - XFIXNUM (time_flag));
 	}
       else
 	mtime = lisp_time_argument (time_flag);
@@ -5526,7 +5526,7 @@ auto_save_1 (void)
       else if (modes = Ffile_modes (BVAR (current_buffer, filename)),
 	       FIXNUMP (modes))
 	/* Remote files don't cooperate with stat.  */
-	auto_save_mode_bits = (XINT (modes) | 0600) & 0777;
+	auto_save_mode_bits = (XFIXNUM (modes) | 0600) & 0777;
     }
 
   return
@@ -5693,7 +5693,7 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 	    && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b)
 	    && BUF_AUTOSAVE_MODIFF (b) < BUF_MODIFF (b)
 	    /* -1 means we've turned off autosaving for a while--see below.  */
-	    && XINT (BVAR (b, save_length)) >= 0
+	    && XFIXNUM (BVAR (b, save_length)) >= 0
 	    && (do_handled_files
 		|| NILP (Ffind_file_name_handler (BVAR (b, auto_save_file_name),
 						  Qwrite_region))))
@@ -5708,11 +5708,11 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 
 	    set_buffer_internal (b);
 	    if (NILP (Vauto_save_include_big_deletions)
-		&& (XFASTINT (BVAR (b, save_length)) * 10
+		&& (XFIXNAT (BVAR (b, save_length)) * 10
 		    > (BUF_Z (b) - BUF_BEG (b)) * 13)
 		/* A short file is likely to change a large fraction;
 		   spare the user annoying messages.  */
-		&& XFASTINT (BVAR (b, save_length)) > 5000
+		&& XFIXNAT (BVAR (b, save_length)) > 5000
 		/* These messages are frequent and annoying for `*mail*'.  */
 		&& !EQ (BVAR (b, filename), Qnil)
 		&& NILP (no_message))

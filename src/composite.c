@@ -196,9 +196,9 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
   if (FIXNUMP (id))
     {
       /* PROP should be Form-B.  */
-      if (XINT (id) < 0 || XINT (id) >= n_compositions)
+      if (XFIXNUM (id) < 0 || XFIXNUM (id) >= n_compositions)
 	goto invalid_composition;
-      return XINT (id);
+      return XFIXNUM (id);
     }
 
   /* PROP should be Form-A.
@@ -206,7 +206,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
   if (!CONSP (id))
     goto invalid_composition;
   length = XCAR (id);
-  if (!FIXNUMP (length) || XINT (length) != nchars)
+  if (!FIXNUMP (length) || XFIXNUM (length) != nchars)
     goto invalid_composition;
 
   components = XCDR (id);
@@ -251,7 +251,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
       id = HASH_VALUE (hash_table, hash_index);
       XSETCAR (prop, id);
       XSETCDR (prop, Fcons (make_fixnum (nchars), Fcons (key, XCDR (prop))));
-      return XINT (id);
+      return XFIXNUM (id);
     }
 
   /* This composition is a new one.  We must register it.  */
@@ -332,7 +332,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
       for (i = 0; i < glyph_len; i++)
 	{
 	  int this_width;
-	  ch = XINT (key_contents[i]);
+	  ch = XFIXNUM (key_contents[i]);
 	  /* TAB in a composition means display glyphs with padding
 	     space on the left or right.  */
 	  this_width = (ch == '\t' ? 1 : CHARACTER_WIDTH (ch));
@@ -345,7 +345,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
       /* Rule-base composition.  */
       double leftmost = 0.0, rightmost;
 
-      ch = XINT (key_contents[0]);
+      ch = XFIXNUM (key_contents[0]);
       rightmost = ch != '\t' ? CHARACTER_WIDTH (ch) : 1;
 
       for (i = 1; i < glyph_len; i += 2)
@@ -354,8 +354,8 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
 	  int this_width;
 	  double this_left;
 
-	  rule = XINT (key_contents[i]);
-	  ch = XINT (key_contents[i + 1]);
+	  rule = XFIXNUM (key_contents[i]);
+	  ch = XFIXNUM (key_contents[i + 1]);
 	  this_width = ch != '\t' ? CHARACTER_WIDTH (ch) : 1;
 
 	  /* A composition rule is specified by an integer value
@@ -433,7 +433,7 @@ find_composition (ptrdiff_t pos, ptrdiff_t limit,
     {
       val = Fnext_single_property_change (make_fixnum (pos), Qcomposition,
 					  object, make_fixnum (limit));
-      pos = XINT (val);
+      pos = XFIXNUM (val);
       if (pos == limit)
 	return 0;
     }
@@ -444,7 +444,7 @@ find_composition (ptrdiff_t pos, ptrdiff_t limit,
 	return 1;
       val = Fprevious_single_property_change (make_fixnum (pos), Qcomposition,
 					      object, make_fixnum (limit));
-      pos = XINT (val);
+      pos = XFIXNUM (val);
       if (pos == limit)
 	return 0;
       pos--;
@@ -836,7 +836,7 @@ fill_gstring_body (Lisp_Object gstring)
   for (i = 0; i < len; i++)
     {
       Lisp_Object g = LGSTRING_GLYPH (gstring, i);
-      int c = XFASTINT (AREF (header, i + 1));
+      int c = XFIXNAT (AREF (header, i + 1));
 
       if (NILP (g))
 	{
@@ -852,7 +852,7 @@ fill_gstring_body (Lisp_Object gstring)
 	}
       else
 	{
-	  int width = XFASTINT (CHAR_TABLE_REF (Vchar_width_table, c));
+	  int width = XFIXNAT (CHAR_TABLE_REF (Vchar_width_table, c));
 
 	  LGLYPH_SET_CODE (g, c);
 	  LGLYPH_SET_LBEARING (g, 0);
@@ -941,7 +941,7 @@ char_composable_p (int c)
   return (c > ' '
 	  && (c == ZERO_WIDTH_NON_JOINER || c == ZERO_WIDTH_JOINER
 	      || (val = CHAR_TABLE_REF (Vunicode_category_table, c),
-		  (FIXNUMP (val) && (XINT (val) <= UNICODE_CATEGORY_So)))));
+		  (FIXNUMP (val) && (XFIXNUM (val) <= UNICODE_CATEGORY_So)))));
 }
 
 /* Update cmp_it->stop_pos to the next position after CHARPOS (and
@@ -1031,10 +1031,10 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 		  Lisp_Object elt = XCAR (val);
 		  if (VECTORP (elt) && ASIZE (elt) == 3
 		      && FIXNATP (AREF (elt, 1))
-		      && charpos - 1 - XFASTINT (AREF (elt, 1)) >= start)
+		      && charpos - 1 - XFIXNAT (AREF (elt, 1)) >= start)
 		    {
 		      cmp_it->rule_idx = ridx;
-		      cmp_it->lookback = XFASTINT (AREF (elt, 1));
+		      cmp_it->lookback = XFIXNAT (AREF (elt, 1));
 		      cmp_it->stop_pos = charpos - 1 - cmp_it->lookback;
 		      cmp_it->ch = c;
 		      return;
@@ -1082,9 +1082,9 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 	      Lisp_Object elt = XCAR (val);
 	      if (VECTORP (elt) && ASIZE (elt) == 3
 		  && FIXNATP (AREF (elt, 1))
-		  && charpos - XFASTINT (AREF (elt, 1)) > endpos)
+		  && charpos - XFIXNAT (AREF (elt, 1)) > endpos)
 		{
-		  ptrdiff_t back = XFASTINT (AREF (elt, 1));
+		  ptrdiff_t back = XFIXNAT (AREF (elt, 1));
 		  ptrdiff_t cpos = charpos - back, bpos;
 
 		  if (back == 0)
@@ -1223,7 +1223,7 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	      if (! VECTORP (elt) || ASIZE (elt) != 3
 		  || ! FIXNUMP (AREF (elt, 1)))
 		continue;
-	      if (XFASTINT (AREF (elt, 1)) != cmp_it->lookback)
+	      if (XFIXNAT (AREF (elt, 1)) != cmp_it->lookback)
 		goto no_composition;
 	      lgstring = autocmp_chars (elt, charpos, bytepos, endpos,
 					w, face, string);
@@ -1262,7 +1262,7 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	goto no_composition;
       if (NILP (LGSTRING_ID (lgstring)))
 	lgstring = composition_gstring_put_cache (lgstring, -1);
-      cmp_it->id = XINT (LGSTRING_ID (lgstring));
+      cmp_it->id = XFIXNUM (LGSTRING_ID (lgstring));
       int i;
       for (i = 0; i < LGSTRING_GLYPH_LEN (lgstring); i++)
 	if (NILP (LGSTRING_GLYPH (lgstring, i)))
@@ -1391,7 +1391,7 @@ composition_update_it (struct composition_it *cmp_it, ptrdiff_t charpos, ptrdiff
       cmp_it->width = 0;
       for (i = cmp_it->nchars - 1; i >= 0; i--)
 	{
-	  c = XINT (LGSTRING_CHAR (gstring, from + i));
+	  c = XFIXNUM (LGSTRING_CHAR (gstring, from + i));
 	  cmp_it->nbytes += CHAR_BYTES (c);
 	  cmp_it->width += CHARACTER_WIDTH (c);
 	}
@@ -1561,7 +1561,7 @@ find_automatic_composition (ptrdiff_t pos, ptrdiff_t limit,
 
 	      if (VECTORP (elt) && ASIZE (elt) == 3 && FIXNATP (AREF (elt, 1)))
 		{
-		  EMACS_INT check_pos = cur.pos - XFASTINT (AREF (elt, 1));
+		  EMACS_INT check_pos = cur.pos - XFIXNAT (AREF (elt, 1));
 		  struct position_record check;
 
 		  if (check_pos < head
@@ -1739,8 +1739,8 @@ should be ignored.  */)
       if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
 	error ("Attempt to shape unibyte text");
       validate_region (&from, &to);
-      frompos = XFASTINT (from);
-      topos = XFASTINT (to);
+      frompos = XFIXNAT (from);
+      topos = XFIXNAT (to);
       frombyte = CHAR_TO_BYTE (frompos);
     }
   else
@@ -1785,7 +1785,7 @@ for the composition.  See `compose-region' for more details.  */)
       && !STRINGP (components))
     CHECK_VECTOR (components);
 
-  compose_text (XINT (start), XINT (end), components, modification_func, Qnil);
+  compose_text (XFIXNUM (start), XFIXNUM (end), components, modification_func, Qnil);
   return Qnil;
 }
 
@@ -1824,7 +1824,7 @@ See `find-composition' for more details.  */)
   if (!NILP (limit))
     {
       CHECK_FIXNUM_COERCE_MARKER (limit);
-      to = min (XINT (limit), ZV);
+      to = min (XFIXNUM (limit), ZV);
     }
   else
     to = -1;
@@ -1832,15 +1832,15 @@ See `find-composition' for more details.  */)
   if (!NILP (string))
     {
       CHECK_STRING (string);
-      if (XINT (pos) < 0 || XINT (pos) > SCHARS (string))
+      if (XFIXNUM (pos) < 0 || XFIXNUM (pos) > SCHARS (string))
 	args_out_of_range (string, pos);
     }
   else
     {
-      if (XINT (pos) < BEGV || XINT (pos) > ZV)
+      if (XFIXNUM (pos) < BEGV || XFIXNUM (pos) > ZV)
 	args_out_of_range (Fcurrent_buffer (), pos);
     }
-  from = XINT (pos);
+  from = XFIXNUM (pos);
 
   if (!find_composition (from, to, &start, &end, &prop, string))
     {
@@ -1851,12 +1851,12 @@ See `find-composition' for more details.  */)
 	return list3 (make_fixnum (start), make_fixnum (end), gstring);
       return Qnil;
     }
-  if ((end <= XINT (pos) || start > XINT (pos)))
+  if ((end <= XFIXNUM (pos) || start > XFIXNUM (pos)))
     {
       ptrdiff_t s, e;
 
       if (find_automatic_composition (from, to, &s, &e, &gstring, string)
-	  && (e <= XINT (pos) ? e > end : s < start))
+	  && (e <= XFIXNUM (pos) ? e > end : s < start))
 	return list3 (make_fixnum (s), make_fixnum (e), gstring);
     }
   if (!composition_valid_p (start, end, prop))

@@ -4296,7 +4296,7 @@ xg_print_frames_dialog (Lisp_Object frames)
     gtk_print_operation_set_print_settings (print, print_settings);
   if (page_setup != NULL)
     gtk_print_operation_set_default_page_setup (print, page_setup);
-  gtk_print_operation_set_n_pages (print, XINT (Flength (frames)));
+  gtk_print_operation_set_n_pages (print, XFIXNUM (Flength (frames)));
   g_signal_connect (print, "draw-page", G_CALLBACK (draw_page), &frames);
   res = gtk_print_operation_run (print, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
                                  NULL, NULL);
@@ -4891,16 +4891,16 @@ update_frame_tool_bar (struct frame *f)
 
   if (RANGED_FIXNUMP (1, Vtool_bar_button_margin, INT_MAX))
     {
-      hmargin = XFASTINT (Vtool_bar_button_margin);
-      vmargin = XFASTINT (Vtool_bar_button_margin);
+      hmargin = XFIXNAT (Vtool_bar_button_margin);
+      vmargin = XFIXNAT (Vtool_bar_button_margin);
     }
   else if (CONSP (Vtool_bar_button_margin))
     {
       if (RANGED_FIXNUMP (1, XCAR (Vtool_bar_button_margin), INT_MAX))
-        hmargin = XFASTINT (XCAR (Vtool_bar_button_margin));
+        hmargin = XFIXNAT (XCAR (Vtool_bar_button_margin));
 
       if (RANGED_FIXNUMP (1, XCDR (Vtool_bar_button_margin), INT_MAX))
-        vmargin = XFASTINT (XCDR (Vtool_bar_button_margin));
+        vmargin = XFIXNAT (XCDR (Vtool_bar_button_margin));
     }
 
   /* The natural size (i.e. when GTK uses 0 as margin) looks best,

@@ -2851,7 +2851,7 @@ serial_configure (struct Lisp_Process *p,
   else
     tem = Fplist_get (p->childp, QCspeed);
   CHECK_FIXNUM (tem);
-  err = cfsetspeed (&attr, XINT (tem));
+  err = cfsetspeed (&attr, XFIXNUM (tem));
   if (err != 0)
     report_file_error ("Failed cfsetspeed", tem);
   childp2 = Fplist_put (childp2, QCspeed, tem);
@@ -2864,15 +2864,15 @@ serial_configure (struct Lisp_Process *p,
   if (NILP (tem))
     tem = make_fixnum (8);
   CHECK_FIXNUM (tem);
-  if (XINT (tem) != 7 && XINT (tem) != 8)
+  if (XFIXNUM (tem) != 7 && XFIXNUM (tem) != 8)
     error (":bytesize must be nil (8), 7, or 8");
-  summary[0] = XINT (tem) + '0';
+  summary[0] = XFIXNUM (tem) + '0';
 #if defined (CSIZE) && defined (CS7) && defined (CS8)
   attr.c_cflag &= ~CSIZE;
-  attr.c_cflag |= ((XINT (tem) == 7) ? CS7 : CS8);
+  attr.c_cflag |= ((XFIXNUM (tem) == 7) ? CS7 : CS8);
 #else
   /* Don't error on bytesize 8, which should be set by cfmakeraw.  */
-  if (XINT (tem) != 8)
+  if (XFIXNUM (tem) != 8)
     error ("Bytesize cannot be changed");
 #endif
   childp2 = Fplist_put (childp2, QCbytesize, tem);
@@ -2918,16 +2918,16 @@ serial_configure (struct Lisp_Process *p,
   if (NILP (tem))
     tem = make_fixnum (1);
   CHECK_FIXNUM (tem);
-  if (XINT (tem) != 1 && XINT (tem) != 2)
+  if (XFIXNUM (tem) != 1 && XFIXNUM (tem) != 2)
     error (":stopbits must be nil (1 stopbit), 1, or 2");
-  summary[2] = XINT (tem) + '0';
+  summary[2] = XFIXNUM (tem) + '0';
 #if defined (CSTOPB)
   attr.c_cflag &= ~CSTOPB;
-  if (XINT (tem) == 2)
+  if (XFIXNUM (tem) == 2)
     attr.c_cflag |= CSTOPB;
 #else
   /* Don't error on 1 stopbit, which should be set by cfmakeraw.  */
-  if (XINT (tem) != 1)
+  if (XFIXNUM (tem) != 1)
     error ("Stopbits cannot be configured");
 #endif
   childp2 = Fplist_put (childp2, QCstopbits, tem);

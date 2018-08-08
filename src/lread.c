@@ -331,7 +331,7 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
 
   if (NILP (tem))
     return -1;
-  return XINT (tem);
+  return XFIXNUM (tem);
 
  read_multibyte:
   if (unread_char >= 0)
@@ -673,7 +673,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
   do
     val = read_char (0, Qnil, (input_method ? Qnil : Qt), 0,
 		     FIXED_OR_FLOATP (seconds) ? &end_time : NULL);
-  while (FIXNUMP (val) && XINT (val) == -2); /* wrong_kboard_jmpbuf */
+  while (FIXNUMP (val) && XFIXNUM (val) == -2); /* wrong_kboard_jmpbuf */
 
   if (BUFFERP (val))
     goto retry;
@@ -704,7 +704,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
 	      /* Merge this symbol's modifier bits
 		 with the ASCII equivalent of its basic code.  */
 	      if (!NILP (tem1))
-		XSETFASTINT (val, XINT (tem1) | XINT (Fcar (Fcdr (tem))));
+		XSETFASTINT (val, XFIXNUM (tem1) | XFIXNUM (Fcar (Fcdr (tem))));
 	    }
 	}
 
@@ -766,7 +766,7 @@ floating-point value.  */)
   val = read_filtered_event (1, 1, 1, ! NILP (inherit_input_method), seconds);
 
   return (NILP (val) ? Qnil
-	  : make_fixnum (char_resolve_modifier_mask (XINT (val))));
+	  : make_fixnum (char_resolve_modifier_mask (XFIXNUM (val))));
 }
 
 DEFUN ("read-event", Fread_event, Sread_event, 0, 3, 0,
@@ -810,7 +810,7 @@ floating-point value.  */)
   val = read_filtered_event (1, 1, 0, ! NILP (inherit_input_method), seconds);
 
   return (NILP (val) ? Qnil
-	  : make_fixnum (char_resolve_modifier_mask (XINT (val))));
+	  : make_fixnum (char_resolve_modifier_mask (XFIXNUM (val))));
 }
 
 DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
@@ -1702,9 +1702,9 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 	    if (FIXNATP (predicate))
 	      {
 		fd = -1;
-		if (INT_MAX < XFASTINT (predicate))
+		if (INT_MAX < XFIXNAT (predicate))
 		  last_errno = EINVAL;
-		else if (faccessat (AT_FDCWD, pfn, XFASTINT (predicate),
+		else if (faccessat (AT_FDCWD, pfn, XFIXNAT (predicate),
 				    AT_EACCESS)
 			 == 0)
 		  {
@@ -2348,14 +2348,14 @@ character_name_to_code (char const *name, ptrdiff_t name_len)
        : call2 (Qchar_from_name, make_unibyte_string (name, name_len), Qt));
 
   if (! RANGED_FIXNUMP (0, code, MAX_UNICODE_CHAR)
-      || char_surrogate_p (XINT (code)))
+      || char_surrogate_p (XFIXNUM (code)))
     {
       AUTO_STRING (format, "\\N{%s}");
       AUTO_STRING_WITH_LEN (namestr, name, name_len);
       xsignal1 (Qinvalid_read_syntax, CALLN (Fformat, format, namestr));
     }
 
-  return XINT (code);
+  return XFIXNUM (code);
 }
 
 /* Bound on the length of a Unicode character name.  As of
@@ -2779,7 +2779,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 	      if (!EQ (head, Qhash_table))
 		{
-		  ptrdiff_t size = XINT (Flength (tmp));
+		  ptrdiff_t size = XFIXNUM (Flength (tmp));
 		  Lisp_Object record = Fmake_record (CAR_SAFE (tmp),
 						     make_fixnum (size - 1),
 						     Qnil);
@@ -2866,7 +2866,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  /* Sub char-table can't be read as a regular
 		     vector because of a two C integer fields.  */
 		  Lisp_Object tbl, tmp = read_list (1, readcharfun);
-		  ptrdiff_t size = XINT (Flength (tmp));
+		  ptrdiff_t size = XFIXNUM (Flength (tmp));
 		  int i, depth, min_char;
 		  struct Lisp_Cons *cell;
 
@@ -2875,7 +2875,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 		  if (! RANGED_FIXNUMP (1, XCAR (tmp), 3))
 		    error ("Invalid depth in sub char-table");
-		  depth = XINT (XCAR (tmp));
+		  depth = XFIXNUM (XCAR (tmp));
 		  if (chartab_size[depth] != size - 2)
 		    error ("Invalid size in sub char-table");
 		  cell = XCONS (tmp), tmp = XCDR (tmp), size--;
@@ -2883,7 +2883,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 
 		  if (! RANGED_FIXNUMP (0, XCAR (tmp), MAX_CHAR))
 		    error ("Invalid minimum character in sub-char-table");
-		  min_char = XINT (XCAR (tmp));
+		  min_char = XFIXNUM (XCAR (tmp));
 		  cell = XCONS (tmp), tmp = XCDR (tmp), size--;
 		  free_cons (cell);
 
@@ -2908,7 +2908,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  if (c == '"')
 	    {
 	      Lisp_Object tmp, val;
-	      EMACS_INT size_in_chars = bool_vector_bytes (XFASTINT (length));
+	      EMACS_INT size_in_chars = bool_vector_bytes (XFIXNAT (length));
 	      unsigned char *data;
 
 	      UNREAD (c);
@@ -2919,17 +2919,17 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 			 when the number of bits was a multiple of 8.
 			 Accept such input in case it came from an old
 			 version.  */
-		      && ! (XFASTINT (length)
+		      && ! (XFIXNAT (length)
 			    == (SCHARS (tmp) - 1) * BOOL_VECTOR_BITS_PER_CHAR)))
 		invalid_syntax ("#&...");
 
-	      val = make_uninit_bool_vector (XFASTINT (length));
+	      val = make_uninit_bool_vector (XFIXNAT (length));
 	      data = bool_vector_uchar_data (val);
 	      memcpy (data, SDATA (tmp), size_in_chars);
 	      /* Clear the extraneous bits in the last byte.  */
-	      if (XINT (length) != size_in_chars * BOOL_VECTOR_BITS_PER_CHAR)
+	      if (XFIXNUM (length) != size_in_chars * BOOL_VECTOR_BITS_PER_CHAR)
 		data[size_in_chars - 1]
-		  &= (1 << (XINT (length) % BOOL_VECTOR_BITS_PER_CHAR)) - 1;
+		  &= (1 << (XFIXNUM (length) % BOOL_VECTOR_BITS_PER_CHAR)) - 1;
 	      return val;
 	    }
 	  invalid_syntax ("#&...");
@@ -3832,11 +3832,11 @@ read_vector (Lisp_Object readcharfun, bool bytecodeflag)
 
   tem = read_list (1, readcharfun);
   len = Flength (tem);
-  if (bytecodeflag && XFASTINT (len) <= COMPILED_STACK_DEPTH)
+  if (bytecodeflag && XFIXNAT (len) <= COMPILED_STACK_DEPTH)
     error ("Invalid byte code");
   vector = Fmake_vector (len, Qnil);
 
-  size = XFASTINT (len);
+  size = XFIXNAT (len);
   ptr = XVECTOR (vector)->contents;
   for (i = 0; i < size; i++)
     {
@@ -3990,7 +3990,7 @@ read_list (bool flag, Lisp_Object readcharfun)
 			 multibyte.  */
 
 		      /* Position is negative for user variables.  */
-		      EMACS_INT pos = eabs (XINT (XCDR (val)));
+		      EMACS_INT pos = eabs (XFIXNUM (XCDR (val)));
 		      if (pos >= saved_doc_string_position
 			  && pos < (saved_doc_string_position
 				    + saved_doc_string_length))
@@ -4095,7 +4095,7 @@ intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
       SET_SYMBOL_VAL (XSYMBOL (sym), sym);
     }
 
-  ptr = aref_addr (obarray, XINT (index));
+  ptr = aref_addr (obarray, XFIXNUM (index));
   set_symbol_next (sym, SYMBOLP (*ptr) ? XSYMBOL (*ptr) : NULL);
   *ptr = sym;
   return sym;

@@ -87,8 +87,8 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
   xw->type = type;
   xw->title = title;
   xw->buffer = NILP (buffer) ? Fcurrent_buffer () : Fget_buffer_create (buffer);
-  xw->height = XFASTINT (height);
-  xw->width = XFASTINT (width);
+  xw->height = XFIXNAT (height);
+  xw->width = XFIXNAT (width);
   xw->kill_without_query = false;
   XSETXWIDGET (val, xw);
   Vxwidget_list = Fcons (val, Vxwidget_list);
@@ -767,8 +767,8 @@ DEFUN ("xwidget-resize", Fxwidget_resize, Sxwidget_resize, 3, 3, 0,
   CHECK_RANGED_INTEGER (new_width, 0, INT_MAX);
   CHECK_RANGED_INTEGER (new_height, 0, INT_MAX);
   struct xwidget *xw = XXWIDGET (xwidget);
-  int w = XFASTINT (new_width);
-  int h = XFASTINT (new_height);
+  int w = XFIXNAT (new_width);
+  int h = XFIXNAT (new_height);
 
   xw->width = w;
   xw->height = h;

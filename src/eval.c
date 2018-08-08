@@ -264,8 +264,8 @@ init_eval (void)
 static void
 restore_stack_limits (Lisp_Object data)
 {
-  max_specpdl_size = XINT (XCAR (data));
-  max_lisp_eval_depth = XINT (XCDR (data));
+  max_specpdl_size = XFIXNUM (XCAR (data));
+  max_lisp_eval_depth = XFIXNUM (XCDR (data));
 }
 
 static void grow_specpdl (void);
@@ -938,7 +938,7 @@ usage: (let VARLIST BODY...)  */)
   CHECK_LIST (varlist);
 
   /* Make space to hold the values to give the bound variables.  */
-  EMACS_INT varlist_len = XFASTINT (Flength (varlist));
+  EMACS_INT varlist_len = XFIXNAT (Flength (varlist));
   SAFE_ALLOCA_LISP (temps, varlist_len);
   ptrdiff_t nvars = varlist_len;
 
@@ -2246,9 +2246,9 @@ eval_sub (Lisp_Object form)
 
       check_cons_list ();
 
-      if (XINT (numargs) < XSUBR (fun)->min_args
+      if (XFIXNUM (numargs) < XSUBR (fun)->min_args
 	  || (XSUBR (fun)->max_args >= 0
-	      && XSUBR (fun)->max_args < XINT (numargs)))
+	      && XSUBR (fun)->max_args < XFIXNUM (numargs)))
 	xsignal2 (Qwrong_number_of_arguments, original_fun, numargs);
 
       else if (XSUBR (fun)->max_args == UNEVALLED)
@@ -2260,9 +2260,9 @@ eval_sub (Lisp_Object form)
 	  ptrdiff_t argnum = 0;
 	  USE_SAFE_ALLOCA;
 
-	  SAFE_ALLOCA_LISP (vals, XINT (numargs));
+	  SAFE_ALLOCA_LISP (vals, XFIXNUM (numargs));
 
-	  while (CONSP (args_left) && argnum < XINT (numargs))
+	  while (CONSP (args_left) && argnum < XFIXNUM (numargs))
 	    {
 	      Lisp_Object arg = XCAR (args_left);
 	      args_left = XCDR (args_left);
@@ -2292,7 +2292,7 @@ eval_sub (Lisp_Object form)
 	      args_left = Fcdr (args_left);
 	    }
 
-	  set_backtrace_args (specpdl + count, argvals, XINT (numargs));
+	  set_backtrace_args (specpdl + count, argvals, XFIXNUM (numargs));
 
 	  switch (i)
 	    {
@@ -2405,7 +2405,7 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
 
   CHECK_LIST (spread_arg);
 
-  numargs = XINT (Flength (spread_arg));
+  numargs = XFIXNUM (Flength (spread_arg));
 
   if (numargs == 0)
     return Ffuncall (nargs - 1, args);
@@ -2960,7 +2960,7 @@ apply_lambda (Lisp_Object fun, Lisp_Object args, ptrdiff_t count)
   Lisp_Object tem;
   USE_SAFE_ALLOCA;
 
-  numargs = XFASTINT (Flength (args));
+  numargs = XFIXNAT (Flength (args));
   SAFE_ALLOCA_LISP (arg_vector, numargs);
   args_left = args;
 
@@ -3667,7 +3667,7 @@ get_backtrace_frame (Lisp_Object nframes, Lisp_Object base)
   union specbinding *pdl = get_backtrace_starting_at (base);
 
   /* Find the frame requested.  */
-  for (i = XFASTINT (nframes); i > 0 && backtrace_p (pdl); i--)
+  for (i = XFIXNAT (nframes); i > 0 && backtrace_p (pdl); i--)
     pdl = backtrace_next (pdl);
 
   return pdl;
@@ -3868,7 +3868,7 @@ NFRAMES and BASE specify the activation frame to use, as in `backtrace-frame'.  
 {
   union specbinding *frame = get_backtrace_frame (nframes, base);
   union specbinding *prevframe
-    = get_backtrace_frame (make_fixnum (XFASTINT (nframes) - 1), base);
+    = get_backtrace_frame (make_fixnum (XFIXNAT (nframes) - 1), base);
   ptrdiff_t distance = specpdl_ptr - frame;
   Lisp_Object result = Qnil;
   eassert (distance >= 0);

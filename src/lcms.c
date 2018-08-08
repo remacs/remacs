@@ -254,7 +254,7 @@ parse_viewing_conditions (Lisp_Object view, const cmsCIEXYZ *wp,
   if (CONSP (view) && FIXNATP (XCAR (view)))				\
     {									\
       CHECK_RANGED_INTEGER (XCAR (view), 1, 4);				\
-      vc->field = XINT (XCAR (view));					\
+      vc->field = XFIXNUM (XCAR (view));					\
       view = XCDR (view);						\
     }									\
   else									\

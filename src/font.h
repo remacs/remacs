@@ -186,15 +186,15 @@ enum font_property_index
 /* Return the numeric weight value of FONT.  */
 #define FONT_WEIGHT_NUMERIC(font)		\
   (FIXNUMP (AREF ((font), FONT_WEIGHT_INDEX))	\
-   ? (XINT (AREF ((font), FONT_WEIGHT_INDEX)) >> 8) : -1)
+   ? (XFIXNUM (AREF ((font), FONT_WEIGHT_INDEX)) >> 8) : -1)
 /* Return the numeric slant value of FONT.  */
 #define FONT_SLANT_NUMERIC(font)		\
   (FIXNUMP (AREF ((font), FONT_SLANT_INDEX))	\
-   ? (XINT (AREF ((font), FONT_SLANT_INDEX)) >> 8) : -1)
+   ? (XFIXNUM (AREF ((font), FONT_SLANT_INDEX)) >> 8) : -1)
 /* Return the numeric width value of FONT.  */
 #define FONT_WIDTH_NUMERIC(font)		\
   (FIXNUMP (AREF ((font), FONT_WIDTH_INDEX))	\
-   ? (XINT (AREF ((font), FONT_WIDTH_INDEX)) >> 8) : -1)
+   ? (XFIXNUM (AREF ((font), FONT_WIDTH_INDEX)) >> 8) : -1)
 /* Return the symbolic weight value of FONT.  */
 #define FONT_WEIGHT_SYMBOLIC(font)	\
   font_style_symbolic (font, FONT_WEIGHT_INDEX, false)

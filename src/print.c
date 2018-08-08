@@ -261,7 +261,7 @@ printchar_to_stream (unsigned int ch, FILE *stream)
 	  break;
       if (! (i < n))
 	break;
-      ch = XFASTINT (AREF (dv, i));
+      ch = XFIXNAT (AREF (dv, i));
     }
 }
 
@@ -522,7 +522,7 @@ PRINTCHARFUN defaults to the value of `standard-output' (which see).  */)
     printcharfun = Vstandard_output;
   CHECK_FIXNUM (character);
   PRINTPREPARE;
-  printchar (XINT (character), printcharfun);
+  printchar (XFIXNUM (character), printcharfun);
   PRINTFINISH;
   return character;
 }
@@ -772,7 +772,7 @@ to make it write to the debugging output.  */)
   (Lisp_Object character)
 {
   CHECK_FIXNUM (character);
-  printchar_to_stream (XINT (character), stderr);
+  printchar_to_stream (XFIXNUM (character), stderr);
   return character;
 }
 
@@ -1408,8 +1408,8 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 	   Negative values of print-length are invalid.  Treat them
 	   like a print-length of nil.  */
 	if (FIXNATP (Vprint_length)
-	    && XFASTINT (Vprint_length) < size_in_bytes)
-	  size_in_bytes = XFASTINT (Vprint_length);
+	    && XFIXNAT (Vprint_length) < size_in_bytes)
+	  size_in_bytes = XFIXNAT (Vprint_length);
 
 	for (ptrdiff_t i = 0; i < size_in_bytes; i++)
 	  {
@@ -1521,8 +1521,8 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 	ptrdiff_t size = real_size;
 
 	/* Don't print more elements than the specified maximum.  */
-	if (FIXNATP (Vprint_length) && XFASTINT (Vprint_length) < size)
-	  size = XFASTINT (Vprint_length);
+	if (FIXNATP (Vprint_length) && XFIXNAT (Vprint_length) < size)
+	  size = XFIXNAT (Vprint_length);
 
 	printchar ('(', printcharfun);
 	for (ptrdiff_t i = 0; i < size; i++)
@@ -1652,8 +1652,8 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 
 	/* Don't print more elements than the specified maximum.  */
 	ptrdiff_t n
-	  = (FIXNATP (Vprint_length) && XFASTINT (Vprint_length) < size
-	     ? XFASTINT (Vprint_length) : size);
+	  = (FIXNATP (Vprint_length) && XFIXNAT (Vprint_length) < size
+	     ? XFIXNAT (Vprint_length) : size);
 
 	print_c_string ("#s(", printcharfun);
 	for (ptrdiff_t i = 0; i < n; i ++)
@@ -1714,8 +1714,8 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 
 	/* Don't print more elements than the specified maximum.  */
 	if (FIXNATP (Vprint_length)
-	    && XFASTINT (Vprint_length) < size)
-	  size = XFASTINT (Vprint_length);
+	    && XFIXNAT (Vprint_length) < size)
+	  size = XFIXNAT (Vprint_length);
 
 	for (int i = idx; i < size; i++)
 	  {
@@ -1807,7 +1807,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
       Lisp_Object num = Fgethash (obj, Vprint_number_table, Qnil);
       if (FIXNUMP (num))
 	{
-	  EMACS_INT n = XINT (num);
+	  EMACS_INT n = XFIXNUM (num);
 	  if (n < 0)
 	    { /* Add a prefix #n= if OBJ has not yet been printed;
 		 that is, its status field is nil.  */
@@ -1832,7 +1832,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
     {
     case_Lisp_Int:
       {
-	int len = sprintf (buf, "%"pI"d", XINT (obj));
+	int len = sprintf (buf, "%"pI"d", XFIXNUM (obj));
 	strout (buf, len, len, printcharfun);
       }
       break;
@@ -2008,7 +2008,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
     case Lisp_Cons:
       /* If deeper than spec'd depth, print placeholder.  */
       if (FIXNUMP (Vprint_level)
-	  && print_depth > XINT (Vprint_level))
+	  && print_depth > XFIXNUM (Vprint_level))
 	print_c_string ("...", printcharfun);
       else if (print_quoted && CONSP (XCDR (obj)) && NILP (XCDR (XCDR (obj)))
 	       && EQ (XCAR (obj), Qquote))
@@ -2050,7 +2050,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	  /* Negative values of print-length are invalid in CL.
 	     Treat them like nil, as CMUCL does.  */
 	  printmax_t print_length = (FIXNATP (Vprint_length)
-				     ? XFASTINT (Vprint_length)
+				     ? XFIXNAT (Vprint_length)
 				     : TYPE_MAXIMUM (printmax_t));
 
 	  printmax_t i = 0;

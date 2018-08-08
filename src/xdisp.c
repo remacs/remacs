@@ -1251,7 +1251,7 @@ default_line_pixel_height (struct window *w)
       if (!NILP (val))
 	{
 	  if (RANGED_FIXNUMP (0, val, INT_MAX))
-	    height += XFASTINT (val);
+	    height += XFIXNAT (val);
 	  else if (FLOATP (val))
 	    {
 	      int addon = XFLOAT_DATA (val) * height + 0.5;
@@ -1550,8 +1550,8 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 		  startpos =
 		    Fprevious_single_char_property_change (endpos, Qdisplay,
 							   Qnil, Qnil);
-		  start = XFASTINT (startpos);
-		  end = XFASTINT (endpos);
+		  start = XFIXNAT (startpos);
+		  end = XFIXNAT (endpos);
 		  /* Move to the last buffer position before the
 		     display property.  */
 		  start_display (&it3, w, top);
@@ -2843,7 +2843,7 @@ init_iterator (struct it *it, struct window *w,
       && FRAME_WINDOW_P (it->f))
     {
       if (FIXNATP (BVAR (current_buffer, extra_line_spacing)))
-	it->extra_line_spacing = XFASTINT (BVAR (current_buffer, extra_line_spacing));
+	it->extra_line_spacing = XFIXNAT (BVAR (current_buffer, extra_line_spacing));
       else if (FLOATP (BVAR (current_buffer, extra_line_spacing)))
 	it->extra_line_spacing = (XFLOAT_DATA (BVAR (current_buffer, extra_line_spacing))
 				  * FRAME_LINE_HEIGHT (it->f));
@@ -2870,7 +2870,7 @@ init_iterator (struct it *it, struct window *w,
      invisible.  */
   it->selective = (FIXNUMP (BVAR (current_buffer, selective_display))
 		   ? (clip_to_bounds
-		      (-1, XINT (BVAR (current_buffer, selective_display)),
+		      (-1, XFIXNUM (BVAR (current_buffer, selective_display)),
 		       PTRDIFF_MAX))
 		   : (!NILP (BVAR (current_buffer, selective_display))
 		      ? -1 : 0));
@@ -2891,7 +2891,7 @@ init_iterator (struct it *it, struct window *w,
       = marker_position (w->redisplay_end_trigger);
   else if (FIXNUMP (w->redisplay_end_trigger))
     it->redisplay_end_trigger_charpos
-      = clip_to_bounds (PTRDIFF_MIN, XINT (w->redisplay_end_trigger),
+      = clip_to_bounds (PTRDIFF_MIN, XFIXNUM (w->redisplay_end_trigger),
 			PTRDIFF_MAX);
 
   it->tab_width = SANE_TAB_WIDTH (current_buffer);
@@ -2905,7 +2905,7 @@ init_iterator (struct it *it, struct window *w,
 	  || NILP (Vtruncate_partial_width_windows)
 	  || (FIXNUMP (Vtruncate_partial_width_windows)
 	      /* PXW: Shall we do something about this?  */
-	      && (XINT (Vtruncate_partial_width_windows)
+	      && (XFIXNUM (Vtruncate_partial_width_windows)
 		  <= WINDOW_TOTAL_COLS (it->w))))
       && NILP (BVAR (current_buffer, truncate_lines)))
     it->line_wrap = NILP (BVAR (current_buffer, word_wrap))
@@ -3599,7 +3599,7 @@ compute_stop_pos (struct it *it)
       for (next_iv = next_interval (iv);
 	   (next_iv
 	    && (NILP (limit)
-		|| XFASTINT (limit) > next_iv->position));
+		|| XFIXNAT (limit) > next_iv->position));
 	   next_iv = next_interval (next_iv))
 	{
 	  for (p = it_props; p->handler; ++p)
@@ -3617,9 +3617,9 @@ compute_stop_pos (struct it *it)
       if (next_iv)
 	{
 	  if (FIXNUMP (limit)
-	      && next_iv->position >= XFASTINT (limit))
+	      && next_iv->position >= XFIXNAT (limit))
 	    /* No text property change up to limit.  */
-	    it->stop_charpos = min (XFASTINT (limit), it->stop_charpos);
+	    it->stop_charpos = min (XFIXNAT (limit), it->stop_charpos);
 	  else
 	    /* Text properties change in next_iv.  */
 	    it->stop_charpos = min (it->stop_charpos, next_iv->position);
@@ -3758,7 +3758,7 @@ compute_display_string_pos (struct text_pos *position,
   limpos = make_fixnum (lim);
   do {
     pos = Fnext_single_char_property_change (pos, Qdisplay, object1, limpos);
-    CHARPOS (tpos) = XFASTINT (pos);
+    CHARPOS (tpos) = XFIXNAT (pos);
     if (CHARPOS (tpos) >= lim)
       {
 	*disp_prop = 0;
@@ -3819,7 +3819,7 @@ compute_display_string_end (ptrdiff_t charpos, struct bidi_string_data *string)
      changes.  */
   pos = Fnext_single_char_property_change (pos, Qdisplay, object, Qnil);
 
-  return XFASTINT (pos);
+  return XFIXNAT (pos);
 }
 
 
@@ -4376,7 +4376,7 @@ handle_invisible_prop (struct it *it)
 	      eassert (FIXNUMP (end_charpos));
 	      if (FIXNUMP (end_charpos))
 		{
-		  endpos = XFASTINT (end_charpos);
+		  endpos = XFIXNAT (end_charpos);
 		  prop = Fget_text_property (end_charpos, Qinvisible, it->string);
 		  invis = TEXT_PROP_MEANS_INVISIBLE (prop);
 		  if (invis == 2)
@@ -4863,11 +4863,11 @@ display_prop_end (struct it *it, Lisp_Object object, struct text_pos start_pos)
 
   end = Fnext_single_char_property_change (make_fixnum (CHARPOS (start_pos)),
 					   Qdisplay, object, Qnil);
-  CHARPOS (end_pos) = XFASTINT (end);
+  CHARPOS (end_pos) = XFIXNAT (end);
   if (STRINGP (object))
     compute_string_pos (&end_pos, start_pos, it->string);
   else
-    BYTEPOS (end_pos) = CHAR_TO_BYTE (XFASTINT (end));
+    BYTEPOS (end_pos) = CHAR_TO_BYTE (XFIXNAT (end));
 
   return end_pos;
 }
@@ -4965,7 +4965,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  && RANGED_FIXNUMP (0, XCAR (XCDR (it->font_height)), INT_MAX))
 		{
 		  /* `(+ N)' or `(- N)' where N is an integer.  */
-		  int steps = XINT (XCAR (XCDR (it->font_height)));
+		  int steps = XFIXNUM (XCAR (XCDR (it->font_height)));
 		  if (EQ (XCAR (it->font_height), Qplus))
 		    steps = - steps;
 		  it->face_id = smaller_face (it->f, it->face_id, steps);
@@ -4989,7 +4989,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  f = FACE_FROM_ID (it->f,
 				    lookup_basic_face (it->w, it->f, DEFAULT_FACE_ID));
 		  new_height = (XFLOATINT (it->font_height)
-				* XINT (f->lface[LFACE_HEIGHT_INDEX]));
+				* XFIXNUM (f->lface[LFACE_HEIGHT_INDEX]));
 		}
 	      else if (enable_eval_p)
 		{
@@ -5517,7 +5517,7 @@ string_buffer_position_lim (Lisp_Object string,
 	}
     }
 
-  return found ? XINT (pos) : 0;
+  return found ? XFIXNUM (pos) : 0;
 }
 
 /* Determine which buffer position in current buffer STRING comes from.
@@ -5852,7 +5852,7 @@ load_overlay_strings (struct it *it, ptrdiff_t charpos)
       entries[n].string = (STRING);					\
       entries[n].overlay = (OVERLAY);					\
       priority = Foverlay_get ((OVERLAY), Qpriority);			\
-      entries[n].priority = FIXNUMP (priority) ? XINT (priority) : 0;  \
+      entries[n].priority = FIXNUMP (priority) ? XFIXNUM (priority) : 0;  \
       entries[n].after_string_p = (AFTER_P);				\
       ++n;								\
     }									\
@@ -10144,7 +10144,7 @@ include the height of both, if present, in the return value.  */)
   else
     {
       CHECK_FIXNUM_COERCE_MARKER (from);
-      start = min (max (XINT (from), BEGV), ZV);
+      start = min (max (XFIXNUM (from), BEGV), ZV);
     }
 
   if (NILP (to))
@@ -10161,16 +10161,16 @@ include the height of both, if present, in the return value.  */)
   else
     {
       CHECK_FIXNUM_COERCE_MARKER (to);
-      end = max (start, min (XINT (to), ZV));
+      end = max (start, min (XFIXNUM (to), ZV));
     }
 
   if (!NILP (x_limit) && RANGED_FIXNUMP (0, x_limit, INT_MAX))
-    max_x = XINT (x_limit);
+    max_x = XFIXNUM (x_limit);
 
   if (NILP (y_limit))
     max_y = INT_MAX;
   else if (RANGED_FIXNUMP (0, y_limit, INT_MAX))
-    max_y = XINT (y_limit);
+    max_y = XFIXNUM (y_limit);
 
   itdata = bidi_shelve_cache ();
   SET_TEXT_POS (startp, start, CHAR_TO_BYTE (start));
@@ -10460,7 +10460,7 @@ message_dolog (const char *m, ptrdiff_t nbytes, bool nlflag, bool multibyte)
 	  if (FIXNATP (Vmessage_log_max))
 	    {
 	      scan_newline (Z, Z_BYTE, BEG, BEG_BYTE,
-			    -XFASTINT (Vmessage_log_max) - 1, false);
+			    -XFIXNAT (Vmessage_log_max) - 1, false);
 	      del_range_both (BEG, BEG_BYTE, PT, PT_BYTE, false);
 	    }
 	}
@@ -11000,7 +11000,7 @@ unwind_with_echo_area_buffer (Lisp_Object vector)
 {
   set_buffer_internal_1 (XBUFFER (AREF (vector, 0)));
   Vdeactivate_mark = AREF (vector, 1);
-  windows_or_buffers_changed = XFASTINT (AREF (vector, 2));
+  windows_or_buffers_changed = XFIXNAT (AREF (vector, 2));
 
   if (WINDOWP (AREF (vector, 3)))
     {
@@ -11012,14 +11012,14 @@ unwind_with_echo_area_buffer (Lisp_Object vector)
 
       wset_buffer (w, buffer);
       set_marker_both (w->pointm, buffer,
-		       XFASTINT (AREF (vector, 5)),
-		       XFASTINT (AREF (vector, 6)));
+		       XFIXNAT (AREF (vector, 5)),
+		       XFIXNAT (AREF (vector, 6)));
       set_marker_both (w->old_pointm, buffer,
-		       XFASTINT (AREF (vector, 7)),
-		       XFASTINT (AREF (vector, 8)));
+		       XFIXNAT (AREF (vector, 7)),
+		       XFIXNAT (AREF (vector, 8)));
       set_marker_both (w->start, buffer,
-		       XFASTINT (AREF (vector, 9)),
-		       XFASTINT (AREF (vector, 10)));
+		       XFIXNAT (AREF (vector, 9)),
+		       XFIXNAT (AREF (vector, 10)));
     }
 
   Vwith_echo_area_save_vector = vector;
@@ -11280,7 +11280,7 @@ resize_mini_window (struct window *w, bool exact_p)
       if (FLOATP (Vmax_mini_window_height))
 	max_height = XFLOAT_DATA (Vmax_mini_window_height) * total_height;
       else if (FIXNUMP (Vmax_mini_window_height))
-	max_height = XINT (Vmax_mini_window_height) * unit;
+	max_height = XFIXNUM (Vmax_mini_window_height) * unit;
       else
 	max_height = total_height / 4;
 
@@ -11871,8 +11871,8 @@ unwind_format_mode_line (Lisp_Object vector)
   Lisp_Object target_frame_window = AREF (vector, 8);
   Lisp_Object old_top_frame = AREF (vector, 9);
 
-  mode_line_target = XINT (AREF (vector, 0));
-  mode_line_noprop_ptr = mode_line_noprop_buf + XINT (AREF (vector, 1));
+  mode_line_target = XFIXNUM (AREF (vector, 0));
+  mode_line_noprop_ptr = mode_line_noprop_buf + XFIXNUM (AREF (vector, 1));
   mode_line_string_list = AREF (vector, 2);
   if (! EQ (AREF (vector, 3), Qt))
     mode_line_proptrans_alist = AREF (vector, 3);
@@ -12488,18 +12488,18 @@ build_desired_tool_bar_string (struct frame *f)
       if (RANGED_FIXNUMP (1, Vtool_bar_button_margin,
 			   INT_MAX - max (hmargin, vmargin)))
 	{
-	  hmargin += XFASTINT (Vtool_bar_button_margin);
-	  vmargin += XFASTINT (Vtool_bar_button_margin);
+	  hmargin += XFIXNAT (Vtool_bar_button_margin);
+	  vmargin += XFIXNAT (Vtool_bar_button_margin);
 	}
       else if (CONSP (Vtool_bar_button_margin))
 	{
 	  if (RANGED_FIXNUMP (1, XCAR (Vtool_bar_button_margin),
 			       INT_MAX - hmargin))
-	    hmargin += XFASTINT (XCAR (Vtool_bar_button_margin));
+	    hmargin += XFIXNAT (XCAR (Vtool_bar_button_margin));
 
 	  if (RANGED_FIXNUMP (1, XCDR (Vtool_bar_button_margin),
 			       INT_MAX - vmargin))
-	    vmargin += XFASTINT (XCDR (Vtool_bar_button_margin));
+	    vmargin += XFIXNAT (XCDR (Vtool_bar_button_margin));
 	}
 
       if (auto_raise_tool_bar_buttons_p)
@@ -12836,7 +12836,7 @@ redisplay_tool_bar (struct frame *f)
       int border, rows, height, extra;
 
       if (TYPE_RANGED_FIXNUMP (int, Vtool_bar_border))
-	border = XINT (Vtool_bar_border);
+	border = XFIXNUM (Vtool_bar_border);
       else if (EQ (Vtool_bar_border, Qinternal_border_width))
 	border = FRAME_INTERNAL_BORDER_WIDTH (f);
       else if (EQ (Vtool_bar_border, Qborder_width))
@@ -12958,7 +12958,7 @@ tool_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx)
 			     Qmenu_item, f->current_tool_bar_string);
   if (! FIXNUMP (prop))
     return false;
-  *prop_idx = XINT (prop);
+  *prop_idx = XFIXNUM (prop);
   return true;
 }
 
@@ -13205,7 +13205,7 @@ hscroll_window_tree (Lisp_Object window)
     }
   else if (TYPE_RANGED_FIXNUMP (int, Vhscroll_step))
     {
-      hscroll_step_abs = XINT (Vhscroll_step);
+      hscroll_step_abs = XFIXNUM (Vhscroll_step);
       if (hscroll_step_abs < 0)
 	hscroll_step_abs = 0;
     }
@@ -13562,7 +13562,7 @@ text_outside_line_unchanged_p (struct window *w,
 	 beginning of the line.  */
       if (unchanged_p
 	  && FIXNUMP (BVAR (current_buffer, selective_display))
-	  && XINT (BVAR (current_buffer, selective_display)) > 0
+	  && XFIXNUM (BVAR (current_buffer, selective_display)) > 0
 	  && (BEG_UNCHANGED < start || GPT <= start))
 	unchanged_p = false;
 
@@ -14144,7 +14144,7 @@ redisplay_internal (void)
   {									\
     Lisp_Object entry = Fgethash (make_fixnum (i), a, make_fixnum (0));	\
     if (FIXNUMP (entry))						\
-      Fputhash (make_fixnum (i), make_fixnum (1 + XINT (entry)), a);	\
+      Fputhash (make_fixnum (i), make_fixnum (1 + XFIXNUM (entry)), a);	\
   }
 
   AINC (Vredisplay__all_windows_cause, windows_or_buffers_changed);
@@ -15136,7 +15136,7 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 	      }
 	    if (FIXNUMP (chprop))
 	      {
-		bpos_covered = bpos_max + XINT (chprop);
+		bpos_covered = bpos_max + XFIXNUM (chprop);
 		/* If the `cursor' property covers buffer positions up
 		   to and including point, we should display cursor on
 		   this glyph.  Note that, if a `cursor' property on one
@@ -15210,7 +15210,7 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 	      }
 	    if (FIXNUMP (chprop))
 	      {
-		bpos_covered = bpos_max + XINT (chprop);
+		bpos_covered = bpos_max + XFIXNUM (chprop);
 		/* If the `cursor' property covers buffer positions up
 		   to and including point, we should display cursor on
 		   this glyph.  */
@@ -16943,7 +16943,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 						   Qnil, Qnil);
 
 	      if (FIXNATP (invprop_end))
-		alt_pt = XFASTINT (invprop_end);
+		alt_pt = XFIXNAT (invprop_end);
 	      else
 		alt_pt = ZV;
 	      r = row_containing_pos (w, alt_pt, w->desired_matrix->rows,
@@ -17475,7 +17475,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 						   Qnil, Qnil);
 
 	      if (FIXNATP (invis_end))
-		alt_pos = XFASTINT (invis_end);
+		alt_pos = XFIXNAT (invis_end);
 	      else
 		alt_pos = ZV;
 	      row = row_containing_pos (w, alt_pos, matrix->rows, NULL, 0);
@@ -19584,7 +19584,7 @@ with numeric argument, its value is passed as the GLYPHS flag.  */)
 	   w->cursor.x, w->cursor.y, w->cursor.hpos, w->cursor.vpos);
   fprintf (stderr, "=============================================\n");
   dump_glyph_matrix (w->current_matrix,
-		     TYPE_RANGED_FIXNUMP (int, glyphs) ? XINT (glyphs) : 0);
+		     TYPE_RANGED_FIXNUMP (int, glyphs) ? XFIXNUM (glyphs) : 0);
   return Qnil;
 }
 
@@ -19629,13 +19629,13 @@ GLYPHS > 1 or omitted means dump glyphs in long form.  */)
   else
     {
       CHECK_FIXNUM (row);
-      vpos = XINT (row);
+      vpos = XFIXNUM (row);
     }
   matrix = XWINDOW (selected_window)->current_matrix;
   if (vpos >= 0 && vpos < matrix->nrows)
     dump_glyph_row (MATRIX_ROW (matrix, vpos),
 		    vpos,
-		    TYPE_RANGED_FIXNUMP (int, glyphs) ? XINT (glyphs) : 2);
+		    TYPE_RANGED_FIXNUMP (int, glyphs) ? XFIXNUM (glyphs) : 2);
   return Qnil;
 }
 
@@ -19661,11 +19661,11 @@ do nothing.  */)
   else
     {
       CHECK_FIXNUM (row);
-      vpos = XINT (row);
+      vpos = XFIXNUM (row);
     }
   if (vpos >= 0 && vpos < m->nrows)
     dump_glyph_row (MATRIX_ROW (m, vpos), vpos,
-		    TYPE_RANGED_FIXNUMP (int, glyphs) ? XINT (glyphs) : 2);
+		    TYPE_RANGED_FIXNUMP (int, glyphs) ? XFIXNUM (glyphs) : 2);
 #endif
   return Qnil;
 }
@@ -19681,7 +19681,7 @@ With ARG, turn tracing on if and only if ARG is positive.  */)
   else
     {
       arg = Fprefix_numeric_value (arg);
-      trace_redisplay_p = XINT (arg) > 0;
+      trace_redisplay_p = XFIXNUM (arg) > 0;
     }
 
   return Qnil;
@@ -20147,8 +20147,8 @@ append_space_for_newline (struct it *it, bool default_face_p)
 		  it->phys_ascent = it->ascent;
 		  it->phys_descent = it->descent;
 		  if (!NILP (height)
-		      && XINT (height) > it->ascent + it->descent)
-		    it->ascent = XINT (height) - it->descent;
+		      && XFIXNUM (height) > it->ascent + it->descent)
+		    it->ascent = XFIXNUM (height) - it->descent;
 
 		  if (!NILP (total_height))
 		    spacing = calc_line_height_property (it, total_height, font,
@@ -20161,7 +20161,7 @@ append_space_for_newline (struct it *it, bool default_face_p)
 		    }
 		  if (FIXNUMP (spacing))
 		    {
-		      extra_line_spacing = XINT (spacing);
+		      extra_line_spacing = XFIXNUM (spacing);
 		      if (!NILP (total_height))
 			extra_line_spacing -= (it->phys_ascent + it->phys_descent);
 		    }
@@ -21129,7 +21129,7 @@ maybe_produce_line_number (struct it *it)
   if (!it->lnum_width)
     {
       if (FIXNATP (Vdisplay_line_numbers_width))
-	it->lnum_width = XFASTINT (Vdisplay_line_numbers_width);
+	it->lnum_width = XFIXNAT (Vdisplay_line_numbers_width);
 
       /* Max line number to be displayed cannot be more than the one
 	 corresponding to the last row of the desired matrix.  */
@@ -22186,7 +22186,7 @@ display_line (struct it *it, int cursor_vpos)
       else
 	{
 	  eassert (FIXNUMP (overlay_arrow_string));
-	  row->overlay_arrow_bitmap = XINT (overlay_arrow_string);
+	  row->overlay_arrow_bitmap = XFIXNUM (overlay_arrow_string);
 	}
       overlay_arrow_seen = true;
     }
@@ -22449,8 +22449,8 @@ the `bidi-class' property of a character.  */)
 
       set_buffer_temp (buf);
       validate_region (&from, &to);
-      from_pos = XINT (from);
-      to_pos = XINT (to);
+      from_pos = XFIXNUM (from);
+      to_pos = XFIXNUM (to);
       if (from_pos >= ZV)
 	return Qnil;
 
@@ -22519,7 +22519,7 @@ Value is the new character position of point.  */)
    && !(GLYPH)->avoid_cursor_p)
 
   CHECK_FIXNUM (direction);
-  dir = XINT (direction);
+  dir = XFIXNUM (direction);
   if (dir > 0)
     dir = 1;
   else
@@ -22990,7 +22990,7 @@ Emacs UBA implementation, in particular with the test suite.  */)
   else
     {
       CHECK_FIXNUM_COERCE_MARKER (vpos);
-      nrow = XINT (vpos);
+      nrow = XFIXNUM (vpos);
     }
 
   /* We require up-to-date glyph matrix for this window.  */
@@ -23912,7 +23912,7 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 	  }
 	else if (FIXNUMP (car))
 	  {
-	    register int lim = XINT (car);
+	    register int lim = XFIXNUM (car);
 	    elt = XCDR (elt);
 	    if (lim < 0)
 	      {
@@ -24032,7 +24032,7 @@ store_mode_line_string (const char *string, Lisp_Object lisp_string,
     }
   else
     {
-      len = XFASTINT (Flength (lisp_string));
+      len = XFIXNAT (Flength (lisp_string));
       if (precision > 0 && len > precision)
 	{
 	  len = precision;
@@ -24362,7 +24362,7 @@ decode_mode_spec_coding (Lisp_Object coding_system, char *buf, bool eol_flag)
       eolvalue = AREF (val, 2);
 
       *buf++ = multibyte
-	? XFASTINT (CODING_ATTR_MNEMONIC (attrs))
+	? XFIXNAT (CODING_ATTR_MNEMONIC (attrs))
 	: ' ';
 
       if (eol_flag)
@@ -24391,7 +24391,7 @@ decode_mode_spec_coding (Lisp_Object coding_system, char *buf, bool eol_flag)
 	}
       else if (CHARACTERP (eoltype))
 	{
-	  int c = XFASTINT (eoltype);
+	  int c = XFIXNAT (eoltype);
 	  return buf + CHAR_STRING (c, (unsigned char *) buf);
 	}
       else
@@ -24598,7 +24598,7 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 
 	/* If the buffer is very big, don't waste time.  */
 	if (FIXNUMP (Vline_number_display_limit)
-	    && BUF_ZV (b) - BUF_BEGV (b) > XINT (Vline_number_display_limit))
+	    && BUF_ZV (b) - BUF_BEGV (b) > XFIXNUM (Vline_number_display_limit))
 	  {
 	    w->base_line_pos = 0;
 	    w->base_line_number = 0;
@@ -27191,22 +27191,22 @@ produce_image_glyph (struct it *it)
   slice.height = img->height;
 
   if (FIXNUMP (it->slice.x))
-    slice.x = XINT (it->slice.x);
+    slice.x = XFIXNUM (it->slice.x);
   else if (FLOATP (it->slice.x))
     slice.x = XFLOAT_DATA (it->slice.x) * img->width;
 
   if (FIXNUMP (it->slice.y))
-    slice.y = XINT (it->slice.y);
+    slice.y = XFIXNUM (it->slice.y);
   else if (FLOATP (it->slice.y))
     slice.y = XFLOAT_DATA (it->slice.y) * img->height;
 
   if (FIXNUMP (it->slice.width))
-    slice.width = XINT (it->slice.width);
+    slice.width = XFIXNUM (it->slice.width);
   else if (FLOATP (it->slice.width))
     slice.width = XFLOAT_DATA (it->slice.width) * img->width;
 
   if (FIXNUMP (it->slice.height))
-    slice.height = XINT (it->slice.height);
+    slice.height = XFIXNUM (it->slice.height);
   else if (FLOATP (it->slice.height))
     slice.height = XFLOAT_DATA (it->slice.height) * img->height;
 
@@ -27886,7 +27886,7 @@ calc_line_height_property (struct it *it, Lisp_Object val, struct font *font,
   if (FLOATP (val))
     height = (int)(XFLOAT_DATA (val) * height);
   else if (FIXNUMP (val))
-    height *= XINT (val);
+    height *= XFIXNUM (val);
 
   return make_fixnum (height);
 }
@@ -28376,8 +28376,8 @@ x_produce_glyphs (struct it *it)
 		  it->descent += face->box_line_width;
 		}
 	      if (!NILP (height)
-		  && XINT (height) > it->ascent + it->descent)
-		it->ascent = XINT (height) - it->descent;
+		  && XFIXNUM (height) > it->ascent + it->descent)
+		it->ascent = XFIXNUM (height) - it->descent;
 
 	      if (!NILP (total_height))
 		spacing = calc_line_height_property (it, total_height, font,
@@ -28390,7 +28390,7 @@ x_produce_glyphs (struct it *it)
 		}
 	      if (FIXNUMP (spacing))
 		{
-		  extra_line_spacing = XINT (spacing);
+		  extra_line_spacing = XFIXNUM (spacing);
 		  if (!NILP (total_height))
 		    extra_line_spacing -= (it->phys_ascent + it->phys_descent);
 		}
@@ -29096,7 +29096,7 @@ get_specified_cursor_type (Lisp_Object arg, int *width)
       && EQ (XCAR (arg), Qbar)
       && RANGED_FIXNUMP (0, XCDR (arg), INT_MAX))
     {
-      *width = XINT (XCDR (arg));
+      *width = XFIXNUM (XCDR (arg));
       return BAR_CURSOR;
     }
 
@@ -29110,7 +29110,7 @@ get_specified_cursor_type (Lisp_Object arg, int *width)
       && EQ (XCAR (arg), Qhbar)
       && RANGED_FIXNUMP (0, XCDR (arg), INT_MAX))
     {
-      *width = XINT (XCDR (arg));
+      *width = XFIXNUM (XCDR (arg));
       return HBAR_CURSOR;
     }
 
@@ -30733,13 +30733,13 @@ on_hot_spot_p (Lisp_Object hot_spot, int x, int y)
 	return false;
       if (!CONSP (XCDR (rect)))
 	return false;
-      if (!(tem = XCAR (XCAR (rect)), FIXNUMP (tem) && x >= XINT (tem)))
+      if (!(tem = XCAR (XCAR (rect)), FIXNUMP (tem) && x >= XFIXNUM (tem)))
 	return false;
-      if (!(tem = XCDR (XCAR (rect)), FIXNUMP (tem) && y >= XINT (tem)))
+      if (!(tem = XCDR (XCAR (rect)), FIXNUMP (tem) && y >= XFIXNUM (tem)))
 	return false;
-      if (!(tem = XCAR (XCDR (rect)), FIXNUMP (tem) && x <= XINT (tem)))
+      if (!(tem = XCAR (XCDR (rect)), FIXNUMP (tem) && x <= XFIXNUM (tem)))
 	return false;
-      if (!(tem = XCDR (XCDR (rect)), FIXNUMP (tem) && y <= XINT (tem)))
+      if (!(tem = XCDR (XCDR (rect)), FIXNUMP (tem) && y <= XFIXNUM (tem)))
 	return false;
       return true;
     }
@@ -30755,8 +30755,8 @@ on_hot_spot_p (Lisp_Object hot_spot, int x, int y)
 	  && (ly0 = XCDR (XCAR (circ)), FIXNUMP (ly0)))
 	{
 	  double r = XFLOATINT (lr);
-	  double dx = XINT (lx0) - x;
-	  double dy = XINT (ly0) - y;
+	  double dx = XFIXNUM (lx0) - x;
+	  double dy = XFIXNUM (ly0) - y;
 	  return (dx * dx + dy * dy <= r * r);
 	}
     }
@@ -30784,14 +30784,14 @@ on_hot_spot_p (Lisp_Object hot_spot, int x, int y)
 	  if ((lx = poly[n-2], !FIXNUMP (lx))
 	      || (ly = poly[n-1], !FIXNUMP (lx)))
 	    return false;
-	  x0 = XINT (lx), y0 = XINT (ly);
+	  x0 = XFIXNUM (lx), y0 = XFIXNUM (ly);
 	  for (i = 0; i < n; i += 2)
 	    {
 	      int x1 = x0, y1 = y0;
 	      if ((lx = poly[i], !FIXNUMP (lx))
 		  || (ly = poly[i+1], !FIXNUMP (ly)))
 		return false;
-	      x0 = XINT (lx), y0 = XINT (ly);
+	      x0 = XFIXNUM (lx), y0 = XFIXNUM (ly);
 
 	      /* Does this segment cross the X line?  */
 	      if (x0 >= x)
@@ -30847,8 +30847,8 @@ Returns the alist element for the first matching AREA in MAP.  */)
   CHECK_FIXNUM (y);
 
   return find_hot_spot (map,
-			clip_to_bounds (INT_MIN, XINT (x), INT_MAX),
-			clip_to_bounds (INT_MIN, XINT (y), INT_MAX));
+			clip_to_bounds (INT_MIN, XFIXNUM (x), INT_MAX),
+			clip_to_bounds (INT_MIN, XFIXNUM (y), INT_MAX));
 }
 #endif	/* HAVE_WINDOW_SYSTEM */
 
@@ -31090,13 +31090,13 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	  if (NILP (b))
 	    begpos = 0;
 	  else
-	    begpos = XINT (b);
+	    begpos = XFIXNUM (b);
 
 	  e = Fnext_single_property_change (pos, Qmouse_face, string, Qnil);
 	  if (NILP (e))
 	    endpos = SCHARS (string);
 	  else
-	    endpos = XINT (e);
+	    endpos = XFIXNUM (e);
 
 	  /* Calculate the glyph position GPOS of GLYPH in the
 	     displayed string, relative to the beginning of the
@@ -31573,7 +31573,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	      if (NILP (e))
 		e = make_fixnum (SCHARS (object));
 	      mouse_face_from_string_pos (w, hlinfo, object,
-					  XINT (s), XINT (e));
+					  XFIXNUM (s), XFIXNUM (e));
 	      hlinfo->mouse_face_past_end = false;
 	      hlinfo->mouse_face_window = window;
 	      hlinfo->mouse_face_face_id
@@ -31658,10 +31658,10 @@ note_mouse_highlight (struct frame *f, int x, int y)
 		  mouse_face_from_buffer_pos (window, hlinfo, pos,
 					      NILP (before)
 					      ? 1
-					      : XFASTINT (before),
+					      : XFIXNAT (before),
 					      NILP (after)
 					      ? BUF_Z (XBUFFER (buffer))
-					      : XFASTINT (after),
+					      : XFIXNAT (after),
 					      before_string, after_string,
 					      disp_string);
 		  cursor = No_Cursor;
@@ -33316,8 +33316,8 @@ start_hourglass (void)
   cancel_hourglass ();
 
   if (FIXNUMP (Vhourglass_delay)
-      && XINT (Vhourglass_delay) > 0)
-    delay = make_timespec (min (XINT (Vhourglass_delay),
+      && XFIXNUM (Vhourglass_delay) > 0)
+    delay = make_timespec (min (XFIXNUM (Vhourglass_delay),
 				  TYPE_MAXIMUM (time_t)),
 			   0);
   else if (FLOATP (Vhourglass_delay)

@@ -134,11 +134,11 @@ restore_menu_items (Lisp_Object saved)
   menu_items_inuse = (! NILP (menu_items) ? Qt : Qnil);
   menu_items_allocated = (VECTORP (menu_items) ? ASIZE (menu_items) : 0);
   saved = XCDR (saved);
-  menu_items_used = XINT (XCAR (saved));
+  menu_items_used = XFIXNUM (XCAR (saved));
   saved = XCDR (saved);
-  menu_items_n_panes = XINT (XCAR (saved));
+  menu_items_n_panes = XFIXNUM (XCAR (saved));
   saved = XCDR (saved);
-  menu_items_submenu_depth = XINT (XCAR (saved));
+  menu_items_submenu_depth = XFIXNUM (XCAR (saved));
 }
 
 /* Push the whole state of menu_items processing onto the specpdl.
@@ -532,7 +532,7 @@ parse_single_submenu (Lisp_Object item_key, Lisp_Object item_name,
   USE_SAFE_ALLOCA;
 
   length = Flength (maps);
-  len = XINT (length);
+  len = XFIXNUM (length);
 
   /* Convert the list MAPS into a vector MAPVEC.  */
   SAFE_ALLOCA_LISP (mapvec, len);
@@ -1079,7 +1079,7 @@ into menu items.  */)
   if (!FRAME_LIVE_P (f))
     return Qnil;
 
-  pixel_to_glyph_coords (f, XINT (x), XINT (y), &col, &row, NULL, 1);
+  pixel_to_glyph_coords (f, XFIXNUM (x), XFIXNUM (y), &col, &row, NULL, 1);
   if (0 <= row && row < FRAME_MENU_BAR_LINES (f))
     {
       Lisp_Object items, item;
@@ -1099,10 +1099,10 @@ into menu items.  */)
 	  pos = AREF (items, i + 3);
 	  if (NILP (str))
 	    return item;
-	  if (XINT (pos) <= col
+	  if (XFIXNUM (pos) <= col
 	      /* We use <= so the blank between 2 items on a TTY is
 		 considered part of the previous item.  */
-	      && col <= XINT (pos) + menu_item_width (SDATA (str)))
+	      && col <= XFIXNUM (pos) + menu_item_width (SDATA (str)))
 	    {
 	      item = AREF (items, i);
 	      return item;
@@ -1268,8 +1268,8 @@ x_popup_menu_1 (Lisp_Object position, Lisp_Object menu)
 			   ? (EMACS_INT) INT_MIN - ypos
 			   : MOST_NEGATIVE_FIXNUM),
 			  INT_MAX - ypos);
-    xpos += XINT (x);
-    ypos += XINT (y);
+    xpos += XFIXNUM (x);
+    ypos += XFIXNUM (y);
 
     XSETFRAME (Vmenu_updating_frame, f);
   }
@@ -1309,7 +1309,7 @@ x_popup_menu_1 (Lisp_Object position, Lisp_Object menu)
   else if (CONSP (menu) && KEYMAPP (XCAR (menu)))
     {
       /* We were given a list of keymaps.  */
-      EMACS_INT nmaps = XFASTINT (Flength (menu));
+      EMACS_INT nmaps = XFIXNAT (Flength (menu));
       Lisp_Object *maps;
       ptrdiff_t i;
       USE_SAFE_ALLOCA;

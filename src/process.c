@@ -747,7 +747,7 @@ status_message (struct Lisp_Process *p)
     {
       char const *signame;
       synchronize_system_messages_locale ();
-      signame = strsignal (XFASTINT (code));
+      signame = strsignal (XFIXNAT (code));
       if (signame == 0)
 	string = build_string ("unknown");
       else
@@ -769,10 +769,10 @@ status_message (struct Lisp_Process *p)
   else if (EQ (symbol, Qexit))
     {
       if (NETCONN1_P (p))
-	return build_string (XFASTINT (code) == 0
+	return build_string (XFIXNAT (code) == 0
 			     ? "deleted\n"
 			     : "connection broken by remote peer\n");
-      if (XFASTINT (code) == 0)
+      if (XFIXNAT (code) == 0)
 	return build_string ("finished\n");
       AUTO_STRING (prefix, "exited abnormally with code ");
       string = Fnumber_to_string (code);
@@ -1383,7 +1383,7 @@ nil otherwise.  */)
   if (NETCONN_P (process)
       || XPROCESS (process)->infd < 0
       || (set_window_size (XPROCESS (process)->infd,
-			   XINT (height), XINT (width))
+			   XFIXNUM (height), XFIXNUM (width))
 	  < 0))
     return Qnil;
   else
@@ -1589,7 +1589,7 @@ Return nil if format of ADDRESS is invalid.  */)
 
 	  if (nargs <= 5         /* IPv4 */
 	      && i < 4           /* host, not port */
-	      && XINT (p->contents[i]) > 255)
+	      && XFIXNUM (p->contents[i]) > 255)
 	    return Qnil;
 
 	  args[i + 1] = p->contents[i];
@@ -1789,7 +1789,7 @@ usage: (make-process &rest ARGS)  */)
       val = Vcoding_system_for_read;
     if (NILP (val))
       {
-	ptrdiff_t nargs2 = 3 + XINT (Flength (command));
+	ptrdiff_t nargs2 = 3 + XFIXNUM (Flength (command));
 	Lisp_Object tem2;
 	SAFE_ALLOCA_LISP (args2, nargs2);
 	ptrdiff_t i = 0;
@@ -1819,7 +1819,7 @@ usage: (make-process &rest ARGS)  */)
       {
 	if (EQ (coding_systems, Qt))
 	  {
-	    ptrdiff_t nargs2 = 3 + XINT (Flength (command));
+	    ptrdiff_t nargs2 = 3 + XFIXNUM (Flength (command));
 	    Lisp_Object tem2;
 	    SAFE_ALLOCA_LISP (args2, nargs2);
 	    ptrdiff_t i = 0;
@@ -2567,7 +2567,7 @@ static Lisp_Object
 conv_addrinfo_to_lisp (struct addrinfo *res)
 {
   Lisp_Object protocol = make_fixnum (res->ai_protocol);
-  eassert (XINT (protocol) == res->ai_protocol);
+  eassert (XFIXNUM (protocol) == res->ai_protocol);
   return Fcons (protocol, conv_sockaddr_to_lisp (res->ai_addr, res->ai_addrlen));
 }
 
@@ -2609,7 +2609,7 @@ get_lisp_to_sockaddr_size (Lisp_Object address, int *familyp)
       p = XVECTOR (XCDR (address));
       if (MAX_ALLOCA - sizeof sa->sa_family < p->header.size)
 	return 0;
-      *familyp = XINT (XCAR (address));
+      *familyp = XFIXNUM (XCAR (address));
       return p->header.size + sizeof (sa->sa_family);
     }
   return 0;
@@ -2639,7 +2639,7 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
 	{
 	  DECLARE_POINTER_ALIAS (sin, struct sockaddr_in, sa);
 	  len = sizeof (sin->sin_addr) + 1;
-	  hostport = XINT (p->contents[--len]);
+	  hostport = XFIXNUM (p->contents[--len]);
 	  sin->sin_port = htons (hostport);
 	  cp = (unsigned char *)&sin->sin_addr;
 	  sa->sa_family = family;
@@ -2650,12 +2650,12 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
 	  DECLARE_POINTER_ALIAS (sin6, struct sockaddr_in6, sa);
 	  DECLARE_POINTER_ALIAS (ip6, uint16_t, &sin6->sin6_addr);
 	  len = sizeof (sin6->sin6_addr) / 2 + 1;
-	  hostport = XINT (p->contents[--len]);
+	  hostport = XFIXNUM (p->contents[--len]);
 	  sin6->sin6_port = htons (hostport);
 	  for (i = 0; i < len; i++)
 	    if (FIXNUMP (p->contents[i]))
 	      {
-		int j = XFASTINT (p->contents[i]) & 0xffff;
+		int j = XFIXNAT (p->contents[i]) & 0xffff;
 		ip6[i] = ntohs (j);
 	      }
 	  sa->sa_family = family;
@@ -2687,7 +2687,7 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
 
   for (i = 0; i < len; i++)
     if (FIXNUMP (p->contents[i]))
-      *cp++ = XFASTINT (p->contents[i]) & 0xff;
+      *cp++ = XFIXNAT (p->contents[i]) & 0xff;
 }
 
 #ifdef DATAGRAM_SOCKETS
@@ -2819,7 +2819,7 @@ set_socket_option (int s, Lisp_Object opt, Lisp_Object val)
       {
 	int optval;
 	if (TYPE_RANGED_FIXNUMP (int, val))
-	  optval = XINT (val);
+	  optval = XFIXNUM (val);
 	else
 	  error ("Bad option value for %s", name);
 	ret = setsockopt (s, sopt->optlevel, sopt->optnum,
@@ -2858,7 +2858,7 @@ set_socket_option (int s, Lisp_Object opt, Lisp_Object val)
 	linger.l_onoff = 1;
 	linger.l_linger = 0;
 	if (TYPE_RANGED_FIXNUMP (int, val))
-	  linger.l_linger = XINT (val);
+	  linger.l_linger = XFIXNUM (val);
 	else
 	  linger.l_onoff = NILP (val) ? 0 : 1;
 	ret = setsockopt (s, sopt->optlevel, sopt->optnum,
@@ -3357,7 +3357,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
     {
       Lisp_Object addrinfo = XCAR (addrinfos);
       addrinfos = XCDR (addrinfos);
-      int protocol = XINT (XCAR (addrinfo));
+      int protocol = XFIXNUM (XCAR (addrinfo));
       Lisp_Object ip_address = XCDR (addrinfo);
 
 #ifdef WINDOWSNT
@@ -3941,7 +3941,7 @@ usage: (make-network-process &rest ARGS)  */)
   else if (EQ (tem, Qipv4))
     family = AF_INET;
   else if (TYPE_RANGED_FIXNUMP (int, tem))
-    family = XINT (tem);
+    family = XFIXNUM (tem);
   else
     error ("Unknown address family");
 
@@ -4010,7 +4010,7 @@ usage: (make-network-process &rest ARGS)  */)
       else if (FIXNUMP (service))
 	{
 	  portstring = portbuf;
-	  portstringlen = sprintf (portbuf, "%"pI"d", XINT (service));
+	  portstringlen = sprintf (portbuf, "%"pI"d", XFIXNUM (service));
 	}
       else
 	{
@@ -4096,7 +4096,7 @@ usage: (make-network-process &rest ARGS)  */)
   if (EQ (service, Qt))
     port = 0;
   else if (FIXNUMP (service))
-    port = XINT (service);
+    port = XFIXNUM (service);
   else
     {
       CHECK_STRING (service);
@@ -4170,7 +4170,7 @@ usage: (make-network-process &rest ARGS)  */)
   /* :server QLEN */
   p->is_server = !NILP (server);
   if (TYPE_RANGED_FIXNUMP (int, server))
-    p->backlog = XINT (server);
+    p->backlog = XFIXNUM (server);
 
   /* :nowait BOOL */
   if (!p->is_server && socktype != SOCK_DGRAM && nowait)
@@ -4627,11 +4627,11 @@ is nil, from any process) before the timeout expired.  */)
     { /* Obsolete calling convention using integers rather than floats.  */
       CHECK_FIXNUM (millisec);
       if (NILP (seconds))
-	seconds = make_float (XINT (millisec) / 1000.0);
+	seconds = make_float (XFIXNUM (millisec) / 1000.0);
       else
 	{
 	  CHECK_FIXNUM (seconds);
-	  seconds = make_float (XINT (millisec) / 1000.0 + XINT (seconds));
+	  seconds = make_float (XFIXNUM (millisec) / 1000.0 + XFIXNUM (seconds));
 	}
     }
 
@@ -4642,9 +4642,9 @@ is nil, from any process) before the timeout expired.  */)
     {
       if (FIXNUMP (seconds))
 	{
-	  if (XINT (seconds) > 0)
+	  if (XFIXNUM (seconds) > 0)
 	    {
-	      secs = XINT (seconds);
+	      secs = XFIXNUM (seconds);
 	      nsecs = 0;
 	    }
 	}
@@ -6196,8 +6196,8 @@ write_queue_pop (struct Lisp_Process *p, Lisp_Object *obj,
   *obj = XCAR (entry);
   offset_length = XCDR (entry);
 
-  *len = XINT (XCDR (offset_length));
-  offset = XINT (XCAR (offset_length));
+  *len = XFIXNUM (XCDR (offset_length));
+  offset = XFIXNUM (XCAR (offset_length));
   *buf = SSDATA (*obj) + offset;
 
   return 1;
@@ -6451,11 +6451,11 @@ set up yet, this function will block until socket setup has completed.  */)
 
   validate_region (&start, &end);
 
-  start_byte = CHAR_TO_BYTE (XINT (start));
-  end_byte = CHAR_TO_BYTE (XINT (end));
+  start_byte = CHAR_TO_BYTE (XFIXNUM (start));
+  end_byte = CHAR_TO_BYTE (XFIXNUM (end));
 
-  if (XINT (start) < GPT && XINT (end) > GPT)
-    move_gap_both (XINT (start), start_byte);
+  if (XFIXNUM (start) < GPT && XFIXNUM (end) > GPT)
+    move_gap_both (XFIXNUM (start), start_byte);
 
   if (NETCONN_P (proc))
     wait_while_connecting (proc);
@@ -6864,7 +6864,7 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.  */)
   if (FIXNUMP (sigcode))
     {
       CHECK_TYPE_RANGED_INTEGER (int, sigcode);
-      signo = XINT (sigcode);
+      signo = XFIXNUM (sigcode);
     }
   else
     {
@@ -7052,7 +7052,7 @@ handle_child_signal (int sig)
 	{
 	  pid_t deleted_pid;
 	  if (FIXNUMP (xpid))
-	    deleted_pid = XINT (xpid);
+	    deleted_pid = XFIXNUM (xpid);
 	  else
 	    deleted_pid = XFLOAT_DATA (xpid);
 	  if (child_status_changed (deleted_pid, 0, 0))

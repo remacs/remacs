@@ -206,7 +206,7 @@ translate_char (Lisp_Object table, int c)
 
       ch = CHAR_TABLE_REF (table, c);
       if (CHARACTERP (ch))
-	c = XINT (ch);
+	c = XFIXNUM (ch);
     }
   else
     {
@@ -244,7 +244,7 @@ DEFUN ("unibyte-char-to-multibyte", Funibyte_char_to_multibyte,
   int c;
 
   CHECK_CHARACTER (ch);
-  c = XFASTINT (ch);
+  c = XFIXNAT (ch);
   if (c >= 0x100)
     error ("Not a unibyte character: %d", c);
   MAKE_CHAR_MULTIBYTE (c);
@@ -260,7 +260,7 @@ If the multibyte character does not represent a byte, return -1.  */)
   int cm;
 
   CHECK_CHARACTER (ch);
-  cm = XFASTINT (ch);
+  cm = XFIXNAT (ch);
   if (cm < 256)
     /* Can't distinguish a byte read from a unibyte buffer from
        a latin1 char, so let's let it slide.  */
@@ -291,7 +291,7 @@ char_width (int c, struct Lisp_Char_Table *dp)
 	    ch = AREF (disp, i);
 	    if (CHARACTERP (ch))
 	      {
-		int w = CHARACTER_WIDTH (XFASTINT (ch));
+		int w = CHARACTER_WIDTH (XFIXNAT (ch));
 		if (INT_ADD_WRAPV (width, w, &width))
 		  string_overflow ();
 	      }
@@ -312,7 +312,7 @@ usage: (char-width CHAR)  */)
   ptrdiff_t width;
 
   CHECK_CHARACTER (ch);
-  c = XINT (ch);
+  c = XFIXNUM (ch);
   width = char_width (c, buffer_display_table ());
   return make_fixnum (width);
 }
@@ -855,7 +855,7 @@ usage: (string &rest CHARACTERS)  */)
   for (i = 0; i < n; i++)
     {
       CHECK_CHARACTER (args[i]);
-      c = XINT (args[i]);
+      c = XFIXNUM (args[i]);
       p += CHAR_STRING (c, p);
     }
 
@@ -878,7 +878,7 @@ usage: (unibyte-string &rest BYTES)  */)
   for (i = 0; i < n; i++)
     {
       CHECK_RANGED_INTEGER (args[i], 0, 255);
-      *p++ = XINT (args[i]);
+      *p++ = XFIXNUM (args[i]);
     }
 
   str = make_string_from_bytes ((char *) buf, n, p - buf);
@@ -897,7 +897,7 @@ usage: (char-resolve-modifiers CHAR)  */)
   EMACS_INT c;
 
   CHECK_FIXNUM (character);
-  c = XINT (character);
+  c = XFIXNUM (character);
   return make_fixnum (char_resolve_modifier_mask (c));
 }
 
@@ -926,9 +926,9 @@ character is not ASCII nor 8-bit character, an error is signaled.  */)
       else
 	{
 	  CHECK_FIXNUM_COERCE_MARKER (position);
-	  if (XINT (position) < BEGV || XINT (position) >= ZV)
+	  if (XFIXNUM (position) < BEGV || XFIXNUM (position) >= ZV)
 	    args_out_of_range_3 (position, make_fixnum (BEGV), make_fixnum (ZV));
-	  pos = XFASTINT (position);
+	  pos = XFIXNAT (position);
 	  p = CHAR_POS_ADDR (pos);
 	}
       if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
@@ -944,9 +944,9 @@ character is not ASCII nor 8-bit character, an error is signaled.  */)
       else
 	{
 	  CHECK_FIXNAT (position);
-	  if (XINT (position) >= SCHARS (string))
+	  if (XFIXNUM (position) >= SCHARS (string))
 	    args_out_of_range (string, position);
-	  pos = XFASTINT (position);
+	  pos = XFIXNAT (position);
 	  p = SDATA (string) + string_char_to_byte (string, pos);
 	}
       if (! STRING_MULTIBYTE (string))
@@ -967,7 +967,7 @@ alphabeticp (int c)
   Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
   if (! FIXNUMP (category))
     return false;
-  EMACS_INT gen_cat = XINT (category);
+  EMACS_INT gen_cat = XFIXNUM (category);
 
   /* See UTS #18.  There are additional characters that should be
      here, those designated as Other_uppercase, Other_lowercase,
@@ -990,7 +990,7 @@ alphanumericp (int c)
   Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
   if (! FIXNUMP (category))
     return false;
-  EMACS_INT gen_cat = XINT (category);
+  EMACS_INT gen_cat = XFIXNUM (category);
 
   /* See UTS #18.  Same comment as for alphabeticp applies.  FIXME. */
   return (gen_cat == UNICODE_CATEGORY_Lu
@@ -1012,7 +1012,7 @@ graphicp (int c)
   Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
   if (! FIXNUMP (category))
     return false;
-  EMACS_INT gen_cat = XINT (category);
+  EMACS_INT gen_cat = XFIXNUM (category);
 
   /* See UTS #18.  */
   return (!(gen_cat == UNICODE_CATEGORY_Zs /* space separator */
@@ -1030,7 +1030,7 @@ printablep (int c)
   Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, c);
   if (! FIXNUMP (category))
     return false;
-  EMACS_INT gen_cat = XINT (category);
+  EMACS_INT gen_cat = XFIXNUM (category);
 
   /* See UTS #18.  */
   return (!(gen_cat == UNICODE_CATEGORY_Cc /* control */
@@ -1047,7 +1047,7 @@ blankp (int c)
   if (! FIXNUMP (category))
     return false;
 
-  return XINT (category) == UNICODE_CATEGORY_Zs; /* separator, space */
+  return XFIXNUM (category) == UNICODE_CATEGORY_Zs; /* separator, space */
 }
 
 

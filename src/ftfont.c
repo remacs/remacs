@@ -390,7 +390,7 @@ ftfont_lookup_cache (Lisp_Object key, enum ftfont_cache_for cache_for)
       ? ! cache_data->ft_face : ! cache_data->fc_charset)
     {
       char *filename = SSDATA (XCAR (key));
-      int idx = XINT (XCDR (key));
+      int idx = XFIXNUM (XCDR (key));
 
       if (cache_for == FTFONT_CACHE_FOR_FACE)
 	{
@@ -600,9 +600,9 @@ ftfont_get_open_type_spec (Lisp_Object otf_spec)
 	continue;
       len = Flength (val);
       spec->features[i] =
-	(min (PTRDIFF_MAX, SIZE_MAX) / sizeof (int) < XINT (len)
+	(min (PTRDIFF_MAX, SIZE_MAX) / sizeof (int) < XFIXNUM (len)
 	 ? 0
-	 : malloc (XINT (len) * sizeof *spec->features[i]));
+	 : malloc (XFIXNUM (len) * sizeof *spec->features[i]));
       if (! spec->features[i])
 	{
 	  if (i > 0 && spec->features[0])
@@ -647,9 +647,9 @@ ftfont_spec_pattern (Lisp_Object spec, char *otlayout, struct OpenTypeSpec **ots
     return NULL;
 
   if (FIXNUMP (AREF (spec, FONT_DPI_INDEX)))
-    dpi = XINT (AREF (spec, FONT_DPI_INDEX));
+    dpi = XFIXNUM (AREF (spec, FONT_DPI_INDEX));
   if (FIXNUMP (AREF (spec, FONT_AVGWIDTH_INDEX))
-      && XINT (AREF (spec, FONT_AVGWIDTH_INDEX)) == 0)
+      && XFIXNUM (AREF (spec, FONT_AVGWIDTH_INDEX)) == 0)
     scalable = 1;
 
   registry = AREF (spec, FONT_REGISTRY_INDEX);
@@ -687,7 +687,7 @@ ftfont_spec_pattern (Lisp_Object spec, char *otlayout, struct OpenTypeSpec **ots
       if (EQ (key, QCdpi))
 	{
 	  if (FIXNUMP (val))
-	    dpi = XINT (val);
+	    dpi = XFIXNUM (val);
 	}
       else if (EQ (key, QClang))
 	{
@@ -735,7 +735,7 @@ ftfont_spec_pattern (Lisp_Object spec, char *otlayout, struct OpenTypeSpec **ots
 	    goto err;
 	  for (chars = XCDR (chars); CONSP (chars); chars = XCDR (chars))
 	    if (CHARACTERP (XCAR (chars))
-		&& ! FcCharSetAddChar (charset, XFASTINT (XCAR (chars))))
+		&& ! FcCharSetAddChar (charset, XFIXNAT (XCAR (chars))))
 	      goto err;
 	}
     }
@@ -833,7 +833,7 @@ ftfont_list (struct frame *f, Lisp_Object spec)
       val = Qnil;
     }
   if (FIXNUMP (AREF (spec, FONT_SPACING_INDEX)))
-    spacing = XINT (AREF (spec, FONT_SPACING_INDEX));
+    spacing = XFIXNUM (AREF (spec, FONT_SPACING_INDEX));
   family = AREF (spec, FONT_FAMILY_INDEX);
   if (! NILP (family))
     {
@@ -956,7 +956,7 @@ ftfont_list (struct frame *f, Lisp_Object spec)
 	    continue;
 	  for (j = 0; j < ASIZE (chars); j++)
 	    if (TYPE_RANGED_FIXNUMP (FcChar32, AREF (chars, j))
-		&& FcCharSetHasChar (charset, XFASTINT (AREF (chars, j))))
+		&& FcCharSetHasChar (charset, XFIXNAT (AREF (chars, j))))
 	      break;
 	  if (j == ASIZE (chars))
 	    continue;
@@ -1021,7 +1021,7 @@ ftfont_match (struct frame *f, Lisp_Object spec)
       FcValue value;
 
       value.type = FcTypeDouble;
-      value.u.d = XINT (AREF (spec, FONT_SIZE_INDEX));
+      value.u.d = XFIXNUM (AREF (spec, FONT_SIZE_INDEX));
       FcPatternAdd (pattern, FC_PIXEL_SIZE, value, FcFalse);
     }
   if (FcConfigSubstitute (NULL, pattern, FcMatchPattern) == FcTrue)
@@ -1130,7 +1130,7 @@ ftfont_open2 (struct frame *f,
 	  return Qnil;
 	}
     }
-  size = XINT (AREF (entity, FONT_SIZE_INDEX));
+  size = XFIXNUM (AREF (entity, FONT_SIZE_INDEX));
   if (size == 0)
     size = pixel_size;
   if (FT_Set_Pixel_Sizes (ft_face, size, size) != 0)
@@ -1148,7 +1148,7 @@ ftfont_open2 (struct frame *f,
   font = XFONT_OBJECT (font_object);
   ftfont_info = (struct ftfont_info *) font;
   ftfont_info->ft_size = ft_face->size;
-  ftfont_info->index = XINT (idx);
+  ftfont_info->index = XFIXNUM (idx);
 #ifdef HAVE_LIBOTF
   ftfont_info->maybe_otf = (ft_face->face_flags & FT_FACE_FLAG_SFNT) != 0;
   ftfont_info->otf = NULL;
@@ -1161,7 +1161,7 @@ ftfont_open2 (struct frame *f,
 
   upEM = ft_face->units_per_EM;
   scalable = (FIXNUMP (AREF (entity, FONT_AVGWIDTH_INDEX))
-	      && XINT (AREF (entity, FONT_AVGWIDTH_INDEX)) == 0);
+	      && XFIXNUM (AREF (entity, FONT_AVGWIDTH_INDEX)) == 0);
   if (scalable)
     {
       font->ascent = ft_face->ascender * size / upEM + 0.5;
@@ -1175,7 +1175,7 @@ ftfont_open2 (struct frame *f,
       font->height = ft_face->size->metrics.height >> 6;
     }
   if (FIXNUMP (AREF (entity, FONT_SPACING_INDEX)))
-    spacing = XINT (AREF (entity, FONT_SPACING_INDEX));
+    spacing = XFIXNUM (AREF (entity, FONT_SPACING_INDEX));
   else
     spacing = FC_PROPORTIONAL;
   if (spacing != FC_PROPORTIONAL
@@ -1233,7 +1233,7 @@ ftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 {
   Lisp_Object font_object;
   FT_UInt size;
-  size = XINT (AREF (entity, FONT_SIZE_INDEX));
+  size = XFIXNUM (AREF (entity, FONT_SIZE_INDEX));
   if (size == 0)
     size = pixel_size;
   font_object = font_build_object (VECSIZE (struct ftfont_info),

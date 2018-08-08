@@ -1693,7 +1693,7 @@ static unsigned long
 cons_to_x_long (Lisp_Object obj)
 {
   if (X_ULONG_MAX <= INTMAX_MAX
-      || XINT (FIXNUMP (obj) ? obj : XCAR (obj)) < 0)
+      || XFIXNUM (FIXNUMP (obj) ? obj : XCAR (obj)) < 0)
     return cons_to_signed (obj, X_LONG_MIN, min (X_ULONG_MAX, INTMAX_MAX));
   else
     return cons_to_unsigned (obj, X_ULONG_MAX);
@@ -1756,7 +1756,7 @@ lisp_data_to_selection_data (struct x_display_info *dpyinfo,
       cs->format = 16;
       cs->size = 1;
       cs->data[sizeof (short)] = 0;
-      *short_ptr = XINT (obj);
+      *short_ptr = XFIXNUM (obj);
       if (NILP (type)) type = QINTEGER;
     }
   else if (FIXNUMP (obj)
@@ -1832,7 +1832,7 @@ lisp_data_to_selection_data (struct x_display_info *dpyinfo,
 	      if (format == 32)
 		x_atoms[i] = cons_to_x_long (AREF (obj, i));
 	      else
-		shorts[i] = XINT (AREF (obj, i));
+		shorts[i] = XFIXNUM (AREF (obj, i));
 	    }
 	}
     }
@@ -1856,10 +1856,10 @@ clean_local_selection_data (Lisp_Object obj)
       && FIXNUMP (XCAR (obj))
       && FIXNUMP (XCDR (obj)))
     {
-      if (XINT (XCAR (obj)) == 0)
+      if (XFIXNUM (XCAR (obj)) == 0)
 	return XCDR (obj);
-      if (XINT (XCAR (obj)) == -1)
-	return make_fixnum (- XINT (XCDR (obj)));
+      if (XFIXNUM (XCAR (obj)) == -1)
+	return make_fixnum (- XFIXNUM (XCDR (obj)));
     }
   if (VECTORP (obj))
     {
@@ -2313,8 +2313,8 @@ x_fill_property_data (Display *dpy, Lisp_Object data, void *ret, int format)
                  For XDnd, v2 might be y of a window, and can be negative.
                  The XDnd spec. is not explicit about negative values,
                  but let's assume negative v2 is sent modulo 2**16.  */
-	      unsigned long v1 = XINT (XCAR (o)) & 0xffff;
-	      unsigned long v2 = XINT (XCDR (o)) & 0xffff;
+	      unsigned long v1 = XFIXNUM (XCAR (o)) & 0xffff;
+	      unsigned long v2 = XFIXNUM (XCDR (o)) & 0xffff;
 	      val = (v1 << 16) | v2;
             }
           else
@@ -2560,11 +2560,11 @@ x_send_client_event (Lisp_Object display, Lisp_Object dest, Lisp_Object from,
   if (x_check_property_data (values) == -1)
     error ("Bad data in VALUES, must be number, cons or string");
 
-  if (XINT (format) != 8 && XINT (format) != 16 && XINT (format) != 32)
+  if (XFIXNUM (format) != 8 && XFIXNUM (format) != 16 && XFIXNUM (format) != 32)
     error ("FORMAT must be one of 8, 16 or 32");
 
   event.xclient.type = ClientMessage;
-  event.xclient.format = XINT (format);
+  event.xclient.format = XFIXNUM (format);
 
   if (FRAMEP (dest) || NILP (dest))
     {

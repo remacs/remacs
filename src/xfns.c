@@ -1233,7 +1233,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       if (!NILP (shape_var))
 	{
 	  CHECK_TYPE_RANGED_INTEGER (unsigned, shape_var);
-	  cursor_data.cursor_num[i] = XINT (shape_var);
+	  cursor_data.cursor_num[i] = XFIXNUM (shape_var);
 	}
       else
 	cursor_data.cursor_num[i] = mouse_cursor_types[i].default_shape;
@@ -1532,7 +1532,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
     return;
 
   if (TYPE_RANGED_FIXNUMP (int, value))
-    nlines = XINT (value);
+    nlines = XFIXNUM (value);
   else
     nlines = 0;
 
@@ -1619,7 +1619,7 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 
   /* Use VALUE only if an int >= 0.  */
   if (RANGED_FIXNUMP (0, value, INT_MAX))
-    nlines = XFASTINT (value);
+    nlines = XFIXNAT (value);
   else
     nlines = 0;
 
@@ -1716,7 +1716,7 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
   int border;
 
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  border = max (XINT (arg), 0);
+  border = max (XFIXNUM (arg), 0);
 
   if (border != FRAME_INTERNAL_BORDER_WIDTH (f))
     {
@@ -3292,7 +3292,7 @@ x_icon (struct frame *f, Lisp_Object parms)
   block_input ();
 
   if (! EQ (icon_x, Qunbound))
-    x_wm_set_icon_position (f, XINT (icon_x), XINT (icon_y));
+    x_wm_set_icon_position (f, XFIXNUM (icon_x), XFIXNUM (icon_y));
 
 #if false /* x_get_arg removes the visibility parameter as a side effect,
 	     but x_create_frame still needs it.  */
@@ -3725,7 +3725,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* Specify the parent under which to make this X window.  */
   if (!NILP (parent))
     {
-      f->output_data.x->parent_desc = (Window) XFASTINT (parent);
+      f->output_data.x->parent_desc = (Window) XFIXNAT (parent);
       f->output_data.x->explicit_parent = true;
     }
   else
@@ -5099,8 +5099,8 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
       edges = Fx_frame_edges (parent, Qnative_edges);
       if (!NILP (edges))
 	{
-	  x_native += XINT (Fnth (make_fixnum (0), edges));
-	  y_native += XINT (Fnth (make_fixnum (1), edges));
+	  x_native += XFIXNUM (Fnth (make_fixnum (0), edges));
+	  y_native += XFIXNUM (Fnth (make_fixnum (1), edges));
 	}
 
       outer_left = x_native;
@@ -5476,7 +5476,7 @@ The coordinates X and Y are interpreted in pixels relative to a position
 
   block_input ();
   XWarpPointer (FRAME_X_DISPLAY (f), None, DefaultRootWindow (FRAME_X_DISPLAY (f)),
-		0, 0, 0, 0, XINT (x), XINT (y));
+		0, 0, 0, 0, XFIXNUM (x), XFIXNUM (y));
   unblock_input ();
 
   return Qnil;
@@ -5776,10 +5776,10 @@ FRAME.  Default is to change on the edit X window.  */)
     {
       CHECK_FIXNUM (format);
 
-      if (XINT (format) != 8 && XINT (format) != 16
-          && XINT (format) != 32)
+      if (XFIXNUM (format) != 8 && XFIXNUM (format) != 16
+          && XFIXNUM (format) != 32)
         error ("FORMAT must be one of 8, 16 or 32");
-      element_format = XINT (format);
+      element_format = XFIXNUM (format);
     }
 
   if (CONSP (value))
@@ -6484,10 +6484,10 @@ compute_tip_xy (struct frame *f,
           geometry = Fassq (Qgeometry, monitor);
           if (CONSP (geometry))
             {
-              min_x = XINT (Fnth (make_fixnum (1), geometry));
-              min_y = XINT (Fnth (make_fixnum (2), geometry));
-              max_x = min_x + XINT (Fnth (make_fixnum (3), geometry));
-              max_y = min_y + XINT (Fnth (make_fixnum (4), geometry));
+              min_x = XFIXNUM (Fnth (make_fixnum (1), geometry));
+              min_y = XFIXNUM (Fnth (make_fixnum (2), geometry));
+              max_x = min_x + XFIXNUM (Fnth (make_fixnum (3), geometry));
+              max_y = min_y + XFIXNUM (Fnth (make_fixnum (4), geometry));
               if (min_x <= *root_x && *root_x < max_x
                   && min_y <= *root_y && *root_y < max_y)
                 {
@@ -6511,33 +6511,33 @@ compute_tip_xy (struct frame *f,
     }
 
   if (FIXNUMP (top))
-    *root_y = XINT (top);
+    *root_y = XFIXNUM (top);
   else if (FIXNUMP (bottom))
-    *root_y = XINT (bottom) - height;
-  else if (*root_y + XINT (dy) <= min_y)
+    *root_y = XFIXNUM (bottom) - height;
+  else if (*root_y + XFIXNUM (dy) <= min_y)
     *root_y = min_y; /* Can happen for negative dy */
-  else if (*root_y + XINT (dy) + height <= max_y)
+  else if (*root_y + XFIXNUM (dy) + height <= max_y)
     /* It fits below the pointer */
-    *root_y += XINT (dy);
-  else if (height + XINT (dy) + min_y <= *root_y)
+    *root_y += XFIXNUM (dy);
+  else if (height + XFIXNUM (dy) + min_y <= *root_y)
     /* It fits above the pointer.  */
-    *root_y -= height + XINT (dy);
+    *root_y -= height + XFIXNUM (dy);
   else
     /* Put it on the top.  */
     *root_y = min_y;
 
   if (FIXNUMP (left))
-    *root_x = XINT (left);
+    *root_x = XFIXNUM (left);
   else if (FIXNUMP (right))
-    *root_x = XINT (right) - width;
-  else if (*root_x + XINT (dx) <= min_x)
+    *root_x = XFIXNUM (right) - width;
+  else if (*root_x + XFIXNUM (dx) <= min_x)
     *root_x = 0; /* Can happen for negative dx */
-  else if (*root_x + XINT (dx) + width <= max_x)
+  else if (*root_x + XFIXNUM (dx) + width <= max_x)
     /* It fits to the right of the pointer.  */
-    *root_x += XINT (dx);
-  else if (width + XINT (dx) + min_x <= *root_x)
+    *root_x += XFIXNUM (dx);
+  else if (width + XFIXNUM (dx) + min_x <= *root_x)
     /* It fits to the left of the pointer.  */
-    *root_x -= width + XINT (dx);
+    *root_x -= width + XFIXNUM (dx);
   else
     /* Put it left justified on the screen -- it ought to fit that way.  */
     *root_x = min_x;
@@ -6925,8 +6925,8 @@ Text larger than the specified size is clipped.  */)
       && RANGED_FIXNUMP (1, XCAR (Vx_max_tooltip_size), INT_MAX)
       && RANGED_FIXNUMP (1, XCDR (Vx_max_tooltip_size), INT_MAX))
     {
-      w->total_cols = XFASTINT (XCAR (Vx_max_tooltip_size));
-      w->total_lines = XFASTINT (XCDR (Vx_max_tooltip_size));
+      w->total_cols = XFIXNAT (XCAR (Vx_max_tooltip_size));
+      w->total_lines = XFIXNAT (XCDR (Vx_max_tooltip_size));
     }
   else
     {
@@ -6958,8 +6958,8 @@ Text larger than the specified size is clipped.  */)
   size = Fwindow_text_pixel_size (window, Qnil, Qnil, Qnil,
 				  make_fixnum (w->pixel_height), Qnil);
   /* Add the frame's internal border to calculated size.  */
-  width = XINT (Fcar (size)) + 2 * FRAME_INTERNAL_BORDER_WIDTH (tip_f);
-  height = XINT (Fcdr (size)) + 2 * FRAME_INTERNAL_BORDER_WIDTH (tip_f);
+  width = XFIXNUM (Fcar (size)) + 2 * FRAME_INTERNAL_BORDER_WIDTH (tip_f);
+  height = XFIXNUM (Fcdr (size)) + 2 * FRAME_INTERNAL_BORDER_WIDTH (tip_f);
 
   /* Calculate position of tooltip frame.  */
   compute_tip_xy (tip_f, parms, dx, dy, width, height, &root_x, &root_y);

@@ -629,7 +629,7 @@ do								\
     stack_idx++;						\
     ccl_prog = called_ccl.prog;					\
     ic = CCL_HEADER_MAIN;					\
-    eof_ic = XFASTINT (ccl_prog[CCL_HEADER_EOF]);		\
+    eof_ic = XFIXNAT (ccl_prog[CCL_HEADER_EOF]);		\
     goto ccl_repeat;						\
   }								\
 while (0)
@@ -736,7 +736,7 @@ while (0)
 #define GET_CCL_RANGE(var, ccl_prog, ic, lo, hi)		\
   do								\
     {								\
-      EMACS_INT prog_word = XINT ((ccl_prog)[ic]);		\
+      EMACS_INT prog_word = XFIXNUM ((ccl_prog)[ic]);		\
       if (! ASCENDING_ORDER (lo, prog_word, hi))		\
 	CCL_INVALID_CMD;					\
       (var) = prog_word;					\
@@ -769,12 +769,12 @@ while (0)
       CCL_INVALID_CMD;						\
     else if (dst + len <= dst_end)				\
       {								\
-	if (XFASTINT (ccl_prog[ic]) & 0x1000000)		\
+	if (XFIXNAT (ccl_prog[ic]) & 0x1000000)		\
 	  for (ccli = 0; ccli < len; ccli++)			\
-	    *dst++ = XFASTINT (ccl_prog[ic + ccli]) & 0xFFFFFF;	\
+	    *dst++ = XFIXNAT (ccl_prog[ic + ccli]) & 0xFFFFFF;	\
 	else							\
 	  for (ccli = 0; ccli < len; ccli++)			\
-	    *dst++ = ((XFASTINT (ccl_prog[ic + (ccli / 3)]))	\
+	    *dst++ = ((XFIXNAT (ccl_prog[ic + (ccli / 3)]))	\
 		      >> ((2 - (ccli % 3)) * 8)) & 0xFF;	\
       }								\
     else							\
@@ -926,14 +926,14 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	  break;
 
 	case CCL_SetConst:	/* 00000000000000000000rrrXXXXX */
-	  reg[rrr] = XINT (ccl_prog[ic++]);
+	  reg[rrr] = XFIXNUM (ccl_prog[ic++]);
 	  break;
 
 	case CCL_SetArray:	/* CCCCCCCCCCCCCCCCCCCCRRRrrrXXXXX */
 	  i = reg[RRR];
 	  j = field1 >> 3;
 	  if (0 <= i && i < j)
-	    reg[rrr] = XINT (ccl_prog[ic + i]);
+	    reg[rrr] = XFIXNUM (ccl_prog[ic + i]);
 	  ic += j;
 	  break;
 
@@ -961,13 +961,13 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	  break;
 
 	case CCL_WriteConstJump: /* A--D--D--R--E--S--S-000XXXXX */
-	  i = XINT (ccl_prog[ic]);
+	  i = XFIXNUM (ccl_prog[ic]);
 	  CCL_WRITE_CHAR (i);
 	  ic += ADDR;
 	  break;
 
 	case CCL_WriteConstReadJump: /* A--D--D--R--E--S--S-rrrXXXXX */
-	  i = XINT (ccl_prog[ic]);
+	  i = XFIXNUM (ccl_prog[ic]);
 	  CCL_WRITE_CHAR (i);
 	  ic++;
 	  CCL_READ_CHAR (reg[rrr]);
@@ -975,17 +975,17 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	  break;
 
 	case CCL_WriteStringJump: /* A--D--D--R--E--S--S-000XXXXX */
-	  j = XINT (ccl_prog[ic++]);
+	  j = XFIXNUM (ccl_prog[ic++]);
 	  CCL_WRITE_STRING (j);
 	  ic += ADDR - 1;
 	  break;
 
 	case CCL_WriteArrayReadJump: /* A--D--D--R--E--S--S-rrrXXXXX */
 	  i = reg[rrr];
-	  j = XINT (ccl_prog[ic]);
+	  j = XFIXNUM (ccl_prog[ic]);
 	  if (0 <= i && i < j)
 	    {
-	      i = XINT (ccl_prog[ic + 1 + i]);
+	      i = XFIXNUM (ccl_prog[ic + 1 + i]);
 	      CCL_WRITE_CHAR (i);
 	    }
 	  ic += j + 2;
@@ -1004,7 +1004,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	case CCL_Branch:	/* CCCCCCCCCCCCCCCCCCCCrrrXXXXX */
 	{
 	  int ioff = 0 <= reg[rrr] && reg[rrr] < field1 ? reg[rrr] : field1;
-	  int incr = XINT (ccl_prog[ic + ioff]);
+	  int incr = XFIXNUM (ccl_prog[ic + ioff]);
 	  ic += incr;
 	}
 	  break;
@@ -1023,7 +1023,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	case CCL_WriteExprConst:  /* 1:00000OPERATION000RRR000XXXXX */
 	  rrr = 7;
 	  i = reg[RRR];
-	  j = XINT (ccl_prog[ic]);
+	  j = XFIXNUM (ccl_prog[ic]);
 	  op = field1 >> 6;
 	  jump_address = ic + 1;
 	  goto ccl_set_expr;
@@ -1056,7 +1056,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	    /* If FFF is nonzero, the CCL program ID is in the
                following code.  */
 	    if (rrr)
-	      prog_id = XINT (ccl_prog[ic++]);
+	      prog_id = XFIXNUM (ccl_prog[ic++]);
 	    else
 	      prog_id = field1;
 
@@ -1081,7 +1081,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	    stack_idx++;
 	    ccl_prog = XVECTOR (AREF (slot, 1))->contents;
 	    ic = CCL_HEADER_MAIN;
-	    eof_ic = XFASTINT (ccl_prog[CCL_HEADER_EOF]);
+	    eof_ic = XFIXNAT (ccl_prog[CCL_HEADER_EOF]);
 	  }
 	  break;
 
@@ -1099,7 +1099,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	  i = reg[rrr];
 	  if (0 <= i && i < field1)
 	    {
-	      j = XINT (ccl_prog[ic + i]);
+	      j = XFIXNUM (ccl_prog[ic + i]);
 	      CCL_WRITE_CHAR (j);
 	    }
 	  ic += field1;
@@ -1124,7 +1124,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	  CCL_SUCCESS;
 
 	case CCL_ExprSelfConst: /* 00000OPERATION000000rrrXXXXX */
-	  i = XINT (ccl_prog[ic++]);
+	  i = XFIXNUM (ccl_prog[ic++]);
 	  op = field1 >> 6;
 	  goto ccl_expr_self;
 
@@ -1160,7 +1160,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 
 	case CCL_SetExprConst:	/* 00000OPERATION000RRRrrrXXXXX */
 	  i = reg[RRR];
-	  j = XINT (ccl_prog[ic++]);
+	  j = XFIXNUM (ccl_prog[ic++]);
 	  op = field1 >> 6;
 	  jump_address = ic;
 	  goto ccl_set_expr;
@@ -1178,8 +1178,8 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	case CCL_JumpCondExprConst: /* A--D--D--R--E--S--S-rrrXXXXX */
 	  i = reg[rrr];
 	  jump_address = ic + ADDR;
-	  op = XINT (ccl_prog[ic++]);
-	  j = XINT (ccl_prog[ic++]);
+	  op = XFIXNUM (ccl_prog[ic++]);
+	  j = XFIXNUM (ccl_prog[ic++]);
 	  rrr = 7;
 	  goto ccl_set_expr;
 
@@ -1189,7 +1189,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	case CCL_JumpCondExprReg:
 	  i = reg[rrr];
 	  jump_address = ic + ADDR;
-	  op = XINT (ccl_prog[ic++]);
+	  op = XFIXNUM (ccl_prog[ic++]);
 	  GET_CCL_RANGE (j, ccl_prog, ic++, 0, 7);
 	  j = reg[j];
 	  rrr = 7;
@@ -1323,9 +1323,9 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		  {
 		    Lisp_Object opl;
 		    opl = HASH_VALUE (h, eop);
-		    if (! (FIXNUMP (opl) && IN_INT_RANGE (XINT (opl))))
+		    if (! (FIXNUMP (opl) && IN_INT_RANGE (XFIXNUM (opl))))
 		      CCL_INVALID_CMD;
-		    reg[RRR] = XINT (opl);
+		    reg[RRR] = XFIXNUM (opl);
 		    reg[7] = 1; /* r7 true for success */
 		  }
 		else
@@ -1340,7 +1340,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		ptrdiff_t size;
 		int fin_ic;
 
-		j = XINT (ccl_prog[ic++]); /* number of maps. */
+		j = XFIXNUM (ccl_prog[ic++]); /* number of maps. */
 		fin_ic = ic + j;
 		op = reg[rrr];
 		if ((j > reg[RRR]) && (j >= 0))
@@ -1359,7 +1359,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		  {
 		    if (!VECTORP (Vcode_conversion_map_vector)) continue;
 		    size = ASIZE (Vcode_conversion_map_vector);
-		    point = XINT (ccl_prog[ic++]);
+		    point = XFIXNUM (ccl_prog[ic++]);
 		    if (! (0 <= point && point < size)) continue;
 		    map = AREF (Vcode_conversion_map_vector, point);
 
@@ -1377,7 +1377,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		       [t ELEMENT STARTPOINT ENDPOINT]  */
 		    if (FIXNUMP (content))
 		      {
-			point = XINT (content);
+			point = XFIXNUM (content);
 			if (!(point <= op && op - point + 1 < size)) continue;
 			content = AREF (map, op - point + 1);
 		      }
@@ -1385,9 +1385,9 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		      {
 			if (size != 4) continue;
 			if (FIXNUMP (AREF (map, 2))
-			    && XINT (AREF (map, 2)) <= op
+			    && XFIXNUM (AREF (map, 2)) <= op
 			    && FIXNUMP (AREF (map, 3))
-			    && op < XINT (AREF (map, 3)))
+			    && op < XFIXNUM (AREF (map, 3)))
 			  content = AREF (map, 1);
 			else
 			  continue;
@@ -1397,10 +1397,10 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 
 		    if (NILP (content))
 		      continue;
-		    else if (FIXNUMP (content) && IN_INT_RANGE (XINT (content)))
+		    else if (FIXNUMP (content) && IN_INT_RANGE (XFIXNUM (content)))
 		      {
 			reg[RRR] = i;
-			reg[rrr] = XINT (content);
+			reg[rrr] = XFIXNUM (content);
 			break;
 		      }
 		    else if (EQ (content, Qt) || EQ (content, Qlambda))
@@ -1413,10 +1413,10 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 			attrib = XCAR (content);
 			value = XCDR (content);
 			if (! (FIXNUMP (attrib) && FIXNUMP (value)
-			       && IN_INT_RANGE (XINT (value))))
+			       && IN_INT_RANGE (XFIXNUM (value))))
 			  continue;
 			reg[RRR] = i;
-			reg[rrr] = XINT (value);
+			reg[rrr] = XFIXNUM (value);
 			break;
 		      }
 		    else if (SYMBOLP (content))
@@ -1453,7 +1453,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		stack_idx_of_map_multiple = 0;
 
 		/* Get number of maps and separators.  */
-		map_set_rest_length = XINT (ccl_prog[ic++]);
+		map_set_rest_length = XFIXNUM (ccl_prog[ic++]);
 
 		fin_ic = ic + map_set_rest_length;
 		op = reg[rrr];
@@ -1524,7 +1524,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		do {
 		  for (;map_set_rest_length > 0;i++, ic++, map_set_rest_length--)
 		    {
-		      point = XINT (ccl_prog[ic]);
+		      point = XFIXNUM (ccl_prog[ic]);
 		      if (point < 0)
 			{
 			  /* +1 is for including separator. */
@@ -1556,7 +1556,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 			 [t ELEMENT STARTPOINT ENDPOINT]  */
 		      if (FIXNUMP (content))
 			{
-			  point = XINT (content);
+			  point = XFIXNUM (content);
 			  if (!(point <= op && op - point + 1 < size)) continue;
 			  content = AREF (map, op - point + 1);
 			}
@@ -1564,9 +1564,9 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 			{
 			  if (size != 4) continue;
 			  if (FIXNUMP (AREF (map, 2))
-			      && XINT (AREF (map, 2)) <= op
+			      && XFIXNUM (AREF (map, 2)) <= op
 			      && FIXNUMP (AREF (map, 3))
-			      && op < XINT (AREF (map, 3)))
+			      && op < XFIXNUM (AREF (map, 3)))
 			    content = AREF (map, 1);
 			  else
 			    continue;
@@ -1578,9 +1578,9 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 			continue;
 
 		      reg[RRR] = i;
-		      if (FIXNUMP (content) && IN_INT_RANGE (XINT (content)))
+		      if (FIXNUMP (content) && IN_INT_RANGE (XFIXNUM (content)))
 			{
-			  op = XINT (content);
+			  op = XFIXNUM (content);
 			  i += map_set_rest_length - 1;
 			  ic += map_set_rest_length - 1;
 			  POP_MAPPING_STACK (map_set_rest_length, reg[rrr]);
@@ -1591,9 +1591,9 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 			  attrib = XCAR (content);
 			  value = XCDR (content);
 			  if (! (FIXNUMP (attrib) && FIXNUMP (value)
-				 && IN_INT_RANGE (XINT (value))))
+				 && IN_INT_RANGE (XFIXNUM (value))))
 			    continue;
-			  op = XINT (value);
+			  op = XFIXNUM (value);
 			  i += map_set_rest_length - 1;
 			  ic += map_set_rest_length - 1;
 			  POP_MAPPING_STACK (map_set_rest_length, reg[rrr]);
@@ -1639,7 +1639,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	      {
 		Lisp_Object map, attrib, value, content;
 		int point;
-		j = XINT (ccl_prog[ic++]); /* map_id */
+		j = XFIXNUM (ccl_prog[ic++]); /* map_id */
 		op = reg[rrr];
 		if (! (VECTORP (Vcode_conversion_map_vector)
 		       && j < ASIZE (Vcode_conversion_map_vector)))
@@ -1657,19 +1657,19 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		if (! (VECTORP (map)
 		       && 0 < ASIZE (map)
 		       && FIXNUMP (AREF (map, 0))
-		       && XINT (AREF (map, 0)) <= op
-		       && op - XINT (AREF (map, 0)) + 1 < ASIZE (map)))
+		       && XFIXNUM (AREF (map, 0)) <= op
+		       && op - XFIXNUM (AREF (map, 0)) + 1 < ASIZE (map)))
 		  {
 		    reg[RRR] = -1;
 		    break;
 		  }
-		point = op - XINT (AREF (map, 0)) + 1;
+		point = op - XFIXNUM (AREF (map, 0)) + 1;
 		reg[RRR] = 0;
 		content = AREF (map, point);
 		if (NILP (content))
 		  reg[RRR] = -1;
 		else if (TYPE_RANGED_FIXNUMP (int, content))
-		  reg[rrr] = XINT (content);
+		  reg[rrr] = XFIXNUM (content);
 		else if (EQ (content, Qt));
 		else if (CONSP (content))
 		  {
@@ -1678,7 +1678,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 		    if (!FIXNUMP (attrib)
 			|| !TYPE_RANGED_FIXNUMP (int, value))
 		      continue;
-		    reg[rrr] = XINT (value);
+		    reg[rrr] = XFIXNUM (value);
 		    break;
 		  }
 		else if (SYMBOLP (content))
@@ -1852,8 +1852,8 @@ resolve_symbol_ccl_program (Lisp_Object ccl)
       return Qnil;
     }
 
-  if (! (0 <= XINT (AREF (result, CCL_HEADER_BUF_MAG))
-	 && ASCENDING_ORDER (0, XINT (AREF (result, CCL_HEADER_EOF)),
+  if (! (0 <= XFIXNUM (AREF (result, CCL_HEADER_BUF_MAG))
+	 && ASCENDING_ORDER (0, XFIXNUM (AREF (result, CCL_HEADER_EOF)),
 			     ASIZE (ccl))))
     return Qnil;
 
@@ -1882,14 +1882,14 @@ ccl_get_compiled_code (Lisp_Object ccl_prog, ptrdiff_t *idx)
 
   val = Fget (ccl_prog, Qccl_program_idx);
   if (! FIXNATP (val)
-      || XINT (val) >= ASIZE (Vccl_program_table))
+      || XFIXNUM (val) >= ASIZE (Vccl_program_table))
     return Qnil;
-  slot = AREF (Vccl_program_table, XINT (val));
+  slot = AREF (Vccl_program_table, XFIXNUM (val));
   if (! VECTORP (slot)
       || ASIZE (slot) != 4
       || ! VECTORP (AREF (slot, 1)))
     return Qnil;
-  *idx = XINT (val);
+  *idx = XFIXNUM (val);
   if (NILP (AREF (slot, 2)))
     {
       val = resolve_symbol_ccl_program (AREF (slot, 1));
@@ -1920,8 +1920,8 @@ setup_ccl_program (struct ccl_program *ccl, Lisp_Object ccl_prog)
       vp = XVECTOR (ccl_prog);
       ccl->size = vp->header.size;
       ccl->prog = vp->contents;
-      ccl->eof_ic = XINT (vp->contents[CCL_HEADER_EOF]);
-      ccl->buf_magnification = XINT (vp->contents[CCL_HEADER_BUF_MAG]);
+      ccl->eof_ic = XFIXNUM (vp->contents[CCL_HEADER_EOF]);
+      ccl->buf_magnification = XFIXNUM (vp->contents[CCL_HEADER_BUF_MAG]);
       if (ccl->idx >= 0)
 	{
 	  Lisp_Object slot;
@@ -1957,7 +1957,7 @@ See the documentation of `define-ccl-program' for the detail of CCL program.  */
 
   val = Fget (object, Qccl_program_idx);
   return ((! FIXNATP (val)
-	   || XINT (val) >= ASIZE (Vccl_program_table))
+	   || XFIXNUM (val) >= ASIZE (Vccl_program_table))
 	  ? Qnil : Qt);
 }
 
@@ -1991,7 +1991,7 @@ programs.  */)
 
   for (i = 0; i < 8; i++)
     ccl.reg[i] = (TYPE_RANGED_FIXNUMP (int, AREF (reg, i))
-		  ? XINT (AREF (reg, i))
+		  ? XFIXNUM (AREF (reg, i))
 		  : 0);
 
   ccl_driver (&ccl, NULL, NULL, 0, 0, Qnil);
@@ -2060,11 +2060,11 @@ usage: (ccl-execute-on-string CCL-PROGRAM STATUS STRING &optional CONTINUE UNIBY
       if (NILP (AREF (status, i)))
 	ASET (status, i, make_fixnum (0));
       if (TYPE_RANGED_FIXNUMP (int, AREF (status, i)))
-	ccl.reg[i] = XINT (AREF (status, i));
+	ccl.reg[i] = XFIXNUM (AREF (status, i));
     }
   if (FIXNUMP (AREF (status, i)))
     {
-      i = XFASTINT (AREF (status, 8));
+      i = XFIXNAT (AREF (status, 8));
       if (ccl.ic < i && i < ccl.size)
 	ccl.ic = i;
     }

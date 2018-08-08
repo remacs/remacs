@@ -485,7 +485,7 @@ lisp_to_json (Lisp_Object lisp, struct json_configuration *conf)
   else if (FIXNUMP (lisp))
     {
       CHECK_TYPE_RANGED_INTEGER (json_int_t, lisp);
-      return json_check (json_integer (XINT (lisp)));
+      return json_check (json_integer (XFIXNUM (lisp)));
     }
   else if (FLOATP (lisp))
     return json_check (json_real (XFLOAT_DATA (lisp)));

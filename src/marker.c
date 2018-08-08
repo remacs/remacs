@@ -525,7 +525,7 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
 	 don't want to call buf_charpos_to_bytepos if POSITION
 	 is a marker and so we know the bytepos already.  */
       if (FIXNUMP (position))
-	charpos = XINT (position), bytepos = -1;
+	charpos = XFIXNUM (position), bytepos = -1;
       else if (MARKERP (position))
 	{
 	  charpos = XMARKER (position)->charpos;
@@ -752,7 +752,7 @@ DEFUN ("buffer-has-markers-at", Fbuffer_has_markers_at, Sbuffer_has_markers_at,
   register struct Lisp_Marker *tail;
   register ptrdiff_t charpos;
 
-  charpos = clip_to_bounds (BEG, XINT (position), Z);
+  charpos = clip_to_bounds (BEG, XFIXNUM (position), Z);
 
   for (tail = BUF_MARKERS (current_buffer); tail; tail = tail->next)
     if (tail->charpos == charpos)

@@ -402,7 +402,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
       ptrdiff_t len = SCHARS (string);
 
       CHECK_FIXNUM (start);
-      pos = XINT (start);
+      pos = XFIXNUM (start);
       if (pos < 0 && -pos <= len)
 	pos = len + pos;
       else if (0 > pos || pos > len)
@@ -1037,7 +1037,7 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
   if (!NILP (count))
     {
       CHECK_FIXNUM (count);
-      n *= XINT (count);
+      n *= XFIXNUM (count);
     }
 
   CHECK_STRING (string);
@@ -1051,7 +1051,7 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
   else
     {
       CHECK_FIXNUM_COERCE_MARKER (bound);
-      lim = XINT (bound);
+      lim = XFIXNUM (bound);
       if (n > 0 ? lim < PT : lim > PT)
 	error ("Invalid search bound (wrong side of point)");
       if (lim > ZV)
@@ -1153,7 +1153,7 @@ do						\
 	Lisp_Object temp;			\
 	temp = Faref (trt, make_fixnum (d));	\
 	if (FIXNUMP (temp))			\
-	  out = XINT (temp);			\
+	  out = XFIXNUM (temp);			\
 	else					\
 	  out = d;				\
       }						\
@@ -2421,9 +2421,9 @@ since only regular expressions have distinguished subexpressions.  */)
   else
     {
       CHECK_FIXNUM (subexp);
-      if (! (0 <= XINT (subexp) && XINT (subexp) < search_regs.num_regs))
+      if (! (0 <= XFIXNUM (subexp) && XFIXNUM (subexp) < search_regs.num_regs))
 	args_out_of_range (subexp, make_fixnum (search_regs.num_regs));
-      sub = XINT (subexp);
+      sub = XFIXNUM (subexp);
     }
 
   if (NILP (string))
@@ -2810,7 +2810,7 @@ match_limit (Lisp_Object num, bool beginningp)
   EMACS_INT n;
 
   CHECK_FIXNUM (num);
-  n = XINT (num);
+  n = XFIXNUM (num);
   if (n < 0)
     args_out_of_range (num, make_fixnum (0));
   if (search_regs.num_regs <= 0)
@@ -2989,7 +2989,7 @@ If optional arg RESEAT is non-nil, make markers on LIST point nowhere.  */)
 
   /* Allocate registers if they don't already exist.  */
   {
-    EMACS_INT length = XFASTINT (Flength (list)) / 2;
+    EMACS_INT length = XFIXNAT (Flength (list)) / 2;
 
     if (length > search_regs.num_regs)
       {
@@ -3055,15 +3055,15 @@ If optional arg RESEAT is non-nil, make markers on LIST point nowhere.  */)
 	      XSETFASTINT (marker, 0);
 
 	    CHECK_FIXNUM_COERCE_MARKER (marker);
-	    if ((XINT (from) < 0
-		 ? TYPE_MINIMUM (regoff_t) <= XINT (from)
-		 : XINT (from) <= TYPE_MAXIMUM (regoff_t))
-		&& (XINT (marker) < 0
-		    ? TYPE_MINIMUM (regoff_t) <= XINT (marker)
-		    : XINT (marker) <= TYPE_MAXIMUM (regoff_t)))
+	    if ((XFIXNUM (from) < 0
+		 ? TYPE_MINIMUM (regoff_t) <= XFIXNUM (from)
+		 : XFIXNUM (from) <= TYPE_MAXIMUM (regoff_t))
+		&& (XFIXNUM (marker) < 0
+		    ? TYPE_MINIMUM (regoff_t) <= XFIXNUM (marker)
+		    : XFIXNUM (marker) <= TYPE_MAXIMUM (regoff_t)))
 	      {
-		search_regs.start[i] = XINT (from);
-		search_regs.end[i] = XINT (marker);
+		search_regs.start[i] = XFIXNUM (from);
+		search_regs.end[i] = XFIXNUM (marker);
 	      }
 	    else
 	      {

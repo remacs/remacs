@@ -224,7 +224,7 @@ them.  This happens with wheeled mice on Windows 9X, for example.  */)
   int n;
 
   CHECK_FIXNUM (nbuttons);
-  n = XINT (nbuttons);
+  n = XFIXNUM (nbuttons);
   if (n < 2 || n > 3)
     xsignal2 (Qargs_out_of_range,
 	      build_string ("only 2 or 3 mouse buttons are supported"),
@@ -540,7 +540,7 @@ dos_set_window_size (int *rows, int *cols)
 				    *rows, *cols), Qnil));
 
   if (FIXNUMP (video_mode)
-      && (video_mode_value = XINT (video_mode)) > 0)
+      && (video_mode_value = XFIXNUM (video_mode)) > 0)
     {
       regs.x.ax = video_mode_value;
       int86 (0x10, &regs, &regs);
@@ -746,7 +746,7 @@ IT_set_cursor_type (struct frame *f, Lisp_Object cursor_type)
 	{
 	  /* Feature: negative WIDTH means cursor at the top
 	     of the character cell, zero means invisible cursor.  */
-	  width = XINT (bar_parms);
+	  width = XFIXNUM (bar_parms);
 	  msdos_set_cursor_shape (f, width >= 0 ? DEFAULT_CURSOR_START : 0,
 				  width);
 	}
@@ -754,9 +754,9 @@ IT_set_cursor_type (struct frame *f, Lisp_Object cursor_type)
 	       && FIXNUMP (XCAR (bar_parms))
 	       && FIXNUMP (XCDR (bar_parms)))
 	{
-	  int start_line = XINT (XCDR (bar_parms));
+	  int start_line = XFIXNUM (XCDR (bar_parms));
 
-	  width = XINT (XCAR (bar_parms));
+	  width = XFIXNUM (XCAR (bar_parms));
 	  msdos_set_cursor_shape (f, start_line, width);
 	}
     }
@@ -1564,7 +1564,7 @@ void
 IT_set_frame_parameters (struct frame *f, Lisp_Object alist)
 {
   Lisp_Object tail;
-  int i, j, length = XINT (Flength (alist));
+  int i, j, length = XFIXNUM (Flength (alist));
   Lisp_Object *parms
     = (Lisp_Object *) alloca (length * word_size);
   Lisp_Object *values

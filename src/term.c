@@ -2147,7 +2147,7 @@ set_tty_color_mode (struct tty_display_info *tty, struct frame *f)
   else
     color_mode = Qnil;
 
-  mode = TYPE_RANGED_FIXNUMP (int, color_mode) ? XINT (color_mode) : 0;
+  mode = TYPE_RANGED_FIXNUMP (int, color_mode) ? XFIXNUM (color_mode) : 0;
 
   if (mode != tty->previous_color_mode)
     {
@@ -2805,8 +2805,8 @@ mouse_get_xy (int *x, int *y)
 						 &time_dummy);
   if (!NILP (lmx))
     {
-      *x = XINT (lmx);
-      *y = XINT (lmy);
+      *x = XFIXNUM (lmx);
+      *y = XFIXNUM (lmy);
     }
 }
 
@@ -3477,7 +3477,7 @@ tty_menu_new_item_coords (struct frame *f, int which, int *x, int *y)
 	  pos = AREF (items, i + 3);
 	  if (NILP (str))
 	    return;
-	  ix = XINT (pos);
+	  ix = XFIXNUM (pos);
 	  if (ix <= *x
 	      /* We use <= so the blank between 2 items on a TTY is
 		 considered part of the previous item.  */
@@ -3488,14 +3488,14 @@ tty_menu_new_item_coords (struct frame *f, int which, int *x, int *y)
 	      if (which == TTYM_NEXT)
 		{
 		  if (i < last_i)
-		    *x = XINT (AREF (items, i + 4 + 3));
+		    *x = XFIXNUM (AREF (items, i + 4 + 3));
 		  else
 		    *x = 0;	/* Wrap around to the first item.  */
 		}
 	      else if (prev_x < 0)
 		{
 		  /* Wrap around to the last item.  */
-		  *x = XINT (AREF (items, last_i + 3));
+		  *x = XFIXNUM (AREF (items, last_i + 3));
 		}
 	      else
 		*x = prev_x;

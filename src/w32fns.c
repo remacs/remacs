@@ -462,7 +462,7 @@ if the entry is new.  */)
   CHECK_FIXNUM (blue);
   CHECK_STRING (name);
 
-  XSETINT (rgb, RGB (XUINT (red), XUINT (green), XUINT (blue)));
+  XSETINT (rgb, RGB (XUFIXNUM (red), XUFIXNUM (green), XUFIXNUM (blue)));
 
   block_input ();
 
@@ -1182,7 +1182,7 @@ w32_defined_color (struct frame *f, const char *color, XColor *color_def,
       if (f)
 	{
 	  /* Apply gamma correction.  */
-	  w32_color_ref = XUINT (tem);
+	  w32_color_ref = XUFIXNUM (tem);
 	  gamma_correct (f, &w32_color_ref);
 	  XSETINT (tem, w32_color_ref);
 	}
@@ -1198,7 +1198,7 @@ w32_defined_color (struct frame *f, const char *color, XColor *color_def,
 	  /* check if color is already mapped */
 	  while (entry)
 	    {
-	      if (W32_COLOR (entry->entry) == XUINT (tem))
+	      if (W32_COLOR (entry->entry) == XUFIXNUM (tem))
 		break;
 	      prev = &entry->next;
 	      entry = entry->next;
@@ -1208,7 +1208,7 @@ w32_defined_color (struct frame *f, const char *color, XColor *color_def,
 	    {
 	      /* not already mapped, so add to list */
 	      entry = xmalloc (sizeof (struct w32_palette_entry));
-	      SET_W32_COLOR (entry->entry, XUINT (tem));
+	      SET_W32_COLOR (entry->entry, XUFIXNUM (tem));
 	      entry->next = NULL;
 	      *prev = entry;
 	      one_w32_display_info.num_colors++;
@@ -1220,7 +1220,7 @@ w32_defined_color (struct frame *f, const char *color, XColor *color_def,
       /* Ensure COLORREF value is snapped to nearest color in (default)
 	 palette by simulating the PALETTERGB macro.  This works whether
 	 or not the display device has a palette. */
-      w32_color_ref = XUINT (tem) | 0x2000000;
+      w32_color_ref = XUFIXNUM (tem) | 0x2000000;
 
       color_def->pixel = w32_color_ref;
       color_def->red = GetRValue (w32_color_ref) * 256;
@@ -1344,7 +1344,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   if (!EQ (Qnil, Vx_pointer_shape))
     {
       CHECK_FIXNUM (Vx_pointer_shape);
-      cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f), XINT (Vx_pointer_shape));
+      cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f), XFIXNUM (Vx_pointer_shape));
     }
   else
     cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f), XC_xterm);
@@ -1354,7 +1354,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
     {
       CHECK_FIXNUM (Vx_nontext_pointer_shape);
       nontext_cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f),
-					  XINT (Vx_nontext_pointer_shape));
+					  XFIXNUM (Vx_nontext_pointer_shape));
     }
   else
     nontext_cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f), XC_left_ptr);
@@ -1364,7 +1364,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
     {
       CHECK_FIXNUM (Vx_hourglass_pointer_shape);
       hourglass_cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f),
-					    XINT (Vx_hourglass_pointer_shape));
+					    XFIXNUM (Vx_hourglass_pointer_shape));
     }
   else
     hourglass_cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f), XC_watch);
@@ -1375,7 +1375,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
     {
       CHECK_FIXNUM (Vx_mode_pointer_shape);
       mode_cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f),
-				       XINT (Vx_mode_pointer_shape));
+				       XFIXNUM (Vx_mode_pointer_shape));
     }
   else
     mode_cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f), XC_xterm);
@@ -1386,7 +1386,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       CHECK_FIXNUM (Vx_sensitive_text_pointer_shape);
       hand_cursor
 	= XCreateFontCursor (FRAME_W32_DISPLAY (f),
-			     XINT (Vx_sensitive_text_pointer_shape));
+			     XFIXNUM (Vx_sensitive_text_pointer_shape));
     }
   else
     hand_cursor = XCreateFontCursor (FRAME_W32_DISPLAY (f), XC_crosshair);
@@ -1396,7 +1396,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       CHECK_FIXNUM (Vx_window_horizontal_drag_shape);
       horizontal_drag_cursor
 	= XCreateFontCursor (FRAME_W32_DISPLAY (f),
-			     XINT (Vx_window_horizontal_drag_shape));
+			     XFIXNUM (Vx_window_horizontal_drag_shape));
     }
   else
     horizontal_drag_cursor
@@ -1407,7 +1407,7 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       CHECK_FIXNUM (Vx_window_vertical_drag_shape);
       vertical_drag_cursor
 	= XCreateFontCursor (FRAME_W32_DISPLAY (f),
-			     XINT (Vx_window_vertical_drag_shape));
+			     XFIXNUM (Vx_window_vertical_drag_shape));
     }
   else
     vertical_drag_cursor
@@ -1689,7 +1689,7 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
   int border;
 
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  border = max (XINT (arg), 0);
+  border = max (XFIXNUM (arg), 0);
 
   if (border != FRAME_INTERNAL_BORDER_WIDTH (f))
     {
@@ -1725,7 +1725,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
   if (!FRAME_MINIBUF_ONLY_P (f) && !FRAME_PARENT_FRAME (f))
     {
       boolean old = FRAME_EXTERNAL_MENU_BAR (f);
-      boolean new = (FIXNUMP (value) && XINT (value) > 0) ? true : false;
+      boolean new = (FIXNUMP (value) && XFIXNUM (value) > 0) ? true : false;
 
       FRAME_MENU_BAR_LINES (f) = 0;
       FRAME_MENU_BAR_HEIGHT (f) = 0;
@@ -1780,8 +1780,8 @@ x_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
     return;
 
   /* Use VALUE only if an integer >= 0.  */
-  if (FIXNUMP (value) && XINT (value) >= 0)
-    nlines = XFASTINT (value);
+  if (FIXNUMP (value) && XFIXNUM (value) >= 0)
+    nlines = XFIXNAT (value);
   else
     nlines = 0;
 
@@ -2027,7 +2027,7 @@ x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
   if (!NILP (new_value) && !FRAME_UNDECORATED (f))
     {
       dwStyle = ((dwStyle & ~WS_THICKFRAME & ~WS_CAPTION)
-		 | ((FIXED_OR_FLOATP (border_width) && (XINT (border_width) > 0))
+		 | ((FIXED_OR_FLOATP (border_width) && (XFIXNUM (border_width) > 0))
 		    ? WS_BORDER : false));
       SetWindowLong (hwnd, GWL_STYLE, dwStyle);
       SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0,
@@ -2334,7 +2334,7 @@ w32_createwindow (struct frame *f, int *coords)
       if (FRAME_UNDECORATED (f))
 	{
 	  /* If we want a thin border, specify it here.  */
-	  if (FIXED_OR_FLOATP (border_width) && (XINT (border_width) > 0))
+	  if (FIXED_OR_FLOATP (border_width) && (XFIXNUM (border_width) > 0))
 	    f->output_data.w32->dwStyle |= WS_BORDER;
 	}
       else
@@ -2350,7 +2350,7 @@ w32_createwindow (struct frame *f, int *coords)
       f->output_data.w32->dwStyle = WS_POPUP;
 
       /* If we want a thin border, specify it here.  */
-      if (FIXED_OR_FLOATP (border_width) && (XINT (border_width) > 0))
+      if (FIXED_OR_FLOATP (border_width) && (XFIXNUM (border_width) > 0))
 	f->output_data.w32->dwStyle |= WS_BORDER;
     }
   else
@@ -3117,9 +3117,9 @@ map_keypad_keys (unsigned int virt_key, unsigned int extended)
 static Lisp_Object w32_grabbed_keys;
 
 #define HOTKEY(vk, mods)      make_fixnum (((vk) & 255) | ((mods) << 8))
-#define HOTKEY_ID(k)          (XFASTINT (k) & 0xbfff)
-#define HOTKEY_VK_CODE(k)     (XFASTINT (k) & 255)
-#define HOTKEY_MODIFIERS(k)   (XFASTINT (k) >> 8)
+#define HOTKEY_ID(k)          (XFIXNAT (k) & 0xbfff)
+#define HOTKEY_VK_CODE(k)     (XFIXNAT (k) & 255)
+#define HOTKEY_MODIFIERS(k)   (XFIXNAT (k) >> 8)
 
 #define RAW_HOTKEY_ID(k)        ((k) & 0xbfff)
 #define RAW_HOTKEY_VK_CODE(k)   ((k) & 255)
@@ -4200,7 +4200,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	      if (GetAsyncKeyState (wParam) & 1)
 		{
 		  if (FIXED_OR_FLOATP (Vw32_phantom_key_code))
-		    key = XUINT (Vw32_phantom_key_code) & 255;
+		    key = XUFIXNUM (Vw32_phantom_key_code) & 255;
 		  else
 		    key = VK_SPACE;
 		  dpyinfo->faked_key = key;
@@ -4216,7 +4216,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	      if (GetAsyncKeyState (wParam) & 1)
 		{
 		  if (FIXED_OR_FLOATP (Vw32_phantom_key_code))
-		    key = XUINT (Vw32_phantom_key_code) & 255;
+		    key = XUFIXNUM (Vw32_phantom_key_code) & 255;
 		  else
 		    key = VK_SPACE;
 		  dpyinfo->faked_key = key;
@@ -5413,11 +5413,11 @@ my_create_window (struct frame * f)
   if (EQ (left, Qunbound))
     coords[0] = CW_USEDEFAULT;
   else
-    coords[0] = XINT (left);
+    coords[0] = XFIXNUM (left);
   if (EQ (top, Qunbound))
     coords[1] = CW_USEDEFAULT;
   else
-    coords[1] = XINT (top);
+    coords[1] = XFIXNUM (top);
 
   if (!PostThreadMessage (dwWindowsThreadId, WM_EMACS_CREATEWINDOW,
 			  (WPARAM)f, (LPARAM)coords))
@@ -5809,7 +5809,7 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
     {
       /* Cast to UINT_PTR shuts up compiler warnings about cast to
 	 pointer from integer of different size.  */
-      f->output_data.w32->parent_desc = (Window) (UINT_PTR) XFASTINT (parent);
+      f->output_data.w32->parent_desc = (Window) (UINT_PTR) XFIXNAT (parent);
       f->output_data.w32->explicit_parent = true;
     }
   else
@@ -7105,33 +7105,33 @@ compute_tip_xy (struct frame *f,
     }
 
   if (FIXNUMP (top))
-    *root_y = XINT (top);
+    *root_y = XFIXNUM (top);
   else if (FIXNUMP (bottom))
-    *root_y = XINT (bottom) - height;
-  else if (*root_y + XINT (dy) <= min_y)
+    *root_y = XFIXNUM (bottom) - height;
+  else if (*root_y + XFIXNUM (dy) <= min_y)
     *root_y = min_y; /* Can happen for negative dy */
-  else if (*root_y + XINT (dy) + height <= max_y)
+  else if (*root_y + XFIXNUM (dy) + height <= max_y)
     /* It fits below the pointer */
-      *root_y += XINT (dy);
-  else if (height + XINT (dy) + min_y <= *root_y)
+      *root_y += XFIXNUM (dy);
+  else if (height + XFIXNUM (dy) + min_y <= *root_y)
     /* It fits above the pointer.  */
-    *root_y -= height + XINT (dy);
+    *root_y -= height + XFIXNUM (dy);
   else
     /* Put it on the top.  */
     *root_y = min_y;
 
   if (FIXNUMP (left))
-    *root_x = XINT (left);
+    *root_x = XFIXNUM (left);
   else if (FIXNUMP (right))
-    *root_x = XINT (right) - width;
-  else if (*root_x + XINT (dx) <= min_x)
+    *root_x = XFIXNUM (right) - width;
+  else if (*root_x + XFIXNUM (dx) <= min_x)
     *root_x = 0; /* Can happen for negative dx */
-  else if (*root_x + XINT (dx) + width <= max_x)
+  else if (*root_x + XFIXNUM (dx) + width <= max_x)
     /* It fits to the right of the pointer.  */
-    *root_x += XINT (dx);
-  else if (width + XINT (dx) + min_x <= *root_x)
+    *root_x += XFIXNUM (dx);
+  else if (width + XFIXNUM (dx) + min_x <= *root_x)
     /* It fits to the left of the pointer.  */
-    *root_x -= width + XINT (dx);
+    *root_x -= width + XFIXNUM (dx);
   else
     /* Put it left justified on the screen -- it ought to fit that way.  */
     *root_x = min_x;
@@ -7389,8 +7389,8 @@ DEFUN ("x-show-tip", Fx_show_tip, Sx_show_tip, 1, 6, 0,
       && RANGED_FIXNUMP (1, XCAR (Vx_max_tooltip_size), INT_MAX)
       && RANGED_FIXNUMP (1, XCDR (Vx_max_tooltip_size), INT_MAX))
     {
-      w->total_cols = XFASTINT (XCAR (Vx_max_tooltip_size));
-      w->total_lines = XFASTINT (XCDR (Vx_max_tooltip_size));
+      w->total_cols = XFIXNAT (XCAR (Vx_max_tooltip_size));
+      w->total_lines = XFIXNAT (XCDR (Vx_max_tooltip_size));
     }
   else
     {
@@ -7422,8 +7422,8 @@ DEFUN ("x-show-tip", Fx_show_tip, Sx_show_tip, 1, 6, 0,
   size = Fwindow_text_pixel_size (window, Qnil, Qnil, Qnil,
 				  make_fixnum (w->pixel_height), Qnil);
   /* Add the frame's internal border to calculated size.  */
-  width = XINT (Fcar (size)) + 2 * FRAME_INTERNAL_BORDER_WIDTH (tip_f);
-  height = XINT (Fcdr (size)) + 2 * FRAME_INTERNAL_BORDER_WIDTH (tip_f);
+  width = XFIXNUM (Fcar (size)) + 2 * FRAME_INTERNAL_BORDER_WIDTH (tip_f);
+  height = XFIXNUM (Fcdr (size)) + 2 * FRAME_INTERNAL_BORDER_WIDTH (tip_f);
   /* Calculate position of tooltip frame.  */
   compute_tip_xy (tip_f, parms, dx, dy, width, height, &root_x, &root_y);
 
@@ -7431,7 +7431,7 @@ DEFUN ("x-show-tip", Fx_show_tip, Sx_show_tip, 1, 6, 0,
   {
     RECT rect;
     int pad = (FIXED_OR_FLOATP (Vw32_tooltip_extra_pixels)
-	       ? max (0, XINT (Vw32_tooltip_extra_pixels))
+	       ? max (0, XFIXNUM (Vw32_tooltip_extra_pixels))
 	       : FRAME_COLUMN_WIDTH (tip_f));
 
     rect.left = rect.top = 0;
@@ -8036,7 +8036,7 @@ If optional parameter FRAME is not specified, use selected frame.  */)
   CHECK_FIXNUM (command);
 
   if (FRAME_W32_P (f))
-    PostMessage (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, XINT (command), 0);
+    PostMessage (FRAME_W32_WINDOW (f), WM_SYSCOMMAND, XFIXNUM (command), 0);
 
   return Qnil;
 }
@@ -8144,7 +8144,7 @@ a ShowWindow flag:
   result = (intptr_t) ShellExecuteW (NULL, ops_w, doc_w, params_w,
 				     GUI_SDATA (current_dir),
 				     (FIXNUMP (show_flag)
-				      ? XINT (show_flag) : SW_SHOWDEFAULT));
+				      ? XFIXNUM (show_flag) : SW_SHOWDEFAULT));
 
   if (result > 32)
     return Qt;
@@ -8301,7 +8301,7 @@ a ShowWindow flag:
       shexinfo_w.lpParameters = params_w;
       shexinfo_w.lpDirectory = current_dir_w;
       shexinfo_w.nShow =
-	(FIXNUMP (show_flag) ? XINT (show_flag) : SW_SHOWDEFAULT);
+	(FIXNUMP (show_flag) ? XFIXNUM (show_flag) : SW_SHOWDEFAULT);
       success = ShellExecuteExW (&shexinfo_w);
       xfree (doc_w);
     }
@@ -8336,7 +8336,7 @@ a ShowWindow flag:
       shexinfo_a.lpParameters = params_a;
       shexinfo_a.lpDirectory = current_dir_a;
       shexinfo_a.nShow =
-	(FIXNUMP (show_flag) ? XINT (show_flag) : SW_SHOWDEFAULT);
+	(FIXNUMP (show_flag) ? XFIXNUM (show_flag) : SW_SHOWDEFAULT);
       success = ShellExecuteExA (&shexinfo_a);
       xfree (doc_w);
       xfree (doc_a);
@@ -8419,7 +8419,7 @@ w32_parse_and_hook_hot_key (Lisp_Object key, int hook)
   if (SYMBOLP (c))
     {
       c = parse_modifiers (c);
-      lisp_modifiers = XINT (Fcar (Fcdr (c)));
+      lisp_modifiers = XFIXNUM (Fcar (Fcdr (c)));
       c = Fcar (c);
       if (!SYMBOLP (c))
 	emacs_abort ();
@@ -8432,9 +8432,9 @@ w32_parse_and_hook_hot_key (Lisp_Object key, int hook)
     }
   else if (FIXNUMP (c))
     {
-      lisp_modifiers = XINT (c) & ~CHARACTERBITS;
+      lisp_modifiers = XFIXNUM (c) & ~CHARACTERBITS;
       /* Many ascii characters are their own virtual key code.  */
-      vk_code = XINT (c) & CHARACTERBITS;
+      vk_code = XFIXNUM (c) & CHARACTERBITS;
     }
 
   if (vk_code < 0 || vk_code > 255)
@@ -8534,7 +8534,7 @@ any key combinations, otherwise nil.  */)
       /* Notify input thread about new hot-key definition, so that it
 	 takes effect without needing to switch focus.  */
       PostThreadMessage (dwWindowsThreadId, WM_EMACS_REGISTER_HOT_KEY,
-			 (WPARAM) XINT (key), 0);
+			 (WPARAM) XFIXNUM (key), 0);
     }
 
   return key;
@@ -8567,7 +8567,7 @@ DEFUN ("w32-unregister-hot-key", Fw32_unregister_hot_key,
       /* Notify input thread about hot-key definition being removed, so
 	 that it takes effect without needing focus switch.  */
       if (PostThreadMessage (dwWindowsThreadId, WM_EMACS_UNREGISTER_HOT_KEY,
-			     (WPARAM) XINT (XCAR (item)), lparam))
+			     (WPARAM) XFIXNUM (XCAR (item)), lparam))
 	{
 	  MSG msg;
 	  GetMessage (&msg, NULL, WM_EMACS_DONE, WM_EMACS_DONE);
@@ -8647,7 +8647,7 @@ to change the state.  */)
   if (NILP (new_state))
     lparam = -1;
   else
-    lparam = (XUINT (new_state)) & 1;
+    lparam = (XUFIXNUM (new_state)) & 1;
   if (PostThreadMessage (dwWindowsThreadId, WM_EMACS_TOGGLE_LOCK_KEY,
 			 (WPARAM) vk_code, lparam))
     {
@@ -9071,7 +9071,7 @@ The coordinates X and Y are interpreted in pixels relative to a position
   if (os_subtype == OS_NT
       && w32_major_version + w32_minor_version >= 6)
     ret = SystemParametersInfo (SPI_GETMOUSETRAILS, 0, &trail_num, 0);
-  SetCursorPos (XINT (x), XINT (y));
+  SetCursorPos (XFIXNUM (x), XFIXNUM (y));
   if (ret)
     SystemParametersInfo (SPI_SETMOUSETRAILS, trail_num, NULL, 0);
   unblock_input ();
@@ -9432,7 +9432,7 @@ w32_console_toggle_lock_key (int vk_code, Lisp_Object new_state)
 
   if (NILP (new_state)
       || (FIXED_OR_FLOATP (new_state)
-	  && ((XUINT (new_state)) & 1) != cur_state))
+	  && ((XUFIXNUM (new_state)) & 1) != cur_state))
     {
 #ifdef WINDOWSNT
       faked_key = vk_code;
@@ -10071,7 +10071,7 @@ DEFUN ("w32-notification-close",
   struct frame *f = SELECTED_FRAME ();
 
   if (FIXNUMP (id))
-    delete_tray_notification (f, XINT (id));
+    delete_tray_notification (f, XFIXNUM (id));
 
   return Qnil;
 }

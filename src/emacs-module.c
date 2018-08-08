@@ -302,7 +302,7 @@ module_make_global_ref (emacs_env *env, emacs_value ref)
   if (i >= 0)
     {
       Lisp_Object value = HASH_VALUE (h, i);
-      EMACS_INT refcount = XFASTINT (value) + 1;
+      EMACS_INT refcount = XFIXNAT (value) + 1;
       if (MOST_POSITIVE_FIXNUM < refcount)
 	xsignal0 (Qoverflow_error);
       value = make_fixed_natnum (refcount);
@@ -329,7 +329,7 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
 
   if (i >= 0)
     {
-      EMACS_INT refcount = XFASTINT (HASH_VALUE (h, i)) - 1;
+      EMACS_INT refcount = XFIXNAT (HASH_VALUE (h, i)) - 1;
       if (refcount > 0)
         set_hash_value_slot (h, i, make_fixed_natnum (refcount));
       else
@@ -525,7 +525,7 @@ module_extract_integer (emacs_env *env, emacs_value n)
 	xsignal1 (Qoverflow_error, l);
       return mpz_get_si (XBIGNUM (l)->value);
     }
-  return XINT (l);
+  return XFIXNUM (l);
 }
 
 static emacs_value

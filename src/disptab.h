@@ -79,7 +79,7 @@ extern struct Lisp_Char_Table *buffer_display_table (void);
 #define GLYPH_FOLLOW_ALIASES(base, length, g)			\
   do {								\
     while (GLYPH_ALIAS_P ((base), (length), (g)))		\
-      SET_GLYPH_CHAR ((g), XINT ((base)[GLYPH_CHAR (g)]));	\
+      SET_GLYPH_CHAR ((g), XFIXNUM ((base)[GLYPH_CHAR (g)]));	\
     if (!GLYPH_CHAR_VALID_P (g))				\
       SET_GLYPH_CHAR (g, ' ');					\
   } while (false)

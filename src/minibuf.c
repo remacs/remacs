@@ -157,7 +157,7 @@ string_to_object (Lisp_Object val, Lisp_Object defalt)
     }
 
   expr_and_pos = Fread_from_string (val, Qnil, Qnil);
-  pos = XINT (Fcdr (expr_and_pos));
+  pos = XFIXNUM (Fcdr (expr_and_pos));
   if (pos != SCHARS (val))
     {
       /* Ignore trailing whitespace; any other trailing junk
@@ -198,7 +198,7 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
 
   /* Check, whether we need to suppress echoing.  */
   if (CHARACTERP (Vread_hide_char))
-    hide_char = XFASTINT (Vread_hide_char);
+    hide_char = XFIXNAT (Vread_hide_char);
 
   /* Manipulate tty.  */
   if (hide_char)
@@ -299,7 +299,7 @@ Return (point-min) if current buffer is not a minibuffer.  */)
 
   end = Ffield_end (beg, Qnil, Qnil);
 
-  if (XINT (end) == ZV && NILP (Fget_char_property (beg, Qfield, Qnil)))
+  if (XFIXNUM (end) == ZV && NILP (Fget_char_property (beg, Qfield, Qnil)))
     return beg;
   else
     return end;
@@ -311,7 +311,7 @@ DEFUN ("minibuffer-contents", Fminibuffer_contents,
 If the current buffer is not a minibuffer, return its entire contents.  */)
   (void)
 {
-  ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
+  ptrdiff_t prompt_end = XFIXNUM (Fminibuffer_prompt_end ());
   return make_buffer_string (prompt_end, ZV, 1);
 }
 
@@ -321,7 +321,7 @@ DEFUN ("minibuffer-contents-no-properties", Fminibuffer_contents_no_properties,
 If the current buffer is not a minibuffer, return its entire contents.  */)
   (void)
 {
-  ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
+  ptrdiff_t prompt_end = XFIXNUM (Fminibuffer_prompt_end ());
   return make_buffer_string (prompt_end, ZV, 0);
 }
 
@@ -395,11 +395,11 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 	    {
 	      CHECK_FIXNUM (backup_n);
 	      /* Convert to distance from end of input.  */
-	      if (XINT (backup_n) < 1)
+	      if (XFIXNUM (backup_n) < 1)
 		/* A number too small means the beginning of the string.  */
 		pos =  - SCHARS (initial);
 	      else
-		pos = XINT (backup_n) - 1 - SCHARS (initial);
+		pos = XFIXNUM (backup_n) - 1 - SCHARS (initial);
 	    }
 	}
       else
@@ -788,12 +788,12 @@ read_minibuf_unwind (void)
   /* Restore prompt, etc, from outer minibuffer level.  */
   Lisp_Object key_vec = Fcar (minibuf_save_list);
   eassert (VECTORP (key_vec));
-  this_command_key_count = XFASTINT (Flength (key_vec));
+  this_command_key_count = XFIXNAT (Flength (key_vec));
   this_command_keys = key_vec;
   minibuf_save_list = Fcdr (minibuf_save_list);
   minibuf_prompt = Fcar (minibuf_save_list);
   minibuf_save_list = Fcdr (minibuf_save_list);
-  minibuf_prompt_width = XFASTINT (Fcar (minibuf_save_list));
+  minibuf_prompt_width = XFIXNAT (Fcar (minibuf_save_list));
   minibuf_save_list = Fcdr (minibuf_save_list);
   Vhelp_form = Fcar (minibuf_save_list);
   minibuf_save_list = Fcdr (minibuf_save_list);
@@ -1327,7 +1327,7 @@ is used to further constrain the set of candidates.  */)
 				      eltstring, zero,
 				      make_fixnum (compare),
 				      completion_ignore_case ? Qt : Qnil);
-	      matchsize = EQ (tem, Qt) ? compare : eabs (XINT (tem)) - 1;
+	      matchsize = EQ (tem, Qt) ? compare : eabs (XFIXNUM (tem)) - 1;
 
 	      if (completion_ignore_case)
 		{

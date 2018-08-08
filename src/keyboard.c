@@ -441,7 +441,7 @@ static bool
 echo_keystrokes_p (void)
 {
   return (FLOATP (Vecho_keystrokes) ? XFLOAT_DATA (Vecho_keystrokes) > 0.0
-	  : FIXNUMP (Vecho_keystrokes) ? XINT (Vecho_keystrokes) > 0
+	  : FIXNUMP (Vecho_keystrokes) ? XFIXNUM (Vecho_keystrokes) > 0
           : false);
 }
 
@@ -467,7 +467,7 @@ echo_add_key (Lisp_Object c)
   c = EVENT_HEAD (c);
 
   if (FIXNUMP (c))
-    ptr = push_key_description (XINT (c), ptr);
+    ptr = push_key_description (XFIXNUM (c), ptr);
   else if (SYMBOLP (c))
     {
       Lisp_Object name = SYMBOL_NAME (c);
@@ -541,7 +541,7 @@ echo_dash (void)
       idx = make_fixnum (SCHARS (KVAR (current_kboard, echo_string)) - 1);
       last_char = Faref (KVAR (current_kboard, echo_string), idx);
 
-      if (XINT (last_char) == '-' && XINT (prev_char) != ' ')
+      if (XFIXNUM (last_char) == '-' && XFIXNUM (prev_char) != ' ')
 	return;
     }
 
@@ -1525,7 +1525,7 @@ command_loop_1 (void)
 		{
 		  Lisp_Object txt
 		    = call1 (Fsymbol_value (Qregion_extract_function), Qnil);
-		  if (XINT (Flength (txt)) > 0)
+		  if (XFIXNUM (Flength (txt)) > 0)
 		    /* Don't set empty selections.  */
 		    call2 (Qgui_set_selection, QPRIMARY, txt);
 		}
@@ -1677,7 +1677,7 @@ adjust_point_for_property (ptrdiff_t last_pt, bool modified)
 			|| !NILP (Foverlay_get (overlay, Qbefore_string))));
 	      tmp = Fnext_single_char_property_change
 		(make_fixnum (end), Qinvisible, Qnil, Qnil);
-	      end = FIXNATP (tmp) ? XFASTINT (tmp) : ZV;
+	      end = FIXNATP (tmp) ? XFIXNAT (tmp) : ZV;
 	    }
 	  while (beg > BEGV
 #if 0
@@ -1695,7 +1695,7 @@ adjust_point_for_property (ptrdiff_t last_pt, bool modified)
 			|| !NILP (Foverlay_get (overlay, Qbefore_string))));
 	      tmp = Fprevious_single_char_property_change
 		(make_fixnum (beg), Qinvisible, Qnil, Qnil);
-	      beg = FIXNATP (tmp) ? XFASTINT (tmp) : BEGV;
+	      beg = FIXNATP (tmp) ? XFIXNAT (tmp) : BEGV;
 	    }
 
 	  /* Move away from the inside area.  */
@@ -2145,7 +2145,7 @@ read_event_from_main_queue (struct timespec *end_time,
     }
 
   /* Terminate Emacs in batch mode if at eof.  */
-  if (noninteractive && FIXNUMP (c) && XINT (c) < 0)
+  if (noninteractive && FIXNUMP (c) && XFIXNUM (c) < 0)
     Fkill_emacs (make_fixnum (1));
 
   if (FIXNUMP (c))
@@ -2154,12 +2154,12 @@ read_event_from_main_queue (struct timespec *end_time,
       if ((extra_keyboard_modifiers & CHAR_CTL)
 	  || ((extra_keyboard_modifiers & 0177) < ' '
 	      && (extra_keyboard_modifiers & 0177) != 0))
-	XSETINT (c, make_ctrl_char (XINT (c)));
+	XSETINT (c, make_ctrl_char (XFIXNUM (c)));
 
       /* Transfer any other modifier bits directly from
 	 extra_keyboard_modifiers to c.  Ignore the actual character code
 	 in the low 16 bits of extra_keyboard_modifiers.  */
-      XSETINT (c, XINT (c) | (extra_keyboard_modifiers & ~0xff7f & ~CHAR_CTL));
+      XSETINT (c, XFIXNUM (c) | (extra_keyboard_modifiers & ~0xff7f & ~CHAR_CTL));
     }
 
   return c;
@@ -2208,7 +2208,7 @@ read_decoded_event_from_main_queue (struct timespec *end_time,
 	  eassert (n < MAX_ENCODED_BYTES);
 	  events[n++] = nextevt;
 	  if (FIXNATP (nextevt)
-	      && XINT (nextevt) < (meta_key == 1 ? 0x80 : 0x100))
+	      && XFIXNUM (nextevt) < (meta_key == 1 ? 0x80 : 0x100))
 	    { /* An encoded byte sequence, let's try to decode it.  */
 	      struct coding_system *coding
 		= TERMINAL_KEYBOARD_CODING (terminal);
@@ -2218,7 +2218,7 @@ read_decoded_event_from_main_queue (struct timespec *end_time,
 		  int i;
 		  if (meta_key != 2)
 		    for (i = 0; i < n; i++)
-		      events[i] = make_fixnum (XINT (events[i]) & ~0x80);
+		      events[i] = make_fixnum (XFIXNUM (events[i]) & ~0x80);
 		}
 	      else
 		{
@@ -2226,7 +2226,7 @@ read_decoded_event_from_main_queue (struct timespec *end_time,
 		  unsigned char dest[MAX_ENCODED_BYTES * MAX_MULTIBYTE_LENGTH];
 		  int i;
 		  for (i = 0; i < n; i++)
-		    src[i] = XINT (events[i]);
+		    src[i] = XFIXNUM (events[i]);
 		  if (meta_key != 2)
 		    for (i = 0; i < n; i++)
 		      src[i] &= ~0x80;
@@ -2403,7 +2403,7 @@ read_char (int commandflag, Lisp_Object map,
 	 Also, some things replace the macro with t
 	 to force an early exit.  */
       if (EQ (Vexecuting_kbd_macro, Qt)
-	  || executing_kbd_macro_index >= XFASTINT (Flength (Vexecuting_kbd_macro)))
+	  || executing_kbd_macro_index >= XFIXNAT (Flength (Vexecuting_kbd_macro)))
 	{
 	  XSETINT (c, -1);
 	  goto exit;
@@ -2411,8 +2411,8 @@ read_char (int commandflag, Lisp_Object map,
 
       c = Faref (Vexecuting_kbd_macro, make_fixnum (executing_kbd_macro_index));
       if (STRINGP (Vexecuting_kbd_macro)
-	  && (XFASTINT (c) & 0x80) && (XFASTINT (c) <= 0xff))
-	XSETFASTINT (c, CHAR_META | (XFASTINT (c) & ~0x80));
+	  && (XFIXNAT (c) & 0x80) && (XFIXNAT (c) <= 0xff))
+	XSETFASTINT (c, CHAR_META | (XFIXNAT (c) & ~0x80));
 
       executing_kbd_macro_index++;
 
@@ -2516,7 +2516,7 @@ read_char (int commandflag, Lisp_Object map,
     {
       c = read_char_minibuf_menu_prompt (commandflag, map);
 
-      if (FIXNUMP (c) && XINT (c) == -2)
+      if (FIXNUMP (c) && XFIXNUM (c) == -2)
         return c;               /* wrong_kboard_jmpbuf */
 
       if (! NILP (c))
@@ -2676,10 +2676,10 @@ read_char (int commandflag, Lisp_Object map,
       if (commandflag != 0 && commandflag != -2
 	  && num_nonmacro_input_events > last_auto_save
 	  && FIXNUMP (Vauto_save_timeout)
-	  && XINT (Vauto_save_timeout) > 0)
+	  && XFIXNUM (Vauto_save_timeout) > 0)
 	{
 	  Lisp_Object tem0;
-	  EMACS_INT timeout = XFASTINT (Vauto_save_timeout);
+	  EMACS_INT timeout = XFIXNAT (Vauto_save_timeout);
 
 	  timeout = min (timeout, MOST_POSITIVE_FIXNUM / delay_level * 4);
 	  timeout = delay_level * timeout / 4;
@@ -2852,15 +2852,15 @@ read_char (int commandflag, Lisp_Object map,
   if (FIXNUMP (c))
     {
       /* If kbd_buffer_get_event gave us an EOF, return that.  */
-      if (XINT (c) == -1)
+      if (XFIXNUM (c) == -1)
 	goto exit;
 
       if ((STRINGP (KVAR (current_kboard, Vkeyboard_translate_table))
-	   && UNSIGNED_CMP (XFASTINT (c), <,
+	   && UNSIGNED_CMP (XFIXNAT (c), <,
 			    SCHARS (KVAR (current_kboard,
 					  Vkeyboard_translate_table))))
 	  || (VECTORP (KVAR (current_kboard, Vkeyboard_translate_table))
-	      && UNSIGNED_CMP (XFASTINT (c), <,
+	      && UNSIGNED_CMP (XFIXNAT (c), <,
 			       ASIZE (KVAR (current_kboard,
 					    Vkeyboard_translate_table))))
 	  || (CHAR_TABLE_P (KVAR (current_kboard, Vkeyboard_translate_table))
@@ -2910,7 +2910,7 @@ read_char (int commandflag, Lisp_Object map,
      save the echo area contents for it to refer to.  */
   if (FIXNUMP (c)
       && ! NILP (Vinput_method_function)
-      && ' ' <= XINT (c) && XINT (c) < 256 && XINT (c) != 127)
+      && ' ' <= XFIXNUM (c) && XFIXNUM (c) < 256 && XFIXNUM (c) != 127)
     {
       previous_echo_area_message = Fcurrent_message ();
       Vinput_method_previous_message = previous_echo_area_message;
@@ -2940,7 +2940,7 @@ read_char (int commandflag, Lisp_Object map,
       /* Don't run the input method within a key sequence,
 	 after the first event of the key sequence.  */
       && NILP (prev_event)
-      && ' ' <= XINT (c) && XINT (c) < 256 && XINT (c) != 127)
+      && ' ' <= XFIXNUM (c) && XFIXNUM (c) < 256 && XFIXNUM (c) != 127)
     {
       Lisp_Object keys;
       ptrdiff_t key_count;
@@ -3261,10 +3261,10 @@ record_char (Lisp_Object c)
       block_input ();
       if (FIXNUMP (c))
 	{
-	  if (XUINT (c) < 0x100)
-	    putc_unlocked (XUINT (c), dribble);
+	  if (XUFIXNUM (c) < 0x100)
+	    putc_unlocked (XUFIXNUM (c), dribble);
 	  else
-	    fprintf (dribble, " 0x%"pI"x", XUINT (c));
+	    fprintf (dribble, " 0x%"pI"x", XUFIXNUM (c));
 	}
       else
 	{
@@ -5009,7 +5009,7 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
   int xret = 0, yret = 0;
   /* The window or frame under frame pixel coordinates (x,y)  */
   Lisp_Object window_or_frame = f
-    ? window_from_coordinates (f, XINT (x), XINT (y), &part, 0)
+    ? window_from_coordinates (f, XFIXNUM (x), XFIXNUM (y), &part, 0)
     : Qnil;
 
   if (WINDOWP (window_or_frame))
@@ -5024,15 +5024,15 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
       Lisp_Object object = Qnil;
 
       /* Pixel coordinates relative to the window corner.  */
-      int wx = XINT (x) - WINDOW_LEFT_EDGE_X (w);
-      int wy = XINT (y) - WINDOW_TOP_EDGE_Y (w);
+      int wx = XFIXNUM (x) - WINDOW_LEFT_EDGE_X (w);
+      int wy = XFIXNUM (y) - WINDOW_TOP_EDGE_Y (w);
 
       /* For text area clicks, return X, Y relative to the corner of
 	 this text area.  Note that dX, dY etc are set below, by
 	 buffer_posn_from_coords.  */
       if (part == ON_TEXT)
 	{
-	  xret = XINT (x) - window_box_left (w, TEXT_AREA);
+	  xret = XFIXNUM (x) - window_box_left (w, TEXT_AREA);
 	  yret = wy - WINDOW_HEADER_LINE_HEIGHT (w);
 	}
       /* For mode line and header line clicks, return X, Y relative to
@@ -5152,7 +5152,7 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 	    : (part == ON_RIGHT_FRINGE || part == ON_RIGHT_MARGIN
 	       || (part == ON_VERTICAL_SCROLL_BAR
 		   && WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (w)))
-	    ? (XINT (x) - window_box_left (w, TEXT_AREA))
+	    ? (XFIXNUM (x) - window_box_left (w, TEXT_AREA))
 	    : 0;
 	  int y2 = wy;
 
@@ -5210,8 +5210,8 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
     {
       /* Return mouse pixel coordinates here.  */
       XSETFRAME (window_or_frame, f);
-      xret = XINT (x);
-      yret = XINT (y);
+      xret = XFIXNUM (x);
+      yret = XFIXNUM (y);
 
       if (FRAME_LIVE_P (f)
 	  && FRAME_INTERNAL_BORDER_WIDTH (f) > 0
@@ -5530,7 +5530,7 @@ make_lispy_event (struct input_event *event)
 	       in a menu (non-toolkit version).  */
 	    if (!toolkit_menubar_in_use (f))
 	      {
-		pixel_to_glyph_coords (f, XINT (event->x), XINT (event->y),
+		pixel_to_glyph_coords (f, XFIXNUM (event->x), XFIXNUM (event->y),
 				       &column, &row, NULL, 1);
 
 		/* In the non-toolkit version, clicks on the menu bar
@@ -5555,8 +5555,8 @@ make_lispy_event (struct input_event *event)
 			pos = AREF (items, i + 3);
 			if (NILP (string))
 			  break;
-			if (column >= XINT (pos)
-			    && column < XINT (pos) + SCHARS (string))
+			if (column >= XFIXNUM (pos)
+			    && column < XFIXNUM (pos) + SCHARS (string))
 			  {
 			    item = AREF (items, i);
 			    break;
@@ -5616,18 +5616,18 @@ make_lispy_event (struct input_event *event)
 	    fuzz = double_click_fuzz / 8;
 
 	  is_double = (button == last_mouse_button
-		       && (eabs (XINT (event->x) - last_mouse_x) <= fuzz)
-		       && (eabs (XINT (event->y) - last_mouse_y) <= fuzz)
+		       && (eabs (XFIXNUM (event->x) - last_mouse_x) <= fuzz)
+		       && (eabs (XFIXNUM (event->y) - last_mouse_y) <= fuzz)
 		       && button_down_time != 0
 		       && (EQ (Vdouble_click_time, Qt)
 			   || (FIXNATP (Vdouble_click_time)
 			       && (event->timestamp - button_down_time
-				   < XFASTINT (Vdouble_click_time)))));
+				   < XFIXNAT (Vdouble_click_time)))));
 	}
 
 	last_mouse_button = button;
-	last_mouse_x = XINT (event->x);
-	last_mouse_y = XINT (event->y);
+	last_mouse_x = XFIXNUM (event->x);
+	last_mouse_y = XFIXNUM (event->y);
 
 	/* If this is a button press, squirrel away the location, so
            we can decide later whether it was a click or a drag.  */
@@ -5674,8 +5674,8 @@ make_lispy_event (struct input_event *event)
 		if (CONSP (down)
 		    && FIXNUMP (XCAR (down)) && FIXNUMP (XCDR (down)))
 		  {
-		    xdiff = XINT (XCAR (new_down)) - XINT (XCAR (down));
-		    ydiff = XINT (XCDR (new_down)) - XINT (XCDR (down));
+		    xdiff = XFIXNUM (XCAR (new_down)) - XFIXNUM (XCAR (down));
+		    ydiff = XFIXNUM (XCDR (new_down)) - XFIXNUM (XCDR (down));
 		  }
 
 		if (ignore_mouse_drag_p)
@@ -5794,13 +5794,13 @@ make_lispy_event (struct input_event *event)
             symbol_num += 2;
 
 	  is_double = (last_mouse_button == - (1 + symbol_num)
-		       && (eabs (XINT (event->x) - last_mouse_x) <= fuzz)
-		       && (eabs (XINT (event->y) - last_mouse_y) <= fuzz)
+		       && (eabs (XFIXNUM (event->x) - last_mouse_x) <= fuzz)
+		       && (eabs (XFIXNUM (event->y) - last_mouse_y) <= fuzz)
 		       && button_down_time != 0
 		       && (EQ (Vdouble_click_time, Qt)
 			   || (FIXNATP (Vdouble_click_time)
 			       && (event->timestamp - button_down_time
-				   < XFASTINT (Vdouble_click_time)))));
+				   < XFIXNAT (Vdouble_click_time)))));
 	  if (is_double)
 	    {
 	      double_click_count++;
@@ -5817,8 +5817,8 @@ make_lispy_event (struct input_event *event)
 	  button_down_time = event->timestamp;
 	  /* Use a negative value to distinguish wheel from mouse button.  */
 	  last_mouse_button = - (1 + symbol_num);
-	  last_mouse_x = XINT (event->x);
-	  last_mouse_y = XINT (event->y);
+	  last_mouse_x = XFIXNUM (event->x);
+	  last_mouse_y = XFIXNUM (event->y);
 
 	  /* Get the symbol we should use for the wheel event.  */
 	  head = modify_event_symbol (symbol_num,
@@ -6260,7 +6260,7 @@ lispy_modifier_list (int modifiers)
    SYMBOL's Qevent_symbol_element_mask property, and maintains the
    Qevent_symbol_elements property.  */
 
-#define KEY_TO_CHAR(k) (XINT (k) & ((1 << CHARACTERBITS) - 1))
+#define KEY_TO_CHAR(k) (XFIXNUM (k) & ((1 << CHARACTERBITS) - 1))
 
 Lisp_Object
 parse_modifiers (Lisp_Object symbol)
@@ -6268,7 +6268,7 @@ parse_modifiers (Lisp_Object symbol)
   Lisp_Object elements;
 
   if (FIXNUMP (symbol))
-    return list2i (KEY_TO_CHAR (symbol), XINT (symbol) & CHAR_MODIFIER_MASK);
+    return list2i (KEY_TO_CHAR (symbol), XFIXNUM (symbol) & CHAR_MODIFIER_MASK);
   else if (!SYMBOLP (symbol))
     return Qnil;
 
@@ -6336,7 +6336,7 @@ apply_modifiers (int modifiers, Lisp_Object base)
   modifiers &= INTMASK;
 
   if (FIXNUMP (base))
-    return make_fixnum (XINT (base) | modifiers);
+    return make_fixnum (XFIXNUM (base) | modifiers);
 
   /* The click modifier never figures into cache indices.  */
   cache = Fget (base, Qmodifier_cache);
@@ -6404,7 +6404,7 @@ reorder_modifiers (Lisp_Object symbol)
   Lisp_Object parsed;
 
   parsed = parse_modifiers (symbol);
-  return apply_modifiers (XFASTINT (XCAR (XCDR (parsed))),
+  return apply_modifiers (XFIXNAT (XCAR (XCDR (parsed))),
 			  XCAR (parsed));
 }
 
@@ -6491,7 +6491,7 @@ modify_event_symbol (ptrdiff_t symbol_num, int modifiers, Lisp_Object symbol_kin
 	  USE_SAFE_ALLOCA;
 	  buf = SAFE_ALLOCA (len);
 	  esprintf (buf, "%s-%"pI"d", SDATA (name_alist_or_stem),
-		    XINT (symbol_int) + 1);
+		    XFIXNUM (symbol_int) + 1);
 	  value = intern (buf);
 	  SAFE_FREE ();
 	}
@@ -6578,18 +6578,18 @@ has the same base event type and all the specified modifiers.  */)
     {
       /* Turn (shift a) into A.  */
       if ((modifiers & shift_modifier) != 0
-	  && (XINT (base) >= 'a' && XINT (base) <= 'z'))
+	  && (XFIXNUM (base) >= 'a' && XFIXNUM (base) <= 'z'))
 	{
-	  XSETINT (base, XINT (base) - ('a' - 'A'));
+	  XSETINT (base, XFIXNUM (base) - ('a' - 'A'));
 	  modifiers &= ~shift_modifier;
 	}
 
       /* Turn (control a) into C-a.  */
       if (modifiers & ctrl_modifier)
 	return make_fixnum ((modifiers & ~ctrl_modifier)
-			    | make_ctrl_char (XINT (base)));
+			    | make_ctrl_char (XFIXNUM (base)));
       else
-	return make_fixnum (modifiers | XINT (base));
+	return make_fixnum (modifiers | XFIXNUM (base));
     }
   else if (SYMBOLP (base))
     return apply_modifiers (modifiers, base);
@@ -8527,8 +8527,8 @@ read_char_minibuf_menu_prompt (int commandflag,
 
 		  upcased_event = Fupcase (event);
 		  downcased_event = Fdowncase (event);
-		  char_matches = (XINT (upcased_event) == SREF (s, 0)
-				  || XINT (downcased_event) == SREF (s, 0));
+		  char_matches = (XFIXNUM (upcased_event) == SREF (s, 0)
+				  || XFIXNUM (downcased_event) == SREF (s, 0));
 		  if (! char_matches)
 		    desc = Fsingle_key_description (event, Qnil);
 
@@ -8633,10 +8633,10 @@ read_char_minibuf_menu_prompt (int commandflag,
       while (BUFFERP (obj));
       kset_defining_kbd_macro (current_kboard, orig_defn_macro);
 
-      if (!FIXNUMP (obj) || XINT (obj) == -2
+      if (!FIXNUMP (obj) || XFIXNUM (obj) == -2
 	  || (! EQ (obj, menu_prompt_more_char)
 	      && (!FIXNUMP (menu_prompt_more_char)
-		  || ! EQ (obj, make_fixnum (Ctl (XINT (menu_prompt_more_char)))))))
+		  || ! EQ (obj, make_fixnum (Ctl (XFIXNUM (menu_prompt_more_char)))))))
 	{
 	  if (!NILP (KVAR (current_kboard, defining_kbd_macro)))
 	    store_kbd_macro_char (obj);
@@ -8757,7 +8757,7 @@ keyremap_step (Lisp_Object *keybuf, volatile keyremap *fkey,
      the binding and restart with fkey->start at the end.  */
   if ((VECTORP (next) || STRINGP (next)) && doit)
     {
-      int len = XFASTINT (Flength (next));
+      int len = XFIXNAT (Flength (next));
       int i;
 
       *diff = len - (fkey->end - fkey->start);
@@ -9105,7 +9105,7 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 		             current_binding, last_nonmenu_event,
                              &used_mouse_menu, NULL);
 	    used_mouse_menu_history[t] = used_mouse_menu;
-	    if ((FIXNUMP (key) && XINT (key) == -2) /* wrong_kboard_jmpbuf */
+	    if ((FIXNUMP (key) && XFIXNUM (key) == -2) /* wrong_kboard_jmpbuf */
 		/* When switching to a new tty (with a new keyboard),
 		   read_char returns the new buffer, rather than -2
 		   (Bug#5095).  This is because `terminal-init-xterm'
@@ -9173,7 +9173,7 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 	  /* read_char returns -1 at the end of a macro.
 	     Emacs 18 handles this by returning immediately with a
 	     zero, so that's what we'll do.  */
-	  if (FIXNUMP (key) && XINT (key) == -1)
+	  if (FIXNUMP (key) && XFIXNUM (key) == -1)
 	    {
 	      t = 0;
 	      /* The Microsoft C compiler can't handle the goto that
@@ -9209,7 +9209,7 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 	     quit_throw_to_read_char switched buffers,
 	     replay to get the right keymap.  */
 	  if (FIXNUMP (key)
-	      && XINT (key) == quit_char
+	      && XFIXNUM (key) == quit_char
 	      && current_buffer != starting_buffer)
 	    {
 	      GROW_RAW_KEYBUF;
@@ -9409,7 +9409,7 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 	      int modifiers;
 
 	      breakdown = parse_modifiers (head);
-	      modifiers = XINT (XCAR (XCDR (breakdown)));
+	      modifiers = XFIXNUM (XCAR (XCDR (breakdown)));
 	      /* Attempt to reduce an unbound mouse event to a simpler
 		 event that is bound:
 		   Drags reduce to clicks.
@@ -9642,7 +9642,7 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 	  && FIXNUMP (key))
 	{
 	  Lisp_Object new_key;
-	  EMACS_INT k = XINT (key);
+	  EMACS_INT k = XFIXNUM (key);
 
 	  if (k & shift_modifier)
 	    XSETINT (new_key, k & ~shift_modifier);
@@ -9689,7 +9689,7 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 	{
 	  Lisp_Object breakdown = parse_modifiers (key);
 	  int modifiers
-	    = CONSP (breakdown) ? (XINT (XCAR (XCDR (breakdown)))) : 0;
+	    = CONSP (breakdown) ? (XFIXNUM (XCAR (XCDR (breakdown)))) : 0;
 
 	  if (modifiers & shift_modifier
 	      /* Treat uppercase keys as shifted.  */
@@ -10655,7 +10655,7 @@ See also `current-input-mode'.  */)
     return Qnil;
   tty = t->display_info.tty;
 
-  if (NILP (quit) || !FIXNUMP (quit) || XINT (quit) < 0 || XINT (quit) > 0400)
+  if (NILP (quit) || !FIXNUMP (quit) || XFIXNUM (quit) < 0 || XFIXNUM (quit) > 0400)
     error ("QUIT must be an ASCII character");
 
 #ifndef DOS_NT
@@ -10664,7 +10664,7 @@ See also `current-input-mode'.  */)
 #endif
 
   /* Don't let this value be out of range.  */
-  quit_char = XINT (quit) & (tty->meta_key == 0 ? 0177 : 0377);
+  quit_char = XFIXNUM (quit) & (tty->meta_key == 0 ? 0177 : 0377);
 
 #ifndef DOS_NT
   init_sys_modes (tty);
@@ -10747,7 +10747,7 @@ The `posn-' functions access elements of such lists.  */)
   CHECK_FIXNUM (x);
   /* We allow X of -1, for the newline in a R2L line that overflowed
      into the left fringe.  */
-  if (XINT (x) != -1)
+  if (XFIXNUM (x) != -1)
     CHECK_FIXNAT (x);
   CHECK_FIXNAT (y);
 
@@ -10758,12 +10758,12 @@ The `posn-' functions access elements of such lists.  */)
     {
       struct window *w = decode_live_window (frame_or_window);
 
-      XSETINT (x, (XINT (x)
+      XSETINT (x, (XFIXNUM (x)
 		   + WINDOW_LEFT_EDGE_X (w)
 		   + (NILP (whole)
 		      ? window_box_left_offset (w, TEXT_AREA)
 		      : 0)));
-      XSETINT (y, WINDOW_TO_FRAME_PIXEL_Y (w, XINT (y)));
+      XSETINT (y, WINDOW_TO_FRAME_PIXEL_Y (w, XFIXNUM (y)));
       frame_or_window = w->frame;
     }
 
@@ -10796,15 +10796,15 @@ The `posn-' functions access elements of such lists.  */)
       Lisp_Object x = XCAR (tem);
       Lisp_Object y = XCAR (XCDR (tem));
       Lisp_Object aux_info = XCDR (XCDR (tem));
-      int y_coord = XINT (y);
+      int y_coord = XFIXNUM (y);
 
       /* Point invisible due to hscrolling?  X can be -1 when a
 	 newline in a R2L line overflows into the left fringe.  */
-      if (XINT (x) < -1)
+      if (XFIXNUM (x) < -1)
 	return Qnil;
       if (!NILP (aux_info) && y_coord < 0)
 	{
-	  int rtop = XINT (XCAR (aux_info));
+	  int rtop = XFIXNUM (XCAR (aux_info));
 
 	  y = make_fixnum (y_coord + rtop);
 	}

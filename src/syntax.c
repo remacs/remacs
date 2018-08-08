@@ -615,7 +615,7 @@ find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
       Lisp_Object boc = Fnth (make_fixnum (8), ppss);
       if (FIXED_OR_FLOATP (boc))
         {
-          find_start_value = XINT (boc);
+          find_start_value = XFIXNUM (boc);
           find_start_value_byte = CHAR_TO_BYTE (find_start_value);
         }
       else
@@ -952,7 +952,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 	    {
 	      adjusted = true;
 	      find_start_value
-		= CONSP (state.levelstarts) ? XINT (XCAR (state.levelstarts))
+		= CONSP (state.levelstarts) ? XFIXNUM (XCAR (state.levelstarts))
 		: state.thislevelstart >= 0 ? state.thislevelstart
 		: find_start_value;
 	      find_start_value_byte = CHAR_TO_BYTE (find_start_value);
@@ -1118,7 +1118,7 @@ this is probably the wrong function to use, because it can't take
 {
   int char_int;
   CHECK_CHARACTER (character);
-  char_int = XINT (character);
+  char_int = XFIXNUM (character);
   SETUP_BUFFER_SYNTAX_TABLE ();
   return make_fixnum (syntax_code_spec[SYNTAX (char_int)]);
 }
@@ -1130,7 +1130,7 @@ DEFUN ("matching-paren", Fmatching_paren, Smatching_paren, 1, 1, 0,
   int char_int;
   enum syntaxcode code;
   CHECK_CHARACTER (character);
-  char_int = XINT (character);
+  char_int = XFIXNUM (character);
   SETUP_BUFFER_SYNTAX_TABLE ();
   code = SYNTAX (char_int);
   if (code == Sopen || code == Sclose)
@@ -1165,7 +1165,7 @@ the value of a `syntax-table' text property.  */)
       int len;
       int character = STRING_CHAR_AND_LENGTH (p, len);
       XSETINT (match, character);
-      if (XFASTINT (match) == ' ')
+      if (XFIXNAT (match) == ' ')
 	match = Qnil;
       p += len;
     }
@@ -1277,7 +1277,7 @@ usage: (modify-syntax-entry CHAR NEWENTRY &optional SYNTAX-TABLE)  */)
   if (CONSP (c))
     SET_RAW_SYNTAX_ENTRY_RANGE (syntax_table, c, newentry);
   else
-    SET_RAW_SYNTAX_ENTRY (syntax_table, XINT (c), newentry);
+    SET_RAW_SYNTAX_ENTRY (syntax_table, XFIXNUM (c), newentry);
 
   /* We clear the regexp cache, since character classes can now have
      different values from those in the compiled regexps.*/
@@ -1325,7 +1325,7 @@ DEFUN ("internal-describe-syntax-value", Finternal_describe_syntax_value,
       return syntax;
     }
 
-  syntax_code = XINT (first) & INT_MAX;
+  syntax_code = XFIXNUM (first) & INT_MAX;
   code = syntax_code & 0377;
   start1 = SYNTAX_FLAGS_COMSTART_FIRST (syntax_code);
   start2 = SYNTAX_FLAGS_COMSTART_SECOND (syntax_code);
@@ -1348,7 +1348,7 @@ DEFUN ("internal-describe-syntax-value", Finternal_describe_syntax_value,
   if (NILP (match_lisp))
     insert (" ", 1);
   else
-    insert_char (XINT (match_lisp));
+    insert_char (XFIXNUM (match_lisp));
 
   if (start1)
     insert ("1", 1);
@@ -1413,7 +1413,7 @@ DEFUN ("internal-describe-syntax-value", Finternal_describe_syntax_value,
   if (!NILP (match_lisp))
     {
       insert_string (", matches ");
-      insert_char (XINT (match_lisp));
+      insert_char (XFIXNUM (match_lisp));
     }
 
   if (start1)
@@ -1481,9 +1481,9 @@ scan_words (ptrdiff_t from, EMACS_INT count)
       if (! NILP (Ffboundp (func)))
 	{
 	  pos = call2 (func, make_fixnum (from - 1), make_fixnum (end));
-	  if (FIXNUMP (pos) && from < XINT (pos) && XINT (pos) <= ZV)
+	  if (FIXNUMP (pos) && from < XFIXNUM (pos) && XFIXNUM (pos) <= ZV)
 	    {
-	      from = XINT (pos);
+	      from = XFIXNUM (pos);
 	      from_byte = CHAR_TO_BYTE (from);
 	    }
 	}
@@ -1530,9 +1530,9 @@ scan_words (ptrdiff_t from, EMACS_INT count)
       if (! NILP (Ffboundp (func)))
  	{
 	  pos = call2 (func, make_fixnum (from), make_fixnum (beg));
-	  if (FIXNUMP (pos) && BEGV <= XINT (pos) && XINT (pos) < from)
+	  if (FIXNUMP (pos) && BEGV <= XFIXNUM (pos) && XFIXNUM (pos) < from)
 	    {
-	      from = XINT (pos);
+	      from = XFIXNUM (pos);
 	      from_byte = CHAR_TO_BYTE (from);
 	    }
 	}
@@ -1588,14 +1588,14 @@ instead.  See Info node `(elisp) Word Motion' for details.  */)
   else
     CHECK_FIXNUM (arg);
 
-  val = orig_val = scan_words (PT, XINT (arg));
+  val = orig_val = scan_words (PT, XFIXNUM (arg));
   if (! orig_val)
-    val = XINT (arg) > 0 ? ZV : BEGV;
+    val = XFIXNUM (arg) > 0 ? ZV : BEGV;
 
   /* Avoid jumping out of an input field.  */
   tmp = Fconstrain_to_field (make_fixnum (val), make_fixnum (PT),
 			     Qnil, Qnil, Qnil);
-  val = XFASTINT (tmp);
+  val = XFIXNAT (tmp);
 
   SET_PT (val);
   return val == orig_val ? Qt : Qnil;
@@ -1679,13 +1679,13 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
     CHECK_FIXNUM_COERCE_MARKER (lim);
 
   /* In any case, don't allow scan outside bounds of buffer.  */
-  if (XINT (lim) > ZV)
+  if (XFIXNUM (lim) > ZV)
     XSETFASTINT (lim, ZV);
-  if (XINT (lim) < BEGV)
+  if (XFIXNUM (lim) < BEGV)
     XSETFASTINT (lim, BEGV);
 
   multibyte = (!NILP (BVAR (current_buffer, enable_multibyte_characters))
-	       && (XINT (lim) - PT != CHAR_TO_BYTE (XINT (lim)) - PT_BYTE));
+	       && (XFIXNUM (lim) - PT != CHAR_TO_BYTE (XFIXNUM (lim)) - PT_BYTE));
   string_multibyte = SBYTES (string) > SCHARS (string);
 
   memset (fastmap, 0, sizeof fastmap);
@@ -1936,13 +1936,13 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 
     if (forwardp)
       {
-	endp = (XINT (lim) == GPT) ? GPT_ADDR : CHAR_POS_ADDR (XINT (lim));
-	stop = (pos < GPT && GPT < XINT (lim)) ? GPT_ADDR : endp;
+	endp = (XFIXNUM (lim) == GPT) ? GPT_ADDR : CHAR_POS_ADDR (XFIXNUM (lim));
+	stop = (pos < GPT && GPT < XFIXNUM (lim)) ? GPT_ADDR : endp;
       }
     else
       {
-	endp = CHAR_POS_ADDR (XINT (lim));
-	stop = (pos >= GPT && GPT > XINT (lim)) ? GAP_END_ADDR : endp;
+	endp = CHAR_POS_ADDR (XFIXNUM (lim));
+	stop = (pos >= GPT && GPT > XFIXNUM (lim)) ? GAP_END_ADDR : endp;
       }
 
     /* This code may look up syntax tables using functions that rely on the
@@ -2118,16 +2118,16 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
     CHECK_FIXNUM_COERCE_MARKER (lim);
 
   /* In any case, don't allow scan outside bounds of buffer.  */
-  if (XINT (lim) > ZV)
+  if (XFIXNUM (lim) > ZV)
     XSETFASTINT (lim, ZV);
-  if (XINT (lim) < BEGV)
+  if (XFIXNUM (lim) < BEGV)
     XSETFASTINT (lim, BEGV);
 
-  if (forwardp ? (PT >= XFASTINT (lim)) : (PT <= XFASTINT (lim)))
+  if (forwardp ? (PT >= XFIXNAT (lim)) : (PT <= XFIXNAT (lim)))
     return make_fixnum (0);
 
   multibyte = (!NILP (BVAR (current_buffer, enable_multibyte_characters))
-	       && (XINT (lim) - PT != CHAR_TO_BYTE (XINT (lim)) - PT_BYTE));
+	       && (XFIXNUM (lim) - PT != CHAR_TO_BYTE (XFIXNUM (lim)) - PT_BYTE));
 
   memset (fastmap, 0, sizeof fastmap);
 
@@ -2172,8 +2172,8 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 	while (true)
 	  {
 	    p = BYTE_POS_ADDR (pos_byte);
-	    endp = XINT (lim) == GPT ? GPT_ADDR : CHAR_POS_ADDR (XINT (lim));
-	    stop = pos < GPT && GPT < XINT (lim) ? GPT_ADDR : endp;
+	    endp = XFIXNUM (lim) == GPT ? GPT_ADDR : CHAR_POS_ADDR (XFIXNUM (lim));
+	    stop = pos < GPT && GPT < XFIXNUM (lim) ? GPT_ADDR : endp;
 
 	    do
 	      {
@@ -2205,8 +2205,8 @@ skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
     else
       {
 	p = BYTE_POS_ADDR (pos_byte);
-	endp = CHAR_POS_ADDR (XINT (lim));
-	stop = pos >= GPT && GPT > XINT (lim) ? GAP_END_ADDR : endp;
+	endp = CHAR_POS_ADDR (XFIXNUM (lim));
+	stop = pos >= GPT && GPT > XFIXNUM (lim) ? GAP_END_ADDR : endp;
 
 	if (multibyte)
 	  {
@@ -2275,7 +2275,7 @@ in_classes (int c, Lisp_Object iso_classes)
       elt = XCAR (iso_classes);
       iso_classes = XCDR (iso_classes);
 
-      if (re_iswctype (c, XFASTINT (elt)))
+      if (re_iswctype (c, XFIXNAT (elt)))
 	fits_class = 1;
     }
 
@@ -2443,7 +2443,7 @@ between them, return t; otherwise return nil.  */)
   unsigned short int quit_count = 0;
 
   CHECK_FIXNUM (count);
-  count1 = XINT (count);
+  count1 = XFIXNUM (count);
   stop = count1 > 0 ? ZV : BEGV;
 
   from = PT;
@@ -3057,7 +3057,7 @@ that point is zero, and signal an error if the depth is nonzero.  */)
   CHECK_FIXNUM (count);
   CHECK_FIXNUM (depth);
 
-  return scan_lists (XINT (from), XINT (count), XINT (depth), 0);
+  return scan_lists (XFIXNUM (from), XFIXNUM (count), XFIXNUM (depth), 0);
 }
 
 DEFUN ("scan-sexps", Fscan_sexps, Sscan_sexps, 2, 2, 0,
@@ -3076,7 +3076,7 @@ but before count is used up, nil is returned.  */)
   CHECK_FIXNUM (from);
   CHECK_FIXNUM (count);
 
-  return scan_lists (XINT (from), XINT (count), 0, 1);
+  return scan_lists (XFIXNUM (from), XFIXNUM (count), 0, 1);
 }
 
 DEFUN ("backward-prefix-chars", Fbackward_prefix_chars, Sbackward_prefix_chars,
@@ -3217,7 +3217,7 @@ do { prev_from = from;				\
     {
       Lisp_Object temhd = Fcar (tem);
       if (RANGED_FIXNUMP (PTRDIFF_MIN, temhd, PTRDIFF_MAX))
-        curlevel->last = XINT (temhd);
+        curlevel->last = XFIXNUM (temhd);
       if (++curlevel == endlevel)
         curlevel--; /* error ("Nesting too deep for parser"); */
       curlevel->prev = -1;
@@ -3490,7 +3490,7 @@ internalize_parse_state (Lisp_Object external, struct lisp_parse_state *state)
     {
       tem = Fcar (external);
       if (!NILP (tem))
-	state->depth = XINT (tem);
+	state->depth = XFIXNUM (tem);
       else
 	state->depth = 0;
 
@@ -3500,13 +3500,13 @@ internalize_parse_state (Lisp_Object external, struct lisp_parse_state *state)
       tem = Fcar (external);
       /* Check whether we are inside string_fence-style string: */
       state->instring = (!NILP (tem)
-                         ? (CHARACTERP (tem) ? XFASTINT (tem) : ST_STRING_STYLE)
+                         ? (CHARACTERP (tem) ? XFIXNAT (tem) : ST_STRING_STYLE)
                          : -1);
 
       external = Fcdr (external);
       tem = Fcar (external);
       state->incomment = (!NILP (tem)
-                          ? (FIXNUMP (tem) ? XINT (tem) : -1)
+                          ? (FIXNUMP (tem) ? XFIXNUM (tem) : -1)
                           : 0);
 
       external = Fcdr (external);
@@ -3521,20 +3521,20 @@ internalize_parse_state (Lisp_Object external, struct lisp_parse_state *state)
       state->comstyle = (NILP (tem)
                          ? 0
                          : (RANGED_FIXNUMP (0, tem, ST_COMMENT_STYLE)
-                            ? XINT (tem)
+                            ? XFIXNUM (tem)
                             : ST_COMMENT_STYLE));
 
       external = Fcdr (external);
       tem = Fcar (external);
       state->comstr_start =
-	RANGED_FIXNUMP (PTRDIFF_MIN, tem, PTRDIFF_MAX) ? XINT (tem) : -1;
+	RANGED_FIXNUMP (PTRDIFF_MIN, tem, PTRDIFF_MAX) ? XFIXNUM (tem) : -1;
       external = Fcdr (external);
       tem = Fcar (external);
       state->levelstarts = tem;
 
       external = Fcdr (external);
       tem = Fcar (external);
-      state->prev_syntax = NILP (tem) ? Smax : XINT (tem);
+      state->prev_syntax = NILP (tem) ? Smax : XFIXNUM (tem);
     }
 }
 
@@ -3584,15 +3584,15 @@ Sixth arg COMMENTSTOP non-nil means stop after the start of a comment.
   if (!NILP (targetdepth))
     {
       CHECK_FIXNUM (targetdepth);
-      target = XINT (targetdepth);
+      target = XFIXNUM (targetdepth);
     }
   else
     target = TYPE_MINIMUM (EMACS_INT);	/* We won't reach this depth.  */
 
   validate_region (&from, &to);
   internalize_parse_state (oldstate, &state);
-  scan_sexps_forward (&state, XINT (from), CHAR_TO_BYTE (XINT (from)),
-		      XINT (to),
+  scan_sexps_forward (&state, XFIXNUM (from), CHAR_TO_BYTE (XFIXNUM (from)),
+		      XFIXNUM (to),
 		      target, !NILP (stopbefore),
 		      (NILP (commentstop)
 		       ? 0 : (EQ (commentstop, Qsyntax_table) ? -1 : 1)));

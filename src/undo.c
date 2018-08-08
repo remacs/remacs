@@ -104,7 +104,7 @@ record_insert (ptrdiff_t beg, ptrdiff_t length)
       if (CONSP (elt)
 	  && FIXNUMP (XCAR (elt))
 	  && FIXNUMP (XCDR (elt))
-	  && XINT (XCDR (elt)) == beg)
+	  && XFIXNUM (XCDR (elt)) == beg)
 	{
 	  XSETCDR (elt, make_fixnum (beg + length));
 	  return;
@@ -353,7 +353,7 @@ truncate_undo_list (struct buffer *b)
   /* If by the first boundary we have already passed undo_outer_limit,
      we're heading for memory full, so offer to clear out the list.  */
   if (FIXNUMP (Vundo_outer_limit)
-      && size_so_far > XINT (Vundo_outer_limit)
+      && size_so_far > XFIXNUM (Vundo_outer_limit)
       && !NILP (Vundo_outer_limit_function))
     {
       Lisp_Object tem;

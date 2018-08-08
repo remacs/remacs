@@ -77,14 +77,14 @@ See Info node `(elisp)Random Numbers' for more details.  */)
     seed_random (SSDATA (limit), SBYTES (limit));
 
   val = get_random ();
-  if (FIXNUMP (limit) && 0 < XINT (limit))
+  if (FIXNUMP (limit) && 0 < XFIXNUM (limit))
     while (true)
       {
 	/* Return the remainder, except reject the rare case where
 	   get_random returns a number so close to INTMASK that the
 	   remainder isn't random.  */
-	EMACS_INT remainder = val % XINT (limit);
-	if (val - remainder <= INTMASK - XINT (limit) + 1)
+	EMACS_INT remainder = val % XFIXNUM (limit);
+	if (val - remainder <= INTMASK - XFIXNUM (limit) + 1)
 	  return make_fixnum (remainder);
 	val = get_random ();
       }
@@ -270,9 +270,9 @@ If string STR1 is greater, the value is a positive number N;
 
   /* For backward compatibility, silently bring too-large positive end
      values into range.  */
-  if (FIXNUMP (end1) && SCHARS (str1) < XINT (end1))
+  if (FIXNUMP (end1) && SCHARS (str1) < XFIXNUM (end1))
     end1 = make_fixnum (SCHARS (str1));
-  if (FIXNUMP (end2) && SCHARS (str2) < XINT (end2))
+  if (FIXNUMP (end2) && SCHARS (str2) < XFIXNUM (end2))
     end2 = make_fixnum (SCHARS (str2));
 
   validate_subarray (str1, start1, end1, SCHARS (str1), &from1, &to1);
@@ -298,8 +298,8 @@ If string STR1 is greater, the value is a positive number N;
 
       if (! NILP (ignore_case))
 	{
-	  c1 = XINT (Fupcase (make_fixnum (c1)));
-	  c2 = XINT (Fupcase (make_fixnum (c2)));
+	  c1 = XFIXNUM (Fupcase (make_fixnum (c1)));
+	  c2 = XFIXNUM (Fupcase (make_fixnum (c2)));
 	}
 
       if (c1 == c2)
@@ -645,7 +645,7 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
     {
       EMACS_INT len;
       this = args[argnum];
-      len = XFASTINT (Flength (this));
+      len = XFIXNAT (Flength (this));
       if (target_type == Lisp_String)
 	{
 	  /* We must count the number of bytes needed in the string
@@ -660,7 +660,7 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 	      {
 		ch = AREF (this, i);
 		CHECK_CHARACTER (ch);
-		c = XFASTINT (ch);
+		c = XFIXNAT (ch);
 		this_len_byte = CHAR_BYTES (c);
 		if (STRING_BYTES_BOUND - result_len_byte < this_len_byte)
 		  string_overflow ();
@@ -675,7 +675,7 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 	      {
 		ch = XCAR (this);
 		CHECK_CHARACTER (ch);
-		c = XFASTINT (ch);
+		c = XFIXNAT (ch);
 		this_len_byte = CHAR_BYTES (c);
 		if (STRING_BYTES_BOUND - result_len_byte < this_len_byte)
 		  string_overflow ();
@@ -740,7 +740,7 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 
       this = args[argnum];
       if (!CONSP (this))
-	thislen = Flength (this), thisleni = XINT (thislen);
+	thislen = Flength (this), thisleni = XFIXNUM (thislen);
 
       /* Between strings of the same kind, copy fast.  */
       if (STRINGP (this) && STRINGP (val)
@@ -827,7 +827,7 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
 	      {
 		int c;
 		CHECK_CHARACTER (elt);
-		c = XFASTINT (elt);
+		c = XFIXNAT (elt);
 		if (some_multibyte)
 		  toindex_byte += CHAR_STRING (c, SDATA (val) + toindex_byte);
 		else
@@ -1260,7 +1260,7 @@ validate_subarray (Lisp_Object array, Lisp_Object from, Lisp_Object to,
 
   if (FIXNUMP (from))
     {
-      f = XINT (from);
+      f = XFIXNUM (from);
       if (f < 0)
 	f += size;
     }
@@ -1271,7 +1271,7 @@ validate_subarray (Lisp_Object array, Lisp_Object from, Lisp_Object to,
 
   if (FIXNUMP (to))
     {
-      t = XINT (to);
+      t = XFIXNUM (to);
       if (t < 0)
 	t += size;
     }
@@ -1385,7 +1385,7 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
 {
   CHECK_FIXNUM (n);
   Lisp_Object tail = list;
-  for (EMACS_INT num = XINT (n); 0 < num; num--)
+  for (EMACS_INT num = XFIXNUM (n); 0 < num; num--)
     {
       if (! CONSP (tail))
 	{
@@ -1645,7 +1645,7 @@ changing the value of a sequence `foo'.  */)
 	      cbytes = 1;
 	    }
 
-	  if (!FIXNUMP (elt) || c != XINT (elt))
+	  if (!FIXNUMP (elt) || c != XFIXNUM (elt))
 	    {
 	      ++nchars;
 	      nbytes += cbytes;
@@ -1675,7 +1675,7 @@ changing the value of a sequence `foo'.  */)
 		  cbytes = 1;
 		}
 
-	      if (!FIXNUMP (elt) || c != XINT (elt))
+	      if (!FIXNUMP (elt) || c != XFIXNUM (elt))
 		{
 		  unsigned char *from = SDATA (seq) + ibyte;
 		  unsigned char *to   = SDATA (tem) + nbytes;
@@ -1846,7 +1846,7 @@ sort_list (Lisp_Object list, Lisp_Object predicate)
 
   front = list;
   len = Flength (list);
-  length = XINT (len);
+  length = XFIXNUM (len);
   if (length < 2)
     return list;
 
@@ -2417,7 +2417,7 @@ ARRAY is a vector, string, char-table, or bool-vector.  */)
       register unsigned char *p = SDATA (array);
       int charval;
       CHECK_CHARACTER (item);
-      charval = XFASTINT (item);
+      charval = XFIXNAT (item);
       size = SCHARS (array);
       if (STRING_MULTIBYTE (array))
 	{
@@ -2569,7 +2569,7 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
   (Lisp_Object function, Lisp_Object sequence, Lisp_Object separator)
 {
   USE_SAFE_ALLOCA;
-  EMACS_INT leni = XFASTINT (Flength (sequence));
+  EMACS_INT leni = XFIXNAT (Flength (sequence));
   if (CHAR_TABLE_P (sequence))
     wrong_type_argument (Qlistp, sequence);
   EMACS_INT args_alloc = 2 * leni - 1;
@@ -2598,7 +2598,7 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
   (Lisp_Object function, Lisp_Object sequence)
 {
   USE_SAFE_ALLOCA;
-  EMACS_INT leni = XFASTINT (Flength (sequence));
+  EMACS_INT leni = XFIXNAT (Flength (sequence));
   if (CHAR_TABLE_P (sequence))
     wrong_type_argument (Qlistp, sequence);
   Lisp_Object *args;
@@ -2617,7 +2617,7 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
 {
   register EMACS_INT leni;
 
-  leni = XFASTINT (Flength (sequence));
+  leni = XFIXNAT (Flength (sequence));
   if (CHAR_TABLE_P (sequence))
     wrong_type_argument (Qlistp, sequence);
   mapcar1 (leni, 0, function, sequence);
@@ -2632,7 +2632,7 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string. */)
      (Lisp_Object function, Lisp_Object sequence)
 {
   USE_SAFE_ALLOCA;
-  EMACS_INT leni = XFASTINT (Flength (sequence));
+  EMACS_INT leni = XFIXNAT (Flength (sequence));
   if (CHAR_TABLE_P (sequence))
     wrong_type_argument (Qlistp, sequence);
   Lisp_Object *args;
@@ -3159,9 +3159,9 @@ into shorter lines.  */)
 
   validate_region (&beg, &end);
 
-  ibeg = CHAR_TO_BYTE (XFASTINT (beg));
-  iend = CHAR_TO_BYTE (XFASTINT (end));
-  move_gap_both (XFASTINT (beg), ibeg);
+  ibeg = CHAR_TO_BYTE (XFIXNAT (beg));
+  iend = CHAR_TO_BYTE (XFIXNAT (end));
+  move_gap_both (XFIXNAT (beg), ibeg);
 
   /* We need to allocate enough room for encoding the text.
      We need 33 1/3% more space, plus a newline every 76
@@ -3186,17 +3186,17 @@ into shorter lines.  */)
 
   /* Now we have encoded the region, so we insert the new contents
      and delete the old.  (Insert first in order to preserve markers.)  */
-  SET_PT_BOTH (XFASTINT (beg), ibeg);
+  SET_PT_BOTH (XFIXNAT (beg), ibeg);
   insert (encoded, encoded_length);
   SAFE_FREE ();
   del_range_byte (ibeg + encoded_length, iend + encoded_length);
 
   /* If point was outside of the region, restore it exactly; else just
      move to the beginning of the region.  */
-  if (old_pos >= XFASTINT (end))
-    old_pos += encoded_length - (XFASTINT (end) - XFASTINT (beg));
-  else if (old_pos > XFASTINT (beg))
-    old_pos = XFASTINT (beg);
+  if (old_pos >= XFIXNAT (end))
+    old_pos += encoded_length - (XFIXNAT (end) - XFIXNAT (beg));
+  else if (old_pos > XFIXNAT (beg))
+    old_pos = XFIXNAT (beg);
   SET_PT (old_pos);
 
   /* We return the length of the encoded text. */
@@ -3359,8 +3359,8 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
 
   validate_region (&beg, &end);
 
-  ibeg = CHAR_TO_BYTE (XFASTINT (beg));
-  iend = CHAR_TO_BYTE (XFASTINT (end));
+  ibeg = CHAR_TO_BYTE (XFIXNAT (beg));
+  iend = CHAR_TO_BYTE (XFIXNAT (end));
 
   length = iend - ibeg;
 
@@ -3370,7 +3370,7 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
   allength = multibyte ? length * 2 : length;
   decoded = SAFE_ALLOCA (allength);
 
-  move_gap_both (XFASTINT (beg), ibeg);
+  move_gap_both (XFIXNAT (beg), ibeg);
   decoded_length = base64_decode_1 ((char *) BYTE_POS_ADDR (ibeg),
 				    decoded, length,
 				    multibyte, &inserted_chars);
@@ -3385,21 +3385,21 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
 
   /* Now we have decoded the region, so we insert the new contents
      and delete the old.  (Insert first in order to preserve markers.)  */
-  TEMP_SET_PT_BOTH (XFASTINT (beg), ibeg);
+  TEMP_SET_PT_BOTH (XFIXNAT (beg), ibeg);
   insert_1_both (decoded, inserted_chars, decoded_length, 0, 1, 0);
-  signal_after_change (XFASTINT (beg), 0, inserted_chars);
+  signal_after_change (XFIXNAT (beg), 0, inserted_chars);
   SAFE_FREE ();
 
   /* Delete the original text.  */
-  del_range_both (PT, PT_BYTE, XFASTINT (end) + inserted_chars,
+  del_range_both (PT, PT_BYTE, XFIXNAT (end) + inserted_chars,
 		  iend + decoded_length, 1);
 
   /* If point was outside of the region, restore it exactly; else just
      move to the beginning of the region.  */
-  if (old_pos >= XFASTINT (end))
-    old_pos += inserted_chars - (XFASTINT (end) - XFASTINT (beg));
-  else if (old_pos > XFASTINT (beg))
-    old_pos = XFASTINT (beg);
+  if (old_pos >= XFIXNAT (end))
+    old_pos += inserted_chars - (XFIXNAT (end) - XFIXNAT (beg));
+  else if (old_pos > XFIXNAT (beg))
+    old_pos = XFIXNAT (beg);
   SET_PT (old_pos > ZV ? ZV : old_pos);
 
   return make_fixnum (inserted_chars);
@@ -3696,7 +3696,7 @@ larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
 static ptrdiff_t
 HASH_NEXT (struct Lisp_Hash_Table *h, ptrdiff_t idx)
 {
-  return XINT (AREF (h->next, idx));
+  return XFIXNUM (AREF (h->next, idx));
 }
 
 /* Return the index of the element in hash table H that is the start
@@ -3705,7 +3705,7 @@ HASH_NEXT (struct Lisp_Hash_Table *h, ptrdiff_t idx)
 static ptrdiff_t
 HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
 {
-  return XINT (AREF (h->index, idx));
+  return XFIXNUM (AREF (h->index, idx));
 }
 
 /* Compare KEY1 which has hash code HASH1 and KEY2 with hash code
@@ -4008,7 +4008,7 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       for (i = 0; i < old_size; ++i)
 	if (!NILP (HASH_HASH (h, i)))
 	  {
-	    EMACS_UINT hash_code = XUINT (HASH_HASH (h, i));
+	    EMACS_UINT hash_code = XUFIXNUM (HASH_HASH (h, i));
 	    ptrdiff_t start_of_bucket = hash_code % ASIZE (h->index);
 	    set_hash_next_slot (h, i, HASH_INDEX (h, start_of_bucket));
 	    set_hash_index_slot (h, start_of_bucket, i);
@@ -4037,7 +4037,7 @@ hash_lookup (struct Lisp_Hash_Table *h, Lisp_Object key, EMACS_UINT *hash)
   for (i = HASH_INDEX (h, start_of_bucket); 0 <= i; i = HASH_NEXT (h, i))
     if (EQ (key, HASH_KEY (h, i))
 	|| (h->test.cmpfn
-	    && hash_code == XUINT (HASH_HASH (h, i))
+	    && hash_code == XUFIXNUM (HASH_HASH (h, i))
 	    && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
       break;
 
@@ -4094,7 +4094,7 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
     {
       if (EQ (key, HASH_KEY (h, i))
 	  || (h->test.cmpfn
-	      && hash_code == XUINT (HASH_HASH (h, i))
+	      && hash_code == XUFIXNUM (HASH_HASH (h, i))
 	      && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
 	{
 	  /* Take entry out of collision chain.  */
@@ -4444,7 +4444,7 @@ sxhash (Lisp_Object obj, int depth)
   switch (XTYPE (obj))
     {
     case_Lisp_Int:
-      hash = XUINT (obj);
+      hash = XUFIXNUM (obj);
       break;
 
     case Lisp_Misc:
@@ -4607,7 +4607,7 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   if (NILP (size_arg))
     size = DEFAULT_HASH_SIZE;
   else if (FIXNATP (size_arg))
-    size = XFASTINT (size_arg);
+    size = XFIXNAT (size_arg);
   else
     signal_error ("Invalid hash table size", size_arg);
 
@@ -4616,8 +4616,8 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
   i = get_key_arg (QCrehash_size, nargs, args, used);
   if (!i)
     rehash_size = DEFAULT_REHASH_SIZE;
-  else if (FIXNUMP (args[i]) && 0 < XINT (args[i]))
-    rehash_size = - XINT (args[i]);
+  else if (FIXNUMP (args[i]) && 0 < XFIXNUM (args[i]))
+    rehash_size = - XFIXNUM (args[i]);
   else if (FLOATP (args[i]) && 0 < (float) (XFLOAT_DATA (args[i]) - 1))
     rehash_size = (float) (XFLOAT_DATA (args[i]) - 1);
   else
@@ -4932,7 +4932,7 @@ extract_data_from_object (Lisp_Object spec,
       else
 	{
 	  CHECK_FIXNUM_COERCE_MARKER (start);
-	  b = XINT (start);
+	  b = XFIXNUM (start);
 	}
 
       if (NILP (end))
@@ -4940,7 +4940,7 @@ extract_data_from_object (Lisp_Object spec,
       else
 	{
 	  CHECK_FIXNUM_COERCE_MARKER (end);
-	  e = XINT (end);
+	  e = XFIXNUM (end);
 	}
 
       if (b > e)
@@ -5033,7 +5033,7 @@ extract_data_from_object (Lisp_Object spec,
         error ("Without a length, `iv-auto' can't be used; see ELisp manual");
       else
         {
-	  EMACS_INT start_hold = XFASTINT (start);
+	  EMACS_INT start_hold = XFIXNAT (start);
           object = make_uninit_string (start_hold);
           gnutls_rnd (GNUTLS_RND_NONCE, SSDATA (object), start_hold);
 

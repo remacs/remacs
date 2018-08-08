@@ -2065,9 +2065,9 @@ all of which are called before Emacs is actually killed.  */
     }
 
   if (FIXNUMP (arg))
-    exit_code = (XINT (arg) < 0
-		 ? XINT (arg) | INT_MIN
-		 : XINT (arg) & INT_MAX);
+    exit_code = (XFIXNUM (arg) < 0
+		 ? XFIXNUM (arg) | INT_MIN
+		 : XFIXNUM (arg) & INT_MAX);
   else
     exit_code = EXIT_SUCCESS;
   exit (exit_code);

@@ -936,7 +936,7 @@ Usage: (gnutls-error-fatalp ERROR)  */)
   if (! TYPE_RANGED_FIXNUMP (int, err))
     error ("Not an error symbol or code");
 
-  if (0 == gnutls_error_is_fatal (XINT (err)))
+  if (0 == gnutls_error_is_fatal (XFIXNUM (err)))
     return Qnil;
 
   return Qt;
@@ -968,7 +968,7 @@ usage: (gnutls-error-string ERROR)  */)
   if (! TYPE_RANGED_FIXNUMP (int, err))
     return build_string ("Not an error symbol or code");
 
-  return build_string (emacs_gnutls_strerror (XINT (err)));
+  return build_string (emacs_gnutls_strerror (XFIXNUM (err)));
 }
 
 DEFUN ("gnutls-deinit", Fgnutls_deinit, Sgnutls_deinit, 1, 1, 0,
@@ -1656,8 +1656,8 @@ one trustfile (usually a CA bundle).  */)
 # ifdef HAVE_GNUTLS3
       gnutls_global_set_audit_log_function (gnutls_audit_log_function);
 # endif
-      gnutls_global_set_log_level (XINT (loglevel));
-      max_log_level = XINT (loglevel);
+      gnutls_global_set_log_level (XFIXNUM (loglevel));
+      max_log_level = XFIXNUM (loglevel);
       XPROCESS (proc)->gnutls_log_level = max_log_level;
     }
 
@@ -1692,7 +1692,7 @@ one trustfile (usually a CA bundle).  */)
       verify_flags = Fplist_get (proplist, QCverify_flags);
       if (TYPE_RANGED_FIXNUMP (unsigned int, verify_flags))
 	{
-	  gnutls_verify_flags = XFASTINT (verify_flags);
+	  gnutls_verify_flags = XFIXNAT (verify_flags);
 	  GNUTLS_LOG (2, max_log_level, "setting verification flags");
 	}
       else if (NILP (verify_flags))
@@ -1852,7 +1852,7 @@ one trustfile (usually a CA bundle).  */)
   GNUTLS_INITSTAGE (proc) = GNUTLS_STAGE_PRIORITY;
 
   if (FIXNUMP (prime_bits))
-    gnutls_dh_set_prime_bits (state, XUINT (prime_bits));
+    gnutls_dh_set_prime_bits (state, XUFIXNUM (prime_bits));
 
   ret = EQ (type, Qgnutls_x509pki)
     ? gnutls_credentials_set (state, GNUTLS_CRD_CERTIFICATE, x509_cred)
@@ -2073,7 +2073,7 @@ gnutls_symmetric (bool encrypting, Lisp_Object cipher,
   if (SYMBOLP (cipher))
     info = XCDR (Fassq (cipher, Fgnutls_ciphers ()));
   else if (TYPE_RANGED_FIXNUMP (gnutls_cipher_algorithm_t, cipher))
-    gca = XINT (cipher);
+    gca = XFIXNUM (cipher);
   else
     info = cipher;
 
@@ -2081,7 +2081,7 @@ gnutls_symmetric (bool encrypting, Lisp_Object cipher,
     {
       Lisp_Object v = Fplist_get (info, QCcipher_id);
       if (TYPE_RANGED_FIXNUMP (gnutls_cipher_algorithm_t, v))
-        gca = XINT (v);
+        gca = XFIXNUM (v);
     }
 
   ptrdiff_t key_size = gnutls_cipher_get_key_size (gca);
@@ -2344,7 +2344,7 @@ itself. */)
   if (SYMBOLP (hash_method))
     info = XCDR (Fassq (hash_method, Fgnutls_macs ()));
   else if (TYPE_RANGED_FIXNUMP (gnutls_mac_algorithm_t, hash_method))
-    gma = XINT (hash_method);
+    gma = XFIXNUM (hash_method);
   else
     info = hash_method;
 
@@ -2352,7 +2352,7 @@ itself. */)
     {
       Lisp_Object v = Fplist_get (info, QCmac_algorithm_id);
       if (TYPE_RANGED_FIXNUMP (gnutls_mac_algorithm_t, v))
-        gma = XINT (v);
+        gma = XFIXNUM (v);
     }
 
   ptrdiff_t digest_length = gnutls_hmac_get_len (gma);
@@ -2425,7 +2425,7 @@ the number itself. */)
   if (SYMBOLP (digest_method))
     info = XCDR (Fassq (digest_method, Fgnutls_digests ()));
   else if (TYPE_RANGED_FIXNUMP (gnutls_digest_algorithm_t, digest_method))
-    gda = XINT (digest_method);
+    gda = XFIXNUM (digest_method);
   else
     info = digest_method;
 
@@ -2433,7 +2433,7 @@ the number itself. */)
     {
       Lisp_Object v = Fplist_get (info, QCdigest_algorithm_id);
       if (TYPE_RANGED_FIXNUMP (gnutls_digest_algorithm_t, v))
-        gda = XINT (v);
+        gda = XFIXNUM (v);
     }
 
   ptrdiff_t digest_length = gnutls_hash_get_len (gda);

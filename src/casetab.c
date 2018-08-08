@@ -196,11 +196,11 @@ set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 
       if (CONSP (c))
 	{
-	  from = XINT (XCAR (c));
-	  to = XINT (XCDR (c));
+	  from = XFIXNUM (XCAR (c));
+	  to = XFIXNUM (XCDR (c));
 	}
       else
-	from = to = XINT (c);
+	from = to = XFIXNUM (c);
 
       to++;
       for (; from < to; from++)
@@ -222,11 +222,11 @@ shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 
       if (CONSP (c))
 	{
-	  from = XINT (XCAR (c));
-	  to = XINT (XCDR (c));
+	  from = XFIXNUM (XCAR (c));
+	  to = XFIXNUM (XCDR (c));
 	}
       else
-	from = to = XINT (c);
+	from = to = XFIXNUM (c);
 
       to++;
       for (; from < to; from++)

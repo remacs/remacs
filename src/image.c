@@ -785,7 +785,7 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
 	  /* Unlike the other integer-related cases, this one does not
 	     verify that VALUE fits in 'int'.  This is because callers
 	     want EMACS_INT.  */
-	  if (!FIXNUMP (value) || XINT (value) < 0)
+	  if (!FIXNUMP (value) || XFIXNUM (value) < 0)
 	    return 0;
 	  break;
 
@@ -1005,8 +1005,8 @@ check_image_size (struct frame *f, int width, int height)
     return 0;
 
   if (FIXNUMP (Vmax_image_size))
-    return (width <= XINT (Vmax_image_size)
-	    && height <= XINT (Vmax_image_size));
+    return (width <= XFIXNUM (Vmax_image_size)
+	    && height <= XFIXNUM (Vmax_image_size));
   else if (FLOATP (Vmax_image_size))
     {
       if (f != NULL)
@@ -1547,7 +1547,7 @@ clear_image_cache (struct frame *f, Lisp_Object filter)
 
 	  /* If the number of cached images has grown unusually large,
 	     decrease the cache eviction delay (Bug#6230).  */
-	  delay = XINT (Vimage_cache_eviction_delay);
+	  delay = XFIXNUM (Vimage_cache_eviction_delay);
 	  if (nimages > 40)
 	    delay = 1600 * delay / nimages / nimages;
 	  delay = max (delay, 1);
@@ -1762,10 +1762,10 @@ lookup_image (struct frame *f, Lisp_Object spec)
 
 	  value = image_spec_value (spec, QCwidth, NULL);
 	  img->width = (FIXNUMP (value)
-			? XFASTINT (value) : DEFAULT_IMAGE_WIDTH);
+			? XFIXNAT (value) : DEFAULT_IMAGE_WIDTH);
 	  value = image_spec_value (spec, QCheight, NULL);
 	  img->height = (FIXNUMP (value)
-			 ? XFASTINT (value) : DEFAULT_IMAGE_HEIGHT);
+			 ? XFIXNAT (value) : DEFAULT_IMAGE_HEIGHT);
 	}
       else
 	{
@@ -1777,24 +1777,24 @@ lookup_image (struct frame *f, Lisp_Object spec)
 
 	  ascent = image_spec_value (spec, QCascent, NULL);
 	  if (FIXNUMP (ascent))
-	    img->ascent = XFASTINT (ascent);
+	    img->ascent = XFIXNAT (ascent);
 	  else if (EQ (ascent, Qcenter))
 	    img->ascent = CENTERED_IMAGE_ASCENT;
 
 	  margin = image_spec_value (spec, QCmargin, NULL);
 	  if (FIXNUMP (margin))
-	    img->vmargin = img->hmargin = XFASTINT (margin);
+	    img->vmargin = img->hmargin = XFIXNAT (margin);
 	  else if (CONSP (margin))
 	    {
-	      img->hmargin = XFASTINT (XCAR (margin));
-	      img->vmargin = XFASTINT (XCDR (margin));
+	      img->hmargin = XFIXNAT (XCAR (margin));
+	      img->vmargin = XFIXNAT (XCDR (margin));
 	    }
 
 	  relief = image_spec_value (spec, QCrelief, NULL);
 	  relief_bound = INT_MAX - max (img->hmargin, img->vmargin);
 	  if (RANGED_FIXNUMP (- relief_bound, relief, relief_bound))
 	    {
-	      img->relief = XINT (relief);
+	      img->relief = XFIXNUM (relief);
 	      img->hmargin += eabs (img->relief);
 	      img->vmargin += eabs (img->relief);
 	    }
@@ -2512,8 +2512,8 @@ xbm_image_p (Lisp_Object object)
 	return 0;
 
       data = kw[XBM_DATA].value;
-      width = XFASTINT (kw[XBM_WIDTH].value);
-      height = XFASTINT (kw[XBM_HEIGHT].value);
+      width = XFIXNAT (kw[XBM_WIDTH].value);
+      height = XFIXNAT (kw[XBM_HEIGHT].value);
 
       /* Check type of data, and width and height against contents of
 	 data.  */
@@ -3061,8 +3061,8 @@ xbm_load (struct frame *f, struct image *img)
       /* Get specified width, and height.  */
       if (!in_memory_file_p)
 	{
-	  img->width = XFASTINT (fmt[XBM_WIDTH].value);
-	  img->height = XFASTINT (fmt[XBM_HEIGHT].value);
+	  img->width = XFIXNAT (fmt[XBM_WIDTH].value);
+	  img->height = XFIXNAT (fmt[XBM_HEIGHT].value);
 	  eassert (img->width > 0 && img->height > 0);
 	  if (!check_image_size (f, img->width, img->height))
 	    {
@@ -4168,7 +4168,7 @@ xpm_load_image (struct frame *f,
   if (!NILP (Fxw_display_color_p (frame)))
     best_key = XPM_COLOR_KEY_C;
   else if (!NILP (Fx_display_grayscale_p (frame)))
-    best_key = (XFASTINT (Fx_display_planes (frame)) > 2
+    best_key = (XFIXNAT (Fx_display_planes (frame)) > 2
 		? XPM_COLOR_KEY_G : XPM_COLOR_KEY_G4);
   else
     best_key = XPM_COLOR_KEY_M;
@@ -4267,7 +4267,7 @@ xpm_load_image (struct frame *f,
 	    (*get_color_table) (color_table, str, chars_per_pixel);
 
 	  XPutPixel (ximg, x, y,
-		     (FIXNUMP (color_val) ? XINT (color_val)
+		     (FIXNUMP (color_val) ? XFIXNUM (color_val)
 		      : FRAME_FOREGROUND_PIXEL (f)));
 #ifndef HAVE_NS
 	  XPutPixel (mask_img, x, y,
@@ -5095,7 +5095,7 @@ x_build_heuristic_mask (struct frame *f, struct image *img, Lisp_Object how)
 
       for (i = 0; i < 3 && CONSP (how) && FIXNATP (XCAR (how)); ++i)
 	{
-	  rgb[i] = XFASTINT (XCAR (how)) & 0xffff;
+	  rgb[i] = XFIXNAT (XCAR (how)) & 0xffff;
 	  how = XCDR (how);
 	}
 
@@ -7282,7 +7282,7 @@ tiff_load (struct frame *f, struct image *img)
   image = image_spec_value (img->spec, QCindex, NULL);
   if (FIXNUMP (image))
     {
-      EMACS_INT ino = XFASTINT (image);
+      EMACS_INT ino = XFIXNAT (image);
       if (! (TYPE_MINIMUM (tdir_t) <= ino && ino <= TYPE_MAXIMUM (tdir_t)
 	     && TIFFSetDirectory (tiff, ino)))
 	{
@@ -7746,7 +7746,7 @@ gif_load (struct frame *f, struct image *img)
   /* Which sub-image are we to display?  */
   {
     Lisp_Object image_number = image_spec_value (img->spec, QCindex, NULL);
-    idx = FIXNUMP (image_number) ? XFASTINT (image_number) : 0;
+    idx = FIXNUMP (image_number) ? XFIXNAT (image_number) : 0;
     if (idx < 0 || idx >= gif->ImageCount)
       {
 	image_error ("Invalid image number `%s' in image `%s'",
@@ -8107,11 +8107,11 @@ compute_image_size (size_t width, size_t height,
 
   value = image_spec_value (spec, QCmax_width, NULL);
   if (FIXNATP (value))
-    max_width = min (XFASTINT (value), INT_MAX);
+    max_width = min (XFIXNAT (value), INT_MAX);
 
   value = image_spec_value (spec, QCmax_height, NULL);
   if (FIXNATP (value))
-    max_height = min (XFASTINT (value), INT_MAX);
+    max_height = min (XFIXNAT (value), INT_MAX);
 
   /* If width and/or height is set in the display spec assume we want
      to scale to those values.  If either h or w is unspecified, the
@@ -8120,7 +8120,7 @@ compute_image_size (size_t width, size_t height,
   value = image_spec_value (spec, QCwidth, NULL);
   if (FIXNATP (value))
     {
-      desired_width = min (XFASTINT (value) * scale, INT_MAX);
+      desired_width = min (XFIXNAT (value) * scale, INT_MAX);
       /* :width overrides :max-width. */
       max_width = -1;
     }
@@ -8128,7 +8128,7 @@ compute_image_size (size_t width, size_t height,
   value = image_spec_value (spec, QCheight, NULL);
   if (FIXNATP (value))
     {
-      desired_height = min (XFASTINT (value) * scale, INT_MAX);
+      desired_height = min (XFIXNAT (value) * scale, INT_MAX);
       /* :height overrides :max-height. */
       max_height = -1;
     }
@@ -8573,7 +8573,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
      find out things about it.  */
 
   image = image_spec_value (img->spec, QCindex, NULL);
-  ino = FIXNUMP (image) ? XFASTINT (image) : 0;
+  ino = FIXNUMP (image) ? XFIXNAT (image) : 0;
   image_wand = NewMagickWand ();
 
   if (filename)
@@ -8585,7 +8585,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 
       if (FIXNATP (lwidth) && FIXNATP (lheight))
 	{
-	  MagickSetSize (image_wand, XFASTINT (lwidth), XFASTINT (lheight));
+	  MagickSetSize (image_wand, XFIXNAT (lwidth), XFIXNAT (lheight));
 	  MagickSetDepth (image_wand, 8);
 	}
       filename_hint = imagemagick_filename_hint (img->spec, hint_buffer);
@@ -8685,19 +8685,19 @@ imagemagick_load_image (struct frame *f, struct image *img,
          than the alternatives, but it still reads the entire image into memory
          before cropping, which is apparently difficult to avoid when using
          imagemagick.  */
-      size_t crop_width = XINT (XCAR (crop));
+      size_t crop_width = XFIXNUM (XCAR (crop));
       crop = XCDR (crop);
       if (CONSP (crop) && TYPE_RANGED_FIXNUMP (size_t, XCAR (crop)))
 	{
-	  size_t crop_height = XINT (XCAR (crop));
+	  size_t crop_height = XFIXNUM (XCAR (crop));
 	  crop = XCDR (crop);
 	  if (CONSP (crop) && TYPE_RANGED_FIXNUMP (ssize_t, XCAR (crop)))
 	    {
-	      ssize_t crop_x = XINT (XCAR (crop));
+	      ssize_t crop_x = XFIXNUM (XCAR (crop));
 	      crop = XCDR (crop);
 	      if (CONSP (crop) && TYPE_RANGED_FIXNUMP (ssize_t, XCAR (crop)))
 		{
-		  ssize_t crop_y = XINT (XCAR (crop));
+		  ssize_t crop_y = XFIXNUM (XCAR (crop));
 		  MagickCropImage (image_wand, crop_width, crop_height,
 				   crop_x, crop_y);
 		}
@@ -9589,10 +9589,10 @@ gs_load (struct frame *f, struct image *img)
      = 1/72 in, xdpi and ydpi are stored in the frame's X display
      info.  */
   pt_width = image_spec_value (img->spec, QCpt_width, NULL);
-  in_width = FIXNUMP (pt_width) ? XFASTINT (pt_width) / 72.0 : 0;
+  in_width = FIXNUMP (pt_width) ? XFIXNAT (pt_width) / 72.0 : 0;
   in_width *= FRAME_RES_X (f);
   pt_height = image_spec_value (img->spec, QCpt_height, NULL);
-  in_height = FIXNUMP (pt_height) ? XFASTINT (pt_height) / 72.0 : 0;
+  in_height = FIXNUMP (pt_height) ? XFIXNAT (pt_height) / 72.0 : 0;
   in_height *= FRAME_RES_Y (f);
 
   if (! (in_width <= INT_MAX && in_height <= INT_MAX

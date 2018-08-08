@@ -1361,7 +1361,7 @@ FRAME_BOTTOM_DIVIDER_WIDTH (struct frame *f)
    float.  Value is a C integer.  */
 #define FRAME_PIXEL_X_FROM_CANON_X(F, X)		\
   (FIXNUMP (X)						\
-   ? XINT (X) * FRAME_COLUMN_WIDTH (F)			\
+   ? XFIXNUM (X) * FRAME_COLUMN_WIDTH (F)			\
    : (int) (XFLOAT_DATA (X) * FRAME_COLUMN_WIDTH (F)))
 
 /* Convert canonical value Y to pixels.  F is the frame whose
@@ -1369,7 +1369,7 @@ FRAME_BOTTOM_DIVIDER_WIDTH (struct frame *f)
    or float.  Value is a C integer.  */
 #define FRAME_PIXEL_Y_FROM_CANON_Y(F, Y)		\
   (FIXNUMP (Y)						\
-   ? XINT (Y) * FRAME_LINE_HEIGHT (F)			\
+   ? XFIXNUM (Y) * FRAME_LINE_HEIGHT (F)			\
    : (int) (XFLOAT_DATA (Y) * FRAME_LINE_HEIGHT (F)))
 
 /* Convert pixel-value X to canonical units.  F is the frame whose

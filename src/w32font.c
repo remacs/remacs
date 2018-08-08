@@ -920,7 +920,7 @@ w32font_open_internal (struct frame *f, Lisp_Object font_entity,
   if (!EQ (val, Qraster))
     logfont.lfOutPrecision = OUT_TT_PRECIS;
 
-  size = XINT (AREF (font_entity, FONT_SIZE_INDEX));
+  size = XFIXNUM (AREF (font_entity, FONT_SIZE_INDEX));
   if (!size)
     size = pixel_size;
 
@@ -1231,7 +1231,7 @@ font_matches_spec (DWORD type, NEWTEXTMETRICEX *font,
   val = AREF (spec, FONT_SPACING_INDEX);
   if (FIXNUMP (val))
     {
-      int spacing = XINT (val);
+      int spacing = XFIXNUM (val);
       int proportional = (spacing < FONT_SPACING_MONO);
 
       if ((proportional && !(font->ntmTm.tmPitchAndFamily & 0x01))
@@ -1822,8 +1822,8 @@ w32_to_x_charset (int fncharset, char *matching)
         /* Look for Same charset and a valid codepage (or non-int
            which means ignore).  */
         if (EQ (w32_charset, charset_type)
-            && (!FIXNUMP (codepage) || XINT (codepage) == CP_DEFAULT
-                || IsValidCodePage (XINT (codepage))))
+            && (!FIXNUMP (codepage) || XFIXNUM (codepage) == CP_DEFAULT
+                || IsValidCodePage (XFIXNUM (codepage))))
           {
             /* If we don't have a match already, then this is the
                best.  */
@@ -1957,7 +1957,7 @@ fill_in_logfont (struct frame *f, LOGFONT *logfont, Lisp_Object font_spec)
   tmp = AREF (font_spec, FONT_DPI_INDEX);
   if (FIXNUMP (tmp))
     {
-      dpi = XINT (tmp);
+      dpi = XFIXNUM (tmp);
     }
   else if (FLOATP (tmp))
     {
@@ -1967,7 +1967,7 @@ fill_in_logfont (struct frame *f, LOGFONT *logfont, Lisp_Object font_spec)
   /* Height  */
   tmp = AREF (font_spec, FONT_SIZE_INDEX);
   if (FIXNUMP (tmp))
-    logfont->lfHeight = -1 * XINT (tmp);
+    logfont->lfHeight = -1 * XFIXNUM (tmp);
   else if (FLOATP (tmp))
     logfont->lfHeight = (int) (-1.0 *  dpi * XFLOAT_DATA (tmp) / 72.27 + 0.5);
 
@@ -2038,7 +2038,7 @@ fill_in_logfont (struct frame *f, LOGFONT *logfont, Lisp_Object font_spec)
   tmp = AREF (font_spec, FONT_SPACING_INDEX);
   if (FIXNUMP (tmp))
     {
-      int spacing = XINT (tmp);
+      int spacing = XFIXNUM (tmp);
       if (spacing < FONT_SPACING_MONO)
 	logfont->lfPitchAndFamily
 	  = (logfont->lfPitchAndFamily & 0xF0) | VARIABLE_PITCH;

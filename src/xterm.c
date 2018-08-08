@@ -918,7 +918,7 @@ x_set_frame_alpha (struct frame *f)
   if (FLOATP (Vframe_alpha_lower_limit))
     alpha_min = XFLOAT_DATA (Vframe_alpha_lower_limit);
   else if (FIXNUMP (Vframe_alpha_lower_limit))
-    alpha_min = (XINT (Vframe_alpha_lower_limit)) / 100.0;
+    alpha_min = (XFIXNUM (Vframe_alpha_lower_limit)) / 100.0;
 
   if (alpha < 0.0)
     return;
@@ -3109,11 +3109,11 @@ x_draw_image_relief (struct glyph_string *s)
 	  && FIXNUMP (XCAR (Vtool_bar_button_margin))
 	  && FIXNUMP (XCDR (Vtool_bar_button_margin)))
 	{
-	  extra_x = XINT (XCAR (Vtool_bar_button_margin));
-	  extra_y = XINT (XCDR (Vtool_bar_button_margin));
+	  extra_x = XFIXNUM (XCAR (Vtool_bar_button_margin));
+	  extra_y = XFIXNUM (XCDR (Vtool_bar_button_margin));
 	}
       else if (FIXNUMP (Vtool_bar_button_margin))
-	extra_x = extra_y = XINT (Vtool_bar_button_margin);
+	extra_x = extra_y = XFIXNUM (Vtool_bar_button_margin);
     }
 
   top_p = bot_p = left_p = right_p = false;
@@ -3705,7 +3705,7 @@ x_draw_glyph_string (struct glyph_string *s)
 		    = buffer_local_value (Qunderline_minimum_offset,
 					  s->w->contents);
 		  if (FIXNUMP (val))
-		    minimum_offset = XFASTINT (val);
+		    minimum_offset = XFIXNAT (val);
 		  else
 		    minimum_offset = 1;
 		  val = buffer_local_value (Qx_underline_at_descent_line,
@@ -4824,15 +4824,15 @@ x_x_to_emacs_modifiers (struct x_display_info *dpyinfo, int state)
   Lisp_Object tem;
 
   tem = Fget (Vx_ctrl_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_ctrl = XINT (tem) & INT_MAX;
+  if (FIXNUMP (tem)) mod_ctrl = XFIXNUM (tem) & INT_MAX;
   tem = Fget (Vx_alt_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_alt = XINT (tem) & INT_MAX;
+  if (FIXNUMP (tem)) mod_alt = XFIXNUM (tem) & INT_MAX;
   tem = Fget (Vx_meta_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_meta = XINT (tem) & INT_MAX;
+  if (FIXNUMP (tem)) mod_meta = XFIXNUM (tem) & INT_MAX;
   tem = Fget (Vx_hyper_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_hyper = XINT (tem) & INT_MAX;
+  if (FIXNUMP (tem)) mod_hyper = XFIXNUM (tem) & INT_MAX;
   tem = Fget (Vx_super_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_super = XINT (tem) & INT_MAX;
+  if (FIXNUMP (tem)) mod_super = XFIXNUM (tem) & INT_MAX;
 
   return (  ((state & (ShiftMask | dpyinfo->shift_lock_mask)) ? shift_modifier : 0)
             | ((state & ControlMask)			? mod_ctrl	: 0)
@@ -4854,15 +4854,15 @@ x_emacs_to_x_modifiers (struct x_display_info *dpyinfo, EMACS_INT state)
   Lisp_Object tem;
 
   tem = Fget (Vx_ctrl_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_ctrl = XINT (tem);
+  if (FIXNUMP (tem)) mod_ctrl = XFIXNUM (tem);
   tem = Fget (Vx_alt_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_alt = XINT (tem);
+  if (FIXNUMP (tem)) mod_alt = XFIXNUM (tem);
   tem = Fget (Vx_meta_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_meta = XINT (tem);
+  if (FIXNUMP (tem)) mod_meta = XFIXNUM (tem);
   tem = Fget (Vx_hyper_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_hyper = XINT (tem);
+  if (FIXNUMP (tem)) mod_hyper = XFIXNUM (tem);
   tem = Fget (Vx_super_keysym, Qmodifier_value);
-  if (FIXNUMP (tem)) mod_super = XINT (tem);
+  if (FIXNUMP (tem)) mod_super = XFIXNUM (tem);
 
 
   return (  ((state & mod_alt)		? dpyinfo->alt_mod_mask   : 0)
@@ -8363,10 +8363,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 				Qnil),
 		  FIXNATP (c)))
  	    {
- 	      inev.ie.kind = (SINGLE_BYTE_CHAR_P (XFASTINT (c))
+	      inev.ie.kind = (SINGLE_BYTE_CHAR_P (XFIXNAT (c))
                               ? ASCII_KEYSTROKE_EVENT
                               : MULTIBYTE_CHAR_KEYSTROKE_EVENT);
- 	      inev.ie.code = XFASTINT (c);
+	      inev.ie.code = XFIXNAT (c);
  	      goto done_keysym;
  	    }
 
@@ -10254,8 +10254,8 @@ x_calc_absolute_position (struct frame *f)
 	  XSETFRAME (frame, f);
 	  edges = Fx_frame_edges (frame, Qouter_edges);
 	  if (!NILP (edges))
-	    width = (XINT (Fnth (make_fixnum (2), edges))
-		     - XINT (Fnth (make_fixnum (0), edges)));
+	    width = (XFIXNUM (Fnth (make_fixnum (2), edges))
+		     - XFIXNUM (Fnth (make_fixnum (0), edges)));
 	}
 
       if (p)
@@ -10296,8 +10296,8 @@ x_calc_absolute_position (struct frame *f)
 	  if (NILP (edges))
 	    edges = Fx_frame_edges (frame, Qouter_edges);
 	  if (!NILP (edges))
-	    height = (XINT (Fnth (make_fixnum (3), edges))
-		      - XINT (Fnth (make_fixnum (1), edges)));
+	    height = (XFIXNUM (Fnth (make_fixnum (3), edges))
+		      - XFIXNUM (Fnth (make_fixnum (1), edges)));
 	}
 
       if (p)

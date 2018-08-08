@@ -879,7 +879,7 @@ uniscribe_check_otf (LOGFONT *font, Lisp_Object otf_spec)
   int i, retval = 0;
 
   /* Check the spec is in the right format.  */
-  if (!CONSP (otf_spec) || XINT (Flength (otf_spec)) < 3)
+  if (!CONSP (otf_spec) || XFIXNUM (Flength (otf_spec)) < 3)
     return 0;
 
   /* Break otf_spec into its components.  */

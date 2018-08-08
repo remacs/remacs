@@ -1102,8 +1102,8 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
     {
       char number[sizeof "-999999"];
 
-      /* Use XINT instead of XFASTINT to work around GCC bug 80776.  */
-      int i = XINT (Frandom (make_fixnum (1000000)));
+      /* Use XFIXNUM instead of XFIXNAT to work around GCC bug 80776.  */
+      int i = XFIXNUM (Frandom (make_fixnum (1000000)));
       eassume (0 <= i && i < 1000000);
 
       AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
@@ -2236,13 +2236,13 @@ validate_region (register Lisp_Object *b, register Lisp_Object *e)
   CHECK_FIXNUM_COERCE_MARKER (*b);
   CHECK_FIXNUM_COERCE_MARKER (*e);
 
-  if (XINT (*b) > XINT (*e))
+  if (XFIXNUM (*b) > XFIXNUM (*e))
     {
       Lisp_Object tem;
       tem = *b;  *b = *e;  *e = tem;
     }
 
-  if (! (BEGV <= XINT (*b) && XINT (*e) <= ZV))
+  if (! (BEGV <= XFIXNUM (*b) && XFIXNUM (*e) <= ZV))
     args_out_of_range_3 (Fcurrent_buffer (), *b, *e);
 }
 
@@ -3214,15 +3214,15 @@ sort_overlays (Lisp_Object *overlay_vec, ptrdiff_t noverlays, struct window *w)
 	    }
 	  else if (FIXNUMP (tem))
 	    {
-	      sortvec[j].priority = XINT (tem);
+	      sortvec[j].priority = XFIXNUM (tem);
 	      sortvec[j].spriority = 0;
 	    }
 	  else if (CONSP (tem))
 	    {
 	      Lisp_Object car = XCAR (tem);
 	      Lisp_Object cdr = XCDR (tem);
-	      sortvec[j].priority  = FIXNUMP (car) ? XINT (car) : 0;
-	      sortvec[j].spriority = FIXNUMP (cdr) ? XINT (cdr) : 0;
+	      sortvec[j].priority  = FIXNUMP (car) ? XFIXNUM (car) : 0;
+	      sortvec[j].spriority = FIXNUMP (cdr) ? XFIXNUM (cdr) : 0;
 	    }
 	  j++;
 	}
@@ -3290,7 +3290,7 @@ record_overlay_string (struct sortstrlist *ssl, Lisp_Object str,
   ssl->buf[ssl->used].string = str;
   ssl->buf[ssl->used].string2 = str2;
   ssl->buf[ssl->used].size = size;
-  ssl->buf[ssl->used].priority = (FIXNUMP (pri) ? XINT (pri) : 0);
+  ssl->buf[ssl->used].priority = (FIXNUMP (pri) ? XFIXNUM (pri) : 0);
   ssl->used++;
 
   if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
@@ -3870,7 +3870,7 @@ for the rear of the overlay advance when text is inserted there
   CHECK_FIXNUM_COERCE_MARKER (beg);
   CHECK_FIXNUM_COERCE_MARKER (end);
 
-  if (XINT (beg) > XINT (end))
+  if (XFIXNUM (beg) > XFIXNUM (end))
     {
       Lisp_Object temp;
       temp = beg; beg = end; end = temp;
@@ -3990,7 +3990,7 @@ buffer.  */)
   CHECK_FIXNUM_COERCE_MARKER (beg);
   CHECK_FIXNUM_COERCE_MARKER (end);
 
-  if (XINT (beg) > XINT (end))
+  if (XFIXNUM (beg) > XFIXNUM (end))
     {
       Lisp_Object temp;
       temp = beg; beg = end; end = temp;
@@ -4167,7 +4167,7 @@ If SORTED is non-nil, then sort them by decreasing priority.  */)
 
   /* Put all the overlays we want in a vector in overlay_vec.
      Store the length in len.  */
-  noverlays = overlays_at (XINT (pos), 1, &overlay_vec, &len,
+  noverlays = overlays_at (XFIXNUM (pos), 1, &overlay_vec, &len,
 			   NULL, NULL, 0);
 
   if (!NILP (sorted))
@@ -4211,7 +4211,7 @@ end of the buffer.  */)
 
   /* Put all the overlays we want in a vector in overlay_vec.
      Store the length in len.  */
-  noverlays = overlays_in (XINT (beg), XINT (end), 1, &overlay_vec, &len,
+  noverlays = overlays_in (XFIXNUM (beg), XFIXNUM (end), 1, &overlay_vec, &len,
 			   NULL, NULL);
 
   /* Make a list of them all.  */
@@ -4243,7 +4243,7 @@ the value is (point-max).  */)
   /* Put all the overlays we want in a vector in overlay_vec.
      Store the length in len.
      endpos gets the position where the next overlay starts.  */
-  noverlays = overlays_at (XINT (pos), 1, &overlay_vec, &len,
+  noverlays = overlays_at (XFIXNUM (pos), 1, &overlay_vec, &len,
 			   &endpos, 0, 1);
 
   /* If any of these overlays ends before endpos,
@@ -4281,7 +4281,7 @@ the value is (point-min).  */)
 
   /* At beginning of buffer, we know the answer;
      avoid bug subtracting 1 below.  */
-  if (XINT (pos) == BEGV)
+  if (XFIXNUM (pos) == BEGV)
     return pos;
 
   len = 10;
@@ -4290,7 +4290,7 @@ the value is (point-min).  */)
   /* Put all the overlays we want in a vector in overlay_vec.
      Store the length in len.
      prevpos gets the position of the previous change.  */
-  overlays_at (XINT (pos), 1, &overlay_vec, &len,
+  overlays_at (XFIXNUM (pos), 1, &overlay_vec, &len,
 	       0, &prevpos, 1);
 
   xfree (overlay_vec);
@@ -4334,7 +4334,7 @@ for positions far away from POS).  */)
   ptrdiff_t p;
   CHECK_FIXNUM_COERCE_MARKER (pos);
 
-  p = clip_to_bounds (PTRDIFF_MIN, XINT (pos), PTRDIFF_MAX);
+  p = clip_to_bounds (PTRDIFF_MIN, XFIXNUM (pos), PTRDIFF_MAX);
   recenter_overlay_lists (current_buffer, p);
   return Qnil;
 }
@@ -4442,7 +4442,7 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
   Lisp_Object prop, overlay;
   struct Lisp_Overlay *tail;
   /* True if this change is an insertion.  */
-  bool insertion = (after ? XFASTINT (arg3) == 0 : EQ (start, end));
+  bool insertion = (after ? XFIXNAT (arg3) == 0 : EQ (start, end));
 
   overlay = Qnil;
   tail = NULL;
@@ -4470,18 +4470,18 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
 	  ostart = OVERLAY_START (overlay);
 	  oend = OVERLAY_END (overlay);
 	  endpos = OVERLAY_POSITION (oend);
-	  if (XFASTINT (start) > endpos)
+	  if (XFIXNAT (start) > endpos)
 	    break;
 	  startpos = OVERLAY_POSITION (ostart);
-	  if (insertion && (XFASTINT (start) == startpos
-			    || XFASTINT (end) == startpos))
+	  if (insertion && (XFIXNAT (start) == startpos
+			    || XFIXNAT (end) == startpos))
 	    {
 	      prop = Foverlay_get (overlay, Qinsert_in_front_hooks);
 	      if (!NILP (prop))
 		add_overlay_mod_hooklist (prop, overlay);
 	    }
-	  if (insertion && (XFASTINT (start) == endpos
-			    || XFASTINT (end) == endpos))
+	  if (insertion && (XFIXNAT (start) == endpos
+			    || XFIXNAT (end) == endpos))
 	    {
 	      prop = Foverlay_get (overlay, Qinsert_behind_hooks);
 	      if (!NILP (prop))
@@ -4489,7 +4489,7 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
 	    }
 	  /* Test for intersecting intervals.  This does the right thing
 	     for both insertion and deletion.  */
-	  if (XFASTINT (end) > startpos && XFASTINT (start) < endpos)
+	  if (XFIXNAT (end) > startpos && XFIXNAT (start) < endpos)
 	    {
 	      prop = Foverlay_get (overlay, Qmodification_hooks);
 	      if (!NILP (prop))
@@ -4508,17 +4508,17 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
 	  oend = OVERLAY_END (overlay);
 	  startpos = OVERLAY_POSITION (ostart);
 	  endpos = OVERLAY_POSITION (oend);
-	  if (XFASTINT (end) < startpos)
+	  if (XFIXNAT (end) < startpos)
 	    break;
-	  if (insertion && (XFASTINT (start) == startpos
-			    || XFASTINT (end) == startpos))
+	  if (insertion && (XFIXNAT (start) == startpos
+			    || XFIXNAT (end) == startpos))
 	    {
 	      prop = Foverlay_get (overlay, Qinsert_in_front_hooks);
 	      if (!NILP (prop))
 		add_overlay_mod_hooklist (prop, overlay);
 	    }
-	  if (insertion && (XFASTINT (start) == endpos
-			    || XFASTINT (end) == endpos))
+	  if (insertion && (XFIXNAT (start) == endpos
+			    || XFIXNAT (end) == endpos))
 	    {
 	      prop = Foverlay_get (overlay, Qinsert_behind_hooks);
 	      if (!NILP (prop))
@@ -4526,7 +4526,7 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
 	    }
 	  /* Test for intersecting intervals.  This does the right thing
 	     for both insertion and deletion.  */
-	  if (XFASTINT (end) > startpos && XFASTINT (start) < endpos)
+	  if (XFIXNAT (end) > startpos && XFIXNAT (start) < endpos)
 	    {
 	      prop = Foverlay_get (overlay, Qmodification_hooks);
 	      if (!NILP (prop))

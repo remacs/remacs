@@ -1926,8 +1926,8 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 
 	  if (! NILP (intangible_propval))
 	    {
-	      while (XINT (pos) > BEGV
-		     && EQ (Fget_char_property (make_fixnum (XINT (pos) - 1),
+	      while (XFIXNUM (pos) > BEGV
+		     && EQ (Fget_char_property (make_fixnum (XFIXNUM (pos) - 1),
 						Qintangible, Qnil),
 			    intangible_propval))
 		pos = Fprevious_char_property_change (pos, Qnil);
@@ -1937,7 +1937,7 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 		 property is `front-sticky', perturb it to be one character
 		 earlier -- this ensures that point can never move to the
 		 beginning of an invisible/intangible/front-sticky region.  */
-	      charpos = adjust_for_invis_intang (XINT (pos), 0, -1, 0);
+	      charpos = adjust_for_invis_intang (XFIXNUM (pos), 0, -1, 0);
 	    }
 	}
       else
@@ -1959,7 +1959,7 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 
 	  if (! NILP (intangible_propval))
 	    {
-	      while (XINT (pos) < ZV
+	      while (XFIXNUM (pos) < ZV
 		     && EQ (Fget_char_property (pos, Qintangible, Qnil),
 			    intangible_propval))
 		pos = Fnext_char_property_change (pos, Qnil);
@@ -1969,7 +1969,7 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 		 property is `rear-sticky', perturb it to be one character
 		 later -- this ensures that point can never move to the
 		 end of an invisible/intangible/rear-sticky region.  */
-	      charpos = adjust_for_invis_intang (XINT (pos), -1, 1, 0);
+	      charpos = adjust_for_invis_intang (XFIXNUM (pos), -1, 1, 0);
 	    }
 	}
 
@@ -2055,7 +2055,7 @@ move_if_not_intangible (ptrdiff_t position)
   if (! NILP (Vinhibit_point_motion_hooks))
     /* If intangible is inhibited, always move point to POSITION.  */
     ;
-  else if (PT < position && XINT (pos) < ZV)
+  else if (PT < position && XFIXNUM (pos) < ZV)
     {
       /* We want to move forward, so check the text before POSITION.  */
 
@@ -2065,23 +2065,23 @@ move_if_not_intangible (ptrdiff_t position)
       /* If following char is intangible,
 	 skip back over all chars with matching intangible property.  */
       if (! NILP (intangible_propval))
-	while (XINT (pos) > BEGV
-	       && EQ (Fget_char_property (make_fixnum (XINT (pos) - 1),
+	while (XFIXNUM (pos) > BEGV
+	       && EQ (Fget_char_property (make_fixnum (XFIXNUM (pos) - 1),
 					  Qintangible, Qnil),
 		      intangible_propval))
 	  pos = Fprevious_char_property_change (pos, Qnil);
     }
-  else if (XINT (pos) > BEGV)
+  else if (XFIXNUM (pos) > BEGV)
     {
       /* We want to move backward, so check the text after POSITION.  */
 
-      intangible_propval = Fget_char_property (make_fixnum (XINT (pos) - 1),
+      intangible_propval = Fget_char_property (make_fixnum (XFIXNUM (pos) - 1),
 					       Qintangible, Qnil);
 
       /* If following char is intangible,
 	 skip forward over all chars with matching intangible property.  */
       if (! NILP (intangible_propval))
-	while (XINT (pos) < ZV
+	while (XFIXNUM (pos) < ZV
 	       && EQ (Fget_char_property (pos, Qintangible, Qnil),
 		      intangible_propval))
 	  pos = Fnext_char_property_change (pos, Qnil);
@@ -2096,7 +2096,7 @@ move_if_not_intangible (ptrdiff_t position)
      try moving to POSITION (which means we actually move farther
      if POSITION is inside of intangible text).  */
 
-  if (XINT (pos) != PT)
+  if (XFIXNUM (pos) != PT)
     SET_PT (position);
 }
 

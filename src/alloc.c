@@ -2324,10 +2324,10 @@ a multibyte string even if INIT is an ASCII character.  */)
   CHECK_FIXNAT (length);
   CHECK_CHARACTER (init);
 
-  c = XFASTINT (init);
+  c = XFIXNAT (init);
   if (ASCII_CHAR_P (c) && NILP (multibyte))
     {
-      nbytes = XINT (length);
+      nbytes = XFIXNUM (length);
       val = make_uninit_string (nbytes);
       if (nbytes)
 	{
@@ -2339,7 +2339,7 @@ a multibyte string even if INIT is an ASCII character.  */)
     {
       unsigned char str[MAX_MULTIBYTE_LENGTH];
       ptrdiff_t len = CHAR_STRING (c, str);
-      EMACS_INT string_len = XINT (length);
+      EMACS_INT string_len = XFIXNUM (length);
       unsigned char *p, *beg, *end;
 
       if (INT_MULTIPLY_WRAPV (len, string_len, &nbytes))
@@ -2416,7 +2416,7 @@ LENGTH must be a number.  INIT matters only in whether it is t or nil.  */)
   Lisp_Object val;
 
   CHECK_FIXNAT (length);
-  val = make_uninit_bool_vector (XFASTINT (length));
+  val = make_uninit_bool_vector (XFIXNAT (length));
   return bool_vector_fill (val, init);
 }
 
@@ -2896,7 +2896,7 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
   Lisp_Object val = Qnil;
   CHECK_FIXNAT (length);
 
-  for (EMACS_INT size = XFASTINT (length); 0 < size; size--)
+  for (EMACS_INT size = XFIXNAT (length); 0 < size; size--)
     {
       val = Fcons (init, val);
       rarely_quit (size);
@@ -3440,7 +3440,7 @@ each initialized to INIT.  */)
   (Lisp_Object type, Lisp_Object slots, Lisp_Object init)
 {
   CHECK_FIXNAT (slots);
-  EMACS_INT size = XFASTINT (slots) + 1;
+  EMACS_INT size = XFIXNAT (slots) + 1;
   struct Lisp_Vector *p = allocate_record (size);
   p->contents[0] = type;
   for (ptrdiff_t i = 1; i < size; i++)
@@ -3469,8 +3469,8 @@ See also the function `vector'.  */)
   (Lisp_Object length, Lisp_Object init)
 {
   CHECK_FIXNAT (length);
-  struct Lisp_Vector *p = allocate_vector (XFASTINT (length));
-  for (ptrdiff_t i = 0; i < XFASTINT (length); i++)
+  struct Lisp_Vector *p = allocate_vector (XFIXNAT (length));
+  for (ptrdiff_t i = 0; i < XFIXNAT (length); i++)
     p->contents[i] = init;
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
@@ -3899,7 +3899,7 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
        are characters that are in 0...127,
        after discarding the meta bit and all the bits above it.  */
     if (!FIXNUMP (args[i])
-	|| (XINT (args[i]) & ~(-CHAR_META)) >= 0200)
+	|| (XFIXNUM (args[i]) & ~(-CHAR_META)) >= 0200)
       return Fvector (nargs, args);
 
   /* Since the loop exited, we know that all the things in it are
@@ -3910,9 +3910,9 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
     result = Fmake_string (make_fixnum (nargs), make_fixnum (0), Qnil);
     for (i = 0; i < nargs; i++)
       {
-	SSET (result, i, XINT (args[i]));
+	SSET (result, i, XFIXNUM (args[i]));
 	/* Move the meta bit to the right place for a string char.  */
-	if (XINT (args[i]) & CHAR_META)
+	if (XFIXNUM (args[i]) & CHAR_META)
 	  SSET (result, i, SREF (result, i) | 0x80);
       }
 

@@ -7043,7 +7043,7 @@ system_process_attributes (Lisp_Object pid)
   BOOL result = FALSE;
 
   CHECK_FIXNUM_OR_FLOAT (pid);
-  proc_id = FLOATP (pid) ? XFLOAT_DATA (pid) : XINT (pid);
+  proc_id = FLOATP (pid) ? XFLOAT_DATA (pid) : XFIXNUM (pid);
 
   h_snapshot = create_toolhelp32_snapshot (TH32CS_SNAPPROCESS, 0);
 
@@ -10107,7 +10107,7 @@ serial_configure (struct Lisp_Process *p, Lisp_Object contact)
   else
     tem = Fplist_get (p->childp, QCspeed);
   CHECK_FIXNUM (tem);
-  dcb.BaudRate = XINT (tem);
+  dcb.BaudRate = XFIXNUM (tem);
   childp2 = Fplist_put (childp2, QCspeed, tem);
 
   /* Configure bytesize.  */
@@ -10118,10 +10118,10 @@ serial_configure (struct Lisp_Process *p, Lisp_Object contact)
   if (NILP (tem))
     tem = make_fixnum (8);
   CHECK_FIXNUM (tem);
-  if (XINT (tem) != 7 && XINT (tem) != 8)
+  if (XFIXNUM (tem) != 7 && XFIXNUM (tem) != 8)
     error (":bytesize must be nil (8), 7, or 8");
-  dcb.ByteSize = XINT (tem);
-  summary[0] = XINT (tem) + '0';
+  dcb.ByteSize = XFIXNUM (tem);
+  summary[0] = XFIXNUM (tem) + '0';
   childp2 = Fplist_put (childp2, QCbytesize, tem);
 
   /* Configure parity.  */
@@ -10162,12 +10162,12 @@ serial_configure (struct Lisp_Process *p, Lisp_Object contact)
   if (NILP (tem))
     tem = make_fixnum (1);
   CHECK_FIXNUM (tem);
-  if (XINT (tem) != 1 && XINT (tem) != 2)
+  if (XFIXNUM (tem) != 1 && XFIXNUM (tem) != 2)
     error (":stopbits must be nil (1 stopbit), 1, or 2");
-  summary[2] = XINT (tem) + '0';
-  if (XINT (tem) == 1)
+  summary[2] = XFIXNUM (tem) + '0';
+  if (XFIXNUM (tem) == 1)
     dcb.StopBits = ONESTOPBIT;
-  else if (XINT (tem) == 2)
+  else if (XFIXNUM (tem) == 2)
     dcb.StopBits = TWOSTOPBITS;
   childp2 = Fplist_put (childp2, QCstopbits, tem);
 

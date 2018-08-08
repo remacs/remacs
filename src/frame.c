@@ -159,9 +159,9 @@ frame_size_history_add (struct frame *f, Lisp_Object fun_symbol,
   XSETFRAME (frame, f);
   if (CONSP (frame_size_history)
       && FIXNUMP (XCAR (frame_size_history))
-      && 0 < XINT (XCAR (frame_size_history)))
+      && 0 < XFIXNUM (XCAR (frame_size_history)))
     frame_size_history =
-      Fcons (make_fixnum (XINT (XCAR (frame_size_history)) - 1),
+      Fcons (make_fixnum (XFIXNUM (XCAR (frame_size_history)) - 1),
 	     Fcons (list4
 		    (frame, fun_symbol,
 		     ((width > 0)
@@ -220,7 +220,7 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
     return;
 
   if (TYPE_RANGED_FIXNUMP (int, value))
-    nlines = XINT (value);
+    nlines = XFIXNUM (value);
   else
     nlines = 0;
 
@@ -359,7 +359,7 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
       || (NILP (horizontal)
 	  && FIXED_OR_FLOATP (par_size = get_frame_param (f, Qmin_height))))
     {
-      int min_size = XINT (par_size);
+      int min_size = XFIXNUM (par_size);
 
       /* Don't allow phantom frames.  */
       if (min_size < 1)
@@ -372,7 +372,7 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
 			      : FRAME_COLUMN_WIDTH (f)));
     }
   else
-    retval = XINT (call4 (Qframe_windows_min_size, frame, horizontal,
+    retval = XFIXNUM (call4 (Qframe_windows_min_size, frame, horizontal,
 			  ignore, pixelwise));
   /* Don't allow too small height of text-mode frames, or else cm.c
      might abort in cmcheckmagic.  */
@@ -1598,7 +1598,7 @@ candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
 		     FRAME_FOCUS_FRAME (c)))
 	    return candidate;
 	}
-      else if (FIXNUMP (minibuf) && XINT (minibuf) == 0)
+      else if (FIXNUMP (minibuf) && XFIXNUM (minibuf) == 0)
 	{
 	  if (FRAME_VISIBLE_P (c) || FRAME_ICONIFIED_P (c))
 	    return candidate;
@@ -2320,8 +2320,8 @@ and returns whatever that function returns.  */)
 
   if (! NILP (x))
     {
-      int col = XINT (x);
-      int row = XINT (y);
+      int col = XFIXNUM (x);
+      int row = XFIXNUM (y);
       pixel_to_glyph_coords (f, col, row, &col, &row, NULL, 1);
       XSETINT (x, col);
       XSETINT (y, row);
@@ -2430,19 +2430,19 @@ before calling this function on it, like this.
 #ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (XFRAME (frame)))
     /* Warping the mouse will cause enternotify and focus events.  */
-    frame_set_mouse_position (XFRAME (frame), XINT (x), XINT (y));
+    frame_set_mouse_position (XFRAME (frame), XFIXNUM (x), XFIXNUM (y));
 #else
 #if defined (MSDOS)
   if (FRAME_MSDOS_P (XFRAME (frame)))
     {
       Fselect_frame (frame, Qnil);
-      mouse_moveto (XINT (x), XINT (y));
+      mouse_moveto (XFIXNUM (x), XFIXNUM (y));
     }
 #else
 #ifdef HAVE_GPM
     {
       Fselect_frame (frame, Qnil);
-      term_mouse_moveto (XINT (x), XINT (y));
+      term_mouse_moveto (XFIXNUM (x), XFIXNUM (y));
     }
 #endif
 #endif
@@ -2471,19 +2471,19 @@ before calling this function on it, like this.
 #ifdef HAVE_WINDOW_SYSTEM
   if (FRAME_WINDOW_P (XFRAME (frame)))
     /* Warping the mouse will cause enternotify and focus events.  */
-    frame_set_mouse_pixel_position (XFRAME (frame), XINT (x), XINT (y));
+    frame_set_mouse_pixel_position (XFRAME (frame), XFIXNUM (x), XFIXNUM (y));
 #else
 #if defined (MSDOS)
   if (FRAME_MSDOS_P (XFRAME (frame)))
     {
       Fselect_frame (frame, Qnil);
-      mouse_moveto (XINT (x), XINT (y));
+      mouse_moveto (XFIXNUM (x), XFIXNUM (y));
     }
 #else
 #ifdef HAVE_GPM
     {
       Fselect_frame (frame, Qnil);
-      term_mouse_moveto (XINT (x), XINT (y));
+      term_mouse_moveto (XFIXNUM (x), XFIXNUM (y));
     }
 #endif
 #endif
@@ -3193,7 +3193,7 @@ list, but are otherwise ignored.  */)
 #endif
 
     {
-      EMACS_INT length = XFASTINT (Flength (alist));
+      EMACS_INT length = XFIXNAT (Flength (alist));
       ptrdiff_t i;
       Lisp_Object *parms;
       Lisp_Object *values;
@@ -3428,8 +3428,8 @@ multiple of the default frame font height.  */)
   CHECK_TYPE_RANGED_INTEGER (int, height);
 
   pixel_height = (!NILP (pixelwise)
-		  ? XINT (height)
-		  : XINT (height) * FRAME_LINE_HEIGHT (f));
+		  ? XFIXNUM (height)
+		  : XFIXNUM (height) * FRAME_LINE_HEIGHT (f));
   adjust_frame_size (f, -1, pixel_height, 1, !NILP (pretend), Qheight);
 
   return Qnil;
@@ -3453,8 +3453,8 @@ multiple of the default frame font width.  */)
   CHECK_TYPE_RANGED_INTEGER (int, width);
 
   pixel_width = (!NILP (pixelwise)
-		 ? XINT (width)
-		 : XINT (width) * FRAME_COLUMN_WIDTH (f));
+		 ? XFIXNUM (width)
+		 : XFIXNUM (width) * FRAME_COLUMN_WIDTH (f));
   adjust_frame_size (f, pixel_width, -1, 1, !NILP (pretend), Qwidth);
 
   return Qnil;
@@ -3476,11 +3476,11 @@ font height.  */)
   CHECK_TYPE_RANGED_INTEGER (int, height);
 
   pixel_width = (!NILP (pixelwise)
-		 ? XINT (width)
-		 : XINT (width) * FRAME_COLUMN_WIDTH (f));
+		 ? XFIXNUM (width)
+		 : XFIXNUM (width) * FRAME_COLUMN_WIDTH (f));
   pixel_height = (!NILP (pixelwise)
-		  ? XINT (height)
-		  : XINT (height) * FRAME_LINE_HEIGHT (f));
+		  ? XFIXNUM (height)
+		  : XFIXNUM (height) * FRAME_LINE_HEIGHT (f));
   adjust_frame_size (f, pixel_width, pixel_height, 1, 0, Qsize);
 
   return Qnil;
@@ -3520,7 +3520,7 @@ bottom edge of FRAME's display.  */)
   if (FRAME_WINDOW_P (f))
     {
 #ifdef HAVE_WINDOW_SYSTEM
-      x_set_offset (f, XINT (x), XINT (y), 1);
+      x_set_offset (f, XFIXNUM (x), XFIXNUM (y), 1);
 #endif
     }
 
@@ -3689,10 +3689,10 @@ frame_float (struct frame *f, Lisp_Object val, enum frame_float_type what,
 		}
 
 	      /* Workarea available.  */
-	      parent_left = XINT (Fnth (make_fixnum (0), workarea));
-	      parent_top = XINT (Fnth (make_fixnum (1), workarea));
-	      parent_width = XINT (Fnth (make_fixnum (2), workarea));
-	      parent_height = XINT (Fnth (make_fixnum (3), workarea));
+	      parent_left = XFIXNUM (Fnth (make_fixnum (0), workarea));
+	      parent_top = XFIXNUM (Fnth (make_fixnum (1), workarea));
+	      parent_width = XFIXNUM (Fnth (make_fixnum (2), workarea));
+	      parent_height = XFIXNUM (Fnth (make_fixnum (3), workarea));
 	      *parent_done = 1;
 	    }
 	}
@@ -3720,12 +3720,12 @@ frame_float (struct frame *f, Lisp_Object val, enum frame_float_type what,
 	  if (!NILP (outer_edges))
 	    {
 	      outer_minus_text_width
-		= (XINT (Fnth (make_fixnum (2), outer_edges))
-		   - XINT (Fnth (make_fixnum (0), outer_edges))
+		= (XFIXNUM (Fnth (make_fixnum (2), outer_edges))
+		   - XFIXNUM (Fnth (make_fixnum (0), outer_edges))
 		   - FRAME_TEXT_WIDTH (f));
 	      outer_minus_text_height
-		= (XINT (Fnth (make_fixnum (3), outer_edges))
-		   - XINT (Fnth (make_fixnum (1), outer_edges))
+		= (XFIXNUM (Fnth (make_fixnum (3), outer_edges))
+		   - XFIXNUM (Fnth (make_fixnum (1), outer_edges))
 		   - FRAME_TEXT_HEIGHT (f));
 	    }
 	  else
@@ -3875,10 +3875,10 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
       if (EQ (prop, Qwidth))
         {
 	  if (RANGED_FIXNUMP (0, val, INT_MAX))
-	    width = XFASTINT (val) * FRAME_COLUMN_WIDTH (f) ;
+	    width = XFIXNAT (val) * FRAME_COLUMN_WIDTH (f) ;
 	  else if (CONSP (val) && EQ (XCAR (val), Qtext_pixels)
 		   && RANGED_FIXNUMP (0, XCDR (val), INT_MAX))
-	    width = XFASTINT (XCDR (val));
+	    width = XFIXNAT (XCDR (val));
 	  else if (FLOATP (val))
 	    width = frame_float (f, val, FRAME_FLOAT_WIDTH, &parent_done,
 				 &outer_done, -1);
@@ -3886,10 +3886,10 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
       else if (EQ (prop, Qheight))
         {
 	  if (RANGED_FIXNUMP (0, val, INT_MAX))
-	    height = XFASTINT (val) * FRAME_LINE_HEIGHT (f);
+	    height = XFIXNAT (val) * FRAME_LINE_HEIGHT (f);
 	  else if (CONSP (val) && EQ (XCAR (val), Qtext_pixels)
 		   && RANGED_FIXNUMP (0, XCDR (val), INT_MAX))
-	    height = XFASTINT (XCDR (val));
+	    height = XFIXNAT (XCDR (val));
 	  else if (FLOATP (val))
 	    height = frame_float (f, val, FRAME_FLOAT_HEIGHT, &parent_done,
 				 &outer_done, -1);
@@ -3917,9 +3917,9 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 
 	  param_index = Fget (prop, Qx_frame_parameter);
 	  if (FIXNATP (param_index)
-	      && XFASTINT (param_index) < ARRAYELTS (frame_parms)
-	      && FRAME_RIF (f)->frame_parm_handlers[XINT (param_index)])
-	    (*(FRAME_RIF (f)->frame_parm_handlers[XINT (param_index)])) (f, val, old_value);
+	      && XFIXNAT (param_index) < ARRAYELTS (frame_parms)
+	      && FRAME_RIF (f)->frame_parm_handlers[XFIXNUM (param_index)])
+	    (*(FRAME_RIF (f)->frame_parm_handlers[XFIXNUM (param_index)])) (f, val, old_value);
 	}
     }
 
@@ -3981,8 +3981,8 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 
   if ((!NILP (left) || !NILP (top))
       && ! (left_no_change && top_no_change)
-      && ! (FIXED_OR_FLOATP (left) && XINT (left) == f->left_pos
-	    && FIXED_OR_FLOATP (top) && XINT (top) == f->top_pos))
+      && ! (FIXED_OR_FLOATP (left) && XFIXNUM (left) == f->left_pos
+	    && FIXED_OR_FLOATP (top) && XFIXNUM (top) == f->top_pos))
     {
       int leftpos = 0;
       int toppos = 0;
@@ -3993,7 +3993,7 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 	f->size_hint_flags |= XNegative;
       else if (TYPE_RANGED_FIXNUMP (int, left))
 	{
-	  leftpos = XINT (left);
+	  leftpos = XFIXNUM (left);
 	  if (leftpos < 0)
 	    f->size_hint_flags |= XNegative;
 	}
@@ -4001,13 +4001,13 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 	       && CONSP (XCDR (left))
 	       && RANGED_FIXNUMP (-INT_MAX, XCAR (XCDR (left)), INT_MAX))
 	{
-	  leftpos = - XINT (XCAR (XCDR (left)));
+	  leftpos = - XFIXNUM (XCAR (XCDR (left)));
 	  f->size_hint_flags |= XNegative;
 	}
       else if (CONSP (left) && EQ (XCAR (left), Qplus)
 	       && CONSP (XCDR (left))
 	       && TYPE_RANGED_FIXNUMP (int, XCAR (XCDR (left))))
-	leftpos = XINT (XCAR (XCDR (left)));
+	leftpos = XFIXNUM (XCAR (XCDR (left)));
       else if (FLOATP (left))
 	leftpos = frame_float (f, left, FRAME_FLOAT_LEFT, &parent_done,
 			       &outer_done, 0);
@@ -4016,7 +4016,7 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 	f->size_hint_flags |= YNegative;
       else if (TYPE_RANGED_FIXNUMP (int, top))
 	{
-	  toppos = XINT (top);
+	  toppos = XFIXNUM (top);
 	  if (toppos < 0)
 	    f->size_hint_flags |= YNegative;
 	}
@@ -4024,13 +4024,13 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 	       && CONSP (XCDR (top))
 	       && RANGED_FIXNUMP (-INT_MAX, XCAR (XCDR (top)), INT_MAX))
 	{
-	  toppos = - XINT (XCAR (XCDR (top)));
+	  toppos = - XFIXNUM (XCAR (XCDR (top)));
 	  f->size_hint_flags |= YNegative;
 	}
       else if (CONSP (top) && EQ (XCAR (top), Qplus)
 	       && CONSP (XCDR (top))
 	       && TYPE_RANGED_FIXNUMP (int, XCAR (XCDR (top))))
-	toppos = XINT (XCAR (XCDR (top)));
+	toppos = XFIXNUM (XCAR (XCDR (top)));
       else if (FLOATP (top))
 	toppos = frame_float (f, top, FRAME_FLOAT_TOP, &parent_done,
 			      &outer_done, 0);
@@ -4061,7 +4061,7 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
 #ifdef HAVE_X_WINDOWS
   if ((!NILP (icon_left) || !NILP (icon_top))
       && ! (icon_left_no_change && icon_top_no_change))
-    x_wm_set_icon_position (f, XINT (icon_left), XINT (icon_top));
+    x_wm_set_icon_position (f, XFIXNUM (icon_left), XFIXNUM (icon_top));
 #endif /* HAVE_X_WINDOWS */
 
   SAFE_FREE ();
@@ -4188,7 +4188,7 @@ x_set_line_spacing (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
   if (NILP (new_value))
     f->extra_line_spacing = 0;
   else if (RANGED_FIXNUMP (0, new_value, INT_MAX))
-    f->extra_line_spacing = XFASTINT (new_value);
+    f->extra_line_spacing = XFIXNAT (new_value);
   else if (FLOATP (new_value))
     {
       int new_spacing = XFLOAT_DATA (new_value) * FRAME_LINE_HEIGHT (f) + 0.5;
@@ -4227,9 +4227,9 @@ x_set_screen_gamma (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
     {
       Lisp_Object parm_index = Fget (Qbackground_color, Qx_frame_parameter);
       if (FIXNATP (parm_index)
-	  && XFASTINT (parm_index) < ARRAYELTS (frame_parms)
-	  && FRAME_RIF (f)->frame_parm_handlers[XFASTINT (parm_index)])
-	  (*FRAME_RIF (f)->frame_parm_handlers[XFASTINT (parm_index)])
+	  && XFIXNAT (parm_index) < ARRAYELTS (frame_parms)
+	  && FRAME_RIF (f)->frame_parm_handlers[XFIXNAT (parm_index)])
+	  (*FRAME_RIF (f)->frame_parm_handlers[XFIXNAT (parm_index)])
 	    (f, bgcolor, Qnil);
     }
 
@@ -4415,7 +4415,7 @@ x_set_left_fringe (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
   int new_width;
 
   new_width = (RANGED_FIXNUMP (-INT_MAX, new_value, INT_MAX)
-	       ? eabs (XINT (new_value)) : 8);
+	       ? eabs (XFIXNUM (new_value)) : 8);
 
   if (new_width != old_width)
     {
@@ -4439,7 +4439,7 @@ x_set_right_fringe (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
   int new_width;
 
   new_width = (RANGED_FIXNUMP (-INT_MAX, new_value, INT_MAX)
-	       ? eabs (XINT (new_value)) : 8);
+	       ? eabs (XFIXNUM (new_value)) : 8);
 
   if (new_width != old_width)
     {
@@ -4460,13 +4460,13 @@ x_set_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   CHECK_TYPE_RANGED_INTEGER (int, arg);
 
-  if (XINT (arg) == f->border_width)
+  if (XFIXNUM (arg) == f->border_width)
     return;
 
   if (FRAME_X_WINDOW (f) != 0)
     error ("Cannot change the border width of a frame");
 
-  f->border_width = XINT (arg);
+  f->border_width = XFIXNUM (arg);
 }
 
 void
@@ -4474,7 +4474,7 @@ x_set_right_divider_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   int old = FRAME_RIGHT_DIVIDER_WIDTH (f);
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  int new = max (0, XINT (arg));
+  int new = max (0, XFIXNUM (arg));
   if (new != old)
     {
       f->right_divider_width = new;
@@ -4489,7 +4489,7 @@ x_set_bottom_divider_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval
 {
   int old = FRAME_BOTTOM_DIVIDER_WIDTH (f);
   CHECK_TYPE_RANGED_INTEGER (int, arg);
-  int new = max (0, XINT (arg));
+  int new = max (0, XFIXNUM (arg));
   if (new != old)
     {
       f->bottom_divider_width = new;
@@ -4599,10 +4599,10 @@ x_set_scroll_bar_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       SET_FRAME_GARBAGED (f);
     }
   else if (RANGED_FIXNUMP (1, arg, INT_MAX)
-	   && XFASTINT (arg) != FRAME_CONFIG_SCROLL_BAR_WIDTH (f))
+	   && XFIXNAT (arg) != FRAME_CONFIG_SCROLL_BAR_WIDTH (f))
     {
-      FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = XFASTINT (arg);
-      FRAME_CONFIG_SCROLL_BAR_COLS (f) = (XFASTINT (arg) + unit - 1) / unit;
+      FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = XFIXNAT (arg);
+      FRAME_CONFIG_SCROLL_BAR_COLS (f) = (XFIXNAT (arg) + unit - 1) / unit;
       if (FRAME_X_WINDOW (f))
 	adjust_frame_size (f, -1, -1, 3, 0, Qscroll_bar_width);
 
@@ -4629,10 +4629,10 @@ x_set_scroll_bar_height (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
       SET_FRAME_GARBAGED (f);
     }
   else if (RANGED_FIXNUMP (1, arg, INT_MAX)
-	   && XFASTINT (arg) != FRAME_CONFIG_SCROLL_BAR_HEIGHT (f))
+	   && XFIXNAT (arg) != FRAME_CONFIG_SCROLL_BAR_HEIGHT (f))
     {
-      FRAME_CONFIG_SCROLL_BAR_HEIGHT (f) = XFASTINT (arg);
-      FRAME_CONFIG_SCROLL_BAR_LINES (f) = (XFASTINT (arg) + unit - 1) / unit;
+      FRAME_CONFIG_SCROLL_BAR_HEIGHT (f) = XFIXNAT (arg);
+      FRAME_CONFIG_SCROLL_BAR_LINES (f) = (XFIXNAT (arg) + unit - 1) / unit;
       if (FRAME_X_WINDOW (f))
 	adjust_frame_size (f, -1, -1, 3, 0, Qscroll_bar_height);
 
@@ -4673,7 +4673,7 @@ x_set_alpha (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 	}
       else if (FIXNUMP (item))
 	{
-	  EMACS_INT ialpha = XINT (item);
+	  EMACS_INT ialpha = XFIXNUM (item);
 	  if (! (0 <= ialpha && ialpha <= 100))
 	    args_out_of_range (make_fixnum (0), make_fixnum (100));
 	  alpha = ialpha / 100.0;
@@ -5303,10 +5303,10 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
 		    : DEFAULT_TOOL_BAR_BUTTON_RELIEF);
 
 	  if (RANGED_FIXNUMP (1, Vtool_bar_button_margin, INT_MAX))
-	    margin = XFASTINT (Vtool_bar_button_margin);
+	    margin = XFIXNAT (Vtool_bar_button_margin);
 	  else if (CONSP (Vtool_bar_button_margin)
 		   && RANGED_FIXNUMP (1, XCDR (Vtool_bar_button_margin), INT_MAX))
-	    margin = XFASTINT (XCDR (Vtool_bar_button_margin));
+	    margin = XFIXNAT (XCDR (Vtool_bar_button_margin));
 	  else
 	    margin = 0;
 
@@ -5328,12 +5328,12 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
 	  if (CONSP (width) && EQ (XCAR (width), Qtext_pixels))
 	    {
 	      CHECK_FIXNUM (XCDR (width));
-	      if ((XINT (XCDR (width)) < 0 || XINT (XCDR (width)) > INT_MAX))
+	      if ((XFIXNUM (XCDR (width)) < 0 || XFIXNUM (XCDR (width)) > INT_MAX))
 		xsignal1 (Qargs_out_of_range, XCDR (width));
 
-	      SET_FRAME_WIDTH (f, XINT (XCDR (width)));
+	      SET_FRAME_WIDTH (f, XFIXNUM (XCDR (width)));
 	      f->inhibit_horizontal_resize = true;
-	      *x_width = XINT (XCDR (width));
+	      *x_width = XFIXNUM (XCDR (width));
 	    }
 	  else if (FLOATP (width))
 	    {
@@ -5353,10 +5353,10 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
 	  else
 	    {
 	      CHECK_FIXNUM (width);
-	      if ((XINT (width) < 0 || XINT (width) > INT_MAX))
+	      if ((XFIXNUM (width) < 0 || XFIXNUM (width) > INT_MAX))
 		xsignal1 (Qargs_out_of_range, width);
 
-	      SET_FRAME_WIDTH (f, XINT (width) * FRAME_COLUMN_WIDTH (f));
+	      SET_FRAME_WIDTH (f, XFIXNUM (width) * FRAME_COLUMN_WIDTH (f));
 	    }
 	}
 
@@ -5365,12 +5365,12 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
 	  if (CONSP (height) && EQ (XCAR (height), Qtext_pixels))
 	    {
 	      CHECK_FIXNUM (XCDR (height));
-	      if ((XINT (XCDR (height)) < 0 || XINT (XCDR (height)) > INT_MAX))
+	      if ((XFIXNUM (XCDR (height)) < 0 || XFIXNUM (XCDR (height)) > INT_MAX))
 		xsignal1 (Qargs_out_of_range, XCDR (height));
 
-	      SET_FRAME_HEIGHT (f, XINT (XCDR (height)));
+	      SET_FRAME_HEIGHT (f, XFIXNUM (XCDR (height)));
 	      f->inhibit_vertical_resize = true;
-	      *x_height = XINT (XCDR (height));
+	      *x_height = XFIXNUM (XCDR (height));
 	    }
 	  else if (FLOATP (height))
 	    {
@@ -5390,10 +5390,10 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
 	  else
 	    {
 	      CHECK_FIXNUM (height);
-	      if ((XINT (height) < 0) || (XINT (height) > INT_MAX))
+	      if ((XFIXNUM (height) < 0) || (XFIXNUM (height) > INT_MAX))
 		xsignal1 (Qargs_out_of_range, height);
 
-	      SET_FRAME_HEIGHT (f, XINT (height) * FRAME_LINE_HEIGHT (f));
+	      SET_FRAME_HEIGHT (f, XFIXNUM (height) * FRAME_LINE_HEIGHT (f));
 	    }
 	}
 
@@ -5418,14 +5418,14 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
 	       && CONSP (XCDR (top))
 	       && RANGED_FIXNUMP (-INT_MAX, XCAR (XCDR (top)), INT_MAX))
 	{
-	  f->top_pos = - XINT (XCAR (XCDR (top)));
+	  f->top_pos = - XFIXNUM (XCAR (XCDR (top)));
 	  window_prompting |= YNegative;
 	}
       else if (CONSP (top) && EQ (XCAR (top), Qplus)
 	       && CONSP (XCDR (top))
 	       && TYPE_RANGED_FIXNUMP (int, XCAR (XCDR (top))))
 	{
-	  f->top_pos = XINT (XCAR (XCDR (top)));
+	  f->top_pos = XFIXNUM (XCAR (XCDR (top)));
 	}
       else if (FLOATP (top))
 	f->top_pos = frame_float (f, top, FRAME_FLOAT_TOP, &parent_done,
@@ -5435,7 +5435,7 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
       else
 	{
 	  CHECK_TYPE_RANGED_INTEGER (int, top);
-	  f->top_pos = XINT (top);
+	  f->top_pos = XFIXNUM (top);
 	  if (f->top_pos < 0)
 	    window_prompting |= YNegative;
 	}
@@ -5449,14 +5449,14 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
 	       && CONSP (XCDR (left))
 	       && RANGED_FIXNUMP (-INT_MAX, XCAR (XCDR (left)), INT_MAX))
 	{
-	  f->left_pos = - XINT (XCAR (XCDR (left)));
+	  f->left_pos = - XFIXNUM (XCAR (XCDR (left)));
 	  window_prompting |= XNegative;
 	}
       else if (CONSP (left) && EQ (XCAR (left), Qplus)
 	       && CONSP (XCDR (left))
 	       && TYPE_RANGED_FIXNUMP (int, XCAR (XCDR (left))))
 	{
-	  f->left_pos = XINT (XCAR (XCDR (left)));
+	  f->left_pos = XFIXNUM (XCAR (XCDR (left)));
 	}
       else if (FLOATP (left))
 	f->left_pos = frame_float (f, left, FRAME_FLOAT_LEFT, &parent_done,
@@ -5466,7 +5466,7 @@ x_figure_window_size (struct frame *f, Lisp_Object parms, bool toolbar_p, int *x
       else
 	{
 	  CHECK_TYPE_RANGED_INTEGER (int, left);
-	  f->left_pos = XINT (left);
+	  f->left_pos = XFIXNUM (left);
 	  if (f->left_pos < 0)
 	    window_prompting |= XNegative;
 	}

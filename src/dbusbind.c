@@ -522,8 +522,8 @@ xd_extract_signed (Lisp_Object x, intmax_t lo, intmax_t hi)
   CHECK_FIXNUM_OR_FLOAT (x);
   if (FIXNUMP (x))
     {
-      if (lo <= XINT (x) && XINT (x) <= hi)
-	return XINT (x);
+      if (lo <= XFIXNUM (x) && XFIXNUM (x) <= hi)
+	return XFIXNUM (x);
     }
   else
     {
@@ -550,8 +550,8 @@ xd_extract_unsigned (Lisp_Object x, uintmax_t hi)
   CHECK_FIXNUM_OR_FLOAT (x);
   if (FIXNUMP (x))
     {
-      if (0 <= XINT (x) && XINT (x) <= hi)
-	return XINT (x);
+      if (0 <= XFIXNUM (x) && XFIXNUM (x) <= hi)
+	return XFIXNUM (x);
     }
   else
     {
@@ -586,7 +586,7 @@ xd_append_arg (int dtype, Lisp_Object object, DBusMessageIter *iter)
       case DBUS_TYPE_BYTE:
 	CHECK_FIXNAT (object);
 	{
-	  unsigned char val = XFASTINT (object) & 0xFF;
+	  unsigned char val = XFIXNAT (object) & 0xFF;
 	  XD_DEBUG_MESSAGE ("%c %u", dtype, val);
 	  if (!dbus_message_iter_append_basic (iter, dtype, &val))
 	    XD_SIGNAL2 (build_string ("Unable to append argument"), object);
@@ -1276,10 +1276,10 @@ usage: (dbus-message-internal &rest REST)  */)
   handler = Qnil;
 
   CHECK_FIXNAT (message_type);
-  if (! (DBUS_MESSAGE_TYPE_INVALID < XFASTINT (message_type)
-	 && XFASTINT (message_type) < DBUS_NUM_MESSAGE_TYPES))
+  if (! (DBUS_MESSAGE_TYPE_INVALID < XFIXNAT (message_type)
+	 && XFIXNAT (message_type) < DBUS_NUM_MESSAGE_TYPES))
     XD_SIGNAL2 (build_string ("Invalid message type"), message_type);
-  mtype = XFASTINT (message_type);
+  mtype = XFIXNAT (message_type);
 
   if ((mtype == DBUS_MESSAGE_TYPE_METHOD_CALL)
       || (mtype == DBUS_MESSAGE_TYPE_SIGNAL))
@@ -1410,7 +1410,7 @@ usage: (dbus-message-internal &rest REST)  */)
   if ((count + 2 <= nargs) && EQ (args[count], QCtimeout))
     {
       CHECK_FIXNAT (args[count+1]);
-      timeout = min (XFASTINT (args[count+1]), INT_MAX);
+      timeout = min (XFIXNAT (args[count+1]), INT_MAX);
       count = count+2;
     }
 

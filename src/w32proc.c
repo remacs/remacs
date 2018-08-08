@@ -1890,7 +1890,7 @@ sys_spawnve (int mode, char *cmdname, char **argv, char **envp)
       /* Override escape char by binding w32-quote-process-args to
 	 desired character, or use t for auto-selection.  */
       if (FIXNUMP (Vw32_quote_process_args))
-	escape_char = XINT (Vw32_quote_process_args);
+	escape_char = XFIXNUM (Vw32_quote_process_args);
       else
 	escape_char = (is_cygnus_app || is_msys_app) ? '"' : '\\';
     }
@@ -3023,7 +3023,7 @@ If successful, the return value is t, otherwise nil.  */)
 	 externally.  This is necessary because real pids on Windows 95 are
 	 negative.  */
 
-      pid = XINT (process);
+      pid = XFIXNUM (process);
       cp = find_child_pid (pid);
       if (cp != NULL)
 	pid = cp->procinfo.dwProcessId;
@@ -3188,12 +3188,12 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.  */)
 
   CHECK_FIXNUM (lcid);
 
-  if (!IsValidLocale (XINT (lcid), LCID_SUPPORTED))
+  if (!IsValidLocale (XFIXNUM (lcid), LCID_SUPPORTED))
     return Qnil;
 
   if (NILP (longform))
     {
-      got_abbrev = GetLocaleInfo (XINT (lcid),
+      got_abbrev = GetLocaleInfo (XFIXNUM (lcid),
 				  LOCALE_SABBREVLANGNAME | LOCALE_USE_CP_ACP,
 				  abbrev_name, sizeof (abbrev_name));
       if (got_abbrev)
@@ -3201,7 +3201,7 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.  */)
     }
   else if (EQ (longform, Qt))
     {
-      got_full = GetLocaleInfo (XINT (lcid),
+      got_full = GetLocaleInfo (XFIXNUM (lcid),
 				LOCALE_SLANGUAGE | LOCALE_USE_CP_ACP,
 				full_name, sizeof (full_name));
       if (got_full)
@@ -3209,8 +3209,8 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.  */)
     }
   else if (FIXED_OR_FLOATP (longform))
     {
-      got_full = GetLocaleInfo (XINT (lcid),
-				XINT (longform),
+      got_full = GetLocaleInfo (XFIXNUM (lcid),
+				XFIXNUM (longform),
 				full_name, sizeof (full_name));
       /* GetLocaleInfo's return value includes the terminating null
 	 character, when the returned information is a string, whereas
@@ -3301,16 +3301,16 @@ If successful, the new locale id is returned, otherwise nil.  */)
 {
   CHECK_FIXNUM (lcid);
 
-  if (!IsValidLocale (XINT (lcid), LCID_SUPPORTED))
+  if (!IsValidLocale (XFIXNUM (lcid), LCID_SUPPORTED))
     return Qnil;
 
-  if (!SetThreadLocale (XINT (lcid)))
+  if (!SetThreadLocale (XFIXNUM (lcid)))
     return Qnil;
 
   /* Need to set input thread locale if present.  */
   if (dwWindowsThreadId)
     /* Reply is not needed.  */
-    PostThreadMessage (dwWindowsThreadId, WM_EMACS_SETLOCALE, XINT (lcid), 0);
+    PostThreadMessage (dwWindowsThreadId, WM_EMACS_SETLOCALE, XFIXNUM (lcid), 0);
 
   return make_fixnum (GetThreadLocale ());
 }
@@ -3360,10 +3360,10 @@ If successful, the new CP is returned, otherwise nil.  */)
 {
   CHECK_FIXNUM (cp);
 
-  if (!IsValidCodePage (XINT (cp)))
+  if (!IsValidCodePage (XFIXNUM (cp)))
     return Qnil;
 
-  if (!SetConsoleCP (XINT (cp)))
+  if (!SetConsoleCP (XFIXNUM (cp)))
     return Qnil;
 
   return make_fixnum (GetConsoleCP ());
@@ -3388,10 +3388,10 @@ If successful, the new CP is returned, otherwise nil.  */)
 {
   CHECK_FIXNUM (cp);
 
-  if (!IsValidCodePage (XINT (cp)))
+  if (!IsValidCodePage (XFIXNUM (cp)))
     return Qnil;
 
-  if (!SetConsoleOutputCP (XINT (cp)))
+  if (!SetConsoleOutputCP (XFIXNUM (cp)))
     return Qnil;
 
   return make_fixnum (GetConsoleOutputCP ());
@@ -3414,13 +3414,13 @@ yield nil.  */)
 
   CHECK_FIXNUM (cp);
 
-  if (!IsValidCodePage (XINT (cp)))
+  if (!IsValidCodePage (XFIXNUM (cp)))
     return Qnil;
 
   /* Going through a temporary DWORD_PTR variable avoids compiler warning
      about cast to pointer from integer of different size, when
      building --with-wide-int or building for 64bit.  */
-  dwcp = XINT (cp);
+  dwcp = XFIXNUM (cp);
   if (TranslateCharsetInfo ((DWORD *) dwcp, &info, TCI_SRCCODEPAGE))
     return make_fixnum (info.ciCharset);
 
@@ -3480,8 +3480,8 @@ If successful, the new layout id is returned, otherwise nil.  */)
   CHECK_FIXNUM_CAR (layout);
   CHECK_FIXNUM_CDR (layout);
 
-  kl = (HKL) (UINT_PTR) ((XINT (XCAR (layout)) & 0xffff)
-			 | (XINT (XCDR (layout)) << 16));
+  kl = (HKL) (UINT_PTR) ((XFIXNUM (XCAR (layout)) & 0xffff)
+			 | (XFIXNUM (XCDR (layout)) << 16));
 
   /* Synchronize layout with input thread.  */
   if (dwWindowsThreadId)

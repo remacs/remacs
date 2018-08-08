@@ -1180,10 +1180,10 @@ menu_position_func (GtkMenu *menu, gint *x, gint *y, gboolean *push_in, gpointer
     {
       int min_x, min_y;
 
-      min_x = XINT (XCAR (workarea));
-      min_y = XINT (Fnth (make_fixnum (1), workarea));
-      max_x = min_x + XINT (Fnth (make_fixnum (2), workarea));
-      max_y = min_y + XINT (Fnth (make_fixnum (3), workarea));
+      min_x = XFIXNUM (XCAR (workarea));
+      min_y = XFIXNUM (Fnth (make_fixnum (1), workarea));
+      max_x = min_x + XFIXNUM (Fnth (make_fixnum (2), workarea));
+      max_y = min_y + XFIXNUM (Fnth (make_fixnum (3), workarea));
     }
 
   if (max_x < 0 || max_y < 0)

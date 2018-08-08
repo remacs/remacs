@@ -182,7 +182,7 @@ key_event (KEY_EVENT_RECORD *event, struct input_event *emacs_ev, int *isdead)
 	  if ((mod_key_state & LEFT_WIN_PRESSED) == 0)
 	    {
 	      if (FIXED_OR_FLOATP (Vw32_phantom_key_code))
-		faked_key = XUINT (Vw32_phantom_key_code) & 255;
+		faked_key = XUFIXNUM (Vw32_phantom_key_code) & 255;
 	      else
 		faked_key = VK_SPACE;
 	      keybd_event (faked_key, (BYTE) MapVirtualKey (faked_key, 0), 0, 0);
@@ -199,7 +199,7 @@ key_event (KEY_EVENT_RECORD *event, struct input_event *emacs_ev, int *isdead)
 	  if ((mod_key_state & RIGHT_WIN_PRESSED) == 0)
 	    {
 	      if (FIXED_OR_FLOATP (Vw32_phantom_key_code))
-		faked_key = XUINT (Vw32_phantom_key_code) & 255;
+		faked_key = XUFIXNUM (Vw32_phantom_key_code) & 255;
 	      else
 		faked_key = VK_SPACE;
 	      keybd_event (faked_key, (BYTE) MapVirtualKey (faked_key, 0), 0, 0);

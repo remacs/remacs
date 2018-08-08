@@ -240,7 +240,7 @@ WATCH-DESCRIPTOR should be an object returned by `gfile-add-watch'.  */)
 	      watch_descriptor);
 
   eassert (FIXNUMP (watch_descriptor));
-  GFileMonitor *monitor = XINTPTR (watch_descriptor);
+  GFileMonitor *monitor = XFIXNUMPTR (watch_descriptor);
   if (!g_file_monitor_is_cancelled (monitor) &&
       !g_file_monitor_cancel (monitor))
       xsignal2 (Qfile_notify_error, build_string ("Could not rm watch"),
@@ -271,7 +271,7 @@ invalid.  */)
     return Qnil;
   else
     {
-      GFileMonitor *monitor = XINTPTR (watch_descriptor);
+      GFileMonitor *monitor = XFIXNUMPTR (watch_descriptor);
       return g_file_monitor_is_cancelled (monitor) ? Qnil : Qt;
     }
 }
@@ -290,7 +290,7 @@ If WATCH-DESCRIPTOR is not valid, nil is returned.  */)
     return Qnil;
   else
     {
-      GFileMonitor *monitor = XINTPTR (watch_descriptor);
+      GFileMonitor *monitor = XFIXNUMPTR (watch_descriptor);
       return intern (G_OBJECT_TYPE_NAME (monitor));
     }
 }

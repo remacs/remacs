@@ -1066,7 +1066,7 @@ usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &r
       validate_region (&args[0], &args[1]);
       start = args[0];
       end = args[1];
-      empty_input = XINT (start) == XINT (end);
+      empty_input = XFIXNUM (start) == XFIXNUM (end);
     }
 
   if (!empty_input)

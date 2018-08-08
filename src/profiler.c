@@ -80,12 +80,12 @@ static EMACS_INT approximate_median (log_t *log,
 {
   eassert (size > 0);
   if (size < 2)
-    return XINT (HASH_VALUE (log, start));
+    return XFIXNUM (HASH_VALUE (log, start));
   if (size < 3)
     /* Not an actual median, but better for our application than
        choosing either of the two numbers.  */
-    return ((XINT (HASH_VALUE (log, start))
-	     + XINT (HASH_VALUE (log, start + 1)))
+    return ((XFIXNUM (HASH_VALUE (log, start))
+	     + XFIXNUM (HASH_VALUE (log, start + 1)))
 	    / 2);
   else
     {
@@ -110,7 +110,7 @@ static void evict_lower_half (log_t *log)
   for (i = 0; i < size; i++)
     /* Evict not only values smaller but also values equal to the median,
        so as to make sure we evict something no matter what.  */
-    if (XINT (HASH_VALUE (log, i)) <= median)
+    if (XFIXNUM (HASH_VALUE (log, i)) <= median)
       {
 	Lisp_Object key = HASH_KEY (log, i);
 	{ /* FIXME: we could make this more efficient.  */
@@ -156,7 +156,7 @@ record_backtrace (log_t *log, EMACS_INT count)
     ptrdiff_t j = hash_lookup (log, backtrace, &hash);
     if (j >= 0)
       {
-	EMACS_INT old_val = XINT (HASH_VALUE (log, j));
+	EMACS_INT old_val = XFIXNUM (HASH_VALUE (log, j));
 	EMACS_INT new_val = saturated_add (old_val, count);
 	set_hash_value_slot (log, j, make_fixnum (new_val));
       }
@@ -273,7 +273,7 @@ setup_cpu_timer (Lisp_Object sampling_interval)
 			  : EMACS_INT_MAX)))
     return -1;
 
-  current_sampling_interval = XINT (sampling_interval);
+  current_sampling_interval = XFIXNUM (sampling_interval);
   interval = make_timespec (current_sampling_interval / billion,
 			    current_sampling_interval % billion);
   emacs_sigaction_init (&action, deliver_profiler_signal);

@@ -5718,7 +5718,7 @@ additional wait period, in milliseconds; this is for backwards compatibility.
   if (!NILP (milliseconds))
     {
       CHECK_FIXNUM (milliseconds);
-      duration += XINT (milliseconds) / 1000.0;
+      duration += XFIXNUM (milliseconds) / 1000.0;
     }
 
   if (duration > 0)
@@ -5768,7 +5768,7 @@ sit_for (Lisp_Object timeout, bool reading, int display_option)
 
   if (FIXNUMP (timeout))
     {
-      sec = XINT (timeout);
+      sec = XFIXNUM (timeout);
       if (sec <= 0)
 	return Qt;
       nsec = 0;

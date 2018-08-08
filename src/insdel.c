@@ -2287,17 +2287,17 @@ DEFUN ("combine-after-change-execute", Fcombine_after_change_execute,
       elt = XCAR (tail);
       if (! CONSP (elt))
 	continue;
-      thisbeg = XINT (XCAR (elt));
+      thisbeg = XFIXNUM (XCAR (elt));
 
       elt = XCDR (elt);
       if (! CONSP (elt))
 	continue;
-      thisend = XINT (XCAR (elt));
+      thisend = XFIXNUM (XCAR (elt));
 
       elt = XCDR (elt);
       if (! CONSP (elt))
 	continue;
-      thischange = XINT (XCAR (elt));
+      thischange = XFIXNUM (XCAR (elt));
 
       /* Merge this range into the accumulated range.  */
       change += thischange;

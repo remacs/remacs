@@ -382,17 +382,17 @@ access_keymap_1 (Lisp_Object map, Lisp_Object idx,
   else if (FIXNUMP (idx))
     /* Clobber the high bits that can be present on a machine
        with more than 24 bits of integer.  */
-    XSETFASTINT (idx, XINT (idx) & (CHAR_META | (CHAR_META - 1)));
+    XSETFASTINT (idx, XFIXNUM (idx) & (CHAR_META | (CHAR_META - 1)));
 
   /* Handle the special meta -> esc mapping.  */
-  if (FIXNUMP (idx) && XFASTINT (idx) & meta_modifier)
+  if (FIXNUMP (idx) && XFIXNAT (idx) & meta_modifier)
     {
       /* See if there is a meta-map.  If there's none, there is
          no binding for IDX, unless a default binding exists in MAP.  */
       Lisp_Object event_meta_binding, event_meta_map;
       /* A strange value in which Meta is set would cause
 	 infinite recursion.  Protect against that.  */
-      if (XINT (meta_prefix_char) & CHAR_META)
+      if (XFIXNUM (meta_prefix_char) & CHAR_META)
 	meta_prefix_char = make_fixnum (27);
       event_meta_binding = access_keymap_1 (map, meta_prefix_char, t_ok,
 					    noinherit, autoload);
@@ -400,7 +400,7 @@ access_keymap_1 (Lisp_Object map, Lisp_Object idx,
       if (CONSP (event_meta_map))
 	{
 	  map = event_meta_map;
-	  idx = make_fixnum (XFASTINT (idx) & ~meta_modifier);
+	  idx = make_fixnum (XFIXNAT (idx) & ~meta_modifier);
 	}
       else if (t_ok)
 	/* Set IDX to t, so that we only find a default binding.  */
@@ -473,15 +473,15 @@ access_keymap_1 (Lisp_Object map, Lisp_Object idx,
 	  }
 	else if (VECTORP (binding))
 	  {
-	    if (FIXNUMP (idx) && XFASTINT (idx) < ASIZE (binding))
-	      val = AREF (binding, XFASTINT (idx));
+	    if (FIXNUMP (idx) && XFIXNAT (idx) < ASIZE (binding))
+	      val = AREF (binding, XFIXNAT (idx));
 	  }
 	else if (CHAR_TABLE_P (binding))
 	  {
 	    /* Character codes with modifiers
 	       are not included in a char-table.
 	       All character codes without modifiers are included.  */
-	    if (FIXNUMP (idx) && (XFASTINT (idx) & CHAR_MODIFIER_MASK) == 0)
+	    if (FIXNUMP (idx) && (XFIXNAT (idx) & CHAR_MODIFIER_MASK) == 0)
 	      {
 		val = Faref (binding, idx);
 		/* nil has a special meaning for char-tables, so
@@ -567,7 +567,7 @@ map_keymap_char_table_item (Lisp_Object args, Lisp_Object key, Lisp_Object val)
 	 it in place.  */
       if (CONSP (key))
 	key = Fcons (XCAR (key), XCDR (key));
-      union map_keymap *md = XINTPTR (args);
+      union map_keymap *md = XFIXNUMPTR (args);
       map_keymap_item (md->s.fun, md->s.args, key, val, md->s.data);
     }
 }
@@ -785,7 +785,7 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
   else if (FIXNUMP (idx))
     /* Clobber the high bits that can be present on a machine
        with more than 24 bits of integer.  */
-    XSETFASTINT (idx, XINT (idx) & (CHAR_META | (CHAR_META - 1)));
+    XSETFASTINT (idx, XFIXNUM (idx) & (CHAR_META | (CHAR_META - 1)));
 
   /* Scan the keymap for a binding of idx.  */
   {
@@ -807,22 +807,22 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
 	elt = XCAR (tail);
 	if (VECTORP (elt))
 	  {
-	    if (FIXNATP (idx) && XFASTINT (idx) < ASIZE (elt))
+	    if (FIXNATP (idx) && XFIXNAT (idx) < ASIZE (elt))
 	      {
 		CHECK_IMPURE (elt, XVECTOR (elt));
-		ASET (elt, XFASTINT (idx), def);
+		ASET (elt, XFIXNAT (idx), def);
 		return def;
 	      }
 	    else if (CONSP (idx) && CHARACTERP (XCAR (idx)))
 	      {
-		int from = XFASTINT (XCAR (idx));
-		int to = XFASTINT (XCDR (idx));
+		int from = XFIXNAT (XCAR (idx));
+		int to = XFIXNAT (XCDR (idx));
 
 		if (to >= ASIZE (elt))
 		  to = ASIZE (elt) - 1;
 		for (; from <= to; from++)
 		  ASET (elt, from, def);
-		if (to == XFASTINT (XCDR (idx)))
+		if (to == XFIXNAT (XCDR (idx)))
 		  /* We have defined all keys in IDX.  */
 		  return def;
 	      }
@@ -833,7 +833,7 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
 	    /* Character codes with modifiers
 	       are not included in a char-table.
 	       All character codes without modifiers are included.  */
-	    if (FIXNATP (idx) && !(XFASTINT (idx) & CHAR_MODIFIER_MASK))
+	    if (FIXNATP (idx) && !(XFIXNAT (idx) & CHAR_MODIFIER_MASK))
 	      {
 		Faset (elt, idx,
 		       /* nil has a special meaning for char-tables, so
@@ -870,11 +870,11 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
 		     && CHARACTERP (XCAR (idx))
 		     && CHARACTERP (XCAR (elt)))
 	      {
-		int from = XFASTINT (XCAR (idx));
-		int to = XFASTINT (XCDR (idx));
+		int from = XFIXNAT (XCAR (idx));
+		int to = XFIXNAT (XCDR (idx));
 
-		if (from <= XFASTINT (XCAR (elt))
-		    && to >= XFASTINT (XCAR (elt)))
+		if (from <= XFIXNAT (XCAR (elt))
+		    && to >= XFIXNAT (XCAR (elt)))
 		  {
 		    XSETCDR (elt, def);
 		    if (from == to)
@@ -1124,7 +1124,7 @@ binding KEY to DEF is added at the front of KEYMAP.  */)
 	silly_event_symbol_error (c);
 
       if (FIXNUMP (c)
-	  && (XINT (c) & meta_bit)
+	  && (XFIXNUM (c) & meta_bit)
 	  && !metized)
 	{
 	  c = meta_prefix_char;
@@ -1133,7 +1133,7 @@ binding KEY to DEF is added at the front of KEYMAP.  */)
       else
 	{
 	  if (FIXNUMP (c))
-	    XSETINT (c, XINT (c) & ~meta_bit);
+	    XSETINT (c, XFIXNUM (c) & ~meta_bit);
 
 	  metized = 0;
 	  idx++;
@@ -1246,8 +1246,8 @@ recognize the default bindings, just as `read-key-sequence' does.  */)
 	c = Fevent_convert_list (c);
 
       /* Turn the 8th bit of string chars into a meta modifier.  */
-      if (STRINGP (key) && XINT (c) & 0x80 && !STRING_MULTIBYTE (key))
-	XSETINT (c, (XINT (c) | meta_modifier) & ~0x80);
+      if (STRINGP (key) && XFIXNUM (c) & 0x80 && !STRING_MULTIBYTE (key))
+	XSETINT (c, (XFIXNUM (c) | meta_modifier) & ~0x80);
 
       /* Allow string since binding for `menu-bar-select-buffer'
 	 includes the buffer name in the key sequence.  */
@@ -1300,7 +1300,7 @@ silly_event_symbol_error (Lisp_Object c)
   int modifiers;
 
   parsed = parse_modifiers (c);
-  modifiers = XFASTINT (XCAR (XCDR (parsed)));
+  modifiers = XFIXNAT (XCAR (XCDR (parsed)));
   base = XCAR (parsed);
   name = Fsymbol_name (base);
   /* This alist includes elements such as ("RET" . "\\r").  */
@@ -1474,7 +1474,7 @@ current_minor_maps (Lisp_Object **modeptr, Lisp_Object **mapptr)
 static ptrdiff_t
 click_position (Lisp_Object position)
 {
-  EMACS_INT pos = (FIXNUMP (position) ? XINT (position)
+  EMACS_INT pos = (FIXNUMP (position) ? XFIXNUM (position)
 		   : MARKERP (position) ? marker_position (position)
 		   : PT);
   if (! (BEGV <= pos && pos <= ZV))
@@ -1553,12 +1553,12 @@ like in the respective argument of `key-binding'.  */)
 
 	      pos = POSN_BUFFER_POSN (position);
 	      if (FIXNUMP (pos)
-		  && XINT (pos) >= BEG && XINT (pos) <= Z)
+		  && XFIXNUM (pos) >= BEG && XFIXNUM (pos) <= Z)
 		{
-		  local_map = get_local_map (XINT (pos),
+		  local_map = get_local_map (XFIXNUM (pos),
 					     current_buffer, Qlocal_map);
 
-		  keymap = get_local_map (XINT (pos),
+		  keymap = get_local_map (XFIXNUM (pos),
 					  current_buffer, Qkeymap);
 		}
 	    }
@@ -1576,8 +1576,8 @@ like in the respective argument of `key-binding'.  */)
 	      pos = XCDR (string);
 	      string = XCAR (string);
 	      if (FIXNUMP (pos)
-		  && XINT (pos) >= 0
-		  && XINT (pos) < SCHARS (string))
+		  && XFIXNUM (pos) >= 0
+		  && XFIXNUM (pos) < SCHARS (string))
 		{
 		  map = Fget_text_property (pos, Qlocal_map, string);
 		  if (!NILP (map))
@@ -1854,8 +1854,8 @@ accessible_keymaps_1 (Lisp_Object key, Lisp_Object cmd, Lisp_Object args, void *
   while (!NILP (tem = Frassq (cmd, maps)))
     {
       Lisp_Object prefix = XCAR (tem);
-      ptrdiff_t lim = XINT (Flength (XCAR (tem)));
-      if (lim <= XINT (Flength (thisseq)))
+      ptrdiff_t lim = XFIXNUM (Flength (XCAR (tem)));
+      if (lim <= XFIXNUM (Flength (thisseq)))
 	{ /* This keymap was already seen with a smaller prefix.  */
 	  ptrdiff_t i = 0;
 	  while (i < lim && EQ (Faref (prefix, make_fixnum (i)),
@@ -1879,10 +1879,10 @@ accessible_keymaps_1 (Lisp_Object key, Lisp_Object cmd, Lisp_Object args, void *
   if (is_metized)
     {
       int meta_bit = meta_modifier;
-      Lisp_Object last = make_fixnum (XINT (Flength (thisseq)) - 1);
+      Lisp_Object last = make_fixnum (XFIXNUM (Flength (thisseq)) - 1);
       tem = Fcopy_sequence (thisseq);
 
-      Faset (tem, last, make_fixnum (XINT (key) | meta_bit));
+      Faset (tem, last, make_fixnum (XFIXNUM (key) | meta_bit));
 
       /* This new sequence is the same length as
 	 thisseq, so stick it in the list right
@@ -1910,7 +1910,7 @@ then the value includes only maps for prefixes that start with PREFIX.  */)
   (Lisp_Object keymap, Lisp_Object prefix)
 {
   Lisp_Object maps, tail;
-  EMACS_INT prefixlen = XFASTINT (Flength (prefix));
+  EMACS_INT prefixlen = XFIXNAT (Flength (prefix));
 
   if (!NILP (prefix))
     {
@@ -1969,11 +1969,11 @@ then the value includes only maps for prefixes that start with PREFIX.  */)
       data.thisseq = Fcar (XCAR (tail));
       data.maps = maps;
       data.tail = tail;
-      last = make_fixnum (XINT (Flength (data.thisseq)) - 1);
+      last = make_fixnum (XFIXNUM (Flength (data.thisseq)) - 1);
       /* Does the current sequence end in the meta-prefix-char?  */
-      data.is_metized = (XINT (last) >= 0
+      data.is_metized = (XFIXNUM (last) >= 0
 		    /* Don't metize the last char of PREFIX.  */
-		    && XINT (last) >= prefixlen
+		    && XFIXNUM (last) >= prefixlen
 		    && EQ (Faref (data.thisseq, last), meta_prefix_char));
 
       /* Since we can't run lisp code, we can't scan autoloaded maps.  */
@@ -1997,7 +1997,7 @@ For an approximate inverse of this, see `kbd'.  */)
   EMACS_INT i;
   ptrdiff_t i_byte;
   Lisp_Object *args;
-  EMACS_INT size = XINT (Flength (keys));
+  EMACS_INT size = XFIXNUM (Flength (keys));
   Lisp_Object list;
   Lisp_Object sep = build_string (" ");
   Lisp_Object key;
@@ -2006,7 +2006,7 @@ For an approximate inverse of this, see `kbd'.  */)
   USE_SAFE_ALLOCA;
 
   if (!NILP (prefix))
-    size += XINT (Flength (prefix));
+    size += XFIXNUM (Flength (prefix));
 
   /* This has one extra element at the end that we don't pass to Fconcat.  */
   EMACS_INT size4;
@@ -2043,7 +2043,7 @@ For an approximate inverse of this, see `kbd'.  */)
   else if (VECTORP (list))
     size = ASIZE (list);
   else if (CONSP (list))
-    size = XINT (Flength (list));
+    size = XFIXNUM (Flength (list));
   else
     wrong_type_argument (Qarrayp, list);
 
@@ -2074,7 +2074,7 @@ For an approximate inverse of this, see `kbd'.  */)
 	{
 	  if (!FIXNUMP (key)
 	      || EQ (key, meta_prefix_char)
-	      || (XINT (key) & meta_modifier))
+	      || (XFIXNUM (key) & meta_modifier))
 	    {
 	      args[len++] = Fsingle_key_description (meta_prefix_char, Qnil);
 	      args[len++] = sep;
@@ -2082,7 +2082,7 @@ For an approximate inverse of this, see `kbd'.  */)
 		continue;
 	    }
 	  else
-	    XSETINT (key, XINT (key) | meta_modifier);
+	    XSETINT (key, XFIXNUM (key) | meta_modifier);
 	  add_meta = 0;
 	}
       else if (EQ (key, meta_prefix_char))
@@ -2240,7 +2240,7 @@ around function keys and event symbols.  */)
   if (FIXNUMP (key))		/* Normal character.  */
     {
       char tem[KEY_DESCRIPTION_SIZE];
-      char *p = push_key_description (XINT (key), tem);
+      char *p = push_key_description (XFIXNUM (key), tem);
       *p = 0;
       return make_specified_string (tem, -1, p - tem, 1);
     }
@@ -2306,7 +2306,7 @@ See Info node `(elisp)Describing Characters' for examples.  */)
 
   CHECK_CHARACTER (character);
 
-  c = XINT (character);
+  c = XFIXNUM (character);
   if (!ASCII_CHAR_P (c))
     {
       int len = CHAR_STRING (c, (unsigned char *) str);
@@ -2328,7 +2328,7 @@ static int
 preferred_sequence_p (Lisp_Object seq)
 {
   EMACS_INT i;
-  EMACS_INT len = XFASTINT (Flength (seq));
+  EMACS_INT len = XFIXNAT (Flength (seq));
   int result = 1;
 
   for (i = 0; i < len; i++)
@@ -2342,7 +2342,7 @@ preferred_sequence_p (Lisp_Object seq)
 	return 0;
       else
 	{
-	  int modifiers = XINT (elt) & (CHAR_MODIFIER_MASK & ~CHAR_META);
+	  int modifiers = XFIXNUM (elt) & (CHAR_MODIFIER_MASK & ~CHAR_META);
 	  if (modifiers == where_is_preferred_modifier)
 	    result = 2;
 	  else if (modifiers)
@@ -2463,12 +2463,12 @@ where_is_internal (Lisp_Object definition, Lisp_Object keymaps,
 
       this = Fcar (XCAR (maps));
       map  = Fcdr (XCAR (maps));
-      last = make_fixnum (XINT (Flength (this)) - 1);
-      last_is_meta = (XINT (last) >= 0
+      last = make_fixnum (XFIXNUM (Flength (this)) - 1);
+      last_is_meta = (XFIXNUM (last) >= 0
 		      && EQ (Faref (this, last), meta_prefix_char));
 
       /* if (nomenus && !preferred_sequence_p (this)) */
-      if (nomenus && XINT (last) >= 0
+      if (nomenus && XFIXNUM (last) >= 0
 	  && SYMBOLP (tem = Faref (this, make_fixnum (0)))
 	  && !NILP (Fmemq (XCAR (parse_modifiers (tem)), Vmouse_events)))
 	/* If no menu entries should be returned, skip over the
@@ -2720,7 +2720,7 @@ where_is_internal_1 (Lisp_Object key, Lisp_Object binding, Lisp_Object args, voi
   if (FIXNUMP (key) && last_is_meta)
     {
       sequence = Fcopy_sequence (this);
-      Faset (sequence, last, make_fixnum (XINT (key) | meta_modifier));
+      Faset (sequence, last, make_fixnum (XFIXNUM (key) | meta_modifier));
     }
   else
     {
@@ -3126,8 +3126,8 @@ describe_map_compare (const void *aa, const void *bb)
 {
   const struct describe_map_elt *a = aa, *b = bb;
   if (FIXNUMP (a->event) && FIXNUMP (b->event))
-    return ((XINT (a->event) > XINT (b->event))
-	    - (XINT (a->event) < XINT (b->event)));
+    return ((XFIXNUM (a->event) > XFIXNUM (b->event))
+	    - (XFIXNUM (a->event) < XFIXNUM (b->event)));
   if (!FIXNUMP (a->event) && FIXNUMP (b->event))
     return 1;
   if (FIXNUMP (a->event) && !FIXNUMP (b->event))
@@ -3285,7 +3285,7 @@ describe_map (Lisp_Object map, Lisp_Object prefix,
       if (FIXNUMP (vect[i].event))
 	{
 	  while (i + 1 < slots_used
-		 && EQ (vect[i+1].event, make_fixnum (XINT (vect[i].event) + 1))
+		 && EQ (vect[i+1].event, make_fixnum (XFIXNUM (vect[i].event) + 1))
 		 && !NILP (Fequal (vect[i + 1].definition, definition))
 		 && vect[i].shadowed == vect[i + 1].shadowed)
 	    i++;
@@ -3407,7 +3407,7 @@ describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
   if (!keymap_p)
     {
       /* Call Fkey_description first, to avoid GC bug for the other string.  */
-      if (!NILP (prefix) && XFASTINT (Flength (prefix)) > 0)
+      if (!NILP (prefix) && XFIXNAT (Flength (prefix)) > 0)
 	{
 	  Lisp_Object tem = Fkey_description (prefix, Qnil);
 	  AUTO_STRING (space, " ");

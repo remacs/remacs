@@ -194,7 +194,7 @@ EXPONENT must be an integer.   */)
   (Lisp_Object sgnfcand, Lisp_Object exponent)
 {
   CHECK_FIXNUM (exponent);
-  int e = min (max (INT_MIN, XINT (exponent)), INT_MAX);
+  int e = min (max (INT_MIN, XFIXNUM (exponent)), INT_MAX);
   return make_float (ldexp (extract_float (sgnfcand), e));
 }
 
@@ -215,14 +215,14 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
   CHECK_FIXNUM_OR_FLOAT (arg2);
   if (FIXNUMP (arg1)     /* common lisp spec */
       && FIXNUMP (arg2)   /* don't promote, if both are ints, and */
-      && XINT (arg2) >= 0) /* we are sure the result is not fractional */
+      && XFIXNUM (arg2) >= 0) /* we are sure the result is not fractional */
     {				/* this can be improved by pre-calculating */
       EMACS_INT y;		/* some binary powers of x then accumulating */
       EMACS_UINT acc, x;  /* Unsigned so that overflow is well defined.  */
       Lisp_Object val;
 
-      x = XINT (arg1);
-      y = XINT (arg2);
+      x = XFIXNUM (arg1);
+      y = XFIXNUM (arg2);
       acc = (y & 1 ? x : 1);
 
       while ((y >>= 1) != 0)
@@ -285,7 +285,7 @@ DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
       arg = make_number (val);
       mpz_clear (val);
     }
-  else if (FIXNUMP (arg) && XINT (arg) == MOST_NEGATIVE_FIXNUM)
+  else if (FIXNUMP (arg) && XFIXNUM (arg) == MOST_NEGATIVE_FIXNUM)
     {
       mpz_t val;
       mpz_init (val);
@@ -295,8 +295,8 @@ DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
     }
   else if (FLOATP (arg))
     arg = make_float (fabs (XFLOAT_DATA (arg)));
-  else if (XINT (arg) < 0)
-    XSETINT (arg, - XINT (arg));
+  else if (XFIXNUM (arg) < 0)
+    XSETINT (arg, - XFIXNUM (arg));
 
   return arg;
 }
@@ -310,7 +310,7 @@ DEFUN ("float", Ffloat, Sfloat, 1, 1, 0,
   if (BIGNUMP (arg))
     return make_float (mpz_get_d (XBIGNUM (arg)->value));
   if (FIXNUMP (arg))
-    return make_float ((double) XINT (arg));
+    return make_float ((double) XFIXNUM (arg));
   else				/* give 'em the same float back */
     return arg;
 }
@@ -351,7 +351,7 @@ This is the same as the exponent of a float.  */)
   else
     {
       eassert (FIXNUMP (arg));
-      EMACS_INT i = eabs (XINT (arg));
+      EMACS_INT i = eabs (XFIXNUM (arg));
       value = (i == 0
 	       ? MOST_NEGATIVE_FIXNUM
 	       : EMACS_UINT_WIDTH - 1 - ecount_leading_zeros (i));
@@ -383,13 +383,13 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
       CHECK_FIXNUM_OR_FLOAT (divisor);
       if (!FLOATP (arg) && !FLOATP (divisor))
 	{
-	  if (XINT (divisor) == 0)
+	  if (XFIXNUM (divisor) == 0)
 	    xsignal0 (Qarith_error);
-	  return make_fixnum (int_round2 (XINT (arg), XINT (divisor)));
+	  return make_fixnum (int_round2 (XFIXNUM (arg), XFIXNUM (divisor)));
 	}
 
-      double f1 = FLOATP (arg) ? XFLOAT_DATA (arg) : XINT (arg);
-      double f2 = FLOATP (divisor) ? XFLOAT_DATA (divisor) : XINT (divisor);
+      double f1 = FLOATP (arg) ? XFLOAT_DATA (arg) : XFIXNUM (arg);
+      double f2 = FLOATP (divisor) ? XFLOAT_DATA (divisor) : XFIXNUM (divisor);
       if (! IEEE_FLOATING_POINT && f2 == 0)
 	xsignal0 (Qarith_error);
       d = f1 / f2;
@@ -510,8 +510,8 @@ fmod_float (Lisp_Object x, Lisp_Object y)
 {
   double f1, f2;
 
-  f1 = FLOATP (x) ? XFLOAT_DATA (x) : XINT (x);
-  f2 = FLOATP (y) ? XFLOAT_DATA (y) : XINT (y);
+  f1 = FLOATP (x) ? XFLOAT_DATA (x) : XFIXNUM (x);
+  f2 = FLOATP (y) ? XFLOAT_DATA (y) : XFIXNUM (y);
 
   f1 = fmod (f1, f2);
 

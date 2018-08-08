@@ -67,21 +67,21 @@ REGISTERS should be a vector produced by `make-register' and
   union REGS inregs, outregs;
 
   CHECK_FIXNUM (interrupt);
-  no = (unsigned long) XINT (interrupt);
+  no = (unsigned long) XFIXNUM (interrupt);
   CHECK_VECTOR (registers);
   if (no < 0 || no > 0xff || ASIZE (registers) != 8)
     return Qnil;
   for (i = 0; i < 8; i++)
     CHECK_FIXNUM (AREF (registers, i));
 
-  inregs.x.ax    = (unsigned long) XFASTINT (AREF (registers, 0));
-  inregs.x.bx    = (unsigned long) XFASTINT (AREF (registers, 1));
-  inregs.x.cx    = (unsigned long) XFASTINT (AREF (registers, 2));
-  inregs.x.dx    = (unsigned long) XFASTINT (AREF (registers, 3));
-  inregs.x.si    = (unsigned long) XFASTINT (AREF (registers, 4));
-  inregs.x.di    = (unsigned long) XFASTINT (AREF (registers, 5));
-  inregs.x.cflag = (unsigned long) XFASTINT (AREF (registers, 6));
-  inregs.x.flags = (unsigned long) XFASTINT (AREF (registers, 7));
+  inregs.x.ax    = (unsigned long) XFIXNAT (AREF (registers, 0));
+  inregs.x.bx    = (unsigned long) XFIXNAT (AREF (registers, 1));
+  inregs.x.cx    = (unsigned long) XFIXNAT (AREF (registers, 2));
+  inregs.x.dx    = (unsigned long) XFIXNAT (AREF (registers, 3));
+  inregs.x.si    = (unsigned long) XFIXNAT (AREF (registers, 4));
+  inregs.x.di    = (unsigned long) XFIXNAT (AREF (registers, 5));
+  inregs.x.cflag = (unsigned long) XFIXNAT (AREF (registers, 6));
+  inregs.x.flags = (unsigned long) XFIXNAT (AREF (registers, 7));
 
   int86 (no, &inregs, &outregs);
 
@@ -107,7 +107,7 @@ Return the updated VECTOR.  */)
   char *buf;
 
   CHECK_FIXNUM (address);
-  offs = (unsigned long) XINT (address);
+  offs = (unsigned long) XFIXNUM (address);
   CHECK_VECTOR (vector);
   len = ASIZE (vector);
   if (len < 1 || len > 2048 || offs < 0 || offs > 0xfffff - len)
@@ -130,7 +130,7 @@ DEFUN ("msdos-memput", Fdos_memput, Sdos_memput, 2, 2, 0,
   char *buf;
 
   CHECK_FIXNUM (address);
-  offs = (unsigned long) XINT (address);
+  offs = (unsigned long) XFIXNUM (address);
   CHECK_VECTOR (vector);
   len = ASIZE (vector);
   if (len < 1 || len > 2048 || offs < 0 || offs > 0xfffff - len)
@@ -140,7 +140,7 @@ DEFUN ("msdos-memput", Fdos_memput, Sdos_memput, 2, 2, 0,
   for (i = 0; i < len; i++)
     {
       CHECK_FIXNUM (AREF (vector, i));
-      buf[i] = (unsigned char) XFASTINT (AREF (vector, i)) & 0xFF;
+      buf[i] = (unsigned char) XFIXNAT (AREF (vector, i)) & 0xFF;
     }
 
   dosmemput (buf, len, offs);
@@ -155,7 +155,7 @@ The current keyboard layout is available in dos-keyboard-code.  */)
   (Lisp_Object country_code, Lisp_Object allkeys)
 {
   CHECK_FIXNUM (country_code);
-  if (!dos_set_keyboard (XINT (country_code), !NILP (allkeys)))
+  if (!dos_set_keyboard (XFIXNUM (country_code), !NILP (allkeys)))
     return Qnil;
   return Qt;
 }
@@ -521,7 +521,7 @@ system_process_attributes (Lisp_Object pid)
   Lisp_Object attrs = Qnil;
 
   CHECK_FIXNUM_OR_FLOAT (pid);
-  proc_id = FLOATP (pid) ? XFLOAT_DATA (pid) : XINT (pid);
+  proc_id = FLOATP (pid) ? XFLOAT_DATA (pid) : XFIXNUM (pid);
 
   if (proc_id == getpid ())
     {

@@ -791,7 +791,7 @@ DEFUN ("set-screen-color", Fset_screen_color, Sset_screen_color, 2, 2, 0,
 Arguments should be indices between 0 and 15, see w32console.el.  */)
   (Lisp_Object foreground, Lisp_Object background)
 {
-  char_attr_normal = XFASTINT (foreground) + (XFASTINT (background) << 4);
+  char_attr_normal = XFIXNAT (foreground) + (XFIXNAT (background) << 4);
 
   Frecenter (Qnil, Qt);
   return Qt;
@@ -814,7 +814,7 @@ DEFUN ("set-cursor-size", Fset_cursor_size, Sset_cursor_size, 1, 1, 0,
   (Lisp_Object size)
 {
   CONSOLE_CURSOR_INFO cci;
-  cci.dwSize = XFASTINT (size);
+  cci.dwSize = XFIXNAT (size);
   cci.bVisible = TRUE;
   (void) SetConsoleCursorInfo (cur_screen, &cci);
 

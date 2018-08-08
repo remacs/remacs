@@ -324,7 +324,7 @@ static Lisp_Object Vbig5_coding_system;
 /* ISO2022 section */
 
 #define CODING_ISO_INITIAL(coding, reg)			\
-  (XINT (AREF (AREF (CODING_ID_ATTRS ((coding)->id),	\
+  (XFIXNUM (AREF (AREF (CODING_ID_ATTRS ((coding)->id),	\
 		     coding_attr_iso_initial),		\
 	       reg)))
 
@@ -2888,7 +2888,7 @@ setup_iso_safe_charsets (Lisp_Object attrs)
   Lisp_Object reg_usage;
   Lisp_Object tail;
   EMACS_INT reg94, reg96;
-  int flags = XINT (AREF (attrs, coding_attr_iso_flags));
+  int flags = XFIXNUM (AREF (attrs, coding_attr_iso_flags));
   int max_charset_id;
 
   charset_list = CODING_ATTR_CHARSET_LIST (attrs);
@@ -2906,7 +2906,7 @@ setup_iso_safe_charsets (Lisp_Object attrs)
   max_charset_id = 0;
   for (tail = charset_list; CONSP (tail); tail = XCDR (tail))
     {
-      int id = XINT (XCAR (tail));
+      int id = XFIXNUM (XCAR (tail));
       if (max_charset_id < id)
 	max_charset_id = id;
     }
@@ -2915,8 +2915,8 @@ setup_iso_safe_charsets (Lisp_Object attrs)
   memset (SDATA (safe_charsets), 255, max_charset_id + 1);
   request = AREF (attrs, coding_attr_iso_request);
   reg_usage = AREF (attrs, coding_attr_iso_usage);
-  reg94 = XINT (XCAR (reg_usage));
-  reg96 = XINT (XCDR (reg_usage));
+  reg94 = XFIXNUM (XCAR (reg_usage));
+  reg96 = XFIXNUM (XCDR (reg_usage));
 
   for (tail = charset_list; CONSP (tail); tail = XCDR (tail))
     {
@@ -2925,19 +2925,19 @@ setup_iso_safe_charsets (Lisp_Object attrs)
       struct charset *charset;
 
       id = XCAR (tail);
-      charset = CHARSET_FROM_ID (XINT (id));
+      charset = CHARSET_FROM_ID (XFIXNUM (id));
       reg = Fcdr (Fassq (id, request));
       if (! NILP (reg))
-	SSET (safe_charsets, XINT (id), XINT (reg));
+	SSET (safe_charsets, XFIXNUM (id), XFIXNUM (reg));
       else if (charset->iso_chars_96)
 	{
 	  if (reg96 < 4)
-	    SSET (safe_charsets, XINT (id), reg96);
+	    SSET (safe_charsets, XFIXNUM (id), reg96);
 	}
       else
 	{
 	  if (reg94 < 4)
-	    SSET (safe_charsets, XINT (id), reg94);
+	    SSET (safe_charsets, XFIXNUM (id), reg94);
 	}
     }
   ASET (attrs, coding_attr_safe_charsets, safe_charsets);
@@ -4612,7 +4612,7 @@ detect_coding_sjis (struct coding_system *coding,
 
   CODING_GET_INFO (coding, attrs, charset_list);
   max_first_byte_of_2_byte_code
-    = (XINT (Flength (charset_list)) > 3 ? 0xFC : 0xEF);
+    = (XFIXNUM (Flength (charset_list)) > 3 ? 0xFC : 0xEF);
 
   detect_info->checked |= CATEGORY_MASK_SJIS;
   /* A coding system of this category is always ASCII compatible.  */
@@ -4725,10 +4725,10 @@ decode_coding_sjis (struct coding_system *coding)
   CODING_GET_INFO (coding, attrs, charset_list);
 
   val = charset_list;
-  charset_roman = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_kana = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_kanji = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_kanji2 = NILP (val) ? NULL : CHARSET_FROM_ID (XINT (XCAR (val)));
+  charset_roman = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_kana = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_kanji = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_kanji2 = NILP (val) ? NULL : CHARSET_FROM_ID (XFIXNUM (XCAR (val)));
 
   while (1)
     {
@@ -4840,8 +4840,8 @@ decode_coding_big5 (struct coding_system *coding)
 
   CODING_GET_INFO (coding, attrs, charset_list);
   val = charset_list;
-  charset_roman = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_big5 = CHARSET_FROM_ID (XINT (XCAR (val)));
+  charset_roman = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_big5 = CHARSET_FROM_ID (XFIXNUM (XCAR (val)));
 
   while (1)
     {
@@ -4936,9 +4936,9 @@ encode_coding_sjis (struct coding_system *coding)
 
   CODING_GET_INFO (coding, attrs, charset_list);
   val = XCDR (charset_list);
-  charset_kana = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_kanji = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_kanji2 = NILP (val) ? NULL : CHARSET_FROM_ID (XINT (XCAR (val)));
+  charset_kana = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_kanji = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_kanji2 = NILP (val) ? NULL : CHARSET_FROM_ID (XFIXNUM (XCAR (val)));
 
   ascii_compatible = ! NILP (CODING_ATTR_ASCII_COMPAT (attrs));
 
@@ -5029,7 +5029,7 @@ encode_coding_big5 (struct coding_system *coding)
 
   CODING_GET_INFO (coding, attrs, charset_list);
   val = XCDR (charset_list);
-  charset_big5 = CHARSET_FROM_ID (XINT (XCAR (val)));
+  charset_big5 = CHARSET_FROM_ID (XFIXNUM (XCAR (val)));
   ascii_compatible = ! NILP (CODING_ATTR_ASCII_COMPAT (attrs));
 
   while (charbuf < charbuf_end)
@@ -5442,7 +5442,7 @@ detect_coding_charset (struct coding_system *coding,
 	}
       if (FIXNUMP (val))
 	{
-	  charset = CHARSET_FROM_ID (XFASTINT (val));
+	  charset = CHARSET_FROM_ID (XFIXNAT (val));
 	  dim = CHARSET_DIMENSION (charset);
 	  for (idx = 1; idx < dim; idx++)
 	    {
@@ -5461,7 +5461,7 @@ detect_coding_charset (struct coding_system *coding,
 	  idx = 1;
 	  for (; CONSP (val); val = XCDR (val))
 	    {
-	      charset = CHARSET_FROM_ID (XFASTINT (XCAR (val)));
+	      charset = CHARSET_FROM_ID (XFIXNAT (XCAR (val)));
 	      dim = CHARSET_DIMENSION (charset);
 	      while (idx < dim)
 		{
@@ -5555,7 +5555,7 @@ decode_coding_charset (struct coding_system *coding)
 	goto invalid_code;
       if (FIXNUMP (val))
 	{
-	  charset = CHARSET_FROM_ID (XFASTINT (val));
+	  charset = CHARSET_FROM_ID (XFIXNAT (val));
 	  dim = CHARSET_DIMENSION (charset);
 	  while (len < dim)
 	    {
@@ -5573,7 +5573,7 @@ decode_coding_charset (struct coding_system *coding)
 	     comes first).  */
 	  while (CONSP (val))
 	    {
-	      charset = CHARSET_FROM_ID (XFASTINT (XCAR (val)));
+	      charset = CHARSET_FROM_ID (XFIXNAT (XCAR (val)));
 	      dim = CHARSET_DIMENSION (charset);
 	      while (len < dim)
 		{
@@ -5726,7 +5726,7 @@ setup_coding_system (Lisp_Object coding_system, struct coding_system *coding)
   val = CODING_ATTR_SAFE_CHARSETS (attrs);
   coding->max_charset_id = SCHARS (val) - 1;
   coding->safe_charsets = SDATA (val);
-  coding->default_char = XINT (CODING_ATTR_DEFAULT_CHAR (attrs));
+  coding->default_char = XFIXNUM (CODING_ATTR_DEFAULT_CHAR (attrs));
   coding->carryover_bytes = 0;
   coding->raw_destination = 0;
 
@@ -5749,7 +5749,7 @@ setup_coding_system (Lisp_Object coding_system, struct coding_system *coding)
   else if (EQ (coding_type, Qiso_2022))
     {
       int i;
-      int flags = XINT (AREF (attrs, coding_attr_iso_flags));
+      int flags = XFIXNUM (AREF (attrs, coding_attr_iso_flags));
 
       /* Invoke graphic register 0 to plane 0.  */
       CODING_ISO_INVOCATION (coding, 0) = 0;
@@ -5852,13 +5852,13 @@ setup_coding_system (Lisp_Object coding_system, struct coding_system *coding)
 
 	  for (tail = Vemacs_mule_charset_list; CONSP (tail);
 	       tail = XCDR (tail))
-	    if (max_charset_id < XFASTINT (XCAR (tail)))
-	      max_charset_id = XFASTINT (XCAR (tail));
+	    if (max_charset_id < XFIXNAT (XCAR (tail)))
+	      max_charset_id = XFIXNAT (XCAR (tail));
 	  safe_charsets = make_uninit_string (max_charset_id + 1);
 	  memset (SDATA (safe_charsets), 255, max_charset_id + 1);
 	  for (tail = Vemacs_mule_charset_list; CONSP (tail);
 	       tail = XCDR (tail))
-	    SSET (safe_charsets, XFASTINT (XCAR (tail)), 0);
+	    SSET (safe_charsets, XFIXNAT (XCAR (tail)), 0);
 	  coding->max_charset_id = max_charset_id;
 	  coding->safe_charsets = SDATA (safe_charsets);
 	}
@@ -5908,7 +5908,7 @@ coding_charset_list (struct coding_system *coding)
   CODING_GET_INFO (coding, attrs, charset_list);
   if (EQ (CODING_ATTR_TYPE (attrs), Qiso_2022))
     {
-      int flags = XINT (AREF (attrs, coding_attr_iso_flags));
+      int flags = XFIXNUM (AREF (attrs, coding_attr_iso_flags));
 
       if (flags & CODING_ISO_FLAG_FULL_SUPPORT)
 	charset_list = Viso_2022_charset_list;
@@ -5934,7 +5934,7 @@ coding_system_charset_list (Lisp_Object coding_system)
 
   if (EQ (CODING_ATTR_TYPE (attrs), Qiso_2022))
     {
-      int flags = XINT (AREF (attrs, coding_attr_iso_flags));
+      int flags = XFIXNUM (AREF (attrs, coding_attr_iso_flags));
 
       if (flags & CODING_ISO_FLAG_FULL_SUPPORT)
 	charset_list = Viso_2022_charset_list;
@@ -6714,7 +6714,7 @@ detect_coding (struct coding_system *coding)
 		}
 	}
     }
-  else if (XINT (CODING_ATTR_CATEGORY (CODING_ID_ATTRS (coding->id)))
+  else if (XFIXNUM (CODING_ATTR_CATEGORY (CODING_ID_ATTRS (coding->id)))
 	   == coding_category_utf_8_auto)
     {
       Lisp_Object coding_systems;
@@ -6740,7 +6740,7 @@ detect_coding (struct coding_system *coding)
 	    }
 	}
     }
-  else if (XINT (CODING_ATTR_CATEGORY (CODING_ID_ATTRS (coding->id)))
+  else if (XFIXNUM (CODING_ATTR_CATEGORY (CODING_ID_ATTRS (coding->id)))
 	   == coding_category_utf_16_auto)
     {
       Lisp_Object coding_systems;
@@ -6924,8 +6924,8 @@ get_translation_table (Lisp_Object attrs, bool encodep, int *max_lookup)
 	  && CHAR_TABLE_EXTRA_SLOTS (XCHAR_TABLE (translation_table)) > 1)
 	{
 	  val = XCHAR_TABLE (translation_table)->extras[1];
-	  if (FIXNATP (val) && *max_lookup < XFASTINT (val))
-	    *max_lookup = min (XFASTINT (val), MAX_LOOKUP_MAX);
+	  if (FIXNATP (val) && *max_lookup < XFIXNAT (val))
+	    *max_lookup = min (XFIXNAT (val), MAX_LOOKUP_MAX);
 	}
       else if (CONSP (translation_table))
 	{
@@ -6936,8 +6936,8 @@ get_translation_table (Lisp_Object attrs, bool encodep, int *max_lookup)
 		&& CHAR_TABLE_EXTRA_SLOTS (XCHAR_TABLE (XCAR (tail))) > 1)
 	      {
 		Lisp_Object tailval = XCHAR_TABLE (XCAR (tail))->extras[1];
-		if (FIXNATP (tailval) && *max_lookup < XFASTINT (tailval))
-		  *max_lookup = min (XFASTINT (tailval), MAX_LOOKUP_MAX);
+		if (FIXNATP (tailval) && *max_lookup < XFIXNAT (tailval))
+		  *max_lookup = min (XFIXNAT (tailval), MAX_LOOKUP_MAX);
 	      }
 	}
     }
@@ -6951,7 +6951,7 @@ get_translation_table (Lisp_Object attrs, bool encodep, int *max_lookup)
       {								\
 	trans = CHAR_TABLE_REF (table, c);			\
 	if (CHARACTERP (trans))					\
-	  c = XFASTINT (trans), trans = Qnil;			\
+	  c = XFIXNAT (trans), trans = Qnil;			\
       }								\
     else if (CONSP (table))					\
       {								\
@@ -6962,7 +6962,7 @@ get_translation_table (Lisp_Object attrs, bool encodep, int *max_lookup)
 	    {							\
 	      trans = CHAR_TABLE_REF (XCAR (tail), c);		\
 	      if (CHARACTERP (trans))				\
-		c = XFASTINT (trans), trans = Qnil;		\
+		c = XFIXNAT (trans), trans = Qnil;		\
 	      else if (! NILP (trans))				\
 		break;						\
 	    }							\
@@ -6997,7 +6997,7 @@ get_translation (Lisp_Object trans, int *buf, int *buf_end, ptrdiff_t *nchars)
 	{
 	  if (buf + i == buf_end)
 	    return Qt;
-	  if (XINT (AREF (from, i)) != buf[i])
+	  if (XFIXNUM (AREF (from, i)) != buf[i])
 	    break;
 	}
       if (i == len)
@@ -7049,11 +7049,11 @@ produce_chars (struct coding_system *coding, Lisp_Object translation_table,
 		{
 		  trans = get_translation (trans, buf, buf_end, &from_nchars);
 		  if (FIXNUMP (trans))
-		    c = XINT (trans);
+		    c = XFIXNUM (trans);
 		  else if (VECTORP (trans))
 		    {
 		      to_nchars = ASIZE (trans);
-		      c = XINT (AREF (trans, 0));
+		      c = XFIXNUM (AREF (trans, 0));
 		    }
 		  else if (EQ (trans, Qt) && ! last_block)
 		    break;
@@ -7081,7 +7081,7 @@ produce_chars (struct coding_system *coding, Lisp_Object translation_table,
 	      for (i = 0; i < to_nchars; i++)
 		{
 		  if (i > 0)
-		    c = XINT (AREF (trans, i));
+		    c = XFIXNUM (AREF (trans, i));
 		  if (coding->dst_multibyte
 		      || ! CHAR_BYTE8_P (c))
 		    CHAR_STRING_ADVANCE_NO_UNIFY (c, dst);
@@ -7534,7 +7534,7 @@ handle_composition_annotation (ptrdiff_t pos, ptrdiff_t limit,
 		{
 		  len = ASIZE (components);
 		  for (i = 0; i < len; i++)
-		    *buf++ = XINT (AREF (components, i));
+		    *buf++ = XFIXNUM (AREF (components, i));
 		}
 	      else if (STRINGP (components))
 		{
@@ -7549,13 +7549,13 @@ handle_composition_annotation (ptrdiff_t pos, ptrdiff_t limit,
 	      else if (FIXNUMP (components))
 		{
 		  len = 1;
-		  *buf++ = XINT (components);
+		  *buf++ = XFIXNUM (components);
 		}
 	      else if (CONSP (components))
 		{
 		  for (len = 0; CONSP (components);
 		       len++, components = XCDR (components))
-		    *buf++ = XINT (XCAR (components));
+		    *buf++ = XFIXNUM (XCAR (components));
 		}
 	      else
 		emacs_abort ();
@@ -7593,14 +7593,14 @@ handle_charset_annotation (ptrdiff_t pos, ptrdiff_t limit,
 
   val = Fget_text_property (make_fixnum (pos), Qcharset, coding->src_object);
   if (! NILP (val) && CHARSETP (val))
-    id = XINT (CHARSET_SYMBOL_ID (val));
+    id = XFIXNUM (CHARSET_SYMBOL_ID (val));
   else
     id = -1;
   ADD_CHARSET_DATA (buf, 0, id);
   next = Fnext_single_property_change (make_fixnum (pos), Qcharset,
 				       coding->src_object,
 				       make_fixnum (limit));
-  *stop = XINT (next);
+  *stop = XFIXNUM (next);
   return buf;
 }
 
@@ -7710,19 +7710,19 @@ consume_chars (struct coding_system *coding, Lisp_Object translation_table,
 	  trans = get_translation (trans, lookup_buf, lookup_buf_end,
 				   &from_nchars);
 	  if (FIXNUMP (trans))
-	    c = XINT (trans);
+	    c = XFIXNUM (trans);
 	  else if (VECTORP (trans))
 	    {
 	      to_nchars = ASIZE (trans);
 	      if (buf_end - buf < to_nchars)
 		break;
-	      c = XINT (AREF (trans, 0));
+	      c = XFIXNUM (AREF (trans, 0));
 	    }
 	  else
 	    break;
 	  *buf++ = c;
 	  for (i = 1; i < to_nchars; i++)
-	    *buf++ = XINT (AREF (trans, i));
+	    *buf++ = XFIXNUM (AREF (trans, i));
 	  for (i = 1; i < from_nchars; i++, pos++)
 	    src += MULTIBYTE_LENGTH_NO_CHECK (src);
 	}
@@ -8618,7 +8618,7 @@ detect_coding_system (const unsigned char *src,
   detect_info.checked = detect_info.found = detect_info.rejected = 0;
 
   /* At first, detect text-format if necessary.  */
-  base_category = XINT (CODING_ATTR_CATEGORY (attrs));
+  base_category = XFIXNUM (CODING_ATTR_CATEGORY (attrs));
   if (base_category == coding_category_undecided)
     {
       enum coding_category category UNINIT;
@@ -8826,7 +8826,7 @@ detect_coding_system (const unsigned char *src,
     }
   else
     {
-      detect_info.found = 1 << XINT (CODING_ATTR_CATEGORY (attrs));
+      detect_info.found = 1 << XFIXNUM (CODING_ATTR_CATEGORY (attrs));
       val = list1 (make_fixnum (coding.id));
     }
 
@@ -8869,9 +8869,9 @@ detect_coding_system (const unsigned char *src,
 	enum coding_category category;
 	int this_eol;
 
-	id = XINT (XCAR (tail));
+	id = XFIXNUM (XCAR (tail));
 	attrs = CODING_ID_ATTRS (id);
-	category = XINT (CODING_ATTR_CATEGORY (attrs));
+	category = XFIXNUM (CODING_ATTR_CATEGORY (attrs));
 	eol_type = CODING_ID_EOL_TYPE (id);
 	if (VECTORP (eol_type))
 	  {
@@ -8922,7 +8922,7 @@ highest priority.  */)
   ptrdiff_t from_byte, to_byte;
 
   validate_region (&start, &end);
-  from = XINT (start), to = XINT (end);
+  from = XFIXNUM (start), to = XFIXNUM (end);
   from_byte = CHAR_TO_BYTE (from);
   to_byte = CHAR_TO_BYTE (to);
 
@@ -8975,7 +8975,7 @@ char_encodable_p (int c, Lisp_Object attrs)
   for (tail = CODING_ATTR_CHARSET_LIST (attrs);
        CONSP (tail); tail = XCDR (tail))
     {
-      charset = CHARSET_FROM_ID (XINT (XCAR (tail)));
+      charset = CHARSET_FROM_ID (XFIXNUM (XCAR (tail)));
       if (CHAR_CHARSET_P (c, charset))
 	break;
     }
@@ -9013,21 +9013,21 @@ DEFUN ("find-coding-systems-region-internal",
     {
       CHECK_FIXNUM_COERCE_MARKER (start);
       CHECK_FIXNUM_COERCE_MARKER (end);
-      if (XINT (start) < BEG || XINT (end) > Z || XINT (start) > XINT (end))
+      if (XFIXNUM (start) < BEG || XFIXNUM (end) > Z || XFIXNUM (start) > XFIXNUM (end))
 	args_out_of_range (start, end);
       if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
 	return Qt;
-      start_byte = CHAR_TO_BYTE (XINT (start));
-      end_byte = CHAR_TO_BYTE (XINT (end));
-      if (XINT (end) - XINT (start) == end_byte - start_byte)
+      start_byte = CHAR_TO_BYTE (XFIXNUM (start));
+      end_byte = CHAR_TO_BYTE (XFIXNUM (end));
+      if (XFIXNUM (end) - XFIXNUM (start) == end_byte - start_byte)
 	return Qt;
 
-      if (XINT (start) < GPT && XINT (end) > GPT)
+      if (XFIXNUM (start) < GPT && XFIXNUM (end) > GPT)
 	{
-	  if ((GPT - XINT (start)) < (XINT (end) - GPT))
-	    move_gap_both (XINT (start), start_byte);
+	  if ((GPT - XFIXNUM (start)) < (XFIXNUM (end) - GPT))
+	    move_gap_both (XFIXNUM (start), start_byte);
 	  else
-	    move_gap_both (XINT (end), end_byte);
+	    move_gap_both (XFIXNUM (end), end_byte);
 	}
     }
 
@@ -9146,8 +9146,8 @@ to the string and treated as in `substring'.  */)
   if (NILP (string))
     {
       validate_region (&start, &end);
-      from = XINT (start);
-      to = XINT (end);
+      from = XFIXNUM (start);
+      to = XFIXNUM (end);
       if (NILP (BVAR (current_buffer, enable_multibyte_characters))
 	  || (ascii_compatible
 	      && (to - from) == (CHAR_TO_BYTE (to) - (CHAR_TO_BYTE (from)))))
@@ -9176,7 +9176,7 @@ to the string and treated as in `substring'.  */)
   else
     {
       CHECK_FIXNAT (count);
-      n = XINT (count);
+      n = XFIXNUM (count);
     }
 
   positions = Qnil;
@@ -9267,23 +9267,23 @@ is nil.  */)
     {
       CHECK_FIXNUM_COERCE_MARKER (start);
       CHECK_FIXNUM_COERCE_MARKER (end);
-      if (XINT (start) < BEG || XINT (end) > Z || XINT (start) > XINT (end))
+      if (XFIXNUM (start) < BEG || XFIXNUM (end) > Z || XFIXNUM (start) > XFIXNUM (end))
 	args_out_of_range (start, end);
       if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
 	return Qnil;
-      start_byte = CHAR_TO_BYTE (XINT (start));
-      end_byte = CHAR_TO_BYTE (XINT (end));
-      if (XINT (end) - XINT (start) == end_byte - start_byte)
+      start_byte = CHAR_TO_BYTE (XFIXNUM (start));
+      end_byte = CHAR_TO_BYTE (XFIXNUM (end));
+      if (XFIXNUM (end) - XFIXNUM (start) == end_byte - start_byte)
 	return Qnil;
 
-      if (XINT (start) < GPT && XINT (end) > GPT)
+      if (XFIXNUM (start) < GPT && XFIXNUM (end) > GPT)
 	{
-	  if ((GPT - XINT (start)) < (XINT (end) - GPT))
-	    move_gap_both (XINT (start), start_byte);
+	  if ((GPT - XFIXNUM (start)) < (XFIXNUM (end) - GPT))
+	    move_gap_both (XFIXNUM (start), start_byte);
 	  else
-	    move_gap_both (XINT (end), end_byte);
+	    move_gap_both (XFIXNUM (end), end_byte);
 	}
-      pos = XINT (start);
+      pos = XFIXNUM (start);
     }
 
   list = Qnil;
@@ -9369,9 +9369,9 @@ code_convert_region (Lisp_Object start, Lisp_Object end,
     CHECK_BUFFER (dst_object);
 
   validate_region (&start, &end);
-  from = XFASTINT (start);
+  from = XFIXNAT (start);
   from_byte = CHAR_TO_BYTE (from);
-  to = XFASTINT (end);
+  to = XFIXNAT (end);
   to_byte = CHAR_TO_BYTE (to);
 
   setup_coding_system (coding_system, &coding);
@@ -9611,7 +9611,7 @@ Return the corresponding character.  */)
   int c;
 
   CHECK_FIXNAT (code);
-  ch = XFASTINT (code);
+  ch = XFIXNAT (code);
   CHECK_CODING_SYSTEM_GET_SPEC (Vsjis_coding_system, spec);
   attrs = AREF (spec, 0);
 
@@ -9620,9 +9620,9 @@ Return the corresponding character.  */)
     return code;
 
   val = CODING_ATTR_CHARSET_LIST (attrs);
-  charset_roman = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_kana = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_kanji = CHARSET_FROM_ID (XINT (XCAR (val)));
+  charset_roman = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_kana = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_kanji = CHARSET_FROM_ID (XFIXNUM (XCAR (val)));
 
   if (ch <= 0x7F)
     {
@@ -9664,7 +9664,7 @@ Return the corresponding code in SJIS.  */)
   unsigned code;
 
   CHECK_CHARACTER (ch);
-  c = XFASTINT (ch);
+  c = XFIXNAT (ch);
   CHECK_CODING_SYSTEM_GET_SPEC (Vsjis_coding_system, spec);
   attrs = AREF (spec, 0);
 
@@ -9692,7 +9692,7 @@ Return the corresponding character.  */)
   int c;
 
   CHECK_FIXNAT (code);
-  ch = XFASTINT (code);
+  ch = XFIXNAT (code);
   CHECK_CODING_SYSTEM_GET_SPEC (Vbig5_coding_system, spec);
   attrs = AREF (spec, 0);
 
@@ -9701,8 +9701,8 @@ Return the corresponding character.  */)
     return code;
 
   val = CODING_ATTR_CHARSET_LIST (attrs);
-  charset_roman = CHARSET_FROM_ID (XINT (XCAR (val))), val = XCDR (val);
-  charset_big5 = CHARSET_FROM_ID (XINT (XCAR (val)));
+  charset_roman = CHARSET_FROM_ID (XFIXNUM (XCAR (val))), val = XCDR (val);
+  charset_big5 = CHARSET_FROM_ID (XFIXNUM (XCAR (val)));
 
   if (ch <= 0x7F)
     {
@@ -9736,7 +9736,7 @@ Return the corresponding character code in Big5.  */)
   unsigned code;
 
   CHECK_CHARACTER (ch);
-  c = XFASTINT (ch);
+  c = XFIXNAT (ch);
   CHECK_CODING_SYSTEM_GET_SPEC (Vbig5_coding_system, spec);
   attrs = AREF (spec, 0);
   if (ASCII_CHAR_P (c)
@@ -9885,17 +9885,17 @@ usage: (find-operation-coding-system OPERATION ARGUMENTS...)  */)
   if (!SYMBOLP (operation)
       || (target_idx = Fget (operation, Qtarget_idx), !FIXNATP (target_idx)))
     error ("Invalid first argument");
-  if (nargs <= 1 + XFASTINT (target_idx))
+  if (nargs <= 1 + XFIXNAT (target_idx))
     error ("Too few arguments for operation `%s'",
 	   SDATA (SYMBOL_NAME (operation)));
-  target = args[XFASTINT (target_idx) + 1];
+  target = args[XFIXNAT (target_idx) + 1];
   if (!(STRINGP (target)
 	|| (EQ (operation, Qinsert_file_contents) && CONSP (target)
 	    && STRINGP (XCAR (target)) && BUFFERP (XCDR (target)))
 	|| (EQ (operation, Qopen_network_stream)
 	    && (FIXNUMP (target) || EQ (target, Qt)))))
     error ("Invalid argument %"pI"d of operation `%s'",
-	   XFASTINT (target_idx) + 1, SDATA (SYMBOL_NAME (operation)));
+	   XFIXNAT (target_idx) + 1, SDATA (SYMBOL_NAME (operation)));
   if (CONSP (target))
     target = XCAR (target);
 
@@ -9967,7 +9967,7 @@ usage: (set-coding-system-priority &rest coding-systems)  */)
 
       CHECK_CODING_SYSTEM_GET_SPEC (args[i], spec);
       attrs = AREF (spec, 0);
-      category = XINT (CODING_ATTR_CATEGORY (attrs));
+      category = XFIXNUM (CODING_ATTR_CATEGORY (attrs));
       if (changed[category])
 	/* Ignore this coding system because a coding system of the
 	   same category already had a higher priority.  */
@@ -10110,8 +10110,8 @@ usage: (define-coding-system-internal ...)  */)
 	{
 	  if (! RANGED_FIXNUMP (0, XCAR (tail), INT_MAX - 1))
 	    error ("Invalid charset-list");
-	  if (max_charset_id < XFASTINT (XCAR (tail)))
-	    max_charset_id = XFASTINT (XCAR (tail));
+	  if (max_charset_id < XFIXNAT (XCAR (tail)))
+	    max_charset_id = XFIXNAT (XCAR (tail));
 	}
     }
   else
@@ -10141,7 +10141,7 @@ usage: (define-coding-system-internal ...)  */)
   safe_charsets = make_uninit_string (max_charset_id + 1);
   memset (SDATA (safe_charsets), 255, max_charset_id + 1);
   for (tail = charset_list; CONSP (tail); tail = XCDR (tail))
-    SSET (safe_charsets, XFASTINT (XCAR (tail)), 0);
+    SSET (safe_charsets, XFIXNAT (XCAR (tail)), 0);
   ASET (attrs, coding_attr_safe_charsets, safe_charsets);
 
   ASET (attrs, coding_attr_ascii_compat, args[coding_arg_ascii_compatible_p]);
@@ -10198,7 +10198,7 @@ usage: (define-coding-system-internal ...)  */)
 
       for (tail = charset_list; CONSP (tail); tail = XCDR (tail))
 	{
-	  struct charset *charset = CHARSET_FROM_ID (XFASTINT (XCAR (tail)));
+	  struct charset *charset = CHARSET_FROM_ID (XFIXNAT (XCAR (tail)));
 	  int dim = CHARSET_DIMENSION (charset);
 	  int idx = (dim - 1) * 4;
 
@@ -10216,7 +10216,7 @@ usage: (define-coding-system-internal ...)  */)
 		tmp = XCAR (tail);
 	      else if (FIXED_OR_FLOATP (tmp))
 		{
-		  dim2 = CHARSET_DIMENSION (CHARSET_FROM_ID (XFASTINT (tmp)));
+		  dim2 = CHARSET_DIMENSION (CHARSET_FROM_ID (XFIXNAT (tmp)));
 		  if (dim < dim2)
 		    tmp = list2 (XCAR (tail), tmp);
 		  else
@@ -10226,7 +10226,7 @@ usage: (define-coding-system-internal ...)  */)
 		{
 		  for (tmp2 = tmp; CONSP (tmp2); tmp2 = XCDR (tmp2))
 		    {
-		      dim2 = CHARSET_DIMENSION (CHARSET_FROM_ID (XFASTINT (XCAR (tmp2))));
+		      dim2 = CHARSET_DIMENSION (CHARSET_FROM_ID (XFIXNAT (XCAR (tmp2))));
 		      if (dim < dim2)
 			break;
 		    }
@@ -10272,23 +10272,23 @@ usage: (define-coding-system-internal ...)  */)
 	  val = XCAR (tail);
 	  if (FIXNUMP (val))
 	    {
-	      if (! (0 <= XINT (val) && XINT (val) <= 255))
+	      if (! (0 <= XFIXNUM (val) && XFIXNUM (val) <= 255))
 		args_out_of_range_3 (val, make_fixnum (0), make_fixnum (255));
-	      from = to = XINT (val);
+	      from = to = XFIXNUM (val);
 	    }
 	  else
 	    {
 	      CHECK_CONS (val);
 	      CHECK_FIXNAT_CAR (val);
 	      CHECK_FIXNUM_CDR (val);
-	      if (XINT (XCAR (val)) > 255)
+	      if (XFIXNUM (XCAR (val)) > 255)
 		args_out_of_range_3 (XCAR (val),
 				     make_fixnum (0), make_fixnum (255));
-	      from = XINT (XCAR (val));
-	      if (! (from <= XINT (XCDR (val)) && XINT (XCDR (val)) <= 255))
+	      from = XFIXNUM (XCAR (val));
+	      if (! (from <= XFIXNUM (XCDR (val)) && XFIXNUM (XCDR (val)) <= 255))
 		args_out_of_range_3 (XCDR (val),
 				     XCAR (val), make_fixnum (255));
-	      to = XINT (XCDR (val));
+	      to = XFIXNUM (XCDR (val));
 	    }
 	  for (i = from; i <= to; i++)
 	    SSET (valids, i, 1);
@@ -10376,14 +10376,14 @@ usage: (define-coding-system-internal ...)  */)
 	  tmp1 = XCAR (val);
 	  CHECK_CHARSET_GET_ID (tmp1, id);
 	  CHECK_FIXNAT_CDR (val);
-	  if (XINT (XCDR (val)) >= 4)
-	    error ("Invalid graphic register number: %"pI"d", XINT (XCDR (val)));
+	  if (XFIXNUM (XCDR (val)) >= 4)
+	    error ("Invalid graphic register number: %"pI"d", XFIXNUM (XCDR (val)));
 	  XSETCAR (val, make_fixnum (id));
 	}
 
       flags = args[coding_arg_iso2022_flags];
       CHECK_FIXNAT (flags);
-      i = XINT (flags) & INT_MAX;
+      i = XFIXNUM (flags) & INT_MAX;
       if (EQ (args[coding_arg_charset_list], Qiso_2022))
 	i |= CODING_ISO_FLAG_FULL_SUPPORT;
       flags = make_fixnum (i);
@@ -10403,7 +10403,7 @@ usage: (define-coding-system-internal ...)  */)
 		    : coding_category_iso_7_tight);
       else
 	{
-	  int id = XINT (AREF (initial, 1));
+	  int id = XFIXNUM (AREF (initial, 1));
 
 	  category = (((i & CODING_ISO_FLAG_LOCKING_SHIFT)
 		       || EQ (args[coding_arg_charset_list], Qiso_2022)
@@ -10429,11 +10429,11 @@ usage: (define-coding-system-internal ...)  */)
 
       struct charset *charset;
 
-      if (XINT (Flength (charset_list)) != 3
-	  && XINT (Flength (charset_list)) != 4)
+      if (XFIXNUM (Flength (charset_list)) != 3
+	  && XFIXNUM (Flength (charset_list)) != 4)
 	error ("There should be three or four charsets");
 
-      charset = CHARSET_FROM_ID (XINT (XCAR (charset_list)));
+      charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
       if (CHARSET_DIMENSION (charset) != 1)
 	error ("Dimension of charset %s is not one",
 	       SDATA (SYMBOL_NAME (CHARSET_NAME (charset))));
@@ -10441,13 +10441,13 @@ usage: (define-coding-system-internal ...)  */)
 	ASET (attrs, coding_attr_ascii_compat, Qt);
 
       charset_list = XCDR (charset_list);
-      charset = CHARSET_FROM_ID (XINT (XCAR (charset_list)));
+      charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
       if (CHARSET_DIMENSION (charset) != 1)
 	error ("Dimension of charset %s is not one",
 	       SDATA (SYMBOL_NAME (CHARSET_NAME (charset))));
 
       charset_list = XCDR (charset_list);
-      charset = CHARSET_FROM_ID (XINT (XCAR (charset_list)));
+      charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
       if (CHARSET_DIMENSION (charset) != 2)
 	error ("Dimension of charset %s is not two",
 	       SDATA (SYMBOL_NAME (CHARSET_NAME (charset))));
@@ -10455,7 +10455,7 @@ usage: (define-coding-system-internal ...)  */)
       charset_list = XCDR (charset_list);
       if (! NILP (charset_list))
 	{
-	  charset = CHARSET_FROM_ID (XINT (XCAR (charset_list)));
+	  charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
 	  if (CHARSET_DIMENSION (charset) != 2)
 	    error ("Dimension of charset %s is not two",
 		   SDATA (SYMBOL_NAME (CHARSET_NAME (charset))));
@@ -10468,10 +10468,10 @@ usage: (define-coding-system-internal ...)  */)
     {
       struct charset *charset;
 
-      if (XINT (Flength (charset_list)) != 2)
+      if (XFIXNUM (Flength (charset_list)) != 2)
 	error ("There should be just two charsets");
 
-      charset = CHARSET_FROM_ID (XINT (XCAR (charset_list)));
+      charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
       if (CHARSET_DIMENSION (charset) != 1)
 	error ("Dimension of charset %s is not one",
 	       SDATA (SYMBOL_NAME (CHARSET_NAME (charset))));
@@ -10479,7 +10479,7 @@ usage: (define-coding-system-internal ...)  */)
 	ASET (attrs, coding_attr_ascii_compat, Qt);
 
       charset_list = XCDR (charset_list);
-      charset = CHARSET_FROM_ID (XINT (XCAR (charset_list)));
+      charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
       if (CHARSET_DIMENSION (charset) != 2)
 	error ("Dimension of charset %s is not two",
 	       SDATA (SYMBOL_NAME (CHARSET_NAME (charset))));

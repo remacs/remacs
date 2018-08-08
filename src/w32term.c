@@ -479,7 +479,7 @@ x_set_frame_alpha (struct frame *f)
   if (FLOATP (Vframe_alpha_lower_limit))
     alpha_min = XFLOAT_DATA (Vframe_alpha_lower_limit);
   else if (FIXNUMP (Vframe_alpha_lower_limit))
-    alpha_min = (XINT (Vframe_alpha_lower_limit)) / 100.0;
+    alpha_min = (XFIXNUM (Vframe_alpha_lower_limit)) / 100.0;
 
   if (alpha < 0.0)
     return;
@@ -1982,11 +1982,11 @@ x_draw_image_relief (struct glyph_string *s)
 	  && FIXNUMP (XCAR (Vtool_bar_button_margin))
 	  && FIXNUMP (XCDR (Vtool_bar_button_margin)))
 	{
-	  extra_x = XINT (XCAR (Vtool_bar_button_margin));
-	  extra_y = XINT (XCDR (Vtool_bar_button_margin));
+	  extra_x = XFIXNUM (XCAR (Vtool_bar_button_margin));
+	  extra_y = XFIXNUM (XCDR (Vtool_bar_button_margin));
 	}
       else if (FIXNUMP (Vtool_bar_button_margin))
-	extra_x = extra_y = XINT (Vtool_bar_button_margin);
+	extra_x = extra_y = XFIXNUM (Vtool_bar_button_margin);
     }
 
   top_p = bot_p = left_p = right_p = 0;
@@ -2482,7 +2482,7 @@ x_draw_glyph_string (struct glyph_string *s)
 		    = buffer_local_value (Qunderline_minimum_offset,
 					s->w->contents);
 		  if (FIXNUMP (val))
-		    minimum_offset = XFASTINT (val);
+		    minimum_offset = XFIXNAT (val);
 		  else
 		    minimum_offset = 1;
 		  val = buffer_local_value (Qx_underline_at_descent_line,
@@ -3573,8 +3573,8 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 static void
 w32_handle_tool_bar_click (struct frame *f, struct input_event *button_event)
 {
-  int x = XFASTINT (button_event->x);
-  int y = XFASTINT (button_event->y);
+  int x = XFIXNAT (button_event->x);
+  int y = XFIXNAT (button_event->y);
 
   if (button_event->modifiers & down_modifier)
     handle_tool_bar_click (f, x, y, 1, 0);
@@ -4996,8 +4996,8 @@ w32_read_socket (struct terminal *terminal,
                     && WINDOW_TOTAL_LINES (XWINDOW (f->tool_bar_window)))
                   {
                     Lisp_Object window;
-		    int x = XFASTINT (inev.x);
-		    int y = XFASTINT (inev.y);
+		    int x = XFIXNAT (inev.x);
+		    int y = XFIXNAT (inev.y);
 
                     window = window_from_coordinates (f, x, y, 0, 1);
 
@@ -6145,8 +6145,8 @@ x_calc_absolute_position (struct frame *f)
               monitor_left = Fnth (make_fixnum (1), geometry);
               monitor_top  = Fnth (make_fixnum (2), geometry);
 
-              display_left = min (display_left, XINT (monitor_left));
-              display_top  = min (display_top,  XINT (monitor_top));
+              display_left = min (display_left, XFIXNUM (monitor_left));
+              display_top  = min (display_top,  XFIXNUM (monitor_top));
             }
         }
     }

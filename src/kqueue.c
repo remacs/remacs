@@ -234,7 +234,7 @@ kqueue_compare_dir_list (Lisp_Object watch_object)
 
     /* Check size of that file.  */
     Lisp_Object size = Fnth (make_fixnum (4), entry);
-    if (FLOATP (size) || (XINT (size) > 0))
+    if (FLOATP (size) || (XFIXNUM (size) > 0))
       kqueue_generate_event
 	(watch_object, Fcons (Qwrite, Qnil), XCAR (XCDR (entry)), Qnil);
 
@@ -395,7 +395,7 @@ only when the upper directory of the renamed file is watched.  */)
     maxfd = 256;
 
   /* We assume 50 file descriptors are sufficient for the rest of Emacs.  */
-  if ((maxfd - 50) < XINT (Flength (watch_list)))
+  if ((maxfd - 50) < XFIXNUM (Flength (watch_list)))
     xsignal2
       (Qfile_notify_error,
        build_string ("File watching not possible, no file descriptor left"),
@@ -474,7 +474,7 @@ WATCH-DESCRIPTOR should be an object returned by `kqueue-add-watch'.  */)
 	      watch_descriptor);
 
   eassert (FIXNUMP (watch_descriptor));
-  int fd = XINT (watch_descriptor);
+  int fd = XFIXNUM (watch_descriptor);
   if ( fd >= 0)
     emacs_close (fd);
 

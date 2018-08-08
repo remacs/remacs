@@ -491,7 +491,7 @@ lookup_fringe_bitmap (Lisp_Object bitmap)
   if (!FIXNUMP (bitmap))
     return 0;
 
-  bn = XINT (bitmap);
+  bn = XFIXNUM (bitmap);
   if (bn > NO_FRINGE_BITMAP
       && bn < max_used_fringe_bitmap
       && (bn < MAX_STANDARD_FRINGE_BITMAPS
@@ -743,7 +743,7 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 	    return NO_FRINGE_BITMAP;
 	  if (CONSP (bm1))
 	    {
-	      ln1 = XINT (Flength (bm1));
+	      ln1 = XFIXNUM (Flength (bm1));
 	      if (partial_p)
 		{
 		  if (ln1 > ix2)
@@ -778,7 +778,7 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 	    {
 	      if (CONSP (bm2))
 		{
-		  ln2 = XINT (Flength (bm2));
+		  ln2 = XFIXNUM (Flength (bm2));
 		  if (partial_p)
 		    {
 		      if (ln2 > ix2)
@@ -1510,7 +1510,7 @@ If BITMAP already exists, the existing definition is replaced.  */)
   else
     {
       CHECK_FIXNUM (height);
-      fb.height = max (0, min (XINT (height), 255));
+      fb.height = max (0, min (XFIXNUM (height), 255));
       if (fb.height > h)
 	{
 	  fill1 = (fb.height - h) / 2;
@@ -1523,7 +1523,7 @@ If BITMAP already exists, the existing definition is replaced.  */)
   else
     {
       CHECK_FIXNUM (width);
-      fb.width = max (0, min (XINT (width), 255));
+      fb.width = max (0, min (XFIXNUM (width), 255));
     }
 
   fb.period = 0;
@@ -1605,7 +1605,7 @@ If BITMAP already exists, the existing definition is replaced.  */)
       for (i = 0; i < h && j < fb.height; i++)
 	{
 	  Lisp_Object elt = Faref (bits, make_fixnum (i));
-	  b[j++] = FIXED_OR_FLOATP (elt) ? XINT (elt) : 0;
+	  b[j++] = FIXED_OR_FLOATP (elt) ? XFIXNUM (elt) : 0;
 	}
       for (i = 0; i < fill2 && j < fb.height; i++)
 	b[j++] = 0;
@@ -1662,9 +1662,9 @@ Return nil if POS is not visible in WINDOW.  */)
   if (!NILP (pos))
     {
       CHECK_FIXNUM_COERCE_MARKER (pos);
-      if (! (BEGV <= XINT (pos) && XINT (pos) <= ZV))
+      if (! (BEGV <= XFIXNUM (pos) && XFIXNUM (pos) <= ZV))
 	args_out_of_range (window, pos);
-      textpos = XINT (pos);
+      textpos = XFIXNUM (pos);
     }
   else if (w == XWINDOW (selected_window))
     textpos = PT;

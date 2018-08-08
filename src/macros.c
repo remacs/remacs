@@ -98,8 +98,8 @@ macro before appending to it.  */)
 	{
 	  Lisp_Object c;
 	  c = Faref (KVAR (current_kboard, Vlast_kbd_macro), make_fixnum (i));
-	  if (cvt && FIXNATP (c) && (XFASTINT (c) & 0x80))
-	    XSETFASTINT (c, CHAR_META | (XFASTINT (c) & ~0x80));
+	  if (cvt && FIXNATP (c) && (XFIXNAT (c) & 0x80))
+	    XSETFASTINT (c, CHAR_META | (XFIXNAT (c) & ~0x80));
 	  current_kboard->kbd_macro_buffer[i] = c;
 	}
 
@@ -162,11 +162,11 @@ each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.  */)
       message1 ("Keyboard macro defined");
     }
 
-  if (XFASTINT (repeat) == 0)
+  if (XFIXNAT (repeat) == 0)
     Fexecute_kbd_macro (KVAR (current_kboard, Vlast_kbd_macro), repeat, loopfunc);
-  else if (XINT (repeat) > 1)
+  else if (XFIXNUM (repeat) > 1)
     {
-      XSETINT (repeat, XINT (repeat) - 1);
+      XSETINT (repeat, XFIXNUM (repeat) - 1);
       Fexecute_kbd_macro (KVAR (current_kboard, Vlast_kbd_macro),
 			  repeat, loopfunc);
     }
@@ -267,7 +267,7 @@ pop_kbd_macro (Lisp_Object info)
   Lisp_Object tem;
   Vexecuting_kbd_macro = XCAR (info);
   tem = XCDR (info);
-  executing_kbd_macro_index = XINT (XCAR (tem));
+  executing_kbd_macro_index = XFIXNUM (XCAR (tem));
   Vreal_this_command = XCDR (tem);
   run_hook (Qkbd_macro_termination_hook);
 }
@@ -293,7 +293,7 @@ each iteration of the macro.  Iteration stops if LOOPFUNC returns nil.  */)
   if (!NILP (count))
     {
       count = Fprefix_numeric_value (count);
-      repeat = XINT (count);
+      repeat = XFIXNUM (count);
     }
 
   final = indirect_function (macro);

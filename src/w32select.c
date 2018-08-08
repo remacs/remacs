@@ -241,7 +241,7 @@ static Lisp_Object
 render (Lisp_Object oformat)
 {
   HGLOBAL htext = NULL;
-  UINT format = XFASTINT (oformat);
+  UINT format = XFIXNAT (oformat);
 
   ONTRACE (fprintf (stderr, "render\n"));
 

@@ -63,14 +63,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 {									\
   if (byte_metering_on)							\
     {									\
-      if (XFASTINT (METER_1 (this_code)) < MOST_POSITIVE_FIXNUM)	\
+      if (XFIXNAT (METER_1 (this_code)) < MOST_POSITIVE_FIXNUM)	\
         XSETFASTINT (METER_1 (this_code),				\
-		     XFASTINT (METER_1 (this_code)) + 1);		\
+		     XFIXNAT (METER_1 (this_code)) + 1);		\
       if (last_code							\
-	  && (XFASTINT (METER_2 (last_code, this_code))			\
+	  && (XFIXNAT (METER_2 (last_code, this_code))			\
 	      < MOST_POSITIVE_FIXNUM))					\
         XSETFASTINT (METER_2 (last_code, this_code),			\
-		     XFASTINT (METER_2 (last_code, this_code)) + 1);	\
+		     XFIXNAT (METER_2 (last_code, this_code)) + 1);	\
     }									\
 }
 
@@ -362,7 +362,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   Lisp_Object *vectorp = XVECTOR (vector)->contents;
 
   unsigned char quitcounter = 1;
-  EMACS_INT stack_items = XFASTINT (maxdepth) + 1;
+  EMACS_INT stack_items = XFIXNAT (maxdepth) + 1;
   USE_SAFE_ALLOCA;
   void *alloc;
   SAFE_ALLOCA_LISP_EXTRA (alloc, stack_items, bytestr_length);
@@ -379,7 +379,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   if (!NILP (args_template))
     {
       eassert (FIXNUMP (args_template));
-      ptrdiff_t at = XINT (args_template);
+      ptrdiff_t at = XFIXNUM (args_template);
       bool rest = (at & 128) != 0;
       int mandatory = at & 127;
       ptrdiff_t nonrest = at >> 8;
@@ -622,9 +622,9 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 		Lisp_Object v1 = TOP;
 		Lisp_Object v2 = Fget (v1, Qbyte_code_meter);
 		if (FIXNUMP (v2)
-		    && XINT (v2) < MOST_POSITIVE_FIXNUM)
+		    && XFIXNUM (v2) < MOST_POSITIVE_FIXNUM)
 		  {
-		    XSETINT (v2, XINT (v2) + 1);
+		    XSETINT (v2, XFIXNUM (v2) + 1);
 		    Fput (v1, Qbyte_code_meter, v2);
 		  }
 	      }
@@ -833,7 +833,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  {
 	    Lisp_Object v2 = POP, v1 = TOP;
 	    CHECK_FIXNUM (v1);
-	    for (EMACS_INT n = XINT (v1); 0 < n && CONSP (v2); n--)
+	    for (EMACS_INT n = XFIXNUM (v1); 0 < n && CONSP (v2); n--)
 	      {
 		v2 = XCDR (v2);
 		rarely_quit (n);
@@ -972,14 +972,14 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bsub1):
-	  TOP = (FIXNUMP (TOP) && XINT (TOP) != MOST_NEGATIVE_FIXNUM
-		 ? make_fixnum (XINT (TOP) - 1)
+	  TOP = (FIXNUMP (TOP) && XFIXNUM (TOP) != MOST_NEGATIVE_FIXNUM
+		 ? make_fixnum (XFIXNUM (TOP) - 1)
 		 : Fsub1 (TOP));
 	  NEXT;
 
 	CASE (Badd1):
-	  TOP = (FIXNUMP (TOP) && XINT (TOP) != MOST_POSITIVE_FIXNUM
-		 ? make_fixnum (XINT (TOP) + 1)
+	  TOP = (FIXNUMP (TOP) && XFIXNUM (TOP) != MOST_POSITIVE_FIXNUM
+		 ? make_fixnum (XFIXNUM (TOP) + 1)
 		 : Fadd1 (TOP));
 	  NEXT;
 
@@ -1031,8 +1031,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  NEXT;
 
 	CASE (Bnegate):
-	  TOP = (FIXNUMP (TOP) && XINT (TOP) != MOST_NEGATIVE_FIXNUM
-		 ? make_fixnum (- XINT (TOP))
+	  TOP = (FIXNUMP (TOP) && XFIXNUM (TOP) != MOST_NEGATIVE_FIXNUM
+		 ? make_fixnum (- XFIXNUM (TOP))
 		 : Fminus (1, &TOP));
 	  NEXT;
 
@@ -1175,7 +1175,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Bchar_syntax):
 	  {
 	    CHECK_CHARACTER (TOP);
-	    int c = XFASTINT (TOP);
+	    int c = XFIXNAT (TOP);
 	    if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
 	      MAKE_CHAR_MULTIBYTE (c);
 	    XSETFASTINT (TOP, syntax_code_spec[SYNTAX (c)]);
@@ -1269,7 +1269,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 		/* Exchange args and then do nth.  */
 		Lisp_Object v2 = POP, v1 = TOP;
 		CHECK_FIXNUM (v2);
-		for (EMACS_INT n = XINT (v2); 0 < n && CONSP (v1); n--)
+		for (EMACS_INT n = XFIXNUM (v2); 0 < n && CONSP (v1); n--)
 		  {
 		    v1 = XCDR (v1);
 		    rarely_quit (n);
@@ -1439,7 +1439,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 		Lisp_Object val = HASH_VALUE (h, i);
 		if (BYTE_CODE_SAFE && !FIXNUMP (val))
 		  emacs_abort ();
-		op = XINT (val);
+		op = XFIXNUM (val);
 		goto op_branch;
 	      }
           }
@@ -1475,7 +1475,7 @@ Lisp_Object
 get_byte_code_arity (Lisp_Object args_template)
 {
   eassert (FIXNATP (args_template));
-  EMACS_INT at = XINT (args_template);
+  EMACS_INT at = XFIXNUM (args_template);
   bool rest = (at & 128) != 0;
   int mandatory = at & 127;
   EMACS_INT nonrest = at >> 8;

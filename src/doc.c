@@ -102,7 +102,7 @@ get_doc_string (Lisp_Object filepos, bool unibyte, bool definition)
   else
     return Qnil;
 
-  position = eabs (XINT (pos));
+  position = eabs (XFIXNUM (pos));
 
   if (!STRINGP (Vdoc_directory))
     return Qnil;
