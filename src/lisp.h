@@ -2264,7 +2264,9 @@ struct Lisp_Marker
      does not point anywhere.  */
 
   /* For markers that point somewhere,
-     this is used to chain of all the markers in a given buffer.  */
+     this is used to chain of all the markers in a given buffer.
+     The chain does not preserve markers from garbage collection;
+     instead, markers are removed from the chain when freed by GC.  */
   /* We could remove it and use an array in buffer_text instead.
      That would also allow us to preserve it ordered.  */
   struct Lisp_Marker *next;

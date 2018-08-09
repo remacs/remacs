@@ -6495,26 +6495,8 @@ mark_object (Lisp_Object arg)
 	    mark_char_table (ptr, (enum pvec_type) pvectype);
 	    break;
 
-	  case PVEC_MARKER:
-	    /* DO NOT mark thru the marker's chain.
-	       The buffer's markers chain does not preserve markers from gc;
-	       instead, markers are removed from the chain when freed by gc.  */
-	  case PVEC_BOOL_VECTOR:
-	  case PVEC_MISC_PTR:
-#ifdef HAVE_MODULES
-	  case PVEC_USER_PTR:
-#endif
-	    /* No Lisp_Objects to mark in these.  */
-	    VECTOR_MARK (ptr);
-	    break;
-
 	  case PVEC_OVERLAY:
 	    mark_overlay (XOVERLAY (obj));
-	    break;
-
-	  case PVEC_FINALIZER:
-	    VECTOR_MARK (ptr);
-	    mark_object (XFINALIZER (obj)->function);
 	    break;
 
 	  case PVEC_SUBR:
@@ -6524,6 +6506,8 @@ mark_object (Lisp_Object arg)
 	    emacs_abort ();
 
 	  default:
+	    /* A regular vector, or a pseudovector needing no special
+	       treatment.  */
 	    mark_vectorlike (ptr);
 	  }
       }
