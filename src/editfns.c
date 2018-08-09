@@ -4257,6 +4257,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
     /* The start and end bytepos in the output string.  */
     ptrdiff_t start, end;
 
+    /* The start of the spec in the format string.  */
+    ptrdiff_t fbeg;
+
     /* Whether the argument is a string with intervals.  */
     bool_bf intervals : 1;
   } *info;
@@ -4408,6 +4411,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	  char conversion = *format++;
 	  memset (&discarded[format0 - format_start], 1,
 		  format - format0 - (conversion == '%'));
+	  info[ispec].fbeg = format0 - format_start;
 	  if (conversion == '%')
 	    {
 	      new_result = true;
@@ -4981,7 +4985,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else if (discarded[bytepos] == 1)
 		    {
 		      position++;
-		      if (fieldn < nspec && translated == info[fieldn].start)
+		      if (fieldn < nspec
+			  && position > info[fieldn].fbeg
+			  && translated == info[fieldn].start)
 			{
 			  translated += info[fieldn].end - info[fieldn].start;
 			  fieldn++;
@@ -5001,7 +5007,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else if (discarded[bytepos] == 1)
 		    {
 		      position++;
-		      if (fieldn < nspec && translated == info[fieldn].start)
+		      if (fieldn < nspec
+			  && position > info[fieldn].fbeg
+			  && translated == info[fieldn].start)
 			{
 			  translated += info[fieldn].end - info[fieldn].start;
 			  fieldn++;

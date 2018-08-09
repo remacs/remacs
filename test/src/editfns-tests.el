@@ -88,7 +88,21 @@
            (format "%-10s" (concat (propertize "01" 'face 'bold)
                                    (propertize "23" 'face 'underline)
                                    (propertize "45" 'face 'italic)))
-           #("012345    " 0 2 (face bold) 2 4 (face underline) 4 10 (face italic)))))
+           #("012345    "
+             0 2 (face bold) 2 4 (face underline) 4 10 (face italic))))
+  ;; Bug #32404
+  (should (ert-equal-including-properties
+           (format (concat (propertize "%s" 'face 'bold)
+                           ""
+                           (propertize "%s" 'face 'error))
+                   "foo" "bar")
+           #("foobar" 0 3 (face bold) 3 6 (face error))))
+  (should (ert-equal-including-properties
+           (format (concat "%s" (propertize "%s" 'face 'error)) "foo" "bar")
+           #("foobar" 3 6 (face error))))
+  (should (ert-equal-including-properties
+           (format (concat "%s " (propertize "%s" 'face 'error)) "foo" "bar")
+           #("foo bar" 4 7 (face error)))))
 
 ;; Tests for bug#5131.
 (defun transpose-test-reverse-word (start end)
