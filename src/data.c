@@ -3251,8 +3251,8 @@ Both X and Y must be numbers or markers.  */)
       mpz_mod (result, *xmp, *ymp);
 
       /* Fix the sign if needed.  */
-      cmpr = mpz_cmp_si (result, 0);
-      cmpy = mpz_cmp_si (*ymp, 0);
+      cmpr = mpz_sgn (result);
+      cmpy = mpz_sgn (*ymp);
       if (cmpy < 0 ? cmpr > 0 : cmpr < 0)
 	mpz_add (result, result, *ymp);
 

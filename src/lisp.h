@@ -2772,7 +2772,7 @@ INLINE bool
 NATNUMP (Lisp_Object x)
 {
   if (BIGNUMP (x))
-    return mpz_cmp_si (XBIGNUM (x)->value, 0) >= 0;
+    return mpz_sgn (XBIGNUM (x)->value) >= 0;
   return FIXNUMP (x) && 0 <= XFIXNUM (x);
 }
 INLINE bool
