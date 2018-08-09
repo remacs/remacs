@@ -2932,7 +2932,7 @@ set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
    for the most common cases; it's not required to be a power of two, but
    it's expected to be a mult-of-ROUNDUP_SIZE (see below).  */
 
-#define VECTOR_BLOCK_SIZE 4096
+enum { VECTOR_BLOCK_SIZE = 4096 };
 
 /* Vector size requests are a multiple of this.  */
 enum { roundup_size = COMMON_MULTIPLE (LISP_ALIGNMENT, word_size) };
@@ -2948,22 +2948,21 @@ verify (VECTOR_BLOCK_SIZE <= (1 << PSEUDOVECTOR_SIZE_BITS));
 
 /* Rounding helps to maintain alignment constraints if USE_LSB_TAG.  */
 
-#define VECTOR_BLOCK_BYTES (VECTOR_BLOCK_SIZE - vroundup_ct (sizeof (void *)))
+enum {VECTOR_BLOCK_BYTES = VECTOR_BLOCK_SIZE - vroundup_ct (sizeof (void *))};
 
 /* Size of the minimal vector allocated from block.  */
 
-#define VBLOCK_BYTES_MIN vroundup_ct (header_size + sizeof (Lisp_Object))
+enum { VBLOCK_BYTES_MIN = vroundup_ct (header_size + sizeof (Lisp_Object)) };
 
 /* Size of the largest vector allocated from block.  */
 
-#define VBLOCK_BYTES_MAX					\
-  vroundup ((VECTOR_BLOCK_BYTES / 2) - word_size)
+enum { VBLOCK_BYTES_MAX = vroundup_ct ((VECTOR_BLOCK_BYTES / 2) - word_size) };
 
 /* We maintain one free list for each possible block-allocated
    vector size, and this is the number of free lists we have.  */
 
-#define VECTOR_MAX_FREE_LIST_INDEX				\
-  ((VECTOR_BLOCK_BYTES - VBLOCK_BYTES_MIN) / roundup_size + 1)
+enum { VECTOR_MAX_FREE_LIST_INDEX =
+       (VECTOR_BLOCK_BYTES - VBLOCK_BYTES_MIN) / roundup_size + 1 };
 
 /* Common shortcut to advance vector pointer over a block data.  */
 
@@ -3090,14 +3089,14 @@ init_vectors (void)
 /* Allocate vector from a vector block.  */
 
 static struct Lisp_Vector *
-allocate_vector_from_block (size_t nbytes)
+allocate_vector_from_block (ptrdiff_t nbytes)
 {
   struct Lisp_Vector *vector;
   struct vector_block *block;
   size_t index, restbytes;
 
-  eassert (VBLOCK_BYTES_MIN <= nbytes && nbytes <= VBLOCK_BYTES_MAX);
-  eassert (nbytes % roundup_size == 0);
+  eassume (VBLOCK_BYTES_MIN <= nbytes && nbytes <= VBLOCK_BYTES_MAX);
+  eassume (nbytes % roundup_size == 0);
 
   /* First, try to allocate from a free list
      containing vectors of the requested size.  */
@@ -3182,35 +3181,45 @@ vector_nbytes (struct Lisp_Vector *v)
   return vroundup (header_size + word_size * nwords);
 }
 
+/* Convert a pseudovector pointer P to its underlying struct T pointer.
+   Verify that the struct is small, since cleanup_vector is called
+   only on small vector-like objects.  */
+
+#define PSEUDOVEC_STRUCT(p, t) \
+  verify_expr ((header_size + VECSIZE (struct t) * word_size \
+		<= VBLOCK_BYTES_MAX), \
+	       (struct t *) (p))
+
 /* Release extra resources still in use by VECTOR, which may be any
-   vector-like object.  */
+   small vector-like object.  */
 
 static void
 cleanup_vector (struct Lisp_Vector *vector)
 {
   detect_suspicious_free (vector);
-  if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_FONT)
-      && ((vector->header.size & PSEUDOVECTOR_SIZE_MASK)
-	  == FONT_OBJECT_MAX))
+  if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_FONT))
     {
-      struct font_driver const *drv = ((struct font *) vector)->driver;
-
-      /* The font driver might sometimes be NULL, e.g. if Emacs was
-	 interrupted before it had time to set it up.  */
-      if (drv)
+      if ((vector->header.size & PSEUDOVECTOR_SIZE_MASK) == FONT_OBJECT_MAX)
 	{
-	  /* Attempt to catch subtle bugs like Bug#16140.  */
-	  eassert (valid_font_driver (drv));
-	  drv->close ((struct font *) vector);
+	  struct font *font = PSEUDOVEC_STRUCT (vector, font);
+	  struct font_driver const *drv = font->driver;
+
+	  /* The font driver might sometimes be NULL, e.g. if Emacs was
+	     interrupted before it had time to set it up.  */
+	  if (drv)
+	    {
+	      /* Attempt to catch subtle bugs like Bug#16140.  */
+	      eassert (valid_font_driver (drv));
+	      drv->close (font);
+	    }
 	}
     }
-
-  if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_THREAD))
-    finalize_one_thread ((struct thread_state *) vector);
+  else if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_THREAD))
+    finalize_one_thread (PSEUDOVEC_STRUCT (vector, thread_state));
   else if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_MUTEX))
-    finalize_one_mutex ((struct Lisp_Mutex *) vector);
+    finalize_one_mutex (PSEUDOVEC_STRUCT (vector, Lisp_Mutex));
   else if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_CONDVAR))
-    finalize_one_condvar ((struct Lisp_CondVar *) vector);
+    finalize_one_condvar (PSEUDOVEC_STRUCT (vector, Lisp_CondVar));
 }
 
 /* Reclaim space used by unmarked vectors.  */
