@@ -365,11 +365,6 @@ The number of symbols in use.
 The number of symbols for which space has been obtained from
 the operating system, but that are not currently being used.
 
-@item misc-size
-Internal size of a miscellaneous entity, i.e.,
-@code{sizeof (union Lisp_Misc)}, which is a size of the
-largest type enumerated in @code{enum Lisp_Misc_Type}.
-
 @item string-size
 Internal size of a string header, i.e., @code{sizeof (struct Lisp_String)}.
 
