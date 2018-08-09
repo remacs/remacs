@@ -724,6 +724,8 @@ guaranteed by the originator of a cluster definition."
           (dolist (elt (all-completions "shadow-" obarray 'functionp))
             (trace-function-background (intern elt)))
           (trace-function-background 'save-buffer)
+          (dolist (elt write-file-functions)
+            (trace-function-background elt))
 	  ;; Cleanup.
 	  (when (file-exists-p shadow-info-file)
 	    (delete-file shadow-info-file))
@@ -775,7 +777,10 @@ guaranteed by the originator of a cluster definition."
             (message "Point 4.2")
             (insert "foo")
             (message "%s" buffer-file-name)
+            (message "%s" write-file-functions)
+	    (setenv "BUG_32226" "1")
             (save-buffer))
+	  (setenv "BUG_32226")
           (message "Point 4.3")
           (message "%s" (shadow-site-primary cluster2))
           (message "%s" (shadow-contract-file-name (concat "/cluster1:" file)))
@@ -821,6 +826,7 @@ guaranteed by the originator of a cluster definition."
             shadow-files-to-copy)))
         (error (message "Error: %s" err) (signal (car err) (cdr err))))
 
+      (setenv "BUG_32226")
       (untrace-all)
       (message "%s" (with-current-buffer trace-buffer (buffer-string)))
 
