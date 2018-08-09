@@ -1367,6 +1367,76 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 {
   switch (PSEUDOVECTOR_TYPE (XVECTOR (obj)))
     {
+    case PVEC_BIGNUM:
+      {
+	struct Lisp_Bignum *b = XBIGNUM (obj);
+	char *str = mpz_get_str (NULL, 10, b->value);
+	record_unwind_protect_ptr (xfree, str);
+	print_c_string (str, printcharfun);
+      }
+      break;
+
+    case PVEC_MARKER:
+      print_c_string ("#<marker ", printcharfun);
+      /* Do you think this is necessary?  */
+      if (XMARKER (obj)->insertion_type != 0)
+	print_c_string ("(moves after insertion) ", printcharfun);
+      if (! XMARKER (obj)->buffer)
+	print_c_string ("in no buffer", printcharfun);
+      else
+	{
+	  int len = sprintf (buf, "at %"pD"d in ", marker_position (obj));
+	  strout (buf, len, len, printcharfun);
+	  print_string (BVAR (XMARKER (obj)->buffer, name), printcharfun);
+	}
+      printchar ('>', printcharfun);
+      break;
+
+    case PVEC_OVERLAY:
+      print_c_string ("#<overlay ", printcharfun);
+      if (! XMARKER (OVERLAY_START (obj))->buffer)
+	print_c_string ("in no buffer", printcharfun);
+      else
+	{
+	  int len = sprintf (buf, "from %"pD"d to %"pD"d in ",
+			     marker_position (OVERLAY_START (obj)),
+			     marker_position (OVERLAY_END   (obj)));
+	  strout (buf, len, len, printcharfun);
+	  print_string (BVAR (XMARKER (OVERLAY_START (obj))->buffer, name),
+			printcharfun);
+	}
+      printchar ('>', printcharfun);
+      break;
+
+#ifdef HAVE_MODULES
+    case PVEC_USER_PTR:
+      {
+	print_c_string ("#<user-ptr ", printcharfun);
+	int i = sprintf (buf, "ptr=%p finalizer=%p",
+			 XUSER_PTR (obj)->p,
+			 XUSER_PTR (obj)->finalizer);
+	strout (buf, i, i, printcharfun);
+	printchar ('>', printcharfun);
+      }
+      break;
+#endif
+
+    case PVEC_FINALIZER:
+      print_c_string ("#<finalizer", printcharfun);
+      if (NILP (XFINALIZER (obj)->function))
+	print_c_string (" used", printcharfun);
+      printchar ('>', printcharfun);
+      break;
+
+    case PVEC_MISC_PTR:
+      {
+	/* This shouldn't happen in normal usage, but let's
+	   print it anyway for the benefit of the debugger.  */
+	int i = sprintf (buf, "#<ptr %p>", xmint_pointer (obj));
+	strout (buf, i, i, printcharfun);
+      }
+      break;
+
     case PVEC_PROCESS:
       if (escapeflag)
 	{
@@ -2096,103 +2166,16 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
       break;
 
     case Lisp_Vectorlike:
-      if (! print_vectorlike (obj, printcharfun, escapeflag, buf))
-	goto badtype;
-      break;
-
-    case Lisp_Misc:
-      switch (XMISCTYPE (obj))
-	{
-	case Lisp_Misc_Marker:
-	  print_c_string ("#<marker ", printcharfun);
-	  /* Do you think this is necessary?  */
-	  if (XMARKER (obj)->insertion_type != 0)
-	    print_c_string ("(moves after insertion) ", printcharfun);
-	  if (! XMARKER (obj)->buffer)
-	    print_c_string ("in no buffer", printcharfun);
-	  else
-	    {
-	      int len = sprintf (buf, "at %"pD"d in ", marker_position (obj));
-	      strout (buf, len, len, printcharfun);
-	      print_string (BVAR (XMARKER (obj)->buffer, name), printcharfun);
-	    }
-	  printchar ('>', printcharfun);
-	  break;
-
-	case Lisp_Misc_Overlay:
-	  print_c_string ("#<overlay ", printcharfun);
-	  if (! XMARKER (OVERLAY_START (obj))->buffer)
-	    print_c_string ("in no buffer", printcharfun);
-	  else
-	    {
-	      int len = sprintf (buf, "from %"pD"d to %"pD"d in ",
-				 marker_position (OVERLAY_START (obj)),
-				 marker_position (OVERLAY_END   (obj)));
-	      strout (buf, len, len, printcharfun);
-	      print_string (BVAR (XMARKER (OVERLAY_START (obj))->buffer, name),
-			    printcharfun);
-	    }
-	  printchar ('>', printcharfun);
-          break;
-
-#ifdef HAVE_MODULES
-	case Lisp_Misc_User_Ptr:
-	  {
-	    print_c_string ("#<user-ptr ", printcharfun);
-	    int i = sprintf (buf, "ptr=%p finalizer=%p",
-			     XUSER_PTR (obj)->p,
-			     XUSER_PTR (obj)->finalizer);
-	    strout (buf, i, i, printcharfun);
-	    printchar ('>', printcharfun);
-	    break;
-	  }
-#endif
-
-        case Lisp_Misc_Finalizer:
-          print_c_string ("#<finalizer", printcharfun);
-          if (NILP (XFINALIZER (obj)->function))
-            print_c_string (" used", printcharfun);
-	  printchar ('>', printcharfun);
-          break;
-
-	  /* Remaining cases shouldn't happen in normal usage, but let's
-	     print them anyway for the benefit of the debugger.  */
-
-	case Lisp_Misc_Free:
-	  print_c_string ("#<misc free cell>", printcharfun);
-	  break;
-
-	case Lisp_Misc_Ptr:
-	  {
-	    int i = sprintf (buf, "#<ptr %p>", xmint_pointer (obj));
-	    strout (buf, i, i, printcharfun);
-	  }
-	  break;
-
-	case Lisp_Misc_Bignum:
-	  {
-	    struct Lisp_Bignum *b = XBIGNUM (obj);
-	    char *str = mpz_get_str (NULL, 10, b->value);
-	    record_unwind_protect_ptr (xfree, str);
-	    print_c_string (str, printcharfun);
-	  }
-	  break;
-
-	default:
-	  goto badtype;
-	}
-      break;
-
+      if (print_vectorlike (obj, printcharfun, escapeflag, buf))
+	break;
+      FALLTHROUGH;
     default:
-    badtype:
       {
 	int len;
 	/* We're in trouble if this happens!
 	   Probably should just emacs_abort ().  */
 	print_c_string ("#<EMACS BUG: INVALID DATATYPE ", printcharfun);
-	if (MISCP (obj))
-	  len = sprintf (buf, "(MISC 0x%04x)", (unsigned) XMISCTYPE (obj));
-	else if (VECTORLIKEP (obj))
+	if (VECTORLIKEP (obj))
 	  len = sprintf (buf, "(PVEC 0x%08zx)", (size_t) ASIZE (obj));
 	else
 	  len = sprintf (buf, "(0x%02x)", (unsigned) XTYPE (obj));

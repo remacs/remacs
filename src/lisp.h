@@ -365,8 +365,6 @@ typedef EMACS_INT Lisp_Word;
 #define lisp_h_EQ(x, y) (XLI (x) == XLI (y))
 #define lisp_h_FLOATP(x) (XTYPE (x) == Lisp_Float)
 #define lisp_h_FIXNUMP(x) ((XTYPE (x) & (Lisp_Int0 | ~Lisp_Int1)) == Lisp_Int0)
-#define lisp_h_MARKERP(x) (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Marker)
-#define lisp_h_MISCP(x) (XTYPE (x) == Lisp_Misc)
 #define lisp_h_NILP(x) EQ (x, Qnil)
 #define lisp_h_SET_SYMBOL_VAL(sym, v) \
    (eassert ((sym)->u.s.redirect == SYMBOL_PLAINVAL), \
@@ -430,8 +428,6 @@ typedef EMACS_INT Lisp_Word;
 # define EQ(x, y) lisp_h_EQ (x, y)
 # define FLOATP(x) lisp_h_FLOATP (x)
 # define FIXNUMP(x) lisp_h_FIXNUMP (x)
-# define MARKERP(x) lisp_h_MARKERP (x)
-# define MISCP(x) lisp_h_MISCP (x)
 # define NILP(x) lisp_h_NILP (x)
 # define SET_SYMBOL_VAL(sym, v) lisp_h_SET_SYMBOL_VAL (sym, v)
 # define SYMBOL_CONSTANT_P(sym) lisp_h_SYMBOL_CONSTANT_P (sym)
@@ -482,11 +478,9 @@ enum Lisp_Type
     /* Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.  */
     Lisp_Symbol = 0,
 
-    /* Miscellaneous.  XMISC (object) points to a union Lisp_Misc,
-       whose first member indicates the subtype.  */
-    Lisp_Misc = 1,
+    /* Type 1 is currently unused.  */
 
-    /* Integer.  XFIXNUM (obj) is the integer value.  */
+    /* Fixnum.  XFIXNUM (obj) is the integer value.  */
     Lisp_Int0 = 2,
     Lisp_Int1 = USE_LSB_TAG ? 6 : 3,
 
@@ -506,26 +500,6 @@ enum Lisp_Type
     Lisp_Float = 7
   };
 
-/* This is the set of data types that share a common structure.
-   The first member of the structure is a type code from this set.
-   The enum values are arbitrary, but we'll use large numbers to make it
-   more likely that we'll spot the error if a random word in memory is
-   mistakenly interpreted as a Lisp_Misc.  */
-enum Lisp_Misc_Type
-  {
-    Lisp_Misc_Free = 0x5eab,
-    Lisp_Misc_Marker,
-    Lisp_Misc_Overlay,
-    Lisp_Misc_Finalizer,
-    Lisp_Misc_Ptr,
-#ifdef HAVE_MODULES
-    Lisp_Misc_User_Ptr,
-#endif
-    Lisp_Misc_Bignum,
-    /* This is not a type code.  It is for range checking.  */
-    Lisp_Misc_Limit
-  };
-
 /* These are the types of forwarding objects used in the value slot
    of symbols for special built-in variables whose value is stored in
    C variables.  */
@@ -539,14 +513,12 @@ enum Lisp_Fwd_Type
   };
 
 /* If you want to define a new Lisp data type, here are some
-   instructions.  See the thread at
-   https://lists.gnu.org/r/emacs-devel/2012-10/msg00561.html
-   for more info.
+   instructions.
 
    First, there are already a couple of Lisp types that can be used if
    your new type does not need to be exposed to Lisp programs nor
-   displayed to users.  These are Lisp_Misc_Ptr, a Lisp_Misc
-   subtype; and PVEC_OTHER, a kind of vectorlike object.  The former
+   displayed to users.  These are Lisp_Misc_Ptr and PVEC_OTHER,
+   which are both vectorlike objects.  The former
    is suitable for stashing a pointer in a Lisp object; the pointer
    might be to some low-level C object that contains auxiliary
    information.  The latter is useful for vector-like Lisp objects
@@ -557,29 +529,13 @@ enum Lisp_Fwd_Type
    These two types don't look pretty when printed, so they are
    unsuitable for Lisp objects that can be exposed to users.
 
-   To define a new data type, add one more Lisp_Misc subtype or one
-   more pseudovector subtype.  Pseudovectors are more suitable for
-   objects with several slots that need to support fast random access,
-   while Lisp_Misc types are for everything else.  A pseudovector object
-   provides one or more slots for Lisp objects, followed by struct
-   members that are accessible only from C.  A Lisp_Misc object is a
-   wrapper for a C struct that can contain anything you like.
+   To define a new data type, add a pseudovector subtype by extending
+   the pvec_type enumeration.  A pseudovector provides one or more
+   slots for Lisp objects, followed by struct members that are
+   accessible only from C.
 
    There is no way to explicitly free a Lisp Object; only the garbage
    collector frees them.
-
-   To add a new pseudovector type, extend the pvec_type enumeration;
-   to add a new Lisp_Misc, extend the Lisp_Misc_Type enumeration.
-
-   For a Lisp_Misc, you will also need to add your entry to union
-   Lisp_Misc, but make sure the first word has the same structure as
-   the others, starting with a 16-bit member of the Lisp_Misc_Type
-   enumeration and a 1-bit GC markbit.  Also make sure the overall
-   size of the union is not increased by your addition.  The latter
-   requirement is to keep Lisp_Misc objects small enough, so they
-   are handled faster: since all Lisp_Misc types use the same space,
-   enlarging any of them will affect all the rest.  If you really
-   need a larger object, it is best to use Lisp_Vectorlike instead.
 
    For a new pseudovector, it's highly desirable to limit the size
    of your data type by VBLOCK_BYTES_MAX bytes (defined in alloc.c).
@@ -973,6 +929,14 @@ enum pvec_type
 {
   PVEC_NORMAL_VECTOR,
   PVEC_FREE,
+  PVEC_BIGNUM,
+  PVEC_MARKER,
+  PVEC_OVERLAY,
+  PVEC_FINALIZER,
+  PVEC_MISC_PTR,
+#ifdef HAVE_MODULES
+  PVEC_USER_PTR,
+#endif
   PVEC_PROCESS,
   PVEC_FRAME,
   PVEC_WINDOW,
@@ -1173,7 +1137,6 @@ INLINE bool
 #define XSETSTRING(a, b) ((a) = make_lisp_ptr (b, Lisp_String))
 #define XSETSYMBOL(a, b) ((a) = make_lisp_symbol (b))
 #define XSETFLOAT(a, b) ((a) = make_lisp_ptr (b, Lisp_Float))
-#define XSETMISC(a, b) ((a) = make_lisp_ptr (b, Lisp_Misc))
 
 /* Pseudovector types.  */
 
@@ -2273,46 +2236,10 @@ SXHASH_REDUCE (EMACS_UINT x)
   return (x ^ x >> (EMACS_INT_WIDTH - FIXNUM_BITS)) & INTMASK;
 }
 
-/* These structures are used for various misc types.  */
-
-struct Lisp_Misc_Any		/* Supertype of all Misc types.  */
-{
-  ENUM_BF (Lisp_Misc_Type) type : 16;		/* = Lisp_Misc_??? */
-  bool_bf gcmarkbit : 1;
-  unsigned spacer : 15;
-};
-
-INLINE bool
-(MISCP) (Lisp_Object x)
-{
-  return lisp_h_MISCP (x);
-}
-
-INLINE struct Lisp_Misc_Any *
-XMISCANY (Lisp_Object a)
-{
-  eassert (MISCP (a));
-  return XUNTAG (a, Lisp_Misc, struct Lisp_Misc_Any);
-}
-
-INLINE enum Lisp_Misc_Type
-XMISCTYPE (Lisp_Object a)
-{
-  return XMISCANY (a)->type;
-}
-
 struct Lisp_Marker
 {
-  ENUM_BF (Lisp_Misc_Type) type : 16;		/* = Lisp_Misc_Marker */
-  bool_bf gcmarkbit : 1;
-  unsigned spacer : 13;
-  /* This flag is temporarily used in the functions
-     decode/encode_coding_object to record that the marker position
-     must be adjusted after the conversion.  */
-  bool_bf need_adjustment : 1;
-  /* True means normal insertion at the marker's position
-     leaves the marker after the inserted text.  */
-  bool_bf insertion_type : 1;
+  union vectorlike_header header;
+
   /* This is the buffer that the marker points into, or 0 if it points nowhere.
      Note: a chain of markers can contain markers pointing into different
      buffers (the chain is per buffer_text rather than per buffer, so it's
@@ -2324,6 +2251,14 @@ struct Lisp_Marker
      - Fkill_buffer: to only unchain the markers of current indirect buffer.
      */
   struct buffer *buffer;
+
+  /* This flag is temporarily used in the functions
+     decode/encode_coding_object to record that the marker position
+     must be adjusted after the conversion.  */
+  bool_bf need_adjustment : 1;
+  /* True means normal insertion at the marker's position
+     leaves the marker after the inserted text.  */
+  bool_bf insertion_type : 1;
 
   /* The remaining fields are meaningless in a marker that
      does not point anywhere.  */
@@ -2357,20 +2292,16 @@ struct Lisp_Overlay
    I.e. 9words plus 2 bits, 3words of which are for external linked lists.
 */
   {
-    ENUM_BF (Lisp_Misc_Type) type : 16;	/* = Lisp_Misc_Overlay */
-    bool_bf gcmarkbit : 1;
-    unsigned spacer : 15;
-    struct Lisp_Overlay *next;
+    union vectorlike_header header;
     Lisp_Object start;
     Lisp_Object end;
     Lisp_Object plist;
+    struct Lisp_Overlay *next;
   };
 
 struct Lisp_Misc_Ptr
   {
-    ENUM_BF (Lisp_Misc_Type) type : 16;	/* = Lisp_Misc_Ptr */
-    bool_bf gcmarkbit : 1;
-    unsigned spacer : 15;
+    union vectorlike_header header;
     void *pointer;
   };
 
@@ -2388,7 +2319,7 @@ extern Lisp_Object make_misc_ptr (void *);
    C code, it should not be given a mint_ptr generated from Lisp code
    as that would allow Lisp code to coin pointers from integers and
    could lead to crashes.  To package a C pointer into a Lisp-visible
-   object you can put the pointer into a Lisp_Misc object instead; see
+   object you can put the pointer into a pseudovector instead; see
    Lisp_User_Ptr for an example.  */
 
 INLINE Lisp_Object
@@ -2401,7 +2332,7 @@ make_mint_ptr (void *a)
 INLINE bool
 mint_ptrp (Lisp_Object x)
 {
-  return FIXNUMP (x) || (MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Ptr);
+  return FIXNUMP (x) || PSEUDOVECTORP (x, PVEC_MISC_PTR);
 }
 
 INLINE void *
@@ -2410,16 +2341,13 @@ xmint_pointer (Lisp_Object a)
   eassert (mint_ptrp (a));
   if (FIXNUMP (a))
     return XFIXNUMPTR (a);
-  return XUNTAG (a, Lisp_Misc, struct Lisp_Misc_Ptr)->pointer;
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Misc_Ptr)->pointer;
 }
 
 #ifdef HAVE_MODULES
 struct Lisp_User_Ptr
 {
-  ENUM_BF (Lisp_Misc_Type) type : 16;	     /* = Lisp_Misc_User_Ptr */
-  bool_bf gcmarkbit : 1;
-  unsigned spacer : 15;
-
+  union vectorlike_header header;
   void (*finalizer) (void *);
   void *p;
 };
@@ -2428,123 +2356,89 @@ struct Lisp_User_Ptr
 /* A finalizer sentinel.  */
 struct Lisp_Finalizer
   {
-    struct Lisp_Misc_Any base;
-
-    /* Circular list of all active weak references.  */
-    struct Lisp_Finalizer *prev;
-    struct Lisp_Finalizer *next;
+    union vectorlike_header header;
 
     /* Call FUNCTION when the finalizer becomes unreachable, even if
        FUNCTION contains a reference to the finalizer; i.e., call
        FUNCTION when it is reachable _only_ through finalizers.  */
     Lisp_Object function;
+
+    /* Circular list of all active weak references.  */
+    struct Lisp_Finalizer *prev;
+    struct Lisp_Finalizer *next;
   };
 
 INLINE bool
 FINALIZERP (Lisp_Object x)
 {
-  return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Finalizer;
+  return PSEUDOVECTORP (x, PVEC_FINALIZER);
 }
 
 INLINE struct Lisp_Finalizer *
 XFINALIZER (Lisp_Object a)
 {
   eassert (FINALIZERP (a));
-  return XUNTAG (a, Lisp_Misc, struct Lisp_Finalizer);
-}
-
-/* A miscellaneous object, when it's on the free list.  */
-struct Lisp_Free
-  {
-    ENUM_BF (Lisp_Misc_Type) type : 16;	/* = Lisp_Misc_Free */
-    bool_bf gcmarkbit : 1;
-    unsigned spacer : 15;
-    union Lisp_Misc *chain;
-  };
-
-struct Lisp_Bignum
-  {
-    ENUM_BF (Lisp_Misc_Type) type : 16; /* = Lisp_Misc_Bignum */
-    bool_bf gcmarkbit : 1;
-    unsigned spacer : 15;
-    mpz_t value;
-  };
-
-/* To get the type field of a union Lisp_Misc, use XMISCTYPE.
-   It uses one of these struct subtypes to get the type field.  */
-
-union Lisp_Misc
-  {
-    struct Lisp_Misc_Any u_any;	   /* Supertype of all Misc types.  */
-    struct Lisp_Free u_free;
-    struct Lisp_Marker u_marker;
-    struct Lisp_Overlay u_overlay;
-    struct Lisp_Finalizer u_finalizer;
-    struct Lisp_Misc_Ptr u_misc_ptr;
-#ifdef HAVE_MODULES
-    struct Lisp_User_Ptr u_user_ptr;
-#endif
-    struct Lisp_Bignum u_bignum;
-  };
-
-INLINE union Lisp_Misc *
-XMISC (Lisp_Object a)
-{
-  return XUNTAG (a, Lisp_Misc, union Lisp_Misc);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Finalizer);
 }
 
 INLINE bool
-(MARKERP) (Lisp_Object x)
+MARKERP (Lisp_Object x)
 {
-  return lisp_h_MARKERP (x);
+  return PSEUDOVECTORP (x, PVEC_MARKER);
 }
 
 INLINE struct Lisp_Marker *
 XMARKER (Lisp_Object a)
 {
   eassert (MARKERP (a));
-  return XUNTAG (a, Lisp_Misc, struct Lisp_Marker);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Marker);
 }
 
 INLINE bool
 OVERLAYP (Lisp_Object x)
 {
-  return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Overlay;
+  return PSEUDOVECTORP (x, PVEC_OVERLAY);
 }
 
 INLINE struct Lisp_Overlay *
 XOVERLAY (Lisp_Object a)
 {
   eassert (OVERLAYP (a));
-  return XUNTAG (a, Lisp_Misc, struct Lisp_Overlay);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Overlay);
 }
 
 #ifdef HAVE_MODULES
 INLINE bool
 USER_PTRP (Lisp_Object x)
 {
-  return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_User_Ptr;
+  return PSEUDOVECTORP (x, PVEC_USER_PTR);
 }
 
 INLINE struct Lisp_User_Ptr *
 XUSER_PTR (Lisp_Object a)
 {
   eassert (USER_PTRP (a));
-  return XUNTAG (a, Lisp_Misc, struct Lisp_User_Ptr);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_User_Ptr);
 }
 #endif
+
+struct Lisp_Bignum
+{
+  union vectorlike_header header;
+  mpz_t value;
+};
 
 INLINE bool
 BIGNUMP (Lisp_Object x)
 {
-  return MISCP (x) && XMISCTYPE (x) == Lisp_Misc_Bignum;
+  return PSEUDOVECTORP (x, PVEC_BIGNUM);
 }
 
 INLINE struct Lisp_Bignum *
 XBIGNUM (Lisp_Object a)
 {
   eassert (BIGNUMP (a));
-  return XUNTAG (a, Lisp_Misc, struct Lisp_Bignum);
+  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Bignum);
 }
 
 INLINE bool

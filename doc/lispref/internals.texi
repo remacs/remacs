@@ -318,7 +318,6 @@ future allocations.  So an overall result is:
 @example
 ((@code{conses} @var{cons-size} @var{used-conses} @var{free-conses})
  (@code{symbols} @var{symbol-size} @var{used-symbols} @var{free-symbols})
- (@code{miscs} @var{misc-size} @var{used-miscs} @var{free-miscs})
  (@code{strings} @var{string-size} @var{used-strings} @var{free-strings})
  (@code{string-bytes} @var{byte-size} @var{used-bytes})
  (@code{vectors} @var{vector-size} @var{used-vectors})
@@ -334,7 +333,7 @@ Here is an example:
 @example
 (garbage-collect)
       @result{} ((conses 16 49126 8058) (symbols 48 14607 0)
-                 (miscs 40 34 56) (strings 32 2942 2607)
+                 (strings 32 2942 2607)
                  (string-bytes 1 78607) (vectors 16 7247)
                  (vector-slots 8 341609 29474) (floats 8 71 102)
                  (intervals 56 27 26) (buffers 944 8)
@@ -370,14 +369,6 @@ the operating system, but that are not currently being used.
 Internal size of a miscellaneous entity, i.e.,
 @code{sizeof (union Lisp_Misc)}, which is a size of the
 largest type enumerated in @code{enum Lisp_Misc_Type}.
-
-@item used-miscs
-The number of miscellaneous objects in use.  These include markers
-and overlays, plus certain objects not visible to users.
-
-@item free-miscs
-The number of miscellaneous objects for which space has been obtained
-from the operating system, but that are not currently being used.
 
 @item string-size
 Internal size of a string header, i.e., @code{sizeof (struct Lisp_String)}.

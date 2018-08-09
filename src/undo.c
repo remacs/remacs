@@ -126,15 +126,11 @@ record_insert (ptrdiff_t beg, ptrdiff_t length)
 static void
 record_marker_adjustments (ptrdiff_t from, ptrdiff_t to)
 {
-  Lisp_Object marker;
-  register struct Lisp_Marker *m;
-  register ptrdiff_t charpos, adjustment;
+  prepare_record ();
 
-  prepare_record();
-
-  for (m = BUF_MARKERS (current_buffer); m; m = m->next)
+  for (struct Lisp_Marker *m = BUF_MARKERS (current_buffer); m; m = m->next)
     {
-      charpos = m->charpos;
+      ptrdiff_t charpos = m->charpos;
       eassert (charpos <= Z);
 
       if (from <= charpos && charpos <= to)
@@ -146,11 +142,11 @@ record_marker_adjustments (ptrdiff_t from, ptrdiff_t to)
              insertion_type t markers will automatically move forward
              upon re-inserting the deleted text, so we have to arrange
              for them to move backward to the correct position.  */
-          adjustment = (m->insertion_type ? to : from) - charpos;
+	  ptrdiff_t adjustment = (m->insertion_type ? to : from) - charpos;
 
           if (adjustment)
             {
-              XSETMISC (marker, m);
+	      Lisp_Object marker = make_lisp_ptr (m, Lisp_Vectorlike);
               bset_undo_list
                 (current_buffer,
                  Fcons (Fcons (marker, make_fixnum (adjustment)),

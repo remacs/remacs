@@ -5819,11 +5819,7 @@ compare_overlay_entries (const void *e1, const void *e2)
 static void
 load_overlay_strings (struct it *it, ptrdiff_t charpos)
 {
-  Lisp_Object overlay, window, str, invisible;
-  struct Lisp_Overlay *ov;
-  ptrdiff_t start, end;
-  ptrdiff_t n = 0, i, j;
-  int invis;
+  ptrdiff_t n = 0;
   struct overlay_entry entriesbuf[20];
   ptrdiff_t size = ARRAYELTS (entriesbuf);
   struct overlay_entry *entries = entriesbuf;
@@ -5859,12 +5855,13 @@ load_overlay_strings (struct it *it, ptrdiff_t charpos)
   while (false)
 
   /* Process overlay before the overlay center.  */
-  for (ov = current_buffer->overlays_before; ov; ov = ov->next)
+  for (struct Lisp_Overlay *ov = current_buffer->overlays_before;
+       ov; ov = ov->next)
     {
-      XSETMISC (overlay, ov);
+      Lisp_Object overlay = make_lisp_ptr (ov, Lisp_Vectorlike);
       eassert (OVERLAYP (overlay));
-      start = OVERLAY_POSITION (OVERLAY_START (overlay));
-      end = OVERLAY_POSITION (OVERLAY_END (overlay));
+      ptrdiff_t start = OVERLAY_POSITION (OVERLAY_START (overlay));
+      ptrdiff_t end = OVERLAY_POSITION (OVERLAY_END (overlay));
 
       if (end < charpos)
 	break;
@@ -5875,17 +5872,18 @@ load_overlay_strings (struct it *it, ptrdiff_t charpos)
 	continue;
 
       /* Skip this overlay if it doesn't apply to IT->w.  */
-      window = Foverlay_get (overlay, Qwindow);
+      Lisp_Object window = Foverlay_get (overlay, Qwindow);
       if (WINDOWP (window) && XWINDOW (window) != it->w)
 	continue;
 
       /* If the text ``under'' the overlay is invisible, both before-
 	 and after-strings from this overlay are visible; start and
 	 end position are indistinguishable.  */
-      invisible = Foverlay_get (overlay, Qinvisible);
-      invis = TEXT_PROP_MEANS_INVISIBLE (invisible);
+      Lisp_Object invisible = Foverlay_get (overlay, Qinvisible);
+      int invis = TEXT_PROP_MEANS_INVISIBLE (invisible);
 
       /* If overlay has a non-empty before-string, record it.  */
+      Lisp_Object str;
       if ((start == charpos || (end == charpos && invis != 0))
 	  && (str = Foverlay_get (overlay, Qbefore_string), STRINGP (str))
 	  && SCHARS (str))
@@ -5899,12 +5897,13 @@ load_overlay_strings (struct it *it, ptrdiff_t charpos)
     }
 
   /* Process overlays after the overlay center.  */
-  for (ov = current_buffer->overlays_after; ov; ov = ov->next)
+  for (struct Lisp_Overlay *ov = current_buffer->overlays_after;
+       ov; ov = ov->next)
     {
-      XSETMISC (overlay, ov);
+      Lisp_Object overlay = make_lisp_ptr (ov, Lisp_Vectorlike);
       eassert (OVERLAYP (overlay));
-      start = OVERLAY_POSITION (OVERLAY_START (overlay));
-      end = OVERLAY_POSITION (OVERLAY_END (overlay));
+      ptrdiff_t start = OVERLAY_POSITION (OVERLAY_START (overlay));
+      ptrdiff_t end = OVERLAY_POSITION (OVERLAY_END (overlay));
 
       if (start > charpos)
 	break;
@@ -5915,16 +5914,17 @@ load_overlay_strings (struct it *it, ptrdiff_t charpos)
 	continue;
 
       /* Skip this overlay if it doesn't apply to IT->w.  */
-      window = Foverlay_get (overlay, Qwindow);
+      Lisp_Object window = Foverlay_get (overlay, Qwindow);
       if (WINDOWP (window) && XWINDOW (window) != it->w)
 	continue;
 
       /* If the text ``under'' the overlay is invisible, it has a zero
 	 dimension, and both before- and after-strings apply.  */
-      invisible = Foverlay_get (overlay, Qinvisible);
-      invis = TEXT_PROP_MEANS_INVISIBLE (invisible);
+      Lisp_Object invisible = Foverlay_get (overlay, Qinvisible);
+      int invis = TEXT_PROP_MEANS_INVISIBLE (invisible);
 
       /* If overlay has a non-empty before-string, record it.  */
+      Lisp_Object str;
       if ((start == charpos || (end == charpos && invis != 0))
 	  && (str = Foverlay_get (overlay, Qbefore_string), STRINGP (str))
 	  && SCHARS (str))
@@ -5950,12 +5950,11 @@ load_overlay_strings (struct it *it, ptrdiff_t charpos)
   /* IT->current.overlay_string_index is the number of overlay strings
      that have already been consumed by IT.  Copy some of the
      remaining overlay strings to IT->overlay_strings.  */
-  i = 0;
-  j = it->current.overlay_string_index;
-  while (i < OVERLAY_STRING_CHUNK_SIZE && j < n)
+  ptrdiff_t j = it->current.overlay_string_index;
+  for (ptrdiff_t i = 0; i < OVERLAY_STRING_CHUNK_SIZE && j < n; i++, j++)
     {
       it->overlay_strings[i] = entries[j].string;
-      it->string_overlays[i++] = entries[j++].overlay;
+      it->string_overlays[i] = entries[j].overlay;
     }
 
   CHECK_IT (it);

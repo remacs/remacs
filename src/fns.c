@@ -2287,7 +2287,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	ht = CALLN (Fmake_hash_table, QCtest, Qeq);
       switch (XTYPE (o1))
 	{
-	case Lisp_Cons: case Lisp_Misc: case Lisp_Vectorlike:
+	case Lisp_Cons: case Lisp_Vectorlike:
 	  {
 	    struct Lisp_Hash_Table *h = XHASH_TABLE (ht);
 	    EMACS_UINT hash;
@@ -2344,31 +2344,6 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       depth++;
       goto tail_recurse;
 
-    case Lisp_Misc:
-      if (XMISCTYPE (o1) != XMISCTYPE (o2))
-	return false;
-      if (OVERLAYP (o1))
-	{
-	  if (!internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
-			       equal_kind, depth + 1, ht)
-	      || !internal_equal (OVERLAY_END (o1), OVERLAY_END (o2),
-				  equal_kind, depth + 1, ht))
-	    return false;
-	  o1 = XOVERLAY (o1)->plist;
-	  o2 = XOVERLAY (o2)->plist;
-	  depth++;
-	  goto tail_recurse;
-	}
-      if (MARKERP (o1))
-	{
-	  return (XMARKER (o1)->buffer == XMARKER (o2)->buffer
-		  && (XMARKER (o1)->buffer == 0
-		      || XMARKER (o1)->bytepos == XMARKER (o2)->bytepos));
-	}
-      if (BIGNUMP (o1))
-	return mpz_cmp (XBIGNUM (o1)->value, XBIGNUM (o2)->value) == 0;
-      break;
-
     case Lisp_Vectorlike:
       {
 	register int i;
@@ -2378,6 +2353,26 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	   same size.  */
 	if (ASIZE (o2) != size)
 	  return false;
+	if (BIGNUMP (o1))
+	  return mpz_cmp (XBIGNUM (o1)->value, XBIGNUM (o2)->value) == 0;
+	if (OVERLAYP (o1))
+	  {
+	    if (!internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
+				 equal_kind, depth + 1, ht)
+		|| !internal_equal (OVERLAY_END (o1), OVERLAY_END (o2),
+				    equal_kind, depth + 1, ht))
+	      return false;
+	    o1 = XOVERLAY (o1)->plist;
+	    o2 = XOVERLAY (o2)->plist;
+	    depth++;
+	    goto tail_recurse;
+	  }
+	if (MARKERP (o1))
+	  {
+	    return (XMARKER (o1)->buffer == XMARKER (o2)->buffer
+		    && (XMARKER (o1)->buffer == 0
+			|| XMARKER (o1)->bytepos == XMARKER (o2)->bytepos));
+	  }
 	/* Boolvectors are compared much like strings.  */
 	if (BOOL_VECTOR_P (o1))
 	  {
@@ -4477,13 +4472,6 @@ sxhash (Lisp_Object obj, int depth)
       hash = XUFIXNUM (obj);
       break;
 
-    case Lisp_Misc:
-      if (XMISCTYPE (obj) == Lisp_Misc_Bignum)
-	{
-	  hash = sxhash_bignum (XBIGNUM (obj));
-	  break;
-	}
-      FALLTHROUGH;
     case Lisp_Symbol:
       hash = XHASH (obj);
       break;
@@ -4494,7 +4482,9 @@ sxhash (Lisp_Object obj, int depth)
 
       /* This can be everything from a vector to an overlay.  */
     case Lisp_Vectorlike:
-      if (VECTORP (obj) || RECORDP (obj))
+      if (BIGNUMP (obj))
+	hash = sxhash_bignum (XBIGNUM (obj));
+      else if (VECTORP (obj) || RECORDP (obj))
 	/* According to the CL HyperSpec, two arrays are equal only if
 	   they are `eq', except for strings and bit-vectors.  In
 	   Emacs, this works differently.  We have to compare element

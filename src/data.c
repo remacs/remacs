@@ -221,29 +221,17 @@ for example, (type-of 1) returns `integer'.  */)
     case Lisp_Cons:
       return Qcons;
 
-    case Lisp_Misc:
-      switch (XMISCTYPE (object))
-	{
-	case Lisp_Misc_Marker:
-	  return Qmarker;
-	case Lisp_Misc_Overlay:
-	  return Qoverlay;
-        case Lisp_Misc_Finalizer:
-          return Qfinalizer;
-#ifdef HAVE_MODULES
-	case Lisp_Misc_User_Ptr:
-	  return Quser_ptr;
-#endif
-	case Lisp_Misc_Bignum:
-	  return Qinteger;
-	default:
-	  emacs_abort ();
-	}
-
     case Lisp_Vectorlike:
       switch (PSEUDOVECTOR_TYPE (XVECTOR (object)))
         {
         case PVEC_NORMAL_VECTOR: return Qvector;
+	case PVEC_BIGNUM: return Qinteger;
+	case PVEC_MARKER: return Qmarker;
+	case PVEC_OVERLAY: return Qoverlay;
+	case PVEC_FINALIZER: return Qfinalizer;
+#ifdef HAVE_MODULES
+	case PVEC_USER_PTR: return Quser_ptr;
+#endif
         case PVEC_WINDOW_CONFIGURATION: return Qwindow_configuration;
         case PVEC_PROCESS: return Qprocess;
         case PVEC_WINDOW: return Qwindow;
@@ -279,6 +267,7 @@ for example, (type-of 1) returns `integer'.  */)
         case PVEC_MODULE_FUNCTION:
           return Qmodule_function;
         /* "Impossible" cases.  */
+	case PVEC_MISC_PTR:
         case PVEC_XWIDGET:
         case PVEC_OTHER:
         case PVEC_XWIDGET_VIEW:

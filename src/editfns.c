@@ -484,21 +484,18 @@ If you set the marker not to point anywhere, the buffer will have no mark.  */)
 static ptrdiff_t
 overlays_around (EMACS_INT pos, Lisp_Object *vec, ptrdiff_t len)
 {
-  Lisp_Object overlay, start, end;
-  struct Lisp_Overlay *tail;
-  ptrdiff_t startpos, endpos;
   ptrdiff_t idx = 0;
 
-  for (tail = current_buffer->overlays_before; tail; tail = tail->next)
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_before;
+       tail; tail = tail->next)
     {
-      XSETMISC (overlay, tail);
-
-      end = OVERLAY_END (overlay);
-      endpos = OVERLAY_POSITION (end);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
+      Lisp_Object end = OVERLAY_END (overlay);
+      ptrdiff_t endpos = OVERLAY_POSITION (end);
       if (endpos < pos)
 	  break;
-      start = OVERLAY_START (overlay);
-      startpos = OVERLAY_POSITION (start);
+      Lisp_Object start = OVERLAY_START (overlay);
+      ptrdiff_t startpos = OVERLAY_POSITION (start);
       if (startpos <= pos)
 	{
 	  if (idx < len)
@@ -508,16 +505,16 @@ overlays_around (EMACS_INT pos, Lisp_Object *vec, ptrdiff_t len)
 	}
     }
 
-  for (tail = current_buffer->overlays_after; tail; tail = tail->next)
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_after;
+       tail; tail = tail->next)
     {
-      XSETMISC (overlay, tail);
-
-      start = OVERLAY_START (overlay);
-      startpos = OVERLAY_POSITION (start);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
+      Lisp_Object start = OVERLAY_START (overlay);
+      ptrdiff_t startpos = OVERLAY_POSITION (start);
       if (pos < startpos)
 	break;
-      end = OVERLAY_END (overlay);
-      endpos = OVERLAY_POSITION (end);
+      Lisp_Object end = OVERLAY_END (overlay);
+      ptrdiff_t endpos = OVERLAY_POSITION (end);
       if (pos <= endpos)
 	{
 	  if (idx < len)
