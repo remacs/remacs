@@ -2988,7 +2988,7 @@ Emacs compiled on a 64-bit machine can handle much larger buffers.
 @cindex Shell buffer, echoed commands and @samp{^M} in
 @cindex Echoed commands in @code{shell-mode}
 
-Try typing @kbd{M-x shell-strip-ctrl-m @key{RET}} while in @code{shell-mode} to
+Try typing @kbd{M-x comint-strip-ctrl-m @key{RET}} while in @code{shell-mode} to
 make them go away.  If that doesn't work, you have several options:
 
 For @code{tcsh}, put this in your @file{.cshrc} (or @file{.tcshrc})
@@ -3041,7 +3041,7 @@ characters from the buffer by adding this to your @file{.emacs} init
 file:
 
 @smalllisp
-(add-hook 'comint-output-filter-functions 'shell-strip-ctrl-m)
+(add-hook 'comint-output-filter-functions #'comint-strip-ctrl-m)
 @end smalllisp
 
 On a related note: if your shell is echoing your input line in the shell

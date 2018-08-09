@@ -110,8 +110,4 @@
 
 (provide-theme 'deeper-blue)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; deeper-blue-theme.el ends here

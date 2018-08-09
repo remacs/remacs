@@ -78,7 +78,7 @@
 ;;
 ;; Not bound by default in comint-mode (some are in shell mode)
 ;; comint-run				Run a program under comint-mode
-;; send-invisible			Read a line w/o echo, and send to proc
+;; comint-send-invisible		Read a line w/o echo, and send to proc
 ;; comint-dynamic-complete-filename	Complete filename at point.
 ;; comint-dynamic-list-filename-completions List completions in help buffer.
 ;; comint-replace-by-expanded-filename	Expand and complete filename at point;
@@ -632,7 +632,7 @@ Input ring history expansion can be achieved with the commands
 Input ring expansion is controlled by the variable `comint-input-autoexpand',
 and addition is controlled by the variable `comint-input-ignoredups'.
 
-Commands with no default key bindings include `send-invisible',
+Commands with no default key bindings include `comint-send-invisible',
 `completion-at-point', `comint-dynamic-list-filename-completions', and
 `comint-magic-space'.
 
@@ -2247,7 +2247,7 @@ This function could be on `comint-output-filter-functions' or bound to a key."
 	(error nil))
       (while (re-search-forward "\r+$" pmark t)
 	(replace-match "" t t)))))
-(defalias 'shell-strip-ctrl-m 'comint-strip-ctrl-m)
+(define-obsolete-function-alias 'shell-strip-ctrl-m #'comint-strip-ctrl-m "27.1")
 
 (defun comint-show-maximum-output ()
   "Put the end of the buffer at the bottom of the window."
@@ -2357,9 +2357,9 @@ a buffer local variable."
 
 ;; These three functions are for entering text you don't want echoed or
 ;; saved -- typically passwords to ftp, telnet, or somesuch.
-;; Just enter m-x send-invisible and type in your line.
+;; Just enter m-x comint-send-invisible and type in your line.
 
-(defun send-invisible (&optional prompt)
+(defun comint-send-invisible (&optional prompt)
   "Read a string without echoing.
 Then send it to the process running in the current buffer.
 The string is sent using `comint-input-sender'.
@@ -2382,18 +2382,19 @@ Security bug: your string can still be temporarily recovered with
 	    (message "Warning: text will be echoed")))
       (error "Buffer %s has no process" (current-buffer)))))
 
+(define-obsolete-function-alias 'send-invisible #'comint-send-invisible "27.1")
+
 (defun comint-watch-for-password-prompt (string)
   "Prompt in the minibuffer for password and send without echoing.
-This function uses `send-invisible' to read and send a password to the buffer's
-process if STRING contains a password prompt defined by
-`comint-password-prompt-regexp'.
+Looks for a match to `comint-password-prompt-regexp' in order
+to detect the need to (prompt and) send a password.
 
 This function could be in the list `comint-output-filter-functions'."
   (when (let ((case-fold-search t))
 	  (string-match comint-password-prompt-regexp string))
     (when (string-match "^[ \n\r\t\v\f\b\a]+" string)
       (setq string (replace-match "" t t string)))
-    (send-invisible string)))
+    (comint-send-invisible string)))
 
 ;; Low-level process communication
 

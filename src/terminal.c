@@ -483,7 +483,7 @@ static Lisp_Object
 store_terminal_param (struct terminal *t, Lisp_Object parameter, Lisp_Object value)
 {
   Lisp_Object old_alist_elt = Fassq (parameter, t->param_alist);
-  if (EQ (old_alist_elt, Qnil))
+  if (NILP (old_alist_elt))
     {
       tset_param_alist (t, Fcons (Fcons (parameter, value), t->param_alist));
       return Qnil;

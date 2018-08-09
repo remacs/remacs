@@ -1026,8 +1026,8 @@ Move backward across one shell command, but not beyond the current line
 Ask the shell for its working directory, and update the Shell buffer's
 default directory.  @xref{Directory Tracking}.
 
-@item M-x send-invisible @key{RET} @var{text} @key{RET}
-@findex send-invisible
+@item M-x comint-send-invisible @key{RET} @var{text} @key{RET}
+@findex comint-send-invisible
 Send @var{text} as input to the shell, after reading it without
 echoing.  This is useful when a shell command runs a program that asks
 for a password.

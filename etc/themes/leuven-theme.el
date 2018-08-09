@@ -708,7 +708,6 @@ Semantic, and Ansi-Color faces are included -- and much more...")
 ;; time-stamp-format: "%:y%02m%02d.%02H%02M"
 ;; time-stamp-start: "Version: "
 ;; time-stamp-end: "$"
-;; no-byte-compile: t
 ;; End:
 
 ;;; leuven-theme.el ends here

@@ -63,7 +63,8 @@ But it is possible to add elements to the list, or remove elements.
 
 @defun sequencep object
 This function returns @code{t} if @var{object} is a list, vector,
-string, bool-vector, or char-table, @code{nil} otherwise.
+string, bool-vector, or char-table, @code{nil} otherwise.  See also
+@code{seqp} below.
 @end defun
 
 @defun length sequence
@@ -479,7 +480,8 @@ built-in sequence types, @code{seq-length} behaves like @code{length}.
 @defun seqp object
   This function returns non-@code{nil} if @var{object} is a sequence
 (a list or array), or any additional type of sequence defined via
-@file{seq.el} generic functions.
+@file{seq.el} generic functions.  This is an extensible variant of
+@code{sequencep}.
 
 @example
 @group
@@ -1355,7 +1357,7 @@ each initialized to @var{object}.
 @defun vconcat &rest sequences
 @cindex copying vectors
 This function returns a new vector containing all the elements of
-@var{sequences}.  The arguments @var{sequences} may be true lists,
+@var{sequences}.  The arguments @var{sequences} may be proper lists,
 vectors, strings or bool-vectors.  If no @var{sequences} are given,
 the empty vector is returned.
 

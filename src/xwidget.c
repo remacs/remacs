@@ -1099,7 +1099,7 @@ xwidget_view_lookup (struct xwidget *xw, struct window *w)
 
   ret = Fxwidget_view_lookup (xwidget, window);
 
-  return EQ (ret, Qnil) ? NULL : XXWIDGET_VIEW (ret);
+  return NILP (ret) ? NULL : XXWIDGET_VIEW (ret);
 }
 
 struct xwidget *

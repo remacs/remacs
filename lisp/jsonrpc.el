@@ -6,7 +6,7 @@
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
 ;; Package-Requires: ((emacs "25.2"))
-;; Version: 1.0.0
+;; Version: 1.0.2
 
 ;; This is an Elpa :core package.  Don't use functionality that is not
 ;; compatible with Emacs 25.2.
@@ -74,7 +74,11 @@
     :documentation "A hash table of request ID to continuation lambdas.")
    (-events-buffer
     :accessor jsonrpc--events-buffer
-    :documentation "A buffer pretty-printing the JSON-RPC RPC events")
+    :documentation "A buffer pretty-printing the JSONRPC events")
+   (-events-buffer-scrollback-size
+    :initarg :events-buffer-scrollback-size
+    :accessor jsonrpc--events-buffer-scrollback-size
+    :documentation "If non-nil, maximum size of events buffer.")
    (-deferred-actions
     :initform (make-hash-table :test #'equal)
     :accessor jsonrpc--deferred-actions
@@ -193,9 +197,7 @@ dispatcher in CONNECTION."
           (when timer (cancel-timer timer)))
         (remhash id (jsonrpc--request-continuations connection))
         (if error (funcall (nth 1 continuations) error)
-          (funcall (nth 0 continuations) result)))
-       (;; An abnormal situation
-        id (jsonrpc--warn "No continuation for id %s" id)))
+          (funcall (nth 0 continuations) result))))
       (jsonrpc--call-deferred connection))))
 
 
@@ -256,17 +258,30 @@ Returns nil."
   (apply #'jsonrpc--async-request-1 connection method params args)
   nil)
 
-(cl-defun jsonrpc-request (connection method params &key deferred timeout)
+(cl-defun jsonrpc-request (connection
+                           method params &key
+                           deferred timeout
+                           cancel-on-input
+                           cancel-on-input-retval)
   "Make a request to CONNECTION, wait for a reply.
 Like `jsonrpc-async-request' for CONNECTION, METHOD and PARAMS,
-but synchronous, i.e. this function doesn't exit until anything
-interesting (success, error or timeout) happens.  Furthermore, it
-only exits locally (returning the JSONRPC result object) if the
-request is successful, otherwise exit non-locally with an error
-of type `jsonrpc-error'.
+but synchronous.
 
-DEFERRED is passed to `jsonrpc-async-request', which see."
+Except in the case of a non-nil CANCEL-ON-INPUT (explained
+below), this function doesn't exit until anything interesting
+happens (success reply, error reply, or timeout).  Furthermore,
+it only exits locally (returning the JSONRPC result object) if
+the request is successful, otherwise it exits non-locally with an
+error of type `jsonrpc-error'.
+
+DEFERRED is passed to `jsonrpc-async-request', which see.
+
+If CANCEL-ON-INPUT is non-nil and the user inputs something while
+the functino is waiting, then it exits immediately, returning
+CANCEL-ON-INPUT-RETVAL.  Any future replies (normal or error) are
+ignored."
   (let* ((tag (cl-gensym "jsonrpc-request-catch-tag")) id-and-timer
+         cancelled
          (retval
           (unwind-protect ; protect against user-quit, for example
               (catch tag
@@ -274,19 +289,27 @@ DEFERRED is passed to `jsonrpc-async-request', which see."
                  id-and-timer
                  (jsonrpc--async-request-1
                   connection method params
-                  :success-fn (lambda (result) (throw tag `(done ,result)))
+                  :success-fn (lambda (result)
+                                (unless cancelled
+                                  (throw tag `(done ,result))))
                   :error-fn
                   (jsonrpc-lambda
                       (&key code message data)
-                    (throw tag `(error (jsonrpc-error-code . ,code)
-                                       (jsonrpc-error-message . ,message)
-                                       (jsonrpc-error-data . ,data))))
+                    (unless cancelled
+                      (throw tag `(error (jsonrpc-error-code . ,code)
+                                         (jsonrpc-error-message . ,message)
+                                         (jsonrpc-error-data . ,data)))))
                   :timeout-fn
                   (lambda ()
-                    (throw tag '(error (jsonrpc-error-message . "Timed out"))))
+                    (unless cancelled
+                      (throw tag '(error (jsonrpc-error-message . "Timed out")))))
                   :deferred deferred
                   :timeout timeout))
-                (while t (accept-process-output nil 30)))
+                (cond (cancel-on-input
+                       (while (sit-for 30))
+                       (setq cancelled t)
+                       `(cancelled ,cancel-on-input-retval))
+                      (t (while t (accept-process-output nil 30)))))
             (pcase-let* ((`(,id ,timer) id-and-timer))
               (remhash id (jsonrpc--request-continuations connection))
               (remhash (list deferred (current-buffer))
@@ -641,15 +664,26 @@ originated."
                       (if type
                           (format "-%s" subtype)))))
         (goto-char (point-max))
-        (let ((msg (format "%s%s%s %s:\n%s\n"
-                           type
-                           (if id (format " (id:%s)" id) "")
-                           (if error " ERROR" "")
-                           (current-time-string)
-                           (pp-to-string message))))
-          (when error
-            (setq msg (propertize msg 'face 'error)))
-          (insert-before-markers msg))))))
+        (prog1
+            (let ((msg (format "%s%s%s %s:\n%s\n"
+                               type
+                               (if id (format " (id:%s)" id) "")
+                               (if error " ERROR" "")
+                               (current-time-string)
+                               (pp-to-string message))))
+              (when error
+                (setq msg (propertize msg 'face 'error)))
+              (insert-before-markers msg))
+          ;; Trim the buffer if it's too large
+          (let ((max (jsonrpc--events-buffer-scrollback-size connection)))
+            (when max
+              (save-excursion
+                (goto-char (point-min))
+                (while (> (buffer-size) max)
+                  (delete-region (point) (progn (forward-line 1)
+                                                (forward-sexp 1)
+                                                (forward-line 2)
+                                                (point))))))))))))
 
 (provide 'jsonrpc)
 ;;; jsonrpc.el ends here

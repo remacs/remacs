@@ -83,8 +83,4 @@ of green, brown, and blue.")
 
 (provide-theme 'wheatgrass)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; wheatgrass-theme.el ends here

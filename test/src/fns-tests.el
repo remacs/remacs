@@ -23,6 +23,17 @@
 
 (require 'cl-lib)
 
+;; Test that equality predicates work correctly on NaNs when combined
+;; with hash tables based on those predicates.  This was not the case
+;; for eql in Emacs 26.
+(ert-deftest fns-tests-equality-nan ()
+  (dolist (test (list #'eq #'eql #'equal))
+    (let* ((h (make-hash-table :test test))
+           (nan 0.0e+NaN)
+           (-nan (- nan)))
+      (puthash nan t h)
+      (should (eq (funcall test nan -nan) (gethash -nan h))))))
+
 (ert-deftest fns-tests-reverse ()
   (should-error (reverse))
   (should-error (reverse 1))

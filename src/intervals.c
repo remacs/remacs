@@ -197,7 +197,7 @@ intervals_equal (INTERVAL i0, INTERVAL i1)
 	}
 
       /* i0 has something i1 doesn't.  */
-      if (EQ (i1_val, Qnil))
+      if (NILP (i1_val))
 	return false;
 
       /* i0 and i1 both have sym, but it has different values in each.  */

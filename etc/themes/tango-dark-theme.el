@@ -170,8 +170,4 @@ Semantic, and Ansi-Color faces are included.")
 
 (provide-theme 'tango-dark)
 
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; tango-dark-theme.el ends here

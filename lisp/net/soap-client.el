@@ -685,14 +685,17 @@ This is a specialization of `soap-decode-type' for
         (anyType (soap-decode-any-type node))
         (Array (soap-decode-array node))))))
 
-(defun soap-type-of (element)
-  "Return the type of ELEMENT."
-  ;; Support Emacs < 26 byte-code running in Emacs >= 26 sessions
-  ;; (Bug#31742).
-  (let ((type (type-of element)))
-    (if (eq type 'vector)
-        (aref element 0) ; For Emacs 25 and earlier.
-      type)))
+(defalias 'soap-type-of
+  (if (eq 'soap-xs-basic-type (type-of (make-soap-xs-basic-type)))
+      ;; `type-of' in Emacs ≥ 26 already does what we need.
+      #'type-of
+    ;; For Emacs < 26, use our own function.
+    (lambda (element)
+      "Return the type of ELEMENT."
+      (if (vectorp element)
+          (aref element 0)            ;Assume this vector is actually a struct!
+        ;; This should never happen.
+        (type-of element)))))
 
 ;; Register methods for `soap-xs-basic-type'
 (let ((tag (soap-type-of (make-soap-xs-basic-type))))
@@ -2880,6 +2883,8 @@ reference multiRef parts which are external to RESPONSE-NODE."
         decoded-parts))))
 
 ;;;; SOAP type encoding
+
+;; FIXME: Use `cl-defmethod' (but this requires Emacs-25).
 
 (defun soap-encode-attributes (value type)
   "Encode XML attributes for VALUE according to TYPE.

@@ -1610,7 +1610,7 @@ Anything else, means only clear those images which refer to FILTER,
 which is then usually a filename.  */)
   (Lisp_Object filter)
 {
-  if (!(EQ (filter, Qnil) || FRAMEP (filter)))
+  if (! (NILP (filter) || FRAMEP (filter)))
     clear_image_caches (filter);
   else
     clear_image_cache (decode_window_system_frame (filter), Qt);

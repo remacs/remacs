@@ -106,9 +106,4 @@ Used and created by Tassilo Horn.")
 
 (provide-theme 'tsdh-light)
 
-
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
-
 ;;; tsdh-light-theme.el ends here

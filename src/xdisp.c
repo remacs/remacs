@@ -265,7 +265,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    character to be delivered is a composed character, the iteration
    calls composition_reseat_it and next_element_from_composition.  If
    they succeed to compose the character with one or more of the
-   following characters, the whole sequence of characters that where
+   following characters, the whole sequence of characters that were
    composed is recorded in the `struct composition_it' object that is
    part of the buffer iterator.  The composed sequence could produce
    one or more font glyphs (called "grapheme clusters") on the screen.
@@ -467,12 +467,12 @@ static bool message_enable_multibyte;
    looking for those `redisplay' bits (actually, there might be some such bits
    set, but then only on objects which aren't displayed anyway).
 
-   OTOH if it's non-zero we wil have to loop through all windows and then check
-   the `redisplay' bit of the corresponding window, frame, and buffer, in order
-   to decide whether that window needs attention or not.  Note that we can't
-   just look at the frame's redisplay bit to decide that the whole frame can be
-   skipped, since even if the frame's redisplay bit is unset, some of its
-   windows's redisplay bits may be set.
+   OTOH if it's non-zero we will have to loop through all windows and then
+   check the `redisplay' bit of the corresponding window, frame, and buffer, in
+   order to decide whether that window needs attention or not.  Note that we
+   can't just look at the frame's redisplay bit to decide that the whole frame
+   can be skipped, since even if the frame's redisplay bit is unset, some of
+   its windows's redisplay bits may be set.
 
    Mostly for historical reasons, windows_or_buffers_changed can also take
    other non-zero values.  In that case, the precise value doesn't matter (it
@@ -483,7 +483,7 @@ static bool message_enable_multibyte;
 int windows_or_buffers_changed;
 
 /* Nonzero if we should redraw the mode lines on the next redisplay.
-   Similarly to `windows_or_buffers_changed', If it has value REDISPLAY_SOME,
+   Similarly to `windows_or_buffers_changed', if it has value REDISPLAY_SOME,
    then only redisplay the mode lines in those buffers/windows/frames where the
    `redisplay' bit has been set.
    For any other value, redisplay all mode lines (the number used is then only
@@ -2281,9 +2281,9 @@ get_phys_cursor_geometry (struct window *w, struct glyph_row *row,
   int x, y, wd, h, h0, y0, ascent;
 
   /* Compute the width of the rectangle to draw.  If on a stretch
-     glyph, and `x-stretch-block-cursor' is nil, don't draw a
-     rectangle as wide as the glyph, but use a canonical character
-     width instead.  */
+     glyph, and `x-stretch-cursor' is nil, don't draw a rectangle
+     as wide as the glyph, but use a canonical character width
+     instead.  */
   wd = glyph->pixel_width;
 
   x = w->phys_cursor.x;
@@ -8384,7 +8384,7 @@ next_element_from_buffer (struct it *it)
   eassert (IT_CHARPOS (*it) >= BEGV);
   eassert (NILP (it->string) && !it->s);
   eassert (!it->bidi_p
-	   || (EQ (it->bidi_it.string.lstring, Qnil)
+	   || (NILP (it->bidi_it.string.lstring)
 	       && it->bidi_it.string.s == NULL));
 
   /* With bidi reordering, the character to display might not be the
@@ -11148,7 +11148,7 @@ display_echo_area (struct window *w)
 
 /* Helper for display_echo_area.  Display the current buffer which
    contains the current echo area message in window W, a mini-window,
-   a pointer to which is passed in A1.  A2..A4 are currently not used.
+   a pointer to which is passed in A1.  A2 is currently not used.
    Change the height of W so that all of the message is displayed.
    Value is true if height of W was changed.  */
 
@@ -11209,8 +11209,8 @@ resize_echo_area_exactly (void)
 /* Callback function for with_echo_area_buffer, when used from
    resize_echo_area_exactly.  A1 contains a pointer to the window to
    resize, EXACTLY non-nil means resize the mini-window exactly to the
-   size of the text displayed.  A3 and A4 are not used.  Value is what
-   resize_mini_window returns.  */
+   size of the text displayed.  Value is what resize_mini_window
+   returns.  */
 
 static bool
 resize_mini_window_1 (ptrdiff_t a1, Lisp_Object exactly)
@@ -16916,6 +16916,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
       /* We used to issue a CHECK_MARGINS argument to try_window here,
 	 but this causes scrolling to fail when point begins inside
 	 the scroll margin (bug#148) -- cyd  */
+      clear_glyph_matrix (w->desired_matrix);
       if (!try_window (window, startp, 0))
 	{
 	  w->force_start = true;
@@ -23516,6 +23517,17 @@ move_elt_to_front (Lisp_Object elt, Lisp_Object list)
   return list;
 }
 
+/* Subroutine to call Fset_text_properties through
+   internal_condition_case_n.  ARGS are the arguments of
+   Fset_text_properties, in order.  */
+
+static Lisp_Object
+safe_set_text_properties (ptrdiff_t nargs, Lisp_Object *args)
+{
+  eassert (nargs == 4);
+  return Fset_text_properties (args[0], args[1], args[2], args[3]);
+}
+
 /* Contribute ELT to the mode line for window IT->w.  How it
    translates into text depends on its data type.
 
@@ -23610,8 +23622,17 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 			= Fdelq (aelt, mode_line_proptrans_alist);
 
 		    elt = Fcopy_sequence (elt);
-		    Fset_text_properties (make_fixnum (0), Flength (elt),
-					  props, elt);
+		    /* PROPS might cause set-text-properties to signal
+		       an error, so we call it via internal_condition_case_n,
+		       to avoid an infloop in redisplay due to the error.  */
+		    internal_condition_case_n (safe_set_text_properties,
+					       4,
+					       ((Lisp_Object [])
+					       {make_fixnum (0),
+						   Flength (elt),
+						   props,
+						   elt}),
+					       Qt, safe_eval_handler);
 		    /* Add this item to mode_line_proptrans_alist.  */
 		    mode_line_proptrans_alist
 		      = Fcons (Fcons (elt, props),

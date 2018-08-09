@@ -913,8 +913,10 @@ where LOGBUFFER is the name of the ChangeLog buffer, and each
              (setq change-log-default-name nil)
              (find-change-log)))))
     (when (or (find-buffer-visiting changelog-file-name)
-              (file-exists-p changelog-file-name))
-      (with-current-buffer (find-file-noselect changelog-file-name)
+              (file-exists-p changelog-file-name)
+              add-log-dont-create-changelog-file)
+      (with-current-buffer
+          (add-log-find-changelog-buffer changelog-file-name)
         (unless (eq major-mode 'change-log-mode) (change-log-mode))
         (goto-char (point-min))
         (if (looking-at "\\s-*\n") (goto-char (match-end 0)))

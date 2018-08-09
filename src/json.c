@@ -7,7 +7,7 @@ This file is part of GNU Emacs.
 GNU Emacs is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or (at
-nyour option) any later version.
+your option) any later version.
 
 GNU Emacs is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -159,7 +159,12 @@ init_json_functions (void)
    than PTRDIFF_MAX.  Such objects wouldn't play well with the rest of
    Emacs's codebase, which generally uses ptrdiff_t for sizes and
    indices.  The other functions in this file also generally assume
-   that size_t values never exceed PTRDIFF_MAX.  */
+   that size_t values never exceed PTRDIFF_MAX.
+
+   In addition, we need to use a custom allocator because on
+   MS-Windows we replace malloc/free with our own functions, see
+   w32heap.c, so we must force the library to use our allocator, or
+   else we won't be able to free storage allocated by the library.  */
 
 static void *
 json_malloc (size_t size)
@@ -605,7 +610,7 @@ usage: (json-serialize OBJECT &rest ARGS)  */)
   char *string = json_dumps (json, JSON_COMPACT);
   if (string == NULL)
     json_out_of_memory ();
-  record_unwind_protect_ptr (free, string);
+  record_unwind_protect_ptr (json_free, string);
 
   return unbind_to (count, json_build_string (string));
 }

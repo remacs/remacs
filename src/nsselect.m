@@ -164,7 +164,7 @@ ns_get_our_change_count_for (Lisp_Object selection)
 static void
 ns_string_to_pasteboard_internal (id pb, Lisp_Object str, NSString *gtype)
 {
-  if (EQ (str, Qnil))
+  if (NILP (str))
     {
       [pb declareTypes: [NSArray array] owner: nil];
     }
@@ -399,7 +399,7 @@ these literal upper-case names.)  The symbol nil is the same as
     return Qnil;
 
   CHECK_SYMBOL (selection);
-  if (EQ (selection, Qnil)) selection = QPRIMARY;
+  if (NILP (selection)) selection = QPRIMARY;
   if (EQ (selection, Qt)) selection = QSECONDARY;
   pb = ns_symbol_to_pb (selection);
   if (pb == nil) return Qnil;
@@ -421,7 +421,7 @@ and t is the same as `SECONDARY'.  */)
 {
   check_window_system (NULL);
   CHECK_SYMBOL (selection);
-  if (EQ (selection, Qnil)) selection = QPRIMARY;
+  if (NILP (selection)) selection = QPRIMARY;
   if (EQ (selection, Qt)) selection = QSECONDARY;
   return ns_get_pb_change_count (selection)
     == ns_get_our_change_count_for (selection)

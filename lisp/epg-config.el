@@ -98,11 +98,14 @@ Note that the buffer name starts with a space."
   :type 'boolean)
 
 (defconst epg-gpg-minimum-version "1.4.3")
+(defconst epg-gpg2-minimum-version "2.1.6")
 
 (defconst epg-config--program-alist
   `((OpenPGP
      epg-gpg-program
-     ("gpg2" . "2.1.6") ("gpg" . ,epg-gpg-minimum-version))
+     ("gpg2" . ,epg-gpg2-minimum-version)
+     ("gpg" . ((,epg-gpg-minimum-version . "2.0")
+               ,epg-gpg2-minimum-version)))
     (CMS
      epg-gpgsm-program
      ("gpgsm" . "2.0.4")))
@@ -228,14 +231,26 @@ version requirement is met."
   (epg-config--make-gpg-configuration epg-gpg-program))
 
 ;;;###autoload
-(defun epg-check-configuration (config &optional minimum-version)
-  "Verify that a sufficient version of GnuPG is installed."
+(defun epg-check-configuration (config &optional req-versions)
+  "Verify that a sufficient version of GnuPG is installed.
+CONFIG should be a `epg-configuration' object (a plist).
+REQ-VERSIONS should be a list with elements of the form (MIN
+. MAX) where MIN and MAX are version strings indicating a
+semi-open range of acceptable versions.  REQ-VERSIONS may also be
+a single minimum version string."
   (let ((version (alist-get 'version config)))
     (unless (stringp version)
       (error "Undetermined version: %S" version))
-    (unless (version<= (or minimum-version
-                           epg-gpg-minimum-version)
-                       version)
+    (catch 'version-ok
+      (pcase-dolist ((or `(,min . ,max)
+                         (and min (let max nil)))
+                     (if (listp req-versions) req-versions
+                       (list req-versions)))
+        (when (and (version<= (or min epg-gpg-minimum-version)
+                              version)
+                   (or (null max)
+                       (version< version max)))
+          (throw 'version-ok t)))
       (error "Unsupported version: %s" version))))
 
 ;;;###autoload

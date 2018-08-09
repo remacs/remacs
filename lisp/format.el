@@ -539,6 +539,8 @@ Compare using `equal'."
 	(setq tail next)))
     (cons acopy bcopy)))
 
+(define-obsolete-function-alias 'format-proper-list-p 'proper-list-p "27.1")
+
 (defun format-reorder (items order)
   "Arrange ITEMS to follow partial ORDER.
 Elements of ITEMS equal to elements of ORDER will be rearranged

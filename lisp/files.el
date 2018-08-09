@@ -1830,7 +1830,7 @@ killed."
           ;; Don't use `find-file' because it may end up using another window
           ;; in some corner cases, e.g. when the selected window is
           ;; softly-dedicated.
-	  (let ((newbuf (find-file-noselect filename wildcards)))
+	  (let ((newbuf (find-file-noselect filename nil nil wildcards)))
             (switch-to-buffer newbuf)))
       (when (eq obuf (current-buffer))
 	;; This executes if find-file gets an error
@@ -1954,7 +1954,7 @@ started Emacs, set `abbreviated-home-dir' to nil so it will be recalculated)."
 			 (save-match-data
 			   (string-match "^[a-zA-`]:/$" filename))))
                (equal (get 'abbreviated-home-dir 'home)
-                      (expand-file-name "~")))
+                      (save-match-data (expand-file-name "~"))))
 	  (setq filename
 		(concat "~"
 			(match-string 1 filename)
@@ -5091,6 +5091,9 @@ Before and after saving the buffer, this function runs
 		          (make-directory dir t)
 		        (error "Canceled")))
 		    (setq setmodes (basic-save-buffer-1)))))
+	    ;; We are hunting a nasty error, which happens on hydra.
+	    ;; Adding traces might help.
+	    (if (getenv "BUG_32226") (message "BUG_32226"))
 	    ;; Now we have saved the current buffer.  Let's make sure
 	    ;; that buffer-file-coding-system is fixed to what
 	    ;; actually used for saving by binding it locally.
@@ -5518,6 +5521,21 @@ raised."
 		  dir parent))
 	  (dolist (dir create-list)
             (files--ensure-directory dir)))))))
+
+(defun make-empty-file (filename &optional parents)
+  "Create an empty file FILENAME.
+Optional arg PARENTS, if non-nil then creates parent dirs as needed.
+
+If called interactively, then PARENTS is non-nil."
+  (interactive
+   (let ((filename (read-file-name "Create empty file: ")))
+     (list filename t)))
+  (when (and (file-exists-p filename) (null parents))
+    (signal 'file-already-exists `("File exists" ,filename)))
+  (let ((paren-dir (file-name-directory filename)))
+    (when (and paren-dir (not (file-exists-p paren-dir)))
+      (make-directory paren-dir parents)))
+  (write-region "" nil filename nil 0))
 
 (defconst directory-files-no-dot-files-regexp
   "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*"

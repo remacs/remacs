@@ -31,10 +31,10 @@
 ;;
 ;; To enable Flyspell in text representing computer programs, type
 ;; M-x flyspell-prog-mode.
-;; In that mode only text inside comments is checked.
+;; In that mode only text inside comments and strings is checked.
 ;;
 ;; Some user variables control the behavior of flyspell.  They are
-;; those defined under the `User variables' comment.
+;; those defined under the `User configuration' comment.
 
 ;;; Code:
 
@@ -137,7 +137,10 @@ This variable specifies how far to search to find such a duplicate.
 (defcustom flyspell-persistent-highlight t
   "Non-nil means misspelled words remain highlighted until corrected.
 If this variable is nil, only the most recently detected misspelled word
-is highlighted."
+is highlighted, and the highlight is turned off as soon as point moves
+off the misspelled word.
+
+Make sure this variable is non-nil if you use `flyspell-region'."
   :group 'flyspell
   :type 'boolean)
 
@@ -1371,7 +1374,10 @@ language."
 ;;*    flyspell-small-region ...                                        */
 ;;*---------------------------------------------------------------------*/
 (defun flyspell-small-region (beg end)
-  "Flyspell text between BEG and END."
+  "Flyspell text between BEG and END.
+
+This function is intended to work on small regions, as
+determined by `flyspell-large-region'."
   (save-excursion
     (if (> beg end)
 	(let ((old beg))
@@ -1642,7 +1648,10 @@ The buffer to mark them in is `flyspell-large-region-buffer'."
 ;;*---------------------------------------------------------------------*/
 ;;;###autoload
 (defun flyspell-region (beg end)
-  "Flyspell text between BEG and END."
+  "Flyspell text between BEG and END.
+
+Make sure `flyspell-mode' is turned on if you want the highlight
+of a misspelled word removed when you've corrected it."
   (interactive "r")
   (ispell-set-spellchecker-params)  ; Initialize variables and dicts alists
   (if (= beg end)
