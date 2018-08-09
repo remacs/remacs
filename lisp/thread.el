@@ -26,6 +26,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'backtrace)
 (require 'pcase)
 (require 'subr-x)
 
@@ -55,11 +56,13 @@ An EVENT has the format
 (defvar thread-list-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
+    (define-key map "b" #'thread-list-pop-to-backtrace)
     (define-key map "s" nil)
     (define-key map "sq" #'thread-list-send-quit-signal)
     (define-key map "se" #'thread-list-send-error-signal)
     (easy-menu-define nil map ""
       '("Threads"
+        ["Show backtrace" thread-list-pop-to-backtrace t]
 	["Send Quit Signal" thread-list-send-quit-signal t]
         ["Send Error Signal" thread-list-send-error-signal t]))
     map)
@@ -68,7 +71,7 @@ An EVENT has the format
 (define-derived-mode thread-list-mode tabulated-list-mode "Thread-List"
   "Major mode for monitoring Lisp threads."
   (setq tabulated-list-format
-        [("Thread Name" 15 t)
+        [("Thread Name" 20 t)
          ("Status" 10 t)
          ("Blocked On" 30 t)])
   (setq tabulated-list-sort-key (cons (car (aref tabulated-list-format 0)) nil))
@@ -105,9 +108,7 @@ An EVENT has the format
   (let (entries)
     (dolist (thread (all-threads))
       (pcase-let ((`(,status ,blocker) (thread-list--get-status thread)))
-        (push `(,thread [,(or (thread-name thread)
-                              (and (eq thread main-thread) "Main")
-                              (prin1-to-string thread))
+        (push `(,thread [,(thread-list--name thread)
                          ,status ,blocker])
               entries)))
     entries))
@@ -137,12 +138,60 @@ other describing THREAD's blocker, if any."
   "Send the specified SIGNAL to the thread at point.
 Ask for user confirmation before signaling the thread."
   (let ((thread (tabulated-list-get-id)))
-    (if (and (threadp thread) (thread-alive-p thread))
+    (if (thread-alive-p thread)
         (when (y-or-n-p (format "Send %s signal to %s? " signal thread))
-          (if (and (threadp thread) (thread-alive-p thread))
+          (if (thread-alive-p thread)
               (thread-signal thread signal nil)
             (message "This thread is no longer alive")))
       (message "This thread is no longer alive"))))
+
+(defvar-local thread-list-backtrace--thread nil
+  "Thread whose backtrace is displayed in the current buffer.")
+
+(defun thread-list-pop-to-backtrace ()
+  "Display the backtrace for the thread at point."
+  (interactive)
+  (let ((thread (tabulated-list-get-id)))
+    (if (thread-alive-p thread)
+        (let ((buffer (get-buffer-create "*Thread Backtrace*")))
+          (pop-to-buffer buffer)
+          (unless (derived-mode-p 'backtrace-mode)
+            (backtrace-mode)
+            (add-hook 'backtrace-revert-hook
+                      #'thread-list-backtrace--revert-hook-function)
+            (setq backtrace-insert-header-function
+                  #'thread-list-backtrace--insert-header))
+          (setq thread-list-backtrace--thread thread)
+          (thread-list-backtrace--revert-hook-function)
+          (backtrace-print)
+          (goto-char (point-min)))
+      (message "This thread is no longer alive"))))
+
+(defun thread-list-backtrace--revert-hook-function ()
+  (setq backtrace-frames
+        (when (thread-alive-p thread-list-backtrace--thread)
+          (mapcar #'thread-list--make-backtrace-frame
+                  (backtrace--frames-from-thread
+                   thread-list-backtrace--thread)))))
+
+(cl-defun thread-list--make-backtrace-frame ((evald fun &rest args))
+  (backtrace-make-frame :evald evald :fun fun :args args))
+
+(defun thread-list-backtrace--insert-header ()
+  (let ((name (thread-list--name thread-list-backtrace--thread)))
+    (if (thread-alive-p thread-list-backtrace--thread)
+        (progn
+          (insert (substitute-command-keys "Backtrace for thread `"))
+          (insert name)
+          (insert (substitute-command-keys "':\n")))
+      (insert (substitute-command-keys "Thread `"))
+      (insert name)
+      (insert (substitute-command-keys "' is no longer running\n")))))
+
+(defun thread-list--name (thread)
+  (or (thread-name thread)
+      (and (eq thread main-thread) "Main")
+      (prin1-to-string thread)))
 
 (provide 'thread)
 ;;; thread.el ends here
