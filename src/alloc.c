@@ -3830,7 +3830,7 @@ make_number (mpz_t value)
           for (i = 0; i < limbs; i++)
             {
               mp_limb_t limb = mpz_getlimbn (value, i);
-              v |= (EMACS_INT) ((EMACS_UINT) limb << (i * GMP_NUMB_BITS));
+              v |= (EMACS_INT) ((EMACS_UINT) limb << (i * mp_bits_per_limb));
             }
           if (sign < 0)
             v = -v;
