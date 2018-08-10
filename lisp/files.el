@@ -5078,8 +5078,15 @@ Before and after saving the buffer, this function runs
                     (set-visited-file-name filename)))
               ;; Support VC version backups.
 	      (vc-before-save)
+	      ;; We are hunting a nasty error, which happens on hydra.
+	      ;; Adding traces might help.
+	      (if (getenv "BUG_32226") (message "BUG_32226"))
 	      (or (run-hook-with-args-until-success 'local-write-file-hooks)
 	          (run-hook-with-args-until-success 'write-file-functions)
+                  (progn
+                    (if (getenv "BUG_32226")
+                        (message "BUG_32226 %s" buffer-file-name))
+                    nil)
 	          ;; If a hook returned t, file is already "written".
 	          ;; Otherwise, write it the usual way now.
 	          (let ((dir (file-name-directory
@@ -5091,9 +5098,6 @@ Before and after saving the buffer, this function runs
 		          (make-directory dir t)
 		        (error "Canceled")))
 		    (setq setmodes (basic-save-buffer-1)))))
-	    ;; We are hunting a nasty error, which happens on hydra.
-	    ;; Adding traces might help.
-	    (if (getenv "BUG_32226") (message "BUG_32226"))
 	    ;; Now we have saved the current buffer.  Let's make sure
 	    ;; that buffer-file-coding-system is fixed to what
 	    ;; actually used for saving by binding it locally.
