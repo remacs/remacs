@@ -4749,12 +4749,12 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		    {
 		      if (binary_as_unsigned)
 			{
-			  x = XUINT (arg);
+			  x = XUFIXNUM (arg);
 			  negative = false;
 			}
 		      else
 			{
-			  EMACS_INT i = XINT (arg);
+			  EMACS_INT i = XFIXNUM (arg);
 			  negative = i < 0;
 			  x = negative ? -i : i;
 			}

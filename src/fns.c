@@ -163,7 +163,7 @@ A proper list is neither circular nor dotted (i.e., its last cdr is nil).  */
     return Qnil;
   if (MOST_POSITIVE_FIXNUM < len)
     xsignal0 (Qoverflow_error);
-  return make_number (len);
+  return make_fixnum (len);
 }
 
 DEFUN ("string-bytes", Fstring_bytes, Sstring_bytes, 1, 1, 0,
