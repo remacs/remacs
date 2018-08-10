@@ -875,6 +875,9 @@ removed.
 ** lookup-key can take a list of keymaps as argument.
 
 +++
+** 'condition-case' now accepts 't' to match any error symbol.
+
++++
 ** New function 'proper-list-p'.
 Given a proper list as argument, this predicate returns its length;
 otherwise, it returns nil.  'format-proper-list-p' is now an obsolete

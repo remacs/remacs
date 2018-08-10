@@ -1215,9 +1215,9 @@ Executes BODYFORM and returns its value if no error happens.
 Each element of HANDLERS looks like (CONDITION-NAME BODY...)
 where the BODY is made of Lisp expressions.
 
-A handler is applicable to an error
-if CONDITION-NAME is one of the error's condition names.
-If an error happens, the first applicable handler is run.
+A handler is applicable to an error if CONDITION-NAME is one of the
+error's condition names.  A CONDITION-NAME of t applies to any error
+symbol.  If an error happens, the first applicable handler is run.
 
 The car of a handler may be a list of condition names instead of a
 single condition name; then it handles all of them.  If the special
@@ -1854,7 +1854,9 @@ find_handler_clause (Lisp_Object handlers, Lisp_Object conditions)
   for (h = handlers; CONSP (h); h = XCDR (h))
     {
       Lisp_Object handler = XCAR (h);
-      if (!NILP (Fmemq (handler, conditions)))
+      if (!NILP (Fmemq (handler, conditions))
+          /* t is also used as a catch-all by Lisp code.  */
+          || EQ (handler, Qt))
 	return handlers;
     }
 
