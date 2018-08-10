@@ -618,7 +618,7 @@ guaranteed by the originator of a cluster definition."
 		  shadow-test-remote-temporary-file-directory))
 		mocked-input `(,cluster1 ,file1 ,cluster2 ,file2 ,(kbd "RET")))
 	  (with-temp-buffer
-	    (setq-local buffer-file-name file1)
+            (set-visited-file-name file1)
 	    (call-interactively 'shadow-define-literal-group))
 
           ;; `shadow-literal-groups' is a list of lists.
@@ -679,7 +679,7 @@ guaranteed by the originator of a cluster definition."
 		mocked-input `(,(shadow-regexp-superquote file)
                                ,cluster1 ,cluster2 ,(kbd "RET")))
 	  (with-temp-buffer
-	    (setq-local buffer-file-name nil)
+            (set-visited-file-name nil)
 	    (call-interactively 'shadow-define-regexp-group))
 
           ;; `shadow-regexp-groups' is a list of lists.
@@ -756,7 +756,7 @@ guaranteed by the originator of a cluster definition."
           (message "Point 3")
           ;; Save file from "cluster1" definition.
           (with-temp-buffer
-            (setq buffer-file-name file)
+            (set-visited-file-name file)
             (insert "foo")
             (save-buffer))
           (message "%s" file)
@@ -773,7 +773,7 @@ guaranteed by the originator of a cluster definition."
             (message "Point 4.1")
             (message "%s" file)
             (message "%s" (shadow-site-primary cluster2))
-            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+            (set-visited-file-name (concat (shadow-site-primary cluster2) file))
             (message "Point 4.2")
             (insert "foo")
             (message "%s" buffer-file-name)
@@ -804,7 +804,7 @@ guaranteed by the originator of a cluster definition."
           (message "Point 6")
           ;; Save file from "cluster1" definition.
           (with-temp-buffer
-            (setq buffer-file-name file)
+            (set-visited-file-name file)
             (insert "foo")
             (save-buffer))
 	  (should
@@ -815,7 +815,7 @@ guaranteed by the originator of a cluster definition."
           (message "Point 7")
           ;; Save file from "cluster2" definition.
           (with-temp-buffer
-            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+            (set-visited-file-name (concat (shadow-site-primary cluster2) file))
             (insert "foo")
             (save-buffer))
 	  (should
@@ -892,11 +892,11 @@ guaranteed by the originator of a cluster definition."
 
           ;; Save files.
           (with-temp-buffer
-            (setq buffer-file-name file)
+            (set-visited-file-name file)
             (insert "foo")
             (save-buffer))
           (with-temp-buffer
-            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+            (set-visited-file-name (concat (shadow-site-primary cluster2) file))
             (insert "foo")
             (save-buffer))
 
