@@ -5091,13 +5091,16 @@ Before and after saving the buffer, this function runs
 	          ;; Otherwise, write it the usual way now.
 	          (let ((dir (file-name-directory
 			      (expand-file-name buffer-file-name))))
+                    (if (getenv "BUG_32226") (message "BUG_32226 %s" dir))
 		    (unless (file-exists-p dir)
 		      (if (y-or-n-p
 		           (format-message
                             "Directory `%s' does not exist; create? " dir))
 		          (make-directory dir t)
 		        (error "Canceled")))
+                    (if (getenv "BUG_32226") (message "BUG_32226 %s" dir))
 		    (setq setmodes (basic-save-buffer-1)))))
+	    (if (getenv "BUG_32226") (message "BUG_32226"))
 	    ;; Now we have saved the current buffer.  Let's make sure
 	    ;; that buffer-file-coding-system is fixed to what
 	    ;; actually used for saving by binding it locally.

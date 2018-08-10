@@ -724,6 +724,9 @@ guaranteed by the originator of a cluster definition."
           (dolist (elt (all-completions "shadow-" obarray 'functionp))
             (trace-function-background (intern elt)))
           (trace-function-background 'save-buffer)
+          (trace-function-background 'basic-save-buffer)
+          (trace-function-background 'basic-save-buffer-1)
+          (trace-function-background 'basic-save-buffer-2)
           (dolist (elt write-file-functions)
             (trace-function-background elt))
 	  ;; Cleanup.
