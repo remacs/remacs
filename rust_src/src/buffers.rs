@@ -10,7 +10,8 @@ use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handl
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
                  Qvoid_variable};
-use remacs_sys::{buffer_local_value, globals, last_per_buffer_idx, set_buffer_internal_1};
+use remacs_sys::{bset_update_mode_line, buffer_local_value, buffer_window_count, globals,
+                 last_per_buffer_idx, update_mode_lines, set_buffer_internal_1};
 
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
@@ -794,6 +795,28 @@ pub fn buffer_local_value_lisp(variable: LispObject, buffer: LispObject) -> Lisp
 #[lisp_fn(min = "0")]
 pub fn buffer_base_buffer(buffer: LispObject) -> Option<LispBufferRef> {
     buffer.as_buffer_or_current_buffer().base_buffer()
+}
+
+/// Force redisplay of the current buffer's mode line and header line.
+/// With optional non-nil ALL, force redisplay of all mode lines and
+/// header lines.  This function also forces recomputation of the
+/// menu bar menus and the frame title.
+#[lisp_fn(min = "0")]
+pub fn force_mode_line_update(all: LispObject) -> LispObject {
+    let mut current_buffer = ThreadState::current_buffer();
+    if all.is_not_nil() {
+        unsafe {
+            update_mode_lines = 10;
+        }
+        // FIXME: This can't be right.
+        current_buffer.set_prevent_redisplay_optimizations_p(true);
+    } else if 0 < unsafe { buffer_window_count(current_buffer.as_mut()) } {
+        unsafe {
+            bset_update_mode_line(current_buffer.as_mut());
+        }
+        current_buffer.set_prevent_redisplay_optimizations_p(true);
+    }
+    all
 }
 
 #[no_mangle]
