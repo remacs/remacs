@@ -242,6 +242,15 @@ return the symbol's function definition."
 
 (defun find-function-C-source (fun-or-var file type)
   "Find the source location where FUN-OR-VAR is defined in FILE.
+TYPE should be nil to find a function, or `defvar' to find a variable.
+
+Despite its name, this function will also look in the Rust directory."
+  (if (string-suffix-p ".rs" file)
+      (find-function-rust-source fun-or-var file)
+    (find-function--C-source fun-or-var file type)))
+
+(defun find-function--C-source (fun-or-var file type)
+  "Find the source location where FUN-OR-VAR is defined in FILE.
 TYPE should be nil to find a function, or `defvar' to find a variable."
   (let ((dir (or find-function-C-source-directory
                  (read-directory-name "Emacs C source dir: " nil nil t))))
