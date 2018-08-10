@@ -6,7 +6,7 @@
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
 ;; Package-Requires: ((emacs "25.2"))
-;; Version: 1.0.2
+;; Version: 1.0.3
 
 ;; This is an Elpa :core package.  Don't use functionality that is not
 ;; compatible with Emacs 25.2.
@@ -78,7 +78,7 @@
    (-events-buffer-scrollback-size
     :initarg :events-buffer-scrollback-size
     :accessor jsonrpc--events-buffer-scrollback-size
-    :documentation "If non-nil, maximum size of events buffer.")
+    :documentation "Max size of events buffer.  0 disables, nil means infinite.")
    (-deferred-actions
     :initform (make-hash-table :test #'equal)
     :accessor jsonrpc--deferred-actions
@@ -652,38 +652,39 @@ TIMEOUT is nil)."
 CONNECTION is the current connection.  MESSAGE is a JSON-like
 plist.  TYPE is a symbol saying if this is a client or server
 originated."
-  (with-current-buffer (jsonrpc-events-buffer connection)
-    (cl-destructuring-bind (&key method id error &allow-other-keys) message
-      (let* ((inhibit-read-only t)
-             (subtype (cond ((and method id)       'request)
-                            (method                'notification)
-                            (id                    'reply)
-                            (t                     'message)))
-             (type
-              (concat (format "%s" (or type 'internal))
-                      (if type
-                          (format "-%s" subtype)))))
-        (goto-char (point-max))
-        (prog1
-            (let ((msg (format "%s%s%s %s:\n%s\n"
-                               type
-                               (if id (format " (id:%s)" id) "")
-                               (if error " ERROR" "")
-                               (current-time-string)
-                               (pp-to-string message))))
-              (when error
-                (setq msg (propertize msg 'face 'error)))
-              (insert-before-markers msg))
-          ;; Trim the buffer if it's too large
-          (let ((max (jsonrpc--events-buffer-scrollback-size connection)))
-            (when max
-              (save-excursion
-                (goto-char (point-min))
-                (while (> (buffer-size) max)
-                  (delete-region (point) (progn (forward-line 1)
-                                                (forward-sexp 1)
-                                                (forward-line 2)
-                                                (point))))))))))))
+  (let ((max (jsonrpc--events-buffer-scrollback-size connection)))
+    (when (or (null max) (cl-plusp max))
+      (with-current-buffer (jsonrpc-events-buffer connection)
+        (cl-destructuring-bind (&key method id error &allow-other-keys) message
+          (let* ((inhibit-read-only t)
+                 (subtype (cond ((and method id)       'request)
+                                (method                'notification)
+                                (id                    'reply)
+                                (t                     'message)))
+                 (type
+                  (concat (format "%s" (or type 'internal))
+                          (if type
+                              (format "-%s" subtype)))))
+            (goto-char (point-max))
+            (prog1
+                (let ((msg (format "%s%s%s %s:\n%s\n"
+                                   type
+                                   (if id (format " (id:%s)" id) "")
+                                   (if error " ERROR" "")
+                                   (current-time-string)
+                                   (pp-to-string message))))
+                  (when error
+                    (setq msg (propertize msg 'face 'error)))
+                  (insert-before-markers msg))
+              ;; Trim the buffer if it's too large
+              (when max
+                (save-excursion
+                  (goto-char (point-min))
+                  (while (> (buffer-size) max)
+                    (delete-region (point) (progn (forward-line 1)
+                                                  (forward-sexp 1)
+                                                  (forward-line 2)
+                                                  (point)))))))))))))
 
 (provide 'jsonrpc)
 ;;; jsonrpc.el ends here
