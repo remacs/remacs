@@ -5147,6 +5147,7 @@ Before and after saving the buffer, this function runs
 ;; backup-buffer.
 (defun basic-save-buffer-2 ()
   (let (tempsetmodes setmodes)
+    (if (getenv "BUG_32226") (message "BUG_32226 %s" 1))
     (if (not (file-writable-p buffer-file-name))
 	(let ((dir (file-name-directory buffer-file-name)))
 	  (if (not (file-directory-p dir))
@@ -5162,10 +5163,12 @@ Before and after saving the buffer, this function runs
 		     buffer-file-name)))
 		  (setq tempsetmodes t)
 		(error "Attempt to save to a file which you aren't allowed to write"))))))
+    (if (getenv "BUG_32226") (message "BUG_32226 %s" 2))
     (or buffer-backed-up
 	(setq setmodes (backup-buffer)))
     (let* ((dir (file-name-directory buffer-file-name))
            (dir-writable (file-writable-p dir)))
+      (if (getenv "BUG_32226") (message "BUG_32226 %s" 3))
       (if (or (and file-precious-flag dir-writable)
               (and break-hardlink-on-save
                    (file-exists-p buffer-file-name)
@@ -5183,6 +5186,7 @@ Before and after saving the buffer, this function runs
 	    ;; Create temp files with strict access rights.  It's easy to
 	    ;; loosen them later, whereas it's impossible to close the
 	    ;; time-window of loose permissions otherwise.
+            (if (getenv "BUG_32226") (message "BUG_32226 %s" 4))
 	    (condition-case err
 		(progn
 		  (clear-visited-file-modtime)
@@ -5200,6 +5204,7 @@ Before and after saving the buffer, this function runs
 	      ;; If we failed, restore the buffer's modtime.
 	      (error (set-visited-file-modtime old-modtime)
 		     (signal (car err) (cdr err))))
+            (if (getenv "BUG_32226") (message "BUG_32226 %s" 5))
 	    ;; Since we have created an entirely new file,
 	    ;; make sure it gets the right permission bits set.
 	    (setq setmodes (or setmodes
@@ -5209,11 +5214,13 @@ Before and after saving the buffer, this function runs
 				     buffer-file-name)))
 	    ;; We succeeded in writing the temp file,
 	    ;; so rename it.
+            (if (getenv "BUG_32226") (message "BUG_32226 %s" 6))
 	    (rename-file tempname buffer-file-name t))
 	;; If file not writable, see if we can make it writable
 	;; temporarily while we write it.
 	;; But no need to do so if we have just backed it up
 	;; (setmodes is set) because that says we're superseding.
+        (if (getenv "BUG_32226") (message "BUG_32226 %s" 7))
 	(cond ((and tempsetmodes (not setmodes))
 	       ;; Change the mode back, after writing.
 	       (setq setmodes (list (file-modes buffer-file-name)
@@ -5227,6 +5234,7 @@ Before and after saving the buffer, this function runs
 						   (nth 1 setmodes)))
 		 (set-file-modes buffer-file-name
 				 (logior (car setmodes) 128))))))
+      (if (getenv "BUG_32226") (message "BUG_32226 %s" 8))
 	(let (success)
 	  (unwind-protect
 	      (progn
@@ -5235,13 +5243,16 @@ Before and after saving the buffer, this function runs
                 ;; write-region-annotate-functions may make use of it.
                 (write-region nil nil
                               buffer-file-name nil t buffer-file-truename)
+                (if (getenv "BUG_32226") (message "BUG_32226 %s" 9))
                 (when save-silently (message nil))
 		(setq success t))
 	    ;; If we get an error writing the new file, and we made
 	    ;; the backup by renaming, undo the backing-up.
+            (if (getenv "BUG_32226") (message "BUG_32226 %s" 10))
 	    (and setmodes (not success)
 		 (progn
 		   (rename-file (nth 2 setmodes) buffer-file-name t)
+                   (if (getenv "BUG_32226") (message "BUG_32226 %s" 11))
 		   (setq buffer-backed-up nil))))))
     setmodes))
 
