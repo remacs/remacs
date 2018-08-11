@@ -6,7 +6,7 @@
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
 ;; Package-Requires: ((emacs "25.2"))
-;; Version: 1.0.4
+;; Version: 1.0.5
 
 ;; This is an Elpa :core package.  Don't use functionality that is not
 ;; compatible with Emacs 25.2.
@@ -415,19 +415,23 @@ connection object, called when the process dies .")
   "Return non-nil if JSONRPC connection CONN is running."
   (process-live-p (jsonrpc--process conn)))
 
-(cl-defmethod jsonrpc-shutdown ((conn jsonrpc-process-connection))
+(cl-defmethod jsonrpc-shutdown ((conn jsonrpc-process-connection)
+                                &optional cleanup)
   "Wait for JSONRPC connection CONN to shutdown and return t.
-If the server wasn't running, do nothing and return nil."
-  (when (jsonrpc-running-p conn)
-    (cl-loop
-     with proc = (jsonrpc--process conn)
-     do
-     (delete-process proc)
-     (accept-process-output nil 0.1)
-     while (not (process-get proc 'jsonrpc-sentinel-done))
-     do (jsonrpc--warn
-         "Sentinel for %s still hasn't run,  deleting it!" proc)
-     finally return t)))
+If the server wasn't running, do nothing and return nil.  With
+optional CLEANUP, kill any associated buffers. "
+  (unwind-protect
+      (when (jsonrpc-running-p conn)
+        (cl-loop
+         with proc = (jsonrpc--process conn)
+         do
+         (delete-process proc)
+         (accept-process-output nil 0.1)
+         while (not (process-get proc 'jsonrpc-sentinel-done))
+         do (jsonrpc--warn
+             "Sentinel for %s still hasn't run,  deleting it!" proc)
+         finally return t))
+    (when cleanup (kill-buffer (process-buffer conn)))))
 
 (defun jsonrpc-stderr-buffer (conn)
   "Get CONN's standard error buffer, if any."
