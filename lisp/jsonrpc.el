@@ -6,7 +6,7 @@
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
 ;; Package-Requires: ((emacs "25.2"))
-;; Version: 1.0.3
+;; Version: 1.0.4
 
 ;; This is an Elpa :core package.  Don't use functionality that is not
 ;; compatible with Emacs 25.2.
@@ -412,15 +412,18 @@ connection object, called when the process dies .")
   (process-live-p (jsonrpc--process conn)))
 
 (cl-defmethod jsonrpc-shutdown ((conn jsonrpc-process-connection))
-  "Shutdown the JSONRPC connection CONN."
-  (cl-loop
-   with proc = (jsonrpc--process conn)
-   do
-   (delete-process proc)
-   (accept-process-output nil 0.1)
-   while (not (process-get proc 'jsonrpc-sentinel-done))
-   do (jsonrpc--warn
-       "Sentinel for %s still hasn't run,  deleting it!" proc)))
+  "Wait for JSONRPC connection CONN to shutdown and return t.
+If the server wasn't running, do nothing and return nil."
+  (when (jsonrpc-running-p conn)
+    (cl-loop
+     with proc = (jsonrpc--process conn)
+     do
+     (delete-process proc)
+     (accept-process-output nil 0.1)
+     while (not (process-get proc 'jsonrpc-sentinel-done))
+     do (jsonrpc--warn
+         "Sentinel for %s still hasn't run,  deleting it!" proc)
+     finally return t)))
 
 (defun jsonrpc-stderr-buffer (conn)
   "Get CONN's standard error buffer, if any."
