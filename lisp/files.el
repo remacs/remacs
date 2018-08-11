@@ -5234,7 +5234,7 @@ Before and after saving the buffer, this function runs
 						   (nth 1 setmodes)))
 		 (set-file-modes buffer-file-name
 				 (logior (car setmodes) 128))))))
-      (if (getenv "BUG_32226") (message "BUG_32226 %s" 8))
+      (if (getenv "BUG_32226") (message "BUG_32226 %s %s %s" 8 buffer-file-name buffer-file-truename))
 	(let (success)
 	  (unwind-protect
 	      (progn
@@ -5248,7 +5248,7 @@ Before and after saving the buffer, this function runs
 		(setq success t))
 	    ;; If we get an error writing the new file, and we made
 	    ;; the backup by renaming, undo the backing-up.
-            (if (getenv "BUG_32226") (message "BUG_32226 %s" 10))
+            (if (getenv "BUG_32226") (message "BUG_32226 %s %s %s" 10 (nth 2 setmodes) buffer-file-name))
 	    (and setmodes (not success)
 		 (progn
 		   (rename-file (nth 2 setmodes) buffer-file-name t)

@@ -723,6 +723,8 @@ guaranteed by the originator of a cluster definition."
           (require 'trace)
           (dolist (elt (all-completions "shadow-" obarray 'functionp))
             (trace-function-background (intern elt)))
+          (dolist (elt (all-completions "tramp-" obarray 'functionp))
+            (trace-function-background (intern elt)))
           (trace-function-background 'save-buffer)
           (trace-function-background 'basic-save-buffer)
           (trace-function-background 'basic-save-buffer-1)
