@@ -283,7 +283,7 @@ ignored."
   (let* ((tag (cl-gensym "jsonrpc-request-catch-tag")) id-and-timer
          cancelled
          (retval
-          (unwind-protect ; protect against user-quit, for example
+          (unwind-protect
               (catch tag
                 (setq
                  id-and-timer
@@ -310,6 +310,10 @@ ignored."
                        (setq cancelled t)
                        `(cancelled ,cancel-on-input-retval))
                       (t (while t (accept-process-output nil 30)))))
+            ;; In normal operation, cancellation is handled by the
+            ;; timeout function and response filter, but we still have
+            ;; to protect against user-quit (C-g) or the
+            ;; `cancel-on-input' case.
             (pcase-let* ((`(,id ,timer) id-and-timer))
               (remhash id (jsonrpc--request-continuations connection))
               (remhash (list deferred (current-buffer))
