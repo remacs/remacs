@@ -63,6 +63,14 @@
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
 
+(setq password-cache-expiry nil
+      tramp-verbose 0
+      tramp-message-show-message nil)
+
+;; This should happen on hydra only.
+(when (getenv "EMACS_HYDRA_CI")
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
 (defconst shadow-test-info-file
   (expand-file-name "shadows_test" temporary-file-directory)
   "File to keep shadow information in during tests.")
