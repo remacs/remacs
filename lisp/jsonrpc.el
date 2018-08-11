@@ -431,7 +431,7 @@ optional CLEANUP, kill any associated buffers. "
          do (jsonrpc--warn
              "Sentinel for %s still hasn't run,  deleting it!" proc)
          finally return t))
-    (when cleanup (kill-buffer (process-buffer conn)))))
+    (when cleanup (kill-buffer (process-buffer (jsonrpc--process conn))))))
 
 (defun jsonrpc-stderr-buffer (conn)
   "Get CONN's standard error buffer, if any."
