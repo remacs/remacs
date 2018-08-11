@@ -5421,16 +5421,10 @@ Some window managers may refuse to restack windows.  */)
   struct frame *f1 = decode_live_frame (frame1);
   struct frame *f2 = decode_live_frame (frame2);
 
-  if (FRAME_OUTER_WINDOW (f1) && FRAME_OUTER_WINDOW (f2))
-    {
-      x_frame_restack (f1, f2, !NILP (above));
-      return Qt;
-    }
-  else
-    {
-      error ("Cannot restack frames");
-      return Qnil;
-    }
+  if (! (FRAME_OUTER_WINDOW (f1) && FRAME_OUTER_WINDOW (f2)))
+    error ("Cannot restack frames");
+  x_frame_restack (f1, f2, !NILP (above));
+  return Qt;
 }
 
 

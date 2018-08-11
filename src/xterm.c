@@ -9935,7 +9935,6 @@ x_io_error_quitter (Display *display)
   snprintf (buf, sizeof buf, "Connection lost to X server '%s'",
 	    DisplayString (display));
   x_connection_closed (display, buf, true);
-  assume (false);
 }
 
 /* Changing the font of the frame.  */
