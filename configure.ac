@@ -4305,7 +4305,7 @@ AC_SUBST(KRB4LIB)
 GMP_LIB=
 GMP_OBJ=
 HAVE_GMP=no
-AC_CHECK_LIB(gmp, __gmpz_init, [
+AC_CHECK_LIB(gmp, __gmpz_roinit_n, [
   AC_CHECK_HEADERS(gmp.h, [
     GMP_LIB=-lgmp
     HAVE_GMP=yes
