@@ -2321,13 +2321,13 @@ a multibyte string even if INIT is an ASCII character.  */)
   int c;
   EMACS_INT nbytes;
 
-  CHECK_NATNUM (length);
+  CHECK_FIXNAT (length);
   CHECK_CHARACTER (init);
 
-  c = XFASTINT (init);
+  c = XFIXNAT (init);
   if (ASCII_CHAR_P (c) && NILP (multibyte))
     {
-      nbytes = XINT (length);
+      nbytes = XFIXNUM (length);
       val = make_uninit_string (nbytes);
       if (nbytes)
 	{
@@ -2339,7 +2339,7 @@ a multibyte string even if INIT is an ASCII character.  */)
     {
       unsigned char str[MAX_MULTIBYTE_LENGTH];
       ptrdiff_t len = CHAR_STRING (c, str);
-      EMACS_INT string_len = XINT (length);
+      EMACS_INT string_len = XFIXNUM (length);
       unsigned char *p, *beg, *end;
 
       if (INT_MULTIPLY_WRAPV (len, string_len, &nbytes))
@@ -2415,8 +2415,8 @@ LENGTH must be a number.  INIT matters only in whether it is t or nil.  */)
 {
   Lisp_Object val;
 
-  CHECK_NATNUM (length);
-  val = make_uninit_bool_vector (XFASTINT (length));
+  CHECK_FIXNAT (length);
+  val = make_uninit_bool_vector (XFIXNAT (length));
   return bool_vector_fill (val, init);
 }
 
@@ -2894,9 +2894,9 @@ DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
   (Lisp_Object length, Lisp_Object init)
 {
   Lisp_Object val = Qnil;
-  CHECK_NATNUM (length);
+  CHECK_FIXNAT (length);
 
-  for (EMACS_INT size = XFASTINT (length); 0 < size; size--)
+  for (EMACS_INT size = XFIXNAT (length); 0 < size; size--)
     {
       val = Fcons (init, val);
       rarely_quit (size);
@@ -3448,8 +3448,8 @@ symbol or a type descriptor.  SLOTS is the number of non-type slots,
 each initialized to INIT.  */)
   (Lisp_Object type, Lisp_Object slots, Lisp_Object init)
 {
-  CHECK_NATNUM (slots);
-  EMACS_INT size = XFASTINT (slots) + 1;
+  CHECK_FIXNAT (slots);
+  EMACS_INT size = XFIXNAT (slots) + 1;
   struct Lisp_Vector *p = allocate_record (size);
   p->contents[0] = type;
   for (ptrdiff_t i = 1; i < size; i++)
@@ -3477,9 +3477,9 @@ DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,
 See also the function `vector'.  */)
   (Lisp_Object length, Lisp_Object init)
 {
-  CHECK_NATNUM (length);
-  struct Lisp_Vector *p = allocate_vector (XFASTINT (length));
-  for (ptrdiff_t i = 0; i < XFASTINT (length); i++)
+  CHECK_FIXNAT (length);
+  struct Lisp_Vector *p = allocate_vector (XFIXNAT (length));
+  for (ptrdiff_t i = 0; i < XFIXNAT (length); i++)
     p->contents[i] = init;
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
@@ -3789,6 +3789,109 @@ build_marker (struct buffer *buf, ptrdiff_t charpos, ptrdiff_t bytepos)
 }
 
 
+
+Lisp_Object
+make_bignum_str (const char *num, int base)
+{
+  Lisp_Object obj;
+  struct Lisp_Bignum *b;
+  int check;
+
+  obj = allocate_misc (Lisp_Misc_Bignum);
+  b = XBIGNUM (obj);
+  mpz_init (b->value);
+  check = mpz_set_str (b->value, num, base);
+  eassert (check == 0);
+  return obj;
+}
+
+/* Given an mpz_t, make a number.  This may return a bignum or a
+   fixnum depending on VALUE.  */
+
+Lisp_Object
+make_number (mpz_t value)
+{
+  Lisp_Object obj;
+  struct Lisp_Bignum *b;
+
+  if (mpz_fits_slong_p (value))
+    {
+      long l = mpz_get_si (value);
+      if (!FIXNUM_OVERFLOW_P (l))
+	{
+	  XSETINT (obj, l);
+	  return obj;
+	}
+    }
+
+  /* Check if fixnum can be larger than long.  */
+  if (sizeof (EMACS_INT) > sizeof (long))
+    {
+      size_t bits = mpz_sizeinbase (value, 2);
+      int sign = mpz_sgn (value);
+
+      if (bits < FIXNUM_BITS + (sign < 0))
+        {
+          EMACS_INT v = 0;
+          size_t limbs = mpz_size (value);
+          mp_size_t i;
+
+          for (i = 0; i < limbs; i++)
+            {
+              mp_limb_t limb = mpz_getlimbn (value, i);
+              v |= (EMACS_INT) ((EMACS_UINT) limb << (i * mp_bits_per_limb));
+            }
+          if (sign < 0)
+            v = -v;
+
+          if (!FIXNUM_OVERFLOW_P (v))
+            {
+              XSETINT (obj, v);
+              return obj;
+            }
+        }
+    }
+
+  obj = allocate_misc (Lisp_Misc_Bignum);
+  b = XBIGNUM (obj);
+  /* We could mpz_init + mpz_swap here, to avoid a copy, but the
+     resulting API seemed possibly confusing.  */
+  mpz_init_set (b->value, value);
+
+  return obj;
+}
+
+void
+mpz_set_intmax_slow (mpz_t result, intmax_t v)
+{
+  /* If long is larger then a faster path is taken.  */
+  eassert (sizeof (intmax_t) > sizeof (long));
+
+  bool negate = false;
+  if (v < 0)
+    {
+      v = -v;
+      negate = true;
+    }
+  mpz_set_uintmax_slow (result, (uintmax_t) v);
+  if (negate)
+    mpz_neg (result, result);
+}
+
+void
+mpz_set_uintmax_slow (mpz_t result, uintmax_t v)
+{
+  /* If long is larger then a faster path is taken.  */
+  eassert (sizeof (uintmax_t) > sizeof (unsigned long));
+
+  /* COUNT = 1 means just a single word of the given size.  ORDER = -1
+     is arbitrary since there's only a single word.  ENDIAN = 0 means
+     use the native endian-ness.  NAILS = 0 means use the whole
+     word.  */
+  mpz_import (result, 1, -1, sizeof (uintmax_t), 0, 0, &v);
+}
+
+
 /* Return a newly created vector or string with specified arguments as
    elements.  If all the arguments are characters that can fit
    in a string of events, make a string; otherwise, make a vector.
@@ -3804,8 +3907,8 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
     /* The things that fit in a string
        are characters that are in 0...127,
        after discarding the meta bit and all the bits above it.  */
-    if (!INTEGERP (args[i])
-	|| (XINT (args[i]) & ~(-CHAR_META)) >= 0200)
+    if (!FIXNUMP (args[i])
+	|| (XFIXNUM (args[i]) & ~(-CHAR_META)) >= 0200)
       return Fvector (nargs, args);
 
   /* Since the loop exited, we know that all the things in it are
@@ -3813,12 +3916,12 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
   {
     Lisp_Object result;
 
-    result = Fmake_string (make_number (nargs), make_number (0), Qnil);
+    result = Fmake_string (make_fixnum (nargs), make_fixnum (0), Qnil);
     for (i = 0; i < nargs; i++)
       {
-	SSET (result, i, XINT (args[i]));
+	SSET (result, i, XFIXNUM (args[i]));
 	/* Move the meta bit to the right place for a string char.  */
-	if (XINT (args[i]) & CHAR_META)
+	if (XFIXNUM (args[i]) & CHAR_META)
 	  SSET (result, i, SREF (result, i) | 0x80);
       }
 
@@ -4700,7 +4803,7 @@ mark_maybe_object (Lisp_Object obj)
     VALGRIND_MAKE_MEM_DEFINED (&obj, sizeof (obj));
 #endif
 
-  if (INTEGERP (obj))
+  if (FIXNUMP (obj))
     return;
 
   void *po = XPNTR (obj);
@@ -5180,7 +5283,7 @@ valid_pointer_p (void *p)
 int
 valid_lisp_object_p (Lisp_Object obj)
 {
-  if (INTEGERP (obj))
+  if (FIXNUMP (obj))
     return 1;
 
   void *p = XPNTR (obj);
@@ -5441,6 +5544,34 @@ make_pure_float (double num)
   return new;
 }
 
+/* Value is a bignum object with value VALUE allocated from pure
+   space.  */
+
+static Lisp_Object
+make_pure_bignum (struct Lisp_Bignum *value)
+{
+  Lisp_Object new;
+  size_t i, nlimbs = mpz_size (value->value);
+  size_t nbytes = nlimbs * sizeof (mp_limb_t);
+  mp_limb_t *pure_limbs;
+  mp_size_t new_size;
+
+  struct Lisp_Bignum *b = pure_alloc (sizeof (struct Lisp_Bignum), Lisp_Misc);
+  b->type = Lisp_Misc_Bignum;
+
+  pure_limbs = pure_alloc (nbytes, -1);
+  for (i = 0; i < nlimbs; ++i)
+    pure_limbs[i] = mpz_getlimbn (value->value, i);
+
+  new_size = nlimbs;
+  if (mpz_sgn (value->value) < 0)
+    new_size = -new_size;
+
+  mpz_roinit_n (b->value, pure_limbs, new_size);
+
+  XSETMISC (new, b);
+  return new;
+}
 
 /* Return a vector with room for LEN Lisp_Objects allocated from
    pure space.  */
@@ -5513,7 +5644,7 @@ static struct pinned_object
 static Lisp_Object
 purecopy (Lisp_Object obj)
 {
-  if (INTEGERP (obj)
+  if (FIXNUMP (obj)
       || (! SYMBOLP (obj) && PURE_P (XPNTR (obj)))
       || SUBRP (obj))
     return obj;    /* Already pure.  */
@@ -5582,6 +5713,8 @@ purecopy (Lisp_Object obj)
       /* Don't hash-cons it.  */
       return obj;
     }
+  else if (BIGNUMP (obj))
+    obj = make_pure_bignum (XBIGNUM (obj));
   else
     {
       AUTO_STRING (fmt, "Don't know how to purify: %S");
@@ -5623,7 +5756,7 @@ inhibit_garbage_collection (void)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
 
-  specbind (Qgc_cons_threshold, make_number (MOST_POSITIVE_FIXNUM));
+  specbind (Qgc_cons_threshold, make_fixnum (MOST_POSITIVE_FIXNUM));
   return count;
 }
 
@@ -5633,7 +5766,7 @@ inhibit_garbage_collection (void)
 static Lisp_Object
 bounded_number (EMACS_INT number)
 {
-  return make_number (min (MOST_POSITIVE_FIXNUM, number));
+  return make_fixnum (min (MOST_POSITIVE_FIXNUM, number));
 }
 
 /* Calculate total bytes of live objects.  */
@@ -5986,37 +6119,37 @@ garbage_collect_1 (void *end)
   unbind_to (count, Qnil);
 
   Lisp_Object total[] = {
-    list4 (Qconses, make_number (sizeof (struct Lisp_Cons)),
+    list4 (Qconses, make_fixnum (sizeof (struct Lisp_Cons)),
 	   bounded_number (total_conses),
 	   bounded_number (total_free_conses)),
-    list4 (Qsymbols, make_number (sizeof (struct Lisp_Symbol)),
+    list4 (Qsymbols, make_fixnum (sizeof (struct Lisp_Symbol)),
 	   bounded_number (total_symbols),
 	   bounded_number (total_free_symbols)),
-    list4 (Qmiscs, make_number (sizeof (union Lisp_Misc)),
+    list4 (Qmiscs, make_fixnum (sizeof (union Lisp_Misc)),
 	   bounded_number (total_markers),
 	   bounded_number (total_free_markers)),
-    list4 (Qstrings, make_number (sizeof (struct Lisp_String)),
+    list4 (Qstrings, make_fixnum (sizeof (struct Lisp_String)),
 	   bounded_number (total_strings),
 	   bounded_number (total_free_strings)),
-    list3 (Qstring_bytes, make_number (1),
+    list3 (Qstring_bytes, make_fixnum (1),
 	   bounded_number (total_string_bytes)),
     list3 (Qvectors,
-	   make_number (header_size + sizeof (Lisp_Object)),
+	   make_fixnum (header_size + sizeof (Lisp_Object)),
 	   bounded_number (total_vectors)),
-    list4 (Qvector_slots, make_number (word_size),
+    list4 (Qvector_slots, make_fixnum (word_size),
 	   bounded_number (total_vector_slots),
 	   bounded_number (total_free_vector_slots)),
-    list4 (Qfloats, make_number (sizeof (struct Lisp_Float)),
+    list4 (Qfloats, make_fixnum (sizeof (struct Lisp_Float)),
 	   bounded_number (total_floats),
 	   bounded_number (total_free_floats)),
-    list4 (Qintervals, make_number (sizeof (struct interval)),
+    list4 (Qintervals, make_fixnum (sizeof (struct interval)),
 	   bounded_number (total_intervals),
 	   bounded_number (total_free_intervals)),
-    list3 (Qbuffers, make_number (sizeof (struct buffer)),
+    list3 (Qbuffers, make_fixnum (sizeof (struct buffer)),
 	   bounded_number (total_buffers)),
 
 #ifdef DOUG_LEA_MALLOC
-    list4 (Qheap, make_number (1024),
+    list4 (Qheap, make_fixnum (1024),
 	   bounded_number ((mallinfo ().uordblks + 1023) >> 10),
 	   bounded_number ((mallinfo ().fordblks + 1023) >> 10)),
 #endif
@@ -6151,7 +6284,7 @@ mark_char_table (struct Lisp_Vector *ptr, enum pvec_type pvectype)
     {
       Lisp_Object val = ptr->contents[i];
 
-      if (INTEGERP (val) || (SYMBOLP (val) && XSYMBOL (val)->u.s.gcmarkbit))
+      if (FIXNUMP (val) || (SYMBOLP (val) && XSYMBOL (val)->u.s.gcmarkbit))
 	continue;
       if (SUB_CHAR_TABLE_P (val))
 	{
@@ -6563,6 +6696,7 @@ mark_object (Lisp_Object arg)
 	  break;
 
 	case Lisp_Misc_Ptr:
+	case Lisp_Misc_Bignum:
 	  XMISCANY (obj)->gcmarkbit = true;
 	  break;
 
@@ -6982,6 +7116,8 @@ sweep_misc (void)
 		    uptr->finalizer (uptr->p);
 		}
 #endif
+	      else if (mblk->markers[i].m.u_any.type == Lisp_Misc_Bignum)
+		mpz_clear (mblk->markers[i].m.u_bignum.value);
               /* Set the type of the freed object to Lisp_Misc_Free.
                  We could leave the type alone, since nobody checks it,
                  but this might catch bugs faster.  */

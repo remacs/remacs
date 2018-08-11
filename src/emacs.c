@@ -377,7 +377,7 @@ terminate_due_to_signal (int sig, int backtrace_limit)
 
           totally_unblock_input ();
           if (sig == SIGTERM || sig == SIGHUP || sig == SIGINT)
-            Fkill_emacs (make_number (sig));
+            Fkill_emacs (make_fixnum (sig));
 
           shut_down_emacs (sig, Qnil);
           emacs_backtrace (backtrace_limit);
@@ -446,7 +446,7 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
     {
       Lisp_Object found;
       int yes = openp (Vexec_path, Vinvocation_name,
-		       Vexec_suffixes, &found, make_number (X_OK), false);
+		       Vexec_suffixes, &found, make_fixnum (X_OK), false);
       if (yes == 1)
 	{
 	  /* Add /: to the front of the name
@@ -673,6 +673,20 @@ close_output_streams (void)
     _exit (EXIT_FAILURE);
 }
 
+/* Wrapper function for GMP.  */
+static void *
+xrealloc_for_gmp (void *ptr, size_t ignore, size_t size)
+{
+  return xrealloc (ptr, size);
+}
+
+/* Wrapper function for GMP.  */
+static void
+xfree_for_gmp (void *ptr, size_t ignore)
+{
+  xfree (ptr);
+}
+
 /* ARGSUSED */
 int
 main (int argc, char **argv)
@@ -770,6 +784,8 @@ main (int argc, char **argv)
 
   init_standard_fds ();
   atexit (close_output_streams);
+
+  mp_set_memory_functions (xmalloc, xrealloc_for_gmp, xfree_for_gmp);
 
   sort_args (argc, argv);
   argc = 0;
@@ -2052,10 +2068,10 @@ all of which are called before Emacs is actually killed.  */
       unlink (SSDATA (listfile));
     }
 
-  if (INTEGERP (arg))
-    exit_code = (XINT (arg) < 0
-		 ? XINT (arg) | INT_MIN
-		 : XINT (arg) & INT_MAX);
+  if (FIXNUMP (arg))
+    exit_code = (XFIXNUM (arg) < 0
+		 ? XFIXNUM (arg) | INT_MIN
+		 : XFIXNUM (arg) & INT_MAX);
   else
     exit_code = EXIT_SUCCESS;
   exit (exit_code);
@@ -2416,7 +2432,7 @@ decode_env_path (const char *evarname, const char *defalt, bool empty)
               && strncmp (path, emacs_dir_env, emacs_dir_len) == 0)
             element = Fexpand_file_name (Fsubstring
                                          (element,
-                                          make_number (emacs_dir_len),
+                                          make_fixnum (emacs_dir_len),
                                           Qnil),
                                          build_unibyte_string (emacs_dir));
 #endif
