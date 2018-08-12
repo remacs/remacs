@@ -276,17 +276,15 @@ error !;
 
 /* Minimum alignment requirement for Lisp objects, imposed by the
    internal representation of tagged pointers.  It is 2**GCTYPEBITS if
-   USE_LSB_TAG, otherwise the alignment of Lisp_Object to avoid
-   padding after union vectorlike_header.  It must be a literal
-   integer constant, for older versions of GCC (through at least
-   4.9).  */
+   USE_LSB_TAG, 1 otherwise.  It must be a literal integer constant,
+   for older versions of GCC (through at least 4.9).  */
 #if USE_LSB_TAG
 # define GCALIGNMENT 8
 # if GCALIGNMENT != 1 << GCTYPEBITS
 #  error "GCALIGNMENT and GCTYPEBITS are inconsistent"
 # endif
 #else
-# define GCALIGNMENT alignof (Lisp_Object)
+# define GCALIGNMENT 1
 #endif
 
 #define GCALIGNED_UNION char alignas (GCALIGNMENT) gcaligned;
@@ -851,6 +849,8 @@ union vectorlike_header
 	 Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
 	 4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
     ptrdiff_t size;
+    /* Align the union so that there is no padding after it.  */
+    Lisp_Object align;
     GCALIGNED_UNION
   };
 verify (alignof (union vectorlike_header) % GCALIGNMENT == 0);
@@ -1577,6 +1577,7 @@ enum
     bool_header_size = offsetof (struct Lisp_Bool_Vector, data),
     word_size = sizeof (Lisp_Object)
   };
+verify (header_size == sizeof (union vectorlike_header));
 
 /* The number of data words and bytes in a bool vector with SIZE bits.  */
 
