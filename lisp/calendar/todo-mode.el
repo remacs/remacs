@@ -1830,7 +1830,6 @@ consist of the last todo items and the first done items."
 (defvar todo-date-from-calendar nil
   "Helper variable for setting item date from the Emacs Calendar.")
 
-(defvar todo-insert-item--keys-so-far)
 (defvar todo-insert-item--parameters)
 
 (defun todo-insert-item (&optional arg)
@@ -1852,8 +1851,7 @@ already been entered and which remain available.  See
 `(todo-mode) Inserting New Items' for details of the parameters,
 their associated keys and their effects."
   (interactive "P")
-  (setq todo-insert-item--keys-so-far "i")
-  (todo-insert-item--next-param nil (list arg) todo-insert-item--parameters))
+  (todo-insert-item--next-param (list arg) todo-insert-item--parameters nil "i"))
 
 (defun todo-insert-item--basic (&optional arg diary-type date-type time where)
   "Function implementing the core of `todo-insert-item'."
@@ -2101,17 +2099,14 @@ the item at point."
               (let (todo-show-with-done) (todo-category-select)))))
       (if ov (delete-overlay ov)))))
 
-(defvar todo-edit-item--param-key-alist)
-(defvar todo-edit-done-item--param-key-alist)
-
 (defun todo-edit-item (&optional arg)
   "Choose an editing operation for the current item and carry it out."
   (interactive "P")
   (let ((marked (assoc (todo-current-category) todo-categories-with-marks)))
     (cond ((and (todo-done-item-p) (not marked))
-	   (todo-edit-item--next-key todo-edit-done-item--param-key-alist))
+	   (todo-edit-item--next-key 'done arg))
 	  ((or marked (todo-item-string))
-	   (todo-edit-item--next-key todo-edit-item--param-key-alist arg)))))
+	   (todo-edit-item--next-key 'todo arg)))))
 
 (defun todo-edit-item--text (&optional arg)
   "Function providing the text editing facilities of `todo-edit-item'."
@@ -5523,12 +5518,14 @@ of each other."
 ;;; Generating and applying item insertion and editing key sequences
 ;; -----------------------------------------------------------------------------
 
-;; Thanks to Stefan Monnier for suggesting dynamically generating item
-;; insertion commands and their key bindings, and offering an elegant
-;; implementation, which, however, relies on lexical scoping and so
-;; cannot be used here until the Calendar code used by todo-mode.el is
-;; converted to lexical binding.  Hence, the following implementation
-;; uses dynamic binding.
+;; Thanks to Stefan Monnier for (i) not only suggesting dynamically
+;; generating item insertion commands and their key bindings but also
+;; offering an elegant implementation which, however, since it used
+;; lexical binding, was at the time incompatible with the Calendar and
+;; Diary code in todo-mode.el; and (ii) later making that code
+;; compatible with lexical binding, so that his implementation, of
+;; which the following is a somewhat expanded version, could be
+;; realized in todo-mode.el.
 
 (defconst todo-insert-item--parameters
   '((default copy) (diary nonmarking) (calendar date dayname) time (here region))
@@ -5536,91 +5533,33 @@ of each other."
 Passed by `todo-insert-item' to `todo-insert-item--next-param' to
 dynamically create item insertion commands.")
 
-(defconst todo-insert-item--param-key-alist
-  '((default    . "i")
-    (copy       . "p")
-    (diary      . "y")
-    (nonmarking . "k")
-    (calendar   . "c")
-    (date       . "d")
-    (dayname    . "n")
-    (time       . "t")
-    (here       . "h")
-    (region     . "r"))
-  "List pairing item insertion parameters with their completion keys.")
-
-(defsubst todo-insert-item--keyof (param)
-  "Return key paired with item insertion PARAM."
-  (cdr (assoc param todo-insert-item--param-key-alist)))
-
-(defun todo-insert-item--argsleft (key list)
-  "Return sublist of LIST whose first member corresponds to KEY."
-  (let (l sym)
-    (mapc (lambda (m)
-	    (when (consp m)
-	      (catch 'found1
-		(dolist (s m)
-		  (when (equal key (todo-insert-item--keyof s))
-		    (throw 'found1 (setq sym s))))))
-	    (if sym
-		(progn
-		  (push sym l)
-		  (setq sym nil))
-	      (push m l)))
-	  list)
-    (setq list (reverse l)))
-  (memq (catch 'found2
-	  (dolist (e todo-insert-item--param-key-alist)
-	    (when (equal key (cdr e))
-	      (throw 'found2 (car e)))))
-	list))
-
-(defsubst todo-insert-item--this-key () (char-to-string last-command-event))
-
-(defvar todo-insert-item--keys-so-far ""
-  "String of item insertion keys so far entered for this command.")
-
-(defvar todo-insert-item--args nil)
-(defvar todo-insert-item--argleft nil)
-(defvar todo-insert-item--argsleft nil)
-(defvar todo-insert-item--newargsleft nil)
-
-(defun todo-insert-item--apply-args ()
-  "Build list of arguments for item insertion and apply them.
-The list consists of item insertion parameters that can be passed
-as insertion command arguments in fixed positions.  If a position
-in the list is not occupied by the corresponding parameter, it is
-occupied by nil."
-  (let* ((arg (list (car todo-insert-item--args)))
-	 (args (nconc (cdr todo-insert-item--args)
-		      (list (car (todo-insert-item--argsleft
-				  (todo-insert-item--this-key)
-				  todo-insert-item--argsleft)))))
-	 (arglist (if (= 4 (length args))
-		      args
-		    (let ((v (make-vector 4 nil)) elt)
-		      (while args
-			(setq elt (pop args))
-			(cond ((memq elt '(diary nonmarking))
-			       (aset v 0 elt))
-			      ((memq elt '(calendar date dayname))
-			       (aset v 1 elt))
-			      ((eq elt 'time)
-			       (aset v 2 elt))
-			      ((memq elt '(copy here region))
-			       (aset v 3 elt))))
-		      (append v nil)))))
-    (apply #'todo-insert-item--basic (nconc arg arglist))))
-
-(defun todo-insert-item--next-param (last args argsleft)
-  "Build item insertion command from LAST, ARGS and ARGSLEFT and call it.
-Dynamically generate key bindings, prompting with the keys
-already entered and those still available."
-  (cl-assert argsleft)
+(defun todo-insert-item--next-param (args params last keys-so-far)
+  "Generate and invoke an item insertion command.
+Dynamically generate the command, its arguments ARGS and its key
+binding by recursing through the list of parameters PARAMS,
+taking the LAST from a sublist and prompting with KEYS-SO-FAR
+keys already entered and those still available."
+  (cl-assert params)
   (let* ((map (make-sparse-keymap))
+         (param-key-alist '((default    . "i")
+                            (copy       . "p")
+                            (diary      . "y")
+                            (nonmarking . "k")
+                            (calendar   . "c")
+                            (date       . "d")
+                            (dayname    . "n")
+                            (time       . "t")
+                            (here       . "h")
+                            (region     . "r")))
+         ;; Return key paired with given item insertion parameter.
+         (key-of (lambda (param) (cdr (assoc param param-key-alist))))
+         ;; The key just typed.
+         (this-key (lambda () (char-to-string last-command-event)))
          (prompt nil)
-         (addprompt
-	  (lambda (k name)
+         ;; Add successively entered keys to the prompt and show what
+         ;; possibilities remain.
+         (add-to-prompt
+	  (lambda (key name)
 	    (setq prompt
 		  (concat prompt
 			  (format
@@ -5630,80 +5569,119 @@ already entered and those still available."
 			    "%s=>%s"
 			    (when (memq name '(copy nonmarking dayname region))
 			      " }"))
-			   (propertize k 'face 'todo-key-prompt)
-			   name))))))
-    (setq todo-insert-item--args args)
-    (setq todo-insert-item--argsleft argsleft)
+			   (propertize key 'face 'todo-key-prompt)
+			   name)))))
+         ;; Return the sublist of the given list of parameters whose
+         ;; first member is paired with the given key.
+         (get-params
+          (lambda (key lst)
+            (setq lst (if (consp lst) lst (list lst)))
+            (let (l sym)
+              (mapc (lambda (m)
+                      (when (consp m)
+                        (catch 'found1
+                          (dolist (s m)
+                            (when (equal key (funcall key-of s))
+                              (throw 'found1 (setq sym s))))))
+                      (if sym
+                          (progn
+                            (push sym l)
+                            (setq sym nil))
+                        (push m l)))
+                    lst)
+              (setq lst (reverse l)))
+            (memq (catch 'found2
+                    (dolist (e param-key-alist)
+                      (when (equal key (cdr e))
+                        (throw 'found2 (car e)))))
+                  lst)))
+         ;; Build list of arguments for item insertion and then
+         ;; execute the basic insertion function. The list consists of
+         ;; item insertion parameters that can be passed as insertion
+         ;; command arguments in fixed positions.  If a position in
+         ;; the list is not occupied by the corresponding parameter,
+         ;; it is occupied by nil.
+         (gen-and-exec
+          (lambda ()
+            (let* ((arg (list (car args))) ; Possible prefix argument.
+	           (rest (nconc (cdr args)
+	                        (list (car (funcall get-params
+                                                    (funcall this-key)
+                                                    params)))))
+	           (parlist (if (= 4 (length rest))
+                                rest
+                              (let ((v (make-vector 4 nil)) elt)
+                                (while rest
+                                  (setq elt (pop rest))
+                                  (cond ((memq elt '(diary nonmarking))
+                                         (aset v 0 elt))
+                                        ((memq elt '(calendar date dayname))
+                                         (aset v 1 elt))
+                                        ((eq elt 'time)
+                                         (aset v 2 elt))
+                                        ((memq elt '(copy here region))
+                                         (aset v 3 elt))))
+                                (append v nil)))))
+              (apply #'todo-insert-item--basic (nconc arg parlist)))))
+         ;; Operate on a copy of the parameter list so the original is
+         ;; not consumed, thus available for the next key typed.
+         (params0 params))
     (when last
       (if (memq last '(default copy))
 	  (progn
-	    (setq todo-insert-item--argsleft nil)
-	    (todo-insert-item--apply-args))
-	(let ((k (todo-insert-item--keyof last)))
-	  (funcall addprompt k (make-symbol (concat (symbol-name last) ":GO!")))
-	  (define-key map (todo-insert-item--keyof last)
+	    (setq params0 nil)
+            (funcall gen-and-exec))
+        (let ((key (funcall key-of last)))
+	  (funcall add-to-prompt key (make-symbol
+                                      (concat (symbol-name last) ":GO!")))
+	  (define-key map (funcall key-of last)
 	    (lambda () (interactive)
-	      (todo-insert-item--apply-args))))))
-    (while todo-insert-item--argsleft
-      (let ((x (car todo-insert-item--argsleft)))
-	(setq todo-insert-item--newargsleft (cdr todo-insert-item--argsleft))
-        (dolist (argleft (if (consp x) x (list x)))
-	  (let ((k (todo-insert-item--keyof argleft)))
-	    (funcall addprompt k argleft)
-	    (define-key map k
-	      (if (null todo-insert-item--newargsleft)
-		  (lambda () (interactive)
-		    (todo-insert-item--apply-args))
-		(lambda () (interactive)
-		  (setq todo-insert-item--keys-so-far
-			(concat todo-insert-item--keys-so-far " "
-				(todo-insert-item--this-key)))
-		  (todo-insert-item--next-param
-		   (car (todo-insert-item--argsleft
-			 (todo-insert-item--this-key)
-			 todo-insert-item--argsleft))
-		   (nconc todo-insert-item--args
-			  (list (car (todo-insert-item--argsleft
-				      (todo-insert-item--this-key)
-				      todo-insert-item--argsleft))))
-		   (cdr (todo-insert-item--argsleft
-			 (todo-insert-item--this-key)
-			 todo-insert-item--argsleft)))))))))
-      (setq todo-insert-item--argsleft todo-insert-item--newargsleft))
-    (when prompt (message "Press a key (so far `%s'): %s"
-			  todo-insert-item--keys-so-far prompt))
+	      (funcall gen-and-exec))))))
+    (while params0
+      (let* ((x (car params0))
+             (restparams (cdr params0)))
+        (dolist (param (if (consp x) x (list x)))
+          (let ((key (funcall key-of param)))
+            (funcall add-to-prompt key param)
+            (define-key map key
+              (if (null restparams)
+                  (lambda () (interactive)
+                    (funcall gen-and-exec))
+                (lambda () (interactive)
+                  (setq keys-so-far (concat keys-so-far " " (funcall this-key)))
+                  (todo-insert-item--next-param
+                   (nconc args (list (car (funcall get-params
+                                                   (funcall this-key) param))))
+                   (cdr (funcall get-params (funcall this-key) params))
+                   (car (funcall get-params (funcall this-key) param))
+                   keys-so-far))))))
+        (setq params0 restparams)))
     (set-transient-map map)
-    (setq todo-insert-item--argsleft argsleft)))
+    (when prompt (message "Press a key (so far `%s'): %s" keys-so-far prompt))
+    (setq params0 params)))
 
-(defconst todo-edit-item--param-key-alist
-  '((edit       . "e")
-    (header     . "h")
-    (multiline  . "m")
-    (diary      . "y")
-    (nonmarking . "k")
-    (date       . "d")
-    (time       . "t"))
-  "Alist of item editing parameters and their keys.")
-
-(defconst todo-edit-item--date-param-key-alist
-  '((full       . "f")
-    (calendar   . "c")
-    (today      . "a")
-    (dayname    . "n")
-    (year       . "y")
-    (month      . "m")
-    (daynum     . "d"))
-  "Alist of item date editing parameters and their keys.")
-
-(defconst todo-edit-done-item--param-key-alist
-  '((add/edit   . "c")
-    (delete     . "d"))
-  "Alist of done item comment editing parameters and their keys.")
-
-(defvar	todo-edit-item--prompt "Press a key (so far `e'): ")
-
-(defun todo-edit-item--next-key (params &optional arg)
-  (let* ((p->k (mapconcat (lambda (elt)
+(defun todo-edit-item--next-key (type &optional arg)
+  (let* ((todo-param-key-alist '((edit       . "e")
+                                 (header     . "h")
+                                 (multiline  . "m")
+                                 (diary      . "y")
+                                 (nonmarking . "k")
+                                 (date       . "d")
+                                 (time       . "t")))
+         (done-param-key-alist '((add/edit   . "c")
+                                 (delete     . "d")))
+         (date-param-key-alist '((full       . "f")
+                                 (calendar   . "c")
+                                 (today      . "a")
+                                 (dayname    . "n")
+                                 (year       . "y")
+                                 (month      . "m")
+                                 (daynum     . "d")))
+         (params (pcase type
+                   ('todo todo-param-key-alist)
+                   ('done done-param-key-alist)
+                   ('date date-param-key-alist)))
+         (p->k (mapconcat (lambda (elt)
 			    (format "%s=>%s"
 				    (propertize (cdr elt) 'face
 						'todo-key-prompt)
@@ -5712,31 +5690,32 @@ already entered and those still available."
 							'(add/edit delete))
 					      " comment"))))
 			  params " "))
-	 (key-prompt (substitute-command-keys todo-edit-item--prompt))
+	 (key-prompt (substitute-command-keys
+                      (concat "Press a key (so far `e"
+                              (if (eq type 'date) " d" "")
+                              "'): ")))
 	 (this-key (let ((key (read-key (concat key-prompt p->k))))
 		     (and (characterp key) (char-to-string key))))
 	 (this-param (car (rassoc this-key params))))
     (pcase this-param
-      (`edit (todo-edit-item--text))
-      (`header (todo-edit-item--text 'include-header))
-      (`multiline (todo-edit-item--text 'multiline))
-      (`add/edit (todo-edit-item--text 'comment-edit))
-      (`delete (todo-edit-item--text 'comment-delete))
-      (`diary (todo-edit-item--diary-inclusion))
-      (`nonmarking (todo-edit-item--diary-inclusion 'nonmarking))
-      (`date (let ((todo-edit-item--prompt "Press a key (so far `e d'): "))
-	       (todo-edit-item--next-key
-		todo-edit-item--date-param-key-alist arg)))
-      (`full (progn (todo-edit-item--header 'date)
+      ('edit (todo-edit-item--text))
+      ('header (todo-edit-item--text 'include-header))
+      ('multiline (todo-edit-item--text 'multiline))
+      ('add/edit (todo-edit-item--text 'comment-edit))
+      ('delete (todo-edit-item--text 'comment-delete))
+      ('diary (todo-edit-item--diary-inclusion))
+      ('nonmarking (todo-edit-item--diary-inclusion 'nonmarking))
+      ('date (todo-edit-item--next-key 'date arg))
+      ('full (progn (todo-edit-item--header 'date)
 		    (when todo-always-add-time-string
 		      (todo-edit-item--header 'time))))
-      (`calendar (todo-edit-item--header 'calendar))
-      (`today (todo-edit-item--header 'today))
-      (`dayname (todo-edit-item--header 'dayname))
-      (`year (todo-edit-item--header 'year arg))
-      (`month (todo-edit-item--header 'month arg))
-      (`daynum (todo-edit-item--header 'day arg))
-      (`time (todo-edit-item--header 'time)))))
+      ('calendar (todo-edit-item--header 'calendar))
+      ('today (todo-edit-item--header 'today))
+      ('dayname (todo-edit-item--header 'dayname))
+      ('year (todo-edit-item--header 'year arg))
+      ('month (todo-edit-item--header 'month arg))
+      ('daynum (todo-edit-item--header 'day arg))
+      ('time (todo-edit-item--header 'time)))))
 
 ;; -----------------------------------------------------------------------------
 ;;; Todo minibuffer utilities
