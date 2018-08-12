@@ -6,7 +6,7 @@
 ;; Maintainer: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
 ;; Package-Requires: ((emacs "25.2"))
-;; Version: 1.0.5
+;; Version: 1.0.6
 
 ;; This is an Elpa :core package.  Don't use functionality that is not
 ;; compatible with Emacs 25.2.
@@ -429,7 +429,8 @@ With optional CLEANUP, kill any associated buffers. "
        do (jsonrpc--warn
            "Sentinel for %s still hasn't run,  deleting it!" proc))
     (when cleanup
-      (kill-buffer (process-buffer (jsonrpc--process conn))))))
+      (kill-buffer (process-buffer (jsonrpc--process conn)))
+      (kill-buffer (jsonrpc-stderr-buffer conn)))))
 
 (defun jsonrpc-stderr-buffer (conn)
   "Get CONN's standard error buffer, if any."
