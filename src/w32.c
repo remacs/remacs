@@ -9358,7 +9358,7 @@ w32_read_registry (HKEY rootkey, Lisp_Object lkey, Lisp_Object lname)
   DWORD vsize, vtype;
   LPBYTE pvalue;
   Lisp_Object val, retval;
-  const char *key, *value_name;
+  const char *key, *value_name = NULL;
   /* The following sizes are according to size limitations
      documented in MSDN.  */
   wchar_t key_w[255+1];

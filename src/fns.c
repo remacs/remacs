@@ -2522,7 +2522,7 @@ usage: (nconc &rest LISTS)  */)
 
       CHECK_CONS (tem);
 
-      Lisp_Object tail;
+      Lisp_Object tail = Qnil;
       FOR_EACH_TAIL (tem)
 	tail = tem;
 
