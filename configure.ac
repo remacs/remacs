@@ -4302,19 +4302,32 @@ AC_SUBST(KRB5LIB)
 AC_SUBST(DESLIB)
 AC_SUBST(KRB4LIB)
 
+AC_ARG_WITH([mini-gmp],
+  [AS_HELP_STRING([--without-mini-gmp],
+		  [don't compile and use mini-gmp, a substitute for the
+		   GNU Multiple Precision (GMP) library; this is the
+		   default on systems with recent-enough GMP.])])
 GMP_LIB=
-GMP_OBJ=
+GMP_OBJ=mini-gmp.o
 HAVE_GMP=no
-AC_CHECK_LIB(gmp, __gmpz_roinit_n, [
-  AC_CHECK_HEADERS(gmp.h, [
-    GMP_LIB=-lgmp
-    HAVE_GMP=yes
-    AC_DEFINE(HAVE_GMP, 1, [Define to 1 if you have gmp.h and -lgmp])])])
-if test $HAVE_GMP = no; then
-   GMP_OBJ=mini-gmp.o
+case $with_mini_gmp in
+  yes) ;;
+  no) HAVE_GMP=yes;;
+  *) AC_CHECK_HEADERS([gmp.h],
+       [OLIBS=$LIBS
+	AC_SEARCH_LIBS([__gmpz_roinit_n], [gmp])
+	LIBS=$OLIBS
+	case $ac_cv_search___gmpz_roinit_n in
+	  'none needed') HAVE_GMP=yes;;
+	  -*) HAVE_GMP=yes GMP_LIB=$ac_cv_search___gmpz_roinit_n;;
+	esac]);;
+esac
+if test "$HAVE_GMP" = yes; then
+  GMP_OBJ=
+  AC_DEFINE([HAVE_GMP], 1, [Define to 1 if you have recent-enough GMP.])
 fi
-AC_SUBST(GMP_LIB)
-AC_SUBST(GMP_OBJ)
+AC_SUBST([GMP_LIB])
+AC_SUBST([GMP_OBJ])
 
 AC_CHECK_HEADERS(valgrind/valgrind.h)
 

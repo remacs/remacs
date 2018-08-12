@@ -24,8 +24,11 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Installation Changes in Emacs 27.1
 
-** configure now checks for the GMP library.  If not found, the
-included "mini-gmp" library is used instead.
+** Emacs now uses GMP, the GNU Multiple Precision library.
+By default, if 'configure' does not find a suitable libgmp, it
+arranges for the included mini-gmp library to be built and used.
+The new 'configure' option --with-mini-gmp uses mini-gmp even if a
+suitable libgmp is available.
 
 ** The new configure option '--with-json' adds support for JSON using
 the Jansson library.  It is on by default; use 'configure
