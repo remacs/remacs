@@ -63,6 +63,14 @@
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
 
+(setq password-cache-expiry nil
+      tramp-verbose 0
+      tramp-message-show-message nil)
+
+;; This should happen on hydra only.
+(when (getenv "EMACS_HYDRA_CI")
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+
 (defconst shadow-test-info-file
   (expand-file-name "shadows_test" temporary-file-directory)
   "File to keep shadow information in during tests.")
@@ -618,7 +626,7 @@ guaranteed by the originator of a cluster definition."
 		  shadow-test-remote-temporary-file-directory))
 		mocked-input `(,cluster1 ,file1 ,cluster2 ,file2 ,(kbd "RET")))
 	  (with-temp-buffer
-	    (setq-local buffer-file-name file1)
+            (set-visited-file-name file1)
 	    (call-interactively 'shadow-define-literal-group))
 
           ;; `shadow-literal-groups' is a list of lists.
@@ -679,7 +687,7 @@ guaranteed by the originator of a cluster definition."
 		mocked-input `(,(shadow-regexp-superquote file)
                                ,cluster1 ,cluster2 ,(kbd "RET")))
 	  (with-temp-buffer
-	    (setq-local buffer-file-name nil)
+            (set-visited-file-name nil)
 	    (call-interactively 'shadow-define-regexp-group))
 
           ;; `shadow-regexp-groups' is a list of lists.
@@ -708,6 +716,7 @@ guaranteed by the originator of a cluster definition."
   "Check that needed shadows are added to todo."
   (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
+  (skip-unless (file-writable-p shadow-test-remote-temporary-file-directory))
 
   (let ((backup-inhibited t)
         (shadow-info-file shadow-test-info-file)
@@ -745,7 +754,7 @@ guaranteed by the originator of a cluster definition."
 
           ;; Save file from "cluster1" definition.
           (with-temp-buffer
-            (setq buffer-file-name file)
+            (set-visited-file-name file)
             (insert "foo")
             (save-buffer))
 	  (should
@@ -755,7 +764,7 @@ guaranteed by the originator of a cluster definition."
 
           ;; Save file from "cluster2" definition.
           (with-temp-buffer
-            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+            (set-visited-file-name (concat (shadow-site-primary cluster2) file))
             (insert "foo")
             (save-buffer))
 	  (should
@@ -775,7 +784,7 @@ guaranteed by the originator of a cluster definition."
 
           ;; Save file from "cluster1" definition.
           (with-temp-buffer
-            (setq buffer-file-name file)
+            (set-visited-file-name file)
             (insert "foo")
             (save-buffer))
 	  (should
@@ -785,7 +794,7 @@ guaranteed by the originator of a cluster definition."
 
           ;; Save file from "cluster2" definition.
           (with-temp-buffer
-            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+            (set-visited-file-name (concat (shadow-site-primary cluster2) file))
             (insert "foo")
             (save-buffer))
 	  (should
@@ -800,15 +809,18 @@ guaranteed by the originator of a cluster definition."
 	(delete-file shadow-info-file))
       (when (file-exists-p shadow-todo-file)
 	(delete-file shadow-todo-file))
-      (when (file-exists-p file)
-	(delete-file file))
-      (when (file-exists-p (concat (shadow-site-primary cluster2) file))
-	(delete-file (concat (shadow-site-primary cluster2) file))))))
+      (ignore-errors
+        (when (file-exists-p file)
+	  (delete-file file)))
+      (ignore-errors
+        (when (file-exists-p (concat (shadow-site-primary cluster2) file))
+	  (delete-file (concat (shadow-site-primary cluster2) file)))))))
 
 (ert-deftest shadow-test09-shadow-copy-files ()
   "Check that needed shadow files are copied."
   (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
+  (skip-unless (file-writable-p shadow-test-remote-temporary-file-directory))
 
   (let ((backup-inhibited t)
         (shadow-info-file shadow-test-info-file)
@@ -855,11 +867,11 @@ guaranteed by the originator of a cluster definition."
 
           ;; Save files.
           (with-temp-buffer
-            (setq buffer-file-name file)
+            (set-visited-file-name file)
             (insert "foo")
             (save-buffer))
           (with-temp-buffer
-            (setq buffer-file-name (concat (shadow-site-primary cluster2) file))
+            (set-visited-file-name (concat (shadow-site-primary cluster2) file))
             (insert "foo")
             (save-buffer))
 
@@ -886,10 +898,12 @@ guaranteed by the originator of a cluster definition."
 	(delete-file shadow-info-file))
       (when (file-exists-p shadow-todo-file)
 	(delete-file shadow-todo-file))
-      (when (file-exists-p file)
-	(delete-file file))
-      (when (file-exists-p (concat (shadow-site-primary cluster2) file))
-	(delete-file (concat (shadow-site-primary cluster2) file))))))
+      (ignore-errors
+        (when (file-exists-p file)
+	  (delete-file file)))
+      (ignore-errors
+        (when (file-exists-p (concat (shadow-site-primary cluster2) file))
+	  (delete-file (concat (shadow-site-primary cluster2) file)))))))
 
 (defun shadowfile-test-all (&optional interactive)
   "Run all tests for \\[shadowfile]."
