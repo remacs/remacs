@@ -276,15 +276,17 @@ error !;
 
 /* Minimum alignment requirement for Lisp objects, imposed by the
    internal representation of tagged pointers.  It is 2**GCTYPEBITS if
-   USE_LSB_TAG, 1 otherwise.  It must be a literal integer constant,
-   for older versions of GCC (through at least 4.9).  */
+   USE_LSB_TAG, otherwise the alignment of Lisp_Object to avoid
+   padding after union vectorlike_header.  It must be a literal
+   integer constant, for older versions of GCC (through at least
+   4.9).  */
 #if USE_LSB_TAG
 # define GCALIGNMENT 8
 # if GCALIGNMENT != 1 << GCTYPEBITS
 #  error "GCALIGNMENT and GCTYPEBITS are inconsistent"
 # endif
 #else
-# define GCALIGNMENT 1
+# define GCALIGNMENT alignof (Lisp_Object)
 #endif
 
 #define GCALIGNED_UNION char alignas (GCALIGNMENT) gcaligned;
