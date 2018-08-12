@@ -2411,17 +2411,20 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
 {
   double f1, f2;
   EMACS_INT i1, i2;
-  bool fneq;
+  bool lt, eq, gt;
   bool test;
 
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num1);
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num2);
 
   /* If either arg is floating point, set F1 and F2 to the 'double'
-     approximations of the two arguments, and set FNEQ if floating-point
-     comparison reports that F1 is not equal to F2, possibly because F1
-     or F2 is a NaN.  Regardless, set I1 and I2 to integers that break
-     ties if the floating-point comparison is either not done or reports
+     approximations of the two arguments, and set LT, EQ, and GT to
+     the <, ==, > floating-point comparisons of F1 and F2
+     respectively, taking care to avoid problems if either is a NaN,
+     and trying to avoid problems on platforms where variables (in
+     violation of the C standard) can contain excess precision.
+     Regardless, set I1 and I2 to integers that break ties if the
+     floating-point comparison is either not done or reports
      equality.  */
 
   if (FLOATP (num1))
@@ -2444,7 +2447,9 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
 	     to I2 will break the tie correctly.  */
 	  i1 = f2 = i2 = XINT (num2);
 	}
-      fneq = f1 != f2;
+      lt = f1 < f2;
+      eq = f1 == f2;
+      gt = f1 > f2;
     }
   else
     {
@@ -2455,39 +2460,49 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
 	     converse of comparing float to integer (see above).  */
 	  i2 = f1 = i1;
 	  f2 = XFLOAT_DATA (num2);
-	  fneq = f1 != f2;
+	  lt = f1 < f2;
+	  eq = f1 == f2;
+	  gt = f1 > f2;
 	}
       else
 	{
 	  i2 = XINT (num2);
-	  fneq = false;
+	  eq = true;
 	}
+    }
+
+  if (eq)
+    {
+      /* Break a floating-point tie by comparing the integers.  */
+      lt = i1 < i2;
+      eq = i1 == i2;
+      gt = i1 > i2;
     }
 
   switch (comparison)
     {
     case ARITH_EQUAL:
-      test = !fneq && i1 == i2;
+      test = eq;
       break;
 
     case ARITH_NOTEQUAL:
-      test = fneq || i1 != i2;
+      test = !eq;
       break;
 
     case ARITH_LESS:
-      test = fneq ? f1 < f2 : i1 < i2;
+      test = lt;
       break;
 
     case ARITH_LESS_OR_EQUAL:
-      test = fneq ? f1 <= f2 : i1 <= i2;
+      test = lt | eq;
       break;
 
     case ARITH_GRTR:
-      test = fneq ? f1 > f2 : i1 > i2;
+      test = gt;
       break;
 
     case ARITH_GRTR_OR_EQUAL:
-      test = fneq ? f1 >= f2 : i1 >= i2;
+      test = gt | eq;
       break;
 
     default:
