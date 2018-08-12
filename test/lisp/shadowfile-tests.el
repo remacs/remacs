@@ -726,26 +726,13 @@ guaranteed by the originator of a cluster definition."
         shadow-files-to-copy
 	cluster1 cluster2 primary regexp file)
     (unwind-protect
-        (condition-case err
         (progn
-          (require 'trace)
-          (dolist (elt (all-completions "shadow-" obarray 'functionp))
-            (trace-function-background (intern elt)))
-          (dolist (elt (all-completions "tramp-" obarray 'functionp))
-            (trace-function-background (intern elt)))
-          (trace-function-background 'save-buffer)
-          (trace-function-background 'basic-save-buffer)
-          (trace-function-background 'basic-save-buffer-1)
-          (trace-function-background 'basic-save-buffer-2)
-          (dolist (elt write-file-functions)
-            (trace-function-background elt))
 	  ;; Cleanup.
 	  (when (file-exists-p shadow-info-file)
 	    (delete-file shadow-info-file))
 	  (when (file-exists-p shadow-todo-file)
 	    (delete-file shadow-todo-file))
 
-          (message "Point 1")
           ;; Define clusters.
 	  (setq cluster1 "cluster1"
 		primary shadow-system-name
@@ -758,7 +745,6 @@ guaranteed by the originator of a cluster definition."
 		regexp (shadow-regexp-superquote primary))
 	  (shadow-set-cluster cluster2 primary regexp)
 
-          (message "Point 2")
 	  ;; Define a literal group.
 	  (setq file
 		(make-temp-name
@@ -766,38 +752,21 @@ guaranteed by the originator of a cluster definition."
                 shadow-literal-groups
                 `((,(concat "/cluster1:" file) ,(concat "/cluster2:" file))))
 
-          (message "Point 3")
           ;; Save file from "cluster1" definition.
           (with-temp-buffer
             (set-visited-file-name file)
             (insert "foo")
             (save-buffer))
-          (message "%s" file)
-          (message "%s" (shadow-contract-file-name (concat "/cluster2:" file)))
-          (message "%s" shadow-files-to-copy)
 	  (should
            (member
             (cons file (shadow-contract-file-name (concat "/cluster2:" file)))
             shadow-files-to-copy))
 
-          (message "Point 4")
           ;; Save file from "cluster2" definition.
           (with-temp-buffer
-            (message "Point 4.1")
-            (message "%s" file)
-            (message "%s" (shadow-site-primary cluster2))
             (set-visited-file-name (concat (shadow-site-primary cluster2) file))
-            (message "Point 4.2")
             (insert "foo")
-            (message "%s" buffer-file-name)
-            (message "%s" write-file-functions)
-	    (setenv "BUG_32226" "1")
             (save-buffer))
-	  (setenv "BUG_32226")
-          (message "Point 4.3")
-          (message "%s" (shadow-site-primary cluster2))
-          (message "%s" (shadow-contract-file-name (concat "/cluster1:" file)))
-          (message "%s" shadow-files-to-copy)
 	  (should
            (member
             (cons
@@ -805,7 +774,6 @@ guaranteed by the originator of a cluster definition."
              (shadow-contract-file-name (concat "/cluster1:" file)))
             shadow-files-to-copy))
 
-          (message "Point 5")
 	  ;; Define a regexp group.
 	  (setq shadow-files-to-copy nil
                 shadow-regexp-groups
@@ -814,7 +782,6 @@ guaranteed by the originator of a cluster definition."
                    ,(concat (shadow-site-primary cluster2)
                             (shadow-regexp-superquote file)))))
 
-          (message "Point 6")
           ;; Save file from "cluster1" definition.
           (with-temp-buffer
             (set-visited-file-name file)
@@ -825,7 +792,6 @@ guaranteed by the originator of a cluster definition."
             (cons file (shadow-contract-file-name (concat "/cluster2:" file)))
             shadow-files-to-copy))
 
-          (message "Point 7")
           ;; Save file from "cluster2" definition.
           (with-temp-buffer
             (set-visited-file-name (concat (shadow-site-primary cluster2) file))
@@ -837,11 +803,6 @@ guaranteed by the originator of a cluster definition."
              (concat (shadow-site-primary cluster2) file)
              (shadow-contract-file-name (concat "/cluster1:" file)))
             shadow-files-to-copy)))
-        (error (message "Error: %s" err) (signal (car err) (cdr err))))
-
-      (setenv "BUG_32226")
-      (untrace-all)
-      (message "%s" (with-current-buffer trace-buffer (buffer-string)))
 
       ;; Cleanup.
       (when (file-exists-p shadow-info-file)
@@ -859,6 +820,7 @@ guaranteed by the originator of a cluster definition."
   "Check that needed shadow files are copied."
   (skip-unless (not (memq system-type '(windows-nt ms-dos))))
   (skip-unless (file-remote-p shadow-test-remote-temporary-file-directory))
+  (skip-unless (file-writable-p shadow-test-remote-temporary-file-directory))
 
   (let ((backup-inhibited t)
         (shadow-info-file shadow-test-info-file)
