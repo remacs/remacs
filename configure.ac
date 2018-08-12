@@ -4308,7 +4308,7 @@ AC_ARG_WITH([mini-gmp],
 		   GNU Multiple Precision (GMP) library; this is the
 		   default on systems with recent-enough GMP.])])
 GMP_LIB=
-GMP_OBJ=mini-gmp.o
+GMP_OBJ=mini-gmp-emacs.o
 HAVE_GMP=no
 case $with_mini_gmp in
   yes) ;;
