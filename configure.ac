@@ -4312,7 +4312,7 @@ GMP_OBJ=mini-gmp-emacs.o
 HAVE_GMP=no
 case $with_mini_gmp in
   yes) ;;
-  no) HAVE_GMP=yes;;
+  no) HAVE_GMP=yes GMP_LIB=-lgmp;;
   *) AC_CHECK_HEADERS([gmp.h],
        [OLIBS=$LIBS
 	AC_SEARCH_LIBS([__gmpz_roinit_n], [gmp])
