@@ -84,7 +84,9 @@ An EVENT has the format
     (with-current-buffer buf
       (unless (derived-mode-p 'thread-list-mode)
         (thread-list-mode)
-        (run-at-time 0 nil #'thread-list--timer-func buf)))
+        (run-at-time thread-list-refresh-seconds nil
+                     #'thread-list--timer-func buf))
+      (revert-buffer))
     (switch-to-buffer buf)))
 ;; This command can be destructive if they don't know what they are
 ;; doing.  Kids, don't try this at home!
