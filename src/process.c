@@ -3336,7 +3336,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
   int family;
   struct sockaddr *sa = NULL;
   int ret;
-  ptrdiff_t addrlen;
+  ptrdiff_t addrlen UNINIT;
   struct Lisp_Process *p = XPROCESS (proc);
   Lisp_Object contact = p->childp;
   int optbits = 0;

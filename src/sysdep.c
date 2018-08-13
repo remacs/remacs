@@ -3239,7 +3239,7 @@ system_process_attributes (Lisp_Object pid)
   struct group *gr;
   long clocks_per_sec;
   char *procfn_end;
-  char procbuf[1025], *p, *q;
+  char procbuf[1025], *p, *q UNINIT;
   int fd;
   ssize_t nread;
   static char const default_cmd[] = "???";

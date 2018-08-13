@@ -274,7 +274,7 @@ x_real_pos_and_offsets (struct frame *f,
      should be the outer WM window. */
   for (;;)
     {
-      Window wm_window, rootw;
+      Window wm_window UNINIT, rootw UNINIT;
 
 #ifdef USE_XCB
       xcb_query_tree_cookie_t query_tree_cookie;

@@ -10637,7 +10637,7 @@ get_current_wm_state (struct frame *f,
 #ifdef USE_XCB
   xcb_get_property_cookie_t prop_cookie;
   xcb_get_property_reply_t *prop;
-  xcb_atom_t *reply_data;
+  xcb_atom_t *reply_data UNINIT;
 #else
   Display *dpy = FRAME_X_DISPLAY (f);
   unsigned long bytes_remaining;

@@ -3798,7 +3798,7 @@ x_set_frame_parameters (struct frame *f, Lisp_Object alist)
   Lisp_Object icon_left, icon_top;
 
   /* And with this.  */
-  Lisp_Object fullscreen = Qnil;
+  Lisp_Object fullscreen UNINIT;
   bool fullscreen_change = false;
 
   /* Record in these vectors all the parms specified.  */

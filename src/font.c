@@ -1468,7 +1468,7 @@ font_parse_fcname (char *name, ptrdiff_t len, Lisp_Object font)
 	      else
 		{
 		  /* KEY=VAL pairs  */
-		  Lisp_Object key = Qnil;
+		  Lisp_Object key UNINIT;
 		  int prop;
 
 		  if (q - p == 10 && memcmp (p + 1, "pixelsize", 9) == 0)
