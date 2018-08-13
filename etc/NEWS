@@ -45,6 +45,11 @@ often cause crashes.  Set it to nil if you really need those fonts.
 
 * Changes in Specialized Modes and Packages in Emacs 26.2
 
+** Ibuffer
+
+---
+*** New toggle 'ibuffer-do-toggle-lock', bound to 'L'.
+
 ** Gnus
 
 ---
