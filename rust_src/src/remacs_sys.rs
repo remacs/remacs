@@ -121,6 +121,7 @@ extern "C" {
     #[cfg(unix)]
     pub fn filemode_string(f: LispObject) -> LispObject;
 
+    pub fn wset_update_mode_line(w: *mut Lisp_Window);
 }
 
 // Largest and smallest numbers that can be represented as fixnums in
