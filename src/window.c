@@ -210,7 +210,7 @@ wset_mode_line_height(struct window *w, int height)
   w->mode_line_height = height;
 }
 
-static void
+void
 wset_update_mode_line (struct window *w)
 {
   /* If this window is the selected window on its frame, set the
@@ -1409,28 +1409,6 @@ if it isn't already recorded.  */)
     XSETINT (value, BUF_Z (b) - w->window_end_pos);
 
   return value;
-}
-
-DEFUN ("set-window-start", Fset_window_start, Sset_window_start, 2, 3, 0,
-       doc: /* Make display in WINDOW start at position POS in WINDOW's buffer.
-WINDOW must be a live window and defaults to the selected one.  Return
-POS.  Optional third arg NOFORCE non-nil inhibits next redisplay from
-overriding motion of point in order to display at this exact start.  */)
-  (Lisp_Object window, Lisp_Object pos, Lisp_Object noforce)
-{
-  register struct window *w = decode_live_window (window);
-
-  set_marker_restricted (w->start, pos, w->contents);
-  /* This is not right, but much easier than doing what is right.  */
-  w->start_at_line_beg = false;
-  if (NILP (noforce))
-    w->force_start = true;
-  wset_update_mode_line (w);
-  /* Bug#15957.  */
-  w->window_end_valid = false;
-  wset_redisplay (w);
-
-  return pos;
 }
 
 DEFUN ("pos-visible-in-window-p", Fpos_visible_in_window_p,
@@ -7216,7 +7194,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_end);
-  defsubr (&Sset_window_start);
   defsubr (&Swindow_lines_pixel_dimensions);
   defsubr (&Sset_window_display_table);
   defsubr (&Snext_window);

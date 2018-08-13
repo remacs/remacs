@@ -10,7 +10,8 @@ use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone
 use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, set_buffer_internal, window_menu_bar_p,
-                 window_parameter, window_tool_bar_p, window_list_1};
+                 window_parameter, window_tool_bar_p, wset_redisplay, wset_update_mode_line,
+                 window_list_1};
 use remacs_sys::Fcons;
 use remacs_sys::globals;
 
@@ -816,6 +817,28 @@ pub fn set_window_point(window: LispObject, pos: LispObject) -> LispObject {
         // the new value of point.
         w.set_redisplay(true);
     }
+    pos
+}
+
+/// Make display in WINDOW start at position POS in WINDOW's buffer.
+/// WINDOW must be a live window and defaults to the selected one.  Return
+/// POS.  Optional third arg NOFORCE non-nil inhibits next redisplay from
+/// overriding motion of point in order to display at this exact start.
+#[lisp_fn(min = "2")]
+pub fn set_window_start(window: LispObject, pos: LispObject, noforce: LispObject) -> LispObject {
+    let mut w = window_live_or_selected(window);
+    set_marker_restricted(w.start, pos, w.contents());
+    // This is not right, but much easier than doing what is right.
+    w.set_start_at_line_beg(false);
+    if noforce.is_nil() {
+        w.set_force_start(true);
+    }
+    unsafe {
+        wset_update_mode_line(w.as_mut());
+    }
+    // Bug#15957
+    w.set_window_end_valid(false);
+    unsafe { wset_redisplay(w.as_mut()) };
     pos
 }
 
