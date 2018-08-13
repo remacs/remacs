@@ -77,7 +77,6 @@ dir_monitor_callback (GFileMonitor *monitor,
 
   /* Determine callback function.  */
   monitor_object = make_pointer_integer (monitor);
-  eassert (FIXNUMP (monitor_object));
   watch_object = assq_no_quit (monitor_object, watch_list);
 
   if (CONSP (watch_object))
@@ -203,10 +202,10 @@ will be reported only in case of the `moved' event.  */)
   if (! monitor)
     xsignal2 (Qfile_notify_error, build_string ("Cannot watch file"), file);
 
-  Lisp_Object watch_descriptor = make_pointer_integer (monitor);
+  Lisp_Object watch_descriptor = make_pointer_integer_unsafe (monitor);
 
-  /* Check the dicey assumption that make_pointer_integer is safe.  */
-  if (! FIXNUMP (watch_descriptor))
+  if (! (FIXNUMP (watch_descriptor)
+	 && XFIXNUMPTR (watch_descriptor) == monitor))
     {
       g_object_unref (monitor);
       xsignal2 (Qfile_notify_error, build_string ("Unsupported file watcher"),
