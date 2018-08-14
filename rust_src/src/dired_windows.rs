@@ -1,7 +1,27 @@
-use remacs_sys::{file_attributes_c, globals, Qfile_attributes, Qnil};
+use remacs_sys::{directory_files_and_attributes_c, directory_files_c, file_attributes_c, globals,
+                 Qfile_attributes, Qnil};
 
 use lisp::LispObject;
 use lists::list;
+
+pub fn directory_files(
+    directory: LispObject,
+    full: LispObject,
+    match_re: LispObject,
+    nosort: LispObject,
+) -> LispObject {
+    unsafe { directory_files_c(directory, full, match_re, nosort) }
+}
+
+pub fn directory_files_and_attributes(
+    directory: LispObject,
+    full: LispObject,
+    match_re: LispObject,
+    nosort: LispObject,
+    id_format: LispObject,
+) -> LispObject {
+    unsafe { directory_files_and_attributes_c(directory, full, match_re, nosort, id_format) }
+}
 
 pub fn file_attributes_intro(filename: LispObject, id_format: LispObject) -> LispObject {
     unsafe { file_attributes_c(filename, id_format) }
