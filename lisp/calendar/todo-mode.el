@@ -6726,9 +6726,13 @@ Added to `window-configuration-change-hook' in Todo mode."
 
 \\{todo-edit-mode-map}"
   (todo-modes-set-1)
-  (setq-local todo-current-todo-file (file-truename (buffer-file-name)))
-  (when (= (buffer-size) (- (point-max) (point-min)))
-    ;; Only need this when editing the whole file not just an item.
+  (if (> (buffer-size) (- (point-max) (point-min)))
+      ;; Editing one item in an indirect buffer, so buffer-file-name is nil.
+      (setq-local todo-current-todo-file todo-global-current-todo-file)
+    ;; When editing archive file, make sure it is current todo file.
+    (setq-local todo-current-todo-file (file-truename (buffer-file-name)))
+    ;; Need this when editing the whole file to return to the category
+    ;; editing was invoked from.
     (setq-local todo-categories (todo-set-categories)))
   (setq buffer-read-only nil))
 
