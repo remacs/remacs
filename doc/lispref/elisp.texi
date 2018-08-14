@@ -1346,6 +1346,7 @@ Threads
 * Basic Thread Functions::  Basic thread functions.
 * Mutexes::                 Mutexes allow exclusive access to data.
 * Condition Variables::     Inter-thread events.
+* The Thread List::         Show the active threads.
 
 Processes
 
