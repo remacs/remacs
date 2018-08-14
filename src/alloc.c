@@ -2655,8 +2655,6 @@ make_float (double float_value)
 
   if (float_free_list)
     {
-      /* We use the data field for chaining the free list
-	 so that we won't use the same field that has the mark bit.  */
       XSETFLOAT (val, float_free_list);
       float_free_list = float_free_list->u.chain;
     }
@@ -2760,8 +2758,6 @@ DEFUN ("cons", Fcons, Scons, 2, 2, 0,
 
   if (cons_free_list)
     {
-      /* We use the cdr for chaining the free list
-	 so that we won't use the same field that has the mark bit.  */
       XSETCONS (val, cons_free_list);
       cons_free_list = cons_free_list->u.s.u.chain;
     }
