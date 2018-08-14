@@ -6721,32 +6721,11 @@ Added to `window-configuration-change-hook' in Todo mode."
   (setq-local todo-current-todo-file (file-truename (buffer-file-name)))
   (setq-local todo-show-done-only t))
 
-;; (defun todo-mode-external-set ()
-;;   "Set `todo-categories' externally to `todo-current-todo-file'."
-;;   (setq-local todo-current-todo-file todo-global-current-todo-file)
-;;   (let ((cats (with-current-buffer
-;; 		  ;; Can't use find-buffer-visiting when
-;; 		  ;; `todo-show-categories-table' is called on first
-;; 		  ;; invocation of `todo-show', since there is then
-;; 		  ;; no buffer visiting the current file.
-;; 		  (find-file-noselect todo-current-todo-file 'nowarn)
-;; 		(or todo-categories
-;; 		    ;; In Todo Edit mode todo-categories is now nil
-;; 		    ;; since it uses same buffer as Todo mode but
-;; 		    ;; doesn't have the latter's local variables.
-;; 		    (save-excursion
-;; 		      (goto-char (point-min))
-;; 		      (read (buffer-substring-no-properties
-;; 			     (line-beginning-position)
-;; 			     (line-end-position))))))))
-;;     (setq-local todo-categories cats)))
-
 (define-derived-mode todo-edit-mode text-mode "Todo-Ed"
   "Major mode for editing multiline todo items.
 
 \\{todo-edit-mode-map}"
   (todo-modes-set-1)
-  ;; (todo-mode-external-set)
   (setq-local todo-current-todo-file (file-truename (buffer-file-name)))
   (when (= (buffer-size) (- (point-max) (point-min)))
     ;; Only need this when editing the whole file not just an item.
@@ -6759,7 +6738,6 @@ Added to `window-configuration-change-hook' in Todo mode."
   "Major mode for displaying and editing todo categories.
 
 \\{todo-categories-mode-map}"
-  ;; (todo-mode-external-set)
   (setq-local todo-current-todo-file todo-global-current-todo-file)
   (setq-local todo-categories
 	      ;; Can't use find-buffer-visiting when
