@@ -4303,17 +4303,16 @@ AC_SUBST(KRB5LIB)
 AC_SUBST(DESLIB)
 AC_SUBST(KRB4LIB)
 
-AC_ARG_WITH([mini-gmp],
-  [AS_HELP_STRING([--without-mini-gmp],
-		  [don't compile and use mini-gmp, a substitute for the
-		   GNU Multiple Precision (GMP) library; this is the
-		   default on systems with recent-enough GMP.])])
+AC_ARG_WITH([libgmp],
+  [AS_HELP_STRING([--without-libgmp],
+		  [don't use the GNU Multiple Precision (GMP) library;
+		   this is the default on systems lacking libgmp.])])
 GMP_LIB=
 GMP_OBJ=mini-gmp-emacs.o
 HAVE_GMP=no
-case $with_mini_gmp in
-  yes) ;;
-  no) HAVE_GMP=yes GMP_LIB=-lgmp;;
+case $with_libgmp in
+  no) ;;
+  yes) HAVE_GMP=yes GMP_LIB=-lgmp;;
   *) AC_CHECK_HEADERS([gmp.h],
        [OLIBS=$LIBS
 	AC_SEARCH_LIBS([__gmpz_roinit_n], [gmp])

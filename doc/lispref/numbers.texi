@@ -319,10 +319,8 @@ its argument.  See also @code{integer-or-marker-p} and
 
 @defun bignump object
 This predicate tests whether its argument is a large integer, and
-returns @code{t} if so, @code{nil} otherwise.  Large integers cannot
-be compared with @code{eq}, only with @code{=} or @code{eql}.  Also,
-large integers are only available if Emacs was compiled with the GMP
-library.
+returns @code{t} if so, @code{nil} otherwise.  Unlike small integers,
+large integers can be @code{=} or @code{eql} even if they are not @code{eq}.
 @end defun
 
 @defun fixnump object

@@ -27,7 +27,7 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 ** Emacs now uses GMP, the GNU Multiple Precision library.
 By default, if 'configure' does not find a suitable libgmp, it
 arranges for the included mini-gmp library to be built and used.
-The new 'configure' option --with-mini-gmp uses mini-gmp even if a
+The new 'configure' option --without-libgmp uses mini-gmp even if a
 suitable libgmp is available.
 
 ** The new configure option '--with-json' adds support for JSON using
