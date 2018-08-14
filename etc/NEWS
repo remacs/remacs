@@ -831,9 +831,11 @@ is backwards-compatible with versions of Emacs in which the old function
 exists.  See the node "Displaying Buffers in Side Windows" in the ELisp
 manual for more details.
 
-** The 'garbage-collect' function no longer returns a 'misc' component
-because garbage collection no longer treats miscellaneous objects
-specially; they are now allocated like any other pseudovector.
+** garbage collection no longer treats miscellaneous objects specially;
+they are now allocated like any other pseudovector.  As a result, the
+'garbage-collect' and 'memory-use-count' functions no longer return a
+'misc' component, and the 'misc-objects-consed' variable has been
+removed.
 
 
 * Lisp Changes in Emacs 27.1
