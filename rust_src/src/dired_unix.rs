@@ -1,7 +1,6 @@
 use libc::{c_char, c_long, endpwent, getgrgid, getpwent, getpwuid, group, passwd, size_t, ssize_t,
            timespec as c_timespec};
 
-use std::cmp::Ordering;
 use std::ffi::{CStr, CString, OsStr};
 use std::fs;
 use std::io;
@@ -105,6 +104,7 @@ impl LispObjectExt for LispObject {
             idf_sym_s.to_string().to_lowercase()
         }
     }
+
     fn to_stdstring(&self) -> String {
         let s = self.as_string().unwrap(); //LispObject String
         let slice = unsafe { slice::from_raw_parts(s.const_data_ptr(), s.len_bytes() as usize) };
@@ -112,137 +112,331 @@ impl LispObjectExt for LispObject {
     }
 }
 
-struct DirFiles {
-    directory: String,
-    full: bool,
-    match_re: LispObject,
-    nosort: bool,
-    attrs: bool,
-    id_format: LispObject,
-    files: Vec<String>,
-    files_attrs: Vec<LispObject>,
+// Directory files/attrs request input
+struct DirReq {
+    dname: String, // directory name
+    full: FullPath,
+    match_re: Option<LispObject>, // filter regexp
+    sortmemaybe: SortFNames,
+    id_format: LispObject, // integer uid (default) or string username
 }
 
-impl DirFiles {
+impl DirReq {
     fn new(
-        directory: String,
-        full: bool,
-        match_re: LispObject,
-        nosort: bool,
-        attrs: bool,
+        dname: String,
+        full: FullPath,
+        match_re: Option<LispObject>,
+        sortmemaybe: SortFNames,
         id_format: LispObject,
     ) -> Self {
         Self {
-            directory,
+            dname,
+            full,
+            match_re,
+            sortmemaybe,
+            id_format,
+        }
+    }
+}
+
+enum SortFNames {
+    No,
+    Yes,
+}
+
+enum FullPath {
+    No,
+    Yes,
+}
+
+// Directory files/attrs output data
+enum DirData {
+    Files {
+        fnames: Vec<String>,
+    },
+    FilesAttrs {
+        fnames: Vec<String>,
+        fattrs: Vec<LispObject>,
+    },
+}
+
+impl DirData {
+    fn from_os(&mut self, dr: &DirReq) {
+        match *self {
+            DirData::Files { ref mut fnames } => {
+                fnames_from_os(fnames, dr.dname.to_owned(), dr.match_re);
+                if let SortFNames::Yes = dr.sortmemaybe {
+                    fnames.sort();
+                }
+            }
+            DirData::FilesAttrs {
+                ref mut fnames,
+                ref mut fattrs,
+            } => {
+                fnames_from_os(fnames, dr.dname.to_owned(), dr.match_re);
+                if let SortFNames::Yes = dr.sortmemaybe {
+                    fnames.sort();
+                }
+
+                fattrs_from_os(fattrs, fnames, dr.dname.to_owned(), dr.id_format);
+            }
+        }
+    }
+
+    fn to_list(&mut self, dr: &DirReq) -> LispObject {
+        match *self {
+            DirData::Files { ref mut fnames } => {
+                fnames_to_list(fnames, dr.dname.to_owned(), &dr.full)
+            }
+            DirData::FilesAttrs {
+                ref mut fnames,
+                ref mut fattrs,
+            } => fattrs_to_list(fattrs, fnames, dr.dname.to_owned(), &dr.full),
+        }
+    }
+}
+
+fn fattrs_from_os(
+    fattrs: &mut Vec<LispObject>,
+    fnames: &mut Vec<String>,
+    dname: String,
+    id_format: LispObject,
+) {
+    for f in fnames {
+        let fa = file_attributes_core(
+            LispObject::from(f.to_full(dname.to_owned()).as_str()),
+            id_format,
+        );
+        fattrs.push(fa);
+    }
+}
+
+fn fnames_from_os(fnames: &mut Vec<String>, dname: String, match_re: Option<LispObject>) {
+    let res = read_dir(dname.to_owned(), fnames, match_re);
+    if res.is_err() {
+        xsignal!(
+            Qfile_missing,
+            format!("Opening directory: {}", res.unwrap_err()).to_bstring(),
+            dname.to_bstring()
+        );
+    }
+}
+
+fn read_dir(
+    dname: String,
+    fnames: &mut Vec<String>,
+    match_re: Option<LispObject>,
+) -> io::Result<()> {
+    let dir = dname.clone();
+    let dir_p = Path::new(&dir);
+
+    let mut re = RegEx::new(String::from("").to_bstring());
+    if let Some(x) = match_re {
+        re = RegEx::new(x);
+    }
+
+    let dot = String::from(".");
+    if let Some(_) = match_re_maybe(dot.to_owned(), match_re, &re) {
+        fnames.push(dot);
+    }
+    let dotdot = String::from("..");
+    if let Some(_) = match_re_maybe(dotdot.to_owned(), match_re, &re) {
+        fnames.push(dotdot);
+    }
+
+    for fname in fs::read_dir(dir_p)? {
+        let fname = fname?;
+        let f_enc = fname.file_name().into_string().unwrap();
+        let f_enc_lo = LispObject::from(f_enc.as_str()); // encoded
+        let f_dec_lo = unsafe { decode_file_name(f_enc_lo) }; // decoded
+        let f = f_dec_lo.to_stdstring();
+
+        if let Some(_) = match_re_maybe(f.to_owned(), match_re, &re) {
+            fnames.push(f);
+        }
+    }
+
+    Ok(())
+}
+
+fn match_re_maybe(f: String, match_re: Option<LispObject>, re: &RegEx) -> Option<String> {
+    match match_re {
+        Some(_) => {
+            if re.is_match(f.as_str()) {
+                Some(f)
+            } else {
+                None
+            }
+        }
+        None => Some(f),
+    }
+}
+
+fn fnames_to_list(fnames: &mut Vec<String>, dname: String, full: &FullPath) -> LispObject {
+    match *full {
+        FullPath::No => list(&mut fnames.iter().map(|x| x.to_bstring()).collect::<Vec<_>>()),
+        FullPath::Yes => list(&mut fnames
+            .iter()
+            .map(|x| x.to_full(dname.to_owned()))
+            .map(|x| x.to_bstring())
+            .collect::<Vec<_>>()),
+    }
+}
+
+fn fattrs_to_list(
+    fattrs: &mut Vec<LispObject>,
+    fnames: &mut Vec<String>,
+    dname: String,
+    full: &FullPath,
+) -> LispObject {
+    match *full {
+        FullPath::No => list(&mut fnames
+            .iter()
+            .map(|x| x.to_bstring())
+            .zip(fattrs.to_owned())
+            .map(|x| LispObject::cons(x.0, x.1))
+            .collect::<Vec<_>>()),
+        FullPath::Yes => list(&mut fnames
+            .iter()
+            .map(|x| x.to_full(dname.to_owned()))
+            .map(|x| x.to_bstring())
+            .zip(fattrs.to_owned())
+            .map(|x| LispObject::cons(x.0, x.1))
+            .collect::<Vec<_>>()),
+    }
+}
+
+fn directory_files_core(dr: &DirReq, dd: &mut DirData) -> LispObject {
+    dd.from_os(dr);
+
+    dd.to_list(dr)
+}
+
+pub fn directory_files_intro(
+    directory: LispObject,
+    full: LispObject,
+    match_re: LispObject,
+    nosort: LispObject,
+) -> LispObject {
+    let dnexp = unsafe { Fexpand_file_name(directory, Qnil) };
+
+    let handler = unsafe { Ffind_file_name_handler(dnexp, Qdirectory_files) };
+    if handler.is_not_nil() {
+        return call!(handler, Qdirectory_files, dnexp, full, match_re, nosort);
+    }
+
+    let dr = DirReq::new(
+        dnexp.to_stdstring(),
+        if full.is_nil() {
+            FullPath::No
+        } else {
+            FullPath::Yes
+        },
+        if match_re.is_nil() {
+            None
+        } else {
+            Some(match_re)
+        },
+        if nosort.is_nil() {
+            SortFNames::Yes
+        } else {
+            SortFNames::No
+        },
+        Qnil,
+    );
+    let mut dd = DirData::Files { fnames: Vec::new() };
+
+    directory_files_core(&dr, &mut dd)
+}
+
+pub fn directory_files_and_attributes_intro(
+    directory: LispObject,
+    full: LispObject,
+    match_re: LispObject,
+    nosort: LispObject,
+    id_format: LispObject,
+) -> LispObject {
+    let dnexp = unsafe { Fexpand_file_name(directory, Qnil) };
+
+    let handler = unsafe { Ffind_file_name_handler(dnexp, Qdirectory_files_and_attributes) };
+    if handler.is_not_nil() {
+        return call!(
+            handler,
+            Qdirectory_files_and_attributes,
+            dnexp,
             full,
             match_re,
             nosort,
-            attrs,
-            id_format,
-            files: Vec::new(),
-            files_attrs: Vec::new(),
-        }
+            id_format
+        );
     }
 
-    // read_dir() does not return .&.. so bolt them on
-    fn add_dots(&mut self) {
-        let d = String::from(".");
-        let dd = String::from("..");
-
-        if self.match_re.is_nil() {
-            self.files.push(d);
-            self.files.push(dd);
+    let dr = DirReq::new(
+        dnexp.to_stdstring(),
+        if full.is_nil() {
+            FullPath::No
         } else {
-            let re = RegEx::new(self.match_re);
-
-            if re.is_match(d.as_str()) {
-                self.files.push(d);
-            }
-            if re.is_match(dd.as_str()) {
-                self.files.push(dd);
-            }
-        }
-    }
-
-    fn get(&mut self) -> io::Result<()> {
-        let dir = self.directory.clone();
-        let dir_p = Path::new(&dir);
-
-        self.add_dots();
-
-        for file in fs::read_dir(dir_p)? {
-            let file = file?;
-            let f_enc = file.file_name().into_string().unwrap();
-            let f_enc_lo = LispObject::from(f_enc.as_str()); // encoded
-            let f_dec_lo = unsafe { decode_file_name(f_enc_lo) }; // decoded
-            let f = f_dec_lo.to_stdstring();
-
-            if self.match_re.is_nil() {
-                self.files.push(f);
-            } else {
-                let re = RegEx::new(self.match_re);
-                if re.is_match(f.as_str()) {
-                    self.files.push(f);
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    fn get_attrs(&mut self) {
-        for f in &self.files {
-            let fattrs = file_attributes_core(
-                LispObject::from(f.to_full(self.directory.to_owned()).as_str()),
-                self.id_format,
-            );
-            self.files_attrs.push(fattrs);
-        }
-    }
-
-    fn sort(&mut self) {
-        self.files.sort_by(|a, b| {
-            if a < b {
-                Ordering::Less
-            } else {
-                Ordering::Greater
-            }
-        });
-    }
-
-    fn to_list(&self) -> LispObject {
-        if !self.attrs {
-            if !self.full {
-                list(&mut self.files
-                    .iter()
-                    .map(|x| x.to_bstring())
-                    .collect::<Vec<_>>())
-            } else {
-                list(&mut self.files
-                    .iter()
-                    .map(|x| x.to_full(self.directory.to_owned()))
-                    .map(|x| x.to_bstring())
-                    .collect::<Vec<_>>())
-            }
+            FullPath::Yes
+        },
+        if match_re.is_nil() {
+            None
         } else {
-            if !self.full {
-                list(&mut self.files
-                    .iter()
-                    .map(|x| x.to_bstring())
-                    .zip(self.files_attrs.to_owned())
-                    .map(|x| LispObject::cons(x.0, x.1))
-                    .collect::<Vec<_>>())
-            } else {
-                list(&mut self.files
-                    .iter()
-                    .map(|x| x.to_full(self.directory.to_owned()))
-                    .map(|x| x.to_bstring())
-                    .zip(self.files_attrs.to_owned())
-                    .map(|x| LispObject::cons(x.0, x.1))
-                    .collect::<Vec<_>>())
-            }
-        }
+            Some(match_re)
+        },
+        if nosort.is_nil() {
+            SortFNames::Yes
+        } else {
+            SortFNames::No
+        },
+        id_format,
+    );
+    let mut dd = DirData::FilesAttrs {
+        fnames: Vec::new(),
+        fattrs: Vec::new(),
+    };
+
+    directory_files_core(&dr, &mut dd)
+}
+
+// Called by list_system_processes in sysdep.c
+#[no_mangle]
+pub extern "C" fn directory_files_internal(
+    directory: LispObject,
+    full: LispObject,
+    match_re: LispObject,
+    nosort: LispObject,
+    attrs: bool,
+    id_format: LispObject,
+) -> LispObject {
+    let dr = DirReq::new(
+        directory.to_stdstring(),
+        if full.is_nil() {
+            FullPath::No
+        } else {
+            FullPath::Yes
+        },
+        if match_re.is_nil() {
+            None
+        } else {
+            Some(match_re)
+        },
+        if nosort.is_nil() {
+            SortFNames::Yes
+        } else {
+            SortFNames::No
+        },
+        id_format,
+    );
+
+    let mut dd = DirData::Files { fnames: Vec::new() };
+    if attrs {
+        dd = DirData::FilesAttrs {
+            fnames: Vec::new(),
+            fattrs: Vec::new(),
+        };
     }
+
+    directory_files_core(&dr, &mut dd)
 }
 
 struct RegEx {
@@ -271,97 +465,6 @@ impl RegEx {
             ) >= 0
         }
     }
-}
-
-fn directory_files_core(
-    directory: LispObject,
-    full: LispObject,
-    match_re: LispObject,
-    nosort: LispObject,
-    attrs: bool,
-    id_format: LispObject,
-) -> LispObject {
-    let mut files = DirFiles::new(
-        directory.to_stdstring(),
-        full.is_not_nil(),
-        match_re,
-        nosort.is_not_nil(),
-        attrs,
-        id_format,
-    );
-
-    let res = files.get();
-    if res.is_err() {
-        xsignal!(
-            Qfile_missing,
-            format!("Opening directory: {}", res.unwrap_err()).to_bstring(),
-            directory
-        );
-    } else {
-        if !files.nosort {
-            files.sort();
-        }
-
-        if files.attrs {
-            files.get_attrs();
-        }
-
-        files.to_list()
-    }
-}
-
-// Called by list_system_processes in sysdep.c
-#[no_mangle]
-pub extern "C" fn directory_files_internal(
-    directory: LispObject,
-    full: LispObject,
-    match_re: LispObject,
-    nosort: LispObject,
-    attrs: bool,
-    id_format: LispObject,
-) -> LispObject {
-    directory_files_core(directory, full, match_re, nosort, attrs, id_format)
-}
-
-pub fn directory_files_intro(
-    directory: LispObject,
-    full: LispObject,
-    match_re: LispObject,
-    nosort: LispObject,
-) -> LispObject {
-    let dnexp = unsafe { Fexpand_file_name(directory, Qnil) };
-
-    let handler = unsafe { Ffind_file_name_handler(dnexp, Qdirectory_files) };
-    if handler.is_not_nil() {
-        return call!(handler, Qdirectory_files, dnexp, full, match_re, nosort);
-    }
-
-    directory_files_core(dnexp, full, match_re, nosort, false, Qnil)
-}
-
-pub fn directory_files_and_attributes_intro(
-    directory: LispObject,
-    full: LispObject,
-    match_re: LispObject,
-    nosort: LispObject,
-    id_format: LispObject,
-) -> LispObject {
-    let dnexp = unsafe { Fexpand_file_name(directory, Qnil) };
-
-    let handler = unsafe { Ffind_file_name_handler(dnexp, Qdirectory_files_and_attributes) };
-    if handler.is_not_nil() {
-        return call!(
-            handler,
-            Qdirectory_files_and_attributes,
-            dnexp,
-            full,
-            match_re,
-            nosort,
-            id_format
-        );
-    }
-
-    directory_files_core(dnexp, full, match_re, nosort, true, id_format)
 }
 
 struct FileAttrs {
