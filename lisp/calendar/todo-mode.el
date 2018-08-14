@@ -1242,9 +1242,10 @@ this command should be used with caution."
   (widen)
   (todo-edit-mode)
   (remove-overlays)
-  (display-warning 'todo (format "\
+  (display-warning
+   'todo (format "\
 
-Type %s to return to Todo mode.
+Type %s to return to Todo%s mode.
 
 This also runs a file format check and signals an error if
 the format has become invalid.  However, this check cannot
@@ -1254,7 +1255,12 @@ You can repair this inconsistency by invoking the command
 `todo-repair-categories-sexp', but this will revert any
 renumbering of the categories you have made, so you will
 have to renumber them again (see `(todo-mode) Reordering
-Categories')." (substitute-command-keys "\\[todo-edit-quit]"))))
+Categories').
+"
+                 (substitute-command-keys "\\[todo-edit-quit]")
+                 (if (equal "toda" (file-name-extension
+                                    (buffer-file-name)))
+                     " Archive" ""))))
 
 (defun todo-add-category (&optional file cat)
   "Add a new category to a todo file.
@@ -2240,7 +2246,9 @@ made in the number or names of categories."
       ;; (todo-repair-categories-sexp)
       ;; Compare (todo-make-categories-list t) with sexp and if
       ;; different ask (todo-update-categories-sexp) ?
-      (todo-mode)
+      (if (equal (file-name-extension (buffer-file-name)) "toda")
+          (todo-archive-mode)
+        (todo-mode))
       (let* ((cat-beg (concat "^" (regexp-quote todo-category-beg)
 			      "\\(.*\\)$"))
 	     (curline (buffer-substring-no-properties
@@ -5094,7 +5102,7 @@ again."
 
 (defun todo-check-format ()
   "Signal an error if the current todo file is ill-formatted.
-Otherwise return t.  Display a message if the file is well-formed
+Otherwise return t.  Display a warning if the file is well-formed
 but the categories sexp differs from the current value of
 `todo-categories'."
   (save-excursion
@@ -5128,12 +5136,14 @@ but the categories sexp differs from the current value of
 	    (forward-line)))
 	;; Warn user if categories sexp has changed.
 	(unless (string= ssexp cats)
-	  (message (concat "The sexp at the beginning of the file differs "
-			   "from the value of `todo-categories'.\n"
-			   "If the sexp is wrong, you can fix it with "
-			   "M-x todo-repair-categories-sexp,\n"
-			   "but note this reverts any changes you have "
-			   "made in the order of the categories."))))))
+          (display-warning 'todo "\
+
+The sexp at the beginning of the file differs from the value of
+`todo-categories'. If the sexp is wrong, you can fix it with
+M-x todo-repair-categories-sexp, but note this reverts any
+changes you have made in the order of the categories.
+"
+                           )))))
   t)
 
 (defun todo-item-start ()
@@ -6711,32 +6721,36 @@ Added to `window-configuration-change-hook' in Todo mode."
   (setq-local todo-current-todo-file (file-truename (buffer-file-name)))
   (setq-local todo-show-done-only t))
 
-(defun todo-mode-external-set ()
-  "Set `todo-categories' externally to `todo-current-todo-file'."
-  (setq-local todo-current-todo-file todo-global-current-todo-file)
-  (let ((cats (with-current-buffer
-		  ;; Can't use find-buffer-visiting when
-		  ;; `todo-show-categories-table' is called on first
-		  ;; invocation of `todo-show', since there is then
-		  ;; no buffer visiting the current file.
-		  (find-file-noselect todo-current-todo-file 'nowarn)
-		(or todo-categories
-		    ;; In Todo Edit mode todo-categories is now nil
-		    ;; since it uses same buffer as Todo mode but
-		    ;; doesn't have the latter's local variables.
-		    (save-excursion
-		      (goto-char (point-min))
-		      (read (buffer-substring-no-properties
-			     (line-beginning-position)
-			     (line-end-position))))))))
-    (setq-local todo-categories cats)))
+;; (defun todo-mode-external-set ()
+;;   "Set `todo-categories' externally to `todo-current-todo-file'."
+;;   (setq-local todo-current-todo-file todo-global-current-todo-file)
+;;   (let ((cats (with-current-buffer
+;; 		  ;; Can't use find-buffer-visiting when
+;; 		  ;; `todo-show-categories-table' is called on first
+;; 		  ;; invocation of `todo-show', since there is then
+;; 		  ;; no buffer visiting the current file.
+;; 		  (find-file-noselect todo-current-todo-file 'nowarn)
+;; 		(or todo-categories
+;; 		    ;; In Todo Edit mode todo-categories is now nil
+;; 		    ;; since it uses same buffer as Todo mode but
+;; 		    ;; doesn't have the latter's local variables.
+;; 		    (save-excursion
+;; 		      (goto-char (point-min))
+;; 		      (read (buffer-substring-no-properties
+;; 			     (line-beginning-position)
+;; 			     (line-end-position))))))))
+;;     (setq-local todo-categories cats)))
 
 (define-derived-mode todo-edit-mode text-mode "Todo-Ed"
   "Major mode for editing multiline todo items.
 
 \\{todo-edit-mode-map}"
   (todo-modes-set-1)
-  (todo-mode-external-set)
+  ;; (todo-mode-external-set)
+  (setq-local todo-current-todo-file (file-truename (buffer-file-name)))
+  (when (= (buffer-size) (- (point-max) (point-min)))
+    ;; Only need this when editing the whole file not just an item.
+    (setq-local todo-categories (todo-set-categories)))
   (setq buffer-read-only nil))
 
 (put 'todo-categories-mode 'mode-class 'special)
@@ -6745,7 +6759,16 @@ Added to `window-configuration-change-hook' in Todo mode."
   "Major mode for displaying and editing todo categories.
 
 \\{todo-categories-mode-map}"
-  (todo-mode-external-set))
+  ;; (todo-mode-external-set)
+  (setq-local todo-current-todo-file todo-global-current-todo-file)
+  (setq-local todo-categories
+	      ;; Can't use find-buffer-visiting when
+	      ;; `todo-show-categories-table' is called on first
+	      ;; invocation of `todo-show', since there is then no
+	      ;; buffer visiting the current file.
+              (with-current-buffer (find-file-noselect
+                                    todo-current-todo-file 'nowarn)
+                todo-categories)))
 
 (put 'todo-filtered-items-mode 'mode-class 'special)
 

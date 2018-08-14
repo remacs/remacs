@@ -763,6 +763,24 @@ The highlighting should remain enabled."
    (ert-simulate-command '(forward-line)) ; Now on first done item.
    (should (eq 'hl-line (get-char-property (point) 'face)))))
 
+(ert-deftest todo-test-edit-quit ()
+  "Test result of exiting todo-edit-mode on a whole file.
+Exiting should return to the same todo-mode or todo-archive-mode
+buffer from which the editing command was invoked."
+  (with-todo-test
+   (todo-test--show 1)
+   (let ((buf (current-buffer)))
+     (todo-edit-file)
+     (todo-edit-quit)
+     (should (eq (current-buffer) buf))
+     (should (eq major-mode 'todo-mode))
+   (todo-find-archive)
+   (let ((buf (current-buffer)))
+     (todo-edit-file)
+     (todo-edit-quit)
+     (should (eq (current-buffer) buf))
+     (should (eq major-mode 'todo-archive-mode))))))
+
 
 (provide 'todo-mode-tests)
 ;;; todo-mode-tests.el ends here
