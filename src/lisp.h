@@ -1191,7 +1191,8 @@ XFIXNUMPTR (Lisp_Object a)
 INLINE Lisp_Object
 make_pointer_integer_unsafe (void *p)
 {
-  return TAG_PTR (Lisp_Int0, p);
+  Lisp_Object a = TAG_PTR (Lisp_Int0, p);
+  return a;
 }
 
 INLINE Lisp_Object
