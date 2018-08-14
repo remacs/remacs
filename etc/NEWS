@@ -59,6 +59,11 @@ option --enable-check-lisp-object-type is therefore no longer as
 useful and so is no longer enabled by default in developer builds,
 to reduce differences between developer and production builds.
 
+** Ibuffer
+
+---
+*** New toggle 'ibuffer-do-toggle-lock', bound to 'L'.
+
 ** Gnus
 
 +++
