@@ -5734,7 +5734,7 @@ DEF_DLL_FN (void, png_read_end, (png_structp, png_infop));
 DEF_DLL_FN (void, png_error, (png_structp, png_const_charp));
 
 #  if (PNG_LIBPNG_VER >= 10500)
-DEF_DLL_FN (void, png_longjmp, (png_structp, int)) PNG_NORETURN;
+DEF_DLL_FN (void, png_longjmp, (png_structp, int) PNG_NORETURN);
 DEF_DLL_FN (jmp_buf *, png_set_longjmp_fn,
 	    (png_structp, png_longjmp_ptr, size_t));
 #  endif /* libpng version >= 1.5 */

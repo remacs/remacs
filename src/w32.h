@@ -164,6 +164,10 @@ extern void reset_standard_handles (int in, int out,
 /* Return the string resource associated with KEY of type TYPE.  */
 extern LPBYTE w32_get_resource (const char * key, LPDWORD type);
 
+/* Load a function from a DLL.  Defined in this file.  */
+typedef void (* VOIDFNPTR) (void);
+INLINE VOIDFNPTR get_proc_addr (HINSTANCE handle, LPCSTR fname);
+
 extern void release_listen_threads (void);
 extern void init_ntproc (int);
 extern void term_ntproc (int);
@@ -241,14 +245,30 @@ extern ssize_t emacs_gnutls_push (gnutls_transport_ptr_t p,
                                   const void* buf, size_t sz);
 #endif /* HAVE_GNUTLS */
 
-/* Definine a function that will be loaded from a DLL.  */
-#define DEF_DLL_FN(type, func, args) static type (FAR CDECL *fn_##func) args
+
+
+/* Load a function address from a DLL. Cast the result via "VOIDFNPTR"
+   to pacify -Wcast-function-type in GCC 8.1.  */
+INLINE VOIDFNPTR
+get_proc_addr (HINSTANCE handle, LPCSTR fname)
+{
+  return (VOIDFNPTR) GetProcAddress (handle, fname);
+}
+
+/* Define a function that will be loaded from a DLL.  The variable
+   arguments should contain the argument list for the function, and
+   optionally be followed by function attributes.  For example:
+   DEF_DLL_FN (void, png_longjmp, (png_structp, int) PNG_NORETURN);
+  */
+#define DEF_DLL_FN(type, func, ...)                     \
+  typedef type (CDECL *W32_PFN_##func) __VA_ARGS__;     \
+  static W32_PFN_##func fn_##func
 
 /* Load a function from the DLL.  */
 #define LOAD_DLL_FN(lib, func)						\
   do									\
     {									\
-      fn_##func = (void *) GetProcAddress (lib, #func);			\
+      fn_##func = (W32_PFN_##func) get_proc_addr (lib, #func);   \
       if (!fn_##func)							\
 	return false;							\
     }									\

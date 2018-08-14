@@ -2640,7 +2640,7 @@ setup_w32_kbdhook (void)
   if (w32_kbdhook_active)
     {
       IsDebuggerPresent_Proc is_debugger_present = (IsDebuggerPresent_Proc)
-	GetProcAddress (GetModuleHandle ("kernel32.dll"), "IsDebuggerPresent");
+	get_proc_addr (GetModuleHandle ("kernel32.dll"), "IsDebuggerPresent");
       if (is_debugger_present && is_debugger_present ())
 	return;
     }
@@ -2655,7 +2655,7 @@ setup_w32_kbdhook (void)
 	 (https://support.microsoft.com/en-us/kb/124103) is used for
 	 NT 4 systems.  */
       GetConsoleWindow_Proc get_console = (GetConsoleWindow_Proc)
-	GetProcAddress (GetModuleHandle ("kernel32.dll"), "GetConsoleWindow");
+	get_proc_addr (GetModuleHandle ("kernel32.dll"), "GetConsoleWindow");
 
       if (get_console != NULL)
 	kbdhook.console = get_console ();
@@ -9117,9 +9117,9 @@ DEFUN ("file-system-info", Ffile_system_info, Sfile_system_info, 1, 1, 0,
   {
     HMODULE hKernel = GetModuleHandle ("kernel32");
     GetDiskFreeSpaceExW_Proc pfn_GetDiskFreeSpaceExW =
-      (GetDiskFreeSpaceExW_Proc) GetProcAddress (hKernel, "GetDiskFreeSpaceExW");
+      (GetDiskFreeSpaceExW_Proc) get_proc_addr (hKernel, "GetDiskFreeSpaceExW");
     GetDiskFreeSpaceExA_Proc pfn_GetDiskFreeSpaceExA =
-      (GetDiskFreeSpaceExA_Proc) GetProcAddress (hKernel, "GetDiskFreeSpaceExA");
+      (GetDiskFreeSpaceExA_Proc) get_proc_addr (hKernel, "GetDiskFreeSpaceExA");
     bool have_pfn_GetDiskFreeSpaceEx =
       ((w32_unicode_filenames && pfn_GetDiskFreeSpaceExW)
        || (!w32_unicode_filenames && pfn_GetDiskFreeSpaceExA));
@@ -9694,8 +9694,8 @@ get_dll_version (const char *dll_name)
 
   if (hdll)
     {
-      DLLGETVERSIONPROC pDllGetVersion
-	= (DLLGETVERSIONPROC) GetProcAddress (hdll, "DllGetVersion");
+      DLLGETVERSIONPROC pDllGetVersion = (DLLGETVERSIONPROC)
+        get_proc_addr (hdll, "DllGetVersion");
 
       if (pDllGetVersion)
 	{
@@ -10662,9 +10662,8 @@ void
 w32_reset_stack_overflow_guard (void)
 {
   if (resetstkoflw == NULL)
-    resetstkoflw =
-      (_resetstkoflw_proc)GetProcAddress (GetModuleHandle ("msvcrt.dll"),
-					  "_resetstkoflw");
+    resetstkoflw = (_resetstkoflw_proc)
+      get_proc_addr (GetModuleHandle ("msvcrt.dll"), "_resetstkoflw");
   /* We ignore the return value.  If _resetstkoflw fails, the next
      stack overflow will crash the program.  */
   if (resetstkoflw != NULL)
@@ -10738,9 +10737,8 @@ w32_backtrace (void **buffer, int limit)
   if (!s_pfn_CaptureStackBackTrace)
     {
       hm_kernel32 = LoadLibrary ("Kernel32.dll");
-      s_pfn_CaptureStackBackTrace =
-	(CaptureStackBackTrace_proc) GetProcAddress (hm_kernel32,
-						     "RtlCaptureStackBackTrace");
+      s_pfn_CaptureStackBackTrace = (CaptureStackBackTrace_proc)
+        get_proc_addr (hm_kernel32, "RtlCaptureStackBackTrace");
     }
   if (s_pfn_CaptureStackBackTrace)
     return s_pfn_CaptureStackBackTrace (0, min (BACKTRACE_LIMIT_MAX, limit),
@@ -10873,29 +10871,29 @@ globals_of_w32fns (void)
     it dynamically.  Do it once, here, instead of every time it is used.
   */
   track_mouse_event_fn = (TrackMouseEvent_Proc)
-    GetProcAddress (user32_lib, "TrackMouseEvent");
+    get_proc_addr (user32_lib, "TrackMouseEvent");
 
   monitor_from_point_fn = (MonitorFromPoint_Proc)
-    GetProcAddress (user32_lib, "MonitorFromPoint");
+    get_proc_addr (user32_lib, "MonitorFromPoint");
   get_monitor_info_fn = (GetMonitorInfo_Proc)
-    GetProcAddress (user32_lib, "GetMonitorInfoA");
+    get_proc_addr (user32_lib, "GetMonitorInfoA");
   monitor_from_window_fn = (MonitorFromWindow_Proc)
-    GetProcAddress (user32_lib, "MonitorFromWindow");
+    get_proc_addr (user32_lib, "MonitorFromWindow");
   enum_display_monitors_fn = (EnumDisplayMonitors_Proc)
-    GetProcAddress (user32_lib, "EnumDisplayMonitors");
+    get_proc_addr (user32_lib, "EnumDisplayMonitors");
   get_title_bar_info_fn = (GetTitleBarInfo_Proc)
-    GetProcAddress (user32_lib, "GetTitleBarInfo");
+    get_proc_addr (user32_lib, "GetTitleBarInfo");
 
   {
     HMODULE imm32_lib = GetModuleHandle ("imm32.dll");
     get_composition_string_fn = (ImmGetCompositionString_Proc)
-      GetProcAddress (imm32_lib, "ImmGetCompositionStringW");
+      get_proc_addr (imm32_lib, "ImmGetCompositionStringW");
     get_ime_context_fn = (ImmGetContext_Proc)
-      GetProcAddress (imm32_lib, "ImmGetContext");
+      get_proc_addr (imm32_lib, "ImmGetContext");
     release_ime_context_fn = (ImmReleaseContext_Proc)
-      GetProcAddress (imm32_lib, "ImmReleaseContext");
+      get_proc_addr (imm32_lib, "ImmReleaseContext");
     set_ime_composition_window_fn = (ImmSetCompositionWindow_Proc)
-      GetProcAddress (imm32_lib, "ImmSetCompositionWindow");
+      get_proc_addr (imm32_lib, "ImmSetCompositionWindow");
   }
 
   except_code = 0;
