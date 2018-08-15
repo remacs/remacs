@@ -433,7 +433,8 @@ highlighting will not update as you type."
   "Set face of each match of REGEXP to FACE.
 Interactively, prompt for REGEXP using `read-regexp', then FACE.
 Use the global history list for FACE.  Limit face setting to the
-corresponding SUBEXP of REGEXP.
+corresponding SUBEXP (interactively, the prefix argument) of REGEXP.
+If SUBEXP is omitted or nil, the entire REGEXP is highlighted.
 
 Use Font lock mode, if enabled, to highlight REGEXP.  Otherwise,
 use overlays for highlighting.  If overlays are used, the
@@ -689,7 +690,9 @@ with completion and history."
     (intern face)))
 
 (defun hi-lock-set-pattern (regexp face &optional subexp)
-  "Highlight SUBEXP of REGEXP with face FACE."
+  "Highlight SUBEXP of REGEXP with face FACE.
+If omitted or nil, SUBEXP defaults to zero, i.e. the entire
+REGEXP is highlighted."
   ;; Hashcons the regexp, so it can be passed to remove-overlays later.
   (setq regexp (hi-lock--hashcons regexp))
   (setq subexp (or subexp 0))

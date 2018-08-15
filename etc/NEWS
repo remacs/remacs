@@ -720,7 +720,8 @@ UUID at point.
 
 +++
 *** 'highlight-regexp' can now highlight subexpressions.
-The command accepts a prefix argument to choose the subexpression.
+The now command accepts a prefix numeric argument to choose the
+subexpression.
 
 
 * New Modes and Packages in Emacs 27.1
