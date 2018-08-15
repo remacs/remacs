@@ -394,6 +394,10 @@ buffer with the article(s) attached.
 *** 'erc-button-google-url' has been renamed 'erc-button-search-url'
 and its value has been changed to Duck Duck Go.
 
+** EUDC
+
+*** XEmacs support has been removed.
+
 ** eww/shr
 
 *** When opening external links in eww/shr (typically with the

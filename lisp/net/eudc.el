@@ -630,9 +630,7 @@ These are the special commands of EUDC mode:
     n -- Move to next record.
     p -- Move to previous record.
     b -- Insert record at point into the BBDB database."
-  (if (not (featurep 'xemacs))
-      (easy-menu-define eudc-emacs-menu eudc-mode-map "" (eudc-menu))
-    (setq mode-popup-menu (eudc-menu))))
+  (easy-menu-define eudc-emacs-menu eudc-mode-map "" (eudc-menu)))
 
 ;;}}}
 
@@ -1140,33 +1138,11 @@ queries the server for the existing fields and displays a corresponding form."
 	    eudc-tail-menu)))
 
 (defun eudc-install-menu ()
-  (cond
-   ((and (featurep 'xemacs) (featurep 'menubar))
-    (add-submenu '("Tools") (eudc-menu)))
-   ((not (featurep 'xemacs))
-    (cond
-     ((fboundp 'easy-menu-create-menu)
-      (define-key
-	global-map
-	[menu-bar tools directory-search]
-	(cons "Directory Servers"
-	      (easy-menu-create-menu "Directory Servers" (cdr (eudc-menu))))))
-     ((fboundp 'easy-menu-add-item)
-      (let ((menu (eudc-menu)))
-	(easy-menu-add-item nil '("tools") (easy-menu-create-menu (car menu)
-								  (cdr menu)))))
-     ((fboundp 'easy-menu-create-keymaps)
-      (easy-menu-define eudc-menu-map eudc-mode-map "Directory Client Menu" (eudc-menu))
-      (define-key
-	global-map
-	[menu-bar tools eudc]
-	(cons "Directory Servers"
-	      (easy-menu-create-keymaps "Directory Servers"
-                                        (cdr (eudc-menu))))))
-     (t
-      (error "Unknown version of easymenu"))))
-   ))
-
+  (define-key
+    global-map
+    [menu-bar tools directory-search]
+    (cons "Directory Servers"
+	  (easy-menu-create-menu "Directory Servers" (cdr (eudc-menu))))))
 
 ;;; Load time initializations :
 
@@ -1182,7 +1158,7 @@ queries the server for the existing fields and displays a corresponding form."
   (eudc-install-menu))
 
 
-;; The following installs a short menu for EUDC at XEmacs startup.
+;; The following installs a short menu for EUDC at Emacs startup.
 
 ;;;###autoload
 (defun eudc-load-eudc ()

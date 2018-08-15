@@ -155,40 +155,21 @@ display a button."
   "Toggle inline display of an image."
   (interactive)
   (when (eudc-bob-can-display-inline-images)
-    (cond ((featurep 'xemacs)
-	   (let ((overlays (append (overlays-at (1- (point)))
-				   (overlays-at (point))))
-		 overlay glyph)
-	     (setq overlay (car overlays))
-	     (while (and overlay
-			 (not (setq glyph (overlay-get overlay 'glyph))))
-	       (setq overlays (cdr overlays))
-	       (setq overlay (car overlays)))
-	     (if overlay
-		 (if (overlay-get overlay 'end-glyph)
-		     (progn
-		       (overlay-put overlay 'end-glyph nil)
-		       (overlay-put overlay 'invisible nil))
-		   (overlay-put overlay 'end-glyph glyph)
-		   (overlay-put overlay 'invisible t)))))
-	  (t
-	   (let* ((overlays (append (overlays-at (1- (point)))
-				    (overlays-at (point))))
-		  image)
-
-	     ;; Search overlay with an image.
-	     (while (and overlays (null image))
-	       (let ((prop (overlay-get (car overlays) 'eudc-image)))
-		 (if (eq 'image (car-safe prop))
-		     (setq image prop)
-		   (setq overlays (cdr overlays)))))
-
-	     ;; Toggle that overlay's image display.
-	     (when overlays
-	       (let ((overlay (car overlays)))
-		 (overlay-put overlay 'display
-			      (if (overlay-get overlay 'display)
-				  nil image)))))))))
+    (let* ((overlays (append (overlays-at (1- (point)))
+			     (overlays-at (point))))
+	   image)
+      ;; Search overlay with an image.
+      (while (and overlays (null image))
+	(let ((prop (overlay-get (car overlays) 'eudc-image)))
+	  (if (eq 'image (car-safe prop))
+	      (setq image prop)
+	    (setq overlays (cdr overlays)))))
+      ;; Toggle that overlay's image display.
+      (when overlays
+	(let ((overlay (car overlays)))
+	  (overlay-put overlay 'display
+		       (if (overlay-get overlay 'display)
+			   nil image)))))))
 
 (defun eudc-bob-display-audio (data)
   "Display a button for audio DATA."
@@ -272,25 +253,19 @@ display a button."
   (interactive "@e")
   (run-hooks 'activate-menubar-hook)
   (eudc-jump-to-event event)
-  (if (featurep 'xemacs)
-      (progn
-	(run-hooks 'activate-popup-menu-hook)
-	(popup-menu (eudc-bob-menu)))
-    (let ((result (x-popup-menu t (eudc-bob-menu)))
-	  command)
-      (if result
-	  (progn
-	    (setq command (lookup-key (eudc-bob-menu)
-				      (apply 'vector result)))
-	    (command-execute command))))))
+  (let ((result (x-popup-menu t (eudc-bob-menu)))
+	command)
+    (if result
+	(progn
+	  (setq command (lookup-key (eudc-bob-menu)
+				    (apply 'vector result)))
+	  (command-execute command)))))
 
 (setq eudc-bob-generic-keymap
       (let ((map (make-sparse-keymap)))
 	(define-key map "s" 'eudc-bob-save-object)
 	(define-key map "!" 'eudc-bob-pipe-object-to-external-program)
-	(define-key map (if (featurep 'xemacs)
-			    [button3]
-			  [down-mouse-3]) 'eudc-bob-popup-menu)
+	(define-key map [down-mouse-3] 'eudc-bob-popup-menu)
 	map))
 
 (setq eudc-bob-image-keymap
@@ -301,25 +276,19 @@ display a button."
 (setq eudc-bob-sound-keymap
       (let ((map (make-sparse-keymap)))
 	(define-key map [return] 'eudc-bob-play-sound-at-point)
-	(define-key map (if (featurep 'xemacs)
-			    [button2]
-			  [down-mouse-2]) 'eudc-bob-play-sound-at-mouse)
+	(define-key map [down-mouse-2] 'eudc-bob-play-sound-at-mouse)
 	map))
 
 (setq eudc-bob-url-keymap
       (let ((map (make-sparse-keymap)))
 	(define-key map [return] 'browse-url-at-point)
-	(define-key map (if (featurep 'xemacs)
-			    [button2]
-			  [down-mouse-2]) 'browse-url-at-mouse)
+	(define-key map [down-mouse-2] 'browse-url-at-mouse)
 	map))
 
 (setq eudc-bob-mail-keymap
       (let ((map (make-sparse-keymap)))
 	(define-key map [return] 'goto-address-at-point)
-	(define-key map (if (featurep 'xemacs)
-			    [button2]
-			  [down-mouse-2]) 'goto-address-at-point)
+	(define-key map [down-mouse-2] 'goto-address-at-point)
 	map))
 
 (set-keymap-parent eudc-bob-image-keymap eudc-bob-generic-keymap)
@@ -327,19 +296,18 @@ display a button."
 
 ;; If the first arguments can be nil here, then these 3 can be
 ;; defconsts once more.
-(when (not (featurep 'xemacs))
-  (easy-menu-define eudc-bob-generic-menu
-    eudc-bob-generic-keymap
-    ""
-    eudc-bob-generic-menu)
-  (easy-menu-define eudc-bob-image-menu
-    eudc-bob-image-keymap
-    ""
-    eudc-bob-image-menu)
-  (easy-menu-define eudc-bob-sound-menu
-    eudc-bob-sound-keymap
-    ""
-    eudc-bob-sound-menu))
+(easy-menu-define eudc-bob-generic-menu
+  eudc-bob-generic-keymap
+  ""
+  eudc-bob-generic-menu)
+(easy-menu-define eudc-bob-image-menu
+  eudc-bob-image-keymap
+  ""
+  eudc-bob-image-menu)
+(easy-menu-define eudc-bob-sound-menu
+  eudc-bob-sound-keymap
+  ""
+  eudc-bob-sound-menu)
 
 ;;;###autoload
 (defun eudc-display-generic-binary (data)
