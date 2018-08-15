@@ -457,7 +457,7 @@ INIT is either the initial content of the field or a function,
 which is called to determine the initial content of the field.
 ALTERNATIVE if non-nil is an integer that numbers sets of
 alternatives, starting from zero."
-  :group 'BibTeX
+  :group 'bibtex
   :version "26.1"                       ; add Conference
   :type 'bibtex-entry-alist)
 (put 'bibtex-BibTeX-entry-alist 'risky-local-variable t)
