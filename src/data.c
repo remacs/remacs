@@ -3350,8 +3350,7 @@ representation.  */)
 	return make_fixnum (mpz_popcount (XBIGNUM (value)->value));
       mpz_t tem;
       mpz_init (tem);
-      mpz_neg (tem, XBIGNUM (value)->value);
-      mpz_sub_ui (tem, tem, 1);
+      mpz_com (tem, XBIGNUM (value)->value);
       Lisp_Object result = make_fixnum (mpz_popcount (tem));
       mpz_clear (tem);
       return result;
