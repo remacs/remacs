@@ -3793,28 +3793,17 @@ mpz_set_intmax_slow (mpz_t result, intmax_t v)
   /* If long is larger then a faster path is taken.  */
   eassert (sizeof (intmax_t) > sizeof (long));
 
-  bool negate = false;
-  if (v < 0)
-    {
-      v = -v;
-      negate = true;
-    }
-  mpz_set_uintmax_slow (result, (uintmax_t) v);
-  if (negate)
-    mpz_neg (result, result);
-}
-
-void
-mpz_set_uintmax_slow (mpz_t result, uintmax_t v)
-{
-  /* If long is larger then a faster path is taken.  */
-  eassert (sizeof (uintmax_t) > sizeof (unsigned long));
+  bool complement = v < 0;
+  if (complement)
+    v = -1 - v;
 
   /* COUNT = 1 means just a single word of the given size.  ORDER = -1
      is arbitrary since there's only a single word.  ENDIAN = 0 means
      use the native endian-ness.  NAILS = 0 means use the whole
      word.  */
-  mpz_import (result, 1, -1, sizeof (uintmax_t), 0, 0, &v);
+  mpz_import (result, 1, -1, sizeof v, 0, 0, &v);
+  if (complement)
+    mpz_com (result, result);
 }
 
 

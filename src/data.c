@@ -3006,7 +3006,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	    {
 	      mpz_t tem;
 	      mpz_init (tem);
-	      mpz_set_uintmax (tem, XUFIXNUM (val));
+	      mpz_set_intmax (tem, XFIXNUM (val));
 	      mpz_and (accum, accum, tem);
 	      mpz_clear (tem);
 	    }
@@ -3018,7 +3018,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	    {
 	      mpz_t tem;
 	      mpz_init (tem);
-	      mpz_set_uintmax (tem, XUFIXNUM (val));
+	      mpz_set_intmax (tem, XFIXNUM (val));
 	      mpz_ior (accum, accum, tem);
 	      mpz_clear (tem);
 	    }
@@ -3030,7 +3030,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	    {
 	      mpz_t tem;
 	      mpz_init (tem);
-	      mpz_set_uintmax (tem, XUFIXNUM (val));
+	      mpz_set_intmax (tem, XFIXNUM (val));
 	      mpz_xor (accum, accum, tem);
 	      mpz_clear (tem);
 	    }

@@ -597,8 +597,22 @@ comparing the subr with a much slower lisp implementation."
   (should (< (1- most-negative-fixnum) most-negative-fixnum))
   (should (fixnump (1- (1+ most-positive-fixnum)))))
 
+(ert-deftest data-tests-logand ()
+  (should (= -1 (logand -1)))
+  (let ((n (* 2 most-negative-fixnum)))
+    (should (= (logand -1 n) n))))
+
 (ert-deftest data-tests-logcount ()
   (should (= (logcount (read "#xffffffffffffffffffffffffffffffff")) 128)))
+
+(ert-deftest data-tests-logior ()
+  (should (= -1 (logior -1)))
+  (should (= -1 (logior most-positive-fixnum most-negative-fixnum))))
+
+(ert-deftest data-tests-logxor ()
+  (should (= -1 (logxor -1)))
+  (let ((n (1+ most-positive-fixnum)))
+    (should (= (logxor -1 n) (lognot n)))))
 
 (ert-deftest data-tests-minmax ()
   (let ((a (- most-negative-fixnum 1))
