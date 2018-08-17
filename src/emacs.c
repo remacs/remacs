@@ -673,14 +673,32 @@ close_output_streams (void)
     _exit (EXIT_FAILURE);
 }
 
-/* Wrapper function for GMP.  */
+/* Memory allocation functions for GMP.  */
+
+static void
+check_bignum_size (size_t size)
+{
+  /* Do not create a bignum whose log base 2 could exceed fixnum range.
+     This way, functions like mpz_popcount return values in fixnum range.
+     It may also help to avoid other problems with outlandish bignums.  */
+  if (MOST_POSITIVE_FIXNUM / CHAR_BIT < size)
+    error ("Integer too large to be represented");
+}
+
+static void * ATTRIBUTE_MALLOC
+xmalloc_for_gmp (size_t size)
+{
+  check_bignum_size (size);
+  return xmalloc (size);
+}
+
 static void *
 xrealloc_for_gmp (void *ptr, size_t ignore, size_t size)
 {
+  check_bignum_size (size);
   return xrealloc (ptr, size);
 }
 
-/* Wrapper function for GMP.  */
 static void
 xfree_for_gmp (void *ptr, size_t ignore)
 {
@@ -785,7 +803,7 @@ main (int argc, char **argv)
   init_standard_fds ();
   atexit (close_output_streams);
 
-  mp_set_memory_functions (xmalloc, xrealloc_for_gmp, xfree_for_gmp);
+  mp_set_memory_functions (xmalloc_for_gmp, xrealloc_for_gmp, xfree_for_gmp);
 
   sort_args (argc, argv);
   argc = 0;
