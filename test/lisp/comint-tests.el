@@ -38,7 +38,7 @@
     "[sudo] password for user:" ; Ubuntu sudo
     "Password (again):"
     "Enter password:"
-    "Mot de Passe:" ; localized
+    "Mot de Passe :" ; localized (Bug#29729)
     "Passwort:") ; localized
   "List of strings that should match `comint-password-prompt-regexp'.")
 
