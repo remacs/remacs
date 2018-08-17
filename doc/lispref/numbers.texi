@@ -37,7 +37,7 @@ numbers have a fixed amount of precision.
   Integers in Emacs Lisp can have arbitrary precision.
 
   Under the hood, though, there are two kinds of integers: smaller
-ones, called @dfn{fixnums}, and larger ones, called @dfn{bignums}
+ones, called @dfn{fixnums}, and larger ones, called @dfn{bignums}.
 Some functions in Emacs only accept fixnums.  Also, while fixnums can
 always be compared for equality with @code{eq}, bignums require the
 use of @code{eql}.

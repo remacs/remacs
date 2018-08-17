@@ -858,9 +858,18 @@ otherwise, it returns nil.  'format-proper-list-p' is now an obsolete
 alias for the new function.
 
 +++
-** Emacs Lisp integers can be of arbitrary precision.  The new
-predicates 'bignump' and 'fixnump' can be used to distinguish between
-the types of integers.
+** Emacs Lisp integers can now be of arbitrary size.
+Emacs uses the GNU Multiple Precision (GMP) library to support
+integers whose size is too large to support natively.  The integers
+supported natively are known as "fixnums", while the larger ones are
+"bignums".  The new predicates 'bignump' and 'fixnump' can be used to
+distinguish between these two types of integers.
+
+All the arithmetic, comparison, and logical (a.k.a. "bitwise")
+operations where bignums make sense now support both fixnums and
+bignums.  However, note that unlike fixnums, bignums will not compare
+equal with 'eq', you must use 'eql' instead.  (Numerical comparison
+with '=' works on both, of course.)
 
 ** define-minor-mode automatically documents the meaning of ARG
 
