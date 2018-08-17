@@ -266,30 +266,43 @@ DEFUN ("sqrt", Fsqrt, Ssqrt, 1, 1, 0,
 
 DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
        doc: /* Return the absolute value of ARG.  */)
-  (register Lisp_Object arg)
+  (Lisp_Object arg)
 {
   CHECK_NUMBER (arg);
 
-  if (BIGNUMP (arg))
+  if (FIXNUMP (arg))
     {
-      mpz_t val;
-      mpz_init (val);
-      mpz_abs (val, XBIGNUM (arg)->value);
-      arg = make_number (val);
-      mpz_clear (val);
-    }
-  else if (FIXNUMP (arg) && XFIXNUM (arg) == MOST_NEGATIVE_FIXNUM)
-    {
-      mpz_t val;
-      mpz_init (val);
-      mpz_set_intmax (val, - MOST_NEGATIVE_FIXNUM);
-      arg = make_number (val);
-      mpz_clear (val);
+      if (XFIXNUM (arg) < 0)
+	{
+	  EMACS_INT absarg = -XFIXNUM (arg);
+	  if (absarg <= MOST_POSITIVE_FIXNUM)
+	    arg = make_fixnum (absarg);
+	  else
+	    {
+	      mpz_t val;
+	      mpz_init (val);
+	      mpz_set_intmax (val, absarg);
+	      arg = make_number (val);
+	      mpz_clear (val);
+	    }
+	}
     }
   else if (FLOATP (arg))
-    arg = make_float (fabs (XFLOAT_DATA (arg)));
-  else if (XFIXNUM (arg) < 0)
-    XSETINT (arg, - XFIXNUM (arg));
+    {
+      if (signbit (XFLOAT_DATA (arg)))
+	arg = make_float (- XFLOAT_DATA (arg));
+    }
+  else
+    {
+      if (mpz_sgn (XBIGNUM (arg)->value) < 0)
+	{
+	  mpz_t val;
+	  mpz_init (val);
+	  mpz_neg (val, XBIGNUM (arg)->value);
+	  arg = make_number (val);
+	  mpz_clear (val);
+	}
+    }
 
   return arg;
 }
