@@ -2386,140 +2386,37 @@ bool-vector.  IDX starts at 0.  */)
 
 /* Arithmetic functions */
 
-#ifndef isnan
-# define isnan(x) ((x) != (x))
-#endif
-
-static Lisp_Object
-bignumcompare (Lisp_Object num1, Lisp_Object num2,
-	       enum Arith_Comparison comparison)
-{
-  int cmp;
-  bool test;
-
-  if (BIGNUMP (num1))
-    {
-      if (FLOATP (num2))
-	{
-	  /* Note that GMP doesn't define comparisons against NaN, so
-	     we need to handle them specially.  */
-	  if (isnan (XFLOAT_DATA (num2)))
-	    return Qnil;
-	  cmp = mpz_cmp_d (XBIGNUM (num1)->value, XFLOAT_DATA (num2));
-	}
-      else if (FIXNUMP (num2))
-        {
-          if (sizeof (EMACS_INT) > sizeof (long) && XFIXNUM (num2) > LONG_MAX)
-            {
-              mpz_t tem;
-              mpz_init (tem);
-              mpz_set_intmax (tem, XFIXNUM (num2));
-              cmp = mpz_cmp (XBIGNUM (num1)->value, tem);
-              mpz_clear (tem);
-            }
-          else
-            cmp = mpz_cmp_si (XBIGNUM (num1)->value, XFIXNUM (num2));
-        }
-      else
-	{
-	  eassume (BIGNUMP (num2));
-	  cmp = mpz_cmp (XBIGNUM (num1)->value, XBIGNUM (num2)->value);
-	}
-    }
-  else
-    {
-      eassume (BIGNUMP (num2));
-      if (FLOATP (num1))
-	{
-	  /* Note that GMP doesn't define comparisons against NaN, so
-	     we need to handle them specially.  */
-	  if (isnan (XFLOAT_DATA (num1)))
-	    return Qnil;
-	  cmp = - mpz_cmp_d (XBIGNUM (num2)->value, XFLOAT_DATA (num1));
-	}
-      else
-        {
-	  eassume (FIXNUMP (num1));
-          if (sizeof (EMACS_INT) > sizeof (long) && XFIXNUM (num1) > LONG_MAX)
-            {
-              mpz_t tem;
-              mpz_init (tem);
-              mpz_set_intmax (tem, XFIXNUM (num1));
-              cmp = - mpz_cmp (XBIGNUM (num2)->value, tem);
-              mpz_clear (tem);
-            }
-          else
-            cmp = - mpz_cmp_si (XBIGNUM (num2)->value, XFIXNUM (num1));
-        }
-    }
-
-  switch (comparison)
-    {
-    case ARITH_EQUAL:
-      test = cmp == 0;
-      break;
-
-    case ARITH_NOTEQUAL:
-      test = cmp != 0;
-      break;
-
-    case ARITH_LESS:
-      test = cmp < 0;
-      break;
-
-    case ARITH_LESS_OR_EQUAL:
-      test = cmp <= 0;
-      break;
-
-    case ARITH_GRTR:
-      test = cmp > 0;
-      break;
-
-    case ARITH_GRTR_OR_EQUAL:
-      test = cmp >= 0;
-      break;
-
-    default:
-      eassume (false);
-    }
-
-  return test ? Qt : Qnil;
-}
-
 Lisp_Object
 arithcompare (Lisp_Object num1, Lisp_Object num2,
 	      enum Arith_Comparison comparison)
 {
-  double f1, f2;
-  EMACS_INT i1, i2;
-  bool lt, eq, gt;
+  EMACS_INT i1 = 0, i2 = 0;
+  bool lt, eq = true, gt;
   bool test;
 
   CHECK_NUMBER_COERCE_MARKER (num1);
   CHECK_NUMBER_COERCE_MARKER (num2);
 
-  if (BIGNUMP (num1) || BIGNUMP (num2))
-    return bignumcompare (num1, num2, comparison);
-
-  /* If either arg is floating point, set F1 and F2 to the 'double'
-     approximations of the two arguments, and set LT, EQ, and GT to
-     the <, ==, > floating-point comparisons of F1 and F2
+  /* If the comparison is mostly done by comparing two doubles,
+     set LT, EQ, and GT to the <, ==, > results of that comparison,
      respectively, taking care to avoid problems if either is a NaN,
      and trying to avoid problems on platforms where variables (in
      violation of the C standard) can contain excess precision.
      Regardless, set I1 and I2 to integers that break ties if the
-     floating-point comparison is either not done or reports
+     two-double comparison is either not done or reports
      equality.  */
 
   if (FLOATP (num1))
     {
-      f1 = XFLOAT_DATA (num1);
+      double f1 = XFLOAT_DATA (num1);
       if (FLOATP (num2))
 	{
-	  i1 = i2 = 0;
-	  f2 = XFLOAT_DATA (num2);
+	  double f2 = XFLOAT_DATA (num2);
+	  lt = f1 < f2;
+	  eq = f1 == f2;
+	  gt = f1 > f2;
 	}
-      else
+      else if (FIXNUMP (num2))
 	{
 	  /* Compare a float NUM1 to an integer NUM2 by converting the
 	     integer I2 (i.e., NUM2) to the double F2 (a conversion that
@@ -2529,35 +2426,56 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
 	     floating-point comparison reports a tie, NUM1 = F1 = F2 = I1
 	     (exactly) so I1 - I2 = NUM1 - NUM2 (exactly), so comparing I1
 	     to I2 will break the tie correctly.  */
-	  i1 = f2 = i2 = XFIXNUM (num2);
+	  double f2 = XFIXNUM (num2);
+	  lt = f1 < f2;
+	  eq = f1 == f2;
+	  gt = f1 > f2;
+	  i1 = f2;
+	  i2 = XFIXNUM (num2);
 	}
-      lt = f1 < f2;
-      eq = f1 == f2;
-      gt = f1 > f2;
+      else if (isnan (f1))
+	lt = eq = gt = false;
+      else
+	i2 = mpz_cmp_d (XBIGNUM (num2)->value, f1);
     }
-  else
+  else if (FIXNUMP (num1))
     {
-      i1 = XFIXNUM (num1);
       if (FLOATP (num2))
 	{
 	  /* Compare an integer NUM1 to a float NUM2.  This is the
 	     converse of comparing float to integer (see above).  */
-	  i2 = f1 = i1;
-	  f2 = XFLOAT_DATA (num2);
+	  double f1 = XFIXNUM (num1), f2 = XFLOAT_DATA (num2);
 	  lt = f1 < f2;
 	  eq = f1 == f2;
 	  gt = f1 > f2;
+	  i1 = XFIXNUM (num1);
+	  i2 = f1;
+	}
+      else if (FIXNUMP (num2))
+	{
+	  i1 = XFIXNUM (num1);
+	  i2 = XFIXNUM (num2);
 	}
       else
-	{
-	  i2 = XFIXNUM (num2);
-	  eq = true;
-	}
+	i2 = mpz_sgn (XBIGNUM (num2)->value);
     }
+  else if (FLOATP (num2))
+    {
+      double f2 = XFLOAT_DATA (num2);
+      if (isnan (f2))
+	lt = eq = gt = false;
+      else
+	i1 = mpz_cmp_d (XBIGNUM (num1)->value, f2);
+    }
+  else if (FIXNUMP (num2))
+    i1 = mpz_sgn (XBIGNUM (num1)->value);
+  else
+    i1 = mpz_cmp (XBIGNUM (num1)->value, XBIGNUM (num2)->value);
 
   if (eq)
     {
-      /* Break a floating-point tie by comparing the integers.  */
+      /* The two-double comparison either reported equality, or was not done.
+	 Break the tie by comparing the integers.  */
       lt = i1 < i2;
       eq = i1 == i2;
       gt = i1 > i2;

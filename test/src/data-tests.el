@@ -551,7 +551,10 @@ comparing the subr with a much slower lisp implementation."
     (should (= b0 b0))
 
     (should (/= b0 f-1))
-    (should (/= b0 b-1))))
+    (should (/= b0 b-1))
+
+    (should (/= b0 0.0e+NaN))
+    (should (/= b-1 0.0e+NaN))))
 
 (ert-deftest data-tests-+ ()
   (should-not (fixnump (+ most-positive-fixnum most-positive-fixnum)))
