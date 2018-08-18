@@ -1236,11 +1236,10 @@ other strings to choose various seed values.
 This function returns a pseudo-random integer.  Repeated calls return a
 series of pseudo-random integers.
 
-If @var{limit} is a positive integer, the value is chosen to be
+If @var{limit} is a positive fixnum, the value is chosen to be
 nonnegative and less than @var{limit}.  Otherwise, the value might be
-any integer representable in Lisp, i.e., an integer between
-@code{most-negative-fixnum} and @code{most-positive-fixnum}
-(@pxref{Integer Basics}).
+any fixnum, i.e., any integer from @code{most-negative-fixnum} through
+@code{most-positive-fixnum} (@pxref{Integer Basics}).
 
 If @var{limit} is @code{t}, it means to choose a new seed as if Emacs
 were restarting, typically from the system entropy.  On systems
