@@ -71,16 +71,18 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
     loop {
         let avail_out: isize = 16 * 1024;
 
-        let gap_size = current_buffer.gap_size();
+        let old_gap_size = current_buffer.gap_size();
 
-        if gap_size < avail_out {
+        if old_gap_size < avail_out {
             unsafe {
-                make_gap(avail_out - gap_size);
+                make_gap(avail_out - old_gap_size);
             }
         }
 
+        let new_gap_size = avail_out;
+
         let gap_writer = unsafe {
-            slice::from_raw_parts_mut(current_buffer.gap_start_addr(), gap_size as usize)
+            slice::from_raw_parts_mut(current_buffer.gap_start_addr(), new_gap_size as usize)
         };
 
         match decoder.read(gap_writer) {
