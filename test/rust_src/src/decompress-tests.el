@@ -40,6 +40,20 @@
 	       (buffer-string))
 	     "foo\n"))))
 
+(ert-deftest zlib--decompress-large-file ()
+  "Test decompressing a gzipped file."
+  (when (and (fboundp 'zlib-available-p)
+	     (zlib-available-p))
+    (should (string=
+	     (with-temp-buffer
+	       (set-buffer-multibyte nil)
+	       (insert-file-contents-literally
+		(expand-file-name "32k-a.gz" zlib-tests-data-directory))
+	       (zlib-decompress-region (point-min) (point-max))
+	       (buffer-string))
+             ;; 32kb 'a' repeat string
+             (make-string (* 32 1024) ?a)))))
+
 (provide 'decompress-tests)
 
 ;;; decompress-tests.el ends here.
