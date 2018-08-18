@@ -10125,7 +10125,7 @@ to be converted to forward slashes by the caller.  */)
   CHECK_STRING (key);
   CHECK_STRING (name);
 
-  HKEY rootkey;
+  HKEY rootkey = HKEY_CURRENT_USER;
   if (EQ (root, QHKCR))
     rootkey = HKEY_CLASSES_ROOT;
   else if (EQ (root, QHKCU))
@@ -10139,10 +10139,7 @@ to be converted to forward slashes by the caller.  */)
   else if (!NILP (root))
     error ("unknown root key: %s", SDATA (SYMBOL_NAME (root)));
 
-  Lisp_Object val = w32_read_registry (NILP (root)
-				       ? HKEY_CURRENT_USER
-				       : rootkey,
-				       key, name);
+  Lisp_Object val = w32_read_registry (rootkey, key, name);
   if (NILP (val) && NILP (root))
     val = w32_read_registry (HKEY_LOCAL_MACHINE, key, name);
 
