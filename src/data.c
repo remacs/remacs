@@ -3365,29 +3365,43 @@ representation.  */)
 		      : count_one_bits_ll (v));
 }
 
-static Lisp_Object
-ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
+DEFUN ("ash", Fash, Sash, 2, 2, 0,
+       doc: /* Return VALUE with its bits shifted left by COUNT.
+If COUNT is negative, shifting is actually to the right.
+In this case, the sign bit is duplicated.  */)
+  (Lisp_Object value, Lisp_Object count)
 {
-  /* This code assumes that signed right shifts are arithmetic.  */
-  verify ((EMACS_INT) -1 >> 1 == -1);
-
   Lisp_Object val;
 
+  /* The negative of the minimum value of COUNT that fits into a fixnum,
+     such that mpz_fdiv_q_exp supports -COUNT.  */
+  EMACS_INT minus_count_min = min (-MOST_NEGATIVE_FIXNUM,
+				   TYPE_MAXIMUM (mp_bitcnt_t));
   CHECK_INTEGER (value);
-  CHECK_FIXNUM (count);
+  CHECK_RANGED_INTEGER (count, - minus_count_min, TYPE_MAXIMUM (mp_bitcnt_t));
 
   if (BIGNUMP (value))
     {
+      if (XFIXNUM (count) == 0)
+	return value;
       mpz_t result;
       mpz_init (result);
-      if (XFIXNUM (count) >= 0)
+      if (XFIXNUM (count) > 0)
 	mpz_mul_2exp (result, XBIGNUM (value)->value, XFIXNUM (count));
-      else if (lsh)
-	mpz_tdiv_q_2exp (result, XBIGNUM (value)->value, - XFIXNUM (count));
       else
 	mpz_fdiv_q_2exp (result, XBIGNUM (value)->value, - XFIXNUM (count));
       val = make_number (result);
       mpz_clear (result);
+    }
+  else if (XFIXNUM (count) <= 0)
+    {
+      /* This code assumes that signed right shifts are arithmetic.  */
+      verify ((EMACS_INT) -1 >> 1 == -1);
+
+      EMACS_INT shift = -XFIXNUM (count);
+      EMACS_INT result = (shift < EMACS_INT_WIDTH ? XFIXNUM (value) >> shift
+			  : XFIXNUM (value) < 0 ? -1 : 0);
+      val = make_fixnum (result);
     }
   else
     {
@@ -3400,14 +3414,7 @@ ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 
       if (XFIXNUM (count) >= 0)
 	mpz_mul_2exp (result, result, XFIXNUM (count));
-      else if (lsh)
-	{
-	  if (mpz_sgn (result) > 0)
-	    mpz_fdiv_q_2exp (result, result, - XFIXNUM (count));
-	  else
-	    mpz_fdiv_q_2exp (result, result, - XFIXNUM (count));
-	}
-      else /* ash */
+      else
 	mpz_fdiv_q_2exp (result, result, - XFIXNUM (count));
 
       val = make_number (result);
@@ -3415,24 +3422,6 @@ ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
     }
 
   return val;
-}
-
-DEFUN ("ash", Fash, Sash, 2, 2, 0,
-       doc: /* Return VALUE with its bits shifted left by COUNT.
-If COUNT is negative, shifting is actually to the right.
-In this case, the sign bit is duplicated.  */)
-  (register Lisp_Object value, Lisp_Object count)
-{
-  return ash_lsh_impl (value, count, false);
-}
-
-DEFUN ("lsh", Flsh, Slsh, 2, 2, 0,
-       doc: /* Return VALUE with its bits shifted left by COUNT.
-If COUNT is negative, shifting is actually to the right.
-In this case, zeros are shifted in on the left.  */)
-  (register Lisp_Object value, Lisp_Object count)
-{
-  return ash_lsh_impl (value, count, true);
 }
 
 DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
@@ -4235,7 +4224,6 @@ syms_of_data (void)
   defsubr (&Slogior);
   defsubr (&Slogxor);
   defsubr (&Slogcount);
-  defsubr (&Slsh);
   defsubr (&Sash);
   defsubr (&Sadd1);
   defsubr (&Ssub1);

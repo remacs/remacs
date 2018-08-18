@@ -598,7 +598,9 @@ comparing the subr with a much slower lisp implementation."
   (should (fixnump (1- (1+ most-positive-fixnum)))))
 
 (ert-deftest data-tests-logand ()
-  (should (= -1 (logand -1)))
+  (should (= -1 (logand) (logand -1) (logand -1 -1)))
+  (let ((n (1+ most-positive-fixnum)))
+    (should (= (logand -1 n) n)))
   (let ((n (* 2 most-negative-fixnum)))
     (should (= (logand -1 n) n))))
 
@@ -606,11 +608,11 @@ comparing the subr with a much slower lisp implementation."
   (should (= (logcount (read "#xffffffffffffffffffffffffffffffff")) 128)))
 
 (ert-deftest data-tests-logior ()
-  (should (= -1 (logior -1)))
+  (should (= -1 (logior -1) (logior -1 -1)))
   (should (= -1 (logior most-positive-fixnum most-negative-fixnum))))
 
 (ert-deftest data-tests-logxor ()
-  (should (= -1 (logxor -1)))
+  (should (= -1 (logxor -1) (logxor -1 -1 -1)))
   (let ((n (1+ most-positive-fixnum)))
     (should (= (logxor -1 n) (lognot n)))))
 
@@ -642,6 +644,12 @@ comparing the subr with a much slower lisp implementation."
   (should (= (ash most-negative-fixnum 1)
              (* most-negative-fixnum 2)))
   (should (= (lsh most-negative-fixnum 1)
-             (* most-negative-fixnum 2))))
+             (* most-negative-fixnum 2)))
+  (should (= (ash (* 2 most-negative-fixnum) -1)
+	     most-negative-fixnum))
+  (should (= (lsh most-positive-fixnum -1) (/ most-positive-fixnum 2)))
+  (should (= (lsh most-negative-fixnum -1) (lsh (- most-negative-fixnum) -1)))
+  (should (= (lsh -1 -1) most-positive-fixnum))
+  (should-error (lsh (1- most-negative-fixnum) -1)))
 
 ;;; data-tests.el ends here

@@ -366,6 +366,18 @@ was called."
   (declare (compiler-macro (lambda (_) `(= 0 ,number))))
   (= 0 number))
 
+(defun lsh (value count)
+  "Return VALUE with its bits shifted left by COUNT.
+If COUNT is negative, shifting is actually to the right.
+In this case, if VALUE is a negative fixnum treat it as unsigned,
+i.e., subtract 2 * most-negative-fixnum from VALUE before shifting it."
+  (when (and (< value 0) (< count 0))
+    (when (< value most-negative-fixnum)
+      (signal 'args-out-of-range (list value count)))
+    (setq value (logand (ash value -1) most-positive-fixnum))
+    (setq count (1+ count)))
+  (ash value count))
+
 
 ;;;; List functions.
 

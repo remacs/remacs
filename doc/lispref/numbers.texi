@@ -844,7 +844,9 @@ bits in @var{integer1} to the left @var{count} places, or to the right
 if @var{count} is negative, bringing zeros into the vacated bits.  If
 @var{count} is negative, @code{lsh} shifts zeros into the leftmost
 (most-significant) bit, producing a nonnegative result even if
-@var{integer1} is negative.  Contrast this with @code{ash}, below.
+@var{integer1} is negative fixnum.  (If @var{integer1} is a negative
+bignum, @var{count} must be nonnegative.)  Contrast this with
+@code{ash}, below.
 
 Here are two examples of @code{lsh}, shifting a pattern of bits one
 place to the left.  We show only the low-order eight bits of the binary
@@ -913,7 +915,8 @@ is negative.
 @code{ash} gives the same results as @code{lsh} except when
 @var{integer1} and @var{count} are both negative.  In that case,
 @code{ash} puts ones in the empty bit positions on the left, while
-@code{lsh} puts zeros in those bit positions.
+@code{lsh} puts zeros in those bit positions and requires
+@var{integer1} to be a fixnum.
 
 Thus, with @code{ash}, shifting the pattern of bits one place to the right
 looks like this:
