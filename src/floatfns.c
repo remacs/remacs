@@ -212,7 +212,7 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
   if (INTEGERP (arg1) && NATNUMP (arg2))
     {
       unsigned long exp;
-      if (RANGED_FIXNUMP (0, arg2, ULONG_MAX))
+      if (TYPE_RANGED_FIXNUMP (unsigned long, arg2))
 	exp = XFIXNUM (arg2);
       else if (MOST_POSITIVE_FIXNUM < ULONG_MAX && BIGNUMP (arg2)
 	       && mpz_fits_ulong_p (XBIGNUM (arg2)->value))
