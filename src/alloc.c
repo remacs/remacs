@@ -3752,25 +3752,20 @@ make_number (mpz_t value)
       if (!FIXNUM_OVERFLOW_P (l))
 	return make_fixnum (l);
     }
-
-  /* Check if fixnum can be larger than long.  */
-  if (sizeof (EMACS_INT) > sizeof (long))
+  else if (LONG_WIDTH < FIXNUM_BITS)
     {
       size_t bits = mpz_sizeinbase (value, 2);
-      int sign = mpz_sgn (value);
 
-      if (bits < FIXNUM_BITS + (sign < 0))
+      if (bits <= FIXNUM_BITS)
         {
           EMACS_INT v = 0;
-          size_t limbs = mpz_size (value);
-          mp_size_t i;
-
-          for (i = 0; i < limbs; i++)
+	  int i = 0;
+	  for (int shift = 0; shift < bits; shift += mp_bits_per_limb)
             {
-              mp_limb_t limb = mpz_getlimbn (value, i);
-              v |= (EMACS_INT) ((EMACS_UINT) limb << (i * mp_bits_per_limb));
+	      EMACS_INT limb = mpz_getlimbn (value, i++);
+	      v += limb << shift;
             }
-          if (sign < 0)
+	  if (mpz_sgn (value) < 0)
             v = -v;
 
           if (!FIXNUM_OVERFLOW_P (v))
