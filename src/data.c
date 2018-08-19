@@ -2896,11 +2896,11 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	    {
 	      /* Note that a bignum can never be 0, so we don't need
 		 to check that case.  */
-	      if (FIXNUMP (val) && XFIXNUM (val) == 0)
-		xsignal0 (Qarith_error);
 	      if (BIGNUMP (val))
 		mpz_tdiv_q (accum, accum, XBIGNUM (val)->value);
-              else if (sizeof (EMACS_INT) > sizeof (long))
+	      else if (XFIXNUM (val) == 0)
+		xsignal0 (Qarith_error);
+	      else if (ULONG_MAX < -MOST_NEGATIVE_FIXNUM)
                 {
                   mpz_t tem;
                   mpz_init (tem);
@@ -2911,11 +2911,8 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	      else
 		{
 		  EMACS_INT value = XFIXNUM (val);
-		  bool negate = value < 0;
-		  if (negate)
-		    value = -value;
-		  mpz_tdiv_q_ui (accum, accum, value);
-		  if (negate)
+		  mpz_tdiv_q_ui (accum, accum, eabs (value));
+		  if (value < 0)
 		    mpz_neg (accum, accum);
 		}
 	    }
