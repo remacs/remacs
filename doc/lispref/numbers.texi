@@ -1185,7 +1185,7 @@ returns a NaN.
 @defun expt x y
 This function returns @var{x} raised to power @var{y}.  If both
 arguments are integers and @var{y} is nonnegative, the result is an
-integer; in this case, overflow causes truncation, so watch out.
+integer; in this case, overflow signals an error, so watch out.
 If @var{x} is a finite negative number and @var{y} is a finite
 non-integer, @code{expt} returns a NaN.
 @end defun

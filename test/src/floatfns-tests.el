@@ -42,6 +42,15 @@
   (should (= most-positive-fixnum
              (- (abs most-negative-fixnum) 1))))
 
+(ert-deftest bignum-expt ()
+  (dolist (n (list most-positive-fixnum (1+ most-positive-fixnum)
+                   most-negative-fixnum (1- most-negative-fixnum)
+                   -2 -1 0 1 2))
+    (should (= (expt n 0) 1))
+    (should (= (expt n 1) n))
+    (should (= (expt n 2) (* n n)))
+    (should (= (expt n 3) (* n n n)))))
+
 (ert-deftest bignum-logb ()
   (should (= (+ (logb most-positive-fixnum) 1)
              (logb (+ most-positive-fixnum 1)))))
