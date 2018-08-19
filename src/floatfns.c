@@ -514,10 +514,8 @@ With optional DIVISOR, truncate ARG/DIVISOR.  */)
 Lisp_Object
 fmod_float (Lisp_Object x, Lisp_Object y)
 {
-  double f1, f2;
-
-  f1 = FLOATP (x) ? XFLOAT_DATA (x) : XFIXNUM (x);
-  f2 = FLOATP (y) ? XFLOAT_DATA (y) : XFIXNUM (y);
+  double f1 = XFLOATINT (x);
+  double f2 = XFLOATINT (y);
 
   f1 = fmod (f1, f2);
 
