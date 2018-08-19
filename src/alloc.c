@@ -3785,18 +3785,21 @@ make_number (mpz_t value)
 void
 mpz_set_intmax_slow (mpz_t result, intmax_t v)
 {
-  /* If long is larger then a faster path is taken.  */
-  eassert (sizeof (intmax_t) > sizeof (long));
+  /* If V fits in long, a faster path is taken.  */
+  eassert (! (LONG_MIN <= v && v <= LONG_MAX));
 
   bool complement = v < 0;
   if (complement)
     v = -1 - v;
 
-  /* COUNT = 1 means just a single word of the given size.  ORDER = -1
-     is arbitrary since there's only a single word.  ENDIAN = 0 means
-     use the native endian-ness.  NAILS = 0 means use the whole
-     word.  */
-  mpz_import (result, 1, -1, sizeof v, 0, 0, &v);
+  enum { nails = sizeof v * CHAR_BIT - INTMAX_WIDTH };
+# ifndef HAVE_GMP
+  /* mini-gmp requires NAILS to be zero, which is true for all
+     likely Emacs platforms.  Sanity-check this.  */
+  verify (nails == 0);
+# endif
+
+  mpz_import (result, 1, -1, sizeof v, 0, nails, &v);
   if (complement)
     mpz_com (result, result);
 }

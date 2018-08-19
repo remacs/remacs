@@ -30,10 +30,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <float.h>
 #include <inttypes.h>
 #include <limits.h>
+
 #ifdef HAVE_GMP
-#include <gmp.h>
+# include <gmp.h>
 #else
-#include "mini-gmp.h"
+# include "mini-gmp.h"
 #endif
 
 #include <intprops.h>
@@ -3566,10 +3567,10 @@ mpz_set_intmax (mpz_t result, intmax_t v)
   /* mpz_set_si works in terms of long, but Emacs may use a wider
      integer type, and so sometimes will have to construct the mpz_t
      by hand.  */
-  if (sizeof (intmax_t) > sizeof (long) && (long) v != v)
-    mpz_set_intmax_slow (result, v);
-  else
+  if (LONG_MIN <= v && v <= LONG_MAX)
     mpz_set_si (result, v);
+  else
+    mpz_set_intmax_slow (result, v);
 }
 
 /* Build a frequently used 2/3/4-integer lists.  */

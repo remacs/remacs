@@ -2775,6 +2775,9 @@ enum arithop
     Alogxor
   };
 
+enum { FIXNUMS_FIT_IN_LONG = (LONG_MIN <= MOST_NEGATIVE_FIXNUM
+			      && MOST_POSITIVE_FIXNUM <= LONG_MAX) };
+
 static void
 free_mpz_value (void *value_ptr)
 {
@@ -2829,7 +2832,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	case Aadd:
 	  if (BIGNUMP (val))
 	    mpz_add (accum, accum, XBIGNUM (val)->value);
-	  else if (sizeof (EMACS_INT) > sizeof (long))
+	  else if (! FIXNUMS_FIT_IN_LONG)
             {
 	      mpz_t tem;
 	      mpz_init (tem);
@@ -2854,7 +2857,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	    }
 	  else if (BIGNUMP (val))
 	    mpz_sub (accum, accum, XBIGNUM (val)->value);
-	  else if (sizeof (EMACS_INT) > sizeof (long))
+	  else if (! FIXNUMS_FIT_IN_LONG)
             {
 	      mpz_t tem;
 	      mpz_init (tem);
@@ -2870,7 +2873,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	case Amult:
 	  if (BIGNUMP (val))
 	    mpz_mul (accum, accum, XBIGNUM (val)->value);
-	  else if (sizeof (EMACS_INT) > sizeof (long))
+	  else if (! FIXNUMS_FIT_IN_LONG)
             {
 	      mpz_t tem;
 	      mpz_init (tem);
