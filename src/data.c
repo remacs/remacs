@@ -2966,26 +2966,14 @@ static Lisp_Object
 float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 		    ptrdiff_t nargs, Lisp_Object *args)
 {
-  register Lisp_Object val;
-  double next;
-
   for (; argnum < nargs; argnum++)
     {
-      /* using args[argnum] as argument to CHECK_NUMBER_... */
-      val = args[argnum];
+      Lisp_Object val = args[argnum];
       CHECK_NUMBER_COERCE_MARKER (val);
+      double next = (FIXNUMP (val) ? XFIXNUM (val)
+		     : FLOATP (val) ? XFLOAT_DATA (val)
+		     : mpz_get_d (XBIGNUM (val)->value));
 
-      if (FLOATP (val))
-	{
-	  next = XFLOAT_DATA (val);
-	}
-      else if (BIGNUMP (val))
-	next = mpz_get_d (XBIGNUM (val)->value);
-      else
-	{
-	  args[argnum] = val;    /* runs into a compiler bug. */
-	  next = XFIXNUM (args[argnum]);
-	}
       switch (code)
 	{
 	case Aadd:
