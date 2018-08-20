@@ -1402,9 +1402,20 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
        doc: /* Take cdr N times on LIST, return the result.  */)
   (Lisp_Object n, Lisp_Object list)
 {
-  CHECK_FIXNUM (n);
+  CHECK_INTEGER (n);
   Lisp_Object tail = list;
-  for (EMACS_INT num = XFIXNUM (n); 0 < num; num--)
+
+  EMACS_INT num;
+  if (FIXNUMP (n))
+    num = XFIXNUM (n);
+  else
+    {
+      num = mpz_sgn (XBIGNUM (n)->value);
+      if (0 < num)
+	num = EMACS_INT_MAX;  /* LIST cannot possibly be this long.  */
+    }
+
+  for (; 0 < num; num--)
     {
       if (! CONSP (tail))
 	{
