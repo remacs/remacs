@@ -1403,7 +1403,12 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
   (Lisp_Object n, Lisp_Object list)
 {
   CHECK_INTEGER (n);
-  Lisp_Object tail = list;
+
+  /* A huge but in-range EMACS_INT that can be substituted for a
+     positive bignum while counting down.  It does not introduce
+     miscounts because a list or cycle cannot possibly be this long,
+     and any counting error is fixed up later.  */
+  EMACS_INT large_num = EMACS_INT_MAX;
 
   EMACS_INT num;
   if (FIXNUMP (n))
@@ -1412,16 +1417,57 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
     {
       num = mpz_sgn (XBIGNUM (n)->value);
       if (0 < num)
-	num = EMACS_INT_MAX;  /* LIST cannot possibly be this long.  */
+	num = large_num;
     }
 
+  EMACS_INT tortoise_num = num;
+  Lisp_Object tail = list, saved_tail = tail;
+  FOR_EACH_TAIL_SAFE (tail)
+    {
+      if (num <= 0)
+	return tail;
+      if (tail == li.tortoise)
+	tortoise_num = num;
+      saved_tail = XCDR (tail);
+      num--;
+      rarely_quit (num);
+    }
+
+  tail = saved_tail;
+  if (! CONSP (tail))
+    {
+      CHECK_LIST_END (tail, list);
+      return Qnil;
+    }
+
+  /* TAIL is part of a cycle.  Reduce NUM modulo the cycle length to
+     avoid going around this cycle repeatedly.  */
+  intptr_t cycle_length = tortoise_num - num;
+  if (! FIXNUMP (n))
+    {
+      /* Undo any error introduced when LARGE_NUM was substituted for
+	 N, by adding N - LARGE_NUM to NUM, using arithmetic modulo
+	 CYCLE_LENGTH.  */
+      mpz_t z; /* N mod CYCLE_LENGTH.  */
+      mpz_init (z);
+      if (cycle_length <= ULONG_MAX)
+	num += mpz_mod_ui (z, XBIGNUM (n)->value, cycle_length);
+      else
+	{
+	  mpz_set_intmax (z, cycle_length);
+	  mpz_mod (z, XBIGNUM (n)->value, z);
+	  intptr_t iz;
+	  mpz_export (&iz, NULL, -1, sizeof iz, 0, 0, z);
+	  num += iz;
+	}
+      mpz_clear (z);
+      num += cycle_length - large_num % cycle_length;
+    }
+  num %= cycle_length;
+
+  /* One last time through the cycle.  */
   for (; 0 < num; num--)
     {
-      if (! CONSP (tail))
-	{
-	  CHECK_LIST_END (tail, list);
-	  return Qnil;
-	}
       tail = XCDR (tail);
       rarely_quit (num);
     }
