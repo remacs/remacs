@@ -34,6 +34,7 @@ typedef struct
 
 #ifdef WINDOWSNT
 # include <windows.h>
+# include "w32common.h"
 # include "w32.h"
 
 DEF_DLL_FN (cmsFloat64Number, cmsCIE2000DeltaE,

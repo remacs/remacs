@@ -77,6 +77,7 @@ typedef struct x_bitmap_record Bitmap_Record;
 
 /* We need (or want) w32.h only when we're _not_ compiling for Cygwin.  */
 #ifdef WINDOWSNT
+# include "w32common.h"
 # include "w32.h"
 #endif
 

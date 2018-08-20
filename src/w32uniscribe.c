@@ -36,6 +36,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "composite.h"
 #include "font.h"
 #include "w32font.h"
+#include "w32common.h"
 
 struct uniscribe_font_info
 {
