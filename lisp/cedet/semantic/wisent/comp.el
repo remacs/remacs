@@ -142,8 +142,8 @@ If optional LEFT is non-nil insert spaces on left."
 (defconst wisent-BITS-PER-WORD
   (let ((i 1)
 	(do-shift (if (boundp 'most-positive-fixnum)
-		      (lambda (i) (lsh most-positive-fixnum (- i)))
-		    (lambda (i) (lsh 1 i)))))
+		      (lambda (i) (ash most-positive-fixnum (- i)))
+		    (lambda (i) (ash 1 i)))))
     (while (not (zerop (funcall do-shift i)))
       (setq i (1+ i)))
     i))
@@ -156,18 +156,18 @@ If optional LEFT is non-nil insert spaces on left."
   "X[I/BITS-PER-WORD] |= 1 << (I % BITS-PER-WORD)."
   (let ((k (/ i wisent-BITS-PER-WORD)))
     (aset x k (logior (aref x k)
-                      (lsh 1 (% i wisent-BITS-PER-WORD))))))
+                      (ash 1 (% i wisent-BITS-PER-WORD))))))
 
 (defsubst wisent-RESETBIT (x i)
   "X[I/BITS-PER-WORD] &= ~(1 << (I % BITS-PER-WORD))."
   (let ((k (/ i wisent-BITS-PER-WORD)))
     (aset x k (logand (aref x k)
-                      (lognot (lsh 1 (% i wisent-BITS-PER-WORD)))))))
+                      (lognot (ash 1 (% i wisent-BITS-PER-WORD)))))))
 
 (defsubst wisent-BITISSET (x i)
   "(X[I/BITS-PER-WORD] & (1 << (I % BITS-PER-WORD))) != 0."
   (not (zerop (logand (aref x (/ i wisent-BITS-PER-WORD))
-                      (lsh 1 (% i wisent-BITS-PER-WORD))))))
+                      (ash 1 (% i wisent-BITS-PER-WORD))))))
 
 (defsubst wisent-noninteractive ()
   "Return non-nil if running without interactive terminal."

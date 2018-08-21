@@ -1017,7 +1017,7 @@ hg binary."
          ;; Dirstate too small to be valid
          (< (nth 7 dirstate-attr) 40)
          ;; We want to store 32-bit unsigned values in fixnums.
-         (zerop (lsh -1 32))
+         (zerop (ash most-positive-fixnum -32))
          (progn
            (setf repo-relative-filename
                  (file-relative-name truename repo))
