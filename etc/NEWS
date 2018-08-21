@@ -255,6 +255,12 @@ navigation and editing of large files.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+---
+** bibtex
+*** New commands 'bibtex-next-entry' and 'bibtex-previous-entry'.
+In bibtex-mode-map, forward-paragraph and backward-paragraph are
+remapped to these, respectively.
+
 +++
 ** Dired
 
