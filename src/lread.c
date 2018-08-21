@@ -3710,8 +3710,9 @@ string_to_number (char const *string, int base, int flags)
      IEEE floating point hosts, and works around a formerly-common bug where
      atof ("-0.0") drops the sign.  */
   bool negative = *cp == '-';
+  bool positive = *cp == '+';
 
-  bool signedp = negative || *cp == '+';
+  bool signedp = negative | positive;
   cp += signedp;
 
   enum { INTOVERFLOW = 1, LEAD_INT = 2, DOT_CHAR = 4, TRAIL_INT = 8,
@@ -3732,6 +3733,7 @@ string_to_number (char const *string, int base, int flags)
 	  n += digit;
 	}
     }
+  char const *after_digits = cp;
   if (*cp == '.')
     {
       state |= DOT_CHAR;
@@ -3807,10 +3809,19 @@ string_to_number (char const *string, int base, int flags)
 	  return make_fixnum (negative ? -signed_n : signed_n);
 	}
 
-      /* Skip a leading "+".  */
-      if (signedp && !negative)
-	++string;
-      return make_bignum_str (string, base);
+      /* Trim any leading "+" and trailing nondigits, then convert to
+	 bignum.  */
+      string += positive;
+      if (!*after_digits)
+	return make_bignum_str (string, base);
+      ptrdiff_t trimmed_len = after_digits - string;
+      USE_SAFE_ALLOCA;
+      char *trimmed = SAFE_ALLOCA (trimmed_len + 1);
+      memcpy (trimmed, string, trimmed_len);
+      trimmed[trimmed_len] = '\0';
+      Lisp_Object result = make_bignum_str (trimmed, base);
+      SAFE_FREE ();
+      return result;
     }
 
   /* Either the number uses float syntax, or it does not fit into a fixnum.
