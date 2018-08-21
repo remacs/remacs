@@ -112,18 +112,18 @@ view the numbers in their binary form.
   In binary, the decimal integer 5 looks like this:
 
 @example
-...000101
+@dots{}000101
 @end example
 
 @noindent
-(The @samp{...} stands for a conceptually infinite number of bits that
-match the leading bit; here, an infinite number of 0 bits.  Later
-examples also use this @samp{...} notation.)
+(The ellipsis @samp{@dots{}} stands for a conceptually infinite number
+of bits that match the leading bit; here, an infinite number of 0
+bits.  Later examples also use this @samp{@dots{}} notation.)
 
   The integer @minus{}1 looks like this:
 
 @example
-...111111
+@dots{}111111
 @end example
 
 @noindent
@@ -136,7 +136,7 @@ In binary, the decimal integer 4 is 100.  Consequently,
 @minus{}5 looks like this:
 
 @example
-...111011
+@dots{}111011
 @end example
 
   Many of the functions described in this chapter accept markers for
@@ -189,15 +189,16 @@ on 64-bit platforms.
 
 @cindex bignum range
 @cindex integer range
+@cindex number of bignum bits, limit on
 @defvar integer-width
 The value of this variable is a nonnegative integer that is an upper
 bound on the number of bits in a bignum.  Integers outside the fixnum
 range are limited to absolute values less than 2@sup{@var{n}}, where
 @var{n} is this variable's value.  Attempts to create bignums outside
-this range result in integer overflow.  Setting this variable to zero
-disables creation of bignums; setting it to a large number can cause
-Emacs to consume large quantities of memory if a computation creates
-huge integers.
+this range result in an integer overflow error.  Setting this variable
+to zero disables creation of bignums; setting it to a large number can
+cause Emacs to consume large quantities of memory if a computation
+creates huge integers.
 @end defvar
 
   In Emacs Lisp, text characters are represented by integers.  Any
@@ -871,30 +872,30 @@ equivalent to dividing by two and then rounding toward minus infinity.
 @group
 (ash 7 1) @result{} 14
 ;; @r{Decimal 7 becomes decimal 14.}
-...000111
+@dots{}000111
      @result{}
-...001110
+@dots{}001110
 @end group
 
 @group
 (ash 7 -1) @result{} 3
-...000111
+@dots{}000111
      @result{}
-...000011
+@dots{}000011
 @end group
 
 @group
 (ash -7 1) @result{} -14
-...111001
+@dots{}111001
      @result{}
-...110010
+@dots{}110010
 @end group
 
 @group
 (ash -7 -1) @result{} -4
-...111001
+@dots{}111001
      @result{}
-...111100
+@dots{}111100
 @end group
 @end example
 
@@ -903,18 +904,18 @@ Here are examples of shifting left or right by two bits:
 @smallexample
 @group
                   ;  @r{       binary values}
-(ash 5 2)         ;   5  =  @r{...000101}
-     @result{} 20         ;      =  @r{...010100}
-(ash -5 2)        ;  -5  =  @r{...111011}
-     @result{} -20        ;      =  @r{...101100}
+(ash 5 2)         ;   5  =  @r{@dots{}000101}
+     @result{} 20         ;      =  @r{@dots{}010100}
+(ash -5 2)        ;  -5  =  @r{@dots{}111011}
+     @result{} -20        ;      =  @r{@dots{}101100}
 @end group
 @group
 (ash 5 -2)
-     @result{} 1          ;      =  @r{...000001}
+     @result{} 1          ;      =  @r{@dots{}000001}
 @end group
 @group
 (ash -5 -2)
-     @result{} -2         ;      =  @r{...111110}
+     @result{} -2         ;      =  @r{@dots{}111110}
 @end group
 @end smallexample
 @end defun
@@ -938,16 +939,16 @@ exceptional cases.  These examples assume 30-bit fixnums.
 @smallexample
 @group
                  ; @r{     binary values}
-(ash -7 -1)      ; -7 = @r{...111111111111111111111111111001}
-     @result{} -4        ;    = @r{...111111111111111111111111111100}
+(ash -7 -1)      ; -7 = @r{@dots{}111111111111111111111111111001}
+     @result{} -4        ;    = @r{@dots{}111111111111111111111111111100}
 (lsh -7 -1)
-     @result{} 536870908 ;    = @r{...011111111111111111111111111100}
+     @result{} 536870908 ;    = @r{@dots{}011111111111111111111111111100}
 @end group
 @group
-(ash -5 -2)      ; -5 = @r{...111111111111111111111111111011}
-     @result{} -2        ;    = @r{...111111111111111111111111111110}
+(ash -5 -2)      ; -5 = @r{@dots{}111111111111111111111111111011}
+     @result{} -2        ;    = @r{@dots{}111111111111111111111111111110}
 (lsh -5 -2)
-     @result{} 268435454 ;    = @r{...001111111111111111111111111110}
+     @result{} 268435454 ;    = @r{@dots{}001111111111111111111111111110}
 @end group
 @end smallexample
 @end defun
@@ -983,21 +984,21 @@ because its binary representation consists entirely of ones.  If
 @group
                    ; @r{       binary values}
 
-(logand 14 13)     ; 14  =  @r{...001110}
-                   ; 13  =  @r{...001101}
-     @result{} 12         ; 12  =  @r{...001100}
+(logand 14 13)     ; 14  =  @r{@dots{}001110}
+                   ; 13  =  @r{@dots{}001101}
+     @result{} 12         ; 12  =  @r{@dots{}001100}
 @end group
 
 @group
-(logand 14 13 4)   ; 14  =  @r{...001110}
-                   ; 13  =  @r{...001101}
-                   ;  4  =  @r{...000100}
-     @result{} 4          ;  4  =  @r{...000100}
+(logand 14 13 4)   ; 14  =  @r{@dots{}001110}
+                   ; 13  =  @r{@dots{}001101}
+                   ;  4  =  @r{@dots{}000100}
+     @result{} 4          ;  4  =  @r{@dots{}000100}
 @end group
 
 @group
 (logand)
-     @result{} -1         ; -1  =  @r{...111111}
+     @result{} -1         ; -1  =  @r{@dots{}111111}
 @end group
 @end smallexample
 @end defun
@@ -1013,16 +1014,16 @@ passed just one argument, it returns that argument.
 @group
                    ; @r{       binary values}
 
-(logior 12 5)      ; 12  =  @r{...001100}
-                   ;  5  =  @r{...000101}
-     @result{} 13         ; 13  =  @r{...001101}
+(logior 12 5)      ; 12  =  @r{@dots{}001100}
+                   ;  5  =  @r{@dots{}000101}
+     @result{} 13         ; 13  =  @r{@dots{}001101}
 @end group
 
 @group
-(logior 12 5 7)    ; 12  =  @r{...001100}
-                   ;  5  =  @r{...000101}
-                   ;  7  =  @r{...000111}
-     @result{} 15         ; 15  =  @r{...001111}
+(logior 12 5 7)    ; 12  =  @r{@dots{}001100}
+                   ;  5  =  @r{@dots{}000101}
+                   ;  7  =  @r{@dots{}000111}
+     @result{} 15         ; 15  =  @r{@dots{}001111}
 @end group
 @end smallexample
 @end defun
@@ -1038,16 +1039,16 @@ result is 0, which is an identity element for this operation.  If
 @group
                    ; @r{       binary values}
 
-(logxor 12 5)      ; 12  =  @r{...001100}
-                   ;  5  =  @r{...000101}
-     @result{} 9          ;  9  =  @r{...001001}
+(logxor 12 5)      ; 12  =  @r{@dots{}001100}
+                   ;  5  =  @r{@dots{}000101}
+     @result{} 9          ;  9  =  @r{@dots{}001001}
 @end group
 
 @group
-(logxor 12 5 7)    ; 12  =  @r{...001100}
-                   ;  5  =  @r{...000101}
-                   ;  7  =  @r{...000111}
-     @result{} 14         ; 14  =  @r{...001110}
+(logxor 12 5 7)    ; 12  =  @r{@dots{}001100}
+                   ;  5  =  @r{@dots{}000101}
+                   ;  7  =  @r{@dots{}000111}
+     @result{} 14         ; 14  =  @r{@dots{}001110}
 @end group
 @end smallexample
 @end defun
@@ -1060,9 +1061,9 @@ bit is one in the result if, and only if, the @var{n}th bit is zero in
 @example
 (lognot 5)
      @result{} -6
-;;  5  =  @r{...000101}
+;;  5  =  @r{@dots{}000101}
 ;; @r{becomes}
-;; -6  =  @r{...111010}
+;; -6  =  @r{@dots{}111010}
 @end example
 @end defun
 
@@ -1077,9 +1078,9 @@ its two's complement binary representation.  The result is always
 nonnegative.
 
 @example
-(logcount 43)     ;  43 = @r{...000101011}
+(logcount 43)     ;  43 = @r{@dots{}000101011}
      @result{} 4
-(logcount -43)    ; -43 = @r{...111010101}
+(logcount -43)    ; -43 = @r{@dots{}111010101}
      @result{} 3
 @end example
 @end defun
