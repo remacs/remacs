@@ -193,8 +193,14 @@ on 64-bit platforms.
 @defvar integer-width
 The value of this variable is a nonnegative integer that is an upper
 bound on the number of bits in a bignum.  Integers outside the fixnum
-range are limited to absolute values less than 2@sup{@var{n}}, where
-@var{n} is this variable's value.  Attempts to create bignums outside
+range are limited to absolute values less than
+@ifnottex
+2**@var{n},
+@end ifnottex
+@tex
+@math{2^{n}},
+@end tex
+where @var{n} is this variable's value.  Attempts to create bignums outside
 this range result in an integer overflow error.  Setting this variable
 to zero disables creation of bignums; setting it to a large number can
 cause Emacs to consume large quantities of memory if a computation
@@ -857,8 +863,14 @@ reproducing the same pattern moved over.
 to the left @var{count} places, or to the right if @var{count} is
 negative.  Left shifts introduce zero bits on the right; right shifts
 discard the rightmost bits.  Considered as an integer operation,
-@code{ash} multiplies @var{integer1} by 2@sup{@var{count}} and then
-converts the result to an integer by rounding downward, toward
+@code{ash} multiplies @var{integer1} by
+@ifnottex
+2**@var{count},
+@end ifnottex
+@tex
+@math{2^{count}},
+@end tex
+and then converts the result to an integer by rounding downward, toward
 minus infinity.
 
 Here are examples of @code{ash}, shifting a pattern of bits one place
