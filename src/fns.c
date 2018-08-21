@@ -1418,7 +1418,7 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
       num = XFIXNUM (n);
 
       /* Speed up small lists by omitting circularity and quit checking.  */
-      if (num < 128)
+      if (num <= SMALL_LIST_LEN_MAX)
 	{
 	  for (; 0 < num; num--, tail = XCDR (tail))
 	    if (! CONSP (tail))
@@ -1503,9 +1503,8 @@ N counts from zero.  If LIST is not that long, nil is returned.  */)
 
 DEFUN ("elt", Felt, Selt, 2, 2, 0,
        doc: /* Return element of SEQUENCE at index N.  */)
-  (register Lisp_Object sequence, Lisp_Object n)
+  (Lisp_Object sequence, Lisp_Object n)
 {
-  CHECK_FIXNUM (n);
   if (CONSP (sequence) || NILP (sequence))
     return Fcar (Fnthcdr (n, sequence));
 

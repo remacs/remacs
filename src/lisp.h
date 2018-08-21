@@ -4694,6 +4694,11 @@ enum
 	 Lisp_String))							\
      : make_unibyte_string (str, len))
 
+/* The maximum length of "small" lists, as a heuristic.  These lists
+   are so short that code need not check for cycles or quits while
+   traversing.  */
+enum { SMALL_LIST_LEN_MAX = 127 };
+
 /* Loop over conses of the list TAIL, signaling if a cycle is found,
    and possibly quitting after each loop iteration.  In the loop body,
    set TAIL to the current cons.  If the loop exits normally,
