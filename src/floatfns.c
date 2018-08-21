@@ -210,29 +210,7 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
   /* Common Lisp spec: don't promote if both are integers, and if the
      result is not fractional.  */
   if (INTEGERP (arg1) && NATNUMP (arg2))
-    {
-      unsigned long exp;
-      if (TYPE_RANGED_FIXNUMP (unsigned long, arg2))
-	exp = XFIXNUM (arg2);
-      else if (MOST_POSITIVE_FIXNUM < ULONG_MAX && BIGNUMP (arg2)
-	       && mpz_fits_ulong_p (XBIGNUM (arg2)->value))
-	exp = mpz_get_ui (XBIGNUM (arg2)->value);
-      else
-	xsignal3 (Qrange_error, build_string ("expt"), arg1, arg2);
-
-      mpz_t val;
-      mpz_init (val);
-      if (FIXNUMP (arg1))
-	{
-	  mpz_set_intmax (val, XFIXNUM (arg1));
-	  mpz_pow_ui (val, val, exp);
-	}
-      else
-	mpz_pow_ui (val, XBIGNUM (arg1)->value, exp);
-      Lisp_Object res = make_number (val);
-      mpz_clear (val);
-      return res;
-    }
+    return expt_integer (arg1, arg2);
 
   return make_float (pow (XFLOATINT (arg1), XFLOATINT (arg2)));
 }

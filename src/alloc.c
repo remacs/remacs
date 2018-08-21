@@ -3746,32 +3746,32 @@ make_bignum_str (const char *num, int base)
 Lisp_Object
 make_number (mpz_t value)
 {
-  if (mpz_fits_slong_p (value))
-    {
-      long l = mpz_get_si (value);
-      if (!FIXNUM_OVERFLOW_P (l))
-	return make_fixnum (l);
-    }
-  else if (LONG_WIDTH < FIXNUM_BITS)
-    {
-      size_t bits = mpz_sizeinbase (value, 2);
+  size_t bits = mpz_sizeinbase (value, 2);
 
-      if (bits <= FIXNUM_BITS)
-        {
-          EMACS_INT v = 0;
-	  int i = 0;
-	  for (int shift = 0; shift < bits; shift += mp_bits_per_limb)
-            {
-	      EMACS_INT limb = mpz_getlimbn (value, i++);
-	      v += limb << shift;
-            }
-	  if (mpz_sgn (value) < 0)
-            v = -v;
+  if (bits <= FIXNUM_BITS)
+    {
+      EMACS_INT v = 0;
+      int i = 0, shift = 0;
 
-          if (!FIXNUM_OVERFLOW_P (v))
-	    return make_fixnum (v);
-        }
+      do
+	{
+	  EMACS_INT limb = mpz_getlimbn (value, i++);
+	  v += limb << shift;
+	  shift += GMP_NUMB_BITS;
+	}
+      while (shift < bits);
+
+      if (mpz_sgn (value) < 0)
+	v = -v;
+
+      if (!FIXNUM_OVERFLOW_P (v))
+	return make_fixnum (v);
     }
+
+  /* The documentation says integer-width should be nonnegative, so
+     a single comparison suffices even though 'bits' is unsigned.  */
+  if (integer_width < bits)
+    integer_overflow ();
 
   struct Lisp_Bignum *b = ALLOCATE_PSEUDOVECTOR (struct Lisp_Bignum, value,
 						 PVEC_BIGNUM);
@@ -7200,6 +7200,26 @@ verify_alloca (void)
 
 #endif /* ENABLE_CHECKING && USE_STACK_LISP_OBJECTS */
 
+/* Memory allocation for GMP.  */
+
+void
+integer_overflow (void)
+{
+  error ("Integer too large to be represented");
+}
+
+static void *
+xrealloc_for_gmp (void *ptr, size_t ignore, size_t size)
+{
+  return xrealloc (ptr, size);
+}
+
+static void
+xfree_for_gmp (void *ptr, size_t ignore)
+{
+  xfree (ptr);
+}
+
 /* Initialization.  */
 
 void
@@ -7233,6 +7253,10 @@ init_alloc_once (void)
 void
 init_alloc (void)
 {
+  eassert (mp_bits_per_limb == GMP_NUMB_BITS);
+  integer_width = 1 << 16;
+  mp_set_memory_functions (xmalloc, xrealloc_for_gmp, xfree_for_gmp);
+
   Vgc_elapsed = make_float (0.0);
   gcs_done = 0;
 
@@ -7334,6 +7358,11 @@ do hash-consing of the objects allocated to pure space.  */);
 The time is in seconds as a floating point value.  */);
   DEFVAR_INT ("gcs-done", gcs_done,
               doc: /* Accumulated number of garbage collections done.  */);
+
+  DEFVAR_INT ("integer-width", integer_width,
+	      doc: /* Maximum number of bits in bignums.
+Integers outside the fixnum range are limited to absolute values less
+than 2**N, where N is this variable's value.  N should be nonnegative.  */);
 
   defsubr (&Scons);
   defsubr (&Slist);

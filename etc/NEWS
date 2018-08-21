@@ -871,6 +871,12 @@ bignums.  However, note that unlike fixnums, bignums will not compare
 equal with 'eq', you must use 'eql' instead.  (Numerical comparison
 with '=' works on both, of course.)
 
++++
+** New variable 'integer-width'.
+It is a nonnegative integer specifying the maximum number of bits
+allowed in a bignum.  Integer overflow occurs if this limit is
+exceeded.
+
 ** define-minor-mode automatically documents the meaning of ARG
 
 +++

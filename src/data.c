@@ -2384,6 +2384,80 @@ bool-vector.  IDX starts at 0.  */)
   return newelt;
 }
 
+/* GMP tests for this value and aborts (!) if it is exceeded.
+   This is as of GMP 6.1.2 (2016); perhaps future versions will differ.  */
+enum { GMP_NLIMBS_MAX = min (INT_MAX, ULONG_MAX / GMP_NUMB_BITS) };
+
+/* An upper bound on limb counts, needed to prevent libgmp and/or
+   Emacs from aborting or otherwise misbehaving.  This bound applies
+   to estimates of mpz_t sizes before the mpz_t objects are created,
+   as opposed to integer-width which operates on mpz_t values after
+   creation and before conversion to Lisp bignums.  */
+enum
+  {
+   NLIMBS_LIMIT = min (min (/* libgmp needs to store limb counts.  */
+			    GMP_NLIMBS_MAX,
+
+			    /* Size calculations need to work.  */
+			    min (PTRDIFF_MAX, SIZE_MAX) / sizeof (mp_limb_t)),
+
+		       /* Emacs puts bit counts into fixnums.  */
+		       MOST_POSITIVE_FIXNUM / GMP_NUMB_BITS)
+  };
+
+/* Like mpz_size, but tell the compiler the result is a nonnegative int.  */
+
+static int
+emacs_mpz_size (mpz_t const op)
+{
+  mp_size_t size = mpz_size (op);
+  eassume (0 <= size && size <= INT_MAX);
+  return size;
+}
+
+/* Wrappers to work around GMP limitations.  As of GMP 6.1.2 (2016),
+   the library code aborts when a number is too large.  These wrappers
+   avoid the problem for functions that can return numbers much larger
+   than their arguments.  For slowly-growing numbers, the integer
+   width check in make_number should suffice.  */
+
+static void
+emacs_mpz_mul (mpz_t rop, mpz_t const op1, mpz_t const op2)
+{
+  if (NLIMBS_LIMIT - emacs_mpz_size (op1) < emacs_mpz_size (op2))
+    integer_overflow ();
+  mpz_mul (rop, op1, op2);
+}
+
+static void
+emacs_mpz_mul_2exp (mpz_t rop, mpz_t const op1, mp_bitcnt_t op2)
+{
+  /* Fudge factor derived from GMP 6.1.2, to avoid an abort in
+     mpz_mul_2exp (look for the '+ 1' in its source code).  */
+  enum { mul_2exp_extra_limbs = 1 };
+  enum { lim = min (NLIMBS_LIMIT, GMP_NLIMBS_MAX - mul_2exp_extra_limbs) };
+
+  mp_bitcnt_t op2limbs = op2 / GMP_NUMB_BITS;
+  if (lim - emacs_mpz_size (op1) < op2limbs)
+    integer_overflow ();
+  mpz_mul_2exp (rop, op1, op2);
+}
+
+static void
+emacs_mpz_pow_ui (mpz_t rop, mpz_t const base, unsigned long exp)
+{
+  /* This fudge factor is derived from GMP 6.1.2, to avoid an abort in
+     mpz_n_pow_ui (look for the '5' in its source code).  */
+  enum { pow_ui_extra_limbs = 5 };
+  enum { lim = min (NLIMBS_LIMIT, GMP_NLIMBS_MAX - pow_ui_extra_limbs) };
+
+  int nbase = emacs_mpz_size (base), n;
+  if (INT_MULTIPLY_WRAPV (nbase, exp, &n) || lim < n)
+    integer_overflow ();
+  mpz_pow_ui (rop, base, exp);
+}
+
+
 /* Arithmetic functions */
 
 Lisp_Object
@@ -2872,13 +2946,13 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	  break;
 	case Amult:
 	  if (BIGNUMP (val))
-	    mpz_mul (accum, accum, XBIGNUM (val)->value);
+	    emacs_mpz_mul (accum, accum, XBIGNUM (val)->value);
 	  else if (! FIXNUMS_FIT_IN_LONG)
             {
 	      mpz_t tem;
 	      mpz_init (tem);
 	      mpz_set_intmax (tem, XFIXNUM (val));
-	      mpz_mul (accum, accum, tem);
+	      emacs_mpz_mul (accum, accum, tem);
 	      mpz_clear (tem);
             }
 	  else
@@ -3293,7 +3367,7 @@ In this case, the sign bit is duplicated.  */)
       mpz_t result;
       mpz_init (result);
       if (XFIXNUM (count) > 0)
-	mpz_mul_2exp (result, XBIGNUM (value)->value, XFIXNUM (count));
+	emacs_mpz_mul_2exp (result, XBIGNUM (value)->value, XFIXNUM (count));
       else
 	mpz_fdiv_q_2exp (result, XBIGNUM (value)->value, - XFIXNUM (count));
       val = make_number (result);
@@ -3319,7 +3393,7 @@ In this case, the sign bit is duplicated.  */)
       mpz_set_intmax (result, XFIXNUM (value));
 
       if (XFIXNUM (count) >= 0)
-	mpz_mul_2exp (result, result, XFIXNUM (count));
+	emacs_mpz_mul_2exp (result, result, XFIXNUM (count));
       else
 	mpz_fdiv_q_2exp (result, result, - XFIXNUM (count));
 
@@ -3328,6 +3402,33 @@ In this case, the sign bit is duplicated.  */)
     }
 
   return val;
+}
+
+/* Return X ** Y as an integer.  X and Y must be integers, and Y must
+   be nonnegative.  */
+
+Lisp_Object
+expt_integer (Lisp_Object x, Lisp_Object y)
+{
+  unsigned long exp;
+  if (TYPE_RANGED_FIXNUMP (unsigned long, y))
+    exp = XFIXNUM (y);
+  else if (MOST_POSITIVE_FIXNUM < ULONG_MAX && BIGNUMP (y)
+	   && mpz_fits_ulong_p (XBIGNUM (y)->value))
+    exp = mpz_get_ui (XBIGNUM (y)->value);
+  else
+    integer_overflow ();
+
+  mpz_t val;
+  mpz_init (val);
+  emacs_mpz_pow_ui (val,
+		    (FIXNUMP (x)
+		     ? (mpz_set_intmax (val, XFIXNUM (x)), val)
+		     : XBIGNUM (x)->value),
+		    exp);
+  Lisp_Object res = make_number (val);
+  mpz_clear (val);
+  return res;
 }
 
 DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
