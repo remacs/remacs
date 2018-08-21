@@ -624,6 +624,11 @@
         (should (eq (gethash b2 hash)
                     (funcall test b1 b2)))))))
 
+(ert-deftest test-nthcdr-simple ()
+  (should (eq (nthcdr 0 'x) 'x))
+  (should (eq (nthcdr 1 '(x . y)) 'y))
+  (should (eq (nthcdr 2 '(x y . z)) 'z)))
+
 (ert-deftest test-nthcdr-circular ()
   (dolist (len '(1 2 5 37 120 997 1024))
     (let ((cycle (make-list len nil)))

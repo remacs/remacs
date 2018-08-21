@@ -1402,6 +1402,8 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
        doc: /* Take cdr N times on LIST, return the result.  */)
   (Lisp_Object n, Lisp_Object list)
 {
+  Lisp_Object tail = list;
+
   CHECK_INTEGER (n);
 
   /* A huge but in-range EMACS_INT that can be substituted for a
@@ -1412,24 +1414,41 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
 
   EMACS_INT num;
   if (FIXNUMP (n))
-    num = XFIXNUM (n);
+    {
+      num = XFIXNUM (n);
+
+      /* Speed up small lists by omitting circularity and quit checking.  */
+      if (num < 128)
+	{
+	  for (; 0 < num; num--, tail = XCDR (tail))
+	    if (! CONSP (tail))
+	      {
+		CHECK_LIST_END (tail, list);
+		return Qnil;
+	      }
+	  return tail;
+	}
+    }
   else
     {
-      num = mpz_sgn (XBIGNUM (n)->value);
-      if (0 < num)
-	num = large_num;
+      if (mpz_sgn (XBIGNUM (n)->value) < 0)
+	return tail;
+      num = large_num;
     }
 
   EMACS_INT tortoise_num = num;
-  Lisp_Object tail = list, saved_tail = tail;
+  Lisp_Object saved_tail = tail;
   FOR_EACH_TAIL_SAFE (tail)
     {
-      if (num <= 0)
-	return tail;
-      if (tail == li.tortoise)
+      /* If the tortoise just jumped (which is rare),
+	 update TORTOISE_NUM accordingly.  */
+      if (EQ (tail, li.tortoise))
 	tortoise_num = num;
+
       saved_tail = XCDR (tail);
       num--;
+      if (num == 0)
+	return saved_tail;
       rarely_quit (num);
     }
 
