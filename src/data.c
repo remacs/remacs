@@ -511,16 +511,6 @@ DEFUN ("integerp", Fintegerp, Sintegerp, 1, 1, 0,
   return Qnil;
 }
 
-DEFUN ("fixnump", Ffixnump, Sfixnump, 1, 1, 0,
-       doc: /* Return t if OBJECT is an fixnum.  */
-       attributes: const)
-  (Lisp_Object object)
-{
-  if (FIXNUMP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("integer-or-marker-p", Finteger_or_marker_p, Sinteger_or_marker_p, 1, 1, 0,
        doc: /* Return t if OBJECT is an integer or a marker (editor pointer).  */)
   (register Lisp_Object object)
@@ -595,15 +585,6 @@ DEFUN ("condition-variable-p", Fcondition_variable_p, Scondition_variable_p,
   (Lisp_Object object)
 {
   if (CONDVARP (object))
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("bignump", Fbignump, Sbignump, 1, 1, 0,
-       doc: /* Return t if OBJECT is a bignum.  */)
-  (Lisp_Object object)
-{
-  if (BIGNUMP (object))
     return Qt;
   return Qnil;
 }
@@ -4153,7 +4134,6 @@ syms_of_data (void)
   defsubr (&Sconsp);
   defsubr (&Satom);
   defsubr (&Sintegerp);
-  defsubr (&Sfixnump);
   defsubr (&Sinteger_or_marker_p);
   defsubr (&Snumberp);
   defsubr (&Snumber_or_marker_p);
@@ -4179,7 +4159,6 @@ syms_of_data (void)
   defsubr (&Sthreadp);
   defsubr (&Smutexp);
   defsubr (&Scondition_variable_p);
-  defsubr (&Sbignump);
   defsubr (&Scar);
   defsubr (&Scdr);
   defsubr (&Scar_safe);

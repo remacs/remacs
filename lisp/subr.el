@@ -366,6 +366,15 @@ was called."
   (declare (compiler-macro (lambda (_) `(= 0 ,number))))
   (= 0 number))
 
+(defun fixnump (object)
+  "Return t if OBJECT is a fixnum."
+  (and (integerp object)
+       (<= most-negative-fixnum object most-positive-fixnum)))
+
+(defun bignump (object)
+  "Return t if OBJECT is a bignum."
+  (and (integerp object) (not (fixnump object))))
+
 (defun lsh (value count)
   "Return VALUE with its bits shifted left by COUNT.
 If COUNT is negative, shifting is actually to the right.
