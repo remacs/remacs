@@ -357,10 +357,10 @@ This is the same as the exponent of a float.  */)
 static Lisp_Object
 rounding_driver (Lisp_Object arg, Lisp_Object divisor,
 		 double (*double_round) (double),
-		 EMACS_INT (*int_round2) (EMACS_INT, EMACS_INT),
+		 void (*int_divide) (mpz_t, mpz_t const, mpz_t const),
 		 const char *name)
 {
-  CHECK_FIXNUM_OR_FLOAT (arg);
+  CHECK_NUMBER (arg);
 
   double d;
   if (NILP (divisor))
@@ -371,12 +371,25 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
     }
   else
     {
-      CHECK_FIXNUM_OR_FLOAT (divisor);
+      CHECK_NUMBER (divisor);
       if (!FLOATP (arg) && !FLOATP (divisor))
 	{
-	  if (XFIXNUM (divisor) == 0)
+	  if (EQ (divisor, make_fixnum (0)))
 	    xsignal0 (Qarith_error);
-	  return make_fixnum (int_round2 (XFIXNUM (arg), XFIXNUM (divisor)));
+	  mpz_t d, q;
+	  mpz_init (d);
+	  mpz_init (q);
+	  int_divide (q,
+		      (FIXNUMP (arg)
+		       ? (mpz_set_intmax (q, XFIXNUM (arg)), q)
+		       : XBIGNUM (arg)->value),
+		      (FIXNUMP (divisor)
+		       ? (mpz_set_intmax (d, XFIXNUM (divisor)), d)
+		       : XBIGNUM (divisor)->value));
+	  Lisp_Object result = make_number (q);
+	  mpz_clear (d);
+	  mpz_clear (q);
+	  return result;
 	}
 
       double f1 = FLOATP (arg) ? XFLOAT_DATA (arg) : XFIXNUM (arg);
@@ -400,37 +413,39 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
   xsignal2 (Qrange_error, build_string (name), arg);
 }
 
-static EMACS_INT
-ceiling2 (EMACS_INT i1, EMACS_INT i2)
+static void
+rounddiv_q (mpz_t q, mpz_t const n, mpz_t const d)
 {
-  return i1 / i2 + ((i1 % i2 != 0) & ((i1 < 0) == (i2 < 0)));
-}
+  /* mpz_tdiv_qr gives us one remainder R, but we want the remainder
+     R1 on the other side of 0 if R1 is closer to 0 than R is; because
+     we want to round to even, we also want R1 if R and R1 are the
+     same distance from 0 and if the quotient is odd.
 
-static EMACS_INT
-floor2 (EMACS_INT i1, EMACS_INT i2)
-{
-  return i1 / i2 - ((i1 % i2 != 0) & ((i1 < 0) != (i2 < 0)));
-}
+     If we were using EMACS_INT arithmetic instead of bignums,
+     the following code could look something like this:
 
-static EMACS_INT
-truncate2 (EMACS_INT i1, EMACS_INT i2)
-{
-  return i1 / i2;
-}
+     q = n / d;
+     r = n % d;
+     neg_d = d < 0;
+     neg_r = r < 0;
+     r = eabs (r);
+     abs_r1 = eabs (d) - r;
+     if (abs_r1 < r + (q & 1))
+       q += neg_d == neg_r ? 1 : -1;  */
 
-static EMACS_INT
-round2 (EMACS_INT i1, EMACS_INT i2)
-{
-  /* The C language's division operator gives us one remainder R, but
-     we want the remainder R1 on the other side of 0 if R1 is closer
-     to 0 than R is; because we want to round to even, we also want R1
-     if R and R1 are the same distance from 0 and if C's quotient is
-     odd.  */
-  EMACS_INT q = i1 / i2;
-  EMACS_INT r = i1 % i2;
-  EMACS_INT abs_r = eabs (r);
-  EMACS_INT abs_r1 = eabs (i2) - abs_r;
-  return q + (abs_r + (q & 1) <= abs_r1 ? 0 : (i2 ^ r) < 0 ? -1 : 1);
+  mpz_t r, abs_r1;
+  mpz_init (r);
+  mpz_init (abs_r1);
+  mpz_tdiv_qr (q, r, n, d);
+  bool neg_d = mpz_sgn (d) < 0;
+  bool neg_r = mpz_sgn (r) < 0;
+  mpz_abs (r, r);
+  mpz_abs (abs_r1, d);
+  mpz_sub (abs_r1, abs_r1, r);
+  if (mpz_cmp (abs_r1, r) < (mpz_odd_p (q) != 0))
+    (neg_d == neg_r ? mpz_add_ui : mpz_sub_ui) (q, q, 1);
+  mpz_clear (r);
+  mpz_clear (abs_r1);
 }
 
 /* The code uses emacs_rint, so that it works to undefine HAVE_RINT
@@ -461,7 +476,7 @@ This rounds the value towards +inf.
 With optional DIVISOR, return the smallest integer no less than ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, ceil, ceiling2, "ceiling");
+  return rounding_driver (arg, divisor, ceil, mpz_cdiv_q, "ceiling");
 }
 
 DEFUN ("floor", Ffloor, Sfloor, 1, 2, 0,
@@ -470,7 +485,7 @@ This rounds the value towards -inf.
 With optional DIVISOR, return the largest integer no greater than ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, floor, floor2, "floor");
+  return rounding_driver (arg, divisor, floor, mpz_fdiv_q, "floor");
 }
 
 DEFUN ("round", Fround, Sround, 1, 2, 0,
@@ -483,7 +498,7 @@ your machine.  For example, (round 2.5) can return 3 on some
 systems, but 2 on others.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, emacs_rint, round2, "round");
+  return rounding_driver (arg, divisor, emacs_rint, rounddiv_q, "round");
 }
 
 DEFUN ("truncate", Ftruncate, Struncate, 1, 2, 0,
@@ -492,7 +507,7 @@ Rounds ARG toward zero.
 With optional DIVISOR, truncate ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, trunc, truncate2, "truncate");
+  return rounding_driver (arg, divisor, trunc, mpz_tdiv_q, "truncate");
 }
 
 

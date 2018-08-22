@@ -58,4 +58,31 @@
 (ert-deftest bignum-mod ()
   (should (= 0 (mod (1+ most-positive-fixnum) 2.0))))
 
+(ert-deftest bignum-round ()
+  (let ((ns (list (* most-positive-fixnum most-negative-fixnum)
+                  (1- most-negative-fixnum) most-negative-fixnum
+                  (1+ most-negative-fixnum) -2 1 1 2
+                  (1- most-positive-fixnum) most-positive-fixnum
+                  (1+ most-positive-fixnum)
+                  (* most-positive-fixnum most-positive-fixnum))))
+    (dolist (n ns)
+      (dolist (d ns)
+        (let ((q (/ n d))
+              (r (% n d))
+              (same-sign (eq (< n 0) (< d 0))))
+          (should (= (ceiling n d)
+                     (+ q (if (and same-sign (not (zerop r))) 1 0))))
+          (should (= (floor n d)
+                     (- q (if (and (not same-sign) (not (zerop r))) 1 0))))
+          (should (= (truncate n d) q))
+          (let ((cdelta (abs (- n (* d (ceiling n d)))))
+                (fdelta (abs (- n (* d (floor n d)))))
+                (rdelta (abs (- n (* d (round n d))))))
+            (should (<= rdelta cdelta))
+            (should (<= rdelta fdelta))
+            (should (if (zerop r)
+                        (= 0 cdelta fdelta rdelta)
+                      (or (/= cdelta fdelta)
+                          (zerop (% (round n d) 2)))))))))))
+
 (provide 'floatfns-tests)
