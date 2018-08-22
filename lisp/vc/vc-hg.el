@@ -629,7 +629,7 @@ Return the byte's value as an integer."
         ;; 1+4*4 is the length of the dirstate item header.
         (forward-char (1+ (* 3 4)))
         (let ((this-flen (vc-hg--read-u32-be)))
-          (if (and (or (eql this-flen flen)
+          (if (and (or (eq this-flen flen)
                        (and (> this-flen flen)
                             (eq (char-after (+ (point) flen)) 0)))
                    (search-forward fname (+ (point) flen) t))
