@@ -883,11 +883,11 @@ deleted.  Point is left where the deleted region was."
 	      (active (or (cadr (assoc group nnfolder-group-alist))
 			  (cons 1 0)))
 	      (scantime (assoc group nnfolder-scantime-alist))
-	      (minid most-positive-fixnum)
+	      (minid (cdr active))
 	      maxid start end newscantime
 	      novbuf articles newnum
 	      buffer-read-only)
-	  (setq maxid (cdr active))
+	  (setq maxid minid)
 
 	  (unless (or gnus-nov-is-evil nnfolder-nov-is-evil
 		      (and (file-exists-p nov)

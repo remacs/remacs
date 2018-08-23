@@ -5564,7 +5564,7 @@ In posting styles use `(\"Expires\" (make-expires-date 30))'."
   ;; Instead we use this randomly inited counter.
   (setq message-unique-id-char
 	(% (1+ (or message-unique-id-char
-		   (logand (random most-positive-fixnum) (1- (ash 1 20)))))
+		   (random (ash 1 20))))
 	   ;; (current-time) returns 16-bit ints,
 	   ;; and 2^16*25 just fits into 4 digits i base 36.
 	   (* 25 25)))

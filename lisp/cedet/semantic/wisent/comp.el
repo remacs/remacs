@@ -139,14 +139,7 @@ If optional LEFT is non-nil insert spaces on left."
 ;;;; Environment dependencies
 ;;;; ------------------------
 
-(defconst wisent-BITS-PER-WORD
-  (let ((i 1)
-	(do-shift (if (boundp 'most-positive-fixnum)
-		      (lambda (i) (ash most-positive-fixnum (- i)))
-		    (lambda (i) (ash 1 i)))))
-    (while (not (zerop (funcall do-shift i)))
-      (setq i (1+ i)))
-    i))
+(defconst wisent-BITS-PER-WORD (logcount most-positive-fixnum))
 
 (defsubst wisent-WORDSIZE (n)
   "(N + BITS-PER-WORD - 1) / BITS-PER-WORD."
