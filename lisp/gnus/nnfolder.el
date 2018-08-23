@@ -877,16 +877,16 @@ deleted.  Point is left where the deleted region was."
 	  (delete-char 1))
 	(nnmail-activate 'nnfolder)
 	;; Read in the file.
-	(let ((delim "^From ")
-	      (marker (concat "\n" nnfolder-article-marker))
-	      (number "[0-9]+")
-	      (active (or (cadr (assoc group nnfolder-group-alist))
-			  (cons 1 0)))
-	      (scantime (assoc group nnfolder-scantime-alist))
-	      (minid (cdr active))
-	      maxid start end newscantime
-	      novbuf articles newnum
-	      buffer-read-only)
+	(let* ((delim "^From ")
+	       (marker (concat "\n" nnfolder-article-marker))
+	       (number "[0-9]+")
+	       (active (or (cadr (assoc group nnfolder-group-alist))
+			   (cons 1 0)))
+	       (scantime (assoc group nnfolder-scantime-alist))
+	       (minid (cdr active))
+	       maxid start end newscantime
+	       novbuf articles newnum
+	       buffer-read-only)
 	  (setq maxid minid)
 
 	  (unless (or gnus-nov-is-evil nnfolder-nov-is-evil
@@ -958,7 +958,7 @@ deleted.  Point is left where the deleted region was."
 	  (while (not (= end (point-max)))
 	    (setq start (marker-position end))
 	    (goto-char end)
-	   ;; There may be more than one "From " line, so we skip past
+	    ;; There may be more than one "From " line, so we skip past
 	    ;; them.
 	    (while (looking-at delim)
 	      (forward-line 1))
