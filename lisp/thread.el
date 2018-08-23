@@ -82,6 +82,9 @@ An EVENT has the format
 (defun list-threads ()
   "Display a list of threads."
   (interactive)
+  ;; Threads may not exist, if Emacs was configured --without-threads.
+  (unless (bound-and-true-p main-thread)
+    (error "Threads are not supported in this configuration"))
   ;; Generate the Threads list buffer, and switch to it.
   (let ((buf (get-buffer-create "*Threads*")))
     (with-current-buffer buf
