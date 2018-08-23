@@ -410,7 +410,12 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
       if (! FIXNUM_OVERFLOW_P (ir))
 	return make_fixnum (ir);
     }
-  xsignal2 (Qrange_error, build_string (name), arg);
+  mpz_t drz;
+  mpz_init (drz);
+  mpz_set_d (drz, dr);
+  Lisp_Object rounded = make_number (drz);
+  mpz_clear (drz);
+  return rounded;
 }
 
 static void
@@ -501,13 +506,20 @@ systems, but 2 on others.  */)
   return rounding_driver (arg, divisor, emacs_rint, rounddiv_q, "round");
 }
 
+/* Since rounding_driver truncates anyway, no need to call 'trunc'.  */
+static double
+identity (double x)
+{
+  return x;
+}
+
 DEFUN ("truncate", Ftruncate, Struncate, 1, 2, 0,
        doc: /* Truncate a floating point number to an int.
 Rounds ARG toward zero.
 With optional DIVISOR, truncate ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, trunc, mpz_tdiv_q, "truncate");
+  return rounding_driver (arg, divisor, identity, mpz_tdiv_q, "truncate");
 }
 
 

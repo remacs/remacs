@@ -2406,7 +2406,7 @@ static void
 emacs_mpz_mul (mpz_t rop, mpz_t const op1, mpz_t const op2)
 {
   if (NLIMBS_LIMIT - emacs_mpz_size (op1) < emacs_mpz_size (op2))
-    integer_overflow ();
+    range_error ();
   mpz_mul (rop, op1, op2);
 }
 
@@ -2420,7 +2420,7 @@ emacs_mpz_mul_2exp (mpz_t rop, mpz_t const op1, mp_bitcnt_t op2)
 
   mp_bitcnt_t op2limbs = op2 / GMP_NUMB_BITS;
   if (lim - emacs_mpz_size (op1) < op2limbs)
-    integer_overflow ();
+    range_error ();
   mpz_mul_2exp (rop, op1, op2);
 }
 
@@ -2434,7 +2434,7 @@ emacs_mpz_pow_ui (mpz_t rop, mpz_t const base, unsigned long exp)
 
   int nbase = emacs_mpz_size (base), n;
   if (INT_MULTIPLY_WRAPV (nbase, exp, &n) || lim < n)
-    integer_overflow ();
+    range_error ();
   mpz_pow_ui (rop, base, exp);
 }
 
@@ -3398,7 +3398,7 @@ expt_integer (Lisp_Object x, Lisp_Object y)
 	   && mpz_fits_ulong_p (XBIGNUM (y)->value))
     exp = mpz_get_ui (XBIGNUM (y)->value);
   else
-    integer_overflow ();
+    range_error ();
 
   mpz_t val;
   mpz_init (val);

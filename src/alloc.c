@@ -3771,7 +3771,7 @@ make_number (mpz_t value)
   /* The documentation says integer-width should be nonnegative, so
      a single comparison suffices even though 'bits' is unsigned.  */
   if (integer_width < bits)
-    integer_overflow ();
+    range_error ();
 
   struct Lisp_Bignum *b = ALLOCATE_PSEUDOVECTOR (struct Lisp_Bignum, value,
 						 PVEC_BIGNUM);
@@ -7203,9 +7203,9 @@ verify_alloca (void)
 /* Memory allocation for GMP.  */
 
 void
-integer_overflow (void)
+range_error (void)
 {
-  error ("Integer too large to be represented");
+  xsignal0 (Qrange_error);
 }
 
 static void *

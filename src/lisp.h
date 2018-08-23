@@ -3708,7 +3708,7 @@ extern void display_malloc_warning (void);
 extern ptrdiff_t inhibit_garbage_collection (void);
 extern Lisp_Object build_overlay (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void free_cons (struct Lisp_Cons *);
-extern _Noreturn void integer_overflow (void);
+extern _Noreturn void range_error (void);
 extern void init_alloc_once (void);
 extern void init_alloc (void);
 extern void syms_of_alloc (void);

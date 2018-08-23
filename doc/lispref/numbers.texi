@@ -201,7 +201,7 @@ range are limited to absolute values less than
 @math{2^{n}},
 @end tex
 where @var{n} is this variable's value.  Attempts to create bignums outside
-this range result in an integer overflow error.  Setting this variable
+this range signal a range error.  Setting this variable
 to zero disables creation of bignums; setting it to a large number can
 cause Emacs to consume large quantities of memory if a computation
 creates huge integers.
