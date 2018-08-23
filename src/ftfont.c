@@ -2687,6 +2687,152 @@ ftfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 
 #ifdef HAVE_HARFBUZZ
 
+static hb_unicode_combining_class_t
+uni_combining (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
+{
+  /* FIXME: Is it OK to load the table each time like this? */
+  Lisp_Object table = uniprop_table (intern ("canonical-combining-class"));
+  if (!NILP (table))
+    {
+      /* FIXME: something is wrong here, the classes we are getting do not make
+       * sense. */
+      Lisp_Object combining = CHAR_TABLE_REF (table, ch);
+      if (INTEGERP (combining))
+        return (hb_unicode_combining_class_t) XFIXNUM (combining);
+    }
+
+  return HB_UNICODE_COMBINING_CLASS_NOT_REORDERED;
+}
+
+static hb_unicode_general_category_t
+uni_general (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
+{
+  Lisp_Object category = CHAR_TABLE_REF (Vunicode_category_table, ch);
+
+  if (INTEGERP (category))
+    {
+    switch (XFIXNUM (category))
+      {
+      case UNICODE_CATEGORY_Cc:
+        return HB_UNICODE_GENERAL_CATEGORY_CONTROL;
+      case UNICODE_CATEGORY_Cf:
+        return HB_UNICODE_GENERAL_CATEGORY_FORMAT;
+      case UNICODE_CATEGORY_Cn:
+        return HB_UNICODE_GENERAL_CATEGORY_UNASSIGNED;
+      case UNICODE_CATEGORY_Co:
+        return HB_UNICODE_GENERAL_CATEGORY_PRIVATE_USE;
+      case UNICODE_CATEGORY_Cs:
+        return HB_UNICODE_GENERAL_CATEGORY_SURROGATE;
+      case UNICODE_CATEGORY_Ll:
+        return HB_UNICODE_GENERAL_CATEGORY_LOWERCASE_LETTER;
+      case UNICODE_CATEGORY_Lm:
+        return HB_UNICODE_GENERAL_CATEGORY_MODIFIER_LETTER;
+      case UNICODE_CATEGORY_Lo:
+        return HB_UNICODE_GENERAL_CATEGORY_OTHER_LETTER;
+      case UNICODE_CATEGORY_Lt:
+        return HB_UNICODE_GENERAL_CATEGORY_TITLECASE_LETTER;
+      case UNICODE_CATEGORY_Lu:
+        return HB_UNICODE_GENERAL_CATEGORY_UPPERCASE_LETTER;
+      case UNICODE_CATEGORY_Mc:
+        return HB_UNICODE_GENERAL_CATEGORY_SPACING_MARK;
+      case UNICODE_CATEGORY_Me:
+        return HB_UNICODE_GENERAL_CATEGORY_ENCLOSING_MARK;
+      case UNICODE_CATEGORY_Mn:
+        return HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK;
+      case UNICODE_CATEGORY_Nd:
+        return HB_UNICODE_GENERAL_CATEGORY_DECIMAL_NUMBER;
+      case UNICODE_CATEGORY_Nl:
+        return HB_UNICODE_GENERAL_CATEGORY_LETTER_NUMBER;
+      case UNICODE_CATEGORY_No:
+        return HB_UNICODE_GENERAL_CATEGORY_OTHER_NUMBER;
+      case UNICODE_CATEGORY_Pc:
+        return HB_UNICODE_GENERAL_CATEGORY_CONNECT_PUNCTUATION;
+      case UNICODE_CATEGORY_Pd:
+        return HB_UNICODE_GENERAL_CATEGORY_DASH_PUNCTUATION;
+      case UNICODE_CATEGORY_Pe:
+        return HB_UNICODE_GENERAL_CATEGORY_CLOSE_PUNCTUATION;
+      case UNICODE_CATEGORY_Pf:
+        return HB_UNICODE_GENERAL_CATEGORY_FINAL_PUNCTUATION;
+      case UNICODE_CATEGORY_Pi:
+        return HB_UNICODE_GENERAL_CATEGORY_INITIAL_PUNCTUATION;
+      case UNICODE_CATEGORY_Po:
+        return HB_UNICODE_GENERAL_CATEGORY_OTHER_PUNCTUATION;
+      case UNICODE_CATEGORY_Ps:
+        return HB_UNICODE_GENERAL_CATEGORY_OPEN_PUNCTUATION;
+      case UNICODE_CATEGORY_Sc:
+        return HB_UNICODE_GENERAL_CATEGORY_CURRENCY_SYMBOL;
+      case UNICODE_CATEGORY_Sk:
+        return HB_UNICODE_GENERAL_CATEGORY_MODIFIER_SYMBOL;
+      case UNICODE_CATEGORY_Sm:
+        return HB_UNICODE_GENERAL_CATEGORY_MATH_SYMBOL;
+      case UNICODE_CATEGORY_So:
+        return HB_UNICODE_GENERAL_CATEGORY_OTHER_SYMBOL;
+      case UNICODE_CATEGORY_Zl:
+        return HB_UNICODE_GENERAL_CATEGORY_LINE_SEPARATOR;
+      case UNICODE_CATEGORY_Zp:
+        return HB_UNICODE_GENERAL_CATEGORY_PARAGRAPH_SEPARATOR;
+      case UNICODE_CATEGORY_Zs:
+        return HB_UNICODE_GENERAL_CATEGORY_SPACE_SEPARATOR;
+      case UNICODE_CATEGORY_UNKNOWN:
+        return HB_UNICODE_GENERAL_CATEGORY_UNASSIGNED;
+      }
+    }
+
+  return HB_UNICODE_GENERAL_CATEGORY_UNASSIGNED;
+}
+
+static hb_codepoint_t
+uni_mirroring (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
+{
+  return bidi_mirror_char (ch);
+}
+
+static hb_script_t
+uni_script (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
+{
+  Lisp_Object script = CHAR_TABLE_REF (Vchar_script_table, ch);
+
+  if (SYMBOLP (script))
+    {
+      /* FIXME: from_string wants an ISO 15924 script tag here. */
+      return hb_script_from_string (SSDATA (SYMBOL_NAME (script)),
+                                    SBYTES (SYMBOL_NAME (script)));
+    }
+
+  return HB_SCRIPT_INVALID;
+}
+
+static hb_bool_t
+uni_compose (hb_unicode_funcs_t *funcs, hb_codepoint_t a, hb_codepoint_t b,
+             hb_codepoint_t *ab, void *user_data)
+{
+  /* FIXME: implement */
+  return false;
+}
+
+static hb_bool_t
+uni_decompose (hb_unicode_funcs_t *funcs, hb_codepoint_t ab, hb_codepoint_t *a,
+               hb_codepoint_t *b, void *user_data)
+{
+  /* FIXME: implement */
+  return false;
+}
+
+static hb_unicode_funcs_t *
+get_hb_unicode_funcs (void)
+{
+  hb_unicode_funcs_t *funcs = hb_unicode_funcs_create (NULL);
+
+  hb_unicode_funcs_set_combining_class_func (funcs, uni_combining, NULL, NULL);
+  hb_unicode_funcs_set_general_category_func (funcs, uni_general, NULL, NULL);
+  hb_unicode_funcs_set_mirroring_func (funcs, uni_mirroring, NULL, NULL);
+  hb_unicode_funcs_set_script_func (funcs, uni_script, NULL, NULL);
+  hb_unicode_funcs_set_compose_func (funcs, uni_compose, NULL, NULL);
+  hb_unicode_funcs_set_decompose_func (funcs, uni_decompose, NULL, NULL);
+
+  return funcs;
+}
+
 static Lisp_Object
 ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
                     FT_Matrix *matrix)
@@ -2715,6 +2861,9 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
   text_len = i;
   if (!text_len)
     goto done;
+
+  hb_unicode_funcs_t* ufuncs = get_hb_unicode_funcs();
+  hb_buffer_set_unicode_funcs(hb_buffer, ufuncs);
 
   hb_buffer_set_content_type (hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
   hb_buffer_set_cluster_level (hb_buffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
