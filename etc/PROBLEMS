@@ -207,7 +207,7 @@ configuring your compiler to use the native linker instead of GNU ld.
 ** When Emacs is compiled with Gtk+, closing a display kills Emacs.
 
 There is a long-standing bug in GTK that prevents it from recovering
-from disconnects: http://bugzilla.gnome.org/show_bug.cgi?id=85715.
+from disconnects: https://gitlab.gnome.org/GNOME/gtk/issues/221.
 
 Thus, for instance, when Emacs is run as a server on a text terminal,
 and an X frame is created, and the X server for that frame crashes or
@@ -225,7 +225,7 @@ The error message is:
 
   X protocol error: BadMatch (invalid parameter attributes) on protocol request 140
   When compiled with GTK, Emacs cannot recover from X disconnects.
-  This is a GTK bug: https://bugzilla.gnome.org/show_bug.cgi?id=85715
+  This is a GTK bug: https://gitlab.gnome.org/GNOME/gtk/issues/221
   For details, see etc/PROBLEMS.
   Fatal error 6: Aborted
 
@@ -1164,7 +1164,7 @@ is running.  If gnome-settings-daemon is not running, Emacs receives
 input through XIM without any problem.  Furthermore, this seems only
 to happen in *.UTF-8 locales; zh_CN.GB2312 and zh_CN.GBK locales, for
 example, work fine.  A bug report has been filed in the Gnome
-bugzilla: http://bugzilla.gnome.org/show_bug.cgi?id=357032
+bugzilla: https://bugzilla.gnome.org/show_bug.cgi?id=357032
 
 *** Gnome: GPaste clipboard manager causes erratic behavior of 'yank'
 

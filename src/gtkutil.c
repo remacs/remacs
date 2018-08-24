@@ -259,7 +259,7 @@ xg_display_close (Display *dpy)
 
 #if GTK_CHECK_VERSION (2, 0, 0) && ! GTK_CHECK_VERSION (2, 10, 0)
   /* GTK 2.2-2.8 has a bug that makes gdk_display_close crash (bug
-     http://bugzilla.gnome.org/show_bug.cgi?id=85715).  This way we
+     https://gitlab.gnome.org/GNOME/gtk/issues/221).  This way we
      can continue running, but there will be memory leaks.  */
   g_object_run_dispose (G_OBJECT (gdpy));
 #else
