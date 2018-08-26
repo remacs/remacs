@@ -303,6 +303,7 @@ is output until the first non-zero unit is encountered."
         (push match usedunits)))
     (and zeroflag larger
          (error "Units are not in decreasing order of size"))
+    (setq seconds (floor seconds))
     (dolist (u units)
       (setq spec (car u)
             name (cadr u)
