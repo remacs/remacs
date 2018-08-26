@@ -344,20 +344,20 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
       Lisp_Object globals = global_env_private.values;
       Lisp_Object prev = Qnil;
       ptrdiff_t count = 0;
-      for (Lisp_Object tail = global_env_private.values; CONSP (tail);
+      for (Lisp_Object tail = globals; CONSP (tail);
            tail = XCDR (tail))
         {
-          emacs_value global = xmint_pointer (XCAR (globals));
+          emacs_value global = xmint_pointer (XCAR (tail));
           if (global == ref)
             {
               if (NILP (prev))
                 global_env_private.values = XCDR (globals);
               else
-                XSETCDR (prev, XCDR (globals));
+                XSETCDR (prev, XCDR (tail));
               return;
             }
           ++count;
-          prev = globals;
+          prev = tail;
         }
       module_abort ("Global value was not found in list of %"pD"d globals",
                     count);
