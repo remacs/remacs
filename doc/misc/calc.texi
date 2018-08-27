@@ -33275,19 +33275,18 @@ prefer them, or if you are calling these functions from regular Lisp.
 
 The functions described here are scattered throughout the various
 Calc component files.  Note that @file{calc.el} includes @code{autoload}s
-for only a few component files; when Calc wants to call an advanced
-function it calls @samp{(calc-extensions)} first; this function
-autoloads @file{calc-ext.el}, which in turn autoloads all the functions
-in the remaining component files.
+for only a few component files; to get autoloads of the more advanced
+function, one needs to load @file{calc-ext.el}, which in turn
+autoloads all the functions in the remaining component files.
 
 Because @code{defmath} itself uses the extensions, user-written code
 generally always executes with the extensions already loaded, so
 normally you can use any Calc function and be confident that it will
 be autoloaded for you when necessary.  If you are doing something
 special, check carefully to make sure each function you are using is
-from @file{calc.el} or its components, and call @samp{(calc-extensions)}
-before using any function based in @file{calc-ext.el} if you can't
-prove this file will already be loaded.
+from @file{calc.el} or its components, and use @w{@code{(require
+'calc-ext)}} before using any function based in @file{calc-ext.el} if
+you can't prove this file will already be loaded.
 
 @menu
 * Data Type Formats::

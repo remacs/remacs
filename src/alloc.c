@@ -7017,7 +7017,7 @@ Frames, windows, buffers, and subprocesses count as vectors
   (but the contents of a buffer's text do not count here).  */)
   (void)
 {
-  return listn (CONSTYPE_HEAP, 8,
+  return listn (CONSTYPE_HEAP, 7,
 		bounded_number (cons_cells_consed),
 		bounded_number (floats_consed),
 		bounded_number (vector_cells_consed),
