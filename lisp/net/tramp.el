@@ -8,6 +8,7 @@
 ;; Keywords: comm, processes
 ;; Package: tramp
 ;; Version: 2.4.1-pre
+;; Package-Requires: ((emacs "24.1"))
 
 ;; This file is part of GNU Emacs.
 
@@ -35,8 +36,6 @@
 ;;
 ;; Notes:
 ;; -----
-;;
-;; This package only works for Emacs 24.1 and higher.
 ;;
 ;; Also see the todo list at the bottom of this file.
 ;;
