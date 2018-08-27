@@ -1441,21 +1441,23 @@ No indentation or other \"electric\" behavior is performed."
 	'in-block)
        ((c-in-function-trailer-p)
 	'in-trailer)
-       ((and (not least-enclosing)
-	     (consp paren-state)
-	     (consp (car paren-state))
-	     (eq start (cdar paren-state))
-	     (or
-	      (save-excursion
-		(c-forward-syntactic-ws)
-		(or (not (looking-at c-symbol-start))
-		    (looking-at c-keywords-regexp)))
-	      (save-excursion
-		(goto-char (caar paren-state))
-		(c-beginning-of-decl-1
-		 (and least-enclosing
-		      (c-safe-position least-enclosing paren-state)))
-		(not (looking-at c-defun-type-name-decl-key)))))
+       ((or (and (eq (char-before) ?\;)
+		 (save-excursion
+		   (backward-char)
+		   (c-in-function-trailer-p)))
+	    (and (not least-enclosing)
+		 (consp paren-state)
+		 (consp (car paren-state))
+		 (eq start (cdar paren-state))
+		 (or
+		  (save-excursion
+		    (c-forward-syntactic-ws)
+		    (or (not (looking-at c-symbol-start))
+			(looking-at c-keywords-regexp)))
+		  (save-excursion
+		    (goto-char (caar paren-state))
+		    (c-beginning-of-decl-1)
+		    (not (looking-at c-defun-type-name-decl-key))))))
 	'at-function-end)
        (t
 	;; Find the start of the current declaration.  NOTE: If we're in the
