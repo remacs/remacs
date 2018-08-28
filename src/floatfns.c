@@ -42,6 +42,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include "lisp.h"
+#include "bignum.h"
 
 #include <math.h>
 
@@ -209,7 +210,7 @@ DEFUN ("expt", Fexpt, Sexpt, 2, 2, 0,
 
   /* Common Lisp spec: don't promote if both are integers, and if the
      result is not fractional.  */
-  if (INTEGERP (arg1) && NATNUMP (arg2))
+  if (INTEGERP (arg1) && Fnatnump (arg2))
     return expt_integer (arg1, arg2);
 
   return make_float (pow (XFLOATINT (arg1), XFLOATINT (arg2)));
@@ -258,19 +259,7 @@ DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
   if (FIXNUMP (arg))
     {
       if (XFIXNUM (arg) < 0)
-	{
-	  EMACS_INT absarg = -XFIXNUM (arg);
-	  if (absarg <= MOST_POSITIVE_FIXNUM)
-	    arg = make_fixnum (absarg);
-	  else
-	    {
-	      mpz_t val;
-	      mpz_init (val);
-	      mpz_set_intmax (val, absarg);
-	      arg = make_number (val);
-	      mpz_clear (val);
-	    }
-	}
+	arg = make_int (-XFIXNUM (arg));
     }
   else if (FLOATP (arg))
     {
@@ -284,7 +273,7 @@ DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
 	  mpz_t val;
 	  mpz_init (val);
 	  mpz_neg (val, XBIGNUM (arg)->value);
-	  arg = make_number (val);
+	  arg = make_integer (val);
 	  mpz_clear (val);
 	}
     }
@@ -297,13 +286,8 @@ DEFUN ("float", Ffloat, Sfloat, 1, 1, 0,
   (register Lisp_Object arg)
 {
   CHECK_NUMBER (arg);
-
-  if (BIGNUMP (arg))
-    return make_float (mpz_get_d (XBIGNUM (arg)->value));
-  if (FIXNUMP (arg))
-    return make_float ((double) XFIXNUM (arg));
-  else				/* give 'em the same float back */
-    return arg;
+  /* If ARG is a float, give 'em the same float back.  */
+  return FLOATP (arg) ? arg : make_float (XFLOATINT (arg));
 }
 
 static int
@@ -386,7 +370,7 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
 		      (FIXNUMP (divisor)
 		       ? (mpz_set_intmax (d, XFIXNUM (divisor)), d)
 		       : XBIGNUM (divisor)->value));
-	  Lisp_Object result = make_number (q);
+	  Lisp_Object result = make_integer (q);
 	  mpz_clear (d);
 	  mpz_clear (q);
 	  return result;
@@ -410,12 +394,7 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
       if (! FIXNUM_OVERFLOW_P (ir))
 	return make_fixnum (ir);
     }
-  mpz_t drz;
-  mpz_init (drz);
-  mpz_set_d (drz, dr);
-  Lisp_Object rounded = make_number (drz);
-  mpz_clear (drz);
-  return rounded;
+  return double_to_bignum (dr);
 }
 
 static void
@@ -433,9 +412,9 @@ rounddiv_q (mpz_t q, mpz_t const n, mpz_t const d)
      r = n % d;
      neg_d = d < 0;
      neg_r = r < 0;
-     r = eabs (r);
-     abs_r1 = eabs (d) - r;
-     if (abs_r1 < r + (q & 1))
+     abs_r = eabs (r);
+     abs_r1 = eabs (d) - abs_r;
+     if (abs_r1 < abs_r + (q & 1))
        q += neg_d == neg_r ? 1 : -1;  */
 
   mpz_t r, abs_r1;
@@ -444,10 +423,11 @@ rounddiv_q (mpz_t q, mpz_t const n, mpz_t const d)
   mpz_tdiv_qr (q, r, n, d);
   bool neg_d = mpz_sgn (d) < 0;
   bool neg_r = mpz_sgn (r) < 0;
-  mpz_abs (r, r);
+  mpz_t *abs_r = &r;
+  mpz_abs (*abs_r, r);
   mpz_abs (abs_r1, d);
-  mpz_sub (abs_r1, abs_r1, r);
-  if (mpz_cmp (abs_r1, r) < (mpz_odd_p (q) != 0))
+  mpz_sub (abs_r1, abs_r1, *abs_r);
+  if (mpz_cmp (abs_r1, *abs_r) < (mpz_odd_p (q) != 0))
     (neg_d == neg_r ? mpz_add_ui : mpz_sub_ui) (q, q, 1);
   mpz_clear (r);
   mpz_clear (abs_r1);

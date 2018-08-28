@@ -709,7 +709,7 @@ usage: (json-insert OBJECT &rest ARGS)  */)
 
 /* Convert a JSON object to a Lisp object.  */
 
-static _GL_ARG_NONNULL ((1)) Lisp_Object
+static Lisp_Object ARG_NONNULL ((1))
 json_to_lisp (json_t *json, struct json_configuration *conf)
 {
   switch (json_typeof (json))

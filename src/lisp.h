@@ -31,12 +31,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <inttypes.h>
 #include <limits.h>
 
-#ifdef HAVE_GMP
-# include <gmp.h>
-#else
-# include "mini-gmp.h"
-#endif
-
 #include <intprops.h>
 #include <verify.h>
 
@@ -589,6 +583,10 @@ enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = false };
 INLINE void set_sub_char_table_contents (Lisp_Object, ptrdiff_t,
 					      Lisp_Object);
 
+/* Defined in bignum.c.  */
+extern double bignum_to_double (Lisp_Object);
+extern Lisp_Object make_bigint (intmax_t);
+
 /* Defined in chartab.c.  */
 extern Lisp_Object char_table_ref (Lisp_Object, int);
 extern void char_table_set (Lisp_Object, int, Lisp_Object);
@@ -1012,14 +1010,6 @@ enum More_Lisp_Bits
    values.  They are macros for use in static initializers.  */
 #define MOST_POSITIVE_FIXNUM (EMACS_INT_MAX >> INTTYPEBITS)
 #define MOST_NEGATIVE_FIXNUM (-1 - MOST_POSITIVE_FIXNUM)
-
-
-/* GMP-related limits.  */
-
-/* Number of data bits in a limb.  */
-#ifndef GMP_NUMB_BITS
-enum { GMP_NUMB_BITS = TYPE_WIDTH (mp_limb_t) };
-#endif
 
 #if USE_LSB_TAG
 
@@ -2460,29 +2450,23 @@ XUSER_PTR (Lisp_Object a)
 }
 #endif
 
-struct Lisp_Bignum
-{
-  union vectorlike_header header;
-  mpz_t value;
-};
-
 INLINE bool
 BIGNUMP (Lisp_Object x)
 {
   return PSEUDOVECTORP (x, PVEC_BIGNUM);
 }
 
-INLINE struct Lisp_Bignum *
-XBIGNUM (Lisp_Object a)
-{
-  eassert (BIGNUMP (a));
-  return XUNTAG (a, Lisp_Vectorlike, struct Lisp_Bignum);
-}
-
 INLINE bool
 INTEGERP (Lisp_Object x)
 {
   return FIXNUMP (x) || BIGNUMP (x);
+}
+
+/* Return a Lisp integer with value taken from n.  */
+INLINE Lisp_Object
+make_int (intmax_t n)
+{
+  return FIXNUM_OVERFLOW_P (n) ? make_bigint (n) : make_fixnum (n);
 }
 
 
@@ -2698,13 +2682,6 @@ FIXNATP (Lisp_Object x)
   return FIXNUMP (x) && 0 <= XFIXNUM (x);
 }
 INLINE bool
-NATNUMP (Lisp_Object x)
-{
-  if (BIGNUMP (x))
-    return mpz_sgn (XBIGNUM (x)->value) >= 0;
-  return FIXNUMP (x) && 0 <= XFIXNUM (x);
-}
-INLINE bool
 NUMBERP (Lisp_Object x)
 {
   return INTEGERP (x) || FLOATP (x);
@@ -2848,9 +2825,9 @@ CHECK_FIXNAT (Lisp_Object x)
 INLINE double
 XFLOATINT (Lisp_Object n)
 {
-  if (BIGNUMP (n))
-    return mpz_get_d (XBIGNUM (n)->value);
-  return FLOATP (n) ? XFLOAT_DATA (n) : XFIXNUM (n);
+  return (FIXNUMP (n) ? XFIXNUM (n)
+	  : FLOATP (n) ? XFLOAT_DATA (n)
+	  : bignum_to_double (n));
 }
 
 INLINE void
@@ -3310,6 +3287,11 @@ set_sub_char_table_contents (Lisp_Object table, ptrdiff_t idx, Lisp_Object val)
   XSUB_CHAR_TABLE (table)->contents[idx] = val;
 }
 
+/* Defined in bignum.c.  */
+extern Lisp_Object bignum_to_string (Lisp_Object, int);
+extern Lisp_Object make_bignum_str (char const *, int);
+extern Lisp_Object double_to_bignum (double);
+
 /* Defined in data.c.  */
 extern _Noreturn void wrong_choice (Lisp_Object, Lisp_Object);
 extern void notify_variable_watchers (Lisp_Object, Lisp_Object,
@@ -3581,22 +3563,6 @@ extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 			  Lisp_Object);
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
 extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
-
-extern Lisp_Object make_bignum_str (const char *num, int base);
-extern Lisp_Object make_number (mpz_t value);
-extern void mpz_set_intmax_slow (mpz_t result, intmax_t v);
-
-INLINE void
-mpz_set_intmax (mpz_t result, intmax_t v)
-{
-  /* mpz_set_si works in terms of long, but Emacs may use a wider
-     integer type, and so sometimes will have to construct the mpz_t
-     by hand.  */
-  if (LONG_MIN <= v && v <= LONG_MAX)
-    mpz_set_si (result, v);
-  else
-    mpz_set_intmax_slow (result, v);
-}
 
 /* Build a frequently used 2/3/4-integer lists.  */
 

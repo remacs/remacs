@@ -31,6 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #endif
 
 #include "lisp.h"
+#include "bignum.h"
 #include "dispextern.h"
 #include "intervals.h"
 #include "ptr-bounds.h"
@@ -3725,83 +3726,6 @@ build_marker (struct buffer *buf, ptrdiff_t charpos, ptrdiff_t bytepos)
   m->next = BUF_MARKERS (buf);
   BUF_MARKERS (buf) = m;
   return make_lisp_ptr (m, Lisp_Vectorlike);
-}
-
-
-
-Lisp_Object
-make_bignum_str (const char *num, int base)
-{
-  struct Lisp_Bignum *b = ALLOCATE_PSEUDOVECTOR (struct Lisp_Bignum, value,
-						 PVEC_BIGNUM);
-  mpz_init (b->value);
-  int check = mpz_set_str (b->value, num, base);
-  eassert (check == 0);
-  return make_lisp_ptr (b, Lisp_Vectorlike);
-}
-
-/* Given an mpz_t, make a number.  This may return a bignum or a
-   fixnum depending on VALUE.  */
-
-Lisp_Object
-make_number (mpz_t value)
-{
-  size_t bits = mpz_sizeinbase (value, 2);
-
-  if (bits <= FIXNUM_BITS)
-    {
-      EMACS_INT v = 0;
-      int i = 0, shift = 0;
-
-      do
-	{
-	  EMACS_INT limb = mpz_getlimbn (value, i++);
-	  v += limb << shift;
-	  shift += GMP_NUMB_BITS;
-	}
-      while (shift < bits);
-
-      if (mpz_sgn (value) < 0)
-	v = -v;
-
-      if (!FIXNUM_OVERFLOW_P (v))
-	return make_fixnum (v);
-    }
-
-  /* The documentation says integer-width should be nonnegative, so
-     a single comparison suffices even though 'bits' is unsigned.  */
-  if (integer_width < bits)
-    range_error ();
-
-  struct Lisp_Bignum *b = ALLOCATE_PSEUDOVECTOR (struct Lisp_Bignum, value,
-						 PVEC_BIGNUM);
-  /* We could mpz_init + mpz_swap here, to avoid a copy, but the
-     resulting API seemed possibly confusing.  */
-  mpz_init_set (b->value, value);
-
-  return make_lisp_ptr (b, Lisp_Vectorlike);
-}
-
-void
-mpz_set_intmax_slow (mpz_t result, intmax_t v)
-{
-  /* If V fits in long, a faster path is taken.  */
-  eassert (! (LONG_MIN <= v && v <= LONG_MAX));
-
-  bool complement = v < 0;
-  if (complement)
-    v = -1 - v;
-
-  enum { nails = sizeof v * CHAR_BIT - INTMAX_WIDTH };
-# ifndef HAVE_GMP
-  /* mini-gmp requires NAILS to be zero, which is true for all
-     likely Emacs platforms.  Sanity-check this.  */
-  verify (nails == 0);
-# endif
-
-  mpz_import (result, 1, -1, sizeof v, 0, nails, &v);
-  if (complement)
-    mpz_com (result, result);
 }
 
 

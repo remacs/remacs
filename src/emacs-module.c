@@ -27,6 +27,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 
 #include "lisp.h"
+#include "bignum.h"
 #include "dynlib.h"
 #include "coding.h"
 #include "keyboard.h"
@@ -521,6 +522,8 @@ module_extract_integer (emacs_env *env, emacs_value n)
   CHECK_INTEGER (l);
   if (BIGNUMP (l))
     {
+      /* FIXME: This can incorrectly signal overflow on platforms
+	 where long is narrower than intmax_t.  */
       if (!mpz_fits_slong_p (XBIGNUM (l)->value))
 	xsignal1 (Qoverflow_error, l);
       return mpz_get_si (XBIGNUM (l)->value);
@@ -531,19 +534,8 @@ module_extract_integer (emacs_env *env, emacs_value n)
 static emacs_value
 module_make_integer (emacs_env *env, intmax_t n)
 {
-  Lisp_Object obj;
   MODULE_FUNCTION_BEGIN (module_nil);
-  if (FIXNUM_OVERFLOW_P (n))
-    {
-      mpz_t val;
-      mpz_init (val);
-      mpz_set_intmax (val, n);
-      obj = make_number (val);
-      mpz_clear (val);
-    }
-  else
-    obj = make_fixnum (n);
-  return lisp_to_value (env, obj);
+  return lisp_to_value (env, make_int (n));
 }
 
 static double

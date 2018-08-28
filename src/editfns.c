@@ -4491,9 +4491,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      else if (conversion == 'X')
 		base = -16;
 
-	      char *str = mpz_get_str (NULL, base, XBIGNUM (arg)->value);
-	      arg = make_unibyte_string (str, strlen (str));
-	      xfree (str);
+	      arg = bignum_to_string (arg, base);
 	      conversion = 's';
 	    }
 

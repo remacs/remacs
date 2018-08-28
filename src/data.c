@@ -29,6 +29,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <intprops.h>
 
 #include "lisp.h"
+#include "bignum.h"
 #include "puresize.h"
 #include "character.h"
 #include "buffer.h"
@@ -525,9 +526,9 @@ DEFUN ("natnump", Fnatnump, Snatnump, 1, 1, 0,
        attributes: const)
   (Lisp_Object object)
 {
-  if (NATNUMP (object))
-    return Qt;
-  return Qnil;
+  return ((FIXNUMP (object) ? 0 <= XFIXNUM (object)
+	   : BIGNUMP (object) && 0 <= mpz_sgn (XBIGNUM (object)->value))
+	  ? Qt : Qnil);
 }
 
 DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
@@ -2400,7 +2401,7 @@ emacs_mpz_size (mpz_t const op)
    the library code aborts when a number is too large.  These wrappers
    avoid the problem for functions that can return numbers much larger
    than their arguments.  For slowly-growing numbers, the integer
-   width check in make_number should suffice.  */
+   width checks in bignum.c should suffice.  */
 
 static void
 emacs_mpz_mul (mpz_t rop, mpz_t const op1, mpz_t const op2)
@@ -2770,12 +2771,7 @@ NUMBER may be an integer or a floating point number.  */)
   int len;
 
   if (BIGNUMP (number))
-    {
-      ptrdiff_t count = SPECPDL_INDEX ();
-      char *str = mpz_get_str (NULL, 10, XBIGNUM (number)->value);
-      record_unwind_protect_ptr (xfree, str);
-      return unbind_to (count, make_unibyte_string (str, strlen (str)));
-    }
+    return bignum_to_string (number, 10);
 
   CHECK_FIXNUM_OR_FLOAT (number);
 
@@ -3011,7 +3007,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args)
 	}
     }
 
-  return unbind_to (count, make_number (accum));
+  return unbind_to (count, make_integer (accum));
 }
 
 static Lisp_Object
@@ -3141,7 +3137,7 @@ Both must be integers or markers.  */)
 
       mpz_init (result);
       mpz_tdiv_r (result, *xmp, *ymp);
-      val = make_number (result);
+      val = make_integer (result);
       mpz_clear (result);
 
       if (xmp == &xm)
@@ -3221,7 +3217,7 @@ Both X and Y must be numbers or markers.  */)
       if (cmpy < 0 ? cmpr > 0 : cmpr < 0)
 	mpz_add (result, result, *ymp);
 
-      val = make_number (result);
+      val = make_integer (result);
       mpz_clear (result);
 
       if (xmp == &xm)
@@ -3351,7 +3347,7 @@ In this case, the sign bit is duplicated.  */)
 	emacs_mpz_mul_2exp (result, XBIGNUM (value)->value, XFIXNUM (count));
       else
 	mpz_fdiv_q_2exp (result, XBIGNUM (value)->value, - XFIXNUM (count));
-      val = make_number (result);
+      val = make_integer (result);
       mpz_clear (result);
     }
   else if (XFIXNUM (count) <= 0)
@@ -3378,7 +3374,7 @@ In this case, the sign bit is duplicated.  */)
       else
 	mpz_fdiv_q_2exp (result, result, - XFIXNUM (count));
 
-      val = make_number (result);
+      val = make_integer (result);
       mpz_clear (result);
     }
 
@@ -3407,7 +3403,7 @@ expt_integer (Lisp_Object x, Lisp_Object y)
 		     ? (mpz_set_intmax (val, XFIXNUM (x)), val)
 		     : XBIGNUM (x)->value),
 		    exp);
-  Lisp_Object res = make_number (val);
+  Lisp_Object res = make_integer (val);
   mpz_clear (val);
   return res;
 }
@@ -3427,7 +3423,7 @@ Markers are converted to integers.  */)
       mpz_t num;
       mpz_init (num);
       mpz_add_ui (num, XBIGNUM (number)->value, 1);
-      number = make_number (num);
+      number = make_integer (num);
       mpz_clear (num);
     }
   else
@@ -3440,7 +3436,7 @@ Markers are converted to integers.  */)
 	  mpz_t num;
 	  mpz_init (num);
 	  mpz_set_intmax (num, XFIXNUM (number) + 1);
-	  number = make_number (num);
+	  number = make_integer (num);
 	  mpz_clear (num);
 	}
     }
@@ -3462,7 +3458,7 @@ Markers are converted to integers.  */)
       mpz_t num;
       mpz_init (num);
       mpz_sub_ui (num, XBIGNUM (number)->value, 1);
-      number = make_number (num);
+      number = make_integer (num);
       mpz_clear (num);
     }
   else
@@ -3475,7 +3471,7 @@ Markers are converted to integers.  */)
 	  mpz_t num;
 	  mpz_init (num);
 	  mpz_set_intmax (num, XFIXNUM (number) - 1);
-	  number = make_number (num);
+	  number = make_integer (num);
 	  mpz_clear (num);
 	}
     }
@@ -3492,7 +3488,7 @@ DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
       mpz_t value;
       mpz_init (value);
       mpz_com (value, XBIGNUM (number)->value);
-      number = make_number (value);
+      number = make_integer (value);
       mpz_clear (value);
     }
   else
