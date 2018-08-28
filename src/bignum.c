@@ -67,6 +67,18 @@ make_bignum (mpz_t const op)
   return make_bignum_bits (op, mpz_sizeinbase (op, 2));
 }
 
+static void mpz_set_uintmax_slow (mpz_t, uintmax_t);
+
+/* Set RESULT to V.  */
+static void
+mpz_set_uintmax (mpz_t result, uintmax_t v)
+{
+  if (v <= ULONG_MAX)
+    mpz_set_ui (result, v);
+  else
+    mpz_set_uintmax_slow (result, v);
+}
+
 /* Return a Lisp integer equal to N, which must not be in fixnum range.  */
 Lisp_Object
 make_bigint (intmax_t n)
@@ -75,6 +87,17 @@ make_bigint (intmax_t n)
   mpz_t z;
   mpz_init (z);
   mpz_set_intmax (z, n);
+  Lisp_Object result = make_bignum (z);
+  mpz_clear (z);
+  return result;
+}
+Lisp_Object
+make_biguint (uintmax_t n)
+{
+  eassert (FIXNUM_OVERFLOW_P (n));
+  mpz_t z;
+  mpz_init (z);
+  mpz_set_uintmax (z, n);
   Lisp_Object result = make_bignum (z);
   mpz_clear (z);
   return result;
@@ -109,23 +132,95 @@ make_integer (mpz_t const op)
   return make_bignum_bits (op, bits);
 }
 
+/* Set RESULT to V.  This code is for when intmax_t is wider than long.  */
 void
 mpz_set_intmax_slow (mpz_t result, intmax_t v)
 {
-  bool complement = v < 0;
-  if (complement)
-    v = -1 - v;
+  int maxlimbs = (INTMAX_WIDTH + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS;
+  mp_limb_t *limb = mpz_limbs_write (result, maxlimbs);
+  int n = 0;
+  uintmax_t u = v;
+  bool negative = v < 0;
+  if (negative)
+    {
+      uintmax_t two = 2;
+      u = -u & ((two << (UINTMAX_WIDTH - 1)) - 1);
+    }
 
-  enum { nails = sizeof v * CHAR_BIT - INTMAX_WIDTH };
-# ifndef HAVE_GMP
-  /* mini-gmp requires NAILS to be zero, which is true for all
-     likely Emacs platforms.  Sanity-check this.  */
-  verify (nails == 0);
-# endif
+  do
+    {
+      limb[n++] = u;
+      u = GMP_NUMB_BITS < UINTMAX_WIDTH ? u >> GMP_NUMB_BITS : 0;
+    }
+  while (u != 0);
 
-  mpz_import (result, 1, -1, sizeof v, 0, nails, &v);
-  if (complement)
-    mpz_com (result, result);
+  mpz_limbs_finish (result, negative ? -n : n);
+}
+static void
+mpz_set_uintmax_slow (mpz_t result, uintmax_t v)
+{
+  int maxlimbs = (UINTMAX_WIDTH + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS;
+  mp_limb_t *limb = mpz_limbs_write (result, maxlimbs);
+  int n = 0;
+
+  do
+    {
+      limb[n++] = v;
+      v = GMP_NUMB_BITS < INTMAX_WIDTH ? v >> GMP_NUMB_BITS : 0;
+    }
+  while (v != 0);
+
+  mpz_limbs_finish (result, n);
+}
+
+/* Return the value of the bignum X if it fits, 0 otherwise.
+   A bignum cannot be zero, so 0 indicates failure reliably.  */
+intmax_t
+bignum_to_intmax (Lisp_Object x)
+{
+  ptrdiff_t bits = mpz_sizeinbase (XBIGNUM (x)->value, 2);
+  bool negative = mpz_sgn (XBIGNUM (x)->value) < 0;
+
+  if (bits < INTMAX_WIDTH)
+    {
+      intmax_t v = 0;
+      int i = 0, shift = 0;
+
+      do
+	{
+	  intmax_t limb = mpz_getlimbn (XBIGNUM (x)->value, i++);
+	  v += limb << shift;
+	  shift += GMP_NUMB_BITS;
+	}
+      while (shift < bits);
+
+      return negative ? -v : v;
+    }
+  return ((bits == INTMAX_WIDTH && INTMAX_MIN < -INTMAX_MAX && negative
+	   && mpz_scan1 (XBIGNUM (x)->value, 0) == INTMAX_WIDTH - 1)
+	  ? INTMAX_MIN : 0);
+}
+uintmax_t
+bignum_to_uintmax (Lisp_Object x)
+{
+  uintmax_t v = 0;
+  if (0 <= mpz_sgn (XBIGNUM (x)->value))
+    {
+      ptrdiff_t bits = mpz_sizeinbase (XBIGNUM (x)->value, 2);
+      if (bits <= UINTMAX_WIDTH)
+	{
+	  int i = 0, shift = 0;
+
+	  do
+	    {
+	      uintmax_t limb = mpz_getlimbn (XBIGNUM (x)->value, i++);
+	      v += limb << shift;
+	      shift += GMP_NUMB_BITS;
+	    }
+	  while (shift < bits);
+	}
+    }
+  return v;
 }
 
 /* Convert NUM to a base-BASE Lisp string.  */

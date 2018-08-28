@@ -721,14 +721,10 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
     case JSON_TRUE:
       return Qt;
     case JSON_INTEGER:
-      /* Return an integer if possible, a floating-point number
-         otherwise.  This loses precision for integers with large
-         magnitude; however, such integers tend to be nonportable
-         anyway because many JSON implementations use only 64-bit
-                      floating-point numbers with 53 mantissa bits.  See
-                      https://tools.ietf.org/html/rfc7159#section-6 for some
-      discussion.  */
-      return make_fixnum_or_float (json_integer_value (json));
+      {
+	json_int_t i = json_integer_value (json);
+	return INT_TO_INTEGER (i);
+      }
     case JSON_REAL:
       return make_float (json_real_value (json));
     case JSON_STRING:

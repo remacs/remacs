@@ -800,7 +800,7 @@ parse_image_spec (Lisp_Object spec, struct image_keyword *keywords,
 	  return 0;
 
 	case IMAGE_NUMBER_VALUE:
-	  if (! FIXED_OR_FLOATP (value))
+	  if (! NUMBERP (value))
 	    return 0;
 	  break;
 
@@ -4929,20 +4929,20 @@ x_edge_detection (struct frame *f, struct image *img, Lisp_Object matrix,
   if (CONSP (matrix))
     {
       for (i = 0;
-	   i < 9 && CONSP (matrix) && FIXED_OR_FLOATP (XCAR (matrix));
+	   i < 9 && CONSP (matrix) && NUMBERP (XCAR (matrix));
 	   ++i, matrix = XCDR (matrix))
 	trans[i] = XFLOATINT (XCAR (matrix));
     }
   else if (VECTORP (matrix) && ASIZE (matrix) >= 9)
     {
-      for (i = 0; i < 9 && FIXED_OR_FLOATP (AREF (matrix, i)); ++i)
+      for (i = 0; i < 9 && NUMBERP (AREF (matrix, i)); ++i)
 	trans[i] = XFLOATINT (AREF (matrix, i));
     }
 
   if (NILP (color_adjust))
     color_adjust = make_fixnum (0xffff / 2);
 
-  if (i == 9 && FIXED_OR_FLOATP (color_adjust))
+  if (i == 9 && NUMBERP (color_adjust))
     x_detect_edges (f, img, trans, XFLOATINT (color_adjust));
 }
 
@@ -8103,7 +8103,7 @@ compute_image_size (size_t width, size_t height,
   double scale = 1;
 
   value = image_spec_value (spec, QCscale, NULL);
-  if (FIXED_OR_FLOATP (value))
+  if (NUMBERP (value))
     scale = XFLOATINT (value);
 
   value = image_spec_value (spec, QCmax_width, NULL);

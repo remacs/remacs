@@ -3206,7 +3206,7 @@ If LCID (a 16-bit number) is not a valid locale, the result is nil.  */)
       if (got_full)
 	return DECODE_SYSTEM (build_string (full_name));
     }
-  else if (FIXED_OR_FLOATP (longform))
+  else if (FIXNUMP (longform))
     {
       got_full = GetLocaleInfo (XFIXNUM (lcid),
 				XFIXNUM (longform),

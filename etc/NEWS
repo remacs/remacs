@@ -891,6 +891,14 @@ nonnegative value of the new variable 'integer-width' specifies the
 maximum number of bits allowed in a bignum.  Emacs signals an integer
 overflow error if this limit is exceeded.
 
+Several primitive functions formerly returned floats or lists of
+integers to represent integers that did not fit into fixnums.  These
+functions now simply return integers instead.  Affected functions
+include functions like encode-char that compute code-points, functions
+like file-attributes that compute file sizes and other attributes,
+functions like process-id that compute process IDs, and functions like
+user-uid and group-gid that compute user and group IDs.
+
 ** define-minor-mode automatically documents the meaning of ARG.
 
 +++

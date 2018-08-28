@@ -586,6 +586,7 @@ INLINE void set_sub_char_table_contents (Lisp_Object, ptrdiff_t,
 /* Defined in bignum.c.  */
 extern double bignum_to_double (Lisp_Object);
 extern Lisp_Object make_bigint (intmax_t);
+extern Lisp_Object make_biguint (uintmax_t);
 
 /* Defined in chartab.c.  */
 extern Lisp_Object char_table_ref (Lisp_Object, int);
@@ -2468,6 +2469,15 @@ make_int (intmax_t n)
 {
   return FIXNUM_OVERFLOW_P (n) ? make_bigint (n) : make_fixnum (n);
 }
+INLINE Lisp_Object
+make_uint (uintmax_t n)
+{
+  return FIXNUM_OVERFLOW_P (n) ? make_biguint (n) : make_fixnum (n);
+}
+
+/* Return a Lisp integer equal to the value of the C integer EXPR.  */
+#define INT_TO_INTEGER(expr) \
+  (EXPR_SIGNED (expr) ? make_int (expr) : make_uint (expr))
 
 
 /* Forwarding pointer to an int variable.
@@ -2672,11 +2682,6 @@ enum char_bits
 /* Data type checking.  */
 
 INLINE bool
-FIXED_OR_FLOATP (Lisp_Object x)
-{
-  return FIXNUMP (x) || FLOATP (x);
-}
-INLINE bool
 FIXNATP (Lisp_Object x)
 {
   return FIXNUMP (x) && 0 <= XFIXNUM (x);
@@ -2831,12 +2836,6 @@ XFLOATINT (Lisp_Object n)
 }
 
 INLINE void
-CHECK_FIXNUM_OR_FLOAT (Lisp_Object x)
-{
-  CHECK_TYPE (FIXED_OR_FLOATP (x), Qnumberp, x);
-}
-
-INLINE void
 CHECK_NUMBER (Lisp_Object x)
 {
   CHECK_TYPE (NUMBERP (x), Qnumberp, x);
@@ -2847,14 +2846,6 @@ CHECK_INTEGER (Lisp_Object x)
 {
   CHECK_TYPE (INTEGERP (x), Qnumberp, x);
 }
-
-#define CHECK_FIXNUM_OR_FLOAT_COERCE_MARKER(x)				\
-  do {									\
-    if (MARKERP (x))							\
-      XSETFASTINT (x, marker_position (x));				\
-    else								\
-      CHECK_TYPE (FIXED_OR_FLOATP (x), Qnumber_or_marker_p, x);		\
-  } while (false)
 
 #define CHECK_NUMBER_COERCE_MARKER(x)					\
   do {									\
@@ -3288,6 +3279,8 @@ set_sub_char_table_contents (Lisp_Object table, ptrdiff_t idx, Lisp_Object val)
 }
 
 /* Defined in bignum.c.  */
+extern intmax_t bignum_to_intmax (Lisp_Object);
+extern uintmax_t bignum_to_uintmax (Lisp_Object);
 extern Lisp_Object bignum_to_string (Lisp_Object, int);
 extern Lisp_Object make_bignum_str (char const *, int);
 extern Lisp_Object double_to_bignum (double);
@@ -3308,16 +3301,6 @@ enum Arith_Comparison {
 };
 extern Lisp_Object arithcompare (Lisp_Object num1, Lisp_Object num2,
                                  enum Arith_Comparison comparison);
-
-/* Convert the integer I to an Emacs representation, either the integer
-   itself, or a cons of two or three integers, or if all else fails a float.
-   I should not have side effects.  */
-#define INTEGER_TO_CONS(i)					    \
-  (! FIXNUM_OVERFLOW_P (i)					    \
-   ? make_fixnum (i)						    \
-   : EXPR_SIGNED (i) ? intbig_to_lisp (i) : uintbig_to_lisp (i))
-extern Lisp_Object intbig_to_lisp (intmax_t);
-extern Lisp_Object uintbig_to_lisp (uintmax_t);
 
 /* Convert the Emacs representation CONS back to an integer of type
    TYPE, storing the result the variable VAR.  Signal an error if CONS
@@ -4472,12 +4455,6 @@ extern void init_system_name (void);
    exceed the maximum for its promoted type.  This is called 'eabs'
    because 'abs' is reserved by the C standard.  */
 #define eabs(x)         ((x) < 0 ? -(x) : (x))
-
-/* Return a fixnum or float, depending on whether the integer VAL fits
-   in a Lisp fixnum.  */
-
-#define make_fixnum_or_float(val) \
-   (FIXNUM_OVERFLOW_P (val) ? make_float (val) : make_fixnum (val))
 
 /* SAFE_ALLOCA normally allocates memory on the stack, but if size is
    larger than MAX_ALLOCA, use xmalloc to avoid overflowing the stack.  */

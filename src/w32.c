@@ -6873,7 +6873,7 @@ list_system_processes (void)
 	   res = process32_next  (h_snapshot, &proc_entry))
 	{
 	  proc_id = proc_entry.th32ProcessID;
-	  proclist = Fcons (make_fixnum_or_float (proc_id), proclist);
+	  proclist = Fcons (INT_TO_INTEGER (proc_id), proclist);
 	}
 
       CloseHandle (h_snapshot);
@@ -7031,7 +7031,7 @@ system_process_attributes (Lisp_Object pid)
   double pcpu;
   BOOL result = FALSE;
 
-  CHECK_FIXNUM_OR_FLOAT (pid);
+  CHECK_NUMBER (pid);
   proc_id = FLOATP (pid) ? XFLOAT_DATA (pid) : XFIXNUM (pid);
 
   h_snapshot = create_toolhelp32_snapshot (TH32CS_SNAPPROCESS, 0);
@@ -7061,12 +7061,12 @@ system_process_attributes (Lisp_Object pid)
 		}
 	      attrs = Fcons (Fcons (Qcomm, decoded_cmd), attrs);
 	      attrs = Fcons (Fcons (Qppid,
-				    make_fixnum_or_float (pe.th32ParentProcessID)),
+				    INT_TO_INTEGER (pe.th32ParentProcessID)),
 			     attrs);
 	      attrs = Fcons (Fcons (Qpri, make_fixnum (pe.pcPriClassBase)),
 			     attrs);
 	      attrs = Fcons (Fcons (Qthcount,
-				    make_fixnum_or_float (pe.cntThreads)),
+				    INT_TO_INTEGER (pe.cntThreads)),
 			     attrs);
 	      found_proc = 1;
 	      break;
@@ -7214,12 +7214,12 @@ system_process_attributes (Lisp_Object pid)
 	CloseHandle (token);
     }
 
-  attrs = Fcons (Fcons (Qeuid, make_fixnum_or_float (euid)), attrs);
+  attrs = Fcons (Fcons (Qeuid, INT_TO_INTEGER (euid)), attrs);
   tem = make_unibyte_string (uname, ulength);
   attrs = Fcons (Fcons (Quser,
 			 code_convert_string_norecord (tem, Vlocale_coding_system, 0)),
 		 attrs);
-  attrs = Fcons (Fcons (Qegid, make_fixnum_or_float (egid)), attrs);
+  attrs = Fcons (Fcons (Qegid, INT_TO_INTEGER (egid)), attrs);
   tem = make_unibyte_string (gname, glength);
   attrs = Fcons (Fcons (Qgroup,
 			 code_convert_string_norecord (tem, Vlocale_coding_system, 0)),
@@ -7249,12 +7249,12 @@ system_process_attributes (Lisp_Object pid)
       SIZE_T rss = mem_ex.WorkingSetSize / 1024;
 
       attrs = Fcons (Fcons (Qmajflt,
-			    make_fixnum_or_float (mem_ex.PageFaultCount)),
+			    INT_TO_INTEGER (mem_ex.PageFaultCount)),
 		     attrs);
       attrs = Fcons (Fcons (Qvsize,
-			    make_fixnum_or_float (mem_ex.PrivateUsage / 1024)),
+			    INT_TO_INTEGER (mem_ex.PrivateUsage / 1024)),
 		     attrs);
-      attrs = Fcons (Fcons (Qrss, make_fixnum_or_float (rss)), attrs);
+      attrs = Fcons (Fcons (Qrss, INT_TO_INTEGER (rss)), attrs);
       if (totphys)
 	attrs = Fcons (Fcons (Qpmem, make_float (100. * rss / totphys)), attrs);
     }
@@ -7264,9 +7264,9 @@ system_process_attributes (Lisp_Object pid)
       SIZE_T rss = mem_ex.WorkingSetSize / 1024;
 
       attrs = Fcons (Fcons (Qmajflt,
-			    make_fixnum_or_float (mem.PageFaultCount)),
+			    INT_TO_INTEGER (mem.PageFaultCount)),
 		     attrs);
-      attrs = Fcons (Fcons (Qrss, make_fixnum_or_float (rss)), attrs);
+      attrs = Fcons (Fcons (Qrss, INT_TO_INTEGER (rss)), attrs);
       if (totphys)
 	attrs = Fcons (Fcons (Qpmem, make_float (100. * rss / totphys)), attrs);
     }
@@ -7275,7 +7275,7 @@ system_process_attributes (Lisp_Object pid)
     {
       DWORD rss = maxrss / 1024;
 
-      attrs = Fcons (Fcons (Qrss, make_fixnum_or_float (maxrss / 1024)), attrs);
+      attrs = Fcons (Fcons (Qrss, INT_TO_INTEGER (maxrss / 1024)), attrs);
       if (totphys)
 	attrs = Fcons (Fcons (Qpmem, make_float (100. * rss / totphys)), attrs);
     }
@@ -9433,10 +9433,10 @@ w32_read_registry (HKEY rootkey, Lisp_Object lkey, Lisp_Object lname)
 	retval = Qt;
 	break;
       case REG_DWORD:
-	retval = INTEGER_TO_CONS (*((DWORD *)pvalue));
+	retval = INT_TO_INTEGER (*((DWORD *)pvalue));
 	break;
       case REG_QWORD:
-	retval = INTEGER_TO_CONS (*((long long *)pvalue));
+	retval = INT_TO_INTEGER (*((long long *)pvalue));
 	break;
       case REG_BINARY:
 	{

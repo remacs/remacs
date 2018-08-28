@@ -132,14 +132,14 @@ To get the number of bytes, use `string-bytes'.  */)
 DEFUN ("safe-length", Fsafe_length, Ssafe_length, 1, 1, 0,
        doc: /* Return the length of a list, but avoid error or infinite loop.
 This function never gets an error.  If LIST is not really a list,
-it returns 0.  If LIST is circular, it returns a finite value
-which is at least the number of distinct elements.  */)
+it returns 0.  If LIST is circular, it returns an integer that is at
+least the number of distinct elements.  */)
   (Lisp_Object list)
 {
   intptr_t len = 0;
   FOR_EACH_TAIL_SAFE (list)
     len++;
-  return make_fixnum_or_float (len);
+  return INT_TO_INTEGER (len);
 }
 
 DEFUN ("proper-list-p", Fproper_list_p, Sproper_list_p, 1, 1, 0,

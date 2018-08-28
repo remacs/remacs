@@ -924,7 +924,7 @@ Usage: (gnutls-error-fatalp ERROR)  */)
   if (SYMBOLP (err))
     {
       code = Fget (err, Qgnutls_code);
-      if (FIXED_OR_FLOATP (code))
+      if (NUMBERP (code))
 	{
 	  err = code;
 	}
@@ -956,7 +956,7 @@ usage: (gnutls-error-string ERROR)  */)
   if (SYMBOLP (err))
     {
       code = Fget (err, Qgnutls_code);
-      if (FIXED_OR_FLOATP (code))
+      if (NUMBERP (code))
 	{
 	  err = code;
 	}

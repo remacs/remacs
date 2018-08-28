@@ -329,7 +329,7 @@ init_editfns (bool dumping)
   else
     {
       uid_t euid = geteuid ();
-      tem = make_fixnum_or_float (euid);
+      tem = INT_TO_INTEGER (euid);
     }
   Vuser_full_name = Fuser_full_name (tem);
 
@@ -1338,7 +1338,7 @@ This is based on the effective uid, not the real uid.
 Also, if the environment variables LOGNAME or USER are set,
 that determines the value of this function.
 
-If optional argument UID is an integer or a float, return the login name
+If optional argument UID is an integer, return the login name
 of the user with that uid, or nil if there is no such user.  */)
   (Lisp_Object uid)
 {
@@ -1377,39 +1377,35 @@ This ignores the environment variables LOGNAME and USER, so it differs from
 }
 
 DEFUN ("user-uid", Fuser_uid, Suser_uid, 0, 0, 0,
-       doc: /* Return the effective uid of Emacs.
-Value is an integer or a float, depending on the value.  */)
+       doc: /* Return the effective uid of Emacs.  */)
   (void)
 {
   uid_t euid = geteuid ();
-  return make_fixnum_or_float (euid);
+  return INT_TO_INTEGER (euid);
 }
 
 DEFUN ("user-real-uid", Fuser_real_uid, Suser_real_uid, 0, 0, 0,
-       doc: /* Return the real uid of Emacs.
-Value is an integer or a float, depending on the value.  */)
+       doc: /* Return the real uid of Emacs.  */)
   (void)
 {
   uid_t uid = getuid ();
-  return make_fixnum_or_float (uid);
+  return INT_TO_INTEGER (uid);
 }
 
 DEFUN ("group-gid", Fgroup_gid, Sgroup_gid, 0, 0, 0,
-       doc: /* Return the effective gid of Emacs.
-Value is an integer or a float, depending on the value.  */)
+       doc: /* Return the effective gid of Emacs.  */)
   (void)
 {
   gid_t egid = getegid ();
-  return make_fixnum_or_float (egid);
+  return INT_TO_INTEGER (egid);
 }
 
 DEFUN ("group-real-gid", Fgroup_real_gid, Sgroup_real_gid, 0, 0, 0,
-       doc: /* Return the real gid of Emacs.
-Value is an integer or a float, depending on the value.  */)
+       doc: /* Return the real gid of Emacs.  */)
   (void)
 {
   gid_t gid = getgid ();
-  return make_fixnum_or_float (gid);
+  return INT_TO_INTEGER (gid);
 }
 
 DEFUN ("user-full-name", Fuser_full_name, Suser_full_name, 0, 1, 0,
@@ -1417,7 +1413,7 @@ DEFUN ("user-full-name", Fuser_full_name, Suser_full_name, 0, 1, 0,
 If the full name corresponding to Emacs's userid is not known,
 return "unknown".
 
-If optional argument UID is an integer or float, return the full name
+If optional argument UID is an integer, return the full name
 of the user with that uid, or nil if there is no such user.
 If UID is a string, return the full name of the user with that login
 name, or nil if there is no such user.  */)
@@ -1429,7 +1425,7 @@ name, or nil if there is no such user.  */)
 
   if (NILP (uid))
     return Vuser_full_name;
-  else if (FIXED_OR_FLOATP (uid))
+  else if (NUMBERP (uid))
     {
       uid_t u;
       CONS_TO_INTEGER (uid, uid_t, u);
@@ -1489,7 +1485,7 @@ DEFUN ("emacs-pid", Femacs_pid, Semacs_pid, 0, 0, 0,
   (void)
 {
   pid_t pid = getpid ();
-  return make_fixnum_or_float (pid);
+  return INT_TO_INTEGER (pid);
 }
 
 

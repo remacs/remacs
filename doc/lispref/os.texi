@@ -1197,24 +1197,19 @@ Titles}).
 @cindex UID
 @defun user-real-uid
 This function returns the real @acronym{UID} of the user.
-The value may be floating point, in the (unlikely) event that
-the UID is too large to fit in a Lisp integer.
 @end defun
 
 @defun user-uid
 This function returns the effective @acronym{UID} of the user.
-The value may be floating point.
 @end defun
 
 @cindex GID
 @defun group-gid
 This function returns the effective @acronym{GID} of the Emacs process.
-The value may be floating point.
 @end defun
 
 @defun group-real-gid
 This function returns the real @acronym{GID} of the Emacs process.
-The value may be floating point.
 @end defun
 
 @defun system-users
