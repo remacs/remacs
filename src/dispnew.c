@@ -5775,7 +5775,7 @@ sit_for (Lisp_Object timeout, bool reading, int display_option)
     }
   else if (BIGNUMP (timeout))
     {
-      if (!Fnatnump (timeout))
+      if (NILP (Fnatnump (timeout)))
 	return Qt;
       sec = bignum_to_intmax (timeout);
       if (sec == 0)
