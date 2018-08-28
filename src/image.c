@@ -8273,11 +8273,20 @@ imagemagick_image_p (Lisp_Object object)
 /* The GIF library also defines DrawRectangle, but its never used in Emacs.
    Therefore rename the function so it doesn't collide with ImageMagick.  */
 #define DrawRectangle DrawRectangleGif
-#include <wand/MagickWand.h>
+
+#if IMAGEMAGICK_MAJOR == 6
+# include <wand/MagickWand.h>
+# include <magick/version.h>
+#else
+# include <MagickWand/MagickWand.h>
+# include <MagickCore/version.h>
+/* ImageMagick 7 compatibility definitions */
+# define PixelSetMagickColor PixelSetPixelColor
+typedef PixelInfo MagickPixelPacket;
+#endif
 
 /* ImageMagick 6.5.3 through 6.6.5 hid PixelGetMagickColor for some reason.
    Emacs seems to work fine with the hidden version, so unhide it.  */
-#include <magick/version.h>
 #if 0x653 <= MagickLibVersion && MagickLibVersion <= 0x665
 extern WandExport void PixelGetMagickColor (const PixelWand *,
 					    MagickPixelPacket *);
@@ -8815,7 +8824,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
 #endif /* HAVE_MAGICKEXPORTIMAGEPIXELS */
     {
       size_t image_height;
-      MagickRealType color_scale = 65535.0 / QuantumRange;
+      MagickRealType color_scale = 65535.0 / (MagickRealType) QuantumRange;
 #ifdef USE_CAIRO
       data = xmalloc (width * height * 4);
       color_scale /= 256;

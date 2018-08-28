@@ -2518,9 +2518,16 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
 
     ## 6.3.5 is the earliest version known to work; see Bug#17339.
     ## 6.8.2 makes Emacs crash; see Bug#13867.
-    ## 7 and later have not been ported to; See Bug#25967.
-    IMAGEMAGICK_MODULE="Wand >= 6.3.5 Wand != 6.8.2 Wand < 7"
-    EMACS_CHECK_MODULES([IMAGEMAGICK], [$IMAGEMAGICK_MODULE])
+    IMAGEMAGICK7_MODULE="MagickWand >= 7"
+    IMAGEMAGICK6_MODULE="Wand >= 6.3.5 Wand != 6.8.2"
+    # As we check for ImageMagick 7 then 6 track which version we find
+    EMACS_CHECK_MODULES([IMAGEMAGICK], [$IMAGEMAGICK7_MODULE])
+    AS_IF([test $HAVE_IMAGEMAGICK = yes],
+      [IMAGEMAGICK_MAJOR=7],
+      [
+        EMACS_CHECK_MODULES([IMAGEMAGICK], [$IMAGEMAGICK6_MODULE])
+        AS_IF([test $HAVE_IMAGEMAGICK = yes], [IMAGEMAGICK_MAJOR=6])
+      ])
 
     if test $HAVE_IMAGEMAGICK = yes; then
       OLD_CFLAGS=$CFLAGS
@@ -2540,6 +2547,8 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
     fi
     if test $HAVE_IMAGEMAGICK = yes; then
       AC_DEFINE([HAVE_IMAGEMAGICK], 1, [Define to 1 if using ImageMagick.])
+      AC_DEFINE_UNQUOTED([IMAGEMAGICK_MAJOR], [$IMAGEMAGICK_MAJOR],
+                         [ImageMagick major version number (from configure).])
     else
       IMAGEMAGICK_CFLAGS=
       IMAGEMAGICK_LIBS=
@@ -5460,7 +5469,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use -lrsvg-2?                                ${HAVE_RSVG}
   Does Emacs use cairo?                                   ${HAVE_CAIRO}
   Does Emacs use -llcms2?                                 ${HAVE_LCMS2}
-  Does Emacs use imagemagick (version 6)?                 ${HAVE_IMAGEMAGICK}
+  Does Emacs use imagemagick?                             ${HAVE_IMAGEMAGICK}
   Does Emacs support sound?                               ${HAVE_SOUND}
   Does Emacs use -lgpm?                                   ${HAVE_GPM}
   Does Emacs use -ldbus?                                  ${HAVE_DBUS}
