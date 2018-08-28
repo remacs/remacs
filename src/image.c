@@ -8274,15 +8274,15 @@ imagemagick_image_p (Lisp_Object object)
    Therefore rename the function so it doesn't collide with ImageMagick.  */
 #define DrawRectangle DrawRectangleGif
 
-#if IMAGEMAGICK_MAJOR == 6
-# include <wand/MagickWand.h>
-# include <magick/version.h>
-#else
+#ifdef HAVE_IMAGEMAGICK7
 # include <MagickWand/MagickWand.h>
 # include <MagickCore/version.h>
-/* ImageMagick 7 compatibility definitions */
+/* ImageMagick 7 compatibility definitions.  */
 # define PixelSetMagickColor PixelSetPixelColor
 typedef PixelInfo MagickPixelPacket;
+#else
+# include <wand/MagickWand.h>
+# include <magick/version.h>
 #endif
 
 /* ImageMagick 6.5.3 through 6.6.5 hid PixelGetMagickColor for some reason.
