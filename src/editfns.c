@@ -4608,17 +4608,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    {
 	      enum
 	      {
-		/* Lower bound on the number of bits per
-		   base-FLT_RADIX digit.  */
-		DIG_BITS_LBOUND = FLT_RADIX < 16 ? 1 : 4,
-
-		/* 1 if integers should be formatted as long doubles,
-		   because they may be so large that there is a rounding
-		   error when converting them to double, and long doubles
-		   are wider than doubles.  */
-		INT_AS_LDBL = (DIG_BITS_LBOUND * DBL_MANT_DIG < FIXNUM_BITS - 1
-			       && DBL_MANT_DIG < LDBL_MANT_DIG),
-
 		/* Maximum precision for a %f conversion such that the
 		   trailing output digit might be nonzero.  Any precision
 		   larger than this will not yield useful information.  */
@@ -4649,7 +4638,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		 with "L" possibly inserted for floating-point formats,
 		 and with pM inserted for integer formats.
 		 At most two flags F can be specified at once.  */
-	      char convspec[sizeof "%FF.*d" + max (INT_AS_LDBL, pMlen)];
+	      char convspec[sizeof "%FF.*d" + max (sizeof "L" - 1, pMlen)];
 	      char *f = convspec;
 	      *f++ = '%';
 	      /* MINUS_FLAG and ZERO_FLAG are dealt with later.  */
@@ -4658,15 +4647,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      *f = '#'; f += sharp_flag;
 	      *f++ = '.';
 	      *f++ = '*';
-	      if (float_conversion)
-		{
-		  if (INT_AS_LDBL)
-		    {
-		      *f = 'L';
-		      f += FIXNUMP (arg);
-		    }
-		}
-	      else if (conversion != 'c')
+	      if (! (float_conversion || conversion == 'c'))
 		{
 		  memcpy (f, pMd, pMlen);
 		  f += pMlen;
@@ -4694,17 +4675,66 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	      ptrdiff_t sprintf_bytes;
 	      if (float_conversion)
 		{
-		  if (INT_AS_LDBL && FIXNUMP (arg))
+		  /* Format as a long double if the arg is an integer
+		     that would lose less information than when formatting
+		     it as a double.  Otherwise, format as a double;
+		     this is likely to be faster and better-tested.  */
+
+		  bool format_as_long_double = false;
+		  double darg;
+		  long double ldarg;
+
+		  if (FLOATP (arg))
+		    darg = XFLOAT_DATA (arg);
+		  else
 		    {
-		      /* Although long double may have a rounding error if
-			 DIG_BITS_LBOUND * LDBL_MANT_DIG < FIXNUM_BITS - 1,
-			 it is more accurate than plain 'double'.  */
-		      long double x = XFIXNUM (arg);
-		      sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
+		      bool format_bignum_as_double = false;
+		      if (LDBL_MANT_DIG <= DBL_MANT_DIG)
+			{
+			  if (FIXNUMP (arg))
+			    darg = XFIXNUM (arg);
+			  else
+			    format_bignum_as_double = true;
+			}
+		      else
+			{
+			  if (FIXNUMP (arg))
+			    ldarg = XFIXNUM (arg);
+			  else
+			    {
+			      intmax_t iarg = bignum_to_intmax (arg);
+			      if (iarg != 0)
+				ldarg = iarg;
+			      else
+				{
+				  uintmax_t uarg = bignum_to_uintmax (arg);
+				  if (uarg != 0)
+				    ldarg = uarg;
+				  else
+				    format_bignum_as_double = true;
+				}
+			    }
+			  if (!format_bignum_as_double)
+			    {
+			      darg = ldarg;
+			      format_as_long_double = darg != ldarg;
+			    }
+			}
+		      if (format_bignum_as_double)
+			darg = bignum_to_double (arg);
+		    }
+
+		  if (format_as_long_double)
+		    {
+		      f[-1] = 'L';
+		      *f++ = conversion;
+		      *f = '\0';
+		      sprintf_bytes = sprintf (sprintf_buf, convspec, prec,
+					       ldarg);
 		    }
 		  else
 		    sprintf_bytes = sprintf (sprintf_buf, convspec, prec,
-					     XFLOATINT (arg));
+					     darg);
 		}
 	      else if (conversion == 'c')
 		{
@@ -4740,7 +4770,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		{
 		  uprintmax_t x;
 		  bool negative;
-		  if (INTEGERP (arg))
+		  if (FIXNUMP (arg))
 		    {
 		      if (binary_as_unsigned)
 			{
