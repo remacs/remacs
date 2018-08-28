@@ -1693,7 +1693,7 @@ static unsigned long
 cons_to_x_long (Lisp_Object obj)
 {
   if (X_ULONG_MAX <= INTMAX_MAX
-      || !Fnatnump (CONSP (obj) ? XCAR (obj) : obj))
+      || NILP (Fnatnump (CONSP (obj) ? XCAR (obj) : obj)))
     return cons_to_signed (obj, X_LONG_MIN, min (X_ULONG_MAX, INTMAX_MAX));
   else
     return cons_to_unsigned (obj, X_ULONG_MAX);
