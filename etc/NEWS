@@ -865,6 +865,8 @@ removed.
 
 * Lisp Changes in Emacs 27.1
 
+** lookup-key can take a list of keymaps as argument.
+
 +++
 ** New function 'proper-list-p'.
 Given a proper list as argument, this predicate returns its length;
