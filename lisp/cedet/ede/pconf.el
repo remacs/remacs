@@ -135,7 +135,7 @@ don't do it.  A value of nil means to just do it.")
 	  (with-current-buffer "*compilation*"
 	    (goto-char (point-max))
 
-	    (when (not (string= mode-line-process ":exit [0]"))
+            (when (not (string= (car mode-line-process) ":exit [0]"))
 	      (error "Configure failed!"))
 
 	    ;; The Makefile is now recreated by configure?
