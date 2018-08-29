@@ -116,6 +116,9 @@ This requires either the macOS \"open\" command, or the freedesktop
 			   (concat "mailto:" to)))
 	(error "Subject, To or body not found")))))
 
+(defvar report-emacs-bug--os-description nil
+  "Cached value of operating system description.")
+
 (defun report-emacs-bug--os-description ()
   "Return a string describing the operating system, or nil."
   (cond ((eq system-type 'darwin)
@@ -129,8 +132,25 @@ This requires either the macOS \"open\" command, or the freedesktop
                                         nil t)
                      (setq os (concat os " " (match-string 1)))))))
            os))
+        ((eq system-type 'windows-nt)
+         (or report-emacs-bug--os-description
+             (setq
+              report-emacs-bug--os-description
+              (let (os)
+                (with-temp-buffer
+                  ;; Seems like this command can be slow, because it
+                  ;; unconditionally queries a bunch of other stuff
+                  ;; we don't care about.
+                  (when (eq 0 (ignore-errors
+                                (call-process "systeminfo" nil '(t nil) nil)))
+                    (dolist (s '("OS Name" "OS Version"))
+                      (goto-char (point-min))
+                      (if (re-search-forward
+                           (format "^%s\\s-*:\\s-+\\(.*\\)$" s)
+                           nil t)
+                          (setq os (concat os " " (match-string 1)))))))
+                os))))
         ;; TODO include other branches here.
-        ;; MS Windows: systeminfo ?
         ;; Cygwin, *BSD, etc: ?
         (t
          (or (let ((file "/etc/os-release"))
