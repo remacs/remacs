@@ -5116,19 +5116,13 @@ Return ATTR."
       (setcar (nthcdr 3 attr) (round (nth 3 attr))))
     ;; Convert last access time.
     (unless (listp (nth 4 attr))
-      (setcar (nthcdr 4 attr)
-              (list (floor (nth 4 attr) 65536)
-                    (floor (mod (nth 4 attr) 65536)))))
+      (setcar (nthcdr 4 attr) (seconds-to-time (nth 4 attr))))
     ;; Convert last modification time.
     (unless (listp (nth 5 attr))
-      (setcar (nthcdr 5 attr)
-              (list (floor (nth 5 attr) 65536)
-                    (floor (mod (nth 5 attr) 65536)))))
+      (setcar (nthcdr 5 attr) (seconds-to-time (nth 5 attr))))
     ;; Convert last status change time.
     (unless (listp (nth 6 attr))
-      (setcar (nthcdr 6 attr)
-              (list (floor (nth 6 attr) 65536)
-                    (floor (mod (nth 6 attr) 65536)))))
+      (setcar (nthcdr 6 attr) (seconds-to-time (nth 6 attr))))
     ;; Convert file size.
     (when (< (nth 7 attr) 0)
       (setcar (nthcdr 7 attr) -1))
@@ -5158,8 +5152,8 @@ Return ATTR."
               (not (string-equal
                     (nth 3 attr)
                     (tramp-get-remote-gid vec 'string)))))
-    ;; Convert inode.  Big numbers have been added to Emacs 27.
-    (unless (or (fboundp 'bignump) (listp (nth 10 attr)))
+    ;; Convert inode.
+    (when (floatp (nth 10 attr))
       (setcar (nthcdr 10 attr)
               (condition-case nil
                   (let ((high (nth 10 attr))
