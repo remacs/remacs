@@ -1575,7 +1575,6 @@ case $opsys in
     LIB_MATH=
     SYSTEM_TYPE=windows-nt
     ;;
-  dnl NB this may be adjusted below.
   netbsd | openbsd )
     SYSTEM_TYPE=berkeley-unix
     ;;
