@@ -2515,10 +2515,9 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
       export PKG_CONFIG_PATH="$PKG_CONFIG_PATH$PATH_SEPARATOR`$BREW --prefix imagemagick@6 2>/dev/null`/lib/pkgconfig"
     fi
 
-    EMACS_CHECK_MODULES([IMAGEMAGICK7], [MagickWand >= 7])
-    if test $HAVE_IMAGEMAGICK7 = yes; then
+    EMACS_CHECK_MODULES([IMAGEMAGICK], [MagickWand >= 7])
+    if test $HAVE_IMAGEMAGICK = yes; then
        AC_DEFINE([HAVE_IMAGEMAGICK7], 1, [Define to 1 if using ImageMagick7.])
-       HAVE_IMAGEMAGICK = yes
     else
        ## 6.3.5 is the earliest version known to work; see Bug#17339.
        ## 6.8.2 makes Emacs crash; see Bug#13867.
@@ -2543,8 +2542,6 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
     fi
     if test $HAVE_IMAGEMAGICK = yes; then
       AC_DEFINE([HAVE_IMAGEMAGICK], 1, [Define to 1 if using ImageMagick.])
-      AC_DEFINE_UNQUOTED([IMAGEMAGICK_MAJOR], [$IMAGEMAGICK_MAJOR],
-                         [ImageMagick major version number (from configure).])
     else
       IMAGEMAGICK_CFLAGS=
       IMAGEMAGICK_LIBS=
