@@ -83,9 +83,6 @@ pub fn float_arith_driver(
             ArithOp::Div => if args.len() > 1 && argnum == 0 {
                 accum = next;
             } else {
-                if next == 0. {
-                    xsignal!(Qarith_error);
-                }
                 accum /= next;
             },
             ArithOp::Logand | ArithOp::Logior | ArithOp::Logxor => {
