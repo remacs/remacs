@@ -726,6 +726,10 @@ to signal the main thread, e.g., when they encounter an error.
 +++
 *** 'thread-join' returns the result of the finished thread now.
 
++++
+*** 'thread-signal' does not propagate errors to the main thread.
+Instead, error messages are just printed in the main thread.
+
 ---
 ** thingatpt.el supports a new "thing" called 'uuid'.
 A symbol 'uuid' can be passed to thing-at-point and it returns the

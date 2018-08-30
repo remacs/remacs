@@ -25,6 +25,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "process.h"
 #include "coding.h"
 #include "syssignal.h"
+#include "keyboard.h"
 
 static struct thread_state main_thread;
 
@@ -34,7 +35,6 @@ static struct thread_state *all_threads = &main_thread;
 
 static sys_mutex_t global_lock;
 
-extern int poll_suppress_count;
 extern volatile int interrupt_input_blocked;
 
 
@@ -863,7 +863,8 @@ DEFUN ("thread-signal", Fthread_signal, Sthread_signal, 3, 3, 0,
 This acts like `signal', but arranges for the signal to be raised
 in THREAD.  If THREAD is the current thread, acts just like `signal'.
 This will interrupt a blocked call to `mutex-lock', `condition-wait',
-or `thread-join' in the target thread.  */)
+or `thread-join' in the target thread.
+If THREAD is the main thread, just the error message is shown.  */)
   (Lisp_Object thread, Lisp_Object error_symbol, Lisp_Object data)
 {
   struct thread_state *tstate;
@@ -874,13 +875,29 @@ or `thread-join' in the target thread.  */)
   if (tstate == current_thread)
     Fsignal (error_symbol, data);
 
-  /* What to do if thread is already signaled?  */
-  /* What if error_symbol is Qnil?  */
-  tstate->error_symbol = error_symbol;
-  tstate->error_data = data;
+  if (main_thread_p (tstate))
+    {
+      /* Construct an event.  */
+      struct input_event event;
+      EVENT_INIT (event);
+      event.kind = THREAD_EVENT;
+      event.frame_or_window = Qnil;
+      event.arg = list3 (Fcurrent_thread (), error_symbol, data);
 
-  if (tstate->wait_condvar)
-    flush_stack_call_func (thread_signal_callback, tstate);
+      /* Store it into the input event queue.  */
+      kbd_buffer_store_event (&event);
+    }
+
+  else
+    {
+      /* What to do if thread is already signaled?  */
+      /* What if error_symbol is Qnil?  */
+      tstate->error_symbol = error_symbol;
+      tstate->error_data = data;
+
+      if (tstate->wait_condvar)
+	flush_stack_call_func (thread_signal_callback, tstate);
+    }
 
   return Qnil;
 }

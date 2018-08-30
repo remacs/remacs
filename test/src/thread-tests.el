@@ -19,6 +19,8 @@
 
 ;;; Code:
 
+(require 'thread)
+
 ;; Declare the functions in case Emacs has been configured --without-threads.
 (declare-function all-threads "thread.c" ())
 (declare-function condition-mutex "thread.c" (cond))
@@ -319,6 +321,25 @@
     (sit-for 1)
     (should-not (thread-alive-p thread))
     (should (equal (thread-last-error) '(error)))))
+
+(ert-deftest threads-signal-main-thread ()
+  "Test signaling the main thread."
+  (skip-unless (featurep 'threads))
+  ;; We cannot use `ert-with-message-capture', because threads do not
+  ;; know let-bound variables.
+  (with-current-buffer "*Messages*"
+    (let (buffer-read-only)
+      (erase-buffer))
+    (let ((thread
+           (make-thread #'(lambda () (thread-signal main-thread 'error nil)))))
+      (while (thread-alive-p thread)
+        (thread-yield))
+      (read-event nil nil 0.1)
+      ;; No error has been raised, which is part of the test.
+      (should
+       (string-match
+        (format-message "Error %s: (error nil)" thread)
+        (buffer-string ))))))
 
 (defvar threads-condvar nil)
 
