@@ -875,6 +875,7 @@ If THREAD is the main thread, just the error message is shown.  */)
   if (tstate == current_thread)
     Fsignal (error_symbol, data);
 
+#ifdef THREADS_ENABLED
   if (main_thread_p (tstate))
     {
       /* Construct an event.  */
@@ -889,6 +890,7 @@ If THREAD is the main thread, just the error message is shown.  */)
     }
 
   else
+#endif
     {
       /* What to do if thread is already signaled?  */
       /* What if error_symbol is Qnil?  */
