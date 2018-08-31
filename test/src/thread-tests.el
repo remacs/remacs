@@ -116,7 +116,7 @@
   :tags '(:unstable)
   (skip-unless (featurep 'threads))
   (let ((thread (make-thread #'threads-call-error)))
-    (while (thread-alive-p thread)
+    (while (thread-live-p thread)
       (thread-yield))
     (should-error (thread-join thread))))
 
@@ -332,7 +332,7 @@
       (erase-buffer))
     (let ((thread
            (make-thread #'(lambda () (thread-signal main-thread 'error nil)))))
-      (while (thread-alive-p thread)
+      (while (thread-live-p thread)
         (thread-yield))
       (read-event nil nil 0.1)
       ;; No error has been raised, which is part of the test.
