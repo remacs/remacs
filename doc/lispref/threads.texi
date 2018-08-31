@@ -97,7 +97,7 @@ Yield execution to the next runnable thread.
 Return the name of @var{thread}, as specified to @code{make-thread}.
 @end defun
 
-@defun thread-alive-p thread
+@defun thread-live-p thread
 Return @code{t} if @var{thread} is alive, or @code{nil} if it is not.
 A thread is alive as long as its function is still executing.
 @end defun
