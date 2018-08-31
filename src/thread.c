@@ -41,7 +41,7 @@ extern volatile int interrupt_input_blocked;
 
 /* m_specpdl is set when the thread is created and cleared when the
    thread dies.  */
-#define thread_alive_p(STATE) ((STATE)->m_specpdl != NULL)
+#define thread_live_p(STATE) ((STATE)->m_specpdl != NULL)
 
 
 
@@ -904,7 +904,7 @@ If THREAD is the main thread, just the error message is shown.  */)
   return Qnil;
 }
 
-DEFUN ("thread-alive-p", Fthread_alive_p, Sthread_alive_p, 1, 1, 0,
+DEFUN ("thread-live-p", Fthread_live_p, Sthread_live_p, 1, 1, 0,
        doc: /* Return t if THREAD is alive, or nil if it has exited.  */)
   (Lisp_Object thread)
 {
@@ -913,7 +913,7 @@ DEFUN ("thread-alive-p", Fthread_alive_p, Sthread_alive_p, 1, 1, 0,
   CHECK_THREAD (thread);
   tstate = XTHREAD (thread);
 
-  return thread_alive_p (tstate) ? Qt : Qnil;
+  return thread_live_p (tstate) ? Qt : Qnil;
 }
 
 DEFUN ("thread--blocker", Fthread_blocker, Sthread_blocker, 1, 1, 0,
@@ -943,7 +943,7 @@ thread_join_callback (void *arg)
   XSETTHREAD (thread, tstate);
   self->event_object = thread;
   self->wait_condvar = &tstate->thread_condvar;
-  while (thread_alive_p (tstate) && NILP (self->error_symbol))
+  while (thread_live_p (tstate) && NILP (self->error_symbol))
     sys_cond_wait (self->wait_condvar, &global_lock);
 
   self->wait_condvar = NULL;
@@ -970,7 +970,7 @@ is an error for a thread to try to join itself.  */)
   error_symbol = tstate->error_symbol;
   error_data = tstate->error_data;
 
-  if (thread_alive_p (tstate))
+  if (thread_live_p (tstate))
     flush_stack_call_func (thread_join_callback, tstate);
 
   if (!NILP (error_symbol))
@@ -988,7 +988,7 @@ DEFUN ("all-threads", Fall_threads, Sall_threads, 0, 0, 0,
 
   for (iter = all_threads; iter; iter = iter->next_thread)
     {
-      if (thread_alive_p (iter))
+      if (thread_live_p (iter))
 	{
 	  Lisp_Object thread;
 
@@ -1093,7 +1093,7 @@ syms_of_threads (void)
       defsubr (&Scurrent_thread);
       defsubr (&Sthread_name);
       defsubr (&Sthread_signal);
-      defsubr (&Sthread_alive_p);
+      defsubr (&Sthread_live_p);
       defsubr (&Sthread_join);
       defsubr (&Sthread_blocker);
       defsubr (&Sall_threads);
@@ -1110,6 +1110,9 @@ syms_of_threads (void)
 
       staticpro (&last_thread_error);
       last_thread_error = Qnil;
+
+      Fdefalias (intern_c_string ("thread-alive-p"),
+		 intern_c_string ("thread-live-p"), Qnil);
 
       Fprovide (intern_c_string ("threads"), Qnil);
     }
