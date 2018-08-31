@@ -4677,8 +4677,7 @@ scrolling (struct frame *frame)
 	{
 	  /* This line cannot be redrawn, so don't let scrolling mess it.  */
 	  new_hash[i] = old_hash[i];
-#define INFINITY 1000000	/* Taken from scroll.c */
-	  draw_cost[i] = INFINITY;
+	  draw_cost[i] = SCROLL_INFINITY;
 	}
       else
 	{

@@ -5009,7 +5009,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   Lisp_Object proc;
   struct timespec timeout, end_time, timer_delay;
   struct timespec got_output_end_time = invalid_timespec ();
-  enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
+  enum { MINIMUM = -1, TIMEOUT, FOREVER } wait;
   int got_some_output = -1;
   uintmax_t prev_wait_proc_nbytes_read = wait_proc ? wait_proc->nbytes_read : 0;
 #if defined HAVE_GETADDRINFO_A || defined HAVE_GNUTLS
@@ -5048,7 +5048,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       end_time = timespec_add (now, make_timespec (time_limit, nsecs));
     }
   else
-    wait = INFINITY;
+    wait = FOREVER;
 
   while (1)
     {
@@ -7515,7 +7515,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 {
   register int nfds;
   struct timespec end_time, timeout;
-  enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
+  enum { MINIMUM = -1, TIMEOUT, FOREVER } wait;
 
   if (TYPE_MAXIMUM (time_t) < time_limit)
     time_limit = TYPE_MAXIMUM (time_t);
@@ -7529,7 +7529,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
                                make_timespec (time_limit, nsecs));
     }
   else
-    wait = INFINITY;
+    wait = FOREVER;
 
   /* Turn off periodic alarms (in case they are in use)
      and then turn off any other atimers,
@@ -7635,7 +7635,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       /*  If we woke up due to SIGWINCH, actually change size now.  */
       do_pending_window_change (0);
 
-      if (wait < INFINITY && nfds == 0 && ! timeout_reduced_for_timers)
+      if (wait < FOREVER && nfds == 0 && ! timeout_reduced_for_timers)
 	/* We waited the full specified time, so return now.  */
 	break;
 
