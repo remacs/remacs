@@ -38505,7 +38505,11 @@ Like `xref-find-definitions' but switch to the other frame.
 
 (autoload 'xref-find-references "xref" "\
 Find references to the identifier at point.
-With prefix argument, prompt for the identifier.
+This command might prompt for the identifier as needed, perhaps
+offering the symbol at point as the default.
+With prefix argument, or if `xref-prompt-for-identifier' is t,
+always prompt for the identifier.  If `xref-prompt-for-identifier'
+is nil, prompt only if there's no usable symbol at point.
 
 \(fn IDENTIFIER)" t nil)
 
