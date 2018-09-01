@@ -48,6 +48,11 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
     let istart = start.as_fixnum_or_error() as isize;
     let iend = end.as_fixnum_or_error() as isize;
 
+    // Empty region, decompress failed.
+    if istart == iend {
+        return false;
+    }
+
     unsafe { move_gap_both(iend, iend) };
 
     // Insert the decompressed data at the end of the compressed data.

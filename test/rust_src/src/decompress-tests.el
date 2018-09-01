@@ -54,6 +54,14 @@
              ;; 32kb 'a' repeat string
              (make-string (* 32 1024) ?a)))))
 
+(ert-deftest zlib--decompress-empty-buffer ()
+  "Test decompressing an empty buffer."
+  (when (and (fboundp 'zlib-available-p)
+	     (zlib-available-p))
+    (should (not (with-temp-buffer
+                   (set-buffer-multibyte nil)
+                   (zlib-decompress-region (point-min) (point-max)))))))
+
 (provide 'decompress-tests)
 
 ;;; decompress-tests.el ends here.
