@@ -866,7 +866,16 @@ union vectorlike_header
 	 Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
 	 4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
     ptrdiff_t size;
-    /* Align the union so that there is no padding after it.  */
+    /* Align the union so that there is no padding after it.
+       This is needed for the following reason:
+       If the alignment constraint of Lisp_Object is greater than the size of
+       vectorlike_header (e.g. with-wide-int), vectorlike objects which have
+       0 Lisp_Object fields and whose 1st field has a smaller alignment
+       constraint than Lisp_Object may end up with their 1st field "before
+       pseudovector index 0", in which case PSEUDOVECSIZE will return
+       a "negative" number.  We could fix PSEUDOVECSIZE, but it's easier to
+       just force rounding up the size of vectorlike_header to the alignment
+       of Lisp_Object.  */
     Lisp_Object align;
     GCALIGNED_UNION
   };
