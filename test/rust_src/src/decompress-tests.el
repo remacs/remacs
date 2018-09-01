@@ -41,7 +41,7 @@
 	     "foo\n"))))
 
 (ert-deftest zlib--decompress-large-file ()
-  "Test decompressing a gzipped file."
+  "Test decompressing a large gzipped file."
   (when (and (fboundp 'zlib-available-p)
 	     (zlib-available-p))
     (should (string=
