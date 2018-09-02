@@ -255,6 +255,7 @@ See `tramp-actions-before-shell' for more info.")
     (file-remote-p . tramp-handle-file-remote-p)
     ;; `file-selinux-context' performed by default handler.
     (file-symlink-p . tramp-handle-file-symlink-p)
+    (file-system-info . tramp-smb-handle-file-system-info)
     (file-truename . tramp-handle-file-truename)
     (file-writable-p . tramp-smb-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
@@ -954,6 +955,38 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		(nth 0 x))))
 	   (tramp-smb-get-file-entries directory))))))))
 
+(defun tramp-smb-handle-file-system-info (filename)
+  "Like `file-system-info' for Tramp files."
+  (ignore-errors
+    (unless (file-directory-p filename)
+      (setq filename (file-name-directory filename)))
+    (with-parsed-tramp-file-name (expand-file-name filename) nil
+      (tramp-message v 5 "file system info: %s" localname)
+      (tramp-smb-send-command v (format "du %s/*" (tramp-smb-get-localname v)))
+      (with-current-buffer (tramp-get-connection-buffer v)
+	(let (total avail blocksize)
+	  (goto-char (point-min))
+	  (forward-line)
+	  (when (looking-at
+		 (concat "[[:space:]]*\\([[:digit:]]+\\)"
+			 " blocks of size \\([[:digit:]]+\\)"
+			 "\\. \\([[:digit:]]+\\) blocks available"))
+	    (setq blocksize (string-to-number (concat (match-string 2) "e0"))
+		  total (* blocksize
+			   (string-to-number (concat (match-string 1) "e0")))
+		  avail (* blocksize
+			   (string-to-number (concat (match-string 3) "e0")))))
+	  (forward-line)
+	  (when (looking-at "Total number of bytes: \\([[:digit:]]+\\)")
+	    ;; The used number of bytes is not part of the result.  As
+	    ;; side effect, we store it as file property.
+	    (tramp-set-file-property
+	     v localname "used-bytes"
+	     (string-to-number (concat (match-string 1) "e0"))))
+	  ;; Result.
+	  (when (and total avail)
+	    (list total (- total avail) avail)))))))
+
 (defun tramp-smb-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
   (if (file-exists-p filename)
@@ -984,7 +1017,14 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	      ;; We should not destroy the cache entry.
 	      (entries (copy-sequence
 			(tramp-smb-get-file-entries
-			 (file-name-directory filename)))))
+			 (file-name-directory filename))))
+	      (avail (get-free-disk-space filename))
+	      ;; `get-free-disk-space' calls `file-system-info', which
+	      ;; sets file property "used-bytes" as side effect.
+	      (used
+	       (format
+		"%.0f"
+		(/ (tramp-get-file-property v localname "used-bytes" 0) 1024))))
 
 	  (when wildcard
 	    (string-match "\\." base)
@@ -1031,6 +1071,12 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		  ((char-equal ?x (string-to-char (nth 1 x)))
 		   (setcar x (concat (car x) "*"))))))
 	     entries))
+
+	  ;; Insert size information.
+	  (insert
+	   (if avail
+	       (format "total used in directory %s available %s\n" used avail)
+	     (format "total %s\n" used)))
 
 	  ;; Print entries.
 	  (mapc
