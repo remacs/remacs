@@ -1892,7 +1892,6 @@ For definition of that list see `tramp-set-completion-function'."
    ;; The method related defaults.
    (cdr (assoc method tramp-completion-function-alist))))
 
-
 ;;; Fontification of `read-file-name':
 
 (defvar tramp-rfn-eshadow-overlay)
@@ -1902,11 +1901,11 @@ For definition of that list see `tramp-set-completion-function'."
   "Set up a minibuffer for `file-name-shadow-mode'.
 Adds another overlay hiding filename parts according to Tramp's
 special handling of `substitute-in-file-name'."
-  (when (symbol-value 'minibuffer-completing-file-name)
+  (when minibuffer-completing-file-name
     (setq tramp-rfn-eshadow-overlay
 	  (make-overlay (minibuffer-prompt-end) (minibuffer-prompt-end)))
     ;; Copy rfn-eshadow-overlay properties.
-    (let ((props (overlay-properties (symbol-value 'rfn-eshadow-overlay))))
+    (let ((props (overlay-properties rfn-eshadow-overlay)))
       (while props
  	;; The `field' property prevents correct minibuffer
  	;; completion; we exclude it.
@@ -1931,26 +1930,24 @@ This is intended to be used as a minibuffer `post-command-hook' for
 been set up by `rfn-eshadow-setup-minibuffer'."
   ;; In remote files name, there is a shadowing just for the local part.
   (ignore-errors
-    (let ((end (or (overlay-end (symbol-value 'rfn-eshadow-overlay))
+    (let ((end (or (overlay-end rfn-eshadow-overlay)
 		   (minibuffer-prompt-end)))
 	  ;; We do not want to send any remote command.
 	  (non-essential t))
       (when
 	  (tramp-tramp-file-p
 	   (buffer-substring-no-properties end (point-max)))
-	(save-excursion
-	  (save-restriction
-	    (narrow-to-region
-	     (1+ (or (string-match
-		      (tramp-rfn-eshadow-update-overlay-regexp)
-		      (buffer-string) end)
-		     end))
-	     (point-max))
-	    (let ((rfn-eshadow-overlay tramp-rfn-eshadow-overlay)
-		  (rfn-eshadow-update-overlay-hook nil)
-		  file-name-handler-alist)
-	      (move-overlay rfn-eshadow-overlay (point-max) (point-max))
-	      (rfn-eshadow-update-overlay))))))))
+	(save-restriction
+	  (narrow-to-region
+	   (1+ (or (string-match
+		    (tramp-rfn-eshadow-update-overlay-regexp)
+		    (buffer-string) end)
+		   end))
+	   (point-max))
+	  (setq rfn-eshadow-overlay tramp-rfn-eshadow-overlay)
+	  (let (rfn-eshadow-update-overlay-hook file-name-handler-alist)
+	    (move-overlay rfn-eshadow-overlay (point-max) (point-max))
+	    (rfn-eshadow-update-overlay)))))))
 
 (add-hook 'rfn-eshadow-update-overlay-hook
 	  'tramp-rfn-eshadow-update-overlay)
@@ -4615,8 +4612,6 @@ Only works for Bourne-like shells."
 ;; * Better error checking.  At least whenever we see something
 ;;   strange when doing zerop, we should kill the process and start
 ;;   again.  (Greg Stark)
-;;
-;; * Make shadowfile.el grok Tramp filenames.  (Bug#4526, Bug#4846)
 ;;
 ;; * I was wondering if it would be possible to use tramp even if I'm
 ;;   actually using sshfs.  But when I launch a command I would like
