@@ -43,7 +43,7 @@ struct Lisp_Bignum
 
 extern mpz_t mpz[4];
 
-extern void init_bignum_once (void);
+extern void init_bignum (void);
 extern Lisp_Object make_integer_mpz (void);
 extern void mpz_set_intmax_slow (mpz_t, intmax_t) ARG_NONNULL ((1));
 

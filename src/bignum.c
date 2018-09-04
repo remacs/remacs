@@ -34,9 +34,25 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 mpz_t mpz[4];
 
-void
-init_bignum_once (void)
+static void *
+xrealloc_for_gmp (void *ptr, size_t ignore, size_t size)
 {
+  return xrealloc (ptr, size);
+}
+
+static void
+xfree_for_gmp (void *ptr, size_t ignore)
+{
+  xfree (ptr);
+}
+
+void
+init_bignum (void)
+{
+  eassert (mp_bits_per_limb == GMP_NUMB_BITS);
+  integer_width = 1 << 16;
+  mp_set_memory_functions (xmalloc, xrealloc_for_gmp, xfree_for_gmp);
+
   for (int i = 0; i < ARRAYELTS (mpz); i++)
     mpz_init (mpz[i]);
 }

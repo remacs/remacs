@@ -7126,18 +7126,6 @@ range_error (void)
   xsignal0 (Qrange_error);
 }
 
-static void *
-xrealloc_for_gmp (void *ptr, size_t ignore, size_t size)
-{
-  return xrealloc (ptr, size);
-}
-
-static void
-xfree_for_gmp (void *ptr, size_t ignore)
-{
-  xfree (ptr);
-}
-
 /* Initialization.  */
 
 void
@@ -7171,10 +7159,6 @@ init_alloc_once (void)
 void
 init_alloc (void)
 {
-  eassert (mp_bits_per_limb == GMP_NUMB_BITS);
-  integer_width = 1 << 16;
-  mp_set_memory_functions (xmalloc, xrealloc_for_gmp, xfree_for_gmp);
-
   Vgc_elapsed = make_float (0.0);
   gcs_done = 0;
 
