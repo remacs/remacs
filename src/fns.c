@@ -1470,11 +1470,11 @@ DEFUN ("nthcdr", Fnthcdr, Snthcdr, 2, 2, 0,
 	 CYCLE_LENGTH.  */
       /* Add N mod CYCLE_LENGTH to NUM.  */
       if (cycle_length <= ULONG_MAX)
-	num += mpz_mod_ui (mpz[0], XBIGNUM (n)->value, cycle_length);
+	num += mpz_tdiv_ui (XBIGNUM (n)->value, cycle_length);
       else
 	{
 	  mpz_set_intmax (mpz[0], cycle_length);
-	  mpz_mod (mpz[0], XBIGNUM (n)->value, mpz[0]);
+	  mpz_tdiv_r (mpz[0], XBIGNUM (n)->value, mpz[0]);
 	  intptr_t iz;
 	  mpz_export (&iz, NULL, -1, sizeof iz, 0, 0, mpz[0]);
 	  num += iz;
