@@ -1712,7 +1712,7 @@ or with the current marker character if MARKER-CHAR is t."
           (let* ((overwrite (file-exists-p to))
                  (dired-overwrite-confirmed ; for dired-handle-overwrite
                   (and overwrite
-                       (let ((help-form '(format-message "\
+                       (let ((help-form (format-message "\
 Type SPC or `y' to overwrite file `%s',
 DEL or `n' to skip to next,
 ESC or `q' to not overwrite any of the remaining files,
