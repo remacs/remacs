@@ -1209,6 +1209,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
   if (!initialized)
     {
       init_alloc_once ();
+      init_bignum_once ();
       init_threads_once ();
       init_obarray ();
       init_eval_once ();

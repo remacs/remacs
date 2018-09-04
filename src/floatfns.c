@@ -270,11 +270,8 @@ DEFUN ("abs", Fabs, Sabs, 1, 1, 0,
     {
       if (mpz_sgn (XBIGNUM (arg)->value) < 0)
 	{
-	  mpz_t val;
-	  mpz_init (val);
-	  mpz_neg (val, XBIGNUM (arg)->value);
-	  arg = make_integer (val);
-	  mpz_clear (val);
+	  mpz_neg (mpz[0], XBIGNUM (arg)->value);
+	  arg = make_integer_mpz ();
 	}
     }
 
@@ -360,20 +357,10 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
 	{
 	  if (EQ (divisor, make_fixnum (0)))
 	    xsignal0 (Qarith_error);
-	  mpz_t d, q;
-	  mpz_init (d);
-	  mpz_init (q);
-	  int_divide (q,
-		      (FIXNUMP (arg)
-		       ? (mpz_set_intmax (q, XFIXNUM (arg)), q)
-		       : XBIGNUM (arg)->value),
-		      (FIXNUMP (divisor)
-		       ? (mpz_set_intmax (d, XFIXNUM (divisor)), d)
-		       : XBIGNUM (divisor)->value));
-	  Lisp_Object result = make_integer (q);
-	  mpz_clear (d);
-	  mpz_clear (q);
-	  return result;
+	  int_divide (mpz[0],
+		      *bignum_integer (&mpz[0], arg),
+		      *bignum_integer (&mpz[1], divisor));
+	  return make_integer_mpz ();
 	}
 
       double f1 = FLOATP (arg) ? XFLOAT_DATA (arg) : XFIXNUM (arg);
@@ -417,20 +404,15 @@ rounddiv_q (mpz_t q, mpz_t const n, mpz_t const d)
      if (abs_r1 < abs_r + (q & 1))
        q += neg_d == neg_r ? 1 : -1;  */
 
-  mpz_t r, abs_r1;
-  mpz_init (r);
-  mpz_init (abs_r1);
-  mpz_tdiv_qr (q, r, n, d);
+  mpz_t *r = &mpz[2], *abs_r = r, *abs_r1 = &mpz[3];
+  mpz_tdiv_qr (q, *r, n, d);
   bool neg_d = mpz_sgn (d) < 0;
-  bool neg_r = mpz_sgn (r) < 0;
-  mpz_t *abs_r = &r;
-  mpz_abs (*abs_r, r);
-  mpz_abs (abs_r1, d);
-  mpz_sub (abs_r1, abs_r1, *abs_r);
-  if (mpz_cmp (abs_r1, *abs_r) < (mpz_odd_p (q) != 0))
+  bool neg_r = mpz_sgn (*r) < 0;
+  mpz_abs (*abs_r, *r);
+  mpz_abs (*abs_r1, d);
+  mpz_sub (*abs_r1, *abs_r1, *abs_r);
+  if (mpz_cmp (*abs_r1, *abs_r) < (mpz_odd_p (q) != 0))
     (neg_d == neg_r ? mpz_add_ui : mpz_sub_ui) (q, q, 1);
-  mpz_clear (r);
-  mpz_clear (abs_r1);
 }
 
 /* The code uses emacs_rint, so that it works to undefine HAVE_RINT
