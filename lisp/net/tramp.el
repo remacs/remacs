@@ -1923,6 +1923,13 @@ special handling of `substitute-in-file-name'."
 (defun tramp-rfn-eshadow-update-overlay-regexp ()
   (format "[^%s/~]*\\(/\\|~\\)" tramp-postfix-host-format))
 
+;; Package rfn-eshadow is preloaded in Emacs, but for some reason,
+;; it only did (defvar rfn-eshadow-overlay) without giving it a global
+;; value, so it was only declared as dynamically-scoped within the
+;; rfn-eshadow.el file.  This is now fixed in Emacs>26.1 but we still need
+;; this defvar here for older releases.
+(defvar rfn-eshadow-overlay)
+
 (defun tramp-rfn-eshadow-update-overlay ()
   "Update `rfn-eshadow-overlay' to cover shadowed part of minibuffer input.
 This is intended to be used as a minibuffer `post-command-hook' for
@@ -1944,8 +1951,9 @@ been set up by `rfn-eshadow-setup-minibuffer'."
 		    (buffer-string) end)
 		   end))
 	   (point-max))
-	  (setq rfn-eshadow-overlay tramp-rfn-eshadow-overlay)
-	  (let (rfn-eshadow-update-overlay-hook file-name-handler-alist)
+	  (let ((rfn-eshadow-overlay tramp-rfn-eshadow-overlay)
+		(rfn-eshadow-update-overlay-hook nil)
+		file-name-handler-alist)
 	    (move-overlay rfn-eshadow-overlay (point-max) (point-max))
 	    (rfn-eshadow-update-overlay)))))))
 
