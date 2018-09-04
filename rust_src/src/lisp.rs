@@ -1,5 +1,3 @@
-#![macro_use]
-
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 

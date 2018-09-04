@@ -76,7 +76,7 @@ where
         let src = if src.starts_with("#[") {
             src.to_string()
         } else {
-            format!("#[lisp_fn{}]", src)
+            format!("#[lisp_fn({})]", src)
         };
         syn::parse_outer_attr(&src)
             .and_then(|v| LispFnArgsRaw::from_meta_item(&v.value).map_err(|e| e.to_string()))

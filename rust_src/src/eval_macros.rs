@@ -155,9 +155,9 @@ macro_rules! defvar_lisp {
             #[allow(unused_unsafe)]
             unsafe {
                 #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Objfwd = unsafe { ::hacks::uninitialized() };
-                ::remacs_sys::defvar_lisp(&mut o_fwd,
-                                          $lisp_name.as_ptr() as *const i8,
+                static mut o_fwd: ::hacks::Hack<::data::Lisp_Objfwd> = unsafe { ::hacks::Hack::uninitialized() };
+                ::remacs_sys::defvar_lisp(o_fwd.get_mut(),
+                                          concat!($lisp_name, "\0").as_ptr() as *const i8,
                                           &mut ::remacs_sys::globals.$field_name);
                 ::remacs_sys::globals.$field_name = $value;
             }
@@ -171,9 +171,9 @@ macro_rules! defvar_lisp_nopro {
             #[allow(unused_unsafe)]
             unsafe {
                 #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Objfwd = unsafe { ::hacks::uninitialized() };
-                ::remacs_sys::defvar_lisp_nopro(&mut o_fwd,
-                                                $lisp_name.as_ptr() as *const i8,
+                static mut o_fwd: ::hacks::Hack<::data::Lisp_Objfwd> = unsafe { ::hacks::Hack::uninitialized() };
+                ::remacs_sys::defvar_lisp_nopro(o_fwd.get_mut(),
+                                                concat!($lisp_name, "\0").as_ptr() as *const i8,
                                                 &mut ::remacs_sys::globals.$field_name);
                 ::remacs_sys::globals.$field_name = $value;
             }
@@ -187,9 +187,9 @@ macro_rules! defvar_bool {
             #[allow(unused_unsafe)]
             unsafe {
                 #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Boolfwd = unsafe { ::hacks::uninitialized() };
-                ::remacs_sys::defvar_bool(&mut o_fwd,
-                                          $lisp_name.as_ptr() as *const i8,
+                static mut o_fwd: ::hacks::Hack<::data::Lisp_Boolfwd> = unsafe { ::hacks::Hack::uninitialized() };
+                ::remacs_sys::defvar_bool(o_fwd.get_mut(),
+                                          concat!($lisp_name, "\0").as_ptr() as *const i8,
                                           &mut ::remacs_sys::globals.$field_name);
                 ::remacs_sys::globals.$field_name = $value;
             }
@@ -203,9 +203,9 @@ macro_rules! defvar_int {
             #[allow(unused_unsafe)]
             unsafe {
                 #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Intfwd = unsafe { ::hacks::uninitialized() };
-                ::remacs_sys::defvar_int(&mut o_fwd,
-                                         $lisp_name.as_ptr() as *const i8,
+                static mut o_fwd: ::hacks::Hack<::data::Lisp_Intfwd> = unsafe { ::hacks::Hack::uninitialized() };
+                ::remacs_sys::defvar_int(o_fwd.get_mut(),
+                                         concat!($lisp_name, "\0").as_ptr() as *const i8,
                                          &mut ::remacs_sys::globals.$field_name);
                 ::remacs_sys::globals.$field_name = $value;
             }
@@ -220,9 +220,9 @@ macro_rules! defvar_kboard {
             #[allow(unused_unsafe)]
             unsafe {
                 #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Kboard_Objfwd = unsafe { ::hacks::uninitialized() };
-                ::lread::defvar_kboard_offset(&mut o_fwd,
-                                              $lisp_name.as_ptr() as *const i8,
+                static mut o_fwd: ::hacks::Hack<::data::Lisp_Kboard_Objfwd> = unsafe { ::hacks::Hack::uninitialized() };
+                ::lread::defvar_kboard_offset(o_fwd.get_mut(),
+                                              concat!($lisp_name, "\0").as_ptr() as *const i8,
                                               ::field_offset::offset_of!(
                                                   ::remacs_sys::kboard => $vname));
                 }
@@ -244,9 +244,9 @@ macro_rules! defvar_per_buffer {
             #[allow(unused_unsafe)]
             unsafe {
                 #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Buffer_Objfwd = unsafe { ::hacks::uninitialized() };
-                ::lread::defvar_per_buffer_offset(&mut o_fwd,
-                                                  $lname.as_ptr() as *const i8,
+                static mut o_fwd: ::hacks::Hack<::data::Lisp_Buffer_Objfwd> = unsafe { ::hacks::Hack::uninitialized() };
+                ::lread::defvar_per_buffer_offset(o_fwd.get_mut(),
+                                                  concat!($lname, "\0").as_ptr() as *const i8,
                                                   ::field_offset::offset_of!(
                                                       ::remacs_sys::Lisp_Buffer => $vname),
                                                   $pred);
