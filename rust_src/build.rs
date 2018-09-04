@@ -175,6 +175,27 @@ impl<'a> ModuleParser<'a> {
                     self.fail(1, "unexpected end of file");
                 }
             } else if line.starts_with("#[lisp_fn") {
+                let line = if line.ends_with("]") {
+                    line.clone()
+                } else {
+                    let mut line = line.clone();
+                    loop {
+                        if let Some(next) = reader.next() {
+                            let l = next?;
+                            if !l.ends_with(")]") {
+                                line += &l;
+                            } else {
+                                line += &l;
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+
+                    line
+                };
+
                 let name = if let Some(begin) = line.find(C_NAME) {
                     let start = begin + C_NAME.len();
                     let end = line[start..].find('"').unwrap() + start;
