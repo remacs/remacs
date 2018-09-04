@@ -757,6 +757,11 @@ the commit message."
   (interactive)
   (log-edit-toggle-header "Sign-Off" "yes"))
 
+(defun vc-git-log-edit-toggle-no-verify ()
+  "Toggle whether to bypass the pre-commit and commit-msg hooks."
+  (interactive)
+  (log-edit-toggle-header "No-Verify" "yes"))
+
 (defun vc-git-log-edit-toggle-amend ()
   "Toggle whether this will amend the previous commit.
 If toggling on, also insert its message into the buffer."
@@ -782,6 +787,7 @@ If toggling on, also insert its message into the buffer."
 (defvar vc-git-log-edit-mode-map
   (let ((map (make-sparse-keymap "Git-Log-Edit")))
     (define-key map "\C-c\C-s" 'vc-git-log-edit-toggle-signoff)
+    (define-key map "\C-c\C-n" 'vc-git-log-edit-toggle-no-verify)
     (define-key map "\C-c\C-e" 'vc-git-log-edit-toggle-amend)
     map))
 
@@ -825,6 +831,7 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
                             `(("Author" . "--author")
                               ("Date" . "--date")
                               ("Amend" . ,(boolean-arg-fn "--amend"))
+                              ("No-Verify" . ,(boolean-arg-fn "--no-verify"))
                               ("Sign-Off" . ,(boolean-arg-fn "--signoff")))
                             comment)))
                       (when msg-file
