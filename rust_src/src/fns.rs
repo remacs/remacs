@@ -1,17 +1,17 @@
 //* Random utility Lisp functions.
 
 use remacs_macros::lisp_fn;
+use remacs_sys::Lisp_Type;
+use remacs_sys::Vautoload_queue;
+use remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
 use remacs_sys::{Fcons, Fload, Fmapc};
 use remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
                  Qwrong_number_of_arguments};
-use remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
-use remacs_sys::Lisp_Type;
-use remacs_sys::Vautoload_queue;
 
 use eval::un_autoload;
+use lisp::defsubr;
 use lisp::LispCons;
 use lisp::LispObject;
-use lisp::defsubr;
 use lists::{assq, car, get, member, memq, put};
 use obarray::loadhist_attach;
 use objects::equal;
@@ -129,11 +129,10 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // even if the feature specified is already loaded.
     // But not more than once in any file,
     // and not when we aren't loading or reading from a file.
-    let from_file = unsafe { globals.load_in_progress }
-        || current_load_list
-            .iter_cars_safe()
-            .last()
-            .map_or(false, |elt| elt.is_string());
+    let from_file = unsafe { globals.load_in_progress } || current_load_list
+        .iter_cars_safe()
+        .last()
+        .map_or(false, |elt| elt.is_string());
 
     if from_file {
         let tem = LispObject::cons(Qrequire, feature);

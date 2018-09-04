@@ -2,16 +2,16 @@
 
 use std::ptr;
 
-use libc::{c_int, c_long, time_t};
 use libc::timespec as c_timespec;
+use libc::{c_int, c_long, time_t};
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
-use remacs_sys::{lisp_time, EmacsInt};
 use remacs_sys::MOST_NEGATIVE_FIXNUM;
+use remacs_sys::{lisp_time, EmacsInt};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use lists::list;
 
 const LO_TIME_BITS: i32 = 16;
@@ -219,7 +219,8 @@ pub extern "C" fn decode_time_components(
     if !dresult.is_null() {
         let dhi = hi as f64;
         unsafe {
-            *dresult = (us as f64 * 1e6 + ps as f64) / 1e12 + (lo as f64)
+            *dresult = (us as f64 * 1e6 + ps as f64) / 1e12
+                + (lo as f64)
                 + dhi * f64::from(1 << LO_TIME_BITS);
         }
     }

@@ -1,6 +1,8 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{build_string, eval_sub, find_symbol_value, globals, maybe_quit,
+                 record_unwind_protect, record_unwind_save_match_data, specbind, unbind_to};
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled};
 use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Ffuncall, Fload, Fpurecopy, Fset,
                  Fset_default};
@@ -9,12 +11,10 @@ use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinter
                  Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation,
                  Qwrong_number_of_arguments};
 use remacs_sys::{Vautoload_queue, Vrun_hooks};
-use remacs_sys::{build_string, eval_sub, find_symbol_value, globals, maybe_quit,
-                 record_unwind_protect, record_unwind_save_match_data, specbind, unbind_to};
 
 use data::{defalias, indirect_function, indirect_function_lisp};
-use lisp::{LispCons, LispObject};
 use lisp::{defsubr, is_autoload};
+use lisp::{LispCons, LispObject};
 use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr};
 use multibyte::LispStringRef;
 use obarray::loadhist_attach;
@@ -216,7 +216,8 @@ pub fn function(args: LispObject) -> LispObject {
                 // This is a lambda expression within a lexical environment;
                 // return an interpreted closure instead of a simple lambda.
 
-                let tmp = cdr.as_cons()
+                let tmp = cdr
+                    .as_cons()
                     .and_then(|c| c.cdr().as_cons())
                     .and_then(|c| c.car().as_cons());
                 if let Some(cell) = tmp {
@@ -454,7 +455,12 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 /// The order of execution is thus TEST, BODY, TEST, BODY and so on
 /// until TEST returns nil.
 /// usage: (while TEST BODY...)
-#[lisp_fn(name = "while", c_name = "while", min = "1", unevalled = "true")]
+#[lisp_fn(
+    name = "while",
+    c_name = "while",
+    min = "1",
+    unevalled = "true"
+)]
 pub fn lisp_while(args: LispCons) -> LispObject {
     let (test, body) = args.as_tuple();
 

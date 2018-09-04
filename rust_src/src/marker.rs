@@ -5,14 +5,14 @@ use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
+use remacs_sys::Qinteger_or_marker_p;
 use remacs_sys::{allocate_misc, buf_charpos_to_bytepos, set_point_both, unchain_marker,
                  Fmake_marker};
-use remacs_sys::Qinteger_or_marker_p;
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
 
 use buffers::LispBufferRef;
-use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject};
 use threads::ThreadState;
 use util::clip_to_bounds;
 
@@ -458,10 +458,9 @@ fn set_marker_internal_else(
     // Don't believe BYTEPOS if it comes from a different buffer,
     // since that buffer might have a very different correspondence
     // between character and byte positions.
-    if bytepos == -1
-        || !position
-            .as_marker()
-            .map_or(false, |m| m.buffer() == Some(buf))
+    if bytepos == -1 || !position
+        .as_marker()
+        .map_or(false, |m| m.buffer() == Some(buf))
     {
         bytepos = unsafe { buf_charpos_to_bytepos(buf.as_mut(), charpos) };
     } else {

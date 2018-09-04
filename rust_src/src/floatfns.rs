@@ -10,8 +10,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qarith_error, Qinteger_or_marker_p, Qnumberp, Qrange_error};
 
-use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
+use lisp::{LispNumber, LispObject};
 use math::ArithOp;
 
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
@@ -40,7 +40,7 @@ macro_rules! simple_float_op {
         fn $float_func(arg: EmacsDouble) -> EmacsDouble {
             arg.$float_func()
         }
-    }
+    };
 }
 
 simple_float_op!("acos", acos, "Return the inverse cosine of ARG.");

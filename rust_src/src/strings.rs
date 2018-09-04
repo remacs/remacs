@@ -5,12 +5,12 @@ use std::ptr;
 use libc;
 
 use remacs_macros::lisp_fn;
+use remacs_sys::EmacsInt;
 use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
                  string_to_multibyte as c_string_to_multibyte};
-use remacs_sys::EmacsInt;
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use multibyte;
 use multibyte::LispStringRef;
 
@@ -37,7 +37,8 @@ pub fn string_equal(s1: LispObject, s2: LispObject) -> bool {
     let s1 = LispObject::symbol_or_string_as_string(s1);
     let s2 = LispObject::symbol_or_string_as_string(s2);
 
-    s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes()
+    s1.len_chars() == s2.len_chars()
+        && s1.len_bytes() == s2.len_bytes()
         && s1.as_slice() == s2.as_slice()
 }
 

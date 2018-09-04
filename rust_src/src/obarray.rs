@@ -2,13 +2,13 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
+use remacs_sys::Qvectorp;
 use remacs_sys::{fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
                  make_pure_c_string, make_unibyte_string, oblookup};
-use remacs_sys::Qvectorp;
+use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 
 /// A lisp object containing an `obarray`.
 pub struct LispObarrayRef(LispObject);

@@ -38,8 +38,8 @@ use std::slice;
 
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
-use remacs_sys::{char_bits, EmacsInt, Lisp_String, Lisp_Type};
 use remacs_sys::emacs_abort;
+use remacs_sys::{char_bits, EmacsInt, Lisp_String, Lisp_Type};
 
 use lisp::{ExternalPtr, LispObject};
 
@@ -482,13 +482,15 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
         }
     } else if head & 0x10 == 0 {
         (
-            ((head & 0x0F) << 12) | ((Codepoint::from(slice[1]) & 0x3F) << 6)
+            ((head & 0x0F) << 12)
+                | ((Codepoint::from(slice[1]) & 0x3F) << 6)
                 | (Codepoint::from(slice[2]) & 0x3F),
             3,
         )
     } else if head & 0x08 == 0 {
         (
-            ((head & 0x07) << 18) | ((Codepoint::from(slice[1]) & 0x3F) << 12)
+            ((head & 0x07) << 18)
+                | ((Codepoint::from(slice[1]) & 0x3F) << 12)
                 | ((Codepoint::from(slice[2]) & 0x3F) << 6)
                 | (Codepoint::from(slice[3]) & 0x3F),
             4,
@@ -496,7 +498,8 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
     } else {
         // the relevant bytes of "head" are always zero
         (
-            ((Codepoint::from(slice[1]) & 0x3F) << 18) | ((Codepoint::from(slice[2]) & 0x3F) << 12)
+            ((Codepoint::from(slice[1]) & 0x3F) << 18)
+                | ((Codepoint::from(slice[2]) & 0x3F) << 12)
                 | ((Codepoint::from(slice[3]) & 0x3F) << 6)
                 | (Codepoint::from(slice[4]) & 0x3F),
             5,

@@ -1,12 +1,12 @@
 //! Operations on lists.
 
 use remacs_macros::lisp_fn;
+use remacs_sys::globals;
 use remacs_sys::{EmacsInt, EmacsUint};
 use remacs_sys::{Qcircular_list, Qplistp};
-use remacs_sys::globals;
 
-use lisp::{LispCons, LispObject};
 use lisp::defsubr;
+use lisp::{LispCons, LispObject};
 use symbols::LispSymbolRef;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
@@ -83,9 +83,7 @@ pub fn cdr(list: LispObject) -> LispObject {
 pub fn car_safe(object: LispObject) -> LispObject {
     object
         .as_cons()
-        .map_or(LispObject::constant_nil(), |cons| {
-            cons.car()
-        })
+        .map_or(LispObject::constant_nil(), |cons| cons.car())
 }
 
 /// Return the cdr of OBJECT if it is a cons cell, or else nil.
@@ -93,9 +91,7 @@ pub fn car_safe(object: LispObject) -> LispObject {
 pub fn cdr_safe(object: LispObject) -> LispObject {
     object
         .as_cons()
-        .map_or(LispObject::constant_nil(), |cons| {
-            cons.cdr()
-        })
+        .map_or(LispObject::constant_nil(), |cons| cons.cdr())
 }
 
 /// Take cdr N times on LIST, return the result.
@@ -165,8 +161,7 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.car()))
-        })
-        .unwrap_or_else(LispObject::constant_nil)
+        }).unwrap_or_else(LispObject::constant_nil)
 }
 
 /// Return non-nil if KEY is `eq' to the car of an element of LIST.
@@ -198,8 +193,7 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
-        })
-        .unwrap_or_else(LispObject::constant_nil)
+        }).unwrap_or_else(LispObject::constant_nil)
 }
 
 /// Return non-nil if KEY is `eq' to the cdr of an element of LIST.

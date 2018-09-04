@@ -4,8 +4,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
 use remacs_sys::{FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use obarray::intern;
 use vectors::LispVectorlikeRef;
 

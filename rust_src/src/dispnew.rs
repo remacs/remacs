@@ -4,11 +4,11 @@ use std::{cmp, ptr};
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, WAIT_READING_MAX};
 use remacs_sys::{dtotimespec, timespec_add, timespec_sub, wait_reading_process_output};
+use remacs_sys::{EmacsDouble, EmacsInt, WAIT_READING_MAX};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 
 /// Pause, without updating display, for SECONDS seconds.
 /// SECONDS may be a floating-point value, meaning that you can wait for a

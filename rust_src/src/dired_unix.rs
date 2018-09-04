@@ -11,9 +11,9 @@ use std::slice;
 
 use remacs_sys::{build_string, file_attributes_c_internal, filemode_string, globals,
                  Fexpand_file_name, Ffind_file_name_handler, Qfile_attributes, Qnil};
+use remacs_sys::{compile_pattern, re_pattern_buffer, re_search};
 use remacs_sys::{decode_file_name, Qdirectory_files, Qdirectory_files_and_attributes,
                  Qfile_missing};
-use remacs_sys::{compile_pattern, re_pattern_buffer, re_search};
 
 use lisp::LispObject;
 use lists::list;
@@ -275,11 +275,13 @@ fn match_re_maybe(f: String, match_re: Option<LispObject>, re: &RegEx) -> Option
 fn fnames_to_list(fnames: &mut Vec<String>, dname: String, full: &FullPath) -> LispObject {
     match *full {
         FullPath::No => list(&mut fnames.iter().map(|x| x.to_bstring()).collect::<Vec<_>>()),
-        FullPath::Yes => list(&mut fnames
-            .iter()
-            .map(|x| x.to_full(dname.to_owned()))
-            .map(|x| x.to_bstring())
-            .collect::<Vec<_>>()),
+        FullPath::Yes => list(
+            &mut fnames
+                .iter()
+                .map(|x| x.to_full(dname.to_owned()))
+                .map(|x| x.to_bstring())
+                .collect::<Vec<_>>(),
+        ),
     }
 }
 
@@ -290,19 +292,23 @@ fn fattrs_to_list(
     full: &FullPath,
 ) -> LispObject {
     match *full {
-        FullPath::No => list(&mut fnames
-            .iter()
-            .map(|x| x.to_bstring())
-            .zip(fattrs.to_owned())
-            .map(|x| LispObject::cons(x.0, x.1))
-            .collect::<Vec<_>>()),
-        FullPath::Yes => list(&mut fnames
-            .iter()
-            .map(|x| x.to_full(dname.to_owned()))
-            .map(|x| x.to_bstring())
-            .zip(fattrs.to_owned())
-            .map(|x| LispObject::cons(x.0, x.1))
-            .collect::<Vec<_>>()),
+        FullPath::No => list(
+            &mut fnames
+                .iter()
+                .map(|x| x.to_bstring())
+                .zip(fattrs.to_owned())
+                .map(|x| LispObject::cons(x.0, x.1))
+                .collect::<Vec<_>>(),
+        ),
+        FullPath::Yes => list(
+            &mut fnames
+                .iter()
+                .map(|x| x.to_full(dname.to_owned()))
+                .map(|x| x.to_bstring())
+                .zip(fattrs.to_owned())
+                .map(|x| LispObject::cons(x.0, x.1))
+                .collect::<Vec<_>>(),
+        ),
     }
 }
 

@@ -3,13 +3,13 @@
 use libc;
 
 use remacs_macros::lisp_fn;
+use remacs_sys::uniprop_table_uncompress;
+use remacs_sys::Qchar_code_property_table;
 use remacs_sys::{Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
                  CHARTAB_SIZE_BITS};
-use remacs_sys::Qchar_code_property_table;
-use remacs_sys::uniprop_table_uncompress;
 
-use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject};
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 pub type LispSubCharTableRef = ExternalPtr<Lisp_Sub_Char_Table>;
@@ -29,7 +29,8 @@ fn chartab_idx(c: isize, depth: i32, min_char: i32) -> usize {
     // Number of characters (in bits) each element of Nth level char-table covers.
     let bits = match depth {
         0 => {
-            CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_1 + CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_2
+            CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_1
+                + CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_2
                 + CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_3
         }
         1 => CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_2 + CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_3,
@@ -77,7 +78,8 @@ impl LispCharTableRef {
                 tmp
             }
         } else {
-            let tmp = self.contents
+            let tmp = self
+                .contents
                 .get(chartab_idx(c, 0, 0) as usize)
                 .map_or_else(|| error!("Index out of range"), |tmp| *tmp);
             if let Some(sub) = tmp.as_sub_char_table() {

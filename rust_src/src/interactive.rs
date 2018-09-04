@@ -3,8 +3,8 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qminus};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 
 /// Return numeric meaning of raw prefix argument RAW.
 /// A raw prefix argument is what you get from `(interactive "P")'.

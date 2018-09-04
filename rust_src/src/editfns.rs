@@ -6,22 +6,22 @@ use libc::{c_int, c_uchar, ptrdiff_t};
 use std;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
-use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
+use remacs_sys::EmacsInt;
 use remacs_sys::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, buffer_overflow, downcase,
                  find_before_next_newline, find_field, find_newline, globals, insert,
                  insert_and_inherit, make_string_from_bytes, maybe_quit, scan_newline_from_point,
                  set_point, set_point_both};
-use remacs_sys::EmacsInt;
+use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
+use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 
 use buffers::{get_buffer, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
-use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
+use lisp::{LispNumber, LispObject};
 use marker::{marker_position_lisp, set_point_from_marker};
+use multibyte::{is_single_byte_char, unibyte_to_char};
 use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, Codepoint, LispStringRef,
                 MAX_MULTIBYTE_LENGTH};
-use multibyte::{is_single_byte_char, unibyte_to_char};
 use textprop::get_char_property;
 use threads::ThreadState;
 use util::clip_to_bounds;
@@ -105,9 +105,9 @@ pub fn gap_size() -> EmacsInt {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> EmacsInt {
     let current_buf = ThreadState::current_buffer();
-    if unsafe { globals.Vtransient_mark_mode }.is_not_nil() && unsafe {
-        globals.Vmark_even_if_inactive
-    }.is_nil() && current_buf.mark_active().is_nil()
+    if unsafe { globals.Vtransient_mark_mode }.is_not_nil()
+        && unsafe { globals.Vmark_even_if_inactive }.is_nil()
+        && current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);
     }
@@ -247,7 +247,10 @@ pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
 /// The optional third argument INHERIT, if non-nil, says to inherit text
 /// properties from adjoining text, if those properties are sticky.  If
 /// called interactively, INHERIT is t.
-#[lisp_fn(min = "1", intspec = "(list (read-char-by-name \"Insert character (Unicode name or hex): \") (prefix-numeric-value current-prefix-arg) t))")]
+#[lisp_fn(
+    min = "1",
+    intspec = "(list (read-char-by-name \"Insert character (Unicode name or hex): \") (prefix-numeric-value current-prefix-arg) t))"
+)]
 pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool) {
     let count = count.unwrap_or(1);
     if count <= 0 {
@@ -337,7 +340,8 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
             return None;
         }
     } else {
-        let p = pos.as_fixnum()
+        let p = pos
+            .as_fixnum()
             .unwrap_or_else(|| wrong_type!(Qinteger_or_marker_p, pos)) as isize;
         if p <= buffer_ref.begv || p > buffer_ref.zv() {
             return None;
@@ -639,7 +643,8 @@ pub fn constrain_to_field(
     let prev_new = new_pos - 1;
     let begv = ThreadState::current_buffer().begv as EmacsInt;
 
-    if unsafe { globals.Vinhibit_field_text_motion == Qnil } && new_pos != old_pos
+    if unsafe { globals.Vinhibit_field_text_motion == Qnil }
+        && new_pos != old_pos
         && (get_char_property(
             new_pos,
             Qfield,

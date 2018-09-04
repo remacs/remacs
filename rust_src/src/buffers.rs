@@ -4,20 +4,20 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{bset_update_mode_line, buffer_local_value, buffer_window_count, globals,
+                 last_per_buffer_idx, set_buffer_internal_1, update_mode_lines};
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Overlay, Lisp_Type,
                  Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
                  Qvoid_variable};
-use remacs_sys::{bset_update_mode_line, buffer_local_value, buffer_window_count, globals,
-                 last_per_buffer_idx, update_mode_lines, set_buffer_internal_1};
 
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
 use editfns::point;
-use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::string_char;
@@ -477,7 +477,8 @@ pub fn buffer_live_p(object: Option<LispBufferRef>) -> bool {
 /// Like Fassoc, but use `Fstring_equal` to compare
 /// (which ignores text properties), and don't ever quit.
 fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
-    let result = list.iter_tails_safe()
+    let result = list
+        .iter_tails_safe()
         .find(|&item| string_equal(car(item.car()), key));
     if let Some(elt) = result {
         elt.car()
@@ -670,7 +671,8 @@ pub extern "C" fn nsberror(spec: LispObject) -> ! {
 #[lisp_fn]
 pub fn overlay_lists() -> LispObject {
     let list_overlays = |ol: LispOverlayRef| -> LispObject {
-        let ol_list = ol.iter()
+        let ol_list = ol
+            .iter()
             .fold(Qnil, |accum, n| unsafe { Fcons(n.as_lisp_obj(), accum) });
         ol_list
     };
@@ -690,8 +692,7 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
         .find(|buf| {
             let buf_truename = buf.truename();
             buf_truename.is_string() && string_equal(buf_truename, filename)
-        })
-        .into()
+        }).into()
 }
 
 // to be removed once all references in C are ported

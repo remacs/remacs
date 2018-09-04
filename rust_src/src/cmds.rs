@@ -5,23 +5,23 @@ use std;
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
+use remacs_sys::EmacsInt;
+use remacs_sys::{bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible,
+                 globals, initial_define_key, insert_and_inherit, memory_full, replace_range,
+                 run_hook, scan_newline_from_point, set_point, set_point_both, syntax_property,
+                 syntaxcode, translate_char, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column, Fset};
-use remacs_sys::{bitch_at_user, current_column, del_range, frame_make_pointer_invisible, globals,
-                 initial_define_key, insert_and_inherit, memory_full, replace_range, run_hook,
-                 scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
-                 translate_char, concat2, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
                  Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
                  Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate};
-use remacs_sys::EmacsInt;
 
 use character::{self, characterp};
 use editfns::{line_beginning_position, line_end_position, preceding_char};
 use frames::selected_frame;
 use keymap::{current_global_map, Ctl};
-use lisp::LispObject;
 use lisp::defsubr;
-use multibyte::{single_byte_charp, unibyte_to_char, write_codepoint, Codepoint, char_to_byte8,
+use lisp::LispObject;
+use multibyte::{char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
                 MAX_MULTIBYTE_LENGTH};
 use obarray::intern;
 use threads::ThreadState;
@@ -184,7 +184,8 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
 
     if shortage > 0
         && (count <= 0
-            || (cur_buf.zv() > cur_buf.begv && cur_buf.pt() != opoint
+            || (cur_buf.zv() > cur_buf.begv
+                && cur_buf.pt() != opoint
                 && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != b'\n'))
     {
         shortage -= 1
@@ -295,9 +296,8 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
     let mut current_buffer = ThreadState::current_buffer();
     let overwrite = current_buffer.overwrite_mode_;
-    if unsafe { globals.Vbefore_change_functions }.is_not_nil() || unsafe {
-        globals.Vafter_change_functions
-    }.is_not_nil()
+    if unsafe { globals.Vbefore_change_functions }.is_not_nil()
+        || unsafe { globals.Vafter_change_functions }.is_not_nil()
     {
         hairy = 1;
     }
@@ -380,8 +380,10 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     } else {
         unibyte_to_char(preceding_char() as Codepoint)
     };
-    if current_buffer.abbrev_mode_.is_not_nil() && synt != syntaxcode::Sword
-        && current_buffer.read_only_.is_nil() && current_buffer.pt > current_buffer.begv
+    if current_buffer.abbrev_mode_.is_not_nil()
+        && synt != syntaxcode::Sword
+        && current_buffer.read_only_.is_nil()
+        && current_buffer.pt > current_buffer.begv
         && unsafe { syntax_property(previous_char as libc::c_int, true) } == syntaxcode::Sword
     {
         let modiff = unsafe { (*current_buffer.text).modiff };
@@ -453,7 +455,8 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
-        if t.get(c as isize).is_not_nil() && (c == ' ' as Codepoint || c == '\n' as Codepoint)
+        if t.get(c as isize).is_not_nil()
+            && (c == ' ' as Codepoint || c == '\n' as Codepoint)
             && current_buffer.auto_fill_function_.is_not_nil()
         {
             if c == '\n' as Codepoint {

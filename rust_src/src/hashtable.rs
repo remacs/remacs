@@ -4,14 +4,14 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, CHECK_IMPURE};
+use remacs_sys::Qhash_table_test;
 use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
                  Fcopy_sequence};
-use remacs_sys::Qhash_table_test;
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, CHECK_IMPURE};
 
 use data::aref;
-use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject};
 use lists::{list, put};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;

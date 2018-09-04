@@ -2,15 +2,15 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, get_process as cget_process,
                  send_process, setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
+use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
                  Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial, Qstop, Qt};
 
-use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject};
 
 use buffers::get_buffer;
 use lists::{assoc, car, cdr, plist_put};

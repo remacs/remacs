@@ -5,20 +5,20 @@ use std::ptr;
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
+use remacs_sys::globals;
+use remacs_sys::Fcons;
 use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, set_buffer_internal, window_menu_bar_p,
-                 window_parameter, window_tool_bar_p, wset_redisplay, wset_update_mode_line,
-                 window_list_1};
-use remacs_sys::Fcons;
-use remacs_sys::globals;
+                 selected_window as current_window, set_buffer_internal, window_list_1,
+                 window_menu_bar_p, window_parameter, window_tool_bar_p, wset_redisplay,
+                 wset_update_mode_line};
+use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 
 use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, window_frame_live_or_selected, LispFrameRef};
-use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject};
 use lists::{assq, setcdr};
 use marker::{marker_position_lisp, set_marker_restricted};
 use threads::ThreadState;
@@ -197,13 +197,15 @@ impl LispWindowRef {
     pub fn wants_mode_line(mut self) -> bool {
         let window_mode_line_format = unsafe { window_parameter(self.as_mut(), Qmode_line_format) };
 
-        self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
+        self.is_live()
+            && !self.is_minibuffer()
+            && !self.is_pseudo()
             && !window_mode_line_format.eq(Qnone)
-            && (window_mode_line_format.is_not_nil()
-                || self.contents()
-                    .as_buffer_or_error()
-                    .mode_line_format_
-                    .is_not_nil())
+            && (window_mode_line_format.is_not_nil() || self
+                .contents()
+                .as_buffer_or_error()
+                .mode_line_format_
+                .is_not_nil())
             && self.pixel_height > self.frame().as_frame_or_error().line_height
     }
 
@@ -225,7 +227,9 @@ impl LispWindowRef {
             height *= 2;
         }
 
-        self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
+        self.is_live()
+            && !self.is_minibuffer()
+            && !self.is_pseudo()
             && !window_header_line_format.eq(Qnone)
             && (window_header_line_format.is_not_nil()
                 || (self.contents().as_buffer_or_error().header_line_format_).is_not_nil())
@@ -418,7 +422,8 @@ pub fn set_window_combination_limit(mut window: LispWindowRef, limit: LispObject
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
     let current_minibuf = unsafe { current_minibuf_window };
-    if level > 0 && selected_window().as_window_or_error().is_minibuffer()
+    if level > 0
+        && selected_window().as_window_or_error().is_minibuffer()
         && current_minibuf.as_window().unwrap().is_live()
     {
         current_minibuf

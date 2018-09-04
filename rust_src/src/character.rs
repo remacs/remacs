@@ -37,10 +37,10 @@ pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
     new_pos
 }
 
-use lisp::LispObject;
 use lisp::defsubr;
-use multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe};
+use lisp::LispObject;
 use multibyte::MAX_CHAR;
+use multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe};
 
 /// Return the character of the maximum code.
 #[lisp_fn]

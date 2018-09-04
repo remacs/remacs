@@ -142,7 +142,8 @@ pub extern "C" fn scan_rust_file(
         } else if line.starts_with("defvar_") {
             // defvar_lisp!(f_Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
             lazy_static! {
-                static ref RE: Regex = Regex::new(r#"defvar_(.+?)!\((.+?),\s+"(.+?)",\s+(.+?)\);"#).unwrap();
+                static ref RE: Regex =
+                    Regex::new(r#"defvar_(.+?)!\((.+?),\s+"(.+?)",\s+(.+?)\);"#).unwrap();
             }
             for caps in RE.captures_iter(line) {
                 let kindstr = &caps[1];

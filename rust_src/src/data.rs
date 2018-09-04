@@ -19,8 +19,8 @@ use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, 
 
 use frames::selected_frame;
 use keymap::get_keymap;
-use lisp::{LispObject, LispSubrRef};
 use lisp::{defsubr, is_autoload};
+use lisp::{LispObject, LispSubrRef};
 use lists::{get, memq, put};
 use math::leq;
 use multibyte::{is_ascii, is_single_byte_char};
@@ -73,7 +73,11 @@ pub fn indirect_function(object: LispObject) -> LispObject {
 /// function indirections to find the final function binding and return it.
 /// Signal a cyclic-function-indirection error if there is a loop in the
 /// function chain of symbols.
-#[lisp_fn(min = "1", c_name = "indirect_function", name = "indirect-function")]
+#[lisp_fn(
+    min = "1",
+    c_name = "indirect_function",
+    name = "indirect-function"
+)]
 pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispObject {
     match object.as_symbol() {
         None => object,
