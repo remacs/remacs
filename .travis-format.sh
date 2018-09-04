@@ -15,14 +15,4 @@ echo "Checking formatting"
 cd "$DIR/rust_src"
 cargo fmt -- --version
 
-cd "$DIR/rust_src/src"
-cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
-
-cd "$DIR/rust_src/remacs-lib"
-cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
-
-cd "$DIR/rust_src/remacs-macros"
-cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff lib.rs
-
-cd "$DIR/rust_src/alloc_unexecmacosx"
-cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
+cargo fmt --all -- --config-path $RUSTFMT_CONFIG_DIR --check
