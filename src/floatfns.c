@@ -355,6 +355,8 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
       CHECK_NUMBER (divisor);
       if (!FLOATP (arg) && !FLOATP (divisor))
 	{
+	  /* Divide as integers.  Converting to double might lose
+	     info, even for fixnums; also see the FIXME below.  */
 	  if (EQ (divisor, make_fixnum (0)))
 	    xsignal0 (Qarith_error);
 	  int_divide (mpz[0],
@@ -363,10 +365,11 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
 	  return make_integer_mpz ();
 	}
 
-      double f1 = FLOATP (arg) ? XFLOAT_DATA (arg) : XFIXNUM (arg);
-      double f2 = FLOATP (divisor) ? XFLOAT_DATA (divisor) : XFIXNUM (divisor);
+      double f1 = XFLOATINT (arg);
+      double f2 = XFLOATINT (divisor);
       if (! IEEE_FLOATING_POINT && f2 == 0)
 	xsignal0 (Qarith_error);
+      /* FIXME: This division rounds, so the result is double-rounded.  */
       d = f1 / f2;
     }
 
