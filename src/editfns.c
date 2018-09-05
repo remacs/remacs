@@ -4691,21 +4691,16 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 			}
 		      else
 			{
-			  if (FIXNUMP (arg))
-			    ldarg = XFIXNUM (arg);
-			  else
+			  if (INTEGERP (arg))
 			    {
-			      intmax_t iarg = bignum_to_intmax (arg);
-			      if (iarg != 0)
+			      intmax_t iarg;
+			      uintmax_t uarg;
+			      if (integer_to_intmax (arg, &iarg))
 				ldarg = iarg;
+			      else if (integer_to_uintmax (arg, &uarg))
+				ldarg = uarg;
 			      else
-				{
-				  uintmax_t uarg = bignum_to_uintmax (arg);
-				  if (uarg != 0)
-				    ldarg = uarg;
-				  else
-				    format_bignum_as_double = true;
-				}
+				format_bignum_as_double = true;
 			    }
 			  if (!format_bignum_as_double)
 			    {

@@ -3297,6 +3297,39 @@ extern Lisp_Object bignum_to_string (Lisp_Object, int);
 extern Lisp_Object make_bignum_str (char const *, int);
 extern Lisp_Object double_to_bignum (double);
 
+/* Converthe integer NUM to *N.  Return true if successful, false
+   (possibly setting *N) otherwise.  */
+INLINE bool
+integer_to_intmax (Lisp_Object num, intmax_t *n)
+{
+  if (FIXNUMP (num))
+    {
+      *n = XFIXNUM (num);
+      return true;
+    }
+  else
+    {
+      intmax_t i = bignum_to_intmax (num);
+      *n = i;
+      return i != 0;
+    }
+}
+INLINE bool
+integer_to_uintmax (Lisp_Object num, uintmax_t *n)
+{
+  if (FIXNUMP (num))
+    {
+      *n = XFIXNUM (num);
+      return 0 <= XFIXNUM (num);
+    }
+  else
+    {
+      uintmax_t i = bignum_to_uintmax (num);
+      *n = i;
+      return i != 0;
+    }
+}
+
 /* Defined in data.c.  */
 extern _Noreturn void wrong_choice (Lisp_Object, Lisp_Object);
 extern void notify_variable_watchers (Lisp_Object, Lisp_Object,

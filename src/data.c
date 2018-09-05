@@ -2653,17 +2653,7 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
   else
     {
       Lisp_Object hi = CONSP (c) ? XCAR (c) : c;
-
-      if (FIXNUMP (hi))
-	{
-	  val = XFIXNUM (hi);
-	  valid = 0 <= val;
-	}
-      else
-	{
-	  val = bignum_to_uintmax (hi);
-	  valid = val != 0;
-	}
+      valid = integer_to_uintmax (hi, &val);
 
       if (valid && CONSP (c))
 	{
@@ -2724,17 +2714,7 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
   else
     {
       Lisp_Object hi = CONSP (c) ? XCAR (c) : c;
-
-      if (FIXNUMP (hi))
-	{
-	  val = XFIXNUM (hi);
-	  valid = true;
-	}
-      else if (BIGNUMP (hi))
-	{
-	  val = bignum_to_intmax (hi);
-	  valid = val != 0;
-	}
+      valid = integer_to_intmax (hi, &val);
 
       if (valid && CONSP (c))
 	{
@@ -2972,16 +2952,8 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 
 	/* Set NEXT to the next value if it fits, else exit the loop.  */
 	intmax_t next;
-	if (FIXNUMP (val))
-	  next = XFIXNUM (val);
-	else if (FLOATP (val))
+	if (! (INTEGERP (val) && integer_to_intmax (val, &next)))
 	  break;
-	else
-	  {
-	    next = bignum_to_intmax (val);
-	    if (next == 0)
-	      break;
-	  }
 
 	/* Set ACCUM to the next operation's result if it fits,
 	   else exit the loop.  */

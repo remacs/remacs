@@ -7055,8 +7055,9 @@ handle_child_signal (int sig)
       xpid = XCAR (head);
       if (all_pids_are_fixnums ? FIXNUMP (xpid) : INTEGERP (xpid))
 	{
-	  pid_t deleted_pid = (FIXNUMP (xpid) ? XFIXNUM (xpid)
-			       : bignum_to_intmax (xpid));
+	  intmax_t deleted_pid;
+	  bool ok = integer_to_intmax (xpid, &deleted_pid);
+	  eassert (ok);
 	  if (child_status_changed (deleted_pid, 0, 0))
 	    {
 	      if (STRINGP (XCDR (head)))
