@@ -1743,10 +1743,10 @@ disassemble_lisp_time (Lisp_Object specified_time, Lisp_Object *phigh,
 
       /* When combining components, require LOW to be an integer,
 	 as otherwise it would be a pain to add up times.  */
-      if (! FIXNUMP (low))
+      if (! INTEGERP (low))
 	return 0;
     }
-  else if (FIXNUMP (specified_time))
+  else if (INTEGERP (specified_time))
     len = 2;
 
   *phigh = high;
@@ -1807,11 +1807,12 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
 			Lisp_Object psec,
 			struct lisp_time *result, double *dresult)
 {
-  EMACS_INT hi, lo, us, ps;
+  EMACS_INT hi, us, ps;
+  intmax_t lo;
   if (! (FIXNUMP (high)
 	 && FIXNUMP (usec) && FIXNUMP (psec)))
     return 0;
-  if (! FIXNUMP (low))
+  if (! INTEGERP (low))
     {
       if (FLOATP (low))
 	{
@@ -1841,7 +1842,8 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
     }
 
   hi = XFIXNUM (high);
-  lo = XFIXNUM (low);
+  if (! integer_to_intmax (low, &lo))
+    return -1;
   us = XFIXNUM (usec);
   ps = XFIXNUM (psec);
 
@@ -1849,7 +1851,8 @@ decode_time_components (Lisp_Object high, Lisp_Object low, Lisp_Object usec,
      each overflow into the next higher-order component.  */
   us += ps / 1000000 - (ps % 1000000 < 0);
   lo += us / 1000000 - (us % 1000000 < 0);
-  hi += lo >> LO_TIME_BITS;
+  if (INT_ADD_WRAPV (lo >> LO_TIME_BITS, hi, &hi))
+    return -1;
   ps = ps % 1000000 + 1000000 * (ps % 1000000 < 0);
   us = us % 1000000 + 1000000 * (us % 1000000 < 0);
   lo &= (1 << LO_TIME_BITS) - 1;
