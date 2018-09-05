@@ -738,7 +738,11 @@ Instead, error messages are just printed in the main thread.
 *** 'thread-alive-p' is now obsolete, use 'thread-live-p' instead.
 
 +++
-*** 'list-threads' displays the live threads in a tabulated-list buffer.
+*** New command 'list-threads' shows Lisp threads.
+See the current list of live threads in a tabulated-list buffer which
+automatically updates.  In the buffer, you can use 's q' or 's e' to
+signal a thread with quit or error respectively, or get a snapshot
+backtrace with 'b'.
 
 ---
 ** thingatpt.el supports a new "thing" called 'uuid'.

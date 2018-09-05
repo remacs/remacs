@@ -281,15 +281,17 @@ mutex cannot be changed.
 @findex list-threads
 The @code{list-threads} command lists all the currently alive threads.
 In the resulting buffer, each thread is identified either by the name
-passed to @code{make-thread}, or by its unique internal identifier if
-it was not created with a name.  The status of each thread at the time
-of the creation or last update of the buffer is shown, in addition to
-the object the thread was blocked on at the time, if it was blocked.
+passed to @code{make-thread} (@pxref{Basic Thread Functions}), or by
+its unique internal identifier if it was not created with a name.  The
+status of each thread at the time of the creation or last update of
+the buffer is shown, in addition to the object the thread was blocked
+on at the time, if it was blocked.
 
-@vindex thread-list-refresh-seconds
+@defvar thread-list-refresh-seconds
 The @file{*Threads*} buffer will automatically update twice per
-second.  To make the refresh rate faster or slower, customize
-@code{thread-list-refresh-seconds}.
+second.  You can make the refresh rate faster or slower by customizing
+this variable.
+@end defvar
 
 Here are the commands available in the thread list buffer:
 
@@ -300,9 +302,9 @@ Here are the commands available in the thread list buffer:
 @item b
 Show a backtrace of the thread at point.  This will show where in its
 code the thread had yielded or was blocked at the moment you pressed
-@kbd{b}.  Be aware that by the time you see the backtrace, the thread
-may have resumed execution, and be in a different section of code, or
-be completed.
+@kbd{b}.  Be aware that the backtrace is a snapshot; the thread could
+have meanwhile resumed execution, and be in a different state, or
+could have exited.
 
 You may use @kbd{g} in the thread's backtrace buffer to get an updated
 backtrace, as backtrace buffers do not automatically update.
@@ -310,10 +312,12 @@ backtrace, as backtrace buffers do not automatically update.
 commands which work on them.
 
 @item s
-Send a signal to the thread at point.  After @kbd{s}, type @kbd{q} to
-send a quit signal or @kbd{e} to send an error signal.  Only do this
-if you understand how to restart the target thread, because your Emacs
-session may behave incorrectly if necessary threads are killed.
+Signal the thread at point.  After @kbd{s}, type @kbd{q} to send a
+quit signal or @kbd{e} to send an error signal.  Threads may implement
+handling of signals, but the default behavior is to exit on any
+signal.  Therefore you should only use this command if you understand
+how to restart the target thread, because your Emacs session may
+behave incorrectly if necessary threads are killed.
 
 @item g
 Update the list of threads and their statuses.
