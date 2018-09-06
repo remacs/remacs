@@ -4583,7 +4583,7 @@ Only works for Bourne-like shells."
 		(tramp-get-connection-property
 		 (tramp-get-connection-process v) "remote-path" nil)
 		(tramp-get-connection-property v "remote-path" nil))
-	       ":"))
+	       path-separator))
 	  (getenv "PATH"))))
 
 (eval-after-load "esh-util"
