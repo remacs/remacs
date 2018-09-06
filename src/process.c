@@ -3321,11 +3321,9 @@ static void
 connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
                         Lisp_Object use_external_socket_p)
 {
-  ptrdiff_t count = SPECPDL_INDEX ();
   int s = -1, outch, inch;
   int xerrno = 0;
   int family;
-  struct sockaddr *sa = NULL;
   int ret;
   ptrdiff_t addrlen;
   struct Lisp_Process *p = XPROCESS (proc);
@@ -3344,6 +3342,11 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
   /* Do this in case we never enter the while-loop below.  */
   s = -1;
 
+  struct sockaddr *sa = NULL;
+  ptrdiff_t count = SPECPDL_INDEX ();
+  record_unwind_protect_nothing ();
+  ptrdiff_t count1 = SPECPDL_INDEX ();
+
   while (!NILP (addrinfos))
     {
       Lisp_Object addrinfo = XCAR (addrinfos);
@@ -3356,9 +3359,8 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 #endif
 
       addrlen = get_lisp_to_sockaddr_size (ip_address, &family);
-      if (sa)
-	free (sa);
-      sa = xmalloc (addrlen);
+      sa = xrealloc (sa, addrlen);
+      set_unwind_protect_ptr (count, xfree, sa);
       conv_lisp_to_sockaddr (family, ip_address, sa, addrlen);
 
       s = socket_to_use;
@@ -3520,7 +3522,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 #endif /* !WINDOWSNT */
 
       /* Discard the unwind protect closing S.  */
-      specpdl_ptr = specpdl + count;
+      specpdl_ptr = specpdl + count1;
       emacs_close (s);
       s = -1;
       if (0 <= socket_to_use)
@@ -3591,6 +3593,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	  Lisp_Object data = get_file_errno_data (err, contact, xerrno);
 
 	  pset_status (p, list2 (Fcar (data), Fcdr (data)));
+	  unbind_to (count, Qnil);
 	  return;
 	}
 
@@ -3610,7 +3613,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
   p->outfd = outch;
 
   /* Discard the unwind protect for closing S, if any.  */
-  specpdl_ptr = specpdl + count;
+  specpdl_ptr = specpdl + count1;
 
   if (p->is_server && p->socktype != SOCK_DGRAM)
     pset_status (p, Qlisten);
@@ -3671,6 +3674,7 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
     }
 #endif
 
+  unbind_to (count, Qnil);
 }
 
 /* Create a network stream/datagram client/server process.  Treated
