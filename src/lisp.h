@@ -1619,7 +1619,16 @@ struct Lisp_Bool_Vector
   } GCALIGNED_STRUCT;
 
 /* Some handy constants for calculating sizes
-   and offsets, mostly of vectorlike objects.   */
+   and offsets, mostly of vectorlike objects.
+
+   The garbage collector assumes that the initial part of any struct
+   that starts with a union vectorlike_header followed by N
+   Lisp_Objects (some possibly in arrays and/or a trailing flexible
+   array) will be laid out like a struct Lisp_Vector with N
+   Lisp_Objects.  This assumption is true in practice on known Emacs
+   targets even though the C standard does not guarantee it.  This
+   header contains a few sanity checks that should suffice to detect
+   violations of this assumption on plausible practical hosts.  */
 
 enum
   {
@@ -1627,7 +1636,6 @@ enum
     bool_header_size = offsetof (struct Lisp_Bool_Vector, data),
     word_size = sizeof (Lisp_Object)
   };
-verify (header_size == sizeof (union vectorlike_header));
 
 /* The number of data words and bytes in a bool vector with SIZE bits.  */
 
@@ -1989,6 +1997,13 @@ enum char_table_specials
     SUB_CHAR_TABLE_OFFSET = PSEUDOVECSIZE (struct Lisp_Sub_Char_Table, contents)
   };
 
+/* Sanity-check pseudovector layout.  */
+verify (offsetof (struct Lisp_Char_Table, defalt) == header_size);
+verify (offsetof (struct Lisp_Char_Table, extras)
+	== header_size + CHAR_TABLE_STANDARD_SLOTS * sizeof (Lisp_Object));
+verify (offsetof (struct Lisp_Sub_Char_Table, contents)
+	== header_size + SUB_CHAR_TABLE_OFFSET * sizeof (Lisp_Object));
+
 /* Return the number of "extra" slots in the char table CT.  */
 
 INLINE int
@@ -1997,11 +2012,6 @@ CHAR_TABLE_EXTRA_SLOTS (struct Lisp_Char_Table *ct)
   return ((ct->header.size & PSEUDOVECTOR_SIZE_MASK)
 	  - CHAR_TABLE_STANDARD_SLOTS);
 }
-
-/* Make sure that sub char-table contents slot is where we think it is.  */
-verify (offsetof (struct Lisp_Sub_Char_Table, contents)
-	== (offsetof (struct Lisp_Vector, contents)
-	    + SUB_CHAR_TABLE_OFFSET * sizeof (Lisp_Object)));
 
 
 /* Save and restore the instruction and environment pointers,
@@ -2216,6 +2226,8 @@ struct Lisp_Hash_Table
   struct Lisp_Hash_Table *next_weak;
 } GCALIGNED_STRUCT;
 
+/* Sanity-check pseudovector layout.  */
+verify (offsetof (struct Lisp_Hash_Table, weak) == header_size);
 
 INLINE bool
 HASH_TABLE_P (Lisp_Object a)
