@@ -6268,7 +6268,7 @@ struct save_window_data
     /* These are currently unused.  We need them as soon as we convert
        to pixels.  */
     int frame_menu_bar_height, frame_tool_bar_height;
-  };
+  } GCALIGNED_STRUCT;
 
 /* This is saved as a Lisp_Vector.  */
 struct saved_window

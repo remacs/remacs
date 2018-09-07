@@ -229,7 +229,7 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
    USE_LSB_TAG not only requires the least 3 bits of pointers returned by
    malloc to be 0 but also needs to be able to impose a mult-of-8 alignment
    on some non-GC Lisp_Objects, all of which are aligned via
-   GCALIGNED_UNION at the end of a union.  */
+   GCALIGNED_UNION_MEMBER, GCALIGNED_STRUCT_MEMBER, and GCALIGNED_STRUCT.  */
 
 enum Lisp_Bits
   {
@@ -282,7 +282,35 @@ error !;
 # define GCALIGNMENT 1
 #endif
 
-#define GCALIGNED_UNION char alignas (GCALIGNMENT) gcaligned;
+/* If a struct is always allocated by the GC and is therefore always
+   GC-aligned, put GCALIGNED_STRUCT after its closing '}'; this can
+   help the compiler generate better code.
+
+   To cause a union to have alignment of at least GCALIGNMENT, put
+   GCALIGNED_UNION_MEMBER in its member list.  Similarly for a struct
+   and GCALIGNED_STRUCT_MEMBER, although this may make the struct a
+   bit bigger on non-GCC platforms.  Any struct using
+   GCALIGNED_STRUCT_MEMBER should also use GCALIGNED_STRUCT.
+
+   Although these macros are reasonably portable, they are not
+   guaranteed on non-GCC platforms, as C11 does not require support
+   for alignment to GCALIGNMENT and older compilers may ignore
+   alignment requests.  For any type T where garbage collection
+   requires alignment, use verify (GCALIGNED (T)) to verify the
+   requirement on the current platform.  Types need this check if
+   their objects can be allocated outside the garbage collector.  For
+   example, struct Lisp_Symbol needs the check because of lispsym and
+   struct Lisp_Cons needs it because of STACK_CONS.  */
+
+#define GCALIGNED_UNION_MEMBER char alignas (GCALIGNMENT) gcaligned;
+#if HAVE_STRUCT_ATTRIBUTE_ALIGNED
+# define GCALIGNED_STRUCT_MEMBER
+# define GCALIGNED_STRUCT __attribute__ ((aligned (GCALIGNMENT)))
+#else
+# define GCALIGNED_STRUCT_MEMBER GCALIGNED_UNION_MEMBER
+# define GCALIGNED_STRUCT
+#endif
+#define GCALIGNED(type) (alignof (type) % GCALIGNMENT == 0)
 
 /* Lisp_Word is a scalar word suitable for holding a tagged pointer or
    integer.  Usually it is a pointer to a deliberately-incomplete type
@@ -751,10 +779,10 @@ struct Lisp_Symbol
       /* Next symbol in obarray bucket, if the symbol is interned.  */
       struct Lisp_Symbol *next;
     } s;
-    GCALIGNED_UNION
+    GCALIGNED_UNION_MEMBER
   } u;
 };
-verify (alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
+verify (GCALIGNED (struct Lisp_Symbol));
 
 /* Declare a Lisp-callable function.  The MAXARGS parameter has the same
    meaning as in the DEFUN macro, and is used to construct a prototype.  */
@@ -843,7 +871,9 @@ typedef EMACS_UINT Lisp_Word_tag;
    and PSEUDOVECTORP cast their pointers to union vectorlike_header *,
    because when two such pointers potentially alias, a compiler won't
    incorrectly reorder loads and stores to their size fields.  See
-   Bug#8546.  */
+   Bug#8546.  This union formerly contained more members, and there's
+   no compelling reason to change it to a struct merely because the
+   number of members has been reduced to one.  */
 union vectorlike_header
   {
     /* The main member contains various pieces of information:
@@ -866,20 +896,7 @@ union vectorlike_header
 	 Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
 	 4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
     ptrdiff_t size;
-    /* Align the union so that there is no padding after it.
-       This is needed for the following reason:
-       If the alignment constraint of Lisp_Object is greater than the size of
-       vectorlike_header (e.g. with-wide-int), vectorlike objects which have
-       0 Lisp_Object fields and whose 1st field has a smaller alignment
-       constraint than Lisp_Object may end up with their 1st field "before
-       pseudovector index 0", in which case PSEUDOVECSIZE will return
-       a "negative" number.  We could fix PSEUDOVECSIZE, but it's easier to
-       just force rounding up the size of vectorlike_header to the alignment
-       of Lisp_Object.  */
-    Lisp_Object align;
-    GCALIGNED_UNION
   };
-verify (alignof (union vectorlike_header) % GCALIGNMENT == 0);
 
 INLINE bool
 (SYMBOLP) (Lisp_Object x)
@@ -1251,10 +1268,10 @@ struct Lisp_Cons
 	struct Lisp_Cons *chain;
       } u;
     } s;
-    GCALIGNED_UNION
+    GCALIGNED_UNION_MEMBER
   } u;
 };
-verify (alignof (struct Lisp_Cons) % GCALIGNMENT == 0);
+verify (GCALIGNED (struct Lisp_Cons));
 
 INLINE bool
 (NILP) (Lisp_Object x)
@@ -1373,10 +1390,10 @@ struct Lisp_String
       unsigned char *data;
     } s;
     struct Lisp_String *next;
-    GCALIGNED_UNION
+    GCALIGNED_UNION_MEMBER
   } u;
 };
-verify (alignof (struct Lisp_String) % GCALIGNMENT == 0);
+verify (GCALIGNED (struct Lisp_String));
 
 INLINE bool
 STRINGP (Lisp_Object x)
@@ -1507,7 +1524,7 @@ struct Lisp_Vector
   {
     union vectorlike_header header;
     Lisp_Object contents[FLEXIBLE_ARRAY_MEMBER];
-  };
+  } GCALIGNED_STRUCT;
 
 INLINE bool
 (VECTORLIKEP) (Lisp_Object x)
@@ -1599,7 +1616,7 @@ struct Lisp_Bool_Vector
        The bits are in little-endian order in the bytes, and
        the bytes are in little-endian order in the words.  */
     bits_word data[FLEXIBLE_ARRAY_MEMBER];
-  };
+  } GCALIGNED_STRUCT;
 
 /* Some handy constants for calculating sizes
    and offsets, mostly of vectorlike objects.   */
@@ -1765,7 +1782,8 @@ memclear (void *p, ptrdiff_t nbytes)
    ones that the GC needs to trace).  */
 
 #define PSEUDOVECSIZE(type, nonlispfield)			\
-  ((offsetof (type, nonlispfield) - header_size) / word_size)
+   (offsetof (type, nonlispfield) < header_size			\
+    ? 0 : (offsetof (type, nonlispfield) - header_size) / word_size)
 
 /* Compute A OP B, using the unsigned comparison operator OP.  A and B
    should be integer expressions.  This is not the same as
@@ -1830,7 +1848,7 @@ struct Lisp_Char_Table
 
     /* These hold additional data.  It is a vector.  */
     Lisp_Object extras[FLEXIBLE_ARRAY_MEMBER];
-  };
+  } GCALIGNED_STRUCT;
 
 INLINE bool
 CHAR_TABLE_P (Lisp_Object a)
@@ -1942,7 +1960,9 @@ struct Lisp_Subr
     const char *symbol_name;
     const char *intspec;
     EMACS_INT doc;
-  };
+    GCALIGNED_STRUCT_MEMBER
+  } GCALIGNED_STRUCT;
+verify (GCALIGNED (struct Lisp_Subr));
 
 INLINE bool
 SUBRP (Lisp_Object a)
@@ -2194,7 +2214,7 @@ struct Lisp_Hash_Table
   /* Next weak hash table if this is a weak hash table.  The head
      of the list is in weak_hash_tables.  */
   struct Lisp_Hash_Table *next_weak;
-};
+} GCALIGNED_STRUCT;
 
 
 INLINE bool
@@ -2313,7 +2333,7 @@ struct Lisp_Marker
      used to implement the functionality of markers, but rather to (ab)use
      markers as a cache for char<->byte mappings).  */
   ptrdiff_t bytepos;
-};
+} GCALIGNED_STRUCT;
 
 /* START and END are markers in the overlay's buffer, and
    PLIST is the overlay's property list.  */
@@ -2335,13 +2355,13 @@ struct Lisp_Overlay
     Lisp_Object end;
     Lisp_Object plist;
     struct Lisp_Overlay *next;
-  };
+  } GCALIGNED_STRUCT;
 
 struct Lisp_Misc_Ptr
   {
     union vectorlike_header header;
     void *pointer;
-  };
+  } GCALIGNED_STRUCT;
 
 extern Lisp_Object make_misc_ptr (void *);
 
@@ -2388,7 +2408,7 @@ struct Lisp_User_Ptr
   union vectorlike_header header;
   void (*finalizer) (void *);
   void *p;
-};
+} GCALIGNED_STRUCT;
 #endif
 
 /* A finalizer sentinel.  */
@@ -2404,7 +2424,7 @@ struct Lisp_Finalizer
     /* Circular list of all active weak references.  */
     struct Lisp_Finalizer *prev;
     struct Lisp_Finalizer *next;
-  };
+  } GCALIGNED_STRUCT;
 
 INLINE bool
 FINALIZERP (Lisp_Object x)
@@ -2616,7 +2636,7 @@ struct Lisp_Float
       double data;
       struct Lisp_Float *chain;
     } u;
-  };
+  } GCALIGNED_STRUCT;
 
 INLINE bool
 (FLOATP) (Lisp_Object x)
@@ -3946,7 +3966,7 @@ struct Lisp_Module_Function
   ptrdiff_t min_arity, max_arity;
   emacs_subr subr;
   void *data;
-};
+} GCALIGNED_STRUCT;
 
 INLINE bool
 MODULE_FUNCTIONP (Lisp_Object o)

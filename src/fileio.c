@@ -3394,9 +3394,9 @@ union read_non_regular
     int fd;
     ptrdiff_t inserted, trytry;
   } s;
-  GCALIGNED_UNION
+  GCALIGNED_UNION_MEMBER
 };
-verify (alignof (union read_non_regular) % GCALIGNMENT == 0);
+verify (GCALIGNED (union read_non_regular));
 
 static Lisp_Object
 read_non_regular (Lisp_Object state)

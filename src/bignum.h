@@ -39,7 +39,7 @@ struct Lisp_Bignum
 {
   union vectorlike_header header;
   mpz_t value;
-};
+} GCALIGNED_STRUCT;
 
 extern mpz_t mpz[4];
 
