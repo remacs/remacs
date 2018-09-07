@@ -1890,7 +1890,7 @@ struct Lisp_Sub_Char_Table
 
     /* Use set_sub_char_table_contents to set this.  */
     Lisp_Object contents[FLEXIBLE_ARRAY_MEMBER];
-  };
+  } GCALIGNED_STRUCT;
 
 INLINE bool
 SUB_CHAR_TABLE_P (Lisp_Object a)
