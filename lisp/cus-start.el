@@ -706,6 +706,8 @@ since it could result in memory overflow and make Emacs crash."
 	  (put symbol 'risky-local-variable (cadr prop)))
       (if (setq prop (memq :set rest))
 	  (put symbol 'custom-set (cadr prop)))
+      ;; This is used by describe-variable.
+      (if version (put symbol 'custom-version version))
       ;; Note this is the _only_ initialize property we handle.
       (if (eq (cadr (memq :initialize rest)) 'custom-initialize-delay)
           ;; These vars are defined early and should hence be initialized
@@ -724,7 +726,6 @@ since it could result in memory overflow and make Emacs crash."
 	  (custom-add-to-group group symbol 'custom-variable))
 	;; Set the type.
 	(put symbol 'custom-type type)
-	(if version (put symbol 'custom-version version))
 	(while rest
 	  (setq prop (car rest)
 		propval (cadr rest)
