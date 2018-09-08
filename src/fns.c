@@ -133,7 +133,8 @@ DEFUN ("safe-length", Fsafe_length, Ssafe_length, 1, 1, 0,
        doc: /* Return the length of a list, but avoid error or infinite loop.
 This function never gets an error.  If LIST is not really a list,
 it returns 0.  If LIST is circular, it returns an integer that is at
-least the number of distinct elements.  */)
+least the number of distinct elements.
+Value is a fixnum, if it's small enough, otherwise a bignum.  */)
   (Lisp_Object list)
 {
   intptr_t len = 0;
