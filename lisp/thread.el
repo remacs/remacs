@@ -121,7 +121,7 @@ An EVENT has the format
 Return a list of two strings, one describing THREAD's status, the
 other describing THREAD's blocker, if any."
   (cond
-   ((not (thread-alive-p thread)) '("Finished" ""))
+   ((not (thread-live-p thread)) '("Finished" ""))
    ((eq thread (current-thread)) '("Running" ""))
    (t (if-let ((blocker (thread--blocker thread)))
           `("Blocked" ,(prin1-to-string blocker))
@@ -141,9 +141,9 @@ other describing THREAD's blocker, if any."
   "Send the specified SIGNAL to the thread at point.
 Ask for user confirmation before signaling the thread."
   (let ((thread (tabulated-list-get-id)))
-    (if (thread-alive-p thread)
+    (if (thread-live-p thread)
         (when (y-or-n-p (format "Send %s signal to %s? " signal thread))
-          (if (thread-alive-p thread)
+          (if (thread-live-p thread)
               (thread-signal thread signal nil)
             (message "This thread is no longer alive")))
       (message "This thread is no longer alive"))))
@@ -155,7 +155,7 @@ Ask for user confirmation before signaling the thread."
   "Display the backtrace for the thread at point."
   (interactive)
   (let ((thread (tabulated-list-get-id)))
-    (if (thread-alive-p thread)
+    (if (thread-live-p thread)
         (let ((buffer (get-buffer-create "*Thread Backtrace*")))
           (pop-to-buffer buffer)
           (unless (derived-mode-p 'backtrace-mode)
@@ -172,7 +172,7 @@ Ask for user confirmation before signaling the thread."
 
 (defun thread-list-backtrace--revert-hook-function ()
   (setq backtrace-frames
-        (when (thread-alive-p thread-list-backtrace--thread)
+        (when (thread-live-p thread-list-backtrace--thread)
           (mapcar #'thread-list--make-backtrace-frame
                   (backtrace--frames-from-thread
                    thread-list-backtrace--thread)))))
@@ -182,7 +182,7 @@ Ask for user confirmation before signaling the thread."
 
 (defun thread-list-backtrace--insert-header ()
   (let ((name (thread-list--name thread-list-backtrace--thread)))
-    (if (thread-alive-p thread-list-backtrace--thread)
+    (if (thread-live-p thread-list-backtrace--thread)
         (progn
           (insert (substitute-command-keys "Backtrace for thread `"))
           (insert name)
