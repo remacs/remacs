@@ -964,6 +964,11 @@ displaying the same buffer.  See the Info node "Face Remapping" of the
 Emacs Lisp Reference manual for more detail.
 
 +++
+** Special handling of buffer-local 'window-size-change-functions'.
+A buffer-local value of this hook is now run only if at least one
+window showing the buffer has changed its size.
+
++++
 ** New function assoc-delete-all.
 
 +++
