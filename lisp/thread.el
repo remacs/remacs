@@ -25,9 +25,9 @@
 
 ;;; Code:
 
-(require 'cl-lib)
+(eval-when-compile (require 'cl-lib))
 (require 'backtrace)
-(require 'pcase)
+(eval-when-compile (require 'pcase))
 (eval-when-compile (require 'subr-x))
 
 ;;;###autoload
