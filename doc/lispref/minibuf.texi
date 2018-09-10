@@ -1770,12 +1770,9 @@ flag may be one of the following values.
 @table @code
 @item nil
 This specifies a @code{try-completion} operation.  The function should
-return @code{t} if the specified string is a unique and exact match;
-if there is more than one match, it should return the common substring
-of all matches (if the string is an exact match for one completion
-alternative but also matches other longer alternatives, the return
-value is the string); if there are no matches, it should return
-@code{nil}.
+return @code{nil} if there are no matches; it should return @code{t}
+if the specified string is a unique and exact match; and it should
+return the longest common prefix substring of all matches otherwise.
 
 @item t
 This specifies an @code{all-completions} operation.  The function
