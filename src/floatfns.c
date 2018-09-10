@@ -391,7 +391,7 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
       if (! FIXNUM_OVERFLOW_P (ir))
 	return make_fixnum (ir);
     }
-  return double_to_bignum (dr);
+  return double_to_integer (dr);
 }
 
 static EMACS_INT

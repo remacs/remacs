@@ -64,9 +64,9 @@ bignum_to_double (Lisp_Object n)
   return mpz_get_d (XBIGNUM (n)->value);
 }
 
-/* Return D, converted to a bignum.  Discard any fraction.  */
+/* Return D, converted to a Lisp integer.  Discard any fraction.  */
 Lisp_Object
-double_to_bignum (double d)
+double_to_integer (double d)
 {
   mpz_set_d (mpz[0], d);
   return make_integer_mpz ();

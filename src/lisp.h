@@ -3327,7 +3327,7 @@ extern ptrdiff_t bignum_bufsize (Lisp_Object, int);
 extern ptrdiff_t bignum_to_c_string (char *, ptrdiff_t, Lisp_Object, int);
 extern Lisp_Object bignum_to_string (Lisp_Object, int);
 extern Lisp_Object make_bignum_str (char const *, int);
-extern Lisp_Object double_to_bignum (double);
+extern Lisp_Object double_to_integer (double);
 
 /* Converthe integer NUM to *N.  Return true if successful, false
    (possibly setting *N) otherwise.  */

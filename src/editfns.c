@@ -4657,7 +4657,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
 	      /* Characters to be inserted after spaces and before
 		 leading zeros.  This can occur with bignums, since
-		 string_to_bignum does only leading '-'.  */
+		 bignum_to_string does only leading '-'.  */
 	      char prefix[sizeof "-0x" - 1];
 	      int prefixlen = 0;
 
