@@ -556,13 +556,13 @@ brackets.
 
 @defun text-char-description character
 This function returns a string describing @var{character} in the
-standard Emacs notation for characters that appear in text---like
-@code{single-key-description}, except that control characters are
-represented with a leading caret (which is how control characters in
-Emacs buffers are usually displayed).  Another difference is that
-@code{text-char-description} recognizes the 2**7 bit as the Meta
-character, whereas @code{single-key-description} uses the 2**27 bit
-for Meta.
+standard Emacs notation for characters that can appear in text---like
+@code{single-key-description}, except that the argument must be a
+valid character code that passes a @code{characterp} test
+(@pxref{Character Codes}), control characters are represented with a
+leading caret (which is how control characters in Emacs buffers are
+usually displayed), and the 2**7 bit is treated as the Meta bit,
+whereas @code{single-key-description} uses the 2**27 bit for Meta.
 
 @smallexample
 @group
