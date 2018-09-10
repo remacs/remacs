@@ -26,7 +26,7 @@
 
 (require 'cl-lib)
 (require 'rmc)                       ; read-multiple-choice
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defvar nsm-permanent-host-settings nil)
 (defvar nsm-temporary-host-settings nil)
