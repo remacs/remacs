@@ -232,6 +232,13 @@ typographic quotes, “like this”, in text modes, and in comments in
 non-text modes.
 
 ---
+** New user option 'flyspell-case-fold-duplications'.
+This option controls whether Flyspell mode considers consecutive words
+to be duplicates if they are not in the same case.  If non-nil, the
+default, words are considered to be duplicates even if their letters'
+case does not match.
+
+---
 ** 'write-abbrev-file' now includes special properties.
 'write-abbrev-file' now writes special properties like ':case-fixed'
 for abbrevs that have them.
