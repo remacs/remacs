@@ -72,7 +72,7 @@ Detection of repeated words is not implemented in
   "Non-nil means Flyspell matches duplicate words case-insensitively."
   :group 'flyspell
   :type 'boolean
-  :version 27.1)
+  :version "27.1")
 
 (defcustom flyspell-mark-duplications-exceptions
   '((nil . ("that" "had")) ; Common defaults for English.
