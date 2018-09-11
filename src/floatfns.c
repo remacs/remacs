@@ -339,8 +339,7 @@ static Lisp_Object
 rounding_driver (Lisp_Object arg, Lisp_Object divisor,
 		 double (*double_round) (double),
 		 void (*int_divide) (mpz_t, mpz_t const, mpz_t const),
-		 EMACS_INT (*fixnum_divide) (EMACS_INT, EMACS_INT),
-		 const char *name)
+		 EMACS_INT (*fixnum_divide) (EMACS_INT, EMACS_INT))
 {
   CHECK_NUMBER (arg);
 
@@ -474,7 +473,7 @@ This rounds the value towards +inf.
 With optional DIVISOR, return the smallest integer no less than ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, ceil, mpz_cdiv_q, ceiling2, "ceiling");
+  return rounding_driver (arg, divisor, ceil, mpz_cdiv_q, ceiling2);
 }
 
 DEFUN ("floor", Ffloor, Sfloor, 1, 2, 0,
@@ -483,7 +482,7 @@ This rounds the value towards -inf.
 With optional DIVISOR, return the largest integer no greater than ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, floor, mpz_fdiv_q, floor2, "floor");
+  return rounding_driver (arg, divisor, floor, mpz_fdiv_q, floor2);
 }
 
 DEFUN ("round", Fround, Sround, 1, 2, 0,
@@ -496,8 +495,7 @@ your machine.  For example, (round 2.5) can return 3 on some
 systems, but 2 on others.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, emacs_rint, rounddiv_q, round2,
-			  "round");
+  return rounding_driver (arg, divisor, emacs_rint, rounddiv_q, round2);
 }
 
 /* Since rounding_driver truncates anyway, no need to call 'trunc'.  */
@@ -513,8 +511,7 @@ Rounds ARG toward zero.
 With optional DIVISOR, truncate ARG/DIVISOR.  */)
   (Lisp_Object arg, Lisp_Object divisor)
 {
-  return rounding_driver (arg, divisor, identity, mpz_tdiv_q, truncate2,
-			  "truncate");
+  return rounding_driver (arg, divisor, identity, mpz_tdiv_q, truncate2);
 }
 
 
