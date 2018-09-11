@@ -1075,12 +1075,13 @@ the current Emacs session.  If a symbol has not yet been so used,
 @subsection Keyboard Events
 @cindex keyboard events
 
+@cindex character event
 There are two kinds of input you can get from the keyboard: ordinary
 keys, and function keys.  Ordinary keys correspond to (possibly
 modified) characters; the events they generate are represented in Lisp
-as characters.  The event type of a character event is the character
-itself (an integer), which might have some modifier bits set; see
-@ref{Classifying Events}.
+as characters.  The event type of a @dfn{character event} is the
+character itself (an integer), which might have some modifier bits
+set; see @ref{Classifying Events}.
 
 @cindex modifier bits (of input character)
 @cindex basic code (of input character)
