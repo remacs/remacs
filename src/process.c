@@ -252,7 +252,7 @@ static EMACS_INT update_tick;
 # define HAVE_SEQPACKET
 #endif
 
-#define READ_OUTPUT_DELAY_INCREMENT (TIMESPEC_RESOLUTION / 100)
+#define READ_OUTPUT_DELAY_INCREMENT (TIMESPEC_HZ / 100)
 #define READ_OUTPUT_DELAY_MAX       (READ_OUTPUT_DELAY_INCREMENT * 5)
 #define READ_OUTPUT_DELAY_MAX_MAX   (READ_OUTPUT_DELAY_INCREMENT * 7)
 
@@ -5478,7 +5478,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
              have waited a long amount of time due to repeated
              timers.  */
 	  struct timespec huge_timespec
-	    = make_timespec (TYPE_MAXIMUM (time_t), 2 * TIMESPEC_RESOLUTION);
+	    = make_timespec (TYPE_MAXIMUM (time_t), 2 * TIMESPEC_HZ);
 	  struct timespec cmp_time = huge_timespec;
 	  if (wait < TIMEOUT
               || (wait_proc
