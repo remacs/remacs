@@ -7120,14 +7120,6 @@ verify_alloca (void)
 
 #endif /* ENABLE_CHECKING && USE_STACK_LISP_OBJECTS */
 
-/* Memory allocation for GMP.  */
-
-void
-range_error (void)
-{
-  xsignal0 (Qrange_error);
-}
-
 /* Initialization.  */
 
 void

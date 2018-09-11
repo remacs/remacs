@@ -1765,6 +1765,14 @@ signal_error (const char *s, Lisp_Object arg)
   xsignal (Qerror, Fcons (build_string (s), arg));
 }
 
+/* Use this for arithmetic overflow, e.g., when an integer result is
+   too large even for a bignum.  */
+void
+overflow_error (void)
+{
+  xsignal0 (Qoverflow_error);
+}
+
 
 /* Return true if LIST is a non-nil atom or
    a list containing one of CONDITIONS.  */

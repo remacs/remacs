@@ -80,7 +80,7 @@ make_bignum_bits (size_t bits)
   /* The documentation says integer-width should be nonnegative, so
      a single comparison suffices even though 'bits' is unsigned.  */
   if (integer_width < bits)
-    range_error ();
+    overflow_error ();
 
   struct Lisp_Bignum *b = ALLOCATE_PSEUDOVECTOR (struct Lisp_Bignum, value,
 						 PVEC_BIGNUM);
