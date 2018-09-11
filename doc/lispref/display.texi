@@ -5500,7 +5500,7 @@ that describe the outer circumference of the polygon.
 
 @lisp
 (svg-polygon svg '((100 . 100) (200 . 150) (150 . 90))
-             :stroke-color "blue" :fill-color "red"")
+             :stroke-color "blue" :fill-color "red")
 @end lisp
 @end defun
 
