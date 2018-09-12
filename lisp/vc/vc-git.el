@@ -1440,8 +1440,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
      (cond
       ((equal current-prefix-arg '(16))
        (list (read-from-minibuffer "Run: " "git grep"
-				   nil nil 'grep-history)
-	     nil))
+				   nil nil 'grep-history)))
       (t (let* ((regexp (grep-read-regexp))
 		(files
                  (mapconcat #'shell-quote-argument
@@ -1451,6 +1450,8 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 	   (list regexp files dir))))))
   (require 'grep)
   (when (and (stringp regexp) (> (length regexp) 0))
+    (unless (and dir (file-accessible-directory-p dir))
+      (setq dir default-directory))
     (let ((command regexp))
       (if (null files)
 	  (if (string= command "git grep")
