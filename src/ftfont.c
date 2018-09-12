@@ -2690,16 +2690,14 @@ ftfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 static hb_unicode_combining_class_t
 uni_combining (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
 {
-  /* FIXME: Is it OK to load the table each time like this? */
-  Lisp_Object table = uniprop_table (intern ("canonical-combining-class"));
-  if (!NILP (table))
-    {
-      /* FIXME: something is wrong here, the classes we are getting do not make
-       * sense. */
-      Lisp_Object combining = CHAR_TABLE_REF (table, ch);
-      if (INTEGERP (combining))
-        return (hb_unicode_combining_class_t) XFIXNUM (combining);
-    }
+  Lisp_Object table, combining;
+
+  /* FIXME: Is it efficient to load the table each time? */
+  table = Funicode_property_table_internal (intern ("canonical-combining-class"));
+  combining = Fget_unicode_property_internal (table, make_fixnum (ch));
+
+  if (INTEGERP (combining))
+    return (hb_unicode_combining_class_t) XFIXNUM (combining);
 
   return HB_UNICODE_COMBINING_CLASS_NOT_REORDERED;
 }
