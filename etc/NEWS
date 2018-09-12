@@ -196,6 +196,9 @@ regular expression was previously invalid, but is now accepted:
 ---
 ** The German prefix and postfix input methods now support Capital sharp S.
 
+---
+** New input methods hawaiian-postfix and hawaiian-prefix.
+
 +++
 ** New function 'exec-path'.
 This function by default returns the value of the corresponding
