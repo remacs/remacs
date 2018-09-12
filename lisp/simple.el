@@ -385,7 +385,11 @@ select the source buffer."
   (interactive "p")
   (let ((next-error-highlight next-error-highlight-no-select))
     (next-error n))
-  (pop-to-buffer next-error-last-buffer))
+  (let ((display-buffer-overriding-action '(display-buffer-reuse-window)))
+    ;; Override user customization such as display-buffer-same-window
+    ;; and use display-buffer-reuse-window to ensure next-error-last-buffer
+    ;; is displayed somewhere, not necessarily in the same window (bug#32607).
+    (pop-to-buffer next-error-last-buffer)))
 
 (defun previous-error-no-select (&optional n)
   "Move point to the previous error in the `next-error' buffer and highlight match.
