@@ -299,8 +299,6 @@ It is run after `gnus-article-prepare-hook'."
     ;; it. Calling `gnus-article-prepare-display' on an already
     ;; prepared article removes all MIME parts.  I'm unsure whether
     ;; this is a bug or not.
-    (when (gnus-visual-p 'article-highlight 'highlight)
-      (gnus-article-highlight t))
     (save-excursion
       (save-restriction
 	(widen)
