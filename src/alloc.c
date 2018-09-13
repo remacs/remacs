@@ -3793,20 +3793,7 @@ free_save_value (Lisp_Object save)
   free_misc (save);
 }
 
-/* Return a Lisp_Misc_Overlay object with specified START, END and PLIST.  */
 
-Lisp_Object
-build_overlay (Lisp_Object start, Lisp_Object end, Lisp_Object plist)
-{
-  register Lisp_Object overlay;
-
-  overlay = allocate_misc (Lisp_Misc_Overlay);
-  OVERLAY_START (overlay) = start;
-  OVERLAY_END (overlay) = end;
-  set_overlay_plist (overlay, plist);
-  XOVERLAY (overlay)->next = NULL;
-  return overlay;
-}
 
 DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
        doc: /* Return a newly allocated marker which does not point at any place.  */)

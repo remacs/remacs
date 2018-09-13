@@ -4,10 +4,10 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{bset_update_mode_line, buffer_local_value, buffer_window_count, globals,
-                 last_per_buffer_idx, set_buffer_internal_1, update_mode_lines};
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Overlay, Lisp_Type,
-                 Vbuffer_alist, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
+                 globals, last_per_buffer_idx, set_buffer_internal_1, update_mode_lines};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
+                 Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
@@ -818,6 +818,25 @@ pub fn force_mode_line_update(all: LispObject) -> LispObject {
         current_buffer.set_prevent_redisplay_optimizations_p(true);
     }
     all
+}
+
+/// Return a Lisp_Misc_Overlay object with specified START, END and PLIST.
+#[no_mangle]
+pub extern "C" fn build_overlay(
+    start: LispObject,
+    end: LispObject,
+    plist: LispObject,
+) -> LispObject {
+    unsafe {
+        let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Overlay);
+        let mut overlay = obj.as_overlay_or_error();
+        overlay.start = start;
+        overlay.end = end;
+        overlay.plist = plist;
+        overlay.next = ptr::null_mut();
+
+        overlay.as_lisp_obj()
+    }
 }
 
 #[no_mangle]
