@@ -109,4 +109,8 @@
           (should-error (round n d))
           (should-error (truncate n d)))))))
 
+(ert-deftest big-round ()
+  (should (= (floor 54043195528445955 3)
+             (floor 54043195528445955 3.0))))
+
 (provide 'floatfns-tests)

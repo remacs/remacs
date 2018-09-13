@@ -332,6 +332,18 @@ This is the same as the exponent of a float.  */)
   return make_fixnum (value);
 }
 
+/* True if A is exactly representable as an integer.  */
+
+static bool
+integer_value (Lisp_Object a)
+{
+  if (FLOATP (a))
+    {
+      double d = XFLOAT_DATA (a);
+      return d == floor (d) && isfinite (d);
+    }
+  return true;
+}
 
 /* the rounding functions  */
 
@@ -353,10 +365,16 @@ rounding_driver (Lisp_Object arg, Lisp_Object divisor,
   else
     {
       CHECK_NUMBER (divisor);
-      if (!FLOATP (arg) && !FLOATP (divisor))
+      if (integer_value (arg) && integer_value (divisor))
 	{
 	  /* Divide as integers.  Converting to double might lose
 	     info, even for fixnums; also see the FIXME below.  */
+
+	  if (FLOATP (arg))
+	    arg = double_to_integer (XFLOAT_DATA (arg));
+	  if (FLOATP (divisor))
+	    divisor = double_to_integer (XFLOAT_DATA (divisor));
+
 	  if (FIXNUMP (divisor))
 	    {
 	      if (XFIXNUM (divisor) == 0)
