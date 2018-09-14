@@ -764,7 +764,7 @@ This variable is set by `nnmaildir-request-article'.")
 
 (defun nnmaildir--scan (gname scan-msgs groups _method srv-dir srv-ls)
   (catch 'return
-    (let ((36h-ago (- (car (current-time)) 2))
+    (let ((36h-ago (- (float-time) 129600))
 	  absdir nndir tdir ndir cdir nattr cattr isnew pgname read-only ls
 	  files num dir flist group x)
       (setq absdir (nnmaildir--srvgrp-dir srv-dir gname)
@@ -801,7 +801,7 @@ This variable is set by `nnmaildir-request-article'.")
 	  (throw 'return nil))
 	(dolist (file (funcall ls tdir 'full "\\`[^.]" 'nosort))
 	  (setq x (file-attributes file))
-	  (if (or (> (cadr x) 1) (< (car (nth 4 x)) 36h-ago))
+	  (if (or (> (cadr x) 1) (time-less-p (nth 4 x) 36h-ago))
 	      (delete-file file))))
       (or scan-msgs
 	  isnew
@@ -1463,9 +1463,7 @@ This variable is set by `nnmaildir-request-article'.")
       (unless (string-equal nnmaildir--delivery-time file)
 	(setq nnmaildir--delivery-time file
 	      nnmaildir--delivery-count 0))
-      (when (and (consp (cdr time))
-		 (consp (cddr time)))
-	(setq file (concat file "M" (number-to-string (caddr time)))))
+      (setq file (concat file (format-time-string "M%6N" time)))
       (setq file (concat file nnmaildir--delivery-pid)
 	    file (concat file "Q" (number-to-string nnmaildir--delivery-count))
 	    file (concat file "." (nnmaildir--system-name))
