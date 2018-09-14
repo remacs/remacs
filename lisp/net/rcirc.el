@@ -679,16 +679,24 @@ last ping."
   "If non-nil, write information to `rcirc-debug-buffer'.")
 (defun rcirc-debug (process text)
   "Add an entry to the debug log including PROCESS and TEXT.
-Debug text is written to `rcirc-debug-buffer' if `rcirc-debug-flag'
-is non-nil."
+Debug text is appended to `rcirc-debug-buffer' if `rcirc-debug-flag'
+is non-nil.
+
+For convenience, the read-only state of the debug buffer is ignored.
+When the point is at the end of the visible portion of the buffer, it
+is moved to after the text inserted.  Otherwise the point is not moved."
   (when rcirc-debug-flag
     (with-current-buffer (get-buffer-create rcirc-debug-buffer)
-      (goto-char (point-max))
-      (insert (concat
-	       "["
-	       (format-time-string "%Y-%m-%dT%T ") (process-name process)
-	       "] "
-	       text)))))
+      (let ((old (point-marker)))
+        (set-marker-insertion-type old t)
+        (goto-char (point-max))
+        (let ((inhibit-read-only t))
+          (terpri (current-buffer) t)
+          (insert "["
+                  (format-time-string "%FT%T ") (process-name process)
+                  "] "
+                  text))
+        (goto-char old)))))
 
 (define-obsolete-variable-alias 'rcirc-sentinel-hooks
   'rcirc-sentinel-functions "24.3")
