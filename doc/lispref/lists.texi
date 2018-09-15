@@ -1736,6 +1736,13 @@ alist
 @end example
 @end defun
 
+@defun assoc-delete-all key alist
+This function deletes from @var{alist} all the elements whose @sc{car}
+is @code{equal} to @var{key}.  It works like @code{assq-delete-all},
+except for the predicate used for comparing alist elements with
+@var{key}.
+@end defun
+
 @defun rassq-delete-all value alist
 This function deletes from @var{alist} all the elements whose @sc{cdr}
 is @code{eq} to @var{value}.  It returns the shortened alist, and

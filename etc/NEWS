@@ -78,6 +78,7 @@ in its NEWS.)
 
 ** VC
 
+---
 *** VC support for Mercurial was improved.
 Emacs now avoids invoking 'hg' as much as possible, for faster operation.
 (This and the following changes were actually made in Emacs 26.1, but
@@ -125,9 +126,11 @@ obsolete it.
 
 * Lisp Changes in Emacs 26.2
 
++++
 ** The new function 'read-answer' accepts either long or short answers
 depending on the new customizable variable 'read-answer-short'.
 
++++
 ** New function 'assoc-delete-all'.
 Like 'assq-delete-all', but uses 'equal' for comparison.
 
