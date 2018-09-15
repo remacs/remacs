@@ -3469,7 +3469,7 @@ See also the function `vector'.  */)
 
 DEFUN ("vector", Fvector, Svector, 0, MANY, 0,
        doc: /* Return a newly created vector with specified arguments as elements.
-Any number of arguments, even zero arguments, are allowed.
+Any number of arguments, even zero arguments, is allowed.
 usage: (vector &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
