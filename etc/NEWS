@@ -131,6 +131,17 @@ depending on the new customizable variable 'read-answer-short'.
 ** New function 'assoc-delete-all'.
 Like 'assq-delete-all', but uses 'equal' for comparison.
 
+---
+** The function 'thing-at-point' behaves as before Emacs 26.1.
+The behavior of 'thing-at-point' when called with argument 'list' has
+changed in Emacs 26.1, in that it didn't consider text inside comments
+and strings as a potential list.  This change is now reverted, and
+'thing-at-point' behaves like it did before Emacs 26.1.
+
+To cater to use cases where comments and strings are to be ignored
+when looking for a list, the function 'list-at-point' now takes an
+optional argument to do so.
+
 
 * Changes in Emacs 26.2 on Non-Free Operating Systems
 
