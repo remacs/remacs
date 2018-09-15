@@ -976,7 +976,7 @@ A buffer-local value of this hook is now run only if at least one
 window showing the buffer has changed its size.
 
 +++
-** New function assoc-delete-all.
+** The function assoc-delete-all now takes an optional predicate argument.
 
 +++
 ** New function 'string-distance' to calculate the Levenshtein distance
