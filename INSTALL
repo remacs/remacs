@@ -204,7 +204,7 @@ configure Emacs with.  On Debian-based systems, you can install all the
 packages needed to build the installed version of Emacs with a command
 like 'apt-get build-dep emacs' (on older systems, replace 'emacs' with
 eg 'emacs25').  On Red Hat-based systems, the corresponding command is
-'dnf builddep emacs' (or older systems, use 'yum-builddep' instead).
+'dnf builddep emacs' (on older systems, use 'yum-builddep' instead).
 
 
 DETAILED BUILDING AND INSTALLATION:
