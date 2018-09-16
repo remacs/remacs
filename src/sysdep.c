@@ -3111,13 +3111,12 @@ get_up_time (void)
 
   if (fup)
     {
-      unsigned long long upsec, upfrac, idlesec, idlefrac;
-      int upfrac_start, upfrac_end, idlefrac_start, idlefrac_end;
+      unsigned long long upsec, upfrac;
+      int upfrac_start, upfrac_end;
 
-      if (fscanf (fup, "%llu.%n%llu%n %llu.%n%llu%n",
-		  &upsec, &upfrac_start, &upfrac, &upfrac_end,
-		  &idlesec, &idlefrac_start, &idlefrac, &idlefrac_end)
-	  == 4)
+      if (fscanf (fup, "%llu.%n%llu%n",
+		  &upsec, &upfrac_start, &upfrac, &upfrac_end)
+	  == 2)
 	{
 	  if (TYPE_MAXIMUM (time_t) < upsec)
 	    {
