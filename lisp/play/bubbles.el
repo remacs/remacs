@@ -250,10 +250,10 @@ Available modes are `shift-default' and `shift-always'."
   "Indicate whether images have been created successfully.")
 
 (defvar bubbles--col-offset 0
-  "Horizontal offset for centering the bubbles grid.")
+  "Horizontal offset for centering the bubbles grid, in pixels.")
 
 (defvar bubbles--row-offset 0
-  "Vertical offset for centering the bubbles grid.")
+  "Vertical offset for centering the bubbles grid, in pixels.")
 
 (defvar bubbles--save-data nil
   "List containing bubbles save data (SCORE BUFFERCONTENTS).")
@@ -960,33 +960,26 @@ columns on its right towards the left.
 (defun bubbles--compute-offsets ()
   "Update horizontal and vertical offsets for centering the bubbles grid.
 Set `bubbles--col-offset' and `bubbles--row-offset'."
-  (cond ((and (display-images-p)
-              bubbles--images-ok
-              (not (eq bubbles-graphics-theme 'ascii))
-              (fboundp 'window-inside-pixel-edges))
-         ;; compute offset in units of pixels
-         (let ((bubbles--image-size
-                (car (image-size (car bubbles--images) t))))
-           (setq bubbles--col-offset
-                 (list
-                  (max 0 (/ (- (nth 2 (window-inside-pixel-edges))
-                               (nth 0 (window-inside-pixel-edges))
-                               (* ( + bubbles--image-size 2) ;; margin
-                                  (bubbles--grid-width))) 2))))
-           (setq bubbles--row-offset
-                 (list
-                  (max 0 (/ (- (nth 3 (window-inside-pixel-edges))
-                               (nth 1 (window-inside-pixel-edges))
-                               (* (+ bubbles--image-size 1) ;; margin
-                                  (bubbles--grid-height))) 2))))))
-        (t
-         ;; compute offset in units of chars
-         (setq bubbles--col-offset
-               (max 0 (/ (- (window-width)
-                            (bubbles--grid-width)) 2)))
-         (setq bubbles--row-offset
-               (max 0 (/ (- (window-height)
-                            (bubbles--grid-height) 2) 2))))))
+  (let* ((use-images-p (and (display-images-p)
+                            bubbles--images-ok
+                            (not (eq bubbles-graphics-theme 'ascii))))
+         (bubbles--image-size
+          (if use-images-p (car (image-size (car bubbles--images) t)) 1))
+         ;; In GUI mode, leave thin margins around the images.
+         (image-hor-size
+          (if use-images-p (+ bubbles--image-size 2) bubbles--image-size))
+         (image-vert-size
+          (if use-images-p (1+ bubbles--image-size) bubbles--image-size)))
+    (setq bubbles--col-offset
+          (max 0 (/ (- (nth 2 (window-body-pixel-edges))
+                       (nth 0 (window-body-pixel-edges))
+                       (* image-hor-size (bubbles--grid-width)))
+                    2)))
+    (setq bubbles--row-offset
+          (max 0 (/ (- (nth 3 (window-body-pixel-edges))
+                       (nth 1 (window-body-pixel-edges))
+                       (* image-vert-size (bubbles--grid-height)))
+                    2)))))
 
 (defun bubbles--remove-overlays ()
   "Remove all overlays."
@@ -1007,7 +1000,8 @@ Set `bubbles--col-offset' and `bubbles--row-offset'."
     (insert " ")
     (put-text-property (point-min) (point)
                        'display
-                       (cons 'space (list :height bubbles--row-offset)))
+                       (cons 'space (list :height
+                                          (list bubbles--row-offset))))
     (insert "\n")
     (let ((max-char (length (bubbles--colors))))
       (dotimes (i (bubbles--grid-height))
@@ -1015,7 +1009,8 @@ Set `bubbles--col-offset' and `bubbles--row-offset'."
           (insert " ")
           (put-text-property p (point)
                              'display
-                             (cons 'space (list :width bubbles--col-offset))))
+                             (cons 'space (list :width
+                                                (list bubbles--col-offset)))))
         (dotimes (j (bubbles--grid-width))
           (let* ((index (random max-char))
                  (char (nth index bubbles-chars)))
@@ -1025,7 +1020,8 @@ Set `bubbles--col-offset' and `bubbles--row-offset'."
       (insert "\n ")
       (put-text-property (1- (point)) (point)
                          'display
-                         (cons 'space (list :width bubbles--col-offset))))
+                         (cons 'space (list :width
+                                            (list bubbles--col-offset)))))
     (put-text-property (point-min) (point-max) 'pointer 'arrow))
   (bubbles-mode)
   (bubbles--reset-score)
@@ -1177,7 +1173,7 @@ Use optional parameter POS instead of point if given."
       (insert " ")
       (put-text-property (1- (point)) (point)
                          'display
-                         (cons 'space (list :width bubbles--col-offset)))
+                         (cons 'space (list :width (list bubbles--col-offset))))
       (insert (format "Score:    %4d" bubbles--score))
       (put-text-property pos (point) 'status t))))
 
@@ -1197,7 +1193,7 @@ Use optional parameter POS instead of point if given."
     (insert "\n ")
     (put-text-property (1- (point)) (point)
                        'display
-                       (cons 'space (list :width bubbles--col-offset)))
+                       (cons 'space (list :width (list bubbles--col-offset))))
     (insert "Game Over!"))
   ;; save score
   (gamegrid-add-score (format "bubbles-%s-%d-%d-%d-scores"
