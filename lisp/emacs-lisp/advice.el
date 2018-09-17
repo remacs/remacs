@@ -1575,7 +1575,6 @@
 ;; ==============================
 
 (require 'macroexp)
-;; At run-time also, since ad-do-advised-functions returns code that uses it.
 (eval-when-compile (require 'cl-lib))
 
 ;; @@ Variable definitions:
@@ -1662,18 +1661,14 @@ generates a copy of TREE."
 ;; (this list is maintained as a completion table):
 (defvar ad-advised-functions nil)
 
-(defmacro ad-pushnew-advised-function (function)
+(defun ad-pushnew-advised-function (function)
   "Add FUNCTION to `ad-advised-functions' unless its already there."
-  `(if (not (assoc (symbol-name ,function) ad-advised-functions))
-    (setq ad-advised-functions
-     (cons (list (symbol-name ,function))
-      ad-advised-functions))))
+  (add-to-list 'ad-advised-functions (symbol-name function)))
 
-(defmacro ad-pop-advised-function (function)
+(defun ad-pop-advised-function (function)
   "Remove FUNCTION from `ad-advised-functions'."
-  `(setq ad-advised-functions
-    (delq (assoc (symbol-name ,function) ad-advised-functions)
-     ad-advised-functions)))
+  (setq ad-advised-functions
+        (delete (symbol-name function) ad-advised-functions)))
 
 (defmacro ad-do-advised-functions (varform &rest body)
   "`dolist'-style iterator that maps over advised functions.
@@ -1683,7 +1678,7 @@ On each iteration VAR will be bound to the name of an advised function
 \(a symbol)."
   (declare (indent 1))
   `(dolist (,(car varform) ad-advised-functions)
-     (setq ,(car varform) (intern (car ,(car varform))))
+     (setq ,(car varform) (intern ,(car varform)))
      ,@body))
 
 (defun ad-get-advice-info (function)
@@ -1849,7 +1844,7 @@ function at point for which PREDICATE returns non-nil)."
 			      (require 'help)
 			      (function-called-at-point))))
 	      (and function
-		   (assoc (symbol-name function) ad-advised-functions)
+		   (member (symbol-name function) ad-advised-functions)
 		   (or (null predicate)
 		       (funcall predicate function))
 		   function))
@@ -2813,7 +2808,7 @@ advised definition from scratch."
 ;; advised definition will be generated.
 
 (defun ad-preactivate-advice (function advice class position)
-  "Preactivate FUNCTION and returns the constructed cache."
+  "Preactivate FUNCTION and return the constructed cache."
   (let* ((advicefunname (ad-get-advice-info-field function 'advicefunname))
          (old-advice (symbol-function advicefunname))
 	 (old-advice-info (ad-copy-advice-info function))
