@@ -30,14 +30,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
  **  operations: reset_watch, get_time
  */
 
-#define INLINE EXTERN_INLINE
 #include <config.h>
 
 #include <inttypes.h>
 #include <stdlib.h>
 
 #include <intprops.h>
-#include <systime.h>
+#include <timespec.h>
 #include <unlocked-io.h>
 
 static struct timespec TV1;

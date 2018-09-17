@@ -17,9 +17,9 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #if ! defined TIMESPEC_H
-# define TIMESPEC_H
+#define TIMESPEC_H
 
-# include <time.h>
+#include <time.h>
 
 #ifndef _GL_INLINE_HEADER_BEGIN
  #error "Please include config.h first."
@@ -33,6 +33,7 @@ _GL_INLINE_HEADER_BEGIN
 extern "C" {
 #endif
 
+#include "arg-nonnull.h"
 #include "verify.h"
 
 /* Inverse resolution of timespec timestamps (in units per second),
@@ -122,8 +123,9 @@ timespectod (struct timespec a)
   return a.tv_sec + a.tv_nsec / 1e9;
 }
 
-void gettime (struct timespec *);
-int settime (struct timespec const *);
+struct timespec current_timespec (void);
+void gettime (struct timespec *) _GL_ARG_NONNULL ((1));
+int settime (struct timespec const *) _GL_ARG_NONNULL ((1));
 
 #ifdef __cplusplus
 }
