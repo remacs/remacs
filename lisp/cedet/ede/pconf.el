@@ -135,6 +135,8 @@ don't do it.  A value of nil means to just do it.")
 	  (with-current-buffer "*compilation*"
 	    (goto-char (point-max))
 
+	    ;; FIXME: Use `compilation-finish-functions' or similar to
+	    ;; avoid relying on exact format of `mode-line-process'.
             (when (not (string= (car mode-line-process) ":exit [0]"))
 	      (error "Configure failed!"))
 
