@@ -38,8 +38,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    So, require 3.5.1.  */
 #if GNUTLS_VERSION_NUMBER >= 0x030501
 # define HAVE_GNUTLS_AEAD
-#else
-/* gnutls_cipher_get_tag_size was introduced in 3.2.0, but it's only
+#elif GNUTLS_VERSION_NUMBER < 0x030202
+/* gnutls_cipher_get_tag_size was introduced in 3.2.2, but it's only
    relevant for AEAD ciphers.  */
 # define gnutls_cipher_get_tag_size(cipher) 0
 #endif
