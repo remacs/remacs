@@ -239,62 +239,6 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
   return val;
 }
 
-DEFUN ("minibuffer-prompt-end", Fminibuffer_prompt_end,
-       Sminibuffer_prompt_end, 0, 0, 0,
-       doc: /* Return the buffer position of the end of the minibuffer prompt.
-Return (point-min) if current buffer is not a minibuffer.  */)
-  (void)
-{
-  /* This function is written to be most efficient when there's a prompt.  */
-  Lisp_Object beg, end, tem;
-  beg = make_number (BEGV);
-
-  tem = Fmemq (Fcurrent_buffer (), Vminibuffer_list);
-  if (NILP (tem))
-    return beg;
-
-  end = Ffield_end (beg, Qnil, Qnil);
-
-  if (XINT (end) == ZV && NILP (Fget_char_property (beg, Qfield, Qnil)))
-    return beg;
-  else
-    return end;
-}
-
-DEFUN ("minibuffer-contents", Fminibuffer_contents,
-       Sminibuffer_contents, 0, 0, 0,
-       doc: /* Return the user input in a minibuffer as a string.
-If the current buffer is not a minibuffer, return its entire contents.  */)
-  (void)
-{
-  ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
-  return make_buffer_string (prompt_end, ZV, 1);
-}
-
-DEFUN ("minibuffer-contents-no-properties", Fminibuffer_contents_no_properties,
-       Sminibuffer_contents_no_properties, 0, 0, 0,
-       doc: /* Return the user input in a minibuffer as a string, without text-properties.
-If the current buffer is not a minibuffer, return its entire contents.  */)
-  (void)
-{
-  ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
-  return make_buffer_string (prompt_end, ZV, 0);
-}
-
-DEFUN ("minibuffer-completion-contents", Fminibuffer_completion_contents,
-       Sminibuffer_completion_contents, 0, 0, 0,
-       doc: /* Return the user input in a minibuffer before point as a string.
-That is what completion commands operate on.
-If the current buffer is not a minibuffer, return its entire contents.  */)
-  (void)
-{
-  ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
-  if (PT < prompt_end)
-    error ("Cannot do completion in the prompt");
-  return make_buffer_string (prompt_end, PT, 1);
-}
-
-
 /* Read from the minibuffer using keymap MAP and initial contents INITIAL,
    putting point minus BACKUP_N bytes from the end of INITIAL,
    prompting with PROMPT (a string), using history list HISTVAR
@@ -2058,11 +2002,6 @@ characters.  This variable should never be set globally.  */);
   defsubr (&Sinternal_complete_buffer);
   defsubr (&Sread_buffer);
   defsubr (&Sread_no_blanks_input);
-
-  defsubr (&Sminibuffer_prompt_end);
-  defsubr (&Sminibuffer_contents);
-  defsubr (&Sminibuffer_contents_no_properties);
-  defsubr (&Sminibuffer_completion_contents);
 
   defsubr (&Stry_completion);
   defsubr (&Sall_completions);
