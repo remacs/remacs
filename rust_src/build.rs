@@ -175,6 +175,27 @@ impl<'a> ModuleParser<'a> {
                     self.fail(1, "unexpected end of file");
                 }
             } else if line.starts_with("#[lisp_fn") {
+                let line = if line.ends_with("]") {
+                    line.clone()
+                } else {
+                    let mut line = line.clone();
+                    loop {
+                        if let Some(next) = reader.next() {
+                            let l = next?;
+                            if !l.ends_with(")]") {
+                                line += &l;
+                            } else {
+                                line += &l;
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+
+                    line
+                };
+
                 let name = if let Some(begin) = line.find(C_NAME) {
                     let start = begin + C_NAME.len();
                     let end = line[start..].find('"').unwrap() + start;
@@ -388,7 +409,8 @@ fn generate_include_files() -> Result<(), BuildError> {
         let exports_path: PathBuf = [
             env_var("OUT_DIR"),
             [&mod_data.info.name, "_exports.rs"].concat(),
-        ].iter()
+        ]
+            .iter()
             .collect();
         if exports_path.exists() {
             // Start with a clean slate
@@ -477,8 +499,7 @@ fn generate_definitions() {
         .iter()
         .find(|&&(n, _, l)| {
             actual_ptr_size <= l && usable_integers.iter().find(|&x| x == &n).is_some()
-        })
-        .expect("build.rs: intptr_t is too large!");
+        }).expect("build.rs: intptr_t is too large!");
 
     let float_types = [("f64", size_of::<f64>())];
 
@@ -641,7 +662,8 @@ fn run_bindgen() {
                 builder = builder.clang_arg("-I../lwlib");
             }
 
-            builder = builder.clang_arg("-Demacs")
+            builder = builder
+                .clang_arg("-Demacs")
                 .header("wrapper.h")
                 .generate_inline_functions(true)
                 .derive_default(true)
@@ -684,15 +706,12 @@ fn run_bindgen() {
                 // bindgen fails to generate this one correctly; it's hard
                 // https://github.com/rust-lang-nursery/rust-bindgen/issues/1318
                 .blacklist_type("max_align_t")
-
                 // by default we want C enums to be converted into a Rust module with constants in it
                 .default_enum_style(bindgen::EnumVariation::ModuleConsts)
-
                 // enums with only one variant are better as simple constants
                 .constified_enum("EMACS_INT_WIDTH")
                 .constified_enum("BOOL_VECTOR_BITS_PER_CHAR")
                 .constified_enum("BITS_PER_BITS_WORD")
-
                 // TODO(db48x): verify that all of these enums meet Rust's requirements (primarily that they have no duplicate variants)
                 .rustified_enum("Arith_Comparison")
                 .rustified_enum("AtkCoordType")

@@ -1,5 +1,3 @@
-#![macro_use]
-
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 
@@ -14,6 +12,7 @@ use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
 
+use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float};
 use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, Lisp_Bits,
                  CHECK_IMPURE, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX, INTMASK,
                  MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, USE_LSB_TAG, VALMASK};
@@ -24,7 +23,6 @@ use remacs_sys::{Qarrayp, Qautoload, Qbufferp, Qchar_table_p, Qcharacterp, Qcons
                  Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp,
                  Qstringp, Qsubrp, Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp, Qwholenump,
                  Qwindow_live_p, Qwindow_valid_p, Qwindowp, Vbuffer_alist};
-use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float};
 
 use buffers::{LispBufferRef, LispOverlayRef};
 use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
@@ -238,7 +236,9 @@ impl LispObject {
     #[inline]
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         if self.is_symbol() {
-            Some(LispSymbolRef::new(self.symbol_ptr_value() as *mut Lisp_Symbol))
+            Some(LispSymbolRef::new(
+                self.symbol_ptr_value() as *mut Lisp_Symbol
+            ))
         } else {
             None
         }
@@ -256,7 +256,8 @@ impl LispObject {
     #[inline]
     pub fn symbol_or_string_as_string(self) -> LispStringRef {
         match self.as_symbol() {
-            Some(sym) => sym.symbol_name()
+            Some(sym) => sym
+                .symbol_name()
                 .as_string()
                 .expect("Expected a symbol name?"),
             None => self.as_string_or_error(),
@@ -846,7 +847,8 @@ impl LispObject {
     }
 
     pub fn as_minibuffer_or_error(self) -> LispWindowRef {
-        let w = self.as_window()
+        let w = self
+            .as_window()
             .unwrap_or_else(|| wrong_type!(Qwindowp, self));
         if !w.is_minibuffer() {
             error!("Window is not a minibuffer window");

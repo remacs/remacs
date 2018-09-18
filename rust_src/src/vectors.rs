@@ -7,17 +7,17 @@ use std::ptr;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
+use remacs_sys::Qsequencep;
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
                  Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD,
                  MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_FLAG};
-use remacs_sys::Qsequencep;
 
 use buffers::LispBufferRef;
 use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
 use data::aref;
 use frames::LispFrameRef;
-use lisp::{ExternalPtr, LispObject, LispSubrRef};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject, LispSubrRef};
 use lists::{inorder, nth, sort_list};
 use multibyte::MAX_CHAR;
 use process::LispProcessRef;
@@ -192,17 +192,13 @@ macro_rules! impl_vectorlike_ref {
             #[inline]
             pub fn as_slice(&self) -> &[LispObject] {
                 let l = self.len();
-                unsafe {
-                    &self.contents.as_slice(l)
-                }
+                unsafe { &self.contents.as_slice(l) }
             }
 
             #[inline]
             pub fn as_mut_slice(&mut self) -> &mut [LispObject] {
                 let l = self.len();
-                unsafe {
-                    self.contents.as_mut_slice(l)
-                }
+                unsafe { self.contents.as_mut_slice(l) }
             }
 
             #[inline]
@@ -268,12 +264,6 @@ macro_rules! impl_vectorlike_ref {
                     None
                 }
             }
-/*
-            fn size_hint(&self) -> (usize, Option<usize>) {
-                let remaining = (self.rev - self.cur) + 1;
-                (remaining, Some(remaining))
-            }
-*/
         }
 
         impl<'a> DoubleEndedIterator for $itertype<'a> {
@@ -289,7 +279,7 @@ macro_rules! impl_vectorlike_ref {
         }
 
         impl<'a> ExactSizeIterator for $itertype<'a> {}
-    }
+    };
 }
 
 impl_vectorlike_ref! { LispVectorRef, LispVecIterator, ptrdiff_t::max_value() }
@@ -346,7 +336,8 @@ impl LispBoolVecRef {
     }
 
     pub unsafe fn set_unchecked(&mut self, idx: usize, b: bool) {
-        let limb = self.as_mut_slice()
+        let limb = self
+            .as_mut_slice()
             .get_unchecked_mut(idx / BITS_PER_BITS_WORD as usize) as *mut usize;
         if b {
             *limb |= 1 << (idx % BITS_PER_BITS_WORD as usize)
@@ -554,12 +545,9 @@ pub fn recordp(object: LispObject) -> bool {
 }
 
 lazy_static! {
-    pub static ref HEADER_SIZE: usize = {
-        unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) }
-    };
-    pub static ref WORD_SIZE: usize = {
-        ::std::mem::size_of::<::lisp::LispObject>()
-    };
+    pub static ref HEADER_SIZE: usize =
+        { unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) } };
+    pub static ref WORD_SIZE: usize = { ::std::mem::size_of::<::lisp::LispObject>() };
 }
 
 include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));

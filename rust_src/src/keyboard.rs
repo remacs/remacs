@@ -2,14 +2,14 @@
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qt, Qvertical_line};
-use remacs_sys::{make_lispy_position, window_box_left_offset};
-use remacs_sys::Fpos_visible_in_window_p;
 use remacs_sys::glyph_row_area;
+use remacs_sys::Fpos_visible_in_window_p;
+use remacs_sys::{make_lispy_position, window_box_left_offset};
+use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qt, Qvertical_line};
 
 use frames::window_frame_live_or_selected_with_action;
-use lisp::{IsLispNatnum, LispCons, LispObject};
 use lisp::defsubr;
+use lisp::{IsLispNatnum, LispCons, LispObject};
 use windows::window_or_selected_unchecked;
 
 /// Return position information for buffer position POS in WINDOW.
@@ -45,7 +45,8 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     }
     let aux_info = it.rest();
     if aux_info.is_not_nil() && y_coord < 0 {
-        let rtop = it.next()
+        let rtop = it
+            .next()
             .unwrap_or_else(|| LispObject::from(0))
             .as_fixnum_or_error();
 
@@ -103,7 +104,9 @@ pub fn posn_at_x_y(
 pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
     event.map_or(false, |event| {
         let first = event.car();
-        if first.eq(Qhelp_echo) || first.eq(Qvertical_line) || first.eq(Qmode_line)
+        if first.eq(Qhelp_echo)
+            || first.eq(Qvertical_line)
+            || first.eq(Qmode_line)
             || first.eq(Qheader_line)
         {
             return false;

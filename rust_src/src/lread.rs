@@ -2,9 +2,9 @@ use libc;
 use lisp::LispObject;
 use obarray::intern_c_string_1;
 use remacs_sys;
-use remacs_sys::EmacsInt;
 use remacs_sys::staticpro;
 use remacs_sys::symbol_redirect;
+use remacs_sys::EmacsInt;
 
 use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj,
            Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd,

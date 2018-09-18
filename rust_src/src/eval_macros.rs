@@ -70,11 +70,13 @@ macro_rules! message_with_string {
     ($str:expr, $obj:expr, $should_log:expr) => {
         #[allow(unused_unsafe)]
         unsafe {
-            ::remacs_sys::message_with_string($str.as_ptr() as *const ::libc::c_char,
-                                              $obj,
-                                              $should_log);
+            ::remacs_sys::message_with_string(
+                $str.as_ptr() as *const ::libc::c_char,
+                $obj,
+                $should_log,
+            );
         }
-    }
+    };
 }
 
 /// Macro to format an error message.
@@ -150,84 +152,88 @@ macro_rules! def_lisp_sym {
 /// multi-threaded Emacs.
 #[macro_export]
 macro_rules! defvar_lisp {
-    ($field_name:ident, $lisp_name:expr, $value:expr) => {
-        {
-            #[allow(unused_unsafe)]
-            unsafe {
-                #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Objfwd = unsafe { ::hacks::uninitialized() };
-                ::remacs_sys::defvar_lisp(&mut o_fwd,
-                                          $lisp_name.as_ptr() as *const i8,
-                                          &mut ::remacs_sys::globals.$field_name);
-                ::remacs_sys::globals.$field_name = $value;
-            }
+    ($field_name:ident, $lisp_name:expr, $value:expr) => {{
+        #[allow(unused_unsafe)]
+        unsafe {
+            #[allow(const_err)]
+            static mut o_fwd: ::hacks::Hack<::data::Lisp_Objfwd> =
+                unsafe { ::hacks::Hack::uninitialized() };
+            ::remacs_sys::defvar_lisp(
+                o_fwd.get_mut(),
+                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                &mut ::remacs_sys::globals.$field_name,
+            );
+            ::remacs_sys::globals.$field_name = $value;
         }
-    };
+    }};
 }
 #[macro_export]
 macro_rules! defvar_lisp_nopro {
-    ($field_name:ident, $lisp_name:expr, $value:expr) => {
-        {
-            #[allow(unused_unsafe)]
-            unsafe {
-                #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Objfwd = unsafe { ::hacks::uninitialized() };
-                ::remacs_sys::defvar_lisp_nopro(&mut o_fwd,
-                                                $lisp_name.as_ptr() as *const i8,
-                                                &mut ::remacs_sys::globals.$field_name);
-                ::remacs_sys::globals.$field_name = $value;
-            }
+    ($field_name:ident, $lisp_name:expr, $value:expr) => {{
+        #[allow(unused_unsafe)]
+        unsafe {
+            #[allow(const_err)]
+            static mut o_fwd: ::hacks::Hack<::data::Lisp_Objfwd> =
+                unsafe { ::hacks::Hack::uninitialized() };
+            ::remacs_sys::defvar_lisp_nopro(
+                o_fwd.get_mut(),
+                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                &mut ::remacs_sys::globals.$field_name,
+            );
+            ::remacs_sys::globals.$field_name = $value;
         }
-    };
+    }};
 }
 #[macro_export]
 macro_rules! defvar_bool {
-    ($field_name:ident, $lisp_name:expr, $value:expr) => {
-        {
-            #[allow(unused_unsafe)]
-            unsafe {
-                #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Boolfwd = unsafe { ::hacks::uninitialized() };
-                ::remacs_sys::defvar_bool(&mut o_fwd,
-                                          $lisp_name.as_ptr() as *const i8,
-                                          &mut ::remacs_sys::globals.$field_name);
-                ::remacs_sys::globals.$field_name = $value;
-            }
+    ($field_name:ident, $lisp_name:expr, $value:expr) => {{
+        #[allow(unused_unsafe)]
+        unsafe {
+            #[allow(const_err)]
+            static mut o_fwd: ::hacks::Hack<::data::Lisp_Boolfwd> =
+                unsafe { ::hacks::Hack::uninitialized() };
+            ::remacs_sys::defvar_bool(
+                o_fwd.get_mut(),
+                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                &mut ::remacs_sys::globals.$field_name,
+            );
+            ::remacs_sys::globals.$field_name = $value;
         }
-    };
+    }};
 }
 #[macro_export]
 macro_rules! defvar_int {
-    ($field_name:ident, $lisp_name:expr, $value:expr) => {
-        {
-            #[allow(unused_unsafe)]
-            unsafe {
-                #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Intfwd = unsafe { ::hacks::uninitialized() };
-                ::remacs_sys::defvar_int(&mut o_fwd,
-                                         $lisp_name.as_ptr() as *const i8,
-                                         &mut ::remacs_sys::globals.$field_name);
-                ::remacs_sys::globals.$field_name = $value;
-            }
+    ($field_name:ident, $lisp_name:expr, $value:expr) => {{
+        #[allow(unused_unsafe)]
+        unsafe {
+            #[allow(const_err)]
+            static mut o_fwd: ::hacks::Hack<::data::Lisp_Intfwd> =
+                unsafe { ::hacks::Hack::uninitialized() };
+            ::remacs_sys::defvar_int(
+                o_fwd.get_mut(),
+                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                &mut ::remacs_sys::globals.$field_name,
+            );
+            ::remacs_sys::globals.$field_name = $value;
         }
-    };
+    }};
 }
 
 #[macro_export]
 macro_rules! defvar_kboard {
-    ($vname:ident, $lisp_name:expr) => {
-        {
-            #[allow(unused_unsafe)]
-            unsafe {
-                #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Kboard_Objfwd = unsafe { ::hacks::uninitialized() };
-                ::lread::defvar_kboard_offset(&mut o_fwd,
-                                              $lisp_name.as_ptr() as *const i8,
-                                              ::field_offset::offset_of!(
-                                                  ::remacs_sys::kboard => $vname));
-                }
+    ($vname:ident, $lisp_name:expr) => {{
+        #[allow(unused_unsafe)]
+        unsafe {
+            #[allow(const_err)]
+            static mut o_fwd: ::hacks::Hack<::data::Lisp_Kboard_Objfwd> =
+                unsafe { ::hacks::Hack::uninitialized() };
+            ::lread::defvar_kboard_offset(
+                o_fwd.get_mut(),
+                concat!($lisp_name, "\0").as_ptr() as *const i8,
+                ::field_offset::offset_of!(::remacs_sys::kboard => $vname),
+            );
         }
-    };
+    }};
 }
 
 /// Similar to defvar_lisp but define a variable whose value is the
@@ -239,27 +245,27 @@ macro_rules! defvar_kboard {
 /// string as a comment.
 #[macro_export]
 macro_rules! defvar_per_buffer {
-    ($vname:ident, $lname:expr, $pred:ident) => {
-        {
-            #[allow(unused_unsafe)]
-            unsafe {
-                #[allow(const_err)]
-                static mut o_fwd: ::data::Lisp_Buffer_Objfwd = unsafe { ::hacks::uninitialized() };
-                ::lread::defvar_per_buffer_offset(&mut o_fwd,
-                                                  $lname.as_ptr() as *const i8,
-                                                  ::field_offset::offset_of!(
-                                                      ::remacs_sys::Lisp_Buffer => $vname),
-                                                  $pred);
-            }
+    ($vname:ident, $lname:expr, $pred:ident) => {{
+        #[allow(unused_unsafe)]
+        unsafe {
+            #[allow(const_err)]
+            static mut o_fwd: ::hacks::Hack<::data::Lisp_Buffer_Objfwd> =
+                unsafe { ::hacks::Hack::uninitialized() };
+            ::lread::defvar_per_buffer_offset(
+                o_fwd.get_mut(),
+                concat!($lname, "\0").as_ptr() as *const i8,
+                ::field_offset::offset_of!(::remacs_sys::Lisp_Buffer => $vname),
+                $pred,
+            );
         }
-    };
+    }};
 }
 
 #[allow(unused_macros)]
 macro_rules! declare_GC_protected_static {
     ($var: ident, $value: expr) => {
         static mut $var: LispObject = $value;
-    }
+    };
 }
 
 macro_rules! verify_lisp_type {
@@ -270,7 +276,10 @@ macro_rules! verify_lisp_type {
     };
     ($n:expr, Qcharacterp) => {
         if $n < 0 || $n > ($crate::multibyte::MAX_CHAR as EmacsInt) {
-            wrong_type!(::remacs_sys::Qcharacterp, $crate::lisp::LispObject::from($n));
+            wrong_type!(
+                ::remacs_sys::Qcharacterp,
+                $crate::lisp::LispObject::from($n)
+            );
         }
     };
     ($obj:expr, Qstringp) => {
@@ -288,6 +297,6 @@ macro_rules! verify_lisp_type {
 macro_rules! per_buffer_var_idx {
     ($field: ident) => {
         #[allow(unused_unsafe)]
-        (unsafe{buffer_local_flags.$field}).as_natnum_or_error() as usize
-    }
+        (unsafe { buffer_local_flags.$field }).as_natnum_or_error() as usize
+    };
 }

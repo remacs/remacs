@@ -8,8 +8,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{current_thread as current_thread_pointer, thread_state, Lisp_Type, SPECPDL_INDEX};
 
 use buffers::LispBufferRef;
-use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject};
 
 pub type ThreadStateRef = ExternalPtr<thread_state>;
 

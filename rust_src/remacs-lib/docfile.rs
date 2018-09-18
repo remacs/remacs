@@ -42,6 +42,8 @@ pub extern "C" fn scan_rust_file(
 
     let mut line_iter = fp.lines();
 
+    let mut in_lisp_fn = false;
+
     while let Some(line) = line_iter.next() {
         let line = line.unwrap();
         let line = line.trim();
@@ -64,9 +66,27 @@ pub extern "C" fn scan_rust_file(
             in_docstring = false;
         }
 
-        if line.starts_with("#[lisp_fn") {
+        if line == "#[lisp_fn(" {
             attribute = line.to_owned();
-        } else if line.starts_with("pub fn ") || line.starts_with("fn ") {
+            in_lisp_fn = true;
+            continue;
+        } else if line.starts_with("#[lisp_fn") {
+            attribute = line.to_owned();
+            continue;
+        }
+
+        if in_lisp_fn {
+            if line == ")]" {
+                attribute += line;
+                in_lisp_fn = false;
+                continue;
+            } else {
+                attribute += line;
+                continue;
+            }
+        }
+
+        if line.starts_with("pub fn ") || line.starts_with("fn ") {
             if attribute.is_empty() {
                 // Not a #[lisp_fn]
                 continue;
@@ -142,7 +162,8 @@ pub extern "C" fn scan_rust_file(
         } else if line.starts_with("defvar_") {
             // defvar_lisp!(f_Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
             lazy_static! {
-                static ref RE: Regex = Regex::new(r#"defvar_(.+?)!\((.+?),\s+"(.+?)",\s+(.+?)\);"#).unwrap();
+                static ref RE: Regex =
+                    Regex::new(r#"defvar_(.+?)!\((.+?),\s+"(.+?)",\s+(.+?)\);"#).unwrap();
             }
             for caps in RE.captures_iter(line) {
                 let kindstr = &caps[1];

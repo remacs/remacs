@@ -6,11 +6,11 @@ use std::ptr;
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
+                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit};
 use remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -108,7 +108,8 @@ pub extern "C" fn get_keymap(
 
             // Should we do an autoload?  Autoload forms for keymaps have
             // Qkeymap as their fifth element.
-            if (autoload || !error_if_not_keymap) && cons.car().eq_raw(Qautoload)
+            if (autoload || !error_if_not_keymap)
+                && cons.car().eq_raw(Qautoload)
                 && object.is_symbol()
             {
                 let tail = nth(4, tem);

@@ -1,11 +1,11 @@
 //! Functions related to syntax
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qsyntax_table, Qsyntax_table_p};
 use remacs_sys::{buffer_local_flags, scan_lists};
+use remacs_sys::{EmacsInt, Qsyntax_table, Qsyntax_table_p};
 
 use chartable::LispCharTableRef;
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use threads::ThreadState;
 
 /// Return the current syntax table. This is the one specified by the

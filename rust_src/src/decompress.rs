@@ -5,8 +5,8 @@ use std::slice;
 
 use buffers::validate_region;
 use flate2::read::{DeflateDecoder, GzDecoder, ZlibDecoder};
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use remacs_macros::lisp_fn;
 use remacs_sys::{buf_charpos_to_bytepos, del_range, insert_from_gap, make_gap, maybe_quit,
                  move_gap_both};

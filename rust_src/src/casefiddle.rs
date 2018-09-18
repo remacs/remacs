@@ -1,8 +1,8 @@
 //! Case conversion functions.
 use remacs_macros::lisp_fn;
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use remacs_sys::{case_action, casify_object};
 
 /// Convert argument to capitalized form and return that.

@@ -5,8 +5,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
 
 use floatfns;
-use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
+use lisp::{LispNumber, LispObject};
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).

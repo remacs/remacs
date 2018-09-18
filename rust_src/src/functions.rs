@@ -20,7 +20,9 @@ pub static mut lispsym: EmacsInt = 0;
 
 #[warn(unused_macros)]
 macro_rules! mock_float {
-    () => { mock_float!(0.0) };
+    () => {
+        mock_float!(0.0)
+    };
 
     ($f: expr) => {{
         // Fake an allocated float by just putting it on the heap and leaking it.
@@ -36,7 +38,9 @@ macro_rules! mock_float {
 
 #[macro_export]
 macro_rules! mock_unibyte_string {
-    () => { mock_unibyte_string!("") };
+    () => {
+        mock_unibyte_string!("")
+    };
     ($string: expr) => {{
         let strcopy = ::std::ffi::CString::new($string).unwrap();
         let len = strcopy.as_bytes().len() as ::libc::ptrdiff_t;
@@ -54,7 +58,9 @@ macro_rules! mock_unibyte_string {
 
 #[macro_export]
 macro_rules! mock_multibyte_string {
-    () => { mock_multibyte_string!("") };
+    () => {
+        mock_multibyte_string!("")
+    };
     ($string: expr) => {{
         let strcopy = ::std::ffi::CString::new($string).unwrap();
         let len = strcopy.as_bytes().len() as ::libc::ptrdiff_t;
@@ -72,12 +78,16 @@ macro_rules! mock_multibyte_string {
 
 #[allow(unused_macros)]
 macro_rules! assert_t {
-    ($arg: expr) => {{ assert!($arg == ::lisp::LispObject::constant_t()); }};
+    ($arg: expr) => {{
+        assert!($arg == ::lisp::LispObject::constant_t());
+    }};
 }
 
 #[allow(unused_macros)]
 macro_rules! assert_nil {
-    ($arg: expr) => {{ assert!($arg == ::lisp::LispObject::constant_nil()); }};
+    ($arg: expr) => {{
+        assert!($arg == ::lisp::LispObject::constant_nil());
+    }};
 }
 
 // Note(db48x): see if we can go back to using mock-derive for these

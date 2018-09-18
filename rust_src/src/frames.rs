@@ -5,8 +5,8 @@ use remacs_sys::{frame_dimension, output_method, Fcons, Fselect_window};
 use remacs_sys::{selected_frame as current_frame, Lisp_Frame, Lisp_Type};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
-use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject};
 use windows::{selected_window, LispWindowRef};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;

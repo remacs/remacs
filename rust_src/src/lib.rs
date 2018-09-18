@@ -1,23 +1,24 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
-#![cfg_attr(feature = "clippy", allow(not_unsafe_ptr_arg_deref, wrong_self_convention))]
+#![cfg_attr(
+    feature = "clippy",
+    allow(not_unsafe_ptr_arg_deref, wrong_self_convention)
+)]
 #![feature(const_fn)]
-#![feature(const_size_of)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(private_no_mangle_fns)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
-#![allow(improper_ctypes)] // we need this to be able to inclde FieldOffsets in C structs
+// we need this to be able to inclde FieldOffsets in C structs
+#![allow(improper_ctypes)]
 // we have a bunch of unused code during testing at the moment, somehow
 #![cfg_attr(test, allow(unused))]
-#![feature(proc_macro)]
 #![cfg_attr(feature = "strict", deny(warnings))]
-#![feature(global_allocator)]
 #![feature(concat_idents)]
 #![feature(stmt_expr_attributes)]
-#![feature(repr_transparent)]
 #![feature(untagged_unions)]
 #![feature(never_type)]
+#![feature(const_fn_union)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -31,6 +32,8 @@ extern crate sha2;
 
 extern crate field_offset;
 extern crate flate2;
+
+extern crate core;
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
 #[cfg(all(not(test), target_os = "macos"))]
@@ -129,13 +132,21 @@ mod compile_errors {
 }
 
 mod hacks {
+    use core::mem::ManuallyDrop;
+
     #[allow(unions_with_drop_fields)]
-    union Hack<T> {
-        t: T,
+    pub union Hack<T> {
+        t: ManuallyDrop<T>,
         u: (),
     }
-    #[allow(const_err)]
-    pub const unsafe fn uninitialized<T>() -> T {
-        Hack { u: () }.t
+
+    impl<T> Hack<T> {
+        pub const unsafe fn uninitialized() -> Self {
+            Hack { u: () }
+        }
+
+        pub unsafe fn get_mut(&mut self) -> &mut T {
+            &mut *self.t
+        }
     }
 }

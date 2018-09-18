@@ -3,8 +3,8 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::Qcategory_table;
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use threads::ThreadState;
 
 /// Return t if ARG is a category table.
