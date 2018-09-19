@@ -346,8 +346,9 @@ Alias to Emacs's @code{locate} function, which simply runs the external
 
 @item make
 @cmindex make
-Run @command{make} through @code{compile}.
-@xref{Compilation, , , emacs, The GNU Emacs Manual}.
+Run @command{make} through @code{compile} when run asynchronously
+(e.g., @samp{make &}).  @xref{Compilation, , , emacs, The GNU Emacs
+Manual}.  Otherwise call the external @command{make} command.
 
 @item occur
 @cmindex occur
