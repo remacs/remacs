@@ -656,7 +656,8 @@ Concatenate FILE(s), or standard input, to standard output.")
 ;; special front-end functions for compilation-mode buffers
 
 (defun eshell/make (&rest args)
-  "Use `compile' to do background makes."
+  "Use `compile' to do background makes.
+Fallback to standard make when called synchronously."
   (if (and eshell-current-subjob-p
 	   (eshell-interactive-output-p))
       (let ((compilation-process-setup-function
