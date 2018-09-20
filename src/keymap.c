@@ -2286,7 +2286,8 @@ push_text_char_description (register unsigned int c, register char *p)
 DEFUN ("text-char-description", Ftext_char_description, Stext_char_description, 1, 1, 0,
        doc: /* Return the description of CHARACTER in standard Emacs notation.
 CHARACTER must be a valid character code that passes the `characterp' test.
-Control characters turn into "^char", the 2**7 bit is treated as Meta, etc.
+Control characters turn into "^char", and characters with Meta and other
+modifiers signal an error, as they are not valid characterr codes.
 This differs from `single-key-description' which accepts character events,
 and thus doesn't enforce the `characterp' condition, turns control
 characters into "C-char", and uses the 2**27 bit for Meta.
