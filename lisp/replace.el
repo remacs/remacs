@@ -1213,29 +1213,25 @@ ORIG-LINE and BUFFER are the line and the buffer from which
 the user called `occur'."
   (save-excursion
     (goto-char (point-min))
-    (let ((buffer (get-text-property (point-at-bol) 'occur-title))
-          (beg-pos (get-text-property (point-at-bol) 'region-start))
-          (end-pos (get-text-property (point-at-bol) 'region-end))
-          (orig-line (get-text-property (point-at-bol) 'current-line))
-          beg-line end-line)
+    (let ((buffer (get-text-property (point) 'occur-title))
+          (beg-pos (get-text-property (point) 'region-start))
+          (end-pos (get-text-property (point) 'region-end))
+          (orig-line (get-text-property (point) 'current-line)))
       (list beg-pos end-pos orig-line buffer))))
 
 (defun occur-revert-function (_ignore1 _ignore2)
   "Handle `revert-buffer' for Occur mode buffers."
   (if (cdr (nth 2 occur-revert-arguments)) ; multi-occur
       (apply 'occur-1 (append occur-revert-arguments (list (buffer-name))))
-    (let* ((region (occur--parse-occur-buffer))
-           (region-start (nth 0 region))
-           (region-end (nth 1 region))
-           (orig-line (nth 2 region))
-           (buffer (nth 3 region))
-           (regexp (car occur-revert-arguments)))
+    (pcase-let ((`(,region-start ,region-end ,orig-line ,buffer)
+                 (occur--parse-occur-buffer))
+                (regexp (car occur-revert-arguments)))
       (with-current-buffer buffer
         (when (wholenump orig-line)
-          (goto-char 1)
+          (goto-char (point-min))
           (forward-line (1- orig-line)))
         (save-excursion
-          (if region
+          (if (or region-start region-end)
               (occur regexp nil (list (cons region-start region-end)))
             (apply 'occur-1 (append occur-revert-arguments (list (buffer-name))))))))))
 
