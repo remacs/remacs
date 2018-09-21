@@ -740,7 +740,7 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
           xsignal0 (Qjson_object_too_deep);
         size_t size = json_array_size (json);
         if (FIXNUM_OVERFLOW_P (size))
-          xsignal0 (Qoverflow_error);
+          overflow_error ();
         Lisp_Object result = Fmake_vector (make_fixed_natnum (size), Qunbound);
         for (ptrdiff_t i = 0; i < size; ++i)
           ASET (result, i,
@@ -759,7 +759,7 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
             {
               size_t size = json_object_size (json);
               if (FIXNUM_OVERFLOW_P (size))
-                xsignal0 (Qoverflow_error);
+                overflow_error ();
               result = CALLN (Fmake_hash_table, QCtest, Qequal, QCsize,
                               make_fixed_natnum (size));
               struct Lisp_Hash_Table *h = XHASH_TABLE (result);
