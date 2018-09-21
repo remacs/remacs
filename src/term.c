@@ -4004,6 +4004,7 @@ init_tty (const char *name, const char *terminal_type, bool must_succeed)
 	char const *diagnostic
 	  = (fd < 0) ? "Could not open file: %s" : "Not a tty device: %s";
 	emacs_close (fd);
+        delete_terminal_internal (terminal);
 	maybe_fatal (must_succeed, terminal, diagnostic, diagnostic, name);
       }
 
