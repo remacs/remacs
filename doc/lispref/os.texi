@@ -1423,7 +1423,8 @@ The year, an integer typically greater than 1900.
 The day of week, as an integer between 0 and 6, where 0 stands for
 Sunday.
 @item dst
-@code{t} if daylight saving time is effect, otherwise @code{nil}.
+@code{t} if daylight saving time is effect, @code{nil} if it is not
+in effect, and @minus{}1 if this information is not available.
 @item utcoff
 An integer indicating the Universal Time offset in seconds, i.e., the number of
 seconds east of Greenwich.

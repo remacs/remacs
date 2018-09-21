@@ -1060,6 +1060,14 @@ a multibyte string even if its second argument is an ASCII character.
 ** (format "%d" X) no longer mishandles a floating-point number X that
 does not fit in a machine integer.
 
++++
+** In the DST slot, encode-time and parse-time-string now return -1
+if it is not known whether daylight saving time is in effect.
+Formerly they were inconsistent: encode-time returned t in this
+situation, whereas parse-time-string returned nil.  Now they
+consistently use use nil to mean that DST is not in effect, and use -1
+to mean that it is not known whether DST is in effect.
+
 ** New JSON parsing and serialization functions 'json-serialize',
 'json-insert', 'json-parse-string', and 'json-parse-buffer'.  These
 are implemented in C using the Jansson library.

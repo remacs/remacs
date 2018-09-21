@@ -2165,7 +2165,8 @@ between 0 and 23.  DAY is an integer between 1 and 31.  MONTH is an
 integer between 1 and 12.  YEAR is an integer indicating the
 four-digit year.  DOW is the day of week, an integer between 0 and 6,
 where 0 is Sunday.  DST is t if daylight saving time is in effect,
-otherwise nil.  UTCOFF is an integer indicating the UTC offset in
+nil if it is not in effect, and -1 if this information is
+not available.  UTCOFF is an integer indicating the UTC offset in
 seconds, i.e., the number of seconds east of Greenwich.  (Note that
 Common Lisp has different meanings for DOW and UTCOFF.)
 
@@ -2194,7 +2195,8 @@ usage: (decode-time &optional TIME ZONE)  */)
 		make_fixnum (local_tm.tm_mon + 1),
 		make_fixnum (local_tm.tm_year + tm_year_base),
 		make_fixnum (local_tm.tm_wday),
-		local_tm.tm_isdst ? Qt : Qnil,
+		(local_tm.tm_isdst < 0 ? make_fixnum (-1)
+		 : local_tm.tm_isdst == 0 ? Qnil : Qt),
 		(HAVE_TM_GMTOFF
 		 ? make_fixnum (tm_gmtoff (&local_tm))
 		 : gmtime_r (&time_spec, &gmt_tm)
