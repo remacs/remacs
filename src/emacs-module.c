@@ -747,11 +747,7 @@ DEFUN ("module-load", Fmodule_load, Smodule_load, 1, 1, 0,
   maybe_quit ();
 
   if (r != 0)
-    {
-      if (FIXNUM_OVERFLOW_P (r))
-        overflow_error ();
-      xsignal2 (Qmodule_init_failed, file, make_fixnum (r));
-    }
+    xsignal2 (Qmodule_init_failed, file, INT_TO_INTEGER (r));
 
   module_signal_or_throw (&env_priv);
   return unbind_to (count, Qt);
