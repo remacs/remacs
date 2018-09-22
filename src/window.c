@@ -119,7 +119,7 @@ wset_dedicated (struct window *w, Lisp_Object val)
   w->dedicated = val;
 }
 
-static void
+void
 wset_display_table (struct window *w, Lisp_Object val)
 {
   w->display_table = val;
@@ -1760,15 +1760,6 @@ window_display_table (struct window *w)
   return dp;
 }
 
-DEFUN ("set-window-display-table", Fset_window_display_table, Sset_window_display_table, 2, 2, 0,
-       doc: /* Set WINDOW's display-table to TABLE.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (register Lisp_Object window, Lisp_Object table)
-{
-  wset_display_table (decode_live_window (window), table);
-  return table;
-}
-
 /* Record info on buffer window W is displaying
    when it is about to cease to display that buffer.  */
 static void
@@ -7195,7 +7186,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_at);
   defsubr (&Swindow_end);
   defsubr (&Swindow_lines_pixel_dimensions);
-  defsubr (&Sset_window_display_table);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
   defsubr (&Sget_buffer_window);
