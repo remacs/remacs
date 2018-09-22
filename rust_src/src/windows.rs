@@ -361,6 +361,29 @@ pub fn window_minibuffer_p(window: LispObject) -> bool {
     win.is_minibuffer()
 }
 
+/// Return the width of window WINDOW in pixels.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value includes the fringes and margins of WINDOW as well as
+/// any vertical dividers or scroll bars belonging to WINDOW.  If WINDOW is
+/// an internal window, its pixel width is the width of the screen areas
+/// spanned by its children.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_width(window: LispObject) -> EmacsInt {
+    window_valid_or_selected(window).pixel_width as EmacsInt
+}
+
+/// Return the height of window WINDOW in pixels.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value includes the mode line and header line and the bottom
+/// divider, if any.  If WINDOW is an internal window, its pixel height is
+/// the height of the screen areas spanned by its children.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_height(window: LispObject) -> EmacsInt {
+    window_valid_or_selected(window).pixel_height as EmacsInt
+}
+
 /// Get width of marginal areas of window WINDOW.
 /// WINDOW must be a live window and defaults to the selected one.
 ///
