@@ -265,6 +265,17 @@ navigation and editing of large files.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** project.el
+*** New commands project-search and project-query-replace
+
+** Etags
++++
+*** 'next-file' is now an obsolete alias of tags-next-file
+*** tags-loop-revert-buffers is an obsolete alias of multifile-revert-buffers
+*** The tags-loop-continue function along with the tags-loop-operate and
+tags-loop-scan variables are now obsolete; use the new multifile-initialize and
+multifile-continue functions instead.
+
 ---
 ** bibtex
 *** New commands 'bibtex-next-entry' and 'bibtex-previous-entry'.
@@ -769,6 +780,8 @@ subexpression.
 
 
 * New Modes and Packages in Emacs 27.1
+
+** multifile.el lets one setup multifile operations like search&replace
 
 +++
 ** Emacs can now visit files in archives as if they were directories.
