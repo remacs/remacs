@@ -10,8 +10,8 @@ use remacs_sys::Fcons;
 use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, set_buffer_internal, window_list_1,
-                 window_menu_bar_p, window_parameter, window_tool_bar_p, wset_redisplay,
-                 wset_update_mode_line};
+                 window_menu_bar_p, window_parameter, window_tool_bar_p, wset_display_table,
+                 wset_redisplay, wset_update_mode_line};
 use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 
@@ -537,6 +537,15 @@ pub fn window_parameter_defun(window: LispObject, parameter: LispObject) -> Lisp
 pub fn window_display_table(window: LispObject) -> LispObject {
     let win = window_live_or_selected(window);
     win.display_table
+}
+
+/// Set WINDOW's display-table to TABLE.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn]
+pub fn set_window_display_table(window: LispObject, table: LispObject) -> LispObject {
+    let mut w = window_live_or_selected(window);
+    unsafe { wset_display_table(w.as_mut(), table) };
+    table
 }
 
 pub fn window_wants_mode_line(window: LispWindowRef) -> bool {
