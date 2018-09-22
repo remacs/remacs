@@ -4749,6 +4749,12 @@ maybe_gc (void)
     Fgarbage_collect ();
 }
 
+Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
+
+bool backtrace_debug_on_exit (union specbinding *pdl);
+
+void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
+
 INLINE_HEADER_END
 
 #endif /* EMACS_LISP_H */
