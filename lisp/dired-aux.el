@@ -2832,7 +2832,7 @@ is part of a file name (i.e., has the text property `dired-filename')."
   "Search for a string through all marked files using Isearch."
   (interactive)
   (multi-isearch-files
-   (dired-get-marked-files nil nil 'dired-nondirectory-p nil t)))
+   (dired-get-marked-files nil nil #'dired-nondirectory-p nil t)))
 
 ;;;###autoload
 (defun dired-do-isearch-regexp ()
@@ -2847,7 +2847,11 @@ is part of a file name (i.e., has the text property `dired-filename')."
 Stops when a match is found.
 To continue searching for next match, use command \\[tags-loop-continue]."
   (interactive "sSearch marked files (regexp): ")
-  (tags-search regexp '(dired-get-marked-files nil nil 'dired-nondirectory-p)))
+  (multifile-initialize-search
+   regexp
+   (dired-get-marked-files nil nil #'dired-nondirectory-p)
+   'default)
+  (multifile-continue))
 
 ;;;###autoload
 (defun dired-do-query-replace-regexp (from to &optional delimited)
@@ -2860,13 +2864,16 @@ with the command \\[tags-loop-continue]."
 	  (query-replace-read-args
 	   "Query replace regexp in marked files" t t)))
      (list (nth 0 common) (nth 1 common) (nth 2 common))))
-  (dolist (file (dired-get-marked-files nil nil 'dired-nondirectory-p nil t))
+  (dolist (file (dired-get-marked-files nil nil #'dired-nondirectory-p nil t))
     (let ((buffer (get-file-buffer file)))
       (if (and buffer (with-current-buffer buffer
 			buffer-read-only))
 	  (error "File `%s' is visited read-only" file))))
-  (tags-query-replace from to delimited
-		      '(dired-get-marked-files nil nil 'dired-nondirectory-p)))
+  (multifile-initialize-replace
+   from to (dired-get-marked-files nil nil #'dired-nondirectory-p)
+   (if (equal from (downcase from)) nil 'default)
+   delimited)
+  (multifile-continue))
 
 (declare-function xref--show-xrefs "xref")
 (declare-function xref-query-replace-in-results "xref")
