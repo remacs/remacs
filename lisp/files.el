@@ -493,7 +493,8 @@ The functions are called in the order given until one of them returns non-nil.")
 (defcustom find-file-hook nil
   "List of functions to be called after a buffer is loaded from a file.
 The buffer's local variables (if any) will have been processed before the
-functions are called."
+functions are called.  This includes directory-local variables, if any,
+for the file's directory."
   :group 'find-file
   :type 'hook
   :options '(auto-insert)
@@ -2369,7 +2370,7 @@ the file contents into it using `insert-file-contents-literally'."
 				  _after-find-file-from-revert-buffer
 				  nomodes)
   "Called after finding a file and by the default revert function.
-Sets buffer mode, parses local variables.
+Sets buffer mode, parses file-local and directory-local variables.
 Optional args ERROR, WARN, and NOAUTO: ERROR non-nil means there was an
 error in reading the file.  WARN non-nil means warn if there
 exists an auto-save file more recent than the visited file.
@@ -2454,7 +2455,7 @@ unless NOMODES is non-nil."
 
 (defun normal-mode (&optional find-file)
   "Choose the major mode for this buffer automatically.
-Also sets up any specified local variables of the file.
+Also sets up any specified local variables of the file or its directory.
 Uses the visited file name, the -*- line, and the local variables spec.
 
 This function is called automatically from `find-file'.  In that case,
@@ -3485,6 +3486,8 @@ DIR-NAME is the name of the associated directory.  Otherwise it is nil."
 
 (defun hack-local-variables (&optional handle-mode)
   "Parse and put into effect this buffer's local variables spec.
+For buffers visitying files, also puts into effect directory-local
+variables.
 Uses `hack-local-variables-apply' to apply the variables.
 
 If HANDLE-MODE is nil, we apply all the specified local
