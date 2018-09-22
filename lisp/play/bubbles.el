@@ -1,4 +1,4 @@
-;;; bubbles.el --- Puzzle game for Emacs
+;;; bubbles.el --- Puzzle game for Emacs  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
@@ -144,8 +144,7 @@ images the `ascii' theme will be used."
                 (const :tag "Diamonds" diamonds)
                 (const :tag "Balls" balls)
                 (const :tag "Emacs" emacs)
-                (const :tag "ASCII (no images)" ascii))
-  :group 'bubbles)
+                (const :tag "ASCII (no images)" ascii)))
 
 (defconst bubbles--grid-small '(10 . 10)
   "Predefined small bubbles grid.")
@@ -168,8 +167,7 @@ images the `ascii' theme will be used."
                 (const :tag "Huge" ,bubbles--grid-huge)
                 (cons :tag "User defined"
                       (integer :tag "Width")
-                      (integer :tag "Height")))
-  :group 'bubbles)
+                      (integer :tag "Height"))))
 
 (defconst bubbles--colors-2 '("orange" "violet")
   "Predefined bubbles color list with two colors.")
@@ -194,16 +192,14 @@ types are present."
                 (const :tag "Red, darkgreen, blue, orange" ,bubbles--colors-4)
                 (const :tag "Red, darkgreen, blue, orange, violet"
                        ,bubbles--colors-5)
-                (repeat :tag "User defined" color))
-  :group 'bubbles)
+                (repeat :tag "User defined" color)))
 
 (defcustom bubbles-chars
   '(?+ ?O ?# ?X ?. ?* ?& ?§)
   "Characters used for bubbles.
 Note that the actual number of different bubbles is determined by
 the number of colors, see `bubbles-colors'."
-  :type '(repeat character)
-  :group 'bubbles)
+  :type '(repeat character))
 
 (defcustom bubbles-shift-mode
   'default
@@ -212,12 +208,10 @@ Available modes are `shift-default' and `shift-always'."
   :type '(radio (const :tag "Default" default)
                 (const :tag "Shifter" always)
                 ;;(const :tag "Mega Shifter" mega)
-                )
-  :group 'bubbles)
+                ))
 
 (defcustom bubbles-mode-hook nil
   "Hook run by Bubbles mode."
-  :group 'bubbles
   :type 'hook)
 
 (defun bubbles-customize ()
@@ -898,7 +892,7 @@ static char * dot3d_xpm[] = {
 ;; bubbles mode map
 (defvar bubbles-mode-map
   (let ((map (make-sparse-keymap 'bubbles-mode-map)))
-;;    (suppress-keymap map t)
+    ;; (suppress-keymap map t)
     (define-key map "q" 'bubbles-quit)
     (define-key map "\n" 'bubbles-plop)
     (define-key map " " 'bubbles-plop)
@@ -925,7 +919,7 @@ static char * dot3d_xpm[] = {
   (buffer-disable-undo)
   (force-mode-line-update)
   (redisplay)
-  (add-hook 'post-command-hook 'bubbles--mark-neighborhood t t))
+  (add-hook 'post-command-hook #'bubbles--mark-neighborhood t t))
 
 ;;;###autoload
 (defun bubbles ()
@@ -1004,14 +998,14 @@ Set `bubbles--col-offset' and `bubbles--row-offset'."
                                           (list bubbles--row-offset))))
     (insert "\n")
     (let ((max-char (length (bubbles--colors))))
-      (dotimes (i (bubbles--grid-height))
+      (dotimes (_ (bubbles--grid-height))
         (let ((p (point)))
           (insert " ")
           (put-text-property p (point)
                              'display
                              (cons 'space (list :width
                                                 (list bubbles--col-offset)))))
-        (dotimes (j (bubbles--grid-width))
+        (dotimes (_ (bubbles--grid-width))
           (let* ((index (random max-char))
                  (char (nth index bubbles-chars)))
             (insert char)
@@ -1268,7 +1262,7 @@ Use optional parameter POS instead of point if given."
                      (while (get-text-property (point) 'removed)
                        (setq shifted-cols (1+ shifted-cols))
                        (bubbles--shift 'right (1- (bubbles--grid-height)) j))
-                     (dotimes (k shifted-cols)
+                     (dotimes (_ shifted-cols)
                        (let ((i (- (bubbles--grid-height) 2)))
                          (while (>= i 0)
                            (setq shifted (or (bubbles--shift 'right i j)
@@ -1422,8 +1416,8 @@ Return t if new char is non-empty."
         (goto-char (point-min))
         (forward-line 1)
         (let ((inhibit-read-only t))
-          (dotimes (i (bubbles--grid-height))
-            (dotimes (j (bubbles--grid-width))
+          (dotimes (_ (bubbles--grid-height))
+            (dotimes (_ (bubbles--grid-width))
               (forward-char 1)
               (let ((index (or (get-text-property (point) 'index) -1)))
                 (let ((img bubbles--empty-image))
