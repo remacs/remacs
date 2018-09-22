@@ -62,7 +62,7 @@ init_bignum (void)
 double
 bignum_to_double (Lisp_Object n)
 {
-  return mpz_get_d (XBIGNUM (n)->value);
+  return mpz_get_d_rounded (XBIGNUM (n)->value);
 }
 
 /* Return D, converted to a Lisp integer.  Discard any fraction.
@@ -251,12 +251,40 @@ bignum_to_uintmax (Lisp_Object x)
 }
 
 /* Yield an upper bound on the buffer size needed to contain a C
-   string representing the bignum NUM in base BASE.  This includes any
+   string representing the NUM in base BASE.  This includes any
    preceding '-' and the terminating null.  */
+static ptrdiff_t
+mpz_bufsize (mpz_t const num, int base)
+{
+  return mpz_sizeinbase (num, base) + 2;
+}
 ptrdiff_t
 bignum_bufsize (Lisp_Object num, int base)
 {
-  return mpz_sizeinbase (XBIGNUM (num)->value, base) + 2;
+  return mpz_bufsize (XBIGNUM (num)->value, base);
+}
+
+/* Convert NUM to a nearest double, as opposed to mpz_get_d which
+   truncates toward zero.  */
+double
+mpz_get_d_rounded (mpz_t const num)
+{
+  ptrdiff_t size = mpz_bufsize (num, 10);
+
+  /* Use mpz_get_d as a shortcut for a bignum so small that rounding
+     errors cannot occur, which is possible if EMACS_INT (not counting
+     sign) has fewer bits than a double significand.  */
+  if (! ((FLT_RADIX == 2 && DBL_MANT_DIG <= FIXNUM_BITS - 1)
+	 || (FLT_RADIX == 16 && DBL_MANT_DIG * 4 <= FIXNUM_BITS - 1))
+      && size <= DBL_DIG + 2)
+    return mpz_get_d (num);
+
+  USE_SAFE_ALLOCA;
+  char *buf = SAFE_ALLOCA (size);
+  mpz_get_str (buf, 10, num);
+  double result = strtod (buf, NULL);
+  SAFE_FREE ();
+  return result;
 }
 
 /* Store into BUF (of size SIZE) the value of NUM as a base-BASE string.

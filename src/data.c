@@ -2921,7 +2921,7 @@ bignum_arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
       CHECK_NUMBER_COERCE_MARKER (val);
       if (FLOATP (val))
 	return float_arith_driver (code, nargs, args, argnum,
-				   mpz_get_d (*accum), val);
+				   mpz_get_d_rounded (*accum), val);
     }
 }
 
