@@ -1728,18 +1728,6 @@ window_parameter (struct window *w, Lisp_Object parameter)
   return CDR_SAFE (result);
 }
 
-
-DEFUN ("window-parameter", Fwindow_parameter, Swindow_parameter,
-       2, 2, 0,
-       doc:  /* Return WINDOW's value for PARAMETER.
-WINDOW can be any window and defaults to the selected one.  */)
-  (Lisp_Object window, Lisp_Object parameter)
-{
-  struct window *w = decode_any_window (window);
-
-  return window_parameter (w, parameter);
-}
-
 struct Lisp_Char_Table *
 window_display_table (struct window *w)
 {
@@ -7231,7 +7219,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_vscroll);
   defsubr (&Scompare_window_configurations);
   defsubr (&Swindow_parameters);
-  defsubr (&Swindow_parameter);
 }
 
 void

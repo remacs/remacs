@@ -258,7 +258,6 @@ pub fn window_or_selected_unchecked(window: LispObject) -> LispObject {
 }
 
 /// Same as the `decode_any_window` function
-#[allow(dead_code)] // FIXME: Remove as soon as it is used
 fn window_or_selected(window: LispObject) -> LispWindowRef {
     window_or_selected_unchecked(window).as_window_or_error()
 }
@@ -521,6 +520,15 @@ pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
 pub fn minibuffer_window(frame: LispObject) -> LispObject {
     let frame = frame_live_or_selected(frame);
     frame.minibuffer_window
+}
+
+/// Return WINDOW's value for PARAMETER.
+/// WINDOW can be any window and defaults to the selected one.
+#[lisp_fn(name = "window-parameter")]
+pub fn window_parameter_defun(window: LispObject, parameter: LispObject) -> LispObject {
+    let mut w = window_or_selected(window);
+
+    unsafe { window_parameter(w.as_mut(), parameter) }
 }
 
 /// Return the display-table that WINDOW is using.
