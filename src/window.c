@@ -556,31 +556,6 @@ Return nil if WINDOW has no previous sibling.  */)
   return decode_valid_window (window)->prev;
 }
 
-DEFUN ("window-pixel-width", Fwindow_pixel_width, Swindow_pixel_width, 0, 1, 0,
-       doc: /* Return the width of window WINDOW in pixels.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value includes the fringes and margins of WINDOW as well as
-any vertical dividers or scroll bars belonging to WINDOW.  If WINDOW is
-an internal window, its pixel width is the width of the screen areas
-spanned by its children.  */)
-     (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->pixel_width);
-}
-
-DEFUN ("window-pixel-height", Fwindow_pixel_height, Swindow_pixel_height, 0, 1, 0,
-       doc: /* Return the height of window WINDOW in pixels.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value includes the mode line and header line and the bottom
-divider, if any.  If WINDOW is an internal window, its pixel height is
-the height of the screen areas spanned by its children.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->pixel_height);
-}
-
 DEFUN ("window-pixel-width-before-size-change",
        Fwindow_pixel_width_before_size_change,
        Swindow_pixel_width_before_size_change, 0, 1, 0,
@@ -7162,8 +7137,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_next_sibling);
   defsubr (&Swindow_prev_sibling);
-  defsubr (&Swindow_pixel_width);
-  defsubr (&Swindow_pixel_height);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
   defsubr (&Swindow_normal_size);
