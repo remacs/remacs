@@ -2920,8 +2920,8 @@ bignum_arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
       val = args[argnum];
       CHECK_NUMBER_COERCE_MARKER (val);
       if (FLOATP (val))
-	float_arith_driver (code, nargs, args, argnum,
-			    mpz_get_d (*accum), val);
+	return float_arith_driver (code, nargs, args, argnum,
+				   mpz_get_d (*accum), val);
     }
 }
 
