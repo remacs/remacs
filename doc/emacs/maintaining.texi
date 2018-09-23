@@ -2116,8 +2116,8 @@ variable @code{tags-apropos-additional-actions}; see its documentation
 for details.
 @end ignore
 
-@findex next-file
-  @kbd{M-x next-file} visits files covered by the selected tags table.
+@findex tags-next-file
+  @kbd{M-x tags-next-file} visits files covered by the selected tags table.
 The first time it is called, it visits the first file covered by the
 table.  Each subsequent call visits the next covered file, unless a
 prefix argument is supplied, in which case it returns to the first
