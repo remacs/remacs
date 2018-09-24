@@ -16,7 +16,7 @@ use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 
 use editfns::{goto_char, point};
-use frames::{frame_live_or_selected, selected_frame, window_frame_live_or_selected, LispFrameRef};
+use frames::{frame_live_or_selected, selected_frame, LispFrameRef};
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
 use lists::{assq, setcdr};
@@ -525,16 +525,6 @@ pub fn window_frame(window: LispObject) -> LispObject {
     let win = window_valid_or_selected(window);
 
     win.frame()
-}
-
-/// Return the root window of FRAME-OR-WINDOW.
-/// If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
-/// With a frame argument, return that frame's root window.
-/// With a window argument, return the root window of that window's frame.
-#[lisp_fn(min = "0")]
-pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
-    let frame = window_frame_live_or_selected(frame_or_window);
-    frame.root_window
 }
 
 /// Return the minibuffer window for frame FRAME.
