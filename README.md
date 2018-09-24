@@ -173,7 +173,10 @@ more Emacs-y.
 
 #### Dockerized development environment
 
-If you don't want to bother with the above setup you can use the provided docker environment.  Make sure you have [docker](https://www.docker.com/) 1.12+ and [docker-compose](https://github.com/docker/compose) 1.8+ available.
+If you don't want to bother with the above setup you can use the
+provided docker environment. Make sure you have
+[docker](https://www.docker.com/) 1.12+ and
+[docker-compose](https://github.com/docker/compose) 1.8+ available.
 
 To spin up the environment run
 
@@ -181,9 +184,21 @@ To spin up the environment run
 docker-compose up -d
 ```
 
-First time you run this command docker will build the image.  After that any subsequent startups will happen in less than a second.
+First time you run this command docker will build the image. After
+that any subsequent startups will happen in less than a second. If
+this command fails because of needing absolute paths, make sure to set
+the PWD environment variable before calling the command like so
 
-The working directory with remacs will be mounted under the same path in the container so editing the files on your host machine will automatically be reflected inside the container.   To build remacs use the steps from [Building Remacs](#building-remacs) prefixed with `docker-compose exec remacs`, this will ensure the commands are executed inside the container.
+```shell
+PWD=$(pwd) docker-compose up -d
+```
+
+The working directory with remacs will be mounted under the same path
+in the container so editing the files on your host machine will
+automatically be reflected inside the container. To build remacs use
+the steps from [Building Remacs](#building-remacs) prefixed with
+`docker-compose exec remacs`, this will ensure the commands are
+executed inside the container.
 
 ### Building Remacs
 
