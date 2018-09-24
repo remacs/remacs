@@ -1,18 +1,24 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
-#![cfg_attr(feature = "clippy", allow(not_unsafe_ptr_arg_deref, wrong_self_convention))]
+#![cfg_attr(
+    feature = "clippy",
+    allow(not_unsafe_ptr_arg_deref, wrong_self_convention)
+)]
 #![feature(const_fn)]
-#![feature(const_size_of)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(private_no_mangle_fns)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
-#![feature(proc_macro)]
+// we need this to be able to inclde FieldOffsets in C structs
+#![allow(improper_ctypes)]
+// we have a bunch of unused code during testing at the moment, somehow
+#![cfg_attr(test, allow(unused))]
 #![cfg_attr(feature = "strict", deny(warnings))]
-#![feature(global_allocator)]
 #![feature(concat_idents)]
 #![feature(stmt_expr_attributes)]
-#![feature(repr_transparent)]
+#![feature(untagged_unions)]
+#![feature(never_type)]
+#![feature(const_fn_union)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -24,6 +30,11 @@ extern crate rand;
 extern crate sha1;
 extern crate sha2;
 
+extern crate field_offset;
+extern crate flate2;
+
+extern crate core;
+
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
 #[cfg(all(not(test), target_os = "macos"))]
 extern crate alloc_unexecmacosx;
@@ -31,9 +42,6 @@ extern crate alloc_unexecmacosx;
 // Needed for linking.
 extern crate remacs_lib;
 extern crate remacs_macros;
-
-#[cfg(test)]
-extern crate mock_derive;
 
 #[cfg(test)]
 #[macro_use]
@@ -50,13 +58,19 @@ mod str2sig;
 mod base64;
 mod buffers;
 mod casefiddle;
+mod casetab;
 mod category;
 mod character;
 mod chartable;
 mod cmds;
 mod crypto;
 mod data;
+mod decompress;
 mod dired;
+#[cfg(unix)]
+mod dired_unix;
+#[cfg(windows)]
+mod dired_windows;
 mod dispnew;
 mod editfns;
 mod eval;
@@ -73,6 +87,7 @@ mod keyboard;
 mod keymap;
 mod libm;
 mod lists;
+mod lread;
 mod marker;
 mod math;
 mod minibuf;
@@ -99,6 +114,7 @@ use alloc_unexecmacosx::OsxUnexecAlloc;
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
+#[cfg(not(test))]
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
@@ -112,5 +128,25 @@ mod compile_errors {
     #[lisp_fn]
     fn dummy(x: LispObject) -> LispObject {
         compile_error!("error 001");
+    }
+}
+
+mod hacks {
+    use core::mem::ManuallyDrop;
+
+    #[allow(unions_with_drop_fields)]
+    pub union Hack<T> {
+        t: ManuallyDrop<T>,
+        u: (),
+    }
+
+    impl<T> Hack<T> {
+        pub const unsafe fn uninitialized() -> Self {
+            Hack { u: () }
+        }
+
+        pub unsafe fn get_mut(&mut self) -> &mut T {
+            &mut *self.t
+        }
     }
 }

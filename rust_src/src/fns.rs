@@ -1,17 +1,17 @@
 //* Random utility Lisp functions.
 
 use remacs_macros::lisp_fn;
+use remacs_sys::Lisp_Type;
+use remacs_sys::Vautoload_queue;
+use remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
 use remacs_sys::{Fcons, Fload, Fmapc};
 use remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
                  Qwrong_number_of_arguments};
-use remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
-use remacs_sys::Lisp_Type;
-use remacs_sys::Vautoload_queue;
 
 use eval::un_autoload;
+use lisp::defsubr;
 use lisp::LispCons;
 use lisp::LispObject;
-use lisp::defsubr;
 use lists::{assq, car, get, member, memq, put};
 use obarray::loadhist_attach;
 use objects::equal;
@@ -28,7 +28,7 @@ use vectors::length;
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> bool {
-    let mut tem = memq(feature.as_lisp_obj(), unsafe { globals.f_Vfeatures });
+    let mut tem = memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures });
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(subfeature, get(feature, Qsubfeatures));
     }
@@ -46,29 +46,29 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     unsafe {
         if Vautoload_queue.is_not_nil() {
             Vautoload_queue = Fcons(
-                Fcons(LispObject::from_fixnum(0).to_raw(), globals.f_Vfeatures),
+                Fcons(LispObject::from(0), globals.Vfeatures),
                 Vautoload_queue,
             );
         }
     }
-    if memq(feature.as_lisp_obj(), unsafe { globals.f_Vfeatures }).is_nil() {
+    if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.f_Vfeatures = Fcons(feature.as_lisp_obj().to_raw(), globals.f_Vfeatures);
+            globals.Vfeatures = Fcons(feature.as_lisp_obj(), globals.Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
         put(feature.as_lisp_obj(), Qsubfeatures, subfeature);
     }
     unsafe {
-        globals.f_Vcurrent_load_list = Fcons(
-            Fcons(Qprovide, feature.as_lisp_obj().to_raw()),
-            globals.f_Vcurrent_load_list,
+        globals.Vcurrent_load_list = Fcons(
+            Fcons(Qprovide, feature.as_lisp_obj()),
+            globals.Vcurrent_load_list,
         );
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.as_lisp_obj(), globals.f_Vafter_load_alist).as_cons() {
-            Fmapc(Qfuncall, c.cdr().to_raw());
+        if let Some(c) = assq(feature.as_lisp_obj(), globals.Vafter_load_alist).as_cons() {
+            Fmapc(Qfuncall, c.cdr());
         }
     }
     feature.as_lisp_obj()
@@ -123,26 +123,25 @@ unsafe extern "C" fn require_unwind(old_value: LispObject) {
 #[lisp_fn(min = "1")]
 pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -> LispObject {
     let feature_sym = feature.as_symbol_or_error();
-    let current_load_list = unsafe { globals.f_Vcurrent_load_list };
+    let current_load_list = unsafe { globals.Vcurrent_load_list };
 
     // Record the presence of `require' in this file
     // even if the feature specified is already loaded.
     // But not more than once in any file,
     // and not when we aren't loading or reading from a file.
-    let from_file = unsafe { globals.f_load_in_progress }
-        || current_load_list
-            .iter_cars_safe()
-            .last()
-            .map_or(false, |elt| elt.is_string());
+    let from_file = unsafe { globals.load_in_progress } || current_load_list
+        .iter_cars_safe()
+        .last()
+        .map_or(false, |elt| elt.is_string());
 
     if from_file {
         let tem = LispObject::cons(Qrequire, feature);
         if member(tem, current_load_list).is_nil() {
-            loadhist_attach(tem.to_raw());
+            loadhist_attach(tem);
         }
     }
 
-    if memq(feature, unsafe { globals.f_Vfeatures }).is_not_nil() {
+    if memq(feature, unsafe { globals.Vfeatures }).is_not_nil() {
         return feature;
     }
 
@@ -150,7 +149,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     // This is to make sure that loadup.el gives a clear picture
     // of what files are preloaded and when.
-    if unsafe { globals.f_Vpurify_flag != Qnil } {
+    if unsafe { globals.Vpurify_flag != Qnil } {
         error!(
             "(require {}) while preparing to dump",
             feature_sym.symbol_name().as_string_or_error()
@@ -174,21 +173,21 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     unsafe {
         // Update the list for any nested `require's that occur.
-        record_unwind_protect(require_unwind, require_nesting_list);
-        require_nesting_list = Fcons(feature.to_raw(), require_nesting_list);
+        record_unwind_protect(Some(require_unwind), require_nesting_list);
+        require_nesting_list = Fcons(feature, require_nesting_list);
 
         // Value saved here is to be restored into Vautoload_queue
-        record_unwind_protect(un_autoload, Vautoload_queue);
+        record_unwind_protect(Some(un_autoload), Vautoload_queue);
         Vautoload_queue = Qt;
 
         // Load the file.
         let tem = Fload(
             if filename.is_nil() {
-                feature_sym.symbol_name().to_raw()
+                feature_sym.symbol_name()
             } else {
-                filename.to_raw()
+                filename
             },
-            noerror.to_raw(),
+            noerror,
             Qt,
             Qnil,
             if filename.is_nil() { Qt } else { Qnil },
@@ -200,9 +199,9 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         }
     }
 
-    let tem = memq(feature, unsafe { globals.f_Vfeatures });
+    let tem = memq(feature, unsafe { globals.Vfeatures });
     if tem.is_nil() {
-        let tem3 = car(car(unsafe { globals.f_Vload_history }));
+        let tem3 = car(car(unsafe { globals.Vload_history }));
 
         if tem3.is_nil() {
             error!(
@@ -224,7 +223,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         Vautoload_queue = Qt;
     }
 
-    unsafe { unbind_to(count, feature.to_raw()) }
+    unsafe { unbind_to(count, feature) }
 }
 def_lisp_sym!(Qrequire, "require");
 

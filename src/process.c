@@ -336,7 +336,7 @@ pset_encoding_buf (struct Lisp_Process *p, Lisp_Object val)
 {
   p->encoding_buf = val;
 }
-static void
+void
 pset_filter (struct Lisp_Process *p, Lisp_Object val)
 {
   p->filter = NILP (val) ? Qinternal_default_process_filter : val;
@@ -391,31 +391,6 @@ pset_stderrproc (struct Lisp_Process *p, Lisp_Object val)
 {
   p->stderrproc = val;
 }
-
-/* Accessors to enable Rust code to get data from the Lisp_Process struct */
-pid_t pget_pid(const struct Lisp_Process *p)
-{
-  return p->pid;
-}
-
-bool_bf pget_kill_without_query(const struct Lisp_Process *p)
-{
-  return p->kill_without_query;
-}
-
-bool_bf pget_process_inherit_coding_system_flag(const struct Lisp_Process *p)
-{
-  return p->inherit_coding_system_flag;
-}
-/* End Rust Accessors */
-
-/* Setters to enable Rust code to set data in the Lisp_Process struct */
-void
-pset_kill_without_query (struct Lisp_Process *p, bool_bf val)
-{
-  p->kill_without_query = val;
-}
-/* End Rust Setters */
 
 
 static Lisp_Object
@@ -479,7 +454,7 @@ add_non_keyboard_read_fd (int fd)
     max_desc = fd;
 }
 
-static void
+void
 add_process_read_fd (int fd)
 {
   add_non_keyboard_read_fd (fd);
@@ -1079,7 +1054,7 @@ nil, indicating the current buffer's process.  */)
   return Qnil;
 }
 
-static void
+void
 set_process_filter_masks (struct Lisp_Process *p)
 {
   if (EQ (p->filter, Qt) && !EQ (p->status, Qlisten))
@@ -1088,49 +1063,6 @@ set_process_filter_masks (struct Lisp_Process *p)
 	   /* Network or serial process not stopped:  */
 	   && !EQ (p->command, Qt))
     add_process_read_fd (p->infd);
-}
-
-DEFUN ("set-process-filter", Fset_process_filter, Sset_process_filter,
-       2, 2, 0,
-       doc: /* Give PROCESS the filter function FILTER; nil means default.
-A value of t means stop accepting output from the process.
-
-When a process has a non-default filter, its buffer is not used for output.
-Instead, each time it does output, the entire string of output is
-passed to the filter.
-
-The filter gets two arguments: the process and the string of output.
-The string argument is normally a multibyte string, except:
-- if the process's input coding system is no-conversion or raw-text,
-  it is a unibyte string (the non-converted input), or else
-- if `default-enable-multibyte-characters' is nil, it is a unibyte
-  string (the result of converting the decoded input multibyte
-  string to unibyte with `string-make-unibyte').  */)
-  (Lisp_Object process, Lisp_Object filter)
-{
-  CHECK_PROCESS (process);
-  struct Lisp_Process *p = XPROCESS (process);
-
-  /* Don't signal an error if the process's input file descriptor
-     is closed.  This could make debugging Lisp more difficult,
-     for example when doing something like
-
-     (setq process (start-process ...))
-     (debug)
-     (set-process-filter process ...)  */
-
-  if (NILP (filter))
-    filter = Qinternal_default_process_filter;
-
-  pset_filter (p, filter);
-
-  if (p->infd >= 0)
-    set_process_filter_masks (p);
-
-  if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
-    pset_childp (p, Fplist_put (p->childp, QCfilter, filter));
-  setup_process_coding_systems (process);
-  return filter;
 }
 
 DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
@@ -1159,16 +1091,6 @@ If THREAD is nil, the process is unlocked.  */)
     fd_callback_info[proc->outfd].thread = tstate;
 
   return thread;
-}
-
-DEFUN ("process-thread", Fprocess_thread, Sprocess_thread,
-       1, 1, 0,
-       doc: /* Ret the locking thread of PROCESS.
-If PROCESS is unlocked, this function returns nil.  */)
-  (Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->thread;
 }
 
 DEFUN ("set-process-window-size", Fset_process_window_size,
@@ -7110,16 +7032,6 @@ encode subprocess input. */)
   return Qnil;
 }
 
-DEFUN ("process-coding-system",
-       Fprocess_coding_system, Sprocess_coding_system, 1, 1, 0,
-       doc: /* Return a cons of coding systems for decoding and encoding of PROCESS.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return Fcons (XPROCESS (process)->decode_coding_system,
-		XPROCESS (process)->encode_coding_system);
-}
-
 DEFUN ("set-process-filter-multibyte", Fset_process_filter_multibyte,
        Sset_process_filter_multibyte, 2, 2, 0,
        doc: /* Set multibyteness of the strings given to PROCESS's filter.
@@ -7659,9 +7571,7 @@ returns non-`nil'.  */);
   DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
 
   defsubr (&Sdelete_process);
-  defsubr (&Sset_process_filter);
   defsubr (&Sset_process_thread);
-  defsubr (&Sprocess_thread);
   defsubr (&Sset_process_window_size);
   defsubr (&Sset_process_inherit_coding_system_flag);
   defsubr (&Sprocess_contact);
@@ -7693,7 +7603,6 @@ returns non-`nil'.  */);
   defsubr (&Sinternal_default_process_sentinel);
   defsubr (&Sinternal_default_process_filter);
   defsubr (&Sset_process_coding_system);
-  defsubr (&Sprocess_coding_system);
   defsubr (&Sset_process_filter_multibyte);
   defsubr (&Sprocess_filter_multibyte_p);
 

@@ -154,21 +154,15 @@ enum font_property_index
        a font (font-driver dependent).  */
     FONT_EXTRA_INDEX,		/* alist		alist */
 
-    /* This value is the length of font-spec vector.  */
-    FONT_SPEC_MAX,
-
     /* The followings are used only for a font-entity and a font-object.  */
 
     /* List of font-objects opened from the font-entity.  */
-    FONT_OBJLIST_INDEX = FONT_SPEC_MAX,
-
-    /* This value is the length of font-entity vector.  */
-    FONT_ENTITY_MAX,
+    FONT_OBJLIST_INDEX,
 
     /* The followings are used only for a font-object.  */
 
     /* XLFD name of the font (string). */
-    FONT_NAME_INDEX = FONT_ENTITY_MAX,
+    FONT_NAME_INDEX,
 
     /* Full name of the font (string).  It is the name extracted from
        the opened font, and may be different from the above.  It may be
@@ -178,10 +172,16 @@ enum font_property_index
     /* File name of the font or nil if a file associated with the font
        is not available.  */
     FONT_FILE_INDEX,
-
-    /* This value is the length of font-object vector.  */
-    FONT_OBJECT_MAX
   };
+
+/* This value is the length of font-spec vector.  */
+#define FONT_SPEC_MAX 13
+
+/* This value is the length of font-entity vector.  */
+#define FONT_ENTITY_MAX 14
+
+/* This value is the length of font-object vector.  */
+#define FONT_OBJECT_MAX 17
 
 /* Return the numeric weight value of FONT.  */
 #define FONT_WEIGHT_NUMERIC(font)		\

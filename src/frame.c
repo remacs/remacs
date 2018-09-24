@@ -2421,7 +2421,7 @@ for how to proceed.  */)
 {
   struct frame *f = decode_live_frame (frame);
 #ifdef HAVE_WINDOW_SYSTEM
- Lisp_Object parent = f->parent_frame;
+  Lisp_Object parent = f->parent_frame;
 
   if (!NILP (parent))
     {
@@ -5390,60 +5390,6 @@ make_monitor_attribute_list (struct MonitorInfo *monitors,
 }
 
 #endif /* HAVE_WINDOW_SYSTEM */
-
-/* Accessors to enable Rust code to get data from the Frame struct */
-Lisp_Object
-fget_selected_window (const struct frame *f)
-{
-  return f->selected_window;
-}
-
-int fget_column_width(const struct frame *f)
-{
-  return f->column_width;
-}
-
-int fget_line_height(const struct frame *f)
-{
-  return f->line_height;
-}
-
-int
-fget_output_method(const struct frame *f)
-{
-  return f->output_method;
-}
-
-bool
-fget_visible(const struct frame *f)
-{
-  return f->visible;
-}
-
-bool
-fget_pointer_invisible(const struct frame *f)
-{
-  return f->pointer_invisible;
-}
-
-bool_bf
-fget_iconified(const struct frame *f)
-{
-  return f->iconified;
-}
-
-int
-fget_top_pos(const struct frame *f)
-{
-  return f->top_pos;
-}
-
-int
-fget_left_pos(const struct frame *f)
-{
-  return f->left_pos;
-}
-
 
 
 /***********************************************************************

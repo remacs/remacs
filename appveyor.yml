@@ -4,7 +4,7 @@ environment:
   matrix:
     - TARGET: x86_64-pc-windows-gnu
 
-image: Visual Studio 2015
+image: Visual Studio 2017
 
 # Install Rust and Cargo
 # (Based on from https://github.com/rust-lang/libc/blob/master/appveyor.yml)
@@ -13,7 +13,9 @@ install:
   - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
   - rustup-init.exe --default-host %TARGET% --default-toolchain %REMACS_RUST_VERSION% -y
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin;C:\msys64\usr\bin
+  - rustup component add rustfmt-preview
   - rustc -Vv
+  - rustfmt --version
   - cargo -V
   - set MSYSTEM=MINGW64
   - C:\msys64\usr\bin\bash --login -c "pacman -Syy"
@@ -34,7 +36,7 @@ build: false
 # Equivalent to Travis's `script` phase
 test_script:
   - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && ./autogen.sh"
-  - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
+  - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && INCLUDE= LIBS= LIBPATH= PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
   - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && make"
   - C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && make check"
 

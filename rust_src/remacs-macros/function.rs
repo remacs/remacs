@@ -51,7 +51,8 @@ pub fn parse(item: &syn::Item) -> Result<Function> {
                 return Err("lisp functions can only use \"Rust\" ABI");
             }
 
-            let args = decl.inputs
+            let args = decl
+                .inputs
                 .iter()
                 .map(get_fn_arg_ident_ty)
                 .collect::<Result<_>>()?;
@@ -147,7 +148,8 @@ fn is_lisp_object(ty: &syn::Type) -> bool {
             ref path,
         }) => {
             let str_path = format!("{}", quote!(#path));
-            str_path == "LispObject" || str_path == "lisp :: LispObject"
+            str_path == "LispObject"
+                || str_path == "lisp :: LispObject"
                 || str_path == ":: lisp :: LispObject"
         }
         _ => false,

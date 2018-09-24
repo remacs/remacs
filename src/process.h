@@ -201,15 +201,6 @@ struct Lisp_Process
     bool_bf gnutls_complete_negotiation_p : 1;
 #endif
 };
-/* Accessors for Rust */
-pid_t
-pget_pid(const struct Lisp_Process *p);
-
-bool_bf
-pget_kill_without_query(const struct Lisp_Process *p);
-
-bool_bf
-pget_process_inherit_coding_system_flag(const struct Lisp_Process *p);
 
 INLINE bool
 PROCESSP (Lisp_Object a)
@@ -307,8 +298,6 @@ extern Lisp_Object remove_slash_colon (Lisp_Object);
 
 extern void update_processes_for_thread_death (Lisp_Object);
 
-void pset_kill_without_query (struct Lisp_Process *p, bool_bf val);
-
 INLINE_HEADER_END
 
 #endif /* EMACS_PROCESS_H */
@@ -316,6 +305,8 @@ INLINE_HEADER_END
 bool
 pget_raw_status_new(const struct Lisp_Process *p);
 
+int
+pget_infd(const struct Lisp_Process *p);
 
 Lisp_Object
 get_process (register Lisp_Object name);

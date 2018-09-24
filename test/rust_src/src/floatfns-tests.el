@@ -34,4 +34,7 @@
   (should-error (ftruncate 0) :type 'wrong-type-argument)
   (should-error (fround 0) :type 'wrong-type-argument))
 
+(ert-deftest float-divide-by-zero ()
+  (should (isnan (/ 0.0 0))))
+
 (provide 'floatfns-tests)

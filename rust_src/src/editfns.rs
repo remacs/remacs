@@ -6,22 +6,22 @@ use libc::{c_int, c_uchar, ptrdiff_t};
 use std;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
-use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
+use remacs_sys::EmacsInt;
 use remacs_sys::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, buffer_overflow, downcase,
                  find_before_next_newline, find_field, find_newline, globals, insert,
                  insert_and_inherit, make_string_from_bytes, maybe_quit, scan_newline_from_point,
                  set_point, set_point_both};
-use remacs_sys::EmacsInt;
+use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
+use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 
 use buffers::{get_buffer, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
-use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
+use lisp::{LispNumber, LispObject};
 use marker::{marker_position_lisp, set_point_from_marker};
+use multibyte::{is_single_byte_char, unibyte_to_char};
 use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, Codepoint, LispStringRef,
                 MAX_MULTIBYTE_LENGTH};
-use multibyte::{is_single_byte_char, unibyte_to_char};
 use textprop::get_char_property;
 use threads::ThreadState;
 use util::clip_to_bounds;
@@ -105,9 +105,9 @@ pub fn gap_size() -> EmacsInt {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> EmacsInt {
     let current_buf = ThreadState::current_buffer();
-    if unsafe { globals.f_Vtransient_mark_mode }.is_not_nil() && unsafe {
-        globals.f_Vmark_even_if_inactive
-    }.is_nil() && current_buf.mark_active().is_nil()
+    if unsafe { globals.Vtransient_mark_mode }.is_not_nil()
+        && unsafe { globals.Vmark_even_if_inactive }.is_nil()
+        && current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);
     }
@@ -166,11 +166,11 @@ pub fn point_max() -> EmacsInt {
 #[lisp_fn(intspec = "NGoto char: ")]
 pub fn goto_char(position: LispObject) -> LispObject {
     if position.is_marker() {
-        set_point_from_marker(position.to_raw());
+        set_point_from_marker(position);
     } else if let Some(num) = position.as_fixnum() {
-        let cur_buf = ThreadState::current_buffer();
+        let mut cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -183,10 +183,10 @@ pub fn goto_char(position: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
     let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
-    let cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -208,9 +208,9 @@ pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
 pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     if byte < 0 || byte > 255 {
         args_out_of_range!(
-            LispObject::from_fixnum(byte),
-            LispObject::from_fixnum(0),
-            LispObject::from_fixnum(255)
+            LispObject::from(byte),
+            LispObject::from(0),
+            LispObject::from(255)
         )
     }
     let buf = ThreadState::current_buffer();
@@ -247,7 +247,10 @@ pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
 /// The optional third argument INHERIT, if non-nil, says to inherit text
 /// properties from adjoining text, if those properties are sticky.  If
 /// called interactively, INHERIT is t.
-#[lisp_fn(min = "1", intspec = "(list (read-char-by-name \"Insert character (Unicode name or hex): \") (prefix-numeric-value current-prefix-arg) t))")]
+#[lisp_fn(
+    min = "1",
+    intspec = "(list (read-char-by-name \"Insert character (Unicode name or hex): \") (prefix-numeric-value current-prefix-arg) t))"
+)]
 pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool) {
     let count = count.unwrap_or(1);
     if count <= 0 {
@@ -317,17 +320,54 @@ pub fn preceding_char() -> EmacsInt {
     EmacsInt::from(buffer_ref.fetch_char(pos))
 }
 
+/// Return character in current buffer preceding position POS.
+/// POS is an integer or a marker and defaults to point.
+/// If POS is out of range, the value is nil.
+#[lisp_fn(min = "0")]
+pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
+    let mut buffer_ref = ThreadState::current_buffer();
+    let pos_byte: isize;
+
+    if pos.is_nil() {
+        pos_byte = buffer_ref.pt_byte;
+        // In case point is point_min
+        if pos_byte == 1 {
+            return None;
+        }
+    } else if let Some(m) = pos.as_marker() {
+        pos_byte = m.bytepos_or_error();
+        if pos_byte <= buffer_ref.begv_byte || pos_byte > buffer_ref.zv_byte {
+            return None;
+        }
+    } else {
+        let p = pos
+            .as_fixnum()
+            .unwrap_or_else(|| wrong_type!(Qinteger_or_marker_p, pos)) as isize;
+        if p <= buffer_ref.begv || p > buffer_ref.zv() {
+            return None;
+        }
+        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+    }
+
+    let pos_before = if buffer_ref.multibyte_characters_enabled() {
+        EmacsInt::from(buffer_ref.fetch_char(unsafe { dec_pos(pos_byte) }))
+    } else {
+        EmacsInt::from(buffer_ref.fetch_byte(pos_byte - 1))
+    };
+    Some(pos_before)
+}
+
 /// Return character in current buffer at position POS.
 /// POS is an integer or a marker and defaults to point.
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
-    let buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer();
     if pos.is_nil() {
         pos = LispObject::from(point());
     }
-    if pos.is_marker() {
-        let pos_byte = pos.as_marker().unwrap().bytepos_or_error();
+    if let Some(m) = pos.as_marker() {
+        let pos_byte = m.bytepos_or_error();
         // Note that this considers the position in the current buffer,
         // even if the marker is from another buffer.
         if pos_byte < buffer_ref.begv_byte || pos_byte >= buffer_ref.zv_byte {
@@ -340,7 +380,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv() {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_ptr(), p) };
+            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -364,21 +404,21 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
     let first = it.next().unwrap();
     let orig_string = first.as_string_or_error();
 
-    let copy = unsafe { Fcopy_sequence(first.to_raw()) };
+    let copy = unsafe { Fcopy_sequence(*first) };
 
     let mut properties = Qnil;
 
     while let Some(a) = it.next() {
         let b = it.next().unwrap(); // safe due to the odd check at the beginning
-        properties = unsafe { Fcons(a.to_raw(), Fcons(b.to_raw(), properties)) };
+        properties = unsafe { Fcons(*a, Fcons(*b, properties)) };
     }
 
     unsafe {
         Fadd_text_properties(
-            LispObject::from_natnum(0).to_raw(),
-            LispObject::from_natnum(orig_string.len_chars() as EmacsInt).to_raw(),
+            LispObject::from(0),
+            LispObject::from(orig_string.len_chars()),
             properties,
-            copy.to_raw(),
+            copy,
         );
     };
 
@@ -512,9 +552,9 @@ pub fn field_beginning(
     let mut beg = 0;
     unsafe {
         find_field(
-            LispObject::from(pos).to_raw(),
-            LispObject::from(escape_from_edge).to_raw(),
-            LispObject::from(limit).to_raw(),
+            LispObject::from(pos),
+            LispObject::from(escape_from_edge),
+            LispObject::from(limit),
             &mut beg,
             Qnil,
             ptr::null_mut(),
@@ -540,11 +580,11 @@ pub fn field_end(
     let mut end = 0;
     unsafe {
         find_field(
-            LispObject::from(pos).to_raw(),
-            LispObject::from(escape_from_edge).to_raw(),
+            LispObject::from(pos),
+            LispObject::from(escape_from_edge),
             Qnil,
             ptr::null_mut(),
-            LispObject::from(limit).to_raw(),
+            LispObject::from(limit),
             &mut end,
         );
     }
@@ -603,7 +643,8 @@ pub fn constrain_to_field(
     let prev_new = new_pos - 1;
     let begv = ThreadState::current_buffer().begv as EmacsInt;
 
-    if unsafe { globals.f_Vinhibit_field_text_motion == Qnil } && new_pos != old_pos
+    if unsafe { globals.Vinhibit_field_text_motion == Qnil }
+        && new_pos != old_pos
         && (get_char_property(
             new_pos,
             Qfield,
@@ -629,8 +670,8 @@ pub fn constrain_to_field(
             // `get_pos_property' as well.
             || (unsafe {
                 Fget_pos_property(
-                    LispObject::from(old_pos).to_raw(),
-                    inhibit_capture_property.to_raw(),
+                    LispObject::from(old_pos),
+                    inhibit_capture_property,
                     Qnil) == Qnil
             }
                 && (old_pos <= begv

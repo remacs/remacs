@@ -1,12 +1,12 @@
 //! Minibuffer input and completion.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{minibuf_level, minibuf_prompt, minibuf_window, EmacsInt, Fcopy_sequence};
 use remacs_sys::Vminibuffer_list;
+use remacs_sys::{minibuf_level, minibuf_prompt, minibuf_window, EmacsInt, Fcopy_sequence};
 
 use buffers::{current_buffer, get_buffer};
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use lists::memq;
 
 /// Return t if BUFFER is a minibuffer.
@@ -45,7 +45,7 @@ pub fn set_minibuffer_window(window: LispObject) -> LispObject {
     window.as_minibuffer_or_error(); // just for the checks
 
     unsafe {
-        minibuf_window = window.to_raw();
+        minibuf_window = window;
     }
 
     window

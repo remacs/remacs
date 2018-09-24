@@ -12,6 +12,8 @@ use std::ptr;
 use remacs_util::parse_lisp_fn;
 
 #[allow(dead_code)]
+const INVALID: c_int = 0;
+#[allow(dead_code)]
 const LISP_OBJECT: c_int = 1;
 #[allow(dead_code)]
 const EMACS_INTEGER: c_int = 2;
@@ -40,6 +42,8 @@ pub extern "C" fn scan_rust_file(
 
     let mut line_iter = fp.lines();
 
+    let mut in_lisp_fn = false;
+
     while let Some(line) = line_iter.next() {
         let line = line.unwrap();
         let line = line.trim();
@@ -62,9 +66,27 @@ pub extern "C" fn scan_rust_file(
             in_docstring = false;
         }
 
-        if line.starts_with("#[lisp_fn") {
+        if line == "#[lisp_fn(" {
             attribute = line.to_owned();
-        } else if line.starts_with("pub fn ") || line.starts_with("fn ") {
+            in_lisp_fn = true;
+            continue;
+        } else if line.starts_with("#[lisp_fn") {
+            attribute = line.to_owned();
+            continue;
+        }
+
+        if in_lisp_fn {
+            if line == ")]" {
+                attribute += line;
+                in_lisp_fn = false;
+                continue;
+            } else {
+                attribute += line;
+                continue;
+            }
+        }
+
+        if line.starts_with("pub fn ") || line.starts_with("fn ") {
             if attribute.is_empty() {
                 // Not a #[lisp_fn]
                 continue;
@@ -137,6 +159,36 @@ pub extern "C" fn scan_rust_file(
             let name = CString::new(&caps[1]).unwrap();
             let value = CString::new(&caps[2]).unwrap();
             add_global(SYMBOL, name.as_ptr(), 0, value.as_ptr());
+        } else if line.starts_with("defvar_") {
+            // defvar_lisp!(f_Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
+            lazy_static! {
+                static ref RE: Regex =
+                    Regex::new(r#"defvar_(.+?)!\((.+?),\s+"(.+?)",\s+(.+?)\);"#).unwrap();
+            }
+            for caps in RE.captures_iter(line) {
+                let kindstr = &caps[1];
+                let kind = match kindstr {
+                    "lisp" => LISP_OBJECT,
+                    "lisp_nopro" => LISP_OBJECT,
+                    "bool" => BOOLEAN,
+                    "int" => EMACS_INTEGER,
+                    "per_buffer" => INVALID, // not really invalid, we just skip them here
+                    "kboard" => INVALID,
+                    _ => panic!("unknown macro 'defvar_{}' found; either you have a typo in {} or you need to update docfile.rs`",
+                                kindstr, filename),
+                };
+                if kind != INVALID {
+                    let field_name = &caps[2];
+                    assert!(!field_name.starts_with("f_"));
+                    if generate_globals != 0 {
+                        let field_name = CString::new(&caps[2]).unwrap();
+                        add_global(kind, field_name.as_ptr(), 0, ptr::null());
+                    } else {
+                        let lisp_name = &caps[3];
+                        print!("\x1fV{}\n{}", lisp_name, docstring)
+                    }
+                }
+            }
         }
     }
     stdout().flush().unwrap();

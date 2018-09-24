@@ -3,11 +3,11 @@
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::EmacsInt;
 use remacs_sys::get_char_property_and_overlay;
+use remacs_sys::EmacsInt;
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 
 /// Return the value of POSITION's property PROP, in OBJECT.
 /// Both overlay properties and text properties are checked.
@@ -20,12 +20,7 @@ use lisp::defsubr;
 #[lisp_fn(min = "2")]
 pub fn get_char_property(position: EmacsInt, prop: LispObject, object: LispObject) -> LispObject {
     unsafe {
-        get_char_property_and_overlay(
-            LispObject::from(position).to_raw(),
-            prop.to_raw(),
-            object.to_raw(),
-            ptr::null_mut(),
-        )
+        get_char_property_and_overlay(LispObject::from(position), prop, object, ptr::null_mut())
     }
 }
 

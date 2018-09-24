@@ -8,18 +8,18 @@ use std;
 use std::slice;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{make_specified_string, make_uninit_string, EmacsInt};
 use remacs_sys::{code_convert_string, extract_data_from_object, preferred_coding_system,
                  string_char_to_byte, validate_subarray, Fcoding_system_p};
-use remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p};
-use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qraw_text, Qsha1,
-                 Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region};
 use remacs_sys::{current_thread, make_buffer_string, record_unwind_current_buffer,
                  set_buffer_internal};
+use remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p};
+use remacs_sys::{make_specified_string, make_uninit_string, EmacsInt};
+use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qraw_text, Qsha1,
+                 Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region};
 
 use buffers::{buffer_file_name, current_buffer, get_buffer, nsberror, LispBufferRef};
-use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
+use lisp::{LispNumber, LispObject};
 use multibyte::LispStringRef;
 use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
@@ -43,17 +43,17 @@ static SHA512_DIGEST_LEN: usize = 512 / 8;
 
 fn hash_alg(algorithm: LispObject) -> HashAlg {
     algorithm.as_symbol_or_error();
-    if algorithm.to_raw() == Qmd5 {
+    if algorithm == Qmd5 {
         HashAlg::MD5
-    } else if algorithm.to_raw() == Qsha1 {
+    } else if algorithm == Qsha1 {
         HashAlg::SHA1
-    } else if algorithm.to_raw() == Qsha224 {
+    } else if algorithm == Qsha224 {
         HashAlg::SHA224
-    } else if algorithm.to_raw() == Qsha256 {
+    } else if algorithm == Qsha256 {
         HashAlg::SHA256
-    } else if algorithm.to_raw() == Qsha384 {
+    } else if algorithm == Qsha384 {
         HashAlg::SHA384
-    } else if algorithm.to_raw() == Qsha512 {
+    } else if algorithm == Qsha512 {
         HashAlg::SHA512
     } else {
         let name = symbol_name(algorithm.as_symbol_or_error()).as_string_or_error();
@@ -62,7 +62,7 @@ fn hash_alg(algorithm: LispObject) -> HashAlg {
 }
 
 fn check_coding_system_or_error(coding_system: LispObject, noerror: LispObject) -> LispObject {
-    if unsafe { Fcoding_system_p(coding_system.to_raw()) }.is_nil() {
+    if unsafe { Fcoding_system_p(coding_system) }.is_nil() {
         /* Invalid coding system. */
         if noerror.is_not_nil() {
             Qraw_text
@@ -102,43 +102,36 @@ fn get_coding_system_for_buffer(
     if coding_system.is_not_nil() {
         return coding_system;
     }
-    if unsafe { globals.f_Vcoding_system_for_write }.is_not_nil() {
-        return unsafe { globals.f_Vcoding_system_for_write };
+    if unsafe { globals.Vcoding_system_for_write }.is_not_nil() {
+        return unsafe { globals.Vcoding_system_for_write };
     }
-    if (buffer.buffer_file_coding_system.is_nil() || unsafe {
-        Flocal_variable_p(
-            Qbuffer_file_coding_system,
-            LispObject::constant_nil().to_raw(),
-        )
-    }.is_nil()) && !buffer.multibyte_characters_enabled()
+    if (buffer.buffer_file_coding_system_.is_nil() || unsafe {
+        Flocal_variable_p(Qbuffer_file_coding_system, LispObject::constant_nil())
+    }.is_nil())
+        && !buffer.multibyte_characters_enabled()
     {
         return Qraw_text;
     }
     if buffer_file_name(object).is_not_nil() {
         /* Check file-coding-system-alist. */
-        let mut args = [
-            Qwrite_region,
-            start.to_raw(),
-            end.to_raw(),
-            buffer_file_name(object).to_raw(),
-        ];
+        let mut args = [Qwrite_region, start, end, buffer_file_name(object)];
         let val = unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) };
         if val.is_cons() && val.as_cons_or_error().cdr().is_not_nil() {
             return val.as_cons_or_error().cdr();
         }
     }
-    if buffer.buffer_file_coding_system.is_not_nil() {
+    if buffer.buffer_file_coding_system_.is_not_nil() {
         /* If we still have not decided a coding system, use the
            default value of buffer-file-coding-system. */
-        return buffer.buffer_file_coding_system;
+        return buffer.buffer_file_coding_system_;
     }
-    let sscsf = unsafe { globals.f_Vselect_safe_coding_system_function };
+    let sscsf = unsafe { globals.Vselect_safe_coding_system_function };
     if fboundp(sscsf.as_symbol_or_error()) {
         /* Confirm that VAL can surely encode the current region. */
         return call!(
             sscsf,
-            LispObject::from_natnum(start_byte as EmacsInt),
-            LispObject::from_natnum(end_byte as EmacsInt),
+            LispObject::from(start_byte),
+            LispObject::from(end_byte),
             coding_system,
             LispObject::constant_nil()
         );
@@ -160,24 +153,17 @@ fn get_input_from_string(
 
     size = string.len_bytes();
     unsafe {
-        validate_subarray(
-            object.to_raw(),
-            start.to_raw(),
-            end.to_raw(),
-            size,
-            &mut start_char,
-            &mut end_char,
-        );
+        validate_subarray(object, start, end, size, &mut start_char, &mut end_char);
     }
     start_byte = if start_char == 0 {
         0
     } else {
-        unsafe { string_char_to_byte(object.to_raw(), start_char) }
+        unsafe { string_char_to_byte(object, start_char) }
     };
     end_byte = if end_char == size {
         string.len_bytes()
     } else {
-        unsafe { string_char_to_byte(object.to_raw(), end_char) }
+        unsafe { string_char_to_byte(object, end_char) }
     };
     if start_byte == 0 && end_byte == size {
         object
@@ -250,9 +236,9 @@ fn get_input(
             *string = Some(
                 unsafe {
                     code_convert_string(
-                        object.to_raw(),
-                        coding_system.to_raw(),
-                        LispObject::constant_nil().to_raw(),
+                        object,
+                        coding_system,
+                        LispObject::constant_nil(),
                         true,
                         false,
                         true,
@@ -281,9 +267,9 @@ fn get_input(
             );
             unsafe {
                 code_convert_string(
-                    s.to_raw(),
-                    coding_system.to_raw(),
-                    LispObject::constant_nil().to_raw(),
+                    s,
+                    coding_system,
+                    LispObject::constant_nil(),
                     true,
                     false,
                     false,
@@ -384,7 +370,7 @@ fn _secure_hash(
     let spec = list!(object, start, end, coding_system, noerror);
     let mut start_byte: ptrdiff_t = 0;
     let mut end_byte: ptrdiff_t = 0;
-    let input = unsafe { extract_data_from_object(spec.to_raw(), &mut start_byte, &mut end_byte) };
+    let input = unsafe { extract_data_from_object(spec, &mut start_byte, &mut end_byte) };
 
     if input.is_null() {
         error!("secure_hash: failed to extract data from object, aborting!");
@@ -495,7 +481,7 @@ pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     };
 
     if buffer.is_nil() {
-        nsberror(buffer_or_name.to_raw());
+        nsberror(buffer_or_name);
     }
     let b = buffer.as_buffer().unwrap();
     let mut ctx = sha1::Sha1::new();

@@ -1,9 +1,8 @@
 #![feature(allocator_api)]
 extern crate libc;
 
-use std::heap::Alloc;
-use std::heap::AllocErr;
-use std::heap::Layout;
+use std::alloc::GlobalAlloc;
+use std::alloc::Layout;
 
 /// To adhere to the rule that all calls to malloc, realloc, and free
 /// be redirected to their `unexec_`-prefixed variants, this crate
@@ -17,36 +16,29 @@ extern "C" {
 
 pub struct OsxUnexecAlloc;
 
-unsafe impl<'a> Alloc for &'a OsxUnexecAlloc {
-    unsafe fn alloc(&mut self, layout: Layout) -> Result<*mut u8, AllocErr> {
+unsafe impl GlobalAlloc for OsxUnexecAlloc {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let addr = unexec_malloc(layout.size() as libc::size_t);
         if addr.is_null() {
-            return Err(AllocErr::Exhausted { request: layout });
+            return addr as *mut u8;
         }
 
         assert_eq!(addr as usize & (layout.align() - 1), 0);
-        Ok(addr as *mut u8)
+        addr as *mut u8
     }
 
-    unsafe fn dealloc(&mut self, ptr: *mut u8, layout: Layout) {
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         assert_eq!(ptr as usize & (layout.align() - 1), 0);
         unexec_free(ptr as *mut libc::c_void)
     }
 
-    unsafe fn realloc(
-        &mut self,
-        ptr: *mut u8,
-        _layout: Layout,
-        new_layout: Layout,
-    ) -> Result<*mut u8, AllocErr> {
-        let addr = unexec_realloc(ptr as *mut libc::c_void, new_layout.size() as libc::size_t);
+    unsafe fn realloc(&self, ptr: *mut u8, _layout: Layout, new_size: usize) -> *mut u8 {
+        let addr = unexec_realloc(ptr as *mut libc::c_void, new_size);
         if addr.is_null() {
-            return Err(AllocErr::Exhausted {
-                request: new_layout,
-            });
+            return addr as *mut u8;
         }
 
-        assert_eq!(addr as usize & (new_layout.align() - 1), 0);
-        Ok(addr as *mut u8)
+        assert_eq!(addr as usize & (_layout.align() - 1), 0);
+        addr as *mut u8
     }
 }

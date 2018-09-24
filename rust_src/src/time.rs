@@ -2,16 +2,16 @@
 
 use std::ptr;
 
-use libc::{c_int, c_long, time_t};
 use libc::timespec as c_timespec;
+use libc::{c_int, c_long, time_t};
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
-use remacs_sys::{lisp_time, EmacsInt};
 use remacs_sys::MOST_NEGATIVE_FIXNUM;
+use remacs_sys::{lisp_time, EmacsInt};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use lists::list;
 
 const LO_TIME_BITS: i32 = 16;
@@ -39,17 +39,17 @@ pub extern "C" fn lo_time(t: time_t) -> i32 {
 /// correspondingly negative picosecond count.
 #[no_mangle]
 pub extern "C" fn make_lisp_time(t: c_timespec) -> LispObject {
-    make_lisp_time_1(t).to_raw()
+    make_lisp_time_1(t)
 }
 
 fn make_lisp_time_1(t: c_timespec) -> LispObject {
     let s = t.tv_sec;
     let ns = t.tv_nsec;
     list(&[
-        LispObject::from_fixnum(hi_time(s)),
-        LispObject::from_fixnum(EmacsInt::from(lo_time(s))),
-        LispObject::from_fixnum((ns / 1_000) as EmacsInt),
-        LispObject::from_fixnum((ns % 1_000 * 1_000) as EmacsInt),
+        LispObject::from(hi_time(s)),
+        LispObject::from(lo_time(s)),
+        LispObject::from(ns / 1_000),
+        LispObject::from(ns % 1_000 * 1_000),
     ])
 }
 
@@ -67,10 +67,10 @@ pub extern "C" fn disassemble_lisp_time(
 ) -> c_int {
     let specified_time = specified_time;
 
-    let mut high = LispObject::from_fixnum(0);
+    let mut high = LispObject::from(0);
     let mut low = specified_time;
-    let mut usec = LispObject::from_fixnum(0);
-    let mut psec = LispObject::from_fixnum(0);
+    let mut usec = LispObject::from(0);
+    let mut psec = LispObject::from(0);
     let mut len = 4;
 
     if let Some(cons) = specified_time.as_cons() {
@@ -108,10 +108,10 @@ pub extern "C" fn disassemble_lisp_time(
     }
 
     unsafe {
-        *phigh = high.to_raw();
-        *plow = low.to_raw();
-        *pusec = usec.to_raw();
-        *ppsec = psec.to_raw();
+        *phigh = high;
+        *plow = low;
+        *pusec = usec;
+        *ppsec = psec;
     }
 
     len
@@ -219,7 +219,8 @@ pub extern "C" fn decode_time_components(
     if !dresult.is_null() {
         let dhi = hi as f64;
         unsafe {
-            *dresult = (us as f64 * 1e6 + ps as f64) / 1e12 + (lo as f64)
+            *dresult = (us as f64 * 1e6 + ps as f64) / 1e12
+                + (lo as f64)
                 + dhi * f64::from(1 << LO_TIME_BITS);
         }
     }
@@ -365,7 +366,7 @@ pub fn float_time(time: LispObject) -> LispObject {
 
     let mut t = 0.0;
 
-    if disassemble_lisp_time(time.to_raw(), &mut high, &mut low, &mut usec, &mut psec) == 0
+    if disassemble_lisp_time(time, &mut high, &mut low, &mut usec, &mut psec) == 0
         || decode_time_components(high, low, usec, psec, ptr::null_mut(), &mut t) == 0
     {
         invalid_time();

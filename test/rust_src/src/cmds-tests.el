@@ -45,5 +45,10 @@
       (should (string= (buffer-string) "world!"))))
   )
 
+(ert-deftest self-insert-command-with-negative-argument ()
+  "Test `self-insert-command' with a negative argument."
+  (let ((last-command-event ?a))
+    (should-error (self-insert-command -1))))
+
 (provide 'cmds-tests)
 ;;; cmds-tests.el ends here

@@ -4,20 +4,20 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_Overlay,
+use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
+                 globals, last_per_buffer_idx, set_buffer_internal_1, update_mode_lines};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
                  Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
                  Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
                  Qvoid_variable};
-use remacs_sys::{bget_overlays_after, bget_overlays_before, buffer_local_value, fget_buffer_list,
-                 fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals,
-                 last_per_buffer_idx, set_buffer_internal};
 
 use chartable::LispCharTableRef;
+use data::Lisp_Fwd;
 use editfns::point;
-use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::string_char;
@@ -72,7 +72,7 @@ impl LispBufferRef {
     }
 
     pub fn is_read_only(&self) -> bool {
-        self.read_only.into()
+        self.read_only_.into()
     }
 
     #[inline]
@@ -136,6 +136,11 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn gap_start_addr(self) -> *mut c_uchar {
+        unsafe { (*self.text).beg.offset((*self.text).gpt_byte - BEG_BYTE) }
+    }
+
+    #[inline]
     pub fn gap_end_addr(self) -> *mut c_uchar {
         unsafe {
             (*self.text)
@@ -188,38 +193,38 @@ impl LispBufferRef {
 
     #[inline]
     pub fn mark_active(self) -> LispObject {
-        self.mark_active
+        self.mark_active_
     }
 
     #[inline]
     pub fn pt_marker(self) -> LispObject {
-        self.pt_marker
+        self.pt_marker_
     }
 
     #[inline]
     pub fn begv_marker(self) -> LispObject {
-        self.begv_marker
+        self.begv_marker_
     }
 
     #[inline]
     pub fn zv_marker(self) -> LispObject {
-        self.zv_marker
+        self.zv_marker_
     }
 
     #[inline]
     pub fn mark(self) -> LispObject {
-        self.mark
+        self.mark_
     }
 
     #[allow(dead_code)]
     #[inline]
     pub fn name(self) -> LispObject {
-        self.name
+        self.name_
     }
 
     #[inline]
     pub fn filename(self) -> LispObject {
-        self.filename
+        self.filename_
     }
 
     #[inline]
@@ -229,17 +234,22 @@ impl LispBufferRef {
 
     #[inline]
     pub fn truename(self) -> LispObject {
-        self.file_truename
+        self.file_truename_
     }
 
     pub fn case_fold_search(self) -> LispObject {
-        self.case_fold_search
+        self.case_fold_search_
     }
 
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
-        self.name.is_not_nil()
+        self.name_.is_not_nil()
+    }
+
+    #[inline]
+    pub fn byte_pos_addr(self, n: ptrdiff_t) -> *mut c_uchar {
+        unsafe { (*self.text).beg.offset(n - BEG_BYTE) }
     }
 
     #[inline]
@@ -281,17 +291,27 @@ impl LispBufferRef {
 
     #[inline]
     pub fn multibyte_characters_enabled(self) -> bool {
-        self.enable_multibyte_characters.is_not_nil()
+        self.enable_multibyte_characters_.is_not_nil()
     }
 
     #[inline]
     pub fn overlays_before(&self) -> Option<LispOverlayRef> {
-        LispOverlayRef::from_ptr(unsafe { bget_overlays_before(self.as_ptr()) })
+        let p = self.overlays_before;
+        if p == ptr::null_mut() {
+            None
+        } else {
+            Some(ExternalPtr::new(p))
+        }
     }
 
     #[inline]
     pub fn overlays_after(&self) -> Option<LispOverlayRef> {
-        LispOverlayRef::from_ptr(unsafe { bget_overlays_after(self.as_ptr()) })
+        let p = self.overlays_after;
+        if p == ptr::null_mut() {
+            None
+        } else {
+            Some(ExternalPtr::new(p))
+        }
     }
 
     #[inline]
@@ -314,16 +334,16 @@ impl LispBufferRef {
 
     #[inline]
     pub fn set_syntax_table(&mut self, table: LispCharTableRef) {
-        self.syntax_table = LispObject::from(table).to_raw();
+        self.syntax_table_ = LispObject::from(table);
     }
 
     /// Set whether per-buffer variable with index IDX has a buffer-local
     /// value in buffer.  VAL zero means it does't.
     // Similar to SET_PER_BUFFER_VALUE_P macro in C
     #[inline]
-    pub fn set_per_buffer_value_p(&mut self, idx: usize, val: c_uchar) {
+    pub fn set_per_buffer_value_p(&mut self, idx: usize, val: libc::c_char) {
         unsafe {
-            if idx >= last_per_buffer_idx {
+            if idx >= last_per_buffer_idx as usize {
                 panic!(
                     "set_per_buffer_value_p called with index greater than {}",
                     last_per_buffer_idx
@@ -401,11 +421,11 @@ pub type LispBufferLocalValueRef = ExternalPtr<Lisp_Buffer_Local_Value>;
 
 impl LispBufferLocalValueRef {
     pub fn get_fwd(self) -> *const Lisp_Fwd {
-        unsafe { get_blv_fwd(self.as_ptr()) }
+        self.fwd
     }
 
     pub fn get_value(self) -> LispObject {
-        unsafe { get_blv_value(self.as_ptr()) }
+        self.valcell.as_cons_or_error().cdr()
     }
 }
 
@@ -417,15 +437,15 @@ impl LispBufferLocalValueRef {
 pub fn buffer_list(frame: LispObject) -> LispObject {
     let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }
         .iter_cars_safe()
-        .map(|o| cdr(o).to_raw())
+        .map(|o| cdr(o))
         .collect();
 
     match frame.as_frame() {
         None => Flist(buffers.len() as isize, buffers.as_mut_ptr()),
 
         Some(frame) => unsafe {
-            let framelist = Fcopy_sequence(fget_buffer_list(frame.as_ptr()));
-            let prevlist = Fnreverse(Fcopy_sequence(fget_buried_buffer_list(frame.as_ptr())));
+            let framelist = Fcopy_sequence(frame.buffer_list);
+            let prevlist = Fnreverse(Fcopy_sequence(frame.buried_buffer_list));
 
             // Remove any buffer that duplicates one in
             // FRAMELIST or PREVLIST.
@@ -457,7 +477,8 @@ pub fn buffer_live_p(object: Option<LispBufferRef>) -> bool {
 /// Like Fassoc, but use `Fstring_equal` to compare
 /// (which ignores text properties), and don't ever quit.
 fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
-    let result = list.iter_tails_safe()
+    let result = list
+        .iter_tails_safe()
         .find(|&item| string_equal(car(item.car()), key));
     if let Some(elt) = result {
         elt.car()
@@ -498,7 +519,7 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
         buffer.as_buffer_or_error()
     };
 
-    buf.filename
+    buf.filename_
 }
 
 /// Return t if BUFFER was modified since its file was last read or saved.
@@ -514,7 +535,7 @@ pub fn buffer_modified_p(buffer: LispObject) -> bool {
 /// Return nil if BUFFER has been killed.
 #[lisp_fn(min = "0")]
 pub fn buffer_name(buffer: LispObject) -> LispObject {
-    buffer.as_buffer_or_current_buffer().name
+    buffer.as_buffer_or_current_buffer().name_
 }
 
 /// Return BUFFER's tick counter, incremented for each change in text.
@@ -579,8 +600,8 @@ pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
     }
 
     unsafe {
-        *b = LispObject::from_fixnum(beg).to_raw();
-        *e = LispObject::from_fixnum(end).to_raw();
+        *b = LispObject::from(beg);
+        *e = LispObject::from(end);
     }
 
     let buf = ThreadState::current_buffer();
@@ -603,13 +624,13 @@ pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
 pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     let buffer = get_buffer(buffer_or_name);
     if buffer.is_nil() {
-        nsberror(buffer_or_name.to_raw())
+        nsberror(buffer_or_name)
     };
     let mut buf = buffer.as_buffer_or_error();
     if !buf.is_live() {
         error!("Selecting deleted buffer");
     };
-    unsafe { set_buffer_internal(buf.as_mut()) };
+    unsafe { set_buffer_internal_1(buf.as_mut()) };
     buffer
 }
 
@@ -620,9 +641,8 @@ pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
 pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
     let pos = position.unwrap_or_else(point);
 
-    let inhibit_read_only: bool = unsafe { globals.f_Vinhibit_read_only.into() };
-    let prop =
-        unsafe { Fget_text_property(LispObject::from(pos).to_raw(), Qinhibit_read_only, Qnil) };
+    let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
+    let prop = unsafe { Fget_text_property(LispObject::from(pos), Qinhibit_read_only, Qnil) };
 
     if ThreadState::current_buffer().is_read_only() && !inhibit_read_only && prop.is_nil() {
         xsignal!(Qbuffer_read_only, current_buffer())
@@ -651,9 +671,9 @@ pub extern "C" fn nsberror(spec: LispObject) -> ! {
 #[lisp_fn]
 pub fn overlay_lists() -> LispObject {
     let list_overlays = |ol: LispOverlayRef| -> LispObject {
-        let ol_list = ol.iter().fold(Qnil, |accum, n| unsafe {
-            Fcons(n.as_lisp_obj().to_raw(), accum)
-        });
+        let ol_list = ol
+            .iter()
+            .fold(Qnil, |accum, n| unsafe { Fcons(n.as_lisp_obj(), accum) });
         ol_list
     };
 
@@ -664,7 +684,7 @@ pub fn overlay_lists() -> LispObject {
     let after = cur_buf
         .overlays_after()
         .map_or_else(LispObject::constant_nil, &list_overlays);
-    unsafe { Fcons(Fnreverse(before.to_raw()), Fnreverse(after.to_raw())) }
+    unsafe { Fcons(Fnreverse(before), Fnreverse(after)) }
 }
 
 fn get_truename_buffer_1(filename: LispObject) -> LispObject {
@@ -672,14 +692,13 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
         .find(|buf| {
             let buf_truename = buf.truename();
             buf_truename.is_string() && string_equal(buf_truename, filename)
-        })
-        .into()
+        }).into()
 }
 
 // to be removed once all references in C are ported
 #[no_mangle]
 pub extern "C" fn get_truename_buffer(filename: LispObject) -> LispObject {
-    get_truename_buffer_1(filename).to_raw()
+    get_truename_buffer_1(filename)
 }
 
 /// If buffer B has markers to record PT, BEGV and ZV when it is not
@@ -697,25 +716,15 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
         assert!(begv_marker.is_not_nil());
         assert!(zv_marker.is_not_nil());
 
-        let buffer = buffer_ref.as_lisp_obj().to_raw();
+        let buffer = buffer_ref.as_lisp_obj();
+        set_marker_both(pt_marker, buffer, buffer_ref.pt(), buffer_ref.pt_byte());
         set_marker_both(
-            pt_marker.to_raw(),
-            buffer,
-            buffer_ref.pt(),
-            buffer_ref.pt_byte(),
-        );
-        set_marker_both(
-            begv_marker.to_raw(),
+            begv_marker,
             buffer,
             buffer_ref.begv(),
             buffer_ref.begv_byte(),
         );
-        set_marker_both(
-            zv_marker.to_raw(),
-            buffer,
-            buffer_ref.zv(),
-            buffer_ref.zv_byte(),
-        );
+        set_marker_both(zv_marker, buffer, buffer_ref.zv(), buffer_ref.zv_byte());
     }
 }
 
@@ -750,14 +759,14 @@ pub extern "C" fn fetch_buffer_markers(buffer: *mut Lisp_Buffer) {
 #[lisp_fn]
 pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
     verify_lisp_type!(filename, Qstringp);
-    let filename = unsafe { Fexpand_file_name(filename.to_raw(), Qnil) };
+    let filename = unsafe { Fexpand_file_name(filename, Qnil) };
 
     // If the file name has special constructs in it,
     // call the corresponding file handler.
-    let handler = unsafe { Ffind_file_name_handler(filename.to_raw(), Qget_file_buffer) };
+    let handler = unsafe { Ffind_file_name_handler(filename, Qget_file_buffer) };
 
     if handler.is_not_nil() {
-        let handled_buf = call_raw!(handler.to_raw(), Qget_file_buffer, filename.to_raw());
+        let handled_buf = call_raw!(handler, Qget_file_buffer, filename);
         handled_buf.as_buffer()
     } else {
         LiveBufferIter::new().find(|buf| {
@@ -772,7 +781,7 @@ pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
 /// is the default binding of the variable.
 #[lisp_fn(name = "buffer-local-value", c_name = "buffer_local_value")]
 pub fn buffer_local_value_lisp(variable: LispObject, buffer: LispObject) -> LispObject {
-    let result = unsafe { buffer_local_value(variable.to_raw(), buffer.to_raw()) };
+    let result = unsafe { buffer_local_value(variable, buffer) };
 
     if result.eq_raw(Qunbound) {
         xsignal!(Qvoid_variable, variable);
@@ -789,6 +798,55 @@ pub fn buffer_base_buffer(buffer: LispObject) -> Option<LispBufferRef> {
     buffer.as_buffer_or_current_buffer().base_buffer()
 }
 
-def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+/// Force redisplay of the current buffer's mode line and header line.
+/// With optional non-nil ALL, force redisplay of all mode lines and
+/// header lines.  This function also forces recomputation of the
+/// menu bar menus and the frame title.
+#[lisp_fn(min = "0")]
+pub fn force_mode_line_update(all: LispObject) -> LispObject {
+    let mut current_buffer = ThreadState::current_buffer();
+    if all.is_not_nil() {
+        unsafe {
+            update_mode_lines = 10;
+        }
+        // FIXME: This can't be right.
+        current_buffer.set_prevent_redisplay_optimizations_p(true);
+    } else if 0 < unsafe { buffer_window_count(current_buffer.as_mut()) } {
+        unsafe {
+            bset_update_mode_line(current_buffer.as_mut());
+        }
+        current_buffer.set_prevent_redisplay_optimizations_p(true);
+    }
+    all
+}
+
+/// Return a Lisp_Misc_Overlay object with specified START, END and PLIST.
+#[no_mangle]
+pub extern "C" fn build_overlay(
+    start: LispObject,
+    end: LispObject,
+    plist: LispObject,
+) -> LispObject {
+    unsafe {
+        let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Overlay);
+        let mut overlay = obj.as_overlay_or_error();
+        overlay.start = start;
+        overlay.end = end;
+        overlay.plist = plist;
+        overlay.next = ptr::null_mut();
+
+        overlay.as_lisp_obj()
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn rust_syms_of_buffer() {
+    def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+
+    /// Analogous to `mode-line-format', but controls the header line.
+    /// The header line appears, optionally, at the top of a window;
+    /// the mode line appears at the bottom.
+    defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
+}
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

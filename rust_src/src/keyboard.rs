@@ -2,14 +2,14 @@
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::{EmacsInt, TEXT_AREA};
-use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qt, Qvertical_line};
-use remacs_sys::{make_lispy_position, window_box_left_offset};
+use remacs_sys::glyph_row_area;
 use remacs_sys::Fpos_visible_in_window_p;
+use remacs_sys::{make_lispy_position, window_box_left_offset};
+use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qt, Qvertical_line};
 
 use frames::window_frame_live_or_selected_with_action;
-use lisp::{IsLispNatnum, LispCons, LispObject};
 use lisp::defsubr;
+use lisp::{IsLispNatnum, LispCons, LispObject};
 use windows::window_or_selected_unchecked;
 
 /// Return position information for buffer position POS in WINDOW.
@@ -26,14 +26,14 @@ use windows::window_or_selected_unchecked;
 pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     let window = window_or_selected_unchecked(window);
 
-    let tem = unsafe { Fpos_visible_in_window_p(pos.to_raw(), window.to_raw(), Qt) };
+    let tem = unsafe { Fpos_visible_in_window_p(pos, window, Qt) };
     if tem.is_nil() {
         return LispObject::constant_nil();
     }
 
     let mut it = tem.iter_cars();
-    let x = it.next().unwrap_or_else(|| LispObject::from_fixnum(0));
-    let y = it.next().unwrap_or_else(|| LispObject::from_fixnum(0));
+    let x = it.next().unwrap_or_else(|| LispObject::from(0));
+    let y = it.next().unwrap_or_else(|| LispObject::from(0));
 
     let mut y_coord = y.as_fixnum_or_error();
     let x_coord = x.as_fixnum_or_error();
@@ -45,16 +45,17 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     }
     let aux_info = it.rest();
     if aux_info.is_not_nil() && y_coord < 0 {
-        let rtop = it.next()
-            .unwrap_or_else(|| LispObject::from_fixnum(0))
+        let rtop = it
+            .next()
+            .unwrap_or_else(|| LispObject::from(0))
             .as_fixnum_or_error();
 
         y_coord += rtop;
     }
 
     posn_at_x_y(
-        LispObject::from_fixnum(x_coord),
-        LispObject::from_fixnum(y_coord),
+        LispObject::from(x_coord),
+        LispObject::from(y_coord),
         window,
         LispObject::constant_nil(),
     )
@@ -84,24 +85,17 @@ pub fn posn_at_x_y(
     let mut x = x as i32;
     let mut y = objy.as_natnum_or_error() as i32;
 
-    let frame = window_frame_live_or_selected_with_action(frame_or_window, |w| {
+    let mut frame = window_frame_live_or_selected_with_action(frame_or_window, |mut w| {
         x += w.left_edge_x();
 
         if whole.is_nil() {
-            x += unsafe { window_box_left_offset(w.as_ptr(), TEXT_AREA) };
+            x += unsafe { window_box_left_offset(w.as_mut(), glyph_row_area::TEXT_AREA) };
         }
 
         y = w.frame_pixel_y(y);
     });
 
-    unsafe {
-        make_lispy_position(
-            frame.as_ptr(),
-            LispObject::from_fixnum(EmacsInt::from(x)).to_raw(),
-            LispObject::from_natnum(EmacsInt::from(y)).to_raw(),
-            0,
-        )
-    }
+    unsafe { make_lispy_position(frame.as_mut(), LispObject::from(x), LispObject::from(y), 0) }
 }
 
 /// Return true if EVENT is a list whose elements are all integers or symbols.
@@ -110,7 +104,9 @@ pub fn posn_at_x_y(
 pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
     event.map_or(false, |event| {
         let first = event.car();
-        if first.eq(Qhelp_echo) || first.eq(Qvertical_line) || first.eq(Qmode_line)
+        if first.eq(Qhelp_echo)
+            || first.eq(Qvertical_line)
+            || first.eq(Qmode_line)
             || first.eq(Qheader_line)
         {
             return false;
@@ -124,6 +120,36 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
 
         it.rest().is_nil()
     })
+}
+
+#[no_mangle]
+pub extern "C" fn rust_syms_of_keyboard() {
+    /// The last command executed.
+    /// Normally a symbol with a function definition, but can be whatever was found
+    /// in the keymap, or whatever the variable `this-command' was set to by that
+    /// command.
+    ///
+    /// The value `mode-exit' is special; it means that the previous command
+    /// read an event that told it to exit, and it did so and unread that event.
+    /// In other words, the present command is the event that made the previous
+    /// command exit.
+    ///
+    /// The value `kill-region' is special; it means that the previous command
+    /// was a kill command.
+    ///
+    /// `last-command' has a separate binding for each terminal device.
+    /// See Info node `(elisp)Multiple Terminals'.
+    defvar_kboard!(Vlast_command_, "last-command");
+
+    /// Same as `last-command', but never altered by Lisp code.
+    /// Taken from the previous value of `real-this-command'.
+    defvar_kboard!(Vreal_last_command_, "real-last-command");
+
+    /// Last command that may be repeated.
+    /// The last command executed that was not bound to an input event.
+    /// This is the command `repeat' will try to repeat.
+    /// Taken from a previous value of `real-this-command'.  */
+    defvar_kboard!(Vlast_repeatable_command_, "last-repeatable-command");
 }
 
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));

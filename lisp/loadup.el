@@ -453,7 +453,7 @@ lost after dumping")))
       ;; Do this here, rather than earlier, so that the above code
       ;; can invoke Git commands and the like.
       (setq exec-path nil)
-      (message "Dumping under the name emacs")
+      (message "Dumping under the name remacs")
       (condition-case ()
 	  (delete-file "remacs")
 	(file-error nil))

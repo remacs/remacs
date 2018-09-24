@@ -5,23 +5,23 @@ use std;
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
+use remacs_sys::EmacsInt;
+use remacs_sys::{bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible,
+                 globals, initial_define_key, insert_and_inherit, memory_full, replace_range,
+                 run_hook, scan_newline_from_point, set_point, set_point_both, syntax_property,
+                 syntaxcode, translate_char, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column, Fset};
-use remacs_sys::{bitch_at_user, current_column, del_range, frame_make_pointer_invisible, globals,
-                 initial_define_key, insert_and_inherit, memory_full, replace_range, run_hook,
-                 scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
-                 translate_char, concat2, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
                  Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
                  Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate};
-use remacs_sys::EmacsInt;
 
 use character::{self, characterp};
 use editfns::{line_beginning_position, line_end_position, preceding_char};
 use frames::selected_frame;
 use keymap::{current_global_map, Ctl};
-use lisp::LispObject;
 use lisp::defsubr;
-use multibyte::{single_byte_charp, unibyte_to_char, write_codepoint, Codepoint, char_to_byte8,
+use lisp::LispObject;
+use multibyte::{char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
                 MAX_MULTIBYTE_LENGTH};
 use obarray::intern;
 use threads::ThreadState;
@@ -184,7 +184,8 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
 
     if shortage > 0
         && (count <= 0
-            || (cur_buf.zv() > cur_buf.begv && cur_buf.pt() != opoint
+            || (cur_buf.zv() > cur_buf.begv
+                && cur_buf.pt() != opoint
                 && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != b'\n'))
     {
         shortage -= 1
@@ -225,7 +226,7 @@ pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
             unsafe { del_range(buffer.pt(), pos) };
         }
     } else {
-        call_raw!(Qkill_forward_chars, LispObject::from(n).to_raw());
+        call_raw!(Qkill_forward_chars, LispObject::from(n));
     }
 }
 
@@ -253,15 +254,15 @@ pub fn self_insert_command(n: EmacsInt) {
 
     // Barf if the key that invoked this was not a character.
     if !characterp(
-        unsafe { globals.f_last_command_event },
+        unsafe { globals.last_command_event },
         LispObject::constant_nil(),
     ) {
         unsafe { bitch_at_user() };
     } else {
         let character = unsafe {
             translate_char(
-                globals.f_Vtranslation_table_for_input,
-                globals.f_last_command_event.as_fixnum_or_error(),
+                globals.Vtranslation_table_for_input,
+                globals.last_command_event.as_fixnum_or_error() as i32,
             )
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
@@ -294,16 +295,15 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     let mut spaces_to_insert: usize = 0;
 
     let mut current_buffer = ThreadState::current_buffer();
-    let overwrite = current_buffer.overwrite_mode;
-    if unsafe { globals.f_Vbefore_change_functions }.is_not_nil() || unsafe {
-        globals.f_Vafter_change_functions
-    }.is_not_nil()
+    let overwrite = current_buffer.overwrite_mode_;
+    if unsafe { globals.Vbefore_change_functions }.is_not_nil()
+        || unsafe { globals.Vafter_change_functions }.is_not_nil()
     {
         hairy = 1;
     }
 
     // At first, get multi-byte form of C in STR.
-    if current_buffer.enable_multibyte_characters.is_not_nil() {
+    if current_buffer.multibyte_characters_enabled() {
         len = write_codepoint(&mut str, c);
         if len == 1 {
             c = str[0] as Codepoint;
@@ -337,8 +337,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         if overwrite == Qoverwrite_mode_binary {
             chars_to_delete = n as usize;
         } else if c != '\n' as Codepoint && c2 != '\n' as Codepoint {
-            let cwidth =
-                unsafe { Fchar_width(LispObject::from(c).to_raw()) }.as_fixnum_or_error() as usize;
+            let cwidth = unsafe { Fchar_width(LispObject::from(c)) }.as_fixnum_or_error() as usize;
             if cwidth > 0 {
                 let pos = current_buffer.pt;
                 let pos_byte = current_buffer.pt_byte;
@@ -354,9 +353,8 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                     // if the TARGET_CLM is middle of multi-column
                     // character.  In that case, the new point is set after
                     // that character.
-                    let actual_clm = unsafe {
-                        Fmove_to_column(LispObject::from(target_clm).to_raw(), Qnil)
-                    }.as_fixnum_or_error() as usize;
+                    let actual_clm = unsafe { Fmove_to_column(LispObject::from(target_clm), Qnil) }
+                        .as_fixnum_or_error() as usize;
                     chars_to_delete = (current_buffer.pt - pos) as usize;
                     if actual_clm > target_clm {
                         // We will delete too many columns.  Let's fill columns
@@ -377,14 +375,16 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
     synt = unsafe { syntax_property(c as i32, true) };
 
-    let previous_char = if current_buffer.enable_multibyte_characters.is_not_nil() {
+    let previous_char = if current_buffer.multibyte_characters_enabled() {
         preceding_char() as Codepoint
     } else {
         unibyte_to_char(preceding_char() as Codepoint)
     };
-    if current_buffer.abbrev_mode.is_not_nil() && synt != syntaxcode::Word
-        && current_buffer.read_only.is_not_nil() && current_buffer.pt > current_buffer.begv
-        && unsafe { syntax_property(previous_char as libc::c_int, true) } == syntaxcode::Word
+    if current_buffer.abbrev_mode_.is_not_nil()
+        && synt != syntaxcode::Sword
+        && current_buffer.read_only_.is_nil()
+        && current_buffer.pt > current_buffer.begv
+        && unsafe { syntax_property(previous_char as libc::c_int, true) } == syntaxcode::Sword
     {
         let modiff = unsafe { (*current_buffer.text).modiff };
 
@@ -395,12 +395,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // return right away--don't really self-insert.  */
         if let Some(s) = sym.as_symbol() {
             if let Some(f) = s.function.as_symbol() {
-                let prop = unsafe {
-                    Fget(
-                        LispObject::from(f).to_raw(),
-                        intern("no-self-insert").to_raw(),
-                    )
-                };
+                let prop = unsafe { Fget(LispObject::from(f), intern("no-self-insert")) };
                 if prop.is_not_nil() {
                     return 1;
                 }
@@ -413,29 +408,27 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     if chars_to_delete > 0 {
-        let mc = if current_buffer.enable_multibyte_characters.is_not_nil() && single_byte_charp(c)
-        {
+        let mc = if current_buffer.multibyte_characters_enabled() && single_byte_charp(c) {
             unibyte_to_char(c)
         } else {
             c
         };
-        let mut string =
-            unsafe { Fmake_string(LispObject::from(n).to_raw(), LispObject::from(mc).to_raw()) };
+        let mut string = unsafe { Fmake_string(LispObject::from(n), LispObject::from(mc)) };
         if spaces_to_insert > 0 {
             let tem = unsafe {
                 Fmake_string(
-                    LispObject::from(spaces_to_insert).to_raw(),
-                    LispObject::from(' ' as Codepoint).to_raw(),
+                    LispObject::from(spaces_to_insert),
+                    LispObject::from(' ' as Codepoint),
                 )
             };
-            string = unsafe { concat2(string.to_raw(), tem.to_raw()) };
+            string = unsafe { concat2(string, tem) };
         }
 
         unsafe {
             replace_range(
                 current_buffer.pt,
                 current_buffer.pt + chars_to_delete as isize,
-                string.to_raw(),
+                string,
                 true,
                 true,
                 true,
@@ -461,9 +454,10 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         unsafe { insert_and_inherit(str.as_mut_ptr() as *mut i8, len as isize) };
     }
 
-    if let Some(t) = unsafe { globals.f_Vauto_fill_chars }.as_char_table() {
-        if t.get(c as isize).is_not_nil() && (c == ' ' as Codepoint || c == '\n' as Codepoint)
-            && current_buffer.auto_fill_function.is_not_nil()
+    if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
+        if t.get(c as isize).is_not_nil()
+            && (c == ' ' as Codepoint || c == '\n' as Codepoint)
+            && current_buffer.auto_fill_function_.is_not_nil()
         {
             if c == '\n' as Codepoint {
                 // After inserting a newline, move to previous line and fill
@@ -496,7 +490,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
 #[no_mangle]
 pub extern "C" fn keys_of_cmds() {
-    let global_map = current_global_map().to_raw();
+    let global_map = current_global_map();
 
     unsafe {
         let sic = CString::new("self-insert-command").unwrap();
@@ -520,7 +514,7 @@ pub extern "C" fn keys_of_cmds() {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_syms_of_cmds() {
+pub extern "C" fn syms_of_cmds() {
     def_lisp_sym!(Qinternal_auto_fill, "internal-auto-fill");
     def_lisp_sym!(Qundo_auto_amalgamate, "undo-auto-amalgamate");
     #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -530,6 +524,10 @@ pub extern "C" fn rust_syms_of_cmds() {
     def_lisp_sym!(Qoverwrite_mode_binary, "overwrite-mode-binary");
     def_lisp_sym!(Qexpand_abbrev, "expand-abbrev");
     def_lisp_sym!(Qpost_self_insert_hook, "post-self-insert-hook");
+
+    /// Hook run at the end of `self-insert-command'.
+    /// This is run after inserting the character.
+    defvar_lisp!(Vpost_self_insert_hook, "post-self-insert-hook", Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/cmds_exports.rs"));

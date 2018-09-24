@@ -64,12 +64,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define file_tell ftell
 #endif
 
-// Used by Rust to interact with bitfield properties.
-bool symbol_is_interned(struct Lisp_Symbol *symbol);
-bool symbol_is_alias(struct Lisp_Symbol *symbol);
-bool symbol_is_constant(struct Lisp_Symbol *symbol);
-uint16_t misc_get_ty(struct Lisp_Misc_Any *any);
-
 /* The objects or placeholders read with the #n=object form.
 
    A hash table maps a number to either a placeholder (while the
@@ -4220,79 +4214,6 @@ defalias (struct Lisp_Subr *sname, char *string)
 }
 #endif /* NOTDEF */
 
-/* Define an "integer variable"; a symbol whose value is forwarded to a
-   C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):
-   DEFxxVAR_INT ("emacs-priority", &emacs_priority, "Documentation");  */
-void
-defvar_int (struct Lisp_Intfwd *i_fwd,
-	    const char *namestring, EMACS_INT *address)
-{
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  i_fwd->type = Lisp_Fwd_Int;
-  i_fwd->intvar = address;
-  XSYMBOL (sym)->declared_special = 1;
-  XSYMBOL (sym)->redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)i_fwd);
-}
-
-/* Similar but define a variable whose value is t if address contains 1,
-   nil if address contains 0.  */
-void
-defvar_bool (struct Lisp_Boolfwd *b_fwd,
-	     const char *namestring, bool *address)
-{
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  b_fwd->type = Lisp_Fwd_Bool;
-  b_fwd->boolvar = address;
-  XSYMBOL (sym)->declared_special = 1;
-  XSYMBOL (sym)->redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)b_fwd);
-  Vbyte_boolean_vars = Fcons (sym, Vbyte_boolean_vars);
-}
-
-/* Similar but define a variable whose value is the Lisp Object stored
-   at address.  Two versions: with and without gc-marking of the C
-   variable.  The nopro version is used when that variable will be
-   gc-marked for some other reason, since marking the same slot twice
-   can cause trouble with strings.  */
-void
-defvar_lisp_nopro (struct Lisp_Objfwd *o_fwd,
-		   const char *namestring, Lisp_Object *address)
-{
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  o_fwd->type = Lisp_Fwd_Obj;
-  o_fwd->objvar = address;
-  XSYMBOL (sym)->declared_special = 1;
-  XSYMBOL (sym)->redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)o_fwd);
-}
-
-void
-defvar_lisp (struct Lisp_Objfwd *o_fwd,
-	     const char *namestring, Lisp_Object *address)
-{
-  defvar_lisp_nopro (o_fwd, namestring, address);
-  staticpro (address);
-}
-
-/* Similar but define a variable whose value is the Lisp Object stored
-   at a particular offset in the current kboard object.  */
-
-void
-defvar_kboard (struct Lisp_Kboard_Objfwd *ko_fwd,
-	       const char *namestring, int offset)
-{
-  Lisp_Object sym;
-  sym = intern_c_string (namestring);
-  ko_fwd->type = Lisp_Fwd_Kboard_Obj;
-  ko_fwd->offset = offset;
-  XSYMBOL (sym)->declared_special = 1;
-  XSYMBOL (sym)->redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (XSYMBOL (sym), (union Lisp_Fwd *)ko_fwd);
-}
 
 /* Check that the elements of lpath exist.  */
 
@@ -4593,30 +4514,6 @@ dir_warning (char const *use, Lisp_Object dirname)
       message_dolog (buffer, message_len, 0, STRING_MULTIBYTE (dirname));
       SAFE_FREE ();
     }
-}
-
-bool
-symbol_is_interned (struct Lisp_Symbol *symbol)
-{
-  return symbol->interned == SYMBOL_INTERNED_IN_INITIAL_OBARRAY;
-}
-
-bool
-symbol_is_alias (struct Lisp_Symbol *symbol)
-{
-  return symbol->redirect == SYMBOL_VARALIAS;
-}
-
-bool
-symbol_is_constant (struct Lisp_Symbol *symbol)
-{
-  return symbol->trapped_write == SYMBOL_NOWRITE;
-}
-
-uint16_t
-misc_get_ty (struct Lisp_Misc_Any *any)
-{
-  return any->type;
 }
 
 void

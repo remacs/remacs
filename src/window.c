@@ -40,9 +40,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
-// Used by Rust.
-bool is_minibuffer(struct window *);
-
 static ptrdiff_t count_windows (struct window *);
 static ptrdiff_t get_leaf_windows (struct window *, struct window **,
 				   ptrdiff_t);
@@ -122,7 +119,7 @@ wset_dedicated (struct window *w, Lisp_Object val)
   w->dedicated = val;
 }
 
-static void
+void
 wset_display_table (struct window *w, Lisp_Object val)
 {
   w->display_table = val;
@@ -213,7 +210,7 @@ wset_mode_line_height(struct window *w, int height)
   w->mode_line_height = height;
 }
 
-static void
+void
 wset_update_mode_line (struct window *w)
 {
   /* If this window is the selected window on its frame, set the
@@ -557,42 +554,6 @@ Return nil if WINDOW has no previous sibling.  */)
   (Lisp_Object window)
 {
   return decode_valid_window (window)->prev;
-}
-
-DEFUN ("window-use-time", Fwindow_use_time, Swindow_use_time, 0, 1, 0,
-       doc: /* Return the use time of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-The window with the highest use time is the most recently selected
-one.  The window with the lowest use time is the least recently
-selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_live_window (window)->use_time);
-}
-
-DEFUN ("window-pixel-width", Fwindow_pixel_width, Swindow_pixel_width, 0, 1, 0,
-       doc: /* Return the width of window WINDOW in pixels.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value includes the fringes and margins of WINDOW as well as
-any vertical dividers or scroll bars belonging to WINDOW.  If WINDOW is
-an internal window, its pixel width is the width of the screen areas
-spanned by its children.  */)
-     (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->pixel_width);
-}
-
-DEFUN ("window-pixel-height", Fwindow_pixel_height, Swindow_pixel_height, 0, 1, 0,
-       doc: /* Return the height of window WINDOW in pixels.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value includes the mode line and header line and the bottom
-divider, if any.  If WINDOW is an internal window, its pixel height is
-the height of the screen areas spanned by its children.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->pixel_height);
 }
 
 DEFUN ("window-pixel-width-before-size-change",
@@ -1344,14 +1305,6 @@ column 0.  */)
 				  0, false);
 }
 
-DEFUN ("window-old-point", Fwindow_old_point, Swindow_old_point, 0, 1, 0,
-       doc: /* Return old value of point in WINDOW.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return Fmarker_position (decode_live_window (window)->old_pointm);
-}
-
 /* This is text temporarily removed from the doc string below.
 
 This function returns nil if the position is not currently known.
@@ -1431,64 +1384,6 @@ if it isn't already recorded.  */)
     XSETINT (value, BUF_Z (b) - w->window_end_pos);
 
   return value;
-}
-
-DEFUN ("set-window-point", Fset_window_point, Sset_window_point, 2, 2, 0,
-       doc: /* Make point value in WINDOW be at position POS in WINDOW's buffer.
-WINDOW must be a live window and defaults to the selected one.
-Return POS.  */)
-  (Lisp_Object window, Lisp_Object pos)
-{
-  register struct window *w = decode_live_window (window);
-
-  /* Type of POS is checked by Fgoto_char or set_marker_restricted ...  */
-
-  if (w == XWINDOW (selected_window))
-    {
-      if (XBUFFER (w->contents) == current_buffer)
-	Fgoto_char (pos);
-      else
-	{
-	  struct buffer *old_buffer = current_buffer;
-
-	  /* ... but here we want to catch type error before buffer change.  */
-	  CHECK_NUMBER_COERCE_MARKER (pos);
-	  set_buffer_internal (XBUFFER (w->contents));
-	  Fgoto_char (pos);
-	  set_buffer_internal (old_buffer);
-	}
-    }
-  else
-    {
-      set_marker_restricted (w->pointm, pos, w->contents);
-      /* We have to make sure that redisplay updates the window to show
-	 the new value of point.  */
-      wset_redisplay (w);
-    }
-
-  return pos;
-}
-
-DEFUN ("set-window-start", Fset_window_start, Sset_window_start, 2, 3, 0,
-       doc: /* Make display in WINDOW start at position POS in WINDOW's buffer.
-WINDOW must be a live window and defaults to the selected one.  Return
-POS.  Optional third arg NOFORCE non-nil inhibits next redisplay from
-overriding motion of point in order to display at this exact start.  */)
-  (Lisp_Object window, Lisp_Object pos, Lisp_Object noforce)
-{
-  register struct window *w = decode_live_window (window);
-
-  set_marker_restricted (w->start, pos, w->contents);
-  /* This is not right, but much easier than doing what is right.  */
-  w->start_at_line_beg = false;
-  if (NILP (noforce))
-    w->force_start = true;
-  wset_update_mode_line (w);
-  /* Bug#15957.  */
-  w->window_end_valid = false;
-  wset_redisplay (w);
-
-  return pos;
 }
 
 DEFUN ("pos-visible-in-window-p", Fpos_visible_in_window_p,
@@ -1790,101 +1685,6 @@ though when run from an idle timer with a delay of zero seconds.  */)
   return Fnreverse (rows);
 }
 
-DEFUN ("window-dedicated-p", Fwindow_dedicated_p, Swindow_dedicated_p,
-       0, 1, 0,
-       doc: /* Return non-nil when WINDOW is dedicated to its buffer.
-More precisely, return the value assigned by the last call of
-`set-window-dedicated-p' for WINDOW.  Return nil if that function was
-never called with WINDOW as its argument, or the value set by that
-function was internally reset since its last call.  WINDOW must be a
-live window and defaults to the selected one.
-
-When a window is dedicated to its buffer, `display-buffer' will refrain
-from displaying another buffer in it.  `get-lru-window' and
-`get-largest-window' treat dedicated windows specially.
-`delete-windows-on', `replace-buffer-in-windows', `quit-window' and
-`kill-buffer' can delete a dedicated window and the containing frame.
-
-Functions like `set-window-buffer' may change the buffer displayed by a
-window, unless that window is "strongly" dedicated to its buffer, that
-is the value returned by `window-dedicated-p' is t.  */)
-  (Lisp_Object window)
-{
-  return decode_live_window (window)->dedicated;
-}
-
-DEFUN ("set-window-dedicated-p", Fset_window_dedicated_p,
-       Sset_window_dedicated_p, 2, 2, 0,
-       doc: /* Mark WINDOW as dedicated according to FLAG.
-WINDOW must be a live window and defaults to the selected one.  FLAG
-non-nil means mark WINDOW as dedicated to its buffer.  FLAG nil means
-mark WINDOW as non-dedicated.  Return FLAG.
-
-When a window is dedicated to its buffer, `display-buffer' will refrain
-from displaying another buffer in it.  `get-lru-window' and
-`get-largest-window' treat dedicated windows specially.
-`delete-windows-on', `replace-buffer-in-windows', `quit-window',
-`quit-restore-window' and `kill-buffer' can delete a dedicated window
-and the containing frame.
-
-As a special case, if FLAG is t, mark WINDOW as "strongly" dedicated to
-its buffer.  Functions like `set-window-buffer' may change the buffer
-displayed by a window, unless that window is strongly dedicated to its
-buffer.  If and when `set-window-buffer' displays another buffer in a
-window, it also makes sure that the window is no more dedicated.  */)
-  (Lisp_Object window, Lisp_Object flag)
-{
-  wset_dedicated (decode_live_window (window), flag);
-  return flag;
-}
-
-DEFUN ("window-prev-buffers", Fwindow_prev_buffers, Swindow_prev_buffers,
-       0, 1, 0,
-       doc:  /* Return buffers previously shown in WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-The return value is a list of elements (BUFFER WINDOW-START POS),
-where BUFFER is a buffer, WINDOW-START is the start position of the
-window for that buffer, and POS is a window-specific point value.  */)
-  (Lisp_Object window)
-{
-  return decode_live_window (window)->prev_buffers;
-}
-
-DEFUN ("set-window-prev-buffers", Fset_window_prev_buffers,
-       Sset_window_prev_buffers, 2, 2, 0,
-       doc: /* Set WINDOW's previous buffers to PREV-BUFFERS.
-WINDOW must be a live window and defaults to the selected one.
-
-PREV-BUFFERS should be a list of elements (BUFFER WINDOW-START POS),
-where BUFFER is a buffer, WINDOW-START is the start position of the
-window for that buffer, and POS is a window-specific point value.  */)
-     (Lisp_Object window, Lisp_Object prev_buffers)
-{
-  wset_prev_buffers (decode_live_window (window), prev_buffers);
-  return prev_buffers;
-}
-
-DEFUN ("window-next-buffers", Fwindow_next_buffers, Swindow_next_buffers,
-       0, 1, 0,
-       doc:  /* Return list of buffers recently re-shown in WINDOW.
-WINDOW must be a live window and defaults to the selected one.  */)
-     (Lisp_Object window)
-{
-  return decode_live_window (window)->next_buffers;
-}
-
-DEFUN ("set-window-next-buffers", Fset_window_next_buffers,
-       Sset_window_next_buffers, 2, 2, 0,
-       doc: /* Set WINDOW's next buffers to NEXT-BUFFERS.
-WINDOW must be a live window and defaults to the selected one.
-NEXT-BUFFERS should be a list of buffers.  */)
-     (Lisp_Object window, Lisp_Object next_buffers)
-{
-  wset_next_buffers (decode_live_window (window), next_buffers);
-  return next_buffers;
-}
-
 DEFUN ("window-parameters", Fwindow_parameters, Swindow_parameters,
        0, 1, 0,
        doc: /* Return the parameters of WINDOW and their values.
@@ -1901,18 +1701,6 @@ window_parameter (struct window *w, Lisp_Object parameter)
   Lisp_Object result = Fassq (parameter, w->window_parameters);
 
   return CDR_SAFE (result);
-}
-
-
-DEFUN ("window-parameter", Fwindow_parameter, Swindow_parameter,
-       2, 2, 0,
-       doc:  /* Return WINDOW's value for PARAMETER.
-WINDOW can be any window and defaults to the selected one.  */)
-  (Lisp_Object window, Lisp_Object parameter)
-{
-  struct window *w = decode_any_window (window);
-
-  return window_parameter (w, parameter);
 }
 
 struct Lisp_Char_Table *
@@ -1935,15 +1723,6 @@ window_display_table (struct window *w)
   return dp;
 }
 
-DEFUN ("set-window-display-table", Fset_window_display_table, Sset_window_display_table, 2, 2, 0,
-       doc: /* Set WINDOW's display-table to TABLE.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (register Lisp_Object window, Lisp_Object table)
-{
-  wset_display_table (decode_live_window (window), table);
-  return table;
-}
-
 /* Record info on buffer window W is displaying
    when it is about to cease to display that buffer.  */
 static void
@@ -7337,9 +7116,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_next_sibling);
   defsubr (&Swindow_prev_sibling);
-  defsubr (&Swindow_use_time);
-  defsubr (&Swindow_pixel_width);
-  defsubr (&Swindow_pixel_height);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
   defsubr (&Swindow_normal_size);
@@ -7369,14 +7145,8 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_scroll_bar_height);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
-  defsubr (&Swindow_old_point);
   defsubr (&Swindow_end);
-  defsubr (&Sset_window_point);
-  defsubr (&Sset_window_start);
-  defsubr (&Swindow_dedicated_p);
   defsubr (&Swindow_lines_pixel_dimensions);
-  defsubr (&Sset_window_dedicated_p);
-  defsubr (&Sset_window_display_table);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
   defsubr (&Sget_buffer_window);
@@ -7411,12 +7181,7 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
   defsubr (&Scompare_window_configurations);
-  defsubr (&Swindow_prev_buffers);
-  defsubr (&Sset_window_prev_buffers);
-  defsubr (&Swindow_next_buffers);
-  defsubr (&Sset_window_next_buffers);
   defsubr (&Swindow_parameters);
-  defsubr (&Swindow_parameter);
 }
 
 void
@@ -7428,13 +7193,4 @@ keys_of_window (void)
   initial_define_key (global_map, Ctl ('V'), "scroll-up-command");
   initial_define_key (meta_map, Ctl ('V'), "scroll-other-window");
   initial_define_key (meta_map, 'v', "scroll-down-command");
-}
-
-
-/* Accessors to enable Rust code to get data from the Lisp_Process struct */
-
-Lisp_Object
-wget_window_parameters(const struct window *w)
-{
-  return w->window_parameters;
 }

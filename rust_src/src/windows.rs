@@ -5,24 +5,23 @@ use std::ptr;
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{MODE_LINE_FACE_ID, MODE_LINE_INACTIVE_FACE_ID};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
+use remacs_sys::globals;
+use remacs_sys::Fcons;
 use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, wget_current_matrix, wget_mode_line_height,
-                 wget_parent, wget_pixel_height, wget_pseudo_window_p, wget_window_parameters,
-                 window_menu_bar_p, window_parameter, window_tool_bar_p, wset_mode_line_height,
-                 wset_window_parameters, window_list_1};
-use remacs_sys::Fcons;
-use remacs_sys::globals;
+                 selected_window as current_window, set_buffer_internal, window_list_1,
+                 window_menu_bar_p, window_parameter, window_tool_bar_p, wset_display_table,
+                 wset_redisplay, wset_update_mode_line};
+use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 
-use editfns::point;
+use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, window_frame_live_or_selected, LispFrameRef};
-use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lisp::{ExternalPtr, LispObject};
 use lists::{assq, setcdr};
-use marker::marker_position_lisp;
+use marker::{marker_position_lisp, set_marker_restricted};
+use threads::ThreadState;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
@@ -40,7 +39,7 @@ impl LispWindowRef {
 
     #[inline]
     pub fn is_pseudo(self) -> bool {
-        unsafe { wget_pseudo_window_p(self.as_ptr()) }
+        self.pseudo_window_p()
     }
 
     /// A window of any sort, leaf or interior, is "valid" if its
@@ -64,22 +63,22 @@ impl LispWindowRef {
     /// from W->mode_line_height, look at W's current glyph matrix, or return
     /// a default based on the height of the font of the face `mode-line'.
     pub fn current_mode_line_height(&mut self) -> i32 {
-        let mode_line_height = unsafe { wget_mode_line_height(self.as_ptr()) };
-        let matrix = LispGlyphMatrixRef::new(unsafe { wget_current_matrix(self.as_ptr()) });
-        let matrix_mode_line_height = matrix.mode_line_height();
+        let mode_line_height = self.mode_line_height;
+        let matrix_mode_line_height =
+            LispGlyphMatrixRef::new(self.current_matrix).mode_line_height();
 
         if mode_line_height >= 0 {
             mode_line_height
         } else if matrix_mode_line_height != 0 {
-            unsafe { wset_mode_line_height(self.as_mut(), matrix_mode_line_height) };
+            self.mode_line_height = matrix_mode_line_height;
             matrix_mode_line_height
         } else {
-            let frame = self.frame().as_frame_or_error();
+            let mut frame = self.frame().as_frame_or_error();
             let window = selected_window().as_window_or_error();
             let mode_line_height = unsafe {
-                estimate_mode_line_height(frame.as_ptr(), CURRENT_MODE_LINE_FACE_ID(window))
+                estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
             };
-            unsafe { wset_mode_line_height(self.as_mut(), mode_line_height) };
+            self.mode_line_height = mode_line_height;
             mode_line_height
         }
     }
@@ -105,17 +104,13 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn is_menu_bar(self) -> bool {
-        unsafe { window_menu_bar_p(self.as_ptr()) }
+    pub fn is_menu_bar(mut self) -> bool {
+        unsafe { window_menu_bar_p(self.as_mut()) }
     }
 
     #[inline]
-    pub fn is_tool_bar(self) -> bool {
-        unsafe { window_tool_bar_p(self.as_ptr()) }
-    }
-
-    pub fn pixel_height(self) -> i32 {
-        unsafe { wget_pixel_height(self.as_ptr()) }
+    pub fn is_tool_bar(mut self) -> bool {
+        unsafe { window_tool_bar_p(self.as_mut()) }
     }
 
     pub fn total_width(self, round: LispObject) -> i32 {
@@ -126,7 +121,7 @@ impl LispWindowRef {
             self.total_cols
         } else {
             let frame = self.frame().as_frame_or_error();
-            let unit = frame.column_width();
+            let unit = frame.column_width;
 
             if round == qceiling {
                 (self.pixel_width + unit - 1) / unit
@@ -144,7 +139,7 @@ impl LispWindowRef {
             self.total_lines
         } else {
             let frame = self.frame().as_frame_or_error();
-            let unit = frame.line_height();
+            let unit = frame.line_height;
 
             if round == qceiling {
                 (self.pixel_height + unit - 1) / unit
@@ -199,17 +194,19 @@ impl LispWindowRef {
     /// parameter must not be 'none' and either that parameter or W's
     /// buffer's 'mode-line-format' value must be non-nil.  Finally, W must
     /// be higher than its frame's canonical character height.
-    pub fn wants_mode_line(self) -> bool {
-        let window_mode_line_format = unsafe { window_parameter(self.as_ptr(), Qmode_line_format) };
+    pub fn wants_mode_line(mut self) -> bool {
+        let window_mode_line_format = unsafe { window_parameter(self.as_mut(), Qmode_line_format) };
 
-        self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
+        self.is_live()
+            && !self.is_minibuffer()
+            && !self.is_pseudo()
             && !window_mode_line_format.eq(Qnone)
-            && (window_mode_line_format.is_not_nil()
-                || self.contents()
-                    .as_buffer_or_error()
-                    .mode_line_format
-                    .is_not_nil())
-            && self.pixel_height() > self.frame().as_frame_or_error().line_height()
+            && (window_mode_line_format.is_not_nil() || self
+                .contents()
+                .as_buffer_or_error()
+                .mode_line_format_
+                .is_not_nil())
+            && self.pixel_height > self.frame().as_frame_or_error().line_height
     }
 
     /// True if window wants a header line and is high enough to
@@ -221,20 +218,22 @@ impl LispWindowRef {
     /// buffer's 'header-line-format' value must be non-nil.  Finally, window must
     /// be higher than its frame's canonical character height and be able to
     /// accommodate a mode line too if necessary (the mode line prevails).
-    pub fn wants_header_line(self) -> bool {
+    pub fn wants_header_line(mut self) -> bool {
         let window_header_line_format =
-            unsafe { window_parameter(self.as_ptr(), Qheader_line_format) };
+            unsafe { window_parameter(self.as_mut(), Qheader_line_format) };
 
-        let mut height = self.frame().as_frame_or_error().line_height();
+        let mut height = self.frame().as_frame_or_error().line_height;
         if self.wants_mode_line() {
             height *= 2;
         }
 
-        self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
+        self.is_live()
+            && !self.is_minibuffer()
+            && !self.is_pseudo()
             && !window_header_line_format.eq(Qnone)
             && (window_header_line_format.is_not_nil()
-                || (self.contents().as_buffer_or_error().header_line_format).is_not_nil())
-            && self.pixel_height() > height
+                || (self.contents().as_buffer_or_error().header_line_format_).is_not_nil())
+            && self.pixel_height > height
     }
 }
 
@@ -259,7 +258,6 @@ pub fn window_or_selected_unchecked(window: LispObject) -> LispObject {
 }
 
 /// Same as the `decode_any_window` function
-#[allow(dead_code)] // FIXME: Remove as soon as it is used
 fn window_or_selected(window: LispObject) -> LispWindowRef {
     window_or_selected_unchecked(window).as_window_or_error()
 }
@@ -363,6 +361,29 @@ pub fn window_minibuffer_p(window: LispObject) -> bool {
     win.is_minibuffer()
 }
 
+/// Return the width of window WINDOW in pixels.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value includes the fringes and margins of WINDOW as well as
+/// any vertical dividers or scroll bars belonging to WINDOW.  If WINDOW is
+/// an internal window, its pixel width is the width of the screen areas
+/// spanned by its children.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_width(window: LispObject) -> EmacsInt {
+    window_valid_or_selected(window).pixel_width as EmacsInt
+}
+
+/// Return the height of window WINDOW in pixels.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value includes the mode line and header line and the bottom
+/// divider, if any.  If WINDOW is an internal window, its pixel height is
+/// the height of the screen areas spanned by its children.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_height(window: LispObject) -> EmacsInt {
+    window_valid_or_selected(window).pixel_height as EmacsInt
+}
+
 /// Get width of marginal areas of window WINDOW.
 /// WINDOW must be a live window and defaults to the selected one.
 ///
@@ -373,7 +394,7 @@ pub fn window_minibuffer_p(window: LispObject) -> bool {
 pub fn window_margins(window: LispObject) -> LispObject {
     fn margin_as_object(margin: c_int) -> LispObject {
         if margin != 0 {
-            LispObject::from_fixnum(EmacsInt::from(margin))
+            LispObject::from(margin)
         } else {
             LispObject::constant_nil()
         }
@@ -412,7 +433,7 @@ pub fn set_window_combination_limit(mut window: LispWindowRef, limit: LispObject
         error!("Combination limit is meaningful for internal windows only");
     }
 
-    window.combination_limit = limit.to_raw();
+    window.combination_limit = limit;
 
     limit
 }
@@ -423,7 +444,8 @@ pub fn set_window_combination_limit(mut window: LispWindowRef, limit: LispObject
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
     let current_minibuf = unsafe { current_minibuf_window };
-    if level > 0 && selected_window().as_window_or_error().is_minibuffer()
+    if level > 0
+        && selected_window().as_window_or_error().is_minibuffer()
         && current_minibuf.as_window().unwrap().is_live()
     {
         current_minibuf
@@ -481,10 +503,10 @@ pub fn window_total_width(window: LispObject, round: LispObject) -> EmacsInt {
 /// WINDOW's frame.  Any other value of ROUND means to return the internal
 /// total height of WINDOW.
 #[lisp_fn(min = "0")]
-pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject {
+pub fn window_total_height(window: LispObject, round: LispObject) -> i32 {
     let win = window_valid_or_selected(window);
 
-    LispObject::from_natnum(EmacsInt::from(win.total_height(round)))
+    win.total_height(round)
 }
 
 /// Return the parent window of window WINDOW.
@@ -492,7 +514,7 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject 
 /// Return nil for a window with no parent (e.g. a root window).
 #[lisp_fn(min = "0")]
 pub fn window_parent(window: LispObject) -> LispObject {
-    (unsafe { wget_parent(window_valid_or_selected(window).as_ptr()) })
+    window_valid_or_selected(window).parent
 }
 
 /// Return the frame that window WINDOW is on.
@@ -512,7 +534,7 @@ pub fn window_frame(window: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
     let frame = window_frame_live_or_selected(frame_or_window);
-    frame.root_window()
+    frame.root_window
 }
 
 /// Return the minibuffer window for frame FRAME.
@@ -520,7 +542,16 @@ pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn minibuffer_window(frame: LispObject) -> LispObject {
     let frame = frame_live_or_selected(frame);
-    frame.minibuffer_window()
+    frame.minibuffer_window
+}
+
+/// Return WINDOW's value for PARAMETER.
+/// WINDOW can be any window and defaults to the selected one.
+#[lisp_fn(name = "window-parameter")]
+pub fn window_parameter_defun(window: LispObject, parameter: LispObject) -> LispObject {
+    let mut w = window_or_selected(window);
+
+    unsafe { window_parameter(w.as_mut(), parameter) }
 }
 
 /// Return the display-table that WINDOW is using.
@@ -529,6 +560,15 @@ pub fn minibuffer_window(frame: LispObject) -> LispObject {
 pub fn window_display_table(window: LispObject) -> LispObject {
     let win = window_live_or_selected(window);
     win.display_table
+}
+
+/// Set WINDOW's display-table to TABLE.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn]
+pub fn set_window_display_table(window: LispObject, table: LispObject) -> LispObject {
+    let mut w = window_live_or_selected(window);
+    unsafe { wset_display_table(w.as_mut(), table) };
+    table
 }
 
 pub fn window_wants_mode_line(window: LispWindowRef) -> bool {
@@ -548,16 +588,10 @@ pub fn set_window_parameter(
     parameter: LispObject,
     value: LispObject,
 ) -> LispObject {
-    let w = window_or_selected(window);
-    let w_params = unsafe { wget_window_parameters(w.as_ptr()) };
-    let old_alist_elt = assq(parameter, w_params);
+    let mut w = window_or_selected(window);
+    let old_alist_elt = assq(parameter, w.window_parameters);
     if old_alist_elt.is_nil() {
-        unsafe {
-            wset_window_parameters(
-                w.as_ptr(),
-                Fcons(Fcons(parameter.to_raw(), value.to_raw()), w_params),
-            )
-        }
+        w.window_parameters = unsafe { Fcons(Fcons(parameter, value), w.window_parameters) };
     } else {
         setcdr(old_alist_elt.as_cons_or_error(), value);
     }
@@ -578,7 +612,7 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
     selw: LispWindowRef,
     mbw: LispWindowRef,
     scrw: LispWindowRef,
-) -> i32 {
+) -> face_id {
     let current = if let Some(w) = selected_window().as_window() {
         w
     } else {
@@ -586,19 +620,19 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
     };
 
     unsafe {
-        if !globals.f_mode_line_in_non_selected_windows {
-            return MODE_LINE_FACE_ID;
+        if !globals.mode_line_in_non_selected_windows {
+            return face_id::MODE_LINE_FACE_ID;
         } else if selw == current {
-            return MODE_LINE_FACE_ID;
+            return face_id::MODE_LINE_FACE_ID;
         } else if minibuf_level > 0 {
             if let Some(minibuf_window) = current_minibuf_window.as_window() {
                 if mbw == minibuf_window && scrw == minibuf_window {
-                    return MODE_LINE_FACE_ID;
+                    return face_id::MODE_LINE_FACE_ID;
                 }
             }
         }
 
-        MODE_LINE_INACTIVE_FACE_ID
+        face_id::MODE_LINE_INACTIVE_FACE_ID
     }
 }
 
@@ -636,7 +670,7 @@ pub fn window_list(
         Some(w) => w.as_lisp_obj(),
         None => {
             if let Some(f) = frame {
-                f.selected_window()
+                f.selected_window
             } else {
                 selected_window()
             }
@@ -656,7 +690,7 @@ pub fn window_list(
         error!("Window is on a different frame");
     }
 
-    unsafe { (window_list_1(w_obj.to_raw(), minibuf.to_raw(), f_obj.to_raw())) }
+    unsafe { (window_list_1(w_obj, minibuf, f_obj)) }
 }
 
 /// Return a list of all live windows.
@@ -695,7 +729,162 @@ pub fn window_list_one(
     minibuf: LispObject,
     all_frames: LispObject,
 ) -> LispObject {
-    unsafe { (window_list_1(window.to_raw(), minibuf.to_raw(), all_frames.to_raw())) }
+    unsafe { (window_list_1(window, minibuf, all_frames)) }
+}
+
+/// Return non-nil when WINDOW is dedicated to its buffer.
+/// More precisely, return the value assigned by the last call of
+/// `set-window-dedicated-p' for WINDOW.  Return nil if that function was
+/// never called with WINDOW as its argument, or the value set by that
+/// function was internally reset since its last call.  WINDOW must be a
+/// live window and defaults to the selected one.
+///
+/// When a window is dedicated to its buffer, `display-buffer' will refrain
+/// from displaying another buffer in it.  `get-lru-window' and
+/// `get-largest-window' treat dedicated windows specially.
+/// `delete-windows-on', `replace-buffer-in-windows', `quit-window' and
+/// `kill-buffer' can delete a dedicated window and the containing frame.
+///
+/// Functions like `set-window-buffer' may change the buffer displayed by a
+/// window, unless that window is "strongly" dedicated to its buffer, that
+/// is the value returned by `window-dedicated-p' is t.
+#[lisp_fn(min = "0")]
+pub fn window_dedicated_p(window: LispObject) -> LispObject {
+    window_live_or_selected(window).dedicated
+}
+
+/// Mark WINDOW as dedicated according to FLAG.
+/// WINDOW must be a live window and defaults to the selected one.  FLAG
+/// non-nil means mark WINDOW as dedicated to its buffer.  FLAG nil means
+/// mark WINDOW as non-dedicated.  Return FLAG.
+///
+/// When a window is dedicated to its buffer, `display-buffer' will refrain
+/// from displaying another buffer in it.  `get-lru-window' and
+/// `get-largest-window' treat dedicated windows specially.
+/// `delete-windows-on', `replace-buffer-in-windows', `quit-window',
+/// `quit-restore-window' and `kill-buffer' can delete a dedicated window
+/// and the containing frame.
+///
+/// As a special case, if FLAG is t, mark WINDOW as "strongly" dedicated to
+/// its buffer.  Functions like `set-window-buffer' may change the buffer
+/// displayed by a window, unless that window is strongly dedicated to its
+/// buffer.  If and when `set-window-buffer' displays another buffer in a
+/// window, it also makes sure that the window is no more dedicated.
+#[lisp_fn]
+pub fn set_window_dedicated_p(window: LispObject, flag: LispObject) -> LispObject {
+    window_live_or_selected(window).dedicated = flag;
+    flag
+}
+
+/// Return old value of point in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_old_point(window: LispObject) -> Option<EmacsInt> {
+    let win = window_live_or_selected(window);
+    marker_position_lisp(win.old_pointm.into())
+}
+
+/// Return the use time of window WINDOW.
+/// WINDOW must be a live window and defaults to the selected one. The
+/// window with the highest use time is the most recently selected
+/// one.  The window with the lowest use time is the least recently
+/// selected one.
+#[lisp_fn(min = "0")]
+pub fn window_use_time(window: LispObject) -> LispObject {
+    let use_time = window_live_or_selected(window).use_time;
+    LispObject::from(use_time)
+}
+
+/// Return buffers previously shown in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_prev_buffers(window: LispObject) -> LispObject {
+    window_live_or_selected(window).prev_buffers
+}
+
+/// Set WINDOW's previous buffers to PREV-BUFFERS.
+/// WINDOW must be a live window and defaults to the selected one.
+/// PREV-BUFFERS should be a list of elements (BUFFER WINDOW-START POS),
+/// where BUFFER is a buffer, WINDOW-START is the start position of the
+/// window for that buffer, and POS is a window-specific point value.
+#[lisp_fn]
+pub fn set_window_prev_buffers(window: LispObject, prev_buffers: LispObject) -> LispObject {
+    window_live_or_selected(window).prev_buffers = prev_buffers;
+    prev_buffers
+}
+
+/// Return list of buffers recently re-shown in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_next_buffers(window: LispObject) -> LispObject {
+    window_live_or_selected(window).next_buffers
+}
+
+/// Set WINDOW's next buffers to NEXT-BUFFERS.
+/// WINDOW must be a live window and defaults to the selected one.
+/// NEXT-BUFFERS should be a list of buffers.
+#[lisp_fn]
+pub fn set_window_next_buffers(window: LispObject, next_buffers: LispObject) -> LispObject {
+    window_live_or_selected(window).next_buffers = next_buffers;
+    next_buffers
+}
+
+/// Make point value in WINDOW be at position POS in WINDOW's buffer.
+/// WINDOW must be a live window and defaults to the selected one.
+/// Return POS.
+#[lisp_fn]
+pub fn set_window_point(window: LispObject, pos: LispObject) -> LispObject {
+    let mut w = window_live_or_selected(window);
+
+    // Type of POS is checked by Fgoto_char or set_marker_restricted ...
+    if w == selected_window().as_window_or_error() {
+        let mut current_buffer = ThreadState::current_buffer();
+
+        if w.contents()
+            .as_buffer()
+            .map_or(false, |b| b == current_buffer)
+        {
+            goto_char(pos);
+        } else {
+            // ... but here we want to catch type error before buffer change.
+            pos.as_number_coerce_marker_or_error();
+            unsafe {
+                set_buffer_internal(w.contents().as_buffer_or_error().as_mut());
+            }
+            goto_char(pos);
+            unsafe {
+                set_buffer_internal(current_buffer.as_mut());
+            }
+        }
+    } else {
+        set_marker_restricted(w.pointm, pos, w.contents());
+        // We have to make sure that redisplay updates the window to show
+        // the new value of point.
+        w.set_redisplay(true);
+    }
+    pos
+}
+
+/// Make display in WINDOW start at position POS in WINDOW's buffer.
+/// WINDOW must be a live window and defaults to the selected one.  Return
+/// POS.  Optional third arg NOFORCE non-nil inhibits next redisplay from
+/// overriding motion of point in order to display at this exact start.
+#[lisp_fn(min = "2")]
+pub fn set_window_start(window: LispObject, pos: LispObject, noforce: LispObject) -> LispObject {
+    let mut w = window_live_or_selected(window);
+    set_marker_restricted(w.start, pos, w.contents());
+    // This is not right, but much easier than doing what is right.
+    w.set_start_at_line_beg(false);
+    if noforce.is_nil() {
+        w.set_force_start(true);
+    }
+    unsafe {
+        wset_update_mode_line(w.as_mut());
+    }
+    // Bug#15957
+    w.set_window_end_valid(false);
+    unsafe { wset_redisplay(w.as_mut()) };
+    pos
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

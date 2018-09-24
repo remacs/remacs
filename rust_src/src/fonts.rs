@@ -2,10 +2,10 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
-use remacs_sys::font;
+use remacs_sys::{FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 use obarray::intern;
 use vectors::LispVectorlikeRef;
 
@@ -21,15 +21,15 @@ impl LispFontRef {
     }
 
     pub fn is_font_spec(&self) -> bool {
-        self.0.pseudovector_size() == EmacsInt::from(font::FONT_SPEC_MAX)
+        self.0.pseudovector_size() == EmacsInt::from(FONT_SPEC_MAX)
     }
 
     pub fn is_font_entity(&self) -> bool {
-        self.0.pseudovector_size() == EmacsInt::from(font::FONT_ENTITY_MAX)
+        self.0.pseudovector_size() == EmacsInt::from(FONT_ENTITY_MAX)
     }
 
     pub fn is_font_object(&self) -> bool {
-        self.0.pseudovector_size() == EmacsInt::from(font::FONT_OBJECT_MAX)
+        self.0.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
     }
 }
 
@@ -50,7 +50,7 @@ impl FontExtraType {
         } else if extra_type.eq(unsafe { Qfont_object }) {
             FontExtraType::Object
         } else {
-            wrong_type!(intern("font-extra-type").to_raw(), extra_type);
+            wrong_type!(intern("font-extra-type"), extra_type);
         }
     }
 }

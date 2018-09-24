@@ -952,7 +952,7 @@ have-tests:
 
 check check-maybe check-expensive: have-tests all
 	$(MAKE) -C test $@
-	$(CARGO_TEST) --manifest-path ${cargo_manifest}
+	$(MAKE) -C src $@
 
 dist:
 	cd ${srcdir}; ./make-dist

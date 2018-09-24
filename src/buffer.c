@@ -1066,28 +1066,6 @@ No argument or nil as argument means use current buffer as BUFFER.  */)
   return result;
 }
 
-DEFUN ("force-mode-line-update", Fforce_mode_line_update,
-       Sforce_mode_line_update, 0, 1, 0,
-       doc: /* Force redisplay of the current buffer's mode line and header line.
-With optional non-nil ALL, force redisplay of all mode lines and
-header lines.  This function also forces recomputation of the
-menu bar menus and the frame title.  */)
-     (Lisp_Object all)
-{
-  if (!NILP (all))
-    {
-      update_mode_lines = 10;
-      /* FIXME: This can't be right.  */
-      current_buffer->prevent_redisplay_optimizations_p = true;
-    }
-  else if (buffer_window_count (current_buffer))
-    {
-      bset_update_mode_line (current_buffer);
-      current_buffer->prevent_redisplay_optimizations_p = true;
-    }
-  return all;
-}
-
 DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, Sset_buffer_modified_p,
        1, 1, 0,
        doc: /* Mark current buffer as modified or unmodified according to FLAG.
@@ -5049,6 +5027,21 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
     emacs_abort ();
 }
 
+/* Similar to defvar_lisp but define a variable whose value is the
+   Lisp_Object stored in the current buffer.  LNAME is the Lisp-level
+   variable name.  VNAME is the name of the buffer slot.  PREDICATE
+   is nil for a general Lisp variable.  If PREDICATE is non-nil, then
+   only Lisp values that satisfies the PREDICATE are allowed (except
+   that nil is allowed too).  DOC is a dummy where you write the doc
+   string as a comment.  */
+
+#define DEFVAR_PER_BUFFER(lname, vname, predicate, doc)		\
+  do {								\
+    static struct Lisp_Buffer_Objfwd bo_fwd;			\
+    defvar_per_buffer (&bo_fwd, lname, vname, predicate);	\
+  } while (0)
+
+extern void rust_syms_of_buffer(void);
 
 /* Initialize the buffer routines.  */
 void
@@ -5097,12 +5090,7 @@ syms_of_buffer (void)
   Fput (Qprotected_field, Qerror_message,
 	build_pure_c_string ("Attempt to modify a protected field"));
 
-  DEFVAR_PER_BUFFER ("header-line-format",
-		     &BVAR (current_buffer, header_line_format),
-		     Qnil,
-		     doc: /* Analogous to `mode-line-format', but controls the header line.
-The header line appears, optionally, at the top of a window;
-the mode line appears at the bottom.  */);
+  rust_syms_of_buffer();
 
   DEFVAR_PER_BUFFER ("mode-line-format", &BVAR (current_buffer, mode_line_format),
 		     Qnil,
@@ -5870,7 +5858,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);
   defsubr (&Sbuffer_local_variables);
-  defsubr (&Sforce_mode_line_update);
   defsubr (&Sset_buffer_modified_p);
   defsubr (&Srename_buffer);
   defsubr (&Sother_buffer);
@@ -5906,23 +5893,8 @@ keys_of_buffer (void)
   initial_define_key (control_x_map, 'k', "kill-buffer");
 }
 
-
-/* Accessors for Rust */
-
-struct Lisp_Overlay*
-bget_overlays_before(const struct buffer *b)
+extern void
+set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
 {
-  return b->overlays_before;
-}
-
-struct Lisp_Overlay*
-bget_overlays_after(const struct buffer *b)
-{
-  return b->overlays_after;
-}
-
-void
-bset_markers (struct buffer *b, struct Lisp_Marker *m)
-{
-  b->text->markers = m;
+  *(Lisp_Object *)(offset + (char *) b) = value;
 }

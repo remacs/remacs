@@ -95,5 +95,25 @@
   (should (equal "insert" (subr-name (symbol-function 'insert))))
   (should (equal "equal" (subr-name (symbol-function 'equal)))))
 
+(ert-deftest data-test--subr-lang ()
+  (should-error (subr-lang 'insert))
+  (should (equal "Rust" (subr-lang (symbol-function 'eval))))
+  ;; If this C function is ported to Rust, replace it with another C
+  ;; function. If there are no more C functions, then delete these
+  ;; tests, delete `subr-lang', and celebrate :)
+  (should (equal "C" (subr-lang (symbol-function 'menu-bar-menu-at-x-y)))))
+
+(ert-deftest data-test--subr-lang-fail ()
+  ;; `rename-buffer' is a primitive function that is advised by
+  ;; default (by `uniquify'), confusing `subr-lang'.
+  :expected-result :failed
+  (should (equal "C" (subr-lang (symbol-function 'rename-buffer)))))
+
+(ert-deftest data-test--describe-function-smoke-fail ()
+  ;; `describe-function' relies on `subr-lang' in its implementation,
+  ;; so run it here to make sure that it works.
+  :expected-result :failed
+  (describe-function 'rename-buffer))
+
 (provide 'data-tests)
 ;;; data-tests.el ends here

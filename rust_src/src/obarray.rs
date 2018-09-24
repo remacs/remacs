@@ -2,13 +2,13 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
+use remacs_sys::Qvectorp;
 use remacs_sys::{fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
                  make_pure_c_string, make_unibyte_string, oblookup};
-use remacs_sys::Qvectorp;
+use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 
 /// A lisp object containing an `obarray`.
 pub struct LispObarrayRef(LispObject);
@@ -20,7 +20,7 @@ impl LispObarrayRef {
 
     /// Return a reference to the Lisp variable `obarray`.
     pub fn global() -> LispObarrayRef {
-        LispObarrayRef(check_obarray(unsafe { globals.f_Vobarray }))
+        LispObarrayRef(check_obarray(unsafe { globals.Vobarray }))
     }
 
     pub fn as_lisp_obj(&self) -> LispObject {
@@ -35,7 +35,7 @@ impl LispObarrayRef {
         let obj = self.as_lisp_obj();
         unsafe {
             oblookup(
-                obj.to_raw(),
+                obj,
                 string.const_sdata_ptr(),
                 string.len_chars(),
                 string.len_bytes(),
@@ -52,16 +52,12 @@ impl LispObarrayRef {
         let obj = self.as_lisp_obj();
         if tem.is_symbol() {
             tem
-        } else if unsafe { globals.f_Vpurify_flag }.is_not_nil() {
+        } else if unsafe { globals.Vpurify_flag }.is_not_nil() {
             // When Emacs is running lisp code to dump to an executable, make
             // use of pure storage.
-            intern_driver(
-                unsafe { Fpurecopy(string.to_raw()) },
-                obj.to_raw(),
-                tem.to_raw(),
-            )
+            intern_driver(unsafe { Fpurecopy(string) }, obj, tem)
         } else {
-            intern_driver(string.to_raw(), obj.to_raw(), tem.to_raw())
+            intern_driver(string, obj, tem)
         }
     }
 }
@@ -79,7 +75,7 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
 pub extern "C" fn loadhist_attach(x: LispObject) {
     unsafe {
         if initialized {
-            globals.f_Vcurrent_load_list = Fcons(x, globals.f_Vcurrent_load_list);
+            globals.Vcurrent_load_list = Fcons(x, globals.Vcurrent_load_list);
         }
     }
 }
@@ -99,8 +95,8 @@ pub extern "C" fn check_obarray(obarray: LispObject) -> LispObject {
     let v = obarray.as_vector();
     if v.map_or(0, |v_1| v_1.len()) == 0 {
         // If Vobarray is now invalid, force it to be valid.
-        if unsafe { globals.f_Vobarray }.eq(obarray) {
-            unsafe { globals.f_Vobarray = initial_obarray };
+        if unsafe { globals.Vobarray }.eq(obarray) {
+            unsafe { globals.Vobarray = initial_obarray };
         }
         wrong_type!(Qvectorp, obarray);
     }
@@ -118,7 +114,7 @@ pub extern "C" fn map_obarray(
     for item in v.iter().rev() {
         if let Some(sym) = item.as_symbol() {
             for s in sym.iter() {
-                func(s.as_lisp_obj().to_raw(), arg);
+                func(s.as_lisp_obj(), arg);
             }
         }
     }
@@ -128,19 +124,15 @@ pub extern "C" fn map_obarray(
 /// current obarray.
 #[no_mangle]
 pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
-    let obarray = LispObarrayRef::global().as_lisp_obj().to_raw();
+    let obarray = LispObarrayRef::global().as_lisp_obj();
     let tem = unsafe { oblookup(obarray, s, len, len) };
 
     if tem.is_symbol() {
-        tem.to_raw()
+        tem
     } else {
         // The above `oblookup' was done on the basis of nchars==nbytes, so
         // the string has to be unibyte.
-        intern_driver(
-            unsafe { make_unibyte_string(s, len) },
-            obarray,
-            tem.to_raw(),
-        )
+        intern_driver(unsafe { make_unibyte_string(s, len) }, obarray, tem)
     }
 }
 
@@ -148,16 +140,16 @@ pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> Lisp
 /// interned in the current obarray.
 #[no_mangle]
 pub extern "C" fn intern_c_string_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
-    let obarray = LispObarrayRef::global().as_lisp_obj().to_raw();
+    let obarray = LispObarrayRef::global().as_lisp_obj();
     let tem = unsafe { oblookup(obarray, s, len, len) };
 
     if tem.is_symbol() {
-        tem.to_raw()
+        tem
     } else {
         // Creating a non-pure string from a string literal not implemented yet.
         // We could just use make_string here and live with the extra copy.
-        assert!(unsafe { globals.f_Vpurify_flag }.is_not_nil());
-        intern_driver(unsafe { make_pure_c_string(s, len) }, obarray, tem.to_raw())
+        assert!(unsafe { globals.Vpurify_flag }.is_not_nil());
+        intern_driver(unsafe { make_pure_c_string(s, len) }, obarray, tem)
     }
 }
 
@@ -213,11 +205,7 @@ extern "C" fn mapatoms_1(sym: LispObject, function: LispObject) {
 pub fn mapatoms(function: LispObject, obarray: Option<LispObarrayRef>) -> () {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
 
-    map_obarray(
-        obarray.as_lisp_obj().to_raw(),
-        mapatoms_1,
-        function.to_raw(),
-    );
+    map_obarray(obarray.as_lisp_obj(), mapatoms_1, function);
 }
 
 include!(concat!(env!("OUT_DIR"), "/obarray_exports.rs"));

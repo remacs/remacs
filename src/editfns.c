@@ -75,11 +75,6 @@ static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
-void
-find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
-	    Lisp_Object beg_limit,
-	    ptrdiff_t *beg, Lisp_Object end_limit, ptrdiff_t *end);
-
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
 #endif
@@ -321,13 +316,6 @@ init_editfns (bool dumping)
 #else
   Voperating_system_release = Qnil;
 #endif
-}
-
-DEFUN ("point-marker", Fpoint_marker, Spoint_marker, 0, 0, 0,
-       doc: /* Return value of point, as a marker object.  */)
-  (void)
-{
-  return build_marker (current_buffer, PT, PT_BYTE);
 }
 
 /* Find all the overlays in the current buffer that touch position POS.
@@ -726,69 +714,6 @@ usage: (save-current-buffer &rest BODY)  */)
 
   record_unwind_current_buffer ();
   return unbind_to (count, Fprogn (args));
-}
-
-DEFUN ("point-min-marker", Fpoint_min_marker, Spoint_min_marker, 0, 0, 0,
-       doc: /* Return a marker to the minimum permissible value of point in this buffer.
-This is the beginning, unless narrowing (a buffer restriction) is in effect.  */)
-  (void)
-{
-  return build_marker (current_buffer, BEGV, BEGV_BYTE);
-}
-
-DEFUN ("point-max-marker", Fpoint_max_marker, Spoint_max_marker, 0, 0, 0,
-       doc: /* Return a marker to the maximum permissible value of point in this buffer.
-This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
-is in effect, in which case it is less.  */)
-  (void)
-{
-  return build_marker (current_buffer, ZV, ZV_BYTE);
-}
-
-
-DEFUN ("char-before", Fchar_before, Schar_before, 0, 1, 0,
-       doc: /* Return character in current buffer preceding position POS.
-POS is an integer or a marker and defaults to point.
-If POS is out of range, the value is nil.  */)
-  (Lisp_Object pos)
-{
-  register Lisp_Object val;
-  register ptrdiff_t pos_byte;
-
-  if (NILP (pos))
-    {
-      pos_byte = PT_BYTE;
-      XSETFASTINT (pos, PT);
-    }
-
-  if (MARKERP (pos))
-    {
-      pos_byte = marker_byte_position (pos);
-
-      if (pos_byte <= BEGV_BYTE || pos_byte > ZV_BYTE)
-	return Qnil;
-    }
-  else
-    {
-      CHECK_NUMBER_COERCE_MARKER (pos);
-
-      if (XINT (pos) <= BEGV || XINT (pos) > ZV)
-	return Qnil;
-
-      pos_byte = CHAR_TO_BYTE (XINT (pos));
-    }
-
-  if (!NILP (BVAR (current_buffer, enable_multibyte_characters)))
-    {
-      DEC_POS (pos_byte);
-      XSETFASTINT (val, FETCH_CHAR (pos_byte));
-    }
-  else
-    {
-      pos_byte--;
-      XSETFASTINT (val, FETCH_BYTE (pos_byte));
-    }
-   return val;
 }
 
 DEFUN ("user-login-name", Fuser_login_name, Suser_login_name, 0, 1, 0,
@@ -4508,8 +4433,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sbuffer_string);
   defsubr (&Sget_pos_property);
 
-  defsubr (&Spoint_marker);
-
   /* Symbol for the text property used to mark fields.  */
   DEFSYM (Qfield, "field");
 
@@ -4523,10 +4446,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
 
-  defsubr (&Spoint_min_marker);
-  defsubr (&Spoint_max_marker);
-
-  defsubr (&Schar_before);
   defsubr (&Sinsert);
   defsubr (&Sinsert_before_markers);
   defsubr (&Sinsert_and_inherit);

@@ -6,8 +6,8 @@ use std::sync::Mutex;
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, INTMASK};
 
-use lisp::LispObject;
 use lisp::defsubr;
+use lisp::LispObject;
 
 lazy_static! {
     static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
@@ -80,7 +80,7 @@ pub fn random(limit: LispObject) -> LispObject {
             let val: EmacsInt = rng.gen();
             let remainder = val.abs() % limit;
             if val - remainder <= INTMASK - limit + 1 {
-                return LispObject::from_fixnum(remainder);
+                return LispObject::from(remainder);
             }
         }
     } else {

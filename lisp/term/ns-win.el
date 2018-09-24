@@ -741,18 +741,20 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
 ;; FIXME: This doesn't look right.  Is there a better way to do this
 ;; that keeps customize happy?
-(let ((appkit-version (progn
-                        (string-match "^appkit-\\([^\s-]*\\)" ns-version-string)
-                        (string-to-number (match-string 1 ns-version-string)))))
-  ;; Appkit 1138 ~= macOS 10.7.
-  (when (and (featurep 'cocoa) (>= appkit-version 1138))
-    (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control))))
-    (put 'mouse-wheel-scroll-amount 'customized-value
-         (list (custom-quote (symbol-value 'mouse-wheel-scroll-amount))))
+(when (featurep 'cocoa)
+  (let ((appkit-version
+         (progn (string-match "^appkit-\\([^\s-]*\\)" ns-version-string)
+                (string-to-number (match-string 1 ns-version-string)))))
+    ;; Appkit 1138 ~= macOS 10.7.
+    (when (>= appkit-version 1138)
+      (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control))))
+      (put 'mouse-wheel-scroll-amount 'customized-value
+           (list (custom-quote (symbol-value 'mouse-wheel-scroll-amount))))
 
-    (setq mouse-wheel-progressive-speed nil)
-    (put 'mouse-wheel-progressive-speed 'customized-value
-         (list (custom-quote (symbol-value 'mouse-wheel-progressive-speed))))))
+      (setq mouse-wheel-progressive-speed nil)
+      (put 'mouse-wheel-progressive-speed 'customized-value
+           (list (custom-quote
+                  (symbol-value 'mouse-wheel-progressive-speed)))))))
 
 
 ;;;; Color support.

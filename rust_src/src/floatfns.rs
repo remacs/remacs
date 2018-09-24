@@ -10,8 +10,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qarith_error, Qinteger_or_marker_p, Qnumberp, Qrange_error};
 
-use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
+use lisp::{LispNumber, LispObject};
 use math::ArithOp;
 
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
@@ -40,7 +40,7 @@ macro_rules! simple_float_op {
         fn $float_func(arg: EmacsDouble) -> EmacsDouble {
             arg.$float_func()
         }
-    }
+    };
 }
 
 simple_float_op!("acos", acos, "Return the inverse cosine of ARG.");
@@ -83,9 +83,6 @@ pub fn float_arith_driver(
             ArithOp::Div => if args.len() > 1 && argnum == 0 {
                 accum = next;
             } else {
-                if next == 0. {
-                    xsignal!(Qarith_error);
-                }
                 accum /= next;
             },
             ArithOp::Logand | ArithOp::Logior | ArithOp::Logxor => {
@@ -198,7 +195,7 @@ pub fn frexp(x: EmacsDouble) -> LispObject {
     let (significand, exponent) = libm::frexp(x);
     LispObject::cons(
         LispObject::from_float(significand),
-        LispObject::from_fixnum(EmacsInt::from(exponent)),
+        LispObject::from(exponent),
     )
 }
 
@@ -214,7 +211,7 @@ pub fn ldexp(significand: EmacsDouble, exponent: EmacsInt) -> EmacsDouble {
 pub fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
     if let (Some(x), Some(y)) = (arg1.as_fixnum(), arg2.as_fixnum()) {
         if y >= 0 && y <= EmacsInt::from(u32::max_value()) {
-            return LispObject::from_fixnum(x.pow(y as u32));
+            return LispObject::from(x.pow(y as u32));
         }
     }
     let b = arg1.any_to_float_or_error();

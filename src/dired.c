@@ -47,8 +47,31 @@ extern int is_slow_fs (const char *);
 #endif
 
 static ptrdiff_t scmp (const char *, const char *, ptrdiff_t);
-static Lisp_Object file_attributes (int, char const *, Lisp_Object,
-				    Lisp_Object, Lisp_Object);
+static Lisp_Object file_attributes_static (int, char const *, Lisp_Object,
+					   Lisp_Object, Lisp_Object);
+
+#ifndef WINDOWSNT
+extern Lisp_Object file_attributes(Lisp_Object, Lisp_Object);
+
+extern Lisp_Object file_attributes_rust_internal (Lisp_Object,
+						  Lisp_Object,
+						  Lisp_Object);
+
+Lisp_Object file_attributes_c_internal (char const *,
+					Lisp_Object,
+					Lisp_Object,
+					Lisp_Object);
+Lisp_Object filemode_string(Lisp_Object);
+#endif
+
+#ifdef WINDOWSNT
+Lisp_Object directory_files_c(Lisp_Object, Lisp_Object, Lisp_Object,
+			      Lisp_Object);
+Lisp_Object directory_files_and_attributes_c(Lisp_Object, Lisp_Object,
+					     Lisp_Object, Lisp_Object,
+					     Lisp_Object);
+Lisp_Object file_attributes_c(Lisp_Object, Lisp_Object);
+#endif
 
 /* Return the number of bytes in DP's name.  */
 static ptrdiff_t
@@ -160,6 +183,7 @@ read_dirent (DIR *dir, Lisp_Object dirname)
    if ATTRS, return a list of directory filenames and their attributes.
    In the latter case, pass ID_FORMAT to file_attributes.  */
 
+#ifdef WINDOWSNT
 Lisp_Object
 directory_files_internal (Lisp_Object directory, Lisp_Object full,
 			  Lisp_Object match, Lisp_Object nosort, bool attrs,
@@ -300,8 +324,13 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 
 	  if (attrs)
 	    {
+#ifdef WINDOWSNT
 	      Lisp_Object fileattrs
-		= file_attributes (fd, dp->d_name, directory, name, id_format);
+		= file_attributes_static (fd, dp->d_name, directory, name, id_format);
+#else
+	      Lisp_Object fileattrs
+		= file_attributes_rust_internal (directory, name, id_format);
+#endif
 	      list = Fcons (Fcons (finalname, fileattrs), list);
 	    }
 	  else
@@ -325,18 +354,12 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   (void) directory_volatile;
   return list;
 }
+#endif /* WINDOWSNT*/
 
-
-DEFUN ("directory-files", Fdirectory_files, Sdirectory_files, 1, 4, 0,
-       doc: /* Return a list of names of files in DIRECTORY.
-There are three optional arguments:
-If FULL is non-nil, return absolute file names.  Otherwise return names
- that are relative to the specified directory.
-If MATCH is non-nil, mention only file names that match the regexp MATCH.
-If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
- Otherwise, the list returned is sorted with `string-lessp'.
- NOSORT is useful if you plan to sort the result yourself.  */)
-  (Lisp_Object directory, Lisp_Object full, Lisp_Object match, Lisp_Object nosort)
+#ifdef WINDOWSNT
+Lisp_Object
+directory_files_c(Lisp_Object directory, Lisp_Object full,
+		  Lisp_Object match, Lisp_Object nosort)
 {
   Lisp_Object handler;
   directory = Fexpand_file_name (directory, Qnil);
@@ -350,21 +373,13 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 
   return directory_files_internal (directory, full, match, nosort, false, Qnil);
 }
+#endif
 
-DEFUN ("directory-files-and-attributes", Fdirectory_files_and_attributes,
-       Sdirectory_files_and_attributes, 1, 5, 0,
-       doc: /* Return a list of names of files and their attributes in DIRECTORY.
-There are four optional arguments:
-If FULL is non-nil, return absolute file names.  Otherwise return names
- that are relative to the specified directory.
-If MATCH is non-nil, mention only file names that match the regexp MATCH.
-If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
- NOSORT is useful if you plan to sort the result yourself.
-ID-FORMAT specifies the preferred format of attributes uid and gid, see
-`file-attributes' for further documentation.
-On MS-Windows, performance depends on `w32-get-true-file-attributes',
-which see.  */)
-  (Lisp_Object directory, Lisp_Object full, Lisp_Object match, Lisp_Object nosort, Lisp_Object id_format)
+#ifdef WINDOWSNT
+Lisp_Object
+directory_files_and_attributes_c(Lisp_Object directory, Lisp_Object full,
+				 Lisp_Object match, Lisp_Object nosort,
+				 Lisp_Object id_format)
 {
   Lisp_Object handler;
   directory = Fexpand_file_name (directory, Qnil);
@@ -379,6 +394,8 @@ which see.  */)
   return directory_files_internal (directory, full, match, nosort,
 				   true, id_format);
 }
+#endif
+
 
 
 static Lisp_Object file_name_completion (Lisp_Object, Lisp_Object, bool,
@@ -848,57 +865,9 @@ stat_gname (struct stat *st)
 #endif
 }
 
-DEFUN ("file-attributes", Ffile_attributes, Sfile_attributes, 1, 2, 0,
-       doc: /* Return a list of attributes of file FILENAME.
-Value is nil if specified file cannot be opened.
-
-ID-FORMAT specifies the preferred format of attributes uid and gid (see
-below) - valid values are `string' and `integer'.  The latter is the
-default, but we plan to change that, so you should specify a non-nil value
-for ID-FORMAT if you use the returned uid or gid.
-
-To access the elements returned, the following access functions are
-provided: `file-attribute-type', `file-attribute-link-number',
-`file-attribute-user-id', `file-attribute-group-id',
-`file-attribute-access-time', `file-attribute-modification-time',
-`file-attribute-status-change-time', `file-attribute-size',
-`file-attribute-modes', `file-attribute-inode-number', and
-`file-attribute-device-number'.
-
-Elements of the attribute list are:
- 0. t for directory, string (name linked to) for symbolic link, or nil.
- 1. Number of links to file.
- 2. File uid as a string or a number.  If a string value cannot be
-  looked up, a numeric value, either an integer or a float, is returned.
- 3. File gid, likewise.
- 4. Last access time, as a list of integers (HIGH LOW USEC PSEC) in the
-  same style as (current-time).
-  (See a note below about access time on FAT-based filesystems.)
- 5. Last modification time, likewise.  This is the time of the last
-  change to the file's contents.
- 6. Last status change time, likewise.  This is the time of last change
-  to the file's attributes: owner and group, access mode bits, etc.
- 7. Size in bytes.
-  This is a floating point number if the size is too large for an integer.
- 8. File modes, as a string of ten letters or dashes as in ls -l.
- 9. An unspecified value, present only for backward compatibility.
-10. inode number.  If it is larger than what an Emacs integer can hold,
-  this is of the form (HIGH . LOW): first the high bits, then the low 16 bits.
-  If even HIGH is too large for an Emacs integer, this is instead of the form
-  (HIGH MIDDLE . LOW): first the high bits, then the middle 24 bits,
-  and finally the low 16 bits.
-11. Filesystem device number.  If it is larger than what the Emacs
-  integer can hold, this is a cons cell, similar to the inode number.
-
-On most filesystems, the combination of the inode and the device
-number uniquely identifies the file.
-
-On MS-Windows, performance depends on `w32-get-true-file-attributes',
-which see.
-
-On some FAT-based filesystems, only the date of last access is recorded,
-so last access time will always be midnight of that day.  */)
-  (Lisp_Object filename, Lisp_Object id_format)
+#ifdef WINDOWSNT
+Lisp_Object
+file_attributes_c(Lisp_Object filename, Lisp_Object id_format)
 {
   Lisp_Object encoded;
   Lisp_Object handler;
@@ -921,12 +890,14 @@ so last access time will always be midnight of that day.  */)
     }
 
   encoded = ENCODE_FILE (filename);
-  return file_attributes (AT_FDCWD, SSDATA (encoded), Qnil, filename,
-			  id_format);
+  return file_attributes_static (AT_FDCWD, SSDATA (encoded), Qnil, filename,
+				 id_format);
 }
+#endif /* WINDOWSNT */
+
 
 static Lisp_Object
-file_attributes (int fd, char const *name,
+file_attributes_static (int fd, char const *name,
 		 Lisp_Object dirname, Lisp_Object filename,
 		 Lisp_Object id_format)
 {
@@ -1029,14 +1000,56 @@ file_attributes (int fd, char const *name,
 		INTEGER_TO_CONS (s.st_dev));
 }
 
-DEFUN ("file-attributes-lessp", Ffile_attributes_lessp, Sfile_attributes_lessp, 2, 2, 0,
-       doc: /* Return t if first arg file attributes list is less than second.
-Comparison is in lexicographic order and case is significant.  */)
-  (Lisp_Object f1, Lisp_Object f2)
+#ifndef WINDOWSNT
+Lisp_Object
+file_attributes_c_internal (char const *name,
+			    Lisp_Object dirname, Lisp_Object filename,
+			    Lisp_Object id_format)
 {
-  return Fstring_lessp (Fcar (f1), Fcar (f2));
+  return file_attributes_static(AT_FDCWD, name,
+				dirname, filename,
+				id_format);
 }
+#endif /* !WINDOWSNT */
 
+
+#ifndef WINDOWSNT
+/*
+ * (temp) Filemode support for Remacs
+ */
+
+static Lisp_Object
+filemode_string_core (int fd, char const *name)
+{
+  struct stat s;
+  int lstat_result;
+
+  /* An array to hold the mode string generated by filemodestring, 
+     including its terminating space and null byte.  */
+  char modes[sizeof "-rwxr-xr-x "];
+
+  lstat_result = fstatat (fd, name, &s, AT_SYMLINK_NOFOLLOW);
+
+  if (lstat_result < 0)
+    return Qnil;
+
+  filemodestring (&s, modes);
+
+  return make_string(modes, 10);
+}
+
+Lisp_Object
+filemode_string (Lisp_Object filename)
+{
+  Lisp_Object encoded;
+  filename = internal_condition_case_2 (Fexpand_file_name, filename, Qnil,
+					Qt, Fidentity);
+  if (!STRINGP (filename))
+    return Qnil;
+  encoded = ENCODE_FILE (filename);
+  return filemode_string_core (AT_FDCWD, SSDATA (encoded));
+}
+#endif /* !WINDOWSNT */
 
 DEFUN ("system-groups", Fsystem_groups, Ssystem_groups, 0, 0, 0,
        doc: /* Return a list of user group names currently registered in the system.
@@ -1067,12 +1080,8 @@ syms_of_dired (void)
   DEFSYM (Qdefault_directory, "default-directory");
   DEFSYM (Qdecomposed_characters, "decomposed-characters");
 
-  defsubr (&Sdirectory_files);
-  defsubr (&Sdirectory_files_and_attributes);
   defsubr (&Sfile_name_completion);
   defsubr (&Sfile_name_all_completions);
-  defsubr (&Sfile_attributes);
-  defsubr (&Sfile_attributes_lessp);
   defsubr (&Ssystem_groups);
 
   DEFVAR_LISP ("completion-ignored-extensions", Vcompletion_ignored_extensions,

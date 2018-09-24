@@ -453,9 +453,7 @@ enum Lisp_Misc_Type
     Lisp_Misc_Overlay,
     Lisp_Misc_Save_Value,
     Lisp_Misc_Finalizer,
-#ifdef HAVE_MODULES
     Lisp_Misc_User_Ptr,
-#endif
     /* This is not a type code.  It is for range checking.  */
     Lisp_Misc_Limit
   };
@@ -1796,7 +1794,7 @@ struct Lisp_Subr
     const char *symbol_name;
     const char *intspec;
     EMACS_INT doc;
-    int lang;
+    enum Lisp_Subr_Lang lang;
   };
 
 INLINE bool
@@ -2176,34 +2174,6 @@ struct Lisp_Marker
   ptrdiff_t bytepos;
 };
 
-/* Accessors to enable Rust code to get data from the Lisp_Marker struct */
-
-bool_bf
-mget_insertion_type(const struct Lisp_Marker *m);
-
-void
-mset_insertion_type(struct Lisp_Marker *m, bool_bf val);
-
-struct Lisp_Marker*
-mget_next_marker (struct Lisp_Marker *m);
-
-void
-mset_next_marker(struct Lisp_Marker *m, struct Lisp_Marker *n);
-
-struct buffer*
-mget_buffer (struct Lisp_Marker *m);
-
-void
-mset_buffer(struct Lisp_Marker *m, struct buffer *b);
-
-ptrdiff_t
-mget_charpos (struct Lisp_Marker *m);
-
-ptrdiff_t
-mget_bytepos (struct Lisp_Marker *m);
-
-/* End Rust Accessors */
-
 /* START and END are markers in the overlay's buffer, and
    PLIST is the overlay's property list.  */
 struct Lisp_Overlay
@@ -2534,7 +2504,7 @@ struct Lisp_Objfwd
 struct Lisp_Buffer_Objfwd
   {
     enum Lisp_Fwd_Type type;	/* = Lisp_Fwd_Buffer_Obj */
-    int offset;
+    size_t offset;
     /* One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.  */
     Lisp_Object predicate;
   };
@@ -2591,7 +2561,7 @@ struct Lisp_Buffer_Local_Value
 struct Lisp_Kboard_Objfwd
   {
     enum Lisp_Fwd_Type type;	/* = Lisp_Fwd_Kboard_Obj */
-    int offset;
+    size_t offset;
   };
 
 union Lisp_Fwd
@@ -3241,6 +3211,12 @@ INLINE enum symbol_redirect
 get_symbol_redirect(const struct Lisp_Symbol *sym)
 {
   return sym->redirect;
+}
+
+INLINE void
+set_symbol_redirect(struct Lisp_Symbol *sym, enum symbol_redirect v)
+{
+  sym->redirect = v;
 }
 
 INLINE void
@@ -4445,11 +4421,6 @@ extern void xml_cleanup_parser (void);
 #ifdef HAVE_LCMS2
 /* Defined in lcms.c.  */
 extern void syms_of_lcms2 (void);
-#endif
-
-#ifdef HAVE_ZLIB
-/* Defined in decompress.c.  */
-extern void syms_of_decompress (void);
 #endif
 
 #ifdef HAVE_DBUS

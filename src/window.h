@@ -398,16 +398,6 @@ struct window
     ptrdiff_t window_end_bytepos;
   };
 
-/* Accessors to enable Rust code to get data from the window struct */
-
-Lisp_Object
-wget_window_parameters(const struct window *w);
-
-void
-wset_window_parameters (struct window *w, Lisp_Object val);
-
-
-
 Lisp_Object
 window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames);
 
