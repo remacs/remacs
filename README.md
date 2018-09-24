@@ -164,16 +164,19 @@ more Emacs-y.
 
     On macOS, you'll need libxml2 (via `xcode-select --install`) and
     gnutls (via `brew install gnutls`).
-    
-    On macOS, the default `makeinfo` command in outdated, you'll need 
+
+    On macOS, the default `makeinfo` command is outdated, you'll need
     to update it (via `brew install texinfo`). To use the installed
-    version of `makeinfo` instead of the built in (`/usr/bin/makeinfo`)
+    version of `makeinfo` instead of the built-in (`/usr/bin/makeinfo`)
     one, you'll need to make sure `/usr/local/opt/texinfo/bin` is
     before `/usr/bin` in `PATH`.
 
 #### Dockerized development environment
 
-If you don't want to bother with the above setup you can use the provided docker environment.  Make sure you have [docker](https://www.docker.com/) 1.12+ and [docker-compose](https://github.com/docker/compose) 1.8+ available.
+If you don't want to bother with the above setup you can use the
+provided docker environment. Make sure you have
+[docker](https://www.docker.com/) 1.12+ and
+[docker-compose](https://github.com/docker/compose) 1.8+ available.
 
 To spin up the environment run
 
@@ -368,8 +371,8 @@ $ make rustfmt
 
 ### Running tests
 
-Run elisp and Rust tests in toplevel directory. If run in a subdirectory, 
-only run the tests in that directory.
+Run elisp and Rust tests in the toplevel directory. If run in a subdirectory,
+only the tests that directory will be run.
 
 * `make check`
   Run all tests as defined in the directory. Expensive tests are
@@ -377,7 +380,7 @@ only run the tests in that directory.
   <filename>.log.
 
 * `make check-maybe`
-  Like "make check", but run only the tests for files that have been 
+  Like "make check", but run only the tests for files that have been
   modified since the last build.
 
 ## Design Goals
