@@ -3827,7 +3827,8 @@ interactively, this is t."
             ;; No output; error?
               (let ((output
                      (if (and error-file
-                              (< 0 (nth 7 (file-attributes error-file))))
+                              (< 0 (file-attribute-size
+				    (file-attributes error-file))))
                          (format "some error output%s"
                                  (if shell-command-default-error-buffer
                                      (format " to the \"%s\" buffer"
@@ -3850,7 +3851,7 @@ interactively, this is t."
               )))))
 
     (when (and error-file (file-exists-p error-file))
-      (if (< 0 (nth 7 (file-attributes error-file)))
+      (if (< 0 (file-attribute-size (file-attributes error-file)))
 	  (with-current-buffer (get-buffer-create error-buffer)
 	    (let ((pos-from-end (- (point-max) (point))))
 	      (or (bobp)

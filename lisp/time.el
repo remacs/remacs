@@ -365,7 +365,8 @@ Switches from the 1 to 5 to 15 minute load average, and then back to 1."
     (while (and mail-files (= size 0))
       ;; Count size of regular files only.
       (setq size (+ size (or (and (file-regular-p (car mail-files))
-				  (nth 7 (file-attributes (car mail-files))))
+				  (file-attribute-size
+				   (file-attributes (car mail-files))))
 			     0)))
       (setq mail-files (cdr mail-files)))
     (if (> size 0)
@@ -483,7 +484,8 @@ update which can wait for the next redisplay."
 (defun display-time-file-nonempty-p (file)
   (let ((remote-file-name-inhibit-cache (- display-time-interval 5)))
     (and (file-exists-p file)
-	 (< 0 (nth 7 (file-attributes (file-chase-links file)))))))
+	 (< 0 (file-attribute-size
+	       (file-attributes (file-chase-links file)))))))
 
 ;;;###autoload
 (define-minor-mode display-time-mode

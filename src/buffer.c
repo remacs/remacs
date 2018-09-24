@@ -6010,11 +6010,11 @@ An entry (TEXT . POSITION) represents the deletion of the string TEXT
 from (abs POSITION).  If POSITION is positive, point was at the front
 of the text being deleted; if negative, point was at the end.
 
-An entry (t HIGH LOW USEC PSEC) indicates that the buffer was previously
-unmodified; (HIGH LOW USEC PSEC) is in the same style as (current-time)
-and is the visited file's modification time, as of that time.  If the
-modification time of the most recent save is different, this entry is
-obsolete.
+An entry (t . TIMESTAMP), where TIMESTAMP is in the style of
+`current-time', indicates that the buffer was previously unmodified;
+TIMESTAMP is the visited file's modification time, as of that time.
+If the modification time of the most recent save is different, this
+entry is obsolete.
 
 An entry (t . 0) means the buffer was previously unmodified but
 its time stamp was unknown because it was not associated with a file.

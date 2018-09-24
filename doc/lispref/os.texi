@@ -1991,8 +1991,7 @@ the idleness time, as described below.
 
 @defun current-idle-time
 If Emacs is idle, this function returns the length of time Emacs has
-been idle, as a list of four integers: @code{(@var{sec-high}
-@var{sec-low} @var{microsec} @var{picosec})}, using the same format as
+been idle, using the same format as
 @code{current-time} (@pxref{Time of Day}).
 
 When Emacs is not idle, @code{current-idle-time} returns @code{nil}.

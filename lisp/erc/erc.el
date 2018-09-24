@@ -6040,8 +6040,7 @@ non-nil value is found.
 ;; time routines
 
 (defun erc-string-to-emacs-time (string)
-  "Convert the long number represented by STRING into an Emacs format.
-Returns a list of the form (HIGH LOW), compatible with Emacs time format."
+  "Convert the long number represented by STRING into an Emacs timestamp."
   (let* ((n (string-to-number (concat string ".0"))))
     (list (truncate (/ n 65536))
           (truncate (mod n 65536)))))

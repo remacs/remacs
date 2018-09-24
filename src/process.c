@@ -7934,8 +7934,7 @@ integer or floating point values.
  majflt  -- number of major page faults (number)
  cminflt -- cumulative number of minor page faults (number)
  cmajflt -- cumulative number of major page faults (number)
- utime   -- user time used by the process, in (current-time) format,
-              which is a list of integers (HIGH LOW USEC PSEC)
+ utime   -- user time used by the process, in `current-time' format
  stime   -- system time used by the process (current-time)
  time    -- sum of utime and stime (current-time)
  cutime  -- user time used by the process and its children (current-time)
@@ -7947,7 +7946,7 @@ integer or floating point values.
  start   -- time the process started (current-time)
  vsize   -- virtual memory size of the process in KB's (number)
  rss     -- resident set size of the process in KB's (number)
- etime   -- elapsed time the process is running, in (HIGH LOW USEC PSEC) format
+ etime   -- elapsed time the process is running (current-time)
  pcpu    -- percents of CPU time used by the process (floating-point number)
  pmem    -- percents of total physical memory used by process's resident set
               (floating-point number)

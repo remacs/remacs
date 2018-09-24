@@ -1152,7 +1152,8 @@ consecutive checks.  For example:
   (defun display-time-file-nonempty-p (file)
     (let ((remote-file-name-inhibit-cache (- display-time-interval 5)))
       (and (file-exists-p file)
-           (< 0 (nth 7 (file-attributes (file-chase-links file)))))))"
+           (< 0 (file-attribute-size
+                 (file-attributes (file-chase-links file)))))))"
   :group 'files
   :version "24.1"
   :type `(choice
@@ -2155,10 +2156,10 @@ the various files."
 	;; Check to see if the file looks uncommonly large.
 	(when (not (or buf nowarn))
           (when (eq (abort-if-file-too-large
-                     (nth 7 attributes) "open" filename t)
+                     (file-attribute-size attributes) "open" filename t)
                     'raw)
             (setf rawfile t))
-	  (warn-maybe-out-of-memory (nth 7 attributes)))
+	  (warn-maybe-out-of-memory (file-attribute-size attributes)))
 	(if buf
 	    ;; We are using an existing buffer.
 	    (let (nonexistent)
@@ -2372,7 +2373,8 @@ This function ensures that none of these modifications will take place."
       (signal 'file-error (list "Opening input file" "Is a directory"
                                 filename)))
   ;; Check whether the file is uncommonly large
-  (abort-if-file-too-large (nth 7 (file-attributes filename)) "insert" filename)
+  (abort-if-file-too-large (file-attribute-size (file-attributes filename))
+			   "insert" filename)
   (let* ((buffer (find-buffer-visiting (abbreviate-file-name (file-truename filename))
                                        #'buffer-modified-p))
          (tem (funcall insert-func filename)))
@@ -3856,8 +3858,8 @@ Each element in this list has the form (DIR CLASS MTIME).
 DIR is the name of the directory.
 CLASS is the name of a variable class (a symbol).
 MTIME is the recorded modification time of the directory-local
-variables file associated with this entry.  This time is a list
-of integers (the same format as `file-attributes'), and is
+variables file associated with this entry.  This time is a Lisp
+timestamp (the same format as `current-time'), and is
 used to test whether the cache entry is still valid.
 Alternatively, MTIME can be nil, which means the entry is always
 considered valid.")
@@ -4061,7 +4063,9 @@ This function returns either:
 		       (equal (nth 2 dir-elt)
 			      (let ((latest 0))
 				(dolist (f cached-files latest)
-				  (let ((f-time (nth 5 (file-attributes f))))
+				  (let ((f-time
+					 (file-attribute-modification-time
+					  (file-attributes f))))
 				    (if (time-less-p latest f-time)
 					(setq latest f-time)))))))))
             ;; This cache entry is OK.
@@ -4093,7 +4097,8 @@ Return the new class name, which is a symbol named DIR."
          (variables))
     (with-demoted-errors "Error reading dir-locals: %S"
       (dolist (file files)
-	(let ((file-time (nth 5 (file-attributes file))))
+	(let ((file-time (file-attribute-modification-time
+			  (file-attributes file))))
 	  (if (time-less-p latest file-time)
 	    (setq latest file-time)))
         (with-temp-buffer
@@ -4445,7 +4450,7 @@ BACKUPNAME is the backup file name, which is the old file renamed."
 				      (let ((attr (file-attributes
 						   real-file-name
 						   'integer)))
-					(<= (nth 2 attr)
+					(<= (file-attribute-user-id attr)
 					    copy-when-priv-mismatch))))
 			     (not (file-ownership-preserved-p real-file-name
 							      t)))))
@@ -4537,32 +4542,36 @@ the group would be preserved too."
 	;; Return t if the file doesn't exist, since it's true that no
 	;; information would be lost by an (attempted) delete and create.
 	(or (null attributes)
-	    (and (or (= (nth 2 attributes) (user-uid))
+	    (and (or (= (file-attribute-user-id attributes) (user-uid))
 		     ;; Files created on Windows by Administrator (RID=500)
 		     ;; have the Administrators group (RID=544) recorded as
 		     ;; their owner.  Rewriting them will still preserve the
 		     ;; owner.
 		     (and (eq system-type 'windows-nt)
-			  (= (user-uid) 500) (= (nth 2 attributes) 544)))
+			  (= (user-uid) 500)
+			  (= (file-attribute-user-id attributes) 544)))
 		 (or (not group)
 		     ;; On BSD-derived systems files always inherit the parent
 		     ;; directory's group, so skip the group-gid test.
 		     (memq system-type '(berkeley-unix darwin gnu/kfreebsd))
-		     (= (nth 3 attributes) (group-gid)))
+		     (= (file-attribute-group-id attributes) (group-gid)))
 		 (let* ((parent (or (file-name-directory file) "."))
 			(parent-attributes (file-attributes parent 'integer)))
 		   (and parent-attributes
 			;; On some systems, a file created in a setuid directory
 			;; inherits that directory's owner.
 			(or
-			 (= (nth 2 parent-attributes) (user-uid))
-			 (string-match "^...[^sS]" (nth 8 parent-attributes)))
+			 (= (file-attribute-user-id parent-attributes)
+			    (user-uid))
+			 (string-match
+			  "^...[^sS]"
+			  (file-attribute-modes parent-attributes)))
 			;; On many systems, a file created in a setgid directory
 			;; inherits that directory's group.  On some systems
 			;; this happens even if the setgid bit is not set.
 			(or (not group)
-			    (= (nth 3 parent-attributes)
-			       (nth 3 attributes)))))))))))
+			    (= (file-attribute-group-id parent-attributes)
+			       (file-attribute-group-id attributes)))))))))))
 
 (defun file-name-sans-extension (filename)
   "Return FILENAME sans final \"extension\".
@@ -5722,7 +5731,8 @@ into NEWNAME instead."
 
       ;; Set directory attributes.
       (let ((modes (file-modes directory))
-	    (times (and keep-time (nth 5 (file-attributes directory)))))
+	    (times (and keep-time (file-attribute-modification-time
+				   (file-attributes directory)))))
 	(if modes (set-file-modes newname modes))
 	(if times (set-file-times newname times))))))
 
@@ -7328,7 +7338,7 @@ based on existing mode bits, as in \"og+rX-w\"."
   (let* ((modes (or (if orig-file (file-modes orig-file) 0)
 		    (error "File not found")))
 	 (modestr (and (stringp orig-file)
-		       (nth 8 (file-attributes orig-file))))
+		       (file-attribute-modes (file-attributes orig-file))))
 	 (default
 	   (and (stringp modestr)
 		(string-match "^.\\(...\\)\\(...\\)\\(...\\)$" modestr)
@@ -7508,27 +7518,24 @@ returned."
 
 (defsubst file-attribute-access-time (attributes)
   "The last access time in ATTRIBUTES returned by `file-attributes'.
-This a list of integers (HIGH LOW USEC PSEC) in the same style
-as (current-time)."
+This a Lisp timestamp in the style of `current-time'."
   (nth 4 attributes))
 
 (defsubst file-attribute-modification-time (attributes)
   "The modification time in ATTRIBUTES returned by `file-attributes'.
 This is the time of the last change to the file's contents, and
-is a list of integers (HIGH LOW USEC PSEC) in the same style
-as (current-time)."
+is a Lisp timestamp in the style of `current-time'."
   (nth 5 attributes))
 
 (defsubst file-attribute-status-change-time (attributes)
   "The status modification time in ATTRIBUTES returned by `file-attributes'.
 This is the time of last change to the file's attributes: owner
-and group, access mode bits, etc, and is a list of integers (HIGH
-LOW USEC PSEC) in the same style as (current-time)."
+and group, access mode bits, etc., and is a Lisp timestamp in the
+style of `current-time'."
   (nth 6 attributes))
 
 (defsubst file-attribute-size (attributes)
-  "The size (in bytes) in ATTRIBUTES returned by `file-attributes'.
-This is a floating point number if the size is too large for an integer."
+  "The integer size (in bytes) in ATTRIBUTES returned by `file-attributes'."
   (nth 7 attributes))
 
 (defsubst file-attribute-modes (attributes)
@@ -7538,20 +7545,12 @@ This is a string of ten letters or dashes as in ls -l."
 
 (defsubst file-attribute-inode-number (attributes)
   "The inode number in ATTRIBUTES returned by `file-attributes'.
-If it is larger than what an Emacs integer can hold, this is of
-the form (HIGH . LOW): first the high bits, then the low 16 bits.
-If even HIGH is too large for an Emacs integer, this is instead
-of the form (HIGH MIDDLE . LOW): first the high bits, then the
-middle 24 bits, and finally the low 16 bits."
+It is a nonnegative integer."
   (nth 10 attributes))
 
 (defsubst file-attribute-device-number (attributes)
   "The file system device number in ATTRIBUTES returned by `file-attributes'.
-If it is larger than what an Emacs integer can hold, this is of
-the form (HIGH . LOW): first the high bits, then the low 16 bits.
-If even HIGH is too large for an Emacs integer, this is instead
-of the form (HIGH MIDDLE . LOW): first the high bits, then the
-middle 24 bits, and finally the low 16 bits."
+It is an integer."
   (nth 11 attributes))
 
 (defun file-attribute-collect (attributes &rest attr-names)

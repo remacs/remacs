@@ -2815,16 +2815,13 @@ return that value."
 (defun feedmail-default-date-generator (maybe-file)
   "Default function for generating Date: header contents."
   (feedmail-say-debug ">in-> feedmail-default-date-generator")
-  (when maybe-file
-    (feedmail-say-debug (concat "4 cre " (feedmail-rfc822-date (nth 4 (file-attributes maybe-file)))))
-    (feedmail-say-debug (concat "5 mod " (feedmail-rfc822-date (nth 5 (file-attributes maybe-file)))))
-    (feedmail-say-debug (concat "6 sta " (feedmail-rfc822-date (nth 6 (file-attributes maybe-file))))))
-  (let ((date-time))
-    (if (and (not feedmail-queue-use-send-time-for-date) maybe-file)
-	(setq date-time (nth 5 (file-attributes maybe-file))))
-    (feedmail-rfc822-date date-time))
-  )
-
+  (let ((attr (and maybe-file (file-attributes maybe-file))))
+    (when attr
+      (feedmail-say-debug (concat "4 cre " (feedmail-rfc822-date (file-attribute-access-time attr))))
+      (feedmail-say-debug (concat "5 mod " (feedmail-rfc822-date (file-attribute-modification-time attr))))
+      (feedmail-say-debug (concat "6 sta " (feedmail-rfc822-date (file-attribute-status-change-time attr)))))
+    (feedmail-rfc822-date (and attr (not feedmail-queue-use-send-time-for-date)
+			       (file-attribute-modification-time attr)))))
 
 (defun feedmail-fiddle-date (maybe-file)
   "Fiddle Date:.  See documentation of `feedmail-date-generator'."
@@ -2874,7 +2871,8 @@ probably not appropriate for you."
 	      (concat (if (equal (match-beginning 1) (match-end 1)) "" "-") end-stuff))
       (setq end-stuff (concat "@" end-stuff)))
     (if (and (not feedmail-queue-use-send-time-for-message-id) maybe-file)
-	(setq date-time (nth 5 (file-attributes maybe-file))))
+	(setq date-time (file-attribute-modification-time
+			 (file-attributes maybe-file))))
     (format "<%d-%s%s%s>"
 	    (mod (random) 10000)
 	    (format-time-string "%a%d%b%Y%H%M%S" date-time)

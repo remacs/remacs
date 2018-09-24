@@ -850,8 +850,8 @@ If DIRNAME is already in a Dired buffer, that buffer is used without refresh."
   (not (let ((attributes (file-attributes dirname))
 	     (modtime (visited-file-modtime)))
 	 (or (eq modtime 0)
-	     (not (eq (car attributes) t))
-	     (equal (nth 5 attributes) modtime)))))
+	     (not (eq (file-attribute-type attributes) t))
+	     (equal (file-attribute-modification-time attributes) modtime)))))
 
 (defvar auto-revert-remote-files)
 
@@ -1092,7 +1092,8 @@ wildcards, erases the buffer, and builds the subdir-alist anew
       (dired-build-subdir-alist)
       (let ((attributes (file-attributes dirname)))
 	(if (eq (car attributes) t)
-	    (set-visited-file-modtime (nth 5 attributes))))
+	    (set-visited-file-modtime (file-attribute-modification-time
+                                       attributes))))
       (set-buffer-modified-p nil)
       ;; No need to narrow since the whole buffer contains just
       ;; dired-readin's output, nothing else.  The hook can

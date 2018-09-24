@@ -142,15 +142,15 @@ returned."
   (defsubst tramp-compat-file-attribute-modification-time (attributes)
     "The modification time in ATTRIBUTES returned by `file-attributes'.
 This is the time of the last change to the file's contents, and
-is a list of integers (HIGH LOW USEC PSEC) in the same style
-as (current-time)."
+is a Lisp timestamp in the style of `current-time'."
     (nth 5 attributes)))
 
 (if (fboundp 'file-attribute-size)
     (defalias 'tramp-compat-file-attribute-size 'file-attribute-size)
   (defsubst tramp-compat-file-attribute-size (attributes)
     "The size (in bytes) in ATTRIBUTES returned by `file-attributes'.
-This is a floating point number if the size is too large for an integer."
+If the size is too large for a fixnum, this is a bignum in Emacs 27
+and later, and is a float in Emacs 26 and earlier."
     (nth 7 attributes)))
 
 (if (fboundp 'file-attribute-modes)

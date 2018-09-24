@@ -1656,8 +1656,7 @@ See `current-time-string' for the various forms of a time value.  */)
 DEFUN ("get-internal-run-time", Fget_internal_run_time, Sget_internal_run_time,
        0, 0, 0,
        doc: /* Return the current run time used by Emacs.
-The time is returned as a list (HIGH LOW USEC PSEC), using the same
-style as (current-time).
+The time is returned as in the style of `current-time'.
 
 On systems that can't determine the run time, `get-internal-run-time'
 does the same thing as `current-time'.  */)
