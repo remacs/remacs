@@ -492,7 +492,7 @@ from the MODE alist ignoring the input argument VALUE."
       ;; Insert modified alist of directory-local variables.
       (insert ";;; Directory Local Variables\n")
       (insert ";;; For more information see (info \"(emacs) Directory Variables\")\n\n")
-      (princ (add-dir-local-variables-to-string
+      (princ (dir-locals-to-string
               (sort variables
 		    (lambda (a b)
 		      (cond
@@ -505,18 +505,18 @@ from the MODE alist ignoring the input argument VALUE."
       (goto-char (point-min))
       (indent-sexp))))
 
-(defun add-dir-local-variables-to-string (variables)
+(defun dir-locals-to-string (variables)
   "Output alists of VARIABLES to string in dotted pair notation syntax."
   (format "(%s)" (mapconcat
-                  (lambda (mode-variable)
+                  (lambda (mode-variables)
                     (format "(%S . %s)"
-                            (car mode-variable)
+                            (car mode-variables)
                             (format "(%s)" (mapconcat
                                             (lambda (variable-value)
-                                              (format "(%s . %S)"
+                                              (format "(%S . %S)"
                                                       (car variable-value)
                                                       (cdr variable-value)))
-                                            (cdr mode-variable) "\n"))))
+                                            (cdr mode-variables) "\n"))))
                   variables "\n")))
 
 ;;;###autoload
