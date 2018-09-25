@@ -244,4 +244,31 @@ pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
     !frame_ref.pointer_invisible()
 }
 
+/// Return the root window of FRAME-OR-WINDOW.
+/// If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
+/// With a frame argument, return that frame's root window.
+/// With a window argument, return the root window of that window's frame.
+#[lisp_fn(min = "0")]
+pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
+    let frame = window_frame_live_or_selected(frame_or_window);
+    frame.root_window
+}
+
+/* Don't move this to window.el - this must be a safe routine.  */
+/// Return the topmost, leftmost live window on FRAME-OR-WINDOW.
+/// If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
+/// Else if FRAME-OR-WINDOW denotes a valid window, return the first window
+/// of that window's frame. If FRAME-OR-WINDOW denotes a live frame, return
+/// the first window of that frame.
+#[lisp_fn(min = "0")]
+pub fn frame_first_window(frame_or_window: LispObject) -> LispWindowRef {
+    let mut window = frame_root_window(frame_or_window).as_window_or_error();
+
+    while let Some(win) = window.contents().as_window() {
+        window = win;
+    }
+
+    window
+}
+
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
