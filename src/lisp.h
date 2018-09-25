@@ -559,8 +559,6 @@ extern bool initialized;
 /* Defined in Rust.  */
 extern double extract_float (Lisp_Object);
 
-
-
 
 /* Low-level conversion and type checking.  */
 

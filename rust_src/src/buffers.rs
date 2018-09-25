@@ -174,15 +174,20 @@ impl LispBufferRef {
         unsafe { (*self.text).z }
     }
 
+    #[inline]
+    pub fn pos_within_range(self, pos: isize) -> isize {
+        if pos >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        }
+    }
+
     // Same as the BUF_BYTE_ADDRESS c macro
     /// Return the address of character at byte position BYTE_POS in buffer BUF.
     #[inline]
     pub fn buf_byte_address(self, byte_pos: isize) -> c_uchar {
-        let gap = if byte_pos >= self.gpt_byte() {
-            self.gap_size()
-        } else {
-            0
-        };
+        let gap = self.pos_within_range(byte_pos);
         unsafe { *(self.beg_addr().offset(byte_pos - BEG_BYTE + gap)) as c_uchar }
     }
 
@@ -202,10 +207,7 @@ impl LispBufferRef {
     pub fn dec_pos(self, pos_byte: isize) -> isize {
         let mut new_pos = pos_byte - 1;
         let mut offset = new_pos - self.beg_byte();
-        if new_pos >= self.gpt_byte() {
-            offset += self.gap_size();
-        }
-
+        offset += self.pos_within_range(new_pos);
         unsafe {
             let mut chp = self.beg_addr().offset(offset);
 

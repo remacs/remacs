@@ -357,9 +357,9 @@ pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) -> () {
                     }
                     tail = cur;
                 }
-                panic!("Marker was not in it's chain.");
+                panic!("Marker was not found in its chain.");
             } else {
-                panic!("Marker was not in it's chain.");
+                panic!("No markers were found in buffer.");
             }
         }
     }
@@ -589,7 +589,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
     // two best approximations is all single-byte,
     // we interpolate the result immediately.
 
-    macro_rules! consider {
+    macro_rules! consider_known {
         ($cpos:expr, $bpos:expr) => {
             let mut changed = false;
             if $cpos == charpos {
@@ -616,17 +616,17 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         };
     }
 
-    consider!(buffer_ref.pt(), buffer_ref.pt_byte());
-    consider!(buffer_ref.gpt(), buffer_ref.gpt_byte());
-    consider!(buffer_ref.begv(), buffer_ref.begv_byte());
-    consider!(buffer_ref.zv(), buffer_ref.zv_byte());
+    consider_known!(buffer_ref.pt(), buffer_ref.pt_byte());
+    consider_known!(buffer_ref.gpt(), buffer_ref.gpt_byte());
+    consider_known!(buffer_ref.begv(), buffer_ref.begv_byte());
+    consider_known!(buffer_ref.zv(), buffer_ref.zv_byte());
 
     if buffer_ref.is_cached && buffer_ref.modifications() == buffer_ref.cached_modiff {
-        consider!(buffer_ref.cached_charpos, buffer_ref.cached_bytepos);
+        consider_known!(buffer_ref.cached_charpos, buffer_ref.cached_bytepos);
     }
 
     for m in buffer_ref.markers().iter() {
-        consider!(m.charpos_or_error(), m.bytepos_or_error());
+        consider_known!(m.charpos_or_error(), m.bytepos_or_error());
         // If we are down to a range of 50 chars,
         // don't bother checking any other markers;
         // scan the intervening chars directly now.
@@ -700,7 +700,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
     let mut best_below = buffer_ref.beg();
     let mut best_below_byte = buffer_ref.beg_byte();
 
-    macro_rules! consider {
+    macro_rules! consider_known {
         ($bpos:expr, $cpos:expr) => {
             let mut changed = false;
             if $bpos == bytepos {
@@ -727,17 +727,17 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         };
     }
 
-    consider!(buffer_ref.pt_byte(), buffer_ref.pt());
-    consider!(buffer_ref.gpt_byte(), buffer_ref.gpt());
-    consider!(buffer_ref.begv_byte(), buffer_ref.begv());
-    consider!(buffer_ref.zv_byte(), buffer_ref.zv());
+    consider_known!(buffer_ref.pt_byte(), buffer_ref.pt());
+    consider_known!(buffer_ref.gpt_byte(), buffer_ref.gpt());
+    consider_known!(buffer_ref.begv_byte(), buffer_ref.begv());
+    consider_known!(buffer_ref.zv_byte(), buffer_ref.zv());
 
     if buffer_ref.is_cached && buffer_ref.modifications() == buffer_ref.cached_modiff {
-        consider!(buffer_ref.cached_bytepos, buffer_ref.cached_charpos);
+        consider_known!(buffer_ref.cached_bytepos, buffer_ref.cached_charpos);
     }
 
     for m in buffer_ref.markers().iter() {
-        consider!(m.bytepos_or_error(), m.charpos_or_error());
+        consider_known!(m.bytepos_or_error(), m.charpos_or_error());
         // If we are down to a range of 50 chars,
         // don't bother checking any other markers;
         // scan the intervening chars directly now.
