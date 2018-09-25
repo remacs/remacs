@@ -6,22 +6,21 @@ use libc::{c_int, c_uchar, ptrdiff_t};
 use std;
 
 use remacs_macros::lisp_fn;
+
 use remacs_sys::EmacsInt;
-use remacs_sys::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, buffer_overflow, downcase,
-                 find_before_next_newline, find_field, find_newline, globals, insert,
-                 insert_and_inherit, make_string_from_bytes, maybe_quit, scan_newline_from_point,
-                 set_point, set_point_both};
+use remacs_sys::{buffer_overflow, downcase, find_before_next_newline, find_field, find_newline,
+                 globals, insert, insert_and_inherit, make_string_from_bytes, maybe_quit,
+                 scan_newline_from_point, set_point, set_point_both};
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 
 use buffers::{get_buffer, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
-use lisp::defsubr;
-use lisp::{LispNumber, LispObject};
-use marker::{marker_position_lisp, set_point_from_marker};
-use multibyte::{is_single_byte_char, unibyte_to_char};
-use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, Codepoint, LispStringRef,
-                MAX_MULTIBYTE_LENGTH};
+use lisp::{defsubr, LispNumber, LispObject};
+use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp,
+             set_point_from_marker};
+use multibyte::{is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
+                write_codepoint, Codepoint, LispStringRef, MAX_MULTIBYTE_LENGTH};
 use textprop::get_char_property;
 use threads::ThreadState;
 use util::clip_to_bounds;
@@ -170,7 +169,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
     } else if let Some(num) = position.as_fixnum() {
         let mut cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -186,7 +185,7 @@ pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
     let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -346,7 +345,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         if p <= buffer_ref.begv || p > buffer_ref.zv() {
             return None;
         }
-        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -380,7 +379,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv() {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -760,7 +759,7 @@ pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
         }
     }
 
-    unsafe { Some(buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) as EmacsInt) }
+    Some(buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) as EmacsInt)
 }
 
 /// Return t if two characters match, optionally ignoring case.

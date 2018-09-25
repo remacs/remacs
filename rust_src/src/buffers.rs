@@ -13,6 +13,7 @@ use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handl
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
                  Qvoid_variable};
 
+use character::char_head_p;
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
 use editfns::point;
@@ -20,7 +21,7 @@ use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
-use multibyte::string_char;
+use multibyte::{multibyte_length_by_head, string_char};
 use strings::string_equal;
 use threads::ThreadState;
 
@@ -121,6 +122,11 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn gpt(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt }
+    }
+
+    #[inline]
     pub fn gpt_byte(self) -> ptrdiff_t {
         unsafe { (*self.text).gpt_byte }
     }
@@ -166,6 +172,49 @@ impl LispBufferRef {
     #[inline]
     pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
+    }
+
+    // Same as the BUF_BYTE_ADDRESS c macro
+    /// Return the address of character at byte position BYTE_POS in buffer BUF.
+    #[inline]
+    pub fn buf_byte_address(self, byte_pos: isize) -> c_uchar {
+        let gap = if byte_pos >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        };
+        unsafe { *(self.beg_addr().offset(byte_pos - BEG_BYTE + gap)) as c_uchar }
+    }
+
+    // Same as the BUF_INC_POS c macro
+    /// Increment the buffer byte position POS_BYTE of the the buffer to
+    /// the next character boundary.  This macro relies on the fact that
+    /// *GPT_ADDR and *Z_ADDR are always accessible and the values are
+    /// '\0'.  No range checking of POS_BYTE.
+    pub fn inc_pos(self, pos_byte: isize) -> isize {
+        let chp = self.buf_byte_address(pos_byte);
+        pos_byte + multibyte_length_by_head(chp) as isize
+    }
+
+    // Same as the BUF_DEC_POS c macro
+    /// Decrement the buffer byte position POS_BYTE of the buffer to
+    /// the previous character boundary.  No range checking of POS_BYTE.
+    pub fn dec_pos(self, pos_byte: isize) -> isize {
+        let mut new_pos = pos_byte - 1;
+        let mut offset = new_pos - self.beg_byte();
+        if new_pos >= self.gpt_byte() {
+            offset += self.gap_size();
+        }
+
+        unsafe {
+            let mut chp = self.beg_addr().offset(offset);
+
+            while !char_head_p(*chp) {
+                chp = chp.offset(-1);
+                new_pos -= 1;
+            }
+        }
+        new_pos
     }
 
     /// Number of modifications made to the buffer.
