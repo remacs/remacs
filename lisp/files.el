@@ -3486,7 +3486,7 @@ DIR-NAME is the name of the associated directory.  Otherwise it is nil."
 
 (defun hack-local-variables (&optional handle-mode)
   "Parse and put into effect this buffer's local variables spec.
-For buffers visitying files, also puts into effect directory-local
+For buffers visiting files, also puts into effect directory-local
 variables.
 Uses `hack-local-variables-apply' to apply the variables.
 

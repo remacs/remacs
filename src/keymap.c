@@ -2287,7 +2287,7 @@ DEFUN ("text-char-description", Ftext_char_description, Stext_char_description, 
        doc: /* Return the description of CHARACTER in standard Emacs notation.
 CHARACTER must be a valid character code that passes the `characterp' test.
 Control characters turn into "^char", and characters with Meta and other
-modifiers signal an error, as they are not valid characterr codes.
+modifiers signal an error, as they are not valid character codes.
 This differs from `single-key-description' which accepts character events,
 and thus doesn't enforce the `characterp' condition, turns control
 characters into "C-char", and uses the 2**27 bit for Meta.
