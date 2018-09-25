@@ -1518,9 +1518,7 @@ Removes badly formatted data and ignored directories."
 			     (consp time)
 			     (cond
 			      ((integerp (car time))
-			       (and (/= (car time) 0)
-				    (integerp (car (cdr time)))
-				    (/= (car (cdr time)) 0)
+			       (and (not (zerop (float-time time)))
 				    (ido-may-cache-directory dir)))
 			      ((eq (car time) 'ftp)
 			       (and (numberp (cdr time))

@@ -336,15 +336,10 @@ would give mode line times like `94/12/30 21:07:48 (UTC)'."
 	 (next-time (timer-relative-time
 		     (list (aref timer 1) (aref timer 2) (aref timer 3))
 		     (* 5 (aref timer 4)) 0)))
-    ;; If the activation time is far in the past,
+    ;; If the activation time is not in the future,
     ;; skip executions until we reach a time in the future.
     ;; This avoids a long pause if Emacs has been suspended for hours.
-    (or (> (nth 0 next-time) (nth 0 current))
-	(and (= (nth 0 next-time) (nth 0 current))
-	     (> (nth 1 next-time) (nth 1 current)))
-	(and (= (nth 0 next-time) (nth 0 current))
-	     (= (nth 1 next-time) (nth 1 current))
-	     (> (nth 2 next-time) (nth 2 current)))
+    (or (time-less-p current next-time)
 	(progn
 	  (timer-set-time timer (timer-next-integral-multiple-of-time
 				 current display-time-interval)
@@ -439,23 +434,16 @@ update which can wait for the next redisplay."
 		((and (stringp mail-spool-file)
 		      (or (null display-time-server-down-time)
 			  ;; If have been down for 20 min, try again.
-			  (> (- (nth 1 now) display-time-server-down-time)
-			     1200)
-			  (and (< (nth 1 now) display-time-server-down-time)
-			       (> (- (nth 1 now)
-				     display-time-server-down-time)
-				  -64336))))
-		 (let ((start-time (current-time)))
+			  (< 1200 (- (float-time now)
+				     display-time-server-down-time))))
+		 (let ((start-time (float-time)))
 		   (prog1
 		       (display-time-file-nonempty-p mail-spool-file)
-		     (if (> (- (nth 1 (current-time))
-			       (nth 1 start-time))
-			    20)
-			 ;; Record that mail file is not accessible.
-			 (setq display-time-server-down-time
-			       (nth 1 (current-time)))
-		       ;; Record that mail file is accessible.
-		       (setq display-time-server-down-time nil)))))))
+		     ;; Record whether mail file is accessible.
+		     (setq display-time-server-down-time
+			   (let ((end-time (float-time)))
+			     (and (< 20 (- end-time start-time))
+				  end-time))))))))
          (24-hours (substring time 11 13))
          (hour (string-to-number 24-hours))
          (12-hours (int-to-string (1+ (% (+ hour 11) 12))))
