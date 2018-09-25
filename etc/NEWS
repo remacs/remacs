@@ -982,6 +982,11 @@ This works like 'dolist', but reports progress similar to
 This works like 'delete-frame-functions', but runs after the frame to
 be deleted has been made dead and removed from the frame list.
 
+---
+** The function 'provided-mode-derived-p' was extended to support aliases.
+The function now returns non-nil when the argument MODE is derived
+from any alias of any of MODES.
+
 +++
 ** New frame focus state inspection interface.
 The hooks 'focus-in-hook' and 'focus-out-hook' are now obsolete.
