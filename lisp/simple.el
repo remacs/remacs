@@ -4324,7 +4324,7 @@ ring directly.")
 A non-nil value ensures that Emacs kill operations do not
 irrevocably overwrite existing clipboard text by saving it to the
 `kill-ring' prior to the kill.  Such text can subsequently be
-retrieved via \\[yank] \\[yank-pop]]."
+retrieved via \\[yank] \\[yank-pop]."
   :type 'boolean
   :group 'killing
   :version "23.2")
