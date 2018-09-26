@@ -695,7 +695,6 @@ or a superior directory.")
 (defvar log-view-message-re)
 (defvar log-view-file-re)
 (defvar log-view-font-lock-keywords)
-(defvar log-view-current-tag-function)
 (defvar log-view-per-file-logs)
 (defvar log-view-expanded-log-entry-function)
 
