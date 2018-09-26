@@ -5193,7 +5193,21 @@ ns_term_init (Lisp_Object display_name)
                                       alpha: 1.0]
                   forKey: [NSString stringWithUTF8String: name]];
           }
-        [cl writeToFile: nil];
+
+        /* FIXME: Report any errors writing the color file below.  */
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101100
+        if ([cl respondsToSelector:@selector(writeToURL:error:)])
+#endif
+          [cl writeToURL:nil error:nil];
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101100
+        else
+#endif
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 101100 */
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101100 \
+  || defined (NS_IMPL_GNUSTEP)
+          [cl writeToFile: nil];
+#endif
       }
   }
 
