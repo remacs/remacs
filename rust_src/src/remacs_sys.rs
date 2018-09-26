@@ -170,6 +170,7 @@ unsafe impl Sync for Lisp_Subr {}
 pub type Lisp_Buffer = buffer;
 pub type Lisp_Frame = frame;
 pub type Lisp_Glyph = glyph;
+pub type Lisp_Terminal = terminal;
 pub type Lisp_Window = window;
 
 #[repr(C)]
