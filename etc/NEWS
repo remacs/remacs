@@ -262,6 +262,12 @@ large files.  Now it also offers a third alternative: to visit the
 file literally, as in 'find-file-literally', which speeds up
 navigation and editing of large files.
 
+---
+** add-dir-local-variable now uses dotted pair notation syntax
+to write alists of variables to .dir-locals.el.  This is the same
+syntax that you can see in the example of a .dir-locals.el file
+in (info "(emacs) Directory Variables")
+
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
