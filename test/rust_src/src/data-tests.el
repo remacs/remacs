@@ -115,5 +115,18 @@
   :expected-result :failed
   (describe-function 'rename-buffer))
 
+(ert-deftest data-test--get-variable-documentation ()
+  ;; `gc-cons-threshold' is defined in C.
+  (should
+   (integerp
+    (get 'gc-cons-threshold 'variable-documentation))))
+
+(ert-deftest data-test--get-variable-documentation-fail ()
+  ;; `last-command' is defined in Rust.
+  :expected-result :failed
+  (should
+   (integerp
+    (get 'last-command 'variable-documentation))))
+
 (provide 'data-tests)
 ;;; data-tests.el ends here
