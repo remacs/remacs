@@ -4442,7 +4442,7 @@ generated.  It may be used to modify the buffer in some strange,
 unnatural way.
 
 @item gnus-group-prepared-hook
-@vindex gnus-group-prepare-hook
+@vindex gnus-group-prepared-hook
 is called as the very last thing after the group buffer has been
 generated.  It may be used to move point around, for instance.
 

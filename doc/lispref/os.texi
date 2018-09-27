@@ -3018,7 +3018,7 @@ Although Emacs normally respects access permissions of the underlying
 operating system, in some cases it handles accesses specially.  For
 example, file names can have handlers that treat the files specially,
 with their own access checking.  @xref{Magic File Names}.  Also, a
-buffer can be read-only even if the corresponding file is writeable,
+buffer can be read-only even if the corresponding file is writable,
 and vice versa, which can result in messages such as @samp{File passwd
 is write-protected; try to save anyway? (yes or no)}.  @xref{Read Only
 Buffers}.
