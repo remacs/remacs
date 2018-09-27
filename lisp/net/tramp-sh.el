@@ -1020,6 +1020,7 @@ of command line.")
     (file-remote-p . tramp-handle-file-remote-p)
     (file-selinux-context . tramp-sh-handle-file-selinux-context)
     (file-symlink-p . tramp-handle-file-symlink-p)
+    (file-system-info . tramp-sh-handle-file-system-info)
     (file-truename . tramp-sh-handle-file-truename)
     (file-writable-p . tramp-sh-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
@@ -2739,6 +2740,17 @@ The method used must be an out-of-band method."
 	     beg 'noerror)
 	    (replace-match (file-relative-name filename) t))
 
+	  ;; Try to insert the amount of free space.
+	  (goto-char (point-min))
+	  ;; First find the line to put it on.
+	  (when (re-search-forward "^\\([[:space:]]*total\\)" nil t)
+	    (let ((available (get-free-disk-space ".")))
+	      (when available
+		;; Replace "total" with "total used", to avoid confusion.
+		(replace-match "\\1 used in directory")
+		(end-of-line)
+		(insert " available " available))))
+
 	  (goto-char (point-max)))))))
 
 ;; Canonicalization of file names.
@@ -3700,6 +3712,30 @@ file-notify events."
 	  (tramp-compat-funcall
 	   'file-notify-handle-event
 	   `(file-notify ,object file-notify-callback)))))))
+
+(defun tramp-sh-handle-file-system-info (filename)
+  "Like `file-system-info' for Tramp files."
+  (ignore-errors
+    (with-parsed-tramp-file-name (expand-file-name filename) nil
+      (when (tramp-get-remote-df v)
+	(tramp-message v 5 "file system info: %s" localname)
+	(tramp-send-command
+	 v (format
+	    "%s --block-size=1 --output=size,used,avail %s"
+	    (tramp-get-remote-df v) (tramp-shell-quote-argument localname)))
+	(with-current-buffer (tramp-get-connection-buffer v)
+	  (goto-char (point-min))
+	  (forward-line)
+	  (when (looking-at
+		 (concat "[[:space:]]*\\([[:digit:]]+\\)"
+			 "[[:space:]]+\\([[:digit:]]+\\)"
+			 "[[:space:]]+\\([[:digit:]]+\\)"))
+	    (list (string-to-number (concat (match-string 1) "e0"))
+		  ;; The second value is the used size.  We need the
+		  ;; free size.
+		  (- (string-to-number (concat (match-string 1) "e0"))
+		     (string-to-number (concat (match-string 2) "e0")))
+		  (string-to-number (concat (match-string 3) "e0")))))))))
 
 ;;; Internal Functions:
 
@@ -5403,6 +5439,17 @@ This command is returned only if `delete-by-moving-to-trash' is non-nil."
 	   (file-remote-p tmpfile 'localname))))
 	(delete-file tmpfile))
       result)))
+
+(defun tramp-get-remote-df (vec)
+  "Determine remote `df' command."
+  (with-tramp-connection-property vec "df"
+    (tramp-message vec 5 "Finding a suitable `df' command")
+    (let ((result (tramp-find-executable vec "df" (tramp-get-remote-path vec))))
+      (and
+       result
+       (tramp-send-command-and-check
+	vec (format "%s --block-size=1 --output=size,used,avail /" result))
+       result))))
 
 (defun tramp-get-remote-gvfs-monitor-dir (vec)
   "Determine remote `gvfs-monitor-dir' command."
