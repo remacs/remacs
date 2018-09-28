@@ -1736,17 +1736,26 @@ integer number stands for the number of seconds since the epoch.
 @defun time-less-p t1 t2
 This returns @code{t} if time value @var{t1} is less than time value
 @var{t2}.
+The result is @code{nil} if either argument is a NaN.
+@end defun
+
+@defun time-equal t1 t2
+This returns @code{t} if @var{t1} and @var{t2} are equal time values.
+The result is @code{nil} if either argument is a NaN.
 @end defun
 
 @defun time-subtract t1 t2
 This returns the time difference @var{t1} @minus{} @var{t2} between
-two time values, as a time value.  If you need the difference in units
+two time values, as a time value.  However, the result is a float
+if either argument is a float infinity or NaN@.
+If you need the difference in units
 of elapsed seconds, use @code{float-time} (@pxref{Time of Day,
 float-time}) to convert the result into seconds.
 @end defun
 
 @defun time-add t1 t2
 This returns the sum of two time values, as a time value.
+However, the result is a float if either argument is a float infinity or NaN@.
 One argument should represent a time difference rather than a point in time,
 either as a list or as a single number of elapsed seconds.
 Here is how to add a number of seconds to a time value:

@@ -951,6 +951,14 @@ like file-attributes that compute file sizes and other attributes,
 functions like process-id that compute process IDs, and functions like
 user-uid and group-gid that compute user and group IDs.
 
++++
+** 'time-add', 'time-subtract', and 'time-less-p' now accept
+infinities and NaNs too, and propagate them or return nil like
+floating-point operators do.
+
++++
+** New function 'time-equal' compares time values for equality.
+
 ** define-minor-mode automatically documents the meaning of ARG.
 
 +++
