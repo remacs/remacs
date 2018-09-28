@@ -851,7 +851,7 @@ since.
 
 Make it so that the Lisp command on the right of the pipe is repeatedly
 called with the input strings as arguments.  This will require changing
-@code{eshell-do-pipeline} to handle non-process targets.
+@code{eshell-do-pipelines} to handle non-process targets.
 
 @item Input redirection is not supported
 

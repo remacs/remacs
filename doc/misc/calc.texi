@@ -36249,7 +36249,7 @@ keystrokes are not listed in this summary.
 @c
 @r{       @:      j +   @:formula      @:    27  @:calc-sel-add-both-sides@:}
 @r{       @:      j -   @:formula      @:    27  @:calc-sel-sub-both-sides@:}
-@r{       @:      j *   @:formula      @:    27  @:calc-sel-mul-both-sides@:}
+@r{       @:      j *   @:formula      @:    27  @:calc-sel-mult-both-sides@:}
 @r{       @:      j /   @:formula      @:    27  @:calc-sel-div-both-sides@:}
 @r{       @:      j &   @:             @:    27  @:calc-sel-invert@:}
 
