@@ -538,7 +538,7 @@ pub fn minibuffer_window(frame: LispObject) -> LispObject {
 /// Return WINDOW's value for PARAMETER.
 /// WINDOW can be any window and defaults to the selected one.
 #[lisp_fn(name = "window-parameter")]
-pub fn window_parameter_defun(window: LispObject, parameter: LispObject) -> LispObject {
+pub fn window_parameter_lisp(window: LispObject, parameter: LispObject) -> LispObject {
     let mut w = window_or_selected(window);
 
     unsafe { window_parameter(w.as_mut(), parameter) }
