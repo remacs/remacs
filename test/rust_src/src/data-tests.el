@@ -129,10 +129,7 @@
   ;; Defined in Lisp
   (should (consp (find-definition-noselect 'split-width-threshold 'defvar)))
   ;; Defined in C
-  (should (consp (find-definition-noselect 'gc-cons-threshold 'defvar))))
-
-(ert-deftest data-test--find-definition-noselect-fail ()
-  :expected-result :failed
+  (should (consp (find-definition-noselect 'gc-cons-threshold 'defvar)))
   ;; Defined in Rust
   (should (consp (find-definition-noselect 'post-self-insert-hook 'defvar))))
 
