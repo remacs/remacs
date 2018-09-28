@@ -1480,7 +1480,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
   (interactive "sStash name: ")
   (let ((root (vc-git-root default-directory)))
     (when root
-      (vc-git--call nil "stash" "save" name)
+      (apply #'vc-git--call nil "stash" "push" "-m" name (vc-dir-marked-files))
       (vc-resynch-buffer root t t))))
 
 (defvar vc-git-stash-read-history nil
