@@ -957,7 +957,7 @@ infinities and NaNs too, and propagate them or return nil like
 floating-point operators do.
 
 +++
-** New function 'time-equal' compares time values for equality.
+** New function 'time-equal-p' compares time values for equality.
 
 ** define-minor-mode automatically documents the meaning of ARG.
 

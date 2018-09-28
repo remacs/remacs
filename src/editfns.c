@@ -1676,7 +1676,7 @@ See `current-time-string' for the various forms of a time value.  */)
   return time_cmp (t1, t2) < 0 ? Qt : Qnil;
 }
 
-DEFUN ("time-equal", Ftime_equal, Stime_equal, 2, 2, 0,
+DEFUN ("time-equal-p", Ftime_equal_p, Stime_equal_p, 2, 2, 0,
        doc: /* Return non-nil if T1 and T2 are equal time values.  */)
   (Lisp_Object t1, Lisp_Object t2)
 {
@@ -5765,7 +5765,7 @@ it to be non-nil.  */);
   defsubr (&Scurrent_time);
   defsubr (&Stime_add);
   defsubr (&Stime_subtract);
-  defsubr (&Stime_equal);
+  defsubr (&Stime_equal_p);
   defsubr (&Stime_less_p);
   defsubr (&Sget_internal_run_time);
   defsubr (&Sformat_time_string);
