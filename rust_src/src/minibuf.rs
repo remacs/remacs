@@ -2,15 +2,16 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, EmacsInt,
-                 Fcopy_sequence};
+                 Fcopy_sequence, Ffuncall};
 use remacs_sys::{Qfield, Vminibuffer_list};
 
 use buffers::{current_buffer, get_buffer};
 use editfns::field_end;
 use lisp::defsubr;
 use lisp::LispObject;
-use lisp::LispObject;
 use lists::memq;
+use obarray::intern;
+use symbols::symbol_value;
 use textprop::get_char_property;
 use threads::ThreadState;
 
@@ -115,6 +116,90 @@ pub fn minibuffer_completion_contents() -> LispObject {
         error!("Cannot do completion in the prompt");
     }
     unsafe { make_buffer_string(prompt_end, pt, true) }
+}
+
+/// Read a string in the minibuffer, with completion.
+/// PROMPT is a string to prompt with; normally it ends in a colon and a space.
+/// COLLECTION can be a list of strings, an alist, an obarray or a hash table.
+/// COLLECTION can also be a function to do the completion itself.
+/// PREDICATE limits completion to a subset of COLLECTION.
+/// See `try-completion', `all-completions', `test-completion',
+/// and `completion-boundaries', for more details on completion,
+/// COLLECTION, and PREDICATE.  See also Info nodes `(elisp)Basic Completion'
+/// for the details about completion, and `(elisp)Programmed Completion' for
+/// expectations from COLLECTION when it's a function.
+///
+/// REQUIRE-MATCH can take the following values:
+/// - t means that the user is not allowed to exit unless
+///   the input is (or completes to) an element of COLLECTION or is null.
+/// - nil means that the user can exit with any input.
+/// - `confirm' means that the user can exit with any input, but she needs
+///   to confirm her choice if the input is not an element of COLLECTION.
+/// - `confirm-after-completion' means that the user can exit with any
+///   input, but she needs to confirm her choice if she called
+///   `minibuffer-complete' right before `minibuffer-complete-and-exit'
+///   and the input is not an element of COLLECTION.
+/// - anything else behaves like t except that typing RET does not exit if it
+///   does non-null completion.
+///
+/// If the input is null, `completing-read' returns DEF, or the first element
+/// of the list of default values, or an empty string if DEF is nil,
+/// regardless of the value of REQUIRE-MATCH.
+///
+/// If INITIAL-INPUT is non-nil, insert it in the minibuffer initially,
+///   with point positioned at the end.
+///   If it is (STRING . POSITION), the initial input is STRING, but point
+///   is placed at _zero-indexed_ position POSITION in STRING.  (*Note*
+///   that this is different from `read-from-minibuffer' and related
+///   functions, which use one-indexing for POSITION.)  This feature is
+///   deprecated--it is best to pass nil for INITIAL-INPUT and supply the
+///   default value DEF instead.  The user can yank the default value into
+///   the minibuffer easily using \\<minibuffer-local-map>\\[next-history-element].
+///
+/// HIST, if non-nil, specifies a history list and optionally the initial
+///   position in the list.  It can be a symbol, which is the history list
+///   variable to use, or it can be a cons cell (HISTVAR . HISTPOS).  In
+///   that case, HISTVAR is the history list variable to use, and HISTPOS
+///   is the initial position (the position in the list used by the
+///   minibuffer history commands).  For consistency, you should also
+///   specify that element of the history as the value of
+///   INITIAL-INPUT.  (This is the only case in which you should use
+///   INITIAL-INPUT instead of DEF.)  Positions are counted starting from
+///   1 at the beginning of the list.  The variable `history-length'
+///   controls the maximum length of a history list.
+///
+/// DEF, if non-nil, is the default value or the list of default values.
+///
+/// If INHERIT-INPUT-METHOD is non-nil, the minibuffer inherits
+///   the current input method and the setting of `enable-multibyte-characters'.
+///
+/// Completion ignores case if the ambient value of
+///   `completion-ignore-case' is non-nil.
+///
+/// See also `completing-read-function'.
+#[lisp_fn(min = "2")]
+pub fn completing_read(
+    prompt: LispObject,
+    collection: LispObject,
+    predicate: LispObject,
+    require_match: LispObject,
+    initial_input: LispObject,
+    hist: LispObject,
+    def: LispObject,
+    inherit_input_method: LispObject,
+) -> LispObject {
+    callN_raw!(
+        Ffuncall,
+        symbol_value(intern("completing-read-function")),
+        prompt,
+        collection,
+        predicate,
+        require_match,
+        initial_input,
+        hist,
+        def,
+        inherit_input_method
+    )
 }
 
 include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));
