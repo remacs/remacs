@@ -37,7 +37,8 @@ impl LispFnArgsRaw {
         D: Display + ?Sized,
     {
         Ok(LispFnArgs {
-            name: self.name
+            name: self
+                .name
                 .unwrap_or_else(|| def_name.to_string().replace("_", "-")),
             c_name: self.c_name.unwrap_or_else(|| def_name.to_string()),
             min: if let Some(s) = self.min {

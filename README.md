@@ -201,7 +201,7 @@ can be passed to cargo with CARGO_FLAGS.
 For example:
 
 ``` bash
-$ make CARGO_FLAGS="-vv" RUSTFLAGS="-Zunstable-options --pretty"
+$ make CARGO_FLAGS="-vv" RUSTFLAGS="-Zunstable-options --cfg MARKER_DEBUG"
 ```
 
 ### Running Remacs
