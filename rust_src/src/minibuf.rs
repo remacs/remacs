@@ -405,4 +405,35 @@ pub fn read_variable(prompt: LispObject, default_value: LispObject) -> LispObjec
     read_command_or_variable(prompt, default_value, Qcustom_variable_p)
 }
 
+/// Read a string from the terminal, not allowing blanks.
+/// Prompt with PROMPT.  Whitespace terminates the input.  If INITIAL is
+/// non-nil, it should be a string, which is used as initial input, with
+/// point positioned at the end, so that SPACE will accept the input.
+/// (Actually, INITIAL can also be a cons of a string and an integer.
+/// Such values are treated as in `read-from-minibuffer', but are normally
+/// not useful in this function.)
+/// Third arg INHERIT-INPUT-METHOD, if non-nil, means the minibuffer inherits
+/// the current input method and the setting of`enable-multibyte-characters'.
+#[lisp_fn(min = "1")]
+pub fn read_no_blanks_input(
+    prompt: LispObject,
+    initial: LispObject,
+    inherit_input_method: LispObject,
+) -> LispObject {
+    prompt.as_string_or_error();
+    unsafe {
+        read_minibuf(
+            globals.Vminibuffer_local_ns_map,
+            initial,
+            prompt,
+            false,
+            Qminibuffer_history,
+            LispObject::from_fixnum(0),
+            Qnil,
+            false,
+            inherit_input_method.is_not_nil(),
+        )
+    }
+}
+
 include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));
