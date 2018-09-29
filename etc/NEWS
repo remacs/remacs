@@ -62,6 +62,11 @@ to reduce differences between developer and production builds.
 ** Ibuffer
 
 ---
+*** All mode filters can now accept a list of symbols.
+This means you can now easily filter several major modes, as well
+as a single mode.
+
+---
 *** New toggle 'ibuffer-do-toggle-lock', bound to 'L'.
 
 ** Gnus
