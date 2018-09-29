@@ -1628,8 +1628,15 @@ The difference to vc-do-command is that this function always invokes
          (or coding-system-for-read vc-git-log-output-coding-system))
 	(coding-system-for-write
          (or coding-system-for-write vc-git-commits-coding-system))
-	(process-environment (cons "PAGER=" process-environment)))
-    (push "GIT_DIR" process-environment)
+	(process-environment
+	 (append
+	  `("GIT_DIR"
+	    "PAGER="
+	    ;; Avoid repository locking during background operations
+	    ;; (bug#21559).
+	    ,@(when revert-buffer-in-progress-p
+		'("GIT_OPTIONAL_LOCKS=0")))
+	  process-environment)))
     (apply 'process-file vc-git-program nil buffer nil command args)))
 
 (defun vc-git--out-ok (command &rest args)
