@@ -3602,13 +3602,11 @@ support symbolic links."
 	   (buffer-name)))
   (unless time-list
     (let ((remote-file-name-inhibit-cache t))
-      ;; '(-1 65535) means file doesn't exists yet.
       (setq time-list
 	    (or (tramp-compat-file-attribute-modification-time
 		 (file-attributes (buffer-file-name)))
-		'(-1 65535)))))
-  ;; We use '(0 0) as a don't-know value.
-  (unless (equal time-list '(0 0))
+		tramp-time-doesnt-exist))))
+  (unless (tramp-compat-time-equal-p time-list tramp-time-dont-know)
     (tramp-run-real-handler 'set-visited-file-modtime (list time-list))))
 
 (defun tramp-handle-verify-visited-file-modtime (&optional buf)
@@ -3634,21 +3632,14 @@ of."
 
 	  (cond
 	   ;; File exists, and has a known modtime.
-	   ((and attr (not (equal modtime '(0 0))))
-	    (< (abs (tramp-time-diff
-		     modtime
-		     ;; For compatibility, deal with both the old
-		     ;; (HIGH . LOW) and the new (HIGH LOW) return
-		     ;; values of `visited-file-modtime'.
-		     (if (atom (cdr mt))
-			 (list (car mt) (cdr mt))
-		       mt)))
-	       2))
+	   ((and attr
+		 (not (tramp-compat-time-equal-p modtime tramp-time-dont-know)))
+	    (< (abs (tramp-time-diff modtime mt)) 2))
 	   ;; Modtime has the don't know value.
 	   (attr t)
 	   ;; If file does not exist, say it is not modified if and
 	   ;; only if that agrees with the buffer's record.
-	   (t (equal mt '(-1 65535)))))))))
+	   (t (tramp-compat-time-equal-p mt tramp-time-doesnt-exist))))))))
 
 ;; This is used in tramp-gvfs.el and tramp-sh.el.
 (defconst tramp-gio-events
@@ -4531,17 +4522,19 @@ Invokes `password-read' if available, `read-passwd' else."
        :host ,host-port :port ,method))
     (password-cache-remove (tramp-make-tramp-file-name vec 'noloc 'nohop))))
 
-;; Snarfed code from time-date.el.
+;;;###tramp-autoload
+(defconst tramp-time-dont-know '(0 0 0 1000)
+  "An invalid time value, used as \"Don’t know\" value.")
 
-(defconst tramp-half-a-year '(241 17024)
-"Evaluated by \"(days-to-time 183)\".")
+;;;###tramp-autoload
+(defconst tramp-time-doesnt-exist '(-1 65535)
+  "An invalid time value, used as \"Doesn’t exist\" value.")
 
 ;;;###tramp-autoload
 (defun tramp-time-diff (t1 t2)
   "Return the difference between the two times, in seconds.
 T1 and T2 are time values (as returned by `current-time' for example)."
-  ;; Starting with Emacs 25.1, we could change this to use `time-subtract'.
-  (float-time (tramp-compat-funcall 'subtract-time t1 t2)))
+  (float-time (time-subtract t1 t2)))
 
 (defun tramp-unquote-shell-quote-argument (s)
   "Remove quotation prefix \"/:\" from string S, and quote it then for shell."

@@ -1561,6 +1561,9 @@ Here's a bunch of time/date/second/day examples:
 (time-less-p '(13818 19266) '(13818 19145))
 @result{} nil
 
+(time-equal-p '(13818 19266) '(13818 19145))
+@result{} nil
+
 (time-subtract '(13818 19266) '(13818 19145))
 @result{} (0 121)
 
@@ -1640,6 +1643,10 @@ return a ``zero'' time.
 @item time-less-p
 Take two times and say whether the first time is less (i.e., earlier)
 than the second time.  (This is a built-in function.)
+
+@item time-equal-p
+Check, whether two time values are equal.  The time values must not be
+in the same format.  (This is a built-in function.)
 
 @item time-since
 Take a time and return a time saying how long it was since that time.

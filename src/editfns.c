@@ -1677,7 +1677,9 @@ See `current-time-string' for the various forms of a time value.  */)
 }
 
 DEFUN ("time-equal-p", Ftime_equal_p, Stime_equal_p, 2, 2, 0,
-       doc: /* Return non-nil if T1 and T2 are equal time values.  */)
+       doc: /* Return non-nil if T1 and T2 are equal time values.
+A nil value for either argument stands for the current time.
+See `current-time-string' for the various forms of a time value.  */)
   (Lisp_Object t1, Lisp_Object t2)
 {
   return time_cmp (t1, t2) == 0 ? Qt : Qnil;
