@@ -3585,7 +3585,11 @@ support symbolic links."
 	    (setq filename
 		  (concat (file-remote-p filename)
 			  (replace-regexp-in-string
-                           "\\`/+" "/" (substitute-in-file-name localname)))))))
+                           "\\`/+" "/"
+			   ;; We must disable cygwin-mount file name
+			   ;; handlers and alike.
+			   (tramp-run-real-handler
+			    'substitute-in-file-name (list localname))))))))
       ;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
       (if (and (stringp localname) (string-equal "~" localname))
 	  (concat filename "/")
