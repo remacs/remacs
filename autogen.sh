@@ -30,9 +30,8 @@
 
 ### Code:
 
-## Used when remacs is dependent on nightly
-## Will print an error message telling people they need nightly rust
-require_nightly=true
+## Rust tool chain required version path
+rust_toolchain_vers_path="./rust-toolchain"
 
 ## Tools we need:
 ## Note that we respect the values of AUTOCONF etc, like autoreconf does.
@@ -135,13 +134,36 @@ case $do_autoconf,$do_git in
     test -r .git && do_git=true;;
 esac
 
-echo "Validating Rust install ..."
-command -v rustc >/dev/null 2>&1 || { echo >&2 "Remacs requires rust to be installed in order to build. Please install it via rustup: https://www.rustup.rs/; Aborting."; exit 1; }
-command -v cargo >/dev/null 2>&1 || { echo >&2 "Remacs requires cargo to be installed in order to build. Please install it via rustup: https://www.rustup.rs/; Aborting."; exit 1; }
+echo "Validating Rust toolchain install ..."
+command -v rustup >/dev/null 2>&1 || { echo >&2 "Remacs requires the rustup command to be installed in order to build. Please see https://www.rustup.rs/; Aborting."; exit 1; }
 
-if $require_nightly; then
-    rustc --version | grep nightly || { echo >&2 "Remacs currently requires nightly Rust. If you do not have nightly Rust, you should install rustup at https://www.rustup.rs/, and run 'rustup install nightly' in the remacs directory."; exit 1; }
-    echo "Your system has the required rust installation for building remacs."
+if [ -n $rust_toolchain_vers_path ] ; then
+    remacs_version=$(cat $rust_toolchain_vers_path)
+    rustup_active_version=$(rustup show | awk '/active toolchain/ {getline; getline; getline; print}')
+    echo $rustup_active_version | grep $remacs_version >/dev/null
+    if [ $? != 0 ]; then
+	rustup_installed=$(rustup show | awk '/installed/{flag=1; next} /active/{flag=0} flag')
+	echo $rustup_installed | grep $remacs_version >/dev/null
+	if [ $? != 0 ]; then
+	    echo >&2 "Remacs currently requires Rust toolchain version $remacs_version."
+	    echo >&2 "Run 'rustup install $remacs_version' in this directory."
+	    exit 1
+	else
+	    echo $rustup_active_version | grep 'directory override'  >/dev/null
+	    if [ $? = 0 ]; then
+	    	echo >&2 "Remacs currently requires Rust toolchain version $remacs_version."
+	    	echo >&2 "The active version is not the required one and is set via directory override:\n\t$rustup_active_version"
+	    	echo >&2 "Run 'rustup override unset'."
+	    	exit 1
+	    else
+		# /should/ not get here
+	    	echo >&2 "Remacs currently requires Rust toolchain version $remacs_version."
+	    	exit 1
+	    fi
+	fi
+    fi
+
+    echo "Your system has the required Rust toolchain installed for building Remacs."
 fi
 
 # Generate Autoconf-related files, if requested.
