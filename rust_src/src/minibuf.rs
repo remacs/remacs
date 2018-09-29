@@ -1,19 +1,21 @@
 //! Minibuffer input and completion.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{globals, Qcommandp, Qcustom_variable_p, Qfield, Qnil, Qt, Vminibuffer_list};
-use remacs_sys::{make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, EmacsInt,
-                 Fcopy_sequence, Ffuncall};
+use remacs_sys::{globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
+                 Qminibuffer_history, Qnil, Qt, Vminibuffer_list};
+use remacs_sys::{make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf,
+                 specbind, unbind_to, EmacsInt, Fcopy_sequence, Ffuncall};
 
 use buffers::{current_buffer, get_buffer};
 use editfns::field_end;
+use keymap::get_keymap;
 use lisp::defsubr;
 use lisp::LispObject;
-use lists::memq;
+use lists::{car_safe, cdr_safe, memq};
 use obarray::{intern, lisp_intern};
 use symbols::symbol_value;
 use textprop::get_char_property;
-use threads::ThreadState;
+use threads::{c_specpdl_index, ThreadState};
 
 /// Return t if BUFFER is a minibuffer.
 /// No argument or nil as argument means use current buffer as BUFFER.
@@ -118,6 +120,106 @@ pub fn minibuffer_completion_contents() -> LispObject {
     unsafe { make_buffer_string(prompt_end, pt, true) }
 }
 
+/// Read a string from the minibuffer, prompting with string PROMPT.
+/// The optional second arg INITIAL-CONTENTS is an obsolete alternative to
+///   DEFAULT-VALUE.  It normally should be nil in new code, except when
+///   HIST is a cons.  It is discussed in more detail below.
+///
+/// Third arg KEYMAP is a keymap to use whilst reading;
+///   if omitted or nil, the default is `minibuffer-local-map'.
+///
+/// If fourth arg READ is non-nil, interpret the result as a Lisp object
+///   and return that object:
+///   in other words, do `(car (read-from-string INPUT-STRING))'
+///
+/// Fifth arg HIST, if non-nil, specifies a history list and optionally
+///   the initial position in the list.  It can be a symbol, which is the
+///   history list variable to use, or a cons cell (HISTVAR . HISTPOS).
+///   In that case, HISTVAR is the history list variable to use, and
+///   HISTPOS is the initial position for use by the minibuffer history
+///   commands.  For consistency, you should also specify that element of
+///   the history as the value of INITIAL-CONTENTS.  Positions are counted
+///   starting from 1 at the beginning of the list.
+///
+/// Sixth arg DEFAULT-VALUE, if non-nil, should be a string, which is used
+///   as the default to `read' if READ is non-nil and the user enters
+///   empty input.  But if READ is nil, this function does _not_ return
+///   DEFAULT-VALUE for empty input!  Instead, it returns the empty string.
+///
+///   Whatever the value of READ, DEFAULT-VALUE is made available via the
+///   minibuffer history commands.  DEFAULT-VALUE can also be a list of
+///   strings, in which case all the strings are available in the history,
+///   and the first string is the default to `read' if READ is non-nil.
+///
+/// Seventh arg INHERIT-INPUT-METHOD, if non-nil, means the minibuffer inherits
+///  the current input method and the setting of `enable-multibyte-characters'.
+///
+/// If the variable `minibuffer-allow-text-properties' is non-nil,
+///  then the string which is returned includes whatever text properties
+///  were present in the minibuffer.  Otherwise the value has no text properties.
+///
+/// The remainder of this documentation string describes the
+/// INITIAL-CONTENTS argument in more detail.  It is only relevant when
+/// studying existing code, or when HIST is a cons.  If non-nil,
+/// INITIAL-CONTENTS is a string to be inserted into the minibuffer before
+/// reading input.  Normally, point is put at the end of that string.
+/// However, if INITIAL-CONTENTS is (STRING . POSITION), the initial
+/// input is STRING, but point is placed at _one-indexed_ position
+/// POSITION in the minibuffer.  Any integer value less than or equal to
+/// one puts point at the beginning of the string.  *Note* that this
+/// behavior differs from the way such arguments are used in `completing-read'
+/// and some related functions, which use zero-indexing for POSITION.
+#[lisp_fn(min = "1")]
+pub fn read_from_minibuffer(
+    prompt: LispObject,
+    initial_contents: LispObject,
+    mut keymap: LispObject,
+    read: LispObject,
+    hist: LispObject,
+    default_value: LispObject,
+    inherit_input_method: LispObject,
+) -> LispObject {
+    prompt.as_string_or_error();
+    keymap = if keymap.is_nil() {
+        unsafe { globals.Vminibuffer_local_map }
+    } else {
+        get_keymap(keymap, true, false)
+    };
+
+    let mut histvar: LispObject;
+    let mut histpos: LispObject;
+    if hist.is_symbol() {
+        histvar = hist;
+        histpos = Qnil;
+    } else {
+        histvar = car_safe(hist);
+        histpos = cdr_safe(hist);
+    }
+
+    if histvar.is_nil() {
+        histvar = Qminibuffer_history
+    };
+    if histpos.is_nil() {
+        histpos = LispObject::from_natnum(0)
+    };
+
+    unsafe {
+        read_minibuf(
+            keymap,
+            initial_contents,
+            prompt,
+            read.is_not_nil(),
+            histvar,
+            histpos,
+            default_value,
+            globals.minibuffer_allow_text_properties,
+            inherit_input_method.is_not_nil(),
+        )
+    }
+}
+
+// Functions that use the minibuffer to read various things.
+
 /// Read a string in the minibuffer, with completion.
 /// PROMPT is a string to prompt with; normally it ends in a colon and a space.
 /// COLLECTION can be a list of strings, an alist, an obarray or a hash table.
@@ -200,6 +302,58 @@ pub fn completing_read(
         def,
         inherit_input_method
     )
+}
+
+/// Read a string from the minibuffer, prompting with string PROMPT.
+/// If non-nil, second arg INITIAL-INPUT is a string to insert before reading.
+///   This argument has been superseded by DEFAULT-VALUE and should normally be nil
+///   in new code.  It behaves as INITIAL-CONTENTS in `read-from-minibuffer' (which
+///   see).
+/// The third arg HISTORY, if non-nil, specifies a history list
+///   and optionally the initial position in the list.
+/// See `read-from-minibuffer' for details of HISTORY argument.
+/// Fourth arg DEFAULT-VALUE is the default value or the list of default values.
+///  If non-nil, it is used for history commands, and as the value (or the first
+///  element of the list of default values) to return if the user enters the
+///  empty string.
+/// Fifth arg INHERIT-INPUT-METHOD, if non-nil, means the minibuffer inherits
+///  the current input method and the setting of `enable-multibyte-characters'.
+#[lisp_fn(min = "1")]
+pub fn read_string(
+    prompt: LispObject,
+    initial_input: LispObject,
+    history: LispObject,
+    default_value: LispObject,
+    inherit_input_method: LispObject,
+) -> LispObject {
+    let count = c_specpdl_index();
+
+    // Just in case we're in a recursive minibuffer, make it clear that the
+    // previous minibuffer's completion table does not apply to the new
+    // minibuffer.
+    // FIXME: `minibuffer-completion-table' should be buffer-local instead.
+    unsafe { specbind(Qminibuffer_completion_table, Qnil) };
+    let mut val: LispObject;
+
+    val = read_from_minibuffer(
+        prompt,
+        initial_input,
+        Qnil,
+        Qnil,
+        history,
+        default_value,
+        inherit_input_method,
+    );
+
+    if let Some(s) = val.as_string() {
+        if s.len_chars() == 0 && default_value.is_not_nil() {
+            val = match default_value.as_cons() {
+                None => default_value,
+                Some(c) => c.car(),
+            }
+        }
+    }
+    unsafe { unbind_to(count, val) }
 }
 
 pub fn read_command_or_variable(

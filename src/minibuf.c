@@ -262,7 +262,7 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
    if INHERIT_INPUT_METHOD, the minibuffer inherits the
    current input method.  */
 
-static Lisp_Object
+Lisp_Object
 read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 	      bool expflag,
 	      Lisp_Object histvar, Lisp_Object histpos, Lisp_Object defalt,
@@ -811,127 +811,8 @@ read_minibuf_unwind (void)
      made sense during the read_minibuf invocation.  */
   call0 (intern ("minibuffer-inactive-mode"));
 }
-
-
-DEFUN ("read-from-minibuffer", Fread_from_minibuffer,
-       Sread_from_minibuffer, 1, 7, 0,
-       doc: /* Read a string from the minibuffer, prompting with string PROMPT.
-The optional second arg INITIAL-CONTENTS is an obsolete alternative to
-  DEFAULT-VALUE.  It normally should be nil in new code, except when
-  HIST is a cons.  It is discussed in more detail below.
-
-Third arg KEYMAP is a keymap to use whilst reading;
-  if omitted or nil, the default is `minibuffer-local-map'.
-
-If fourth arg READ is non-nil, interpret the result as a Lisp object
-  and return that object:
-  in other words, do `(car (read-from-string INPUT-STRING))'
-
-Fifth arg HIST, if non-nil, specifies a history list and optionally
-  the initial position in the list.  It can be a symbol, which is the
-  history list variable to use, or a cons cell (HISTVAR . HISTPOS).
-  In that case, HISTVAR is the history list variable to use, and
-  HISTPOS is the initial position for use by the minibuffer history
-  commands.  For consistency, you should also specify that element of
-  the history as the value of INITIAL-CONTENTS.  Positions are counted
-  starting from 1 at the beginning of the list.
-
-Sixth arg DEFAULT-VALUE, if non-nil, should be a string, which is used
-  as the default to `read' if READ is non-nil and the user enters
-  empty input.  But if READ is nil, this function does _not_ return
-  DEFAULT-VALUE for empty input!  Instead, it returns the empty string.
-
-  Whatever the value of READ, DEFAULT-VALUE is made available via the
-  minibuffer history commands.  DEFAULT-VALUE can also be a list of
-  strings, in which case all the strings are available in the history,
-  and the first string is the default to `read' if READ is non-nil.
-
-Seventh arg INHERIT-INPUT-METHOD, if non-nil, means the minibuffer inherits
- the current input method and the setting of `enable-multibyte-characters'.
-
-If the variable `minibuffer-allow-text-properties' is non-nil,
- then the string which is returned includes whatever text properties
- were present in the minibuffer.  Otherwise the value has no text properties.
-
-The remainder of this documentation string describes the
-INITIAL-CONTENTS argument in more detail.  It is only relevant when
-studying existing code, or when HIST is a cons.  If non-nil,
-INITIAL-CONTENTS is a string to be inserted into the minibuffer before
-reading input.  Normally, point is put at the end of that string.
-However, if INITIAL-CONTENTS is (STRING . POSITION), the initial
-input is STRING, but point is placed at _one-indexed_ position
-POSITION in the minibuffer.  Any integer value less than or equal to
-one puts point at the beginning of the string.  *Note* that this
-behavior differs from the way such arguments are used in `completing-read'
-and some related functions, which use zero-indexing for POSITION.  */)
-  (Lisp_Object prompt, Lisp_Object initial_contents, Lisp_Object keymap, Lisp_Object read, Lisp_Object hist, Lisp_Object default_value, Lisp_Object inherit_input_method)
-{
-  Lisp_Object histvar, histpos, val;
-
-  CHECK_STRING (prompt);
-  if (NILP (keymap))
-    keymap = Vminibuffer_local_map;
-  else
-    keymap = get_keymap (keymap, 1, 0);
-
-  if (SYMBOLP (hist))
-    {
-      histvar = hist;
-      histpos = Qnil;
-    }
-  else
-    {
-      histvar = Fcar_safe (hist);
-      histpos = Fcdr_safe (hist);
-    }
-  if (NILP (histvar))
-    histvar = Qminibuffer_history;
-  if (NILP (histpos))
-    XSETFASTINT (histpos, 0);
-
-  val = read_minibuf (keymap, initial_contents, prompt,
-		      !NILP (read),
-		      histvar, histpos, default_value,
-		      minibuffer_allow_text_properties,
-		      !NILP (inherit_input_method));
-  return val;
-}
 
 /* Functions that use the minibuffer to read various things.  */
-
-DEFUN ("read-string", Fread_string, Sread_string, 1, 5, 0,
-       doc: /* Read a string from the minibuffer, prompting with string PROMPT.
-If non-nil, second arg INITIAL-INPUT is a string to insert before reading.
-  This argument has been superseded by DEFAULT-VALUE and should normally be nil
-  in new code.  It behaves as INITIAL-CONTENTS in `read-from-minibuffer' (which
-  see).
-The third arg HISTORY, if non-nil, specifies a history list
-  and optionally the initial position in the list.
-See `read-from-minibuffer' for details of HISTORY argument.
-Fourth arg DEFAULT-VALUE is the default value or the list of default values.
- If non-nil, it is used for history commands, and as the value (or the first
- element of the list of default values) to return if the user enters the
- empty string.
-Fifth arg INHERIT-INPUT-METHOD, if non-nil, means the minibuffer inherits
- the current input method and the setting of `enable-multibyte-characters'.  */)
-  (Lisp_Object prompt, Lisp_Object initial_input, Lisp_Object history, Lisp_Object default_value, Lisp_Object inherit_input_method)
-{
-  Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  /* Just in case we're in a recursive minibuffer, make it clear that the
-     previous minibuffer's completion table does not apply to the new
-     minibuffer.
-     FIXME: `minibuffer-completion-table' should be buffer-local instead.  */
-  specbind (Qminibuffer_completion_table, Qnil);
-
-  val = Fread_from_minibuffer (prompt, initial_input, Qnil,
-			       Qnil, history, default_value,
-			       inherit_input_method);
-  if (STRINGP (val) && SCHARS (val) == 0 && ! NILP (default_value))
-    val = CONSP (default_value) ? XCAR (default_value) : default_value;
-  return unbind_to (count, val);
-}
 
 DEFUN ("read-no-blanks-input", Fread_no_blanks_input, Sread_no_blanks_input, 1, 3, 0,
        doc: /* Read a string from the terminal, not allowing blanks.
@@ -1880,8 +1761,6 @@ It must be a character, which will be used to mask the input
 characters.  This variable should never be set globally.  */);
   Vread_hide_char = Qnil;
 
-  defsubr (&Sread_from_minibuffer);
-  defsubr (&Sread_string);
   defsubr (&Sinternal_complete_buffer);
   defsubr (&Sread_buffer);
   defsubr (&Sread_no_blanks_input);
