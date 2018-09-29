@@ -258,10 +258,9 @@ case does not match.
 for abbrevs that have them.
 
 +++
-** 'insert-abbrev-table-description' skips empty tables.
-'insert-abbrev-table-description' skips inserting empty tables when
-inserting non-readable tables.  By extension, this makes
-'write-abbrev-file' skip writing empty tables.
+** 'write-abbrev-file' skips empty tables.
+'write-abbrev-file' now skips inserting a 'define-abbrev-table' form for
+tables which do not have any non-system abbrevs to save.
 
 +++
 ** The new functions and commands 'text-property-search-forward' and
