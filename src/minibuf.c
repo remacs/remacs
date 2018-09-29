@@ -951,28 +951,6 @@ the current input method and the setting of`enable-multibyte-characters'.  */)
 		       !NILP (inherit_input_method));
 }
 
-DEFUN ("read-command", Fread_command, Sread_command, 1, 2, 0,
-       doc: /* Read the name of a command and return as a symbol.
-Prompt with PROMPT.  By default, return DEFAULT-VALUE or its first element
-if it is a list.  */)
-  (Lisp_Object prompt, Lisp_Object default_value)
-{
-  Lisp_Object name, default_string;
-
-  if (NILP (default_value))
-    default_string = Qnil;
-  else if (SYMBOLP (default_value))
-    default_string = SYMBOL_NAME (default_value);
-  else
-    default_string = default_value;
-
-  name = Fcompleting_read (prompt, Vobarray, Qcommandp, Qt,
-			   Qnil, Qnil, default_string, Qnil);
-  if (NILP (name))
-    return name;
-  return Fintern (name, Qnil);
-}
-
 #ifdef NOTDEF
 DEFUN ("read-function", Fread_function, Sread_function, 1, 1, 0,
        doc: /* One arg PROMPT, a string.  Read the name of a function and return as a symbol.
@@ -983,31 +961,6 @@ Prompt with PROMPT.  */)
 		  Qnil);
 }
 #endif /* NOTDEF */
-
-DEFUN ("read-variable", Fread_variable, Sread_variable, 1, 2, 0,
-       doc: /* Read the name of a user option and return it as a symbol.
-Prompt with PROMPT.  By default, return DEFAULT-VALUE or its first element
-if it is a list.
-A user option, or customizable variable, is one for which
-`custom-variable-p' returns non-nil.  */)
-  (Lisp_Object prompt, Lisp_Object default_value)
-{
-  Lisp_Object name, default_string;
-
-  if (NILP (default_value))
-    default_string = Qnil;
-  else if (SYMBOLP (default_value))
-    default_string = SYMBOL_NAME (default_value);
-  else
-    default_string = default_value;
-
-  name = Fcompleting_read (prompt, Vobarray,
-			   Qcustom_variable_p, Qt,
-			   Qnil, Qnil, default_string, Qnil);
-  if (NILP (name))
-    return name;
-  return Fintern (name, Qnil);
-}
 
 DEFUN ("read-buffer", Fread_buffer, Sread_buffer, 1, 4, 0,
        doc: /* Read the name of a buffer and return as a string.
@@ -1929,8 +1882,6 @@ characters.  This variable should never be set globally.  */);
 
   defsubr (&Sread_from_minibuffer);
   defsubr (&Sread_string);
-  defsubr (&Sread_command);
-  defsubr (&Sread_variable);
   defsubr (&Sinternal_complete_buffer);
   defsubr (&Sread_buffer);
   defsubr (&Sread_no_blanks_input);

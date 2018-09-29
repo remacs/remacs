@@ -1,16 +1,16 @@
 //! Minibuffer input and completion.
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{globals, Qcommandp, Qcustom_variable_p, Qfield, Qnil, Qt, Vminibuffer_list};
 use remacs_sys::{make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, EmacsInt,
                  Fcopy_sequence, Ffuncall};
-use remacs_sys::{Qfield, Vminibuffer_list};
 
 use buffers::{current_buffer, get_buffer};
 use editfns::field_end;
 use lisp::defsubr;
 use lisp::LispObject;
 use lists::memq;
-use obarray::intern;
+use obarray::{intern, lisp_intern};
 use symbols::symbol_value;
 use textprop::get_char_property;
 use threads::ThreadState;
@@ -200,6 +200,55 @@ pub fn completing_read(
         def,
         inherit_input_method
     )
+}
+
+pub fn read_command_or_variable(
+    prompt: LispObject,
+    default_value: LispObject,
+    symbol: LispObject,
+) -> LispObject {
+    let default_string = if default_value.is_nil() {
+        LispObject::constant_nil()
+    } else if let Some(s) = default_value.as_symbol() {
+        s.symbol_name()
+    } else {
+        default_value
+    };
+
+    let name = completing_read(
+        prompt,
+        unsafe { globals.Vobarray },
+        symbol,
+        Qt,
+        Qnil,
+        Qnil,
+        default_string,
+        Qnil,
+    );
+
+    if name.is_nil() {
+        name
+    } else {
+        lisp_intern(name, Qnil)
+    }
+}
+
+/// Read the name of a command and return as a symbol. */
+/// Prompt with PROMPT.  By default, return DEFAULT-VALUE or its first element */
+/// if it is a list.
+#[lisp_fn(min = "1")]
+pub fn read_command(prompt: LispObject, default_value: LispObject) -> LispObject {
+    read_command_or_variable(prompt, default_value, Qcommandp)
+}
+
+/// Read the name of a user option and return it as a symbol.
+/// Prompt with PROMPT.  By default, return DEFAULT-VALUE or its first element
+/// if it is a list.
+/// A user option, or customizable variable, is one for which
+/// `custom-variable-p' returns non-nil.
+#[lisp_fn(min = "1")]
+pub fn read_variable(prompt: LispObject, default_value: LispObject) -> LispObject {
+    read_command_or_variable(prompt, default_value, Qcustom_variable_p)
 }
 
 include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));
