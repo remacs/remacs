@@ -3569,6 +3569,7 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
     case ICONIFY_EVENT: ignore_event = Qiconify_frame; break;
     case DEICONIFY_EVENT: ignore_event = Qmake_frame_visible; break;
     case SELECTION_REQUEST_EVENT: ignore_event = Qselection_request; break;
+    case BUFFER_SWITCH_EVENT: ignore_event = Qbuffer_switch; break;
     default: ignore_event = Qnil; break;
     }
 
@@ -11103,6 +11104,8 @@ syms_of_keyboard (void)
 
   /* Menu and tool bar item parts.  */
   DEFSYM (Qmenu_enable, "menu-enable");
+
+  DEFSYM (Qbuffer_switch, "buffer-switch");
 
 #ifdef HAVE_NTGUI
   DEFSYM (Qlanguage_change, "language-change");
