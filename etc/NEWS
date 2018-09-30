@@ -220,6 +220,12 @@ This triggers to search the program on the remote host as indicated by
 When set to t, no message will be shown when auto-saving (default
 value: nil).
 
+---
+** The value of 'make-cursor-line-fully-visible' can now be a function.
+In addition to nil or non-nil, the value can now be a predicate
+function.  Follow mode uses this to control scrolling of its windows
+when the last screen line in a window is not fully visible.
+
 
 * Editing Changes in Emacs 27.1
 
