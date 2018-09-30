@@ -7642,8 +7642,3 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_attributes);
 }
 
-bool
-pget_raw_status_new(const struct Lisp_Process *p)
-{
-  return p->raw_status_new;
-}
