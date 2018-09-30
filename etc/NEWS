@@ -325,6 +325,10 @@ file.
 This new variable allows customizing the default arguments passed to
 git-grep when 'vc-git-grep' is used.
 
+*** Command 'vc-git-stash' now respects marks in the '*vc-dir*' buffer.
+When some files are marked, only those are stashed.
+When no files are marked, all modified files are stashed, as before.
+
 ** diff-mode
 *** Hunks are now automatically refined by default.
 To disable it, set the new defcustom 'diff-font-lock-refine' to nil.
