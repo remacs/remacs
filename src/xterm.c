@@ -93,19 +93,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #endif
 #endif
 
-#if defined (USE_LUCID) || defined (USE_MOTIF)
-#include "../lwlib/xlwmenu.h"
-#endif
-
 #ifdef USE_X_TOOLKIT
 
 /* Include toolkit specific headers for the scroll bar widget.  */
 
 #ifdef USE_TOOLKIT_SCROLL_BARS
-#if defined USE_MOTIF
-#include <Xm/Xm.h>		/* For LESSTIF_VERSION */
-#include <Xm/ScrollBar.h>
-#else /* !USE_MOTIF i.e. use Xaw */
 
 #ifdef HAVE_XAW3D
 #include <X11/Xaw3d/Simple.h>
@@ -118,7 +110,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifndef XtNpickTop
 #define XtNpickTop "pickTop"
 #endif /* !XtNpickTop */
-#endif /* !USE_MOTIF */
 #endif /* USE_TOOLKIT_SCROLL_BARS */
 
 #endif /* USE_X_TOOLKIT */
@@ -231,7 +222,7 @@ static void x_sync_with_move (struct frame *, int, int, bool);
 static int handle_one_xevent (struct x_display_info *,
 			      const XEvent *, int *,
 			      struct input_event *);
-#if ! (defined USE_X_TOOLKIT || defined USE_MOTIF)
+#ifndef USE_X_TOOLKIT
 static int x_dispatch_event (XEvent *, Display *);
 #endif
 static void x_wm_set_window_state (struct frame *, int);
@@ -2040,58 +2031,6 @@ x_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 }
 
 #ifdef USE_X_TOOLKIT
-
-#ifdef USE_LUCID
-
-/* Return the frame on which widget WIDGET is used.. Abort if frame
-   cannot be determined.  */
-
-static struct frame *
-x_frame_of_widget (Widget widget)
-{
-  struct x_display_info *dpyinfo;
-  Lisp_Object tail, frame;
-  struct frame *f;
-
-  dpyinfo = x_display_info_for_display (XtDisplay (widget));
-
-  /* Find the top-level shell of the widget.  Note that this function
-     can be called when the widget is not yet realized, so XtWindow
-     (widget) == 0.  That's the reason we can't simply use
-     x_any_window_to_frame.  */
-  while (!XtIsTopLevelShell (widget))
-    widget = XtParent (widget);
-
-  /* Look for a frame with that top-level widget.  Allocate the color
-     on that frame to get the right gamma correction value.  */
-  FOR_EACH_FRAME (tail, frame)
-    {
-      f = XFRAME (frame);
-      if (FRAME_X_P (f)
-	  && f->output_data.nothing != 1
-	  && FRAME_DISPLAY_INFO (f) == dpyinfo
-	  && f->output_data.x->widget == widget)
-	return f;
-    }
-  emacs_abort ();
-}
-
-/* Allocate a color which is lighter or darker than *PIXEL by FACTOR
-   or DELTA.  Try a color with RGB values multiplied by FACTOR first.
-   If this produces the same color as PIXEL, try a color where all RGB
-   values have DELTA added.  Return the allocated color in *PIXEL.
-   DISPLAY is the X display, CMAP is the colormap to operate on.
-   Value is true if successful.  */
-
-bool
-x_alloc_lighter_color_for_widget (Widget widget, Display *display, Colormap cmap,
-				  unsigned long *pixel, double factor, int delta)
-{
-  struct frame *f = x_frame_of_widget (widget);
-  return x_alloc_lighter_color (f, display, cmap, pixel, factor, delta);
-}
-
-#endif /* USE_LUCID */
 
 
 /* Structure specifying which arguments should be passed by Xt to
@@ -5254,29 +5193,6 @@ x_window_to_scroll_bar (Display *display, Window window_id, int type)
 }
 
 
-#if defined USE_LUCID
-
-/* Return the Lucid menu bar WINDOW is part of.  Return null
-   if WINDOW is not part of a menu bar.  */
-
-static Widget
-x_window_to_menu_bar (Window window)
-{
-  Lisp_Object tail, frame;
-
-  FOR_EACH_FRAME (tail, frame)
-    if (FRAME_X_P (XFRAME (frame)))
-      {
-	Widget menu_bar = XFRAME (frame)->output_data.x->menubar_widget;
-
-	if (menu_bar && xlwmenu_window_p (menu_bar, window))
-	  return menu_bar;
-      }
-  return NULL;
-}
-
-#endif /* USE_LUCID */
-
 
 /************************************************************************
 			 Toolkit scroll bars
@@ -5321,13 +5237,8 @@ xt_action_hook (Widget widget, XtPointer client_data, String action_name,
   bool scroll_bar_p;
   const char *end_action;
 
-#ifdef USE_MOTIF
-  scroll_bar_p = XmIsScrollBar (widget);
-  end_action = "Release";
-#else /* !USE_MOTIF i.e. use Xaw */
   scroll_bar_p = XtIsSubclass (widget, scrollbarWidgetClass);
   end_action = "EndScroll";
-#endif /* USE_MOTIF */
 
   if (scroll_bar_p
       && strcmp (action_name, end_action) == 0
@@ -5348,9 +5259,6 @@ xt_action_hook (Widget widget, XtPointer client_data, String action_name,
 	  set_vertical_scroll_bar (w);
 	}
       window_being_scrolled = Qnil;
-#if defined (USE_LUCID)
-      bar->last_seen_part = scroll_bar_nowhere;
-#endif
       /* Xt timeouts no longer needed.  */
       toolkit_scroll_bar_interaction = false;
     }
@@ -5364,13 +5272,8 @@ xt_horizontal_action_hook (Widget widget, XtPointer client_data, String action_n
   bool scroll_bar_p;
   const char *end_action;
 
-#ifdef USE_MOTIF
-  scroll_bar_p = XmIsScrollBar (widget);
-  end_action = "Release";
-#else /* !USE_MOTIF i.e. use Xaw */
   scroll_bar_p = XtIsSubclass (widget, scrollbarWidgetClass);
   end_action = "EndScroll";
-#endif /* USE_MOTIF */
 
   if (scroll_bar_p
       && strcmp (action_name, end_action) == 0
@@ -5392,9 +5295,6 @@ xt_horizontal_action_hook (Widget widget, XtPointer client_data, String action_n
 	      set_horizontal_scroll_bar (w);
 	    }
 	  window_being_scrolled = Qnil;
-#if defined (USE_LUCID)
-	  bar->last_seen_part = scroll_bar_nowhere;
-#endif
 	  /* Xt timeouts no longer needed.  */
 	  toolkit_scroll_bar_interaction = false;
 	}
@@ -5526,96 +5426,7 @@ x_horizontal_scroll_bar_to_input_event (const XEvent *event,
 }
 
 
-#ifdef USE_MOTIF
-
-/* Minimum and maximum values used for Motif scroll bars.  */
-
-#define XM_SB_MAX 10000000
-
-/* Scroll bar callback for Motif scroll bars.  WIDGET is the scroll
-   bar widget.  CLIENT_DATA is a pointer to the scroll_bar structure.
-   CALL_DATA is a pointer to a XmScrollBarCallbackStruct.  */
-
-static void
-xm_scroll_callback (Widget widget, XtPointer client_data, XtPointer call_data)
-{
-  struct scroll_bar *bar = client_data;
-  XmScrollBarCallbackStruct *cs = call_data;
-  enum scroll_bar_part part = scroll_bar_nowhere;
-  bool horizontal = bar->horizontal;
-  int whole = 0, portion = 0;
-
-  switch (cs->reason)
-    {
-    case XmCR_DECREMENT:
-      bar->dragging = -1;
-      part = horizontal ? scroll_bar_left_arrow : scroll_bar_up_arrow;
-      break;
-
-    case XmCR_INCREMENT:
-      bar->dragging = -1;
-      part = horizontal ? scroll_bar_right_arrow : scroll_bar_down_arrow;
-      break;
-
-    case XmCR_PAGE_DECREMENT:
-      bar->dragging = -1;
-      part = horizontal ? scroll_bar_before_handle : scroll_bar_above_handle;
-      break;
-
-    case XmCR_PAGE_INCREMENT:
-      bar->dragging = -1;
-      part = horizontal ? scroll_bar_after_handle : scroll_bar_below_handle;
-      break;
-
-    case XmCR_TO_TOP:
-      bar->dragging = -1;
-      part = horizontal ? scroll_bar_to_leftmost : scroll_bar_to_top;
-      break;
-
-    case XmCR_TO_BOTTOM:
-      bar->dragging = -1;
-      part = horizontal ? scroll_bar_to_rightmost : scroll_bar_to_bottom;
-      break;
-
-    case XmCR_DRAG:
-      {
-	int slider_size;
-
-	block_input ();
-	XtVaGetValues (widget, XmNsliderSize, &slider_size, NULL);
-	unblock_input ();
-
-	if (horizontal)
-	  {
-	    portion = bar->whole * ((float)cs->value / XM_SB_MAX);
-	    whole = bar->whole * ((float)(XM_SB_MAX - slider_size) / XM_SB_MAX);
-	    portion = min (portion, whole);
-	    part = scroll_bar_horizontal_handle;
-	  }
-	else
-	  {
-	    whole = XM_SB_MAX - slider_size;
-	    portion = min (cs->value, whole);
-	    part = scroll_bar_handle;
-	  }
-
-	bar->dragging = cs->value;
-      }
-      break;
-
-    case XmCR_VALUE_CHANGED:
-      break;
-    };
-
-  if (part != scroll_bar_nowhere)
-    {
-      window_being_scrolled = bar->window;
-      x_send_scroll_bar_event (bar->window, part, portion, whole,
-			       bar->horizontal);
-    }
-}
-
-#elif defined USE_GTK
+#ifdef USE_GTK
 
 /* Scroll bar callback for GTK scroll bars.  WIDGET is the scroll
    bar widget.  DATA is a pointer to the scroll_bar structure. */
@@ -5713,7 +5524,7 @@ xg_end_scroll_callback (GtkWidget *widget,
 }
 
 
-#else /* not USE_GTK and not USE_MOTIF */
+#else /* not USE_GTK */
 
 /* Xaw scroll bar callback.  Invoked when the thumb is dragged.
    WIDGET is the scroll bar widget.  CLIENT_DATA is a pointer to the
@@ -5845,7 +5656,7 @@ xaw_scroll_callback (Widget widget, XtPointer client_data, XtPointer call_data)
     }
 }
 
-#endif /* not USE_GTK and not USE_MOTIF */
+#endif /* not USE_GTK */
 
 #define SCROLL_BAR_NAME "verticalScrollBar"
 #define SCROLL_BAR_HORIZONTAL_NAME "horizontalScrollBar"
@@ -5891,59 +5702,6 @@ x_create_toolkit_scroll_bar (struct frame *f, struct scroll_bar *bar)
   unsigned long pixel;
 
   block_input ();
-
-#ifdef USE_MOTIF
-  /* Set resources.  Create the widget.  */
-  XtSetArg (av[ac], XtNmappedWhenManaged, False); ++ac;
-  XtSetArg (av[ac], XmNminimum, 0); ++ac;
-  XtSetArg (av[ac], XmNmaximum, XM_SB_MAX); ++ac;
-  XtSetArg (av[ac], XmNorientation, XmVERTICAL); ++ac;
-  XtSetArg (av[ac], XmNprocessingDirection, XmMAX_ON_BOTTOM), ++ac;
-  XtSetArg (av[ac], XmNincrement, 1); ++ac;
-  XtSetArg (av[ac], XmNpageIncrement, 1); ++ac;
-
-  pixel = f->output_data.x->scroll_bar_foreground_pixel;
-  if (pixel != -1)
-    {
-      XtSetArg (av[ac], XmNforeground, pixel);
-      ++ac;
-    }
-
-  pixel = f->output_data.x->scroll_bar_background_pixel;
-  if (pixel != -1)
-    {
-      XtSetArg (av[ac], XmNbackground, pixel);
-      ++ac;
-    }
-
-  widget = XmCreateScrollBar (f->output_data.x->edit_widget,
-			      (char *) scroll_bar_name, av, ac);
-
-  /* Add one callback for everything that can happen.  */
-  XtAddCallback (widget, XmNdecrementCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNdragCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNincrementCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNpageDecrementCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNpageIncrementCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNtoBottomCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNtoTopCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-
-  /* Realize the widget.  Only after that is the X window created.  */
-  XtRealizeWidget (widget);
-
-  /* Set the cursor to an arrow.  I didn't find a resource to do that.
-     And I'm wondering why it hasn't an arrow cursor by default.  */
-  XDefineCursor (XtDisplay (widget), XtWindow (widget),
-                 f->output_data.x->nontext_cursor);
-
-#else /* !USE_MOTIF i.e. use Xaw */
 
   /* Set resources.  Create the widget.  The background of the
      Xaw3d scroll bar widget is a little bit light for my taste.
@@ -6062,8 +5820,6 @@ x_create_toolkit_scroll_bar (struct frame *f, struct scroll_bar *bar)
   /* Realize the widget.  Only after that is the X window created.  */
   XtRealizeWidget (widget);
 
-#endif /* !USE_MOTIF */
-
   /* Install an action hook that lets us detect when the user
      finishes interacting with a scroll bar.  */
   if (action_hook_id == 0)
@@ -6090,59 +5846,6 @@ x_create_horizontal_toolkit_scroll_bar (struct frame *f, struct scroll_bar *bar)
   unsigned long pixel;
 
   block_input ();
-
-#ifdef USE_MOTIF
-  /* Set resources.  Create the widget.  */
-  XtSetArg (av[ac], XtNmappedWhenManaged, False); ++ac;
-  XtSetArg (av[ac], XmNminimum, 0); ++ac;
-  XtSetArg (av[ac], XmNmaximum, XM_SB_MAX); ++ac;
-  XtSetArg (av[ac], XmNorientation, XmHORIZONTAL); ++ac;
-  XtSetArg (av[ac], XmNprocessingDirection, XmMAX_ON_RIGHT), ++ac;
-  XtSetArg (av[ac], XmNincrement, 1); ++ac;
-  XtSetArg (av[ac], XmNpageIncrement, 1); ++ac;
-
-  pixel = f->output_data.x->scroll_bar_foreground_pixel;
-  if (pixel != -1)
-    {
-      XtSetArg (av[ac], XmNforeground, pixel);
-      ++ac;
-    }
-
-  pixel = f->output_data.x->scroll_bar_background_pixel;
-  if (pixel != -1)
-    {
-      XtSetArg (av[ac], XmNbackground, pixel);
-      ++ac;
-    }
-
-  widget = XmCreateScrollBar (f->output_data.x->edit_widget,
-			      (char *) scroll_bar_name, av, ac);
-
-  /* Add one callback for everything that can happen.  */
-  XtAddCallback (widget, XmNdecrementCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNdragCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNincrementCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNpageDecrementCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNpageIncrementCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNtoBottomCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-  XtAddCallback (widget, XmNtoTopCallback, xm_scroll_callback,
-		 (XtPointer) bar);
-
-  /* Realize the widget.  Only after that is the X window created.  */
-  XtRealizeWidget (widget);
-
-  /* Set the cursor to an arrow.  I didn't find a resource to do that.
-     And I'm wondering why it hasn't an arrow cursor by default.  */
-  XDefineCursor (XtDisplay (widget), XtWindow (widget),
-                 f->output_data.x->nontext_cursor);
-
-#else /* !USE_MOTIF i.e. use Xaw */
 
   /* Set resources.  Create the widget.  The background of the
      Xaw3d scroll bar widget is a little bit light for my taste.
@@ -6261,7 +5964,6 @@ x_create_horizontal_toolkit_scroll_bar (struct frame *f, struct scroll_bar *bar)
   /* Realize the widget.  Only after that is the X window created.  */
   XtRealizeWidget (widget);
 
-#endif /* !USE_MOTIF */
 
   /* Install an action hook that lets us detect when the user
      finishes interacting with a scroll bar.  */
@@ -6307,52 +6009,6 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
   float top, shown;
 
   block_input ();
-
-#ifdef USE_MOTIF
-
-  if (scroll_bar_adjust_thumb_portion_p)
-    {
-      /* We use an estimate of 30 chars per line rather than the real
-         `portion' value.  This has the disadvantage that the thumb size
-         is not very representative, but it makes our life a lot easier.
-         Otherwise, we have to constantly adjust the thumb size, which
-         we can't always do quickly enough: while dragging, the size of
-         the thumb might prevent the user from dragging the thumb all the
-         way to the end.  but Motif and some versions of Xaw3d don't allow
-         updating the thumb size while dragging.  Also, even if we can update
-         its size, the update will often happen too late.
-         If you don't believe it, check out revision 1.650 of xterm.c to see
-         what hoops we were going through and the still poor behavior we got.  */
-      portion = WINDOW_TOTAL_LINES (XWINDOW (bar->window)) * 30;
-      /* When the thumb is at the bottom, position == whole.
-         So we need to increase `whole' to make space for the thumb.  */
-      whole += portion;
-    }
-
-  if (whole <= 0)
-    top = 0, shown = 1;
-  else
-    {
-      top = (float) position / whole;
-      shown = (float) portion / whole;
-    }
-
-  if (bar->dragging == -1)
-    {
-      int size, value;
-
-      /* Slider size.  Must be in the range [1 .. MAX - MIN] where MAX
-         is the scroll bar's maximum and MIN is the scroll bar's minimum
-	 value.  */
-      size = clip_to_bounds (1, shown * XM_SB_MAX, XM_SB_MAX);
-
-      /* Position.  Must be in the range [MIN .. MAX - SLIDER_SIZE].  */
-      value = top * XM_SB_MAX;
-      value = min (value, XM_SB_MAX - size);
-
-      XmScrollBarSetValues (widget, value, size, 0, 0, False);
-    }
-#else /* !USE_MOTIF i.e. use Xaw */
 
   if (whole == 0)
     top = 0, shown = 1;
@@ -6405,7 +6061,6 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
 	  }
       }
   }
-#endif /* !USE_MOTIF */
 
   unblock_input ();
 }
@@ -6420,17 +6075,6 @@ x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, 
 
   block_input ();
 
-#ifdef USE_MOTIF
-  bar->whole = whole;
-  shown = (float) portion / whole;
-  top = (float) position / (whole - portion);
-  {
-    int size = clip_to_bounds (1, shown * XM_SB_MAX, XM_SB_MAX);
-    int value = clip_to_bounds (0, top * (XM_SB_MAX - size), XM_SB_MAX - size);
-
-    XmScrollBarSetValues (widget, value, size, 0, 0, False);
-  }
-#else /* !USE_MOTIF i.e. use Xaw */
   bar->whole = whole;
   if (whole == 0)
     top = 0, shown = 1;
@@ -6488,7 +6132,6 @@ x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, 
       }
 #endif
   }
-#endif /* !USE_MOTIF */
 
   unblock_input ();
 }
@@ -6569,9 +6212,6 @@ x_scroll_bar_create (struct window *w, int top, int left,
   bar->end = 0;
   bar->dragging = -1;
   bar->horizontal = horizontal;
-#if defined (USE_TOOLKIT_SCROLL_BARS) && defined (USE_LUCID)
-  bar->last_seen_part = scroll_bar_nowhere;
-#endif
 
   /* Add bar to its frame's list of scroll bars.  */
   bar->next = FRAME_SCROLL_BARS (f);
@@ -8025,16 +7665,6 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #ifndef USE_TOOLKIT_SCROLL_BARS
           struct scroll_bar *bar;
 #endif
-#if defined USE_LUCID
-          /* Submenus of the Lucid menu bar aren't widgets
-             themselves, so there's no way to dispatch events
-             to them.  Recognize this case separately.  */
-          {
-            Widget widget = x_window_to_menu_bar (event->xexpose.window);
-            if (widget)
-              xlwmenu_redisplay (widget);
-          }
-#endif /* USE_LUCID */
 
 #ifdef USE_TOOLKIT_SCROLL_BARS
           /* Dispatch event to the widget.  */
@@ -8185,21 +7815,6 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           clear_mouse_face (hlinfo);
           hlinfo->mouse_face_hidden = true;
         }
-
-#if defined USE_MOTIF && defined USE_TOOLKIT_SCROLL_BARS
-      if (f == 0)
-        {
-          /* Scroll bars consume key events, but we want
-             the keys to go to the scroll bar's frame.  */
-          Widget widget = XtWindowToWidget (dpyinfo->display,
-                                            event->xkey.window);
-          if (widget && XmIsScrollBar (widget))
-            {
-              widget = XtParent (widget);
-              f = x_any_window_to_frame (dpyinfo, XtWindow (widget));
-            }
-        }
-#endif /* USE_MOTIF and USE_TOOLKIT_SCROLL_BARS */
 
       if (f != 0)
         {
@@ -10242,22 +9857,6 @@ x_calc_absolute_position (struct frame *f)
     {
       int height = FRAME_PIXEL_HEIGHT (f);
 
-#if defined USE_X_TOOLKIT && defined USE_MOTIF
-      /* Something is fishy here.  When using Motif, starting Emacs with
-	 `-g -0-0', the frame appears too low by a few pixels.
-
-	 This seems to be so because initially, while Emacs is starting,
-	 the column widget's height and the frame's pixel height are
-	 different.  The column widget's height is the right one.  In
-	 later invocations, when Emacs is up, the frame's pixel height
-	 is right, though.
-
-	 It's not obvious where the initial small difference comes from.
-	 2000-12-01, gerd.  */
-
-      XtVaGetValues (f->output_data.x->column_widget, XtNheight, &height, NULL);
-#endif
-
       if (f->output_data.x->has_been_visible && !p)
 	{
 	  Lisp_Object frame;
@@ -11768,13 +11367,6 @@ x_free_frame_resources (struct frame *f)
 	unload_color (f, f->output_data.x->scroll_bar_background_pixel);
       if (f->output_data.x->scroll_bar_foreground_pixel != -1)
 	unload_color (f, f->output_data.x->scroll_bar_foreground_pixel);
-#if defined (USE_LUCID) && defined (USE_TOOLKIT_SCROLL_BARS)
-      /* Scrollbar shadow colors.  */
-      if (f->output_data.x->scroll_bar_top_shadow_pixel != -1)
-	unload_color (f, f->output_data.x->scroll_bar_top_shadow_pixel);
-      if (f->output_data.x->scroll_bar_bottom_shadow_pixel != -1)
-	unload_color (f, f->output_data.x->scroll_bar_bottom_shadow_pixel);
-#endif /* USE_LUCID && USE_TOOLKIT_SCROLL_BARS */
       if (f->output_data.x->white_relief.pixel != -1)
 	unload_color (f, f->output_data.x->white_relief.pixel);
       if (f->output_data.x->black_relief.pixel != -1)
@@ -12791,29 +12383,6 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   if (interrupt_input)
     init_sigio (dpyinfo->connection);
 
-#ifdef USE_LUCID
-  {
-    XrmValue d, fr, to;
-    Font font;
-
-    dpy = dpyinfo->display;
-    d.addr = (XPointer)&dpy;
-    d.size = sizeof (Display *);
-    fr.addr = (char *) XtDefaultFont;
-    fr.size = sizeof (XtDefaultFont);
-    to.size = sizeof (Font *);
-    to.addr = (XPointer)&font;
-    x_catch_errors (dpy);
-    if (!XtCallConverter (dpy, XtCvtStringToFont, &d, 1, &fr, &to, NULL))
-      emacs_abort ();
-    if (x_had_errors_p (dpy) || !XQueryFont (dpy, font))
-      XrmPutLineResource (&xrdb, "Emacs.dialog.*.font: 9x15");
-    /* Do not free XFontStruct returned by the above call to XQueryFont.
-       This leads to X protocol errors at XtCloseDisplay (Bug#18403).  */
-    x_uncatch_errors ();
-  }
-#endif
-
   /* See if we should run in synchronous mode.  This is useful
      for debugging X code.  */
   {
@@ -13240,9 +12809,7 @@ With the X Window system, the value is a symbol describing the
 X toolkit.  Possible values are: gtk, motif, xaw, or xaw3d.
 With MS Windows or Nextstep, the value is t.  */);
 #ifdef USE_TOOLKIT_SCROLL_BARS
-#ifdef USE_MOTIF
-  Vx_toolkit_scroll_bars = intern_c_string ("motif");
-#elif defined HAVE_XAW3D
+#ifdef HAVE_XAW3D
   Vx_toolkit_scroll_bars = intern_c_string ("xaw3d");
 #elif USE_GTK
   Vx_toolkit_scroll_bars = intern_c_string ("gtk");

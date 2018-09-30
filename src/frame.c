@@ -5827,7 +5827,7 @@ Note that when a frame is not large enough to accommodate a change of
 any of the parameters listed above, Emacs may try to enlarge the frame
 even if this option is non-nil.  */);
 #if defined (HAVE_WINDOW_SYSTEM)
-#if defined (USE_LUCID) || defined (USE_MOTIF) || defined (HAVE_NTGUI)
+#if defined (HAVE_NTGUI)
   frame_inhibit_implied_resize = list1 (Qtool_bar_lines);
 #else
   frame_inhibit_implied_resize = Qnil;

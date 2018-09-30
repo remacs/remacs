@@ -68,18 +68,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/CoreP.h>
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
-#ifdef USE_LUCID
-#include "xsettings.h"
-#include "../lwlib/xlwmenu.h"
 #ifdef HAVE_XAW3D
 #include <X11/Xaw3d/Paned.h>
 #else /* !HAVE_XAW3D */
 #include <X11/Xaw/Paned.h>
 #endif /* HAVE_XAW3D */
-#endif /* USE_LUCID */
-#ifdef USE_MOTIF
-#include "../lwlib/lwlib.h"
-#endif
 #else /* not USE_X_TOOLKIT */
 #ifndef USE_GTK
 #include "../oldXMenu/XMenu.h"
@@ -128,7 +121,7 @@ menubar_id_to_frame (LWLIB_ID id)
 #endif
 
 
-#if defined USE_GTK || defined USE_MOTIF
+#if defined USE_GTK
 
 /* Set menu_items_inuse so no other popup menu or dialog is created.  */
 
@@ -245,16 +238,6 @@ popup_get_selection (XEvent *initial_event, struct x_display_info *dpyinfo,
           && dpyinfo->display == event.xbutton.display)
         {
           dpyinfo->grabbed &= ~(1 << event.xbutton.button);
-#ifdef USE_MOTIF /* Pretending that the event came from a
-                    Btn1Down seems the only way to convince Motif to
-                    activate its callbacks; setting the XmNmenuPost
-                    isn't working. --marcus@sysc.pdx.edu.  */
-          event.xbutton.button = 1;
-          /*  Motif only pops down menus when no Ctrl, Alt or Mod
-              key is pressed and the button is released.  So reset key state
-              so Motif thinks this is the case.  */
-          event.xbutton.state = 0;
-#endif
         }
       /* Pop down on C-g and Escape.  */
       else if (event.type == KeyPress
@@ -303,18 +286,6 @@ If FRAME is nil or not given, use the selected frame.  */)
       ev.xbutton.button = Button1;
       ev.xbutton.x = ev.xbutton.y = FRAME_MENUBAR_HEIGHT (f) / 2;
       ev.xbutton.same_screen = True;
-
-#ifdef USE_MOTIF
-      {
-        Arg al[2];
-        WidgetList list;
-        Cardinal nr;
-        XtSetArg (al[0], XtNchildren, &list);
-        XtSetArg (al[1], XtNnumChildren, &nr);
-        XtGetValues (menubar, al, 2);
-        ev.xbutton.window = XtWindow (list[0]);
-      }
-#endif
 
       XTranslateCoordinates (FRAME_X_DISPLAY (f),
                              /* From-window, to-window.  */
@@ -643,37 +614,6 @@ update_frame_menubar (struct frame *f)
 #endif /* USE_GTK */
 }
 
-#ifdef USE_LUCID
-static void
-apply_systemfont_to_dialog (Widget w)
-{
-  const char *fn = xsettings_get_system_normal_font ();
-  if (fn)
-    {
-      XrmDatabase db = XtDatabase (XtDisplay (w));
-      if (db)
-        XrmPutStringResource (&db, "*dialog.font", fn);
-    }
-}
-
-static void
-apply_systemfont_to_menu (struct frame *f, Widget w)
-{
-  const char *fn = xsettings_get_system_normal_font ();
-
-  if (fn)
-    {
-      XrmDatabase db = XtDatabase (XtDisplay (w));
-      if (db)
-        {
-          XrmPutStringResource (&db, "*menubar*font", fn);
-          XrmPutStringResource (&db, "*popup*font", fn);
-        }
-    }
-}
-
-#endif
-
 /* Set the contents of the menubar widgets of frame F.
    The argument FIRST_TIME is currently ignored;
    it is set the first time this is called, from initialize_frame_menubar.  */
@@ -950,9 +890,6 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
       char menuOverride[] = "Ctrl<KeyPress>g: MenuGadgetEscape()";
       XtTranslations  override = XtParseTranslationTable (menuOverride);
 
-#ifdef USE_LUCID
-      apply_systemfont_to_menu (f, f->output_data.x->column_widget);
-#endif
       menubar_widget = lw_create_widget ("menubar", "menubar", id,
                                          first_wv,
 					 f->output_data.x->column_widget,
@@ -975,31 +912,14 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
     menubar_size
       = (f->output_data.x->menubar_widget
 	 ? (f->output_data.x->menubar_widget->core.height
-#ifndef USE_LUCID
 	    /* Damn me...  With Lucid I get a core.border_width of 1
 	       only the first time this is called and an ibw of 1 every
 	       time this is called.  So the first time this is called I
 	       was off by one.  Fix that here by never adding
 	       core.border_width for Lucid.  */
 	    + f->output_data.x->menubar_widget->core.border_width
-#endif /* USE_LUCID */
 	    )
 	 : 0);
-
-#ifdef USE_LUCID
-      /* Experimentally, we now get the right results
-	 for -geometry -0-0 without this.  24 Aug 96, rms.
-         Maybe so, but the menu bar size is missing the pixels so the
-         WM size hints are off by these pixels.  Jan D, oct 2009.  */
-    if (FRAME_EXTERNAL_MENU_BAR (f))
-      {
-        Dimension ibw = 0;
-
-        XtVaGetValues (f->output_data.x->column_widget,
-		       XtNinternalBorderWidth, &ibw, NULL);
-	menubar_size += ibw;
-      }
-#endif /* USE_LUCID */
 
     FRAME_MENUBAR_HEIGHT (f) = menubar_size;
   }
@@ -1039,12 +959,6 @@ void
 free_frame_menubar (struct frame *f)
 {
   Widget menubar_widget;
-#ifdef USE_MOTIF
-  /* Motif automatically shrinks the frame in lw_destroy_all_widgets.
-     If we want to preserve the old height, calculate it now so we can
-     restore it below.  */
-  int old_height = FRAME_TEXT_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f);
-#endif
 
   eassert (FRAME_X_P (f));
 
@@ -1054,49 +968,15 @@ free_frame_menubar (struct frame *f)
 
   if (menubar_widget)
     {
-#ifdef USE_MOTIF
-      /* Removing the menu bar magically changes the shell widget's x
-	 and y position of (0, 0) which, when the menu bar is turned
-	 on again, leads to pull-down menus appearing in strange
-	 positions near the upper-left corner of the display.  This
-	 happens only with some window managers like twm and ctwm,
-	 but not with other like Motif's mwm or kwm, because the
-	 latter generate ConfigureNotify events when the menu bar
-	 is switched off, which fixes the shell position.  */
-      Position x0, y0, x1, y1;
-#endif
 
       block_input ();
-
-#ifdef USE_MOTIF
-      if (f->output_data.x->widget)
-	XtVaGetValues (f->output_data.x->widget, XtNx, &x0, XtNy, &y0, NULL);
-#endif
 
       lw_destroy_all_widgets ((LWLIB_ID) f->output_data.x->id);
       f->output_data.x->menubar_widget = NULL;
 
       if (f->output_data.x->widget)
 	{
-#ifdef USE_MOTIF
-	  XtVaGetValues (f->output_data.x->widget, XtNx, &x1, XtNy, &y1, NULL);
-	  if (x1 == 0 && y1 == 0)
-	    XtVaSetValues (f->output_data.x->widget, XtNx, x0, XtNy, y0, NULL);
-	  if (frame_inhibit_resize (f, false, Qmenu_bar_lines))
-	    adjust_frame_size (f, -1, old_height, 1, false, Qfree_frame_menubar_1);
-	  else
-	    adjust_frame_size (f, -1, -1, 2, false, Qfree_frame_menubar_1);
-#else
 	  adjust_frame_size (f, -1, -1, 2, false, Qfree_frame_menubar_1);
-#endif /* USE_MOTIF */
-	}
-      else
-	{
-#ifdef USE_MOTIF
-	  if (WINDOWP (FRAME_ROOT_WINDOW (f))
-	      && frame_inhibit_resize (f, false, Qmenu_bar_lines))
-	    adjust_frame_size (f, -1, old_height, 1, false, Qfree_frame_menubar_2);
-#endif
 	}
 
       unblock_input ();
@@ -1357,10 +1237,6 @@ create_and_show_popup_menu (struct frame *f, widget_value *first_wv,
   Window dummy_window;
 
   eassert (FRAME_X_P (f));
-
-#ifdef USE_LUCID
-  apply_systemfont_to_menu (f, f->output_data.x->widget);
-#endif
 
   menu_id = widget_id_tick++;
   menu = lw_create_widget ("popup", first_wv->name, menu_id, first_wv,
@@ -1764,9 +1640,6 @@ create_and_show_dialog (struct frame *f, widget_value *first_wv)
   eassert (FRAME_X_P (f));
 
   dialog_id = widget_id_tick++;
-#ifdef USE_LUCID
-  apply_systemfont_to_dialog (f->output_data.x->widget);
-#endif
   lw_create_widget (first_wv->name, "dialog", dialog_id, first_wv,
                     f->output_data.x->widget, true, 0,
                     dialog_selection_callback, 0, 0);
