@@ -123,7 +123,6 @@
 
 (ert-deftest data-test--get-variable-documentation-fail ()
   ;; `last-command' is defined in Rust.
-  :expected-result :failed
   (should
    (integerp
     (get 'last-command 'variable-documentation))))
