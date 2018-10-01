@@ -106,6 +106,17 @@ extern "C" {
         sexpflag: bool,
     ) -> LispObject;
     pub fn is_minibuffer(w: *const Lisp_Window) -> bool;
+    pub fn read_minibuf(
+        map: Lisp_Object,
+        initial: Lisp_Object,
+        prompt: Lisp_Object,
+        expflag: bool,
+        histvar: Lisp_Object,
+        histpos: Lisp_Object,
+        defalt: Lisp_Object,
+        allow_props: bool,
+        inherit_input_method: bool,
+    ) -> Lisp_Object;
     pub static minibuf_prompt: LispObject;
     pub fn add_process_read_fd(fd: libc::c_int);
     pub fn allocate_misc(t: Lisp_Misc_Type) -> LispObject;

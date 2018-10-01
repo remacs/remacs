@@ -21,7 +21,6 @@
 
 (require 'ert)
 
-
 ;;; Support functions for `try-completion', `all-completion', and
 ;;; `test-completion' tests.
 
@@ -399,5 +398,11 @@
   (minibuf-tests--test-completion-regexp
    #'minibuf-tests--strings-to-symbol-hashtable))
 
-
+(ert-deftest test-minibuffer-contents ()
+  (let ((buf (window-buffer (select-window (minibuffer-window)))))
+    (with-current-buffer buf
+      (should (string= (minibuffer-contents) ""))
+      (insert "test")
+      (should (string= (minibuffer-contents) "test")))))
+
 ;;; minibuf-tests.el ends here
