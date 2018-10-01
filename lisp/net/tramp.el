@@ -1941,21 +1941,20 @@ been set up by `rfn-eshadow-setup-minibuffer'."
 		   (minibuffer-prompt-end)))
 	  ;; We do not want to send any remote command.
 	  (non-essential t))
-      (when
-	  (tramp-tramp-file-p
-	   (buffer-substring-no-properties end (point-max)))
-	(save-restriction
-	  (narrow-to-region
-	   (1+ (or (string-match
-		    (tramp-rfn-eshadow-update-overlay-regexp)
-		    (buffer-string) end)
-		   end))
-	   (point-max))
-	  (let ((rfn-eshadow-overlay tramp-rfn-eshadow-overlay)
-		(rfn-eshadow-update-overlay-hook nil)
-		file-name-handler-alist)
-	    (move-overlay rfn-eshadow-overlay (point-max) (point-max))
-	    (rfn-eshadow-update-overlay)))))))
+      (when (tramp-tramp-file-p (buffer-substring end (point-max)))
+	(save-excursion
+	  (save-restriction
+	    (narrow-to-region
+	     (1+ (or (string-match
+		      (tramp-rfn-eshadow-update-overlay-regexp)
+		      (buffer-string) end)
+		     end))
+	     (point-max))
+	    (let ((rfn-eshadow-overlay tramp-rfn-eshadow-overlay)
+		  (rfn-eshadow-update-overlay-hook nil)
+		  file-name-handler-alist)
+	      (move-overlay rfn-eshadow-overlay (point-max) (point-max))
+	      (rfn-eshadow-update-overlay))))))))
 
 (add-hook 'rfn-eshadow-update-overlay-hook
 	  'tramp-rfn-eshadow-update-overlay)
