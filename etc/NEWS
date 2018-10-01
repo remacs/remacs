@@ -365,6 +365,29 @@ better emulate 'M-.' in both Bash and zsh, since the former counts
 from the beginning of the arguments, while the latter counts from the
 end.
 
+** SQL
+
+*** Installation of 'sql-indent' from ELPA is strongly encouraged.
+This package support sophisticated rules for properly indenting SQL
+statements.  SQL is not like other programming languages like C, Java,
+or Python where code is sparse and rules for formatting are fairly
+well established. Instead SQL is more like COBOL (from which it came)
+and code tends to be very dense and line ending decisions driven by
+syntax and line length considerations to make readable code.
+Experienced SQL developers may prefer to rely upon existing Emacs
+facilities for formatting code but the 'sql-indent' package provides
+facilities to aid more casual SQL developers layout queries and
+complex expressions.
+
+*** 'sql-use-indent-support' (default t) enables SQL indention support.
+The `sql-indent' package from ELPA must be installed to get the
+indentation support in 'sql-mode' and 'sql-interactive-mode'.
+
+*** 'sql-mode-hook' and 'sql-interactive-mode-hook' changed.
+Both hook variables have had 'sql-indent-enable' added to their
+default values. If youhave existing customizations to these variables,
+you should make sure that the new default entry is included.
+
 ** Term
 
 ---
