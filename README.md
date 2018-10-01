@@ -152,13 +152,13 @@ more Emacs-y.
         rustup install `cat rust-toolchain`
 
 2. You will need a C compiler and toolchain. On Linux, you can do
-   something like `apt-get install build-essential automake clang`. On
+   something like `apt install build-essential automake clang`. On
    macOS, you'll need Xcode.
 
 3. You will need some C libraries. On Linux, you can install
    everything you need with:
 
-        apt-get install texinfo libjpeg-dev libtiff-dev \
+        apt install texinfo libjpeg-dev libtiff-dev \
           libgif-dev libxpm-dev libgtk-3-dev libgnutls28-dev \
           libncurses5-dev libxml2-dev libxt-dev
 
