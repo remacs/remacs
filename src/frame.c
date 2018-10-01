@@ -45,10 +45,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "fontset.h"
 #endif
 #include "cm.h"
-#ifdef USE_X_TOOLKIT
-#include "widget.h"
-#endif
-
 /* The currently selected frame.  */
 
 Lisp_Object selected_frame;
@@ -1892,7 +1888,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   fset_buried_buffer_list (f, Qnil);
 
   free_font_driver_list (f);
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI)
+#if defined (HAVE_NTGUI)
   xfree (f->namebuf);
 #endif
   xfree (f->decode_mode_spec_buffer);
@@ -1920,7 +1916,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
     /* If needed, delete the terminal that this frame was on.
        (This must be done after the frame is killed.)  */
     terminal->reference_count--;
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#if defined (USE_GTK)
     /* FIXME: Deleting the terminal crashes emacs because of a GTK
        bug.
        https://lists.gnu.org/archive/html/emacs-devel/2011-10/msg00363.html */
@@ -1930,7 +1926,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
        don't delete the terminal for these builds either.  */
     if (terminal->reference_count == 0 && terminal->type == output_x_window)
       terminal->reference_count = 1;
-#endif /* USE_X_TOOLKIT || USE_GTK */
+#endif /* USE_GTK */
     if (terminal->reference_count == 0)
       {
 	Lisp_Object tmp;
@@ -3929,10 +3925,6 @@ x_report_frame_params (struct frame *f, Lisp_Object *alistptr)
   store_in_alist (alistptr, Qwindow_id,
 		  make_formatted_string (buf, "%"pMu, w));
 #ifdef HAVE_X_WINDOWS
-#ifdef USE_X_TOOLKIT
-  /* Tooltip frame may not have this widget.  */
-  if (FRAME_X_OUTPUT (f)->widget)
-#endif
     w = (uintptr_t) FRAME_OUTER_WINDOW (f);
   store_in_alist (alistptr, Qouter_window_id,
 		  make_formatted_string (buf, "%"pMu, w));
@@ -4701,7 +4693,7 @@ display_x_get_resource (Display_Info *dpyinfo, Lisp_Object attribute,
 			    attribute, class, component, subclass);
 }
 
-#if defined HAVE_X_WINDOWS && !defined USE_X_TOOLKIT && !defined USE_GTK
+#if defined HAVE_X_WINDOWS && !defined USE_GTK
 /* Used when C code wants a resource value.  */
 /* Called from oldXMenu/Create.c.  */
 char *

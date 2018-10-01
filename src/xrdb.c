@@ -412,11 +412,9 @@ x_load_resources (Display *display, const char *xrm_string,
   const char *helv = "-*-helvetica-medium-r-*--*-120-*-*-*-*-iso8859-1";
 
   x_rm_string = XrmStringToQuark (XrmStringType);
-#ifndef USE_X_TOOLKIT
   /* pmr@osf.org says this shouldn't be done if USE_X_TOOLKIT.
      I suspect it's because the toolkit version does this elsewhere.  */
   XrmInitialize ();
-#endif
   rdb = XrmGetStringDatabase ("");
 
   /* Add some font defaults.  If the font `helv' doesn't exist, widgets

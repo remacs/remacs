@@ -453,31 +453,6 @@ x_free_colors (struct frame *f, unsigned long *pixels, int npixels)
     }
 }
 
-
-#ifdef USE_X_TOOLKIT
-
-/* Free colors used on display DPY.  PIXELS is an array of NPIXELS pixel
-   color values.  Interrupt input must be blocked when this function
-   is called.  */
-
-void
-x_free_dpy_colors (Display *dpy, Screen *screen, Colormap cmap,
-		   unsigned long *pixels, int npixels)
-{
-  struct x_display_info *dpyinfo = x_display_info_for_display (dpy);
-
-  /* If display has an immutable color map, freeing colors is not
-     necessary and some servers don't allow it.  So don't do it.  */
-  if (x_mutable_colormap (dpyinfo->visual))
-    {
-#ifdef DEBUG_X_COLORS
-      unregister_colors (pixels, npixels);
-#endif
-      XFreeColors (dpy, cmap, pixels, npixels, 0);
-    }
-}
-#endif /* USE_X_TOOLKIT */
-
 /* Create and return a GC for use on frame F.  GC values and mask
    are given by XGCV and MASK.  */
 
@@ -3412,105 +3387,6 @@ DEFUN ("internal-set-lisp-face-attribute-from-resource",
 			      Menu face
  ***********************************************************************/
 
-#if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT
-
-/* Make menus on frame F appear as specified by the `menu' face.  */
-
-static void
-x_update_menu_appearance (struct frame *f)
-{
-  struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
-  XrmDatabase rdb;
-
-  if (dpyinfo
-      && (rdb = XrmGetDatabase (FRAME_X_DISPLAY (f)),
-	  rdb != NULL))
-    {
-      char line[512];
-      char *buf = line;
-      ptrdiff_t bufsize = sizeof line;
-      Lisp_Object lface = lface_from_face_name (f, Qmenu, true);
-      struct face *face = FACE_FROM_ID (f, MENU_FACE_ID);
-      const char *myname = SSDATA (Vx_resource_name);
-      bool changed_p = false;
-      const char *popup_path = "menu.popup";
-
-      if (STRINGP (LFACE_FOREGROUND (lface)))
-	{
-	  exprintf (&buf, &bufsize, line, -1, "%s.%s*foreground: %s",
-		    myname, popup_path,
-		    SDATA (LFACE_FOREGROUND (lface)));
-	  XrmPutLineResource (&rdb, line);
-	  exprintf (&buf, &bufsize, line, -1, "%s.pane.menubar*foreground: %s",
-		    myname, SDATA (LFACE_FOREGROUND (lface)));
-	  XrmPutLineResource (&rdb, line);
-	  changed_p = true;
-	}
-
-      if (STRINGP (LFACE_BACKGROUND (lface)))
-	{
-	  exprintf (&buf, &bufsize, line, -1, "%s.%s*background: %s",
-		    myname, popup_path,
-		    SDATA (LFACE_BACKGROUND (lface)));
-	  XrmPutLineResource (&rdb, line);
-
-	  exprintf (&buf, &bufsize, line, -1, "%s.pane.menubar*background: %s",
-		    myname, SDATA (LFACE_BACKGROUND (lface)));
-	  XrmPutLineResource (&rdb, line);
-	  changed_p = true;
-	}
-
-      if (face->font
-	  /* On Solaris 5.8, it's been reported that the `menu' face
-	     can be unspecified here, during startup.  Why this
-	     happens remains unknown.  -- cyd  */
-	  && FONTP (LFACE_FONT (lface))
-	  && (!UNSPECIFIEDP (LFACE_FAMILY (lface))
-	      || !UNSPECIFIEDP (LFACE_FOUNDRY (lface))
-	      || !UNSPECIFIEDP (LFACE_SWIDTH (lface))
-	      || !UNSPECIFIEDP (LFACE_WEIGHT (lface))
-	      || !UNSPECIFIEDP (LFACE_SLANT (lface))
-	      || !UNSPECIFIEDP (LFACE_HEIGHT (lface))))
-	{
-	  Lisp_Object xlfd = Ffont_xlfd_name (LFACE_FONT (lface), Qnil);
-#if defined HAVE_X_I18N
-
-	  const char *suffix = "Set";
-#else
-	  const char *suffix = "";
-#endif
-
-	  if (! NILP (xlfd))
-	    {
-#if defined HAVE_X_I18N
-	      char *fontsetname = xic_create_fontsetname (SSDATA (xlfd), motif);
-#else
-	      char *fontsetname = SSDATA (xlfd);
-#endif
-	      exprintf (&buf, &bufsize, line, -1, "%s.pane.menubar*font%s: %s",
-			myname, suffix, fontsetname);
-	      XrmPutLineResource (&rdb, line);
-
-	      exprintf (&buf, &bufsize, line, -1, "%s.%s*font%s: %s",
-			myname, popup_path, suffix, fontsetname);
-	      XrmPutLineResource (&rdb, line);
-	      changed_p = true;
-	      if (fontsetname != SSDATA (xlfd))
-		xfree (fontsetname);
-	    }
-	}
-
-      if (changed_p && f->output_data.x->menubar_widget)
-	free_frame_menubar (f);
-
-      if (buf != line)
-	xfree (buf);
-    }
-}
-
-#endif /* HAVE_X_WINDOWS && USE_X_TOOLKIT */
-
-
 DEFUN ("face-attribute-relative-p", Fface_attribute_relative_p,
        Sface_attribute_relative_p,
        2, 2, 0,
@@ -5163,10 +5039,6 @@ realize_basic_faces (struct frame *f)
       if (FRAME_FACE_CACHE (f)->menu_face_changed_p)
 	{
 	  FRAME_FACE_CACHE (f)->menu_face_changed_p = false;
-#ifdef USE_X_TOOLKIT
-	  if (FRAME_WINDOW_P (f))
-	    x_update_menu_appearance (f);
-#endif
 	}
 
       success_p = true;

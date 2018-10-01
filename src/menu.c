@@ -33,10 +33,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "blockinput.h"
 #include "buffer.h"
 
-#ifdef USE_X_TOOLKIT
-#include "../lwlib/lwlib.h"
-#endif
-
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
@@ -51,7 +47,7 @@ extern AppendMenuW_Proc unicode_append_menu;
 static bool
 have_boxes (void)
 {
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NTGUI) || defined(HAVE_NS)
+#if defined (USE_GTK) || defined (HAVE_NTGUI) || defined(HAVE_NS)
   if (FRAME_WINDOW_P (XFRAME (Vmenu_updating_frame)))
     return 1;
 #endif
@@ -170,7 +166,7 @@ ensure_menu_items (int items)
     }
 }
 
-#if (defined USE_X_TOOLKIT || defined USE_GTK || defined HAVE_NS \
+#if (defined USE_GTK || defined HAVE_NS \
      || defined HAVE_NTGUI)
 
 /* Begin a submenu.  */
@@ -195,7 +191,7 @@ push_submenu_end (void)
   menu_items_submenu_depth--;
 }
 
-#endif /* USE_X_TOOLKIT || USE_GTK || HAVE_NS || defined HAVE_NTGUI */
+#endif /* USE_GTK || HAVE_NS || defined HAVE_NTGUI */
 
 /* Indicate boundary between left and right.  */
 
@@ -423,7 +419,7 @@ single_menu_item (Lisp_Object key, Lisp_Object item, Lisp_Object dummy, void *sk
 		  AREF (item_properties, ITEM_PROPERTY_SELECTED),
 		  AREF (item_properties, ITEM_PROPERTY_HELP));
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
+#if defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
   /* Display a submenu using the toolkit.  */
   if (FRAME_WINDOW_P (XFRAME (Vmenu_updating_frame))
       && ! (NILP (map) || NILP (enabled)))
@@ -569,7 +565,7 @@ parse_single_submenu (Lisp_Object item_key, Lisp_Object item_name,
 }
 
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
+#if defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
 
 /* Allocate and basically initialize widget_value, blocking input.  */
 
@@ -946,7 +942,7 @@ find_and_call_menu_selection (struct frame *f, int menu_bar_items_used,
   SAFE_FREE ();
 }
 
-#endif /* USE_X_TOOLKIT || USE_GTK || HAVE_NS || HAVE_NTGUI */
+#endif /* USE_GTK || HAVE_NS || HAVE_NTGUI */
 
 #ifdef HAVE_NS
 /* As above, but return the menu selection instead of storing in kb buffer.

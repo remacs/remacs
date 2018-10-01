@@ -27,9 +27,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifdef HAVE_X_WINDOWS
 
 #include <X11/Xlib.h>
-#ifdef USE_X_TOOLKIT
-#include <X11/Intrinsic.h>
-#endif /* USE_X_TOOLKIT */
 
 #else /* !HAVE_X_WINDOWS */
 

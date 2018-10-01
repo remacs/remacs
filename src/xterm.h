@@ -32,19 +32,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/Xatom.h>
 #include <X11/Xresource.h>
 
-#ifdef USE_X_TOOLKIT
-#include <X11/StringDefs.h>
-#include <X11/IntrinsicP.h>	/* CoreP.h needs this */
-#include <X11/CoreP.h>		/* foul, but we need this to use our own
-				   window inside a widget instead of one
-				   that Xt creates... */
-#ifdef X_TOOLKIT_EDITRES
-#include <X11/Xmu/Editres.h>
-#endif
-
-typedef Widget xt_or_gtk_widget;
-#endif
-
 #ifdef USE_GTK
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
@@ -509,7 +496,7 @@ extern void select_visual (struct x_display_info *);
 
 struct x_output
 {
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#if defined (USE_GTK)
   /* Height of menu bar widget, in pixels.  This value
      is not meaningful if the menubar is turned off.  */
   int menubar_height;
@@ -557,18 +544,6 @@ struct x_output
      but it can be the root window, and it can be explicitly specified
      (see the explicit_parent field, below).  */
   Window parent_desc;
-
-#ifdef USE_X_TOOLKIT
-  /* The widget of this screen.  This is the window of a "shell" widget.  */
-  Widget widget;
-  /* The XmPanedWindows...  */
-  Widget column_widget;
-  /* The widget of the edit portion of this screen; the window in
-     "window_desc" is inside of this.  */
-  Widget edit_widget;
-
-  Widget menubar_widget;
-#endif
 
 #ifdef USE_GTK
   /* The widget of this screen.  This is the window of a top widget.  */
@@ -669,11 +644,6 @@ struct x_output
   /* This is a button event that wants to activate the menubar.
      We save it here until the command loop gets to think about it.  */
   XEvent *saved_menu_event;
-
-  /* This is the widget id used for this frame's menubar in lwlib.  */
-#ifdef USE_X_TOOLKIT
-  int id;
-#endif
 
   /* True means hourglass cursor is currently displayed.  */
   bool_bf hourglass_p : 1;
@@ -778,11 +748,6 @@ extern void x_mark_frame_dirty (struct frame *f);
 #define FRAME_X_NEED_BUFFER_FLIP(f) ((f)->output_data.x->need_buffer_flip)
 
 /* Return the outermost X window associated with the frame F.  */
-#ifdef USE_X_TOOLKIT
-#define FRAME_OUTER_WINDOW(f) ((f)->output_data.x->widget ?             \
-                               XtWindow ((f)->output_data.x->widget) :  \
-                               FRAME_X_WINDOW (f))
-#else
 #ifdef USE_GTK
 /* Functions not present in older Gtk+ */
 
@@ -822,13 +787,12 @@ extern void x_mark_frame_dirty (struct frame *f);
 #else /* !USE_GTK */
 #define FRAME_OUTER_WINDOW(f) (FRAME_X_WINDOW (f))
 #endif /* !USE_GTK */
-#endif
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#if defined (USE_GTK)
 #define FRAME_MENUBAR_HEIGHT(f) ((f)->output_data.x->menubar_height)
 #else
 #define FRAME_MENUBAR_HEIGHT(f) ((void) f, 0)
-#endif /* USE_X_TOOLKIT || USE_GTK */
+#endif /* USE_GTK */
 
 #define FRAME_FONT(f) ((f)->output_data.x->font)
 #define FRAME_FONTSET(f) ((f)->output_data.x->fontset)
@@ -927,25 +891,6 @@ struct scroll_bar
 
 /* Turning a lisp vector value into a pointer to a struct scroll_bar.  */
 #define XSCROLL_BAR(vec) ((struct scroll_bar *) XVECTOR (vec))
-
-#ifdef USE_X_TOOLKIT
-
-/* Extract the X widget of the scroll bar from a struct scroll_bar.
-   XtWindowToWidget should be fast enough since Xt uses a hash table
-   to map windows to widgets.  */
-
-#define SCROLL_BAR_X_WIDGET(dpy, ptr) \
-  XtWindowToWidget (dpy, ptr->x_window)
-
-/* Store a widget id in a struct scroll_bar.  */
-
-#define SET_SCROLL_BAR_X_WIDGET(ptr, w)		\
-  do {						\
-    Window window = XtWindow (w);		\
-    ptr->x_window = window;			\
-  } while (false)
-
-#endif /* USE_X_TOOLKIT */
 
 /* Return the inside width of a vertical scroll bar, given the outside
    width.  */
@@ -1093,20 +1038,13 @@ extern void xembed_request_focus (struct frame *);
 extern void x_ewmh_activate_frame (struct frame *);
 extern void x_delete_terminal (struct terminal *terminal);
 extern unsigned long x_copy_color (struct frame *, unsigned long);
-#ifdef USE_X_TOOLKIT
-extern XtAppContext Xt_app_con;
-extern void x_activate_timeout_atimer (void);
-#endif
 extern bool x_alloc_nearest_color (struct frame *, Colormap, XColor *);
 extern void x_query_color (struct frame *f, XColor *);
 extern void x_clear_area (struct frame *f, int, int, int, int);
-#if !defined USE_X_TOOLKIT && !defined USE_GTK
+#if !defined USE_GTK
 extern void x_mouse_leave (struct x_display_info *);
 #endif
 
-#if defined USE_X_TOOLKIT
-extern int x_dispatch_event (XEvent *, Display *);
-#endif
 extern int x_x_to_emacs_modifiers (struct x_display_info *, int);
 #ifdef USE_CAIRO
 extern cairo_t *x_begin_cr_clip (struct frame *, GC);
@@ -1220,21 +1158,11 @@ extern void xic_set_xfontset (struct frame *, const char *);
 extern bool x_defined_color (struct frame *, const char *, XColor *, bool);
 #ifdef HAVE_X_I18N
 extern void free_frame_xic (struct frame *);
-# if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT
-extern char *xic_create_fontsetname (const char *, bool);
-# endif
 #endif
-
-/* Defined in xfaces.c */
-
-#ifdef USE_X_TOOLKIT
-extern void x_free_dpy_colors (Display *, Screen *, Colormap,
-                               unsigned long *, int);
-#endif /* USE_X_TOOLKIT */
 
 /* Defined in xmenu.c */
 
-#if defined USE_X_TOOLKIT || defined USE_GTK
+#if defined USE_GTK
 extern Lisp_Object xw_popup_dialog (struct frame *, Lisp_Object, Lisp_Object);
 #endif
 

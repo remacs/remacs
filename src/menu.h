@@ -35,7 +35,7 @@ extern void discard_menu_items (void);
 extern void save_menu_items (void);
 extern bool parse_single_submenu (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void list_of_panes (Lisp_Object);
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NTGUI) \
+#if defined (USE_GTK) || defined (HAVE_NTGUI) \
   || defined (HAVE_NS)
 extern void free_menubar_widget_value_tree (widget_value *);
 extern void update_submenu_strings (widget_value *);
