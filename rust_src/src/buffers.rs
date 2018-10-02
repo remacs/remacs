@@ -5,13 +5,14 @@ use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
-                 globals, last_per_buffer_idx, set_buffer_internal_1, update_mode_lines};
+                 delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
+                 set_buffer_internal_1, specbind, unbind_to, unchain_both, update_mode_lines};
+use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
+                 Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Foverlay_get};
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
                  Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
-use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
-                 Fget_text_property, Fnconc, Fnreverse};
-use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
-                 Qvoid_variable};
+use remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qget_file_buffer,
+                 Qinhibit_quit, Qinhibit_read_only, Qnil, Qt, Qunbound, Qvoid_variable};
 
 use character::char_head_p;
 use chartable::LispCharTableRef;
@@ -23,7 +24,7 @@ use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::{multibyte_length_by_head, string_char};
 use strings::string_equal;
-use threads::ThreadState;
+use threads::{c_specpdl_index, ThreadState};
 
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
@@ -849,6 +850,43 @@ pub extern "C" fn build_overlay(
 
         overlay.as_lisp_obj()
     }
+}
+
+/// Delete the overlay OVERLAY from its buffer.
+#[lisp_fn]
+pub fn delete_overlay(overlay: LispObject) -> LispObject {
+    let mut ov_ref = overlay.as_overlay_or_error();
+    let mut buf_ref = match marker_buffer(ov_ref.start.as_marker_or_error()) {
+        Some(b) => b,
+        None => return Qnil,
+    };
+    let count = c_specpdl_index();
+
+    unsafe {
+        specbind(Qinhibit_quit, Qt);
+        unchain_both(buf_ref.as_mut(), overlay);
+        drop_overlay(buf_ref.as_mut(), ov_ref.as_mut());
+
+        // When deleting an overlay with before or after strings, turn off
+        // display optimizations for the affected buffer, on the basis that
+        // these strings may contain newlines.  This is easier to do than to
+        // check for that situation during redisplay.
+        if windows_or_buffers_changed != 0 && Foverlay_get(overlay, Qbefore_string).is_not_nil()
+            || Foverlay_get(overlay, Qafter_string).is_not_nil()
+        {
+            buf_ref.set_prevent_redisplay_optimizations_p(true);
+        }
+    }
+
+    unsafe { unbind_to(count, Qnil) }
+}
+
+/// Delete all overlays of BUFFER.
+/// BUFFER omitted or nil means delete all overlays of the current buffer.
+#[lisp_fn(min = "0", name = "delete-all-overlays")]
+pub fn delete_all_overlays_lisp(buffer: LispObject) -> LispObject {
+    unsafe { delete_all_overlays(buffer.as_buffer_or_current_buffer().as_mut()) };
+    Qnil
 }
 
 #[no_mangle]
