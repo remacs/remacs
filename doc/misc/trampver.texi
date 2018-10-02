@@ -44,3 +44,13 @@
 @set ipv6prefix
 @set ipv6postfix
 @end ifset
+
+@c Macro for formatting a file name according to the respective
+@c syntax.  Macro arguments should not have any leading or trailing
+@c whitespace.  Not very elegant, but I don't know it better.
+
+@macro trampfn {method, userhost, localname}
+@value{prefix}@c
+\method\@value{postfixhop}@c
+\userhost\@value{postfix}\localname\
+@end macro

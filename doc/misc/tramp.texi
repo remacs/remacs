@@ -12,16 +12,6 @@
 @c This is *so* much nicer :)
 @footnotestyle end
 
-@c Macro for formatting a file name according to the respective
-@c syntax.  Macro arguments should not have any leading or trailing
-@c whitespace.  Not very elegant, but I don't know it better.
-
-@macro trampfn {method, userhost, localname}
-@value{prefix}@c
-\method\@value{postfixhop}@c
-\userhost\@value{postfix}\localname\
-@end macro
-
 @copying
 Copyright @copyright{} 1999--2018 Free Software Foundation, Inc.
 
@@ -122,8 +112,11 @@ For the developer:
  --- The Detailed Node Listing ---
 @c
 @ifset installchapter
+
 Installing @value{tramp} with your Emacs
 
+* System Requirements::         Prerequisites for :@value{tramp} installation.
+* Basic Installation::          Installation steps.:
 * Installation parameters::     Parameters in order to control installation.
 * Testing::                     A test suite for @value{tramp}.
 * Load paths::                  How to plug-in @value{tramp} into your environment.
@@ -4107,7 +4100,7 @@ Unloading @value{tramp} resets Ange FTP plugins also.
 
 @c For the developer
 @node Files directories and localnames
-@chapter How file names, directories and localnames are mangled and managed.
+@chapter How file names, directories and localnames are mangled and managed
 
 @menu
 * Localname deconstruction::    Splitting a localname into its component parts.
