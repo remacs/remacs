@@ -438,10 +438,7 @@ Keys specific to Follow mode:
         (setq pos-visible-in-window-group-p-function
               'follow-pos-visible-in-window-p)
         (setq selected-window-group-function 'follow-all-followers)
-        (setq move-to-window-group-line-function 'follow-move-to-window-line)
-
-        ;; Crude workaround for bug #32848 for the emacs-26 branch, 2018-09-30.
-        (setq-local make-cursor-line-fully-visible nil))
+        (setq move-to-window-group-line-function 'follow-move-to-window-line))
 
     ;; Remove globally-installed hook functions only if there is no
     ;; other Follow mode buffer.
@@ -453,9 +450,6 @@ Keys specific to Follow mode:
       (unless following
 	(remove-hook 'post-command-hook 'follow-post-command-hook)
 	(remove-hook 'window-size-change-functions 'follow-window-size-change)))
-
-    ;; Second part of crude workaround for bug #32848.
-    (kill-local-variable 'make-cursor-line-fully-visible)
 
     (kill-local-variable 'move-to-window-group-line-function)
     (kill-local-variable 'selected-window-group-function)
