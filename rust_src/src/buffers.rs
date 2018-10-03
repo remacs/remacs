@@ -82,11 +82,6 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn zv_byte(self) -> ptrdiff_t {
-        self.zv_byte
-    }
-
-    #[inline]
     pub fn pt(self) -> ptrdiff_t {
         self.pt
     }
@@ -775,7 +770,7 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
             buffer_ref.begv(),
             buffer_ref.begv_byte(),
         );
-        set_marker_both(zv_marker, buffer, buffer_ref.zv(), buffer_ref.zv_byte());
+        set_marker_both(zv_marker, buffer, buffer_ref.zv(), buffer_ref.zv_byte);
     }
 }
 
