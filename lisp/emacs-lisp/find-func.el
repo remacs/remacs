@@ -284,30 +284,37 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
     (setq find-function-rust-source-directory dir)
     dir))
 
-(defun find-function-rust-source (identifier file)
-  "Find the source location where IDENTIFIER is defined in FILE."
+(defun find-function-rust-source (fun-or-var file type)
+  "Find the source location where FUN-OR-VAR is defined in FILE.
+TYPE should be nil to find a function, or `defvar' to find a variable."
   (let* ((dir (find-function-maybe-read-rust-source-directory))
          (file (expand-file-name file dir)))
     (unless (file-readable-p file)
       (error "The Rust source file %s is not available" (file-name-nondirectory file)))
 
-    (let* ((fname (subr-name
-                   (advice--cd*r
-                    (find-function-advised-original
-                     (indirect-function
-                      (find-function-advised-original identifier))))))
-           (rust-fname (replace-regexp-in-string "-" "_" fname))
-           (regex (rx-to-string
-                   `(and "fn" (+ space) ,rust-fname "(")))
-           (lisp-fn-name-regex (rx-to-string
-                                `(and "#[" (* space) "lisp_fn" (* space)
-                                      "(" (* space) "name" (* space) "="
-                                      (* space) "\"" ,fname))))
+    (let* ((name
+            (if type
+                (symbol-name fun-or-var)
+              (subr-name
+               (advice--cd*r
+                (find-function-advised-original
+                 (indirect-function
+                  (find-function-advised-original fun-or-var)))))))
+           (rust-name (replace-regexp-in-string "-" "_" name))
+           (regex
+            (rx-to-string
+             (if type
+                 `(and "defvar_" (+ anything) "\"" ,name "\"")
+               `(and "fn" (+ space) ,rust-name "("))))
+           (lisp-name-regex (rx-to-string
+                             `(and "#[" (* space) "lisp_fn" (* space)
+                                   "(" (* space) "name" (* space) "="
+                                   (* space) "\"" ,name))))
       (with-current-buffer (find-file-noselect file)
         (goto-char (point-min))
-        (unless (re-search-forward lisp-fn-name-regex nil t)
+        (unless (re-search-forward lisp-name-regex nil t)
           (unless (re-search-forward regex nil t)
-            (error "Can't find source for %s" identifier)))
+            (error "Can't find source for %s" fun-or-var)))
         (cons (current-buffer) (match-beginning 0))))))
 
 
@@ -435,7 +442,7 @@ The search is done in the source for library LIBRARY."
    ((string-match (rx bos "src/" (group (+ nonl) (or ".c" ".m")) eos) library)
     (find-function-C-source symbol (match-string 1 library) type))
    ((string-match (rx bos "rust_src/src/" (group (+ nonl) ".rs") eos) library)
-    (find-function-rust-source symbol (match-string 1 library)))
+    (find-function-rust-source symbol (match-string 1 library) type))
    (t
     (find-function-lisp-source symbol type library))))
 
