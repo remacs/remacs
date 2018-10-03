@@ -1385,7 +1385,13 @@ non-first windows in Follow mode."
 	  (unless (eq win (selected-window))
 	    (let ((p (window-point win)))
 	      (set-window-start win (window-start win) nil)
-	      (set-window-point win p))))
+              (if (nth 2 (pos-visible-in-window-p p win t))
+                  ;; p is in a partially visible line.  We can't leave
+                  ;; window-point there, because C-x o back into WIN
+                  ;; would then fail.
+                  (with-selected-window win
+                    (forward-line)) ; redisplay will recenter it in WIN.
+	        (set-window-point win p)))))
 
 	(unless visible
 	  ;; If point may not be visible in the selected window,
