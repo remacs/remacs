@@ -50,11 +50,6 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn point_marker(self) -> LispObject {
-        self.pointm
-    }
-
-    #[inline]
     pub fn contents(self) -> LispObject {
         self.contents
     }
@@ -311,7 +306,7 @@ pub fn window_point(window: LispObject) -> Option<EmacsInt> {
     if win == selected_window().as_window_or_error() {
         Some(point())
     } else {
-        marker_position_lisp(win.point_marker().into())
+        marker_position_lisp(win.pointm.into())
     }
 }
 
