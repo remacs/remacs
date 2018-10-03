@@ -888,11 +888,11 @@ main (int argc, char **argv)
 		lim = newlim;
 	    }
 	}
-      /* If the stack is big enough, let regex-emacs.c more of it before
-         falling back to heap allocation.  */
-      emacs_re_safe_alloca = max
-        (min (lim - extra, SIZE_MAX) * (min_ratio / ratio),
-         MAX_ALLOCA);
+      /* If the stack is big enough, let regex-emacs.c use more of it
+	 before falling back to heap allocation.  */
+      ptrdiff_t max_failures
+	= min (lim - extra, min (PTRDIFF_MAX, SIZE_MAX)) / ratio;
+      emacs_re_safe_alloca = max (max_failures * min_ratio, MAX_ALLOCA);
     }
 #endif /* HAVE_SETRLIMIT and RLIMIT_STACK and not CYGWIN */
 
