@@ -786,7 +786,9 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	(if cd "$(DESTDIR)${icondir}"; then \
 	   rm -f hicolor/*x*/apps/"${EMACS_NAME}.png" \
 	     "hicolor/scalable/apps/${EMACS_NAME}.svg" \
-	     hicolor/scalable/mimetypes/`echo emacs-document | sed '$(TRANSFORM)'`.svg; \
+	     "hicolor/scalable/apps/${EMACS_NAME}.ico" \
+	     "hicolor/scalable/mimetypes/${EMACS_NAME}-document.svg" \
+	     "hicolor/scalable/mimetypes/${EMACS_NAME}-document23.svg"; \
 	fi)
 	-rm -f "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"
 	-rm -f "$(DESTDIR)${appdatadir}/${EMACS_NAME}.appdata.xml"
