@@ -327,7 +327,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // C2 and several characters following C2.
 
         // This is the character after point.
-        let c2 = current_buffer.fetch_char(current_buffer.pt_byte()) as Codepoint;
+        let c2 = current_buffer.fetch_char(current_buffer.pt_byte) as Codepoint;
 
         // Overwriting in binary-mode always replaces C2 by C.
         // Overwriting in textual-mode doesn't always do that.

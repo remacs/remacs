@@ -87,11 +87,6 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn pt_byte(self) -> ptrdiff_t {
-        self.pt_byte
-    }
-
-    #[inline]
     pub fn beg_addr(self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
     }
@@ -753,7 +748,7 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
         assert!(zv_marker.is_not_nil());
 
         let buffer = buffer_ref.as_lisp_obj();
-        set_marker_both(pt_marker, buffer, buffer_ref.pt(), buffer_ref.pt_byte());
+        set_marker_both(pt_marker, buffer, buffer_ref.pt(), buffer_ref.pt_byte);
         set_marker_both(begv_marker, buffer, buffer_ref.begv, buffer_ref.begv_byte);
         set_marker_both(zv_marker, buffer, buffer_ref.zv(), buffer_ref.zv_byte);
     }
