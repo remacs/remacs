@@ -174,7 +174,7 @@ more Emacs-y.
 #### Dockerized development environment
 
 If you don't want to bother with the above setup you can use the
-provided docker environment. Make sure you have
+provided Docker environment. Make sure you have
 [docker](https://www.docker.com/) 1.12+ and
 [docker-compose](https://github.com/docker/compose) 1.8+ available.
 
@@ -184,7 +184,7 @@ To spin up the environment run
 docker-compose up -d
 ```
 
-First time you run this command docker will build the image.  After that any subsequent startups will happen in less than a second.
+First time you run this command Docker will build the image.  After that any subsequent startups will happen in less than a second.
 
 The working directory with remacs will be mounted under the same path in the container so editing the files on your host machine will automatically be reflected inside the container.   To build remacs use the steps from [Building Remacs](#building-remacs) prefixed with `docker-compose exec remacs`, this will ensure the commands are executed inside the container.
 
@@ -372,7 +372,7 @@ $ make rustfmt
 ### Running tests
 
 Run elisp and Rust tests in the toplevel directory. If run in a subdirectory,
-only the tests that directory will be run.
+only the tests in that directory will be run.
 
 * `make check`
   Run all tests as defined in the directory. Expensive tests are
