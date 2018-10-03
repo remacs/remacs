@@ -3,8 +3,17 @@ use std::path;
 
 use remacs_macros::lisp_fn;
 
-use lisp::defsubr;
+use lisp::{defsubr, LispCons};
+use math::{arithcompare, ArithComparison};
 use multibyte::LispStringRef;
+
+/// Return t if (car A) is numerically less than (car B).
+#[lisp_fn]
+pub fn car_less_than_car(a: LispCons, b: LispCons) -> bool {
+    arithcompare(a.car(), b.car(), ArithComparison::Less)
+}
+
+def_lisp_sym!(Qcar_less_than_car, "car-less-than-car");
 
 /// Return non-nil if NAME ends with a directory separator character.
 #[lisp_fn]
