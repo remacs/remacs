@@ -15,12 +15,6 @@ in older Emacs versions.
 You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
 
-Temporary note:
-+++ indicates that all necessary documentation updates are complete.
-    (This means all relevant manuals in doc/ AND lisp doc-strings.)
---- means no change in the manuals is needed.
-When you add a new item, use the appropriate mark if you are sure it applies,
-
 
 * Installation Changes in Emacs 26.2
 
@@ -50,14 +44,6 @@ often cause crashes.  Set it to nil if you really need those fonts.
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.2
-
----
-** Follow mode
-Follow mode now sets a buffer local value of nil for
-make-cursor-line-fully-visible in any buffer using it.  This ensures
-correct operation if point is moved by C-n to the next window when
-there is a partially displayed line at the bottom of the original
-window.
 
 ** Ibuffer
 
