@@ -86,14 +86,9 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn constant_t() -> LispObject {
-        Qt
-    }
-
-    #[inline]
     pub fn from_bool(v: bool) -> LispObject {
         if v {
-            LispObject::constant_t()
+            Qt
         } else {
             Qnil
         }
@@ -135,7 +130,7 @@ impl From<bool> for LispObject {
     #[inline]
     fn from(v: bool) -> Self {
         if v {
-            LispObject::constant_t()
+            Qt
         } else {
             Qnil
         }

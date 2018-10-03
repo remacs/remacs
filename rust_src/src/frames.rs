@@ -209,7 +209,7 @@ pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
 #[lisp_fn]
 pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
     if frame.is_visible() {
-        LispObject::constant_t()
+        Qt
     } else if frame.iconified() {
         Qicon
     } else {

@@ -249,7 +249,7 @@ pub fn process_status(process: LispObject) -> LispObject {
         let process_command = process.command;
         if status.eq(Qexit) {
             status = Qclosed;
-        } else if process_command.eq(LispObject::constant_t()) {
+        } else if process_command.eq(Qt) {
             status = Qstop;
         } else if status.eq(Qrun) {
             status = Qopen;

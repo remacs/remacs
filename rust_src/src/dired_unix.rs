@@ -9,11 +9,11 @@ use std::path::Path;
 use std::ptr::null_mut;
 use std::slice;
 
-use remacs_sys::{build_string, file_attributes_c_internal, filemode_string, globals,
-                 Fexpand_file_name, Ffind_file_name_handler, Qfile_attributes, Qnil};
-use remacs_sys::{compile_pattern, re_pattern_buffer, re_search};
-use remacs_sys::{decode_file_name, Qdirectory_files, Qdirectory_files_and_attributes,
-                 Qfile_missing};
+use remacs_sys::{build_string, compile_pattern, decode_file_name, file_attributes_c_internal,
+                 filemode_string, globals, re_pattern_buffer, re_search};
+use remacs_sys::{Fexpand_file_name, Ffind_file_name_handler};
+use remacs_sys::{Qdirectory_files, Qdirectory_files_and_attributes, Qfile_attributes,
+                 Qfile_missing, Qnil, Qt};
 
 use lisp::LispObject;
 use lists::list;
@@ -625,7 +625,7 @@ impl FileAttrs {
             attrs.push(self.ftype_sym_path.to_owned().to_bstring());
         } else {
             if self.ftype_is_dir {
-                attrs.push(LispObject::constant_t());
+                attrs.push(Qt);
             } else {
                 attrs.push(Qnil);
             }
@@ -679,7 +679,7 @@ impl FileAttrs {
         attrs.push(unsafe { filemode_string(fpath_lo) });
 
         //  9. An unspecified value, present only for backward compatibility.
-        attrs.push(LispObject::constant_t());
+        attrs.push(Qt);
 
         // 10. inode number.  If it is larger than what an Emacs integer can hold,
         //     this is of the form (HIGH . LOW): first the high bits, then the low 16 bits.

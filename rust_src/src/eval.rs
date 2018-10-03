@@ -308,7 +308,7 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
         put(sym, Qvariable_documentation, docstring);
     }
 
-    put(sym, Qrisky_local_variable, LispObject::constant_t());
+    put(sym, Qrisky_local_variable, Qt);
     loadhist_attach(sym);
 
     sym_ref
@@ -551,7 +551,7 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
     let value = if lexical.is_cons() || lexical.is_nil() {
         lexical
     } else {
-        list!(LispObject::constant_t())
+        list!(Qt)
     };
 
     unsafe {
