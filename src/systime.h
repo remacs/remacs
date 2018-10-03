@@ -19,6 +19,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifndef EMACS_SYSTIME_H
 #define EMACS_SYSTIME_H
 
+#include "lisp.h"
 #include <timespec.h>
 
 INLINE_HEADER_BEGIN
@@ -66,7 +67,6 @@ timespec_valid_p (struct timespec t)
 
 /* defined in sysdep.c */
 extern int set_file_times (int, const char *, struct timespec, struct timespec);
-extern struct timeval make_timeval (struct timespec) ATTRIBUTE_CONST;
 
 /* defined in keyboard.c */
 extern void set_waiting_for_input (struct timespec *);
@@ -82,12 +82,16 @@ struct lisp_time
   int lo, us, ps;
 };
 
-/* defined in editfns.c */
+/* defined in timefns.c */
+extern struct timeval make_timeval (struct timespec) ATTRIBUTE_CONST;
 extern Lisp_Object make_lisp_time (struct timespec);
 extern int decode_time_components (Lisp_Object, Lisp_Object, Lisp_Object,
 				   Lisp_Object, struct lisp_time *, double *);
 extern struct timespec lisp_to_timespec (struct lisp_time);
 extern struct timespec lisp_time_argument (Lisp_Object);
+extern _Noreturn void time_overflow (void);
+extern void init_timefns (bool);
+extern void syms_of_timefns (void);
 
 INLINE_HEADER_END
 

@@ -1512,6 +1512,8 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_minibuf ();
       syms_of_process ();
       syms_of_search ();
+      syms_of_sysdep ();
+      syms_of_timefns ();
       syms_of_frame ();
       syms_of_syntax ();
       syms_of_terminal ();
@@ -1653,9 +1655,11 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
   init_charset ();
 
-  /* This calls putenv and so must precede init_process_emacs.  Also,
-     it sets Voperating_system_release, which init_process_emacs uses.  */
-  init_editfns (dumping);
+  /* This calls putenv and so must precede init_process_emacs.  */
+  init_timefns (dumping);
+
+  /* This sets Voperating_system_release, which init_process_emacs uses.  */
+  init_editfns ();
 
   /* These two call putenv.  */
 #ifdef HAVE_DBUS

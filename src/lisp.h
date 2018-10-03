@@ -4014,11 +4014,10 @@ extern void save_excursion_save (union specbinding *);
 extern void save_excursion_restore (Lisp_Object, Lisp_Object);
 extern Lisp_Object save_restriction_save (void);
 extern void save_restriction_restore (Lisp_Object);
-extern _Noreturn void time_overflow (void);
 extern Lisp_Object make_buffer_string (ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object make_buffer_string_both (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 					    ptrdiff_t, bool);
-extern void init_editfns (bool);
+extern void init_editfns (void);
 extern void syms_of_editfns (void);
 
 /* Defined in buffer.c.  */
@@ -4355,6 +4354,7 @@ extern ptrdiff_t emacs_write_quit (int, void const *, ptrdiff_t);
 extern void emacs_perror (char const *);
 extern int renameat_noreplace (int, char const *, int, char const *);
 extern int str_collate (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
+extern void syms_of_sysdep (void);
 
 /* Defined in filelock.c.  */
 extern void lock_file (Lisp_Object);
