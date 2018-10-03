@@ -49,6 +49,7 @@
 @c syntax.  Macro arguments should not have any leading or trailing
 @c whitespace.  Not very elegant, but I don't know it better.
 
+@unmacro trampfn
 @macro trampfn {method, userhost, localname}
 @value{prefix}@c
 \method\@value{postfixhop}@c
