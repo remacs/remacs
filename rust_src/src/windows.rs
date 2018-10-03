@@ -13,7 +13,7 @@ use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  window_menu_bar_p, window_parameter, window_tool_bar_p, wset_display_table,
                  wset_redisplay, wset_update_mode_line};
 use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 
 use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, LispFrameRef};
@@ -888,12 +888,12 @@ pub fn set_window_start(window: LispObject, pos: LispObject, noforce: LispObject
 /// Return nil if WINDOW is an internal window whose children form a
 /// horizontal combination.
 #[lisp_fn(min = "0")]
-pub fn window_top_child(window: LispObject) -> LispObject {
+pub fn window_top_child(window: LispObject) -> Option<LispWindowRef> {
     let window = window_valid_or_selected(window);
     if window.is_vertical_combination() {
-        window.contents
+        window.contents.as_window()
     } else {
-        Qnil
+        None
     }
 }
 
