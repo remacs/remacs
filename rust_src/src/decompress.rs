@@ -121,7 +121,7 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
                 // Put point where it was, or if the buffer has shrunk because the
                 // compressed data is bigger than the uncompressed, at
                 // point-max.
-                let charpos = min(old_pt, current_buffer.zv());
+                let charpos = min(old_pt, current_buffer.zv);
                 let bytepos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), charpos) };
                 current_buffer.set_pt_both(charpos, bytepos);
 

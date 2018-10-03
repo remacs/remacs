@@ -142,7 +142,7 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
             // within the line.
             unsafe { set_point(pt - 1) };
             break;
-        } else if pt > newpos && pt < cur_buf.zv() && cur_buf.fetch_char(newpos) != '\n' as i32 {
+        } else if pt > newpos && pt < cur_buf.zv && cur_buf.fetch_char(newpos) != '\n' as i32 {
             // If we skipped something intangible
             // and now we're not really at eol,
             // keep going.
@@ -184,7 +184,7 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
 
     if shortage > 0
         && (count <= 0
-            || (cur_buf.zv() > cur_buf.begv
+            || (cur_buf.zv > cur_buf.begv
                 && cur_buf.pt != opoint
                 && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != b'\n'))
     {
@@ -316,7 +316,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         };
         len = 1;
     }
-    if overwrite.is_not_nil() && current_buffer.pt < current_buffer.zv() {
+    if overwrite.is_not_nil() && current_buffer.pt < current_buffer.zv {
         // In overwrite-mode, we substitute a character at point (C2,
         // hereafter) by C.  For that, we delete C2 in advance.  But,
         // just substituting C2 by C may move a remaining text in the

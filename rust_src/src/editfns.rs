@@ -57,7 +57,7 @@ pub fn buffer_size(buffer: LispObject) -> EmacsInt {
 #[lisp_fn]
 pub fn eobp() -> bool {
     let buffer_ref = ThreadState::current_buffer();
-    buffer_ref.zv() == buffer_ref.pt
+    buffer_ref.zv == buffer_ref.pt
 }
 
 /// Return t if point is at the beginning of the buffer.  If the
@@ -80,7 +80,7 @@ pub fn bolp() -> bool {
 #[lisp_fn]
 pub fn eolp() -> bool {
     let buffer_ref = ThreadState::current_buffer();
-    buffer_ref.pt == buffer_ref.zv() || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n'
+    buffer_ref.pt == buffer_ref.zv || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n'
 }
 
 /// Return the position of the gap, in the current buffer.
@@ -155,7 +155,7 @@ pub fn point_min() -> EmacsInt {
 /// restriction) is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max() -> EmacsInt {
-    ThreadState::current_buffer().zv() as EmacsInt
+    ThreadState::current_buffer().zv as EmacsInt
 }
 
 /// Set point to POSITION, a number or marker.
@@ -342,7 +342,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         let p = pos
             .as_fixnum()
             .unwrap_or_else(|| wrong_type!(Qinteger_or_marker_p, pos)) as isize;
-        if p <= buffer_ref.begv || p > buffer_ref.zv() {
+        if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
         pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
@@ -376,7 +376,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         }
     } else {
         let p = pos.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
-        if p < buffer_ref.begv || p >= buffer_ref.zv() {
+        if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
             let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
