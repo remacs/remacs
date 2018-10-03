@@ -3047,6 +3047,22 @@ list_system_processes (void)
 
 #endif /* !defined (WINDOWSNT) */
 
+
+#if defined __FreeBSD__ || defined DARWIN_OS
+
+static struct timespec
+timeval_to_timespec (struct timeval t)
+{
+  return make_timespec (t.tv_sec, t.tv_usec * 1000);
+}
+static Lisp_Object
+make_lisp_timeval (struct timeval t)
+{
+  return make_lisp_time (timeval_to_timespec (t));
+}
+
+#endif
+
 #if defined GNU_LINUX && defined HAVE_LONG_LONG_INT
 static struct timespec
 time_from_jiffies (unsigned long long tval, long hz)
@@ -3567,18 +3583,6 @@ system_process_attributes (Lisp_Object pid)
 
 #elif defined __FreeBSD__
 
-static struct timespec
-timeval_to_timespec (struct timeval t)
-{
-  return make_timespec (t.tv_sec, t.tv_usec * 1000);
-}
-
-static Lisp_Object
-make_lisp_timeval (struct timeval t)
-{
-  return make_lisp_time (timeval_to_timespec (t));
-}
-
 Lisp_Object
 system_process_attributes (Lisp_Object pid)
 {
@@ -3747,18 +3751,6 @@ system_process_attributes (Lisp_Object pid)
 }
 
 #elif defined DARWIN_OS
-
-static struct timespec
-timeval_to_timespec (struct timeval t)
-{
-  return make_timespec (t.tv_sec, t.tv_usec * 1000);
-}
-
-static Lisp_Object
-make_lisp_timeval (struct timeval t)
-{
-  return make_lisp_time (timeval_to_timespec (t));
-}
 
 Lisp_Object
 system_process_attributes (Lisp_Object pid)
