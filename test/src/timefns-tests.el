@@ -77,3 +77,6 @@
                (format-time-string "%Y-%m-%d %H:%M:%S" (- (ash 1 31) 3600) t)
                "2038-01-19 02:14:08")
               (timefns-tests--have-leap-seconds))))
+
+(ert-deftest time-equal-p-nil-nil ()
+  (should (time-equal-p nil nil)))

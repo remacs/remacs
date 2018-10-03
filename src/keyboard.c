@@ -4163,18 +4163,13 @@ decode_timer (Lisp_Object timer, struct timespec *result)
   Lisp_Object *vec;
 
   if (! (VECTORP (timer) && ASIZE (timer) == 9))
-    return 0;
+    return false;
   vec = XVECTOR (timer)->contents;
   if (! NILP (vec[0]))
-    return 0;
+    return false;
   if (! FIXNUMP (vec[2]))
     return false;
-
-  struct lisp_time t;
-  if (decode_time_components (vec[1], vec[2], vec[3], vec[8], &t, 0) <= 0)
-    return false;
-  *result = lisp_to_timespec (t);
-  return timespec_valid_p (*result);
+  return list4_to_timespec (vec[1], vec[2], vec[3], vec[8], result);
 }
 
 

@@ -996,6 +996,21 @@ functions like process-id that compute process IDs, and functions like
 user-uid and group-gid that compute user and group IDs.
 
 +++
+** Although the default timestamp format is still (HI LO US PS),
+it is planned to change in a future Emacs version, to exploit bignums.
+The documentation has been updated to mention that the timestamp
+format may change and that programs should use functions like
+format-time-string, decode-time, and encode-time rather than probing
+the innards of a timestamp directly, or creating a timestamp by hand.
+
++++
+** encode-time supports a new API (encode-time TIME &optional FORM).
+This can convert decoded times and Lisp time values to Lisp timestamps
+of various forms, including a new timestamp form (TICKS . HZ), where
+TICKS is an integer and HZ is a positive integer denoting a clock
+frequency.  The old encode-time API is still supported.
+
++++
 ** 'time-add', 'time-subtract', and 'time-less-p' now accept
 infinities and NaNs too, and propagate them or return nil like
 floating-point operators do.

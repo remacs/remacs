@@ -534,8 +534,7 @@ non-nil, the amount returned will be relative to past time worked."
       string)))
 
 (define-obsolete-function-alias 'timeclock-time-to-seconds 'float-time "26.1")
-(define-obsolete-function-alias 'timeclock-seconds-to-time 'seconds-to-time
-  "26.1")
+(define-obsolete-function-alias 'timeclock-seconds-to-time 'encode-time "26.1")
 
 ;; Should today-only be removed in favor of timeclock-relative? - gm
 (defsubst timeclock-when-to-leave (&optional today-only)

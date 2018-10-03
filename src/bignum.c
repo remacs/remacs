@@ -31,7 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    storage is exhausted.  Admittedly this is not ideal.  An mpz value
    in a temporary is made permanent by mpz_swapping it with a bignum's
    value.  Although typically at most two temporaries are needed,
-   rounding_driver and rounddiv_q need four altogther.  */
+   time_arith, rounddiv_q and rounding_driver each need four.  */
 
 mpz_t mpz[4];
 
