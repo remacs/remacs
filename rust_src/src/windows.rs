@@ -13,7 +13,7 @@ use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  window_menu_bar_p, window_parameter, window_tool_bar_p, wset_display_table,
                  wset_redisplay, wset_update_mode_line};
 use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone};
 
 use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, LispFrameRef};
@@ -234,6 +234,11 @@ impl LispWindowRef {
             && (window_header_line_format.is_not_nil()
                 || (self.contents().as_buffer_or_error().header_line_format_).is_not_nil())
             && self.pixel_height > height
+    }
+
+    /// True if window W is a vertical combination of windows.
+    pub fn is_vertical_combination(self) -> bool {
+        self.is_internal() && !self.horizontal()
     }
 }
 
@@ -875,6 +880,21 @@ pub fn set_window_start(window: LispObject, pos: LispObject, noforce: LispObject
     w.set_window_end_valid(false);
     unsafe { wset_redisplay(w.as_mut()) };
     pos
+}
+
+/// Return the topmost child window of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return nil if WINDOW is a live window (live windows have no children).
+/// Return nil if WINDOW is an internal window whose children form a
+/// horizontal combination.
+#[lisp_fn(min = "0")]
+pub fn window_top_child(window: LispObject) -> LispObject {
+    let window = window_valid_or_selected(window);
+    if window.is_vertical_combination() {
+        window.contents
+    } else {
+        Qnil
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

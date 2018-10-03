@@ -487,18 +487,6 @@ the buffer of the selected window before each command.  */)
   return select_window (window, norecord, false);
 }
 
-DEFUN ("window-top-child", Fwindow_top_child, Swindow_top_child, 0, 1, 0,
-       doc: /* Return the topmost child window of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-Return nil if WINDOW is a live window (live windows have no children).
-Return nil if WINDOW is an internal window whose children form a
-horizontal combination.  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_valid_window (window);
-  return WINDOW_VERTICAL_COMBINATION_P (w) ? w->contents : Qnil;
-}
-
 DEFUN ("window-left-child", Fwindow_left_child, Swindow_left_child, 0, 1, 0,
        doc: /* Return the leftmost child window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -7084,7 +7072,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
 
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
-  defsubr (&Swindow_top_child);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_next_sibling);
   defsubr (&Swindow_prev_sibling);
