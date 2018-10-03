@@ -616,7 +616,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         };
     }
 
-    consider_known!(buffer_ref.pt(), buffer_ref.pt_byte);
+    consider_known!(buffer_ref.pt, buffer_ref.pt_byte);
     consider_known!(buffer_ref.gpt(), buffer_ref.gpt_byte());
     consider_known!(buffer_ref.begv, buffer_ref.begv_byte);
     consider_known!(buffer_ref.zv(), buffer_ref.zv_byte);
@@ -727,7 +727,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         };
     }
 
-    consider_known!(buffer_ref.pt_byte, buffer_ref.pt());
+    consider_known!(buffer_ref.pt_byte, buffer_ref.pt);
     consider_known!(buffer_ref.gpt_byte(), buffer_ref.gpt());
     consider_known!(buffer_ref.begv_byte, buffer_ref.begv);
     consider_known!(buffer_ref.zv_byte, buffer_ref.zv());
