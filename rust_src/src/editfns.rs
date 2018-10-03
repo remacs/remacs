@@ -10,12 +10,13 @@ use remacs_macros::lisp_fn;
 
 use remacs_sys::EmacsInt;
 use remacs_sys::{buffer_overflow, downcase, find_before_next_newline, find_field, find_newline,
-                 globals, insert, insert_and_inherit, make_string_from_bytes, maybe_quit,
-                 scan_newline_from_point, set_point, set_point_both};
+                 globals, insert, insert_and_inherit, insert_from_buffer, make_string_from_bytes,
+                 maybe_quit, scan_newline_from_point, set_buffer_internal_1, set_point,
+                 set_point_both, update_buffer_properties};
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 
-use buffers::{get_buffer, BUF_BYTES_MAX};
+use buffers::{get_buffer, nsberror, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
 use lisp::{defsubr, LispObject};
 use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp,
@@ -840,6 +841,60 @@ pub fn group_real_gid() -> LispObject {
 pub fn emacs_pid() -> LispObject {
     let id = unsafe { libc::getpid() };
     LispObject::int_or_float_from_fixnum(EmacsInt::from(id))
+}
+
+/// Insert before point a substring of the contents of BUFFER.
+/// BUFFER may be a buffer or a buffer name.
+/// Arguments START and END are character positions specifying the substring.
+/// They default to the values of (point-min) and (point-max) in BUFFER.
+///
+/// Point and before-insertion markers move forward to end up after the
+/// inserted text.
+/// Any other markers at the point of insertion remain before the text.
+///
+/// If the current buffer is multibyte and BUFFER is unibyte, or vice
+/// versa, strings are converted from unibyte to multibyte or vice versa
+/// using `string-make-multibyte' or `string-make-unibyte', which see.
+#[lisp_fn(min = "1")]
+pub fn insert_buffer_substring(buffer: LispObject, beg: LispObject, end: LispObject) -> LispObject {
+    let buf = get_buffer(buffer);
+    if buf.is_nil() {
+        nsberror(buffer);
+    }
+    let mut buf_ref = match buf.as_live_buffer() {
+        Some(b) => b,
+        None => error!("Selecting deleted buffer"),
+    };
+
+    let get_pos = |pos: LispObject, default: isize| {
+        if pos.is_nil() {
+            default
+        } else {
+            pos.as_number_coerce_marker_or_error();
+            pos.as_fixnum_or_error() as isize
+        }
+    };
+    let mut b = get_pos(beg, buf_ref.begv);
+    let mut e = get_pos(end, buf_ref.zv);
+
+    if b > e {
+        let temp = b;
+        b = e;
+        e = temp;
+    }
+
+    if !(buf_ref.begv <= b && e <= buf_ref.zv) {
+        args_out_of_range!(beg, end);
+    }
+
+    let mut cur_buf = ThreadState::current_buffer();
+    unsafe {
+        set_buffer_internal_1(buf_ref.as_mut());
+        update_buffer_properties(b, e);
+        set_buffer_internal_1(cur_buf.as_mut());
+        insert_from_buffer(buf_ref.as_mut(), b, e - b, false)
+    };
+    Qnil
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

@@ -73,8 +73,8 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 				       Lisp_Object, struct tm *);
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
-static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
+void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -1822,7 +1822,7 @@ make_buffer_string_both (ptrdiff_t start, ptrdiff_t start_byte,
 /* Call Vbuffer_access_fontify_functions for the range START ... END
    in the current buffer, if necessary.  */
 
-static void
+void
 update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
 {
   /* If this buffer has some access functions,
@@ -1889,63 +1889,6 @@ of the buffer.  */)
   (void)
 {
   return make_buffer_string_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, 1);
-}
-
-DEFUN ("insert-buffer-substring", Finsert_buffer_substring, Sinsert_buffer_substring,
-       1, 3, 0,
-       doc: /* Insert before point a substring of the contents of BUFFER.
-BUFFER may be a buffer or a buffer name.
-Arguments START and END are character positions specifying the substring.
-They default to the values of (point-min) and (point-max) in BUFFER.
-
-Point and before-insertion markers move forward to end up after the
-inserted text.
-Any other markers at the point of insertion remain before the text.
-
-If the current buffer is multibyte and BUFFER is unibyte, or vice
-versa, strings are converted from unibyte to multibyte or vice versa
-using `string-make-multibyte' or `string-make-unibyte', which see.  */)
-  (Lisp_Object buffer, Lisp_Object start, Lisp_Object end)
-{
-  register EMACS_INT b, e, temp;
-  register struct buffer *bp, *obuf;
-  Lisp_Object buf;
-
-  buf = Fget_buffer (buffer);
-  if (NILP (buf))
-    nsberror (buffer);
-  bp = XBUFFER (buf);
-  if (!BUFFER_LIVE_P (bp))
-    error ("Selecting deleted buffer");
-
-  if (NILP (start))
-    b = BUF_BEGV (bp);
-  else
-    {
-      CHECK_NUMBER_COERCE_MARKER (start);
-      b = XINT (start);
-    }
-  if (NILP (end))
-    e = BUF_ZV (bp);
-  else
-    {
-      CHECK_NUMBER_COERCE_MARKER (end);
-      e = XINT (end);
-    }
-
-  if (b > e)
-    temp = b, b = e, e = temp;
-
-  if (!(BUF_BEGV (bp) <= b && e <= BUF_ZV (bp)))
-    args_out_of_range (start, end);
-
-  obuf = current_buffer;
-  set_buffer_internal_1 (bp);
-  update_buffer_properties (b, e);
-  set_buffer_internal_1 (obuf);
-
-  insert_from_buffer (bp, b, e - b, 0);
-  return Qnil;
 }
 
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
@@ -4431,7 +4374,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sformat);
   defsubr (&Sformat_message);
 
-  defsubr (&Sinsert_buffer_substring);
   defsubr (&Scompare_buffer_substrings);
   defsubr (&Sreplace_buffer_contents);
   defsubr (&Ssubst_char_in_region);
