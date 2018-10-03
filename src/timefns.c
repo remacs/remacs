@@ -1035,8 +1035,8 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
 }
 
 DEFUN ("time-add", Ftime_add, Stime_add, 2, 2, 0,
-       doc: /* Return the sum of two time values A and B, as a timestamp.
-See Info node `(elisp)Time of Day' for time value formats.
+       doc: /* Return the sum of two time values A and B, as a time value.
+See `format-time-string' for the various forms of a time value.
 For example, nil stands for the current time.  */)
   (Lisp_Object a, Lisp_Object b)
 {
@@ -1044,9 +1044,9 @@ For example, nil stands for the current time.  */)
 }
 
 DEFUN ("time-subtract", Ftime_subtract, Stime_subtract, 2, 2, 0,
-       doc: /* Return the difference between two time values A and B, as a timestamp.
+       doc: /* Return the difference between two time values A and B, as a time value.
 You can use `float-time' to convert the difference into elapsed seconds.
-See Info node `(elisp)Time of Day' for time value formats.
+See `format-time-string' for the various forms of a time value.
 For example, nil stands for the current time.  */)
   (Lisp_Object a, Lisp_Object b)
 {
@@ -1092,7 +1092,7 @@ time_cmp (Lisp_Object a, Lisp_Object b)
 
 DEFUN ("time-less-p", Ftime_less_p, Stime_less_p, 2, 2, 0,
        doc: /* Return non-nil if time value A is less than time value B.
-See Info node `(elisp)Time of Day' for time value formats.
+See `format-time-string' for the various forms of a time value.
 For example, nil stands for the current time.  */)
   (Lisp_Object a, Lisp_Object b)
 {
@@ -1101,7 +1101,7 @@ For example, nil stands for the current time.  */)
 
 DEFUN ("time-equal-p", Ftime_equal_p, Stime_equal_p, 2, 2, 0,
        doc: /* Return non-nil if A and B are equal time values.
-See Info node `(elisp)Time of Day' for time value formats.  */)
+See `format-time-string' for the various forms of a time value.  */)
   (Lisp_Object a, Lisp_Object b)
 {
   return time_cmp (a, b) == 0 ? Qt : Qnil;
@@ -1110,12 +1110,12 @@ See Info node `(elisp)Time of Day' for time value formats.  */)
 
 DEFUN ("float-time", Ffloat_time, Sfloat_time, 0, 1, 0,
        doc: /* Return the current time, as a float number of seconds since the epoch.
-If SPECIFIED-TIME is given, it is a Lisp time value to convert to
-float instead of the current time.  See Info node `(elisp)Time of Day'
-for time value formats.
+If SPECIFIED-TIME is given, it is a time value to convert to float
+instead of the current time.  See `format-time-string' for the various
+forms of a time value.
 
 WARNING: Since the result is floating point, it may not be exact.
-If precise time stamps are required, use either `current-time',
+If precise time stamps are required, use either `encode-time',
 or (if you need time as a string) `format-time-string'.  */)
   (Lisp_Object specified_time)
 {
@@ -1226,8 +1226,12 @@ format_time_string (char const *format, ptrdiff_t formatlen,
 }
 
 DEFUN ("format-time-string", Fformat_time_string, Sformat_time_string, 1, 3, 0,
-       doc: /* Use FORMAT-STRING to format the time TIME, or now if omitted or nil.
-TIME is a Lisp time value; see Info node `(elisp)Time of Day'.
+       doc: /* Use FORMAT-STRING to format the time value TIME.
+A time value that is omitted or nil stands for the current time,
+a number stands for that many seconds, an integer pair (TICKS . HZ)
+stands for TICKS/HZ seconds, and an integer list (HI LO US PS) stands
+for HI*2**16 + LO + US/10**6 + PS/10**12 seconds.  This function
+treats seconds as time since the epoch of 1970-01-01 00:00:00 UTC.
 
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in
@@ -1300,8 +1304,8 @@ usage: (format-time-string FORMAT-STRING &optional TIME ZONE)  */)
 
 DEFUN ("decode-time", Fdecode_time, Sdecode_time, 0, 2, 0,
        doc: /* Decode a time value as (SEC MINUTE HOUR DAY MONTH YEAR DOW DST UTCOFF).
-The optional TIME is the Lisp time value to convert.  See Info node
-`(elisp)Time of Day' for time value formats.
+The optional TIME is the time value to convert.  See
+`format-time-string' for the various forms of a time value.
 
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in
@@ -1381,22 +1385,23 @@ check_tm_member (Lisp_Object obj, int offset)
 }
 
 DEFUN ("encode-time", Fencode_time, Sencode_time, 1, MANY, 0,
-       doc: /* Convert TIME to a timestamp.
+       doc: /* Convert optional TIME to a timestamp.
 Optional FORM specifies how the returned value should be encoded.
 This can act as the reverse operation of `decode-time', which see.
 
 If TIME is a list (SECOND MINUTE HOUR DAY MONTH YEAR IGNORED DST ZONE)
-it a decoded time in the style of `decode-time', so that (encode-time
-(decode-time ...)) works.  TIME can also be a Lisp time value; see
-Info node `(elisp)Time of Day'.
+it is a decoded time in the style of `decode-time', so that (encode-time
+(decode-time ...)) works.  TIME can also be a time value.
+See `format-time-string' for the various forms of a time value.
+For example, an omitted TIME stands for the current time.
 
 If FORM is a positive integer, the time is returned as a pair of
 integers (TICKS . FORM), where TICKS is the number of clock ticks and FORM
 is the clock frequency in ticks per second.  (Currently the positive
 integer should be at least 65536 if the returned value is expected to
 be given to standard functions expecting Lisp timestamps.)  If FORM is
-t, the time is returned as (TICKS . PHZ), where PHZ is a
-platform-dependent clock frequency.  If FORM is `integer', the time is
+t, the time is returned as (TICKS . PHZ), where PHZ is a platform dependent
+clock frequency in ticks per second.  If FORM is `integer', the time is
 returned as an integer count of seconds.  If FORM is `list', the time is
 returned as an integer list (HIGH LOW USEC PSEC), where HIGH has the
 most significant bits of the seconds, LOW has the least significant 16
@@ -1405,11 +1410,12 @@ Returned values are rounded toward minus infinity.  Although an
 omitted or nil FORM currently acts like `list', this is planned to
 change, so callers requiring list timestamps should specify `list'.
 
-As an obsolescent calling convention, the first 6 arguments SECOND,
-MINUTE, HOUR, DAY, MONTH, and YEAR specify the components of a decoded
-time, where DST assumed to be -1 and FORM is omitted.  If there are more
+As an obsolescent calling convention, if this function is called with
+6 or more arguments, the first 6 arguments are SECOND, MINUTE, HOUR,
+DAY, MONTH, and YEAR, and specify the components of a decoded time,
+where DST assumed to be -1 and FORM is omitted.  If there are more
 than 6 arguments the *last* argument is used as ZONE and any other
-extra arguments are ignored, so that (apply \\='encode-time
+extra arguments are ignored, so that (apply #\\='encode-time
 (decode-time ...)) works; otherwise ZONE is assumed to be nil.
 
 If the input is a decoded time, ZONE is nil for Emacs local time, t
@@ -1430,7 +1436,7 @@ If you want them to stand for years in this century, you must do that yourself.
 Years before 1970 are not guaranteed to work.  On some systems,
 year values as low as 1901 do work.
 
-usage: (encode-time TIME &optional FORM)  */)
+usage: (encode-time &optional TIME FORM &rest OBSOLESCENT-ARGUMENTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   time_t value;
@@ -1490,13 +1496,13 @@ usage: (encode-time TIME &optional FORM)  */)
 }
 
 DEFUN ("current-time", Fcurrent_time, Scurrent_time, 0, 0, 0,
-       doc: /* Return the current time, counting the number of seconds since the epoch.
-
-See Info node `(elisp)Time of Day' for the format of the returned
-timestamp.  Although this is currently list format, it may change in
-future versions of Emacs.  Use `encode-time' if you need a particular
-form; for example, (encode-time nil \\='list) returns the current time
-in list form.  */)
+       doc: /* Return the current time, as the number of seconds since 1970-01-01 00:00:00.
+The time is returned as a list of integers (HIGH LOW USEC PSEC).
+HIGH has the most significant bits of the seconds, while LOW has the
+least significant 16 bits.  USEC and PSEC are the microsecond and
+picosecond counts.  Use `encode-time' if you need a particular
+timestamp form; for example, (encode-time nil \\='integer) returns the
+current time in seconds.  */)
   (void)
 {
   return make_lisp_time (current_timespec ());
@@ -1512,9 +1518,9 @@ The format is `Sun Sep 16 01:03:52 1973'.
 However, see also the functions `decode-time' and `format-time-string'
 which provide a much more powerful and general facility.
 
-If SPECIFIED-TIME is given, it is the Lisp time value to format
-instead of the current time.  See Info node `(elisp)Time of Day' for
-time value formats.
+If SPECIFIED-TIME is given, it is the time value to format instead of
+the current time.  See `format-time-string' for the various forms of a
+time value.
 
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in
@@ -1559,7 +1565,8 @@ OFFSET is an integer number of seconds ahead of UTC (east of Greenwich).
 NAME is a string giving the name of the time zone.
 If SPECIFIED-TIME is given, the time zone offset is determined from it
 instead of using the current time.  The argument should be a Lisp
-time value; see Info node `(elisp)Time of Day'.
+time value; see `format-time-string' for the various forms of a time
+value.
 
 The optional ZONE is omitted or nil for Emacs local time, t for
 Universal Time, `wall' for system wall clock time, or a string as in

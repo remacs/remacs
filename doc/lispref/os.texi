@@ -1457,14 +1457,14 @@ seconds east of Greenwich.
 @var{dow} and @var{utcoff}.
 @end defun
 
-@defun encode-time time &optional form
+@defun encode-time &optional time form &rest obsolescent-arguments
 This function converts @var{time} to a Lisp timestamp.
 It can act as the inverse of @code{decode-time}.
 
-The first argument can be a Lisp time value such as @code{nil} for the
-current time, a number of seconds, a pair @code{(@var{ticks}
-. @var{hz})}, or a list @code{(@var{high} @var{low} @var{micro}
-@var{pico})} (@pxref{Time of Day}).  It can also be a list
+The first argument can be a time value such as a number of seconds, a
+pair @code{(@var{ticks} . @var{hz})}, a list @code{(@var{high}
+@var{low} @var{micro} @var{pico})}, or @code{nil} (the default) for
+the current time (@pxref{Time of Day}).  It can also be a list
 @code{(@var{second} @var{minute} @var{hour} @var{day} @var{month}
 @var{year} @var{ignored} @var{dst} @var{zone})} that specifies a
 decoded time in the style of @code{decode-time}, so that
@@ -1494,10 +1494,10 @@ or more arguments.  The first six arguments @var{second},
 specify most of the components of a decoded time.  If there are more
 than six arguments the @emph{last} argument is used as @var{zone} and
 any other extra arguments are ignored, so that @code{(apply
-'encode-time (decode-time ...))} works; otherwise @var{zone} defaults
+#\\='encode-time (decode-time ...))} works; otherwise @var{zone} defaults
 to the current time zone rule (@pxref{Time Zone Rules}).  The decoded
 time's @var{dst} component is treated as if it was @minus{}1, and
-@var{form} so it takes its default value.
+@var{form} takes its default value.
 
 Year numbers less than 100 are not treated specially.  If you want them
 to stand for years above 1900, or years above 2000, you must alter them
