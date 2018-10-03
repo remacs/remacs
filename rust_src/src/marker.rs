@@ -5,9 +5,9 @@ use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qinteger_or_marker_p;
 use remacs_sys::{allocate_misc, set_point_both, Fmake_marker};
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
+use remacs_sys::{Qinteger_or_marker_p, Qnil};
 
 use buffers::LispBufferRef;
 use lisp::{defsubr, ExternalPtr, LispObject};
@@ -255,7 +255,7 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
     let buffer_or_nil = marker
         .as_marker()
         .and_then(|m| m.buffer())
-        .map_or(LispObject::constant_nil(), |b| b.as_lisp_obj());
+        .map_or(Qnil, |b| b.as_lisp_obj());
 
     set_marker(new, marker, buffer_or_nil);
     new.as_marker()
@@ -616,10 +616,10 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         };
     }
 
-    consider_known!(buffer_ref.pt(), buffer_ref.pt_byte());
+    consider_known!(buffer_ref.pt, buffer_ref.pt_byte);
     consider_known!(buffer_ref.gpt(), buffer_ref.gpt_byte());
-    consider_known!(buffer_ref.begv(), buffer_ref.begv_byte());
-    consider_known!(buffer_ref.zv(), buffer_ref.zv_byte());
+    consider_known!(buffer_ref.begv, buffer_ref.begv_byte);
+    consider_known!(buffer_ref.zv, buffer_ref.zv_byte);
 
     if buffer_ref.is_cached && buffer_ref.modifications() == buffer_ref.cached_modiff {
         consider_known!(buffer_ref.cached_charpos, buffer_ref.cached_bytepos);
@@ -727,10 +727,10 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         };
     }
 
-    consider_known!(buffer_ref.pt_byte(), buffer_ref.pt());
+    consider_known!(buffer_ref.pt_byte, buffer_ref.pt);
     consider_known!(buffer_ref.gpt_byte(), buffer_ref.gpt());
-    consider_known!(buffer_ref.begv_byte(), buffer_ref.begv());
-    consider_known!(buffer_ref.zv_byte(), buffer_ref.zv());
+    consider_known!(buffer_ref.begv_byte, buffer_ref.begv);
+    consider_known!(buffer_ref.zv_byte, buffer_ref.zv);
 
     if buffer_ref.is_cached && buffer_ref.modifications() == buffer_ref.cached_modiff {
         consider_known!(buffer_ref.cached_bytepos, buffer_ref.cached_charpos);

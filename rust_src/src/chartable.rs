@@ -4,9 +4,9 @@ use libc;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::uniprop_table_uncompress;
-use remacs_sys::Qchar_code_property_table;
 use remacs_sys::{Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
                  CHARTAB_SIZE_BITS};
+use remacs_sys::{Qchar_code_property_table, Qnil};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
@@ -188,7 +188,7 @@ pub fn set_char_table_parent(
     chartable.parent = if let Some(p) = parent {
         p.as_lisp_obj()
     } else {
-        LispObject::constant_nil()
+        Qnil
     };
     //parent
 }

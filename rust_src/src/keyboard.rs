@@ -5,7 +5,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys::glyph_row_area;
 use remacs_sys::Fpos_visible_in_window_p;
 use remacs_sys::{make_lispy_position, window_box_left_offset};
-use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qt, Qvertical_line};
+use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line};
 
 use frames::window_frame_live_or_selected_with_action;
 use lisp::defsubr;
@@ -28,7 +28,7 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
 
     let tem = unsafe { Fpos_visible_in_window_p(pos, window, Qt) };
     if tem.is_nil() {
-        return LispObject::constant_nil();
+        return Qnil;
     }
 
     let mut it = tem.iter_cars();
@@ -41,7 +41,7 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     // Point invisible due to hscrolling?  X can be -1 when a
     // newline in a R2L line overflows into the left fringe.
     if x_coord < -1 {
-        return LispObject::constant_nil();
+        return Qnil;
     }
     let aux_info = it.rest();
     if aux_info.is_not_nil() && y_coord < 0 {
@@ -57,7 +57,7 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
         LispObject::from(x_coord),
         LispObject::from(y_coord),
         window,
-        LispObject::constant_nil(),
+        Qnil,
     )
 }
 

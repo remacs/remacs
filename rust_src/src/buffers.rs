@@ -77,36 +77,6 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn zv(self) -> ptrdiff_t {
-        self.zv
-    }
-
-    #[inline]
-    pub fn zv_byte(self) -> ptrdiff_t {
-        self.zv_byte
-    }
-
-    #[inline]
-    pub fn pt(self) -> ptrdiff_t {
-        self.pt
-    }
-
-    #[inline]
-    pub fn pt_byte(self) -> ptrdiff_t {
-        self.pt_byte
-    }
-
-    #[inline]
-    pub fn begv(self) -> ptrdiff_t {
-        self.begv
-    }
-
-    #[inline]
-    pub fn begv_byte(self) -> ptrdiff_t {
-        self.begv_byte
-    }
-
-    #[inline]
     pub fn beg_addr(self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
     }
@@ -534,7 +504,7 @@ fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject
     if let Some(elt) = result {
         elt.car()
     } else {
-        LispObject::constant_nil()
+        Qnil
     }
 }
 
@@ -729,12 +699,8 @@ pub fn overlay_lists() -> LispObject {
     };
 
     let cur_buf = ThreadState::current_buffer();
-    let before = cur_buf
-        .overlays_before()
-        .map_or_else(LispObject::constant_nil, &list_overlays);
-    let after = cur_buf
-        .overlays_after()
-        .map_or_else(LispObject::constant_nil, &list_overlays);
+    let before = cur_buf.overlays_before().map_or(Qnil, &list_overlays);
+    let after = cur_buf.overlays_after().map_or(Qnil, &list_overlays);
     unsafe { Fcons(Fnreverse(before), Fnreverse(after)) }
 }
 
@@ -768,14 +734,9 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
         assert!(zv_marker.is_not_nil());
 
         let buffer = buffer_ref.as_lisp_obj();
-        set_marker_both(pt_marker, buffer, buffer_ref.pt(), buffer_ref.pt_byte());
-        set_marker_both(
-            begv_marker,
-            buffer,
-            buffer_ref.begv(),
-            buffer_ref.begv_byte(),
-        );
-        set_marker_both(zv_marker, buffer, buffer_ref.zv(), buffer_ref.zv_byte());
+        set_marker_both(pt_marker, buffer, buffer_ref.pt, buffer_ref.pt_byte);
+        set_marker_both(begv_marker, buffer, buffer_ref.begv, buffer_ref.begv_byte);
+        set_marker_both(zv_marker, buffer, buffer_ref.zv, buffer_ref.zv_byte);
     }
 }
 

@@ -38,7 +38,7 @@ pub fn minibufferp(object: LispObject) -> bool {
 pub fn active_minibuffer_window() -> LispObject {
     unsafe {
         if minibuf_level == 0 {
-            LispObject::constant_nil()
+            Qnil
         } else {
             minibuf_window
         }
@@ -84,7 +84,7 @@ pub fn minibuffer_prompt_end() -> EmacsInt {
 
     let end = field_end(Some(beg), false, None);
     let buffer_end = ThreadState::current_buffer().zv as EmacsInt;
-    if end == buffer_end && get_char_property(beg, Qfield, LispObject::constant_nil()).is_nil() {
+    if end == buffer_end && get_char_property(beg, Qfield, Qnil).is_nil() {
         beg
     } else {
         end
@@ -362,7 +362,7 @@ pub fn read_command_or_variable(
     symbol: LispObject,
 ) -> LispObject {
     let default_string = if default_value.is_nil() {
-        LispObject::constant_nil()
+        Qnil
     } else if let Some(s) = default_value.as_symbol() {
         s.symbol_name()
     } else {

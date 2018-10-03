@@ -13,7 +13,7 @@ use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  window_menu_bar_p, window_parameter, window_tool_bar_p, wset_display_table,
                  wset_redisplay, wset_update_mode_line};
 use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone};
 
 use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, LispFrameRef};
@@ -47,11 +47,6 @@ impl LispWindowRef {
     #[inline]
     pub fn is_valid(self) -> bool {
         self.contents().is_not_nil()
-    }
-
-    #[inline]
-    pub fn point_marker(self) -> LispObject {
-        self.pointm
     }
 
     #[inline]
@@ -311,7 +306,7 @@ pub fn window_point(window: LispObject) -> Option<EmacsInt> {
     if win == selected_window().as_window_or_error() {
         Some(point())
     } else {
-        marker_position_lisp(win.point_marker().into())
+        marker_position_lisp(win.pointm.into())
     }
 }
 
@@ -332,7 +327,7 @@ pub fn window_buffer(window: LispObject) -> LispObject {
     if win.is_live() {
         win.contents()
     } else {
-        LispObject::constant_nil()
+        Qnil
     }
 }
 
@@ -396,7 +391,7 @@ pub fn window_margins(window: LispObject) -> LispObject {
         if margin != 0 {
             LispObject::from(margin)
         } else {
-            LispObject::constant_nil()
+            Qnil
         }
     }
     let win = window_live_or_selected(window);
@@ -450,7 +445,7 @@ pub fn minibuffer_selected_window() -> LispObject {
     {
         current_minibuf
     } else {
-        LispObject::constant_nil()
+        Qnil
     }
 }
 
