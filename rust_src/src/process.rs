@@ -7,7 +7,7 @@ use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, get_proces
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
-                 Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial, Qstop, Qt};
+                 Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qrun, Qserial, Qstop, Qt};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
@@ -97,11 +97,7 @@ pub fn get_process(name: LispObject) -> LispObject {
         name
     } else {
         name.as_string_or_error();
-        cdr(assoc(
-            name,
-            unsafe { Vprocess_alist },
-            LispObject::constant_nil(),
-        ))
+        cdr(assoc(name, unsafe { Vprocess_alist }, Qnil))
     }
 }
 
@@ -139,11 +135,11 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 #[lisp_fn]
 pub fn get_buffer_process(buffer: LispObject) -> LispObject {
     if buffer.is_nil() {
-        return LispObject::constant_nil();
+        return Qnil;
     }
     let buf = get_buffer(buffer);
     if buf.is_nil() {
-        return LispObject::constant_nil();
+        return Qnil;
     }
     for tail in unsafe { Vprocess_alist }.iter_tails() {
         let p = tail.car().as_cons().unwrap().cdr();
@@ -151,7 +147,7 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
             return p;
         }
     }
-    LispObject::constant_nil()
+    Qnil
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.

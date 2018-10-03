@@ -91,16 +91,11 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn constant_nil() -> LispObject {
-        Qnil
-    }
-
-    #[inline]
     pub fn from_bool(v: bool) -> LispObject {
         if v {
             LispObject::constant_t()
         } else {
-            LispObject::constant_nil()
+            Qnil
         }
     }
 
@@ -117,7 +112,7 @@ where
     #[inline]
     fn from(v: Option<T>) -> Self {
         match v {
-            None => LispObject::constant_nil(),
+            None => Qnil,
             Some(v) => LispObject::from(v),
         }
     }
@@ -125,7 +120,7 @@ where
 
 impl From<()> for LispObject {
     fn from(_v: ()) -> Self {
-        LispObject::constant_nil()
+        Qnil
     }
 }
 
@@ -142,7 +137,7 @@ impl From<bool> for LispObject {
         if v {
             LispObject::constant_t()
         } else {
-            LispObject::constant_nil()
+            Qnil
         }
     }
 }

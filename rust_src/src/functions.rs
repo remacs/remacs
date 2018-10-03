@@ -86,7 +86,7 @@ macro_rules! assert_t {
 #[allow(unused_macros)]
 macro_rules! assert_nil {
     ($arg: expr) => {{
-        assert!($arg == ::lisp::LispObject::constant_nil());
+        assert!($arg == ::remacs_sys::Qnil);
     }};
 }
 

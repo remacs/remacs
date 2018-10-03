@@ -504,7 +504,7 @@ fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject
     if let Some(elt) = result {
         elt.car()
     } else {
-        LispObject::constant_nil()
+        Qnil
     }
 }
 
@@ -699,12 +699,8 @@ pub fn overlay_lists() -> LispObject {
     };
 
     let cur_buf = ThreadState::current_buffer();
-    let before = cur_buf
-        .overlays_before()
-        .map_or_else(LispObject::constant_nil, &list_overlays);
-    let after = cur_buf
-        .overlays_after()
-        .map_or_else(LispObject::constant_nil, &list_overlays);
+    let before = cur_buf.overlays_before().map_or(Qnil, &list_overlays);
+    let after = cur_buf.overlays_after().map_or(Qnil, &list_overlays);
     unsafe { Fcons(Fnreverse(before), Fnreverse(after)) }
 }
 

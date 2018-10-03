@@ -490,7 +490,7 @@ pub fn line_beginning_position(n: Option<EmacsInt>) -> EmacsInt {
         LispNumber::Fixnum(point() as EmacsInt),
         n != 1,
         true,
-        LispObject::constant_nil(),
+        Qnil,
     )
 }
 
@@ -531,7 +531,7 @@ pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
         LispNumber::Fixnum(orig),
         n != 1,
         true,
-        LispObject::constant_nil(),
+        Qnil,
     )
 }
 
@@ -647,11 +647,11 @@ pub fn constrain_to_field(
         && (get_char_property(
             new_pos,
             Qfield,
-            LispObject::constant_nil()).is_not_nil()
+            Qnil).is_not_nil()
             || get_char_property(
                 old_pos,
                 Qfield,
-                LispObject::constant_nil()).is_not_nil()
+                Qnil).is_not_nil()
             // To recognize field boundaries, we must also look at the
             // previous positions; we could use `Fget_pos_property'
             // instead, but in itself that would fail inside non-sticky
@@ -660,9 +660,9 @@ pub fn constrain_to_field(
                 && get_char_property(
                     prev_new,
                     Qfield,
-                    LispObject::constant_nil()).is_not_nil())
+                    Qnil).is_not_nil())
             || (old_pos > begv
-                && get_char_property(prev_old, Qfield, LispObject::constant_nil()).is_not_nil()))
+                && get_char_property(prev_old, Qfield, Qnil).is_not_nil()))
         && (inhibit_capture_property.is_nil()
             // Field boundaries are again a problem; but now we must
             // decide the case exactly, so we need to call
@@ -677,11 +677,11 @@ pub fn constrain_to_field(
                     || get_char_property(
                         old_pos,
                         inhibit_capture_property,
-                        LispObject::constant_nil()).is_nil()
+                        Qnil).is_nil()
                     || get_char_property(
                         prev_old,
                         inhibit_capture_property,
-                        LispObject::constant_nil()).is_nil())))
+                        Qnil).is_nil())))
     // It is possible that NEW_POS is not within the same field as
     // OLD_POS; try to move NEW_POS so that it is.
     {

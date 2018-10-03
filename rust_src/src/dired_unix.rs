@@ -627,7 +627,7 @@ impl FileAttrs {
             if self.ftype_is_dir {
                 attrs.push(LispObject::constant_t());
             } else {
-                attrs.push(LispObject::constant_nil());
+                attrs.push(Qnil);
             }
         }
 

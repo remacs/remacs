@@ -255,7 +255,7 @@ pub fn self_insert_command(n: EmacsInt) {
     // Barf if the key that invoked this was not a character.
     if !characterp(
         unsafe { globals.last_command_event },
-        LispObject::constant_nil(),
+        Qnil,
     ) {
         unsafe { bitch_at_user() };
     } else {

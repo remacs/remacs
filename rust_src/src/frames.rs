@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{frame_dimension, output_method, Fcons, Fselect_window};
 use remacs_sys::{selected_frame as current_frame, Lisp_Frame, Lisp_Type};
-use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
+use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
@@ -105,7 +105,7 @@ pub fn frame_live_p(object: LispObject) -> LispObject {
         }
     }
 
-    LispObject::constant_nil()
+    Qnil
 }
 
 /// Return the selected window of FRAME-OR-WINDOW.
@@ -154,9 +154,7 @@ pub fn set_frame_selected_window(
 /// See also `frame-live-p'.
 #[lisp_fn]
 pub fn framep(object: LispObject) -> LispObject {
-    object
-        .as_frame()
-        .map_or_else(LispObject::constant_nil, framep_1)
+    object.as_frame().map_or(Qnil, framep_1)
 }
 
 fn framep_1(frame: LispFrameRef) -> LispObject {
@@ -193,7 +191,7 @@ pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
     }
 
     if window_system.is_t() {
-        LispObject::constant_nil()
+        Qnil
     } else {
         window_system
     }
@@ -215,7 +213,7 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
     } else if frame.iconified() {
         Qicon
     } else {
-        LispObject::constant_nil()
+        Qnil
     }
 }
 

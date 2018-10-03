@@ -6,7 +6,7 @@ use remacs_sys::Lisp_Symbol;
 use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
                  make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
                  swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
-use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
+use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qunbound, Qvoid_variable};
 
 use buffers::LispBufferLocalValueRef;
 use data::indirect_function;
@@ -239,7 +239,7 @@ pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
     if symbol.is_nil() || symbol.is_t() {
         xsignal!(Qsetting_constant, symbol);
     }
-    sym.set_function(LispObject::constant_nil());
+    sym.set_function(Qnil);
     sym
 }
 
