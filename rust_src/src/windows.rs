@@ -230,6 +230,11 @@ impl LispWindowRef {
                 || (self.contents().as_buffer_or_error().header_line_format_).is_not_nil())
             && self.pixel_height > height
     }
+
+    /// True if window W is a vertical combination of windows.
+    pub fn is_vertical_combination(self) -> bool {
+        self.is_internal() && !self.horizontal()
+    }
 }
 
 pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
@@ -870,6 +875,21 @@ pub fn set_window_start(window: LispObject, pos: LispObject, noforce: LispObject
     w.set_window_end_valid(false);
     unsafe { wset_redisplay(w.as_mut()) };
     pos
+}
+
+/// Return the topmost child window of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return nil if WINDOW is a live window (live windows have no children).
+/// Return nil if WINDOW is an internal window whose children form a
+/// horizontal combination.
+#[lisp_fn(min = "0")]
+pub fn window_top_child(window: LispObject) -> Option<LispWindowRef> {
+    let window = window_valid_or_selected(window);
+    if window.is_vertical_combination() {
+        window.contents.as_window()
+    } else {
+        None
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
