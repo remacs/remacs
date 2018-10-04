@@ -148,9 +148,6 @@ more Emacs-y.
    rustup will use that version as long as you are in the Remacs
    repository
 
-        cd /path/to/remacs
-        rustup install `cat rust-toolchain`
-
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like `apt install build-essential automake clang`. On
    macOS, you'll need Xcode.
