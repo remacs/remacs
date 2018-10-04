@@ -247,4 +247,28 @@
   (makunbound 'function-hook)
   (makunbound 'list-of-functions))
 
+(ert-deftest eval-tests--funcall()
+  (let ((f (lambda () 1)))
+    (should (eq (funcall f) 1)))
+
+  (should (eq (funcall (lambda () 1)) 1)))
+
+(ert-deftest eval-tests--funcall-error()
+  "Checks all error cases for funcall."
+
+  (should-error (funcall nil) :type 'void-function)
+
+  (let ((f nil))
+    (should-error (funcall f) :type 'void-function)
+    (should-error (funcall 'f) :type 'void-function))
+
+  (should-error (funcall 1) :type 'invalid-function)
+
+  (should-error (funcall '(nil)) :type 'invalid-function)
+
+  ;; Checks that Bug#24673 has been fixed.
+  (should-error (funcall '(closure)) :type 'invalid-function)
+
+  (should-error (funcall (lambda)) :type 'invalid-function))
+
 ;;; eval-tests.el ends here
