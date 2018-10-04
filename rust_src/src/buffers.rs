@@ -878,7 +878,8 @@ pub fn delete_overlay(overlay: LispObject) -> LispObject {
         }
     }
 
-    unsafe { unbind_to(count, Qnil) }
+    unsafe { unbind_to(count, Qnil) };
+    Qnil
 }
 
 /// Delete all overlays of BUFFER.
