@@ -73,9 +73,9 @@ Savannah Project Page}.
 @end ifhtml
 
 There is a mailing list for @value{tramp}, available at
-@email{tramp-devel@@gnu.org}, and archived at
-@uref{https://lists.gnu.org/r/tramp-devel/, the
-@value{tramp} Mail Archive}.
+@email{@value{tramp-bug-report-address}}, and archived at
+@uref{https://lists.gnu.org/r/tramp-devel/, the @value{tramp} Mail
+Archive}.
 
 @page
 @insertcopying
@@ -3247,9 +3247,9 @@ discussing, and general discussions about @value{tramp}.
 post for moderator approval.  Sometimes this approval step may take as
 long as 48 hours due to public holidays.
 
-@email{tramp-devel@@gnu.org} is the mailing list.  Messages sent to
-this address go to all the subscribers.  This is @emph{not} the
-address to send subscription requests to.
+@email{@value{tramp-bug-report-address}} is the mailing list.
+Messages sent to this address go to all the subscribers.  This is
+@emph{not} the address to send subscription requests to.
 
 To subscribe to the mailing list, visit:
 @uref{https://lists.gnu.org/mailman/listinfo/tramp-devel/, the

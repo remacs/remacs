@@ -25,11 +25,10 @@
 
 ;;; Code:
 
-;; In the Tramp GIT repository, the version number and the bug report
-;; address are auto-frobbed from configure.ac, so you should edit that
-;; file and run "autoconf && ./configure" to change them.  Emacs
-;; version check is defined in macro AC_EMACS_INFO of aclocal.m4;
-;; should be changed only there.
+;; In the Tramp GIT, the version number is auto-frobbed from tramp.el,
+;; and the bug report address is auto-frobbed from configure.ac.
+;; Emacs version check is defined in macro AC_EMACS_INFO of
+;; aclocal.m4; should be changed only there.
 
 ;;;###tramp-autoload
 (defconst tramp-version "2.4.1-pre"
