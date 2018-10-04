@@ -875,7 +875,8 @@ main (int argc, char **argv)
 	    newlim = rlim.rlim_max;
 	  newlim -= newlim % pagesize;
 
-	  if (pagesize <= newlim - lim)
+	  if (newlim > lim	/* in case rlim_t is an unsigned type */
+	      && pagesize <= newlim - lim)
 	    {
 	      rlim.rlim_cur = newlim;
 	      if (setrlimit (RLIMIT_STACK, &rlim) == 0)
@@ -884,9 +885,10 @@ main (int argc, char **argv)
 	}
       /* If the stack is big enough, let regex.c more of it before
          falling back to heap allocation.  */
-      emacs_re_safe_alloca = max
-        (min (lim - extra, SIZE_MAX) * (min_ratio / ratio),
-         MAX_ALLOCA);
+      if (lim < extra)
+	lim = extra;	/* avoid wrap-around in unsigned subtraction */
+      emacs_re_safe_alloca =
+	max (min (lim - extra, SIZE_MAX) * (min_ratio / ratio), MAX_ALLOCA);
     }
 #endif /* HAVE_SETRLIMIT and RLIMIT_STACK and not CYGWIN */
 
