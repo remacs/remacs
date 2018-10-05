@@ -2,12 +2,13 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, get_process as cget_process,
-                 send_process, setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
+use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
+                 get_process as cget_process, send_process, setup_process_coding_systems,
+                 update_status, Fmapcar, STRING_BYTES};
 use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
-                 Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qrun, Qserial, Qstop, Qt};
+                 Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qreal, Qrun, Qserial, Qstop, Qt};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
@@ -406,6 +407,41 @@ pub fn process_exit_status(mut process: LispProcessRef) -> LispObject {
     status
         .as_cons()
         .map_or_else(|| LispObject::from(0), |cons| car(cons.cdr()))
+}
+
+/// Return non-nil if PROCESS has given the terminal to a
+/// child.  If the operating system does not make it possible to find out,
+/// return t.  If we can find out, return the numeric ID of the foreground
+/// process group.
+#[lisp_fn(min = "0")]
+pub fn process_running_child_p(mut process: LispObject) -> LispObject {
+    // Initialize in case ioctl doesn't exist or gives an error,
+    // in a way that will cause returning t.
+    process = get_process(process);
+    let mut proc_ref = process.as_process_or_error();
+
+    if proc_ref.type_.eq(Qreal) {
+        error!(
+            "Process {} is not a subprocess.",
+            proc_ref.name.as_string_or_error()
+        );
+    }
+    if proc_ref.infd < 0 {
+        error!(
+            "Process {} is not active.",
+            proc_ref.name.as_string_or_error()
+        );
+    }
+
+    let gid = unsafe { emacs_get_tty_pgrp(proc_ref.as_mut()) };
+
+    if gid == proc_ref.pid {
+        Qnil
+    } else if gid != -1 {
+        LispObject::from_fixnum(gid.into())
+    } else {
+        Qt
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
