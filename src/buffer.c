@@ -698,7 +698,7 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
 
 /* Mark OV as no longer associated with B.  */
 
-static void
+void
 drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
 {
   eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
@@ -3609,7 +3609,7 @@ unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay)
 
 /* Remove OVERLAY from both overlay lists of B.  */
 
-static void
+void
 unchain_both (struct buffer *b, Lisp_Object overlay)
 {
   struct Lisp_Overlay *ov = XOVERLAY (overlay);
@@ -3723,47 +3723,6 @@ buffer.  */)
   return unbind_to (count, overlay);
 }
 
-DEFUN ("delete-overlay", Fdelete_overlay, Sdelete_overlay, 1, 1, 0,
-       doc: /* Delete the overlay OVERLAY from its buffer.  */)
-  (Lisp_Object overlay)
-{
-  Lisp_Object buffer;
-  struct buffer *b;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  CHECK_OVERLAY (overlay);
-
-  buffer = Fmarker_buffer (OVERLAY_START (overlay));
-  if (NILP (buffer))
-    return Qnil;
-
-  b = XBUFFER (buffer);
-  specbind (Qinhibit_quit, Qt);
-
-  unchain_both (b, overlay);
-  drop_overlay (b, XOVERLAY (overlay));
-
-  /* When deleting an overlay with before or after strings, turn off
-     display optimizations for the affected buffer, on the basis that
-     these strings may contain newlines.  This is easier to do than to
-     check for that situation during redisplay.  */
-  if (!windows_or_buffers_changed
-      && (!NILP (Foverlay_get (overlay, Qbefore_string))
-	  || !NILP (Foverlay_get (overlay, Qafter_string))))
-    b->prevent_redisplay_optimizations_p = 1;
-
-  return unbind_to (count, Qnil);
-}
-
-DEFUN ("delete-all-overlays", Fdelete_all_overlays, Sdelete_all_overlays, 0, 1, 0,
-       doc: /* Delete all overlays of BUFFER.
-BUFFER omitted or nil means delete all overlays of the current
-buffer.  */)
-  (Lisp_Object buffer)
-{
-  delete_all_overlays (decode_buffer (buffer));
-  return Qnil;
-}
 
 /* Overlay dissection functions.  */
 
@@ -5871,8 +5830,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Skill_all_local_variables);
 
   defsubr (&Smake_overlay);
-  defsubr (&Sdelete_overlay);
-  defsubr (&Sdelete_all_overlays);
   defsubr (&Smove_overlay);
   defsubr (&Soverlays_at);
   defsubr (&Soverlays_in);

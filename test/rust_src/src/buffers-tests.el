@@ -21,3 +21,20 @@
     (should (null (overlay-properties overlay)))
     (overlay-put overlay 'priority 2)
     (should (equal (overlay-properties overlay) '(priority 2)))))
+
+(ert-deftest test-delete-overlay ()
+  (let ((buf (get-buffer-create "test-delete-overlay")))
+    (with-current-buffer buf
+      (overlay-put (make-overlay (point-min) (point-max)) 'test "test")
+      (should (= (length (overlays-in (point-min) (point-max))) 1))
+      (delete-overlay (car (overlays-in (point-min) (point-max)))))
+      (should (eq (overlays-in (point-min) (point-max)) nil))))
+
+(ert-deftest test-delete-all-overlays ()
+  (let ((buf (get-buffer-create "test-delete-all-overlays")))
+    (with-current-buffer buf
+      (overlay-put (make-overlay (point-min) (point-max)) 'test "test")
+      (overlay-put (make-overlay (point-min) (point-max)) 'test "test")
+      (should (= (length (overlays-in (point-min) (point-max))) 2))
+      (delete-all-overlays)
+      (should (eq (overlays-in (point-min) (point-max)) nil)))))
