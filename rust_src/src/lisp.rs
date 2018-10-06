@@ -324,6 +324,10 @@ impl<T> ExternalPtr<T> {
     pub fn as_mut(&mut self) -> *mut T {
         self.0
     }
+
+    pub fn from_ptr(ptr: *mut c_void) -> Option<Self> {
+        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
+    }
 }
 
 impl<T> Deref for ExternalPtr<T> {
