@@ -64,13 +64,15 @@ pub const BUF_BYTES_MAX: ptrdiff_t = buf_bytes_max();
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
+impl<T> ExternalPtr<T> {
+    pub fn from_ptr(ptr: *mut c_void) -> Option<Self> {
+        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
+    }
+}
+
 impl LispBufferRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
-    pub fn from_ptr(ptr: *mut c_void) -> Option<LispBufferRef> {
-        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 
     pub fn is_read_only(&self) -> bool {
@@ -382,10 +384,6 @@ impl LispBufferRef {
 impl LispOverlayRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)
-    }
-
-    pub fn from_ptr(ptr: *mut c_void) -> Option<LispOverlayRef> {
-        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 
     pub fn iter(self) -> LispOverlayIter {
