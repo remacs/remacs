@@ -46,12 +46,7 @@ impl LispWindowRef {
     /// contents slot is non-nil.
     #[inline]
     pub fn is_valid(self) -> bool {
-        self.contents().is_not_nil()
-    }
-
-    #[inline]
-    pub fn contents(self) -> LispObject {
-        self.contents
+        self.contents.is_not_nil()
     }
 
     /// Return the current height of the mode line of window W. If not known
@@ -85,7 +80,7 @@ impl LispWindowRef {
 
     #[inline]
     pub fn is_internal(self) -> bool {
-        self.contents().is_window()
+        self.contents.is_window()
     }
 
     #[inline]
@@ -192,7 +187,7 @@ impl LispWindowRef {
             && !self.is_pseudo()
             && !window_mode_line_format.eq(Qnone)
             && (window_mode_line_format.is_not_nil() || self
-                .contents()
+                .contents
                 .as_buffer_or_error()
                 .mode_line_format_
                 .is_not_nil())
@@ -222,7 +217,7 @@ impl LispWindowRef {
             && !self.is_pseudo()
             && !window_header_line_format.eq(Qnone)
             && (window_header_line_format.is_not_nil()
-                || (self.contents().as_buffer_or_error().header_line_format_).is_not_nil())
+                || (self.contents.as_buffer_or_error().header_line_format_).is_not_nil())
             && self.pixel_height > height
     }
 
@@ -325,7 +320,7 @@ pub fn selected_window() -> LispObject {
 pub fn window_buffer(window: LispObject) -> LispObject {
     let win = window_valid_or_selected(window);
     if win.is_live() {
-        win.contents()
+        win.contents
     } else {
         Qnil
     }
@@ -825,7 +820,7 @@ pub fn set_window_point(window: LispObject, pos: LispObject) -> LispObject {
     if w == selected_window().as_window_or_error() {
         let mut current_buffer = ThreadState::current_buffer();
 
-        if w.contents()
+        if w.contents
             .as_buffer()
             .map_or(false, |b| b == current_buffer)
         {
@@ -834,7 +829,7 @@ pub fn set_window_point(window: LispObject, pos: LispObject) -> LispObject {
             // ... but here we want to catch type error before buffer change.
             pos.as_number_coerce_marker_or_error();
             unsafe {
-                set_buffer_internal(w.contents().as_buffer_or_error().as_mut());
+                set_buffer_internal(w.contents.as_buffer_or_error().as_mut());
             }
             goto_char(pos);
             unsafe {
@@ -842,7 +837,7 @@ pub fn set_window_point(window: LispObject, pos: LispObject) -> LispObject {
             }
         }
     } else {
-        set_marker_restricted(w.pointm, pos, w.contents());
+        set_marker_restricted(w.pointm, pos, w.contents);
         // We have to make sure that redisplay updates the window to show
         // the new value of point.
         w.set_redisplay(true);
@@ -857,7 +852,7 @@ pub fn set_window_point(window: LispObject, pos: LispObject) -> LispObject {
 #[lisp_fn(min = "2")]
 pub fn set_window_start(window: LispObject, pos: LispObject, noforce: LispObject) -> LispObject {
     let mut w = window_live_or_selected(window);
-    set_marker_restricted(w.start, pos, w.contents());
+    set_marker_restricted(w.start, pos, w.contents);
     // This is not right, but much easier than doing what is right.
     w.set_start_at_line_beg(false);
     if noforce.is_nil() {
