@@ -85,6 +85,9 @@
                 'A)))
   )
 
+(ert-deftest data-test--byteorder ()
+  (should (member (byteorder) '(66 108))))
+
 (ert-deftest data-test--subr-arity ()
   (should-error (subr-arity 'insert))
   (should (equal '(0 . many) (subr-arity (symbol-function 'insert))))
