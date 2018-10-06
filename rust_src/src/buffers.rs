@@ -78,11 +78,6 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn beg_addr(self) -> *mut c_uchar {
-        unsafe { (*self.text).beg }
-    }
-
-    #[inline]
     pub fn beg(self) -> ptrdiff_t {
         BEG
     }
@@ -90,26 +85,6 @@ impl LispBufferRef {
     #[inline]
     pub fn beg_byte(self) -> ptrdiff_t {
         BEG_BYTE
-    }
-
-    #[inline]
-    pub fn gpt(self) -> ptrdiff_t {
-        unsafe { (*self.text).gpt }
-    }
-
-    #[inline]
-    pub fn gpt_byte(self) -> ptrdiff_t {
-        unsafe { (*self.text).gpt_byte }
-    }
-
-    #[inline]
-    pub fn gap_size(self) -> ptrdiff_t {
-        unsafe { (*self.text).gap_size }
-    }
-
-    #[inline]
-    pub fn gap_position(self) -> ptrdiff_t {
-        unsafe { (*self.text).gpt }
     }
 
     #[inline]
@@ -133,16 +108,6 @@ impl LispBufferRef {
                 .beg
                 .offset((*self.text).gap_size + (*self.text).z_byte - BEG_BYTE)
         }
-    }
-
-    #[inline]
-    pub fn z_byte(self) -> ptrdiff_t {
-        unsafe { (*self.text).z_byte }
-    }
-
-    #[inline]
-    pub fn z(self) -> ptrdiff_t {
-        unsafe { (*self.text).z }
     }
 
     #[inline]
@@ -188,24 +153,6 @@ impl LispBufferRef {
             }
         }
         new_pos
-    }
-
-    /// Number of modifications made to the buffer.
-    #[inline]
-    pub fn modifications(self) -> EmacsInt {
-        unsafe { (*self.text).modiff }
-    }
-
-    /// Value of `modiff` last time the buffer was saved.
-    #[inline]
-    pub fn modifications_since_save(self) -> EmacsInt {
-        unsafe { (*self.text).save_modiff }
-    }
-
-    /// Number of modifications to the buffer's characters.
-    #[inline]
-    pub fn char_modifications(self) -> EmacsInt {
-        unsafe { (*self.text).chars_modiff }
     }
 
     #[inline]
@@ -373,6 +320,62 @@ impl LispBufferRef {
             }
         }
         self.local_flags[idx] = val;
+    }
+}
+
+// Methods for accessing struct buffer_text fields
+impl LispBufferRef {
+    #[inline]
+    pub fn beg_addr(self) -> *mut c_uchar {
+        unsafe { (*self.text).beg }
+    }
+
+    #[inline]
+    pub fn gpt(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt }
+    }
+
+    #[inline]
+    pub fn gpt_byte(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt_byte }
+    }
+
+    #[inline]
+    pub fn gap_size(self) -> ptrdiff_t {
+        unsafe { (*self.text).gap_size }
+    }
+
+    #[inline]
+    pub fn gap_position(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt }
+    }
+
+    /// Number of modifications made to the buffer.
+    #[inline]
+    pub fn modifications(self) -> EmacsInt {
+        unsafe { (*self.text).modiff }
+    }
+
+    /// Value of `modiff` last time the buffer was saved.
+    #[inline]
+    pub fn modifications_since_save(self) -> EmacsInt {
+        unsafe { (*self.text).save_modiff }
+    }
+
+    /// Number of modifications to the buffer's characters.
+    #[inline]
+    pub fn char_modifications(self) -> EmacsInt {
+        unsafe { (*self.text).chars_modiff }
+    }
+
+    #[inline]
+    pub fn z_byte(self) -> ptrdiff_t {
+        unsafe { (*self.text).z_byte }
+    }
+
+    #[inline]
+    pub fn z(self) -> ptrdiff_t {
+        unsafe { (*self.text).z }
     }
 }
 
