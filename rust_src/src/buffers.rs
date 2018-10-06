@@ -388,21 +388,6 @@ impl LispOverlayRef {
         unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 
-    #[inline]
-    pub fn start(self) -> LispObject {
-        self.start
-    }
-
-    #[inline]
-    pub fn end(self) -> LispObject {
-        self.end
-    }
-
-    #[inline]
-    pub fn plist(self) -> LispObject {
-        self.plist
-    }
-
     pub fn iter(self) -> LispOverlayIter {
         LispOverlayIter {
             current: Some(self),
@@ -588,20 +573,20 @@ pub fn buffer_chars_modified_tick(buffer: LispObject) -> EmacsInt {
 /// Return the position at which OVERLAY starts.
 #[lisp_fn]
 pub fn overlay_start(overlay: LispOverlayRef) -> Option<EmacsInt> {
-    marker_position_lisp(overlay.start().into())
+    marker_position_lisp(overlay.start.into())
 }
 
 /// Return the position at which OVERLAY ends.
 #[lisp_fn]
 pub fn overlay_end(overlay: LispOverlayRef) -> Option<EmacsInt> {
-    marker_position_lisp(overlay.end().into())
+    marker_position_lisp(overlay.end.into())
 }
 
 /// Return the buffer OVERLAY belongs to.
 /// Return nil if OVERLAY has been deleted.
 #[lisp_fn]
 pub fn overlay_buffer(overlay: LispOverlayRef) -> Option<LispBufferRef> {
-    marker_buffer(overlay.start().into())
+    marker_buffer(overlay.start.into())
 }
 
 /// Return a list of the properties on OVERLAY.
