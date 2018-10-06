@@ -102,8 +102,8 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
         return Qnil;
     }
     for tail in unsafe { Vprocess_alist }.iter_tails() {
-        let p = tail.car().as_cons().unwrap().cdr();
-        if buf.eq(p.as_process().unwrap().buffer) {
+        let p = tail.car().as_cons_or_error().cdr();
+        if buf.eq(p.as_process_or_error().buffer) {
             return p;
         }
     }
