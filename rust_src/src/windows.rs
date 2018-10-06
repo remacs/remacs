@@ -68,7 +68,7 @@ impl LispWindowRef {
             self.mode_line_height = matrix_mode_line_height;
             matrix_mode_line_height
         } else {
-            let mut frame = self.frame().as_frame_or_error();
+            let mut frame = self.frame.as_frame_or_error();
             let window = selected_window().as_window_or_error();
             let mode_line_height = unsafe {
                 estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
@@ -76,11 +76,6 @@ impl LispWindowRef {
             self.mode_line_height = mode_line_height;
             mode_line_height
         }
-    }
-
-    #[inline]
-    pub fn frame(self) -> LispObject {
-        self.frame
     }
 
     #[inline]
@@ -115,7 +110,7 @@ impl LispWindowRef {
         if !(round == qfloor || round == qceiling) {
             self.total_cols
         } else {
-            let frame = self.frame().as_frame_or_error();
+            let frame = self.frame.as_frame_or_error();
             let unit = frame.column_width;
 
             if round == qceiling {
@@ -133,7 +128,7 @@ impl LispWindowRef {
         if !(round == qfloor || round == qceiling) {
             self.total_lines
         } else {
-            let frame = self.frame().as_frame_or_error();
+            let frame = self.frame.as_frame_or_error();
             let unit = frame.line_height;
 
             if round == qceiling {
@@ -149,7 +144,7 @@ impl LispWindowRef {
     /// if any.
     #[inline]
     pub fn left_edge_x(self) -> i32 {
-        self.frame().as_frame_or_error().internal_border_width() + self.left_pixel_edge()
+        self.frame.as_frame_or_error().internal_border_width() + self.left_pixel_edge()
     }
 
     /// The frame y-position at which the window starts.
@@ -157,7 +152,7 @@ impl LispWindowRef {
     pub fn top_edge_y(self) -> i32 {
         let mut y = self.top_pixel_edge();
         if !(self.is_menu_bar() || self.is_tool_bar()) {
-            y += self.frame().as_frame_or_error().internal_border_width();
+            y += self.frame.as_frame_or_error().internal_border_width();
         }
         y
     }
@@ -201,7 +196,7 @@ impl LispWindowRef {
                 .as_buffer_or_error()
                 .mode_line_format_
                 .is_not_nil())
-            && self.pixel_height > self.frame().as_frame_or_error().line_height
+            && self.pixel_height > self.frame.as_frame_or_error().line_height
     }
 
     /// True if window wants a header line and is high enough to
@@ -217,7 +212,7 @@ impl LispWindowRef {
         let window_header_line_format =
             unsafe { window_parameter(self.as_mut(), Qheader_line_format) };
 
-        let mut height = self.frame().as_frame_or_error().line_height;
+        let mut height = self.frame.as_frame_or_error().line_height;
         if self.wants_mode_line() {
             height *= 2;
         }
@@ -524,7 +519,7 @@ pub fn window_parent(window: LispObject) -> LispObject {
 pub fn window_frame(window: LispObject) -> LispObject {
     let win = window_valid_or_selected(window);
 
-    win.frame()
+    win.frame
 }
 
 /// Return the minibuffer window for frame FRAME.
@@ -676,7 +671,7 @@ pub fn window_list(
         .as_window()
         .unwrap_or_else(|| panic!("Invalid window reference."));
 
-    if !f_obj.eq(w_ref.frame()) {
+    if !f_obj.eq(w_ref.frame) {
         error!("Window is on a different frame");
     }
 

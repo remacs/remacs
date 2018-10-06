@@ -60,7 +60,7 @@ pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
         selected_frame().as_frame_or_error()
     } else if let Some(win) = object.as_valid_window() {
         // the window's frame does not need a live check
-        win.frame().as_frame_or_error()
+        win.frame.as_frame_or_error()
     } else {
         object.as_live_frame_or_error()
     }
@@ -80,7 +80,7 @@ pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
     if object.is_window() {
         let w = object.as_live_window_or_error();
         window_action(w);
-        object = w.frame();
+        object = w.frame;
     }
 
     object.as_live_frame_or_error()
@@ -134,7 +134,7 @@ pub fn set_frame_selected_window(
     let mut frame_ref = frame_live_or_selected(frame);
     let w = window.as_live_window_or_error();
 
-    if frame_ref != w.frame().as_frame().unwrap() {
+    if frame_ref != w.frame.as_frame().unwrap() {
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if frame_ref == selected_frame().as_frame().unwrap() {
