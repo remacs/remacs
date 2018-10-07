@@ -173,7 +173,7 @@ pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObj
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
     let tem = obarray.lookup(name);
 
-    if tem.is_integer() || (name.is_symbol() && !name.eq(tem)) {
+    if tem.is_integer() || (name.is_symbol() && name.ne(tem)) {
         Qnil
     } else {
         tem
