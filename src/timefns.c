@@ -896,8 +896,14 @@ lisp_to_timespec (struct lisp_time t)
       ns = mpz_fdiv_q_ui (*q, *q, TIMESPEC_HZ);
     }
 
-  if (mpz_time (*q, &result.tv_sec))
-    result.tv_nsec = ns;
+  /* With some versions of MinGW, tv_sec is a 64-bit type, whereas
+     time_t is a 32-bit type.  */
+  time_t sec;
+  if (mpz_time (*q, &sec))
+    {
+      result.tv_sec = sec;
+      result.tv_nsec = ns;
+    }
   return result;
 }
 
