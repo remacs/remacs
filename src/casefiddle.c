@@ -330,21 +330,6 @@ casify_object (enum case_action flag, Lisp_Object obj)
   else
     return do_casify_unibyte_string (&ctx, obj);
 }
-
-/* Like Fcapitalize but change only the initials.  */
-
-DEFUN ("upcase-initials", Fupcase_initials, Supcase_initials, 1, 1, 0,
-       doc: /* Convert the initial of each word in the argument to upper case.
-This means that each word's first character is converted to either
-title case or upper case, and the rest are left unchanged.
-The argument may be a character or string.  The result has the same type.
-The argument object is not altered--the value is a copy.  If argument
-is a character, characters which map to multiple code points when
-cased, e.g. ﬁ, are returned unchanged.  */)
-  (Lisp_Object obj)
-{
-  return casify_object (CASE_CAPITALIZE_UP, obj);
-}
 
 /* Based on CTX, case region in a unibyte buffer from *STARTP to *ENDP.
 
@@ -624,7 +609,6 @@ syms_of_casefiddle (void)
   DEFSYM (Qspecial_lowercase, "special-lowercase");
   DEFSYM (Qspecial_titlecase, "special-titlecase");
 
-  defsubr (&Supcase_initials);
   defsubr (&Supcase_region);
   defsubr (&Sdowncase_region);
   defsubr (&Scapitalize_region);
