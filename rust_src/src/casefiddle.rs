@@ -1,8 +1,12 @@
 //! Case conversion functions.
+use std::ffi::CString;
+
 use remacs_macros::lisp_fn;
 
+use keymap::Ctl;
 use lisp::defsubr;
 use lisp::LispObject;
+use lists::put;
 use remacs_sys::{case_action, casify_object, casify_region_nil, casify_word};
 use remacs_sys::{control_x_map, initial_define_key, meta_map};
 use remacs_sys::{Qdisabled, Qnil, Qt};
@@ -180,6 +184,41 @@ pub extern "C" fn syms_of_casefiddle() {
     def_lisp_sym!(Qspecial_uppercase, "special-uppercase");
     def_lisp_sym!(Qspecial_lowercase, "special-lowercase");
     def_lisp_sym!(Qspecial_titlecase, "special-titlecase");
+}
+
+#[no_mangle]
+pub extern "C" fn keys_of_casefiddle() {
+    unsafe {
+        initial_define_key(
+            control_x_map,
+            Ctl('L'),
+            CString::new("downcase-region").unwrap().as_ptr(),
+        );
+        initial_define_key(
+            control_x_map,
+            Ctl('U'),
+            CString::new("upcase-region").unwrap().as_ptr(),
+        );
+
+        initial_define_key(
+            meta_map,
+            'c' as i32,
+            CString::new("capitalize-word").unwrap().as_ptr(),
+        );
+        initial_define_key(
+            meta_map,
+            'l' as i32,
+            CString::new("downcase-word").unwrap().as_ptr(),
+        );
+        initial_define_key(
+            meta_map,
+            'u' as i32,
+            CString::new("upcase-word").unwrap().as_ptr(),
+        );
+    }
+
+    put(intern("upcase-region"), Qdisabled, Qt);
+    put(intern("downcase-region"), Qdisabled, Qt);
 }
 
 include!(concat!(env!("OUT_DIR"), "/casefiddle_exports.rs"));
