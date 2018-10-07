@@ -367,22 +367,12 @@ impl LispBufferRef {
 impl LispBufferRef {
     #[inline]
     pub fn overlays_before(&self) -> Option<LispOverlayRef> {
-        let p = self.overlays_before;
-        if p == ptr::null_mut() {
-            None
-        } else {
-            Some(ExternalPtr::new(p))
-        }
+        unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
     }
 
     #[inline]
     pub fn overlays_after(&self) -> Option<LispOverlayRef> {
-        let p = self.overlays_after;
-        if p == ptr::null_mut() {
-            None
-        } else {
-            Some(ExternalPtr::new(p))
-        }
+        unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
     }
 }
 
