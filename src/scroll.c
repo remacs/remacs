@@ -186,13 +186,13 @@ calculate_scrolling (struct frame *frame,
 	else
 	  {
 	    cost = p1->writecost + first_insert_cost[i];
-	    if ((int) p1->insertcount > i)
+	    if (p1->insertcount > i)
 	      emacs_abort ();
 	    cost1 = p1->insertcost + next_insert_cost[i - p1->insertcount];
 	  }
 	p->insertcost = min (cost, cost1) + draw_cost[i] + extra_cost;
 	p->insertcount = (cost < cost1) ? 1 : p1->insertcount + 1;
-	if ((int) p->insertcount > i)
+	if (p->insertcount > i)
 	  emacs_abort ();
 
 	/* Calculate the cost if we do a delete line after
