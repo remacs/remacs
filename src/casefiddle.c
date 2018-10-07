@@ -522,30 +522,13 @@ point and the mark is operated on.  */)
   return Qnil;
 }
 
-DEFUN ("capitalize-region", Fcapitalize_region, Scapitalize_region, 2, 2, "r",
-       doc: /* Convert the region to capitalized form.
-This means that each word's first character is converted to either
-title case or upper case, and the rest to lower case.
-In programs, give two arguments, the starting and ending
-character positions to operate on.  */)
-  (Lisp_Object beg, Lisp_Object end)
+/* casify_region returns a pointer, which complicates interaction
+   with Rust. This wraps that and returns nil. It can be deleted once
+   casify_region is ported. */
+Lisp_Object
+casify_region_nil (enum case_action flag, Lisp_Object b, Lisp_Object e)
 {
-  casify_region (CASE_CAPITALIZE, beg, end);
-  return Qnil;
-}
-
-/* Like Fcapitalize_region but change only the initials.  */
-
-DEFUN ("upcase-initials-region", Fupcase_initials_region,
-       Supcase_initials_region, 2, 2, "r",
-       doc: /* Upcase the initial of each word in the region.
-This means that each word's first character is converted to either
-title case or upper case, and the rest are left unchanged.
-In programs, give two arguments, the starting and ending
-character positions to operate on.  */)
-  (Lisp_Object beg, Lisp_Object end)
-{
-  casify_region (CASE_CAPITALIZE_UP, beg, end);
+  casify_region(flag, b, e);
   return Qnil;
 }
 
@@ -571,8 +554,6 @@ syms_of_casefiddle (void)
 
   defsubr (&Supcase_region);
   defsubr (&Sdowncase_region);
-  defsubr (&Scapitalize_region);
-  defsubr (&Supcase_initials_region);
 }
 
 void

@@ -3,7 +3,7 @@ use remacs_macros::lisp_fn;
 
 use lisp::defsubr;
 use lisp::LispObject;
-use remacs_sys::{case_action, casify_object, casify_word};
+use remacs_sys::{case_action, casify_object, casify_region_nil, casify_word};
 
 /// Convert argument to capitalized form and return that.
 /// This means that each word's first character is converted to either
@@ -15,6 +15,16 @@ use remacs_sys::{case_action, casify_object, casify_word};
 #[lisp_fn]
 pub fn capitalize(object: LispObject) -> LispObject {
     unsafe { casify_object(case_action::CASE_CAPITALIZE, object) }
+}
+
+/// Convert the region to capitalized form.
+/// This means that each word's first character is converted to either
+/// title case or upper case, and the rest to lower case.  In
+/// programs, give two arguments, the starting and ending character
+/// positions to operate on.
+#[lisp_fn(intspec = "r")]
+pub fn capitalize_region(beg: LispObject, end: LispObject) -> LispObject {
+    unsafe { casify_region_nil(case_action::CASE_CAPITALIZE, beg, end) }
 }
 
 /// Capitalize from point to the end of word, moving over.
@@ -73,6 +83,18 @@ pub fn upcase(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn upcase_initials(obj: LispObject) -> LispObject {
     unsafe { casify_object(case_action::CASE_CAPITALIZE_UP, obj) }
+}
+
+// Like Fcapitalize_region but change only the initials.
+
+/// Upcase the initial of each word in the region.
+/// This means that each word's first character is converted to either
+/// title case or upper case, and the rest are left unchanged.  In
+/// programs, give two arguments, the starting and ending character
+/// positions to operate on.
+#[lisp_fn(intspec = "r")]
+pub fn upcase_initials_region(beg: LispObject, end: LispObject) -> LispObject {
+    unsafe { casify_region_nil(case_action::CASE_CAPITALIZE_UP, beg, end) }
 }
 
 /// Convert to upper case from point to end of word, moving over.
