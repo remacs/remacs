@@ -3,8 +3,9 @@ use remacs_macros::lisp_fn;
 
 use lisp::defsubr;
 use lisp::LispObject;
-use remacs_sys::Qnil;
 use remacs_sys::{case_action, casify_object, casify_region_nil, casify_word};
+use remacs_sys::{control_x_map, initial_define_key, meta_map};
+use remacs_sys::{Qdisabled, Qnil, Qt};
 
 use obarray::intern;
 use symbols::symbol_value;
@@ -170,6 +171,15 @@ fn casefiddle_region(
 
         Qnil
     }
+}
+
+#[no_mangle]
+pub extern "C" fn syms_of_casefiddle() {
+    def_lisp_sym!(Qidentity, "identity");
+    def_lisp_sym!(Qtitlecase, "titlecase");
+    def_lisp_sym!(Qspecial_uppercase, "special-uppercase");
+    def_lisp_sym!(Qspecial_lowercase, "special-lowercase");
+    def_lisp_sym!(Qspecial_titlecase, "special-titlecase");
 }
 
 include!(concat!(env!("OUT_DIR"), "/casefiddle_exports.rs"));

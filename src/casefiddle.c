@@ -489,16 +489,6 @@ casify_word (enum case_action flag, Lisp_Object arg)
 }
 
 void
-syms_of_casefiddle (void)
-{
-  DEFSYM (Qidentity, "identity");
-  DEFSYM (Qtitlecase, "titlecase");
-  DEFSYM (Qspecial_uppercase, "special-uppercase");
-  DEFSYM (Qspecial_lowercase, "special-lowercase");
-  DEFSYM (Qspecial_titlecase, "special-titlecase");
-}
-
-void
 keys_of_casefiddle (void)
 {
   initial_define_key (control_x_map, Ctl ('U'), "upcase-region");
