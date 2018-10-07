@@ -350,7 +350,6 @@ OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
 OPTION_DEFAULT_ON([m17n-flt],[don't use m17n-flt for text shaping])
 
 OPTION_DEFAULT_ON([toolkit-scroll-bars],[don't use Xaw3d scroll bars])
-OPTION_DEFAULT_ON([xaw3d],[don't use Xaw3d])
 OPTION_DEFAULT_ON([xim],[don't use X11 XIM])
 AC_ARG_WITH([ns],[AS_HELP_STRING([--with-ns],
 [use Nextstep (macOS Cocoa or GNUstep) windowing system.
@@ -2932,18 +2931,7 @@ dnl Older compilers (eg sunos4 cc) choke on it.
 HAVE_XAW3D=no
 LUCID_LIBW=
 if test x"${USE_X_TOOLKIT}" = xmaybe; then
-  if test "$with_xaw3d" != no; then
-    AC_CACHE_VAL(emacs_cv_xaw3d,
-    [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <X11/Intrinsic.h>
-#include <X11/Xaw3d/Simple.h>]],
-      [[]])],
-      [AC_CHECK_LIB(Xaw3d, XawScrollbarSetThumb,
-                    emacs_cv_xaw3d=yes, emacs_cv_xaw3d=no)],
-      emacs_cv_xaw3d=no)])
-  else
     emacs_cv_xaw3d=no
-  fi
     AC_MSG_CHECKING(for xaw3d)
     AC_MSG_RESULT(no)
     AC_MSG_CHECKING(for libXaw)
@@ -3013,12 +3001,7 @@ AH_TEMPLATE(USE_TOOLKIT_SCROLL_BARS,
 	    [Define to 1 if we should use toolkit scroll bars.])dnl
 USE_TOOLKIT_SCROLL_BARS=no
 if test "${with_toolkit_scroll_bars}" != "no"; then
-  if test "${USE_X_TOOLKIT}" != "none"; then
-    if test "${HAVE_XAW3D}" = "yes"; then
-      AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-      USE_TOOLKIT_SCROLL_BARS=yes
-    fi
-  elif test "${HAVE_GTK}" = "yes"; then
+  if test "${HAVE_GTK}" = "yes"; then
     AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
     USE_TOOLKIT_SCROLL_BARS=yes
   elif test "${HAVE_NS}" = "yes"; then
@@ -5278,7 +5261,7 @@ Configured for '${canonical}'.
 
 optsep=
 emacs_config_features=
-for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
+for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 NS MODULES \
   XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
@@ -5306,8 +5289,7 @@ done
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_FEATURES, "${emacs_config_features}",
   [Summary of some of the main features enabled by configure.])
 
-AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D}
-  Does Emacs use -lXpm?                                   ${HAVE_XPM}
+AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
   Does Emacs use -ljpeg?                                  ${HAVE_JPEG}
   Does Emacs use -ltiff?                                  ${HAVE_TIFF}
   Does Emacs use a gif library?                           ${HAVE_GIF} $LIBGIF

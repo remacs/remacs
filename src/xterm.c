@@ -5763,17 +5763,13 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
       top = max (0, min (1, top));
     else
       top = old_top;
-#if ! defined (HAVE_XAW3D)
     /* With Xaw, 'top' values too closer to 1.0 may
        cause the thumb to disappear.  Fix that.  */
     top = min (top, 0.99f);
-#endif
     /* Keep two pixels available for moving the thumb down.  */
     shown = max (0, min (1 - top - (2.0f / height), shown));
-#if ! defined (HAVE_XAW3D)
     /* Likewise with too small 'shown'.  */
     shown = max (shown, 0.01f);
-#endif
 
     /* If the call to XawScrollbarSetThumb below doesn't seem to
        work, check that 'NARROWPROTO' is defined in src/config.h.
@@ -5830,17 +5826,13 @@ x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, 
       top = max (0, min (1, top));
     else
       top = old_top;
-#if ! defined (HAVE_XAW3D)
     /* With Xaw, 'top' values too closer to 1.0 may
        cause the thumb to disappear.  Fix that.  */
     top = min (top, 0.99f);
-#endif
     /* Keep two pixels available for moving the thumb down.  */
     shown = max (0, min (1 - top - (2.0f / height), shown));
-#if ! defined (HAVE_XAW3D)
     /* Likewise with too small 'shown'.  */
     shown = max (shown, 0.01f);
-#endif
 #endif
 
     /* If the call to XawScrollbarSetThumb below doesn't seem to
@@ -12246,9 +12238,7 @@ With the X Window system, the value is a symbol describing the
 X toolkit.  Possible values are: gtk, motif, xaw, or xaw3d.
 With MS Windows or Nextstep, the value is t.  */);
 #ifdef USE_TOOLKIT_SCROLL_BARS
-#ifdef HAVE_XAW3D
-  Vx_toolkit_scroll_bars = intern_c_string ("xaw3d");
-#elif USE_GTK
+#ifdef USE_GTK
   Vx_toolkit_scroll_bars = intern_c_string ("gtk");
 #else
   Vx_toolkit_scroll_bars = intern_c_string ("xaw");
