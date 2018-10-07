@@ -549,7 +549,7 @@ character positions to operate on.  */)
   return Qnil;
 }
 
-static Lisp_Object
+Lisp_Object
 casify_word (enum case_action flag, Lisp_Object arg)
 {
   CHECK_NUMBER (arg);
@@ -558,46 +558,6 @@ casify_word (enum case_action flag, Lisp_Object arg)
     farend = XINT (arg) <= 0 ? BEGV : ZV;
   SET_PT (casify_region (flag, make_number (PT), make_number (farend)));
   return Qnil;
-}
-
-DEFUN ("upcase-word", Fupcase_word, Supcase_word, 1, 1, "p",
-       doc: /* Convert to upper case from point to end of word, moving over.
-
-If point is in the middle of a word, the part of that word before point
-is ignored when moving forward.
-
-With negative argument, convert previous words but do not move.
-See also `capitalize-word'.  */)
-  (Lisp_Object arg)
-{
-  return casify_word (CASE_UP, arg);
-}
-
-DEFUN ("downcase-word", Fdowncase_word, Sdowncase_word, 1, 1, "p",
-       doc: /* Convert to lower case from point to end of word, moving over.
-
-If point is in the middle of a word, the part of that word before point
-is ignored when moving forward.
-
-With negative argument, convert previous words but do not move.  */)
-  (Lisp_Object arg)
-{
-  return casify_word (CASE_DOWN, arg);
-}
-
-DEFUN ("capitalize-word", Fcapitalize_word, Scapitalize_word, 1, 1, "p",
-       doc: /* Capitalize from point to the end of word, moving over.
-With numerical argument ARG, capitalize the next ARG-1 words as well.
-This gives the word(s) a first character in upper case
-and the rest lower case.
-
-If point is in the middle of a word, the part of that word before point
-is ignored when moving forward.
-
-With negative argument, capitalize previous words but do not move.  */)
-  (Lisp_Object arg)
-{
-  return casify_word (CASE_CAPITALIZE, arg);
 }
 
 void
@@ -613,9 +573,6 @@ syms_of_casefiddle (void)
   defsubr (&Sdowncase_region);
   defsubr (&Scapitalize_region);
   defsubr (&Supcase_initials_region);
-  defsubr (&Supcase_word);
-  defsubr (&Sdowncase_word);
-  defsubr (&Scapitalize_word);
 }
 
 void
