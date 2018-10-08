@@ -74,6 +74,7 @@ mod dired_unix;
 mod dired_windows;
 mod dispnew;
 mod editfns;
+mod emacs;
 mod eval;
 mod ffi;
 mod fileio;
