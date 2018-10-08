@@ -7,7 +7,7 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 use remacs_sys::globals;
 use remacs_sys::Fcons;
-use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
+use remacs_sys::{estimate_mode_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, set_buffer_internal, window_list_1,
                  window_menu_bar_p, window_parameter, window_tool_bar_p, wset_display_table,
@@ -85,7 +85,7 @@ impl LispWindowRef {
 
     #[inline]
     pub fn is_minibuffer(self) -> bool {
-        unsafe { is_minibuffer(self.as_ptr()) }
+        self.mini()
     }
 
     #[inline]
