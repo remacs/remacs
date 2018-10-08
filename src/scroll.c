@@ -47,13 +47,13 @@ struct matrix_elt
     int deletecost;
     /* Number of inserts so far in this run of inserts,
        for the cost in insertcost.  */
-    unsigned char insertcount;
+    int insertcount;
     /* Number of deletes so far in this run of deletes,
        for the cost in deletecost.  */
-    unsigned char deletecount;
+    int deletecount;
     /* Number of writes so far since the last insert
        or delete for the cost in writecost. */
-    unsigned char writecount;
+    int writecount;
   };
 
 static void do_direct_scrolling (struct frame *,
