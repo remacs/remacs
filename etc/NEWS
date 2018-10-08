@@ -329,6 +329,8 @@ git-grep when 'vc-git-grep' is used.
 When some files are marked, only those are stashed.
 When no files are marked, all modified files are stashed, as before.
 
+*** The new hook 'vc-retrieve-tag-hook' runs after retrieving a tag.
+
 ** diff-mode
 *** Hunks are now automatically refined by default.
 To disable it, set the new defcustom 'diff-font-lock-refine' to nil.
