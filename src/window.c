@@ -258,7 +258,7 @@ wget_pseudo_window_p(struct window *w)
 bool
 window_menu_bar_p(struct window *W)
 {
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
   return (WINDOWP (WINDOW_XFRAME (W)->menu_bar_window)
           && (W) == XWINDOW (WINDOW_XFRAME (W)->menu_bar_window));
 #else

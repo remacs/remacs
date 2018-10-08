@@ -973,17 +973,6 @@ xsettings_get_system_font (void)
   return current_mono_font;
 }
 
-#ifdef USE_LUCID
-/* Return the system font.
-   May be NULL if not known.  */
-
-const char *
-xsettings_get_system_normal_font (void)
-{
-  return current_font;
-}
-#endif
-
 DEFUN ("font-get-system-normal-font", Ffont_get_system_normal_font,
        Sfont_get_system_normal_font,
        0, 0, 0,

@@ -57,56 +57,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/extensions/Xdbe.h>
 #endif
 
-#ifdef USE_X_TOOLKIT
-#include <X11/Shell.h>
-
-#ifndef USE_MOTIF
-#ifdef HAVE_XAW3D
-#include <X11/Xaw3d/Paned.h>
-#include <X11/Xaw3d/Label.h>
-#else /* !HAVE_XAW3D */
-#include <X11/Xaw/Paned.h>
-#include <X11/Xaw/Label.h>
-#endif /* HAVE_XAW3D */
-#endif /* USE_MOTIF */
-
-#ifdef USG
-#undef USG	/* ####KLUDGE for Solaris 2.2 and up */
-#include <X11/Xos.h>
-#define USG
-#ifdef USG /* Pacify gcc -Wunused-macros.  */
-#endif
-#else
-#include <X11/Xos.h>
-#endif
-
-#include "widget.h"
-
-#include "../lwlib/lwlib.h"
-
-#ifdef USE_MOTIF
-#include <Xm/Xm.h>
-#include <Xm/DialogS.h>
-#include <Xm/FileSB.h>
-#include <Xm/List.h>
-#include <Xm/TextF.h>
-#include <Xm/MwmUtil.h>
-#endif
-
-#ifdef USE_LUCID
-#include "../lwlib/xlwmenu.h"
-#endif
-
-/* Unique id counter for widgets created by the Lucid Widget Library.  */
-
-extern LWLIB_ID widget_id_tick;
-
-#ifdef USE_MOTIF
-
-#endif /* USE_MOTIF */
-
-#endif /* USE_X_TOOLKIT */
-
 #ifdef USE_GTK
 
 #endif /* USE_GTK */
@@ -118,7 +68,6 @@ static ptrdiff_t image_cache_refcount;
 static int dpyinfo_refcount;
 #endif
 
-#ifndef USE_MOTIF
 #ifndef USE_GTK
 /** #define MWM_HINTS_FUNCTIONS     (1L << 0) **/
 #define MWM_HINTS_DECORATIONS   (1L << 1)
@@ -145,7 +94,6 @@ typedef struct {
 
 #define PROP_MOTIF_WM_HINTS_ELEMENTS 5
 #endif /* NOT USE_GTK */
-#endif /* NOT USE_MOTIF */
 
 static struct x_display_info *x_display_info_for_name (Lisp_Object);
 static void set_up_x_back_buffer (struct frame *f);
@@ -918,17 +866,10 @@ x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_v
 #ifdef USE_GTK
       xg_set_no_accept_focus (f, new_value);
 #else /* not USE_GTK */
-#ifdef USE_X_TOOLKIT
-      Arg al[1];
-
-      XtSetArg (al[0], XtNinput, NILP (new_value) ? True : False);
-      XtSetValues (f->output_data.x->widget, al, 1);
-#else /* not USE_X_TOOLKIT */
       Window window = FRAME_X_WINDOW (f);
 
       f->output_data.x->wm_hints.input = NILP (new_value) ? True : False;
       XSetWMHints (FRAME_X_DISPLAY (f), window, &f->output_data.x->wm_hints);
-#endif /* USE_X_TOOLKIT */
 #endif /* USE_GTK */
       FRAME_NO_ACCEPT_FOCUS (f) = !NILP (new_value);
     }
@@ -1520,7 +1461,7 @@ static void
 x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
   int nlines;
-#if ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
+#if ! defined (USE_GTK)
   int olines = FRAME_MENU_BAR_LINES (f);
 #endif
 
@@ -1539,7 +1480,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
   /* Make sure we redisplay all windows in this frame.  */
   fset_redisplay (f);
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#if defined (USE_GTK)
   FRAME_MENU_BAR_LINES (f) = 0;
   FRAME_MENU_BAR_HEIGHT (f) = 0;
   if (nlines)
@@ -1557,7 +1498,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
       if (FRAME_X_P (f))
 	f->output_data.x->menubar_widget = 0;
     }
-#else /* not USE_X_TOOLKIT && not USE_GTK */
+#else /* not USE_GTK */
   FRAME_MENU_BAR_LINES (f) = nlines;
   FRAME_MENU_BAR_HEIGHT (f) = nlines * FRAME_LINE_HEIGHT (f);
   adjust_frame_size (f, -1, -1, 2, true, Qx_set_menu_bar_lines);
@@ -1597,7 +1538,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
       if (nlines == 0 && WINDOWP (f->menu_bar_window))
 	clear_glyph_matrix (XWINDOW (f->menu_bar_window)->current_matrix);
     }
-#endif /* not USE_X_TOOLKIT && not USE_GTK */
+#endif /* not USE_GTK */
   adjust_frame_glyphs (f);
 }
 
@@ -1722,11 +1663,6 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
     {
       f->internal_border_width = border;
 
-#ifdef USE_X_TOOLKIT
-      if (FRAME_X_OUTPUT (f)->edit_widget)
-	widget_store_internal_border (FRAME_X_OUTPUT (f)->edit_widget);
-#endif
-
       if (FRAME_X_WINDOW (f))
 	{
 	  adjust_frame_size (f, -1, -1, 3, false, Qinternal_border_width);
@@ -1787,20 +1723,6 @@ x_set_scroll_bar_background (struct frame *f, Lisp_Object value, Lisp_Object old
 
   if (f->output_data.x->scroll_bar_background_pixel != -1)
     unload_color (f, f->output_data.x->scroll_bar_background_pixel);
-
-#if defined (USE_LUCID) && defined (USE_TOOLKIT_SCROLL_BARS)
-  /* Scrollbar shadow colors.  */
-  if (f->output_data.x->scroll_bar_top_shadow_pixel != -1)
-    {
-      unload_color (f, f->output_data.x->scroll_bar_top_shadow_pixel);
-      f->output_data.x->scroll_bar_top_shadow_pixel = -1;
-    }
-  if (f->output_data.x->scroll_bar_bottom_shadow_pixel != -1)
-    {
-      unload_color (f, f->output_data.x->scroll_bar_bottom_shadow_pixel);
-      f->output_data.x->scroll_bar_bottom_shadow_pixel = -1;
-    }
-#endif /* USE_LUCID && USE_TOOLKIT_SCROLL_BARS */
 
   f->output_data.x->scroll_bar_background_pixel = pixel;
   if (FRAME_X_WINDOW (f) && FRAME_VISIBLE_P (f))
@@ -2154,77 +2076,6 @@ x_default_scroll_bar_color_parameter (struct frame *f,
 
 
 
-
-#ifdef USE_X_TOOLKIT
-
-/* If the WM_PROTOCOLS property does not already contain WM_TAKE_FOCUS,
-   WM_DELETE_WINDOW, and WM_SAVE_YOURSELF, then add them.  (They may
-   already be present because of the toolkit (Motif adds some of them,
-   for example, but Xt doesn't).  */
-
-static void
-hack_wm_protocols (struct frame *f, Widget widget)
-{
-  Display *dpy = XtDisplay (widget);
-  Window w = XtWindow (widget);
-  bool need_delete = true;
-  bool need_focus = true;
-  bool need_save = true;
-
-  block_input ();
-  {
-    Atom type;
-    unsigned char *catoms;
-    int format = 0;
-    unsigned long nitems = 0;
-    unsigned long bytes_after;
-
-    if ((XGetWindowProperty (dpy, w,
-			     FRAME_DISPLAY_INFO (f)->Xatom_wm_protocols,
-			     0, 100, False, XA_ATOM,
-			     &type, &format, &nitems, &bytes_after,
-			     &catoms)
-	 == Success)
-	&& format == 32 && type == XA_ATOM)
-      {
-	Atom *atoms = (Atom *) catoms;
-	while (nitems > 0)
-	  {
-	    nitems--;
-	    if (atoms[nitems]
-		== FRAME_DISPLAY_INFO (f)->Xatom_wm_delete_window)
-	      need_delete = false;
-	    else if (atoms[nitems]
-		     == FRAME_DISPLAY_INFO (f)->Xatom_wm_take_focus)
-	      need_focus = false;
-	    else if (atoms[nitems]
-		     == FRAME_DISPLAY_INFO (f)->Xatom_wm_save_yourself)
-	      need_save = false;
-	  }
-      }
-    if (catoms)
-      XFree (catoms);
-  }
-  {
-    Atom props[10];
-    int count = 0;
-    if (need_delete)
-      props[count++] = FRAME_DISPLAY_INFO (f)->Xatom_wm_delete_window;
-    if (need_focus)
-      props[count++] = FRAME_DISPLAY_INFO (f)->Xatom_wm_take_focus;
-    if (need_save)
-      props[count++] = FRAME_DISPLAY_INFO (f)->Xatom_wm_save_yourself;
-    if (count)
-      XChangeProperty (dpy, w, FRAME_DISPLAY_INFO (f)->Xatom_wm_protocols,
-		       XA_ATOM, 32, PropModeAppend,
-		       (unsigned char *) props, count);
-  }
-  unblock_input ();
-}
-#endif
-
-
-
 /* Support routines for XIC (X Input Context).  */
 
 #ifdef HAVE_X_I18N
@@ -2249,133 +2100,6 @@ static const XIMStyle supported_xim_styles[] =
   0,
 };
 
-
-#if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT
-/* Create an X fontset on frame F with base font name BASE_FONTNAME.  */
-
-static const char xic_default_fontset[] = "-*-*-*-r-normal--14-*-*-*-*-*-*-*";
-
-/* Create an Xt fontset spec from the name of a base font.
-   If `motif' is True use the Motif syntax.  */
-char *
-xic_create_fontsetname (const char *base_fontname, bool motif)
-{
-  const char *sep = motif ? ";" : ",";
-  char *fontsetname;
-  char *z;
-
-  /* Make a fontset name from the base font name.  */
-  if (xic_default_fontset == base_fontname)
-    {
-      /* There is no base font name, use the default.  */
-      fontsetname = xmalloc (strlen (base_fontname) + 2);
-      z = stpcpy (fontsetname, base_fontname);
-    }
-  else
-    {
-      /* Make a fontset name from the base font name.
-	 The font set will be made of the following elements:
-	 - the base font.
-	 - the base font where the charset spec is replaced by -*-*.
-	 - the same but with the family also replaced with -*-*-.  */
-      const char *p = base_fontname;
-      ptrdiff_t i;
-
-      for (i = 0; *p; p++)
-	if (*p == '-') i++;
-      if (i != 14)
-	{
-	  /* As the font name doesn't conform to XLFD, we can't
-	     modify it to generalize it to allcs and allfamilies.
-	     Use the specified font plus the default.  */
-	  fontsetname = xmalloc (strlen (base_fontname)
-				 + strlen (xic_default_fontset) + 3);
-	  z = stpcpy (fontsetname, base_fontname);
-	  z = stpcpy (z, sep);
-	  z = stpcpy (z, xic_default_fontset);
-	}
-      else
-	{
-	  ptrdiff_t len;
-	  const char *p1 = NULL, *p2 = NULL, *p3 = NULL;
-	  char *font_allcs = NULL;
-	  char *font_allfamilies = NULL;
-	  char *font_all = NULL;
-	  const char *allcs = "*-*-*-*-*-*-*";
-	  const char *allfamilies = "-*-*-";
-	  const char *all = "*-*-*-*-";
-	  char *base;
-
-	  for (i = 0, p = base_fontname; i < 8; p++)
-	    {
-	      if (*p == '-')
-		{
-		  i++;
-		  if (i == 3)
-		    p1 = p + 1;
-		  else if (i == 7)
-		    p2 = p + 1;
-		  else if (i == 6)
-		    p3 = p + 1;
-		}
-	    }
-	  /* If base_fontname specifies ADSTYLE, make it a
-	     wildcard.  */
-	  if (*p3 != '*')
-	    {
-	      ptrdiff_t diff = (p2 - p3) - 2;
-
-	      base = alloca (strlen (base_fontname) + 1);
-	      memcpy (base, base_fontname, p3 - base_fontname);
-	      base[p3 - base_fontname] = '*';
-	      base[(p3 - base_fontname) + 1] = '-';
-	      strcpy (base + (p3 - base_fontname) + 2, p2);
-	      p = base + (p - base_fontname) - diff;
-	      p1 = base + (p1 - base_fontname);
-	      p2 = base + (p2 - base_fontname) - diff;
-	      base_fontname = base;
-	    }
-
-	  /* Build the font spec that matches all charsets.  */
-	  len = p - base_fontname + strlen (allcs) + 1;
-	  font_allcs = alloca (len);
-	  memcpy (font_allcs, base_fontname, p - base_fontname);
-	  strcpy (font_allcs + (p - base_fontname), allcs);
-
-	  /* Build the font spec that matches all families and
-	     add-styles.  */
-	  len = p - p1 + strlen (allcs) + strlen (allfamilies) + 1;
-	  font_allfamilies = alloca (len);
-	  strcpy (font_allfamilies, allfamilies);
-	  memcpy (font_allfamilies + strlen (allfamilies), p1, p - p1);
-	  strcpy (font_allfamilies + strlen (allfamilies) + (p - p1), allcs);
-
-	  /* Build the font spec that matches all.  */
-	  len = p - p2 + strlen (allcs) + strlen (all) + strlen (allfamilies) + 1;
-	  font_all = alloca (len);
-	  z = stpcpy (font_all, allfamilies);
-	  z = stpcpy (z, all);
-	  memcpy (z, p2, p - p2);
-	  strcpy (z + (p - p2), allcs);
-
-	  /* Build the actual font set name.  */
-	  len = strlen (base_fontname) + strlen (font_allcs)
-	    + strlen (font_allfamilies) + strlen (font_all) + 5;
-	  fontsetname = xmalloc (len);
-	  z = stpcpy (fontsetname, base_fontname);
-	  z = stpcpy (z, sep);
-	  z = stpcpy (z, font_allcs);
-	  z = stpcpy (z, sep);
-	  z = stpcpy (z, font_allfamilies);
-	  z = stpcpy (z, sep);
-	  z = stpcpy (z, font_all);
-	}
-    }
-  if (motif)
-    strcpy (z, ":");
-  return fontsetname;
-}
-#endif /* HAVE_X_WINDOWS && USE_X_TOOLKIT */
 
 #ifdef DEBUG_XIC_FONTSET
 static void
@@ -2834,258 +2558,6 @@ initial_set_up_x_back_buffer (struct frame *f)
   unblock_input ();
 }
 
-#ifdef USE_X_TOOLKIT
-
-/* Create and set up the X widget for frame F.  */
-
-static void
-x_window (struct frame *f, long window_prompting)
-{
-  XClassHint class_hints;
-  XSetWindowAttributes attributes;
-  unsigned long attribute_mask;
-  Widget shell_widget;
-  Widget pane_widget;
-  Widget frame_widget;
-  Arg al[25];
-  int ac;
-
-  block_input ();
-
-  /* Use the resource name as the top-level widget name
-     for looking up resources.  Make a non-Lisp copy
-     for the window manager, so GC relocation won't bother it.
-
-     Elsewhere we specify the window name for the window manager.  */
-  f->namebuf = xlispstrdup (Vx_resource_name);
-
-  ac = 0;
-  XtSetArg (al[ac], XtNallowShellResize, 1); ac++;
-  XtSetArg (al[ac], XtNinput, 1); ac++;
-  XtSetArg (al[ac], XtNmappedWhenManaged, 0); ac++;
-  XtSetArg (al[ac], XtNborderWidth, f->border_width); ac++;
-  XtSetArg (al[ac], XtNvisual, FRAME_X_VISUAL (f)); ac++;
-  XtSetArg (al[ac], XtNdepth, FRAME_DISPLAY_INFO (f)->n_planes); ac++;
-  XtSetArg (al[ac], XtNcolormap, FRAME_X_COLORMAP (f)); ac++;
-  shell_widget = XtAppCreateShell (f->namebuf, EMACS_CLASS,
-				   applicationShellWidgetClass,
-				   FRAME_X_DISPLAY (f), al, ac);
-
-  f->output_data.x->widget = shell_widget;
-  /* maybe_set_screen_title_format (shell_widget); */
-
-  pane_widget = lw_create_widget ("main", "pane", widget_id_tick++,
-				  NULL, shell_widget, False,
-				  NULL, NULL, NULL, NULL);
-
-  ac = 0;
-  XtSetArg (al[ac], XtNvisual, FRAME_X_VISUAL (f)); ac++;
-  XtSetArg (al[ac], XtNdepth, FRAME_DISPLAY_INFO (f)->n_planes); ac++;
-  XtSetArg (al[ac], XtNcolormap, FRAME_X_COLORMAP (f)); ac++;
-  XtSetArg (al[ac], XtNborderWidth, 0); ac++;
-  XtSetValues (pane_widget, al, ac);
-  f->output_data.x->column_widget = pane_widget;
-
-  /* mappedWhenManaged to false tells to the paned window to not map/unmap
-     the emacs screen when changing menubar.  This reduces flickering.  */
-
-  ac = 0;
-  XtSetArg (al[ac], XtNmappedWhenManaged, 0); ac++;
-  XtSetArg (al[ac], (char *) XtNshowGrip, 0); ac++;
-  XtSetArg (al[ac], (char *) XtNallowResize, 1); ac++;
-  XtSetArg (al[ac], (char *) XtNresizeToPreferred, 1); ac++;
-  XtSetArg (al[ac], (char *) XtNemacsFrame, f); ac++;
-  XtSetArg (al[ac], XtNvisual, FRAME_X_VISUAL (f)); ac++;
-  XtSetArg (al[ac], XtNdepth, FRAME_DISPLAY_INFO (f)->n_planes); ac++;
-  XtSetArg (al[ac], XtNcolormap, FRAME_X_COLORMAP (f)); ac++;
-  XtSetArg (al[ac], XtNborderWidth, 0); ac++;
-  frame_widget = XtCreateWidget (f->namebuf, emacsFrameClass (), pane_widget,
-				 al, ac);
-
-  f->output_data.x->edit_widget = frame_widget;
-
-  XtManageChild (frame_widget);
-
-  /* Do some needed geometry management.  */
-  {
-    Arg gal[3];
-    int gac = 0;
-    int extra_borders = 0;
-    int menubar_size
-      = (f->output_data.x->menubar_widget
-	 ? (f->output_data.x->menubar_widget->core.height
-	    + f->output_data.x->menubar_widget->core.border_width)
-	 : 0);
-
-#if false /* Experimentally, we now get the right results
-	     for -geometry -0-0 without this.  24 Aug 96, rms.  */
-    if (FRAME_EXTERNAL_MENU_BAR (f))
-      {
-        Dimension ibw = 0;
-        XtVaGetValues (pane_widget, XtNinternalBorderWidth, &ibw, NULL);
-        menubar_size += ibw;
-      }
-#endif
-
-    FRAME_MENUBAR_HEIGHT (f) = menubar_size;
-
-#ifndef USE_LUCID
-    /* Motif seems to need this amount added to the sizes
-       specified for the shell widget.  The Athena/Lucid widgets don't.
-       Both conclusions reached experimentally.  -- rms.  */
-    XtVaGetValues (f->output_data.x->edit_widget, XtNinternalBorderWidth,
-		   &extra_borders, NULL);
-    extra_borders *= 2;
-#endif
-
-    f->shell_position = xmalloc (sizeof "=x++" + 4 * INT_STRLEN_BOUND (int));
-
-    /* Convert our geometry parameters into a geometry string
-       and specify it.
-       Note that we do not specify here whether the position
-       is a user-specified or program-specified one.
-       We pass that information later, in x_wm_set_size_hint.  */
-    {
-      int left = f->left_pos;
-      bool xneg = (window_prompting & XNegative) != 0;
-      int top = f->top_pos;
-      bool yneg = (window_prompting & YNegative) != 0;
-      if (xneg)
-	left = -left;
-      if (yneg)
-	top = -top;
-
-      if (window_prompting & USPosition)
-	sprintf (f->shell_position, "=%dx%d%c%d%c%d",
-		 FRAME_PIXEL_WIDTH (f) + extra_borders,
-		 FRAME_PIXEL_HEIGHT (f) + menubar_size + extra_borders,
-		 (xneg ? '-' : '+'), left,
-		 (yneg ? '-' : '+'), top);
-      else
-        {
-          sprintf (f->shell_position, "=%dx%d",
-                   FRAME_PIXEL_WIDTH (f) + extra_borders,
-                   FRAME_PIXEL_HEIGHT (f) + menubar_size + extra_borders);
-
-          /* Setting x and y when the position is not specified in
-             the geometry string will set program position in the WM hints.
-             If Emacs had just one program position, we could set it in
-             fallback resources, but since each make-frame call can specify
-             different program positions, this is easier.  */
-          XtSetArg (gal[gac], XtNx, left); gac++;
-          XtSetArg (gal[gac], XtNy, top); gac++;
-        }
-    }
-
-    XtSetArg (gal[gac], XtNgeometry, f->shell_position); gac++;
-    XtSetValues (shell_widget, gal, gac);
-  }
-
-  XtManageChild (pane_widget);
-  XtRealizeWidget (shell_widget);
-
-  if (FRAME_X_EMBEDDED_P (f))
-    XReparentWindow (FRAME_X_DISPLAY (f), XtWindow (shell_widget),
-		     f->output_data.x->parent_desc, 0, 0);
-
-  FRAME_X_WINDOW (f) = XtWindow (frame_widget);
-  initial_set_up_x_back_buffer (f);
-  validate_x_resource_name ();
-
-  class_hints.res_name = SSDATA (Vx_resource_name);
-  class_hints.res_class = SSDATA (Vx_resource_class);
-  XSetClassHint (FRAME_X_DISPLAY (f), XtWindow (shell_widget), &class_hints);
-
-#ifdef HAVE_X_I18N
-  FRAME_XIC (f) = NULL;
-  if (use_xim)
-    create_frame_xic (f);
-#endif
-
-  f->output_data.x->wm_hints.input = True;
-  f->output_data.x->wm_hints.flags |= InputHint;
-  XSetWMHints (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
-	       &f->output_data.x->wm_hints);
-
-  hack_wm_protocols (f, shell_widget);
-
-#ifdef X_TOOLKIT_EDITRES
-  XtAddEventHandler (shell_widget, 0, True, _XEditResCheckMessages, 0);
-#endif
-
-  /* Do a stupid property change to force the server to generate a
-     PropertyNotify event so that the event_stream server timestamp will
-     be initialized to something relevant to the time we created the window.
-     */
-  XChangeProperty (XtDisplay (frame_widget), XtWindow (frame_widget),
-		   FRAME_DISPLAY_INFO (f)->Xatom_wm_protocols,
-		   XA_ATOM, 32, PropModeAppend, NULL, 0);
-
-  /* Make all the standard events reach the Emacs frame.  */
-  attributes.event_mask = STANDARD_EVENT_SET;
-
-#ifdef HAVE_X_I18N
-  if (FRAME_XIC (f))
-    {
-      /* XIM server might require some X events. */
-      unsigned long fevent = NoEventMask;
-      XGetICValues (FRAME_XIC (f), XNFilterEvents, &fevent, NULL);
-      attributes.event_mask |= fevent;
-    }
-#endif /* HAVE_X_I18N */
-
-  attributes.override_redirect = FRAME_OVERRIDE_REDIRECT (f);
-  attribute_mask = CWEventMask | CWOverrideRedirect;
-  XChangeWindowAttributes (XtDisplay (shell_widget), XtWindow (shell_widget),
-			   attribute_mask, &attributes);
-
-  XtMapWidget (frame_widget);
-
-  /* x_set_name normally ignores requests to set the name if the
-     requested name is the same as the current name.  This is the one
-     place where that assumption isn't correct; f->name is set, but
-     the X server hasn't been told.  */
-  {
-    Lisp_Object name;
-    bool explicit = f->explicit_name;
-
-    f->explicit_name = false;
-    name = f->name;
-    fset_name (f, Qnil);
-    x_set_name (f, name, explicit);
-  }
-
-  if (FRAME_UNDECORATED (f))
-    {
-      Display *dpy = FRAME_X_DISPLAY (f);
-      PropMotifWmHints hints;
-      Atom prop = XInternAtom (dpy, "_MOTIF_WM_HINTS", False);
-
-      memset (&hints, 0, sizeof(hints));
-      hints.flags = MWM_HINTS_DECORATIONS;
-      hints.decorations = 0;
-
-      /* For some reason the third and fourth arguments in the following
-	 call must be identical: In the corresponding XGetWindowProperty
-	 call in getMotifHints, xfwm has the third and seventh args both
-	 display_info->atoms[MOTIF_WM_HINTS].  Obviously, YMMV.   */
-      XChangeProperty (dpy, FRAME_OUTER_WINDOW (f), prop, prop, 32,
-		       PropModeReplace, (unsigned char *) &hints,
-		       PROP_MOTIF_WM_HINTS_ELEMENTS);
-    }
-
-  XDefineCursor (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
-		 f->output_data.x->current_cursor
-                 = f->output_data.x->text_cursor);
-
-  unblock_input ();
-
-  /* This is a no-op, except under Motif.  Make sure main areas are
-     set to something reasonable, in case we get an error later.  */
-  lw_set_main_areas (pane_widget, 0, frame_widget);
-}
-
-#else /* not USE_X_TOOLKIT */
 #ifdef USE_GTK
 static void
 x_window (struct frame *f)
@@ -3246,7 +2718,6 @@ x_window (struct frame *f)
 }
 
 #endif /* not USE_GTK */
-#endif /* not USE_X_TOOLKIT */
 
 /* Verify that the icon position args for this window are valid.  */
 
@@ -3674,10 +3145,6 @@ This function is an internal primitive--use `make-frame' instead.  */)
   FRAME_FONTSET (f) = -1;
   f->output_data.x->scroll_bar_foreground_pixel = -1;
   f->output_data.x->scroll_bar_background_pixel = -1;
-#if defined (USE_LUCID) && defined (USE_TOOLKIT_SCROLL_BARS)
-  f->output_data.x->scroll_bar_top_shadow_pixel = -1;
-  f->output_data.x->scroll_bar_bottom_shadow_pixel = -1;
-#endif /* USE_LUCID && USE_TOOLKIT_SCROLL_BARS */
   f->output_data.x->white_relief.pixel = -1;
   f->output_data.x->black_relief.pixel = -1;
 
@@ -3911,11 +3378,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_icon_verify (f, parms);
 
   /* Create the X widget or window.  */
-#ifdef USE_X_TOOLKIT
-  x_window (f, window_prompting);
-#else
   x_window (f);
-#endif
 
   x_icon (f, parms);
   x_make_gc (f);
@@ -3960,7 +3423,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qno_accept_focus, Qnil,
 		       NULL, NULL, RES_TYPE_BOOLEAN);
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#if defined (USE_GTK)
   /* Create the menu bar.  */
   if (!minibuffer_only && FRAME_EXTERNAL_MENU_BAR (f))
     {
@@ -3976,7 +3439,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
 			 f->output_data.x->edit_widget);
 #endif /* not USE_GTK */
     }
-#endif /* USE_X_TOOLKIT || USE_GTK */
+#endif /* USE_GTK */
 
   /* Consider frame official, now.  */
   f->can_x_set_window_size = true;
@@ -5096,7 +4559,7 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
   inner_right = native_right - internal_border_width;
   inner_bottom = native_bottom - internal_border_width;
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#if defined (USE_GTK)
   menu_bar_external = true;
   menu_bar_height = FRAME_MENUBAR_HEIGHT (f);
   native_top += menu_bar_height;
@@ -6130,10 +5593,6 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
   FRAME_FONTSET (f) = -1;
   f->output_data.x->scroll_bar_foreground_pixel = -1;
   f->output_data.x->scroll_bar_background_pixel = -1;
-#if defined (USE_LUCID) && defined (USE_TOOLKIT_SCROLL_BARS)
-  f->output_data.x->scroll_bar_top_shadow_pixel = -1;
-  f->output_data.x->scroll_bar_bottom_shadow_pixel = -1;
-#endif /* USE_LUCID && USE_TOOLKIT_SCROLL_BARS */
   f->output_data.x->white_relief.pixel = -1;
   f->output_data.x->black_relief.pixel = -1;
 
@@ -6547,28 +6006,6 @@ x_hide_tip (bool delete)
 	    x_make_frame_invisible (XFRAME (tip_frame));
 
 	  was_open = Qt;
-
-#ifdef USE_LUCID
-	  /* Bloodcurdling hack alert: The Lucid menu bar widget's
-	     redisplay procedure is not called when a tip frame over
-	     menu items is unmapped.  Redisplay the menu manually...  */
-	  {
-	    Widget w;
-	    struct frame *f = SELECTED_FRAME ();
-	    if (FRAME_X_P (f) && FRAME_LIVE_P (f))
-	      {
-		w = f->output_data.x->menubar_widget;
-
-		if (!DoesSaveUnders (FRAME_DISPLAY_INFO (f)->screen)
-		    && w != NULL)
-		  {
-		    block_input ();
-		    xlwmenu_redisplay (w);
-		    unblock_input ();
-		  }
-	      }
-	  }
-#endif /* USE_LUCID */
 	}
       else
 	tip_frame = Qnil;
@@ -6899,208 +6336,6 @@ DEFUN ("x-uses-old-gtk-dialog", Fx_uses_old_gtk_dialog,
   return Qnil;
 }
 
-
-#ifdef USE_MOTIF
-/* Callback for "OK" and "Cancel" on file selection dialog.  */
-
-static void
-file_dialog_cb (Widget widget, XtPointer client_data, XtPointer call_data)
-{
-  int *result = client_data;
-  XmAnyCallbackStruct *cb = call_data;
-  *result = cb->reason;
-}
-
-
-/* Callback for unmapping a file selection dialog.  This is used to
-   capture the case where a dialog is closed via a window manager's
-   closer button, for example. Using a XmNdestroyCallback didn't work
-   in this case.  */
-
-static void
-file_dialog_unmap_cb (Widget widget, XtPointer client_data, XtPointer call_data)
-{
-  int *result = client_data;
-  *result = XmCR_CANCEL;
-}
-
-static void
-clean_up_file_dialog (void *arg)
-{
-  Widget dialog = arg;
-
-  /* Clean up.  */
-  block_input ();
-  XtUnmanageChild (dialog);
-  XtDestroyWidget (dialog);
-  x_menu_set_in_use (false);
-  unblock_input ();
-}
-
-
-DEFUN ("x-file-dialog", Fx_file_dialog, Sx_file_dialog, 2, 5, 0,
-       doc: /* Read file name, prompting with PROMPT in directory DIR.
-Use a file selection dialog.  Select DEFAULT-FILENAME in the dialog's file
-selection box, if specified.  If MUSTMATCH is non-nil, the returned file
-or directory must exist.
-
-This function is only defined on NS, MS Windows, and X Windows with the
-Motif or Gtk toolkits.  With the Motif toolkit, ONLY-DIR-P is ignored.
-Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.
-On Windows 7 and later, the file selection dialog "remembers" the last
-directory where the user selected a file, and will open that directory
-instead of DIR on subsequent invocations of this function with the same
-value of DIR as in previous invocations; this is standard Windows behavior.  */)
-  (Lisp_Object prompt, Lisp_Object dir, Lisp_Object default_filename,
-   Lisp_Object mustmatch, Lisp_Object only_dir_p)
-{
-  int result;
-  struct frame *f = SELECTED_FRAME ();
-  Lisp_Object file = Qnil;
-  Lisp_Object decoded_file;
-  Widget dialog, text, help;
-  Arg al[10];
-  int ac = 0;
-  XmString dir_xmstring, pattern_xmstring;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  check_window_system (f);
-
-  if (popup_activated ())
-    error ("Trying to use a menu from within a menu-entry");
-
-  CHECK_STRING (prompt);
-  CHECK_STRING (dir);
-
-  /* Prevent redisplay.  */
-  specbind (Qinhibit_redisplay, Qt);
-
-  block_input ();
-
-  /* Create the dialog with PROMPT as title, using DIR as initial
-     directory and using "*" as pattern.  */
-  dir = Fexpand_file_name (dir, Qnil);
-  dir_xmstring = XmStringCreateLocalized (SSDATA (dir));
-  pattern_xmstring = XmStringCreateLocalized ("*");
-
-  XtSetArg (al[ac], XmNtitle, SDATA (prompt)); ++ac;
-  XtSetArg (al[ac], XmNdirectory, dir_xmstring); ++ac;
-  XtSetArg (al[ac], XmNpattern, pattern_xmstring); ++ac;
-  XtSetArg (al[ac], XmNresizePolicy, XmRESIZE_GROW); ++ac;
-  XtSetArg (al[ac], XmNdialogStyle, XmDIALOG_APPLICATION_MODAL); ++ac;
-  dialog = XmCreateFileSelectionDialog (f->output_data.x->widget,
-					"fsb", al, ac);
-  XmStringFree (dir_xmstring);
-  XmStringFree (pattern_xmstring);
-
-  /* Add callbacks for OK and Cancel.  */
-  XtAddCallback (dialog, XmNokCallback, file_dialog_cb,
-		 (XtPointer) &result);
-  XtAddCallback (dialog, XmNcancelCallback, file_dialog_cb,
-		 (XtPointer) &result);
-  XtAddCallback (dialog, XmNunmapCallback, file_dialog_unmap_cb,
-		 (XtPointer) &result);
-
-  /* Remove the help button since we can't display help.  */
-  help = XmFileSelectionBoxGetChild (dialog, XmDIALOG_HELP_BUTTON);
-  XtUnmanageChild (help);
-
-  /* Mark OK button as default.  */
-  XtVaSetValues (XmFileSelectionBoxGetChild (dialog, XmDIALOG_OK_BUTTON),
-		 XmNshowAsDefault, True, NULL);
-
-  /* If MUSTMATCH is non-nil, disable the file entry field of the
-     dialog, so that the user must select a file from the files list
-     box.  We can't remove it because we wouldn't have a way to get at
-     the result file name, then.  */
-  text = XmFileSelectionBoxGetChild (dialog, XmDIALOG_TEXT);
-  if (!NILP (mustmatch))
-    {
-      Widget label;
-      label = XmFileSelectionBoxGetChild (dialog, XmDIALOG_SELECTION_LABEL);
-      XtSetSensitive (text, False);
-      XtSetSensitive (label, False);
-    }
-
-  /* Manage the dialog, so that list boxes get filled.  */
-  XtManageChild (dialog);
-
-  if (STRINGP (default_filename))
-    {
-      XmString default_xmstring;
-      Widget wtext = XmFileSelectionBoxGetChild (dialog, XmDIALOG_TEXT);
-      Widget list = XmFileSelectionBoxGetChild (dialog, XmDIALOG_LIST);
-
-      XmTextPosition last_pos = XmTextFieldGetLastPosition (wtext);
-      XmTextFieldReplace (wtext, 0, last_pos,
-                          (SSDATA (Ffile_name_nondirectory (default_filename))));
-
-      /* Select DEFAULT_FILENAME in the files list box.  DEFAULT_FILENAME
-         must include the path for this to work.  */
-
-      default_xmstring = XmStringCreateLocalized (SSDATA (default_filename));
-
-      if (XmListItemExists (list, default_xmstring))
-        {
-          int item_pos = XmListItemPos (list, default_xmstring);
-          /* Select the item and scroll it into view.  */
-          XmListSelectPos (list, item_pos, True);
-          XmListSetPos (list, item_pos);
-        }
-
-      XmStringFree (default_xmstring);
-    }
-
-  record_unwind_protect_ptr (clean_up_file_dialog, dialog);
-
-  /* Process events until the user presses Cancel or OK.  */
-  x_menu_set_in_use (true);
-  result = 0;
-  while (result == 0)
-    {
-      XEvent event;
-      x_menu_wait_for_event (0);
-      XtAppNextEvent (Xt_app_con, &event);
-      if (event.type == KeyPress
-          && FRAME_X_DISPLAY (f) == event.xkey.display)
-        {
-          KeySym keysym = XLookupKeysym (&event.xkey, 0);
-
-          /* Pop down on C-g.  */
-          if (keysym == XK_g && (event.xkey.state & ControlMask) != 0)
-            XtUnmanageChild (dialog);
-        }
-
-      (void) x_dispatch_event (&event, FRAME_X_DISPLAY (f));
-    }
-
-  /* Get the result.  */
-  if (result == XmCR_OK)
-    {
-      XmString text_string;
-      String data;
-
-      XtVaGetValues (dialog, XmNtextString, &text_string, NULL);
-      XmStringGetLtoR (text_string, XmFONTLIST_DEFAULT_TAG, &data);
-      XmStringFree (text_string);
-      file = build_string (data);
-      XtFree (data);
-    }
-  else
-    file = Qnil;
-
-  unblock_input ();
-
-  /* Make "Cancel" equivalent to C-g.  */
-  if (NILP (file))
-    quit ();
-
-  decoded_file = DECODE_FILE (file);
-
-  return unbind_to (count, decoded_file);
-}
-
-#endif /* USE_MOTIF */
 
 #ifdef USE_GTK
 
@@ -7732,17 +6967,6 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   /* Tell Emacs about this window system.  */
   Fprovide (Qx, Qnil);
 
-#ifdef USE_X_TOOLKIT
-  Fprovide (intern_c_string ("x-toolkit"), Qnil);
-#ifdef USE_MOTIF
-  Fprovide (intern_c_string ("motif"), Qnil);
-
-  DEFVAR_LISP ("motif-version-string", Vmotif_version_string,
-	       doc: /* Version info for LessTif/Motif.  */);
-  Vmotif_version_string = build_string (XmVERSION_STRING);
-#endif /* USE_MOTIF */
-#endif /* USE_X_TOOLKIT */
-
 #ifdef USE_GTK
   /* Provide x-toolkit also for GTK.  Internally GTK does not use Xt so it
      is not an X toolkit in that sense (USE_X_TOOLKIT is not defined).
@@ -7826,7 +7050,7 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   staticpro (&last_show_tip_args);
 
   defsubr (&Sx_uses_old_gtk_dialog);
-#if defined (USE_MOTIF) || defined (USE_GTK)
+#if defined (USE_GTK)
   defsubr (&Sx_file_dialog);
 #endif
 

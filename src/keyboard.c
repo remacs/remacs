@@ -3933,7 +3933,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  XSETBUFFER (obj, current_buffer);
 	  kbd_fetch_ptr = event + 1;
 	}
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
+#if defined (HAVE_NTGUI) \
     || defined (HAVE_NS) || defined (USE_GTK)
       else if (event->kind == MENU_BAR_ACTIVATE_EVENT)
 	{
@@ -4103,7 +4103,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	    {
 	      obj = make_lispy_event (&event->ie);
 
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
+#if defined (HAVE_NTGUI) \
     || defined (HAVE_NS) || defined (USE_GTK)
 	      /* If this was a menu selection, then set the flag to inhibit
 		 writing to last_nonmenu_event.  Don't do this if the event
@@ -5404,7 +5404,7 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 static bool
 toolkit_menubar_in_use (struct frame *f)
 {
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
+#if defined (USE_GTK) || defined (HAVE_NS) || defined (HAVE_NTGUI)
   return !(!FRAME_WINDOW_P (f));
 #else
   return false;
@@ -6021,7 +6021,7 @@ make_lispy_event (struct input_event *event)
 	return list3 (head, position, files);
       }
 
-#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
+#if defined (HAVE_NTGUI) \
     || defined (HAVE_NS) || defined (USE_GTK)
     case MENU_BAR_EVENT:
       if (EQ (event->arg, event->frame_or_window))

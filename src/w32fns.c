@@ -1623,9 +1623,6 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
      the new icon is not mapped, so map the window in its stead.  */
   if (FRAME_VISIBLE_P (f))
     {
-#ifdef USE_X_TOOLKIT
-      XtPopup (f->output_data.w32->widget, XtGrabNone);
-#endif
       XMapWindow (FRAME_W32_DISPLAY (f), FRAME_W32_WINDOW (f));
     }
 

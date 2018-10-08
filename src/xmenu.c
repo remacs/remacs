@@ -61,30 +61,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 /*  Defining HAVE_MULTILINGUAL_MENU would mean that the toolkit menu
     code accepts the Emacs internal encoding.  */
 #undef HAVE_MULTILINGUAL_MENU
-#ifdef USE_X_TOOLKIT
-#include "widget.h"
-#include <X11/Xlib.h>
-#include <X11/IntrinsicP.h>
-#include <X11/CoreP.h>
-#include <X11/StringDefs.h>
-#include <X11/Shell.h>
-#ifdef USE_LUCID
-#include "xsettings.h"
-#include "../lwlib/xlwmenu.h"
-#ifdef HAVE_XAW3D
-#include <X11/Xaw3d/Paned.h>
-#else /* !HAVE_XAW3D */
-#include <X11/Xaw/Paned.h>
-#endif /* HAVE_XAW3D */
-#endif /* USE_LUCID */
-#ifdef USE_MOTIF
-#include "../lwlib/lwlib.h"
-#endif
-#else /* not USE_X_TOOLKIT */
 #ifndef USE_GTK
 #include "../oldXMenu/XMenu.h"
 #endif
-#endif /* not USE_X_TOOLKIT */
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef USE_GTK
@@ -101,34 +80,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    Xt on behalf of one of the widget sets.  */
 static int popup_activated_flag;
 
-
-#ifdef USE_X_TOOLKIT
-
-static LWLIB_ID next_menubar_widget_id;
-
-/* Return the frame whose ->output_data.x->id equals ID, or 0 if none.  */
-
-static struct frame *
-menubar_id_to_frame (LWLIB_ID id)
-{
-  Lisp_Object tail, frame;
-  struct frame *f;
-
-  FOR_EACH_FRAME (tail, frame)
-    {
-      f = XFRAME (frame);
-      if (!FRAME_WINDOW_P (f))
-	continue;
-      if (f->output_data.x->id == id)
-	return f;
-    }
-  return 0;
-}
-
-#endif
 
 
-#if defined USE_GTK || defined USE_MOTIF
+#if defined USE_GTK
 
 /* Set menu_items_inuse so no other popup menu or dialog is created.  */
 
@@ -139,10 +93,6 @@ x_menu_set_in_use (bool in_use)
 
   menu_items_inuse = in_use ? Qt : Qnil;
   popup_activated_flag = in_use;
-#ifdef USE_X_TOOLKIT
-  if (popup_activated_flag)
-    x_activate_timeout_atimer ();
-#endif
 
   /* Don't let frames in `above' z-group obscure popups.  */
   FOR_EACH_FRAME (frames, frame)
@@ -168,9 +118,7 @@ x_menu_wait_for_event (void *data)
      instead of the small ifdefs below.  */
 
   while (
-#ifdef USE_X_TOOLKIT
-         ! XtAppPending (Xt_app_con)
-#elif defined USE_GTK
+#if defined USE_GTK
          ! gtk_events_pending ()
 #else
          ! XPending (data)
@@ -208,144 +156,7 @@ x_menu_wait_for_event (void *data)
 }
 
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
-
-#ifdef USE_X_TOOLKIT
-
-/* Loop in Xt until the menu pulldown or dialog popup has been
-   popped down (deactivated).  This is used for x-popup-menu
-   and x-popup-dialog; it is not used for the menu bar.
-
-   NOTE: All calls to popup_get_selection should be protected
-   with BLOCK_INPUT, UNBLOCK_INPUT wrappers.  */
-
-static void
-popup_get_selection (XEvent *initial_event, struct x_display_info *dpyinfo,
-		     LWLIB_ID id, bool do_timers)
-{
-  XEvent event;
-
-  while (popup_activated_flag)
-    {
-      if (initial_event)
-        {
-          event = *initial_event;
-          initial_event = 0;
-        }
-      else
-        {
-          if (do_timers) x_menu_wait_for_event (0);
-          XtAppNextEvent (Xt_app_con, &event);
-        }
-
-      /* Make sure we don't consider buttons grabbed after menu goes.
-         And make sure to deactivate for any ButtonRelease,
-         even if XtDispatchEvent doesn't do that.  */
-      if (event.type == ButtonRelease
-          && dpyinfo->display == event.xbutton.display)
-        {
-          dpyinfo->grabbed &= ~(1 << event.xbutton.button);
-#ifdef USE_MOTIF /* Pretending that the event came from a
-                    Btn1Down seems the only way to convince Motif to
-                    activate its callbacks; setting the XmNmenuPost
-                    isn't working. --marcus@sysc.pdx.edu.  */
-          event.xbutton.button = 1;
-          /*  Motif only pops down menus when no Ctrl, Alt or Mod
-              key is pressed and the button is released.  So reset key state
-              so Motif thinks this is the case.  */
-          event.xbutton.state = 0;
-#endif
-        }
-      /* Pop down on C-g and Escape.  */
-      else if (event.type == KeyPress
-               && dpyinfo->display == event.xbutton.display)
-        {
-          KeySym keysym = XLookupKeysym (&event.xkey, 0);
-
-          if ((keysym == XK_g && (event.xkey.state & ControlMask) != 0)
-              || keysym == XK_Escape) /* Any escape, ignore modifiers.  */
-            popup_activated_flag = 0;
-        }
-
-      x_dispatch_event (&event, event.xany.display);
-    }
-}
-
-DEFUN ("x-menu-bar-open-internal", Fx_menu_bar_open_internal, Sx_menu_bar_open_internal, 0, 1, "i",
-       doc: /* Start key navigation of the menu bar in FRAME.
-This initially opens the first menu bar item and you can then navigate with the
-arrow keys, select a menu entry with the return key or cancel with the
-escape key.  If FRAME has no menu bar this function does nothing.
-
-If FRAME is nil or not given, use the selected frame.  */)
-  (Lisp_Object frame)
-{
-  XEvent ev;
-  struct frame *f = decode_window_system_frame (frame);
-  Widget menubar;
-  block_input ();
-
-  if (FRAME_EXTERNAL_MENU_BAR (f))
-    set_frame_menubar (f, false, true);
-
-  menubar = FRAME_X_OUTPUT (f)->menubar_widget;
-  if (menubar)
-    {
-      Window child;
-      bool error_p = false;
-
-      x_catch_errors (FRAME_X_DISPLAY (f));
-      memset (&ev, 0, sizeof ev);
-      ev.xbutton.display = FRAME_X_DISPLAY (f);
-      ev.xbutton.window = XtWindow (menubar);
-      ev.xbutton.root = FRAME_DISPLAY_INFO (f)->root_window;
-      ev.xbutton.time = XtLastTimestampProcessed (FRAME_X_DISPLAY (f));
-      ev.xbutton.button = Button1;
-      ev.xbutton.x = ev.xbutton.y = FRAME_MENUBAR_HEIGHT (f) / 2;
-      ev.xbutton.same_screen = True;
-
-#ifdef USE_MOTIF
-      {
-        Arg al[2];
-        WidgetList list;
-        Cardinal nr;
-        XtSetArg (al[0], XtNchildren, &list);
-        XtSetArg (al[1], XtNnumChildren, &nr);
-        XtGetValues (menubar, al, 2);
-        ev.xbutton.window = XtWindow (list[0]);
-      }
-#endif
-
-      XTranslateCoordinates (FRAME_X_DISPLAY (f),
-                             /* From-window, to-window.  */
-                             ev.xbutton.window, ev.xbutton.root,
-
-                             /* From-position, to-position.  */
-                             ev.xbutton.x, ev.xbutton.y,
-                             &ev.xbutton.x_root, &ev.xbutton.y_root,
-
-                             /* Child of win.  */
-                             &child);
-      error_p = x_had_errors_p (FRAME_X_DISPLAY (f));
-      x_uncatch_errors_after_check ();
-
-      if (! error_p)
-        {
-          ev.type = ButtonPress;
-          ev.xbutton.state = 0;
-
-          XtDispatchEvent (&ev);
-          ev.xbutton.type = ButtonRelease;
-          ev.xbutton.state = Button1Mask;
-          XtDispatchEvent (&ev);
-        }
-    }
-
-  unblock_input ();
-
-  return Qnil;
-}
-#endif /* USE_X_TOOLKIT */
+#if defined (USE_GTK)
 
 
 #ifdef USE_GTK
@@ -643,37 +454,6 @@ update_frame_menubar (struct frame *f)
 #endif /* USE_GTK */
 }
 
-#ifdef USE_LUCID
-static void
-apply_systemfont_to_dialog (Widget w)
-{
-  const char *fn = xsettings_get_system_normal_font ();
-  if (fn)
-    {
-      XrmDatabase db = XtDatabase (XtDisplay (w));
-      if (db)
-        XrmPutStringResource (&db, "*dialog.font", fn);
-    }
-}
-
-static void
-apply_systemfont_to_menu (struct frame *f, Widget w)
-{
-  const char *fn = xsettings_get_system_normal_font ();
-
-  if (fn)
-    {
-      XrmDatabase db = XtDatabase (XtDisplay (w));
-      if (db)
-        {
-          XrmPutStringResource (&db, "*menubar*font", fn);
-          XrmPutStringResource (&db, "*popup*font", fn);
-        }
-    }
-}
-
-#endif
-
 /* Set the contents of the menubar widgets of frame F.
    The argument FIRST_TIME is currently ignored;
    it is set the first time this is called, from initialize_frame_menubar.  */
@@ -682,9 +462,6 @@ void
 set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
 {
   xt_or_gtk_widget menubar_widget, old_widget;
-#ifdef USE_X_TOOLKIT
-  LWLIB_ID id;
-#endif
   Lisp_Object items;
   widget_value *wv, *first_wv, *prev_wv = 0;
   int i;
@@ -697,12 +474,6 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
   menubar_widget = old_widget = f->output_data.x->menubar_widget;
 
   XSETFRAME (Vmenu_updating_frame, f);
-
-#ifdef USE_X_TOOLKIT
-  if (f->output_data.x->id == 0)
-    f->output_data.x->id = next_menubar_widget_id++;
-  id = f->output_data.x->id;
-#endif
 
   if (! menubar_widget)
     deep_p = true;
@@ -950,9 +721,6 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
       char menuOverride[] = "Ctrl<KeyPress>g: MenuGadgetEscape()";
       XtTranslations  override = XtParseTranslationTable (menuOverride);
 
-#ifdef USE_LUCID
-      apply_systemfont_to_menu (f, f->output_data.x->column_widget);
-#endif
       menubar_widget = lw_create_widget ("menubar", "menubar", id,
                                          first_wv,
 					 f->output_data.x->column_widget,
@@ -975,31 +743,14 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
     menubar_size
       = (f->output_data.x->menubar_widget
 	 ? (f->output_data.x->menubar_widget->core.height
-#ifndef USE_LUCID
 	    /* Damn me...  With Lucid I get a core.border_width of 1
 	       only the first time this is called and an ibw of 1 every
 	       time this is called.  So the first time this is called I
 	       was off by one.  Fix that here by never adding
 	       core.border_width for Lucid.  */
 	    + f->output_data.x->menubar_widget->core.border_width
-#endif /* USE_LUCID */
 	    )
 	 : 0);
-
-#ifdef USE_LUCID
-      /* Experimentally, we now get the right results
-	 for -geometry -0-0 without this.  24 Aug 96, rms.
-         Maybe so, but the menu bar size is missing the pixels so the
-         WM size hints are off by these pixels.  Jan D, oct 2009.  */
-    if (FRAME_EXTERNAL_MENU_BAR (f))
-      {
-        Dimension ibw = 0;
-
-        XtVaGetValues (f->output_data.x->column_widget,
-		       XtNinternalBorderWidth, &ibw, NULL);
-	menubar_size += ibw;
-      }
-#endif /* USE_LUCID */
 
     FRAME_MENUBAR_HEIGHT (f) = menubar_size;
   }
@@ -1039,12 +790,6 @@ void
 free_frame_menubar (struct frame *f)
 {
   Widget menubar_widget;
-#ifdef USE_MOTIF
-  /* Motif automatically shrinks the frame in lw_destroy_all_widgets.
-     If we want to preserve the old height, calculate it now so we can
-     restore it below.  */
-  int old_height = FRAME_TEXT_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f);
-#endif
 
   eassert (FRAME_X_P (f));
 
@@ -1054,49 +799,15 @@ free_frame_menubar (struct frame *f)
 
   if (menubar_widget)
     {
-#ifdef USE_MOTIF
-      /* Removing the menu bar magically changes the shell widget's x
-	 and y position of (0, 0) which, when the menu bar is turned
-	 on again, leads to pull-down menus appearing in strange
-	 positions near the upper-left corner of the display.  This
-	 happens only with some window managers like twm and ctwm,
-	 but not with other like Motif's mwm or kwm, because the
-	 latter generate ConfigureNotify events when the menu bar
-	 is switched off, which fixes the shell position.  */
-      Position x0, y0, x1, y1;
-#endif
 
       block_input ();
-
-#ifdef USE_MOTIF
-      if (f->output_data.x->widget)
-	XtVaGetValues (f->output_data.x->widget, XtNx, &x0, XtNy, &y0, NULL);
-#endif
 
       lw_destroy_all_widgets ((LWLIB_ID) f->output_data.x->id);
       f->output_data.x->menubar_widget = NULL;
 
       if (f->output_data.x->widget)
 	{
-#ifdef USE_MOTIF
-	  XtVaGetValues (f->output_data.x->widget, XtNx, &x1, XtNy, &y1, NULL);
-	  if (x1 == 0 && y1 == 0)
-	    XtVaSetValues (f->output_data.x->widget, XtNx, x0, XtNy, y0, NULL);
-	  if (frame_inhibit_resize (f, false, Qmenu_bar_lines))
-	    adjust_frame_size (f, -1, old_height, 1, false, Qfree_frame_menubar_1);
-	  else
-	    adjust_frame_size (f, -1, -1, 2, false, Qfree_frame_menubar_1);
-#else
 	  adjust_frame_size (f, -1, -1, 2, false, Qfree_frame_menubar_1);
-#endif /* USE_MOTIF */
-	}
-      else
-	{
-#ifdef USE_MOTIF
-	  if (WINDOWP (FRAME_ROOT_WINDOW (f))
-	      && frame_inhibit_resize (f, false, Qmenu_bar_lines))
-	    adjust_frame_size (f, -1, old_height, 1, false, Qfree_frame_menubar_2);
-#endif
 	}
 
       unblock_input ();
@@ -1104,7 +815,7 @@ free_frame_menubar (struct frame *f)
 }
 #endif /* not USE_GTK */
 
-#endif /* USE_X_TOOLKIT || USE_GTK */
+#endif /* USE_GTK */
 
 /* x_menu_show actually displays a menu using the panes and items in menu_items
    and returns the value selected from it.
@@ -1123,7 +834,7 @@ free_frame_menubar (struct frame *f)
    ERROR is a place to store an error message string in case of failure.
    (We return nil on failure, but the value doesn't actually matter.)  */
 
-#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+#if defined (USE_GTK)
 
 /* The item selected in the popup menu.  */
 static Lisp_Object *volatile menu_item_selection;
@@ -1357,10 +1068,6 @@ create_and_show_popup_menu (struct frame *f, widget_value *first_wv,
   Window dummy_window;
 
   eassert (FRAME_X_P (f));
-
-#ifdef USE_LUCID
-  apply_systemfont_to_menu (f, f->output_data.x->widget);
-#endif
 
   menu_id = widget_id_tick++;
   menu = lw_create_widget ("popup", first_wv->name, menu_id, first_wv,
@@ -1764,9 +1471,6 @@ create_and_show_dialog (struct frame *f, widget_value *first_wv)
   eassert (FRAME_X_P (f));
 
   dialog_id = widget_id_tick++;
-#ifdef USE_LUCID
-  apply_systemfont_to_dialog (f->output_data.x->widget);
-#endif
   lw_create_widget (first_wv->name, "dialog", dialog_id, first_wv,
                     f->output_data.x->widget, true, 0,
                     dialog_selection_callback, 0, 0);
@@ -1992,7 +1696,7 @@ xw_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
   return selection;
 }
 
-#else /* not USE_X_TOOLKIT && not USE_GTK */
+#else /* not USE_GTK */
 
 /* The frame of the last activated non-toolkit menu bar.
    Used to generate menu help events.  */
@@ -2350,7 +2054,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
   return unbind_to (specpdl_count, entry);
 }
 
-#endif /* not USE_X_TOOLKIT */
+#endif
 
 /* Detect if a dialog or menu has been posted.  */
 
@@ -2372,12 +2076,6 @@ DEFUN ("menu-or-popup-active-p", Fmenu_or_popup_active_p, Smenu_or_popup_active_
 void
 syms_of_xmenu (void)
 {
-#ifdef USE_X_TOOLKIT
-  enum { WIDGET_ID_TICK_START = 1 << 16 };
-  widget_id_tick = WIDGET_ID_TICK_START;
-  next_menubar_widget_id = 1;
-#endif
-
   DEFSYM (Qdebug_on_next_call, "debug-on-next-call");
   defsubr (&Smenu_or_popup_active_p);
 
@@ -2385,7 +2083,7 @@ syms_of_xmenu (void)
   DEFSYM (Qframe_monitor_workarea, "frame-monitor-workarea");
 #endif
 
-#if defined (USE_GTK) || defined (USE_X_TOOLKIT)
+#if defined (USE_GTK)
   defsubr (&Sx_menu_bar_open_internal);
   Ffset (intern_c_string ("accelerate-menu"),
 	 intern_c_string (Sx_menu_bar_open_internal.symbol_name));
