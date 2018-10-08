@@ -3578,6 +3578,7 @@ extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 			  Lisp_Object);
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
 extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
+extern Lisp_Object build_marker (struct buffer *, ptrdiff_t, ptrdiff_t);
 
 /* Build a frequently used 2/3/4-integer lists.  */
 
@@ -4013,8 +4014,6 @@ extern Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object)
 extern Lisp_Object set_marker_both (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
                                                ptrdiff_t, ptrdiff_t);
-extern Lisp_Object build_marker (struct buffer *, ptrdiff_t, ptrdiff_t);
-extern void syms_of_marker (void);
 
 /* Defined in fileio.c.  */
 
@@ -4749,6 +4748,12 @@ maybe_gc (void)
 	  && consing_since_gc > memory_full_cons_threshold))
     Fgarbage_collect ();
 }
+
+Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
+
+bool backtrace_debug_on_exit (union specbinding *pdl);
+
+void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
 
 INLINE_HEADER_END
 

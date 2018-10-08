@@ -2,10 +2,10 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qvectorp;
 use remacs_sys::{fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
                  make_pure_c_string, make_unibyte_string, oblookup};
 use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
+use remacs_sys::{Qnil, Qvectorp};
 
 use lisp::defsubr;
 use lisp::LispObject;
@@ -174,7 +174,7 @@ pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObj
     let tem = obarray.lookup(name);
 
     if tem.is_integer() || (name.is_symbol() && !name.eq(tem)) {
-        LispObject::constant_nil()
+        Qnil
     } else {
         tem
     }

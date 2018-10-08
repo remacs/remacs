@@ -4,11 +4,11 @@ use std::{cmp, ptr};
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
+use remacs_sys::Qnil;
 use remacs_sys::{dtotimespec, timespec_add, timespec_sub, wait_reading_process_output};
 use remacs_sys::{EmacsDouble, EmacsInt, WAIT_READING_MAX};
 
 use lisp::defsubr;
-use lisp::LispObject;
 
 /// Pause, without updating display, for SECONDS seconds.
 /// SECONDS may be a floating-point value, meaning that you can wait for a
@@ -28,7 +28,7 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> () {
                     t.tv_nsec as i32,
                     0,
                     true,
-                    LispObject::constant_nil(),
+                    Qnil,
                     ptr::null_mut(),
                     0,
                 )

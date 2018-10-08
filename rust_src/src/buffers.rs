@@ -5,14 +5,16 @@ use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
-                 globals, last_per_buffer_idx, set_buffer_internal_1, update_mode_lines};
+                 delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
+                 set_buffer_internal_1, specbind, unbind_to, unchain_both, update_mode_lines};
+use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
+                 Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Foverlay_get};
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
                  Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
-use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
-                 Fget_text_property, Fnconc, Fnreverse};
-use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil, Qunbound,
-                 Qvoid_variable};
+use remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qget_file_buffer,
+                 Qinhibit_quit, Qinhibit_read_only, Qnil, Qt, Qunbound, Qvoid_variable};
 
+use character::char_head_p;
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
 use editfns::point;
@@ -20,9 +22,9 @@ use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
-use multibyte::string_char;
+use multibyte::{multibyte_length_by_head, string_char};
 use strings::string_equal;
-use threads::ThreadState;
+use threads::{c_specpdl_index, ThreadState};
 
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
@@ -76,41 +78,6 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn zv(self) -> ptrdiff_t {
-        self.zv
-    }
-
-    #[inline]
-    pub fn zv_byte(self) -> ptrdiff_t {
-        self.zv_byte
-    }
-
-    #[inline]
-    pub fn pt(self) -> ptrdiff_t {
-        self.pt
-    }
-
-    #[inline]
-    pub fn pt_byte(self) -> ptrdiff_t {
-        self.pt_byte
-    }
-
-    #[inline]
-    pub fn begv(self) -> ptrdiff_t {
-        self.begv
-    }
-
-    #[inline]
-    pub fn begv_byte(self) -> ptrdiff_t {
-        self.begv_byte
-    }
-
-    #[inline]
-    pub fn beg_addr(self) -> *mut c_uchar {
-        unsafe { (*self.text).beg }
-    }
-
-    #[inline]
     pub fn beg(self) -> ptrdiff_t {
         BEG
     }
@@ -118,21 +85,6 @@ impl LispBufferRef {
     #[inline]
     pub fn beg_byte(self) -> ptrdiff_t {
         BEG_BYTE
-    }
-
-    #[inline]
-    pub fn gpt_byte(self) -> ptrdiff_t {
-        unsafe { (*self.text).gpt_byte }
-    }
-
-    #[inline]
-    pub fn gap_size(self) -> ptrdiff_t {
-        unsafe { (*self.text).gap_size }
-    }
-
-    #[inline]
-    pub fn gap_position(self) -> ptrdiff_t {
-        unsafe { (*self.text).gpt }
     }
 
     #[inline]
@@ -159,31 +111,48 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn z_byte(self) -> ptrdiff_t {
-        unsafe { (*self.text).z_byte }
+    pub fn pos_within_range(self, pos: isize) -> isize {
+        if pos >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        }
     }
 
+    // Same as the BUF_BYTE_ADDRESS c macro
+    /// Return the address of character at byte position BYTE_POS in buffer BUF.
     #[inline]
-    pub fn z(self) -> ptrdiff_t {
-        unsafe { (*self.text).z }
+    pub fn buf_byte_address(self, byte_pos: isize) -> c_uchar {
+        let gap = self.pos_within_range(byte_pos);
+        unsafe { *(self.beg_addr().offset(byte_pos - BEG_BYTE + gap)) as c_uchar }
     }
 
-    /// Number of modifications made to the buffer.
-    #[inline]
-    pub fn modifications(self) -> EmacsInt {
-        unsafe { (*self.text).modiff }
+    // Same as the BUF_INC_POS c macro
+    /// Increment the buffer byte position POS_BYTE of the the buffer to
+    /// the next character boundary.  This macro relies on the fact that
+    /// *GPT_ADDR and *Z_ADDR are always accessible and the values are
+    /// '\0'.  No range checking of POS_BYTE.
+    pub fn inc_pos(self, pos_byte: isize) -> isize {
+        let chp = self.buf_byte_address(pos_byte);
+        pos_byte + multibyte_length_by_head(chp) as isize
     }
 
-    /// Value of `modiff` last time the buffer was saved.
-    #[inline]
-    pub fn modifications_since_save(self) -> EmacsInt {
-        unsafe { (*self.text).save_modiff }
-    }
+    // Same as the BUF_DEC_POS c macro
+    /// Decrement the buffer byte position POS_BYTE of the buffer to
+    /// the previous character boundary.  No range checking of POS_BYTE.
+    pub fn dec_pos(self, pos_byte: isize) -> isize {
+        let mut new_pos = pos_byte - 1;
+        let mut offset = new_pos - self.beg_byte();
+        offset += self.pos_within_range(new_pos);
+        unsafe {
+            let mut chp = self.beg_addr().offset(offset);
 
-    /// Number of modifications to the buffer's characters.
-    #[inline]
-    pub fn char_modifications(self) -> EmacsInt {
-        unsafe { (*self.text).chars_modiff }
+            while !char_head_p(*chp) {
+                chp = chp.offset(-1);
+                new_pos -= 1;
+            }
+        }
+        new_pos
     }
 
     #[inline]
@@ -354,6 +323,62 @@ impl LispBufferRef {
     }
 }
 
+// Methods for accessing struct buffer_text fields
+impl LispBufferRef {
+    #[inline]
+    pub fn beg_addr(self) -> *mut c_uchar {
+        unsafe { (*self.text).beg }
+    }
+
+    #[inline]
+    pub fn gpt(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt }
+    }
+
+    #[inline]
+    pub fn gpt_byte(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt_byte }
+    }
+
+    #[inline]
+    pub fn gap_size(self) -> ptrdiff_t {
+        unsafe { (*self.text).gap_size }
+    }
+
+    #[inline]
+    pub fn gap_position(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt }
+    }
+
+    /// Number of modifications made to the buffer.
+    #[inline]
+    pub fn modifications(self) -> EmacsInt {
+        unsafe { (*self.text).modiff }
+    }
+
+    /// Value of `modiff` last time the buffer was saved.
+    #[inline]
+    pub fn modifications_since_save(self) -> EmacsInt {
+        unsafe { (*self.text).save_modiff }
+    }
+
+    /// Number of modifications to the buffer's characters.
+    #[inline]
+    pub fn char_modifications(self) -> EmacsInt {
+        unsafe { (*self.text).chars_modiff }
+    }
+
+    #[inline]
+    pub fn z_byte(self) -> ptrdiff_t {
+        unsafe { (*self.text).z_byte }
+    }
+
+    #[inline]
+    pub fn z(self) -> ptrdiff_t {
+        unsafe { (*self.text).z }
+    }
+}
+
 impl LispOverlayRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)
@@ -483,7 +508,7 @@ fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject
     if let Some(elt) = result {
         elt.car()
     } else {
-        LispObject::constant_nil()
+        Qnil
     }
 }
 
@@ -678,12 +703,8 @@ pub fn overlay_lists() -> LispObject {
     };
 
     let cur_buf = ThreadState::current_buffer();
-    let before = cur_buf
-        .overlays_before()
-        .map_or_else(LispObject::constant_nil, &list_overlays);
-    let after = cur_buf
-        .overlays_after()
-        .map_or_else(LispObject::constant_nil, &list_overlays);
+    let before = cur_buf.overlays_before().map_or(Qnil, &list_overlays);
+    let after = cur_buf.overlays_after().map_or(Qnil, &list_overlays);
     unsafe { Fcons(Fnreverse(before), Fnreverse(after)) }
 }
 
@@ -717,14 +738,9 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
         assert!(zv_marker.is_not_nil());
 
         let buffer = buffer_ref.as_lisp_obj();
-        set_marker_both(pt_marker, buffer, buffer_ref.pt(), buffer_ref.pt_byte());
-        set_marker_both(
-            begv_marker,
-            buffer,
-            buffer_ref.begv(),
-            buffer_ref.begv_byte(),
-        );
-        set_marker_both(zv_marker, buffer, buffer_ref.zv(), buffer_ref.zv_byte());
+        set_marker_both(pt_marker, buffer, buffer_ref.pt, buffer_ref.pt_byte);
+        set_marker_both(begv_marker, buffer, buffer_ref.begv, buffer_ref.begv_byte);
+        set_marker_both(zv_marker, buffer, buffer_ref.zv, buffer_ref.zv_byte);
     }
 }
 
@@ -837,6 +853,44 @@ pub extern "C" fn build_overlay(
 
         overlay.as_lisp_obj()
     }
+}
+
+/// Delete the overlay OVERLAY from its buffer.
+#[lisp_fn]
+pub fn delete_overlay(overlay: LispObject) -> LispObject {
+    let mut ov_ref = overlay.as_overlay_or_error();
+    let mut buf_ref = match marker_buffer(ov_ref.start.as_marker_or_error()) {
+        Some(b) => b,
+        None => return Qnil,
+    };
+    let count = c_specpdl_index();
+
+    unsafe {
+        specbind(Qinhibit_quit, Qt);
+        unchain_both(buf_ref.as_mut(), overlay);
+        drop_overlay(buf_ref.as_mut(), ov_ref.as_mut());
+
+        // When deleting an overlay with before or after strings, turn off
+        // display optimizations for the affected buffer, on the basis that
+        // these strings may contain newlines.  This is easier to do than to
+        // check for that situation during redisplay.
+        if windows_or_buffers_changed != 0 && Foverlay_get(overlay, Qbefore_string).is_not_nil()
+            || Foverlay_get(overlay, Qafter_string).is_not_nil()
+        {
+            buf_ref.set_prevent_redisplay_optimizations_p(true);
+        }
+    }
+
+    unsafe { unbind_to(count, Qnil) };
+    Qnil
+}
+
+/// Delete all overlays of BUFFER.
+/// BUFFER omitted or nil means delete all overlays of the current buffer.
+#[lisp_fn(min = "0", name = "delete-all-overlays")]
+pub fn delete_all_overlays_lisp(buffer: LispObject) -> LispObject {
+    unsafe { delete_all_overlays(buffer.as_buffer_or_current_buffer().as_mut()) };
+    Qnil
 }
 
 #[no_mangle]

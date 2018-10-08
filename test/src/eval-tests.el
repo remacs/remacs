@@ -27,11 +27,6 @@
 
 (require 'ert)
 
-(ert-deftest eval-tests--bug24673 ()
-  "Checks that Bug#24673 has been fixed."
-  ;; This should not crash.
-  (should-error (funcall '(closure)) :type 'invalid-function))
-
 (defvar byte-compile-debug)
 
 (ert-deftest eval-tests--bugs-24912-and-24913 ()

@@ -362,33 +362,6 @@ wset_buffer (struct window *w, Lisp_Object val)
   adjust_window_count (w, 1);
 }
 
-/* Don't move this to window.el - this must be a safe routine.  */
-DEFUN ("frame-first-window", Fframe_first_window, Sframe_first_window, 0, 1, 0,
-       doc: /* Return the topmost, leftmost live window on FRAME-OR-WINDOW.
-If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
-Else if FRAME-OR-WINDOW denotes a valid window, return the first window
-of that window's frame.  If FRAME-OR-WINDOW denotes a live frame, return
-the first window of that frame.  */)
-  (Lisp_Object frame_or_window)
-{
-  Lisp_Object window;
-
-  if (NILP (frame_or_window))
-    window = SELECTED_FRAME ()->root_window;
-  else if (WINDOW_VALID_P (frame_or_window))
-    window = XFRAME (WINDOW_FRAME (XWINDOW (frame_or_window)))->root_window;
-  else
-    {
-      CHECK_LIVE_FRAME (frame_or_window);
-      window = XFRAME (frame_or_window)->root_window;
-    }
-
-  while (WINDOWP (XWINDOW (window)->contents))
-    window = XWINDOW (window)->contents;
-
-  return window;
-}
-
 EMACS_INT window_select_count;
 
 /* If select_window is called with inhibit_point_swap true it will
@@ -514,18 +487,6 @@ the buffer of the selected window before each command.  */)
   return select_window (window, norecord, false);
 }
 
-DEFUN ("window-top-child", Fwindow_top_child, Swindow_top_child, 0, 1, 0,
-       doc: /* Return the topmost child window of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-Return nil if WINDOW is a live window (live windows have no children).
-Return nil if WINDOW is an internal window whose children form a
-horizontal combination.  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_valid_window (window);
-  return WINDOW_VERTICAL_COMBINATION_P (w) ? w->contents : Qnil;
-}
-
 DEFUN ("window-left-child", Fwindow_left_child, Swindow_left_child, 0, 1, 0,
        doc: /* Return the leftmost child window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -7109,10 +7070,8 @@ Note that this optimization can cause the portion of the buffer
 displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
-  defsubr (&Sframe_first_window);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
-  defsubr (&Swindow_top_child);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_next_sibling);
   defsubr (&Swindow_prev_sibling);

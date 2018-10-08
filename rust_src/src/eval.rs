@@ -1,26 +1,30 @@
 //! Generic Lisp eval functions
 
+use std::ptr;
+
 use remacs_macros::lisp_fn;
-use remacs_sys::{build_string, eval_sub, find_symbol_value, globals, maybe_quit,
-                 record_unwind_protect, record_unwind_save_match_data, specbind, unbind_to};
+use remacs_sys::{backtrace_debug_on_exit, build_string, call_debugger, check_cons_list,
+                 do_debug_on_call, eval_sub, find_symbol_value, funcall_lambda, funcall_subr,
+                 globals, list2, maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
+                 record_unwind_save_match_data, specbind, unbind_to, COMPILEDP, MODULE_FUNCTIONP};
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled};
-use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Ffuncall, Fload, Fpurecopy, Fset,
-                 Fset_default};
-use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
-                 Qinteractive_form, Qinternal_interpreter_environment, Qlambda, Qmacro, Qnil,
-                 Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation,
-                 Qwrong_number_of_arguments};
+use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Fload, Fpurecopy, Fset, Fset_default};
+use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
+                 Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda,
+                 Qmacro, Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound,
+                 Qvariable_documentation, Qvoid_function, Qwrong_number_of_arguments};
+
 use remacs_sys::{Vautoload_queue, Vrun_hooks};
 
 use data::{defalias, indirect_function, indirect_function_lisp};
 use lisp::{defsubr, is_autoload};
-use lisp::{LispCons, LispObject};
+use lisp::{LispCons, LispObject, LispSubrRef};
 use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr};
 use multibyte::LispStringRef;
 use obarray::loadhist_attach;
 use objects::equal;
 use symbols::{fboundp, symbol_function, LispSymbolRef};
-use threads::c_specpdl_index;
+use threads::{c_specpdl_index, ThreadState};
 use vectors::length;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -290,7 +294,7 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
 
         car(cdr(tail))
     } else {
-        LispObject::constant_nil()
+        Qnil
     };
 
     let mut tem = unsafe { eval_sub(car(cdr(args))) };
@@ -308,7 +312,7 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
         put(sym, Qvariable_documentation, docstring);
     }
 
-    put(sym, Qrisky_local_variable, LispObject::constant_t());
+    put(sym, Qrisky_local_variable, Qt);
     loadhist_attach(sym);
 
     sym_ref
@@ -326,7 +330,7 @@ fn let_binding_value(obj: LispObject) -> (LispObject, LispObject) {
     } else {
         let (front, tail) = obj.as_cons_or_error().as_tuple();
         let (to_eval, tail) = if tail.is_nil() {
-            (LispObject::constant_nil(), tail)
+            (Qnil, tail)
         } else {
             tail.as_cons_or_error().as_tuple()
         };
@@ -470,7 +474,7 @@ pub fn lisp_while(args: LispCons) -> LispObject {
         progn(body);
     }
 
-    LispObject::constant_nil()
+    Qnil
 }
 
 /// Return result of expanding macros at top level of FORM.
@@ -489,7 +493,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
         // Set SYM, give DEF and TEM right values in case SYM is not a symbol.
         let (mut sym, body) = form_cell.as_tuple();
         let mut def = sym;
-        let mut tem = LispObject::constant_nil();
+        let mut tem = Qnil;
 
         // Trace symbols aliases to other symbols
         // until we get a symbol that is not an alias.
@@ -551,7 +555,7 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
     let value = if lexical.is_cons() || lexical.is_nil() {
         lexical
     } else {
-        list!(LispObject::constant_t())
+        list!(Qt)
     };
 
     unsafe {
@@ -565,7 +569,7 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
 #[no_mangle]
 pub extern "C" fn apply1(mut func: LispObject, arg: LispObject) -> LispObject {
     if arg == Qnil {
-        unsafe { Ffuncall(1, &mut func) }
+        Ffuncall(1, &mut func)
     } else {
         callN_raw!(Fapply, func, arg)
     }
@@ -674,7 +678,7 @@ pub fn autoload(
 ) -> LispObject {
     // If function is defined and not as an autoload, don't override.
     if function.function != Qnil && !is_autoload(function.function) {
-        return LispObject::constant_nil();
+        return Qnil;
     }
 
     if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(LispObject::from(0)) {
@@ -688,7 +692,7 @@ pub fn autoload(
     defalias(
         function.as_lisp_obj(),
         list!(Qautoload, file.as_lisp_obj(), docstring, interactive, ty),
-        LispObject::constant_nil(),
+        Qnil,
     )
 }
 
@@ -821,9 +825,9 @@ pub fn autoload_do_load(
     }
 
     if funname.is_nil() {
-        LispObject::constant_nil()
+        Qnil
     } else {
-        let fun = indirect_function_lisp(funname, LispObject::constant_nil());
+        let fun = indirect_function_lisp(funname, Qnil);
 
         if equal(fun, fundef) {
             error!(
@@ -874,8 +878,8 @@ pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
 
 fn funcall_nil(args: &[LispObject]) -> LispObject {
     let mut obj_array: Vec<LispObject> = args.iter().map(|o| *o).collect();
-    unsafe { Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr()) };
-    LispObject::constant_nil()
+    Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr());
+    Qnil
 }
 
 /// Run the hook HOOK, giving each function no args.
@@ -895,15 +899,15 @@ fn run_hook_with_args_internal(
     // If we are dying or still initializing,
     // don't do anything -- it would probably crash if we tried.
     if unsafe { Vrun_hooks == Qnil } {
-        return LispObject::constant_nil();
+        return Qnil;
     }
 
-    let mut ret = LispObject::constant_nil();
+    let mut ret = Qnil;
     let sym = args[0];
     let val = unsafe { find_symbol_value(sym) };
 
     if val.eq_raw(Qunbound) || val.is_nil() {
-        LispObject::constant_nil()
+        Qnil
     } else if !val.is_cons() || FUNCTIONP(val) {
         args[0] = val;
         func(args)
@@ -946,6 +950,145 @@ fn run_hook_with_args_internal(
 
         ret
     }
+}
+
+enum LispFun {
+    SubrFun(LispSubrRef),
+    LambdaFun(LispObject),
+}
+
+enum LispFunError {
+    InvalidFun,
+    VoidFun,
+}
+
+fn resolve_fun(fun: LispObject) -> Result<LispFun, LispFunError> {
+    let original_fun = fun;
+
+    loop {
+        if original_fun.is_nil() {
+            return Err(LispFunError::VoidFun);
+        }
+
+        // Optimize for no indirection.
+        let fun = original_fun
+            .as_symbol()
+            .map_or_else(|| original_fun, |f| f.get_indirect_function());
+
+        if fun.is_nil() {
+            return Err(LispFunError::VoidFun);
+        }
+
+        if let Some(f) = fun.as_subr() {
+            return Ok(LispFun::SubrFun(f));
+        }
+
+        if unsafe { COMPILEDP(fun) || MODULE_FUNCTIONP(fun) } {
+            return Ok(LispFun::LambdaFun(fun));
+        }
+
+        if let Some(cons) = fun.as_cons() {
+            let funcar = cons.car();
+
+            if !funcar.is_symbol() {
+                return Err(LispFunError::InvalidFun);
+            }
+
+            if funcar.eq(Qlambda) || funcar.eq(Qclosure) {
+                return Ok(LispFun::LambdaFun(fun));
+            }
+
+            if funcar.eq(Qautoload) {
+                Fautoload_do_load(fun, original_fun, Qnil);
+                unsafe { check_cons_list() };
+                continue;
+            }
+
+            return Err(LispFunError::InvalidFun);
+        }
+
+        return Err(LispFunError::InvalidFun);
+    }
+}
+
+/// Call first argument as a function, passing remaining arguments to it.
+/// Return the value that function returns.
+/// Thus, (funcall \\='cons \\='x \\='y) returns (x . y).
+/// usage: (funcall FUNCTION &rest ARGUMENTS)
+#[allow(unused_assignments)]
+#[lisp_fn]
+pub fn funcall(args: &mut [LispObject]) -> LispObject {
+    unsafe { maybe_quit() };
+
+    // Increment the lisp eval depth
+    let mut current_thread = ThreadState::current_thread();
+    current_thread.m_lisp_eval_depth = current_thread.m_lisp_eval_depth + 1;
+
+    unsafe {
+        if current_thread.m_lisp_eval_depth > globals.max_lisp_eval_depth {
+            if globals.max_lisp_eval_depth < 100 {
+                globals.max_lisp_eval_depth = 100;
+            }
+
+            if current_thread.m_lisp_eval_depth > globals.max_lisp_eval_depth {
+                error!("Lisp nesting exceeds `max-lisp-eval-depth'");
+            }
+        }
+    }
+
+    // The first element in args is the called function.
+    let numargs = args.len() as isize - 1;
+
+    let fun = args[0];
+
+    let fun_args = if numargs > 0 {
+        &mut args[1]
+    } else {
+        ptr::null_mut()
+    };
+
+    let count = unsafe { record_in_backtrace(fun, fun_args, numargs) };
+
+    unsafe { maybe_gc() };
+
+    unsafe {
+        if globals.debug_on_next_call {
+            do_debug_on_call(Qlambda, count);
+        }
+    }
+
+    unsafe { check_cons_list() };
+
+    let mut val = Qnil;
+
+    match resolve_fun(fun) {
+        Ok(LispFun::SubrFun(mut f)) => {
+            val = unsafe { funcall_subr(f.as_mut(), numargs, fun_args) };
+        }
+        Ok(LispFun::LambdaFun(f)) => {
+            val = unsafe { funcall_lambda(f, numargs, fun_args) };
+        }
+        Err(LispFunError::InvalidFun) => {
+            xsignal!(Qinvalid_function, fun);
+        }
+        Err(LispFunError::VoidFun) => {
+            xsignal!(Qvoid_function, fun);
+        }
+    }
+
+    unsafe { check_cons_list() };
+
+    current_thread.m_lisp_eval_depth = current_thread.m_lisp_eval_depth - 1;
+
+    unsafe {
+        if backtrace_debug_on_exit(current_thread.m_specpdl.offset(count)) {
+            val = call_debugger(list2(Qexit, val));
+        }
+
+        current_thread.m_specpdl_ptr = current_thread.m_specpdl_ptr.offset(-1);
+    }
+
+    val
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

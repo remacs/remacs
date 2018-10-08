@@ -6,22 +6,21 @@ use libc::{c_int, c_uchar, ptrdiff_t};
 use std;
 
 use remacs_macros::lisp_fn;
+
 use remacs_sys::EmacsInt;
-use remacs_sys::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, buffer_overflow, downcase,
-                 find_before_next_newline, find_field, find_newline, globals, insert,
-                 insert_and_inherit, make_string_from_bytes, maybe_quit, scan_newline_from_point,
-                 set_point, set_point_both};
+use remacs_sys::{buffer_overflow, downcase, find_before_next_newline, find_field, find_newline,
+                 globals, insert, insert_and_inherit, make_string_from_bytes, maybe_quit,
+                 scan_newline_from_point, set_point, set_point_both};
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 
 use buffers::{get_buffer, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
-use lisp::defsubr;
-use lisp::{LispNumber, LispObject};
-use marker::{marker_position_lisp, set_point_from_marker};
-use multibyte::{is_single_byte_char, unibyte_to_char};
-use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, Codepoint, LispStringRef,
-                MAX_MULTIBYTE_LENGTH};
+use lisp::{defsubr, LispNumber, LispObject};
+use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp,
+             set_point_from_marker};
+use multibyte::{is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
+                write_codepoint, Codepoint, LispStringRef, MAX_MULTIBYTE_LENGTH};
 use textprop::get_char_property;
 use threads::ThreadState;
 use util::clip_to_bounds;
@@ -58,7 +57,7 @@ pub fn buffer_size(buffer: LispObject) -> EmacsInt {
 #[lisp_fn]
 pub fn eobp() -> bool {
     let buffer_ref = ThreadState::current_buffer();
-    buffer_ref.zv() == buffer_ref.pt
+    buffer_ref.zv == buffer_ref.pt
 }
 
 /// Return t if point is at the beginning of the buffer.  If the
@@ -81,7 +80,7 @@ pub fn bolp() -> bool {
 #[lisp_fn]
 pub fn eolp() -> bool {
     let buffer_ref = ThreadState::current_buffer();
-    buffer_ref.pt == buffer_ref.zv() || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n'
+    buffer_ref.pt == buffer_ref.zv || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n'
 }
 
 /// Return the position of the gap, in the current buffer.
@@ -156,7 +155,7 @@ pub fn point_min() -> EmacsInt {
 /// restriction) is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max() -> EmacsInt {
-    ThreadState::current_buffer().zv() as EmacsInt
+    ThreadState::current_buffer().zv as EmacsInt
 }
 
 /// Set point to POSITION, a number or marker.
@@ -170,7 +169,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
     } else if let Some(num) = position.as_fixnum() {
         let mut cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -186,7 +185,7 @@ pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
     let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -343,10 +342,10 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         let p = pos
             .as_fixnum()
             .unwrap_or_else(|| wrong_type!(Qinteger_or_marker_p, pos)) as isize;
-        if p <= buffer_ref.begv || p > buffer_ref.zv() {
+        if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
-        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -377,10 +376,10 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         }
     } else {
         let p = pos.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
-        if p < buffer_ref.begv || p >= buffer_ref.zv() {
+        if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -491,7 +490,7 @@ pub fn line_beginning_position(n: Option<EmacsInt>) -> EmacsInt {
         LispNumber::Fixnum(point() as EmacsInt),
         n != 1,
         true,
-        LispObject::constant_nil(),
+        Qnil,
     )
 }
 
@@ -532,7 +531,7 @@ pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
         LispNumber::Fixnum(orig),
         n != 1,
         true,
-        LispObject::constant_nil(),
+        Qnil,
     )
 }
 
@@ -648,11 +647,11 @@ pub fn constrain_to_field(
         && (get_char_property(
             new_pos,
             Qfield,
-            LispObject::constant_nil()).is_not_nil()
+            Qnil).is_not_nil()
             || get_char_property(
                 old_pos,
                 Qfield,
-                LispObject::constant_nil()).is_not_nil()
+                Qnil).is_not_nil()
             // To recognize field boundaries, we must also look at the
             // previous positions; we could use `Fget_pos_property'
             // instead, but in itself that would fail inside non-sticky
@@ -661,9 +660,9 @@ pub fn constrain_to_field(
                 && get_char_property(
                     prev_new,
                     Qfield,
-                    LispObject::constant_nil()).is_not_nil())
+                    Qnil).is_not_nil())
             || (old_pos > begv
-                && get_char_property(prev_old, Qfield, LispObject::constant_nil()).is_not_nil()))
+                && get_char_property(prev_old, Qfield, Qnil).is_not_nil()))
         && (inhibit_capture_property.is_nil()
             // Field boundaries are again a problem; but now we must
             // decide the case exactly, so we need to call
@@ -678,11 +677,11 @@ pub fn constrain_to_field(
                     || get_char_property(
                         old_pos,
                         inhibit_capture_property,
-                        LispObject::constant_nil()).is_nil()
+                        Qnil).is_nil()
                     || get_char_property(
                         prev_old,
                         inhibit_capture_property,
-                        LispObject::constant_nil()).is_nil())))
+                        Qnil).is_nil())))
     // It is possible that NEW_POS is not within the same field as
     // OLD_POS; try to move NEW_POS so that it is.
     {
@@ -760,7 +759,7 @@ pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
         }
     }
 
-    unsafe { Some(buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) as EmacsInt) }
+    Some(buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) as EmacsInt)
 }
 
 /// Return t if two characters match, optionally ignoring case.

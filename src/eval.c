@@ -100,7 +100,6 @@ Lisp_Object backtrace_function (union specbinding *) EXTERNALLY_VISIBLE;
 union specbinding *backtrace_next (union specbinding *) EXTERNALLY_VISIBLE;
 union specbinding *backtrace_top (void) EXTERNALLY_VISIBLE;
 
-static Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
 static Lisp_Object apply_lambda (Lisp_Object, Lisp_Object, ptrdiff_t);
 static Lisp_Object lambda_arity (Lisp_Object);
 
@@ -174,7 +173,7 @@ backtrace_args (union specbinding *pdl)
   return pdl->bt.args;
 }
 
-static bool
+bool
 backtrace_debug_on_exit (union specbinding *pdl)
 {
   eassert (pdl->kind == SPECPDL_BACKTRACE);
@@ -340,7 +339,7 @@ call_debugger (Lisp_Object arg)
   return unbind_to (count, val);
 }
 
-static void
+void
 do_debug_on_call (Lisp_Object code, ptrdiff_t count)
 {
   debug_on_next_call = 0;
@@ -1909,82 +1908,6 @@ call8 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3,
   return CALLN (Ffuncall, fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 }
 
-DEFUN ("funcall", Ffuncall, Sfuncall, 1, MANY, 0,
-       doc: /* Call first argument as a function, passing remaining arguments to it.
-Return the value that function returns.
-Thus, (funcall \\='cons \\='x \\='y) returns (x . y).
-usage: (funcall FUNCTION &rest ARGUMENTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object fun, original_fun;
-  Lisp_Object funcar;
-  ptrdiff_t numargs = nargs - 1;
-  Lisp_Object val;
-  ptrdiff_t count;
-
-  maybe_quit ();
-
-  if (++lisp_eval_depth > max_lisp_eval_depth)
-    {
-      if (max_lisp_eval_depth < 100)
-	max_lisp_eval_depth = 100;
-      if (lisp_eval_depth > max_lisp_eval_depth)
-	error ("Lisp nesting exceeds `max-lisp-eval-depth'");
-    }
-
-  count = record_in_backtrace (args[0], &args[1], nargs - 1);
-
-  maybe_gc ();
-
-  if (debug_on_next_call)
-    do_debug_on_call (Qlambda, count);
-
-  check_cons_list ();
-
-  original_fun = args[0];
-
- retry:
-
-  /* Optimize for no indirection.  */
-  fun = original_fun;
-  if (SYMBOLP (fun) && !NILP (fun)
-      && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
-    fun = indirect_function (fun);
-
-  if (SUBRP (fun))
-    val = funcall_subr (XSUBR (fun), numargs, args + 1);
-  else if (COMPILEDP (fun) || MODULE_FUNCTIONP (fun))
-    val = funcall_lambda (fun, numargs, args + 1);
-  else
-    {
-      if (NILP (fun))
-	xsignal1 (Qvoid_function, original_fun);
-      if (!CONSP (fun))
-	xsignal1 (Qinvalid_function, original_fun);
-      funcar = XCAR (fun);
-      if (!SYMBOLP (funcar))
-	xsignal1 (Qinvalid_function, original_fun);
-      if (EQ (funcar, Qlambda)
-	  || EQ (funcar, Qclosure))
-	val = funcall_lambda (fun, numargs, args + 1);
-      else if (EQ (funcar, Qautoload))
-	{
-	  Fautoload_do_load (fun, original_fun, Qnil);
-	  check_cons_list ();
-	  goto retry;
-	}
-      else
-	xsignal1 (Qinvalid_function, original_fun);
-    }
-  check_cons_list ();
-  lisp_eval_depth--;
-  if (backtrace_debug_on_exit (specpdl + count))
-    val = call_debugger (list2 (Qexit, val));
-  specpdl_ptr--;
-  return val;
-}
-
-
 /* Apply a C subroutine SUBR to the NUMARGS evaluated arguments in ARG_VECTOR
    and return the result of evaluation.  */
 
@@ -2106,7 +2029,7 @@ apply_lambda (Lisp_Object fun, Lisp_Object args, ptrdiff_t count)
    FUN must be either a lambda-expression, a compiled-code object,
    or a module function.  */
 
-static Lisp_Object
+Lisp_Object
 funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
 		register Lisp_Object *arg_vector)
 {
@@ -3252,7 +3175,6 @@ alist of active lexical bindings.  */);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
   defsubr (&Sapply);
-  defsubr (&Sfuncall);
   defsubr (&Sfunc_arity);
   defsubr (&Srun_hook_with_args_until_success);
   defsubr (&Srun_hook_with_args_until_failure);

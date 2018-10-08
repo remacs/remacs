@@ -5005,13 +5005,6 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
 }
 
 
-DEFUN ("car-less-than-car", Fcar_less_than_car, Scar_less_than_car, 2, 2, 0,
-       doc: /* Return t if (car A) is numerically less than (car B).  */)
-  (Lisp_Object a, Lisp_Object b)
-{
-  return arithcompare (Fcar (a), Fcar (b), ARITH_LESS);
-}
-
 /* Build the complete list of annotations appropriate for writing out
    the text between START and END, by calling all the functions in
    write-region-annotate-functions and merging the lists they return.
@@ -5858,8 +5851,6 @@ behaves as if file names were encoded in `utf-8'.  */);
      multibyteness of the current buffer after inserting a file.  */
   DEFSYM (Qafter_insert_file_set_coding, "after-insert-file-set-coding");
 
-  DEFSYM (Qcar_less_than_car, "car-less-than-car");
-
   Fput (Qfile_error, Qerror_conditions,
 	Fpurecopy (list2 (Qfile_error, Qerror)));
   Fput (Qfile_error, Qerror_message,
@@ -6074,7 +6065,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_newer_than_file_p);
   defsubr (&Sinsert_file_contents);
   defsubr (&Swrite_region);
-  defsubr (&Scar_less_than_car);
   defsubr (&Sverify_visited_file_modtime);
   defsubr (&Svisited_file_modtime);
   defsubr (&Sset_visited_file_modtime);

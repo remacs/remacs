@@ -508,7 +508,7 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
 }
 
 /// Same as `BYTES_BY_CHAR_HEAD` macro in C.
-fn multibyte_length_by_head(byte: c_uchar) -> usize {
+pub fn multibyte_length_by_head(byte: c_uchar) -> usize {
     if byte & 0x80 == 0 {
         1
     } else if byte & 0x20 == 0 {

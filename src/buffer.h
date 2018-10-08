@@ -522,7 +522,7 @@ struct buffer
   /* Length of file when last read or saved.
      -1 means auto saving turned off because buffer shrank a lot.
      -2 means don't turn off auto saving if buffer shrinks.
-       (That value is used with buffer-swap-text.)
+     (That value is used with buffer-swap-text.)
      This is not in the  struct buffer_text
      because it's not used in indirect buffers at all.  */
   Lisp_Object save_length_;
@@ -894,6 +894,14 @@ struct buffer
      struct buffer_text because local variables have to be right in
      the struct buffer. So we copy it around in set_buffer_internal.  */
   Lisp_Object undo_list_;
+
+  /* Record one cached position found recently by
+     buf_charpos_to_bytepos or buf_bytepos_to_charpos.  */
+  ptrdiff_t cached_charpos;
+  ptrdiff_t cached_bytepos;
+
+  bool is_cached;
+  EMACS_INT cached_modiff;
 };
 
 INLINE bool
