@@ -4075,6 +4075,11 @@ extern ptrdiff_t find_before_next_newline (ptrdiff_t, ptrdiff_t,
 extern void syms_of_search (void);
 extern void clear_regexp_cache (void);
 
+Lisp_Object looking_at_1 (Lisp_Object string, bool posix);
+Lisp_Object match_limit (Lisp_Object num, bool beginningp);
+Lisp_Object search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count, int direction, int RE, bool posix);
+Lisp_Object string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start, bool posix);
+
 /* Defined in minibuf.c.  */
 
 extern Lisp_Object Vminibuffer_list;

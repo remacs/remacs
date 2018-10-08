@@ -270,7 +270,7 @@ compile_pattern (Lisp_Object pattern, struct re_registers *regp,
 }
 
 
-static Lisp_Object
+Lisp_Object
 looking_at_1 (Lisp_Object string, bool posix)
 {
   Lisp_Object val;
@@ -347,29 +347,8 @@ looking_at_1 (Lisp_Object string, bool posix)
 
   return val;
 }
-
-DEFUN ("looking-at", Flooking_at, Slooking_at, 1, 1, 0,
-       doc: /* Return t if text after point matches regular expression REGEXP.
-This function modifies the match data that `match-beginning',
-`match-end' and `match-data' access; save and restore the match
-data if you want to preserve them.  */)
-  (Lisp_Object regexp)
-{
-  return looking_at_1 (regexp, 0);
-}
-
-DEFUN ("posix-looking-at", Fposix_looking_at, Sposix_looking_at, 1, 1, 0,
-       doc: /* Return t if text after point matches regular expression REGEXP.
-Find the longest match, in accord with Posix regular expression rules.
-This function modifies the match data that `match-beginning',
-`match-end' and `match-data' access; save and restore the match
-data if you want to preserve them.  */)
-  (Lisp_Object regexp)
-{
-  return looking_at_1 (regexp, 1);
-}
 
-static Lisp_Object
+Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 		bool posix)
 {
@@ -437,34 +416,6 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 	}
 
   return make_number (string_byte_to_char (string, val));
-}
-
-DEFUN ("string-match", Fstring_match, Sstring_match, 2, 3, 0,
-       doc: /* Return index of start of first match for REGEXP in STRING, or nil.
-Matching ignores case if `case-fold-search' is non-nil.
-If third arg START is non-nil, start search at that index in STRING.
-For index of first char beyond the match, do (match-end 0).
-`match-end' and `match-beginning' also give indices of substrings
-matched by parenthesis constructs in the pattern.
-
-You can use the function `match-string' to extract the substrings
-matched by the parenthesis constructions in REGEXP. */)
-  (Lisp_Object regexp, Lisp_Object string, Lisp_Object start)
-{
-  return string_match_1 (regexp, string, start, 0);
-}
-
-DEFUN ("posix-string-match", Fposix_string_match, Sposix_string_match, 2, 3, 0,
-       doc: /* Return index of start of first match for REGEXP in STRING, or nil.
-Find the longest match, in accord with Posix regular expression rules.
-Case is ignored if `case-fold-search' is non-nil in the current buffer.
-If third arg START is non-nil, start search at that index in STRING.
-For index of first char beyond the match, do (match-end 0).
-`match-end' and `match-beginning' also give indices of substrings
-matched by parenthesis constructs in the pattern.  */)
-  (Lisp_Object regexp, Lisp_Object string, Lisp_Object start)
-{
-  return string_match_1 (regexp, string, start, 1);
 }
 
 /* Match REGEXP against STRING using translation table TABLE,
@@ -1015,7 +966,7 @@ find_before_next_newline (ptrdiff_t from, ptrdiff_t to,
 
 /* Subroutines of Lisp buffer search functions. */
 
-static Lisp_Object
+Lisp_Object
 search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror,
 		Lisp_Object count, int direction, int RE, bool posix)
 {
@@ -2176,157 +2127,7 @@ set_search_regs (ptrdiff_t beg_byte, ptrdiff_t nbytes)
   XSETBUFFER (last_thing_searched, current_buffer);
 }
 
-DEFUN ("search-backward", Fsearch_backward, Ssearch_backward, 1, 4,
-       "MSearch backward: ",
-       doc: /* Search backward from point for STRING.
-Set point to the beginning of the occurrence found, and return point.
-An optional second argument bounds the search; it is a buffer position.
-  The match found must not begin before that position.  A value of nil
-  means search to the beginning of the accessible portion of the buffer.
-Optional third argument, if t, means if fail just return nil (no error).
-  If not nil and not t, position at limit of search and return nil.
-Optional fourth argument COUNT, if a positive number, means to search
-  for COUNT successive occurrences.  If COUNT is negative, search
-  forward, instead of backward, for -COUNT occurrences.  A value of
-  nil means the same as 1.
-With COUNT positive, the match found is the COUNTth to last one (or
-  last, if COUNT is 1 or nil) in the buffer located entirely before
-  the origin of the search; correspondingly with COUNT negative.
 
-Search case-sensitivity is determined by the value of the variable
-`case-fold-search', which see.
-
-See also the functions `match-beginning', `match-end' and `replace-match'.  */)
-  (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
-{
-  return search_command (string, bound, noerror, count, -1, 0, 0);
-}
-
-DEFUN ("search-forward", Fsearch_forward, Ssearch_forward, 1, 4, "MSearch: ",
-       doc: /* Search forward from point for STRING.
-Set point to the end of the occurrence found, and return point.
-An optional second argument bounds the search; it is a buffer position.
-  The match found must not end after that position.  A value of nil
-  means search to the end of the accessible portion of the buffer.
-Optional third argument, if t, means if fail just return nil (no error).
-  If not nil and not t, move to limit of search and return nil.
-Optional fourth argument COUNT, if a positive number, means to search
-  for COUNT successive occurrences.  If COUNT is negative, search
-  backward, instead of forward, for -COUNT occurrences.  A value of
-  nil means the same as 1.
-With COUNT positive, the match found is the COUNTth one (or first,
-  if COUNT is 1 or nil) in the buffer located entirely after the
-  origin of the search; correspondingly with COUNT negative.
-
-Search case-sensitivity is determined by the value of the variable
-`case-fold-search', which see.
-
-See also the functions `match-beginning', `match-end' and `replace-match'.  */)
-  (Lisp_Object string, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
-{
-  return search_command (string, bound, noerror, count, 1, 0, 0);
-}
-
-DEFUN ("re-search-backward", Fre_search_backward, Sre_search_backward, 1, 4,
-       "sRE search backward: ",
-       doc: /* Search backward from point for regular expression REGEXP.
-This function is almost identical to `re-search-forward', except that
-by default it searches backward instead of forward, and the sign of
-COUNT also indicates exactly the opposite searching direction.
-
-See `re-search-forward' for details.  */)
-  (Lisp_Object regexp, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
-{
-  return search_command (regexp, bound, noerror, count, -1, 1, 0);
-}
-
-DEFUN ("re-search-forward", Fre_search_forward, Sre_search_forward, 1, 4,
-       "sRE search: ",
-       doc: /* Search forward from point for regular expression REGEXP.
-Set point to the end of the occurrence found, and return point.
-The optional second argument BOUND is a buffer position that bounds
-  the search.  The match found must not end after that position.  A
-  value of nil means search to the end of the accessible portion of
-  the buffer.
-The optional third argument NOERROR indicates how errors are handled
-  when the search fails.  If it is nil or omitted, emit an error; if
-  it is t, simply return nil and do nothing; if it is neither nil nor
-  t, move to the limit of search and return nil.
-The optional fourth argument COUNT is a number that indicates the
-  search direction and the number of occurrences to search for.  If it
-  is positive, search forward for COUNT successive occurrences; if it
-  is negative, search backward, instead of forward, for -COUNT
-  occurrences.  A value of nil means the same as 1.
-With COUNT positive/negative, the match found is the COUNTth/-COUNTth
-  one in the buffer located entirely after/before the origin of the
-  search.
-
-Search case-sensitivity is determined by the value of the variable
-`case-fold-search', which see.
-
-See also the functions `match-beginning', `match-end', `match-string',
-and `replace-match'.  */)
-  (Lisp_Object regexp, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
-{
-  return search_command (regexp, bound, noerror, count, 1, 1, 0);
-}
-
-DEFUN ("posix-search-backward", Fposix_search_backward, Sposix_search_backward, 1, 4,
-       "sPosix search backward: ",
-       doc: /* Search backward from point for match for regular expression REGEXP.
-Find the longest match in accord with Posix regular expression rules.
-Set point to the beginning of the occurrence found, and return point.
-An optional second argument bounds the search; it is a buffer position.
-  The match found must not begin before that position.  A value of nil
-  means search to the beginning of the accessible portion of the buffer.
-Optional third argument, if t, means if fail just return nil (no error).
-  If not nil and not t, position at limit of search and return nil.
-Optional fourth argument COUNT, if a positive number, means to search
-  for COUNT successive occurrences.  If COUNT is negative, search
-  forward, instead of backward, for -COUNT occurrences.  A value of
-  nil means the same as 1.
-With COUNT positive, the match found is the COUNTth to last one (or
-  last, if COUNT is 1 or nil) in the buffer located entirely before
-  the origin of the search; correspondingly with COUNT negative.
-
-Search case-sensitivity is determined by the value of the variable
-`case-fold-search', which see.
-
-See also the functions `match-beginning', `match-end', `match-string',
-and `replace-match'.  */)
-  (Lisp_Object regexp, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
-{
-  return search_command (regexp, bound, noerror, count, -1, 1, 1);
-}
-
-DEFUN ("posix-search-forward", Fposix_search_forward, Sposix_search_forward, 1, 4,
-       "sPosix search: ",
-       doc: /* Search forward from point for regular expression REGEXP.
-Find the longest match in accord with Posix regular expression rules.
-Set point to the end of the occurrence found, and return point.
-An optional second argument bounds the search; it is a buffer position.
-  The match found must not end after that position.  A value of nil
-  means search to the end of the accessible portion of the buffer.
-Optional third argument, if t, means if fail just return nil (no error).
-  If not nil and not t, move to limit of search and return nil.
-Optional fourth argument COUNT, if a positive number, means to search
-  for COUNT successive occurrences.  If COUNT is negative, search
-  backward, instead of forward, for -COUNT occurrences.  A value of
-  nil means the same as 1.
-With COUNT positive, the match found is the COUNTth one (or first,
-  if COUNT is 1 or nil) in the buffer located entirely after the
-  origin of the search; correspondingly with COUNT negative.
-
-Search case-sensitivity is determined by the value of the variable
-`case-fold-search', which see.
-
-See also the functions `match-beginning', `match-end', `match-string',
-and `replace-match'.  */)
-  (Lisp_Object regexp, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
-{
-  return search_command (regexp, bound, noerror, count, 1, 1, 1);
-}
-
 DEFUN ("replace-match", Freplace_match, Sreplace_match, 1, 5, 0,
        doc: /* Replace text matched by last search with NEWTEXT.
 Leave point at the end of the replacement text.
@@ -2774,7 +2575,7 @@ since only regular expressions have distinguished subexpressions.  */)
   return Qnil;
 }
 
-static Lisp_Object
+Lisp_Object
 match_limit (Lisp_Object num, bool beginningp)
 {
   EMACS_INT n;
@@ -2790,34 +2591,6 @@ match_limit (Lisp_Object num, bool beginningp)
     return Qnil;
   return (make_number ((beginningp) ? search_regs.start[n]
 		                    : search_regs.end[n]));
-}
-
-DEFUN ("match-beginning", Fmatch_beginning, Smatch_beginning, 1, 1, 0,
-       doc: /* Return position of start of text matched by last search.
-SUBEXP, a number, specifies which parenthesized expression in the last
-  regexp.
-Value is nil if SUBEXPth pair didn't match, or there were less than
-  SUBEXP pairs.
-Zero means the entire text matched by the whole regexp or whole string.
-
-Return value is undefined if the last search failed.  */)
-  (Lisp_Object subexp)
-{
-  return match_limit (subexp, 1);
-}
-
-DEFUN ("match-end", Fmatch_end, Smatch_end, 1, 1, 0,
-       doc: /* Return position of end of text matched by last search.
-SUBEXP, a number, specifies which parenthesized expression in the last
-  regexp.
-Value is nil if SUBEXPth pair didn't match, or there were less than
-  SUBEXP pairs.
-Zero means the entire text matched by the whole regexp or whole string.
-
-Return value is undefined if the last search failed.  */)
-  (Lisp_Object subexp)
-{
-  return match_limit (subexp, 0);
 }
 
 DEFUN ("match-data", Fmatch_data, Smatch_data, 0, 3, 0,
@@ -3426,19 +3199,7 @@ do not set the match data.  The proper way to use this variable
 is to bind it with `let' around a small expression.  */);
   Vinhibit_changing_match_data = Qnil;
 
-  defsubr (&Slooking_at);
-  defsubr (&Sposix_looking_at);
-  defsubr (&Sstring_match);
-  defsubr (&Sposix_string_match);
-  defsubr (&Ssearch_forward);
-  defsubr (&Ssearch_backward);
-  defsubr (&Sre_search_forward);
-  defsubr (&Sre_search_backward);
-  defsubr (&Sposix_search_forward);
-  defsubr (&Sposix_search_backward);
   defsubr (&Sreplace_match);
-  defsubr (&Smatch_beginning);
-  defsubr (&Smatch_end);
   defsubr (&Smatch_data);
   defsubr (&Sset_match_data);
   defsubr (&Sregexp_quote);

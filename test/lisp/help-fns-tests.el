@@ -51,7 +51,7 @@ Return first line of the output of (describe-function-1 FUNC)."
     (should (string-match regexp result))))
 
 (ert-deftest help-fns-test-interactive-built-in ()
-  (let ((regexp "an interactive built-in function in .C source code")
+  (let ((regexp "an interactive built-in function in `Rust source code'")
         (result (help-fns-tests--describe-function 're-search-forward)))
     (should (string-match regexp result))))
 

@@ -97,6 +97,7 @@ mod obarray;
 mod objects;
 mod process;
 mod remacs_sys;
+mod search;
 mod strings;
 mod symbols;
 mod syntax;
