@@ -4413,8 +4413,9 @@ extern char *x_get_keysym_name (int);
 
 #ifdef HAVE_LIBXML2
 /* Defined in xml.c.  */
-extern void syms_of_xml (void);
 extern void xml_cleanup_parser (void);
+bool init_libxml2_functions (void);
+Lisp_Object parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments, bool htmlp);
 #endif
 
 #ifdef HAVE_LCMS2

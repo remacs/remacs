@@ -86,7 +86,7 @@ libxml2_loaded_p (void)
 
 #endif	/* !WINDOWSNT */
 
-static bool
+bool
 init_libxml2_functions (void)
 {
 #ifdef WINDOWSNT
@@ -173,7 +173,7 @@ make_dom (xmlNode *node)
     return Qnil;
 }
 
-static Lisp_Object
+Lisp_Object
 parse_region (Lisp_Object start, Lisp_Object end, Lisp_Object base_url,
 	      Lisp_Object discard_comments, bool htmlp)
 {
@@ -264,43 +264,6 @@ xml_cleanup_parser (void)
 {
   if (libxml2_loaded_p ())
     xmlCleanupParser ();
-}
-
-DEFUN ("libxml-parse-html-region", Flibxml_parse_html_region,
-       Slibxml_parse_html_region,
-       2, 4, 0,
-       doc: /* Parse the region as an HTML document and return the parse tree.
-If BASE-URL is non-nil, it is used to expand relative URLs.
-If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
-{
-  if (init_libxml2_functions ())
-    return parse_region (start, end, base_url, discard_comments, true);
-  return Qnil;
-}
-
-DEFUN ("libxml-parse-xml-region", Flibxml_parse_xml_region,
-       Slibxml_parse_xml_region,
-       2, 4, 0,
-       doc: /* Parse the region as an XML document and return the parse tree.
-If BASE-URL is non-nil, it is used to expand relative URLs.
-If DISCARD-COMMENTS is non-nil, all HTML comments are discarded. */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object base_url, Lisp_Object discard_comments)
-{
-  if (init_libxml2_functions ())
-    return parse_region (start, end, base_url, discard_comments, false);
-  return Qnil;
-}
-
-
-/***********************************************************************
-			    Initialization
- ***********************************************************************/
-void
-syms_of_xml (void)
-{
-  defsubr (&Slibxml_parse_html_region);
-  defsubr (&Slibxml_parse_xml_region);
 }
 
 #endif /* HAVE_LIBXML2 */
