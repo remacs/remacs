@@ -429,7 +429,7 @@ do_casify_multibyte_region (struct casing_context *ctx,
 /* flag is CASE_UP, CASE_DOWN or CASE_CAPITALIZE or CASE_CAPITALIZE_UP.  b and
    e specify range of buffer to operate on.  Return character position of the
    end of the region after changes.  */
-static ptrdiff_t
+ptrdiff_t
 casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
 {
   ptrdiff_t added;
@@ -474,16 +474,5 @@ Lisp_Object
 casify_region_nil (enum case_action flag, Lisp_Object b, Lisp_Object e)
 {
   casify_region(flag, b, e);
-  return Qnil;
-}
-
-Lisp_Object
-casify_word (enum case_action flag, Lisp_Object arg)
-{
-  CHECK_NUMBER (arg);
-  ptrdiff_t farend = scan_words (PT, XINT (arg));
-  if (!farend)
-    farend = XINT (arg) <= 0 ? BEGV : ZV;
-  SET_PT (casify_region (flag, make_number (PT), make_number (farend)));
   return Qnil;
 }
