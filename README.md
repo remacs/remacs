@@ -142,11 +142,9 @@ more Emacs-y.
 ### Requirements
 
 1. You will need
-   [Rust installed](https://www.rust-lang.org/en-US/install.html). Remacs
-   uses unstable Rust features, so you will need to use nightly. The
-   file `rust-toolchain` indicates the correct version to install;
-   rustup will use that version as long as you are in the Remacs
-   repository
+   [Rust installed](https://www.rust-lang.org/en-US/install.html). 
+   The file `rust-toolchain` indicates the version that gets installed.
+   This happens automatically, so don't override the toolchain manually.
 
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like `apt install build-essential automake clang`. On
