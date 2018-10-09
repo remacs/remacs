@@ -1207,19 +1207,7 @@ To return to ordinary Occur mode, use \\[occur-cease-edit]."
 
 (defun occur-revert-function (_ignore1 _ignore2)
   "Handle `revert-buffer' for Occur mode buffers."
-  (if (cdr (nth 2 occur-revert-arguments)) ; multi-occur
-      (apply 'occur-1 (append occur-revert-arguments (list (buffer-name))))
-    (pcase-let ((`(,region-start ,region-end ,orig-line ,buffer)
-                 (occur--parse-occur-buffer))
-                (regexp (car occur-revert-arguments)))
-      (if (not (or region-start region-end))
-          (apply 'occur-1 (append occur-revert-arguments (list (buffer-name))))
-        (with-current-buffer buffer
-          (when (wholenump orig-line)
-            (goto-char (point-min))
-            (forward-line (1- orig-line)))
-          (save-excursion
-            (occur regexp nil (list (cons region-start region-end)))))))))
+  (apply #'occur-1 (append occur-revert-arguments (list (buffer-name)))))
 
 (defun occur-mode-find-occurrence ()
   (let ((pos (get-text-property (point) 'occur-target)))
