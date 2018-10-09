@@ -1121,6 +1121,11 @@ for this is to reveal context in an outline-mode when the occurrence is hidden."
   :type 'hook
   :group 'matching)
 
+(defun occur--garbage-collect-revert-args ()
+  (dolist (boo (nth 2 occur-revert-arguments))
+    (when (overlayp boo) (delete-overlay boo)))
+  (kill-local-variable 'occur-revert-arguments))
+
 (put 'occur-mode 'mode-class 'special)
 (define-derived-mode occur-mode special-mode "Occur"
   "Major mode for output from \\[occur].
@@ -1130,6 +1135,7 @@ Alternatively, click \\[occur-mode-mouse-goto] on an item to go to it.
 
 \\{occur-mode-map}"
   (setq-local revert-buffer-function #'occur-revert-function)
+  (add-hook 'kill-buffer-hook #'occur--garbage-collect-revert-args nil t)
   (setq next-error-function #'occur-next-error))
 
 
@@ -1411,10 +1417,6 @@ invoke `occur'."
                    (or unique-p (not interactive-p)))))
 
 ;; Region limits when `occur' applies on a region.
-(defvar occur--region-start nil)
-(defvar occur--region-end nil)
-(defvar occur--region-start-line nil)
-(defvar occur--orig-line nil)
 (defvar occur--final-pos nil)
 
 (defun occur (regexp &optional nlines region)
@@ -1624,6 +1626,7 @@ See also `multi-occur'."
 			       42)
 			    (window-width))
 			 "" (occur-regexp-descr regexp))))
+          (occur--garbage-collect-revert-args)
 	  (setq occur-revert-arguments (list regexp nlines bufs))
           (if (= count 0)
               (kill-buffer occur-buf)
@@ -1659,26 +1662,27 @@ See also `multi-occur'."
                 ;; begin searching in the buffer
 		(goto-char (if (overlayp boo) (overlay-start boo) (point-min)))
                 (forward-line 0)
-	        (let ((limit (if (overlayp boo) (overlay-end boo) (point-max)))
-		      (curr-line (line-number-at-pos)) ; line count
-		      (orig-line (if (not (overlayp boo)) 1
-                                   (line-number-at-pos
-                                    (overlay-get boo 'occur--orig-point))))
-		      (orig-line-shown-p)
-		      (prev-line nil)        ; line number of prev match endpt
-		      (prev-after-lines nil) ; context lines of prev match
-		      (matchbeg 0)
-		      (origpt nil)
-		      (begpt nil)
-		      (endpt nil)
-		      (marker nil)
-		      (curstring "")
-		      (ret nil)
-	              ;; The following binding is for when case-fold-search
-	              ;; has a local binding in the original buffer, in which
-	              ;; case we cannot bind it globally and let that have
-	              ;; effect in every buffer we search.
-                      (case-fold-search case-fold))
+	        (let* ((limit (if (overlayp boo) (overlay-end boo) (point-max)))
+                       (start-line (line-number-at-pos))
+		       (curr-line start-line) ; line count
+		       (orig-line (if (not (overlayp boo)) 1
+                                    (line-number-at-pos
+                                     (overlay-get boo 'occur--orig-point))))
+		       (orig-line-shown-p)
+		       (prev-line nil)        ; line number of prev match endpt
+		       (prev-after-lines nil) ; context lines of prev match
+		       (matchbeg 0)
+		       (origpt nil)
+		       (begpt nil)
+		       (endpt nil)
+		       (marker nil)
+		       (curstring "")
+		       (ret nil)
+	               ;; The following binding is for when case-fold-search
+	               ;; has a local binding in the original buffer, in which
+	               ;; case we cannot bind it globally and let that have
+	               ;; effect in every buffer we search.
+                       (case-fold-search case-fold))
 	          (or coding
 		      ;; Set CODING only if the current buffer locally
 		      ;; binds buffer-file-coding-system.
@@ -1792,7 +1796,7 @@ See also `multi-occur'."
 				(setq orig-line-shown-p t)
 				(save-excursion
 				  (goto-char (point-min))
-				  (forward-line (- orig-line (or occur--region-start-line 1)))
+				  (forward-line (- orig-line start-line 1))
 				  (occur-engine-line (line-beginning-position)
 						     (line-end-position) keep-props)))))
 		        ;; Actually insert the match display data
@@ -1830,7 +1834,7 @@ See also `multi-occur'."
 		    (let ((orig-line-str
 			   (save-excursion
 			     (goto-char (point-min))
-			     (forward-line (- orig-line (or occur--region-start-line 1)))
+			     (forward-line (- orig-line start-line 1))
 			     (occur-engine-line (line-beginning-position)
 						(line-end-position) keep-props))))
 		      (add-face-text-property
