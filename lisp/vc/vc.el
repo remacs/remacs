@@ -834,7 +834,6 @@ See `run-hooks'."
   :type 'hook
   :group 'vc)
 
-;;;###autoload
 (defcustom vc-retrieve-tag-hook nil
   "Normal hook (list of functions) run after retrieving a tag."
   :type 'hook
