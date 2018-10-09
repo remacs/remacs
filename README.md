@@ -184,9 +184,21 @@ To spin up the environment run
 docker-compose up -d
 ```
 
-First time you run this command Docker will build the image.  After that any subsequent startups will happen in less than a second.
+The first time you run this command, Docker will build the image. After
+that any subsequent startups will happen in less than a second. If
+this command fails because of needing absolute paths, make sure to set
+the PWD environment variable before calling the command like so:
 
-The working directory with remacs will be mounted under the same path in the container so editing the files on your host machine will automatically be reflected inside the container.   To build remacs use the steps from [Building Remacs](#building-remacs) prefixed with `docker-compose exec remacs`, this will ensure the commands are executed inside the container.
+```shell
+PWD=$(pwd) docker-compose up -d
+```
+
+The working directory with remacs will be mounted under the same path
+in the container so editing the files on your host machine will
+automatically be reflected inside the container. To build remacs use
+the steps from [Building Remacs](#building-remacs) prefixed with
+`docker-compose exec remacs`, this will ensure the commands are
+executed inside the container.
 
 ### Building Remacs
 
