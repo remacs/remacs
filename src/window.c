@@ -258,13 +258,8 @@ wget_pseudo_window_p(struct window *w)
 bool
 window_menu_bar_p(struct window *W)
 {
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
-  return (WINDOWP (WINDOW_XFRAME (W)->menu_bar_window)
-          && (W) == XWINDOW (WINDOW_XFRAME (W)->menu_bar_window));
-#else
 /* No menu bar windows if X toolkit is in use.  */
   return false;
-#endif
 }
 
 /* True if W is a tool bar window.  */
