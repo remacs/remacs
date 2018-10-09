@@ -1226,14 +1226,14 @@ the user called `occur'."
     (pcase-let ((`(,region-start ,region-end ,orig-line ,buffer)
                  (occur--parse-occur-buffer))
                 (regexp (car occur-revert-arguments)))
-      (with-current-buffer buffer
-        (when (wholenump orig-line)
-          (goto-char (point-min))
-          (forward-line (1- orig-line)))
-        (save-excursion
-          (if (or region-start region-end)
-              (occur regexp nil (list (cons region-start region-end)))
-            (apply 'occur-1 (append occur-revert-arguments (list (buffer-name))))))))))
+      (if (not (or region-start region-end))
+          (apply 'occur-1 (append occur-revert-arguments (list (buffer-name))))
+        (with-current-buffer buffer
+          (when (wholenump orig-line)
+            (goto-char (point-min))
+            (forward-line (1- orig-line)))
+          (save-excursion
+            (occur regexp nil (list (cons region-start region-end)))))))))
 
 (defun occur-mode-find-occurrence ()
   (let ((pos (get-text-property (point) 'occur-target)))
