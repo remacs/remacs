@@ -1588,19 +1588,6 @@ In this case, zeros are shifted in on the left.  */)
   return ash_lsh_impl (value, count, true);
 }
 
-DEFUN ("byteorder", Fbyteorder, Sbyteorder, 0, 0, 0,
-       doc: /* Return the byteorder for the machine.
-Returns 66 (ASCII uppercase B) for big endian machines or 108 (ASCII
-lowercase l) for small endian machines.  */
-       attributes: const)
-  (void)
-{
-  unsigned i = 0x04030201;
-  int order = *(char *)&i == 1 ? 108 : 66;
-
-  return make_number (order);
-}
-
 /* Because we round up the bool vector allocate size to word_size
    units, we can safely read past the "end" of the vector in the
    operations below.  These extra bits are always zero.  */
@@ -2141,7 +2128,6 @@ syms_of_data (void)
   defsubr (&Sstring_to_number);
   defsubr (&Slsh);
   defsubr (&Sash);
-  defsubr (&Sbyteorder);
 #ifdef HAVE_MODULES
   defsubr (&Suser_ptrp);
 #endif

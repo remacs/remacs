@@ -331,6 +331,18 @@ pub fn subr_name(subr: LispSubrRef) -> LispObject {
     unsafe { build_string(name) }
 }
 
+/// Return the byteorder for the machine.
+/// Returns 66 (ASCII uppercase B) for big endian machines or 108
+/// (ASCII lowercase l) for small endian machines.
+#[lisp_fn]
+pub fn byteorder() -> u8 {
+    if cfg!(endian = "big") {
+        b'B'
+    } else {
+        b'l'
+    }
+}
+
 /***********************************************************************
                 Getting and Setting Values of Symbols
  ***********************************************************************/
