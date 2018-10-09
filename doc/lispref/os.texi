@@ -1766,7 +1766,7 @@ special object that stores the information about the next invocation
 times and the function to invoke.
 
 @defun timerp object
-This predicate function returns non-@code{nil} of @code{object} is a
+This predicate function returns non-@code{nil} if @code{object} is a
 timer.
 @end defun
 
