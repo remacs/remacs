@@ -106,6 +106,7 @@ mod time;
 mod util;
 mod vectors;
 mod windows;
+mod xml;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
