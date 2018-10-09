@@ -185,7 +185,7 @@ impl LispWindowRef {
         self.is_live()
             && !self.is_minibuffer()
             && !self.is_pseudo()
-            && !window_mode_line_format.eq(Qnone)
+            && window_mode_line_format.ne(Qnone)
             && (window_mode_line_format.is_not_nil() || self
                 .contents
                 .as_buffer_or_error()
@@ -215,7 +215,7 @@ impl LispWindowRef {
         self.is_live()
             && !self.is_minibuffer()
             && !self.is_pseudo()
-            && !window_header_line_format.eq(Qnone)
+            && window_header_line_format.ne(Qnone)
             && (window_header_line_format.is_not_nil()
                 || (self.contents.as_buffer_or_error().header_line_format_).is_not_nil())
             && self.pixel_height > height
@@ -666,7 +666,7 @@ pub fn window_list(
         .as_window()
         .unwrap_or_else(|| panic!("Invalid window reference."));
 
-    if !f_obj.eq(w_ref.frame) {
+    if f_obj.ne(w_ref.frame) {
         error!("Window is on a different frame");
     }
 

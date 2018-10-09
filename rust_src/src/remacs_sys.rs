@@ -136,6 +136,7 @@ extern "C" {
     pub fn wset_display_table(w: *mut Lisp_Window, val: LispObject);
     pub fn drop_overlay(b: *mut Lisp_Buffer, ov: *mut Lisp_Overlay);
     pub fn unchain_both(b: *mut Lisp_Buffer, ov: LispObject);
+    pub fn emacs_get_tty_pgrp(p: *mut Lisp_Process) -> libc::pid_t;
 }
 
 // Largest and smallest numbers that can be represented as fixnums in

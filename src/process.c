@@ -6141,7 +6141,7 @@ set up yet, this function will block until socket setup has completed.  */)
 
 /* Return the foreground process group for the tty/pty that
    the process P uses.  */
-static pid_t
+pid_t
 emacs_get_tty_pgrp (struct Lisp_Process *p)
 {
   pid_t gid = -1;
@@ -6165,34 +6165,6 @@ emacs_get_tty_pgrp (struct Lisp_Process *p)
   return gid;
 }
 
-DEFUN ("process-running-child-p", Fprocess_running_child_p,
-       Sprocess_running_child_p, 0, 1, 0,
-       doc: /* Return non-nil if PROCESS has given the terminal to a
-child.  If the operating system does not make it possible to find out,
-return t.  If we can find out, return the numeric ID of the foreground
-process group.  */)
-  (Lisp_Object process)
-{
-  /* Initialize in case ioctl doesn't exist or gives an error,
-     in a way that will cause returning t.  */
-  Lisp_Object proc = get_process (process);
-  struct Lisp_Process *p = XPROCESS (proc);
-
-  if (!EQ (p->type, Qreal))
-    error ("Process %s is not a subprocess",
-	   SDATA (p->name));
-  if (p->infd < 0)
-    error ("Process %s is not active",
-	   SDATA (p->name));
-
-  pid_t gid = emacs_get_tty_pgrp (p);
-
-  if (gid == p->pid)
-    return Qnil;
-  if (gid != -1)
-    return make_number (gid);
-  return Qt;
-}
 
 /* Send a signal number SIGNO to PROCESS.
    If CURRENT_GROUP is t, that means send to the process group
@@ -7596,7 +7568,6 @@ returns non-`nil'.  */);
   defsubr (&Squit_process);
   defsubr (&Sstop_process);
   defsubr (&Scontinue_process);
-  defsubr (&Sprocess_running_child_p);
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);
   defsubr (&Sprocess_type);
