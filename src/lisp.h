@@ -4096,8 +4096,8 @@ extern void syms_of_callint (void);
 
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 Lisp_Object casify_object (enum case_action flag, Lisp_Object obj);
+ptrdiff_t casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e);
 Lisp_Object casify_region_nil (enum case_action flag, Lisp_Object b, Lisp_Object e);
-Lisp_Object casify_word (enum case_action flag, Lisp_Object obj);
 extern void syms_of_casefiddle (void);
 extern void keys_of_casefiddle (void);
 
