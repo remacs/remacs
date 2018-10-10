@@ -548,12 +548,10 @@ impl FileAttrs {
             self.use_c_internal = true;
 
             return Ok(());
+        } else if ft.is_dir() {
+            self.ftype_is_dir = true;
         } else {
-            if ft.is_dir() {
-                self.ftype_is_dir = true;
-            } else {
-                self.ftype_is_dir = false;
-            }
+            self.ftype_is_dir = false;
         }
 
         self.nlinks = md.nlink();
@@ -623,12 +621,10 @@ impl FileAttrs {
         //  0. t for directory, string (name linked to) for symbolic link, or nil.
         if self.ftype_is_sym {
             attrs.push(self.ftype_sym_path.to_owned().to_bstring());
+        } else if self.ftype_is_dir {
+            attrs.push(Qt);
         } else {
-            if self.ftype_is_dir {
-                attrs.push(Qt);
-            } else {
-                attrs.push(Qnil);
-            }
+            attrs.push(Qnil);
         }
 
         //  1. Number of links to file.
