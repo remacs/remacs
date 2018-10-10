@@ -25,7 +25,6 @@ fn main() {
     let mut hash_input: String = String::with_capacity(1024);
     for path in processed_paths {
         for entry in ignore::Walk::new(path)
-            .into_iter()
             .filter(|e| {
                 let entry = e.as_ref().unwrap();
                 let filename = entry.file_name().to_string_lossy();

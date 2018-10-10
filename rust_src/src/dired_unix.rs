@@ -589,11 +589,11 @@ impl FileAttrs {
         }
 
         self.atime_s = md.atime();
-        self.atime_ns = c_long::from(md.atime_nsec());
+        self.atime_ns = md.atime_nsec();
         self.mtime_s = md.mtime();
-        self.mtime_ns = c_long::from(md.mtime_nsec());
+        self.mtime_ns = md.mtime_nsec();
         self.ctime_s = md.ctime();
-        self.ctime_ns = c_long::from(md.ctime_nsec());
+        self.ctime_ns = md.ctime_nsec();
 
         self.size = md.size();
 
