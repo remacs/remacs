@@ -186,15 +186,11 @@ pub fn read_from_minibuffer(
         get_keymap(keymap, true, false)
     };
 
-    let mut histvar: LispObject;
-    let mut histpos: LispObject;
-    if hist.is_symbol() {
-        histvar = hist;
-        histpos = Qnil;
+    let (mut histvar, mut histpos) = if hist.is_symbol() {
+        (hist, Qnil)
     } else {
-        histvar = car_safe(hist);
-        histpos = cdr_safe(hist);
-    }
+        (car_safe(hist), cdr_safe(hist))
+    };
 
     if histvar.is_nil() {
         histvar = Qminibuffer_history

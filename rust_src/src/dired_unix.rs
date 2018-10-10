@@ -427,13 +427,14 @@ pub extern "C" fn directory_files_internal(
         id_format,
     );
 
-    let mut dd = DirData::Files { fnames: Vec::new() };
-    if attrs {
-        dd = DirData::FilesAttrs {
+    let mut dd = if attrs {
+        DirData::FilesAttrs {
             fnames: Vec::new(),
             fattrs: Vec::new(),
-        };
-    }
+        }
+    } else {
+        DirData::Files { fnames: Vec::new() }
+    };
 
     directory_files_core(&dr, &mut dd)
 }
