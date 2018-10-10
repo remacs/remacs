@@ -438,10 +438,7 @@ impl LispBufferLocalValueRef {
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
 pub fn buffer_list(frame: LispObject) -> LispObject {
-    let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }
-        .iter_cars_safe()
-        .map(|o| cdr(o))
-        .collect();
+    let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }.iter_cars_safe().map(cdr).collect();
 
     match frame.as_frame() {
         None => Flist(buffers.len() as isize, buffers.as_mut_ptr()),
