@@ -145,7 +145,6 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                         ::remacs_sys::xmalloc(::std::mem::size_of::<::remacs_sys::Lisp_Subr>())
                         as *mut ::remacs_sys::Lisp_Subr;
                     ::std::ptr::copy_nonoverlapping(&subr, ptr, 1);
-                    ::std::mem::forget(subr);
                     ::lisp::ExternalPtr::new(ptr)
                 }
             };

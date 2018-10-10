@@ -45,7 +45,7 @@ const numname: [(&str, c_int); 30] = [
 ];
 
 #[cfg(target_os = "macos")]
-const numname: [(&'static str, c_int); 27] = [
+const numname: [(&str, c_int); 27] = [
     ("HUP", libc::SIGHUP),
     ("INT", libc::SIGINT),
     ("QUIT", libc::SIGQUIT),

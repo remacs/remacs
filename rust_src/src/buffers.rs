@@ -696,10 +696,8 @@ pub extern "C" fn nsberror(spec: LispObject) -> ! {
 #[lisp_fn]
 pub fn overlay_lists() -> LispObject {
     let list_overlays = |ol: LispOverlayRef| -> LispObject {
-        let ol_list = ol
-            .iter()
-            .fold(Qnil, |accum, n| unsafe { Fcons(n.as_lisp_obj(), accum) });
-        ol_list
+        ol.iter()
+            .fold(Qnil, |accum, n| unsafe { Fcons(n.as_lisp_obj(), accum) })
     };
 
     let cur_buf = ThreadState::current_buffer();

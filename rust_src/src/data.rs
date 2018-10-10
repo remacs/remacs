@@ -90,7 +90,7 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
 /// for example, (type-of 1) returns `integer'.
 #[lisp_fn]
 pub fn type_of(object: LispObject) -> LispObject {
-    let ty = match object.get_type() {
+    match object.get_type() {
         Lisp_Type::Lisp_Cons => Qcons,
         Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => Qinteger,
         Lisp_Type::Lisp_Symbol => Qsymbol,
@@ -143,13 +143,12 @@ pub fn type_of(object: LispObject) -> LispObject {
                             return v.get_unchecked(1);
                         }
                     }
-                    return t;
+                    t
                 },
                 _ => Qnone,
             }
         }
-    };
-    ty
+    }
 }
 
 #[lisp_fn]
@@ -487,26 +486,22 @@ pub extern "C" fn store_symval_forwarding(
         Lisp_Fwd_Buffer_Obj => {
             let predicate = unsafe { (*valcontents).u_buffer_objfwd.predicate };
 
-            if newval.is_not_nil() {
-                if predicate.is_symbol() {
-                    let mut prop = unsafe { Fget(predicate, Qchoice) };
-                    if prop.is_not_nil() {
-                        if memq(newval, prop).is_nil() {
-                            unsafe { wrong_choice(prop, newval) };
+            if newval.is_not_nil() && predicate.is_symbol() {
+                let mut prop = unsafe { Fget(predicate, Qchoice) };
+                if prop.is_not_nil() {
+                    if memq(newval, prop).is_nil() {
+                        unsafe { wrong_choice(prop, newval) };
+                    }
+                } else {
+                    prop = unsafe { Fget(predicate, Qrange) };
+                    if prop.is_cons() {
+                        let (min, max) = prop.as_cons_or_error().as_tuple();
+                        let args = [min, newval, max];
+                        if !newval.is_number() || leq(&args) {
+                            unsafe { wrong_range(min, max, newval) };
                         }
-                    } else {
-                        prop = unsafe { Fget(predicate, Qrange) };
-                        if prop.is_cons() {
-                            let (min, max) = prop.as_cons_or_error().as_tuple();
-                            let args = [min, newval, max];
-                            if !newval.is_number() || leq(&args) {
-                                unsafe { wrong_range(min, max, newval) };
-                            }
-                        } else if predicate.is_function() {
-                            if call!(predicate, newval).is_nil() {
-                                wrong_type!(predicate, newval);
-                            }
-                        }
+                    } else if predicate.is_function() && call!(predicate, newval).is_nil() {
+                        wrong_type!(predicate, newval);
                     }
                 }
             }

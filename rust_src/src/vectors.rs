@@ -181,7 +181,7 @@ macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
         impl $type {
             #[inline]
-            pub fn len(&self) -> usize {
+            pub fn len(self) -> usize {
                 (self.header.size & ($size_mask as isize)) as usize
             }
 
@@ -192,7 +192,7 @@ macro_rules! impl_vectorlike_ref {
             #[inline]
             pub fn as_slice(&self) -> &[LispObject] {
                 let l = self.len();
-                unsafe { &self.contents.as_slice(l) }
+                unsafe { self.contents.as_slice(l) }
             }
 
             #[inline]
@@ -202,13 +202,13 @@ macro_rules! impl_vectorlike_ref {
             }
 
             #[inline]
-            pub fn get(&self, idx: usize) -> LispObject {
+            pub fn get(self, idx: usize) -> LispObject {
                 assert!(idx < self.len());
                 unsafe { self.get_unchecked(idx) }
             }
 
             #[inline]
-            pub unsafe fn get_unchecked(&self, idx: usize) -> LispObject {
+            pub unsafe fn get_unchecked(self, idx: usize) -> LispObject {
                 self.as_slice()[idx]
             }
 
@@ -302,23 +302,23 @@ impl LispBoolVecRef {
     }
 
     #[inline]
-    pub fn len(&self) -> usize {
+    pub fn len(self) -> usize {
         self.size as usize
     }
 
     #[inline]
-    unsafe fn get_bit(&self, idx: usize) -> bool {
+    unsafe fn get_bit(self, idx: usize) -> bool {
         let limb = self.as_slice()[idx / BITS_PER_BITS_WORD as usize];
         limb & (1 << (idx % BITS_PER_BITS_WORD as usize)) != 0
     }
 
     #[inline]
-    pub fn get(&self, idx: usize) -> LispObject {
+    pub fn get(self, idx: usize) -> LispObject {
         assert!(idx < self.len());
         unsafe { self.get_unchecked(idx) }
     }
 
-    pub unsafe fn get_unchecked(&self, idx: usize) -> LispObject {
+    pub unsafe fn get_unchecked(self, idx: usize) -> LispObject {
         LispObject::from_bool(self.get_bit(idx))
     }
 
