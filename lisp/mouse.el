@@ -171,7 +171,10 @@ items `Turn Off' and `Help'."
                 (mouse-menu-non-singleton menu)
               (if (fboundp mm-fun)      ; bug#20201
                   `(keymap
-                    ,indicator
+                    ,(format "%s - %s" indicator
+			     (capitalize
+			      (replace-regexp-in-string
+			       "-" " " (format "%S" minor-mode))))
                     (turn-off menu-item "Turn off minor mode" ,mm-fun)
                     (help menu-item "Help for minor mode"
                           (lambda () (interactive)
