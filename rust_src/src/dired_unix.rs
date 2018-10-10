@@ -274,9 +274,9 @@ fn match_re_maybe(f: String, match_re: Option<LispObject>, re: &RegEx) -> Option
 
 fn fnames_to_list(fnames: &mut Vec<String>, dname: String, full: &FullPath) -> LispObject {
     match *full {
-        FullPath::No => list(&mut fnames.iter().map(|x| x.to_bstring()).collect::<Vec<_>>()),
+        FullPath::No => list(&fnames.iter().map(|x| x.to_bstring()).collect::<Vec<_>>()),
         FullPath::Yes => list(
-            &mut fnames
+            &fnames
                 .iter()
                 .map(|x| x.to_full(dname.to_owned()))
                 .map(|x| x.to_bstring())
@@ -293,7 +293,7 @@ fn fattrs_to_list(
 ) -> LispObject {
     match *full {
         FullPath::No => list(
-            &mut fnames
+            &fnames
                 .iter()
                 .map(|x| x.to_bstring())
                 .zip(fattrs.to_owned())
@@ -301,7 +301,7 @@ fn fattrs_to_list(
                 .collect::<Vec<_>>(),
         ),
         FullPath::Yes => list(
-            &mut fnames
+            &fnames
                 .iter()
                 .map(|x| x.to_full(dname.to_owned()))
                 .map(|x| x.to_bstring())
@@ -688,7 +688,7 @@ impl FileAttrs {
         //     integer can hold, this is a cons cell, similar to the inode number.
         attrs.push(LispObject::from_natnum(self.dev));
 
-        list(&mut attrs)
+        list(&attrs)
     }
 }
 
@@ -751,5 +751,5 @@ pub fn get_users() -> LispObject {
         unames.push(get_user_real_login_name());
     }
 
-    list(&mut unames)
+    list(&unames)
 }
