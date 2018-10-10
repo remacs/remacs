@@ -254,8 +254,11 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
         .map_or(Qnil, |b| b.as_lisp_obj());
 
     set_marker(new, marker, buffer_or_nil);
-    new.as_marker()
-        .map(|mut m| m.set_insertion_type(itype.is_not_nil()));
+
+    if let Some(mut m) = new.as_marker() {
+        m.set_insertion_type(itype.is_not_nil())
+    }
+
     new
 }
 
