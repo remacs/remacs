@@ -306,7 +306,7 @@ fn pset_filter(mut process: LispProcessRef, val: LispObject) -> LispObject {
 }
 
 fn set_process_filter_masks(process: LispProcessRef) -> () {
-    if !(process.infd == -1) && process.filter.eq(Qt) {
+    if process.infd != -1 && process.filter.eq(Qt) {
         if process.status.ne(Qlisten) {
             unsafe { delete_read_fd(process.infd) };
         // Network or serial process not stopped:

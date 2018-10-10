@@ -551,7 +551,7 @@ impl FileAttrs {
 
         //  2. File uid as a string or a number.  If a string value cannot be
         //  looked up, a numeric value, either an integer or a float, is returned.
-        self.idf_is_int = !("string" == self.id_format);
+        self.idf_is_int = "string" != self.id_format;
         if self.idf_is_int {
             self.idf_uid = md.uid();
             self.idf_gid = md.gid();
