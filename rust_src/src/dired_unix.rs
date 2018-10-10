@@ -229,11 +229,11 @@ fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>)
     }
 
     let dot = String::from(".");
-    if let Some(_) = match_re_maybe(dot.to_owned(), match_re, &re) {
+    if match_re_maybe(dot.to_owned(), match_re, &re).is_some() {
         fnames.push(dot);
     }
     let dotdot = String::from("..");
-    if let Some(_) = match_re_maybe(dotdot.to_owned(), match_re, &re) {
+    if match_re_maybe(dotdot.to_owned(), match_re, &re).is_some() {
         fnames.push(dotdot);
     }
 
@@ -244,7 +244,7 @@ fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>)
         let f_dec_lo = unsafe { decode_file_name(f_enc_lo) }; // decoded
         let f = f_dec_lo.to_stdstring();
 
-        if let Some(_) = match_re_maybe(f.to_owned(), match_re, &re) {
+        if match_re_maybe(f.to_owned(), match_re, &re).is_some() {
             fnames.push(f);
         }
     }
