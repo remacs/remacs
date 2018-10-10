@@ -35,7 +35,7 @@ include!(concat!(env!("OUT_DIR"), "/globals.rs"));
 pub const VAL_MAX: EmacsInt = (EMACS_INT_MAX >> (GCTYPEBITS - 1));
 pub const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
 pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (Lisp_Bits::INTTYPEBITS - 1));
-pub const PSEUDOVECTOR_FLAG: usize = 0x4000000000000000;
+pub const PSEUDOVECTOR_FLAG: usize = 0x4000_0000_0000_0000;
 
 // These signal an error, therefore are marked as non-returning.
 extern "C" {
