@@ -164,7 +164,7 @@ impl DirData {
     fn from_os(&mut self, dr: &DirReq) {
         match *self {
             DirData::Files { ref mut fnames } => {
-                fnames_from_os(fnames, dr.dname.to_owned(), dr.match_re);
+                fnames_from_os(fnames, &dr.dname, dr.match_re);
                 if let SortFNames::Yes = dr.sortmemaybe {
                     fnames.sort();
                 }
@@ -173,25 +173,23 @@ impl DirData {
                 ref mut fnames,
                 ref mut fattrs,
             } => {
-                fnames_from_os(fnames, dr.dname.to_owned(), dr.match_re);
+                fnames_from_os(fnames, &dr.dname, dr.match_re);
                 if let SortFNames::Yes = dr.sortmemaybe {
                     fnames.sort();
                 }
 
-                fattrs_from_os(fattrs, fnames, dr.dname.to_owned(), dr.id_format);
+                fattrs_from_os(fattrs, fnames, &dr.dname, dr.id_format);
             }
         }
     }
 
     fn to_list(&mut self, dr: &DirReq) -> LispObject {
         match *self {
-            DirData::Files { ref mut fnames } => {
-                fnames_to_list(fnames, dr.dname.to_owned(), &dr.full)
-            }
+            DirData::Files { ref mut fnames } => fnames_to_list(fnames, &dr.dname, &dr.full),
             DirData::FilesAttrs {
                 ref mut fnames,
                 ref mut fattrs,
-            } => fattrs_to_list(fattrs, fnames, dr.dname.to_owned(), &dr.full),
+            } => fattrs_to_list(fattrs, fnames, &dr.dname, &dr.full),
         }
     }
 }
@@ -199,7 +197,7 @@ impl DirData {
 fn fattrs_from_os(
     fattrs: &mut Vec<LispObject>,
     fnames: &mut Vec<String>,
-    dname: String,
+    dname: &str,
     id_format: LispObject,
 ) {
     for f in fnames {
@@ -211,24 +209,19 @@ fn fattrs_from_os(
     }
 }
 
-fn fnames_from_os(fnames: &mut Vec<String>, dname: String, match_re: Option<LispObject>) {
-    let res = read_dir(dname.to_owned(), fnames, match_re);
+fn fnames_from_os(fnames: &mut Vec<String>, dname: &str, match_re: Option<LispObject>) {
+    let res = read_dir(dname, fnames, match_re);
     if res.is_err() {
         xsignal!(
             Qfile_missing,
             format!("Opening directory: {}", res.unwrap_err()).to_bstring(),
-            dname.to_bstring()
+            LispObject::from(dname)
         );
     }
 }
 
-fn read_dir(
-    dname: String,
-    fnames: &mut Vec<String>,
-    match_re: Option<LispObject>,
-) -> io::Result<()> {
-    let dir = dname.clone();
-    let dir_p = Path::new(&dir);
+fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>) -> io::Result<()> {
+    let dir_p = Path::new(dname);
 
     let mut re = RegEx::new(String::from("").to_bstring());
     if let Some(x) = match_re {
@@ -272,7 +265,7 @@ fn match_re_maybe(f: String, match_re: Option<LispObject>, re: &RegEx) -> Option
     }
 }
 
-fn fnames_to_list(fnames: &mut Vec<String>, dname: String, full: &FullPath) -> LispObject {
+fn fnames_to_list(fnames: &mut Vec<String>, dname: &str, full: &FullPath) -> LispObject {
     match *full {
         FullPath::No => list(&fnames.iter().map(|x| x.to_bstring()).collect::<Vec<_>>()),
         FullPath::Yes => list(
@@ -288,7 +281,7 @@ fn fnames_to_list(fnames: &mut Vec<String>, dname: String, full: &FullPath) -> L
 fn fattrs_to_list(
     fattrs: &mut Vec<LispObject>,
     fnames: &mut Vec<String>,
-    dname: String,
+    dname: &str,
     full: &FullPath,
 ) -> LispObject {
     match *full {
@@ -558,7 +551,7 @@ impl FileAttrs {
 
         //  2. File uid as a string or a number.  If a string value cannot be
         //  looked up, a numeric value, either an integer or a float, is returned.
-        self.idf_is_int = !("string".to_owned() == self.id_format);
+        self.idf_is_int = !("string" == self.id_format);
         if self.idf_is_int {
             self.idf_uid = md.uid();
             self.idf_gid = md.gid();
