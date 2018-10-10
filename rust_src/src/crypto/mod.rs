@@ -17,7 +17,7 @@ use remacs_sys::{make_specified_string, make_uninit_string, EmacsInt};
 use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qnil, Qraw_text, Qsha1,
                  Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region};
 
-use buffers::{buffer_file_name, current_buffer, get_buffer, nsberror, LispBufferRef};
+use buffers::{buffer_file_name, LispBufferOrCurrent, LispBufferRef};
 use lisp::defsubr;
 use lisp::{LispNumber, LispObject};
 use multibyte::LispStringRef;
@@ -448,17 +448,8 @@ fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 /// This hash is performed on the raw internal format of the buffer,
 /// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
-pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
-    let buffer = if buffer_or_name.is_nil() {
-        current_buffer()
-    } else {
-        get_buffer(buffer_or_name)
-    };
-
-    if buffer.is_nil() {
-        nsberror(buffer_or_name);
-    }
-    let b = buffer.as_buffer().unwrap();
+pub fn buffer_hash(buffer_or_name: LispBufferOrCurrent) -> LispObject {
+    let b = buffer_or_name.unwrap();
     let mut ctx = sha1::Sha1::new();
 
     ctx.update(unsafe {

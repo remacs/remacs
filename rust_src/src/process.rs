@@ -13,7 +13,7 @@ use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
 
-use buffers::get_buffer;
+use buffers::lispbuffer_or_by_name;
 use lists::{assoc, car, cdr, plist_put};
 use multibyte::LispStringRef;
 
@@ -94,14 +94,12 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// Return nil if all processes associated with BUFFER have been
 /// deleted or killed.
 #[lisp_fn]
-pub fn get_buffer_process(buffer: LispObject) -> LispObject {
-    if buffer.is_nil() {
-        return Qnil;
-    }
-    let buf = get_buffer(buffer);
+pub fn get_buffer_process(buffer_or_name: LispObject) -> LispObject {
+    let buf = lispbuffer_or_by_name(buffer_or_name);
     if buf.is_nil() {
         return Qnil;
     }
+
     for tail in unsafe { Vprocess_alist }.iter_tails() {
         let p = tail.car().as_cons_or_error().cdr();
         if buf.eq(p.as_process_or_error().buffer) {

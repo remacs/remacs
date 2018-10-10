@@ -14,7 +14,7 @@ use remacs_sys::{buffer_overflow, downcase, find_before_next_newline, find_field
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 
-use buffers::{get_buffer, BUF_BYTES_MAX};
+use buffers::{LispBufferOrCurrent, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
 use lisp::{defsubr, LispNumber, LispObject};
 use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp,
@@ -43,12 +43,8 @@ pub fn point() -> EmacsInt {
 /// in some other BUFFER, use
 /// `(with-current-buffer BUFFER (- (point-max) (point-min)))'.
 #[lisp_fn(min = "0")]
-pub fn buffer_size(buffer: LispObject) -> EmacsInt {
-    let buffer_ref = if buffer.is_not_nil() {
-        get_buffer(buffer).as_buffer_or_error()
-    } else {
-        ThreadState::current_buffer()
-    };
+pub fn buffer_size(buffer_or_name: LispBufferOrCurrent) -> EmacsInt {
+    let buffer_ref = buffer_or_name.unwrap();
     (buffer_ref.z() - buffer_ref.beg()) as EmacsInt
 }
 
