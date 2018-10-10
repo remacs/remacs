@@ -631,7 +631,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         }
     }
 
-    let result = if charpos - best_below < best_above - charpos {
+    if charpos - best_below < best_above - charpos {
         let record = charpos - best_below > 5000;
 
         while best_below != charpos {
@@ -674,9 +674,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         buffer_ref.cached_bytepos = best_above_byte;
 
         best_above_byte
-    };
-
-    result
+    }
 }
 
 #[no_mangle]
@@ -748,7 +746,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
     // We have one known above and one known below.
     // Scan, counting characters, from whichever one is closer.
 
-    let result = if bytepos - best_below_byte < best_above_byte - bytepos {
+    if bytepos - best_below_byte < best_above_byte - bytepos {
         let record = bytepos - best_below_byte > 5000;
 
         while best_below_byte < bytepos {
@@ -802,9 +800,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         buffer_ref.cached_bytepos = best_above_byte;
 
         best_above
-    };
-
-    result
+    }
 }
 
 #[no_mangle]
