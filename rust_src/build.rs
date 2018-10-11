@@ -1081,9 +1081,12 @@ fn run_bindgen() {
                 .rustified_enum("gnutls_compression_method_t")
                 .rustified_enum("gnutls_connection_end_t")
                 .rustified_enum("gnutls_credentials_type_t")
+                .rustified_enum("gnutls_ctype_target_t")
                 .rustified_enum("gnutls_digest_algorithm_t")
                 .rustified_enum("gnutls_ecc_curve_t")
                 .rustified_enum("gnutls_ext_parse_type_t")
+                .rustified_enum("gnutls_fips_mode_t")
+                .rustified_enum("gnutls_gost_paramset_t")
                 .rustified_enum("gnutls_group_t")
                 .rustified_enum("gnutls_handshake_description_t")
                 .rustified_enum("gnutls_initstage_t")
@@ -1210,7 +1213,7 @@ fn run_bindgen() {
                 .generate()
                 .expect("Unable to generate bindings");
 
-            // https://github.com/servo/rust-bindgen/issues/839
+            // https://github.com/rust-lang-nursery/rust-bindgen/issues/839
             let source = bindings.to_string();
             let re = regex::Regex::new(
                 r"pub use self\s*::\s*gnutls_cipher_algorithm_t as gnutls_cipher_algorithm\s*;",
