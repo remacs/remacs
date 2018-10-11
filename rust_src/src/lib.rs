@@ -57,6 +57,7 @@ mod str2sig;
 
 mod base64;
 mod buffers;
+mod bytecode;
 mod casefiddle;
 mod casetab;
 mod category;
