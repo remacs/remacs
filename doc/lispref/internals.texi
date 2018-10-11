@@ -1023,7 +1023,7 @@ according to the conventions of the underlying platform.  Then place
 the shared library in a directory mentioned in @code{load-path}
 (@pxref{Library Search}), where Emacs will find it.
 
-If you wish to verify the conformance of a modue to the Emacs dynamic
+If you wish to verify the conformance of a module to the Emacs dynamic
 module @acronym{API}, invoke Emacs with the @kbd{--module-assertions}
 option.  @xref{Initial Options,,,emacs, The GNU Emacs Manual}.
 
