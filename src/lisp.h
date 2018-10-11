@@ -2506,7 +2506,7 @@ INTEGERP (Lisp_Object x)
   return FIXNUMP (x) || BIGNUMP (x);
 }
 
-/* Return a Lisp integer with value taken from n.  */
+/* Return a Lisp integer with value taken from N.  */
 INLINE Lisp_Object
 make_int (intmax_t n)
 {
@@ -3329,6 +3329,7 @@ extern ptrdiff_t bignum_bufsize (Lisp_Object, int);
 extern ptrdiff_t bignum_to_c_string (char *, ptrdiff_t, Lisp_Object, int);
 extern Lisp_Object bignum_to_string (Lisp_Object, int);
 extern Lisp_Object make_bignum_str (char const *, int);
+extern Lisp_Object make_neg_biguint (uintmax_t);
 extern Lisp_Object double_to_integer (double);
 
 /* Converthe integer NUM to *N.  Return true if successful, false
@@ -3839,7 +3840,7 @@ LOADHIST_ATTACH (Lisp_Object x)
 extern int openp (Lisp_Object, Lisp_Object, Lisp_Object,
                   Lisp_Object *, Lisp_Object, bool);
 enum { S2N_IGNORE_TRAILING = 1 };
-extern Lisp_Object string_to_number (char const *, int, int);
+extern Lisp_Object string_to_number (char const *, int, ptrdiff_t *);
 extern void map_obarray (Lisp_Object, void (*) (Lisp_Object, Lisp_Object),
                          Lisp_Object);
 extern void dir_warning (const char *, Lisp_Object);

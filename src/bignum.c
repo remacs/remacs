@@ -117,6 +117,16 @@ make_biguint (uintmax_t n)
   return make_bignum ();
 }
 
+/* Return a Lisp integer equal to -N, which must not be in fixnum range.  */
+Lisp_Object
+make_neg_biguint (uintmax_t n)
+{
+  eassert (-MOST_NEGATIVE_FIXNUM < n);
+  mpz_set_uintmax (mpz[0], n);
+  mpz_neg (mpz[0], mpz[0]);
+  return make_bignum ();
+}
+
 /* Return a Lisp integer with value taken from mpz[0].
    Set mpz[0] to a junk value.  */
 Lisp_Object

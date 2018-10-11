@@ -2796,7 +2796,7 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   while (*p == ' ' || *p == '\t')
     p++;
 
-  Lisp_Object val = string_to_number (p, b, S2N_IGNORE_TRAILING);
+  Lisp_Object val = string_to_number (p, b, 0);
   return NILP (val) ? make_fixnum (0) : val;
 }
 
