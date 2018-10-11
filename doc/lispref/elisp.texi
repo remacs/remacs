@@ -1588,8 +1588,17 @@ GNU Emacs Internals
 * Memory Usage::            Info about total size of Lisp objects made so far.
 * C Dialect::               What C variant Emacs is written in.
 * Writing Emacs Primitives::  Writing C code for Emacs.
+* Writing Dynamic Modules::   Writing loadable modules for Emacs.
 * Object Internals::        Data formats of buffers, windows, processes.
 * C Integer Types::         How C integer types are used inside Emacs.
+
+Writing Dynamic Modules
+
+* Module Initialization::
+* Module Functions::
+* Module Values::
+* Module Misc::
+* Module Nonlocal::
 
 Object Internals
 
