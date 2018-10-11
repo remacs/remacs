@@ -37,7 +37,7 @@ fn create_buffer_decoder<'a>(buffer: &'a [u8]) -> Box<Read + 'a> {
 /// This function can be called only in unibyte buffers.
 #[lisp_fn]
 pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> bool {
-    validate_region(&mut start, &mut end);
+    unsafe { validate_region(&mut start, &mut end) };
 
     let mut current_buffer = ThreadState::current_buffer();
 
@@ -79,9 +79,7 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
         let old_gap_size = current_buffer.gap_size();
 
         if old_gap_size < avail_out {
-            unsafe {
-                make_gap(avail_out - old_gap_size);
-            }
+            unsafe { make_gap(avail_out - old_gap_size) };
         }
 
         let new_gap_size = avail_out;
@@ -102,9 +100,7 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
             // Continue to decompress the remaining data.
             Ok(decompressed) => {
                 let decompressed = decompressed as isize;
-                unsafe {
-                    insert_from_gap(decompressed, decompressed, false);
-                }
+                unsafe { insert_from_gap(decompressed, decompressed, false) };
 
                 decompressed_bytes += decompressed;
 
@@ -114,9 +110,7 @@ pub fn zlib_decompress_region(mut start: LispObject, mut end: LispObject) -> boo
             // Decompress failed.
             _ => {
                 // Delete any uncompressed data already inserted on error.
-                unsafe {
-                    del_range(iend, iend + decompressed_bytes);
-                }
+                unsafe { del_range(iend, iend + decompressed_bytes) };
 
                 // Put point where it was, or if the buffer has shrunk because the
                 // compressed data is bigger than the uncompressed, at

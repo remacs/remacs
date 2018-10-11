@@ -588,9 +588,9 @@ pub fn overlay_properties(overlay: LispOverlayRef) -> LispObject {
 }
 
 #[no_mangle]
-pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
-    let start = unsafe { *b };
-    let stop = unsafe { *e };
+pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
+    let start = *b;
+    let stop = *e;
 
     let mut beg = start.as_fixnum_coerce_marker_or_error();
     let mut end = stop.as_fixnum_coerce_marker_or_error();
@@ -599,10 +599,8 @@ pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
         mem::swap(&mut beg, &mut end);
     }
 
-    unsafe {
-        *b = LispObject::from(beg);
-        *e = LispObject::from(end);
-    }
+    *b = LispObject::from(beg);
+    *e = LispObject::from(end);
 
     let buf = ThreadState::current_buffer();
     let begv = buf.begv as EmacsInt;

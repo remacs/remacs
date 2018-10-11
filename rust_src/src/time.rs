@@ -58,7 +58,7 @@ fn make_lisp_time_1(t: c_timespec) -> LispObject {
 /// Return 2, 3, or 4 to indicate the effective length of `SPECIFIED_TIME`
 /// if successful, 0 if unsuccessful.
 #[no_mangle]
-pub extern "C" fn disassemble_lisp_time(
+pub unsafe extern "C" fn disassemble_lisp_time(
     specified_time: LispObject,
     phigh: *mut LispObject,
     plow: *mut LispObject,
@@ -107,12 +107,10 @@ pub extern "C" fn disassemble_lisp_time(
         len = 2;
     }
 
-    unsafe {
-        *phigh = high;
-        *plow = low;
-        *pusec = usec;
-        *ppsec = psec;
-    }
+    *phigh = high;
+    *plow = low;
+    *pusec = usec;
+    *ppsec = psec;
 
     len
 }
@@ -128,7 +126,7 @@ pub extern "C" fn disassemble_lisp_time(
 /// Return 1 if successful, 0 if the components are of the
 /// wrong type, and -1 if the time is out of range.
 #[no_mangle]
-pub extern "C" fn decode_time_components(
+pub unsafe extern "C" fn decode_time_components(
     high: LispObject,
     low: LispObject,
     usec: LispObject,
@@ -152,25 +150,19 @@ pub extern "C" fn decode_time_components(
                 return -1;
             }
             if !dresult.is_null() {
-                unsafe {
-                    *dresult = t;
-                }
+                *dresult = t;
             }
             return 1;
         } else if low.is_nil() {
             let now = current_timespec();
             if !result.is_null() {
-                unsafe {
-                    (*result).hi = hi_time(now.tv_sec);
-                    (*result).lo = lo_time(now.tv_sec);
-                    (*result).us = (now.tv_nsec / 1000) as c_int;
-                    (*result).ps = (now.tv_nsec % 1000 * 1000) as c_int;
-                }
+                (*result).hi = hi_time(now.tv_sec);
+                (*result).lo = lo_time(now.tv_sec);
+                (*result).us = (now.tv_nsec / 1000) as c_int;
+                (*result).ps = (now.tv_nsec % 1000 * 1000) as c_int;
             }
             if !dresult.is_null() {
-                unsafe {
-                    *dresult = (now.tv_sec as f64) + (now.tv_nsec as f64) / 1e9;
-                }
+                *dresult = (now.tv_sec as f64) + (now.tv_nsec as f64) / 1e9;
             }
             return 1;
         } else {
@@ -209,20 +201,15 @@ pub extern "C" fn decode_time_components(
             return -1;
         }
 
-        unsafe {
-            (*result).hi = hi;
-            (*result).lo = lo as c_int;
-            (*result).us = us as c_int;
-            (*result).ps = ps as c_int;
-        }
+        (*result).hi = hi;
+        (*result).lo = lo as c_int;
+        (*result).us = us as c_int;
+        (*result).ps = ps as c_int;
     }
     if !dresult.is_null() {
         let dhi = hi as f64;
-        unsafe {
-            *dresult = (us as f64 * 1e6 + ps as f64) / 1e12
-                + (lo as f64)
-                + dhi * f64::from(1 << LO_TIME_BITS);
-        }
+        *dresult =
+            (us as f64 * 1e6 + ps as f64) / 1e12 + (lo as f64) + dhi * f64::from(1 << LO_TIME_BITS);
     }
 
     1
@@ -230,7 +217,7 @@ pub extern "C" fn decode_time_components(
 
 /// Convert T into an Emacs time *RESULT, truncating toward minus infinity.
 /// Return true if T is in range, false otherwise.
-fn decode_float_time(t: f64, result: *mut lisp_time) -> bool {
+unsafe fn decode_float_time(t: f64, result: *mut lisp_time) -> bool {
     let lo_multiplier = f64::from(1 << LO_TIME_BITS);
     let emacs_time_min = MOST_NEGATIVE_FIXNUM as f64 * lo_multiplier;
     if !(emacs_time_min <= t && t < -emacs_time_min) {
@@ -260,12 +247,10 @@ fn decode_float_time(t: f64, result: *mut lisp_time) -> bool {
         lo += 1 << LO_TIME_BITS;
     }
 
-    unsafe {
-        (*result).hi = hi;
-        (*result).lo = lo;
-        (*result).us = us;
-        (*result).ps = ps;
-    }
+    (*result).hi = hi;
+    (*result).lo = lo;
+    (*result).us = us;
+    (*result).ps = ps;
 
     true
 }
@@ -293,13 +278,16 @@ pub extern "C" fn lisp_to_timespec(t: lisp_time) -> c_timespec {
 /// If `SPECIFIED_TIME` is nil, use the current time.
 /// Signal an error if `SPECIFIED_TIME` does not represent a time.
 #[no_mangle]
-pub extern "C" fn lisp_time_struct(specified_time: LispObject, plen: *mut c_int) -> lisp_time {
+pub unsafe extern "C" fn lisp_time_struct(
+    specified_time: LispObject,
+    plen: *mut c_int,
+) -> lisp_time {
     let mut high = LispObject::from_C(0);
     let mut low = LispObject::from_C(0);
     let mut usec = LispObject::from_C(0);
     let mut psec = LispObject::from_C(0);
 
-    let len = disassemble_lisp_time(specified_time, &mut high, &mut low, &mut usec, &mut psec);
+    let len = { disassemble_lisp_time(specified_time, &mut high, &mut low, &mut usec, &mut psec) };
     if len == 0 {
         invalid_time();
     }
@@ -308,9 +296,7 @@ pub extern "C" fn lisp_time_struct(specified_time: LispObject, plen: *mut c_int)
     let val = decode_time_components(high, low, usec, psec, &mut t, ptr::null_mut());
     check_time_validity(val);
     if !plen.is_null() {
-        unsafe {
-            *plen = len;
-        }
+        *plen = len;
     }
 
     t
@@ -366,9 +352,10 @@ pub fn float_time(time: LispObject) -> LispObject {
 
     let mut t = 0.0;
 
-    if disassemble_lisp_time(time, &mut high, &mut low, &mut usec, &mut psec) == 0
-        || decode_time_components(high, low, usec, psec, ptr::null_mut(), &mut t) == 0
-    {
+    if unsafe {
+        disassemble_lisp_time(time, &mut high, &mut low, &mut usec, &mut psec) == 0
+            || decode_time_components(high, low, usec, psec, ptr::null_mut(), &mut t) == 0
+    } {
         invalid_time();
     }
 

@@ -63,12 +63,14 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
 
     let mut nchars = 0;
     let mut nbytes = 0;
-    multibyte::parse_str_as_multibyte(
-        string.const_data_ptr(),
-        string.len_bytes(),
-        &mut nchars,
-        &mut nbytes,
-    );
+    unsafe {
+        multibyte::parse_str_as_multibyte(
+            string.const_data_ptr(),
+            string.len_bytes(),
+            &mut nchars,
+            &mut nbytes,
+        )
+    };
 
     let new_string =
         unsafe { make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt) };
@@ -81,12 +83,14 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
         );
     }
     if nbytes != string.len_bytes() {
-        multibyte::str_as_multibyte(
-            new_s.data_ptr(),
-            nbytes,
-            string.len_bytes(),
-            ptr::null_mut(),
-        );
+        unsafe {
+            multibyte::str_as_multibyte(
+                new_s.data_ptr(),
+                nbytes,
+                string.len_bytes(),
+                ptr::null_mut(),
+            )
+        };
     }
     new_string
 }
@@ -117,8 +121,9 @@ pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
     if string.is_multibyte() {
         let size = string.len_bytes();
         let mut buffer: Vec<libc::c_uchar> = Vec::with_capacity(size as usize);
-        let converted_size =
-            multibyte::str_to_unibyte(string.const_data_ptr(), buffer.as_mut_ptr(), size);
+        let converted_size = unsafe {
+            multibyte::str_to_unibyte(string.const_data_ptr(), buffer.as_mut_ptr(), size)
+        };
 
         if converted_size < size {
             error!("Can't convert {}th character to unibyte", converted_size);

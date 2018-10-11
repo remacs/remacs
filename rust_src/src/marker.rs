@@ -132,32 +132,30 @@ pub fn marker_buffer(marker: LispMarkerRef) -> Option<LispBufferRef> {
 /// Return a newly allocated marker which points into BUF
 /// at character position CHARPOS and byte position BYTEPOS.
 #[no_mangle]
-pub extern "C" fn build_marker(
+pub unsafe extern "C" fn build_marker(
     buf: *mut Lisp_Buffer,
     charpos: ptrdiff_t,
     bytepos: ptrdiff_t,
 ) -> LispObject {
-    debug_assert!(unsafe { (*buf).name_.is_not_nil() });
+    debug_assert!((*buf).name_.is_not_nil());
     debug_assert!(charpos <= bytepos);
 
-    unsafe {
-        let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker);
-        let mut m = obj.as_marker_or_error();
+    let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker);
+    let mut m = obj.as_marker_or_error();
 
-        m.set_buffer(buf);
-        m.set_charpos(charpos);
-        m.set_bytepos(bytepos);
-        m.set_insertion_type(false);
-        m.set_need_adjustment(false);
+    m.set_buffer(buf);
+    m.set_charpos(charpos);
+    m.set_bytepos(bytepos);
+    m.set_insertion_type(false);
+    m.set_need_adjustment(false);
 
-        let mut buffer_ref = LispBufferRef::from_ptr(buf as *mut c_void)
-            .unwrap_or_else(|| panic!("Invalid buffer reference."));
+    let mut buffer_ref = LispBufferRef::from_ptr(buf as *mut c_void)
+        .unwrap_or_else(|| panic!("Invalid buffer reference."));
 
-        m.set_next((*buffer_ref.text).markers);
-        (*buffer_ref.text).markers = m.as_mut();
+    m.set_next((*buffer_ref.text).markers);
+    (*buffer_ref.text).markers = m.as_mut();
 
-        obj
-    }
+    obj
 }
 
 /// Return value of point, as a marker object.
@@ -642,7 +640,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
             best_below_byte = buffer_ref.inc_pos(best_below_byte);
         }
         if record {
-            build_marker(b, best_below, best_below_byte);
+            unsafe { build_marker(b, best_below, best_below_byte) };
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -664,7 +662,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         }
 
         if record {
-            build_marker(b, best_above, best_above_byte);
+            unsafe { build_marker(b, best_above, best_above_byte) };
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -763,7 +761,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         // But don't do it if BUF_MARKERS is nil;
         // that is a signal from Fset_buffer_multibyte.
         if record && buffer_ref.markers().is_some() {
-            build_marker(b, best_below, best_below_byte);
+            unsafe { build_marker(b, best_below, best_below_byte) };
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -790,7 +788,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         // But don't do it if BUF_MARKERS is nil;
         // that is a signal from Fset_buffer_multibyte.
         if record && buffer_ref.markers().is_some() {
-            build_marker(b, best_below, best_below_byte);
+            unsafe { build_marker(b, best_below, best_below_byte) };
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -820,11 +818,13 @@ fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) -> ()
         return;
     }
 
-    let nchars = if bytepos > b.gpt_byte() {
-        multibyte_chars_in_text(b.beg_addr(), b.gpt_byte() - b.beg_byte())
-            + multibyte_chars_in_text(b.gap_end_addr(), bytepos - b.gpt_byte())
-    } else {
-        multibyte_chars_in_text(b.beg_addr(), bytepos - b.beg_byte())
+    let nchars = unsafe {
+        if bytepos > b.gpt_byte() {
+            multibyte_chars_in_text(b.beg_addr(), b.gpt_byte() - b.beg_byte())
+                + multibyte_chars_in_text(b.gap_end_addr(), bytepos - b.gpt_byte())
+        } else {
+            multibyte_chars_in_text(b.beg_addr(), bytepos - b.beg_byte())
+        }
     };
 
     if charpos - 1 != nchars {
