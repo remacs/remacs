@@ -318,7 +318,7 @@ impl<T> ExternalPtr<T> {
         self.0.is_null()
     }
 
-    pub fn as_ptr(&self) -> *const T {
+    pub fn as_ptr(self) -> *const T {
         self.0
     }
 

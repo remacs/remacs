@@ -69,7 +69,7 @@ impl LispBufferRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
-    pub fn is_read_only(&self) -> bool {
+    pub fn is_read_only(self) -> bool {
         self.read_only_.into()
     }
 
@@ -366,12 +366,12 @@ impl LispBufferRef {
 
 impl LispBufferRef {
     #[inline]
-    pub fn overlays_before(&self) -> Option<LispOverlayRef> {
+    pub fn overlays_before(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
     }
 
     #[inline]
-    pub fn overlays_after(&self) -> Option<LispOverlayRef> {
+    pub fn overlays_after(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
     }
 }

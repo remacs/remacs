@@ -93,11 +93,11 @@ impl LispStringRef {
         self.data as *mut c_char
     }
 
-    pub fn const_data_ptr(&self) -> *const c_uchar {
+    pub fn const_data_ptr(self) -> *const c_uchar {
         self.data as *const c_uchar
     }
 
-    pub fn const_sdata_ptr(&self) -> *const c_char {
+    pub fn const_sdata_ptr(self) -> *const c_char {
         self.data as *const c_char
     }
 

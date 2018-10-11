@@ -36,17 +36,17 @@ impl LispVectorlikeRef {
     }
 
     #[inline]
-    pub fn as_vector(&self) -> Option<LispVectorRef> {
+    pub fn as_vector(self) -> Option<LispVectorRef> {
         if self.is_vector() {
-            Some(unsafe { mem::transmute::<_, LispVectorRef>(*self) })
+            Some(unsafe { mem::transmute::<_, LispVectorRef>(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub unsafe fn as_vector_unchecked(&self) -> LispVectorRef {
-        mem::transmute::<_, LispVectorRef>(*self)
+    pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
+        mem::transmute::<_, LispVectorRef>(self)
     }
 
     #[inline]
@@ -72,105 +72,105 @@ impl LispVectorlikeRef {
     }
 
     #[inline]
-    pub fn as_bool_vector(&self) -> Option<LispBoolVecRef> {
+    pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
         if self.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR) {
-            Some(unsafe { mem::transmute::<_, LispBoolVecRef>(*self) })
+            Some(unsafe { mem::transmute::<_, LispBoolVecRef>(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_buffer(&self) -> Option<LispBufferRef> {
+    pub fn as_buffer(self) -> Option<LispBufferRef> {
         if self.is_pseudovector(pvec_type::PVEC_BUFFER) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_subr(&self) -> Option<LispSubrRef> {
+    pub fn as_subr(self) -> Option<LispSubrRef> {
         if self.is_pseudovector(pvec_type::PVEC_SUBR) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_window(&self) -> Option<LispWindowRef> {
+    pub fn as_window(self) -> Option<LispWindowRef> {
         if self.is_pseudovector(pvec_type::PVEC_WINDOW) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_frame(&self) -> Option<LispFrameRef> {
+    pub fn as_frame(self) -> Option<LispFrameRef> {
         if self.is_pseudovector(pvec_type::PVEC_FRAME) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_process(&self) -> Option<LispProcessRef> {
+    pub fn as_process(self) -> Option<LispProcessRef> {
         if self.is_pseudovector(pvec_type::PVEC_PROCESS) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_thread(&self) -> Option<ThreadStateRef> {
+    pub fn as_thread(self) -> Option<ThreadStateRef> {
         if self.is_pseudovector(pvec_type::PVEC_THREAD) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_char_table(&self) -> Option<LispCharTableRef> {
+    pub fn as_char_table(self) -> Option<LispCharTableRef> {
         if self.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
-    pub fn as_sub_char_table(&self) -> Option<LispSubCharTableRef> {
+    pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
         if self.is_pseudovector(pvec_type::PVEC_SUB_CHAR_TABLE) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
-    pub fn as_sub_char_table_ascii(&self) -> Option<LispSubCharTableAsciiRef> {
+    pub fn as_sub_char_table_ascii(self) -> Option<LispSubCharTableAsciiRef> {
         if self.is_pseudovector(pvec_type::PVEC_SUB_CHAR_TABLE) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
     #[inline]
-    pub fn as_compiled(&self) -> Option<LispVectorlikeSlotsRef> {
+    pub fn as_compiled(self) -> Option<LispVectorlikeSlotsRef> {
         if self.is_pseudovector(pvec_type::PVEC_COMPILED) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
     }
 
-    pub fn as_record(&self) -> Option<LispVectorlikeSlotsRef> {
+    pub fn as_record(self) -> Option<LispVectorlikeSlotsRef> {
         if self.is_pseudovector(pvec_type::PVEC_RECORD) {
-            Some(unsafe { mem::transmute(*self) })
+            Some(unsafe { mem::transmute(self) })
         } else {
             None
         }
