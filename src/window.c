@@ -6836,12 +6836,6 @@ init_window (void)
   Vwindow_list = Qnil;
 }
 
-bool
-is_minibuffer(struct window *w)
-{
-  return w->mini ? true : false;
-}
-
 void
 syms_of_window (void)
 {

@@ -69,10 +69,6 @@ impl LispBufferRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
-    pub fn from_ptr(ptr: *mut c_void) -> Option<LispBufferRef> {
-        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
-    }
-
     pub fn is_read_only(&self) -> bool {
         self.read_only_.into()
     }
@@ -108,51 +104,6 @@ impl LispBufferRef {
                 .beg
                 .offset((*self.text).gap_size + (*self.text).z_byte - BEG_BYTE)
         }
-    }
-
-    #[inline]
-    pub fn pos_within_range(self, pos: isize) -> isize {
-        if pos >= self.gpt_byte() {
-            self.gap_size()
-        } else {
-            0
-        }
-    }
-
-    // Same as the BUF_BYTE_ADDRESS c macro
-    /// Return the address of character at byte position BYTE_POS in buffer BUF.
-    #[inline]
-    pub fn buf_byte_address(self, byte_pos: isize) -> c_uchar {
-        let gap = self.pos_within_range(byte_pos);
-        unsafe { *(self.beg_addr().offset(byte_pos - BEG_BYTE + gap)) as c_uchar }
-    }
-
-    // Same as the BUF_INC_POS c macro
-    /// Increment the buffer byte position POS_BYTE of the the buffer to
-    /// the next character boundary.  This macro relies on the fact that
-    /// *GPT_ADDR and *Z_ADDR are always accessible and the values are
-    /// '\0'.  No range checking of POS_BYTE.
-    pub fn inc_pos(self, pos_byte: isize) -> isize {
-        let chp = self.buf_byte_address(pos_byte);
-        pos_byte + multibyte_length_by_head(chp) as isize
-    }
-
-    // Same as the BUF_DEC_POS c macro
-    /// Decrement the buffer byte position POS_BYTE of the buffer to
-    /// the previous character boundary.  No range checking of POS_BYTE.
-    pub fn dec_pos(self, pos_byte: isize) -> isize {
-        let mut new_pos = pos_byte - 1;
-        let mut offset = new_pos - self.beg_byte();
-        offset += self.pos_within_range(new_pos);
-        unsafe {
-            let mut chp = self.beg_addr().offset(offset);
-
-            while !char_head_p(*chp) {
-                chp = chp.offset(-1);
-                new_pos -= 1;
-            }
-        }
-        new_pos
     }
 
     #[inline]
@@ -217,73 +168,6 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn byte_pos_addr(self, n: ptrdiff_t) -> *mut c_uchar {
-        unsafe { (*self.text).beg.offset(n - BEG_BYTE) }
-    }
-
-    #[inline]
-    pub fn fetch_byte(self, n: ptrdiff_t) -> u8 {
-        let offset = if n >= self.gpt_byte() {
-            self.gap_size()
-        } else {
-            0
-        };
-
-        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
-    }
-
-    #[inline]
-    pub fn fetch_multibyte_char(self, n: ptrdiff_t) -> c_int {
-        let offset = if n >= self.gpt_byte() && n >= 0 {
-            self.gap_size()
-        } else {
-            0
-        };
-
-        unsafe {
-            string_char(
-                self.beg_addr().offset(offset + n - self.beg_byte()),
-                ptr::null_mut(),
-                ptr::null_mut(),
-            )
-        }
-    }
-
-    #[inline]
-    pub fn fetch_char(self, n: ptrdiff_t) -> c_int {
-        if self.multibyte_characters_enabled() {
-            self.fetch_multibyte_char(n)
-        } else {
-            c_int::from(self.fetch_byte(n))
-        }
-    }
-
-    #[inline]
-    pub fn multibyte_characters_enabled(self) -> bool {
-        self.enable_multibyte_characters_.is_not_nil()
-    }
-
-    #[inline]
-    pub fn overlays_before(&self) -> Option<LispOverlayRef> {
-        let p = self.overlays_before;
-        if p == ptr::null_mut() {
-            None
-        } else {
-            Some(ExternalPtr::new(p))
-        }
-    }
-
-    #[inline]
-    pub fn overlays_after(&self) -> Option<LispOverlayRef> {
-        let p = self.overlays_after;
-        if p == ptr::null_mut() {
-            None
-        } else {
-            Some(ExternalPtr::new(p))
-        }
-    }
-
-    #[inline]
     pub fn set_pt_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
         self.pt = charpos;
         self.pt_byte = byte;
@@ -306,9 +190,9 @@ impl LispBufferRef {
         self.syntax_table_ = LispObject::from(table);
     }
 
+    // Similar to SET_PER_BUFFER_VALUE_P macro in C
     /// Set whether per-buffer variable with index IDX has a buffer-local
     /// value in buffer.  VAL zero means it does't.
-    // Similar to SET_PER_BUFFER_VALUE_P macro in C
     #[inline]
     pub fn set_per_buffer_value_p(&mut self, idx: usize, val: libc::c_char) {
         unsafe {
@@ -320,6 +204,107 @@ impl LispBufferRef {
             }
         }
         self.local_flags[idx] = val;
+    }
+}
+
+// Characters, positions and byte positions.
+impl LispBufferRef {
+    /// Return the address of byte position N in current buffer.
+    #[inline]
+    pub fn byte_pos_addr(self, n: ptrdiff_t) -> *mut c_uchar {
+        unsafe { (*self.text).beg.offset(n - BEG_BYTE) }
+    }
+
+    /// Return the address of character at byte position BYTE_POS.
+    #[inline]
+    pub fn buf_byte_address(self, byte_pos: isize) -> c_uchar {
+        let gap = self.pos_within_range(byte_pos);
+        unsafe { *(self.beg_addr().offset(byte_pos - BEG_BYTE + gap)) as c_uchar }
+    }
+
+    /// Return the byte at byte position N.
+    #[inline]
+    pub fn fetch_byte(self, n: ptrdiff_t) -> u8 {
+        let offset = if n >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        };
+
+        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
+    }
+
+    /// Return character at byte position POS.  See the caveat WARNING for
+    /// FETCH_MULTIBYTE_CHAR below.
+    #[inline]
+    pub fn fetch_char(self, n: ptrdiff_t) -> c_int {
+        if self.multibyte_characters_enabled() {
+            self.fetch_multibyte_char(n)
+        } else {
+            c_int::from(self.fetch_byte(n))
+        }
+    }
+
+    /// Return character code of multi-byte form at byte position POS.  If POS
+    /// doesn't point the head of valid multi-byte form, only the byte at
+    /// POS is returned.  No range checking.
+    #[inline]
+    pub fn fetch_multibyte_char(self, n: ptrdiff_t) -> c_int {
+        let offset = if n >= self.gpt_byte() && n >= 0 {
+            self.gap_size()
+        } else {
+            0
+        };
+
+        unsafe {
+            string_char(
+                self.beg_addr().offset(offset + n - self.beg_byte()),
+                ptr::null_mut(),
+                ptr::null_mut(),
+            )
+        }
+    }
+
+    #[inline]
+    pub fn multibyte_characters_enabled(self) -> bool {
+        self.enable_multibyte_characters_.is_not_nil()
+    }
+
+    #[inline]
+    pub fn pos_within_range(self, pos: isize) -> isize {
+        if pos >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        }
+    }
+
+    // Same as the BUF_INC_POS c macro
+    /// Increment the buffer byte position POS_BYTE of the the buffer to
+    /// the next character boundary.  This macro relies on the fact that
+    /// *GPT_ADDR and *Z_ADDR are always accessible and the values are
+    /// '\0'.  No range checking of POS_BYTE.
+    pub fn inc_pos(self, pos_byte: isize) -> isize {
+        let chp = self.buf_byte_address(pos_byte);
+        pos_byte + multibyte_length_by_head(chp) as isize
+    }
+
+    // Same as the BUF_DEC_POS c macro
+    /// Decrement the buffer byte position POS_BYTE of the buffer to
+    /// the previous character boundary.  No range checking of POS_BYTE.
+    pub fn dec_pos(self, pos_byte: isize) -> isize {
+        let mut new_pos = pos_byte - 1;
+        let mut offset = new_pos - self.beg_byte();
+        offset += self.pos_within_range(new_pos);
+        unsafe {
+            let mut chp = self.beg_addr().offset(offset);
+
+            while !char_head_p(*chp) {
+                chp = chp.offset(-1);
+                new_pos -= 1;
+            }
+        }
+        new_pos
     }
 }
 
@@ -379,28 +364,21 @@ impl LispBufferRef {
     }
 }
 
+impl LispBufferRef {
+    #[inline]
+    pub fn overlays_before(&self) -> Option<LispOverlayRef> {
+        unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
+    }
+
+    #[inline]
+    pub fn overlays_after(&self) -> Option<LispOverlayRef> {
+        unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
+    }
+}
+
 impl LispOverlayRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)
-    }
-
-    pub fn from_ptr(ptr: *mut c_void) -> Option<LispOverlayRef> {
-        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
-    }
-
-    #[inline]
-    pub fn start(self) -> LispObject {
-        self.start
-    }
-
-    #[inline]
-    pub fn end(self) -> LispObject {
-        self.end
-    }
-
-    #[inline]
-    pub fn plist(self) -> LispObject {
-        self.plist
     }
 
     pub fn iter(self) -> LispOverlayIter {
@@ -588,20 +566,20 @@ pub fn buffer_chars_modified_tick(buffer: LispObject) -> EmacsInt {
 /// Return the position at which OVERLAY starts.
 #[lisp_fn]
 pub fn overlay_start(overlay: LispOverlayRef) -> Option<EmacsInt> {
-    marker_position_lisp(overlay.start().into())
+    marker_position_lisp(overlay.start.into())
 }
 
 /// Return the position at which OVERLAY ends.
 #[lisp_fn]
 pub fn overlay_end(overlay: LispOverlayRef) -> Option<EmacsInt> {
-    marker_position_lisp(overlay.end().into())
+    marker_position_lisp(overlay.end.into())
 }
 
 /// Return the buffer OVERLAY belongs to.
 /// Return nil if OVERLAY has been deleted.
 #[lisp_fn]
 pub fn overlay_buffer(overlay: LispOverlayRef) -> Option<LispBufferRef> {
-    marker_buffer(overlay.start().into())
+    marker_buffer(overlay.start.into())
 }
 
 /// Return a list of the properties on OVERLAY.

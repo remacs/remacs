@@ -28,10 +28,6 @@ impl LispMarkerRef {
         unsafe { mem::transmute(self.as_ptr()) }
     }
 
-    pub fn from_ptr(ptr: *mut c_void) -> Option<LispMarkerRef> {
-        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
-    }
-
     pub fn charpos(self) -> Option<ptrdiff_t> {
         match self.buffer() {
             None => None,

@@ -105,7 +105,6 @@ extern "C" {
         depth: EmacsInt,
         sexpflag: bool,
     ) -> LispObject;
-    pub fn is_minibuffer(w: *const Lisp_Window) -> bool;
     pub fn read_minibuf(
         map: Lisp_Object,
         initial: Lisp_Object,
