@@ -3509,56 +3509,6 @@ xpm_image_p (Lisp_Object object)
 
 #endif /* HAVE_XPM || HAVE_NS */
 
-#if defined HAVE_XPM && defined HAVE_X_WINDOWS && !defined USE_GTK
-ptrdiff_t
-x_create_bitmap_from_xpm_data (struct frame *f, const char **bits)
-{
-  Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
-  ptrdiff_t id;
-  int rc;
-  XpmAttributes attrs;
-  Pixmap bitmap, mask;
-
-  memset (&attrs, 0, sizeof attrs);
-
-  attrs.visual = FRAME_X_VISUAL (f);
-  attrs.colormap = FRAME_X_COLORMAP (f);
-  attrs.valuemask |= XpmVisual;
-  attrs.valuemask |= XpmColormap;
-
-#ifdef ALLOC_XPM_COLORS
-  attrs.color_closure = f;
-  attrs.alloc_color = xpm_alloc_color;
-  attrs.free_colors = xpm_free_colors;
-  attrs.valuemask |= XpmAllocColor | XpmFreeColors | XpmColorClosure;
-  xpm_init_color_cache (f, &attrs);
-#endif
-
-  rc = XpmCreatePixmapFromData (FRAME_X_DISPLAY (f), FRAME_X_DRAWABLE (f),
-				(char **) bits, &bitmap, &mask, &attrs);
-  if (rc != XpmSuccess)
-    {
-      XpmFreeAttributes (&attrs);
-      return -1;
-    }
-
-  id = x_allocate_bitmap_record (f);
-  dpyinfo->bitmaps[id - 1].pixmap = bitmap;
-  dpyinfo->bitmaps[id - 1].have_mask = true;
-  dpyinfo->bitmaps[id - 1].mask = mask;
-  dpyinfo->bitmaps[id - 1].file = NULL;
-  dpyinfo->bitmaps[id - 1].height = attrs.height;
-  dpyinfo->bitmaps[id - 1].width = attrs.width;
-  dpyinfo->bitmaps[id - 1].depth = attrs.depth;
-  dpyinfo->bitmaps[id - 1].refcount = 1;
-
-#ifdef ALLOC_XPM_COLORS
-  xpm_free_color_cache ();
-#endif
-  XpmFreeAttributes (&attrs);
-  return id;
-}
-#endif /* defined (HAVE_XPM) && defined (HAVE_X_WINDOWS) */
 
 /* Load image IMG which will be displayed on frame F.  Value is
    true if successful.  */

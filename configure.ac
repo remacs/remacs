@@ -312,13 +312,12 @@ AC_ARG_WITH([x-toolkit],[AS_HELP_STRING([--with-x-toolkit=KIT],
  [use an X toolkit (KIT one of: yes or gtk, gtk2, gtk3, no)])],
 [	  case "${withval}" in
 	    y | ye | yes )	val=gtk ;;
-	    n | no )		val=no  ;;
 	    g | gt | gtk  )	val=gtk ;;
 	    gtk2  )	val=gtk2 ;;
 	    gtk3  )	val=gtk3 ;;
 	    * )
 AC_MSG_ERROR(['--with-x-toolkit=$withval' is invalid;
-this option's value should be 'yes', 'no', 'gtk',
+this option's value should be 'yes', 'gtk',
 'gtk2' or 'gtk3'.  'yes' and 'gtk' are synonyms.])
 	    ;;
 	  esac
@@ -2129,7 +2128,6 @@ dnl USE_X_TOOLKIT is set.
       gtk3 ) with_gtk3=yes
              term_header=gtkutil.h
              USE_X_TOOLKIT=none ;;
-      no ) USE_X_TOOLKIT=none ;;
 dnl If user did not say whether to use a toolkit, make this decision later:
 dnl use the toolkit if we have gtk, or X11R5 or newer.
       * ) USE_X_TOOLKIT=maybe ;;

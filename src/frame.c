@@ -4693,34 +4693,6 @@ display_x_get_resource (Display_Info *dpyinfo, Lisp_Object attribute,
 			    attribute, class, component, subclass);
 }
 
-#if defined HAVE_X_WINDOWS && !defined USE_GTK
-/* Used when C code wants a resource value.  */
-/* Called from oldXMenu/Create.c.  */
-char *
-x_get_resource_string (const char *attribute, const char *class)
-{
-  char *result;
-  struct frame *sf = SELECTED_FRAME ();
-  ptrdiff_t invocation_namelen = SBYTES (Vinvocation_name);
-  USE_SAFE_ALLOCA;
-
-  /* Allocate space for the components, the dots which separate them,
-     and the final '\0'.  */
-  ptrdiff_t name_keysize = invocation_namelen + strlen (attribute) + 2;
-  ptrdiff_t class_keysize = sizeof (EMACS_CLASS) - 1 + strlen (class) + 2;
-  char *name_key = SAFE_ALLOCA (name_keysize + class_keysize);
-  char *class_key = name_key + name_keysize;
-
-  esprintf (name_key, "%s.%s", SSDATA (Vinvocation_name), attribute);
-  sprintf (class_key, "%s.%s", EMACS_CLASS, class);
-
-  result = x_get_string_resource (FRAME_DISPLAY_INFO (sf)->xrdb,
-				  name_key, class_key);
-  SAFE_FREE ();
-  return result;
-}
-#endif
-
 /* Return the value of parameter PARAM.
 
    First search ALIST, then Vdefault_frame_alist, then the X defaults

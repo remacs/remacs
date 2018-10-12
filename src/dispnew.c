@@ -759,14 +759,6 @@ clear_current_matrices (register struct frame *f)
   if (f->current_matrix)
     clear_glyph_matrix (f->current_matrix);
 
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
-  /* Clear the matrix of the menu bar window, if such a window exists.
-     The menu bar window is currently used to display menus on X when
-     no toolkit support is compiled in.  */
-  if (WINDOWP (f->menu_bar_window))
-    clear_glyph_matrix (XWINDOW (f->menu_bar_window)->current_matrix);
-#endif
-
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
   /* Clear the matrix of the tool-bar window, if any.  */
   if (WINDOWP (f->tool_bar_window))
@@ -786,11 +778,6 @@ clear_desired_matrices (register struct frame *f)
 {
   if (f->desired_matrix)
     clear_glyph_matrix (f->desired_matrix);
-
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
-  if (WINDOWP (f->menu_bar_window))
-    clear_glyph_matrix (XWINDOW (f->menu_bar_window)->desired_matrix);
-#endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
   if (WINDOWP (f->tool_bar_window))
@@ -2073,39 +2060,6 @@ adjust_frame_glyphs_for_window_redisplay (struct frame *f)
   /* Allocate/reallocate window matrices.  */
   allocate_matrices_for_window_redisplay (XWINDOW (FRAME_ROOT_WINDOW (f)));
 
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
-  /* Allocate/ reallocate matrices of the dummy window used to display
-     the menu bar under X when no X toolkit support is available.  */
-  {
-    /* Allocate a dummy window if not already done.  */
-    struct window *w;
-    if (NILP (f->menu_bar_window))
-      {
-	Lisp_Object frame;
-	fset_menu_bar_window (f, make_window ());
-	w = XWINDOW (f->menu_bar_window);
-	XSETFRAME (frame, f);
-	wset_frame (w, frame);
-	w->pseudo_window_p = 1;
-      }
-    else
-      w = XWINDOW (f->menu_bar_window);
-
-    /* Set window dimensions to frame dimensions and allocate or
-       adjust glyph matrices of W.  */
-    w->pixel_left = 0;
-    w->left_col = 0;
-    w->pixel_top = 0;
-    w->top_line = 0;
-    w->pixel_width = (FRAME_PIXEL_WIDTH (f)
-		      - 2 * FRAME_INTERNAL_BORDER_WIDTH (f));
-    w->total_cols = FRAME_TOTAL_COLS (f);
-    w->pixel_height = FRAME_MENU_BAR_HEIGHT (f);
-    w->total_lines = FRAME_MENU_BAR_LINES (f);
-    allocate_matrices_for_window_redisplay (w);
-  }
-#endif
-
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
   {
     /* Allocate/ reallocate matrices of the tool bar window.  If we
@@ -2174,19 +2128,6 @@ free_glyphs (struct frame *f)
       /* Release window sub-matrices.  */
       if (!NILP (f->root_window))
         free_window_matrices (XWINDOW (f->root_window));
-
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
-      /* Free the dummy window for menu bars without X toolkit and its
-	 glyph matrices.  */
-      if (!NILP (f->menu_bar_window))
-	{
-	  struct window *w = XWINDOW (f->menu_bar_window);
-	  free_glyph_matrix (w->desired_matrix);
-	  free_glyph_matrix (w->current_matrix);
-	  w->desired_matrix = w->current_matrix = NULL;
-	  fset_menu_bar_window (f, Qnil);
-	}
-#endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
       /* Free the tool bar window and its glyph matrices.  */
@@ -3073,13 +3014,6 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
       /* Update all windows in the window tree of F, maybe stopping
 	 when pending input is detected.  */
       update_begin (f);
-
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
-      /* Update the menu bar on X frames that don't have toolkit
-	 support.  */
-      if (WINDOWP (f->menu_bar_window))
-	update_window (XWINDOW (f->menu_bar_window), true);
-#endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
       /* Update the tool-bar window, if present.  */

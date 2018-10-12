@@ -171,12 +171,6 @@ struct frame
      most recently buried buffer is first.  For last-buffer.  */
   Lisp_Object buried_buffer_list;
 
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
-  /* A dummy window used to display menu bars under X when no X
-     toolkit support is available.  */
-  Lisp_Object menu_bar_window;
-#endif
-
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
   /* A window used to display the tool-bar of a frame.  */
   Lisp_Object tool_bar_window;
@@ -633,13 +627,6 @@ fset_menu_bar_vector (struct frame *f, Lisp_Object val)
 {
   f->menu_bar_vector = val;
 }
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_GTK)
-INLINE void
-fset_menu_bar_window (struct frame *f, Lisp_Object val)
-{
-  f->menu_bar_window = val;
-}
-#endif
 INLINE void
 fset_name (struct frame *f, Lisp_Object val)
 {
