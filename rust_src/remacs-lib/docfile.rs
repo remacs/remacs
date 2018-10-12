@@ -27,12 +27,12 @@ const FUNCTION: c_int = 5;
 type AddGlobalFn = fn(c_int, *const c_char, c_int, *const c_char) -> *const ();
 
 #[no_mangle]
-pub extern "C" fn scan_rust_file(
+pub unsafe extern "C" fn scan_rust_file(
     filename: *const c_char,
     generate_globals: c_int,
     add_global: AddGlobalFn,
 ) {
-    let filename = unsafe { CStr::from_ptr(filename) }.to_str().unwrap();
+    let filename = CStr::from_ptr(filename).to_str().unwrap();
     let fp = BufReader::new(File::open(&*filename).unwrap());
 
     let mut in_docstring = false;
@@ -147,8 +147,8 @@ pub extern "C" fn scan_rust_file(
                 }
                 // Print contents for docfile to stdout
                 print!(
-                    "\x1f{}{}\n{}\n{}",
-                    "F", attr_props.name, docstring, docstring_usage
+                    "\x1fF{}\n{}\n{}",
+                    attr_props.name, docstring, docstring_usage
                 );
             }
         } else if line.starts_with("def_lisp_sym!(") {

@@ -14,6 +14,8 @@ Thank you for contributing to Remacs!
   can be found in the section on [Remacs style](#remacs-style).
 * Check for Rust compiler warnings, as CI won't go green if there
   are warnings.
+* Try to check your code with Clippy. `cargo clippy` will run the linter.
+  You can install clippy with `rustup component add clippy-preview`.
 * Format your code with
   [rustfmt](https://github.com/rust-lang-nursery/rustfmt). Make sure
   you have the correct version by using rustup (it will use the

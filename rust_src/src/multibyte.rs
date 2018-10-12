@@ -746,7 +746,7 @@ pub fn char_byte8_p(c: Codepoint) -> bool {
 
 pub fn char_to_byte8(c: Codepoint) -> u8 {
     if char_byte8_p(c) {
-        (c - 0x3FFF00) as u8
+        (c - 0x003F_FF00) as u8
     } else {
         (c & 0xFF) as u8
     }

@@ -22,15 +22,15 @@ use std::env;
 const NUM_RETRIES: usize = 50;
 
 #[no_mangle]
-pub extern "C" fn rust_make_temp(template: *mut c_char, flags: c_int) -> c_int {
+pub unsafe extern "C" fn rust_make_temp(template: *mut c_char, flags: c_int) -> c_int {
     let save_errno = errno::errno();
-    let template_string = unsafe { CStr::from_ptr(template).to_string_lossy().into_owned() };
+    let template_string = CStr::from_ptr(template).to_string_lossy().into_owned();
 
     match make_temporary_file(template_string, flags) {
         Ok(result) => {
             errno::set_errno(save_errno);
             let name = CString::new(result.1).unwrap();
-            unsafe { libc::strcpy(template, name.as_ptr()) };
+            libc::strcpy(template, name.as_ptr());
             result.0
         }
 
