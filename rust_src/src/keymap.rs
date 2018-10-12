@@ -268,7 +268,7 @@ pub fn keymap_prompt(map: LispObject) -> LispObject {
 /// Same as `map_keymap_internal`, but traverses parent keymaps as well.
 /// AUTOLOAD indicates that autoloaded keymaps should be loaded.
 #[no_mangle]
-pub extern "C" fn map_keymap(
+pub unsafe extern "C" fn map_keymap(
     map: LispObject,
     fun: map_keymap_function_t,
     args: LispObject,
@@ -306,20 +306,22 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
     if sort_first {
         return call!(intern("map-keymap-sorted"), function, keymap);
     }
-    map_keymap(
-        keymap,
-        Some(map_keymap_call),
-        function,
-        ptr::null_mut(),
-        true,
-    );
+    unsafe {
+        map_keymap(
+            keymap,
+            Some(map_keymap_call),
+            function,
+            ptr::null_mut(),
+            true,
+        )
+    };
     Qnil
 }
 
 /// Call FUN for every binding in MAP and stop at (and return) the parent.
 /// FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).
 #[no_mangle]
-pub extern "C" fn map_keymap_internal(
+pub unsafe extern "C" fn map_keymap_internal(
     map: LispObject,
     fun: map_keymap_function_t,
     args: LispObject,
@@ -351,24 +353,20 @@ pub extern "C" fn map_keymap_internal(
 
             if let Some(binding_cons) = binding.as_cons() {
                 let (car, cdr) = binding_cons.as_tuple();
-                unsafe { map_keymap_item(fun, args, car, cdr, data) };
+                map_keymap_item(fun, args, car, cdr, data);
             } else if binding.is_vector() {
                 if let Some(binding_vec) = binding.as_vectorlike() {
                     for c in 0..binding_vec.pseudovector_size() {
                         let character = LispObject::from(c);
-                        unsafe { map_keymap_item(fun, args, character, aref(binding, c), data) };
+                        map_keymap_item(fun, args, character, aref(binding, c), data);
                     }
                 }
             } else if binding.is_char_table() {
-                unsafe {
-                    let saved = match fun {
-                        Some(f) => {
-                            make_save_funcptr_ptr_obj(Some(std::mem::transmute(f)), data, args)
-                        }
-                        None => make_save_funcptr_ptr_obj(None, data, args),
-                    };
-                    map_char_table(Some(map_keymap_char_table_item), Qnil, binding, saved);
-                }
+                let saved = match fun {
+                    Some(f) => make_save_funcptr_ptr_obj(Some(std::mem::transmute(f)), data, args),
+                    None => make_save_funcptr_ptr_obj(None, data, args),
+                };
+                map_char_table(Some(map_keymap_char_table_item), Qnil, binding, saved);
             }
         }
 
@@ -385,7 +383,7 @@ pub extern "C" fn map_keymap_internal(
 #[lisp_fn(name = "map-keymap-internal")]
 pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
     keymap = get_keymap(keymap, true, true);
-    map_keymap_internal(keymap, Some(map_keymap_call), function, ptr::null_mut())
+    unsafe { map_keymap_internal(keymap, Some(map_keymap_call), function, ptr::null_mut()) }
 }
 
 /// Return the binding for command KEYS in current local keymap only.

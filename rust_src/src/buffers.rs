@@ -69,7 +69,7 @@ impl LispBufferRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
-    pub fn is_read_only(&self) -> bool {
+    pub fn is_read_only(self) -> bool {
         self.read_only_.into()
     }
 
@@ -366,12 +366,12 @@ impl LispBufferRef {
 
 impl LispBufferRef {
     #[inline]
-    pub fn overlays_before(&self) -> Option<LispOverlayRef> {
+    pub fn overlays_before(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
     }
 
     #[inline]
-    pub fn overlays_after(&self) -> Option<LispOverlayRef> {
+    pub fn overlays_after(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
     }
 }
@@ -438,10 +438,7 @@ impl LispBufferLocalValueRef {
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
 pub fn buffer_list(frame: LispObject) -> LispObject {
-    let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }
-        .iter_cars_safe()
-        .map(|o| cdr(o))
-        .collect();
+    let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }.iter_cars_safe().map(cdr).collect();
 
     match frame.as_frame() {
         None => Flist(buffers.len() as isize, buffers.as_mut_ptr()),
@@ -591,9 +588,9 @@ pub fn overlay_properties(overlay: LispOverlayRef) -> LispObject {
 }
 
 #[no_mangle]
-pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
-    let start = unsafe { *b };
-    let stop = unsafe { *e };
+pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
+    let start = *b;
+    let stop = *e;
 
     let mut beg = start.as_fixnum_coerce_marker_or_error();
     let mut end = stop.as_fixnum_coerce_marker_or_error();
@@ -602,10 +599,8 @@ pub extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject) {
         mem::swap(&mut beg, &mut end);
     }
 
-    unsafe {
-        *b = LispObject::from(beg);
-        *e = LispObject::from(end);
-    }
+    *b = LispObject::from(beg);
+    *e = LispObject::from(end);
 
     let buf = ThreadState::current_buffer();
     let begv = buf.begv as EmacsInt;
@@ -674,10 +669,8 @@ pub extern "C" fn nsberror(spec: LispObject) -> ! {
 #[lisp_fn]
 pub fn overlay_lists() -> LispObject {
     let list_overlays = |ol: LispOverlayRef| -> LispObject {
-        let ol_list = ol
-            .iter()
-            .fold(Qnil, |accum, n| unsafe { Fcons(n.as_lisp_obj(), accum) });
-        ol_list
+        ol.iter()
+            .fold(Qnil, |accum, n| unsafe { Fcons(n.as_lisp_obj(), accum) })
     };
 
     let cur_buf = ThreadState::current_buffer();

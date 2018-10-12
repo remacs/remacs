@@ -600,9 +600,7 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
     };
 
     unsafe {
-        if !globals.mode_line_in_non_selected_windows {
-            return face_id::MODE_LINE_FACE_ID;
-        } else if selw == current {
+        if !globals.mode_line_in_non_selected_windows || selw == current {
             return face_id::MODE_LINE_FACE_ID;
         } else if minibuf_level > 0 {
             if let Some(minibuf_window) = current_minibuf_window.as_window() {

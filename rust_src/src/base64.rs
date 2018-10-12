@@ -65,7 +65,7 @@ pub extern "C" fn base64_encode_1(
 /// decoded result should be in multibyte form.  If `NCHARS_RETURN` is not NULL,
 /// store the number of produced characters in `*NCHARS_RETURN`.
 #[no_mangle]
-pub extern "C" fn base64_decode_1(
+pub unsafe extern "C" fn base64_decode_1(
     from: *const c_char,
     length: usize,
     to: *mut c_char,
@@ -73,17 +73,15 @@ pub extern "C" fn base64_decode_1(
     multibyte: bool,
     nchars_return: *mut isize,
 ) -> isize {
-    let encoded = unsafe { slice::from_raw_parts(from as *const u8, length as usize) };
-    let decoded = unsafe { slice::from_raw_parts_mut(to as *mut u8, out_length as usize) };
+    let encoded = slice::from_raw_parts(from as *const u8, length as usize);
+    let decoded = slice::from_raw_parts_mut(to as *mut u8, out_length as usize);
 
     // Use the MIME config to allow embedded newlines.
     if let Ok(decoded_length) =
         base64_crate::decode_config_slice(encoded, base64_crate::MIME, decoded)
     {
         if !nchars_return.is_null() {
-            unsafe {
-                *nchars_return = decoded_length as isize;
-            }
+            *nchars_return = decoded_length as isize;
         }
         if multibyte {
             // Decode non-ASCII bytes into UTF-8 pairs.
@@ -92,9 +90,7 @@ pub extern "C" fn base64_decode_1(
                 .map(|&byte| byte as char)
                 .collect();
             let s_len = s.len();
-            unsafe {
-                ptr::copy_nonoverlapping(s.as_ptr(), to as *mut u8, s_len);
-            }
+            ptr::copy_nonoverlapping(s.as_ptr(), to as *mut u8, s_len);
             s.len() as isize
         } else {
             decoded_length as isize
@@ -211,14 +207,16 @@ fn test_simple_base64_decode_1() {
     let mut decoded: Vec<u8> = Vec::new();
     decoded.resize(compute_decode_size(input.len()), 0);
 
-    let length = base64_decode_1(
-        input.as_ptr() as *mut c_char,
-        input.as_bytes().len(),
-        decoded.as_mut_ptr() as *mut c_char,
-        decoded.len(),
-        true,
-        &mut n,
-    );
+    let length = unsafe {
+        base64_decode_1(
+            input.as_ptr() as *mut c_char,
+            input.as_bytes().len(),
+            decoded.as_mut_ptr() as *mut c_char,
+            decoded.len(),
+            true,
+            &mut n,
+        )
+    };
     unsafe { decoded.set_len(length as usize) };
 
     assert_eq!(clear.len(), length as usize);
@@ -234,14 +232,16 @@ fn test_multibyte_base64_decode_1() {
     let mut decoded: Vec<u8> = Vec::new();
     decoded.resize(compute_decode_size(input.len()), 0);
 
-    let length = base64_decode_1(
-        input.as_ptr() as *mut c_char,
-        input.as_bytes().len(),
-        decoded.as_mut_ptr() as *mut c_char,
-        decoded.len(),
-        true,
-        &mut n,
-    );
+    let length = unsafe {
+        base64_decode_1(
+            input.as_ptr() as *mut c_char,
+            input.as_bytes().len(),
+            decoded.as_mut_ptr() as *mut c_char,
+            decoded.len(),
+            true,
+            &mut n,
+        )
+    };
     unsafe { decoded.set_len(length as usize) };
 
     assert_eq!(clear.len(), length as usize);
@@ -254,14 +254,16 @@ fn test_multibyte_base64_decode_1() {
     decoded = Vec::new();
     decoded.resize(compute_decode_size(input.len()), 0);
 
-    let length = base64_decode_1(
-        input.as_ptr() as *mut c_char,
-        input.as_bytes().len(),
-        decoded.as_mut_ptr() as *mut c_char,
-        decoded.len(),
-        false,
-        &mut n,
-    );
+    let length = unsafe {
+        base64_decode_1(
+            input.as_ptr() as *mut c_char,
+            input.as_bytes().len(),
+            decoded.as_mut_ptr() as *mut c_char,
+            decoded.len(),
+            false,
+            &mut n,
+        )
+    };
     unsafe { decoded.set_len(length as usize) };
 
     assert_eq!(clear.len(), length as usize);
@@ -309,23 +311,27 @@ bWFpbGluZyBsaXN0cywgc2VlIDxodHRwOi8vbGlzdHMuZ251Lm9yZy8+LgoK";
     let mut n2: isize = 0;
     let nchars2: *mut isize = &mut n2;
 
-    let length1 = base64_decode_1(
-        input1.as_ptr() as *mut c_char,
-        input1.as_bytes().len(),
-        decoded1.as_mut_ptr() as *mut c_char,
-        decoded1.capacity(),
-        true,
-        nchars1,
-    );
+    let length1 = unsafe {
+        base64_decode_1(
+            input1.as_ptr() as *mut c_char,
+            input1.as_bytes().len(),
+            decoded1.as_mut_ptr() as *mut c_char,
+            decoded1.capacity(),
+            true,
+            nchars1,
+        )
+    };
 
-    let length2 = base64_decode_1(
-        input2.as_ptr() as *mut c_char,
-        input2.as_bytes().len(),
-        decoded2.as_mut_ptr() as *mut c_char,
-        decoded2.capacity(),
-        true,
-        nchars2,
-    );
+    let length2 = unsafe {
+        base64_decode_1(
+            input2.as_ptr() as *mut c_char,
+            input2.as_bytes().len(),
+            decoded2.as_mut_ptr() as *mut c_char,
+            decoded2.capacity(),
+            true,
+            nchars2,
+        )
+    };
 
     assert_eq!(length1, length2);
     assert_eq!(n1, n2);
@@ -370,22 +376,22 @@ pub fn base64_decode_string(mut string: LispStringRef) -> LispObject {
     let mut buffer: Vec<c_char> = Vec::with_capacity(length);
 
     let decoded = buffer.as_mut_ptr();
-    let decoded_length = base64_decode_1(
-        string.sdata_ptr(),
-        string.len_bytes() as usize,
-        decoded,
-        length,
-        false,
-        ptr::null_mut(),
-    );
+    let decoded_length = unsafe {
+        base64_decode_1(
+            string.sdata_ptr(),
+            string.len_bytes() as usize,
+            decoded,
+            length,
+            false,
+            ptr::null_mut(),
+        )
+    };
 
     if decoded_length < 0 {
         error!("Invalid base64 data");
     }
-    unsafe {
-        buffer.set_len(decoded_length as usize);
-        make_unibyte_string(decoded, decoded_length)
-    }
+    unsafe { buffer.set_len(decoded_length as usize) };
+    unsafe { make_unibyte_string(decoded, decoded_length) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/base64_exports.rs"));

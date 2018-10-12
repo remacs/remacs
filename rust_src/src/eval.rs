@@ -1022,7 +1022,7 @@ pub fn funcall(args: &mut [LispObject]) -> LispObject {
 
     // Increment the lisp eval depth
     let mut current_thread = ThreadState::current_thread();
-    current_thread.m_lisp_eval_depth = current_thread.m_lisp_eval_depth + 1;
+    current_thread.m_lisp_eval_depth += 1;
 
     unsafe {
         if current_thread.m_lisp_eval_depth > globals.max_lisp_eval_depth {
@@ -1078,7 +1078,7 @@ pub fn funcall(args: &mut [LispObject]) -> LispObject {
 
     unsafe { check_cons_list() };
 
-    current_thread.m_lisp_eval_depth = current_thread.m_lisp_eval_depth - 1;
+    current_thread.m_lisp_eval_depth -= 1;
 
     unsafe {
         if backtrace_debug_on_exit(current_thread.m_specpdl.offset(count)) {

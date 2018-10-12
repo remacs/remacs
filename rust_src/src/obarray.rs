@@ -65,10 +65,12 @@ impl LispObarrayRef {
 /// Intern (e.g. create a symbol from) a string.
 pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
     let s = string.as_ref();
-    intern_1(
-        s.as_ptr() as *const libc::c_char,
-        s.len() as libc::ptrdiff_t,
-    )
+    unsafe {
+        intern_1(
+            s.as_ptr() as *const libc::c_char,
+            s.len() as libc::ptrdiff_t,
+        )
+    }
 }
 
 #[no_mangle]
@@ -123,33 +125,36 @@ pub extern "C" fn map_obarray(
 /// Intern the C string `s`: return a symbol with that name, interned in the
 /// current obarray.
 #[no_mangle]
-pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
+pub unsafe extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
     let obarray = LispObarrayRef::global().as_lisp_obj();
-    let tem = unsafe { oblookup(obarray, s, len, len) };
+    let tem = oblookup(obarray, s, len, len);
 
     if tem.is_symbol() {
         tem
     } else {
         // The above `oblookup' was done on the basis of nchars==nbytes, so
         // the string has to be unibyte.
-        intern_driver(unsafe { make_unibyte_string(s, len) }, obarray, tem)
+        intern_driver(make_unibyte_string(s, len), obarray, tem)
     }
 }
 
 /// Intern the C string STR: return a symbol with that name,
 /// interned in the current obarray.
 #[no_mangle]
-pub extern "C" fn intern_c_string_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
+pub unsafe extern "C" fn intern_c_string_1(
+    s: *const libc::c_char,
+    len: libc::ptrdiff_t,
+) -> LispObject {
     let obarray = LispObarrayRef::global().as_lisp_obj();
-    let tem = unsafe { oblookup(obarray, s, len, len) };
+    let tem = oblookup(obarray, s, len, len);
 
     if tem.is_symbol() {
         tem
     } else {
         // Creating a non-pure string from a string literal not implemented yet.
         // We could just use make_string here and live with the extra copy.
-        assert!(unsafe { globals.Vpurify_flag }.is_not_nil());
-        intern_driver(unsafe { make_pure_c_string(s, len) }, obarray, tem)
+        assert!(globals.Vpurify_flag.is_not_nil());
+        intern_driver(make_pure_c_string(s, len), obarray, tem)
     }
 }
 

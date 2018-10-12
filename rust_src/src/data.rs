@@ -31,13 +31,13 @@ use field_offset::FieldOffset;
 
 // Lisp_Fwd predicates which can go away as the callers are ported to Rust
 #[no_mangle]
-pub extern "C" fn KBOARD_OBJFWDP(a: *const Lisp_Fwd) -> bool {
-    unsafe { (*a).u_intfwd.ty == Lisp_Fwd_Kboard_Obj }
+pub unsafe extern "C" fn KBOARD_OBJFWDP(a: *const Lisp_Fwd) -> bool {
+    (*a).u_intfwd.ty == Lisp_Fwd_Kboard_Obj
 }
 
 #[no_mangle]
-pub extern "C" fn OBJFWDP(a: *const Lisp_Fwd) -> bool {
-    unsafe { (*a).u_intfwd.ty == Lisp_Fwd_Obj }
+pub unsafe extern "C" fn OBJFWDP(a: *const Lisp_Fwd) -> bool {
+    (*a).u_intfwd.ty == Lisp_Fwd_Obj
 }
 
 /// Find the function at the end of a chain of symbol function indirections.
@@ -90,7 +90,7 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
 /// for example, (type-of 1) returns `integer'.
 #[lisp_fn]
 pub fn type_of(object: LispObject) -> LispObject {
-    let ty = match object.get_type() {
+    match object.get_type() {
         Lisp_Type::Lisp_Cons => Qcons,
         Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => Qinteger,
         Lisp_Type::Lisp_Symbol => Qsymbol,
@@ -143,13 +143,12 @@ pub fn type_of(object: LispObject) -> LispObject {
                             return v.get_unchecked(1);
                         }
                     }
-                    return t;
+                    t
                 },
                 _ => Qnone,
             }
         }
-    };
-    ty
+    }
 }
 
 #[lisp_fn]
@@ -430,37 +429,35 @@ pub struct Lisp_Kboard_Objfwd {
 /// This does not handle buffer-local variables; use
 /// swap_in_symval_forwarding for that.
 #[no_mangle]
-pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject {
-    unsafe {
-        match (*valcontents).u_intfwd.ty {
-            Lisp_Fwd_Int => LispObject::from(*(*valcontents).u_intfwd.intvar),
-            Lisp_Fwd_Bool => LispObject::from(*(*valcontents).u_boolfwd.boolvar),
-            Lisp_Fwd_Obj => (*(*valcontents).u_objfwd.objvar),
-            Lisp_Fwd_Buffer_Obj => *(*valcontents)
-                .u_buffer_objfwd
-                .offset
-                .apply_ptr(ThreadState::current_buffer().as_mut()),
-            Lisp_Fwd_Kboard_Obj => {
-                // We used to simply use current_kboard here, but from Lisp
-                // code, its value is often unexpected.  It seems nicer to
-                // allow constructions like this to work as intuitively expected:
-                //
-                // (with-selected-frame frame
-                // (define-key local-function-map "\eOP" [f1]))
-                //
-                // On the other hand, this affects the semantics of
-                // last-command and real-last-command, and people may rely on
-                // that.  I took a quick look at the Lisp codebase, and I
-                // don't think anything will break.  --lorentey
-                let frame = selected_frame().as_frame_or_error();
-                if !frame.is_live() {
-                    emacs_abort();
-                }
-                let kboard = (*frame.terminal).kboard;
-                *(*valcontents).u_kboard_objfwd.offset.apply_ptr(kboard)
+pub unsafe extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject {
+    match (*valcontents).u_intfwd.ty {
+        Lisp_Fwd_Int => LispObject::from(*(*valcontents).u_intfwd.intvar),
+        Lisp_Fwd_Bool => LispObject::from(*(*valcontents).u_boolfwd.boolvar),
+        Lisp_Fwd_Obj => (*(*valcontents).u_objfwd.objvar),
+        Lisp_Fwd_Buffer_Obj => *(*valcontents)
+            .u_buffer_objfwd
+            .offset
+            .apply_ptr(ThreadState::current_buffer().as_mut()),
+        Lisp_Fwd_Kboard_Obj => {
+            // We used to simply use current_kboard here, but from Lisp
+            // code, its value is often unexpected.  It seems nicer to
+            // allow constructions like this to work as intuitively expected:
+            //
+            // (with-selected-frame frame
+            // (define-key local-function-map "\eOP" [f1]))
+            //
+            // On the other hand, this affects the semantics of
+            // last-command and real-last-command, and people may rely on
+            // that.  I took a quick look at the Lisp codebase, and I
+            // don't think anything will break.  --lorentey
+            let frame = selected_frame().as_frame_or_error();
+            if !frame.is_live() {
+                emacs_abort();
             }
-            _ => emacs_abort(),
+            let kboard = (*frame.terminal).kboard;
+            *(*valcontents).u_kboard_objfwd.offset.apply_ptr(kboard)
         }
+        _ => emacs_abort(),
     }
 }
 
@@ -472,41 +469,37 @@ pub extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject
 /// BUF non-zero means set the value in buffer BUF instead of the
 /// current buffer.  This only plays a role for per-buffer variables.
 #[no_mangle]
-pub extern "C" fn store_symval_forwarding(
+pub unsafe extern "C" fn store_symval_forwarding(
     valcontents: *mut Lisp_Fwd,
     newval: LispObject,
     mut buf: *mut Lisp_Buffer,
 ) {
-    match unsafe { (*valcontents).u_intfwd.ty } {
-        Lisp_Fwd_Int => unsafe { (*(*valcontents).u_intfwd.intvar) = newval.as_fixnum_or_error() },
-        Lisp_Fwd_Bool => unsafe { (*(*valcontents).u_boolfwd.boolvar) = newval.is_not_nil() },
-        Lisp_Fwd_Obj => unsafe {
+    match (*valcontents).u_intfwd.ty {
+        Lisp_Fwd_Int => (*(*valcontents).u_intfwd.intvar) = newval.as_fixnum_or_error(),
+        Lisp_Fwd_Bool => (*(*valcontents).u_boolfwd.boolvar) = newval.is_not_nil(),
+        Lisp_Fwd_Obj => {
             (*(*valcontents).u_objfwd.objvar) = newval;
             update_buffer_defaults((*valcontents).u_objfwd.objvar, newval);
-        },
+        }
         Lisp_Fwd_Buffer_Obj => {
-            let predicate = unsafe { (*valcontents).u_buffer_objfwd.predicate };
+            let predicate = (*valcontents).u_buffer_objfwd.predicate;
 
-            if newval.is_not_nil() {
-                if predicate.is_symbol() {
-                    let mut prop = unsafe { Fget(predicate, Qchoice) };
-                    if prop.is_not_nil() {
-                        if memq(newval, prop).is_nil() {
-                            unsafe { wrong_choice(prop, newval) };
+            if newval.is_not_nil() && predicate.is_symbol() {
+                let mut prop = Fget(predicate, Qchoice);
+                if prop.is_not_nil() {
+                    if memq(newval, prop).is_nil() {
+                        wrong_choice(prop, newval);
+                    }
+                } else {
+                    prop = Fget(predicate, Qrange);
+                    if prop.is_cons() {
+                        let (min, max) = prop.as_cons_or_error().as_tuple();
+                        let args = [min, newval, max];
+                        if !newval.is_number() || leq(&args) {
+                            wrong_range(min, max, newval);
                         }
-                    } else {
-                        prop = unsafe { Fget(predicate, Qrange) };
-                        if prop.is_cons() {
-                            let (min, max) = prop.as_cons_or_error().as_tuple();
-                            let args = [min, newval, max];
-                            if !newval.is_number() || leq(&args) {
-                                unsafe { wrong_range(min, max, newval) };
-                            }
-                        } else if predicate.is_function() {
-                            if call!(predicate, newval).is_nil() {
-                                wrong_type!(predicate, newval);
-                            }
-                        }
+                    } else if predicate.is_function() && call!(predicate, newval).is_nil() {
+                        wrong_type!(predicate, newval);
                     }
                 }
             }
@@ -514,21 +507,17 @@ pub extern "C" fn store_symval_forwarding(
             if buf.is_null() {
                 buf = ThreadState::current_buffer().as_mut();
             }
-            unsafe {
-                *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
-            }
+            *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
         }
         Lisp_Fwd_Kboard_Obj => {
             let frame = selected_frame().as_frame_or_error();
             if !frame.is_live() {
-                unsafe { emacs_abort() };
+                emacs_abort();
             }
-            unsafe {
-                let kboard = (*frame.terminal).kboard;
-                *(*valcontents).u_kboard_objfwd.offset.apply_ptr_mut(kboard) = newval;
-            }
+            let kboard = (*frame.terminal).kboard;
+            *(*valcontents).u_kboard_objfwd.offset.apply_ptr_mut(kboard) = newval;
         }
-        _ => unsafe { emacs_abort() },
+        _ => emacs_abort(),
     }
 }
 

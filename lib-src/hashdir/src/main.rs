@@ -3,7 +3,7 @@ extern crate ignore;
 extern crate sha2;
 use sha2::Digest;
 
-fn process_path<'a>(path: &str) -> String {
+fn process_path(path: &str) -> String {
     let path = std::path::Path::new("../src").join(path);
     let buf = std::fs::canonicalize(path).unwrap();
     buf.to_string_lossy().to_string()
@@ -25,14 +25,14 @@ fn main() {
     let mut hash_input: String = String::with_capacity(1024);
     for path in processed_paths {
         for entry in ignore::Walk::new(path)
-            .into_iter()
             .filter(|e| {
                 let entry = e.as_ref().unwrap();
                 let filename = entry.file_name().to_string_lossy();
-                entry.file_type().unwrap().is_dir() || filename.ends_with(".c")
-                    || filename.ends_with(".h") || filename.ends_with(".rs")
-            })
-            .filter_map(|e| e.ok())
+                entry.file_type().unwrap().is_dir()
+                    || filename.ends_with(".c")
+                    || filename.ends_with(".h")
+                    || filename.ends_with(".rs")
+            }).filter_map(|e| e.ok())
         {
             if entry.file_type().unwrap().is_file() {
                 hash_input.push_str(&entry.path().to_string_lossy().to_string());

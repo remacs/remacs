@@ -12,6 +12,7 @@ use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
 
+use remacs_sys;
 use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float};
 use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, Lisp_Bits,
                  CHECK_IMPURE, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX, INTMASK,
@@ -317,7 +318,7 @@ impl<T> ExternalPtr<T> {
         self.0.is_null()
     }
 
-    pub fn as_ptr(&self) -> *const T {
+    pub fn as_ptr(self) -> *const T {
         self.0
     }
 
@@ -405,7 +406,7 @@ impl LispObject {
     }
 
     unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef::new(mem::transmute(self.get_untaggedptr()))
+        LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
     }
 }
 
@@ -643,9 +644,9 @@ impl LispObject {
     #[inline]
     pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
         if self.is_vectorlike() {
-            Some(LispVectorlikeRef::new(unsafe {
-                mem::transmute(self.get_untaggedptr())
-            }))
+            Some(LispVectorlikeRef::new(
+                self.get_untaggedptr() as *mut remacs_sys::Lisp_Vectorlike
+            ))
         } else {
             None
         }
@@ -663,7 +664,7 @@ impl LispObject {
     */
 
     pub unsafe fn as_vectorlike_unchecked(self) -> LispVectorlikeRef {
-        LispVectorlikeRef::new(mem::transmute(self.get_untaggedptr()))
+        LispVectorlikeRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Vectorlike)
     }
 
     pub fn as_vector(self) -> Option<LispVectorRef> {
@@ -1031,7 +1032,7 @@ impl From<LispObject> for ThreadStateRef {
 impl LispObject {
     pub fn as_hash_table_or_error(self) -> LispHashTableRef {
         if self.is_hash_table() {
-            LispHashTableRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+            LispHashTableRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Hash_Table)
         } else {
             wrong_type!(Qhash_table_p, self);
         }
@@ -1297,7 +1298,7 @@ impl LispCons {
     }
 
     fn _extract(self) -> *mut Lisp_Cons {
-        unsafe { mem::transmute(self.0.get_untaggedptr()) }
+        self.0.get_untaggedptr() as *mut remacs_sys::Lisp_Cons
     }
 
     /// Return the car (first cell).
@@ -1369,7 +1370,7 @@ impl LispObject {
     #[inline]
     unsafe fn to_float_unchecked(self) -> LispFloatRef {
         debug_assert!(self.is_float());
-        LispFloatRef::new(mem::transmute(self.get_untaggedptr()))
+        LispFloatRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Float)
     }
 
     unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
@@ -1458,7 +1459,7 @@ impl LispObject {
 
     #[inline]
     pub unsafe fn as_string_unchecked(self) -> LispStringRef {
-        LispStringRef::new(mem::transmute(self.get_untaggedptr()))
+        LispStringRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_String)
     }
 
     #[inline]
