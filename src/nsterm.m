@@ -2721,6 +2721,7 @@ ns_copy_bits (struct frame *f, NSRect src, NSRect dest)
       [FRAME_NS_VIEW (f) scrollRect: src
                                  by: NSMakeSize (dest.origin.x - src.origin.x,
                                                  dest.origin.y - src.origin.y)];
+      [FRAME_NS_VIEW (f) setNeedsDisplay:YES];
     }
 }
 
