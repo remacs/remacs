@@ -5,10 +5,11 @@ use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
-                 delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
+                 del_range, delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
                  set_buffer_internal_1, specbind, unbind_to, unchain_both, update_mode_lines};
 use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
-                 Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Foverlay_get};
+                 Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Foverlay_get,
+                 Fwiden};
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
                  Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qget_file_buffer,
@@ -684,7 +685,8 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
         .find(|buf| {
             let buf_truename = buf.truename();
             buf_truename.is_string() && string_equal(buf_truename, filename)
-        }).into()
+        })
+        .into()
 }
 
 // to be removed once all references in C are ported
@@ -861,6 +863,27 @@ pub fn delete_overlay(overlay: LispObject) -> LispObject {
 #[lisp_fn(min = "0", name = "delete-all-overlays")]
 pub fn delete_all_overlays_lisp(buffer: LispObject) -> LispObject {
     unsafe { delete_all_overlays(buffer.as_buffer_or_current_buffer().as_mut()) };
+    Qnil
+}
+
+/// Delete the entire contents of the current buffer.
+/// Any narrowing restriction in effect (see `narrow-to-region') is removed,
+/// so the buffer is truly empty after this.
+#[lisp_fn]
+pub fn erase_buffer() -> LispObject {
+    unsafe {
+        Fwiden();
+
+        let mut cur_buf = ThreadState::current_buffer();
+        del_range(cur_buf.beg(), cur_buf.z());
+
+        cur_buf.last_window_start = 1;
+
+        // Prevent warnings, or suspension of auto saving, that would happen
+        // if future size is less than past size.  Use of erase-buffer
+        // implies that the future text is not really related to the past text.
+        cur_buf.save_length_ = LispObject::from(0);
+    }
     Qnil
 }
 

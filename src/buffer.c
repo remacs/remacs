@@ -1865,23 +1865,6 @@ set_buffer_if_live (Lisp_Object buffer)
     set_buffer_internal (XBUFFER (buffer));
 }
 
-DEFUN ("erase-buffer", Ferase_buffer, Serase_buffer, 0, 0, "*",
-       doc: /* Delete the entire contents of the current buffer.
-Any narrowing restriction in effect (see `narrow-to-region') is removed,
-so the buffer is truly empty after this.  */)
-  (void)
-{
-  Fwiden ();
-
-  del_range (BEG, Z);
-
-  current_buffer->last_window_start = 1;
-  /* Prevent warnings, or suspension of auto saving, that would happen
-     if future size is less than past size.  Use of erase-buffer
-     implies that the future text is not really related to the past text.  */
-  XSETFASTINT (BVAR (current_buffer, save_length), 0);
-  return Qnil;
-}
 
 /* Advance BYTE_POS up to a character boundary
    and return the adjusted position.  */
@@ -5824,7 +5807,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
-  defsubr (&Serase_buffer);
   defsubr (&Sbuffer_swap_text);
   defsubr (&Sset_buffer_multibyte);
   defsubr (&Skill_all_local_variables);
