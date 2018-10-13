@@ -38,3 +38,19 @@
       (should (= (length (overlays-in (point-min) (point-max))) 2))
       (delete-all-overlays)
       (should (eq (overlays-in (point-min) (point-max)) nil)))))
+
+(ert-deftest test-erase-buffer ()
+  (let ((buf (get-buffer-create "test-erase-buffer")))
+    (with-current-buffer buf
+      (insert "test")
+      (erase-buffer)
+      (should (string= (buffer-string) ""))
+      (let (pos)
+        (insert "test")
+        (setq pos (point))
+        (insert "narrowed")
+        (narrow-to-region pos (point-max))
+        (erase-buffer)
+        ;; ensure widen is called
+        (widen)
+        (should (string= (buffer-string) ""))))))
