@@ -2304,7 +2304,10 @@ get_phys_cursor_geometry (struct window *w, struct glyph_row *row,
      ascent value, lest the hollow cursor looks funny.  */
   y = w->phys_cursor.y;
   ascent = row->ascent;
-  if (row->ascent < glyph->ascent)
+  /* The test for row at ZV is for when line numbers are displayed and
+     point is at EOB: the cursor could then be smaller or larger than
+     the default face's font.  */
+  if (!row->ends_at_zv_p && row->ascent < glyph->ascent)
     {
       y -= glyph->ascent - row->ascent;
       ascent = glyph->ascent;
@@ -2314,6 +2317,9 @@ get_phys_cursor_geometry (struct window *w, struct glyph_row *row,
   h0 = min (FRAME_LINE_HEIGHT (f), row->visible_height);
 
   h = max (h0, ascent + glyph->descent);
+  /* Don't let the cursor exceed the dimensions of the row, so that
+     the upper/lower side of the box aren't clipped.  */
+  h = min (h, row->height);
   h0 = min (h0, ascent + glyph->descent);
 
   y0 = WINDOW_HEADER_LINE_HEIGHT (w);
@@ -21175,14 +21181,11 @@ maybe_produce_line_number (struct it *it)
   for (const char *p = lnum_buf; *p; p++)
     {
       /* For continuation lines and lines after ZV, instead of a line
-	 number, produce a blank prefix of the same width.  Use the
-	 default face for the blank field beyond ZV.  */
-      if (beyond_zv)
-	tem_it.face_id = it->base_face_id;
-      else if (lnum_face_id != current_lnum_face_id
-	       && (EQ (Vdisplay_line_numbers, Qvisual)
-		   ? this_line == 0
-		   : this_line == it->pt_lnum))
+	 number, produce a blank prefix of the same width.  */
+      if (lnum_face_id != current_lnum_face_id
+	  && (EQ (Vdisplay_line_numbers, Qvisual)
+	      ? this_line == 0
+	      : this_line == it->pt_lnum))
 	tem_it.face_id = current_lnum_face_id;
       else
 	tem_it.face_id = lnum_face_id;
@@ -21235,23 +21238,30 @@ maybe_produce_line_number (struct it *it)
 	}
     }
 
-  /* Update IT's metrics due to glyphs produced for line numbers.  */
-  if (it->glyph_row)
+  /* Update IT's metrics due to glyphs produced for line numbers.
+     Don't do that for rows beyond ZV, to avoid displaying a cursor of
+     different dimensions there.  */
+  if (!beyond_zv)
     {
-      struct glyph_row *row = it->glyph_row;
+      if (it->glyph_row)
+	{
+	  struct glyph_row *row = it->glyph_row;
 
-      it->max_ascent = max (row->ascent, tem_it.max_ascent);
-      it->max_descent = max (row->height - row->ascent, tem_it.max_descent);
-      it->max_phys_ascent = max (row->phys_ascent, tem_it.max_phys_ascent);
-      it->max_phys_descent = max (row->phys_height - row->phys_ascent,
-				  tem_it.max_phys_descent);
-    }
-  else
-    {
-      it->max_ascent = max (it->max_ascent, tem_it.max_ascent);
-      it->max_descent = max (it->max_descent, tem_it.max_descent);
-      it->max_phys_ascent = max (it->max_phys_ascent, tem_it.max_phys_ascent);
-      it->max_phys_descent = max (it->max_phys_descent, tem_it.max_phys_descent);
+	  it->max_ascent = max (row->ascent, tem_it.max_ascent);
+	  it->max_descent = max (row->height - row->ascent, tem_it.max_descent);
+	  it->max_phys_ascent = max (row->phys_ascent, tem_it.max_phys_ascent);
+	  it->max_phys_descent = max (row->phys_height - row->phys_ascent,
+				      tem_it.max_phys_descent);
+	}
+      else
+	{
+	  it->max_ascent = max (it->max_ascent, tem_it.max_ascent);
+	  it->max_descent = max (it->max_descent, tem_it.max_descent);
+	  it->max_phys_ascent = max (it->max_phys_ascent,
+				     tem_it.max_phys_ascent);
+	  it->max_phys_descent = max (it->max_phys_descent,
+				      tem_it.max_phys_descent);
+	}
     }
 
   it->line_number_produced_p = true;
