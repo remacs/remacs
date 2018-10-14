@@ -3071,6 +3071,7 @@ union specbinding
       ENUM_BF (specbind_tag) kind : CHAR_BIT;
       void (*func) (Lisp_Object);
       Lisp_Object arg;
+      EMACS_INT eval_depth;
     } unwind;
     struct {
       ENUM_BF (specbind_tag) kind : CHAR_BIT;
