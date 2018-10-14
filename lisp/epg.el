@@ -657,7 +657,7 @@ callback data (if any)."
 				  :command (cons (epg-context-program context)
 						 args)
 				  :connection-type 'pipe
-				  :coding '(binary . binary)
+				  :coding 'raw-text
 				  :filter #'epg--process-filter
 				  :stderr error-process
 				  :noquery t)))
