@@ -1187,12 +1187,12 @@ it does when Lisp code encounters the same situations.
 @end deftypefn
 
 After writing your C code for a module function, you should make a
-Lisp function object from it using @code{make_function}.  This is
+Lisp function object from it using the @code{make_function} function,
+whose pointer is provided in the environment (recall that the pointer
+to the environment is returned by @code{get_environment}).  This is
 normally done in the module initialization function (@pxref{module
 initialization function}), after verifying the @acronym{API}
-compatibility, and uses the pointer to @code{make_function} provided
-in the environment (recall that the pointer to the environment is
-returned by @code{get_environment}).
+compatibility.
 
 @deftypefn Function emacs_value make_function (emacs_env *@var{env}, ptrdiff_t @var{min_arity}, ptrdiff_t @var{max_arity}, subr @var{func}, const char *@var{docstring}, void *@var{data})
 @vindex emacs_variadic_function
