@@ -2820,8 +2820,11 @@ Thus, (funcall \\='cons \\='x \\='y) returns (x . y).
 usage: (funcall FUNCTION &rest ARGUMENTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object fun, original_fun;
-  Lisp_Object funcar;
+  /* Use 'volatile' here to cause optimizing compilers to keep a
+     reference on the stack to the function's bytecode object.  See
+     Bug#33014.  */
+  Lisp_Object volatile fun;
+  Lisp_Object original_fun, funcar;
   ptrdiff_t numargs = nargs - 1;
   Lisp_Object val;
   ptrdiff_t count;
