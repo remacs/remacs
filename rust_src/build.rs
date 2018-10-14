@@ -669,43 +669,43 @@ fn run_bindgen() {
                 .derive_default(true)
                 .ctypes_prefix("::libc")
                 // we define these ourselves, for various reasons
-                .blacklist_type("Lisp_Object")
-                .blacklist_type("emacs_globals")
-                .blacklist_type("Q.*") // symbols like Qnil and so on
-                .blacklist_type("USE_LSB_TAG")
-                .blacklist_type("VALMASK")
-                .blacklist_type("PSEUDOVECTOR_FLAG")
+                .blacklist_item("Lisp_Object")
+                .blacklist_item("emacs_globals")
+                .blacklist_item("Q.*") // symbols like Qnil and so on
+                .blacklist_item("USE_LSB_TAG")
+                .blacklist_item("VALMASK")
+                .blacklist_item("PSEUDOVECTOR_FLAG")
                 // these two are found by bindgen on mac, but not linux
-                .blacklist_type("EMACS_INT_MAX")
-                .blacklist_type("VAL_MAX")
+                .blacklist_item("EMACS_INT_MAX")
+                .blacklist_item("VAL_MAX")
                 // this is wallpaper for a bug in bindgen, we don't lose much by it
                 // https://github.com/servo/rust-bindgen/issues/687
-                .blacklist_type("BOOL_VECTOR_BITS_PER_CHAR")
+                .blacklist_item("BOOL_VECTOR_BITS_PER_CHAR")
                 // this is wallpaper for a function argument that shadows a static of the same name
                 // https://github.com/servo/rust-bindgen/issues/804
-                .blacklist_type("face_change")
+                .blacklist_item("face_change")
                 // these never return, and bindgen doesn't yet detect that, so we will do them manually
-                .blacklist_type("error")
-                .blacklist_type("circular_list")
-                .blacklist_type("wrong_type_argument")
-                .blacklist_type("nsberror")
-                .blacklist_type("emacs_abort")
-                .blacklist_type("Fsignal")
-                .blacklist_type("memory_full")
-                .blacklist_type("bitch_at_user")
-                .blacklist_type("wrong_choice")
-                .blacklist_type("wrong_range")
+                .blacklist_item("error")
+                .blacklist_item("circular_list")
+                .blacklist_item("wrong_type_argument")
+                .blacklist_item("nsberror")
+                .blacklist_item("emacs_abort")
+                .blacklist_item("Fsignal")
+                .blacklist_item("memory_full")
+                .blacklist_item("bitch_at_user")
+                .blacklist_item("wrong_choice")
+                .blacklist_item("wrong_range")
                 // these are defined in data.rs
-                .blacklist_type("Lisp_Fwd")
-                .blacklist_type("Lisp_.*fwd")
+                .blacklist_item("Lisp_Fwd")
+                .blacklist_item("Lisp_.*fwd")
                 // these are defined in remacs_lib
-                .blacklist_type("timespec")
-                .blacklist_type("current_timespec")
-                .blacklist_type("timex")
-                .blacklist_type("clock_adjtime")
+                .blacklist_item("timespec")
+                .blacklist_item("current_timespec")
+                .blacklist_item("timex")
+                .blacklist_item("clock_adjtime")
                 // bindgen fails to generate this one correctly; it's hard
                 // https://github.com/rust-lang-nursery/rust-bindgen/issues/1318
-                .blacklist_type("max_align_t")
+                .blacklist_item("max_align_t")
                 // by default we want C enums to be converted into a Rust module with constants in it
                 .default_enum_style(bindgen::EnumVariation::ModuleConsts)
                 // enums with only one variant are better as simple constants
@@ -1081,12 +1081,9 @@ fn run_bindgen() {
                 .rustified_enum("gnutls_compression_method_t")
                 .rustified_enum("gnutls_connection_end_t")
                 .rustified_enum("gnutls_credentials_type_t")
-                .rustified_enum("gnutls_ctype_target_t")
                 .rustified_enum("gnutls_digest_algorithm_t")
                 .rustified_enum("gnutls_ecc_curve_t")
                 .rustified_enum("gnutls_ext_parse_type_t")
-                .rustified_enum("gnutls_fips_mode_t")
-                .rustified_enum("gnutls_gost_paramset_t")
                 .rustified_enum("gnutls_group_t")
                 .rustified_enum("gnutls_handshake_description_t")
                 .rustified_enum("gnutls_initstage_t")
@@ -1202,9 +1199,9 @@ fn run_bindgen() {
                     .rustified_enum("_WSACOMPLETIONTYPE")
                     .rustified_enum("_WSAESETSERVICEOP")
                     .rustified_enum("_WSAEcomparator")
-                    .blacklist_type(".*QOS_SD_MODE")
-                    .blacklist_type(".*QOS_SHAPING_RATE")
-                    .blacklist_type(".*IMAGE_LINENUMBER");
+                    .blacklist_item(".*QOS_SD_MODE")
+                    .blacklist_item(".*QOS_SHAPING_RATE")
+                    .blacklist_item(".*IMAGE_LINENUMBER");
             }
 
             let bindings = builder
