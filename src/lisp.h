@@ -3796,6 +3796,7 @@ extern Lisp_Object intern_driver (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index);
 extern void init_symbol (Lisp_Object, Lisp_Object);
 extern Lisp_Object oblookup (Lisp_Object, const char *, ptrdiff_t, ptrdiff_t);
+extern Lisp_Object read_internal_start (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void loadhist_attach(Lisp_Object x);
 INLINE void
 LOADHIST_ATTACH (Lisp_Object x)
