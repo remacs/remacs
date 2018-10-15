@@ -4200,18 +4200,20 @@ point at the middle, top, and bottom of the window.
 @cindex vertical scroll position
 
    @dfn{Vertical fractional scrolling} means shifting text in a window
-up or down by a specified multiple or fraction of a line.  Each window
-has a @dfn{vertical scroll position}, which is a number, never less than
-zero.  It specifies how far to raise the contents of the window.
-Raising the window contents generally makes all or part of some lines
-disappear off the top, and all or part of some other lines appear at the
-bottom.  The usual value is zero.
+up or down by a specified multiple or fraction of a line.  Emacs uses
+it, for example, on images and screen lines which are taller than the
+window.  Each window has a @dfn{vertical scroll position}, which is a
+number, never less than zero.  It specifies how far to raise the
+contents of the window when displaying them.  Raising the window
+contents generally makes all or part of some lines disappear off the
+top, and all or part of some other lines appear at the bottom.  The
+usual value is zero.
 
    The vertical scroll position is measured in units of the normal line
 height, which is the height of the default font.  Thus, if the value is
-.5, that means the window contents are scrolled up half the normal line
-height.  If it is 3.3, that means the window contents are scrolled up
-somewhat over three times the normal line height.
+.5, that means the window contents will be scrolled up half the normal
+line height.  If it is 3.3, that means the window contents are scrolled
+up somewhat over three times the normal line height.
 
    What fraction of a line the vertical scrolling covers, or how many
 lines, depends on what the lines contain.  A value of .5 could scroll a

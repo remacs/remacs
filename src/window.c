@@ -7322,6 +7322,8 @@ value.  */)
 
 DEFUN ("window-vscroll", Fwindow_vscroll, Swindow_vscroll, 0, 2, 0,
        doc: /* Return the amount by which WINDOW is scrolled vertically.
+This takes effect when displaying tall lines or images.
+
 If WINDOW is omitted or nil, it defaults to the selected window.
 Normally, value is a multiple of the canonical character height of WINDOW;
 optional second arg PIXELS-P means value is measured in pixels.  */)
@@ -7344,6 +7346,8 @@ optional second arg PIXELS-P means value is measured in pixels.  */)
 DEFUN ("set-window-vscroll", Fset_window_vscroll, Sset_window_vscroll,
        2, 3, 0,
        doc: /* Set amount by which WINDOW should be scrolled vertically to VSCROLL.
+This takes effect when displaying tall lines or images.
+
 WINDOW nil means use the selected window.  Normally, VSCROLL is a
 non-negative multiple of the canonical character height of WINDOW;
 optional third arg PIXELS-P non-nil means that VSCROLL is in pixels.
