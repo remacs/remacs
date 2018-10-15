@@ -156,17 +156,10 @@ pub unsafe fn defvar_per_buffer_offset(
 ///  t (read text line using minibuffer and use it, or read from
 ///     standard input in batch mode).
 #[lisp_fn(min = "0")]
-pub fn read(mut stream: LispObject) -> LispObject {
-    if stream.is_nil() {
-        unsafe { stream = globals.Vstandard_input };
-    }
-
-    if stream.is_t() {
-        stream = Qread_char;
-    }
-
-    if stream.eq(Qread_char) {
-        /* FIXME: ?! When is this used !?  */
+pub fn read(stream: LispObject) -> LispObject {
+    if (stream.is_nil() && unsafe { read_check_stream(globals.Vstandard_input) })
+        || read_check_stream(stream)
+    {
         let cs = CString::new("Lisp expression: ").unwrap();
         call!(intern("read-minibuffer"), unsafe {
             build_string(cs.as_ptr())
@@ -174,6 +167,10 @@ pub fn read(mut stream: LispObject) -> LispObject {
     } else {
         unsafe { read_internal_start(stream, Qnil, Qnil) }
     }
+}
+
+fn read_check_stream(stream: LispObject) -> bool {
+    stream.is_t() || stream.eq(Qread_char)
 }
 
 include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));
