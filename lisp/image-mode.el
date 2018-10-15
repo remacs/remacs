@@ -692,6 +692,7 @@ on these modes."
 Remove text properties that display the image."
   (let ((inhibit-read-only t)
 	(buffer-undo-list t)
+	(create-lockfiles nil) ; avoid changing dir mtime by lock_file
 	(modified (buffer-modified-p)))
     (remove-list-of-text-properties (point-min) (point-max)
 				    '(display read-nonsticky ;; intangible
@@ -781,8 +782,9 @@ was inserted."
 (defun image--imagemagick-wanted-p (filename)
   (and (fboundp 'imagemagick-types)
        (not (eq imagemagick-types-inhibit t))
-       (not (memq (intern (upcase (file-name-extension filename)) obarray)
-                  imagemagick-types-inhibit))))
+       (not (and (file-name-extension filename)
+                 (memq (intern (upcase (file-name-extension filename)) obarray)
+                       imagemagick-types-inhibit)))))
 
 (defun image-toggle-hex-display ()
   "Toggle between image and hex display."
