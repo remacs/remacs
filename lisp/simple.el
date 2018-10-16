@@ -3959,6 +3959,7 @@ support pty association, if PROGRAM is nil."
                                ;; name "*Async Shell Command*<10>" (bug#30016)
 			       ("Buffer"  25 t)
 			       ("TTY"     12 t)
+			       ("Thread"  12 t)
 			       ("Command"  0 t)])
   (make-local-variable 'process-menu-query-only)
   (setq tabulated-list-sort-key (cons "Process" nil))
@@ -4000,6 +4001,11 @@ Also, delete any process that is exited or signaled."
 				   action process-menu-visit-buffer)
 			       "--"))
 		  (tty (or (process-tty-name p) "--"))
+		  (thread
+                   (cond
+                    ((null (process-thread p)) "--")
+                    ((eq (process-thread p) main-thread) "Main")
+                    ((thread-name (process-thread p)))))
 		  (cmd
 		   (if (memq type '(network serial))
 		       (let ((contact (process-contact p t)))
@@ -4022,7 +4028,7 @@ Also, delete any process that is exited or signaled."
 					 (format " at %s b/s" speed)
 				       "")))))
 		     (mapconcat 'identity (process-command p) " "))))
-	     (push (list p (vector name pid status buf-label tty cmd))
+	     (push (list p (vector name pid status buf-label tty thread cmd))
 		   tabulated-list-entries)))))
   (tabulated-list-init-header))
 
