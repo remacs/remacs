@@ -31,7 +31,7 @@ use eval::FUNCTIONP;
 use fonts::LispFontRef;
 use frames::LispFrameRef;
 use hashtable::LispHashTableRef;
-use lists::circular_list;
+use lists::{circular_list, list};
 use marker::LispMarkerRef;
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use obarray::{check_obarray, LispObarrayRef};
@@ -117,6 +117,12 @@ where
 impl From<()> for LispObject {
     fn from(_v: ()) -> Self {
         Qnil
+    }
+}
+
+impl From<Vec<LispObject>> for LispObject {
+    fn from(v: Vec<LispObject>) -> Self {
+        list(&v)
     }
 }
 
