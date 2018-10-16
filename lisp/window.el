@@ -5541,6 +5541,10 @@ specific buffers."
 	   (t 'leaf)))
 	 (buffer (window-buffer window))
 	 (selected (eq window (selected-window)))
+	 (next-buffers (when (window-live-p window)
+			 (window-next-buffers window)))
+	 (prev-buffers (when (window-live-p window)
+			 (window-prev-buffers window)))
 	 (head
 	  `(,type
             ,@(unless (window-next-sibling window) `((last . t)))
@@ -5593,7 +5597,22 @@ specific buffers."
 		     (start . ,(if writable
                                    start
                                  (with-current-buffer buffer
-                                   (copy-marker start))))))))))
+                                   (copy-marker start))))))))
+            ,@(when next-buffers
+                `((next-buffers . ,(mapcar (lambda (buffer)
+                                           (buffer-name buffer))
+                                         next-buffers))))
+            ,@(when prev-buffers
+                `((prev-buffers .
+                   ,(mapcar (lambda (entry)
+                              (list (buffer-name (nth 0 entry))
+                                    (if writable
+                                        (marker-position (nth 1 entry))
+                                      (nth 1 entry))
+                                    (if writable
+                                        (marker-position (nth 2 entry))
+                                      (nth 2 entry))))
+                            prev-buffers))))))
 	 (tail
 	  (when (memq type '(vc hc))
 	    (let (list)
@@ -5736,7 +5755,9 @@ value can be also stored on disk and read back in a new session."
     (let ((window (car item))
 	  (combination-limit (cdr (assq 'combination-limit item)))
 	  (parameters (cdr (assq 'parameters item)))
-	  (state (cdr (assq 'buffer item))))
+	  (state (cdr (assq 'buffer item)))
+	  (next-buffers (cdr (assq 'next-buffers item)))
+	  (prev-buffers (cdr (assq 'prev-buffers item))))
       (when combination-limit
 	(set-window-combination-limit window combination-limit))
       ;; Reset window's parameters and assign saved ones (we might want
@@ -5748,7 +5769,8 @@ value can be also stored on disk and read back in a new session."
 	  (set-window-parameter window (car parameter) (cdr parameter))))
       ;; Process buffer related state.
       (when state
-	(let ((buffer (get-buffer (car state))))
+	(let ((buffer (get-buffer (car state)))
+	      (state (cdr state)))
 	  (if buffer
 	      (with-current-buffer buffer
 		(set-window-buffer window buffer)
@@ -5817,7 +5839,30 @@ value can be also stored on disk and read back in a new session."
 		  (set-window-point window (cdr (assq 'point state))))
 		;; Select window if it's the selected one.
 		(when (cdr (assq 'selected state))
-		  (select-window window)))
+		  (select-window window))
+                (when next-buffers
+                  (set-window-next-buffers
+                   window
+                   (delq nil (mapcar (lambda (buffer)
+                                       (setq buffer (get-buffer buffer))
+                                       (when (buffer-live-p buffer) buffer))
+                                     next-buffers))))
+                (when prev-buffers
+                  (set-window-prev-buffers
+                   window
+                   (delq nil (mapcar (lambda (entry)
+                                       (let ((buffer (get-buffer (nth 0 entry)))
+                                             (m1 (nth 1 entry))
+                                             (m2 (nth 2 entry)))
+                                         (when (buffer-live-p buffer)
+                                           (list buffer
+                                                 (if (markerp m1) m1
+                                                   (set-marker (make-marker) m1
+                                                               buffer))
+                                                 (if (markerp m2) m2
+                                                   (set-marker (make-marker) m2
+                                                               buffer))))))
+                                     prev-buffers)))))
 	    ;; We don't want to raise an error in case the buffer does
 	    ;; not exist anymore, so we switch to a previous one and
 	    ;; save the window with the intention of deleting it later
