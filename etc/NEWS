@@ -25,6 +25,12 @@ webkit2gtk-4.0 package; version 2.12 or later is required.
 (This change was actually made in Emacs 26.1, but was not called out
 in its NEWS.)
 
++++
+** Installing Emacs now installs the emacs-module.h file.
+The emacs-module.h file is now installed in the system-wide include
+directory as part of the Emacs installation.  This allows to build
+Emacs modules outside of the Emacs source tree.
+
 
 * Startup Changes in Emacs 26.2
 
