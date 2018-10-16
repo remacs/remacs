@@ -3579,6 +3579,7 @@ extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
 extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
 extern Lisp_Object build_marker (struct buffer *, ptrdiff_t, ptrdiff_t);
+extern Lisp_Object bounded_number(EMACS_INT);
 
 /* Build a frequently used 2/3/4-integer lists.  */
 

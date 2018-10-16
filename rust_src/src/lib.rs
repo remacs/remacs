@@ -55,6 +55,7 @@ mod lisp;
 mod vector_macros;
 mod str2sig;
 
+mod alloc;
 mod base64;
 mod buffers;
 mod bytecode;
