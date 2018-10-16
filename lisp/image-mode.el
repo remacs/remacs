@@ -145,7 +145,7 @@ otherwise it defaults to t, used for times when the buffer is not displayed."
   (unless (listp image-mode-winprops-alist)
     (setq image-mode-winprops-alist nil))
   (add-hook 'window-configuration-change-hook
- 	    'image-mode-reapply-winprops nil t))
+	    #'image-mode-reapply-winprops nil t))
 
 ;;; Image scrolling functions
 
@@ -572,8 +572,8 @@ Key bindings:
 	;; Keep track of [vh]scroll when switching buffers
 	(image-mode-setup-winprops)
 
-	(add-hook 'change-major-mode-hook 'image-toggle-display-text nil t)
-	(add-hook 'after-revert-hook 'image-after-revert-hook nil t)
+	(add-hook 'change-major-mode-hook #'image-toggle-display-text nil t)
+	(add-hook 'after-revert-hook #'image-after-revert-hook nil t)
 	(run-mode-hooks 'image-mode-hook)
 	(let ((image (image-get-display-property))
 	      (msg1 (substitute-command-keys
@@ -725,10 +725,14 @@ was inserted."
                            (not (and (boundp 'epa-file-encrypt-to)
                                      (local-variable-p
                                       'epa-file-encrypt-to))))))
-	 (file-or-data (if data-p
-			   (string-make-unibyte
-			    (buffer-substring-no-properties (point-min) (point-max)))
-			 filename))
+	 (file-or-data
+          (if data-p
+	      (let ((str
+		     (buffer-substring-no-properties (point-min) (point-max))))
+                (if enable-multibyte-characters
+                    (encode-coding-string str buffer-file-coding-system)
+                  str))
+	    filename))
 	 ;; If we have a `fit-width' or a `fit-height', don't limit
 	 ;; the size of the image to the window size.
 	 (edges (and (null image-transform-resize)
