@@ -287,6 +287,10 @@ in (info "(emacs) Directory Variables")
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Octave mode
+The mode is automatically enabled in files that start with the
+'function' keyword.
+
 ** project.el
 *** New commands project-search and project-query-replace
 

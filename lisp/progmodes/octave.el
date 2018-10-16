@@ -170,8 +170,8 @@ parenthetical grouping.")
     (modify-syntax-entry ?. "."   table)
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?_ "_"   table)
-    ;; The "b" flag only applies to the second letter of the comstart
-    ;; and the first letter of the comend, i.e. the "4b" below is ineffective.
+    ;; The "b" flag only applies to the second letter of the comstart and
+    ;; the first letter of the comend, i.e. a "4b" below would be ineffective.
     ;; If we try to put `b' on the single-line comments, we get a similar
     ;; problem where the % and # chars appear as first chars of the 2-char
     ;; comend, so the multi-line ender is also turned into style-b.
@@ -532,6 +532,27 @@ Non-nil means always go to the next Octave code line after sending."
                          'syntax-table (string-to-syntax "\"'")))))
 
 (defvar electric-layout-rules)
+
+;; FIXME: cc-mode.el also adds an entry for .m files, mapping them to
+;; objc-mode.  We here rely on the fact that loaddefs.el is filled in
+;; alphabetical order, so cc-mode.el comes before octave-mode.el, which lets
+;; our entry come first!
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.m\\'" . octave-maybe-mode))
+
+;;;###autoload
+(defun octave-maybe-mode ()
+  "Select `octave-mode' if the current buffer seems to hold Octave code."
+  (if (save-excursion
+        (with-syntax-table octave-mode-syntax-table
+          (goto-char (point-min))
+          (forward-comment (point-max))
+          ;; FIXME: What about Octave files which don't start with "function"?
+          (looking-at "function")))
+      (octave-mode)
+    (let ((x (rassq 'octave-maybe-mode auto-mode-alist)))
+      (when x
+        (let ((auto-mode-alist (remove x auto-mode-alist)))
+          (set-auto-mode))))))
 
 ;;;###autoload
 (define-derived-mode octave-mode prog-mode "Octave"
