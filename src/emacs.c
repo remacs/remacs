@@ -548,22 +548,6 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
   unbind_to (count, Qnil);
 }
 
-DEFUN ("invocation-name", Finvocation_name, Sinvocation_name, 0, 0, 0,
-       doc: /* Return the program name that was used to run Emacs.
-Any directory names are omitted.  */)
-  (void)
-{
-  return Fcopy_sequence (Vinvocation_name);
-}
-
-DEFUN ("invocation-directory", Finvocation_directory, Sinvocation_directory,
-       0, 0, 0,
-       doc: /* Return the directory name in which the Emacs executable was located.  */)
-  (void)
-{
-  return Fcopy_sequence (Vinvocation_directory);
-}
-
 
 /* Test whether the next argument in ARGV matches SSTR or a prefix of
    LSTR (at least MINLEN characters).  If so, then if VALPTR is non-null
@@ -2455,8 +2439,6 @@ syms_of_emacs (void)
 
   defsubr (&Skill_emacs);
 
-  defsubr (&Sinvocation_name);
-  defsubr (&Sinvocation_directory);
   defsubr (&Sdaemonp);
   defsubr (&Sdaemon_initialized);
 
