@@ -348,7 +348,6 @@ OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
 OPTION_DEFAULT_ON([m17n-flt],[don't use m17n-flt for text shaping])
 
-OPTION_DEFAULT_ON([toolkit-scroll-bars],[don't use Xaw3d scroll bars])
 OPTION_DEFAULT_ON([xim],[don't use X11 XIM])
 AC_ARG_WITH([ns],[AS_HELP_STRING([--with-ns],
 [use Nextstep (macOS Cocoa or GNUstep) windowing system.
@@ -1943,10 +1942,6 @@ ns_self_contained=no
 NS_OBJ=
 NS_OBJC_OBJ=
 if test "${HAVE_NS}" = yes; then
-  if test "$with_toolkit_scroll_bars" = "no"; then
-    AC_MSG_ERROR([Non-toolkit scroll bars are not implemented for Nextstep.])
-  fi
-
   window_system=nextstep
   # set up packaging dirs
   if test "${EN_NS_SELF_CONTAINED}" = yes; then
@@ -2042,9 +2037,6 @@ CM_OBJ="cm.o"
 XARGS_LIMIT=
 if test "${HAVE_W32}" = "yes"; then
   AC_DEFINE(HAVE_NTGUI, 1, [Define to use native MS Windows GUI.])
-  if test "$with_toolkit_scroll_bars" = "no"; then
-    AC_MSG_ERROR([Non-toolkit scroll bars are not implemented for w32 build.])
-  fi
   AC_CHECK_TOOL(WINDRES, [windres],
                 [AC_MSG_ERROR([No resource compiler found.])])
   W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
@@ -2635,12 +2627,6 @@ AC_SUBST(GTK_OBJ)
 
 if test "${HAVE_GTK}" = "yes"; then
 
-  dnl  GTK scrollbars resemble toolkit scrollbars a lot, so to avoid
-  dnl  a lot if #ifdef:s, say we have toolkit scrollbars.
-  if test "$with_toolkit_scroll_bars" != no; then
-    with_toolkit_scroll_bars=yes
-  fi
-
   dnl  Check if we have the old file selection dialog declared and
   dnl  in the link library.  In 2.x it may be in the library,
   dnl  but not declared if deprecated featured has been selected out.
@@ -2990,26 +2976,6 @@ dnl tranle@intellicorp.com says libXmu.a can need XtMalloc in libXt.a to link.
 fi
 AC_SUBST(LIBXTR6)
 AC_SUBST(LIBXMU)
-
-dnl Use toolkit scroll bars if configured for GTK or X toolkit and either
-dnl using Xaw3d is available, and unless
-dnl --with-toolkit-scroll-bars=no was specified.
-
-AH_TEMPLATE(USE_TOOLKIT_SCROLL_BARS,
-	    [Define to 1 if we should use toolkit scroll bars.])dnl
-USE_TOOLKIT_SCROLL_BARS=no
-if test "${with_toolkit_scroll_bars}" != "no"; then
-  if test "${HAVE_GTK}" = "yes"; then
-    AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-    USE_TOOLKIT_SCROLL_BARS=yes
-  elif test "${HAVE_NS}" = "yes"; then
-    AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-    USE_TOOLKIT_SCROLL_BARS=yes
-  elif test "${HAVE_W32}" = "yes"; then
-    AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
-    USE_TOOLKIT_SCROLL_BARS=yes
-  fi
-fi
 
 dnl See if XIM is available.
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -5230,8 +5196,7 @@ End:
 
 #### Report on what we decided to do.
 #### Report GTK as a toolkit, even if it doesn't use Xt.
-#### It makes printing result more understandable as using GTK sets
-#### toolkit_scroll_bars to yes by default.
+#### It makes printing result more understandable.
 if test "${HAVE_GTK}" = "yes"; then
   USE_X_TOOLKIT="$USE_GTK_TOOLKIT"
 fi
@@ -5261,13 +5226,13 @@ optsep=
 emacs_config_features=
 for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
-  LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 NS MODULES \
+  LIBOTF XFT ZLIB X_TOOLKIT OLDXMENU X11 NS MODULES \
   XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
 
     case $opt in
       CANNOT_DUMP) eval val=\${$opt} ;;
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
-      TOOLKIT_SCROLL_BARS|X_TOOLKIT) eval val=\${USE_$opt} ;;
+      X_TOOLKIT) eval val=\${USE_$opt} ;;
       *) eval val=\${HAVE_$opt} ;;
     esac
     case x$val in
@@ -5312,7 +5277,6 @@ AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
   Does Emacs use -lxft?                                   ${HAVE_XFT}
   Does Emacs use -lsystemd?                               ${HAVE_LIBSYSTEMD}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
-  Does Emacs use toolkit scroll bars?                     ${USE_TOOLKIT_SCROLL_BARS}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
   Does Emacs have threading support in lisp?              ${threads_enabled}
 "])

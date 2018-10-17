@@ -3346,9 +3346,7 @@ readable_events (int flags)
   if (kbd_fetch_ptr != kbd_store_ptr)
     {
       if (flags & (READABLE_EVENTS_FILTER_EVENTS
-#ifdef USE_TOOLKIT_SCROLL_BARS
 		   | READABLE_EVENTS_IGNORE_SQUEEZABLES
-#endif
 		   ))
         {
           union buffered_input_event *event = kbd_fetch_ptr;
@@ -3358,17 +3356,13 @@ readable_events (int flags)
               if (event == kbd_buffer + KBD_BUFFER_SIZE)
                 event = kbd_buffer;
 	      if (!(
-#ifdef USE_TOOLKIT_SCROLL_BARS
 		    (flags & READABLE_EVENTS_FILTER_EVENTS) &&
-#endif
 		    event->kind == FOCUS_IN_EVENT)
-#ifdef USE_TOOLKIT_SCROLL_BARS
 		  && !((flags & READABLE_EVENTS_IGNORE_SQUEEZABLES)
 		       && (event->kind == SCROLL_BAR_CLICK_EVENT
 			   || event->kind == HORIZONTAL_SCROLL_BAR_CLICK_EVENT)
 		       && event->ie.part == scroll_bar_handle
 		       && event->ie.modifiers == 0)
-#endif
 		  && !((flags & READABLE_EVENTS_FILTER_EVENTS)
 		       && event->kind == BUFFER_SWITCH_EVENT))
 		return 1;
@@ -5581,10 +5575,6 @@ make_lispy_event (struct input_event *event)
 #ifdef HAVE_GPM
     case GPM_CLICK_EVENT:
 #endif
-#ifndef USE_TOOLKIT_SCROLL_BARS
-    case SCROLL_BAR_CLICK_EVENT:
-    case HORIZONTAL_SCROLL_BAR_CLICK_EVENT:
-#endif
       {
 	int button = event->code;
 	bool is_double;
@@ -5664,11 +5654,6 @@ make_lispy_event (struct input_event *event)
 	    position = make_lispy_position (f, event->x, event->y,
 					    event->timestamp);
 	  }
-#ifndef USE_TOOLKIT_SCROLL_BARS
-	else
-	  /* It's a scrollbar click.  */
-	  position = make_scroll_bar_position (event, Qvertical_scroll_bar);
-#endif /* not USE_TOOLKIT_SCROLL_BARS */
 
 	if (button >= ASIZE (button_down_location))
 	  {
@@ -5926,7 +5911,6 @@ make_lispy_event (struct input_event *event)
       }
 
 
-#ifdef USE_TOOLKIT_SCROLL_BARS
 
       /* We don't have down and up events if using toolkit scroll bars,
 	 so make this always a click event.  Store in the `part' of
@@ -5995,7 +5979,6 @@ make_lispy_event (struct input_event *event)
 	return list2 (head, position);
       }
 
-#endif /* USE_TOOLKIT_SCROLL_BARS */
 
     case DRAG_N_DROP_EVENT:
       {
