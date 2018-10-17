@@ -659,7 +659,6 @@ fn run_bindgen() {
                 builder = builder.clang_arg("-I../nt/inc");
                 builder =
                     builder.clang_arg("-Ic:\\Program Files\\LLVM\\lib\\clang\\6.0.0\\include");
-                builder = builder.clang_arg("-I../lwlib");
             }
 
             builder = builder

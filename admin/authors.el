@@ -302,7 +302,6 @@ Changes to files matching one of the regexps in this list are not listed.")
     "gfdl.1"
     "texi/Makefile.in"
     "autodeps.mk"
-    "lwlib/autodeps.mk"
     "src/autodeps.mk"
     "Imakefile" "icons/sink.ico" "aixcc.lex"
     "nxml/char-name/unicode"
@@ -759,10 +758,7 @@ Changes to files in this list are not listed.")
     "front-cover-1.texi" "locals.texi" "calendar.texi" "info-stnd.texi"
     "tasks.texi"
     "advice.texi" "picture.texi" "texinfo.tex"
-    ;; lwlib:
     "dispatch.c" "dispatch.h" "xrdb-cpp.c" "xrdb.c"
-    "lwlib-Xol.c" "lwlib-Xol.h" "lwlib-Xolmb.c" "lwlib-Xolmb.h"
-    "lwlib-XolmbP.h"
     ;; lib/
     "lib/stdio.c" "lib/gl_openssl.h" "lib/sigprocmask.c"
     "lib/pthread_sigprocmask.c" "lib/ldtoastr.c" "lib/dummy.c"

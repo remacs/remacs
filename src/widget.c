@@ -45,7 +45,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/ObjectP.h>
 #include <X11/Shell.h>
 #include <X11/ShellP.h>
-#include "../lwlib/lwlib.h"
 
 static void EmacsFrameInitialize (Widget request, Widget new, ArgList dum1, Cardinal *dum2);
 static void EmacsFrameDestroy (Widget widget);
