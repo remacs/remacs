@@ -2,13 +2,14 @@
 
 use libc;
 use std::ffi::CString;
+use std::ptr;
 
 use remacs_macros::lisp_fn;
 use remacs_sys;
-use remacs_sys::staticpro;
-use remacs_sys::EmacsInt;
-use remacs_sys::{build_string, read_internal_start, symbol_redirect};
-use remacs_sys::{globals, Qnil, Qread_char};
+use remacs_sys::{build_string, read_internal_start, readevalloop, specbind, staticpro,
+                 symbol_redirect, unbind_to, Fcons};
+use remacs_sys::{globals, EmacsInt};
+use remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp};
 
 use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj,
            Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd,
@@ -16,6 +17,7 @@ use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_B
 use field_offset::FieldOffset;
 use lisp::{defsubr, LispObject};
 use obarray::{intern, intern_c_string_1};
+use threads::{c_specpdl_index, ThreadState};
 
 // Define an "integer variable"; a symbol whose value is forwarded to a
 // C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):
@@ -35,8 +37,8 @@ pub unsafe extern "C" fn defvar_int(
     sym.set_fwd(i_fwd as *mut Lisp_Fwd);
 }
 
-/* Similar but define a variable whose value is t if address contains 1,
-   nil if address contains 0.  */
+// Similar but define a variable whose value is t if address contains 1,
+// nil if address contains 0.
 #[no_mangle]
 pub unsafe extern "C" fn defvar_bool(
     b_fwd: *mut Lisp_Boolfwd,
@@ -139,8 +141,8 @@ pub unsafe fn defvar_per_buffer_offset(
     *local = sym.as_lisp_obj();
     let flags = offset.apply(&remacs_sys::buffer_local_flags);
     if flags.is_nil() {
-        /* Did a DEFVAR_PER_BUFFER without initializing the corresponding
-           slot of buffer_local_flags.  */
+        // Did a DEFVAR_PER_BUFFER without initializing the corresponding
+        // slot of buffer_local_flags.
         remacs_sys::emacs_abort();
     }
 }
@@ -180,6 +182,58 @@ pub fn read(stream: LispObject) -> LispObject {
     } else {
         unsafe { read_internal_start(input, Qnil, Qnil) }
     }
+}
+
+/// Execute the region as Lisp code.
+/// When called from programs, expects two arguments,
+/// giving starting and ending indices in the current buffer
+/// of the text to be executed.
+/// Programs can pass third argument PRINTFLAG which controls output:
+///  a value of nil means discard it; anything else is stream for printing it.
+///  See Info node `(elisp)Output Streams' for details on streams.
+/// Also the fourth argument READ-FUNCTION, if non-nil, is used
+/// instead of `read' to read each expression.  It gets one argument
+/// which is the input stream for reading characters.
+///
+/// This function does not move point.
+#[lisp_fn(min = "2")]
+pub fn eval_region(
+    start: LispObject,
+    end: LispObject,
+    printflag: LispObject,
+    read_function: LispObject,
+) -> LispObject {
+    // FIXME: Do the eval-sexp-add-defvars dance!
+    let count = c_specpdl_index();
+    let cur_buf = ThreadState::current_buffer();
+    let cur_buf_obj = cur_buf.into();
+
+    let tem = if printflag.is_nil() {
+        Qsymbolp
+    } else {
+        printflag
+    };
+    unsafe {
+        specbind(Qstandard_output, tem);
+        specbind(
+            Qeval_buffer_list,
+            Fcons(cur_buf_obj, globals.Veval_buffer_list),
+        );
+
+        // `readevalloop' calls functions which check the type of start and end.
+        readevalloop(
+            cur_buf_obj,
+            ptr::null_mut(),
+            cur_buf.filename(),
+            printflag.is_not_nil(),
+            Qnil,
+            read_function,
+            start,
+            end,
+        );
+        unbind_to(count, Qnil);
+    }
+    Qnil
 }
 
 include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));
