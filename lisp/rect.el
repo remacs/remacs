@@ -167,6 +167,37 @@ The final point after the last operation will be returned."
                  (<= (point) endpt))))
       final-point)))
 
+(defun rectangle-position-as-coordinates (position)
+   "Return cons of the column and line values of POSITION.
+POSITION specifies a position of the current buffer.  The value
+returned is a cons of the current column of POSITION and its line
+number."
+  (save-excursion
+    (goto-char position)
+    (let ((col (current-column))
+          (line (1- (line-number-at-pos))))
+      (cons col line))))
+
+(defun rectangle-intersect-p (pos1 size1 pos2 size2)
+   "Return non-nil if two rectangles intersect.
+POS1 and POS2 specify the positions of the upper-left corners of
+the first and second rectangle as conses of their column and line
+values.  SIZE1 and SIZE2 specify the dimensions of the first and
+second rectangle, as conses of their width and height measured in
+columns and lines."
+  (let ((x1 (car pos1))
+        (y1 (cdr pos1))
+        (x2 (car pos2))
+        (y2 (cdr pos2))
+        (w1 (car size1))
+        (h1 (cdr size1))
+        (w2 (car size2))
+        (h2 (cdr size2)))
+    (not (or (<= (+ x1 w1) x2)
+             (<= (+ x2 w2) x1)
+             (<= (+ y1 h1) y2)
+             (<= (+ y2 h2) y1)))))
+
 (defun delete-rectangle-line (startcol endcol fill)
   (when (= (move-to-column startcol (if fill t 'coerce)) startcol)
     (delete-region (point)
