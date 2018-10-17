@@ -656,6 +656,12 @@ mark_threads (void)
   flush_stack_call_func (mark_threads_callback, NULL);
 }
 
+void
+unmark_main_thread (void)
+{
+  main_thread.header.size &= ~ARRAY_MARK_FLAG;
+}
+
 
 
 static void
