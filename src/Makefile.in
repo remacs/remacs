@@ -48,7 +48,6 @@ lispsource = $(top_srcdir)/lisp
 lib = ../lib
 libsrc = ../lib-src
 etc = ../etc
-oldXMenudir = ../oldXMenu
 lwlibdir = ../lwlib
 
 # Configuration files for .o files to depend on.
@@ -185,7 +184,6 @@ LIBXT_OTHER=@LIBXT_OTHER@
 
 ## If !HAVE_X11 || USE_GTK, empty.
 ## Else if USE_X_TOOLKIT, $(lwlibdir)/liblw.a.
-## Else $(oldXMenudir)/libXMenu11.a.
 LIBXMENU=@LIBXMENU@
 
 ## xmenu.o if HAVE_X_WINDOWS, else empty.
@@ -647,8 +645,6 @@ endif
 ## HAVE_X11 && !USE_GTK, but there is no harm in always defining them.
 $(lwlibdir)/liblw.a: $(config_h) globals.h lisp.h FORCE
 	$(MAKE) -C $(lwlibdir) liblw.a
-$(oldXMenudir)/libXMenu11.a: FORCE
-	$(MAKE) -C $(oldXMenudir) libXMenu11.a
 FORCE:
 .PHONY: FORCE
 

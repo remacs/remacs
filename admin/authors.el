@@ -303,7 +303,6 @@ Changes to files matching one of the regexps in this list are not listed.")
     "texi/Makefile.in"
     "autodeps.mk"
     "lwlib/autodeps.mk"
-    "oldXMenu/autodeps.mk"
     "src/autodeps.mk"
     "Imakefile" "icons/sink.ico" "aixcc.lex"
     "nxml/char-name/unicode"

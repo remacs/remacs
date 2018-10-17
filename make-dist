@@ -388,7 +388,7 @@ echo "Creating subdirectories"
 for subdir in site-lisp \
 	      leim leim/CXTERM-DIC leim/MISC-DIC leim/SKK-DIC \
 	      build-aux \
-	      src src/bitmaps lib lib-src oldXMenu lwlib \
+	      src src/bitmaps lib lib-src lwlib \
 	      nt nt/inc nt/inc/sys nt/inc/arpa nt/inc/netinet nt/icons \
 	      `find etc lisp admin test -type d` \
 	      doc doc/emacs doc/misc doc/man doc/lispref doc/lispintro \
@@ -522,11 +522,6 @@ echo "Making links to 'nextstep/Cocoa/Emacs.base/Contents/Resources'"
 echo "Making links to 'nextstep/GNUstep/Emacs.base/Resources'"
 (cd nextstep/GNUstep/Emacs.base/Resources
  ln README emacs.tiff ../../../../${tempdir}/nextstep/GNUstep/Emacs.base/Resources )
-
-echo "Making links to 'oldXMenu'"
-(cd oldXMenu
- ln *.[ch] *.in *.mk ../${tempdir}/oldXMenu
- ln README ChangeLog.*[0-9] ../${tempdir}/oldXMenu)
 
 echo "Making links to 'lwlib'"
 (cd lwlib
