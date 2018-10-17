@@ -1,15 +1,21 @@
+//! Lisp parsing and input streams.
+
 use libc;
-use lisp::LispObject;
-use obarray::intern_c_string_1;
+use std::ffi::CString;
+
+use remacs_macros::lisp_fn;
 use remacs_sys;
 use remacs_sys::staticpro;
-use remacs_sys::symbol_redirect;
 use remacs_sys::EmacsInt;
+use remacs_sys::{build_string, read_internal_start, symbol_redirect};
+use remacs_sys::{globals, Qnil, Qread_char};
 
 use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj,
            Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd,
            Lisp_Objfwd};
 use field_offset::FieldOffset;
+use lisp::{defsubr, LispObject};
+use obarray::{intern, intern_c_string_1};
 
 // Define an "integer variable"; a symbol whose value is forwarded to a
 // C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):
@@ -138,3 +144,33 @@ pub unsafe fn defvar_per_buffer_offset(
         remacs_sys::emacs_abort();
     }
 }
+
+/// Read one Lisp expression as text from STREAM, return as Lisp object.
+/// If STREAM is nil, use the value of `standard-input' (which see).
+/// STREAM or the value of `standard-input' may be:
+///  a buffer (read from point and advance it)
+///  a marker (read from where it points and advance it)
+///  a function (call it with no arguments for each character,
+///      call it with a char as argument to push a char back)
+///  a string (takes text from string, starting at the beginning)
+///  t (read text line using minibuffer and use it, or read from
+///     standard input in batch mode).
+#[lisp_fn(min = "0")]
+pub fn read(stream: LispObject) -> LispObject {
+    if (stream.is_nil() && unsafe { read_check_stream(globals.Vstandard_input) })
+        || read_check_stream(stream)
+    {
+        let cs = CString::new("Lisp expression: ").unwrap();
+        call!(intern("read-minibuffer"), unsafe {
+            build_string(cs.as_ptr())
+        })
+    } else {
+        unsafe { read_internal_start(stream, Qnil, Qnil) }
+    }
+}
+
+fn read_check_stream(stream: LispObject) -> bool {
+    stream.is_t() || stream.eq(Qread_char)
+}
+
+include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));
