@@ -402,21 +402,22 @@ The list is in preference order.")
   (with-temp-buffer
     ;; Get index, get first mail, send it, update index, get second
     ;; mail, send it, etc...
-    (let ((file-msg "")
+    (let (file-data file-elisp
           (qfile (expand-file-name smtpmail-queue-index-file
                                    smtpmail-queue-dir))
 	  result)
       (insert-file-contents qfile)
       (goto-char (point-min))
       (while (not (eobp))
-	(setq file-msg (buffer-substring (point) (line-end-position)))
-	(load file-msg)
+	(setq file-data (buffer-substring (point) (line-end-position)))
+	(setq file-elisp (concat file-data ".el"))
+	(load file-elisp)
 	;; Insert the message literally: it is already encoded as per
 	;; the MIME headers, and code conversions might guess the
 	;; encoding wrongly.
 	(with-temp-buffer
 	  (let ((coding-system-for-read 'no-conversion))
-	    (insert-file-contents file-msg))
+	    (insert-file-contents file-data))
           (let ((smtpmail-mail-address
                  (or (and mail-specify-envelope-from (mail-envelope-from))
                      user-mail-address)))
@@ -426,8 +427,8 @@ The list is in preference order.")
 				    (current-buffer)))
 		  (error "Sending failed: %s" result))
               (error "Sending failed; no recipients"))))
-	(delete-file file-msg)
-	(delete-file (concat file-msg ".el"))
+	(delete-file file-data)
+	(delete-file file-elisp)
 	(delete-region (point-at-bol) (point-at-bol 2)))
       (write-region (point-min) (point-max) qfile))))
 
