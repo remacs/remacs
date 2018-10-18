@@ -113,7 +113,7 @@ NAME is the file name function to use, default `flymake-proc-get-real-file-name'
   "Currently active Flymake process for a buffer, if any.")
 
 (defvar flymake-proc--report-fn nil
-  "If bound, function used to report back to flymake's UI.")
+  "If bound, function used to report back to Flymake's UI.")
 
 (defun flymake-proc-reformat-err-line-patterns-from-compile-el (original-list)
   "Grab error line patterns from ORIGINAL-LIST in compile.el format.
@@ -265,7 +265,6 @@ Return t if so, nil if not."
 
 (defun flymake-proc--find-possible-master-files (file-name master-file-dirs masks)
   "Find (by name and location) all possible master files.
-
 Name is specified by FILE-NAME and location is specified by
 MASTER-FILE-DIRS.  Master files include .cpp and .c for .h.
 Files are searched for starting from the .h directory and max
@@ -522,13 +521,13 @@ Create parent directories as needed."
          for buffer = (and full-file
                            (find-buffer-visiting full-file))
          if (and (eq buffer (process-buffer proc)) message)
-         collect (with-current-buffer buffer
-                   (pcase-let ((`(,beg . ,end)
-                                (flymake-diag-region line-number col-number)))
-                     (flymake-make-diagnostic
-                      buffer beg end
-                      (guess-type flymake-proc-diagnostic-type-pred message)
-                      message)))
+         collect (pcase-let ((`(,beg . ,end)
+                              (flymake-diag-region buffer line-number col-number)))
+                   (flymake-make-diagnostic
+                    buffer beg end
+                    (with-current-buffer buffer
+                      (guess-type flymake-proc-diagnostic-type-pred message))
+                    message))
          else
          do (flymake-log 2 "Reference to file %s is out of scope" fname))
       (error
@@ -626,7 +625,7 @@ Create parent directories as needed."
 (defun flymake-proc--panic (problem explanation)
   "Tell Flymake UI about a fatal PROBLEM with this backend.
 May only be called in a dynamic environment where
-`flymake-proc--dynamic-report-fn' is bound"
+`flymake-proc--report-fn' is bound."
   (flymake-log 0 "%s: %s" problem explanation)
   (if (and (boundp 'flymake-proc--report-fn)
            flymake-proc--report-fn)
@@ -718,7 +717,7 @@ May only be called in a dynamic environment where
 (defun flymake-proc-legacy-flymake (report-fn &rest args)
   "Flymake backend based on the original Flymake implementation.
 This function is suitable for inclusion in
-`flymake-diagnostic-types-alist'. For backward compatibility, it
+`flymake-diagnostic-functions'. For backward compatibility, it
 can also be executed interactively independently of
 `flymake-mode'."
   ;; Interactively, behave as if flymake had invoked us through its
@@ -742,16 +741,18 @@ can also be executed interactively independently of
            "There's already a Flymake process running in this buffer")
           (kill-process proc))))
     (when
-        ;; A number of situations make us not want to error right away
-        ;; (and disable ourselves), in case the situation changes in
-        ;; the near future.
-        (and buffer-file-name
-             ;; Since we write temp files in current dir, there's no point
-             ;; trying if the directory is read-only (bug#8954).
-             (file-writable-p (file-name-directory buffer-file-name))
-             (or (not flymake-proc-compilation-prevents-syntax-check)
+        ;; This particular situation make us not want to error right
+        ;; away (and disable ourselves), in case the situation changes
+        ;; in the near future.
+        (and (or (not flymake-proc-compilation-prevents-syntax-check)
                  (not (flymake-proc--compilation-is-running))))
-      (let ((init-f (flymake-proc--get-init-function buffer-file-name)))
+      (let ((init-f
+             (and
+              buffer-file-name
+              ;; Since we write temp files in current dir, there's no point
+              ;; trying if the directory is read-only (bug#8954).
+              (file-writable-p (file-name-directory buffer-file-name))
+              (flymake-proc--get-init-function buffer-file-name))))
         (unless init-f (error "Can find a suitable init function"))
         (flymake-proc--clear-buildfile-cache)
         (flymake-proc--clear-project-include-dirs-cache)
@@ -768,7 +769,6 @@ can also be executed interactively independently of
                 (flymake-log 0 "init function %s for %s failed, cleaning up"
                              init-f buffer-file-name))
                (t
-                (setq flymake-last-change-time nil)
                 (setq proc
                       (let ((default-directory (or dir default-directory)))
                         (when dir
@@ -878,8 +878,7 @@ can also be executed interactively independently of
 (defun flymake-proc-simple-cleanup ()
   "Do cleanup after `flymake-proc-init-create-temp-buffer-copy'.
 Delete temp file."
-  (flymake-proc--safe-delete-file flymake-proc--temp-source-file-name)
-  (setq flymake-last-change-time nil))
+  (flymake-proc--safe-delete-file flymake-proc--temp-source-file-name))
 
 (defun flymake-proc-get-real-file-name (file-name-from-err-msg)
   "Translate file name from error message to \"real\" file name.

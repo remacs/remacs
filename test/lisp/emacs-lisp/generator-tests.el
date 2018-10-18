@@ -282,3 +282,13 @@ identical output.
 (ert-deftest cps-test-declarations-preserved ()
   (should (equal (documentation 'generator-with-docstring) "Documentation!"))
   (should (equal (get 'generator-with-docstring 'lisp-indent-function) 5)))
+
+(ert-deftest cps-iter-lambda-with-dynamic-binding ()
+  "`iter-lambda' with dynamic binding produces correct result (bug#25965)."
+  (should (= 1
+             (iter-next
+              (funcall (iter-lambda ()
+                         (let* ((fill-column 10) ;;any special variable will do
+                                (i 0)
+                                (j (setq i (1+ i))))
+                           (iter-yield i))))))))

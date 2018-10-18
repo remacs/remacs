@@ -1279,13 +1279,8 @@ default), and @code{list-directory-verbose-switches} is a string
 giving the switches to use in a verbose listing (@code{"-l"} by
 default).
 
-@vindex directory-free-space-program
-@vindex directory-free-space-args
   In verbose directory listings, Emacs adds information about the
-amount of free space on the disk that contains the directory.  To do
-this, it runs the program specified by
-@code{directory-free-space-program} with arguments
-@code{directory-free-space-args}.
+amount of free space on the disk that contains the directory.
 
   The command @kbd{M-x delete-directory} prompts for a directory's name
 using the minibuffer, and deletes the directory if it is empty.  If

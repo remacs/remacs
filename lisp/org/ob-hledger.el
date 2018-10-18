@@ -1,4 +1,4 @@
-;;  ob-ledger.el --- Babel Functions for hledger      -*- lexical-binding: t; -*-
+;;  ob-hledger.el --- Babel Functions for hledger      -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
