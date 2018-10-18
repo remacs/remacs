@@ -2288,8 +2288,13 @@ if WRAP is non-nil, always act as if MINI were nil.
 
 Return nil if no suitable window can be found."
   (setq window (window-normalize-window window t))
-  (unless (memq direction '(above below left right))
-    (error "Wrong direction %s" direction))
+  (cond
+   ((eq direction 'up)
+    (setq direction 'above))
+   ((eq direction 'down)
+    (setq direction 'below))
+   ((not (memq direction '(above below left right)))
+    (error "Wrong direction %s" direction)))
   (let* ((frame (window-frame window))
 	 (hor (memq direction '(left right)))
 	 (first (if hor
