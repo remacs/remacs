@@ -4893,13 +4893,8 @@ else
 fi
 AC_SUBST(LIBX_OTHER)
 
-HAVE_OLDXMENU=no
 if test "$HAVE_GTK" = yes || test "$HAVE_X11" != yes; then
   LIBXMENU=
-elif test "$USE_X_TOOLKIT" = none; then
-  HAVE_OLDXMENU=yes
-  LIBXMENU='$(oldXMenudir)/libXMenu11.a'
-  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS oldXMenu"
 else
   LIBXMENU='$(lwlibdir)/liblw.a'
   AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS lwlib"
@@ -5226,7 +5221,7 @@ optsep=
 emacs_config_features=
 for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
-  LIBOTF XFT ZLIB X_TOOLKIT OLDXMENU X11 NS MODULES \
+  LIBOTF XFT ZLIB X_TOOLKIT X11 NS MODULES \
   XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
 
     case $opt in
@@ -5339,7 +5334,7 @@ dnl config.status treats $srcdir specially, so I think this is ok...
 AC_CONFIG_FILES([$srcdir/doc/man/emacs.1])
 
 m4_define([subdir_makefiles],
-  [lib/Makefile lib-src/Makefile oldXMenu/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile])
+  [lib/Makefile lib-src/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile])
 SUBDIR_MAKEFILES="subdir_makefiles"
 AC_CONFIG_FILES(subdir_makefiles)
 
