@@ -255,10 +255,10 @@ pub fn float(arg: LispObject) -> LispObject {
 /// Cause an error if X1 or X2 is not a float.
 #[lisp_fn]
 pub fn copysign(x1: EmacsDouble, x2: EmacsDouble) -> EmacsDouble {
-    if libm::signbit(x1) != libm::signbit(x2) {
-        -x1
-    } else {
+    if libm::signbit(x1) == libm::signbit(x2) {
         x1
+    } else {
+        -x1
     }
 }
 

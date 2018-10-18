@@ -320,10 +320,10 @@ pub fn subr_arity(subr: LispSubrRef) -> LispObject {
     } else if subr.is_unevalled() {
         Qunevalled
     } else {
-        LispObject::from(subr.max_args() as EmacsInt)
+        LispObject::from(EmacsInt::from(subr.max_args()))
     };
 
-    LispObject::cons(LispObject::from(minargs as EmacsInt), maxargs)
+    LispObject::cons(LispObject::from(EmacsInt::from(minargs)), maxargs)
 }
 
 /// Return name of subroutine SUBR.

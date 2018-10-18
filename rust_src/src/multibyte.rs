@@ -756,7 +756,7 @@ pub unsafe extern "C" fn string_char(
         *len = cplen as c_int;
     }
     if !advanced.is_null() {
-        *advanced = ptr.offset(cplen as isize);
+        *advanced = ptr.add(cplen);
     }
     cp as c_int
 }

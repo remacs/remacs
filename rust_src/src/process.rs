@@ -116,10 +116,10 @@ pub fn process_buffer(process: LispProcessRef) -> LispObject {
 /// For a network, serial, and pipe connections, this value is nil.
 #[lisp_fn]
 pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
-    if process.pid != 0 {
-        Some(EmacsInt::from(process.pid))
-    } else {
+    if process.pid == 0 {
         None
+    } else {
+        Some(EmacsInt::from(process.pid))
     }
 }
 
@@ -471,10 +471,10 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
 
     if gid == proc_ref.pid {
         Qnil
-    } else if gid != -1 {
-        LispObject::from_fixnum(gid.into())
-    } else {
+    } else if gid == -1 {
         Qt
+    } else {
+        LispObject::from_fixnum(gid.into())
     }
 }
 

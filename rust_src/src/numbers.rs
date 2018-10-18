@@ -76,10 +76,10 @@ impl LispObject {
     #[inline]
     pub unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
         let raw = self.to_C();
-        if !USE_LSB_TAG {
-            raw & INTMASK
-        } else {
+        if USE_LSB_TAG {
             raw >> Lisp_Bits::INTTYPEBITS
+        } else {
+            raw & INTMASK
         }
     }
 

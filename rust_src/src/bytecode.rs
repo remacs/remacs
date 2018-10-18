@@ -32,7 +32,7 @@ fn rust_exec_byte_code(
 /// If the third argument is incorrect, Emacs may crash :(
 #[lisp_fn]
 pub fn byte_code(bytestr: LispObject, vector: LispObject, maxdepth: LispObject) -> LispObject {
-    rust_exec_byte_code(bytestr, vector, maxdepth, Qnil, &mut vec![])
+    rust_exec_byte_code(bytestr, vector, maxdepth, Qnil, &mut [])
 }
 
 include!(concat!(env!("OUT_DIR"), "/bytecode_exports.rs"));

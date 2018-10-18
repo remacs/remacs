@@ -171,7 +171,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
     } else if let Some(num) = position.as_fixnum() {
         let mut cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -187,7 +187,7 @@ pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
     let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -253,7 +253,11 @@ pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     intspec = "(list (read-char-by-name \"Insert character (Unicode name or hex): \") (prefix-numeric-value current-prefix-arg) t))"
 )]
 pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool) {
+    // 4000 bytes is a magic number chosen deep in the past for unknown reasons
+    const BUFSIZE: usize = 4000;
+
     let count = count.unwrap_or(1);
+
     if count <= 0 {
         return;
     }
@@ -265,8 +269,6 @@ pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool)
         unsafe { buffer_overflow() };
     }
     let mut n: ptrdiff_t = (count * (len as EmacsInt)) as ptrdiff_t;
-    // 4000 bytes is a magic number chosen deep in the past for unknown reasons
-    const BUFSIZE: usize = 4000;
     let mut buffer = [0_i8; BUFSIZE];
     // bufferlen is the number of bytes used when filling the buffer
     // with as many copies of str as possible, without overflowing it.
@@ -347,7 +349,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
-        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
+        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -381,7 +383,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
-            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
+            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -761,7 +763,7 @@ pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
         }
     }
 
-    Some(buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) as EmacsInt)
+    Some(unsafe { buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) } as EmacsInt)
 }
 
 /// Return t if two characters match, optionally ignoring case.

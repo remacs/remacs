@@ -343,6 +343,8 @@ fn _secure_hash(
     noerror: LispObject,
     binary: LispObject,
 ) -> LispObject {
+    type HashFn = fn(&[u8], &mut [u8]);
+
     let spec = list!(object, start, end, coding_system, noerror);
     let mut start_byte: ptrdiff_t = 0;
     let mut end_byte: ptrdiff_t = 0;
@@ -359,7 +361,6 @@ fn _secure_hash(
         )
     };
 
-    type HashFn = fn(&[u8], &mut [u8]);
     let (digest_size, hash_func) = match algorithm {
         HashAlg::MD5 => (MD5_DIGEST_LEN, md5_buffer as HashFn),
         HashAlg::SHA1 => (SHA1_DIGEST_LEN, sha1_buffer as HashFn),

@@ -214,20 +214,18 @@ pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
 
     let buffer = ThreadState::current_buffer();
     let pos = buffer.pt + n as isize;
-    if !killflag {
-        if n < 0 {
-            if pos < buffer.begv {
-                xsignal!(Qbeginning_of_buffer);
-            } else {
-                unsafe { del_range(pos, buffer.pt) };
-            }
-        } else if pos > buffer.zv {
-            xsignal!(Qend_of_buffer);
-        } else {
-            unsafe { del_range(buffer.pt, pos) };
-        }
-    } else {
+    if killflag {
         call_raw!(Qkill_forward_chars, LispObject::from(n));
+    } else if n < 0 {
+        if pos < buffer.begv {
+            xsignal!(Qbeginning_of_buffer);
+        } else {
+            unsafe { del_range(pos, buffer.pt) };
+        }
+    } else if pos > buffer.zv {
+        xsignal!(Qend_of_buffer);
+    } else {
+        unsafe { del_range(buffer.pt, pos) };
     }
 }
 
@@ -304,7 +302,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     if current_buffer.multibyte_characters_enabled() {
         len = write_codepoint(&mut str, c);
         if len == 1 {
-            c = str[0] as Codepoint;
+            c = Codepoint::from(str[0]);
         }
     } else {
         str[0] = if single_byte_charp(c) {
