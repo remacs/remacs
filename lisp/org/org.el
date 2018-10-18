@@ -16071,7 +16071,9 @@ automatically performed, such drawers will be silently ignored."
 	   (when (memq (org-element-type element) '(keyword node-property))
 	     (let ((value (org-element-property :value element))
 		   (start 0))
-	       (while (string-match "%[0-9]*\\(\\S-+\\)" value start)
+	       (while (string-match "%[0-9]*\\([[:alnum:]_-]+\\)\\(([^)]+)\\)?\
+\\(?:{[^}]+}\\)?"
+				    value start)
 		 (setq start (match-end 0))
 		 (let ((p (match-string-no-properties 1 value)))
 		   (unless (member-ignore-case p org-special-properties)
@@ -19481,7 +19483,6 @@ COMMANDS is a list of alternating OLDDEF NEWDEF command names."
 
 (org-defkey org-mode-map [(shift return)]   'org-table-copy-down)
 (org-defkey org-mode-map [(meta shift return)] 'org-insert-todo-heading)
-(org-defkey org-mode-map [(meta return)]       'org-meta-return)
 (org-defkey org-mode-map (kbd "M-RET") #'org-meta-return)
 
 ;; Cursor keys with modifiers
@@ -24204,16 +24205,25 @@ convenience:
 
   - On an affiliated keyword, jump to the first one.
   - On a table or a property drawer, move to its beginning.
-  - On a verse or source block, stop before blank lines."
+  - On comment, example, export, src and verse blocks, stop
+    before blank lines."
   (interactive)
   (unless (bobp)
     (let* ((deactivate-mark nil)
 	   (element (org-element-at-point))
 	   (type (org-element-type element))
-	   (contents-begin (org-element-property :contents-begin element))
 	   (contents-end (org-element-property :contents-end element))
 	   (post-affiliated (org-element-property :post-affiliated element))
-	   (begin (org-element-property :begin element)))
+	   (begin (org-element-property :begin element))
+	   (special?			;blocks handled specially
+	    (memq type '(comment-block example-block export-block src-block
+				       verse-block)))
+	   (contents-begin
+	    (if special?
+		;; These types have no proper contents.  Fake line
+		;; below the block opening line as contents beginning.
+		(save-excursion (goto-char begin) (line-beginning-position 2))
+	      (org-element-property :contents-begin element))))
       (cond
        ((not element) (goto-char (point-min)))
        ((= (point) begin)
@@ -24224,11 +24234,8 @@ convenience:
 	(goto-char (org-element-property
 		    :post-affiliated (org-element-property :parent element))))
        ((memq type '(property-drawer table)) (goto-char begin))
-       ((memq type '(src-block verse-block))
-	(when (eq type 'src-block)
-	  (setq contents-begin
-		(save-excursion (goto-char begin) (forward-line) (point))))
-	(if (= (point) contents-begin) (goto-char post-affiliated)
+       (special?
+	(if (<= (point) contents-begin) (goto-char post-affiliated)
 	  ;; Inside a verse block, see blank lines as paragraph
 	  ;; separators.
 	  (let ((origin (point)))
@@ -24237,7 +24244,6 @@ convenience:
 	      (skip-chars-forward " \r\t\n" origin)
 	      (if (= (point) origin) (goto-char contents-begin)
 		(beginning-of-line))))))
-       ((not contents-begin) (goto-char (or post-affiliated begin)))
        ((eq type 'paragraph)
 	(goto-char contents-begin)
 	;; When at first paragraph in an item or a footnote definition,

@@ -89,6 +89,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <acl.h>
 #include <allocator.h>
 #include <careadlinkat.h>
+#include <fsusage.h>
 #include <stat-time.h>
 #include <tempname.h>
 
@@ -5728,8 +5729,53 @@ effect except for flushing STREAM's data.  */)
 
   return (set_binary_mode (fileno (fp), binmode) == O_BINARY) ? Qt : Qnil;
 }
+
+#ifndef DOS_NT
 
+/* Yield a Lisp float as close as possible to BLOCKSIZE * BLOCKS, with
+   the result negated if NEGATE.  */
+static Lisp_Object
+blocks_to_bytes (uintmax_t blocksize, uintmax_t blocks, bool negate)
+{
+  /* On typical platforms the following code is accurate to 53 bits,
+     which is close enough.  BLOCKSIZE is invariably a power of 2, so
+     converting it to double does not lose information.  */
+  double bs = blocksize;
+  return make_float (negate ? -bs * -blocks : bs * blocks);
+}
 
+DEFUN ("file-system-info", Ffile_system_info, Sfile_system_info, 1, 1, 0,
+       doc: /* Return storage information about the file system FILENAME is on.
+Value is a list of numbers (TOTAL FREE AVAIL), where TOTAL is the total
+storage of the file system, FREE is the free storage, and AVAIL is the
+storage available to a non-superuser.  All 3 numbers are in bytes.
+If the underlying system call fails, value is nil.  */)
+  (Lisp_Object filename)
+{
+  Lisp_Object encoded = ENCODE_FILE (Fexpand_file_name (filename, Qnil));
+
+  /* If the file name has special constructs in it,
+     call the corresponding file handler.  */
+  Lisp_Object handler = Ffind_file_name_handler (encoded, Qfile_system_info);
+  if (!NILP (handler))
+    {
+      Lisp_Object result = call2 (handler, Qfile_system_info, encoded);
+      if (CONSP (result) || NILP (result))
+	return result;
+      error ("Invalid handler in `file-name-handler-alist'");
+    }
+
+  struct fs_usage u;
+  if (get_fs_usage (SSDATA (encoded), NULL, &u) != 0)
+    return Qnil;
+  return list3 (blocks_to_bytes (u.fsu_blocksize, u.fsu_blocks, false),
+		blocks_to_bytes (u.fsu_blocksize, u.fsu_bfree, false),
+		blocks_to_bytes (u.fsu_blocksize, u.fsu_bavail,
+				 u.fsu_bavail_top_bit_set));
+}
+
+#endif /* !DOS_NT */
+
 void
 init_fileio (void)
 {
@@ -5800,6 +5846,7 @@ syms_of_fileio (void)
   DEFSYM (Qwrite_region, "write-region");
   DEFSYM (Qverify_visited_file_modtime, "verify-visited-file-modtime");
   DEFSYM (Qset_visited_file_modtime, "set-visited-file-modtime");
+  DEFSYM (Qfile_system_info, "file-system-info");
 
   /* The symbol bound to coding-system-for-read when
      insert-file-contents is called for recovering a file.  This is not
@@ -6075,6 +6122,10 @@ This includes interactive calls to `delete-file' and
   defsubr (&Snext_read_file_uses_dialog_p);
 
   defsubr (&Sset_binary_mode);
+
+#ifndef DOS_NT
+  defsubr (&Sfile_system_info);
+#endif
 
 #ifdef HAVE_SYNC
   defsubr (&Sunix_sync);
