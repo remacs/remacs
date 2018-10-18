@@ -414,6 +414,9 @@ This enables more efficient backends.  See the docstring of
 
 ** Package
 
+*** New macro `package-get-version` lets packages query their own version
+Example use in auctex.el: (defconst auctex-version (package-get-version))
+
 *** New 'package-quickstart' feature.
 When 'package-quickstart' is non-nil, package.el precomputes a big autoloads
 file so that activation of packages can be done much faster, which can speed up

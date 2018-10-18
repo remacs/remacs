@@ -689,8 +689,9 @@ PKG-DESC is a `package-desc' object."
 Load the autoloads file, and ensure `load-path' is setup.  If
 RELOAD is non-nil, also load all files in the package that
 correspond to previously loaded files."
-  (let* ((loaded-files-list (when reload
-                              (package--list-loaded-files (package-desc-dir pkg-desc)))))
+  (let* ((loaded-files-list
+          (when reload
+            (package--list-loaded-files (package-desc-dir pkg-desc)))))
     ;; Add to load path, add autoloads, and activate the package.
     (package--activate-autoloads-and-load-path pkg-desc)
     ;; Call `load' on all files in `package-desc-dir' already present in
@@ -3449,6 +3450,36 @@ Does not fetch the updated list of packages before displaying.
 The list is displayed in a buffer named `*Packages*'."
   (interactive)
   (list-packages t))
+
+;;;###autoload
+(defmacro package-get-version ()
+  "Return the version number of the package in which this is used.
+Assumes it is used from an Elisp file placed inside the top-level directory
+of an installed ELPA package.
+The return value is a string (or nil in case we can't find it)."
+  ;; Hack alert!
+  (let ((file
+         (or (if (boundp 'byte-compile-current-file) byte-compile-current-file)
+             load-file-name
+             buffer-file-name)))
+    (cond
+     ((null file) nil)
+     ;; Packages are normally installed into directories named "<pkg>-<vers>",
+     ;; so get the version number from there.
+     ((string-match "/[^/]+-\\([0-9]\\(?:[0-9.]\\|pre\\|beta\\|alpha\\|snapshot\\)+\\)/[^/]+\\'" file)
+      (match-string 1 file))
+     ;; For packages run straight from the an elpa.git clone, there's no
+     ;; "-<vers>" in the directory name, so we have to fetch the version
+     ;; the hard way.
+     (t
+      (let* ((pkgdir (file-name-directory file))
+             (pkgname (file-name-nondirectory (directory-file-name pkgdir)))
+             (mainfile (expand-file-name (concat pkgname ".el") pkgdir)))
+        (when (file-readable-p mainfile)
+          (with-temp-buffer
+            (insert-file-contents mainfile)
+            (or (lm-header "package-version")
+                (lm-header "version")))))))))
 
 ;;;; Quickstart: precompute activation actions for faster start up.
 
