@@ -5584,7 +5584,7 @@ specific buffers."
 		(let ((point (window-point window))
 		      (start (window-start window)))
 		  `((buffer
-		     ,(buffer-name buffer)
+		     ,(if writable (buffer-name buffer) buffer)
 		     (selected . ,selected)
 		     (hscroll . ,(window-hscroll window))
 		     (fringes . ,(window-fringes window))
@@ -5604,20 +5604,20 @@ specific buffers."
                                  (with-current-buffer buffer
                                    (copy-marker start))))))))
             ,@(when next-buffers
-                `((next-buffers . ,(mapcar (lambda (buffer)
-                                           (buffer-name buffer))
-                                         next-buffers))))
+                `((next-buffers
+                   . ,(if writable
+                          (mapcar (lambda (buffer) (buffer-name buffer))
+                                  next-buffers)
+                        next-buffers))))
             ,@(when prev-buffers
-                `((prev-buffers .
-                   ,(mapcar (lambda (entry)
-                              (list (buffer-name (nth 0 entry))
-                                    (if writable
-                                        (marker-position (nth 1 entry))
-                                      (nth 1 entry))
-                                    (if writable
-                                        (marker-position (nth 2 entry))
-                                      (nth 2 entry))))
-                            prev-buffers))))))
+                `((prev-buffers
+                   . ,(if writable
+                          (mapcar (lambda (entry)
+                                    (list (buffer-name (nth 0 entry))
+                                          (marker-position (nth 1 entry))
+                                          (marker-position (nth 2 entry))))
+                                  prev-buffers)
+                        prev-buffers))))))
 	 (tail
 	  (when (memq type '(vc hc))
 	    (let (list)
