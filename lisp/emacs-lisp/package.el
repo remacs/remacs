@@ -3452,11 +3452,14 @@ The list is displayed in a buffer named `*Packages*'."
   (list-packages t))
 
 ;;;###autoload
-(defmacro package-get-version ()
+(defun package-get-version ()
   "Return the version number of the package in which this is used.
 Assumes it is used from an Elisp file placed inside the top-level directory
 of an installed ELPA package.
 The return value is a string (or nil in case we can't find it)."
+  ;; In a sense, this is a lie, but it does just what we want: precompute
+  ;; the version at compile time and hardcodes it into the .elc file!
+  (declare (pure t))
   ;; Hack alert!
   (let ((file
          (or (if (boundp 'byte-compile-current-file) byte-compile-current-file)
@@ -3476,6 +3479,7 @@ The return value is a string (or nil in case we can't find it)."
              (pkgname (file-name-nondirectory (directory-file-name pkgdir)))
              (mainfile (expand-file-name (concat pkgname ".el") pkgdir)))
         (when (file-readable-p mainfile)
+          (require 'lisp-mnt)
           (with-temp-buffer
             (insert-file-contents mainfile)
             (or (lm-header "package-version")
@@ -3567,7 +3571,7 @@ activations need to be changed, such as when `package-load-list' is modified."
       (insert "
 ;; Local\sVariables:
 ;; version-control: never
-;; no-byte-compile: t
+;;\sno-byte-compile: t
 ;; no-update-autoloads: t
 ;; End:
 "))))

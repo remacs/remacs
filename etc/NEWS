@@ -420,7 +420,7 @@ This enables more efficient backends.  See the docstring of
 
 ** Package
 
-*** New macro `package-get-version` lets packages query their own version.
+*** New function `package-get-version` lets packages query their own version.
 Example use in auctex.el: (defconst auctex-version (package-get-version))
 
 *** New 'package-quickstart' feature.
