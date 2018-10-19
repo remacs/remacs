@@ -2,10 +2,11 @@
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::glyph_row_area;
-use remacs_sys::Fpos_visible_in_window_p;
+use remacs_sys::{command_loop_level, glyph_row_area, minibuf_level};
 use remacs_sys::{make_lispy_position, window_box_left_offset};
-use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line};
+use remacs_sys::{Fpos_visible_in_window_p, Fthrow};
+use remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error,
+                 Qvertical_line};
 
 use frames::window_frame_live_or_selected_with_action;
 use lisp::defsubr;
@@ -122,6 +123,35 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
 
         it.rest().is_nil()
     })
+}
+
+pub fn quit_recursive_edit(val: bool) -> ! {
+    unsafe {
+        if command_loop_level > 0 || minibuf_level > 0 {
+            Fthrow(Qexit, LispObject::from_bool(val));
+        }
+
+        let msg = "No recursive edit is in progress";
+        xsignal!(
+            Quser_error,
+            ::remacs_sys::make_string(
+                msg.as_ptr() as *const ::libc::c_char,
+                msg.len() as ::libc::ptrdiff_t,
+            )
+        );
+    }
+}
+
+/// Exit from the innermost recursive edit or minibuffer.
+#[lisp_fn]
+pub fn exit_recursive_edit() {
+    quit_recursive_edit(false);
+}
+
+/// Abort the command that requested this recursive edit or minibuffer input.
+#[lisp_fn]
+pub fn abort_recursive_edit() {
+    quit_recursive_edit(true);
 }
 
 #[no_mangle]

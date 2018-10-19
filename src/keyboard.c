@@ -1145,35 +1145,6 @@ This also exits all active minibuffers.  */
   Fthrow (Qtop_level, Qnil);
 }
 
-static _Noreturn void
-user_error (const char *msg)
-{
-  xsignal1 (Quser_error, build_string (msg));
-}
-
-/* _Noreturn will be added to prototype by make-docfile.  */
-DEFUN ("exit-recursive-edit", Fexit_recursive_edit, Sexit_recursive_edit, 0, 0, "",
-       doc: /* Exit from the innermost recursive edit or minibuffer.  */
-       attributes: noreturn)
-  (void)
-{
-  if (command_loop_level > 0 || minibuf_level > 0)
-    Fthrow (Qexit, Qnil);
-
-  user_error ("No recursive edit is in progress");
-}
-
-/* _Noreturn will be added to prototype by make-docfile.  */
-DEFUN ("abort-recursive-edit", Fabort_recursive_edit, Sabort_recursive_edit, 0, 0, "",
-       doc: /* Abort the command that requested this recursive edit or minibuffer input.  */
-       attributes: noreturn)
-  (void)
-{
-  if (command_loop_level > 0 || minibuf_level > 0)
-    Fthrow (Qexit, Qt);
-
-  user_error ("No recursive edit is in progress");
-}
 
 /* Restore mouse tracking enablement.  See Ftrack_mouse for the only use
    of this function.  */
@@ -11142,8 +11113,6 @@ syms_of_keyboard (void)
   defsubr (&Sset__this_command_keys);
   defsubr (&Sclear_this_command_keys);
   defsubr (&Ssuspend_emacs);
-  defsubr (&Sabort_recursive_edit);
-  defsubr (&Sexit_recursive_edit);
   defsubr (&Srecursion_depth);
   defsubr (&Scommand_error_default_function);
   defsubr (&Stop_level);
