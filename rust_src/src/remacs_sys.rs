@@ -62,6 +62,15 @@ pub enum EqualKind {
     IncludingProperties,
 }
 
+#[repr(C)]
+pub enum BoolVectorOp {
+    BoolVectorExclusiveOr,
+    BoolVectorUnion,
+    BoolVectorIntersection,
+    BoolVectorSetDifference,
+    BoolVectorSubsetp,
+}
+
 // bindgen apparently misses these, for various reasons
 extern "C" {
     // these weren't declared in a header, for example
@@ -139,6 +148,12 @@ extern "C" {
 
     pub fn set_window_hscroll(w: *mut Lisp_Window, hscroll: EMACS_INT) -> Lisp_Object;
     pub fn scroll_command(n: Lisp_Object, direction: libc::c_int);
+    pub fn bool_vector_binop_driver(
+        a: Lisp_Object,
+        b: Lisp_Object,
+        dest: Lisp_Object,
+        op: BoolVectorOp,
+    ) -> Lisp_Object;
 }
 
 // Largest and smallest numbers that can be represented as fixnums in
