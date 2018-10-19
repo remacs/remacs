@@ -8,7 +8,7 @@
   (let ((char1 97)
         (char2 949)
         (marker (make-marker)))
-    (with-temp-buffer 
+    (with-temp-buffer
       (should (eq (char-before) nil))
       (should (eq (char-before -1) nil))
       (should (eq (char-before 100) nil))
@@ -20,3 +20,15 @@
       (set-marker marker 2)
       (should (char-equal (char-before marker) char1))
       (should-error (char-before (current-buffer)) :type 'wrong-type-argument))))
+
+(ert-deftest test-id-functions ()
+  (dolist (id (list
+               (user-uid)
+               (user-real-uid)
+               (group-gid)
+               (group-real-gid)
+               (emacs-pid)))
+    (should
+     (or
+      (integerp id)
+      (floatp id)))))
