@@ -1616,7 +1616,7 @@ enum bool_vector_op { bool_vector_exclusive_or,
                       bool_vector_set_difference,
                       bool_vector_subsetp };
 
-static Lisp_Object
+Lisp_Object
 bool_vector_binop_driver (Lisp_Object a,
                           Lisp_Object b,
                           Lisp_Object dest,
@@ -1740,59 +1740,6 @@ bits_word_to_host_endian (bits_word val)
     return r;
   }
 #endif
-}
-
-DEFUN ("bool-vector-exclusive-or", Fbool_vector_exclusive_or,
-       Sbool_vector_exclusive_or, 2, 3, 0,
-       doc: /* Return A ^ B, bitwise exclusive or.
-If optional third argument C is given, store result into C.
-A, B, and C must be bool vectors of the same length.
-Return the destination vector if it changed or nil otherwise.  */)
-  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
-{
-  return bool_vector_binop_driver (a, b, c, bool_vector_exclusive_or);
-}
-
-DEFUN ("bool-vector-union", Fbool_vector_union,
-       Sbool_vector_union, 2, 3, 0,
-       doc: /* Return A | B, bitwise or.
-If optional third argument C is given, store result into C.
-A, B, and C must be bool vectors of the same length.
-Return the destination vector if it changed or nil otherwise.  */)
-  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
-{
-  return bool_vector_binop_driver (a, b, c, bool_vector_union);
-}
-
-DEFUN ("bool-vector-intersection", Fbool_vector_intersection,
-       Sbool_vector_intersection, 2, 3, 0,
-       doc: /* Return A & B, bitwise and.
-If optional third argument C is given, store result into C.
-A, B, and C must be bool vectors of the same length.
-Return the destination vector if it changed or nil otherwise.  */)
-  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
-{
-  return bool_vector_binop_driver (a, b, c, bool_vector_intersection);
-}
-
-DEFUN ("bool-vector-set-difference", Fbool_vector_set_difference,
-       Sbool_vector_set_difference, 2, 3, 0,
-       doc: /* Return A &~ B, set difference.
-If optional third argument C is given, store result into C.
-A, B, and C must be bool vectors of the same length.
-Return the destination vector if it changed or nil otherwise.  */)
-  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
-{
-  return bool_vector_binop_driver (a, b, c, bool_vector_set_difference);
-}
-
-DEFUN ("bool-vector-subsetp", Fbool_vector_subsetp,
-       Sbool_vector_subsetp, 2, 2, 0,
-       doc: /* Return t if every t value in A is also t in B, nil otherwise.
-A and B must be bool vectors of the same length.  */)
-  (Lisp_Object a, Lisp_Object b)
-{
-  return bool_vector_binop_driver (a, b, b, bool_vector_subsetp);
 }
 
 DEFUN ("bool-vector-not", Fbool_vector_not,
@@ -2145,12 +2092,7 @@ syms_of_data (void)
   defsubr (&Suser_ptrp);
 #endif
 
-  defsubr (&Sbool_vector_exclusive_or);
-  defsubr (&Sbool_vector_union);
-  defsubr (&Sbool_vector_intersection);
-  defsubr (&Sbool_vector_set_difference);
   defsubr (&Sbool_vector_not);
-  defsubr (&Sbool_vector_subsetp);
   defsubr (&Sbool_vector_count_consecutive);
   defsubr (&Sbool_vector_count_population);
 

@@ -62,6 +62,15 @@ pub enum EqualKind {
     IncludingProperties,
 }
 
+#[repr(C)]
+pub enum BoolVectorOp {
+    BoolVectorExclusiveOr,
+    BoolVectorUnion,
+    BoolVectorIntersection,
+    BoolVectorSetDifference,
+    BoolVectorSubsetp,
+}
+
 // bindgen apparently misses these, for various reasons
 extern "C" {
     // these weren't declared in a header, for example
@@ -136,6 +145,13 @@ extern "C" {
     pub fn drop_overlay(b: *mut Lisp_Buffer, ov: *mut Lisp_Overlay);
     pub fn unchain_both(b: *mut Lisp_Buffer, ov: LispObject);
     pub fn emacs_get_tty_pgrp(p: *mut Lisp_Process) -> libc::pid_t;
+
+    pub fn bool_vector_binop_driver(
+        a: Lisp_Object,
+        b: Lisp_Object,
+        dest: Lisp_Object,
+        op: BoolVectorOp,
+    ) -> Lisp_Object;
 }
 
 // Largest and smallest numbers that can be represented as fixnums in
