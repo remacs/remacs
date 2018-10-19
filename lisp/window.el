@@ -2262,14 +2262,14 @@ SIDE can be any of the symbols `left', `top', `right' or
   "Return window in DIRECTION as seen from WINDOW.
 More precisely, return the nearest window in direction DIRECTION
 as seen from the position of `window-point' in window WINDOW.
-DIRECTION must be one of `above', `below', `left' or `right'.
+DIRECTION should be one of 'above', 'below', 'left' or 'right'.
 WINDOW must be a live window and defaults to the selected one.
 
-Do not return a window whose `no-other-window' parameter is
-non-nil.  If the nearest window's `no-other-window' parameter is
+Do not return a window whose 'no-other-window' parameter is
+non-nil.  If the nearest window's 'no-other-window' parameter is
 non-nil, try to find another window in the indicated direction.
 If, however, the optional argument IGNORE is non-nil, return that
-window even if its `no-other-window' parameter is non-nil.
+window even if its 'no-other-window' parameter is non-nil.
 
 Optional argument SIGN a negative number means to use the right
 or bottom edge of WINDOW as reference position instead of
@@ -2278,7 +2278,7 @@ top edge of WINDOW as reference position.
 
 Optional argument WRAP non-nil means to wrap DIRECTION around
 frame borders.  This means to return for WINDOW at the top of the
-frame and DIRECTION `above' the minibuffer window if the frame
+frame and DIRECTION 'above' the minibuffer window if the frame
 has one, and a window at the bottom of the frame otherwise.
 
 Optional argument MINI nil means to return the minibuffer window
@@ -4917,26 +4917,29 @@ absolute value can be less than `window-min-height' or
 small as one line or two columns.  SIZE defaults to half of
 WINDOW's size.
 
-Optional third argument SIDE nil (or `below') specifies that the
-new window shall be located below WINDOW.  SIDE `above' means the
+Optional third argument SIDE nil (or 'below') specifies that the
+new window shall be located below WINDOW.  SIDE 'above' means the
 new window shall be located above WINDOW.  In both cases SIZE
 specifies the new number of lines for WINDOW (or the new window
 if SIZE is negative) including space reserved for the mode and/or
 header line.
 
-SIDE t (or `right') specifies that the new window shall be
-located on the right side of WINDOW.  SIDE `left' means the new
+SIDE t (or 'right') specifies that the new window shall be
+located on the right side of WINDOW.  SIDE 'left' means the new
 window shall be located on the left of WINDOW.  In both cases
 SIZE specifies the new number of columns for WINDOW (or the new
 window provided SIZE is negative) including space reserved for
-fringes and the scrollbar or a divider column.  Any other non-nil
-value for SIDE is currently handled like t (or `right').
+fringes and the scrollbar or a divider column.
+
+For compatibility reasons, SIDE 'up' and 'down' are interpreted
+as 'above' and 'below'.  Any other non-nil value for SIDE is
+currently handled like t (or 'right').
 
 PIXELWISE, if non-nil, means to interpret SIZE pixelwise.
 
 If the variable `ignore-window-parameters' is non-nil or the
-`split-window' parameter of WINDOW equals t, do not process any
-parameters of WINDOW.  Otherwise, if the `split-window' parameter
+'split-window' parameter of WINDOW equals t, do not process any
+parameters of WINDOW.  Otherwise, if the 'split-window' parameter
 of WINDOW specifies a function, call that function with all three
 arguments and return the value returned by that function.
 
@@ -4952,6 +4955,8 @@ frame.  The selected window is not changed by this function."
   (setq window (window-normalize-window window))
   (let* ((side (cond
 		((not side) 'below)
+                ((eq side 'up) 'above)
+                ((eq side 'down) 'below)
 		((memq side '(below above right left)) side)
 		(t 'right)))
 	 (horizontal (not (memq side '(below above))))
@@ -4975,10 +4980,10 @@ frame.  The selected window is not changed by this function."
     (catch 'done
       (cond
        ;; Ignore window parameters if either `ignore-window-parameters'
-       ;; is t or the `split-window' parameter equals t.
+       ;; is t or the 'split-window' parameter equals t.
        ((or ignore-window-parameters (eq function t)))
        ((functionp function)
-	;; The `split-window' parameter specifies the function to call.
+	;; The 'split-window' parameter specifies the function to call.
 	;; If that function is `ignore', do nothing.
 	(throw 'done (funcall function window size side)))
        ;; If WINDOW is part of an atomic window, split the root window
@@ -5011,10 +5016,10 @@ frame.  The selected window is not changed by this function."
 	(setq window-combination-limit t))
 
       (let* ((parent-pixel-size
-	      ;; `parent-pixel-size' is the pixel size of WINDOW's
+	      ;; 'parent-pixel-size' is the pixel size of WINDOW's
 	      ;; parent, provided it has one.
 	      (when parent (window-size parent horizontal t)))
-	     ;; `resize' non-nil means we are supposed to resize other
+	     ;; 'resize' non-nil means we are supposed to resize other
 	     ;; windows in WINDOW's combination.
 	     (resize
 	      (and window-combination-resize
@@ -5023,9 +5028,9 @@ frame.  The selected window is not changed by this function."
 		   (not (eq window-combination-limit t))
 		   ;; Resize makes sense in iso-combinations only.
 		   (window-combined-p window horizontal)))
-	     ;; `old-pixel-size' is the current pixel size of WINDOW.
+	     ;; 'old-pixel-size' is the current pixel size of WINDOW.
 	     (old-pixel-size (window-size window horizontal t))
-	     ;; `new-size' is the specified or calculated size of the
+	     ;; 'new-size' is the specified or calculated size of the
 	     ;; new window.
 	     new-pixel-size new-parent new-normal)
 	(cond
