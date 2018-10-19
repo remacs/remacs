@@ -2,6 +2,7 @@
 
 use std::ptr;
 
+use libc;
 use libc::{c_int, c_uchar, ptrdiff_t};
 use std;
 
@@ -797,6 +798,45 @@ pub fn char_equal(c1: LispObject, c2: LispObject) -> bool {
     }
 
     unsafe { downcase(c1 as c_int) == downcase(c2 as c_int) }
+}
+
+/// Return the effective uid of Emacs.
+/// Value is an integer or a float, depending on the value.
+#[lisp_fn]
+pub fn user_uid() -> LispObject {
+    let id = unsafe { libc::geteuid() };
+    LispObject::int_or_float_from_fixnum(EmacsInt::from(id))
+}
+
+/// Return the real uid of Emacs.
+/// Value is an integer or a float, depending on the value.
+#[lisp_fn]
+pub fn user_real_uid() -> LispObject {
+    let id = unsafe { libc::getuid() };
+    LispObject::int_or_float_from_fixnum(EmacsInt::from(id))
+}
+
+/// Return the effective gid of Emacs.
+/// Value is an integer or a float, depending on the value.
+#[lisp_fn]
+pub fn group_gid() -> LispObject {
+    let id = unsafe { libc::getegid() };
+    LispObject::int_or_float_from_fixnum(EmacsInt::from(id))
+}
+
+/// Return the real gid of Emacs.
+/// Value is an integer or a float, depending on the value.
+#[lisp_fn]
+pub fn group_real_gid() -> LispObject {
+    let id = unsafe { libc::getgid() };
+    LispObject::int_or_float_from_fixnum(EmacsInt::from(id))
+}
+
+/// Return the process ID of Emacs, as a number.
+#[lisp_fn]
+pub fn emacs_pid() -> LispObject {
+    let id = unsafe { libc::getpid() };
+    LispObject::int_or_float_from_fixnum(EmacsInt::from(id))
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
