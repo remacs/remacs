@@ -287,6 +287,12 @@ in (info "(emacs) Directory Variables")
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+---
+** Follow mode
+In the current follow group of windows, "ghost" cursors are no longer
+displayed in the non-selected follow windows.  To get the old behavior
+back, customize follow-hide-ghost-cursors to nil.
+
 ** Octave mode
 The mode is automatically enabled in files that start with the
 'function' keyword.
