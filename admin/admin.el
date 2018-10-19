@@ -92,8 +92,8 @@ Optional argument DATE is the release date, default today."
   "Set Emacs version to VERSION in relevant files under ROOT.
 Root must be the root of an Emacs source tree."
   (interactive (list
-		(read-directory-name "Emacs root directory: " source-directory)
-		(read-string "Version number: " emacs-version)))
+		        (read-directory-name "Emacs root directory: " source-directory)
+		        (read-string "Version number: " emacs-version)))
   (unless (file-exists-p (expand-file-name "src/emacs.c" root))
     (user-error "%s doesn't seem to be the root of an Emacs source tree" root))
   (message "Setting version numbers...")
@@ -101,15 +101,15 @@ Root must be the root of an Emacs source tree."
   ;; `README', but since `set-version-in-file' only replaces the first
   ;; occurrence, it won't be replaced.
   (set-version-in-file root "README" version
-		       (rx (and "version" (1+ space)
-				(submatch (1+ (in "0-9."))))))
+		               (rx (and "version" (1+ space)
+				                (submatch (1+ (in "0-9."))))))
   (set-version-in-file root "configure.ac" version
-		       (rx (and "AC_INIT" (1+ (not (in ?,)))
+		               (rx (and "AC_INIT" (1+ (not (in ?,)))
                                 ?, (0+ space)
                                 (submatch (1+ (in "0-9."))))))
   (set-version-in-file root "nt/README.W32" version
-		       (rx (and "version" (1+ space)
-				(submatch (1+ (in "0-9."))))))
+		               (rx (and "version" (1+ space)
+				                (submatch (1+ (in "0-9."))))))
   ;; Major version only.
   (when (string-match "\\([0-9]\\{2,\\}\\)" version)
     (let ((newmajor (match-string 1 version)))
@@ -149,11 +149,17 @@ Documentation changes might not have been completed!"))))
         (re-search-forward "is about changes in Emacs version \\([0-9]+\\)")
         (replace-match (number-to-string newmajor) nil nil nil 1)
         (re-search-forward "^See files \\(NEWS\\)")
-        (replace-match (format "NEWS.%s, NEWS" oldmajor) nil nil nil 1)
-        (let ((start (line-beginning-position)))
-          (search-forward "in older Emacs versions")
-          (or (equal start (line-beginning-position))
-              (fill-region start (line-beginning-position 2))))
+        (unless (save-match-data
+                  (when (looking-at "\\(\\..*\\), \\(\\.\\.\\.\\|…\\)")
+                    (replace-match
+                     (format ".%s, NEWS.%s" oldmajor (1- oldmajor))
+                     nil nil nil 1)
+                    t))
+          (replace-match (format "NEWS.%s, NEWS" oldmajor) nil nil nil 1)
+          (let ((start (line-beginning-position)))
+            (search-forward "in older Emacs versions")
+            (or (equal start (line-beginning-position))
+                (fill-region start (line-beginning-position 2)))))
         (re-search-forward "^$")
         (forward-line -1)
         (let ((start (point)))
@@ -174,9 +180,9 @@ Documentation changes might not have been completed!"))))
         (dolist (s '("Installation Changes" "Startup Changes" "Changes"
                      "Editing Changes"
                      "Changes in Specialized Modes and Packages"
-                          "New Modes and Packages"
-                          "Incompatible Lisp Changes"
-                          "Lisp Changes"))
+                     "New Modes and Packages"
+                     "Incompatible Lisp Changes"
+                     "Lisp Changes"))
           (insert (format "\n\n* %s in Emacs %s\n" s newshort)))
         (insert (format "\n\n* Changes in Emacs %s on \
 Non-Free Operating Systems\n" newshort)))
@@ -880,3 +886,7 @@ changes (in a non-trivial way).  This function does not check for that."
 (provide 'admin)
 
 ;;; admin.el ends here
+
+;; Local Variables:
+;; coding: utf-8
+;; End:

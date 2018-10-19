@@ -423,20 +423,12 @@ static CGPoint menu_mouse_point;
     }
 
 
-/* GNUstep always shows decorations if the window is resizable,
-   miniaturizable or closable, but Cocoa does strange things in native
-   fullscreen mode if you don't have at least resizable enabled.
-
-   These flags will be OR'd or XOR'd with the NSWindow's styleMask
+/* These flags will be OR'd or XOR'd with the NSWindow's styleMask
    property depending on what we're doing. */
-#ifdef NS_IMPL_COCOA
-#define FRAME_DECORATED_FLAGS NSWindowStyleMaskTitled
-#else
 #define FRAME_DECORATED_FLAGS (NSWindowStyleMaskTitled              \
                                | NSWindowStyleMaskResizable         \
                                | NSWindowStyleMaskMiniaturizable    \
                                | NSWindowStyleMaskClosable)
-#endif
 #define FRAME_UNDECORATED_FLAGS NSWindowStyleMaskBorderless
 
 /* TODO: get rid of need for these forward declarations */
@@ -3715,7 +3707,7 @@ ns_dumpglyphs_image (struct glyph_string *s, NSRect r)
       /* Currently on NS img->mask is always 0. Since
          get_window_cursor_type specifies a hollow box cursor when on
          a non-masked image we never reach this clause. But we put it
-         in in anticipation of better support for image masks on
+         in, in anticipation of better support for image masks on
          NS. */
       tdCol = ns_lookup_indexed_color (NS_FACE_FOREGROUND (face), s->f);
     }
@@ -6812,14 +6804,19 @@ not_in_argv (NSString *arg)
 
   if (! [self isFullscreen])
     {
+      int toolbar_height;
 #ifdef NS_IMPL_GNUSTEP
       // GNUstep does not always update the tool bar height.  Force it.
       if (toolbar && [toolbar isVisible])
           update_frame_tool_bar (emacsframe);
 #endif
 
+      toolbar_height = FRAME_TOOLBAR_HEIGHT (emacsframe);
+      if (toolbar_height < 0)
+        toolbar_height = 35;
+
       extra = FRAME_NS_TITLEBAR_HEIGHT (emacsframe)
-        + FRAME_TOOLBAR_HEIGHT (emacsframe);
+        + toolbar_height;
     }
 
   if (wait_for_tool_bar)
@@ -6866,11 +6863,12 @@ not_in_argv (NSString *arg)
       SET_FRAME_GARBAGED (emacsframe);
       cancel_mouse_face (emacsframe);
 
-      /* The next two lines appear to be setting the frame to the same
-         size as it already is.  Why are they there? */
-      // wr = NSMakeRect (0, 0, neww, newh);
-
-      // [view setFrame: wr];
+      /* The next two lines set the frame to the same size as we've
+         already set above.  We need to do this when we switch back
+         from non-native fullscreen, in other circumstances it appears
+         to be a noop.  (bug#28872) */
+      wr = NSMakeRect (0, 0, neww, newh);
+      [view setFrame: wr];
 
       // to do: consider using [NSNotificationCenter postNotificationName:].
       [self windowDidMove: // Update top/left.
@@ -6892,6 +6890,9 @@ not_in_argv (NSString *arg)
            NSTRACE_ARG_SIZE (frameSize));
   NSTRACE_RECT   ("[sender frame]", [sender frame]);
   NSTRACE_FSTYPE ("fs_state", fs_state);
+
+  if (!FRAME_LIVE_P (emacsframe))
+    return frameSize;
 
   if (fs_state == FULLSCREEN_MAXIMIZED
       && (maximized_width != (int)frameSize.width
@@ -7208,15 +7209,9 @@ not_in_argv (NSString *arg)
 
   win = [[EmacsWindow alloc]
             initWithContentRect: r
-                      styleMask: ((FRAME_UNDECORATED (f)
-                                   ? FRAME_UNDECORATED_FLAGS
-                                   : FRAME_DECORATED_FLAGS)
-#ifdef NS_IMPL_COCOA
-                                  | NSWindowStyleMaskResizable
-                                  | NSWindowStyleMaskMiniaturizable
-                                  | NSWindowStyleMaskClosable
-#endif
-                                  )
+                      styleMask: (FRAME_UNDECORATED (f)
+                                  ? FRAME_UNDECORATED_FLAGS
+                                  : FRAME_DECORATED_FLAGS)
                         backing: NSBackingStoreBuffered
                           defer: YES];
 

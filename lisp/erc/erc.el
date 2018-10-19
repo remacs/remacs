@@ -2548,9 +2548,7 @@ consumption for long-lived IRC or Emacs sessions."
      (maphash
       (lambda (nick last-PRIVMSG-time)
         (when
-            (> (float-time (time-subtract
-                            (current-time)
-                            last-PRIVMSG-time))
+            (> (float-time (time-subtract nil last-PRIVMSG-time))
                erc-lurker-threshold-time)
           (remhash nick hash)))
       hash)
@@ -2617,7 +2615,7 @@ server within `erc-lurker-threshold-time'.  See also
                    (gethash server erc-lurker-state (make-hash-table)))))
     (or (null last-PRIVMSG-time)
         (> (float-time
-            (time-subtract (current-time) last-PRIVMSG-time))
+            (time-subtract nil last-PRIVMSG-time))
            erc-lurker-threshold-time))))
 
 (defcustom erc-common-server-suffixes

@@ -26,7 +26,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "syssignal.h"
 
-static struct thread_state main_thread;
+static struct thread_state alignas (GCALIGNMENT) main_thread;
 
 struct thread_state *current_thread = &main_thread;
 
@@ -806,7 +806,11 @@ If NAME is given, it must be a string; it names the new thread.  */)
     {
       /* Restore the previous situation.  */
       all_threads = all_threads->next_thread;
+#ifdef THREADS_ENABLED
       error ("Could not start a new thread");
+#else
+      error ("Concurrency is not supported in this configuration");
+#endif
     }
 
   /* FIXME: race here where new thread might not be filled in?  */

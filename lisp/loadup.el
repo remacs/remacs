@@ -76,6 +76,7 @@
       (setq max-lisp-eval-depth 2200)
       (setq load-path (list (expand-file-name "." dir)
 			    (expand-file-name "emacs-lisp" dir)
+			    (expand-file-name "progmodes" dir)
 			    (expand-file-name "language" dir)
 			    (expand-file-name "international" dir)
 			    (expand-file-name "textmodes" dir)

@@ -10153,7 +10153,7 @@ to override `appt-message-warning-time'."
          ;; time and without date as argument, so it may pass wrong
          ;; information otherwise
          (today (org-date-to-gregorian
-                 (time-to-days (current-time))))
+                 (time-to-days nil)))
          (org-agenda-restrict nil)
          (files (org-agenda-files 'unrestricted)) entries file
          (org-agenda-buffer nil))

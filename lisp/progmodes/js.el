@@ -1834,10 +1834,15 @@ This performs fontification according to `js--class-styles'."
   (save-excursion
     (back-to-indentation)
     (if (js--looking-at-operator-p)
-        (or (not (memq (char-after) '(?- ?+)))
-            (progn
-              (forward-comment (- (point)))
-              (not (memq (char-before) '(?, ?\[ ?\()))))
+        (if (eq (char-after) ?/)
+            (prog1
+                (not (nth 3 (syntax-ppss (1+ (point)))))
+              (forward-char -1))
+          (or
+           (not (memq (char-after) '(?- ?+)))
+           (progn
+             (forward-comment (- (point)))
+             (not (memq (char-before) '(?, ?\[ ?\())))))
       (and (js--find-newline-backward)
            (progn
              (skip-chars-backward " \t")
@@ -1972,8 +1977,12 @@ statement spanning multiple lines; otherwise, return nil."
     (save-excursion
       (back-to-indentation)
       (when (not (looking-at js--declaration-keyword-re))
-        (when (looking-at js--indent-operator-re)
-          (goto-char (match-end 0)))
+        (let ((pt (point)))
+          (when (looking-at js--indent-operator-re)
+            (goto-char (match-end 0)))
+          ;; The "operator" is probably a regexp literal opener.
+          (when (nth 3 (syntax-ppss))
+            (goto-char pt)))
         (while (and (not at-opening-bracket)
                     (not (bobp))
                     (let ((pos (point)))

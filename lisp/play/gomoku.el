@@ -263,7 +263,7 @@ Other useful commands:\n
   "Vector recording the actual score of the free squares.")
 
 
-;; The key point point about the algorithm is that, rather than considering
+;; The key point about the algorithm is that, rather than considering
 ;; the board as just a set of squares, we prefer to see it as a "space" of
 ;; internested 5-tuples of contiguous squares (called qtuples).
 ;;

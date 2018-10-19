@@ -909,6 +909,8 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
 [ \t]*\\(\\(?:\\sw\\|\\s_\\)+\\)"
   "Regexp matching the definition of a derived type.")
 
+;; Maybe this should include "class default", but the constant is no
+;; longer used.
 (defconst f90-typeis-re
   "\\_<\\(class\\|type\\)[ \t]*is[ \t]*("
   "Regexp matching a CLASS/TYPE IS statement.")
@@ -955,10 +957,14 @@ Used in the F90 entry in `hs-special-modes-alist'.")
    ;; Avoid F2003 "type is" in "select type",
    ;; and also variables of derived type "type (foo)".
    ;; "type, foo" must be a block (?).
+   ;; And a partial effort to avoid "class default".
    "\\(?:type\\|class\\)[ \t,]\\("
-   "[^i(!\n\"& \t]\\|"                 ; not-i(
+   "[^id(!\n\"& \t]\\|"                ; not-id(
    "i[^s!\n\"& \t]\\|"                 ; i not-s
-   "is\\(?:\\sw\\|\\s_\\)\\)\\|"
+   "d[^e!\n\"& \t]\\|"                 ; d not-e
+   "de[^f!\n\"& \t]\\|"                ; de not-f
+   "def[^a!\n\"& \t]\\|"               ; def not-a
+   "\\(?:is\\|default\\)\\(?:\\sw\\|\\s_\\)\\)\\|"
    ;; "abstract interface" is F2003; "submodule" is F2008.
    "program\\|\\(?:abstract[ \t]*\\)?interface\\|\\(?:sub\\)?module\\|"
    ;; "enum", but not "enumerator".
@@ -1454,7 +1460,7 @@ if all else fails."
     (not (or (looking-at "end")
              (looking-at "\\(do\\|if\\|else\\(if\\|where\\)?\
 \\|select[ \t]*\\(case\\|type\\)\\|case\\|where\\|forall\\|\
-\\(?:class\\|type\\)[ \t]*is\\|\
+\\(?:class\\|type\\)[ \t]*is\\|class[ \t]*default\\|\
 block\\|critical\\|enum\\|associate\\)\\_>")
              (looking-at "\\(program\\|\\(?:sub\\)?module\\|\
 \\(?:abstract[ \t]*\\)?interface\\|block[ \t]*data\\)\\_>")

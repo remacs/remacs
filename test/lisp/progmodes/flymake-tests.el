@@ -24,6 +24,7 @@
 ;;; Code:
 (require 'ert)
 (require 'flymake)
+(eval-when-compile (require 'subr-x)) ; string-trim
 
 (defvar flymake-tests-data-directory
   (expand-file-name "lisp/progmodes/flymake-resources"
@@ -37,7 +38,7 @@
 ;;
 ;;
 (defun flymake-tests--wait-for-backends ()
-  ;; Weirdness here...  http://debbugs.gnu.org/17647#25
+  ;; Weirdness here...  https://debbugs.gnu.org/17647#25
   ;; ... meaning `sleep-for', and even
   ;; `accept-process-output', won't suffice as ways to get
   ;; process filters and sentinels to run, though they do work
@@ -73,7 +74,9 @@ SEVERITY-PREDICATE is used to setup
             (when sev-pred-supplied-p
               (setq-local flymake-proc-diagnostic-type-pred severity-predicate))
             (goto-char (point-min))
-            (unless flymake-mode (flymake-mode 1))
+            (let ((flymake-start-on-flymake-mode nil))
+              (unless flymake-mode (flymake-mode 1)))
+            (flymake-start)
             (flymake-tests--wait-for-backends)
             (funcall fn)))
       (and buffer
@@ -128,26 +131,27 @@ SEVERITY-PREDICATE is used to setup
 
 (ert-deftest different-diagnostic-types ()
   "Test GCC warning via function predicate."
-  (skip-unless (and (executable-find "gcc") (executable-find "make")
-                    ;; Travis' gcc seems to be a different version
-                    ;; regarding whether it displays notes.
-                    (not (getenv "TRAVIS"))))
+  (skip-unless (and (executable-find "gcc")
+                    (version<=
+                     "5" (string-trim
+                          (shell-command-to-string "gcc -dumpversion")))
+                    (executable-find "make")))
   (let ((flymake-wrap-around nil))
     (flymake-tests--with-flymake
-        ("errors-and-warnings.c")
-      (flymake-goto-next-error)
-      (should (eq 'flymake-error (face-at-point)))
-      (flymake-goto-next-error)
-      (should (eq 'flymake-note (face-at-point)))
-      (flymake-goto-next-error)
-      (should (eq 'flymake-warning (face-at-point)))
-      (flymake-goto-next-error)
-      (should (eq 'flymake-error (face-at-point)))
-      (flymake-goto-next-error)
-      (should (eq 'flymake-warning (face-at-point)))
-      (flymake-goto-next-error)
-      (should (eq 'flymake-warning (face-at-point)))
-      (should-error (flymake-goto-next-error nil nil t)))))
+     ("errors-and-warnings.c")
+     (flymake-goto-next-error)
+     (should (eq 'flymake-error (face-at-point)))
+     (flymake-goto-next-error)
+     (should (eq 'flymake-note (face-at-point)))
+     (flymake-goto-next-error)
+     (should (eq 'flymake-warning (face-at-point)))
+     (flymake-goto-next-error)
+     (should (eq 'flymake-error (face-at-point)))
+     (flymake-goto-next-error)
+     (should (eq 'flymake-warning (face-at-point)))
+     (flymake-goto-next-error)
+     (should (eq 'flymake-warning (face-at-point)))
+     (should-error (flymake-goto-next-error nil nil t)))))
 
 (ert-deftest included-c-header-files ()
   "Test inclusion of .h header files."
@@ -235,7 +239,9 @@ SEVERITY-PREDICATE is used to setup
                    'crashing-backend
                    ))
             (flymake-wrap-around nil))
-        (flymake-mode)
+        (let ((flymake-start-on-flymake-mode nil))
+          (flymake-mode))
+        (flymake-start)
 
         (flymake-tests--assert-set (flymake-running-backends)
           (error-backend warning-backend panicking-backend)
@@ -304,7 +310,9 @@ SEVERITY-PREDICATE is used to setup
         (let ((flymake-diagnostic-functions
                (list 'eager-backend))
               (flymake-wrap-around nil))
-          (flymake-mode)
+          (let ((flymake-start-on-flymake-mode nil))
+            (flymake-mode))
+          (flymake-start)
           (flymake-tests--assert-set (flymake-running-backends)
             (eager-backend) ())
           (cl-loop until tick repeat 4 do (sleep-for 0.2))

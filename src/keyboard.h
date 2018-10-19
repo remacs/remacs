@@ -65,7 +65,7 @@ INLINE_HEADER_BEGIN
    as soon as a complete key arrives from some KBOARD or other,
    Emacs starts executing that key's binding.  It switches to the
    single-kboard state for the execution of that command,
-   so that that command can get input only from its own KBOARD.
+   so that the command can get input only from its own KBOARD.
 
    While in the single-kboard state, read_char can consider input only
    from the current KBOARD.  If events come from other KBOARDs, they

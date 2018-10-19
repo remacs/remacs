@@ -1954,6 +1954,11 @@ line_number_display_width (struct window *w, int *width, int *pixel_width)
 	  saved_restriction = true;
 	}
       start_display (&it, w, wstart);
+      /* The call to move_it_by_lines below will not generate a line
+	 number if the first line shown in the window is hscrolled
+	 such that all of its display elements are out of view.  So we
+	 pretend the hscroll doesn't exist.  */
+      it.first_visible_x = 0;
       move_it_by_lines (&it, 1);
       *width = it.lnum_width;
       *pixel_width = it.lnum_pixel_width;
@@ -1966,14 +1971,26 @@ line_number_display_width (struct window *w, int *width, int *pixel_width)
 DEFUN ("line-number-display-width", Fline_number_display_width,
        Sline_number_display_width, 0, 1, 0,
        doc: /* Return the width used for displaying line numbers in the selected window.
-If optional argument PIXELWISE is non-nil, return the width in pixels,
-otherwise return the width in columns of the face used to display
-line numbers, `line-number'.  */)
+If optional argument PIXELWISE is the symbol `columns', return the width
+in units of the frame's canonical character width.  In this case, the
+value is a float.
+If optional argument PIXELWISE is t or any other non-nil value, return
+the width as an integer number of pixels.
+Otherwise return the value as an integer number of columns of the face
+used to display line numbers, `line-number'.  Note that in the latter
+case, the value doesn't include the 2 columns used for padding the
+numbers on display.  */)
   (Lisp_Object pixelwise)
 {
   int width, pixel_width;
+  struct window *w = XWINDOW (selected_window);
   line_number_display_width (XWINDOW (selected_window), &width, &pixel_width);
-  if (!NILP (pixelwise))
+  if (EQ (pixelwise, Qcolumns))
+    {
+      struct frame *f = XFRAME (w->frame);
+      return make_float ((double) pixel_width / FRAME_COLUMN_WIDTH (f));
+    }
+  else if (!NILP (pixelwise))
     return make_number (pixel_width);
   return make_number (width);
 }
@@ -2334,6 +2351,8 @@ syms_of_indent (void)
   DEFVAR_BOOL ("indent-tabs-mode", indent_tabs_mode,
 	       doc: /* Indentation can insert tabs if this is non-nil.  */);
   indent_tabs_mode = 1;
+
+  DEFSYM (Qcolumns, "columns");
 
   defsubr (&Scurrent_indentation);
   defsubr (&Sindent_to);
