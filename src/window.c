@@ -801,7 +801,7 @@ WINDOW must be a live window and defaults to the selected one.  */)
 
 /* Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
    range, returning the new amount as a fixnum.  */
-static Lisp_Object
+Lisp_Object
 set_window_hscroll (struct window *w, EMACS_INT hscroll)
 {
   /* Horizontal scrolling has problems with large scroll amounts.
@@ -4981,7 +4981,7 @@ window_scroll_line_based (Lisp_Object window, int n, bool whole, bool noerror)
    DIRECTION may be 1 meaning to scroll down, or -1 meaning to scroll
    up.  This is the guts of Fscroll_up and Fscroll_down.  */
 
-static void
+void
 scroll_command (Lisp_Object n, int direction)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -5007,32 +5007,6 @@ scroll_command (Lisp_Object n, int direction)
     }
 
   unbind_to (count, Qnil);
-}
-
-DEFUN ("scroll-up", Fscroll_up, Sscroll_up, 0, 1, "^P",
-       doc: /* Scroll text of selected window upward ARG lines.
-If ARG is omitted or nil, scroll upward by a near full screen.
-A near full screen is `next-screen-context-lines' less than a full screen.
-Negative ARG means scroll downward.
-If ARG is the atom `-', scroll downward by nearly full screen.
-When calling from a program, supply as argument a number, nil, or `-'.  */)
-  (Lisp_Object arg)
-{
-  scroll_command (arg, 1);
-  return Qnil;
-}
-
-DEFUN ("scroll-down", Fscroll_down, Sscroll_down, 0, 1, "^P",
-       doc: /* Scroll text of selected window down ARG lines.
-If ARG is omitted or nil, scroll down by a near full screen.
-A near full screen is `next-screen-context-lines' less than a full screen.
-Negative ARG means scroll upward.
-If ARG is the atom `-', scroll upward by nearly full screen.
-When calling from a program, supply as argument a number, nil, or `-'.  */)
-  (Lisp_Object arg)
-{
-  scroll_command (arg, -1);
-  return Qnil;
 }
 
 DEFUN ("other-window-for-scrolling", Fother_window_for_scrolling, Sother_window_for_scrolling, 0, 0, 0,
@@ -5129,56 +5103,6 @@ specifies the window to scroll.  This takes precedence over
   return Qnil;
 }
 
-DEFUN ("scroll-left", Fscroll_left, Sscroll_left, 0, 2, "^P\np",
-       doc: /* Scroll selected window display ARG columns left.
-Default for ARG is window width minus 2.
-Value is the total amount of leftward horizontal scrolling in
-effect after the change.
-If SET-MINIMUM is non-nil, the new scroll amount becomes the
-lower bound for automatic scrolling, i.e. automatic scrolling
-will not scroll a window to a column less than the value returned
-by this function.  This happens in an interactive call.  */)
-  (register Lisp_Object arg, Lisp_Object set_minimum)
-{
-  struct window *w = XWINDOW (selected_window);
-  EMACS_INT requested_arg = (NILP (arg)
-			     ? window_body_width (w, 0) - 2
-			     : XINT (Fprefix_numeric_value (arg)));
-  Lisp_Object result = set_window_hscroll (w, w->hscroll + requested_arg);
-
-  if (!NILP (set_minimum))
-    w->min_hscroll = w->hscroll;
-
-  w->suspend_auto_hscroll = true;
-
-  return result;
-}
-
-DEFUN ("scroll-right", Fscroll_right, Sscroll_right, 0, 2, "^P\np",
-       doc: /* Scroll selected window display ARG columns right.
-Default for ARG is window width minus 2.
-Value is the total amount of leftward horizontal scrolling in
-effect after the change.
-If SET-MINIMUM is non-nil, the new scroll amount becomes the
-lower bound for automatic scrolling, i.e. automatic scrolling
-will not scroll a window to a column less than the value returned
-by this function.  This happens in an interactive call.  */)
-  (register Lisp_Object arg, Lisp_Object set_minimum)
-{
-  struct window *w = XWINDOW (selected_window);
-  EMACS_INT requested_arg = (NILP (arg)
-			     ? window_body_width (w, 0) - 2
-			     : XINT (Fprefix_numeric_value (arg)));
-  Lisp_Object result = set_window_hscroll (w, w->hscroll - requested_arg);
-
-  if (!NILP (set_minimum))
-    w->min_hscroll = w->hscroll;
-
-  w->suspend_auto_hscroll = true;
-
-  return result;
-}
-
 /* Value is the number of lines actually displayed in window W,
    as opposed to its height.  */
 
@@ -7107,10 +7031,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sselect_window);
   defsubr (&Sforce_window_update);
   defsubr (&Ssplit_window_internal);
-  defsubr (&Sscroll_up);
-  defsubr (&Sscroll_down);
-  defsubr (&Sscroll_left);
-  defsubr (&Sscroll_right);
   defsubr (&Sother_window_for_scrolling);
   defsubr (&Sscroll_other_window);
   defsubr (&Srecenter);
