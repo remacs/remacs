@@ -44,4 +44,12 @@
 	   (timer-next-integral-multiple-of-time '(0 0 0 1) (1+ (ash 1 53)))
 	   (list (ash 1 (- 53 16)) 1))))
 
+(ert-deftest timer-next-integral-multiple-of-time-2 ()
+  "Test bug#33071."
+  (let* ((tc (current-time))
+         (tce (encode-time tc 100))
+         (nt (timer-next-integral-multiple-of-time tc 0.01))
+         (nte (encode-time nt 100)))
+    (should (= (car nte) (1+ (car tce))))))
+
 ;;; timer-tests.el ends here

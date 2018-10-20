@@ -101,7 +101,7 @@ of SECS seconds since the epoch.  SECS may be a fraction."
 		       time
 		     (encode-time time 1000000000000)))
 	 (hz (cdr ticks-hz))
-	 (s-ticks (* secs hz))
+	 (s-ticks (round (* secs hz)))
 	 (more-ticks (+ (car ticks-hz) s-ticks)))
     (encode-time (cons (- more-ticks (% more-ticks s-ticks)) hz))))
 
