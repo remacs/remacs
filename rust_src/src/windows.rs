@@ -8,15 +8,16 @@ use remacs_macros::lisp_fn;
 use remacs_sys::globals;
 use remacs_sys::Fcons;
 use remacs_sys::{estimate_mode_line_height, minibuf_level,
-                 minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, set_buffer_internal, window_list_1,
-                 window_menu_bar_p, window_parameter, window_tool_bar_p, wset_display_table,
-                 wset_redisplay, wset_update_mode_line};
+                 minibuf_selected_window as current_minibuf_window, scroll_command,
+                 selected_window as current_window, set_buffer_internal, set_window_hscroll,
+                 window_body_width, window_list_1, window_menu_bar_p, window_parameter,
+                 window_tool_bar_p, wset_display_table, wset_redisplay, wset_update_mode_line};
 use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone};
 
 use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, LispFrameRef};
+use interactive::prefix_numeric_value;
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
 use lists::{assq, setcdr};
@@ -878,6 +879,78 @@ pub fn window_top_child(window: LispObject) -> Option<LispWindowRef> {
     } else {
         None
     }
+}
+
+pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool) -> LispObject {
+    let mut w = selected_window().as_window_or_error();
+    let requested_arg = if arg.is_nil() {
+        unsafe { window_body_width(w.as_mut(), false) as EmacsInt - 2 }
+    } else {
+        if left {
+            prefix_numeric_value(arg)
+        } else {
+            -prefix_numeric_value(arg)
+        }
+    };
+
+    let result = unsafe { set_window_hscroll(w.as_mut(), w.hscroll as EmacsInt + requested_arg) };
+
+    if set_minimum.is_not_nil() {
+        w.min_hscroll = w.hscroll;
+    }
+
+    w.set_suspend_auto_hscroll(true);
+    result
+}
+
+/// Scroll selected window display ARG columns left.
+/// Default for ARG is window width minus 2.
+/// Value is the total amount of leftward horizontal scrolling in
+/// effect after the change.
+/// If SET-MINIMUM is non-nil, the new scroll amount becomes the
+/// lower bound for automatic scrolling, i.e. automatic scrolling
+/// will not scroll a window to a column less than the value returned
+/// by this function.  This happens in an interactive call.
+#[lisp_fn(min = "0", intspec = "^P\np")]
+pub fn scroll_left(arg: LispObject, set_minimum: LispObject) -> LispObject {
+    scroll_horizontally(arg, set_minimum, true)
+}
+
+/// Scroll selected window display ARG columns left.
+/// Default for ARG is window width minus 2.
+/// Value is the total amount of leftward horizontal scrolling in
+/// effect after the change.
+/// If SET-MINIMUM is non-nil, the new scroll amount becomes the
+/// lower bound for automatic scrolling, i.e. automatic scrolling
+/// will not scroll a window to a column less than the value returned
+/// by this function.  This happens in an interactive call.
+#[lisp_fn(min = "0", intspec = "^P\np")]
+pub fn scroll_right(arg: LispObject, set_minimum: LispObject) -> LispObject {
+    scroll_horizontally(arg, set_minimum, false)
+}
+
+/// Scroll text of selected window upward ARG lines.
+/// If ARG is omitted or nil, scroll upward by a near full screen.
+/// A near full screen is `next-screen-context-lines' less than a full screen.
+/// Negative ARG means scroll downward.
+/// If ARG is the atom `-', scroll downward by nearly full screen.
+/// When calling from a program, supply as argument a number, nil, or `-'.
+#[lisp_fn(min = "0", intspec = "^P")]
+pub fn scroll_up(arg: LispObject) -> LispObject {
+    unsafe { scroll_command(arg, 1) };
+    Qnil
+}
+
+/// Scroll text of selected window down ARG lines.
+/// If ARG is omitted or nil, scroll down by a near full screen.
+/// A near full screen is `next-screen-context-lines' less than a full screen.
+/// Negative ARG means scroll upward.
+/// If ARG is the atom `-', scroll upward by nearly full screen.
+/// When calling from a program, supply as argument a number, nil, or `-'.
+#[lisp_fn(min = "0", intspec = "^P")]
+pub fn scroll_down(arg: LispObject) -> LispObject {
+    unsafe { scroll_command(arg, -1) };
+    Qnil
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
