@@ -81,7 +81,7 @@ emacs_fixed_gtk_widget_size_allocate (GtkWidget *widget,
      additional case for an xwidget view.
 
      It would be nicer if the bse class method could be called first,
-     and the the xview modification only would remain here. It wasn't
+     and the xview modification only would remain here. It wasn't
      possible to solve it that way yet.  */
   EmacsFixedClass *klass;
   GtkWidgetClass *parent_class;

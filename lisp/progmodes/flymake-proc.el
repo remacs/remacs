@@ -20,7 +20,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -40,6 +40,8 @@
 ;;   (from http://bugs.debian.org/337339).
 
 ;;; Code:
+
+(require 'cl-lib)
 
 (require 'flymake)
 
@@ -64,6 +66,13 @@
   "Max number of master files to check."
   :group 'flymake
   :type 'integer)
+
+(defcustom flymake-proc-ignored-file-name-regexps '()
+  "Files syntax checking is forbidden for.
+Overrides `flymake-proc-allowed-file-name-masks'."
+  :group 'flymake
+  :type '(repeat (regexp))
+  :version "27.1")
 
 (defcustom flymake-proc-allowed-file-name-masks
   '(("\\.\\(?:c\\(?:pp\\|xx\\|\\+\\+\\)?\\|CC\\)\\'"
@@ -91,6 +100,7 @@
     ;; ("\\.tex\\'" 1)
     )
   "Files syntax checking is allowed for.
+Variable `flymake-proc-ignored-file-name-regexps' overrides this variable.
 This is an alist with elements of the form:
   REGEXP INIT [CLEANUP [NAME]]
 REGEXP is a regular expression that matches a file name.
@@ -188,17 +198,22 @@ expression. A match indicates `:warning' type, otherwise
          :error)))
 
 (defun flymake-proc--get-file-name-mode-and-masks (file-name)
-  "Return the corresponding entry from `flymake-proc-allowed-file-name-masks'."
+  "Return the corresponding entry from `flymake-proc-allowed-file-name-masks'.
+If the FILE-NAME matches a regexp from `flymake-proc-ignored-file-name-regexps',
+`flymake-proc-allowed-file-name-masks' is not searched."
   (unless (stringp file-name)
     (error "Invalid file-name"))
-  (let ((fnm flymake-proc-allowed-file-name-masks)
-	(mode-and-masks nil))
-    (while (and (not mode-and-masks) fnm)
-      (if (string-match (car (car fnm)) file-name)
-	  (setq mode-and-masks (cdr (car fnm))))
-      (setq fnm (cdr fnm)))
-    (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
-    mode-and-masks))
+  (if (cl-find file-name flymake-proc-ignored-file-name-regexps
+               :test (lambda (fn rex) (string-match rex fn)))
+      (flymake-log 3 "file %s ignored")
+    (let ((fnm flymake-proc-allowed-file-name-masks)
+          (mode-and-masks nil))
+      (while (and (not mode-and-masks) fnm)
+        (if (string-match (car (car fnm)) file-name)
+            (setq mode-and-masks (cdr (car fnm))))
+        (setq fnm (cdr fnm)))
+      (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
+      mode-and-masks)))
 
 (defun flymake-proc--get-init-function (file-name)
   "Return init function to be used for the file."
@@ -626,7 +641,7 @@ Create parent directories as needed."
   "Tell Flymake UI about a fatal PROBLEM with this backend.
 May only be called in a dynamic environment where
 `flymake-proc--report-fn' is bound."
-  (flymake-log 0 "%s: %s" problem explanation)
+  (flymake-log 1 "%s: %s" problem explanation)
   (if (and (boundp 'flymake-proc--report-fn)
            flymake-proc--report-fn)
       (funcall flymake-proc--report-fn :panic
@@ -766,7 +781,7 @@ can also be executed interactively independently of
           (unwind-protect
               (cond
                ((not cmd-and-args)
-                (flymake-log 0 "init function %s for %s failed, cleaning up"
+                (flymake-log 1 "init function %s for %s failed, cleaning up"
                              init-f buffer-file-name))
                (t
                 (setq proc

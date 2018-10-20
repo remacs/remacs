@@ -389,10 +389,9 @@ the output buffer."
   (if clear (semantic-clear-toplevel-cache))
   (if (eq clear '-) (setq clear -1))
   (let* ((start (current-time))
-	 (out (semantic-fetch-tags))
-	 (end (current-time)))
+	 (out (semantic-fetch-tags)))
     (message "Retrieving tags took %.2f seconds."
-	     (semantic-elapsed-time start end))
+	     (semantic-elapsed-time start nil))
     (when (or (null clear) (not (listp clear))
 	      (and (numberp clear) (< 0 clear)))
       (pop-to-buffer "*Parser Output*")

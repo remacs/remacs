@@ -768,8 +768,7 @@ Optional RECURSING is for internal use, to limit recursion."
 
             (if allout-widgets-time-decoration-activity
                 (setq allout-widgets-last-decoration-timing
-                      (list (allout-elapsed-time-seconds (current-time)
-                                                         start-time)
+                      (list (allout-elapsed-time-seconds nil start-time)
                             allout-widgets-changes-record)))
 
             (setq allout-widgets-changes-record nil)

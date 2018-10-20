@@ -23,7 +23,7 @@ dnl  along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
 dnl Note this is parsed by (at least) make-dist and lisp/cedet/ede/emacs.el.
-AC_INIT(GNU Emacs, 26.0.60, bug-gnu-emacs@gnu.org)
+AC_INIT(GNU Emacs, 27.0.50, bug-gnu-emacs@gnu.org, , https://www.gnu.org/software/emacs/)
 
 dnl Set emacs_config_options to the options of 'configure', quoted for the shell,
 dnl and then quoted again for a C string.  Separate options with spaces.
@@ -689,6 +689,12 @@ case "${canonical}" in
 		;;
       *) ;;
     esac
+  ;;
+
+  ## QNX Neutrino
+  *-nto-qnx* )
+    opsys=qnxnto
+    CFLAGS="$CFLAGS -D__NO_EXT_QNX"
   ;;
 
   ## Intel 386 machines where we don't care about the manufacturer.
@@ -1492,6 +1498,8 @@ case "$opsys" in
 
   hpux*) LIBS_SYSTEM="-l:libdld.sl" ;;
 
+  qnxnto) LIBS_SYSTEM="-lsocket" ;;
+
   sol2*) LIBS_SYSTEM="-lsocket -lnsl" ;;
 
   unixware) LIBS_SYSTEM="-lsocket -lnsl -lelf" ;;
@@ -2184,7 +2192,8 @@ test "$CANNOT_DUMP" = yes ||
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
   darwin | mingw32 | nacl | sol2-10) ;;
-  cygwin) hybrid_malloc=yes
+  cygwin | qnxto)
+	  hybrid_malloc=yes
           system_malloc= ;;
   *) test "$ac_cv_func_sbrk" = yes && system_malloc=$emacs_cv_sanitize_address;;
 esac
@@ -3866,9 +3875,8 @@ AC_CACHE_CHECK([for library containing tputs], [emacs_cv_tputs_lib],
 [if test "${opsys}" = "mingw32"; then
   emacs_cv_tputs_lib='none required'
 else
-  # Maybe curses should be tried earlier?
-  # See https://debbugs.gnu.org/9736#35
-  for tputs_library in '' tinfo ncurses terminfo termcap curses; do
+  # curses precedes termcap because of AIX (Bug#9736#35) and OpenIndiana.
+  for tputs_library in '' tinfo ncurses terminfo curses termcap; do
     OLIBS=$LIBS
     if test -z "$tputs_library"; then
       emacs_cv_tputs_lib='none required'
@@ -3887,7 +3895,7 @@ fi])
 AS_CASE(["$emacs_cv_tputs_lib"],
   [no], [AC_MSG_ERROR([The required function 'tputs' was not found in any library.
 The following libraries were tried (in order):
-  libtinfo, libncurses, libterminfo, libtermcap, libcurses
+  libtinfo, libncurses, libterminfo, libcurses, libtermcap
 Please try installing whichever of these libraries is most appropriate
 for your system, together with its header files.
 For example, a libncurses-dev(el) or similar package.])],
@@ -4434,7 +4442,7 @@ case $opsys in
     AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
 
-  gnu | openbsd )
+  gnu | openbsd | qnxnto )
     AC_DEFINE(FIRST_PTY_LETTER, ['p'])
     ;;
 

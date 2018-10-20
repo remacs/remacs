@@ -442,8 +442,10 @@ after a sequence of character events."
 (defsubst lglyph-set-adjustment (glyph &optional xoff yoff wadjust)
   (aset glyph 9 (vector (or xoff 0) (or yoff 0) (or wadjust 0))))
 
+;; Return the shallow Copy of GLYPH.
 (defsubst lglyph-copy (glyph) (copy-sequence glyph))
 
+;; Insert GLYPH at the index IDX of GSTRING.
 (defun lgstring-insert-glyph (gstring idx glyph)
   (let ((nglyphs (lgstring-glyph-len gstring))
 	(i idx))
@@ -458,6 +460,18 @@ after a sequence of character events."
       (setq i (1- i)))
     (lgstring-set-glyph gstring i glyph)
     gstring))
+
+;; Remove glyph at IDX from GSTRING.
+(defun lgstring-remove-glyph (gstring idx)
+  (setq gstring (copy-sequence gstring))
+  (lgstring-set-id gstring nil)
+  (let ((len (length gstring)))
+    (setq idx (+ idx 3))
+    (while (< idx len)
+      (aset gstring (1- idx) (aref gstring idx))
+      (setq idx (1+ idx)))
+    (aset gstring (1- len) nil))
+  gstring)
 
 (defun compose-glyph-string (gstring from to)
   (let ((glyph (lgstring-glyph gstring from))

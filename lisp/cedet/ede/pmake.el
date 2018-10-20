@@ -277,7 +277,7 @@ Execute BODY in a location where a value can be placed."
 ;;; SOURCE VARIABLE NAME CONSTRUCTION
 
 (defsubst ede-pmake-varname (obj)
-  "Convert OBJ into a variable name name.
+  "Convert OBJ into a variable name.
 Change .  to _ in the variable name."
   (let ((name (oref obj name)))
     (while (string-match "\\." name)

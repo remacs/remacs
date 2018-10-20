@@ -546,14 +546,15 @@ See variable `server-auth-dir' for details."
                               ;; group recorded as the owner.
                               (/= uid 544) (/= (user-uid) 500)))
                      (format "it is not owned by you (owner = %s (%d))"
-                             (user-full-name (user-uid)) (user-uid)))
+                             (user-full-name uid) uid))
                     (w32 nil)           ; on NTFS?
                     ((/= 0 (logand ?\077 (file-modes dir)))
                      (format "it is accessible by others (%03o)"
                              (file-modes dir)))
                     (t nil))))
       (when unsafe
-        (error "`%s' is not a safe directory because %s" dir unsafe)))))
+        (error "`%s' is not a safe directory because %s"
+               (expand-file-name dir) unsafe)))))
 
 (defun server-generate-key ()
   "Generate and return a random authentication key.

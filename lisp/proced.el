@@ -604,7 +604,8 @@ Important: the match ends just after the marker.")
   "Return header line for Proced buffer."
   (list (propertize " "
                     'display
-                    (list 'space :align-to (+ 2 (line-number-display-width))))
+                    (list 'space :align-to
+                          (line-number-display-width 'columns)))
         (if (<= (window-hscroll) (length proced-header-line))
             (replace-regexp-in-string ;; preserve text properties
              "\\(%\\)" "\\1\\1"

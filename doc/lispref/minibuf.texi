@@ -2407,6 +2407,19 @@ This is a normal hook that is run whenever the minibuffer is entered.
 @xref{Hooks}.
 @end defvar
 
+@defmac minibuffer-with-setup-hook function &rest body
+This macro executes @var{body} after arranging for the specified
+@var{function} to be called via @code{minibuffer-setup-hook}.  By
+default, @var{function} is called before the other functions in the
+@code{minibuffer-setup-hook} list, but if @var{function} is of the
+form @w{@code{(:append @var{func})}}, @var{func} will be called
+@emph{after} the other hook functions.
+
+The @var{body} forms should not use the minibuffer more than once.  If
+the minibuffer is re-entered recursively, @var{function} will only be
+called once, for the outermost use of the minibuffer.
+@end defmac
+
 @defvar minibuffer-exit-hook
 This is a normal hook that is run whenever the minibuffer is exited.
 @xref{Hooks}.

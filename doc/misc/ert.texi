@@ -292,6 +292,20 @@ summary as shown below:
 emacs -batch -l ert -f ert-summarize-tests-batch-and-exit output.log
 @end example
 
+@vindex ert-quiet
+By default, ERT in batch mode is quite verbose, printing a line with
+result after each test.  This gives you progress information: how many
+tests have been executed and how many there are.  However, in some
+cases this much output may be undesirable.  In this case, set
+@code{ert-quiet} variable to a non-nil value:
+
+@example
+emacs -batch -l ert -l my-tests.el \
+      --eval "(let ((ert-quiet t)) (ert-run-tests-batch-and-exit))"
+@end example
+
+In quiet mode ERT prints only unexpected results and summary.
+
 If ERT is not part of your Emacs distribution, you may need to use
 @code{-L /path/to/ert/} so that Emacs can find it.  You may need
 additional @code{-L} flags to ensure that @code{my-tests.el} and all the

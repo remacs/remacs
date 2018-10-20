@@ -118,7 +118,7 @@ static mode_t auto_save_mode_bits;
 static bool auto_save_error_occurred;
 
 /* If VALID_TIMESTAMP_FILE_SYSTEM, then TIMESTAMP_FILE_SYSTEM is the device
-   number of a file system where time stamps were observed to to work.  */
+   number of a file system where time stamps were observed to work.  */
 static bool valid_timestamp_file_system;
 static dev_t timestamp_file_system;
 
@@ -2227,7 +2227,7 @@ This is what happens in interactive use with M-x.  */)
   (Lisp_Object file, Lisp_Object newname, Lisp_Object ok_if_already_exists)
 {
   Lisp_Object handler;
-  Lisp_Object encoded_file, encoded_newname, symlink_target;
+  Lisp_Object encoded_file, encoded_newname;
 
   file = Fexpand_file_name (file, Qnil);
 
@@ -2263,7 +2263,7 @@ This is what happens in interactive use with M-x.  */)
   bool plain_rename = (case_only_rename
 		       || (!NILP (ok_if_already_exists)
 			   && !INTEGERP (ok_if_already_exists)));
-  int rename_errno;
+  int rename_errno UNINIT;
   if (!plain_rename)
     {
       if (renameat_noreplace (AT_FDCWD, SSDATA (encoded_file),
@@ -2301,12 +2301,22 @@ This is what happens in interactive use with M-x.  */)
   if (rename_errno != EXDEV)
     report_file_errno ("Renaming", list2 (file, newname), rename_errno);
 
+  struct stat file_st;
   bool dirp = !NILP (Fdirectory_name_p (file));
+  if (!dirp)
+    {
+      if (lstat (SSDATA (encoded_file), &file_st) != 0)
+	report_file_error ("Renaming", list2 (file, newname));
+      dirp = S_ISDIR (file_st.st_mode) != 0;
+    }
   if (dirp)
     call4 (Qcopy_directory, file, newname, Qt, Qnil);
   else
     {
-      symlink_target = Ffile_symlink_p (file);
+      Lisp_Object symlink_target
+	= (S_ISLNK (file_st.st_mode)
+	   ? emacs_readlinkat (AT_FDCWD, SSDATA (encoded_file))
+	   : Qnil);
       if (!NILP (symlink_target))
 	Fmake_symbolic_link (symlink_target, newname, ok_if_already_exists);
       else

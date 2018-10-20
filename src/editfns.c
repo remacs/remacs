@@ -1132,11 +1132,11 @@ by text that describes the specified date and time in TIME:
  only blank-padded, %l is like %I blank-padded.
 %p is the locale's equivalent of either AM or PM.
 %q is the calendar quarter (1–4).
-%M is the minute.
-%S is the second.
-%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
-%Z is the time zone name, %z is the numeric form.
+%M is the minute (00-59).
+%S is the second (00-59; 00-60 on platforms with leap seconds)
 %s is the number of seconds since 1970-01-01 00:00:00 +0000.
+%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
+%Z is the time zone abbreviation, %z is the numeric form.
 
 %c is the locale's date and time format.
 %x is the locale's "preferred" date format.
@@ -1146,7 +1146,8 @@ by text that describes the specified date and time in TIME:
 %R is like "%H:%M", %T is like "%H:%M:%S", %r is like "%I:%M:%S %p".
 %X is the locale's "preferred" time format.
 
-Finally, %n is a newline, %t is a tab, %% is a literal %.
+Finally, %n is a newline, %t is a tab, %% is a literal %, and
+unrecognized %-sequences stand for themselves.
 
 Certain flags and modifiers are available with some format controls.
 The flags are `_', `-', `^' and `#'.  For certain characters X,
@@ -3148,6 +3149,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
      multibyte character of the previous string.  This flag tells if we
      must consider such a situation or not.  */
   bool maybe_combine_byte;
+  Lisp_Object val;
   bool arg_intervals = false;
   USE_SAFE_ALLOCA;
   sa_avail -= sizeof initial_buffer;
@@ -3386,7 +3388,10 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    {
 	      if (format == end && format - format_start == 2
 		  && ! string_intervals (args[0]))
-		return arg;
+		{
+		  val = arg;
+		  goto return_val;
+		}
 
 	      /* handle case (precision[n] >= 0) */
 
@@ -3831,11 +3836,14 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
     emacs_abort ();
 
   if (! new_result)
-    return args[0];
+    {
+      val = args[0];
+      goto return_val;
+    }
 
   if (maybe_combine_byte)
     nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);
-  Lisp_Object val = make_specified_string (buf, nchars, p - buf, multibyte);
+  val = make_specified_string (buf, nchars, p - buf, multibyte);
 
   /* If the format string has text properties, or any of the string
      arguments has text properties, set up text properties of the
@@ -3933,6 +3941,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	    }
     }
 
+ return_val:
   /* If we allocated BUF or INFO with malloc, free it too.  */
   SAFE_FREE ();
 

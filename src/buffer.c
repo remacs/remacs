@@ -3264,8 +3264,8 @@ void
 fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
 {
   Lisp_Object overlay;
-  struct Lisp_Overlay *before_list;
-  struct Lisp_Overlay *after_list;
+  struct Lisp_Overlay *before_list UNINIT;
+  struct Lisp_Overlay *after_list UNINIT;
   /* These are either nil, indicating that before_list or after_list
      should be assigned, or the cons cell the cdr of which should be
      assigned.  */
@@ -5598,7 +5598,7 @@ and is the visited file's modification time, as of that time.  If the
 modification time of the most recent save is different, this entry is
 obsolete.
 
-An entry (t . 0) means means the buffer was previously unmodified but
+An entry (t . 0) means the buffer was previously unmodified but
 its time stamp was unknown because it was not associated with a file.
 An entry (t . -1) is similar, except that it means the buffer's visited
 file did not exist.

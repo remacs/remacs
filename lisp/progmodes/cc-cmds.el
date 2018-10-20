@@ -1852,7 +1852,7 @@ with a brace block."
 	   ;; struct, union, enum, or similar:
 	   ((looking-at c-type-prefix-key)
 	    (let ((key-pos (point)))
-	      (c-forward-token-2 1)	; over "struct ".
+	      (c-forward-over-token-and-ws) ; over "struct ".
 	      (cond
 	       ((looking-at c-symbol-key)	; "struct foo { ..."
 		(buffer-substring-no-properties key-pos (match-end 0)))

@@ -94,8 +94,8 @@ file:///foo/bar.jpg"
   (concat (md5 (xdg-thumb-uri filename)) ".png"))
 
 (defun xdg-thumb-mtime (filename)
-  "Return modification time of FILENAME as integral seconds from the epoch."
-  (floor (float-time (nth 5 (file-attributes filename)))))
+  "Return modification time of FILENAME as an Emacs timestamp."
+  (file-attribute-modification-time (file-attributes filename)))
 
 
 ;; XDG User Directories
