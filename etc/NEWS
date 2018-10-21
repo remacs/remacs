@@ -876,6 +876,9 @@ documentation of the new mode and its commands.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
+** define-fringe-bitmap is always defined, even when Emacs is built
+without any GUI support.
+
 ---
 ** Just loading a theme's file no longer activates the theme's settings.
 Loading a theme with 'M-x load-theme' still activates the theme, as it

@@ -219,25 +219,24 @@ Specifically, start it when the saved buffer is actually displayed."
   :version "26.1"
   :type 'boolean)
 
-(when (fboundp 'define-fringe-bitmap)
-  (define-fringe-bitmap 'flymake-double-exclamation-mark
-    (vector #b00000000
-            #b00000000
-            #b00000000
-            #b00000000
-            #b01100110
-            #b01100110
-            #b01100110
-            #b01100110
-            #b01100110
-            #b01100110
-            #b01100110
-            #b01100110
-            #b00000000
-            #b01100110
-            #b00000000
-            #b00000000
-            #b00000000)))
+(define-fringe-bitmap 'flymake-double-exclamation-mark
+  (vector #b00000000
+          #b00000000
+          #b00000000
+          #b00000000
+          #b01100110
+          #b01100110
+          #b01100110
+          #b01100110
+          #b01100110
+          #b01100110
+          #b01100110
+          #b01100110
+          #b00000000
+          #b01100110
+          #b00000000
+          #b00000000
+          #b00000000))
 
 (defvar-local flymake-timer nil
   "Timer for starting syntax check.")
