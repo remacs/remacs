@@ -63,6 +63,7 @@ mod casefiddle;
 mod casetab;
 mod category;
 mod character;
+mod charset;
 mod chartable;
 mod cmds;
 mod crypto;
