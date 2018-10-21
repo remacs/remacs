@@ -7469,7 +7469,7 @@ You can also switch between context diff and unified diff with \\[diff-context->
 or vice versa with \\[diff-unified->context] and you can also reverse the direction of
 a diff with \\[diff-reverse-direction].
 
-   \\{diff-mode-map}
+\\{diff-mode-map}
 
 \(fn)" t nil)
 
@@ -13804,6 +13804,8 @@ Interactively, reads the register using `register-read-with-preview'.
 ;;;### (autoloads nil "fringe" "fringe.el" (0 0 0 0))
 ;;; Generated autoloads from fringe.el
 
+(unless (fboundp 'define-fringe-bitmap) (defun define-fringe-bitmap (_bitmap _bits &optional _height _width _align) "Define fringe bitmap BITMAP from BITS of size HEIGHT x WIDTH.\nBITMAP is a symbol identifying the new fringe bitmap.\nBITS is either a string or a vector of integers.\nHEIGHT is height of bitmap.  If HEIGHT is nil, use length of BITS.\nWIDTH must be an integer between 1 and 16, or nil which defaults to 8.\nOptional fifth arg ALIGN may be one of ‘top’, ‘center’, or ‘bottom’,\nindicating the positioning of the bitmap relative to the rows where it\nis used; the default is to center the bitmap.  Fifth arg may also be a\nlist (ALIGN PERIODIC) where PERIODIC non-nil specifies that the bitmap\nshould be repeated.\nIf BITMAP already exists, the existing definition is replaced."))
+
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "fringe" '("fringe-" "set-fringe-")))
 
 ;;;***
@@ -13908,7 +13910,7 @@ detailed description of this mode.
 
 \(fn COMMAND-LINE)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "gdb-mi" '("breakpoint-" "def-gdb-" "gdb" "gud-" "nil")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "gdb-mi" '("breakpoint" "def-gdb-" "gdb" "gud-" "hollow-right-triangle" "nil")))
 
 ;;;***
 
@@ -23452,6 +23454,12 @@ Many aspects this mode can be customized using
 
 ;;;### (autoloads nil "octave" "progmodes/octave.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/octave.el
+ (add-to-list 'auto-mode-alist '("\\.m\\'" . octave-maybe-mode))
+
+(autoload 'octave-maybe-mode "octave" "\
+Select `octave-mode' if the current buffer seems to hold Octave code.
+
+\(fn)" nil nil)
 
 (autoload 'octave-mode "octave" "\
 Major mode for editing Octave code.
@@ -24819,6 +24827,16 @@ short description.
 \(fn &optional NO-FETCH)" t nil)
 
 (defalias 'package-list-packages 'list-packages)
+
+(autoload 'package-get-version "package" "\
+Return the version number of the package in which this is used.
+Assumes it is used from an Elisp file placed inside the top-level directory
+of an installed ELPA package.
+The return value is a string (or nil in case we can't find it).
+
+\(fn)" nil nil)
+
+(function-put 'package-get-version 'pure 't)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "package" '("bad-signature" "define-package" "describe-package-1" "package-")))
 
@@ -29063,9 +29081,26 @@ also enable the mode if ARG is omitted or nil, and toggle it
 if ARG is `toggle'; disable the mode otherwise.
 
 When Savehist mode is enabled, minibuffer history is saved
-periodically and when exiting Emacs.  When Savehist mode is
-enabled for the first time in an Emacs session, it loads the
-previous minibuffer history from `savehist-file'.
+to `savehist-file' periodically and when exiting Emacs.  When
+Savehist mode is enabled for the first time in an Emacs session,
+it loads the previous minibuffer histories from `savehist-file'.
+The variable `savehist-autosave-interval' controls the
+periodicity of saving minibuffer histories.
+
+If `savehist-save-minibuffer-history' is non-nil (the default),
+all recorded minibuffer histories will be saved.  You can arrange
+for additional history variables to be saved and restored by
+customizing `savehist-additional-variables', which by default is
+an empty list.  For example, to save the history of commands
+invoked via \\[execute-extended-command], add `command-history' to the list in
+`savehist-additional-variables'.
+
+Alternatively, you could customize `savehist-save-minibuffer-history'
+to nil, and add to `savehist-additional-variables' only those
+history variables you want to save.
+
+To ignore some history variables, add their symbols to the list
+in `savehist-ignored-variables'.
 
 This mode should normally be turned on from your Emacs init file.
 Calling it at any other time replaces your current minibuffer
@@ -31015,7 +31050,7 @@ then `snmpv2-mode-hook'.
 
 ;;;### (autoloads nil "soap-client" "net/soap-client.el" (0 0 0 0))
 ;;; Generated autoloads from net/soap-client.el
-(push (purecopy '(soap-client 3 1 4)) package--builtin-versions)
+(push (purecopy '(soap-client 3 1 5)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "soap-client" '("soap-")))
 
@@ -34139,10 +34174,7 @@ If DATE lacks timezone information, GMT is assumed.
 
 (defalias 'time-to-seconds 'float-time)
 
-(autoload 'seconds-to-time "time-date" "\
-Convert SECONDS to a time value.
-
-\(fn SECONDS)" nil nil)
+(defalias 'seconds-to-time 'encode-time)
 
 (autoload 'days-to-time "time-date" "\
 Convert DAYS into a time value.
@@ -34711,14 +34743,14 @@ match file names at root of the underlying local file system,
 like \"/sys\" or \"/C:\".")
 
 (defun tramp-autoload-file-name-handler (operation &rest args) "\
-Load Tramp file name handler, and perform OPERATION." (if tramp-mode (let ((default-directory temporary-file-directory)) (load "tramp" 'noerror 'nomessage)) (tramp-unload-file-name-handlers)) (apply operation args))
+Load Tramp file name handler, and perform OPERATION." (tramp-unload-file-name-handlers) (if tramp-mode (let ((default-directory temporary-file-directory)) (load "tramp" 'noerror 'nomessage))) (apply operation args))
 
 (defun tramp-register-autoload-file-name-handlers nil "\
 Add Tramp file name handlers to `file-name-handler-alist' during autoload." (add-to-list 'file-name-handler-alist (cons tramp-autoload-file-name-regexp 'tramp-autoload-file-name-handler)) (put 'tramp-autoload-file-name-handler 'safe-magic t))
  (tramp-register-autoload-file-name-handlers)
 
 (defun tramp-unload-file-name-handlers nil "\
-Unload Tramp file name handlers from `file-name-handler-alist'." (dolist (fnh '(tramp-file-name-handler tramp-completion-file-name-handler tramp-archive-file-name-handler tramp-autoload-file-name-handler)) (let ((a1 (rassq fnh file-name-handler-alist))) (setq file-name-handler-alist (delq a1 file-name-handler-alist)))))
+Unload Tramp file name handlers from `file-name-handler-alist'." (dolist (fnh file-name-handler-alist) (when (and (symbolp (cdr fnh)) (string-prefix-p "tramp-" (symbol-name (cdr fnh)))) (setq file-name-handler-alist (delq fnh file-name-handler-alist)))))
 
 (defvar tramp-completion-mode nil "\
 If non-nil, external packages signal that they are in file name completion.")
@@ -34757,8 +34789,10 @@ It must be supported by libarchive(3).")
 (defmacro tramp-archive-autoload-file-name-regexp nil "\
 Regular expression matching archive file names." `(concat "\\`" "\\(" ".+" "\\." (regexp-opt tramp-archive-suffixes) "\\(?:" "\\." (regexp-opt tramp-archive-compression-suffixes) "\\)*" "\\)" "\\(" "/" ".*" "\\)" "\\'"))
 
+(defalias 'tramp-archive-autoload-file-name-handler 'tramp-autoload-file-name-handler)
+
 (defun tramp-register-archive-file-name-handler nil "\
-Add archive file name handler to `file-name-handler-alist'." (when tramp-archive-enabled (add-to-list 'file-name-handler-alist (cons (tramp-archive-autoload-file-name-regexp) 'tramp-autoload-file-name-handler)) (put 'tramp-archive-file-name-handler 'safe-magic t)))
+Add archive file name handler to `file-name-handler-alist'." (when tramp-archive-enabled (add-to-list 'file-name-handler-alist (cons (tramp-archive-autoload-file-name-regexp) 'tramp-archive-autoload-file-name-handler)) (put 'tramp-archive-autoload-file-name-handler 'safe-magic t)))
 
 (add-hook 'after-init-hook 'tramp-register-archive-file-name-handler)
 
@@ -36290,6 +36324,7 @@ If NAME is empty, it refers to the latest revisions of the current branch.
 If locking is used for the files in DIR, then there must not be any
 locked files at or below DIR (but if NAME is empty, locked files are
 allowed and simply skipped).
+This function runs the hook `vc-retrieve-tag-hook' when finished.
 
 \(fn DIR NAME)" t nil)
 
@@ -38895,28 +38930,29 @@ Zone out, completely.
 ;;;***
 
 ;;;### (autoloads nil nil ("abbrev.el" "bindings.el" "buff-menu.el"
-;;;;;;  "button.el" "calc/calc-aent.el" "calc/calc-embed.el" "calc/calc-misc.el"
-;;;;;;  "calc/calc-yank.el" "calendar/cal-loaddefs.el" "calendar/diary-loaddefs.el"
-;;;;;;  "calendar/hol-loaddefs.el" "case-table.el" "cedet/ede/base.el"
-;;;;;;  "cedet/ede/config.el" "cedet/ede/cpp-root.el" "cedet/ede/custom.el"
-;;;;;;  "cedet/ede/dired.el" "cedet/ede/emacs.el" "cedet/ede/files.el"
-;;;;;;  "cedet/ede/generic.el" "cedet/ede/linux.el" "cedet/ede/locate.el"
-;;;;;;  "cedet/ede/make.el" "cedet/ede/shell.el" "cedet/ede/speedbar.el"
-;;;;;;  "cedet/ede/system.el" "cedet/ede/util.el" "cedet/semantic/analyze.el"
-;;;;;;  "cedet/semantic/analyze/complete.el" "cedet/semantic/analyze/refs.el"
-;;;;;;  "cedet/semantic/bovine.el" "cedet/semantic/bovine/c-by.el"
-;;;;;;  "cedet/semantic/bovine/c.el" "cedet/semantic/bovine/el.el"
-;;;;;;  "cedet/semantic/bovine/gcc.el" "cedet/semantic/bovine/make-by.el"
-;;;;;;  "cedet/semantic/bovine/make.el" "cedet/semantic/bovine/scm-by.el"
-;;;;;;  "cedet/semantic/bovine/scm.el" "cedet/semantic/complete.el"
-;;;;;;  "cedet/semantic/ctxt.el" "cedet/semantic/db-file.el" "cedet/semantic/db-find.el"
-;;;;;;  "cedet/semantic/db-global.el" "cedet/semantic/db-mode.el"
-;;;;;;  "cedet/semantic/db-typecache.el" "cedet/semantic/db.el" "cedet/semantic/debug.el"
-;;;;;;  "cedet/semantic/decorate/include.el" "cedet/semantic/decorate/mode.el"
-;;;;;;  "cedet/semantic/dep.el" "cedet/semantic/doc.el" "cedet/semantic/edit.el"
-;;;;;;  "cedet/semantic/find.el" "cedet/semantic/format.el" "cedet/semantic/html.el"
-;;;;;;  "cedet/semantic/ia-sb.el" "cedet/semantic/ia.el" "cedet/semantic/idle.el"
-;;;;;;  "cedet/semantic/imenu.el" "cedet/semantic/lex-spp.el" "cedet/semantic/lex.el"
+;;;;;;  "button.el" "calc/calc-aent.el" "calc/calc-embed.el" "calc/calc-loaddefs.el"
+;;;;;;  "calc/calc-misc.el" "calc/calc-yank.el" "calendar/cal-loaddefs.el"
+;;;;;;  "calendar/diary-loaddefs.el" "calendar/hol-loaddefs.el" "case-table.el"
+;;;;;;  "cedet/ede/base.el" "cedet/ede/config.el" "cedet/ede/cpp-root.el"
+;;;;;;  "cedet/ede/custom.el" "cedet/ede/dired.el" "cedet/ede/emacs.el"
+;;;;;;  "cedet/ede/files.el" "cedet/ede/generic.el" "cedet/ede/linux.el"
+;;;;;;  "cedet/ede/loaddefs.el" "cedet/ede/locate.el" "cedet/ede/make.el"
+;;;;;;  "cedet/ede/shell.el" "cedet/ede/speedbar.el" "cedet/ede/system.el"
+;;;;;;  "cedet/ede/util.el" "cedet/semantic/analyze.el" "cedet/semantic/analyze/complete.el"
+;;;;;;  "cedet/semantic/analyze/refs.el" "cedet/semantic/bovine.el"
+;;;;;;  "cedet/semantic/bovine/c-by.el" "cedet/semantic/bovine/c.el"
+;;;;;;  "cedet/semantic/bovine/el.el" "cedet/semantic/bovine/gcc.el"
+;;;;;;  "cedet/semantic/bovine/make-by.el" "cedet/semantic/bovine/make.el"
+;;;;;;  "cedet/semantic/bovine/scm-by.el" "cedet/semantic/bovine/scm.el"
+;;;;;;  "cedet/semantic/complete.el" "cedet/semantic/ctxt.el" "cedet/semantic/db-file.el"
+;;;;;;  "cedet/semantic/db-find.el" "cedet/semantic/db-global.el"
+;;;;;;  "cedet/semantic/db-mode.el" "cedet/semantic/db-typecache.el"
+;;;;;;  "cedet/semantic/db.el" "cedet/semantic/debug.el" "cedet/semantic/decorate/include.el"
+;;;;;;  "cedet/semantic/decorate/mode.el" "cedet/semantic/dep.el"
+;;;;;;  "cedet/semantic/doc.el" "cedet/semantic/edit.el" "cedet/semantic/find.el"
+;;;;;;  "cedet/semantic/format.el" "cedet/semantic/html.el" "cedet/semantic/ia-sb.el"
+;;;;;;  "cedet/semantic/ia.el" "cedet/semantic/idle.el" "cedet/semantic/imenu.el"
+;;;;;;  "cedet/semantic/lex-spp.el" "cedet/semantic/lex.el" "cedet/semantic/loaddefs.el"
 ;;;;;;  "cedet/semantic/mru-bookmark.el" "cedet/semantic/scope.el"
 ;;;;;;  "cedet/semantic/senator.el" "cedet/semantic/sort.el" "cedet/semantic/symref.el"
 ;;;;;;  "cedet/semantic/symref/cscope.el" "cedet/semantic/symref/global.el"
@@ -38929,36 +38965,39 @@ Zone out, completely.
 ;;;;;;  "cedet/semantic/wisent/python-wy.el" "cedet/semantic/wisent/python.el"
 ;;;;;;  "cedet/srecode/compile.el" "cedet/srecode/cpp.el" "cedet/srecode/document.el"
 ;;;;;;  "cedet/srecode/el.el" "cedet/srecode/expandproto.el" "cedet/srecode/getset.el"
-;;;;;;  "cedet/srecode/insert.el" "cedet/srecode/java.el" "cedet/srecode/map.el"
-;;;;;;  "cedet/srecode/mode.el" "cedet/srecode/srt-wy.el" "cedet/srecode/srt.el"
-;;;;;;  "cedet/srecode/template.el" "cedet/srecode/texi.el" "composite.el"
-;;;;;;  "cus-face.el" "cus-start.el" "custom.el" "dired-aux.el" "dired-x.el"
-;;;;;;  "electric.el" "emacs-lisp/backquote.el" "emacs-lisp/byte-run.el"
-;;;;;;  "emacs-lisp/cl-extra.el" "emacs-lisp/cl-macs.el" "emacs-lisp/cl-preloaded.el"
-;;;;;;  "emacs-lisp/cl-seq.el" "emacs-lisp/eieio-compat.el" "emacs-lisp/eieio-custom.el"
-;;;;;;  "emacs-lisp/eieio-opt.el" "emacs-lisp/eldoc.el" "emacs-lisp/float-sup.el"
-;;;;;;  "emacs-lisp/lisp-mode.el" "emacs-lisp/lisp.el" "emacs-lisp/macroexp.el"
-;;;;;;  "emacs-lisp/map-ynp.el" "emacs-lisp/nadvice.el" "emacs-lisp/syntax.el"
-;;;;;;  "emacs-lisp/timer.el" "env.el" "epa-hook.el" "erc/erc-autoaway.el"
-;;;;;;  "erc/erc-button.el" "erc/erc-capab.el" "erc/erc-compat.el"
-;;;;;;  "erc/erc-dcc.el" "erc/erc-desktop-notifications.el" "erc/erc-ezbounce.el"
-;;;;;;  "erc/erc-fill.el" "erc/erc-identd.el" "erc/erc-imenu.el"
-;;;;;;  "erc/erc-join.el" "erc/erc-list.el" "erc/erc-log.el" "erc/erc-match.el"
-;;;;;;  "erc/erc-menu.el" "erc/erc-netsplit.el" "erc/erc-notify.el"
-;;;;;;  "erc/erc-page.el" "erc/erc-pcomplete.el" "erc/erc-replace.el"
-;;;;;;  "erc/erc-ring.el" "erc/erc-services.el" "erc/erc-sound.el"
-;;;;;;  "erc/erc-speedbar.el" "erc/erc-spelling.el" "erc/erc-stamp.el"
-;;;;;;  "erc/erc-track.el" "erc/erc-truncate.el" "erc/erc-xdcc.el"
-;;;;;;  "eshell/em-alias.el" "eshell/em-banner.el" "eshell/em-basic.el"
-;;;;;;  "eshell/em-cmpl.el" "eshell/em-dirs.el" "eshell/em-glob.el"
-;;;;;;  "eshell/em-hist.el" "eshell/em-ls.el" "eshell/em-pred.el"
-;;;;;;  "eshell/em-prompt.el" "eshell/em-rebind.el" "eshell/em-script.el"
-;;;;;;  "eshell/em-smart.el" "eshell/em-term.el" "eshell/em-tramp.el"
-;;;;;;  "eshell/em-unix.el" "eshell/em-xtra.el" "facemenu.el" "faces.el"
-;;;;;;  "files.el" "font-core.el" "font-lock.el" "format.el" "frame.el"
-;;;;;;  "help.el" "hfy-cmap.el" "ibuf-ext.el" "indent.el" "international/characters.el"
-;;;;;;  "international/charprop.el" "international/charscript.el"
-;;;;;;  "international/cp51932.el" "international/eucjp-ms.el" "international/mule-cmds.el"
+;;;;;;  "cedet/srecode/insert.el" "cedet/srecode/java.el" "cedet/srecode/loaddefs.el"
+;;;;;;  "cedet/srecode/map.el" "cedet/srecode/mode.el" "cedet/srecode/srt-wy.el"
+;;;;;;  "cedet/srecode/srt.el" "cedet/srecode/template.el" "cedet/srecode/texi.el"
+;;;;;;  "composite.el" "cus-face.el" "cus-start.el" "custom.el" "dired-aux.el"
+;;;;;;  "dired-loaddefs.el" "dired-x.el" "electric.el" "emacs-lisp/backquote.el"
+;;;;;;  "emacs-lisp/byte-run.el" "emacs-lisp/cl-extra.el" "emacs-lisp/cl-loaddefs.el"
+;;;;;;  "emacs-lisp/cl-macs.el" "emacs-lisp/cl-preloaded.el" "emacs-lisp/cl-seq.el"
+;;;;;;  "emacs-lisp/eieio-compat.el" "emacs-lisp/eieio-custom.el"
+;;;;;;  "emacs-lisp/eieio-loaddefs.el" "emacs-lisp/eieio-opt.el"
+;;;;;;  "emacs-lisp/eldoc.el" "emacs-lisp/float-sup.el" "emacs-lisp/lisp-mode.el"
+;;;;;;  "emacs-lisp/lisp.el" "emacs-lisp/macroexp.el" "emacs-lisp/map-ynp.el"
+;;;;;;  "emacs-lisp/nadvice.el" "emacs-lisp/syntax.el" "emacs-lisp/timer.el"
+;;;;;;  "env.el" "epa-hook.el" "erc/erc-autoaway.el" "erc/erc-button.el"
+;;;;;;  "erc/erc-capab.el" "erc/erc-compat.el" "erc/erc-dcc.el" "erc/erc-desktop-notifications.el"
+;;;;;;  "erc/erc-ezbounce.el" "erc/erc-fill.el" "erc/erc-identd.el"
+;;;;;;  "erc/erc-imenu.el" "erc/erc-join.el" "erc/erc-list.el" "erc/erc-loaddefs.el"
+;;;;;;  "erc/erc-log.el" "erc/erc-match.el" "erc/erc-menu.el" "erc/erc-netsplit.el"
+;;;;;;  "erc/erc-notify.el" "erc/erc-page.el" "erc/erc-pcomplete.el"
+;;;;;;  "erc/erc-replace.el" "erc/erc-ring.el" "erc/erc-services.el"
+;;;;;;  "erc/erc-sound.el" "erc/erc-speedbar.el" "erc/erc-spelling.el"
+;;;;;;  "erc/erc-stamp.el" "erc/erc-track.el" "erc/erc-truncate.el"
+;;;;;;  "erc/erc-xdcc.el" "eshell/em-alias.el" "eshell/em-banner.el"
+;;;;;;  "eshell/em-basic.el" "eshell/em-cmpl.el" "eshell/em-dirs.el"
+;;;;;;  "eshell/em-glob.el" "eshell/em-hist.el" "eshell/em-ls.el"
+;;;;;;  "eshell/em-pred.el" "eshell/em-prompt.el" "eshell/em-rebind.el"
+;;;;;;  "eshell/em-script.el" "eshell/em-smart.el" "eshell/em-term.el"
+;;;;;;  "eshell/em-tramp.el" "eshell/em-unix.el" "eshell/em-xtra.el"
+;;;;;;  "eshell/esh-groups.el" "facemenu.el" "faces.el" "files.el"
+;;;;;;  "font-core.el" "font-lock.el" "format.el" "frame.el" "help.el"
+;;;;;;  "hfy-cmap.el" "htmlfontify-loaddefs.el" "ibuf-ext.el" "ibuffer-loaddefs.el"
+;;;;;;  "indent.el" "international/characters.el" "international/charprop.el"
+;;;;;;  "international/charscript.el" "international/cp51932.el"
+;;;;;;  "international/eucjp-ms.el" "international/mule-cmds.el"
 ;;;;;;  "international/mule-conf.el" "international/mule.el" "international/uni-bidi.el"
 ;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
 ;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
@@ -38994,30 +39033,31 @@ Zone out, completely.
 ;;;;;;  "leim/quail/slovak.el" "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el"
 ;;;;;;  "leim/quail/tsang-b5.el" "leim/quail/tsang-cns.el" "leim/quail/vntelex.el"
 ;;;;;;  "leim/quail/vnvni.el" "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el"
-;;;;;;  "mail/rmailedit.el" "mail/rmailkwd.el" "mail/rmailmm.el"
-;;;;;;  "mail/rmailmsc.el" "mail/rmailsort.el" "mail/rmailsum.el"
-;;;;;;  "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el" "mh-e/mh-loaddefs.el"
-;;;;;;  "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el" "newcomment.el"
-;;;;;;  "obarray.el" "org/ob-core.el" "org/ob-keys.el" "org/ob-lob.el"
-;;;;;;  "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el" "org/org-archive.el"
-;;;;;;  "org/org-attach.el" "org/org-bbdb.el" "org/org-clock.el"
-;;;;;;  "org/org-datetree.el" "org/org-element.el" "org/org-feed.el"
-;;;;;;  "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
-;;;;;;  "org/org-install.el" "org/org-irc.el" "org/org-mobile.el"
-;;;;;;  "org/org-plot.el" "org/org-table.el" "org/org-timer.el" "org/ox-ascii.el"
-;;;;;;  "org/ox-beamer.el" "org/ox-html.el" "org/ox-icalendar.el"
-;;;;;;  "org/ox-latex.el" "org/ox-man.el" "org/ox-md.el" "org/ox-odt.el"
-;;;;;;  "org/ox-org.el" "org/ox-publish.el" "org/ox-texinfo.el" "org/ox.el"
-;;;;;;  "progmodes/elisp-mode.el" "progmodes/prog-mode.el" "ps-def.el"
-;;;;;;  "ps-mule.el" "register.el" "replace.el" "rfn-eshadow.el"
-;;;;;;  "select.el" "simple.el" "startup.el" "subdirs.el" "subr.el"
-;;;;;;  "textmodes/fill.el" "textmodes/page.el" "textmodes/paragraphs.el"
-;;;;;;  "textmodes/reftex-auc.el" "textmodes/reftex-cite.el" "textmodes/reftex-dcr.el"
-;;;;;;  "textmodes/reftex-global.el" "textmodes/reftex-index.el"
-;;;;;;  "textmodes/reftex-parse.el" "textmodes/reftex-ref.el" "textmodes/reftex-sel.el"
-;;;;;;  "textmodes/reftex-toc.el" "textmodes/text-mode.el" "uniquify.el"
-;;;;;;  "vc/ediff-hook.el" "vc/vc-hooks.el" "version.el" "widget.el"
-;;;;;;  "window.el") (0 0 0 0))
+;;;;;;  "mail/rmail-loaddefs.el" "mail/rmailedit.el" "mail/rmailkwd.el"
+;;;;;;  "mail/rmailmm.el" "mail/rmailmsc.el" "mail/rmailsort.el"
+;;;;;;  "mail/rmailsum.el" "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el"
+;;;;;;  "mh-e/mh-loaddefs.el" "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el"
+;;;;;;  "newcomment.el" "obarray.el" "org/ob-core.el" "org/ob-keys.el"
+;;;;;;  "org/ob-lob.el" "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el"
+;;;;;;  "org/org-archive.el" "org/org-attach.el" "org/org-bbdb.el"
+;;;;;;  "org/org-clock.el" "org/org-datetree.el" "org/org-element.el"
+;;;;;;  "org/org-feed.el" "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
+;;;;;;  "org/org-install.el" "org/org-irc.el" "org/org-loaddefs.el"
+;;;;;;  "org/org-mobile.el" "org/org-plot.el" "org/org-table.el"
+;;;;;;  "org/org-timer.el" "org/ox-ascii.el" "org/ox-beamer.el" "org/ox-html.el"
+;;;;;;  "org/ox-icalendar.el" "org/ox-latex.el" "org/ox-man.el" "org/ox-md.el"
+;;;;;;  "org/ox-odt.el" "org/ox-org.el" "org/ox-publish.el" "org/ox-texinfo.el"
+;;;;;;  "org/ox.el" "progmodes/elisp-mode.el" "progmodes/prog-mode.el"
+;;;;;;  "ps-def.el" "ps-mule.el" "ps-print-loaddefs.el" "register.el"
+;;;;;;  "replace.el" "rfn-eshadow.el" "select.el" "simple.el" "startup.el"
+;;;;;;  "subdirs.el" "subr.el" "textmodes/fill.el" "textmodes/page.el"
+;;;;;;  "textmodes/paragraphs.el" "textmodes/reftex-auc.el" "textmodes/reftex-cite.el"
+;;;;;;  "textmodes/reftex-dcr.el" "textmodes/reftex-global.el" "textmodes/reftex-index.el"
+;;;;;;  "textmodes/reftex-loaddefs.el" "textmodes/reftex-parse.el"
+;;;;;;  "textmodes/reftex-ref.el" "textmodes/reftex-sel.el" "textmodes/reftex-toc.el"
+;;;;;;  "textmodes/text-mode.el" "uniquify.el" "vc/ediff-hook.el"
+;;;;;;  "vc/vc-hooks.el" "version.el" "widget.el" "window.el") (0
+;;;;;;  0 0 0))
 
 ;;;***
 
