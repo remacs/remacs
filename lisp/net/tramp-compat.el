@@ -29,6 +29,11 @@
 
 ;;; Code:
 
+;; In Emacs 24 and 25, `tramp-unload-file-name-handlers' is not
+;; autoloaded.  So we declare it here in order to avoid recursive
+;; load.  This will be overwritten in tramp.el.
+(defun tramp-unload-file-name-handlers ())
+
 (require 'auth-source)
 (require 'advice)
 (require 'cl-lib)
