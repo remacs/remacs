@@ -946,10 +946,7 @@ callback data (if any)."
    (cons (cons 'no-seckey string)
 	 (epg-context-result-for context 'error))))
 
-(defun epg--time-from-seconds (seconds)
-  (let ((number-seconds (string-to-number (concat seconds ".0"))))
-    (cons (floor (/ number-seconds 65536))
-	  (floor (mod number-seconds 65536)))))
+(defalias 'epg--time-from-seconds #'string-to-number)
 
 (defun epg--status-ERRSIG (context string)
   (if (string-match "\\`\\([^ ]+\\) \\([0-9]+\\) \\([0-9]+\\) \
