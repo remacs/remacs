@@ -21,12 +21,6 @@ Temporary note:
 --- means no change in the manuals is needed.
 When you add a new item, use the appropriate mark if you are sure it applies,
 
-+++
-** Installing Emacs now installs the emacs-module.h file.
-The emacs-module.h file is now installed in the system-wide include
-directory as part of the Emacs installation.  This allows to build
-Emacs modules outside of the Emacs source tree.
-
 
 * Installation Changes in Emacs 27.1
 
@@ -71,9 +65,6 @@ to reduce differences between developer and production builds.
 *** All mode filters can now accept a list of symbols.
 This means you can now easily filter several major modes, as well
 as a single mode.
-
----
-*** New toggle 'ibuffer-do-toggle-lock', bound to 'L'.
 
 ** Gnus
 
@@ -130,11 +121,6 @@ the new version of the file again.)
 
 +++
 ** The function 'read-passwd' uses '*' as default character to hide passwords.
-
----
-** New variable 'xft-ignore-color-fonts'.
-Default t means don't try to load color fonts when using Xft, as they
-often cause crashes.  Set it to nil if you really need those fonts.
 
 ---
 ** The new option 'tooltip-resize-echo-area' avoids truncating tooltip text
@@ -965,14 +951,6 @@ x-lost-selection-hooks, x-sent-selection-hooks.
 default-directory-alist, dired-default-directory,
 dired-default-directory-alist, dired-enable-local-variables,
 dired-hack-local-variables, dired-local-variables-file, dired-omit-here-always.
-
-** The function 'display-buffer-in-major-side-window' no longer exists.
-It has been renamed as internal function 'window--make-major-side-window',
-however applications should instead call 'display-buffer-in-side-window'
-(passing the SIDE and SLOT parameters as elements of ALIST).  This approach
-is backwards-compatible with versions of Emacs in which the old function
-exists.  See the node "Displaying Buffers in Side Windows" in the ELisp
-manual for more details.
 
 ** garbage collection no longer treats miscellaneous objects specially;
 they are now allocated like any other pseudovector.  As a result, the
