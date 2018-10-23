@@ -342,12 +342,6 @@ Return the result of the last expression in BODY."
 (defconst edebug-trace-buffer "*edebug-trace*"
   "Name of the buffer to put trace info in.")
 
-(defun edebug-focus-frame (frame)
-  "Switch focus to frame FRAME, if we're in a GUI.
-Otherwise, do nothing."
-  (unless (memq (framep frame) '(nil t pc))
-    (x-focus-frame frame)))
-
 (defun edebug-pop-to-buffer (buffer &optional window)
   ;; Like pop-to-buffer, but select window where BUFFER was last shown.
   ;; Select WINDOW if it is provided and still exists.  Otherwise,
@@ -379,6 +373,8 @@ Otherwise, do nothing."
 	 (t (split-window (minibuffer-selected-window)))))
   (set-window-buffer window buffer)
   (select-window window)
+  (unless (memq (framep (selected-frame)) '(nil t pc))
+    (x-focus-frame (selected-frame)))
   (set-window-hscroll window 0)) ;; should this be??
 
 (defun edebug-get-displayed-buffer-points ()
@@ -2346,8 +2342,9 @@ and run its entry function, and set up `edebug-before' and
                                                 edebug-execution-mode)
                       edebug-next-execution-mode nil)
                 (edebug-default-enter function args body))
-            (if (frame-live-p outside-frame)
-                (edebug-focus-frame outside-frame))))
+            (if (and (frame-live-p outside-frame)
+                     (not (memq (framep outside-frame) '(nil t pc))))
+                (x-focus-frame outside-frame))))
 
       (let* ((edebug-data (get function 'edebug))
              (edebug-def-mark (car edebug-data)) ; mark at def start
@@ -2656,7 +2653,8 @@ See `edebug-behavior-alist' for implementations.")
 	  (edebug-eval-display eval-result-list)
 	  ;; The evaluation list better not have deleted edebug-window-data.
 	  (select-window (car edebug-window-data))
-          (edebug-focus-frame (window-frame (selected-window)))
+          (if (not (memq (framep (selected-frame)) '(nil t pc)))
+              (x-focus-frame (selected-frame)))
 	  (set-buffer edebug-buffer)
 
 	  (setq edebug-buffer-outside-point (point))
@@ -3027,7 +3025,6 @@ Otherwise, toggle for all windows."
   ;;(if edebug-inside-windows
   ;;  (edebug-set-windows edebug-inside-windows))
   (edebug-pop-to-buffer edebug-buffer)
-  (edebug-focus-frame (window-frame (selected-window)))
   (goto-char edebug-point))
 
 (defun edebug-view-outside ()
@@ -3055,15 +3052,13 @@ before returning.  The default is one second."
     ;; If the buffer's currently displayed, avoid set-window-configuration.
     (save-window-excursion
       (edebug-pop-to-buffer edebug-outside-buffer)
-      (edebug-focus-frame (window-frame (selected-window)))
       (goto-char edebug-outside-point)
       (message "Current buffer: %s Point: %s Mark: %s"
 	       (current-buffer) (point)
 	       (if (marker-buffer (edebug-mark-marker))
 		   (marker-position (edebug-mark-marker)) "<not set>"))
       (sit-for arg)
-      (edebug-pop-to-buffer edebug-buffer (car edebug-window-data))
-      (edebug-focus-frame (window-frame (selected-window))))))
+      (edebug-pop-to-buffer edebug-buffer (car edebug-window-data)))))
 
 
 ;; Joe Wells, here is a start at your idea of adding a buffer to the internal
@@ -3885,8 +3880,7 @@ May only be called from within `edebug--recursive-edit'."
   "Switch to the evaluation list buffer \"*edebug*\"."
   (interactive)
   (edebug-eval-redisplay)
-  (edebug-pop-to-buffer edebug-eval-buffer)
-  (edebug-focus-frame (window-frame (selected-window))))
+  (edebug-pop-to-buffer edebug-eval-buffer))
 
 
 (defun edebug-update-eval-list ()
