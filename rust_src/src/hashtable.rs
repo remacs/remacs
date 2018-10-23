@@ -21,6 +21,7 @@ pub enum HashLookupResult {
     Missing(EmacsUint),
     Found(isize),
 }
+use self::HashLookupResult::{Found, Missing};
 
 impl LispHashTableRef {
     pub fn allocate() -> LispHashTableRef {
@@ -87,13 +88,14 @@ impl LispHashTableRef {
     }
 
     pub fn lookup(self, key: LispObject) -> HashLookupResult {
+        // This allows `self` to be immutable.
         let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
         let mut hash = 0;
         let idx = unsafe { hash_lookup(mutself, key, &mut hash) };
         if idx < 0 {
-            HashLookupResult::Missing(hash)
+            Missing(hash)
         } else {
-            HashLookupResult::Found(idx)
+            Found(idx)
         }
     }
 
