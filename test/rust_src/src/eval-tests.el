@@ -271,4 +271,8 @@
 
   (should-error (funcall (lambda)) :type 'invalid-function))
 
+;; Local Variables:
+;; byte-compile-warnings: (not lexical free-vars unresolved)
+;; End:
+
 ;;; eval-tests.el ends here
