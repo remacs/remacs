@@ -21,6 +21,12 @@ Temporary note:
 --- means no change in the manuals is needed.
 When you add a new item, use the appropriate mark if you are sure it applies,
 
++++
+** Installing Emacs now installs the emacs-module.h file.
+The emacs-module.h file is now installed in the system-wide include
+directory as part of the Emacs installation.  This allows to build
+Emacs modules outside of the Emacs source tree.
+
 
 * Installation Changes in Emacs 27.1
 
