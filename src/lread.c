@@ -95,21 +95,6 @@ static Lisp_Object read_objects_map;
    (to reduce allocations), or nil.  */
 static Lisp_Object read_objects_completed;
 
-/* File and lookahead for get-file-char and get-emacs-mule-file-char
-   to read from.  Used by Fload.  */
-static struct infile
-{
-  /* The input stream.  */
-  FILE *stream;
-
-  /* Lookahead byte count.  */
-  signed char lookahead;
-
-  /* Lookahead bytes, in reverse order.  Keep these here because it is
-     not portable to ungetc more than one byte at a time.  */
-  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
-} *infile;
-
 /* For use within read-from-string (this reader is non-reentrant!!)  */
 static ptrdiff_t read_from_string_index;
 static ptrdiff_t read_from_string_index_byte;
@@ -153,9 +138,6 @@ static Lisp_Object Vloads_in_progress;
 static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
                                  Lisp_Object);
 
-static void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
-                          Lisp_Object, Lisp_Object,
-                          Lisp_Object, Lisp_Object);
 
 /* Functions that read one byte from the current source READCHARFUN
    or unreads one byte.  If the integer argument C is -1, it returns
@@ -1848,7 +1830,7 @@ readevalloop_eager_expand_eval (Lisp_Object val, Lisp_Object macroexpand)
    START, END specify region to read in current buffer (from eval-region).
    If the input is not from a buffer, they must be nil.  */
 
-static void
+void
 readevalloop (Lisp_Object readcharfun,
 	      struct infile *infile0,
 	      Lisp_Object sourcename,
@@ -2095,42 +2077,6 @@ This function preserves the position of point.  */)
   unbind_to (count, Qnil);
 
   return Qnil;
-}
-
-DEFUN ("eval-region", Feval_region, Seval_region, 2, 4, "r",
-       doc: /* Execute the region as Lisp code.
-When called from programs, expects two arguments,
-giving starting and ending indices in the current buffer
-of the text to be executed.
-Programs can pass third argument PRINTFLAG which controls output:
- a value of nil means discard it; anything else is stream for printing it.
- See Info node `(elisp)Output Streams' for details on streams.
-Also the fourth argument READ-FUNCTION, if non-nil, is used
-instead of `read' to read each expression.  It gets one argument
-which is the input stream for reading characters.
-
-This function does not move point.  */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object printflag, Lisp_Object read_function)
-{
-  /* FIXME: Do the eval-sexp-add-defvars dance!  */
-  ptrdiff_t count = SPECPDL_INDEX ();
-  Lisp_Object tem, cbuf;
-
-  cbuf = Fcurrent_buffer ();
-
-  if (NILP (printflag))
-    tem = Qsymbolp;
-  else
-    tem = printflag;
-  specbind (Qstandard_output, tem);
-  specbind (Qeval_buffer_list, Fcons (cbuf, Veval_buffer_list));
-
-  /* `readevalloop' calls functions which check the type of start and end.  */
-  readevalloop (cbuf, 0, BVAR (XBUFFER (cbuf), filename),
-		!NILP (printflag), Qnil, read_function,
-		start, end);
-
-  return unbind_to (count, Qnil);
 }
 
 
@@ -4498,7 +4444,6 @@ syms_of_lread (void)
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
   defsubr (&Seval_buffer);
-  defsubr (&Seval_region);
   defsubr (&Sread_char);
   defsubr (&Sread_char_exclusive);
   defsubr (&Sread_event);
