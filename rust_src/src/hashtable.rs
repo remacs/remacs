@@ -234,7 +234,7 @@ pub fn gethash(key: LispObject, hash_table: LispHashTableRef, dflt: LispObject) 
 pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef) -> LispObject {
     hash_table.check_impure(hash_table);
 
-    match hash_table.lookup(value) {
+    match hash_table.lookup(key) {
         Found(idx) => {
             hash_table.set_hash_value(idx, value);
         }
