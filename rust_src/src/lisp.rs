@@ -779,10 +779,3 @@ macro_rules! protect_statics_from_GC {
         }
     }
 }
-
-#[test]
-fn test_basic_float() {
-    let val = 8.0;
-    let result = mock_float!(val);
-    assert!(result.is_float() && result.as_float() == Some(val));
-}

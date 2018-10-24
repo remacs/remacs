@@ -468,3 +468,10 @@ pub fn rust_init_extra_syms() {
 }
 
 include!(concat!(env!("OUT_DIR"), "/floatfns_exports.rs"));
+
+#[test]
+fn test_basic_float() {
+    let val = 8.0;
+    let result = mock_float!(val);
+    assert!(result.is_float() && result.as_float() == Some(val));
+}
