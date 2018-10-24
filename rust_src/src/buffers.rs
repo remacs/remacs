@@ -771,7 +771,7 @@ pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
 pub fn buffer_local_value_lisp(variable: LispObject, buffer: LispObject) -> LispObject {
     let result = unsafe { buffer_local_value(variable, buffer) };
 
-    if result.eq_raw(Qunbound) {
+    if result.eq(Qunbound) {
         xsignal!(Qvoid_variable, variable);
     }
 

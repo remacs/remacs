@@ -95,25 +95,23 @@ pub extern "C" fn get_keymap(
         }
 
         if let Some(cons) = object.as_cons() {
-            if cons.car().eq_raw(Qkeymap) {
+            if cons.car().eq(Qkeymap) {
                 return object;
             }
         }
 
         let tem = indirect_function(object);
         if let Some(cons) = tem.as_cons() {
-            if cons.car().eq_raw(Qkeymap) {
+            if cons.car().eq(Qkeymap) {
                 return tem;
             }
 
             // Should we do an autoload?  Autoload forms for keymaps have
             // Qkeymap as their fifth element.
-            if (autoload || !error_if_not_keymap)
-                && cons.car().eq_raw(Qautoload)
-                && object.is_symbol()
+            if (autoload || !error_if_not_keymap) && cons.car().eq(Qautoload) && object.is_symbol()
             {
                 let tail = nth(4, tem);
-                if tail.eq_raw(Qkeymap) {
+                if tail.eq(Qkeymap) {
                     if autoload {
                         autoload_do_load(tem, object, Qnil);
                         autoload_retry = true;
@@ -233,11 +231,13 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
         // If we came to the end, add the parent in PREV.
         match list.as_cons() {
             None => break,
-            Some(cons) => if keymapp(list) {
-                break;
-            } else {
-                prev = cons;
-            },
+            Some(cons) => {
+                if keymapp(list) {
+                    break;
+                } else {
+                    prev = cons;
+                }
+            }
         }
     }
     prev.check_impure();
@@ -332,7 +332,7 @@ pub unsafe extern "C" fn map_keymap_internal(
         None => Qnil,
         Some(cons) => {
             let (car, cdr) = cons.as_tuple();
-            if car.eq_raw(Qkeymap) {
+            if car.eq(Qkeymap) {
                 cdr
             } else {
                 map
@@ -343,7 +343,7 @@ pub unsafe extern "C" fn map_keymap_internal(
     let mut parent = tail;
     for tail_cons in tail.iter_tails_safe() {
         let binding = tail_cons.car();
-        if binding.eq_raw(Qkeymap) {
+        if binding.eq(Qkeymap) {
             break;
         } else {
             // An embedded parent.

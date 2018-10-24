@@ -198,7 +198,7 @@ pub fn boundp(mut symbol: LispSymbolRef) -> bool {
         _ => unreachable!(),
     };
 
-    !valcontents.eq_raw(Qunbound)
+    !valcontents.eq(Qunbound)
 }
 
 /* It has been previously suggested to make this function an alias for
