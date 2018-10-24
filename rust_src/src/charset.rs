@@ -14,7 +14,10 @@ impl LispObject {
     pub fn is_charset(self) -> bool {
         unsafe {
             let h_ref = Vcharset_hash_table.as_hash_table_or_error();
-            h_ref.lookup(self, ptr::null_mut()) >= 0
+            match h_ref.lookup(self) {
+                Found(_) => true,
+                Missing(_) => false,
+            }
         }
     }
 }
