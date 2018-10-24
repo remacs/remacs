@@ -19,17 +19,11 @@ GPLv3 license.
         - [Building Remacs](#building-remacs)
         - [Running Remacs](#running-remacs)
         - [Rustdoc builds](#rustdoc-builds)
-    - [Porting Elisp Primitive Functions: Walkthrough](#porting-elisp-primitive-functions-walkthrough)
-        - [Porting Widely Used C Functions](#porting-widely-used-c-functions)
+    - [Porting Elisp Primitive Functions](#porting-elisp-primitive-functions)
     - [Design Goals](#design-goals)
     - [Non-Design Goals](#non-design-goals)
     - [Contributing](#contributing)
     - [Help Needed](#help-needed)
-    - [Rust Porting Tips](#rust-porting-tips)
-        - [C Functions](#c-functions)
-        - [C Macros](#c-macros)
-        - [Assertions](#assertions)
-        - [Safety](#safety)
 
 <!-- markdown-toc end -->
 
@@ -244,69 +238,43 @@ You can then open these docs with:
 $ cargo doc --open
 ```
 
-## Porting Elisp Primitive Functions: Walkthrough
+## Porting Elisp Primitive Functions
 
-Let's look at porting `numberp` to Rust.
+The first thing to look at is the C implementation for the atan function. It takes an optional second argument, which makes it interesting. The complicated mathematical bits, on the other hand, are handled by the standard library. This allows us to focus on the porting process without getting distracted by the math.
 
-First, make sure you have configured and built Remacs on your
-system. You'll probably want to generate TAGS too, so you can jump to
-definitions of C functions.
-
-This is the definition of `numberp`:
+The Lisp values we are given as arguments are tagged pointers; in this case they are pointers to doubles. The code has to check the tag and follow the pointer to retrieve the real values. Note that this code invokes a C macro (called DEFUN) that reduces some of the boilerplate. The macro declares a static varable called Satan that holds the metadata the Lisp compiler will need in order to successfully call this function, such as the docstring and the pointer to the Fatan function, which is what the C implementation is named:
 
 ``` c
-DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a number (floating point or integer).  */
-       attributes: const)
-  (Lisp_Object object)
+DEFUN ("atan", Fatan, Satan, 1, 2, 0,
+       doc: /* Return the inverse tangent of the arguments.
+If only one argument Y is given, return the inverse tangent of Y.
+If two arguments Y and X are given, return the inverse tangent of Y
+divided by X, i.e. the angle in radians between the vector (X, Y)
+and the x-axis.  */)
+  (Lisp_Object y, Lisp_Object x)
 {
-  if (NUMBERP (object))
-    return Qt;
+  double d = extract_float (y);
+f (NILP (x))
+    d = atan (d);
   else
-    return Qnil;
-}
-```
-
-The `DEFUN` macro, in addition to defining a function `Fnumberp`, also
-creates a static struct `Snumberp` that describes the function for Emacs'
-Lisp interpreter.
-
-In Rust, we define a `numberp` function that does the actual work then use
-an attribute (implemented as a procedural macro) named `lisp_fn` that
-handles these definitions for us:
-
-``` rust
-// This is the function that gets called when
-// we call numberp in elisp.
-//
-// `lisp_fn` defines a wrapper function that calls numberp with
-// LispObject values. It also declares a struct that we can pass to
-// defsubr so the elisp interpreter knows about this function.
-
-/// Return t if OBJECT is a number.
-#[lisp_fn]
-fn numberp(object: LispObject) -> bool {
-    object.is_number()
-}
-```
-
-Additionally, `lisp_fn` can automatically translate LispObjects passed
-in as arguments into native Rust types:
-
-``` rust
-// This function takes a double, and can also take an integer.
-#[lisp_fn(min = "1")]
-pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> LispObject {
-    let duration = seconds + (milliseconds.unwrap_or(0) as f64 / 1000.0);
-    if duration > 0.0 {
-        // … etc
+    {
+      double d2 = extract_float (x);
+      d = atan2 (d, d2);
     }
+  return make_float (d);
 }
 ```
 
-Similarly, `lisp_fn` can automatically translate the return type:
+extract_float checks the tag (signalling an "invalid argument" error if it's not the tag for a double), and returns the actual value. NILP checks to see if the tag indicates that this is a null value, indicating that the user didn't supply a second argument at all.
+
+Next take a look at the current Rust implementation. It must also take an optional argument, and it also invokes a (Rust) macro to reduce the boilerplate of declaring the static data for the function. However, it also takes care of all of the type conversions and checks that we need to do in order to handle the arguments and return value:
 
 ``` rust
+/// Return the inverse tangent of the arguments.
+/// If only one argument Y is given, return the inverse tangent of Y.
+/// If two arguments Y and X are given, return the inverse tangent of Y
+/// divided by X, i.e. the angle in radians between the vector (X, Y)
+/// and the x-axis
 #[lisp_fn(min = "1")]
 pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
     match x {
@@ -316,79 +284,9 @@ pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
 }
 ```
 
-The automatic translation signals a Lisp argument-type error if it
-sees an argument of the wrong type. LispObjects are therefore still
-the correct choice for functions which can handle disparate argument
-types (such as one that takes either a buffer object or a string
-containing a buffer name), or doesn't want to signal an
-error. Similarly, LispObject is still the correct choice of return
-type for functions which may return different types in different
-calls.
+You can see that we don't have to check to see if our arguments are of the correct type; the code generated by the lisp_fn macro does this for us. We also asked for the second argument to be an Option<EmacsDouble>; this is the Rust type for a value which is either a valid double or isn't specified at all. We use a match statement to handle both cases.
 
-The elisp name of the function is derived from the Rust name, with
-underscores replaced by hyphens.  If that is not possible (like for
-the function `+`), you can give an elisp name as an argument to
-`lisp_fn`, like `#[lisp_fn(name = "+")]`.
-
-Optional arguments are also possible: to make the minimum number of
-arguments from elisp different from the number of Rust arguments,
-pass a `min = "n"` argument.
-
-The docstring of the function should be the same as the docstring
-in the C code.  (Don't wonder about it being a comment there, Emacs
-has some magic that extracts it into a separate file.)
-
-Finally, delete the old C definition.
-
-You're done! Compile Remacs, try your function with `M-x ielm`, and
-open a pull request. Fame and glory await!
-
-### Porting Widely Used C Functions
-
-If your Rust function replaces a C function that is used elsewhere in
-the C codebase, it needs to be exported. If the function is not a Lisp
-function (i.e. doesn't use the `#[lisp_fn]` macro), you need to
-manually mark it as `#[no_mangle]` and `extern "C"` to be exported
-with the correct ABI.
-
-### Source code style guide
-
-In order to pass Travis checks on pull requests, the source has to be
-formatted according to the default style of `rustfmt`, as packaged
-with the Rust nightly in `rust-toolchain`.  To do that, install
-`rustfmt`:
-
-```
-$ rustup component add rustfmt-preview
-```
-
-Make sure you uninstall the crate version of `rustfmt` first; The new
-component will install its own set of binaries.
-
-```
-$ cargo uninstall rustfmt
-$ cargo uninstall rustfmt-nightly
-```
-
-Then you can run this in the checkout root to reformat all Rust code:
-
-```
-$ make rustfmt
-```
-
-### Running tests
-
-Run elisp and Rust tests in the toplevel directory. If run in a subdirectory,
-only the tests in that directory will be run.
-
-* `make check`
-  Run all tests as defined in the directory. Expensive tests are
-  suppressed. The result of the tests for <filename>.el is stored in
-  <filename>.log.
-
-* `make check-maybe`
-  Like "make check", but run only the tests for files that have been
-  modified since the last build.
+This code is so much better that it's hard to believe just how simple the implementation of the macro is. It just calls .into() on the arguments and the return value; the compiler does the rest when it dispatches this method call to the correct implementation.
 
 ## Design Goals
 
@@ -432,96 +330,4 @@ Pull requests welcome, no copyright assignment required. This project is under t
 ## Help Needed
 
 There's lots to do! We keep a list of low hanging fruit here so you can easily choose
-one. If you do, please open a new issue to keep track of the task and link to it.
-
-Easy tasks:
-
-- [ ] Find a small function in lisp.h and write an equivalent in lisp.rs.
-- [ ] Add Rust unit tests. Currently we're relying on Emacs' own
-  test suite.
-- [ ] Add docstrings to public functions in lisp.rs.
-- [ ] Tidy up messy Rust that's been translated directly from C. Run
-  `rustfmt`, add or rename internal variables, run `clippy`, and so on.
-- [ ] Add Rust-level unit tests to elisp functions defined in lib.rs.
-
-Medium tasks:
-
-- [ ] Choose an elisp function you like, and port it to rust. Look at
-  `rust-mod` for an example.
-- [x] Teach `describe-function` to find functions defined in Rust.
-- [ ] Expand our Travis configuration to run 'make check', so we know
-  remacs passes Emacs' internal test suite.
-- [x] Expand our Travis configuration to ensure that Rust code has been
-  formatted with rustfmt
-- [ ] Set up bors/homu.
-- [ ] Set up a badge tracking pub struct/function coverage using
-  cargo-doc-coverage.
-- [ ] Search the Rust source code for `TODO` comments and fix them.
-
-Big tasks:
-
-- [ ] Find equivalent Rust libraries for parts of Emacs, and replace all
-  the relevant C code. Rust has great libraries for regular
-  expressions, GUI, terminal UI, managing processes, amongst others.
-- [ ] Change the elisp float representation to use
-  [nan boxing](https://wingolog.org/archives/2011/05/18/value-representation-in-javascript-implementations)
-  rather than allocating floats on the heap.
-
-## Rust Porting Tips
-
-### C Functions
-
-When writing a Rust version of a C function, give it the same name and
-same arguments. If this isn't appropriate, docstrings should say the
-equivalent C function to help future porters.
-
-For example, `make_natnum` mentions that it can be used
-in place of `XSETFASTINT`.
-
-### C Macros
-
-For C macros, we try to define a fairly equivalent Rust
-function. The docstring should mention the original macro name.
-
-Since the Rust function is not a drop-in replacement, we prefer Rust
-naming conventions for the new function.
-
-For the checked arithmetic macros (`INT_ADD_WRAPV`,
-`INT_MULTIPLY_WRAPV` and so on), you can simply use `.checked_add`,
-`.checked_mul` from the Rust stdlib.
-
-### Assertions
-
-`eassert` in Emacs C should be `debug_assert!` in Rust.
-
-`emacs_abort()` in Emacs C should be `panic!("reason for panicking")`
-in Rust.
-
-### Safety
-
-`LispObject` values may represent pointers, so the usual safety
-concerns of raw pointers apply.
-
-If you can break memory safety by passing a valid value to a function,
-then it should be marked as `unsafe`. For example:
-
-``` rust
-impl LispObject {
-    // This function is unsafe because it's accessing a raw pointer
-    // without doing any checking. We assume the current value is a
-    // pointer to a string.
-    unsafe fn as_string_unchecked(self) -> LispStringRef {
-        LispStringRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
-    }
-
-    // This function is safe because it verifies that the pointer is
-    // tagged as a string.
-    fn as_string_or_error(self) -> LispStringRef {
-        if self.is_string() {
-            unsafe { self.as_string_unchecked() }
-        } else {
-            wrong_type!(Qstringp, self)
-        }
-    }
-}
-```
+one. You can find information in our [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our gitter channel.
