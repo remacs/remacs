@@ -843,7 +843,8 @@ decompressed data.  The buffer's multibyteness must be turned off."
 					(prog2
 					    (insert-file-contents err-file)
 					    (buffer-string)
-					  (erase-buffer)) t)
+					  (erase-buffer))
+					nil t)
 				       " ")
 			    "\n")
 		    (setq err-msg
