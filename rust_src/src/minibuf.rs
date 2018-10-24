@@ -22,8 +22,11 @@ use threads::{c_specpdl_index, ThreadState};
 /// BUFFER can be a buffer or a buffer name.
 #[lisp_fn(min = "0")]
 pub fn minibufferp(buffer_or_name: LispBufferOrCurrent) -> bool {
-    let buffer = buffer_or_name.unwrap();
-    memq(buffer.into(), unsafe { Vminibuffer_list }).is_not_nil()
+    let buffer = match buffer_or_name.as_buffer_safe() {
+        None => Qnil,
+        Some(b) => b.into(),
+    };
+    memq(buffer, unsafe { Vminibuffer_list }).is_not_nil()
 }
 
 /// Return the currently active minibuffer window, or nil if none.

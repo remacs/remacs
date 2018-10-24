@@ -10,10 +10,9 @@ use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
                  Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qreal, Qrun, Qserial, Qstop, Qt};
 
+use buffers::get_buffer;
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
-
-use buffers::lispbuffer_or_by_name;
 use lists::{assoc, car, cdr, plist_put};
 use multibyte::LispStringRef;
 
@@ -95,7 +94,10 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// deleted or killed.
 #[lisp_fn]
 pub fn get_buffer_process(buffer_or_name: LispObject) -> LispObject {
-    let buf = lispbuffer_or_by_name(buffer_or_name);
+    if buffer_or_name.is_nil() {
+        return Qnil;
+    }
+    let buf = get_buffer(buffer_or_name.into());
     if buf.is_nil() {
         return Qnil;
     }
