@@ -2616,6 +2616,13 @@ please call support for your X-server and see if you can get a fix.
 If you do, please send it to bug-gnu-emacs@gnu.org so we can list it here.
 
 
+* Runtime problems specific to macOS
+
+** macOS doesn't come with libxpm, so only XPM3 is supported.
+
+Libxpm is available for macOS as part of the XQuartz project.
+
+
 * Build-time problems
 
 ** Configuration
