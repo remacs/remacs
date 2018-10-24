@@ -49,6 +49,7 @@ OMIT_GNULIB_MODULE_dirent = true
 OMIT_GNULIB_MODULE_dirfd = true
 OMIT_GNULIB_MODULE_fcntl = true
 OMIT_GNULIB_MODULE_fcntl-h = true
+OMIT_GNULIB_MODULE_fsusage = true
 OMIT_GNULIB_MODULE_inttypes-incomplete = true
 OMIT_GNULIB_MODULE_open = true
 OMIT_GNULIB_MODULE_pipe2 = true

@@ -803,9 +803,7 @@ window_tool_bar_p(struct window *W);
   (WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (W)		\
    || WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (W))
 
-#if (defined (HAVE_WINDOW_SYSTEM)					\
-     && ((defined (USE_TOOLKIT_SCROLL_BARS))	\
-	 || defined (HAVE_NTGUI)))
+#if defined (HAVE_WINDOW_SYSTEM)
 # define USE_HORIZONTAL_SCROLL_BARS true
 #else
 # define USE_HORIZONTAL_SCROLL_BARS false

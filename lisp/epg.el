@@ -757,9 +757,8 @@ callback data (if any)."
   ;; Restore Emacs frame on text terminal, when pinentry-curses has terminated.
   (if (with-current-buffer (process-buffer (epg-context-process context))
 	(and epg-agent-file
-	     (> (float-time (or (nth 5 (file-attributes epg-agent-file))
-				'(0 0 0 0)))
-		(float-time epg-agent-mtime))))
+	     (time-less-p epg-agent-mtime
+			  (or (nth 5 (file-attributes epg-agent-file)) 0))))
       (redraw-frame))
   (epg-context-set-result-for
    context 'error

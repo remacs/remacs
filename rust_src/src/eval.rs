@@ -698,7 +698,7 @@ pub fn autoload(
 
 def_lisp_sym!(Qautoload, "autoload");
 
-/// Non-nil if OBJECT is a function.
+/// Return t if OBJECT is a function.
 #[lisp_fn(name = "functionp", c_name = "functionp")]
 pub fn functionp_lisp(object: LispObject) -> bool {
     FUNCTIONP(object)
@@ -782,11 +782,9 @@ pub fn autoload_do_load(
         return fundef;
     }
 
-    if macro_only.eq_raw(Qmacro) {
-        let kind = nth(4, fundef);
-        if !(kind.eq_raw(Qt) || kind.eq_raw(Qmacro)) {
-            return fundef;
-        }
+    let kind = nth(4, fundef);
+    if macro_only.eq_raw(Qmacro) && !(kind.eq_raw(Qt) || kind.eq_raw(Qmacro)) {
+        return fundef;
     }
 
     let sym = funname.as_symbol_or_error();
@@ -815,16 +813,26 @@ pub fn autoload_do_load(
 
         record_unwind_protect(Some(un_autoload), Vautoload_queue);
         Vautoload_queue = Qt;
-        // If `macro_only', assume this autoload to be a "best-effort",
-        // so don't signal an error if autoloading fails.
-        Fload(Fcar(Fcdr(fundef)), macro_only, Qt, Qnil, Qt);
+    }
+
+    // If `macro_only' is set and fundef isn't a macro, assume this autoload to
+    // be a "best-effort" (e.g. to try and find a compiler macro),
+    // so don't signal an error if autoloading fails.
+    let ignore_errors = if kind.eq_raw(Qt) || kind.eq_raw(Qmacro) {
+        Qnil
+    } else {
+        macro_only
+    };
+
+    unsafe {
+        Fload(Fcar(Fcdr(fundef)), ignore_errors, Qt, Qnil, Qt);
 
         // Once loading finishes, don't undo it.
         Vautoload_queue = Qt;
         unbind_to(count, Qnil);
     }
 
-    if funname.is_nil() {
+    if funname.is_nil() || ignore_errors.is_not_nil() {
         Qnil
     } else {
         let fun = indirect_function_lisp(funname, Qnil);

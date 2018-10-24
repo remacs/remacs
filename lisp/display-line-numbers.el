@@ -36,6 +36,7 @@
 
 (defgroup display-line-numbers nil
   "Display line numbers in the buffer."
+  :group 'convenience
   :group 'display)
 
 (defcustom display-line-numbers-type t

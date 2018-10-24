@@ -182,7 +182,7 @@ in shell buffers.  You set this variable by calling one of:
   :group 'ansi-colors
   :version "23.2")
 
-(defvar ansi-color-apply-face-function 'ansi-color-apply-overlay-face
+(defvar ansi-color-apply-face-function #'ansi-color-apply-overlay-face
   "Function for applying an Ansi Color face to text in a buffer.
 This function should accept three arguments: BEG, END, and FACE,
 and it should apply face FACE to the text between BEG and END.")
@@ -480,6 +480,7 @@ Emacs requires OBJECT to be a buffer."
     ;; In order to avoid this, we use the `insert-behind-hooks' overlay
     ;; property to make sure it works.
     (let ((overlay (make-overlay from to object)))
+      (overlay-put overlay 'evaporate t)
       (overlay-put overlay 'modification-hooks '(ansi-color-freeze-overlay))
       (overlay-put overlay 'insert-behind-hooks '(ansi-color-freeze-overlay))
       overlay)))

@@ -302,8 +302,6 @@ Changes to files matching one of the regexps in this list are not listed.")
     "gfdl.1"
     "texi/Makefile.in"
     "autodeps.mk"
-    "lwlib/autodeps.mk"
-    "oldXMenu/autodeps.mk"
     "src/autodeps.mk"
     "Imakefile" "icons/sink.ico" "aixcc.lex"
     "nxml/char-name/unicode"
@@ -760,10 +758,7 @@ Changes to files in this list are not listed.")
     "front-cover-1.texi" "locals.texi" "calendar.texi" "info-stnd.texi"
     "tasks.texi"
     "advice.texi" "picture.texi" "texinfo.tex"
-    ;; lwlib:
     "dispatch.c" "dispatch.h" "xrdb-cpp.c" "xrdb.c"
-    "lwlib-Xol.c" "lwlib-Xol.h" "lwlib-Xolmb.c" "lwlib-Xolmb.h"
-    "lwlib-XolmbP.h"
     ;; lib/
     "lib/stdio.c" "lib/gl_openssl.h" "lib/sigprocmask.c"
     "lib/pthread_sigprocmask.c" "lib/ldtoastr.c" "lib/dummy.c"
@@ -805,7 +800,10 @@ Changes to files in this list are not listed.")
     "srecode-tests.el" "make-test-deps.emacs-lisp"
     "nxml-uchnm.el"
     "decoder-tests.el"
-    "obsolete/scribe.el")
+    "obsolete/scribe.el"
+    "cp51932.el"
+    "eucjp-ms.el"
+    "lisp.mk")
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
 
@@ -910,7 +908,8 @@ in the repository.")
     ("emulation/ws-mode.el" . "ws-mode.el")
     ("vc/vc-arch.el" . "vc-arch.el")
     ("lisp/gnus/messcompat.el" . "messcompat.el")
-    ("lisp/gnus/html2text.el" . "html2text.el")
+    ("html2text.el" . "html2text.el")
+    ("lisp/net/html2text.el" . "html2text.el")
     ;; From lisp to etc/forms.
     ("forms-d2.el" . "forms-d2.el")
     ("forms-pass.el" . "forms-pass.el")
@@ -1314,9 +1313,10 @@ it is found in `authors-fixed-case'."
     (setq author (replace-regexp-in-string "[ \t]+" " " author))
     ;; NB this ignores the first name only case.
     (unless (string-match "[-, \t]" author)
-      (push (format-message "%s:%d: ignored `%s'"
-			    file (1+ (count-lines (point-min) pos)) author)
-	    authors-ignored-names)
+      (or (authors-lax-changelog-p file)
+          (push (format-message "%s:%d: ignored `%s'"
+                                file (1+ (count-lines (point-min) pos)) author)
+                authors-ignored-names))
       (setq author ""))
     (or (car (member author authors-fixed-case))
 	(capitalize author))))

@@ -140,10 +140,6 @@ static Lisp_Object recover_top_level_message;
 /* Message normally displayed by Vtop_level.  */
 static Lisp_Object regular_top_level_message;
 
-/* For longjmp to where kbd input is being done.  */
-
-static sys_jmp_buf getcjmp;
-
 /* True while displaying for echoing.   Delays C-g throwing.  */
 
 static bool echoing;
@@ -2565,9 +2561,6 @@ read_char (int commandflag, Lisp_Object map,
 	 so restore it now.  */
       restore_getcjmp (save_jump);
       pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
-#if THREADS_ENABLED
-      maybe_reacquire_global_lock ();
-#endif
       unbind_to (jmpcount, Qnil);
       XSETINT (c, quit_char);
       internal_last_event_frame = selected_frame;
@@ -3346,9 +3339,7 @@ readable_events (int flags)
   if (kbd_fetch_ptr != kbd_store_ptr)
     {
       if (flags & (READABLE_EVENTS_FILTER_EVENTS
-#ifdef USE_TOOLKIT_SCROLL_BARS
 		   | READABLE_EVENTS_IGNORE_SQUEEZABLES
-#endif
 		   ))
         {
           union buffered_input_event *event = kbd_fetch_ptr;
@@ -3358,17 +3349,13 @@ readable_events (int flags)
               if (event == kbd_buffer + KBD_BUFFER_SIZE)
                 event = kbd_buffer;
 	      if (!(
-#ifdef USE_TOOLKIT_SCROLL_BARS
 		    (flags & READABLE_EVENTS_FILTER_EVENTS) &&
-#endif
 		    event->kind == FOCUS_IN_EVENT)
-#ifdef USE_TOOLKIT_SCROLL_BARS
 		  && !((flags & READABLE_EVENTS_IGNORE_SQUEEZABLES)
 		       && (event->kind == SCROLL_BAR_CLICK_EVENT
 			   || event->kind == HORIZONTAL_SCROLL_BAR_CLICK_EVENT)
 		       && event->ie.part == scroll_bar_handle
 		       && event->ie.modifiers == 0)
-#endif
 		  && !((flags & READABLE_EVENTS_FILTER_EVENTS)
 		       && event->kind == BUFFER_SWITCH_EVENT))
 		return 1;
@@ -5581,10 +5568,6 @@ make_lispy_event (struct input_event *event)
 #ifdef HAVE_GPM
     case GPM_CLICK_EVENT:
 #endif
-#ifndef USE_TOOLKIT_SCROLL_BARS
-    case SCROLL_BAR_CLICK_EVENT:
-    case HORIZONTAL_SCROLL_BAR_CLICK_EVENT:
-#endif
       {
 	int button = event->code;
 	bool is_double;
@@ -5664,11 +5647,6 @@ make_lispy_event (struct input_event *event)
 	    position = make_lispy_position (f, event->x, event->y,
 					    event->timestamp);
 	  }
-#ifndef USE_TOOLKIT_SCROLL_BARS
-	else
-	  /* It's a scrollbar click.  */
-	  position = make_scroll_bar_position (event, Qvertical_scroll_bar);
-#endif /* not USE_TOOLKIT_SCROLL_BARS */
 
 	if (button >= ASIZE (button_down_location))
 	  {
@@ -5926,7 +5904,6 @@ make_lispy_event (struct input_event *event)
       }
 
 
-#ifdef USE_TOOLKIT_SCROLL_BARS
 
       /* We don't have down and up events if using toolkit scroll bars,
 	 so make this always a click event.  Store in the `part' of
@@ -5995,7 +5972,6 @@ make_lispy_event (struct input_event *event)
 	return list2 (head, position);
       }
 
-#endif /* USE_TOOLKIT_SCROLL_BARS */
 
     case DRAG_N_DROP_EVENT:
       {
@@ -10009,7 +9985,12 @@ Internal use only.  */)
 
   this_command_key_count = 0;
   this_single_command_key_start = 0;
-  int key0 = SREF (keys, 0);
+
+  int charidx = 0, byteidx = 0;
+  int key0;
+  FETCH_STRING_CHAR_ADVANCE (key0, keys, charidx, byteidx);
+  if (CHAR_BYTE8_P (key0))
+    key0 = CHAR_TO_BYTE8 (key0);
 
   /* Kludge alert: this makes M-x be in the form expected by
      novice.el.  (248 is \370, a.k.a. "Meta-x".)  Any better ideas?  */
@@ -10018,7 +9999,13 @@ Internal use only.  */)
   else
     add_command_key (make_number (key0));
   for (ptrdiff_t i = 1; i < SCHARS (keys); i++)
-    add_command_key (make_number (SREF (keys, i)));
+    {
+      int key_i;
+      FETCH_STRING_CHAR_ADVANCE (key_i, keys, charidx, byteidx);
+      if (CHAR_BYTE8_P (key_i))
+	key_i = CHAR_TO_BYTE8 (key_i);
+      add_command_key (make_number (key_i));
+    }
   return Qnil;
 }
 
@@ -10435,6 +10422,13 @@ handle_interrupt (bool in_signal_handler)
          outside of polling since we don't get SIGIO like X and we don't have a
          separate event loop thread like W32.  */
 #ifndef HAVE_NS
+#ifdef THREADS_ENABLED
+  /* If we were called from a signal handler, we must be in the main
+     thread, see deliver_process_signal.  So we must make sure the
+     main thread holds the global lock.  */
+  if (in_signal_handler)
+    maybe_reacquire_global_lock ();
+#endif
   if (waiting_for_input && !echoing)
     quit_throw_to_read_char (in_signal_handler);
 #endif

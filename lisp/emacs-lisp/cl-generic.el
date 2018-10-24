@@ -204,7 +204,16 @@ OPTIONS-AND-METHODS currently understands:
 DEFAULT-BODY, if present, is used as the body of a default method.
 
 \(fn NAME ARGS [DOC-STRING] [OPTIONS-AND-METHODS...] &rest DEFAULT-BODY)"
-  (declare (indent 2) (doc-string 3))
+  (declare (indent 2) (doc-string 3)
+           (debug
+            (&define name cl-lambda-list lambda-doc
+                     [&rest [&or
+                             ("declare" &rest sexp)
+                             (":argument-precedence-order" &rest sexp)
+                             (&define ":method" [&rest atom]
+                                      cl-generic-method-args lambda-doc
+                                      def-body)]]
+                     def-body)))
   (let* ((doc (if (stringp (car-safe options-and-methods))
                   (pop options-and-methods)))
          (declarations nil)
@@ -422,7 +431,7 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
                                     ; Like in CLOS spec, we support
                                     ; any non-list values.
              cl-generic-method-args     ; arguments
-             [ &optional stringp ]      ; documentation string
+             lambda-doc                 ; documentation string
              def-body)))                ; part to be debugged
   (let ((qualifiers nil))
     (while (not (listp args))

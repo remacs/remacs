@@ -382,14 +382,13 @@ original definition, use \\[elp-restore-function] or \\[elp-restore-all]."
           ;; and return the results.
           (setq result (apply func args))
         ;; we are recording times
-        (let (enter-time exit-time)
+        (let (enter-time)
           ;; increment the call-counter
           (cl-incf (aref info 0))
 	  (setq enter-time (current-time)
-		result (apply func args)
-                exit-time (current-time))
+		result (apply func args))
           ;; calculate total time in function
-          (cl-incf (aref info 1) (elp-elapsed-time enter-time exit-time))
+          (cl-incf (aref info 1) (elp-elapsed-time enter-time nil))
           ))
       ;; turn off recording if this is the master function
       (if (and elp-master

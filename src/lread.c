@@ -95,21 +95,6 @@ static Lisp_Object read_objects_map;
    (to reduce allocations), or nil.  */
 static Lisp_Object read_objects_completed;
 
-/* File and lookahead for get-file-char and get-emacs-mule-file-char
-   to read from.  Used by Fload.  */
-static struct infile
-{
-  /* The input stream.  */
-  FILE *stream;
-
-  /* Lookahead byte count.  */
-  signed char lookahead;
-
-  /* Lookahead bytes, in reverse order.  Keep these here because it is
-     not portable to ungetc more than one byte at a time.  */
-  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
-} *infile;
-
 /* For use within read-from-string (this reader is non-reentrant!!)  */
 static ptrdiff_t read_from_string_index;
 static ptrdiff_t read_from_string_index_byte;
@@ -153,9 +138,6 @@ static Lisp_Object Vloads_in_progress;
 static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
                                  Lisp_Object);
 
-static void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
-                          Lisp_Object, Lisp_Object,
-                          Lisp_Object, Lisp_Object);
 
 /* Functions that read one byte from the current source READCHARFUN
    or unreads one byte.  If the integer argument C is -1, it returns
@@ -601,8 +583,6 @@ struct subst
   Lisp_Object seen;
 };
 
-static Lisp_Object read_internal_start (Lisp_Object, Lisp_Object,
-                                        Lisp_Object);
 static Lisp_Object read0 (Lisp_Object);
 static Lisp_Object read1 (Lisp_Object, int *, bool);
 
@@ -1850,7 +1830,7 @@ readevalloop_eager_expand_eval (Lisp_Object val, Lisp_Object macroexpand)
    START, END specify region to read in current buffer (from eval-region).
    If the input is not from a buffer, they must be nil.  */
 
-static void
+void
 readevalloop (Lisp_Object readcharfun,
 	      struct infile *infile0,
 	      Lisp_Object sourcename,
@@ -2099,68 +2079,7 @@ This function preserves the position of point.  */)
   return Qnil;
 }
 
-DEFUN ("eval-region", Feval_region, Seval_region, 2, 4, "r",
-       doc: /* Execute the region as Lisp code.
-When called from programs, expects two arguments,
-giving starting and ending indices in the current buffer
-of the text to be executed.
-Programs can pass third argument PRINTFLAG which controls output:
- a value of nil means discard it; anything else is stream for printing it.
- See Info node `(elisp)Output Streams' for details on streams.
-Also the fourth argument READ-FUNCTION, if non-nil, is used
-instead of `read' to read each expression.  It gets one argument
-which is the input stream for reading characters.
-
-This function does not move point.  */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object printflag, Lisp_Object read_function)
-{
-  /* FIXME: Do the eval-sexp-add-defvars dance!  */
-  ptrdiff_t count = SPECPDL_INDEX ();
-  Lisp_Object tem, cbuf;
-
-  cbuf = Fcurrent_buffer ();
-
-  if (NILP (printflag))
-    tem = Qsymbolp;
-  else
-    tem = printflag;
-  specbind (Qstandard_output, tem);
-  specbind (Qeval_buffer_list, Fcons (cbuf, Veval_buffer_list));
-
-  /* `readevalloop' calls functions which check the type of start and end.  */
-  readevalloop (cbuf, 0, BVAR (XBUFFER (cbuf), filename),
-		!NILP (printflag), Qnil, read_function,
-		start, end);
-
-  return unbind_to (count, Qnil);
-}
-
 
-DEFUN ("read", Fread, Sread, 0, 1, 0,
-       doc: /* Read one Lisp expression as text from STREAM, return as Lisp object.
-If STREAM is nil, use the value of `standard-input' (which see).
-STREAM or the value of `standard-input' may be:
- a buffer (read from point and advance it)
- a marker (read from where it points and advance it)
- a function (call it with no arguments for each character,
-     call it with a char as argument to push a char back)
- a string (takes text from string, starting at the beginning)
- t (read text line using minibuffer and use it, or read from
-    standard input in batch mode).  */)
-  (Lisp_Object stream)
-{
-  if (NILP (stream))
-    stream = Vstandard_input;
-  if (EQ (stream, Qt))
-    stream = Qread_char;
-  if (EQ (stream, Qread_char))
-    /* FIXME: ?! When is this used !?  */
-    return call1 (intern ("read-minibuffer"),
-		  build_string ("Lisp expression: "));
-
-  return read_internal_start (stream, Qnil, Qnil);
-}
-
 DEFUN ("read-from-string", Fread_from_string, Sread_from_string, 1, 3, 0,
        doc: /* Read one Lisp expression which is represented as text by STRING.
 Returns a cons: (OBJECT-READ . FINAL-STRING-INDEX).
@@ -2180,7 +2099,7 @@ the end of STRING.  */)
 
 /* Function to set up the global context we need in toplevel read
    calls.  START and END only used when STREAM is a string.  */
-static Lisp_Object
+Lisp_Object
 read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
 {
   Lisp_Object retval;
@@ -4519,14 +4438,12 @@ dir_warning (char const *use, Lisp_Object dirname)
 void
 syms_of_lread (void)
 {
-  defsubr (&Sread);
   defsubr (&Sread_from_string);
   defsubr (&Slread__substitute_object_in_subtree);
   defsubr (&Sunintern);
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
   defsubr (&Seval_buffer);
-  defsubr (&Seval_region);
   defsubr (&Sread_char);
   defsubr (&Sread_char_exclusive);
   defsubr (&Sread_event);
@@ -4607,7 +4524,7 @@ to the specified file name if a suffix is allowed or required.  */);
 			  build_pure_c_string (".el"));
 #endif
   DEFVAR_LISP ("module-file-suffix", Vmodule_file_suffix,
-	       doc: /* Suffix of loadable module file, or nil of modules are not supported.  */);
+	       doc: /* Suffix of loadable module file, or nil if modules are not supported.  */);
 #ifdef HAVE_MODULES
   Vmodule_file_suffix = build_pure_c_string (MODULES_SUFFIX);
 #else

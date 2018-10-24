@@ -1,11 +1,13 @@
 //! data helpers
+
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys;
-use remacs_sys::{aset_multibyte_string, build_string, emacs_abort, globals,
-                 update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
-use remacs_sys::{pvec_type, EmacsInt, Lisp_Misc_Type, Lisp_Type};
+use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, build_string, emacs_abort,
+                 globals, update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET,
+                 CHECK_IMPURE};
+use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
 use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang};
 use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
@@ -125,15 +127,17 @@ pub fn type_of(object: LispObject) -> LispObject {
                 pvec_type::PVEC_CONDVAR => Qcondition_variable,
                 pvec_type::PVEC_TERMINAL => Qterminal,
                 pvec_type::PVEC_MODULE_FUNCTION => Qmodule_function,
-                pvec_type::PVEC_FONT => if object.is_font_spec() {
-                    Qfont_spec
-                } else if object.is_font_entity() {
-                    Qfont_entity
-                } else if object.is_font_object() {
-                    Qfont_object
-                } else {
-                    Qfont
-                },
+                pvec_type::PVEC_FONT => {
+                    if object.is_font_spec() {
+                        Qfont_spec
+                    } else if object.is_font_entity() {
+                        Qfont_entity
+                    } else if object.is_font_object() {
+                        Qfont_object
+                    } else {
+                        Qfont
+                    }
+                }
                 pvec_type::PVEC_RECORD => unsafe {
                     let vec = object.as_vector_unchecked();
                     let t = vec.get_unchecked(0);
@@ -343,8 +347,8 @@ pub fn byteorder() -> u8 {
 }
 
 /***********************************************************************
-                Getting and Setting Values of Symbols
- ***********************************************************************/
+               Getting and Setting Values of Symbols
+***********************************************************************/
 
 /// These are the types of forwarding objects used in the value slot
 /// of symbols for special built-in variables whose value is stored in
@@ -519,6 +523,49 @@ pub unsafe extern "C" fn store_symval_forwarding(
         }
         _ => emacs_abort(),
     }
+}
+
+/// Return A ^ B, bitwise exclusive or.
+/// If optional third argument C is given, store result into C.
+/// A, B, and C must be bool vectors of the same length.
+/// Return the destination vector if it changed or nil otherwise.
+#[lisp_fn(min = "2")]
+pub fn bool_vector_exclusive_or(a: LispObject, b: LispObject, c: LispObject) -> LispObject {
+    unsafe { bool_vector_binop_driver(a, b, c, BoolVectorOp::BoolVectorExclusiveOr) }
+}
+
+/// Return A | B, bitwise or.
+/// If optional third argument C is given, store result into C.
+/// A, B, and C must be bool vectors of the same length.
+/// Return the destination vector if it changed or nil otherwise.
+#[lisp_fn(min = "2")]
+pub fn bool_vector_union(a: LispObject, b: LispObject, c: LispObject) -> LispObject {
+    unsafe { bool_vector_binop_driver(a, b, c, BoolVectorOp::BoolVectorUnion) }
+}
+
+/// Return A & B, bitwise and.
+/// If optional third argument C is given, store result into C.
+/// A, B, and C must be bool vectors of the same length.
+/// Return the destination vector if it changed or nil otherwise.
+#[lisp_fn(min = "2")]
+pub fn bool_vector_intersection(a: LispObject, b: LispObject, c: LispObject) -> LispObject {
+    unsafe { bool_vector_binop_driver(a, b, c, BoolVectorOp::BoolVectorIntersection) }
+}
+
+/// Return A &~ B, set difference.
+/// If optional third argument C is given, store result into C.
+/// A, B, and C must be bool vectors of the same length.
+/// Return the destination vector if it changed or nil otherwise.
+#[lisp_fn(min = "2")]
+pub fn bool_vector_set_difference(a: LispObject, b: LispObject, c: LispObject) -> LispObject {
+    unsafe { bool_vector_binop_driver(a, b, c, BoolVectorOp::BoolVectorSetDifference) }
+}
+
+/// Return t if every t value in A is also t in B, nil otherwise.
+/// A and B must be bool vectors of the same length.
+#[lisp_fn]
+pub fn bool_vector_subsetp(a: LispObject, b: LispObject) -> LispObject {
+    unsafe { bool_vector_binop_driver(a, b, b, BoolVectorOp::BoolVectorSubsetp) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

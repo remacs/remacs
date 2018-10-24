@@ -480,7 +480,7 @@ Font for POD headers."
 (defcustom cperl-highlight-variables-indiscriminately nil
   "Non-nil means perform additional highlighting on variables.
 Currently only changes how scalar variables are highlighted.
-Note that that variable is only read at initialization time for
+Note that the variable is only read at initialization time for
 the variable `cperl-font-lock-keywords-2', so changing it after you've
 entered CPerl mode the first time will have no effect."
   :type 'boolean

@@ -983,7 +983,7 @@ value_to_lisp (emacs_value v)
   return o;
 }
 
-/* Attempt to convert O to an emacs_value.  Do not do any checking or
+/* Attempt to convert O to an emacs_value.  Do not do any checking
    or allocate any storage; the caller should prevent or detect
    any resulting bit pattern that is not a valid emacs_value.  */
 static emacs_value

@@ -999,7 +999,7 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
   (Lisp_Object variable)
 {
   Lisp_Object tem;
-  bool forwarded;
+  bool forwarded UNINIT;
   union Lisp_Val_Fwd valcontents;
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
@@ -1547,6 +1547,18 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
 }
 
 
+DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
+       doc: /* Return population count of VALUE.
+This is the number of one bits in the two's complement representation
+of VALUE.  If VALUE is negative, return the number of zero bits in the
+representation.  */)
+  (Lisp_Object value)
+{
+  CHECK_NUMBER (value);
+  EMACS_INT v = XINT (value) < 0 ? -1 - XINT (value) : XINT (value);
+  return make_number (rust_count_one_bits(v));
+}
+
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
@@ -1604,7 +1616,7 @@ enum bool_vector_op { bool_vector_exclusive_or,
                       bool_vector_set_difference,
                       bool_vector_subsetp };
 
-static Lisp_Object
+Lisp_Object
 bool_vector_binop_driver (Lisp_Object a,
                           Lisp_Object b,
                           Lisp_Object dest,
@@ -1728,59 +1740,6 @@ bits_word_to_host_endian (bits_word val)
     return r;
   }
 #endif
-}
-
-DEFUN ("bool-vector-exclusive-or", Fbool_vector_exclusive_or,
-       Sbool_vector_exclusive_or, 2, 3, 0,
-       doc: /* Return A ^ B, bitwise exclusive or.
-If optional third argument C is given, store result into C.
-A, B, and C must be bool vectors of the same length.
-Return the destination vector if it changed or nil otherwise.  */)
-  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
-{
-  return bool_vector_binop_driver (a, b, c, bool_vector_exclusive_or);
-}
-
-DEFUN ("bool-vector-union", Fbool_vector_union,
-       Sbool_vector_union, 2, 3, 0,
-       doc: /* Return A | B, bitwise or.
-If optional third argument C is given, store result into C.
-A, B, and C must be bool vectors of the same length.
-Return the destination vector if it changed or nil otherwise.  */)
-  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
-{
-  return bool_vector_binop_driver (a, b, c, bool_vector_union);
-}
-
-DEFUN ("bool-vector-intersection", Fbool_vector_intersection,
-       Sbool_vector_intersection, 2, 3, 0,
-       doc: /* Return A & B, bitwise and.
-If optional third argument C is given, store result into C.
-A, B, and C must be bool vectors of the same length.
-Return the destination vector if it changed or nil otherwise.  */)
-  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
-{
-  return bool_vector_binop_driver (a, b, c, bool_vector_intersection);
-}
-
-DEFUN ("bool-vector-set-difference", Fbool_vector_set_difference,
-       Sbool_vector_set_difference, 2, 3, 0,
-       doc: /* Return A &~ B, set difference.
-If optional third argument C is given, store result into C.
-A, B, and C must be bool vectors of the same length.
-Return the destination vector if it changed or nil otherwise.  */)
-  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
-{
-  return bool_vector_binop_driver (a, b, c, bool_vector_set_difference);
-}
-
-DEFUN ("bool-vector-subsetp", Fbool_vector_subsetp,
-       Sbool_vector_subsetp, 2, 2, 0,
-       doc: /* Return t if every t value in A is also t in B, nil otherwise.
-A and B must be bool vectors of the same length.  */)
-  (Lisp_Object a, Lisp_Object b)
-{
-  return bool_vector_binop_driver (a, b, b, bool_vector_subsetp);
 }
 
 DEFUN ("bool-vector-not", Fbool_vector_not,
@@ -2126,18 +2085,14 @@ syms_of_data (void)
 #endif
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
+  defsubr (&Slogcount);
   defsubr (&Slsh);
   defsubr (&Sash);
 #ifdef HAVE_MODULES
   defsubr (&Suser_ptrp);
 #endif
 
-  defsubr (&Sbool_vector_exclusive_or);
-  defsubr (&Sbool_vector_union);
-  defsubr (&Sbool_vector_intersection);
-  defsubr (&Sbool_vector_set_difference);
   defsubr (&Sbool_vector_not);
-  defsubr (&Sbool_vector_subsetp);
   defsubr (&Sbool_vector_count_consecutive);
   defsubr (&Sbool_vector_count_population);
 

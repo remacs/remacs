@@ -903,7 +903,8 @@ substitution string.  Note dynamic scoping of variables.")
   (read-regexp "Search for" 'grep-tag-default 'grep-regexp-history))
 
 (defun grep-read-files (regexp)
-  "Read files arg for interactive grep."
+  "Read a file-name pattern arg for interactive grep.
+The pattern can include shell wildcards."
   (let* ((bn (or (buffer-file-name)
 		 (replace-regexp-in-string "<[0-9]+>\\'" "" (buffer-name))))
 	 (fn (and bn
@@ -936,7 +937,7 @@ substitution string.  Note dynamic scoping of variables.")
 	       (car (car grep-files-aliases))))
 	 (files (completing-read
 		 (concat "Search for \"" regexp
-			 "\" in files"
+			 "\" in files matching wildcard"
 			 (if default (concat " (default " default ")"))
 			 ": ")
 		 'read-file-name-internal

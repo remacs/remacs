@@ -167,7 +167,7 @@ use c-constant-symbol instead."
 (defmacro defcustom-c-stylevar (name val doc &rest args)
   "Define a style variable NAME with VAL and DOC.
 More precisely, convert the given `:type FOO', mined out of ARGS,
-to an aggregate `:type (radio STYLE (PREAMBLE FOO))', append some
+to an aggregate `:type (radio STYLE (PREAMBLE FOO))', append
 some boilerplate documentation to DOC, arrange for the fallback
 value of NAME to be VAL, and call `custom-declare-variable' to
 do the rest of the work.

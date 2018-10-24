@@ -3133,48 +3133,6 @@ is used.  */)
   return make_number (0);
 }
 
-DEFUN ("frame-text-cols", Fframe_text_cols, Sframe_text_cols, 0, 1, 0,
-       doc: /* Return width in columns of FRAME's text area.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_COLS (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-text-lines", Fframe_text_lines, Sframe_text_lines, 0, 1, 0,
-       doc: /* Return height in lines of FRAME's text area.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_LINES (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-total-cols", Fframe_total_cols, Sframe_total_cols, 0, 1, 0,
-       doc: /* Return number of total columns of FRAME.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TOTAL_COLS (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-total-lines", Fframe_total_lines, Sframe_total_lines, 0, 1, 0,
-       doc: /* Return number of total lines of FRAME.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TOTAL_LINES (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-text-width", Fframe_text_width, Sframe_text_width, 0, 1, 0,
-       doc: /* Return text area width of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TEXT_WIDTH (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-text-height", Fframe_text_height, Sframe_text_height, 0, 1, 0,
-       doc: /* Return text area height of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TEXT_HEIGHT (decode_any_frame (frame)));
-}
-
 DEFUN ("frame-scroll-bar-width", Fscroll_bar_width, Sscroll_bar_width, 0, 1, 0,
        doc: /* Return scroll bar width of FRAME in pixels.  */)
   (Lisp_Object frame)
@@ -5592,13 +5550,9 @@ Setting this variable does not affect existing frames, only new ones.  */);
   DEFVAR_LISP ("default-frame-scroll-bars", Vdefault_frame_scroll_bars,
 	       doc: /* Default position of vertical scroll bars on this window-system.  */);
 #ifdef HAVE_WINDOW_SYSTEM
-#if defined (HAVE_NTGUI) || defined (NS_IMPL_COCOA) || (defined (USE_GTK) && defined (USE_TOOLKIT_SCROLL_BARS))
   /* MS-Windows, macOS, and GTK have scroll bars on the right by
      default.  */
   Vdefault_frame_scroll_bars = Qright;
-#else
-  Vdefault_frame_scroll_bars = Qleft;
-#endif
 #else
   Vdefault_frame_scroll_bars = Qnil;
 #endif
@@ -5885,12 +5839,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_char_width);
   defsubr (&Sframe_native_height);
   defsubr (&Sframe_native_width);
-  defsubr (&Sframe_text_cols);
-  defsubr (&Sframe_text_lines);
-  defsubr (&Sframe_total_cols);
-  defsubr (&Sframe_total_lines);
-  defsubr (&Sframe_text_width);
-  defsubr (&Sframe_text_height);
   defsubr (&Sscroll_bar_width);
   defsubr (&Sscroll_bar_height);
   defsubr (&Sfringe_width);

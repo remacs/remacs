@@ -2884,9 +2884,13 @@ set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
 
 enum
   {
-    /* Alignment of struct Lisp_Vector objects.  */
-    vector_alignment = COMMON_MULTIPLE (FLEXALIGNOF (struct Lisp_Vector),
-					 GCALIGNMENT),
+    /* Alignment of struct Lisp_Vector objects.  Because pseudovectors
+       can contain any C type, align at least as strictly as
+       max_align_t.  On x86 and x86-64 this can waste up to 8 bytes
+       for typical vectors, since alignof (max_align_t) is 16 but
+       typical vectors need only an alignment of 8.  However, it is
+       not worth the hassle to avoid wasting those bytes.  */
+    vector_alignment = COMMON_MULTIPLE (alignof (max_align_t), GCALIGNMENT),
 
     /* Vector size requests are a multiple of this.  */
     roundup_size = COMMON_MULTIPLE (vector_alignment, word_size)
@@ -5649,7 +5653,7 @@ inhibit_garbage_collection (void)
 /* Used to avoid possible overflows when
    converting from C to Lisp integers.  */
 
-static Lisp_Object
+Lisp_Object
 bounded_number (EMACS_INT number)
 {
   return make_number (min (MOST_POSITIVE_FIXNUM, number));
@@ -7156,32 +7160,6 @@ We divide the value by 1024 to make sure it fits in a Lisp integer.  */)
   return end;
 }
 
-DEFUN ("memory-use-counts", Fmemory_use_counts, Smemory_use_counts, 0, 0, 0,
-       doc: /* Return a list of counters that measure how much consing there has been.
-Each of these counters increments for a certain kind of object.
-The counters wrap around from the largest positive integer to zero.
-Garbage collection does not decrease them.
-The elements of the value are as follows:
-  (CONSES FLOATS VECTOR-CELLS SYMBOLS STRING-CHARS MISCS INTERVALS STRINGS)
-All are in units of 1 = one object consed
-except for VECTOR-CELLS and STRING-CHARS, which count the total length of
-objects consed.
-MISCS include overlays, markers, and some internal types.
-Frames, windows, buffers, and subprocesses count as vectors
-  (but the contents of a buffer's text do not count here).  */)
-  (void)
-{
-  return listn (CONSTYPE_HEAP, 8,
-		bounded_number (cons_cells_consed),
-		bounded_number (floats_consed),
-		bounded_number (vector_cells_consed),
-		bounded_number (symbols_consed),
-		bounded_number (string_chars_consed),
-		bounded_number (misc_objects_consed),
-		bounded_number (intervals_consed),
-		bounded_number (strings_consed));
-}
-
 static bool
 symbol_uses_obj (Lisp_Object symbol, Lisp_Object obj)
 {
@@ -7513,7 +7491,6 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_limit);
   defsubr (&Smemory_info);
-  defsubr (&Smemory_use_counts);
   defsubr (&Ssuspicious_object);
 }
 

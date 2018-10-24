@@ -3202,7 +3202,7 @@ a number of other ways as well.  Here we sketch a few of them:
 @item
 The semantics of maximizing and iconifying child frames is highly
 window-system dependent.  As a rule, applications should never invoke
-these operations for on frames.  By default, invoking
+these operations on child frames.  By default, invoking
 @code{iconify-frame} on a child frame will try to iconify the top-level
 frame corresponding to that child frame instead.  To obtain a different
 behavior, users may customize the option @code{iconify-child-frame}

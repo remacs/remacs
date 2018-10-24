@@ -880,11 +880,6 @@ struct scroll_bar
      being dragged, this is -1.  */
   int dragging;
 
-#if defined (USE_TOOLKIT_SCROLL_BARS) && !defined (USE_GTK)
-  /* Last value of whole for horizontal scrollbars.  */
-  int whole;
-#endif
-
   /* True if the scroll bar is horizontal.  */
   bool horizontal;
 };

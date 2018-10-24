@@ -247,6 +247,6 @@ chars"
    (goto-char eshell-last-input-start)
    (string= (eshell-get-old-input) "echo alpha")))
 
-(provide 'esh-test)
+(provide 'eshell-tests)
 
 ;;; tests/eshell-tests.el ends here

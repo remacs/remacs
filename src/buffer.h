@@ -23,6 +23,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <sys/types.h>
 #include <time.h>
+#include <stdio.h>
 
 #include "character.h"
 #include "lisp.h"
@@ -1407,6 +1408,26 @@ lowercasep (int c)
 {
   return !uppercasep (c) && upcase (c) != c;
 }
+
+/* File and lookahead for get-file-char and get-emacs-mule-file-char
+   to read from.  Used by Fload.  */
+struct infile
+{
+  /* The input stream.  */
+  FILE *stream;
+
+  /* Lookahead byte count.  */
+  signed char lookahead;
+
+  /* Lookahead bytes, in reverse order.  Keep these here because it is
+     not portable to ungetc more than one byte at a time.  */
+  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
+} *infile;
+
+/* Defined in lread.c.  */
+extern void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
+                          Lisp_Object, Lisp_Object,
+                          Lisp_Object, Lisp_Object);
 
 INLINE_HEADER_END
 

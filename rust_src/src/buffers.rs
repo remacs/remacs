@@ -486,92 +486,48 @@ fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject
     }
 }
 
-pub enum LispBufferOrName {
-    Buffer(LispBufferRef),
-    Name(LispStringRef),
+pub struct LispBufferOrName {
+    name: LispObject,
+    buffer: LispObject,
 }
 
 impl LispBufferOrName {
-    pub fn as_buffer_safe(self) -> Option<LispBufferRef> {
-        match self {
-            LispBufferOrName::Buffer(b) => Some(b),
-            LispBufferOrName::Name(n) => {
-                let b = cdr(assoc_ignore_text_properties(n.into(), unsafe {
-                    Vbuffer_alist
-                }));
+    pub fn as_obj(self) -> LispObject {
+        self.buffer
+    }
 
-                b.as_buffer()
+    pub fn as_buffer_or_error(self) -> LispBufferRef {
+        if self.buffer.is_nil() {
+            nsberror(self.name);
+        }
+        self.buffer.as_buffer_or_error()
+    }
+
+    pub fn from_name(buffer_or_name: LispObject) -> Self {
+        if buffer_or_name.is_buffer() {
+            Self {
+                name: Qnil,
+                buffer: buffer_or_name,
+            }
+        } else {
+            buffer_or_name.as_string_or_error();
+            Self {
+                name: buffer_or_name,
+                buffer: cdr(assoc_ignore_text_properties(buffer_or_name, unsafe {
+                    Vbuffer_alist
+                })),
             }
         }
     }
 
-    pub fn unwrap_buffer(self) -> LispBufferRef {
-        match self.as_buffer_safe() {
-            None => match self {
-                LispBufferOrName::Name(n) => nsberror(n.into()),
-                _ => unreachable!(),
-            },
-            Some(b) => b,
-        }
-    }
-}
-
-impl From<LispObject> for LispBufferOrName {
-    fn from(buffer_or_name: LispObject) -> Self {
+    pub fn from_name_or(buffer_or_name: LispObject, default: fn() -> LispObject) -> Self {
         if buffer_or_name.is_nil() {
-            nsberror(buffer_or_name);
-        }
-
-        if let Some(b) = buffer_or_name.as_buffer() {
-            LispBufferOrName::Buffer(b)
-        } else {
-            LispBufferOrName::Name(buffer_or_name.as_string_or_error())
-        }
-    }
-}
-
-pub enum LispBufferOrCurrent {
-    Buffer(LispBufferRef),
-    Name(LispStringRef),
-}
-
-impl LispBufferOrCurrent {
-    pub fn as_buffer_safe(self) -> Option<LispBufferRef> {
-        match self {
-            LispBufferOrCurrent::Buffer(b) => Some(b),
-            LispBufferOrCurrent::Name(n) => {
-                let b = cdr(assoc_ignore_text_properties(n.into(), unsafe {
-                    Vbuffer_alist
-                }));
-
-                b.as_buffer()
+            Self {
+                name: Qnil,
+                buffer: default(),
             }
-        }
-    }
-
-    pub fn unwrap_buffer(self) -> LispBufferRef {
-        match self.as_buffer_safe() {
-            None => match self {
-                LispBufferOrCurrent::Name(n) => nsberror(n.into()),
-                _ => unreachable!(),
-            },
-            Some(b) => b,
-        }
-    }
-}
-
-impl From<LispObject> for LispBufferOrCurrent {
-    fn from(buffer_or_name: LispObject) -> Self {
-        let obj = if buffer_or_name.is_nil() {
-            current_buffer()
         } else {
-            buffer_or_name
-        };
-
-        if let Some(b) = obj.as_buffer() {
-            LispBufferOrCurrent::Buffer(b)
-        } else {
-            LispBufferOrCurrent::Name(buffer_or_name.as_string_or_error())
+            Self::from_name(buffer_or_name)
         }
     }
 }
@@ -581,11 +537,10 @@ impl From<LispObject> for LispBufferOrCurrent {
 /// is a string and there is no buffer with that name, return nil.  If
 /// BUFFER-OR-NAME is a buffer, return it as given.
 #[lisp_fn]
-pub fn get_buffer(buffer_or_name: LispBufferOrName) -> LispObject {
-    match buffer_or_name.as_buffer_safe() {
-        None => Qnil,
-        Some(buffer) => buffer.into(),
-    }
+pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
+    let tmp = LispBufferOrName::from_name(buffer_or_name);
+
+    tmp.as_obj()
 }
 
 /// Return the current buffer as a Lisp object.
@@ -700,8 +655,9 @@ pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject)
 /// `pop-to-buffer' to switch buffers permanently.
 /// The return value is the buffer made current.
 #[lisp_fn]
-pub fn set_buffer(buffer_or_name: LispBufferOrName) -> LispBufferRef {
-    let mut buffer = buffer_or_name.unwrap_buffer();
+pub fn set_buffer(buffer_or_name: LispObject) -> LispBufferRef {
+    let tmp = LispBufferOrName::from_name(buffer_or_name);
+    let mut buffer = tmp.as_buffer_or_error();
     if !buffer.is_live() {
         error!("Selecting deleted buffer");
     };

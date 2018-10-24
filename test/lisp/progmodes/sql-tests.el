@@ -50,7 +50,7 @@
         (lambda (_command) t))
        ((symbol-function 'process-lines)
         (lambda (_program &rest _args)
-          (error))))
+          (error "some error"))))
     (should-not (sql-postgres-list-databases))))
 
 (provide 'sql-tests)

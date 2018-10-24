@@ -1836,6 +1836,26 @@ verify (offsetof (struct Lisp_Sub_Char_Table, contents)
 	== (offsetof (struct Lisp_Vector, contents)
 	    + SUB_CHAR_TABLE_OFFSET * sizeof (Lisp_Object)));
 
+
+/* Save and restore the instruction and environment pointers,
+   without affecting the signal mask.  */
+
+#ifdef HAVE__SETJMP
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) _setjmp (j)
+# define sys_longjmp(j, v) _longjmp (j, v)
+#elif defined HAVE_SIGSETJMP
+typedef sigjmp_buf sys_jmp_buf;
+# define sys_setjmp(j) sigsetjmp (j, 0)
+# define sys_longjmp(j, v) siglongjmp (j, v)
+#else
+/* A platform that uses neither _longjmp nor siglongjmp; assume
+   longjmp does not affect the sigmask.  */
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) setjmp (j)
+# define sys_longjmp(j, v) longjmp (j, v)
+#endif
+
 #include "thread.h"
 
 /***********************************************************************
@@ -2974,25 +2994,6 @@ extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
     static struct Lisp_Kboard_Objfwd ko_fwd;			\
     defvar_kboard (&ko_fwd, lname, offsetof (KBOARD, vname ## _)); \
   } while (false)
-
-/* Save and restore the instruction and environment pointers,
-   without affecting the signal mask.  */
-
-#ifdef HAVE__SETJMP
-typedef jmp_buf sys_jmp_buf;
-# define sys_setjmp(j) _setjmp (j)
-# define sys_longjmp(j, v) _longjmp (j, v)
-#elif defined HAVE_SIGSETJMP
-typedef sigjmp_buf sys_jmp_buf;
-# define sys_setjmp(j) sigsetjmp (j, 0)
-# define sys_longjmp(j, v) siglongjmp (j, v)
-#else
-/* A platform that uses neither _longjmp nor siglongjmp; assume
-   longjmp does not affect the sigmask.  */
-typedef jmp_buf sys_jmp_buf;
-# define sys_setjmp(j) setjmp (j)
-# define sys_longjmp(j, v) longjmp (j, v)
-#endif
 
 
 /* Elisp uses several stacks:
@@ -3579,6 +3580,7 @@ extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
 extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
 extern Lisp_Object build_marker (struct buffer *, ptrdiff_t, ptrdiff_t);
+extern Lisp_Object bounded_number(EMACS_INT);
 
 /* Build a frequently used 2/3/4-integer lists.  */
 
@@ -3796,6 +3798,7 @@ extern Lisp_Object intern_driver (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index);
 extern void init_symbol (Lisp_Object, Lisp_Object);
 extern Lisp_Object oblookup (Lisp_Object, const char *, ptrdiff_t, ptrdiff_t);
+extern Lisp_Object read_internal_start (Lisp_Object, Lisp_Object, Lisp_Object);
 extern void loadhist_attach(Lisp_Object x);
 INLINE void
 LOADHIST_ATTACH (Lisp_Object x)
@@ -3981,7 +3984,6 @@ extern _Noreturn void time_overflow (void);
 extern Lisp_Object make_buffer_string (ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object make_buffer_string_both (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 					    ptrdiff_t, bool);
-extern Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool, bool);
 extern void init_editfns (bool);
 extern void syms_of_editfns (void);
 

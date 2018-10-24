@@ -940,20 +940,6 @@ x_set_background_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 
       xg_set_background_color (f, bg);
 
-#ifndef USE_TOOLKIT_SCROLL_BARS /* Turns out to be annoying with
-				   toolkit scroll bars.  */
-      {
-	Lisp_Object bar;
-	for (bar = FRAME_SCROLL_BARS (f);
-	     !NILP (bar);
-	     bar = XSCROLL_BAR (bar)->next)
-	  {
-	    Window window = XSCROLL_BAR (bar)->x_window;
-	    XSetWindowBackground (dpy, window, bg);
-	  }
-      }
-#endif /* USE_TOOLKIT_SCROLL_BARS */
-
       unblock_input ();
       update_face_from_frame_parameter (f, Qbackground_color, arg);
 
@@ -1777,36 +1763,20 @@ void
 x_set_scroll_bar_default_width (struct frame *f)
 {
   int unit = FRAME_COLUMN_WIDTH (f);
-#ifdef USE_TOOLKIT_SCROLL_BARS
   int minw = xg_get_default_scrollbar_width (f);
   /* A minimum width of 14 doesn't look good for toolkit scroll bars.  */
   FRAME_CONFIG_SCROLL_BAR_COLS (f) = (minw + unit - 1) / unit;
   FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = minw;
-#else
-  /* The width of a non-toolkit scrollbar is 14 pixels.  */
-  FRAME_CONFIG_SCROLL_BAR_COLS (f) = (14 + unit - 1) / unit;
-  FRAME_CONFIG_SCROLL_BAR_WIDTH (f)
-    = FRAME_CONFIG_SCROLL_BAR_COLS (f) * unit;
-#endif
 }
 
 void
 x_set_scroll_bar_default_height (struct frame *f)
 {
   int height = FRAME_LINE_HEIGHT (f);
-#ifdef USE_TOOLKIT_SCROLL_BARS
   int min_height = xg_get_default_scrollbar_height (f);
   /* A minimum height of 14 doesn't look good for toolkit scroll bars.  */
   FRAME_CONFIG_SCROLL_BAR_HEIGHT (f) = min_height;
   FRAME_CONFIG_SCROLL_BAR_LINES (f) = (min_height + height - 1) / height;
-#else
-  /* The height of a non-toolkit scrollbar is 14 pixels.  */
-  FRAME_CONFIG_SCROLL_BAR_LINES (f) = (14 + height - 1) / height;
-
-  /* Use all of that space (aside from required margins) for the
-     scroll bar.  */
-  FRAME_CONFIG_SCROLL_BAR_HEIGHT (f) = 14;
-#endif
 }
 
 
@@ -1827,7 +1797,6 @@ x_default_scroll_bar_color_parameter (struct frame *f,
   tem = x_get_arg (dpyinfo, alist, prop, xprop, xclass, RES_TYPE_STRING);
   if (EQ (tem, Qunbound))
     {
-#ifdef USE_TOOLKIT_SCROLL_BARS
 
       /* See if an X resource for the scroll bar color has been
 	 specified.  */
@@ -1848,12 +1817,6 @@ x_default_scroll_bar_color_parameter (struct frame *f,
 	     specified.  */
 	  tem = Qnil;
 	}
-
-#else /* not USE_TOOLKIT_SCROLL_BARS */
-
-      tem = Qnil;
-
-#endif /* not USE_TOOLKIT_SCROLL_BARS */
     }
 
   AUTO_FRAME_ARG (arg, prop, tem);
@@ -2938,11 +2901,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qbottom_divider_width, make_number (0),
 		       NULL, NULL, RES_TYPE_NUMBER);
   x_default_parameter (f, parms, Qvertical_scroll_bars,
-#if defined (USE_TOOLKIT_SCROLL_BARS)
 		       Qright,
-#else
-		       Qleft,
-#endif
 		       "verticalScrollBars", "ScrollBars",
 		       RES_TYPE_SYMBOL);
   x_default_parameter (f, parms, Qhorizontal_scroll_bars, Qnil,

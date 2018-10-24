@@ -19,7 +19,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifndef MENU_H
 #define MENU_H
 
-#include "../lwlib/lwlib-widget.h"
+#include "lwlib-widget.h"
 
 /* Bit fields used by terminal-specific menu_show_hook.  */
 

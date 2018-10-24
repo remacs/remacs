@@ -20,7 +20,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -40,6 +40,8 @@
 ;;   (from http://bugs.debian.org/337339).
 
 ;;; Code:
+
+(require 'cl-lib)
 
 (require 'flymake)
 
@@ -64,6 +66,13 @@
   "Max number of master files to check."
   :group 'flymake
   :type 'integer)
+
+(defcustom flymake-proc-ignored-file-name-regexps '()
+  "Files syntax checking is forbidden for.
+Overrides `flymake-proc-allowed-file-name-masks'."
+  :group 'flymake
+  :type '(repeat (regexp))
+  :version "27.1")
 
 (defcustom flymake-proc-allowed-file-name-masks
   '(("\\.\\(?:c\\(?:pp\\|xx\\|\\+\\+\\)?\\|CC\\)\\'"
@@ -91,6 +100,7 @@
     ;; ("\\.tex\\'" 1)
     )
   "Files syntax checking is allowed for.
+Variable `flymake-proc-ignored-file-name-regexps' overrides this variable.
 This is an alist with elements of the form:
   REGEXP INIT [CLEANUP [NAME]]
 REGEXP is a regular expression that matches a file name.
@@ -113,7 +123,7 @@ NAME is the file name function to use, default `flymake-proc-get-real-file-name'
   "Currently active Flymake process for a buffer, if any.")
 
 (defvar flymake-proc--report-fn nil
-  "If bound, function used to report back to flymake's UI.")
+  "If bound, function used to report back to Flymake's UI.")
 
 (defun flymake-proc-reformat-err-line-patterns-from-compile-el (original-list)
   "Grab error line patterns from ORIGINAL-LIST in compile.el format.
@@ -188,17 +198,22 @@ expression. A match indicates `:warning' type, otherwise
          :error)))
 
 (defun flymake-proc--get-file-name-mode-and-masks (file-name)
-  "Return the corresponding entry from `flymake-proc-allowed-file-name-masks'."
+  "Return the corresponding entry from `flymake-proc-allowed-file-name-masks'.
+If the FILE-NAME matches a regexp from `flymake-proc-ignored-file-name-regexps',
+`flymake-proc-allowed-file-name-masks' is not searched."
   (unless (stringp file-name)
     (error "Invalid file-name"))
-  (let ((fnm flymake-proc-allowed-file-name-masks)
-	(mode-and-masks nil))
-    (while (and (not mode-and-masks) fnm)
-      (if (string-match (car (car fnm)) file-name)
-	  (setq mode-and-masks (cdr (car fnm))))
-      (setq fnm (cdr fnm)))
-    (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
-    mode-and-masks))
+  (if (cl-find file-name flymake-proc-ignored-file-name-regexps
+               :test (lambda (fn rex) (string-match rex fn)))
+      (flymake-log 3 "file %s ignored")
+    (let ((fnm flymake-proc-allowed-file-name-masks)
+          (mode-and-masks nil))
+      (while (and (not mode-and-masks) fnm)
+        (if (string-match (car (car fnm)) file-name)
+            (setq mode-and-masks (cdr (car fnm))))
+        (setq fnm (cdr fnm)))
+      (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
+      mode-and-masks)))
 
 (defun flymake-proc--get-init-function (file-name)
   "Return init function to be used for the file."
@@ -265,7 +280,6 @@ Return t if so, nil if not."
 
 (defun flymake-proc--find-possible-master-files (file-name master-file-dirs masks)
   "Find (by name and location) all possible master files.
-
 Name is specified by FILE-NAME and location is specified by
 MASTER-FILE-DIRS.  Master files include .cpp and .c for .h.
 Files are searched for starting from the .h directory and max
@@ -522,13 +536,13 @@ Create parent directories as needed."
          for buffer = (and full-file
                            (find-buffer-visiting full-file))
          if (and (eq buffer (process-buffer proc)) message)
-         collect (with-current-buffer buffer
-                   (pcase-let ((`(,beg . ,end)
-                                (flymake-diag-region line-number col-number)))
-                     (flymake-make-diagnostic
-                      buffer beg end
-                      (guess-type flymake-proc-diagnostic-type-pred message)
-                      message)))
+         collect (pcase-let ((`(,beg . ,end)
+                              (flymake-diag-region buffer line-number col-number)))
+                   (flymake-make-diagnostic
+                    buffer beg end
+                    (with-current-buffer buffer
+                      (guess-type flymake-proc-diagnostic-type-pred message))
+                    message))
          else
          do (flymake-log 2 "Reference to file %s is out of scope" fname))
       (error
@@ -626,8 +640,8 @@ Create parent directories as needed."
 (defun flymake-proc--panic (problem explanation)
   "Tell Flymake UI about a fatal PROBLEM with this backend.
 May only be called in a dynamic environment where
-`flymake-proc--dynamic-report-fn' is bound"
-  (flymake-log 0 "%s: %s" problem explanation)
+`flymake-proc--report-fn' is bound."
+  (flymake-log 1 "%s: %s" problem explanation)
   (if (and (boundp 'flymake-proc--report-fn)
            flymake-proc--report-fn)
       (funcall flymake-proc--report-fn :panic
@@ -718,7 +732,7 @@ May only be called in a dynamic environment where
 (defun flymake-proc-legacy-flymake (report-fn &rest args)
   "Flymake backend based on the original Flymake implementation.
 This function is suitable for inclusion in
-`flymake-diagnostic-types-alist'. For backward compatibility, it
+`flymake-diagnostic-functions'. For backward compatibility, it
 can also be executed interactively independently of
 `flymake-mode'."
   ;; Interactively, behave as if flymake had invoked us through its
@@ -742,16 +756,18 @@ can also be executed interactively independently of
            "There's already a Flymake process running in this buffer")
           (kill-process proc))))
     (when
-        ;; A number of situations make us not want to error right away
-        ;; (and disable ourselves), in case the situation changes in
-        ;; the near future.
-        (and buffer-file-name
-             ;; Since we write temp files in current dir, there's no point
-             ;; trying if the directory is read-only (bug#8954).
-             (file-writable-p (file-name-directory buffer-file-name))
-             (or (not flymake-proc-compilation-prevents-syntax-check)
+        ;; This particular situation make us not want to error right
+        ;; away (and disable ourselves), in case the situation changes
+        ;; in the near future.
+        (and (or (not flymake-proc-compilation-prevents-syntax-check)
                  (not (flymake-proc--compilation-is-running))))
-      (let ((init-f (flymake-proc--get-init-function buffer-file-name)))
+      (let ((init-f
+             (and
+              buffer-file-name
+              ;; Since we write temp files in current dir, there's no point
+              ;; trying if the directory is read-only (bug#8954).
+              (file-writable-p (file-name-directory buffer-file-name))
+              (flymake-proc--get-init-function buffer-file-name))))
         (unless init-f (error "Can find a suitable init function"))
         (flymake-proc--clear-buildfile-cache)
         (flymake-proc--clear-project-include-dirs-cache)
@@ -765,10 +781,9 @@ can also be executed interactively independently of
           (unwind-protect
               (cond
                ((not cmd-and-args)
-                (flymake-log 0 "init function %s for %s failed, cleaning up"
+                (flymake-log 1 "init function %s for %s failed, cleaning up"
                              init-f buffer-file-name))
                (t
-                (setq flymake-last-change-time nil)
                 (setq proc
                       (let ((default-directory (or dir default-directory)))
                         (when dir
@@ -878,8 +893,7 @@ can also be executed interactively independently of
 (defun flymake-proc-simple-cleanup ()
   "Do cleanup after `flymake-proc-init-create-temp-buffer-copy'.
 Delete temp file."
-  (flymake-proc--safe-delete-file flymake-proc--temp-source-file-name)
-  (setq flymake-last-change-time nil))
+  (flymake-proc--safe-delete-file flymake-proc--temp-source-file-name))
 
 (defun flymake-proc-get-real-file-name (file-name-from-err-msg)
   "Translate file name from error message to \"real\" file name.

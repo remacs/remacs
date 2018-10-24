@@ -444,7 +444,6 @@ line, with the most recent command last.  See also
 	     (ignore-dups eshell-hist-ignoredups))
 	(with-temp-buffer
 	  (insert-file-contents file)
-	  ;; Save restriction in case file is already visited...
 	  ;; Watch for those date stamps in history files!
 	  (goto-char (point-max))
 	  (while (and (< count size)
@@ -488,7 +487,9 @@ See also `eshell-read-history'."
 	  (while (> index 0)
 	    (setq index (1- index))
 	    (let ((start (point)))
-	      (insert (ring-ref ring index) ?\n)
+              ;; Remove properties before inserting, to avoid trouble
+              ;; with read-only strings (Bug#28700).
+              (insert (substring-no-properties (ring-ref ring index)) ?\n)
 	      (subst-char-in-region start (1- (point)) ?\n ?\177)))
 	  (eshell-with-private-file-modes
 	   (write-region (point-min) (point-max) file append

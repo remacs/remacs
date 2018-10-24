@@ -13216,6 +13216,11 @@ Also @pxref{Formatting Variables}.
 @subsection Server Commands
 @cindex server commands
 
+The following keybinding are available in the server buffer.  Be aware
+that some of the commands will only work on servers that you've added
+through this interface (with @kbd{a}), not with servers you've defined
+in your init files.
+
 @table @kbd
 
 @item v
@@ -18487,7 +18492,7 @@ something along the lines of the following:
 (defun my-article-old-p ()
   "Say whether an article is old."
   (< (time-to-days (date-to-time (mail-header-date gnus-headers)))
-     (- (time-to-days (current-time)) gnus-agent-expire-days)))
+     (- (time-to-days nil) gnus-agent-expire-days)))
 @end lisp
 
 with the predicate then defined as:

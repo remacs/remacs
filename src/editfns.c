@@ -74,6 +74,7 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
+static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -760,42 +761,6 @@ This ignores the environment variables LOGNAME and USER, so it differs from
   return Vuser_real_login_name;
 }
 
-DEFUN ("user-uid", Fuser_uid, Suser_uid, 0, 0, 0,
-       doc: /* Return the effective uid of Emacs.
-Value is an integer or a float, depending on the value.  */)
-  (void)
-{
-  uid_t euid = geteuid ();
-  return make_fixnum_or_float (euid);
-}
-
-DEFUN ("user-real-uid", Fuser_real_uid, Suser_real_uid, 0, 0, 0,
-       doc: /* Return the real uid of Emacs.
-Value is an integer or a float, depending on the value.  */)
-  (void)
-{
-  uid_t uid = getuid ();
-  return make_fixnum_or_float (uid);
-}
-
-DEFUN ("group-gid", Fgroup_gid, Sgroup_gid, 0, 0, 0,
-       doc: /* Return the effective gid of Emacs.
-Value is an integer or a float, depending on the value.  */)
-  (void)
-{
-  gid_t egid = getegid ();
-  return make_fixnum_or_float (egid);
-}
-
-DEFUN ("group-real-gid", Fgroup_real_gid, Sgroup_real_gid, 0, 0, 0,
-       doc: /* Return the real gid of Emacs.
-Value is an integer or a float, depending on the value.  */)
-  (void)
-{
-  gid_t gid = getgid ();
-  return make_fixnum_or_float (gid);
-}
-
 DEFUN ("user-full-name", Fuser_full_name, Suser_full_name, 0, 1, 0,
        doc: /* Return the full name of the user logged in, as a string.
 If the full name corresponding to Emacs's userid is not known,
@@ -866,14 +831,6 @@ DEFUN ("system-name", Fsystem_name, Ssystem_name, 0, 0, 0,
   if (EQ (Vsystem_name, cached_system_name))
     init_and_cache_system_name ();
   return Vsystem_name;
-}
-
-DEFUN ("emacs-pid", Femacs_pid, Semacs_pid, 0, 0, 0,
-       doc: /* Return the process ID of Emacs, as a number.  */)
-  (void)
-{
-  pid_t pid = getpid ();
-  return make_fixnum_or_float (pid);
 }
 
 
@@ -1175,11 +1132,11 @@ by text that describes the specified date and time in TIME:
  only blank-padded, %l is like %I blank-padded.
 %p is the locale's equivalent of either AM or PM.
 %q is the calendar quarter (1–4).
-%M is the minute.
-%S is the second.
-%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
-%Z is the time zone name, %z is the numeric form.
+%M is the minute (00-59).
+%S is the second (00-59; 00-60 on platforms with leap seconds)
 %s is the number of seconds since 1970-01-01 00:00:00 +0000.
+%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
+%Z is the time zone abbreviation, %z is the numeric form.
 
 %c is the locale's date and time format.
 %x is the locale's "preferred" date format.
@@ -1189,7 +1146,8 @@ by text that describes the specified date and time in TIME:
 %R is like "%H:%M", %T is like "%H:%M:%S", %r is like "%I:%M:%S %p".
 %X is the locale's "preferred" time format.
 
-Finally, %n is a newline, %t is a tab, %% is a literal %.
+Finally, %n is a newline, %t is a tab, %% is a literal %, and
+unrecognized %-sequences stand for themselves.
 
 Certain flags and modifiers are available with some format controls.
 The flags are `_', `-', `^' and `#'.  For certain characters X,
@@ -3002,7 +2960,7 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = styled_format (nargs, args, true, false);
+      Lisp_Object val = Fformat_message (nargs, args);
       message3 (val);
       return val;
     }
@@ -3028,7 +2986,7 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = styled_format (nargs, args, true, false);
+      Lisp_Object val = Fformat_message (nargs, args);
       Lisp_Object pane, menu;
 
       pane = list1 (Fcons (build_string ("OK"), Qt));
@@ -3153,7 +3111,7 @@ produced text.
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return styled_format (nargs, args, false, true);
+  return styled_format (nargs, args, false);
 }
 
 DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
@@ -3169,16 +3127,13 @@ and right quote replacement characters are specified by
 usage: (format-message STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return styled_format (nargs, args, true, true);
+  return styled_format (nargs, args, true);
 }
 
-/* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.
-   If NEW_RESULT, the result is a new string; otherwise, the result
-   may be one of the arguments.  */
+/* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
 
-Lisp_Object
-styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
-	       bool new_result)
+static Lisp_Object
+styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 {
   ptrdiff_t n;		/* The number of the next arg to substitute.  */
   char initial_buffer[4000];
@@ -3194,6 +3149,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
      multibyte character of the previous string.  This flag tells if we
      must consider such a situation or not.  */
   bool maybe_combine_byte;
+  Lisp_Object val;
   bool arg_intervals = false;
   USE_SAFE_ALLOCA;
   sa_avail -= sizeof initial_buffer;
@@ -3207,9 +3163,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 
     /* The start and end bytepos in the output string.  */
     ptrdiff_t start, end;
-
-    /* Whether the argument is a newly created string.  */
-    bool_bf new_string : 1;
 
     /* Whether the argument is a string with intervals.  */
     bool_bf intervals : 1;
@@ -3253,6 +3206,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 
   ptrdiff_t ispec;
   ptrdiff_t nspec = 0;
+
+  /* True if a string needs to be allocated to hold the result.  */
+  bool new_result = false;
 
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */
@@ -3373,7 +3329,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 	  if (nspec < ispec)
 	    {
 	      spec->argument = args[n];
-	      spec->new_string = false;
 	      spec->intervals = false;
 	      nspec = ispec;
 	    }
@@ -3391,7 +3346,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 		{
 		  Lisp_Object noescape = conversion == 'S' ? Qnil : Qt;
 		  spec->argument = arg = Fprin1_to_string (arg, noescape);
-		  spec->new_string = true;
 		  if (STRING_MULTIBYTE (arg) && ! multibyte)
 		    {
 		      multibyte = true;
@@ -3410,7 +3364,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 		      goto retry;
 		    }
 		  spec->argument = arg = Fchar_to_string (arg);
-		  spec->new_string = true;
 		}
 
 	      if (!EQ (arg, args[n]))
@@ -3434,9 +3387,11 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 	  if (conversion == 's')
 	    {
 	      if (format == end && format - format_start == 2
-		  && (!new_result || spec->new_string)
 		  && ! string_intervals (args[0]))
-		return arg;
+		{
+		  val = arg;
+		  goto return_val;
+		}
 
 	      /* handle case (precision[n] >= 0) */
 
@@ -3881,11 +3836,14 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
     emacs_abort ();
 
   if (! new_result)
-    return args[0];
+    {
+      val = args[0];
+      goto return_val;
+    }
 
   if (maybe_combine_byte)
     nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);
-  Lisp_Object val = make_specified_string (buf, nchars, p - buf, multibyte);
+  val = make_specified_string (buf, nchars, p - buf, multibyte);
 
   /* If the format string has text properties, or any of the string
      arguments has text properties, set up text properties of the
@@ -3983,6 +3941,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 	    }
     }
 
+ return_val:
   /* If we allocated BUF or INFO with malloc, free it too.  */
   SAFE_FREE ();
 
@@ -4453,12 +4412,7 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);
-  defsubr (&Suser_uid);
-  defsubr (&Suser_real_uid);
-  defsubr (&Sgroup_gid);
-  defsubr (&Sgroup_real_gid);
   defsubr (&Suser_full_name);
-  defsubr (&Semacs_pid);
   defsubr (&Stime_add);
   defsubr (&Stime_subtract);
   defsubr (&Stime_less_p);

@@ -6,7 +6,7 @@ use remacs_sys::{globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_com
 use remacs_sys::{make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf,
                  specbind, unbind_to, EmacsInt, Fcopy_sequence, Ffuncall};
 
-use buffers::LispBufferOrCurrent;
+use buffers::{current_buffer, LispBufferOrName};
 use editfns::field_end;
 use keymap::get_keymap;
 use lisp::defsubr;
@@ -21,12 +21,9 @@ use threads::{c_specpdl_index, ThreadState};
 /// No argument or nil as argument means use current buffer as BUFFER.
 /// BUFFER can be a buffer or a buffer name.
 #[lisp_fn(min = "0")]
-pub fn minibufferp(buffer_or_name: LispBufferOrCurrent) -> bool {
-    let buffer = match buffer_or_name.as_buffer_safe() {
-        None => Qnil,
-        Some(b) => b.into(),
-    };
-    memq(buffer, unsafe { Vminibuffer_list }).is_not_nil()
+pub fn minibufferp(buffer_or_name: LispObject) -> bool {
+    let tmp = LispBufferOrName::from_name_or(buffer_or_name, current_buffer);
+    memq(tmp.as_obj(), unsafe { Vminibuffer_list }).is_not_nil()
 }
 
 /// Return the currently active minibuffer window, or nil if none.
