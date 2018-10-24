@@ -2,10 +2,10 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::Fset;
-use remacs_sys::Lisp_Symbol;
 use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
                  make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
                  swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
+use remacs_sys::{Lisp_Symbol, Lisp_Type};
 use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qunbound, Qvoid_variable};
 
 use buffers::LispBufferLocalValueRef;
@@ -129,6 +129,77 @@ impl LispSymbolRef {
     }
 }
 
+impl From<LispObject> for LispSymbolRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_symbol_or_error()
+    }
+}
+
+impl From<LispSymbolRef> for LispObject {
+    #[inline]
+    fn from(s: LispSymbolRef) -> Self {
+        s.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispSymbolRef> {
+    fn from(o: LispObject) -> Option<LispSymbolRef> {
+        o.as_symbol()
+    }
+}
+
+// Symbol support (LispType == Lisp_Symbol == 0)
+impl LispObject {
+    #[inline]
+    pub fn is_symbol(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Symbol
+    }
+
+    #[inline]
+    pub fn as_symbol(self) -> Option<LispSymbolRef> {
+        if self.is_symbol() {
+            Some(LispSymbolRef::new(
+                self.symbol_ptr_value() as *mut Lisp_Symbol
+            ))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_symbol_or_error(self) -> LispSymbolRef {
+        if let Some(sym) = self.as_symbol() {
+            sym
+        } else {
+            wrong_type!(Qsymbolp, self)
+        }
+    }
+
+    #[inline]
+    pub fn symbol_or_string_as_string(self) -> LispStringRef {
+        match self.as_symbol() {
+            Some(sym) => sym
+                .symbol_name()
+                .as_string()
+                .expect("Expected a symbol name?"),
+            None => self.as_string_or_error(),
+        }
+    }
+
+    #[inline]
+    fn symbol_ptr_value(self) -> EmacsInt {
+        let ptr_value = if USE_LSB_TAG {
+            self.to_C()
+        } else {
+            self.get_untaggedptr() as EmacsInt
+        };
+
+        let lispsym_offset = unsafe { &lispsym as *const _ as EmacsInt };
+        ptr_value + lispsym_offset
+    }
+}
+
 pub struct LispSymbolIter {
     current: LispSymbolRef,
 }
@@ -202,9 +273,9 @@ pub fn boundp(mut symbol: LispSymbolRef) -> bool {
 }
 
 /* It has been previously suggested to make this function an alias for
-   symbol-function, but upon discussion at Bug#23957, there is a risk
-   breaking backward compatibility, as some users of fboundp may
-   expect `t' in particular, rather than any true value.  */
+symbol-function, but upon discussion at Bug#23957, there is a risk
+breaking backward compatibility, as some users of fboundp may
+expect `t' in particular, rather than any true value.  */
 
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]

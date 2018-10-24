@@ -4,7 +4,29 @@ use libc::{c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
 
+use lisp::defsubr;
+use lisp::LispObject;
+use multibyte::MAX_CHAR;
+use multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe};
 use threads::ThreadState;
+
+impl LispObject {
+    /// Nonzero iff X is a character.
+    pub fn is_character(self) -> bool {
+        self.as_fixnum()
+            .map_or(false, |i| 0 <= i && i <= EmacsInt::from(MAX_CHAR))
+    }
+
+    /// Check if Lisp object is a character or not and return the codepoint
+    /// Similar to CHECK_CHARACTER
+    #[inline]
+    pub fn as_character_or_error(self) -> Codepoint {
+        if !self.is_character() {
+            wrong_type!(Qcharacterp, self)
+        }
+        self.as_fixnum().unwrap() as Codepoint
+    }
+}
 
 /// True iff byte starts a character in a multibyte form.
 ///
@@ -36,11 +58,6 @@ pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
 
     new_pos
 }
-
-use lisp::defsubr;
-use lisp::LispObject;
-use multibyte::MAX_CHAR;
-use multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe};
 
 /// Return the character of the maximum code.
 #[lisp_fn]

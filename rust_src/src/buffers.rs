@@ -7,11 +7,11 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
                  del_range, delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
                  set_buffer_internal_1, specbind, unbind_to, unchain_both, update_mode_lines};
+use remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
+                 Lisp_Overlay, Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
                  Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Foverlay_get,
                  Fwiden};
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
-                 Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qget_file_buffer,
                  Qinhibit_quit, Qinhibit_read_only, Qnil, Qt, Qunbound, Qvoid_variable};
 
@@ -377,6 +377,87 @@ impl LispBufferRef {
     }
 }
 
+impl LispObject {
+    pub fn is_buffer(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BUFFER))
+    }
+
+    pub fn as_buffer(self) -> Option<LispBufferRef> {
+        self.as_vectorlike().and_then(|v| v.as_buffer())
+    }
+
+    pub fn as_live_buffer(self) -> Option<LispBufferRef> {
+        self.as_buffer()
+            .and_then(|b| if b.is_live() { Some(b) } else { None })
+    }
+
+    pub fn as_buffer_or_error(self) -> LispBufferRef {
+        self.as_buffer()
+            .unwrap_or_else(|| wrong_type!(Qbufferp, self))
+    }
+}
+
+impl From<LispObject> for LispBufferRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_buffer_or_error()
+    }
+}
+
+impl From<LispBufferRef> for LispObject {
+    fn from(b: LispBufferRef) -> Self {
+        b.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispBufferRef> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_buffer()
+    }
+}
+
+impl LispObject {
+    pub fn is_overlay(self) -> bool {
+        self.as_misc()
+            .map_or(false, |m| m.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay)
+    }
+
+    pub fn as_overlay(self) -> Option<LispOverlayRef> {
+        self.as_misc().and_then(|m| {
+            if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
+                unsafe { Some(mem::transmute(m)) }
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn as_overlay_or_error(self) -> LispOverlayRef {
+        self.as_overlay()
+            .unwrap_or_else(|| wrong_type!(Qoverlayp, self))
+    }
+}
+
+impl From<LispObject> for LispOverlayRef {
+    fn from(o: LispObject) -> Self {
+        o.as_overlay_or_error()
+    }
+}
+
+impl From<LispOverlayRef> for LispObject {
+    fn from(o: LispOverlayRef) -> Self {
+        o.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispOverlayRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_overlay()
+    }
+}
+
 impl LispOverlayRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)
@@ -685,7 +766,8 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
         .find(|buf| {
             let buf_truename = buf.truename();
             buf_truename.is_string() && string_equal(buf_truename, filename)
-        }).into()
+        })
+        .into()
 }
 
 // to be removed once all references in C are ported

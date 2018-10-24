@@ -5,10 +5,10 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
                  get_process as cget_process, send_process, setup_process_coding_systems,
                  update_status, Fmapcar, STRING_BYTES};
-use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
+use remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
-                 Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qreal, Qrun, Qserial, Qstop, Qt};
+                 Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
@@ -42,6 +42,40 @@ impl LispProcessRef {
     #[inline]
     fn set_childp(&mut self, childp: LispObject) {
         self.childp = childp;
+    }
+}
+
+impl LispObject {
+    pub fn is_process(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_PROCESS))
+    }
+
+    pub fn as_process(self) -> Option<LispProcessRef> {
+        self.as_vectorlike().and_then(|v| v.as_process())
+    }
+
+    pub fn as_process_or_error(self) -> LispProcessRef {
+        self.as_process()
+            .unwrap_or_else(|| wrong_type!(Qprocessp, self))
+    }
+}
+
+impl From<LispObject> for LispProcessRef {
+    fn from(o: LispObject) -> Self {
+        o.as_process_or_error()
+    }
+}
+
+impl From<LispProcessRef> for LispObject {
+    fn from(p: LispProcessRef) -> Self {
+        p.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispProcessRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_process()
     }
 }
 

@@ -6,7 +6,7 @@ use std::ptr;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{allocate_misc, set_point_both, Fmake_marker};
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
+use remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
 use remacs_sys::{Qinteger_or_marker_p, Qnil};
 
 use buffers::LispBufferRef;
@@ -84,6 +84,48 @@ impl LispMarkerRef {
 
     pub fn set_next(mut self, m: *mut Lisp_Marker) -> () {
         self.next = m;
+    }
+}
+
+impl From<LispObject> for LispMarkerRef {
+    fn from(o: LispObject) -> Self {
+        o.as_marker_or_error()
+    }
+}
+
+impl From<LispMarkerRef> for LispObject {
+    fn from(m: LispMarkerRef) -> Self {
+        m.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispMarkerRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_marker()
+    }
+}
+
+impl LispObject {
+    #[inline]
+    pub fn is_marker(self) -> bool {
+        self.as_misc()
+            .map_or(false, |m| m.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker)
+    }
+
+    #[inline]
+    pub fn as_marker(self) -> Option<LispMarkerRef> {
+        self.as_misc().and_then(|m| {
+            if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
+                unsafe { Some(mem::transmute(m)) }
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn as_marker_or_error(self) -> LispMarkerRef {
+        self.as_marker()
+            .unwrap_or_else(|| wrong_type!(Qmarkerp, self))
     }
 }
 

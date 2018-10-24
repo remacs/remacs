@@ -7,12 +7,97 @@ use libc;
 
 use libm;
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Type, MOST_NEGATIVE_FIXNUM,
+                 MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qarith_error, Qinteger_or_marker_p, Qnumberp, Qrange_error};
 
 use lisp::defsubr;
 use lisp::{LispNumber, LispObject};
 use math::ArithOp;
+
+// Float support (LispType == Lisp_Float == 7 )
+
+pub type LispFloatRef = ExternalPtr<Lisp_Float>;
+
+#[test]
+fn test_lisp_float_size() {
+    let double_size = mem::size_of::<EmacsDouble>();
+    let ptr_size = mem::size_of::<*const Lisp_Float>();
+
+    assert!(mem::size_of::<Lisp_Float>() == max(double_size, ptr_size));
+}
+
+impl LispFloatRef {
+    pub fn as_data(&self) -> &EmacsDouble {
+        unsafe { &*(&self.u.data as *const EmacsDouble) }
+    }
+}
+
+impl LispObject {
+    #[inline]
+    pub fn is_float(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Float
+    }
+
+    #[inline]
+    unsafe fn to_float_unchecked(self) -> LispFloatRef {
+        debug_assert!(self.is_float());
+        LispFloatRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Float)
+    }
+
+    unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
+        *self.to_float_unchecked().as_data()
+    }
+
+    pub fn as_float(self) -> Option<EmacsDouble> {
+        if self.is_float() {
+            Some(unsafe { self.get_float_data_unchecked() })
+        } else {
+            None
+        }
+    }
+
+    pub fn as_float_or_error(self) -> EmacsDouble {
+        if self.is_float() {
+            unsafe { self.get_float_data_unchecked() }
+        } else {
+            wrong_type!(Qfloatp, self)
+        }
+    }
+
+    /*
+    /// If the LispObject is a number (of any kind), get a floating point value for it
+    pub fn any_to_float(self) -> Option<EmacsDouble> {
+        self.as_float()
+            .or_else(|| self.as_fixnum().map(|i| i as EmacsDouble))
+    }
+    */
+
+    pub fn any_to_float_or_error(self) -> EmacsDouble {
+        self.as_float().unwrap_or_else(|| {
+            self.as_fixnum()
+                .unwrap_or_else(|| wrong_type!(Qnumberp, self)) as EmacsDouble
+        })
+    }
+}
+
+impl From<LispObject> for EmacsDouble {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.any_to_float_or_error()
+    }
+}
+
+impl From<LispObject> for Option<EmacsDouble> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else {
+            Some(o.any_to_float_or_error())
+        }
+    }
+}
 
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
 /// TODO this is used from C in a few places; remove afterwards.
@@ -80,11 +165,13 @@ pub fn float_arith_driver(
                 }
             }
             ArithOp::Mult => accum *= next,
-            ArithOp::Div => if args.len() > 1 && argnum == 0 {
-                accum = next;
-            } else {
-                accum /= next;
-            },
+            ArithOp::Div => {
+                if args.len() > 1 && argnum == 0 {
+                    accum = next;
+                } else {
+                    accum /= next;
+                }
+            }
             ArithOp::Logand | ArithOp::Logior | ArithOp::Logxor => {
                 wrong_type!(Qinteger_or_marker_p, val)
             }
@@ -118,13 +205,15 @@ pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
 pub fn log(arg: EmacsDouble, base: Option<EmacsDouble>) -> EmacsDouble {
     match base {
         None => arg.ln(),
-        Some(base) => if base == 10.0 {
-            arg.log10()
-        } else if base == 2.0 {
-            arg.log2()
-        } else {
-            arg.log(base)
-        },
+        Some(base) => {
+            if base == 10.0 {
+                arg.log10()
+            } else if base == 2.0 {
+                arg.log2()
+            } else {
+                arg.log(base)
+            }
+        }
     }
 }
 

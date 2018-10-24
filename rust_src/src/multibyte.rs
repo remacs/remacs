@@ -39,7 +39,7 @@ use std::slice;
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
 use remacs_sys::emacs_abort;
-use remacs_sys::{char_bits, EmacsInt, Lisp_String, Lisp_Type};
+use remacs_sys::{char_bits, pvec_type, EmacsInt, Lisp_String, Lisp_Type};
 
 use lisp::{ExternalPtr, LispObject};
 
@@ -221,6 +221,61 @@ impl LispStringRef {
     #[allow(dead_code)]
     pub fn chars(&self) -> LispStringRefCharIterator {
         LispStringRefCharIterator(self.char_indices())
+    }
+}
+
+impl From<EmacsDouble> for LispObject {
+    #[inline]
+    fn from(v: EmacsDouble) -> Self {
+        LispObject::from_float(v)
+    }
+}
+
+impl From<LispObject> for LispStringRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_string_or_error()
+    }
+}
+
+impl From<LispStringRef> for LispObject {
+    #[inline]
+    fn from(s: LispStringRef) -> Self {
+        s.as_lisp_obj()
+    }
+}
+
+// String support (LispType == 4)
+
+impl LispObject {
+    #[inline]
+    pub fn is_string(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_String
+    }
+
+    #[inline]
+    pub fn as_string(self) -> Option<LispStringRef> {
+        if self.is_string() {
+            Some(unsafe { self.as_string_unchecked() })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_string_or_error(self) -> LispStringRef {
+        self.as_string()
+            .unwrap_or_else(|| wrong_type!(Qstringp, self))
+    }
+
+    #[inline]
+    pub unsafe fn as_string_unchecked(self) -> LispStringRef {
+        LispStringRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_String)
+    }
+
+    #[inline]
+    pub fn empty_unibyte_string() -> LispStringRef {
+        LispStringRef::from(unsafe { empty_unibyte_string })
     }
 }
 
@@ -625,11 +680,13 @@ pub unsafe extern "C" fn str_as_multibyte(
         while from < slice.len() {
             chars += 1;
             match multibyte_length(&slice[from..], false) {
-                Some(n) => for _ in 0..n {
-                    slice[to] = slice[from];
-                    from += 1;
-                    to += 1;
-                },
+                Some(n) => {
+                    for _ in 0..n {
+                        slice[to] = slice[from];
+                        from += 1;
+                        to += 1;
+                    }
+                }
                 None => {
                     let byte = slice[from];
                     to += write_codepoint(&mut slice[to..], raw_byte_codepoint(byte));
@@ -668,11 +725,13 @@ pub unsafe extern "C" fn str_as_unibyte(ptr: *mut c_uchar, bytes: ptrdiff_t) -> 
                 from += 2;
                 to += 1;
             }
-            n => for _ in 0..n {
-                slice[to] = slice[from];
-                from += 1;
-                to += 1;
-            },
+            n => {
+                for _ in 0..n {
+                    slice[to] = slice[from];
+                    from += 1;
+                    to += 1;
+                }
+            }
         }
     }
     to as ptrdiff_t

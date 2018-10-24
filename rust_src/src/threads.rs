@@ -42,6 +42,29 @@ impl ThreadStateRef {
     }
 }
 
+impl From<LispObject> for ThreadStateRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_thread_or_error()
+    }
+}
+
+impl LispObject {
+    pub fn is_thread(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_THREAD))
+    }
+
+    pub fn as_thread(self) -> Option<ThreadStateRef> {
+        self.as_vectorlike().and_then(|v| v.as_thread())
+    }
+
+    pub fn as_thread_or_error(self) -> ThreadStateRef {
+        self.as_thread()
+            .unwrap_or_else(|| wrong_type!(Qthreadp, self))
+    }
+}
+
 // FIXME: The right thing to do is start indexing thread.m_specpdl as
 // an array instead of depending on C style pointer math.
 pub fn c_specpdl_index() -> libc::ptrdiff_t {

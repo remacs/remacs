@@ -114,6 +114,45 @@ impl LispHashTableRef {
     }
 }
 
+impl From<LispObject> for LispHashTableRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_hash_table_or_error()
+    }
+}
+
+impl From<LispHashTableRef> for LispObject {
+    #[inline]
+    fn from(h: LispHashTableRef) -> Self {
+        LispObject::from_hash_table(h)
+    }
+}
+
+impl LispObject {
+    pub fn is_hash_table(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_HASH_TABLE))
+    }
+
+    pub fn as_hash_table_or_error(self) -> LispHashTableRef {
+        if self.is_hash_table() {
+            LispHashTableRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Hash_Table)
+        } else {
+            wrong_type!(Qhash_table_p, self);
+        }
+    }
+
+    pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
+        let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
+        debug_assert!(
+            object.is_vectorlike() && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void
+        );
+
+        debug_assert!(object.is_hash_table());
+        object
+    }
+}
+
 /// An iterator used for iterating over the indices
 /// of the `key_and_value` vector of a `Lisp_Hash_Table`.
 /// Equivalent to a `for (i = 0; i < HASH_TABLE_SIZE(h); ++i)`

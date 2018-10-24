@@ -29,6 +29,71 @@ pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
 pub type LispBoolVecRef = ExternalPtr<Lisp_Bool_Vector>;
 pub type LispVectorlikeSlotsRef = ExternalPtr<Lisp_Vectorlike_With_Slots>;
 
+// Vectorlike support (LispType == 5)
+
+impl LispObject {
+    #[inline]
+    pub fn is_vectorlike(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Vectorlike
+    }
+
+    #[inline]
+    pub fn is_vector(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| v.is_vector())
+    }
+
+    #[inline]
+    pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
+        if self.is_vectorlike() {
+            Some(LispVectorlikeRef::new(
+                self.get_untaggedptr() as *mut remacs_sys::Lisp_Vectorlike
+            ))
+        } else {
+            None
+        }
+    }
+
+    /*
+    #[inline]
+    pub fn as_vectorlike_or_error(self) -> LispVectorlikeRef {
+        if self.is_vectorlike() {
+            LispVectorlikeRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        } else {
+            wrong_type!(Qvectorp, self)
+        }
+    }
+    */
+
+    pub unsafe fn as_vectorlike_unchecked(self) -> LispVectorlikeRef {
+        LispVectorlikeRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Vectorlike)
+    }
+
+    pub fn as_vector(self) -> Option<LispVectorRef> {
+        self.as_vectorlike().and_then(|v| v.as_vector())
+    }
+
+    pub fn as_vector_or_error(self) -> LispVectorRef {
+        self.as_vector()
+            .unwrap_or_else(|| wrong_type!(Qvectorp, self))
+    }
+
+    pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
+        self.as_vectorlike_unchecked().as_vector_unchecked()
+    }
+
+    pub fn as_vector_or_string_length(self) -> isize {
+        if let Some(s) = self.as_string() {
+            return s.len_chars();
+        } else if let Some(vl) = self.as_vectorlike() {
+            if let Some(v) = vl.as_vector() {
+                return v.len() as isize;
+            }
+        };
+
+        wrong_type!(Qarrayp, self);
+    }
+}
+
 impl LispVectorlikeRef {
     #[inline]
     pub fn is_vector(self) -> bool {
