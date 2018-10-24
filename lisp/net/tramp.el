@@ -1439,7 +1439,9 @@ the form (METHOD USER DOMAIN HOST PORT LOCALNAME &optional HOP)."
 	      localname (nth 5 args)
 	      hop (nth 6 args))))
 
-    (when (zerop (length method))
+    ;; Unless `tramp-syntax' is `simplified', we need a method.
+    (when (and (not (zerop (length tramp-postfix-method-format)))
+	       (zerop (length method)))
       (signal 'wrong-type-argument (list 'stringp method)))
     (concat tramp-prefix-format hop
 	    (unless (zerop (length tramp-postfix-method-format))
