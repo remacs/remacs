@@ -13,8 +13,8 @@ use lisp::LispObject;
 impl LispObject {
     pub fn is_charset(self) -> bool {
         unsafe {
-            let mut h_ref = Vcharset_hash_table.as_hash_table_or_error();
-            hash_lookup(h_ref.as_mut(), self, ptr::null_mut()) >= 0
+            let h_ref = Vcharset_hash_table.as_hash_table_or_error();
+            h_ref.lookup(self, ptr::null_mut()) >= 0
         }
     }
 }
