@@ -1346,7 +1346,7 @@ impl LispCons {
 pub fn is_autoload(function: LispObject) -> bool {
     function
         .as_cons()
-        .map_or(false, |cell| cell.car().eq_raw(Qautoload))
+        .map_or(false, |cell| cell.car().eq(Qautoload))
 }
 
 // Float support (LispType == Lisp_Float == 7 )
@@ -1632,10 +1632,6 @@ impl LispObject {
 
     #[inline]
     pub fn eq(self, other: LispObject) -> bool {
-        self == other
-    }
-
-    pub fn eq_raw(self, other: LispObject) -> bool {
         self == other
     }
 

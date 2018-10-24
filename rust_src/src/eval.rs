@@ -216,7 +216,7 @@ pub fn function(args: LispObject) -> LispObject {
     if unsafe { globals.Vinternal_interpreter_environment != Qnil } {
         if let Some(cell) = quoted.as_cons() {
             let (first, mut cdr) = cell.as_tuple();
-            if first.eq_raw(Qlambda) {
+            if first.eq(Qlambda) {
                 // This is a lambda expression within a lexical environment;
                 // return an interpreted closure instead of a simple lambda.
 
@@ -226,7 +226,7 @@ pub fn function(args: LispObject) -> LispObject {
                     .and_then(|c| c.car().as_cons());
                 if let Some(cell) = tmp {
                     let (typ, tail) = cell.as_tuple();
-                    if typ.eq_raw(QCdocumentation) {
+                    if typ.eq(QCdocumentation) {
                         // Handle the special (:documentation <form>) to build the docstring
                         // dynamically.
 
@@ -518,7 +518,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             def = autoload_do_load(def, sym, Qmacro);
             if let Some(cell) = def.as_cons() {
                 let func = cell.car();
-                if !func.eq_raw(Qmacro) {
+                if !func.eq(Qmacro) {
                     break;
                 }
                 cell.cdr()
@@ -535,7 +535,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
         };
 
         let newform = apply1(expander, body);
-        if form.eq_raw(newform) {
+        if form.eq(newform) {
             break;
         } else {
             form = newform;
@@ -639,13 +639,13 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
     } else if let Some(cell) = fun.as_cons() {
         // Lists may represent commands.
         let funcar = cell.car();
-        if funcar.eq_raw(Qclosure) {
+        if funcar.eq(Qclosure) {
             let bound = assq(Qinteractive, cdr(cdr(cell.cdr())));
             return bound.is_not_nil() || has_interactive_prop;
-        } else if funcar.eq_raw(Qlambda) {
+        } else if funcar.eq(Qlambda) {
             let bound = assq(Qinteractive, cdr(cell.cdr()));
             return bound.is_not_nil() || has_interactive_prop;
-        } else if funcar.eq_raw(Qautoload) {
+        } else if funcar.eq(Qautoload) {
             let value = car(cdr(cdr(cell.cdr())));
             return value.is_not_nil() || has_interactive_prop;
         }
@@ -713,7 +713,7 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
             obj = sym.get_indirect_function();
 
             if let Some(cons) = obj.as_cons() {
-                if cons.car().eq_raw(Qautoload) {
+                if cons.car().eq(Qautoload) {
                     // Autoloaded symbols are functions, except if they load
                     // macros or keymaps.
                     let mut it = obj.iter_tails_safe();
@@ -738,7 +738,7 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
         true
     } else if let Some(cons) = obj.as_cons() {
         let car = cons.car();
-        car.eq_raw(Qlambda) || car.eq_raw(Qclosure)
+        car.eq(Qlambda) || car.eq(Qclosure)
     } else {
         false
     }
@@ -778,12 +778,12 @@ pub fn autoload_do_load(
 ) -> LispObject {
     let count = c_specpdl_index();
 
-    if !(fundef.is_cons() && car(fundef).eq_raw(Qautoload)) {
+    if !(fundef.is_cons() && car(fundef).eq(Qautoload)) {
         return fundef;
     }
 
     let kind = nth(4, fundef);
-    if macro_only.eq_raw(Qmacro) && !(kind.eq_raw(Qt) || kind.eq_raw(Qmacro)) {
+    if macro_only.eq(Qmacro) && !(kind.eq(Qt) || kind.eq(Qmacro)) {
         return fundef;
     }
 
@@ -818,7 +818,7 @@ pub fn autoload_do_load(
     // If `macro_only' is set and fundef isn't a macro, assume this autoload to
     // be a "best-effort" (e.g. to try and find a compiler macro),
     // so don't signal an error if autoloading fails.
-    let ignore_errors = if kind.eq_raw(Qt) || kind.eq_raw(Qmacro) {
+    let ignore_errors = if kind.eq(Qt) || kind.eq(Qmacro) {
         Qnil
     } else {
         macro_only
@@ -914,7 +914,7 @@ fn run_hook_with_args_internal(
     let sym = args[0];
     let val = unsafe { find_symbol_value(sym) };
 
-    if val.eq_raw(Qunbound) || val.is_nil() {
+    if val.eq(Qunbound) || val.is_nil() {
         Qnil
     } else if !val.is_cons() || FUNCTIONP(val) {
         args[0] = val;
@@ -925,7 +925,7 @@ fn run_hook_with_args_internal(
                 break;
             }
 
-            if item.eq_raw(Qt) {
+            if item.eq(Qt) {
                 // t indicates this hook has a local binding;
                 // it means to run the global binding too.
                 let global_vals = unsafe { Fdefault_value(sym) };
@@ -933,7 +933,7 @@ fn run_hook_with_args_internal(
                     continue;
                 }
 
-                if !global_vals.is_cons() || car(global_vals).eq_raw(Qlambda) {
+                if !global_vals.is_cons() || car(global_vals).eq(Qlambda) {
                     args[0] = global_vals;
                     ret = func(args);
                 } else {
@@ -945,7 +945,7 @@ fn run_hook_with_args_internal(
                         args[0] = gval;
                         // In a global value, t should not occur. If it does, we
                         // must ignore it to avoid an endless loop.
-                        if !args[0].eq_raw(Qt) {
+                        if !args[0].eq(Qt) {
                             ret = func(args);
                         }
                     }
