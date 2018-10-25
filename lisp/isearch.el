@@ -1956,11 +1956,14 @@ and reads its face argument using `hi-lock-read-face-name'."
 
 
 (defun isearch-delete-char ()
-  "Discard last input item and move point back.
-Last input means the last character or the last isearch command
-that added or deleted characters from the search string,
-moved point, toggled regexp mode or case-sensitivity, etc.
-If no previous match was done, just beep."
+  "Undo last input item during a search.
+
+An input item is the result of a command that pushes a new state
+of isearch (as recorded by the `isearch--state' structure) to
+`isearch-cmds'.  Info node `(emacs)Basic Isearch' explains when
+Emacs records a new input item.
+
+If no input items have been entered yet, just beep."
   (interactive)
   (if (null (cdr isearch-cmds))
       (ding)

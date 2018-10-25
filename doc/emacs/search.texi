@@ -99,10 +99,18 @@ text that matches the search string---using the @code{isearch} face
 that customize this highlighting.  The current search string is also
 displayed in the echo area.
 
-  If you make a mistake typing the search string, type @key{DEL}.
-Each @key{DEL} cancels the last character of the search string.
-@xref{Error in Isearch}, for more about dealing with unsuccessful
-search.
+@cindex isearch input item
+@cindex input item, isearch
+@findex isearch-delete-char
+@kindex DEL @r{(Incremental search)}
+  If you make a mistake typing the search string, type @key{DEL}
+(@code{isearch-delete-char}).  Each @key{DEL} cancels the last input
+item entered during the search.  Emacs records a new @dfn{input item}
+whenever you type a command that changes the search string, the
+position of point, the success or failure of the search, the direction
+of the search, the position of the other end of the current search
+result, or the ``wrappedness'' of the search.  @xref{Error in
+Isearch}, for more about dealing with unsuccessful search.
 
 @cindex exit incremental search
 @cindex incremental search, exiting
@@ -283,14 +291,15 @@ string that failed to match is highlighted using the face
 @code{isearch-fail}.
 
   At this point, there are several things you can do.  If your string
-was mistyped, you can use @key{DEL} to erase some of it and correct
-it, or you can type @kbd{M-e} and edit it.  If you like the place you
-have found, you can type @key{RET} to remain there.  Or you can type
-@kbd{C-g}, which removes from the search string the characters that
-could not be found (the @samp{T} in @samp{FOOT}), leaving those that
-were found (the @samp{FOO} in @samp{FOOT}).  A second @kbd{C-g} at
-that point cancels the search entirely, returning point to where it
-was when the search started.
+was mistyped, use @key{DEL} to cancel a previous input item
+(@pxref{Basic Isearch}), @kbd{C-M-w} to erase one character at a time,
+or @kbd{M-e} to edit it.  If you like the place you have found, you
+can type @key{RET} to remain there.  Or you can type @kbd{C-g}, which
+removes from the search string the characters that could not be found
+(the @samp{T} in @samp{FOOT}), leaving those that were found (the
+@samp{FOO} in @samp{FOOT}).  A second @kbd{C-g} at that point cancels
+the search entirely, returning point to where it was when the search
+started.
 
 @cindex quitting (in search)
 @kindex C-g @r{(Incremental search)}
