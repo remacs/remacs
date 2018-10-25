@@ -79,7 +79,7 @@ off](https://i.stack.imgur.com/7Cu9Z.jpg).
 
 Rust is a great alternative to C.
 
-Rust has **a fantastic learning curve**. The documentation is superb,
+Rust has **a fantastic learning curve**. [The documentation is superb](https://doc.rust-lang.org/),
 and the community is very helpful if you get stuck.
 
 Rust has **excellent tooling**. The compiler makes great suggestions,
