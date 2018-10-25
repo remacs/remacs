@@ -5,25 +5,22 @@
 
 A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust](https://www.rust-lang.org).
 
-GPLv3 license.
-
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
 
-- [Rust :heart: Emacs](#rust-heart-emacs)
-    - [Why Emacs?](#why-emacs)
-    - [Why Rust?](#why-rust)
-    - [Why A Fork?](#why-a-fork)
-    - [Getting Started](#getting-started)
-        - [Requirements](#requirements)
-        - [Building Remacs](#building-remacs)
-        - [Running Remacs](#running-remacs)
-        - [Rustdoc builds](#rustdoc-builds)
-    - [Porting Elisp Primitive Functions](#porting-elisp-primitive-functions)
-    - [Design Goals](#design-goals)
-    - [Non-Design Goals](#non-design-goals)
-    - [Contributing](#contributing)
-    - [Help Needed](#help-needed)
+- [Why Emacs?](#why-emacs)
+- [Why Rust?](#why-rust)
+- [Why A Fork?](#why-a-fork)
+- [Getting Started](#getting-started)
+    - [Requirements](#requirements)
+    - [Building Remacs](#building-remacs)
+    - [Running Remacs](#running-remacs)
+    - [Rustdoc builds](#rustdoc-builds)
+- [Porting Elisp Primitive Functions](#porting-elisp-primitive-functions)
+- [Design Goals](#design-goals)
+- [Non-Design Goals](#non-design-goals)
+- [Contributing](#contributing)
+- [Help Needed](#help-needed)
 
 <!-- markdown-toc end -->
 
@@ -329,5 +326,5 @@ Pull requests welcome, no copyright assignment required. This project is under t
 
 ## Help Needed
 
-There's lots to do! We keep a list of low hanging fruit here so you can easily choose
+There's lots to do! We keep a list of [low hanging fruit](https://github.com/Wilfred/remacs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) here so you can easily choose
 one. You can find information in our [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our gitter channel.
