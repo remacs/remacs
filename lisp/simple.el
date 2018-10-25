@@ -7930,7 +7930,7 @@ With a prefix argument, set VARIABLE to VALUE buffer-locally."
 		   (read-variable (format "Set variable (default %s): " default-var)
 				  default-var)
 		 (read-variable "Set variable: ")))
-	  (minibuffer-help-form '(describe-variable var))
+	  (minibuffer-help-form `(describe-variable ',var))
 	  (prop (get var 'variable-interactive))
           (obsolete (car (get var 'byte-obsolete-variable)))
 	  (prompt (format "Set %s %s to value: " var
