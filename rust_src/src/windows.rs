@@ -12,8 +12,9 @@ use remacs_sys::{estimate_mode_line_height, minibuf_level,
                  selected_window as current_window, set_buffer_internal, set_window_hscroll,
                  window_body_width, window_list_1, window_menu_bar_p, window_parameter,
                  window_tool_bar_p, wset_display_table, wset_redisplay, wset_update_mode_line};
-use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone};
+use remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
+                 Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 
 use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, LispFrameRef};
@@ -226,6 +227,80 @@ impl LispWindowRef {
     pub fn is_vertical_combination(self) -> bool {
         self.is_internal() && !self.horizontal()
     }
+}
+
+impl From<LispObject> for LispWindowRef {
+    fn from(o: LispObject) -> Self {
+        o.as_window_or_error()
+    }
+}
+
+impl From<LispWindowRef> for LispObject {
+    fn from(w: LispWindowRef) -> Self {
+        w.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispWindowRef> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_window()
+    }
+}
+
+impl LispObject {
+    pub fn is_window(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_WINDOW))
+    }
+
+    pub fn as_window(self) -> Option<LispWindowRef> {
+        self.as_vectorlike().and_then(|v| v.as_window())
+    }
+
+    pub fn as_window_or_error(self) -> LispWindowRef {
+        self.as_window()
+            .unwrap_or_else(|| wrong_type!(Qwindowp, self))
+    }
+
+    pub fn as_minibuffer_or_error(self) -> LispWindowRef {
+        let w = self
+            .as_window()
+            .unwrap_or_else(|| wrong_type!(Qwindowp, self));
+        if !w.is_minibuffer() {
+            error!("Window is not a minibuffer window");
+        }
+        w
+    }
+
+    pub fn as_live_window(self) -> Option<LispWindowRef> {
+        self.as_window()
+            .and_then(|w| if w.is_live() { Some(w) } else { None })
+    }
+
+    pub fn as_live_window_or_error(self) -> LispWindowRef {
+        self.as_live_window()
+            .unwrap_or_else(|| wrong_type!(Qwindow_live_p, self))
+    }
+
+    pub fn as_valid_window(self) -> Option<LispWindowRef> {
+        self.as_window()
+            .and_then(|w| if w.is_valid() { Some(w) } else { None })
+    }
+
+    pub fn as_valid_window_or_error(self) -> LispWindowRef {
+        self.as_valid_window()
+            .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
+    }
+
+    /*
+    pub fn is_window_configuration(self) -> bool {
+        self.as_vectorlike().map_or(
+            false,
+            |v| v.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION),
+        )
+    }
+    */
 }
 
 pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;

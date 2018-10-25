@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{frame_dimension, output_method, Fcons, Fselect_window};
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame, Lisp_Type};
+use remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::defsubr;
@@ -30,6 +30,51 @@ impl LispFrameRef {
     #[inline]
     pub fn is_visible(self) -> bool {
         self.visible() != 0
+    }
+}
+
+impl From<LispObject> for LispFrameRef {
+    fn from(o: LispObject) -> Self {
+        o.as_frame_or_error()
+    }
+}
+
+impl From<LispFrameRef> for LispObject {
+    fn from(f: LispFrameRef) -> Self {
+        f.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispFrameRef> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_frame()
+    }
+}
+
+impl LispObject {
+    pub fn is_frame(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_FRAME))
+    }
+
+    pub fn as_frame(self) -> Option<LispFrameRef> {
+        self.as_vectorlike().and_then(|v| v.as_frame())
+    }
+
+    pub fn as_frame_or_error(self) -> LispFrameRef {
+        self.as_frame()
+            .unwrap_or_else(|| wrong_type!(Qframep, self))
+    }
+
+    pub fn as_live_frame(self) -> Option<LispFrameRef> {
+        self.as_frame()
+            .and_then(|f| if f.is_live() { Some(f) } else { None })
+    }
+
+    pub fn as_live_frame_or_error(self) -> LispFrameRef {
+        self.as_live_frame()
+            .unwrap_or_else(|| wrong_type!(Qframe_live_p, self))
     }
 }
 

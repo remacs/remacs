@@ -10,9 +10,8 @@ use remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeature
 
 use eval::un_autoload;
 use lisp::defsubr;
-use lisp::LispCons;
 use lisp::LispObject;
-use lists::{assq, car, get, member, memq, put};
+use lists::{assq, car, get, member, memq, put, LispCons};
 use obarray::loadhist_attach;
 use objects::equal;
 use symbols::LispSymbolRef;

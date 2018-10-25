@@ -18,8 +18,8 @@ use remacs_sys::{Vautoload_queue, Vrun_hooks};
 
 use data::{defalias, indirect_function, indirect_function_lisp};
 use lisp::{defsubr, is_autoload};
-use lisp::{LispCons, LispObject, LispSubrRef};
-use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr};
+use lisp::{LispObject, LispSubrRef};
+use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons};
 use multibyte::LispStringRef;
 use obarray::loadhist_attach;
 use objects::equal;

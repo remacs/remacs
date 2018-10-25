@@ -7,13 +7,13 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
                  del_range, delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
                  set_buffer_internal_1, specbind, unbind_to, unchain_both, update_mode_lines};
+use remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
+                 Lisp_Overlay, Lisp_Type, Vbuffer_alist};
 use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
                  Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Foverlay_get,
                  Fwiden};
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
-                 Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
-use remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qget_file_buffer,
-                 Qinhibit_quit, Qinhibit_read_only, Qnil, Qt, Qunbound, Qvoid_variable};
+use remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
+                 Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, Qvoid_variable};
 
 use character::char_head_p;
 use chartable::LispCharTableRef;
@@ -24,6 +24,7 @@ use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::{multibyte_length_by_head, string_char};
+use numbers::MOST_POSITIVE_FIXNUM;
 use strings::string_equal;
 use threads::{c_specpdl_index, ThreadState};
 
@@ -374,6 +375,87 @@ impl LispBufferRef {
     #[inline]
     pub fn overlays_after(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
+    }
+}
+
+impl LispObject {
+    pub fn is_buffer(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BUFFER))
+    }
+
+    pub fn as_buffer(self) -> Option<LispBufferRef> {
+        self.as_vectorlike().and_then(|v| v.as_buffer())
+    }
+
+    pub fn as_live_buffer(self) -> Option<LispBufferRef> {
+        self.as_buffer()
+            .and_then(|b| if b.is_live() { Some(b) } else { None })
+    }
+
+    pub fn as_buffer_or_error(self) -> LispBufferRef {
+        self.as_buffer()
+            .unwrap_or_else(|| wrong_type!(Qbufferp, self))
+    }
+}
+
+impl From<LispObject> for LispBufferRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_buffer_or_error()
+    }
+}
+
+impl From<LispBufferRef> for LispObject {
+    fn from(b: LispBufferRef) -> Self {
+        b.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispBufferRef> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_buffer()
+    }
+}
+
+impl LispObject {
+    pub fn is_overlay(self) -> bool {
+        self.as_misc()
+            .map_or(false, |m| m.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay)
+    }
+
+    pub fn as_overlay(self) -> Option<LispOverlayRef> {
+        self.as_misc().and_then(|m| {
+            if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
+                unsafe { Some(mem::transmute(m)) }
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn as_overlay_or_error(self) -> LispOverlayRef {
+        self.as_overlay()
+            .unwrap_or_else(|| wrong_type!(Qoverlayp, self))
+    }
+}
+
+impl From<LispObject> for LispOverlayRef {
+    fn from(o: LispObject) -> Self {
+        o.as_overlay_or_error()
+    }
+}
+
+impl From<LispOverlayRef> for LispObject {
+    fn from(o: LispOverlayRef) -> Self {
+        o.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispOverlayRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_overlay()
     }
 }
 

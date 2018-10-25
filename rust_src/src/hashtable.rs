@@ -4,10 +4,11 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qhash_table_test;
 use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
                  Fcopy_sequence};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, CHECK_IMPURE};
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type,
+                 CHECK_IMPURE};
+use remacs_sys::{Qhash_table_p, Qhash_table_test};
 
 use data::aref;
 use lisp::defsubr;
@@ -125,6 +126,45 @@ impl LispHashTableRef {
 
     pub fn clear(mut self) {
         unsafe { hash_clear(self.as_mut()) }
+    }
+}
+
+impl From<LispObject> for LispHashTableRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_hash_table_or_error()
+    }
+}
+
+impl From<LispHashTableRef> for LispObject {
+    #[inline]
+    fn from(h: LispHashTableRef) -> Self {
+        LispObject::from_hash_table(h)
+    }
+}
+
+impl LispObject {
+    pub fn is_hash_table(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_HASH_TABLE))
+    }
+
+    pub fn as_hash_table_or_error(self) -> LispHashTableRef {
+        if self.is_hash_table() {
+            LispHashTableRef::new(self.get_untaggedptr() as *mut Lisp_Hash_Table)
+        } else {
+            wrong_type!(Qhash_table_p, self);
+        }
+    }
+
+    pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
+        let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
+        debug_assert!(
+            object.is_vectorlike() && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void
+        );
+
+        debug_assert!(object.is_hash_table());
+        object
     }
 }
 

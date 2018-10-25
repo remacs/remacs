@@ -19,8 +19,9 @@ use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qnil, Q
 
 use buffers::{buffer_file_name, current_buffer, get_buffer, nsberror, LispBufferRef};
 use lisp::defsubr;
-use lisp::{LispNumber, LispObject};
+use lisp::LispObject;
 use multibyte::LispStringRef;
+use numbers::LispNumber;
 use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
 
@@ -98,7 +99,7 @@ fn get_coding_system_for_buffer(
     coding_system: LispObject,
 ) -> LispObject {
     /* Decide the coding-system to encode the data with.
-       See fileio.c:Fwrite-region */
+    See fileio.c:Fwrite-region */
     if coding_system.is_not_nil() {
         return coding_system;
     }
@@ -121,7 +122,7 @@ fn get_coding_system_for_buffer(
     }
     if buffer.buffer_file_coding_system_.is_not_nil() {
         /* If we still have not decided a coding system, use the
-           default value of buffer-file-coding-system. */
+        default value of buffer-file-coding-system. */
         return buffer.buffer_file_coding_system_;
     }
     let sscsf = unsafe { globals.Vselect_safe_coding_system_function };

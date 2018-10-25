@@ -156,11 +156,6 @@ extern "C" {
     ) -> Lisp_Object;
 }
 
-// Largest and smallest numbers that can be represented as fixnums in
-// Emacs lisp.
-pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> Lisp_Bits::INTTYPEBITS as u32;
-pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
-
 // Max value for the first argument of wait_reading_process_output.
 pub const WAIT_READING_MAX: i64 = std::i64::MAX;
 
