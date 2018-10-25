@@ -1409,8 +1409,6 @@ lowercasep (int c)
   return !uppercasep (c) && upcase (c) != c;
 }
 
-/* File and lookahead for get-file-char and get-emacs-mule-file-char
-   to read from.  Used by Fload.  */
 struct infile
 {
   /* The input stream.  */
@@ -1422,7 +1420,10 @@ struct infile
   /* Lookahead bytes, in reverse order.  Keep these here because it is
      not portable to ungetc more than one byte at a time.  */
   unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
-} *infile;
+};
+
+/* Defined in buffer.c.  */
+extern struct infile* infile;
 
 /* Defined in lread.c.  */
 extern void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
