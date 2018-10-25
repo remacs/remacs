@@ -10,10 +10,9 @@ use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
                  Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
                  Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt};
 
+use buffers::LispBufferOrName;
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
-
-use buffers::get_buffer;
 use lists::{assoc, car, cdr, plist_put};
 use multibyte::LispStringRef;
 
@@ -124,20 +123,19 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// Return nil if all processes associated with BUFFER have been
 /// deleted or killed.
 #[lisp_fn]
-pub fn get_buffer_process(buffer: LispObject) -> LispObject {
-    if buffer.is_nil() {
+pub fn get_buffer_process(buffer_or_name: LispBufferOrName) -> LispObject {
+    let obj = LispObject::from(buffer_or_name);
+    if obj.is_nil() {
         return Qnil;
     }
-    let buf = get_buffer(buffer);
-    if buf.is_nil() {
-        return Qnil;
-    }
+
     for tail in unsafe { Vprocess_alist }.iter_tails() {
         let p = tail.car().as_cons_or_error().cdr();
-        if buf.eq(p.as_process_or_error().buffer) {
+        if obj.eq(p.as_process_or_error().buffer) {
             return p;
         }
     }
+
     Qnil
 }
 
