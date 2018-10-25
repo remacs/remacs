@@ -317,8 +317,12 @@ backward."
 ;;; Marker stack  (M-. pushes, M-, pops)
 
 (defcustom xref-marker-ring-length 16
-  "Length of the xref marker ring."
-  :type 'integer)
+  "Length of the xref marker ring.
+If this variable is not set through Customize, you must call
+`xref-set-marker-ring-length' for changes to take effect."
+  :type 'integer
+  :initialize #'custom-initialize-default
+  :set #'xref-set-marker-ring-length)
 
 (defcustom xref-prompt-for-identifier '(not xref-find-definitions
                                             xref-find-definitions-other-window
@@ -353,6 +357,14 @@ elements is negated: these commands will NOT prompt."
 
 (defvar xref--marker-ring (make-ring xref-marker-ring-length)
   "Ring of markers to implement the marker stack.")
+
+(defun xref-set-marker-ring-length (var val)
+  "Set `xref-marker-ring-length'.
+VAR is the symbol `xref-marker-ring-length' and VAL is the new
+value."
+  (set-default var val)
+  (if (ring-p xref--marker-ring)
+      (ring-resize xref--marker-ring val)))
 
 (defun xref-push-marker-stack (&optional m)
   "Add point M (defaults to `point-marker') to the marker stack."

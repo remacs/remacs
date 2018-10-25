@@ -460,6 +460,11 @@ for example.
 This command finds definitions of the identifier at the place of a
 mouse click event, and is intended to be bound to a mouse event.
 
++++
+*** Changing 'xref-marker-ring-length' works after 'xref.el' is loaded.
+Previously, setting 'xref-marker-ring-length' would only take effect
+if set before 'xref.el' was loaded.
+
 ** Ecomplete
 
 *** The ecomplete sorting has changed to a decay-based algorithm.
