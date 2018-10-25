@@ -5,25 +5,21 @@
 
 A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust](https://www.rust-lang.org).
 
-GPLv3 license.
-
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
 
-- [Rust :heart: Emacs](#rust-heart-emacs)
-    - [Why Emacs?](#why-emacs)
-    - [Why Rust?](#why-rust)
-    - [Why A Fork?](#why-a-fork)
-    - [Getting Started](#getting-started)
-        - [Requirements](#requirements)
-        - [Building Remacs](#building-remacs)
-        - [Running Remacs](#running-remacs)
-        - [Rustdoc builds](#rustdoc-builds)
-    - [Porting Elisp Primitive Functions](#porting-elisp-primitive-functions)
-    - [Design Goals](#design-goals)
-    - [Non-Design Goals](#non-design-goals)
-    - [Contributing](#contributing)
-    - [Help Needed](#help-needed)
+- [Why Emacs?](#why-emacs)
+- [Why Rust?](#why-rust)
+- [Why A Fork?](#why-a-fork)
+- [Getting Started](#getting-started)
+    - [Requirements](#requirements)
+    - [Building Remacs](#building-remacs)
+    - [Running Remacs](#running-remacs)
+- [Porting Elisp Primitive Functions](#porting-elisp-primitive-functions)
+- [Design Goals](#design-goals)
+- [Non-Design Goals](#non-design-goals)
+- [Contributing](#contributing)
+- [Help Needed](#help-needed)
 
 <!-- markdown-toc end -->
 
@@ -83,7 +79,7 @@ off](https://i.stack.imgur.com/7Cu9Z.jpg).
 
 Rust is a great alternative to C.
 
-Rust has **a fantastic learning curve**. The documentation is superb,
+Rust has **a fantastic learning curve**. [The documentation is superb](https://doc.rust-lang.org/),
 and the community is very helpful if you get stuck.
 
 Rust has **excellent tooling**. The compiler makes great suggestions,
@@ -218,26 +214,6 @@ You can now run your shiny new Remacs build!
 $ RUST_BACKTRACE=1 src/remacs -q
 ```
 
-### Rustdoc builds
-
-You can use rustdoc to generate API docs:
-
-``` bash
-# http://stackoverflow.com/a/39374515/509706
-$ cargo rustdoc -- \
-    --no-defaults \
-    --passes strip-hidden \
-    --passes collapse-docs \
-    --passes unindent-comments \
-    --passes strip-priv-imports
-```
-
-You can then open these docs with:
-
-``` bash
-$ cargo doc --open
-```
-
 ## Porting Elisp Primitive Functions
 
 The first thing to look at is the C implementation for the `atan` function. It takes an optional second argument, which makes it interesting. The complicated mathematical bits, on the other hand, are handled by the standard library. This allows us to focus on the porting process without getting distracted by the math.
@@ -329,5 +305,5 @@ Pull requests welcome, no copyright assignment required. This project is under t
 
 ## Help Needed
 
-There's lots to do! We keep a list of low hanging fruit here so you can easily choose
-one. You can find information in our [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our gitter channel.
+There's lots to do! We keep a list of [low hanging fruit](https://github.com/Wilfred/remacs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) here so you can easily choose
+one. You can find information in the [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our gitter channel.
