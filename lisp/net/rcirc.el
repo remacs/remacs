@@ -753,12 +753,12 @@ Function is called with PROCESS, COMMAND, SENDER, ARGS and LINE.")
   (with-rcirc-process-buffer process
     (setq rcirc-last-server-message-time (current-time))
     (setq rcirc-process-output (concat rcirc-process-output output))
-    (when (= (aref rcirc-process-output
-                   (1- (length rcirc-process-output))) ?\n)
-      (mapc (lambda (line)
-              (rcirc-process-server-response process line))
-            (split-string rcirc-process-output "[\n\r]" t))
-      (setq rcirc-process-output nil))))
+    (when (= ?\n (aref rcirc-process-output
+                       (1- (length rcirc-process-output))))
+      (let ((lines (split-string rcirc-process-output "[\n\r]" t)))
+        (setq rcirc-process-output nil)
+        (dolist (line lines)
+          (rcirc-process-server-response process line))))))
 
 (defun rcirc-reschedule-timeout (process)
   (with-rcirc-process-buffer process
