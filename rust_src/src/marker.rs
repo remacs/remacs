@@ -106,13 +106,11 @@ impl From<LispObject> for Option<LispMarkerRef> {
 }
 
 impl LispObject {
-    #[inline]
     pub fn is_marker(self) -> bool {
         self.as_misc()
             .map_or(false, |m| m.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker)
     }
 
-    #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.as_misc().and_then(|m| {
             if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {

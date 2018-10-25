@@ -26,12 +26,10 @@ impl LispFloatRef {
 }
 
 impl LispObject {
-    #[inline]
     pub fn is_float(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Float
     }
 
-    #[inline]
     unsafe fn to_float_unchecked(self) -> LispFloatRef {
         debug_assert!(self.is_float());
         LispFloatRef::new(self.get_untaggedptr() as *mut Lisp_Float)
@@ -74,14 +72,12 @@ impl LispObject {
 }
 
 impl From<LispObject> for EmacsDouble {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.any_to_float_or_error()
     }
 }
 
 impl From<LispObject> for Option<EmacsDouble> {
-    #[inline]
     fn from(o: LispObject) -> Self {
         if o.is_nil() {
             None

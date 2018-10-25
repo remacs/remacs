@@ -15,7 +15,6 @@ use vectors::LispVectorlikeRef;
 pub struct LispFontRef(LispVectorlikeRef);
 
 impl LispFontRef {
-    #[inline]
     pub fn from_vectorlike(v: LispVectorlikeRef) -> LispFontRef {
         LispFontRef(v)
     }

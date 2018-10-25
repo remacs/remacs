@@ -18,12 +18,10 @@ use symbols::LispSymbolRef;
 pub struct LispCons(LispObject);
 
 impl LispObject {
-    #[inline]
     pub fn is_cons(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Cons
     }
 
-    #[inline]
     pub fn as_cons(self) -> Option<LispCons> {
         if self.is_cons() {
             Some(LispCons(self))
@@ -32,7 +30,6 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn as_cons_or_error(self) -> LispCons {
         if self.is_cons() {
             LispCons(self)
@@ -43,12 +40,10 @@ impl LispObject {
 }
 
 impl LispObject {
-    #[inline]
     pub fn cons(car: LispObject, cdr: LispObject) -> Self {
         unsafe { Fcons(car, cdr) }
     }
 
-    #[inline]
     pub fn is_list(self) -> bool {
         self.is_cons() || self.is_nil()
     }
@@ -186,14 +181,12 @@ impl Iterator for CarIter {
 }
 
 impl From<LispObject> for LispCons {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_cons_or_error()
     }
 }
 
 impl From<LispObject> for Option<LispCons> {
-    #[inline]
     fn from(o: LispObject) -> Self {
         if o.is_list() {
             Some(o.as_cons_or_error())

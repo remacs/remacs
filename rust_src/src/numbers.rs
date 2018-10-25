@@ -30,13 +30,11 @@ pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 /// TODO: Recheck these logic in original C code.
 
 impl LispObject {
-    #[inline]
     pub fn from_fixnum(n: EmacsInt) -> LispObject {
         debug_assert!(MOST_NEGATIVE_FIXNUM <= n && n <= MOST_POSITIVE_FIXNUM);
         Self::from_fixnum_truncated(n)
     }
 
-    #[inline]
     pub fn from_fixnum_truncated(n: EmacsInt) -> LispObject {
         let o = if USE_LSB_TAG {
             (n << Lisp_Bits::INTTYPEBITS) as EmacsUint + Lisp_Type::Lisp_Int0 as EmacsUint
@@ -53,13 +51,11 @@ impl LispObject {
     // TODO: the C claims that make_natnum is faster, but it does the same
     // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
     // should remove this in favour of make_number.
-    #[inline]
     pub fn from_natnum(n: EmacsUint) -> LispObject {
         debug_assert!(n <= (MOST_POSITIVE_FIXNUM as EmacsUint));
         LispObject::from_fixnum_truncated(n as EmacsInt)
     }
 
-    #[inline]
     pub fn int_or_float_from_fixnum(n: EmacsInt) -> LispObject {
         if n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM {
             Self::from_float(n as f64)
@@ -68,12 +64,10 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn fixnum_overflow(n: EmacsInt) -> bool {
         n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM
     }
 
-    #[inline]
     pub unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
         let raw = self.to_C();
         if !USE_LSB_TAG {
@@ -83,14 +77,12 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn is_fixnum(self) -> bool {
         let ty = self.get_type();
         (ty as u8 & ((Lisp_Type::Lisp_Int0 as u8) | !(Lisp_Type::Lisp_Int1 as u8)))
             == Lisp_Type::Lisp_Int0 as u8
     }
 
-    #[inline]
     pub fn as_fixnum(self) -> Option<EmacsInt> {
         if self.is_fixnum() {
             Some(unsafe { self.to_fixnum_unchecked() })
@@ -99,7 +91,6 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn as_fixnum_or_error(self) -> EmacsInt {
         if self.is_fixnum() {
             unsafe { self.to_fixnum_unchecked() }
@@ -108,7 +99,6 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn as_fixnum_coerce_marker_or_error(self) -> EmacsInt {
         if let Some(n) = self.as_fixnum() {
             n
@@ -120,17 +110,14 @@ impl LispObject {
     }
 
     /// TODO: Bignum support? (Current Emacs doesn't have it)
-    #[inline]
     pub fn is_integer(self) -> bool {
         self.is_fixnum()
     }
 
-    #[inline]
     pub fn is_natnum(self) -> bool {
         self.as_fixnum().map_or(false, |i| i >= 0)
     }
 
-    #[inline]
     pub fn as_natnum_or_error(self) -> EmacsUint {
         if self.is_natnum() {
             unsafe { self.to_fixnum_unchecked() as EmacsUint }
@@ -180,13 +167,11 @@ impl From<LispObject> for Option<LispNumber> {
 }
 
 impl LispObject {
-    #[inline]
     pub fn is_number(self) -> bool {
         self.is_fixnum() || self.is_float()
     }
 
     /*
-    #[inline]
     pub fn as_number_or_error(self) -> LispNumber {
         if let Some(n) = self.as_fixnum() {
             LispNumber::Fixnum(n)
@@ -210,7 +195,6 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
         self.as_number_coerce_marker()
             .unwrap_or_else(|| wrong_type!(Qnumber_or_marker_p, self))

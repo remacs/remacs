@@ -78,12 +78,10 @@ impl LispHashTableRef {
         self.weak
     }
 
-    #[inline]
     pub fn get_hash_value(self, idx: isize) -> LispObject {
         aref(self.key_and_value, (2 * idx + 1) as EmacsInt)
     }
 
-    #[inline]
     pub fn set_hash_value(self, idx: isize, value: LispObject) {
         unsafe { gc_aset(self.key_and_value, 2 * idx + 1, value) };
     }
@@ -130,14 +128,12 @@ impl LispHashTableRef {
 }
 
 impl From<LispObject> for LispHashTableRef {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_hash_table_or_error()
     }
 }
 
 impl From<LispHashTableRef> for LispObject {
-    #[inline]
     fn from(h: LispHashTableRef) -> Self {
         LispObject::from_hash_table(h)
     }

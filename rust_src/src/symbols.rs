@@ -132,14 +132,12 @@ impl LispSymbolRef {
 }
 
 impl From<LispObject> for LispSymbolRef {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_symbol_or_error()
     }
 }
 
 impl From<LispSymbolRef> for LispObject {
-    #[inline]
     fn from(s: LispSymbolRef) -> Self {
         s.as_lisp_obj()
     }
@@ -153,12 +151,10 @@ impl From<LispObject> for Option<LispSymbolRef> {
 
 // Symbol support (LispType == Lisp_Symbol == 0)
 impl LispObject {
-    #[inline]
     pub fn is_symbol(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Symbol
     }
 
-    #[inline]
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         if self.is_symbol() {
             Some(LispSymbolRef::new(
@@ -169,7 +165,6 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn as_symbol_or_error(self) -> LispSymbolRef {
         if let Some(sym) = self.as_symbol() {
             sym
@@ -178,7 +173,6 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn symbol_or_string_as_string(self) -> LispStringRef {
         match self.as_symbol() {
             Some(sym) => sym
@@ -189,7 +183,6 @@ impl LispObject {
         }
     }
 
-    #[inline]
     fn symbol_ptr_value(self) -> EmacsInt {
         let ptr_value = if USE_LSB_TAG {
             self.to_C()

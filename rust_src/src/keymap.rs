@@ -20,7 +20,6 @@ use lists::nth;
 use obarray::intern;
 use threads::ThreadState;
 
-#[inline]
 pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
 }

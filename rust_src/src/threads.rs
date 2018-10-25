@@ -28,24 +28,20 @@ impl ThreadState {
 }
 
 impl ThreadStateRef {
-    #[inline]
     pub fn name(self) -> LispObject {
         self.name
     }
 
-    #[inline]
     pub fn is_alive(self) -> bool {
         !self.m_specpdl.is_null()
     }
 
-    #[inline]
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
 impl From<LispObject> for ThreadStateRef {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_thread_or_error()
     }

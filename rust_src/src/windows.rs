@@ -34,19 +34,16 @@ impl LispWindowRef {
 
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
-    #[inline]
     pub fn is_live(self) -> bool {
         self.contents.is_buffer()
     }
 
-    #[inline]
     pub fn is_pseudo(self) -> bool {
         self.pseudo_window_p()
     }
 
     /// A window of any sort, leaf or interior, is "valid" if its
     /// contents slot is non-nil.
-    #[inline]
     pub fn is_valid(self) -> bool {
         self.contents.is_not_nil()
     }
@@ -75,27 +72,22 @@ impl LispWindowRef {
         }
     }
 
-    #[inline]
     pub fn start_marker(self) -> LispObject {
         self.start
     }
 
-    #[inline]
     pub fn is_internal(self) -> bool {
         self.contents.is_window()
     }
 
-    #[inline]
     pub fn is_minibuffer(self) -> bool {
         self.mini()
     }
 
-    #[inline]
     pub fn is_menu_bar(mut self) -> bool {
         unsafe { window_menu_bar_p(self.as_mut()) }
     }
 
-    #[inline]
     pub fn is_tool_bar(mut self) -> bool {
         unsafe { window_tool_bar_p(self.as_mut()) }
     }
@@ -139,13 +131,11 @@ impl LispWindowRef {
     /// The frame x-position at which the text (or left fringe) in
     /// window starts. This does not include a left-hand scroll bar
     /// if any.
-    #[inline]
     pub fn left_edge_x(self) -> i32 {
         self.frame.as_frame_or_error().internal_border_width() + self.left_pixel_edge()
     }
 
     /// The frame y-position at which the window starts.
-    #[inline]
     pub fn top_edge_y(self) -> i32 {
         let mut y = self.top_pixel_edge();
         if !(self.is_menu_bar() || self.is_tool_bar()) {
@@ -155,20 +145,17 @@ impl LispWindowRef {
     }
 
     /// The pixel value where the text (or left fringe) in window starts.
-    #[inline]
     pub fn left_pixel_edge(self) -> i32 {
         self.pixel_left
     }
 
     /// The top pixel edge at which the window starts.
     /// This includes a header line, if any.
-    #[inline]
     pub fn top_pixel_edge(self) -> i32 {
         self.pixel_top
     }
 
     /// Convert window relative pixel Y to frame pixel coordinates.
-    #[inline]
     pub fn frame_pixel_y(self, y: i32) -> i32 {
         y + self.top_edge_y()
     }
@@ -242,7 +229,6 @@ impl From<LispWindowRef> for LispObject {
 }
 
 impl From<LispObject> for Option<LispWindowRef> {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_window()
     }
