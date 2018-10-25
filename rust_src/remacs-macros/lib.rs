@@ -1,5 +1,3 @@
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
 #![recursion_limit = "128"]
 
 #[macro_use]
@@ -114,6 +112,8 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
 
     let tokens = quote! {
         #[no_mangle]
+        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[allow(clippy::transmute_ptr_to_ptr)]
         pub extern "C" fn #fname(#cargs) -> ::lisp::LispObject {
             #body
 

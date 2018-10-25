@@ -1,5 +1,5 @@
 //! Functions doing math on numbers.
-#![cfg_attr(feature = "clippy", allow(float_cmp))]
+#![allow(clippy::float_cmp)]
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};

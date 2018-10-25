@@ -1,5 +1,5 @@
 //! Functions operating on float numbers.
-#![cfg_attr(feature = "clippy", allow(float_cmp))]
+#![allow(clippy::float_cmp)]
 
 use libc;
 

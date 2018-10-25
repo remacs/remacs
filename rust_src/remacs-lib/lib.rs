@@ -1,5 +1,4 @@
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
+#![feature(tool_lints)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(private_no_mangle_fns)]
