@@ -870,7 +870,8 @@ Otherwise, it defers to REST which is a list of branches of the form
                (else-rest (cdr splitrest)))
           (pcase--if (cond
                       ((null val) `(null ,sym))
-                      ((or (integerp val) (symbolp val))
+                      ((integerp val) `(eql ,sym ,val))
+                      ((symbolp val)
                        (if (pcase--self-quoting-p val)
                            `(eq ,sym ,val)
                          `(eq ,sym ',val)))
