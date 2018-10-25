@@ -1218,6 +1218,10 @@ to mean that it is not known whether DST is in effect.
 'json-insert', 'json-parse-string', and 'json-parse-buffer'.  These
 are implemented in C using the Jansson library.
 
++++
+** New function 'ring-resize'.
+'ring-resize' can be used to grow or shrink a ring.
+
 ** Mailcap
 
 ---

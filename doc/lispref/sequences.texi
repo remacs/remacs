@@ -1777,6 +1777,11 @@ If the ring is full, this function removes the newest element to make
 room for the inserted element.
 @end defun
 
+@defun ring-resize ring size
+Set the size of @var{ring} to @var{size}.  If the new size is smaller,
+then the oldest items in the ring are discarded.
+@end defun
+
 @cindex fifo data structure
   If you are careful not to exceed the ring size, you can
 use the ring as a first-in-first-out queue.  For example:
