@@ -4,8 +4,6 @@
 use libc::{c_char, c_void, intptr_t, uintptr_t};
 use std::ffi::CString;
 
-#[cfg(test)]
-use std::cmp::max;
 use std::convert::From;
 use std::fmt::{Debug, Error, Formatter};
 use std::mem;
@@ -13,24 +11,19 @@ use std::ops::{Deref, DerefMut};
 use std::slice;
 
 use remacs_sys;
-use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, Lisp_Bits,
-                 CHECK_IMPURE, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX, INTMASK,
-                 MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, USE_LSB_TAG, VALMASK};
-use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Symbol,
-                 Lisp_Type};
-use remacs_sys::{Qarrayp, Qautoload, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp,
-                 Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p,
-                 Qnumberp, Qplistp, Qstringp, Qsubrp, Qsymbolp, Qt, Qunbound, Qvectorp,
-                 Qwholenump, Vbuffer_alist};
+use remacs_sys::{build_string, internal_equal, make_float};
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits,
+                 FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX, USE_LSB_TAG, VALMASK};
+use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
+use remacs_sys::{Qautoload, Qchar_table_p, Qlistp, Qnil, Qsubrp, Qt, Qunbound, Vbuffer_alist};
 
+use buffers::LispBufferRef;
 use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
 use eval::FUNCTIONP;
 use fonts::LispFontRef;
-use lists::{circular_list, list};
-use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
+use lists::{list, CarIter};
 use obarray::{check_obarray, LispObarrayRef};
-use vectors::{LispBoolVecRef, LispVectorRef, LispVectorlikeRef};
+use vectors::LispBoolVecRef;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 

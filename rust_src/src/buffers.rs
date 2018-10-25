@@ -8,12 +8,12 @@ use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffe
                  del_range, delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
                  set_buffer_internal_1, specbind, unbind_to, unchain_both, update_mode_lines};
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
-                 Lisp_Overlay, Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
+                 Lisp_Overlay, Lisp_Type, Vbuffer_alist};
 use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
                  Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Foverlay_get,
                  Fwiden};
-use remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qget_file_buffer,
-                 Qinhibit_quit, Qinhibit_read_only, Qnil, Qt, Qunbound, Qvoid_variable};
+use remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
+                 Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, Qvoid_variable};
 
 use character::char_head_p;
 use chartable::LispCharTableRef;
@@ -24,6 +24,7 @@ use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::{multibyte_length_by_head, string_char};
+use numbers::MOST_POSITIVE_FIXNUM;
 use strings::string_equal;
 use threads::{c_specpdl_index, ThreadState};
 
@@ -766,8 +767,7 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
         .find(|buf| {
             let buf_truename = buf.truename();
             buf_truename.is_string() && string_equal(buf_truename, filename)
-        })
-        .into()
+        }).into()
 }
 
 // to be removed once all references in C are ported

@@ -5,14 +5,16 @@ use remacs_sys::Fset;
 use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
                  make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
                  swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
-use remacs_sys::{Lisp_Symbol, Lisp_Type};
-use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qunbound, Qvoid_variable};
+use remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG};
+use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qsymbolp, Qunbound,
+                 Qvoid_variable};
 
 use buffers::LispBufferLocalValueRef;
 use data::indirect_function;
 use data::Lisp_Fwd;
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
+use multibyte::LispStringRef;
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 

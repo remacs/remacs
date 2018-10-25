@@ -12,8 +12,9 @@ use remacs_sys::{estimate_mode_line_height, minibuf_level,
                  selected_window as current_window, set_buffer_internal, set_window_hscroll,
                  window_body_width, window_list_1, window_menu_bar_p, window_parameter,
                  window_tool_bar_p, wset_display_table, wset_redisplay, wset_update_mode_line};
-use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone};
+use remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
+                 Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 
 use editfns::{goto_char, point};
 use frames::{frame_live_or_selected, selected_frame, LispFrameRef};

@@ -4,10 +4,11 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qhash_table_test;
 use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
                  Fcopy_sequence};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, CHECK_IMPURE};
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type,
+                 CHECK_IMPURE};
+use remacs_sys::{Qhash_table_p, Qhash_table_test};
 
 use data::aref;
 use lisp::defsubr;
@@ -136,7 +137,7 @@ impl LispObject {
 
     pub fn as_hash_table_or_error(self) -> LispHashTableRef {
         if self.is_hash_table() {
-            LispHashTableRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Hash_Table)
+            LispHashTableRef::new(self.get_untaggedptr() as *mut Lisp_Hash_Table)
         } else {
             wrong_type!(Qhash_table_p, self);
         }

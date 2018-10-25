@@ -3,11 +3,13 @@
 use libc::{c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
+use remacs_sys::EmacsInt;
+use remacs_sys::Qcharacterp;
 
 use lisp::defsubr;
 use lisp::LispObject;
-use multibyte::MAX_CHAR;
 use multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe};
+use multibyte::{Codepoint, MAX_CHAR};
 use threads::ThreadState;
 
 impl LispObject {

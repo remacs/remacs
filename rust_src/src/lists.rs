@@ -1,15 +1,89 @@
 //! Operations on lists.
 
+use libc::c_void;
+
 use remacs_macros::lisp_fn;
-use remacs_sys::globals;
-use remacs_sys::{EmacsInt, EmacsUint};
-use remacs_sys::{Qcircular_list, Qnil, Qplistp};
+use remacs_sys::{globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type};
+use remacs_sys::{Fcons, CHECK_IMPURE};
+use remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp};
 
 use lisp::defsubr;
-use lisp::{LispCons, LispObject};
+use lisp::LispObject;
 use symbols::LispSymbolRef;
 
 // Cons support (LispType == 6 | 3)
+
+/// A newtype for objects we know are conses.
+#[derive(Clone, Copy)]
+pub struct LispCons(LispObject);
+
+impl LispObject {
+    #[inline]
+    pub fn is_cons(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Cons
+    }
+
+    #[inline]
+    pub fn as_cons(self) -> Option<LispCons> {
+        if self.is_cons() {
+            Some(LispCons(self))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_cons_or_error(self) -> LispCons {
+        if self.is_cons() {
+            LispCons(self)
+        } else {
+            wrong_type!(Qconsp, self)
+        }
+    }
+}
+
+impl LispObject {
+    #[inline]
+    pub fn cons(car: LispObject, cdr: LispObject) -> Self {
+        unsafe { Fcons(car, cdr) }
+    }
+
+    #[inline]
+    pub fn is_list(self) -> bool {
+        self.is_cons() || self.is_nil()
+    }
+
+    /// Iterate over all tails of self.  self should be a list, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
+    pub fn iter_tails(self) -> TailsIter {
+        TailsIter::new(self, Some(Qlistp))
+    }
+
+    /// Iterate over all tails of self.  If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    pub fn iter_tails_safe(self) -> TailsIter {
+        TailsIter::new(self, None)
+    }
+
+    /// Iterate over all tails of self.  self should be a plist, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
+    pub fn iter_tails_plist(self) -> TailsIter {
+        TailsIter::new(self, Some(Qplistp))
+    }
+
+    /// Iterate over the car cells of a list.
+    pub fn iter_cars(self) -> CarIter {
+        CarIter::new(self, Some(Qlistp))
+    }
+
+    /// Iterate over all cars of self. If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    pub fn iter_cars_safe(self) -> CarIter {
+        CarIter::new(self, None)
+    }
+}
 
 /// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
 pub struct TailsIter {
@@ -111,72 +185,6 @@ impl Iterator for CarIter {
     }
 }
 
-impl LispObject {
-    #[inline]
-    pub fn cons(car: LispObject, cdr: LispObject) -> Self {
-        unsafe { Fcons(car, cdr) }
-    }
-
-    #[inline]
-    pub fn is_cons(self) -> bool {
-        self.get_type() == Lisp_Type::Lisp_Cons
-    }
-
-    #[inline]
-    pub fn as_cons(self) -> Option<LispCons> {
-        if self.is_cons() {
-            Some(LispCons(self))
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn as_cons_or_error(self) -> LispCons {
-        if self.is_cons() {
-            LispCons(self)
-        } else {
-            wrong_type!(Qconsp, self)
-        }
-    }
-
-    #[inline]
-    pub fn is_list(self) -> bool {
-        self.is_cons() || self.is_nil()
-    }
-
-    /// Iterate over all tails of self.  self should be a list, i.e. a chain
-    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
-    /// will be signaled.
-    pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(self, Some(Qlistp))
-    }
-
-    /// Iterate over all tails of self.  If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    pub fn iter_tails_safe(self) -> TailsIter {
-        TailsIter::new(self, None)
-    }
-
-    /// Iterate over all tails of self.  self should be a plist, i.e. a chain
-    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
-    /// will be signaled.
-    pub fn iter_tails_plist(self) -> TailsIter {
-        TailsIter::new(self, Some(Qplistp))
-    }
-
-    /// Iterate over the car cells of a list.
-    pub fn iter_cars(self) -> CarIter {
-        CarIter::new(self, Some(Qlistp))
-    }
-
-    /// Iterate over all cars of self. If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    pub fn iter_cars_safe(self) -> CarIter {
-        CarIter::new(self, None)
-    }
-}
-
 impl From<LispObject> for LispCons {
     #[inline]
     fn from(o: LispObject) -> Self {
@@ -201,17 +209,13 @@ impl From<LispCons> for LispObject {
     }
 }
 
-/// A newtype for objects we know are conses.
-#[derive(Clone, Copy)]
-pub struct LispCons(LispObject);
-
 impl LispCons {
     pub fn as_obj(self) -> LispObject {
         self.0
     }
 
     fn _extract(self) -> *mut Lisp_Cons {
-        self.0.get_untaggedptr() as *mut remacs_sys::Lisp_Cons
+        self.0.get_untaggedptr() as *mut Lisp_Cons
     }
 
     /// Return the car (first cell).
@@ -396,8 +400,7 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.car()))
-        })
-        .unwrap_or(Qnil)
+        }).unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the car of an element of LIST.
@@ -429,8 +432,7 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
-        })
-        .unwrap_or(Qnil)
+        }).unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the cdr of an element of LIST.

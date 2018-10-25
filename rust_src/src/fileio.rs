@@ -3,7 +3,8 @@ use std::path;
 
 use remacs_macros::lisp_fn;
 
-use lisp::{defsubr, LispCons};
+use lisp::defsubr;
+use lists::LispCons;
 use math::{arithcompare, ArithComparison};
 use multibyte::LispStringRef;
 

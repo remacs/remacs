@@ -9,7 +9,9 @@ use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line}
 
 use frames::window_frame_live_or_selected_with_action;
 use lisp::defsubr;
-use lisp::{IsLispNatnum, LispCons, LispObject};
+use lisp::LispObject;
+use lists::LispCons;
+use numbers::IsLispNatnum;
 use windows::window_or_selected_unchecked;
 
 /// Return position information for buffer position POS in WINDOW.

@@ -6,7 +6,8 @@ use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
 
 use floatfns;
 use lisp::defsubr;
-use lisp::{LispNumber, LispObject};
+use lisp::LispObject;
+use numbers::LispNumber;
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).
@@ -308,26 +309,34 @@ pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithCompari
     match comparison {
         ArithComparison::Equal => !fneq && i1 == i2,
         ArithComparison::Notequal => fneq || i1 != i2,
-        ArithComparison::Less => if fneq {
-            f1 < f2
-        } else {
-            i1 < i2
-        },
-        ArithComparison::LessOrEqual => if fneq {
-            f1 <= f2
-        } else {
-            i1 <= i2
-        },
-        ArithComparison::Grtr => if fneq {
-            f1 > f2
-        } else {
-            i1 > i2
-        },
-        ArithComparison::GrtrOrEqual => if fneq {
-            f1 >= f2
-        } else {
-            i1 >= i2
-        },
+        ArithComparison::Less => {
+            if fneq {
+                f1 < f2
+            } else {
+                i1 < i2
+            }
+        }
+        ArithComparison::LessOrEqual => {
+            if fneq {
+                f1 <= f2
+            } else {
+                i1 <= i2
+            }
+        }
+        ArithComparison::Grtr => {
+            if fneq {
+                f1 > f2
+            } else {
+                i1 > i2
+            }
+        }
+        ArithComparison::GrtrOrEqual => {
+            if fneq {
+                f1 >= f2
+            } else {
+                i1 >= i2
+            }
+        }
     }
 }
 

@@ -6,8 +6,8 @@ use std::ptr;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{allocate_misc, set_point_both, Fmake_marker};
-use remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
-use remacs_sys::{Qinteger_or_marker_p, Qnil};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
+use remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil};
 
 use buffers::LispBufferRef;
 use lisp::{defsubr, ExternalPtr, LispObject};

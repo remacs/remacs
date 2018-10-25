@@ -9,7 +9,7 @@ use remacs_sys::EmacsInt;
 use remacs_sys::{bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible,
                  globals, initial_define_key, insert_and_inherit, memory_full, replace_range,
                  run_hook, scan_newline_from_point, set_point, set_point_both, syntax_property,
-                 syntaxcode, translate_char, MOST_POSITIVE_FIXNUM};
+                 syntaxcode, translate_char};
 use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column, Fset};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
                  Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
@@ -23,6 +23,7 @@ use lisp::defsubr;
 use lisp::LispObject;
 use multibyte::{char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
                 MAX_MULTIBYTE_LENGTH};
+use numbers::MOST_POSITIVE_FIXNUM;
 use obarray::intern;
 use threads::ThreadState;
 

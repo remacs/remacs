@@ -7,10 +7,9 @@ use std::ptr;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qsequencep;
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
-                 Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD,
-                 MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_FLAG};
+                 Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG};
+use remacs_sys::{Qarrayp, Qsequencep, Qvectorp};
 
 use buffers::LispBufferRef;
 use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
@@ -20,6 +19,7 @@ use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject, LispSubrRef};
 use lists::{inorder, nth, sort_list};
 use multibyte::MAX_CHAR;
+use numbers::MOST_POSITIVE_FIXNUM;
 use process::LispProcessRef;
 use threads::ThreadStateRef;
 use windows::LispWindowRef;
@@ -46,7 +46,7 @@ impl LispObject {
     pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
         if self.is_vectorlike() {
             Some(LispVectorlikeRef::new(
-                self.get_untaggedptr() as *mut remacs_sys::Lisp_Vectorlike
+                self.get_untaggedptr() as *mut Lisp_Vectorlike
             ))
         } else {
             None
@@ -65,7 +65,7 @@ impl LispObject {
     */
 
     pub unsafe fn as_vectorlike_unchecked(self) -> LispVectorlikeRef {
-        LispVectorlikeRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Vectorlike)
+        LispVectorlikeRef::new(self.get_untaggedptr() as *mut Lisp_Vectorlike)
     }
 
     pub fn as_vector(self) -> Option<LispVectorRef> {

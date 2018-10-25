@@ -5,7 +5,9 @@ use std::mem;
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_thread as current_thread_pointer, thread_state, Lisp_Type, SPECPDL_INDEX};
+use remacs_sys::Qthreadp;
+use remacs_sys::{current_thread as current_thread_pointer, pvec_type, thread_state, Lisp_Type,
+                 SPECPDL_INDEX};
 
 use buffers::LispBufferRef;
 use lisp::defsubr;

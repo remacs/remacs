@@ -17,11 +17,12 @@ use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 
 use buffers::{get_buffer, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
-use lisp::{defsubr, LispNumber, LispObject};
+use lisp::{defsubr, LispObject};
 use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp,
              set_point_from_marker};
 use multibyte::{is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
                 write_codepoint, Codepoint, LispStringRef, MAX_MULTIBYTE_LENGTH};
+use numbers::LispNumber;
 use textprop::get_char_property;
 use threads::ThreadState;
 use util::clip_to_bounds;

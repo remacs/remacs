@@ -1,31 +1,23 @@
 //! Functions operating on float numbers.
 #![cfg_attr(feature = "clippy", allow(float_cmp))]
 
-use std::mem;
-
 use libc;
+
+use std::mem;
 
 use libm;
 use remacs_macros::lisp_fn;
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Type, MOST_NEGATIVE_FIXNUM,
-                 MOST_POSITIVE_FIXNUM};
-use remacs_sys::{Qarith_error, Qinteger_or_marker_p, Qnumberp, Qrange_error};
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type};
+use remacs_sys::{Qarith_error, Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error};
 
 use lisp::defsubr;
-use lisp::{LispNumber, LispObject};
+use lisp::{ExternalPtr, LispObject};
 use math::ArithOp;
+use numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
 
 // Float support (LispType == Lisp_Float == 7 )
 
 pub type LispFloatRef = ExternalPtr<Lisp_Float>;
-
-#[test]
-fn test_lisp_float_size() {
-    let double_size = mem::size_of::<EmacsDouble>();
-    let ptr_size = mem::size_of::<*const Lisp_Float>();
-
-    assert!(mem::size_of::<Lisp_Float>() == max(double_size, ptr_size));
-}
 
 impl LispFloatRef {
     pub fn as_data(&self) -> &EmacsDouble {
@@ -42,7 +34,7 @@ impl LispObject {
     #[inline]
     unsafe fn to_float_unchecked(self) -> LispFloatRef {
         debug_assert!(self.is_float());
-        LispFloatRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Float)
+        LispFloatRef::new(self.get_untaggedptr() as *mut Lisp_Float)
     }
 
     unsafe fn get_float_data_unchecked(self) -> EmacsDouble {
@@ -469,9 +461,20 @@ pub fn rust_init_extra_syms() {
 
 include!(concat!(env!("OUT_DIR"), "/floatfns_exports.rs"));
 
+#[cfg(test)]
+use std::cmp::max;
+
 #[test]
 fn test_basic_float() {
     let val = 8.0;
     let result = mock_float!(val);
     assert!(result.is_float() && result.as_float() == Some(val));
+}
+
+#[test]
+fn test_lisp_float_size() {
+    let double_size = mem::size_of::<EmacsDouble>();
+    let ptr_size = mem::size_of::<*const Lisp_Float>();
+
+    assert!(mem::size_of::<Lisp_Float>() == max(double_size, ptr_size));
 }

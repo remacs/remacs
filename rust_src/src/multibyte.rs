@@ -38,8 +38,9 @@ use std::slice;
 
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
-use remacs_sys::emacs_abort;
-use remacs_sys::{char_bits, pvec_type, EmacsInt, Lisp_String, Lisp_Type};
+use remacs_sys::Qstringp;
+use remacs_sys::{char_bits, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type};
+use remacs_sys::{emacs_abort, empty_unibyte_string};
 
 use lisp::{ExternalPtr, LispObject};
 
@@ -60,6 +61,8 @@ pub const MAX_5_BYTE_CHAR: Codepoint = 0x3F_FF7F;
 
 /// Maximum length of a single encoded codepoint
 pub const MAX_MULTIBYTE_LENGTH: usize = 5;
+
+// String support (LispType == 4)
 
 impl LispStringRef {
     pub fn as_lisp_obj(self) -> LispObject {
@@ -245,8 +248,6 @@ impl From<LispStringRef> for LispObject {
     }
 }
 
-// String support (LispType == 4)
-
 impl LispObject {
     #[inline]
     pub fn is_string(self) -> bool {
@@ -270,7 +271,7 @@ impl LispObject {
 
     #[inline]
     pub unsafe fn as_string_unchecked(self) -> LispStringRef {
-        LispStringRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_String)
+        LispStringRef::new(self.get_untaggedptr() as *mut Lisp_String)
     }
 
     #[inline]

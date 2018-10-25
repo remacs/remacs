@@ -4,7 +4,8 @@ use rand::{Rng, SeedableRng, StdRng};
 use std::sync::Mutex;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, LispNumber, INTMASK};
+use remacs_sys::{EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG};
+use remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump};
 
 use lisp::defsubr;
 use lisp::LispObject;
@@ -12,6 +13,11 @@ use lisp::LispObject;
 lazy_static! {
     static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
 }
+
+// Largest and smallest numbers that can be represented as fixnums in
+// Emacs lisp.
+pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> Lisp_Bits::INTTYPEBITS as u32;
+pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 
 // Fixnum(Integer) support (LispType == Lisp_Int0 | Lisp_Int1 == 2 | 6(LSB) )
 
