@@ -32,6 +32,8 @@ static void set_canon (Lisp_Object case_table, Lisp_Object range, Lisp_Object el
 static void set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
 static void shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
 
+extern void rust_syms_of_casetab (void);
+
 static Lisp_Object
 check_case_table (Lisp_Object obj)
 {

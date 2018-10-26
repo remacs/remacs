@@ -94,6 +94,9 @@ static void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
 static void silly_event_symbol_error (Lisp_Object);
 static Lisp_Object get_keyelt (Lisp_Object, bool);
 
+void map_keymap_item (map_keymap_function_t, Lisp_Object, Lisp_Object, Lisp_Object, void *);
+void map_keymap_char_table_item (Lisp_Object, Lisp_Object, Lisp_Object);
+
 static void
 CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
 {

@@ -362,6 +362,8 @@ static void compact_small_strings (void);
 static void free_large_strings (void);
 extern Lisp_Object which_symbols (Lisp_Object, EMACS_INT) EXTERNALLY_VISIBLE;
 
+Lisp_Object allocate_misc (enum Lisp_Misc_Type);
+
 /* When scanning the C stack for live Lisp objects, Emacs keeps track of
    what memory allocated via lisp_malloc and lisp_align_malloc is intended
    for what purpose.  This enumeration specifies the type of memory.  */

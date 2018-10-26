@@ -39,6 +39,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 extern bool KBOARD_OBJFWDP (union Lisp_Fwd *a);
 extern bool OBJFWDP (union Lisp_Fwd *a);
 
+_Noreturn void wrong_range (Lisp_Object, Lisp_Object, Lisp_Object);
+void update_buffer_defaults(Lisp_Object *, Lisp_Object);
+
 static void
 set_blv_found (struct Lisp_Buffer_Local_Value *blv, int found)
 {
@@ -1615,6 +1618,8 @@ enum bool_vector_op { bool_vector_exclusive_or,
                       bool_vector_intersection,
                       bool_vector_set_difference,
                       bool_vector_subsetp };
+
+Lisp_Object bool_vector_binop_driver (Lisp_Object, Lisp_Object, Lisp_Object, enum bool_vector_op);
 
 Lisp_Object
 bool_vector_binop_driver (Lisp_Object a,

@@ -179,6 +179,7 @@ static void x_wm_set_icon_pixmap (struct frame *, ptrdiff_t);
 static void x_initialize (void);
 
 static bool get_current_wm_state (struct frame *, Window, int *, bool *);
+int x_dispatch_event (XEvent *, Display *);
 
 /* Flush display of frame F.  */
 
