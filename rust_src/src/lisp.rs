@@ -12,17 +12,15 @@ use std::slice;
 
 use remacs_sys;
 use remacs_sys::{build_string, internal_equal, make_float};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits,
-                 FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX, USE_LSB_TAG, VALMASK};
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits, USE_LSB_TAG,
+                 VALMASK};
 use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
-use remacs_sys::{Qautoload, Qchar_table_p, Qlistp, Qnil, Qsubrp, Qt, Qunbound, Vbuffer_alist};
+use remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Qunbound, Vbuffer_alist};
 
 use buffers::LispBufferRef;
-use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
+use chartable::{LispSubCharTableAsciiRef, LispSubCharTableRef};
 use eval::FUNCTIONP;
-use fonts::LispFontRef;
 use lists::{list, CarIter};
-use obarray::{check_obarray, LispObarrayRef};
 use vectors::LispBoolVecRef;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -173,29 +171,6 @@ impl LispObject {
 
     pub fn get_untaggedptr(self) -> *mut c_void {
         (self.to_C() & VALMASK) as intptr_t as *mut c_void
-    }
-}
-
-// Obarray support
-impl LispObject {
-    pub fn as_obarray_or_error(self) -> LispObarrayRef {
-        LispObarrayRef::new(check_obarray(self))
-    }
-}
-
-impl From<LispObject> for LispObarrayRef {
-    fn from(o: LispObject) -> LispObarrayRef {
-        o.as_obarray_or_error()
-    }
-}
-
-impl From<LispObject> for Option<LispObarrayRef> {
-    fn from(o: LispObject) -> Self {
-        if o.is_nil() {
-            None
-        } else {
-            Some(o.as_obarray_or_error())
-        }
     }
 }
 
@@ -445,23 +420,6 @@ impl LispObject {
         self.as_subr().unwrap_or_else(|| wrong_type!(Qsubrp, self))
     }
 
-    pub fn is_char_table(self) -> bool {
-        self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_CHAR_TABLE))
-    }
-
-    pub fn as_char_table(self) -> Option<LispCharTableRef> {
-        self.as_vectorlike().and_then(|v| v.as_char_table())
-    }
-
-    pub fn as_char_table_or_error(self) -> LispCharTableRef {
-        if let Some(chartable) = self.as_char_table() {
-            chartable
-        } else {
-            wrong_type!(Qchar_table_p, self)
-        }
-    }
-
     pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
         self.as_vectorlike().and_then(|v| v.as_sub_char_table())
     }
@@ -488,60 +446,9 @@ impl LispObject {
         self.is_cons() || self.is_nil() || self.is_array()
     }
 
-    pub fn is_font(self) -> bool {
-        self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_FONT))
-    }
-
-    pub fn as_font(self) -> Option<LispFontRef> {
-        self.as_vectorlike().and_then(|v| {
-            if v.is_pseudovector(pvec_type::PVEC_FONT) {
-                Some(LispFontRef::from_vectorlike(v))
-            } else {
-                None
-            }
-        })
-    }
-
-    pub fn is_font_entity(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_ENTITY_MAX)
-        })
-    }
-
-    pub fn is_font_object(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
-        })
-    }
-
-    pub fn is_font_spec(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_SPEC_MAX)
-        })
-    }
-
     pub fn is_record(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_RECORD))
-    }
-}
-
-impl From<LispObject> for LispCharTableRef {
-    fn from(o: LispObject) -> Self {
-        o.as_char_table_or_error()
-    }
-}
-
-impl From<LispObject> for Option<LispCharTableRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_char_table()
-    }
-}
-
-impl From<LispCharTableRef> for LispObject {
-    fn from(ct: LispCharTableRef) -> Self {
-        ct.as_lisp_obj()
     }
 }
 

@@ -4,9 +4,9 @@ use libc;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::uniprop_table_uncompress;
-use remacs_sys::{Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
+use remacs_sys::{pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
                  CHARTAB_SIZE_BITS};
-use remacs_sys::{Qchar_code_property_table, Qnil};
+use remacs_sys::{Qchar_code_property_table, Qchar_table_p, Qnil};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
@@ -14,6 +14,43 @@ use lisp::{ExternalPtr, LispObject};
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 pub type LispSubCharTableRef = ExternalPtr<Lisp_Sub_Char_Table>;
 pub struct LispSubCharTableAsciiRef(ExternalPtr<Lisp_Sub_Char_Table>);
+
+impl LispObject {
+    pub fn is_char_table(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_CHAR_TABLE))
+    }
+
+    pub fn as_char_table(self) -> Option<LispCharTableRef> {
+        self.as_vectorlike().and_then(|v| v.as_char_table())
+    }
+
+    pub fn as_char_table_or_error(self) -> LispCharTableRef {
+        if let Some(chartable) = self.as_char_table() {
+            chartable
+        } else {
+            wrong_type!(Qchar_table_p, self)
+        }
+    }
+}
+
+impl From<LispObject> for LispCharTableRef {
+    fn from(o: LispObject) -> Self {
+        o.as_char_table_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispCharTableRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_char_table()
+    }
+}
+
+impl From<LispCharTableRef> for LispObject {
+    fn from(ct: LispCharTableRef) -> Self {
+        ct.as_lisp_obj()
+    }
+}
 
 fn chartab_size(depth: i32) -> usize {
     match depth {

@@ -14,6 +14,10 @@ use lisp::LispObject;
 pub struct LispObarrayRef(LispObject);
 
 impl LispObarrayRef {
+    pub fn as_lisp_obj(&self) -> LispObject {
+        self.0
+    }
+
     pub fn new(obj: LispObject) -> LispObarrayRef {
         LispObarrayRef(obj)
     }
@@ -21,10 +25,6 @@ impl LispObarrayRef {
     /// Return a reference to the Lisp variable `obarray`.
     pub fn global() -> LispObarrayRef {
         LispObarrayRef(check_obarray(unsafe { globals.Vobarray }))
-    }
-
-    pub fn as_lisp_obj(&self) -> LispObject {
-        self.0
     }
 
     /// Return the symbol that matches NAME (either a symbol or string). If
@@ -58,6 +58,28 @@ impl LispObarrayRef {
             intern_driver(unsafe { Fpurecopy(string) }, obj, tem)
         } else {
             intern_driver(string, obj, tem)
+        }
+    }
+}
+
+impl LispObject {
+    pub fn as_obarray_or_error(self) -> LispObarrayRef {
+        LispObarrayRef::new(check_obarray(self))
+    }
+}
+
+impl From<LispObject> for LispObarrayRef {
+    fn from(o: LispObject) -> LispObarrayRef {
+        o.as_obarray_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispObarrayRef> {
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else {
+            Some(o.as_obarray_or_error())
         }
     }
 }

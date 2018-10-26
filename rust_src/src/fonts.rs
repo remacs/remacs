@@ -1,8 +1,8 @@
 //! font support
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX};
 use remacs_sys::{EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
-use remacs_sys::{FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX};
 
 use lisp::defsubr;
 use lisp::LispObject;
@@ -29,6 +29,41 @@ impl LispFontRef {
 
     pub fn is_font_object(&self) -> bool {
         self.0.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
+    }
+}
+
+impl LispObject {
+    pub fn is_font(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_FONT))
+    }
+
+    pub fn as_font(self) -> Option<LispFontRef> {
+        self.as_vectorlike().and_then(|v| {
+            if v.is_pseudovector(pvec_type::PVEC_FONT) {
+                Some(LispFontRef::from_vectorlike(v))
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn is_font_entity(self) -> bool {
+        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
+            vec.pseudovector_size() == EmacsInt::from(FONT_ENTITY_MAX)
+        })
+    }
+
+    pub fn is_font_object(self) -> bool {
+        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
+            vec.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
+        })
+    }
+
+    pub fn is_font_spec(self) -> bool {
+        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
+            vec.pseudovector_size() == EmacsInt::from(FONT_SPEC_MAX)
+        })
     }
 }
 
