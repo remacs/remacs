@@ -16,18 +16,15 @@ impl LispFrameRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
-    #[inline]
     pub fn is_live(self) -> bool {
         !self.terminal.is_null()
     }
 
     // Pixel-width of internal border lines.
-    #[inline]
     pub fn internal_border_width(self) -> i32 {
         unsafe { frame_dimension(self.internal_border_width) }
     }
 
-    #[inline]
     pub fn is_visible(self) -> bool {
         self.visible() != 0
     }
@@ -46,7 +43,6 @@ impl From<LispFrameRef> for LispObject {
 }
 
 impl From<LispObject> for Option<LispFrameRef> {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_frame()
     }

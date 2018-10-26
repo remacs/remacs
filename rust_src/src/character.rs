@@ -21,7 +21,6 @@ impl LispObject {
 
     /// Check if Lisp object is a character or not and return the codepoint
     /// Similar to CHECK_CHARACTER
-    #[inline]
     pub fn as_character_or_error(self) -> Codepoint {
         if !self.is_character() {
             wrong_type!(Qcharacterp, self)
@@ -33,7 +32,6 @@ impl LispObject {
 /// True iff byte starts a character in a multibyte form.
 ///
 /// Same as the `CHAR_HEAD_P` macro.
-#[inline]
 pub fn char_head_p(byte: c_uchar) -> bool {
     (byte & 0xC0) != 0x80
 }
@@ -42,7 +40,6 @@ pub fn char_head_p(byte: c_uchar) -> bool {
 /// to the previous character boundary. No range checking of POS.
 ///
 /// Can be used instead of the `DEC_POS` macro.
-#[inline]
 pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
     let buffer_ref = ThreadState::current_buffer();
 

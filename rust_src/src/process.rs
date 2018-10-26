@@ -24,22 +24,18 @@ impl LispProcessRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
-    #[inline]
     fn ptype(self) -> LispObject {
         self.type_
     }
 
-    #[inline]
     fn set_plist(&mut self, plist: LispObject) {
         self.plist = plist;
     }
 
-    #[inline]
     fn set_buffer(&mut self, buffer: LispObject) {
         self.buffer = buffer;
     }
 
-    #[inline]
     fn set_childp(&mut self, childp: LispObject) {
         self.childp = childp;
     }

@@ -65,12 +65,10 @@ impl LispObject {
         self.0 as EmacsUint
     }
 
-    #[inline]
     pub fn constant_unbound() -> LispObject {
         Qunbound
     }
 
-    #[inline]
     pub fn from_bool(v: bool) -> LispObject {
         if v {
             Qt
@@ -79,7 +77,6 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
         unsafe { make_float(v) }
     }
@@ -89,7 +86,6 @@ impl<T> From<Option<T>> for LispObject
 where
     LispObject: From<T>,
 {
-    #[inline]
     fn from(v: Option<T>) -> Self {
         match v {
             None => Qnil,
@@ -111,14 +107,12 @@ impl From<Vec<LispObject>> for LispObject {
 }
 
 impl From<LispObject> for bool {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.is_not_nil()
     }
 }
 
 impl From<bool> for LispObject {
-    #[inline]
     fn from(v: bool) -> Self {
         if v {
             Qt
@@ -145,7 +139,6 @@ impl From<LispObject> for Option<u32> {
 
 /// Copies a Rust str into a new Lisp string
 impl<'a> From<&'a str> for LispObject {
-    #[inline]
     fn from(s: &str) -> Self {
         let cs = CString::new(s).unwrap();
         unsafe { build_string(cs.as_ptr()) }
@@ -178,7 +171,6 @@ impl LispObject {
         LispObject::from_C(res)
     }
 
-    #[inline]
     pub fn get_untaggedptr(self) -> *mut c_void {
         (self.to_C() & VALMASK) as intptr_t as *mut c_void
     }
@@ -297,7 +289,6 @@ impl LispSubrRef {
 pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
 
 impl LispMiscRef {
-    #[inline]
     pub fn get_type(self) -> Lisp_Misc_Type {
         self.type_()
     }
@@ -310,12 +301,10 @@ fn test_lisp_misc_any_size() {
 }
 
 impl LispObject {
-    #[inline]
     pub fn is_misc(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Misc
     }
 
-    #[inline]
     pub fn as_misc(self) -> Option<LispMiscRef> {
         if self.is_misc() {
             unsafe { Some(self.to_misc_unchecked()) }
@@ -330,14 +319,12 @@ impl LispObject {
 }
 
 impl From<LispObject> for EmacsInt {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_fixnum_or_error()
     }
 }
 
 impl From<LispObject> for Option<EmacsInt> {
-    #[inline]
     fn from(o: LispObject) -> Self {
         if o.is_nil() {
             None
@@ -348,14 +335,12 @@ impl From<LispObject> for Option<EmacsInt> {
 }
 
 impl From<LispObject> for EmacsUint {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_natnum_or_error()
     }
 }
 
 impl From<LispObject> for Option<EmacsUint> {
-    #[inline]
     fn from(o: LispObject) -> Self {
         if o.is_nil() {
             None
@@ -366,7 +351,6 @@ impl From<LispObject> for Option<EmacsUint> {
 }
 
 impl From<EmacsInt> for LispObject {
-    #[inline]
     fn from(v: EmacsInt) -> Self {
         LispObject::from_fixnum(v)
     }
@@ -562,7 +546,6 @@ impl From<LispCharTableRef> for LispObject {
 }
 
 impl From<LispObject> for LispSubrRef {
-    #[inline]
     fn from(o: LispObject) -> Self {
         o.as_subr_or_error()
     }
@@ -610,34 +593,28 @@ pub fn is_autoload(function: LispObject) -> bool {
 // Other functions
 
 impl LispObject {
-    #[inline]
     pub fn is_nil(self) -> bool {
         self == Qnil
     }
 
-    #[inline]
     pub fn is_not_nil(self) -> bool {
         self != Qnil
     }
 
-    #[inline]
     pub fn is_t(self) -> bool {
         self == Qt
     }
 
     // The three Emacs Lisp comparison functions.
 
-    #[inline]
     pub fn eq(self, other: LispObject) -> bool {
         self == other
     }
 
-    #[inline]
     pub fn ne(self, other: LispObject) -> bool {
         self != other
     }
 
-    #[inline]
     pub fn eql(self, other: LispObject) -> bool {
         if self.is_float() {
             self.equal_no_quit(other)
@@ -646,12 +623,10 @@ impl LispObject {
         }
     }
 
-    #[inline]
     pub fn equal(self, other: LispObject) -> bool {
         unsafe { internal_equal(self, other, EqualKind::Plain, 0, Qnil) }
     }
 
-    #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
         unsafe { internal_equal(self, other, EqualKind::NoQuit, 0, Qnil) }
     }
