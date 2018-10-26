@@ -1,10 +1,7 @@
 //! Basic character set support.
 
-use std::ptr;
-
 use remacs_macros::lisp_fn;
 
-use remacs_sys::hash_lookup;
 use remacs_sys::Vcharset_hash_table;
 
 use hashtable::HashLookupResult;
