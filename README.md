@@ -15,11 +15,10 @@ A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust
     - [Requirements](#requirements)
     - [Building Remacs](#building-remacs)
     - [Running Remacs](#running-remacs)
-- [Porting Elisp Primitive Functions](#porting-elisp-primitive-functions)
 - [Design Goals](#design-goals)
 - [Non-Design Goals](#non-design-goals)
+- [Porting Elisp Primitive Functions](#porting-elisp-primitive-functions)
 - [Contributing](#contributing)
-- [Help Needed](#help-needed)
 
 <!-- markdown-toc end -->
 
@@ -214,6 +213,40 @@ You can now run your shiny new Remacs build!
 $ RUST_BACKTRACE=1 src/remacs -q
 ```
 
+## Design Goals
+
+**Compatibility**: Remacs should not break existing elisp code, and
+ideally provide the same FFI too.
+
+**Similar naming conventions**: Code in Remacs should use the same
+naming conventions for elisp namespaces, to make translation
+straightforward.
+
+This means that an elisp function `do-stuff` will have a corresponding
+Rust function `Fdo_stuff`, and a declaration struct `Sdo_stuff`. A
+lisp variable `do-stuff` will have a Rust variable `Vdo_stuff` and a
+symbol `'do-stuff` will have a Rust variable `Qdo_stuff`.
+
+Otherwise, we follow Rust naming conventions, with docstrings noting
+equivalent functions or macros in C. When incrementally porting, we
+may define Rust functions with the same name as their C predecessors.
+
+**Leverage Rust itself**: Remacs should make best use of Rust to
+ensure code is robust and performant.
+
+**Leverage the Rust ecosystem**: Remacs should use existing Rust
+crates wherever possible, and create new, separate crates where our
+code could benefit others.
+
+**Great docs**: Emacs has excellent documentation, Remacs should be no
+different.
+
+## Non-Design Goals
+
+**`etags`**: The
+[universal ctags project](https://github.com/universal-ctags/ctags)
+supports a wider range of languages and we recommend it instead.
+
 ## Porting Elisp Primitive Functions
 
 The first thing to look at is the C implementation for the `atan` function. It takes an optional second argument, which makes it interesting. The complicated mathematical bits, on the other hand, are handled by the standard library. This allows us to focus on the porting process without getting distracted by the math.
@@ -264,46 +297,10 @@ You can see that we don't have to check to see if our arguments are of the corre
 
 This code is so much better that it's hard to believe just how simple the implementation of the macro is. It just calls `.into()` on the arguments and the return value; the compiler does the rest when it dispatches this method call to the correct implementation.
 
-## Design Goals
-
-**Compatibility**: Remacs should not break existing elisp code, and
-ideally provide the same FFI too.
-
-**Similar naming conventions**: Code in Remacs should use the same
-naming conventions for elisp namespaces, to make translation
-straightforward.
-
-This means that an elisp function `do-stuff` will have a corresponding
-Rust function `Fdo_stuff`, and a declaration struct `Sdo_stuff`. A
-lisp variable `do-stuff` will have a Rust variable `Vdo_stuff` and a
-symbol `'do-stuff` will have a Rust variable `Qdo_stuff`.
-
-Otherwise, we follow Rust naming conventions, with docstrings noting
-equivalent functions or macros in C. When incrementally porting, we
-may define Rust functions with the same name as their C predecessors.
-
-**Leverage Rust itself**: Remacs should make best use of Rust to
-ensure code is robust and performant.
-
-**Leverage the Rust ecosystem**: Remacs should use existing Rust
-crates wherever possible, and create new, separate crates where our
-code could benefit others.
-
-**Great docs**: Emacs has excellent documentation, Remacs should be no
-different.
-
-## Non-Design Goals
-
-**`etags`**: The
-[universal ctags project](https://github.com/universal-ctags/ctags)
-supports a wider range of languages and we recommend it instead.
-
 ## Contributing
 
 Pull requests welcome, no copyright assignment required. This project is under the
 [Rust code of conduct](https://www.rust-lang.org/en-US/conduct.html).
-
-## Help Needed
 
 There's lots to do! We keep a list of [low hanging fruit](https://github.com/Wilfred/remacs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) here so you can easily choose
 one. You can find information in the [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our gitter channel.
