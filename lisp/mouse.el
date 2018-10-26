@@ -2413,16 +2413,13 @@ is copied instead of being cut."
          (buffer (current-buffer))
          (window (selected-window))
          (text-from-read-only buffer-read-only)
-         ;; Use multiple overlays to cover cases where the region is
-         ;; rectangular.
+         ;; Use multiple overlays to cover cases where the region has more
+         ;; than one boundary.
          (mouse-drag-and-drop-overlays (mapcar (lambda (bounds)
                                                  (make-overlay (car bounds)
                                                                (cdr bounds)))
                                                (region-bounds)))
          (region-noncontiguous (region-noncontiguous-p))
-         (region-width (- (overlay-end (car mouse-drag-and-drop-overlays))
-                          (overlay-start (car mouse-drag-and-drop-overlays))))
-         (region-height (length mouse-drag-and-drop-overlays))
          point-to-paste
          point-to-paste-read-only
          window-to-paste
@@ -2467,10 +2464,6 @@ is copied instead of being cut."
           ;; skipped, value-selection remains nil.
           (unless value-selection
             (setq value-selection (funcall region-extract-function nil))
-            ;; Remove yank-handler property in order to re-insert text using
-            ;; the `insert-rectangle' function later on.
-            (remove-text-properties 0 (length value-selection)
-                                    '(yank-handler) value-selection)
             (when mouse-drag-and-drop-region-show-tooltip
               (let ((text-size mouse-drag-and-drop-region-show-tooltip))
                 (setq text-tooltip
@@ -2485,15 +2478,11 @@ is copied instead of being cut."
             ;; Check if selected text is read-only.
             (setq text-from-read-only
                   (or text-from-read-only
-                      (get-text-property start 'read-only)
-                      (get-text-property end 'read-only)
                       (catch 'loop
-                             (dolist (bound (region-bounds))
-                               (unless (equal
-                                        (next-single-char-property-change
-                                         (car bound) 'read-only nil (cdr bound))
-                                        (cdr bound))
-                                 (throw 'loop t)))))))
+                        (dolist (bound (region-bounds))
+                          (when (text-property-not-all
+                                 (car bound) (cdr bound) 'read-only nil)
+                            (throw 'loop t)))))))
 
           (setq window-to-paste (posn-window (event-end event)))
           (setq point-to-paste (posn-point (event-end event)))
@@ -2531,16 +2520,16 @@ is copied instead of being cut."
                   (and (eq (overlay-buffer (car mouse-drag-and-drop-overlays))
                            buffer-to-paste)
                        (if region-noncontiguous
-                           (let ((size (cons region-width region-height))
+                           (let ((dimensions (rectangle-dimensions start end))
                                  (start-coordinates
                                   (rectangle-position-as-coordinates start))
                                  (point-to-paste-coordinates
                                   (rectangle-position-as-coordinates
                                    point-to-paste)))
                              (and (rectangle-intersect-p
-                                   start-coordinates size
-                                   point-to-paste-coordinates size)
-                                  (not (<= (car point-to-paste-coordinates)
+                                   start-coordinates dimensions
+                                   point-to-paste-coordinates dimensions)
+                                  (not (< (car point-to-paste-coordinates)
                                            (car start-coordinates)))))
                          (and (<= (overlay-start
                                    (car mouse-drag-and-drop-overlays))
@@ -2635,10 +2624,7 @@ is copied instead of being cut."
           (setq window-exempt window-to-paste)
           (goto-char point-to-paste)
           (push-mark)
-
-          (if region-noncontiguous
-              (insert-rectangle (split-string value-selection "\n"))
-            (insert value-selection))
+          (insert-for-yank value-selection)
 
           ;; On success, set the text as region on destination buffer.
           (when (not (equal (mark) (point)))

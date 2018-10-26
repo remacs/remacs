@@ -170,21 +170,19 @@ The final point after the last operation will be returned."
 (defun rectangle-position-as-coordinates (position)
    "Return cons of the column and line values of POSITION.
 POSITION specifies a position of the current buffer.  The value
-returned is a cons of the current column of POSITION and its line
-number."
+returned has the form (COLUMN . LINE)."
   (save-excursion
     (goto-char position)
     (let ((col (current-column))
-          (line (1- (line-number-at-pos))))
+          (line (line-number-at-pos)))
       (cons col line))))
 
 (defun rectangle-intersect-p (pos1 size1 pos2 size2)
    "Return non-nil if two rectangles intersect.
 POS1 and POS2 specify the positions of the upper-left corners of
-the first and second rectangle as conses of their column and line
-values.  SIZE1 and SIZE2 specify the dimensions of the first and
-second rectangle, as conses of their width and height measured in
-columns and lines."
+the first and second rectangles as conses of the form (COLUMN . LINE).
+SIZE1 and SIZE2 specify the dimensions of the first and second
+rectangles, as conses of the form (WIDTH . HEIGHT)."
   (let ((x1 (car pos1))
         (y1 (cdr pos1))
         (x2 (car pos2))
@@ -197,6 +195,16 @@ columns and lines."
              (<= (+ x2 w2) x1)
              (<= (+ y1 h1) y2)
              (<= (+ y2 h2) y1)))))
+
+(defun rectangle-dimensions (start end)
+  "Return the dimensions of the rectangle with corners at START
+and END. The returned value has the form of (WIDTH . HEIGHT)."
+  (save-excursion
+    (let* ((height (1+ (abs (- (line-number-at-pos end)
+                               (line-number-at-pos start)))))
+           (cols (rectangle--pos-cols start end))
+           (width (abs (- (cdr cols) (car cols)))))
+      (cons width height))))
 
 (defun delete-rectangle-line (startcol endcol fill)
   (when (= (move-to-column startcol (if fill t 'coerce)) startcol)
