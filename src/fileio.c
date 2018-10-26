@@ -5656,15 +5656,6 @@ No auto-save file will be written until the buffer changes again.  */)
   return Qnil;
 }
 
-DEFUN ("clear-buffer-auto-save-failure", Fclear_buffer_auto_save_failure,
-       Sclear_buffer_auto_save_failure, 0, 0, 0,
-       doc: /* Clear any record of a recent auto-save failure in the current buffer.  */)
-  (void)
-{
-  current_buffer->auto_save_failure_time = 0;
-  return Qnil;
-}
-
 DEFUN ("recent-auto-save-p", Frecent_auto_save_p, Srecent_auto_save_p,
        0, 0, 0,
        doc: /* Return t if current buffer has been auto-saved recently.
@@ -6126,7 +6117,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sset_visited_file_modtime);
   defsubr (&Sdo_auto_save);
   defsubr (&Sset_buffer_auto_saved);
-  defsubr (&Sclear_buffer_auto_save_failure);
   defsubr (&Srecent_auto_save_p);
 
   defsubr (&Snext_read_file_uses_dialog_p);
