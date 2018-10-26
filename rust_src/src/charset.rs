@@ -7,6 +7,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys::hash_lookup;
 use remacs_sys::Vcharset_hash_table;
 
+use hashtable::HashLookupResult;
 use lisp::defsubr;
 use lisp::LispObject;
 
@@ -15,8 +16,8 @@ impl LispObject {
         unsafe {
             let h_ref = Vcharset_hash_table.as_hash_table_or_error();
             match h_ref.lookup(self) {
-                Found(_) => true,
-                Missing(_) => false,
+                HashLookupResult::Found(_) => true,
+                HashLookupResult::Missing(_) => false,
             }
         }
     }
