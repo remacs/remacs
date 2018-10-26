@@ -176,8 +176,8 @@ merge
 
 ## FIXME it would be better to trap this in gitmerge.
 ## NEWS should never be modified, only eg NEWS.26.
-git diff --stat --cached origin/master | grep -q "NEWS " && \
-    die "NEWS has been modified"
+git diff --stat --cached origin/master | grep -q "etc/NEWS " && \
+    die "etc/NEWS has been modified"
 
 
 [ "$build" ] || exit 0
