@@ -112,9 +112,10 @@ fn get_coding_system_for_buffer(
     {
         return Qraw_text;
     }
-    if buffer_file_name(object).is_not_nil() {
-        /* Check file-coding-system-alist. */
-        let mut args = [Qwrite_region, start, end, buffer_file_name(object)];
+    let file_name = buffer_file_name(object.into());
+    if file_name.is_not_nil() {
+        // Check file-coding-system-alist.
+        let mut args = [Qwrite_region, start, end, file_name];
         let val = unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) };
         if val.is_cons() && val.as_cons_or_error().cdr().is_not_nil() {
             return val.as_cons_or_error().cdr();

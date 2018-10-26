@@ -565,6 +565,26 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
     }
 }
 
+pub struct LispBufferOrCurrent(LispBufferRef);
+
+impl From<LispObject> for LispBufferOrCurrent {
+    fn from(obj: LispObject) -> LispBufferOrCurrent {
+        LispBufferOrCurrent(obj.as_buffer_or_current_buffer())
+    }
+}
+
+impl From<LispBufferOrCurrent> for LispObject {
+    fn from(buffer: LispBufferOrCurrent) -> LispObject {
+        buffer.unwrap().into()
+    }
+}
+
+impl LispBufferOrCurrent {
+    pub fn unwrap(self) -> LispBufferRef {
+        self.0
+    }
+}
+
 /// Return a list of all existing live buffers.
 /// If the optional arg FRAME is a frame, we return the buffer list in the
 /// proper order for that frame: the buffers show in FRAME come first,
@@ -638,8 +658,8 @@ pub fn current_buffer() -> LispObject {
 /// Return name of file BUFFER is visiting, or nil if none.
 /// No argument or nil as argument means use the current buffer.
 #[lisp_fn(min = "0")]
-pub fn buffer_file_name(buffer: LispObject) -> LispObject {
-    let buf = buffer.as_buffer_or_current_buffer();
+pub fn buffer_file_name(buffer: LispBufferOrCurrent) -> LispObject {
+    let buf = buffer.unwrap();
 
     buf.filename_
 }
