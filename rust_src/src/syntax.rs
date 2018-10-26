@@ -1,6 +1,6 @@
 //! Functions related to syntax
 use remacs_macros::lisp_fn;
-use remacs_sys::{buffer_local_flags, scan_lists};
+use remacs_sys::scan_lists;
 use remacs_sys::{EmacsInt, Qsyntax_table, Qsyntax_table_p};
 
 use chartable::LispCharTableRef;

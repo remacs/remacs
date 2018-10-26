@@ -7,6 +7,7 @@ use remacs_sys;
 use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, build_string, emacs_abort,
                  globals, update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET,
                  CHECK_IMPURE};
+use remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect};
 use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
 use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang};
@@ -16,8 +17,8 @@ use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, 
                  Qfloat, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qframe,
                  Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker, Qmodule_function,
                  Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol, Qt,
-                 Qterminal, Qthread, Qunevalled, Quser_ptr, Qvector, Qwindow,
-                 Qwindow_configuration};
+                 Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector, Qvoid_variable,
+                 Qwindow, Qwindow_configuration};
 
 use frames::selected_frame;
 use keymap::get_keymap;
@@ -27,6 +28,7 @@ use lists::{get, memq, put};
 use math::leq;
 use multibyte::{is_ascii, is_single_byte_char};
 use obarray::loadhist_attach;
+use symbols::LispSymbolRef;
 use threads::ThreadState;
 
 use field_offset::FieldOffset;
@@ -346,6 +348,76 @@ pub fn byteorder() -> u8 {
     }
 }
 
+/// Return the default value of SYMBOL, but don't check for voidness.
+/// Return Qunbound if it is void.
+fn default_value(mut symbol: LispSymbolRef) -> LispObject {
+    while symbol.get_redirect() == symbol_redirect::SYMBOL_VARALIAS {
+        symbol = symbol.get_indirect_variable();
+    }
+    match symbol.get_redirect() {
+        symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+        symbol_redirect::SYMBOL_LOCALIZED => {
+            // If var is set up for a buffer that lacks a local value for it,
+            // the current value is nominally the default value.
+            // But the `realvalue' slot may be more up to date, since
+            // ordinary setq stores just that slot.  So use that.
+            let blv = symbol.get_blv();
+            let fwd = blv.get_fwd();
+            if !fwd.is_null() && blv.valcell.eq(blv.defcell) {
+                unsafe { do_symval_forwarding(fwd) }
+            } else {
+                blv.defcell.as_cons_or_error().cdr()
+            }
+        }
+        symbol_redirect::SYMBOL_FORWARDED => {
+            let valcontents = symbol.get_fwd();
+
+            // For a built-in buffer-local variable, get the default value
+            // rather than letting do_symval_forwarding get the current value.
+            if_chain! {
+                // if_chain! builds up a series of conditions and contitional assignments into one
+                // big pair of then/else arms. This should be converted into idiomatic Option-based
+                // code eventually.
+                if unsafe { (*valcontents).u_intfwd.ty } == Lisp_Fwd_Buffer_Obj;
+                let offset = unsafe { (*valcontents).u_buffer_objfwd.offset };
+                if unsafe {
+                    *offset.apply_ptr_mut(&mut buffer_local_flags)
+                }.as_fixnum_or_error() != 0;
+                then {
+                    unsafe { per_buffer_default(offset.get_byte_offset() as i32) }
+                } else {
+                    // For other variables, get the current value.
+                    unsafe { do_symval_forwarding(valcontents) }
+                }
+            }
+        }
+        _ => panic!("Symbol type has no default value"),
+    }
+}
+
+/// Return t if SYMBOL has a non-void default value.
+/// This is the value that is seen in buffers that do not have their own values
+/// for this variable.
+#[lisp_fn]
+pub fn default_boundp(symbol: LispSymbolRef) -> bool {
+    !default_value(symbol).eq(Qunbound)
+}
+
+/// Return SYMBOL's default value.
+/// This is the value that is seen in buffers that do not have their own values
+/// for this variable.  The default value is meaningful for variables with
+/// local bindings in certain buffers.
+#[lisp_fn(c_name = "default_value", name = "default-value")]
+pub fn default_value_lisp(symbol: LispSymbolRef) -> LispObject {
+    let value = default_value(symbol);
+
+    if value.eq(Qunbound) {
+        xsignal!(Qvoid_variable, symbol.into());
+    }
+
+    value
+}
+
 /***********************************************************************
                Getting and Setting Values of Symbols
 ***********************************************************************/
@@ -433,7 +505,7 @@ pub struct Lisp_Kboard_Objfwd {
 /// This does not handle buffer-local variables; use
 /// swap_in_symval_forwarding for that.
 #[no_mangle]
-pub unsafe extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject {
+pub unsafe extern "C" fn do_symval_forwarding(valcontents: *const Lisp_Fwd) -> LispObject {
     match (*valcontents).u_intfwd.ty {
         Lisp_Fwd_Int => LispObject::from(*(*valcontents).u_intfwd.intvar),
         Lisp_Fwd_Bool => LispObject::from(*(*valcontents).u_boolfwd.boolvar),
