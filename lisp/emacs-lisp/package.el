@@ -2911,17 +2911,17 @@ PKG is a `package-desc' object.
 Return (PKG-DESC [NAME VERSION STATUS DOC])."
   (let* ((status  (package-desc-status pkg))
          (face (pcase status
-                 (`"built-in"  'package-status-built-in)
-                 (`"external"  'package-status-external)
-                 (`"available" 'package-status-available)
-                 (`"avail-obso" 'package-status-avail-obso)
-                 (`"new"       'package-status-new)
-                 (`"held"      'package-status-held)
-                 (`"disabled"  'package-status-disabled)
-                 (`"installed" 'package-status-installed)
-                 (`"dependency" 'package-status-dependency)
-                 (`"unsigned"  'package-status-unsigned)
-                 (`"incompat"  'package-status-incompat)
+                 ("built-in"  'package-status-built-in)
+                 ("external"  'package-status-external)
+                 ("available" 'package-status-available)
+                 ("avail-obso" 'package-status-avail-obso)
+                 ("new"       'package-status-new)
+                 ("held"      'package-status-held)
+                 ("disabled"  'package-status-disabled)
+                 ("installed" 'package-status-installed)
+                 ("dependency" 'package-status-dependency)
+                 ("unsigned"  'package-status-unsigned)
+                 ("incompat"  'package-status-incompat)
                  (_            'font-lock-warning-face)))) ; obsolete.
     (list pkg
           `[(,(symbol-name (package-desc-name pkg))

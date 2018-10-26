@@ -150,12 +150,12 @@ Type `y' to skip this revision,
                              (format "%s: Skip (y/n/N/q/%s)? " str
                                      (key-description (vector help-char)))
                              '(?y ?n ?N ?q)))
-                      (`?y (setq skip t))
-                      (`?q (keyboard-quit))
+                      (?y (setq skip t))
+                      (?q (keyboard-quit))
                       ;; A single log entry can match skip-regexp multiple
                       ;; times.  If you are sure you don't want to skip it,
                       ;; you don't want to be asked multiple times.
-                      (`?N (setq skip 'no))))))
+                      (?N (setq skip 'no))))))
               (if (eq skip t)
                   (push revno skipped)
                 (push revno revnos)))))

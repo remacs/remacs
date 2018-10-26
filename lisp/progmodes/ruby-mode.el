@@ -612,7 +612,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
       ;; For (invalid) code between switch and case.
       ;; (if (smie-parent-p "switch") 4)
       ))
-    (`(:before . ,(or `"(" `"[" `"{"))
+    (`(:before . ,(or "(" "[" "{"))
      (cond
       ((and (equal token "{")
             (not (smie-rule-prev-p "(" "{" "[" "," "=>" "=" "return" ";"))
@@ -639,7 +639,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
            (forward-char -1))
          (smie-indent-virtual))
         (t (smie-rule-parent))))))
-    (`(:after . ,(or `"(" "[" "{"))
+    (`(:after . ,(or "(" "[" "{"))
      ;; FIXME: Shouldn't this be the default behavior of
      ;; `smie-indent-after-keyword'?
      (save-excursion
@@ -660,7 +660,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        (smie-backward-sexp ".")
        (cons 'column (+ (current-column)
                         ruby-indent-level))))
-    (`(:before . ,(or `"else" `"then" `"elsif" `"rescue" `"ensure"))
+    (`(:before . ,(or "else" "then" "elsif" "rescue" "ensure"))
      (smie-rule-parent))
     (`(:before . "when")
      ;; Align to the previous `when', but look up the virtual
@@ -1544,8 +1544,8 @@ With ARG, do it many times.  Negative ARG means move forward."
             (cond ((looking-at "\\s)")
                    (goto-char (scan-sexps (1+ (point)) -1))
                    (pcase (char-before)
-                     (`?% (forward-char -1))
-                     ((or `?q `?Q `?w `?W `?r `?x)
+                     (?% (forward-char -1))
+                     ((or ?q ?Q ?w ?W ?r ?x)
                       (if (eq (char-before (1- (point))) ?%)
                           (forward-char -2))))
                    nil)
@@ -1562,13 +1562,13 @@ With ARG, do it many times.  Negative ARG means move forward."
                    (forward-char 1)
                    (while (progn (forward-word-strictly -1)
                                  (pcase (char-before)
-                                   (`?_ t)
-                                   (`?. (forward-char -1) t)
-                                   ((or `?$ `?@)
+                                   (?_ t)
+                                   (?. (forward-char -1) t)
+                                   ((or ?$ ?@)
                                     (forward-char -1)
                                     (and (eq (char-before) (char-after))
                                          (forward-char -1)))
-                                   (`?:
+                                   (?:
                                     (forward-char -1)
                                     (eq (char-before) :)))))
                    (if (looking-at ruby-block-end-re)
