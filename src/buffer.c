@@ -4973,20 +4973,6 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
     emacs_abort ();
 }
 
-/* Similar to defvar_lisp but define a variable whose value is the
-   Lisp_Object stored in the current buffer.  LNAME is the Lisp-level
-   variable name.  VNAME is the name of the buffer slot.  PREDICATE
-   is nil for a general Lisp variable.  If PREDICATE is non-nil, then
-   only Lisp values that satisfies the PREDICATE are allowed (except
-   that nil is allowed too).  DOC is a dummy where you write the doc
-   string as a comment.  */
-
-#define DEFVAR_PER_BUFFER(lname, vname, predicate, doc)		\
-  do {								\
-    static struct Lisp_Buffer_Objfwd bo_fwd;			\
-    defvar_per_buffer (&bo_fwd, lname, vname, predicate);	\
-  } while (0)
-
 extern void rust_syms_of_buffer(void);
 
 /* Initialize the buffer routines.  */
