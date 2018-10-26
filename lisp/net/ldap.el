@@ -646,7 +646,12 @@ an alist of attribute/value pairs."
 	       (not (equal "" sizelimit)))
 	  (setq arglist (nconc arglist (list (format "-z%s" sizelimit)))))
       (if passwd
-	  (let* ((process-connection-type nil)
+	  ;; Work around Bug#33154, see also Bug#33050.  Leaving
+	  ;; process-connection-type at its default (typically t)
+	  ;; would probably be fine too, however this is the minimal
+	  ;; change on the release branch that fixes ldap.el on Darwin
+	  ;; and leaves other operating systems unchanged.
+	  (let* ((process-connection-type (eq system-type 'darwin))
 		 (proc-args (append arglist ldap-ldapsearch-args
 				    filter))
 		 (proc (apply #'start-process "ldapsearch" buf
