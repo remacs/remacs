@@ -93,7 +93,7 @@ static bool scrolling (struct frame *);
 static void set_window_cursor_after_update (struct window *);
 static void adjust_frame_glyphs_for_window_redisplay (struct frame *);
 static void adjust_frame_glyphs_for_frame_redisplay (struct frame *);
-static void set_window_update_flags (struct window *w, bool on_p);
+void set_window_update_flags (struct window *w, bool on_p);
 
 /* True means last display completed.  False means it was preempted.  */
 
@@ -2930,53 +2930,6 @@ window_to_frame_hpos (struct window *w, int hpos)
 
 
 
-/**********************************************************************
-			    Redrawing Frames
- **********************************************************************/
-
-/* Redraw frame F.  */
-
-void
-redraw_frame (struct frame *f)
-{
-  /* Error if F has no glyphs.  */
-  eassert (f->glyphs_initialized_p);
-  update_begin (f);
-  clear_frame (f);
-  clear_current_matrices (f);
-  update_end (f);
-  fset_redisplay (f);
-  /* Mark all windows as inaccurate, so that every window will have
-     its redisplay done.  */
-  mark_window_display_accurate (FRAME_ROOT_WINDOW (f), 0);
-  set_window_update_flags (XWINDOW (FRAME_ROOT_WINDOW (f)), true);
-  f->garbaged = false;
-}
-
-DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 0, 1, 0,
-       doc: /* Clear frame FRAME and output again what is supposed to appear on it.
-If FRAME is omitted or nil, the selected frame is used.  */)
-  (Lisp_Object frame)
-{
-  redraw_frame (decode_live_frame (frame));
-  return Qnil;
-}
-
-DEFUN ("redraw-display", Fredraw_display, Sredraw_display, 0, 0, "",
-       doc: /* Clear and redisplay all visible frames.  */)
-  (void)
-{
-  Lisp_Object tail, frame;
-
-  FOR_EACH_FRAME (tail, frame)
-    if (FRAME_VISIBLE_P (XFRAME (frame)))
-      redraw_frame (XFRAME (frame));
-
-  return Qnil;
-}
-
-
-
 /***********************************************************************
 			     Frame Update
  ***********************************************************************/
@@ -3889,24 +3842,6 @@ set_window_cursor_after_update (struct window *w)
   hpos = clip_to_bounds (-1, hpos, w->current_matrix->matrix_w - 1);
   vpos = clip_to_bounds (0, vpos, w->current_matrix->nrows - 1);
   output_cursor_to (w, vpos, hpos, cy, cx);
-}
-
-
-/* Set WINDOW->must_be_updated_p to ON_P for all windows in
-   the window tree rooted at W.  */
-
-static void
-set_window_update_flags (struct window *w, bool on_p)
-{
-  while (w)
-    {
-      if (WINDOWP (w->contents))
-	set_window_update_flags (XWINDOW (w->contents), on_p);
-      else
-	w->must_be_updated_p = on_p;
-
-      w = NILP (w->next) ? 0 : XWINDOW (w->next);
-    }
 }
 
 
@@ -6057,8 +5992,6 @@ WINDOW nil or omitted means report on the selected window.  */)
 void
 syms_of_display (void)
 {
-  defsubr (&Sredraw_frame);
-  defsubr (&Sredraw_display);
   defsubr (&Sframe_or_buffer_changed_p);
   defsubr (&Sopen_termscript);
   defsubr (&Sding);

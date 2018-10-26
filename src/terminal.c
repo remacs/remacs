@@ -79,20 +79,6 @@ ring_bell (struct frame *f)
     (*FRAME_TERMINAL (f)->ring_bell_hook) (f);
 }
 
-void
-update_begin (struct frame *f)
-{
-  if (FRAME_TERMINAL (f)->update_begin_hook)
-    (*FRAME_TERMINAL (f)->update_begin_hook) (f);
-}
-
-void
-update_end (struct frame *f)
-{
-  if (FRAME_TERMINAL (f)->update_end_hook)
-    (*FRAME_TERMINAL (f)->update_end_hook) (f);
-}
-
 /* Specify how many text lines, from the top of the window,
    should be affected by insert-lines and delete-lines operations.
    This, and those operations, are used only within an update
@@ -122,79 +108,6 @@ raw_cursor_to (struct frame *f, int row, int col)
 {
   if (FRAME_TERMINAL (f)->raw_cursor_to_hook)
     (*FRAME_TERMINAL (f)->raw_cursor_to_hook) (f, row, col);
-}
-
-/* Erase operations.  */
-
-/* Clear from cursor to end of frame.  */
-void
-clear_to_end (struct frame *f)
-{
-  if (FRAME_TERMINAL (f)->clear_to_end_hook)
-    (*FRAME_TERMINAL (f)->clear_to_end_hook) (f);
-}
-
-/* Clear entire frame.  */
-
-void
-clear_frame (struct frame *f)
-{
-  if (FRAME_TERMINAL (f)->clear_frame_hook)
-    (*FRAME_TERMINAL (f)->clear_frame_hook) (f);
-}
-
-/* Clear from cursor to end of line.
-   Assume that the line is already clear starting at column first_unused_hpos.
-
-   Note that the cursor may be moved, on terminals lacking a `ce' string.  */
-
-void
-clear_end_of_line (struct frame *f, int first_unused_hpos)
-{
-  if (FRAME_TERMINAL (f)->clear_end_of_line_hook)
-    (*FRAME_TERMINAL (f)->clear_end_of_line_hook) (f, first_unused_hpos);
-}
-
-/* Output LEN glyphs starting at STRING at the nominal cursor position.
-   Advance the nominal cursor over the text.  */
-
-void
-write_glyphs (struct frame *f, struct glyph *string, int len)
-{
-  if (FRAME_TERMINAL (f)->write_glyphs_hook)
-    (*FRAME_TERMINAL (f)->write_glyphs_hook) (f, string, len);
-}
-
-/* Insert LEN glyphs from START at the nominal cursor position.
-
-   If start is zero, insert blanks instead of a string at start */
-
-void
-insert_glyphs (struct frame *f, struct glyph *start, int len)
-{
-  if (len <= 0)
-    return;
-
-  if (FRAME_TERMINAL (f)->insert_glyphs_hook)
-    (*FRAME_TERMINAL (f)->insert_glyphs_hook) (f, start, len);
-}
-
-/* Delete N glyphs at the nominal cursor position. */
-
-void
-delete_glyphs (struct frame *f, int n)
-{
-  if (FRAME_TERMINAL (f)->delete_glyphs_hook)
-    (*FRAME_TERMINAL (f)->delete_glyphs_hook) (f, n);
-}
-
-/* Insert N lines at vpos VPOS.  If N is negative, delete -N lines.  */
-
-void
-ins_del_lines (struct frame *f, int vpos, int n)
-{
-  if (FRAME_TERMINAL (f)->ins_del_lines_hook)
-    (*FRAME_TERMINAL (f)->ins_del_lines_hook) (f, vpos, n);
 }
 
 /* Return the terminal object specified by TERMINAL.  TERMINAL may
