@@ -254,7 +254,7 @@ wrong_choice (Lisp_Object choice, Lisp_Object wrong)
 /* Used to signal a user-friendly error if WRONG is not a number or
    integer/floating-point number outsize of inclusive MIN..MAX range.  */
 
-extern void
+_Noreturn extern void
 wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 {
   AUTO_STRING (value_should_be_from, "Value should be from ");
