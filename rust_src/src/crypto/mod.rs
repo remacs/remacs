@@ -451,8 +451,10 @@ fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 /// This hash is performed on the raw internal format of the buffer,
 /// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
-pub fn buffer_hash(buffer_or_name: LispBufferOrName) -> LispObject {
-    let b = buffer_or_name.as_buffer_or_current_buffer_or_error(nsberror);
+pub fn buffer_hash(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
+    let b = buffer_or_name.map_or_else(ThreadState::current_buffer, |b| {
+        b.as_buffer_or_error(nsberror)
+    });
     let mut ctx = sha1::Sha1::new();
 
     ctx.update(unsafe {
