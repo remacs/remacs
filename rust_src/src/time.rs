@@ -1,5 +1,6 @@
 //! Time support
 
+use std::cmp::max;
 use std::ptr;
 
 use libc::timespec as c_timespec;
@@ -7,12 +8,15 @@ use libc::{c_int, c_long, time_t};
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
+use remacs_sys::Qnil;
 use remacs_sys::{lisp_time, EmacsInt};
 
-use lisp::defsubr;
-use lisp::LispObject;
+use lisp::{defsubr, ExternalPtr, LispObject};
 use lists::list;
 use numbers::MOST_NEGATIVE_FIXNUM;
+
+pub type LispTime = lisp_time;
+pub type LispTimeRef = ExternalPtr<LispTime>;
 
 const LO_TIME_BITS: i32 = 16;
 
@@ -131,7 +135,7 @@ pub unsafe extern "C" fn decode_time_components(
     low: LispObject,
     usec: LispObject,
     psec: LispObject,
-    result: *mut lisp_time,
+    mut result: LispTimeRef,
     dresult: *mut f64,
 ) -> c_int {
     let high = high;
@@ -156,10 +160,10 @@ pub unsafe extern "C" fn decode_time_components(
         } else if low.is_nil() {
             let now = current_timespec();
             if !result.is_null() {
-                (*result).hi = hi_time(now.tv_sec);
-                (*result).lo = lo_time(now.tv_sec);
-                (*result).us = (now.tv_nsec / 1000) as c_int;
-                (*result).ps = (now.tv_nsec % 1000 * 1000) as c_int;
+                result.hi = hi_time(now.tv_sec);
+                result.lo = lo_time(now.tv_sec);
+                result.us = (now.tv_nsec / 1000) as c_int;
+                result.ps = (now.tv_nsec % 1000 * 1000) as c_int;
             }
             if !dresult.is_null() {
                 *dresult = (now.tv_sec as f64) + (now.tv_nsec as f64) / 1e9;
@@ -201,10 +205,10 @@ pub unsafe extern "C" fn decode_time_components(
             return -1;
         }
 
-        (*result).hi = hi;
-        (*result).lo = lo as c_int;
-        (*result).us = us as c_int;
-        (*result).ps = ps as c_int;
+        result.hi = hi;
+        result.lo = lo as c_int;
+        result.us = us as c_int;
+        result.ps = ps as c_int;
     }
     if !dresult.is_null() {
         let dhi = hi as f64;
@@ -217,7 +221,7 @@ pub unsafe extern "C" fn decode_time_components(
 
 /// Convert T into an Emacs time *RESULT, truncating toward minus infinity.
 /// Return true if T is in range, false otherwise.
-unsafe fn decode_float_time(t: f64, result: *mut lisp_time) -> bool {
+unsafe fn decode_float_time(t: f64, mut result: LispTimeRef) -> bool {
     let lo_multiplier = f64::from(1 << LO_TIME_BITS);
     let emacs_time_min = MOST_NEGATIVE_FIXNUM as f64 * lo_multiplier;
     if !(emacs_time_min <= t && t < -emacs_time_min) {
@@ -247,16 +251,16 @@ unsafe fn decode_float_time(t: f64, result: *mut lisp_time) -> bool {
         lo += 1 << LO_TIME_BITS;
     }
 
-    (*result).hi = hi;
-    (*result).lo = lo;
-    (*result).us = us;
-    (*result).ps = ps;
+    result.hi = hi;
+    result.lo = lo;
+    result.us = us;
+    result.ps = ps;
 
     true
 }
 
 #[no_mangle]
-pub extern "C" fn lisp_to_timespec(t: lisp_time) -> c_timespec {
+pub extern "C" fn lisp_to_timespec(t: LispTime) -> c_timespec {
     if t.hi < (1 >> LO_TIME_BITS) {
         return c_timespec {
             tv_sec: 0,
@@ -281,7 +285,7 @@ pub extern "C" fn lisp_to_timespec(t: lisp_time) -> c_timespec {
 pub unsafe extern "C" fn lisp_time_struct(
     specified_time: LispObject,
     plen: *mut c_int,
-) -> lisp_time {
+) -> LispTime {
     let mut high = LispObject::from_C(0);
     let mut low = LispObject::from_C(0);
     let mut usec = LispObject::from_C(0);
@@ -292,8 +296,15 @@ pub unsafe extern "C" fn lisp_time_struct(
         invalid_time();
     }
 
-    let mut t: lisp_time = Default::default();
-    let val = decode_time_components(high, low, usec, psec, &mut t, ptr::null_mut());
+    let mut t: LispTime = Default::default();
+    let val = decode_time_components(
+        high,
+        low,
+        usec,
+        psec,
+        ExternalPtr::new(&mut t),
+        ptr::null_mut(),
+    );
     check_time_validity(val);
     if !plen.is_null() {
         *plen = len;
@@ -302,24 +313,26 @@ pub unsafe extern "C" fn lisp_time_struct(
     t
 }
 
-/// Check a return value compatible with that of `decode_time_components`.
-fn check_time_validity(validity: i32) {
-    if validity <= 0 {
-        if validity < 0 {
-            time_overflow();
-        } else {
-            invalid_time();
-        }
-    }
+/// Report that a time value is out of range for Emacs.
+#[no_mangle]
+pub extern "C" fn time_overflow() -> ! {
+    error!("Specified time is not representable")
 }
 
 fn invalid_time() -> ! {
-    error!("Invalid time specification");
+    error!("Invalid time specification")
 }
 
-/// Report that a time value is out of range for Emacs.
-fn time_overflow() -> ! {
-    error!("Specified time is not representable");
+/// Check a return value compatible with that of decode_time_components.
+#[no_mangle]
+pub extern "C" fn check_time_validity(validity: c_int) {
+    if validity <= 0 {
+        if validity < 0 {
+            time_overflow()
+        } else {
+            invalid_time()
+        }
+    }
 }
 
 /// Return the current time, as the number of seconds since 1970-01-01 00:00:00.
@@ -354,12 +367,90 @@ pub fn float_time(time: LispObject) -> LispObject {
 
     if unsafe {
         disassemble_lisp_time(time, &mut high, &mut low, &mut usec, &mut psec) == 0
-            || decode_time_components(high, low, usec, psec, ptr::null_mut(), &mut t) == 0
+            || decode_time_components(
+                high,
+                low,
+                usec,
+                psec,
+                ExternalPtr::new(ptr::null_mut()),
+                &mut t,
+            ) == 0
     } {
         invalid_time();
     }
 
     LispObject::from_float(t)
+}
+
+fn time_add(ta: LispTime, tb: LispTime) -> LispTime {
+    let mut hi: EmacsInt = ta.hi + tb.hi;
+    let mut lo: c_int = ta.lo + tb.lo;
+    let mut us: c_int = ta.us + tb.us;
+    let mut ps: c_int = ta.ps + tb.ps;
+    us += if 1000000 <= ps { 1 } else { 0 };
+    ps -= if 1000000 <= ps { 1000000 } else { 0 };
+    lo += if 1000000 <= us { 1 } else { 0 };
+    us -= if 1000000 <= us { 1000000 } else { 0 };
+    hi += if 1 << LO_TIME_BITS <= lo { 1 } else { 0 };
+    lo -= (if 1 << LO_TIME_BITS <= lo { 1 } else { 0 }) << LO_TIME_BITS;
+    LispTime { hi, lo, us, ps }
+}
+
+fn time_subtract(ta: LispTime, tb: LispTime) -> LispTime {
+    let mut hi: EmacsInt = ta.hi - tb.hi;
+    let mut lo: c_int = ta.lo - tb.lo;
+    let mut us: c_int = ta.us - tb.us;
+    let mut ps: c_int = ta.ps - tb.ps;
+    us -= if ps < 0 { 1 } else { 0 };
+    ps += if ps < 0 { 1000000 } else { 0 };
+    lo -= if us < 0 { 1 } else { 0 };
+    us += if us < 0 { 1000000 } else { 0 };
+    hi -= if lo < 0 { 1 } else { 0 };
+    lo += (if lo < 0 { 1 } else { 0 }) << LO_TIME_BITS;
+    LispTime { hi, lo, us, ps }
+}
+
+fn time_arith<F: FnOnce(LispTime, LispTime) -> LispTime>(
+    a: LispObject,
+    b: LispObject,
+    op: F,
+) -> LispObject {
+    let mut alen: c_int = 0;
+    let mut blen: c_int = 0;
+    let ta = unsafe { lisp_time_struct(a, &mut alen) };
+    let tb = unsafe { lisp_time_struct(b, &mut blen) };
+    let t = op(ta, tb);
+    if LispObject::fixnum_overflow(t.hi) {
+        time_overflow();
+    }
+
+    let max_len = max(alen, blen);
+    let mut val = LispObject::cons(LispObject::from_C(t.ps as c_long), Qnil);
+    if max_len == 3 {
+        val = LispObject::cons(LispObject::from_C(t.us as c_long), val);
+    }
+    if max_len == 2 {
+        val = LispObject::cons(LispObject::from_C(t.lo as c_long), val);
+        val = LispObject::cons(LispObject::from_C(t.hi), val);
+    }
+    val
+}
+
+/// Return the sum of two time values A and B, as a time value.
+/// A nil value for either argument stands for the current time.
+/// See `current-time-string' for the various forms of a time value.
+#[lisp_fn(c_name = "time_add", name = "time-add")]
+pub fn time_add_lisp(a: LispObject, b: LispObject) -> LispObject {
+    time_arith(a, b, time_add)
+}
+
+/// Return the difference between two time values A and B, as a time value.
+/// Use `float-time' to convert the difference into elapsed seconds.
+/// A nil value for either argument stands for the current time.
+/// See `current-time-string' for the various forms of a time value.
+#[lisp_fn(c_name = "time_subtract", name = "time-subtract")]
+pub fn time_subtract_lisp(a: LispObject, b: LispObject) -> LispObject {
+    time_arith(a, b, time_subtract)
 }
 
 include!(concat!(env!("OUT_DIR"), "/time_exports.rs"));
