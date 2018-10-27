@@ -1071,13 +1071,16 @@ instead of deleted."
         (filter-buffer-substring (region-beginning) (region-end) method)))))
   "Function to get the region's content.
 Called with one argument METHOD which can be:
-- nil: return the content as a string.
+- nil: return the content as a string (list of strings for
+  non-contiguous regions).
 - `delete-only': delete the region; the return value is undefined.
-- `bounds': return the boundaries of the region as a list of cons
-  cells of the form (START . END).
+- `bounds': return the boundaries of the region as a list of one
+  or more cons cells of the form (START . END).
 - anything else: delete the region and return its content
-  as a string, after filtering it with `filter-buffer-substring', which
-  is called with METHOD as its 3rd argument.")
+  as a string (or list of strings for non-contiguous regions),
+  after filtering it with `filter-buffer-substring', which
+  is called, for each contiguous sub-region, with METHOD as its
+  3rd argument.")
 
 (defvar region-insert-function
   (lambda (lines)
@@ -5527,8 +5530,10 @@ also checks the value of `use-empty-active-region'."
        (progn (cl-assert (mark)) t)))
 
 (defun region-bounds ()
-  "Return the boundaries of the region as a pair of positions.
-Value is a list of cons cells of the form (START . END)."
+  "Return the boundaries of the region.
+Value is a list of one or more cons cells of the form (START . END).
+It will have more than one cons cell when the region is non-contiguous,
+see `region-noncontiguous-p' and `extract-rectangle-bounds'."
   (funcall region-extract-function 'bounds))
 
 (defun region-noncontiguous-p ()
@@ -7935,7 +7940,7 @@ With a prefix argument, set VARIABLE to VALUE buffer-locally."
 		   (read-variable (format "Set variable (default %s): " default-var)
 				  default-var)
 		 (read-variable "Set variable: ")))
-	  (minibuffer-help-form '(describe-variable var))
+	  (minibuffer-help-form `(describe-variable ',var))
 	  (prop (get var 'variable-interactive))
           (obsolete (car (get var 'byte-obsolete-variable)))
 	  (prompt (format "Set %s %s to value: " var
