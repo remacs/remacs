@@ -12,6 +12,7 @@ use vectors::LispVectorlikeRef;
 // A font is not a type in and of itself, it's just a group of three kinds of
 // pseudovector. This newtype allows us to define methods that yield the actual
 // font types: Spec, Entity, and Object.
+#[repr(transparent)]
 pub struct LispFontRef(LispVectorlikeRef);
 
 impl LispFontRef {

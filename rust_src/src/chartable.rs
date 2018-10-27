@@ -13,6 +13,7 @@ use lisp::{ExternalPtr, LispObject};
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 pub type LispSubCharTableRef = ExternalPtr<Lisp_Sub_Char_Table>;
+#[repr(transparent)]
 pub struct LispSubCharTableAsciiRef(ExternalPtr<Lisp_Sub_Char_Table>);
 
 impl LispObject {
