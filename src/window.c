@@ -542,19 +542,6 @@ after that.  */)
 	  (decode_valid_window (window)->pixel_height_before_size_change));
 }
 
-DEFUN ("window-new-total", Fwindow_new_total, Swindow_new_total, 0, 1, 0,
-       doc: /* Return the new total size of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-
-The new total size of WINDOW is the value set by the last call of
-`set-window-new-total' for WINDOW.  If it is valid, it will be shortly
-installed as WINDOW's total height (see `window-total-height') or total
-width (see `window-total-width').  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->new_total;
-}
-
 DEFUN ("window-normal-size", Fwindow_normal_size, Swindow_normal_size, 0, 2, 0,
        doc: /* Return the normal height of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -6992,7 +6979,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_height_before_size_change);
   defsubr (&Swindow_normal_size);
   defsubr (&Swindow_new_pixel);
-  defsubr (&Swindow_new_total);
   defsubr (&Swindow_new_normal);
   defsubr (&Swindow_pixel_left);
   defsubr (&Swindow_pixel_top);
