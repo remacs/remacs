@@ -14,6 +14,7 @@ use symbols::LispSymbolRef;
 // Cons support (LispType == 6 | 3)
 
 /// A newtype for objects we know are conses.
+#[repr(transparent)]
 #[derive(Clone, Copy)]
 pub struct LispCons(LispObject);
 

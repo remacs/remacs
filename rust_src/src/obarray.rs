@@ -11,6 +11,7 @@ use lisp::defsubr;
 use lisp::LispObject;
 
 /// A lisp object containing an `obarray`.
+#[repr(transparent)]
 pub struct LispObarrayRef(LispObject);
 
 impl LispObarrayRef {

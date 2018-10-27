@@ -42,7 +42,7 @@ use vectors::LispBoolVecRef;
 ///
 /// Their definition are determined in a way consistent with Emacs C.
 /// Under casual systems, they're the type isize and usize respectively.
-#[repr(C)]
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct LispObject(pub EmacsInt);
 
@@ -182,7 +182,7 @@ impl LispObject {
 // directly creating and moving or copying this struct is simply wrong!
 // If needed, we can calculate all variants size and allocate properly.
 
-#[repr(C)]
+#[repr(transparent)]
 #[derive(Debug)]
 pub struct ExternalPtr<T>(*mut T);
 
