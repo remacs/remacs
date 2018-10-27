@@ -39,8 +39,8 @@
   (should (eq (window-old-point (selected-window)) 1)))
 
 (ert-deftest window-new-total()
-  (should (eq (window-new-total) 9))
-  (should (eq (window-new-total (selected-window)) 9)))
+  (should (eq (window-new-total) (window-total-height)))
+  (should (eq (window-new-total (selected-window)) (window-total-height))))
 
 (ert-deftest window-use-time ()
   (let ((use-time (window-use-time)))
