@@ -1672,6 +1672,12 @@ are implemented in C using the Jansson library.
 and 'flatten' it such that the result is a list of all the terminal
 nodes.
 
++++
+** 'zlib-decompress-region' can partially decompress corrupted data.
+If the new optional ALLOW-PARTIAL argument is passed, then the data
+that was decompressed successfully before failing will be inserted
+into the buffer.
+
 ** Mailcap
 
 ---

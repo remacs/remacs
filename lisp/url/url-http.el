@@ -939,7 +939,8 @@ should be shown to the user."
     (goto-char (point-min))
     success))
 
-(declare-function zlib-decompress-region "decompress.c" (start end))
+(declare-function zlib-decompress-region "decompress.c"
+                  (start end &optional allow-partial))
 
 (defun url-handle-content-transfer-encoding ()
   (let ((encoding (mail-fetch-field "content-encoding")))
@@ -951,7 +952,7 @@ should be shown to the user."
 	(widen)
 	(goto-char (point-min))
 	(when (search-forward "\n\n")
-	  (zlib-decompress-region (point) (point-max)))))))
+	  (zlib-decompress-region (point) (point-max) t))))))
 
 ;; Miscellaneous
 (defun url-http-activate-callback ()

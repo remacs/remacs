@@ -4513,14 +4513,17 @@ This function returns non-@code{nil} if built-in zlib decompression is
 available.
 @end defun
 
-@defun zlib-decompress-region start end
+@defun zlib-decompress-region start end &optional allow-partial
 This function decompresses the region between @var{start} and
 @var{end}, using built-in zlib decompression.  The region should
 contain data that were compressed with gzip or zlib.  On success, the
 function replaces the contents of the region with the decompressed
-data.  On failure, the function leaves the region unchanged and
-returns @code{nil}.  This function can be called only in unibyte
-buffers.
+data.  If @var{allow-partial} is @code{nil} or omitted, then on
+failure, the function leaves the region unchanged and returns
+@code{nil}.  Otherwise, it returns the number of bytes that were not
+decompressed and replaces the region text by whatever data was
+successfully decompressed.  This function can be called only in
+unibyte buffers.
 @end defun
 
 
