@@ -908,7 +908,7 @@ AC_CACHE_CHECK([whether the compiler is clang], [emacs_cv_clang],
      [emacs_cv_clang=yes],
      [emacs_cv_clang=no])])
 
-WERROR_CFLAGS=
+WERROR_CFLAGS=$WERROR_CFLAGS
 # When compiling with GCC, prefer -isystem to -I when including system
 # include files, to avoid generating useless diagnostics for the files.
 AS_IF([test $gl_gcc_warnings = no],
@@ -5036,7 +5036,7 @@ esac
 if test "${HAVE_W32}" = "yes"; then
     REMACSLIB_NAME="remacs_lib.lib"
     RUST_DEPS="$RUST_DEPS -lws2_32 -luserenv"
-    
+
     # Windows fails linking in the 'cargo test' stage, skip for now.
     CARGO_TEST="true"
 fi
