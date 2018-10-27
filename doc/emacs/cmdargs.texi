@@ -305,6 +305,8 @@ not disable loading @file{site-start.el}.
 
 @item --no-site-file
 @opindex --no-site-file
+@itemx -nsl
+@opindex -nsl
 @cindex @file{site-start.el} file, not loading
 Do not load @file{site-start.el} (@pxref{Init File}).  The @samp{-Q}
 option does this too, but other options like @samp{-q} do not.
@@ -379,6 +381,8 @@ Enable expensive correctness checks when dealing with dynamically
 loadable modules.  This is intended for module authors that wish to
 verify that their module conforms to the module API requirements.  The
 option makes Emacs abort if a module-related assertion triggers.
+@xref{Writing Dynamic Modules,, Writing Dynamically-Loaded Modules,
+elisp, The GNU Emacs Lisp Reference Manual}.
 @end table
 
 @node Command Example
