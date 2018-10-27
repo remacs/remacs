@@ -601,13 +601,13 @@ Shell mode, because they allow for job control (@kbd{C-c}, @kbd{C-z},
 etc.)@: between the process and its children, and because interactive
 programs treat ptys as terminal devices, whereas pipes don't support
 these features.  However, for subprocesses used by Lisp programs for
-internal purposes (i.e., with no user interaction), where significant
-amounts of data need to be exchanged between the subprocess and the
-Lisp program, it is often better to use a pipe, because pipes are
-more efficient, and because they are immune to stray character
-injections that ptys introduce for large (around 500 byte) messages.
-Also, the total number of ptys is limited on many systems, and it is
-good not to waste them unnecessarily.
+internal purposes (i.e., no user interaction with the subprocess is
+required), where significant amounts of data need to be exchanged
+between the subprocess and the Lisp program, it is often better to use
+a pipe, because pipes are more efficient, and because they are immune
+to stray character injections that ptys introduce for large (around
+500 byte) messages.  Also, the total number of ptys is limited on many
+systems, and it is good not to waste them unnecessarily.
 
 @defun make-process &rest args
 This function is the basic low-level primitive for starting
