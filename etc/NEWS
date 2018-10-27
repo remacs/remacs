@@ -120,10 +120,11 @@ the new version of the file again.)
 * Changes in Emacs 27.1
 
 +++
-** emacsclient uses EMACS_SOCKET_NAME if --socket-name is not set.
-The behavior is identical to the EMACS_SERVER_FILE, in that the
-command line value will override the environment, and the natural
-default to TMPDIR, then /tmp, continues to apply.
+** emacsclient now supports the 'EMACS_SOCKET_NAME' environment variable.
+The behavior is identical to 'EMACS_SERVER_FILE', in that the
+command-line value specified via '--socket-name' will override the
+environment, and the natural default to TMPDIR, then '/tmp', continues
+to apply.
 
 +++
 ** The function 'read-passwd' uses '*' as default character to hide passwords.
