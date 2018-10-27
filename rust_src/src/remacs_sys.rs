@@ -168,8 +168,9 @@ pub const WAIT_READING_MAX: i64 = std::i64::MAX;
 unsafe impl Sync for Lisp_Subr {}
 
 pub type Lisp_Buffer = buffer;
-pub type Lisp_Window = window;
 pub type Lisp_Frame = frame;
+pub type Lisp_Glyph = glyph;
+pub type Lisp_Window = window;
 
 #[repr(C)]
 pub struct Lisp_Vectorlike {
