@@ -44,39 +44,6 @@ impl LispObject {
         LispObject::from_C(o as EmacsInt)
     }
 
-    /// Convert a positive integer into its LispObject representation.
-    ///
-    /// This is also the function to use when translating `XSETFASTINT`
-    /// from Emacs C.
-    // TODO: the C claims that make_natnum is faster, but it does the same
-    // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
-    // should remove this in favour of make_number.
-    pub fn from_natnum(n: EmacsUint) -> LispObject {
-        debug_assert!(n <= (MOST_POSITIVE_FIXNUM as EmacsUint));
-        LispObject::from_fixnum_truncated(n as EmacsInt)
-    }
-
-    pub fn int_or_float_from_fixnum(n: EmacsInt) -> LispObject {
-        if n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM {
-            Self::from_float(n as f64)
-        } else {
-            Self::from_fixnum(n)
-        }
-    }
-
-    pub fn fixnum_overflow(n: EmacsInt) -> bool {
-        n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM
-    }
-
-    pub unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
-        let raw = self.to_C();
-        if USE_LSB_TAG {
-            raw >> Lisp_Bits::INTTYPEBITS
-        } else {
-            raw & INTMASK
-        }
-    }
-
     pub fn is_fixnum(self) -> bool {
         let ty = self.get_type();
         (ty as u8 & ((Lisp_Type::Lisp_Int0 as u8) | !(Lisp_Type::Lisp_Int1 as u8)))
@@ -98,6 +65,55 @@ impl LispObject {
             wrong_type!(Qintegerp, self)
         }
     }
+}
+
+impl LispObject {
+    /// Convert a positive integer into its LispObject representation.
+    ///
+    /// This is also the function to use when translating `XSETFASTINT`
+    /// from Emacs C.
+    // TODO: the C claims that make_natnum is faster, but it does the same
+    // thing as make_number when USE_LSB_TAG is 1, which it is for us. We
+    // should remove this in favour of make_number.
+    pub fn from_natnum(n: EmacsUint) -> LispObject {
+        debug_assert!(n <= (MOST_POSITIVE_FIXNUM as EmacsUint));
+        LispObject::from_fixnum_truncated(n as EmacsInt)
+    }
+
+    pub fn is_natnum(self) -> bool {
+        self.as_fixnum().map_or(false, |i| i >= 0)
+    }
+
+    pub fn as_natnum_or_error(self) -> EmacsUint {
+        if self.is_natnum() {
+            unsafe { self.to_fixnum_unchecked() as EmacsUint }
+        } else {
+            wrong_type!(Qwholenump, self)
+        }
+    }
+}
+
+impl LispObject {
+    pub fn int_or_float_from_fixnum(n: EmacsInt) -> LispObject {
+        if n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM {
+            Self::from_float(n as f64)
+        } else {
+            Self::from_fixnum(n)
+        }
+    }
+
+    pub fn fixnum_overflow(n: EmacsInt) -> bool {
+        n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM
+    }
+
+    pub unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
+        let raw = self.to_C();
+        if USE_LSB_TAG {
+            raw >> Lisp_Bits::INTTYPEBITS
+        } else {
+            raw & INTMASK
+        }
+    }
 
     pub fn as_fixnum_coerce_marker_or_error(self) -> EmacsInt {
         if let Some(n) = self.as_fixnum() {
@@ -112,18 +128,6 @@ impl LispObject {
     /// TODO: Bignum support? (Current Emacs doesn't have it)
     pub fn is_integer(self) -> bool {
         self.is_fixnum()
-    }
-
-    pub fn is_natnum(self) -> bool {
-        self.as_fixnum().map_or(false, |i| i >= 0)
-    }
-
-    pub fn as_natnum_or_error(self) -> EmacsUint {
-        if self.is_natnum() {
-            unsafe { self.to_fixnum_unchecked() as EmacsUint }
-        } else {
-            wrong_type!(Qwholenump, self)
-        }
     }
 }
 

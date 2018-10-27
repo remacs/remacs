@@ -391,6 +391,17 @@ impl LispBoolVecRef {
     }
 }
 
+impl LispObject {
+    pub fn is_bool_vector(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR))
+    }
+
+    pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
+        self.as_vectorlike().and_then(|v| v.as_bool_vector())
+    }
+}
+
 pub struct LispBoolVecIterator<'a> {
     bvec: &'a LispBoolVecRef,
     limb: usize,
