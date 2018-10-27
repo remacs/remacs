@@ -1,9 +1,7 @@
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
-#![cfg_attr(
-    feature = "clippy",
-    allow(not_unsafe_ptr_arg_deref, wrong_self_convention)
-)]
+#![feature(tool_lints)]
+#![allow(clippy::cyclomatic_complexity)]
+#![allow(clippy::wrong_self_convention)]
+#![allow(clippy::too_many_arguments)]
 #![feature(const_fn)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
@@ -100,6 +98,7 @@ mod numbers;
 mod obarray;
 mod objects;
 mod process;
+#[allow(clippy::all)]
 mod remacs_sys;
 mod search;
 mod strings;

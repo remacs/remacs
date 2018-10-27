@@ -215,32 +215,16 @@ pub extern "C" fn syms_of_casefiddle() {
 #[no_mangle]
 pub extern "C" fn keys_of_casefiddle() {
     unsafe {
-        initial_define_key(
-            control_x_map,
-            Ctl('L'),
-            CString::new("downcase-region").unwrap().as_ptr(),
-        );
-        initial_define_key(
-            control_x_map,
-            Ctl('U'),
-            CString::new("upcase-region").unwrap().as_ptr(),
-        );
-
-        initial_define_key(
-            meta_map,
-            'c' as i32,
-            CString::new("capitalize-word").unwrap().as_ptr(),
-        );
-        initial_define_key(
-            meta_map,
-            'l' as i32,
-            CString::new("downcase-word").unwrap().as_ptr(),
-        );
-        initial_define_key(
-            meta_map,
-            'u' as i32,
-            CString::new("upcase-word").unwrap().as_ptr(),
-        );
+        let downcase_region = CString::new("downcase-region").unwrap();
+        initial_define_key(control_x_map, Ctl('L'), downcase_region.as_ptr());
+        let upcase_region = CString::new("upcase-region").unwrap();
+        initial_define_key(control_x_map, Ctl('U'), upcase_region.as_ptr());
+        let capitalize_word = CString::new("capitalize-word").unwrap();
+        initial_define_key(meta_map, 'c' as i32, capitalize_word.as_ptr());
+        let downcase_word = CString::new("downcase-word").unwrap();
+        initial_define_key(meta_map, 'l' as i32, downcase_word.as_ptr());
+        let upcase_word = CString::new("upcase-word").unwrap();
+        initial_define_key(meta_map, 'u' as i32, upcase_word.as_ptr());
     }
 
     put(intern("upcase-region"), Qdisabled, Qt);

@@ -339,19 +339,19 @@ impl From<isize> for LispObject {
 
 impl From<i32> for LispObject {
     fn from(v: i32) -> Self {
-        LispObject::from_fixnum(v as EmacsInt)
+        LispObject::from_fixnum(EmacsInt::from(v))
     }
 }
 
 impl From<i16> for LispObject {
     fn from(v: i16) -> Self {
-        LispObject::from_fixnum(v as EmacsInt)
+        LispObject::from_fixnum(EmacsInt::from(v))
     }
 }
 
 impl From<i8> for LispObject {
     fn from(v: i8) -> Self {
-        LispObject::from_fixnum(v as EmacsInt)
+        LispObject::from_fixnum(EmacsInt::from(v))
     }
 }
 
@@ -369,19 +369,19 @@ impl From<usize> for LispObject {
 
 impl From<u32> for LispObject {
     fn from(v: u32) -> Self {
-        LispObject::from_natnum(v as EmacsUint)
+        LispObject::from_natnum(EmacsUint::from(v))
     }
 }
 
 impl From<u16> for LispObject {
     fn from(v: u16) -> Self {
-        LispObject::from_natnum(v as EmacsUint)
+        LispObject::from_natnum(EmacsUint::from(v))
     }
 }
 
 impl From<u8> for LispObject {
     fn from(v: u8) -> Self {
-        LispObject::from_natnum(v as EmacsUint)
+        LispObject::from_natnum(EmacsUint::from(v))
     }
 }
 

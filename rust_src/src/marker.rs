@@ -242,7 +242,7 @@ pub extern "C" fn set_point_from_marker(marker: LispObject) {
     // Don't trust the byte position if the marker belongs to a
     // different buffer.
     if marker.buffer().map_or(false, |b| b != cur_buf) {
-        bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), charpos);
+        bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), charpos) };
     } else {
         bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
     };
@@ -547,7 +547,7 @@ fn set_marker_internal_else(
         .as_marker()
         .map_or(false, |m| m.buffer() == Some(buf))
     {
-        bytepos = buf_charpos_to_bytepos(buf.as_mut(), charpos);
+        bytepos = unsafe { buf_charpos_to_bytepos(buf.as_mut(), charpos) };
     } else {
         let beg = buf.buffer_beg_byte(restricted);
         let end = buf.buffer_end_byte(restricted);
@@ -599,7 +599,7 @@ impl LispBufferRef {
 
 /// Return the byte position corresponding to CHARPOS in B.
 #[no_mangle]
-pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) -> isize {
+pub unsafe extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) -> isize {
     let mut buffer_ref = LispBufferRef::from_ptr(b as *mut c_void).unwrap();
 
     assert!(buffer_ref.beg() <= charpos && charpos <= buffer_ref.z());
@@ -680,7 +680,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
             best_below_byte = buffer_ref.inc_pos(best_below_byte);
         }
         if record {
-            unsafe { build_marker(b, best_below, best_below_byte) };
+            build_marker(b, best_below, best_below_byte);
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -702,7 +702,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
         }
 
         if record {
-            unsafe { build_marker(b, best_above, best_above_byte) };
+            build_marker(b, best_above, best_above_byte);
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -719,7 +719,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
 }
 
 #[no_mangle]
-pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) -> isize {
+pub unsafe extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) -> isize {
     let mut buffer_ref = LispBufferRef::from_ptr(b as *mut c_void).unwrap();
 
     assert!(buffer_ref.beg_byte() <= bytepos && bytepos <= buffer_ref.z_byte());
@@ -801,7 +801,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         // But don't do it if BUF_MARKERS is nil;
         // that is a signal from Fset_buffer_multibyte.
         if record && buffer_ref.markers().is_some() {
-            unsafe { build_marker(b, best_below, best_below_byte) };
+            build_marker(b, best_below, best_below_byte);
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);
@@ -828,7 +828,7 @@ pub extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: isize) ->
         // But don't do it if BUF_MARKERS is nil;
         // that is a signal from Fset_buffer_multibyte.
         if record && buffer_ref.markers().is_some() {
-            unsafe { build_marker(b, best_below, best_below_byte) };
+            build_marker(b, best_below, best_below_byte);
         }
         if MARKER_DEBUG {
             byte_char_debug_check(buffer_ref, best_below, best_below_byte);

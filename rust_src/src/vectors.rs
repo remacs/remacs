@@ -488,10 +488,10 @@ pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
             // instead of one in some cases.
             if !inorder(predicate, a, b) {
                 Ordering::Greater
-            } else if !inorder(predicate, b, a) {
-                Ordering::Less
-            } else {
+            } else if inorder(predicate, b, a) {
                 Ordering::Equal
+            } else {
+                Ordering::Less
             }
         });
         seq

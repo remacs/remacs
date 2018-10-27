@@ -139,7 +139,7 @@ pub extern "C" fn get_keymap(
 /// in case you use it as a menu with `x-popup-menu'.
 #[lisp_fn(min = "0")]
 pub fn make_keymap(string: LispObject) -> LispObject {
-    let tail: LispObject = if !string.is_nil() {
+    let tail: LispObject = if string.is_not_nil() {
         list!(string)
     } else {
         Qnil

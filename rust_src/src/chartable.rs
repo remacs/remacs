@@ -140,7 +140,7 @@ impl LispCharTableRef {
 }
 
 impl LispSubCharTableAsciiRef {
-    pub fn as_lisp_obj(self) -> LispObject {
+    pub fn as_lisp_obj(&self) -> LispObject {
         LispObject::tag_ptr(self.0, Lisp_Type::Lisp_Vectorlike)
     }
 

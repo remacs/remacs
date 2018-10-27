@@ -275,7 +275,7 @@ macro_rules! verify_lisp_type {
         }
     };
     ($n:expr, Qcharacterp) => {
-        if $n < 0 || $n > ($crate::multibyte::MAX_CHAR as EmacsInt) {
+        if $n < 0 || $n > (EmacsInt::from($crate::multibyte::MAX_CHAR)) {
             wrong_type!(
                 ::remacs_sys::Qcharacterp,
                 $crate::lisp::LispObject::from($n)

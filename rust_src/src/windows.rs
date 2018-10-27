@@ -422,7 +422,7 @@ pub fn window_minibuffer_p(window: LispObject) -> bool {
 /// spanned by its children.
 #[lisp_fn(min = "0")]
 pub fn window_pixel_width(window: LispObject) -> EmacsInt {
-    window_valid_or_selected(window).pixel_width as EmacsInt
+    EmacsInt::from(window_valid_or_selected(window).pixel_width)
 }
 
 /// Return the height of window WINDOW in pixels.
@@ -433,7 +433,7 @@ pub fn window_pixel_width(window: LispObject) -> EmacsInt {
 /// the height of the screen areas spanned by its children.
 #[lisp_fn(min = "0")]
 pub fn window_pixel_height(window: LispObject) -> EmacsInt {
-    window_valid_or_selected(window).pixel_height as EmacsInt
+    EmacsInt::from(window_valid_or_selected(window).pixel_height)
 }
 
 /// Get width of marginal areas of window WINDOW.
@@ -445,10 +445,10 @@ pub fn window_pixel_height(window: LispObject) -> EmacsInt {
 #[lisp_fn(min = "0")]
 pub fn window_margins(window: LispObject) -> LispObject {
     fn margin_as_object(margin: c_int) -> LispObject {
-        if margin != 0 {
-            LispObject::from(margin)
-        } else {
+        if margin == 0 {
             Qnil
+        } else {
+            LispObject::from(margin)
         }
     }
     let win = window_live_or_selected(window);
@@ -945,13 +945,11 @@ pub fn window_top_child(window: LispObject) -> Option<LispWindowRef> {
 pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool) -> LispObject {
     let mut w = selected_window().as_window_or_error();
     let requested_arg = if arg.is_nil() {
-        unsafe { window_body_width(w.as_mut(), false) as EmacsInt - 2 }
+        unsafe { EmacsInt::from(window_body_width(w.as_mut(), false)) - 2 }
+    } else if left {
+        prefix_numeric_value(arg)
     } else {
-        if left {
-            prefix_numeric_value(arg)
-        } else {
-            -prefix_numeric_value(arg)
-        }
+        -prefix_numeric_value(arg)
     };
 
     let result = unsafe { set_window_hscroll(w.as_mut(), w.hscroll as EmacsInt + requested_arg) };

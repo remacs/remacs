@@ -77,11 +77,12 @@ pub fn and(args: LispObject) -> LispObject {
 pub fn lisp_if(args: LispObject) -> LispObject {
     let cell = args.as_cons_or_error();
     let cond = unsafe { eval_sub(cell.car()) };
+    let cnsq = cell.cdr().as_cons_or_error();
 
-    if cond != Qnil {
-        unsafe { eval_sub(cell.cdr().as_cons_or_error().car()) }
+    if cond.is_not_nil() {
+        unsafe { eval_sub(cnsq.car()) }
     } else {
-        progn(cell.cdr().as_cons_or_error().cdr())
+        progn(cnsq.cdr())
     }
 }
 
@@ -885,7 +886,7 @@ pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
 }
 
 fn funcall_nil(args: &[LispObject]) -> LispObject {
-    let mut obj_array: Vec<LispObject> = args.iter().map(|o| *o).collect();
+    let mut obj_array: Vec<LispObject> = args.to_vec();
     Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr());
     Qnil
 }
