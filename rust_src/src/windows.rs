@@ -1014,7 +1014,6 @@ pub fn scroll_down(arg: LispObject) -> LispObject {
     Qnil
 }
 
-
 // Return the new total size of window WINDOW.
 // WINDOW must be a valid window and defaults to the selected one.
 //
