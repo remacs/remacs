@@ -4231,11 +4231,8 @@ extern void syms_of_process (void);
 extern void setup_process_coding_systems (Lisp_Object);
 
 /* Defined in callproc.c.  */
-#ifndef DOS_NT
 # define CHILD_SETUP_TYPE _Noreturn void
-#else
-# define CHILD_SETUP_TYPE int
-#endif
+
 extern CHILD_SETUP_TYPE child_setup (int, int, int, char **, bool, Lisp_Object);
 extern void init_callproc_1 (void);
 extern void init_callproc (void);
@@ -4444,11 +4441,6 @@ extern bool profiler_memory_running;
 extern void malloc_probe (size_t);
 extern void syms_of_profiler (void);
 
-
-#ifdef DOS_NT
-/* Defined in w32.c.  */
-extern char *emacs_root_dir (void);
-#endif /* DOS_NT */
 
 /* Defined in lastfile.c.  */
 extern char my_edata[];

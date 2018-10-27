@@ -10525,16 +10525,14 @@ See also `current-input-mode'.  */)
 
   if (tty->flow_control != !NILP (flow))
     {
-#ifndef DOS_NT
+
       /* This causes startup screen to be restored and messes with the mouse.  */
       reset_sys_modes (tty);
-#endif
 
       tty->flow_control = !NILP (flow);
 
-#ifndef DOS_NT
       init_sys_modes (tty);
-#endif
+
     }
   return Qnil;
 }

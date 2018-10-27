@@ -13852,9 +13852,8 @@ redisplay_internal (void)
 	 display area, displaying a different frame means redisplay
 	 the whole thing.  */
       SET_FRAME_GARBAGED (sf);
-#ifndef DOS_NT
+
       set_tty_color_mode (FRAME_TTY (sf), sf);
-#endif
       FRAME_TTY (sf)->previous_frame = sf;
     }
 

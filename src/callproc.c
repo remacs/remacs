@@ -196,11 +196,7 @@ call_process_cleanup (Lisp_Object buffer)
     }
 }
 
-#ifdef DOS_NT
-static mode_t const default_output_mode = S_IREAD | S_IWRITE;
-#else
 static mode_t const default_output_mode = 0666;
-#endif
 
 DEFUN ("call-process", Fcall_process, Scall_process, 1, MANY, 0,
        doc: /* Call PROGRAM synchronously in separate process.
@@ -839,17 +835,8 @@ create_temp_file (ptrdiff_t nargs, Lisp_Object *args,
   else
     {
       char *outf;
-#ifndef DOS_NT
       outf = getenv ("TMPDIR");
       tmpdir = build_string (outf ? outf : "/tmp/");
-#else /* DOS_NT */
-      if ((outf = egetenv ("TMPDIR"))
-	  || (outf = egetenv ("TMP"))
-	  || (outf = egetenv ("TEMP")))
-	tmpdir = build_string (outf);
-      else
-	tmpdir = Ffile_name_as_directory (build_string ("c:/temp"));
-#endif
     }
 
   {

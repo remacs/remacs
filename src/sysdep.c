@@ -385,15 +385,11 @@ init_baud_rate (int fd)
     emacs_ospeed = 0;
   else
     {
-#ifdef DOS_NT
-    emacs_ospeed = 15;
-#else  /* not DOS_NT */
       struct termios sg;
 
       sg.c_cflag = B9600;
       tcgetattr (fd, &sg);
       emacs_ospeed = cfgetospeed (&sg);
-#endif /* not DOS_NT */
     }
 
   baud_rate = (emacs_ospeed < ARRAYELTS (baud_convert)
@@ -583,9 +579,6 @@ struct save_signal
   struct sigaction action;
 };
 
-#ifdef DOS_NT
-static void save_signal_handlers (struct save_signal *);
-#endif
 static void restore_signal_handlers (struct save_signal *);
 
 /* Suspend the Emacs process; give terminal to its superior.  */
@@ -593,15 +586,7 @@ static void restore_signal_handlers (struct save_signal *);
 void
 sys_suspend (void)
 {
-#ifndef DOS_NT
   kill (0, SIGTSTP);
-#else
-/* On a system where suspending is not implemented,
-   instead fork a subshell and let it talk directly to the terminal
-   while we wait.  */
-  sys_subshell ();
-
-#endif
 }
 
 /* Fork a subshell.  */
@@ -609,24 +594,16 @@ sys_suspend (void)
 void
 sys_subshell (void)
 {
-#ifdef DOS_NT	/* Demacs 1.1.2 91/10/20 Manabu Higashida */
-  int st;
-  char oldwd[MAX_UTF8_PATH];
-#endif
   int status;
   pid_t pid;
   struct save_signal saved_handlers[5];
   char *str = SSDATA (encode_current_directory ());
 
-#ifdef DOS_NT
-  pid = 0;
-#else
   {
     char *volatile str_volatile = str;
     pid = vfork ();
     str = str_volatile;
   }
-#endif
 
   if (pid < 0)
     error ("Can't spawn subshell");
@@ -641,19 +618,10 @@ sys_subshell (void)
   saved_handlers[3].code = 0;
 #endif
 
-#ifdef DOS_NT
-  save_signal_handlers (saved_handlers);
-#endif
-
   if (pid == 0)
     {
       const char *sh = 0;
 
-#ifdef DOS_NT    /* MW, Aug 1993 */
-      getcwd (oldwd, sizeof oldwd);
-      if (sh == 0)
-	sh = egetenv ("SUSPEND");	/* KFS, 1994-12-14 */
-#endif
       if (sh == 0)
 	sh = egetenv ("SHELL");
       if (sh == 0)
@@ -662,10 +630,10 @@ sys_subshell (void)
       /* Use our buffer's default directory for the subshell.  */
       if (chdir (str) != 0)
 	{
-#ifndef DOS_NT
+
 	  emacs_perror (str);
 	  _exit (EXIT_CANCELED);
-#endif
+
 	}
 
 #ifdef  WINDOWSNT
@@ -681,25 +649,9 @@ sys_subshell (void)
 #endif  /* not WINDOWSNT */
     }
 
-#ifndef DOS_NT
   wait_for_termination (pid, &status, 0);
-#endif
   restore_signal_handlers (saved_handlers);
 }
-
-#ifdef DOS_NT
-static void
-save_signal_handlers (struct save_signal *saved_handlers)
-{
-  while (saved_handlers->code)
-    {
-      struct sigaction action;
-      emacs_sigaction_init (&action, SIG_IGN);
-      sigaction (saved_handlers->code, &action, &saved_handlers->action);
-      saved_handlers++;
-    }
-}
-#endif
 
 static void
 restore_signal_handlers (struct save_signal *saved_handlers)
@@ -725,7 +677,6 @@ init_sigio (int fd)
 #endif
 }
 
-#ifndef DOS_NT
 static void
 reset_sigio (int fd)
 {
@@ -733,7 +684,6 @@ reset_sigio (int fd)
   fcntl (fd, F_SETFL, old_fcntl_flags[fd]);
 #endif
 }
-#endif
 
 void
 request_sigio (void)

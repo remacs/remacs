@@ -11323,11 +11323,8 @@ internal character representation.  */);
   for (int i = 0; i < coding_category_max; i++)
     Fset (AREF (Vcoding_category_table, i), Qno_conversion);
 
-#if defined (DOS_NT)
-  system_eol_type = Qdos;
-#else
   system_eol_type = Qunix;
-#endif
+
   staticpro (&system_eol_type);
 }
 #endif /* emacs */

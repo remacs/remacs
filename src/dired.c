@@ -106,14 +106,6 @@ open_directory (Lisp_Object dirname, int *fdp)
   DIR *d;
   int fd, opendir_errno;
 
-#ifdef DOS_NT
-  /* Directories cannot be opened.  The emulation assumes that any
-     file descriptor other than AT_FDCWD corresponds to the most
-     recently opened directory.  This hack is good enough for Emacs.  */
-  fd = 0;
-  d = opendir (name);
-  opendir_errno = errno;
-#else
   fd = emacs_open (name, O_RDONLY | O_DIRECTORY, 0);
   if (fd < 0)
     {
@@ -127,7 +119,6 @@ open_directory (Lisp_Object dirname, int *fdp)
       if (! d)
 	emacs_close (fd);
     }
-#endif
 
   if (!d)
     report_file_errno ("Opening directory", dirname, opendir_errno);

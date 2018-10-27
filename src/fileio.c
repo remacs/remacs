@@ -4801,11 +4801,8 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
     offset = file_offset (append);
   else if (!NILP (append))
     open_flags |= O_APPEND;
-#ifdef DOS_NT
-  mode = S_IREAD | S_IWRITE;
-#else
+
   mode = auto_saving ? auto_save_mode_bits : 0666;
-#endif
 
   if (open_and_close_file)
     {
@@ -5731,7 +5728,6 @@ effect except for flushing STREAM's data.  */)
   return (set_binary_mode (fileno (fp), binmode) == O_BINARY) ? Qt : Qnil;
 }
 
-#ifndef DOS_NT
 
 /* Yield a Lisp float as close as possible to BLOCKSIZE * BLOCKS, with
    the result negated if NEGATE.  */
@@ -5775,7 +5771,6 @@ If the underlying system call fails, value is nil.  */)
 				 u.fsu_bavail_top_bit_set));
 }
 
-#endif /* !DOS_NT */
 
 void
 init_fileio (void)
@@ -6123,9 +6118,7 @@ This includes interactive calls to `delete-file' and
 
   defsubr (&Sset_binary_mode);
 
-#ifndef DOS_NT
   defsubr (&Sfile_system_info);
-#endif
 
 #ifdef HAVE_SYNC
   defsubr (&Sunix_sync);
