@@ -4232,7 +4232,7 @@ unless a hook has been set.
 Use `filter-buffer-substring' instead of `buffer-substring',
 `buffer-substring-no-properties', or `delete-and-extract-region' when
 you want to allow filtering to take place.  For example, major or minor
-modes can use `filter-buffer-substring-function' to extract characters
+modes can use `filter-buffer-substring-function' to exclude text properties
 that are special to a buffer, and should not be copied into other buffers."
   (funcall filter-buffer-substring-function beg end delete))
 
