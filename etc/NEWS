@@ -582,6 +582,14 @@ can now be searched via 'C-s'.
 
 ** Search and Replace
 
+*** lazy-highlight-buffer highlights matches in the full buffer.
+It is useful in combination with lazy-highlight-cleanup customized to nil
+to leave matches highlighted in the whole buffer after exiting isearch.
+Also when lazy-highlight-buffer prepares highlighting in the buffer,
+navigation through the matches without flickering is more smooth.
+lazy-highlight-buffer-max-at-a-time controls the number of matches to
+highlight in one iteration while processing the full buffer.
+
 +++
 *** New isearch bindings.
 
