@@ -58,6 +58,7 @@ impl LispObject {
         self.as_vectorlike().and_then(|v| v.as_frame())
     }
 
+    // Same as CHECK_FRAME
     pub fn as_frame_or_error(self) -> LispFrameRef {
         self.as_frame()
             .unwrap_or_else(|| wrong_type!(Qframep, self))
@@ -68,6 +69,7 @@ impl LispObject {
             .and_then(|f| if f.is_live() { Some(f) } else { None })
     }
 
+    // Same as CHECK_LIVE_FRAME
     pub fn as_live_frame_or_error(self) -> LispFrameRef {
         self.as_live_frame()
             .unwrap_or_else(|| wrong_type!(Qframe_live_p, self))

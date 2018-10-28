@@ -53,6 +53,17 @@ impl From<LispCharTableRef> for LispObject {
     }
 }
 
+impl LispObject {
+    pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
+        self.as_vectorlike().and_then(|v| v.as_sub_char_table())
+    }
+
+    pub fn as_sub_char_table_ascii(self) -> Option<LispSubCharTableAsciiRef> {
+        self.as_vectorlike()
+            .and_then(|v| v.as_sub_char_table_ascii())
+    }
+}
+
 fn chartab_size(depth: i32) -> usize {
     match depth {
         0 => 1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0 as isize,

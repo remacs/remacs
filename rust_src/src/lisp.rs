@@ -18,10 +18,8 @@ use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
 use remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Qunbound, Vbuffer_alist};
 
 use buffers::LispBufferRef;
-use chartable::{LispSubCharTableAsciiRef, LispSubCharTableRef};
 use eval::FUNCTIONP;
 use lists::{list, CarIter};
-use vectors::LispBoolVecRef;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -174,14 +172,6 @@ impl LispObject {
     }
 }
 
-// Misc support (LispType == Lisp_Misc == 1)
-
-// Lisp_Misc is a union. Now we don't really care about its variants except the
-// super type layout. LispMisc is an unsized type for this, and LispMiscAny is
-// only the header and a padding, which is consistent with the c version.
-// directly creating and moving or copying this struct is simply wrong!
-// If needed, we can calculate all variants size and allocate properly.
-
 #[repr(transparent)]
 #[derive(Debug)]
 pub struct ExternalPtr<T>(*mut T);
@@ -233,63 +223,6 @@ impl<T> DerefMut for ExternalPtr<T> {
 impl<T> PartialEq for ExternalPtr<T> {
     fn eq(&self, other: &ExternalPtr<T>) -> bool {
         self.as_ptr() == other.as_ptr()
-    }
-}
-
-pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
-unsafe impl Sync for LispSubrRef {}
-
-impl LispSubrRef {
-    pub fn is_many(self) -> bool {
-        !self.0.is_null() && self.max_args() == -2
-    }
-
-    pub fn is_unevalled(self) -> bool {
-        !self.0.is_null() && self.max_args() == -1
-    }
-
-    pub fn max_args(self) -> i16 {
-        unsafe { (*self.0).max_args }
-    }
-
-    pub fn min_args(self) -> i16 {
-        unsafe { (*self.0).min_args }
-    }
-
-    pub fn symbol_name(self) -> *const c_char {
-        unsafe { (*self.0).symbol_name }
-    }
-}
-
-pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
-
-impl LispMiscRef {
-    pub fn get_type(self) -> Lisp_Misc_Type {
-        self.type_()
-    }
-}
-
-#[test]
-fn test_lisp_misc_any_size() {
-    // Should be 32 bits, which is 4 bytes.
-    assert!(mem::size_of::<Lisp_Misc_Any>() == 4);
-}
-
-impl LispObject {
-    pub fn is_misc(self) -> bool {
-        self.get_type() == Lisp_Type::Lisp_Misc
-    }
-
-    pub fn as_misc(self) -> Option<LispMiscRef> {
-        if self.is_misc() {
-            unsafe { Some(self.to_misc_unchecked()) }
-        } else {
-            None
-        }
-    }
-
-    unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
     }
 }
 
@@ -407,37 +340,6 @@ impl LispObject {
         })
     }
 
-    pub fn is_subr(self) -> bool {
-        self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_SUBR))
-    }
-
-    pub fn as_subr(self) -> Option<LispSubrRef> {
-        self.as_vectorlike().and_then(|v| v.as_subr())
-    }
-
-    pub fn as_subr_or_error(self) -> LispSubrRef {
-        self.as_subr().unwrap_or_else(|| wrong_type!(Qsubrp, self))
-    }
-
-    pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
-        self.as_vectorlike().and_then(|v| v.as_sub_char_table())
-    }
-
-    pub fn as_sub_char_table_ascii(self) -> Option<LispSubCharTableAsciiRef> {
-        self.as_vectorlike()
-            .and_then(|v| v.as_sub_char_table_ascii())
-    }
-
-    pub fn is_bool_vector(self) -> bool {
-        self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR))
-    }
-
-    pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
-        self.as_vectorlike().and_then(|v| v.as_bool_vector())
-    }
-
     pub fn is_array(self) -> bool {
         self.is_vector() || self.is_string() || self.is_char_table() || self.is_bool_vector()
     }
@@ -449,12 +351,6 @@ impl LispObject {
     pub fn is_record(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_RECORD))
-    }
-}
-
-impl From<LispObject> for LispSubrRef {
-    fn from(o: LispObject) -> Self {
-        o.as_subr_or_error()
     }
 }
 
@@ -495,6 +391,88 @@ pub fn is_autoload(function: LispObject) -> bool {
     function
         .as_cons()
         .map_or(false, |cell| cell.car().eq(Qautoload))
+}
+
+// Misc support (LispType == Lisp_Misc == 1)
+
+// Lisp_Misc is a union. Now we don't really care about its variants except the
+// super type layout. LispMisc is an unsized type for this, and LispMiscAny is
+// only the header and a padding, which is consistent with the c version.
+// directly creating and moving or copying this struct is simply wrong!
+// If needed, we can calculate all variants size and allocate properly.
+
+pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
+
+impl LispMiscRef {
+    pub fn get_type(self) -> Lisp_Misc_Type {
+        self.type_()
+    }
+}
+
+impl LispObject {
+    pub fn is_misc(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Misc
+    }
+
+    pub fn as_misc(self) -> Option<LispMiscRef> {
+        if self.is_misc() {
+            unsafe { Some(self.to_misc_unchecked()) }
+        } else {
+            None
+        }
+    }
+
+    unsafe fn to_misc_unchecked(self) -> LispMiscRef {
+        LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
+    }
+}
+
+// Lisp_Subr support
+
+pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
+unsafe impl Sync for LispSubrRef {}
+
+impl LispSubrRef {
+    pub fn is_many(self) -> bool {
+        !self.0.is_null() && self.max_args() == -2
+    }
+
+    pub fn is_unevalled(self) -> bool {
+        !self.0.is_null() && self.max_args() == -1
+    }
+
+    pub fn max_args(self) -> i16 {
+        unsafe { (*self.0).max_args }
+    }
+
+    pub fn min_args(self) -> i16 {
+        unsafe { (*self.0).min_args }
+    }
+
+    pub fn symbol_name(self) -> *const c_char {
+        unsafe { (*self.0).symbol_name }
+    }
+}
+
+impl LispObject {
+    pub fn is_subr(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_SUBR))
+    }
+
+    pub fn as_subr(self) -> Option<LispSubrRef> {
+        self.as_vectorlike().and_then(|v| v.as_subr())
+    }
+
+    pub fn as_subr_or_error(self) -> LispSubrRef {
+        self.as_subr().unwrap_or_else(|| wrong_type!(Qsubrp, self))
+    }
+}
+
+impl From<LispObject> for LispSubrRef {
+    fn from(o: LispObject) -> Self {
+        o.as_subr_or_error()
+    }
 }
 
 // Other functions
@@ -649,4 +627,10 @@ macro_rules! protect_statics_from_GC {
             }
         }
     }
+}
+
+#[test]
+fn test_lisp_misc_any_size() {
+    // Should be 32 bits, which is 4 bytes.
+    assert!(mem::size_of::<Lisp_Misc_Any>() == 4);
 }
