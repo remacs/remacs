@@ -775,6 +775,13 @@ Tramp for some look-alike remote file names.
 *** For some connection methods, like "su" or "sudo", the host name in
 ad-hoc multi-hop file names must match the previous hop.
 
+** Rcirc
+
+---
+*** New user option 'rcirc-url-max-length'.
+Setting this option to an integer causes URLs displayed in Rcirc
+buffers to be truncated to that many characters.
+
 ** Register
 ---
 *** The return value of method 'register-val-describe' includes the

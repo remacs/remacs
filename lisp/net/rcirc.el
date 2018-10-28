@@ -168,6 +168,14 @@ underneath each nick."
 		 (string :tag "Prefix text"))
   :group 'rcirc)
 
+(defcustom rcirc-url-max-length nil
+  "Maximum number of characters in displayed URLs.
+If nil, no maximum is applied."
+  :version "27.1"
+  :type '(choice (const :tag "No maximum" nil)
+                 (integer :tag "Number of characters"))
+  :group 'rcirc)
+
 (defvar rcirc-ignore-buffer-activity-flag nil
   "If non-nil, ignore activity in this buffer.")
 (make-variable-buffer-local 'rcirc-ignore-buffer-activity-flag)
@@ -2485,24 +2493,26 @@ If ARG is given, opens the URL in a new browser window."
 	(rcirc-record-activity (current-buffer) 'nick)))))
 
 (defun rcirc-markup-urls (_sender _response)
-  (while (and rcirc-url-regexp ;; nil means disable URL catching
+  (while (and rcirc-url-regexp ; nil means disable URL catching.
               (re-search-forward rcirc-url-regexp nil t))
     (let* ((start (match-beginning 0))
-           (end (match-end 0))
-           (url (match-string-no-properties 0))
-           (link-text (buffer-substring-no-properties start end)))
+           (url   (buffer-substring-no-properties start (point))))
+      (when rcirc-url-max-length
+        ;; Replace match with truncated URL.
+        (delete-region start (point))
+        (insert (url-truncate-url-for-viewing url rcirc-url-max-length)))
       ;; Add a button for the URL.  Note that we use `make-text-button',
       ;; rather than `make-button', as text-buttons are much faster in
       ;; large buffers.
-      (make-text-button start end
+      (make-text-button start (point)
 			'face 'rcirc-url
 			'follow-link t
 			'rcirc-url url
 			'action (lambda (button)
 				  (browse-url (button-get button 'rcirc-url))))
-      ;; record the url if it is not already the latest stored url
-      (when (not (string= link-text (caar rcirc-urls)))
-        (push (cons link-text start) rcirc-urls)))))
+      ;; Record the URL if it is not already the latest stored URL.
+      (unless (string= url (caar rcirc-urls))
+        (push (cons url start) rcirc-urls)))))
 
 (defun rcirc-markup-keywords (sender response)
   (when (and (string= response "PRIVMSG")
