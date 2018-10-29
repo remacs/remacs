@@ -361,9 +361,8 @@ pub fn makunbound(symbol: LispObject) -> LispSymbolRef {
 /// outside of any lexical scope.
 #[lisp_fn]
 pub fn symbol_value(symbol: LispObject) -> LispObject {
-    let raw_symbol = symbol;
-    let val = unsafe { find_symbol_value(raw_symbol) };
-    if val == LispObject::constant_unbound() {
+    let val = unsafe { find_symbol_value(symbol) };
+    if val == Qunbound {
         xsignal!(Qvoid_variable, symbol);
     }
     val
