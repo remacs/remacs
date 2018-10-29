@@ -11,14 +11,15 @@ use std::ops::{Deref, DerefMut};
 use std::slice;
 
 use remacs_sys;
-use remacs_sys::{build_string, internal_equal, make_float};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits, USE_LSB_TAG,
+use remacs_sys::{build_string, make_float};
+use remacs_sys::{equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG,
                  VALMASK};
 use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
 use remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist};
 
 use buffers::LispBufferRef;
 use eval::FUNCTIONP;
+use fns::internal_equal;
 use lists::{list, CarIter};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -171,7 +172,7 @@ impl LispObject {
         }
     }
 
-    unsafe fn to_misc_unchecked(self) -> LispMiscRef {
+    pub unsafe fn to_misc_unchecked(self) -> LispMiscRef {
         LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
     }
 }
@@ -482,6 +483,8 @@ pub fn is_autoload(function: LispObject) -> bool {
         .map_or(false, |cell| cell.car().eq(Qautoload))
 }
 
+// Other functions
+
 impl LispObject {
     pub fn is_nil(self) -> bool {
         self == Qnil
@@ -514,11 +517,11 @@ impl LispObject {
     }
 
     pub fn equal(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, EqualKind::Plain, 0, Qnil) }
+        internal_equal(self, other, equal_kind::EQUAL_PLAIN, 0, Qnil)
     }
 
     pub fn equal_no_quit(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, EqualKind::NoQuit, 0, Qnil) }
+        internal_equal(self, other, equal_kind::EQUAL_NO_QUIT, 0, Qnil)
     }
 
     pub fn is_function(self) -> bool {

@@ -20,7 +20,7 @@ use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
 use editfns::point;
 use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject, LiveBufferIter};
+use lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter};
 use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
 use multibyte::{multibyte_length_by_head, string_char};
@@ -338,6 +338,20 @@ impl LispBufferRef {
     }
 }
 
+impl LispMiscRef {
+    pub fn as_overlay(self) -> Option<LispOverlayRef> {
+        if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
+            unsafe { Some(mem::transmute(self)) }
+        } else {
+            None
+        }
+    }
+
+    pub fn to_overlay_unchecked(self) -> LispOverlayRef {
+        unsafe { mem::transmute(self) }
+    }
+}
+
 impl LispObject {
     pub fn is_buffer(self) -> bool {
         self.as_vectorlike()
@@ -384,13 +398,7 @@ impl LispObject {
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
-        self.as_misc().and_then(|m| {
-            if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
-                unsafe { Some(mem::transmute(m)) }
-            } else {
-                None
-            }
-        })
+        self.as_misc().and_then(|m| m.as_overlay())
     }
 
     pub fn as_overlay_or_error(self) -> LispOverlayRef {

@@ -1,14 +1,21 @@
 //* Random utility Lisp functions.
 
+use libc::c_int;
+
+use std::f64;
+
 use remacs_macros::lisp_fn;
-use remacs_sys::Lisp_Type;
 use remacs_sys::Vautoload_queue;
-use remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
-use remacs_sys::{Fcons, Fload, Fmapc};
-use remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
-                 Qwrong_number_of_arguments};
+use remacs_sys::{compare_string_intervals, compare_window_configurations, concat as lisp_concat,
+                 globals, record_unwind_protect, reference_internal_equal, unbind_to};
+use remacs_sys::{equal_kind, pvec_type};
+use remacs_sys::{Fcons, Fload, Fmake_hash_table, Fmapc};
+use remacs_sys::{Lisp_Misc_Type, Lisp_Type, More_Lisp_Bits, PSEUDOVECTOR_FLAG};
+use remacs_sys::{QCtest, Qeq, Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures,
+                 Qt, Qwrong_number_of_arguments};
 
 use eval::un_autoload;
+use hashtable::HashLookupResult;
 use lisp::defsubr;
 use lisp::LispObject;
 use lists::{assq, car, get, member, memq, put, LispCons};
@@ -256,6 +263,164 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
             Lisp_Type::Lisp_String,
             false,
         )
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn internal_equal(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: c_int,
+    mut ht: LispObject,
+) -> bool {
+    if depth > 10 {
+        assert!(kind != equal_kind::EQUAL_NO_QUIT);
+        if depth > 200 {
+            error!("Stack overflow in equal");
+        }
+        if ht.is_nil() {
+            ht = callN_raw!(Fmake_hash_table, QCtest, Qeq);
+            match o1.get_type() {
+                Lisp_Type::Lisp_Cons | Lisp_Type::Lisp_Misc | Lisp_Type::Lisp_Vectorlike => {
+                    let hash_table = ht.as_hash_table_or_error();
+                    match hash_table.lookup(o1) {
+                        HashLookupResult::Found(idx) => {
+                            let o2s = hash_table.get_hash_value(idx);
+                            if memq(o2, o2s).is_nil() {
+                                hash_table.set_hash_value(idx, unsafe { Fcons(o2, o2s) });
+                            } else {
+                                return true;
+                            }
+                        }
+                        HashLookupResult::Missing(hash) => {
+                            hash_table.put(o1, unsafe { Fcons(o2, Qnil) }, hash);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    if o1.eq(o2) {
+        return true;
+    }
+
+    if let (Some(d1), Some(d2)) = (o1.as_float(), o2.as_float()) {
+        d1 == d2 || (d1 == f64::NAN && d2 == f64::NAN)
+    } else if let (Some(m1), Some(m2)) = (o1.as_misc(), o2.as_misc()) {
+        if let (Some(ov1), Some(ov2)) = (m1.as_overlay(), m2.as_overlay()) {
+            let overlays_equal = internal_equal(ov1.start, ov2.start, kind, depth + 1, ht)
+                && internal_equal(ov1.end, ov2.end, kind, depth + 1, ht);
+            overlays_equal && internal_equal(ov1.plist, ov2.plist, kind, depth + 1, ht)
+        } else if let (Some(marker1), Some(marker2)) = (m1.as_marker(), m2.as_marker()) {
+            let marker1 = m1.to_marker_unchecked();
+            let marker2 = m2.to_marker_unchecked();
+            marker1.buffer == marker2.buffer
+                && (marker1.buffer.is_null() || marker1.bytepos == marker2.bytepos)
+        } else {
+            false
+        }
+    } else if let (Some(s1), Some(s2)) = (o1.as_string(), o2.as_string()) {
+        if s1.len_chars() == s2.len_chars()
+            && s1.len_bytes() == s2.len_bytes()
+            && s1.as_slice() == s2.as_slice()
+        {
+            if kind == equal_kind::EQUAL_INCLUDING_PROPERTIES {
+                unsafe { compare_string_intervals(o1, o2) }
+            } else {
+                true
+            }
+        } else {
+            false
+        }
+    } else {
+        unsafe { reference_internal_equal(o1, o2, kind, depth + 1, ht) }
+    }
+}
+
+fn _unused(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: c_int,
+    ht: LispObject,
+) -> bool {
+    match (o1.get_type(), o2.get_type()) {
+        (Lisp_Type::Lisp_Cons, Lisp_Type::Lisp_Cons) => {
+            let mut o1_it = o1.iter_cars_safe();
+            let mut o2_it = o2.iter_cars_safe();
+
+            // this is a manual zip because one iterator might exhaust before the other due
+            // to differences in length or because one ran out of cons cells but not data.
+            loop {
+                if let (Some(item1), Some(item2)) = (o1_it.next(), o2_it.next()) {
+                    let (depth_1, ht_1) = if kind == equal_kind::EQUAL_NO_QUIT {
+                        (0, Qnil)
+                    } else {
+                        (depth + 1, ht)
+                    };
+                    if !internal_equal(item1, item2, kind, depth_1, ht_1) {
+                        return false;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            let o1_rest = o1_it.rest();
+            let o2_rest = o2_it.rest();
+            if o1_rest != o2_rest {
+                return false;
+            }
+
+            internal_equal(o1_rest, o2_rest, kind, depth + 1, ht)
+        }
+        (Lisp_Type::Lisp_Vectorlike, Lisp_Type::Lisp_Vectorlike) => {
+            let o1_vl = unsafe { o1.as_vectorlike_unchecked() };
+            let o2_vl = unsafe { o2.as_vectorlike_unchecked() };
+
+            // Pseudovectors have the type encoded in the size field, so this test
+            // actually checks that the objects have the same type as well as the
+            // same size.
+            if o1_vl.raw_size() != o2_vl.raw_size() {
+                return false;
+            }
+
+            if let (Some(bv1), Some(bv2)) = (o1_vl.as_bool_vector(), o2_vl.as_bool_vector()) {
+                // Boolvectors are compared much like strings.
+                (bv1.len() == bv2.len()) && (bv1.as_slice() == bv2.as_slice())
+            } else if o1_vl.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION)
+                && o2_vl.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION)
+            {
+                assert!(kind != equal_kind::EQUAL_NO_QUIT);
+                unsafe { compare_window_configurations(o1, o2, false) }
+            } else {
+                // Aside from them, only true vectors, char-tables, compiled
+                // functions, and fonts (font-spec, font-entity, font-object)
+                // are sensible to compare, so eliminate the others now.
+                let size = o1_vl.raw_size();
+                if (size & (PSEUDOVECTOR_FLAG as isize)) != 0 {
+                    if ((size & (More_Lisp_Bits::PVEC_TYPE_MASK as isize))
+                        >> More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS)
+                        < (pvec_type::PVEC_COMPILED as isize)
+                    {
+                        return false;
+                    }
+                }
+
+                // pretend the values are lisp vectors to ease the comparison.
+                let v1 = unsafe { o1_vl.as_vector_unchecked() };
+                let v2 = unsafe { o2_vl.as_vector_unchecked() };
+
+                v1.as_slice()
+                    .iter()
+                    .zip(v2.as_slice().iter())
+                    .all(|(item1, item2)| internal_equal(*item1, *item2, kind, depth + 1, ht))
+            }
+        }
+        _ => false,
     }
 }
 

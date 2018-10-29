@@ -10,7 +10,7 @@ use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
 use remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil};
 
 use buffers::LispBufferRef;
-use lisp::{defsubr, ExternalPtr, LispObject};
+use lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject};
 use multibyte::multibyte_chars_in_text;
 use threads::ThreadState;
 use util::clip_to_bounds;
@@ -22,6 +22,20 @@ const MARKER_DEBUG: bool = true;
 
 #[cfg(not(MARKER_DEBUG))]
 const MARKER_DEBUG: bool = false;
+
+impl LispMiscRef {
+    pub fn as_marker(self) -> Option<LispMarkerRef> {
+        if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
+            unsafe { Some(mem::transmute(self)) }
+        } else {
+            None
+        }
+    }
+
+    pub fn to_marker_unchecked(self) -> LispMarkerRef {
+        unsafe { mem::transmute(self) }
+    }
+}
 
 impl LispMarkerRef {
     pub fn as_lisp_obj(self) -> LispObject {
@@ -112,13 +126,7 @@ impl LispObject {
     }
 
     pub fn as_marker(self) -> Option<LispMarkerRef> {
-        self.as_misc().and_then(|m| {
-            if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
-                unsafe { Some(mem::transmute(m)) }
-            } else {
-                None
-            }
-        })
+        self.as_misc().and_then(|m| m.as_marker())
     }
 
     pub fn as_marker_or_error(self) -> LispMarkerRef {

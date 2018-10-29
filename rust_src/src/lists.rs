@@ -82,6 +82,7 @@ impl LispObject {
 }
 
 /// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
+#[derive(Clone, Copy)]
 pub struct TailsIter {
     list: LispObject,
     tail: LispObject,
@@ -157,6 +158,7 @@ impl Iterator for TailsIter {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct CarIter {
     tails: TailsIter,
 }

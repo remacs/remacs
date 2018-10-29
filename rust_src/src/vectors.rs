@@ -122,6 +122,10 @@ impl LispVectorlikeRef {
                 as isize
     }
 
+    pub fn raw_size(self) -> isize {
+        self.header.size
+    }
+
     pub fn pseudovector_size(self) -> EmacsInt {
         (self.header.size & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)) as EmacsInt
     }
@@ -132,6 +136,10 @@ impl LispVectorlikeRef {
         } else {
             None
         }
+    }
+
+    pub unsafe fn as_bool_vector_unchecked(self) -> LispBoolVecRef {
+        mem::transmute::<_, LispBoolVecRef>(self)
     }
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {

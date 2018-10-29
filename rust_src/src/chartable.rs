@@ -118,6 +118,11 @@ impl LispCharTableRef {
             - (1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0 as isize)
     }
 
+    pub fn as_slice(&self) -> &[LispObject] {
+        let size = (self.header.size & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)) as usize;
+        &self.contents[0..size]
+    }
+
     pub fn get(self, c: isize) -> LispObject {
         let mut val = if is_ascii(c) {
             let tmp = self.ascii;

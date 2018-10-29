@@ -41,7 +41,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define gnutls_rnd w32_gnutls_rnd
 #endif
 
-enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 void hash_clear (struct Lisp_Hash_Table *h);
 
@@ -1341,8 +1340,7 @@ equal_no_quit (Lisp_Object o1, Lisp_Object o2)
 
 /* NOTE: made this non-static to call it from Rust. */
 bool
-internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
-		int depth, Lisp_Object ht)
+reference_internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind, int depth, Lisp_Object ht)
 {
  tail_recurse:
   if (depth > 10)
@@ -1407,8 +1405,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	  {
 	    if (! CONSP (o2))
 	      return false;
-	    if (! internal_equal (XCAR (o1), XCAR (o2),
-				  equal_kind, depth + 1, ht))
+	    if (! reference_internal_equal (XCAR (o1), XCAR (o2), equal_kind, depth + 1, ht))
 	      return false;
 	    o2 = XCDR (o2);
 	    if (EQ (XCDR (o1), o2))
@@ -1422,10 +1419,10 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	return false;
       if (OVERLAYP (o1))
 	{
-	  if (!internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
-			       equal_kind, depth + 1, ht)
-	      || !internal_equal (OVERLAY_END (o1), OVERLAY_END (o2),
-				  equal_kind, depth + 1, ht))
+	  if (!reference_internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
+                                         equal_kind, depth + 1, ht)
+	      || !reference_internal_equal (OVERLAY_END (o1), OVERLAY_END (o2),
+                                            equal_kind, depth + 1, ht))
 	    return false;
 	  o1 = XOVERLAY (o1)->plist;
 	  o2 = XOVERLAY (o2)->plist;
@@ -1481,7 +1478,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	    Lisp_Object v1, v2;
 	    v1 = AREF (o1, i);
 	    v2 = AREF (o2, i);
-	    if (!internal_equal (v1, v2, equal_kind, depth + 1, ht))
+	    if (!reference_internal_equal (v1, v2, equal_kind, depth + 1, ht))
 	      return false;
 	  }
 	return true;
