@@ -62,6 +62,8 @@ Lisp_Object minibuf_prompt;
 
 static ptrdiff_t minibuf_prompt_width;
 
+Lisp_Object read_minibuf (Lisp_Object, Lisp_Object, Lisp_Object, bool, Lisp_Object, Lisp_Object, Lisp_Object, bool, bool);
+
 
 /* Put minibuf on currently selected frame's minibuffer.
    We do this whenever the user starts a new minibuffer

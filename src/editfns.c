@@ -76,6 +76,8 @@ static int tm_diff (struct tm *, struct tm *);
 static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
+void find_field (Lisp_Object, Lisp_Object, Lisp_Object, ptrdiff_t *, Lisp_Object, ptrdiff_t *);
+
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
 #endif

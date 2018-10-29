@@ -65,6 +65,12 @@ static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 					      Lisp_Object);
 static void apply_window_adjustment (struct window *);
 
+void wset_display_table (struct window *, Lisp_Object);
+void wset_window_parameters (struct window *, Lisp_Object);
+void wset_update_mode_line (struct window *);
+Lisp_Object set_window_hscroll (struct window *, EMACS_INT);
+void scroll_command (Lisp_Object, int);
+
 /* This is the window in which the terminal's cursor should
    be left when nothing is being done with it.  This must
    always be a leaf window, and its buffer is selected by

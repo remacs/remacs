@@ -254,6 +254,9 @@ static int read_process_output (Lisp_Object, int);
 static void create_pty (Lisp_Object);
 static void exec_sentinel (Lisp_Object, Lisp_Object);
 
+void add_process_read_fd (int);
+pid_t emacs_get_tty_pgrp (struct Lisp_Process *);
+
 /* Number of bits set in connect_wait_mask.  */
 static int num_pending_connects;
 
@@ -7612,4 +7615,3 @@ returns non-`nil'.  */);
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
 }
-

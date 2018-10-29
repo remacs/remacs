@@ -115,6 +115,9 @@ static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
 static void swap_out_buffer_local_variables (struct buffer *b);
 static void reset_buffer_local_variables (struct buffer *, bool);
 
+void drop_overlay (struct buffer *, struct Lisp_Overlay *);
+void unchain_both (struct buffer *, Lisp_Object);
+
 /* Alist of all buffer names vs the buffers.  This used to be
    a Lisp-visible variable, but is no longer, to prevent lossage
    due to user rplac'ing this alist or its elements.  */
@@ -4972,20 +4975,6 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
        slot of buffer_local_flags.  */
     emacs_abort ();
 }
-
-/* Similar to defvar_lisp but define a variable whose value is the
-   Lisp_Object stored in the current buffer.  LNAME is the Lisp-level
-   variable name.  VNAME is the name of the buffer slot.  PREDICATE
-   is nil for a general Lisp variable.  If PREDICATE is non-nil, then
-   only Lisp values that satisfies the PREDICATE are allowed (except
-   that nil is allowed too).  DOC is a dummy where you write the doc
-   string as a comment.  */
-
-#define DEFVAR_PER_BUFFER(lname, vname, predicate, doc)		\
-  do {								\
-    static struct Lisp_Buffer_Objfwd bo_fwd;			\
-    defvar_per_buffer (&bo_fwd, lname, vname, predicate);	\
-  } while (0)
 
 extern void rust_syms_of_buffer(void);
 

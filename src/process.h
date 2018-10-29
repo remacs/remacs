@@ -300,8 +300,6 @@ extern void update_processes_for_thread_death (Lisp_Object);
 
 INLINE_HEADER_END
 
-#endif /* EMACS_PROCESS_H */
-
 Lisp_Object
 get_process (register Lisp_Object name);
 
@@ -311,3 +309,9 @@ update_status (struct Lisp_Process *p);
 void
 send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 	      Lisp_Object object);
+
+void pset_filter (struct Lisp_Process *, Lisp_Object);
+void pset_sentinel (struct Lisp_Process *, Lisp_Object);
+void set_process_filter_masks (struct Lisp_Process *);
+
+#endif /* EMACS_PROCESS_H */

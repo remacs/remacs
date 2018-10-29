@@ -36,7 +36,7 @@ jobs:
         - travis_wait rustup install $(cat rust-toolchain)
         - travis_wait rustup component add rustfmt-preview
       script:
-        - ./autogen.sh && RUSTFLAGS="-Dwarnings" ./configure
+        - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror' ./configure
         - make -j 3 && echo '==> Running tests' && make check
     -
       <<: *FULL_TEST
@@ -63,7 +63,7 @@ jobs:
         - travis_wait rustup install $(cat rust-toolchain)
         - travis_wait rustup component add rustfmt-preview
       script:
-        - ./autogen.sh && RUSTFLAGS="-Dwarnings" ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
+        - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror' ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
     -
       <<: *NO_WINDOW_SYSTEM_TEST

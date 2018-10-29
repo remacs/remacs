@@ -3331,6 +3331,7 @@ enum Arith_Comparison {
 /* Defined in rust  */
 Lisp_Object arithcompare (Lisp_Object num1, Lisp_Object num2,
                                  enum Arith_Comparison comparison);
+extern void store_symval_forwarding (union Lisp_Fwd *, Lisp_Object, struct buffer *);
 
 /* Convert the integer I to an Emacs representation, either the integer
    itself, or a cons of two or three integers, or if all else fails a float.
