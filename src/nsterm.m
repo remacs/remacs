@@ -796,6 +796,27 @@ ns_menu_bar_height (NSScreen *screen)
 }
 
 
+static NSRect
+ns_row_rect (struct window *w, struct glyph_row *row,
+               enum glyph_row_area area)
+/* Get the row as an NSRect.  */
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (w));
+  NSRect rect;
+  int window_x, window_y, window_width;
+
+  window_box (w, area, &window_x, &window_y, &window_width, 0);
+
+  rect.origin.x = window_x;
+  rect.origin.y = WINDOW_TO_FRAME_PIXEL_Y (w, max (0, row->y));
+  rect.origin.y = max (rect.origin.y, window_y);
+  rect.size.width = window_width;
+  rect.size.height = row->visible_height;
+
+  return rect;
+}
+
+
 /* ==========================================================================
 
     Focus (clipping) and screen update
@@ -1048,29 +1069,6 @@ ns_update_begin (struct frame *f)
     if (! tbar_visible != ! [toolbar isVisible])
       [toolbar setVisible: tbar_visible];
   }
-
-  /* drawRect may have been called for say the minibuffer, and then clip path
-     is for the minibuffer.  But the display engine may draw more because
-     we have set the frame as garbaged.  So reset clip path to the whole
-     view.  */
-  /* FIXME: I don't think we need to do this.  */
-  if ([NSView focusView] == FRAME_NS_VIEW (f))
-    {
-      NSBezierPath *bp;
-      NSRect r = [view frame];
-      NSRect cr = [[view window] frame];
-      /* If a large frame size is set, r may be larger than the window frame
-         before constrained.  In that case don't change the clip path, as we
-         will clear in to the tool bar and title bar.  */
-      if (r.size.height
-          + FRAME_NS_TITLEBAR_HEIGHT (f)
-          + FRAME_TOOLBAR_HEIGHT (f) <= cr.size.height)
-        {
-          bp = [[NSBezierPath bezierPathWithRect: r] retain];
-          [bp setClip];
-          [bp release];
-        }
-    }
 #endif
 }
 
@@ -1205,28 +1203,6 @@ ns_reset_clipping (struct frame *f)
   [[NSGraphicsContext currentContext] restoreGraphicsState];
 }
 
-
-static BOOL
-ns_clip_to_row (struct window *w, struct glyph_row *row,
-		enum glyph_row_area area, BOOL gc)
-/* --------------------------------------------------------------------------
-     Internal (but parallels other terms): Focus drawing on given row
-   -------------------------------------------------------------------------- */
-{
-  struct frame *f = XFRAME (WINDOW_FRAME (w));
-  NSRect clip_rect;
-  int window_x, window_y, window_width;
-
-  window_box (w, area, &window_x, &window_y, &window_width, 0);
-
-  clip_rect.origin.x = window_x;
-  clip_rect.origin.y = WINDOW_TO_FRAME_PIXEL_Y (w, max (0, row->y));
-  clip_rect.origin.y = max (clip_rect.origin.y, window_y);
-  clip_rect.size.width = window_width;
-  clip_rect.size.height = row->visible_height;
-
-  return ns_clip_to_rect (f, &clip_rect, 1);
-}
 
 /* ==========================================================================
 
@@ -2692,7 +2668,7 @@ static void
 ns_copy_bits (struct frame *f, NSRect src, NSRect dest)
 {
   NSSize delta = NSMakeSize (dest.origin.x - src.origin.x,
-                             dest.origin.y - src.origin.y)
+                             dest.origin.y - src.origin.y);
   NSTRACE ("ns_copy_bits");
 
   if (FRAME_NS_VIEW (f))
@@ -2825,12 +2801,20 @@ ns_shift_glyphs_for_insert (struct frame *f,
     External (RIF): copy an area horizontally, don't worry about clearing src
    -------------------------------------------------------------------------- */
 {
-  NSRect srcRect = NSMakeRect (x, y, width, height);
+  //NSRect srcRect = NSMakeRect (x, y, width, height);
   NSRect dstRect = NSMakeRect (x+shift_by, y, width, height);
 
   NSTRACE ("ns_shift_glyphs_for_insert");
 
-  ns_copy_bits (f, srcRect, dstRect);
+  /* This doesn't work now as we copy the "bits" before we've had a
+     chance to actually draw any changes to the screen.  This means in
+     certain circumstances we end up with copies of the cursor all
+     over the place.  Just mark the area dirty so it is redrawn later.
+
+     FIXME: Work out how to do this properly.  */
+  // ns_copy_bits (f, srcRect, dstRect);
+
+  [FRAME_NS_VIEW (f) setNeedsDisplayInRect:dstRect];
 }
 
 
@@ -2911,6 +2895,9 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
   struct face *face = p->face;
   static EmacsImage **bimgs = NULL;
   static int nBimgs = 0;
+  NSRect clearRect = NSZeroRect;
+  NSRect imageRect = NSZeroRect;
+  NSRect rowRect = ns_row_rect (w, row, ANY_AREA);
 
   NSTRACE_WHEN (NSTRACE_GROUP_FRINGE, "ns_draw_fringe_bitmap");
   NSTRACE_MSG ("which:%d cursor:%d overlay:%d width:%d height:%d period:%d",
@@ -2925,25 +2912,40 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
       nBimgs = max_used_fringe_bitmap;
     }
 
-  /* Must clip because of partially visible lines.  */
-  if (ns_clip_to_row (w, row, ANY_AREA, YES))
-    {
-      if (!p->overlay_p)
-        {
-          int bx = p->bx, by = p->by, nx = p->nx, ny = p->ny;
+  /* Work out the rectangle we will composite into.  */
+  if (p->which)
+    imageRect = NSMakeRect (p->x, p->y, p->wd, p->h);
 
-          if (bx >= 0 && nx > 0)
-            {
-              NSRect r = NSMakeRect (bx, by, nx, ny);
-              NSRectClip (r);
-              [ns_lookup_indexed_color (face->background, f) set];
-              NSRectFill (r);
-            }
+  /* Work out the rectangle we will need to clear.  Because we're
+     compositing rather than blitting, we need to clear the area under
+     the image regardless of anything else.  */
+  if (!p->overlay_p)
+    {
+      clearRect = NSMakeRect (p->bx, p->by, p->nx, p->ny);
+      clearRect = NSUnionRect (clearRect, imageRect);
+    }
+  else
+    {
+      clearRect = imageRect;
+    }
+
+  /* Handle partially visible rows.  */
+  clearRect = NSIntersectionRect (clearRect, rowRect);
+
+  /* The visible portion of imageRect will always be contained within
+     clearRect.  */
+  if (ns_clip_to_rect (f, &clearRect, 1))
+    {
+      if (! NSIsEmptyRect (clearRect))
+        {
+          NSTRACE_RECT ("clearRect", clearRect);
+
+          [ns_lookup_indexed_color(face->background, f) set];
+          NSRectFill (clearRect);
         }
 
       if (p->which)
         {
-          NSRect r = NSMakeRect (p->x, p->y, p->wd, p->h);
           EmacsImage *img = bimgs[p->which - 1];
 
           if (!img)
@@ -2964,13 +2966,6 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
               xfree (cbits);
             }
 
-          NSTRACE_RECT ("r", r);
-
-          NSRectClip (r);
-          /* Since we composite the bitmap instead of just blitting it, we need
-             to erase the whole background.  */
-          [ns_lookup_indexed_color(face->background, f) set];
-          NSRectFill (r);
 
           {
             NSColor *bm_color;
@@ -2990,7 +2985,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
 
           NSTRACE_RECT ("fromRect", fromRect);
 
-          [img drawInRect: r
+          [img drawInRect: imageRect
                  fromRect: fromRect
                 operation: NSCompositingOperationSourceOver
                  fraction: 1.0
@@ -2998,7 +2993,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
                     hints: nil];
 #else
           {
-            NSPoint pt = r.origin;
+            NSPoint pt = imageRect.origin;
             pt.y += p->h;
             [img compositeToPoint: pt operation: NSCompositingOperationSourceOver];
           }
@@ -3088,7 +3083,9 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
   r.size.width = w->phys_cursor_width;
 
   /* Prevent the cursor from being drawn outside the text area.  */
-  if (ns_clip_to_row (w, glyph_row, TEXT_AREA, NO))
+  r = NSIntersectionRect (r, ns_row_rect (w, glyph_row, TEXT_AREA));
+
+  if (ns_clip_to_rect (f, &r, 1))
     {
       face = FACE_FROM_ID_OR_NULL (f, phys_cursor_glyph->face_id);
       if (face && NS_FACE_BACKGROUND (face)
@@ -3128,11 +3125,18 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
           NSRectFill (s);
           break;
         }
-      ns_reset_clipping (f);
 
       /* draw the character under the cursor */
       if (cursor_type != NO_CURSOR)
         draw_phys_cursor_glyph (w, glyph_row, DRAW_CURSOR);
+
+      ns_reset_clipping (f);
+    }
+  else if (! redisplaying_p)
+    {
+      /* If this function is called outside redisplay, it probably
+         means we need an immediate update.  */
+      [FRAME_NS_VIEW (f) display];
     }
 }
 
@@ -8096,6 +8100,9 @@ not_in_argv (NSString *arg)
   for (int i = 0 ; i < numRects ; i++)
     {
       NSRect r = rectList[i];
+
+      NSTRACE_RECT ("r", r);
+
       expose_frame (emacsframe,
                     NSMinX (r), NSMinY (r),
                     NSWidth (r), NSHeight (r));
