@@ -61,10 +61,6 @@ impl LispObject {
         self.0 as EmacsUint
     }
 
-    pub fn constant_unbound() -> LispObject {
-        Qunbound
-    }
-
     pub fn from_bool(v: bool) -> LispObject {
         if v {
             Qt

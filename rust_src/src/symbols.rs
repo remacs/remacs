@@ -7,7 +7,7 @@ use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redi
                  swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
 use remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG};
 use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qsymbolp, Qunbound,
-                 Qvoid_variable};
+                 Qvoid_variable, Qunbound};
 
 use buffers::LispBufferLocalValueRef;
 use data::indirect_function;
@@ -361,9 +361,8 @@ pub fn makunbound(symbol: LispObject) -> LispSymbolRef {
 /// outside of any lexical scope.
 #[lisp_fn]
 pub fn symbol_value(symbol: LispObject) -> LispObject {
-    let raw_symbol = symbol;
-    let val = unsafe { find_symbol_value(raw_symbol) };
-    if val == LispObject::constant_unbound() {
+    let val = unsafe { find_symbol_value(symbol) };
+    if val == Qunbound {
         xsignal!(Qvoid_variable, symbol);
     }
     val
