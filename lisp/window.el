@@ -5552,9 +5552,14 @@ specific buffers."
 	 (buffer (window-buffer window))
 	 (selected (eq window (selected-window)))
 	 (next-buffers (when (window-live-p window)
-			 (window-next-buffers window)))
+	                 (delq nil (mapcar (lambda (buffer)
+                                             (and (buffer-live-p buffer) buffer))
+                                           (window-next-buffers window)))))
 	 (prev-buffers (when (window-live-p window)
-			 (window-prev-buffers window)))
+	                 (delq nil (mapcar (lambda (entry)
+                                             (and (buffer-live-p (nth 0 entry))
+                                                  entry))
+                                           (window-prev-buffers window)))))
 	 (head
 	  `(,type
             ,@(unless (window-next-sibling window) `((last . t)))
