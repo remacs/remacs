@@ -118,6 +118,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
             #body
 
             let ret = #rname(#rargs);
+            #[allow(unreachable_code)]
             ::lisp::LispObject::from(ret)
         }
 
