@@ -297,6 +297,6 @@ macro_rules! verify_lisp_type {
 macro_rules! per_buffer_var_idx {
     ($field: ident) => {
         #[allow(unused_unsafe)]
-        (unsafe { buffer_local_flags.$field }).as_natnum_or_error() as usize
+        (unsafe { ::remacs_sys::buffer_local_flags.$field }).as_natnum_or_error() as usize
     };
 }

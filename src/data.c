@@ -682,80 +682,6 @@ notify_variable_watchers (Lisp_Object symbol,
 
 /* Access or set a buffer-local symbol's default value.  */
 
-/* Return the default value of SYMBOL, but don't check for voidness.
-   Return Qunbound if it is void.  */
-
-static Lisp_Object
-default_value (Lisp_Object symbol)
-{
-  struct Lisp_Symbol *sym;
-
-  CHECK_SYMBOL (symbol);
-  sym = XSYMBOL (symbol);
-
- start:
-  switch (sym->redirect)
-    {
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_PLAINVAL: return SYMBOL_VAL (sym);
-    case SYMBOL_LOCALIZED:
-      {
-	/* If var is set up for a buffer that lacks a local value for it,
-	   the current value is nominally the default value.
-	   But the `realvalue' slot may be more up to date, since
-	   ordinary setq stores just that slot.  So use that.  */
-	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-	if (blv->fwd && EQ (blv->valcell, blv->defcell))
-	  return do_symval_forwarding (blv->fwd);
-	else
-	  return XCDR (blv->defcell);
-      }
-    case SYMBOL_FORWARDED:
-      {
-	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
-
-	/* For a built-in buffer-local variable, get the default value
-	   rather than letting do_symval_forwarding get the current value.  */
-	if (BUFFER_OBJFWDP (valcontents))
-	  {
-	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
-	    if (PER_BUFFER_IDX (offset) != 0)
-	      return per_buffer_default (offset);
-	  }
-
-	/* For other variables, get the current value.  */
-	return do_symval_forwarding (valcontents);
-      }
-    default: emacs_abort ();
-    }
-}
-
-DEFUN ("default-boundp", Fdefault_boundp, Sdefault_boundp, 1, 1, 0,
-       doc: /* Return t if SYMBOL has a non-void default value.
-This is the value that is seen in buffers that do not have their own values
-for this variable.  */)
-  (Lisp_Object symbol)
-{
-  register Lisp_Object value;
-
-  value = default_value (symbol);
-  return (EQ (value, Qunbound) ? Qnil : Qt);
-}
-
-DEFUN ("default-value", Fdefault_value, Sdefault_value, 1, 1, 0,
-       doc: /* Return SYMBOL's default value.
-This is the value that is seen in buffers that do not have their own values
-for this variable.  The default value is meaningful for variables with
-local bindings in certain buffers.  */)
-  (Lisp_Object symbol)
-{
-  Lisp_Object value = default_value (symbol);
-  if (!EQ (value, Qunbound))
-    return value;
-
-  xsignal1 (Qvoid_variable, symbol);
-}
-
 void
 set_default_internal (Lisp_Object symbol, Lisp_Object value,
                       enum Set_Internal_Bind bindflag)
@@ -2069,8 +1995,6 @@ syms_of_data (void)
   defsubr (&Smodule_function_p);
   defsubr (&Sfset);
   defsubr (&Sset);
-  defsubr (&Sdefault_boundp);
-  defsubr (&Sdefault_value);
   defsubr (&Sset_default);
   defsubr (&Ssetq_default);
   defsubr (&Smake_variable_buffer_local);
