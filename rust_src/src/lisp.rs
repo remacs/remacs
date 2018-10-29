@@ -15,7 +15,7 @@ use remacs_sys::{build_string, internal_equal, make_float};
 use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits, USE_LSB_TAG,
                  VALMASK};
 use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
-use remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Qunbound, Vbuffer_alist};
+use remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist};
 
 use buffers::LispBufferRef;
 use eval::FUNCTIONP;

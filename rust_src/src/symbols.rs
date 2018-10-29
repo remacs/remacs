@@ -7,7 +7,7 @@ use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redi
                  swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
 use remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG};
 use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qsymbolp, Qunbound,
-                 Qvoid_variable, Qunbound};
+                 Qvoid_variable};
 
 use buffers::LispBufferLocalValueRef;
 use data::indirect_function;
