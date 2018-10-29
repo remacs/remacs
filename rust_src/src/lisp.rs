@@ -133,6 +133,13 @@ impl From<LispObject> for Option<u32> {
     }
 }
 
+impl From<!> for LispObject {
+    fn from(_v: !) -> Self {
+        // I'm surprized that this works
+        Qnil
+    }
+}
+
 /// Copies a Rust str into a new Lisp string
 impl<'a> From<&'a str> for LispObject {
     fn from(s: &str) -> Self {
