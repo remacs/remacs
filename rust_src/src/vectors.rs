@@ -8,7 +8,8 @@ use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
-                 Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG};
+                 Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD,
+                 BOOL_VECTOR_BITS_PER_CHAR, PSEUDOVECTOR_FLAG};
 use remacs_sys::{Qarrayp, Qsequencep, Qvectorp};
 
 use buffers::LispBufferRef;
@@ -339,7 +340,10 @@ impl LispBoolVecRef {
     }
 
     pub fn as_slice(&self) -> &[usize] {
-        let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
+        //let l = self.len() / BITS_PER_BITS_WORD as usize + 1;
+        let l = (self.len() + (BOOL_VECTOR_BITS_PER_CHAR as usize) - 1)
+            / (BOOL_VECTOR_BITS_PER_CHAR as usize);
+        println!("Rust: BV len: {}", l);
         unsafe { self.data.as_slice(l) }
     }
 

@@ -10,7 +10,7 @@ use remacs_sys::{compare_string_intervals, compare_window_configurations, concat
                  globals, record_unwind_protect, reference_internal_equal, unbind_to};
 use remacs_sys::{equal_kind, pvec_type};
 use remacs_sys::{Fcons, Fload, Fmake_hash_table, Fmapc};
-use remacs_sys::{Lisp_Misc_Type, Lisp_Type, More_Lisp_Bits, PSEUDOVECTOR_FLAG};
+use remacs_sys::{Lisp_Type, More_Lisp_Bits, PSEUDOVECTOR_FLAG};
 use remacs_sys::{QCtest, Qeq, Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures,
                  Qt, Qwrong_number_of_arguments};
 
@@ -315,8 +315,6 @@ pub extern "C" fn internal_equal(
                 && internal_equal(ov1.end, ov2.end, kind, depth + 1, ht);
             overlays_equal && internal_equal(ov1.plist, ov2.plist, kind, depth + 1, ht)
         } else if let (Some(marker1), Some(marker2)) = (m1.as_marker(), m2.as_marker()) {
-            let marker1 = m1.to_marker_unchecked();
-            let marker2 = m2.to_marker_unchecked();
             marker1.buffer == marker2.buffer
                 && (marker1.buffer.is_null() || marker1.bytepos == marker2.bytepos)
         } else {
@@ -335,77 +333,51 @@ pub extern "C" fn internal_equal(
         } else {
             false
         }
-    } else {
-        unsafe { reference_internal_equal(o1, o2, kind, depth + 1, ht) }
-    }
-}
-
-fn _unused(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: c_int,
-    ht: LispObject,
-) -> bool {
-    match (o1.get_type(), o2.get_type()) {
-        (Lisp_Type::Lisp_Cons, Lisp_Type::Lisp_Cons) => {
-            let mut o1_it = o1.iter_cars_safe();
-            let mut o2_it = o2.iter_cars_safe();
-
-            // this is a manual zip because one iterator might exhaust before the other due
-            // to differences in length or because one ran out of cons cells but not data.
-            loop {
-                if let (Some(item1), Some(item2)) = (o1_it.next(), o2_it.next()) {
-                    let (depth_1, ht_1) = if kind == equal_kind::EQUAL_NO_QUIT {
-                        (0, Qnil)
-                    } else {
-                        (depth + 1, ht)
-                    };
-                    if !internal_equal(item1, item2, kind, depth_1, ht_1) {
-                        return false;
-                    }
-                } else {
-                    break;
-                }
-            }
-
-            let o1_rest = o1_it.rest();
-            let o2_rest = o2_it.rest();
-            if o1_rest != o2_rest {
-                return false;
-            }
-
-            internal_equal(o1_rest, o2_rest, kind, depth + 1, ht)
+    } else if let (Some(o1_vl), Some(o2_vl)) = (o1.as_vectorlike(), o2.as_vectorlike()) {
+        println!("Rust: In vector like");
+        // Pseudovectors have the type encoded in the size field, so this test
+        // actually checks that the objects have the same type as well as the
+        // same size.
+        if o1_vl.raw_size() != o2_vl.raw_size() {
+            println!("Rust: Raw size differs");
+            return false;
         }
-        (Lisp_Type::Lisp_Vectorlike, Lisp_Type::Lisp_Vectorlike) => {
-            let o1_vl = unsafe { o1.as_vectorlike_unchecked() };
-            let o2_vl = unsafe { o2.as_vectorlike_unchecked() };
 
-            // Pseudovectors have the type encoded in the size field, so this test
-            // actually checks that the objects have the same type as well as the
-            // same size.
-            if o1_vl.raw_size() != o2_vl.raw_size() {
-                return false;
-            }
-
+        let outcome =
             if let (Some(bv1), Some(bv2)) = (o1_vl.as_bool_vector(), o2_vl.as_bool_vector()) {
                 // Boolvectors are compared much like strings.
-                (bv1.len() == bv2.len()) && (bv1.as_slice() == bv2.as_slice())
+                let sizes = (bv1.len() == bv2.len());
+                let result = (bv1.as_slice() == bv2.as_slice());
+                let reference = unsafe { reference_internal_equal(o1, o2, kind, depth, ht) };
+                if result != reference {
+                    println!(
+                        "Rust: Bool vector {:?} sizes: {} {}, result: {}",
+                        o1,
+                        bv1.len(),
+                        sizes,
+                        result
+                    );
+                    println!("bv1: {:?}\nbv2: {:?}", bv1.as_slice(), bv2.as_slice());
+                }
+                result
             } else if o1_vl.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION)
                 && o2_vl.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION)
             {
                 assert!(kind != equal_kind::EQUAL_NO_QUIT);
-                unsafe { compare_window_configurations(o1, o2, false) }
+                let result = unsafe { compare_window_configurations(o1, o2, false) };
+                println!("Rust: Window configuration {}", result);
+                result
             } else {
                 // Aside from them, only true vectors, char-tables, compiled
                 // functions, and fonts (font-spec, font-entity, font-object)
                 // are sensible to compare, so eliminate the others now.
                 let size = o1_vl.raw_size();
                 if (size & (PSEUDOVECTOR_FLAG as isize)) != 0 {
-                    if ((size & (More_Lisp_Bits::PVEC_TYPE_MASK as isize))
-                        >> More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS)
-                        < (pvec_type::PVEC_COMPILED as isize)
-                    {
+                    println!("Rust: Pseudovector flag");
+                    let this_type = (size & (More_Lisp_Bits::PVEC_TYPE_MASK as isize))
+                        >> More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS;
+                    if this_type < (pvec_type::PVEC_COMPILED as isize) {
+                        println!("Rust: Less than compiled {}", this_type);
                         return false;
                     }
                 }
@@ -414,13 +386,61 @@ fn _unused(
                 let v1 = unsafe { o1_vl.as_vector_unchecked() };
                 let v2 = unsafe { o2_vl.as_vector_unchecked() };
 
-                v1.as_slice()
+                println!("Rust: Trying slice comparison");
+                let result = v1
+                    .as_slice()
                     .iter()
                     .zip(v2.as_slice().iter())
-                    .all(|(item1, item2)| internal_equal(*item1, *item2, kind, depth + 1, ht))
+                    .all(|(item1, item2)| internal_equal(*item1, *item2, kind, depth + 1, ht));
+                println!("Rust: Result {}", result);
+                result
+            };
+        println!("Rust: outcome {}\n", outcome);
+        unsafe { reference_internal_equal(o1, o2, kind, depth + 1, ht) }
+    } else if o1.is_cons() && o2.is_cons() {
+        let (mut o1_it, mut o2_it) = if kind == equal_kind::EQUAL_NO_QUIT {
+            (o1.iter_tails_safe(), o2.iter_tails_safe())
+        } else {
+            (o1.iter_tails(), o2.iter_tails())
+        };
+
+        let mut result = false;
+        // this is a manual zip because one iterator might exhaust before the other due
+        // to differences in length or because one ran out of cons cells but not data.
+        loop {
+            if let (Some(item1), Some(item2)) = (o1_it.next(), o2_it.next()) {
+                let (depth_1, ht_1) = if kind == equal_kind::EQUAL_NO_QUIT {
+                    (0, Qnil)
+                } else {
+                    (depth + 1, ht)
+                };
+                if !internal_equal(item1.car(), item2.car(), kind, depth_1, ht_1) {
+                    //return false;
+                    break;
+                }
+                if item1.cdr().eq(item2.cdr()) {
+                    //return true;
+                    result = true;
+                    break;
+                }
+            } else {
+                break;
             }
         }
-        _ => false,
+
+        if result {
+            result
+        } else {
+            let o1_rest = o1_it.rest();
+            let o2_rest = o2_it.rest();
+
+            result = internal_equal(o1_rest, o2_rest, kind, depth + 1, ht);
+            let reference = unsafe { reference_internal_equal(o1, o2, kind, depth + 1, ht) };
+            println!("cons: {} = {}", result, reference);
+            reference
+        }
+    } else {
+        unsafe { reference_internal_equal(o1, o2, kind, depth + 1, ht) }
     }
 }
 

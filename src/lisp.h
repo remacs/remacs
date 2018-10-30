@@ -4733,7 +4733,7 @@ struct for_each_tail_internal
    is little point to calling maybe_quit here.  */
 
 #define FOR_EACH_TAIL_INTERNAL(tail, cycle, check_quit)			\
-  for (struct for_each_tail_internal li = { tail, 2, 0, 2 };		\
+for (struct for_each_tail_internal li = { tail, 2, 0, 2 };		\
        CONSP (tail);							\
        ((tail) = XCDR (tail),						\
 	((--li.q != 0							\
