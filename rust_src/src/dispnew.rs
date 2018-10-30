@@ -7,13 +7,13 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{clear_current_matrices, dtotimespec, fset_redisplay,
                  mark_window_display_accurate, timespec_add, timespec_sub,
                  wait_reading_process_output};
+use remacs_sys::{redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX};
 use remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph};
-use remacs_sys::{Qnil, Vframe_list, WAIT_READING_MAX};
 
 use frames::{frame_live_or_selected, LispFrameRef};
 use lisp::{defsubr, ExternalPtr, LispObject};
 use terminal::{clear_frame, update_begin, update_end};
-use windows::LispWindowRef;
+use windows::{window_or_selected, LispWindowRef};
 
 pub type LispGlyphRef = ExternalPtr<Lisp_Glyph>;
 
@@ -103,6 +103,30 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
             Some(next.as_window_or_error())
         };
     }
+}
+
+/***********************************************************************
+			   Blinking cursor
+ ***********************************************************************/
+
+/// Set the cursor-visibility flag of WINDOW to SHOW.
+/// WINDOW nil means use the selected window.  SHOW non-nil means
+/// show a cursor in WINDOW in the next redisplay.  SHOW nil means
+/// don't show a cursor.
+#[lisp_fn]
+pub fn internal_show_cursor(window: LispObject, show: LispObject) {
+    // Don't change cursor state while redisplaying.  This could confuse
+    // output routines.
+    if !unsafe { redisplaying_p } {
+        window_or_selected(window).set_cursor_off_p(show.is_nil())
+    }
+}
+
+/// Value is non-nil if next redisplay will display a cursor in WINDOW.
+/// WINDOW nil or omitted means report on the selected window.
+#[lisp_fn]
+pub fn internal_show_cursor_p(window: LispObject) -> bool {
+    !window_or_selected(window).cursor_off_p()
 }
 
 include!(concat!(env!("OUT_DIR"), "/dispnew_exports.rs"));
