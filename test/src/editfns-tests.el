@@ -351,4 +351,11 @@
     (should (equal (format "%-#50.40x" v3)
                    "-0x000000003ffffffffffffffe000000000000000        "))))
 
+(ert-deftest group-name ()
+  (let ((list `((0 . "root")
+                (1000 . ,(user-login-name 1000))
+                (1212345 . nil))))
+    (dolist (test list)
+      (should (equal (group-name (car test)) (cdr test))))))
+
 ;;; editfns-tests.el ends here

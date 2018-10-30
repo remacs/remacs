@@ -1230,6 +1230,11 @@ groups on the system.  If Emacs cannot retrieve this information, the
 return value is @code{nil}.
 @end defun
 
+@defun user-login-name gid
+This runction returns the group name that corresponds to @var{gid},
+or @code{nil} if there is no such group.
+@end defun
+
 
 @node Time of Day
 @section Time of Day

@@ -1263,6 +1263,9 @@ where there's no better alternative.  We believe that the incorrect
 uses of this function all but disappeared by now, so we are
 un-obsoleting it.
 
++++
+** New function 'group-name' returns a group name based on a group-GID
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

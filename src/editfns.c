@@ -1143,6 +1143,21 @@ of the user with that uid, or nil if there is no such user.  */)
   return (pw ? build_string (pw->pw_name) : Qnil);
 }
 
+DEFUN ("group-name", Fgroup_name, Sgroup_name, 1, 1, 0,
+       doc: /* If argument GID is an integer or a float, return the login name
+of the group with that gid, or nil if there is no such GID.  */)
+  (Lisp_Object gid)
+{
+  struct group *gr;
+  gid_t id;
+
+  CONS_TO_INTEGER (gid, gid_t, id);
+  block_input ();
+  gr = getgrgid (id);
+  unblock_input ();
+  return (gr ? build_string (gr->gr_name) : Qnil);
+}
+
 DEFUN ("user-real-login-name", Fuser_real_login_name, Suser_real_login_name,
        0, 0, 0,
        doc: /* Return the name of the user's real uid, as a string.
@@ -4487,6 +4502,7 @@ it to be non-nil.  */);
   defsubr (&Sinsert_byte);
 
   defsubr (&Suser_login_name);
+  defsubr (&Sgroup_name);
   defsubr (&Suser_real_login_name);
   defsubr (&Suser_uid);
   defsubr (&Suser_real_uid);
