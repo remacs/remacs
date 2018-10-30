@@ -5498,6 +5498,15 @@ for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
           *) continue ;;
         esac
       ;;
+      NOTIFY)
+        case $val in
+          *lkqueue*) opt="$opt LIBKQUEUE" ;;
+          *kqueue*) opt="$opt KQUEUE" ;;
+          *inotify*) opt="$opt INOTIFY" ;;
+          *gfile*) opt="$opt GFILENOTIFY" ;;
+          *w32*) opt="$opt W32NOTIFY" ;;
+        esac
+      ;;
     esac
     AS_VAR_APPEND([emacs_config_features], ["$optsep$opt"])
     optsep=' '
