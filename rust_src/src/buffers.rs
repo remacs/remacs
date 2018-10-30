@@ -488,29 +488,12 @@ impl LispBufferOrName {
         self.into()
     }
 
-    pub fn as_buffer_or_error(self, error: extern "C" fn(LispObject) -> !) -> LispBufferRef {
-        match self.as_buffer() {
-            Some(b) => b,
-            None => error(self.into()),
-        }
-    }
-
     pub fn as_buffer_or_current_buffer(self) -> Option<LispBufferRef> {
         let obj = LispObject::from(self);
         if obj.is_nil() {
             Some(ThreadState::current_buffer())
         } else {
             self.as_buffer()
-        }
-    }
-
-    pub fn as_buffer_or_current_buffer_or_error(
-        self,
-        error: extern "C" fn(LispObject) -> !,
-    ) -> LispBufferRef {
-        match self.as_buffer_or_current_buffer() {
-            Some(b) => b,
-            None => error(self.into()),
         }
     }
 }
@@ -557,11 +540,13 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
                 cdr(assoc_ignore_text_properties(n, unsafe { Vbuffer_alist }))
             }
         };
-        if let Some(b) = buffer.as_buffer() {
-            Some(b)
-        } else {
-            None
-        }
+        buffer.as_buffer()
+    }
+}
+
+impl From<LispBufferOrName> for LispBufferRef {
+    fn from(v: LispBufferOrName) -> LispBufferRef {
+        v.as_buffer().unwrap_or_else(|| nsberror(v.into()))
     }
 }
 
@@ -762,7 +747,7 @@ pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject)
 /// The return value is the buffer made current.
 #[lisp_fn]
 pub fn set_buffer(buffer_or_name: LispBufferOrName) -> LispBufferRef {
-    let mut buffer = buffer_or_name.as_buffer_or_error(nsberror);
+    let mut buffer: LispBufferRef = buffer_or_name.into();
     if !buffer.is_live() {
         error!("Selecting deleted buffer");
     };
