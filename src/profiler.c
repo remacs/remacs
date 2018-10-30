@@ -37,7 +37,7 @@ typedef struct Lisp_Hash_Table log_t;
 
 static struct hash_table_test hashtest_profiler;
 
-static Lisp_Object
+Lisp_Object
 make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
 {
   /* We use a standard Elisp hash-table object, but we use it in
@@ -435,71 +435,7 @@ Before returning, a new log is allocated for future samples.  */)
 /* True if memory profiler is running.  */
 bool profiler_memory_running;
 
-static Lisp_Object memory_log;
-
-DEFUN ("profiler-memory-start", Fprofiler_memory_start, Sprofiler_memory_start,
-       0, 0, 0,
-       doc: /* Start/restart the memory profiler.
-The memory profiler will take samples of the call-stack whenever a new
-allocation takes place.  Note that most small allocations only trigger
-the profiler occasionally.
-See also `profiler-log-size' and `profiler-max-stack-depth'.  */)
-  (void)
-{
-  if (profiler_memory_running)
-    error ("Memory profiler is already running");
-
-  if (NILP (memory_log))
-    memory_log = make_log (profiler_log_size,
-			   profiler_max_stack_depth);
-
-  profiler_memory_running = true;
-
-  return Qt;
-}
-
-DEFUN ("profiler-memory-stop",
-       Fprofiler_memory_stop, Sprofiler_memory_stop,
-       0, 0, 0,
-       doc: /* Stop the memory profiler.  The profiler log is not affected.
-Return non-nil if the profiler was running.  */)
-  (void)
-{
-  if (!profiler_memory_running)
-    return Qnil;
-  profiler_memory_running = false;
-  return Qt;
-}
-
-DEFUN ("profiler-memory-running-p",
-       Fprofiler_memory_running_p, Sprofiler_memory_running_p,
-       0, 0, 0,
-       doc: /* Return non-nil if memory profiler is running.  */)
-  (void)
-{
-  return profiler_memory_running ? Qt : Qnil;
-}
-
-DEFUN ("profiler-memory-log",
-       Fprofiler_memory_log, Sprofiler_memory_log,
-       0, 0, 0,
-       doc: /* Return the current memory profiler log.
-The log is a hash-table mapping backtraces to counters which represent
-the amount of memory allocated at those points.  Every backtrace is a vector
-of functions, where the last few elements may be nil.
-Before returning, a new log is allocated for future samples.  */)
-  (void)
-{
-  Lisp_Object result = memory_log;
-  /* Here we're making the log visible to Elisp , so it's not safe any
-     more for our use afterwards since we can't rely on its special
-     pre-allocated keys anymore.  So we have to allocate a new one.  */
-  memory_log = (profiler_memory_running
-		? make_log (profiler_log_size, profiler_max_stack_depth)
-		: Qnil);
-  return result;
-}
-
+Lisp_Object memory_log;
 
 /* Signals and probes.  */
 
@@ -605,8 +541,4 @@ to make room for new entries.  */);
   profiler_memory_running = false;
   memory_log = Qnil;
   staticpro (&memory_log);
-  defsubr (&Sprofiler_memory_start);
-  defsubr (&Sprofiler_memory_stop);
-  defsubr (&Sprofiler_memory_running_p);
-  defsubr (&Sprofiler_memory_log);
 }

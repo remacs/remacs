@@ -4442,6 +4442,8 @@ void syms_of_dbusbind (void);
 
 /* Defined in profiler.c.  */
 extern bool profiler_memory_running;
+extern Lisp_Object memory_log;
+extern Lisp_Object make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth);
 extern void malloc_probe (size_t);
 extern void syms_of_profiler (void);
 
