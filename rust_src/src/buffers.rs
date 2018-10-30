@@ -472,11 +472,6 @@ impl LispBufferLocalValueRef {
     }
 }
 
-#[no_mangle]
-pub extern "C" fn invalid_buffer_error(obj: LispObject) -> ! {
-    wrong_type!(Qbufferp, obj);
-}
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum LispBufferOrName {
     Buffer(LispObject),
