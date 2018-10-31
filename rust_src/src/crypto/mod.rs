@@ -21,7 +21,6 @@ use buffers::{buffer_file_name, current_buffer, get_buffer, nsberror, LispBuffer
 use lisp::defsubr;
 use lisp::LispObject;
 use multibyte::LispStringRef;
-use numbers::LispNumber;
 use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
 
@@ -189,22 +188,14 @@ fn get_input_from_buffer(
     let prev_buffer = ThreadState::current_buffer().as_mut();
     unsafe { record_unwind_current_buffer() };
     unsafe { set_buffer_internal(buffer.as_mut()) };
-    *start_byte = if start.is_nil() {
-        buffer.begv
-    } else {
-        match start.as_number_coerce_marker_or_error() {
-            LispNumber::Fixnum(n) => n as ptrdiff_t,
-            LispNumber::Float(n) => n as ptrdiff_t,
-        }
-    };
-    *end_byte = if end.is_nil() {
-        buffer.zv
-    } else {
-        match end.as_number_coerce_marker_or_error() {
-            LispNumber::Fixnum(n) => n as ptrdiff_t,
-            LispNumber::Float(n) => n as ptrdiff_t,
-        }
-    };
+
+    *start_byte = start.map_or(buffer.begv, |v| {
+        v.as_number_coerce_marker_or_error().to_fixnum() as ptrdiff_t
+    });
+    *end_byte = end.map_or(buffer.zv, |v| {
+        v.as_number_coerce_marker_or_error().to_fixnum() as ptrdiff_t
+    });
+
     if start_byte > end_byte {
         std::mem::swap(start_byte, end_byte);
     }

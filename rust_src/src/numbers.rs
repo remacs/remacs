@@ -170,6 +170,15 @@ impl From<LispObject> for Option<LispNumber> {
     }
 }
 
+impl From<LispNumber> for LispObject {
+    fn from(n: LispNumber) -> LispObject {
+        match n {
+            LispNumber::Fixnum(v) => v.into(),
+            LispNumber::Float(v) => LispObject::from_float(v),
+        }
+    }
+}
+
 impl LispObject {
     pub fn is_number(self) -> bool {
         self.is_fixnum() || self.is_float()
