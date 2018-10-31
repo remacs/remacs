@@ -1,7 +1,9 @@
 //! Functions related to syntax
+
 use remacs_macros::lisp_fn;
-use remacs_sys::{buffer_defaults, scan_lists};
-use remacs_sys::{EmacsInt, Qsyntax_table, Qsyntax_table_p};
+use remacs_sys::{buffer_defaults, check_syntax_table, scan_lists, set_char_table_defalt};
+use remacs_sys::{EmacsInt, Qnil, Qsyntax_table, Qsyntax_table_p};
+use remacs_sys::{Fcopy_sequence, Fset_char_table_parent};
 
 use chartable::LispCharTableRef;
 use lisp::defsubr;
@@ -63,6 +65,31 @@ fn check_syntax_table_p(table: LispCharTableRef) {
 #[lisp_fn]
 pub fn standard_syntax_table() -> LispCharTableRef {
     unsafe { buffer_defaults.syntax_table_ }.into()
+}
+
+/// Construct a new syntax table and return it.
+/// It is a copy of the TABLE, which defaults to the standard syntax table.
+#[lisp_fn(min = "0")]
+pub fn copy_syntax_table(mut table: LispObject) -> LispObject {
+    let buffer_table = unsafe { buffer_defaults.syntax_table_ };
+    if table.is_not_nil() {
+        unsafe { check_syntax_table(table) };
+    } else {
+        table = buffer_table;
+    }
+    let copy = unsafe { Fcopy_sequence(table) };
+
+    // Only the standard syntax table should have a default element.
+    // Other syntax tables should inherit from parents instead.
+    unsafe { set_char_table_defalt(copy, Qnil) };
+
+    // Copied syntax tables should all have parents.
+    // If we copied one with no parent, such as the standard syntax table,
+    // use the standard syntax table as the copy's parent.
+    if copy.as_char_table_or_error().parent.is_nil() {
+        unsafe { Fset_char_table_parent(copy, buffer_table) };
+    }
+    copy
 }
 
 include!(concat!(env!("OUT_DIR"), "/syntax_exports.rs"));
