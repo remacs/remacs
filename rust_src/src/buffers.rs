@@ -186,10 +186,9 @@ impl LispBufferRef {
         }
         self.local_flags[idx] = val;
     }
-}
 
-// Characters, positions and byte positions.
-impl LispBufferRef {
+    // Characters, positions and byte positions.
+
     /// Return the address of byte position N in current buffer.
     pub fn byte_pos_addr(self, n: ptrdiff_t) -> *mut c_uchar {
         unsafe { (*self.text).beg.offset(n - BEG_BYTE) }
@@ -280,10 +279,9 @@ impl LispBufferRef {
         }
         new_pos
     }
-}
 
-// Methods for accessing struct buffer_text fields
-impl LispBufferRef {
+    // Methods for accessing struct buffer_text fields
+
     pub fn beg_addr(self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
     }
@@ -326,15 +324,21 @@ impl LispBufferRef {
     pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
     }
-}
 
-impl LispBufferRef {
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
     }
 
     pub fn overlays_after(self) -> Option<LispOverlayRef> {
         unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
+    }
+
+    pub fn as_live(self) -> Option<LispBufferRef> {
+        if self.is_live() {
+            Some(self)
+        } else {
+            None
+        }
     }
 }
 
@@ -349,8 +353,7 @@ impl LispObject {
     }
 
     pub fn as_live_buffer(self) -> Option<LispBufferRef> {
-        self.as_buffer()
-            .and_then(|b| if b.is_live() { Some(b) } else { None })
+        self.as_buffer().and_then(|b| b.as_live())
     }
 
     pub fn as_buffer_or_error(self) -> LispBufferRef {
