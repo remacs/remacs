@@ -266,7 +266,8 @@ variable name being but a special case of it)."
 (defmacro pcase-let* (bindings &rest body)
   "Like `let*' but where you can use `pcase' patterns for bindings.
 BODY should be an expression, and BINDINGS should be a list of bindings
-of the form (PAT EXP)."
+of the form (PATTERN EXP).
+See `pcase-let' for discussion of how PATTERN is matched."
   (declare (indent 1)
            (debug ((&rest (pcase-PAT &optional form)) body)))
   (let ((cached (gethash bindings pcase--memoize)))
@@ -281,10 +282,11 @@ of the form (PAT EXP)."
 (defmacro pcase-let (bindings &rest body)
   "Like `let' but where you can use `pcase' patterns for bindings.
 BODY should be a list of expressions, and BINDINGS should be a list of bindings
-of the form (PAT EXP).
-The macro is expanded and optimized under the assumption that those
-patterns *will* match, so a mismatch may go undetected or may cause
-any kind of error."
+of the form (PATTERN EXP).
+The PATTERNs are only used to extract data, so the code does not test
+whether the data does match the corresponding patterns: a mismatch
+may signal an error or may go undetected, binding variables to arbitrary
+values, such as nil."
   (declare (indent 1) (debug pcase-let*))
   (if (null (cdr bindings))
       `(pcase-let* ,bindings ,@body)
@@ -302,7 +304,11 @@ any kind of error."
 
 ;;;###autoload
 (defmacro pcase-dolist (spec &rest body)
-  "Like `dolist' but where the binding can be a `pcase' pattern.
+  "Superset of `dolist' where the VAR binding can be a `pcase' PATTERN.
+More specifically, this is just a shorthand for the following combination
+of `dolist' and `pcase-let':
+
+    (dolist (x LIST) (pcase-let ((PATTERN x)) BODY...))
 \n(fn (PATTERN LIST) BODY...)"
   (declare (indent 1) (debug ((pcase-PAT form) body)))
   (if (pcase--trivial-upat-p (car spec))
