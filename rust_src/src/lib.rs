@@ -100,6 +100,7 @@ mod numbers;
 mod obarray;
 mod objects;
 mod process;
+mod profiler;
 #[allow(clippy::all)]
 mod remacs_sys;
 mod search;
