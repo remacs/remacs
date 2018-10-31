@@ -477,6 +477,7 @@ returns non-@code{nil}, the pattern matches the value
 * The @code{pcase} macro: pcase Macro.  Plus examples and caveats.
 * Extending @code{pcase}: Extending pcase.  Define new kinds of patterns.
 * Backquote-Style Patterns: Backquote Patterns.  Structural matching.
+* Destructuring patterns:: Using pcase patterns to extract subfields.
 @end menu
 
 @node pcase Macro
@@ -496,6 +497,10 @@ If there is a match, the value of @code{pcase} is the value
 of the last of @var{body-forms} in the successful clause.
 Otherwise, @code{pcase} evaluates to @code{nil}.
 @end defmac
+
+Each @var{pattern} has to be a @dfn{pcase pattern}, which can either
+use one of the core patterns defined below, or use one of the patterns
+defined via @code{pcase-defmacro}.
 
 The rest of this subsection
 describes different forms of core patterns,
@@ -1167,6 +1172,90 @@ evaluation results:
 (evaluate '(call (fn x (add 1 x)) 2) nil) @result{} 3
 (evaluate '(sub 1 2) nil)                 @result{} error
 @end example
+
+@node Destructuring patterns
+@subsection Destructuring Patterns
+@cindex destructuring patterns
+
+Pcase patterns not only express a condition on the form of the objects
+they can match but they can also extract sub-fields of those objects.
+Say we have a list and want to extract 2 elements from it with the
+following code:
+
+@example
+  (pcase l
+    (`(add ,x ,y)  (message "Contains %S and %S" x y)))
+@end example
+
+This will not only extract @code{x} and @code{y} but will additionally
+test that @code{l} is a list containing exactly 3 elements and whose
+first element is the symbol @code{add}.  If any of those tests fail,
+@code{pcase} will directly return @code{nil} without calling
+@code{message}.
+
+@dfn{Destructuring} of an object is an operation that extracts
+multiple values stored in the object, e.g., the 2nd and the 3rd
+element of a list or a vector.  @dfn{Destructuring binding} is
+similar to a local binding (@pxref{Local Variables}), but it gives
+values to multiple elements of a variable by extracting those values
+from an object of compatible structure.
+
+The macros described in this section use @dfn{destructuring
+patterns}, which are normal Pcase patterns used in a context where we
+presume that the object does match the pattern, and we only want
+to extract some subfields.  For example:
+
+@example
+  (pcase-let ((`(add ,x ,y) l))
+    (message "Contains %S and %S" x y))
+@end example
+
+@noindent
+does the same as the previous example, except that it directly tries
+to extract @code{x} and @code{y} from @code{l} without first verifying
+if @code{l} is a list which has the right number of elements and has
+@code{add} as its first element.
+The precise behavior when the object does not actually match the
+pattern is undefined, although the body will not be silently skipped:
+either an error is signaled or the body is run with some of the
+variables potentially bound to arbitrary values like @code{nil}.
+
+@defmac pcase-let bindings body@dots{}
+Bind variables according to @var{bindings} and then eval @var{body}.
+
+@var{bindings} is a list of bindings of the form @w{@code{(@var{pattern}
+@var{exp})}}, where @var{exp} is an expression to evaluate and
+@var{pattern} is a destructuring pattern.
+
+All @var{exp}s are evaluated first after which they are matched
+against their respective @var{pattern}, introducing new variable
+bindings which can then be used inside @var{body}.
+@end defmac
+
+@defmac pcase-let* bindings body@dots{}
+Bind variables according to @var{bindings} and then eval @var{body}.
+
+@var{bindings} is a list of bindings of the form @code{(@var{pattern}
+@var{exp})}, where @var{exp} is an expression to evaluate and
+@var{pattern} is a destructuring pattern.
+
+Unlike @code{pcase-let}, but like @code{let*}, each @var{exp} is
+matched against its corresponding @var{pattern} before passing to the
+next element of @var{bindings}, so the variables introduced in each
+binding are available in the @var{exp}s that follow it, additionally
+to being available in @var{body}.
+@end defmac
+
+@findex dolist
+@defmac pcase-dolist (pattern list) body@dots{}
+This construct executes @var{body} once for each element of
+@var{list}, in a context where the variables appearing in the the
+destructuring pattern @var{pattern} are bound to the corresponding
+values found in the element.
+When @var{pattern} is a simple variable, this ends up being equivalent
+to @code{dolist}.
+@end defmac
+
 
 @node Iteration
 @section Iteration
