@@ -1985,6 +1985,8 @@ For definition of that list see `tramp-set-completion-function'."
   (append
    `(;; Default settings are taken into account.
      (tramp-parse-default-user-host ,method)
+     ;; Hits from auth-sources.
+     (tramp-parse-auth-sources ,method)
      ;; Hosts visited once shall be remembered.
      (tramp-parse-connection-properties ,method))
    ;; The method related defaults.
@@ -2787,6 +2789,23 @@ PARTIAL-USER must match USER, PARTIAL-HOST must match HOST."
 This function is added always in `tramp-get-completion-function'
 for all methods.  Resulting data are derived from default settings."
   `((,(tramp-find-user method nil nil) ,(tramp-find-host method nil nil))))
+
+(defcustom tramp-completion-use-auth-sources auth-source-do-cache
+  "Whether to use `auth-source-search' for completion of user and host names.
+This could be disturbing, if it requires a password / passphrase,
+as for \"~/.authinfo.gpg\"."
+  :group 'tramp
+  :version "27.1"
+  :type 'boolean)
+
+(defun tramp-parse-auth-sources (method)
+  "Return a list of (user host) tuples allowed to access for METHOD.
+This function is added always in `tramp-get-completion-function'
+for all methods.  Resulting data are derived from default settings."
+  (and tramp-completion-use-auth-sources
+       (mapcar
+	(lambda (x) `(,(plist-get x :user) ,(plist-get x :host)))
+	(auth-source-search :port method :max most-positive-fixnum))))
 
 ;; Generic function.
 (defun tramp-parse-group (regexp match-level skip-regexp)

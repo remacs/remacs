@@ -751,6 +751,11 @@ are obsoleted in GVFS.
 *** Validated passwords are saved by auth-source backends which support this.
 
 +++
+*** During user and host name completion in the minibuffer, results
+from auth-source search are taken into account.  This can be disabled
+by setting user option 'tramp-completion-use-auth-sources' to nil.
+
++++
 *** The user option 'tramp-ignored-file-name-regexp' allows to disable
 Tramp for some look-alike remote file names.
 

@@ -2538,6 +2538,14 @@ names on that host.
 When the configuration (@pxref{Customizing Completion}) includes user
 names, then the completion lists will account for the user names as well.
 
+@vindex tramp-completion-use-auth-sources
+Results from @code{auth-sources} search (@pxref{Using an
+authentication file}) are added to the completion candidates.  This
+search could be annoying, for example due to a passphrase request of
+the @file{~/.authinfo.gpg} authentication file.  The user option
+@code{tramp-completion-use-auth-sources} controls, whether such a
+search is performed during completion.
+
 Remote hosts previously visited or hosts whose connections are kept
 persistently (@pxref{Connection caching}) will be included in the
 completion lists.
