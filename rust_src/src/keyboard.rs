@@ -143,13 +143,13 @@ pub fn quit_recursive_edit(val: bool) -> ! {
 }
 
 /// Exit from the innermost recursive edit or minibuffer.
-#[lisp_fn]
+#[lisp_fn(intspec = "")]
 pub fn exit_recursive_edit() -> ! {
     quit_recursive_edit(false);
 }
 
 /// Abort the command that requested this recursive edit or minibuffer input.
-#[lisp_fn]
+#[lisp_fn(intspec = "")]
 pub fn abort_recursive_edit() -> ! {
     quit_recursive_edit(true);
 }
