@@ -1463,7 +1463,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 		 (goto-char (match-beginning 0))
 		 (save-excursion (search-forward "'" (match-end 0) t)))))))))
 
-(defun c-parse-quotes-before-change (beg end)
+(defun c-parse-quotes-before-change (_beg _end)
   ;; This function analyzes 's near the region (c-new-BEG c-new-END), amending
   ;; those two variables as needed to include 's into that region when they
   ;; might be syntactically relevant to the change in progress.
@@ -1550,7 +1550,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	 'c-digit-separator t
 	 ?')))))
 
-(defun c-parse-quotes-after-change (beg end old-len)
+(defun c-parse-quotes-after-change (_beg _end _old-len)
   ;; This function applies syntax-table properties (value '(1)) and
   ;; c-digit-separator properties as needed to 's within the range (c-new-BEG
   ;; c-new-END).  This operation is performed even within strings and
