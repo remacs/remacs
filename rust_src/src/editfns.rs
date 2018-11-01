@@ -16,7 +16,7 @@ use remacs_sys::{buffer_overflow, downcase, find_before_next_newline, find_field
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 
-use buffers::{get_buffer, nsberror, BUF_BYTES_MAX};
+use buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
 use lisp::{defsubr, LispObject};
 use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp,
@@ -46,12 +46,8 @@ pub fn point() -> EmacsInt {
 /// in some other BUFFER, use
 /// `(with-current-buffer BUFFER (- (point-max) (point-min)))'.
 #[lisp_fn(min = "0")]
-pub fn buffer_size(buffer: LispObject) -> EmacsInt {
-    let buffer_ref = if buffer.is_not_nil() {
-        get_buffer(buffer).as_buffer_or_error()
-    } else {
-        ThreadState::current_buffer()
-    };
+pub fn buffer_size(buffer: LispBufferOrCurrent) -> EmacsInt {
+    let buffer_ref = buffer.unwrap();
     (buffer_ref.z() - buffer_ref.beg()) as EmacsInt
 }
 
@@ -856,15 +852,14 @@ pub fn emacs_pid() -> LispObject {
 /// versa, strings are converted from unibyte to multibyte or vice versa
 /// using `string-make-multibyte' or `string-make-unibyte', which see.
 #[lisp_fn(min = "1")]
-pub fn insert_buffer_substring(buffer: LispObject, beg: LispObject, end: LispObject) -> LispObject {
-    let buf = get_buffer(buffer);
-    if buf.is_nil() {
-        nsberror(buffer);
-    }
-    let mut buf_ref = match buf.as_live_buffer() {
-        Some(b) => b,
-        None => error!("Selecting deleted buffer"),
-    };
+pub fn insert_buffer_substring(
+    buffer: LispBufferOrName,
+    beg: LispObject,
+    end: LispObject,
+) -> LispObject {
+    let mut buf_ref = LispBufferRef::from(buffer)
+        .as_live()
+        .unwrap_or_else(|| error!("Selecting deleted buffer"));
 
     let get_pos = |pos: LispObject, default: isize| {
         if pos.is_nil() {
