@@ -62,8 +62,7 @@ fn check_syntax_table_p(table: LispCharTableRef) {
 /// Return the standard syntax table.  This is the one used for new buffers.
 #[lisp_fn]
 pub fn standard_syntax_table() -> LispCharTableRef {
-    let buffer_table = unsafe { buffer_defaults.syntax_table_ };
-    buffer_table.as_char_table_or_error()
+    unsafe { buffer_defaults.syntax_table_ }.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/syntax_exports.rs"));
