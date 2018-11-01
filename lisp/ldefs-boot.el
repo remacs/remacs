@@ -24952,7 +24952,8 @@ variable name being but a special case of it).
 (autoload 'pcase-let* "pcase" "\
 Like `let*' but where you can use `pcase' patterns for bindings.
 BODY should be an expression, and BINDINGS should be a list of bindings
-of the form (PAT EXP).
+of the form (PATTERN EXP).
+See `pcase-let' for discussion of how PATTERN is matched.
 
 \(fn BINDINGS &rest BODY)" nil t)
 
@@ -24961,17 +24962,22 @@ of the form (PAT EXP).
 (autoload 'pcase-let "pcase" "\
 Like `let' but where you can use `pcase' patterns for bindings.
 BODY should be a list of expressions, and BINDINGS should be a list of bindings
-of the form (PAT EXP).
-The macro is expanded and optimized under the assumption that those
-patterns *will* match, so a mismatch may go undetected or may cause
-any kind of error.
+of the form (PATTERN EXP).
+The PATTERNs are only used to extract data, so the code does not test
+whether the data does match the corresponding patterns: a mismatch
+may signal an error or may go undetected, binding variables to arbitrary
+values, such as nil.
 
 \(fn BINDINGS &rest BODY)" nil t)
 
 (function-put 'pcase-let 'lisp-indent-function '1)
 
 (autoload 'pcase-dolist "pcase" "\
-Like `dolist' but where the binding can be a `pcase' pattern.
+Superset of `dolist' where the VAR binding can be a `pcase' PATTERN.
+More specifically, this is just a shorthand for the following combination
+of `dolist' and `pcase-let':
+
+    (dolist (x LIST) (pcase-let ((PATTERN x)) BODY...))
 
 \(fn (PATTERN LIST) BODY...)" nil t)
 
@@ -28752,7 +28758,7 @@ CHAR
      `chinese-two-byte'			(\\cC)
      `greek-two-byte'			(\\cG)
      `japanese-hiragana-two-byte'	(\\cH)
-     `indian-tow-byte'			(\\cI)
+     `indian-two-byte'			(\\cI)
      `japanese-katakana-two-byte'	(\\cK)
      `korean-hangul-two-byte'		(\\cN)
      `cyrillic-two-byte'		(\\cY)
@@ -34624,7 +34630,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 3 4 26 2)) package--builtin-versions)
+(push (purecopy '(tramp 2 3 5 26 2)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
