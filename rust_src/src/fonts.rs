@@ -122,7 +122,7 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> bool {
 pub fn font_match_p(spec: LispObject, font: LispObject) -> bool {
     if !spec.is_font_spec() {wrong_type!(Qfont_spec, spec)}
     if !font.is_font() {wrong_type!(Qfont, font)}
-    c_font_match_p(spec, font)
+    unsafe {c_font_match_p(spec, font)}
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));
