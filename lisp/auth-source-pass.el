@@ -56,7 +56,8 @@ See `auth-source-search' for details on SPEC."
          ;; Do not build a result, as none will match when HOST is nil
          nil)
         (t
-         (list (auth-source-pass--build-result host port user)))))
+         (when-let ((result (auth-source-pass--build-result host port user)))
+           (list result)))))
 
 (defun auth-source-pass--build-result (host port user)
   "Build auth-source-pass entry matching HOST, PORT and USER."

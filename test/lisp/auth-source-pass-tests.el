@@ -83,6 +83,11 @@ This function is intended to be set to `auth-source-debug`."
                                   ("bar"))
     (should-not (auth-source-pass-search :host nil))))
 
+(ert-deftest auth-source-pass-not-found ()
+  (auth-source-pass--with-store '(("foo" ("port" . "foo-port") ("host" . "foo-user"))
+                                  ("bar"))
+    (should-not (auth-source-pass-search :host "baz"))))
+
 
 (ert-deftest auth-source-pass-find-match-matching-at-entry-name ()
   (auth-source-pass--with-store '(("foo"))
