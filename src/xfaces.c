@@ -5943,7 +5943,14 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
     int face_id;
 
     if (base_face_id >= 0)
-      face_id = base_face_id;
+      {
+	face_id = base_face_id;
+	/* Make sure the base face ID is usable: if someone freed the
+	   cached faces since we've looked up the base face, we need
+	   to look it up again.  */
+	if (!FACE_FROM_ID_OR_NULL (f, face_id))
+	  face_id = lookup_basic_face (f, DEFAULT_FACE_ID);
+      }
     else if (NILP (Vface_remapping_alist))
       face_id = DEFAULT_FACE_ID;
     else
