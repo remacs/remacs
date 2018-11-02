@@ -2094,6 +2094,8 @@ HASH_TABLE_SIZE (struct Lisp_Hash_Table *h)
   return ASIZE (h->next);
 }
 
+void hash_clear (struct Lisp_Hash_Table *h);
+
 /* Default size for hash tables if not specified.  */
 
 enum DEFAULT_HASH_SIZE { DEFAULT_HASH_SIZE = 65 };
