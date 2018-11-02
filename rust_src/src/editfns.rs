@@ -9,12 +9,13 @@ use std;
 use remacs_macros::lisp_fn;
 
 use remacs_sys::EmacsInt;
-use remacs_sys::{buffer_overflow, downcase, find_before_next_newline, find_field, find_newline,
-                 globals, insert, insert_and_inherit, insert_from_buffer, make_string_from_bytes,
-                 maybe_quit, scan_newline_from_point, set_buffer_internal_1, set_point,
-                 set_point_both, update_buffer_properties};
-use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
-use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
+use remacs_sys::{buffer_overflow, build_string, downcase, find_before_next_newline, find_field,
+                 find_newline, globals, insert, insert_and_inherit, insert_from_buffer,
+                 make_string_from_bytes, maybe_quit, message1, scan_newline_from_point,
+                 set_buffer_internal_1, set_point, set_point_both, update_buffer_properties};
+use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
+                 Fx_popup_dialog};
+use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt};
 
 use buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX};
 use character::{char_head_p, dec_pos};
@@ -890,6 +891,35 @@ pub fn insert_buffer_substring(
         insert_from_buffer(buf_ref.as_mut(), b, e - b, false)
     };
     Qnil
+}
+
+/// Display a message, in a dialog box if possible.
+/// If a dialog box is not available, use the echo area.
+/// The first argument is a format control string, and the rest are data
+/// to be formatted under control of the string.  See `format-message' for
+/// details.
+///
+/// If the first argument is nil or the empty string, clear any existing
+/// message; let the minibuffer contents show.
+///
+/// usage: (message-box FORMAT-STRING &rest ARGS)
+#[lisp_fn]
+pub fn message_box(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        if args[0].is_nil() {
+            message1("".as_ptr() as *const ::libc::c_char);
+            Qnil
+        } else {
+            let val = Fformat_message(args.len() as isize, args.as_mut_ptr() as *mut LispObject);
+            let pane = list!(Fcons(
+                build_string("OK".as_ptr() as *const ::libc::c_char),
+                Qt
+            ));
+            let menu = Fcons(val, pane);
+            Fx_popup_dialog(Qt, menu, Qt);
+            val
+        }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
