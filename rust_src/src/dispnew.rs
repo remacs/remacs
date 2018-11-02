@@ -124,7 +124,7 @@ pub fn internal_show_cursor(window: LispObject, show: LispObject) {
 
 /// Value is non-nil if next redisplay will display a cursor in WINDOW.
 /// WINDOW nil or omitted means report on the selected window.
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn internal_show_cursor_p(window: LispObject) -> bool {
     !window_or_selected(window).cursor_off_p()
 }
