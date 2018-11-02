@@ -301,19 +301,6 @@ decode_live_window (register Lisp_Object window)
   return XWINDOW (window);
 }
 
-struct window *
-decode_any_window (register Lisp_Object window)
-{
-  struct window *w;
-
-  if (NILP (window))
-    return XWINDOW (selected_window);
-
-  CHECK_WINDOW (window);
-  w = XWINDOW (window);
-  return w;
-}
-
 static struct window *
 decode_valid_window (register Lisp_Object window)
 {

@@ -310,8 +310,13 @@ pub fn window_or_selected_unchecked(window: LispObject) -> LispObject {
 }
 
 /// Same as the `decode_any_window` function
-fn window_or_selected(window: LispObject) -> LispWindowRef {
+pub fn window_or_selected(window: LispObject) -> LispWindowRef {
     window_or_selected_unchecked(window).as_window_or_error()
+}
+
+#[no_mangle]
+pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
+    window_or_selected(window)
 }
 
 /// Same as the `decode_live_window` function
