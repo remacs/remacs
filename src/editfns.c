@@ -2911,36 +2911,6 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
 }
 
-DEFUN ("message-box", Fmessage_box, Smessage_box, 1, MANY, 0,
-       doc: /* Display a message, in a dialog box if possible.
-If a dialog box is not available, use the echo area.
-The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format-message' for
-details.
-
-If the first argument is nil or the empty string, clear any existing
-message; let the minibuffer contents show.
-
-usage: (message-box FORMAT-STRING &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  if (NILP (args[0]))
-    {
-      message1 (0);
-      return Qnil;
-    }
-  else
-    {
-      Lisp_Object val = Fformat_message (nargs, args);
-      Lisp_Object pane, menu;
-
-      pane = list1 (Fcons (build_string ("OK"), Qt));
-      menu = Fcons (val, pane);
-      Fx_popup_dialog (Qt, menu, Qt);
-      return val;
-    }
-}
-
 DEFUN ("message-or-box", Fmessage_or_box, Smessage_or_box, 1, MANY, 0,
        doc: /* Display a message in a dialog box or in the echo area.
 If this command was invoked with the mouse, use a dialog box if
@@ -4370,7 +4340,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sset_time_zone_rule);
   defsubr (&Ssystem_name);
   defsubr (&Smessage);
-  defsubr (&Smessage_box);
   defsubr (&Smessage_or_box);
   defsubr (&Scurrent_message);
   defsubr (&Sformat);

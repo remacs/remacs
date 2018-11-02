@@ -5957,35 +5957,6 @@ init_display (void)
 
 
 /***********************************************************************
-			   Blinking cursor
- ***********************************************************************/
-
-DEFUN ("internal-show-cursor", Finternal_show_cursor,
-       Sinternal_show_cursor, 2, 2, 0,
-       doc: /* Set the cursor-visibility flag of WINDOW to SHOW.
-WINDOW nil means use the selected window.  SHOW non-nil means
-show a cursor in WINDOW in the next redisplay.  SHOW nil means
-don't show a cursor.  */)
-  (Lisp_Object window, Lisp_Object show)
-{
-  /* Don't change cursor state while redisplaying.  This could confuse
-     output routines.  */
-  if (!redisplaying_p)
-    decode_any_window (window)->cursor_off_p = NILP (show);
-  return Qnil;
-}
-
-
-DEFUN ("internal-show-cursor-p", Finternal_show_cursor_p,
-       Sinternal_show_cursor_p, 0, 1, 0,
-       doc: /* Value is non-nil if next redisplay will display a cursor in WINDOW.
-WINDOW nil or omitted means report on the selected window.  */)
-  (Lisp_Object window)
-{
-  return decode_any_window (window)->cursor_off_p ? Qnil : Qt;
-}
-
-/***********************************************************************
 			    Initialization
  ***********************************************************************/
 
@@ -5997,8 +5968,6 @@ syms_of_display (void)
   defsubr (&Sding);
   defsubr (&Sredisplay);
   defsubr (&Ssend_string_to_terminal);
-  defsubr (&Sinternal_show_cursor);
-  defsubr (&Sinternal_show_cursor_p);
 
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_redisplay_history);
