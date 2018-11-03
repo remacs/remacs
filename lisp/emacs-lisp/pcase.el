@@ -264,10 +264,14 @@ variable name being but a special case of it)."
 
 ;;;###autoload
 (defmacro pcase-let* (bindings &rest body)
-  "Like `let*' but where you can use `pcase' patterns for bindings.
-BODY should be an expression, and BINDINGS should be a list of bindings
-of the form (PATTERN EXP).
-See `pcase-let' for discussion of how PATTERN is matched."
+  "Like `let*', but supports destructuring BINDINGS using `pcase' patterns.
+As with `pcase-let', BINDINGS are of the form (PATTERN EXP), but the
+EXP in each binding in BINDINGS can use the results of the destructuring
+bindings that precede it in BINDINGS' order.
+
+Each EXP should match (i.e. be of compatible structure) to its
+respective PATTERN; a mismatch may signal an error or may go
+undetected, binding variables to arbitrary values, such as nil."
   (declare (indent 1)
            (debug ((&rest (pcase-PAT &optional form)) body)))
   (let ((cached (gethash bindings pcase--memoize)))
@@ -280,13 +284,16 @@ See `pcase-let' for discussion of how PATTERN is matched."
 
 ;;;###autoload
 (defmacro pcase-let (bindings &rest body)
-  "Like `let' but where you can use `pcase' patterns for bindings.
-BODY should be a list of expressions, and BINDINGS should be a list of bindings
-of the form (PATTERN EXP).
-The PATTERNs are only used to extract data, so the code does not test
-whether the data does match the corresponding patterns: a mismatch
-may signal an error or may go undetected, binding variables to arbitrary
-values, such as nil."
+  "Like `let', but supports destructuring BINDINGS using `pcase' patterns.
+BODY should be a list of expressions, and BINDINGS should be a list of
+bindings of the form (PATTERN EXP).
+All EXPs are evaluated first, and then used to perform destructuring
+bindings by matching each EXP against its respective PATTERN.  Then
+BODY is evaluated with those bindings in effect.
+
+Each EXP should match (i.e. be of compatible structure) to its
+respective PATTERN; a mismatch may signal an error or may go
+undetected, binding variables to arbitrary values, such as nil."
   (declare (indent 1) (debug pcase-let*))
   (if (null (cdr bindings))
       `(pcase-let* ,bindings ,@body)
@@ -304,11 +311,15 @@ values, such as nil."
 
 ;;;###autoload
 (defmacro pcase-dolist (spec &rest body)
-  "Superset of `dolist' where the VAR binding can be a `pcase' PATTERN.
-More specifically, this is just a shorthand for the following combination
-of `dolist' and `pcase-let':
-
-    (dolist (x LIST) (pcase-let ((PATTERN x)) BODY...))
+  "Eval BODY once for each set of bindings defined by PATTERN and LIST elements.
+PATTERN should be a `pcase' pattern describing the structure of
+LIST elements, and LIST is a list of objects that match PATTERN,
+i.e. have a structure that is compatible with PATTERN.
+For each element of LIST, this macro binds the variables in
+PATTERN to the corresponding subfields of the LIST element, and
+then evaluates BODY with these bindings in effect.  The
+destructuring bindings of variables in PATTERN to the subfields
+of the elements of LIST is performed as if by `pcase-let'.
 \n(fn (PATTERN LIST) BODY...)"
   (declare (indent 1) (debug ((pcase-PAT form) body)))
   (if (pcase--trivial-upat-p (car spec))
