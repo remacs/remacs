@@ -868,14 +868,13 @@ UUID at point.
 *** 'highlight-regexp' can now highlight subexpressions.
 The now command accepts a prefix numeric argument to choose the
 subexpression.
-** Mouse display major mode menu
-+++
-*** 'minor-mode-menu-from-indicator' now display full minor mode.
+
+** Mouse display of minor mode menu
+
+---
+*** 'minor-mode-menu-from-indicator' now display full minor mode name.
 When there is no menu for a mode, display the mode name after the
-indicator instead of just the indicator (which is sometime cryptic).
-Ex:
-before : SP
-now    : SP - Smartparens Mode
+indicator instead of just the indicator (which is sometimes cryptic).
 
 
 * New Modes and Packages in Emacs 27.1
