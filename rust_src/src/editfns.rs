@@ -9,7 +9,7 @@ use std;
 use remacs_macros::lisp_fn;
 
 use remacs_sys::EmacsInt;
-use remacs_sys::{buffer_overflow, build_string, current_message as c_current_message, downcase,
+use remacs_sys::{buffer_overflow, build_string, current_message, downcase,
                  find_before_next_newline, find_field, find_newline, globals, insert,
                  insert_and_inherit, insert_from_buffer, make_string_from_bytes, maybe_quit,
                  message1, scan_newline_from_point, set_buffer_internal_1, set_point,
@@ -924,9 +924,9 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
 }
 
 /// Return the string currently displayed in the echo area, or nil if none.
-#[lisp_fn()]
-pub fn current_message() -> LispObject {
-    unsafe { c_current_message() }
+#[lisp_fn(name = "current-message", c_name = "current_message")]
+pub fn lisp_current_message() -> LispObject {
+    unsafe { current_message() }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
