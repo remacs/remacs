@@ -2932,13 +2932,6 @@ usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
   return Fmessage (nargs, args);
 }
 
-DEFUN ("current-message", Fcurrent_message, Scurrent_message, 0, 0, 0,
-       doc: /* Return the string currently displayed in the echo area, or nil if none.  */)
-  (void)
-{
-  return current_message ();
-}
-
 /* Convert the prefix of STR from ASCII decimal digits to a number.
    Set *STR_END to the address of the first non-digit.  Return the
    number, or PTRDIFF_MAX on overflow.  Return 0 if there is no number.
@@ -4341,7 +4334,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Ssystem_name);
   defsubr (&Smessage);
   defsubr (&Smessage_or_box);
-  defsubr (&Scurrent_message);
   defsubr (&Sformat);
   defsubr (&Sformat_message);
 
