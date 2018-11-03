@@ -1884,15 +1884,6 @@ they can be in either order.  */)
   return make_buffer_string (b, e, 0);
 }
 
-DEFUN ("buffer-string", Fbuffer_string, Sbuffer_string, 0, 0, 0,
-       doc: /* Return the contents of the current buffer as a string.
-If narrowing is in effect, this function returns only the visible part
-of the buffer.  */)
-  (void)
-{
-  return make_buffer_string_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, 1);
-}
-
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
        6, 6, 0,
        doc: /* Compare two substrings of two buffers; return result as number.
@@ -4304,7 +4295,6 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Sbuffer_substring);
   defsubr (&Sbuffer_substring_no_properties);
-  defsubr (&Sbuffer_string);
   defsubr (&Sget_pos_property);
 
   /* Symbol for the text property used to mark fields.  */
