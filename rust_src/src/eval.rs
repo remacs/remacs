@@ -460,12 +460,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 /// The order of execution is thus TEST, BODY, TEST, BODY and so on
 /// until TEST returns nil.
 /// usage: (while TEST BODY...)
-#[lisp_fn(
-    name = "while",
-    c_name = "while",
-    min = "1",
-    unevalled = "true"
-)]
+#[lisp_fn(name = "while", c_name = "while", min = "1", unevalled = "true")]
 pub fn lisp_while(args: LispCons) -> LispObject {
     let (test, body) = args.as_tuple();
 

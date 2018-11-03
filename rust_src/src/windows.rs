@@ -175,11 +175,12 @@ impl LispWindowRef {
             && !self.is_minibuffer()
             && !self.is_pseudo()
             && window_mode_line_format.ne(Qnone)
-            && (window_mode_line_format.is_not_nil() || self
-                .contents
-                .as_buffer_or_error()
-                .mode_line_format_
-                .is_not_nil())
+            && (window_mode_line_format.is_not_nil()
+                || self
+                    .contents
+                    .as_buffer_or_error()
+                    .mode_line_format_
+                    .is_not_nil())
             && self.pixel_height > self.frame.as_frame_or_error().line_height
     }
 

@@ -46,8 +46,8 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> () {
 }
 
 /**********************************************************************
-			    Redrawing Frames
- **********************************************************************/
+		    Redrawing Frames
+**********************************************************************/
 
 /// Redraw frame F.
 #[no_mangle]
@@ -106,8 +106,8 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
 }
 
 /***********************************************************************
-			   Blinking cursor
- ***********************************************************************/
+		   Blinking cursor
+***********************************************************************/
 
 /// Set the cursor-visibility flag of WINDOW to SHOW.
 /// WINDOW nil means use the selected window.  SHOW non-nil means

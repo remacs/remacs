@@ -50,21 +50,24 @@ impl LispObject {
     }
 
     pub fn is_font_entity(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_ENTITY_MAX)
-        })
+        self.is_font()
+            && self.as_vectorlike().map_or(false, |vec| {
+                vec.pseudovector_size() == EmacsInt::from(FONT_ENTITY_MAX)
+            })
     }
 
     pub fn is_font_object(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
-        })
+        self.is_font()
+            && self.as_vectorlike().map_or(false, |vec| {
+                vec.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
+            })
     }
 
     pub fn is_font_spec(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_SPEC_MAX)
-        })
+        self.is_font()
+            && self.as_vectorlike().map_or(false, |vec| {
+                vec.pseudovector_size() == EmacsInt::from(FONT_SPEC_MAX)
+            })
     }
 }
 

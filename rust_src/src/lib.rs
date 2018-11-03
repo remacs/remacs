@@ -1,11 +1,9 @@
-#![feature(tool_lints)]
 #![allow(clippy::cyclomatic_complexity)]
 #![allow(clippy::wrong_self_convention)]
 #![allow(clippy::too_many_arguments)]
 #![feature(const_fn)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
-#![allow(private_no_mangle_fns)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 // we need this to be able to inclde FieldOffsets in C structs
 #![allow(improper_ctypes)]

@@ -394,7 +394,8 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.car()))
-        }).unwrap_or(Qnil)
+        })
+        .unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the car of an element of LIST.
@@ -426,7 +427,8 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
-        }).unwrap_or(Qnil)
+        })
+        .unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the cdr of an element of LIST.

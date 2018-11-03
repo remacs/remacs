@@ -128,10 +128,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // even if the feature specified is already loaded.
     // But not more than once in any file,
     // and not when we aren't loading or reading from a file.
-    let from_file = unsafe { globals.load_in_progress } || current_load_list
-        .iter_cars_safe()
-        .last()
-        .map_or(false, |elt| elt.is_string());
+    let from_file = unsafe { globals.load_in_progress }
+        || current_load_list
+            .iter_cars_safe()
+            .last()
+            .map_or(false, |elt| elt.is_string());
 
     if from_file {
         let tem = LispObject::cons(Qrequire, feature);
