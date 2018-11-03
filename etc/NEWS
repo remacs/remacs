@@ -339,8 +339,9 @@ When no files are marked, all modified files are stashed, as before.
 
 *** The new hook 'vc-retrieve-tag-hook' runs after retrieving a tag.
 
---- `vc-hg' now invokes `smerge-mode' correctly when visiting files.
-Code that attempted to invoke `smerge-mode' when visiting an Hg file
+---
+*** 'vc-hg' now invokes 'smerge-mode' when visiting files.
+Code that attempted to invoke 'smerge-mode' when visiting an Hg file
 with conflicts existed in earlier versions of Emacs, but incorrectly
 never detected a conflict due to invalid assumptions about cached
 values.
