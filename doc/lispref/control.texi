@@ -518,8 +518,8 @@ Matches any @var{expval}.
 This is also known as @dfn{don't care} or @dfn{wildcard}.
 
 @item '@var{val}
-Matches if @var{expval} is equals @var{val}.  The comparison is done
-as if by @code{equal} (@pxref{Equality Predicates}).
+Matches if @var{expval} equals @var{val}.  The comparison is done as
+if by @code{equal} (@pxref{Equality Predicates}).
 
 @item @var{keyword}
 @itemx @var{integer}
