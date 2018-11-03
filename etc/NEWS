@@ -489,6 +489,11 @@ See the concept index in the Gnus manual for the 'match-list' entry.
 article(s) to a pre-existing Message buffer, or create a new Message
 buffer with the article(s) attached.
 
+---
+*** New option 'nnir-notmuch-filter-group-names-function'.
+This option controls whether and how to use Gnus search groups as
+'path:' search terms to 'notmuch'.
+
 ** erc
 
 ---
