@@ -1226,7 +1226,7 @@ For an alternative facility for destructuring binding, see
 @ref{seq-let}.
 
 @defmac pcase-let bindings body@dots{}
-Perform desctructuring binding of variables according to
+Perform destructuring binding of variables according to
 @var{bindings}, and then evaluate @var{body}.
 
 @var{bindings} is a list of bindings of the form @w{@code{(@var{pattern}
@@ -1242,7 +1242,7 @@ evaluated @var{exp}.
 @end defmac
 
 @defmac pcase-let* bindings body@dots{}
-Perform desctructuring binding of variables according to
+Perform destructuring binding of variables according to
 @var{bindings}, and then evaluate @var{body}.
 
 @var{bindings} is a list of bindings of the form @code{(@var{pattern}
