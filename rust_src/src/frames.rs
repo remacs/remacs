@@ -1,14 +1,13 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method, Fcons,
-                 Fselect_window};
+use remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method, Fcons};
 use remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
-use windows::{selected_window, LispWindowRef};
+use windows::{select_window_lisp, selected_window, LispWindowRef};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -182,7 +181,7 @@ pub fn set_frame_selected_window(
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if frame_ref == selected_frame().as_frame().unwrap() {
-        unsafe { Fselect_window(window, norecord) }
+        select_window_lisp(window, norecord)
     } else {
         frame_ref.selected_window = window;
         window
