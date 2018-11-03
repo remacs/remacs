@@ -132,7 +132,8 @@ pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> LispObjec
                 let p = item.as_cons_or_error().cdr();
                 obj.eq(p.as_process_or_error().buffer)
             })
-        }).map_or(Qnil, |item| item.as_cons_or_error().cdr())
+        })
+        .map_or(Qnil, |item| item.as_cons_or_error().cdr())
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.
