@@ -3763,6 +3763,7 @@ extern void map_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Ob
 					Lisp_Object, struct charset *,
 					unsigned, unsigned);
 extern Lisp_Object uniprop_table (Lisp_Object);
+extern Lisp_Object uniprop_table_uncompress (Lisp_Object, int);
 extern void syms_of_chartab (void);
 
 /* Defined in print.c.  */

@@ -1,7 +1,5 @@
 //! char table related functions
 
-use libc;
-
 use remacs_macros::lisp_fn;
 use remacs_sys::uniprop_table_uncompress;
 use remacs_sys::{pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
@@ -186,7 +184,7 @@ impl LispSubCharTableRef {
         let mut val = self._get(idx);
 
         if is_uniprop && uniprop_compressed_form_p(val) {
-            val = unsafe { uniprop_table_uncompress(self.as_lisp_obj(), idx as libc::c_uint) };
+            val = unsafe { uniprop_table_uncompress(self.as_lisp_obj(), idx as i32) };
         }
 
         if let Some(sub) = val.as_sub_char_table() {

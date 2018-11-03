@@ -1,12 +1,11 @@
 //! data helpers
 
-use libc::c_int;
+use libc::{c_char, c_int};
 
 use remacs_macros::lisp_fn;
 use remacs_sys;
-use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, build_string, emacs_abort,
-                 globals, update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET,
-                 CHECK_IMPURE};
+use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
+                 emacs_abort, globals, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect};
 use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
@@ -20,10 +19,12 @@ use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, 
                  Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector, Qvoid_variable,
                  Qwindow, Qwindow_configuration};
 
+use buffers::per_buffer_idx;
+use buffers::LispBufferRef;
 use frames::selected_frame;
 use keymap::get_keymap;
 use lisp::{defsubr, is_autoload};
-use lisp::{LispObject, LispSubrRef};
+use lisp::{LispObject, LispSubrRef, LiveBufferIter};
 use lists::{get, memq, put};
 use math::leq;
 use multibyte::{is_ascii, is_single_byte_char};
@@ -594,6 +595,29 @@ pub unsafe extern "C" fn store_symval_forwarding(
             *(*valcontents).u_kboard_objfwd.offset.apply_ptr_mut(kboard) = newval;
         }
         _ => emacs_abort(),
+    }
+}
+
+unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) {
+    // If this variable is a default for something stored
+    // in the buffer itself, such as default-fill-column,
+    // find the buffers that don't have local values for it
+    // and update them.
+    let defaults = LispBufferRef::new(&mut buffer_defaults as *mut Lisp_Buffer);
+    let defaults_as_object = defaults.as_ptr() as *const LispObject;
+    if objvar > defaults_as_object && objvar < defaults_as_object.add(1) {
+        let offset = (objvar as *const c_char).offset_from(defaults.as_ptr() as *const c_char);
+        let idx = per_buffer_idx(offset);
+
+        if idx <= 0 {
+            return;
+        }
+
+        LiveBufferIter::new().for_each(|mut buf| {
+            if !buf.value_p(idx as isize) {
+                buf.set_value(offset as usize, newval);
+            }
+        });
     }
 }
 
