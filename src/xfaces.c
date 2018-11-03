@@ -6755,6 +6755,7 @@ Because Emacs normally only redraws screen areas when the underlying
 buffer contents change, you may need to call `redraw-display' after
 changing this variable for it to take effect.  */);
   Vface_remapping_alist = Qnil;
+  DEFSYM (Qface_remapping_alist,"face-remapping-alist");
 
   DEFVAR_LISP ("face-font-rescale-alist", Vface_font_rescale_alist,
 	       doc: /* Alist of fonts vs the rescaling factors.
