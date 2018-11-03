@@ -1,7 +1,5 @@
-#![feature(tool_lints)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
-#![allow(private_no_mangle_fns)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 extern crate errno;
