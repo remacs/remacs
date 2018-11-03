@@ -74,7 +74,6 @@ pub enum BoolVectorOp {
 extern "C" {
     // these weren't declared in a header, for example
     pub static Vprocess_alist: Lisp_Object;
-    pub fn hash_clear(h: *mut Lisp_Hash_Table);
     pub fn internal_equal(
         o1: Lisp_Object,
         o2: Lisp_Object,
