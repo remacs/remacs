@@ -1018,13 +1018,13 @@ pub fn scroll_down(arg: LispObject) -> LispObject {
     Qnil
 }
 
-// Return the new total size of window WINDOW.
-// WINDOW must be a valid window and defaults to the selected one.
-//
-// The new total size of WINDOW is the value set by the last call of
-// `set-window-new-total' for WINDOW.  If it is valid, it will be shortly
-// installed as WINDOW's total height (see `window-total-height') or total
-// width (see `window-total-width').
+/// Return the new total size of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The new total size of WINDOW is the value set by the last call of
+/// `set-window-new-total' for WINDOW.  If it is valid, it will be shortly
+/// installed as WINDOW's total height (see `window-total-height') or total
+/// width (see `window-total-width').
 #[lisp_fn(min = "0")]
 pub fn window_new_total(arg: LispObject) -> LispObject {
     let win = window_valid_or_selected(arg);
