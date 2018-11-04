@@ -9,11 +9,11 @@ use std;
 use remacs_macros::lisp_fn;
 
 use remacs_sys::EmacsInt;
-use remacs_sys::{buffer_overflow, build_string, downcase, find_before_next_newline, find_field,
-                 find_newline, globals, insert, insert_and_inherit, insert_from_buffer,
-                 make_buffer_string_both, make_string_from_bytes, maybe_quit, message1,
-                 scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both,
-                 update_buffer_properties};
+use remacs_sys::{buffer_overflow, build_string, current_message, downcase,
+                 find_before_next_newline, find_field, find_newline, globals, insert,
+                 insert_and_inherit, insert_from_buffer, make_buffer_string_both,
+                 make_string_from_bytes, maybe_quit, message1, scan_newline_from_point,
+                 set_buffer_internal_1, set_point, set_point_both, update_buffer_properties};
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
                  Fx_popup_dialog};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt};
@@ -921,6 +921,12 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
             val
         }
     }
+}
+
+/// Return the string currently displayed in the echo area, or nil if none.
+#[lisp_fn(name = "current-message", c_name = "current_message")]
+pub fn lisp_current_message() -> LispObject {
+    unsafe { current_message() }
 }
 
 /// Return the contents of the current buffer as a string.
