@@ -1560,7 +1560,15 @@ Switch to a buffer visiting file FILENAME,
 creating one if none already exists.
 Interactively, the default if you just type RET is the current directory,
 but the visited file name is available through the minibuffer history:
-type M-n to pull it into the minibuffer.
+type \\[next-history-element] to pull it into the minibuffer.
+
+The first time \\[next-history-element] is used after Emacs prompts for
+the file name, the result is affected by `file-name-at-point-functions',
+which by default try to guess the file name by looking at point in the
+current buffer.  Customize the value of `file-name-at-point-functions'
+or set it to nil, if you want only the visited file name and the
+current directory to be available on first \\[next-history-element]
+request.
 
 You can visit files on remote machines by specifying something
 like /ssh:SOME_REMOTE_MACHINE:FILE for the file name.  You can
@@ -1591,7 +1599,15 @@ an existing one.  See the function `display-buffer'.
 
 Interactively, the default if you just type RET is the current directory,
 but the visited file name is available through the minibuffer history:
-type M-n to pull it into the minibuffer.
+type \\[next-history-element] to pull it into the minibuffer.
+
+The first time \\[next-history-element] is used after Emacs prompts for
+the file name, the result is affected by `file-name-at-point-functions',
+which by default try to guess the file name by looking at point in the
+current buffer.  Customize the value of `file-name-at-point-functions'
+or set it to nil, if you want only the visited file name and the
+current directory to be available on first \\[next-history-element]
+request.
 
 Interactively, or if WILDCARDS is non-nil in a call from Lisp,
 expand wildcards (if any) and visit multiple files."
@@ -1615,7 +1631,15 @@ an existing one.  See the function `display-buffer'.
 
 Interactively, the default if you just type RET is the current directory,
 but the visited file name is available through the minibuffer history:
-type M-n to pull it into the minibuffer.
+type \\[next-history-element] to pull it into the minibuffer.
+
+The first time \\[next-history-element] is used after Emacs prompts for
+the file name, the result is affected by `file-name-at-point-functions',
+which by default try to guess the file name by looking at point in the
+current buffer.  Customize the value of `file-name-at-point-functions'
+or set it to nil, if you want only the visited file name and the
+current directory to be available on first \\[next-history-element]
+request.
 
 Interactively, or if WILDCARDS is non-nil in a call from Lisp,
 expand wildcards (if any) and visit multiple files."
@@ -1831,7 +1855,13 @@ The value includes abbreviation according to `directory-abbrev-alist'.")
   "Return a version of FILENAME shortened using `directory-abbrev-alist'.
 This also substitutes \"~\" for the user's home directory (unless the
 home directory is a root directory) and removes automounter prefixes
-\(see the variable `automount-dir-prefix')."
+\(see the variable `automount-dir-prefix').
+
+When this function is first called, it caches the user's home
+directory as a regexp in `abbreviated-home-dir', and reuses it
+afterwards (so long as the home directory does not change;
+if you want to permanently change your home directory after having
+started Emacs, set `abbreviated-home-dir' to nil so it will be recalculated)."
   ;; Get rid of the prefixes added by the automounter.
   (save-match-data
     (if (and automount-dir-prefix
@@ -1853,29 +1883,37 @@ home directory is a root directory) and removes automounter prefixes
       ;; give time for directory-abbrev-alist to be set properly.
       ;; We include a slash at the end, to avoid spurious matches
       ;; such as `/usr/foobar' when the home dir is `/usr/foo'.
-      (or abbreviated-home-dir
-	  (setq abbreviated-home-dir
-		(let ((abbreviated-home-dir "$foo"))
-                  (setq abbreviated-home-dir
-                        (concat "\\`"
-                                (abbreviate-file-name (expand-file-name "~"))
-                                "\\(/\\|\\'\\)"))
-                  ;; Depending on whether default-directory does or
-                  ;; doesn't include non-ASCII characters, the value
-                  ;; of abbreviated-home-dir could be multibyte or
-                  ;; unibyte.  In the latter case, we need to decode
-                  ;; it.  Note that this function is called for the
-                  ;; first time (from startup.el) when
-                  ;; locale-coding-system is already set up.
-                  (if (multibyte-string-p abbreviated-home-dir)
-                      abbreviated-home-dir
-                    (decode-coding-string abbreviated-home-dir
-                                          (if (eq system-type 'windows-nt)
-                                              'utf-8
-                                            locale-coding-system))))))
+      (unless abbreviated-home-dir
+        (put 'abbreviated-home-dir 'home (expand-file-name "~"))
+        (setq abbreviated-home-dir
+              (let ((abbreviated-home-dir "$foo"))
+                (setq abbreviated-home-dir
+                      (concat "\\`"
+                              (abbreviate-file-name
+                               (get 'abbreviated-home-dir 'home))
+                              "\\(/\\|\\'\\)"))
+                ;; Depending on whether default-directory does or
+                ;; doesn't include non-ASCII characters, the value
+                ;; of abbreviated-home-dir could be multibyte or
+                ;; unibyte.  In the latter case, we need to decode
+                ;; it.  Note that this function is called for the
+                ;; first time (from startup.el) when
+                ;; locale-coding-system is already set up.
+                (if (multibyte-string-p abbreviated-home-dir)
+                    abbreviated-home-dir
+                  (decode-coding-string abbreviated-home-dir
+                                        (if (eq system-type 'windows-nt)
+                                            'utf-8
+                                          locale-coding-system))))))
 
       ;; If FILENAME starts with the abbreviated homedir,
+      ;; and ~ hasn't changed since abbreviated-home-dir was set,
       ;; make it start with `~' instead.
+      ;; If ~ has changed, we ignore abbreviated-home-dir rather than
+      ;; invalidating it, on the assumption that a change in HOME
+      ;; is likely temporary (eg for testing).
+      ;; FIXME Is it even worth caching abbreviated-home-dir?
+      ;; Ref: https://debbugs.gnu.org/19657#20
       (if (and (string-match abbreviated-home-dir filename)
 	       ;; If the home dir is just /, don't change it.
 	       (not (and (= (match-end 0) 1)
@@ -1884,7 +1922,9 @@ home directory is a root directory) and removes automounter prefixes
 	       ;; Novell Netware allows drive letters beyond `Z:'.
 	       (not (and (memq system-type '(ms-dos windows-nt cygwin))
 			 (save-match-data
-			   (string-match "^[a-zA-`]:/$" filename)))))
+			   (string-match "^[a-zA-`]:/$" filename))))
+               (equal (get 'abbreviated-home-dir 'home)
+                      (expand-file-name "~")))
 	  (setq filename
 		(concat "~"
 			(match-string 1 filename)
@@ -3865,16 +3905,16 @@ VARIABLES list of the class.  The list is processed in order.
   "File that contains directory-local variables.
 It has to be constant to enforce uniform values across different
 environments and users.
-See also `dir-locals-file-2', whose values override this one's.
-See Info node `(elisp)Directory Local Variables' for details.")
 
-(defconst dir-locals-file-2 ".dir-locals-2.el"
-  "File that contains directory-local variables.
-This essentially a second file that can be used like
-`dir-locals-file', so that users can have specify their personal
-dir-local variables even if the current directory already has a
-`dir-locals-file' that is shared with other users (such as in a
-git repository).
+A second dir-locals file can be used by a user to specify their
+personal dir-local variables even if the current directory
+already has a `dir-locals-file' that is shared with other
+users (such as in a git repository).  The name of this second
+file is derived by appending \"-2\" to the base name of
+`dir-locals-file'.  With the default value of `dir-locals-file',
+a \".dir-locals-2.el\" file in the same directory will override
+the \".dir-locals.el\".
+
 See Info node `(elisp)Directory Local Variables' for details.")
 
 (defun dir-locals--all-files (directory)
@@ -4613,25 +4653,41 @@ The function `find-backup-file-name' also uses this."
 	      ;; "/drive_x".
 	      (or (file-name-absolute-p file)
 		  (setq file (expand-file-name file))) ; make defaults explicit
-	      ;; Replace any invalid file-name characters (for the
-	      ;; case of backing up remote files).
-	      (setq file (expand-file-name (convert-standard-filename file)))
-	      (if (eq (aref file 1) ?:)
-		  (setq file (concat "/"
-				     "drive_"
-				     (char-to-string (downcase (aref file 0)))
-				     (if (eq (aref file 2) ?/)
-					 ""
-				       "/")
-				     (substring file 2)))))
-	    ;; Make the name unique by substituting directory
-	    ;; separators.  It may not really be worth bothering about
-	    ;; doubling `!'s in the original name...
-	    (expand-file-name
-	     (subst-char-in-string
-	      ?/ ?!
-	      (replace-regexp-in-string "!" "!!" file))
-	     backup-directory))
+              (cond
+               ((file-remote-p file)
+                ;; Remove the leading slash, if any, to prevent
+                ;; expand-file-name from adding a drive letter.
+                (and (memq (aref file 0) '(?/ ?\\))
+                     (setq file (substring file 1)))
+	        ;; Replace any invalid file-name characters.
+                (setq file (convert-standard-filename file))
+                ;; Replace slashes to make the file name unique, and
+                ;; prepend backup-directory.
+                (expand-file-name
+	         (subst-char-in-string
+	          ?/ ?!
+	          (replace-regexp-in-string "!" "!!"
+                                            (concat "/" file)))
+	         backup-directory))
+               (t
+	        ;; Replace any invalid file-name characters.
+	        (setq file (expand-file-name (convert-standard-filename file)))
+	        (if (eq (aref file 1) ?:)
+		    (setq file (concat "/"
+				       "drive_"
+				       (char-to-string (downcase (aref file 0)))
+				       (if (eq (aref file 2) ?/)
+					   ""
+				         "/")
+				       (substring file 2))))
+	        ;; Make the name unique by substituting directory
+	        ;; separators.  It may not really be worth bothering about
+	        ;; doubling `!'s in the original name...
+	        (expand-file-name
+	         (subst-char-in-string
+	          ?/ ?!
+	          (replace-regexp-in-string "!" "!!" file))
+	         backup-directory)))))
 	(expand-file-name (file-name-nondirectory file)
 			  (file-name-as-directory abs-backup-directory))))))
 
@@ -5851,7 +5907,11 @@ an auto-save file."
       (error "%s is an auto-save file" (abbreviate-file-name file)))
   (let ((file-name (let ((buffer-file-name file))
 		     (make-auto-save-file-name))))
-    (cond ((if (file-exists-p file)
+    (cond ((and (file-exists-p file)
+                (not (file-exists-p file-name)))
+           (error "Auto save file %s does not exist"
+                  (abbreviate-file-name file-name)))
+          ((if (file-exists-p file)
 	       (not (file-newer-than-file-p file-name file))
 	     (not (file-exists-p file-name)))
 	   (error "Auto-save file %s not current"

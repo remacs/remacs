@@ -175,3 +175,7 @@ in the alist is nil, prompt for the appropriate values."
 (provide 'erc-ezbounce)
 
 ;;; erc-ezbounce.el ends here
+
+;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
+;; End:

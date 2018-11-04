@@ -154,7 +154,7 @@ This is typically a function to add in
   (dolist (entry gnus-newsrc-alist)
     (let ((group (car entry)))
       ;; Check that the group level is less than
-      ;; `gnus-notifications-minimum-level' and the the group has unread
+      ;; `gnus-notifications-minimum-level' and the group has unread
       ;; messages.
       (when (and (<= (gnus-group-level group) gnus-notifications-minimum-level)
                  (let ((unread (gnus-group-unread group)))

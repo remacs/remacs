@@ -623,7 +623,7 @@ Also saves its contents in the comment history and hides
       (setq buffer-read-only nil)
       (erase-buffer)
       (cvs-insert-strings files)
-      (setq buffer-read-only t)
+      (special-mode)
       (goto-char (point-min))
       (save-selected-window
 	(cvs-pop-to-buffer-same-frame buf)

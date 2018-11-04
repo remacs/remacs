@@ -1887,8 +1887,7 @@ the special XREF mode:
 @table @kbd
 @item @key{RET}
 @itemx mouse-2
-Display the reference on the current line and bury the @file{*xref*}
-buffer.
+Display the reference on the current line.
 @item n
 @itemx .
 @findex xref-next-line
@@ -1903,6 +1902,10 @@ Move to the previous reference and display it in the other window
 @findex xref-show-location-at-point
 Display the reference on the current line in the other window
 (@code{xref-show-location-at-point}).
+@item TAB
+@findex xref-quit-and-goto-xref
+Display the reference on the current line and bury the @file{*xref*}
+buffer (@code{xref-quit-and-goto-xref}).
 @findex xref-query-replace-in-results
 @item r @var{pattern} @key{RET} @var{replacement} @key{RET}
 Perform interactive query-replace on references that match

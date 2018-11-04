@@ -406,7 +406,7 @@ the sort order."
 
 ;;;###autoload
 (defun sort-regexp-fields (reverse record-regexp key-regexp beg end)
-  "Sort the text in the region region lexicographically.
+  "Sort the text in the region lexicographically.
 If called interactively, prompt for two regular expressions,
 RECORD-REGEXP and KEY-REGEXP.
 

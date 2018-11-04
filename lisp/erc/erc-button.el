@@ -49,7 +49,7 @@
   "Define how text can be turned into clickable buttons."
   :group 'erc)
 
-;;;###autoload (autoload 'erc-button-mode "erc-button" nil t)
+;;;###autoload(autoload 'erc-button-mode "erc-button" nil t)
 (define-erc-module button nil
   "This mode buttonizes all messages according to `erc-button-alist'."
   ((add-hook 'erc-insert-modify-hook 'erc-button-add-buttons 'append)
@@ -545,5 +545,6 @@ and `apropos' for other symbols."
 
 ;;; erc-button.el ends here
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: nil
 ;; End:

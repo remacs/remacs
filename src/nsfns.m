@@ -1234,6 +1234,10 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qinternal_border_width, make_number (2),
                       "internalBorderWidth", "InternalBorderWidth",
                       RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qright_divider_width, make_number (0),
+		       NULL, NULL, RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qbottom_divider_width, make_number (0),
+		       NULL, NULL, RES_TYPE_NUMBER);
 
   /* default vertical scrollbars on right on Mac */
   {

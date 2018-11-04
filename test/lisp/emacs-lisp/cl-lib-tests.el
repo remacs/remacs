@@ -201,6 +201,10 @@
                     :b :a :a 42)
            '(42 :a))))
 
+(ert-deftest cl-lib-empty-keyargs ()
+  (should-error (funcall (cl-function (lambda (&key) 1))
+                         :b 1)))
+
 (cl-defstruct (mystruct
                (:constructor cl-lib--con-1 (&aux (abc 1)))
                (:constructor cl-lib--con-2 (&optional def) "Constructor docstring."))
@@ -511,6 +515,16 @@
 
 (ert-deftest cl-lib-symbol-macrolet-2 ()
   (should (equal (cl-lib-symbol-macrolet-4+5) (+ 4 5))))
+
+
+(ert-deftest cl-lib-symbol-macrolet-hide ()
+  ;; bug#26325
+  (should (equal (let ((y 5))
+                   (cl-symbol-macrolet ((x y))
+                     (list x
+                           (let ((x 6)) (list x y))
+                           (cl-letf ((x 6)) (list x y)))))
+                 '(5 (6 5) (6 6)))))
 
 (defun cl-lib-tests--dummy-function ()
   ;; Dummy function to see if the file is compiled.

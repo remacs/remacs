@@ -152,7 +152,7 @@ DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
   if (NILP (symbol))
     xsignal1 (Qsetting_constant, symbol);
 
-  function = XSYMBOL (symbol)->function;
+  function = XSYMBOL (symbol)->u.s.function;
 
   if (!NILP (Vautoload_queue) && !NILP (function))
     Vautoload_queue = Fcons (Fcons (symbol, function), Vautoload_queue);
@@ -376,7 +376,7 @@ find_symbol_value (Lisp_Object symbol)
   sym = XSYMBOL (symbol);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: return SYMBOL_VAL (sym);
@@ -424,7 +424,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 
   CHECK_SYMBOL (symbol);
   sym = XSYMBOL (symbol);
-  switch (sym->trapped_write)
+  switch (sym->u.s.trapped_write)
     {
     case SYMBOL_NOWRITE:
       if (NILP (Fkeywordp (symbol))
@@ -450,7 +450,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
     }
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: SET_SYMBOL_VAL (sym , newval); return;
@@ -550,7 +550,7 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
 	if (voide)
 	  { /* If storing void (making the symbol void), forward only through
 	       buffer-local indicator, not through Lisp_Objfwd, etc.  */
-	    sym->redirect = SYMBOL_PLAINVAL;
+	    sym->u.s.redirect = SYMBOL_PLAINVAL;
 	    SET_SYMBOL_VAL (sym, newval);
 	  }
 	else
@@ -566,9 +566,9 @@ static void
 set_symbol_trapped_write (Lisp_Object symbol, enum symbol_trapped_write trap)
 {
   struct Lisp_Symbol *sym = XSYMBOL (symbol);
-  if (sym->trapped_write == SYMBOL_NOWRITE)
+  if (sym->u.s.trapped_write == SYMBOL_NOWRITE)
     xsignal1 (Qtrapping_constant, symbol);
-  sym->trapped_write = trap;
+  sym->u.s.trapped_write = trap;
 }
 
 static void
@@ -583,7 +583,7 @@ harmonize_variable_watchers (Lisp_Object alias, Lisp_Object base_variable)
   if (!EQ (base_variable, alias)
       && EQ (base_variable, Findirect_variable (alias)))
     set_symbol_trapped_write
-      (alias, XSYMBOL (base_variable)->trapped_write);
+      (alias, XSYMBOL (base_variable)->u.s.trapped_write);
 }
 
 DEFUN ("add-variable-watcher", Fadd_variable_watcher, Sadd_variable_watcher,
@@ -693,7 +693,7 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
 
   CHECK_SYMBOL (symbol);
   sym = XSYMBOL (symbol);
-  switch (sym->trapped_write)
+  switch (sym->u.s.trapped_write)
     {
     case SYMBOL_NOWRITE:
       if (NILP (Fkeywordp (symbol))
@@ -705,7 +705,7 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
 
     case SYMBOL_TRAPPED_WRITE:
       /* Don't notify here if we're going to call Fset anyway.  */
-      if (sym->redirect != SYMBOL_PLAINVAL
+      if (sym->u.s.redirect != SYMBOL_PLAINVAL
           /* Setting due to thread switching doesn't count.  */
           && bindflag != SET_INTERNAL_THREAD_SWITCH)
         notify_variable_watchers (symbol, value, Qset_default, Qnil);
@@ -717,7 +717,7 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
     }
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: set_internal (symbol, value, Qnil, bindflag); return;
@@ -869,7 +869,7 @@ The function `default-value' gets the default value and `set-default' sets it.  
   sym = XSYMBOL (variable);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL:
@@ -892,12 +892,12 @@ The function `default-value' gets the default value and `set-default' sets it.  
     }
 
   if (SYMBOL_CONSTANT_P (variable))
-    error ("Symbol %s may not be buffer-local", SDATA (SYMBOL_NAME (variable)));
+    xsignal1 (Qsetting_constant, variable);
 
   if (!blv)
     {
       blv = make_blv (sym, forwarded, valcontents);
-      sym->redirect = SYMBOL_LOCALIZED;
+      sym->u.s.redirect = SYMBOL_LOCALIZED;
       SET_SYMBOL_BLV (sym, blv);
     }
 
@@ -937,7 +937,7 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
   sym = XSYMBOL (variable);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL:
@@ -954,9 +954,8 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
     default: emacs_abort ();
     }
 
-  if (sym->trapped_write == SYMBOL_NOWRITE)
-    error ("Symbol %s may not be buffer-local",
-	   SDATA (SYMBOL_NAME (variable)));
+  if (sym->u.s.trapped_write == SYMBOL_NOWRITE)
+    xsignal1 (Qsetting_constant, variable);
 
   if (blv ? blv->local_if_set
       : (forwarded && BUFFER_OBJFWDP (valcontents.fwd)))
@@ -970,7 +969,7 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
   if (!blv)
     {
       blv = make_blv (sym, forwarded, valcontents);
-      sym->redirect = SYMBOL_LOCALIZED;
+      sym->u.s.redirect = SYMBOL_LOCALIZED;
       SET_SYMBOL_BLV (sym, blv);
     }
 
@@ -1027,7 +1026,7 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
   sym = XSYMBOL (variable);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: return variable;
@@ -1054,7 +1053,7 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
     default: emacs_abort ();
     }
 
-  if (sym->trapped_write == SYMBOL_TRAPPED_WRITE)
+  if (sym->u.s.trapped_write == SYMBOL_TRAPPED_WRITE)
     notify_variable_watchers (variable, Qnil, Qmakunbound, Fcurrent_buffer ());
 
   /* Get rid of this buffer's alist element, if any.  */
@@ -1096,7 +1095,7 @@ BUFFER defaults to the current buffer.  */)
   sym = XSYMBOL (variable);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: return Qnil;
@@ -1150,7 +1149,7 @@ value in BUFFER, or if VARIABLE is automatically buffer-local (see
   sym = XSYMBOL (variable);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: return Qnil;
@@ -1185,7 +1184,7 @@ If the current binding is global (the default), the value is nil.  */)
   find_symbol_value (variable);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: return Qnil;
@@ -1203,7 +1202,7 @@ If the current binding is global (the default), the value is nil.  */)
 	 buffer's or frame's value we are saving.  */
       if (!NILP (Flocal_variable_p (variable, Qnil)))
 	return Fcurrent_buffer ();
-      else if (sym->redirect == SYMBOL_LOCALIZED
+      else if (sym->u.s.redirect == SYMBOL_LOCALIZED
 	       && blv_found (SYMBOL_BLV (sym)))
 	return SYMBOL_BLV (sym)->where;
       else
@@ -1211,6 +1210,316 @@ If the current binding is global (the default), the value is nil.  */)
     default: emacs_abort ();
     }
 }
+
+// TODO(db48x): delete?
+///* This code is disabled now that we use the selected frame to return
+//   keyboard-local-values.  */
+//#if 0
+//extern struct terminal *get_terminal (Lisp_Object display, int);
+//
+//DEFUN ("terminal-local-value", Fterminal_local_value,
+//       Sterminal_local_value, 2, 2, 0,
+//       doc: /* Return the terminal-local value of SYMBOL on TERMINAL.
+//If SYMBOL is not a terminal-local variable, then return its normal
+//value, like `symbol-value'.
+//
+//TERMINAL may be a terminal object, a frame, or nil (meaning the
+//selected frame's terminal device).  */)
+//  (Lisp_Object symbol, Lisp_Object terminal)
+//{
+//  Lisp_Object result;
+//  struct terminal *t = get_terminal (terminal, 1);
+//  push_kboard (t->kboard);
+//  result = Fsymbol_value (symbol);
+//  pop_kboard ();
+//  return result;
+//}
+//
+//DEFUN ("set-terminal-local-value", Fset_terminal_local_value,
+//       Sset_terminal_local_value, 3, 3, 0,
+//       doc: /* Set the terminal-local binding of SYMBOL on TERMINAL to VALUE.
+//If VARIABLE is not a terminal-local variable, then set its normal
+//binding, like `set'.
+//
+//TERMINAL may be a terminal object, a frame, or nil (meaning the
+//selected frame's terminal device).  */)
+//  (Lisp_Object symbol, Lisp_Object terminal, Lisp_Object value)
+//{
+//  Lisp_Object result;
+//  struct terminal *t = get_terminal (terminal, 1);
+//  push_kboard (d->kboard);
+//  result = Fset (symbol, value);
+//  pop_kboard ();
+//  return result;
+//}
+//#endif
+//
+///* Find the function at the end of a chain of symbol function indirections.  */
+//
+///* If OBJECT is a symbol, find the end of its function chain and
+//   return the value found there.  If OBJECT is not a symbol, just
+//   return it.  If there is a cycle in the function chain, signal a
+//   cyclic-function-indirection error.
+//
+//   This is like Findirect_function, except that it doesn't signal an
+//   error if the chain ends up unbound.  */
+//Lisp_Object
+//indirect_function (register Lisp_Object object)
+//{
+//  Lisp_Object tortoise, hare;
+//
+//  hare = tortoise = object;
+//
+//  for (;;)
+//    {
+//      if (!SYMBOLP (hare) || NILP (hare))
+//	break;
+//      hare = XSYMBOL (hare)->u.s.function;
+//      if (!SYMBOLP (hare) || NILP (hare))
+//	break;
+//      hare = XSYMBOL (hare)->u.s.function;
+//
+//      tortoise = XSYMBOL (tortoise)->u.s.function;
+//
+//      if (EQ (hare, tortoise))
+//	xsignal1 (Qcyclic_function_indirection, object);
+//    }
+//
+//  return hare;
+//}
+//
+//DEFUN ("indirect-function", Findirect_function, Sindirect_function, 1, 2, 0,
+//       doc: /* Return the function at the end of OBJECT's function chain.
+//If OBJECT is not a symbol, just return it.  Otherwise, follow all
+//function indirections to find the final function binding and return it.
+//Signal a cyclic-function-indirection error if there is a loop in the
+//function chain of symbols.  */)
+//  (register Lisp_Object object, Lisp_Object noerror)
+//{
+//  Lisp_Object result;
+//
+//  /* Optimize for no indirection.  */
+//  result = object;
+//  if (SYMBOLP (result) && !NILP (result)
+//      && (result = XSYMBOL (result)->u.s.function, SYMBOLP (result)))
+//    result = indirect_function (result);
+//  if (!NILP (result))
+//    return result;
+//
+//  return Qnil;
+//}
+//
+///* Extract and set vector and string elements.  */
+//
+//DEFUN ("aref", Faref, Saref, 2, 2, 0,
+//       doc: /* Return the element of ARG at index IDX.
+//ARG may be a vector, a string, a char-table, a bool-vector, a record,
+//or a byte-code object.  IDX starts at 0.  */)
+//  (register Lisp_Object array, Lisp_Object idx)
+//{
+//  register EMACS_INT idxval;
+//
+//  CHECK_NUMBER (idx);
+//  idxval = XINT (idx);
+//  if (STRINGP (array))
+//    {
+//      int c;
+//      ptrdiff_t idxval_byte;
+//
+//      if (idxval < 0 || idxval >= SCHARS (array))
+//	args_out_of_range (array, idx);
+//      if (! STRING_MULTIBYTE (array))
+//	return make_number ((unsigned char) SREF (array, idxval));
+//      idxval_byte = string_char_to_byte (array, idxval);
+//
+//      c = STRING_CHAR (SDATA (array) + idxval_byte);
+//      return make_number (c);
+//    }
+//  else if (BOOL_VECTOR_P (array))
+//    {
+//      if (idxval < 0 || idxval >= bool_vector_size (array))
+//	args_out_of_range (array, idx);
+//      return bool_vector_ref (array, idxval);
+//    }
+//  else if (CHAR_TABLE_P (array))
+//    {
+//      CHECK_CHARACTER (idx);
+//      return CHAR_TABLE_REF (array, idxval);
+//    }
+//  else
+//    {
+//      ptrdiff_t size = 0;
+//      if (VECTORP (array))
+//	size = ASIZE (array);
+//      else if (COMPILEDP (array) || RECORDP (array))
+//	size = PVSIZE (array);
+//      else
+//	wrong_type_argument (Qarrayp, array);
+//
+//      if (idxval < 0 || idxval >= size)
+//	args_out_of_range (array, idx);
+//      return AREF (array, idxval);
+//    }
+//}
+//
+//DEFUN ("aset", Faset, Saset, 3, 3, 0,
+//       doc: /* Store into the element of ARRAY at index IDX the value NEWELT.
+//Return NEWELT.  ARRAY may be a vector, a string, a char-table or a
+//bool-vector.  IDX starts at 0.  */)
+//  (register Lisp_Object array, Lisp_Object idx, Lisp_Object newelt)
+//{
+//  register EMACS_INT idxval;
+//
+//  CHECK_NUMBER (idx);
+//  idxval = XINT (idx);
+//  if (! RECORDP (array))
+//    CHECK_ARRAY (array, Qarrayp);
+//
+//  if (VECTORP (array))
+//    {
+//      CHECK_IMPURE (array, XVECTOR (array));
+//      if (idxval < 0 || idxval >= ASIZE (array))
+//	args_out_of_range (array, idx);
+//      ASET (array, idxval, newelt);
+//    }
+//  else if (BOOL_VECTOR_P (array))
+//    {
+//      if (idxval < 0 || idxval >= bool_vector_size (array))
+//	args_out_of_range (array, idx);
+//      bool_vector_set (array, idxval, !NILP (newelt));
+//    }
+//  else if (CHAR_TABLE_P (array))
+//    {
+//      CHECK_CHARACTER (idx);
+//      CHAR_TABLE_SET (array, idxval, newelt);
+//    }
+//  else if (RECORDP (array))
+//    {
+//      if (idxval < 0 || idxval >= PVSIZE (array))
+//	args_out_of_range (array, idx);
+//      ASET (array, idxval, newelt);
+//    }
+//  else /* STRINGP */
+//    {
+//      int c;
+//
+//      CHECK_IMPURE (array, XSTRING (array));
+//      if (idxval < 0 || idxval >= SCHARS (array))
+//	args_out_of_range (array, idx);
+//      CHECK_CHARACTER (newelt);
+//      c = XFASTINT (newelt);
+//
+//      if (STRING_MULTIBYTE (array))
+//	{
+//	  ptrdiff_t idxval_byte, nbytes;
+//	  int prev_bytes, new_bytes;
+//	  unsigned char workbuf[MAX_MULTIBYTE_LENGTH], *p0 = workbuf, *p1;
+//
+//	  nbytes = SBYTES (array);
+//	  idxval_byte = string_char_to_byte (array, idxval);
+//	  p1 = SDATA (array) + idxval_byte;
+//	  prev_bytes = BYTES_BY_CHAR_HEAD (*p1);
+//	  new_bytes = CHAR_STRING (c, p0);
+//	  if (prev_bytes != new_bytes)
+//	    {
+//	      /* We must relocate the string data.  */
+//	      ptrdiff_t nchars = SCHARS (array);
+//	      USE_SAFE_ALLOCA;
+//	      unsigned char *str = SAFE_ALLOCA (nbytes);
+//
+//	      memcpy (str, SDATA (array), nbytes);
+//	      allocate_string_data (XSTRING (array), nchars,
+//				    nbytes + new_bytes - prev_bytes);
+//	      memcpy (SDATA (array), str, idxval_byte);
+//	      p1 = SDATA (array) + idxval_byte;
+//	      memcpy (p1 + new_bytes, str + idxval_byte + prev_bytes,
+//		      nbytes - (idxval_byte + prev_bytes));
+//	      SAFE_FREE ();
+//	      clear_string_char_byte_cache ();
+//	    }
+//	  while (new_bytes--)
+//	    *p1++ = *p0++;
+//	}
+//      else
+//	{
+//	  if (! SINGLE_BYTE_CHAR_P (c))
+//	    {
+//	      ptrdiff_t i;
+//
+//	      for (i = SBYTES (array) - 1; i >= 0; i--)
+//		if (SREF (array, i) >= 0x80)
+//		  args_out_of_range (array, newelt);
+//	      /* ARRAY is an ASCII string.  Convert it to a multibyte
+//		 string, and try `aset' again.  */
+//	      STRING_SET_MULTIBYTE (array);
+//	      return Faset (array, idx, newelt);
+//	    }
+//	  SSET (array, idxval, c);
+//	}
+//    }
+//
+//  return newelt;
+//}
+//
+///* Arithmetic functions */
+//
+//Lisp_Object
+//arithcompare (Lisp_Object num1, Lisp_Object num2,
+//	      enum Arith_Comparison comparison)
+//{
+//  double f1, f2;
+//  EMACS_INT i1, i2;
+//  bool fneq;
+//  bool test;
+//
+//  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num1);
+//  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num2);
+//
+//  /* If either arg is floating point, set F1 and F2 to the 'double'
+//     approximations of the two arguments, and set FNEQ if floating-point
+//     comparison reports that F1 is not equal to F2, possibly because F1
+//     or F2 is a NaN.  Regardless, set I1 and I2 to integers that break
+//     ties if the floating-point comparison is either not done or reports
+//     equality.  */
+//
+//  if (FLOATP (num1))
+//    {
+//      f1 = XFLOAT_DATA (num1);
+//      if (FLOATP (num2))
+//	{
+//	  i1 = i2 = 0;
+//	  f2 = XFLOAT_DATA (num2);
+//	}
+//      else
+//	{
+//	  /* Compare a float NUM1 to an integer NUM2 by converting the
+//	     integer I2 (i.e., NUM2) to the double F2 (a conversion that
+//	     can round on some platforms, if I2 is large enough), and then
+//	     converting F2 back to the integer I1 (a conversion that is
+//	     always exact), so that I1 exactly equals ((double) NUM2).  If
+//	     floating-point comparison reports a tie, NUM1 = F1 = F2 = I1
+//	     (exactly) so I1 - I2 = NUM1 - NUM2 (exactly), so comparing I1
+//	     to I2 will break the tie correctly.  */
+//	  i1 = f2 = i2 = XINT (num2);
+//	}
+//      fneq = f1 != f2;
+//    }
+//  else
+//    {
+//      i1 = XINT (num1);
+//      if (FLOATP (num2))
+//	{
+//	  /* Compare an integer NUM1 to a float NUM2.  This is the
+//	     converse of comparing float to integer (see above).  */
+//	  i2 = f1 = i1;
+//	  f2 = XFLOAT_DATA (num2);
+//	  fneq = f1 != f2;
+//	}
+//      else
+//	return Qnil;
+//    default: emacs_abort ();
+//    }
+//}
 
 /* This code is disabled now that we use the selected frame to return
    keyboard-local-values.  */
@@ -2025,15 +2334,17 @@ syms_of_data (void)
   defsubr (&Sbool_vector_count_consecutive);
   defsubr (&Sbool_vector_count_population);
 
-  set_symbol_function (Qwholenump, XSYMBOL (Qnatnump)->function);
+  set_symbol_function (Qwholenump, XSYMBOL (Qnatnump)->u.s.function);
 
   DEFVAR_LISP ("most-positive-fixnum", Vmost_positive_fixnum,
-	       doc: /* The largest value that is representable in a Lisp integer.  */);
+	       doc: /* The largest value that is representable in a Lisp integer.
+This variable cannot be set; trying to do so will signal an error.  */);
   Vmost_positive_fixnum = make_number (MOST_POSITIVE_FIXNUM);
   make_symbol_constant (intern_c_string ("most-positive-fixnum"));
 
   DEFVAR_LISP ("most-negative-fixnum", Vmost_negative_fixnum,
-	       doc: /* The smallest value that is representable in a Lisp integer.  */);
+	       doc: /* The smallest value that is representable in a Lisp integer.
+This variable cannot be set; trying to do so will signal an error.  */);
   Vmost_negative_fixnum = make_number (MOST_NEGATIVE_FIXNUM);
   make_symbol_constant (intern_c_string ("most-negative-fixnum"));
 

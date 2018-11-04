@@ -899,10 +899,11 @@ Semicolons start comments.
 ;;; Emacs Lisp Byte-Code mode
 
 (eval-and-compile
-  (defconst emacs-list-byte-code-comment-re
+  (defconst emacs-lisp-byte-code-comment-re
     (concat "\\(#\\)@\\([0-9]+\\) "
             ;; Make sure it's a docstring and not a lazy-loaded byte-code.
-            "\\(?:[^(]\\|([^\"]\\)")))
+            "\\(?:[^(]\\|([^\"]\\)")
+    "Regular expression matching a dynamic doc string comment."))
 
 (defun elisp--byte-code-comment (end &optional _point)
   "Try to syntactically mark the #@NNN ....^_ docstrings in byte-code files."
@@ -911,7 +912,7 @@ Semicolons start comments.
                (eq (char-after (nth 8 ppss)) ?#))
       (let* ((n (save-excursion
                   (goto-char (nth 8 ppss))
-                  (when (looking-at emacs-list-byte-code-comment-re)
+                  (when (looking-at emacs-lisp-byte-code-comment-re)
                     (string-to-number (match-string 2)))))
              ;; `maxdiff' tries to make sure the loop below terminates.
              (maxdiff n))
@@ -937,7 +938,7 @@ Semicolons start comments.
   (elisp--byte-code-comment end (point))
   (funcall
    (syntax-propertize-rules
-    (emacs-list-byte-code-comment-re
+    (emacs-lisp-byte-code-comment-re
      (1 (prog1 "< b" (elisp--byte-code-comment end (point))))))
    start end))
 
@@ -1615,7 +1616,11 @@ Calls REPORT-FN directly."
             (generate-new-buffer " *checkdoc-temp*")))
       (unwind-protect
           (save-excursion
-            (checkdoc-current-buffer t))
+            ;; checkdoc-current-buffer can error if there are
+            ;; unbalanced parens, for example, but this shouldn't
+            ;; disable the backend (bug#29176).
+            (ignore-errors
+              (checkdoc-current-buffer t)))
         (kill-buffer checkdoc-diagnostic-buffer)))
     (funcall report-fn
              (cl-loop for (text start end _unfixable) in

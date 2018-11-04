@@ -216,8 +216,9 @@ determine where the desktop is saved."
   :version "22.1")
 
 (defcustom desktop-auto-save-timeout auto-save-timeout
-  "Number of seconds idle time before auto-save of the desktop.
-The idle timer activates auto-saving only when window configuration changes.
+  "Number of seconds of idle time before auto-saving the desktop.
+The desktop will be auto-saved when this amount of idle time have
+passed after some change in the window configuration.
 This applies to an existing desktop file when `desktop-save-mode' is enabled.
 Zero or nil means disable auto-saving due to idleness."
   :type '(choice (const :tag "Off" nil)
@@ -1239,7 +1240,13 @@ Using it may cause conflicts.  Use it anyway? " owner)))))
 	    ;; disabled when loading the desktop fails with errors,
 	    ;; thus not overwriting the desktop with broken contents.
 	    (setq desktop-autosave-was-enabled
-		  (memq 'desktop-auto-save-set-timer window-configuration-change-hook))
+		  (memq 'desktop-auto-save-set-timer
+                        ;; Use the toplevel value of the hook, in case some
+                        ;; feature makes window-configuration-change-hook
+                        ;; buffer-local, and puts there stuff which
+                        ;; doesn't include our timer.
+                        (default-toplevel-value
+                          'window-configuration-change-hook)))
 	    (desktop-auto-save-disable)
 	    ;; Evaluate desktop buffer and remember when it was modified.
 	    (setq desktop-file-modtime (nth 5 (file-attributes (desktop-full-file-name))))
@@ -1362,10 +1369,11 @@ Called by the timer created in `desktop-auto-save-set-timer'."
     (desktop-save desktop-dirname nil t)))
 
 (defun desktop-auto-save-set-timer ()
-  "Set the auto-save timer.
+  "Set the desktop auto-save timer.
 Cancel any previous timer.  When `desktop-auto-save-timeout' is a positive
-integer, start a new idle timer to call `desktop-auto-save' repeatedly
-after that many seconds of idle time."
+integer, start a new idle timer to call `desktop-auto-save' after that many
+seconds of idle time.
+This function is called from `window-configuration-change-hook'."
   (desktop-auto-save-cancel-timer)
   (when (and (integerp desktop-auto-save-timeout)
 	     (> desktop-auto-save-timeout 0))

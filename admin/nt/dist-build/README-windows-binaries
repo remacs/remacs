@@ -27,17 +27,17 @@ Contains a 32-bit build of Emacs without dependencies
 In addition, we provide the following files which will not be useful
 for most end-users.
 
-emacs-26-x86_64-deps.zip
+emacs-27-x86_64-deps.zip
 
 The dependencies. Unzipping this file on top of
 emacs-$VERSION-x86_64-no-deps.zip should result in the same install as
 emacs-$VERSION-x86_64.zip.
 
-emacs-26-i686-deps.zip
+emacs-27-i686-deps.zip
 
 The 32-bit version of the dependencies.
 
-emacs-26-deps-mingw-w64-src.zip
+emacs-27-deps-mingw-w64-src.zip
 
 The source for the dependencies. Source for Emacs itself is available
 in the main distribution tarball. These dependencies were produced

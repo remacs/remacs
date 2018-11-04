@@ -55,7 +55,7 @@
 (defvar erc-list-server-buffer nil)
 
 ;; Define module:
-;;;###autoload (autoload 'erc-list-mode "erc-list")
+;;;###autoload(autoload 'erc-list-mode "erc-list")
 (define-erc-module list nil
   "List channels nicely in a separate buffer."
   ((remove-hook 'erc-server-321-functions 'erc-server-321-message)
@@ -225,6 +225,7 @@ to RFC and send the LIST header (#321) at start of list transmission."
 ;;; erc-list.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

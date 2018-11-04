@@ -383,7 +383,7 @@ pub fn process_send_string(process: LispObject, mut string: LispStringRef) -> ()
     unsafe {
         send_process(
             cget_process(process),
-            string.data as *mut libc::c_char,
+            string.u.s.data as *mut libc::c_char,
             STRING_BYTES(string.as_mut()),
             string.as_lisp_obj(),
         )

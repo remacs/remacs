@@ -904,7 +904,9 @@ substitution string.  Note dynamic scoping of variables.")
 
 (defun grep-read-files (regexp)
   "Read a file-name pattern arg for interactive grep.
-The pattern can include shell wildcards."
+The pattern can include shell wildcards.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'."
   (let* ((bn (or (buffer-file-name)
 		 (replace-regexp-in-string "<[0-9]+>\\'" "" (buffer-name))))
 	 (fn (and bn
@@ -954,7 +956,9 @@ The pattern can include shell wildcards."
   "Run grep, searching for REGEXP in FILES in directory DIR.
 The search is limited to file names matching shell pattern FILES.
 FILES may use abbreviations defined in `grep-files-aliases', e.g.
-entering `ch' is equivalent to `*.[ch]'.
+entering `ch' is equivalent to `*.[ch]'.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'.
 
 With \\[universal-argument] prefix, you can edit the constructed shell command line
 before it is executed.
@@ -1032,7 +1036,9 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
   "Recursively grep for REGEXP in FILES in directory tree rooted at DIR.
 The search is limited to file names matching shell pattern FILES.
 FILES may use abbreviations defined in `grep-files-aliases', e.g.
-entering `ch' is equivalent to `*.[ch]'.
+entering `ch' is equivalent to `*.[ch]'.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'.
 
 With \\[universal-argument] prefix, you can edit the constructed shell command line
 before it is executed.

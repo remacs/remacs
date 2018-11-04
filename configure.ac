@@ -395,7 +395,7 @@ OPTION_DEFAULT_OFF([xwidgets],
 
 ## For the times when you want to build Emacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
-dnl https://lists.gnu.org/archive/html/emacs-devel/2008-04/msg01844.html
+dnl https://lists.gnu.org/r/emacs-devel/2008-04/msg01844.html
 OPTION_DEFAULT_ON([makeinfo],[don't require makeinfo for building manuals])
 
 ## Makefile.in needs the cache file name.
@@ -521,7 +521,7 @@ fi
 dnl The name of this option is unfortunate.  It predates, and has no
 dnl relation to, the "sampling-based elisp profiler" added in 24.3.
 dnl Actually, it stops it working.
-dnl https://lists.gnu.org/archive/html/emacs-devel/2012-11/msg00393.html
+dnl https://lists.gnu.org/r/emacs-devel/2012-11/msg00393.html
 AC_ARG_ENABLE(profiling,
 [AS_HELP_STRING([--enable-profiling],
 		[build emacs with low-level, gprof profiling support.
@@ -694,7 +694,9 @@ case "${canonical}" in
   ## QNX Neutrino
   *-nto-qnx* )
     opsys=qnxnto
+    test -z "$CC" && CC=qcc
     CFLAGS="$CFLAGS -D__NO_EXT_QNX"
+    LDFLAGS="-N2MB $LDFLAGS"
   ;;
 
   ## Intel 386 machines where we don't care about the manufacturer.
@@ -947,7 +949,7 @@ AS_IF([test $gl_gcc_warnings = no],
   nw="$nw -Wbad-function-cast"      # These casts are no worse than others.
 
   # Emacs doesn't care about shadowing; see
-  # <https://lists.gnu.org/archive/html/emacs-diffs/2011-11/msg00265.html>.
+  # <https://lists.gnu.org/r/emacs-diffs/2011-11/msg00265.html>.
   nw="$nw -Wshadow"
 
   # Emacs's use of alloca inhibits protecting the stack.
@@ -1169,7 +1171,7 @@ dnl AC_PROG_LN_S sets LN_S to 'cp -pR' for MinGW, on the premise that 'ln'
 dnl doesn't support links to directories, as in "ln file dir".  But that
 dnl use is non-portable, and OTOH MinGW wants to use hard links for Emacs
 dnl executables at "make install" time.
-dnl See https://lists.gnu.org/archive/html/emacs-devel/2013-04/msg00475.html
+dnl See https://lists.gnu.org/r/emacs-devel/2013-04/msg00475.html
 dnl for more details.
 if test "$opsys" = "mingw32"; then
   LN_S="/bin/ln"
@@ -1315,7 +1317,7 @@ dnl   Eg "make LDFLAGS=... all" could run into problems,
 dnl   https://bugs.debian.org/684788
 dnl * unnecessary, since temacs is the only thing that actually needs it.
 dnl   Indeed this is where it was originally, prior to:
-dnl   https://lists.gnu.org/archive/html/emacs-pretest-bug/2004-03/msg00170.html
+dnl   https://lists.gnu.org/r/emacs-pretest-bug/2004-03/msg00170.html
 if test x$GCC = xyes; then
   LDFLAGS_NOCOMBRELOC="-Wl,-znocombreloc"
 else
@@ -2192,7 +2194,7 @@ test "$CANNOT_DUMP" = yes ||
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
   darwin | mingw32 | nacl | sol2-10) ;;
-  cygwin | qnxto)
+  cygwin | qnxnto | freebsd)
 	  hybrid_malloc=yes
           system_malloc= ;;
   *) test "$ac_cv_func_sbrk" = yes && system_malloc=$emacs_cv_sanitize_address;;
@@ -4905,22 +4907,6 @@ if test "$HAVE_GTK" = yes || test "$HAVE_X11" != yes; then
   LIBXMENU=
 fi
 AC_SUBST(LIBXMENU)
-
-AC_CACHE_CHECK([for struct alignment],
-  [emacs_cv_struct_alignment],
-  [AC_COMPILE_IFELSE(
-     [AC_LANG_PROGRAM([[#include <stddef.h>
-			struct __attribute__ ((aligned (8))) s { char c; };
-			struct t { char c; struct s s; };
-			char verify[offsetof (struct t, s) == 8 ? 1 : -1];
-		      ]])],
-     [emacs_cv_struct_alignment=yes],
-     [emacs_cv_struct_alignment=no])])
-if test "$emacs_cv_struct_alignment" = yes; then
-  AC_DEFINE([HAVE_STRUCT_ATTRIBUTE_ALIGNED], 1,
-    [Define to 1 if 'struct __attribute__ ((aligned (N)))' aligns the
-     structure to an N-byte boundary.])
-fi
 
 if test "${GNU_MALLOC}" = "yes" ; then
   AC_DEFINE(GNU_MALLOC, 1,

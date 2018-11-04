@@ -425,7 +425,7 @@ Only used if `diary-header-line-flag' is non-nil."
 ;; display does not create the fancy buffer, nor does it set
 ;; diary-selective-display in the diary buffer. This means some
 ;; customizations will not take effect, eg:
-;; https://lists.gnu.org/archive/html/emacs-pretest-bug/2007-03/msg00466.html
+;; https://lists.gnu.org/r/emacs-pretest-bug/2007-03/msg00466.html
 ;; So the check for diary-selective-display was dropped. This means the
 ;; diary will be displayed if one customizes a diary variable while
 ;; just visiting the diary-file. This is i) unlikely, and ii) no great loss.
@@ -814,8 +814,8 @@ LIST-ONLY is non-nil, in which case it just returns the list."
                 ;; diary-header-line-flag after diary has been displayed
                 ;; take effect. Unconditionally calling (diary-mode)
                 ;; clobbers file local variables.
-                ;; https://lists.gnu.org/archive/html/emacs-pretest-bug/2007-03/msg00363.html
-                ;; https://lists.gnu.org/archive/html/emacs-pretest-bug/2007-04/msg00404.html
+                ;; https://lists.gnu.org/r/emacs-pretest-bug/2007-03/msg00363.html
+                ;; https://lists.gnu.org/r/emacs-pretest-bug/2007-04/msg00404.html
                 (if (eq major-mode 'diary-mode)
                     (setq header-line-format (and diary-header-line-flag
                                                   diary-header-line-format)))))

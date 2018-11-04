@@ -133,7 +133,7 @@
 ;;   f90-indent-region    (can be called by calling indent-region)
 ;;   f90-indent-subprogram
 ;;   f90-break-line                 f90-join-lines
-;;   f90-fill-region
+;;   f90-fill-region                f90-fill-paragraph
 ;;   f90-insert-end
 ;;   f90-upcase-keywords            f90-upcase-region-keywords
 ;;   f90-downcase-keywords          f90-downcase-region-keywords
@@ -784,6 +784,7 @@ Can be overridden by the value of `font-lock-maximum-decoration'.")
         ["Indent Region" f90-indent-region :active mark-active]
         ["Fill Region" f90-fill-region :active mark-active
          :help "Fill long lines in the region"]
+        ["Fill Statement/Comment" fill-paragraph :active t]
         "--"
         ["Break Line at Point" f90-break-line :active t
          :help "Break the current line at point"]
@@ -1185,6 +1186,7 @@ with no args, if that value is non-nil."
   (set (make-local-variable 'abbrev-all-caps) t)
   (set (make-local-variable 'normal-auto-fill-function) 'f90-do-auto-fill)
   (setq indent-tabs-mode nil)           ; auto buffer local
+  (set (make-local-variable 'fill-paragraph-function) 'f90-fill-paragraph)
   (set (make-local-variable 'font-lock-defaults)
        '((f90-font-lock-keywords f90-font-lock-keywords-1
                                  f90-font-lock-keywords-2
@@ -2158,6 +2160,20 @@ Like `join-line', but handles F90 syntax."
     (if (featurep 'xemacs)
         (zmacs-deactivate-region)
       (deactivate-mark))))
+
+(defun f90-fill-paragraph (&optional justify)
+  "In a comment, fill it as a paragraph, else fill the current statement.
+For use as the value of `fill-paragraph-function'.
+Passes optional argument JUSTIFY to `fill-comment-paragraph'.
+Always returns non-nil (to prevent `fill-paragraph' being called)."
+  (interactive "*P")
+  (or (fill-comment-paragraph justify)
+      (save-excursion
+        (f90-next-statement)
+        (let ((end (if (bobp) (point) (1- (point)))))
+          (f90-previous-statement)
+          (f90-fill-region (point) end)))
+      t))
 
 (defconst f90-end-block-optional-name
   '("program" "module" "subroutine" "function" "type")

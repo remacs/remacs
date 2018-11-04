@@ -44,7 +44,7 @@ AC_DEFUN([gl_FUNC_ALLOCA],
 AC_DEFUN([gl_PREREQ_ALLOCA], [:])
 
 # This works around a bug in autoconf <= 2.68.
-# See <https://lists.gnu.org/archive/html/bug-gnulib/2011-06/msg00277.html>.
+# See <https://lists.gnu.org/r/bug-gnulib/2011-06/msg00277.html>.
 
 m4_version_prereq([2.69], [] ,[
 

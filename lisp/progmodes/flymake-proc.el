@@ -82,7 +82,7 @@ Overrides `flymake-proc-allowed-file-name-masks'."
     ("\\.xml\\'" flymake-proc-xml-init)
     ("\\.html?\\'" flymake-proc-xml-init)
     ("\\.cs\\'" flymake-proc-simple-make-init)
-    ("\\.p[ml]\\'" flymake-proc-perl-init)
+    ;; ("\\.p[ml]\\'" flymake-proc-perl-init)
     ("\\.php[345]?\\'" flymake-proc-php-init)
     ("\\.h\\'" flymake-proc-master-make-header-init flymake-proc-master-cleanup)
     ("\\.java\\'" flymake-proc-simple-make-java-init flymake-proc-simple-java-cleanup)
@@ -179,13 +179,13 @@ from compile.el")
   "Predicate matching against diagnostic text to detect its type.
 Takes a single argument, the diagnostic's text and should return
 a value suitable for indexing
-`flymake-diagnostic-types-alist' (which see). If the returned
-value is nil, a type of `:error' is assumed. For some backward
-compatibility, if a non-nil value is returned that that doesn't
+`flymake-diagnostic-types-alist' (which see).  If the returned
+value is nil, a type of `:error' is assumed.  For some backward
+compatibility, if a non-nil value is returned that doesn't
 index that alist, a type of `:warning' is assumed.
 
 Instead of a function, it can also be a string, a regular
-expression. A match indicates `:warning' type, otherwise
+expression.  A match indicates `:warning' type, otherwise
 `:error'")
 
 (defun flymake-proc-default-guess (text)
@@ -768,7 +768,7 @@ can also be executed interactively independently of
               ;; trying if the directory is read-only (bug#8954).
               (file-writable-p (file-name-directory buffer-file-name))
               (flymake-proc--get-init-function buffer-file-name))))
-        (unless init-f (error "Can find a suitable init function"))
+        (unless init-f (error "Can't find a suitable init function"))
         (flymake-proc--clear-buildfile-cache)
         (flymake-proc--clear-project-include-dirs-cache)
 

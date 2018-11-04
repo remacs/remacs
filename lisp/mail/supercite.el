@@ -713,7 +713,7 @@ the list should be unique."
 
 ;; regi functions
 
-;; https://lists.gnu.org/archive/html/emacs-devel/2009-02/msg00691.html
+;; https://lists.gnu.org/r/emacs-devel/2009-02/msg00691.html
 ;; When rmail replies to a message with full headers visible, the "From "
 ;; line can be included.
 (defun sc-mail-check-from ()

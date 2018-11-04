@@ -1048,7 +1048,7 @@ wildcards, erases the buffer, and builds the subdir-alist anew
   ;; default-directory and dired-actual-switches must be buffer-local
   ;; and initialized by now.
   (let (dirname
-	;; This makes readin much much faster.
+	;; This makes read-in much faster.
 	;; In particular, it prevents the font lock hook from running
 	;; until the directory is all read in.
 	(inhibit-modification-hooks t))
@@ -2228,7 +2228,8 @@ directory in another window."
     (find-file (dired-get-file-for-visit))))
 
 (defun dired-find-alternate-file ()
-  "In Dired, visit this file or directory instead of the Dired buffer."
+  "In Dired, visit file or directory on current line via `find-alternate-file'.
+This kills the Dired buffer, then visits the current line's file or directory."
   (interactive)
   (set-buffer-modified-p nil)
   (find-alternate-file (dired-get-file-for-visit)))
@@ -3145,7 +3146,7 @@ non-empty directories is allowed."
 		       #'dired-delete-entry fn))
                   (quit (throw '--delete-cancel (message "OK, canceled")))
 		  (error ;; catch errors from failed deletions
-		   (dired-log "%s\n" err)
+		   (dired-log "%s: %s\n" (car err) (error-message-string err))
 		   (setq failures (cons (car (car l)) failures)))))
 	      (setq l (cdr l)))
 	    (if (not failures)
@@ -3364,9 +3365,14 @@ argument or confirmation)."
   (save-excursion (not (dired-move-to-filename))))
 
 (defun dired-next-marked-file (arg &optional wrap opoint)
-  "Move to the next marked file.
-If WRAP is non-nil, wrap around to the beginning of the buffer if
-we reach the end."
+  "Move to the ARGth next marked file.
+ARG is the numeric prefix argument and defaults to 1.
+If WRAP is non-nil, which happens interactively, wrap around
+to the beginning of the buffer and search from there, if no
+marked file is found after this line.
+Optional argument OPOINT specifies the buffer position to
+return to if no ARGth marked file is found; it defaults to
+the position where this command was invoked."
   (interactive "p\np")
   (or opoint (setq opoint (point)));; return to where interactively started
   (if (if (> arg 0)
@@ -3383,9 +3389,11 @@ we reach the end."
       (dired-next-marked-file arg nil opoint))))
 
 (defun dired-prev-marked-file (arg &optional wrap)
-  "Move to the previous marked file.
-If WRAP is non-nil, wrap around to the end of the buffer if we
-reach the beginning of the buffer."
+  "Move to the ARGth previous marked file.
+ARG is the numeric prefix argument and defaults to 1.
+If WRAP is non-nil, which happens interactively, wrap around
+to the end of the buffer and search backwards from there, if
+no ARGth marked file is found before this line."
   (interactive "p\np")
   (dired-next-marked-file (- arg) wrap))
 

@@ -1383,7 +1383,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
 
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
-     https://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00033.html  */
+     https://lists.gnu.org/r/emacs-devel/2008-10/msg00033.html  */
   if (NILP (Vafter_init_time)
       || !FRAME_GTK_OUTER_WIDGET (f)
       || FRAME_PARENT_FRAME (f))

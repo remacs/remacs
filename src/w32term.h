@@ -431,7 +431,7 @@ extern struct w32_output w32term_display;
 struct scroll_bar {
 
   /* This field is shared by all vectors.  */
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* The window we're a scroll bar for.  */
   Lisp_Object window;

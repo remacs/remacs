@@ -675,8 +675,8 @@ apply_xft_settings (struct x_display_info *dpyinfo,
 	 of unrelated settings that override users' font customizations,
 	 among others.  Compare:
 
-	 https://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00557.html
-	 https://lists.gnu.org/archive/html/bug-gnu-emacs/2016-12/msg00820.html
+	 https://lists.gnu.org/r/emacs-devel/2016-05/msg00557.html
+	 https://lists.gnu.org/r/bug-gnu-emacs/2016-12/msg00820.html
 
 	 As soon as the dynamic-settings code has been tested and
 	 verified, this Emacs 25.2 workaround should be removed.  */

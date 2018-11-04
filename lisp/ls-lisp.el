@@ -713,23 +713,26 @@ SWITCHES is a list of characters.  Default sorting is alphabetic."
 (defun ls-lisp-classify-file (filename fattr)
   "Append a character to FILENAME indicating the file type.
 
+This function puts the `dired-filename' property on FILENAME, but
+not on the character indicator it appends.
 FATTR is the file attributes returned by `file-attributes' for the file.
 The file type indicators are `/' for directories, `@' for symbolic
 links, `|' for FIFOs, `=' for sockets, `*' for regular files that
 are executable, and nothing for other types of files."
   (let* ((type (car fattr))
 	 (modestr (nth 8 fattr))
-	 (typestr (substring modestr 0 1)))
+	 (typestr (substring modestr 0 1))
+         (file-name (propertize filename 'dired-filename t)))
     (cond
      (type
-      (concat filename (if (eq type t) "/" "@")))
+      (concat file-name (if (eq type t) "/" "@")))
      ((string-match "x" modestr)
-      (concat filename "*"))
+      (concat file-name "*"))
      ((string= "p" typestr)
-      (concat filename "|"))
+      (concat file-name "|"))
      ((string= "s" typestr)
-      (concat filename "="))
-     (t filename))))
+      (concat file-name "="))
+     (t file-name))))
 
 (defun ls-lisp-classify (filedata)
   "Append a character to file name in FILEDATA indicating the file type.
@@ -742,7 +745,6 @@ links, `|' for FIFOs, `=' for sockets, `*' for regular files that
 are executable, and nothing for other types of files."
   (let ((file-name (car filedata))
         (fattr (cdr filedata)))
-    (setq file-name (propertize file-name 'dired-filename t))
     (cons (ls-lisp-classify-file file-name fattr) fattr)))
 
 (defun ls-lisp-extension (filename)
@@ -841,7 +843,7 @@ SWITCHES and TIME-INDEX give the full switch list and time data."
 	    " "
 	    (ls-lisp-format-time file-attr time-index)
 	    " "
-	    (if (not (memq ?F switches)) ; ls-lisp-classify already did that
+	    (if (not (memq ?F switches)) ; ls-lisp-classify-file already did that
 		(propertize file-name 'dired-filename t)
 	      file-name)
 	    (if (stringp file-type)	; is a symbolic link

@@ -43,6 +43,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "systime.h"
 #include "atimer.h"
 #include "process.h"
+#include "menu.h"
 #include <errno.h>
 
 #ifdef HAVE_PTHREAD
@@ -1331,6 +1332,7 @@ command_loop_1 (void)
       Vthis_command_keys_shift_translated = Qnil;
 
       /* Read next key sequence; i gets its length.  */
+      raw_keybuf_count = 0;
       i = read_key_sequence (keybuf, ARRAYELTS (keybuf),
 			     Qnil, 0, 1, 1, 0);
 
@@ -2775,6 +2777,9 @@ read_char (int commandflag, Lisp_Object map,
 
       if (EQ (c, make_number (-2)))
 	return c;
+
+      if (CONSP (c) && EQ (XCAR (c), Qt))
+	c = XCDR (c);
   }
 
  non_reread:
@@ -7802,7 +7807,7 @@ parse_menu_item (Lisp_Object item, int inmenubar)
 		       (such as lmenu.el set it up), check if the
 		       original command matches the cached command.  */
 		    && !(SYMBOLP (def)
-			 && EQ (tem, XSYMBOL (def)->function))))
+			 && EQ (tem, XSYMBOL (def)->u.s.function))))
 	      keys = Qnil;
 	  }
 
@@ -8351,7 +8356,7 @@ read_char_x_menu_prompt (Lisp_Object map,
       /* Display the menu and get the selection.  */
       Lisp_Object value;
 
-      value = Fx_popup_menu (prev_event, get_keymap (map, 0, 1));
+      value = x_popup_menu_1 (prev_event, get_keymap (map, 0, 1));
       if (CONSP (value))
 	{
 	  Lisp_Object tem;
@@ -8662,9 +8667,9 @@ access_keymap_keyremap (Lisp_Object map, Lisp_Object key, Lisp_Object prompt,
   /* Handle a symbol whose function definition is a keymap
      or an array.  */
   if (SYMBOLP (next) && !NILP (Ffboundp (next))
-      && (ARRAYP (XSYMBOL (next)->function)
-	  || KEYMAPP (XSYMBOL (next)->function)))
-    next = Fautoload_do_load (XSYMBOL (next)->function, next, Qnil);
+      && (ARRAYP (XSYMBOL (next)->u.s.function)
+	  || KEYMAPP (XSYMBOL (next)->u.s.function)))
+    next = Fautoload_do_load (XSYMBOL (next)->u.s.function, next, Qnil);
 
   /* If the keymap gives a function, not an
      array, then call the function with one arg and use
@@ -8761,6 +8766,11 @@ test_undefined (Lisp_Object binding)
 	      && EQ (Fcommand_remapping (binding, Qnil, Qnil), Qundefined)));
 }
 
+void init_raw_keybuf_count (void)
+{
+  raw_keybuf_count = 0;
+}
+
 /* Read a sequence of keys that ends with a non prefix character,
    storing it in KEYBUF, a buffer of size BUFSIZE.
    Prompt with PROMPT.
@@ -8817,7 +8827,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   ptrdiff_t keys_start;
 
   Lisp_Object current_binding = Qnil;
-  Lisp_Object first_event = Qnil;
 
   /* Index of the first key that has no binding.
      It is useless to try fkey.start larger than that.  */
@@ -8872,7 +8881,11 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   /* List of events for which a fake prefix key has been generated.  */
   Lisp_Object fake_prefixed_keys = Qnil;
 
-  raw_keybuf_count = 0;
+  /* raw_keybuf_count is now initialized in (most of) the callers of
+     read_key_sequence.  This is so that in a recursive call (for
+     mouse menus) a spurious initialization doesn't erase the contents
+     of raw_keybuf created by the outer call.  */
+  /* raw_keybuf_count = 0; */
 
   last_nonmenu_event = Qnil;
 
@@ -8927,6 +8940,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 
   starting_buffer = current_buffer;
   first_unbound = bufsize + 1;
+  Lisp_Object first_event = mock_input > 0 ? keybuf[0] : Qnil;
 
   /* Build our list of keymaps.
      If we recognize a function key and replace its escape sequence in
@@ -9244,6 +9258,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 		      && BUFFERP (XWINDOW (window)->contents)
 		      && XBUFFER (XWINDOW (window)->contents) != current_buffer)
 		    {
+		      GROW_RAW_KEYBUF;
 		      ASET (raw_keybuf, raw_keybuf_count, key);
 		      raw_keybuf_count++;
 		      keybuf[t] = key;
@@ -9738,6 +9753,7 @@ read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
     cancel_hourglass ();
 #endif
 
+  raw_keybuf_count = 0;
   i = read_key_sequence (keybuf, ARRAYELTS (keybuf),
 			 prompt, ! NILP (dont_downcase_last),
 			 ! NILP (can_return_switch_frame), 0, 0);
@@ -11281,7 +11297,7 @@ for that character after that prefix key.  */);
 	       doc: /* Form to evaluate when Emacs starts up.
 Useful to set before you dump a modified Emacs.  */);
   Vtop_level = Qnil;
-  XSYMBOL (Qtop_level)->declared_special = false;
+  XSYMBOL (Qtop_level)->u.s.declared_special = false;
 
   DEFVAR_KBOARD ("keyboard-translate-table", Vkeyboard_translate_table,
                  doc: /* Translate table for local keyboard input, or nil.

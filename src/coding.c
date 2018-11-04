@@ -10236,7 +10236,7 @@ usage: (define-coding-system-internal ...)  */)
       ASET (attrs, coding_attr_ccl_encoder, val);
 
       val = args[coding_arg_ccl_valids];
-      valids = Fmake_string (make_number (256), make_number (0));
+      valids = Fmake_string (make_number (256), make_number (0), Qnil);
       for (tail = val; CONSP (tail); tail = XCDR (tail))
 	{
 	  int from, to;

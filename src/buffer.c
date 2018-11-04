@@ -65,7 +65,7 @@ struct buffer *all_buffers;
    Setting the default value also goes through the alist of buffers
    and stores into each buffer that does not say it has a local value.  */
 
-struct buffer alignas (GCALIGNMENT) buffer_defaults;
+struct buffer buffer_defaults;
 
 /* This structure marks which slots in a buffer have corresponding
    default values in buffer_defaults.
@@ -88,7 +88,7 @@ struct buffer buffer_local_flags;
 /* This structure holds the names of symbols whose values may be
    buffer-local.  It is indexed and accessed in the same way as the above.  */
 
-struct buffer alignas (GCALIGNMENT) buffer_local_symbols;
+struct buffer buffer_local_symbols;
 
 /* Return the symbol of the per-buffer variable at offset OFFSET in
    the buffer structure.  */
@@ -857,7 +857,8 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
                           newlist = Fcons (elt, newlist);
                       }
                   newlist = Fnreverse (newlist);
-                  if (XSYMBOL (local_var)->trapped_write == SYMBOL_TRAPPED_WRITE)
+                  if (XSYMBOL (local_var)->u.s.trapped_write
+		      == SYMBOL_TRAPPED_WRITE)
                     notify_variable_watchers (local_var, newlist,
                                               Qmakunbound, Fcurrent_buffer ());
                   XSETCDR (XCAR (tmp), newlist);
@@ -870,7 +871,7 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
           else
             XSETCDR (last, XCDR (tmp));
 
-          if (XSYMBOL (local_var)->trapped_write == SYMBOL_TRAPPED_WRITE)
+          if (XSYMBOL (local_var)->u.s.trapped_write == SYMBOL_TRAPPED_WRITE)
             notify_variable_watchers (local_var, Qnil,
                                       Qmakunbound, Fcurrent_buffer ());
         }
@@ -922,7 +923,11 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
   else
     {
       char number[sizeof "-999999"];
-      int i = XFASTINT (Frandom (make_number (999999)));
+
+      /* Use XINT instead of XFASTINT to work around GCC bug 80776.  */
+      int i = XINT (Frandom (make_number (1000000)));
+      eassume (0 <= i && i < 1000000);
+
       AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
       genbase = concat2 (name, lnumber);
       if (NILP (Fget_buffer (genbase)))
@@ -959,7 +964,7 @@ buffer_local_value (Lisp_Object variable, Lisp_Object buffer)
   sym = XSYMBOL (variable);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: result = SYMBOL_VAL (sym); break;
@@ -1823,7 +1828,7 @@ void set_buffer_internal_2 (register struct buffer *b)
 	{
 	  Lisp_Object var = XCAR (XCAR (tail));
 	  struct Lisp_Symbol *sym = XSYMBOL (var);
-	  if (sym->redirect == SYMBOL_LOCALIZED /* Just to be sure.  */
+	  if (sym->u.s.redirect == SYMBOL_LOCALIZED /* Just to be sure.  */
 	      && SYMBOL_BLV (sym)->fwd)
 	    /* Just reference the variable
 	       to cause it to become set for this buffer.  */
@@ -2407,7 +2412,7 @@ swap_out_buffer_local_variables (struct buffer *b)
   for (alist = oalist; CONSP (alist); alist = XCDR (alist))
     {
       Lisp_Object sym = XCAR (XCAR (alist));
-      eassert (XSYMBOL (sym)->redirect == SYMBOL_LOCALIZED);
+      eassert (XSYMBOL (sym)->u.s.redirect == SYMBOL_LOCALIZED);
       /* Need not do anything if some other buffer's binding is
 	 now cached.  */
       if (EQ (SYMBOL_BLV (XSYMBOL (sym))->where, buffer))
@@ -4620,6 +4625,8 @@ init_buffer_once (void)
 {
   int idx;
 
+  /* Items flagged permanent get an explicit permanent-local property
+     added in bindings.el, for clarity.  */
   memset (buffer_permanent_local_flags, 0, sizeof buffer_permanent_local_flags);
 
   /* 0 means not a lisp var, -1 means always local, else mask.  */
@@ -4669,7 +4676,9 @@ init_buffer_once (void)
   XSETFASTINT (BVAR (&buffer_local_flags, selective_display), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, selective_display_ellipses), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, tab_width), idx); ++idx;
-  XSETFASTINT (BVAR (&buffer_local_flags, truncate_lines), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, truncate_lines), idx);
+  /* Make this one a permanent local.  */
+  buffer_permanent_local_flags[idx++] = 1;
   XSETFASTINT (BVAR (&buffer_local_flags, word_wrap), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, ctl_arrow), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, fill_column), idx); ++idx;
@@ -4965,8 +4974,8 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
   bo_fwd->type = Lisp_Fwd_Buffer_Obj;
   bo_fwd->offset = offset;
   bo_fwd->predicate = predicate;
-  sym->declared_special = 1;
-  sym->redirect = SYMBOL_FORWARDED;
+  sym->u.s.declared_special = true;
+  sym->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (sym, (union Lisp_Fwd *) bo_fwd);
   XSETSYMBOL (PER_BUFFER_SYMBOL (offset), sym);
 
@@ -5150,6 +5159,8 @@ file I/O and the behavior of various editing commands.
 
 This variable is buffer-local but you cannot set it directly;
 use the function `set-buffer-multibyte' to change a buffer's representation.
+To prevent any attempts to set it or make it buffer-local, Emacs will
+signal an error in those cases.
 See also Info node `(elisp)Text Representations'.  */);
   make_symbol_constant (intern_c_string ("enable-multibyte-characters"));
 
@@ -5253,7 +5264,7 @@ word-wrapping, you might want to reduce the value of
 in narrower windows.
 
 Instead of setting this variable directly, most users should use
-Visual Line mode .  Visual Line mode, when enabled, sets `word-wrap'
+Visual Line mode.  Visual Line mode, when enabled, sets `word-wrap'
 to t, and additionally redefines simple editing commands to act on
 visual lines rather than logical lines.  See the documentation of
 `visual-line-mode'.  */);
