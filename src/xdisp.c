@@ -32252,6 +32252,18 @@ expose_window (struct window *w, XRectangle *fr)
 	 y0 or y1 is negative (can happen for tall images).  */
       int r_bottom = r.y + r.height;
 
+      /* We must temporarily switch to the window's buffer, in case
+	 the fringe face has been remapped in that buffer's
+	 face-remapping-alist, so that draw_row_fringe_bitmaps,
+	 called from expose_line, will use the right face.  */
+      bool buffer_changed = false;
+      struct buffer *oldbuf = current_buffer;
+      if (!w->pseudo_window_p)
+	{
+	  set_buffer_internal_1 (XBUFFER (w->contents));
+	  buffer_changed = true;
+	}
+
       /* Update lines intersecting rectangle R.  */
       first_overlapping_row = last_overlapping_row = NULL;
       for (row = w->current_matrix->rows;
@@ -32296,6 +32308,9 @@ expose_window (struct window *w, XRectangle *fr)
 	  if (y1 >= yb)
 	    break;
 	}
+
+      if (buffer_changed)
+	set_buffer_internal_1 (oldbuf);
 
       /* Display the mode line if there is one.  */
       if (window_wants_mode_line (w)
