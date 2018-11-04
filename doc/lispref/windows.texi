@@ -2338,20 +2338,19 @@ Window}).
 
    @code{display-buffer} delegates the task of finding a suitable
 window to so-called action functions (@pxref{Buffer Display Action
-Functions}).  Before, @code{display-buffer} compiles a so-called
-action alist---a special association list action functions can use to
-fine-tune their behavior--- and passes that alist on to each action
+Functions}).  First, @code{display-buffer} compiles a so-called action
+alist---a special association list that action functions can use to
+fine-tune their behavior.  Then it passes that alist on to each action
 function it calls (@pxref{Buffer Display Action Alists}).
 
    The behavior of @code{display-buffer} is highly customizable.  To
-understand how customizations are put into practice, readers may want
-to study examples illustrating the precedence acquired by
-@code{display-buffer} for calling action functions (@pxref{Precedence
-of Action Functions}).  To avoid that Lisp programs calling
-@code{display-buffer} come into conflict with users customizing its
-behavior, it may make sense to follow a number of guidelines which are
-sketched in the final part of this section (@pxref{The Zen of Buffer
-Display}).
+understand how customizations are used in practice, you may wish to
+study examples illustrating the order of precedence which
+@code{display-buffer} uses to call action functions (@pxref{Precedence
+of Action Functions}).  To avoid conflicts between Lisp programs
+calling @code{display-buffer} and user customizations of its behavior,
+it may make sense to follow a number of guidelines which are sketched
+in the final part of this section (@pxref{The Zen of Buffer Display}).
 
 @menu
 * Choosing Window::         How to choose a window for displaying a buffer.
@@ -2379,12 +2378,12 @@ Buffers}).
 @cindex display action
   This command performs several complex steps to find a window to
 display in.  These steps are described by means of @dfn{display
-actions}, which have the form @code{(@var{function} . @var{alist})}.
-Here, @var{function} is either a function or a list of functions,
-which we refer to as ``action functions'' (@pxref{Buffer Display
-Action Functions}); @var{alist} is an association list, which we refer
-to as ``action alist'' (@pxref{Buffer Display Action Alists}).  See
-@ref{The Zen of Buffer Display}, for samples of display actions.
+actions}, which have the form @code{(@var{functions} . @var{alist})}.
+Here, @var{functions} is either a single function or a list of
+functions, referred to as ``action functions'' (@pxref{Buffer Display
+Action Functions}); and @var{alist} is an association list, referred
+to as ``action alist'' (@pxref{Buffer Display Action Alists}).
+@xref{The Zen of Buffer Display}, for samples of display actions.
 
   An action function accepts two arguments: the buffer to display and
 an action alist.  It attempts to display the buffer in some window,
@@ -2400,14 +2399,14 @@ value.
 This command makes @var{buffer-or-name} appear in some window, without
 selecting the window or making the buffer current.  The argument
 @var{buffer-or-name} must be a buffer or the name of an existing
-buffer.  The return value is the window chosen to display the buffer.
-It is @code{nil} if no suitable window was found.
+buffer.  The return value is the window chosen to display the buffer,
+or @code{nil} if no suitable window was found.
 
 The optional argument @var{action}, if non-@code{nil}, should normally
 be a display action (described above).  @code{display-buffer} builds a
 list of action functions and an action alist, by consolidating display
 actions from the following sources (in order of their precedence,
-highest ranking first):
+from highest to lowest):
 
 @itemize
 @item
@@ -2439,7 +2438,7 @@ may be called multiple times during one call of @code{display-buffer}.
 @code{display-buffer} calls the action functions specified by this
 list in turn, passing the buffer as the first argument and the
 combined action alist as the second argument, until one of the
-functions returns non-@code{nil}.  See @ref{Precedence of Action
+functions returns non-@code{nil}.  @xref{Precedence of Action
 Functions}, for examples how display actions specified by different
 sources are processed by @code{display-buffer}.
 
@@ -2466,8 +2465,8 @@ should always supply a list value.
 
 The optional argument @var{frame}, if non-@code{nil}, specifies which
 frames to check when deciding whether the buffer is already displayed.
-It is equivalent to adding an element @code{(reusable-frames
-. @var{frame})} to the action alist of @var{action} (@pxref{Buffer
+It is equivalent to adding an element @w{@code{(reusable-frames
+. @var{frame})}} to the action alist of @var{action} (@pxref{Buffer
 Display Action Alists}).  The @var{frame} argument is provided for
 compatibility reasons, Lisp programs should not use it.
 @end deffn
@@ -2475,16 +2474,16 @@ compatibility reasons, Lisp programs should not use it.
 @defvar display-buffer-overriding-action
 The value of this variable should be a display action, which is
 treated with the highest priority by @code{display-buffer}.  The
-default value is empty, i.e., @code{(nil . nil)}.
+default value is an empty display action, i.e., @w{@code{(nil . nil)}}.
 @end defvar
 
 @defopt display-buffer-alist
 The value of this option is an alist mapping conditions to display
 actions.  Each condition may be either a regular expression matching a
 buffer name or a function that takes two arguments: a buffer name and
-the @var{action} argument passed to @code{display-buffer}.  If the
-name of the buffer passed to @code{display-buffer} either matches a
-regular expression in this alist or the function specified by a
+the @var{action} argument passed to @code{display-buffer}.  If either
+the name of the buffer passed to @code{display-buffer} matches a
+regular expression in this alist, or the function specified by a
 condition returns non-@code{nil}, then @code{display-buffer} uses the
 corresponding display action to display the buffer.
 @end defopt
@@ -2519,8 +2518,7 @@ and @code{nil} if they fail.
 This function tries to display @var{buffer} in the selected window.
 It fails if the selected window is a minibuffer window or is dedicated
 to another buffer (@pxref{Dedicated Windows}).  It also fails if
-@var{alist} has a non-@code{nil} @code{inhibit-same-window} entry
-(@pxref{Buffer Display Action Alists}).
+@var{alist} has a non-@code{nil} @code{inhibit-same-window} entry.
 @end defun
 
 @defun display-buffer-reuse-window buffer alist
@@ -2530,15 +2528,13 @@ is already displaying it.
 If @var{alist} has a non-@code{nil} @code{inhibit-same-window} entry,
 the selected window is not eligible for reuse.  The set of frames to
 search for a window already displaying @var{buffer} can be specified
-with the help of a @code{reusable-frames} action alist entry
-(@pxref{Buffer Display Action Alists}).  If @var{alist} contains no
-@code{reusable-frames} entry, this function searches just the selected
-frame.
+with the help of the @code{reusable-frames} action alist entry.  If
+@var{alist} contains no @code{reusable-frames} entry, this function
+searches just the selected frame.
 
 If this function chooses a window on another frame, it makes that
 frame visible and, unless @var{alist} contains an
-@code{inhibit-switch-frame} entry (@pxref{Buffer Display Action
-Alists}), raises that frame if necessary.
+@code{inhibit-switch-frame} entry, raises that frame if necessary.
 @end defun
 
 @defun display-buffer-reuse-mode-window buffer alist
@@ -2553,8 +2549,8 @@ whose mode derives from one of the modes specified thusly.
 
 The behavior is also controlled by @var{alist} entries for
 @code{inhibit-same-window}, @code{reusable-frames} and
-@code{inhibit-switch-frame} (@pxref{Buffer Display Action Alists}) as
-is done in the function @code{display-buffer-reuse-window}.
+@code{inhibit-switch-frame}, like @code{display-buffer-reuse-window}
+does.
 @end defun
 
 @defun display-buffer-pop-up-window buffer alist
@@ -2565,27 +2561,25 @@ It actually performs the split by calling the function specified by
 Options}).
 
 The size of the new window can be adjusted by supplying
-@code{window-height} and @code{window-width} entries in @var{alist}
-(@pxref{Buffer Display Action Alists}).  If @var{alist} contains a
-@code{preserve-size} entry, Emacs will also try to preserve the size
-of the new window during future resize operations (@pxref{Preserving
-Window Sizes}).
+@code{window-height} and @code{window-width} entries in @var{alist}.
+If @var{alist} contains a @code{preserve-size} entry, Emacs will also
+try to preserve the size of the new window during future resize
+operations (@pxref{Preserving Window Sizes}).
 
-This function fails if no window can be split.  More often than not
+This function fails if no window can be split.  More often than not,
 this happens because no window is large enough to allow splitting.
 Setting @code{split-height-threshold} or @code{split-width-threshold}
-(@pxref{Choosing Window Options}) to lower values may help in this
-regard.  Spliting also fails when the selected frame has an
-@code{unsplittable} frame parameter; @pxref{Buffer Parameters}.
+to lower values may help in this regard.  Spliting also fails when the
+selected frame has an @code{unsplittable} frame parameter;
+@pxref{Buffer Parameters}.
 @end defun
 
 @defun display-buffer-in-previous-window buffer alist
-This function tries to display @var{buffer} in a window previously
-showing it.  If @var{alist} has a non-@code{nil}
+This function tries to display @var{buffer} in a window where it was
+previously displayed.  If @var{alist} has a non-@code{nil}
 @code{inhibit-same-window} entry, the selected window is not eligible
 for reuse.  If @var{alist} contains a @code{reusable-frames} entry,
-its value determines which frames to search for a suitable window
-(@pxref{Buffer Display Action Alists}).
+its value determines which frames to search for a suitable window.
 
 If @var{alist} has a @code{previous-window} entry and the window
 specified by that entry is live and not dedicated to another buffer,
@@ -2596,7 +2590,7 @@ before.
 @defun display-buffer-use-some-window buffer alist
 This function tries to display @var{buffer} by choosing an existing
 window and displaying the buffer in that window.  It can fail if all
-windows are dedicated to another buffer (@pxref{Dedicated Windows}).
+windows are dedicated to other buffers (@pxref{Dedicated Windows}).
 @end defun
 
 @defun display-buffer-below-selected buffer alist
@@ -2605,13 +2599,13 @@ selected window.  If there is a window below the selected one and that
 window already displays @var{buffer}, it reuses that window.
 
 If there is no such window, this function tries to create a new window
-by splitting the selected one and display @var{buffer} there.  It will
+by splitting the selected one, and displays @var{buffer} there.  It will
 also try to adjust that window's size provided @var{alist} contains a
 suitable @code{window-height} or @code{window-width} entry, see above.
 
 If splitting the selected window fails and there is a non-dedicated
-window below the selected one showing some other buffer, it tries to
-use that window for showing @var{buffer}.
+window below the selected one showing some other buffer, this function
+tries to use that window for showing @var{buffer}.
 @end defun
 
 @defun display-buffer-at-bottom buffer alist
@@ -2634,19 +2628,19 @@ the newly created frame's parameters.
 
 @defun display-buffer-in-child-frame buffer alist
 This function tries to display @var{buffer} in a child frame
-(@pxref{Child Frames}) of the selected frame, either reusing an existing
-child frame or by making a new one.  If @var{alist} has a non-@code{nil}
-@code{child-frame-parameters} entry, the corresponding value is an alist
-of frame parameters to give the new frame.  A @code{parent-frame}
-parameter specifying the selected frame is provided by default.  If the
-child frame should be or become the child of another frame, a
-corresponding entry must be added to @var{alist}.
+(@pxref{Child Frames}) of the selected frame, either reusing an
+existing child frame or by making a new one.  If @var{alist} has a
+non-@code{nil} @code{child-frame-parameters} entry, the corresponding
+value is an alist of frame parameters to give the new frame.  A
+@code{parent-frame} parameter specifying the selected frame is
+provided by default.  If the child frame should become the child of
+another frame, a corresponding entry must be added to @var{alist}.
 
 The appearance of child frames is largely dependent on the parameters
 provided via @var{alist}.  It is advisable to use at least ratios to
 specify the size (@pxref{Size Parameters}) and the position
-(@pxref{Position Parameters}) of the child frame and to add a
-@code{keep-ratio} parameter (@pxref{Frame Interaction Parameters}) in
+(@pxref{Position Parameters}) of the child frame, and to add a
+@code{keep-ratio} parameter (@pxref{Frame Interaction Parameters}), in
 order to make sure that the child frame remains visible.  For other
 parameters that should be considered see @ref{Child Frames}.
 @end defun
@@ -2658,8 +2652,7 @@ frame).
 
 If this function chooses a window on another frame, it makes that
 frame visible and, unless @var{alist} contains an
-@code{inhibit-switch-frame} entry (@pxref{Buffer Display Action
-Alists}), raises that frame if necessary.
+@code{inhibit-switch-frame} entry, raises that frame if necessary.
 
 If @var{alist} has a non-@code{nil} @code{frame-predicate} entry, its
 value is a function taking one argument (a frame), returning
@@ -2690,7 +2683,7 @@ non-@code{nil} @code{allow-no-window} entry, it is also able to handle
 a @code{nil} return value.
 @end defun
 
-Two action functions are described in their proper
+Two other action functions are described in their proper
 sections---@code{display-buffer-in-side-window} (@pxref{Displaying
 Buffers in Side Windows}) and @code{display-buffer-in-atom-window}
 (@pxref{Atomic Windows}).
@@ -2710,18 +2703,19 @@ and passes that entire list on to any action function it calls.
    By design, action functions are free in their interpretation of
 action alist entries.  In fact, some entries like
 @code{allow-no-window} or @code{previous-window} have a meaning only
-for one or a few action functions and are ignored by the rest.  Other
+for one or a few action functions, and are ignored by the rest.  Other
 entries, like @code{inhibit-same-window} or @code{window-parameters},
-are supposed to be respected by most action functions including those
+are supposed to be respected by most action functions, including those
 provided by application programs and external packages.
 
    In the previous subsection we have described in detail how
 individual action functions interpret the action alist entries they
 care about.  Here we give a reference list of all known action alist
 entries according to their symbols, together with their values and
-action functions that recognize them.  Throughout this list, the terms
-``buffer'' will refer to the buffer @code{display-buffer} is supposed
-to display and ``value'' to the entry's value.
+action functions (@pxref{Buffer Display Action Functions}) that
+recognize them.  Throughout this list, the terms ``buffer'' will refer
+to the buffer @code{display-buffer} is supposed to display, and
+``value'' refers to the entry's value.
 
 @table @code
 @vindex inhibit-same-window@r{, a buffer display action alist entry}
@@ -2733,25 +2727,23 @@ must not be used for displaying the buffer.  All action functions that
 @vindex previous-window@r{, a buffer display action alist entry}
 @item previous-window
 The value must specify a window that may have displayed the buffer
-previously.  @code{display-buffer-in-previous-window} (@pxref{Buffer
-Display Action Functions}) will give preference to such a window
-provided it is still live and not dedicated to another buffer.
+previously.  @code{display-buffer-in-previous-window} will give
+preference to such a window provided it is still live and not
+dedicated to another buffer.
 
 @vindex mode@r{, a buffer display action alist entry}
 @item mode
 The value is either a major mode or a list of major modes.
-@code{display-buffer-reuse-mode-window} (@pxref{Buffer Display Action
-Functions}) may reuse a window whenever the value specified by this
-entry matches the major mode of that window's buffer.  Other action
-functions ignore such entries.
+@code{display-buffer-reuse-mode-window} may reuse a window whenever
+the value specified by this entry matches the major mode of that
+window's buffer.  Other action functions ignore such entries.
 
 @vindex frame-predicate@r{, a buffer display action alist entry}
 @item frame-predicate
 The value must be a function taking one argument (a frame), supposed
 to return non-@code{nil} if that frame is a candidate for displaying
 the buffer.  This entry is used by
-@code{display-buffer-use-some-frame} (@pxref{Buffer Display Action
-Functions}).
+@code{display-buffer-use-some-frame}.
 
 @vindex reusable-frames@r{, a buffer display action alist entry}
 @item reusable-frames
@@ -2777,9 +2769,9 @@ Note that the meaning of @code{nil} differs slightly from that of the
 @var{all-frames} argument to @code{next-window} (@pxref{Cyclic Window
 Ordering}).
 
-A major client of this is @code{display-buffer-reuse-window}
-(@pxref{Buffer Display Action Functions}) but all other action
-functions that try to reuse a window are affected as well.
+A major client of this is @code{display-buffer-reuse-window}, but all
+other action functions that try to reuse a window are affected as
+well.
 
 @vindex inhibit-switch-frame@r{, a buffer display action alist entry}
 @item inhibit-switch-frame
@@ -2787,9 +2779,9 @@ A non-@code{nil} value prevents another frame from being raised or
 selected, if the window chosen by @code{display-buffer} is displayed
 there.  Primarily affected by this are
 @code{display-buffer-use-some-frame} and
-@code{display-buffer-reuse-window} (@pxref{Buffer Display Action
-Functions}).  @code{display-buffer-pop-up-frame} should be affected as
-well but there is no guarantee that the window manager will comply.
+@code{display-buffer-reuse-window}.
+@code{display-buffer-pop-up-frame} should be affected as well, but
+there is no guarantee that the window manager will comply.
 
 @vindex window-parameters@r{, a buffer display action alist entry}
 @item window-parameters
@@ -2800,7 +2792,7 @@ entry.
 @vindex window-height@r{, a buffer display action alist entry}
 @item window-height
 The value specifies whether and how to adjust the height of the chosen
-window and can be provided as follows:
+window, and can have the following values:
 
 @itemize @bullet
 @item
@@ -2825,8 +2817,8 @@ All action functions that choose a window should process this entry.
 @vindex window-width@r{, a buffer display action alist entry}
 @item window-width
 This entry is similar to the @code{window-height} entry described
-before but can be used to adjust the chosen window's width instead.
-The value can be one of the following:
+before, but used to adjust the chosen window's width instead.  The
+value can be one of the following:
 
 @itemize @bullet
 @item
@@ -2852,28 +2844,26 @@ If non-@code{nil} such an entry tells Emacs to preserve the size of
 the window chosen (@pxref{Preserving Window Sizes}).  The value should
 be either @code{(t . nil)} to preserve the width of the window,
 @code{(nil . t)} to preserve its height or @code{(t . t)} to preserve
-both, its width and its height.  All action functions that choose a
+both its width and its height.  All action functions that choose a
 window should process this entry.
 
 @vindex pop-up-frame-parameters@r{, a buffer display action alist entry}
 @item pop-up-frame-parameters
 The value specifies an alist of frame parameters to give a new frame,
-if one is created.  @code{display-buffer-pop-up-frame} (@pxref{Buffer
-Display Action Functions}) is its one and only addressee.
+if one is created.  @code{display-buffer-pop-up-frame} is its one and
+only addressee.
 
 @vindex parent-frame@r{, a buffer display action alist entry}
 @item parent-frame
 The value specifies the parent frame to be used when the buffer is
-displayed on a child frame.  This entry is used by
-@code{display-buffer-in-child-frame} (@pxref{Buffer Display Action
-Functions}) only.
+displayed on a child frame.  This entry is used only by
+@code{display-buffer-in-child-frame}.
 
 @vindex child-frame-parameters@r{, a buffer display action alist entry}
 @item child-frame-parameters
-The value specifies an alist of frame parameters used when the buffer
-is displayed on a child frame.  This entry is used by
-@code{display-buffer-in-child-frame} (@pxref{Buffer Display Action
-Functions}) only.
+The value specifies an alist of frame parameters to use when the buffer
+is displayed on a child frame.  This entry is used only by
+@code{display-buffer-in-child-frame}.
 
 @vindex side@r{, a buffer display action alist entry}
 @item side
@@ -2889,27 +2879,25 @@ Windows}).
 @vindex slot@r{, a buffer display action alist entry}
 @item slot
 If non-@code{nil}, the value specifies the slot of the side window
-supposed to display the buffer.  This entry is used by
-@code{display-buffer-in-side-window} only (@pxref{Displaying Buffers
-in Side Windows}).
+supposed to display the buffer.  This entry is used only by
+@code{display-buffer-in-side-window}.
 
 @vindex window@r{, a buffer display action alist entry}
 @item window
 The value specifies a window that is in some way related to the window
 chosen by @code{display-buffer}.  This entry is currently used by
 @code{display-buffer-in-atom-window} to indicate the window on whose
-side the new window shall be created (@pxref{Atomic Windows}).
+side the new window shall be created.
 
 @vindex allow-no-window@r{, a buffer display action alist entry}
 @item allow-no-window
 If the value is non-@code{nil}, @code{display-buffer} does not
 necessarily have to display the buffer and the caller is prepared to
-accept that.  This entry is not intended for user customizations since
-there is no guarantee that an arbitrary caller of
+accept that.  This entry is not intended for user customizations,
+since there is no guarantee that an arbitrary caller of
 @code{display-buffer} will be able to handle the case that no window
-will display the buffer.  @code{display-buffer-no-window}
-(@pxref{Buffer Display Action Functions}) is the only action function
-that cares about this entry.
+will display the buffer.  @code{display-buffer-no-window} is the only
+action function that cares about this entry.
 @end table
 
 
@@ -2937,16 +2925,16 @@ user may specify directly in @code{display-buffer-alist} etc.
 This variable specifies a function for splitting a window, in order to
 make a new window for displaying a buffer.  It is used by the
 @code{display-buffer-pop-up-window} action function to actually split
-the window (@pxref{Buffer Display Action Functions}).
+the window.
 
 The value must be a function that takes one argument, a window, and
-return either a new window (which will be used to display the desired
+returns either a new window (which will be used to display the desired
 buffer) or @code{nil} (which means the splitting failed).  The default
 value is @code{split-window-sensibly}, which is documented next.
 @end defopt
 
 @defun split-window-sensibly &optional window
-This function tries to split @var{window}, and return the newly created
+This function tries to split @var{window} and return the newly created
 window.  If @var{window} cannot be split, it returns @code{nil}.  If
 @var{window} is omitted or @code{nil}, it defaults to the selected
 window.
@@ -2957,7 +2945,7 @@ placing the new window below, subject to the restriction imposed by
 @code{split-height-threshold} (see below), in addition to any other
 restrictions.  If that fails, it tries to split by placing the new
 window to the right, subject to @code{split-width-threshold} (see
-below).  If that fails, and the window is the only window on its
+below).  If that also fails, and the window is the only window on its
 frame, this function again tries to split and place the new window
 below, disregarding @code{split-height-threshold}.  If this fails as
 well, this function gives up and returns @code{nil}.
@@ -2981,7 +2969,7 @@ that means not to split this way.
 
 @defopt even-window-sizes
 This variable, if non-@code{nil}, causes @code{display-buffer} to even
-window sizes whenever it reuses an existing window and that window is
+window sizes whenever it reuses an existing window, and that window is
 adjacent to the selected one.
 
 If its value is @code{width-only}, sizes are evened only if the reused
@@ -3016,8 +3004,7 @@ directly in @code{display-buffer-alist} etc.
 @defopt pop-up-frame-function
 This variable specifies a function for creating a new frame, in order
 to make a new window for displaying a buffer.  It is used by the
-@code{display-buffer-pop-up-frame} action function (@pxref{Buffer
-Display Action Functions}).
+@code{display-buffer-pop-up-frame} action function.
 
 The value should be a function that takes no arguments and returns a
 frame, or @code{nil} if no frame could be created.  The default value
@@ -3032,9 +3019,8 @@ Parameters}), which is used by the function specified by
 @code{nil}.
 
 This option is provided for backward compatibility only.  Note, that
-when @code{display-buffer-pop-up-frame} (@pxref{Buffer Display Action
-Functions}) calls the function specified by
-@code{pop-up-frame-function}, it prepends the value of all
+when @code{display-buffer-pop-up-frame} calls the function specified
+by @code{pop-up-frame-function}, it prepends the value of all
 @code{pop-up-frame-parameters} action alist entries to
 @code{pop-up-frame-alist} so that the values specified by the action
 alist entry effectively override any corresponding values of
@@ -3111,6 +3097,7 @@ specifying the action function @code{display-buffer-same-window}.
 @subsection Precedence of Action Functions
 @cindex precedence of buffer display action functions
 @cindex execution order of buffer display action functions
+@cindex buffer display action functions, precedence
 
 From the past subsections we already know that @code{display-buffer}
 must be supplied with a number of display actions (@pxref{Choosing
@@ -3132,7 +3119,7 @@ Consider the following form:
 @noindent
 Evaluating this form in the buffer @file{*scratch*} of an uncustomized
 Emacs session will usually fail to reuse a window that shows
-@file{*foo*} already but succeed in popping up a new window.
+@file{*foo*} already, but succeed in popping up a new window.
 Evaluating the same form again will now not cause any visible
 changes---@code{display-buffer} reused the window already showing
 @file{*foo*} because that action was applicable and had the highest
@@ -3157,13 +3144,13 @@ already shown @file{*foo*} previously and was therefore chosen instead
 of some other window.
 
   So far we have only observed the default behavior in an uncustomized
-Emacs session.  To see how this behavior can be customized let's
+Emacs session.  To see how this behavior can be customized, let's
 consider the option @code{display-buffer-base-action}.  It provides a
 very coarse customization which conceptually affects the display of
 @emph{any} buffer.  It can be used to supplement the actions supplied
 by @code{display-buffer-fallback-action} by reordering them or by
 adding actions that are not present there but fit more closely the
-user's editing practice.  It can be, however, also used to change the
+user's editing practice.   However, it can also be used to change the
 default behavior in a more profound way.
 
    Let's consider a user who, as a rule, prefers to display buffers on
@@ -3179,7 +3166,7 @@ another frame.  Such a user might provide the following customization:
 @end example
 
 @noindent
-This setting will cause@code{display-buffer} to first try to find a
+This setting will cause @code{display-buffer} to first try to find a
 window showing the buffer on a visible or iconified frame and, if no
 such frame exists, pop up a new frame.  You can observe this behavior
 on a graphical system by typing @w{@kbd{C-x 1}} in the window showing
@@ -3191,8 +3178,8 @@ the new frame (usually raising the frame and giving it focus too).
 
    Only if creating a new frame fails, @code{display-buffer} will
 apply the actions supplied by @code{display-buffer-fallback-action}
-which means to again try to reuse a window, pop up a new window and so
-on.  A trivial way to make frame creation fail is supplied by the
+which means to again try reusing a window, popping up a new window and
+so on.  A trivial way to make frame creation fail is supplied by the
 following form:
 
 @example
@@ -3213,7 +3200,7 @@ tried there anyway.  However, that would fail because due to the
 precedence of @code{display-buffer-base-action} over
 @code{display-buffer-fallback-action}, at that time
 @code{display-buffer-pop-up-frame} would have already won the race.
-In fact
+In fact, this:
 
 @example
 @group
@@ -3231,13 +3218,13 @@ which is probably not what our user wants.
 default behavior of @code{display-buffer}.  Let us now see how
 @emph{applications} can change the course of @code{display-buffer}.
 The canonical way to do that is to use the @var{action} argument of
-@code{display-buffer} or a function that calls it like, for example,
+@code{display-buffer} or a function that calls it, like, for example,
 @code{pop-to-buffer} (@pxref{Switching Buffers}).
 
    Suppose an application wants to display @file{*foo*} preferably
 below the selected window (to immediately attract the attention of the
 user to the new window) or, if that fails, in a window at the bottom
-of the frame.  It could do that with a call like
+of the frame.  It could do that with a call like this:
 
 @example
 @group
@@ -3250,8 +3237,8 @@ of the frame.  It could do that with a call like
 @noindent
 In order to see how this new, modified form works, delete any frame
 showing @file{*foo*}, type @w{@kbd{C-x 1}} followed by @w{@kbd{C-x 2}} in the
-window showing @file{*scratch*} and subsequently evaluate that form.
-@code{display-buffer} should split the upper window and show
+window showing @file{*scratch*}, and subsequently evaluate that form.
+@code{display-buffer} should split the upper window, and show
 @file{*foo*} in the new window.  Alternatively, if after @w{@kbd{C-x 2}}
 you had typed @w{@kbd{C-x o}}, @code{display-buffer} would have split the
 window at the bottom instead.
@@ -3269,7 +3256,7 @@ by the @var{action} argument try to reuse such a window first.
 
    By setting the @var{action} argument, an application effectively
 overrules any customization of @code{display-buffer-base-action}.  Our
-user can now either accept the choice of the application or redouble
+user can now either accept the choice of the application, or redouble
 by customizing the option @code{display-buffer-alist} as follows:
 
 @example
@@ -3320,9 +3307,9 @@ preferred way regardless of whether the display is also guided by an
 
    We can, however, reasonably conclude that customizing
 @code{display-buffer-alist} differs from customizing
-@code{display-buffer-base-action} in two major aspects: It is stronger
+@code{display-buffer-base-action} in two major aspects: it is stronger
 because it overrides the @var{action} argument of
-@code{display-buffer}.  And it allows to explicitly specify the
+@code{display-buffer}, and it allows to explicitly specify the
 affected buffers.  In fact, displaying other buffers is not affected
 in any way by a customization for @file{*foo*}.  For example,
 
@@ -3382,7 +3369,7 @@ explaining who added this and the subsequent elements) is:
 @end example
 
 @noindent
-Note that among the internal functions listed here
+Note that among the internal functions listed here,
 @code{display-buffer--maybe-same-window} is effectively ignored while
 @code{display-buffer--maybe-pop-up-frame-or-window} actually runs
 @code{display-buffer-pop-up-window}.
@@ -3398,7 +3385,7 @@ The action alist passed in each function call is:
 
 @noindent
 which shows that we have used the second specification of
-@code{display-buffer-alist} above overriding the specification
+@code{display-buffer-alist} above, overriding the specification
 supplied by @code{display-buffer-base-action}.  Suppose our user had
 written that as
 
@@ -3432,7 +3419,7 @@ regard, the application would have to specify an appropriate
 
 @noindent
 This last example shows that while the precedence order of action
-functions is fixed as described in @ref{Choosing Window}, an action
+functions is fixed, as described in @ref{Choosing Window}, an action
 alist entry specified by a display action ranked lower in that order
 can affect the execution of a higher ranked display action.
 
@@ -3468,13 +3455,13 @@ layouts.
 back on a split & delete windows metaphor is not a good idea either.
 Buffer display functions give Lisp programs and users a framework to
 reconcile their different needs; no comparable framework exists for
-splitting and deleting windows.  They also allow to at least partially
-restore the layout of a frame when removing a buffer from it later
-(@pxref{Quitting Windows}).
+splitting and deleting windows.  Buffer display functions also allow
+to at least partially restore the layout of a frame when removing a
+buffer from it later (@pxref{Quitting Windows}).
 
    Below we will give a number of guidelines to redeem the frustration
-mentioned above and thus to avoid that buffers literally get lost in
-between the windows of a frame.
+mentioned above and thus to avoid literally losing buffers in-between
+the windows of a frame.
 
 @table @asis
 @item Write display actions without stress
@@ -3499,7 +3486,7 @@ also the last example of the preceding subsection.
 @end example
 
 @noindent
-on the other hand specifies one action function and an empty action
+on the other hand, specifies one action function and an empty action
 alist.  To combine the effects of the above two specifications one
 would write the form
 
@@ -3588,7 +3575,7 @@ Options}).  This was one major reason for redesigning
 @code{display-buffer}---to provide a clear framework specifying what
 users and applications should be allowed to do.
 
-   Lisp Programs must be prepared that a user's customizations may
+   Lisp programs must be prepared that user customizations may
 cause buffers to get displayed in an unexpected way.  They should
 never assume in their subsequent behavior, that the buffer has been
 shown precisely the way they asked for in the @var{action} argument of
@@ -3597,11 +3584,11 @@ shown precisely the way they asked for in the @var{action} argument of
    Users should not pose too many and too severe restrictions on how
 arbitrary buffers get displayed.  Otherwise, they will risk to lose
 the characteristics of showing a buffer for a certain purpose.
-Suppose an lisp program has been written to compare different versions
+Suppose a Lisp program has been written to compare different versions
 of a buffer in two windows side-by-side.  If the customization of
 @code{display-buffer-alist} prescribes that any such buffer should be
-always shown in or below the selected window, the lisp program will
-have a hard time to set up the desired window configuration via
+always shown in or below the selected window, the program will have a
+hard time to set up the desired window configuration via
 @code{display-buffer}.
 
    To specify a preference for showing an arbitrary buffer, users
@@ -3611,7 +3598,7 @@ in the previous subsection.  @code{display-buffer-alist} should be
 reserved for displaying specific buffers in a specific way.
 
 @item Consider reusing a window that already shows the buffer
-Generally, it's always a good idea for users and lisp program
+Generally, it's always a good idea for users and Lisp
 programmers to be prepared for the case that a window already shows
 the buffer in question and to reuse that window.  In the preceding
 subsection we have shown that failing to do so properly may cause
@@ -3655,19 +3642,19 @@ configurations.
 
    To produce a window configuration displaying multiple buffers (or
 different views of one and the same buffer) in one and the same
-display cycle, lisp program programmers will unavoidably have to write
+display cycle, Lisp programmers will unavoidably have to write
 their own action functions.  A few tricks listed below might help in
 this regard.
 
 @itemize @bullet
 @item
-Making windows atomic (@pxref{Atomic Windows}) avoids that an
-existing window composition gets broken when popping up a new window.
+Making windows atomic (@pxref{Atomic Windows}) avoids breaking an
+existing window composition when popping up a new window.
 The new window will pop up outside the composition instead.
 
 @item
 Temporarily dedicating windows to their buffers (@pxref{Dedicated
-Windows}) avoids that a window gets used for displaying a different
+Windows}) avoids using a window for displaying a different
 buffer.  A non-dedicated window will be used instead.
 
 @item
@@ -3679,8 +3666,8 @@ the same combination can be shrunk instead, though.
 @item
 Side windows (@pxref{Side Windows}) can be used for displaying
 specific buffers always in a window at the same position of a frame.
-This permits to group buffers that do not compete for being shown at
-the same time on a frame and show any such buffer in the same window
+This permits grouping buffers that do not compete for being shown at
+the same time on a frame and showing any such buffer in the same window
 without disrupting the display of other buffers.
 
 @item

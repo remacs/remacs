@@ -386,9 +386,10 @@ to alter this sequence of steps.
 
 @itemize
 @item
-First, check if the buffer should be displayed in the selected window
-regardless of other considerations.  You can tell Emacs to do this by
-adding a regular expression matching the buffer's name together with a
+If the buffer should be displayed in the selected window regardless of
+other considerations, reuse the selected window.  By default, this
+step is skipped, but you can tell Emacs not to skip it by adding a
+regular expression matching the buffer's name together with a
 reference to the @code{display-buffer-same-window} action function
 (@pxref{Buffer Display Action Functions,,Action Functions for Buffer
 Display, elisp, The Emacs Lisp Reference Manual}) to the option
@@ -405,17 +406,16 @@ selected window write:
 @end group
 @end example
 
-By default, @code{display-buffer-alist} is @code{nil}, so this step is
-skipped.
+By default, @code{display-buffer-alist} is @code{nil}.
 
 @item
 Otherwise, if the buffer is already displayed in an existing window,
 reuse that window.  Normally, only windows on the selected frame are
-considered, but windows on other frames are also reusable if a
-corresponding @code{reusable-frames} action alist entry (@pxref{Buffer
-Display Action Alists,,Action Alists for Buffer Display, elisp, The
-Emacs Lisp Reference Manual}) is used (see the next step for an
-example of how to do that).
+considered, but windows on other frames are also reusable if you use
+the corresponding @code{reusable-frames} action alist entry
+(@pxref{Buffer Display Action Alists,,Action Alists for Buffer
+Display, elisp, The Emacs Lisp Reference Manual}).  See the
+next step for an example of how to do that.
 
 @item
 Otherwise, optionally create a new frame and display the buffer there.
@@ -434,7 +434,7 @@ Lisp Reference Manual}) as follows:
 @end example
 
 This customization will also try to make the preceding step search for
-a reusable window on all visible of iconified frames
+a reusable window on all visible or iconified frames.
 
 @item
 Otherwise, try to create a new window by splitting a window on the
@@ -475,22 +475,21 @@ and display the buffer there.
 Some buffers are shown in windows for perusal rather than for editing.
 Help commands (@pxref{Help}) typically use a buffer called @file{*Help*}
 for that purpose, minibuffer completion (@pxref{Completion}) uses a
-buffer called @file{*Completions*} instead.  Such buffers are usually
+buffer called @file{*Completions*}, etc.  Such buffers are usually
 displayed only for a short period of time.
 
   Normally, Emacs chooses the window for such temporary displays via
-@code{display-buffer} as described in the previous subsection.  The
+@code{display-buffer}, as described in the previous subsection.  The
 @file{*Completions*} buffer, on the other hand, is normally displayed
 in a window at the bottom of the selected frame, regardless of the
 number of windows already shown on that frame.
 
   If you prefer Emacs to display a temporary buffer in a different
-fashion, we recommend customizing the variable
-@code{display-buffer-alist} (@pxref{Choosing Window,,Choosing a Window
-for Displaying a Buffer, elisp, The Emacs Lisp Reference Manual}).
-For example, to display @file{*Completions*} always below the selected
-window, use the following form in your initialization file
-(@pxref{Init File}):
+fashion, customize the variable @code{display-buffer-alist}
+(@pxref{Choosing Window,,Choosing a Window for Displaying a Buffer,
+elisp, The Emacs Lisp Reference Manual}) appropriately.  For example,
+to display @file{*Completions*} always below the selected window, use
+the following form in your initialization file (@pxref{Init File}):
 
 @example
 @group
@@ -504,10 +503,10 @@ window, use the following form in your initialization file
   The @file{*Completions*} buffer is also special in the sense that
 Emacs usually tries to make its window just as large as necessary to
 display all of its contents.  To resize windows showing other
-temporary displays like, for example, the @file{*Help*} buffer
-accordingly, turn on the minor mode (@pxref{Minor Modes})
-@code{temp-buffer-resize-mode} (@pxref{Temporary Displays,,Temporary
-Displays, elisp, The Emacs Lisp Reference Manual}).
+temporary displays, like, for example, the @file{*Help*} buffer, turn
+on the minor mode (@pxref{Minor Modes}) @code{temp-buffer-resize-mode}
+(@pxref{Temporary Displays,,Temporary Displays, elisp, The Emacs Lisp
+Reference Manual}).
 
 @vindex temp-buffer-max-height
 @vindex temp-buffer-max-width
@@ -515,7 +514,7 @@ Displays, elisp, The Emacs Lisp Reference Manual}).
 can be controlled by customizing the options
 @code{temp-buffer-max-height} and @code{temp-buffer-max-width}
 (@pxref{Temporary Displays,,Temporary Displays, elisp, The Emacs Lisp
-Reference Manual}) and cannot exceed the size of the containing frame.
+Reference Manual}), and cannot exceed the size of the containing frame.
 
 
 @node Window Convenience
