@@ -4925,17 +4925,6 @@ the corresponding element is nil.  */)
   return vec;
 }
 
-DEFUN ("font-match-p", Ffont_match_p, Sfont_match_p, 2, 2, 0,
-       doc: /* Return t if and only if font-spec SPEC matches with FONT.
-FONT is a font-spec, font-entity, or font-object. */)
-  (Lisp_Object spec, Lisp_Object font)
-{
-  CHECK_FONT_SPEC (spec);
-  CHECK_FONT (font);
-
-  return (font_match_p (spec, font) ? Qt : Qnil);
-}
-
 DEFUN ("font-at", Ffont_at, Sfont_at, 1, 3, 0,
        doc: /* Return a font-object for displaying a character at POSITION.
 Optional second arg WINDOW, if non-nil, is a window displaying
@@ -5359,7 +5348,6 @@ syms_of_font (void)
   defsubr (&Sclose_font);
   defsubr (&Squery_font);
   defsubr (&Sfont_get_glyphs);
-  defsubr (&Sfont_match_p);
   defsubr (&Sfont_at);
 #if 0
   defsubr (&Sdraw_string);

@@ -32,3 +32,10 @@
      (or
       (integerp id)
       (floatp id)))))
+
+(ert-deftest test-buffer-string ()
+  (let ((payload "test buffer contents"))
+    (with-temp-buffer
+      (insert payload)
+      (should (equal (buffer-string) payload)))))
+
