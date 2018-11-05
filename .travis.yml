@@ -13,6 +13,7 @@ addons:
       - texinfo
       - libgif-dev
       - libxmp-dev
+      - libgnutls28-dev
   homebrew:
     packages:
     - gnutls
