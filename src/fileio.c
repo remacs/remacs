@@ -5656,19 +5656,6 @@ No auto-save file will be written until the buffer changes again.  */)
   return Qnil;
 }
 
-DEFUN ("recent-auto-save-p", Frecent_auto_save_p, Srecent_auto_save_p,
-       0, 0, 0,
-       doc: /* Return t if current buffer has been auto-saved recently.
-More precisely, if it has been auto-saved since last read from or saved
-in the visited file.  If the buffer has no visited file,
-then any auto-save counts as "recent".  */)
-  (void)
-{
-  /* FIXME: maybe we should return nil for indirect buffers since
-     they're never autosaved.  */
-  return (SAVE_MODIFF < BUF_AUTOSAVE_MODIFF (current_buffer) ? Qt : Qnil);
-}
-
 /* Reading and completing file names.  */
 
 DEFUN ("next-read-file-uses-dialog-p", Fnext_read_file_uses_dialog_p,
@@ -6117,7 +6104,6 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sset_visited_file_modtime);
   defsubr (&Sdo_auto_save);
   defsubr (&Sset_buffer_auto_saved);
-  defsubr (&Srecent_auto_save_p);
 
   defsubr (&Snext_read_file_uses_dialog_p);
 

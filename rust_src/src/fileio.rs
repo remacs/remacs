@@ -34,4 +34,17 @@ pub fn clear_buffer_auto_save_failure() {
     ThreadState::current_buffer().auto_save_failure_time = 0;
 }
 
+/// Return t if current buffer has been auto-saved recently.
+/// More precisely, if it has been auto-saved since last read from or saved
+/// in the visited file.  If the buffer has no visited file,
+/// then any auto-save counts as "recent".
+#[lisp_fn]
+pub fn recent_auto_save_p() -> bool {
+    let cur_buf = ThreadState::current_buffer();
+
+    // FIXME: maybe we should return nil for indirect buffers since
+    //  they're never autosaved.
+    cur_buf.modifications_since_save() < cur_buf.auto_save_modified
+}
+
 include!(concat!(env!("OUT_DIR"), "/fileio_exports.rs"));
