@@ -951,8 +951,8 @@ have-tests:
 	fi
 
 check check-maybe check-expensive: have-tests all
-	$(MAKE) -C test $@
 	$(MAKE) -C src $@
+	$(MAKE) -C test $@
 
 dist:
 	cd ${srcdir}; ./make-dist
