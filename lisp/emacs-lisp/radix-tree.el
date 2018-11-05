@@ -74,7 +74,7 @@
             (cmp (compare-strings prefix nil nil key i ni)))
        (if (eq t cmp)
            (pcase (radix-tree--remove ptree key ni)
-             (`nil rtree)
+             ('nil rtree)
              (`((,pprefix . ,pptree))
               `((,(concat prefix pprefix) . ,pptree) . ,rtree))
              (nptree `((,prefix . ,nptree) . ,rtree)))

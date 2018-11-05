@@ -322,7 +322,7 @@ places where they originally did not directly appear."
   ;; so we never touch it(unless we enter to the other closure).
   ;;(if (listp form) (print (car form)) form)
   (pcase form
-    (`(,(and letsym (or `let* `let)) ,binders . ,body)
+    (`(,(and letsym (or 'let* 'let)) ,binders . ,body)
 
 					; let and let* special forms
      (let ((binders-new '())
@@ -454,7 +454,7 @@ places where they originally did not directly appear."
     (`(function . ,_) form)
 
 					;defconst, defvar
-    (`(,(and sym (or `defconst `defvar)) ,definedsymbol . ,forms)
+    (`(,(and sym (or 'defconst 'defvar)) ,definedsymbol . ,forms)
      `(,sym ,definedsymbol
             . ,(when (consp forms)
                  (cons (cconv-convert (car forms) env extend)
@@ -496,8 +496,8 @@ places where they originally did not directly appear."
                        `((let ((,var (list ,var))) ,@body))))))
              handlers))))
 
-    (`(,(and head (or (and `catch (guard byte-compile--use-old-handlers))
-                      `unwind-protect))
+    (`(,(and head (or (and 'catch (guard byte-compile--use-old-handlers))
+                      'unwind-protect))
        ,form . ,body)
      `(,head ,(cconv-convert form env extend)
         :fun-body ,(cconv--convert-function () body env form)))
@@ -526,7 +526,7 @@ places where they originally did not directly appear."
              `(progn . ,(nreverse prognlist))
            (car prognlist)))))
 
-    (`(,(and (or `funcall `apply) callsym) ,fun . ,args)
+    (`(,(and (or 'funcall 'apply) callsym) ,fun . ,args)
      ;; These are not special forms but we treat them separately for the needs
      ;; of lambda lifting.
      (let ((mapping (cdr (assq fun env))))
@@ -655,7 +655,7 @@ This function does not return anything but instead fills the
 and updates the data stored in ENV."
   (pcase form
 					; let special form
-    (`(,(and (or `let* `let) letsym) ,binders . ,body-forms)
+    (`(,(and (or 'let* 'let) letsym) ,binders . ,body-forms)
 
      (let ((orig-env env)
            (newvars nil)
@@ -739,18 +739,18 @@ and updates the data stored in ENV."
                                    form "variable"))))
 
     ;; FIXME: The bytecode for unwind-protect forces us to wrap the unwind.
-    (`(,(or (and `catch (guard byte-compile--use-old-handlers))
-            `unwind-protect)
+    (`(,(or (and 'catch (guard byte-compile--use-old-handlers))
+            'unwind-protect)
        ,form . ,body)
      (cconv-analyze-form form env)
      (cconv--analyze-function () body env form))
 
     (`(defvar ,var) (push var byte-compile-bound-variables))
-    (`(,(or `defconst `defvar) ,var ,value . ,_)
+    (`(,(or 'defconst 'defvar) ,var ,value . ,_)
      (push var byte-compile-bound-variables)
      (cconv-analyze-form value env))
 
-    (`(,(or `funcall `apply) ,fun . ,args)
+    (`(,(or 'funcall 'apply) ,fun . ,args)
      ;; Here we ignore fun because funcall and apply are the only two
      ;; functions where we can pass a candidate for lambda lifting as
      ;; argument.  So, if we see fun elsewhere, we'll delete it from

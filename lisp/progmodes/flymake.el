@@ -518,7 +518,7 @@ Currently accepted REPORT-KEY arguments are:
 (put :warning 'flymake-category 'flymake-warning)
 (put :note 'flymake-category 'flymake-note)
 
-(defvar flymake-diagnostic-types-alist `() "")
+(defvar flymake-diagnostic-types-alist '() "")
 (make-obsolete-variable
  'flymake-diagnostic-types-alist
  "Set properties on the diagnostic symbols instead. See Info
@@ -1112,7 +1112,7 @@ default) no filter is applied."
 ;;; Mode-line and menu
 ;;;
 (easy-menu-define flymake-menu flymake-mode-map "Flymake"
-  `("Flymake"
+  '("Flymake"
     [ "Go to next problem"      flymake-goto-next-error t ]
     [ "Go to previous problem"  flymake-goto-prev-error t ]
     [ "Check now"               flymake-start t ]
@@ -1121,7 +1121,7 @@ default) no filter is applied."
     [ "Go to log buffer"        flymake-switch-to-log-buffer t ]
     [ "Turn off Flymake"        flymake-mode t ]))
 
-(defvar flymake--mode-line-format `(:eval (flymake--mode-line-format)))
+(defvar flymake--mode-line-format '(:eval (flymake--mode-line-format)))
 
 (put 'flymake--mode-line-format 'risky-local-variable t)
 
@@ -1160,16 +1160,16 @@ default) no filter is applied."
                       map))
       ,@(pcase-let ((`(,ind ,face ,explain)
                      (cond ((null known)
-                            `("?" mode-line "No known backends"))
+                            '("?" mode-line "No known backends"))
                            (some-waiting
                             `("Wait" compilation-mode-line-run
                               ,(format "Waiting for %s running backend(s)"
                                        (length some-waiting))))
                            (all-disabled
-                            `("!" compilation-mode-line-run
+                            '("!" compilation-mode-line-run
                               "All backends disabled"))
                            (t
-                            `(nil nil nil)))))
+                            '(nil nil nil)))))
           (when ind
             `((":"
                (:propertize ,ind
@@ -1297,14 +1297,14 @@ POS can be a buffer position or a button"
   "Flymake diagnostics"
   "A mode for listing Flymake diagnostics."
   (setq tabulated-list-format
-        `[("Line" 5 (lambda (l1 l2)
-                      (< (plist-get (car l1) :line)
-                         (plist-get (car l2) :line)))
+        `[("Line" 5 ,(lambda (l1 l2)
+                       (< (plist-get (car l1) :line)
+                          (plist-get (car l2) :line)))
            :right-align t)
           ("Col" 3 nil :right-align t)
-          ("Type" 8 (lambda (l1 l2)
-                      (< (plist-get (car l1) :severity)
-                         (plist-get (car l2) :severity))))
+          ("Type" 8 ,(lambda (l1 l2)
+                       (< (plist-get (car l1) :severity)
+                          (plist-get (car l2) :severity))))
           ("Message" 0 t)])
   (setq tabulated-list-entries
         'flymake--diagnostics-buffer-entries)

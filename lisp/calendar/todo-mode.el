@@ -6389,8 +6389,7 @@ Filtered Items mode following todo (not done) items."
 ;; -----------------------------------------------------------------------------
 
 (defvar todo-key-bindings-t
-  `(
-    ("Af"	     todo-find-archive)
+  '(("Af"	     todo-find-archive)
     ("Ac"	     todo-choose-archive)
     ("Ad"	     todo-archive-done-item)
     ("Cv"	     todo-toggle-view-done-items)
@@ -6421,13 +6420,11 @@ Filtered Items mode following todo (not done) items."
     ("k"	     todo-delete-item)
     ("m"	     todo-move-item)
     ("u"	     todo-item-undone)
-    ([remap newline] newline-and-indent)
-   )
+    ([remap newline] newline-and-indent))
   "List of key bindings for Todo mode only.")
 
 (defvar todo-key-bindings-t+a+f
-  `(
-    ("C*" todo-mark-category)
+  '(("C*" todo-mark-category)
     ("Cu" todo-unmark-category)
     ("Fh" todo-toggle-item-header)
     ("h"  todo-toggle-item-header)
@@ -6444,27 +6441,22 @@ Filtered Items mode following todo (not done) items."
     ("p"  todo-previous-item)
     ("q"  todo-quit)
     ("s"  todo-save)
-    ("t"  todo-show)
-   )
+    ("t"  todo-show))
   "List of key bindings for Todo, Archive, and Filtered Items modes.")
 
 (defvar todo-key-bindings-t+a
-  `(
-    ("Fc" todo-show-categories-table)
+  '(("Fc" todo-show-categories-table)
     ("S"  todo-search)
     ("X"  todo-clear-matches)
     ("b"  todo-backward-category)
     ("f"  todo-forward-category)
-    ("*"  todo-toggle-mark-item)
-   )
+    ("*"  todo-toggle-mark-item))
   "List of key bindings for Todo and Todo Archive modes.")
 
 (defvar todo-key-bindings-t+f
-  `(
-    ("l" todo-lower-item-priority)
+  '(("l" todo-lower-item-priority)
     ("r" todo-raise-item-priority)
-    ("#" todo-set-item-priority)
-   )
+    ("#" todo-set-item-priority))
   "List of key bindings for Todo and Todo Filtered Items modes.")
 
 (defvar todo-mode-map

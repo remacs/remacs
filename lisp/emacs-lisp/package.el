@@ -496,9 +496,9 @@ This is, approximately, the inverse of `version-to-list'.
 
 (defun package-desc-suffix (pkg-desc)
   (pcase (package-desc-kind pkg-desc)
-    (`single ".el")
-    (`tar ".tar")
-    (`dir "")
+    ('single ".el")
+    ('tar ".tar")
+    ('dir "")
     (kind (error "Unknown package kind: %s" kind))))
 
 (defun package-desc--keywords (pkg-desc)
@@ -846,7 +846,7 @@ untar into a directory named DIR; otherwise, signal an error."
          (dirname (package-desc-full-name pkg-desc))
          (pkg-dir (expand-file-name dirname package-user-dir)))
     (pcase (package-desc-kind pkg-desc)
-      (`dir
+      ('dir
        (make-directory pkg-dir t)
        (let ((file-list
               (directory-files
@@ -860,12 +860,12 @@ untar into a directory named DIR; otherwise, signal an error."
          ;; things simple by ensuring we're one of them.
          (setf (package-desc-kind pkg-desc)
                (if (> (length file-list) 1) 'tar 'single))))
-      (`tar
+      ('tar
        (make-directory package-user-dir t)
        ;; FIXME: should we delete PKG-DIR if it exists?
        (let* ((default-directory (file-name-as-directory package-user-dir)))
          (package-untar-buffer dirname)))
-      (`single
+      ('single
        (let ((el-file (expand-file-name (format "%s.el" name) pkg-dir)))
          (make-directory pkg-dir t)
          (package--write-file-no-coding el-file)))
@@ -2494,7 +2494,7 @@ Otherwise no newline is inserted."
 
 (easy-menu-define package-menu-mode-menu package-menu-mode-map
   "Menu for `package-menu-mode'."
-  `("Package"
+  '("Package"
     ["Describe Package" package-menu-describe-package :help "Display information about this package"]
     ["Help" package-menu-quick-help :help "Show short key binding help for package-menu-mode"]
     "--"

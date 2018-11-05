@@ -342,7 +342,7 @@ It returns a file name which can be used directly as argument of
     (substitute-key-definition 'complete-symbol 'completion-at-point
                                map global-map)
     (easy-menu-define python-menu map "Python Mode menu"
-      `("Python"
+      '("Python"
         :help "Python-specific Features"
         ["Shift region left" python-indent-shift-left :active mark-active
          :help "Shift region left by a single indentation step"]
@@ -469,13 +469,13 @@ This variant of `rx' supports common Python named REGEXPS."
 (eval-and-compile
   (defun python-syntax--context-compiler-macro (form type &optional syntax-ppss)
     (pcase type
-      (`'comment
+      (''comment
        `(let ((ppss (or ,syntax-ppss (syntax-ppss))))
           (and (nth 4 ppss) (nth 8 ppss))))
-      (`'string
+      (''string
        `(let ((ppss (or ,syntax-ppss (syntax-ppss))))
           (and (nth 3 ppss) (nth 8 ppss))))
-      (`'paren
+      (''paren
        `(nth 1 (or ,syntax-ppss (syntax-ppss))))
       (_ form))))
 
@@ -486,9 +486,9 @@ character address of the specified TYPE."
   (declare (compiler-macro python-syntax--context-compiler-macro))
   (let ((ppss (or syntax-ppss (syntax-ppss))))
     (pcase type
-      (`comment (and (nth 4 ppss) (nth 8 ppss)))
-      (`string (and (nth 3 ppss) (nth 8 ppss)))
-      (`paren (nth 1 ppss))
+      ('comment (and (nth 4 ppss) (nth 8 ppss)))
+      ('string (and (nth 3 ppss) (nth 8 ppss)))
+      ('paren (nth 1 ppss))
       (_ nil))))
 
 (defun python-syntax-context-type (&optional syntax-ppss)
@@ -4015,11 +4015,11 @@ JUSTIFY should be used (if applicable) as in `fill-paragraph'."
             ;; is NIL means to not add any newlines for start or end
             ;; of docstring.  See `python-fill-docstring-style' for a
             ;; graphic idea of each style.
-            (`django (cons 1 1))
-            (`onetwo (and multi-line-p (cons 1 2)))
-            (`pep-257 (and multi-line-p (cons nil 2)))
-            (`pep-257-nn (and multi-line-p (cons nil 1)))
-            (`symmetric (and multi-line-p (cons 1 1)))))
+            ('django (cons 1 1))
+            ('onetwo (and multi-line-p (cons 1 2)))
+            ('pep-257 (and multi-line-p (cons nil 2)))
+            ('pep-257-nn (and multi-line-p (cons nil 1)))
+            ('symmetric (and multi-line-p (cons 1 1)))))
          (fill-paragraph-function))
     (save-restriction
       (narrow-to-region str-start-pos str-end-pos)
@@ -5252,7 +5252,7 @@ configuration could be:
 By default messages are considered errors."
   :version "26.1"
   :group 'python-flymake
-  :type `(alist :key-type (regexp)
+  :type '(alist :key-type (regexp)
                 :value-type (symbol)))
 
 (defvar-local python--flymake-proc nil)
@@ -5414,7 +5414,7 @@ REPORT-FN is Flymake's callback function."
 
   (add-to-list
    'hs-special-modes-alist
-   `(python-mode
+   '(python-mode
      "\\s-*\\_<\\(?:def\\|class\\)\\_>"
      ;; Use the empty string as end regexp so it doesn't default to
      ;; "\\s)".  This way parens at end of defun are properly hidden.

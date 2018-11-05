@@ -175,16 +175,16 @@ This function is called by `org-babel-execute-src-block'."
                        (org-babel-temp-file "sql-out-")))
 	 (header-delim "")
          (command (pcase (intern engine)
-                    (`dbi (format "dbish --batch %s < %s | sed '%s' > %s"
+                    ('dbi (format "dbish --batch %s < %s | sed '%s' > %s"
 				  (or cmdline "")
 				  (org-babel-process-file-name in-file)
 				  "/^+/d;s/^|//;s/(NULL)/ /g;$d"
 				  (org-babel-process-file-name out-file)))
-                    (`monetdb (format "mclient -f tab %s < %s > %s"
+                    ('monetdb (format "mclient -f tab %s < %s > %s"
 				      (or cmdline "")
 				      (org-babel-process-file-name in-file)
 				      (org-babel-process-file-name out-file)))
-		    (`mssql (format "sqlcmd %s -s \"\t\" %s -i %s -o %s"
+		    ('mssql (format "sqlcmd %s -s \"\t\" %s -i %s -o %s"
 				    (or cmdline "")
 				    (org-babel-sql-dbstring-mssql
 				     dbhost dbuser dbpassword database)
@@ -192,14 +192,14 @@ This function is called by `org-babel-execute-src-block'."
 				     (org-babel-process-file-name in-file))
 				    (org-babel-sql-convert-standard-filename
 				     (org-babel-process-file-name out-file))))
-                    (`mysql (format "mysql %s %s %s < %s > %s"
+                    ('mysql (format "mysql %s %s %s < %s > %s"
 				    (org-babel-sql-dbstring-mysql
 				     dbhost dbport dbuser dbpassword database)
 				    (if colnames-p "" "-N")
 				    (or cmdline "")
 				    (org-babel-process-file-name in-file)
 				    (org-babel-process-file-name out-file)))
-		    (`postgresql (format
+		    ('postgresql (format
 				  "%spsql --set=\"ON_ERROR_STOP=1\" %s -A -P \
 footer=off -F \"\t\"  %s -f %s -o %s %s"
 				  (if dbpassword
@@ -211,7 +211,7 @@ footer=off -F \"\t\"  %s -f %s -o %s %s"
 				  (org-babel-process-file-name in-file)
 				  (org-babel-process-file-name out-file)
 				  (or cmdline "")))
-		    (`sqsh (format "sqsh %s %s -i %s -o %s -m csv"
+		    ('sqsh (format "sqsh %s %s -i %s -o %s -m csv"
 				   (or cmdline "")
 				   (org-babel-sql-dbstring-sqsh
 				    dbhost dbuser dbpassword database)
@@ -219,13 +219,13 @@ footer=off -F \"\t\"  %s -f %s -o %s %s"
 				    (org-babel-process-file-name in-file))
 				   (org-babel-sql-convert-standard-filename
 				    (org-babel-process-file-name out-file))))
-		    (`vertica (format "vsql %s -f %s -o %s %s"
-				    (org-babel-sql-dbstring-vertica
-				     dbhost dbport dbuser dbpassword database)
-				    (org-babel-process-file-name in-file)
-				    (org-babel-process-file-name out-file)
-				    (or cmdline "")))
-                    (`oracle (format
+		    ('vertica (format "vsql %s -f %s -o %s %s"
+				      (org-babel-sql-dbstring-vertica
+				       dbhost dbport dbuser dbpassword database)
+				      (org-babel-process-file-name in-file)
+				      (org-babel-process-file-name out-file)
+				      (or cmdline "")))
+                    ('oracle (format
 			      "sqlplus -s %s < %s > %s"
 			      (org-babel-sql-dbstring-oracle
 			       dbhost dbport dbuser dbpassword database)
@@ -235,8 +235,8 @@ footer=off -F \"\t\"  %s -f %s -o %s %s"
     (with-temp-file in-file
       (insert
        (pcase (intern engine)
-	 (`dbi "/format partbox\n")
-         (`oracle "SET PAGESIZE 50000
+	 ('dbi "/format partbox\n")
+         ('oracle "SET PAGESIZE 50000
 SET NEWPAGE 0
 SET TAB OFF
 SET SPACE 0
@@ -249,10 +249,10 @@ SET MARKUP HTML OFF SPOOL OFF
 SET COLSEP '|'
 
 ")
-	 ((or `mssql `sqsh) "SET NOCOUNT ON
+	 ((or 'mssql 'sqsh) "SET NOCOUNT ON
 
 ")
-	 (`vertica "\\a\n")
+	 ('vertica "\\a\n")
 	 (_ ""))
        (org-babel-expand-body:sql body params)
        ;; "sqsh" requires "go" inserted at EOF.

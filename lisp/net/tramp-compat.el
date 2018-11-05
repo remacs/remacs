@@ -232,8 +232,8 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 ;; `cl-struct-slot-info' has been introduced with Emacs 25.
 (defmacro tramp-compat-tramp-file-name-slots ()
   (if (fboundp 'cl-struct-slot-info)
-      `(cdr (mapcar 'car (cl-struct-slot-info 'tramp-file-name)))
-    `(cdr (mapcar 'car (get 'tramp-file-name 'cl-struct-slots)))))
+      '(cdr (mapcar 'car (cl-struct-slot-info 'tramp-file-name)))
+    '(cdr (mapcar 'car (get 'tramp-file-name 'cl-struct-slots)))))
 
 ;; The signature of `tramp-make-tramp-file-name' has been changed.
 ;; Therefore, we cannot us `url-tramp-convert-url-to-tramp' prior

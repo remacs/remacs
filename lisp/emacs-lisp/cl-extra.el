@@ -576,9 +576,9 @@ too large if positive or too small if negative)."
   "Concatenate, into a sequence of type TYPE, the argument SEQUENCEs.
 \n(fn TYPE SEQUENCE...)"
   (pcase type
-    (`vector (apply #'vconcat sequences))
-    (`string (apply #'concat sequences))
-    (`list (apply #'append (append sequences '(nil))))
+    ('vector (apply #'vconcat sequences))
+    ('string (apply #'concat sequences))
+    ('list (apply #'append (append sequences '(nil))))
     (_ (error "Not a sequence type name: %S" type))))
 
 ;;; List functions.
@@ -742,7 +742,7 @@ including `cl-block' and `cl-eval-when'."
 (with-eval-after-load 'find-func
   (defvar find-function-regexp-alist)
   (add-to-list 'find-function-regexp-alist
-               `(define-type . cl--typedef-regexp)))
+               '(define-type . cl--typedef-regexp)))
 
 (define-button-type 'cl-help-type
   :supertype 'help-function-def

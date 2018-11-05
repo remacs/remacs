@@ -416,7 +416,7 @@ SCHEDULED: or DEADLINE: or ANYTHINGLIKETHIS:"
    (let ((kwds org-todo-keywords-1))
      (org-mouse-keyword-menu
       kwds
-      `(lambda (kwd) (org-todo kwd))
+      (lambda (kwd) (org-todo kwd))
       (lambda (kwd) (equal state kwd))))))
 
 (defun org-mouse-tag-menu ()		;todo
@@ -461,11 +461,11 @@ SCHEDULED: or DEADLINE: or ANYTHINGLIKETHIS:"
 
 (defun org-mouse-agenda-type (type)
   (pcase type
-    (`tags "Tags: ")
-    (`todo "TODO: ")
-    (`tags-tree "Tags tree: ")
-    (`todo-tree "TODO tree: ")
-    (`occur-tree "Occur tree: ")
+    ('tags "Tags: ")
+    ('todo "TODO: ")
+    ('tags-tree "Tags tree: ")
+    ('todo-tree "TODO tree: ")
+    ('occur-tree "Occur tree: ")
     (_ "Agenda command ???")))
 
 (defun org-mouse-list-options-menu (alloptions &optional function)

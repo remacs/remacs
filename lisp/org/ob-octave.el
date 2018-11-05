@@ -178,14 +178,14 @@ value of the last statement in BODY, as elisp."
 		 org-babel-matlab-shell-command
 	       org-babel-octave-shell-command)))
     (pcase result-type
-      (`output (org-babel-eval cmd body))
-      (`value (let ((tmp-file (org-babel-temp-file "octave-")))
-	       (org-babel-eval
-		cmd
-		(format org-babel-octave-wrapper-method body
-			(org-babel-process-file-name tmp-file 'noquote)
-			(org-babel-process-file-name tmp-file 'noquote)))
-	       (org-babel-octave-import-elisp-from-file tmp-file))))))
+      ('output (org-babel-eval cmd body))
+      ('value (let ((tmp-file (org-babel-temp-file "octave-")))
+	        (org-babel-eval
+		 cmd
+		 (format org-babel-octave-wrapper-method body
+			 (org-babel-process-file-name tmp-file 'noquote)
+			 (org-babel-process-file-name tmp-file 'noquote)))
+	        (org-babel-octave-import-elisp-from-file tmp-file))))))
 
 (defun org-babel-octave-evaluate-session
     (session body result-type &optional matlabp)
@@ -194,11 +194,11 @@ value of the last statement in BODY, as elisp."
 	 (wait-file (org-babel-temp-file "matlab-emacs-link-wait-signal-"))
 	 (full-body
 	  (pcase result-type
-	    (`output
+	    ('output
 	     (mapconcat
 	      #'org-babel-chomp
 	      (list body org-babel-octave-eoe-indicator) "\n"))
-	    (`value
+	    ('value
 	     (if (and matlabp org-babel-matlab-with-emacs-link)
 		 (concat
 		  (format org-babel-matlab-emacs-link-wrapper-method
@@ -232,9 +232,9 @@ value of the last statement in BODY, as elisp."
 		     t full-body)
 		  (insert full-body) (comint-send-input nil t)))) results)
     (pcase result-type
-      (`value
+      ('value
        (org-babel-octave-import-elisp-from-file tmp-file))
-      (`output
+      ('output
        (setq results
 	     (if matlabp
 		 (cdr (reverse (delq "" (mapcar

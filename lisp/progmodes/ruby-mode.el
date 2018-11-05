@@ -586,12 +586,12 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
 
 (defun ruby-smie-rules (kind token)
   (pcase (cons kind token)
-    (`(:elem . basic) ruby-indent-level)
+    ('(:elem . basic) ruby-indent-level)
     ;; "foo" "bar" is the concatenation of the two strings, so the second
     ;; should be aligned with the first.
-    (`(:elem . args) (if (looking-at "\\s\"") 0))
+    ('(:elem . args) (if (looking-at "\\s\"") 0))
     ;; (`(:after . ",") (smie-rule-separator kind))
-    (`(:before . ";")
+    ('(:before . ";")
      (cond
       ((smie-rule-parent-p "def" "begin" "do" "class" "module" "for"
                            "while" "until" "unless"
@@ -638,12 +638,12 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        ;; because we want to reject hanging tokens at bol, too.
        (unless (or (eolp) (forward-comment 1))
          (cons 'column (current-column)))))
-    (`(:before . " @ ")
+    ('(:before . " @ ")
      (save-excursion
        (skip-chars-forward " \t")
        (cons 'column (current-column))))
-    (`(:before . "do") (ruby-smie--indent-to-stmt))
-    (`(:before . ".")
+    ('(:before . "do") (ruby-smie--indent-to-stmt))
+    ('(:before . ".")
      (if (smie-rule-sibling-p)
          (and ruby-align-chained-calls 0)
        (smie-backward-sexp ".")
@@ -651,7 +651,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
                         ruby-indent-level))))
     (`(:before . ,(or "else" "then" "elsif" "rescue" "ensure"))
      (smie-rule-parent))
-    (`(:before . "when")
+    ('(:before . "when")
      ;; Align to the previous `when', but look up the virtual
      ;; indentation of `case'.
      (if (smie-rule-sibling-p) 0 (smie-rule-parent)))
@@ -668,7 +668,7 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
        (if (ruby-smie--indent-to-stmt-p token)
            (ruby-smie--indent-to-stmt)
          (cons 'column (current-column)))))
-    (`(:before . "iuwu-mod")
+    ('(:before . "iuwu-mod")
      (smie-rule-parent ruby-indent-level))
     ))
 
@@ -756,9 +756,9 @@ It is used when `ruby-encoding-magic-comment-style' is set to `custom'."
 The style of the comment is controlled by `ruby-encoding-magic-comment-style'."
   (let ((encoding-magic-comment-template
          (pcase ruby-encoding-magic-comment-style
-           (`ruby "# coding: %s")
-           (`emacs "# -*- coding: %s -*-")
-           (`custom
+           ('ruby "# coding: %s")
+           ('emacs "# -*- coding: %s -*-")
+           ('custom
             ruby-custom-encoding-magic-comment-template))))
     (insert
      (format encoding-magic-comment-template encoding)

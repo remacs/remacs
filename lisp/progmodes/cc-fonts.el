@@ -672,7 +672,7 @@ stuff.  Used on level 1 and higher."
 
       ,@(when (c-major-mode-is 'pike-mode)
 	  ;; Recognize hashbangs in Pike.
-	  `((eval . (list "\\`#![^\n\r]*"
+	  '((eval . (list "\\`#![^\n\r]*"
 			  0 c-preprocessor-face-name))))
 
       ;; Make hard spaces visible through an inverted `font-lock-warning-face'.
@@ -1937,7 +1937,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
       ;; Fontify generic colon labels in languages that support them.
       ,@(when (c-lang-const c-recognize-colon-labels)
-	  `(c-font-lock-labels))))
+	  '(c-font-lock-labels))))
 
 (c-lang-defconst c-complex-decl-matchers
   "Complex font lock matchers for types and declarations.  Used on level
@@ -1983,10 +1983,10 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
       ;; Fontify angle bracket arglists like templates in C++.
       ,@(when (c-lang-const c-recognize-<>-arglists)
-	  `(c-font-lock-<>-arglists))
+	  '(c-font-lock-<>-arglists))
 
       ,@(when (c-major-mode-is 'c++-mode)
-	  `(c-font-lock-c++-lambda-captures))
+	  '(c-font-lock-c++-lambda-captures))
 
       ;; The first two rules here mostly find occurrences that
       ;; `c-font-lock-declarations' has found already, but not
@@ -2008,7 +2008,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ,@(when (c-major-mode-is 'c++-mode)
 	  ;; This pattern is a probably a "(MATCHER . ANCHORED-HIGHLIGHTER)"
 	  ;; (see Elisp page "Search-based Fontification").
-	  `(("\\<new\\>"
+	  '(("\\<new\\>"
 	     (c-font-lock-c++-new))))
       ))
 
@@ -2076,10 +2076,10 @@ higher."
   t `(,@(when (c-lang-const c-brace-list-decl-kwds)
       ;; Fontify the remaining identifiers inside an enum list when we start
       ;; inside it.
-	  `(c-font-lock-enum-tail
-      ;; Fontify the identifiers inside enum lists.  (The enum type
-      ;; name is handled by `c-simple-decl-matchers' or
-      ;; `c-complex-decl-matchers' below.
+	  '(c-font-lock-enum-tail
+	    ;; Fontify the identifiers inside enum lists.  (The enum type
+	    ;; name is handled by `c-simple-decl-matchers' or
+	    ;; `c-complex-decl-matchers' below.
 	    c-font-lock-enum-body))
 
 	;; Fontify labels after goto etc.
@@ -2130,7 +2130,7 @@ higher."
 		     (if (> (point) limit) (goto-char limit))))))))
 
 	,@(when (c-major-mode-is 'java-mode)
-	    `((eval . (list "\\<\\(@[a-zA-Z0-9]+\\)\\>" 1 c-annotation-face))))
+	    '((eval . (list "\\<\\(@[a-zA-Z0-9]+\\)\\>" 1 c-annotation-face))))
       ))
 
 (c-lang-defconst c-matchers-1

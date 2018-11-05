@@ -1108,7 +1108,7 @@ Assumes that file has been compiled with debugging support."
   (set (make-local-variable 'comment-start) "*")
   (set (make-local-variable 'comment-start-skip) "^\\*[ \t]*")
   (set (make-local-variable 'font-lock-defaults)
-       `(mixal-font-lock-keywords))
+       '(mixal-font-lock-keywords))
   (set (make-local-variable 'syntax-propertize-function)
        mixal-syntax-propertize-function)
   ;; might add an indent function in the future

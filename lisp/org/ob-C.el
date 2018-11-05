@@ -136,7 +136,7 @@ or `org-babel-execute:C++' or `org-babel-execute:D'."
   (let* ((tmp-src-file (org-babel-temp-file
 			"C-src-"
 			(pcase org-babel-c-variant
-			  (`c ".c") (`cpp ".cpp") (`d ".d"))))
+			  ('c ".c") ('cpp ".cpp") ('d ".d"))))
 	 (tmp-bin-file			;not used for D
 	  (org-babel-process-file-name
 	   (org-babel-temp-file "C-bin-" org-babel-exeext)))
@@ -154,29 +154,29 @@ or `org-babel-execute:C++' or `org-babel-execute:D'."
 			  " "))
 	 (full-body
 	  (pcase org-babel-c-variant
-	    (`c (org-babel-C-expand-C body params))
-	    (`cpp (org-babel-C-expand-C++ body params))
-	    (`d (org-babel-C-expand-D body params)))))
+	    ('c (org-babel-C-expand-C body params))
+	    ('cpp (org-babel-C-expand-C++ body params))
+	    ('d (org-babel-C-expand-D body params)))))
     (with-temp-file tmp-src-file (insert full-body))
     (pcase org-babel-c-variant
-      ((or `c `cpp)
+      ((or 'c 'cpp)
        (org-babel-eval
 	(format "%s -o %s %s %s %s"
 		(pcase org-babel-c-variant
-		  (`c org-babel-C-compiler)
-		  (`cpp org-babel-C++-compiler))
+		  ('c org-babel-C-compiler)
+		  ('cpp org-babel-C++-compiler))
 		tmp-bin-file
 		flags
 		(org-babel-process-file-name tmp-src-file)
 		libs)
 	""))
-      (`d nil)) ;; no separate compilation for D
+      ('d nil)) ;; no separate compilation for D
     (let ((results
 	   (org-babel-eval
 	    (pcase org-babel-c-variant
-	      ((or `c `cpp)
+	      ((or 'c 'cpp)
 	       (concat tmp-bin-file cmdline))
-	      (`d
+	      ('d
 	       (format "%s %s %s %s"
 		       org-babel-D-compiler
 		       flags
@@ -323,9 +323,9 @@ FORMAT can be either a format string or a function which is called with VAL."
   (let* ((basetype (org-babel-C-val-to-base-type val))
 	 (type
 	  (pcase basetype
-	    (`integerp '("int" "%d"))
-	    (`floatp '("double" "%f"))
-	    (`stringp
+	    ('integerp '("int" "%d"))
+	    ('floatp '("double" "%f"))
+	    ('stringp
 	     (list
 	      (if (eq org-babel-c-variant 'd) "string" "const char*")
 	      "\"%s\""))
@@ -373,11 +373,11 @@ FORMAT can be either a format string or a function which is called with VAL."
     (let ((type nil))
       (mapc (lambda (v)
 	      (pcase (org-babel-C-val-to-base-type v)
-		(`stringp (setq type 'stringp))
-		(`floatp
+		('stringp (setq type 'stringp))
+		('floatp
 		 (if (or (not type) (eq type 'integerp))
 		     (setq type 'floatp)))
-		(`integerp
+		('integerp
 		 (unless type (setq type 'integerp)))))
 	    val)
       type))
@@ -420,7 +420,7 @@ of the same value."
   "Generate a utility function to convert a column name
 into a column number."
   (pcase org-babel-c-variant
-    ((or `c `cpp)
+    ((or 'c 'cpp)
      "int get_column_num (int nbcols, const char** header, const char* column)
 {
   int c;
@@ -430,7 +430,7 @@ into a column number."
   return -1;
 }
 ")
-    (`d
+    ('d
      "int get_column_num (string[] header, string column)
 {
   foreach (c, h; header)
@@ -448,18 +448,18 @@ specifying a variable with the name of the table."
     (concat
      (format
       (pcase org-babel-c-variant
-	((or `c `cpp) "const char* %s_header[%d] = {%s};")
-	(`d "string %s_header[%d] = [%s];"))
+	((or 'c 'cpp) "const char* %s_header[%d] = {%s};")
+	('d "string %s_header[%d] = [%s];"))
       table
       (length headers)
       (mapconcat (lambda (h) (format "%S" h)) headers ","))
      "\n"
      (pcase org-babel-c-variant
-       ((or `c `cpp)
+       ((or 'c 'cpp)
 	(format
 	 "const char* %s_h (int row, const char* col) { return %s[row][get_column_num(%d,%s_header,col)]; }"
 	 table table (length headers) table))
-       (`d
+       ('d
 	(format
 	 "string %s_h (size_t row, string col) { return %s[row][get_column_num(%s_header,col)]; }"
 	 table table table))))))

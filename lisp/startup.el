@@ -1755,7 +1755,7 @@ a face or button specification."
    :face 'variable-pitch "To quit a partially entered command, type "
    :face 'default "Control-g"
    :face 'variable-pitch ".\n")
-  (fancy-splash-insert :face `(variable-pitch font-lock-builtin-face)
+  (fancy-splash-insert :face '(variable-pitch font-lock-builtin-face)
 		       "\nThis is "
 		       (emacs-version)
 		       "\n"

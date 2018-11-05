@@ -559,7 +559,7 @@ then remove all hi-lock highlighting."
         (x-popup-menu
          t
          (cons
-          `keymap
+          'keymap
           (cons "Select Pattern to Unhighlight"
                 (mapcar (lambda (pattern)
                           (list (car pattern)

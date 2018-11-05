@@ -1013,7 +1013,7 @@ BEG defaults to `point-min', meaning to flush the entire cache."
 Update parsing information up to point, referring to parse,
 prev-parse-point, goal-point, and open-items bound lexically in
 the body of `js--ensure-cache'."
-  `(progn
+  '(progn
      (setq goal-point (point))
      (goto-char prev-parse-point)
      (while (progn
@@ -1023,7 +1023,7 @@ the body of `js--ensure-cache'."
               ;; the given depth -- i.e., make sure we're deeper than the target
               ;; depth.
               (cl-assert (> (nth 0 parse)
-                         (js--pitem-paren-depth (car open-items))))
+                            (js--pitem-paren-depth (car open-items))))
               (setq parse (parse-partial-sexp
                            prev-parse-point goal-point
                            (js--pitem-paren-depth (car open-items))
@@ -3322,11 +3322,11 @@ If nil, the whole Array is treated as a JS symbol.")
 
 (defun js--js-decode-retval (result)
   (pcase (intern (cl-first result))
-    (`atom (cl-second result))
-    (`special (intern (cl-second result)))
-    (`array
+    ('atom (cl-second result))
+    ('special (intern (cl-second result)))
+    ('array
      (mapcar #'js--js-decode-retval (cl-second result)))
-    (`objid
+    ('objid
      (or (gethash (cl-second result)
                   js--js-references)
          (puthash (cl-second result)
@@ -3335,7 +3335,7 @@ If nil, the whole Array is treated as a JS symbol.")
                    :process (inferior-moz-process))
                   js--js-references)))
 
-    (`error (signal 'js-js-error (list (cl-second result))))
+    ('error (signal 'js-js-error (list (cl-second result))))
     (x (error "Unmatched case in js--js-decode-retval: %S" x))))
 
 (defvar comint-last-input-end)
@@ -3720,8 +3720,8 @@ If one hasn't been set, or if it's stale, prompt for a new one."
    (when (or (null js--js-context)
              (js--js-handle-expired-p (cdr js--js-context))
              (pcase (car js--js-context)
-               (`window (js? (js< (cdr js--js-context) "closed")))
-               (`browser (not (js? (js< (cdr js--js-context)
+               ('window (js? (js< (cdr js--js-context) "closed")))
+               ('browser (not (js? (js< (cdr js--js-context)
                                         "contentDocument"))))
                (x (error "Unmatched case in js--get-js-context: %S" x))))
      (setq js--js-context (js--read-tab "JavaScript Context: ")))
@@ -3730,8 +3730,8 @@ If one hasn't been set, or if it's stale, prompt for a new one."
 (defun js--js-content-window (context)
   (with-js
    (pcase (car context)
-     (`window (cdr context))
-     (`browser (js< (cdr context)
+     ('window (cdr context))
+     ('browser (js< (cdr context)
                     "contentWindow" "wrappedJSObject"))
      (x (error "Unmatched case in js--js-content-window: %S" x)))))
 

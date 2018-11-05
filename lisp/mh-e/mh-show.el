@@ -375,8 +375,8 @@ still visible.\n")
            (cond ((not normal-exit)
                   (set-window-configuration config))
                  ,(if dont-return
-                      `(t (setq mh-previous-window-config config))
-                    `((and (get-buffer cur-buffer-name)
+                      '(t (setq mh-previous-window-config config))
+                    '((and (get-buffer cur-buffer-name)
                            (window-live-p (get-buffer-window
                                            (get-buffer cur-buffer-name))))
                       (pop-to-buffer (get-buffer cur-buffer-name) nil)))))))))

@@ -40,7 +40,7 @@
   "Function use to do completing read."
   :version "24.1"
   :group 'gnus-meta
-  :type `(radio (function-item
+  :type '(radio (function-item
                  :doc "Use Emacs standard `completing-read' function."
                  gnus-emacs-completing-read)
 		(function-item

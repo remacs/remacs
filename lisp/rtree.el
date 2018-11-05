@@ -44,7 +44,7 @@
 ;;; Code:
 
 (defmacro rtree-make-node ()
-  `(list (list nil) nil))
+  '(list (list nil) nil))
 
 (defmacro rtree-set-left (node left)
   `(setcar (cdr ,node) ,left))

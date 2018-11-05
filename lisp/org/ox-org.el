@@ -124,8 +124,8 @@ we make sure it is always called."
       (let ((first-child (car (org-element-contents h)))
 	    (new-section (org-element-create 'section)))
 	(pcase (org-element-type first-child)
-	  (`section nil)
-	  (`nil (org-element-adopt-elements h new-section))
+	  ('section nil)
+	  ('nil (org-element-adopt-elements h new-section))
 	  (_ (org-element-insert-before new-section first-child))))))
   tree)
 

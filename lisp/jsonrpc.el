@@ -184,7 +184,7 @@ dispatcher in CONNECTION."
                                                    (cdr oops))
                                         "Internal error")))))
                   (error
-                   `(:error (:code -32603 :message "Internal error"))))))
+                   '(:error (:code -32603 :message "Internal error"))))))
           (apply #'jsonrpc--reply connection id reply)))
        (;; A remote notification
         method
@@ -490,7 +490,7 @@ With optional CLEANUP, kill any associated buffers. "
           ;; Call all outstanding error handlers
           (maphash (lambda (_id triplet)
                      (pcase-let ((`(,_success ,error ,_timeout) triplet))
-                       (funcall error `(:code -1 :message "Server died"))))
+                       (funcall error '(:code -1 :message "Server died"))))
                    (jsonrpc--request-continuations connection))
         (jsonrpc--message "Server exited with status %s" (process-exit-status proc))
         (process-put proc 'jsonrpc-sentinel-done t)

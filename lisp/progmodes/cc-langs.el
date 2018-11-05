@@ -293,7 +293,7 @@ the evaluated constant value at compile time."
       ["Forward Statement"      c-end-of-statement t]
       ,@(when (c-lang-const c-opt-cpp-prefix)
 	  ;; Only applicable if there's a cpp preprocessor.
-	  `(["Up Conditional"         c-up-conditional t]
+	  '(["Up Conditional"         c-up-conditional t]
 	    ["Backward Conditional"   c-backward-conditional t]
 	    ["Forward Conditional"    c-forward-conditional t]
 	    "----"
@@ -383,9 +383,9 @@ The syntax tables aren't stored directly since they're quite large."
 		 ;; its compiler directives as single keyword tokens.
 		 ;; This is then necessary since it's assumed that
 		 ;; every keyword is a single symbol.
-		 `(modify-syntax-entry ?@ "_" table))
+		 '(modify-syntax-entry ?@ "_" table))
 		((c-major-mode-is 'pike-mode)
-		 `(modify-syntax-entry ?@ "." table)))
+		 '(modify-syntax-entry ?@ "." table)))
 	 table)))
 
 (c-lang-defconst c-mode-syntax-table
@@ -1046,16 +1046,16 @@ since CC Mode treats every identifier as an expression."
       ;; Primary.
       ,@(c-lang-const c-identifier-ops)
       ,@(cond ((or (c-major-mode-is 'c++-mode) (c-major-mode-is 'java-mode))
-	       `((postfix-if-paren "<" ">"))) ; Templates.
+	       '((postfix-if-paren "<" ">"))) ; Templates.
 	      ((c-major-mode-is 'pike-mode)
-	       `((prefix "global" "predef")))
+	       '((prefix "global" "predef")))
 	      ((c-major-mode-is 'java-mode)
-	       `((prefix "super"))))
+	       '((prefix "super"))))
 
       ;; Postfix.
       ,@(when (c-major-mode-is 'c++-mode)
 	  ;; The following need special treatment.
-	  `((prefix "dynamic_cast" "static_cast"
+	  '((prefix "dynamic_cast" "static_cast"
 		    "reinterpret_cast" "const_cast" "typeid"
                     "alignof")))
       (left-assoc "."
@@ -1085,7 +1085,7 @@ since CC Mode treats every identifier as an expression."
 
       ;; Member selection.
       ,@(when (c-major-mode-is 'c++-mode)
-	  `((left-assoc ".*" "->*")))
+	  '((left-assoc ".*" "->*")))
 
       ;; Multiplicative.
       (left-assoc "*" "/" "%")

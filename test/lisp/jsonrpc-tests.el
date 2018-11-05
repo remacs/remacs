@@ -64,7 +64,7 @@
                             (unless (memq method '(+ - * / vconcat append
                                                      sit-for ignore))
                               (signal 'jsonrpc-error
-                                      `((jsonrpc-error-message
+                                      '((jsonrpc-error-message
                                          . "Sorry, this isn't allowed")
                                         (jsonrpc-error-code . -32601))))
                             (apply method (append params nil)))

@@ -174,12 +174,12 @@ It must be supported by libarchive(3).")
 ;;;###autoload
 (progn (defmacro tramp-archive-autoload-file-name-regexp ()
   "Regular expression matching archive file names."
-  `(concat
+  '(concat
     "\\`" "\\(" ".+" "\\."
-      ;; Default suffixes ...
-      (regexp-opt tramp-archive-suffixes)
-      ;; ... with compression.
-      "\\(?:" "\\." (regexp-opt tramp-archive-compression-suffixes) "\\)*"
+    ;; Default suffixes ...
+    (regexp-opt tramp-archive-suffixes)
+    ;; ... with compression.
+    "\\(?:" "\\." (regexp-opt tramp-archive-compression-suffixes) "\\)*"
     "\\)" ;; \1
     "\\(" "/" ".*" "\\)" "\\'"))) ;; \2
 

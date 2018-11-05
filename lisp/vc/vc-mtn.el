@@ -190,8 +190,8 @@ switches."
                 (setq branch (replace-match (cdr rule) t nil branch))))
           (format "Mtn%c%s"
                   (pcase (vc-state file)
-                    ((or `up-to-date `needs-update) ?-)
-                    (`added ?@)
+                    ((or 'up-to-date 'needs-update) ?-)
+                    ('added ?@)
                     (_ ?:))
                   branch))
       "")))

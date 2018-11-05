@@ -406,7 +406,7 @@ Two predefined functions are available:
 (defvar gnus-tmp-subject)
 
 (defvar gnus-tree-line-format-alist
-  `((?n gnus-tmp-name ?s)
+  '((?n gnus-tmp-name ?s)
     (?f gnus-tmp-from ?s)
     (?N gnus-tmp-number ?d)
     (?\[ gnus-tmp-open-bracket ?c)

@@ -241,7 +241,7 @@ superset of iso-8859-1."
 	(widget-convert
 	 'list
 	 `(set :inline t :format "%v" ,@(nreverse rest))
-	 `(repeat :inline t :tag "Other options"
+	 '(repeat :inline t :tag "Other options"
 		  (cons :format "%v"
 			(symbol :size 3 :format "(%v")
 			(symbol :size 3 :format " . %v)\n")))))))

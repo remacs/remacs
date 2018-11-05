@@ -3438,15 +3438,15 @@ PARAMS is a plist used to tweak the behavior of the transcoder."
 	     (start (and (not splice)
 			 (org-list--generic-eval
 			  (pcase type
-			    (`ordered ostart)
-			    (`unordered ustart)
+			    ('ordered ostart)
+			    ('unordered ustart)
 			    (_ dstart))
 			  depth)))
 	     (end (and (not splice)
 		       (org-list--generic-eval
 			(pcase type
-			  (`ordered oend)
-			  (`unordered uend)
+			  ('ordered oend)
+			  ('unordered uend)
 			  (_ dend))
 			depth))))
 	;; Make sure trailing newlines in END appear in the output by
@@ -3485,7 +3485,7 @@ PARAMS is a plist used to tweak the behavior of the transcoder."
 	     (separator (and (org-export-get-next-element item info)
 			     (org-list--generic-eval isep type depth)))
 	     (closing (pcase (org-list--generic-eval iend type depth)
-			((or `nil "") "\n")
+			((or 'nil "") "\n")
 			((and (guard separator) s)
 			 (if (equal (substring s -1) "\n") s (concat s "\n")))
 			(s s))))
@@ -3510,9 +3510,9 @@ PARAMS is a plist used to tweak the behavior of the transcoder."
 			     (or dtstart dtend ddstart ddend)))
 		    (concat
 		     (pcase (org-element-property :checkbox item)
-		       (`on cbon)
-		       (`off cboff)
-		       (`trans cbtrans))
+		       ('on cbon)
+		       ('off cboff)
+		       ('trans cbtrans))
 		     (and tag
 			  (concat dtstart
 				  (if backend
@@ -3582,8 +3582,8 @@ with overruling parameters for `org-list-to-generic'."
 LIST is as returned by `org-list-to-lisp'.  PARAMS is a property
 list with overruling parameters for `org-list-to-generic'."
   (let* ((blank (pcase (cdr (assq 'heading org-blank-before-new-entry))
-		  (`t t)
-		  (`auto (save-excursion
+		  ('t t)
+		  ('auto (save-excursion
 			   (org-with-limited-levels (outline-previous-heading))
 			   (org-previous-line-empty-p)))))
 	 (level (org-reduced-level (or (org-current-level) 0)))

@@ -119,7 +119,7 @@
                (beginning-of-line 2)
                (list ,file ,line)))
 	(defmacro cperl-etags-snarf-tag (_file _line)
-	  `(etags-snarf-tag)))
+	  '(etags-snarf-tag)))
       (if (featurep 'xemacs)
 	  (defmacro cperl-etags-goto-tag-location (elt)
 	    ;;(progn

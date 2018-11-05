@@ -269,9 +269,9 @@ BEWARE:  because of stability issues, this is not a symmetric operation."
     (cond
      ((= l1 l2)
       (pcase (cvs-tag-compare tag1 tag2)
-	(`more1 (cons rev2 (cvs-tree-merge tree1 (cdr tree2))))
-	(`more2 (cons rev1 (cvs-tree-merge (cdr tree1) tree2)))
-	(`equal
+	('more1 (cons rev2 (cvs-tree-merge tree1 (cdr tree2))))
+	('more2 (cons rev1 (cvs-tree-merge (cdr tree1) tree2)))
+	('equal
 	 (cons (cons (cvs-tag-merge tag1 tag2)
 		     (cvs-tree-merge (cvs-cdr rev1) (cvs-cdr rev2)))
 	       (cvs-tree-merge (cdr tree1) (cdr tree2))))))
@@ -395,33 +395,33 @@ Otherwise, default to ASCII chars like +, - and |.")
 
 (defconst cvs-tree-char-space
   (pcase cvs-tree-use-charset
-    (`jisx0208 (make-char 'japanese-jisx0208 33 33))
-    (`unicode " ")
+    ('jisx0208 (make-char 'japanese-jisx0208 33 33))
+    ('unicode " ")
     (_ "  ")))
 (defconst cvs-tree-char-hbar
   (pcase cvs-tree-use-charset
-    (`jisx0208 (make-char 'japanese-jisx0208 40 44))
-    (`unicode "━")
+    ('jisx0208 (make-char 'japanese-jisx0208 40 44))
+    ('unicode "━")
     (_ "--")))
 (defconst cvs-tree-char-vbar
   (pcase cvs-tree-use-charset
-    (`jisx0208 (make-char 'japanese-jisx0208 40 45))
-    (`unicode "┃")
+    ('jisx0208 (make-char 'japanese-jisx0208 40 45))
+    ('unicode "┃")
     (_ "| ")))
 (defconst cvs-tree-char-branch
   (pcase cvs-tree-use-charset
-    (`jisx0208 (make-char 'japanese-jisx0208 40 50))
-    (`unicode "┣")
+    ('jisx0208 (make-char 'japanese-jisx0208 40 50))
+    ('unicode "┣")
     (_ "+-")))
 (defconst cvs-tree-char-eob		;end of branch
   (pcase cvs-tree-use-charset
-    (`jisx0208 (make-char 'japanese-jisx0208 40 49))
-    (`unicode "┗")
+    ('jisx0208 (make-char 'japanese-jisx0208 40 49))
+    ('unicode "┗")
     (_ "`-")))
 (defconst cvs-tree-char-bob		;beginning of branch
   (pcase cvs-tree-use-charset
-    (`jisx0208 (make-char 'japanese-jisx0208 40 51))
-    (`unicode "┳")
+    ('jisx0208 (make-char 'japanese-jisx0208 40 51))
+    ('unicode "┳")
     (_ "+-")))
 
 (defun cvs-tag-lessp (tag1 tag2)

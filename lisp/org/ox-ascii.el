@@ -549,8 +549,8 @@ INFO is a plist used as a communication channel."
 INFO is a plist used as a communication channel."
   (pcase (org-element-type element)
     ;; Elements with an absolute width: `headline' and `inlinetask'.
-    (`inlinetask (plist-get info :ascii-inlinetask-width))
-    (`headline
+    ('inlinetask (plist-get info :ascii-inlinetask-width))
+    ('headline
      (- (plist-get info :ascii-text-width)
         (let ((low-level-rank (org-export-low-level-p element info)))
           (if low-level-rank (* low-level-rank 2)
@@ -624,8 +624,8 @@ Return value is a symbol among `left', `center', `right' and
     (while (and (not justification)
 		(setq element (org-element-property :parent element)))
       (pcase (org-element-type element)
-	(`center-block (setq justification 'center))
-	(`special-block
+	('center-block (setq justification 'center))
+	('special-block
 	 (let ((name (org-element-property :type element)))
 	   (cond ((string= name "JUSTIFYRIGHT") (setq justification 'right))
 		 ((string= name "JUSTIFYLEFT") (setq justification 'left)))))))
@@ -724,8 +724,8 @@ caption keyword."
 	      element info nil 'org-ascii--has-caption-p))
 	    (title-fmt (org-ascii--translate
 			(pcase (org-element-type element)
-			  (`table "Table %d:")
-			  (`src-block "Listing %d:"))
+			  ('table "Table %d:")
+			  ('src-block "Listing %d:"))
 			info)))
 	(org-ascii--fill-string
 	 (concat (format title-fmt reference)
@@ -890,8 +890,8 @@ If DATUM is a string, consider it to be a file name, per
 `org-export-resolve-id-link'.  INFO is the communication channel,
 as a plist."
   (pcase (org-element-type datum)
-    (`plain-text (format "See file %s" datum)) ;External file
-    (`headline
+    ('plain-text (format "See file %s" datum)) ;External file
+    ('headline
      (format (org-ascii--translate "See section %s" info)
 	     (if (org-export-numbered-headline-p datum info)
 		 (mapconcat #'number-to-string
@@ -907,7 +907,7 @@ as a plist."
 	    (org-element-lineage datum
 				 '(headline paragraph src-block table) t)))
        (pcase (org-element-type enumerable)
-	 (`headline
+	 ('headline
 	  (format (org-ascii--translate "See section %s" info)
 		  (if (org-export-numbered-headline-p enumerable info)
 		      (mapconcat #'number-to-string number ".")
@@ -915,11 +915,11 @@ as a plist."
 		     (org-element-property :title enumerable) info))))
 	 ((guard (not number))
 	  (org-ascii--translate "Unknown reference" info))
-	 (`paragraph
+	 ('paragraph
 	  (format (org-ascii--translate "See figure %s" info) number))
-	 (`src-block
+	 ('src-block
 	  (format (org-ascii--translate "See listing %s" info) number))
-	 (`table
+	 ('table
 	  (format (org-ascii--translate "See table %s" info) number))
 	 (_ (org-ascii--translate "Unknown reference" info)))))))
 
@@ -970,9 +970,9 @@ channel."
 INFO is a plist used as a communication channel."
   (let ((utf8p (eq (plist-get info :ascii-charset) 'utf-8)))
     (pcase (org-element-property :checkbox item)
-      (`on (if utf8p "☑ " "[X] "))
-      (`off (if utf8p "☐ " "[ ] "))
-      (`trans (if utf8p "☒ " "[-] ")))))
+      ('on (if utf8p "☑ " "[X] "))
+      ('off (if utf8p "☐ " "[ ] "))
+      ('trans (if utf8p "☒ " "[-] ")))))
 
 
 
@@ -1450,11 +1450,11 @@ contextual information."
 	  ;; First parent of ITEM is always the plain-list.  Get
 	  ;; `:type' property from it.
 	  (pcase list-type
-	    (`descriptive
+	    ('descriptive
 	     (concat checkbox
 		     (org-export-data (org-element-property :tag item)
 				      info)))
-	    (`ordered
+	    ('ordered
 	     ;; Return correct number for ITEM, paying attention to
 	     ;; counters.
 	     (let* ((struct (org-element-property :structure item))
@@ -1586,8 +1586,8 @@ INFO is a plist holding contextual information."
 		     (format " (%s)"
 			     (org-ascii--describe-datum destination info)))))
 	  ;; External file.
-	  (`plain-text destination)
-	  (`headline
+	  ('plain-text destination)
+	  ('headline
 	   (if (org-export-numbered-headline-p destination info)
 	       (mapconcat #'number-to-string
 			  (org-export-get-headline-number destination info)

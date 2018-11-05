@@ -140,7 +140,7 @@ That is, regardless of where in the line point is at the time."
    opascal-directives)
   "OPascal4 keywords.")
 
-(defconst opascal-previous-terminators `(semicolon comma)
+(defconst opascal-previous-terminators '(semicolon comma)
   "Expression/statement terminators that denote a previous expression.")
 
 (defconst opascal-comments
@@ -186,7 +186,7 @@ are followed by an expression.")
   `(except finally ,@opascal-visibilities)
   "Statements that mark mid sections of the enclosing block.")
 
-(defconst opascal-end-block-statements `(end until)
+(defconst opascal-end-block-statements '(end until)
   "Statements that end block sections.")
 
 (defconst opascal-match-block-statements
@@ -210,7 +210,7 @@ are followed by an expression.")
   '(interface implementation program library package)
   "Unit sections within which the indent is 0.")
 
-(defconst opascal-use-clauses `(uses requires exports contains)
+(defconst opascal-use-clauses '(uses requires exports contains)
   "Statements that refer to foreign symbols.")
 
 (defconst opascal-unit-statements

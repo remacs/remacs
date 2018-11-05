@@ -175,7 +175,7 @@ this template."
 			    ;;
 			    ;; #+name: call_src
 			    ;; #+begin_src ...
-			    ((and (or `babel-call `src-block) (guard object?))
+			    ((and (or 'babel-call 'src-block) (guard object?))
 			     nil)
 			    (type type)))
 			 (begin
@@ -187,7 +187,7 @@ this template."
 			     (skip-chars-backward " \r\t\n")
 			     (point)))))
 		    (pcase type
-		      (`inline-src-block
+		      ('inline-src-block
 		       (let* ((info
 			       (org-babel-get-src-block-info nil element))
 			      (params (nth 2 info)))
@@ -215,7 +215,7 @@ this template."
 			     ;; insert value.
 			     (delete-region begin end)
 			     (insert replacement)))))
-		      ((or `babel-call `inline-babel-call)
+		      ((or 'babel-call 'inline-babel-call)
 		       (org-babel-exp-do-export (org-babel-lob-get-info element)
 						'lob)
 		       (let ((rep
@@ -242,7 +242,7 @@ this template."
 			   (goto-char begin)
 			   (delete-region begin end)
 			   (insert rep))))
-		      (`src-block
+		      ('src-block
 		       (let ((match-start (copy-marker (match-beginning 0)))
 			     (ind (org-get-indentation)))
 			 ;; Take care of matched block: compute
@@ -394,14 +394,14 @@ inhibit insertion of results into the buffer."
 		  (nth 2 info)
 		  `((:results . ,(if silent "silent" "replace")))))))
 	(pcase type
-	  (`block (org-babel-execute-src-block nil info))
-	  (`inline
+	  ('block (org-babel-execute-src-block nil info))
+	  ('inline
 	    ;; Position the point on the inline source block
 	    ;; allowing `org-babel-insert-result' to check that the
 	    ;; block is inline.
 	    (goto-char (nth 5 info))
 	    (org-babel-execute-src-block nil info))
-	  (`lob
+	  ('lob
 	   (save-excursion
 	     (goto-char (nth 5 info))
 	     (let (org-confirm-babel-evaluate)

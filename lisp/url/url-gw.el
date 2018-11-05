@@ -239,7 +239,7 @@ overriding the value of `url-gateway-method'."
 	  (let ((coding-system-for-read 'binary)
 		(coding-system-for-write 'binary))
 	    (setq conn (pcase gw-method
-			 ((or `tls `ssl `native)
+			 ((or 'tls 'ssl 'native)
 			  (if (eq gw-method 'native)
 			      (setq gw-method 'plain))
 			  (open-network-stream
@@ -249,11 +249,11 @@ overriding the value of `url-gateway-method'."
 			   :nowait (and (featurep 'make-network-process)
                                         (url-asynchronous url-current-object)
                                         '(:nowait t))))
-                         (`socks
+                         ('socks
 			  (socks-open-network-stream name buffer host service))
-			 (`telnet
+			 ('telnet
 			  (url-open-telnet name buffer host service))
-			 (`rlogin
+			 ('rlogin
 			  (url-open-rlogin name buffer host service))
 			 (_
 			  (error "Bad setting of url-gateway-method: %s"

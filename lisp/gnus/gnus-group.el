@@ -496,7 +496,7 @@ simple manner."
 (defvar gnus-tmp-number-of-unread)
 
 (defvar gnus-group-line-format-alist
-  `((?M gnus-tmp-marked-mark ?c)
+  '((?M gnus-tmp-marked-mark ?c)
     (?S gnus-tmp-subscribed ?c)
     (?L gnus-tmp-level ?d)
     (?N (cond ((eq number t) "*" )
@@ -544,7 +544,7 @@ simple manner."
     ))
 
 (defvar gnus-group-mode-line-format-alist
-  `((?S gnus-tmp-news-server ?s)
+  '((?S gnus-tmp-news-server ?s)
     (?M gnus-tmp-news-method ?s)
     (?u gnus-tmp-user-defined ?s)
     (?: gnus-tmp-colon ?s)))
@@ -780,7 +780,7 @@ simple manner."
 
     (easy-menu-define
      gnus-group-reading-menu gnus-group-mode-map ""
-     `("Group"
+     '("Group"
        ["Read" gnus-group-read-group
 	:included (not (gnus-topic-mode-p))
 	:active (gnus-group-group-name)]
@@ -947,7 +947,7 @@ simple manner."
 
     (easy-menu-define
      gnus-group-misc-menu gnus-group-mode-map ""
-     `("Gnus"
+     '("Gnus"
        ["Send a mail" gnus-group-mail t]
        ["Send a message (mail or news)" gnus-group-post-news t]
        ["Create a local message" gnus-group-news t]

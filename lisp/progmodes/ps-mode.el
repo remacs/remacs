@@ -458,9 +458,9 @@ If nil, use `temporary-file-directory'."
 
 (defun ps-mode-smie-rules (kind token)
   (pcase (cons kind token)
-    (`(:after . "<") (when (smie-rule-next-p "<") 0))
-    (`(:elem . basic) ps-mode-tab)
-    (`(:close-all . ">") t)
+    ('(:after . "<") (when (smie-rule-next-p "<") 0))
+    ('(:elem . basic) ps-mode-tab)
+    ('(:close-all . ">") t)
     (`(:list-intro . ,_) t)))
 
 ;;;###autoload

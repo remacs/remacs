@@ -408,7 +408,7 @@ on your system, you could say something like:
   `(let ((id (nnheader-nov-field)))
      (if (string-match "^<[^>]+>$" id)
 	 ,(if nnheader-uniquify-message-id
-	      `(if (string-match "__[^@]+@" id)
+	      '(if (string-match "__[^@]+@" id)
 		   (concat (substring id 0 (match-beginning 0))
 			   (substring id (1- (match-end 0))))
 		 id)

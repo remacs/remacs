@@ -1699,35 +1699,35 @@ comment at the start of cc-engine.el for more info."
   `(let ((beg ,beg) (end ,end))
      (put-text-property beg end 'c-is-sws t)
      ,@(when (facep 'c-debug-is-sws-face)
-	 `((c-debug-add-face beg end 'c-debug-is-sws-face)))))
+	 '((c-debug-add-face beg end 'c-debug-is-sws-face)))))
 
 (defmacro c-put-in-sws (beg end)
   ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (put-text-property beg end 'c-in-sws t)
      ,@(when (facep 'c-debug-is-sws-face)
-	 `((c-debug-add-face beg end 'c-debug-in-sws-face)))))
+	 '((c-debug-add-face beg end 'c-debug-in-sws-face)))))
 
 (defmacro c-remove-is-sws (beg end)
   ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (remove-text-properties beg end '(c-is-sws nil))
      ,@(when (facep 'c-debug-is-sws-face)
-	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)))))
+	 '((c-debug-remove-face beg end 'c-debug-is-sws-face)))))
 
 (defmacro c-remove-in-sws (beg end)
   ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (remove-text-properties beg end '(c-in-sws nil))
      ,@(when (facep 'c-debug-is-sws-face)
-	 `((c-debug-remove-face beg end 'c-debug-in-sws-face)))))
+	 '((c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
 (defmacro c-remove-is-and-in-sws (beg end)
   ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (remove-text-properties beg end '(c-is-sws nil c-in-sws nil))
      ,@(when (facep 'c-debug-is-sws-face)
-	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)
+	 '((c-debug-remove-face beg end 'c-debug-is-sws-face)
 	   (c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
 ;; The type of literal position `end' is in a `before-change-functions'
@@ -6873,8 +6873,8 @@ comment at the start of cc-engine.el for more info."
   `(let (res)
      (setq c-last-identifier-range nil)
      (while (if (setq res ,(if (eq type 'type)
-			       `(c-forward-type)
-			     `(c-forward-name)))
+			       '(c-forward-type)
+			     '(c-forward-name)))
 		nil
 	      (cond ((looking-at c-keywords-regexp)
 		     (c-forward-keyword-clause 1))
@@ -6884,8 +6884,8 @@ comment at the start of cc-engine.el for more info."
      (when (memq res '(t known found prefix maybe))
        (when c-record-type-identifiers
         ,(if (eq type 'type)
-             `(c-record-type-id c-last-identifier-range)
-           `(c-record-ref-id c-last-identifier-range)))
+             '(c-record-type-id c-last-identifier-range)
+           '(c-record-ref-id c-last-identifier-range)))
        t)))
 
 (defmacro c-forward-id-comma-list (type update-safe-pos)
@@ -6896,7 +6896,7 @@ comment at the start of cc-engine.el for more info."
   ;; This macro might do hidden buffer changes.
   `(while (and (progn
 		 ,(when update-safe-pos
-		    `(setq safe-pos (point)))
+		    '(setq safe-pos (point)))
 		 (eq (char-after) ?,))
 	       (progn
 		 (forward-char)
@@ -7917,7 +7917,7 @@ comment at the start of cc-engine.el for more info."
   ;; a comma.  If either of <symbol> or bracketed <expression> is missing,
   ;; throw nil to 'level.  If the terminating } or ) is unmatched, throw nil
   ;; to 'done.  This is not a general purpose macro!
-  `(while (eq (char-before) ?,)
+  '(while (eq (char-before) ?,)
      (backward-char)
      (c-backward-syntactic-ws)
      (when (not (memq (char-before) '(?\) ?})))

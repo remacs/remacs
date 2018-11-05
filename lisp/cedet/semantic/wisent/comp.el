@@ -196,11 +196,11 @@ If optional LEFT is non-nil insert spaces on left."
 (defmacro wisent-log-buffer ()
   "Return the log buffer.
 Its name is defined in constant `wisent-log-buffer-name'."
-  `(get-buffer-create wisent-log-buffer-name))
+  '(get-buffer-create wisent-log-buffer-name))
 
 (defmacro wisent-clear-log ()
   "Delete the entire contents of the log buffer."
-  `(with-current-buffer (wisent-log-buffer)
+  '(with-current-buffer (wisent-log-buffer)
      (erase-buffer)))
 
 (defvar byte-compile-current-file)

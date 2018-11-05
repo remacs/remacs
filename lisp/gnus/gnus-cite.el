@@ -340,7 +340,7 @@ in a boring face, then the pages will be skipped."
 ;; TAG: Is a Supercite tag, if any.
 
 (defvar gnus-cited-opened-text-button-line-format-alist
-  `((?b (marker-position beg) ?d)
+  '((?b (marker-position beg) ?d)
     (?e (marker-position end) ?d)
     (?n (count-lines beg end) ?d)
     (?l (- end beg) ?d)))
@@ -625,7 +625,7 @@ always hide."
 		(point)
 		(progn (eval gnus-cited-closed-text-button-line-format-spec)
 		       (point))
-		`gnus-article-toggle-cited-text
+		'gnus-article-toggle-cited-text
 		(list (cons beg end) start))
 	       (point))
              'article-type 'annotation)
@@ -675,7 +675,7 @@ means show, nil means toggle."
 			gnus-cited-opened-text-button-line-format-spec
 		      gnus-cited-closed-text-button-line-format-spec))
 		   (point))
-	    `gnus-article-toggle-cited-text
+	    'gnus-article-toggle-cited-text
 	    args)
 	   (point))
 	 'article-type 'annotation)))))

@@ -3209,21 +3209,21 @@ function like this: (sql-get-login \\='user \\='password \\='database)."
   (dolist (w what)
     (let ((plist (cdr-safe w)))
       (pcase (or (car-safe w) w)
-        (`user
+        ('user
          (sql-get-login-ext 'sql-user "User: " 'sql-user-history plist))
 
-        (`password
+        ('password
          (setq-default sql-password
                        (read-passwd "Password: " nil (sql-default-value 'sql-password))))
 
-        (`server
+        ('server
          (sql-get-login-ext 'sql-server "Server: " 'sql-server-history plist))
 
-        (`database
+        ('database
          (sql-get-login-ext 'sql-database "Database: "
                             'sql-database-history plist))
 
-        (`port
+        ('port
          (sql-get-login-ext 'sql-port "Port: "
                             nil (append '(:number t) plist)))))))
 
@@ -3332,20 +3332,20 @@ server/database name."
                           (sql-get-product-feature (or product sql-product) :sqli-login)
                           (lambda (token plist)
                               (pcase token
-                                (`user
+                                ('user
                                  (unless (string= "" sql-user)
                                    (list "/" sql-user)))
-                                (`port
+                                ('port
                                  (unless (or (not (numberp sql-port))
                                              (= 0 sql-port))
                                    (list ":" (number-to-string sql-port))))
-                                (`server
+                                ('server
                                  (unless (string= "" sql-server)
                                    (list "."
                                          (if (plist-member plist :file)
                                              (file-name-nondirectory sql-server)
                                            sql-server))))
-                                (`database
+                                ('database
                                  (unless (string= "" sql-database)
                                    (list "@"
                                          (if (plist-member plist :file)
@@ -4314,11 +4314,11 @@ is specified in the connection settings."
                       (mapcar
                        (lambda (v)
                          (pcase (car v)
-                           (`sql-user     'user)
-                           (`sql-password 'password)
-                           (`sql-server   'server)
-                           (`sql-database 'database)
-                           (`sql-port     'port)
+                           ('sql-user     'user)
+                           ('sql-password 'password)
+                           ('sql-server   'server)
+                           ('sql-database 'database)
+                           ('sql-port     'port)
                            (s             s)))
                        connect-set))
 
@@ -4382,11 +4382,11 @@ optionally is saved to the user's init file."
                        `(product ,@login)
                        (lambda (token _plist)
                            (pcase token
-                             (`product  `(sql-product  ',product))
-                             (`user     `(sql-user     ,user))
-                             (`database `(sql-database ,database))
-                             (`server   `(sql-server   ,server))
-                             (`port     `(sql-port     ,port)))))))
+                             ('product  `(sql-product  ',product))
+                             ('user     `(sql-user     ,user))
+                             ('database `(sql-database ,database))
+                             ('server   `(sql-server   ,server))
+                             ('port     `(sql-port     ,port)))))))
 
           (setq alist (append alist (list connect)))
 

@@ -194,7 +194,7 @@ See also the function `wisent-skip-block'."
   "Expand call to SKIP-TOKEN grammar macro.
 Return the form to skip the lookahead token.
 See also the function `wisent-skip-token'."
-  `(wisent-skip-token))
+  '(wisent-skip-token))
 
 (defun wisent-grammar-assocs ()
   "Return associativity and precedence level definitions."

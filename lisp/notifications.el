@@ -232,8 +232,8 @@ of another `notifications-notify' call."
 	(add-to-list 'hints `(:dict-entry
 			      "urgency"
 			      (:variant :byte ,(pcase urgency
-						 (`low 0)
-						 (`critical 2)
+						 ('low 0)
+						 ('critical 2)
 						 (_ 1)))) t))
       (when category
 	(add-to-list 'hints `(:dict-entry

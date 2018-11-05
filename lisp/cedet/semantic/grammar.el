@@ -1611,7 +1611,7 @@ Select the buffer containing the tag's definition, and move point there."
 ;;
 
 (defvar semantic-grammar-syntax-help
-  `(
+  '(
     ;; Lexical Symbols
     ("symbol" . "Syntax: A symbol of alpha numeric and symbol characters")
     ("number" . "Syntax: Numeric characters.")

@@ -2066,7 +2066,7 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
       ;; The code below assumes the name is relative and may do undesirable
       ;; things otherwise.
       (error "Can't extract files with non-relative names")
-    (archive-extract-by-file archive name `("unar" "-no-directory" "-o") "Successfully extracted")))
+    (archive-extract-by-file archive name '("unar" "-no-directory" "-o") "Successfully extracted")))
 
 ;;; Section: Rar self-extracting .exe archives.
 

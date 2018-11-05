@@ -301,8 +301,8 @@ When optional argument HEADING is non-nil, assume line is at
 a heading.  Moreover, if is is `inlinetask', the first star will
 have `org-warning' face."
   (let* ((line (aref (pcase heading
-		       (`nil org-indent--text-line-prefixes)
-		       (`inlinetask org-indent--inlinetask-line-prefixes)
+		       ('nil org-indent--text-line-prefixes)
+		       ('inlinetask org-indent--inlinetask-line-prefixes)
 		       (_ org-indent--heading-line-prefixes))
 		     level))
 	 (wrap

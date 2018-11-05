@@ -1031,7 +1031,7 @@ the sequence."
   (setq ps-mule-prologue-generated nil
 	ps-mule-composition-prologue-generated nil
 	ps-mule-bitmap-prologue-generated nil)
-  (mapcar `(lambda (x) (setcar (nthcdr 2 x) nil))
+  (mapcar (lambda (x) (setcar (nthcdr 2 x) nil))
 	  ps-mule-external-libraries))
 
 (defun ps-mule-encode-header-string (string fonttag)

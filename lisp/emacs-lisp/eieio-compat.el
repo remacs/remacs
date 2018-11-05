@@ -182,11 +182,11 @@ Summary:
           ;; `no-applicable-method', which have slightly different calling
           ;; convention than their cl-generic counterpart.
           (pcase method
-            (`no-next-method
+            ('no-next-method
              (setq method 'cl-no-next-method)
              (setq specializers `(generic method ,@specializers))
              (lambda (_generic _method &rest args) (apply code args)))
-            (`no-applicable-method
+            ('no-applicable-method
              (setq method 'cl-no-applicable-method)
              (setq specializers `(generic ,@specializers))
              (lambda (generic arg &rest args)

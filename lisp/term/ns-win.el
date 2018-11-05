@@ -623,7 +623,7 @@ the last file dropped is selected."
       (let ((last-nonmenu-event (if (listp last-nonmenu-event)
                                     last-nonmenu-event
                                   ;; Fake it:
-                                  `(mouse-1 POSITION 1))))
+                                  '(mouse-1 POSITION 1))))
         (if (y-or-n-p (format "Print buffer %s? " (buffer-name)))
             (print-buffer)
 	  (error "Canceled")))

@@ -56,7 +56,7 @@ reparsed, the cache will be reset.
 TODO: use ffap.el to locate such items?
 
 NOTE: Obsolete this, or use as special user")
-(make-variable-buffer-local `semantic-dependency-include-path)
+(make-variable-buffer-local 'semantic-dependency-include-path)
 
 (defvar semantic-dependency-system-include-path nil
   "Defines the system include path.
@@ -71,7 +71,7 @@ When searching for a file associated with a name found in a tag of
 class include, this path will be inspected for includes of type
 `system'.  Some include tags are agnostic to this setting and will
 check both the project and system directories.")
-(make-variable-buffer-local `semantic-dependency-system-include-path)
+(make-variable-buffer-local 'semantic-dependency-system-include-path)
 
 (defmacro defcustom-mode-local-semantic-dependency-system-include-path
   (mode name value &optional docstring)

@@ -331,8 +331,8 @@ MAP can be a list, hash-table or array."
 TYPE can be one of the following symbols: list or hash-table.
 MAP can be a list, hash-table or array."
   (pcase type
-    (`list (map-pairs map))
-    (`hash-table (map--into-hash-table map))
+    ('list (map-pairs map))
+    ('hash-table (map--into-hash-table map))
     (_ (error "Not a map type name: %S" type))))
 
 (defun map--put (map key v)

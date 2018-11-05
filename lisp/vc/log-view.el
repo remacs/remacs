@@ -157,7 +157,7 @@
 
 (easy-menu-define log-view-mode-menu log-view-mode-map
   "Log-View Display Menu"
-  `("Log-View"
+  '("Log-View"
     ;; XXX Do we need menu entries for these?
     ;; ["Quit"  quit-window]
     ;; ["Kill This Buffer"  kill-this-buffer]

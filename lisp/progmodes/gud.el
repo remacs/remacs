@@ -545,8 +545,8 @@ required by the caller."
 		   nil
 		   (if gdb-show-changed-values
 		       (or parent (pcase status
-				    (`changed 'font-lock-warning-face)
-				    (`out-of-scope 'shadow)
+				    ('changed 'font-lock-warning-face)
+				    ('out-of-scope 'shadow)
 				    (_ t)))
 		     t)
 		   depth)
@@ -566,8 +566,8 @@ required by the caller."
 		     nil
 		     (if gdb-show-changed-values
 			 (or parent (pcase status
-				      (`changed 'font-lock-warning-face)
-				      (`out-of-scope 'shadow)
+				      ('changed 'font-lock-warning-face)
+				      ('out-of-scope 'shadow)
 				      (_ t)))
 		       t)
 		     depth)
@@ -3516,11 +3516,11 @@ With arg, dereference expr if ARG is positive, otherwise do not dereference."
 (defun gud-tooltip-print-command (expr)
   "Return a suitable command to print the expression EXPR."
   (pcase gud-minor-mode
-    (`gdbmi (concat "-data-evaluate-expression \"" expr "\""))
-    (`guiler expr)
-    (`dbx (concat "print " expr))
-    ((or `xdb `pdb) (concat "p " expr))
-    (`sdb (concat expr "/"))))
+    ('gdbmi (concat "-data-evaluate-expression \"" expr "\""))
+    ('guiler expr)
+    ('dbx (concat "print " expr))
+    ((or 'xdb 'pdb) (concat "p " expr))
+    ('sdb (concat expr "/"))))
 
 (declare-function gdb-input "gdb-mi" (command handler &optional trigger))
 (declare-function tooltip-expr-to-print "tooltip" (event))

@@ -1943,15 +1943,15 @@ removed from the list will be disabled."
 (defun erc-setup-buffer (buffer)
   "Consults `erc-join-buffer' to find out how to display `BUFFER'."
   (pcase erc-join-buffer
-    (`window
+    ('window
      (if (active-minibuffer-window)
          (display-buffer buffer)
        (switch-to-buffer-other-window buffer)))
-    (`window-noselect
+    ('window-noselect
      (display-buffer buffer))
-    (`bury
+    ('bury
      nil)
-    (`frame
+    ('frame
      (when (or (not erc-reuse-frames)
                (not (get-buffer-window buffer t)))
        (let ((frame (make-frame (or erc-frame-alist

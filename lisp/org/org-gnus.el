@@ -126,14 +126,14 @@ If `org-store-link' was called with a prefix arg the meaning of
 (defun org-gnus-store-link ()
   "Store a link to a Gnus folder or message."
   (pcase major-mode
-    (`gnus-group-mode
+    ('gnus-group-mode
      (let ((group (gnus-group-group-name)))
        (when group
 	 (org-store-link-props :type "gnus" :group group)
 	 (let ((description (org-gnus-group-link group)))
 	   (org-add-link-props :link description :description description)
 	   description))))
-    ((or `gnus-summary-mode `gnus-article-mode)
+    ((or 'gnus-summary-mode 'gnus-article-mode)
      (let* ((group
 	     (pcase (gnus-find-method-for-group gnus-newsgroup-name)
 	       (`(nnvirtual . ,_)
@@ -176,7 +176,7 @@ If `org-store-link' was called with a prefix arg the meaning of
 	     (description (org-email-link-description)))
 	 (org-add-link-props :link link :description description)
 	 link)))
-    (`message-mode
+    ('message-mode
      (setq org-store-link-plist nil)	;reset
      (save-excursion
        (save-restriction

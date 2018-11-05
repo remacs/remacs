@@ -423,15 +423,15 @@
   (let ((menu (make-sparse-keymap "Edit")))
 
     (bindings--define-key menu [props]
-      `(menu-item "Text Properties" facemenu-menu))
+      '(menu-item "Text Properties" facemenu-menu))
 
     ;; ns-win.el said: Add spell for platform consistency.
     (if (featurep 'ns)
         (bindings--define-key menu [spell]
-          `(menu-item "Spell" ispell-menu-map)))
+          '(menu-item "Spell" ispell-menu-map)))
 
     (bindings--define-key menu [fill]
-      `(menu-item "Fill" fill-region
+      '(menu-item "Fill" fill-region
                   :enable (and mark-active (not buffer-read-only))
                   :help
                   "Fill text in region to fit between left and right margin"))
@@ -440,7 +440,7 @@
       menu-bar-separator)
 
     (bindings--define-key menu [bookmark]
-      `(menu-item "Bookmarks" menu-bar-bookmark-map))
+      '(menu-item "Bookmarks" menu-bar-bookmark-map))
 
     (bindings--define-key menu [goto]
       `(menu-item "Go To" ,menu-bar-goto-menu))
@@ -2421,7 +2421,7 @@ form ((XOFFSET YOFFSET) WINDOW), or nil.
 If nil, the current mouse position is used, or nil if there is no mouse."
   (pcase position
     ;; nil -> mouse cursor position
-    (`nil
+    ('nil
      (let ((mp (mouse-pixel-position)))
        (list (list (cadr mp) (cddr mp)) (car mp))))
     ;; Value returned from `event-end' or `posn-at-point'.

@@ -2444,7 +2444,7 @@ If INITIAL-STRING is non-nil, use that rather than \"Parent groups:\"."
   :group 'custom-faces)
 
 (defface custom-variable-tag
-  `((((class color) (background dark))
+  '((((class color) (background dark))
      :foreground "light blue" :weight bold)
     (((min-colors 88) (class color) (background light))
      :foreground "blue1" :weight bold)
@@ -3920,7 +3920,7 @@ restoring it to the state of a face that has never been customized."
 (defun custom-hook-convert-widget (widget)
   ;; Handle `:options'.
   (let* ((options (widget-get widget :options))
-	 (other `(editable-list :inline t
+	 (other '(editable-list :inline t
 				:entry-format "%i %d%v"
 				(function :format " %v")))
 	 (args (if options

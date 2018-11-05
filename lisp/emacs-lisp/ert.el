@@ -971,7 +971,7 @@ contained in UNIVERSE."
                       test
                       (ert-test-most-recent-result test))))
                 universe))
-    (:unexpected (ert-select-tests `(not :expected) universe))
+    (:unexpected (ert-select-tests '(not :expected) universe))
     ((pred stringp)
      (pcase-exhaustive universe
        (`t (mapcar #'ert-get-test

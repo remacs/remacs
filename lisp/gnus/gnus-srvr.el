@@ -87,7 +87,7 @@ If nil, a faster, but more primitive, buffer is used instead."
 (defvar gnus-inserted-opened-servers nil)
 
 (defvar gnus-server-line-format-alist
-  `((?h gnus-tmp-how ?s)
+  '((?h gnus-tmp-how ?s)
     (?n gnus-tmp-name ?s)
     (?w gnus-tmp-where ?s)
     (?s gnus-tmp-status ?s)
@@ -95,7 +95,7 @@ If nil, a faster, but more primitive, buffer is used instead."
     (?c gnus-tmp-cloud ?s)))
 
 (defvar gnus-server-mode-line-format-alist
-  `((?S gnus-tmp-news-server ?s)
+  '((?S gnus-tmp-news-server ?s)
     (?M gnus-tmp-news-method ?s)
     (?u gnus-tmp-user-defined ?s)))
 
@@ -626,8 +626,8 @@ The following commands are available:
   (let ((info (gnus-server-to-method server)))
     (gnus-edit-form
      info "Showing the server."
-     `(lambda (form)
-	(gnus-server-position-point))
+     (lambda (form)
+       (gnus-server-position-point))
      'edit-server)))
 
 (defun gnus-server-scan-server (server)

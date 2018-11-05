@@ -278,7 +278,7 @@ This can also be a list of the above values."
   "String or function to be executed to display an X-Face header.
 If it is a string, the command will be executed in a sub-shell
 asynchronously.  The compressed face will be piped to this command."
-  :type `(choice string
+  :type '(choice string
 		 (function-item gnus-display-x-face-in-from)
 		 function)
   :version "21.1"
@@ -5155,7 +5155,7 @@ Deleting parts may malfunction or destroy the article; continue? "))
 	    "`----\n"))
 	  (setcdr data
 		  (cdr (mm-make-handle
-			nil `("text/plain" (charset . gnus-decoded)) nil nil
+			nil '("text/plain" (charset . gnus-decoded)) nil nil
 			(list "attachment")
 			(format "Deleted attachment (%s bytes)" bsize))))))
       ;; (set-buffer gnus-summary-buffer)

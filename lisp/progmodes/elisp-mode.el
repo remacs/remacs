@@ -271,14 +271,14 @@ Blank lines separate paragraphs.  Semicolons start comments.
         (unless
             (setq res
                   (pcase sexp
-                    (`(,(or `let `let*) ,bindings)
+                    (`(,(or 'let 'let*) ,bindings)
                      (let ((vars vars))
                        (when (eq 'let* (car sexp))
                          (dolist (binding (cdr (reverse bindings)))
                            (push (or (car-safe binding) binding) vars)))
                        (elisp--local-variables-1
                         vars (car (cdr-safe (car (last bindings)))))))
-                    (`(,(or `let `let*) ,bindings . ,body)
+                    (`(,(or 'let 'let*) ,bindings . ,body)
                      (let ((vars vars))
                        (dolist (binding bindings)
                          (push (or (car-safe binding) binding) vars))
@@ -300,7 +300,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
                     ;; FIXME: Handle `cond'.
                     (`(,_ . ,_)
                      (elisp--local-variables-1 vars (car (last sexp))))
-                    (`elisp--witness--lisp (or vars '(nil)))
+                    ('elisp--witness--lisp (or vars '(nil)))
                     (_ nil)))
           ;; We didn't find the witness in the last element so we try to
           ;; backtrack to the last-but-one.
@@ -541,7 +541,7 @@ functions are annotated with \"<f>\" via the
                      (pcase parent
                        ;; FIXME: Rather than hardcode special cases here,
                        ;; we should use something like a symbol-property.
-                       (`declare
+                       ('declare
                         (list t (mapcar (lambda (x) (symbol-name (car x)))
                                         (delete-dups
                                          ;; FIXME: We should include some
@@ -549,14 +549,14 @@ functions are annotated with \"<f>\" via the
                                          (append macro-declarations-alist
                                                  defun-declarations-alist
                                                  nil))))) ; Copy both alists.
-                       ((and (or `condition-case `condition-case-unless-debug)
+                       ((and (or 'condition-case 'condition-case-unless-debug)
                              (guard (save-excursion
                                       (ignore-errors
                                         (forward-sexp 2)
                                         (< (point) beg)))))
                         (list t obarray
                               :predicate (lambda (sym) (get sym 'error-conditions))))
-                       ((and (or ?\( `let `let*)
+                       ((and (or ?\( 'let 'let*)
                              (guard (save-excursion
                                       (goto-char (1- beg))
                                       (when (eq parent ?\()

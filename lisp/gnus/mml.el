@@ -1152,7 +1152,7 @@ If HANDLES is non-nil, use it instead reparsing the buffer."
 
 (easy-menu-define
   mml-menu mml-mode-map ""
-  `("Attachments"
+  '("Attachments"
     ["Attach File..." mml-attach-file :help "Attach a file at point"]
     ["Attach Buffer..." mml-attach-buffer
      :help "Attach a buffer to the outgoing message"]

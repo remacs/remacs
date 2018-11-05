@@ -4118,7 +4118,7 @@ Runs `prefix-command-preserve-state-hook'."
   (when prefix-arg
     (concat "C-u"
             (pcase prefix-arg
-              (`(-) " -")
+              ('(-) " -")
               (`(,(and (pred integerp) n))
                (let ((str ""))
                  (while (and (> n 4) (= (mod n 4) 0))
@@ -8699,7 +8699,7 @@ See also `normal-erase-is-backspace'."
     (cond ((or (memq window-system '(x w32 ns pc))
 	       (memq system-type '(ms-dos windows-nt)))
 	   (let ((bindings
-		  `(([M-delete] [M-backspace])
+		  '(([M-delete] [M-backspace])
 		    ([C-M-delete] [C-M-backspace])
 		    ([?\e C-delete] [?\e C-backspace]))))
 

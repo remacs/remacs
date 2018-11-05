@@ -316,10 +316,10 @@ When optional argument CANONICAL is non-nil, ignore
 
 Raise an error if expected format is unknown."
   (pcase (or fmt org-duration-format)
-    (`h:mm
+    ('h:mm
      (let ((minutes (floor minutes)))
        (format "%d:%02d" (/ minutes 60) (mod minutes 60))))
-    (`h:mm:ss
+    ('h:mm:ss
      (let* ((whole-minutes (floor minutes))
 	    (seconds (floor (* 60 (- minutes whole-minutes)))))
        (format "%s:%02d"
@@ -328,7 +328,7 @@ Raise an error if expected format is unknown."
     ((pred atom) (error "Invalid duration format specification: %S" fmt))
     ;; Mixed format.  Call recursively the function on both parts.
     ((and duration-format
-	  (let `(special . ,(and mode (or `h:mm:ss `h:mm)))
+	  (let `(special . ,(and mode (or 'h:mm:ss 'h:mm)))
 	    (assq 'special duration-format)))
      (let* ((truncated-format
 	     ;; Remove "special" mode from duration format in order to

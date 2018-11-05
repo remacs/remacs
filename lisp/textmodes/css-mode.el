@@ -1250,20 +1250,20 @@ for determining whether point is within a selector."
 
 (defun css-smie-rules (kind token)
   (pcase (cons kind token)
-    (`(:elem . basic) css-indent-offset)
-    (`(:elem . arg) 0)
+    ('(:elem . basic) css-indent-offset)
+    ('(:elem . arg) 0)
     ;; "" stands for BOB (bug#15467).
     (`(:list-intro . ,(or ";" "" ":-property")) t)
-    (`(:before . "{")
+    ('(:before . "{")
      (when (or (smie-rule-hanging-p) (smie-rule-bolp))
        (smie-backward-sexp ";")
        (unless (eq (char-after) ?\{)
          (smie-indent-virtual))))
-    (`(:before . "(")
+    ('(:before . "(")
      (cond
       ((smie-rule-hanging-p) (smie-rule-parent 0))
       ((not (smie-rule-bolp)) 0)))
-    (`(:after . ":-property")
+    ('(:after . ":-property")
      (when (smie-rule-hanging-p)
        css-indent-offset))))
 

@@ -926,9 +926,9 @@ The value of this variable is used when Font Lock mode is turned on."
 
 (defun font-lock-turn-on-thing-lock ()
   (pcase (font-lock-value-in-major-mode font-lock-support-mode)
-    (`fast-lock-mode (fast-lock-mode t))
-    (`lazy-lock-mode (lazy-lock-mode t))
-    (`jit-lock-mode
+    ('fast-lock-mode (fast-lock-mode t))
+    ('lazy-lock-mode (lazy-lock-mode t))
+    ('jit-lock-mode
      ;; Prepare for jit-lock
      (remove-hook 'after-change-functions
                   #'font-lock-after-change-function t)

@@ -5095,7 +5095,7 @@ entries from minibuffer."
              (list beg end
                    (lambda (s p a)
                      (cond
-                      ((eq a 'metadata) `(metadata (category . bibtex-key)))
+                      ((eq a 'metadata) '(metadata (category . bibtex-key)))
                       (t (let ((completion-ignore-case nil))
                            (complete-with-action
                             a (bibtex-global-key-alist) s p)))))
@@ -5113,7 +5113,7 @@ entries from minibuffer."
            (list beg end
                  (lambda (s p a)
                    (cond
-                    ((eq a 'metadata) `(metadata (category . bibtex-string)))
+                    ((eq a 'metadata) '(metadata (category . bibtex-string)))
                     (t (let ((completion-ignore-case t))
                          (complete-with-action a compl s p)))))
                  :exit-function (bibtex-complete-string-cleanup compl))))))

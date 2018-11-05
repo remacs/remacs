@@ -938,7 +938,7 @@ MET-NAME is as returned by `cl--generic-load-hist-format'."
   (add-to-list 'find-function-regexp-alist
                `(cl-defmethod . ,#'cl--generic-search-method))
   (add-to-list 'find-function-regexp-alist
-               `(cl-defgeneric . cl--generic-find-defgeneric-regexp)))
+               '(cl-defgeneric . cl--generic-find-defgeneric-regexp)))
 
 (defun cl--generic-method-info (method)
   (let* ((specializers (cl--generic-method-specializers method))

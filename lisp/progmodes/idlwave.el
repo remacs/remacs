@@ -9074,7 +9074,7 @@ Assumes that point is at the beginning of the unit as found by
 
 ;; Menus - using easymenu.el
 (defvar idlwave-mode-menu-def
-  `("IDLWAVE"
+  '("IDLWAVE"
     ["PRO/FUNC menu" idlwave-function-menu t]
     ("Motion"
      ["Subprogram Start" idlwave-beginning-of-subprogram t]
@@ -9151,7 +9151,7 @@ Assumes that point is at the beginning of the unit as found by
      ["Kill auto-created buffers" idlwave-kill-autoloaded-buffers t]
      "--"
      ["Insert TAB character" idlwave-hard-tab t])
-     "--"
+    "--"
     ("External"
      ["Start IDL shell" idlwave-shell t]
      ["Edit file in IDLDE" idlwave-edit-in-idlde t]

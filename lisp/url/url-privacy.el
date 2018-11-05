@@ -45,9 +45,9 @@
 	 ((memq (url-device-type) '(win32 w32)) "Windows; 32bit")
 	 (t
 	  (pcase (url-device-type)
-	    (`x "X11")
-	    (`ns "OpenStep")
-	    (`tty "TTY")
+	    ('x "X11")
+	    ('ns "OpenStep")
+	    ('tty "TTY")
 	    (_ nil)))))
 
   (setq url-personal-mail-address (or url-personal-mail-address

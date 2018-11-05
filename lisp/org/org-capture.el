@@ -1042,7 +1042,7 @@ Store them in the capture property list."
 	 (org-capture-put :exact-position (point))
 	 (setq target-entry-p
 	       (and (derived-mode-p 'org-mode) (org-at-heading-p))))
-	(`(clock)
+	('(clock)
 	 (if (and (markerp org-clock-hd-marker)
 		  (marker-buffer org-clock-hd-marker))
 	     (progn (set-buffer (marker-buffer org-clock-hd-marker))
@@ -1101,11 +1101,11 @@ may have been stored before."
   (goto-char (org-capture-get :pos))
   (setq-local outline-level 'org-outline-level)
   (pcase (org-capture-get :type)
-    ((or `nil `entry) (org-capture-place-entry))
-    (`table-line (org-capture-place-table-line))
-    (`plain (org-capture-place-plain-text))
-    (`item (org-capture-place-item))
-    (`checkitem (org-capture-place-item)))
+    ((or 'nil 'entry) (org-capture-place-entry))
+    ('table-line (org-capture-place-table-line))
+    ('plain (org-capture-place-plain-text))
+    ('item (org-capture-place-item))
+    ('checkitem (org-capture-place-item)))
   (org-capture-mode 1)
   (setq-local org-capture-current-plist org-capture-plist))
 
@@ -1791,7 +1791,7 @@ The template may still contain \"%?\" for cursor positioning."
 		     (let ((insert-fun (if (equal key "C") #'insert
 					 (lambda (s) (org-insert-link 0 s)))))
 		       (pcase org-capture--clipboards
-			 (`nil nil)
+			 ('nil nil)
 			 (`(,value) (funcall insert-fun value))
 			 (`(,first-value . ,_)
 			  (funcall insert-fun
@@ -1811,7 +1811,7 @@ The template may still contain \"%?\" for cursor positioning."
 			time (or org-time-was-given upcase?)
 			(member key '("u" "U"))
 			nil nil (list org-end-time-was-given))))
-		    (`nil
+		    ('nil
 		     ;; Load history list for current prompt.
 		     (setq org-capture--prompt-history
 			   (gethash prompt org-capture--prompt-history-table))

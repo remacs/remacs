@@ -652,7 +652,7 @@ Unless NO-REPLACE is true, at each of the positions in LIST-SYMBOL
 		   (< ch ,beg-symbol))
 	   ,@(if no-replace
 		   nil
-		 `((mail-extr-nuke-char-at ch)))
+	       '((mail-extr-nuke-char-at ch)))
 	   (setcar temp nil))
 	 (setq temp (cdr temp)))
        (setq ,list-symbol (delq nil ,list-symbol))))

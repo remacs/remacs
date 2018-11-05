@@ -82,7 +82,7 @@
 	   (setf (epg-context-home-directory context)
 		 epg-tests-home-directory)
 	   ,(if require-passphrase
-		`(with-temp-file (expand-file-name
+		'(with-temp-file (expand-file-name
                                   "gpg-agent.conf" epg-tests-home-directory)
                    (insert "pinentry-program "
                            (expand-file-name "dummy-pinentry"
@@ -92,11 +92,11 @@
                     context
                     #'epg-tests-passphrase-callback)))
 	   ,(if require-public-key
-		`(epg-import-keys-from-file
+		'(epg-import-keys-from-file
 		  context
 		  (expand-file-name "pubkey.asc" epg-tests-data-directory)))
 	   ,(if require-secret-key
-		`(epg-import-keys-from-file
+		'(epg-import-keys-from-file
 		  context
 		  (expand-file-name "seckey.asc" epg-tests-data-directory)))
 	   (with-temp-buffer

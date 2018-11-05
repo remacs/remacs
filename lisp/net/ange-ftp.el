@@ -2679,7 +2679,7 @@ The main reason for this alist is to deal with file versions in VMS.")
 
 (defmacro ange-ftp-parse-filename ()
   ;;Extract the filename from the current line of a dired-like listing.
-  `(save-match-data
+  '(save-match-data
      (let ((eol (progn (end-of-line) (point))))
        (beginning-of-line)
        (if (re-search-forward directory-listing-before-filename-regexp eol t)
@@ -2761,7 +2761,7 @@ match subdirectories as well.")
 (defmacro ange-ftp-dl-parser ()
   ;; Parse the current buffer, which is assumed to be a descriptive
   ;; listing, and return a hashtable.
-  `(let ((tbl (make-hash-table :test 'equal)))
+  '(let ((tbl (make-hash-table :test 'equal)))
      (while (not (eobp))
        (puthash
         (buffer-substring (point)

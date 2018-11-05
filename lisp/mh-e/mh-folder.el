@@ -519,7 +519,7 @@ font-lock is done highlighting.")
 (defmacro mh-remove-xemacs-horizontal-scrollbar ()
   "Get rid of the horizontal scrollbar that XEmacs insists on putting in."
   (when (featurep 'xemacs)
-    `(if (and (featurep 'scrollbar)
+    '(if (and (featurep 'scrollbar)
               (fboundp 'set-specifier))
          (set-specifier horizontal-scrollbar-visible-p nil
                         (cons (current-buffer) nil)))))

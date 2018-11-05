@@ -290,10 +290,10 @@ string.  If RESULT-TYPE equals 'value then return the value of the
 last statement in BODY, as elisp."
   (let ((raw
          (pcase result-type
-           (`output (org-babel-eval org-babel-lua-command
+           ('output (org-babel-eval org-babel-lua-command
 				    (concat (if preamble (concat preamble "\n"))
 					    body)))
-           (`value (let ((tmp-file (org-babel-temp-file "lua-")))
+           ('value (let ((tmp-file (org-babel-temp-file "lua-")))
 		     (org-babel-eval
 		      org-babel-lua-command
 		      (concat
@@ -364,7 +364,7 @@ fd:close()"
 		       (funcall send-wait)))
          (results
           (pcase result-type
-            (`output
+            ('output
              (mapconcat
               #'org-trim
               (butlast
@@ -375,7 +375,7 @@ fd:close()"
                  (insert org-babel-lua-eoe-indicator)
                  (funcall send-wait))
                2) "\n"))
-            (`value
+            ('value
              (let ((tmp-file (org-babel-temp-file "lua-")))
                (org-babel-comint-with-output
                    (session org-babel-lua-eoe-indicator nil body)

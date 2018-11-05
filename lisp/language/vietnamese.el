@@ -72,9 +72,9 @@
 (define-coding-system-alias 'viqr 'vietnamese-viqr)
 
 (set-language-info-alist
- "Vietnamese" `((charset viscii)
+ "Vietnamese" '((charset viscii)
 		(coding-system vietnamese-viscii vietnamese-vscii
-			        vietnamese-tcvn vietnamese-viqr windows-1258)
+			       vietnamese-tcvn vietnamese-viqr windows-1258)
 		(nonascii-translation . viscii)
 		(coding-priority vietnamese-viscii)
 		(input-method . "vietnamese-viqr")

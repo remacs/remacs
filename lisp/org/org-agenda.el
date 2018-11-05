@@ -6213,12 +6213,12 @@ scheduled items with an hour specification like [h]h:mm."
 		    (or (not (memq (line-beginning-position 0) deadline-pos))
 			habitp))
 		   nil)
-		  (`repeated-after-deadline
+		  ('repeated-after-deadline
 		   (let ((deadline (time-to-days
 				    (org-get-deadline-time (point)))))
 		     (and (<= schedule deadline) (> current deadline))))
-		  (`not-today pastschedp)
-		  (`t t)
+		  ('not-today pastschedp)
+		  ('t t)
 		  (_ nil))
 	    (throw :skip nil))
 	  ;; Skip habits if `org-habit-show-habits' is nil, or if we

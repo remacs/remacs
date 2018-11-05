@@ -339,9 +339,9 @@ a communication channel."
     (concat bullet
 	    (make-string (- 4 (length bullet)) ? )
 	    (pcase (org-element-property :checkbox item)
-	      (`on "[X] ")
-	      (`trans "[-] ")
-	      (`off "[ ] "))
+	      ('on "[X] ")
+	      ('trans "[-] ")
+	      ('off "[ ] "))
 	    (let ((tag (org-element-property :tag item)))
 	      (and tag (format "**%s:** "(org-export-data tag info))))
 	    (and contents
@@ -400,11 +400,11 @@ a communication channel."
 			     (org-export-resolve-fuzzy-link link info)
 			   (org-export-resolve-id-link link info))))
 	(pcase (org-element-type destination)
-	  (`plain-text			; External file.
+	  ('plain-text			; External file.
 	   (let ((path (funcall link-org-files-as-md destination)))
 	     (if (not contents) (format "<%s>" path)
 	       (format "[%s](%s)" contents path))))
-	  (`headline
+	  ('headline
 	   (format
 	    "[%s](#%s)"
 	    ;; Description.

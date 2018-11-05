@@ -170,7 +170,7 @@ These were mostly extracted from the Radio Community Server at
 http://subhonker6.userland.com/rcsPublic/rssHotlist.
 
 You may add other entries in `newsticker-url-list'."
-  :type `(set ,@(mapcar `newsticker--splicer
+  :type `(set ,@(mapcar #'newsticker--splicer
                         newsticker--raw-url-list-defaults))
   :set 'newsticker--set-customvar-retrieval
   :group 'newsticker-retrieval)

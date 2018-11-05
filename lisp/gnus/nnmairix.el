@@ -1774,7 +1774,7 @@ If VERSION is a string: must be contained in mairix version output."
 	(setq versionstring
 	      (let* ((commandsplit (split-string nnmairix-mairix-command))
 		     (args (append (list (car commandsplit))
-				  `(nil t nil) (cdr commandsplit) '("-V"))))
+				   '(nil t nil) (cdr commandsplit) '("-V"))))
 	      (apply 'call-process args)
 	      (goto-char (point-min))
 	      (re-search-forward "mairix.*")

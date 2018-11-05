@@ -451,7 +451,7 @@
 ;;; (includes some punctuation conversion rules)
 ;;;
 (defconst tibetan-precomposition-rule-alist
-  `(("à½•à¾±à¾­" . "ö…€")
+  '(("à½•à¾±à¾­" . "ö…€")
     ("à½‚à¾²à¾­" . "ö…˜")
     ("à½šà¾­" . "ö„¢")
     ("à½¢à¾©à¾­" . "ö†…")

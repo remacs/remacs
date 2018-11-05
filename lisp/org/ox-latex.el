@@ -2434,7 +2434,7 @@ used as a communication channel."
 						   nil t))))
     ;; Return proper string, depending on FLOAT.
     (pcase float
-      (`wrap (format "\\begin{wrapfigure}%s
+      ('wrap (format "\\begin{wrapfigure}%s
 %s%s
 %s%s
 %s\\end{wrapfigure}"
@@ -2443,7 +2443,7 @@ used as a communication channel."
 		     (if center "\\centering" "")
 		     comment-include image-code
 		     (if caption-above-p "" caption)))
-      (`sideways (format "\\begin{sidewaysfigure}
+      ('sideways (format "\\begin{sidewaysfigure}
 %s%s
 %s%s
 %s\\end{sidewaysfigure}"
@@ -2451,7 +2451,7 @@ used as a communication channel."
 			 (if center "\\centering" "")
 			 comment-include image-code
 			 (if caption-above-p "" caption)))
-      (`multicolumn (format "\\begin{figure*}%s
+      ('multicolumn (format "\\begin{figure*}%s
 %s%s
 %s%s
 %s\\end{figure*}"
@@ -2460,7 +2460,7 @@ used as a communication channel."
 			    (if center "\\centering" "")
 			    comment-include image-code
 			    (if caption-above-p "" caption)))
-      (`figure (format "\\begin{figure}%s
+      ('figure (format "\\begin{figure}%s
 %s%s
 %s%s
 %s\\end{figure}"
@@ -2767,12 +2767,12 @@ containing export options.  Modify DATA by side-effect and return it."
 	 ;; Non-nil when OBJ can be added to the latex math block B.
 	 (lambda (obj b)
 	   (pcase (org-element-type obj)
-	     (`entity (org-element-property :latex-math-p obj))
-	     (`latex-fragment
+	     ('entity (org-element-property :latex-math-p obj))
+	     ('latex-fragment
 	      (let ((value (org-element-property :value obj)))
 		(or (string-prefix-p "\\(" value)
 		    (string-match-p "\\`\\$[^$]" value))))
-	     ((and type (or `subscript `superscript))
+	     ((and type (or 'subscript 'superscript))
 	      (not (memq type (mapcar #'org-element-type
 				      (org-element-contents b)))))))))
     (org-element-map data '(entity latex-fragment subscript superscript)

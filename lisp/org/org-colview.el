@@ -1379,8 +1379,8 @@ PARAMS is a property list of parameters:
 	 (let ((id (plist-get params :id))
 	       view-file view-pos)
 	   (pcase id
-	     (`global nil)
-	     ((or `local `nil) (setq view-pos (point)))
+	     ('global nil)
+	     ((or 'local 'nil) (setq view-pos (point)))
 	     ((and (let id-string (format "%s" id))
 		   (guard (string-match "^file:\\(.*\\)" id-string)))
 	      (setq view-file (match-string-no-properties 1 id-string))

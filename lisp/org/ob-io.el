@@ -74,14 +74,14 @@ If RESULT-TYPE equals `value' then return the value of the last statement
 in BODY as elisp."
   (when session (error "Sessions are not (yet) supported for Io"))
   (pcase result-type
-    (`output
+    ('output
      (if (member "repl" result-params)
          (org-babel-eval org-babel-io-command body)
        (let ((src-file (org-babel-temp-file "io-")))
          (progn (with-temp-file src-file (insert body))
                 (org-babel-eval
                  (concat org-babel-io-command " " src-file) "")))))
-    (`value (let* ((src-file (org-babel-temp-file "io-"))
+    ('value (let* ((src-file (org-babel-temp-file "io-"))
 		   (wrapper (format org-babel-io-wrapper-method body)))
 	      (with-temp-file src-file (insert wrapper))
 	      (let ((raw (org-babel-eval

@@ -75,7 +75,7 @@
 ;;;###mh-autoload
 (defmacro mh-buffer-data ()
   "Convenience macro to get the MIME data structures of the current buffer."
-  `(gethash (current-buffer) mh-globals-hash))
+  '(gethash (current-buffer) mh-globals-hash))
 
 ;; Structure to keep track of MIME handles on a per buffer basis.
 (mh-defstruct (mh-buffer-data (:conc-name mh-mime-)

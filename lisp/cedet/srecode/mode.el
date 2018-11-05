@@ -89,14 +89,14 @@
      ])
    "---"
    '( "Insert ..." :filter srecode-minor-mode-templates-menu )
-   `( "Generate ..." :filter srecode-minor-mode-generate-menu )
+   '( "Generate ..." :filter srecode-minor-mode-generate-menu )
    "---"
-    (semantic-menu-item
-     ["Customize..."
-      (customize-group "srecode")
-      :active t
-      :help "Customize SRecode options"
-      ])
+   (semantic-menu-item
+    ["Customize..."
+     (customize-group "srecode")
+     :active t
+     :help "Customize SRecode options"
+     ])
    (list
     "Debugging Tools..."
     (semantic-menu-item

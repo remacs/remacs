@@ -25,24 +25,24 @@
 ;;; Code:
 
 (set-language-info-alist
- "UTF-8" `((coding-system utf-8)
+ "UTF-8" '((coding-system utf-8)
 	   (coding-priority utf-8)
 	   (charset unicode-bmp unicode)
-;; Presumably not relevant now.
-;; 	   (setup-function
-;; 	    . (lambda ()
-;; 		;; Use Unicode font under Windows.  Jason Rumney fecit.
-;; 		(if (and (fboundp 'w32-add-charset-info)
-;; 			 (not (boundp 'w32-unicode-charset-defined)))
-;; 		    (w32-add-charset-info "iso10646-1" 'w32-charset-ansi t))))
-;; Is this appropriate?
-;; 	   (exit-function
-;; 	    . (lambda ()
-;; 		(if (and (fboundp 'w32-add-charset-info)
-;; 			 (not (boundp 'w32-unicode-charset-defined)))
-;; 		    (setq w32-charset-info-alist
-;; 			  (delete (assoc "iso10646-1")
-;; 				  w32-charset-info-alist)))))
+           ;; Presumably not relevant now.
+           ;; 	   (setup-function
+           ;; 	    . (lambda ()
+           ;; 		;; Use Unicode font under Windows.  Jason Rumney fecit.
+           ;; 		(if (and (fboundp 'w32-add-charset-info)
+           ;; 			 (not (boundp 'w32-unicode-charset-defined)))
+           ;; 		    (w32-add-charset-info "iso10646-1" 'w32-charset-ansi t))))
+           ;; Is this appropriate?
+           ;; 	   (exit-function
+           ;; 	    . (lambda ()
+           ;; 		(if (and (fboundp 'w32-add-charset-info)
+           ;; 			 (not (boundp 'w32-unicode-charset-defined)))
+           ;; 		    (setq w32-charset-info-alist
+           ;; 			  (delete (assoc "iso10646-1")
+           ;; 				  w32-charset-info-alist)))))
 	   (input-method . "rfc1345")	; maybe not the best choice
 	   (documentation . "\
 This language environment is a generic one for the Unicode character set

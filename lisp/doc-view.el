@@ -494,10 +494,10 @@ Typically \"page-%s.png\".")
 
 (defmacro doc-view-current-page (&optional win)
   `(image-mode-window-get 'page ,win))
-(defmacro doc-view-current-info () `(image-mode-window-get 'info))
-(defmacro doc-view-current-overlay () `(image-mode-window-get 'overlay))
-(defmacro doc-view-current-image () `(image-mode-window-get 'image))
-(defmacro doc-view-current-slice () `(image-mode-window-get 'slice))
+(defmacro doc-view-current-info () '(image-mode-window-get 'info))
+(defmacro doc-view-current-overlay () '(image-mode-window-get 'overlay))
+(defmacro doc-view-current-image () '(image-mode-window-get 'image))
+(defmacro doc-view-current-slice () '(image-mode-window-get 'slice))
 
 (defun doc-view-last-page-number ()
   (length doc-view--current-files))
@@ -1004,8 +1004,8 @@ is named like ODF with the extension turned to pdf."
   "Convert PDF-PS to PNG asynchronously."
   (funcall
    (pcase doc-view-doc-type
-     (`pdf doc-view-pdf->png-converter-function)
-     (`djvu #'doc-view-djvu->tiff-converter-ddjvu)
+     ('pdf doc-view-pdf->png-converter-function)
+     ('djvu #'doc-view-djvu->tiff-converter-ddjvu)
      (_ #'doc-view-ps->png-converter-ghostscript))
    pdf-ps png nil
    (let ((resolution doc-view-resolution))
@@ -1074,20 +1074,20 @@ Start by converting PAGES, and then the rest."
   "Convert the current document to text and call CALLBACK when done."
   (make-directory (doc-view--current-cache-dir) t)
   (pcase doc-view-doc-type
-    (`pdf
+    ('pdf
      ;; Doc is a PDF, so convert it to TXT
      (doc-view-pdf->txt doc-view--buffer-file-name txt callback))
-    (`ps
+    ('ps
      ;; Doc is a PS, so convert it to PDF (which will be converted to
      ;; TXT thereafter).
      (let ((pdf (doc-view-current-cache-doc-pdf)))
        (doc-view-ps->pdf doc-view--buffer-file-name pdf
                          (lambda () (doc-view-pdf->txt pdf txt callback)))))
-    (`dvi
+    ('dvi
      ;; Doc is a DVI.  This means that a doc.pdf already exists in its
      ;; cache subdirectory.
      (doc-view-pdf->txt (doc-view-current-cache-doc-pdf) txt callback))
-    (`odf
+    ('odf
      ;; Doc is some ODF (or MS Office) doc.  This means that a doc.pdf
      ;; already exists in its cache subdirectory.
      (doc-view-pdf->txt (doc-view-current-cache-doc-pdf) txt callback))
@@ -1128,13 +1128,13 @@ Those files are saved in the directory given by the function
                    (doc-view--current-cache-dir))))
     (make-directory (doc-view--current-cache-dir) t)
     (pcase doc-view-doc-type
-      (`dvi
+      ('dvi
        ;; DVI files have to be converted to PDF before Ghostscript can process
        ;; it.
        (let ((pdf (doc-view-current-cache-doc-pdf)))
          (doc-view-dvi->pdf doc-view--buffer-file-name pdf
                             (lambda () (doc-view-pdf/ps->png pdf png-file)))))
-      (`odf
+      ('odf
        ;; ODF files have to be converted to PDF before Ghostscript can
        ;; process it.
        (let ((pdf (doc-view-current-cache-doc-pdf))
@@ -1147,11 +1147,11 @@ Those files are saved in the directory given by the function
 	 ;; file name.  It's named like the input file with the
 	 ;; extension replaced by pdf.
          (funcall doc-view-odf->pdf-converter-function doc-view--buffer-file-name
-                            (lambda ()
-			      ;; Rename to doc.pdf
-			      (rename-file opdf pdf)
-			      (doc-view-pdf/ps->png pdf png-file)))))
-      ((or `pdf `djvu)
+                  (lambda ()
+		    ;; Rename to doc.pdf
+		    (rename-file opdf pdf)
+		    (doc-view-pdf/ps->png pdf png-file)))))
+      ((or 'pdf 'djvu)
        (let ((pages (doc-view-active-pages)))
          ;; Convert doc to bitmap images starting with the active pages.
          (doc-view-document->bitmap doc-view--buffer-file-name png-file pages)))
@@ -1695,7 +1695,7 @@ If BACKWARD is non-nil, jump to the previous match."
   "Find the right single-page converter for the current document type"
   (pcase-let ((`(,conv-function ,type ,extension)
                (pcase doc-view-doc-type
-                 (`djvu (list #'doc-view-djvu->tiff-converter-ddjvu 'tiff "tif"))
+                 ('djvu (list #'doc-view-djvu->tiff-converter-ddjvu 'tiff "tif"))
                  (_     (list doc-view-pdf->png-converter-function  'png  "png")))))
     (setq-local doc-view-single-page-converter-function conv-function)
     (setq-local doc-view--image-type type)

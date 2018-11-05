@@ -613,7 +613,7 @@ format first."
 
 ;; Add ruler-mode to the minor mode menu in the mode line
 (define-key mode-line-mode-menu [ruler-mode]
-  `(menu-item "Ruler" ruler-mode
+  '(menu-item "Ruler" ruler-mode
               :button (:toggle . ruler-mode)))
 
 (defconst ruler-mode-ruler-help-echo

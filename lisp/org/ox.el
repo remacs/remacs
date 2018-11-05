@@ -1954,8 +1954,8 @@ Return a string."
 		 (progn ,@body)
 	       (org-link-broken
 		(pcase (plist-get info :with-broken-links)
-		  (`nil (user-error "Unable to resolve link: %S" (nth 1 err)))
-		  (`mark (org-export-data
+		  ('nil (user-error "Unable to resolve link: %S" (nth 1 err)))
+		  ('mark (org-export-data
 			  (format "[BROKEN LINK: %s]" (nth 1 err)) info))
 		  (_ nil))))))
 	(let* ((type (org-element-type data))
@@ -4278,7 +4278,7 @@ A search cell follows the pattern (TYPE . SEARCH) where
 A search cell is the internal representation of a fuzzy link.  It
 ignores white spaces and statistics cookies, if applicable."
   (pcase (org-element-type datum)
-    (`headline
+    ('headline
      (let ((title (split-string
 		   (replace-regexp-in-string
 		    "\\[[0-9]*\\(?:%\\|/[0-9]*\\)\\]" ""
@@ -4289,7 +4289,7 @@ ignores white spaces and statistics cookies, if applicable."
 	      (cons 'other title)
 	      (let ((custom-id (org-element-property :custom-id datum)))
 		(and custom-id (cons 'custom-id custom-id)))))))
-    (`target
+    ('target
      (list (cons 'target (split-string (org-element-property :value datum)))))
     ((and (let name (org-element-property :name datum))
 	  (guard name))

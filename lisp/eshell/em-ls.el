@@ -346,7 +346,7 @@ instead."
    "ls" (if eshell-ls-initial-args
 	    (list eshell-ls-initial-args args)
 	  args)
-   `((?a "all" nil show-all
+   '((?a "all" nil show-all
 	 "do not ignore entries starting with .")
      (?A "almost-all" nil show-almost-all
 	 "do not list implied . and ..")

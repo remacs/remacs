@@ -52,7 +52,7 @@
 ;; The main keymap
 
 (easy-mmode-defmap log-edit-mode-map
-  `(("\C-c\C-c" . log-edit-done)
+  '(("\C-c\C-c" . log-edit-done)
     ("\C-c\C-a" . log-edit-insert-changelog)
     ("\C-c\C-d" . log-edit-show-diff)
     ("\C-c\C-f" . log-edit-show-files)

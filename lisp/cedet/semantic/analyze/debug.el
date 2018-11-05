@@ -558,19 +558,19 @@ PARENT is a possible parent (by nesting) tag."
 			 'mouse-face 'custom-button-pressed-face
 			 'tag tag
 			 'action
-			 `(lambda (button)
-			    (let ((buff nil)
-				  (pnt nil))
-			      (save-excursion
-				(semantic-go-to-tag
-				 (button-get button 'tag))
-				(setq buff (current-buffer))
-				(setq pnt (point)))
-			      (if (get-buffer-window buff)
-				  (select-window (get-buffer-window buff))
-				(pop-to-buffer buff t))
-			      (goto-char pnt)
-			      (pulse-line-hook-function)))
+			 (lambda (button)
+			   (let ((buff nil)
+				 (pnt nil))
+			     (save-excursion
+			       (semantic-go-to-tag
+				(button-get button 'tag))
+			       (setq buff (current-buffer))
+			       (setq pnt (point)))
+			     (if (get-buffer-window buff)
+				 (select-window (get-buffer-window buff))
+			       (pop-to-buffer buff t))
+			     (goto-char pnt)
+			     (pulse-line-hook-function)))
 			 ))
       (princ "\"")
       (princ str)

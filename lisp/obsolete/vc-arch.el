@@ -397,8 +397,8 @@ CALLBACK expects (ENTRIES &optional MORE-TO-COME); see
 	  (setq rev (replace-match (cdr rule) t nil rev))))
     (format "Arch%c%s"
 	    (pcase (vc-state file)
-	      ((or `up-to-date `needs-update) ?-)
-	      (`added ?@)
+	      ((or 'up-to-date 'needs-update) ?-)
+	      ('added ?@)
 	      (_ ?:))
 	    rev)))
 

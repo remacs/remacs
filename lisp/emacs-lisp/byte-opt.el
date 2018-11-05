@@ -255,7 +255,7 @@
       (setq fn (or (symbol-function name)
                    (cdr (assq name byte-compile-function-environment)))))
     (pcase fn
-      (`nil
+      ('nil
        (byte-compile-warn "attempt to inline `%s' before it was defined"
                           name)
        form)
@@ -635,7 +635,7 @@
     (setq form (car (last (cdr form)))))
   (cond ((consp form)
          (pcase (car form)
-           (`quote (cadr form))
+           ('quote (cadr form))
            ;; Can't use recursion in a defsubst.
            ;; (`progn (byte-compile-trueconstp (car (last (cdr form)))))
            ))
@@ -649,7 +649,7 @@
     (setq form (car (last (cdr form)))))
   (cond ((consp form)
          (pcase (car form)
-           (`quote (null (cadr form)))
+           ('quote (null (cadr form)))
            ;; Can't use recursion in a defsubst.
            ;; (`progn (byte-compile-nilconstp (car (last (cdr form)))))
            ))

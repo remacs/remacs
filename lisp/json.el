@@ -523,8 +523,8 @@ Please see the documentation of `json-object-type' and `json-key-type'."
     ;; Skip over the "}"
     (json-advance)
     (pcase json-object-type
-      (`alist (nreverse elements))
-      (`plist (json--plist-reverse elements))
+      ('alist (nreverse elements))
+      ('plist (json--plist-reverse elements))
       (_ elements))))
 
 ;; Hash table encoding
@@ -641,8 +641,8 @@ become JSON objects."
     ;; Skip over the "]"
     (json-advance)
     (pcase json-array-type
-      (`vector (nreverse (vconcat elements)))
-      (`list (nreverse elements)))))
+      ('vector (nreverse (vconcat elements)))
+      ('list (nreverse elements)))))
 
 ;; Array encoding
 

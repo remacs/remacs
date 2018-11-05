@@ -1158,7 +1158,7 @@ consecutive checks.  For example:
                  (file-attributes (file-chase-links file)))))))"
   :group 'files
   :version "24.1"
-  :type `(choice
+  :type '(choice
 	  (const   :tag "Do not inhibit file name cache" nil)
 	  (const   :tag "Do not use file name cache" t)
 	  (integer :tag "Do not use file name cache"
@@ -3837,13 +3837,13 @@ It is dangerous if either of these conditions are met:
 If VAR is `mode', call `VAL-mode' as a function unless it's
 already the major mode."
   (pcase var
-    (`mode
+    ('mode
      (let ((mode (intern (concat (downcase (symbol-name val))
                                  "-mode"))))
        (unless (eq (indirect-function mode)
                    (indirect-function major-mode))
          (funcall mode))))
-    (`eval
+    ('eval
      (pcase val
        (`(add-hook ',hook . ,_) (hack-one-local-variable--obsolete hook)))
      (save-excursion (eval val)))
@@ -7168,18 +7168,18 @@ only these files will be asked to be saved."
 	    (setcar pair (file-name-unquote (car pair) t))))
 	(setq file-arg-indices (cdr file-arg-indices))))
     (pcase method
-      (`identity (car arguments))
-      (`add (file-name-quote (apply operation arguments) t))
-      (`buffer-file-name
+      ('identity (car arguments))
+      ('add (file-name-quote (apply operation arguments) t))
+      ('buffer-file-name
        (let ((buffer-file-name (file-name-unquote buffer-file-name t)))
          (apply operation arguments)))
-      (`insert-file-contents
+      ('insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect
              (apply operation arguments)
            (when (and visit buffer-file-name)
              (setq buffer-file-name (file-name-quote buffer-file-name t))))))
-      (`unquote-then-quote
+      ('unquote-then-quote
        ;; We can't use `cl-letf' with `(buffer-local-value)' here
        ;; because it wouldn't work during bootstrapping.
        (let ((buffer (current-buffer)))
@@ -7192,7 +7192,7 @@ only these files will be asked to be saved."
              ;; underlying operation.
              (with-current-buffer buffer
                (apply operation arguments))))))
-      (`local-copy
+      ('local-copy
        (let* ((file-name-handler-alist saved-file-name-handler-alist)
               (source (car arguments))
               (target (car (cdr arguments)))

@@ -150,7 +150,7 @@ elisp byte-compiler."
   :group 'ibuffer)
 
 (defcustom ibuffer-fontification-alist
-  `((10 buffer-read-only font-lock-constant-face)
+  '((10 buffer-read-only font-lock-constant-face)
     (15 (and buffer-file-name
 	     (string-match ibuffer-compressed-file-name-regexp
 			   buffer-file-name))
@@ -1613,8 +1613,8 @@ If point is on a group name, this function operates on that group."
     `(truncate-string-to-width ,strvar ,maxvar nil ?\s)))
 
 (defun ibuffer-compile-make-format-form (strvar widthform alignment)
-  (let* ((left `(make-string tmp2 ?\s))
-	 (right `(make-string (- tmp1 tmp2) ?\s)))
+  (let* ((left '(make-string tmp2 ?\s))
+	 (right '(make-string (- tmp1 tmp2) ?\s)))
     `(progn
        (setq tmp1 ,widthform
 	     tmp2 (/ tmp1 2))
@@ -1737,7 +1737,7 @@ If point is on a group name, this function operates on that group."
 		      outforms)
 		     (push `(setq str ,callform
                                   ,@(when strlen-used
-                                      `(strlen (string-width str))))
+                                      '(strlen (string-width str))))
 			   outforms)
 		     (setq outforms
 			   (append outforms
@@ -2205,7 +2205,7 @@ the value of point at the beginning of the line for that buffer."
 		     strname
 		     (propertize strname 'mouse-face 'highlight 'keymap hmap)))
 		  strname)))))
-	 (add-text-properties opos (point) `(ibuffer-title-header t))
+	 (add-text-properties opos (point) '(ibuffer-title-header t))
 	 (insert "\n")
 	 ;; Add the underlines
 	 (let ((str (save-excursion
@@ -2255,7 +2255,7 @@ the value of point at the beginning of the line for that buffer."
                                                align)
                       summary))))))
 	   (point))
-	 `(ibuffer-summary t)))))
+	 '(ibuffer-summary t)))))
 
 
 (defun ibuffer-redisplay (&optional silent)

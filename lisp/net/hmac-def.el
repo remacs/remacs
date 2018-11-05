@@ -73,7 +73,7 @@ If BIT is non-nil, truncate output to specified bits."
 	     ,(if (and bit (< (/ bit 8) L))
 		  `(substring key-xor-opad 0 ,(/ bit 8))
 		;; return a copy of `key-xor-opad'.
-		`(concat key-xor-opad)))
+		'(concat key-xor-opad)))
 	 ;; cleanup.
 	 (fillarray key-xor-ipad 0)
 	 (fillarray key-xor-opad 0)))))

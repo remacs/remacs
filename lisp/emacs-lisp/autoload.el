@@ -182,13 +182,13 @@ expression, in which case we want to handle forms differently."
       (let* ((macrop (memq car '(defmacro cl-defmacro defmacro*)))
 	     (name (nth 1 form))
 	     (args (pcase car
-                     ((or `defun `defmacro
-                          `defun* `defmacro* `cl-defun `cl-defmacro
-                          `define-overloadable-function)
+                     ((or 'defun 'defmacro
+                          'defun* 'defmacro* 'cl-defun 'cl-defmacro
+                          'define-overloadable-function)
                       (nth 2 form))
-                     (`define-skeleton '(&optional str arg))
-                     ((or `define-generic-mode `define-derived-mode
-                          `define-compilation-mode)
+                     ('define-skeleton '(&optional str arg))
+                     ((or 'define-generic-mode 'define-derived-mode
+                          'define-compilation-mode)
                       nil)
                      (_ t)))
 	     (body (nthcdr (or (function-get car 'doc-string-elt) 3) form))

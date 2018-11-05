@@ -220,7 +220,7 @@
     (should-error (cl-struct-slot-offset 'mystruct 'marypoppins))
     (should (pcase (cl-struct-slot-info 'mystruct)
               (`((cl-tag-slot) (abc 5 :readonly t)
-                 (def . ,(or `nil `(nil))))
+                 (def . ,(or 'nil '(nil))))
                t)))))
 (ert-deftest cl-lib-struct-constructors ()
   (should (string-match "\\`Constructor docstring."

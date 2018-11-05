@@ -484,7 +484,7 @@ comparing the subr with a much slower lisp implementation."
         (should-have-watch-data `(data-tests-lvar 3 set ,buf1)))
       (should-have-watch-data `(data-tests-lvar 1 unlet ,buf1))
       (setq-default data-tests-lvar 4)
-      (should-have-watch-data `(data-tests-lvar 4 set nil))
+      (should-have-watch-data '(data-tests-lvar 4 set nil))
       (with-temp-buffer
         (setq buf2 (current-buffer))
         (setq data-tests-lvar 1)
@@ -501,7 +501,7 @@ comparing the subr with a much slower lisp implementation."
         (kill-all-local-variables)
         (should-have-watch-data `(data-tests-lvar nil makunbound ,buf2)))
       (setq-default data-tests-lvar 4)
-      (should-have-watch-data `(data-tests-lvar 4 set nil))
+      (should-have-watch-data '(data-tests-lvar 4 set nil))
       (makunbound 'data-tests-lvar)
       (should-have-watch-data '(data-tests-lvar nil makunbound nil))
       (setq data-tests-lvar 5)

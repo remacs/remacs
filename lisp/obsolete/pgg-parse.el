@@ -123,10 +123,10 @@
 	 0))
 
 (defmacro pgg-byte-after (&optional pos)
-  `(pgg-char-int (char-after ,(or pos `(point)))))
+  `(pgg-char-int (char-after ,(or pos '(point)))))
 
 (defmacro pgg-read-byte ()
-  `(pgg-char-int (char-after (prog1 (point) (forward-char)))))
+  '(pgg-char-int (char-after (prog1 (point) (forward-char)))))
 
 (defmacro pgg-read-bytes-string (nbytes)
   `(buffer-substring

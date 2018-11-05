@@ -5562,7 +5562,7 @@ specific buffers."
                                            (window-prev-buffers window)))))
 	 (head
 	  `(,type
-            ,@(unless (window-next-sibling window) `((last . t)))
+            ,@(unless (window-next-sibling window) '((last . t)))
             (pixel-width . ,(window-pixel-width window))
             (pixel-height . ,(window-pixel-height window))
             (total-width . ,(window-total-width window))
@@ -7824,9 +7824,9 @@ Return the buffer switched to."
            ((window-minibuffer-p) nil)
            ((not (eq (window-dedicated-p) t)) 'force-same-window)
            ((pcase switch-to-buffer-in-dedicated-window
-              (`nil (user-error
+              ('nil (user-error
                      "Cannot switch buffers in a dedicated window"))
-              (`prompt
+              ('prompt
                (if (y-or-n-p
                     (format "Window is dedicated to %s; undedicate it"
                             (window-buffer)))
@@ -7835,7 +7835,7 @@ Return the buffer switched to."
                      'force-same-window)
                  (user-error
                   "Cannot switch buffers in a dedicated window")))
-              (`pop nil)
+              ('pop nil)
               (_ (set-window-dedicated-p nil nil) 'force-same-window))))))
      (list (read-buffer-to-switch "Switch to buffer: ") nil force-same-window)))
   (let ((buffer (window-normalize-buffer-to-switch-to buffer-or-name)))

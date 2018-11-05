@@ -624,12 +624,12 @@ export back-end currently used."
 			(match-string 1 options)
 		      default)))
 	  (pcase opt
-	    (`path (setq template
+	    ('path (setq template
 			 (replace-regexp-in-string
 			  "%SCRIPT_PATH" val template t t)))
-	    (`sdepth (when (integerp (read val))
+	    ('sdepth (when (integerp (read val))
 		       (setq sdepth (min (read val) sdepth))))
-	    (`tdepth (when (integerp (read val))
+	    ('tdepth (when (integerp (read val))
 		       (setq tdepth (min (read val) tdepth))))
 	    (_ (setq val
 		     (cond
@@ -2739,19 +2739,19 @@ INFO is a plist holding contextual information.  See
 	(extra-newline (if (and (org-string-nw-p contents) headline) "\n" "")))
     (concat
      (pcase type
-       (`ordered
+       ('ordered
 	(let* ((counter term-counter-id)
 	       (extra (if counter (format " value=\"%s\"" counter) "")))
 	  (concat
 	   (format "<li%s%s>" class extra)
 	   (when headline (concat headline br)))))
-       (`unordered
+       ('unordered
 	(let* ((id term-counter-id)
 	       (extra (if id (format " id=\"%s\"" id) "")))
 	  (concat
 	   (format "<li%s%s>" class extra)
 	   (when headline (concat headline br)))))
-       (`descriptive
+       ('descriptive
 	(let* ((term term-counter-id))
 	  (setq term (or term "(no term)"))
 	  ;; Check-boxes in descriptive lists are associated to tag.
@@ -2763,9 +2763,9 @@ INFO is a plist holding contextual information.  See
      (and (org-string-nw-p contents) (org-trim contents))
      extra-newline
      (pcase type
-       (`ordered "</li>")
-       (`unordered "</li>")
-       (`descriptive "</dd>")))))
+       ('ordered "</li>")
+       ('unordered "</li>")
+       ('descriptive "</dd>")))))
 
 (defun org-html-item (item contents info)
   "Transcode an ITEM element from Org to HTML.
@@ -2902,8 +2902,8 @@ if its description is a single link targeting an image file."
 	   (cons 'plain-text org-element-all-objects)
 	 (lambda (obj)
 	   (pcase (org-element-type obj)
-	     (`plain-text (org-string-nw-p obj))
-	     (`link (if (= link-count 1) t
+	     ('plain-text (org-string-nw-p obj))
+	     ('link (if (= link-count 1) t
 		      (cl-incf link-count)
 		      (not (org-export-inline-image-p
 			    obj (plist-get info :html-inline-image-rules)))))
@@ -2930,8 +2930,8 @@ images, set it to:
 
   (lambda (paragraph) (org-element-property :caption paragraph))"
   (let ((paragraph (pcase (org-element-type element)
-		     (`paragraph element)
-		     (`link (org-export-get-parent element)))))
+		     ('paragraph element)
+		     ('link (org-export-get-parent element)))))
     (and (eq (org-element-type paragraph) 'paragraph)
 	 (or (not (fboundp 'org-html-standalone-image-predicate))
 	     (funcall org-html-standalone-image-predicate paragraph))
@@ -2941,8 +2941,8 @@ images, set it to:
 		 (cons 'plain-text org-element-all-objects)
 	       (lambda (obj)
 		 (when (pcase (org-element-type obj)
-			 (`plain-text (org-string-nw-p obj))
-			 (`link (or (> (cl-incf link-count) 1)
+			 ('plain-text (org-string-nw-p obj))
+			 ('link (or (> (cl-incf link-count) 1)
 				    (not (org-html-inline-image-p obj info))))
 			 (_ t))
 		   (throw 'exit nil)))
@@ -3046,7 +3046,7 @@ INFO is a plist holding contextual information.  See
 			   (org-export-resolve-id-link link info))))
 	(pcase (org-element-type destination)
 	  ;; ID link points to an external file.
-	  (`plain-text
+	  ('plain-text
 	   (let ((fragment (concat "ID-" path))
 		 ;; Treat links to ".org" files as ".html", if needed.
 		 (path (funcall link-org-files-as-html-maybe
@@ -3054,13 +3054,13 @@ INFO is a plist holding contextual information.  See
 	     (format "<a href=\"%s#%s\"%s>%s</a>"
 		     path fragment attributes (or desc destination))))
 	  ;; Fuzzy link points nowhere.
-	  (`nil
+	  ('nil
 	   (format "<i>%s</i>"
 		   (or desc
 		       (org-export-data
 			(org-element-property :raw-link link) info))))
 	  ;; Link points to a headline.
-	  (`headline
+	  ('headline
 	   (let ((href (or (org-element-property :CUSTOM_ID destination)
 			   (org-export-get-reference destination info)))
 		 ;; What description to use?
@@ -3189,9 +3189,9 @@ the plist used as a communication channel."
 CONTENTS is the contents of the list.  INFO is a plist holding
 contextual information."
   (let* ((type (pcase (org-element-property :type plain-list)
-		 (`ordered "ol")
-		 (`unordered "ul")
-		 (`descriptive "dl")
+		 ('ordered "ol")
+		 ('unordered "ul")
+		 ('descriptive "dl")
 		 (other (error "Unknown HTML list type: %s" other))))
 	 (class (format "org-%s" type))
 	 (attributes (org-export-read-attribute :attr_html plain-list)))

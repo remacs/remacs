@@ -1146,7 +1146,7 @@ See the variable `Man-notify-method' for the different notification behaviors."
   (let ((saved-frame (with-current-buffer man-buffer
 		       Man-original-frame)))
     (pcase Man-notify-method
-      (`newframe
+      ('newframe
        ;; Since we run asynchronously, perhaps while Emacs is waiting
        ;; for input, we must not leave a different buffer current.  We
        ;; can't rely on the editor command loop to reselect the
@@ -1157,25 +1157,25 @@ See the variable `Man-notify-method' for the different notification behaviors."
            (set-window-dedicated-p (frame-selected-window frame) t)
            (or (display-multi-frame-p frame)
                (select-frame frame)))))
-      (`pushy
+      ('pushy
        (switch-to-buffer man-buffer))
-      (`bully
+      ('bully
        (and (frame-live-p saved-frame)
             (select-frame saved-frame))
        (pop-to-buffer man-buffer)
        (delete-other-windows))
-      (`aggressive
+      ('aggressive
        (and (frame-live-p saved-frame)
             (select-frame saved-frame))
        (pop-to-buffer man-buffer))
-      (`friendly
+      ('friendly
        (and (frame-live-p saved-frame)
             (select-frame saved-frame))
        (display-buffer man-buffer 'not-this-window))
-      (`polite
+      ('polite
        (beep)
        (message "Manual buffer %s is ready" (buffer-name man-buffer)))
-      (`quiet
+      ('quiet
        (message "Manual buffer %s is ready" (buffer-name man-buffer)))
       (_ ;; meek
        (message ""))

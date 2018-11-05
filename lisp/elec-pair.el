@@ -522,7 +522,7 @@ happened."
                                    pos))
          (forward-char))
         ;; Insert matching pair.
-        ((and (memq syntax `(?\( ?\" ?\$))
+        ((and (memq syntax '(?\( ?\" ?\$))
               (not overwrite-mode)
               (or unconditional
                   (not (funcall electric-pair-inhibit-predicate

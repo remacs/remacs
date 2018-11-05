@@ -391,13 +391,13 @@ newline after CHAR but stay in the same place.")
           ;; multiple times), but I'm not sure it's what we want.
           ;;
           ;; FIXME: check eolp before inserting \n?
-          (`before (goto-char (1- pos)) (skip-chars-backward " \t")
+          ('before (goto-char (1- pos)) (skip-chars-backward " \t")
                    (unless (bolp) (insert "\n")))
-          (`after  (insert "\n"))
-          (`after-stay (save-excursion
+          ('after  (insert "\n"))
+          ('after-stay (save-excursion
                          (let ((electric-layout-rules nil))
                            (newline 1 t))))
-          (`around (save-excursion
+          ('around (save-excursion
                      (goto-char (1- pos)) (skip-chars-backward " \t")
                      (unless (bolp) (insert "\n")))
                    (insert "\n")))      ; FIXME: check eolp before inserting \n?

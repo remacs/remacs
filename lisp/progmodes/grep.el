@@ -704,7 +704,7 @@ This function is called from `compilation-filter-hook'."
 		  'exec-plus)
 		 ((and
 		   (grep-probe find-program `(nil nil nil ,null-device "-print0"))
-		   (grep-probe xargs-program `(nil nil nil "-0" "echo")))
+		   (grep-probe xargs-program '(nil nil nil "-0" "echo")))
 		  'gnu)
 		 (t
 		  'exec))))

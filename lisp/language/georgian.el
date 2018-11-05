@@ -37,7 +37,7 @@
   :charset-list '(georgian-academy))
 
 (set-language-info-alist
- "Georgian" `((coding-system georgian-ps)
+ "Georgian" '((coding-system georgian-ps)
 	      (coding-priority georgian-ps)
 	      (input-method . "georgian")
 	      (nonascii-translation . georgian-ps)

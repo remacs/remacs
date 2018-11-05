@@ -87,8 +87,8 @@ current directory string."
 BODY is the contents of the block, as a string.  PARAMS is
 a property list containing the parameters of the block."
   (require (pcase org-babel-lisp-eval-fn
-	     (`slime-eval 'slime)
-	     (`sly-eval 'sly)))
+	     ('slime-eval 'slime)
+	     ('sly-eval 'sly)))
   (org-babel-reassemble-table
    (let ((result
           (funcall (if (member "output" (cdr (assq :result-params params)))

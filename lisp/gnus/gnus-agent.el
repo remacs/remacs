@@ -2600,11 +2600,11 @@ General format specifiers can also be used.  See Info node
 (defvar gnus-tmp-groups)
 
 (defvar gnus-category-line-format-alist
-  `((?c gnus-tmp-name ?s)
+  '((?c gnus-tmp-name ?s)
     (?g gnus-tmp-groups ?d)))
 
 (defvar gnus-category-mode-line-format-alist
-  `((?u user-defined ?s)))
+  '((?u user-defined ?s)))
 
 (defvar gnus-category-line-format-spec nil)
 (defvar gnus-category-mode-line-format-spec nil)

@@ -1524,12 +1524,12 @@ Depending on context, inserts a matching close-tag, or closes
 the current start-tag or the current comment or the current cdata, ..."
   (interactive)
   (pcase (car (sgml-lexical-context))
-    (`comment 	(insert " -->"))
-    (`cdata 	(insert "]]>"))
-    (`pi 	(insert " ?>"))
-    (`jsp 	(insert " %>"))
-    (`tag 	(insert " />"))
-    (`text
+    ('comment 	(insert " -->"))
+    ('cdata 	(insert "]]>"))
+    ('pi 	(insert " ?>"))
+    ('jsp 	(insert " %>"))
+    ('tag 	(insert " />"))
+    ('text
      (let ((context (save-excursion (sgml-get-context))))
        (if context
            (progn
@@ -1562,7 +1562,7 @@ LCON is the lexical context, if any."
 
   (pcase (car lcon)
 
-    (`string
+    ('string
      ;; Go back to previous non-empty line.
      (while (and (> (point) (cdr lcon))
 		 (zerop (forward-line -1))
@@ -1573,7 +1573,7 @@ LCON is the lexical context, if any."
        (goto-char (cdr lcon))
        (1+ (current-column))))
 
-    (`comment
+    ('comment
      (let ((mark (looking-at "--")))
        ;; Go back to previous non-empty line.
        (while (and (> (point) (cdr lcon))
@@ -1592,11 +1592,11 @@ LCON is the lexical context, if any."
        (current-column)))
 
     ;; We don't know how to indent it.  Let's be honest about it.
-    (`cdata nil)
+    ('cdata nil)
     ;; We don't know how to indent it.  Let's be honest about it.
-    (`pi nil)
+    ('pi nil)
 
-    (`tag
+    ('tag
      (goto-char (+ (cdr lcon) sgml-attribute-offset))
      (skip-chars-forward "^ \t\n")	;Skip tag name.
      (skip-chars-forward " \t")
@@ -1606,7 +1606,7 @@ LCON is the lexical context, if any."
        (goto-char (+ (cdr lcon) sgml-attribute-offset))
        (+ (current-column) sgml-basic-offset)))
 
-    (`text
+    ('text
      (while (looking-at "</")
        (sgml-forward-sexp 1)
        (skip-chars-forward " \t"))

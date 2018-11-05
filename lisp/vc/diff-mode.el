@@ -476,13 +476,13 @@ See https://lists.gnu.org/r/emacs-devel/2007-11/msg01990.html")
     (unless end
       (setq end (and (re-search-forward
                       (pcase style
-                        (`unified
+                        ('unified
                          (concat (if diff-valid-unified-empty-line
                                      "^[^-+# \\\n]\\|" "^[^-+# \\]\\|")
                                  ;; A `unified' header is ambiguous.
                                  diff-file-header-re))
-                        (`context "^[^-+#! \\]")
-                        (`normal "^[^<>#\\]")
+                        ('context "^[^-+#! \\]")
+                        ('normal "^[^<>#\\]")
                         (_ "^[^-+#!<> \\]"))
                       nil t)
                      (match-beginning 0)))
@@ -2048,7 +2048,7 @@ Return new point, if it was moved."
 
     (goto-char beg)
     (pcase style
-      (`unified
+      ('unified
        (while (re-search-forward "^-" end t)
          (let ((beg-del (progn (beginning-of-line) (point)))
                beg-add end-add)
@@ -2061,7 +2061,7 @@ Return new point, if it was moved."
                              (setq end-add (point))))
              (smerge-refine-regions beg-del beg-add beg-add end-add
                                     nil #'diff-refine-preproc props-r props-a)))))
-      (`context
+      ('context
        (let* ((middle (save-excursion (re-search-forward "^---")))
               (other middle))
          (while (re-search-forward "^\\(?:!.*\n\\)+" middle t)

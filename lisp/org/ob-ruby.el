@@ -200,8 +200,8 @@ return the value of the last statement in BODY, as elisp."
   (if (not buffer)
       ;; external process evaluation
       (pcase result-type
-	(`output (org-babel-eval org-babel-ruby-command body))
-	(`value (let ((tmp-file (org-babel-temp-file "ruby-")))
+	('output (org-babel-eval org-babel-ruby-command body))
+	('value (let ((tmp-file (org-babel-temp-file "ruby-")))
 		  (org-babel-eval
 		   org-babel-ruby-command
 		   (format (if (member "pp" result-params)
@@ -211,7 +211,7 @@ return the value of the last statement in BODY, as elisp."
 		  (org-babel-eval-read-file tmp-file))))
     ;; comint session evaluation
     (pcase result-type
-      (`output
+      ('output
        (let ((eoe-string (format "puts \"%s\"" org-babel-ruby-eoe-indicator)))
 	 ;; Force the session to be ready before the actual session
 	 ;; code is run.  There is some problem in comint that will
@@ -238,7 +238,7 @@ return the value of the last statement in BODY, as elisp."
 		      "conf.prompt_mode=_org_prompt_mode;conf.echo=true"
 		      eoe-string)))
 	     "\n") "[\r\n]") 4) "\n")))
-      (`value
+      ('value
        (let* ((tmp-file (org-babel-temp-file "ruby-"))
 	      (ppp (or (member "code" result-params)
 		       (member "pp" result-params))))

@@ -188,7 +188,7 @@ failed or if there was a problem."
 
 (ert-deftest ert-test-should-with-macrolet ()
   (let ((test (make-ert-test :body (lambda ()
-                                     (cl-macrolet ((foo () `(progn t nil)))
+                                     (cl-macrolet ((foo () '(progn t nil)))
                                        (should (foo)))))))
     (let ((result (let ((ert-debug-on-error nil))
                     (ert-run-test test))))
@@ -490,9 +490,9 @@ This macro is used to test if macroexpansion in `should' works."
                :name nil
                :body nil
                :tags '(a b))))
-    (should (equal (ert-select-tests `(tag a) (list test)) (list test)))
-    (should (equal (ert-select-tests `(tag b) (list test)) (list test)))
-    (should (equal (ert-select-tests `(tag c) (list test)) '()))))
+    (should (equal (ert-select-tests '(tag a) (list test)) (list test)))
+    (should (equal (ert-select-tests '(tag b) (list test)) (list test)))
+    (should (equal (ert-select-tests '(tag c) (list test)) '()))))
 
 
 ;;; Tests for utility functions.

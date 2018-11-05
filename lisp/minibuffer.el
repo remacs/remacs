@@ -1128,7 +1128,7 @@ when the buffer's text is already an exact match."
              ;; Show the completion table, if requested.
              ((not exact)
 	      (if (pcase completion-auto-help
-                    (`lazy (eq this-command last-command))
+                    ('lazy (eq this-command last-command))
                     (_ completion-auto-help))
                   (minibuffer-completion-help beg end)
                 (completion--message "Next char not unique")))
@@ -2095,9 +2095,9 @@ a completion function or god knows what else.")
   ;; like comint-completion-at-point or mh-letter-completion-at-point, which
   ;; could be sometimes safe and sometimes misbehaving (and sometimes neither).
   (if (pcase which
-        (`all t)
-        (`safe (member fun completion--capf-safe-funs))
-        (`optimist (not (member fun completion--capf-misbehave-funs))))
+        ('all t)
+        ('safe (member fun completion--capf-safe-funs))
+        ('optimist (not (member fun completion--capf-misbehave-funs))))
       (let ((res (funcall fun)))
         (cond
          ((and (consp res) (not (functionp res)))
@@ -2955,9 +2955,9 @@ or a symbol, see `completion-pcm--merge-completions'."
          (setq p (cdr p)))
         (`(star ,(pred symbolp) . ,rest) (setq p `(star . ,rest)))
         (`(,(pred symbolp) star . ,rest) (setq p `(star . ,rest)))
-        (`(point ,(or `any `any-delim) . ,rest) (setq p `(point . ,rest)))
-        (`(,(or `any `any-delim) point . ,rest) (setq p `(point . ,rest)))
-        (`(any ,(or `any `any-delim) . ,rest) (setq p `(any . ,rest)))
+        (`(point ,(or 'any 'any-delim) . ,rest) (setq p `(point . ,rest)))
+        (`(,(or 'any 'any-delim) point . ,rest) (setq p `(point . ,rest)))
+        (`(any ,(or 'any 'any-delim) . ,rest) (setq p `(any . ,rest)))
         (`(,(pred symbolp)) (setq p nil)) ;Implicit terminating `any'.
         (_ (push (pop p) n))))
     (nreverse n)))

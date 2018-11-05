@@ -2734,7 +2734,7 @@ Because of ambiguities, this should be concatenated with something like
           (user-error "No menu in this node"))
         (cond
          ((eq (car-safe action) 'boundaries) nil)
-         ((eq action 'metadata) `(metadata (category . info-menu)))
+         ((eq action 'metadata) '(metadata (category . info-menu)))
          ((eq action 'lambda)
           (re-search-forward
            (concat "\n\\* +" (regexp-quote string) ":") nil t))

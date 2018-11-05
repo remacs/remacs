@@ -417,7 +417,7 @@ zero, otherwise they start from one."
 This option specifies both the field width and the type of offset
 displayed in `mode-line-position', a component of the default
 `mode-line-format'."
-  :type `(radio
+  :type '(radio
           (const :tag "nil:  No offset is displayed" nil)
           (const :tag "\"%o\": Proportion of \"travel\" of the window through the buffer"
                  (-3 "%o"))
@@ -724,11 +724,11 @@ okay.  See `mode-line-format'.")
       ;; FIXME: Maybe beginning-of-line, beginning-of-buffer, end-of-line,
       ;; end-of-buffer, end-of-file, buffer-read-only, and
       ;; file-supersession should all be user-errors!
-      `(beginning-of-line beginning-of-buffer end-of-line
-	end-of-buffer end-of-file buffer-read-only
-	file-supersession mark-inactive
-        user-error ;; That's the main one!
-        ))
+      '(beginning-of-line beginning-of-buffer end-of-line
+	                  end-of-buffer end-of-file buffer-read-only
+	                  file-supersession mark-inactive
+                          user-error ;; That's the main one!
+                          ))
 
 (make-variable-buffer-local 'indent-tabs-mode)
 

@@ -929,14 +929,14 @@ relative to `erc-track-switch-direction'"
 	offset)
     (when (< arg 0)
       (setq dir (pcase dir
-		  (`oldest      'newest)
-		  (`newest      'oldest)
-		  (`mostactive  'leastactive)
-		  (`leastactive 'mostactive)
-		  (`importance  'oldest)))
+		  ('oldest      'newest)
+		  ('newest      'oldest)
+		  ('mostactive  'leastactive)
+		  ('leastactive 'mostactive)
+		  ('importance  'oldest)))
       (setq arg (- arg)))
     (setq offset (pcase dir
-		   ((or `oldest `leastactive)
+		   ((or 'oldest 'leastactive)
 		    (- (length erc-modified-channels-alist) arg))
 		   (_ (1- arg))))
     ;; normalize out of range user input

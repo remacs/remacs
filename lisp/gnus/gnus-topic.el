@@ -85,7 +85,7 @@ See Info node `(gnus)Formatting Variables'."
 (defvar gnus-topic-inhibit-change-level nil)
 
 (defconst gnus-topic-line-format-alist
-  `((?n name ?s)
+  '((?n name ?s)
     (?v visible ?s)
     (?i indentation ?s)
     (?g number-of-groups ?d)

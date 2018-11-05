@@ -179,9 +179,9 @@ The buffer's contents should %s:
                         ""
                         "-in-comments")))
                  (if test-in-strings
-                     `(("\"" "\"" "-in-strings")))
+                     '(("\"" "\"" "-in-strings")))
                  (if test-in-code
-                     `(("" "" ""))))
+                     '(("" "" ""))))
          append
          (cl-loop
           for char across input

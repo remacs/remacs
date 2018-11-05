@@ -541,7 +541,7 @@ method and applying Turkish case rules for the characters i, I, ı, İ.")))
  '("European"))
 
 (set-language-info-alist
- "Welsh" `((coding-system utf-8 latin-8) ; the input method is Unicode-based
+ "Welsh" '((coding-system utf-8 latin-8) ; the input method is Unicode-based
 	   (coding-priority utf-8 latin-8)
 	   (nonascii-translation . iso-8859-14)
 	   (input-method . "welsh")
@@ -558,7 +558,7 @@ method and applying Turkish case rules for the characters i, I, ı, İ.")))
  '("European"))
 
 (set-language-info-alist
- "Latin-7" `((coding-system latin-7)
+ "Latin-7" '((coding-system latin-7)
 	     (coding-priority latin-7)
 	     (nonascii-translation . iso-8859-13)
 	     (input-method . "latin-prefix")
@@ -566,7 +566,7 @@ method and applying Turkish case rules for the characters i, I, ı, İ.")))
  '("European"))
 
 (set-language-info-alist
- "Lithuanian" `((coding-system latin-7 windows-1257)
+ "Lithuanian" '((coding-system latin-7 windows-1257)
 		(coding-priority latin-7)
 		(nonascii-translation . iso-8859-13)
 		(input-method . "lithuanian-keyboard")
@@ -574,7 +574,7 @@ method and applying Turkish case rules for the characters i, I, ı, İ.")))
  '("European"))
 
 (set-language-info-alist
- "Latvian" `((coding-system latin-7 windows-1257)
+ "Latvian" '((coding-system latin-7 windows-1257)
 	     (coding-priority latin-7)
 	     (nonascii-translation . iso-8859-13)
 	     (input-method . "latvian-keyboard")

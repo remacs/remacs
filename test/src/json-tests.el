@@ -86,8 +86,8 @@
   (should (equal
            (json-serialize
             (list :detect-hash-table #s(hash-table test equal data ("bla" "ble"))
-                  :detect-alist `((bla . "ble"))
-                  :detect-plist `(:bla "ble")))
+                  :detect-alist '((bla . "ble"))
+                  :detect-plist '(:bla "ble")))
            "\
 {\
 \"detect-hash-table\":{\"bla\":\"ble\"},\

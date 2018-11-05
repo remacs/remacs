@@ -354,26 +354,26 @@ Include the reason for debugger entry from ARGS."
   (pcase (car args)
     ;; lambda is for debug-on-call when a function call is next.
     ;; debug is for debug-on-entry function called.
-    ((or `lambda `debug)
+    ((or 'lambda 'debug)
      (insert "--entering a function:\n"))
     ;; Exiting a function.
-    (`exit
+    ('exit
      (insert "--returning value: ")
      (insert (backtrace-print-to-string debugger-value))
      (insert ?\n))
     ;; Watchpoint triggered.
-    ((and `watchpoint (let `(,symbol ,newval . ,details) (cdr args)))
+    ((and 'watchpoint (let `(,symbol ,newval . ,details) (cdr args)))
      (insert
       "--"
       (pcase details
-        (`(makunbound nil) (format "making %s void" symbol))
+        ('(makunbound nil) (format "making %s void" symbol))
         (`(makunbound ,buffer) (format "killing local value of %s in buffer %s"
                                        symbol buffer))
         (`(defvaralias ,_) (format "aliasing %s to %s" symbol newval))
         (`(let ,_) (format "let-binding %s to %s" symbol
                            (backtrace-print-to-string newval)))
         (`(unlet ,_) (format "ending let-binding of %s" symbol))
-        (`(set nil) (format "setting %s to %s" symbol
+        ('(set nil) (format "setting %s to %s" symbol
                             (backtrace-print-to-string newval)))
         (`(set ,buffer) (format "setting %s in buffer %s to %s"
                                 symbol buffer
@@ -382,12 +382,12 @@ Include the reason for debugger entry from ARGS."
       ": ")
      (insert ?\n))
     ;; Debugger entered for an error.
-    (`error
+    ('error
      (insert "--Lisp error: ")
      (insert (backtrace-print-to-string (nth 1 args)))
      (insert ?\n))
     ;; debug-on-call, when the next thing is an eval.
-    (`t
+    ('t
      (insert "--beginning evaluation of function call form:\n"))
     ;; User calls debug directly.
     (_

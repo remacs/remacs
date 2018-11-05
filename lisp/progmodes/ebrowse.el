@@ -907,8 +907,8 @@ Return the buffer created."
     (ebrowse-redraw-tree)
     (set-buffer-modified-p nil)
     (pcase pop
-      (`switch (switch-to-buffer name))
-      (`pop (pop-to-buffer name)))
+      ('switch (switch-to-buffer name))
+      ('pop (pop-to-buffer name)))
     (current-buffer)))
 
 
@@ -1614,13 +1614,13 @@ specifies where to find/view the result."
 	   (setq view-mode-hook nil))
 	 (push 'ebrowse-find-pattern view-mode-hook)
 	 (pcase where
-	   (`other-window (view-file-other-window file))
-	   (`other-frame  (ebrowse-view-file-other-frame file))
+	   ('other-window (view-file-other-window file))
+	   ('other-frame  (ebrowse-view-file-other-frame file))
 	   (_             (view-file file))))
 	(t
 	 (pcase where
-	   (`other-window (find-file-other-window file))
-	   (`other-frame  (find-file-other-frame file))
+	   ('other-window (find-file-other-window file))
+	   ('other-frame  (find-file-other-frame file))
 	   (_             (find-file file)))
 	 (ebrowse-find-pattern struc info))))
 
@@ -1695,9 +1695,9 @@ INFO is a list (TREE-HEADER TREE-OR-MEMBER MEMBER-LIST)."
 	  (ebrowse-ms
            (setf pattern
                  (pcase member-list
-                   ((or `ebrowse-ts-member-variables
-                        `ebrowse-ts-static-variables
-                        `ebrowse-ts-types)
+                   ((or 'ebrowse-ts-member-variables
+                        'ebrowse-ts-static-variables
+                        'ebrowse-ts-types)
                     (ebrowse-variable-declaration-regexp
                      (ebrowse-bs-name position)))
                    (_
@@ -3172,9 +3172,9 @@ EVENT is the mouse event."
     (2 (ebrowse-find-member-definition))
     (1 (pcase (get-text-property (posn-point (event-start event))
                                  'ebrowse-what)
-	 (`member-name
+	 ('member-name
 	  (ebrowse-popup-menu ebrowse-member-name-object-menu event))
-	 (`class-name
+	 ('class-name
 	  (ebrowse-popup-menu ebrowse-member-class-name-object-menu event))
 	 (_
 	  (ebrowse-popup-menu ebrowse-member-buffer-object-menu event))))))
@@ -3189,7 +3189,7 @@ EVENT is the mouse event."
     (2 (ebrowse-find-member-definition))
     (1 (pcase (get-text-property (posn-point (event-start event))
 				'ebrowse-what)
-	 (`member-name
+	 ('member-name
 	  (ebrowse-view-member-definition 0))))))
 
 
@@ -3522,12 +3522,12 @@ KIND is an additional string printed in the buffer."
     (insert kind)
     (indent-to 50)
     (insert (pcase (cl-second info)
-	      (`ebrowse-ts-member-functions "member function")
-	      (`ebrowse-ts-member-variables "member variable")
-	      (`ebrowse-ts-static-functions "static function")
-	      (`ebrowse-ts-static-variables "static variable")
-	      (`ebrowse-ts-friends (if globals-p "define" "friend"))
-	      (`ebrowse-ts-types "type")
+	      ('ebrowse-ts-member-functions "member function")
+	      ('ebrowse-ts-member-variables "member variable")
+	      ('ebrowse-ts-static-functions "static function")
+	      ('ebrowse-ts-static-variables "static variable")
+	      ('ebrowse-ts-friends (if globals-p "define" "friend"))
+	      ('ebrowse-ts-types "type")
 	      (_ "unknown"))
 	    "\n")))
 
@@ -4371,7 +4371,7 @@ EVENT is the mouse event."
     (pcase (event-click-count event)
       (1
        (pcase property
-	 (`class-name
+	 ('class-name
 	  (ebrowse-popup-menu ebrowse-tree-buffer-class-object-menu event))
 	 (_
 	  (ebrowse-popup-menu ebrowse-tree-buffer-object-menu event)))))))
@@ -4386,7 +4386,7 @@ EVENT is the mouse event."
 	 (property (get-text-property where 'ebrowse-what)))
     (pcase (event-click-count event)
       (1 (pcase property
-	   (`class-name
+	   ('class-name
 	    (ebrowse-tree-command:show-member-functions)))))))
 
 
@@ -4399,11 +4399,11 @@ EVENT is the mouse event."
 	 (property (get-text-property where 'ebrowse-what)))
     (pcase (event-click-count event)
       (2 (pcase property
-	   (`class-name
+	   ('class-name
 	    (let ((collapsed (save-excursion (skip-chars-forward "^\r\n")
 					     (looking-at "\r"))))
 	      (ebrowse-collapse-fn (not collapsed))))
-	   (`mark
+	   ('mark
 	    (ebrowse-toggle-mark-at-point 1)))))))
 
 

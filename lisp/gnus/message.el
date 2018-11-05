@@ -1853,7 +1853,7 @@ You must have the \"hashcash\" binary installed, see `hashcash-path'."
   "Alist of header names/filler functions.")
 
 (defvar message-header-format-alist
-  `((From)
+  '((From)
     (Newsgroups)
     (To)
     (Cc)
@@ -2716,7 +2716,7 @@ systematically send encrypted emails when possible."
 
 (easy-menu-define
   message-mode-menu message-mode-map "Message Menu."
-  `("Message"
+  '("Message"
     ["Yank Original" message-yank-original message-reply-buffer]
     ["Fill Yanked Message" message-fill-yanked-message t]
     ["Insert Signature" message-insert-signature t]
@@ -2750,7 +2750,7 @@ systematically send encrypted emails when possible."
 
 (easy-menu-define
   message-mode-field-menu message-mode-map ""
-  `("Field"
+  '("Field"
     ["To" message-goto-to t]
     ["From" message-goto-from t]
     ["Subject" message-goto-subject t]
@@ -7459,7 +7459,7 @@ Optional DIGEST will use digest to forward."
     ;; Consider there is no illegible text.
     (add-text-properties
      b (point)
-     `(no-illegible-text t rear-nonsticky t start-open t))))
+     '(no-illegible-text t rear-nonsticky t start-open t))))
 
 (defun message-forward-make-body-mml (forward-buffer)
   (insert "\n\n<#mml type=message/rfc822 disposition=inline>\n")

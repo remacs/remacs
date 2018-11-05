@@ -34793,7 +34793,7 @@ List of suffixes which indicate a compressed file.
 It must be supported by libarchive(3).")
 
 (defmacro tramp-archive-autoload-file-name-regexp nil "\
-Regular expression matching archive file names." `(concat "\\`" "\\(" ".+" "\\." (regexp-opt tramp-archive-suffixes) "\\(?:" "\\." (regexp-opt tramp-archive-compression-suffixes) "\\)*" "\\)" "\\(" "/" ".*" "\\)" "\\'"))
+Regular expression matching archive file names." '(concat "\\`" "\\(" ".+" "\\." (regexp-opt tramp-archive-suffixes) "\\(?:" "\\." (regexp-opt tramp-archive-compression-suffixes) "\\)*" "\\)" "\\(" "/" ".*" "\\)" "\\'"))
 
 (defalias 'tramp-archive-autoload-file-name-handler 'tramp-autoload-file-name-handler)
 

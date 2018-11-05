@@ -1542,7 +1542,7 @@ If YANK is non-nil, include the original article."
                        (X-Debbugs-Version
                         . ,(format "%s" (gnus-continuum-version))))))
     (when gnus-bug-create-help-buffer
-      (push `(gnus-bug-kill-buffer) message-send-actions))
+      (push '(gnus-bug-kill-buffer) message-send-actions))
     (goto-char (point-min))
     (message-goto-body)
     (insert "\n\n\n\n\n")
