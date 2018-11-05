@@ -389,7 +389,8 @@ control).  See \"cc-mode.el\" for more info."
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   ;; (define-key c-mode-base-map "\C-c\C-y"  'c-toggle-hungry-state)  Commented out by ACM, 2005-11-22.
   (define-key c-mode-base-map "\C-c\C-w" 'c-subword-mode)
-  (define-key c-mode-base-map "\C-c\C-k" 'c-toggle-comment-style))
+  (define-key c-mode-base-map "\C-c\C-k" 'c-toggle-comment-style)
+  (define-key c-mode-base-map "\C-c\C-z" 'c-display-defun-name))
 
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
@@ -1858,7 +1859,7 @@ Key bindings:
 
 ;;;###autoload
 (defun c-or-c++-mode ()
-  "Analyse buffer and enable either C or C++ mode.
+  "Analyze buffer and enable either C or C++ mode.
 
 Some people and projects use .h extension for C++ header files
 which is also the one used for C header files.  This makes

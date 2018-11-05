@@ -284,7 +284,7 @@ STRING should be given if the last search was by `string-match' on STRING."
 ;; This function is lifted directly from emacs's subr.el
 ;; so that it can be used by xemacs.
 ;; The idea for this was borrowed from org-mode via this link:
-;; https://lists.gnu.org/archive/html/emacs-orgmode/2009-12/msg00032.html
+;; https://lists.gnu.org/r/emacs-orgmode/2009-12/msg00032.html
 (eval-and-compile
   (cond
    ((fboundp 'looking-back)

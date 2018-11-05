@@ -79,7 +79,7 @@ enum ns_appearance_type
 
 struct frame
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* All Lisp_Object components must come first.
      That ensures they are all aligned normally.  */

@@ -504,7 +504,7 @@ Handle mouse button 1 click on buttons.")
 
 (define-widget 'tree-widget-end-guide 'item
   "End of a vertical guide line."
-  :tag       " `"
+  :tag       " \\=`"
   ;;:tag-glyph (tree-widget-find-image "end-guide")
   :format    "%t"
   )

@@ -3125,8 +3125,8 @@ make_parent_window (Lisp_Object window, bool horflag)
 
   o = XWINDOW (window);
   p = allocate_window ();
-  memcpy ((char *) p + sizeof (struct vectorlike_header),
-	  (char *) o + sizeof (struct vectorlike_header),
+  memcpy ((char *) p + sizeof (union vectorlike_header),
+	  (char *) o + sizeof (union vectorlike_header),
 	  word_size * VECSIZE (struct window));
   /* P's buffer slot may change from nil to a buffer...  */
   adjust_window_count (p, 1);
@@ -4683,6 +4683,9 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
       /* We moved the window start towards BEGV, so PT may be now
 	 in the scroll margin at the bottom.  */
       move_it_to (&it, PT, -1,
+		  /* We subtract WINDOW_HEADER_LINE_HEIGHT because
+		     it.y is relative to the bottom of the header
+		     line, see above.  */
 		  (it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w)
                    - partial_line_height (&it) - this_scroll_margin - 1),
 		  -1,
@@ -4720,11 +4723,14 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 
       /* See if point is on a partially visible line at the end.  */
       if (it.what == IT_EOB)
-	partial_p = it.current_y + it.ascent + it.descent > it.last_visible_y;
+	partial_p =
+	  it.current_y + it.ascent + it.descent
+	  > it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w);
       else
 	{
 	  move_it_by_lines (&it, 1);
-	  partial_p = it.current_y > it.last_visible_y;
+	  partial_p =
+	    it.current_y > it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w);
 	}
 
       if (charpos == PT && !partial_p
@@ -4743,7 +4749,7 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 	    goal_y = this_scroll_margin;
 	  SET_TEXT_POS_FROM_MARKER (start, w->start);
 	  start_display (&it, w, start);
-	  /* It would be wrong to subtract CURRENT_HEADER_LINE_HEIGHT
+	  /* It would be wrong to subtract WINDOW_HEADER_LINE_HEIGHT
 	     here because we called start_display again and did not
 	     alter it.current_y this time.  */
 	  move_it_to (&it, -1, window_scroll_pixel_based_preserve_x,
@@ -5471,7 +5477,7 @@ from the top of the window.  */)
 
 struct save_window_data
   {
-    struct vectorlike_header header;
+    union vectorlike_header header;
     Lisp_Object selected_frame;
     Lisp_Object current_window;
     Lisp_Object f_current_buffer;
@@ -5499,7 +5505,7 @@ struct save_window_data
 /* This is saved as a Lisp_Vector.  */
 struct saved_window
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   Lisp_Object window, buffer, start, pointm, old_pointm;
   Lisp_Object pixel_left, pixel_top, pixel_height, pixel_width;
@@ -5900,7 +5906,7 @@ the return value is nil.  Otherwise the value is t.  */)
 
 	   We have to do this in order to capture the following
 	   scenario: Suppose our frame contains two live windows W1 and
-	   W2 and ‘set-window-configuration’ replaces them by two
+	   W2 and 'set-window-configuration' replaces them by two
 	   windows W3 and W4 that were dead the last time
 	   run_window_size_change_functions was run.  If W3 and W4 have
 	   the same values for their old and new pixel sizes but these
@@ -6838,8 +6844,8 @@ on their symbols to be controlled by this variable.  */);
   DEFVAR_LISP ("window-configuration-change-hook",
 	       Vwindow_configuration_change_hook,
 	       doc: /* Functions to call when window configuration changes.
-The buffer-local part is run once per window, with the relevant window
-selected; while the global part is run only once for the modified frame,
+The buffer-local value is run once per window, with the relevant window
+selected; while the global value is run only once for the modified frame,
 with the relevant frame selected.  */);
   Vwindow_configuration_change_hook = Qnil;
 

@@ -1144,9 +1144,12 @@ the @code{declare} form.
 @c automatically load the entire source file containing the function
 @c being instrumented.  That would avoid this.
   Take care to ensure that the specifications are known to Edebug when
-you instrument code.  If you are instrumenting a function from a file
-that uses @code{eval-when-compile} to require another file containing
-macro definitions, you may need to explicitly load that file.
+you instrument code.  If you are instrumenting a function which uses a
+macro defined in another file, you may first need to either evaluate
+the @code{require} forms in the file containing your function, or
+explicitly load the file containing the macro.  If the definition of a
+macro is wrapped by @code{eval-when-compile}, you may need to evaluate
+it.
 
   You can also define an edebug specification for a macro separately
 from the macro definition with @code{def-edebug-spec}.  Adding
@@ -1231,13 +1234,17 @@ A single unevaluated Lisp object, which is not instrumented.
 @c an "expression" is not necessarily intended for evaluation.
 
 @item form
-A single evaluated expression, which is instrumented.
+A single evaluated expression, which is instrumented.  If your macro
+wraps the expression with @code{lambda} before it is evaluated, use
+@code{def-form} instead.  See @code{def-form} below.
 
 @item place
 A generalized variable.  @xref{Generalized Variables}.
 
 @item body
-Short for @code{&rest form}.  See @code{&rest} below.
+Short for @code{&rest form}.  See @code{&rest} below.  If your macro
+wraps its body of code with @code{lambda} before it is evaluated, use
+@code{def-body} instead.  See @code{def-body} below.
 
 @item function-form
 A function form: either a quoted function symbol, a quoted lambda
@@ -1292,11 +1299,16 @@ succeeds.
 
 @item &define
 @c @kindex &define @r{(Edebug)}
-Indicates that the specification is for a defining form.  The defining
-form itself is not instrumented (that is, Edebug does not stop before and
-after the defining form), but forms inside it typically will be
-instrumented.  The @code{&define} keyword should be the first element in
-a list specification.
+
+Indicates that the specification is for a defining form.  Edebug's
+definition of a defining form is a form containing one or more code
+forms which are saved and executed later, after the execution of the
+defining form.
+
+The defining form itself is not instrumented (that is, Edebug does not
+stop before and after the defining form), but forms inside it
+typically will be instrumented.  The @code{&define} keyword should be
+the first element in a list specification.
 
 @item nil
 This is successful when there are no more arguments to match at the

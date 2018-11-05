@@ -857,7 +857,7 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
     (vc-git-command nil nil file "checkout" "-q" "--")))
 
 (defvar vc-git-error-regexp-alist
-  '(("^ \\(.+\\) |" 1 nil nil 0))
+  '(("^ \\(.+\\)\\> *|" 1 nil nil 0))
   "Value of `compilation-error-regexp-alist' in *vc-git* buffers.")
 
 ;; To be called via vc-pull from vc.el, which requires vc-dispatcher.
@@ -882,17 +882,16 @@ If PROMPT is non-nil, prompt for the Git command to run."
       (setq git-program (car  args)
 	    command     (cadr args)
 	    args        (cddr args)))
+    (setq args (nconc args extra-args))
     (require 'vc-dispatcher)
     (apply 'vc-do-async-command buffer root git-program command args)
     (with-current-buffer buffer
       (vc-run-delayed
         (vc-compilation-mode 'git)
         (setq-local compile-command
-                    (concat git-program " " command " " extra-args " "
-                            (if args (mapconcat 'identity args " ") "")))
+                    (concat git-program " " command " "
+                            (mapconcat 'identity args " ")))
         (setq-local compilation-directory root)
-        (setq-local compilation-error-regexp-alist
-                    vc-git-error-regexp-alist)
         ;; Either set `compilation-buffer-name-function' locally to nil
         ;; or use `compilation-arguments' to set `name-function'.
         ;; See `compilation-buffer-name'.
@@ -906,13 +905,13 @@ If PROMPT is non-nil, prompt for the Git command to run."
   "Pull changes into the current Git branch.
 Normally, this runs \"git pull\".  If PROMPT is non-nil, prompt
 for the Git command to run."
-  (vc-git--pushpull "pull" prompt "--stat"))
+  (vc-git--pushpull "pull" prompt '("--stat")))
 
 (defun vc-git-push (prompt)
   "Push changes from the current Git branch.
 Normally, this runs \"git push\".  If PROMPT is non-nil, prompt
 for the Git command to run."
-  (vc-git--pushpull "push" prompt ""))
+  (vc-git--pushpull "push" prompt nil))
 
 (defun vc-git-merge-branch ()
   "Merge changes into the current Git branch.
@@ -980,7 +979,7 @@ This prompts for a branch to merge from."
              ;; FIXME
              ;; 1) the net result is to call git twice per file.
              ;; 2) v-g-c-f is documented to take a directory.
-             ;; https://lists.gnu.org/archive/html/emacs-devel/2014-01/msg01126.html
+             ;; https://lists.gnu.org/r/emacs-devel/2014-01/msg01126.html
              (vc-git-conflicted-files buffer-file-name)
              (save-excursion
                (goto-char (point-min))
@@ -1409,7 +1408,9 @@ This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
   "Run git grep, searching for REGEXP in FILES in directory DIR.
 The search is limited to file names matching shell pattern FILES.
 FILES may use abbreviations defined in `grep-files-aliases', e.g.
-entering `ch' is equivalent to `*.[ch]'.
+entering `ch' is equivalent to `*.[ch]'.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'.
 
 With \\[universal-argument] prefix, you can edit the constructed shell command line
 before it is executed.
@@ -1430,7 +1431,9 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 				   nil nil 'grep-history)
 	     nil))
       (t (let* ((regexp (grep-read-regexp))
-		(files (grep-read-files regexp))
+		(files
+                 (mapconcat #'shell-quote-argument
+                            (split-string (grep-read-files regexp)) " "))
 		(dir (read-directory-name "In directory: "
 					  nil default-directory t)))
 	   (list regexp files dir))))))

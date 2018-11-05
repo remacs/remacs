@@ -717,7 +717,7 @@ with `mouse-movement' events."
         (cursor-in-echo-area t)
         saved-yank-menu)
     (unwind-protect
-        (let (key)
+        (let (key down-ev)
           ;; If yank-menu is empty, populate it temporarily, so that
           ;; "Select and Paste" menu can generate a complete event.
           (when (null (cdr yank-menu))
@@ -728,11 +728,17 @@ with `mouse-movement' events."
 Describe the following key, mouse click, or menu item: "))
                 ((and (pred vectorp) (let `(,key0 . ,_) (aref key 0))
                       (guard (symbolp key0)) (let keyname (symbol-name key0)))
-                 (if no-mouse-movement
-                     (string-match "mouse-movement" keyname)
-                   (and (string-match "\\(mouse\\|down\\|click\\|drag\\)"
-                                      keyname)
-                        (not (sit-for (/ double-click-time 1000.0) t)))))))
+                 (or
+                  (and no-mouse-movement
+                       (string-match "mouse-movement" keyname))
+                  (and (string-match "\\(mouse\\|down\\|click\\|drag\\)"
+                                     keyname)
+                       (progn
+                         ;; Discard events (e.g. <help-echo>) which might
+                         ;; spuriously trigger the `sit-for'.
+                         (sleep-for 0.01)
+                         (while (read-event nil nil 0.01))
+                         (not (sit-for (/ double-click-time 1000.0) t))))))))
           (list
            key
            ;; If KEY is a down-event, read and include the
@@ -743,17 +749,21 @@ Describe the following key, mouse click, or menu item: "))
                 (let ((last-idx (1- (length key))))
                   (and (eventp (aref key last-idx))
                        (memq 'down (event-modifiers (aref key last-idx)))))
-                (or (and (eventp (aref key 0))
-                         (memq 'down (event-modifiers (aref key 0)))
+                (or (and (eventp (setq down-ev (aref key 0)))
+                         (memq 'down (event-modifiers down-ev))
                          ;; However, for the C-down-mouse-2 popup
                          ;; menu, there is no subsequent up-event.  In
                          ;; this case, the up-event is the next
                          ;; element in the supplied vector.
                          (= (length key) 1))
                     (and (> (length key) 1)
-                         (eventp (aref key 1))
-                         (memq 'down (event-modifiers (aref key 1)))))
-                (read-event))))
+                         (eventp (setq down-ev (aref key 1)))
+                         (memq 'down (event-modifiers down-ev))))
+                (if (and (terminal-parameter nil 'xterm-mouse-mode)
+                         (equal (terminal-parameter nil 'xterm-mouse-last-down)
+                                down-ev))
+                    (aref (read-key-sequence-vector nil) 0)
+                  (read-event)))))
       ;; Put yank-menu back as it was, if we changed it.
       (when saved-yank-menu
         (setq yank-menu (copy-sequence saved-yank-menu))

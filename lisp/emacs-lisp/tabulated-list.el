@@ -603,7 +603,16 @@ With a numeric prefix argument N, sort the Nth column."
       (let ((lnum-width (tabulated-list-line-number-width)))
         (when (not (= tabulated-list--current-lnum-width lnum-width))
           (setq-local tabulated-list--current-lnum-width lnum-width)
-          (tabulated-list-revert)))))
+          (tabulated-list-init-header)))))
+
+(defun tabulated-list-window-scroll-function (window _start)
+  (if display-line-numbers
+      (let ((lnum-width
+             (with-selected-window window
+               (line-number-display-width 'columns))))
+        (when (not (= tabulated-list--current-lnum-width lnum-width))
+          (setq-local tabulated-list--current-lnum-width lnum-width)
+          (tabulated-list-init-header)))))
 
 ;;; The mode definition:
 
@@ -654,7 +663,9 @@ as the ewoc pretty-printer."
   ;; the line-number width needs to change due to scrolling.
   (setq-local tabulated-list--current-lnum-width 0)
   (add-hook 'pre-redisplay-functions
-            #'tabulated-list-watch-line-number-width nil t))
+            #'tabulated-list-watch-line-number-width nil t)
+  (add-hook 'window-scroll-functions
+            #'tabulated-list-window-scroll-function nil t))
 
 (put 'tabulated-list-mode 'mode-class 'special)
 

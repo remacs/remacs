@@ -3890,7 +3890,7 @@ contextual information."
 ;; themselves and the list can be arbitrarily deep.
 ;;
 ;; Inspired by following thread:
-;; https://lists.gnu.org/archive/html/emacs-orgmode/2011-03/msg01101.html
+;; https://lists.gnu.org/r/emacs-orgmode/2011-03/msg01101.html
 
 ;; Translate lists to tables
 

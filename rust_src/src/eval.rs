@@ -498,7 +498,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             sym = def;
             tem = assq(sym, environment);
             if tem.is_nil() {
-                def = sym_ref.function;
+                def = sym_ref.get_function();
                 if def.is_not_nil() {
                     continue;
                 }
@@ -673,7 +673,7 @@ pub fn autoload(
     ty: LispObject,
 ) -> LispObject {
     // If function is defined and not as an autoload, don't override.
-    if function.function != Qnil && !is_autoload(function.function) {
+    if function.get_function() != Qnil && !is_autoload(function.get_function()) {
         return Qnil;
     }
 

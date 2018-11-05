@@ -114,7 +114,7 @@ impl LispCharTableRef {
     }
 
     pub fn extra_slots(self) -> isize {
-        (self.header.size & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
+        (unsafe { self.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
             - (1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0 as isize)
     }
 

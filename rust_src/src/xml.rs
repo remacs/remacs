@@ -50,4 +50,11 @@ pub fn libxml_parse_xml_region(
     libxml_parse_region(start, end, base_url, discard_comments, false)
 }
 
+/// Return t if libxml2 support is available in this instance of Emacs.
+#[lisp_fn]
+pub fn libxml_available_p() -> bool {
+    // TODO(db48x)
+    false
+}
+
 include!(concat!(env!("OUT_DIR"), "/xml_exports.rs"));

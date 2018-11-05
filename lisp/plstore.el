@@ -521,7 +521,7 @@ If no one is selected, symmetric encryption will be performed.  "
       t)))
 
 (defun plstore-mode-original ()
-  "Show the original form of the this buffer."
+  "Show the original form of this buffer."
   (interactive)
   (when plstore-encoded
     (if (and (buffer-modified-p)
@@ -533,7 +533,7 @@ If no one is selected, symmetric encryption will be performed.  "
     (setq plstore-encoded nil)))
 
 (defun plstore-mode-decoded ()
-  "Show the decoded form of the this buffer."
+  "Show the decoded form of this buffer."
   (interactive)
   (unless plstore-encoded
     (if (and (buffer-modified-p)
