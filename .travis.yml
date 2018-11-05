@@ -7,14 +7,17 @@ cache:
   directories:
     - $HOME/.rustup
 
-rust:
-  - nightly
+addons:
+  homebrew:
+    packages:
+    - gnutls
+    - texinfo
 
 # Run rustfmt first.
 stages:
   - rustfmt
-  - test
   - cerrors
+  - test
 
 jobs:
   include:
@@ -24,6 +27,16 @@ jobs:
         - travis_wait rustup install $(cat rust-toolchain)
         - travis_wait rustup component add rustfmt-preview
       script: ./.travis-format.sh
+    - stage: cerrors
+      os: linux  # No need to run this everywhere
+      before_script:
+        - sudo apt update
+        - sudo apt install -y texinfo libgif-dev libxpm-dev
+        - travis_wait rustup install $(cat rust-toolchain)
+        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings --with-gif=no
+        - make -C src globals.h
+      script:
+        - ./.travis-cerrors.sh
     - &FULL_TEST
       stage: test
       env:
@@ -34,9 +47,9 @@ jobs:
         - sudo apt update
         - sudo apt install -y texinfo libgif-dev libxpm-dev libgtk-3-dev
         - travis_wait rustup install $(cat rust-toolchain)
-        - travis_wait rustup component add rustfmt-preview
       script:
-        - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror' ./configure
+        # The -Wno-error allows MacOS code deprecation warnings to remain warnings.
+        - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror -Wno-error=deprecated-declarations' ./configure
         - make -j 3 && echo '==> Running tests' && make check
     -
       <<: *FULL_TEST
@@ -44,14 +57,7 @@ jobs:
       env:
         - PATH="/usr/local/opt/texinfo/bin:$PATH"
       before_script:
-        # Travis docs say to avoid brew update, but this works around the
-        # incorrect Ruby version.
-        # https://github.com/travis-ci/travis-ci/issues/8552
-        # GNUTLS is now included, no need to explicitly install it.
-        - brew update
-        - brew install texinfo
         - travis_wait rustup install $(cat rust-toolchain)
-        - travis_wait rustup component add rustfmt-preview
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
       os: linux
@@ -61,27 +67,14 @@ jobs:
         - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
-        - travis_wait rustup component add rustfmt-preview
       script:
-        - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror' ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
+        - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror  -Wno-error=deprecated-declarations' ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
     -
       <<: *NO_WINDOW_SYSTEM_TEST
       os: osx
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
-        - travis_wait rustup component add rustfmt-preview
-    - stage: cerrors
-      os: linux  # No need to run this everywhere
-      before_script:
-        - sudo apt update
-        - sudo apt install -y texinfo libgif-dev libxpm-dev
-        - travis_wait rustup install $(cat rust-toolchain)
-        - travis_wait rustup component add rustfmt-preview
-        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings --with-gif=no
-        - make -C src globals.h
-      script:
-        - ./.travis-cerrors.sh
 
 notifications:
   fast_finish: true
