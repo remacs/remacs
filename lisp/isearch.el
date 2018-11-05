@@ -3202,6 +3202,8 @@ since they have special meaning in a regexp."
 (defvar isearch-lazy-highlight-window-group nil)
 (defvar isearch-lazy-highlight-window-start nil)
 (defvar isearch-lazy-highlight-window-end nil)
+(defvar isearch-lazy-highlight-point-min nil)
+(defvar isearch-lazy-highlight-point-max nil)
 (defvar isearch-lazy-highlight-buffer nil)
 (defvar isearch-lazy-highlight-case-fold-search nil)
 (defvar isearch-lazy-highlight-regexp nil)
@@ -3251,17 +3253,21 @@ by other Emacs features."
 			  isearch-lax-whitespace))
 		 (not (eq isearch-lazy-highlight-regexp-lax-whitespace
 			  isearch-regexp-lax-whitespace))
-		 (not (or lazy-highlight-buffer
-			  (= (window-group-start)
-			     isearch-lazy-highlight-window-start)))
-		 (not (or lazy-highlight-buffer
-			  (= (window-group-end) ; Window may have been split/joined.
-			     isearch-lazy-highlight-window-end)))
 		 (not (eq isearch-forward
 			  isearch-lazy-highlight-forward))
 		 ;; In case we are recovering from an error.
 		 (not (equal isearch-error
-			     isearch-lazy-highlight-error))))
+			     isearch-lazy-highlight-error))
+		 (not (if lazy-highlight-buffer
+			  (= (point-min)
+			     isearch-lazy-highlight-point-min)
+			(= (window-group-start)
+			   isearch-lazy-highlight-window-start)))
+		 (not (if lazy-highlight-buffer
+			  (= (point-max)
+			     isearch-lazy-highlight-point-max)
+			(= (window-group-end) ; Window may have been split/joined.
+			   isearch-lazy-highlight-window-end)))))
     ;; something important did indeed change
     (lazy-highlight-cleanup t (not (equal isearch-string ""))) ;stop old timer
     (setq isearch-lazy-highlight-error isearch-error)
@@ -3274,6 +3280,8 @@ by other Emacs features."
           isearch-lazy-highlight-window-group (selected-window-group)
 	  isearch-lazy-highlight-window-start (window-group-start)
 	  isearch-lazy-highlight-window-end   (window-group-end)
+	  isearch-lazy-highlight-point-min    (point-min)
+	  isearch-lazy-highlight-point-max    (point-max)
 	  isearch-lazy-highlight-buffer       lazy-highlight-buffer
 	  ;; Start lazy-highlighting at the beginning of the found
 	  ;; match (`isearch-other-end').  If no match, use point.
