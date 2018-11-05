@@ -786,7 +786,7 @@ was inserted."
 (defun image--imagemagick-wanted-p (filename)
   (and (fboundp 'imagemagick-types)
        (not (eq imagemagick-types-inhibit t))
-       (not (and (file-name-extension filename)
+       (not (and filename (file-name-extension filename)
                  (memq (intern (upcase (file-name-extension filename)) obarray)
                        imagemagick-types-inhibit)))))
 
