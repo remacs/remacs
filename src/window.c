@@ -1616,14 +1616,6 @@ return value is a list of elements of the form (PARAMETER . VALUE).  */)
   return Fcopy_alist (decode_valid_window (window)->window_parameters);
 }
 
-Lisp_Object
-window_parameter (struct window *w, Lisp_Object parameter)
-{
-  Lisp_Object result = Fassq (parameter, w->window_parameters);
-
-  return CDR_SAFE (result);
-}
-
 struct Lisp_Char_Table *
 window_display_table (struct window *w)
 {
