@@ -13,7 +13,7 @@ use remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph};
 use frames::{frame_live_or_selected, LispFrameRef};
 use lisp::{defsubr, ExternalPtr, LispObject};
 use terminal::{clear_frame, update_begin, update_end};
-use windows::{window_or_selected, LispWindowRef};
+use windows::{LispWindowOrSelected, LispWindowRef};
 
 pub type LispGlyphRef = ExternalPtr<Lisp_Glyph>;
 
@@ -114,19 +114,21 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
 /// show a cursor in WINDOW in the next redisplay.  SHOW nil means
 /// don't show a cursor.
 #[lisp_fn]
-pub fn internal_show_cursor(window: LispObject, show: LispObject) {
+pub fn internal_show_cursor(window: LispWindowOrSelected, show: bool) {
+    let mut win: LispWindowRef = window.into();
     // Don't change cursor state while redisplaying.  This could confuse
     // output routines.
     if !unsafe { redisplaying_p } {
-        window_or_selected(window).set_cursor_off_p(show.is_nil())
+        win.set_cursor_off_p(show)
     }
 }
 
 /// Value is non-nil if next redisplay will display a cursor in WINDOW.
 /// WINDOW nil or omitted means report on the selected window.
 #[lisp_fn(min = "0")]
-pub fn internal_show_cursor_p(window: LispObject) -> bool {
-    !window_or_selected(window).cursor_off_p()
+pub fn internal_show_cursor_p(window: LispWindowOrSelected) -> bool {
+    let win: LispWindowRef = window.into();
+    !win.cursor_off_p()
 }
 
 include!(concat!(env!("OUT_DIR"), "/dispnew_exports.rs"));
