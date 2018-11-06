@@ -7157,6 +7157,7 @@ system_process_attributes (Lisp_Object pid)
 			 code_convert_string_norecord (tem, Vlocale_coding_system, 0)),
 		 attrs);
 
+  memstex.dwLength = sizeof (memstex);
   if (global_memory_status_ex (&memstex))
 #if __GNUC__ || (defined (_MSC_VER) && _MSC_VER >= 1300)
     totphys = memstex.ullTotalPhys / 1024.0;
