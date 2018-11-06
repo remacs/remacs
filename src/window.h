@@ -470,9 +470,6 @@ wset_horizontal_scroll_bar_type (struct window *w, Lisp_Object val)
   w->horizontal_scroll_bar_type = val;
 }
 
-void
-wset_mode_line_height(struct window *w, int height);
-
 INLINE void
 wset_prev_buffers (struct window *w, Lisp_Object val)
 {
