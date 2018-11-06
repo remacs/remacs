@@ -10,8 +10,8 @@ use remacs_sys::Fcons;
 use remacs_sys::{estimate_mode_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window, scroll_command,
                  selected_window as current_window, set_buffer_internal, set_window_hscroll,
-                 window_body_width, window_list_1, window_menu_bar_p, window_parameter,
-                 window_tool_bar_p, wset_display_table, wset_redisplay, wset_update_mode_line};
+                 update_mode_lines, window_body_width, window_list_1, window_menu_bar_p,
+                 window_parameter, window_tool_bar_p, wset_display_table, wset_redisplay};
 use remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
                  Qwindow_live_p, Qwindow_valid_p, Qwindowp};
@@ -924,9 +924,7 @@ pub fn set_window_start(window: LispObject, pos: LispObject, noforce: LispObject
     if noforce.is_nil() {
         w.set_force_start(true);
     }
-    unsafe {
-        wset_update_mode_line(w.as_mut());
-    }
+    wset_update_mode_line(w);
     // Bug#15957
     w.set_window_end_valid(false);
     unsafe { wset_redisplay(w.as_mut()) };
@@ -1029,6 +1027,24 @@ pub fn scroll_down(arg: LispObject) -> LispObject {
 pub fn window_new_total(arg: LispObject) -> LispObject {
     let win = window_valid_or_selected(arg);
     win.new_total
+}
+
+#[no_mangle]
+pub extern "C" fn wset_update_mode_line(mut w: LispWindowRef) {
+    // If this window is the selected window on its frame, set the
+    // global variable update_mode_lines, so that x_consider_frame_title
+    // will consider this frame's title for redisplay.
+    let fselected_window = w.frame.as_frame_or_error().selected_window;
+
+    if let Some(win) = fselected_window.as_window() {
+        if win == w {
+            unsafe {
+                update_mode_lines = 42;
+            }
+        }
+    } else {
+        w.set_update_mode_line(true);
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

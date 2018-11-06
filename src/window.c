@@ -67,7 +67,6 @@ static void apply_window_adjustment (struct window *);
 
 void wset_display_table (struct window *, Lisp_Object);
 void wset_window_parameters (struct window *, Lisp_Object);
-void wset_update_mode_line (struct window *);
 Lisp_Object set_window_hscroll (struct window *, EMACS_INT);
 void scroll_command (Lisp_Object, int);
 
@@ -208,26 +207,6 @@ wset_combination (struct window *w, bool horflag, Lisp_Object val)
      is meaningless.  */
   if (!NILP (val))
     w->horizontal = horflag;
-}
-
-void
-wset_mode_line_height(struct window *w, int height)
-{
-  w->mode_line_height = height;
-}
-
-void
-wset_update_mode_line (struct window *w)
-{
-  /* If this window is the selected window on its frame, set the
-     global variable update_mode_lines, so that x_consider_frame_title
-     will consider this frame's title for redisplay.  */
-  Lisp_Object fselected_window = XFRAME (WINDOW_FRAME (w))->selected_window;
-
-  if (WINDOWP (fselected_window) && XWINDOW (fselected_window) == w)
-    update_mode_lines = 42;
-  else
-    w->update_mode_line = true;
 }
 
 struct glyph_matrix*
