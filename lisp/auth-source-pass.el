@@ -98,6 +98,7 @@ See `auth-source-search' for details on SPEC."
   (advice-add 'auth-source-backend-parse :before-until #'auth-source-pass-backend-parse))
 
 
+;;;###autoload
 (defun auth-source-pass-get (key entry)
   "Return the value associated to KEY in the password-store entry ENTRY.
 
