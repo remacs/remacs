@@ -66,6 +66,7 @@ static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 static void apply_window_adjustment (struct window *);
 
 void wset_window_parameters (struct window *, Lisp_Object);
+void wset_update_mode_line (struct window *);
 Lisp_Object set_window_hscroll (struct window *, EMACS_INT);
 void scroll_command (Lisp_Object, int);
 
