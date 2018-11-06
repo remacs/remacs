@@ -2033,23 +2033,6 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   return Qnil;
 }
 
-DEFUN ("delete-frame", Fdelete_frame, Sdelete_frame, 0, 2, "",
-       doc: /* Delete FRAME, permanently eliminating it from use.
-FRAME must be a live frame and defaults to the selected one.
-
-A frame may not be deleted if its minibuffer serves as surrogate
-minibuffer for another frame.  Normally, you may not delete a frame if
-all other frames are invisible, but if the second optional argument
-FORCE is non-nil, you may do so.
-
-This function runs `delete-frame-functions' before actually
-deleting the frame, unless the frame is a tooltip.
-The functions are run with one argument, the frame to be deleted.  */)
-  (Lisp_Object frame, Lisp_Object force)
-{
-  return delete_frame (frame, !NILP (force) ? Qt : Qnil);
-}
-
 #ifdef HAVE_WINDOW_SYSTEM
 /**
  * frame_internal_border_part:
@@ -5815,7 +5798,6 @@ iconify the top level frame instead.  */);
   defsubr (&Snext_frame);
   defsubr (&Sprevious_frame);
   defsubr (&Slast_nonminibuf_frame);
-  defsubr (&Sdelete_frame);
   defsubr (&Smouse_position);
   defsubr (&Smouse_pixel_position);
   defsubr (&Sset_mouse_position);
