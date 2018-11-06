@@ -771,14 +771,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   return (make_number (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
 }
 
-DEFUN ("window-hscroll", Fwindow_hscroll, Swindow_hscroll, 0, 1, 0,
-       doc: /* Return the number of columns by which WINDOW is scrolled from left margin.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_live_window (window)->hscroll);
-}
-
 /* Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
    range, returning the new amount as a fixnum.  */
 Lisp_Object
@@ -6990,7 +6982,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_resize_apply_total);
   defsubr (&Swindow_body_height);
   defsubr (&Swindow_body_width);
-  defsubr (&Swindow_hscroll);
   defsubr (&Sset_window_hscroll);
   defsubr (&Swindow_redisplay_end_trigger);
   defsubr (&Sset_window_redisplay_end_trigger);

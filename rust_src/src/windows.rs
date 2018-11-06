@@ -1031,4 +1031,12 @@ pub fn window_new_total(arg: LispObject) -> LispObject {
     win.new_total
 }
 
+/// Return the number of columns by which WINDOW is scrolled from left margin.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_hscroll(window: LispObject) -> EmacsInt {
+    let window = window_live_or_selected(window);
+    window.hscroll as EmacsInt
+}
+
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
