@@ -9,8 +9,8 @@ use remacs_sys::globals;
 use remacs_sys::{estimate_mode_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window, scroll_command,
                  selected_window as current_window, set_buffer_internal, set_window_hscroll,
-                 window_body_width, window_list_1, window_menu_bar_p, window_tool_bar_p,
-                 wset_redisplay};
+                 update_mode_lines, window_body_width, window_list_1, window_menu_bar_p,
+                 window_tool_bar_p, wset_redisplay};
 use remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
                  Qwindow_live_p, Qwindow_valid_p, Qwindowp};
