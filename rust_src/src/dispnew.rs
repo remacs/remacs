@@ -115,11 +115,11 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
 /// don't show a cursor.
 #[lisp_fn]
 pub fn internal_show_cursor(window: LispWindowOrSelected, show: bool) {
-    let mut window = window.to_window();
+    let mut win: LispWindowRef = window.into();
     // Don't change cursor state while redisplaying.  This could confuse
     // output routines.
     if !unsafe { redisplaying_p } {
-        window.set_cursor_off_p(show)
+        win.set_cursor_off_p(show)
     }
 }
 
@@ -127,8 +127,8 @@ pub fn internal_show_cursor(window: LispWindowOrSelected, show: bool) {
 /// WINDOW nil or omitted means report on the selected window.
 #[lisp_fn(min = "0")]
 pub fn internal_show_cursor_p(window: LispWindowOrSelected) -> bool {
-    let window = window.to_window();
-    !window.cursor_off_p()
+    let win: LispWindowRef = window.into();
+    !win.cursor_off_p()
 }
 
 include!(concat!(env!("OUT_DIR"), "/dispnew_exports.rs"));

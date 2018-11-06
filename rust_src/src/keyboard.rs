@@ -27,7 +27,7 @@ use windows::LispWindowOrSelected;
 /// The `posn-' functions access elements of such lists.
 #[lisp_fn(min = "0")]
 pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObject {
-    let window = window.to_obj();
+    let window: LispObject = window.into();
 
     let tem = unsafe { Fpos_visible_in_window_p(pos, window, Qt) };
     if tem.is_nil() {

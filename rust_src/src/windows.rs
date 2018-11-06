@@ -313,13 +313,15 @@ impl From<LispObject> for LispWindowOrSelected {
     }
 }
 
-impl LispWindowOrSelected {
-    pub fn to_obj(self) -> LispObject {
-        self.0
+impl From<LispWindowOrSelected> for LispObject {
+    fn from(w: LispWindowOrSelected) -> LispObject {
+        w.0
     }
+}
 
-    pub fn to_window(self) -> LispWindowRef {
-        self.0.as_window_or_error()
+impl From<LispWindowOrSelected> for LispWindowRef {
+    fn from(w: LispWindowOrSelected) -> LispWindowRef {
+        w.0.as_window_or_error()
     }
 }
 
@@ -335,9 +337,9 @@ impl From<LispObject> for LispWindowLiveOrSelected {
     }
 }
 
-impl LispWindowLiveOrSelected {
-    pub fn to_window(self) -> LispWindowRef {
-        self.0
+impl From<LispWindowLiveOrSelected> for LispWindowRef {
+    fn from(w: LispWindowLiveOrSelected) -> LispWindowRef {
+        w.0
     }
 }
 
@@ -353,15 +355,15 @@ impl From<LispObject> for LispWindowValidOrSelected {
     }
 }
 
-impl LispWindowValidOrSelected {
-    pub fn to_window(self) -> LispWindowRef {
-        self.0
+impl From<LispWindowValidOrSelected> for LispWindowRef {
+    fn from(w: LispWindowValidOrSelected) -> LispWindowRef {
+        w.0
     }
 }
 
 #[no_mangle]
 pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
-    LispWindowOrSelected::from(window).to_window()
+    LispWindowOrSelected::from(window).into()
 }
 
 /// Return t if OBJECT is a window and nil otherwise.
@@ -391,7 +393,7 @@ pub fn window_live_p(object: Option<LispWindowRef>) -> bool {
 /// `save-excursion' forms.  But that is hard to define.
 #[lisp_fn(min = "0")]
 pub fn window_point(window: LispWindowLiveOrSelected) -> Option<EmacsInt> {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     if win == selected_window().as_window_or_error() {
         Some(point())
     } else {
@@ -412,7 +414,7 @@ pub fn selected_window() -> LispObject {
 /// Return nil for an internal window or a deleted window.
 #[lisp_fn(min = "0")]
 pub fn window_buffer(window: LispWindowValidOrSelected) -> LispObject {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     if win.is_live() {
         win.contents
     } else {
@@ -433,7 +435,7 @@ pub fn window_valid_p(object: Option<LispWindowRef>) -> bool {
 /// This is updated by redisplay or by calling `set-window-start'.
 #[lisp_fn(min = "0")]
 pub fn window_start(window: LispWindowLiveOrSelected) -> Option<EmacsInt> {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     marker_position_lisp(win.start_marker().into())
 }
 
@@ -441,7 +443,7 @@ pub fn window_start(window: LispWindowLiveOrSelected) -> Option<EmacsInt> {
 /// WINDOW must be a valid window and defaults to the selected one.
 #[lisp_fn(min = "0")]
 pub fn window_minibuffer_p(window: LispWindowValidOrSelected) -> bool {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.is_minibuffer()
 }
 
@@ -453,8 +455,8 @@ pub fn window_minibuffer_p(window: LispWindowValidOrSelected) -> bool {
 /// an internal window, its pixel width is the width of the screen areas
 /// spanned by its children.
 #[lisp_fn(min = "0")]
-pub fn window_pixel_width(window: LispWindowValidOrSelected) -> EmacsInt {
-    let win = window.to_window();
+pub fn window_pixel_width(window: LispWindowValidOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
     win.pixel_width
 }
 
@@ -465,8 +467,8 @@ pub fn window_pixel_width(window: LispWindowValidOrSelected) -> EmacsInt {
 /// divider, if any.  If WINDOW is an internal window, its pixel height is
 /// the height of the screen areas spanned by its children.
 #[lisp_fn(min = "0")]
-pub fn window_pixel_height(window: LispWindowValidOrSelected) -> EmacsInt {
-    let win = window.to_window();
+pub fn window_pixel_height(window: LispWindowValidOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
     win.pixel_height
 }
 
@@ -485,7 +487,7 @@ pub fn window_margins(window: LispWindowLiveOrSelected) -> LispObject {
             LispObject::from(margin)
         }
     }
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
 
     LispObject::cons(
         margin_as_object(win.left_margin_cols),
@@ -562,8 +564,8 @@ pub fn minibuffer_selected_window() -> LispObject {
 /// WINDOW's frame.  Any other value of ROUND means to return the internal
 /// total width of WINDOW.
 #[lisp_fn(min = "0")]
-pub fn window_total_width(window: LispWindowValidOrSelected, round: LispObject) -> EmacsInt {
-    let win = window.to_window()
+pub fn window_total_width(window: LispWindowValidOrSelected, round: LispObject) -> i32 {
+    let win: LispWindowRef = window.into();
     win.total_width(round)
 }
 
@@ -589,7 +591,7 @@ pub fn window_total_width(window: LispWindowValidOrSelected, round: LispObject) 
 /// total height of WINDOW.
 #[lisp_fn(min = "0")]
 pub fn window_total_height(window: LispWindowValidOrSelected, round: LispObject) -> i32 {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.total_height(round)
 }
 
@@ -598,7 +600,7 @@ pub fn window_total_height(window: LispWindowValidOrSelected, round: LispObject)
 /// Return nil for a window with no parent (e.g. a root window).
 #[lisp_fn(min = "0")]
 pub fn window_parent(window: LispWindowValidOrSelected) -> LispObject {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.parent
 }
 
@@ -607,7 +609,7 @@ pub fn window_parent(window: LispWindowValidOrSelected) -> LispObject {
 /// be a valid window.
 #[lisp_fn(min = "0")]
 pub fn window_frame(window: LispWindowValidOrSelected) -> LispObject {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.frame
 }
 
@@ -623,15 +625,15 @@ pub fn minibuffer_window(frame: LispObject) -> LispObject {
 /// WINDOW can be any window and defaults to the selected one.
 #[lisp_fn(name = "window-parameter")]
 pub fn window_parameter_lisp(window: LispWindowOrSelected, parameter: LispObject) -> LispObject {
-    let w = window.to_window();
-    w.get_parameter(parameter)
+    let win: LispWindowRef = window.into();
+    win.get_parameter(parameter)
 }
 
 /// Return the display-table that WINDOW is using.
 /// WINDOW must be a live window and defaults to the selected one.
 #[lisp_fn(min = "0")]
 pub fn window_display_table(window: LispWindowLiveOrSelected) -> LispObject {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.display_table
 }
 
@@ -639,7 +641,7 @@ pub fn window_display_table(window: LispWindowLiveOrSelected) -> LispObject {
 /// WINDOW must be a live window and defaults to the selected one.
 #[lisp_fn]
 pub fn set_window_display_table(window: LispWindowLiveOrSelected, table: LispObject) -> LispObject {
-    let mut win = window.to_window();
+    let mut win: LispWindowRef = window.into();
     win.display_table = table;
     table
 }
@@ -661,11 +663,11 @@ pub fn set_window_parameter(
     parameter: LispObject,
     value: LispObject,
 ) -> LispObject {
-    let mut w = window.to_window();
-    let old_alist_elt = assq(parameter, w.window_parameters);
+    let mut win: LispWindowRef = window.into();
+    let old_alist_elt = assq(parameter, win.window_parameters);
     if old_alist_elt.is_nil() {
-        w.window_parameters =
-            LispObject::cons(LispObject::cons(parameter, value), w.window_parameters);
+        win.window_parameters =
+            LispObject::cons(LispObject::cons(parameter, value), win.window_parameters);
     } else {
         setcdr(old_alist_elt.as_cons_or_error(), value);
     }
@@ -822,7 +824,7 @@ pub fn window_list_one(
 /// is the value returned by `window-dedicated-p' is t.
 #[lisp_fn(min = "0")]
 pub fn window_dedicated_p(window: LispWindowOrSelected) -> LispObject {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.dedicated
 }
 
@@ -845,7 +847,7 @@ pub fn window_dedicated_p(window: LispWindowOrSelected) -> LispObject {
 /// window, it also makes sure that the window is no more dedicated.
 #[lisp_fn]
 pub fn set_window_dedicated_p(window: LispWindowOrSelected, flag: LispObject) -> LispObject {
-    let mut win = window.to_window();
+    let mut win: LispWindowRef = window.into();
     win.dedicated = flag;
     flag
 }
@@ -854,7 +856,7 @@ pub fn set_window_dedicated_p(window: LispWindowOrSelected, flag: LispObject) ->
 /// WINDOW must be a live window and defaults to the selected one.
 #[lisp_fn(min = "0")]
 pub fn window_old_point(window: LispWindowLiveOrSelected) -> Option<EmacsInt> {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     marker_position_lisp(win.old_pointm.into())
 }
 
@@ -865,7 +867,7 @@ pub fn window_old_point(window: LispWindowLiveOrSelected) -> Option<EmacsInt> {
 /// selected one.
 #[lisp_fn(min = "0")]
 pub fn window_use_time(window: LispWindowLiveOrSelected) -> EmacsInt {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.use_time
 }
 
@@ -873,7 +875,7 @@ pub fn window_use_time(window: LispWindowLiveOrSelected) -> EmacsInt {
 /// WINDOW must be a live window and defaults to the selected one.
 #[lisp_fn(min = "0")]
 pub fn window_prev_buffers(window: LispWindowLiveOrSelected) -> LispObject {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.prev_buffers
 }
 
@@ -887,7 +889,7 @@ pub fn set_window_prev_buffers(
     window: LispWindowLiveOrSelected,
     prev_buffers: LispObject,
 ) -> LispObject {
-    let mut win = window.to_window();
+    let mut win: LispWindowRef = window.into();
     win.prev_buffers = prev_buffers;
     prev_buffers
 }
@@ -896,7 +898,7 @@ pub fn set_window_prev_buffers(
 /// WINDOW must be a live window and defaults to the selected one.
 #[lisp_fn(min = "0")]
 pub fn window_next_buffers(window: LispWindowLiveOrSelected) -> LispObject {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.next_buffers
 }
 
@@ -908,7 +910,7 @@ pub fn set_window_next_buffers(
     window: LispWindowLiveOrSelected,
     next_buffers: LispObject,
 ) -> LispObject {
-    let mut win = window.to_window();
+    let mut win: LispWindowRef = window.into();
     win.next_buffers = next_buffers;
     next_buffers
 }
@@ -918,7 +920,7 @@ pub fn set_window_next_buffers(
 /// Return POS.
 #[lisp_fn]
 pub fn set_window_point(window: LispWindowLiveOrSelected, pos: LispObject) -> LispObject {
-    let mut win = window.to_window();
+    let mut win: LispWindowRef = window.into();
 
     // Type of POS is checked by Fgoto_char or set_marker_restricted ...
     if win == selected_window().as_window_or_error() {
@@ -960,7 +962,7 @@ pub fn set_window_start(
     pos: LispObject,
     noforce: bool,
 ) -> LispObject {
-    let mut win = window.to_window();
+    let mut win: LispWindowRef = window.into();
     set_marker_restricted(win.start, pos, win.contents);
     // This is not right, but much easier than doing what is right.
     win.set_start_at_line_beg(false);
@@ -983,7 +985,7 @@ pub fn set_window_start(
 /// horizontal combination.
 #[lisp_fn(min = "0")]
 pub fn window_top_child(window: LispWindowValidOrSelected) -> Option<LispWindowRef> {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     if win.is_vertical_combination() {
         win.contents.as_window()
     } else {
@@ -1070,16 +1072,16 @@ pub fn scroll_down(arg: LispObject) -> LispObject {
 /// width (see `window-total-width').
 #[lisp_fn(min = "0")]
 pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
-    let win = window.to_window();
+    let win: LispWindowRef = window.into();
     win.new_total
 }
 
 /// Return the number of columns by which WINDOW is scrolled from left margin.
 /// WINDOW must be a live window and defaults to the selected one.
 #[lisp_fn(min = "0")]
-pub fn window_hscroll(window: LispObject) -> EmacsInt {
-    let window = window_live_or_selected(window);
-    window.hscroll as EmacsInt
+pub fn window_hscroll(window: LispWindowLiveOrSelected) -> EmacsInt {
+    let win: LispWindowRef = window.into();
+    win.hscroll as EmacsInt
 }
 
 #[no_mangle]
