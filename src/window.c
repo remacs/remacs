@@ -65,7 +65,6 @@ static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 					      Lisp_Object);
 static void apply_window_adjustment (struct window *);
 
-void wset_display_table (struct window *, Lisp_Object);
 void wset_window_parameters (struct window *, Lisp_Object);
 Lisp_Object set_window_hscroll (struct window *, EMACS_INT);
 void scroll_command (Lisp_Object, int);
@@ -122,12 +121,6 @@ static void
 wset_dedicated (struct window *w, Lisp_Object val)
 {
   w->dedicated = val;
-}
-
-void
-wset_display_table (struct window *w, Lisp_Object val)
-{
-  w->display_table = val;
 }
 
 static void
@@ -748,14 +741,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
   return (make_number (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
-}
-
-DEFUN ("window-hscroll", Fwindow_hscroll, Swindow_hscroll, 0, 1, 0,
-       doc: /* Return the number of columns by which WINDOW is scrolled from left margin.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_live_window (window)->hscroll);
 }
 
 /* Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
@@ -5722,7 +5707,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	  w->suspend_auto_hscroll = !NILP (p->suspend_auto_hscroll);
 	  w->min_hscroll = XFASTINT (p->min_hscroll);
 	  w->hscroll_whole = XFASTINT (p->hscroll_whole);
-	  wset_display_table (w, p->display_table);
+	  w->display_table = p->display_table;
 	  w->left_margin_cols = XINT (p->left_margin_cols);
 	  w->right_margin_cols = XINT (p->right_margin_cols);
 	  w->left_fringe_width = XINT (p->left_fringe_width);
@@ -6969,7 +6954,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_resize_apply_total);
   defsubr (&Swindow_body_height);
   defsubr (&Swindow_body_width);
-  defsubr (&Swindow_hscroll);
   defsubr (&Sset_window_hscroll);
   defsubr (&Swindow_redisplay_end_trigger);
   defsubr (&Sset_window_redisplay_end_trigger);
