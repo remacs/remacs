@@ -525,6 +525,14 @@ impl LispObject {
         FUNCTIONP(self)
     }
 
+    pub fn map_or<T, F: FnOnce(LispObject) -> T>(self, default: T, action: F) -> T {
+        if self.is_nil() {
+            default
+        } else {
+            action(self)
+        }
+    }
+
     pub fn map_or_else<T, F: FnOnce() -> T, F1: FnOnce(LispObject) -> T>(
         self,
         default: F,

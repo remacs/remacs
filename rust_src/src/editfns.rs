@@ -181,8 +181,8 @@ pub fn goto_char(position: LispObject) -> LispObject {
 /// Return the byte position for character position POSITION.
 /// If POSITION is out of range, the value is nil.
 #[lisp_fn]
-pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
-    let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
+    let pos = position.to_fixnum() as ptrdiff_t;
     let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
@@ -856,23 +856,15 @@ pub fn emacs_pid() -> LispObject {
 #[lisp_fn(min = "1")]
 pub fn insert_buffer_substring(
     buffer: LispBufferOrName,
-    beg: LispObject,
-    end: LispObject,
+    beg: Option<LispNumber>,
+    end: Option<LispNumber>,
 ) -> LispObject {
     let mut buf_ref = LispBufferRef::from(buffer)
         .as_live()
         .unwrap_or_else(|| error!("Selecting deleted buffer"));
 
-    let get_pos = |pos: LispObject, default: isize| {
-        if pos.is_nil() {
-            default
-        } else {
-            pos.as_number_coerce_marker_or_error();
-            pos.as_fixnum_or_error() as isize
-        }
-    };
-    let mut b = get_pos(beg, buf_ref.begv);
-    let mut e = get_pos(end, buf_ref.zv);
+    let mut b = beg.map_or(buf_ref.begv, |n| n.to_fixnum() as isize);
+    let mut e = end.map_or(buf_ref.zv, |n| n.to_fixnum() as isize);
 
     if b > e {
         let temp = b;
@@ -881,7 +873,7 @@ pub fn insert_buffer_substring(
     }
 
     if !(buf_ref.begv <= b && e <= buf_ref.zv) {
-        args_out_of_range!(beg, end);
+        args_out_of_range!(beg.into(), end.into());
     }
 
     let mut cur_buf = ThreadState::current_buffer();
