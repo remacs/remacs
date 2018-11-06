@@ -139,7 +139,6 @@ extern "C" {
     pub fn filemode_string(f: LispObject) -> LispObject;
 
     pub fn wset_update_mode_line(w: *mut Lisp_Window);
-    pub fn wset_display_table(w: *mut Lisp_Window, val: LispObject);
     pub fn drop_overlay(b: *mut Lisp_Buffer, ov: *mut Lisp_Overlay);
     pub fn unchain_both(b: *mut Lisp_Buffer, ov: LispObject);
     pub fn emacs_get_tty_pgrp(p: *mut Lisp_Process) -> libc::pid_t;

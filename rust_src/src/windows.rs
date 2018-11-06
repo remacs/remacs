@@ -11,7 +11,7 @@ use remacs_sys::{estimate_mode_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window, scroll_command,
                  selected_window as current_window, set_buffer_internal, set_window_hscroll,
                  window_body_width, window_list_1, window_menu_bar_p, window_parameter,
-                 window_tool_bar_p, wset_display_table, wset_redisplay, wset_update_mode_line};
+                 window_tool_bar_p, wset_redisplay, wset_update_mode_line};
 use remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
                  Qwindow_live_p, Qwindow_valid_p, Qwindowp};
@@ -615,7 +615,7 @@ pub fn window_display_table(window: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn set_window_display_table(window: LispObject, table: LispObject) -> LispObject {
     let mut w = window_live_or_selected(window);
-    unsafe { wset_display_table(w.as_mut(), table) };
+    w.display_table = table;
     table
 }
 
