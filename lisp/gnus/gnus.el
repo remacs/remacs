@@ -361,7 +361,7 @@ be set in `.emacs' instead."
 (defface gnus-group-news-2-empty
   '((((class color)
       (background dark))
-     (:foreground "turquoise"))
+     (:foreground "turquoise4"))
     (((class color)
       (background light))
      (:foreground "CadetBlue4"))
@@ -384,10 +384,10 @@ be set in `.emacs' instead."
 (defface gnus-group-news-3-empty
   '((((class color)
       (background dark))
-     ())
+     (:foreground "turquoise3"))
     (((class color)
       (background light))
-     ())
+     (:foreground "DeepSkyBlue4"))
     (t
      ()))
   "Level 3 empty newsgroup face."
@@ -407,10 +407,10 @@ be set in `.emacs' instead."
 (defface gnus-group-news-4-empty
   '((((class color)
       (background dark))
-     ())
+     (:foreground "turquoise2"))
     (((class color)
       (background light))
-     ())
+     (:foreground "DeepSkyBlue3"))
     (t
      ()))
   "Level 4 empty newsgroup face."
@@ -430,10 +430,10 @@ be set in `.emacs' instead."
 (defface gnus-group-news-5-empty
   '((((class color)
       (background dark))
-     ())
+     (:foreground "turquoise1"))
     (((class color)
       (background light))
-     ())
+     (:foreground "DeepSkyBlue2"))
     (t
      ()))
   "Level 5 empty newsgroup face."
@@ -2769,7 +2769,6 @@ gnus-registry.el will populate this if it's loaded.")
       gnus-check-reasonable-setup)
      ("gnus-dup" gnus-dup-suppress-articles gnus-dup-unsuppress-article
       gnus-dup-enter-articles)
-     ("gnus-range" gnus-copy-sequence)
      ("gnus-eform" gnus-edit-form)
      ("gnus-logic" gnus-score-advanced)
      ("gnus-undo" gnus-undo-mode gnus-undo-register)

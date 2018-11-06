@@ -4302,7 +4302,7 @@ For details of keybindings, see `ido-find-file'."
 
 ;;;###autoload
 (defun ido-find-alternate-file ()
-  "Switch to another file and show it in another window.
+  "Find another file, select its buffer, kill previous buffer.
 The file name is selected interactively by typing a substring.
 For details of keybindings, see `ido-find-file'."
   (interactive)

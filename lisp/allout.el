@@ -1687,7 +1687,7 @@ from what it did before, for backwards compatibility.
 MODE is the activation mode - see `allout-auto-activation' for
 valid values."
   (declare (obsolete allout-auto-activation "23.3"))
-  (custom-set-variables (list 'allout-auto-activation (format "%s" mode)))
+  (customize-set-variable 'allout-auto-activation (format "%s" mode))
   (format "%s" mode))
 
 ;;;_  > allout-setup-menubar ()

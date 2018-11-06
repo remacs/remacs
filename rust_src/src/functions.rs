@@ -45,10 +45,14 @@ macro_rules! mock_unibyte_string {
         let strcopy = ::std::ffi::CString::new($string).unwrap();
         let len = strcopy.as_bytes().len() as ::libc::ptrdiff_t;
         let boxed = Box::new(::remacs_sys::Lisp_String {
-            size: len,
-            size_byte: -1,
-            intervals: ::std::ptr::null_mut(),
-            data: strcopy.into_raw() as *mut u8,
+            u: ::remacs_sys::Lisp_String__bindgen_ty_1 {
+                s: ::remacs_sys::Lisp_String__bindgen_ty_1__bindgen_ty_1 {
+                    size: len,
+                    size_byte: -1,
+                    intervals: ::std::ptr::null_mut(),
+                    data: strcopy.into_raw() as *mut u8,
+                },
+            },
         });
 
         let ptr = ::lisp::ExternalPtr::new(Box::into_raw(boxed));
@@ -65,10 +69,14 @@ macro_rules! mock_multibyte_string {
         let strcopy = ::std::ffi::CString::new($string).unwrap();
         let len = strcopy.as_bytes().len() as ::libc::ptrdiff_t;
         let boxed = Box::new(::remacs_sys::Lisp_String {
-            size: len,
-            size_byte: len,
-            intervals: ::std::ptr::null_mut(),
-            data: strcopy.into_raw() as *mut u8,
+            u: ::remacs_sys::Lisp_String__bindgen_ty_1 {
+                s: ::remacs_sys::Lisp_String__bindgen_ty_1__bindgen_ty_1 {
+                    size: len,
+                    size_byte: len,
+                    intervals: ::std::ptr::null_mut(),
+                    data: strcopy.into_raw() as *mut u8,
+                },
+            },
         });
 
         let ptr = ::lisp::ExternalPtr::new(Box::into_raw(boxed));

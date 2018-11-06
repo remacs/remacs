@@ -66,7 +66,7 @@ end
 # Access the name of a symbol
 define xsymname
   xgetsym $arg0
-  set $symname = $ptr->name
+  set $symname = $ptr->u.s.name
 end
 
 # Set up something to print out s-expressions.
@@ -347,7 +347,7 @@ end
 
 define pcursorx
   set $cp = $arg0
-  printf "y=%d x=%d vpos=%d hpos=%d", $cp->y, $cp->x, $cp->vpos, $cp->hpos
+  printf "y=%d x=%d vpos=%d hpos=%d", $cp.y, $cp.x, $cp.vpos, $cp.hpos
 end
 document pcursorx
 Pretty print a window cursor.
@@ -364,28 +364,26 @@ end
 
 define pwinx
   set $w = $arg0
-  if ($w->mini_p != Qnil)
+  if ($w->mini != 0)
     printf "Mini "
   end
-  printf "Window %d ", $int
-  xgetptr $w->buffer
+  printf "Window %d ", $w->sequence_number
+  xgetptr $w->contents
   set $tem = (struct buffer *) $ptr
   xgetptr $tem->name_
-  printf "%s", ((struct Lisp_String *) $ptr)->data
+  printf "%s", ((struct Lisp_String *) $ptr)->u.s.data
   printf "\n"
   xgetptr $w->start
   set $tem = (struct Lisp_Marker *) $ptr
   printf "start=%d end:", $tem->charpos
-  if ($w->window_end_valid != Qnil)
-    xgetint $w->window_end_pos
-    printf "pos=%d", $int
-    xgetint $w->window_end_vpos
-    printf " vpos=%d", $int
+  if ($w->window_end_valid != 0)
+    printf "pos=%d", $w->window_end_pos
+    printf " vpos=%d", $w->window_end_vpos
   else
     printf "invalid"
   end
   printf " vscroll=%d", $w->vscroll
-  if ($w->force_start != Qnil)
+  if ($w->force_start != 0)
     printf " FORCE_START"
   end
   if ($w->must_be_updated_p)
@@ -499,7 +497,7 @@ define pgx
   xgettype ($g.object)
   if ($type == Lisp_String)
     xgetptr $g.object
-    printf " str=0x%x[%d]", ((struct Lisp_String *)$ptr)->data, $g.charpos
+    printf " str=0x%x[%d]", ((struct Lisp_String *)$ptr)->u.s.data, $g.charpos
   else
     printf " pos=%d", $g.charpos
   end
@@ -891,7 +889,7 @@ define xbuffer
   xgetptr $
   print (struct buffer *) $ptr
   xgetptr $->name_
-  output ((struct Lisp_String *) $ptr)->data
+  output ((struct Lisp_String *) $ptr)->u.s.data
   echo \n
 end
 document xbuffer
@@ -930,7 +928,7 @@ end
 define xcar
   xgetptr $
   xgettype $
-  print/x ($type == Lisp_Cons ? ((struct Lisp_Cons *) $ptr)->car : 0)
+  print/x ($type == Lisp_Cons ? ((struct Lisp_Cons *) $ptr)->u.s.car : 0)
 end
 document xcar
 Assume that $ is an Emacs Lisp pair and print its car.
@@ -939,7 +937,7 @@ end
 define xcdr
   xgetptr $
   xgettype $
-  print/x ($type == Lisp_Cons ? ((struct Lisp_Cons *) $ptr)->u.cdr : 0)
+  print/x ($type == Lisp_Cons ? ((struct Lisp_Cons *) $ptr)->u.s.u.cdr : 0)
 end
 document xcdr
 Assume that $ is an Emacs Lisp pair and print its cdr.
@@ -952,9 +950,9 @@ define xlist
   set $nil = $ptr
   set $i = 0
   while $cons != $nil && $i < 10
-    p/x $cons->car
+    p/x $cons->u.s.car
     xpr
-    xgetptr $cons->u.cdr
+    xgetptr $cons->u.s.u.cdr
     set $cons = (struct Lisp_Cons *) $ptr
     set $i = $i + 1
     printf "---\n"
@@ -1067,13 +1065,13 @@ Print $ as a lisp object of any type.
 end
 
 define xprintstr
-  set $data = (char *) $arg0->data
-  set $strsize = ($arg0->size_byte < 0) ? ($arg0->size & ~ARRAY_MARK_FLAG) : $arg0->size_byte
+  set $data = (char *) $arg0->u.s.data
+  set $strsize = ($arg0->u.s.size_byte < 0) ? ($arg0->u.s.size & ~ARRAY_MARK_FLAG) : $arg0->u.s.size_byte
   # GDB doesn't like zero repetition counts
   if $strsize == 0
     output ""
   else
-    output ($arg0->size > 1000) ? 0 : ($data[0])@($strsize)
+    output ($arg0->u.s.size > 1000) ? 0 : ($data[0])@($strsize)
   end
 end
 
@@ -1250,7 +1248,7 @@ commands
   xsymname globals.f_Vinitial_window_system
   xgetptr $symname
   set $tem = (struct Lisp_String *) $ptr
-  set $tem = (char *) $tem->data
+  set $tem = (char *) $tem->u.s.data
   # If we are running in synchronous mode, we want a chance to look
   # around before Emacs exits.  Perhaps we should put the break
   # somewhere else instead...

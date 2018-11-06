@@ -534,9 +534,17 @@ that you know @emph{will} be defined, use a @code{declare-function}
 statement (@pxref{Declaring Functions}).
 
 @item
-If you use many functions and variables from a certain file, you can
-add a @code{require} for that package to avoid compilation warnings
-for them.  For instance,
+If you use many functions, macros, and variables from a certain file,
+you can add a @code{require} (@pxref{Named Features, require}) for
+that package to avoid compilation warnings for them, like this:
+
+@example
+(require 'foo)
+@end example
+
+@noindent
+If you need only macros from some file, you can require it only at
+compile time (@pxref{Eval During Compile}).  For instance,
 
 @example
 (eval-when-compile

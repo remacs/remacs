@@ -2513,7 +2513,7 @@ package to describe."
       (setq buffer-read-only nil)
       ;; Without this, a keyboard layout with R2L characters might be
       ;; displayed reversed, right to left.  See the thread starting at
-      ;; https://lists.gnu.org/archive/html/emacs-devel/2012-03/msg00062.html
+      ;; https://lists.gnu.org/r/emacs-devel/2012-03/msg00062.html
       ;; for a description of one such situation.
       (setq bidi-paragraph-direction 'left-to-right)
       (insert "Input method: " (quail-name)

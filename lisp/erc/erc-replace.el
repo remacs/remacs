@@ -77,7 +77,7 @@ It replaces text according to `erc-replace-alist'."
 		       (eval to))))))
 	  erc-replace-alist))
 
-;;;###autoload (autoload 'erc-replace-mode "erc-replace")
+;;;###autoload(autoload 'erc-replace-mode "erc-replace")
 (define-erc-module replace nil
   "This mode replaces incoming text according to `erc-replace-alist'."
   ((add-hook 'erc-insert-modify-hook
@@ -90,6 +90,7 @@ It replaces text according to `erc-replace-alist'."
 ;;; erc-replace.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

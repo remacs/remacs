@@ -718,7 +718,8 @@ is blocked."
   "Loop over values from an iterator.
 Evaluate BODY with VAR bound to each value from ITERATOR.
 Return the value with which ITERATOR finished iteration."
-  (declare (indent 1))
+  (declare (indent 1)
+           (debug ((symbolp form) body)))
   (let ((done-symbol (cps--gensym "iter-do-iterator-done"))
         (condition-symbol (cps--gensym "iter-do-condition"))
         (it-symbol (cps--gensym "iter-do-iterator"))

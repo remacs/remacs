@@ -65,7 +65,7 @@ modify this GNU manual.''
 @cindex using flymake
 
 Flymake is a universal on-the-fly buffer checker implemented as an
-Emacs minor minor.  To use Flymake, you must first activate
+Emacs minor mode.  To use Flymake, you must first activate
 @code{flymake-mode} by using the command @kbd{flymake-mode}.
 
 When enabled, Flymake collects information about problems in the

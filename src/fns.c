@@ -43,7 +43,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-void hash_clear (struct Lisp_Hash_Table *h);
 
 /* Random data-structure functions.  */
 
@@ -3441,7 +3440,7 @@ syms_of_fns (void)
   DEFSYM (Qwidget_type, "widget-type");
 
   DEFVAR_LISP ("overriding-plist-environment", Voverriding_plist_environment,
-               doc: /* An alist overrides the plists of the symbols which it lists.
+               doc: /* An alist that overrides the plists of the symbols which it lists.
 Used by the byte-compiler to apply `define-symbol-prop' during
 compilation.  */);
   Voverriding_plist_environment = Qnil;

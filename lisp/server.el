@@ -527,8 +527,10 @@ Creates the directory if necessary and makes sure:
 	   (w32 (eq system-type 'windows-nt))
            (unsafe (cond
                     ((not (eq t (car attrs)))
-                     (format "it is a %s" (if (stringp (car attrs))
-                                              "symlink" "file")))
+                     (if (null attrs) "its attributes can't be checked"
+                       (format "it is a %s"
+                               (if (stringp (car attrs))
+                                   "symlink" "file"))))
                     ((and w32 (zerop uid)) ; on FAT32?
                      (display-warning
                       'server

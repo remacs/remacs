@@ -35,7 +35,7 @@ AC_DEFUN([gl_SYS_TYPES_H_DEFAULTS],
 ])
 
 # This works around a buggy version in autoconf <= 2.69.
-# See <https://lists.gnu.org/archive/html/autoconf/2016-08/msg00014.html>
+# See <https://lists.gnu.org/r/autoconf/2016-08/msg00014.html>
 
 m4_version_prereq([2.70], [], [
 

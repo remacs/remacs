@@ -39,7 +39,7 @@ They must also be covered by `url-handler-regexp'."
 (defun url-tramp-convert-url-to-tramp (url)
   "Convert URL to a Tramp file name.
 If URL contains a password, it will be added to the `password-data' cache.
-In case URL is not convertable, nil is returned."
+In case URL is not convertible, nil is returned."
   (let* ((obj (url-generic-parse-url (and (stringp url) url)))
          (port
           (and (natnump (url-portspec obj))
@@ -57,7 +57,7 @@ In case URL is not convertable, nil is returned."
 
 (defun url-tramp-convert-tramp-to-url (file)
   "Convert FILE, a Tramp file name, to a URL.
-In case FILE is not convertable, nil is returned."
+In case FILE is not convertible, nil is returned."
   (let* ((obj (ignore-errors (tramp-dissect-file-name file)))
          (port
           (and (stringp (tramp-file-name-port obj))

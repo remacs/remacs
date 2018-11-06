@@ -39,13 +39,15 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     };
 
     match function.fntype {
-        function::LispFnType::Normal(_) => for ident in function.args {
-            let arg = quote! { #ident: ::lisp::LispObject, };
-            cargs.append_all(arg);
+        function::LispFnType::Normal(_) => {
+            for ident in function.args {
+                let arg = quote! { #ident: ::lisp::LispObject, };
+                cargs.append_all(arg);
 
-            let arg = quote! { (#ident).into(), };
-            rargs.append_all(arg);
-        },
+                let arg = quote! { (#ident).into(), };
+                rargs.append_all(arg);
+            }
+        }
         function::LispFnType::Many => {
             let args = quote! {
                 nargs: ::libc::ptrdiff_t,

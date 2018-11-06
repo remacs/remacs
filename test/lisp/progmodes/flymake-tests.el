@@ -110,24 +110,33 @@ SEVERITY-PREDICATE is used to setup
     (should (eq 'flymake-warning
                 (face-at-point)))))
 
-(ert-deftest warning-predicate-rx-perl ()
-  "Test perl warning via regular expression predicate."
+(ert-deftest perl-backend ()
+  "Test the perl backend"
   (skip-unless (executable-find "perl"))
-  (flymake-tests--with-flymake
-      ("test.pl" :severity-predicate "^Scalar value")
+  (flymake-tests--with-flymake ("test.pl")
     (flymake-goto-next-error)
-    (should (eq 'flymake-warning
-                (face-at-point)))))
+    (should (eq 'flymake-warning (face-at-point)))
+    (goto-char (point-max))
+    (flymake-goto-prev-error)
+    (should (eq 'flymake-error (face-at-point)))))
 
-(ert-deftest warning-predicate-function-perl ()
-  "Test perl warning via function predicate."
-  (skip-unless (executable-find "perl"))
-  (flymake-tests--with-flymake
-      ("test.pl" :severity-predicate
-       (lambda (msg) (string-match "^Scalar value" msg)))
-    (flymake-goto-next-error)
-    (should (eq 'flymake-warning
-                (face-at-point)))))
+(ert-deftest ruby-backend ()
+  "Test the ruby backend"
+  (skip-unless (executable-find "ruby"))
+  ;; Some versions of ruby fail if HOME doesn't exist (bug#29187).
+  (let* ((tempdir (make-temp-file "flymake-tests-ruby" t))
+         (process-environment (cons (format "HOME=%s" tempdir)
+                                    process-environment))
+         ;; And see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=19657#20
+         ;; for this particular yuckiness
+         (abbreviated-home-dir nil))
+    (unwind-protect
+        (flymake-tests--with-flymake ("test.rb")
+          (flymake-goto-next-error)
+          (should (eq 'flymake-warning (face-at-point)))
+          (flymake-goto-next-error)
+          (should (eq 'flymake-error (face-at-point))))
+      (delete-directory tempdir t))))
 
 (ert-deftest different-diagnostic-types ()
   "Test GCC warning via function predicate."
@@ -328,6 +337,38 @@ SEVERITY-PREDICATE is used to setup
           (should (eq 'flymake-warning (face-at-point))) ; back at consectetur
           (should-error (flymake-goto-prev-error nil nil t))
           )))))
+
+(ert-deftest eob-region-and-trailing-newline ()
+  "`flymake-diag-region' at eob with varying trailing newlines."
+  (cl-flet ((diag-region-substring
+             (line col)
+             (pcase-let
+                  ((`(,a . ,b) (flymake-diag-region (current-buffer) line col)))
+                (buffer-substring a b))))
+    (with-temp-buffer
+      (insert "beg\nmmm\nend")
+      (should (equal
+               (diag-region-substring 3 3)
+               "d"))
+      (should (equal
+               (diag-region-substring 3 nil)
+               "end"))
+      (insert "\n")
+      (should (equal
+               (diag-region-substring 4 1)
+               "end"))
+      (should (equal
+               (diag-region-substring 4 nil)
+               "end"))
+      (insert "\n")
+      (should (equal
+               (diag-region-substring 5 1)
+               "\n"))
+      (should (equal
+               (diag-region-substring 5 nil)
+               "\n")))))
+
+
 
 (provide 'flymake-tests)
 

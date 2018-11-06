@@ -20,11 +20,13 @@ fn casify_word(flag: case_action, words: EmacsInt) -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
 
     let far_end = match unsafe { scan_words(buffer_ref.pt, words) } {
-        0 => if words <= 0 {
-            buffer_ref.begv
-        } else {
-            buffer_ref.zv
-        },
+        0 => {
+            if words <= 0 {
+                buffer_ref.begv
+            } else {
+                buffer_ref.zv
+            }
+        }
         n => n,
     };
 

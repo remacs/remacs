@@ -3794,19 +3794,26 @@ font_range (ptrdiff_t pos, ptrdiff_t pos_byte, ptrdiff_t *limit,
   int c;
   Lisp_Object font_object = Qnil;
 
-  if (NILP (string))
+  if (!face)
     {
-      if (! face)
-	{
-	  int face_id;
+      struct frame *f = XFRAME (w->frame);
+      int face_id;
 
-	  face_id = face_at_buffer_position (w, pos, &ignore,
-					     *limit, false, -1);
-	  face = FACE_FROM_ID (XFRAME (w->frame), face_id);
+      if (NILP (string))
+	  face_id = face_at_buffer_position (w, pos, &ignore, *limit,
+					     false, -1);
+      else
+	{
+	  face_id =
+	    NILP (Vface_remapping_alist)
+	    ? DEFAULT_FACE_ID
+	    : lookup_basic_face (f, DEFAULT_FACE_ID);
+
+	  face_id = face_at_string_position (w, string, pos, 0, &ignore,
+					     face_id, false);
 	}
+      face = FACE_FROM_ID (f, face_id);
     }
-  else
-    eassert (face);
 
   while (pos < *limit)
     {
@@ -4925,17 +4932,6 @@ the corresponding element is nil.  */)
   return vec;
 }
 
-DEFUN ("font-match-p", Ffont_match_p, Sfont_match_p, 2, 2, 0,
-       doc: /* Return t if and only if font-spec SPEC matches with FONT.
-FONT is a font-spec, font-entity, or font-object. */)
-  (Lisp_Object spec, Lisp_Object font)
-{
-  CHECK_FONT_SPEC (spec);
-  CHECK_FONT (font);
-
-  return (font_match_p (spec, font) ? Qt : Qnil);
-}
-
 DEFUN ("font-at", Ffont_at, Sfont_at, 1, 3, 0,
        doc: /* Return a font-object for displaying a character at POSITION.
 Optional second arg WINDOW, if non-nil, is a window displaying
@@ -5359,7 +5355,6 @@ syms_of_font (void)
   defsubr (&Sclose_font);
   defsubr (&Squery_font);
   defsubr (&Sfont_get_glyphs);
-  defsubr (&Sfont_match_p);
   defsubr (&Sfont_at);
 #if 0
   defsubr (&Sdraw_string);
@@ -5401,19 +5396,22 @@ gets the repertory information by an opened font and ENCODING.  */);
 	       doc: /*  Vector of valid font weight values.
 Each element has the form:
     [NUMERIC-VALUE SYMBOLIC-NAME ALIAS-NAME ...]
-NUMERIC-VALUE is an integer, and SYMBOLIC-NAME and ALIAS-NAME are symbols. */);
+NUMERIC-VALUE is an integer, and SYMBOLIC-NAME and ALIAS-NAME are symbols.
+This variable cannot be set; trying to do so will signal an error.  */);
   Vfont_weight_table = BUILD_STYLE_TABLE (weight_table);
   make_symbol_constant (intern_c_string ("font-weight-table"));
 
   DEFVAR_LISP_NOPRO ("font-slant-table", Vfont_slant_table,
 	       doc: /*  Vector of font slant symbols vs the corresponding numeric values.
-See `font-weight-table' for the format of the vector. */);
+See `font-weight-table' for the format of the vector.
+This variable cannot be set; trying to do so will signal an error.  */);
   Vfont_slant_table = BUILD_STYLE_TABLE (slant_table);
   make_symbol_constant (intern_c_string ("font-slant-table"));
 
   DEFVAR_LISP_NOPRO ("font-width-table", Vfont_width_table,
 	       doc: /*  Alist of font width symbols vs the corresponding numeric values.
-See `font-weight-table' for the format of the vector. */);
+See `font-weight-table' for the format of the vector.
+This variable cannot be set; trying to do so will signal an error.  */);
   Vfont_width_table = BUILD_STYLE_TABLE (width_table);
   make_symbol_constant (intern_c_string ("font-width-table"));
 

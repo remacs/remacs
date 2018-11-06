@@ -551,8 +551,6 @@ callback data (if any)."
 (defun epg-errors-to-string (errors)
   (mapconcat #'epg-error-to-string errors "; "))
 
-(declare-function pinentry-start "pinentry" (&optional quiet))
-
 (defun epg--start (context args)
   "Start `epg-gpg-program' in a subprocess with given ARGS."
   (if (and (epg-context-process context)
@@ -604,30 +602,13 @@ callback data (if any)."
       (setq process-environment
 	    (cons (concat "GPG_TTY=" terminal-name)
 		  (cons "TERM=xterm" process-environment))))
-    ;; Automatically start the Emacs Pinentry server if appropriate.
-    (when (and (fboundp 'pinentry-start)
-               ;; Emacs Pinentry is useless if Emacs has no interactive session.
-               (not noninteractive)
-               ;; Prefer pinentry-mode over Emacs Pinentry.
-               (null (epg-context-pinentry-mode context))
-               ;; Check if the allow-emacs-pinentry option is set.
-	       (executable-find epg-gpgconf-program)
-	       (with-temp-buffer
-		 (when (= (call-process epg-gpgconf-program nil t nil
-					"--list-options" "gpg-agent")
-			  0)
-		   (goto-char (point-min))
-		   (re-search-forward
-                    "^allow-emacs-pinentry:\\(?:.*:\\)\\{8\\}1"
-                    nil t))))
-      (pinentry-start 'quiet))
     (setq process-environment
 	  (cons (format "INSIDE_EMACS=%s,epg" emacs-version)
 		process-environment))
     ;; Record modified time of gpg-agent socket to restore the Emacs
     ;; frame on text terminal in `epg-wait-for-completion'.
     ;; See
-    ;; <https://lists.gnu.org/archive/html/emacs-devel/2007-02/msg00755.html>
+    ;; <https://lists.gnu.org/r/emacs-devel/2007-02/msg00755.html>
     ;; for more details.
     (when (and agent-info (string-match "\\(.*\\):[0-9]+:[0-9]+" agent-info))
       (setq agent-file (match-string 1 agent-info)

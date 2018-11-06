@@ -3,19 +3,19 @@ Distribution Build Scripts for Windows
 
 The scripts are used to build the binary distribution zip files for windows.
 
-File System Organisation
+File System Organization
 ------------------------
 
 
-They are relatively strict about the file system organisation. In
+They are relatively strict about the file system organization. In
 general, they should work across several more than just the version of
 Emacs they come with, as the dependencies of Emacs change relatively slowly.
 
-The file system needs to be organised like so:
+The file system needs to be organized like so:
 
 ~/emacs-build/git
 
-Contains a checkout of the Emacs git repository, organised according
+Contains a checkout of the Emacs git repository, organized according
 to branches, with git worktree
 
 ~/emacs-build/git/emacs-$branch

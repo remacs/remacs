@@ -92,7 +92,7 @@ impl LispObject {
 
 impl LispVectorlikeRef {
     pub fn is_vector(self) -> bool {
-        self.header.size & (PSEUDOVECTOR_FLAG as isize) == 0
+        unsafe { self.header.size & (PSEUDOVECTOR_FLAG as isize) == 0 }
     }
 
     pub fn as_vector(self) -> Option<LispVectorRef> {
@@ -117,13 +117,17 @@ impl LispVectorlikeRef {
     }
 
     pub fn is_pseudovector(self, tp: pvec_type) -> bool {
-        self.header.size & (PSEUDOVECTOR_FLAG | More_Lisp_Bits::PVEC_TYPE_MASK as usize) as isize
-            == (PSEUDOVECTOR_FLAG | ((tp as usize) << More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS))
-                as isize
+        unsafe {
+            self.header.size
+                & (PSEUDOVECTOR_FLAG | More_Lisp_Bits::PVEC_TYPE_MASK as usize) as isize
+                == (PSEUDOVECTOR_FLAG | ((tp as usize) << More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS))
+                    as isize
+        }
     }
 
     pub fn pseudovector_size(self) -> EmacsInt {
-        (self.header.size & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)) as EmacsInt
+        (unsafe { self.header.size } & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize))
+            as EmacsInt
     }
 
     pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
@@ -227,7 +231,7 @@ macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
         impl $type {
             pub fn len(self) -> usize {
-                (self.header.size & ($size_mask as isize)) as usize
+                (unsafe { self.header.size } & ($size_mask as isize)) as usize
             }
 
             pub fn as_lisp_obj(self) -> LispObject {

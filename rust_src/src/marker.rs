@@ -539,9 +539,10 @@ fn set_marker_internal_else(
     // Don't believe BYTEPOS if it comes from a different buffer,
     // since that buffer might have a very different correspondence
     // between character and byte positions.
-    if bytepos == -1 || !position
-        .as_marker()
-        .map_or(false, |m| m.buffer() == Some(buf))
+    if bytepos == -1
+        || !position
+            .as_marker()
+            .map_or(false, |m| m.buffer() == Some(buf))
     {
         bytepos = unsafe { buf_charpos_to_bytepos(buf.as_mut(), charpos) };
     } else {

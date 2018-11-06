@@ -51,8 +51,9 @@ the middle is discarded, and just the beginning and end are displayed."
 
 (defcustom debugger-print-function #'cl-prin1
   "Function used to print values in the debugger backtraces."
-  :type 'function
-  :options '(cl-prin1 prin1)
+  :type '(choice (const cl-prin1)
+                 (const prin1)
+                 function)
   :version "26.1")
 
 (defcustom debugger-bury-or-kill 'bury

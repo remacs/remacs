@@ -9,8 +9,9 @@ use std;
 use remacs_macros::lisp_fn;
 
 use remacs_sys::EmacsInt;
-use remacs_sys::{buffer_overflow, build_string, downcase, find_before_next_newline, find_field,
-                 find_newline, globals, insert, insert_and_inherit, insert_from_buffer,
+use remacs_sys::{buffer_overflow, build_string, current_message, downcase,
+                 find_before_next_newline, find_field, find_newline, globals, insert,
+                 insert_and_inherit, insert_from_buffer, make_buffer_string_both,
                  make_string_from_bytes, maybe_quit, message1, scan_newline_from_point,
                  set_buffer_internal_1, set_point, set_point_both, update_buffer_properties};
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
@@ -912,6 +913,28 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
             val
         }
     }
+}
+
+/// Return the string currently displayed in the echo area, or nil if none.
+#[lisp_fn(name = "current-message", c_name = "current_message")]
+pub fn lisp_current_message() -> LispObject {
+    unsafe { current_message() }
+}
+
+/// Return the contents of the current buffer as a string.
+/// If narrowing is in effect, this function returns only the visible part
+/// of the buffer.
+#[lisp_fn]
+pub fn buffer_string() -> LispObject {
+    let cur_buf = ThreadState::current_buffer();
+
+    let begv = cur_buf.begv;
+    let begv_byte = cur_buf.begv_byte;
+
+    let zv = cur_buf.zv;
+    let zv_byte = cur_buf.zv_byte;
+
+    unsafe { make_buffer_string_both(begv, begv_byte, zv, zv_byte, true) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

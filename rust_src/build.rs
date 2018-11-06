@@ -340,7 +340,8 @@ fn handle_file(mod_path: &PathBuf) -> Result<Option<ModuleData>, BuildError> {
                 return Err(io::Error::new(
                     e.kind(),
                     format!("Failed to open {}: {}", mod_info.path.to_string_lossy(), e),
-                ).into())
+                )
+                .into())
             }
         };
 
@@ -407,8 +408,8 @@ fn generate_include_files() -> Result<(), BuildError> {
             env_var("OUT_DIR"),
             [&mod_data.info.name, "_exports.rs"].concat(),
         ]
-            .iter()
-            .collect();
+        .iter()
+        .collect();
         if exports_path.exists() {
             // Start with a clean slate
             fs::remove_file(&exports_path)?;
@@ -496,7 +497,8 @@ fn generate_definitions() {
         .iter()
         .find(|&&(n, _, l)| {
             actual_ptr_size <= l && usable_integers.iter().find(|&x| x == &n).is_some()
-        }).expect("build.rs: intptr_t is too large!");
+        })
+        .expect("build.rs: intptr_t is too large!");
 
     let float_types = [("f64", size_of::<f64>())];
 
@@ -508,20 +510,23 @@ fn generate_definitions() {
         file,
         "pub const EMACS_INT_MAX: EmacsInt = {};\n",
         integer_max_constant(integer_type_item.2)
-    ).expect("Write error!");
+    )
+    .expect("Write error!");
 
     write!(
         file,
         "pub const EMACS_INT_SIZE: EmacsInt = {};\n",
         integer_type_item.2
-    ).expect("Write error!");
+    )
+    .expect("Write error!");
 
     write!(file, "pub type EmacsDouble = {};\n", float_type_item.0).expect("Write error!");
     write!(
         file,
         "pub const EMACS_FLOAT_SIZE: EmacsInt = {};\n",
         max(float_type_item.1, actual_ptr_size)
-    ).expect("Write error!");
+    )
+    .expect("Write error!");
 
     if NS_IMPL_GNUSTEP {
         write!(file, "pub type BoolBF = libc::c_uint;\n").expect("Write error!");
@@ -541,7 +546,8 @@ fn generate_definitions() {
         file,
         "pub const USE_LSB_TAG: bool = {};\n",
         if use_lsb_tag { "true" } else { "false" }
-    ).expect("Write error!");
+    )
+    .expect("Write error!");
 }
 
 fn generate_globals() {
@@ -577,7 +583,8 @@ fn generate_globals() {
                             "Lisp_Object" => "LispObject",
                             t => t,
                         }
-                    ).expect("Write error!");
+                    )
+                    .expect("Write error!");
                 }
                 if line.starts_with('}') {
                     write!(out_file, "}}\n").expect("Write error!");
@@ -598,7 +605,8 @@ fn generate_globals() {
                         "pub const {}: LispObject = ::lisp::LispObject( \
                          {} * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt));\n",
                         symbol_name, value
-                    ).expect("Write error in reading symbols stage");
+                    )
+                    .expect("Write error in reading symbols stage");
                 } else if line.trim().starts_with("_Noreturn") {
                     parse_state = ParseState::Complete
                 }

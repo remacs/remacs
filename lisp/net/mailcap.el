@@ -323,7 +323,7 @@ means the viewer is always valid.  If it is a Lisp function, it is
 called with a list of items from any extra fields from the
 Content-Type header as argument to return a boolean value for the
 validity.  Otherwise, if it is a non-function Lisp symbol or list
-whose car is a symbol, it is `eval'led to yield the validity.  If it
+whose car is a symbol, it is `eval'uated to yield the validity.  If it
 is a string or list of strings, it represents a shell command to run
 to return a true or false shell value for the validity.")
 (put 'mailcap-mime-data 'risky-local-variable t)

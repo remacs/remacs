@@ -1884,15 +1884,6 @@ they can be in either order.  */)
   return make_buffer_string (b, e, 0);
 }
 
-DEFUN ("buffer-string", Fbuffer_string, Sbuffer_string, 0, 0, 0,
-       doc: /* Return the contents of the current buffer as a string.
-If narrowing is in effect, this function returns only the visible part
-of the buffer.  */)
-  (void)
-{
-  return make_buffer_string_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, 1);
-}
-
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
        6, 6, 0,
        doc: /* Compare two substrings of two buffers; return result as number.
@@ -2663,7 +2654,7 @@ It returns the number of characters changed.  */)
 		}
 	      else
 		{
-		  string = Fmake_string (make_number (1), val);
+		  string = Fmake_string (make_number (1), val, Qnil);
 		}
 	      replace_range (pos, pos + len, string, 1, 0, 1, 0);
 	      pos_byte += SBYTES (string);
@@ -2932,13 +2923,6 @@ usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
   return Fmessage (nargs, args);
 }
 
-DEFUN ("current-message", Fcurrent_message, Scurrent_message, 0, 0, 0,
-       doc: /* Return the string currently displayed in the echo area, or nil if none.  */)
-  (void)
-{
-  return current_message ();
-}
-
 /* Convert the prefix of STR from ASCII decimal digits to a number.
    Set *STR_END to the address of the first non-digit.  Return the
    number, or PTRDIFF_MAX on overflow.  Return 0 if there is no number.
@@ -3002,8 +2986,8 @@ The # flag means to use an alternate display form for %o, %x, %X, %e,
 %f, and %g sequences: for %o, it ensures that the result begins with
 \"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
 for %e and %f, it causes a decimal point to be included even if the
-the precision is zero; for %g, it causes a decimal point to be
-included even if the the precision is zero, and also forces trailing
+precision is zero; for %g, it causes a decimal point to be
+included even if the precision is zero, and also forces trailing
 zeros after the decimal point to be left in place.
 
 The width specifier supplies a lower limit for the length of the
@@ -4304,7 +4288,6 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Sbuffer_substring);
   defsubr (&Sbuffer_substring_no_properties);
-  defsubr (&Sbuffer_string);
   defsubr (&Sget_pos_property);
 
   /* Symbol for the text property used to mark fields.  */
@@ -4341,7 +4324,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Ssystem_name);
   defsubr (&Smessage);
   defsubr (&Smessage_or_box);
-  defsubr (&Scurrent_message);
   defsubr (&Sformat);
   defsubr (&Sformat_message);
 

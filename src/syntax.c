@@ -979,15 +979,6 @@ check_syntax_table (Lisp_Object obj)
 	      Qsyntax_table_p, obj);
 }
 
-DEFUN ("standard-syntax-table", Fstandard_syntax_table,
-   Sstandard_syntax_table, 0, 0, 0,
-       doc: /* Return the standard syntax table.
-This is the one used for new buffers.  */)
-  (void)
-{
-  return Vstandard_syntax_table;
-}
-
 DEFUN ("copy-syntax-table", Fcopy_syntax_table, Scopy_syntax_table, 0, 1, 0,
        doc: /* Construct a new syntax table and return it.
 It is a copy of the TABLE, which defaults to the standard syntax table.  */)
@@ -3703,7 +3694,6 @@ In both cases, LIMIT bounds the search. */);
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
 
   defsubr (&Ssyntax_table_p);
-  defsubr (&Sstandard_syntax_table);
   defsubr (&Scopy_syntax_table);
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);

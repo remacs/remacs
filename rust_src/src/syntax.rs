@@ -1,6 +1,6 @@
 //! Functions related to syntax
 use remacs_macros::lisp_fn;
-use remacs_sys::scan_lists;
+use remacs_sys::{buffer_defaults, scan_lists};
 use remacs_sys::{EmacsInt, Qsyntax_table, Qsyntax_table_p};
 
 use chartable::LispCharTableRef;
@@ -57,6 +57,12 @@ fn check_syntax_table_p(table: LispCharTableRef) {
     if table.purpose != Qsyntax_table {
         wrong_type!(Qsyntax_table_p, LispObject::from(table))
     }
+}
+
+/// Return the standard syntax table.  This is the one used for new buffers.
+#[lisp_fn]
+pub fn standard_syntax_table() -> LispCharTableRef {
+    unsafe { buffer_defaults.syntax_table_ }.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/syntax_exports.rs"));
