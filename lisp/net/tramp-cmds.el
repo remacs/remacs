@@ -147,6 +147,19 @@ This includes password cache, file cache, connection cache, buffers."
   (when (bound-and-true-p tramp-archive-enabled)
     (tramp-archive-cleanup-hash))
 
+  ;; Remove ad-hoc proxies.
+  (let ((proxies tramp-default-proxies-alist))
+    (while proxies
+      (if (ignore-errors
+	    (get-text-property 0 'tramp-ad-hoc (nth 2 (car proxies))))
+	  (setq tramp-default-proxies-alist
+		(delete (car proxies) tramp-default-proxies-alist)
+		proxies tramp-default-proxies-alist)
+	(setq proxies (cdr proxies)))))
+    (when (and tramp-default-proxies-alist tramp-save-ad-hoc-proxies)
+      (customize-save-variable
+       'tramp-default-proxies-alist tramp-default-proxies-alist))
+
   ;; Remove buffers.
   (dolist (name (tramp-list-tramp-buffers))
     (when (bufferp (get-buffer name)) (kill-buffer name))))

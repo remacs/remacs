@@ -1374,7 +1374,8 @@ connect to @samp{bastion.your.domain}, then:
 @end lisp
 
 @var{proxy} can take patterns @code{%h} or @code{%u} for @var{host} or
-@var{user} respectively.
+@var{user} respectively.  Ports or domains, if they are part of
+a hop file name, are not expanded by those patterns.
 
 To login as @samp{root} on remote hosts in the domain
 @samp{your.domain}, but login as @samp{root} is disabled for non-local

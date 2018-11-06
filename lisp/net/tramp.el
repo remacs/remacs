@@ -379,11 +379,17 @@ empty string for the method name."
 This is an alist of items (HOST USER PROXY).  The first matching
 item specifies the proxy to be passed for a file name located on
 a remote target matching USER@HOST.  HOST and USER are regular
-expressions.  PROXY must be a Tramp filename without a localname
-part.  Method and user name on PROXY are optional, which is
-interpreted with the default values.  PROXY can contain the
-patterns %h and %u, which are replaced by the strings matching
-HOST or USER, respectively.
+expressions, which could also cover a domain (USER%DOMAIN) or
+port (HOST#PORT).  PROXY must be a Tramp filename without a
+localname part.  Method and user name on PROXY are optional,
+which is interpreted with the default values.
+
+PROXY can contain the patterns %h and %u, which are replaced by
+the strings matching HOST or USER (without DOMAIN and PORT parts),
+respectively.
+
+If an entry is added while parsing ad-hoc hop definitions, PROXY
+carries the non-nil text property `tramp-ad-hoc'.
 
 HOST, USER or PROXY could also be Lisp forms, which will be
 evaluated.  The result must be a string or nil, which is

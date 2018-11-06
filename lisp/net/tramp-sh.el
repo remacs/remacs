@@ -4571,21 +4571,21 @@ Goes through the list `tramp-inline-compress-commands'."
 
     ;; Ad-hoc proxy definitions.
     (dolist (proxy (reverse (split-string hops tramp-postfix-hop-regexp 'omit)))
-      (let ((user (tramp-file-name-user item))
-	    (host (tramp-file-name-host item))
+      (let ((user-domain (tramp-file-name-user-domain item))
+	    (host-port (tramp-file-name-host-port item))
 	    (proxy (concat
 		    tramp-prefix-format proxy tramp-postfix-host-format)))
 	(tramp-message
 	 vec 5 "Add proxy (\"%s\" \"%s\" \"%s\")"
-	 (and (stringp host) (regexp-quote host))
-	 (and (stringp user) (regexp-quote user))
+	 (and (stringp host-port) (regexp-quote host-port))
+	 (and (stringp user-domain) (regexp-quote user-domain))
 	 proxy)
 	;; Add the hop.
 	(add-to-list
 	 'tramp-default-proxies-alist
-	 (list (and (stringp host) (regexp-quote host))
-	       (and (stringp user) (regexp-quote user))
-	       proxy))
+	 (list (and (stringp host-port) (regexp-quote host-port))
+	       (and (stringp user-domain) (regexp-quote user-domain))
+	       (propertize proxy 'tramp-ad-hoc t)))
 	(setq item (tramp-dissect-file-name proxy))))
     ;; Save the new value.
     (when (and hops tramp-save-ad-hoc-proxies)
@@ -4600,10 +4600,12 @@ Goes through the list `tramp-inline-compress-commands'."
       (when (and
 	     ;; Host.
 	     (string-match (or (eval (nth 0 item)) "")
-			   (or (tramp-file-name-host (car target-alist)) ""))
+			   (or (tramp-file-name-host-port (car target-alist))
+			       ""))
 	     ;; User.
 	     (string-match (or (eval (nth 1 item)) "")
-			   (or (tramp-file-name-user (car target-alist)) "")))
+			   (or (tramp-file-name-user-domain (car target-alist))
+			       "")))
 	(if (null proxy)
 	    ;; No more hops needed.
 	    (setq choices nil)

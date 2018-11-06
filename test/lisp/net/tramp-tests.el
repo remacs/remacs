@@ -819,12 +819,14 @@ handled properly.  BODY shall not contain a timeout."
       (file-remote-p
        (concat
 	"/method1:%u@%h"
-	"|method2:%u@%h"
-	"|method3:user3@host3:/path/to/file"))
-      (format "/%s:%s@%s|%s:%s@%s|%s:%s@%s:"
-	      "method1" "user3" "host3"
-	      "method2" "user3" "host3"
-	      "method3" "user3" "host3")))))
+	"|method2:user2@host2"
+	"|method3:%u@%h"
+	"|method4:user4%domain4@host4#1234:/path/to/file"))
+      (format "/%s:%s@%s|%s:%s@%s|%s:%s@%s|%s:%s@%s:"
+	      "method1" "user2" "host2"
+	      "method2" "user2" "host2"
+	      "method3" "user4" "host4"
+	      "method4" "user4%domain4" "host4#1234")))))
 
 (ert-deftest tramp-test02-file-name-dissect-simplified ()
   "Check simplified file name components."
@@ -1134,12 +1136,14 @@ handled properly.  BODY shall not contain a timeout."
 	    (file-remote-p
 	     (concat
 	      "/%u@%h"
+	      "|user2@host2"
 	      "|%u@%h"
-	      "|user3@host3:/path/to/file"))
-	    (format "/%s@%s|%s@%s|%s@%s:"
-		    "user3" "host3"
-		    "user3" "host3"
-		    "user3" "host3"))))
+	      "|user4%domain4@host4#1234:/path/to/file"))
+	    (format "/%s@%s|%s@%s|%s@%s|%s@%s:"
+		    "user2" "host2"
+		    "user2" "host2"
+		    "user4" "host4"
+		    "user4%domain4" "host4#1234"))))
 
       ;; Exit.
       (tramp-change-syntax syntax))))
@@ -1780,12 +1784,14 @@ handled properly.  BODY shall not contain a timeout."
 	    (file-remote-p
 	     (concat
 	      "/[method1/%u@%h"
-	      "|method2/%u@%h"
-	      "|method3/user3@host3]/path/to/file"))
-	    (format "/[%s/%s@%s|%s/%s@%s|%s/%s@%s]"
-		    "method1" "user3" "host3"
-		    "method2" "user3" "host3"
-		    "method3" "user3" "host3"))))
+	      "|method2/user2@host2"
+	      "|method3/%u@%h"
+	      "|method4/user4%domain4@host4#1234]/path/to/file"))
+	    (format "/[%s/%s@%s|%s/%s@%s|%s/%s@%s|%s/%s@%s]"
+		    "method1" "user2" "host2"
+		    "method2" "user2" "host2"
+		    "method3" "user4" "host4"
+		    "method4" "user4%domain4" "host4#1234"))))
 
       ;; Exit.
       (tramp-change-syntax syntax))))
