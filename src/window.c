@@ -65,7 +65,6 @@ static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 					      Lisp_Object);
 static void apply_window_adjustment (struct window *);
 
-void wset_display_table (struct window *, Lisp_Object);
 void wset_window_parameters (struct window *, Lisp_Object);
 void wset_update_mode_line (struct window *);
 Lisp_Object set_window_hscroll (struct window *, EMACS_INT);
@@ -123,12 +122,6 @@ static void
 wset_dedicated (struct window *w, Lisp_Object val)
 {
   w->dedicated = val;
-}
-
-void
-wset_display_table (struct window *w, Lisp_Object val)
-{
-  w->display_table = val;
 }
 
 static void
@@ -5735,7 +5728,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	  w->suspend_auto_hscroll = !NILP (p->suspend_auto_hscroll);
 	  w->min_hscroll = XFASTINT (p->min_hscroll);
 	  w->hscroll_whole = XFASTINT (p->hscroll_whole);
-	  wset_display_table (w, p->display_table);
+	  w->display_table = p->display_table;
 	  w->left_margin_cols = XINT (p->left_margin_cols);
 	  w->right_margin_cols = XINT (p->right_margin_cols);
 	  w->left_fringe_width = XINT (p->left_fringe_width);
