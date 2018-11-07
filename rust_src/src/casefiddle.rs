@@ -16,7 +16,7 @@ use threads::ThreadState;
 use obarray::intern;
 use symbols::symbol_value;
 
-fn casify_word(flag: case_action, words: EmacsInt) -> LispObject {
+fn casify_word(flag: case_action, words: EmacsInt) {
     let buffer_ref = ThreadState::current_buffer();
 
     let far_end = match unsafe { scan_words(buffer_ref.pt, words) } {
@@ -39,7 +39,6 @@ fn casify_word(flag: case_action, words: EmacsInt) -> LispObject {
     };
 
     unsafe { set_point(new_pos) };
-    Qnil
 }
 
 /// Convert argument to capitalized form and return that.
@@ -74,8 +73,8 @@ pub fn capitalize_region(beg: LispObject, end: LispObject) -> LispObject {
 ///
 /// With negative argument, capitalize previous words but do not move.
 #[lisp_fn(intspec = "p")]
-pub fn capitalize_word(words: EmacsInt) -> LispObject {
-    casify_word(case_action::CASE_CAPITALIZE, words)
+pub fn capitalize_word(words: EmacsInt) {
+    casify_word(case_action::CASE_CAPITALIZE, words);
 }
 
 /// Convert argument to lower case and return that.
@@ -109,8 +108,8 @@ pub fn downcase_region(
 ///
 /// With negative argument, convert previous words but do not move.
 #[lisp_fn(intspec = "p")]
-pub fn downcase_word(words: EmacsInt) -> LispObject {
-    casify_word(case_action::CASE_DOWN, words)
+pub fn downcase_word(words: EmacsInt) {
+    casify_word(case_action::CASE_DOWN, words);
 }
 
 /// Convert argument to upper case and return that.
@@ -175,8 +174,8 @@ pub fn upcase_region(
 /// With negative argument, convert previous words but do not move.
 /// See also `capitalize-word'.
 #[lisp_fn(intspec = "p")]
-pub fn upcase_word(words: EmacsInt) -> LispObject {
-    casify_word(case_action::CASE_UP, words)
+pub fn upcase_word(words: EmacsInt) {
+    casify_word(case_action::CASE_UP, words);
 }
 
 // Fiddle with the case of a whole region. Used as a helper by

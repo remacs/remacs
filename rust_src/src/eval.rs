@@ -461,7 +461,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 /// until TEST returns nil.
 /// usage: (while TEST BODY...)
 #[lisp_fn(name = "while", c_name = "while", min = "1", unevalled = "true")]
-pub fn lisp_while(args: LispCons) -> LispObject {
+pub fn lisp_while(args: LispCons) {
     let (test, body) = args.as_tuple();
 
     while unsafe { eval_sub(test) } != Qnil {
@@ -469,8 +469,6 @@ pub fn lisp_while(args: LispCons) -> LispObject {
 
         progn(body);
     }
-
-    Qnil
 }
 
 /// Return result of expanding macros at top level of FORM.
