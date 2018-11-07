@@ -1113,6 +1113,8 @@ extern void init_window_once (void);
 extern void init_window (void);
 extern void syms_of_window (void);
 extern void keys_of_window (void);
+extern Lisp_Object select_window (Lisp_Object window, Lisp_Object norecord,
+                                  bool inhibit_point_swap);
 
 /* Move cursor to row/column position VPOS/HPOS, pixel coordinates
    Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y

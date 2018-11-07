@@ -330,7 +330,7 @@ EMACS_INT window_select_count;
    window's pointm slot.  This is needed by Fset_window_configuration to
    avoid that the display routine is called with selected_window set to
    Qnil causing a subsequent crash.  */
-static Lisp_Object
+Lisp_Object
 select_window (Lisp_Object window, Lisp_Object norecord,
 	       bool inhibit_point_swap)
 {
@@ -420,33 +420,6 @@ select_window_1 (Lisp_Object window, bool inhibit_point_swap)
   set_point_from_marker (XWINDOW (window)->pointm);
 }
 
-DEFUN ("select-window", Fselect_window, Sselect_window, 1, 2, 0,
-       doc: /* Select WINDOW which must be a live window.
-Also make WINDOW's frame the selected frame and WINDOW that frame's
-selected window.  In addition, make WINDOW's buffer current and set its
-buffer's value of `point' to the value of WINDOW's `window-point'.
-Return WINDOW.
-
-Optional second arg NORECORD non-nil means do not put this buffer at the
-front of the buffer list and do not make this window the most recently
-selected one.  Also, do not mark WINDOW for redisplay unless NORECORD
-equals the special symbol `mark-for-redisplay'.
-
-Run `buffer-list-update-hook' unless NORECORD is non-nil.  Note that
-applications and internal routines often select a window temporarily for
-various purposes; mostly, to simplify coding.  As a rule, such
-selections should be not recorded and therefore will not pollute
-`buffer-list-update-hook'.  Selections that "really count" are those
-causing a visible change in the next redisplay of WINDOW's frame and
-should be always recorded.  So if you think of running a function each
-time a window gets selected put it on `buffer-list-update-hook'.
-
-Also note that the main editor command loop sets the current buffer to
-the buffer of the selected window before each command.  */)
-  (Lisp_Object window, Lisp_Object norecord)
-{
-  return select_window (window, norecord, false);
-}
 
 DEFUN ("window-left-child", Fwindow_left_child, Swindow_left_child, 0, 1, 0,
        doc: /* Return the leftmost child window of window WINDOW.
@@ -6969,7 +6942,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_buffer);
   defsubr (&Srun_window_configuration_change_hook);
   defsubr (&Srun_window_scroll_functions);
-  defsubr (&Sselect_window);
   defsubr (&Sforce_window_update);
   defsubr (&Ssplit_window_internal);
   defsubr (&Sother_window_for_scrolling);

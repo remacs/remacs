@@ -7,7 +7,7 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 use remacs_sys::globals;
 use remacs_sys::{estimate_mode_line_height, minibuf_level,
-                 minibuf_selected_window as current_minibuf_window, scroll_command,
+                 minibuf_selected_window as current_minibuf_window, scroll_command, select_window,
                  selected_window as current_window, set_buffer_internal, set_window_hscroll,
                  update_mode_lines, window_body_width, window_list_1, window_menu_bar_p,
                  window_tool_bar_p, wset_redisplay};
@@ -1105,6 +1105,33 @@ pub fn window_hscroll(window: LispWindowLiveOrSelected) -> EmacsInt {
 #[no_mangle]
 pub extern "C" fn window_parameter(w: LispWindowRef, parameter: LispObject) -> LispObject {
     w.get_parameter(parameter)
+}
+
+/// Select WINDOW which must be a live window.
+/// Also make WINDOW's frame the selected frame and WINDOW that frame's
+/// selected window.  In addition, make WINDOW's buffer current and set its
+/// buffer's value of `point' to the value of WINDOW's `window-point'.
+/// Return WINDOW.
+///
+/// Optional second arg NORECORD non-nil means do not put this buffer at the
+/// front of the buffer list and do not make this window the most recently
+/// selected one.  Also, do not mark WINDOW for redisplay unless NORECORD
+/// equals the special symbol `mark-for-redisplay'.
+///
+/// Run `buffer-list-update-hook' unless NORECORD is non-nil.  Note that
+/// applications and internal routines often select a window temporarily for
+/// various purposes; mostly, to simplify coding.  As a rule, such
+/// selections should be not recorded and therefore will not pollute
+/// `buffer-list-update-hook'.  Selections that "really count" are those
+/// causing a visible change in the next redisplay of WINDOW's frame and
+/// should be always recorded.  So if you think of running a function each
+/// time a window gets selected put it on `buffer-list-update-hook'.
+///
+/// Also note that the main editor command loop sets the current buffer to
+/// the buffer of the selected window before each command.
+#[lisp_fn(min = "1", name = "select-window", c_name = "select_window")]
+pub fn select_window_lisp(window: LispObject, norecord: LispObject) -> LispObject {
+    unsafe { select_window(window, norecord, false) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
