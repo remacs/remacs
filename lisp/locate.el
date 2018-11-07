@@ -499,9 +499,9 @@ do not work in subdirectories.
 	 (progn
 	   (kill-buffer locate-buffer-name)
 	   (if locate-current-filter
-	       (error "Locate: no match for %s in database using filter %s"
+	       (user-error "Locate: no match for %s in database using filter %s"
 		      search-string locate-current-filter)
-	     (error "Locate: no match for %s in database" search-string))))
+	     (user-error "Locate: no match for %s in database" search-string))))
 
     (locate-insert-header search-string)
 

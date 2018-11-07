@@ -2219,7 +2219,7 @@ directory in another window."
   (let ((raw (dired-get-filename nil t))
 	file-name)
     (if (null raw)
-	(error "No file on this line"))
+	(user-error "No file on this line"))
     (setq file-name (file-name-sans-versions raw t))
     (if (file-exists-p file-name)
 	file-name
