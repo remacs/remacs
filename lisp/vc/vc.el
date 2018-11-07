@@ -1061,27 +1061,27 @@ BEWARE: this function may change the current buffer."
      (t (error "File is not under version control")))))
 
 (defun vc-dired-deduce-fileset ()
-  (let ((backend (vc-responsible-backend default-directory)))
-    (unless backend (error "Directory not under VC"))
-    (list backend
-          (dired-map-over-marks (dired-get-filename nil t) nil))))
+  (list (vc-responsible-backend default-directory)
+        (dired-map-over-marks (dired-get-filename nil t) nil)))
 
 (defun vc-ensure-vc-buffer ()
   "Make sure that the current buffer visits a version-controlled file."
   (cond
    ((derived-mode-p 'vc-dir-mode)
     (set-buffer (find-file-noselect (vc-dir-current-file))))
+   ((derived-mode-p 'dired-mode)
+    (set-buffer (find-file-noselect (dired-get-filename))))
    (t
     (while (and vc-parent-buffer
                 (buffer-live-p vc-parent-buffer)
 		;; Avoid infinite looping when vc-parent-buffer and
 		;; current buffer are the same buffer.
  		(not (eq vc-parent-buffer (current-buffer))))
-      (set-buffer vc-parent-buffer))
-    (if (not buffer-file-name)
-	(error "Buffer %s is not associated with a file" (buffer-name))
-      (unless (vc-backend buffer-file-name)
-	(error "File %s is not under version control" buffer-file-name))))))
+      (set-buffer vc-parent-buffer))))
+  (if (not buffer-file-name)
+      (error "Buffer %s is not associated with a file" (buffer-name))
+    (unless (vc-backend buffer-file-name)
+      (error "File %s is not under version control" buffer-file-name))))
 
 ;;; Support for the C-x v v command.
 ;; This is where all the single-file-oriented code from before the fileset
