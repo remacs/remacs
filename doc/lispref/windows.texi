@@ -5706,9 +5706,10 @@ This function puts the window state @var{state} into @var{window}.
 The argument @var{state} should be the state of a window returned by
 an earlier invocation of @code{window-state-get}, see above.  The
 optional argument @var{window} can be either a live window or an
-internal window (@pxref{Windows and Frames}) and defaults to the
-selected one.  If @var{window} is not live, it is replaced by a live
-window before putting @var{state} into it.
+internal window (@pxref{Windows and Frames}).  If @var{window} is not
+a live window, it is replaced by a new live window created on the same
+frame before putting @var{state} into it.  If @var{window} is @code{nil},
+it puts the window state into a new window.
 
 If the optional argument @var{ignore} is non-@code{nil}, it means to ignore
 minimum window sizes and fixed-size restrictions.  If @var{ignore}

@@ -2764,7 +2764,7 @@ as small) as possible, but don't signal an error."
   "Return t when a window on FRAME shall be resized vertically.
 Optional argument HORIZONTAL non-nil means return t when a window
 shall be resized horizontally."
-(catch 'apply
+  (catch 'apply
     (walk-window-tree
      (lambda (window)
        (unless (= (window-new-pixel window)
@@ -5889,29 +5889,34 @@ value can be also stored on disk and read back in a new session."
   "Put window state STATE into WINDOW.
 STATE should be the state of a window returned by an earlier
 invocation of `window-state-get'.  Optional argument WINDOW must
-specify a valid window and defaults to the selected one.  If
-WINDOW is not live, replace WINDOW by a live one before putting
-STATE into it.
+specify a valid window.  If WINDOW is not a live window,
+replace WINDOW by a new live window created on the same frame.
+If WINDOW is nil, create a new window before putting STATE into it.
 
 Optional argument IGNORE non-nil means ignore minimum window
 sizes and fixed size restrictions.  IGNORE equal `safe' means
 windows can get as small as `window-safe-min-height' and
 `window-safe-min-width'."
   (setq window-state-put-stale-windows nil)
-  (setq window (window-normalize-window window))
 
-  ;; When WINDOW is internal, reduce it to a live one to put STATE into,
-  ;; see Bug#16793.
+  ;; When WINDOW is internal or nil, reduce it to a live one,
+  ;; then create a new window on the same frame to put STATE into.
   (unless (window-live-p window)
     (let ((root window))
-      (setq window (catch 'live
-                     (walk-window-subtree
-                      (lambda (window)
-                        (when (and (window-live-p window)
-                                   (not (window-parameter window 'window-side)))
-                          (throw 'live window)))
-                      root)))
-      (delete-other-windows-internal window root)))
+      (setq window (if root
+                       (catch 'live
+                         (walk-window-subtree
+                          (lambda (window)
+                            (when (and (window-live-p window)
+                                       (not (window-parameter
+                                             window 'window-side)))
+                              (throw 'live window)))
+                          root))
+                     (selected-window)))
+      (delete-other-windows-internal window root)
+      ;; Create a new window to replace the existing one.
+      (setq window (prog1 (split-window window)
+                     (delete-window window)))))
 
   (set-window-dedicated-p window nil)
 
