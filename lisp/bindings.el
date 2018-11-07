@@ -1029,6 +1029,13 @@ if `inhibit-field-text-motion' is non-nil."
 (define-key search-map "hu"   'unhighlight-regexp)
 (define-key search-map "hf"   'hi-lock-find-patterns)
 (define-key search-map "hw"   'hi-lock-write-interactive-patterns)
+(put 'highlight-regexp                   :advertised-binding [?\M-s ?h ?r])
+(put 'highlight-phrase                   :advertised-binding [?\M-s ?h ?p])
+(put 'highlight-lines-matching-regexp    :advertised-binding [?\M-s ?h ?l])
+(put 'highlight-symbol-at-point          :advertised-binding [?\M-s ?h ?.])
+(put 'unhighlight-regexp                 :advertised-binding [?\M-s ?h ?u])
+(put 'hi-lock-find-patterns              :advertised-binding [?\M-s ?h ?f])
+(put 'hi-lock-write-interactive-patterns :advertised-binding [?\M-s ?h ?w])
 
 ;;(defun function-key-error ()
 ;;  (interactive)
