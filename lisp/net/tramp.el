@@ -1592,7 +1592,7 @@ The outline level is equal to the verbosity of the Tramp message."
       (set (make-local-variable 'outline-regexp) tramp-debug-outline-regexp)
       (set (make-local-variable 'outline-level) 'tramp-debug-outline-level)
       ;; Do not edit the debug buffer.
-      (set-keymap-parent (current-local-map) special-mode-map))
+      (use-local-map special-mode-map))
     (current-buffer)))
 
 (defsubst tramp-debug-message (vec fmt-string &rest arguments)
