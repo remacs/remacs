@@ -1,7 +1,7 @@
 //! Functions related to syntax
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{buffer_defaults, check_syntax_table, scan_lists, set_char_table_defalt};
+use remacs_sys::{buffer_defaults, scan_lists, set_char_table_defalt};
 use remacs_sys::{EmacsInt, Qnil, Qsyntax_table, Qsyntax_table_p};
 use remacs_sys::{Fcopy_sequence, Fset_char_table_parent};
 
@@ -67,13 +67,23 @@ pub fn standard_syntax_table() -> LispCharTableRef {
     unsafe { buffer_defaults.syntax_table_ }.into()
 }
 
+#[no_mangle]
+pub extern "C" fn check_syntax_table(obj: LispObject) {
+    if obj
+        .as_char_table()
+        .map_or(true, |c| !c.purpose.eq(Qsyntax_table))
+    {
+        xsignal!(Qsyntax_table_p, obj);
+    }
+}
+
 /// Construct a new syntax table and return it.
 /// It is a copy of the TABLE, which defaults to the standard syntax table.
 #[lisp_fn(min = "0")]
 pub fn copy_syntax_table(mut table: LispObject) -> LispObject {
     let buffer_table = unsafe { buffer_defaults.syntax_table_ };
     if table.is_not_nil() {
-        unsafe { check_syntax_table(table) };
+        check_syntax_table(table);
     } else {
         table = buffer_table;
     }

@@ -972,13 +972,6 @@ Currently, any char-table counts as a syntax table.  */)
   return Qnil;
 }
 
-void
-check_syntax_table (Lisp_Object obj)
-{
-  CHECK_TYPE (CHAR_TABLE_P (obj) && EQ (XCHAR_TABLE (obj)->purpose, Qsyntax_table),
-	      Qsyntax_table_p, obj);
-}
-
 /* Convert a letter which signifies a syntax code
  into the code it signifies.
  This is used by modify-syntax-entry, and other things.  */
