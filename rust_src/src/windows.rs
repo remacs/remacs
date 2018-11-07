@@ -1046,9 +1046,8 @@ pub fn scroll_right(arg: LispObject, set_minimum: LispObject) -> LispObject {
 /// If ARG is the atom `-', scroll downward by nearly full screen.
 /// When calling from a program, supply as argument a number, nil, or `-'.
 #[lisp_fn(min = "0", intspec = "^P")]
-pub fn scroll_up(arg: LispObject) -> LispObject {
+pub fn scroll_up(arg: LispObject) {
     unsafe { scroll_command(arg, 1) };
-    Qnil
 }
 
 /// Scroll text of selected window down ARG lines.
@@ -1058,9 +1057,8 @@ pub fn scroll_up(arg: LispObject) -> LispObject {
 /// If ARG is the atom `-', scroll upward by nearly full screen.
 /// When calling from a program, supply as argument a number, nil, or `-'.
 #[lisp_fn(min = "0", intspec = "^P")]
-pub fn scroll_down(arg: LispObject) -> LispObject {
+pub fn scroll_down(arg: LispObject) {
     unsafe { scroll_command(arg, -1) };
-    Qnil
 }
 
 /// Return the new total size of window WINDOW.

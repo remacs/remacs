@@ -202,7 +202,7 @@ pub fn eval_region(
     end: LispObject,
     printflag: LispObject,
     read_function: LispObject,
-) -> LispObject {
+) {
     // FIXME: Do the eval-sexp-add-defvars dance!
     let count = c_specpdl_index();
     let cur_buf = ThreadState::current_buffer();
@@ -233,7 +233,6 @@ pub fn eval_region(
         );
         unbind_to(count, Qnil);
     }
-    Qnil
 }
 
 include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));

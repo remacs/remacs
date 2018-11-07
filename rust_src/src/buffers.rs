@@ -950,11 +950,11 @@ pub extern "C" fn build_overlay(
 
 /// Delete the overlay OVERLAY from its buffer.
 #[lisp_fn]
-pub fn delete_overlay(overlay: LispObject) -> LispObject {
+pub fn delete_overlay(overlay: LispObject) {
     let mut ov_ref = overlay.as_overlay_or_error();
     let mut buf_ref = match marker_buffer(ov_ref.start.as_marker_or_error()) {
         Some(b) => b,
-        None => return Qnil,
+        None => return,
     };
     let count = c_specpdl_index();
 
@@ -975,22 +975,20 @@ pub fn delete_overlay(overlay: LispObject) -> LispObject {
     }
 
     unsafe { unbind_to(count, Qnil) };
-    Qnil
 }
 
 /// Delete all overlays of BUFFER.
 /// BUFFER omitted or nil means delete all overlays of the current buffer.
 #[lisp_fn(min = "0", name = "delete-all-overlays")]
-pub fn delete_all_overlays_lisp(buffer: LispObject) -> LispObject {
+pub fn delete_all_overlays_lisp(buffer: LispObject) {
     unsafe { delete_all_overlays(buffer.as_buffer_or_current_buffer().as_mut()) };
-    Qnil
 }
 
 /// Delete the entire contents of the current buffer.
 /// Any narrowing restriction in effect (see `narrow-to-region') is removed,
 /// so the buffer is truly empty after this.
 #[lisp_fn]
-pub fn erase_buffer() -> LispObject {
+pub fn erase_buffer() {
     unsafe {
         Fwiden();
 
@@ -1004,7 +1002,6 @@ pub fn erase_buffer() -> LispObject {
         // implies that the future text is not really related to the past text.
         cur_buf.save_length_ = LispObject::from(0);
     }
-    Qnil
 }
 
 #[no_mangle]

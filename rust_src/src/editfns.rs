@@ -858,7 +858,7 @@ pub fn insert_buffer_substring(
     buffer: LispBufferOrName,
     beg: Option<LispNumber>,
     end: Option<LispNumber>,
-) -> LispObject {
+) {
     let mut buf_ref = LispBufferRef::from(buffer)
         .as_live()
         .unwrap_or_else(|| error!("Selecting deleted buffer"));
@@ -883,7 +883,6 @@ pub fn insert_buffer_substring(
         set_buffer_internal_1(cur_buf.as_mut());
         insert_from_buffer(buf_ref.as_mut(), b, e - b, false)
     };
-    Qnil
 }
 
 /// Display a message, in a dialog box if possible.
