@@ -181,6 +181,8 @@ In this case, Ediff will use those frames to display these buffers."
    '(visibility . nil)
    ;; make initial frame small to avoid distraction
    '(width . 1) '(height . 1)
+   ;; Fullscreen control frames don't make sense (Bug#29026).
+   '(fullscreen . nil)
    ;; this blocks queries from  window manager as to where to put
    ;; ediff's control frame. we put the frame outside the display,
    ;; so the initial frame won't jump all over the screen

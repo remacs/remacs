@@ -154,7 +154,7 @@
 	    (9 . "aaa") (9 . "zzz") (9 . "ppp") (9 . "fff")])))
 
 (ert-deftest fns-tests-collate-sort ()
-  ;; See https://lists.gnu.org/archive/html/emacs-devel/2015-10/msg02505.html.
+  ;; See https://lists.gnu.org/r/emacs-devel/2015-10/msg02505.html.
   :expected-result (if (eq system-type 'cygwin) :failed :passed)
   (skip-unless (fns-tests--collate-enabled-p))
 

@@ -14,11 +14,8 @@ use numbers::LispNumber;
 /// Both X and Y must be numbers or markers.
 /// (fn X Y)
 #[lisp_fn(name = "mod", c_name = "mod")]
-pub fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
-    match (
-        x.as_number_coerce_marker_or_error(),
-        y.as_number_coerce_marker_or_error(),
-    ) {
+pub fn lisp_mod(x: LispNumber, y: LispNumber) -> LispObject {
+    match (x, y) {
         (LispNumber::Fixnum(mut i1), LispNumber::Fixnum(i2)) => {
             if i2 == 0 {
                 xsignal!(Qarith_error);
@@ -389,9 +386,9 @@ pub fn neq(num1: LispObject, num2: LispObject) -> bool {
 /// Return remainder of X divided by Y.
 /// Both must be integers or markers.
 #[lisp_fn(name = "%")]
-pub fn rem(x: LispObject, y: LispObject) -> EmacsInt {
-    let x = x.as_fixnum_coerce_marker_or_error();
-    let y = y.as_fixnum_coerce_marker_or_error();
+pub fn rem(x: LispNumber, y: LispNumber) -> EmacsInt {
+    let x = x.to_fixnum();
+    let y = y.to_fixnum();
 
     if y == 0 {
         xsignal!(Qarith_error);
@@ -403,20 +400,20 @@ pub fn rem(x: LispObject, y: LispObject) -> EmacsInt {
 /// Return NUMBER plus one.  NUMBER may be a number or a marker.
 /// Markers are converted to integers.
 #[lisp_fn(name = "1+")]
-pub fn add1(number: LispObject) -> LispObject {
-    match number.as_number_coerce_marker_or_error() {
-        LispNumber::Fixnum(num) => LispObject::from(num + 1),
-        LispNumber::Float(num) => LispObject::from_float(num + 1.0),
+pub fn add1(number: LispNumber) -> LispNumber {
+    match number {
+        LispNumber::Fixnum(num) => LispNumber::Fixnum(num + 1),
+        LispNumber::Float(num) => LispNumber::Float(num + 1.0),
     }
 }
 
 /// Return NUMBER minus one.  NUMBER may be a number or a marker.
 /// Markers are converted to integers.
 #[lisp_fn(name = "1-")]
-pub fn sub1(number: LispObject) -> LispObject {
-    match number.as_number_coerce_marker_or_error() {
-        LispNumber::Fixnum(num) => LispObject::from(num - 1),
-        LispNumber::Float(num) => LispObject::from_float(num - 1.0),
+pub fn sub1(number: LispNumber) -> LispNumber {
+    match number {
+        LispNumber::Fixnum(num) => LispNumber::Fixnum(num - 1),
+        LispNumber::Float(num) => LispNumber::Float(num - 1.0),
     }
 }
 

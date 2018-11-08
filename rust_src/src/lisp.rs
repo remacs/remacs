@@ -524,6 +524,26 @@ impl LispObject {
     pub fn is_function(self) -> bool {
         FUNCTIONP(self)
     }
+
+    pub fn map_or<T, F: FnOnce(LispObject) -> T>(self, default: T, action: F) -> T {
+        if self.is_nil() {
+            default
+        } else {
+            action(self)
+        }
+    }
+
+    pub fn map_or_else<T, F: FnOnce() -> T, F1: FnOnce(LispObject) -> T>(
+        self,
+        default: F,
+        action: F1,
+    ) -> T {
+        if self.is_nil() {
+            default()
+        } else {
+            action(self)
+        }
+    }
 }
 
 /// Used to denote functions that have no limit on the maximum number

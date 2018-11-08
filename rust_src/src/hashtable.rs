@@ -86,6 +86,14 @@ impl LispHashTableRef {
         unsafe { gc_aset(self.key_and_value, 2 * idx + 1, value) };
     }
 
+    pub fn get_hash_key(self, idx: isize) -> LispObject {
+        aref(self.key_and_value, (2 * idx) as EmacsInt)
+    }
+
+    pub fn get_hash_hash(self, idx: isize) -> LispObject {
+        aref(self.hash, idx as EmacsInt)
+    }
+
     pub fn lookup(self, key: LispObject) -> HashLookupResult {
         // This allows `self` to be immutable.
         let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
@@ -102,20 +110,8 @@ impl LispHashTableRef {
         unsafe { hash_put(self.as_mut(), key, value, hash) }
     }
 
-    pub fn check_impure(self, object: LispHashTableRef) {
-        unsafe { CHECK_IMPURE(LispObject::from(object), self.as_ptr() as *mut c_void) };
-    }
-
     pub fn remove(mut self, key: LispObject) {
         unsafe { hash_remove_from_table(self.as_mut(), key) };
-    }
-
-    pub fn get_hash_hash(self, idx: isize) -> LispObject {
-        aref(self.hash, idx as EmacsInt)
-    }
-
-    pub fn get_hash_key(self, idx: isize) -> LispObject {
-        aref(self.key_and_value, (2 * idx) as EmacsInt)
     }
 
     pub fn size(self) -> usize {
@@ -124,6 +120,10 @@ impl LispHashTableRef {
 
     pub fn clear(mut self) {
         unsafe { hash_clear(self.as_mut()) }
+    }
+
+    pub fn check_impure(self, object: LispHashTableRef) {
+        unsafe { CHECK_IMPURE(LispObject::from(object), self.as_ptr() as *mut c_void) };
     }
 }
 

@@ -972,48 +972,6 @@ Currently, any char-table counts as a syntax table.  */)
   return Qnil;
 }
 
-static void
-check_syntax_table (Lisp_Object obj)
-{
-  CHECK_TYPE (CHAR_TABLE_P (obj) && EQ (XCHAR_TABLE (obj)->purpose, Qsyntax_table),
-	      Qsyntax_table_p, obj);
-}
-
-DEFUN ("standard-syntax-table", Fstandard_syntax_table,
-   Sstandard_syntax_table, 0, 0, 0,
-       doc: /* Return the standard syntax table.
-This is the one used for new buffers.  */)
-  (void)
-{
-  return Vstandard_syntax_table;
-}
-
-DEFUN ("copy-syntax-table", Fcopy_syntax_table, Scopy_syntax_table, 0, 1, 0,
-       doc: /* Construct a new syntax table and return it.
-It is a copy of the TABLE, which defaults to the standard syntax table.  */)
-  (Lisp_Object table)
-{
-  Lisp_Object copy;
-
-  if (!NILP (table))
-    check_syntax_table (table);
-  else
-    table = Vstandard_syntax_table;
-
-  copy = Fcopy_sequence (table);
-
-  /* Only the standard syntax table should have a default element.
-     Other syntax tables should inherit from parents instead.  */
-  set_char_table_defalt (copy, Qnil);
-
-  /* Copied syntax tables should all have parents.
-     If we copied one with no parent, such as the standard syntax table,
-     use the standard syntax table as the copy's parent.  */
-  if (NILP (XCHAR_TABLE (copy)->parent))
-    Fset_char_table_parent (copy, Vstandard_syntax_table);
-  return copy;
-}
-
 /* Convert a letter which signifies a syntax code
  into the code it signifies.
  This is used by modify-syntax-entry, and other things.  */
@@ -3703,8 +3661,6 @@ In both cases, LIMIT bounds the search. */);
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
 
   defsubr (&Ssyntax_table_p);
-  defsubr (&Sstandard_syntax_table);
-  defsubr (&Scopy_syntax_table);
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);
   defsubr (&Sstring_to_syntax);

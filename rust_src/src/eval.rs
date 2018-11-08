@@ -460,13 +460,8 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 /// The order of execution is thus TEST, BODY, TEST, BODY and so on
 /// until TEST returns nil.
 /// usage: (while TEST BODY...)
-#[lisp_fn(
-    name = "while",
-    c_name = "while",
-    min = "1",
-    unevalled = "true"
-)]
-pub fn lisp_while(args: LispCons) -> LispObject {
+#[lisp_fn(name = "while", c_name = "while", min = "1", unevalled = "true")]
+pub fn lisp_while(args: LispCons) {
     let (test, body) = args.as_tuple();
 
     while unsafe { eval_sub(test) } != Qnil {
@@ -474,8 +469,6 @@ pub fn lisp_while(args: LispCons) -> LispObject {
 
         progn(body);
     }
-
-    Qnil
 }
 
 /// Return result of expanding macros at top level of FORM.
@@ -503,7 +496,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             sym = def;
             tem = assq(sym, environment);
             if tem.is_nil() {
-                def = sym_ref.function;
+                def = sym_ref.get_function();
                 if def.is_not_nil() {
                     continue;
                 }
@@ -678,7 +671,7 @@ pub fn autoload(
     ty: LispObject,
 ) -> LispObject {
     // If function is defined and not as an autoload, don't override.
-    if function.function != Qnil && !is_autoload(function.function) {
+    if function.get_function() != Qnil && !is_autoload(function.get_function()) {
         return Qnil;
     }
 

@@ -13,7 +13,7 @@ use lisp::defsubr;
 use lisp::LispObject;
 use lists::LispCons;
 use numbers::IsLispNatnum;
-use windows::window_or_selected_unchecked;
+use windows::LispWindowOrSelected;
 
 /// Return position information for buffer position POS in WINDOW.
 /// POS defaults to point in WINDOW; WINDOW defaults to the selected window.
@@ -26,8 +26,8 @@ use windows::window_or_selected_unchecked;
 ///     IMAGE (DX . DY) (WIDTH . HEIGHT))
 /// The `posn-' functions access elements of such lists.
 #[lisp_fn(min = "0")]
-pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
-    let window = window_or_selected_unchecked(window);
+pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObject {
+    let window: LispObject = window.into();
 
     let tem = unsafe { Fpos_visible_in_window_p(pos, window, Qt) };
     if tem.is_nil() {

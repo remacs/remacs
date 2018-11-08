@@ -709,20 +709,18 @@ Optional argument PROPS specifies other text properties to apply."
          ;; Create an "clean" ruler.
          (ruler
           (propertize
-           ;; FIXME: `make-string' returns a unibyte string if it's ASCII-only,
-           ;; which prevents further `aset' from inserting non-ASCII chars,
-           ;; hence the need for `string-to-multibyte'.
-           ;; https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00841.html
-           (string-to-multibyte
-            ;; Make the part of header-line corresponding to the
-            ;; line-number display be blank, not filled with
-            ;; ruler-mode-basic-graduation-char.
-            (if display-line-numbers
-                (let* ((lndw (round (line-number-display-width 'columns)))
-                       (s (make-string lndw ?\s)))
-                  (concat s (make-string (- w lndw)
-                                         ruler-mode-basic-graduation-char)))
-              (make-string w ruler-mode-basic-graduation-char)))
+           ;; Make the part of header-line corresponding to the
+           ;; line-number display be blank, not filled with
+           ;; ruler-mode-basic-graduation-char.
+           (if display-line-numbers
+               (let* ((lndw (round (line-number-display-width 'columns)))
+                      ;; We need a multibyte string here so we could
+                      ;; later use aset to insert multibyte characters
+                      ;; into that string.
+                      (s (make-string lndw ?\s t)))
+                 (concat s (make-string (- w lndw)
+                                        ruler-mode-basic-graduation-char t)))
+             (make-string w ruler-mode-basic-graduation-char t))
            'face 'ruler-mode-default
            'local-map ruler-mode-map
            'help-echo (cond

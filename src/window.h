@@ -88,7 +88,7 @@ struct cursor_pos
 struct window
   {
     /* This is for Lisp; the terminal code does not refer to it.  */
-    struct vectorlike_header header;
+    union vectorlike_header header;
 
     /* The frame this window is on.  */
     Lisp_Object frame;
@@ -469,9 +469,6 @@ wset_horizontal_scroll_bar_type (struct window *w, Lisp_Object val)
 {
   w->horizontal_scroll_bar_type = val;
 }
-
-void
-wset_mode_line_height(struct window *w, int height);
 
 INLINE void
 wset_prev_buffers (struct window *w, Lisp_Object val)
@@ -1116,6 +1113,8 @@ extern void init_window_once (void);
 extern void init_window (void);
 extern void syms_of_window (void);
 extern void keys_of_window (void);
+extern Lisp_Object select_window (Lisp_Object window, Lisp_Object norecord,
+                                  bool inhibit_point_swap);
 
 /* Move cursor to row/column position VPOS/HPOS, pixel coordinates
    Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y

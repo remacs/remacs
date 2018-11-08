@@ -69,6 +69,9 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'subr-x))
+
 ;;;###autoload
 (defalias 'indent-for-comment 'comment-indent)
 ;;;###autoload
@@ -1141,6 +1144,9 @@ the region rather than at left margin."
 
 	  ;; make the leading and trailing lines if requested
 	  (when lines
+            ;; Trim trailing whitespace from cs if there's some.
+            (setq cs (string-trim-right cs))
+
 	    (let ((csce
 		   (comment-make-extra-lines
 		    cs ce ccs cce min-indent max-indent block)))
@@ -1211,7 +1217,7 @@ changed with `comment-style'."
 	   (progn (goto-char end) (end-of-line) (skip-syntax-backward " ")
 		  (<= (point) end))
 	   (or block (not (string= "" comment-end)))
-	   (or block (progn (goto-char beg) (search-forward "\n" end t)))))
+           (or block (progn (goto-char beg) (re-search-forward "$" end t)))))
 
     ;; don't add end-markers just because the user asked for `block'
     (unless (or lines (string= "" comment-end)) (setq block nil))

@@ -761,6 +761,7 @@ FILE's modification time."
                                      "def-edebug-spec"
                                      ;; Hmm... this is getting ugly:
                                      "define-widget"
+                                     "define-erc-module"
                                      "define-erc-response-handler"
                                      "defun-rcirc-command"))))
                     (push (match-string 2) defs))

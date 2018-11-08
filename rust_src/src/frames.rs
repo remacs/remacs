@@ -1,13 +1,13 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{frame_dimension, output_method, Fcons, Fselect_window};
+use remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method, Fcons};
 use remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
-use windows::{selected_window, LispWindowRef};
+use windows::{select_window_lisp, selected_window, LispWindowRef};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -181,7 +181,7 @@ pub fn set_frame_selected_window(
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if frame_ref == selected_frame().as_frame().unwrap() {
-        unsafe { Fselect_window(window, norecord) }
+        select_window_lisp(window, norecord)
     } else {
         frame_ref.selected_window = window;
         window
@@ -346,6 +346,25 @@ pub fn frame_text_width(frame: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_text_height(frame: LispObject) -> LispObject {
     LispObject::from(frame_or_selected(frame).text_height)
+}
+
+/// Delete FRAME, permanently eliminating it from use.
+///
+/// FRAME must be a live frame and defaults to the selected one.
+///
+/// A frame may not be deleted if its minibuffer serves as surrogate
+/// minibuffer for another frame.  Normally, you may not delete a frame if
+/// all other frames are invisible, but if the second optional argument
+/// FORCE is non-nil, you may do so.
+///
+/// This function runs `delete-frame-functions' before actually
+/// deleting the frame, unless the frame is a tooltip.
+/// The functions are run with one argument, the frame to be deleted.
+#[lisp_fn(min = "0", name = "delete-frame", c_name = "delete_frame")]
+pub fn delete_frame_lisp(frame: LispObject, force: bool) {
+    unsafe {
+        c_delete_frame(frame, force.into());
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

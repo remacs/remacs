@@ -446,6 +446,10 @@ DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
      (buffer-list        . :never)
      (buffer-predicate   . :never)
      (buried-buffer-list . :never)
+     ;; Don't save the 'client' parameter to avoid that a subsequent
+     ;; `save-buffers-kill-terminal' in a non-client session barks at
+     ;; the user (Bug#29067).
+     (client             . :never)
      (delete-before      . :never)
      (font               . frameset-filter-font-param)
      (foreground-color   . frameset-filter-sanitize-color)

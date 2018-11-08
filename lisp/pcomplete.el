@@ -772,7 +772,7 @@ this is `comint-dynamic-complete-functions'."
 		(setq c (cdr c)))
 	      (setq pcomplete-stub (substring common-stub 0 len)
 		    pcomplete-autolist t)
-	      (when (and begin (not pcomplete-show-list))
+	      (when (and begin (> len 0) (not pcomplete-show-list))
 		(delete-region begin (point))
 		(pcomplete-insert-entry "" pcomplete-stub))
 	      (throw 'pcomplete-completions completions))

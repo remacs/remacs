@@ -132,7 +132,8 @@ pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> LispObjec
                 let p = item.as_cons_or_error().cdr();
                 obj.eq(p.as_process_or_error().buffer)
             })
-        }).map_or(Qnil, |item| item.as_cons_or_error().cdr())
+        })
+        .map_or(Qnil, |item| item.as_cons_or_error().cdr())
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.
@@ -382,7 +383,7 @@ pub fn process_send_string(process: LispObject, mut string: LispStringRef) -> ()
     unsafe {
         send_process(
             cget_process(process),
-            string.data as *mut libc::c_char,
+            string.u.s.data as *mut libc::c_char,
             STRING_BYTES(string.as_mut()),
             string.as_lisp_obj(),
         )

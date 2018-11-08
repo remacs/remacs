@@ -65,7 +65,6 @@ static struct window *set_window_scroll_bars (struct window *, Lisp_Object,
 					      Lisp_Object);
 static void apply_window_adjustment (struct window *);
 
-void wset_display_table (struct window *, Lisp_Object);
 void wset_window_parameters (struct window *, Lisp_Object);
 void wset_update_mode_line (struct window *);
 Lisp_Object set_window_hscroll (struct window *, EMACS_INT);
@@ -123,12 +122,6 @@ static void
 wset_dedicated (struct window *w, Lisp_Object val)
 {
   w->dedicated = val;
-}
-
-void
-wset_display_table (struct window *w, Lisp_Object val)
-{
-  w->display_table = val;
 }
 
 static void
@@ -208,26 +201,6 @@ wset_combination (struct window *w, bool horflag, Lisp_Object val)
      is meaningless.  */
   if (!NILP (val))
     w->horizontal = horflag;
-}
-
-void
-wset_mode_line_height(struct window *w, int height)
-{
-  w->mode_line_height = height;
-}
-
-void
-wset_update_mode_line (struct window *w)
-{
-  /* If this window is the selected window on its frame, set the
-     global variable update_mode_lines, so that x_consider_frame_title
-     will consider this frame's title for redisplay.  */
-  Lisp_Object fselected_window = XFRAME (WINDOW_FRAME (w))->selected_window;
-
-  if (WINDOWP (fselected_window) && XWINDOW (fselected_window) == w)
-    update_mode_lines = 42;
-  else
-    w->update_mode_line = true;
 }
 
 struct glyph_matrix*
@@ -357,7 +330,7 @@ EMACS_INT window_select_count;
    window's pointm slot.  This is needed by Fset_window_configuration to
    avoid that the display routine is called with selected_window set to
    Qnil causing a subsequent crash.  */
-static Lisp_Object
+Lisp_Object
 select_window (Lisp_Object window, Lisp_Object norecord,
 	       bool inhibit_point_swap)
 {
@@ -447,33 +420,6 @@ select_window_1 (Lisp_Object window, bool inhibit_point_swap)
   set_point_from_marker (XWINDOW (window)->pointm);
 }
 
-DEFUN ("select-window", Fselect_window, Sselect_window, 1, 2, 0,
-       doc: /* Select WINDOW which must be a live window.
-Also make WINDOW's frame the selected frame and WINDOW that frame's
-selected window.  In addition, make WINDOW's buffer current and set its
-buffer's value of `point' to the value of WINDOW's `window-point'.
-Return WINDOW.
-
-Optional second arg NORECORD non-nil means do not put this buffer at the
-front of the buffer list and do not make this window the most recently
-selected one.  Also, do not mark WINDOW for redisplay unless NORECORD
-equals the special symbol `mark-for-redisplay'.
-
-Run `buffer-list-update-hook' unless NORECORD is non-nil.  Note that
-applications and internal routines often select a window temporarily for
-various purposes; mostly, to simplify coding.  As a rule, such
-selections should be not recorded and therefore will not pollute
-`buffer-list-update-hook'.  Selections that "really count" are those
-causing a visible change in the next redisplay of WINDOW's frame and
-should be always recorded.  So if you think of running a function each
-time a window gets selected put it on `buffer-list-update-hook'.
-
-Also note that the main editor command loop sets the current buffer to
-the buffer of the selected window before each command.  */)
-  (Lisp_Object window, Lisp_Object norecord)
-{
-  return select_window (window, norecord, false);
-}
 
 DEFUN ("window-left-child", Fwindow_left_child, Swindow_left_child, 0, 1, 0,
        doc: /* Return the leftmost child window of window WINDOW.
@@ -769,14 +715,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
   return (make_number (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
-}
-
-DEFUN ("window-hscroll", Fwindow_hscroll, Swindow_hscroll, 0, 1, 0,
-       doc: /* Return the number of columns by which WINDOW is scrolled from left margin.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_live_window (window)->hscroll);
 }
 
 /* Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
@@ -1629,14 +1567,6 @@ return value is a list of elements of the form (PARAMETER . VALUE).  */)
   (Lisp_Object window)
 {
   return Fcopy_alist (decode_valid_window (window)->window_parameters);
-}
-
-Lisp_Object
-window_parameter (struct window *w, Lisp_Object parameter)
-{
-  Lisp_Object result = Fassq (parameter, w->window_parameters);
-
-  return CDR_SAFE (result);
 }
 
 struct Lisp_Char_Table *
@@ -3125,8 +3055,8 @@ make_parent_window (Lisp_Object window, bool horflag)
 
   o = XWINDOW (window);
   p = allocate_window ();
-  memcpy ((char *) p + sizeof (struct vectorlike_header),
-	  (char *) o + sizeof (struct vectorlike_header),
+  memcpy ((char *) p + sizeof (union vectorlike_header),
+	  (char *) o + sizeof (union vectorlike_header),
 	  word_size * VECSIZE (struct window));
   /* P's buffer slot may change from nil to a buffer...  */
   adjust_window_count (p, 1);
@@ -4683,6 +4613,9 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
       /* We moved the window start towards BEGV, so PT may be now
 	 in the scroll margin at the bottom.  */
       move_it_to (&it, PT, -1,
+		  /* We subtract WINDOW_HEADER_LINE_HEIGHT because
+		     it.y is relative to the bottom of the header
+		     line, see above.  */
 		  (it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w)
                    - partial_line_height (&it) - this_scroll_margin - 1),
 		  -1,
@@ -4720,11 +4653,14 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 
       /* See if point is on a partially visible line at the end.  */
       if (it.what == IT_EOB)
-	partial_p = it.current_y + it.ascent + it.descent > it.last_visible_y;
+	partial_p =
+	  it.current_y + it.ascent + it.descent
+	  > it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w);
       else
 	{
 	  move_it_by_lines (&it, 1);
-	  partial_p = it.current_y > it.last_visible_y;
+	  partial_p =
+	    it.current_y > it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w);
 	}
 
       if (charpos == PT && !partial_p
@@ -4743,7 +4679,7 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 	    goal_y = this_scroll_margin;
 	  SET_TEXT_POS_FROM_MARKER (start, w->start);
 	  start_display (&it, w, start);
-	  /* It would be wrong to subtract CURRENT_HEADER_LINE_HEIGHT
+	  /* It would be wrong to subtract WINDOW_HEADER_LINE_HEIGHT
 	     here because we called start_display again and did not
 	     alter it.current_y this time.  */
 	  move_it_to (&it, -1, window_scroll_pixel_based_preserve_x,
@@ -5471,7 +5407,7 @@ from the top of the window.  */)
 
 struct save_window_data
   {
-    struct vectorlike_header header;
+    union vectorlike_header header;
     Lisp_Object selected_frame;
     Lisp_Object current_window;
     Lisp_Object f_current_buffer;
@@ -5499,7 +5435,7 @@ struct save_window_data
 /* This is saved as a Lisp_Vector.  */
 struct saved_window
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   Lisp_Object window, buffer, start, pointm, old_pointm;
   Lisp_Object pixel_left, pixel_top, pixel_height, pixel_width;
@@ -5737,7 +5673,7 @@ the return value is nil.  Otherwise the value is t.  */)
 	  w->suspend_auto_hscroll = !NILP (p->suspend_auto_hscroll);
 	  w->min_hscroll = XFASTINT (p->min_hscroll);
 	  w->hscroll_whole = XFASTINT (p->hscroll_whole);
-	  wset_display_table (w, p->display_table);
+	  w->display_table = p->display_table;
 	  w->left_margin_cols = XINT (p->left_margin_cols);
 	  w->right_margin_cols = XINT (p->right_margin_cols);
 	  w->left_fringe_width = XINT (p->left_fringe_width);
@@ -5900,7 +5836,7 @@ the return value is nil.  Otherwise the value is t.  */)
 
 	   We have to do this in order to capture the following
 	   scenario: Suppose our frame contains two live windows W1 and
-	   W2 and ‘set-window-configuration’ replaces them by two
+	   W2 and 'set-window-configuration' replaces them by two
 	   windows W3 and W4 that were dead the last time
 	   run_window_size_change_functions was run.  If W3 and W4 have
 	   the same values for their old and new pixel sizes but these
@@ -6838,8 +6774,8 @@ on their symbols to be controlled by this variable.  */);
   DEFVAR_LISP ("window-configuration-change-hook",
 	       Vwindow_configuration_change_hook,
 	       doc: /* Functions to call when window configuration changes.
-The buffer-local part is run once per window, with the relevant window
-selected; while the global part is run only once for the modified frame,
+The buffer-local value is run once per window, with the relevant window
+selected; while the global value is run only once for the modified frame,
 with the relevant frame selected.  */);
   Vwindow_configuration_change_hook = Qnil;
 
@@ -6984,7 +6920,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_resize_apply_total);
   defsubr (&Swindow_body_height);
   defsubr (&Swindow_body_width);
-  defsubr (&Swindow_hscroll);
   defsubr (&Sset_window_hscroll);
   defsubr (&Swindow_redisplay_end_trigger);
   defsubr (&Sset_window_redisplay_end_trigger);
@@ -7007,7 +6942,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_buffer);
   defsubr (&Srun_window_configuration_change_hook);
   defsubr (&Srun_window_scroll_functions);
-  defsubr (&Sselect_window);
   defsubr (&Sforce_window_update);
   defsubr (&Ssplit_window_internal);
   defsubr (&Sother_window_for_scrolling);

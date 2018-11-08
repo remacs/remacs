@@ -373,7 +373,7 @@ extern struct tty_display_info *gpm_tty;
 struct terminal
 {
   /* This is for Lisp; the terminal code does not refer to it.  */
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* Parameter alist of this terminal.  */
   Lisp_Object param_alist;

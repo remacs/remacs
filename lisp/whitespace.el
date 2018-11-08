@@ -495,7 +495,8 @@ Used when `whitespace-style' includes the value `spaces'.")
 (defvar whitespace-tab 'whitespace-tab
   "Symbol face used to visualize TAB.
 Used when `whitespace-style' includes the value `tabs'.")
-(make-obsolete-variable 'whitespace-tab "use the face instead." "24.4")
+(make-obsolete-variable 'whitespace-tab
+                        "customize the face `whitespace-tab' instead." "24.4")
 
 (defface whitespace-tab
   '((((class color) (background dark))

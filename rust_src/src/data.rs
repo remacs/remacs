@@ -78,11 +78,7 @@ pub fn indirect_function(object: LispObject) -> LispObject {
 /// function indirections to find the final function binding and return it.
 /// Signal a cyclic-function-indirection error if there is a loop in the
 /// function chain of symbols.
-#[lisp_fn(
-    min = "1",
-    c_name = "indirect_function",
-    name = "indirect-function"
-)]
+#[lisp_fn(min = "1", c_name = "indirect_function", name = "indirect-function")]
 pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispObject {
     match object.as_symbol() {
         None => object,
@@ -285,7 +281,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
         // Only add autoload entries after dumping, because the ones before are
         // not useful and else we get loads of them from the loaddefs.el.
 
-        if is_autoload(symbol.function) {
+        if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
             loadhist_attach(unsafe { Fcons(Qt, sym) });
         }
@@ -356,13 +352,13 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
         symbol = symbol.get_indirect_variable();
     }
     match symbol.get_redirect() {
-        symbol_redirect::SYMBOL_PLAINVAL => symbol.get_value(),
+        symbol_redirect::SYMBOL_PLAINVAL => unsafe { symbol.get_value() },
         symbol_redirect::SYMBOL_LOCALIZED => {
             // If var is set up for a buffer that lacks a local value for it,
             // the current value is nominally the default value.
             // But the `realvalue' slot may be more up to date, since
             // ordinary setq stores just that slot.  So use that.
-            let blv = symbol.get_blv();
+            let blv = unsafe { symbol.get_blv() };
             let fwd = blv.get_fwd();
             if !fwd.is_null() && blv.valcell.eq(blv.defcell) {
                 unsafe { do_symval_forwarding(fwd) }
@@ -371,7 +367,7 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
             }
         }
         symbol_redirect::SYMBOL_FORWARDED => {
-            let valcontents = symbol.get_fwd();
+            let valcontents = unsafe { symbol.get_fwd() };
 
             // For a built-in buffer-local variable, get the default value
             // rather than letting do_symval_forwarding get the current value.

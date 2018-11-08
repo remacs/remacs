@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
-timestamp='2017-09-26'
+timestamp='2017-11-23'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ Usage: $0 [OPTION] CPU-MFR-OPSYS or ALIAS
 
 Canonicalize a configuration name.
 
-Operation modes:
+Options:
   -h, --help         print this help, then exit
   -t, --time-stamp   print date of last modification, then exit
   -v, --version      print version number, then exit
@@ -313,7 +313,6 @@ case $basic_machine in
 	| v850 | v850e | v850e1 | v850e2 | v850es | v850e2v3 \
 	| visium \
 	| wasm32 \
-	| we32k \
 	| x86 | xc16x | xstormy16 | xtensa \
 	| z8k | z80)
 		basic_machine=$basic_machine-unknown
@@ -640,7 +639,7 @@ case $basic_machine in
 		basic_machine=rs6000-bull
 		os=-bosx
 		;;
-	dpx2* | dpx2*-bull)
+	dpx2*)
 		basic_machine=m68k-bull
 		os=-sysv3
 		;;
@@ -902,7 +901,7 @@ case $basic_machine in
 		basic_machine=v70-nec
 		os=-sysv
 		;;
-	next | m*-next )
+	next | m*-next)
 		basic_machine=m68k-next
 		case $os in
 		    -nextstep* )
@@ -1492,7 +1491,7 @@ case $os in
 	-nova*)
 		os=-rtmk-nova
 		;;
-	-ns2 )
+	-ns2)
 		os=-nextstep2
 		;;
 	-nsk*)
@@ -1546,6 +1545,19 @@ case $os in
 		;;
 	-dicos*)
 		os=-dicos
+		;;
+	-pikeos*)
+		# Until real need of OS specific support for
+		# particular features comes up, bare metal
+		# configurations are quite functional.
+		case $basic_machine in
+		    arm*)
+			os=-eabi
+			;;
+		    *)
+			os=-elf
+			;;
+		esac
 		;;
 	-nacl*)
 		;;
@@ -1694,7 +1706,7 @@ case $basic_machine in
 	m88k-omron*)
 		os=-luna
 		;;
-	*-next )
+	*-next)
 		os=-nextstep
 		;;
 	*-sequent)
