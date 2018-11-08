@@ -1114,6 +1114,7 @@ extern struct buffer buffer_local_flags;
 
 extern struct buffer buffer_local_symbols;
 
+extern void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
 extern struct Lisp_Overlay *
 unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay);
 extern void delete_all_overlays (struct buffer *);
