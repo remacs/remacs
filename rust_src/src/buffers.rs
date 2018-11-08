@@ -51,6 +51,7 @@ pub const BEG_BYTE: ptrdiff_t = 1;
 //    }
 //}
 // TODO(db48x): use the nicer implementation above once const functions can have conditionals in them
+// https://github.com/rust-lang/rust/issues/24111
 const fn buf_bytes_max() -> ptrdiff_t {
     const p: [ptrdiff_t; 2] = [
         EmacsInt::max_value() as ptrdiff_t,
