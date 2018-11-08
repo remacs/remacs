@@ -599,10 +599,10 @@ unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) 
     // in the buffer itself, such as default-fill-column,
     // find the buffers that don't have local values for it
     // and update them.
-    let defaults = LispBufferRef::new(&mut buffer_defaults as *mut Lisp_Buffer);
-    let defaults_as_object = defaults.as_ptr() as *const LispObject;
-    if objvar > defaults_as_object && objvar < defaults_as_object.add(1) {
-        let offset = (objvar as *const c_char).offset_from(defaults.as_ptr() as *const c_char);
+    let defaults: *mut LispBuffer = &mut buffer_defaults;
+    let defaults_as_object_ptr = defaults as *const LispObject;
+    if objvar > defaults_as_object_ptr && objvar < (defaults.add(1) as *const LispObject) {
+        let offset = (objvar as *const c_char).offset_from(defaults as *const c_char);
         let idx = per_buffer_idx(offset);
 
         if idx <= 0 {

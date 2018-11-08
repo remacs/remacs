@@ -81,6 +81,7 @@ extern "C" {
         depth: libc::c_int,
         ht: Lisp_Object,
     ) -> bool;
+    pub fn uniprop_table_uncompress(table: Lisp_Object, idx: u32) -> Lisp_Object;
     pub fn find_field(
         pos: LispObject,
         merge_at_boundary: LispObject,

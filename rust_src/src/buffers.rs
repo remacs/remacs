@@ -349,12 +349,10 @@ impl LispBufferRef {
         }
     }
 
-    pub fn set_value(&mut self, offset: usize, value: LispObject) {
+    pub unsafe fn set_value(&mut self, offset: usize, value: LispObject) {
         let buffer_bytes = self.as_mut() as *mut c_char;
-        unsafe {
-            let pos = buffer_bytes.add(offset) as *mut LispObject;
-            *pos = value;
-        }
+        let pos = buffer_bytes.add(offset) as *mut LispObject;
+        *pos = value;
     }
 }
 
@@ -1020,10 +1018,10 @@ pub fn erase_buffer() {
     }
 }
 
-pub fn per_buffer_idx(offset: isize) -> isize {
-    let flags = LispBufferRef::new(unsafe { &mut buffer_local_flags as *mut Lisp_Buffer });
-    let flags_object = flags.as_ptr() as *const LispObject;
-    unsafe { (*(flags_object.add(offset as usize))).as_fixnum_or_error() as isize }
+pub unsafe fn per_buffer_idx(offset: isize) -> isize {
+    let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut libc::c_char;
+    let obj = flags.add(offset as usize) as *const LispObject;
+    (*obj).as_fixnum_or_error() as isize
 }
 
 #[no_mangle]
