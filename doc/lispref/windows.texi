@@ -2747,8 +2747,8 @@ the buffer.  This entry is used by
 
 @vindex reusable-frames@r{, a buffer display action alist entry}
 @item reusable-frames
-The value specifies the frame(s) to search for a window that can be
-reused because it already displays the buffer.  It can be set as
+The value specifies the set of frames to search for a window that can
+be reused because it already displays the buffer.  It can be set as
 follows:
 
 @itemize @bullet
@@ -2792,17 +2792,20 @@ entry.
 @vindex window-height@r{, a buffer display action alist entry}
 @item window-height
 The value specifies whether and how to adjust the height of the chosen
-window, and can have the following values:
+window and can be one of the following:
 
 @itemize @bullet
 @item
 @code{nil} means to leave the height of the chosen window alone.
 
 @item
-A number specifies the desired height of the chosen window.  An
-integer specifies the number of lines of the window.  A floating-point
-number gives the fraction of the window's height with respect to the
-height of the frame's root window.
+An integer number specifies the desired total height of the chosen
+window in lines.
+
+@item
+A floating-point number specifies the fraction of the chosen window's
+desired total height with respect to the total height of its frame's
+root window.
 
 @item
 If the value specifies a function, that function is called with one
@@ -2812,7 +2815,11 @@ are @code{shrink-window-if-larger-than-buffer} and
 @code{fit-window-to-buffer}, see @ref{Resizing Windows}.
 @end itemize
 
-All action functions that choose a window should process this entry.
+By convention, the height of the chosen window is adjusted only if the
+window is part of a vertical combination (@pxref{Windows and Frames})
+to avoid changing the height of other, unrelated windows.  Also, this
+entry should be processed only under certain conditions which are
+specified right below this list.
 
 @vindex window-width@r{, a buffer display action alist entry}
 @item window-width
@@ -2825,10 +2832,13 @@ value can be one of the following:
 @code{nil} means to leave the width of the chosen window alone.
 
 @item
-A number specifies the desired width of the chosen window.  An integer
-specifies the number of columns of the window.  A floating-point
-number gives the fraction of the window's width with respect to the
-width of the frame's root window.
+An integer specifies the desired total width of the chosen window in
+columns.
+
+@item
+A floating-point number specifies the fraction of the chosen window's
+desired total width with respect to the total width of the frame's
+root window.
 
 @item
 If the value specifies a function, that function is called with one
@@ -2836,16 +2846,21 @@ argument---the chosen window.  The function is supposed to adjust the
 width of the window; its return value is ignored.
 @end itemize
 
-All action functions that choose a window should process this entry.
+By convention, the width of the chosen window is adjusted only if the
+window is part of a horizontal combination (@pxref{Windows and
+Frames}) to avoid changing the width of other, unrelated windows.
+Also, this entry should be processed under only certain conditions
+which are specified right below this list.
 
 @vindex preserve-size@r{, a buffer display action alist entry}
 @item preserve-size
 If non-@code{nil} such an entry tells Emacs to preserve the size of
 the window chosen (@pxref{Preserving Window Sizes}).  The value should
-be either @code{(t . nil)} to preserve the width of the window,
-@code{(nil . t)} to preserve its height or @code{(t . t)} to preserve
-both its width and its height.  All action functions that choose a
-window should process this entry.
+be either @w{@code{(t . nil)}} to preserve the width of the window,
+@w{@code{(nil . t)}} to preserve its height or @w{@code{(t . t)}} to
+preserve both, its width and its height.  This entry should be
+processed only under certain conditions which are specified right
+after this list.
 
 @vindex pop-up-frame-parameters@r{, a buffer display action alist entry}
 @item pop-up-frame-parameters
@@ -2899,6 +2914,15 @@ since there is no guarantee that an arbitrary caller of
 will display the buffer.  @code{display-buffer-no-window} is the only
 action function that cares about this entry.
 @end table
+
+By convention, the entries @code{window-height}, @code{window-width}
+and @code{preserve-size} are applied after the chosen window's buffer
+has been set up and if and only if that window never showed another
+buffer before.  More precisely, the latter means that the window must
+have been either created by the current @code{display-buffer} call or
+the window was created earlier by @code{display-buffer} to show the
+buffer and never was used to show another buffer until it was reused
+by the current invocation of @code{display-buffer}.
 
 
 @node Choosing Window Options

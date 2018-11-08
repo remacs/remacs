@@ -6705,7 +6705,11 @@ live."
        ((or (eq type 'frame)
 	    (and (eq (car quit-restore) 'same)
 		 (eq (nth 1 quit-restore) 'frame)))
-	;; Adjust size of frame if asked for.
+	;; A window that never showed another buffer but BUFFER ever
+        ;; since it was created on a new frame.
+        ;;
+        ;; Adjust size of frame if asked for.  We probably should do
+        ;; that only for a single window frame.
 	(cond
 	 ((not size))
 	 ((consp size)
@@ -6724,7 +6728,10 @@ live."
        ((or (eq type 'window)
 	    (and (eq (car quit-restore) 'same)
 		 (eq (nth 1 quit-restore) 'window)))
-	;; Adjust height of window if asked for.
+	;; A window that never showed another buffer but BUFFER ever
+        ;; since it was created on an existing frame.
+        ;;
+        ;; Adjust width and/or height of window if asked for.
 	(cond
 	 ((not height))
 	 ((numberp height)
@@ -6820,31 +6827,41 @@ The actual non-nil value of this variable will be copied to the
   "Custom type for `display-buffer' actions.")
 
 (defvar display-buffer-overriding-action '(nil . nil)
-  "User-defined overriding action to perform to display a buffer.
-This action overrides all the other actions in the action variables
-and arguments passed to `display-buffer'.
-Value should be a cons cell (FUNCTION . ALIST), where FUNCTION is
-a function or a list of functions.  Each function should accept
-two arguments: a buffer to display and an alist similar to ALIST.
-The default value is empty.
-See `display-buffer' for details.")
+  "Overriding action for buffer display.
+This action overrides all the other actions in the action
+variables and arguments passed to `display-buffer'.  The value
+should be a cons cell (FUNCTIONS . ALIST), where FUNCTIONS is a
+function or a list of functions.  Each function should accept two
+arguments: a buffer to display and an alist similar to ALIST.
+See `display-buffer' for details.
+
+This variable is not intended for user customization.  Lisp
+programs should never set this variable permanently but may bind
+it around calls of buffer display functions like `display-buffer'
+or `pop-to-buffer'.  Since such a binding will affect any nested
+buffer display requests, this variable should be used with utmost
+care.")
 (put 'display-buffer-overriding-action 'risky-local-variable t)
 
 (defcustom display-buffer-alist nil
   "Alist of user-defined conditional actions for `display-buffer'.
-Its value takes effect before `display-buffer-base-action'
-and `display-buffer-fallback-action', but after
+Its value takes effect before processing the ACTION argument of
+`display-buffer' and before `display-buffer-base-action' and
+`display-buffer-fallback-action', but after
 `display-buffer-overriding-action', which see.
-If non-nil, this is a list of elements (CONDITION . ACTION), where:
+
+If non-nil, this is an alist of elements (CONDITION . ACTION),
+where:
 
  CONDITION is either a regexp matching buffer names, or a
   function that takes two arguments - a buffer name and the
   ACTION argument of `display-buffer' - and returns a boolean.
 
- ACTION is a cons cell (FUNCTION . ALIST), where FUNCTION is a
-  function or a list of functions.  Each such function should
-  accept two arguments: a buffer to display and an alist of the
-  same form as ALIST.  See `display-buffer' for details.
+ ACTION is a cons cell (FUNCTIONS . ALIST), where FUNCTIONS is an
+  action function or a list of action functions and ALIST is an
+  action alist.  Each such action function should accept two
+  arguments: a buffer to display and an alist of the same form as
+  ALIST.  See `display-buffer' for details.
 
 `display-buffer' scans this alist until it either finds a
 matching regular expression or the function specified by a
@@ -6864,11 +6881,12 @@ associated action to the list of actions it will try."
 This is the default action used by `display-buffer' if no other
 actions are specified or all fail, before falling back on
 `display-buffer-fallback-action'.
-It should be a cons cell (FUNCTION . ALIST), where FUNCTION is a
-function or a list of functions.  Each function should accept two
-arguments: a buffer to display and an alist similar to ALIST.
-The default value is empty.
-See `display-buffer' for details."
+
+It should be a cons cell (FUNCTIONS . ALIST), where FUNCTIONS is
+an action function or a list of action functions and ALIST is an
+action alist.  Each such action function should accept two
+arguments: a buffer to display and an alist of the same form as
+ALIST.  See `display-buffer' for details."
   :type display-buffer--action-custom-type
   :risky t
   :version "24.1"
@@ -6884,17 +6902,20 @@ See `display-buffer' for details."
      display-buffer-pop-up-frame))
   "Default fallback action for `display-buffer'.
 This is the action used by `display-buffer' if no other actions
-specified, e.g. by the user options `display-buffer-alist' or
-`display-buffer-base-action', or they all fail.  See `display-buffer'.")
+have been specified, for example, by the user options
+`display-buffer-alist' or `display-buffer-base-action', or they
+all fail.  It should never be set by programs or users.  See
+`display-buffer'.")
 (put 'display-buffer-fallback-action 'risky-local-variable t)
 
 (defun display-buffer-assq-regexp (buffer-name alist action)
   "Retrieve ALIST entry corresponding to BUFFER-NAME.
-This returns the cdr of the ALIST entry if either its key is a
-string that matches BUFFER-NAME, as reported by `string-match-p';
-or if the key is a function that returns a non-nil when called
-with 3 arguments: the ALIST key, BUFFER-NAME, and ACTION.
-ACTION should have the form of the action argument passed to `display-buffer'."
+This returns the cdr of the alist entry ALIST if either its key
+is a string that matches BUFFER-NAME, as reported by
+`string-match-p'; or if the key is a function that returns
+non-nil when called with three arguments: the ALIST key,
+BUFFER-NAME and ACTION.  ACTION should have the form of the
+action argument passed to `display-buffer'."
   (catch 'match
     (dolist (entry alist)
       (let ((key (car entry)))
@@ -6923,100 +6944,99 @@ fails, call `display-buffer-pop-up-frame'.")
 
 (defun display-buffer (buffer-or-name &optional action frame)
   "Display BUFFER-OR-NAME in some window, without selecting it.
-BUFFER-OR-NAME must be a buffer or the name of an existing
-buffer.  Return the window chosen for displaying BUFFER-OR-NAME,
-or nil if no such window is found.
+BUFFER-OR-NAME must be a buffer or a string naming a live buffer.
+Return the window chosen for displaying that buffer, or nil if no
+such window is found.
 
-Optional argument ACTION, if non-nil, should specify a display
-action.  Its form is described below.
+Optional argument ACTION, if non-nil, should specify a buffer
+display action of the form (FUNCTIONS . ALIST).  FUNCTIONS is
+either an \"action function\" or a possibly empty list of action
+functions.  ALIST is a possibly empty \"action alist\".
 
-Optional argument FRAME, if non-nil, acts like an additional
-ALIST entry (reusable-frames . FRAME) to the action list of ACTION,
-specifying the frame(s) to search for a window that is already
-displaying the buffer.  See `display-buffer-reuse-window'.
+An action function is a function that accepts two arguments: the
+buffer to display and an action alist.  Based on those arguments,
+it should try to display the buffer in a window and return that
+window.  An action alist is an association list mapping symbols
+to values.  Action functions use the action alist passed to them
+to fine-tune their behaviors.
 
-If ACTION is non-nil, it should have the form (FUNCTION . ALIST),
-where FUNCTION is either a function or a list of functions, and
-ALIST is an arbitrary association list (alist).
-
-Each such function should accept two arguments: the buffer to
-display and an alist.  Based on those arguments, it should
-display the buffer and return the window.  If the caller is
-prepared to handle the case of not displaying the buffer
-and returning nil from `display-buffer' it should pass
-\(allow-no-window . t) as an element of the ALIST.
-
-The `display-buffer' function builds a function list and an alist
-by combining the functions and alists specified in
+`display-buffer' builds a list of action functions and an action
+alist by combining any action functions and alists specified by
 `display-buffer-overriding-action', `display-buffer-alist', the
 ACTION argument, `display-buffer-base-action', and
 `display-buffer-fallback-action' (in order).  Then it calls each
 function in the combined function list in turn, passing the
-buffer as the first argument and the combined alist as the second
-argument, until one of the functions returns non-nil.
+buffer as the first argument and the combined action alist as the
+second argument, until one of the functions returns non-nil.
 
-If ACTION is nil, the function list and the alist are built using
-only the other variables mentioned above.
+Action functions and the action they try to perform are:
+ `display-buffer-same-window' -- Use the selected window.
+ `display-buffer-reuse-window' -- Use a window already showing
+    the buffer.
+ `display-buffer-in-previous-window' -- Use a window that did
+    show the buffer before.
+ `display-buffer-use-some-window' -- Use some existing window.
+ `display-buffer-pop-up-window' -- Pop up a new window.
+ `display-buffer-below-selected' -- Use or pop up a window below
+    the selected one.
+ `display-buffer-at-bottom' -- Use or pop up a window at the
+    bottom of the selected frame.
+ `display-buffer-pop-up-frame' -- Show the buffer on a new frame.
+ `display-buffer-in-child-frame' -- Show the buffer in a
+    child frame.
+ `display-buffer-no-window' -- Do not display the buffer and
+    have `display-buffer' return nil immediately.
 
-Available action functions include:
- `display-buffer-same-window'
- `display-buffer-reuse-window'
- `display-buffer-pop-up-frame'
- `display-buffer-in-child-frame'
- `display-buffer-pop-up-window'
- `display-buffer-in-previous-window'
- `display-buffer-use-some-window'
- `display-buffer-use-some-frame'
+Action alist entries are:
+ 'inhibit-same-window' -- A non-nil value prevents the same
+    window from being used for display.
+ 'inhibit-switch-frame' -- A non-nil value prevents any frame
+    used for showing the buffer from being raised or selected.
+ 'reusable-frames' -- The value specifies the set of frames to
+    search for a window that already displays the buffer.
+    Possible values are nil (the selected frame), t (any live
+    frame), visible (any visible frame), 0 (any visible or
+    iconified frame) or an existing live frame.
+ 'pop-up-frame-parameters' -- The value specifies an alist of
+    frame parameters to give a new frame, if one is created.
+ 'window-height' -- The value specifies the desired height of the
+    window chosen and is either an integer (the total height of
+    the window), a floating point number (the fraction of its
+    total height with respect to the total height of the frame's
+    root window) or a function to be called with one argument -
+    the chosen window.  The function is supposed to adjust the
+    height of the window; its return value is ignored.  Suitable
+    functions are `shrink-window-if-larger-than-buffer' and
+    `fit-window-to-buffer'.
+ 'window-width' -- The value specifies the desired width of the
+    window chosen and is either an integer (the total width of
+    the window), a floating point number (the fraction of its
+    total width with respect to the width of the frame's root
+    window) or a function to be called with one argument - the
+    chosen window.  The function is supposed to adjust the width
+    of the window; its return value is ignored.
+ 'preserve-size' -- The value should be either (t . nil) to
+    preserve the width of the chosen window, (nil . t) to
+    preserve its height or (t . t) to preserve its height and
+    width in future changes of the window configuration.
+ 'window-parameters' -- The value specifies an alist of window
+    parameters to give the chosen window.
+ 'allow-no-window' -- A non-nil value means that `display-buffer'
+    may not display the buffer and return nil immediately.
 
-Recognized alist entries include:
+The entries 'window-height', 'window-width' and 'preserve-size'
+are applied only when the window used for displaying the buffer
+never showed another buffer before.
 
- `inhibit-same-window' -- A non-nil value prevents the same
-                          window from being used for display.
+The ACTION argument can also have a non-nil and non-list value.
+This means to display the buffer in a window other than the
+selected one, even if it is already displayed in the selected
+window.  If called interactively with a prefix argument, ACTION
+is t.  Non-interactive calls should always supply a list or nil.
 
- `inhibit-switch-frame' -- A non-nil value prevents any other
-                           frame from being raised or selected,
-                           even if the window is displayed there.
-
- `reusable-frames' -- Value specifies frame(s) to search for a
-                      window that already displays the buffer.
-                      See `display-buffer-reuse-window'.
-
- `pop-up-frame-parameters' -- Value specifies an alist of frame
-                              parameters to give a new frame, if
-                              one is created.
-
- `window-height' -- Value specifies either an integer (the number
-    of lines of a new window), a floating point number (the
-    fraction of a new window with respect to the height of the
-    frame's root window) or a function to be called with one
-    argument - a new window.  The function is supposed to adjust
-    the height of the window; its return value is ignored.
-    Suitable functions are `shrink-window-if-larger-than-buffer'
-    and `fit-window-to-buffer'.
-
- `window-width' -- Value specifies either an integer (the number
-    of columns of a new window), a floating point number (the
-    fraction of a new window with respect to the width of the
-    frame's root window) or a function to be called with one
-    argument - a new window.  The function is supposed to adjust
-    the width of the window; its return value is ignored.
-
- `allow-no-window' -- A non-nil value indicates readiness for the case
-    of not displaying the buffer and FUNCTION can safely return
-    a non-window value to suppress displaying.
-
- `preserve-size' -- Value should be either (t . nil) to
-    preserve the width of the window, (nil . t) to preserve its
-    height or (t . t) to preserve both.
-
- `window-parameters' -- Value specifies an alist of window
-                        parameters to give the chosen window.
-
-The ACTION argument to `display-buffer' can also have a non-nil
-and non-list value.  This means to display the buffer in a window
-other than the selected one, even if it is already displayed in
-the selected window.  If called interactively with a prefix
-argument, ACTION is t."
+The optional third argument FRAME, if non-nil, acts like a
+\(reusable-frames . FRAME) entry appended to the action alist
+specified by the ACTION argument."
   (interactive (list (read-buffer "Display buffer: " (other-buffer))
 		     (if current-prefix-arg t)))
   (let ((buffer (if (bufferp buffer-or-name)
@@ -7074,9 +7094,10 @@ its documentation for additional customization information."
 ;;; `display-buffer' action functions:
 
 (defun display-buffer-use-some-frame (buffer alist)
-  "Display BUFFER in an existing frame that meets a predicate
-\(by default any frame other than the current frame).  If
-successful, return the window used; otherwise return nil.
+  "Display BUFFER in an existing frame that meets a predicate.
+The default predicate is to use any frame other than the selected
+frame.  If successful, return the window used; otherwise return
+nil.
 
 If ALIST has a non-nil `inhibit-switch-frame' entry, avoid
 raising the frame.
@@ -7089,17 +7110,18 @@ predicate.
 If ALIST has a non-nil `inhibit-same-window' entry, avoid using
 the currently selected window (only useful with a frame-predicate
 that allows the selected frame)."
-  (let* ((predicate (or (cdr (assq 'frame-predicate alist))
-                        (lambda (frame)
-                          (and
-                           (not (eq frame (selected-frame)))
-                           (not (window-dedicated-p
-                                 (or
-                                  (get-lru-window frame)
-                                  (frame-first-window frame)))))
-                          )))
+  (let* ((predicate
+          (or (cdr (assq 'frame-predicate alist))
+              (lambda (frame)
+                (and (not (eq frame (selected-frame)))
+                     (not (window-dedicated-p
+                           (or (get-lru-window frame)
+                               (frame-first-window frame))))))))
          (frame (car (filtered-frame-list predicate)))
-         (window (and frame (get-lru-window frame nil (cdr (assq 'inhibit-same-window alist))))))
+         (window
+          (and frame
+               (get-lru-window
+                frame nil (cdr (assq 'inhibit-same-window alist))))))
     (when window
       (prog1
           (window--display-buffer
