@@ -149,6 +149,15 @@ is inactive."
   :type 'boolean
   :group 'windmove)
 
+(defcustom windmove-create-window nil
+  "Whether movement off the edge of the frame creates a new window.
+If this variable is set to t, moving left from the leftmost window in
+a frame will create a new window on the left, and similarly for the other
+directions."
+  :type 'boolean
+  :group 'windmove
+  :version "27.1")
+
 ;; If your Emacs sometimes places an empty column between two adjacent
 ;; windows, you may wish to set this delta to 2.
 (defcustom windmove-window-distance-delta 1
@@ -471,8 +480,15 @@ DIR, ARG, and WINDOW are handled as by `windmove-other-window-loc'."
 (defun windmove-do-window-select (dir &optional arg window)
   "Move to the window at direction DIR.
 DIR, ARG, and WINDOW are handled as by `windmove-other-window-loc'.
-If no window is at direction DIR, an error is signaled."
+If no window is at direction DIR, an error is signaled.
+If `windmove-create-window' is non-nil, instead of signalling an error
+it creates a new window at direction DIR ."
   (let ((other-window (windmove-find-other-window dir arg window)))
+    (when (and windmove-create-window
+               (or (null other-window)
+                   (and (window-minibuffer-p other-window)
+                        (not (minibuffer-window-active-p other-window)))))
+      (setq other-window (split-window window nil dir)))
     (cond ((null other-window)
            (user-error "No window %s from selected window" dir))
           ((and (window-minibuffer-p other-window)
@@ -493,7 +509,8 @@ With no prefix argument, or with prefix argument equal to zero,
 \"left\" is relative to the position of point in the window; otherwise
 it is relative to the top edge (for positive ARG) or the bottom edge
 \(for negative ARG) of the current window.
-If no window is at the desired location, an error is signaled."
+If no window is at the desired location, an error is signaled
+unless `windmove-create-window' is non-nil that creates a new window."
   (interactive "P")
   (windmove-do-window-select 'left arg))
 
@@ -504,7 +521,8 @@ With no prefix argument, or with prefix argument equal to zero, \"up\"
 is relative to the position of point in the window; otherwise it is
 relative to the left edge (for positive ARG) or the right edge (for
 negative ARG) of the current window.
-If no window is at the desired location, an error is signaled."
+If no window is at the desired location, an error is signaled
+unless `windmove-create-window' is non-nil that creates a new window."
   (interactive "P")
   (windmove-do-window-select 'up arg))
 
@@ -515,7 +533,8 @@ With no prefix argument, or with prefix argument equal to zero,
 \"right\" is relative to the position of point in the window;
 otherwise it is relative to the top edge (for positive ARG) or the
 bottom edge (for negative ARG) of the current window.
-If no window is at the desired location, an error is signaled."
+If no window is at the desired location, an error is signaled
+unless `windmove-create-window' is non-nil that creates a new window."
   (interactive "P")
   (windmove-do-window-select 'right arg))
 
@@ -526,7 +545,8 @@ With no prefix argument, or with prefix argument equal to zero,
 \"down\" is relative to the position of point in the window; otherwise
 it is relative to the left edge (for positive ARG) or the right edge
 \(for negative ARG) of the current window.
-If no window is at the desired location, an error is signaled."
+If no window is at the desired location, an error is signaled
+unless `windmove-create-window' is non-nil that creates a new window."
   (interactive "P")
   (windmove-do-window-select 'down arg))
 

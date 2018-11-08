@@ -292,6 +292,11 @@ In the current follow group of windows, "ghost" cursors are no longer
 displayed in the non-selected follow windows.  To get the old behavior
 back, customize follow-hide-ghost-cursors to nil.
 
+** Windmove
+
+*** windmove-create-window when non-nil makes a new window on moving off
+the edge of the frame.
+
 ** Octave mode
 The mode is automatically enabled in files that start with the
 'function' keyword.
