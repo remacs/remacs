@@ -361,9 +361,9 @@ pub fn frame_text_height(frame: LispObject) -> LispObject {
 /// deleting the frame, unless the frame is a tooltip.
 /// The functions are run with one argument, the frame to be deleted.
 #[lisp_fn(min = "0", name = "delete-frame", c_name = "delete_frame")]
-pub fn delete_frame_lisp(frame: LispWindowRef, force: bool) {
+pub fn delete_frame_lisp(frame: LispObject, force: bool) {
     unsafe {
-        c_delete_frame(frame.into(), force.into());
+        c_delete_frame(frame, force.into());
     }
 }
 
