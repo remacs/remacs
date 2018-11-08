@@ -1019,8 +1019,8 @@ pub fn erase_buffer() {
 }
 
 pub unsafe fn per_buffer_idx(offset: isize) -> isize {
-    let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut libc::c_char;
-    let obj = flags.add(offset as usize) as *const LispObject;
+    let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
+    let obj = flags.offset(offset);
     (*obj).as_fixnum_or_error() as isize
 }
 

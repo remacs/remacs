@@ -20,7 +20,6 @@ use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, 
                  Qwindow, Qwindow_configuration};
 
 use buffers::per_buffer_idx;
-use buffers::LispBufferRef;
 use frames::selected_frame;
 use keymap::get_keymap;
 use lisp::{defsubr, is_autoload};
@@ -599,10 +598,10 @@ unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) 
     // in the buffer itself, such as default-fill-column,
     // find the buffers that don't have local values for it
     // and update them.
-    let defaults: *mut LispBuffer = &mut buffer_defaults;
+    let defaults: *mut Lisp_Buffer = &mut buffer_defaults;
     let defaults_as_object_ptr = defaults as *const LispObject;
     if objvar > defaults_as_object_ptr && objvar < (defaults.add(1) as *const LispObject) {
-        let offset = (objvar as *const c_char).offset_from(defaults as *const c_char);
+        let offset = objvar.offset_from(defaults_as_object_ptr);
         let idx = per_buffer_idx(offset);
 
         if idx <= 0 {
