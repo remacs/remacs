@@ -1,7 +1,8 @@
 //! Functions operating on buffers.
 
-use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
+
+use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
 
@@ -981,10 +982,28 @@ pub extern "C" fn build_overlay(
     }
 }
 
+// Mark OV as no longer associated with BUF.
+#[no_mangle]
+pub extern "C" fn drop_overlay(mut buf: LispBufferRef, ov: LispOverlayRef) {
+    let start = ov.start.as_marker_or_error();
+    let end = ov.end.as_marker_or_error();
+
+    assert!(buf == marker_buffer(start).unwrap());
+    unsafe {
+        modify_overlay(
+            buf.as_mut(),
+            marker_position_rust(start),
+            marker_position_rust(end),
+        );
+    }
+    unchain_marker_rust(start);
+    unchain_marker_rust(end);
+}
+
 /// Delete the overlay OVERLAY from its buffer.
 #[lisp_fn]
 pub fn delete_overlay(overlay: LispObject) {
-    let mut ov_ref = overlay.as_overlay_or_error();
+    let ov_ref = overlay.as_overlay_or_error();
     let mut buf_ref = match marker_buffer(ov_ref.start.as_marker_or_error()) {
         Some(b) => b,
         None => return,
@@ -994,7 +1013,7 @@ pub fn delete_overlay(overlay: LispObject) {
     unsafe {
         specbind(Qinhibit_quit, Qt);
         unchain_both(buf_ref.as_mut(), overlay);
-        drop_overlay(buf_ref.as_mut(), ov_ref.as_mut());
+        drop_overlay(buf_ref, ov_ref);
 
         // When deleting an overlay with before or after strings, turn off
         // display optimizations for the affected buffer, on the basis that

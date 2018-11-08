@@ -128,7 +128,6 @@ static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
 static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
-static void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -701,19 +700,6 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 
   return buf;
-}
-
-/* Mark OV as no longer associated with B.  */
-
-void
-drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
-{
-  eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
-  modify_overlay (b, marker_position (ov->start),
-		  marker_position (ov->end));
-  unchain_marker (XMARKER (ov->start));
-  unchain_marker (XMARKER (ov->end));
-
 }
 
 /* Delete all overlays of B and reset its overlay lists.  */
@@ -3568,7 +3554,7 @@ for the rear of the overlay advance when text is inserted there
 
 /* Mark a section of BUF as needing redisplay because of overlays changes.  */
 
-static void
+void
 modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 {
   if (start > end)

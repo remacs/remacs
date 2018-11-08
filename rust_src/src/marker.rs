@@ -356,44 +356,48 @@ pub fn attach_marker(
 /// mark bits, including those in chain fields of markers.
 #[no_mangle]
 pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) -> () {
-    unsafe {
-        let marker_ref = LispMarkerRef::from_ptr(marker as *mut c_void)
-            .unwrap_or_else(|| panic!("Invalid marker reference."));
+    let marker_ref = LispMarkerRef::from_ptr(marker as *mut c_void)
+        .unwrap_or_else(|| panic!("Invalid marker reference."));
 
-        if let Some(mut buf) = marker_ref.buffer() {
-            marker_ref.set_buffer(ptr::null_mut());
-            if let Some(last) = buf.markers() {
-                let mut tail: LispMarkerRef = last;
+    unchain_marker_rust(marker_ref)
+}
 
-                for cur in last.iter() {
-                    if cur == marker_ref {
-                        if cur == last {
-                            // Deleting first marker from the buffer's chain.  Crash
-                            // if new first marker in chain does not say it belongs
-                            // to the same buffer, or at least that they have the same
-                            // base buffer.
-                            if let Some(new) = tail.next() {
-                                if new.buffer().map_or(true, |n| n.text != buf.text) {
-                                    panic!("New first marker in chain does not belong to buffer!");
-                                }
+pub fn unchain_marker_rust(marker: LispMarkerRef) {
+    if let Some(mut buf) = marker.buffer() {
+        marker.set_buffer(ptr::null_mut());
+        if let Some(mut last) = buf.markers() {
+            let mut tail: LispMarkerRef = last;
+
+            for cur in last.iter() {
+                if cur == marker {
+                    if cur == last {
+                        // Deleting first marker from the buffer's chain.  Crash
+                        // if new first marker in chain does not say it belongs
+                        // to the same buffer, or at least that they have the same
+                        // base buffer.
+                        if let Some(new) = tail.next() {
+                            if new.buffer().map_or(true, |n| n.text != buf.text) {
+                                panic!("New first marker in chain does not belong to buffer!");
                             }
+                        }
+                        unsafe {
                             match cur.next() {
                                 None => (*buf.text).markers = ptr::null_mut(),
                                 Some(mut c) => (*buf.text).markers = c.as_mut(),
                             }
-                        } else {
-                            tail.set_next(cur.next().map_or(ptr::null_mut(), |mut m| m.as_mut()));
                         }
-                        // We have removed the marker from the chain;
-                        // no need to scan the rest of the chain.
-                        return;
+                    } else {
+                        tail.set_next(cur.next().map_or(ptr::null_mut(), |mut m| m.as_mut()));
                     }
-                    tail = cur;
+                    // We have removed the marker from the chain;
+                    // no need to scan the rest of the chain.
+                    return;
                 }
-                panic!("Marker was not found in its chain.");
-            } else {
-                panic!("No markers were found in buffer.");
+                tail = cur;
             }
+            panic!("Marker was not found in its chain.");
+        } else {
+            panic!("No markers were found in buffer.");
         }
     }
 }
@@ -459,8 +463,11 @@ pub extern "C" fn set_marker_restricted_both(
 /// Return the char position of marker MARKER, as a C integer.
 #[no_mangle]
 pub extern "C" fn marker_position(marker: LispObject) -> ptrdiff_t {
-    let m = marker.as_marker_or_error();
-    m.charpos_or_error()
+    marker_position_rust(marker.into())
+}
+
+pub fn marker_position_rust(marker: LispMarkerRef) -> ptrdiff_t {
+    marker.charpos_or_error()
 }
 
 /// Return the byte position of marker MARKER, as a C integer.
