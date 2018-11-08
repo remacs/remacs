@@ -370,7 +370,7 @@ pub fn unchain_marker_rust(marker: LispMarkerRef) {
 
     marker.set_buffer(ptr::null_mut());
 
-    let mut last = match buf.markers() {
+    let last = match buf.markers() {
         None => panic!("No markers were found in buffer."),
         Some(m) => m,
     };

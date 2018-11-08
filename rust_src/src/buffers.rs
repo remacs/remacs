@@ -351,6 +351,14 @@ impl LispBufferRef {
         unsafe { (*self.text).chars_modiff }
     }
 
+    pub fn overlay_modifications(self) -> EmacsInt {
+        unsafe { (*self.text).overlay_modiff }
+    }
+
+    pub fn set_overlay_modifications(mut self, value: EmacsInt) {
+        unsafe { (*self.text).overlay_modiff = value };
+    }
+
     pub fn z_byte(self) -> ptrdiff_t {
         unsafe { (*self.text).z_byte }
     }
@@ -379,6 +387,67 @@ impl LispBufferRef {
         let buffer_bytes = self.as_mut() as *mut c_char;
         let pos = buffer_bytes.add(offset) as *mut LispObject;
         *pos = value;
+    }
+
+    pub fn Z(self) -> EmacsInt {
+        unsafe { (*self.text).z as EmacsInt }
+    }
+
+    pub fn overlay_unchanged_modified(self) -> EmacsInt {
+        unsafe { (*self.text).overlay_unchanged_modified }
+    }
+
+    pub fn set_beg_unchanged(mut self, value: EmacsInt) {
+        unsafe { (*self.text).beg_unchanged = value as isize };
+    }
+
+    pub fn set_end_unchanged(mut self, value: EmacsInt) {
+        unsafe { (*self.text).end_unchanged = value as isize };
+    }
+
+    pub fn beg_unchanged(self) -> EmacsInt {
+        unsafe { (*self.text).beg_unchanged as EmacsInt }
+    }
+
+    pub fn end_unchanged(self) -> EmacsInt {
+        unsafe { (*self.text).end_unchanged as EmacsInt }
+    }
+
+    pub fn unchanged_modified(self) -> EmacsInt {
+        unsafe { (*self.text).unchanged_modified }
+    }
+
+    pub fn compute_unchanged(self, start: EmacsInt, end: EmacsInt) {
+        if self.unchanged_modified() == self.modifications()
+            && self.overlay_unchanged_modified() == self.overlay_modifications()
+        {
+            self.set_beg_unchanged(start - self.beg() as EmacsInt);
+            self.set_end_unchanged(self.Z() - end);
+        } else {
+            if self.Z() - end < self.end_unchanged() {
+                self.set_end_unchanged(self.Z() - end);
+            }
+            if start - (self.beg() as EmacsInt) < self.beg_unchanged() {
+                self.set_beg_unchanged(start - self.beg() as EmacsInt);
+            }
+        }
+    }
+
+    pub fn set_redisplay(mut self) {
+        unsafe {
+            let count = buffer_window_count(self.as_mut());
+            if count > 0 {
+                let window = selected_window().as_window_or_error();
+                // ... it's visible in other window than selected,
+                if count > 1 || self != window.contents.as_buffer_or_error() {
+                    redisplay_other_windows();
+                }
+                // Even if we don't set windows_or_buffers_changed, do set `redisplay'
+                // so that if we later set windows_or_buffers_changed, this buffer will
+                // not be omitted.
+                (*self.text).set_redisplay(true);
+            }
+        }
     }
 }
 
@@ -963,6 +1032,12 @@ pub fn force_mode_line_update(all: LispObject) -> LispObject {
     all
 }
 
+/// Get the property of overlay OVERLAY with property name PROP.
+#[lisp_fn]
+pub fn overlay_get(overlay: LispOverlayRef, prop: LispObject) -> LispObject {
+    unsafe { lookup_char_property(overlay.plist, prop, false) }
+}
+
 /// Return a Lisp_Misc_Overlay object with specified START, END and PLIST.
 #[no_mangle]
 pub extern "C" fn build_overlay(
@@ -982,29 +1057,40 @@ pub extern "C" fn build_overlay(
     }
 }
 
+// Mark a section of BUF as needing redisplay because of overlays changes.
+#[no_mangle]
+pub extern "C" fn modify_overlay(buf: LispBufferRef, start: EmacsInt, end: EmacsInt) {
+    let (start, end) = if start > end {
+        (end, start)
+    } else {
+        (start, end)
+    };
+
+    buf.compute_unchanged(start, end);
+    buf.set_redisplay();
+    buf.set_overlay_modifications(buf.overlay_modifications() + 1);
+}
+
 // Mark OV as no longer associated with BUF.
 #[no_mangle]
-pub extern "C" fn drop_overlay(mut buf: LispBufferRef, ov: LispOverlayRef) {
+pub extern "C" fn drop_overlay(buf: LispBufferRef, ov: LispOverlayRef) {
     let start = ov.start.as_marker_or_error();
     let end = ov.end.as_marker_or_error();
 
     assert!(buf == marker_buffer(start).unwrap());
-    unsafe {
-        modify_overlay(
-            buf.as_mut(),
-            marker_position_rust(start),
-            marker_position_rust(end),
-        );
-    }
+    modify_overlay(
+        buf,
+        marker_position_rust(start) as EmacsInt,
+        marker_position_rust(end) as EmacsInt,
+    );
     unchain_marker_rust(start);
     unchain_marker_rust(end);
 }
 
 /// Delete the overlay OVERLAY from its buffer.
 #[lisp_fn]
-pub fn delete_overlay(overlay: LispObject) {
-    let ov_ref = overlay.as_overlay_or_error();
-    let mut buf_ref = match marker_buffer(ov_ref.start.as_marker_or_error()) {
+pub fn delete_overlay(overlay: LispOverlayRef) {
+    let mut buf_ref = match marker_buffer(overlay.start.as_marker_or_error()) {
         Some(b) => b,
         None => return,
     };
@@ -1012,18 +1098,20 @@ pub fn delete_overlay(overlay: LispObject) {
 
     unsafe {
         specbind(Qinhibit_quit, Qt);
-        unchain_both(buf_ref.as_mut(), overlay);
-        drop_overlay(buf_ref, ov_ref);
+    }
 
-        // When deleting an overlay with before or after strings, turn off
-        // display optimizations for the affected buffer, on the basis that
-        // these strings may contain newlines.  This is easier to do than to
-        // check for that situation during redisplay.
-        if windows_or_buffers_changed != 0 && Foverlay_get(overlay, Qbefore_string).is_not_nil()
-            || Foverlay_get(overlay, Qafter_string).is_not_nil()
-        {
-            buf_ref.set_prevent_redisplay_optimizations_p(true);
-        }
+    unchain_both_rust(buf_ref, overlay);
+    drop_overlay(buf_ref, overlay);
+
+    // When deleting an overlay with before or after strings, turn off
+    // display optimizations for the affected buffer, on the basis that
+    // these strings may contain newlines.  This is easier to do than to
+    // check for that situation during redisplay.
+    if unsafe { windows_or_buffers_changed != 0 }
+        && overlay_get(overlay, Qbefore_string).is_not_nil()
+        || overlay_get(overlay, Qafter_string).is_not_nil()
+    {
+        buf_ref.set_prevent_redisplay_optimizations_p(true);
     }
 
     unsafe { unbind_to(count, Qnil) };
@@ -1060,6 +1148,21 @@ pub unsafe fn per_buffer_idx(offset: isize) -> isize {
     let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
     let obj = flags.offset(offset);
     (*obj).as_fixnum_or_error() as isize
+}
+
+// Remove OVERLAY from both overlay lists of BUF.
+#[no_mangle]
+pub extern "C" fn unchain_both(buf: LispBufferRef, overlay: LispObject) {
+    unchain_both_rust(buf, overlay.as_overlay_or_error())
+}
+
+pub fn unchain_both_rust(mut buf: LispBufferRef, mut overlay: LispOverlayRef) {
+    unsafe {
+        buf.overlays_before = unchain_overlay(buf.overlays_before, overlay.as_mut());
+        buf.overlays_after = unchain_overlay(buf.overlays_after, overlay.as_mut());
+    }
+
+    assert!(overlay.next.is_null());
 }
 
 #[no_mangle]
