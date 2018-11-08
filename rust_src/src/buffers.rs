@@ -1,12 +1,13 @@
 //! Functions operating on buffers.
 
-use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
+use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_value, buffer_window_count,
-                 del_range, delete_all_overlays, drop_overlay, globals, last_per_buffer_idx,
-                 set_buffer_internal_1, specbind, unbind_to, unchain_both, update_mode_lines};
+use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
+                 buffer_window_count, del_range, delete_all_overlays, drop_overlay, globals,
+                 last_per_buffer_idx, set_buffer_internal_1, specbind, unbind_to, unchain_both,
+                 update_mode_lines};
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
                  Lisp_Overlay, Lisp_Type, Vbuffer_alist};
 use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
@@ -171,6 +172,13 @@ impl LispBufferRef {
 
     pub fn set_syntax_table(&mut self, table: LispCharTableRef) {
         self.syntax_table_ = LispObject::from(table);
+    }
+
+    pub fn value_p(self, idx: isize) -> bool {
+        if idx < 0 || idx >= (unsafe { last_per_buffer_idx } as isize) {
+            panic!("buffer value_p called with an invalid index!");
+        }
+        self.local_flags[idx as usize] != 0
     }
 
     // Similar to SET_PER_BUFFER_VALUE_P macro in C
@@ -340,6 +348,12 @@ impl LispBufferRef {
         } else {
             None
         }
+    }
+
+    pub unsafe fn set_value(&mut self, offset: usize, value: LispObject) {
+        let buffer_bytes = self.as_mut() as *mut c_char;
+        let pos = buffer_bytes.add(offset) as *mut LispObject;
+        *pos = value;
     }
 }
 
@@ -1003,6 +1017,12 @@ pub fn erase_buffer() {
         // implies that the future text is not really related to the past text.
         cur_buf.save_length_ = LispObject::from(0);
     }
+}
+
+pub unsafe fn per_buffer_idx(offset: isize) -> isize {
+    let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
+    let obj = flags.offset(offset);
+    (*obj).as_fixnum_or_error() as isize
 }
 
 #[no_mangle]

@@ -40,7 +40,6 @@ extern bool KBOARD_OBJFWDP (union Lisp_Fwd *a);
 extern bool OBJFWDP (union Lisp_Fwd *a);
 
 _Noreturn void wrong_range (Lisp_Object, Lisp_Object, Lisp_Object);
-void update_buffer_defaults(Lisp_Object *, Lisp_Object);
 
 static void
 set_blv_found (struct Lisp_Buffer_Local_Value *blv, int found)
@@ -266,34 +265,6 @@ wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 	    CALLN (Fconcat, value_should_be_from, Fnumber_to_string (min),
 		   to, Fnumber_to_string (max)),
 	    wrong);
-}
-
-extern void update_buffer_defaults(Lisp_Object* objvar, Lisp_Object newval)
-{
-  /* If this variable is a default for something stored
-     in the buffer itself, such as default-fill-column,
-     find the buffers that don't have local values for it
-     and update them.  */
-  if (objvar > (Lisp_Object *) &buffer_defaults
-      && objvar < (Lisp_Object *) (&buffer_defaults + 1))
-  {
-    int offset = ((char *) objvar
-                  - (char *) &buffer_defaults);
-    int idx = PER_BUFFER_IDX (offset);
-
-    Lisp_Object tail, buf;
-
-    if (idx <= 0)
-      return;
-
-    FOR_EACH_LIVE_BUFFER (tail, buf)
-    {
-      struct buffer *b = XBUFFER (buf);
-
-      if (! PER_BUFFER_VALUE_P (b, idx))
-        set_per_buffer_value (b, offset, newval);
-    }
-  }
 }
 
 /* Set up SYMBOL to refer to its global binding.  This makes it safe

@@ -15,6 +15,7 @@
 #![feature(untagged_unions)]
 #![feature(never_type)]
 #![feature(const_fn_union)]
+#![feature(ptr_offset_from)]
 
 #[macro_use]
 extern crate if_chain;
