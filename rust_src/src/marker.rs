@@ -363,43 +363,49 @@ pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) -> () {
 }
 
 pub fn unchain_marker_rust(marker: LispMarkerRef) {
-    if let Some(mut buf) = marker.buffer() {
-        marker.set_buffer(ptr::null_mut());
-        if let Some(mut last) = buf.markers() {
-            let mut tail: LispMarkerRef = last;
+    let mut buf = match marker.buffer() {
+        None => return,
+        Some(b) => b,
+    };
 
-            for cur in last.iter() {
-                if cur == marker {
-                    if cur == last {
-                        // Deleting first marker from the buffer's chain.  Crash
-                        // if new first marker in chain does not say it belongs
-                        // to the same buffer, or at least that they have the same
-                        // base buffer.
-                        if let Some(new) = tail.next() {
-                            if new.buffer().map_or(true, |n| n.text != buf.text) {
-                                panic!("New first marker in chain does not belong to buffer!");
-                            }
-                        }
-                        unsafe {
-                            match cur.next() {
-                                None => (*buf.text).markers = ptr::null_mut(),
-                                Some(mut c) => (*buf.text).markers = c.as_mut(),
-                            }
-                        }
-                    } else {
-                        tail.set_next(cur.next().map_or(ptr::null_mut(), |mut m| m.as_mut()));
+    marker.set_buffer(ptr::null_mut());
+
+    let mut last = match buf.markers() {
+        None => panic!("No markers were found in buffer."),
+        Some(m) => m,
+    };
+
+    let mut tail: LispMarkerRef = last;
+
+    for cur in last.iter() {
+        if cur == marker {
+            if cur == last {
+                // Deleting first marker from the buffer's chain.  Crash
+                // if new first marker in chain does not say it belongs
+                // to the same buffer, or at least that they have the same
+                // base buffer.
+                if let Some(new) = tail.next() {
+                    if new.buffer().map_or(true, |n| n.text != buf.text) {
+                        panic!("New first marker in chain does not belong to buffer!");
                     }
-                    // We have removed the marker from the chain;
-                    // no need to scan the rest of the chain.
-                    return;
                 }
-                tail = cur;
+                unsafe {
+                    match cur.next() {
+                        None => (*buf.text).markers = ptr::null_mut(),
+                        Some(mut c) => (*buf.text).markers = c.as_mut(),
+                    }
+                }
+            } else {
+                tail.set_next(cur.next().map_or(ptr::null_mut(), |mut m| m.as_mut()));
             }
-            panic!("Marker was not found in its chain.");
-        } else {
-            panic!("No markers were found in buffer.");
+            // We have removed the marker from the chain;
+            // no need to scan the rest of the chain.
+            return;
         }
+        tail = cur;
     }
+
+    panic!("Marker was not found in its chain.");
 }
 
 /// Like set-marker, but won't let the position be outside the visible part.
