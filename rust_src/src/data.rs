@@ -1,6 +1,6 @@
 //! data helpers
 
-use libc::{c_char, c_int};
+use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys;
