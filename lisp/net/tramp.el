@@ -60,6 +60,7 @@
 
 ;; Pacify byte-compiler.
 (require 'cl-lib)
+(declare-function netrc-parse "netrc")
 (defvar auto-save-file-name-transforms)
 (defvar eshell-path-env)
 (defvar ls-lisp-use-insert-directory-program)
@@ -2970,20 +2971,11 @@ Host is always \"localhost\"."
 (defun tramp-parse-netrc (filename)
   "Return a list of (user host) tuples allowed to access.
 User may be nil."
-  (tramp-parse-file filename 'tramp-parse-netrc-group))
-
-(defun tramp-parse-netrc-group ()
-   "Return a (user host) tuple allowed to access.
-User may be nil."
-   (let ((result)
-	 (regexp
-	  (concat
-	   "^[ \t]*machine[ \t]+" "\\(" tramp-host-regexp "\\)"
-	   "\\([ \t]+login[ \t]+" "\\(" tramp-user-regexp "\\)" "\\)?")))
-     (when (re-search-forward regexp (point-at-eol) t)
-       (setq result (list (match-string 3) (match-string 1))))
-     (forward-line 1)
-     result))
+  (mapcar
+   (lambda (item)
+     (and (assoc "machine" item)
+	  `(,(cdr (assoc "login" item)) ,(cdr (assoc "machine" item)))))
+   (netrc-parse filename)))
 
 ;;;###tramp-autoload
 (defun tramp-parse-putty (registry-or-dirname)
