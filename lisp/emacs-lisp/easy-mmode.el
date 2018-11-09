@@ -632,7 +632,8 @@ BODY is executed after moving to the destination location."
     (unless name (setq name base-name))
     `(progn
        (defun ,next-sym (&optional count)
-	 ,(format "Go to the next COUNT'th %s." name)
+	 ,(format "Go to the next COUNT'th %s.
+Interactively, COUNT is the prefix numeric argument, and defaults to 1." name)
 	 (interactive "p")
 	 (unless count (setq count 1))
 	 (if (< count 0) (,prev-sym (- count))
@@ -654,7 +655,9 @@ BODY is executed after moving to the destination location."
            ,@body))
        (put ',next-sym 'definition-name ',base)
        (defun ,prev-sym (&optional count)
-	 ,(format "Go to the previous COUNT'th %s" (or name base-name))
+	 ,(format "Go to the previous COUNT'th %s.
+Interactively, COUNT is the prefix numeric argument, and defaults to 1."
+                  (or name base-name))
 	 (interactive "p")
 	 (unless count (setq count 1))
 	 (if (< count 0) (,next-sym (- count))
