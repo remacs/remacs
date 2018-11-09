@@ -114,12 +114,12 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
 /// show a cursor in WINDOW in the next redisplay.  SHOW nil means
 /// don't show a cursor.
 #[lisp_fn]
-pub fn internal_show_cursor(window: LispWindowOrSelected, show: bool) {
+pub fn internal_show_cursor(window: LispWindowOrSelected, show: LispObject) {
     let mut win: LispWindowRef = window.into();
     // Don't change cursor state while redisplaying.  This could confuse
     // output routines.
     if !unsafe { redisplaying_p } {
-        win.set_cursor_off_p(show)
+        win.set_cursor_off_p(show.is_nil())
     }
 }
 
