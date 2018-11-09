@@ -119,7 +119,7 @@ pub fn internal_show_cursor(window: LispWindowOrSelected, show: bool) {
     // Don't change cursor state while redisplaying.  This could confuse
     // output routines.
     if !unsafe { redisplaying_p } {
-        win.set_cursor_off_p(show)
+        win.set_cursor_off_p(!show)
     }
 }
 
