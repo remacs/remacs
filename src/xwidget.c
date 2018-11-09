@@ -992,8 +992,6 @@ syms_of_xwidget (void)
   defsubr (&Sxwidget_buffer);
   defsubr (&Sset_xwidget_plist);
 
-  DEFSYM (Qxwidget, "xwidget");
-
   DEFSYM (QCxwidget, ":xwidget");
   DEFSYM (QCtitle, ":title");
 
