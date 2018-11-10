@@ -198,8 +198,9 @@ This includes password cache, file cache, connection cache, buffers."
 	  ;; In rare cases, it could contain the password.  So we make it nil.
 	  tramp-password-save-function)
       (reporter-submit-bug-report
-       tramp-bug-report-address		; to-address
-       (format "tramp (%s)" tramp-version) ; package name and version
+       tramp-bug-report-address	  ; to-address
+       (format "tramp (%s %s/%s)" ; package name and version
+	       tramp-version tramp-repository-branch tramp-repository-version)
        (sort
 	(delq nil (mapcar
 	  (lambda (x)

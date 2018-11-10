@@ -530,6 +530,18 @@ directory (without cleaning).  This is only of relevance when
 developing Emacs.
 @end defvar
 
+@defvar emacs-repository-version
+A string that gives the repository revision from which Emacs was
+built.  If Emacs was built outside revision control, the value is
+@code{nil}.
+@end defvar
+
+@defvar emacs-repository-branch
+A string that gives the repository branch from which Emacs was built.
+In the most cases this is @code{"master"}.  If Emacs was built outside
+revision control, the value is @code{nil}.
+@end defvar
+
 @node Acknowledgments
 @section Acknowledgments
 

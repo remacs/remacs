@@ -38,17 +38,23 @@
 (defconst tramp-bug-report-address "tramp-devel@gnu.org"
   "Email address to send bug reports to.")
 
-(defun tramp-repository-get-version ()
-  "Try to return as a string the repository revision of the Tramp sources."
-  (let ((dir (locate-dominating-file (locate-library "tramp") ".git")))
-    (when dir
-      (with-temp-buffer
-	(let ((default-directory (file-name-as-directory dir)))
-	  (and (zerop
-		(ignore-errors
-		  (call-process "git" nil '(t nil) nil "rev-parse" "HEAD")))
-	       (not (zerop (buffer-size)))
-	       (replace-regexp-in-string "\n" "" (buffer-string))))))))
+(defconst tramp-repository-branch
+  (ignore-errors
+    ;; Suppress message from `emacs-repository-get-branch'.
+    (let ((inhibit-message t))
+      ;; `emacs-repository-get-branch' has been introduced with Emacs 27.1.
+      (with-no-warnings
+	(emacs-repository-get-branch
+	 (locate-dominating-file (locate-library "tramp") ".git")))))
+  "The repository branch of the Tramp sources.")
+
+(defconst tramp-repository-version
+  (ignore-errors
+    ;; Suppress message from `emacs-repository-get-version'.
+    (let ((inhibit-message t))
+      (emacs-repository-get-version
+       (locate-dominating-file (locate-library "tramp") ".git"))))
+  "The repository revision of the Tramp sources.")
 
 ;; Check for Emacs version.
 (let ((x   (if (not (string-lessp emacs-version "24.1"))

@@ -225,6 +225,10 @@ In addition to nil or non-nil, the value can now be a predicate
 function.  Follow mode uses this to control scrolling of its windows
 when the last screen line in a window is not fully visible.
 
++++
+** New variable 'emacs-repository-branch'.
+It reports the git branch from which Emacs was built.
+
 
 * Editing Changes in Emacs 27.1
 

@@ -1609,10 +1609,13 @@ ARGUMENTS to actually emit the message (if applicable)."
 	";; Emacs: %s Tramp: %s -*- mode: outline; -*-"
 	emacs-version tramp-version))
       (when (>= tramp-verbose 10)
-	(insert
-	 (format
-	  "\n;; Location: %s Git: %s"
-	  (locate-library "tramp") (tramp-repository-get-version)))))
+	(let ((tramp-verbose 0))
+	  (insert
+	   (format
+	    "\n;; Location: %s Git: %s/%s"
+	    (locate-library "tramp")
+	    (or tramp-repository-branch "")
+	    (or tramp-repository-version ""))))))
     (unless (bolp)
       (insert "\n"))
     ;; Timestamp.

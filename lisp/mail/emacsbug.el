@@ -307,6 +307,8 @@ usually do not have translators for other languages.\n\n")))
 
     (if (stringp emacs-repository-version)
 	(insert "Repository revision: " emacs-repository-version "\n"))
+    (if (stringp emacs-repository-branch)
+	(insert "Repository branch: " emacs-repository-branch "\n"))
     (if (fboundp 'x-server-vendor)
 	(condition-case nil
             ;; This is used not only for X11 but also W32 and others.
