@@ -1697,10 +1697,12 @@ Dired rather than @code{delete-file}.  @xref{Dired Deletion}.
 
 @cindex trash
 @cindex recycle bin
+@findex move-file-to-trash
   @kbd{M-x move-file-to-trash} moves a file into the system
 @dfn{Trash} (or @dfn{Recycle Bin}).  This is a facility available on
 most operating systems; files that are moved into the Trash can be
-brought back later if you change your mind.
+brought back later if you change your mind.  (The way to restore
+trashed files is system-dependent.)
 
 @vindex delete-by-moving-to-trash
   By default, Emacs deletion commands do @emph{not} use the Trash.  To
