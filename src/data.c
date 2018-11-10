@@ -364,14 +364,6 @@ find_symbol_value (Lisp_Object symbol)
     }
 }
 
-DEFUN ("set", Fset, Sset, 2, 2, 0,
-       doc: /* Set SYMBOL's value to NEWVAL, and return NEWVAL.  */)
-  (register Lisp_Object symbol, Lisp_Object newval)
-{
-  set_internal (symbol, newval, Qnil, SET_INTERNAL_SET);
-  return newval;
-}
-
 /* Store the value NEWVAL into SYMBOL.
    If buffer-locality is an issue, WHERE specifies which context to use.
    (nil stands for the current buffer/frame).
@@ -735,16 +727,6 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
       }
     default: emacs_abort ();
     }
-}
-
-DEFUN ("set-default", Fset_default, Sset_default, 2, 2, 0,
-       doc: /* Set SYMBOL's default value to VALUE.  SYMBOL and VALUE are evaluated.
-The default value is seen in buffers that do not have their own values
-for this variable.  */)
-  (Lisp_Object symbol, Lisp_Object value)
-{
-  set_default_internal (symbol, value, SET_INTERNAL_SET);
-  return value;
 }
 
 DEFUN ("setq-default", Fsetq_default, Ssetq_default, 0, UNEVALLED, 0,
@@ -2279,8 +2261,6 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Smodule_function_p);
   defsubr (&Sfset);
-  defsubr (&Sset);
-  defsubr (&Sset_default);
   defsubr (&Ssetq_default);
   defsubr (&Smake_variable_buffer_local);
   defsubr (&Smake_local_variable);

@@ -1,7 +1,6 @@
 //! symbols support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Fset;
 use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
                  make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
                  swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
@@ -10,8 +9,8 @@ use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qsymbolp
                  Qvoid_variable};
 
 use buffers::LispBufferLocalValueRef;
-use data::indirect_function;
 use data::Lisp_Fwd;
+use data::{indirect_function, set};
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
 use multibyte::LispStringRef;
@@ -364,9 +363,7 @@ pub fn makunbound(symbol: LispObject) -> LispSymbolRef {
     if sym.is_constant() {
         xsignal!(Qsetting_constant, symbol);
     }
-    unsafe {
-        Fset(symbol, Qunbound);
-    }
+    set(sym, Qunbound);
     sym
 }
 

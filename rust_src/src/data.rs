@@ -5,9 +5,10 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 use remacs_sys;
 use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
-                 emacs_abort, globals, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
+                 emacs_abort, globals, set_default_internal, set_internal, wrong_choice,
+                 wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect};
-use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type};
+use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind};
 use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
 use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang};
 use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
@@ -657,6 +658,35 @@ pub fn bool_vector_set_difference(a: LispObject, b: LispObject, c: LispObject) -
 #[lisp_fn]
 pub fn bool_vector_subsetp(a: LispObject, b: LispObject) -> LispObject {
     unsafe { bool_vector_binop_driver(a, b, b, BoolVectorOp::BoolVectorSubsetp) }
+}
+
+/// Set SYMBOL's value to NEWVAL, and return NEWVAL.
+#[lisp_fn]
+pub fn set(symbol: LispSymbolRef, newval: LispObject) -> LispObject {
+    unsafe {
+        set_internal(
+            LispObject::from(symbol),
+            newval,
+            Qnil,
+            Set_Internal_Bind::SET_INTERNAL_SET,
+        )
+    };
+    newval
+}
+
+/// Set SYMBOL's default value to VALUE.  SYMBOL and VALUE are evaluated.
+/// The default value is seen in buffers that do not have their own
+/// values for this variable.
+#[lisp_fn]
+pub fn set_default(symbol: LispSymbolRef, value: LispObject) -> LispObject {
+    unsafe {
+        set_default_internal(
+            LispObject::from(symbol),
+            value,
+            Set_Internal_Bind::SET_INTERNAL_SET,
+        )
+    };
+    value
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));
