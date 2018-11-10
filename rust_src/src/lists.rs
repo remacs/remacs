@@ -722,4 +722,64 @@ pub fn circular_list(obj: LispObject) -> ! {
     xsignal!(Qcircular_list, obj);
 }
 
+fn mapcar_over_iterator<I: Iterator<Item = LispObject>>(
+    output: &mut [LispObject],
+    fun: LispObject,
+    it: I,
+) -> EmacsInt {
+    let mut mapped = 0;
+
+    for (i, elt) in it.enumerate() {
+        let dummy = call!(fun, elt);
+        if output.len() > i {
+            output[i as usize] = dummy;
+        }
+        mapped = i + 1;
+    }
+
+    mapped as EmacsInt
+}
+
+// This is the guts of all mapping functions.
+// Apply FUN to each element of SEQ, one by one, storing the results
+// into elements of VALS, a C vector of Lisp_Objects.  LENI is the
+// length of VALS, which should also be the length of SEQ.  Return the
+// number of results; although this is normally LENI, it can be less
+// if SEQ is made shorter as a side effect of FN.
+#[no_mangle]
+pub extern "C" fn mapcar1(
+    leni: EmacsInt,
+    vals: *mut LispObject,
+    fun: LispObject,
+    seq: LispObject,
+) -> EmacsInt {
+    let mut safe_value = [Qnil];
+
+    let output = if vals.is_null() {
+        &mut safe_value
+    } else {
+        unsafe { std::slice::from_raw_parts_mut(vals, leni as usize) }
+    };
+
+    if let Some(v) = seq.as_vectorlike() {
+        if let Some(vc) = v.as_vector() {
+            return mapcar_over_iterator(output, fun, vc.iter());
+        } else if let Some(cf) = v.as_compiled() {
+            return mapcar_over_iterator(output, fun, cf.iter());
+        } else if let Some(bv) = v.as_bool_vector() {
+            return mapcar_over_iterator(output, fun, bv.iter());
+        }
+    }
+    if let Some(s) = seq.as_string() {
+        return mapcar_over_iterator(
+            output,
+            fun,
+            s.char_indices()
+                .map(|(_, c)| LispObject::from_fixnum(c as EmacsInt)),
+        );
+    }
+
+    mapcar_over_iterator(output, fun, seq.iter_cars_safe())
+}
+
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

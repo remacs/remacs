@@ -216,7 +216,6 @@ impl<'a> Iterator for LispStringRefCharIterator<'a> {
 }
 
 impl LispStringRef {
-    #[allow(dead_code)]
     pub fn char_indices(&self) -> LispStringRefIterator {
         LispStringRefIterator {
             string_ref: self,

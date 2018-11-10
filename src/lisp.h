@@ -4521,6 +4521,9 @@ extern void init_system_name (void);
 #define make_fixnum_or_float(val) \
    (FIXNUM_OVERFLOW_P (val) ? make_float (val) : make_number (val))
 
+extern EMACS_INT
+mapcar1 (EMACS_INT leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq);
+
 /* SAFE_ALLOCA normally allocates memory on the stack, but if size is
    larger than MAX_ALLOCA, use xmalloc to avoid overflowing the stack.  */
 
