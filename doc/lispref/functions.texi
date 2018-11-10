@@ -1091,8 +1091,8 @@ yields the form itself:
      @result{} (lambda (x) (* x x))
 @end example
 
-Note that when evaluting under lexical binding the result is a closure
-object (@pxref{Closures}).
+Note that when evaluating under lexical binding the result is a
+closure object (@pxref{Closures}).
 
 The @code{lambda} form has one other effect: it tells the Emacs
 evaluator and byte-compiler that its argument is a function, by using
