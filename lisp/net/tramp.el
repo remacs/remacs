@@ -4193,10 +4193,14 @@ ID-FORMAT valid values are `string' and `integer'."
 (defun tramp-get-local-gid (id-format)
   "The gid of the local user, in ID-FORMAT.
 ID-FORMAT valid values are `string' and `integer'."
-  ;; `group-gid' has been introduced with Emacs 24.4.
-  (if (and (fboundp 'group-gid) (equal id-format 'integer))
-      (tramp-compat-funcall 'group-gid)
-    (tramp-compat-file-attribute-group-id (file-attributes "~/" id-format))))
+  (cond
+   ;; `group-gid' has been introduced with Emacs 24.4.
+   ((and (fboundp 'group-gid) (equal id-format 'integer))
+    (tramp-compat-funcall 'group-gid))
+   ;; `group-name' has been introduced with Emacs 27.1.
+   ((and (fboundp 'group-name) (equal id-format 'string))
+    (tramp-compat-funcall 'group-name (tramp-compat-funcall 'group-gid)))
+   ((tramp-compat-file-attribute-group-id (file-attributes "~/" id-format)))))
 
 (defun tramp-get-local-locale (&optional vec)
   "Determine locale, supporting UTF8 if possible.
