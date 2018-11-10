@@ -300,6 +300,7 @@ extern Lisp_Object network_interface_info (Lisp_Object);
 extern Lisp_Object remove_slash_colon (Lisp_Object);
 
 extern void update_processes_for_thread_death (Lisp_Object);
+extern void dissociate_controlling_tty (void);
 
 INLINE_HEADER_END
 

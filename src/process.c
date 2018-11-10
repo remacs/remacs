@@ -1949,6 +1949,26 @@ close_process_fd (int *fd_addr)
     }
 }
 
+void
+dissociate_controlling_tty (void)
+{
+  if (setsid () < 0)
+    {
+#ifdef TIOCNOTTY
+      /* Needed on Darwin after vfork, since setsid fails in a vforked
+	 child that has not execed.
+	 I wonder: would just ioctl (fd, TIOCNOTTY, 0) work here, for
+	 some fd that the caller already has?  */
+      int ttyfd = emacs_open (DEV_TTY, O_RDWR, 0);
+      if (0 <= ttyfd)
+	{
+	  ioctl (ttyfd, TIOCNOTTY, 0);
+	  emacs_close (ttyfd);
+	}
+#endif
+    }
+}
+
 /* Indexes of file descriptors in open_fds.  */
 enum
   {
@@ -2097,9 +2117,8 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
     {
       /* Make the pty be the controlling terminal of the process.  */
 #ifdef HAVE_PTYS
-      /* First, disconnect its current controlling terminal.
-	 Do this even if !PTY_FLAG; see Bug#30762.  */
-      setsid ();
+      dissociate_controlling_tty ();
+
       /* Make the pty's terminal the controlling terminal.  */
       if (pty_flag && forkin >= 0)
 	{
@@ -2128,21 +2147,6 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
 	}
 #endif
 #endif
-#ifdef TIOCNOTTY
-      /* In 4.3BSD, the TIOCSPGRP bug has been fixed, and now you
-	 can do TIOCSPGRP only to the process's controlling tty.  */
-      if (pty_flag)
-	{
-	  /* I wonder: would just ioctl (0, TIOCNOTTY, 0) work here?
-	     I can't test it since I don't have 4.3.  */
-	  int j = emacs_open (DEV_TTY, O_RDWR, 0);
-	  if (j >= 0)
-	    {
-	      ioctl (j, TIOCNOTTY, 0);
-	      emacs_close (j);
-	    }
-	}
-#endif /* TIOCNOTTY */
 
 #if !defined (DONT_REOPEN_PTY)
 /*** There is a suggestion that this ought to be a

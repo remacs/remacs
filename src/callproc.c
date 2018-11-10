@@ -643,19 +643,7 @@ call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 #endif
 
       unblock_child_signal (&oldset);
-
-#ifdef DARWIN_OS
-      /* Darwin doesn't let us run setsid after a vfork, so use
-         TIOCNOTTY when necessary. */
-      int j = emacs_open (DEV_TTY, O_RDWR, 0);
-      if (j >= 0)
-        {
-          ioctl (j, TIOCNOTTY, 0);
-          emacs_close (j);
-        }
-#else
-      setsid ();
-#endif
+      dissociate_controlling_tty ();
 
       /* Emacs ignores SIGPIPE, but the child should not.  */
       signal (SIGPIPE, SIG_DFL);
