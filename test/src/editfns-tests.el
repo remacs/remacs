@@ -359,7 +359,7 @@
     (should-error (group-name 'foo)))
    (t
     (let ((list `((0 . "root")
-                  (1000 . ,(user-login-name 1000))
+;;;                  (1000 . ,(user-login-name 1000))
                   (1212345 . nil))))
       (dolist (test list)
         (should (equal (group-name (car test)) (cdr test)))))
