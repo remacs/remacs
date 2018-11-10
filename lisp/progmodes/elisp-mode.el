@@ -1669,6 +1669,16 @@ Calls REPORT-FN directly."
 (defvar-local elisp-flymake--byte-compile-process nil
   "Buffer-local process started for byte-compiling the buffer.")
 
+(defvar elisp-flymake-byte-compile-load-path (list "./")
+  "Like `load-path' but used by `elisp-flymake-byte-compile'.
+The default value contains just \"./\" which includes the default
+directory of the buffer being compiled, and nothing else.")
+
+(put 'elisp-flymake-byte-compile-load-path 'safe-local-variable
+     (lambda (x) (and (listp x) (catch 'tag
+                                  (dolist (path x t) (unless (stringp path)
+                                                       (throw 'tag nil)))))))
+
 ;;;###autoload
 (defun elisp-flymake-byte-compile (report-fn &rest _args)
   "A Flymake backend for elisp byte compilation.
@@ -1688,13 +1698,14 @@ current buffer state and calls REPORT-FN when done."
        (make-process
         :name "elisp-flymake-byte-compile"
         :buffer output-buffer
-        :command (list (expand-file-name invocation-name invocation-directory)
-                       "-Q"
-                       "--batch"
-                       ;; "--eval" "(setq load-prefer-newer t)" ; for testing
-                       "-L" default-directory
-                       "-f" "elisp-flymake--batch-compile-for-flymake"
-                       temp-file)
+        :command `(,(expand-file-name invocation-name invocation-directory)
+                   "-Q"
+                   "--batch"
+                   ;; "--eval" "(setq load-prefer-newer t)" ; for testing
+                   ,@(mapcan (lambda (path) (list "-L" path))
+                             elisp-flymake-byte-compile-load-path)
+                   "-f" "elisp-flymake--batch-compile-for-flymake"
+                   ,temp-file)
         :connection-type 'pipe
         :sentinel
         (lambda (proc _event)
