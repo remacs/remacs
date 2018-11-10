@@ -1264,7 +1264,7 @@ uses of this function all but disappeared by now, so we are
 un-obsoleting it.
 
 +++
-** New function 'group-name' returns a group name based on a group-GID
+** New function 'group-name' returns a group name corresponding to GID.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems

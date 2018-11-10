@@ -1143,21 +1143,6 @@ of the user with that uid, or nil if there is no such user.  */)
   return (pw ? build_string (pw->pw_name) : Qnil);
 }
 
-DEFUN ("group-name", Fgroup_name, Sgroup_name, 1, 1, 0,
-       doc: /* If argument GID is an integer or a float, return the login name
-of the group with that gid, or nil if there is no such GID.  */)
-  (Lisp_Object gid)
-{
-  struct group *gr;
-  gid_t id;
-
-  CONS_TO_INTEGER (gid, gid_t, id);
-  block_input ();
-  gr = getgrgid (id);
-  unblock_input ();
-  return (gr ? build_string (gr->gr_name) : Qnil);
-}
-
 DEFUN ("user-real-login-name", Fuser_real_login_name, Suser_real_login_name,
        0, 0, 0,
        doc: /* Return the name of the user's real uid, as a string.
@@ -1189,6 +1174,24 @@ Value is a fixnum, if it's small enough, otherwise a bignum.  */)
 {
   uid_t uid = getuid ();
   return INT_TO_INTEGER (uid);
+}
+
+DEFUN ("group-name", Fgroup_name, Sgroup_name, 1, 1, 0,
+       doc: /* Return the name of the group whose numeric group ID is GID.
+The argument GID should be an integer or a float.
+Return nil if a group with such GID does not exists or is not known.  */)
+  (Lisp_Object gid)
+{
+  struct group *gr;
+  gid_t id;
+
+  if (!NUMBERP (gid) && !CONSP (gid))
+    error ("Invalid GID specification");
+  CONS_TO_INTEGER (gid, gid_t, id);
+  block_input ();
+  gr = getgrgid (id);
+  unblock_input ();
+  return gr ? build_string (gr->gr_name) : Qnil;
 }
 
 DEFUN ("group-gid", Fgroup_gid, Sgroup_gid, 0, 0, 0,

@@ -351,11 +351,18 @@
     (should (equal (format "%-#50.40x" v3)
                    "-0x000000003ffffffffffffffe000000000000000        "))))
 
-(ert-deftest group-name ()
-  (let ((list `((0 . "root")
-                (1000 . ,(user-login-name 1000))
-                (1212345 . nil))))
-    (dolist (test list)
-      (should (equal (group-name (car test)) (cdr test))))))
+(ert-deftest test-group-name ()
+  (cond
+   ((memq system-type '(windows-nt ms-dos))
+    (should (stringp (group-name (group-gid))))
+    (should-not (group-name 123456789))
+    (should-error (group-name 'foo)))
+   (t
+    (let ((list `((0 . "root")
+                  (1000 . ,(user-login-name 1000))
+                  (1212345 . nil))))
+      (dolist (test list)
+        (should (equal (group-name (car test)) (cdr test)))))
+    (should-error (group-name 'foo)))))
 
 ;;; editfns-tests.el ends here

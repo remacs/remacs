@@ -2043,7 +2043,9 @@ getpwuid (unsigned uid)
 struct group *
 getgrgid (gid_t gid)
 {
-  return &dflt_group;
+  if (gid == dflt_passwd.pw_gid)
+    return &dflt_group;
+  return NULL;
 }
 
 struct passwd *
