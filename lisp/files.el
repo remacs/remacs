@@ -7393,7 +7393,10 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
  like the GNOME, KDE and XFCE desktop environments.  Emacs only
  moves files to \"home trash\", ignoring per-volume trashcans."
   (interactive "fMove file to trash: ")
-  (cond (trash-directory
+  ;; If `system-move-file-to-trash' is defined, use it.
+  (cond ((fboundp 'system-move-file-to-trash)
+	 (system-move-file-to-trash filename))
+        (trash-directory
 	 ;; If `trash-directory' is non-nil, move the file there.
 	 (let* ((trash-dir   (expand-file-name trash-directory))
 		(fn          (directory-file-name (expand-file-name filename)))
@@ -7412,9 +7415,6 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
 		 (setq new-fn (car (find-backup-file-name new-fn)))))
 	   (let (delete-by-moving-to-trash)
 	     (rename-file fn new-fn))))
-	;; If `system-move-file-to-trash' is defined, use it.
-	((fboundp 'system-move-file-to-trash)
-	 (system-move-file-to-trash filename))
 	;; Otherwise, use the freedesktop.org method, as specified at
 	;; http://freedesktop.org/wiki/Specifications/trash-spec
 	(t
