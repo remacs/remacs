@@ -176,7 +176,7 @@ if [ -n $rust_toolchain_vers_path ] ; then
 	   echo >&2 "Run 'rustup install $remacs_version'."
 	   exit 1 ;;
         2) echo >&2 "Remacs currently requires Rust toolchain version $remacs_version."
-	   echo >&2 "The active version is not the required one and is set via directory override:\n\t$rustup_active_version"
+	   echo >&2 -e "The active version is not the required one and is set via directory override:\n\t$rustup_active_version"
 	   echo >&2 "Run 'rustup override unset' in this directory."
 	   exit 1 ;;
         *) # /should/ not happen
