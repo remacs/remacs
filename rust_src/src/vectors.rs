@@ -6,23 +6,24 @@ use std::ptr;
 
 use libc::ptrdiff_t;
 
+use crate::remacs_sys::{pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector,
+                        Lisp_Vectorlike, Lisp_Vectorlike_With_Slots, More_Lisp_Bits,
+                        BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG};
+use crate::remacs_sys::{Qarrayp, Qsequencep, Qvectorp};
 use remacs_macros::lisp_fn;
-use remacs_sys::{pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
-                 Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG};
-use remacs_sys::{Qarrayp, Qsequencep, Qvectorp};
 
-use buffers::LispBufferRef;
-use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
-use data::aref;
-use frames::LispFrameRef;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject, LispSubrRef};
-use lists::{inorder, nth, sort_list};
-use multibyte::MAX_CHAR;
-use numbers::MOST_POSITIVE_FIXNUM;
-use process::LispProcessRef;
-use threads::ThreadStateRef;
-use windows::LispWindowRef;
+use crate::buffers::LispBufferRef;
+use crate::chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
+use crate::data::aref;
+use crate::frames::LispFrameRef;
+use crate::lisp::defsubr;
+use crate::lisp::{ExternalPtr, LispObject, LispSubrRef};
+use crate::lists::{inorder, nth, sort_list};
+use crate::multibyte::MAX_CHAR;
+use crate::numbers::MOST_POSITIVE_FIXNUM;
+use crate::process::LispProcessRef;
+use crate::threads::ThreadStateRef;
+use crate::windows::LispWindowRef;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
@@ -597,8 +598,8 @@ pub fn recordp(object: LispObject) -> bool {
 
 lazy_static! {
     pub static ref HEADER_SIZE: usize =
-        { unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) } };
-    pub static ref WORD_SIZE: usize = { ::std::mem::size_of::<::lisp::LispObject>() };
+        { unsafe { offset_of!(crate::remacs_sys::Lisp_Vector, contents) } };
+    pub static ref WORD_SIZE: usize = { ::std::mem::size_of::<crate::lisp::LispObject>() };
 }
 
 include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));

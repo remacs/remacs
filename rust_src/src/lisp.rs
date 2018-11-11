@@ -10,16 +10,16 @@ use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
 
-use remacs_sys;
-use remacs_sys::{build_string, internal_equal, make_float};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits, USE_LSB_TAG,
-                 VALMASK};
-use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
-use remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist};
+use crate::remacs_sys;
+use crate::remacs_sys::{build_string, internal_equal, make_float};
+use crate::remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits,
+                        USE_LSB_TAG, VALMASK};
+use crate::remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
+use crate::remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist};
 
-use buffers::LispBufferRef;
-use eval::FUNCTIONP;
-use lists::{list, CarIter};
+use crate::buffers::LispBufferRef;
+use crate::eval::FUNCTIONP;
+use crate::lists::{list, CarIter};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -647,7 +647,7 @@ macro_rules! protect_statics_from_GC {
         pub fn rust_static_syms() {
             unsafe {
                 $(
-                    ::remacs_sys::staticpro(&$f as *const LispObject as *mut LispObject);
+                    crate::remacs_sys::staticpro(&$f as *const LispObject as *mut LispObject);
                 )+
             }
         }

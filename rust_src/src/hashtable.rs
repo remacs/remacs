@@ -3,17 +3,17 @@
 use libc::c_void;
 use std::ptr;
 
+use crate::remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
+                        Fcopy_sequence};
+use crate::remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type,
+                        CHECK_IMPURE};
+use crate::remacs_sys::{Qhash_table_p, Qhash_table_test};
 use remacs_macros::lisp_fn;
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
-                 Fcopy_sequence};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type,
-                 CHECK_IMPURE};
-use remacs_sys::{Qhash_table_p, Qhash_table_test};
 
-use data::aref;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use lists::{list, put};
+use crate::data::aref;
+use crate::lisp::defsubr;
+use crate::lisp::{ExternalPtr, LispObject};
+use crate::lists::{list, put};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 

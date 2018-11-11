@@ -1,11 +1,11 @@
 //! Storage allocation and gc
 
+use crate::remacs_sys::bounded_number;
+use crate::remacs_sys::globals;
 use remacs_macros::lisp_fn;
-use remacs_sys::bounded_number;
-use remacs_sys::globals;
 
-use lisp::defsubr;
-use lisp::LispObject;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
 
 /// Return a list of counters that measure how much consing there has been.
 /// Each of these counters increments for a certain kind of object.

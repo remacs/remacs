@@ -1,14 +1,14 @@
 //! font support
 
+use crate::remacs_sys::font_match_p as c_font_match_p;
+use crate::remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX};
+use crate::remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec};
 use remacs_macros::lisp_fn;
-use remacs_sys::font_match_p as c_font_match_p;
-use remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX};
-use remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use obarray::intern;
-use vectors::LispVectorlikeRef;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
+use crate::obarray::intern;
+use crate::vectors::LispVectorlikeRef;
 
 // A font is not a type in and of itself, it's just a group of three kinds of
 // pseudovector. This newtype allows us to define methods that yield the actual

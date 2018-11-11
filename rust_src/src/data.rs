@@ -2,35 +2,36 @@
 
 use libc::c_int;
 
+use crate::remacs_sys;
+use crate::remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, buffer_defaults,
+                        build_string, emacs_abort, globals, set_default_internal, set_internal,
+                        wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
+use crate::remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect};
+use crate::remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type,
+                        Set_Internal_Bind};
+use crate::remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
+use crate::remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang};
+use crate::remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer,
+                        Qchar_table, Qchoice, Qcompiled_function, Qcondition_variable, Qcons,
+                        Qcyclic_function_indirection, Qdefalias_fset_function, Qdefun, Qfinalizer,
+                        Qfloat, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qframe,
+                        Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker,
+                        Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange,
+                        Qstring, Qsubr, Qsymbol, Qt, Qterminal, Qthread, Qunbound, Qunevalled,
+                        Quser_ptr, Qvector, Qvoid_variable, Qwindow, Qwindow_configuration};
 use remacs_macros::lisp_fn;
-use remacs_sys;
-use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
-                 emacs_abort, globals, set_default_internal, set_internal, wrong_choice,
-                 wrong_range, CHAR_TABLE_SET, CHECK_IMPURE};
-use remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect};
-use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind};
-use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
-use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang};
-use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
-                 Qchoice, Qcompiled_function, Qcondition_variable, Qcons,
-                 Qcyclic_function_indirection, Qdefalias_fset_function, Qdefun, Qfinalizer,
-                 Qfloat, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qframe,
-                 Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker, Qmodule_function,
-                 Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol, Qt,
-                 Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector, Qvoid_variable,
-                 Qwindow, Qwindow_configuration};
 
-use buffers::per_buffer_idx;
-use frames::selected_frame;
-use keymap::get_keymap;
-use lisp::{defsubr, is_autoload};
-use lisp::{LispObject, LispSubrRef, LiveBufferIter};
-use lists::{get, memq, put};
-use math::leq;
-use multibyte::{is_ascii, is_single_byte_char};
-use obarray::loadhist_attach;
-use symbols::LispSymbolRef;
-use threads::ThreadState;
+use crate::buffers::per_buffer_idx;
+use crate::frames::selected_frame;
+use crate::keymap::get_keymap;
+use crate::lisp::{defsubr, is_autoload};
+use crate::lisp::{LispObject, LispSubrRef, LiveBufferIter};
+use crate::lists::{get, memq, put};
+use crate::math::leq;
+use crate::multibyte::{is_ascii, is_single_byte_char};
+use crate::obarray::loadhist_attach;
+use crate::symbols::LispSymbolRef;
+use crate::threads::ThreadState;
 
 use field_offset::FieldOffset;
 

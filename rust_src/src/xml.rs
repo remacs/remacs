@@ -2,11 +2,11 @@
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::Qnil;
-use remacs_sys::{init_libxml2_functions, parse_region};
+use crate::remacs_sys::Qnil;
+use crate::remacs_sys::{init_libxml2_functions, parse_region};
 
-use lisp::defsubr;
-use lisp::LispObject;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
 
 fn libxml_parse_region(
     start: LispObject,

@@ -2,16 +2,16 @@
 use std::ptr;
 use std::slice;
 
-use base64_crate;
+use crate::base64_crate;
 use libc::{c_char, c_uchar};
 
+use crate::remacs_sys::make_unibyte_string;
 use remacs_macros::lisp_fn;
-use remacs_sys::make_unibyte_string;
 
-use lisp::defsubr;
-use lisp::LispObject;
-use multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR};
-use strings::MIME_LINE_LENGTH;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
+use crate::multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR};
+use crate::strings::MIME_LINE_LENGTH;
 
 #[no_mangle]
 pub extern "C" fn base64_encode_1(

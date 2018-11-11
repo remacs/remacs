@@ -2,14 +2,14 @@
 
 use libc;
 
+use crate::remacs_sys::uniprop_table_uncompress;
+use crate::remacs_sys::{pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type,
+                        More_Lisp_Bits, CHARTAB_SIZE_BITS};
+use crate::remacs_sys::{Qchar_code_property_table, Qchar_table_p, Qnil};
 use remacs_macros::lisp_fn;
-use remacs_sys::uniprop_table_uncompress;
-use remacs_sys::{pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
-                 CHARTAB_SIZE_BITS};
-use remacs_sys::{Qchar_code_property_table, Qchar_table_p, Qnil};
 
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
+use crate::lisp::defsubr;
+use crate::lisp::{ExternalPtr, LispObject};
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 pub type LispSubCharTableRef = ExternalPtr<Lisp_Sub_Char_Table>;

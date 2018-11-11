@@ -5,15 +5,15 @@ use libc;
 
 use std::mem;
 
-use libm;
+use crate::libm;
+use crate::remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type};
+use crate::remacs_sys::{Qarith_error, Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error};
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type};
-use remacs_sys::{Qarith_error, Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error};
 
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use math::ArithOp;
-use numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
+use crate::lisp::defsubr;
+use crate::lisp::{ExternalPtr, LispObject};
+use crate::math::ArithOp;
+use crate::numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
 
 // Float support (LispType == Lisp_Float == 7 )
 

@@ -4,14 +4,14 @@ use std::mem;
 
 use libc;
 
+use crate::remacs_sys::Qthreadp;
+use crate::remacs_sys::{current_thread as current_thread_pointer, pvec_type, thread_state,
+                        Lisp_Type, SPECPDL_INDEX};
 use remacs_macros::lisp_fn;
-use remacs_sys::Qthreadp;
-use remacs_sys::{current_thread as current_thread_pointer, pvec_type, thread_state, Lisp_Type,
-                 SPECPDL_INDEX};
 
-use buffers::LispBufferRef;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
+use crate::buffers::LispBufferRef;
+use crate::lisp::defsubr;
+use crate::lisp::{ExternalPtr, LispObject};
 
 pub type ThreadStateRef = ExternalPtr<thread_state>;
 

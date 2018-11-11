@@ -2,18 +2,18 @@
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::{command_loop_level, glyph_row_area, minibuf_level};
-use remacs_sys::{make_lispy_position, window_box_left_offset};
-use remacs_sys::{Fpos_visible_in_window_p, Fthrow};
-use remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error,
-                 Qvertical_line};
+use crate::remacs_sys::{command_loop_level, glyph_row_area, minibuf_level};
+use crate::remacs_sys::{make_lispy_position, window_box_left_offset};
+use crate::remacs_sys::{Fpos_visible_in_window_p, Fthrow};
+use crate::remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error,
+                        Qvertical_line};
 
-use frames::window_frame_live_or_selected_with_action;
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::LispCons;
-use numbers::IsLispNatnum;
-use windows::LispWindowOrSelected;
+use crate::frames::window_frame_live_or_selected_with_action;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
+use crate::lists::LispCons;
+use crate::numbers::IsLispNatnum;
+use crate::windows::LispWindowOrSelected;
 
 /// Return position information for buffer position POS in WINDOW.
 /// POS defaults to point in WINDOW; WINDOW defaults to the selected window.
@@ -134,7 +134,7 @@ pub fn quit_recursive_edit(val: bool) -> ! {
         let msg = "No recursive edit is in progress";
         xsignal!(
             Quser_error,
-            ::remacs_sys::make_string(
+            crate::remacs_sys::make_string(
                 msg.as_ptr() as *const ::libc::c_char,
                 msg.len() as ::libc::ptrdiff_t,
             )

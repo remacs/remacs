@@ -3,18 +3,18 @@ use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
 
-use keymap::Ctl;
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::put;
-use remacs_sys::EmacsInt;
-use remacs_sys::{case_action, casify_object, casify_region, casify_region_nil};
-use remacs_sys::{control_x_map, initial_define_key, meta_map, scan_words, set_point};
-use remacs_sys::{Qdisabled, Qnil, Qt};
-use threads::ThreadState;
+use crate::keymap::Ctl;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
+use crate::lists::put;
+use crate::remacs_sys::EmacsInt;
+use crate::remacs_sys::{case_action, casify_object, casify_region, casify_region_nil};
+use crate::remacs_sys::{control_x_map, initial_define_key, meta_map, scan_words, set_point};
+use crate::remacs_sys::{Qdisabled, Qnil, Qt};
+use crate::threads::ThreadState;
 
-use obarray::intern;
-use symbols::symbol_value;
+use crate::obarray::intern;
+use crate::symbols::symbol_value;
 
 fn casify_word(flag: case_action, words: EmacsInt) {
     let buffer_ref = ThreadState::current_buffer();

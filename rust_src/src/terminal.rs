@@ -1,5 +1,5 @@
-use dispnew::LispGlyphRef;
-use frames::LispFrameRef;
+use crate::dispnew::LispGlyphRef;
+use crate::frames::LispFrameRef;
 use libc::c_int;
 
 #[no_mangle]

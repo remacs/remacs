@@ -1,10 +1,10 @@
 //! Call a Lisp function interactively.
 
+use crate::remacs_sys::{EmacsInt, Qminus};
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qminus};
 
-use lisp::defsubr;
-use lisp::LispObject;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
 
 /// Return numeric meaning of raw prefix argument RAW.
 /// A raw prefix argument is what you get from `(interactive "P")'.

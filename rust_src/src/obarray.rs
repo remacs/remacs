@@ -1,14 +1,14 @@
 //! obarray code
 use libc;
 
+use crate::remacs_sys::{fatal_error_in_progress, globals, initial_obarray, initialized,
+                        intern_sym, make_pure_c_string, make_unibyte_string, oblookup};
+use crate::remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
+use crate::remacs_sys::{Qnil, Qvectorp};
 use remacs_macros::lisp_fn;
-use remacs_sys::{fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
-                 make_pure_c_string, make_unibyte_string, oblookup};
-use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
-use remacs_sys::{Qnil, Qvectorp};
 
-use lisp::defsubr;
-use lisp::LispObject;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
 
 /// A lisp object containing an `obarray`.
 #[repr(transparent)]

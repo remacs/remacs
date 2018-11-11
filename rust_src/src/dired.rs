@@ -3,13 +3,13 @@
 use remacs_macros::lisp_fn;
 
 #[cfg(unix)]
-use dired_unix::{directory_files_and_attributes_intro, directory_files_intro,
-                 file_attributes_intro, get_users};
+use crate::dired_unix::{directory_files_and_attributes_intro, directory_files_intro,
+                        file_attributes_intro, get_users};
+use crate::lisp::{defsubr, LispObject};
+use crate::lists::car;
+use crate::strings::string_lessp;
 #[cfg(windows)]
 use dired_windows::{file_attributes_intro, get_users};
-use lisp::{defsubr, LispObject};
-use lists::car;
-use strings::string_lessp;
 
 /// Return a list of names of files in DIRECTORY.
 /// There are three optional arguments:

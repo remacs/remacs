@@ -9,15 +9,16 @@ use std::path::Path;
 use std::ptr::null_mut;
 use std::slice;
 
-use remacs_sys::{build_string, compile_pattern, decode_file_name, file_attributes_c_internal,
-                 filemode_string, globals, re_pattern_buffer, re_search};
-use remacs_sys::{Fexpand_file_name, Ffind_file_name_handler};
-use remacs_sys::{Qdirectory_files, Qdirectory_files_and_attributes, Qfile_attributes,
-                 Qfile_missing, Qnil, Qt};
+use crate::remacs_sys::{build_string, compile_pattern, decode_file_name,
+                        file_attributes_c_internal, filemode_string, globals, re_pattern_buffer,
+                        re_search};
+use crate::remacs_sys::{Fexpand_file_name, Ffind_file_name_handler};
+use crate::remacs_sys::{Qdirectory_files, Qdirectory_files_and_attributes, Qfile_attributes,
+                        Qfile_missing, Qnil, Qt};
 
-use lisp::LispObject;
-use lists::list;
-use time::make_lisp_time;
+use crate::lisp::LispObject;
+use crate::lists::list;
+use crate::time::make_lisp_time;
 
 trait StringExt {
     // LispObject strings should use build_string for correct GC behavior.

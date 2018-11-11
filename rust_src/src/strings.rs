@@ -4,15 +4,15 @@ use std::ptr;
 
 use libc;
 
+use crate::remacs_sys::EmacsInt;
+use crate::remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
+                        string_to_multibyte as c_string_to_multibyte};
 use remacs_macros::lisp_fn;
-use remacs_sys::EmacsInt;
-use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
-                 string_to_multibyte as c_string_to_multibyte};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use multibyte;
-use multibyte::LispStringRef;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
+use crate::multibyte;
+use crate::multibyte::LispStringRef;
 
 pub static MIME_LINE_LENGTH: isize = 76;
 

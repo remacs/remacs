@@ -1,13 +1,13 @@
 //! Generic frame functions.
 
+use crate::remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method, Fcons};
+use crate::remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type};
+use crate::remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 use remacs_macros::lisp_fn;
-use remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method, Fcons};
-use remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type};
-use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use windows::{select_window_lisp, selected_window, LispWindowRef};
+use crate::lisp::defsubr;
+use crate::lisp::{ExternalPtr, LispObject};
+use crate::windows::{select_window_lisp, selected_window, LispWindowRef};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 

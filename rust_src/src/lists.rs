@@ -2,14 +2,14 @@
 
 use libc::c_void;
 
+use crate::remacs_sys::{globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type};
+use crate::remacs_sys::{Fcons, CHECK_IMPURE};
+use crate::remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp};
 use remacs_macros::lisp_fn;
-use remacs_sys::{globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type};
-use remacs_sys::{Fcons, CHECK_IMPURE};
-use remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use symbols::LispSymbolRef;
+use crate::lisp::defsubr;
+use crate::lisp::LispObject;
+use crate::symbols::LispSymbolRef;
 
 // Cons support (LispType == 6 | 3)
 

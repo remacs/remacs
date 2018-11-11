@@ -4,25 +4,25 @@ use std::ptr;
 
 use libc::c_int;
 
+use crate::remacs_sys::globals;
+use crate::remacs_sys::{estimate_mode_line_height, minibuf_level,
+                        minibuf_selected_window as current_minibuf_window, scroll_command,
+                        select_window, selected_window as current_window, set_buffer_internal,
+                        set_window_hscroll, update_mode_lines, window_body_width, window_list_1,
+                        window_menu_bar_p, window_tool_bar_p, wset_redisplay};
+use crate::remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window};
+use crate::remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
+                        Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 use remacs_macros::lisp_fn;
-use remacs_sys::globals;
-use remacs_sys::{estimate_mode_line_height, minibuf_level,
-                 minibuf_selected_window as current_minibuf_window, scroll_command, select_window,
-                 selected_window as current_window, set_buffer_internal, set_window_hscroll,
-                 update_mode_lines, window_body_width, window_list_1, window_menu_bar_p,
-                 window_tool_bar_p, wset_redisplay};
-use remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
-                 Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 
-use editfns::{goto_char, point};
-use frames::{frame_live_or_selected, selected_frame, LispFrameRef};
-use interactive::prefix_numeric_value;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use lists::{assq, setcdr};
-use marker::{marker_position_lisp, set_marker_restricted};
-use threads::ThreadState;
+use crate::editfns::{goto_char, point};
+use crate::frames::{frame_live_or_selected, selected_frame, LispFrameRef};
+use crate::interactive::prefix_numeric_value;
+use crate::lisp::defsubr;
+use crate::lisp::{ExternalPtr, LispObject};
+use crate::lists::{assq, setcdr};
+use crate::marker::{marker_position_lisp, set_marker_restricted};
+use crate::threads::ThreadState;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 

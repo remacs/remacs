@@ -127,7 +127,7 @@ static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
+pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
 
 #[cfg(feature = "compile-errors")]
 mod compile_errors {
