@@ -3,11 +3,13 @@ use std::path;
 
 use remacs_macros::lisp_fn;
 
-use crate::lisp::defsubr;
-use crate::lists::LispCons;
-use crate::math::{arithcompare, ArithComparison};
-use crate::multibyte::LispStringRef;
-use crate::threads::ThreadState;
+use crate::{
+    lisp::defsubr,
+    lists::LispCons,
+    math::{arithcompare, ArithComparison},
+    multibyte::LispStringRef,
+    threads::ThreadState,
+};
 
 /// Return t if (car A) is numerically less than (car B).
 #[lisp_fn]

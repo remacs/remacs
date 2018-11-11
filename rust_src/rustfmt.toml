@@ -18,7 +18,6 @@ force_explicit_abi = true
 force_multiline_blocks = false
 format_strings = false
 hard_tabs = false
-imports_indent = "Visual"
 imports_layout = "Mixed"
 indent_style = "Block"
 match_arm_blocks = true

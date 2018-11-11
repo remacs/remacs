@@ -1,8 +1,11 @@
-use remacs_sys::{directory_files_and_attributes_c, directory_files_c, file_attributes_c, globals,
-                 Qfile_attributes, Qnil};
-
-use lisp::LispObject;
-use lists::list;
+use crate::{
+    lisp::LispObject,
+    lists::list,
+    remacs_sys::{
+        directory_files_and_attributes_c, directory_files_c, file_attributes_c, globals,
+        Qfile_attributes, Qnil,
+    },
+};
 
 pub fn directory_files(
     directory: LispObject,

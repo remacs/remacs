@@ -2,10 +2,11 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::remacs_sys::{looking_at_1, match_limit, search_command, string_match_1};
-
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::{looking_at_1, match_limit, search_command, string_match_1},
+};
 
 /// Return t if text after point matches regular expression REGEXP.
 /// This function modifies the match data that `match-beginning',

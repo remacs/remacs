@@ -1,10 +1,11 @@
 //! Indentation functions
 
-use crate::remacs_sys;
-use crate::remacs_sys::EmacsInt;
 use remacs_macros::lisp_fn;
 
-use crate::lisp::defsubr;
+use crate::{
+    lisp::defsubr,
+    remacs_sys::{self, EmacsInt},
+};
 
 /// Return the horizontal position of point.
 /// Beginning of line is column 0.

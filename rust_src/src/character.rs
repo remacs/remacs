@@ -2,15 +2,17 @@
 
 use libc::{c_uchar, ptrdiff_t};
 
-use crate::remacs_sys::EmacsInt;
-use crate::remacs_sys::Qcharacterp;
 use remacs_macros::lisp_fn;
 
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
-use crate::multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe};
-use crate::multibyte::{Codepoint, MAX_CHAR};
-use crate::threads::ThreadState;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe},
+    multibyte::{Codepoint, MAX_CHAR},
+    remacs_sys::EmacsInt,
+    remacs_sys::Qcharacterp,
+    threads::ThreadState,
+};
 
 impl LispObject {
     /// Nonzero iff X is a character.

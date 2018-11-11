@@ -1,22 +1,26 @@
 //* Random utility Lisp functions.
 
-use crate::remacs_sys::Lisp_Type;
-use crate::remacs_sys::Vautoload_queue;
-use crate::remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
-use crate::remacs_sys::{Fcons, Fload, Fmapc};
-use crate::remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
-                        Qwrong_number_of_arguments};
 use remacs_macros::lisp_fn;
 
-use crate::eval::un_autoload;
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
-use crate::lists::{assq, car, get, member, memq, put, LispCons};
-use crate::obarray::loadhist_attach;
-use crate::objects::equal;
-use crate::symbols::LispSymbolRef;
-use crate::threads::c_specpdl_index;
-use crate::vectors::length;
+use crate::{
+    eval::un_autoload,
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::{assq, car, get, member, memq, put, LispCons},
+    obarray::loadhist_attach,
+    objects::equal,
+    remacs_sys::Lisp_Type,
+    remacs_sys::Vautoload_queue,
+    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to},
+    remacs_sys::{Fcons, Fload, Fmapc},
+    remacs_sys::{
+        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
+        Qwrong_number_of_arguments,
+    },
+    symbols::LispSymbolRef,
+    threads::c_specpdl_index,
+    vectors::length,
+};
 
 /// Return t if FEATURE is present in this Emacs.
 ///

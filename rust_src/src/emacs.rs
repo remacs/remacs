@@ -1,9 +1,12 @@
 //! Emacs!
 
-use crate::lisp::{defsubr, LispObject};
-use crate::remacs_sys::globals;
-use crate::remacs_sys::Fcopy_sequence;
 use remacs_macros::lisp_fn;
+
+use crate::{
+    lisp::{defsubr, LispObject},
+    remacs_sys::globals,
+    remacs_sys::Fcopy_sequence,
+};
 
 /// Return the program name that was used to run Emacs.
 /// Any directory names are omitted.

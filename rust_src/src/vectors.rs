@@ -6,24 +6,27 @@ use std::ptr;
 
 use libc::ptrdiff_t;
 
-use crate::remacs_sys::{pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector,
-                        Lisp_Vectorlike, Lisp_Vectorlike_With_Slots, More_Lisp_Bits,
-                        BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG};
-use crate::remacs_sys::{Qarrayp, Qsequencep, Qvectorp};
 use remacs_macros::lisp_fn;
 
-use crate::buffers::LispBufferRef;
-use crate::chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
-use crate::data::aref;
-use crate::frames::LispFrameRef;
-use crate::lisp::defsubr;
-use crate::lisp::{ExternalPtr, LispObject, LispSubrRef};
-use crate::lists::{inorder, nth, sort_list};
-use crate::multibyte::MAX_CHAR;
-use crate::numbers::MOST_POSITIVE_FIXNUM;
-use crate::process::LispProcessRef;
-use crate::threads::ThreadStateRef;
-use crate::windows::LispWindowRef;
+use crate::{
+    buffers::LispBufferRef,
+    chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
+    data::aref,
+    frames::LispFrameRef,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject, LispSubrRef},
+    lists::{inorder, nth, sort_list},
+    multibyte::MAX_CHAR,
+    numbers::MOST_POSITIVE_FIXNUM,
+    process::LispProcessRef,
+    remacs_sys::{
+        pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
+        Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG,
+    },
+    remacs_sys::{Qarrayp, Qsequencep, Qvectorp},
+    threads::ThreadStateRef,
+    windows::LispWindowRef,
+};
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;

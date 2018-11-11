@@ -2,18 +2,21 @@
 
 use std::{cmp, ptr};
 
-use crate::remacs_sys::{clear_current_matrices, dtotimespec, fset_redisplay,
-                        mark_window_display_accurate, timespec_add, timespec_sub,
-                        wait_reading_process_output};
-use crate::remacs_sys::{redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX};
-use crate::remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph};
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
 
-use crate::frames::{frame_live_or_selected, LispFrameRef};
-use crate::lisp::{defsubr, ExternalPtr, LispObject};
-use crate::terminal::{clear_frame, update_begin, update_end};
-use crate::windows::{LispWindowOrSelected, LispWindowRef};
+use crate::{
+    frames::{frame_live_or_selected, LispFrameRef},
+    lisp::{defsubr, ExternalPtr, LispObject},
+    remacs_sys::{
+        clear_current_matrices, dtotimespec, fset_redisplay, mark_window_display_accurate,
+        timespec_add, timespec_sub, wait_reading_process_output,
+    },
+    remacs_sys::{redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX},
+    remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph},
+    terminal::{clear_frame, update_begin, update_end},
+    windows::{LispWindowOrSelected, LispWindowRef},
+};
 
 pub type LispGlyphRef = ExternalPtr<Lisp_Glyph>;
 

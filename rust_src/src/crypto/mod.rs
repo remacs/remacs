@@ -7,22 +7,29 @@ use sha2::{Digest, Sha224, Sha256, Sha384, Sha512};
 use std;
 use std::slice;
 
-use crate::remacs_sys::{code_convert_string, extract_data_from_object, preferred_coding_system,
-                        string_char_to_byte, validate_subarray, Fcoding_system_p};
-use crate::remacs_sys::{current_thread, make_buffer_string, record_unwind_current_buffer,
-                        set_buffer_internal};
-use crate::remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p};
-use crate::remacs_sys::{make_specified_string, make_uninit_string, EmacsInt};
-use crate::remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qnil, Qraw_text,
-                        Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region};
 use remacs_macros::lisp_fn;
 
-use crate::buffers::{buffer_file_name, LispBufferOrName, LispBufferRef};
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
-use crate::multibyte::LispStringRef;
-use crate::symbols::{fboundp, symbol_name};
-use crate::threads::ThreadState;
+use crate::{
+    buffers::{buffer_file_name, LispBufferOrName, LispBufferRef},
+    lisp::defsubr,
+    lisp::LispObject,
+    multibyte::LispStringRef,
+    remacs_sys::{
+        code_convert_string, extract_data_from_object, preferred_coding_system,
+        string_char_to_byte, validate_subarray, Fcoding_system_p,
+    },
+    remacs_sys::{
+        current_thread, make_buffer_string, record_unwind_current_buffer, set_buffer_internal,
+    },
+    remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p},
+    remacs_sys::{make_specified_string, make_uninit_string, EmacsInt},
+    remacs_sys::{
+        Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qnil, Qraw_text, Qsha1, Qsha224,
+        Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region,
+    },
+    symbols::{fboundp, symbol_name},
+    threads::ThreadState,
+};
 
 #[derive(Clone, Copy)]
 enum HashAlg {

@@ -4,16 +4,18 @@ use libc::{c_void, ptrdiff_t};
 use std::mem;
 use std::ptr;
 
-use crate::remacs_sys::{allocate_misc, set_point_both, Fmake_marker};
-use crate::remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
-use crate::remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil};
 use remacs_macros::lisp_fn;
 
-use crate::buffers::{current_buffer, LispBufferRef};
-use crate::lisp::{defsubr, ExternalPtr, LispObject};
-use crate::multibyte::multibyte_chars_in_text;
-use crate::threads::ThreadState;
-use crate::util::clip_to_bounds;
+use crate::{
+    buffers::{current_buffer, LispBufferRef},
+    lisp::{defsubr, ExternalPtr, LispObject},
+    multibyte::multibyte_chars_in_text,
+    remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
+    remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type},
+    remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
+    threads::ThreadState,
+    util::clip_to_bounds,
+};
 
 pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 

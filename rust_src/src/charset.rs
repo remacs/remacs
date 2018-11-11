@@ -2,11 +2,11 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::remacs_sys::Vcharset_hash_table;
-
-use crate::hashtable::HashLookupResult;
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
+use crate::{
+    hashtable::HashLookupResult,
+    lisp::{defsubr, LispObject},
+    remacs_sys::Vcharset_hash_table,
+};
 
 impl LispObject {
     pub fn is_charset(self) -> bool {

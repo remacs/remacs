@@ -1,6 +1,6 @@
-use crate::dispnew::LispGlyphRef;
-use crate::frames::LispFrameRef;
 use libc::c_int;
+
+use crate::{dispnew::LispGlyphRef, frames::LispFrameRef};
 
 #[no_mangle]
 pub unsafe extern "C" fn update_begin(mut f: LispFrameRef) {

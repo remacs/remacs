@@ -5,14 +5,16 @@ use std::ptr;
 use libc::timespec as c_timespec;
 use libc::{c_int, c_long, time_t};
 
-use crate::remacs_sys::{lisp_time, EmacsInt};
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
 
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
-use crate::lists::list;
-use crate::numbers::MOST_NEGATIVE_FIXNUM;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::list,
+    numbers::MOST_NEGATIVE_FIXNUM,
+    remacs_sys::{lisp_time, EmacsInt},
+};
 
 const LO_TIME_BITS: i32 = 16;
 

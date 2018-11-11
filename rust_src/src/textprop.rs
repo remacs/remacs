@@ -2,12 +2,13 @@
 
 use std::ptr;
 
-use crate::remacs_sys::get_char_property_and_overlay;
-use crate::remacs_sys::EmacsInt;
 use remacs_macros::lisp_fn;
 
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
+use crate::{
+    lisp::{defsubr, LispObject},
+    remacs_sys::get_char_property_and_overlay,
+    remacs_sys::EmacsInt,
+};
 
 /// Return the value of POSITION's property PROP, in OBJECT.
 /// Both overlay properties and text properties are checked.

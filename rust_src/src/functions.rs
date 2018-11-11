@@ -11,7 +11,7 @@ use crate::remacs_sys::*;
 /// definitions to remacs-sys first and foremost.
 use libc::*;
 
-use crate::lisp::LispObject;
+use crate::{lisp::LispObject, remacs_sys::*};
 
 // The linker needs the symbol "lispsym" to exist, since certain
 // codepaths lead to it's usage.

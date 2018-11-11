@@ -2,18 +2,20 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::remacs_sys::{command_loop_level, glyph_row_area, minibuf_level};
-use crate::remacs_sys::{make_lispy_position, window_box_left_offset};
-use crate::remacs_sys::{Fpos_visible_in_window_p, Fthrow};
-use crate::remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error,
-                        Qvertical_line};
-
-use crate::frames::window_frame_live_or_selected_with_action;
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
-use crate::lists::LispCons;
-use crate::numbers::IsLispNatnum;
-use crate::windows::LispWindowOrSelected;
+use crate::{
+    frames::window_frame_live_or_selected_with_action,
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::LispCons,
+    numbers::IsLispNatnum,
+    remacs_sys::{command_loop_level, glyph_row_area, minibuf_level},
+    remacs_sys::{make_lispy_position, window_box_left_offset},
+    remacs_sys::{Fpos_visible_in_window_p, Fthrow},
+    remacs_sys::{
+        Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error, Qvertical_line,
+    },
+    windows::LispWindowOrSelected,
+};
 
 /// Return position information for buffer position POS in WINDOW.
 /// POS defaults to point in WINDOW; WINDOW defaults to the selected window.

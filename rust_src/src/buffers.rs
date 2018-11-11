@@ -3,32 +3,40 @@
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
-use crate::remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_flags,
-                        buffer_local_value, buffer_window_count, del_range, delete_all_overlays,
-                        drop_overlay, globals, last_per_buffer_idx, set_buffer_internal_1,
-                        specbind, unbind_to, unchain_both, update_mode_lines};
-use crate::remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
-                        Lisp_Overlay, Lisp_Type, Vbuffer_alist};
-use crate::remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
-                        Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse,
-                        Foverlay_get, Fwiden};
-use crate::remacs_sys::{Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp,
-                        Qget_file_buffer, Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt,
-                        Qunbound, Qvoid_variable};
 use remacs_macros::lisp_fn;
 
-use crate::character::char_head_p;
-use crate::chartable::LispCharTableRef;
-use crate::data::Lisp_Fwd;
-use crate::editfns::point;
-use crate::lisp::defsubr;
-use crate::lisp::{ExternalPtr, LispObject, LiveBufferIter};
-use crate::lists::{car, cdr, Flist, Fmember};
-use crate::marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
-use crate::multibyte::{multibyte_length_by_head, string_char};
-use crate::numbers::MOST_POSITIVE_FIXNUM;
-use crate::strings::string_equal;
-use crate::threads::{c_specpdl_index, ThreadState};
+use crate::{
+    character::char_head_p,
+    chartable::LispCharTableRef,
+    data::Lisp_Fwd,
+    editfns::point,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject, LiveBufferIter},
+    lists::{car, cdr, Flist, Fmember},
+    marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
+    multibyte::{multibyte_length_by_head, string_char},
+    numbers::MOST_POSITIVE_FIXNUM,
+    remacs_sys::{
+        allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
+        buffer_window_count, del_range, delete_all_overlays, drop_overlay, globals,
+        last_per_buffer_idx, set_buffer_internal_1, specbind, unbind_to, unchain_both,
+        update_mode_lines,
+    },
+    remacs_sys::{
+        pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
+        Lisp_Type, Vbuffer_alist,
+    },
+    remacs_sys::{
+        windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
+        Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Foverlay_get, Fwiden,
+    },
+    remacs_sys::{
+        Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
+        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, Qvoid_variable,
+    },
+    strings::string_equal,
+    threads::{c_specpdl_index, ThreadState},
+};
 
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;

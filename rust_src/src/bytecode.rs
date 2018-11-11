@@ -1,9 +1,12 @@
 //! Execution of byte code produced by bytecomp.el.
 
-use crate::lisp::{defsubr, LispObject};
-use crate::remacs_sys::exec_byte_code as c_exec_byte_code;
-use crate::remacs_sys::Qnil;
 use remacs_macros::lisp_fn;
+
+use crate::{
+    lisp::{defsubr, LispObject},
+    remacs_sys::exec_byte_code as c_exec_byte_code,
+    remacs_sys::Qnil,
+};
 
 // Temporary Rust wrapper for C's exec_byte_code
 fn rust_exec_byte_code(

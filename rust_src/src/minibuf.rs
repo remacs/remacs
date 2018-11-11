@@ -1,22 +1,27 @@
 //! Minibuffer input and completion.
 
-use crate::remacs_sys::{globals, Qcommandp, Qcustom_variable_p, Qfield,
-                        Qminibuffer_completion_table, Qminibuffer_history, Qnil, Qt,
-                        Vminibuffer_list};
-use crate::remacs_sys::{make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window,
-                        read_minibuf, specbind, unbind_to, EmacsInt, Fcopy_sequence, Ffuncall};
 use remacs_macros::lisp_fn;
 
-use crate::buffers::{current_buffer, LispBufferOrName};
-use crate::editfns::field_end;
-use crate::keymap::get_keymap;
-use crate::lisp::defsubr;
-use crate::lisp::LispObject;
-use crate::lists::{car_safe, cdr_safe, memq};
-use crate::obarray::{intern, lisp_intern};
-use crate::symbols::symbol_value;
-use crate::textprop::get_char_property;
-use crate::threads::{c_specpdl_index, ThreadState};
+use crate::{
+    buffers::{current_buffer, LispBufferOrName},
+    editfns::field_end,
+    keymap::get_keymap,
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::{car_safe, cdr_safe, memq},
+    obarray::{intern, lisp_intern},
+    remacs_sys::{
+        globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
+        Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
+    },
+    remacs_sys::{
+        make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf, specbind,
+        unbind_to, EmacsInt, Fcopy_sequence, Ffuncall,
+    },
+    symbols::symbol_value,
+    textprop::get_char_property,
+    threads::{c_specpdl_index, ThreadState},
+};
 
 /// Return t if BUFFER is a minibuffer.
 /// No argument or nil as argument means use current buffer as BUFFER.

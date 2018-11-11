@@ -1,21 +1,26 @@
 //! Functions operating on process.
 use libc;
 
-use crate::remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-                        get_process as cget_process, send_process, setup_process_coding_systems,
-                        update_status, Fmapcar, STRING_BYTES};
-use crate::remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
-use crate::remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
-                        Qinternal_default_process_filter, Qinternal_default_process_sentinel,
-                        Qlisten, Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun,
-                        Qserial, Qstop, Qt};
 use remacs_macros::lisp_fn;
 
-use crate::buffers::LispBufferOrName;
-use crate::lisp::defsubr;
-use crate::lisp::{ExternalPtr, LispObject};
-use crate::lists::{assoc, car, cdr, plist_put};
-use crate::multibyte::LispStringRef;
+use crate::{
+    buffers::LispBufferOrName,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    lists::{assoc, car, cdr, plist_put},
+    multibyte::LispStringRef,
+    remacs_sys::{
+        add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
+        get_process as cget_process, send_process, setup_process_coding_systems, update_status,
+        Fmapcar, STRING_BYTES,
+    },
+    remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
+    remacs_sys::{
+        QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_process_filter,
+        Qinternal_default_process_sentinel, Qlisten, Qlistp, Qnetwork, Qnil, Qopen, Qpipe,
+        Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt,
+    },
+};
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
