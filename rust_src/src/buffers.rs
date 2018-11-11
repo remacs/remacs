@@ -10,9 +10,10 @@ use crate::{
     chartable::LispCharTableRef,
     data::Lisp_Fwd,
     editfns::point,
+    frames::LispFrameRef,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LiveBufferIter},
-    lists::{car, cdr, Flist, Fmember},
+    lists::{car, cdr, list, member},
     marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::{multibyte_length_by_head, string_char},
     numbers::MOST_POSITIVE_FIXNUM,
@@ -597,27 +598,21 @@ impl LispBufferOrCurrent {
 /// proper order for that frame: the buffers show in FRAME come first,
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
-pub fn buffer_list(frame: LispObject) -> LispObject {
+pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
     let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }.iter_cars_safe().map(cdr).collect();
 
-    match frame.as_frame() {
-        None => Flist(buffers.len() as isize, buffers.as_mut_ptr()),
+    match frame {
+        None => list(&buffers),
 
-        Some(frame) => unsafe {
-            let framelist = Fcopy_sequence(frame.buffer_list);
-            let prevlist = Fnreverse(Fcopy_sequence(frame.buried_buffer_list));
+        Some(frame) => {
+            let framelist = unsafe { Fcopy_sequence(frame.buffer_list) };
+            let prevlist = unsafe { Fnreverse(Fcopy_sequence(frame.buried_buffer_list)) };
 
-            // Remove any buffer that duplicates one in
-            // FRAMELIST or PREVLIST.
-            buffers.retain(|e| Fmember(*e, framelist) == Qnil || Fmember(*e, prevlist) == Qnil);
+            // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
+            buffers.retain(|e| member(*e, framelist) == Qnil && member(*e, prevlist) == Qnil);
 
-            callN_raw!(
-                Fnconc,
-                framelist,
-                Flist(buffers.len() as isize, buffers.as_mut_ptr()),
-                prevlist
-            )
-        },
+            callN_raw!(Fnconc, framelist, list(&buffers), prevlist)
+        }
     }
 }
 
