@@ -1,0 +1,167 @@
+#!/usr/bin/env python
+"""
+This only ports the 'shell' of the function, not the real code.
+But it is a handy start.
+
+To use put this code in your $PATH and then in (r)emacs mark the function as
+a region and M-| rustize-emacs. The result can then be copied into a Rust
+source file.
+
+TODO:
+known_types needs to be filled in more. Anything it does not know is left in
+the C form.
+
+Note, this _should_ be valid py2 or py3.
+"""
+from __future__ import print_function
+import re
+
+
+def build_docstring(docstring=None, **kwargs):
+    return '\n'.join('/// ' + line.strip() for line in docstring.split('\n'))
+
+
+def build_lisp_fn_args(min_args=None, max_args=None, intspec=None,
+                       lisp_name=None, func_name=None, **kwargs):
+    if intspec == '0':
+        intspec = None
+    elif intspec.startswith('"'):
+        intspec = intspec.strip('"')
+    pieces = []
+    if min_args != max_args and max_args != 'MANY':
+        pieces.append(('min', min_args))
+    if intspec is not None:
+        pieces.append(('intspec', intspec))
+    if lisp_name != func_name.replace('_', '-'):
+        pieces.append(('name', lisp_name))
+    return ', '.join(['{} = "{}"'.format(*p) for p in pieces])
+
+
+def build_lisp_fn_function_name(func_name=None, **kwargs):
+    return func_name.replace('-', '_')
+
+
+known_types = {
+    'bool': 'bool',
+    'char': 'c_char',
+    'int': 'c_int',
+    'ptrdiff_t': 'libc::ptrdiff_t',
+    'void': 'c_void',
+    'void*': '*mut c_void',
+    'buffer struct*': 'LispBufferRef',
+    'Lisp_Overlay struct*': 'LispOverlayRef',
+    'window struct*': 'LispWindowRef',
+    'EMACS_INT': 'EmacsInt',
+    'Lisp_Object': 'LispObject',
+}
+
+
+def build_arg(arg):
+    if arg == 'void':
+        return None
+
+    parts = arg.split()
+    flipped = list(reversed(parts))
+    name, typ = flipped[0], ' '.join([p for p in flipped[1:] if p not in ('register',)])
+    if name[0] == '*':
+        typ = typ + '*'
+        name = name[1:]
+    return name + ': ' + known_types.get(typ, typ)
+
+
+def build_lisp_fn_function_args(max_args=None, func_args=None, **kwargs):
+    if max_args == 'MANY':
+        return 'args: &mut [LispObject]'
+    return build_function_args(func_args)
+
+
+def build_function_args(func_args=None, **kwargs):
+    args = [build_arg(a.strip()) for a in func_args.split(',')]
+    if args == [None]:
+        return ''
+    return ', '.join(args)
+
+
+def build_c_function_return(return_type=None, **kwargs):
+    if return_type == 'void':
+        return ''
+    return ' -> ' + known_types[return_type]
+
+
+def build_c_function_comment(comment):
+    return '\n'.join('// ' + c.strip() for c in comment.split('\n'))
+
+
+def output_lisp_fn_rust_code(match):
+    lisp_fn_args = build_lisp_fn_args(**match)
+    if lisp_fn_args:
+        lisp_fn_args = '(' + lisp_fn_args + ')'
+    lisp_function_pieces = {
+        'docstring': build_docstring(**match),
+        'code': match['code'].strip(),
+        'lisp_fn_args': lisp_fn_args,
+        'function_name': build_lisp_fn_function_name(**match),
+        'function_args': build_lisp_fn_function_args(**match)
+    }
+
+    print('''{docstring}
+#[lisp_fn{lisp_fn_args}]
+pub fn {function_name}({function_args}) -> LispObject
+{code}'''.format(**lisp_function_pieces))
+
+
+def output_c_function_rust_code(match):
+    pieces = {
+        'name': match['func_name'],
+        'args': build_function_args(**match),
+        'return': build_c_function_return(**match),
+        'code': match['code'].strip(),
+        'comment': build_c_function_comment(match['comment'] or '')
+    }
+
+    print('''{comment}
+#[no_mangle]
+pub extern "C" fn {name}({args}){return}
+{code}'''.format(**pieces))
+
+
+def parse_c_definition(c_code):
+    defun_regex = re.compile(r'''^\s*DEFUN\s+\("(?P<lisp_name>[^"]+)",\s+F(?P<func_name>\w+),\s+S\w+,\s+(?P<min_args>\d),\s+(?P<max_args>\d),\s+(?P<intspec>0|"[^"]*"),
+\s+doc:\s+/\*\s+(?P<docstring>.+)\*/\s*.*\)
+\s*\((?P<func_args>[^\)]+)\)
+(?P<code>.+)''', re.DOTALL)
+
+    match = defun_regex.match(c_code)
+    if match:
+        return ('defun', match.groupdict())
+
+    c_func_regex = re.compile(r'''^\s*(?:/\*\s*(?P<comment>.+)\*/)?\s*(?:static|extern)?\s*(?P<return_type>\w+)\s*(?P<func_name>[^\)]+)\s+\((?P<func_args>[^\)]+)\)
+(?P<code>.+)''', re.DOTALL)
+
+    match = c_func_regex.match(c_code)
+    if match:
+        return ('function', match.groupdict())
+
+    return None
+
+
+def rustize(c_code):
+    parsed = parse_c_definition(c_code)
+    if parsed:
+        if parsed[0] == 'defun':
+            return output_lisp_fn_rust_code(parsed[1])
+        elif parsed[0] == 'function':
+            return output_c_function_rust_code(parsed[1])
+
+    raise SystemExit("No match found!")
+
+
+if __name__ == '__main__':
+    import sys
+
+    if len(sys.argv) > 1:
+        fp = open(sys.argv[1])
+    else:
+        fp = sys.stdin
+
+    rustize(fp.read())
