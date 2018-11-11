@@ -599,9 +599,8 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
             let framelist = unsafe { Fcopy_sequence(frame.buffer_list) };
             let prevlist = unsafe { Fnreverse(Fcopy_sequence(frame.buried_buffer_list)) };
 
-            // Remove any buffer that duplicates one in
-            // FRAMELIST or PREVLIST.
-            buffers.retain(|e| member(*e, framelist) == Qnil || member(*e, prevlist) == Qnil);
+            // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
+            buffers.retain(|e| member(*e, framelist) == Qnil && member(*e, prevlist) == Qnil);
 
             callN_raw!(Fnconc, framelist, list(&buffers), prevlist)
         }
