@@ -352,17 +352,24 @@
                    "-0x000000003ffffffffffffffe000000000000000        "))))
 
 (ert-deftest test-group-name ()
+  (should (stringp (group-name (group-gid))))
+  (should-error (group-name 'foo))
   (cond
    ((memq system-type '(windows-nt ms-dos))
-    (should (stringp (group-name (group-gid))))
-    (should-not (group-name 123456789))
-    (should-error (group-name 'foo)))
-   (t
-    (let ((list `((0 . "root")
-;;;                  (1000 . ,(user-login-name 1000))
-                  (1212345 . nil))))
-      (dolist (test list)
-        (should (equal (group-name (car test)) (cdr test)))))
-    (should-error (group-name 'foo)))))
+    (should-not (group-name 123456789)))
+   ((executable-find "getent")
+    (with-temp-buffer
+      (let (stat name)
+      (dolist (gid (list 0 1212345 (group-gid)))
+        (erase-buffer)
+        (setq stat (call-process "getent" nil '(t nil) nil "group"
+                                 (number-to-string gid)))
+        (setq name (group-name gid))
+        (goto-char (point-min))
+        (cond ((eq stat 0)
+               (if (looking-at "\\([[:alnum:]_-]+\\):")
+                   (should (string= (match-string 1) name))))
+              ((eq stat 2)
+               (should-not name)))))))))
 
 ;;; editfns-tests.el ends here
