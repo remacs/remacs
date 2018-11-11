@@ -9,10 +9,10 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
                  map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit};
 use remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt};
-use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
+use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
 
-use data::{aref, indirect_function};
+use data::{aref, indirect_function, set};
 use eval::autoload_do_load;
 use keyboard::lucid_event_type_list_p;
 use lisp::{defsubr, LispObject};
@@ -536,9 +536,9 @@ pub fn define_prefix_command(
     let map = make_sparse_keymap(name);
     unsafe { Ffset(command, map) };
     if mapvar.is_not_nil() {
-        unsafe { Fset(mapvar, map) };
+        set(mapvar.as_symbol_or_error(), map);
     } else {
-        unsafe { Fset(command, map) };
+        set(command.as_symbol_or_error(), map);
     }
     command
 }

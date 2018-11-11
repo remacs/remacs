@@ -10,12 +10,13 @@ use remacs_sys::{bitch_at_user, concat2, current_column, del_range, frame_make_p
                  globals, initial_define_key, insert_and_inherit, memory_full, replace_range,
                  run_hook, scan_newline_from_point, set_point, set_point_both, syntax_property,
                  syntaxcode, translate_char};
-use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column, Fset};
+use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
                  Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
                  Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate};
 
 use character::{self, characterp};
+use data::set;
 use editfns::{line_beginning_position, line_end_position, preceding_char};
 use frames::selected_frame;
 use keymap::{current_global_map, Ctl};
@@ -263,7 +264,10 @@ pub fn self_insert_command(n: EmacsInt) {
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
         if val == 2 {
-            unsafe { Fset(Qundo_auto__this_command_amalgamating, Qnil) };
+            set(
+                Qundo_auto__this_command_amalgamating.as_symbol_or_error(),
+                Qnil,
+            );
         }
         unsafe { frame_make_pointer_invisible(selected_frame().as_frame_or_error().as_mut()) };
     }
