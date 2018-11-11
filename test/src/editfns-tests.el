@@ -362,8 +362,9 @@
       (let (stat name)
       (dolist (gid (list 0 1212345 (group-gid)))
         (erase-buffer)
-        (setq stat (call-process "getent" nil '(t nil) nil "group"
-                                 (number-to-string gid)))
+        (setq stat (ignore-errors
+                     (call-process "getent" nil '(t nil) nil "group"
+                                   (number-to-string gid))))
         (setq name (group-name gid))
         (goto-char (point-min))
         (cond ((eq stat 0)
