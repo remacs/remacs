@@ -2,6 +2,7 @@
 name = "remacs-util"
 version = "0.1.0"
 description = "Common utility code linked by other remacs crates."
+edition = "2018"
 
 [dependencies]
 rand = "0.4.3"
