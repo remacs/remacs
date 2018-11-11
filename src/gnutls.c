@@ -30,31 +30,17 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_GNUTLS_X509_SYSTEM_TRUST
 #endif
 
-/* Although AEAD support started in GnuTLS 3.4.0 and works in 3.5.14,
-   it was broken through at least GnuTLS 3.4.10; see:
-   https://lists.gnu.org/r/emacs-devel/2017-07/msg00992.html
-   The relevant fix seems to have been made in GnuTLS 3.5.1; see:
-   https://gitlab.com/gnutls/gnutls/commit/568935848dd6b82b9315d8b6c529d00e2605e03d
-   So, require 3.5.1.  */
-#if GNUTLS_VERSION_NUMBER >= 0x030501
-# define HAVE_GNUTLS_AEAD
-#elif GNUTLS_VERSION_NUMBER < 0x030202
-/* gnutls_cipher_get_tag_size was introduced in 3.2.2, but it's only
-   relevant for AEAD ciphers.  */
-# define gnutls_cipher_get_tag_size(cipher) 0
+#if GNUTLS_VERSION_NUMBER >= 0x030200
+# define HAVE_GNUTLS_CIPHER_GET_IV_SIZE
 #endif
 
-#if GNUTLS_VERSION_NUMBER < 0x030200
-/* gnutls_cipher_get_iv_size was introduced in 3.2.0.  For the ciphers
-   available in previous versions, block size is equivalent.  */
-#define gnutls_cipher_get_iv_size(cipher) gnutls_cipher_get_block_size (cipher)
+#if GNUTLS_VERSION_NUMBER >= 0x030202
+# define HAVE_GNUTLS_CIPHER_GET_TAG_SIZE
+# define HAVE_GNUTLS_DIGEST_LIST /* also gnutls_digest_get_name */
 #endif
 
-#if GNUTLS_VERSION_NUMBER < 0x030202
-/* gnutls_digest_list and gnutls_digest_get_name were added in 3.2.2.
-   For previous versions, the mac algorithms are equivalent.  */
-# define gnutls_digest_list() ((const gnutls_digest_algorithm_t *) gnutls_mac_list ())
-# define gnutls_digest_get_name(id) gnutls_mac_get_name ((gnutls_mac_algorithm_t) id)
+#if GNUTLS_VERSION_NUMBER >= 0x030205
+# define HAVE_GNUTLS_EXT__DUMBFW
 #endif
 
 /* gnutls_mac_get_nonce_size was added in GnuTLS 3.2.0, but was
@@ -67,8 +53,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_GNUTLS_EXT_GET_NAME
 #endif
 
-#if GNUTLS_VERSION_NUMBER >= 0x030205
-# define HAVE_GNUTLS_EXT__DUMBFW
+/* Although AEAD support started in GnuTLS 3.4.0 and works in 3.5.14,
+   it was broken through at least GnuTLS 3.4.10; see:
+   https://lists.gnu.org/r/emacs-devel/2017-07/msg00992.html
+   The relevant fix seems to have been made in GnuTLS 3.5.1; see:
+   https://gitlab.com/gnutls/gnutls/commit/568935848dd6b82b9315d8b6c529d00e2605e03d
+   So, require 3.5.1.  */
+#if GNUTLS_VERSION_NUMBER >= 0x030501
+# define HAVE_GNUTLS_AEAD
 #endif
 
 #ifdef HAVE_GNUTLS
@@ -223,19 +215,17 @@ DEF_DLL_FN (const gnutls_mac_algorithm_t *, gnutls_mac_list, (void));
 DEF_DLL_FN (size_t, gnutls_mac_get_nonce_size, (gnutls_mac_algorithm_t));
 #   endif
 DEF_DLL_FN (size_t, gnutls_mac_get_key_size, (gnutls_mac_algorithm_t));
-#   ifndef gnutls_digest_list
+#   ifdef HAVE_GNUTLS_DIGEST_LIST
 DEF_DLL_FN (const gnutls_digest_algorithm_t *, gnutls_digest_list, (void));
-#   endif
-#   ifndef gnutls_digest_get_name
 DEF_DLL_FN (const char *, gnutls_digest_get_name, (gnutls_digest_algorithm_t));
 #   endif
 DEF_DLL_FN (gnutls_cipher_algorithm_t *, gnutls_cipher_list, (void));
-#   ifndef gnutls_cipher_get_iv_size
+#   ifdef HAVE_GNUTLS_CIPHER_GET_IV_SIZE
 DEF_DLL_FN (int, gnutls_cipher_get_iv_size, (gnutls_cipher_algorithm_t));
 #   endif
 DEF_DLL_FN (size_t, gnutls_cipher_get_key_size, (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (int, gnutls_cipher_get_block_size, (gnutls_cipher_algorithm_t));
-#   ifndef gnutls_cipher_get_tag_size
+#   ifdef HAVE_GNUTLS_CIPHER_GET_TAG_SIZE
 DEF_DLL_FN (int, gnutls_cipher_get_tag_size, (gnutls_cipher_algorithm_t));
 #   endif
 DEF_DLL_FN (int, gnutls_cipher_init,
@@ -365,19 +355,17 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_mac_get_nonce_size);
 #   endif
   LOAD_DLL_FN (library, gnutls_mac_get_key_size);
-#   ifndef gnutls_digest_list
+#   ifdef HAVE_GNUTLS_DIGEST_LIST
   LOAD_DLL_FN (library, gnutls_digest_list);
-#   endif
-#   ifndef gnutls_digest_get_name
   LOAD_DLL_FN (library, gnutls_digest_get_name);
 #   endif
   LOAD_DLL_FN (library, gnutls_cipher_list);
-#   ifndef gnutls_cipher_get_iv_size
+#   ifdef HAVE_GNUTLS_CIPHER_GET_IV_SIZE
   LOAD_DLL_FN (library, gnutls_cipher_get_iv_size);
 #   endif
   LOAD_DLL_FN (library, gnutls_cipher_get_key_size);
   LOAD_DLL_FN (library, gnutls_cipher_get_block_size);
-#   ifndef gnutls_cipher_get_tag_size
+#   ifdef HAVE_GNUTLS_CIPHER_GET_TAG_SIZE
   LOAD_DLL_FN (library, gnutls_cipher_get_tag_size);
 #   endif
   LOAD_DLL_FN (library, gnutls_cipher_init);
@@ -489,19 +477,17 @@ init_gnutls_functions (void)
 #    define gnutls_mac_get_nonce_size fn_gnutls_mac_get_nonce_size
 #   endif
 #  define gnutls_mac_get_key_size fn_gnutls_mac_get_key_size
-#  ifndef gnutls_digest_list
+#  ifdef HAVE_GNUTLS_DIGEST_LIST
 #   define gnutls_digest_list fn_gnutls_digest_list
-#  endif
-#  ifndef gnutls_digest_get_name
 #   define gnutls_digest_get_name fn_gnutls_digest_get_name
 #  endif
 #  define gnutls_cipher_list fn_gnutls_cipher_list
-#  ifndef gnutls_cipher_get_iv_size
+#  ifdef HAVE_GNUTLS_CIPHER_GET_IV_SIZE
 #   define gnutls_cipher_get_iv_size fn_gnutls_cipher_get_iv_size
 #  endif
 #  define gnutls_cipher_get_key_size fn_gnutls_cipher_get_key_size
 #  define gnutls_cipher_get_block_size fn_gnutls_cipher_get_block_size
-#  ifndef gnutls_cipher_get_tag_size
+#  ifdef HAVE_GNUTLS_CIPHER_GET_TAG_SIZE
 #   define gnutls_cipher_get_tag_size fn_gnutls_cipher_get_tag_size
 #  endif
 #  define gnutls_cipher_init fn_gnutls_cipher_init
@@ -1955,6 +1941,24 @@ This function may also return `gnutls-e-again', or
 
 #ifdef HAVE_GNUTLS3
 
+# ifndef HAVE_GNUTLS_CIPHER_GET_IV_SIZE
+   /* Block size is equivalent.  */
+#  define gnutls_cipher_get_iv_size(cipher) gnutls_cipher_get_block_size (cipher)
+# endif
+
+# ifndef HAVE_GNUTLS_CIPHER_GET_TAG_SIZE
+   /* Tag size is irrelevant.  */
+#  define gnutls_cipher_get_tag_size(cipher) 0
+# endif
+
+# ifndef HAVE_GNUTLS_DIGEST_LIST
+   /* The mac algorithms are equivalent.  */
+#  define gnutls_digest_list() \
+     ((gnutls_digest_algorithm_t const *) gnutls_mac_list ())
+#  define gnutls_digest_get_name(id) \
+     gnutls_mac_get_name ((gnutls_mac_algorithm_t) (id))
+# endif
+
 DEFUN ("gnutls-ciphers", Fgnutls_ciphers, Sgnutls_ciphers, 0, 0, 0,
        doc: /* Return alist of GnuTLS symmetric cipher descriptions as plists.
 The alist key is the cipher name. */)
@@ -2306,9 +2310,9 @@ name. */)
       Lisp_Object gma_symbol = intern (gnutls_mac_get_name (gma));
 
       size_t nonce_size = 0;
-#ifdef HAVE_GNUTLS_MAC_GET_NONCE_SIZE
+# ifdef HAVE_GNUTLS_MAC_GET_NONCE_SIZE
       nonce_size = gnutls_mac_get_nonce_size (gma);
-#endif
+# endif
       Lisp_Object mp = listn (CONSTYPE_HEAP, 11, gma_symbol,
 			      QCmac_algorithm_id, make_fixnum (gma),
 			      QCtype, Qgnutls_type_mac_algorithm,
