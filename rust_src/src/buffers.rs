@@ -20,6 +20,7 @@ use character::char_head_p;
 use chartable::LispCharTableRef;
 use data::Lisp_Fwd;
 use editfns::point;
+use frames::LispFrameRef;
 use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lists::{car, cdr, Flist, Fmember};
@@ -588,10 +589,10 @@ impl LispBufferOrCurrent {
 /// proper order for that frame: the buffers show in FRAME come first,
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
-pub fn buffer_list(frame: LispObject) -> LispObject {
+pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
     let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }.iter_cars_safe().map(cdr).collect();
 
-    match frame.as_frame() {
+    match frame {
         None => Flist(buffers.len() as isize, buffers.as_mut_ptr()),
 
         Some(frame) => unsafe {
@@ -600,7 +601,7 @@ pub fn buffer_list(frame: LispObject) -> LispObject {
 
             // Remove any buffer that duplicates one in
             // FRAMELIST or PREVLIST.
-            buffers.retain(|e| Fmember(*e, framelist) == Qnil || Fmember(*e, prevlist) == Qnil);
+            buffers.retain(|e| Fmember(*e, framelist) == Qnil && Fmember(*e, prevlist) == Qnil);
 
             callN_raw!(
                 Fnconc,
