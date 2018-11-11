@@ -1677,7 +1677,6 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string. */)
   SAFE_FREE ();
   return ret;
 }
-
 
 /* This is how C code calls `yes-or-no-p' and allows the user
    to redefine it.  */
