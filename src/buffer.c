@@ -892,60 +892,6 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
     }
 }
 
-/* We split this away from generate-new-buffer, because rename-buffer
-   and set-visited-file-name ought to be able to use this to really
-   rename the buffer properly.  */
-
-DEFUN ("generate-new-buffer-name", Fgenerate_new_buffer_name,
-       Sgenerate_new_buffer_name, 1, 2, 0,
-       doc: /* Return a string that is the name of no existing buffer based on NAME.
-If there is no live buffer named NAME, then return NAME.
-Otherwise modify name by appending `<NUMBER>', incrementing NUMBER
-\(starting at 2) until an unused name is found, and then return that name.
-Optional second argument IGNORE specifies a name that is okay to use (if
-it is in the sequence to be tried) even if a buffer with that name exists.
-
-If NAME begins with a space (i.e., a buffer that is not normally
-visible to users), then if buffer NAME already exists a random number
-is first appended to NAME, to speed up finding a non-existent buffer.  */)
-  (Lisp_Object name, Lisp_Object ignore)
-{
-  Lisp_Object genbase;
-
-  CHECK_STRING (name);
-
-  if ((!NILP (ignore) && !NILP (Fstring_equal (name, ignore)))
-      || NILP (Fget_buffer (name)))
-    return name;
-
-  if (SREF (name, 0) != ' ') /* See bug#1229.  */
-    genbase = name;
-  else
-    {
-      char number[sizeof "-999999"];
-
-      /* Use XINT instead of XFASTINT to work around GCC bug 80776.  */
-      int i = XINT (Frandom (make_number (1000000)));
-      eassume (0 <= i && i < 1000000);
-
-      AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
-      genbase = concat2 (name, lnumber);
-      if (NILP (Fget_buffer (genbase)))
-	return genbase;
-    }
-
-  for (ptrdiff_t count = 2; ; count++)
-    {
-      char number[INT_BUFSIZE_BOUND (ptrdiff_t) + sizeof "<>"];
-      AUTO_STRING_WITH_LEN (lnumber, number,
-			    sprintf (number, "<%"pD"d>", count));
-      Lisp_Object gentemp = concat2 (genbase, lnumber);
-      if (!NILP (Fstring_equal (gentemp, ignore))
-	  || NILP (Fget_buffer (gentemp)))
-	return gentemp;
-    }
-}
-
 
 
 /* Like Fbuffer_local_value, but return Qunbound if the variable is
@@ -5802,7 +5748,6 @@ Functions running this hook are, `get-buffer-create',
 
   defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);
-  defsubr (&Sgenerate_new_buffer_name);
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sset_buffer_modified_p);
   defsubr (&Srename_buffer);

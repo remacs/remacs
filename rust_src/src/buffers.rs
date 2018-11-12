@@ -5,9 +5,9 @@ use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-                 buffer_window_count, del_range, delete_all_overlays, drop_overlay, globals,
-                 last_per_buffer_idx, set_buffer_internal_1, specbind, unbind_to, unchain_both,
-                 update_mode_lines};
+                 buffer_window_count, concat2, del_range, delete_all_overlays, drop_overlay,
+                 globals, last_per_buffer_idx, set_buffer_internal_1, specbind, unbind_to,
+                 unchain_both, update_mode_lines};
 use remacs_sys::{pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
                  Lisp_Overlay, Lisp_Type, Vbuffer_alist};
 use remacs_sys::{windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
@@ -25,8 +25,11 @@ use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject, LiveBufferIter};
 use lists::{car, cdr, list, member};
 use marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef};
+use multibyte::LispStringRef;
 use multibyte::{multibyte_length_by_head, string_char};
 use numbers::MOST_POSITIVE_FIXNUM;
+use rand::distributions::range::Range;
+use rand::distributions::IndependentSample;
 use strings::string_equal;
 use threads::{c_specpdl_index, ThreadState};
 
@@ -1011,6 +1014,51 @@ pub fn erase_buffer() {
         // if future size is less than past size.  Use of erase-buffer
         // implies that the future text is not really related to the past text.
         cur_buf.save_length_ = LispObject::from(0);
+    }
+}
+
+/// Return a string that is the name of no existing buffer based on NAME.
+/// If there is no live buffer named NAME, then return NAME.
+/// Otherwise modify name by appending `<NUMBER>', incrementing NUMBER
+/// \(starting at 2) until an unused name is found, and then return that name.
+/// Optional second argument IGNORE specifies a name that is okay to use (if
+/// it is in the sequence to be tried) even if a buffer with that name exists.
+///
+/// If NAME begins with a space (i.e., a buffer that is not normally
+/// visible to users), then if buffer NAME already exists a random number
+/// is first appended to NAME, to speed up finding a non-existent buffer.
+#[lisp_fn(min = "1")]
+pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
+    if get_buffer(LispBufferOrName::Name(name.into())).is_none()
+        || (ignore != Qnil && string_equal(name.into(), ignore))
+    {
+        return name;
+    }
+
+    let basename = if name.byte_at(0) == b' ' {
+        let range = Range::new(0, 1000000);
+        let mut rng = rand::thread_rng();
+        // Since random only contains ascii chars, we can use
+        // mock_unibyte_string
+        let suffix = mock_unibyte_string!(format!("-{}", range.ind_sample(&mut rng)));
+        let genname = unsafe { concat2(name.into(), suffix) };
+        if get_buffer(LispBufferOrName::Name(genname)).is_none() {
+            return genname.into();
+        }
+        genname
+    } else {
+        name.into()
+    };
+
+    let mut suffix_count = 2;
+    loop {
+        let suffix = mock_unibyte_string!(format!("<{}>", suffix_count));
+        let candidate = unsafe { concat2(basename, suffix) };
+        let buf = get_buffer(LispBufferOrName::Buffer(candidate));
+        if buf.is_none() || string_equal(candidate, ignore) {
+            return candidate.into();
+        }
+        suffix_count += 1;
     }
 }
 

@@ -242,6 +242,12 @@ impl From<LispObject> for LispStringRef {
     }
 }
 
+impl From<LispObject> for Option<LispStringRef>{
+    fn from(o: LispObject) -> Self {
+        o.as_string()
+    }
+}
+
 impl From<LispStringRef> for LispObject {
     fn from(s: LispStringRef) -> Self {
         s.as_lisp_obj()
