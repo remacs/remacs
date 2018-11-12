@@ -534,6 +534,7 @@ emacs$(EXEEXT): temacs$(EXEEXT) \
 ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
 else
+	unset EMACS_HEAP_EXEC; \
 	LC_ALL=C $(RUN_TEMACS) -batch $(BUILD_DETAILS) -l loadup dump
   ifneq ($(PAXCTL_dumped),)
 	$(PAXCTL_dumped) $@
@@ -739,6 +740,7 @@ bootstrap-emacs$(EXEEXT): temacs$(EXEEXT)
 ifeq ($(CANNOT_DUMP),yes)
 	ln -f temacs$(EXEEXT) $@
 else
+	unset EMACS_HEAP_EXEC; \
 	$(RUN_TEMACS) --batch $(BUILD_DETAILS) --load loadup bootstrap
   ifneq ($(PAXCTL_dumped),)
 	$(PAXCTL_dumped) emacs$(EXEEXT)
