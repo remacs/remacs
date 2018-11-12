@@ -42,12 +42,13 @@ extern crate alloc_unexecmacosx;
 extern crate remacs_lib;
 extern crate remacs_macros;
 
+#[macro_use]
+mod eval_macros;
+
 #[cfg(test)]
 #[macro_use]
 mod functions;
 
-#[macro_use]
-mod eval_macros;
 #[macro_use]
 mod lisp;
 #[macro_use]
