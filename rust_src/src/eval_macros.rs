@@ -301,29 +301,6 @@ macro_rules! per_buffer_var_idx {
     };
 }
 
-macro_rules! mock_unibyte_string {
-    () => {
-        mock_unibyte_string!("")
-    };
-    ($string: expr) => {{
-        let strcopy = ::std::ffi::CString::new($string).unwrap();
-        let len = strcopy.as_bytes().len() as ::libc::ptrdiff_t;
-        let boxed = Box::new(::remacs_sys::Lisp_String {
-            u: ::remacs_sys::Lisp_String__bindgen_ty_1 {
-                s: ::remacs_sys::Lisp_String__bindgen_ty_1__bindgen_ty_1 {
-                    size: len,
-                    size_byte: -1,
-                    intervals: ::std::ptr::null_mut(),
-                    data: strcopy.into_raw() as *mut u8,
-                },
-            },
-        });
-
-        let ptr = ::lisp::ExternalPtr::new(Box::into_raw(boxed));
-        ::lisp::LispObject::tag_ptr(ptr, ::remacs_sys::Lisp_Type::Lisp_String)
-    }};
-}
-
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! mock_unibyte_string {
