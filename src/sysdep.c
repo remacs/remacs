@@ -150,22 +150,52 @@ static const int baud_convert[] =
 #ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
 # include <sys/personality.h>
 
-/* Disable address randomization in the current process.  Return true
-   if addresses were randomized but this has been disabled, false
-   otherwise. */
-bool
-disable_address_randomization (void)
-{
-  int pers = personality (0xffffffff);
-  if (pers < 0)
-    return false;
-  int desired_pers = pers | ADDR_NO_RANDOMIZE;
+/* If not -1, the personality that should be restored before exec.  */
+static int exec_personality;
 
-  /* Call 'personality' twice, to detect buggy platforms like WSL
-     where 'personality' always returns 0.  */
-  return (pers != desired_pers
-	  && personality (desired_pers) == pers
-	  && personality (0xffffffff) == desired_pers);
+/* Try to disable randomization if the current process needs it and
+   does not appear to have it already.  */
+int
+maybe_disable_address_randomization (bool dumping, int argc, char **argv)
+{
+  /* Undocumented Emacs option used only by this function.  */
+  static char const aslr_disabled_option[] = "--__aslr-disabled";
+
+  if (argc < 2 || strcmp (argv[1], aslr_disabled_option) != 0)
+    {
+      bool disable_aslr = dumping;
+# ifdef __PPC64__
+      disable_aslr = true;
+# endif
+      exec_personality = disable_aslr ? personality (0xffffffff) : -1;
+      if (exec_personality & ADDR_NO_RANDOMIZE)
+	exec_personality = -1;
+      if (exec_personality != -1
+	  && personality (exec_personality | ADDR_NO_RANDOMIZE) != -1)
+	{
+	  char **newargv = malloc ((argc + 2) * sizeof *newargv);
+	  if (newargv)
+	    {
+	      /* Invoke self with undocumented option.  */
+	      newargv[0] = argv[0];
+	      newargv[1] = (char *) aslr_disabled_option;
+	      memcpy (&newargv[2], &argv[1], argc * sizeof *newargv);
+	      execvp (newargv[0], newargv);
+	    }
+
+	  /* If malloc or execvp fails, warn and then try anyway.  */
+	  perror (argv[0]);
+	  free (newargv);
+	}
+    }
+  else
+    {
+      /* Our earlier incarnation already disabled ASLR.  */
+      argc--;
+      memmove (&argv[1], &argv[2], argc * sizeof *argv);
+    }
+
+  return argc;
 }
 #endif
 
@@ -177,21 +207,12 @@ int
 emacs_exec_file (char const *file, char *const *argv, char *const *envp)
 {
 #ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
-  int pers = getenv ("EMACS_HEAP_EXEC") ? personality (0xffffffff) : -1;
-  bool change_personality = 0 <= pers && pers & ADDR_NO_RANDOMIZE;
-  if (change_personality)
-    personality (pers & ~ADDR_NO_RANDOMIZE);
+  if (exec_personality != -1)
+    personality (exec_personality);
 #endif
 
   execve (file, argv, envp);
-  int err = errno;
-
-#ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
-  if (change_personality)
-    personality (pers);
-#endif
-
-  return err;
+  return errno;
 }
 
 /* If FD is not already open, arrange for it to be open with FLAGS.  */

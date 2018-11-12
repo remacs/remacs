@@ -4325,9 +4325,12 @@ struct tty_display_info;
 
 /* Defined in sysdep.c.  */
 #ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
-extern bool disable_address_randomization (void);
+extern int maybe_disable_address_randomization (bool, int, char **);
 #else
-INLINE bool disable_address_randomization (void) { return false; }
+INLINE void
+maybe_disable_address_randomization (bool dumping, int argc, char **argv)
+{
+}
 #endif
 extern int emacs_exec_file (char const *, char *const *, char *const *);
 extern void init_standard_fds (void);
