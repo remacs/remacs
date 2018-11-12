@@ -267,11 +267,13 @@ for example, (type-of 1) returns `integer'.  */)
           }
         case PVEC_MODULE_FUNCTION:
           return Qmodule_function;
+        case PVEC_XWIDGET:
+          return Qxwidget;
+        case PVEC_XWIDGET_VIEW:
+          return Qxwidget_view;
         /* "Impossible" cases.  */
 	case PVEC_MISC_PTR:
-        case PVEC_XWIDGET:
         case PVEC_OTHER:
-        case PVEC_XWIDGET_VIEW:
         case PVEC_SUB_CHAR_TABLE:
         case PVEC_FREE: ;
         }
@@ -3930,8 +3932,8 @@ syms_of_data (void)
   DEFSYM (Qmarker, "marker");
   DEFSYM (Qoverlay, "overlay");
   DEFSYM (Qfinalizer, "finalizer");
-#ifdef HAVE_MODULES
   DEFSYM (Qmodule_function, "module-function");
+#ifdef HAVE_MODULES
   DEFSYM (Quser_ptr, "user-ptr");
 #endif
   DEFSYM (Qfloat, "float");
@@ -3954,6 +3956,8 @@ syms_of_data (void)
   DEFSYM (Qfont_entity, "font-entity");
   DEFSYM (Qfont_object, "font-object");
   DEFSYM (Qterminal, "terminal");
+  DEFSYM (Qxwidget, "xwidget");
+  DEFSYM (Qxwidget_view, "xwidget-view");
 
   DEFSYM (Qdefun, "defun");
 
