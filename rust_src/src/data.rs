@@ -11,19 +11,19 @@ use crate::{
     keymap::get_keymap,
     lisp::{defsubr, is_autoload},
     lisp::{LispObject, LispSubrRef, LiveBufferIter},
-    lists::{get, memq, put},
+    lists::{get, member, memq, put},
     math::leq,
     multibyte::{is_ascii, is_single_byte_char},
-    obarray::loadhist_attach,
+    obarray::{loadhist_attach, map_obarray},
     remacs_sys,
     remacs_sys::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
-        emacs_abort, globals, set_default_internal, set_internal, wrong_choice, wrong_range,
-        CHAR_TABLE_SET, CHECK_IMPURE,
+        emacs_abort, globals, set_default_internal, set_internal, symbol_trapped_write,
+        wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
-    remacs_sys::{Fcons, Ffset, Fget, Fpurecopy},
+    remacs_sys::{Fcons, Fdelete, Ffset, Fget, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice,
@@ -31,8 +31,8 @@ use crate::{
         Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object,
         Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker,
         Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol,
-        Qt, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector, Qvoid_variable, Qwindow,
-        Qwindow_configuration,
+        Qt, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector, Qvoid_variable,
+        Qwatchers, Qwindow, Qwindow_configuration,
     },
     symbols::LispSymbolRef,
     threads::ThreadState,
@@ -691,6 +691,83 @@ pub fn set_default(symbol: LispSymbolRef, value: LispObject) -> LispObject {
         )
     };
     value
+}
+
+extern "C" fn harmonize_variable_watchers(alias: LispObject, base_variable: LispObject) {
+    if !base_variable.eq(alias)
+        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable().into())
+    {
+        alias
+            .as_symbol_or_error()
+            .set_trapped_write(base_variable.as_symbol_or_error().get_trapped_write());
+    }
+}
+
+/// Cause WATCH-FUNCTION to be called when SYMBOL is set.
+///
+/// It will be called with 4 arguments: (SYMBOL NEWVAL OPERATION WHERE).
+/// SYMBOL is the variable being changed.
+/// NEWVAL is the value it will be changed to.
+/// OPERATION is a symbol representing the kind of change, one of: `set',
+/// `let', `unlet', `makunbound', and `defvaralias'.
+/// WHERE is a buffer if the buffer-local value of the variable being
+/// changed, nil otherwise.
+///
+/// All writes to aliases of SYMBOL will call WATCH-FUNCTION too.
+#[lisp_fn]
+pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
+    let symbol = symbol.get_indirect_variable();
+
+    symbol.set_trapped_write(symbol_trapped_write::SYMBOL_TRAPPED_WRITE);
+
+    map_obarray(
+        unsafe { globals.Vobarray },
+        harmonize_variable_watchers,
+        symbol.into(),
+    );
+
+    let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
+    let mem = member(watch_function, watchers);
+
+    if mem.is_nil() {
+        put(symbol.into(), Qwatchers, unsafe {
+            Fcons(watch_function, watchers)
+        });
+    }
+}
+
+/// Undo the effect of `add-variable-watcher'.
+/// Remove WATCH-FUNCTION from the list of functions to be called when
+/// SYMBOL (or its aliases) are set.
+#[lisp_fn]
+pub fn remove_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
+    let symbol = symbol.get_indirect_variable();
+
+    let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
+    let watchers = unsafe { Fdelete(watch_function, watchers) };
+
+    if watchers.is_nil() {
+        symbol.set_trapped_write(symbol_trapped_write::SYMBOL_UNTRAPPED_WRITE);
+
+        map_obarray(
+            unsafe { globals.Vobarray },
+            harmonize_variable_watchers,
+            symbol.into(),
+        );
+    }
+
+    put(symbol.into(), Qwatchers, watchers);
+}
+
+/// Return a list of SYMBOL's active watchers.
+#[lisp_fn]
+pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
+    match symbol.get_trapped_write() {
+        symbol_trapped_write::SYMBOL_TRAPPED_WRITE => unsafe {
+            Fget(symbol.get_indirect_variable().into(), Qwatchers)
+        },
+        _ => Qnil,
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

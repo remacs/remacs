@@ -58,9 +58,18 @@ impl LispSymbolRef {
         s.redirect() == symbol_redirect::SYMBOL_VARALIAS
     }
 
-    pub fn is_constant(self) -> bool {
+    pub fn get_trapped_write(self) -> symbol_trapped_write::Type {
         let s = unsafe { self.u.s.as_ref() };
-        s.trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
+        s.trapped_write()
+    }
+
+    pub fn set_trapped_write(mut self, trap: symbol_trapped_write::Type) {
+        let s = unsafe { self.u.s.as_mut() };
+        s.set_trapped_write(trap);
+    }
+
+    pub fn is_constant(self) -> bool {
+        self.get_trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
     }
 
     pub unsafe fn get_alias(self) -> LispSymbolRef {
