@@ -1132,4 +1132,16 @@ pub fn select_window_lisp(window: LispObject, norecord: LispObject) -> LispObjec
     unsafe { select_window(window, norecord, false) }
 }
 
+/// Return top line of window WINDOW.
+/// This is the distance, in lines, between the top of WINDOW and the top
+/// of the frame's window area.  For instance, the return value is 0 if
+/// there is no window above WINDOW.
+///
+/// WINDOW must be a valid window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
+    let win: LispWindowRef = window.into();
+    win.top_line as EmacsInt
+}
+
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
