@@ -4327,9 +4327,10 @@ struct tty_display_info;
 #ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
 extern int maybe_disable_address_randomization (bool, int, char **);
 #else
-INLINE void
+INLINE int
 maybe_disable_address_randomization (bool dumping, int argc, char **argv)
 {
+  return argc;
 }
 #endif
 extern int emacs_exec_file (char const *, char *const *, char *const *);
