@@ -1109,6 +1109,37 @@ def fn(a, b, c=True):
    (should (eq (car (python-indent-context)) :inside-string))
    (should (= (python-indent-calculate-indentation) 4))))
 
+(ert-deftest python-indent-electric-comma-inside-multiline-string ()
+  "Test indentation ...."
+  (python-tests-with-temp-buffer
+   "
+a = (
+    '''\
+- foo,
+- bar
+'''
+"
+   (python-tests-look-at "- bar")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (goto-char (line-end-position))
+   (python-tests-self-insert ",")
+   (should (= (current-indentation) 0))))
+
+(ert-deftest python-indent-electric-comma-after-multiline-string ()
+  "Test indentation ...."
+  (python-tests-with-temp-buffer
+   "
+a = (
+    '''\
+- foo,
+- bar'''
+"
+   (python-tests-look-at "- bar'''")
+   (should (eq (car (python-indent-context)) :inside-string))
+   (goto-char (line-end-position))
+   (python-tests-self-insert ",")
+   (should (= (current-indentation) 0))))
+
 (ert-deftest python-indent-electric-colon-1 ()
   "Test indentation case from Bug#18228."
   (python-tests-with-temp-buffer

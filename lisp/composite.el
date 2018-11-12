@@ -338,7 +338,7 @@ chunk of text that is automatically composed.  If such a chunk is
 found closer to POS than the position that has `composition'
 property, the value is a list of FROM, TO, and a glyph-string
 that specifies how the chunk is to be composed; DETAIL-P is
-inored in this case.  See the function `composition-get-gstring'
+ignored in this case.  See the function `composition-get-gstring'
 for the format of the glyph-string."
   (let ((result (find-composition-internal pos limit string detail-p)))
     (if (and detail-p (> (length result) 3) (nth 2 result) (not (nth 3 result)))
