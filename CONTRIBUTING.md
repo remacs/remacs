@@ -17,8 +17,8 @@ Thank you for contributing to Remacs!
   This will do the work to transform the definition into Rust. You can
   then yank and paste it into the appropriate Rust file or start a new one.
   Now you need to port the body of the function.
-* Try to use types where possible. `LispObject` is analogous to a void pointer
-  in C or using the base class in a object hierarchy. Often we can do better.
+* Try to use more exact types where possible. `LispObject` allows anything,
+  and often we can do better.
 * Check for Rust compiler warnings, as CI won't go green if there
   are warnings.
 * Try to check your code with Clippy. `cargo clippy` will run the linter.
