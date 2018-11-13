@@ -16,7 +16,7 @@ use crate::{
     },
     remacs_sys::{
         make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf, specbind,
-        unbind_to, EmacsInt, Fcopy_sequence, Ffuncall,
+        unbind_to, EmacsInt, Fcopy_sequence,
     },
     symbols::symbol_value,
     textprop::get_char_property,
@@ -286,8 +286,7 @@ pub fn completing_read(
     def: LispObject,
     inherit_input_method: LispObject,
 ) -> LispObject {
-    callN_raw!(
-        Ffuncall,
+    call!(
         symbol_value(intern("completing-read-function")),
         prompt,
         collection,

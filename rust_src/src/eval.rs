@@ -566,9 +566,9 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
 
 /// Apply fn to arg.
 #[no_mangle]
-pub extern "C" fn apply1(mut func: LispObject, arg: LispObject) -> LispObject {
+pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
     if arg == Qnil {
-        Ffuncall(1, &mut func)
+        call!(func)
     } else {
         callN_raw!(Fapply, func, arg)
     }
@@ -883,9 +883,8 @@ pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
     run_hook_with_args_internal(args, funcall_nil)
 }
 
-fn funcall_nil(args: &[LispObject]) -> LispObject {
-    let mut obj_array: Vec<LispObject> = args.to_vec();
-    Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr());
+fn funcall_nil(args: &mut [LispObject]) -> LispObject {
+    funcall(args);
     Qnil
 }
 
@@ -901,7 +900,7 @@ pub extern "C" fn run_hook(hook: LispObject) -> () {
 /// FUNCALL specifies how to call each function on the hook.
 fn run_hook_with_args_internal(
     args: &mut [LispObject],
-    func: fn(&[LispObject]) -> LispObject,
+    func: fn(&mut [LispObject]) -> LispObject,
 ) -> LispObject {
     // If we are dying or still initializing,
     // don't do anything -- it would probably crash if we tried.
