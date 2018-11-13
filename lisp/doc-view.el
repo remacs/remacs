@@ -452,7 +452,7 @@ Typically \"page-%s.png\".")
         ;; file.  (TODO: We'd like to have something like that also
         ;; for other types, at least PS, but I don't know a good way
         ;; to test if a PS file is complete.)
-        (if (= 0 (call-process (executable-find "pdfinfo") nil nil nil
+        (if (= 0 (call-process "pdfinfo" nil nil nil
                                doc-view--buffer-file-name))
             (revert)
           (when (called-interactively-p 'interactive)

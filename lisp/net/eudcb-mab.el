@@ -61,8 +61,7 @@ RETURN-ATTRS is a list of attributes to return, defaulting to
       (goto-char (point-min))
       (when (or (eobp) (time-less-p eudc-buffer-time modified))
 	(erase-buffer)
-	(call-process (executable-find "contacts") nil t nil
-		      "-H" "-l" "-f" fmt-string)
+	(call-process "contacts" nil t nil "-H" "-l" "-f" fmt-string)
 	(setq eudc-buffer-time modified))
       (goto-char (point-min))
       (while (not (eobp))
