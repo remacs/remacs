@@ -3,8 +3,8 @@ GNU Emacs NEWS -- history of user-visible changes.
 Copyright (C) 2017-2018 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
-Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
-If possible, use M-x report-emacs-bug.
+Please send Emacs bug reports to 'bug-gnu-emacs@gnu.org'.
+If possible, use 'M-x report-emacs-bug'.
 
 This file is about changes in Emacs version 27.
 
@@ -13,7 +13,7 @@ See files NEWS.26, NEWS.25, ..., NEWS.18, and NEWS.1-17 for changes
 in older Emacs versions.
 
 You can narrow news to a specific version by calling 'view-emacs-news'
-with a prefix argument or by typing C-u C-h C-n.
+with a prefix argument or by typing 'C-u C-h C-n'.
 
 Temporary note:
 +++ indicates that all necessary documentation updates are complete.
@@ -27,11 +27,11 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 ** Emacs now uses GMP, the GNU Multiple Precision library.
 By default, if 'configure' does not find a suitable libgmp, it
 arranges for the included mini-gmp library to be built and used.
-The new 'configure' option --without-libgmp uses mini-gmp even if a
+The new 'configure' option '--without-libgmp' uses mini-gmp even if a
 suitable libgmp is available.
 
 ** The new configure option '--with-json' adds support for JSON using
-the Jansson library.  It is on by default; use 'configure
+the Jansson library.  It is on by default; use './configure
 --with-json=no' to build without Jansson support.  The new JSON
 functions 'json-serialize', 'json-insert', 'json-parse-string', and
 'json-parse-buffer' are typically much faster than their Lisp
@@ -44,7 +44,7 @@ support other programs.  The new configure option '--without-included-regex'
 forces etags to use the C library's regex matcher even if the regex
 substitute ordinarily would be used to work around compatibility problems.
 
-** Emacs has been ported to the -fcheck-pointer-bounds option of GCC.
+** Emacs has been ported to the '-fcheck-pointer-bounds' option of GCC.
 This causes Emacs to check bounds of some arrays addressed by its
 internal pointers, which can be helpful when debugging the Emacs
 interpreter or modules that it uses.  If your platform supports it you
@@ -54,8 +54,8 @@ can enable it when configuring, e.g., './configure CFLAGS="-g3 -O2
 ** Emacs now normally uses a C pointer type instead of a C integer
 type to implement Lisp_Object, which is the fundamental machine word
 type internal to the Emacs Lisp interpreter.  This change aims to
-catch typos and support -fcheck-pointer-bounds.  The 'configure'
-option --enable-check-lisp-object-type is therefore no longer as
+catch typos and supports '-fcheck-pointer-bounds'.  The 'configure'
+option '--enable-check-lisp-object-type' is therefore no longer as
 useful and so is no longer enabled by default in developer builds,
 to reduce differences between developer and production builds.
 
@@ -113,7 +113,7 @@ work right without some adjustment:
 Units that are ordered after 'emacs.service' will only be started
 after Emacs has finished initialization and is ready for use.
 (If your Emacs is installed in a non-standard location and you copied the
-emacs.service file to eg ~/.config/systemd/user/, you will need to copy
+emacs.service file to eg "~/.config/systemd/user/", you will need to copy
 the new version of the file again.)
 
 
@@ -123,7 +123,7 @@ the new version of the file again.)
 ** emacsclient now supports the 'EMACS_SOCKET_NAME' environment variable.
 The behavior is identical to 'EMACS_SERVER_FILE', in that the
 command-line value specified via '--socket-name' will override the
-environment, and the natural default to TMPDIR, then '/tmp', continues
+environment, and the natural default to TMPDIR, then "/tmp", continues
 to apply.
 
 +++
@@ -136,7 +136,7 @@ it resizes the echo area as needed to accommodate the full tool-tip
 text.
 
 ---
-** Show modeline tooltips only if the corresponding action applies.
+** Show mode line tooltips only if the corresponding action applies.
 Customize the option 'mode-line-default-help-echo' to restore the old
 behavior where the tooltip text is also shown when the corresponding
 action does not apply.
@@ -201,7 +201,7 @@ regular expression was previously invalid, but is now accepted:
 ** The German prefix and postfix input methods now support Capital sharp S.
 
 ---
-** New input methods hawaiian-postfix and hawaiian-prefix.
+** New input methods 'hawaiian-postfix' and 'hawaiian-prefix'.
 
 +++
 ** New function 'exec-path'.
@@ -268,7 +268,7 @@ tables which do not have any non-system abbrevs to save.
 +++
 ** The new functions and commands 'text-property-search-forward' and
 'text-property-search-backward' have been added.  These provide an
-interface that's more like functions like @code{search-forward}.
+interface that's more like functions like 'search-forward'.
 
 ---
 ** More commands support noncontiguous rectangular regions, namely
@@ -282,10 +282,10 @@ file literally, as in 'find-file-literally', which speeds up
 navigation and editing of large files.
 
 ---
-** add-dir-local-variable now uses dotted pair notation syntax
-to write alists of variables to .dir-locals.el.  This is the same
-syntax that you can see in the example of a .dir-locals.el file
-in (info "(emacs) Directory Variables")
+** 'add-dir-local-variable' now uses dotted pair notation syntax to
+write alists of variables to ".dir-locals.el".  This is the same
+syntax that you can see in the example of a ".dir-locals.el" file in
+the node "(emacs) Directory Variables" of the user manual.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
@@ -639,8 +639,8 @@ and case-sensitivity together with search strings in the search ring.
 +++
 *** The Lisp Debugger is now based on 'backtrace-mode'.
 Backtrace mode adds fontification and commands for changing the
-appearance of backtrace frames.  See the node "Backtraces" in the Elisp
-manual for documentation of the new mode and its commands.
+appearance of backtrace frames.  See the node "(elisp) Backtraces" in
+the Elisp manual for documentation of the new mode and its commands.
 
 ** Edebug
 
@@ -654,8 +654,8 @@ globally or for individual definitions.
 +++
 *** Edebug's backtrace buffer now uses 'backtrace-mode'.
 Backtrace mode adds fontification, links and commands for changing the
-appearance of backtrace frames.  See the node "Backtraces" in the Elisp
-manual for documentation of the new mode and its commands.
+appearance of backtrace frames.  See the node "(elisp) Backtraces" in
+the Elisp manual for documentation of the new mode and its commands.
 
 The binding of 'd' in Edebug's keymap is now 'edebug-pop-to-backtrace'
 which replaces 'edebug-backtrace'.  Consequently Edebug's backtrace
@@ -691,8 +691,8 @@ less verbose by removing non-essential information.
 +++
 *** ERT's backtrace buffer now uses 'backtrace-mode'.
 Backtrace mode adds fontification and commands for changing the
-appearance of backtrace frames.  See the node "Backtraces" in the Elisp
-manual for documentation of the new mode and its commands.
+appearance of backtrace frames.  See the node "(elisp) Backtraces" in
+the Elisp manual for documentation of the new mode and its commands.
 
 ** Gamegrid
 
@@ -729,7 +729,7 @@ It can be used to set any buffer as the next one to be used by
 
 ---
 *** The default value of 'nxml-sexp-element-flag' is now t.
-This means that pressing C-M-SPACE now selects the entire tree by
+This means that pressing 'C-M-SPACE' now selects the entire tree by
 default, and not just the opening element.
 
 ** Eshell
@@ -745,8 +745,8 @@ To restore the old behavior, use
 *** The function 'eshell-uniquify-list' has been renamed from
 'eshell-uniqify-list'.
 
-*** The function eshell/kill is now able to handle signal switches.
-Previously eshell/kill would fail if provided a kill signal to send to the
+*** The function 'eshell/kill' is now able to handle signal switches.
+Previously 'eshell/kill' would fail if provided a kill signal to send to the
 process.  It now accepts signals specified either by name or by its number.
 
 ** Shell
@@ -761,7 +761,7 @@ process.  It now accepts signals specified either by name or by its number.
 ** Auth-source
 
 ---
-*** The Secret Service backend supports the :create key now.
+*** The Secret Service backend supports the ':create' key now.
 
 ** Tramp
 
@@ -779,7 +779,7 @@ are obsoleted in GVFS.
 +++
 *** During user and host name completion in the minibuffer, results
 from auth-source search are taken into account.  This can be disabled
-by setting user option 'tramp-completion-use-auth-sources' to nil.
+by setting the user option 'tramp-completion-use-auth-sources' to nil.
 
 +++
 *** The user option 'tramp-ignored-file-name-regexp' allows to disable
@@ -880,36 +880,36 @@ backtrace with 'b'.
 
 ---
 ** thingatpt.el supports a new "thing" called 'uuid'.
-A symbol 'uuid' can be passed to thing-at-point and it returns the
+A symbol 'uuid' can be passed to 'thing-at-point' and it returns the
 UUID at point.
 
-
 ** Interactive automatic highlighting
+
 +++
 *** 'highlight-regexp' can now highlight subexpressions.
-The now command accepts a prefix numeric argument to choose the
+The new command accepts a prefix numeric argument to choose the
 subexpression.
 
 ** Mouse display of minor mode menu
 
 ---
-*** 'minor-mode-menu-from-indicator' now display full minor mode name.
+*** 'minor-mode-menu-from-indicator' now displays full minor mode name.
 When there is no menu for a mode, display the mode name after the
 indicator instead of just the indicator (which is sometimes cryptic).
 
 
 * New Modes and Packages in Emacs 27.1
 
-** multifile.el lets one setup multifile operations like search&replace
+** multifile.el lets one setup multifile operations like search&replace.
 
 +++
 ** Emacs can now visit files in archives as if they were directories.
 This feature uses Tramp and works only on systems which support GVFS,
-i.e. GNU/Linux, roughly spoken.  See the chapter "(tramp) Archive file
+i.e. GNU/Linux, roughly spoken.  See the node "(tramp) Archive file
 names" in the Tramp manual for full documentation of these facilities.
 
 +++
-** New library for writing JSONRPC applications (https://jsonrpc.org)
+** New library for writing JSONRPC applications (https://jsonrpc.org).
 The 'jsonrpc' library enables writing Emacs Lisp applications that
 rely on this protocol.  Since the protocol is designed to be
 transport-agnostic, the library provides an API to implement new
@@ -921,19 +921,19 @@ used by the Language Server Protocol (LSP), is readily available.
 ** Backtrace mode improves viewing of Elisp backtraces.
 Backtrace mode adds pretty printing, fontification and ellipsis
 expansion to backtrace buffers produced by the Lisp debugger, Edebug
-and ERT.  See the node "Backtraces" in the Elisp manual for
+and ERT.  See the node "(elisp) Backtraces" in the Elisp manual for
 documentation of the new mode and its commands.
 
 
 * Incompatible Lisp Changes in Emacs 27.1
 
-** define-fringe-bitmap is always defined, even when Emacs is built
+** 'define-fringe-bitmap' is always defined, even when Emacs is built
 without any GUI support.
 
 ---
 ** Just loading a theme's file no longer activates the theme's settings.
 Loading a theme with 'M-x load-theme' still activates the theme, as it
-did before.  However, loading the theme's file with "M-x load-file",
+did before.  However, loading the theme's file with 'M-x load-file',
 or using 'require' or 'load' in a Lisp program, doesn't actually apply
 the theme's settings until you either invoke 'M-x enable-theme' or
 type 'M-x load-theme'.  (In a Lisp program, calling 'enable-theme' or
@@ -946,7 +946,7 @@ default applied immediately.
 The variable 'custom--inhibit-theme-enable' controls this behavior;
 its default value changed in Emacs 27.1.
 
-** The 'repetitions' argument of 'benchmark-run' can now also be a variable.
+** The REPETITIONS argument of 'benchmark-run' can now also be a variable.
 
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
 longer defaults to 'buffer-file-name'.
@@ -1011,7 +1011,7 @@ default-directory-alist, dired-default-directory,
 dired-default-directory-alist, dired-enable-local-variables,
 dired-hack-local-variables, dired-local-variables-file, dired-omit-here-always.
 
-** garbage collection no longer treats miscellaneous objects specially;
+** Garbage collection no longer treats miscellaneous objects specially;
 they are now allocated like any other pseudovector.  As a result, the
 'garbage-collect' and 'memory-use-count' functions no longer return a
 'misc' component, and the 'misc-objects-consed' variable has been
@@ -1020,7 +1020,7 @@ removed.
 
 * Lisp Changes in Emacs 27.1
 
-** lookup-key can take a list of keymaps as argument.
+** 'lookup-key' can take a list of keymaps as argument.
 
 +++
 ** 'condition-case' now accepts 't' to match any error symbol.
@@ -1054,23 +1054,24 @@ overflow error if this limit is exceeded.
 Several primitive functions formerly returned floats or lists of
 integers to represent integers that did not fit into fixnums.  These
 functions now simply return integers instead.  Affected functions
-include functions like encode-char that compute code-points, functions
-like file-attributes that compute file sizes and other attributes,
-functions like process-id that compute process IDs, and functions like
-user-uid and group-gid that compute user and group IDs.
+include functions like 'encode-char' that compute code-points, functions
+like 'file-attributes' that compute file sizes and other attributes,
+functions like 'process-id' that compute process IDs, and functions like
+'user-uid' and 'group-gid' that compute user and group IDs.
 
 +++
 ** Although the default timestamp format is still (HI LO US PS),
 it is planned to change in a future Emacs version, to exploit bignums.
 The documentation has been updated to mention that the timestamp
 format may change and that programs should use functions like
-format-time-string, decode-time, and encode-time rather than probing
-the innards of a timestamp directly, or creating a timestamp by hand.
+'format-time-string', 'decode-time', and 'encode-time' rather than
+probing the innards of a timestamp directly, or creating a timestamp
+by hand.
 
 +++
-** encode-time supports a new API (encode-time TIME &optional FORM).
+** 'encode-time' supports a new API '(encode-time TIME &optional FORM)'.
 This can convert decoded times and Lisp time values to Lisp timestamps
-of various forms, including a new timestamp form (TICKS . HZ), where
+of various forms, including a new timestamp form '(TICKS . HZ)', where
 TICKS is an integer and HZ is a positive integer denoting a clock
 frequency.  The old encode-time API is still supported.
 
@@ -1082,7 +1083,7 @@ floating-point operators do.
 +++
 ** New function 'time-equal-p' compares time values for equality.
 
-** define-minor-mode automatically documents the meaning of ARG.
+** 'define-minor-mode' automatically documents the meaning of ARG.
 
 +++
 ** The function 'recenter' now accepts an additional optional argument.
@@ -1125,8 +1126,8 @@ On terminal emulators that support the feature, Emacs can now support
 ** Window-specific face remapping.
 Face specifications (of the kind used in 'face-remapping-alist')
 now support filters, allowing faces to vary between different windows
-displaying the same buffer.  See the Info node "Face Remapping" of the
-Emacs Lisp Reference manual for more detail.
+displaying the same buffer.  See the node "(elisp) Face Remapping"
+of the Emacs Lisp Reference manual for more detail.
 
 +++
 ** Special handling of buffer-local 'window-size-change-functions'.
@@ -1134,23 +1135,23 @@ A buffer-local value of this hook is now run only if at least one
 window showing the buffer has changed its size.
 
 +++
-** The function assoc-delete-all now takes an optional predicate argument.
+** The function 'assoc-delete-all' now takes an optional predicate argument.
 
 +++
 ** New function 'string-distance' to calculate the Levenshtein distance
 between two strings.
 
 ** 'print-quoted' now defaults to t, so if you want to see
-(quote x) instead of 'x you will have to bind it to nil where applicable.
+'(quote x)' instead of 'x you will have to bind it to nil where applicable.
 
 +++
-** Numbers formatted via %o or %x may now be formatted as signed integers.
-This avoids problems in calls like (read (format "#x%x" -1)), and is
+** Numbers formatted via '%o' or '%x' may now be formatted as signed integers.
+This avoids problems in calls like '(read (format "#x%x" -1))', and is
 more compatible with bignums, a planned feature.  To get this
-behavior, set the experimental variable binary-as-unsigned to nil,
+behavior, set the experimental variable 'binary-as-unsigned' to nil,
 and if the new behavior breaks your code please email
-32252@debbugs.gnu.org.  Because %o and %x can now format signed
-integers, they now support the + and space flags.
+32252@debbugs.gnu.org.  Because '%o' and '%x' can now format signed
+integers, they now support the '+' and space flags.
 
 ** To avoid confusion caused by "smart quotes", the reader signals an
 error when reading Lisp symbols which begin with one of the following
@@ -1163,7 +1164,7 @@ backslash.  For example:
 
 +++
 ** Omitting variables after '&optional' and '&rest' is now allowed.
-For example (defun foo (&optional)) is no longer an error.  This is
+For example '(defun foo (&optional))' is no longer an error.  This is
 sometimes convenient when writing macros.  See the ChangeLog entry
 titled "Allow '&rest' or '&optional' without following variable
 (Bug#29165)" for a full listing of which arglists are accepted across
@@ -1172,8 +1173,8 @@ versions.
 ** Internal parsing commands now use 'syntax-ppss' and disregard
 'open-paren-in-column-0-is-defun-start'.  This affects mostly things like
 'forward-comment', 'scan-sexps', and 'forward-sexp' when parsing backward.
-The new variable 'comment-use-syntax-ppss' can be set to nil to recover the old
-behavior if needed.
+The new variable 'comment-use-syntax-ppss' can be set to nil to recover
+the old behavior if needed.
 
 ** The 'server-name' and 'server-socket-dir' variables are set when a
 socket has been passed to Emacs.
@@ -1182,6 +1183,10 @@ socket has been passed to Emacs.
 ** The 'file-system-info' function is now available on all platforms.
 instead of just Microsoft platforms.  This fixes a 'get-free-disk-space'
 bug on OS X 10.8 and later.
+
+---
+** The function 'get-free-disk-space' returns now a non-nil value for
+remote systems, which support this check.
 
 +++
 ** 'memory-limit' now returns a better estimate of memory consumption.
@@ -1193,18 +1198,14 @@ each around a sequence of lisp forms, given a region.  This is
 useful when a function makes a possibly large number of repetitive
 changes and the change hooks are time consuming.
 
----
-** The function 'get-free-disk-space' returns now a non-nil value for
-remote systems, which support this check.
-
 +++
 ** 'eql', 'make-hash-table', etc. now treat NaNs consistently.
 Formerly, some of these functions ignored signs and significands of
 NaNs.  Now, all these functions treat NaN signs and significands as
-significant.  For example, (eql 0.0e+NaN -0.0e+NaN) now returns nil
+significant.  For example, '(eql 0.0e+NaN -0.0e+NaN)' now returns nil
 because the two NaNs have different signs; formerly it returned t.
 Also, Emacs now reads and prints NaN significands; e.g., if X is a
-NaN, (format "%s" X) now returns "0.0e+NaN", "1.0e+NaN", etc.,
+NaN, '(format "%s" X)' now returns "0.0e+NaN", "1.0e+NaN", etc.,
 depending on X's significand.
 
 +++
@@ -1212,14 +1213,14 @@ depending on X's significand.
 If the optional third argument is non-nil, 'make-string' will produce
 a multibyte string even if its second argument is an ASCII character.
 
-** (format "%d" X) no longer mishandles a floating-point number X that
+** '(format "%d" X)' no longer mishandles a floating-point number X that
 does not fit in a machine integer.
 
 +++
-** In the DST slot, encode-time and parse-time-string now return -1
+** In the DST slot, 'encode-time' and 'parse-time-string' now return -1
 if it is not known whether daylight saving time is in effect.
-Formerly they were inconsistent: encode-time returned t in this
-situation, whereas parse-time-string returned nil.  Now they
+Formerly they were inconsistent: 'encode-time' returned t in this
+situation, whereas 'parse-time-string' returned nil.  Now they
 consistently use use nil to mean that DST is not in effect, and use -1
 to mean that it is not known whether DST is in effect.
 
@@ -1240,23 +1241,23 @@ file name extensions.
 
 *** The default way the list of possible external viewers for MIME
 types is sorted and chosen has changed.  Earlier, the most specific
-viewer was chosen, even if there was a general override in ~/.mailcap.
-For instance, if /etc/mailcap has an entry for image/gif, that one
-will be chosen even if you have an entry for image/* in your
-~/.mailcap file.  But with the new method, entries from ~/.mailcap
+viewer was chosen, even if there was a general override in "~/.mailcap".
+For instance, if "/etc/mailcap" has an entry for "image/gif", that one
+will be chosen even if you have an entry for "image/*" in your
+"~/.mailcap" file.  But with the new method, entries from "~/.mailcap"
 overrides all system and Emacs-provided defaults.  To get the old
 method back, set 'mailcap-prefer-mailcap-viewers' to nil.
 
 ** URL
 
-*** The file: handler no longer looks for index.html in directories if
-you ask it for a file:///dir URL.  Since this is a low-level library,
-such decisions (if they are to be made at all) are left to
-higher-level functions.
+*** The 'file:' handler no longer looks for "index.html" in
+directories if you ask it for a "file:///dir" URL.  Since this is a
+low-level library, such decisions (if they are to be made at all) are
+left to higher-level functions.
 
-** image-mode
+** Image mode
 
-*** image-mode started using ImageMagick by default for all images
+*** 'image-mode' started using ImageMagick by default for all images
 some years back.  It now respects 'imagemagick-types-inhibit' as a way
 to disable that.
 
