@@ -838,7 +838,8 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
         .find(|buf| {
             let buf_truename = buf.truename();
             buf_truename.is_string() && string_equal(buf_truename, filename)
-        }).into()
+        })
+        .into()
 }
 
 // to be removed once all references in C are ported
