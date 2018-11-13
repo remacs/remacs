@@ -758,9 +758,10 @@ nil (meaning `default-directory') as the associated list element."
   ;; do end up using a superficially different directory.
   (setq dir (expand-file-name dir))
   (if (not (file-directory-p dir))
-      (if (file-exists-p dir)
-	  (error "%s is not a directory" dir)
-	(error "%s: no such directory" dir))
+      (error (if (file-exists-p dir)
+	         "%s is not a directory"
+               "%s: no such directory")
+             dir)
     (unless (file-accessible-directory-p dir)
       (error "Cannot cd to %s:  Permission denied" dir))
     (setq default-directory dir)
@@ -1895,7 +1896,7 @@ afterwards (so long as the home directory does not change;
 if you want to permanently change your home directory after having
 started Emacs, set `abbreviated-home-dir' to nil so it will be recalculated)."
   ;; Get rid of the prefixes added by the automounter.
-  (save-match-data
+  (save-match-data                      ;FIXME: Why?
     (if (and automount-dir-prefix
 	     (string-match automount-dir-prefix filename)
 	     (file-exists-p (file-name-directory
@@ -3456,6 +3457,8 @@ return as the symbol specifying the mode."
 		 (let* ((key (intern (match-string 1)))
 			(val (save-restriction
 			       (narrow-to-region (point) end)
+                               ;; As a defensive measure, we do not allow
+                               ;; circular data in the file-local data.
 			       (let ((read-circle nil))
 				 (read (current-buffer)))))
 			;; It is traditional to ignore
@@ -3665,6 +3668,8 @@ local variables, but directory-local variables may still be applied."
 		      ;; Read the variable value.
 		      (skip-chars-forward "^:")
 		      (forward-char 1)
+                      ;; As a defensive measure, we do not allow
+                      ;; circular data in the file-local data.
 		      (let ((read-circle nil))
 			(setq val (read (current-buffer))))
 		      (if (eq handle-mode t)
@@ -4110,6 +4115,8 @@ Return the new class name, which is a symbol named DIR."
           (insert-file-contents file)
           (let ((newvars
                  (condition-case-unless-debug nil
+                     ;; As a defensive measure, we do not allow
+                     ;; circular data in the file/dir-local data.
                      (let ((read-circle nil))
                        (read (current-buffer)))
                    (end-of-file nil))))
@@ -7154,7 +7161,7 @@ only these files will be asked to be saved."
     (if (symbolp (car file-arg-indices))
 	(setq method (pop file-arg-indices)))
     ;; Strip off the /: from the file names that have it.
-    (save-match-data
+    (save-match-data                    ;FIXME: Why?
       (while (consp file-arg-indices)
 	(let ((pair (nthcdr (car file-arg-indices) arguments)))
 	  (when (car pair)
