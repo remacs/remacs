@@ -497,6 +497,7 @@ Return non-nil in the case where no autoloads were added at point."
 Standard prefixes won't be registered anyway.  I.e. if a file \"foo.el\" defines
 variables or functions that use \"foo-\" as prefix, that will not be registered.
 But all other prefixes will be included.")
+(put 'autoload-compute-prefixes 'safe #'booleanp)
 
 (defconst autoload-def-prefixes-max-entries 5
   "Target length of the list of definition prefixes per file.

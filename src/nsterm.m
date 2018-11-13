@@ -9152,9 +9152,9 @@ ns_xlfd_to_fontname (const char *xlfd)
   const char *ret;
 
   if (!strncmp (xlfd, "--", 2))
-    sscanf (xlfd, "--%*[^-]-%[^-]179-", name);
+    sscanf (xlfd, "--%*[^-]-%179[^-]-", name);
   else
-    sscanf (xlfd, "-%*[^-]-%[^-]179-", name);
+    sscanf (xlfd, "-%*[^-]-%179[^-]-", name);
 
   /* stopgap for malformed XLFD input */
   if (strlen (name) == 0)
