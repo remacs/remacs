@@ -1096,18 +1096,7 @@ the root directory.  */)
 
 	  newdir = get_homedir ();
 	  nm++;
-#ifdef WINDOWSNT
-	  if (newdir[0])
-	    {
-	      char newdir_utf8[MAX_UTF8_PATH];
-
-	      filename_from_ansi (newdir, newdir_utf8);
-	      tem = make_unibyte_string (newdir_utf8, strlen (newdir_utf8));
-	      newdir = SSDATA (tem);
-	    }
-	  else
-#endif
-	    tem = build_string (newdir);
+	  tem = build_string (newdir);
 	  newdirlim = newdir + SBYTES (tem);
 	  /* get_homedir may return a unibyte string, which will bite us
 	     if we expect the directory to be multibyte.  */
@@ -1669,6 +1658,19 @@ char const *
 get_homedir (void)
 {
   char const *home = egetenv ("HOME");
+
+#ifdef WINDOWSNT
+  /* getpw* functions return UTF-8 encoded file names, whereas egetenv
+     returns strings in locale encoding, so we need to convert for
+     consistency.  */
+  char homedir_utf8[MAX_UTF8_PATH];
+  if (home)
+    {
+      filename_from_ansi (home, homedir_utf8);
+      home = homedir_utf8;
+    }
+#endif
+
   if (!home)
     {
       static char const *userenv[] = {"LOGNAME", "USER"};
