@@ -2,6 +2,7 @@
 name = "remacs-macros"
 version = "0.1.0"
 description = "Procedural macro used to generate definitions for lisp native functions."
+edition = "2018"
 
 [lib]
 path = "lib.rs"

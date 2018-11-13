@@ -1,23 +1,29 @@
 //! Lisp parsing and input streams.
 
+use field_offset::FieldOffset;
 use libc;
 use std::ffi::CString;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys;
-use remacs_sys::{build_string, read_internal_start, readevalloop, specbind, staticpro,
-                 symbol_redirect, unbind_to, Fcons};
-use remacs_sys::{globals, EmacsInt};
-use remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp};
 
-use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj,
-           Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd,
-           Lisp_Objfwd};
-use field_offset::FieldOffset;
-use lisp::{defsubr, LispObject};
-use obarray::{intern, intern_c_string_1};
-use threads::{c_specpdl_index, ThreadState};
+use crate::{
+    data::{
+        Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Fwd_Bool, Lisp_Fwd_Buffer_Obj,
+        Lisp_Fwd_Int, Lisp_Fwd_Kboard_Obj, Lisp_Fwd_Obj, Lisp_Intfwd, Lisp_Kboard_Objfwd,
+        Lisp_Objfwd,
+    },
+    lisp::{defsubr, LispObject},
+    obarray::{intern, intern_c_string_1},
+    remacs_sys,
+    remacs_sys::{
+        build_string, read_internal_start, readevalloop, specbind, staticpro, symbol_redirect,
+        unbind_to, Fcons,
+    },
+    remacs_sys::{globals, EmacsInt},
+    remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
+    threads::{c_specpdl_index, ThreadState},
+};
 
 // Define an "integer variable"; a symbol whose value is forwarded to a
 // C variable of type EMACS_INT.  Sample call (with "xx" to fool make-docfile):

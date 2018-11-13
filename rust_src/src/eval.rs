@@ -3,29 +3,34 @@
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{backtrace_debug_on_exit, build_string, call_debugger, check_cons_list,
-                 do_debug_on_call, eval_sub, find_symbol_value, funcall_lambda, funcall_subr,
-                 globals, list2, maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
-                 record_unwind_save_match_data, specbind, unbind_to, COMPILEDP, MODULE_FUNCTIONP};
-use remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled};
-use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Fload, Fpurecopy};
-use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
-                 Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda,
-                 Qmacro, Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound,
-                 Qvariable_documentation, Qvoid_function, Qwrong_number_of_arguments};
 
-use remacs_sys::{Vautoload_queue, Vrun_hooks};
-
-use data::{defalias, indirect_function, indirect_function_lisp, set, set_default};
-use lisp::{defsubr, is_autoload};
-use lisp::{LispObject, LispSubrRef};
-use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons};
-use multibyte::LispStringRef;
-use obarray::loadhist_attach;
-use objects::equal;
-use symbols::{fboundp, symbol_function, LispSymbolRef};
-use threads::{c_specpdl_index, ThreadState};
-use vectors::length;
+use crate::{
+    data::{defalias, indirect_function, indirect_function_lisp, set, set_default},
+    lisp::{defsubr, is_autoload},
+    lisp::{LispObject, LispSubrRef},
+    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons},
+    multibyte::LispStringRef,
+    obarray::loadhist_attach,
+    objects::equal,
+    remacs_sys::{
+        backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
+        eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals, list2, maybe_gc,
+        maybe_quit, record_in_backtrace, record_unwind_protect, record_unwind_save_match_data,
+        specbind, unbind_to, COMPILEDP, MODULE_FUNCTIONP,
+    },
+    remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled},
+    remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Fload, Fpurecopy},
+    remacs_sys::{
+        QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
+        Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
+        Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation, Qvoid_function,
+        Qwrong_number_of_arguments,
+    },
+    remacs_sys::{Vautoload_queue, Vrun_hooks},
+    symbols::{fboundp, symbol_function, LispSymbolRef},
+    threads::{c_specpdl_index, ThreadState},
+    vectors::length,
+};
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   NOTE!!! Every function that can call EVAL must protect its args   *

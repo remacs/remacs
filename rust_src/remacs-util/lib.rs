@@ -10,4 +10,4 @@ extern crate syn;
 mod attributes;
 
 // Used by remacs-macros and remacs-lib
-pub use attributes::parse_lisp_fn;
+pub use self::attributes::parse_lisp_fn;

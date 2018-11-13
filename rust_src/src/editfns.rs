@@ -8,32 +8,41 @@ use std;
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::EmacsInt;
-use remacs_sys::{buffer_overflow, build_string, current_message, downcase,
-                 find_before_next_newline, find_field, find_newline, globals, insert,
-                 insert_and_inherit, insert_from_buffer, make_buffer_string_both,
-                 make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1,
-                 record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
-                 save_restriction_restore, save_restriction_save, scan_newline_from_point,
-                 set_buffer_internal_1, set_point, set_point_both, unbind_to,
-                 update_buffer_properties};
-use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
-                 Fx_popup_dialog};
-use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt};
-
-use buffers::{current_buffer, LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX};
-use character::{char_head_p, dec_pos};
-use eval::progn;
-use lisp::{defsubr, LispObject};
-use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
-             set_point_from_marker};
-use multibyte::{is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
-                write_codepoint, Codepoint, LispStringRef, MAX_MULTIBYTE_LENGTH};
-use numbers::LispNumber;
-use textprop::get_char_property;
-use threads::{c_specpdl_index, ThreadState};
-use util::clip_to_bounds;
-use windows::selected_window;
+use crate::{
+    buffers::current_buffer,
+    buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
+    character::{char_head_p, dec_pos},
+    eval::progn,
+    lisp::{defsubr, LispObject},
+    marker::{
+        buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
+        set_point_from_marker,
+    },
+    multibyte::{
+        is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
+        write_codepoint, MAX_MULTIBYTE_LENGTH,
+    },
+    multibyte::{Codepoint, LispStringRef},
+    numbers::LispNumber,
+    remacs_sys::EmacsInt,
+    remacs_sys::{
+        buffer_overflow, build_string, current_message, downcase, find_before_next_newline,
+        find_field, find_newline, globals, insert, insert_and_inherit, insert_from_buffer,
+        make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
+        message1, record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, unbind_to, update_buffer_properties,
+    },
+    remacs_sys::{
+        Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
+        Fx_popup_dialog,
+    },
+    remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
+    textprop::get_char_property,
+    threads::{c_specpdl_index, ThreadState},
+    util::clip_to_bounds,
+    windows::selected_window,
+};
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).

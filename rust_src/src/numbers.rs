@@ -4,11 +4,13 @@ use rand::{Rng, SeedableRng, StdRng};
 use std::sync::Mutex;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG};
-use remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump};
 
-use lisp::defsubr;
-use lisp::LispObject;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::{EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG},
+    remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump},
+};
 
 lazy_static! {
     static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());

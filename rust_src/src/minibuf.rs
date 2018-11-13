@@ -1,21 +1,27 @@
 //! Minibuffer input and completion.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
-                 Qminibuffer_history, Qnil, Qt, Vminibuffer_list};
-use remacs_sys::{make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf,
-                 specbind, unbind_to, EmacsInt, Fcopy_sequence, Ffuncall};
 
-use buffers::{current_buffer, LispBufferOrName};
-use editfns::field_end;
-use keymap::get_keymap;
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::{car_safe, cdr_safe, memq};
-use obarray::{intern, lisp_intern};
-use symbols::symbol_value;
-use textprop::get_char_property;
-use threads::{c_specpdl_index, ThreadState};
+use crate::{
+    buffers::{current_buffer, LispBufferOrName},
+    editfns::field_end,
+    keymap::get_keymap,
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::{car_safe, cdr_safe, memq},
+    obarray::{intern, lisp_intern},
+    remacs_sys::{
+        globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
+        Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
+    },
+    remacs_sys::{
+        make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf, specbind,
+        unbind_to, EmacsInt, Fcopy_sequence, Ffuncall,
+    },
+    symbols::symbol_value,
+    textprop::get_char_property,
+    threads::{c_specpdl_index, ThreadState},
+};
 
 /// Return t if BUFFER is a minibuffer.
 /// No argument or nil as argument means use current buffer as BUFFER.

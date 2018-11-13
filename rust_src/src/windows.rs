@@ -5,24 +5,30 @@ use std::ptr;
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::globals;
-use remacs_sys::{estimate_mode_line_height, minibuf_level,
-                 minibuf_selected_window as current_minibuf_window, scroll_command, select_window,
-                 selected_window as current_window, set_buffer_internal, set_window_hscroll,
-                 update_mode_lines, window_body_width, window_list_1, window_menu_bar_p,
-                 window_tool_bar_p, wset_redisplay};
-use remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
-                 Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 
-use editfns::{goto_char, point};
-use frames::{frame_live_or_selected, selected_frame, LispFrameRef};
-use interactive::prefix_numeric_value;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use lists::{assq, setcdr};
-use marker::{marker_position_lisp, set_marker_restricted};
-use threads::ThreadState;
+use crate::{
+    editfns::{goto_char, point},
+    frames::{frame_live_or_selected, selected_frame, LispFrameRef},
+    interactive::prefix_numeric_value,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    lists::{assq, setcdr},
+    marker::{marker_position_lisp, set_marker_restricted},
+    remacs_sys::globals,
+    remacs_sys::{
+        estimate_mode_line_height, minibuf_level,
+        minibuf_selected_window as current_minibuf_window, scroll_command, select_window,
+        selected_window as current_window, set_buffer_internal, set_window_hscroll,
+        update_mode_lines, window_body_width, window_list_1, window_menu_bar_p, window_tool_bar_p,
+        wset_redisplay,
+    },
+    remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window},
+    remacs_sys::{
+        Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone, Qwindow_live_p,
+        Qwindow_valid_p, Qwindowp,
+    },
+    threads::ThreadState,
+};
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
@@ -173,7 +179,7 @@ impl LispWindowRef {
         self.is_live()
             && !self.is_minibuffer()
             && !self.is_pseudo()
-            && window_mode_line_format.ne(Qnone)
+            && !window_mode_line_format.eq(Qnone)
             && (window_mode_line_format.is_not_nil()
                 || self
                     .contents
@@ -203,7 +209,7 @@ impl LispWindowRef {
         self.is_live()
             && !self.is_minibuffer()
             && !self.is_pseudo()
-            && window_header_line_format.ne(Qnone)
+            && !window_header_line_format.eq(Qnone)
             && (window_header_line_format.is_not_nil()
                 || (self.contents.as_buffer_or_error().header_line_format_).is_not_nil())
             && self.pixel_height > height
@@ -760,7 +766,7 @@ pub fn window_list(
         .as_window()
         .unwrap_or_else(|| panic!("Invalid window reference."));
 
-    if f_obj.ne(w_ref.frame) {
+    if !f_obj.eq(w_ref.frame) {
         error!("Window is on a different frame");
     }
 

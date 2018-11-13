@@ -7,12 +7,14 @@ use libc::{c_int, c_long, time_t};
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
-use remacs_sys::{lisp_time, EmacsInt};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::list;
-use numbers::MOST_NEGATIVE_FIXNUM;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::list,
+    numbers::MOST_NEGATIVE_FIXNUM,
+    remacs_sys::{lisp_time, EmacsInt},
+};
 
 const LO_TIME_BITS: i32 = 16;
 

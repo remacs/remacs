@@ -1,8 +1,10 @@
 use remacs_macros::lisp_fn;
 
-use lisp::{defsubr, LispObject};
-use objects::eq;
-use remacs_sys::Qcase_table;
+use crate::{
+    lisp::{defsubr, LispObject},
+    objects::eq,
+    remacs_sys::Qcase_table,
+};
 
 /// Return t if OBJECT is a case table.
 /// See `set-case-table' for more information on these data structures.

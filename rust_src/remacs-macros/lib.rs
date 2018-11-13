@@ -1,4 +1,5 @@
 #![recursion_limit = "128"]
+#![feature(extern_crate_item_prelude)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -33,15 +34,15 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let max_args = function.args.len() as i16;
     let intspec = if let Some(intspec) = lisp_fn_args.intspec {
         let cbyte_intspec = CByteLiteral(intspec.as_str());
-        quote!{ (#cbyte_intspec).as_ptr() as *const ::libc::c_char }
+        quote!{ (#cbyte_intspec).as_ptr() as *const libc::c_char }
     } else {
-        quote!{ ::std::ptr::null() }
+        quote!{ std::ptr::null() }
     };
 
     match function.fntype {
         function::LispFnType::Normal(_) => {
             for ident in function.args {
-                let arg = quote! { #ident: ::lisp::LispObject, };
+                let arg = quote! { #ident: crate::lisp::LispObject, };
                 cargs.append_all(arg);
 
                 let arg = quote! { (#ident).into(), };
@@ -50,20 +51,20 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         }
         function::LispFnType::Many => {
             let args = quote! {
-                nargs: ::libc::ptrdiff_t,
-                args: *mut ::lisp::LispObject,
+                nargs: libc::ptrdiff_t,
+                args: *mut crate::lisp::LispObject,
             };
             cargs.append_all(args);
 
             let b = quote! {
                 let args = unsafe {
-                    ::std::slice::from_raw_parts_mut::<::lisp::LispObject>(
+                    std::slice::from_raw_parts_mut::<crate::lisp::LispObject>(
                         args, nargs as usize)
                 };
             };
             body.append_all(b);
 
-            let arg = quote! { unsafe { ::std::mem::transmute(args) } };
+            let arg = quote! { unsafe { std::mem::transmute(args) } };
             rargs.append_all(arg);
         }
     }
@@ -100,15 +101,15 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     } else {
         match function.fntype {
             function::LispFnType::Normal(_) => quote! { #max_args },
-            function::LispFnType::Many => quote! { ::lisp::MANY  },
+            function::LispFnType::Many => quote! { crate::lisp::MANY  },
         }
     };
     let symbol_name = CByteLiteral(&lisp_fn_args.name);
 
     if cfg!(windows) {
         windows_header = quote!{
-            | (::std::mem::size_of::<::remacs_sys::Lisp_Subr>()
-               / ::std::mem::size_of::<::remacs_sys::EmacsInt>()) as ::libc::ptrdiff_t
+            | (std::mem::size_of::<crate::remacs_sys::Lisp_Subr>()
+               / std::mem::size_of::<crate::remacs_sys::EmacsInt>()) as libc::ptrdiff_t
         };
     }
 
@@ -116,39 +117,40 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         #[no_mangle]
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[allow(clippy::transmute_ptr_to_ptr)]
-        pub extern "C" fn #fname(#cargs) -> ::lisp::LispObject {
+        pub extern "C" fn #fname(#cargs) -> crate::lisp::LispObject {
             #body
 
             let ret = #rname(#rargs);
             #[allow(unreachable_code)]
-            ::lisp::LispObject::from(ret)
+            crate::lisp::LispObject::from(ret)
         }
 
         lazy_static! {
-            pub static ref #sname: ::lisp::LispSubrRef = {
-                let subr = ::remacs_sys::Lisp_Subr {
-                    header: ::remacs_sys::vectorlike_header {
-                        size: ((::remacs_sys::pvec_type::PVEC_SUBR as ::libc::ptrdiff_t)
-                               << ::remacs_sys::More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS)
+            pub static ref #sname: crate::lisp::LispSubrRef = {
+                let subr = crate::remacs_sys::Lisp_Subr {
+                    header: crate::remacs_sys::vectorlike_header {
+                        size: ((crate::remacs_sys::pvec_type::PVEC_SUBR as libc::ptrdiff_t)
+                               << crate::remacs_sys::More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS)
                             #windows_header,
                     },
-                    function: ::remacs_sys::Lisp_Subr__bindgen_ty_1 {
+                    function: crate::remacs_sys::Lisp_Subr__bindgen_ty_1 {
                         #functype: (Some(self::#fname))
                     },
                     min_args: #min_args,
                     max_args: #max_args,
-                    symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,
+                    symbol_name: (#symbol_name).as_ptr() as *const libc::c_char,
                     intspec: #intspec,
                     doc: 0,
-                    lang: ::remacs_sys::Lisp_Subr_Lang::Lisp_Subr_Lang_Rust,
+                    lang: crate::remacs_sys::Lisp_Subr_Lang::Lisp_Subr_Lang_Rust,
                 };
 
                 unsafe {
                     let ptr =
-                        ::remacs_sys::xmalloc(::std::mem::size_of::<::remacs_sys::Lisp_Subr>())
-                        as *mut ::remacs_sys::Lisp_Subr;
-                    ::std::ptr::copy_nonoverlapping(&subr, ptr, 1);
-                    ::lisp::ExternalPtr::new(ptr)
+                        crate::remacs_sys::xmalloc(
+                            std::mem::size_of::<crate::remacs_sys::Lisp_Subr>()
+                        ) as *mut crate::remacs_sys::Lisp_Subr;
+                    std::ptr::copy_nonoverlapping(&subr, ptr, 1);
+                    crate::lisp::ExternalPtr::new(ptr)
                 }
             };
         }
