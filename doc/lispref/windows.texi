@@ -4908,7 +4908,8 @@ fashion.
 @defopt scroll-up-aggressively
 Likewise, for scrolling up.  The value, @var{f}, specifies how far
 point should be placed from the bottom of the window; thus, as with
-@code{scroll-up-aggressively}, a larger value scrolls more aggressively.
+@code{scroll-down-aggressively}, a larger value scrolls more
+aggressively.
 @end defopt
 
 @defopt scroll-step
