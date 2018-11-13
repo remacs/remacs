@@ -1,13 +1,15 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method, Fcons};
-use remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type};
-use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use windows::{select_window_lisp, selected_window, LispWindowRef};
+use crate::{
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method, Fcons},
+    remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
+    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    windows::{select_window_lisp, selected_window, LispWindowRef},
+};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -27,6 +29,10 @@ impl LispFrameRef {
 
     pub fn is_visible(self) -> bool {
         self.visible() != 0
+    }
+
+    pub fn total_fringe_width(self) -> i32 {
+        self.left_fringe_width + self.right_fringe_width
     }
 }
 
@@ -314,38 +320,66 @@ pub fn frame_first_window(frame_or_window: LispObject) -> LispWindowRef {
 
 /// Return width in columns of FRAME's text area.
 #[lisp_fn(min = "0")]
-pub fn frame_text_cols(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).text_cols)
+pub fn frame_text_cols(frame: LispObject) -> i32 {
+    frame_or_selected(frame).text_cols
 }
 
 /// Return height in lines of FRAME's text area.
 #[lisp_fn(min = "0")]
-pub fn frame_text_lines(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).text_lines)
+pub fn frame_text_lines(frame: LispObject) -> i32 {
+    frame_or_selected(frame).text_lines
 }
 
 /// Return number of total columns of FRAME.
 #[lisp_fn(min = "0")]
-pub fn frame_total_cols(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).total_cols)
+pub fn frame_total_cols(frame: LispObject) -> i32 {
+    frame_or_selected(frame).total_cols
 }
 
 /// Return number of total lines of FRAME.
 #[lisp_fn(min = "0")]
-pub fn frame_total_lines(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).total_lines)
+pub fn frame_total_lines(frame: LispObject) -> i32 {
+    frame_or_selected(frame).total_lines
 }
 
 /// Return text area width of FRAME in pixels.
 #[lisp_fn(min = "0")]
-pub fn frame_text_width(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).text_width)
+pub fn frame_text_width(frame: LispObject) -> i32 {
+    frame_or_selected(frame).text_width
 }
 
 /// Return text area height of FRAME in pixels.
 #[lisp_fn(min = "0")]
-pub fn frame_text_height(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).text_height)
+pub fn frame_text_height(frame: LispObject) -> i32 {
+    frame_or_selected(frame).text_height
+}
+
+/// Return fringe width of FRAME in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_fringe_width(frame: LispObject) -> i32 {
+    let frame_ref = frame_or_selected(frame);
+    frame_ref.total_fringe_width()
+}
+
+/// Return width of FRAME's internal border in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_internal_border_width(frame: LispObject) -> i32 {
+    let frame_ref = frame_or_selected(frame);
+    frame_ref.internal_border_width()
+}
+
+/// Return width (in pixels) of vertical window dividers on FRAME.
+#[lisp_fn(min = "0")]
+pub fn frame_right_divider_width(frame: LispObject) -> i32 {
+    let frame_ref = frame_or_selected(frame);
+    frame_ref.right_divider_width
+}
+
+/// Return width (in pixels) of horizontal window dividers on FRAME.
+#[lisp_fn(min = "0")]
+pub fn frame_bottom_divider_width(frame: LispObject) -> i32 {
+    let frame_ref = frame_or_selected(frame);
+    frame_ref.bottom_divider_width
 }
 
 /// Delete FRAME, permanently eliminating it from use.

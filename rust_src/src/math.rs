@@ -1,13 +1,14 @@
 //! Functions doing math on numbers.
 #![allow(clippy::float_cmp)]
 
+use crate::remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
 
-use floatfns;
-use lisp::defsubr;
-use lisp::LispObject;
-use numbers::LispNumber;
+use crate::{
+    floatfns,
+    lisp::{defsubr, LispObject},
+    numbers::LispNumber,
+};
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).

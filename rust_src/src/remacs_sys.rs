@@ -21,9 +21,12 @@ use std;
 use libc::timespec;
 use remacs_lib::current_timespec;
 
-use data::{Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Intfwd, Lisp_Kboard_Objfwd,
-           Lisp_Objfwd};
-use lisp::LispObject;
+use crate::{
+    data::{
+        Lisp_Boolfwd, Lisp_Buffer_Objfwd, Lisp_Fwd, Lisp_Intfwd, Lisp_Kboard_Objfwd, Lisp_Objfwd,
+    },
+    lisp::LispObject,
+};
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 

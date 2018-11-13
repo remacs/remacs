@@ -12,6 +12,13 @@ Thank you for contributing to Remacs!
 
 * Follow the existing style for new Rust code. Notes about style
   can be found in the section on [Remacs style](#remacs-style).
+* Use rust_src/admin/rustize-emacs to help start a port of a C function
+  or `DEFUN`. Mark a region around a `DEFUN` and run `M-| rustize-emacs`.
+  This will do the work to transform the definition into Rust. You can
+  then yank and paste it into the appropriate Rust file or start a new one.
+  Now you need to port the body of the function.
+* Try to use more exact types where possible. `LispObject` allows anything,
+  and often we can do better.
 * Check for Rust compiler warnings, as CI won't go green if there
   are warnings.
 * Try to check your code with Clippy. `cargo clippy` will run the linter.
@@ -99,7 +106,7 @@ One of the indicators of good code is a consistent style. When
 updating the Rust sources contributors need to follow these
 guidelines:
 
-* Be consistent with the existing code. This means use similar
+* Be consistent with the existing Rust code. This means use similar
   variable and function names. The Rust source does not follow elisp
   naming conventions. For example, a function is called `is_foo`
   instead of `foop`.
@@ -113,7 +120,7 @@ guidelines:
     1. external crates
     1. remacs crates
     1. modules within the current crate
-* For modules where we import many items, we often to do an import for
+* For modules where we import many items, we often do an import for
   each major type. For instance, in most modules the `remacs-sys` module
   is imported from several times. Once for all of the `Qfoo` names, once
   for types, and again for functions. Doing this helps cut down on the

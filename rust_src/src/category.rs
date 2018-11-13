@@ -1,11 +1,12 @@
 //! Routines to deal with category tables.
 
-use remacs_macros::lisp_fn;
-use remacs_sys::Qcategory_table;
+use crate::{
+    lisp::{defsubr, LispObject},
+    remacs_sys::Qcategory_table,
+    threads::ThreadState,
+};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use threads::ThreadState;
+use remacs_macros::lisp_fn;
 
 /// Return t if ARG is a category table.
 #[lisp_fn]

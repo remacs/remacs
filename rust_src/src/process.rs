@@ -2,19 +2,25 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-                 get_process as cget_process, send_process, setup_process_coding_systems,
-                 update_status, Fmapcar, STRING_BYTES};
-use remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
-use remacs_sys::{QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit,
-                 Qinternal_default_process_filter, Qinternal_default_process_sentinel, Qlisten,
-                 Qlistp, Qnetwork, Qnil, Qopen, Qpipe, Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt};
 
-use buffers::LispBufferOrName;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use lists::{assoc, car, cdr, plist_put};
-use multibyte::LispStringRef;
+use crate::{
+    buffers::LispBufferOrName,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    lists::{assoc, car, cdr, plist_put},
+    multibyte::LispStringRef,
+    remacs_sys::{
+        add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
+        get_process as cget_process, send_process, setup_process_coding_systems, update_status,
+        Fmapcar, STRING_BYTES,
+    },
+    remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
+    remacs_sys::{
+        QCbuffer, QCfilter, QCsentinel, Qcdr, Qclosed, Qexit, Qinternal_default_process_filter,
+        Qinternal_default_process_sentinel, Qlisten, Qlistp, Qnetwork, Qnil, Qopen, Qpipe,
+        Qprocessp, Qreal, Qrun, Qserial, Qstop, Qt,
+    },
+};
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
@@ -332,7 +338,7 @@ fn pset_filter(mut process: LispProcessRef, val: LispObject) -> LispObject {
 
 fn set_process_filter_masks(process: LispProcessRef) -> () {
     if process.infd != -1 && process.filter.eq(Qt) {
-        if process.status.ne(Qlisten) {
+        if !process.status.eq(Qlisten) {
             unsafe { delete_read_fd(process.infd) };
         // Network or serial process not stopped:
         } else if process.command.eq(Qt) {
@@ -445,7 +451,7 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
     process = get_process(process);
     let mut proc_ref = process.as_process_or_error();
 
-    if proc_ref.ptype().ne(Qreal) {
+    if !proc_ref.ptype().eq(Qreal) {
         error!(
             "Process {} is not a subprocess.",
             proc_ref.name.as_string_or_error()

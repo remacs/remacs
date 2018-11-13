@@ -38,11 +38,12 @@ use std::slice;
 
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
-use remacs_sys::Qstringp;
-use remacs_sys::{char_bits, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type};
-use remacs_sys::{emacs_abort, empty_unibyte_string};
-
-use lisp::{ExternalPtr, LispObject};
+use crate::{
+    lisp::{ExternalPtr, LispObject},
+    remacs_sys::Qstringp,
+    remacs_sys::{char_bits, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
+    remacs_sys::{emacs_abort, empty_unibyte_string},
+};
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
 

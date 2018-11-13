@@ -1,10 +1,13 @@
 //! Profiler implementation.
 use std::ffi::CString;
 
-use lisp::{defsubr, LispObject};
 use remacs_macros::lisp_fn;
-use remacs_sys::{error, globals, Qnil};
-use remacs_sys::{make_log, memory_log, profiler_memory_running};
+
+use crate::{
+    lisp::{defsubr, LispObject},
+    remacs_sys::{error, globals, Qnil},
+    remacs_sys::{make_log, memory_log, profiler_memory_running},
+};
 
 /// Return non-nil if memory profiler is running.
 #[lisp_fn]

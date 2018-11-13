@@ -3136,35 +3136,6 @@ DEFUN ("frame-scroll-bar-height", Fscroll_bar_height, Sscroll_bar_height, 0, 1, 
 {
   return make_number (FRAME_SCROLL_BAR_AREA_HEIGHT (decode_any_frame (frame)));
 }
-
-DEFUN ("frame-fringe-width", Ffringe_width, Sfringe_width, 0, 1, 0,
-       doc: /* Return fringe width of FRAME in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_TOTAL_FRINGE_WIDTH (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-internal-border-width", Fframe_internal_border_width, Sframe_internal_border_width, 0, 1, 0,
-       doc: /* Return width of FRAME's internal border in pixels.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_INTERNAL_BORDER_WIDTH (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-right-divider-width", Fright_divider_width, Sright_divider_width, 0, 1, 0,
-       doc: /* Return width (in pixels) of vertical window dividers on FRAME.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_RIGHT_DIVIDER_WIDTH (decode_any_frame (frame)));
-}
-
-DEFUN ("frame-bottom-divider-width", Fbottom_divider_width, Sbottom_divider_width, 0, 1, 0,
-       doc: /* Return width (in pixels) of horizontal window dividers on FRAME.  */)
-  (Lisp_Object frame)
-{
-  return make_number (FRAME_BOTTOM_DIVIDER_WIDTH (decode_any_frame (frame)));
-}
-
 DEFUN ("set-frame-height", Fset_frame_height, Sset_frame_height, 2, 4, 0,
        doc: /* Set text height of frame FRAME to HEIGHT lines.
 Optional third arg PRETEND non-nil means that redisplay should use
@@ -5825,10 +5796,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_native_width);
   defsubr (&Sscroll_bar_width);
   defsubr (&Sscroll_bar_height);
-  defsubr (&Sfringe_width);
-  defsubr (&Sframe_internal_border_width);
-  defsubr (&Sright_divider_width);
-  defsubr (&Sbottom_divider_width);
   defsubr (&Stool_bar_pixel_width);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);

@@ -1,8 +1,8 @@
 //! Time support
 
+use crate::time_crate::now;
 use libc::c_long;
 use libc::timespec as c_timespec;
-use time_crate::now;
 
 /// Return current system time.
 #[no_mangle]

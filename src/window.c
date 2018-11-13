@@ -563,18 +563,6 @@ WINDOW must be a valid window and defaults to the selected one.  */)
   return make_number (decode_valid_window (window)->left_col);
 }
 
-DEFUN ("window-top-line", Fwindow_top_line, Swindow_top_line, 0, 1, 0,
-       doc: /* Return top line of window WINDOW.
-This is the distance, in lines, between the top of WINDOW and the top
-of the frame's window area.  For instance, the return value is 0 if
-there is no window above WINDOW.
-
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return make_number (decode_valid_window (window)->top_line);
-}
-
 /* Return the number of lines/pixels of W's body.  Don't count any mode
    or header line or horizontal divider of W.  Rounds down to nearest
    integer when not working pixelwise. */
@@ -6912,7 +6900,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_left);
   defsubr (&Swindow_pixel_top);
   defsubr (&Swindow_left_column);
-  defsubr (&Swindow_top_line);
   defsubr (&Sset_window_new_pixel);
   defsubr (&Sset_window_new_total);
   defsubr (&Sset_window_new_normal);
