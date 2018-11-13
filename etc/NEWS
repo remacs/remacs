@@ -3,8 +3,8 @@ GNU Emacs NEWS -- history of user-visible changes.
 Copyright (C) 2016-2018 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
-Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
-If possible, use M-x report-emacs-bug.
+Please send Emacs bug reports to 'bug-gnu-emacs@gnu.org'.
+If possible, use 'M-x report-emacs-bug'.
 
 This file is about changes in Emacs version 26.
 
@@ -13,7 +13,7 @@ See files NEWS.25, NEWS.24, ..., NEWS.18, and NEWS.1-17 for changes
 in older Emacs versions.
 
 You can narrow news to a specific version by calling 'view-emacs-news'
-with a prefix argument or by typing C-u C-h C-n.
+with a prefix argument or by typing 'C-u C-h C-n'.
 
 
 * Installation Changes in Emacs 26.2
@@ -65,11 +65,16 @@ often cause crashes.  Set it to nil if you really need those fonts.
 
 ---
 *** Mailutils movemail will now be used if found at runtime.
-The default value of mail-source-movemail-program is now "movemail".
+The default value of 'mail-source-movemail-program' is now "movemail".
 This ensures that the movemail program from GNU Mailutils will be used
 if found in 'exec-path', even if it was not found at build time.  To
-use a different program, customize mail-source-movemail-program to the
+use a different program, customize 'mail-source-movemail-program' to the
 absolute file name of the desired executable.
+
+** Shadowfile
+
+---
+*** shadowfile.el has been rewritten to support Tramp file names.
 
 ** Shell mode
 
@@ -103,15 +108,12 @@ whether the version shown on the mode line is that of the visited file
 or of the repository working copy.
 
 ---
-**** Display of Mercurial revisions in the mode-line has changed.
+**** Display of Mercurial revisions in the mode line has changed.
 Previously, the mode line displayed the local number (1, 2, 3, ...) of
 the revision.  Starting with Emacs 26.1, the default has changed, and
 it now shows the global revision number, in the form of its changeset
 hash value.  To get back the previous behavior, customize the new
 option 'vc-hg-symbolic-revision-styles' to the value '("{rev}")'.
-
----
-** shadowfile.el has been rewritten to support Tramp file names.
 
 
 * New Modes and Packages in Emacs 26.2
@@ -175,11 +177,11 @@ version 2.6.6 or later.
 
 ** The new option 'configure --with-mailutils' causes Emacs to rely on
 GNU Mailutils to retrieve email.  It is recommended, and is the
-default if GNU Mailutils is installed.  When --with-mailutils is not
+default if GNU Mailutils is installed.  When '--with-mailutils' is not
 in effect, the Emacs build procedure by default continues to build and
 install a limited 'movemail' substitute that retrieves POP3 email only
 via insecure channels.  To avoid this problem, use either
---with-mailutils or --without-pop when configuring; --without-pop
+'--with-mailutils' or '--without-pop' when configuring; '--without-pop'
 is the default on platforms other than native MS-Windows.
 
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
