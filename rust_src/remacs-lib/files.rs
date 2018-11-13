@@ -42,10 +42,10 @@ pub unsafe extern "C" fn rust_make_temp(template: *mut c_char, flags: c_int) -> 
 }
 
 pub fn make_temporary_file(template: String, flags: i32) -> Result<(i32, String), i32> {
-    let mut validated_template = r#try!(validate_template(template));
+    let mut validated_template = validate_template(template)?;
     for _ in 0..NUM_RETRIES {
         generate_temporary_filename(&mut validated_template);
-        let attempt = r#try!(CString::new(validated_template.clone()).map_err(|_| EEXIST));
+        let attempt = CString::new(validated_template.clone()).map_err(|_| EEXIST)?;
         let file_handle = match open_temporary_file(&attempt, flags) {
             Ok(file) => file,
             Err(_) => continue,
