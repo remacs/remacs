@@ -336,7 +336,7 @@ fn pset_filter(mut process: LispProcessRef, val: LispObject) -> LispObject {
     filter
 }
 
-fn set_process_filter_masks(process: LispProcessRef) -> () {
+fn set_process_filter_masks(process: LispProcessRef) {
     if process.infd != -1 && process.filter.eq(Qt) {
         if !process.status.eq(Qlisten) {
             unsafe { delete_read_fd(process.infd) };
@@ -385,7 +385,7 @@ fn pset_sentinel(mut process: LispProcessRef, val: LispObject) -> LispObject {
 /// If PROCESS is a non-blocking network process that hasn't been fully
 /// set up yet, this function will block until socket setup has completed.
 #[lisp_fn]
-pub fn process_send_string(process: LispObject, mut string: LispStringRef) -> () {
+pub fn process_send_string(process: LispObject, mut string: LispStringRef) {
     unsafe {
         send_process(
             cget_process(process),
