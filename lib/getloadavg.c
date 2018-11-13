@@ -55,16 +55,12 @@
 
    apollo
    BSD                          Real BSD, not just BSD-like.
-   convex
    DGUX
    eunice                       UNIX emulator under VMS.
    hpux
    __MSDOS__                    No-op for MSDOS.
    NeXT
    sgi
-   sequent                      Sequent Dynix 3.x.x (BSD)
-   _SEQUENT_                    Sequent DYNIX/ptx 1.x.x (SYSV)
-   sony_news                    NEWS-OS (works at least for 4.1C)
    UMAX
    UMAX4_3
    VMS
@@ -99,11 +95,6 @@
 
 # if defined _WIN32 && ! defined __CYGWIN__ && ! defined WINDOWS32
 #  define WINDOWS32
-# endif
-
-# if !defined (BSD) && defined (ultrix)
-/* Ultrix behaves like BSD on Vaxen.  */
-#  define BSD
 # endif
 
 # ifdef NeXT
@@ -145,10 +136,6 @@
 #  define MORE_BSD
 # endif
 
-# if defined (ultrix) && defined (mips)
-#  define decstation
-# endif
-
 # if defined (__SVR4) && !defined (SVR4)
 #  define SVR4
 # endif
@@ -172,13 +159,6 @@
 #  include <sys/table.h>
 # endif
 
-/* UTek's /bin/cc on the 4300 has no architecture specific cpp define by
-   default, but _MACH_IND_SYS_TYPES is defined in <sys/types.h>.  Combine
-   that with a couple of other things and we'll have a unique match.  */
-# if !defined (tek4300) && defined (unix) && defined (m68k) && defined (mc68000) && defined (mc68020) && defined (_MACH_IND_SYS_TYPES)
-#  define tek4300                       /* Define by emacs, but not by other users.  */
-# endif
-
 
 /* VAX C can't handle multi-line #ifs, or lines longer than 256 chars.  */
 # ifndef LOAD_AVE_TYPE
@@ -191,14 +171,6 @@
 #   define LOAD_AVE_TYPE long
 #  endif
 
-#  ifdef decstation
-#   define LOAD_AVE_TYPE long
-#  endif
-
-#  ifdef _SEQUENT_
-#   define LOAD_AVE_TYPE long
-#  endif
-
 #  ifdef sgi
 #   define LOAD_AVE_TYPE long
 #  endif
@@ -207,39 +179,12 @@
 #   define LOAD_AVE_TYPE long
 #  endif
 
-#  ifdef sony_news
-#   define LOAD_AVE_TYPE long
-#  endif
-
-#  ifdef sequent
-#   define LOAD_AVE_TYPE long
-#  endif
-
 #  ifdef OSF_ALPHA
-#   define LOAD_AVE_TYPE long
-#  endif
-
-#  if defined (ardent) && defined (titan)
-#   define LOAD_AVE_TYPE long
-#  endif
-
-#  ifdef tek4300
-#   define LOAD_AVE_TYPE long
-#  endif
-
-#  if defined (alliant) && defined (i860) /* Alliant FX/2800 */
 #   define LOAD_AVE_TYPE long
 #  endif
 
 #  if defined _AIX && ! defined HAVE_LIBPERFSTAT
 #   define LOAD_AVE_TYPE long
-#  endif
-
-#  ifdef convex
-#   define LOAD_AVE_TYPE double
-#   ifndef LDAV_CVT
-#    define LDAV_CVT(n) (n)
-#   endif
 #  endif
 
 # endif /* No LOAD_AVE_TYPE.  */
@@ -251,13 +196,6 @@
 #  define FSCALE 1024.0
 # endif
 
-# if defined (alliant) && defined (i860) /* Alliant FX/2800 */
-/* <sys/param.h> defines an incorrect value for FSCALE on an
-   Alliant FX/2800 Concentrix 2.2, according to ghazi@noc.rutgers.edu.  */
-#  undef FSCALE
-#  define FSCALE 100.0
-# endif
-
 
 # ifndef FSCALE
 
@@ -267,23 +205,15 @@
 #   define FSCALE 2048.0
 #  endif
 
-#  if defined (MIPS) || defined (SVR4) || defined (decstation)
+#  if defined (MIPS) || defined (SVR4)
 #   define FSCALE 256
 #  endif
 
-#  if defined (sgi) || defined (sequent)
+#  if defined (sgi)
 /* Sometimes both MIPS and sgi are defined, so FSCALE was just defined
    above under #ifdef MIPS.  But we want the sgi value.  */
 #   undef FSCALE
 #   define FSCALE 1000.0
-#  endif
-
-#  if defined (ardent) && defined (titan)
-#   define FSCALE 65536.0
-#  endif
-
-#  ifdef tek4300
-#   define FSCALE 100.0
 #  endif
 
 #  if defined _AIX && !defined HAVE_LIBPERFSTAT
@@ -307,24 +237,16 @@
 # endif
 
 
-# if !defined (KERNEL_FILE) && defined (sequent)
-#  define KERNEL_FILE "/dynix"
-# endif
-
 # if !defined (KERNEL_FILE) && defined (hpux)
 #  define KERNEL_FILE "/hp-ux"
 # endif
 
-# if !defined (KERNEL_FILE) && (defined (_SEQUENT_) || defined (MIPS) || defined (SVR4) || defined (ISC) || defined (sgi) || (defined (ardent) && defined (titan)))
+# if !defined (KERNEL_FILE) && (defined (MIPS) || defined (SVR4) || defined (ISC) || defined (sgi))
 #  define KERNEL_FILE "/unix"
 # endif
 
 
-# if !defined (LDAV_SYMBOL) && defined (alliant)
-#  define LDAV_SYMBOL "_Loadavg"
-# endif
-
-# if !defined (LDAV_SYMBOL) && ((defined (hpux) && !defined (hp9000s300)) || defined (_SEQUENT_) || defined (SVR4) || defined (ISC) || defined (sgi) || (defined (ardent) && defined (titan)) || (defined (_AIX) && !defined(HAVE_LIBPERFSTAT)))
+# if !defined (LDAV_SYMBOL) && (defined (hpux) || defined (SVR4) || defined (ISC) || defined (sgi) || (defined (_AIX) && !defined(HAVE_LIBPERFSTAT)))
 #  define LDAV_SYMBOL "avenrun"
 # endif
 
@@ -921,7 +843,7 @@ getloadavg (double loadavg[], int nelem)
 
 #   ifndef SUNOS_5
       if (
-#    if !(defined (_AIX) && !defined (ps2))
+#    if !defined (_AIX)
           nlist (KERNEL_FILE, name_list)
 #    else  /* _AIX */
           knlist (name_list, 1, sizeof (name_list[0]))

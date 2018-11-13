@@ -82,6 +82,7 @@
 #  crypto/sha512-buffer \
 #  d-type \
 #  diffseq \
+#  dosname \
 #  dtoastr \
 #  dtotimespec \
 #  dup2 \
@@ -1403,9 +1404,7 @@ endif
 ## begin gnulib module dosname
 ifeq (,$(OMIT_GNULIB_MODULE_dosname))
 
-ifneq (,$(gl_GNULIB_ENABLED_dosname))
 
-endif
 EXTRA_DIST += dosname.h
 
 endif

@@ -89,7 +89,7 @@ while test $# -gt 0 ; do
     - )	# Use stdin as input.
        break ;;
     -* )
-       echo "$me: invalid option $1$help"
+       echo "$me: invalid option $1$help" >&2
        exit 1 ;;
 
     *local*)
@@ -149,7 +149,7 @@ case $1 in
 		esac
 		;;
 	*-*)
-		# A lone config we happen to match not fitting any patern
+		# A lone config we happen to match not fitting any pattern
 		case $field1-$field2 in
 			decstation-3100)
 				basic_machine=mips-dec
@@ -950,7 +950,7 @@ unset -v basic_machine
 
 # Decode basic machines in the full and proper CPU-Company form.
 case $cpu-$vendor in
-	# Here we handle the default manufacturer of certain CPU types in cannonical form. It is in
+	# Here we handle the default manufacturer of certain CPU types in canonical form. It is in
 	# some cases the only manufacturer, in others, it is the most popular.
 	craynv-unknown)
 		vendor=cray
@@ -1101,7 +1101,7 @@ case $cpu-$vendor in
 		cpu=`echo "$cpu" | sed 's/^xscale/arm/'`
 		;;
 
-	# Recognize the cannonical CPU Types that limit and/or modify the
+	# Recognize the canonical CPU Types that limit and/or modify the
 	# company names they are paired with.
 	cr16-*)
 		os=${os:-elf}
@@ -1150,7 +1150,7 @@ case $cpu-$vendor in
 		;;
 
 	*)
-		# Recognize the cannonical CPU types that are allowed with any
+		# Recognize the canonical CPU types that are allowed with any
 		# company name.
 		case $cpu in
 			1750a | 580 \
