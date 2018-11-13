@@ -607,6 +607,13 @@ $(LIBREMACS_ARCHIVE): globals.h $(rust_srcdir)/src/** $(rust_srcdir)/Cargo.* $(M
 	SRC_HASH="$(shell EMACS_CFLAGS="-I../rust_src $(EMACS_CFLAGS)" ../lib-src/hashdir/target/$(CARGO_BUILD_DIR)/hashdir)" \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
+clippy:
+	RUSTFLAGS="$(RUSTFLAGS)" \
+	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
+	cargo clippy $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
+
+.PHONY: clippy
+
 check check-maybe check-expensive: $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \

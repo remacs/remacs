@@ -954,6 +954,11 @@ check check-maybe check-expensive: have-tests all
 	$(MAKE) -C src $@
 	$(MAKE) -C test $@
 
+clippy:
+	$(MAKE) -C src $@
+
+.PHONY: clippy
+
 dist:
 	cd ${srcdir}; ./make-dist
 
