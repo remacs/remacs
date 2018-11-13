@@ -69,6 +69,7 @@
 (declare-function x-server-vendor "xfns.c" (&optional terminal))
 (declare-function x-server-version "xfns.c" (&optional terminal))
 (declare-function message-sort-headers "message" ())
+(declare-function w32--os-description "w32-fns" ())
 (defvar message-strip-special-text-properties)
 
 (defun report-emacs-bug-can-use-osx-open ()
