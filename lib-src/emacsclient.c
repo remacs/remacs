@@ -1365,14 +1365,9 @@ set_local_socket (const char *local_socket_name)
     switch (sock_status)
       {
       case 1:
-	/* There's a socket, but it isn't owned by us.  This is OK if
-	   we are root. */
-	if (0 != geteuid ())
-	  {
-	    message (true, "%s: Invalid socket owner\n", progname);
-	    return INVALID_SOCKET;
-	  }
-	break;
+	/* There's a socket, but it isn't owned by us.  */
+	message (true, "%s: Invalid socket owner\n", progname);
+	return INVALID_SOCKET;
 
       case 2:
 	/* `stat' failed */

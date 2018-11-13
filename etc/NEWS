@@ -119,12 +119,18 @@ the new version of the file again.)
 
 * Changes in Emacs 27.1
 
+** emacsclient
+
 +++
-** emacsclient now supports the 'EMACS_SOCKET_NAME' environment variable.
+*** emacsclient now supports the 'EMACS_SOCKET_NAME' environment variable.
 The behavior is identical to 'EMACS_SERVER_FILE', in that the
 command-line value specified via '--socket-name' will override the
 environment, and the natural default to TMPDIR, then "/tmp", continues
 to apply.
+
+---
+*** When run by root, emacsclient no longer connects to non-root sockets.
+(Instead you can use Tramp methods to run root commands in a non-root Emacs.)
 
 +++
 ** The function 'read-passwd' uses '*' as default character to hide passwords.
