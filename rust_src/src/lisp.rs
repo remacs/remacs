@@ -501,10 +501,6 @@ impl LispObject {
         self == other
     }
 
-    pub fn ne(self, other: LispObject) -> bool {
-        self != other
-    }
-
     pub fn eql(self, other: LispObject) -> bool {
         if self.is_float() {
             self.equal_no_quit(other)

@@ -192,7 +192,7 @@ pub extern "C" fn keymap_memberp(map: LispObject, maps: LispObject) -> bool {
     if map.is_nil() {
         return false;
     }
-    while keymapp(maps) && map.ne(maps) {
+    while keymapp(maps) && !map.eq(maps) {
         maps = keymap_parent(maps, false);
     }
     map.eq(maps)
