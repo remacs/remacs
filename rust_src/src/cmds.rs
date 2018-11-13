@@ -403,7 +403,12 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // return right away--don't really self-insert.  */
         if let Some(s) = sym.as_symbol() {
             if let Some(f) = s.get_function().as_symbol() {
-                let prop = unsafe { Fget(LispObject::from(f), intern("no-self-insert")) };
+                let prop = unsafe {
+                    Fget(
+                        LispObject::from(f),
+                        LispObject::from(intern("no-self-insert")),
+                    )
+                };
                 if prop.is_not_nil() {
                     return 1;
                 }

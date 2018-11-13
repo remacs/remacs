@@ -192,7 +192,7 @@ fn casefiddle_region(
     } else {
         let mut bounds = call!(
             symbol_value(intern("region-extract-function")),
-            intern("bounds")
+            LispObject::from(intern("bounds"))
         );
 
         while let Some(cons) = bounds.as_cons() {

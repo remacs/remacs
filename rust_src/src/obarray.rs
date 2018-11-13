@@ -12,6 +12,7 @@ use crate::{
     },
     remacs_sys::{Fcons, Fmake_symbol, Fpurecopy},
     remacs_sys::{Qnil, Qvectorp},
+    symbols::LispSymbolRef,
 };
 
 /// A lisp object containing an `obarray`.
@@ -90,14 +91,14 @@ impl From<LispObject> for Option<LispObarrayRef> {
 }
 
 /// Intern (e.g. create a symbol from) a string.
-pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
+pub fn intern<T: AsRef<str>>(string: T) -> LispSymbolRef {
     let s = string.as_ref();
-    unsafe {
+    LispSymbolRef::from(unsafe {
         intern_1(
             s.as_ptr() as *const libc::c_char,
             s.len() as libc::ptrdiff_t,
         )
-    }
+    })
 }
 
 #[no_mangle]

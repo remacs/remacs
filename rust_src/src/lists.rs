@@ -626,10 +626,9 @@ pub fn get(symbol: LispSymbolRef, propname: LispObject) -> LispObject {
 /// Store SYMBOL's PROPNAME property with value VALUE.
 /// It can be retrieved with `(get SYMBOL PROPNAME)'.
 #[lisp_fn]
-pub fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispObject {
-    let mut sym = symbol.as_symbol_or_error();
-    let new_plist = plist_put(sym.get_plist(), propname, value);
-    sym.set_plist(new_plist);
+pub fn put(mut symbol: LispSymbolRef, propname: LispObject, value: LispObject) -> LispObject {
+    let new_plist = plist_put(symbol.get_plist(), propname, value);
+    symbol.set_plist(new_plist);
     value
 }
 

@@ -315,10 +315,10 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
             docstring = unsafe { Fpurecopy(docstring) };
         }
 
-        put(sym, Qvariable_documentation, docstring);
+        put(sym_ref, Qvariable_documentation, docstring);
     }
 
-    put(sym, Qrisky_local_variable, Qt);
+    put(sym_ref, Qrisky_local_variable, Qt);
     loadhist_attach(sym);
 
     sym_ref
@@ -689,7 +689,7 @@ pub fn autoload(
     }
 
     defalias(
-        function.as_lisp_obj(),
+        function,
         list!(Qautoload, file.as_lisp_obj(), docstring, interactive, ty),
         Qnil,
     )

@@ -268,8 +268,12 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
 ///
 /// The return value is undefined.
 #[lisp_fn(min = "2")]
-pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObject) -> LispObject {
-    let symbol = sym.as_symbol_or_error();
+pub fn defalias(
+    symbol: LispSymbolRef,
+    mut definition: LispObject,
+    docstring: LispObject,
+) -> LispObject {
+    let sym = LispObject::from(symbol);
 
     unsafe {
         if globals.Vpurify_flag != Qnil
@@ -301,7 +305,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
     }
 
     if docstring.is_not_nil() {
-        put(sym, Qfunction_documentation, docstring);
+        put(symbol, Qfunction_documentation, docstring);
     }
 
     // We used to return `definition', but now that `defun' and `defmacro' expand
@@ -730,7 +734,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let mem = member(watch_function, watchers);
 
     if mem.is_nil() {
-        put(symbol.into(), Qwatchers, unsafe {
+        put(symbol, Qwatchers, unsafe {
             Fcons(watch_function, watchers)
         });
     }
@@ -756,7 +760,7 @@ pub fn remove_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject
         );
     }
 
-    put(symbol.into(), Qwatchers, watchers);
+    put(symbol, Qwatchers, watchers);
 }
 
 /// Return a list of SYMBOL's active watchers.

@@ -17,6 +17,7 @@ use crate::{
         pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type, CHECK_IMPURE,
     },
     remacs_sys::{Qhash_table_p, Qhash_table_test},
+    symbols::LispSymbolRef,
 };
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -361,7 +362,11 @@ pub fn clrhash(hash_table: LispHashTableRef) -> LispHashTableRef {
 /// It should be the case that if (eq (funcall HASH x1) (funcall HASH x2))
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
-pub fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
+pub fn define_hash_table_test(
+    name: LispSymbolRef,
+    test: LispObject,
+    hash: LispObject,
+) -> LispObject {
     let sym = Qhash_table_test;
     put(name, sym, list(&[test, hash]))
 }
