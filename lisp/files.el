@@ -4096,7 +4096,6 @@ apply).
 Return the new class name, which is a symbol named DIR."
   (let* ((class-name (intern dir))
          (files (dir-locals--all-files dir))
-         (read-circle nil)
 	 ;; If there was a problem, use the values we could get but
 	 ;; don't let the cache prevent future reads.
 	 (latest 0) (success 0)
@@ -4111,7 +4110,8 @@ Return the new class name, which is a symbol named DIR."
           (insert-file-contents file)
           (let ((newvars
                  (condition-case-unless-debug nil
-                     (read (current-buffer))
+                     (let ((read-circle nil))
+                       (read (current-buffer)))
                    (end-of-file nil))))
             (setq variables
                   ;; Try and avoid loading `map' since that also loads cl-lib
