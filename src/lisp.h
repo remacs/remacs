@@ -4061,6 +4061,8 @@ extern void syms_of_marker (void);
 
 /* Defined in fileio.c.  */
 
+extern char *splice_dir_file (char *, char const *, char const *);
+extern char const *get_homedir (void);
 extern Lisp_Object expand_and_dir_to_file (Lisp_Object);
 extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 				 Lisp_Object, Lisp_Object, Lisp_Object,
@@ -4185,6 +4187,7 @@ extern void syms_of_frame (void);
 /* Defined in emacs.c.  */
 extern char **initial_argv;
 extern int initial_argc;
+extern char const *emacs_wd;
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_NS)
 extern bool display_arg;
 #endif

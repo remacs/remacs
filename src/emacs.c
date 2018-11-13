@@ -204,6 +204,9 @@ HANDLE w32_daemon_event;
 char **initial_argv;
 int initial_argc;
 
+/* The name of the working directory, or NULL if this info is unavailable.  */
+char const *emacs_wd;
+
 static void sort_args (int argc, char **argv);
 static void syms_of_emacs (void);
 
@@ -406,7 +409,7 @@ terminate_due_to_signal (int sig, int backtrace_limit)
 /* Code for dealing with Lisp access to the Unix command line.  */
 
 static void
-init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
+init_cmdargs (int argc, char **argv, int skip_args, char const *original_pwd)
 {
   int i;
   Lisp_Object name, dir, handler;
@@ -694,7 +697,7 @@ main (int argc, char **argv)
   char *ch_to_dir = 0;
 
   /* If we use --chdir, this records the original directory.  */
-  char *original_pwd = 0;
+  char const *original_pwd = 0;
 
   /* Record (approximately) where the stack begins.  */
   stack_bottom = (char *) &stack_bottom_variable;
@@ -794,6 +797,8 @@ main (int argc, char **argv)
       exit (0);
     }
 
+  emacs_wd = emacs_get_current_dir_name ();
+
   if (argmatch (argv, argc, "-chdir", "--chdir", 4, &ch_to_dir, &skip_args))
     {
 #ifdef WINDOWSNT
@@ -804,13 +809,14 @@ main (int argc, char **argv)
       filename_from_ansi (ch_to_dir, newdir);
       ch_to_dir = newdir;
 #endif
-      original_pwd = emacs_get_current_dir_name ();
       if (chdir (ch_to_dir) != 0)
         {
           fprintf (stderr, "%s: Can't chdir to %s: %s\n",
                    argv[0], ch_to_dir, strerror (errno));
           exit (1);
         }
+      original_pwd = emacs_wd;
+      emacs_wd = emacs_get_current_dir_name ();
     }
 
 #if defined (HAVE_SETRLIMIT) && defined (RLIMIT_STACK) && !defined (CYGWIN)
@@ -1289,21 +1295,21 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
     {
 #ifdef NS_IMPL_COCOA
       /* Started from GUI? */
-      /* FIXME: Do the right thing if getenv returns NULL, or if
+      /* FIXME: Do the right thing if get_homedir returns "", or if
          chdir fails.  */
       if (! inhibit_window_system && ! isatty (STDIN_FILENO) && ! ch_to_dir)
-        chdir (getenv ("HOME"));
+        chdir (get_homedir ());
       if (skip_args < argc)
         {
           if (!strncmp (argv[skip_args], "-psn", 4))
             {
               skip_args += 1;
-              if (! ch_to_dir) chdir (getenv ("HOME"));
+              if (! ch_to_dir) chdir (get_homedir ());
             }
           else if (skip_args+1 < argc && !strncmp (argv[skip_args+1], "-psn", 4))
             {
               skip_args += 2;
-              if (! ch_to_dir) chdir (getenv ("HOME"));
+              if (! ch_to_dir) chdir (get_homedir ());
             }
         }
 #endif  /* COCOA */

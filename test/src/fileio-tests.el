@@ -95,3 +95,11 @@ Also check that an encoding error can appear in a symlink."
   (should (equal (file-name-as-directory "d:/abc/") "d:/abc/"))
   (should (equal (file-name-as-directory "D:\\abc/") "d:/abc/"))
   (should (equal (file-name-as-directory "D:/abc//") "d:/abc//")))
+
+(ert-deftest fileio-tests--relative-HOME ()
+  "Test that expand-file-name works even when HOME is relative."
+  (let ((old-home (getenv "HOME")))
+    (setenv "HOME" "a/b/c")
+    (should (equal (expand-file-name "~/foo")
+                   (expand-file-name "a/b/c/foo")))
+    (setenv "HOME" old-home)))

@@ -5268,9 +5268,7 @@ init_buffer_once (void)
 void
 init_buffer (int initialized)
 {
-  char *pwd;
   Lisp_Object temp;
-  ptrdiff_t len;
 
 #ifdef USE_MMAP_FOR_BUFFERS
   if (initialized)
@@ -5324,7 +5322,7 @@ init_buffer (int initialized)
   if (NILP (BVAR (&buffer_defaults, enable_multibyte_characters)))
     Fset_buffer_multibyte (Qnil);
 
-  pwd = emacs_get_current_dir_name ();
+  char const *pwd = emacs_wd;
 
   if (!pwd)
     {
@@ -5336,22 +5334,16 @@ init_buffer (int initialized)
     {
       /* Maybe this should really use some standard subroutine
          whose definition is filename syntax dependent.  */
-      len = strlen (pwd);
-      if (!(IS_DIRECTORY_SEP (pwd[len - 1])))
-        {
-          /* Grow buffer to add directory separator and '\0'.  */
-          pwd = realloc (pwd, len + 2);
-          if (!pwd)
-            fatal ("get_current_dir_name: %s\n", strerror (errno));
-          pwd[len] = DIRECTORY_SEP;
-          pwd[len + 1] = '\0';
-          len++;
-        }
+      ptrdiff_t len = strlen (pwd);
+      bool add_slash = ! IS_DIRECTORY_SEP (pwd[len - 1]);
 
       /* At this moment, we still don't know how to decode the directory
          name.  So, we keep the bytes in unibyte form so that file I/O
          routines correctly get the original bytes.  */
-      bset_directory (current_buffer, make_unibyte_string (pwd, len));
+      Lisp_Object dirname = make_unibyte_string (pwd, len + add_slash);
+      if (add_slash)
+	SSET (dirname, len, DIRECTORY_SEP);
+      bset_directory (current_buffer, dirname);
 
       /* Add /: to the front of the name
          if it would otherwise be treated as magic.  */
@@ -5372,8 +5364,6 @@ init_buffer (int initialized)
 
   temp = get_minibuffer (0);
   bset_directory (XBUFFER (temp), BVAR (current_buffer, directory));
-
-  free (pwd);
 }
 
 /* Similar to defvar_lisp but define a variable whose value is the
@@ -5706,8 +5696,8 @@ visual lines rather than logical lines.  See the documentation of
   DEFVAR_PER_BUFFER ("default-directory", &BVAR (current_buffer, directory),
 		     Qstringp,
 		     doc: /* Name of default directory of current buffer.
-It should be a directory name (as opposed to a directory file-name).
-On GNU and Unix systems, directory names end in a slash `/'.
+It should be an absolute directory name; on GNU and Unix systems,
+these names start with `/' or `~' and end with `/'.
 To interactively change the default directory, use command `cd'. */);
 
   DEFVAR_PER_BUFFER ("auto-fill-function", &BVAR (current_buffer, auto_fill_function),

@@ -96,6 +96,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <acl.h>
 #include <allocator.h>
 #include <careadlinkat.h>
+#include <dosname.h>
 #include <fsusage.h>
 #include <stat-time.h>
 #include <tempname.h>
@@ -1093,8 +1094,7 @@ the root directory.  */)
 	{
 	  Lisp_Object tem;
 
-	  if (!(newdir = egetenv ("HOME")))
-	    newdir = newdirlim = "";
+	  newdir = get_homedir ();
 	  nm++;
 #ifdef WINDOWSNT
 	  if (newdir[0])
@@ -1109,7 +1109,7 @@ the root directory.  */)
 #endif
 	    tem = build_string (newdir);
 	  newdirlim = newdir + SBYTES (tem);
-	  /* `egetenv' may return a unibyte string, which will bite us
+	  /* get_homedir may return a unibyte string, which will bite us
 	     if we expect the directory to be multibyte.  */
 	  if (multibyte && !STRING_MULTIBYTE (tem))
 	    {
@@ -1637,7 +1637,6 @@ See also the function `substitute-in-file-name'.")
 }
 #endif
 
-/* If /~ or // appears, discard everything through first slash.  */
 static bool
 file_name_absolute_p (const char *filename)
 {
@@ -1650,6 +1649,61 @@ file_name_absolute_p (const char *filename)
      );
 }
 
+/* Put into BUF the concatenation of DIR and FILE, with an intervening
+   directory separator if needed.  Return a pointer to the null byte
+   at the end of the concatenated string.  */
+char *
+splice_dir_file (char *buf, char const *dir, char const *file)
+{
+  char *e = stpcpy (buf, dir);
+  *e = DIRECTORY_SEP;
+  e += ! (buf < e && IS_DIRECTORY_SEP (e[-1]));
+  return stpcpy (e, file);
+}
+
+/* Get the home directory, an absolute file name.  Return the empty
+   string on failure.  The returned value does not survive garbage
+   collection, calls to this function, or calls to the getpwnam class
+   of functions.  */
+char const *
+get_homedir (void)
+{
+  char const *home = egetenv ("HOME");
+  if (!home)
+    {
+      static char const *userenv[] = {"LOGNAME", "USER"};
+      struct passwd *pw = NULL;
+      for (int i = 0; i < ARRAYELTS (userenv); i++)
+	{
+	  char *user = egetenv (userenv[i]);
+	  if (user)
+	    {
+	      pw = getpwnam (user);
+	      if (pw)
+		break;
+	    }
+	}
+      if (!pw)
+	pw = getpwuid (getuid ());
+      if (pw)
+	home = pw->pw_dir;
+      if (!home)
+	return "";
+    }
+  if (IS_ABSOLUTE_FILE_NAME (home))
+    return home;
+  if (!emacs_wd)
+    error ("$HOME is relative to unknown directory");
+  static char *ahome;
+  static ptrdiff_t ahomesize;
+  ptrdiff_t ahomelenbound = strlen (emacs_wd) + 1 + strlen (home) + 1;
+  if (ahomesize <= ahomelenbound)
+    ahome = xpalloc (ahome, &ahomesize, ahomelenbound + 1 - ahomesize, -1, 1);
+  splice_dir_file (ahome, emacs_wd, home);
+  return ahome;
+}
+
+/* If /~ or // appears, discard everything through first slash.  */
 static char *
 search_embedded_absfilename (char *nm, char *endp)
 {
