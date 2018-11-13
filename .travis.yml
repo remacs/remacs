@@ -27,6 +27,8 @@ stages:
   - test
 
 jobs:
+  allow_failures:
+    - script: make clippy
   include:
     - stage: rustfmt
       os: linux  # No need to run this everywhere
@@ -45,6 +47,7 @@ jobs:
     - stage: clippy
       os: linux  # No need to run this everywhere
       before_script:
+        - sudo apt install -y libgtk-3-dev
         - travis_wait rustup component add clippy-preview
         - ./autogen.sh && ./configure --without-makeinfo
       script:
@@ -94,5 +97,4 @@ notifications:
 matrix:
   fast_finish: true
   allow_failures:
-    - stages: clippy
     - os: osx
