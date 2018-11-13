@@ -332,7 +332,7 @@ fn pset_filter(mut process: LispProcessRef, val: LispObject) -> LispObject {
 
 fn set_process_filter_masks(process: LispProcessRef) -> () {
     if process.infd != -1 && process.filter.eq(Qt) {
-        if process.status.ne(Qlisten) {
+        if !process.status.eq(Qlisten) {
             unsafe { delete_read_fd(process.infd) };
         // Network or serial process not stopped:
         } else if process.command.eq(Qt) {
@@ -445,7 +445,7 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
     process = get_process(process);
     let mut proc_ref = process.as_process_or_error();
 
-    if proc_ref.ptype().ne(Qreal) {
+    if !proc_ref.ptype().eq(Qreal) {
         error!(
             "Process {} is not a subprocess.",
             proc_ref.name.as_string_or_error()
