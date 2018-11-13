@@ -57,4 +57,7 @@ bool disptab_matches_widthtab (struct Lisp_Char_Table *disptab,
 void recompute_width_table (struct buffer *buf,
                             struct Lisp_Char_Table *disptab);
 
+/* Return the current indentation at a given byte offset */
+ptrdiff_t position_indentation (ptrdiff_t pos_byte);
+
 #endif /* EMACS_INDENT_H */
