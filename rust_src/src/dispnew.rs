@@ -4,16 +4,19 @@ use std::{cmp, ptr};
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
-use remacs_sys::{clear_current_matrices, dtotimespec, fset_redisplay,
-                 mark_window_display_accurate, timespec_add, timespec_sub,
-                 wait_reading_process_output};
-use remacs_sys::{redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX};
-use remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph};
 
-use frames::{frame_live_or_selected, LispFrameRef};
-use lisp::{defsubr, ExternalPtr, LispObject};
-use terminal::{clear_frame, update_begin, update_end};
-use windows::{LispWindowOrSelected, LispWindowRef};
+use crate::{
+    frames::{frame_live_or_selected, LispFrameRef},
+    lisp::{defsubr, ExternalPtr, LispObject},
+    remacs_sys::{
+        clear_current_matrices, dtotimespec, fset_redisplay, mark_window_display_accurate,
+        timespec_add, timespec_sub, wait_reading_process_output,
+    },
+    remacs_sys::{redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX},
+    remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph},
+    terminal::{clear_frame, update_begin, update_end},
+    windows::{LispWindowOrSelected, LispWindowRef},
+};
 
 pub type LispGlyphRef = ExternalPtr<Lisp_Glyph>;
 
@@ -90,7 +93,7 @@ pub fn redraw_display() {
 pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
     let mut w = Some(w);
     while let Some(mut win) = w {
-        if let Some(mut contents) = win.contents.as_window() {
+        if let Some(contents) = win.contents.as_window() {
             set_window_update_flags(contents, on_p);
         } else {
             win.set_must_be_updated_p(on_p);

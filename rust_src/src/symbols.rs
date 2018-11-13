@@ -1,19 +1,24 @@
 //! symbols support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
-                 make_lisp_symbol, set_symbol_declared_special, set_symbol_redirect,
-                 swap_in_symval_forwarding, symbol_interned, symbol_redirect, symbol_trapped_write};
-use remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG};
-use remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qsymbolp, Qunbound,
-                 Qvoid_variable};
 
-use buffers::LispBufferLocalValueRef;
-use data::Lisp_Fwd;
-use data::{indirect_function, set};
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use multibyte::LispStringRef;
+use crate::{
+    buffers::LispBufferLocalValueRef,
+    data::Lisp_Fwd,
+    data::{indirect_function, set},
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    multibyte::LispStringRef,
+    remacs_sys::{
+        find_symbol_value, get_symbol_declared_special, get_symbol_redirect, make_lisp_symbol,
+        set_symbol_declared_special, set_symbol_redirect, swap_in_symval_forwarding,
+        symbol_interned, symbol_redirect, symbol_trapped_write,
+    },
+    remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
+    remacs_sys::{
+        Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qsymbolp, Qunbound, Qvoid_variable,
+    },
+};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 

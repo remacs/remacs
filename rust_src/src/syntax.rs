@@ -1,14 +1,16 @@
 //! Functions related to syntax
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{buffer_defaults, scan_lists, set_char_table_defalt};
-use remacs_sys::{EmacsInt, Qnil, Qsyntax_table, Qsyntax_table_p};
-use remacs_sys::{Fcopy_sequence, Fset_char_table_parent};
 
-use chartable::LispCharTableRef;
-use lisp::defsubr;
-use lisp::LispObject;
-use threads::ThreadState;
+use crate::{
+    chartable::LispCharTableRef,
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::{buffer_defaults, scan_lists, set_char_table_defalt},
+    remacs_sys::{EmacsInt, Qnil, Qsyntax_table, Qsyntax_table_p},
+    remacs_sys::{Fcopy_sequence, Fset_char_table_parent},
+    threads::ThreadState,
+};
 
 /// Return the current syntax table. This is the one specified by the
 /// current buffer.

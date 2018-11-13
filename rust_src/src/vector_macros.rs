@@ -7,15 +7,16 @@ macro_rules! offset_of {
 /// Equivalent to PSEUDOVECSIZE in C
 macro_rules! pseudovecsize {
     ($ty: ty, $field: ident) => {
-        ((offset_of!($ty, $field) - *::vectors::HEADER_SIZE) / *::vectors::WORD_SIZE)
+        ((offset_of!($ty, $field) - *crate::vectors::HEADER_SIZE) / *crate::vectors::WORD_SIZE)
     };
 }
 
 /// Equivalent to VECSIZE in C
 macro_rules! vecsize {
     ($ty: ty) => {
-        ((::std::mem::size_of::<$ty>() - *::vectors::HEADER_SIZE + *::vectors::WORD_SIZE - 1)
-            / *::vectors::WORD_SIZE)
+        ((::std::mem::size_of::<$ty>() - *crate::vectors::HEADER_SIZE + *crate::vectors::WORD_SIZE
+            - 1)
+            / *crate::vectors::WORD_SIZE)
     };
 }
 
@@ -23,7 +24,7 @@ macro_rules! vecsize {
 macro_rules! allocate_pseudovector {
     ($ty: ty, $field: ident, $vectype: expr) => {
         unsafe {
-            ::remacs_sys::allocate_pseudovector(
+            crate::remacs_sys::allocate_pseudovector(
                 vecsize!($ty) as ::libc::c_int,
                 pseudovecsize!($ty, $field) as ::libc::c_int,
                 pseudovecsize!($ty, $field) as ::libc::c_int,

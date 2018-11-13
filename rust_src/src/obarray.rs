@@ -2,13 +2,17 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
-                 make_pure_c_string, make_unibyte_string, oblookup};
-use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
-use remacs_sys::{Qnil, Qvectorp};
 
-use lisp::defsubr;
-use lisp::LispObject;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::{
+        fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
+        make_pure_c_string, make_unibyte_string, oblookup,
+    },
+    remacs_sys::{Fcons, Fmake_symbol, Fpurecopy},
+    remacs_sys::{Qnil, Qvectorp},
+};
 
 /// A lisp object containing an `obarray`.
 #[repr(transparent)]

@@ -1,6 +1,6 @@
 //! Miscellaneous utility functions
 
-use remacs_sys::EmacsInt;
+use crate::remacs_sys::EmacsInt;
 
 #[no_mangle]
 pub extern "C" fn clip_to_bounds(lower: isize, num: EmacsInt, upper: isize) -> isize {

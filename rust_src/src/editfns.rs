@@ -8,27 +8,35 @@ use std;
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::EmacsInt;
-use remacs_sys::{buffer_overflow, build_string, current_message, downcase,
-                 find_before_next_newline, find_field, find_newline, globals, insert,
-                 insert_and_inherit, insert_from_buffer, make_buffer_string_both,
-                 make_string_from_bytes, maybe_quit, message1, scan_newline_from_point,
-                 set_buffer_internal_1, set_point, set_point_both, update_buffer_properties};
-use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
-                 Fx_popup_dialog};
-use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt};
-
-use buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX};
-use character::{char_head_p, dec_pos};
-use lisp::{defsubr, LispObject};
-use marker::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp,
-             set_point_from_marker};
-use multibyte::{is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
-                write_codepoint, Codepoint, LispStringRef, MAX_MULTIBYTE_LENGTH};
-use numbers::LispNumber;
-use textprop::get_char_property;
-use threads::ThreadState;
-use util::clip_to_bounds;
+use crate::{
+    buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
+    character::{char_head_p, dec_pos},
+    lisp::{defsubr, LispObject},
+    marker::{
+        buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, set_point_from_marker,
+    },
+    multibyte::{
+        is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
+        write_codepoint, Codepoint, LispStringRef, MAX_MULTIBYTE_LENGTH,
+    },
+    numbers::LispNumber,
+    remacs_sys::EmacsInt,
+    remacs_sys::{
+        buffer_overflow, build_string, current_message, downcase, find_before_next_newline,
+        find_field, find_newline, globals, insert, insert_and_inherit, insert_from_buffer,
+        make_buffer_string_both, make_string_from_bytes, maybe_quit, message1,
+        scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both,
+        update_buffer_properties,
+    },
+    remacs_sys::{
+        Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
+        Fx_popup_dialog,
+    },
+    remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
+    textprop::get_char_property,
+    threads::ThreadState,
+    util::clip_to_bounds,
+};
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).

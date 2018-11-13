@@ -391,10 +391,18 @@ fn generate_include_files() -> Result<(), BuildError> {
 
     for mod_data in &modules {
         for func in &mod_data.c_exports {
-            write!(out_file, "pub use {}::{};\n", mod_data.info.name, func)?;
+            write!(
+                out_file,
+                "pub use crate::{}::{};\n",
+                mod_data.info.name, func
+            )?;
         }
         for func in &mod_data.lisp_fns {
-            write!(out_file, "pub use {}::F{};\n", mod_data.info.name, func)?;
+            write!(
+                out_file,
+                "pub use crate::{}::F{};\n",
+                mod_data.info.name, func
+            )?;
         }
     }
     write!(out_file, "\n")?;
@@ -602,8 +610,8 @@ fn generate_globals() {
                     let value = parts.next().unwrap();
                     write!(
                         out_file,
-                        "pub const {}: LispObject = ::lisp::LispObject( \
-                         {} * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt));\n",
+                        "pub const {}: LispObject = crate::lisp::LispObject( \
+                         {} * (std::mem::size_of::<Lisp_Symbol>() as EmacsInt));\n",
                         symbol_name, value
                     )
                     .expect("Write error in reading symbols stage");

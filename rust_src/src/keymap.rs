@@ -6,19 +6,23 @@ use std::ptr;
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit};
-use remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt};
-use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy};
-use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
 
-use data::{aref, indirect_function, set};
-use eval::autoload_do_load;
-use keyboard::lucid_event_type_list_p;
-use lisp::{defsubr, LispObject};
-use lists::nth;
-use obarray::intern;
-use threads::ThreadState;
+use crate::{
+    data::{aref, indirect_function, set},
+    eval::autoload_do_load,
+    keyboard::lucid_event_type_list_p,
+    lisp::{defsubr, LispObject},
+    lists::nth,
+    obarray::intern,
+    remacs_sys::{
+        access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
+        map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit,
+    },
+    remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
+    remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy},
+    remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt},
+    threads::ThreadState,
+};
 
 pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
