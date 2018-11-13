@@ -1006,7 +1006,7 @@ pub fn delete_all_overlays_lisp(buffer: LispObject) {
 /// Delete the entire contents of the current buffer.
 /// Any narrowing restriction in effect (see `narrow-to-region') is removed,
 /// so the buffer is truly empty after this.
-#[lisp_fn]
+#[lisp_fn(intspec = "*")]
 pub fn erase_buffer() {
     unsafe {
         Fwiden();
