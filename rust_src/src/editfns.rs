@@ -46,13 +46,6 @@ pub fn point() -> EmacsInt {
     buffer_ref.pt as EmacsInt
 }
 
-/// Return value of point, in bytes, as an integer.
-/// Beginning of buffer is position (point-min).
-pub fn point_byte() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
-    buffer_ref.pt_byte as EmacsInt
-}
-
 /// Return the number of characters in the current buffer.
 /// If BUFFER is not nil, return the number of characters in that buffer
 /// instead.
@@ -164,13 +157,6 @@ pub fn mark_marker() -> LispObject {
 #[lisp_fn]
 pub fn point_min() -> EmacsInt {
     ThreadState::current_buffer().begv as EmacsInt
-}
-
-/// Return the minimum permissible byte_position in the current
-/// buffer.  This is 1, unless narrowing (a buffer restriction) is in
-/// effect.
-pub fn point_min_byte() -> EmacsInt {
-    ThreadState::current_buffer().begv_byte as EmacsInt
 }
 
 /// Return the maximum permissible value of point in the current

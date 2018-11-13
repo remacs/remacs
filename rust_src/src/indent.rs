@@ -1,10 +1,12 @@
 //! Indentation functions
 
-use remacs_macros::lisp_fn;
 use std::ptr;
 
+use remacs_macros::lisp_fn;
+
 use crate::{
-    editfns::{point, point_byte, point_min, point_min_byte},
+    buffers::{point_byte, point_min_byte},
+    editfns::{point, point_min},
     lisp::defsubr,
     remacs_sys::{self, find_newline, position_indentation, EmacsInt},
 };
