@@ -48,7 +48,6 @@ pub fn point() -> EmacsInt {
 
 /// Return value of point, in bytes, as an integer.
 /// Beginning of buffer is position (point-min).
-#[lisp_fn]
 pub fn point_byte() -> EmacsInt {
     let buffer_ref = ThreadState::current_buffer();
     buffer_ref.pt_byte as EmacsInt
@@ -170,7 +169,6 @@ pub fn point_min() -> EmacsInt {
 /// Return the minimum permissible byte_position in the current
 /// buffer.  This is 1, unless narrowing (a buffer restriction) is in
 /// effect.
-#[lisp_fn]
 pub fn point_min_byte() -> EmacsInt {
     ThreadState::current_buffer().begv_byte as EmacsInt
 }
