@@ -6,19 +6,22 @@ use std::ptr;
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit};
+use remacs_sys::{access_keymap, describe_vector, make_save_funcptr_ptr_obj, map_char_table,
+                 map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
+                 map_keymap_item, maybe_quit, specbind, unbind_to};
 use remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt};
-use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy};
-use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
+use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy,
+                 Fterpri};
+use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p};
 
+use buffers::current_buffer;
 use data::{aref, indirect_function, set};
 use eval::autoload_do_load;
 use keyboard::lucid_event_type_list_p;
 use lisp::{defsubr, LispObject};
 use lists::nth;
 use obarray::intern;
-use threads::ThreadState;
+use threads::{c_specpdl_index, ThreadState};
 
 pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
@@ -563,6 +566,44 @@ pub fn make_sparse_keymap(string: LispObject) -> LispObject {
     } else {
         list!(Qkeymap)
     }
+}
+
+#[no_mangle]
+pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
+    unsafe { Findent_to(LispObject::from_fixnum(16), LispObject::from_fixnum(1)) };
+    call!(fun, elt);
+    unsafe { Fterpri(Qnil, Qnil) };
+}
+
+/// Insert a description of contents of VECTOR.
+/// This is text showing the elements of vector matched against indices.
+/// DESCRIBER is the output function used; nil means use `princ'.
+#[lisp_fn(min = "1", name = "describe-vector")]
+pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
+    if describer.is_nil() {
+        describer = intern("princ");
+    }
+    unsafe { specbind(Qstandard_output, current_buffer()) };
+    if !(vector.is_vector() || vector.is_char_table()) {
+        wrong_type!(Qvector_or_char_table_p, vector);
+    }
+
+    let count = c_specpdl_index();
+    unsafe {
+        describe_vector(
+            vector,
+            Qnil,
+            describer,
+            describe_vector_princ,
+            false,
+            Qnil,
+            Qnil,
+            false,
+            false,
+        )
+    };
+
+    unsafe { unbind_to(count, Qnil) };
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
