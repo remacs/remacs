@@ -9,24 +9,29 @@ use std;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    buffers::current_buffer,
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
+    eval::progn,
     lisp::{defsubr, LispObject},
     marker::{
-        buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, set_point_from_marker,
+        buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
+        set_point_from_marker,
     },
     multibyte::{
         is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
-        write_codepoint, Codepoint, LispStringRef, MAX_MULTIBYTE_LENGTH,
+        write_codepoint, MAX_MULTIBYTE_LENGTH,
     },
+    multibyte::{Codepoint, LispStringRef},
     numbers::LispNumber,
     remacs_sys::EmacsInt,
     remacs_sys::{
         buffer_overflow, build_string, current_message, downcase, find_before_next_newline,
         find_field, find_newline, globals, insert, insert_and_inherit, insert_from_buffer,
-        make_buffer_string_both, make_string_from_bytes, maybe_quit, message1,
-        scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both,
-        update_buffer_properties,
+        make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
+        message1, record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, unbind_to, update_buffer_properties,
     },
     remacs_sys::{
         Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
@@ -34,8 +39,9 @@ use crate::{
     },
     remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
-    threads::ThreadState,
+    threads::{c_specpdl_index, ThreadState},
     util::clip_to_bounds,
+    windows::selected_window,
 };
 
 /// Return value of point, as an integer.
@@ -942,6 +948,87 @@ pub fn buffer_string() -> LispObject {
     let zv_byte = cur_buf.zv_byte;
 
     unsafe { make_buffer_string_both(begv, begv_byte, zv, zv_byte, true) }
+}
+
+// Save current buffer state for `save-excursion' special form.
+// We (ab)use Lisp_Misc_Save_Value to allow explicit free and so
+// offload some work from GC.
+#[no_mangle]
+pub extern "C" fn save_excursion_save() -> LispObject {
+    let window = selected_window().as_window_or_error();
+
+    unsafe {
+        make_save_obj_obj_obj_obj(
+            point_marker(),
+            Qnil,
+            // Selected window if current buffer is shown in it, nil otherwise.
+            if window.contents.eq(current_buffer()) {
+                window.into()
+            } else {
+                Qnil
+            },
+            Qnil,
+        )
+    }
+}
+
+/// Save point, and current buffer; execute BODY; restore those things.
+/// Executes BODY just like `progn'.
+/// The values of point and the current buffer are restored
+/// even in case of abnormal exit (throw or error).
+///
+/// If you only want to save the current buffer but not point,
+/// then just use `save-current-buffer', or even `with-current-buffer'.
+///
+/// Before Emacs 25.1, `save-excursion' used to save the mark state.
+/// To save the marker state as well as the point and buffer, use
+/// `save-mark-and-excursion'.
+///
+/// usage: (save-excursion &rest BODY)
+#[lisp_fn(unevalled = "true")]
+pub fn save_excursion(args: LispObject) -> LispObject {
+    let count = c_specpdl_index();
+
+    unsafe { record_unwind_protect(Some(save_excursion_restore), save_excursion_save()) };
+
+    unsafe { unbind_to(count, progn(args)) }
+}
+
+/// Record which buffer is current; execute BODY; make that buffer current.
+/// BODY is executed just like `progn'.
+/// usage: (save-current-buffer &rest BODY)
+#[lisp_fn(unevalled = "true")]
+pub fn save_current_buffer(args: LispObject) -> LispObject {
+    let count = c_specpdl_index();
+
+    unsafe { record_unwind_current_buffer() };
+
+    unsafe { unbind_to(count, progn(args)) }
+}
+
+/// Execute BODY, saving and restoring current buffer's restrictions.
+/// The buffer's restrictions make parts of the beginning and end invisible.
+/// \(They are set up with `narrow-to-region' and eliminated with `widen'.)
+/// This special form, `save-restriction', saves the current buffer's restrictions
+/// when it is entered, and restores them when it is exited.
+/// So any `narrow-to-region' within BODY lasts only until the end of the form.
+/// The old restrictions settings are restored
+/// even in case of abnormal exit (throw or error).
+///
+/// The value returned is the value of the last form in BODY.
+///
+/// Note: if you are using both `save-excursion' and `save-restriction',
+/// use `save-excursion' outermost:
+/// (save-excursion (save-restriction ...))
+///
+/// usage: (save-restriction &rest BODY)
+#[lisp_fn(unevalled = "true")]
+pub fn save_restriction(body: LispObject) -> LispObject {
+    let count = c_specpdl_index();
+
+    unsafe { record_unwind_protect(Some(save_restriction_restore), save_restriction_save()) };
+
+    unsafe { unbind_to(count, progn(body)) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

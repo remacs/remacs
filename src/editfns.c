@@ -628,22 +628,6 @@ If POS is nil, the value of point is used for POS.  */)
 }
 
 
-/* Save current buffer state for `save-excursion' special form.
-   We (ab)use Lisp_Misc_Save_Value to allow explicit free and so
-   offload some work from GC.  */
-
-Lisp_Object
-save_excursion_save (void)
-{
-  return make_save_obj_obj_obj_obj
-    (Fpoint_marker (),
-     Qnil,
-     /* Selected window if current buffer is shown in it, nil otherwise.  */
-     (EQ (XWINDOW (selected_window)->contents, Fcurrent_buffer ())
-      ? selected_window : Qnil),
-     Qnil);
-}
-
 /* Restore saved buffer before leaving `save-excursion' special form.  */
 
 void
@@ -680,43 +664,6 @@ save_excursion_restore (Lisp_Object info)
  out:
 
   free_misc (info);
-}
-
-DEFUN ("save-excursion", Fsave_excursion, Ssave_excursion, 0, UNEVALLED, 0,
-       doc: /* Save point, and current buffer; execute BODY; restore those things.
-Executes BODY just like `progn'.
-The values of point and the current buffer are restored
-even in case of abnormal exit (throw or error).
-
-If you only want to save the current buffer but not point,
-then just use `save-current-buffer', or even `with-current-buffer'.
-
-Before Emacs 25.1, `save-excursion' used to save the mark state.
-To save the marker state as well as the point and buffer, use
-`save-mark-and-excursion'.
-
-usage: (save-excursion &rest BODY)  */)
-  (Lisp_Object args)
-{
-  register Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_protect (save_excursion_restore, save_excursion_save ());
-
-  val = Fprogn (args);
-  return unbind_to (count, val);
-}
-
-DEFUN ("save-current-buffer", Fsave_current_buffer, Ssave_current_buffer, 0, UNEVALLED, 0,
-       doc: /* Record which buffer is current; execute BODY; make that buffer current.
-BODY is executed just like `progn'.
-usage: (save-current-buffer &rest BODY)  */)
-  (Lisp_Object args)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_current_buffer ();
-  return unbind_to (count, Fprogn (args));
 }
 
 DEFUN ("user-login-name", Fuser_login_name, Suser_login_name, 0, 1, 0,
@@ -2837,33 +2784,6 @@ save_restriction_restore (Lisp_Object data)
   if (cur)
     set_buffer_internal (cur);
 }
-
-DEFUN ("save-restriction", Fsave_restriction, Ssave_restriction, 0, UNEVALLED, 0,
-       doc: /* Execute BODY, saving and restoring current buffer's restrictions.
-The buffer's restrictions make parts of the beginning and end invisible.
-\(They are set up with `narrow-to-region' and eliminated with `widen'.)
-This special form, `save-restriction', saves the current buffer's restrictions
-when it is entered, and restores them when it is exited.
-So any `narrow-to-region' within BODY lasts only until the end of the form.
-The old restrictions settings are restored
-even in case of abnormal exit (throw or error).
-
-The value returned is the value of the last form in BODY.
-
-Note: if you are using both `save-excursion' and `save-restriction',
-use `save-excursion' outermost:
-    (save-excursion (save-restriction ...))
-
-usage: (save-restriction &rest BODY)  */)
-  (Lisp_Object body)
-{
-  register Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_protect (save_restriction_restore, save_restriction_save ());
-  val = Fprogn (body);
-  return unbind_to (count, val);
-}
 
 DEFUN ("message", Fmessage, Smessage, 1, MANY, 0,
        doc: /* Display a message at the bottom of the screen.
@@ -4300,9 +4220,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sfield_string_no_properties);
   defsubr (&Sdelete_field);
 
-  defsubr (&Ssave_excursion);
-  defsubr (&Ssave_current_buffer);
-
   defsubr (&Sinsert);
   defsubr (&Sinsert_before_markers);
   defsubr (&Sinsert_and_inherit);
@@ -4335,6 +4252,5 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sdelete_and_extract_region);
   defsubr (&Swiden);
   defsubr (&Snarrow_to_region);
-  defsubr (&Ssave_restriction);
   defsubr (&Stranspose_regions);
 }
