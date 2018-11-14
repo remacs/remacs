@@ -878,7 +878,7 @@ pub fn run_hooks(args: &[LispObject]) -> () {
 /// Do not use `make-local-variable' to make a hook variable buffer-local.
 /// Instead, use `add-hook' and specify t for the LOCAL argument.
 /// usage: (run-hook-with-args HOOK &rest ARGS)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
     run_hook_with_args_internal(args, funcall_nil)
 }
@@ -1022,7 +1022,7 @@ fn resolve_fun(fun: LispObject) -> Result<LispFun, LispFunError> {
 /// Thus, (funcall \\='cons \\='x \\='y) returns (x . y).
 /// usage: (funcall FUNCTION &rest ARGUMENTS)
 #[allow(unused_assignments)]
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn funcall(args: &mut [LispObject]) -> LispObject {
     unsafe { maybe_quit() };
 
