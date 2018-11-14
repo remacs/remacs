@@ -88,26 +88,20 @@ Default nil means to write characters above \\177 in octal notation."
 (defun edit-kbd-macro (keys &optional prefix finish-hook store-hook)
   "Edit a keyboard macro.
 At the prompt, type any key sequence which is bound to a keyboard macro.
-Or, type `\\[kmacro-end-and-call-macro]' or RET to edit the last
-keyboard macro, `\\[view-lossage]' to edit the last 300
-keystrokes as a keyboard macro, or `\\[execute-extended-command]'
-to edit a macro by its command name.
+Or, type `C-x e' or RET to edit the last keyboard macro, `C-h l' to edit
+the last 300 keystrokes as a keyboard macro, or `\\[execute-extended-command]' to edit a macro by
+its command name.
 With a prefix argument, format the macro in a more concise way."
-  (interactive
-   (list (read-key-sequence (substitute-command-keys "Keyboard macro to edit \
-\(\\[kmacro-end-and-call-macro], \\[execute-extended-command], \\[view-lossage],\
- or keys): "))
-         current-prefix-arg))
+  (interactive "kKeyboard macro to edit (C-x e, M-x, C-h l, or keys): \nP")
   (when keys
     (let ((cmd (if (arrayp keys) (key-binding keys) keys))
-          (cmd-noremap (when (arrayp keys) (key-binding keys nil t)))
 	  (mac nil) (mac-counter nil) (mac-format nil)
 	  kmacro)
       (cond (store-hook
 	     (setq mac keys)
 	     (setq cmd nil))
-	    ((or (memq cmd '(call-last-kbd-macro kmacro-call-macro kmacro-end-or-call-macro kmacro-end-and-call-macro))
-                 (memq cmd-noremap '(call-last-kbd-macro kmacro-call-macro kmacro-end-or-call-macro kmacro-end-and-call-macro))
+	    ((or (memq cmd '(call-last-kbd-macro kmacro-call-macro
+			     kmacro-end-or-call-macro kmacro-end-and-call-macro))
 		 (member keys '("\r" [return])))
 	     (or last-kbd-macro
 		 (y-or-n-p "No keyboard macro defined.  Create one? ")
@@ -115,14 +109,13 @@ With a prefix argument, format the macro in a more concise way."
 	     (setq mac (or last-kbd-macro ""))
 	     (setq keys nil)
 	     (setq cmd 'last-kbd-macro))
-	    ((memq 'execute-extended-command (list cmd cmd-noremap))
+	    ((eq cmd 'execute-extended-command)
 	     (setq cmd (read-command "Name of keyboard macro to edit: "))
 	     (if (string-equal cmd "")
 		 (error "No command name given"))
 	     (setq keys nil)
 	     (setq mac (symbol-function cmd)))
-	    ((or (memq cmd '(view-lossage electric-view-lossage))
-                 (memq cmd-noremap '(view-lossage electric-view-lossage)))
+	    ((memq cmd '(view-lossage electric-view-lossage))
 	     (setq mac (recent-keys))
 	     (setq keys nil)
 	     (setq cmd 'last-kbd-macro))
