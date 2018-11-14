@@ -601,7 +601,7 @@ pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
             vector,
             Qnil,
             describer,
-            describe_vector_princ,
+            Some(describe_vector_princ),
             false,
             Qnil,
             Qnil,
