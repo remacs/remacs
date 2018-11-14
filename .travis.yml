@@ -29,6 +29,7 @@ stages:
 jobs:
   allow_failures:
     - script: make clippy
+    - os: osx
   include:
     - stage: rustfmt
       os: linux  # No need to run this everywhere
@@ -96,5 +97,3 @@ notifications:
 
 matrix:
   fast_finish: true
-  allow_failures:
-    - os: osx
