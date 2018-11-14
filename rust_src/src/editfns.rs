@@ -1076,7 +1076,7 @@ pub fn rust_find_field(
     end: *mut ptrdiff_t,
 ) {
     let current_buffer = ThreadState::current_buffer();
-    let pos = pos.map_or_else(|| current_buffer.pt, |p| p.to_fixnum() as isize);
+    let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as isize);
 
     // Fields right before and after the point.
     let after_field =
