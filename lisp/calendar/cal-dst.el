@@ -154,7 +154,7 @@ Return nil if no such transition can be found."
        (while
            ;; Set PROBE to halfway between LO and HI, rounding down.
            ;; If PROBE equals LO, we are done.
-           (not (= lo (setq probe (/ (+ lo hi) 2))))
+           (not (= lo (setq probe (floor (+ lo hi) 2))))
          ;; Set either LO or HI to PROBE, depending on probe results.
          (if (eq (car (current-time-zone probe)) hi-utc-diff)
              (setq hi probe)
