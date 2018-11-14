@@ -1530,6 +1530,10 @@ default jumps to the ``old'' file, and the meaning of the prefix
 argument is reversed.  If the prefix argument is a number greater than
 8 (e.g., if you type @kbd{C-u C-u C-c C-c}), then this command also
 sets @code{diff-jump-to-old-file} for the next invocation.
+If the source file is under version control (@pxref{Version Control}),
+this jumps to the work file by default.  With a prefix argument, jump
+to the ``old'' revision of the file (@pxref{Old Revisions}), when
+point is on the old line, or otherwise jump to the ``new'' revision.
 
 @item C-c C-e
 @findex diff-ediff-patch

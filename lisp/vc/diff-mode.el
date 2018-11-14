@@ -55,6 +55,7 @@
 ;;; Code:
 (eval-when-compile (require 'cl-lib))
 
+(autoload 'vc-find-revision "vc")
 (defvar add-log-buffer-file-name-function)
 
 
@@ -103,6 +104,9 @@ when editing big diffs)."
 
 (defvar diff-vc-backend nil
   "The VC backend that created the current Diff buffer, if any.")
+
+(defvar diff-vc-revisions nil
+  "The VC revisions compared in the current Diff buffer, if any.")
 
 (defvar diff-outline-regexp
   "\\([*+][*+][*+] [^0-9]\\|@@ ...\\|\\*\\*\\* [0-9].\\|--- [0-9]..\\)")
@@ -1736,7 +1740,11 @@ NOPROMPT, if non-nil, means not to prompt the user."
 		       (match-string 1)))))
 	   (file (or (diff-find-file-name other noprompt)
                      (error "Can't find the file")))
-	   (buf (find-file-noselect file)))
+	   (revision (and other diff-vc-backend
+                          (nth (if reverse 1 0) diff-vc-revisions)))
+	   (buf (if revision
+                    (vc-find-revision file revision diff-vc-backend)
+                  (find-file-noselect file))))
       ;; Update the user preference if he so wished.
       (when (> (prefix-numeric-value other-file) 8)
 	(setq diff-jump-to-old-file other))
@@ -1862,7 +1870,11 @@ With a prefix argument, try to REVERSE the hunk."
 `diff-jump-to-old-file' (or its opposite if the OTHER-FILE prefix arg
 is given) determines whether to jump to the old or the new file.
 If the prefix arg is bigger than 8 (for example with \\[universal-argument] \\[universal-argument])
-then `diff-jump-to-old-file' is also set, for the next invocations."
+then `diff-jump-to-old-file' is also set, for the next invocations.
+
+Under version control, the OTHER-FILE prefix arg means jump to the old
+revision of the file if point is on an old changed line, or to the new
+revision of the file otherwise."
   (interactive (list current-prefix-arg last-input-event))
   ;; When pointing at a removal line, we probably want to jump to
   ;; the old location, and else to the new (i.e. as if reverting).

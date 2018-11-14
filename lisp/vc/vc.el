@@ -987,6 +987,7 @@ Within directories, only files already under version control are noticed."
 (defvar log-view-vc-backend)
 (defvar log-edit-vc-backend)
 (defvar diff-vc-backend)
+(defvar diff-vc-revisions)
 
 (defun vc-deduce-backend ()
   (cond ((derived-mode-p 'vc-dir-mode)   vc-dir-backend)
@@ -1728,6 +1729,7 @@ Return t if the buffer had changes, nil otherwise."
     (set-buffer buffer)
     (diff-mode)
     (set (make-local-variable 'diff-vc-backend) (car vc-fileset))
+    (set (make-local-variable 'diff-vc-revisions) (list rev1 rev2))
     (set (make-local-variable 'revert-buffer-function)
 	 (lambda (_ignore-auto _noconfirm)
            (vc-diff-internal async vc-fileset rev1 rev2 verbose)))

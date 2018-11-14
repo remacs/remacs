@@ -368,6 +368,10 @@ To disable it, set the new defcustom 'diff-font-lock-refine' to nil.
 *** File headers can be shortened, mimicking Magit's diff format.
 To enable it, set the new defcustom 'diff-font-lock-prettify to t.
 
+*** Prefix arg of 'diff-goto-source' means jump to the old revision
+of the file under version control if point is on an old changed line,
+or to the new revision of the file otherwise.
+
 ** Browse-url
 
 *** The function 'browse-url-emacs' can now visit a URL in selected window.
