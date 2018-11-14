@@ -2557,10 +2557,9 @@ library.  @xref{Hooks}.
 @node Find Init
 @subsection How Emacs Finds Your Init File
 
-  Normally Emacs uses the environment variable @env{HOME}
-(@pxref{General Variables, HOME}) to find @file{.emacs}; that's what
-@samp{~} means in a file name.  If @file{.emacs} is not found inside
-@file{~/} (nor @file{.emacs.el}), Emacs looks for
+  Normally Emacs uses your home directory to find @file{~/.emacs};
+that's what @samp{~} means in a file name.  @xref{General Variables, HOME}.
+If neither @file{~/.emacs} nor @file{~/.emacs.el} is found, Emacs looks for
 @file{~/.emacs.d/init.el} (which, like @file{~/.emacs.el}, can be
 byte-compiled).
 

@@ -2367,8 +2367,10 @@ start with @samp{~}.)  Otherwise, the current buffer's value of
 @end example
 
 If the part of @var{filename} before the first slash is
-@samp{~}, it expands to the value of the @env{HOME} environment
-variable (usually your home directory).  If the part before the first
+@samp{~}, it expands to your home directory, which is typically
+specified by the value of the @env{HOME} environment variable
+(@pxref{General Variables,,, emacs, The GNU Emacs Manual}).
+If the part before the first
 slash is @samp{~@var{user}} and if @var{user} is a valid login name,
 it expands to @var{user}'s home directory.
 If you do not want this expansion for a relative @var{filename} that

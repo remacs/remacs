@@ -529,7 +529,11 @@ otherwise.
 @item HOME
 @vindex HOME@r{, environment variable}
 The location of your files in the directory tree; used for
-expansion of file names starting with a tilde (@file{~}).  On MS-DOS,
+expansion of file names starting with a tilde (@file{~}).
+If set to a relative file name, Emacs expands @file{~} to the
+corresponding absolute file name.  If unset, it normally defaults to
+the home directory of the user given by @env{LOGNAME}, @env{USER} or
+your user ID, or to @file{/} if all else fails.  On MS-DOS,
 it defaults to the directory from which Emacs was started, with
 @samp{/bin} removed from the end if it was present.  On Windows, the
 default value of @env{HOME} is the @file{Application Data}
