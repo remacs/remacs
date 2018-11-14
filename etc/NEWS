@@ -621,6 +621,12 @@ can now be searched via 'C-s'.
 
 ** Search and Replace
 
+*** isearch-lazy-count shows the current match number and total number
+of matches in the Isearch prompt.  Customizable variables
+lazy-count-prefix-format and lazy-count-suffix-format define the
+format of the current and the total number of matches in the prompt's
+prefix and suffix respectively.
+
 *** lazy-highlight-buffer highlights matches in the full buffer.
 It is useful in combination with lazy-highlight-cleanup customized to nil
 to leave matches highlighted in the whole buffer after exiting isearch.

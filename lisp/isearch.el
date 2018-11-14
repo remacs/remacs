@@ -316,6 +316,16 @@ this variable is set to the symbol `all-windows'."
   :group 'lazy-highlight
   :group 'isearch)
 
+(defcustom isearch-lazy-count nil
+  "Show match numbers in the search prompt.
+When both this option and `isearch-lazy-highlight' are non-nil,
+show the current match number and the total number of matches
+in the buffer (or its restriction)."
+  :type 'boolean
+  :group 'lazy-count
+  :group 'isearch
+  :version "27.1")
+
 ;;; Lazy highlight customization.
 
 (defgroup lazy-highlight nil
@@ -385,6 +395,29 @@ and doesn't remove full-buffer highlighting after a search."
   "Face for lazy highlighting of matches other than the current one."
   :group 'lazy-highlight
   :group 'basic-faces)
+
+;;; Lazy count customization.
+
+(defgroup lazy-count nil
+  "Lazy counting feature for reporting the number of matches."
+  :prefix "lazy-count-"
+  :version "27.1"
+  :group 'isearch
+  :group 'matching)
+
+(defcustom lazy-count-prefix-format "%s/%s "
+  "Format of the current/total number of matches for the prompt prefix."
+  :type '(choice (const :tag "No prefix" nil)
+                 (string :tag "Prefix format string" "%s/%s "))
+  :group 'lazy-count
+  :version "27.1")
+
+(defcustom lazy-count-suffix-format nil
+  "Format of the current/total number of matches for the prompt suffix."
+  :type '(choice (const :tag "No suffix" nil)
+                 (string :tag "Suffix format string" " [%s of %s]"))
+  :group 'lazy-count
+  :version "27.1")
 
 
 ;; Define isearch help map.
@@ -2794,7 +2827,8 @@ the word mode."
 			(concat " [" current-input-method-title "]: "))
 		     ": ")
 		   )))
-    (propertize (concat (upcase (substring m 0 1)) (substring m 1))
+    (propertize (concat (isearch-lazy-count-format)
+                        (upcase (substring m 0 1)) (substring m 1))
 		'face 'minibuffer-prompt)))
 
 (defun isearch-message-suffix (&optional c-q-hack)
@@ -2802,8 +2836,32 @@ the word mode."
 	              (if isearch-error
 	                  (concat " [" isearch-error "]")
 	                "")
+                      (isearch-lazy-count-format 'suffix)
 	              (or isearch-message-suffix-add ""))
               'face 'minibuffer-prompt))
+
+(defun isearch-lazy-count-format (&optional suffix-p)
+  "Format the current match number and the total number of matches.
+When SUFFIX-P is non-nil, the returned string is indended for
+isearch-message-suffix prompt.  Otherwise, for isearch-message-prefix."
+  (let ((format-string (if suffix-p
+                           lazy-count-suffix-format
+                         lazy-count-prefix-format)))
+    (if (and format-string
+             isearch-lazy-count
+             isearch-lazy-count-current
+             (not isearch-error)
+             (not isearch-suspended))
+        (format format-string
+                (if isearch-forward
+                    isearch-lazy-count-current
+                  (if (eq isearch-lazy-count-current 0)
+                      0
+                    (- isearch-lazy-count-total
+                       isearch-lazy-count-current
+                       -1)))
+                (or isearch-lazy-count-total "?"))
+      "")))
 
 
 ;; Searching
@@ -3202,6 +3260,8 @@ since they have special meaning in a regexp."
 (defvar isearch-lazy-highlight-window-group nil)
 (defvar isearch-lazy-highlight-window-start nil)
 (defvar isearch-lazy-highlight-window-end nil)
+(defvar isearch-lazy-highlight-window-start-changed nil)
+(defvar isearch-lazy-highlight-window-end-changed nil)
 (defvar isearch-lazy-highlight-point-min nil)
 (defvar isearch-lazy-highlight-point-max nil)
 (defvar isearch-lazy-highlight-buffer nil)
@@ -3214,6 +3274,9 @@ since they have special meaning in a regexp."
 (defvar isearch-lazy-highlight-regexp-function nil)
 (defvar isearch-lazy-highlight-forward nil)
 (defvar isearch-lazy-highlight-error nil)
+(defvar isearch-lazy-count-current nil)
+(defvar isearch-lazy-count-total nil)
+(defvar isearch-lazy-count-hash (make-hash-table))
 
 (defun lazy-highlight-cleanup (&optional force procrastinate)
   "Stop lazy highlighting and remove extra highlighting from current buffer.
@@ -3258,18 +3321,41 @@ by other Emacs features."
 		 ;; In case we are recovering from an error.
 		 (not (equal isearch-error
 			     isearch-lazy-highlight-error))
-		 (not (if lazy-highlight-buffer
-			  (= (point-min)
-			     isearch-lazy-highlight-point-min)
-			(= (window-group-start)
-			   isearch-lazy-highlight-window-start)))
-		 (not (if lazy-highlight-buffer
-			  (= (point-max)
-			     isearch-lazy-highlight-point-max)
-			(= (window-group-end) ; Window may have been split/joined.
-			   isearch-lazy-highlight-window-end)))))
+		 (if lazy-highlight-buffer
+		     (not (= (point-min)
+			     isearch-lazy-highlight-point-min))
+		   (setq isearch-lazy-highlight-window-start-changed
+			 (not (= (window-group-start)
+			         isearch-lazy-highlight-window-start))))
+		 (if lazy-highlight-buffer
+		     (not (= (point-max)
+			     isearch-lazy-highlight-point-max))
+		   (setq isearch-lazy-highlight-window-end-changed
+			 (not (= (window-group-end) ; Window may have been split/joined.
+			         isearch-lazy-highlight-window-end))))))
     ;; something important did indeed change
     (lazy-highlight-cleanup t (not (equal isearch-string ""))) ;stop old timer
+    (when isearch-lazy-count
+      (when (or (equal isearch-string "")
+                ;; Check if this place was reached by a condition above
+                ;; other than changed window boundaries (that shouldn't
+                ;; reset the counter)
+                (and (not isearch-lazy-highlight-window-start-changed)
+                     (not isearch-lazy-highlight-window-end-changed))
+                ;; Also check for changes in buffer boundaries in
+                ;; a possibly narrowed buffer in case lazy-highlight-buffer
+                ;; is nil, thus the same check was not performed above
+                (not (= (point-min)
+                        isearch-lazy-highlight-point-min))
+                (not (= (point-max)
+                        isearch-lazy-highlight-point-max)))
+        ;; Reset old counter before going to count new numbers
+        (clrhash isearch-lazy-count-hash)
+        (setq isearch-lazy-count-current nil
+              isearch-lazy-count-total nil)
+        (funcall (or isearch-message-function #'isearch-message))))
+    (setq isearch-lazy-highlight-window-start-changed nil)
+    (setq isearch-lazy-highlight-window-end-changed nil)
     (setq isearch-lazy-highlight-error isearch-error)
     ;; It used to check for `(not isearch-error)' here, but actually
     ;; lazy-highlighting might find matches to highlight even when
@@ -3313,7 +3399,16 @@ by other Emacs features."
     (unless (equal isearch-string "")
       (setq isearch-lazy-highlight-timer
             (run-with-idle-timer lazy-highlight-initial-delay nil
-                                 'isearch-lazy-highlight-start)))))
+                                 'isearch-lazy-highlight-start))))
+  ;; Update the current match number only in isearch-mode and
+  ;; unless isearch-mode is used specially with isearch-message-function
+  (when (and isearch-lazy-count isearch-mode (null isearch-message-function))
+    ;; Update isearch-lazy-count-current only when it was already set
+    ;; at the end of isearch-lazy-highlight-buffer-update
+    (when isearch-lazy-count-current
+      (setq isearch-lazy-count-current
+            (gethash (point) isearch-lazy-count-hash 0))
+      (isearch-message nil t))))
 
 (defun isearch-lazy-highlight-search (string bound)
   "Search ahead for the next or previous match, for lazy highlighting.
@@ -3434,7 +3529,8 @@ Attempt to do the search exactly the way the pending Isearch would."
 			(goto-char (min (or isearch-lazy-highlight-end-limit (point-max))
 					window-end)))))))
 	    (if nomore
-		(when isearch-lazy-highlight-buffer
+		(when (or isearch-lazy-highlight-buffer
+			  (and isearch-lazy-count (null isearch-lazy-count-current)))
 		  (if isearch-lazy-highlight-forward
 		      (setq isearch-lazy-highlight-end (point-min))
 		    (setq isearch-lazy-highlight-start (point-max)))
@@ -3448,7 +3544,8 @@ Attempt to do the search exactly the way the pending Isearch would."
   "Update highlighting of other matches in the full buffer."
   (let ((max lazy-highlight-buffer-max-at-a-time)
         (looping t)
-        nomore window-start window-end)
+        nomore window-start window-end
+        (opoint (point)))
     (with-local-quit
       (save-selected-window
 	(if (and (window-live-p isearch-lazy-highlight-window)
@@ -3483,8 +3580,18 @@ Attempt to do the search exactly the way the pending Isearch would."
 			    (if (= mb (point-min))
 				(setq found nil)
 			      (forward-char -1)))
-			;; Already highlighted by isearch-lazy-highlight-update
-			(unless (and (>= mb window-start) (<= me window-end))
+			(when isearch-lazy-count
+			  (setq isearch-lazy-count-total
+				(1+ (or isearch-lazy-count-total 0)))
+			  (puthash (if isearch-lazy-highlight-forward me mb)
+				   isearch-lazy-count-total
+				   isearch-lazy-count-hash))
+			;; Don't highlight the match when this loop is used
+			;; only to count matches or when matches were already
+			;; highlighted within the current window boundaries
+			;; by isearch-lazy-highlight-update
+			(unless (or (not isearch-lazy-highlight-buffer)
+				    (and (>= mb window-start) (<= me window-end)))
 			  ;; non-zero-length match
 			  (isearch-lazy-highlight-match mb me)))
 		      ;; Remember the current position of point for
@@ -3498,7 +3605,13 @@ Attempt to do the search exactly the way the pending Isearch would."
 		(if (not found)
 		    (setq looping nil
 			  nomore  t))))
-	    (unless nomore
+	    (if nomore
+		(when (and isearch-lazy-count isearch-mode (null isearch-message-function))
+		  (unless isearch-lazy-count-total
+		    (setq isearch-lazy-count-total 0))
+		  (setq isearch-lazy-count-current
+			(gethash opoint isearch-lazy-count-hash 0))
+		  (isearch-message nil t))
 	      (setq isearch-lazy-highlight-timer
 		    (run-at-time lazy-highlight-interval nil
 				 'isearch-lazy-highlight-buffer-update)))))))))
