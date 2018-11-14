@@ -1,10 +1,10 @@
 //! Lisp functions pertaining to editing.
 
+use std;
 use std::ptr;
 
 use libc;
 use libc::{c_int, c_uchar, ptrdiff_t};
-use std;
 
 use remacs_macros::lisp_fn;
 
@@ -27,17 +27,18 @@ use crate::{
     remacs_sys::EmacsInt,
     remacs_sys::{
         buffer_overflow, build_string, current_message, downcase, find_before_next_newline,
-        find_field, find_newline, globals, insert, insert_and_inherit, insert_from_buffer,
-        make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
-        message1, record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
-        save_restriction_restore, save_restriction_save, scan_newline_from_point,
-        set_buffer_internal_1, set_point, set_point_both, unbind_to, update_buffer_properties,
+        find_newline, get_char_property_and_overlay, globals, insert, insert_and_inherit,
+        insert_from_buffer, make_buffer_string_both, make_save_obj_obj_obj_obj,
+        make_string_from_bytes, maybe_quit, message1, record_unwind_current_buffer,
+        record_unwind_protect, save_excursion_restore, save_restriction_restore,
+        save_restriction_save, scan_newline_from_point, set_buffer_internal_1, set_point,
+        set_point_both, unbind_to, update_buffer_properties,
     },
     remacs_sys::{
         Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
-        Fx_popup_dialog,
+        Fnext_single_char_property_change, Fprevious_single_char_property_change, Fx_popup_dialog,
     },
-    remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
+    remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
     util::clip_to_bounds,
