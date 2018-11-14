@@ -11,13 +11,7 @@ use crate::remacs_sys::*;
 /// definitions to remacs-sys first and foremost.
 use libc::*;
 
-<<<<<<< HEAD
-#[macro_use]
-use eval_macros;
-use lisp::LispObject;
-=======
 use crate::{lisp::LispObject, remacs_sys::*};
->>>>>>> origin/master
 
 // The linker needs the symbol "lispsym" to exist, since certain
 // codepaths lead to it's usage.
