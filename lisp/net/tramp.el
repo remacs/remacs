@@ -2739,7 +2739,9 @@ User is always nil."
    "Return a (user host) tuple allowed to access.
 User is always nil."
    (tramp-parse-group
-    (concat "^[ \t]*Host[ \t]+" "\\(" tramp-host-regexp "\\)") 1 ","))
+    (concat "\\(?:^[ \t]*Host\\)" "\\|" "\\(?:^.+\\)"
+	    "\\|" "\\(" tramp-host-regexp "\\)")
+    1 "[ \t]+"))
 
 ;; Generic function.
 (defun tramp-parse-shostkeys-sknownhosts (dirname regexp)
