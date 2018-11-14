@@ -961,9 +961,12 @@ its default value changed in Emacs 27.1.
 
 ** The REPETITIONS argument of 'benchmark-run' can now also be a variable.
 
-** If $HOME is a relative file name, 'expand-file-name' now expands
-"~" and leading "~/" to the corresponding absolute file name.
-Formerly, it incorrectly expanded them to a relative file name.
+** Interpretation of relative HOME directory has changed.
+If $HOME is set to a relative file name, 'expand-file-name' now
+interprets it relative to the directory where Emacs was started, not
+relative to the default-directory of the current buffer.  We recommend
+always setting $HOME to an absolute file name, so that its meaning is
+independent of where Emacs was started.
 
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
 longer defaults to 'buffer-file-name'.
