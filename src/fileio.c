@@ -1663,7 +1663,7 @@ get_homedir (void)
   /* getpw* functions return UTF-8 encoded file names, whereas egetenv
      returns strings in locale encoding, so we need to convert for
      consistency.  */
-  char homedir_utf8[MAX_UTF8_PATH];
+  static char homedir_utf8[MAX_UTF8_PATH];
   if (home)
     {
       filename_from_ansi (home, homedir_utf8);
