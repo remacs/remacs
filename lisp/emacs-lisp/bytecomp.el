@@ -1931,7 +1931,8 @@ The value is non-nil if there were no errors, nil if errors."
 		       ;; process is trying to load target-file (eg in a
 		       ;; parallel bootstrap), it does not risk getting a
 		       ;; half-finished file.  (Bug#4196)
-		       (tempfile (make-temp-file target-file))
+		       (tempfile
+                        (make-temp-file (file-name-nondirectory target-file)))
 		       (default-modes (default-file-modes))
 		       (temp-modes (logand default-modes #o600))
 		       (desired-modes (logand default-modes #o666))

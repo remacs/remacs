@@ -4656,19 +4656,13 @@ The function `find-backup-file-name' also uses this."
               (cond
                ((file-remote-p file)
                 ;; Remove the leading slash, if any, to prevent
-                ;; expand-file-name from adding a drive letter.
+                ;; convert-standard-filename from converting that to a
+                ;; backslash.
                 (and (memq (aref file 0) '(?/ ?\\))
                      (setq file (substring file 1)))
-	        ;; Replace any invalid file-name characters.
-                (setq file (convert-standard-filename file))
-                ;; Replace slashes to make the file name unique, and
-                ;; prepend backup-directory.
-                (expand-file-name
-	         (subst-char-in-string
-	          ?/ ?!
-	          (replace-regexp-in-string "!" "!!"
-                                            (concat "/" file)))
-	         backup-directory))
+	        ;; Replace any invalid file-name characters, then
+	        ;; prepend the leading slash back.
+                (setq file (concat "/" (convert-standard-filename file))))
                (t
 	        ;; Replace any invalid file-name characters.
 	        (setq file (expand-file-name (convert-standard-filename file)))
@@ -4679,15 +4673,15 @@ The function `find-backup-file-name' also uses this."
 				       (if (eq (aref file 2) ?/)
 					   ""
 				         "/")
-				       (substring file 2))))
-	        ;; Make the name unique by substituting directory
-	        ;; separators.  It may not really be worth bothering about
-	        ;; doubling `!'s in the original name...
-	        (expand-file-name
-	         (subst-char-in-string
-	          ?/ ?!
-	          (replace-regexp-in-string "!" "!!" file))
-	         backup-directory)))))
+				       (substring file 2)))))))
+	    ;; Make the name unique by substituting directory
+	    ;; separators.  It may not really be worth bothering about
+	    ;; doubling `!'s in the original name...
+	    (expand-file-name
+	     (subst-char-in-string
+	      ?/ ?!
+	      (replace-regexp-in-string "!" "!!" file))
+	     backup-directory))
 	(expand-file-name (file-name-nondirectory file)
 			  (file-name-as-directory abs-backup-directory))))))
 

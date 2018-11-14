@@ -1,12 +1,5 @@
 //! Module that is used for FFI exports.These calls should NOT be used in Rust directly.
-use remacs_sys::Lisp_Window;
-
-use data;
-use keyboard;
-use lisp::LispObject;
-use lists;
-use math;
-use windows;
+use crate::{data, keyboard, lisp::LispObject, lists, math, remacs_sys::Lisp_Window, windows};
 
 #[no_mangle]
 pub extern "C" fn circular_list(obj: LispObject) -> ! {

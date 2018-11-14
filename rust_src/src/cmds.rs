@@ -5,28 +5,36 @@ use std;
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::EmacsInt;
-use remacs_sys::{bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible,
-                 globals, initial_define_key, insert_and_inherit, memory_full, replace_range,
-                 run_hook, scan_newline_from_point, set_point, set_point_both, syntax_property,
-                 syntaxcode, translate_char};
-use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column};
-use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
-                 Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
-                 Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate};
 
-use character::{self, characterp};
-use data::set;
-use editfns::{line_beginning_position, line_end_position, preceding_char};
-use frames::selected_frame;
-use keymap::{current_global_map, Ctl};
-use lisp::defsubr;
-use lisp::LispObject;
-use multibyte::{char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
-                MAX_MULTIBYTE_LENGTH};
-use numbers::MOST_POSITIVE_FIXNUM;
-use obarray::intern;
-use threads::ThreadState;
+use crate::{
+    character::{self, characterp},
+    data::set,
+    editfns::{line_beginning_position, line_end_position, preceding_char},
+    frames::selected_frame,
+    keymap::{current_global_map, Ctl},
+    lisp::defsubr,
+    lisp::LispObject,
+    multibyte::{
+        char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
+        MAX_MULTIBYTE_LENGTH,
+    },
+    numbers::MOST_POSITIVE_FIXNUM,
+    obarray::intern,
+    remacs_sys::EmacsInt,
+    remacs_sys::{
+        bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible, globals,
+        initial_define_key, insert_and_inherit, memory_full, replace_range, run_hook,
+        scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
+        translate_char,
+    },
+    remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column},
+    remacs_sys::{
+        Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
+        Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
+        Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate,
+    },
+    threads::ThreadState,
+};
 
 /// Add N to point; or subtract N if FORWARD is false. N defaults to 1.
 /// Validate the new location. Return nil.

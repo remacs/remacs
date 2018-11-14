@@ -1,6 +1,6 @@
 //! Call a Lisp function interactively.
 
-use lisp::{defsubr, LispObject};
+use crate::lisp::{defsubr, LispObject};
 use remacs_macros::lisp_fn;
 
 /// Specify a way of parsing arguments for interactive use of a function.

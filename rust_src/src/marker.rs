@@ -5,15 +5,17 @@ use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{allocate_misc, set_point_both, Fmake_marker};
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type};
-use remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil};
 
-use buffers::{current_buffer, LispBufferRef};
-use lisp::{defsubr, ExternalPtr, LispObject};
-use multibyte::multibyte_chars_in_text;
-use threads::ThreadState;
-use util::clip_to_bounds;
+use crate::{
+    buffers::{current_buffer, LispBufferRef},
+    lisp::{defsubr, ExternalPtr, LispObject},
+    multibyte::multibyte_chars_in_text,
+    remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
+    remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type},
+    remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
+    threads::ThreadState,
+    util::clip_to_bounds,
+};
 
 pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 
@@ -201,20 +203,16 @@ pub unsafe extern "C" fn build_marker(
 /// Return value of point, as a marker object.
 #[lisp_fn]
 pub fn point_marker() -> LispObject {
-    unsafe {
-        let cur_buf = ThreadState::current_buffer().as_mut();
-        build_marker(cur_buf, (*cur_buf).pt, (*cur_buf).pt_byte)
-    }
+    let mut cur_buf = ThreadState::current_buffer();
+    unsafe { build_marker(cur_buf.as_mut(), cur_buf.pt, cur_buf.pt_byte) }
 }
 
 /// Return a marker to the minimum permissible value of point in this buffer.
 /// This is the beginning, unless narrowing (a buffer restriction) is in effect.
 #[lisp_fn]
 pub fn point_min_marker() -> LispObject {
-    unsafe {
-        let cur_buf = ThreadState::current_buffer().as_mut();
-        build_marker(cur_buf, (*cur_buf).begv, (*cur_buf).begv_byte)
-    }
+    let mut cur_buf = ThreadState::current_buffer();
+    unsafe { build_marker(cur_buf.as_mut(), cur_buf.begv, cur_buf.begv_byte) }
 }
 
 /// Return a marker to the maximum permissible value of point in this buffer.
@@ -222,10 +220,8 @@ pub fn point_min_marker() -> LispObject {
 /// is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max_marker() -> LispObject {
-    unsafe {
-        let cur_buf = ThreadState::current_buffer().as_mut();
-        build_marker(cur_buf, (*cur_buf).zv, (*cur_buf).zv_byte)
-    }
+    let mut cur_buf = ThreadState::current_buffer();
+    unsafe { build_marker(cur_buf.as_mut(), cur_buf.zv, cur_buf.zv_byte) }
 }
 
 /// Set PT from MARKER's clipped position.
@@ -366,7 +362,7 @@ pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) -> () {
 
         if let Some(mut buf) = marker_ref.buffer() {
             marker_ref.set_buffer(ptr::null_mut());
-            if let Some(mut last) = buf.markers() {
+            if let Some(last) = buf.markers() {
                 let mut tail: LispMarkerRef = last;
 
                 for cur in last.iter() {
