@@ -56,6 +56,7 @@
 (eval-when-compile (require 'cl-lib))
 
 (autoload 'vc-find-revision "vc")
+(defvar vc-find-revision-no-save)
 (defvar add-log-buffer-file-name-function)
 
 
@@ -1743,7 +1744,8 @@ NOPROMPT, if non-nil, means not to prompt the user."
 	   (revision (and other diff-vc-backend
                           (nth (if reverse 1 0) diff-vc-revisions)))
 	   (buf (if revision
-                    (vc-find-revision file revision diff-vc-backend)
+                    (let ((vc-find-revision-no-save t))
+                      (vc-find-revision file revision diff-vc-backend))
                   (find-file-noselect file))))
       ;; Update the user preference if he so wished.
       (when (> (prefix-numeric-value other-file) 8)

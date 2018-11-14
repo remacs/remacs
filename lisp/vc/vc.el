@@ -871,6 +871,12 @@ is sensitive to blank lines."
 		       (string :tag "Comment End")))
   :group 'vc)
 
+(defcustom vc-find-revision-no-save nil
+  "If non-nil, `vc-find-revision' doesn't write the created buffer to file."
+  :type 'boolean
+  :group 'vc
+  :version "27.1")
+
 
 ;; File property caching
 
@@ -1953,6 +1959,13 @@ If `F.~REV~' already exists, use it instead of checking it out again."
 (defun vc-find-revision (file revision &optional backend)
   "Read REVISION of FILE into a buffer and return the buffer.
 Use BACKEND as the VC backend if specified."
+  (if vc-find-revision-no-save
+      (vc-find-revision-no-save file revision backend)
+    (vc-find-revision-save file revision backend)))
+
+(defun vc-find-revision-save (file revision &optional backend)
+  "Read REVISION of FILE into a buffer and return the buffer.
+Saves the buffer to the file."
   (let ((automatic-backup (vc-version-backup-file-name file revision))
 	(filebuf (or (get-file-buffer file) (current-buffer)))
         (filename (vc-version-backup-file-name file revision 'manual)))
@@ -1982,6 +1995,38 @@ Use BACKEND as the VC backend if specified."
       (with-current-buffer result-buf
 	;; Set the parent buffer so that things like
 	;; C-x v g, C-x v l, ... etc work.
+	(set (make-local-variable 'vc-parent-buffer) filebuf))
+      result-buf)))
+
+(defun vc-find-revision-no-save (file revision &optional backend)
+  "Read REVISION of FILE into a buffer and return the buffer.
+Unlike `vc-find-revision-save', doesn't save the created buffer to file."
+  (let ((filebuf (or (get-file-buffer file) (current-buffer)))
+        (filename (vc-version-backup-file-name file revision 'manual)))
+    (unless (or (get-file-buffer filename)
+                (file-exists-p filename))
+      (with-current-buffer filebuf
+	(let ((failed t))
+	  (unwind-protect
+	      (let ((coding-system-for-read 'no-conversion)
+		    (coding-system-for-write 'no-conversion))
+		(with-current-buffer (create-file-buffer filename)
+                  (setq buffer-file-name filename)
+		  (let ((outbuf (current-buffer)))
+		    (with-current-buffer filebuf
+		      (if backend
+			  (vc-call-backend backend 'find-revision file revision outbuf)
+			(vc-call find-revision file revision outbuf))))
+                  (goto-char (point-min))
+                  (normal-mode)
+	          (set-buffer-modified-p nil)
+                  (setq buffer-read-only t))
+		(setq failed nil))
+	    (when (and failed (get-file-buffer filename))
+	      (kill-buffer (get-file-buffer filename)))))))
+    (let ((result-buf (or (get-file-buffer filename)
+                          (find-file-noselect filename))))
+      (with-current-buffer result-buf
 	(set (make-local-variable 'vc-parent-buffer) filebuf))
       result-buf)))
 

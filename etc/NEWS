@@ -344,6 +344,9 @@ still be used if it exists.)  Set the variable to nil to get the
 previous behavior of always creating a buffer that visits a ChangeLog
 file.
 
+*** New customizable variable 'vc-find-revision-no-save'.
+With non-nil, 'vc-find-revision' doesn't write the created buffer to file.
+
 *** New customizable variable 'vc-git-grep-template'.
 This new variable allows customizing the default arguments passed to
 git-grep when 'vc-git-grep' is used.
