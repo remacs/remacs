@@ -164,59 +164,6 @@ merge_properties (register INTERVAL source, register INTERVAL target)
       o = XCDR (o);
     }
 }
-
-/* Return true if the two intervals have the same properties.  */
-
-bool
-intervals_equal (INTERVAL i0, INTERVAL i1)
-{
-  Lisp_Object i0_cdr, i0_sym;
-  Lisp_Object i1_cdr, i1_val;
-
-  if (DEFAULT_INTERVAL_P (i0) && DEFAULT_INTERVAL_P (i1))
-    return true;
-
-  if (DEFAULT_INTERVAL_P (i0) || DEFAULT_INTERVAL_P (i1))
-    return false;
-
-  i0_cdr = i0->plist;
-  i1_cdr = i1->plist;
-  while (CONSP (i0_cdr) && CONSP (i1_cdr))
-    {
-      i0_sym = XCAR (i0_cdr);
-      i0_cdr = XCDR (i0_cdr);
-      if (!CONSP (i0_cdr))
-	return false;
-      i1_val = i1->plist;
-      while (CONSP (i1_val) && !EQ (XCAR (i1_val), i0_sym))
-	{
-	  i1_val = XCDR (i1_val);
-	  if (!CONSP (i1_val))
-	    return false;
-	  i1_val = XCDR (i1_val);
-	}
-
-      /* i0 has something i1 doesn't.  */
-      if (EQ (i1_val, Qnil))
-	return false;
-
-      /* i0 and i1 both have sym, but it has different values in each.  */
-      if (!CONSP (i1_val)
-	  || (i1_val = XCDR (i1_val), !CONSP (i1_val))
-	  || !EQ (XCAR (i1_val), XCAR (i0_cdr)))
-	return false;
-
-      i0_cdr = XCDR (i0_cdr);
-
-      i1_cdr = XCDR (i1_cdr);
-      if (!CONSP (i1_cdr))
-	return false;
-      i1_cdr = XCDR (i1_cdr);
-    }
-
-  /* Lengths of the two plists were equal.  */
-  return (NILP (i0_cdr) && NILP (i1_cdr));
-}
 
 
 /* Traverse an interval tree TREE, performing FUNCTION on each node.
@@ -636,45 +583,6 @@ find_interval (register INTERVAL tree, register ptrdiff_t position)
     }
 }
 
-/* Find the succeeding interval (lexicographically) to INTERVAL.
-   Sets the `position' field based on that of INTERVAL (see
-   find_interval).  */
-
-INTERVAL
-next_interval (register INTERVAL interval)
-{
-  register INTERVAL i = interval;
-  register ptrdiff_t next_position;
-
-  if (!i)
-    return NULL;
-  next_position = interval->position + LENGTH (interval);
-
-  if (! NULL_RIGHT_CHILD (i))
-    {
-      i = i->right;
-      while (! NULL_LEFT_CHILD (i))
-	i = i->left;
-
-      i->position = next_position;
-      return i;
-    }
-
-  while (! NULL_PARENT (i))
-    {
-      if (AM_LEFT_CHILD (i))
-	{
-	  i = INTERVAL_PARENT (i);
-	  i->position = next_position;
-	  return i;
-	}
-
-      i = INTERVAL_PARENT (i);
-    }
-
-  return NULL;
-}
-
 /* Find the preceding interval (lexicographically) to INTERVAL.
    Sets the `position' field based on that of INTERVAL (see
    find_interval).  */
@@ -2233,42 +2141,6 @@ copy_intervals_to_string (Lisp_Object string, struct buffer *buffer,
 
   set_interval_object (interval_copy, string);
   set_string_intervals (string, interval_copy);
-}
-
-/* Return true if strings S1 and S2 have identical properties.
-   Assume they have identical characters.  */
-
-bool
-compare_string_intervals (Lisp_Object s1, Lisp_Object s2)
-{
-  INTERVAL i1, i2;
-  ptrdiff_t pos = 0;
-  ptrdiff_t end = SCHARS (s1);
-
-  i1 = find_interval (string_intervals (s1), 0);
-  i2 = find_interval (string_intervals (s2), 0);
-
-  while (pos < end)
-    {
-      /* Determine how far we can go before we reach the end of I1 or I2.  */
-      ptrdiff_t len1 = (i1 != 0 ? INTERVAL_LAST_POS (i1) : end) - pos;
-      ptrdiff_t len2 = (i2 != 0 ? INTERVAL_LAST_POS (i2) : end) - pos;
-      ptrdiff_t distance = min (len1, len2);
-
-      /* If we ever find a mismatch between the strings,
-	 they differ.  */
-      if (! intervals_equal (i1, i2))
-	return 0;
-
-      /* Advance POS till the end of the shorter interval,
-	 and advance one or both interval pointers for the new position.  */
-      pos += distance;
-      if (len1 == distance)
-	i1 = next_interval (i1);
-      if (len2 == distance)
-	i2 = next_interval (i2);
-    }
-  return 1;
 }
 
 /* Recursively adjust interval I in the current buffer
