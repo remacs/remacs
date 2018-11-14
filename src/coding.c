@@ -9207,22 +9207,22 @@ to the string and treated as in `substring'.  */)
 
 DEFUN ("check-coding-systems-region", Fcheck_coding_systems_region,
        Scheck_coding_systems_region, 3, 3, 0,
-       doc: /* Check if the region is encodable by coding systems.
+       doc: /* Check if text between START and END is encodable by CODING-SYSTEM-LIST.
 
 START and END are buffer positions specifying the region.
 CODING-SYSTEM-LIST is a list of coding systems to check.
 
-The value is an alist ((CODING-SYSTEM POS0 POS1 ...) ...), where
-CODING-SYSTEM is a member of CODING-SYSTEM-LIST and can't encode the
-whole region, POS0, POS1, ... are buffer positions where non-encodable
-characters are found.
-
 If all coding systems in CODING-SYSTEM-LIST can encode the region, the
-value is nil.
+function returns nil.
+
+If some of the coding systems cannot encode the whole region, value is
+an alist, each element of which has the form (CODING-SYSTEM POS1 POS2 ...),
+which means that CODING-SYSTEM cannot encode the text at buffer positions
+POS1, POS2, ...
 
 START may be a string.  In that case, check if the string is
-encodable, and the value contains indices to the string instead of
-buffer positions.  END is ignored.
+encodable, and the value contains character indices into the string
+instead of buffer positions.  END is ignored in this case.
 
 If the current buffer (or START if it is a string) is unibyte, the value
 is nil.  */)
