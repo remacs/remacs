@@ -52,7 +52,6 @@ ptrdiff_t last_known_column_point;
 static EMACS_INT last_known_column_modified;
 
 static ptrdiff_t current_column_1 (void);
-static ptrdiff_t position_indentation (ptrdiff_t);
 
 /* Get the display table to use for the current buffer.  */
 
@@ -836,20 +835,7 @@ The return value is COLUMN.  */)
 }
 
 
-DEFUN ("current-indentation", Fcurrent_indentation, Scurrent_indentation,
-       0, 0, 0,
-       doc: /* Return the indentation of the current line.
-This is the horizontal position of the character
-following any initial whitespace.  */)
-  (void)
-{
-  ptrdiff_t posbyte;
-
-  find_newline (PT, PT_BYTE, BEGV, BEGV_BYTE, -1, NULL, &posbyte, 1);
-  return make_number (position_indentation (posbyte));
-}
-
-static ptrdiff_t
+ptrdiff_t
 position_indentation (ptrdiff_t pos_byte)
 {
   register ptrdiff_t column = 0;
@@ -2359,7 +2345,6 @@ syms_of_indent (void)
 
   DEFSYM (Qcolumns, "columns");
 
-  defsubr (&Scurrent_indentation);
   defsubr (&Sindent_to);
   defsubr (&Smove_to_column);
   defsubr (&Sline_number_display_width);
