@@ -18,14 +18,14 @@ use crate::{
     remacs_sys::{
         access_keymap, describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
         map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit, specbind,
-        unbind_to
+        unbind_to,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcons, Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri
+        Fcons, Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri,
     },
     remacs_sys::{
-        Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p
+        Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
     },
     threads::{c_specpdl_index, ThreadState},
 };
