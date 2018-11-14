@@ -4,7 +4,7 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::LispBufferOrName,
+    buffers::{current_buffer, get_buffer, LispBufferOrName},
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     lists::{assoc, car, cdr, plist_put},
@@ -84,36 +84,41 @@ impl From<LispObject> for Option<LispProcessRef> {
 /// accepts a process, a process name, a buffer, a buffer name, or nil.
 /// Buffers denote the first process in the buffer, and nil denotes the
 /// current buffer.
-pub fn get_process(name: LispObject) -> LispProcessRef {
-    let proc_or_buf = name.is_string() {
-        let process = lisp_get_process(name);
+#[no_mangle]
+pub extern "C" fn get_process(name: LispObject) -> LispObject {
+    let proc_or_buf = if name.is_string() {
+        let mut obj = get_process_lisp(name);
 
-        if process.is_nil() {
-            let buffer = get_buffer(name);
-
-            if buffer.is_nil() {
-                panic!("Process {} does not exist", name.as_string_or_error())
-            } else {
-                buffer
-            }
-        } else {
-            process
+        if obj.is_nil() {
+            obj = get_buffer(LispBufferOrName::from(name)).map_or_else(
+                || error!("Process {} does not exist", name.as_string_or_error()),
+                |b| b.as_lisp_obj(),
+            );
         }
+        obj
     } else if name.is_nil() {
-        // check if buffer is dead
-        get_buffer(current_buffer())
+        current_buffer()
     } else {
         name
-    }
+    };
 
-    if proc_or_buf.is_buffer() {
-        let proc = get_buffer_process(proc_or_buf);
-        if proc.is_nil() {
-            panic!("Buffer {} has no process", name.as_string_or_error())
+    // Now obj should be either a buffer object or a process object.
+    match proc_or_buf.as_buffer() {
+        Some(b) => {
+            let name = b
+                .name()
+                .as_string()
+                .unwrap_or_else(|| error!("Attempt to get process for a dead buffer"));
+            let proc = get_buffer_process(Some(LispBufferOrName::from(proc_or_buf)));
+            if proc.is_nil() {
+                error!("Buffer {:?} has no process.", unsafe {
+                    name.u.s.data as *mut libc::c_char
+                })
+            } else {
+                proc
+            }
         }
-        proc
-    } else {
-        // check process
+        None => proc_or_buf.as_process_or_error().as_lisp_obj(),
     }
 }
 
@@ -124,8 +129,8 @@ pub fn processp(object: LispObject) -> bool {
 }
 
 /// Return the process named NAME, or nil if there is none.
-#[lisp_fn(name = "get_process")]
-pub fn lisp_get_process(name: LispObject) -> LispObject {
+#[lisp_fn(name = "get-process", c_name = "get_process")]
+pub fn get_process_lisp(name: LispObject) -> LispObject {
     if name.is_process() {
         name
     } else {
@@ -306,8 +311,8 @@ pub fn process_thread(process: LispProcessRef) -> LispObject {
 /// nil, indicating the current buffer's process.
 #[lisp_fn]
 pub fn process_type(process: LispObject) -> LispObject {
-    let p_ref = get_process(process);
-    p_ref.process_type()
+    let p_ref = get_process(process).as_process_or_error();
+    p_ref.ptype()
 }
 
 /// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).

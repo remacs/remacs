@@ -87,30 +87,11 @@ extern "C" {
     pub fn uniprop_table_uncompress(table: Lisp_Object, idx: u32) -> Lisp_Object;
     pub fn find_field(
         pos: LispObject,
-<<<<<<< HEAD
         merge_at_boundary: LispObject,
         beg_limit: LispObject,
         beg: *mut ptrdiff_t,
         end_limit: LispObject,
         end: *mut ptrdiff_t,
-=======
-        window: LispObject,
-        partially: LispObject,
-    ) -> LispObject;
-    pub fn find_before_next_newline(
-        from: ptrdiff_t,
-        to: ptrdiff_t,
-        cnt: ptrdiff_t,
-        bytepos: *mut ptrdiff_t,
-    ) -> ptrdiff_t;
-    pub fn update_status(p: *const Lisp_Process);
-    pub fn setup_process_coding_systems(process: LispObject);
-    pub fn send_process(
-        process: LispObject,
-        buf: *const c_char,
-        len: ptrdiff_t,
-        object: LispObject,
->>>>>>> Port over get_process (except for some error handling)
     );
     pub fn concat(
         nargs: ptrdiff_t,

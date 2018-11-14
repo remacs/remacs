@@ -933,46 +933,6 @@ free_dns_request (Lisp_Object proc)
 }
 #endif
 
-
-/* This is how commands for the user decode process arguments.  It
-   accepts a process, a process name, a buffer, a buffer name, or nil.
-   Buffers denote the first process in the buffer, and nil denotes the
-   current buffer.  */
-
-Lisp_Object
-get_process (register Lisp_Object name)
-{
-  register Lisp_Object proc, obj;
-  if (STRINGP (name))
-    {
-      obj = Fget_process (name);
-      if (NILP (obj))
-	obj = Fget_buffer (name);
-      if (NILP (obj))
-	error ("Process %s does not exist", SDATA (name));
-    }
-  else if (NILP (name))
-    obj = Fcurrent_buffer ();
-  else
-    obj = name;
-
-  /* Now obj should be either a buffer object or a process object.  */
-  if (BUFFERP (obj))
-    {
-      if (NILP (BVAR (XBUFFER (obj), name)))
-        error ("Attempt to get process for a dead buffer");
-      proc = Fget_buffer_process (obj);
-      if (NILP (proc))
-        error ("Buffer %s has no process", SDATA (BVAR (XBUFFER (obj), name)));
-    }
-  else
-    {
-      CHECK_PROCESS (obj);
-      proc = obj;
-    }
-  return proc;
-}
-
 
 /* Fdelete_process promises to immediately forget about the process, but in
    reality, Emacs needs to remember those processes until they have been
