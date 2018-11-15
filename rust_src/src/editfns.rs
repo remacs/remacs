@@ -906,7 +906,7 @@ pub fn insert_buffer_substring(
 /// message; let the minibuffer contents show.
 ///
 /// usage: (message-box FORMAT-STRING &rest ARGS)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn message_box(args: &mut [LispObject]) -> LispObject {
     unsafe {
         if args[0].is_nil() {

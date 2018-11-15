@@ -218,13 +218,13 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
 #[lisp_fn(min = "1", intspec = "p\nP")]
 pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
     if n.abs() < 2 {
-        call_raw!(Qundo_auto_amalgamate);
+        call!(Qundo_auto_amalgamate);
     }
 
     let buffer = ThreadState::current_buffer();
     let pos = buffer.pt + n as isize;
     if killflag {
-        call_raw!(Qkill_forward_chars, LispObject::from(n));
+        call!(Qkill_forward_chars, LispObject::from(n));
     } else if n < 0 {
         if pos < buffer.begv {
             xsignal!(Qbeginning_of_buffer);
@@ -257,7 +257,7 @@ pub fn self_insert_command(n: EmacsInt) {
     }
 
     if n < 2 {
-        call_raw!(Qundo_auto_amalgamate);
+        call!(Qundo_auto_amalgamate);
     }
 
     // Barf if the key that invoked this was not a character.
@@ -396,7 +396,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     {
         let modiff = unsafe { (*current_buffer.text).modiff };
 
-        let sym = call_raw!(Qexpand_abbrev);
+        let sym = call!(Qexpand_abbrev);
 
         // If we expanded an abbrev which has a hook,
         // and the hook has a non-nil `no-self-insert' property,
@@ -476,7 +476,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                 let newpt_byte = current_buffer.pt_byte - 1;
                 current_buffer.set_pt_both(newpt, newpt_byte);
             }
-            let auto_fill_result = call_raw!(Qinternal_auto_fill);
+            let auto_fill_result = call!(Qinternal_auto_fill);
             // Test PT < ZV in case the auto-fill-function is strange.
             if c == '\n' as Codepoint && current_buffer.pt < current_buffer.zv {
                 let newpt = current_buffer.pt + 1;

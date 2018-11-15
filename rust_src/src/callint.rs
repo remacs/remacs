@@ -1,7 +1,12 @@
 //! Call a Lisp function interactively.
 
-use crate::lisp::{defsubr, LispObject};
-use remacs_macros::lisp_fn;
+use crate::{
+    eval::funcall,
+    lisp::{defsubr, LispObject},
+    remacs_macros::lisp_fn,
+    remacs_sys::{temporarily_switch_to_single_kboard, unbind_to},
+    threads::c_specpdl_index,
+};
 
 /// Specify a way of parsing arguments for interactive use of a function.
 /// For example, write
@@ -73,5 +78,19 @@ use remacs_macros::lisp_fn;
 /// usage: (interactive &optional ARG-DESCRIPTOR)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn interactive(_args: LispObject) {}
+
+// BEWARE: Calling this directly from C / Rust would defeat the purpose!
+
+/// Like `funcall' but marks the call as interactive.
+/// I.e. arrange that within the called function `called-interactively-p' will return non-nil.
+/// usage: (funcall-interactively FUNCTION &rest ARGUMENTS)
+#[lisp_fn(min = "1")]
+pub fn funcall_interactively(args: &mut [LispObject]) -> LispObject {
+    let count = c_specpdl_index();
+
+    unsafe { temporarily_switch_to_single_kboard(std::ptr::null_mut()) };
+
+    unsafe { unbind_to(count, funcall(args)) }
+}
 
 include!(concat!(env!("OUT_DIR"), "/callint_exports.rs"));

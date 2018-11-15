@@ -228,7 +228,7 @@ pub fn lisp_intern(string: LispObject, obarray: LispObject) -> LispObject {
 }
 
 extern "C" fn mapatoms_1(sym: LispObject, function: LispObject) {
-    call_raw!(function, sym);
+    call!(function, sym);
 }
 
 /// Call FUNCTION on every symbol in OBARRAY.
