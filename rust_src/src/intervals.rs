@@ -128,14 +128,6 @@ pub extern "C" fn intervals_equal(i0: INTERVAL, i1: INTERVAL) -> bool {
     intervals_equal_rust(IntervalRef::new(i0), IntervalRef::new(i1))
 }
 
-// fn xcar(obj: LispObject) -> LispObject {
-//     obj.as_cons().unwrap().car()
-// }
-
-// fn xcdr(obj: LispObject) -> LispObject {
-//     obj.as_cons().unwrap().cdr()
-// }
-
 pub fn intervals_equal_rust(i0: IntervalRef, i1: IntervalRef) -> bool {
     if i0.is_default() && i1.is_default() {
         return true;
@@ -201,57 +193,6 @@ pub fn intervals_equal_rust(i0: IntervalRef, i1: IntervalRef) -> bool {
 
     // Lengths of the two plists were equal.
     i0_cdr.is_nil() && i1_cdr.is_nil()
-    ////////////
-    // let mut i0_cdr = i0.plist;
-    // let mut i1_cdr = i1.plist;
-
-    // while i0_cdr.is_cons() && i1_cdr.is_cons() {
-    //     let i0_sym = xcar(i0_cdr);
-    //     i0_cdr = xcdr(i0_cdr);
-
-    //     if !i0_cdr.is_cons() {
-    //         return false;
-    //     }
-
-    //     let mut i1_val = i1.plist;
-    //     while i1_val.is_cons() && !xcar(i1_val).eq(i0_sym) {
-    //         i1_val = xcdr(i1_val);
-    //         if !i1_val.is_cons() {
-    //             return false;
-    //         }
-    //         i1_val = xcdr(i1_val);
-    //     }
-
-    //     // i0 has something i1 doesn't.
-    //     if i1_val.is_nil() {
-    //         return false;
-    //     }
-
-    //     // i0 and i1 both have sym, but it has different values in each.
-    //     if !i1_val.is_cons() {
-    //         return false;
-    //     }
-
-    //     i1_val = xcdr(i1_val);
-    //     if !i1_val.is_cons() {
-    //         return false;
-    //     }
-
-    //     if !xcar(i1_val).eq(xcar(i0_cdr)) {
-    //         return false;
-    //     }
-
-    //     i0_cdr = xcdr(i0_cdr);
-    //     i1_cdr = xcdr(i1_cdr);
-
-    //     if !i1_cdr.is_cons() {
-    //         return false;
-    //     }
-
-    //     i1_cdr = xcdr(i1_cdr);
-    // }
-
-    // i0_cdr.is_nil() && i1_cdr.is_nil()
 }
 
 // Find the succeeding interval (lexicographically) to INTERVAL.
