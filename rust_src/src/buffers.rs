@@ -32,7 +32,7 @@ use crate::{
         Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
-        windows_or_buffers_changed, Fcons, Fcopy_sequence, Fexpand_file_name,
+        windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name,
         Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Fwiden,
     },
     remacs_sys::{
@@ -601,11 +601,7 @@ impl LispBufferOrName {
 
     pub fn as_buffer_or_current_buffer(self) -> Option<LispBufferRef> {
         let obj = LispObject::from(self);
-        if obj.is_nil() {
-            Some(ThreadState::current_buffer())
-        } else {
-            self.as_buffer()
-        }
+        obj.map_or_else(|| Some(ThreadState::current_buffer()), |o| o.as_buffer())
     }
 }
 
@@ -723,10 +719,9 @@ fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject
     let result = list
         .iter_tails_safe()
         .find(|&item| string_equal(car(item.car()), key));
-    if let Some(elt) = result {
-        elt.car()
-    } else {
-        Qnil
+    match result {
+        Some(elt) => elt.car(),
+        None => Qnil,
     }
 }
 
@@ -757,8 +752,8 @@ pub fn buffer_file_name(buffer: LispBufferOrCurrent) -> LispObject {
 /// Return t if BUFFER was modified since its file was last read or saved.
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
-pub fn buffer_modified_p(buffer: LispObject) -> bool {
-    let buf = buffer.as_buffer_or_current_buffer();
+pub fn buffer_modified_p(buffer: LispBufferOrCurrent) -> bool {
+    let buf = buffer.unwrap();
     buf.modifications_since_save() < buf.modifications()
 }
 
@@ -766,8 +761,9 @@ pub fn buffer_modified_p(buffer: LispObject) -> bool {
 /// BUFFER defaults to the current buffer.
 /// Return nil if BUFFER has been killed.
 #[lisp_fn(min = "0")]
-pub fn buffer_name(buffer: LispObject) -> LispObject {
-    buffer.as_buffer_or_current_buffer().name_
+pub fn buffer_name(buffer: LispBufferOrCurrent) -> LispObject {
+    let buf = buffer.unwrap();
+    buf.name_
 }
 
 /// Return BUFFER's tick counter, incremented for each change in text.
@@ -775,8 +771,9 @@ pub fn buffer_name(buffer: LispObject) -> LispObject {
 /// text in that buffer is changed.  It wraps around occasionally.
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
-pub fn buffer_modified_tick(buffer: LispObject) -> EmacsInt {
-    buffer.as_buffer_or_current_buffer().modifications()
+pub fn buffer_modified_tick(buffer: LispBufferOrCurrent) -> EmacsInt {
+    let buf = buffer.unwrap();
+    buf.modifications()
 }
 
 /// Return BUFFER's character-change tick counter.
@@ -788,8 +785,9 @@ pub fn buffer_modified_tick(buffer: LispObject) -> EmacsInt {
 /// between these calls.  No argument or nil as argument means use current
 /// buffer as BUFFER.
 #[lisp_fn(min = "0")]
-pub fn buffer_chars_modified_tick(buffer: LispObject) -> EmacsInt {
-    buffer.as_buffer_or_current_buffer().char_modifications()
+pub fn buffer_chars_modified_tick(buffer: LispBufferOrCurrent) -> EmacsInt {
+    let buf = buffer.unwrap();
+    buf.char_modifications()
 }
 
 /// Return the position at which OVERLAY starts.
@@ -878,11 +876,9 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
 /// No such buffer error.
 #[no_mangle]
 pub extern "C" fn nsberror(spec: LispObject) -> ! {
-    let spec = spec;
-    if let Some(s) = spec.as_string() {
-        error!("No buffer named {}", s);
-    } else {
-        error!("Invalid buffer argument");
+    match spec.as_string() {
+        Some(s) => error!("No buffer named {}", s),
+        None => error!("Invalid buffer argument"),
     }
 }
 
@@ -898,13 +894,13 @@ pub extern "C" fn nsberror(spec: LispObject) -> ! {
 pub fn overlay_lists() -> LispObject {
     let list_overlays = |ol: LispOverlayRef| -> LispObject {
         ol.iter()
-            .fold(Qnil, |accum, n| unsafe { Fcons(n.as_lisp_obj(), accum) })
+            .fold(Qnil, |accum, n| LispObject::cons(n.as_lisp_obj(), accum))
     };
 
     let cur_buf = ThreadState::current_buffer();
     let before = cur_buf.overlays_before().map_or(Qnil, &list_overlays);
     let after = cur_buf.overlays_after().map_or(Qnil, &list_overlays);
-    unsafe { Fcons(Fnreverse(before), Fnreverse(after)) }
+    unsafe { LispObject::cons(Fnreverse(before), Fnreverse(after)) }
 }
 
 fn get_truename_buffer_1(filename: LispObject) -> LispObject {
@@ -916,7 +912,6 @@ fn get_truename_buffer_1(filename: LispObject) -> LispObject {
         .into()
 }
 
-// to be removed once all references in C are ported
 #[no_mangle]
 pub extern "C" fn get_truename_buffer(filename: LispObject) -> LispObject {
     get_truename_buffer_1(filename)
@@ -1010,8 +1005,9 @@ pub fn buffer_local_value_lisp(variable: LispObject, buffer: LispObject) -> Lisp
 /// If BUFFER is not indirect, return nil.
 /// BUFFER defaults to the current buffer.
 #[lisp_fn(min = "0")]
-pub fn buffer_base_buffer(buffer: LispObject) -> Option<LispBufferRef> {
-    buffer.as_buffer_or_current_buffer().base_buffer()
+pub fn buffer_base_buffer(buffer: LispBufferOrCurrent) -> Option<LispBufferRef> {
+    let buf = buffer.unwrap();
+    buf.base_buffer()
 }
 
 /// Force redisplay of the current buffer's mode line and header line.
@@ -1019,9 +1015,9 @@ pub fn buffer_base_buffer(buffer: LispObject) -> Option<LispBufferRef> {
 /// header lines.  This function also forces recomputation of the
 /// menu bar menus and the frame title.
 #[lisp_fn(min = "0")]
-pub fn force_mode_line_update(all: LispObject) -> LispObject {
+pub fn force_mode_line_update(all: bool) -> bool {
     let mut current_buffer = ThreadState::current_buffer();
-    if all.is_not_nil() {
+    if all {
         unsafe {
             update_mode_lines = 10;
         }
@@ -1124,8 +1120,8 @@ pub fn delete_overlay(overlay: LispOverlayRef) {
 /// Delete all overlays of BUFFER.
 /// BUFFER omitted or nil means delete all overlays of the current buffer.
 #[lisp_fn(min = "0", name = "delete-all-overlays")]
-pub fn delete_all_overlays_lisp(buffer: LispObject) {
-    unsafe { delete_all_overlays(buffer.as_buffer_or_current_buffer().as_mut()) };
+pub fn delete_all_overlays_lisp(buffer: LispBufferOrCurrent) {
+    unsafe { delete_all_overlays(buffer.unwrap().as_mut()) };
 }
 
 /// Delete the entire contents of the current buffer.

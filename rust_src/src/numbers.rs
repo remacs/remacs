@@ -160,6 +160,12 @@ impl LispNumber {
     }
 }
 
+impl From<EmacsInt> for LispNumber {
+    fn from(n: EmacsInt) -> Self {
+        LispNumber::Fixnum(n)
+    }
+}
+
 impl From<LispObject> for LispNumber {
     fn from(o: LispObject) -> Self {
         o.as_number_coerce_marker_or_error()
