@@ -4,7 +4,7 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::{current_buffer, get_buffer, LispBufferOrName},
+    buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     lists::{assoc, car, cdr, plist_put},
