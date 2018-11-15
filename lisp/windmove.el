@@ -1,4 +1,4 @@
-;;; windmove.el --- directional window-selection routines
+;;; windmove.el --- directional window-selection routines  -*- lexical-binding:t -*-
 ;;
 ;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 ;;
@@ -571,6 +571,112 @@ Default value of MODIFIERS is `shift'."
   (global-set-key (vector (append modifiers '(up)))    'windmove-up)
   (global-set-key (vector (append modifiers '(down)))  'windmove-down))
 
+;;; Directional window display and selection
+
+(defcustom windmove-display-no-select nil
+  "Whether the window should be selected after displaying the buffer in it."
+  :type 'boolean
+  :group 'windmove
+  :version "27.1")
+
+(defun windmove-display-in-direction (dir &optional arg)
+  "Display the next buffer in the window at direction DIR.
+The next buffer is the buffer displayed by the next command invoked
+immediately after this command (ignoring reading from the minibuffer).
+Create a new window if there is no window in that direction.
+By default, select the window with a displayed buffer.
+If prefix ARG is `C-u', reselect a previously selected window.
+If `windmove-display-no-select' is non-nil, this command doesn't
+select the window with a displayed buffer, and the meaning of
+the prefix argument is reversed."
+  (let* ((no-select (not (eq (consp arg) windmove-display-no-select))) ; xor
+         (old-window (or (minibuffer-selected-window) (selected-window)))
+         (new-window)
+         (minibuffer-depth (minibuffer-depth))
+         (action display-buffer-overriding-action)
+         (command this-command)
+         (clearfun (make-symbol "clear-display-buffer-overriding-action"))
+         (exitfun
+          (lambda ()
+            (setq display-buffer-overriding-action action)
+            (when (window-live-p (if no-select old-window new-window))
+              (select-window (if no-select old-window new-window)))
+            (remove-hook 'post-command-hook clearfun))))
+    (fset clearfun
+          (lambda ()
+            (unless (or
+		     ;; Remove the hook immediately
+		     ;; after exiting the minibuffer.
+		     (> (minibuffer-depth) minibuffer-depth)
+		     ;; But don't remove immediately after
+		     ;; adding the hook by the same command below.
+		     (eq this-command command))
+              (funcall exitfun))))
+    (add-hook 'post-command-hook clearfun)
+    (push (lambda (buffer alist)
+	    (unless (> (minibuffer-depth) minibuffer-depth)
+	      (let ((window (if (eq dir 'same-window)
+			        (selected-window)
+                              (window-in-direction
+                               dir nil nil
+                               (and arg (prefix-numeric-value arg))
+                               windmove-wrap-around)))
+                    (type 'reuse))
+                (unless window
+                  (setq window (split-window nil nil dir) type 'window))
+		(setq new-window (window--display-buffer buffer window type alist)))))
+          display-buffer-overriding-action)
+    (message "[display-%s]" dir)))
+
+;;;###autoload
+(defun windmove-display-left (&optional arg)
+  "Display the next buffer in window to the left of the current one.
+See the logic of the prefix ARG in `windmove-display-in-direction'."
+  (interactive "P")
+  (windmove-display-in-direction 'left arg))
+
+;;;###autoload
+(defun windmove-display-up (&optional arg)
+  "Display the next buffer in window above the current one.
+See the logic of the prefix ARG in `windmove-display-in-direction'."
+  (interactive "P")
+  (windmove-display-in-direction 'up arg))
+
+;;;###autoload
+(defun windmove-display-right (&optional arg)
+  "Display the next buffer in window to the right of the current one.
+See the logic of the prefix ARG in `windmove-display-in-direction'."
+  (interactive "P")
+  (windmove-display-in-direction 'right arg))
+
+;;;###autoload
+(defun windmove-display-down (&optional arg)
+  "Display the next buffer in window below the current one.
+See the logic of the prefix ARG in `windmove-display-in-direction'."
+  (interactive "P")
+  (windmove-display-in-direction 'down arg))
+
+;;;###autoload
+(defun windmove-display-same-window (&optional arg)
+  "Display the next buffer in the same window."
+  (interactive "P")
+  (windmove-display-in-direction 'same-window arg))
+
+;;;###autoload
+(defun windmove-display-default-keybindings (&optional modifiers)
+  "Set up keybindings for directional buffer display.
+Keys are bound to commands that display the next buffer in the specified
+direction.  Keybindings are of the form MODIFIERS-{left,right,up,down},
+where MODIFIERS is either a list of modifiers or a single modifier.
+Default value of MODIFIERS is `shift-meta'."
+  (interactive)
+  (unless modifiers (setq modifiers '(shift meta)))
+  (unless (listp modifiers) (setq modifiers (list modifiers)))
+  (global-set-key (vector (append modifiers '(left)))  'windmove-display-left)
+  (global-set-key (vector (append modifiers '(right))) 'windmove-display-right)
+  (global-set-key (vector (append modifiers '(up)))    'windmove-display-up)
+  (global-set-key (vector (append modifiers '(down)))  'windmove-display-down)
+  (global-set-key (vector (append modifiers '(?0)))    'windmove-display-same-window))
 
 (provide 'windmove)
 
