@@ -97,7 +97,7 @@ pub fn downcase(object: LispObject) -> LispObject {
 pub fn downcase_region(
     beg: LispObject,
     end: LispObject,
-    region_noncontiguous_p: LispObject,
+    region_noncontiguous_p: bool,
 ) -> LispObject {
     casefiddle_region(beg, end, region_noncontiguous_p, case_action::CASE_DOWN)
 }
@@ -159,11 +159,7 @@ pub fn upcase_initials_region(beg: LispObject, end: LispObject) -> LispObject {
     min = "2",
     intspec = "(list (region-beginning) (region-end) (region-noncontiguous-p))"
 )]
-pub fn upcase_region(
-    beg: LispObject,
-    end: LispObject,
-    region_noncontiguous_p: LispObject,
-) -> LispObject {
+pub fn upcase_region(beg: LispObject, end: LispObject, region_noncontiguous_p: bool) -> LispObject {
     casefiddle_region(beg, end, region_noncontiguous_p, case_action::CASE_UP)
 }
 
@@ -184,22 +180,21 @@ pub fn upcase_word(words: EmacsInt) {
 fn casefiddle_region(
     beg: LispObject,
     end: LispObject,
-    region_noncontiguous_p: LispObject,
+    region_noncontiguous_p: bool,
     action: case_action,
 ) -> LispObject {
-    if region_noncontiguous_p.is_nil() {
+    if !region_noncontiguous_p {
         unsafe { casify_region_nil(action, beg, end) }
     } else {
-        let mut bounds = call!(
+        let bounds = call!(
             symbol_value(intern("region-extract-function")),
             intern("bounds")
         );
 
-        while let Some(cons) = bounds.as_cons() {
-            let car = cons.car().as_cons_or_error();
-            unsafe { casify_region_nil(action, car.car(), car.cdr()) };
-            bounds = cons.cdr();
-        }
+        bounds.iter_cars_unchecked().for_each(|elt| {
+            let (car, cdr) = elt.as_cons_or_error().as_tuple();
+            unsafe { casify_region_nil(action, car, cdr) };
+        });
 
         Qnil
     }
