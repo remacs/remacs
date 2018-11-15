@@ -182,7 +182,7 @@ pub fn read(stream: LispObject) -> LispObject {
 
     if input.is_t() || input.eq(Qread_char) {
         let cs = CString::new("Lisp expression: ").unwrap();
-        call!(intern("read-minibuffer"), unsafe {
+        call!(LispObject::from(intern("read-minibuffer")), unsafe {
             build_string(cs.as_ptr())
         })
     } else {

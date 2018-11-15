@@ -313,7 +313,11 @@ pub unsafe extern "C" fn map_keymap(
 #[lisp_fn(name = "map-keymap", min = "2")]
 pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
     if sort_first {
-        return call!(intern("map-keymap-sorted"), function, keymap);
+        return call!(
+            LispObject::from(intern("map-keymap-sorted")),
+            function,
+            keymap
+        );
     }
     unsafe {
         map_keymap(

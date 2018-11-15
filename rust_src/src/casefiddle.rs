@@ -188,7 +188,7 @@ fn casefiddle_region(
     } else {
         let bounds = call!(
             symbol_value(intern("region-extract-function")),
-            intern("bounds")
+            LispObject::from(intern("bounds"))
         );
 
         bounds.iter_cars_unchecked().for_each(|elt| {
