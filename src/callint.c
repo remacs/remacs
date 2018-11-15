@@ -161,23 +161,6 @@ read_file_name (Lisp_Object default_filename, Lisp_Object mustmatch,
 		mustmatch, initial, predicate);
 }
 
-/* BEWARE: Calling this directly from C would defeat the purpose!  */
-DEFUN ("funcall-interactively", Ffuncall_interactively, Sfuncall_interactively,
-       1, MANY, 0, doc: /* Like `funcall' but marks the call as interactive.
-I.e. arrange that within the called function `called-interactively-p' will
-return non-nil.
-usage: (funcall-interactively FUNCTION &rest ARGUMENTS)  */)
-     (ptrdiff_t nargs, Lisp_Object *args)
-{
-  ptrdiff_t speccount = SPECPDL_INDEX ();
-  temporarily_switch_to_single_kboard (NULL);
-
-  /* Nothing special to do here, all the work is inside
-     `called-interactively-p'.  Which will look for us as a marker in the
-     backtrace.  */
-  return unbind_to (speccount, Ffuncall (nargs, args));
-}
-
 DEFUN ("call-interactively", Fcall_interactively, Scall_interactively, 1, 3, 0,
        doc: /* Call FUNCTION, providing args according to its interactive calling specs.
 Return the value FUNCTION returns.
@@ -854,5 +837,4 @@ a way to turn themselves off when a mouse command switches windows.  */);
   Vmouse_leave_buffer_hook = Qnil;
 
   defsubr (&Scall_interactively);
-  defsubr (&Sfuncall_interactively);
 }

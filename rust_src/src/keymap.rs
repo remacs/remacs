@@ -313,7 +313,11 @@ pub unsafe extern "C" fn map_keymap(
 #[lisp_fn(name = "map-keymap", min = "2")]
 pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
     if sort_first {
-        return call!(intern("map-keymap-sorted"), function, keymap);
+        return call!(
+            LispObject::from(intern("map-keymap-sorted")),
+            function,
+            keymap
+        );
     }
     unsafe {
         map_keymap(
@@ -420,7 +424,7 @@ pub fn current_local_map() -> LispObject {
 /// Select KEYMAP as the local keymap.
 /// If KEYMAP is nil, that means no local keymap.
 #[lisp_fn]
-pub fn use_local_map(mut keymap: LispObject) -> () {
+pub fn use_local_map(mut keymap: LispObject) {
     if !keymap.is_nil() {
         let map = get_keymap(keymap, true, true);
         keymap = map;
@@ -455,7 +459,7 @@ pub fn current_global_map() -> LispObject {
 
 /// Select KEYMAP as the global keymap.
 #[lisp_fn]
-pub fn use_global_map(keymap: LispObject) -> () {
+pub fn use_global_map(keymap: LispObject) {
     unsafe { _current_global_map = get_keymap(keymap, true, true) };
 }
 
@@ -588,7 +592,7 @@ pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
 #[lisp_fn(min = "1", name = "describe-vector")]
 pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
     if describer.is_nil() {
-        describer = intern("princ");
+        describer = LispObject::from(intern("princ"));
     }
     unsafe { specbind(Qstandard_output, current_buffer()) };
     if !(vector.is_vector() || vector.is_char_table()) {

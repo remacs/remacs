@@ -31,31 +31,12 @@ macro_rules! xsignal {
 /// Macro to call Lisp functions with any number of arguments.
 /// Replaces call0, call1, etc. in the C layer.
 macro_rules! call {
-    ($func:expr, $($arg:expr),*) => {{
-        let mut argsarray = [$func, $($arg),*];
-        #[allow(unused_unsafe)]
-        unsafe {
-            crate::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t,
-                                        argsarray.as_mut_ptr())
-        }
-    }}
-}
-
-macro_rules! call_raw {
-    ($func:expr, $($arg:expr),*) => {{
-        let mut argsarray = [$func, $($arg),*];
-        #[allow(unused_unsafe)]
-        unsafe {
-            crate::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t,
-                                        argsarray.as_mut_ptr())
-        }
-    }};
-    ($func:expr) => {{
-        #[allow(unused_unsafe)]
-        unsafe {
-            crate::remacs_sys::Ffuncall(1, &mut $func)
-        }
-    }}
+    ($func:expr, $($arg:expr),*) => {
+        crate::eval::funcall(&mut [$func, $($arg),*])
+    };
+    ($func:expr) => {
+        crate::eval::funcall(&mut [$func])
+    }
 }
 
 macro_rules! callN_raw {

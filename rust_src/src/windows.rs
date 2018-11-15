@@ -1147,7 +1147,7 @@ pub fn select_window_lisp(window: LispObject, norecord: LispObject) -> LispObjec
 #[lisp_fn(min = "0")]
 pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
     let win: LispWindowRef = window.into();
-    win.top_line as EmacsInt
+    EmacsInt::from(win.top_line)
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

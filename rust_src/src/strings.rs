@@ -159,7 +159,7 @@ pub fn multibyte_string_p(object: LispObject) -> bool {
 /// Clear the contents of STRING.
 /// This makes STRING unibyte and may change its length.
 #[lisp_fn]
-pub fn clear_string(mut string: LispStringRef) -> () {
+pub fn clear_string(mut string: LispStringRef) {
     string.clear_data();
     unsafe {
         string.set_num_chars(string.len_bytes());

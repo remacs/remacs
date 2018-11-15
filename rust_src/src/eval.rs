@@ -315,10 +315,10 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
             docstring = unsafe { Fpurecopy(docstring) };
         }
 
-        put(sym, Qvariable_documentation, docstring);
+        put(sym_ref, Qvariable_documentation, docstring);
     }
 
-    put(sym, Qrisky_local_variable, Qt);
+    put(sym_ref, Qrisky_local_variable, Qt);
     loadhist_attach(sym);
 
     sym_ref
@@ -566,9 +566,9 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
 
 /// Apply fn to arg.
 #[no_mangle]
-pub extern "C" fn apply1(mut func: LispObject, arg: LispObject) -> LispObject {
+pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
     if arg == Qnil {
-        Ffuncall(1, &mut func)
+        call!(func)
     } else {
         callN_raw!(Fapply, func, arg)
     }
@@ -689,7 +689,7 @@ pub fn autoload(
     }
 
     defalias(
-        function.as_lisp_obj(),
+        function,
         list!(Qautoload, file.as_lisp_obj(), docstring, interactive, ty),
         Qnil,
     )
@@ -863,7 +863,7 @@ pub fn autoload_do_load(
 /// Instead, use `add-hook' and specify t for the LOCAL argument.
 /// usage: (run-hooks &rest HOOKS)
 #[lisp_fn]
-pub fn run_hooks(args: &[LispObject]) -> () {
+pub fn run_hooks(args: &[LispObject]) {
     for item in args {
         run_hook(*item);
     }
@@ -878,20 +878,19 @@ pub fn run_hooks(args: &[LispObject]) -> () {
 /// Do not use `make-local-variable' to make a hook variable buffer-local.
 /// Instead, use `add-hook' and specify t for the LOCAL argument.
 /// usage: (run-hook-with-args HOOK &rest ARGS)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
     run_hook_with_args_internal(args, funcall_nil)
 }
 
-fn funcall_nil(args: &[LispObject]) -> LispObject {
-    let mut obj_array: Vec<LispObject> = args.to_vec();
-    Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr());
+fn funcall_nil(args: &mut [LispObject]) -> LispObject {
+    funcall(args);
     Qnil
 }
 
 /// Run the hook HOOK, giving each function no args.
 #[no_mangle]
-pub extern "C" fn run_hook(hook: LispObject) -> () {
+pub extern "C" fn run_hook(hook: LispObject) {
     run_hook_with_args(&mut [hook]);
 }
 
@@ -901,7 +900,7 @@ pub extern "C" fn run_hook(hook: LispObject) -> () {
 /// FUNCALL specifies how to call each function on the hook.
 fn run_hook_with_args_internal(
     args: &mut [LispObject],
-    func: fn(&[LispObject]) -> LispObject,
+    func: fn(&mut [LispObject]) -> LispObject,
 ) -> LispObject {
     // If we are dying or still initializing,
     // don't do anything -- it would probably crash if we tried.
@@ -1023,7 +1022,7 @@ fn resolve_fun(fun: LispObject) -> Result<LispFun, LispFunError> {
 /// Thus, (funcall \\='cons \\='x \\='y) returns (x . y).
 /// usage: (funcall FUNCTION &rest ARGUMENTS)
 #[allow(unused_assignments)]
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn funcall(args: &mut [LispObject]) -> LispObject {
     unsafe { maybe_quit() };
 

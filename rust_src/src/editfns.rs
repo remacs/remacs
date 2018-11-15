@@ -878,9 +878,7 @@ pub fn insert_buffer_substring(
     let mut e = end.map_or(buf_ref.zv, |n| n.to_fixnum() as isize);
 
     if b > e {
-        let temp = b;
-        b = e;
-        e = temp;
+        std::mem::swap(&mut b, &mut e);
     }
 
     if !(buf_ref.begv <= b && e <= buf_ref.zv) {
@@ -906,7 +904,7 @@ pub fn insert_buffer_substring(
 /// message; let the minibuffer contents show.
 ///
 /// usage: (message-box FORMAT-STRING &rest ARGS)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn message_box(args: &mut [LispObject]) -> LispObject {
     unsafe {
         if args[0].is_nil() {

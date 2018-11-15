@@ -60,7 +60,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
         }
     }
     if subfeature.is_not_nil() {
-        put(feature.as_lisp_obj(), Qsubfeatures, subfeature);
+        put(feature, Qsubfeatures, subfeature);
     }
     unsafe {
         globals.Vcurrent_load_list = Fcons(

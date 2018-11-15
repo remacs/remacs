@@ -22,10 +22,14 @@ addons:
 # Run rustfmt first.
 stages:
   - rustfmt
+  - clippy
   - cerrors
   - test
 
 jobs:
+  allow_failures:
+    - script: make clippy
+    - os: osx
   include:
     - stage: rustfmt
       os: linux  # No need to run this everywhere
@@ -41,6 +45,14 @@ jobs:
         - make -C src globals.h
       script:
         - ./.travis-cerrors.sh
+    - stage: clippy
+      os: linux  # No need to run this everywhere
+      before_script:
+        - sudo apt install -y libgtk-3-dev
+        - travis_wait rustup component add clippy-preview
+        - ./autogen.sh && ./configure --without-makeinfo
+      script:
+        - make clippy
     - &FULL_TEST
       stage: test
       env:
@@ -85,5 +97,3 @@ notifications:
 
 matrix:
   fast_finish: true
-  allow_failures:
-    - os: osx

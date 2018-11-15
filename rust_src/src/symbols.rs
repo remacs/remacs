@@ -58,9 +58,18 @@ impl LispSymbolRef {
         s.redirect() == symbol_redirect::SYMBOL_VARALIAS
     }
 
-    pub fn is_constant(self) -> bool {
+    pub fn get_trapped_write(self) -> symbol_trapped_write::Type {
         let s = unsafe { self.u.s.as_ref() };
-        s.trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
+        s.trapped_write()
+    }
+
+    pub fn set_trapped_write(mut self, trap: symbol_trapped_write::Type) {
+        let s = unsafe { self.u.s.as_mut() };
+        s.set_trapped_write(trap);
+    }
+
+    pub fn is_constant(self) -> bool {
+        self.get_trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
     }
 
     pub unsafe fn get_alias(self) -> LispSymbolRef {
@@ -363,23 +372,22 @@ pub fn indirect_variable_lisp(object: LispObject) -> LispObject {
 /// Make SYMBOL's value be void.
 /// Return SYMBOL.
 #[lisp_fn]
-pub fn makunbound(symbol: LispObject) -> LispSymbolRef {
-    let sym = symbol.as_symbol_or_error();
-    if sym.is_constant() {
-        xsignal!(Qsetting_constant, symbol);
+pub fn makunbound(symbol: LispSymbolRef) -> LispSymbolRef {
+    if symbol.is_constant() {
+        xsignal!(Qsetting_constant, symbol.into());
     }
-    set(sym, Qunbound);
-    sym
+    set(symbol, Qunbound);
+    symbol
 }
 
 /// Return SYMBOL's value.  Error if that is void.  Note that if
 /// `lexical-binding' is in effect, this returns the global value
 /// outside of any lexical scope.
 #[lisp_fn]
-pub fn symbol_value(symbol: LispObject) -> LispObject {
-    let val = unsafe { find_symbol_value(symbol) };
+pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
+    let val = unsafe { find_symbol_value(symbol.into()) };
     if val == Qunbound {
-        xsignal!(Qvoid_variable, symbol);
+        xsignal!(Qvoid_variable, symbol.into());
     }
     val
 }
