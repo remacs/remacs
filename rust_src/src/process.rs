@@ -172,16 +172,23 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// deleted or killed.
 #[lisp_fn]
 pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
-    buffer_or_name
-        .and_then(|b| b.as_buffer())
-        .and_then(|buf| {
+    get_buffer_process_internal(buffer_or_name.and_then(|b| b.as_buffer()))
+}
+
+pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> LispObject {
+    match buffer {
+        None => Qnil,
+        Some(buf) => {
             let obj = LispObject::from(buf);
-            unsafe { Vprocess_alist }.iter_cars().find(|item| {
-                let p = item.as_cons_or_error().cdr();
-                obj.eq(p.as_process_or_error().buffer)
-            })
-        })
-        .map_or(Qnil, |item| item.as_cons_or_error().cdr())
+            unsafe { Vprocess_alist }
+                .iter_cars()
+                .find(|item| {
+                    let p = item.as_cons_or_error().cdr();
+                    obj.eq(p.as_process_or_error().buffer)
+                })
+                .map_or(Qnil, |item| item.as_cons_or_error().cdr())
+        }
+    }
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.
