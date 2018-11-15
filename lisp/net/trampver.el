@@ -40,20 +40,26 @@
 
 (defconst tramp-repository-branch
   (ignore-errors
-    ;; Suppress message from `emacs-repository-get-branch'.
-    (let ((inhibit-message t))
+    ;; Suppress message from `emacs-repository-get-branch'.  We must
+    ;; also handle out-of-tree builds.
+    (let ((inhibit-message t)
+	  (dir (or (locate-dominating-file (locate-library "tramp") ".git")
+		   source-directory)))
       ;; `emacs-repository-get-branch' has been introduced with Emacs 27.1.
       (with-no-warnings
-	(emacs-repository-get-branch
-	 (locate-dominating-file (locate-library "tramp") ".git")))))
+	(and (stringp dir) (file-directory-p dir)
+	     (emacs-repository-get-branch dir)))))
   "The repository branch of the Tramp sources.")
 
 (defconst tramp-repository-version
   (ignore-errors
-    ;; Suppress message from `emacs-repository-get-version'.
-    (let ((inhibit-message t))
-      (emacs-repository-get-version
-       (locate-dominating-file (locate-library "tramp") ".git"))))
+    ;; Suppress message from `emacs-repository-get-version'.  We must
+    ;; also handle out-of-tree builds.
+    (let ((inhibit-message t)
+	  (dir (or (locate-dominating-file (locate-library "tramp") ".git")
+		   source-directory)))
+      (and (stringp dir) (file-directory-p dir)
+	   (emacs-repository-get-version dir))))
   "The repository revision of the Tramp sources.")
 
 ;; Check for Emacs version.
