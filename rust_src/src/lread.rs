@@ -18,7 +18,7 @@ use crate::{
     remacs_sys,
     remacs_sys::{
         build_string, read_internal_start, readevalloop, specbind, staticpro, symbol_redirect,
-        unbind_to, Fcons,
+        unbind_to,
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
@@ -223,7 +223,7 @@ pub fn eval_region(
         specbind(Qstandard_output, tem);
         specbind(
             Qeval_buffer_list,
-            Fcons(cur_buf_obj, globals.Veval_buffer_list),
+            LispObject::cons(cur_buf_obj, globals.Veval_buffer_list),
         );
 
         // `readevalloop' calls functions which check the type of start and end.

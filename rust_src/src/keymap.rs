@@ -21,9 +21,7 @@ use crate::{
         unbind_to,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
-    remacs_sys::{
-        Fcons, Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri,
-    },
+    remacs_sys::{Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri},
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
     },
@@ -156,7 +154,7 @@ pub fn make_keymap(string: LispObject) -> LispObject {
     };
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
-    unsafe { Fcons(Qkeymap, Fcons(char_table, tail)) }
+    LispObject::cons(Qkeymap, LispObject::cons(char_table, tail))
 }
 
 /// Return t if OBJECT is a keymap.
