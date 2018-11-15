@@ -592,7 +592,7 @@ pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
 #[lisp_fn(min = "1", name = "describe-vector")]
 pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
     if describer.is_nil() {
-        describer = intern("princ");
+        describer = LispObject::from(intern("princ"));
     }
     unsafe { specbind(Qstandard_output, current_buffer()) };
     if !(vector.is_vector() || vector.is_char_table()) {
