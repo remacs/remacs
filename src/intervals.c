@@ -350,7 +350,7 @@ balance_an_interval (INTERVAL i)
 /* Balance INTERVAL, potentially stuffing it back into its parent
    Lisp Object.  */
 
-static INTERVAL
+INTERVAL
 balance_possible_root_interval (INTERVAL interval)
 {
   Lisp_Object parent;
@@ -522,65 +522,6 @@ interval_start_pos (INTERVAL source)
   if (BUFFERP (parent))
     return BUF_BEG (XBUFFER (parent));
   return 0;
-}
-
-/* Find the interval containing text position POSITION in the text
-   represented by the interval tree TREE.  POSITION is a buffer
-   position (starting from 1) or a string index (starting from 0).
-   If POSITION is at the end of the buffer or string,
-   return the interval containing the last character.
-
-   The `position' field, which is a cache of an interval's position,
-   is updated in the interval found.  Other functions (e.g., next_interval)
-   will update this cache based on the result of find_interval.  */
-
-INTERVAL
-find_interval (register INTERVAL tree, register ptrdiff_t position)
-{
-  /* The distance from the left edge of the subtree at TREE
-                    to POSITION.  */
-  register ptrdiff_t relative_position;
-
-  if (!tree)
-    return NULL;
-
-  relative_position = position;
-  if (INTERVAL_HAS_OBJECT (tree))
-    {
-      Lisp_Object parent;
-      GET_INTERVAL_OBJECT (parent, tree);
-      if (BUFFERP (parent))
-	relative_position -= BUF_BEG (XBUFFER (parent));
-    }
-
-  eassert (relative_position <= TOTAL_LENGTH (tree));
-
-  tree = balance_possible_root_interval (tree);
-
-  while (1)
-    {
-      eassert (tree);
-      if (relative_position < LEFT_TOTAL_LENGTH (tree))
-	{
-	  tree = tree->left;
-	}
-      else if (! NULL_RIGHT_CHILD (tree)
-	       && relative_position >= (TOTAL_LENGTH (tree)
-					- RIGHT_TOTAL_LENGTH (tree)))
-	{
-	  relative_position -= (TOTAL_LENGTH (tree)
-				- RIGHT_TOTAL_LENGTH (tree));
-	  tree = tree->right;
-	}
-      else
-	{
-	  tree->position
-	    = (position - relative_position /* left edge of *tree.  */
-	       + LEFT_TOTAL_LENGTH (tree)); /* left edge of this interval.  */
-
-	  return tree;
-	}
-    }
 }
 
 /* Find the preceding interval (lexicographically) to INTERVAL.

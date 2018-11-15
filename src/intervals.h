@@ -255,6 +255,7 @@ extern void graft_intervals_into_buffer (INTERVAL, ptrdiff_t, ptrdiff_t,
 extern void verify_interval_modification (struct buffer *,
 					  ptrdiff_t, ptrdiff_t);
 extern INTERVAL balance_intervals (INTERVAL);
+extern INTERVAL balance_possible_root_interval (INTERVAL interval);
 extern void copy_intervals_to_string (Lisp_Object, struct buffer *,
                                              ptrdiff_t, ptrdiff_t);
 extern INTERVAL copy_intervals (INTERVAL, ptrdiff_t, ptrdiff_t);

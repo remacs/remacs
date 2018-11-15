@@ -6,7 +6,7 @@ use std::ptr;
 use crate::{
     lisp::{ExternalPtr, LispObject},
     multibyte::LispStringRef,
-    remacs_sys::find_interval,
+    remacs_sys::balance_possible_root_interval,
     remacs_sys::{interval, INTERVAL},
 };
 
@@ -20,9 +20,7 @@ impl IntervalRef {
     }
 
     pub fn length(self) -> isize {
-        self.total_length
-            - IntervalRef::new(self.right).get_total_length()
-            - IntervalRef::new(self.left).get_total_length()
+        self.total_length - self.right_total_length() - self.left_total_length()
     }
 
     pub fn get_total_length(self) -> isize {
@@ -36,33 +34,52 @@ impl IntervalRef {
         }
     }
 
+    // The total size of the left subtree of this interval.
+    pub fn left_total_length(self) -> isize {
+        IntervalRef::new(self.left).get_total_length()
+    }
+
+    // The total size of the right subtree of this interval.
+    pub fn right_total_length(self) -> isize {
+        IntervalRef::new(self.right).get_total_length()
+    }
+
     pub fn last_pos(self) -> isize {
         self.position + self.length()
     }
 
-    pub fn null_parent(self) -> bool {
+    pub fn has_null_parent(self) -> bool {
         self.up_obj() || unsafe { self.up.interval.is_null() }
     }
 
-    pub fn null_left_child(self) -> bool {
+    pub fn has_null_left_child(self) -> bool {
         self.left.is_null()
     }
 
-    pub fn null_right_child(self) -> bool {
+    pub fn has_null_right_child(self) -> bool {
         self.right.is_null()
     }
 
     pub fn am_left_child(mut self) -> bool {
-        !self.null_parent() && self.interval_parent().left == self.as_mut()
+        !self.has_null_parent() && self.parent().left == self.as_mut()
     }
 
     pub fn am_right_child(mut self) -> bool {
-        !self.null_parent() && self.interval_parent().right == self.as_mut()
+        !self.has_null_parent() && self.parent().right == self.as_mut()
     }
 
-    pub fn interval_parent(self) -> IntervalRef {
+    pub fn parent(self) -> IntervalRef {
         assert!(!(self.is_null() || self.up_obj()));
         IntervalRef::new(unsafe { self.up.interval })
+    }
+
+    pub fn has_object(self) -> bool {
+        self.up_obj()
+    }
+
+    pub fn get_object(self) -> LispObject {
+        assert!(self.has_object());
+        unsafe { self.up.obj }
     }
 }
 
@@ -77,8 +94,8 @@ pub fn compare_string_intervals_rust(s1: LispStringRef, s2: LispStringRef) -> bo
     let mut pos = 0;
     let end = s1.len_chars();
 
-    let mut i1 = IntervalRef::new(unsafe { find_interval(s1.intervals().as_mut(), 0) });
-    let mut i2 = IntervalRef::new(unsafe { find_interval(s2.intervals().as_mut(), 0) });
+    let mut i1 = find_interval_rust(s1.intervals(), 0);
+    let mut i2 = find_interval_rust(s2.intervals(), 0);
 
     while pos < end {
         // Determine how far we can go before we reach the end of I1 or I2.
@@ -253,24 +270,75 @@ pub fn next_interval_rust(interval: IntervalRef) -> IntervalRef {
     let next_position = interval.last_pos();
 
     let mut i = interval;
-    if !i.null_right_child() {
+    if !i.has_null_right_child() {
         i = IntervalRef::new(i.right);
-        while !i.null_left_child() {
+        while !i.has_null_left_child() {
             i = IntervalRef::new(i.left);
         }
         i.position = next_position;
         return i;
     }
 
-    while !i.null_parent() {
+    while !i.has_null_parent() {
         if i.am_left_child() {
-            i = i.interval_parent();
+            i = i.parent();
             i.position = next_position;
             return i;
         }
 
-        i = i.interval_parent();
+        i = i.parent();
     }
 
     IntervalRef::new(ptr::null_mut())
+}
+
+// Find the interval containing text position POSITION in the text
+// represented by the interval tree TREE.  POSITION is a buffer
+// position (starting from 1) or a string index (starting from 0).
+// If POSITION is at the end of the buffer or string,
+// return the interval containing the last character.
+//
+// The `position' field, which is a cache of an interval's position,
+// is updated in the interval found.  Other functions (e.g., next_interval)
+// will update this cache based on the result of find_interval.
+#[no_mangle]
+pub extern "C" fn find_interval(tree: INTERVAL, position: libc::ptrdiff_t) -> INTERVAL {
+    find_interval_rust(IntervalRef::new(tree), position).as_mut()
+}
+
+pub fn find_interval_rust(mut tree: IntervalRef, position: libc::ptrdiff_t) -> IntervalRef {
+    if tree.is_null() {
+        return tree;
+    }
+
+    // The distance from the left edge of the subtree at TREE to POSITION.
+    let mut relative_position = position;
+
+    if tree.has_object() {
+        let parent = tree.get_object();
+        if let Some(buf) = parent.as_buffer() {
+            relative_position -= buf.beg();
+        }
+    }
+
+    assert!(relative_position <= tree.get_total_length());
+
+    tree = IntervalRef::new(unsafe { balance_possible_root_interval(tree.as_mut()) });
+
+    loop {
+        assert!(!tree.is_null());
+        if relative_position < tree.left_total_length() {
+            tree = IntervalRef::new(tree.left);
+        } else if !tree.has_null_right_child()
+            && relative_position >= tree.get_total_length() - tree.right_total_length()
+        {
+            relative_position -= tree.get_total_length() - tree.right_total_length();
+            tree = IntervalRef::new(tree.right);
+        } else {
+            tree.position = position - relative_position // left edge of *tree.
+	       + tree.left_total_length(); // left edge of this interval.
+
+            break tree;
+        }
+    }
 }
