@@ -35,7 +35,7 @@ use crate::{
         set_point_both, unbind_to, update_buffer_properties,
     },
     remacs_sys::{
-        Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
+        Fadd_text_properties, Fcopy_sequence, Fformat_message, Fget_pos_property,
         Fnext_single_char_property_change, Fprevious_single_char_property_change, Fx_popup_dialog,
     },
     remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
@@ -427,7 +427,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     while let Some(a) = it.next() {
         let b = it.next().unwrap(); // safe due to the odd check at the beginning
-        properties = unsafe { Fcons(*a, Fcons(*b, properties)) };
+        properties = LispObject::cons(*a, LispObject::cons(*b, properties));
     }
 
     unsafe {
@@ -912,11 +912,11 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
             Qnil
         } else {
             let val = Fformat_message(args.len() as isize, args.as_mut_ptr() as *mut LispObject);
-            let pane = list!(Fcons(
+            let pane = list!(LispObject::cons(
                 build_string("OK".as_ptr() as *const ::libc::c_char),
                 Qt
             ));
-            let menu = Fcons(val, pane);
+            let menu = LispObject::cons(val, pane);
             Fx_popup_dialog(Qt, menu, Qt);
             val
         }

@@ -19,7 +19,7 @@ use crate::{
         specbind, unbind_to, COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled},
-    remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Fload, Fpurecopy},
+    remacs_sys::{Fapply, Fdefault_value, Ffset, Fload, Fpurecopy},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
@@ -239,14 +239,17 @@ pub fn function(args: LispObject) -> LispObject {
                         let docstring = unsafe { eval_sub(car(tail)) };
                         docstring.as_string_or_error();
                         let (a, b) = cdr.as_cons().unwrap().as_tuple();
-                        cdr = unsafe { Fcons(a, Fcons(docstring, b.as_cons().unwrap().cdr())) };
+                        cdr = LispObject::cons(
+                            a,
+                            LispObject::cons(docstring, b.as_cons().unwrap().cdr()),
+                        );
                     }
                 }
 
                 return unsafe {
-                    Fcons(
+                    LispObject::cons(
                         Qclosure,
-                        Fcons(globals.Vinternal_interpreter_environment, cdr),
+                        LispObject::cons(globals.Vinternal_interpreter_environment, cdr),
                     )
                 };
             }
@@ -379,8 +382,10 @@ pub fn letX(args: LispCons) -> LispObject {
                         // Lexically bind VAR by adding it to the interpreter's binding alist.
 
                         unsafe {
-                            let newenv =
-                                Fcons(Fcons(var, val), globals.Vinternal_interpreter_environment);
+                            let newenv = LispObject::cons(
+                                LispObject::cons(var, val),
+                                globals.Vinternal_interpreter_environment,
+                            );
 
                             if globals.Vinternal_interpreter_environment == lexenv {
                                 // Save the old lexical environment on the specpdl stack,
@@ -435,7 +440,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
                     if !bound {
                         // Lexically bind VAR by adding it to the lexenv alist.
-                        lexenv = unsafe { Fcons(Fcons(var, val), lexenv) };
+                        lexenv = LispObject::cons(LispObject::cons(var, val), lexenv);
                         dyn_bind = false;
                     }
                 }
@@ -583,7 +588,10 @@ fn signal_error(msg: &str, arg: LispObject) -> ! {
         Some(_) => arg,
     };
 
-    xsignal!(Qerror, Fcons(build_string(msg.as_ptr() as *const i8), arg));
+    xsignal!(
+        Qerror,
+        LispObject::cons(build_string(msg.as_ptr() as *const i8), arg)
+    );
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.

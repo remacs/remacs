@@ -5,7 +5,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
-    remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method, Fcons},
+    remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
     windows::{select_window_lisp, selected_window, LispWindowRef},
@@ -274,12 +274,11 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_position(frame: LispObject) -> LispObject {
     let frame_ref = frame_live_or_selected(frame);
-    unsafe {
-        Fcons(
-            LispObject::from(frame_ref.left_pos),
-            LispObject::from(frame_ref.top_pos),
-        )
-    }
+
+    LispObject::cons(
+        LispObject::from(frame_ref.left_pos),
+        LispObject::from(frame_ref.top_pos),
+    )
 }
 
 /// Returns t if the mouse pointer displayed on FRAME is visible.
