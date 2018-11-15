@@ -32,8 +32,8 @@ use crate::{
         Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
-        windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name,
-        Ffind_file_name_handler, Fget_text_property, Fnconc, Fnreverse, Fwiden,
+        windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
+        Fget_text_property, Fnconc, Fnreverse, Fwiden,
     },
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
