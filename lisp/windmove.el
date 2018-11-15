@@ -481,8 +481,8 @@ DIR, ARG, and WINDOW are handled as by `windmove-other-window-loc'."
   "Move to the window at direction DIR.
 DIR, ARG, and WINDOW are handled as by `windmove-other-window-loc'.
 If no window is at direction DIR, an error is signaled.
-If `windmove-create-window' is non-nil, instead of signalling an error
-it creates a new window at direction DIR ."
+If `windmove-create-window' is non-nil, try to create a new window
+in direction DIR instead."
   (let ((other-window (windmove-find-other-window dir arg window)))
     (when (and windmove-create-window
                (or (null other-window)
@@ -510,9 +510,9 @@ With no prefix argument, or with prefix argument equal to zero,
 it is relative to the top edge (for positive ARG) or the bottom edge
 \(for negative ARG) of the current window.
 If no window is at the desired location, an error is signaled
-unless `windmove-create-window' is non-nil that creates a new window."
+unless `windmove-create-window' is non-nil and a new window is created."
   (interactive "P")
-  (windmove-do-window-select 'left arg))
+  (windmove-do-window-select 'left (and arg (prefix-numeric-value arg))))
 
 ;;;###autoload
 (defun windmove-up (&optional arg)
@@ -522,9 +522,9 @@ is relative to the position of point in the window; otherwise it is
 relative to the left edge (for positive ARG) or the right edge (for
 negative ARG) of the current window.
 If no window is at the desired location, an error is signaled
-unless `windmove-create-window' is non-nil that creates a new window."
+unless `windmove-create-window' is non-nil and a new window is created."
   (interactive "P")
-  (windmove-do-window-select 'up arg))
+  (windmove-do-window-select 'up (and arg (prefix-numeric-value arg))))
 
 ;;;###autoload
 (defun windmove-right (&optional arg)
@@ -534,9 +534,9 @@ With no prefix argument, or with prefix argument equal to zero,
 otherwise it is relative to the top edge (for positive ARG) or the
 bottom edge (for negative ARG) of the current window.
 If no window is at the desired location, an error is signaled
-unless `windmove-create-window' is non-nil that creates a new window."
+unless `windmove-create-window' is non-nil and a new window is created."
   (interactive "P")
-  (windmove-do-window-select 'right arg))
+  (windmove-do-window-select 'right (and arg (prefix-numeric-value arg))))
 
 ;;;###autoload
 (defun windmove-down (&optional arg)
@@ -546,9 +546,9 @@ With no prefix argument, or with prefix argument equal to zero,
 it is relative to the left edge (for positive ARG) or the right edge
 \(for negative ARG) of the current window.
 If no window is at the desired location, an error is signaled
-unless `windmove-create-window' is non-nil that creates a new window."
+unless `windmove-create-window' is non-nil and a new window is created."
   (interactive "P")
-  (windmove-do-window-select 'down arg))
+  (windmove-do-window-select 'down (and arg (prefix-numeric-value arg))))
 
 
 ;;; set up keybindings
