@@ -1,10 +1,10 @@
 //! Lisp functions pertaining to editing.
 
+use std;
 use std::ptr;
 
 use libc;
 use libc::{c_int, c_uchar, ptrdiff_t};
-use std;
 
 use remacs_macros::lisp_fn;
 
@@ -27,17 +27,18 @@ use crate::{
     remacs_sys::EmacsInt,
     remacs_sys::{
         buffer_overflow, build_string, current_message, downcase, find_before_next_newline,
-        find_field, find_newline, globals, insert, insert_and_inherit, insert_from_buffer,
-        make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
-        message1, record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
-        save_restriction_restore, save_restriction_save, scan_newline_from_point,
-        set_buffer_internal_1, set_point, set_point_both, unbind_to, update_buffer_properties,
+        find_newline, get_char_property_and_overlay, globals, insert, insert_and_inherit,
+        insert_from_buffer, make_buffer_string_both, make_save_obj_obj_obj_obj,
+        make_string_from_bytes, maybe_quit, message1, record_unwind_current_buffer,
+        record_unwind_protect, save_excursion_restore, save_restriction_restore,
+        save_restriction_save, scan_newline_from_point, set_buffer_internal_1, set_point,
+        set_point_both, unbind_to, update_buffer_properties,
     },
     remacs_sys::{
         Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
-        Fx_popup_dialog,
+        Fnext_single_char_property_change, Fprevious_single_char_property_change, Fx_popup_dialog,
     },
-    remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
+    remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
     util::clip_to_bounds,
@@ -566,16 +567,14 @@ pub fn field_beginning(
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
     let mut beg = 0;
-    unsafe {
-        find_field(
-            LispObject::from(pos),
-            LispObject::from(escape_from_edge),
-            LispObject::from(limit),
-            &mut beg,
-            Qnil,
-            ptr::null_mut(),
-        );
-    }
+    rust_find_field(
+        pos.map(LispNumber::from),
+        escape_from_edge,
+        LispObject::from(limit),
+        &mut beg,
+        Qnil,
+        ptr::null_mut(),
+    );
 
     beg as EmacsInt
 }
@@ -594,16 +593,14 @@ pub fn field_end(
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
     let mut end = 0;
-    unsafe {
-        find_field(
-            LispObject::from(pos),
-            LispObject::from(escape_from_edge),
-            Qnil,
-            ptr::null_mut(),
-            LispObject::from(limit),
-            &mut end,
-        );
-    }
+    rust_find_field(
+        pos.map(LispNumber::from),
+        escape_from_edge,
+        Qnil,
+        ptr::null_mut(),
+        LispObject::from(limit),
+        &mut end,
+    );
 
     end as EmacsInt
 }
@@ -1029,6 +1026,157 @@ pub fn save_restriction(body: LispObject) -> LispObject {
     unsafe { record_unwind_protect(Some(save_restriction_restore), save_restriction_save()) };
 
     unsafe { unbind_to(count, progn(body)) }
+}
+
+// Find the field surrounding POS in *BEG and *END.  If POS is nil,
+// the value of point is used instead.  If BEG or END is null,
+// means don't store the beginning or end of the field.
+//
+// BEG_LIMIT and END_LIMIT serve to limit the ranged of the returned
+// results; they do not effect boundary behavior.
+//
+// If MERGE_AT_BOUNDARY is non-nil, then if POS is at the very first
+// position of a field, then the beginning of the previous field is
+// returned instead of the beginning of POS's field (since the end of a
+// field is actually also the beginning of the next input field, this
+// behavior is sometimes useful).  Additionally in the MERGE_AT_BOUNDARY
+// non-nil case, if two fields are separated by a field with the special
+// value `boundary', and POS lies within it, then the two separated
+// fields are considered to be adjacent, and POS between them, when
+// finding the beginning and ending of the "merged" field.
+//
+// Either BEG or END may be 0, in which case the corresponding value
+// is not stored.
+
+#[no_mangle]
+pub extern "C" fn find_field(
+    pos: LispObject,
+    merge_at_boundary: LispObject,
+    beg_limit: LispObject,
+    beg: *mut ptrdiff_t,
+    end_limit: LispObject,
+    end: *mut ptrdiff_t,
+) {
+    rust_find_field(
+        pos.into(),
+        merge_at_boundary.into(),
+        beg_limit,
+        beg,
+        end_limit,
+        end,
+    );
+}
+
+pub fn rust_find_field(
+    pos: Option<LispNumber>,
+    merge_at_boundary: bool,
+    beg_limit: LispObject,
+    beg: *mut ptrdiff_t,
+    end_limit: LispObject,
+    end: *mut ptrdiff_t,
+) {
+    let current_buffer = ThreadState::current_buffer();
+    let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as isize);
+
+    // Fields right before and after the point.
+    let after_field =
+        unsafe { get_char_property_and_overlay(pos.into(), Qfield, Qnil, ptr::null_mut()) };
+    let before_field = if pos > current_buffer.begv {
+        unsafe { get_char_property_and_overlay((pos - 1).into(), Qfield, Qnil, ptr::null_mut()) }
+    } else {
+        // Using nil here would be a more obvious choice, but it would
+        // fail when the buffer starts with a non-sticky field.
+        after_field
+    };
+
+    // True if POS counts as the start of a field.
+    let mut at_field_start = false;
+    // True if POS counts as the end of a field.
+    let mut at_field_end = false;
+
+    // See if we need to handle the case where MERGE_AT_BOUNDARY is nil
+    // and POS is at beginning of a field, which can also be interpreted
+    // as the end of the previous field.  Note that the case where if
+    // MERGE_AT_BOUNDARY is non-nil (see function comment) is actually the
+    // more natural one; then we avoid treating the beginning of a field
+    // specially.
+    if !merge_at_boundary {
+        let field = unsafe { Fget_pos_property(pos.into(), Qfield, Qnil) };
+        if !field.eq(after_field) {
+            at_field_end = true;
+        }
+        if !field.eq(before_field) {
+            at_field_start = true;
+        }
+        if field.is_nil() && at_field_start && at_field_end {
+            // If an inserted char would have a nil field while the surrounding
+            // text is non-nil, we're probably not looking at a
+            // zero-length field, but instead at a non-nil field that's
+            // not intended for editing (such as comint's prompts).
+            at_field_start = false;
+            at_field_end = false;
+        }
+    }
+
+    // Note about special `boundary' fields:
+    //
+    // Consider the case where the point (`.') is between the fields `x' and `y':
+    //
+    //    xxxx.yyyy
+    //
+    // In this situation, if merge_at_boundary is non-nil, consider the
+    // `x' and `y' fields as forming one big merged field, and so the end
+    // of the field is the end of `y'.
+    //
+    // However, if `x' and `y' are separated by a special `boundary' field
+    // (a field with a `field' char-property of 'boundary), then ignore
+    // this special field when merging adjacent fields.  Here's the same
+    // situation, but with a `boundary' field between the `x' and `y' fields:
+    //
+    //    xxx.BBBByyyy
+    //
+    // Here, if point is at the end of `x', the beginning of `y', or
+    // anywhere in-between (within the `boundary' field), merge all
+    // three fields and consider the beginning as being the beginning of
+    // the `x' field, and the end as being the end of the `y' field.
+
+    if !beg.is_null() {
+        unsafe {
+            if at_field_start {
+                // POS is at the edge of a field, and we should consider it as
+                // the beginning of the following field.
+                *beg = pos;
+            } else {
+                let mut p = pos.into();
+                // Find the previous field boundary.
+                if merge_at_boundary && before_field.eq(Qboundary) {
+                    // Skip a `boundary' field.
+                    p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
+                }
+                p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
+                *beg = p.as_fixnum().unwrap_or(current_buffer.begv as EmacsInt) as isize;
+            }
+        }
+    }
+
+    if !end.is_null() {
+        unsafe {
+            if at_field_end {
+                // POS is at the edge of a field, and we should consider it as
+                // the end of the previous field.
+                *end = pos;
+            } else {
+                let mut p = pos.into();
+                // Find the next field boundary.
+                if merge_at_boundary && after_field.eq(Qboundary) {
+                    // Skip a `boundary' field.
+                    p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
+                }
+                p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
+                *end = p.as_fixnum().unwrap_or(current_buffer.zv as EmacsInt) as isize;
+            }
+        }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

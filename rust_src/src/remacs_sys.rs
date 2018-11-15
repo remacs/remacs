@@ -84,15 +84,7 @@ extern "C" {
         depth: libc::c_int,
         ht: Lisp_Object,
     ) -> bool;
-    pub fn uniprop_table_uncompress(table: Lisp_Object, idx: u32) -> Lisp_Object;
-    pub fn find_field(
-        pos: LispObject,
-        merge_at_boundary: LispObject,
-        beg_limit: LispObject,
-        beg: *mut ptrdiff_t,
-        end_limit: LispObject,
-        end: *mut ptrdiff_t,
-    );
+    pub fn update_buffer_defaults(objvar: *mut LispObject, newval: LispObject);
     pub fn concat(
         nargs: ptrdiff_t,
         args: *mut LispObject,
