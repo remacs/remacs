@@ -878,9 +878,7 @@ pub fn insert_buffer_substring(
     let mut e = end.map_or(buf_ref.zv, |n| n.to_fixnum() as isize);
 
     if b > e {
-        let temp = b;
-        b = e;
-        e = temp;
+        std::mem::swap(&mut b, &mut e);
     }
 
     if !(buf_ref.begv <= b && e <= buf_ref.zv) {

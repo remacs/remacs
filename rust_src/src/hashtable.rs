@@ -289,7 +289,7 @@ pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef)
 
 /// Remove KEY from TABLE.
 #[lisp_fn]
-pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
+pub fn remhash(key: LispObject, hash_table: LispHashTableRef) {
     hash_table.check_impure(hash_table);
     hash_table.remove(key);
 }
@@ -298,7 +298,7 @@ pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
 /// FUNCTION is called with two arguments, KEY and VALUE.
 /// `maphash' always returns nil.
 #[lisp_fn]
-pub fn maphash(function: LispObject, hash_table: LispHashTableRef) -> () {
+pub fn maphash(function: LispObject, hash_table: LispHashTableRef) {
     for (key, value) in hash_table.iter() {
         call!(function, key, value);
     }

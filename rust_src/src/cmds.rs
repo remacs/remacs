@@ -38,7 +38,7 @@ use crate::{
 
 /// Add N to point; or subtract N if FORWARD is false. N defaults to 1.
 /// Validate the new location. Return nil.
-fn move_point(n: LispObject, forward: bool) -> () {
+fn move_point(n: LispObject, forward: bool) {
     // This used to just set point to 'point + n', and then check
     // to see if it was within boundaries. But now that SET_POINT can
     // potentially do a lot of stuff (calling entering and exiting
@@ -82,7 +82,7 @@ fn move_point(n: LispObject, forward: bool) -> () {
 /// right or to the left on the screen.  This is in contrast with
 /// \\[right-char], which see.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn forward_char(n: LispObject) -> () {
+pub fn forward_char(n: LispObject) {
     move_point(n, true)
 }
 
@@ -95,7 +95,7 @@ pub fn forward_char(n: LispObject) -> () {
 /// right or to the left on the screen.  This is in contrast with
 /// \\[left-char], which see.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn backward_char(n: LispObject) -> () {
+pub fn backward_char(n: LispObject) {
     move_point(n, false)
 }
 
@@ -117,7 +117,7 @@ pub fn forward_point(n: EmacsInt) -> EmacsInt {
 /// instead.  For instance, `(forward-line 0)' does the same thing as
 /// `(beginning-of-line)', except that it ignores field boundaries.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn beginning_of_line(n: Option<EmacsInt>) -> () {
+pub fn beginning_of_line(n: Option<EmacsInt>) {
     let pos = line_beginning_position(n);
 
     unsafe {
@@ -136,7 +136,7 @@ pub fn beginning_of_line(n: Option<EmacsInt>) -> () {
 /// not move.  To ignore field boundaries bind `inhibit-field-text-motion'
 /// to t.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn end_of_line(n: Option<EmacsInt>) -> () {
+pub fn end_of_line(n: Option<EmacsInt>) {
     let mut num = n.unwrap_or(1);
     let mut newpos: isize;
     let mut pt: isize;
@@ -216,7 +216,7 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
 /// The command `delete-forward-char' is preferable for interactive use, e.g.
 /// because it respects values of `delete-active-region' and `overwrite-mode'.
 #[lisp_fn(min = "1", intspec = "p\nP")]
-pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
+pub fn delete_char(n: EmacsInt, killflag: bool) {
     if n.abs() < 2 {
         call!(Qundo_auto_amalgamate);
     }

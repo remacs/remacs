@@ -424,7 +424,7 @@ pub fn current_local_map() -> LispObject {
 /// Select KEYMAP as the local keymap.
 /// If KEYMAP is nil, that means no local keymap.
 #[lisp_fn]
-pub fn use_local_map(mut keymap: LispObject) -> () {
+pub fn use_local_map(mut keymap: LispObject) {
     if !keymap.is_nil() {
         let map = get_keymap(keymap, true, true);
         keymap = map;
@@ -459,7 +459,7 @@ pub fn current_global_map() -> LispObject {
 
 /// Select KEYMAP as the global keymap.
 #[lisp_fn]
-pub fn use_global_map(keymap: LispObject) -> () {
+pub fn use_global_map(keymap: LispObject) {
     unsafe { _current_global_map = get_keymap(keymap, true, true) };
 }
 

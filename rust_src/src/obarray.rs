@@ -235,7 +235,7 @@ extern "C" fn mapatoms_1(sym: LispObject, function: LispObject) {
 /// Call FUNCTION on every symbol in OBARRAY.
 /// OBARRAY defaults to the value of `obarray'.
 #[lisp_fn(min = "1")]
-pub fn mapatoms(function: LispObject, obarray: Option<LispObarrayRef>) -> () {
+pub fn mapatoms(function: LispObject, obarray: Option<LispObarrayRef>) {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
 
     map_obarray(obarray.as_lisp_obj(), mapatoms_1, function);

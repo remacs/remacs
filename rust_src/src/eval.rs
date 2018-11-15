@@ -863,7 +863,7 @@ pub fn autoload_do_load(
 /// Instead, use `add-hook' and specify t for the LOCAL argument.
 /// usage: (run-hooks &rest HOOKS)
 #[lisp_fn]
-pub fn run_hooks(args: &[LispObject]) -> () {
+pub fn run_hooks(args: &[LispObject]) {
     for item in args {
         run_hook(*item);
     }
@@ -890,7 +890,7 @@ fn funcall_nil(args: &mut [LispObject]) -> LispObject {
 
 /// Run the hook HOOK, giving each function no args.
 #[no_mangle]
-pub extern "C" fn run_hook(hook: LispObject) -> () {
+pub extern "C" fn run_hook(hook: LispObject) {
     run_hook_with_args(&mut [hook]);
 }
 
