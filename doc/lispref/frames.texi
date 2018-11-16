@@ -3121,8 +3121,7 @@ while still being visible themselves.
 their descendants as well, keeping their relative positions unaltered.
 Note that the hook @code{move-frame-functions} (@pxref{Frame Position})
 is run for a child frame only when the position of the child frame
-relative to its parent frame changes.  It is not run for a child frame
-when the position of the parent frame changes.
+relative to its parent frame changes.
 
   When a parent frame is resized, its child frames conceptually retain
 their previous sizes and their positions relative to the left upper

@@ -643,7 +643,7 @@ whose elements are of the form (VAR . VALUE).
 
 When a connection to a remote server is opened, the server's
 connection profiles are found.  A server may be assigned a
-connection profile using `connection-local-set-profile'.  Then
+connection profile using `connection-local-set-profiles'.  Then
 variables are set in the server's process buffer according to the
 VARIABLES list of the connection profile.  The list is processed
 in order."

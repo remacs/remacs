@@ -45,7 +45,7 @@
 ;; If YES-OR-NO is non-nil, it binds `yes-or-no-p' to
 ;; to avoid the prompt.
 (defmacro with-dired-bug28834-test (create-dirs yes-or-no &rest body)
-  (declare ((debug form symbolp body)))
+  (declare (debug (form symbolp body)))
   (let ((foo (make-symbol "foo")))
     `(let* ((,foo (make-temp-file "foo" 'dir))
             (dired-create-destination-dirs ,create-dirs))

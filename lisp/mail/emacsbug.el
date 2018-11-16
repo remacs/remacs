@@ -232,13 +232,32 @@ usually do not have translators for other languages.\n\n")))
                     "', version "
 		    (mapconcat 'number-to-string (x-server-version) ".") "\n")
 	  (error t)))
-    (let ((lsb (with-temp-buffer
-		 (if (eq 0 (ignore-errors
-			     (call-process "lsb_release" nil '(t nil)
-					   nil "-d")))
-		     (buffer-string)))))
-      (if (stringp lsb)
-	  (insert "System " lsb "\n")))
+    (let (os)
+      ;; Maybe this should be factored out in a standalone function,
+      ;; eg emacs-os-description.
+      (cond ((eq system-type 'darwin)
+             (with-temp-buffer
+               (when (eq 0 (ignore-errors
+                             (call-process "sw_vers" nil '(t nil) nil)))
+                 (dolist (s '("ProductName" "ProductVersion"))
+                   (goto-char (point-min))
+                   (if (re-search-forward (format "^%s\\s-*:\\s-+\\(.*\\)$" s)
+                                          nil t)
+                       (setq os (concat os " " (match-string 1))))))))
+            ;; TODO include other branches here.
+            ;; MS Windows: systeminfo ?
+            ;; Cygwin, *BSD, etc: ?
+            (t
+             (with-temp-buffer
+               (when (eq 0 (ignore-errors
+                             (call-process "lsb_release" nil '(t nil)
+                                           nil "-d")))
+                 (goto-char (point-min))
+                 (if (looking-at "^\\sw+:\\s-+")
+                     (goto-char (match-end 0)))
+                 (setq os (buffer-substring (point) (line-end-position)))))))
+      (if (stringp os)
+          (insert "System Description: " os "\n\n")))
     (let ((message-buf (get-buffer "*Messages*")))
       (if message-buf
 	  (let (beg-pos

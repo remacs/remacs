@@ -2114,6 +2114,8 @@ next element of the minibuffer history in the minibuffer."
   (interactive "^p")
   (or arg (setq arg 1))
   (let* ((old-point (point))
+         ;; Don't add newlines if they have the mode enabled globally.
+         (next-line-add-newlines nil)
 	 ;; Remember the original goal column of possibly multi-line input
 	 ;; excluding the length of the prompt on the first line.
 	 (prompt-end (minibuffer-prompt-end))
