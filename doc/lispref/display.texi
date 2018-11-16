@@ -2241,10 +2241,10 @@ attribute is ignored.
 
 @table @code
 @item :family
-Font family or fontset (a string).  @xref{Fonts,,, emacs, The GNU
+Font family name (a string).  @xref{Fonts,,, emacs, The GNU
 Emacs Manual}, for more information about font families.  The function
 @code{font-family-list} (see below) returns a list of available family
-names.  @xref{Fontsets}, for information about fontsets.
+names.
 
 @item :foundry
 The name of the @dfn{font foundry} for the font family specified by
@@ -2404,9 +2404,10 @@ Normally you do not need to set the stipple attribute, because it is
 used automatically to handle certain shades of gray.
 
 @item :font
-The font used to display the face.  Its value should be a font object.
-@xref{Low-Level Font}, for information about font objects, font specs,
-and font entities.
+The font used to display the face.  Its value should be a font object
+or a fontset.  @xref{Low-Level Font}, for information about font
+objects, font specs, and font entities.  @xref{Fontsets}, for
+information about fontsets.
 
 When specifying this attribute using @code{set-face-attribute}
 (@pxref{Attribute Functions}), you may also supply a font spec, a font
