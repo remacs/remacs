@@ -18,8 +18,8 @@ use crate::{
     remacs_sys,
     remacs_sys::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
-        emacs_abort, globals, set_default_internal, set_internal, symbol_trapped_write,
-        wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
+        emacs_abort, globals, rust_count_one_bits, set_default_internal, set_internal,
+        symbol_trapped_write, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
@@ -777,6 +777,16 @@ pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
         },
         _ => Qnil,
     }
+}
+
+/// Return population count of VALUE.
+/// This is the number of one bits in the two's complement representation
+/// of VALUE.  If VALUE is negative, return the number of zero bits in the
+/// representation.
+#[lisp_fn]
+pub fn logcount(value: EmacsInt) -> i32 {
+    let value = if value < 0 { -1 - value } else { value };
+    unsafe { rust_count_one_bits(value as usize) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));
