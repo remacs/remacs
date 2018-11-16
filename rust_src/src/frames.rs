@@ -436,9 +436,8 @@ fn next_frame(frame: LispFrameRef, minibuf: LispObject) -> LispFrameRef {
         for f in Vframe_list.iter_cars_unchecked() {
             let f = f.as_frame_or_error();
             if passed > 0 {
-                let tmp = candidate_frame_rust(f, frame, minibuf);
-                if !tmp.is_nil() {
-                    return tmp.as_frame_or_error();
+                if let Some(candidate) = candidate_frame_rust(f, frame, minibuf) {
+                    return candidate;
                 }
             }
             if frame == f {
@@ -463,25 +462,9 @@ fn next_frame(frame: LispFrameRef, minibuf: LispObject) -> LispFrameRef {
 #[lisp_fn(min = "0")]
 pub fn previous_frame_lisp(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
     let frame = frame.live_or_error();
-    prev_frame(frame, miniframe)
-}
-
-fn prev_frame(frame: LispFrameRef, minibuf: LispObject) -> LispFrameRef {
-    let mut prev: Option<LispFrameRef> = None;
-
-    for f in Vframe_list.iter_cars_unchecked() {
-        let f = f.as_frame_or_error();
-        if frame == f && prev.is_some() {
-            return prev.unwrap();
-        }
-        let tmp = candidate_frame_rust(f, frame, minibuf);
-        if !tmp.is_nil() {
-            prev = tmp.as_frame();
-        }
-    }
 
     // We've scanned the entire list.
-    match prev {
+    match prev_frame(frame, miniframe) {
         // There were no acceptable frames in the list before FRAME; otherwise,
         // we would have returned directly from the loop.  Since PREV is the last
         // acceptable frame in the list, return it.
@@ -493,12 +476,27 @@ fn prev_frame(frame: LispFrameRef, minibuf: LispObject) -> LispFrameRef {
     }
 }
 
+fn prev_frame(frame: LispFrameRef, minibuf: LispObject) -> Option<LispFrameRef> {
+    let mut prev: Option<LispFrameRef> = None;
+
+    for f in Vframe_list.iter_cars_unchecked() {
+        let f = f.as_frame_or_error();
+        if frame == f && prev.is_some() {
+            return prev;
+        }
+
+        prev = candidate_frame_rust(f, frame, minibuf);
+    }
+
+    prev
+}
+
 pub fn candidate_frame_rust(
     candidate: LispFrameRef,
     frame: LispFrameRef,
     minibuf: LispObject,
-) -> LispObject {
-    unsafe { candidate_frame(candidate.into(), frame.into(), minibuf) }
+) -> Option<LispFrameRef> {
+    unsafe { candidate_frame(candidate.into(), frame.into(), minibuf) }.as_frame()
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
