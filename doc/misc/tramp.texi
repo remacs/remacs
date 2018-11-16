@@ -1491,6 +1491,74 @@ predefined methods.  Any part of this list can be modified with more
 suitable settings.  Refer to the Lisp documentation of that variable,
 accessible with @kbd{C-h v tramp-methods @key{RET}}.
 
+In the ELPA archives, there are several examples of such extensions.
+They can be installed with Emacs' Package Manager.  This includes
+
+@table @samp
+@c @item anything-tramp
+@c @item counsel-tramp
+@c @item helm-tramp
+@c Contact Masashí Míyaura <masasam@users.noreply.github.com>
+
+@c @item ibuffer-tramp.el
+@c Contact Svend Sorensen <svend@@ciffer.net>
+
+@item docker-tramp
+@cindex method @option{docker}
+@cindex @option{docker} method
+Integration for Docker containers.  A container is accessed via
+@file{@trampfn{docker,user@@container,/path/to/file}}, where
+@samp{user} is the (optional) user that you want to use, and
+@samp{container} is the id or name of the container.
+
+@item kubernetes-tramp
+@cindex method @option{kubectl}
+@cindex @option{kubectl} method
+Integration for Docker containers deployed in a Kubernetes cluster.
+It is derived from @samp{docker-tramp}.  A container is accessed via
+@file{@trampfn{kubectl,user@@container,/path/to/file}}, @samp{user}
+and @samp{container} have the same meaning as in @samp{docker-tramp}.
+
+@item lxc-tramp
+@cindex method @option{lxc}
+@cindex @option{lxc} method
+Integration for LXC containers.  A container is accessed via
+@file{@trampfn{lxc,container,/path/to/file}}, @samp{container} has the
+same meaning as in @samp{docker-tramp}.  A @samp{user} specification
+is ignored.
+
+@item lxd-tramp
+@cindex method @option{lxd}
+@cindex @option{lxd} method
+Integration for LXD containers.  A container is accessed via
+@file{@trampfn{lxd,user@@container,/path/to/file}}, @samp{user} and
+@samp{container} have the same meaning as in @samp{docker-tramp}.
+
+@item magit-tramp
+@cindex method @option{git}
+@cindex @option{git} method
+Browing git repositories with @code{magit}.  A versioned file is accessed via
+@file{@trampfn{git,rev@@root-dir,/path/to/file}}. @samp{rev} is a git
+revision, and @samp{root-dir} is a virtual host name for the root
+directory, specified in @code{magit-tramp-hosts-alist}.
+
+@item tramp-hdfs
+@cindex method @option{hdfs}
+@cindex @option{hdfs} method
+Access of a hadoop/hdfs file system.  A file is accessed via
+@file{@trampfn{hdfs,user@@node,/path/to/file}}, where @samp{user} is
+the user that you want to use, and @samp{node} is the name of the
+hadoop server.
+
+@item vagrant-tramp
+@cindex method @option{vagrant}
+@cindex @option{vagrant} method
+Convenience method to access vagrant boxes.  It is often used in
+multi-hop file names like
+@file{@value{prefix}vagrant@value{postfixhop}box|sudo@value{postfixhop}box@value{postfix}/path/to/file},
+where @samp{box} is the name of the vagrant box.
+@end table
+
 
 @node Customizing Completion
 @section Selecting config files for user/host name completion
@@ -1671,7 +1739,7 @@ Set @code{auth-source-debug} to @code{t} to debug messages.
 
 @vindex ange-ftp-netrc-filename
 @strong{Note} that @file{auth-source.el} is not used for @option{ftp}
-connections, because @value{tramp} passes the work to Ange FTP.  If
+connections, because @value{tramp} passes the work to Ange FTP@.  If
 you want, for example, use your @file{~/.authinfo.gpg} authentication
 file, you must customize @code{ange-ftp-netrc-filename}:
 
