@@ -35,6 +35,7 @@
 (autoload 'gnus-agent-read-servers-validate "gnus-agent")
 (autoload 'gnus-agent-save-local "gnus-agent")
 (autoload 'gnus-agent-possibly-alter-active "gnus-agent")
+(declare-function gnus-group-decoded-name "gnus-group" (string))
 
 (eval-when-compile (require 'cl-lib))
 
@@ -1828,17 +1829,22 @@ The info element is shared with the same element of
 	(if (setq rest (member method methods))
 	    (gnus-info-set-method info (car rest))
 	  (push method methods)))
+      ;; Check for encoded group names and decode them.
+      (when (string-match-p "[^[:ascii:]]" (setq gname (car info)))
+	(let ((decoded (gnus-group-decoded-name gname)))
+	 (setf gname decoded
+	       (car info) decoded)))
       ;; Check for duplicates.
-      (if (gethash (car info) gnus-newsrc-hashtb)
+      (if (gethash gname gnus-newsrc-hashtb)
 	  ;; Remove this entry from the alist.
 	  (setcdr alist (cddr alist))
 	(puthash
-	 (car info)
+	 gname
 	 ;; Preserve number of unread articles in groups.
-	 (list (and ohashtb (car (gethash (car info) ohashtb)))
+	 (list (and ohashtb (car (gethash gname ohashtb)))
 	       info)
 	 gnus-newsrc-hashtb)
-	(push (car info) gnus-group-list))
+	(push gname gnus-group-list))
       (setq alist (cdr alist)))
     (setq gnus-group-list (nreverse gnus-group-list))
     ;; Make the same select-methods in `gnus-server-alist' identical
@@ -2144,9 +2150,7 @@ The info element is shared with the same element of
 				      (cond ((numberp group)
 					     (number-to-string group))
 					    ((symbolp group)
-					     (encode-coding-string
-					      (symbol-name group)
-					      'latin-1))
+					     (symbol-name group))
 					    ((stringp group)
 					     group)))))
 		     (numberp (setq max (read cur)))
@@ -2155,7 +2159,11 @@ The info element is shared with the same element of
 			     (skip-chars-forward " \t")
 			     (memq (char-after)
 				   '(?= ?x ?j)))))
-		(progn (puthash group (cons min max) hashtb)
+		(progn (when (string-match-p "[^[:ascii:]]" group)
+			 ;; NNTP servers may give us encoded group
+			 ;; names.
+			 (setq group (gnus-group-decoded-name group)))
+		       (puthash group (cons min max) hashtb)
 		       ;; If group is moderated, stick it in the
 		       ;; moderation cache.
 		       (when (eq (char-after) ?m)
@@ -2394,6 +2402,17 @@ If FORCE is non-nil, the .newsrc file is read."
 	(when gnus-newsrc-assoc
 	  (setq gnus-newsrc-alist gnus-newsrc-assoc))))
     (gnus-make-hashtable-from-newsrc-alist)
+    (when gnus-topic-alist
+      (setq gnus-topic-alist
+	    (mapcar
+	     (lambda (elt)
+	       (cons (car elt)
+		     (mapcar (lambda (g)
+			       (if (string-match-p "[^[:ascii:]]" g)
+				   (gnus-group-decoded-name g)
+				 g))
+			     (cdr elt))))
+	     gnus-topic-alist)))
     (when (file-newer-than-file-p file ding-file)
       ;; Old format quick file
       (gnus-message 5 "Reading %s..." file)
@@ -2492,7 +2511,9 @@ If FORCE is non-nil, the .newsrc file is read."
 		 (read buf))
 	    group (if (numberp group)
 		      (number-to-string group)
-		    (symbol-name group)))
+		    ;; newsrc files are written as 'raw-text.
+		    (decode-coding-string
+		     (symbol-name group) 'raw-text)))
       (widen)
       (cond
        ;; It's possible that "group" is actually an options line.
@@ -2911,10 +2932,6 @@ SPECIFIC-VARIABLES, or those in `gnus-variable-list'."
       (setq default-directory (file-name-directory buffer-file-name))
       (buffer-disable-undo)
       (erase-buffer)
-      ;; Use a unibyte buffer since group names are unibyte strings;
-      ;; in particular, non-ASCII group names are the ones encoded by
-      ;; a certain coding system.
-      (mm-disable-multibyte)
       ;; Write options.
       (when gnus-newsrc-options
 	(insert gnus-newsrc-options))

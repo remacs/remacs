@@ -1173,16 +1173,9 @@ ARG is passed to the first function."
   "Return non-nil if all ELEMENTS are non-nil."
   (not (memq nil elements)))
 
-;; gnus.el requires mm-util.
-(declare-function mm-disable-multibyte "mm-util")
-
 (defun gnus-write-active-file (file hashtb &optional full-names)
-  ;; `coding-system-for-write' should be `raw-text' or equivalent.
   (let ((coding-system-for-write nnmail-active-file-coding-system))
     (with-temp-file file
-      ;; The buffer should be in the unibyte mode because group names
-      ;; are ASCII text or encoded non-ASCII text (i.e., unibyte).
-      (mm-disable-multibyte)
       (maphash
        (lambda (group active)
 	 (when active

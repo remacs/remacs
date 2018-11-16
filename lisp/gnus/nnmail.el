@@ -665,9 +665,12 @@ nn*-request-list should have been called before calling this function."
       (condition-case err
 	  (progn
 	    (narrow-to-region (point) (point-at-eol))
-	    (setq group (read buffer))
-	    (unless (stringp group)
-	      (setq group (encode-coding-string (symbol-name group) 'latin-1)))
+	    (setq group (read buffer)
+		  group
+		  (cond ((symbolp group)
+			 (symbol-name group))
+			((numberp group)
+			 (number-to-string group))))
 	    (if (and (numberp (setq max (read buffer)))
 		     (numberp (setq min (read buffer))))
 		(push (list group (cons min max))
@@ -677,7 +680,7 @@ nn*-request-list should have been called before calling this function."
       (forward-line 1))
     group-assoc))
 
-(defcustom nnmail-active-file-coding-system 'raw-text
+(defcustom nnmail-active-file-coding-system 'utf-8-emacs
   "Coding system for active file."
   :group 'nnmail-various
   :type 'coding-system)
@@ -687,7 +690,7 @@ nn*-request-list should have been called before calling this function."
   (let ((coding-system-for-write nnmail-active-file-coding-system))
     (when file-name
       (with-temp-file file-name
-	(mm-disable-multibyte)
+;	(mm-disable-multibyte)
 	(nnmail-generate-active group-assoc)))))
 
 (defun nnmail-generate-active (alist)
@@ -695,7 +698,7 @@ nn*-request-list should have been called before calling this function."
   (erase-buffer)
   (let (group)
     (while (setq group (pop alist))
-      (insert (format "%S %d %d y\n" (intern (car group)) (cdadr group)
+      (insert (format "%s %d %d y\n" (car group) (cdadr group)
 		      (caadr group))))
     (goto-char (point-max))
     (while (search-backward "\\." nil t)
@@ -1027,8 +1030,8 @@ If SOURCE is a directory spec, try to return the group name component."
       (nnmail-check-duplication message-id func artnum-func))
     1))
 
-(defvar nnmail-group-names-not-encoded-p nil
-  "Non-nil means group names are not encoded.")
+(make-obsolete-variable 'nnmail-group-names-not-encoded-p
+			"Group names are always decoded" "27.1")
 
 (defun nnmail-split-incoming (incoming func &optional exit-func
 				       group artnum-func junk-func)
@@ -1036,18 +1039,21 @@ If SOURCE is a directory spec, try to return the group name component."
 FUNC will be called with the buffer narrowed to each mail.
 INCOMING can also be a buffer object.  In that case, the mail
 will be copied over from that buffer."
-  (let ( ;; If this is a group-specific split, we bind the split
+  (let (;; If this is a group-specific split, we bind the split
 	;; methods to just this group.
 	(nnmail-split-methods (if (and group
 				       (not nnmail-resplit-incoming))
 				  (list (list group ""))
-				nnmail-split-methods))
-	(nnmail-group-names-not-encoded-p t))
+				nnmail-split-methods)))
     ;; Insert the incoming file.
     (with-current-buffer (get-buffer-create nnmail-article-buffer)
       (erase-buffer)
       (if (bufferp incoming)
 	  (insert-buffer-substring incoming)
+	;; The following coding system is set to
+	;; `mm-text-coding-system', which is set to some flavor of
+	;; 'raw-text "to get rid of ^Ms".  But it's going to do a lot
+	;; more than that, right?  Shouldn't this also be 'undecided?
 	(let ((coding-system-for-read nnmail-incoming-coding-system))
 	  (mm-insert-file-contents incoming)))
       (prog1

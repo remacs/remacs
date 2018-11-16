@@ -784,11 +784,13 @@ claim them."
 	      (while (not (eobp))
 		(ignore-errors
 		  (push (cons
-			 (buffer-substring
-			  (point)
-			  (progn
-			    (skip-chars-forward "^ \t")
-			    (point)))
+			 (decode-coding-string
+			  (buffer-substring
+			   (point)
+			   (progn
+			     (skip-chars-forward "^ \t")
+			     (point)))
+			  'utf-8-emacs)
 			 (let ((last (read cur)))
 			   (cons (read cur) last)))
 			groups))
@@ -796,18 +798,20 @@ claim them."
 	    (while (not (eobp))
 	      (ignore-errors
 		(push (cons
-		       (if (eq (char-after) ?\")
-			   (read cur)
-			 (let ((p (point)) (name ""))
-			   (skip-chars-forward "^ \t\\\\")
-			   (setq name (buffer-substring p (point)))
-			   (while (eq (char-after) ?\\)
-			     (setq p (1+ (point)))
-			     (forward-char 2)
-			     (skip-chars-forward "^ \t\\\\")
-			     (setq name (concat name (buffer-substring
-						      p (point)))))
-			   name))
+		       (decode-coding-string
+			(if (eq (char-after) ?\")
+			    (read cur)
+			  (let ((p (point)) (name ""))
+			    (skip-chars-forward "^ \t\\\\")
+			    (setq name (buffer-substring p (point)))
+			    (while (eq (char-after) ?\\)
+			      (setq p (1+ (point)))
+			      (forward-char 2)
+			      (skip-chars-forward "^ \t\\\\")
+			      (setq name (concat name (buffer-substring
+						       p (point)))))
+			    name))
+			'utf-8-emacs)
 		       (let ((last (read cur)))
 			 (cons (read cur) last)))
 		      groups))
@@ -859,12 +863,7 @@ claim them."
 			   ((= level gnus-level-zombie) ?Z)
 			   (t ?K)))
 			(max 0 (- (1+ (cddr group)) (cadr group)))
-			;; Don't decode if name is ASCII
-			(if (eq (detect-coding-string name t) 'undecided)
-			    name
-			  (decode-coding-string
-			   name
-			   (inline (gnus-group-name-charset method name)))))))
+			name)))
 	     (list 'gnus-group name)
 	     )))
 	(switch-to-buffer (current-buffer)))

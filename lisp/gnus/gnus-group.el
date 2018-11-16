@@ -479,7 +479,6 @@ simple manner."
 (defvar gnus-tmp-news-method)
 (defvar gnus-tmp-colon)
 (defvar gnus-tmp-news-server)
-(defvar gnus-tmp-decoded-group)
 (defvar gnus-tmp-header)
 (defvar gnus-tmp-process-marked)
 (defvar gnus-tmp-summary-live)
@@ -518,14 +517,9 @@ simple manner."
     (?T (gnus-range-length (cdr (assq 'tick gnus-tmp-marked))) ?d)
     (?i (+ (gnus-range-length (cdr (assq 'dormant gnus-tmp-marked)))
 	   (gnus-range-length (cdr (assq 'tick gnus-tmp-marked)))) ?d)
-    (?g (if (boundp 'gnus-tmp-decoded-group)
-	    gnus-tmp-decoded-group
-	  gnus-tmp-group)
-	?s)
+    (?g gnus-tmp-group ?s)
     (?G gnus-tmp-qualified-group ?s)
-    (?c (gnus-short-group-name (if (boundp 'gnus-tmp-decoded-group)
-				   gnus-tmp-decoded-group
-				 gnus-tmp-group))
+    (?c (gnus-short-group-name gnus-tmp-group)
 	?s)
     (?C gnus-tmp-comment ?s)
     (?D gnus-tmp-newsgroup-description ?s)
@@ -1398,8 +1392,7 @@ if it is a string, only list groups matching REGEXP."
                      ((functionp regexp) (funcall regexp group))))
           (add-text-properties
            (point) (prog1 (1+ (point))
-                     (insert " " mark "     *: "
-                             (gnus-group-decoded-name group)
+                     (insert " " mark " *: " group
                              "\n"))
            (list 'gnus-group group
                  'gnus-unread t
@@ -1508,8 +1501,6 @@ if it is a string, only list groups matching REGEXP."
   "Insert a group line in the group buffer."
   (let* ((gnus-tmp-method
 	  (gnus-server-get-method gnus-tmp-group gnus-tmp-method))
-	 (group-name-charset (gnus-group-name-charset gnus-tmp-method
-						      gnus-tmp-group))
 	 (gnus-tmp-active (gnus-active gnus-tmp-group))
 	 (gnus-tmp-number-total
 	  (if gnus-tmp-active
@@ -1528,16 +1519,13 @@ if it is a string, only list groups matching REGEXP."
 		((= gnus-tmp-level gnus-level-zombie) ?Z)
 		(t ?K)))
 	 (gnus-tmp-qualified-group
-	  (gnus-group-name-decode (gnus-group-real-name gnus-tmp-group)
-				  group-name-charset))
+	  (gnus-group-real-name gnus-tmp-group))
 	 (gnus-tmp-comment
 	  (or (gnus-group-get-parameter gnus-tmp-group 'comment t)
 	      gnus-tmp-group))
 	 (gnus-tmp-newsgroup-description
 	  (if gnus-description-hashtb
-	      (or (gnus-group-name-decode
-		   (gethash gnus-tmp-group gnus-description-hashtb)
-		   group-name-charset) "")
+	      (or (gethash gnus-tmp-group gnus-description-hashtb) "")
 	    ""))
 	 (gnus-tmp-moderated
 	  (if (and gnus-moderated-hashtb
@@ -1574,9 +1562,7 @@ if it is a string, only list groups matching REGEXP."
      (point)
      (prog1 (1+ (point))
        ;; Insert the text.
-       (let ((gnus-tmp-decoded-group (gnus-group-name-decode
-				      gnus-tmp-group group-name-charset)))
-	 (eval gnus-group-line-format-spec)))
+       (eval gnus-group-line-format-spec))
      `(gnus-group ,gnus-tmp-group
 		  gnus-unread ,(if (numberp number)
 				   (string-to-number gnus-tmp-number-of-unread)
@@ -2117,9 +2103,7 @@ be permanent."
 (defun gnus-group-name-at-point ()
   "Return a group name from around point if it exists, or nil."
   (if (derived-mode-p 'gnus-group-mode)
-      (let ((group (gnus-group-group-name)))
-	(when group
-	  (gnus-group-decoded-name group)))
+      (gnus-group-group-name)
     ;; FIXME: Use rx.
     (let ((regexp "[][\C-@-\t\v-*,/:-@\\^`{-\C-?]*\
 \\(nn[a-z]+\\(?:\\+[^][\C-@-*,/:-@\\^`{-\C-?]+\\)?:\
@@ -2160,41 +2144,25 @@ be permanent."
 					     require-match initial-input hist
 					     def)
   "Read a group name with completion.
-Non-ASCII group names are allowed.  The arguments are the same as
-`completing-read' except that COLLECTION and HIST default to
-`gnus-active-hashtb' and `gnus-group-history' respectively if
-they are omitted.  Can handle COLLECTION as a list, hash table,
-or vector."
+The arguments are the same as `completing-read' except that
+COLLECTION and HIST default to `gnus-active-hashtb' and
+`gnus-group-history' respectively if they are omitted.  Can
+handle COLLECTION as a list, hash table, or vector."
+  ;; This function handles vectors for backwards compatibility.  In
+  ;; theory, `collection' will only ever be a list or a hash table.
   (or collection (setq collection gnus-active-hashtb))
   (let* ((choices
-	  (mapcar
-	   (lambda (g)
-	     (if (string-match "[^\000-\177]" g)
-		 (gnus-group-decoded-name g)
-	       g))
 	   (cond ((listp collection)
 		  collection)
 		 ((vectorp collection)
 		  (mapatoms #'symbol-name collection))
 		 ((hash-table-p collection)
-		  (hash-table-keys collection)))))
+		  (hash-table-keys collection))))
 	 (group
 	  (gnus-completing-read (or prompt "Group") (reverse choices)
 				require-match initial-input
 				(or hist 'gnus-group-history)
 				def)))
-    (unless (cond ((and (listp collection)
-			(symbolp (car collection)))
-		   (member group (mapcar 'symbol-name collection)))
-		  ((listp collection)
-		   (member group collection))
-		  ((vectorp collection)
-		   (symbol-value (intern-soft group collection)))
-		  ((hash-table-p collection)
-		   (gethash group collection)))
-      (setq group
-	    (encode-coding-string
-	     group (gnus-group-name-charset nil group))))
     (replace-regexp-in-string "\n" "" group)))
 
 ;;;###autoload
@@ -2755,13 +2723,13 @@ The user will be prompted for GROUP."
   (interactive (list (gnus-group-completing-read)))
   (gnus-group-make-group (gnus-group-real-name group)
 			 (gnus-group-server group)
-			 nil nil t))
+			 nil nil))
 
-(defun gnus-group-make-group (name &optional method address args encoded)
+(defun gnus-group-make-group (name &optional method address args)
   "Add a new newsgroup.
 The user will be prompted for a NAME, for a select METHOD, and an
 ADDRESS.  NAME should be a human-readable string (i.e., not be encoded
-even if it contains non-ASCII characters) unless ENCODED is non-nil.
+even if it contains non-ASCII characters).
 
 If the backend supports it, the group will also be created on the
 server."
@@ -2772,10 +2740,6 @@ server."
 
   (when (stringp method)
     (setq method (or (gnus-server-to-method method) method)))
-  (unless encoded
-    (setq name (encode-coding-string
-		name
-		(gnus-group-name-charset method name))))
   (let* ((meth (gnus-method-simplify
 		(when (and method
 			   (not (gnus-server-equal method gnus-select-method)))
@@ -2784,7 +2748,7 @@ server."
 	 (nname (if method (gnus-group-prefixed-name name meth) name))
 	 backend info)
     (when (gnus-group-entry nname)
-      (error "Group %s already exists" (gnus-group-decoded-name nname)))
+      (error "Group %s already exists" nname))
     ;; Subscribe to the new group.
     (gnus-group-change-level
      (setq info (list t nname gnus-level-default-subscribed nil nil meth))
@@ -2860,20 +2824,19 @@ be removed from the server, even when it's empty."
   (unless (gnus-check-backend-function 'request-delete-group group)
     (error "This back end does not support group deletion"))
   (prog1
-      (let ((group-decoded (gnus-group-decoded-name group)))
-	(when (or no-prompt
-		  (gnus-yes-or-no-p
-		   (format
-		    "Do you really want to delete %s%s? "
-		    group-decoded (if force " and all its contents" ""))))
-	  (gnus-message 6 "Deleting group %s..." group-decoded)
-	  (if (not (gnus-request-delete-group group force))
-	      (gnus-error 3 "Couldn't delete group %s" group-decoded)
-	    (gnus-message 6 "Deleting group %s...done" group-decoded)
-	    (gnus-group-goto-group group)
-	    (gnus-group-kill-group 1 t)
-	    (gnus-set-active group nil)
-	    t)))
+      (when (or no-prompt
+		(gnus-yes-or-no-p
+		 (format
+		  "Do you really want to delete %s%s? "
+		  group (if force " and all its contents" ""))))
+	(gnus-message 6 "Deleting group %s..." group)
+	(if (not (gnus-request-delete-group group force))
+	    (gnus-error 3 "Couldn't delete group %s" group)
+	  (gnus-message 6 "Deleting group %s...done" group)
+	  (gnus-group-goto-group group)
+	  (gnus-group-kill-group 1 t)
+	  (gnus-set-active group nil)
+	  t))
     (gnus-group-position-point)))
 
 (defun gnus-group-rename-group (group new-name)
@@ -2887,13 +2850,9 @@ and NEW-NAME will be prompted for."
        (error "This back end does not support renaming groups"))
      (setq new-name (gnus-read-group
 		     "Rename group to: "
-		     (gnus-group-real-name (gnus-group-decoded-name group)))
+		     (gnus-group-real-name group))
 	   method (gnus-info-method (gnus-get-info group)))
-     (list group (encode-coding-string
-		  new-name
-		  (gnus-group-name-charset
-		   method
-		   (gnus-group-prefixed-name new-name method))))))
+     (list group (gnus-group-prefixed-name new-name method))))
 
   (unless (gnus-check-backend-function 'request-rename-group group)
     (error "This back end does not support renaming groups"))
@@ -2912,34 +2871,30 @@ and NEW-NAME will be prompted for."
 	   (gnus-group-real-name new-name)
 	   (gnus-info-method (gnus-get-info group)))))
 
-  (let ((decoded-group (gnus-group-decoded-name group))
-	(decoded-new-name (gnus-group-decoded-name new-name)))
-    (when (gnus-active new-name)
-      (error "The group %s already exists" decoded-new-name))
+  (when (gnus-active new-name)
+    (error "The group %s already exists" new-name))
 
-    (gnus-message 6 "Renaming group %s to %s..."
-		  decoded-group decoded-new-name)
-    (prog1
-	(if (progn
-	      (gnus-group-goto-group group)
-	      (not (when (< (gnus-group-group-level) gnus-level-zombie)
-		     (gnus-request-rename-group group new-name))))
-	    (gnus-error 3 "Couldn't rename group %s to %s"
-			decoded-group decoded-new-name)
-	  ;; We rename the group internally by killing it...
-	  (gnus-group-kill-group)
-	  ;; ... changing its name ...
-	  (setcar (cdar gnus-list-of-killed-groups) new-name)
-	  ;; ... and then yanking it.  Magic!
-	  (gnus-group-yank-group)
-	  (gnus-set-active new-name (gnus-active group))
-	  (gnus-message 6 "Renaming group %s to %s...done"
-			decoded-group decoded-new-name)
-	  new-name)
-      (setq gnus-killed-list (delete group gnus-killed-list))
-      (gnus-set-active group nil)
-      (gnus-dribble-touch)
-      (gnus-group-position-point))))
+  (gnus-message 6 "Renaming group %s to %s..." group new-name)
+  (prog1
+      (if (progn
+	    (gnus-group-goto-group group)
+	    (not (when (< (gnus-group-group-level) gnus-level-zombie)
+		   (gnus-request-rename-group group new-name))))
+	  (gnus-error 3 "Couldn't rename group %s to %s"
+		      group new-name)
+	;; We rename the group internally by killing it...
+	(gnus-group-kill-group)
+	;; ... changing its name ...
+	(setcar (cdar gnus-list-of-killed-groups) new-name)
+	;; ... and then yanking it.  Magic!
+	(gnus-group-yank-group)
+	(gnus-set-active new-name (gnus-active group))
+	(gnus-message 6 "Renaming group %s to %s...done" group new-name)
+	new-name)
+    (setq gnus-killed-list (delete group gnus-killed-list))
+    (gnus-set-active group nil)
+    (gnus-dribble-touch)
+    (gnus-group-position-point)))
 
 (defun gnus-group-edit-group (group &optional part)
   "Edit the group on the current line."
@@ -2966,7 +2921,7 @@ and NEW-NAME will be prompted for."
        ((eq part 'method) "select method")
        ((eq part 'params) "group parameters")
        (t "group info"))
-      (gnus-group-decoded-name group))
+      group)
      `(lambda (form)
 	(gnus-group-edit-group-done ',part ,group form)))
     (local-set-key
@@ -3105,8 +3060,7 @@ If called with a prefix argument, ask for the file type."
 	 (coding (gnus-group-name-charset method name)))
     (setcar (cdr method) (encode-coding-string file coding))
     (gnus-group-make-group
-     (encode-coding-string (gnus-group-real-name name) coding)
-     method nil nil t)))
+     (gnus-group-real-name name) method nil nil)))
 
 (defvar nnweb-type-definition)
 (defvar gnus-group-web-type-history nil)
@@ -3611,7 +3565,7 @@ up is returned."
 		   "Do you really want to mark all articles in %s as read? "
 		 "Mark all unread articles in %s as read? ")
 	       (if (= (length groups) 1)
-		   (gnus-group-decoded-name (car groups))
+		   (car groups)
 		 (format "these %d groups" (length groups)))))))
 	n
       (while (setq group (pop groups))
@@ -3696,8 +3650,7 @@ Uses the process/prefix convention."
 
 (defun gnus-group-expire-articles-1 (group)
   (when (gnus-check-backend-function 'request-expire-articles group)
-    (gnus-message 6 "Expiring articles in %s..."
-		  (gnus-group-decoded-name group))
+    (gnus-message 6 "Expiring articles in %s..." group)
     (let* ((info (gnus-get-info group))
 	   (expirable (if (gnus-group-total-expirable-p group)
 			  (cons nil (gnus-list-of-read-articles group))
@@ -3724,8 +3677,7 @@ Uses the process/prefix convention."
 	    ;; Just expire using the normal expiry values.
 	    (gnus-request-expire-articles articles-to-expire group))))
 	(gnus-close-group group))
-      (gnus-message 6 "Expiring articles in %s...done"
-		    (gnus-group-decoded-name group))
+      (gnus-message 6 "Expiring articles in %s...done" group)
       ;; Return the list of un-expired articles.
       (cdr expirable))))
 
@@ -3762,7 +3714,7 @@ Uses the process/prefix convention."
   (dolist (group (gnus-group-process-prefix n))
     (gnus-group-remove-mark group)
     (gnus-message 6 "Changed level of %s from %d to %d"
-		  (gnus-group-decoded-name group)
+		  group
 		  (or (gnus-group-group-level) gnus-level-killed)
 		  level)
     (gnus-group-change-level
@@ -3909,7 +3861,7 @@ of groups killed."
 	  ;; `gnus-newsrc-hashtb', this check will always return nil.
 	  (when (numberp (gnus-group-unread group))
 	    (gnus-request-update-group-status group 'unsubscribe))
-	  (message "Killed group %s" (gnus-group-decoded-name group)))
+	  (message "Killed group %s" group))
       ;; If there are lots and lots of groups to be killed, we use
       ;; this thing instead.
       (dolist (group (nreverse groups))
@@ -4047,7 +3999,7 @@ entail asking the server for the groups."
       (add-text-properties
        (point) (prog1 (1+ (point))
 		 (insert "       *: "
-			 (gnus-group-decoded-name group)
+			 group
 			 "\n"))
        (list 'gnus-group group
 	     'gnus-unread t
@@ -4494,9 +4446,9 @@ and the second element is the address."
 		   (prin1-to-string (car method)))
 		 (and (consp method)
 		      (nth 1 (gnus-info-method info)))
-		 nil t)
+		 nil)
 	      ;; It's a native group.
-	      (gnus-group-make-group (gnus-info-group info) nil nil nil t)))
+	      (gnus-group-make-group (gnus-info-group info) nil nil nil)))
 	  (gnus-message 6 "Note: New group created")
 	  (setq entry
 		(gnus-group-entry (gnus-group-prefixed-name
@@ -4685,7 +4637,7 @@ This command may read the active file."
     (while (setq point (text-property-not-all (point) (point-max)
 					      'gnus-group nil))
       (goto-char point)
-      (push (symbol-name (get-text-property point 'gnus-group)) groups)
+      (push (get-text-property point 'gnus-group) groups)
       (forward-char 1))
     groups))
 
@@ -4776,21 +4728,20 @@ Note: currently only implemented in nnml."
     (error "No group to compact"))
   (unless (gnus-check-backend-function 'request-compact-group group)
     (error "This back end does not support group compaction"))
-  (let ((group-decoded (gnus-group-decoded-name group)))
-    (gnus-message 6 "\
+  (gnus-message 6 "\
 Compacting group %s... (this may take a long time)"
-		  group-decoded)
-    (prog1
-	(if (not (gnus-request-compact-group group))
-	    (gnus-error 3 "Couldn't compact group %s" group-decoded)
-	  (gnus-message 6 "Compacting group %s...done" group-decoded)
-	  t)
-      ;; Invalidate the "original article" buffer which might be out of date.
-      ;; #### NOTE: Yes, this might be a bit rude, but since compaction
-      ;; #### will not happen very often, I think this is acceptable.
-      (gnus-kill-buffer gnus-original-article-buffer)
-      ;; Update the group line to reflect new information (art number etc).
-      (gnus-group-update-group-line))))
+		group)
+  (prog1
+      (if (not (gnus-request-compact-group group))
+	  (gnus-error 3 "Couldn't compact group %s" group)
+	(gnus-message 6 "Compacting group %s...done" group)
+	t)
+    ;; Invalidate the "original article" buffer which might be out of date.
+    ;; #### NOTE: Yes, this might be a bit rude, but since compaction
+    ;; #### will not happen very often, I think this is acceptable.
+    (gnus-kill-buffer gnus-original-article-buffer)
+    ;; Update the group line to reflect new information (art number etc).
+    (gnus-group-update-group-line)))
 
 (provide 'gnus-group)
 
