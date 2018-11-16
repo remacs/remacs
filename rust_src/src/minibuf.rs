@@ -5,6 +5,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{current_buffer, LispBufferOrName},
     editfns::field_end,
+    eval::unbind_to,
     keymap::get_keymap,
     lisp::defsubr,
     lisp::LispObject,
@@ -16,7 +17,7 @@ use crate::{
     },
     remacs_sys::{
         make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf, specbind,
-        unbind_to, EmacsInt, Fcopy_sequence,
+        EmacsInt, Fcopy_sequence,
     },
     symbols::symbol_value,
     textprop::get_char_property,
@@ -348,7 +349,8 @@ pub fn read_string(
             }
         }
     }
-    unsafe { unbind_to(count, val) }
+
+    unbind_to(count, val)
 }
 
 pub fn read_command_or_variable(

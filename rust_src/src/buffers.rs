@@ -10,6 +10,7 @@ use crate::{
     chartable::LispCharTableRef,
     data::Lisp_Fwd,
     editfns::point,
+    eval::unbind_to,
     frames::LispFrameRef,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LiveBufferIter},
@@ -20,8 +21,7 @@ use crate::{
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
         buffer_window_count, del_range, delete_all_overlays, drop_overlay, globals,
-        last_per_buffer_idx, set_buffer_internal_1, specbind, unbind_to, unchain_both,
-        update_mode_lines,
+        last_per_buffer_idx, set_buffer_internal_1, specbind, unchain_both, update_mode_lines,
     },
     remacs_sys::{
         pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
@@ -1004,7 +1004,7 @@ pub fn delete_overlay(overlay: LispObject) {
         }
     }
 
-    unsafe { unbind_to(count, Qnil) };
+    unbind_to(count, Qnil);
 }
 
 /// Delete all overlays of BUFFER.
