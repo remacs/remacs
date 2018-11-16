@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     editfns::{goto_char, point},
-    frames::{frame_live_or_selected, selected_frame, LispFrameRef},
+    frames::{frame_live_or_selected, LispFrameOrSelected},
     interactive::prefix_numeric_value,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
@@ -742,25 +742,16 @@ pub extern "C" fn CURRENT_MODE_LINE_HEIGHT(mut window: LispWindowRef) -> i32 {
 /// MINIBUF neither nil nor t means never include the minibuffer window.
 #[lisp_fn(min = "0")]
 pub fn window_list(
-    frame: Option<LispFrameRef>,
+    frame: LispFrameOrSelected,
     minibuf: LispObject,
     window: Option<LispWindowRef>,
 ) -> LispObject {
     let w_obj = match window {
         Some(w) => w.as_lisp_obj(),
-        None => {
-            if let Some(f) = frame {
-                f.selected_window
-            } else {
-                selected_window()
-            }
-        }
+        None => frame.unwrap().selected_window,
     };
 
-    let f_obj = match frame {
-        None => selected_frame(),
-        Some(f) => f.as_lisp_obj(),
-    };
+    let f_obj = LispObject::from(frame);
 
     let w_ref = w_obj
         .as_window()
