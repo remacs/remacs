@@ -4120,6 +4120,7 @@ extern void keys_of_casefiddle (void);
 
 /* Defined in casetab.c.  */
 
+extern Lisp_Object set_case_table (Lisp_Object, bool);
 extern void init_casetab_once (void);
 extern void syms_of_casetab (void);
 
