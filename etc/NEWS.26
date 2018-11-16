@@ -51,6 +51,16 @@ often cause crashes.  Set it to nil if you really need those fonts.
 
 * Changes in Specialized Modes and Packages in Emacs 26.2
 
+** Dired
++++
+*** The 'Z' command on a directory name compresses all of its files.
+It produces a compressed '.tar.gz' archive with all the files in the
+directory and all of its subdirectories.  For symmetry, 'Z' on a
+'.tar.gz' or a '.tgz' archive extracts all the archived files into a
+directory whose name is the archive name sans the '.tar.gz' or '.tgz'
+extension.  (This change was actually made in Emacs 26.1, but was not
+called out in its NEWS.)
+
 ** Ibuffer
 
 ---
