@@ -89,7 +89,7 @@ We recommend against putting any customizations in this file that
 don't need to be set up before initializing installed add-on packages,
 because the early init file is read too early into the startup
 process, and some important parts of the Emacs session, such as
-window-system and other GUI features, are not yet set up, which could
+'window-system' and other GUI features, are not yet set up, which could
 make some customization fail to work.
 
 +++
@@ -300,15 +300,15 @@ the node "(emacs) Directory Variables" of the user manual.
 ** Follow mode
 In the current follow group of windows, "ghost" cursors are no longer
 displayed in the non-selected follow windows.  To get the old behavior
-back, customize follow-hide-ghost-cursors to nil.
+back, customize 'follow-hide-ghost-cursors' to nil.
 
 ** Windmove
 
 *** Windmove supports directional window display and selection.
-The new command windmove-display-default-keybindings binds default
-keys with provided modifiers (by default, shift-meta) to the commands
+The new command 'windmove-display-default-keybindings' binds default
+keys with provided modifiers (by default, Shift-Meta) to the commands
 that display the next buffer in the window at the specified direction.
-This is like windmove-default-keybindings that binds keys to commands
+This is like 'windmove-default-keybindings' that binds keys to commands
 that select the window in the specified direction, but additionally it
 displays the buffer from the next command in that window.  For example,
 'S-M-right C-h i' displays the *Info* buffer in the right window,
@@ -316,7 +316,7 @@ creating the window if necessary.  A special key can be customized to
 display the buffer in the same window, for example, 'S-M-0 C-h e'
 displays the *Messages* buffer in the same window.
 
-*** windmove-create-window when non-nil makes a new window on moving off
+*** 'windmove-create-window' when non-nil makes a new window on moving off
 the edge of the frame.
 
 ** Octave mode
@@ -324,25 +324,31 @@ The mode is automatically enabled in files that start with the
 'function' keyword.
 
 ** project.el
-*** New commands project-search and project-query-replace
+*** New commands 'project-search' and 'project-query-replace'.
 
 ** Etags
+
 +++
-*** 'next-file' is now an obsolete alias of tags-next-file
-*** tags-loop-revert-buffers is an obsolete alias of multifile-revert-buffers
-*** The tags-loop-continue function along with the tags-loop-operate and
-tags-loop-scan variables are now obsolete; use the new multifile-initialize and
-multifile-continue functions instead.
+*** 'next-file' is now an obsolete alias of 'tags-next-file'.
+
+*** 'tags-loop-revert-buffers' is an obsolete alias of
+'multifile-revert-buffers'.
+
+*** The 'tags-loop-continue' function along with the
+'tags-loop-operate' and 'tags-loop-scan' variables are now obsolete;
+use the new 'multifile-initialize' and 'multifile-continue' functions
+instead.
+
+** bibtex
 
 ---
-** bibtex
 *** New commands 'bibtex-next-entry' and 'bibtex-previous-entry'.
-In bibtex-mode-map, forward-paragraph and backward-paragraph are
+In 'bibtex-mode-map', 'forward-paragraph' and 'backward-paragraph' are
 remapped to these, respectively.
 
-+++
 ** Dired
 
++++
 *** New command 'dired-create-empty-file'.
 
 ** Change Logs and VC
@@ -361,7 +367,7 @@ With non-nil, 'vc-find-revision' doesn't write the created buffer to file.
 
 *** New customizable variable 'vc-git-grep-template'.
 This new variable allows customizing the default arguments passed to
-git-grep when 'vc-git-grep' is used.
+'git-grep' when 'vc-git-grep' is used.
 
 *** Command 'vc-git-stash' now respects marks in the '*vc-dir*' buffer.
 When some files are marked, only those are stashed.
@@ -376,12 +382,12 @@ with conflicts existed in earlier versions of Emacs, but incorrectly
 never detected a conflict due to invalid assumptions about cached
 values.
 
-** diff-mode
+** Diff mode
 *** Hunks are now automatically refined by default.
 To disable it, set the new defcustom 'diff-font-lock-refine' to nil.
 
 *** File headers can be shortened, mimicking Magit's diff format.
-To enable it, set the new defcustom 'diff-font-lock-prettify to t.
+To enable it, set the new defcustom 'diff-font-lock-prettify' to t.
 
 +++
 *** Prefix arg of 'diff-goto-source' means jump to the old revision
@@ -401,7 +407,7 @@ shown in the currently selected window.
 Also, 'shell-strip-ctrl-m' is declared obsolete.
 
 +++
-*** 'C-c .' (comint-insert-previous-argument) no longer interprets '&'.
+*** 'C-c .' ('comint-insert-previous-argument') no longer interprets '&'.
 This feature caused problems when '&&' was present in the previous
 command.  Since this command emulates 'M-.' in Bash and zsh, neither
 of which treats '&' specially, the feature was removed for
@@ -462,13 +468,13 @@ This enables more efficient backends.  See the docstring of
 ** Package
 
 *** New function 'package-get-version' lets packages query their own version.
-Example use in auctex.el: (defconst auctex-version (package-get-version))
+Example use in auctex.el: '(defconst auctex-version (package-get-version))'
 
 *** New 'package-quickstart' feature.
 When 'package-quickstart' is non-nil, package.el precomputes a big autoloads
 file so that activation of packages can be done much faster, which can speed up
 your startup significantly.
-It also causes variables like package-user-dir and package-load-list to be
+It also causes variables like 'package-user-dir' and 'package-load-list' to be
 consulted when 'package-quickstart-refresh' is run rather than at startup so
 you don't need to set them in your early init file.
 
@@ -566,7 +572,7 @@ and 'hfy-rgb-txt-color-map' have been renamed from names that used
 +++
 ** Enriched mode supports the 'charset' text property.
 You can add or modify the 'charset' text properties of text using the
-Edit->Text Properties->Special Properties menu, or by invoking the
+'Edit->Text Properties->Special Properties' menu, or by invoking the
 'facemenu-set-charset' command.  Documents in Enriched mode will be
 saved with the charset properties, and those properties will be
 restored when the file is visited.
@@ -574,9 +580,9 @@ restored when the file is visited.
 ** Smtpmail
 
 Authentication mechanisms can be added via external packages, by
-defining new cl-defmethod of smtpmail-try-auth-method.
+defining new 'cl-defmethod' of 'smtpmail-try-auth-method'.
 
-** Footnote-mode
+** Footnote mode
 
 *** Support Hebrew-style footnotes
 *** Footnote text lines are now aligned.
@@ -616,7 +622,7 @@ directories in the destination.
 ** Help
 
 ---
-*** Output format of 'C-h l' (view-lossage) has changed.
+*** Output format of 'C-h l' ('view-lossage') has changed.
 For convenience, 'view-lossage' now displays the last keystrokes
 and commands in the same format as the edit buffer of
 'edit-last-kbd-macro'.  This makes it possible to copy the lines from
@@ -630,29 +636,29 @@ can now be searched via 'C-s'.
 ** Ibuffer
 
 ---
-*** New filter ibuffer-filter-by-process; bound to '/E'.
+*** New filter 'ibuffer-filter-by-process'; bound to '/E'.
 
 ** Search and Replace
 
-*** isearch-lazy-count shows the current match number and total number
+*** 'isearch-lazy-count' shows the current match number and total number
 of matches in the Isearch prompt.  Customizable variables
-lazy-count-prefix-format and lazy-count-suffix-format define the
+'lazy-count-prefix-format' and 'lazy-count-suffix-format' define the
 format of the current and the total number of matches in the prompt's
 prefix and suffix respectively.
 
-*** lazy-highlight-buffer highlights matches in the full buffer.
-It is useful in combination with lazy-highlight-cleanup customized to nil
+*** 'lazy-highlight-buffer' highlights matches in the full buffer.
+It is useful in combination with 'lazy-highlight-cleanup' customized to nil
 to leave matches highlighted in the whole buffer after exiting isearch.
-Also when lazy-highlight-buffer prepares highlighting in the buffer,
+Also when 'lazy-highlight-buffer' prepares highlighting in the buffer,
 navigation through the matches without flickering is more smooth.
-lazy-highlight-buffer-max-at-a-time controls the number of matches to
+'lazy-highlight-buffer-max-at-a-time' controls the number of matches to
 highlight in one iteration while processing the full buffer.
 
 +++
 *** New isearch bindings.
 
-'C-M-w' in isearch changed from isearch-del-char to the new function
-isearch-yank-symbol-or-char.  isearch-del-char is now bound to
+'C-M-w' in isearch changed from 'isearch-del-char' to the new function
+'isearch-yank-symbol-or-char'.  'isearch-del-char' is now bound to
 'C-M-d'.
 
 +++
@@ -983,7 +989,7 @@ its default value changed in Emacs 27.1.
 ** Interpretation of relative HOME directory has changed.
 If $HOME is set to a relative file name, 'expand-file-name' now
 interprets it relative to the directory where Emacs was started, not
-relative to the default-directory of the current buffer.  We recommend
+relative to the 'default-directory' of the current buffer.  We recommend
 always setting $HOME to an absolute file name, so that its meaning is
 independent of where Emacs was started.
 
@@ -1112,7 +1118,7 @@ by hand.
 This can convert decoded times and Lisp time values to Lisp timestamps
 of various forms, including a new timestamp form '(TICKS . HZ)', where
 TICKS is an integer and HZ is a positive integer denoting a clock
-frequency.  The old encode-time API is still supported.
+frequency.  The old 'encode-time' API is still supported.
 
 +++
 ** 'time-add', 'time-subtract', and 'time-less-p' now accept
