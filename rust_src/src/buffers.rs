@@ -374,6 +374,7 @@ impl LispBufferRef {
         }
     }
 
+    #[allow(clippy::cast_ptr_alignment)]
     pub unsafe fn set_value(&mut self, offset: usize, value: LispObject) {
         let buffer_bytes = self.as_mut() as *mut c_char;
         let pos = buffer_bytes.add(offset) as *mut LispObject;
@@ -788,7 +789,7 @@ pub fn set_buffer(buffer_or_name: LispBufferOrName) -> LispBufferRef {
 /// If the text under POSITION (which defaults to point) has the
 /// `inhibit-read-only' text property set, the error will not be raised.
 #[lisp_fn(min = "0")]
-pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
+pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let pos = position.unwrap_or_else(point);
 
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };

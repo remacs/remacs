@@ -10,7 +10,7 @@ use crate::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
     },
-    remacs_sys::{Fcons, Fmake_symbol, Fpurecopy},
+    remacs_sys::{Fmake_symbol, Fpurecopy},
     remacs_sys::{Qnil, Qvectorp},
     symbols::LispSymbolRef,
 };
@@ -105,7 +105,7 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispSymbolRef {
 pub extern "C" fn loadhist_attach(x: LispObject) {
     unsafe {
         if initialized {
-            globals.Vcurrent_load_list = Fcons(x, globals.Vcurrent_load_list);
+            globals.Vcurrent_load_list = LispObject::cons(x, globals.Vcurrent_load_list);
         }
     }
 }
@@ -235,7 +235,7 @@ extern "C" fn mapatoms_1(sym: LispObject, function: LispObject) {
 /// Call FUNCTION on every symbol in OBARRAY.
 /// OBARRAY defaults to the value of `obarray'.
 #[lisp_fn(min = "1")]
-pub fn mapatoms(function: LispObject, obarray: Option<LispObarrayRef>) -> () {
+pub fn mapatoms(function: LispObject, obarray: Option<LispObarrayRef>) {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
 
     map_obarray(obarray.as_lisp_obj(), mapatoms_1, function);

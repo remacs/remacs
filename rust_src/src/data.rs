@@ -23,7 +23,7 @@ use crate::{
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
-    remacs_sys::{Fcons, Fdelete, Ffset, Fget, Fpurecopy},
+    remacs_sys::{Fdelete, Ffset, Fget, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice,
@@ -291,9 +291,12 @@ pub fn defalias(
 
         if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
-            loadhist_attach(unsafe { Fcons(Qt, sym) });
+            loadhist_attach(LispObject::cons(Qt, sym));
         }
-        loadhist_attach(unsafe { Fcons(if autoload { Qautoload } else { Qdefun }, sym) });
+        loadhist_attach(LispObject::cons(
+            if autoload { Qautoload } else { Qdefun },
+            sym,
+        ));
     }
 
     // Handle automatic advice activation.
@@ -734,9 +737,11 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let mem = member(watch_function, watchers);
 
     if mem.is_nil() {
-        put(symbol, Qwatchers, unsafe {
-            Fcons(watch_function, watchers)
-        });
+        put(
+            symbol,
+            Qwatchers,
+            LispObject::cons(watch_function, watchers),
+        );
     }
 }
 

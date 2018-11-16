@@ -21,9 +21,7 @@ use crate::{
         unbind_to,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
-    remacs_sys::{
-        Fcons, Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri,
-    },
+    remacs_sys::{Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri},
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
     },
@@ -156,7 +154,7 @@ pub fn make_keymap(string: LispObject) -> LispObject {
     };
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
-    unsafe { Fcons(Qkeymap, Fcons(char_table, tail)) }
+    LispObject::cons(Qkeymap, LispObject::cons(char_table, tail))
 }
 
 /// Return t if OBJECT is a keymap.
@@ -424,7 +422,7 @@ pub fn current_local_map() -> LispObject {
 /// Select KEYMAP as the local keymap.
 /// If KEYMAP is nil, that means no local keymap.
 #[lisp_fn]
-pub fn use_local_map(mut keymap: LispObject) -> () {
+pub fn use_local_map(mut keymap: LispObject) {
     if !keymap.is_nil() {
         let map = get_keymap(keymap, true, true);
         keymap = map;
@@ -459,7 +457,7 @@ pub fn current_global_map() -> LispObject {
 
 /// Select KEYMAP as the global keymap.
 #[lisp_fn]
-pub fn use_global_map(keymap: LispObject) -> () {
+pub fn use_global_map(keymap: LispObject) {
     unsafe { _current_global_map = get_keymap(keymap, true, true) };
 }
 
@@ -592,7 +590,7 @@ pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
 #[lisp_fn(min = "1", name = "describe-vector")]
 pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
     if describer.is_nil() {
-        describer = intern("princ");
+        describer = LispObject::from(intern("princ"));
     }
     unsafe { specbind(Qstandard_output, current_buffer()) };
     if !(vector.is_vector() || vector.is_char_table()) {
