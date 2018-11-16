@@ -1051,7 +1051,6 @@ gl_GNULIB_ENABLED_a9786850e999ae65a836a6041e8e5ed1 = @gl_GNULIB_ENABLED_a9786850
 gl_GNULIB_ENABLED_be453cec5eecf5731a274f2de7f2db36 = @gl_GNULIB_ENABLED_be453cec5eecf5731a274f2de7f2db36@
 gl_GNULIB_ENABLED_cloexec = @gl_GNULIB_ENABLED_cloexec@
 gl_GNULIB_ENABLED_dirfd = @gl_GNULIB_ENABLED_dirfd@
-gl_GNULIB_ENABLED_dosname = @gl_GNULIB_ENABLED_dosname@
 gl_GNULIB_ENABLED_euidaccess = @gl_GNULIB_ENABLED_euidaccess@
 gl_GNULIB_ENABLED_getdtablesize = @gl_GNULIB_ENABLED_getdtablesize@
 gl_GNULIB_ENABLED_getgroups = @gl_GNULIB_ENABLED_getgroups@

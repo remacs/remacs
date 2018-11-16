@@ -57,7 +57,7 @@ AC_DEFUN([AC_TYPE_LONG_LONG_INT],
 ])
 
 # Define HAVE_UNSIGNED_LONG_LONG_INT if 'unsigned long long int' works.
-# This fixes can be faster than what's in Autoconf 2.62 through 2.68.
+# This can be faster than what's in Autoconf 2.62 through 2.68.
 
 # Note: If the type 'unsigned long long int' exists but is only 32 bits
 # large (as on some very old compilers), AC_TYPE_UNSIGNED_LONG_LONG_INT
