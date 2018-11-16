@@ -109,7 +109,7 @@ If the element is a function or a list of a function and a number,
   (save-window-excursion
     (let ((f (selected-frame))
           (outbuf (get-buffer-create "*zone*"))
-          (text (buffer-substring (window-start) (window-end)))
+          (text (buffer-substring (window-start) (window-end nil t)))
           (wp (1+ (- (window-point)
                      (window-start)))))
       (put 'zone 'orig-buffer (current-buffer))
