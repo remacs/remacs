@@ -56,7 +56,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "composite.h"
 #include "intervals.h"
-#include "ptr-bounds.h"
 #include "character.h"
 #include "buffer.h"
 #include "coding.h"
@@ -2865,9 +2864,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   ptrdiff_t nspec_bound = SCHARS (args[0]) >> 1;
 
   /* Allocate the info and discarded tables.  */
-  ptrdiff_t info_size, alloca_size;
-  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &info_size)
-      || INT_ADD_WRAPV (formatlen, info_size, &alloca_size)
+  ptrdiff_t alloca_size;
+  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &alloca_size)
+      || INT_ADD_WRAPV (formatlen, alloca_size, &alloca_size)
       || SIZE_MAX < alloca_size)
     memory_full (SIZE_MAX);
   info = SAFE_ALLOCA (alloca_size);
@@ -2875,8 +2874,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
      string was not copied into the output.
      It is 2 if byte I was not the first byte of its character.  */
   char *discarded = (char *) &info[nspec_bound];
-  info = ptr_bounds_clip (info, info_size);
-  discarded = ptr_bounds_clip (discarded, formatlen);
   memset (discarded, 0, formatlen);
 
   /* Try to determine whether the result should be multibyte.
@@ -3282,7 +3279,6 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  /* Don't use sprintf here, as it might mishandle prec.  */
 		  sprintf_buf[0] = XINT (arg);
 		  sprintf_bytes = prec != 0;
-		  sprintf_buf[sprintf_bytes] = '\0';
 		}
 	      else if (conversion == 'd' || conversion == 'i')
 		{
@@ -3382,19 +3378,11 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  char src0 = src[0];
 		  int exponent_bytes = 0;
 		  bool signedp = src0 == '-' || src0 == '+' || src0 == ' ';
-		  int prefix_bytes = (signedp
-				      + ((src[signedp] == '0'
-					  && (src[signedp + 1] == 'x'
-					      || src[signedp + 1] == 'X'))
-					 ? 2 : 0));
-		  if (zero_flag)
+		  unsigned char after_sign = src[signedp];
+		  if (zero_flag && 0 <= char_hexdigit (after_sign))
 		    {
-		      unsigned char after_prefix = src[prefix_bytes];
-		      if (0 <= char_hexdigit (after_prefix))
-			{
-			  leading_zeros += padding;
-			  padding = 0;
-			}
+		      leading_zeros += padding;
+		      padding = 0;
 		    }
 
 		  if (excess_precision
@@ -3413,13 +3401,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      nchars += padding;
 		    }
 
-		  memcpy (p, src, prefix_bytes);
-		  p += prefix_bytes;
-		  src += prefix_bytes;
+		  *p = src0;
+		  src += signedp;
+		  p += signedp;
 		  memset (p, '0', leading_zeros);
 		  p += leading_zeros;
 		  int significand_bytes
-		    = sprintf_bytes - prefix_bytes - exponent_bytes;
+		    = sprintf_bytes - signedp - exponent_bytes;
 		  memcpy (p, src, significand_bytes);
                   p += significand_bytes;
 		  src += significand_bytes;

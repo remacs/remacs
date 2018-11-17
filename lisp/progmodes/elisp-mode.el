@@ -307,8 +307,6 @@ Blank lines separate paragraphs.  Semicolons start comments.
           (setq sexp (ignore-errors (butlast sexp)))))
     res))
 
-(defvar warning-minimum-log-level)
-
 (defun elisp--local-variables ()
   "Return a list of locally let-bound variables at point."
   (save-excursion
@@ -330,7 +328,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
                                      (error form))))
              (sexp
               (unwind-protect
-                  (let ((warning-minimum-log-level :emergency))
+                  (progn
                     (advice-add 'macroexpand :around macroexpand-advice)
                     (macroexpand-all sexp))
                 (advice-remove 'macroexpand macroexpand-advice)))

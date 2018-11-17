@@ -3243,7 +3243,7 @@ locally for the subtree through node properties."
       (let ((val (cond ((equal (car key) "DATE")
 			(or (cdr key)
 			    (with-temp-buffer
-			      (org-insert-time-stamp (current-time)))))
+			      (org-insert-time-stamp nil))))
 		       ((equal (car key) "TITLE")
 			(or (let ((visited-file
 				   (buffer-file-name (buffer-base-buffer))))
@@ -3954,7 +3954,9 @@ INFO is a plist holding contextual information."
 (defun org-export-numbered-headline-p (headline info)
   "Return a non-nil value if HEADLINE element should be numbered.
 INFO is a plist used as a communication channel."
-  (unless (org-not-nil (org-export-get-node-property :UNNUMBERED headline t))
+  (unless (cl-some
+	   (lambda (head) (org-not-nil (org-element-property :UNNUMBERED head)))
+	   (org-element-lineage headline nil t))
     (let ((sec-num (plist-get info :section-numbers))
 	  (level (org-export-get-relative-level headline info)))
       (if (wholenump sec-num) (<= level sec-num) sec-num))))
@@ -4053,15 +4055,11 @@ used as a communication channel."
   (memq (org-element-type (org-export-get-previous-element blob info))
 	'(nil section)))
 
-(defun org-export-last-sibling-p (datum info)
-  "Non-nil when DATUM is the last sibling in its parent.
-DATUM is an element or an object.  INFO is a plist used as
+(defun org-export-last-sibling-p (blob info)
+  "Non-nil when BLOB is the last sibling in its parent.
+BLOB is an element or an object.  INFO is a plist used as
 a communication channel."
-  (let ((next (org-export-get-next-element datum info)))
-    (or (not next)
-	(and (eq 'headline (org-element-type datum))
-	     (> (org-element-property :level datum)
-		(org-element-property :level next))))))
+  (not (org-export-get-next-element blob info)))
 
 
 ;;;; For Keywords
@@ -5178,7 +5176,7 @@ return nil."
       info 'first-match)))
 
 
-;;;; For Tables of Contents
+;;;; For Tables Of Contents
 ;;
 ;; `org-export-collect-headlines' builds a list of all exportable
 ;; headline elements, maybe limited to a certain depth.  One can then
@@ -5188,9 +5186,6 @@ return nil."
 ;; Once the generic function `org-export-collect-elements' is defined,
 ;; `org-export-collect-tables', `org-export-collect-figures' and
 ;; `org-export-collect-listings' can be derived from it.
-;;
-;; `org-export-toc-entry-backend' builds a special anonymous back-end
-;; useful to export table of contents' entries.
 
 (defun org-export-collect-headlines (info &optional n scope)
   "Collect headlines in order to build a table of contents.
@@ -5275,32 +5270,6 @@ INFO is a plist used as a communication channel.
 
 Return a list of src-block elements with a caption."
   (org-export-collect-elements 'src-block info))
-
-(defun org-export-toc-entry-backend (parent &rest transcoders)
-  "Return an export back-end appropriate for table of contents entries.
-
-PARENT is an export back-end the returned back-end should inherit
-from.
-
-By default, the back-end removes footnote references and targets.
-It also changes links and radio targets into regular text.
-TRANSCODERS optional argument, when non-nil, specifies additional
-transcoders.  A transcoder follows the pattern (TYPE . FUNCTION)
-where type is an element or object type and FUNCTION the function
-transcoding it."
-  (declare (indent 1))
-  (org-export-create-backend
-   :parent parent
-   :transcoders
-   (append transcoders
-	   `((footnote-reference . ,#'ignore)
-	     (link . ,(lambda (l c i)
-			(or c
-			    (org-export-data
-			     (org-element-property :raw-link l)
-			     i))))
-	     (radio-target . ,(lambda (_r c _) c))
-	     (target . ,#'ignore)))))
 
 
 ;;;; Smart Quotes
@@ -5688,7 +5657,6 @@ them."
      ("zh-TW" :html "&#20316;&#32773;" :utf-8 "作者"))
     ("Continued from previous page"
      ("ar" :default "تتمة الصفحة السابقة")
-     ("cs" :default "Pokračování z předchozí strany")
      ("de" :default "Fortsetzung von vorheriger Seite")
      ("es" :html "Contin&uacute;a de la p&aacute;gina anterior" :ascii "Continua de la pagina anterior" :default "Continúa de la página anterior")
      ("fr" :default "Suite de la page précédente")
@@ -5701,7 +5669,6 @@ them."
      ("sl" :default "Nadaljevanje s prejšnje strani"))
     ("Continued on next page"
      ("ar" :default "التتمة في الصفحة التالية")
-     ("cs" :default "Pokračuje na další stránce")
      ("de" :default "Fortsetzung nächste Seite")
      ("es" :html "Contin&uacute;a en la siguiente p&aacute;gina" :ascii "Continua en la siguiente pagina" :default "Continúa en la siguiente página")
      ("fr" :default "Suite page suivante")
@@ -5713,7 +5680,6 @@ them."
       :utf-8 "(Продолжение следует)")
      ("sl" :default "Nadaljevanje na naslednji strani"))
     ("Created"
-     ("cs" :default "Vytvořeno")
      ("sl" :default "Ustvarjeno"))
     ("Date"
      ("ar" :default "بتاريخ")
@@ -5743,7 +5709,6 @@ them."
      ("zh-TW" :html "&#26085;&#26399;" :utf-8 "日期"))
     ("Equation"
      ("ar" :default "معادلة")
-     ("cs" :default "Rovnice")
      ("da" :default "Ligning")
      ("de" :default "Gleichung")
      ("es" :ascii "Ecuacion" :html "Ecuaci&oacute;n" :default "Ecuación")
@@ -5762,7 +5727,6 @@ them."
      ("zh-CN" :html "&#26041;&#31243;" :utf-8 "方程"))
     ("Figure"
      ("ar" :default "شكل")
-     ("cs" :default "Obrázek")
      ("da" :default "Figur")
      ("de" :default "Abbildung")
      ("es" :default "Figura")
@@ -5778,7 +5742,6 @@ them."
      ("zh-CN" :html "&#22270;" :utf-8 "图"))
     ("Figure %d:"
      ("ar" :default "شكل %d:")
-     ("cs" :default "Obrázek %d:")
      ("da" :default "Figur %d")
      ("de" :default "Abbildung %d:")
      ("es" :default "Figura %d:")
@@ -5797,7 +5760,7 @@ them."
     ("Footnotes"
      ("ar" :default "الهوامش")
      ("ca" :html "Peus de p&agrave;gina")
-     ("cs" :default "Poznámky pod čarou")
+     ("cs" :default "Pozn\xe1mky pod carou")
      ("da" :default "Fodnoter")
      ("de" :html "Fu&szlig;noten" :default "Fußnoten")
      ("eo" :default "Piednotoj")
@@ -5824,7 +5787,6 @@ them."
      ("zh-TW" :html "&#33139;&#35387;" :utf-8 "腳註"))
     ("List of Listings"
      ("ar" :default "قائمة بالبرامج")
-     ("cs" :default "Seznam programů")
      ("da" :default "Programmer")
      ("de" :default "Programmauflistungsverzeichnis")
      ("es" :ascii "Indice de Listados de programas" :html "&Iacute;ndice de Listados de programas" :default "Índice de Listados de programas")
@@ -5839,7 +5801,6 @@ them."
      ("zh-CN" :html "&#20195;&#30721;&#30446;&#24405;" :utf-8 "代码目录"))
     ("List of Tables"
      ("ar" :default "قائمة بالجداول")
-     ("cs" :default "Seznam tabulek")
      ("da" :default "Tabeller")
      ("de" :default "Tabellenverzeichnis")
      ("es" :ascii "Indice de tablas" :html "&Iacute;ndice de tablas" :default "Índice de tablas")
@@ -5858,7 +5819,6 @@ them."
      ("zh-CN" :html "&#34920;&#26684;&#30446;&#24405;" :utf-8 "表格目录"))
     ("Listing"
      ("ar" :default "برنامج")
-     ("cs" :default "Program")
      ("da" :default "Program")
      ("de" :default "Programmlisting")
      ("es" :default "Listado de programa")
@@ -5874,7 +5834,6 @@ them."
      ("zh-CN" :html "&#20195;&#30721;" :utf-8 "代码"))
     ("Listing %d:"
      ("ar" :default "برنامج %d:")
-     ("cs" :default "Program %d:")
      ("da" :default "Program %d")
      ("de" :default "Programmlisting %d")
      ("es" :default "Listado de programa %d")
@@ -5890,24 +5849,20 @@ them."
      ("zh-CN" :html "&#20195;&#30721;%d&nbsp;" :utf-8 "代码%d "))
     ("References"
      ("ar" :default "المراجع")
-     ("cs" :default "Reference")
      ("fr" :ascii "References" :default "Références")
      ("de" :default "Quellen")
      ("es" :default "Referencias")
      ("sl" :default "Reference"))
     ("See figure %s"
-     ("cs" :default "Viz obrázek %s")
      ("fr" :default "cf. figure %s"
       :html "cf.&nbsp;figure&nbsp;%s" :latex "cf.~figure~%s")
      ("sl" :default "Glej sliko %s"))
     ("See listing %s"
-     ("cs" :default "Viz program %s")
      ("fr" :default "cf. programme %s"
       :html "cf.&nbsp;programme&nbsp;%s" :latex "cf.~programme~%s")
      ("sl" :default "Glej izpis programa %s"))
     ("See section %s"
      ("ar" :default "انظر قسم %s")
-     ("cs" :default "Viz sekce %s")
      ("da" :default "jævnfør afsnit %s")
      ("de" :default "siehe Abschnitt %s")
      ("es" :ascii "Vea seccion %s" :html "Vea secci&oacute;n %s" :default "Vea sección %s")
@@ -5921,13 +5876,11 @@ them."
      ("sl" :default "Glej poglavje %d")
      ("zh-CN" :html "&#21442;&#35265;&#31532;%s&#33410;" :utf-8 "参见第%s节"))
     ("See table %s"
-     ("cs" :default "Viz tabulka %s")
      ("fr" :default "cf. tableau %s"
       :html "cf.&nbsp;tableau&nbsp;%s" :latex "cf.~tableau~%s")
      ("sl" :default "Glej tabelo %s"))
     ("Table"
      ("ar" :default "جدول")
-     ("cs" :default "Tabulka")
      ("de" :default "Tabelle")
      ("es" :default "Tabla")
      ("et" :default "Tabel")
@@ -5940,7 +5893,6 @@ them."
      ("zh-CN" :html "&#34920;" :utf-8 "表"))
     ("Table %d:"
      ("ar" :default "جدول %d:")
-     ("cs" :default "Tabulka %d:")
      ("da" :default "Tabel %d")
      ("de" :default "Tabelle %d")
      ("es" :default "Tabla %d")

@@ -913,57 +913,6 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
     }
 }
 
-static Lisp_Object
-internal_catch_all_1 (Lisp_Object (*function) (void *), void *argument)
-{
-  struct handler *c = push_handler_nosignal (Qt, CATCHER_ALL);
-  if (c == NULL)
-    return Qcatch_all_memory_full;
-
-  if (sys_setjmp (c->jmp) == 0)
-    {
-      Lisp_Object val = function (argument);
-      eassert (handlerlist == c);
-      handlerlist = c->next;
-      return val;
-    }
-  else
-    {
-      eassert (handlerlist == c);
-      Lisp_Object val = c->val;
-      handlerlist = c->next;
-      Fsignal (Qno_catch, val);
-    }
-}
-
-/* Like a combination of internal_condition_case_1 and internal_catch.
-   Catches all signals and throws.  Never exits nonlocally; returns
-   Qcatch_all_memory_full if no handler could be allocated.  */
-
-Lisp_Object
-internal_catch_all (Lisp_Object (*function) (void *), void *argument,
-                    Lisp_Object (*handler) (Lisp_Object))
-{
-  struct handler *c = push_handler_nosignal (Qt, CONDITION_CASE);
-  if (c == NULL)
-    return Qcatch_all_memory_full;
-
-  if (sys_setjmp (c->jmp) == 0)
-    {
-      Lisp_Object val = internal_catch_all_1 (function, argument);
-      eassert (handlerlist == c);
-      handlerlist = c->next;
-      return val;
-    }
-  else
-    {
-      eassert (handlerlist == c);
-      Lisp_Object val = c->val;
-      handlerlist = c->next;
-      return handler (val);
-    }
-}
-
 struct handler *
 push_handler (Lisp_Object tag_ch_val, enum handlertype handlertype)
 {
@@ -3216,8 +3165,6 @@ alist of active lexical bindings.  */);
 
   inhibit_lisp_code = Qnil;
 
-  DEFSYM (Qcatch_all_memory_full, "catch-all-memory-full");
-  Funintern (Qcatch_all_memory_full, Qnil);
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);
   defsubr (&Sdefvar);

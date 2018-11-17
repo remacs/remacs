@@ -169,7 +169,7 @@
 
 (defun gnus-icalendar-event--get-attendee-names (ical)
   (let* ((event (car (icalendar--all-events ical)))
-         (attendee-props (seq-filter
+         (attendee-props (gnus-remove-if-not
                           (lambda (p) (eq (car p) 'ATTENDEE))
                           (caddr event))))
 
@@ -180,7 +180,7 @@
 	  (or (plist-get (cadr prop) 'CN)
 	      (replace-regexp-in-string "^.*MAILTO:" "" (caddr prop))))
 	 (attendees-by-type (type)
-			    (seq-filter
+			    (gnus-remove-if-not
 			     (lambda (p) (string= (attendee-role p) type))
 			     attendee-props))
 	 (attendee-names-by-type

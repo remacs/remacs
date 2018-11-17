@@ -26,7 +26,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
 (require 'faceup)
 
 (ert-deftest faceup-functions ()
@@ -53,144 +52,163 @@
                  '(a b (:y nil) (:x t)))))
 
 
-(ert-deftest faceup-markup-basics ()
+(ert-deftest faceup-markup ()
+  "Test basic `faceup' features."
+  ;; ----------
+  ;; Basics
   (should (equal (faceup-markup-string "")     ""))
-  (should (equal (faceup-markup-string "test") "test")))
-
-(ert-deftest faceup-markup-escaping ()
+  (should (equal (faceup-markup-string "test") "test"))
+  ;; ----------
+  ;; Escaping
   (should (equal (faceup-markup-string "«") "««"))
   (should (equal (faceup-markup-string "«A«B«C«") "««A««B««C««"))
   (should (equal (faceup-markup-string "»") "«»"))
-  (should (equal (faceup-markup-string "»A»B»C»") "«»A«»B«»C«»")))
-
-(ert-deftest faceup-markup-plain ()
+  (should (equal (faceup-markup-string "»A»B»C»") "«»A«»B«»C«»"))
+  ;; ----------
+  ;; Plain property.
+  ;;
   ;;   UU
   ;; ABCDEF
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 2 4 (face underline)))
-                 "AB«U:CD»EF")))
-
-(ert-deftest faceup-markup-plain-full-text ()
+  (let ((s "ABCDEF"))
+    (set-text-properties 2 4 '(face underline) s)
+    (should (equal (faceup-markup-string s) "AB«U:CD»EF")))
+  ;; ----------
+  ;; Plain property, full text
+  ;;
   ;; UUUUUU
   ;; ABCDEF
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 0 6 (face underline)))
-                 "«U:ABCDEF»")))
-
-(ert-deftest faceup-markup-anonymous-face ()
+  (let ((s "ABCDEF"))
+    (set-text-properties 0 6 '(face underline) s)
+    (should (equal (faceup-markup-string s) "«U:ABCDEF»")))
+  ;; ----------
+  ;; Anonymous face.
+  ;;
   ;;   AA
   ;; ABCDEF
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 2 4 (face (:underline t))))
-                 "AB«:(:underline t):CD»EF")))
-
-(ert-deftest faceup-markup-anonymous-face-2keys ()
+  (let ((s "ABCDEF"))
+    (set-text-properties 2 4 '(face (:underline t)) s)
+    (should (equal (faceup-markup-string s) "AB«:(:underline t):CD»EF")))
+  ;; ----------
+  ;; Anonymous face -- plist with two keys.
+  ;;
   ;;   AA
   ;; ABCDEF
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 2 4 (face (:foo t :bar nil))))
-                 "AB«:(:foo t):«:(:bar nil):CD»»EF"))
-  ;; Plist in list.
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 2 4 (face ((:foo t :bar nil)))))
-                 "AB«:(:foo t):«:(:bar nil):CD»»EF"))
-  ;; Two plists.
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 2 4 (face ((:foo t) (:bar nil)))))
-                 "AB«:(:bar nil):«:(:foo t):CD»»EF")))
-
-(ert-deftest faceup-markup-anonymous-nested ()
+  (let ((s "ABCDEF"))
+    (set-text-properties 2 4 '(face (:foo t :bar nil)) s)
+    (should (equal (faceup-markup-string s)
+                   "AB«:(:foo t):«:(:bar nil):CD»»EF")))
+  ;; Ditto, with plist in list.
+  (let ((s "ABCDEF"))
+    (set-text-properties 2 4 '(face ((:foo t :bar nil))) s)
+    (should (equal (faceup-markup-string s)
+                   "AB«:(:foo t):«:(:bar nil):CD»»EF")))
+  ;; ----------
+  ;; Anonymous face -- Two plists.
+  ;;
+  ;;   AA
+  ;; ABCDEF
+  (let ((s "ABCDEF"))
+    (set-text-properties 2 4 '(face ((:foo t) (:bar nil))) s)
+    (should (equal (faceup-markup-string s)
+                   "AB«:(:bar nil):«:(:foo t):CD»»EF")))
+  ;; ----------
+  ;; Anonymous face -- Nested.
+  ;;
   ;;   AA
   ;;  IIII
   ;; ABCDEF
-  (should (equal (faceup-markup-string
-                  #("ABCDEF"
-                    1 2 (face ((:foo t)))
-                    2 4 (face ((:bar t) (:foo t)))
-                    4 5 (face ((:foo t)))))
-                 "A«:(:foo t):B«:(:bar t):CD»E»F")))
-
-(ert-deftest faceup-markup-nested ()
+  (let ((s "ABCDEF"))
+    (set-text-properties 1 2 '(face ((:foo t))) s)
+    (set-text-properties 2 4 '(face ((:bar t) (:foo t))) s)
+    (set-text-properties 4 5 '(face ((:foo t))) s)
+    (should (equal (faceup-markup-string s)
+                   "A«:(:foo t):B«:(:bar t):CD»E»F")))
+  ;; ----------
+  ;; Nested properties.
+  ;;
   ;;   UU
   ;;  IIII
   ;; ABCDEF
-  (should (equal (faceup-markup-string
-                  #("ABCDEF"
-                    1 2 (face italic)
-                    2 4 (face (underline italic))
-                    4 5 (face italic)))
-                 "A«I:B«U:CD»E»F")))
-
-(ert-deftest faceup-markup-overlapping ()
+  (let ((s "ABCDEF"))
+    (set-text-properties 1 2 '(face italic) s)
+    (set-text-properties 2 4 '(face (underline italic)) s)
+    (set-text-properties 4 5 '(face italic) s)
+    (should (equal (faceup-markup-string s) "A«I:B«U:CD»E»F")))
+  ;; ----------
+  ;; Overlapping, but not nesting, properties.
+  ;;
   ;;   UUU
   ;;  III
   ;; ABCDEF
-  (should (equal (faceup-markup-string
-                  #("ABCDEF"
-                    1 2 (face italic)
-                    2 4 (face (underline italic))
-                    4 5 (face underline)))
-                 "A«I:B«U:CD»»«U:E»F"))
+  (let ((s "ABCDEF"))
+    (set-text-properties 1 2 '(face italic) s)
+    (set-text-properties 2 4 '(face (underline italic)) s)
+    (set-text-properties 4 5 '(face underline) s)
+    (should (equal (faceup-markup-string s) "A«I:B«U:CD»»«U:E»F")))
+  ;; ----------
+  ;; Overlapping, but not nesting, properties.
+  ;;
   ;;  III
   ;;   UUU
   ;; ABCDEF
-  (should (equal (faceup-markup-string
-                  #("ABCDEF"
-                    1 2 (face italic)
-                    2 4 (face (italic underline))
-                    4 5 (face underline)))
-                 "A«I:B»«U:«I:CD»E»F")))
-
-(ert-deftest faceup-markup-multi-face ()
+  (let ((s "ABCDEF"))
+    (set-text-properties 1 2 '(face italic) s)
+    (set-text-properties 2 4 '(face (italic underline)) s)
+    (set-text-properties 4 5 '(face underline) s)
+    (should (equal (faceup-markup-string s) "A«I:B»«U:«I:CD»E»F")))
+  ;; ----------
   ;; More than one face at the same location.
   ;;
   ;; The property to the front takes precedence, it is rendered as the
   ;; innermost parenthesis pair.
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 2 4 (face (underline italic))))
-                 "AB«I:«U:CD»»EF"))
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 2 4 (face (italic underline))))
-                 "AB«U:«I:CD»»EF"))
+  (let ((s "ABCDEF"))
+    (set-text-properties 2 4 '(face (underline italic)) s)
+    (should (equal (faceup-markup-string s) "AB«I:«U:CD»»EF")))
+  (let ((s "ABCDEF"))
+    (set-text-properties 2 4 '(face (italic underline)) s)
+    (should (equal (faceup-markup-string s) "AB«U:«I:CD»»EF")))
+  ;; ----------
   ;; Equal ranges, full text.
-  (should (equal (faceup-markup-string
-                  #("ABCDEF" 0 6 (face (underline italic))))
-                 "«I:«U:ABCDEF»»"))
+  (let ((s "ABCDEF"))
+    (set-text-properties 0 6 '(face (underline italic)) s)
+    (should (equal (faceup-markup-string s) "«I:«U:ABCDEF»»")))
   ;; Ditto, with stray markup characters.
-  (should (equal (faceup-markup-string
-                  #("AB«CD»EF" 0 8 (face (underline italic))))
-                 "«I:«U:AB««CD«»EF»»")))
+  (let ((s "AB«CD»EF"))
+    (set-text-properties 0 8 '(face (underline italic)) s)
+    (should (equal (faceup-markup-string s) "«I:«U:AB««CD«»EF»»")))
 
-(ert-deftest faceup-markup-multi-property ()
+  ;; ----------
+  ;; Multiple properties
   (let ((faceup-properties '(alpha beta gamma)))
     ;; One property.
-    (should (equal (faceup-markup-string
-                    #("ABCDEF" 2 4 (alpha (a l p h a))))
-                   "AB«(alpha):(a l p h a):CD»EF"))
+    (let ((s "ABCDEF"))
+      (set-text-properties 2 4 '(alpha (a l p h a)) s)
+      (should (equal (faceup-markup-string s) "AB«(alpha):(a l p h a):CD»EF")))
 
     ;; Two properties, inner enclosed.
-    (should (equal (faceup-markup-string
-                    (let ((s (copy-sequence "ABCDEFGHIJ")))
-                      (set-text-properties 2 8 '(alpha (a l p h a)) s)
-                      (font-lock-append-text-property 4 6 'beta '(b e t a) s)
-                      s))
-                   "AB«(alpha):(a l p h a):CD«(beta):(b e t a):EF»GH»IJ"))
+    (let ((s "ABCDEFGHIJ"))
+      (set-text-properties 2 8 '(alpha (a l p h a)) s)
+      (font-lock-append-text-property 4 6 'beta '(b e t a) s)
+      (should (equal (faceup-markup-string s)
+                     "AB«(alpha):(a l p h a):CD«(beta):(b e t a):EF»GH»IJ")))
 
     ;; Two properties, same end
-    (should (equal (faceup-markup-string
-                    (let ((s (copy-sequence "ABCDEFGH")))
-                      (set-text-properties 2 6 '(alpha (a)) s)
-                      (add-text-properties 4 6 '(beta (b)) s)
-                      s))
-                   "AB«(alpha):(a):CD«(beta):(b):EF»»GH"))
+    (let ((s "ABCDEFGH"))
+      (set-text-properties 2 6 '(alpha (a)) s)
+      (add-text-properties 4 6 '(beta (b)) s)
+      (should
+       (equal
+        (faceup-markup-string s)
+        "AB«(alpha):(a):CD«(beta):(b):EF»»GH")))
 
     ;; Two properties, overlap.
-    (should (equal (faceup-markup-string
-                    (let ((s (copy-sequence "ABCDEFGHIJ")))
-                      (set-text-properties 2 6 '(alpha (a)) s)
-                      (add-text-properties 4 8 '(beta (b)) s)
-                      s))
-                   "AB«(alpha):(a):CD«(beta):(b):EF»»«(beta):(b):GH»IJ"))))
+    (let ((s "ABCDEFGHIJ"))
+      (set-text-properties 2 6 '(alpha (a)) s)
+      (add-text-properties 4 8 '(beta (b)) s)
+      (should
+       (equal
+        (faceup-markup-string s)
+        "AB«(alpha):(a):CD«(beta):(b):EF»»«(beta):(b):GH»IJ")))))
 
 
 (ert-deftest faceup-clean ()

@@ -80,7 +80,16 @@ When called interactively, a Tramp connection has to be selected."
    ;; Return nil when there is no Tramp connection.
    (list
     (let ((connections
-	   (mapcar 'tramp-make-tramp-file-name (tramp-list-connections)))
+	   (mapcar
+	    (lambda (x)
+	      (tramp-make-tramp-file-name
+	       (tramp-file-name-method x)
+	       (tramp-file-name-user x)
+	       (tramp-file-name-domain x)
+	       (tramp-file-name-host x)
+	       (tramp-file-name-port x)
+	       (tramp-file-name-localname x)))
+	    (tramp-list-connections)))
 	  name)
 
       (when connections
@@ -104,13 +113,13 @@ When called interactively, a Tramp connection has to be selected."
     (when keep-password (setq tramp-current-connection nil))
 
     ;; Flush file cache.
-    (tramp-flush-directory-properties vec "")
+    (tramp-flush-directory-property vec "")
 
     ;; Flush connection cache.
     (when (processp (tramp-get-connection-process vec))
-      (tramp-flush-connection-properties (tramp-get-connection-process vec))
+      (tramp-flush-connection-property (tramp-get-connection-process vec))
       (delete-process (tramp-get-connection-process vec)))
-    (tramp-flush-connection-properties vec)
+    (tramp-flush-connection-property vec)
 
     ;; Remove buffers.
     (dolist
@@ -142,9 +151,6 @@ This includes password cache, file cache, connection cache, buffers."
 
   ;; Flush file and connection cache.
   (clrhash tramp-cache-data)
-
-  ;; Cleanup local copies of archives.
-  (tramp-archive-cleanup-hash)
 
   ;; Remove buffers.
   (dolist (name (tramp-list-tramp-buffers))

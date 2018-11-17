@@ -427,9 +427,7 @@ Throw an user-error if we cannot resolve automatically."
 	      (setq conflicted t)
 	    ;; Mark as resolved
 	    (call-process "git" nil t nil "add" file)))
-	(if (not conflicted)
-	    (and files (not (gitmerge-commit))
-		 (error "Error committing resolution - fix it manually"))
+	(when conflicted
 	  (with-current-buffer (get-buffer-create gitmerge-warning-buffer)
 	    (erase-buffer)
 	    (insert "For the following files, conflicts could\n"
@@ -455,12 +453,6 @@ Throw an user-error if we cannot resolve automatically."
 		    "diff" "--name-only")
       (zerop (buffer-size))))
 
-(defun gitmerge-commit ()
-  "Commit, and return non-nil if it succeeds."
-  (with-current-buffer (get-buffer-create gitmerge-output-buffer)
-    (erase-buffer)
-    (eq 0 (call-process "git" nil t nil "commit" "--no-edit"))))
-
 (defun gitmerge-maybe-resume ()
   "Check if we have to resume a merge.
 If so, add no longer conflicted files and commit."
@@ -482,8 +474,11 @@ If so, add no longer conflicted files and commit."
 	(gitmerge-resolve-unmerged)
 	;; Commit the merge.
 	(when mergehead
-	  (or (gitmerge-commit)
-	      (error "Git error during merge - fix it manually")))
+	  (with-current-buffer (get-buffer-create gitmerge-output-buffer)
+	    (erase-buffer)
+	    (unless (zerop (call-process "git" nil t nil
+					 "commit" "--no-edit"))
+	      (error "Git error during merge - fix it manually"))))
 	;; Successfully resumed.
 	t))))
 

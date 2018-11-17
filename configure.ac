@@ -350,7 +350,6 @@ OPTION_DEFAULT_ON([libsystemd],[don't compile with libsystemd support])
 OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
 OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
 OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
-OPTION_DEFAULT_ON([json], [don't compile with native JSON support])
 
 OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
@@ -2839,27 +2838,6 @@ fi
 AC_SUBST(LIBSYSTEMD_LIBS)
 AC_SUBST(LIBSYSTEMD_CFLAGS)
 
-HAVE_JSON=no
-JSON_OBJ=
-
-if test "${with_json}" = yes; then
-  EMACS_CHECK_MODULES([JSON], [jansson >= 2.7],
-    [HAVE_JSON=yes], [HAVE_JSON=no])
-  if test "${HAVE_JSON}" = yes; then
-    AC_DEFINE(HAVE_JSON, 1, [Define if using Jansson.])
-    JSON_OBJ=json.o
-  fi
-
-  # Windows loads libjansson dynamically
-  if test "${opsys}" = "mingw32"; then
-    JSON_LIBS=
-  fi
-fi
-
-AC_SUBST(JSON_LIBS)
-AC_SUBST(JSON_CFLAGS)
-AC_SUBST(JSON_OBJ)
-
 NOTIFY_OBJ=
 NOTIFY_SUMMARY=no
 
@@ -3298,9 +3276,7 @@ AC_SUBST(LIBXPM)
 ### Use -ljpeg if available, unless '--with-jpeg=no'.
 HAVE_JPEG=no
 LIBJPEG=
-if test "${NS_IMPL_COCOA}" = yes; then
-  : # Cocoa provides its own jpeg support, so do nothing.
-elif test "${with_jpeg}" != "no"; then
+if test "${with_jpeg}" != "no"; then
   AC_CACHE_CHECK([for jpeglib 6b or later],
     [emacs_cv_jpeglib],
     [OLD_LIBS=$LIBS
@@ -3416,7 +3392,7 @@ HAVE_PNG=no
 LIBPNG=
 PNG_CFLAGS=
 if test "${NS_IMPL_COCOA}" = yes; then
-  : # Cocoa provides its own png support, so do nothing.
+  : # Nothing to do
 elif test "${with_png}" != no; then
   # mingw32 loads the library dynamically.
   if test "$opsys" = mingw32; then
@@ -5239,7 +5215,7 @@ emacs_config_features=
 for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB X_TOOLKIT X11 NS MODULES \
-  XWIDGETS LIBSYSTEMD JSON CANNOT_DUMP LCMS2; do
+  XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
 
     case $opt in
       CANNOT_DUMP) eval val=\${$opt} ;;
@@ -5288,7 +5264,6 @@ AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
   Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
   Does Emacs use -lxft?                                   ${HAVE_XFT}
   Does Emacs use -lsystemd?                               ${HAVE_LIBSYSTEMD}
-  Does Emacs use -ljansson?                               ${HAVE_JSON}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
   Does Emacs have threading support in lisp?              ${threads_enabled}

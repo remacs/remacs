@@ -460,7 +460,7 @@ If LOWEST is non-nil, list all newsgroups of level LOWEST or higher."
 	(unless gnus-killed-hashtb
 	  (gnus-make-hashtable-from-killed))
 	(gnus-group-prepare-flat-list-dead
-	 (seq-remove (lambda (group)
+	 (gnus-remove-if (lambda (group)
 			   (or (gnus-group-entry group)
 			       (gnus-gethash group gnus-killed-hashtb)))
 			 not-in-list)
