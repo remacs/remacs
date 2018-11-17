@@ -1591,9 +1591,6 @@ flush_frame (struct frame *f)
     rif->flush_display (f);
 }
 
-extern Lisp_Object
-candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf);
-
 /***********************************************************************
 			Multimonitor data
  ***********************************************************************/

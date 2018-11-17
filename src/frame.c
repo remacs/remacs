@@ -1448,7 +1448,7 @@ frame.  */)
    Otherwise consider any candidate and return nil if CANDIDATE is not
    acceptable.  */
 
-Lisp_Object
+static Lisp_Object
 candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
 {
   struct frame *c = XFRAME (candidate), *f = XFRAME (frame);
@@ -1487,6 +1487,96 @@ candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
 	return candidate;
     }
   return Qnil;
+}
+
+/* Return the next frame in the frame list after FRAME.  */
+
+static Lisp_Object
+next_frame (Lisp_Object frame, Lisp_Object minibuf)
+{
+  Lisp_Object f, tail;
+  int passed = 0;
+
+  while (passed < 2)
+    FOR_EACH_FRAME (tail, f)
+      {
+	if (passed)
+	  {
+	    f = candidate_frame (f, frame, minibuf);
+	    if (!NILP (f))
+	      return f;
+	  }
+	if (EQ (frame, f))
+	  passed++;
+      }
+  return frame;
+}
+
+/* Return the previous frame in the frame list before FRAME.  */
+
+static Lisp_Object
+prev_frame (Lisp_Object frame, Lisp_Object minibuf)
+{
+  Lisp_Object f, tail, prev = Qnil;
+
+  FOR_EACH_FRAME (tail, f)
+    {
+      if (EQ (frame, f) && !NILP (prev))
+	return prev;
+      f = candidate_frame (f, frame, minibuf);
+      if (!NILP (f))
+	prev = f;
+    }
+
+  /* We've scanned the entire list.  */
+  if (NILP (prev))
+    /* We went through the whole frame list without finding a single
+       acceptable frame.  Return the original frame.  */
+    return frame;
+  else
+    /* There were no acceptable frames in the list before FRAME; otherwise,
+       we would have returned directly from the loop.  Since PREV is the last
+       acceptable frame in the list, return it.  */
+    return prev;
+}
+
+
+DEFUN ("next-frame", Fnext_frame, Snext_frame, 0, 2, 0,
+       doc: /* Return the next frame in the frame list after FRAME.
+It considers only frames on the same terminal as FRAME.
+By default, skip minibuffer-only frames.
+If omitted, FRAME defaults to the selected frame.
+If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+If MINIFRAME is a window, include only its own frame
+and any frame now using that window as the minibuffer.
+If MINIFRAME is `visible', include all visible frames.
+If MINIFRAME is 0, include all visible and iconified frames.
+Otherwise, include all frames.  */)
+  (Lisp_Object frame, Lisp_Object miniframe)
+{
+  if (NILP (frame))
+    frame = selected_frame;
+  CHECK_LIVE_FRAME (frame);
+  return next_frame (frame, miniframe);
+}
+
+DEFUN ("previous-frame", Fprevious_frame, Sprevious_frame, 0, 2, 0,
+       doc: /* Return the previous frame in the frame list before FRAME.
+It considers only frames on the same terminal as FRAME.
+By default, skip minibuffer-only frames.
+If omitted, FRAME defaults to the selected frame.
+If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+If MINIFRAME is a window, include only its own frame
+and any frame now using that window as the minibuffer.
+If MINIFRAME is `visible', include all visible frames.
+If MINIFRAME is 0, include all visible and iconified frames.
+Otherwise, include all frames.  */)
+  (Lisp_Object frame, Lisp_Object miniframe)
+{
+  if (NILP (frame))
+    frame = selected_frame;
+  CHECK_LIVE_FRAME (frame);
+  return prev_frame (frame, miniframe);
 }
 
 DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
@@ -5676,6 +5766,8 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_list);
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
+  defsubr (&Snext_frame);
+  defsubr (&Sprevious_frame);
   defsubr (&Slast_nonminibuf_frame);
   defsubr (&Smouse_position);
   defsubr (&Smouse_pixel_position);
