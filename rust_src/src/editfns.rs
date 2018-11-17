@@ -566,7 +566,7 @@ pub fn field_beginning(
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
-    let (beg, _) = find_field(pos.map(LispNumber::from), escape_from_edge, limit, None);
+    let (beg, _) = find_field(pos, escape_from_edge, limit, None);
 
     beg as EmacsInt
 }
@@ -584,7 +584,7 @@ pub fn field_end(
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
-    let (_, end) = find_field(pos.map(LispNumber::from), escape_from_edge, None, limit);
+    let (_, end) = find_field(pos, escape_from_edge, None, limit);
 
     end as EmacsInt
 }
@@ -1027,13 +1027,13 @@ pub fn save_restriction(body: LispObject) -> LispObject {
 // finding the beginning and ending of the "merged" field.
 
 pub fn find_field(
-    pos: Option<LispNumber>,
+    pos: Option<EmacsInt>,
     merge_at_boundary: bool,
     beg_limit: Option<EmacsInt>,
     end_limit: Option<EmacsInt>,
 ) -> (ptrdiff_t, ptrdiff_t) {
     let current_buffer = ThreadState::current_buffer();
-    let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as isize);
+    let pos = pos.unwrap_or(current_buffer.pt) as isize;
 
     // Fields right before and after the point.
     let after_field =
@@ -1138,8 +1138,8 @@ pub fn find_field(
 /// A field is a region of text with the same `field' property.
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
-pub fn delete_field(pos: LispNumber) {
-    let (beg, end) = find_field(Some(pos), false, None, None);
+pub fn delete_field(pos: Option<EmacsInt>) {
+    let (beg, end) = find_field(pos, false, None, None);
     if beg != end {
         unsafe { del_range(beg, end) };
     }
@@ -1149,8 +1149,8 @@ pub fn delete_field(pos: LispNumber) {
 /// A field is a region of text with the same `field' property.
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
-pub fn field_string(pos: LispNumber) -> LispObject {
-    let (beg, end) = find_field(Some(pos), false, None, None);
+pub fn field_string(pos: Option<EmacsInt>) -> LispObject {
+    let (beg, end) = find_field(pos, false, None, None);
     unsafe { make_buffer_string(beg, end, true) }
 }
 
@@ -1158,8 +1158,8 @@ pub fn field_string(pos: LispNumber) -> LispObject {
 /// A field is a region of text with the same `field' property.
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
-pub fn field_string_no_properties(pos: LispNumber) -> LispObject {
-    let (beg, end) = find_field(Some(pos), false, None, None);
+pub fn field_string_no_properties(pos: Option<EmacsInt>) -> LispObject {
+    let (beg, end) = find_field(pos, false, None, None);
     unsafe { make_buffer_string(beg, end, false) }
 }
 
