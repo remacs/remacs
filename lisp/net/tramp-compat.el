@@ -190,6 +190,11 @@ This is a string of ten letters or dashes as in ls -l."
   (if (get 'file-missing 'error-conditions) 'file-missing 'file-error)
   "The error symbol for the `file-missing' error.")
 
+(add-hook 'tramp-unload-hook
+	  (lambda ()
+	    (unload-feature 'tramp-loaddefs 'force)
+	    (unload-feature 'tramp-compat 'force)))
+
 ;; `file-name-quoted-p', `file-name-quote' and `file-name-unquote' are
 ;; introduced in Emacs 26.
 (eval-and-compile
@@ -205,10 +210,8 @@ If NAME is a remote file name, check the local part of NAME."
     (defsubst tramp-compat-file-name-quote (name)
       "Add the quotation prefix \"/:\" to file NAME.
 If NAME is a remote file name, the local part of NAME is quoted."
-      (if (tramp-compat-file-name-quoted-p name)
-	  name
-	(concat
-	 (file-remote-p name) "/:" (or (file-remote-p name 'localname) name)))))
+      (concat
+       (file-remote-p name) "/:" (or (file-remote-p name 'localname) name))))
 
   (if (fboundp 'file-name-unquote)
       (defalias 'tramp-compat-file-name-unquote 'file-name-unquote)
@@ -237,17 +240,6 @@ If NAME is a remote file name, the local part of NAME is unquoted."
   (if (fboundp 'cl-struct-slot-info)
       `(cdr (mapcar 'car (cl-struct-slot-info 'tramp-file-name)))
     `(cdr (mapcar 'car (get 'tramp-file-name 'cl-struct-slots)))))
-
-;; The signature of `tramp-make-tramp-file-name' has been changed.
-;; Therefore, we cannot us `url-tramp-convert-url-to-tramp' prior
-;; Emacs 26.1.  We use `temporary-file-directory' as indicator.
-(defconst tramp-compat-use-url-tramp-p (fboundp 'temporary-file-directory)
-  "Whether to use url-tramp.el.")
-
-(add-hook 'tramp-unload-hook
-	  (lambda ()
-	    (unload-feature 'tramp-loaddefs 'force)
-	    (unload-feature 'tramp-compat 'force)))
 
 (provide 'tramp-compat)
 

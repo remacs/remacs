@@ -7343,7 +7343,6 @@ Text larger than the specified size is clipped.  */)
   ptrdiff_t count = SPECPDL_INDEX ();
   ptrdiff_t count_1;
   Lisp_Object window, size;
-  Lisp_Object tip_buf;
   AUTO_STRING (tip, " *tip*");
 
   specbind (Qinhibit_redisplay, Qt);
@@ -7501,12 +7500,7 @@ Text larger than the specified size is clipped.  */)
 
   tip_f = XFRAME (tip_frame);
   window = FRAME_ROOT_WINDOW (tip_f);
-  tip_buf = Fget_buffer_create (tip);
-  /* We will mark the tip window a "pseudo-window" below, and such
-     windows cannot have display margins.  */
-  bset_left_margin_cols (XBUFFER (tip_buf), make_number (0));
-  bset_right_margin_cols (XBUFFER (tip_buf), make_number (0));
-  set_window_buffer (window, tip_buf, false, false);
+  set_window_buffer (window, Fget_buffer_create (tip), false, false);
   w = XWINDOW (window);
   w->pseudo_window_p = true;
 
@@ -10421,7 +10415,6 @@ syms_of_w32fns (void)
   DEFSYM (Qserif, "serif");
   DEFSYM (Qzlib, "zlib");
   DEFSYM (Qlcms2, "lcms2");
-  DEFSYM (Qjson, "json");
 
   Fput (Qundefined_color, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qundefined_color, Qerror));

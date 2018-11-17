@@ -410,6 +410,9 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'cl))
+
 
 (defvar faceup-default-property 'face
   "The property that should be represented in Faceup without the (prop) part.")
@@ -453,8 +456,8 @@ When treated as a non-face-like property:
     «(prop):(a):AAA»«(prop):(a b):XXX»«(prop):(a):AAA»")
 
 
-(defvar faceup-markup-start-char ?«)
-(defvar faceup-markup-end-char   ?»)
+(defvar faceup-markup-start-char 171)   ;; «
+(defvar faceup-markup-end-char   187)   ;; »
 
 (defvar faceup-face-short-alist
   '(;; Generic faces (uppercase letters)
@@ -1019,7 +1022,7 @@ variable, can easily define their own explainer functions.")
 
 ;;;###autoload
 (defmacro faceup-defexplainer (function)
-  "Define an Ert explainer function for FUNCTION.
+  "Defines an Ert explainer function for FUNCTION.
 
 FUNCTION must return an explanation when the test fails and
 `faceup-test-explain' is set."

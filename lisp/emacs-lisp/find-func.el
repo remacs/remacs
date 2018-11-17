@@ -399,30 +399,28 @@ See `find-library' for more details."
                               (concat "\\\\?"
                                       (regexp-quote (symbol-name symbol))))))
             (case-fold-search))
-        (save-restriction
-          (widen)
-          (with-syntax-table emacs-lisp-mode-syntax-table
-            (goto-char (point-min))
-            (if (if (functionp regexp)
-                    (funcall regexp symbol)
-                  (or (re-search-forward regexp nil t)
-                      ;; `regexp' matches definitions using known forms like
-                      ;; `defun', or `defvar'.  But some functions/variables
-                      ;; are defined using special macros (or functions), so
-                      ;; if `regexp' can't find the definition, we look for
-                      ;; something of the form "(SOMETHING <symbol> ...)".
-                      ;; This fails to distinguish function definitions from
-                      ;; variable declarations (or even uses thereof), but is
-                      ;; a good pragmatic fallback.
-                      (re-search-forward
-                       (concat "^([^ ]+" find-function-space-re "['(]?"
-                               (regexp-quote (symbol-name symbol))
-                               "\\_>")
-                       nil t)))
-                (progn
-                  (beginning-of-line)
-                  (cons (current-buffer) (point)))
-              (cons (current-buffer) nil))))))))
+        (with-syntax-table emacs-lisp-mode-syntax-table
+          (goto-char (point-min))
+          (if (if (functionp regexp)
+                  (funcall regexp symbol)
+                (or (re-search-forward regexp nil t)
+                    ;; `regexp' matches definitions using known forms like
+                    ;; `defun', or `defvar'.  But some functions/variables
+                    ;; are defined using special macros (or functions), so
+                    ;; if `regexp' can't find the definition, we look for
+                    ;; something of the form "(SOMETHING <symbol> ...)".
+                    ;; This fails to distinguish function definitions from
+                    ;; variable declarations (or even uses thereof), but is
+                    ;; a good pragmatic fallback.
+                    (re-search-forward
+                     (concat "^([^ ]+" find-function-space-re "['(]?"
+                             (regexp-quote (symbol-name symbol))
+                             "\\_>")
+                     nil t)))
+              (progn
+                (beginning-of-line)
+                (cons (current-buffer) (point)))
+            (cons (current-buffer) nil)))))))
 
 ;;;###autoload
 (defun find-function-search-for-symbol (symbol type library)

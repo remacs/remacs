@@ -950,7 +950,7 @@ If necessary, clock-out of the currently active clock."
 	(unless (org-is-active-clock clock)
 	  (org-clock-clock-in clock t))))
 
-     ((not (time-less-p resolve-to (current-time)))
+     ((not (time-less-p resolve-to nil))
       (error "RESOLVE-TO must refer to a time in the past"))
 
      (t
@@ -1052,7 +1052,7 @@ to be CLOCKED OUT."))))
 		(and (not (memq char-pressed '(?i ?q))) char-pressed)))))
 	 (default
 	   (floor (/ (float-time
-		      (time-subtract (current-time) last-valid)) 60)))
+		      (time-subtract nil last-valid)) 60)))
 	 (keep
 	  (and (memq ch '(?k ?K))
 	       (read-number "Keep how many minutes? " default)))
@@ -1089,8 +1089,7 @@ to be CLOCKED OUT."))))
 	      (keep
 	       (time-add last-valid (seconds-to-time (* 60 keep))))
 	      (gotback
-	       (time-subtract (current-time)
-			      (seconds-to-time (* 60 gotback))))
+	       (time-subtract nil (seconds-to-time (* 60 gotback))))
 	      (t
 	       (error "Unexpected, please report this as a bug")))
        (and gotback last-valid)
@@ -1172,7 +1171,7 @@ so long."
 	     org-clock-marker (marker-buffer org-clock-marker))
     (let* ((org-clock-user-idle-seconds (org-user-idle-seconds))
 	   (org-clock-user-idle-start
-	    (time-subtract (current-time)
+	    (time-subtract nil
 			   (seconds-to-time org-clock-user-idle-seconds)))
 	   (org-clock-resolving-clocks-due-to-idleness t))
       (if (> org-clock-user-idle-seconds (* 60 org-clock-idle-time))
@@ -1182,8 +1181,7 @@ so long."
 	   (lambda (_)
 	     (format "Clocked in & idle for %.1f mins"
 		     (/ (float-time
-			 (time-subtract (current-time)
-					org-clock-user-idle-start))
+			 (time-subtract nil org-clock-user-idle-start))
 			60.0)))
 	   org-clock-user-idle-start)))))
 
@@ -1467,7 +1465,7 @@ The time is always returned as UTC."
 	  (and (or (not cmt) (equal cmt "auto"))
 	       lr))
       (setq org--msg-extra "showing task time since last repeat.")
-      (and lr (org-time-string-to-time lr)))
+      (and lr (org-time-string-to-time lr t)))
      (t nil))))
 
 (defun org-clock-find-position (find-unclosed)
@@ -1604,9 +1602,9 @@ to, overriding the existing value of `org-clock-out-switch-to-state'."
 	  (insert "--")
 	  (setq te (org-insert-time-stamp (or at-time now) 'with-hm 'inactive))
 	  (setq s (- (float-time
-		      (apply #'encode-time (org-parse-time-string te)))
+		      (apply #'encode-time (org-parse-time-string te nil t)))
 		     (float-time
-		      (apply #'encode-time (org-parse-time-string ts))))
+		      (apply #'encode-time (org-parse-time-string ts nil t))))
 		h (floor (/ s 3600))
 		s (- s (* 3600 h))
 		m (floor (/ s 60))
@@ -1711,8 +1709,8 @@ Optional argument N tells to change by that many units."
 	      (begts (if updatets1 begts1 begts2)))
 	  (setq tdiff
 		(time-subtract
-		 (org-time-string-to-time org-last-changed-timestamp)
-		 (org-time-string-to-time ts)))
+		 (org-time-string-to-time org-last-changed-timestamp t)
+		 (org-time-string-to-time ts t)))
 	  (save-excursion
 	    (goto-char begts)
 	    (org-timestamp-change
@@ -1820,10 +1818,10 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 	  (lmax 30)
 	  (ltimes (make-vector lmax 0))
 	  (level 0)
-	  (tstart (cond ((stringp tstart) (org-time-string-to-seconds tstart))
+	  (tstart (cond ((stringp tstart) (org-time-string-to-seconds tstart t))
 			((consp tstart) (float-time tstart))
 			(t tstart)))
-	  (tend (cond ((stringp tend) (org-time-string-to-seconds tend))
+	  (tend (cond ((stringp tend) (org-time-string-to-seconds tend t))
 		      ((consp tend) (float-time tend))
 		      (t tend)))
 	  (t1 0)
@@ -1840,10 +1838,11 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 	   (let* ((ts (float-time
 		       (apply #'encode-time
 			      (save-match-data
-				(org-parse-time-string (match-string 2))))))
+				(org-parse-time-string
+				 (match-string 2) nil t)))))
 		  (te (float-time
 		       (apply #'encode-time
-			      (org-parse-time-string (match-string 3)))))
+			      (org-parse-time-string (match-string 3) nil t))))
 		  (dt (- (if tend (min te tend) te)
 			 (if tstart (max ts tstart) ts))))
 	     (when (> dt 0) (cl-incf t1 (floor (/ dt 60))))))
@@ -2724,9 +2723,7 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (setq te (float-time (apply #'encode-time (org-parse-time-string te))))))
     (setq tsb
 	  (if (eq step0 'week)
-	      (let ((dow (nth 6 (decode-time (seconds-to-time ts)))))
-		(if (< dow ws) ts
-		  (- ts (* 86400 (- dow ws)))))
+	      (- ts (* 86400 (- (nth 6 (decode-time (seconds-to-time ts))) ws)))
 	    ts))
     (setq p1 (plist-put p1 :header ""))
     (setq p1 (plist-put p1 :step nil))
@@ -2736,14 +2733,9 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (setq p1 (plist-put p1 :tstart (format-time-string
 				      (org-time-stamp-format nil t)
 				      (seconds-to-time (max tsb ts)))))
-      (cl-incf tsb (let ((dow (nth 6 (decode-time (seconds-to-time tsb)))))
-		     (if (or (eq step0 'day)
-			     (= dow ws))
-			 step
-		       (* 86400 (- ws dow)))))
       (setq p1 (plist-put p1 :tend (format-time-string
 				    (org-time-stamp-format nil t)
-				    (seconds-to-time (min te tsb)))))
+				    (seconds-to-time (min te (setq tsb (+ tsb step)))))))
       (insert "\n" (if (eq step0 'day) "Daily report: "
 		     "Weekly report starting on: ")
 	      (plist-get p1 :tstart) "\n")
@@ -2901,9 +2893,9 @@ Otherwise, return nil."
 	  (setq ts (match-string 1)
 		te (match-string 3))
 	  (setq s (- (float-time
-		      (apply #'encode-time (org-parse-time-string te)))
+		      (apply #'encode-time (org-parse-time-string te nil t)))
 		     (float-time
-		      (apply #'encode-time (org-parse-time-string ts))))
+		      (apply #'encode-time (org-parse-time-string ts nil t))))
 		neg (< s 0)
 		s (abs s)
 		h (floor (/ s 3600))

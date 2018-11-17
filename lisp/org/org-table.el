@@ -1087,18 +1087,22 @@ Before doing so, re-align the table if necessary."
   (interactive)
   (org-table-maybe-eval-formula)
   (org-table-maybe-recalculate-line)
-  (if (and org-table-automatic-realign
-	   org-table-may-need-update)
-      (org-table-align))
-  (let ((col (org-table-current-column)))
-    (beginning-of-line 2)
-    (when (or (not (org-at-table-p))
+  (if (or (looking-at "[ \t]*$")
+	  (save-excursion (skip-chars-backward " \t") (bolp)))
+      (newline)
+    (if (and org-table-automatic-realign
+	     org-table-may-need-update)
+	(org-table-align))
+    (let ((col (org-table-current-column)))
+      (beginning-of-line 2)
+      (if (or (not (org-at-table-p))
 	      (org-at-table-hline-p))
-      (beginning-of-line 0)
-      (org-table-insert-row 'below))
-    (org-table-goto-column col)
-    (skip-chars-backward "^|\n\r")
-    (when (looking-at " ") (forward-char))))
+	  (progn
+	    (beginning-of-line 0)
+	    (org-table-insert-row 'below)))
+      (org-table-goto-column col)
+      (skip-chars-backward "^|\n\r")
+      (if (looking-at " ") (forward-char 1)))))
 
 ;;;###autoload
 (defun org-table-copy-down (n)
@@ -3238,7 +3242,7 @@ existing formula for column %s"
 	 (goto-char beg)
 	 ;; Mark named fields untouchable.  Also check if several
 	 ;; field/range formulas try to set the same field.
-	 (remove-text-properties beg end '(:org-untouchable t))
+	 (remove-text-properties beg end '(org-untouchable t))
 	 (let ((current-line (count-lines org-table-current-begin-pos
 					  (line-beginning-position)))
 	       seen-fields)

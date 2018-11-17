@@ -19479,34 +19479,19 @@ Only text-mode frames have frame glyph matrices.  */)
 }
 
 
-DEFUN ("dump-glyph-row", Fdump_glyph_row, Sdump_glyph_row, 1, 2, "P",
+DEFUN ("dump-glyph-row", Fdump_glyph_row, Sdump_glyph_row, 1, 2, "",
        doc: /* Dump glyph row ROW to stderr.
-Interactively, ROW is the prefix numeric argument and defaults to
-the row which displays point.
-Optional argument GLYPHS 0 means don't dump glyphs.
-GLYPHS 1 means dump glyphs in short form.
-GLYPHS > 1 or omitted means dump glyphs in long form.  */)
+GLYPH 0 means don't dump glyphs.
+GLYPH 1 means dump glyphs in short form.
+GLYPH > 1 or omitted means dump glyphs in long form.  */)
   (Lisp_Object row, Lisp_Object glyphs)
 {
   struct glyph_matrix *matrix;
   EMACS_INT vpos;
 
-  if (NILP (row))
-    {
-      int d1, d2, d3, d4, d5, ypos;
-      bool visible_p = pos_visible_p (XWINDOW (selected_window), PT,
-				      &d1, &d2, &d3, &d4, &d5, &ypos);
-      if (visible_p)
-	vpos = ypos;
-      else
-	vpos = 0;
-    }
-  else
-    {
-      CHECK_NUMBER (row);
-      vpos = XINT (row);
-    }
+  CHECK_NUMBER (row);
   matrix = XWINDOW (selected_window)->current_matrix;
+  vpos = XINT (row);
   if (vpos >= 0 && vpos < matrix->nrows)
     dump_glyph_row (MATRIX_ROW (matrix, vpos),
 		    vpos,
@@ -19515,12 +19500,11 @@ GLYPHS > 1 or omitted means dump glyphs in long form.  */)
 }
 
 
-DEFUN ("dump-tool-bar-row", Fdump_tool_bar_row, Sdump_tool_bar_row, 1, 2, "P",
+DEFUN ("dump-tool-bar-row", Fdump_tool_bar_row, Sdump_tool_bar_row, 1, 2, "",
        doc: /* Dump glyph row ROW of the tool-bar of the current frame to stderr.
-Interactively, ROW is the prefix numeric argument and defaults to zero.
-GLYPHS 0 means don't dump glyphs.
-GLYPHS 1 means dump glyphs in short form.
-GLYPHS > 1 or omitted means dump glyphs in long form.
+GLYPH 0 means don't dump glyphs.
+GLYPH 1 means dump glyphs in short form.
+GLYPH > 1 or omitted means dump glyphs in long form.
 
 If there's no tool-bar, or if the tool-bar is not drawn by Emacs,
 do nothing.  */)
@@ -19531,13 +19515,8 @@ do nothing.  */)
   struct glyph_matrix *m = XWINDOW (sf->tool_bar_window)->current_matrix;
   EMACS_INT vpos;
 
-  if (NILP (row))
-    vpos = 0;
-  else
-    {
-      CHECK_NUMBER (row);
-      vpos = XINT (row);
-    }
+  CHECK_NUMBER (row);
+  vpos = XINT (row);
   if (vpos >= 0 && vpos < m->nrows)
     dump_glyph_row (MATRIX_ROW (m, vpos), vpos,
 		    TYPE_RANGED_INTEGERP (int, glyphs) ? XINT (glyphs) : 2);
@@ -21689,6 +21668,7 @@ display_line (struct it *it, int cursor_vpos)
 		      row->continued_p = true;
 		      row->ends_at_zv_p = false;
 		      row->exact_window_width_line_p = false;
+		      it->continuation_lines_width += x;
 
 		      /* Make sure that a non-default face is extended
 			 up to the right margin of the window.  */

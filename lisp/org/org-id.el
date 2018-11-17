@@ -539,7 +539,8 @@ When FILES is given, scan these files instead."
     (with-temp-buffer
       (condition-case nil
 	  (progn
-	    (insert-file-contents org-id-locations-file)
+	    (insert-file-contents-literally org-id-locations-file)
+	    (goto-char (point-min))
 	    (setq org-id-locations (read (current-buffer))))
 	(error
 	 (message "Could not read org-id-values from %s.  Setting it to nil."

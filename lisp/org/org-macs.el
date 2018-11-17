@@ -51,8 +51,8 @@ Otherwise, return nil."
 SEPARATORS is a regular expression.  When nil, it defaults to
 \"[ \f\t\n\r\v]+\".
 
-Unlike `split-string', matching SEPARATORS at the beginning and
-end of string are ignored."
+Unlike to `split-string', matching SEPARATORS at the beginning
+and end of string are ignored."
   (let ((separators (or separators "[ \f\t\n\r\v]+")))
     (when (string-match (concat "\\`" separators) string)
       (setq string (replace-match "" nil nil string)))
@@ -108,15 +108,16 @@ text properties."
 			      (value (if (stringp display) display
 				       (cl-some #'stringp display))))
 			 (when value
-			   (apply #'propertize
-				  ;; Displayed string could contain
-				  ;; invisible parts, but no nested
-				  ;; display.
-				  (funcall prune-invisible value)
-				  'display
-				  (and (not (stringp display))
-				       (cl-remove-if #'stringp display))
-				  props))))))))
+			   (apply
+			    #'propertize
+			    ;; Displayed string could contain
+			    ;; invisible parts, but no nested display.
+			    (funcall prune-invisible value)
+			    (plist-put props
+				       'display
+				       (and (not (stringp display))
+					    (cl-remove-if #'stringp
+							  display)))))))))))
     ;; `display' property overrides `invisible' one.  So we first
     ;; replace characters with `display' property.  Then we remove
     ;; invisible characters.
@@ -124,7 +125,7 @@ text properties."
 
 (defun org-string-width (string)
   "Return width of STRING when displayed in the current buffer.
-Unlike `string-width', this function takes into consideration
+Unlike to `string-width', this function takes into consideration
 `invisible' and `display' text properties."
   (string-width (org-string-display string)))
 
