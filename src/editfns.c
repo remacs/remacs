@@ -1661,42 +1661,6 @@ update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
     }
 }
 
-DEFUN ("buffer-substring", Fbuffer_substring, Sbuffer_substring, 2, 2, 0,
-       doc: /* Return the contents of part of the current buffer as a string.
-The two arguments START and END are character positions;
-they can be in either order.
-The string returned is multibyte if the buffer is multibyte.
-
-This function copies the text properties of that part of the buffer
-into the result string; if you don't want the text properties,
-use `buffer-substring-no-properties' instead.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  register ptrdiff_t b, e;
-
-  validate_region (&start, &end);
-  b = XINT (start);
-  e = XINT (end);
-
-  return make_buffer_string (b, e, 1);
-}
-
-DEFUN ("buffer-substring-no-properties", Fbuffer_substring_no_properties,
-       Sbuffer_substring_no_properties, 2, 2, 0,
-       doc: /* Return the characters of part of the buffer, without the text properties.
-The two arguments START and END are character positions;
-they can be in either order.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  register ptrdiff_t b, e;
-
-  validate_region (&start, &end);
-  b = XINT (start);
-  e = XINT (end);
-
-  return make_buffer_string (b, e, 0);
-}
-
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
        6, 6, 0,
        doc: /* Compare two substrings of two buffers; return result as number.
@@ -3926,8 +3890,6 @@ functions if all the text being accessed has this property.  */);
   DEFVAR_LISP ("operating-system-release", Voperating_system_release,
 	       doc: /* The release of the operating system Emacs is running on.  */);
 
-  defsubr (&Sbuffer_substring);
-  defsubr (&Sbuffer_substring_no_properties);
   defsubr (&Sget_pos_property);
 
   /* Symbol for the text property used to mark fields.  */

@@ -9,7 +9,7 @@ use libc::{c_int, c_uchar, ptrdiff_t};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::current_buffer,
+    buffers::{current_buffer, validate_region},
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::progn,
@@ -28,7 +28,7 @@ use crate::{
     remacs_sys::{
         buffer_overflow, build_string, current_message, downcase, find_before_next_newline,
         find_newline, get_char_property_and_overlay, globals, insert, insert_and_inherit,
-        insert_from_buffer, make_buffer_string_both, make_save_obj_obj_obj_obj,
+        insert_from_buffer, make_buffer_string, make_buffer_string_both, make_save_obj_obj_obj_obj,
         make_string_from_bytes, maybe_quit, message1, message3, record_unwind_current_buffer,
         record_unwind_protect, save_excursion_restore, save_restriction_restore,
         save_restriction_save, scan_newline_from_point, set_buffer_internal_1, set_point,
@@ -1101,6 +1101,33 @@ pub fn buffer_string() -> LispObject {
     let zv_byte = cur_buf.zv_byte;
 
     unsafe { make_buffer_string_both(begv, begv_byte, zv, zv_byte, true) }
+}
+
+/// Return the contents of part of the current buffer as a string.
+/// The two arguments START and END are character positions;
+/// they can be in either order.
+/// The string returned is multibyte if the buffer is multibyte.
+///
+/// This function copies the text properties of that part of the buffer
+/// into the result string; if you don't want the text properties,
+/// use `buffer-substring-no-properties' instead.
+#[lisp_fn]
+pub fn buffer_substring(mut beg: LispObject, mut end: LispObject) -> LispObject {
+    unsafe { validate_region(&mut beg, &mut end) };
+    let b = beg.as_fixnum_or_error();
+    let e = end.as_fixnum_or_error();
+    unsafe { make_buffer_string(b as isize, e as isize, true) }
+}
+
+/// Return the characters of part of the buffer, without the text properties.
+/// The two arguments START and END are character positions;
+/// they can be in either order.
+#[lisp_fn]
+pub fn buffer_substring_no_properties(mut beg: LispObject, mut end: LispObject) -> LispObject {
+    unsafe { validate_region(&mut beg, &mut end) };
+    let b = beg.as_fixnum_or_error();
+    let e = end.as_fixnum_or_error();
+    unsafe { make_buffer_string(b as isize, e as isize, false) }
 }
 
 // Save current buffer state for `save-excursion' special form.
