@@ -1742,7 +1742,10 @@ NOPROMPT, if non-nil, means not to prompt the user."
 	   (file (or (diff-find-file-name other noprompt)
                      (error "Can't find the file")))
 	   (revision (and other diff-vc-backend
-                          (nth (if reverse 1 0) diff-vc-revisions)))
+                          (if reverse (nth 1 diff-vc-revisions)
+                            (or (nth 0 diff-vc-revisions)
+                                ;; When diff shows changes in working revision
+                                (vc-working-revision file)))))
 	   (buf (if revision
                     (let ((vc-find-revision-no-save t))
                       (vc-find-revision file revision diff-vc-backend))
@@ -1883,13 +1886,13 @@ revision of the file otherwise."
   ;; This is a convenient detail when using smerge-diff.
   (if event (posn-set-point (event-end event)))
   (let ((buffer (when event (current-buffer)))
-        (rev (not (save-excursion (beginning-of-line) (looking-at "[-<]")))))
+        (reverse (not (save-excursion (beginning-of-line) (looking-at "[-<]")))))
     (pcase-let ((`(,buf ,line-offset ,pos ,src ,_dst ,switched)
-                 (diff-find-source-location other-file rev)))
+                 (diff-find-source-location other-file reverse)))
       (pop-to-buffer buf)
       (goto-char (+ (car pos) (cdr src)))
       (when buffer (next-error-found buffer (current-buffer)))
-      (diff-hunk-status-msg line-offset (diff-xor rev switched) t))))
+      (diff-hunk-status-msg line-offset (diff-xor reverse switched) t))))
 
 
 (defun diff-current-defun ()
