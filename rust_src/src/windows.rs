@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     editfns::{goto_char, point},
-    frames::{frame_live_or_selected, LispFrameOrSelected},
+    frames::{LispFrameOrSelected, LispFrameRef},
     interactive::prefix_numeric_value,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
@@ -622,8 +622,8 @@ pub fn window_frame(window: LispWindowValidOrSelected) -> LispObject {
 /// Return the minibuffer window for frame FRAME.
 /// If FRAME is omitted or nil, it defaults to the selected frame.
 #[lisp_fn(min = "0")]
-pub fn minibuffer_window(frame: LispObject) -> LispObject {
-    let frame = frame_live_or_selected(frame);
+pub fn minibuffer_window(frame: LispFrameOrSelected) -> LispObject {
+    let frame = frame.live_or_error();
     frame.minibuffer_window
 }
 
@@ -748,14 +748,14 @@ pub fn window_list(
 ) -> LispObject {
     let w_obj = match window {
         Some(w) => w.as_lisp_obj(),
-        None => frame.unwrap().selected_window,
+        None => LispFrameRef::from(frame).selected_window,
     };
-
-    let f_obj = LispObject::from(frame);
 
     let w_ref = w_obj
         .as_window()
         .unwrap_or_else(|| panic!("Invalid window reference."));
+
+    let f_obj = LispObject::from(frame);
 
     if !f_obj.eq(w_ref.frame) {
         error!("Window is on a different frame");

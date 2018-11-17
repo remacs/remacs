@@ -5,8 +5,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
-    remacs_sys::Vframe_list,
-    remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
+    remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
     windows::{select_window_lisp, selected_window, LispWindowRef},
@@ -83,6 +82,7 @@ impl LispObject {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum LispFrameOrSelected {
     Frame(LispFrameRef),
     Selected,
@@ -98,36 +98,28 @@ impl From<LispObject> for LispFrameOrSelected {
 
 impl From<LispFrameOrSelected> for LispObject {
     fn from(frame: LispFrameOrSelected) -> LispObject {
-        frame.unwrap().into()
+        LispFrameRef::from(frame).into()
     }
 }
 
-impl LispFrameOrSelected {
-    pub fn live_or_error(self) -> LispFrameRef {
-        let frame = self.unwrap();
-        if frame.is_live() {
-            frame
-        } else {
-            wrong_type!(Qframe_live_p, self.into());
-        }
-    }
-
-    pub fn unwrap(self) -> LispFrameRef {
-        match self {
+impl From<LispFrameOrSelected> for LispFrameRef {
+    fn from(frame: LispFrameOrSelected) -> LispFrameRef {
+        match frame {
             LispFrameOrSelected::Frame(f) => f,
             LispFrameOrSelected::Selected => unsafe { current_frame }.as_frame_or_error(),
         }
     }
 }
 
-/// Same as the `decode_any_frame` function
-pub fn frame_or_selected(object: LispObject) -> LispFrameRef {
-    LispFrameOrSelected::from(object).unwrap()
-}
-
-/// Same as the `decode_live_frame` function
-pub fn frame_live_or_selected(object: LispObject) -> LispFrameRef {
-    LispFrameOrSelected::from(object).live_or_error()
+impl LispFrameOrSelected {
+    pub fn live_or_error(self) -> LispFrameRef {
+        let frame = LispFrameRef::from(self);
+        if frame.is_live() {
+            frame
+        } else {
+            wrong_type!(Qframe_live_p, self.into());
+        }
+    }
 }
 
 pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
@@ -253,7 +245,7 @@ pub fn set_frame_selected_window(
 /// predicates which report frame's specific UI-related capabilities.
 #[lisp_fn(min = "0")]
 pub fn window_system(frame: LispFrameOrSelected) -> LispObject {
-    let frame = frame.unwrap();
+    let frame = frame.into();
     let window_system = framep_1(frame);
 
     match window_system {
@@ -302,7 +294,7 @@ pub fn frame_position(frame: LispFrameOrSelected) -> LispObject {
 /// This is useful when `make-pointer-invisible` is set
 #[lisp_fn(min = "0")]
 pub fn frame_pointer_visible_p(frame: LispFrameOrSelected) -> bool {
-    let frame_ref = frame.unwrap();
+    let frame_ref: LispFrameRef = frame.into();
     !frame_ref.pointer_invisible()
 }
 
@@ -336,61 +328,71 @@ pub fn frame_first_window(frame_or_window: LispObject) -> LispWindowRef {
 /// Return width in columns of FRAME's text area.
 #[lisp_fn(min = "0")]
 pub fn frame_text_cols(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().text_cols
+    let frame: LispFrameRef = frame.into();
+    frame.text_cols
 }
 
 /// Return height in lines of FRAME's text area.
 #[lisp_fn(min = "0")]
 pub fn frame_text_lines(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().text_lines
+    let frame: LispFrameRef = frame.into();
+    frame.text_lines
 }
 
 /// Return number of total columns of FRAME.
 #[lisp_fn(min = "0")]
 pub fn frame_total_cols(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().total_cols
+    let frame: LispFrameRef = frame.into();
+    frame.total_cols
 }
 
 /// Return number of total lines of FRAME.
 #[lisp_fn(min = "0")]
 pub fn frame_total_lines(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().total_lines
+    let frame: LispFrameRef = frame.into();
+    frame.total_lines
 }
 
 /// Return text area width of FRAME in pixels.
 #[lisp_fn(min = "0")]
 pub fn frame_text_width(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().text_width
+    let frame: LispFrameRef = frame.into();
+    frame.text_width
 }
 
 /// Return text area height of FRAME in pixels.
 #[lisp_fn(min = "0")]
 pub fn frame_text_height(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().text_height
+    let frame: LispFrameRef = frame.into();
+    frame.text_height
 }
 
 /// Return fringe width of FRAME in pixels.
 #[lisp_fn(min = "0")]
 pub fn frame_fringe_width(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().total_fringe_width()
+    let frame: LispFrameRef = frame.into();
+    frame.total_fringe_width()
 }
 
 /// Return width of FRAME's internal border in pixels.
 #[lisp_fn(min = "0")]
 pub fn frame_internal_border_width(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().internal_border_width()
+    let frame: LispFrameRef = frame.into();
+    frame.internal_border_width()
 }
 
 /// Return width (in pixels) of vertical window dividers on FRAME.
 #[lisp_fn(min = "0")]
 pub fn frame_right_divider_width(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().right_divider_width
+    let frame: LispFrameRef = frame.into();
+    frame.right_divider_width
 }
 
 /// Return width (in pixels) of horizontal window dividers on FRAME.
 #[lisp_fn(min = "0")]
 pub fn frame_bottom_divider_width(frame: LispFrameOrSelected) -> i32 {
-    frame.unwrap().bottom_divider_width
+    let frame: LispFrameRef = frame.into();
+    frame.bottom_divider_width
 }
 
 /// Delete FRAME, permanently eliminating it from use.
@@ -410,93 +412,6 @@ pub fn delete_frame_lisp(frame: LispObject, force: bool) {
     unsafe {
         c_delete_frame(frame, force.into());
     }
-}
-
-/// Return the next frame in the frame list after FRAME.
-/// It considers only frames on the same terminal as FRAME.
-/// By default, skip minibuffer-only frames.
-/// If omitted, FRAME defaults to the selected frame.
-/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
-/// If MINIFRAME is a window, include only its own frame
-/// and any frame now using that window as the minibuffer.
-/// If MINIFRAME is `visible', include all visible frames.
-/// If MINIFRAME is 0, include all visible and iconified frames.
-/// Otherwise, include all frames.
-#[lisp_fn(min = "0", name = "next-frame", c_name = "next_frame")]
-pub fn next_frame_lisp(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
-    let frame = frame.live_or_error();
-    next_frame(frame, miniframe)
-}
-
-// Return the next frame in the frame list after FRAME.
-fn next_frame(frame: LispFrameRef, minibuf: LispObject) -> LispFrameRef {
-    let mut passed = 0;
-
-    while passed < 2 {
-        for f in Vframe_list.iter_cars_unchecked() {
-            let f = f.as_frame_or_error();
-            if passed > 0 {
-                if let Some(candidate) = candidate_frame_rust(f, frame, minibuf) {
-                    return candidate;
-                }
-            }
-            if frame == f {
-                passed += 1;
-            }
-        }
-    }
-
-    frame
-}
-
-/// Return the previous frame in the frame list before FRAME.
-/// It considers only frames on the same terminal as FRAME.
-/// By default, skip minibuffer-only frames.
-/// If omitted, FRAME defaults to the selected frame.
-/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
-/// If MINIFRAME is a window, include only its own frame
-/// and any frame now using that window as the minibuffer.
-/// If MINIFRAME is `visible', include all visible frames.
-/// If MINIFRAME is 0, include all visible and iconified frames.
-/// Otherwise, include all frames.
-#[lisp_fn(min = "0")]
-pub fn previous_frame_lisp(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
-    let frame = frame.live_or_error();
-
-    // We've scanned the entire list.
-    match prev_frame(frame, miniframe) {
-        // There were no acceptable frames in the list before FRAME; otherwise,
-        // we would have returned directly from the loop.  Since PREV is the last
-        // acceptable frame in the list, return it.
-        Some(f) => f,
-
-        // We went through the whole frame list without finding a single
-        // acceptable frame.  Return the original frame.
-        None => frame,
-    }
-}
-
-fn prev_frame(frame: LispFrameRef, minibuf: LispObject) -> Option<LispFrameRef> {
-    let mut prev: Option<LispFrameRef> = None;
-
-    for f in Vframe_list.iter_cars_unchecked() {
-        let f = f.as_frame_or_error();
-        if frame == f && prev.is_some() {
-            return prev;
-        }
-
-        prev = candidate_frame_rust(f, frame, minibuf);
-    }
-
-    prev
-}
-
-pub fn candidate_frame_rust(
-    candidate: LispFrameRef,
-    frame: LispFrameRef,
-    minibuf: LispObject,
-) -> Option<LispFrameRef> {
-    unsafe { candidate_frame(candidate.into(), frame.into(), minibuf) }.as_frame()
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
