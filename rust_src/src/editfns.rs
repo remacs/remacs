@@ -26,13 +26,13 @@ use crate::{
     numbers::LispNumber,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        buffer_overflow, build_string, current_message, downcase, find_before_next_newline,
-        find_newline, get_char_property_and_overlay, globals, insert, insert_and_inherit,
-        insert_from_buffer, make_buffer_string_both, make_save_obj_obj_obj_obj,
-        make_string_from_bytes, maybe_quit, message1, record_unwind_current_buffer,
-        record_unwind_protect, save_excursion_restore, save_restriction_restore,
-        save_restriction_save, scan_newline_from_point, set_buffer_internal_1, set_point,
-        set_point_both, unbind_to, update_buffer_properties,
+        buffer_overflow, build_string, current_message, del_range, downcase,
+        find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
+        insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
+        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1,
+        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, unbind_to, update_buffer_properties,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fformat_message, Fget_pos_property,
@@ -1020,9 +1020,8 @@ pub fn save_restriction(body: LispObject) -> LispObject {
     unsafe { unbind_to(count, progn(body)) }
 }
 
-// Find the field surrounding POS in *BEG and *END.  If POS is nil,
-// the value of point is used instead.  If BEG or END is null,
-// means don't store the beginning or end of the field.
+// Find the field surrounding POS in BEG and END.  If POS is nil,
+// the value of point is used instead.
 //
 // BEG_LIMIT and END_LIMIT serve to limit the ranged of the returned
 // results; they do not effect boundary behavior.
@@ -1036,30 +1035,6 @@ pub fn save_restriction(body: LispObject) -> LispObject {
 // value `boundary', and POS lies within it, then the two separated
 // fields are considered to be adjacent, and POS between them, when
 // finding the beginning and ending of the "merged" field.
-//
-// Either BEG or END may be 0, in which case the corresponding value
-// is not stored.
-
-#[no_mangle]
-pub extern "C" fn find_field(
-    pos: LispObject,
-    merge_at_boundary: LispObject,
-    beg_limit: LispObject,
-    beg: *mut ptrdiff_t,
-    end_limit: LispObject,
-    end: *mut ptrdiff_t,
-) {
-    let (b, e) = rust_find_field(pos.into(), merge_at_boundary.into(), beg_limit, end_limit);
-
-    unsafe {
-        if !beg.is_null() {
-            *beg = b;
-        }
-        if !end.is_null() {
-            *end = e;
-        }
-    }
-}
 
 pub fn rust_find_field(
     pos: Option<LispNumber>,
@@ -1165,6 +1140,35 @@ pub fn rust_find_field(
 
         (beg, end)
     }
+}
+
+/// Delete the field surrounding POS.
+/// A field is a region of text with the same `field' property.
+/// If POS is nil, the value of point is used for POS.
+#[lisp_fn(min = "0")]
+pub fn delete_field(pos: LispNumber) {
+    let (beg, end) = rust_find_field(Some(pos), false, Qnil, Qnil);
+    if beg != end {
+        unsafe { del_range(beg, end) };
+    }
+}
+
+/// Return the contents of the field surrounding POS as a string.
+/// A field is a region of text with the same `field' property.
+/// If POS is nil, the value of point is used for POS.
+#[lisp_fn(min = "0")]
+pub fn field_string(pos: LispNumber) -> LispObject {
+    let (beg, end) = rust_find_field(Some(pos), false, Qnil, Qnil);
+    unsafe { make_buffer_string(beg, end, 1) }
+}
+
+/// Return the contents of the field around POS, without text properties.
+/// A field is a region of text with the same `field' property.
+/// If POS is nil, the value of point is used for POS.
+#[lisp_fn(min = "0")]
+pub fn field_string_no_properties(pos: LispNumber) -> LispObject {
+    let (beg, end) = rust_find_field(Some(pos), false, Qnil, Qnil);
+    unsafe { make_buffer_string(beg, end, 0) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
