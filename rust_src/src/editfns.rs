@@ -1033,12 +1033,12 @@ pub fn find_field(
     end_limit: Option<EmacsInt>,
 ) -> (ptrdiff_t, ptrdiff_t) {
     let current_buffer = ThreadState::current_buffer();
-    let pos = pos.map_or(current_buffer.pt as EmacsInt, |p| p.to_fixnum());
+    let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as ptrdiff_t);
 
     // Fields right before and after the point.
     let after_field =
         unsafe { get_char_property_and_overlay(pos.into(), Qfield, Qnil, ptr::null_mut()) };
-    let before_field = if pos > current_buffer.begv as EmacsInt {
+    let before_field = if pos > current_buffer.begv {
         unsafe { get_char_property_and_overlay((pos - 1).into(), Qfield, Qnil, ptr::null_mut()) }
     } else {
         // Using nil here would be a more obvious choice, but it would
@@ -1101,7 +1101,7 @@ pub fn find_field(
         let beg = if at_field_start {
             // POS is at the edge of a field, and we should consider it as
             // the beginning of the following field.
-            pos as isize
+            pos
         } else {
             let mut p = pos.into();
             let limit = beg_limit.into();
@@ -1117,7 +1117,7 @@ pub fn find_field(
         let end = if at_field_end {
             // POS is at the edge of a field, and we should consider it as
             // the end of the previous field.
-            pos as isize
+            pos
         } else {
             let mut p = pos.into();
             let limit = end_limit.into();
