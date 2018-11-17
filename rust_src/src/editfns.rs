@@ -683,10 +683,11 @@ pub fn constrain_to_field(
     // It is possible that NEW_POS is not within the same field as
     // OLD_POS; try to move NEW_POS so that it is.
     {
+        let tmp: LispNumber = old_pos.into();
         let field_bound = if fwd {
-            field_end(Some(old_pos), escape_from_edge, Some(new_pos))
+            field_end(Some(tmp), escape_from_edge, Some(new_pos))
         } else {
-            field_beginning(Some(old_pos), escape_from_edge, Some(new_pos))
+            field_beginning(Some(tmp), escape_from_edge, Some(new_pos))
         };
 
         let should_constrain = if field_bound < new_pos { fwd } else { !fwd };
