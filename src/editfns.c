@@ -460,41 +460,6 @@ at POSITION.  */)
 }
 
 
-DEFUN ("delete-field", Fdelete_field, Sdelete_field, 0, 1, 0,
-       doc: /* Delete the field surrounding POS.
-A field is a region of text with the same `field' property.
-If POS is nil, the value of point is used for POS.  */)
-  (Lisp_Object pos)
-{
-  ptrdiff_t beg, end;
-  find_field (pos, Qnil, Qnil, &beg, Qnil, &end);
-  if (beg != end)
-    del_range (beg, end);
-  return Qnil;
-}
-
-DEFUN ("field-string", Ffield_string, Sfield_string, 0, 1, 0,
-       doc: /* Return the contents of the field surrounding POS as a string.
-A field is a region of text with the same `field' property.
-If POS is nil, the value of point is used for POS.  */)
-  (Lisp_Object pos)
-{
-  ptrdiff_t beg, end;
-  find_field (pos, Qnil, Qnil, &beg, Qnil, &end);
-  return make_buffer_string (beg, end, 1);
-}
-
-DEFUN ("field-string-no-properties", Ffield_string_no_properties, Sfield_string_no_properties, 0, 1, 0,
-       doc: /* Return the contents of the field around POS, without text properties.
-A field is a region of text with the same `field' property.
-If POS is nil, the value of point is used for POS.  */)
-  (Lisp_Object pos)
-{
-  ptrdiff_t beg, end;
-  find_field (pos, Qnil, Qnil, &beg, Qnil, &end);
-  return make_buffer_string (beg, end, 0);
-}
-
 
 /* Restore saved buffer before leaving `save-excursion' special form.  */
 
@@ -4083,10 +4048,6 @@ functions if all the text being accessed has this property.  */);
 
   /* A special value for Qfield properties.  */
   DEFSYM (Qboundary, "boundary");
-
-  defsubr (&Sfield_string);
-  defsubr (&Sfield_string_no_properties);
-  defsubr (&Sdelete_field);
 
   defsubr (&Sinsert);
   defsubr (&Sinsert_before_markers);
