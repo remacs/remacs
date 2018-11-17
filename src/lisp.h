@@ -3990,6 +3990,7 @@ extern void syms_of_module (void);
 extern void mark_threads (void);
 
 /* Defined in editfns.c.  */
+extern Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 extern void insert1 (Lisp_Object);
 extern Lisp_Object save_excursion_save (void);
 extern Lisp_Object save_restriction_save (void);
