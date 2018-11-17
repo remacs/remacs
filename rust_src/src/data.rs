@@ -534,7 +534,7 @@ pub unsafe extern "C" fn do_symval_forwarding(valcontents: *const Lisp_Fwd) -> L
             // last-command and real-last-command, and people may rely on
             // that.  I took a quick look at the Lisp codebase, and I
             // don't think anything will break.  --lorentey
-            let frame = selected_frame().as_frame_or_error();
+            let frame = selected_frame();
             if !frame.is_live() {
                 emacs_abort();
             }
@@ -594,7 +594,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
             *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
         }
         Lisp_Fwd_Kboard_Obj => {
-            let frame = selected_frame().as_frame_or_error();
+            let frame = selected_frame();
             if !frame.is_live() {
                 emacs_abort();
             }
