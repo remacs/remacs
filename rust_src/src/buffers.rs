@@ -1077,7 +1077,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     loop {
         let suffix = mock_unibyte_string!(format!("<{}>", suffix_count));
         let candidate = unsafe { concat2(basename, suffix) };
-        let buf = get_buffer(LispBufferOrName::Buffer(candidate));
+        let buf = get_buffer(LispBufferOrName::Name(candidate));
         if buf.is_none() || string_equal(candidate, ignore) {
             return candidate.into();
         }
