@@ -540,70 +540,6 @@ restore_symbol_trapped_write (Lisp_Object symbol)
   set_symbol_trapped_write (symbol, SYMBOL_TRAPPED_WRITE);
 }
 
-static void
-harmonize_variable_watchers (Lisp_Object alias, Lisp_Object base_variable)
-{
-  if (!EQ (base_variable, alias)
-      && EQ (base_variable, Findirect_variable (alias)))
-    set_symbol_trapped_write
-      (alias, XSYMBOL (base_variable)->u.s.trapped_write);
-}
-
-DEFUN ("add-variable-watcher", Fadd_variable_watcher, Sadd_variable_watcher,
-       2, 2, 0,
-       doc: /* Cause WATCH-FUNCTION to be called when SYMBOL is set.
-
-It will be called with 4 arguments: (SYMBOL NEWVAL OPERATION WHERE).
-SYMBOL is the variable being changed.
-NEWVAL is the value it will be changed to.
-OPERATION is a symbol representing the kind of change, one of: `set',
-`let', `unlet', `makunbound', and `defvaralias'.
-WHERE is a buffer if the buffer-local value of the variable being
-changed, nil otherwise.
-
-All writes to aliases of SYMBOL will call WATCH-FUNCTION too.  */)
-  (Lisp_Object symbol, Lisp_Object watch_function)
-{
-  symbol = Findirect_variable (symbol);
-  set_symbol_trapped_write (symbol, SYMBOL_TRAPPED_WRITE);
-  map_obarray (Vobarray, harmonize_variable_watchers, symbol);
-
-  Lisp_Object watchers = Fget (symbol, Qwatchers);
-  Lisp_Object member = Fmember (watch_function, watchers);
-  if (NILP (member))
-    Fput (symbol, Qwatchers, Fcons (watch_function, watchers));
-  return Qnil;
-}
-
-DEFUN ("remove-variable-watcher", Fremove_variable_watcher, Sremove_variable_watcher,
-       2, 2, 0,
-       doc: /* Undo the effect of `add-variable-watcher'.
-Remove WATCH-FUNCTION from the list of functions to be called when
-SYMBOL (or its aliases) are set.  */)
-  (Lisp_Object symbol, Lisp_Object watch_function)
-{
-  symbol = Findirect_variable (symbol);
-  Lisp_Object watchers = Fget (symbol, Qwatchers);
-  watchers = Fdelete (watch_function, watchers);
-  if (NILP (watchers))
-    {
-      set_symbol_trapped_write (symbol, SYMBOL_UNTRAPPED_WRITE);
-      map_obarray (Vobarray, harmonize_variable_watchers, symbol);
-    }
-  Fput (symbol, Qwatchers, watchers);
-  return Qnil;
-}
-
-DEFUN ("get-variable-watchers", Fget_variable_watchers, Sget_variable_watchers,
-       1, 1, 0,
-       doc: /* Return a list of SYMBOL's active watchers.  */)
-  (Lisp_Object symbol)
-{
-  return (SYMBOL_TRAPPED_WRITE_P (symbol) == SYMBOL_TRAPPED_WRITE)
-    ? Fget (Findirect_variable (symbol), Qwatchers)
-    : Qnil;
-}
-
 void
 notify_variable_watchers (Lisp_Object symbol,
                           Lisp_Object newval,
@@ -1738,18 +1674,6 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
 }
 
 
-DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
-       doc: /* Return population count of VALUE.
-This is the number of one bits in the two's complement representation
-of VALUE.  If VALUE is negative, return the number of zero bits in the
-representation.  */)
-  (Lisp_Object value)
-{
-  CHECK_NUMBER (value);
-  EMACS_INT v = XINT (value) < 0 ? -1 - XINT (value) : XINT (value);
-  return make_number (rust_count_one_bits(v));
-}
-
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
@@ -2274,7 +2198,6 @@ syms_of_data (void)
 #endif
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
-  defsubr (&Slogcount);
   defsubr (&Slsh);
   defsubr (&Sash);
 #ifdef HAVE_MODULES
@@ -2304,7 +2227,4 @@ This variable cannot be set; trying to do so will signal an error.  */);
   DEFSYM (Qunlet, "unlet");
   DEFSYM (Qset, "set");
   DEFSYM (Qset_default, "set-default");
-  defsubr (&Sadd_variable_watcher);
-  defsubr (&Sremove_variable_watcher);
-  defsubr (&Sget_variable_watchers);
 }

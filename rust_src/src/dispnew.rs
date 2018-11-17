@@ -6,8 +6,8 @@ use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    frames::{frame_live_or_selected, LispFrameRef},
-    lisp::{defsubr, ExternalPtr, LispObject},
+    frames::{LispFrameOrSelected, LispFrameRef},
+    lisp::{defsubr, ExternalPtr},
     remacs_sys::{
         clear_current_matrices, dtotimespec, fset_redisplay, mark_window_display_accurate,
         timespec_add, timespec_sub, wait_reading_process_output,
@@ -26,7 +26,7 @@ pub type LispGlyphRef = ExternalPtr<Lisp_Glyph>;
 /// additional wait period, in milliseconds; this is for backwards compatibility.
 /// (Not all operating systems support waiting for a fraction of a second.)
 #[lisp_fn(min = "1")]
-pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> () {
+pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) {
     let duration = seconds + (milliseconds.unwrap_or(0) as f64 / 1000.0);
     if duration > 0.0 {
         let mut t = unsafe { dtotimespec(duration) };
@@ -52,28 +52,30 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> () {
 		    Redrawing Frames
 **********************************************************************/
 
-/// Redraw frame F.
+/// Redraw frame FRAME.
 #[no_mangle]
-pub unsafe extern "C" fn redraw_frame(mut f: LispFrameRef) {
-    // Error if F has no glyphs.
-    debug_assert!(f.glyphs_initialized_p());
-    update_begin(f);
-    clear_frame(f);
-    clear_current_matrices(f.as_mut());
-    update_end(f);
-    fset_redisplay(f.as_mut());
-    // Mark all windows as inaccurate, so that every window will have
-    // its redisplay done.
-    mark_window_display_accurate(f.root_window, false);
-    set_window_update_flags(f.root_window.as_window_or_error(), true);
-    f.set_garbaged(false);
+pub extern "C" fn redraw_frame(mut frame: LispFrameRef) {
+    unsafe {
+        // Error if FRAME has no glyphs.
+        debug_assert!(frame.glyphs_initialized_p());
+        update_begin(frame);
+        clear_frame(frame);
+        clear_current_matrices(frame.as_mut());
+        update_end(frame);
+        fset_redisplay(frame.as_mut());
+        // Mark all windows as inaccurate, so that every window will have
+        // its redisplay done.
+        mark_window_display_accurate(frame.root_window, false);
+        set_window_update_flags(frame.root_window.as_window_or_error(), true);
+        frame.set_garbaged(false);
+    }
 }
 
 /// Clear frame FRAME and output again what is supposed to appear on it.
 /// If FRAME is omitted or nil, the selected frame is used.
 #[lisp_fn(c_name = "redraw_frame", name = "redraw-frame", min = "0")]
-pub fn redraw_frame_lisp(frame: LispObject) {
-    unsafe { redraw_frame(frame_live_or_selected(frame)) };
+pub fn redraw_frame_lisp(frame: LispFrameOrSelected) {
+    redraw_frame(frame.live_or_error());
 }
 
 /// Clear and redisplay all visible frames.
@@ -83,7 +85,7 @@ pub fn redraw_display() {
         .iter_cars()
         .map(|f| f.as_frame_or_error())
         .filter(|f| f.visible() != 0)
-        .for_each(|f| unsafe { redraw_frame(f) })
+        .for_each(|f| redraw_frame(f))
 }
 
 /// Set WINDOW->must_be_updated_p to ON_P for all windows in

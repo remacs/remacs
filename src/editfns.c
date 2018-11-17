@@ -56,6 +56,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "composite.h"
 #include "intervals.h"
+#include "ptr-bounds.h"
 #include "character.h"
 #include "buffer.h"
 #include "coding.h"
@@ -456,138 +457,6 @@ at POSITION.  */)
 	else
 	  return Qnil;
       }
-    }
-}
-
-/* Find the field surrounding POS in *BEG and *END.  If POS is nil,
-   the value of point is used instead.  If BEG or END is null,
-   means don't store the beginning or end of the field.
-
-   BEG_LIMIT and END_LIMIT serve to limit the ranged of the returned
-   results; they do not effect boundary behavior.
-
-   If MERGE_AT_BOUNDARY is non-nil, then if POS is at the very first
-   position of a field, then the beginning of the previous field is
-   returned instead of the beginning of POS's field (since the end of a
-   field is actually also the beginning of the next input field, this
-   behavior is sometimes useful).  Additionally in the MERGE_AT_BOUNDARY
-   non-nil case, if two fields are separated by a field with the special
-   value `boundary', and POS lies within it, then the two separated
-   fields are considered to be adjacent, and POS between them, when
-   finding the beginning and ending of the "merged" field.
-
-   Either BEG or END may be 0, in which case the corresponding value
-   is not stored.  */
-
-void
-find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
-	    Lisp_Object beg_limit,
-	    ptrdiff_t *beg, Lisp_Object end_limit, ptrdiff_t *end)
-{
-  /* Fields right before and after the point.  */
-  Lisp_Object before_field, after_field;
-  /* True if POS counts as the start of a field.  */
-  bool at_field_start = 0;
-  /* True if POS counts as the end of a field.  */
-  bool at_field_end = 0;
-
-  if (NILP (pos))
-    XSETFASTINT (pos, PT);
-  else
-    CHECK_NUMBER_COERCE_MARKER (pos);
-
-  after_field
-    = get_char_property_and_overlay (pos, Qfield, Qnil, NULL);
-  before_field
-    = (XFASTINT (pos) > BEGV
-       ? get_char_property_and_overlay (make_number (XINT (pos) - 1),
-					Qfield, Qnil, NULL)
-       /* Using nil here would be a more obvious choice, but it would
-          fail when the buffer starts with a non-sticky field.  */
-       : after_field);
-
-  /* See if we need to handle the case where MERGE_AT_BOUNDARY is nil
-     and POS is at beginning of a field, which can also be interpreted
-     as the end of the previous field.  Note that the case where if
-     MERGE_AT_BOUNDARY is non-nil (see function comment) is actually the
-     more natural one; then we avoid treating the beginning of a field
-     specially.  */
-  if (NILP (merge_at_boundary))
-    {
-      Lisp_Object field = Fget_pos_property (pos, Qfield, Qnil);
-      if (!EQ (field, after_field))
-	at_field_end = 1;
-      if (!EQ (field, before_field))
-	at_field_start = 1;
-      if (NILP (field) && at_field_start && at_field_end)
-	/* If an inserted char would have a nil field while the surrounding
-	   text is non-nil, we're probably not looking at a
-	   zero-length field, but instead at a non-nil field that's
-	   not intended for editing (such as comint's prompts).  */
-	at_field_end = at_field_start = 0;
-    }
-
-  /* Note about special `boundary' fields:
-
-     Consider the case where the point (`.') is between the fields `x' and `y':
-
-	xxxx.yyyy
-
-     In this situation, if merge_at_boundary is non-nil, consider the
-     `x' and `y' fields as forming one big merged field, and so the end
-     of the field is the end of `y'.
-
-     However, if `x' and `y' are separated by a special `boundary' field
-     (a field with a `field' char-property of 'boundary), then ignore
-     this special field when merging adjacent fields.  Here's the same
-     situation, but with a `boundary' field between the `x' and `y' fields:
-
-	xxx.BBBByyyy
-
-     Here, if point is at the end of `x', the beginning of `y', or
-     anywhere in-between (within the `boundary' field), merge all
-     three fields and consider the beginning as being the beginning of
-     the `x' field, and the end as being the end of the `y' field.  */
-
-  if (beg)
-    {
-      if (at_field_start)
-	/* POS is at the edge of a field, and we should consider it as
-	   the beginning of the following field.  */
-	*beg = XFASTINT (pos);
-      else
-	/* Find the previous field boundary.  */
-	{
-	  Lisp_Object p = pos;
-	  if (!NILP (merge_at_boundary) && EQ (before_field, Qboundary))
-	    /* Skip a `boundary' field.  */
-	    p = Fprevious_single_char_property_change (p, Qfield, Qnil,
-						       beg_limit);
-
-	  p = Fprevious_single_char_property_change (p, Qfield, Qnil,
-						     beg_limit);
-	  *beg = NILP (p) ? BEGV : XFASTINT (p);
-	}
-    }
-
-  if (end)
-    {
-      if (at_field_end)
-	/* POS is at the edge of a field, and we should consider it as
-	   the end of the previous field.  */
-	*end = XFASTINT (pos);
-      else
-	/* Find the next field boundary.  */
-	{
-	  if (!NILP (merge_at_boundary) && EQ (after_field, Qboundary))
-	    /* Skip a `boundary' field.  */
-	    pos = Fnext_single_char_property_change (pos, Qfield, Qnil,
-						     end_limit);
-
-	  pos = Fnext_single_char_property_change (pos, Qfield, Qnil,
-						   end_limit);
-	  *end = NILP (pos) ? ZV : XFASTINT (pos);
-	}
     }
 }
 
@@ -2996,9 +2865,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   ptrdiff_t nspec_bound = SCHARS (args[0]) >> 1;
 
   /* Allocate the info and discarded tables.  */
-  ptrdiff_t alloca_size;
-  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &alloca_size)
-      || INT_ADD_WRAPV (formatlen, alloca_size, &alloca_size)
+  ptrdiff_t info_size, alloca_size;
+  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &info_size)
+      || INT_ADD_WRAPV (formatlen, info_size, &alloca_size)
       || SIZE_MAX < alloca_size)
     memory_full (SIZE_MAX);
   info = SAFE_ALLOCA (alloca_size);
@@ -3006,6 +2875,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
      string was not copied into the output.
      It is 2 if byte I was not the first byte of its character.  */
   char *discarded = (char *) &info[nspec_bound];
+  info = ptr_bounds_clip (info, info_size);
+  discarded = ptr_bounds_clip (discarded, formatlen);
   memset (discarded, 0, formatlen);
 
   /* Try to determine whether the result should be multibyte.
@@ -3411,6 +3282,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  /* Don't use sprintf here, as it might mishandle prec.  */
 		  sprintf_buf[0] = XINT (arg);
 		  sprintf_bytes = prec != 0;
+		  sprintf_buf[sprintf_bytes] = '\0';
 		}
 	      else if (conversion == 'd' || conversion == 'i')
 		{
@@ -3510,11 +3382,19 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  char src0 = src[0];
 		  int exponent_bytes = 0;
 		  bool signedp = src0 == '-' || src0 == '+' || src0 == ' ';
-		  unsigned char after_sign = src[signedp];
-		  if (zero_flag && 0 <= char_hexdigit (after_sign))
+		  int prefix_bytes = (signedp
+				      + ((src[signedp] == '0'
+					  && (src[signedp + 1] == 'x'
+					      || src[signedp + 1] == 'X'))
+					 ? 2 : 0));
+		  if (zero_flag)
 		    {
-		      leading_zeros += padding;
-		      padding = 0;
+		      unsigned char after_prefix = src[prefix_bytes];
+		      if (0 <= char_hexdigit (after_prefix))
+			{
+			  leading_zeros += padding;
+			  padding = 0;
+			}
 		    }
 
 		  if (excess_precision
@@ -3533,13 +3413,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      nchars += padding;
 		    }
 
-		  *p = src0;
-		  src += signedp;
-		  p += signedp;
+		  memcpy (p, src, prefix_bytes);
+		  p += prefix_bytes;
+		  src += prefix_bytes;
 		  memset (p, '0', leading_zeros);
 		  p += leading_zeros;
 		  int significand_bytes
-		    = sprintf_bytes - signedp - exponent_bytes;
+		    = sprintf_bytes - prefix_bytes - exponent_bytes;
 		  memcpy (p, src, significand_bytes);
                   p += significand_bytes;
 		  src += significand_bytes;

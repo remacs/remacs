@@ -17,6 +17,7 @@ use crate::{
         pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type, CHECK_IMPURE,
     },
     remacs_sys::{Qhash_table_p, Qhash_table_test},
+    symbols::LispSymbolRef,
 };
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -288,7 +289,7 @@ pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef)
 
 /// Remove KEY from TABLE.
 #[lisp_fn]
-pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
+pub fn remhash(key: LispObject, hash_table: LispHashTableRef) {
     hash_table.check_impure(hash_table);
     hash_table.remove(key);
 }
@@ -297,7 +298,7 @@ pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
 /// FUNCTION is called with two arguments, KEY and VALUE.
 /// `maphash' always returns nil.
 #[lisp_fn]
-pub fn maphash(function: LispObject, hash_table: LispHashTableRef) -> () {
+pub fn maphash(function: LispObject, hash_table: LispHashTableRef) {
     for (key, value) in hash_table.iter() {
         call!(function, key, value);
     }
@@ -361,7 +362,11 @@ pub fn clrhash(hash_table: LispHashTableRef) -> LispHashTableRef {
 /// It should be the case that if (eq (funcall HASH x1) (funcall HASH x2))
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
-pub fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
+pub fn define_hash_table_test(
+    name: LispSymbolRef,
+    test: LispObject,
+    hash: LispObject,
+) -> LispObject {
     let sym = Qhash_table_test;
     put(name, sym, list(&[test, hash]))
 }

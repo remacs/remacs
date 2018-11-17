@@ -149,7 +149,7 @@
 (declare-function org-remove-indentation "org" (code &optional n))
 (declare-function org-show-subtree "org" ())
 (declare-function org-sort-remove-invisible "org" (S))
-(declare-function org-time-string-to-seconds "org" (s &optional zone))
+(declare-function org-time-string-to-seconds "org" (s))
 (declare-function org-timer-hms-to-secs "org-timer" (hms))
 (declare-function org-timer-item "org-timer" (&optional arg))
 (declare-function org-trim "org" (s &optional keep-lead))

@@ -2034,7 +2034,7 @@ If TIME is nil, then return the cutoff time for oldness instead."
   "Remove all instances of GROUP from `nnmail-split-history'."
   (let ((history nnmail-split-history))
     (while history
-      (setcar history (gnus-remove-if (lambda (e) (string= (car e) group))
+      (setcar history (seq-remove (lambda (e) (string= (car e) group))
 				      (car history)))
       (pop history))
     (setq nnmail-split-history (delq nil nnmail-split-history))))
