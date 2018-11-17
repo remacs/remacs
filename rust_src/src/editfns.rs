@@ -566,14 +566,11 @@ pub fn field_beginning(
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
-    let mut beg = 0;
-    rust_find_field(
+    let (beg, _) = rust_find_field(
         pos.map(LispNumber::from),
         escape_from_edge,
         LispObject::from(limit),
-        &mut beg,
         Qnil,
-        ptr::null_mut(),
     );
 
     beg as EmacsInt
@@ -592,14 +589,11 @@ pub fn field_end(
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
-    let mut end = 0;
-    rust_find_field(
+    let (_, end) = rust_find_field(
         pos.map(LispNumber::from),
         escape_from_edge,
         Qnil,
-        ptr::null_mut(),
         LispObject::from(limit),
-        &mut end,
     );
 
     end as EmacsInt
@@ -1055,24 +1049,24 @@ pub extern "C" fn find_field(
     end_limit: LispObject,
     end: *mut ptrdiff_t,
 ) {
-    rust_find_field(
-        pos.into(),
-        merge_at_boundary.into(),
-        beg_limit,
-        beg,
-        end_limit,
-        end,
-    );
+    let (b, e) = rust_find_field(pos.into(), merge_at_boundary.into(), beg_limit, end_limit);
+
+    unsafe {
+        if !beg.is_null() {
+            *beg = b;
+        }
+        if !end.is_null() {
+            *end = e;
+        }
+    }
 }
 
 pub fn rust_find_field(
     pos: Option<LispNumber>,
     merge_at_boundary: bool,
     beg_limit: LispObject,
-    beg: *mut ptrdiff_t,
     end_limit: LispObject,
-    end: *mut ptrdiff_t,
-) {
+) -> (ptrdiff_t, ptrdiff_t) {
     let current_buffer = ThreadState::current_buffer();
     let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as isize);
 
@@ -1138,42 +1132,38 @@ pub fn rust_find_field(
     // three fields and consider the beginning as being the beginning of
     // the `x' field, and the end as being the end of the `y' field.
 
-    if !beg.is_null() {
-        unsafe {
-            if at_field_start {
-                // POS is at the edge of a field, and we should consider it as
-                // the beginning of the following field.
-                *beg = pos;
-            } else {
-                let mut p = pos.into();
-                // Find the previous field boundary.
-                if merge_at_boundary && before_field.eq(Qboundary) {
-                    // Skip a `boundary' field.
-                    p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
-                }
+    unsafe {
+        let beg = if at_field_start {
+            // POS is at the edge of a field, and we should consider it as
+            // the beginning of the following field.
+            pos
+        } else {
+            let mut p = pos.into();
+            // Find the previous field boundary.
+            if merge_at_boundary && before_field.eq(Qboundary) {
+                // Skip a `boundary' field.
                 p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
-                *beg = p.as_fixnum().unwrap_or(current_buffer.begv as EmacsInt) as isize;
             }
-        }
-    }
+            p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
+            p.as_fixnum().unwrap_or(current_buffer.begv as EmacsInt) as isize
+        };
 
-    if !end.is_null() {
-        unsafe {
-            if at_field_end {
-                // POS is at the edge of a field, and we should consider it as
-                // the end of the previous field.
-                *end = pos;
-            } else {
-                let mut p = pos.into();
-                // Find the next field boundary.
-                if merge_at_boundary && after_field.eq(Qboundary) {
-                    // Skip a `boundary' field.
-                    p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
-                }
+        let end = if at_field_end {
+            // POS is at the edge of a field, and we should consider it as
+            // the end of the previous field.
+            pos
+        } else {
+            let mut p = pos.into();
+            // Find the next field boundary.
+            if merge_at_boundary && after_field.eq(Qboundary) {
+                // Skip a `boundary' field.
                 p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
-                *end = p.as_fixnum().unwrap_or(current_buffer.zv as EmacsInt) as isize;
             }
-        }
+            p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
+            p.as_fixnum().unwrap_or(current_buffer.zv as EmacsInt) as isize
+        };
+
+        (beg, end)
     }
 }
 
