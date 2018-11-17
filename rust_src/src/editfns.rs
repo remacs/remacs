@@ -1038,7 +1038,7 @@ pub fn find_field(
     // Fields right before and after the point.
     let after_field =
         unsafe { get_char_property_and_overlay(pos.into(), Qfield, Qnil, ptr::null_mut()) };
-    let before_field = if pos > current_buffer.begv {
+    let before_field = if pos > current_buffer.begv as EmacsInt {
         unsafe { get_char_property_and_overlay((pos - 1).into(), Qfield, Qnil, ptr::null_mut()) }
     } else {
         // Using nil here would be a more obvious choice, but it would
