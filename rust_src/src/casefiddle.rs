@@ -10,9 +10,9 @@ use crate::{
     lists::put,
     obarray::intern,
     remacs_sys::EmacsInt,
-    remacs_sys::{case_action, casify_object, casify_region, casify_region_nil},
+    remacs_sys::{case_action, casify_object, casify_region},
     remacs_sys::{control_x_map, initial_define_key, meta_map, scan_words, set_point},
-    remacs_sys::{Qdisabled, Qnil, Qt},
+    remacs_sys::{Qdisabled, Qt},
     symbols::symbol_value,
     threads::ThreadState,
 };
@@ -60,8 +60,8 @@ pub fn capitalize(object: LispObject) -> LispObject {
 /// programs, give two arguments, the starting and ending character
 /// positions to operate on.
 #[lisp_fn(intspec = "r")]
-pub fn capitalize_region(beg: LispObject, end: LispObject) -> LispObject {
-    unsafe { casify_region_nil(case_action::CASE_CAPITALIZE, beg, end) }
+pub fn capitalize_region(beg: LispObject, end: LispObject) {
+    unsafe { casify_region(case_action::CASE_CAPITALIZE, beg, end) };
 }
 
 /// Capitalize from point to the end of word, moving over.
@@ -94,12 +94,8 @@ pub fn downcase(object: LispObject) -> LispObject {
     min = "2",
     intspec = "(list (region-beginning) (region-end) (region-noncontiguous-p))"
 )]
-pub fn downcase_region(
-    beg: LispObject,
-    end: LispObject,
-    region_noncontiguous_p: bool,
-) -> LispObject {
-    casefiddle_region(beg, end, region_noncontiguous_p, case_action::CASE_DOWN)
+pub fn downcase_region(beg: LispObject, end: LispObject, region_noncontiguous_p: bool) {
+    casefiddle_region(beg, end, region_noncontiguous_p, case_action::CASE_DOWN);
 }
 
 /// Convert to lower case from point to end of word, moving over.
@@ -146,8 +142,8 @@ pub fn upcase_initials(obj: LispObject) -> LispObject {
 /// programs, give two arguments, the starting and ending character
 /// positions to operate on.
 #[lisp_fn(intspec = "r")]
-pub fn upcase_initials_region(beg: LispObject, end: LispObject) -> LispObject {
-    unsafe { casify_region_nil(case_action::CASE_CAPITALIZE_UP, beg, end) }
+pub fn upcase_initials_region(beg: LispObject, end: LispObject) {
+    unsafe { casify_region(case_action::CASE_CAPITALIZE_UP, beg, end) };
 }
 
 /// Convert the region to upper case.  In programs, wants two arguments.
@@ -159,8 +155,8 @@ pub fn upcase_initials_region(beg: LispObject, end: LispObject) -> LispObject {
     min = "2",
     intspec = "(list (region-beginning) (region-end) (region-noncontiguous-p))"
 )]
-pub fn upcase_region(beg: LispObject, end: LispObject, region_noncontiguous_p: bool) -> LispObject {
-    casefiddle_region(beg, end, region_noncontiguous_p, case_action::CASE_UP)
+pub fn upcase_region(beg: LispObject, end: LispObject, region_noncontiguous_p: bool) {
+    casefiddle_region(beg, end, region_noncontiguous_p, case_action::CASE_UP);
 }
 
 /// Convert to upper case from point to end of word, moving over.
@@ -182,9 +178,9 @@ fn casefiddle_region(
     end: LispObject,
     region_noncontiguous_p: bool,
     action: case_action,
-) -> LispObject {
+) {
     if !region_noncontiguous_p {
-        unsafe { casify_region_nil(action, beg, end) }
+        unsafe { casify_region(action, beg, end) };
     } else {
         let bounds = call!(
             symbol_value(intern("region-extract-function")),
@@ -193,10 +189,8 @@ fn casefiddle_region(
 
         bounds.iter_cars_unchecked().for_each(|elt| {
             let (car, cdr) = elt.as_cons_or_error().as_tuple();
-            unsafe { casify_region_nil(action, car, cdr) };
+            unsafe { casify_region(action, car, cdr) };
         });
-
-        Qnil
     }
 }
 
