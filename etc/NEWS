@@ -1065,6 +1065,9 @@ removed.
 
 * Lisp Changes in Emacs 27.1
 
++++
+** self-insert-command takes the char to insert as (optional) argument
+
 ** 'lookup-key' can take a list of keymaps as argument.
 
 +++

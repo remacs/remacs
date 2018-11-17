@@ -500,14 +500,14 @@ after point.  It leaves the mark after the inserted text.  The value
 is @code{nil}.
 @end deffn
 
-@deffn Command self-insert-command count
+@deffn Command self-insert-command count &optional char
 @cindex character insertion
 @cindex self-insertion
-This command inserts the last character typed; it does so @var{count}
-times, before point, and returns @code{nil}.  Most printing characters
-are bound to this command.  In routine use, @code{self-insert-command}
-is the most frequently called function in Emacs, but programs rarely use
-it except to install it on a keymap.
+This command inserts the character @var{char} (the last character typed);
+it does so @var{count} times, before point, and returns @code{nil}.
+Most printing characters are bound to this command.  In routine use,
+@code{self-insert-command} is the most frequently called function in Emacs,
+but programs rarely use it except to install it on a keymap.
 
 In an interactive call, @var{count} is the numeric prefix argument.
 

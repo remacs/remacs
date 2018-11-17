@@ -260,11 +260,10 @@ because it respects values of `delete-active-region' and `overwrite-mode'.  */)
   return Qnil;
 }
 
-/* Note that there's code in command_loop_1 which typically avoids
-   calling this.  */
-DEFUN ("self-insert-command", Fself_insert_command, Sself_insert_command, 1, 1, "p",
+DEFUN ("self-insert-command", Fself_insert_command, Sself_insert_command, 1, 2,
+       "(list (prefix-numeric-value current-prefix-arg) last-command-event)",
        doc: /* Insert the character you type.
-Whichever character you type to run this command is inserted.
+Whichever character C you type to run this command is inserted.
 The numeric prefix argument N says how many times to repeat the insertion.
 Before insertion, `expand-abbrev' is executed if the inserted character does
 not have word syntax and the previous character in the buffer does.
@@ -272,9 +271,13 @@ After insertion, `internal-auto-fill' is called if
 `auto-fill-function' is non-nil and if the `auto-fill-chars' table has
 a non-nil value for the inserted character.  At the end, it runs
 `post-self-insert-hook'.  */)
-  (Lisp_Object n)
+  (Lisp_Object n, Lisp_Object c)
 {
   CHECK_FIXNUM (n);
+
+  /* Backward compatibility.  */
+  if (NILP (c))
+    c = last_command_event;
 
   if (XFIXNUM (n) < 0)
     error ("Negative repetition argument %"pI"d", XFIXNUM (n));
@@ -283,11 +286,11 @@ a non-nil value for the inserted character.  At the end, it runs
     call0 (Qundo_auto_amalgamate);
 
   /* Barf if the key that invoked this was not a character.  */
-  if (!CHARACTERP (last_command_event))
+  if (!CHARACTERP (c))
     bitch_at_user ();
   else {
     int character = translate_char (Vtranslation_table_for_input,
-				    XFIXNUM (last_command_event));
+				    XFIXNUM (c));
     int val = internal_self_insert (character, XFIXNAT (n));
     if (val == 2)
       Fset (Qundo_auto__this_command_amalgamating, Qnil);
