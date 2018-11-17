@@ -50,18 +50,20 @@
 
 (require 'org)
 
-;; Declare the function form ERC that we use.
-(declare-function erc-current-logfile "erc-log" (&optional buffer))
-(declare-function erc-prompt "erc" ())
-(declare-function erc-default-target "erc" ())
-(declare-function erc-channel-p "erc" (channel))
 (declare-function erc-buffer-filter "erc" (predicate &optional proc))
-(declare-function erc-server-buffer "erc" ())
-(declare-function erc-get-server-nickname-list "erc" ())
+(declare-function erc-channel-p "erc" (channel))
 (declare-function erc-cmd-JOIN "erc" (channel &optional key))
+(declare-function erc-current-logfile "erc-log" (&optional buffer))
+(declare-function erc-default-target "erc" ())
+(declare-function erc-get-server-nickname-list "erc" ())
+(declare-function erc-logging-enabled "erc-log" (&optional buffer))
+(declare-function erc-prompt "erc" ())
+(declare-function erc-save-buffer-in-logs "erc-log" (&optional buffer))
+(declare-function erc-server-buffer "erc" ())
 
 (defvar org-irc-client 'erc
   "The IRC client to act on.")
+
 (defvar org-irc-link-to-logs nil
   "Non-nil will store a link to the logs, nil will store an irc: style link.")
 

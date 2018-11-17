@@ -610,7 +610,6 @@ value of `texinfo-mode-hook'."
   (setq font-lock-defaults
 	'(texinfo-font-lock-keywords nil nil nil backward-paragraph))
   (setq-local syntax-propertize-function texinfo-syntax-propertize-function)
-  (setq-local parse-sexp-lookup-properties t)
   (setq-local add-log-current-defun-function #'texinfo-current-defun-name)
 
   ;; Outline settings.

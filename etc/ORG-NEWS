@@ -492,9 +492,6 @@ It used to be ~@samp~ but ~@asis~ is neutral and, therefore, more
 suitable as a default value.
 *** Texinfo default process includes ~--no-split~ option
 *** New entities : ~\dollar~ and ~\USD~
-*** ~org-parse-time-string~ accepts a new optional argument
-=ZONE= specifies the current time zone.
-*** ~org-time-string-to-seconds~ now accepts an optional =ZONE= argument
 *** Support for date style URLs in =org-protocol://open-source=
     URLs like =https://cool-blog.com/2017/05/20/cool-post/= are
     covered by rewrite rules.

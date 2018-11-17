@@ -269,12 +269,13 @@ Output is further controlled by the variables
 `cl-print-readably', `cl-print-compiled', along with output
 variables for the standard printing functions.  See Info
 node `(elisp)Output Variables'."
-  (cond
-   (cl-print-readably (prin1 object stream))
-   ((not print-circle) (cl-print-object object stream))
-   (t
-    (let ((cl-print--number-table (cl-print--preprocess object)))
-      (cl-print-object object stream)))))
+  (if cl-print-readably
+      (prin1 object stream)
+    (with-demoted-errors "cl-prin1: %S"
+      (if (not print-circle)
+          (cl-print-object object stream)
+        (let ((cl-print--number-table (cl-print--preprocess object)))
+          (cl-print-object object stream))))))
 
 ;;;###autoload
 (defun cl-prin1-to-string (object)

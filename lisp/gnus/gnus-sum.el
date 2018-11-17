@@ -12270,21 +12270,27 @@ save those articles instead."
 		  (if (> (length articles) 1)
 		      (format "these %d articles" (length articles))
 		    "this article")))
+	 valid-names
 	 (to-newsgroup
-          (cond
-           ((null split-name)
-            (gnus-group-completing-read
-             prom
-             (gnus-remove-if-not 'gnus-valid-move-group-p gnus-active-hashtb t)
-             nil prefix nil default))
-           ((= 1 (length split-name))
-            (gnus-group-completing-read
-             prom
-	     (gnus-remove-if-not 'gnus-valid-move-group-p gnus-active-hashtb t)
-             nil prefix 'gnus-group-history (car split-name)))
-           (t
-            (gnus-completing-read
-             prom (nreverse split-name) nil nil 'gnus-group-history))))
+	  (progn
+	    (mapatoms (lambda (g)
+			(when (gnus-valid-move-group-p g)
+			  (push g valid-names)))
+		      gnus-active-hashtb)
+            (cond
+             ((null split-name)
+              (gnus-group-completing-read
+               prom
+               valid-names
+               nil prefix nil default))
+             ((= 1 (length split-name))
+              (gnus-group-completing-read
+               prom
+	       valid-names
+               nil prefix 'gnus-group-history (car split-name)))
+             (t
+              (gnus-completing-read
+               prom (nreverse split-name) nil nil 'gnus-group-history)))))
          (to-method (gnus-server-to-method (gnus-group-method to-newsgroup)))
 	 encoded)
     (when to-newsgroup

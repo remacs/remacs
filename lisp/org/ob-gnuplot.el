@@ -40,7 +40,7 @@
 ;;; Code:
 (require 'ob)
 
-(declare-function org-time-string-to-time "org" (s &optional zone))
+(declare-function org-time-string-to-time "org" (s))
 (declare-function org-combine-plists "org" (&rest plists))
 (declare-function orgtbl-to-generic "org-table" (table params))
 (declare-function gnuplot-mode "ext:gnuplot-mode" ())
