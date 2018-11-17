@@ -973,6 +973,9 @@ used to set the value of `isearch-regexp-function'."
 	isearch-input-method-local-p (local-variable-p 'input-method-function)
 	regexp-search-ring-yank-pointer nil
 
+	isearch-pre-scroll-point nil
+	isearch-pre-move-point nil
+
 	;; Save the original value of `minibuffer-message-timeout', and
 	;; set it to nil so that isearch's messages don't get timed out.
 	isearch-original-minibuffer-message-timeout minibuffer-message-timeout
@@ -1015,7 +1018,7 @@ used to set the value of `isearch-regexp-function'."
 
   (add-hook 'pre-command-hook 'isearch-pre-command-hook)
   (add-hook 'post-command-hook 'isearch-post-command-hook)
-  (add-hook 'mouse-leave-buffer-hook 'isearch-done)
+  (add-hook 'mouse-leave-buffer-hook 'isearch-mouse-leave-buffer)
   (add-hook 'kbd-macro-termination-hook 'isearch-done)
 
   ;; isearch-mode can be made modal (in the sense of not returning to
@@ -1112,7 +1115,7 @@ NOPUSH is t and EDIT is t."
 
   (remove-hook 'pre-command-hook 'isearch-pre-command-hook)
   (remove-hook 'post-command-hook 'isearch-post-command-hook)
-  (remove-hook 'mouse-leave-buffer-hook 'isearch-done)
+  (remove-hook 'mouse-leave-buffer-hook 'isearch-mouse-leave-buffer)
   (remove-hook 'kbd-macro-termination-hook 'isearch-done)
   (setq isearch-lazy-highlight-start nil)
   (when (buffer-live-p isearch--current-buffer)
@@ -1175,6 +1178,11 @@ NOPUSH is t and EDIT is t."
 		(message "Mark saved where search started")))))
 
   (and (not edit) isearch-recursive-edit (exit-recursive-edit)))
+
+(defun isearch-mouse-leave-buffer ()
+  "Exit Isearch unless the mouse command is allowed in Isearch."
+  (unless (eq (get this-command 'isearch-scroll) t)
+    (isearch-done)))
 
 (defun isearch-update-ring (string &optional regexp)
   "Add STRING to the beginning of the search ring.
@@ -2390,6 +2398,12 @@ to the barrier."
 (put 'split-window-right 'isearch-scroll t)
 (put 'split-window-below 'isearch-scroll t)
 (put 'enlarge-window 'isearch-scroll t)
+(put 'enlarge-window-horizontally 'isearch-scroll t)
+(put 'shrink-window-horizontally 'isearch-scroll t)
+(put 'shrink-window 'isearch-scroll t)
+;; The next two commands don't exit Isearch in isearch-mouse-leave-buffer
+(put 'mouse-drag-mode-line 'isearch-scroll t)
+(put 'mouse-drag-vertical-line 'isearch-scroll t)
 
 ;; Aliases for split-window-*
 (put 'split-window-vertically 'isearch-scroll t)
