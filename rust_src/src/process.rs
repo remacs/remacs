@@ -109,7 +109,7 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
                 .name()
                 .as_string()
                 .unwrap_or_else(|| error!("Attempt to get process for a dead buffer"));
-            let proc = get_buffer_process(Some(LispBufferOrName::from(proc_or_buf)));
+            let proc = get_buffer_process_internal(Some(b));
             if proc.is_nil() {
                 error!("Buffer {:?} has no process.", unsafe {
                     name.u.s.data as *mut libc::c_char
