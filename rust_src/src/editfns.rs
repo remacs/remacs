@@ -566,12 +566,7 @@ pub fn field_beginning(
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
-    let (beg, _) = rust_find_field(
-        pos.map(LispNumber::from),
-        escape_from_edge,
-        LispObject::from(limit),
-        Qnil,
-    );
+    let (beg, _) = find_field(pos.map(LispNumber::from), escape_from_edge, limit, None);
 
     beg as EmacsInt
 }
@@ -589,12 +584,7 @@ pub fn field_end(
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
-    let (_, end) = rust_find_field(
-        pos.map(LispNumber::from),
-        escape_from_edge,
-        Qnil,
-        LispObject::from(limit),
-    );
+    let (_, end) = find_field(pos.map(LispNumber::from), escape_from_edge, None, limit);
 
     end as EmacsInt
 }
@@ -1036,11 +1026,11 @@ pub fn save_restriction(body: LispObject) -> LispObject {
 // fields are considered to be adjacent, and POS between them, when
 // finding the beginning and ending of the "merged" field.
 
-pub fn rust_find_field(
+pub fn find_field(
     pos: Option<LispNumber>,
     merge_at_boundary: bool,
-    beg_limit: LispObject,
-    end_limit: LispObject,
+    beg_limit: Option<EmacsInt>,
+    end_limit: Option<EmacsInt>,
 ) -> (ptrdiff_t, ptrdiff_t) {
     let current_buffer = ThreadState::current_buffer();
     let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as isize);
@@ -1114,12 +1104,13 @@ pub fn rust_find_field(
             pos
         } else {
             let mut p = pos.into();
+            let limit = beg_limit.into();
             // Find the previous field boundary.
             if merge_at_boundary && before_field.eq(Qboundary) {
                 // Skip a `boundary' field.
-                p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
+                p = Fprevious_single_char_property_change(p, Qfield, Qnil, limit);
             }
-            p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
+            p = Fprevious_single_char_property_change(p, Qfield, Qnil, limit);
             p.as_fixnum().unwrap_or(current_buffer.begv as EmacsInt) as isize
         };
 
@@ -1129,12 +1120,13 @@ pub fn rust_find_field(
             pos
         } else {
             let mut p = pos.into();
+            let limit = end_limit.into();
             // Find the next field boundary.
             if merge_at_boundary && after_field.eq(Qboundary) {
                 // Skip a `boundary' field.
-                p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
+                p = Fnext_single_char_property_change(p, Qfield, Qnil, limit);
             }
-            p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
+            p = Fnext_single_char_property_change(p, Qfield, Qnil, limit);
             p.as_fixnum().unwrap_or(current_buffer.zv as EmacsInt) as isize
         };
 
@@ -1147,7 +1139,7 @@ pub fn rust_find_field(
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
 pub fn delete_field(pos: LispNumber) {
-    let (beg, end) = rust_find_field(Some(pos), false, Qnil, Qnil);
+    let (beg, end) = find_field(Some(pos), false, None, None);
     if beg != end {
         unsafe { del_range(beg, end) };
     }
@@ -1158,8 +1150,8 @@ pub fn delete_field(pos: LispNumber) {
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
 pub fn field_string(pos: LispNumber) -> LispObject {
-    let (beg, end) = rust_find_field(Some(pos), false, Qnil, Qnil);
-    unsafe { make_buffer_string(beg, end, 1) }
+    let (beg, end) = find_field(Some(pos), false, None, None);
+    unsafe { make_buffer_string(beg, end, true) }
 }
 
 /// Return the contents of the field around POS, without text properties.
@@ -1167,8 +1159,8 @@ pub fn field_string(pos: LispNumber) -> LispObject {
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
 pub fn field_string_no_properties(pos: LispNumber) -> LispObject {
-    let (beg, end) = rust_find_field(Some(pos), false, Qnil, Qnil);
-    unsafe { make_buffer_string(beg, end, 0) }
+    let (beg, end) = find_field(Some(pos), false, None, None);
+    unsafe { make_buffer_string(beg, end, false) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
