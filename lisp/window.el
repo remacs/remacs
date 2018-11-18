@@ -9287,10 +9287,15 @@ displaying that processes's buffer."
               (when size
                 (set-process-window-size process (cdr size) (car size))))))))))
 
+;; Remove the following call in Emacs 27, running
+;; 'window-size-change-functions' should suffice.
 (add-hook 'window-configuration-change-hook 'window--adjust-process-windows)
+
+;; Catch any size changes not handled by
+;; 'window-configuration-change-hook' (Bug#32720, "another issue" in
+;; Bug#33230).
 (add-hook 'window-size-change-functions (lambda (_frame)
                                           (window--adjust-process-windows)))
-
 
 ;; Some of these are in tutorial--default-keys, so update that if you
 ;; change these.
