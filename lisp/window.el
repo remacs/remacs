@@ -9288,6 +9288,8 @@ displaying that processes's buffer."
                 (set-process-window-size process (cdr size) (car size))))))))))
 
 (add-hook 'window-configuration-change-hook 'window--adjust-process-windows)
+(add-hook 'window-size-change-functions (lambda (_frame)
+                                          (window--adjust-process-windows)))
 
 
 ;; Some of these are in tutorial--default-keys, so update that if you
