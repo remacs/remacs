@@ -1114,6 +1114,10 @@ its value is returned."
   (if (consp pos)
       (let ((w (posn-window pos)) (pt (posn-point pos))
 	    (str (posn-string pos)))
+        ;; FIXME: When STR has a `category' property and there's another
+        ;; `category' property at PT, we should probably disregard the
+        ;; `category' property at PT while doing the (get-char-property
+        ;; pt property w)!
 	(or (and str
 		 (get-text-property (cdr str) property (car str)))
             ;; Mouse clicks in the fringe come with a position in
