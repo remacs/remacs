@@ -92,65 +92,65 @@ char *w32_getenv (const char *);
 #define EXTRA_SPACE 100
 
 /* Name used to invoke this program.  */
-const char *progname;
+static char const *progname;
 
 /* The first argument to main.  */
-int main_argc;
+static int main_argc;
 
 /* The second argument to main.  */
-char **main_argv;
+static char *const *main_argv;
 
-/* Nonzero means don't wait for a response from Emacs.  --no-wait.  */
-int nowait = 0;
+/* True means don't wait for a response from Emacs.  --no-wait.  */
+static int nowait;
 
-/* Nonzero means don't print messages for successful operations.  --quiet.  */
-int quiet = 0;
+/* True means don't print messages for successful operations.  --quiet.  */
+static int quiet;
 
-/* Nonzero means don't print values returned from emacs. --suppress-output.  */
-int suppress_output = 0;
+/* True means don't print values returned from emacs. --suppress-output.  */
+static int suppress_output;
 
-/* Nonzero means args are expressions to be evaluated.  --eval.  */
-int eval = 0;
+/* True means args are expressions to be evaluated.  --eval.  */
+static int eval;
 
 /* Nonzero means don't open a new frame.  Inverse of --create-frame.  */
-int current_frame = 1;
+static int current_frame = 1;
 
 /* The display on which Emacs should work.  --display.  */
-const char *display = NULL;
+static char const *display;
 
 /* The alternate display we should try if Emacs does not support display.  */
-const char *alt_display = NULL;
+static char const *alt_display;
 
 /* The parent window ID, if we are opening a frame via XEmbed.  */
-char *parent_id = NULL;
+static char *parent_id;
 
-/* Nonzero means open a new Emacs frame on the current terminal.  */
-int tty = 0;
+/* True means open a new Emacs frame on the current terminal.  */
+static int tty;
 
 /* If non-NULL, the name of an editor to fallback to if the server
    is not running.  --alternate-editor.   */
-const char *alternate_editor = NULL;
+static char *alternate_editor;
 
 /* If non-NULL, the filename of the UNIX socket.  */
-const char *socket_name = NULL;
+static char const *socket_name;
 
 /* If non-NULL, the filename of the authentication file.  */
-const char *server_file = NULL;
+static char const *server_file;
 
 /* If non-NULL, the tramp prefix emacs must use to find the files.  */
-const char *tramp_prefix = NULL;
+static char const *tramp_prefix;
 
 /* PID of the Emacs server process.  */
-int emacs_pid = 0;
+static int emacs_pid;
 
 /* If non-NULL, a string that should form a frame parameter alist to
    be used for the new frame.  */
-const char *frame_parameters = NULL;
+static char const *frame_parameters;
 
 static _Noreturn void print_help_and_exit (void);
 
 
-struct option longopts[] =
+static struct option const longopts[] =
 {
   { "no-wait",	no_argument,	   NULL, 'n' },
   { "quiet",	no_argument,	   NULL, 'q' },
@@ -203,9 +203,8 @@ xrealloc (void *ptr, size_t size)
 }
 
 /* Like strdup but get a fatal error if memory is exhausted. */
-char *xstrdup (const char *) ATTRIBUTE_MALLOC;
 
-char *
+static char * ATTRIBUTE_MALLOC
 xstrdup (const char *s)
 {
   char *result = strdup (s);
@@ -741,13 +740,9 @@ main (int argc, char **argv)
 #else /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
 
 enum { AUTH_KEY_LENGTH = 64 };
-enum { SEND_BUFFER_SIZE = 4096 };
 
-/* Buffer to accumulate data to send in TCP connections.  */
-char send_buffer[SEND_BUFFER_SIZE + 1];
-int sblen = 0;	/* Fill pointer for the send buffer.  */
 /* Socket used to communicate with the Emacs server process.  */
-HSOCKET emacs_socket = 0;
+static HSOCKET emacs_socket = 0;
 
 /* On Windows, the socket library was historically separate from the
    standard C library, so errors are handled differently.  */
@@ -779,6 +774,14 @@ sock_err_message (const char *function_name)
 static void
 send_to_emacs (HSOCKET s, const char *data)
 {
+  enum { SEND_BUFFER_SIZE = 4096 };
+
+  /* Buffer to accumulate data to send in TCP connections.  */
+  static char send_buffer[SEND_BUFFER_SIZE + 1];
+
+  /* Fill pointer for the send buffer.  */
+  static int sblen;
+
   size_t dlen;
 
   if (!data)
