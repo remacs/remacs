@@ -74,7 +74,6 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 				       Lisp_Object, struct tm *);
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
-static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
 void find_field (Lisp_Object, Lisp_Object, Lisp_Object, ptrdiff_t *, Lisp_Object, ptrdiff_t *);
@@ -460,7 +459,6 @@ at POSITION.  */)
     }
 }
 
-
 
 /* Restore saved buffer before leaving `save-excursion' special form.  */
 
@@ -1381,7 +1379,7 @@ emacs_setenv_TZ (const char *tzstring)
    type of object is Lisp_String).  INHERIT is passed to
    INSERT_FROM_STRING_FUNC as the last argument.  */
 
-static void
+void
 general_insert_function (void (*insert_func)
 			      (const char *, ptrdiff_t),
 			 void (*insert_from_string_func)
@@ -1627,42 +1625,6 @@ update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
       CALLN (Frun_hook_with_args, Qbuffer_access_fontify_functions,
 	     make_number (start), make_number (end));
     }
-}
-
-DEFUN ("buffer-substring", Fbuffer_substring, Sbuffer_substring, 2, 2, 0,
-       doc: /* Return the contents of part of the current buffer as a string.
-The two arguments START and END are character positions;
-they can be in either order.
-The string returned is multibyte if the buffer is multibyte.
-
-This function copies the text properties of that part of the buffer
-into the result string; if you don't want the text properties,
-use `buffer-substring-no-properties' instead.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  register ptrdiff_t b, e;
-
-  validate_region (&start, &end);
-  b = XINT (start);
-  e = XINT (end);
-
-  return make_buffer_string (b, e, 1);
-}
-
-DEFUN ("buffer-substring-no-properties", Fbuffer_substring_no_properties,
-       Sbuffer_substring_no_properties, 2, 2, 0,
-       doc: /* Return the characters of part of the buffer, without the text properties.
-The two arguments START and END are character positions;
-they can be in either order.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  register ptrdiff_t b, e;
-
-  validate_region (&start, &end);
-  b = XINT (start);
-  e = XINT (end);
-
-  return make_buffer_string (b, e, 0);
 }
 
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
@@ -2619,63 +2581,6 @@ save_restriction_restore (Lisp_Object data)
     set_buffer_internal (cur);
 }
 
-DEFUN ("message", Fmessage, Smessage, 1, MANY, 0,
-       doc: /* Display a message at the bottom of the screen.
-The message also goes into the `*Messages*' buffer, if `message-log-max'
-is non-nil.  (In keyboard macros, that's all it does.)
-Return the message.
-
-In batch mode, the message is printed to the standard error stream,
-followed by a newline.
-
-The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  Percent sign (%), grave
-accent (\\=`) and apostrophe (\\=') are special in the format; see
-`format-message' for details.  To display STRING without special
-treatment, use (message "%s" STRING).
-
-If the first argument is nil or the empty string, the function clears
-any existing message; this lets the minibuffer contents show.  See
-also `current-message'.
-
-usage: (message FORMAT-STRING &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  if (NILP (args[0])
-      || (STRINGP (args[0])
-	  && SBYTES (args[0]) == 0))
-    {
-      message1 (0);
-      return args[0];
-    }
-  else
-    {
-      Lisp_Object val = Fformat_message (nargs, args);
-      message3 (val);
-      return val;
-    }
-}
-
-DEFUN ("message-or-box", Fmessage_or_box, Smessage_or_box, 1, MANY, 0,
-       doc: /* Display a message in a dialog box or in the echo area.
-If this command was invoked with the mouse, use a dialog box if
-`use-dialog-box' is non-nil.
-Otherwise, use the echo area.
-The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format-message' for
-details.
-
-If the first argument is nil or the empty string, clear any existing
-message; let the minibuffer contents show.
-
-usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
-      && use_dialog_box)
-    return Fmessage_box (nargs, args);
-  return Fmessage (nargs, args);
-}
 
 /* Convert the prefix of STR from ASCII decimal digits to a number.
    Set *STR_END to the address of the first non-digit.  Return the
@@ -2694,98 +2599,9 @@ str2num (char *str, char **str_end)
   return n;
 }
 
-DEFUN ("format", Fformat, Sformat, 1, MANY, 0,
-       doc: /* Format a string out of a format-string and arguments.
-The first argument is a format control string.
-The other arguments are substituted into it to make the result, a string.
-
-The format control string may contain %-sequences meaning to substitute
-the next available argument, or the argument explicitly specified:
-
-%s means print a string argument.  Actually, prints any object, with `princ'.
-%d means print as signed number in decimal.
-%o means print as unsigned number in octal, %x as unsigned number in hex.
-%X is like %x, but uses upper case.
-%e means print a number in exponential notation.
-%f means print a number in decimal-point notation.
-%g means print a number in exponential notation if the exponent would be
-   less than -4 or greater than or equal to the precision (default: 6);
-   otherwise it prints in decimal-point notation.
-%c means print a number as a single character.
-%S means print any object as an s-expression (using `prin1').
-
-The argument used for %d, %o, %x, %e, %f, %g or %c must be a number.
-Use %% to put a single % into the output.
-
-A %-sequence other than %% may contain optional field number, flag,
-width, and precision specifiers, as follows:
-
-  %<field><flags><width><precision>character
-
-where field is [0-9]+ followed by a literal dollar "$", flags is
-[+ #-0]+, width is [0-9]+, and precision is a literal period "."
-followed by [0-9]+.
-
-If a %-sequence is numbered with a field with positive value N, the
-Nth argument is substituted instead of the next one.  A format can
-contain either numbered or unnumbered %-sequences but not both, except
-that %% can be mixed with numbered %-sequences.
-
-The + flag character inserts a + before any positive number, while a
-space inserts a space before any positive number; these flags only
-affect %d, %e, %f, and %g sequences, and the + flag takes precedence.
-The - and 0 flags affect the width specifier, as described below.
-
-The # flag means to use an alternate display form for %o, %x, %X, %e,
-%f, and %g sequences: for %o, it ensures that the result begins with
-\"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
-for %e and %f, it causes a decimal point to be included even if the
-precision is zero; for %g, it causes a decimal point to be
-included even if the precision is zero, and also forces trailing
-zeros after the decimal point to be left in place.
-
-The width specifier supplies a lower limit for the length of the
-printed representation.  The padding, if any, normally goes on the
-left, but it goes on the right if the - flag is present.  The padding
-character is normally a space, but it is 0 if the 0 flag is present.
-The 0 flag is ignored if the - flag is present, or the format sequence
-is something other than %d, %e, %f, and %g.
-
-For %e and %f sequences, the number after the "." in the precision
-specifier says how many decimal places to show; if zero, the decimal
-point itself is omitted.  For %g, the precision specifies how many
-significant digits to print; zero or omitted are treated as 1.
-For %s and %S, the precision specifier truncates the string to the
-given width.
-
-Text properties, if any, are copied from the format-string to the
-produced text.
-
-usage: (format STRING &rest OBJECTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return styled_format (nargs, args, false);
-}
-
-DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
-       doc: /* Format a string out of a format-string and arguments.
-The first argument is a format control string.
-The other arguments are substituted into it to make the result, a string.
-
-This acts like `format', except it also replaces each grave accent (\\=`)
-by a left quote, and each apostrophe (\\=') by a right quote.  The left
-and right quote replacement characters are specified by
-`text-quoting-style'.
-
-usage: (format-message STRING &rest OBJECTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return styled_format (nargs, args, true);
-}
-
 /* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
 
-static Lisp_Object
+Lisp_Object
 styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 {
   ptrdiff_t n;		/* The number of the next arg to substitute.  */
@@ -4051,8 +3867,6 @@ functions if all the text being accessed has this property.  */);
   DEFVAR_LISP ("operating-system-release", Voperating_system_release,
 	       doc: /* The release of the operating system Emacs is running on.  */);
 
-  defsubr (&Sbuffer_substring);
-  defsubr (&Sbuffer_substring_no_properties);
   defsubr (&Sget_pos_property);
 
   /* Symbol for the text property used to mark fields.  */
@@ -4080,10 +3894,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Scurrent_time_zone);
   defsubr (&Sset_time_zone_rule);
   defsubr (&Ssystem_name);
-  defsubr (&Smessage);
-  defsubr (&Smessage_or_box);
-  defsubr (&Sformat);
-  defsubr (&Sformat_message);
 
   defsubr (&Scompare_buffer_substrings);
   defsubr (&Sreplace_buffer_contents);

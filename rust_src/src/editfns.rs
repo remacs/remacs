@@ -9,7 +9,7 @@ use libc::{c_int, c_uchar, ptrdiff_t};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::current_buffer,
+    buffers::{current_buffer, validate_region},
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::progn,
@@ -29,14 +29,15 @@ use crate::{
         buffer_overflow, build_string, current_message, del_range, downcase,
         find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
         insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
-        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1,
+        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
         record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
         save_restriction_restore, save_restriction_save, scan_newline_from_point,
-        set_buffer_internal_1, set_point, set_point_both, unbind_to, update_buffer_properties,
+        set_buffer_internal_1, set_point, set_point_both, styled_format, unbind_to,
+        update_buffer_properties, STRING_BYTES,
     },
     remacs_sys::{
-        Fadd_text_properties, Fcopy_sequence, Fformat_message, Fget_pos_property,
-        Fnext_single_char_property_change, Fprevious_single_char_property_change, Fx_popup_dialog,
+        Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
+        Fprevious_single_char_property_change, Fx_popup_dialog,
     },
     remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
@@ -410,7 +411,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
 /// usage: (fn STRING &rest PROPERTIES)
 #[lisp_fn(min = "1")]
 pub fn propertize(args: &[LispObject]) -> LispObject {
-    /* Number of args must be odd. */
+    // Number of args must be odd.
     if args.len() & 1 == 0 {
         error!("Wrong number of arguments");
     }
@@ -879,6 +880,41 @@ pub fn insert_buffer_substring(
     };
 }
 
+/// Display a message at the bottom of the screen.
+/// The message also goes into the `*Messages*' buffer, if `message-log-max'
+/// is non-nil.  (In keyboard macros, that's all it does.)
+/// Return the message.
+///
+/// In batch mode, the message is printed to the standard error stream,
+/// followed by a newline.
+///
+/// The first argument is a format control string, and the rest are data
+/// to be formatted under control of the string.  Percent sign (%), grave
+/// accent (\\=`) and apostrophe (\\=') are special in the format; see
+/// `format-message' for details.  To display STRING without special
+/// treatment, use (message "%s" STRING).
+///
+/// If the first argument is nil or the empty string, the function clears
+/// any existing message; this lets the minibuffer contents show.  See
+/// also `current-message'.
+///
+/// usage: (message FORMAT-STRING &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn message(args: &mut [LispObject]) -> LispObject {
+    if args[0].is_nil()
+        || args[0]
+            .as_string()
+            .map_or(false, |mut s| unsafe { STRING_BYTES(s.as_mut()) == 0 })
+    {
+        unsafe { message1(ptr::null_mut()) };
+        args[0]
+    } else {
+        let val = format_message(args);
+        unsafe { message3(val) };
+        val
+    }
+}
+
 /// Display a message, in a dialog box if possible.
 /// If a dialog box is not available, use the echo area.
 /// The first argument is a format control string, and the rest are data
@@ -896,7 +932,7 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
             message1("".as_ptr() as *const ::libc::c_char);
             Qnil
         } else {
-            let val = Fformat_message(args.len() as isize, args.as_mut_ptr() as *mut LispObject);
+            let val = format_message(args);
             let pane = list!(LispObject::cons(
                 build_string("OK".as_ptr() as *const ::libc::c_char),
                 Qt
@@ -908,10 +944,133 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
     }
 }
 
+/// Display a message in a dialog box or in the echo area.
+/// If this command was invoked with the mouse, use a dialog box if
+/// `use-dialog-box' is non-nil.
+/// Otherwise, use the echo area.
+/// The first argument is a format control string, and the rest are data
+/// to be formatted under control of the string.  See `format-message' for
+/// details.
+///
+/// If the first argument is nil or the empty string, clear any existing
+/// message; let the minibuffer contents show.
+///
+/// usage: (message-or-box FORMAT-STRING &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn message_or_box(args: &mut [LispObject]) -> LispObject {
+    if unsafe {
+        (globals.last_nonmenu_event.is_nil() || globals.last_nonmenu_event.is_cons())
+            && globals.use_dialog_box
+    } {
+        message_box(args)
+    } else {
+        message(args)
+    }
+}
+
 /// Return the string currently displayed in the echo area, or nil if none.
 #[lisp_fn(name = "current-message", c_name = "current_message")]
 pub fn lisp_current_message() -> LispObject {
     unsafe { current_message() }
+}
+
+/// Format a string out of a format-string and arguments.
+/// The first argument is a format control string.
+/// The other arguments are substituted into it to make the result, a string.
+///
+/// The format control string may contain %-sequences meaning to substitute
+/// the next available argument, or the argument explicitly specified:
+///
+/// %s means print a string argument.  Actually, prints any object, with `princ'.
+/// %d means print as signed number in decimal.
+/// %o means print as unsigned number in octal, %x as unsigned number in hex.
+/// %X is like %x, but uses upper case.
+/// %e means print a number in exponential notation.
+/// %f means print a number in decimal-point notation.
+/// %g means print a number in exponential notation if the exponent would be
+///    less than -4 or greater than or equal to the precision (default: 6);
+///    otherwise it prints in decimal-point notation.
+/// %c means print a number as a single character.
+/// %S means print any object as an s-expression (using `prin1').
+///
+/// The argument used for %d, %o, %x, %e, %f, %g or %c must be a number.
+/// Use %% to put a single % into the output.
+///
+/// A %-sequence other than %% may contain optional field number, flag,
+/// width, and precision specifiers, as follows:
+///
+///   %<field><flags><width><precision>character
+///
+/// where field is [0-9]+ followed by a literal dollar "$", flags is
+/// [+ #-0]+, width is [0-9]+, and precision is a literal period "."
+/// followed by [0-9]+.
+///
+/// If a %-sequence is numbered with a field with positive value N, the
+/// Nth argument is substituted instead of the next one.  A format can
+/// contain either numbered or unnumbered %-sequences but not both, except
+/// that %% can be mixed with numbered %-sequences.
+///
+/// The + flag character inserts a + before any positive number, while a
+/// space inserts a space before any positive number; these flags only
+/// affect %d, %e, %f, and %g sequences, and the + flag takes precedence.
+/// The - and 0 flags affect the width specifier, as described below.
+///
+/// The # flag means to use an alternate display form for %o, %x, %X, %e,
+/// %f, and %g sequences: for %o, it ensures that the result begins with
+/// \"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
+/// for %e and %f, it causes a decimal point to be included even if the
+/// precision is zero; for %g, it causes a decimal point to be
+/// included even if the precision is zero, and also forces trailing
+/// zeros after the decimal point to be left in place.
+///
+/// The width specifier supplies a lower limit for the length of the
+/// printed representation.  The padding, if any, normally goes on the
+/// left, but it goes on the right if the - flag is present.  The padding
+/// character is normally a space, but it is 0 if the 0 flag is present.
+/// The 0 flag is ignored if the - flag is present, or the format sequence
+/// is something other than %d, %e, %f, and %g.
+///
+/// For %e and %f sequences, the number after the "." in the precision
+/// specifier says how many decimal places to show; if zero, the decimal
+/// point itself is omitted.  For %g, the precision specifies how many
+/// significant digits to print; zero or omitted are treated as 1.
+/// For %s and %S, the precision specifier truncates the string to the
+/// given width.
+///
+/// Text properties, if any, are copied from the format-string to the
+/// produced text.
+///
+/// usage: (format STRING &rest OBJECTS)
+#[lisp_fn(min = "1")]
+pub fn format(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        styled_format(
+            args.len() as isize,
+            args.as_mut_ptr() as *mut LispObject,
+            false,
+        )
+    }
+}
+
+/// Format a string out of a format-string and arguments.
+/// The first argument is a format control string.
+/// The other arguments are substituted into it to make the result, a string.
+///
+/// This acts like `format', except it also replaces each grave accent (\\=`)
+/// by a left quote, and each apostrophe (\\=') by a right quote.  The left
+/// and right quote replacement characters are specified by
+/// `text-quoting-style'.
+///
+/// usage: (format-message STRING &rest OBJECTS)
+#[lisp_fn(min = "1")]
+pub fn format_message(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        styled_format(
+            args.len() as isize,
+            args.as_mut_ptr() as *mut LispObject,
+            true,
+        )
+    }
 }
 
 /// Return the contents of the current buffer as a string.
@@ -928,6 +1087,33 @@ pub fn buffer_string() -> LispObject {
     let zv_byte = cur_buf.zv_byte;
 
     unsafe { make_buffer_string_both(begv, begv_byte, zv, zv_byte, true) }
+}
+
+/// Return the contents of part of the current buffer as a string.
+/// The two arguments START and END are character positions;
+/// they can be in either order.
+/// The string returned is multibyte if the buffer is multibyte.
+///
+/// This function copies the text properties of that part of the buffer
+/// into the result string; if you don't want the text properties,
+/// use `buffer-substring-no-properties' instead.
+#[lisp_fn]
+pub fn buffer_substring(mut beg: LispObject, mut end: LispObject) -> LispObject {
+    unsafe { validate_region(&mut beg, &mut end) };
+    let b = beg.as_fixnum_or_error();
+    let e = end.as_fixnum_or_error();
+    unsafe { make_buffer_string(b as isize, e as isize, true) }
+}
+
+/// Return the characters of part of the buffer, without the text properties.
+/// The two arguments START and END are character positions;
+/// they can be in either order.
+#[lisp_fn]
+pub fn buffer_substring_no_properties(mut beg: LispObject, mut end: LispObject) -> LispObject {
+    unsafe { validate_region(&mut beg, &mut end) };
+    let b = beg.as_fixnum_or_error();
+    let e = end.as_fixnum_or_error();
+    unsafe { make_buffer_string(b as isize, e as isize, false) }
 }
 
 // Save current buffer state for `save-excursion' special form.
