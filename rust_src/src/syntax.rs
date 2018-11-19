@@ -4,9 +4,14 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     chartable::LispCharTableRef,
+    editfns::constrain_to_field,
     lisp::defsubr,
     lisp::LispObject,
-    remacs_sys::{buffer_defaults, scan_lists, set_char_table_defalt},
+    numbers::LispNumber,
+    remacs_sys::{
+        buffer_defaults, scan_lists, scan_words, set_char_table_defalt, set_point, skip_chars,
+        skip_syntaxes,
+    },
     remacs_sys::{EmacsInt, Qnil, Qsyntax_table, Qsyntax_table_p},
     remacs_sys::{Fcopy_sequence, Fset_char_table_parent},
     threads::ThreadState,
@@ -102,6 +107,88 @@ pub fn copy_syntax_table(mut table: LispObject) -> LispObject {
         unsafe { Fset_char_table_parent(copy, buffer_table) };
     }
     copy
+}
+
+/// Move point forward ARG words (backward if ARG is negative).
+/// If ARG is omitted or nil, move point forward one word.
+/// Normally returns t.
+/// If an edge of the buffer or a field boundary is reached, point is
+/// left there and the function returns nil.  Field boundaries are not
+/// noticed if `inhibit-field-text-motion' is non-nil.
+///
+/// The word boundaries are normally determined by the buffer's syntax
+/// table, but `find-word-boundary-function-table', such as set up
+/// by `subword-mode', can change that.  If a Lisp program needs to
+/// move by words determined strictly by the syntax table, it should
+/// use `forward-word-strictly' instead.
+#[lisp_fn(min = "0", intspec = "^p")]
+pub fn forward_word(arg: Option<EmacsInt>) -> bool {
+    let cur_buf = ThreadState::current_buffer();
+    let point = cur_buf.pt;
+    let val = match unsafe { scan_words(point, arg.unwrap_or(1)) } {
+        0 => {
+            if arg > 0 {
+                cur_buf.zv
+            } else {
+                cur_buf.begv
+            }
+        }
+        n => n,
+    };
+
+    // Avoid jumping out of an input field.
+    let tmp = constrain_to_field(
+        Some(LispNumber::Fixnum(val as EmacsInt)),
+        LispNumber::Fixnum(point as EmacsInt),
+        false,
+        false,
+        Qnil,
+    ) as isize;
+    unsafe { set_point(tmp) };
+    val == tmp
+}
+
+/// Move point forward, stopping before a char not in STRING, or at pos LIM.
+/// STRING is like the inside of a `[...]' in a regular expression
+/// except that `]' is never special and `\\' quotes `^', `-' or `\\'
+///  (but not at the end of a range; quoting is never needed there).
+/// Thus, with arg "a-zA-Z", this skips letters stopping before first nonletter.
+/// With arg "^a-zA-Z", skips nonletters stopping before first letter.
+/// Char classes, e.g. `[:alpha:]', are supported.
+///
+/// Returns the distance traveled, either zero or positive.
+#[lisp_fn(min = "1")]
+pub fn skip_chars_forward(string: LispObject, lim: LispObject) -> LispObject {
+    unsafe { skip_chars(true, string, lim, true) }
+}
+
+/// Move point backward, stopping after a char not in STRING, or at pos LIM.
+/// See `skip-chars-forward' for details.
+/// Returns the distance traveled, either zero or negative.
+#[lisp_fn(min = "1")]
+pub fn skip_chars_backward(string: LispObject, lim: LispObject) -> LispObject {
+    unsafe { skip_chars(false, string, lim, true) }
+}
+
+/// Move point forward across chars in specified syntax classes.
+/// SYNTAX is a string of syntax code characters.
+/// Stop before a char whose syntax is not in SYNTAX, or at position LIM.
+/// If SYNTAX starts with ^, skip characters whose syntax is NOT in SYNTAX.
+/// This function returns the distance traveled, either zero or positive.
+#[lisp_fn(min = "1")]
+pub fn skip_syntax_forward(syntax: LispObject, lim: LispObject) -> LispObject {
+    unsafe { skip_syntaxes(true, syntax, lim) }
+}
+
+/// Move point backward across chars in specified syntax classes.
+/// SYNTAX is a string of syntax code characters.
+/// Stop on reaching a char whose syntax is not in SYNTAX, or at position LIM.
+/// If SYNTAX starts with ^, skip characters whose syntax is NOT in SYNTAX.
+/// This function returns either zero or a negative number, and the absolute value
+/// of this is the distance traveled.
+#[lisp_fn(min = "1")]
+pub fn skip_syntax_backward(syntax: LispObject, lim: LispObject) -> LispObject {
+    unsafe { skip_syntaxes(false, syntax, lim) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/syntax_exports.rs"));
