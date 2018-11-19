@@ -1079,7 +1079,7 @@ static bool
 find_tty (const char **tty_type, const char **tty_name, bool noabort)
 {
   const char *type = egetenv ("TERM");
-  const char *name = ttyname (fileno (stdout));
+  const char *name = ttyname (STDOUT_FILENO);
 
   if (!name)
     {
@@ -1162,7 +1162,7 @@ handle_sigcont (int signalnum)
 {
   int old_errno = errno;
   pid_t pgrp = getpgrp ();
-  pid_t tcpgrp = tcgetpgrp (1);
+  pid_t tcpgrp = tcgetpgrp (STDOUT_FILENO);
 
   if (tcpgrp == pgrp)
     {
@@ -1677,7 +1677,7 @@ main (int argc, char **argv)
   if (tty)
     {
       pid_t pgrp = getpgrp ();
-      pid_t tcpgrp = tcgetpgrp (1);
+      pid_t tcpgrp = tcgetpgrp (STDOUT_FILENO);
       if (0 <= tcpgrp && tcpgrp != pgrp)
 	kill (-pgrp, SIGTTIN);
     }
@@ -1854,7 +1854,7 @@ main (int argc, char **argv)
       skiplf = false;
     }
   fflush (stdout);
-  while (fdatasync (1) != 0 && errno == EINTR)
+  while (fdatasync (STDOUT_FILENO) != 0 && errno == EINTR)
     continue;
 
   /* Now, wait for an answer and print any messages.  */
@@ -1961,7 +1961,7 @@ main (int argc, char **argv)
   if (!skiplf)
     printf ("\n");
   fflush (stdout);
-  while (fdatasync (1) != 0 && errno == EINTR)
+  while (fdatasync (STDOUT_FILENO) != 0 && errno == EINTR)
     continue;
 
   if (rl < 0)
