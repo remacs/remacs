@@ -123,9 +123,11 @@ pub fn copy_syntax_table(mut table: LispObject) -> LispObject {
 /// use `forward-word-strictly' instead.
 #[lisp_fn(min = "0", intspec = "^p")]
 pub fn forward_word(arg: Option<EmacsInt>) -> bool {
+    let arg = arg.unwrap_or(1);
     let cur_buf = ThreadState::current_buffer();
     let point = cur_buf.pt;
-    let val = match unsafe { scan_words(point, arg.unwrap_or(1)) } {
+
+    let val = match unsafe { scan_words(point, arg) } {
         0 => {
             if arg > 0 {
                 cur_buf.zv
