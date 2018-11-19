@@ -93,12 +93,14 @@ struct window
     /* The frame this window is on.  */
     Lisp_Object frame;
 
-    /* Following (to right or down) and preceding (to left or up) child
-       at same level of tree.  */
+    /* Following (to right or down) and preceding (to left or up)
+       child at same level of tree.  Whether this is left/right or
+       up/down is determined by the 'horizontal' flag, see below.
+       A minibuffer window has the frame's root window pointed by 'prev'.  */
     Lisp_Object next;
     Lisp_Object prev;
 
-    /* The window this one is a child of.  */
+    /* The window this one is a child of.  For a minibuffer window: nil.  */
     Lisp_Object parent;
 
     /* The normal size of the window.  These are fractions, but we do
@@ -113,7 +115,9 @@ struct window
     Lisp_Object new_normal;
     Lisp_Object new_pixel;
 
-    /* May be buffer, window, or nil.  */
+    /* For a leaf window: a buffer; for an internal window: a window;
+       for a pseudo-window (such as menu bar or tool bar): nil.  It is
+       a buffer for a minibuffer window as well.  */
     Lisp_Object contents;
 
     /* A marker pointing to where in the text to start displaying.

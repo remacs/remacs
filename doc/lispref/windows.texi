@@ -198,12 +198,13 @@ relationships between live windows.  The root node of a window tree is
 called the @dfn{root window}.  It can be either a live window (if the
 frame has just one window), or an internal window.
 
-  A minibuffer window (@pxref{Minibuffer Windows}) is not part of its
-frame's window tree unless the frame is a minibuffer-only frame.
-Nonetheless, most of the functions in this section accept the
-minibuffer window as an argument.  Also, the function
-@code{window-tree} described at the end of this section lists the
-minibuffer window alongside the actual window tree.
+  A minibuffer window (@pxref{Minibuffer Windows}) that is not alone
+on its frame does not have a parent window, so it strictly speaking is
+not part of its frame's window tree.  Nonetheless, it is a sibling
+window of the frame's root window, and thus can be reached via
+@code{window-next-sibling}.  Also, the function @code{window-tree}
+described at the end of this section lists the minibuffer window
+alongside the actual window tree.
 
 @defun frame-root-window &optional frame-or-window
 This function returns the root window for @var{frame-or-window}.  The
