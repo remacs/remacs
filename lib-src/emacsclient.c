@@ -1535,6 +1535,7 @@ start_daemon_and_retry_set_socket (void)
       d_argv[0] = emacs;
       d_argv[1] = daemon_option;
       d_argv[2] = 0;
+#ifndef NO_SOCKETS_IN_FILE_SYSTEM
       if (socket_name != NULL)
 	{
 	  /* Pass  --daemon=socket_name as argument.  */
@@ -1544,6 +1545,7 @@ start_daemon_and_retry_set_socket (void)
 	  strcpy (stpcpy (daemon_arg, deq), socket_name);
 	  d_argv[1] = daemon_arg;
 	}
+#endif
       execvp ("emacs", d_argv);
       message (true, "%s: error starting emacs daemon\n", progname);
     }
