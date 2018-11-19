@@ -4977,8 +4977,8 @@ window_scroll (Lisp_Object window, EMACS_INT n, bool whole, bool noerror)
   if (whole && Vfast_but_imprecise_scrolling)
     specbind (Qfontification_functions, Qnil);
 
-  /* If we must, use the pixel-based version which is much slower than
-     the line-based one but can handle varying line heights.  */
+  /* On GUI frames, use the pixel-based version which is much slower
+     than the line-based one but can handle varying line heights.  */
   if (FRAME_WINDOW_P (XFRAME (XWINDOW (window)->frame)))
     window_scroll_pixel_based (window, n, whole, noerror);
   else
