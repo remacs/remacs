@@ -39,7 +39,6 @@ use std::slice;
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
 use crate::{
-    intervals::IntervalRef,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::Qstringp,
     remacs_sys::{char_bits, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
@@ -166,11 +165,6 @@ impl LispStringRef {
 
     pub fn set_byte(&mut self, idx: ptrdiff_t, elt: c_uchar) {
         unsafe { ptr::write(self.data_ptr().offset(idx), elt) };
-    }
-
-    pub fn intervals(self) -> IntervalRef {
-        let s = unsafe { self.u.s };
-        IntervalRef::new(s.intervals)
     }
 }
 

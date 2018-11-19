@@ -49,7 +49,6 @@ known_types = {
     'void': 'c_void',
     'void*': '*mut c_void',
     'buffer struct*': 'LispBufferRef',
-    'INTERVAL': 'IntervalRef',
     'Lisp_Overlay struct*': 'LispOverlayRef',
     'window struct*': 'LispWindowRef',
     'EMACS_INT': 'EmacsInt',

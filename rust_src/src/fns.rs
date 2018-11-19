@@ -4,7 +4,6 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     eval::un_autoload,
-    intervals::compare_string_intervals_rust,
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, member, memq, put, LispCons},
@@ -12,7 +11,7 @@ use crate::{
     objects::equal,
     remacs_sys::Lisp_Type,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, equal_kind, globals, record_unwind_protect, unbind_to},
+    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to},
     remacs_sys::{Fcons, Fload, Fmapc},
     remacs_sys::{
         Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
@@ -262,30 +261,6 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
             Lisp_Type::Lisp_String,
             false,
         )
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn internal_equal_string(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-) -> bool {
-    let s1 = o1.as_string_or_error();
-    let s2 = o2.as_string_or_error();
-
-    if s1.len_chars() != s2.len_chars() {
-        false
-    } else if s1.len_bytes() != s2.len_bytes() {
-        false
-    } else if s1.as_slice() != s2.as_slice() {
-        false
-    } else if kind == equal_kind::EQUAL_INCLUDING_PROPERTIES
-        && !compare_string_intervals_rust(s1, s2)
-    {
-        false
-    } else {
-        true
     }
 }
 
