@@ -624,7 +624,7 @@ containing the properties `:guid' and `:item-full-text'."
 	      end (and (re-search-forward "</item>" nil t)
 		       (match-beginning 0)))
 	(setq item (buffer-substring beg end)
-	      guid (if (string-match "<guid\\>.*?>\\(.*?\\)</guid>" item)
+	      guid (if (string-match "<guid\\>.*?>\\([^\000]*?\\)</guid>" item)
 		       (xml-substitute-special (match-string-no-properties 1 item))))
 	(setq entry (list :guid guid :item-full-text item))
 	(push entry entries)
