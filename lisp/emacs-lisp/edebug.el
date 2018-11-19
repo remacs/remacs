@@ -191,11 +191,11 @@ Use this with caution since it is not debugged."
 
 (defcustom edebug-print-length 50
   "If non-nil, default value of `print-length' for printing results in Edebug."
-  :type 'integer
+  :type '(choice integer (const nil))
   :group 'edebug)
 (defcustom edebug-print-level 50
   "If non-nil, default value of `print-level' for printing results in Edebug."
-  :type 'integer
+  :type '(choice integer (const nil))
   :group 'edebug)
 (defcustom edebug-print-circle t
   "If non-nil, default value of `print-circle' for printing results in Edebug."
