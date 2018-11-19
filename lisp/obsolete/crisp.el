@@ -376,10 +376,6 @@ normal CRiSP binding) and when it is nil M-x will run
 ;;;###autoload
 (defalias 'brief-mode 'crisp-mode)
 
-;; Interaction with other packages.
-(put 'crisp-home 'CUA 'move)
-(put 'crisp-end  'CUA 'move)
-
 (run-hooks 'crisp-load-hook)
 (provide 'crisp)
 
