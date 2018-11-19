@@ -82,7 +82,7 @@ pub fn minibuffer_prompt_end() -> EmacsInt {
         return beg;
     }
 
-    let end = field_end(Some(beg), false, None);
+    let end = field_end(Some(beg.into()), false, None);
     let buffer_end = buffer.zv as EmacsInt;
     if end == buffer_end && get_char_property(beg, Qfield, Qnil).is_nil() {
         beg

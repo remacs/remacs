@@ -277,7 +277,7 @@ pub fn self_insert_command(n: EmacsInt) {
                 Qnil,
             );
         }
-        unsafe { frame_make_pointer_invisible(selected_frame().as_frame_or_error().as_mut()) };
+        unsafe { frame_make_pointer_invisible(selected_frame().as_mut()) };
     }
 }
 
