@@ -46,6 +46,9 @@
 ;; CODATA values updated February 2016, using 2014 adjustment
 ;; http://arxiv.org/pdf/1507.07956.pdf
 
+;; Updated November 2018 for the redefinition of the SI
+;; https://www.bipm.org/utils/en/pdf/CGPM/Draft-Resolution-A-EN.pdf
+
 (defvar math-standard-units
   '( ;; Length
     ( m       nil                    "*Meter" )
@@ -118,7 +121,7 @@
     ( mph     "mi/hr"                "*Miles per hour" )
     ( kph     "km/hr"                "Kilometers per hour" )
     ( knot    "nmi/hr"               "Knot" )
-    ( c       "299792458 m/s"        "Speed of light" ) ;;; CODATA
+    ( c       "299792458 m/s"        "Speed of light" ) ;; SI definition
 
     ;; Acceleration
     ( ga      "980665*10^(-5) m/s^2" "*\"g\" acceleration" nil
@@ -207,8 +210,8 @@
     ( C       "A s"                   "Coulomb" )
     ( Fdy     "ech Nav"               "Faraday" )
     ( e       "ech"                   "Elementary charge" )
-    ( ech     "1.6021766208*10^(-19) C"     "Elementary charge" nil
-              "1.6021766208 10^-19 C (*)") ;;(approx) CODATA
+    ( ech     "1.602176634*10^(-19) C"    "Elementary charge" nil
+              "1.602176634 10^-19 C")     ;; SI definition
     ( V       "W/A"                   "Volt" )
     ( ohm     "V/A"                   "Ohm" )
     ( Ω       "ohm"                   "Ohm" )
@@ -256,18 +259,21 @@
     ( sr      nil                      "*Steradian" )
 
     ;; Other physical quantities
-    ;; The values are from CODATA, and are approximate.
-    ( h       "6.626070040*10^(-34) J s"     "*Planck's constant" nil
-              "6.626070040 10^-34 J s (*)")
+    ;; Unless otherwise mentioned, the values are from CODATA,
+    ;; and are approximate.
+    ( h       "6.62607015*10^(-34) J s"     "*Planck's constant" nil
+              "6.62607015 10^-34 J s")      ;; SI definition
     ( hbar    "h / (2 pi)"                  "Planck's constant" ) ;; Exact
-    ( mu0     "4 pi 10^(-7) H/m"            "Permeability of vacuum") ;; Exact
-    ( μ0      "mu0"                         "Permeability of vacuum") ;; Exact
-    ( eps0    "1 / (mu0 c^2)"               "Permittivity of vacuum" )
+    ;; After the 2018 SI redefinition, eps0 and mu0 are measured quantities,
+    ;; and mu0 no longer has the previous exact value of 4 pi 10^(-7) H/m.
+    ( eps0    "ech^2 / (2 alpha h c)"       "Permittivity of vacuum" )
     ( ε0      "eps0"                        "Permittivity of vacuum" )
+    ( mu0     "1 / (eps0 c^2)"              "Permeability of vacuum") ;; Exact
+    ( μ0      "mu0"                         "Permeability of vacuum") ;; Exact
     ( G       "6.67408*10^(-11) m^3/(kg s^2)"    "Gravitational constant" nil
               "6.67408 10^-11 m^3/(kg s^2) (*)")
-    ( Nav     "6.022140857*10^(23) / mol"    "Avogadro's constant" nil
-              "6.022140857 10^23 / mol (*)")
+    ( Nav     "6.02214076*10^(23) / mol"    "Avogadro's constant" nil
+              "6.02214076 10^23 / mol")     ;; SI definition
     ( me      "9.10938356*10^(-31) kg"      "Electron rest mass" nil
               "9.10938356 10^-31 kg (*)")
     ( mp      "1.672621898*10^(-27) kg"     "Proton rest mass" nil
@@ -280,12 +286,10 @@
               "1.883531594 10^-28 kg (*)")
     ( Ryd     "10973731.568508 /m"          "Rydberg's constant" nil
               "10973731.568508 /m (*)")
-    ( k       "1.38064852*10^(-23) J/K"      "Boltzmann's constant" nil
-              "1.38064852 10^-23 J/K (*)")
-    ( sigma   "5.670367*10^(-8) W/(m^2 K^4)" "Stefan-Boltzmann constant" nil
-              "5.670367 10^-8 W/(m^2 K^4) (*)")
-    ( σ       "sigma" "Stefan-Boltzmann constant" nil
-              "5.670367 10^-8 W/(m^2 K^4) (*)")
+    ( k       "1.380649*10^(-23) J/K"       "Boltzmann's constant" nil
+              "1.380649 10^-23 J/K")        ;; SI definition
+    ( sigma   "2 pi^5 k^4 / (15 h^3 c^2)"   "Stefan-Boltzmann constant")
+    ( σ       "sigma"                       "Stefan-Boltzmann constant")
     ( alpha   "7.2973525664*10^(-3)"        "Fine structure constant" nil
               "7.2973525664 10^-3 (*)")
     ( α       "alpha"                        "Fine structure constant" nil
@@ -298,8 +302,7 @@
               "-928.4764620 10^-26 J/T (*)")
     ( mup     "1.4106067873*10^(-26) J/T"    "Proton magnetic moment" nil
               "1.4106067873 10^-26 J/T (*)")
-    ( R0      "8.3144598 J/(mol K)"          "Molar gas constant" nil
-              "8.3144598 J/(mol K) (*)")
+    ( R0      "Nav k"                       "Molar gas constant") ;; Exact
     ( V0      "22.710947*10^(-3) m^3/mol"   "Standard volume of ideal gas" nil
               "22.710947 10^-3 m^3/mol (*)")
     ;; Logarithmic units
