@@ -21468,6 +21468,18 @@ The prefix to remove from each file name returned by notmuch in order
 to get a group name (albeit with @samp{/} instead of @samp{.}).  This
 is a regular expression.
 
+@item nnir-notmuch-filter-group-names-function
+A function used to transform the names of groups being searched in,
+for use as a ``path:'' search keyword for notmuch.  If nil, the
+default, ``path:'' keywords are not used.  Otherwise, this should be a
+callable which accepts a single group name and returns a transformed
+name as notmuch expects to see it.  In many mail backends, for
+instance, dots in group names must be converted to forward slashes: to
+achieve this, set this option to
+@example
+(lambda (g) (replace-regexp-in-string "\\." "/" g))
+@end example
+
 @end table
 
 

@@ -518,18 +518,16 @@ that it is for notmuch, not Namazu."
   :type '(regexp)
   :group 'nnir)
 
-(defcustom nnir-notmuch-filter-group-names-function
-  #'gnus-group-short-name
+(defcustom nnir-notmuch-filter-group-names-function nil
   "Whether and how to use Gnus group names as \"path:\" search terms.
 When nil, the groups being searched in are not used as notmuch
 :path search terms.  It's still possible to use \"path:\" terms
 manually within the search query, however.
 
-When a function, map this function over all the group names.  By
-default this runs them through `gnus-group-short-name', and it is
-recommended to use this transform, at least.  Further
-transforms (for instance, converting \".\" to \"/\") can be
-added like so:
+When a function, map this function over all the group names.  To
+use the group names unchanged, set to (lambda (g) g).  Multiple
+transforms (for instance, converting \".\" to \"/\") can be added
+like so:
 
 \(add-function :filter-return
    nnir-notmuch-filter-group-names-function
@@ -1541,14 +1539,15 @@ construct path: search terms (see the variable
 				":[0-9]+"
 			      "^[0-9]+$"))
 	   (groups (when nnir-notmuch-filter-group-names-function
-		     (mapcar nnir-notmuch-filter-group-names-function
-			     groups)))
+		     (delq nil
+			   (mapcar nnir-notmuch-filter-group-names-function
+				   (mapcar #'gnus-group-short-name groups)))))
 	   (pathquery (when groups
-			(concat "("
-			 (mapconcat (lambda (g)
-				      (format " path:%s" g))
-				    groups " or")
-			 ")")))
+			(concat " ("
+				(mapconcat (lambda (g)
+					     (format "path:%s" g))
+					   groups " or")
+				")")))
            artno dirnam filenam)
 
       (when (equal "" qstring)
