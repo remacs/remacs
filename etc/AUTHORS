@@ -1658,6 +1658,8 @@ Gary Delp: wrote mailpost.el (public domain)
 Gary D. Foster: wrote crisp.el scroll-all.el
 and changed gnus-group.el gnus-topic.el
 
+Gary Fredericks: changed window.el
+
 Gary Howell: changed server.el
 
 Gary Oberbrunner: changed gud.el
@@ -3124,7 +3126,7 @@ Markus Triska: wrote linum.el
 and changed bytecomp.el byte-opt.el doctor.el image-mode.el
   processes.texi calc-math.el emacs.c expand.el flymake.el flymake.texi
   flyspell.el handwrite.el internals.texi proced.el prolog.el ps-mode.el
-  speedbar.el subr.el tumme.el widget.texi xterm.c
+  speedbar.el subr.el tumme.el widget.texi windows.texi xterm.c
 
 Mark W. Eichin: changed keyboard.c xterm.c
 
@@ -3584,8 +3586,8 @@ Nicolas Graner: changed message.el
 Nicolas Petton: wrote map-tests.el map.el seq-tests.el seq.el
   thunk-tests.el thunk.el
 and co-wrote auth-source-pass.el auth-source-tests.el subr-tests.el
-and changed sequences.texi README configure.ac sed2v2.inp authors.el
-  emacs.png README.W32 emacs23.png arc-mode.el cl-extra.el emacs.svg
+and changed README sequences.texi configure.ac sed2v2.inp authors.el
+  README.W32 emacs.png emacs23.png arc-mode.el cl-extra.el emacs.svg
   manoj-dark-theme.el Emacs.icns HISTORY Makefile.in auth-source.el
   emacs.ico fns.c make-tarball.txt obarray-tests.el obarray.el
   and 35 other files
