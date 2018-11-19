@@ -293,7 +293,8 @@ w32_get_resource (HKEY predefined, const char *key, LPDWORD type)
   char *result = NULL;
   DWORD cbData;
 
-  if (RegOpenKeyEx (predefined, REG_ROOT, 0, KEY_READ, &hrootkey) == ERROR_SUCCESS)
+  if (RegOpenKeyEx (predefined, REG_ROOT, 0, KEY_READ, &hrootkey)
+      == ERROR_SUCCESS)
     {
       if (RegQueryValueEx (hrootkey, key, NULL, NULL, NULL, &cbData)
 	  == ERROR_SUCCESS)
@@ -695,7 +696,8 @@ fail (void)
         {
           /* Allocate new token.  */
           ++toks;
-          new_argv = xrealloc (new_argv, new_argv_size + toks * sizeof (char *));
+          new_argv = xrealloc (new_argv,
+			       new_argv_size + toks * sizeof (char *));
 
           /* Skip leading delimiters, and set separator, skipping any
              opening quote.  */
@@ -731,8 +733,8 @@ main (int argc, char **argv)
   main_argc = argc;
   main_argv = argv;
   progname = argv[0];
-  message (true, "%s: Sorry, the Emacs server is supported only\n"
-	   "on systems with Berkeley sockets.\n",
+  message (true, ("%s: Sorry, the Emacs server is supported only\n"
+		  "on systems with Berkeley sockets.\n"),
 	   argv[0]);
   fail ();
 }
@@ -1339,9 +1341,10 @@ set_local_socket (const char *local_socket_name)
 	/* `stat' failed */
 	if (saved_errno == ENOENT)
 	  message (true,
-		   "%s: can't find socket; have you started the server?\n\
-To start the server in Emacs, type \"M-x server-start\".\n",
-		   progname);
+		   ("%s: can't find socket; have you started the server?\n"
+		    "%s: To start the server in Emacs,"
+		    " type \"M-x server-start\".\n"),
+		   progname, progname);
 	else
 	  message (true, "%s: can't stat %s: %s\n",
 		   progname, server.sun_path, strerror (saved_errno));
@@ -1530,10 +1533,13 @@ start_daemon_and_retry_set_socket (void)
 	}
 
       /* Try connecting, the daemon should have started by now.  */
-      message (true, "Emacs daemon should have started, trying to connect again\n");
+      message (true,
+	       "Emacs daemon should have started, trying to connect again\n");
+
       if ((emacs_socket = set_socket (1)) == INVALID_SOCKET)
 	{
-	  message (true, "Error: Cannot connect even after starting the Emacs daemon\n");
+	  message (true, ("Error: Cannot connect "
+			  "even after starting the Emacs daemon\n"));
 	  exit (EXIT_FAILURE);
 	}
     }
@@ -1661,8 +1667,8 @@ main (int argc, char **argv)
 
   if (! (optind < argc || eval || create_frame))
     {
-      message (true, "%s: file name or argument required\n"
-	       "Try '%s --help' for more information\n",
+      message (true, ("%s: file name or argument required\n"
+		      "Try '%s --help' for more information\n"),
 	       progname, progname);
       exit (EXIT_FAILURE);
     }
