@@ -228,12 +228,12 @@ char *
 get_current_dir_name (void)
 {
   char *buf;
-  const char *pwd;
   struct stat dotstat, pwdstat;
   /* If PWD is accurate, use it instead of calling getcwd.  PWD is
      sometimes a nicer name, and using it may avoid a fatal error if a
      parent directory is searchable but not readable.  */
-    if ((pwd = egetenv ("PWD")) != 0
+  char const *pwd = egetenv ("PWD");
+  if (pwd
       && (IS_DIRECTORY_SEP (*pwd) || (*pwd && IS_DEVICE_SEP (pwd[1])))
       && stat (pwd, &pwdstat) == 0
       && stat (".", &dotstat) == 0
@@ -782,21 +782,15 @@ send_to_emacs (HSOCKET s, const char *data)
   /* Fill pointer for the send buffer.  */
   static int sblen;
 
-  size_t dlen;
-
-  if (!data)
-    return;
-
-  dlen = strlen (data);
-  while (*data)
+  for (ptrdiff_t dlen = strlen (data); dlen != 0; )
     {
-      size_t part = min (dlen, SEND_BUFFER_SIZE - sblen);
+      int part = min (dlen, SEND_BUFFER_SIZE - sblen);
       memcpy (&send_buffer[sblen], data, part);
       data += part;
       sblen += part;
 
       if (sblen == SEND_BUFFER_SIZE
-	  || (sblen > 0 && send_buffer[sblen-1] == '\n'))
+	  || (0 < sblen && send_buffer[sblen - 1] == '\n'))
 	{
 	  int sent = send (s, send_buffer, sblen, 0);
 	  if (sent < 0)
@@ -1015,7 +1009,6 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
 static HSOCKET
 set_tcp_socket (const char *local_server_file)
 {
-  HSOCKET s;
   struct sockaddr_in server;
   struct linger l_arg = {1, 1};
   char auth_string[AUTH_KEY_LENGTH + 1];
@@ -1028,7 +1021,8 @@ set_tcp_socket (const char *local_server_file)
              progname, inet_ntoa (server.sin_addr));
 
   /* Open up an AF_INET socket.  */
-  if ((s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+  HSOCKET s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (s < 0)
     {
       /* Since we have an alternate to try out, this is not an error
 	 yet; popping out a modal dialog at this stage would make -a
@@ -1225,11 +1219,11 @@ init_signals (void)
 static HSOCKET
 set_local_socket (const char *local_socket_name)
 {
-  HSOCKET s;
   struct sockaddr_un server;
 
   /* Open up an AF_UNIX socket in this person's home directory.  */
-  if ((s = socket (AF_UNIX, SOCK_STREAM, 0)) < 0)
+  HSOCKET s = socket (AF_UNIX, SOCK_STREAM, 0);
+  if (s < 0)
     {
       message (true, "%s: socket: %s\n", progname, strerror (errno));
       return INVALID_SOCKET;
@@ -1712,11 +1706,10 @@ main (int argc, char **argv)
   /* Send over our environment and current directory. */
   if (create_frame)
     {
-      int i;
-      for (i = 0; environ[i]; i++)
+      for (char *const *e = environ; *e; e++)
         {
           send_to_emacs (emacs_socket, "-env ");
-          quote_argument (emacs_socket, environ[i]);
+          quote_argument (emacs_socket, *e);
           send_to_emacs (emacs_socket, " ");
         }
     }
@@ -1781,8 +1774,7 @@ main (int argc, char **argv)
 
   if (optind < argc)
     {
-      int i;
-      for (i = optind; i < argc; i++)
+      for (int i = optind; i < argc; i++)
 	{
 
 	  if (eval)
@@ -1794,11 +1786,15 @@ main (int argc, char **argv)
               continue;
             }
 
-          if (*argv[i] == '+')
+	  char *p = argv[i];
+	  if (*p == '+')
             {
-	      char *p = argv[i] + 1;
-	      while (isdigit ((unsigned char) *p) || *p == ':') p++;
-	      if (*p == 0)
+	      unsigned char c;
+	      do
+		c = *++p;
+	      while (isdigit (c) || c == ':');
+
+	      if (c == 0)
                 {
                   send_to_emacs (emacs_socket, "-position ");
                   quote_argument (emacs_socket, argv[i]);
@@ -1860,7 +1856,6 @@ main (int argc, char **argv)
   /* Now, wait for an answer and print any messages.  */
   while (exit_status == EXIT_SUCCESS)
     {
-      char *p, *end_p;
       do
         {
           errno = 0;
@@ -1876,7 +1871,8 @@ main (int argc, char **argv)
       string[rl] = '\0';
 
       /* Loop over all NL-terminated messages.  */
-      for (end_p = p = string; end_p != NULL && *end_p != '\0'; p = end_p)
+      char *p = string;
+      for (char *end_p = p; end_p && *end_p != '\0'; p = end_p)
 	{
 	  end_p = strchr (p, '\n');
 	  if (end_p != NULL)
