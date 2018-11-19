@@ -81,6 +81,7 @@ char *w32_getenv (const char *);
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <dosname.h>
 #include <min-max.h>
 #include <unlocked-io.h>
 
@@ -888,31 +889,6 @@ unquote_argument (char *str)
 }
 
 
-static bool
-file_name_absolute_p (const char *filename)
-{
-  /* Sanity check, it shouldn't happen.  */
-  if (! filename) return false;
-
-  /* /xxx is always an absolute path.  */
-  if (filename[0] == '/') return true;
-
-  /* Empty filenames (which shouldn't happen) are relative.  */
-  if (filename[0] == '\0') return false;
-
-# ifdef WINDOWSNT
-  /* X:\xxx is always absolute.  */
-  if (isalpha ((unsigned char) filename[0])
-      && filename[1] == ':' && (filename[2] == '\\' || filename[2] == '/'))
-    return true;
-
-  /* Both \xxx and \\xxx\yyy are absolute.  */
-  if (filename[0] == '\\') return true;
-# endif
-
-  return false;
-}
-
 # ifdef WINDOWSNT
 /* Wrapper to make WSACleanup a cdecl, as required by atexit.  */
 void __cdecl close_winsock (void);
@@ -951,7 +927,7 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
   char *port;
   FILE *config = NULL;
 
-  if (file_name_absolute_p (config_file))
+  if (IS_ABSOLUTE_FILE_NAME (config_file))
     config = fopen (config_file, "rb");
   else
     {
@@ -1241,7 +1217,8 @@ set_local_socket (const char *local_socket_name)
     char *tmpdir_storage = NULL;
     char *socket_name_storage = NULL;
 
-    if (!strchr (local_socket_name, '/') && !strchr (local_socket_name, '\\'))
+    if (! (strchr (local_socket_name, '/')
+	   || (ISSLASH ('\\') && strchr (local_socket_name, '\\'))))
       {
 	/* socket_name is a file name component.  */
 	long uid = geteuid ();
@@ -1809,7 +1786,7 @@ main (int argc, char **argv)
                 }
             }
 # ifdef WINDOWSNT
-	  else if (! file_name_absolute_p (argv[i])
+	  else if (! IS_ABSOLUTE_FILE_NAME (argv[i])
 		   && (isalpha (argv[i][0]) && argv[i][1] == ':'))
 	    /* Windows can have a different default directory for each
 	       drive, so the cwd passed via "-dir" is not sufficient
@@ -1830,7 +1807,7 @@ main (int argc, char **argv)
 # endif
 
           send_to_emacs (emacs_socket, "-file ");
-	  if (tramp_prefix && file_name_absolute_p (argv[i]))
+	  if (tramp_prefix && IS_ABSOLUTE_FILE_NAME (argv[i]))
 	    quote_argument (emacs_socket, tramp_prefix);
           quote_argument (emacs_socket, argv[i]);
           send_to_emacs (emacs_socket, " ");
