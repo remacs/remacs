@@ -132,8 +132,10 @@ static bool tty;
    is not running.  --alternate-editor.   */
 static char *alternate_editor;
 
+#ifndef NO_SOCKETS_IN_FILE_SYSTEM
 /* If non-NULL, the filename of the UNIX socket.  */
 static char const *socket_name;
+#endif
 
 /* If non-NULL, the filename of the authentication file.  */
 static char const *server_file;
