@@ -2500,7 +2500,11 @@ This function is intended to be added to `auto-coding-functions'."
                   (let ((sym-type (coding-system-type sym))
                         (bfcs-type
                          (coding-system-type buffer-file-coding-system)))
-                    (if (and (coding-system-equal 'utf-8 sym-type)
+                    ;; 'charset' will signal an error in
+                    ;; coding-system-equal, since it isn't a
+                    ;; coding-system.  So test that up front.
+                    (if (and (not (equal sym-type 'charset))
+                             (coding-system-equal 'utf-8 sym-type)
                              (coding-system-equal 'utf-8 bfcs-type))
                         buffer-file-coding-system
 		      sym))
