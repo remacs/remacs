@@ -101,19 +101,19 @@ static int main_argc;
 static char *const *main_argv;
 
 /* True means don't wait for a response from Emacs.  --no-wait.  */
-static int nowait;
+static bool nowait;
 
 /* True means don't print messages for successful operations.  --quiet.  */
-static int quiet;
+static bool quiet;
 
 /* True means don't print values returned from emacs. --suppress-output.  */
-static int suppress_output;
+static bool suppress_output;
 
 /* True means args are expressions to be evaluated.  --eval.  */
-static int eval;
+static bool eval;
 
-/* Nonzero means don't open a new frame.  Inverse of --create-frame.  */
-static int current_frame = 1;
+/* True means open a new frame.  --create-frame etc.  */
+static bool create_frame;
 
 /* The display on which Emacs should work.  --display.  */
 static char const *display;
@@ -125,7 +125,7 @@ static char const *alt_display;
 static char *parent_id;
 
 /* True means open a new Emacs frame on the current terminal.  */
-static int tty;
+static bool tty;
 
 /* If non-NULL, the name of an editor to fallback to if the server
    is not running.  --alternate-editor.   */
@@ -478,7 +478,7 @@ decode_options (int argc, char **argv)
   alternate_editor = egetenv ("ALTERNATE_EDITOR");
   tramp_prefix = egetenv ("EMACSCLIENT_TRAMP");
 
-  while (1)
+  while (true)
     {
       int opt = getopt_long_only (argc, argv,
 #ifndef NO_SOCKETS_IN_FILE_SYSTEM
@@ -521,19 +521,19 @@ decode_options (int argc, char **argv)
 	  break;
 
 	case 'n':
-	  nowait = 1;
+	  nowait = true;
 	  break;
 
 	case 'e':
-	  eval = 1;
+	  eval = true;
 	  break;
 
 	case 'q':
-	  quiet = 1;
+	  quiet = true;
 	  break;
 
 	case 'u':
-	  suppress_output = 1;
+	  suppress_output = true;
 	  break;
 
 	case 'V':
@@ -542,17 +542,17 @@ decode_options (int argc, char **argv)
 	  break;
 
         case 't':
-          tty = 1;
-	  current_frame = 0;
+	  tty = true;
+	  create_frame = true;
           break;
 
         case 'c':
-          current_frame = 0;
+	  create_frame = true;
           break;
 
 	case 'p':
 	  parent_id = optarg;
-          current_frame = 0;
+	  create_frame = true;
 	  break;
 
 	case 'H':
@@ -585,7 +585,7 @@ decode_options (int argc, char **argv)
      reflected in the DISPLAY variable.  If the user didn't give us an
      explicit display, try this platform-specific after trying the
      display in DISPLAY (if any).  */
-  if (!current_frame && !tty && !display)
+  if (create_frame && !tty && !display)
     {
       /* Set these here so we use a default_display only when the user
          didn't give us an explicit display.  */
@@ -605,24 +605,24 @@ decode_options (int argc, char **argv)
     }
 
   /* A null-string display is invalid.  */
-  if (display && strlen (display) == 0)
+  if (display && !display[0])
     display = NULL;
 
   /* If no display is available, new frames are tty frames.  */
-  if (!current_frame && !display)
-    tty = 1;
+  if (create_frame && !display)
+    tty = true;
 
 #ifdef WINDOWSNT
   /* Emacs on Windows does not support graphical and text terminal
      frames in the same instance.  So, treat the -t and -c options as
      equivalent, and open a new frame on the server's terminal.
-     Ideally, we would only set tty = 1 when the serve is running in a
+     Ideally, we would set tty = true only if the server is running in a
      console, but alas we don't know that.  As a workaround, always
      ask for a tty frame, and let server.el figure it out.  */
-  if (!current_frame)
+  if (create_frame)
     {
       display = NULL;
-      tty = 1;
+      tty = true;
     }
 #endif /* WINDOWSNT */
 }
@@ -892,7 +892,7 @@ unquote_argument (char *str)
 }
 
 
-static int
+static bool
 file_name_absolute_p (const char *filename)
 {
   /* Sanity check, it shouldn't happen.  */
@@ -947,7 +947,7 @@ initialize_sockets (void)
 /* Read the information needed to set up a TCP comm channel with
    the Emacs server: host, port, and authentication string.  */
 
-static int
+static bool
 get_server_config (const char *config_file, struct sockaddr_in *server,
 		   char *authentication)
 {
@@ -1064,19 +1064,19 @@ set_tcp_socket (const char *local_server_file)
 }
 
 
-/* Returns 1 if PREFIX is a prefix of STRING. */
-static int
+/* Return true if PREFIX is a prefix of STRING. */
+static bool
 strprefix (const char *prefix, const char *string)
 {
   return !strncmp (prefix, string, strlen (prefix));
 }
 
-/* Get tty name and type.  If successful, return the type in TTY_TYPE
-   and the name in TTY_NAME, and return 1.  Otherwise, fail if NOABORT
-   is zero, or return 0 if NOABORT is non-zero.  */
+/* Get tty name and type.  If successful, store the type into
+   *TTY_TYPE and the name into *TTY_NAME, and return true.
+   Otherwise, fail if NOABORT is zero, or return false if NOABORT.  */
 
-static int
-find_tty (const char **tty_type, const char **tty_name, int noabort)
+static bool
+find_tty (const char **tty_type, const char **tty_name, bool noabort)
 {
   const char *type = egetenv ("TERM");
   const char *name = ttyname (fileno (stdout));
@@ -1084,24 +1084,18 @@ find_tty (const char **tty_type, const char **tty_name, int noabort)
   if (!name)
     {
       if (noabort)
-	return 0;
-      else
-	{
-	  message (true, "%s: could not get terminal name\n", progname);
-	  fail ();
-	}
+	return false;
+      message (true, "%s: could not get terminal name\n", progname);
+      fail ();
     }
 
   if (!type)
     {
       if (noabort)
-	return 0;
-      else
-	{
-	  message (true, "%s: please set the TERM variable to your terminal type\n",
-		   progname);
-	  fail ();
-	}
+	return false;
+      message (true, "%s: please set the TERM variable to your terminal type\n",
+	       progname);
+      fail ();
     }
 
   const char *inside_emacs = egetenv ("INSIDE_EMACS");
@@ -1109,19 +1103,17 @@ find_tty (const char **tty_type, const char **tty_name, int noabort)
       && strprefix ("eterm", type))
     {
       if (noabort)
-	return 0;
-      else
-	{
-	  /* This causes nasty, MULTI_KBOARD-related input lockouts. */
-	  message (true, "%s: opening a frame in an Emacs term buffer"
-		   " is not supported\n", progname);
-	  fail ();
-	}
+	return false;
+      /* This causes nasty, MULTI_KBOARD-related input lockouts. */
+      message (true, ("%s: opening a frame in an Emacs term buffer"
+		      " is not supported\n"),
+	       progname);
+      fail ();
     }
 
   *tty_name = name;
   *tty_type = type;
-  return 1;
+  return true;
 }
 
 
@@ -1375,7 +1367,7 @@ To start the server in Emacs, type \"M-x server-start\".\n",
 # endif /* ! NO_SOCKETS_IN_FILE_SYSTEM */
 
 static HSOCKET
-set_socket (int no_exit_if_error)
+set_socket (bool no_exit_if_error)
 {
   HSOCKET s;
   const char *local_server_file = server_file;
@@ -1390,7 +1382,7 @@ set_socket (int no_exit_if_error)
   if (socket_name)
     {
       s = set_local_socket (socket_name);
-      if ((s != INVALID_SOCKET) || no_exit_if_error)
+      if (s != INVALID_SOCKET || no_exit_if_error)
 	return s;
       message (true, "%s: error accessing socket \"%s\"\n",
 	       progname, socket_name);
@@ -1405,7 +1397,7 @@ set_socket (int no_exit_if_error)
   if (local_server_file)
     {
       s = set_tcp_socket (local_server_file);
-      if ((s != INVALID_SOCKET) || no_exit_if_error)
+      if (s != INVALID_SOCKET || no_exit_if_error)
 	return s;
 
       message (true, "%s: error accessing server file \"%s\"\n",
@@ -1422,7 +1414,7 @@ set_socket (int no_exit_if_error)
 
   /* Implicit server file.  */
   s = set_tcp_socket ("server");
-  if ((s != INVALID_SOCKET) || no_exit_if_error)
+  if (s != INVALID_SOCKET || no_exit_if_error)
     return s;
 
   /* No implicit or explicit socket, and no alternate editor.  */
@@ -1535,10 +1527,9 @@ start_daemon_and_retry_set_socket (void)
 
   if (dpid > 0)
     {
-      pid_t w;
-      w = waitpid (dpid, &status, WUNTRACED | WCONTINUED);
+      pid_t w = waitpid (dpid, &status, WUNTRACED | WCONTINUED);
 
-      if ((w == -1) || !WIFEXITED (status) || WEXITSTATUS (status))
+      if (w < 0 || !WIFEXITED (status) || WEXITSTATUS (status))
 	{
 	  message (true, "Error: Could not start the Emacs daemon\n");
 	  exit (EXIT_FAILURE);
@@ -1653,10 +1644,10 @@ start_daemon_and_retry_set_socket (void)
 int
 main (int argc, char **argv)
 {
-  int rl = 0, needlf = 0;
+  int rl = 0;
+  bool skiplf = true;
   char *cwd, *str;
   char string[BUFSIZ+1];
-  int start_daemon_if_needed;
   int exit_status = EXIT_SUCCESS;
 
   main_argc = argc;
@@ -1674,7 +1665,7 @@ main (int argc, char **argv)
   /* Process options.  */
   decode_options (argc, argv);
 
-  if ((argc - optind < 1) && !eval && current_frame)
+  if (! (optind < argc || eval || create_frame))
     {
       message (true, "%s: file name or argument required\n"
 	       "Try '%s --help' for more information\n",
@@ -1694,8 +1685,7 @@ main (int argc, char **argv)
 
   /* If alternate_editor is the empty string, start the emacs daemon
      in case of failure to connect.  */
-  start_daemon_if_needed = (alternate_editor
-			    && (alternate_editor[0] == '\0'));
+  bool start_daemon_if_needed = alternate_editor && !alternate_editor[0];
 
   emacs_socket = set_socket (alternate_editor || start_daemon_if_needed);
   if (emacs_socket == INVALID_SOCKET)
@@ -1720,7 +1710,7 @@ main (int argc, char **argv)
 # endif /* HAVE_NTGUI */
 
   /* Send over our environment and current directory. */
-  if (!current_frame)
+  if (create_frame)
     {
       int i;
       for (i = 0; environ[i]; i++)
@@ -1742,7 +1732,7 @@ main (int argc, char **argv)
   if (nowait)
     send_to_emacs (emacs_socket, "-nowait ");
 
-  if (current_frame)
+  if (!create_frame)
     send_to_emacs (emacs_socket, "-current-frame ");
 
   if (display)
@@ -1759,7 +1749,7 @@ main (int argc, char **argv)
       send_to_emacs (emacs_socket, " ");
     }
 
-  if (frame_parameters && !current_frame)
+  if (frame_parameters && create_frame)
     {
       send_to_emacs (emacs_socket, "-frame-parameters ");
       quote_argument (emacs_socket, frame_parameters);
@@ -1769,7 +1759,7 @@ main (int argc, char **argv)
   /* Unless we are certain we don't want to occupy the tty, send our
      tty information to Emacs.  For example, in daemon mode Emacs may
      need to occupy this tty if no other frame is available.  */
-  if (!current_frame || !eval)
+  if (create_frame || !eval)
     {
       const char *tty_type, *tty_name;
 
@@ -1786,10 +1776,10 @@ main (int argc, char **argv)
 	}
     }
 
-  if (!current_frame && !tty)
+  if (create_frame && !tty)
     send_to_emacs (emacs_socket, "-window-system ");
 
-  if ((argc - optind > 0))
+  if (optind < argc)
     {
       int i;
       for (i = optind; i < argc; i++)
@@ -1861,7 +1851,7 @@ main (int argc, char **argv)
   if (!eval && !tty && !nowait && !quiet)
     {
       printf ("Waiting for Emacs...");
-      needlf = 2;
+      skiplf = false;
     }
   fflush (stdout);
   while (fdatasync (1) != 0 && errno == EINTR)
@@ -1909,8 +1899,8 @@ main (int argc, char **argv)
                 }
               else
                 {
-                  nowait = 0;
-                  tty = 1;
+                  nowait = false;
+                  tty = true;
                 }
 
               goto retry;
@@ -1921,10 +1911,9 @@ main (int argc, char **argv)
 	      if (!suppress_output)
 		{
 		  str = unquote_argument (p + strlen ("-print "));
-		  if (needlf)
-		    printf ("\n");
-		  printf ("%s", str);
-		  needlf = str[0] == '\0' ? needlf : str[strlen (str) - 1] != '\n';
+		  printf (&"\n%s"[skiplf], str);
+		  if (str[0])
+		    skiplf = str[strlen (str) - 1] == '\n';
 		}
 	    }
           else if (strprefix ("-print-nonl ", p))
@@ -1935,41 +1924,41 @@ main (int argc, char **argv)
 		{
 		  str = unquote_argument (p + strlen ("-print-nonl "));
 		  printf ("%s", str);
-		  needlf = str[0] == '\0' ? needlf : str[strlen (str) - 1] != '\n';
+		  if (str[0])
+		    skiplf = str[strlen (str) - 1] == '\n';
 		}
             }
           else if (strprefix ("-error ", p))
             {
               /* -error DESCRIPTION: Signal an error on the terminal. */
               str = unquote_argument (p + strlen ("-error "));
-              if (needlf)
+              if (!skiplf)
                 printf ("\n");
               fprintf (stderr, "*ERROR*: %s", str);
-              needlf = str[0] == '\0' ? needlf : str[strlen (str) - 1] != '\n';
+              if (str[0])
+	        skiplf = str[strlen (str) - 1] == '\n';
               exit_status = EXIT_FAILURE;
             }
 # ifdef SIGSTOP
 	  else if (strprefix ("-suspend ", p))
 	    {
 	      /* -suspend: Suspend this terminal, i.e., stop the process. */
-	      if (needlf)
+	      if (!skiplf)
 		printf ("\n");
-	      needlf = 0;
+	      skiplf = true;
 	      kill (0, SIGSTOP);
 	    }
 # endif
 	  else
 	    {
 	      /* Unknown command. */
-	      if (needlf)
-		printf ("\n");
-	      needlf = 0;
-	      printf ("*ERROR*: Unknown message: %s\n", p);
+	      printf (&"\n*ERROR*: Unknown message: %s\n"[skiplf], p);
+	      skiplf = true;
 	    }
 	}
     }
 
-  if (needlf)
+  if (!skiplf)
     printf ("\n");
   fflush (stdout);
   while (fdatasync (1) != 0 && errno == EINTR)
