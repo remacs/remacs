@@ -3960,6 +3960,8 @@ extern Lisp_Object Vrun_hooks;
 extern Lisp_Object Vsignaling_function;
 extern Lisp_Object inhibit_lisp_code;
 
+extern void do_one_unbind (union specbinding *, bool, enum Set_Internal_Bind);
+
 /* To run a normal hook, use the appropriate function from the list below.
    The calling convention:
 

@@ -2550,7 +2550,7 @@ rebind_for_thread_switch (void)
     }
 }
 
-static void
+void
 do_one_unbind (union specbinding *this_binding, bool unwinding,
                enum Set_Internal_Bind bindflag)
 {
@@ -2654,36 +2654,6 @@ set_unwind_protect_ptr (ptrdiff_t count, void (*func) (void *), void *arg)
   p->unwind_ptr.kind = SPECPDL_UNWIND_PTR;
   p->unwind_ptr.func = func;
   p->unwind_ptr.arg = arg;
-}
-
-/* Pop and execute entries from the unwind-protect stack until the
-   depth COUNT is reached.  Return VALUE.  */
-
-Lisp_Object
-unbind_to (ptrdiff_t count, Lisp_Object value)
-{
-  Lisp_Object quitf = Vquit_flag;
-
-  Vquit_flag = Qnil;
-
-  while (specpdl_ptr != specpdl + count)
-    {
-      /* Copy the binding, and decrement specpdl_ptr, before we do
-	 the work to unbind it.  We decrement first
-	 so that an error in unbinding won't try to unbind
-	 the same entry again, and we copy the binding first
-	 in case more bindings are made during some of the code we run.  */
-
-      union specbinding this_binding;
-      this_binding = *--specpdl_ptr;
-
-      do_one_unbind (&this_binding, true, SET_INTERNAL_UNBIND);
-    }
-
-  if (NILP (Vquit_flag) && !NILP (quitf))
-    Vquit_flag = quitf;
-
-  return value;
 }
 
 void

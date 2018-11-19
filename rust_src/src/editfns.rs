@@ -12,7 +12,7 @@ use crate::{
     buffers::{current_buffer, validate_region},
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
-    eval::progn,
+    eval::{progn, unbind_to},
     lisp::{defsubr, LispObject},
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
@@ -32,8 +32,8 @@ use crate::{
         make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
         record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
         save_restriction_restore, save_restriction_save, scan_newline_from_point,
-        set_buffer_internal_1, set_point, set_point_both, styled_format, unbind_to,
-        update_buffer_properties, STRING_BYTES,
+        set_buffer_internal_1, set_point, set_point_both, styled_format, update_buffer_properties,
+        STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
@@ -1157,7 +1157,7 @@ pub fn save_excursion(args: LispObject) -> LispObject {
 
     unsafe { record_unwind_protect(Some(save_excursion_restore), save_excursion_save()) };
 
-    unsafe { unbind_to(count, progn(args)) }
+    unbind_to(count, progn(args))
 }
 
 /// Record which buffer is current; execute BODY; make that buffer current.
@@ -1169,7 +1169,7 @@ pub fn save_current_buffer(args: LispObject) -> LispObject {
 
     unsafe { record_unwind_current_buffer() };
 
-    unsafe { unbind_to(count, progn(args)) }
+    unbind_to(count, progn(args))
 }
 
 /// Execute BODY, saving and restoring current buffer's restrictions.
@@ -1194,7 +1194,7 @@ pub fn save_restriction(body: LispObject) -> LispObject {
 
     unsafe { record_unwind_protect(Some(save_restriction_restore), save_restriction_save()) };
 
-    unsafe { unbind_to(count, progn(body)) }
+    unbind_to(count, progn(body))
 }
 
 // Find the field surrounding POS in BEG and END.  If POS is nil,
