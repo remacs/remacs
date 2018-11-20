@@ -1,6 +1,6 @@
 ;;; vc-hooks.el --- resident support for version-control
 
-;; Copyright (C) 1992-1996, 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1996, 1998-2018 Free Software Foundation, Inc.
 
 ;; Author:     FSF (see vc.el for full credits)
 ;; Maintainer: emacs-devel@gnu.org
@@ -34,9 +34,9 @@
 
 ;; Faces
 
-(defgroup vc-state-faces nil
+(defgroup vc-faces nil
   "Faces used in the mode line by the VC state indicator."
-  :group 'vc-faces
+  :group 'vc
   :group 'mode-line
   :version "25.1")
 

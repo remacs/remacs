@@ -1,6 +1,6 @@
 ;;; grep.el --- run `grep' and display the results  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1987, 1993-1999, 2001-2017 Free Software
+;; Copyright (C) 1985-1987, 1993-1999, 2001-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Roland McGrath <roland@gnu.org>
@@ -162,6 +162,7 @@ Customize or call the function `grep-apply-setting'."
 (defcustom grep-use-null-filename-separator 'auto-detect
   "If non-nil, use `grep's `--null' option.
 This is done to disambiguate file names in `grep's output."
+  :version "26.1"
   :type '(choice (const :tag "Do Not Use `--null'" nil)
                  (const :tag "Use `--null'" t)
                  (other :tag "Not Set" auto-detect))

@@ -1,6 +1,6 @@
 ;;; tramp-sh.el --- Tramp access functions for (s)sh-like connections  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
 ;; (copyright statements below in code to be updated with the above notice)
 
@@ -798,7 +798,7 @@ on the remote host.")
 (defconst tramp-perl-encode
   "%s -e '
 # This script contributed by Juanma Barranquero <lektu@terra.es>.
-# Copyright (C) 2002-2017 Free Software Foundation, Inc.
+# Copyright (C) 2002-2018 Free Software Foundation, Inc.
 use strict;
 
 my %%trans = do {
@@ -836,7 +836,7 @@ This string is passed to `format', so percent characters need to be doubled.")
 (defconst tramp-perl-decode
   "%s -e '
 # This script contributed by Juanma Barranquero <lektu@terra.es>.
-# Copyright (C) 2002-2017 Free Software Foundation, Inc.
+# Copyright (C) 2002-2018 Free Software Foundation, Inc.
 use strict;
 
 my %%trans = do {
@@ -2473,7 +2473,9 @@ The method used must be an out-of-band method."
 	      ;; The default directory must be remote.
 	      (let ((default-directory
 		      (file-name-directory (if t1 filename newname)))
-		    (process-environment (copy-sequence process-environment)))
+		    (process-environment (copy-sequence process-environment))
+		    ;; We do not want to run timers.
+		    timer-list timer-idle-list)
 		;; Set the transfer process properties.
 		(tramp-set-connection-property
 		 v "process-name" (buffer-name (current-buffer)))
@@ -2894,7 +2896,9 @@ the result will be a local, non-Tramp, file name."
 	   ;; We do not want to raise an error when
 	   ;; `start-file-process' has been started several times in
 	   ;; `eshell' and friends.
-	   (tramp-current-connection nil)
+	   tramp-current-connection
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list
 	   p)
 
       (while (get-process name1)
@@ -3406,7 +3410,8 @@ the result will be a local, non-Tramp, file name."
 	;; Set the ownership.
         (when need-chown
           (tramp-set-file-uid-gid filename uid gid))
-	(when (or (eq visit t) (null visit) (stringp visit))
+	(when (and (null noninteractive)
+		   (or (eq visit t) (null visit) (stringp visit)))
 	  (tramp-message v 0 "Wrote %s" filename))
 	(run-hooks 'tramp-handle-write-region-hook)))))
 
@@ -4713,7 +4718,8 @@ connection if a previous connection has died for some reason."
 	      (setenv "PS1" tramp-initial-end-of-output)
               (unless (stringp tramp-encoding-shell)
                 (tramp-error vec 'file-error "`tramp-encoding-shell' not set"))
-	      (let* ((target-alist (tramp-compute-multi-hops vec))
+	      (let* ((current-host (system-name))
+		     (target-alist (tramp-compute-multi-hops vec))
 		     ;; We will apply `tramp-ssh-controlmaster-options'
 		     ;; only for the first hop.
 		     (options (tramp-ssh-controlmaster-options vec))
@@ -4736,7 +4742,7 @@ connection if a previous connection has died for some reason."
 				     tramp-encoding-command-interactive)
 			     (list tramp-encoding-shell))))))
 
-		;; Set sentinel and query flag.
+		;; Set sentinel and query flag.  Initialize variables.
 		(tramp-set-connection-property p "vector" vec)
 		(set-process-sentinel p 'tramp-process-sentinel)
 		(process-put p 'adjust-window-size-function 'ignore)
@@ -4795,8 +4801,9 @@ connection if a previous connection has died for some reason."
 
 		    ;; Check, whether there is a restricted shell.
 		    (dolist (elt tramp-restricted-shell-hosts-alist)
-		      (when (string-match elt l-host)
+		      (when (string-match elt current-host)
 			(setq r-shell t)))
+		    (setq current-host l-host)
 
 		    ;; Set password prompt vector.
 		    (tramp-set-connection-property

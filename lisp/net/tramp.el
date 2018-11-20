@@ -1,6 +1,6 @@
 ;;; tramp.el --- Transparent Remote Access, Multiple Protocol  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
 ;; Author: Kai Großjohann <kai.grossjohann@gmx.net>
 ;;         Michael Albinus <michael.albinus@gmx.de>
@@ -1423,9 +1423,10 @@ the form (METHOD USER DOMAIN HOST PORT LOCALNAME &optional HOP)."
 	      localname (nth 5 args)
 	      hop (nth 6 args))))
 
+    (when (zerop (length method))
+      (signal 'wrong-type-argument (list 'stringp method)))
     (concat tramp-prefix-format hop
-	    (unless (or (zerop (length method))
-			(zerop (length tramp-postfix-method-format)))
+	    (unless (zerop (length tramp-postfix-method-format))
 	      (concat method tramp-postfix-method-format))
 	    user
 	    (unless (zerop (length domain))
@@ -1626,10 +1627,11 @@ ARGUMENTS to actually emit the message (if applicable)."
     ;; The message.
     (insert (apply #'format-message fmt-string arguments))))
 
-(defvar tramp-message-show-message t
+(defvar tramp-message-show-message (null noninteractive)
   "Show Tramp message in the minibuffer.
-This variable is used to disable messages from `tramp-error'.
-The messages are visible anyway, because an error is raised.")
+This variable is used to suppress progress reporter output, and
+to disable messages from `tramp-error'.  Those messages are
+visible anyway, because an error is raised.")
 
 (defsubst tramp-message (vec-or-proc level fmt-string &rest arguments)
   "Emit a message depending on verbosity level.
@@ -2230,6 +2232,8 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 			(let ((default-directory
 				(tramp-compat-temporary-file-directory)))
 			  (load (cadr sf) 'noerror 'nomessage)))
+;;		      (tramp-message
+;;		       v 4 "Running `%s'..." (cons operation args))
 		      ;; If `non-essential' is non-nil, Tramp shall
 		      ;; not open a new connection.
 		      ;; If Tramp detects that it shouldn't continue
@@ -2253,6 +2257,8 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 				      (let ((tramp-locker t))
 					(apply foreign operation args))
 				    (setq tramp-locked tl))))))
+;;		      (tramp-message
+;;		       v 4 "Running `%s'...`%s'" (cons operation args) result)
 		      (cond
 		       ((eq result 'non-essential)
 			(tramp-message
@@ -3833,7 +3839,9 @@ connection buffer."
 This is needed in order to hide `last-coding-system-used', which is set
 for process communication also."
   (with-current-buffer (process-buffer proc)
-    (let (buffer-read-only last-coding-system-used)
+    (let (buffer-read-only last-coding-system-used
+	  ;; We do not want to run timers.
+	  timer-list timer-idle-list)
       ;; Under Windows XP, `accept-process-output' doesn't return
       ;; sometimes.  So we add an additional timeout.  JUST-THIS-ONE
       ;; is set due to Bug#12145.  It is an integer, in order to avoid

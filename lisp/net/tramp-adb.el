@@ -1,6 +1,6 @@
 ;;; tramp-adb.el --- Functions for calling Android Debug Bridge from Tramp  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
 ;; Author: Jürgen Hötzel <juergen@archlinux.org>
 ;; Keywords: comm, processes
@@ -681,13 +681,22 @@ But handle the case, if the \"test\" command is not available."
 	      (tramp-error v 'file-error "Cannot write: `%s'" filename))
 	  (delete-file tmpfile)))
 
-      (when (or (eq visit t) (stringp visit))
-	(set-visited-file-modtime))
-
       (unless (equal curbuf (current-buffer))
 	(tramp-error
 	 v 'file-error
-	 "Buffer has changed from `%s' to `%s'" curbuf (current-buffer))))))
+	 "Buffer has changed from `%s' to `%s'" curbuf (current-buffer)))
+
+      ;; Set file modification time.
+      (when (or (eq visit t) (stringp visit))
+	(set-visited-file-modtime
+	 (tramp-compat-file-attribute-modification-time
+	  (file-attributes filename))))
+
+      ;; The end.
+      (when (and (null noninteractive)
+		 (or (eq visit t) (null visit) (stringp visit)))
+	(tramp-message v 0 "Wrote %s" filename))
+      (run-hooks 'tramp-handle-write-region-hook))))
 
 (defun tramp-adb-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
@@ -1037,7 +1046,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (or (null program) tramp-process-connection-type))
 	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	   (name1 name)
-	   (i 0))
+	   (i 0)
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list)
 
       (while (get-process name1)
 	;; NAME must be unique as process name.

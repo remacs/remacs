@@ -1,6 +1,6 @@
 ;;; tramp-cache.el --- file information caching for Tramp  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2000, 2005-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2000, 2005-2018 Free Software Foundation, Inc.
 
 ;; Author: Daniel Pittman <daniel@inanna.danann.net>
 ;;         Michael Albinus <michael.albinus@gmx.de>
@@ -114,8 +114,7 @@ Returns DEFAULT if not set."
 	(tramp-file-name-hop key) nil)
   (let* ((hash (tramp-get-hash-table key))
 	 (value (when (hash-table-p hash) (gethash property hash))))
-    (if
-	;; We take the value only if there is any, and
+    (if ;; We take the value only if there is any, and
 	;; `remote-file-name-inhibit-cache' indicates that it is still
 	;; valid.  Otherwise, DEFAULT is set.
 	(and (consp value)

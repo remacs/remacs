@@ -1,6 +1,6 @@
 ;;; smtpmail.el --- simple SMTP protocol (RFC 821) for sending mail
 
-;; Copyright (C) 1995-1996, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1996, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Tomoji Kagatani <kagatani@rbc.ncl.omron.co.jp>
 ;; Maintainer: Simon Josefsson <simon@josefsson.org>
@@ -941,7 +941,7 @@ Returns an error if the server cannot be contacted."
 
   (if (and (multibyte-string-p data)
 	   smtpmail-code-conv-from)
-      (setq data (string-as-multibyte
+      (setq data (string-as-multibyte   ;FIXME: ???
 		  (encode-coding-string data smtpmail-code-conv-from))))
 
   (if smtpmail-debug-info

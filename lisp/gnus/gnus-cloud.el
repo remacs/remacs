@@ -1,6 +1,6 @@
 ;;; gnus-cloud.el --- storing and retrieving data via IMAP
 
-;; Copyright (C) 2014-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: mail
@@ -21,6 +21,10 @@
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+
+;; The name gnus-cloud parodizes but otherwise has little to do with
+;; "cloud computing", a misleading term normally best avoided.  See:
+;; https://www.gnu.org/philosophy/words-to-avoid.html#CloudComputing
 
 ;;; Code:
 
@@ -51,6 +55,7 @@
 
 (defcustom gnus-cloud-storage-method (if (featurep 'epg) 'epg 'base64-gzip)
   "Storage method for cloud data, defaults to EPG if that's available."
+  :version "26.1"
   :group 'gnus-cloud
   :type '(radio (const :tag "No encoding" nil)
                 (const :tag "Base64" base64)
@@ -59,6 +64,7 @@
 
 (defcustom gnus-cloud-interactive t
   "Whether Gnus Cloud changes should be confirmed."
+  :version "26.1"
   :group 'gnus-cloud
   :type 'boolean)
 

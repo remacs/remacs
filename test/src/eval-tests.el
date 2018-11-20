@@ -1,6 +1,6 @@
 ;;; eval-tests.el --- unit tests for src/eval.c      -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2018 Free Software Foundation, Inc.
 
 ;; Author: Philipp Stephani <phst@google.com>
 
@@ -30,7 +30,7 @@
 (defvar byte-compile-debug)
 
 (ert-deftest eval-tests--bugs-24912-and-24913 ()
-  "Checks that Emacs doesn’t accept weird argument lists.
+  "Check that Emacs doesn't accept weird argument lists.
 Bug#24912 and Bug#24913."
   (dolist (args '((&optional) (&rest) (&optional &rest) (&rest &optional)
                   (&optional &rest a) (&optional a &rest)

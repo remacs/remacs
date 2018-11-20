@@ -1,6 +1,6 @@
 ;;; em-xtra.el --- extra alias functions  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -29,6 +29,8 @@
   (require 'pcomplete))
 (require 'compile)
 
+;; There are no items in this custom group, but eshell modules (ab)use
+;; custom groups.
 ;;;###autoload
 (progn
 (defgroup eshell-xtra nil

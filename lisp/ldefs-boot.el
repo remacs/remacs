@@ -5763,7 +5763,7 @@ It is possible to show this help automatically after some idle time.
 This is regulated by variable `cperl-lazy-help-time'.  Default with
 `cperl-hairy' (if the value of `cperl-lazy-help-time' is nil) is 5
 secs idle time .  It is also possible to switch this on/off from the
-menu, or via \\[cperl-toggle-autohelp].  Requires `run-with-idle-timer'.
+menu, or via \\[cperl-toggle-autohelp].
 
 Use \\[cperl-lineup] to vertically lineup some construction - put the
 beginning of the region at the start of construction, and make region
@@ -6860,8 +6860,7 @@ a non-positive integer, and enable the mode otherwise
 
 When Delete Selection mode is enabled, typed text replaces the selection
 if the selection is active.  Otherwise, typed text is just inserted at
-point regardless of any selection.  Also, commands that normally delete
-just one character will delete the entire selection instead.
+point regardless of any selection.
 
 See `delete-selection-helper' and `delete-selection-pre-hook' for
 information on adapting behavior of commands in Delete Selection mode.
@@ -9585,9 +9584,10 @@ To change the default, set the variable `ediff-use-toolbar-p', which see.
 (autoload 'edit-kbd-macro "edmacro" "\
 Edit a keyboard macro.
 At the prompt, type any key sequence which is bound to a keyboard macro.
-Or, type `C-x e' or RET to edit the last keyboard macro, `C-h l' to edit
-the last 300 keystrokes as a keyboard macro, or `\\[execute-extended-command]' to edit a macro by
-its command name.
+Or, type `\\[kmacro-end-and-call-macro]' or RET to edit the last
+keyboard macro, `\\[view-lossage]' to edit the last 300
+keystrokes as a keyboard macro, or `\\[execute-extended-command]'
+to edit a macro by its command name.
 With a prefix argument, format the macro in a more concise way.
 
 \(fn KEYS &optional PREFIX FINISH-HOOK STORE-HOOK)" t nil)
@@ -12173,7 +12173,7 @@ Remove faceup markup from buffer.
 \(fn)" t nil)
 
 (autoload 'faceup-defexplainer "faceup" "\
-Defines an Ert explainer function for FUNCTION.
+Define an Ert explainer function for FUNCTION.
 
 FUNCTION must return an explanation when the test fails and
 `faceup-test-explain' is set.
@@ -12470,7 +12470,7 @@ whose elements are of the form (VAR . VALUE).
 
 When a connection to a remote server is opened, the server's
 connection profiles are found.  A server may be assigned a
-connection profile using `connection-local-set-profile'.  Then
+connection profile using `connection-local-set-profiles'.  Then
 variables are set in the server's process buffer according to the
 VARIABLES list of the connection profile.  The list is processed
 in order.
@@ -13265,7 +13265,7 @@ play around with the following keys:
 
 \(fn &optional ARG)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "footnote" '("footnote-" "Footnote-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "footnote" '("footnote-")))
 
 ;;;***
 
@@ -18453,7 +18453,10 @@ For example, invoke \"emacs -batch -f batch-info-validate $info/ ~/*.info\"
 ;;; Generated autoloads from emacs-lisp/inline.el
 
 (autoload 'define-inline "inline" "\
+Define an inline function NAME with arguments ARGS and body in BODY.
 
+This is like `defmacro', but has several advantages.
+See Info node `(elisp)Defining Functions' for more details.
 
 \(fn NAME ARGS &rest BODY)" nil t)
 
@@ -34279,7 +34282,7 @@ Add Tramp file name handlers to `file-name-handler-alist' during autoload." (add
  (tramp-register-autoload-file-name-handlers)
 
 (defun tramp-unload-file-name-handlers nil "\
-Unload Tramp file name handlers from `file-name-handler-alist'." (dolist (fnh (quote (tramp-file-name-handler tramp-completion-file-name-handler tramp-autoload-file-name-handler))) (let ((a1 (rassq fnh file-name-handler-alist))) (setq file-name-handler-alist (delq a1 file-name-handler-alist)))))
+Unload Tramp file name handlers from `file-name-handler-alist'." (dolist (fnh (quote (tramp-file-name-handler tramp-completion-file-name-handler tramp-archive-file-name-handler tramp-autoload-file-name-handler))) (let ((a1 (rassq fnh file-name-handler-alist))) (setq file-name-handler-alist (delq a1 file-name-handler-alist)))))
 
 (defvar tramp-completion-mode nil "\
 If non-nil, external packages signal that they are in file name completion.")
@@ -34297,6 +34300,14 @@ Discard Tramp from loading remote files.
 ;;; Generated autoloads from net/tramp-adb.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-adb" '("tramp-")))
+
+;;;***
+
+;;;### (autoloads nil "tramp-archive" "net/tramp-archive.el" (0 0
+;;;;;;  0 0))
+;;; Generated autoloads from net/tramp-archive.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-archive" '("tramp-" "with-parsed-tramp-archive-file-name")))
 
 ;;;***
 
@@ -34364,7 +34375,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 3 3 -1)) package--builtin-versions)
+(push (purecopy '(tramp 2 4 0 -1)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
@@ -38061,7 +38072,7 @@ or call the function `winner-mode'.")
 Toggle Winner mode on or off.
 With a prefix argument ARG, enable Winner mode if ARG is
 positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil, and toggle it if ARG is ‘toggle’.
+the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
 
 Winner mode is a global minor mode that records the changes in
 the window configuration (i.e. how the frames are partitioned

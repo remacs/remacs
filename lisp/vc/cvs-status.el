@@ -1,6 +1,6 @@
 ;;; cvs-status.el --- major mode for browsing `cvs status' output -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: pcl-cvs cvs status tree vc tools
@@ -32,11 +32,6 @@
 (require 'pcvs-util)
 
 ;;;
-
-(defgroup cvs-status nil
-  "Major mode for browsing `cvs status' output."
-  :group 'pcl-cvs
-  :prefix "cvs-status-")
 
 (easy-mmode-defmap cvs-status-mode-map
   '(("n"	. next-line)

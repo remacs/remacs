@@ -1,4 +1,4 @@
-;; Copyright (C) 2017  Free Software Foundation, Inc
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; Author: Dima Kogan <dima@secretsauce.net>
 ;; Maintainer: emacs-devel@gnu.org

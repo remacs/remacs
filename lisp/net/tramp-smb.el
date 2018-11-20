@@ -1,6 +1,6 @@
 ;;; tramp-smb.el --- Tramp access functions for SMB servers  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
@@ -457,7 +457,9 @@ pass to the OPERATION."
 			       (expand-file-name
 				tramp-temp-name-prefix
 				(tramp-compat-temporary-file-directory))))
-		   (args      (list (concat "//" host "/" share) "-E")))
+		   (args      (list (concat "//" host "/" share) "-E"))
+		   ;; We do not want to run timers.
+		   timer-list timer-idle-list)
 
 	      (if (not (zerop (length user)))
 		  (setq args (append args (list "-U" user)))
@@ -739,7 +741,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (let* ((share     (tramp-smb-get-share v))
 		 (localname (replace-regexp-in-string
 			     "\\\\" "/" (tramp-smb-get-localname v)))
-		 (args      (list (concat "//" host "/" share) "-E")))
+		 (args      (list (concat "//" host "/" share) "-E"))
+		 ;; We do not want to run timers.
+		 timer-list timer-idle-list)
 
 	    (if (not (zerop (length user)))
 		(setq args (append args (list "-U" user)))
@@ -1215,6 +1219,8 @@ component is used as the target of the symlink."
     (let* ((name (file-name-nondirectory program))
 	   (name1 name)
 	   (i 0)
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list
 	   input tmpinput outbuf command ret)
 
       ;; Determine input.
@@ -1391,7 +1397,9 @@ component is used as the target of the symlink."
 			   "\\\\" "/" (tramp-smb-get-localname v)))
 	       (args      (list (concat "//" host "/" share) "-E" "-S"
 				(replace-regexp-in-string
-				 "\n" "," acl-string))))
+				 "\n" "," acl-string)))
+	       ;; We do not want to run timers.
+	       timer-list timer-idle-list)
 
 	  (if (not (zerop (length user)))
 	      (setq args (append args (list "-U" user)))
@@ -1471,7 +1479,9 @@ component is used as the target of the symlink."
 	   (command (mapconcat 'identity (cons program args) " "))
 	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	   (name1 name)
-	   (i 0))
+	   (i 0)
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list)
       (unwind-protect
 	  (save-excursion
 	    (save-restriction
@@ -1563,9 +1573,18 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
 	(tramp-error
 	 v 'file-error
 	 "Buffer has changed from `%s' to `%s'" curbuf (current-buffer)))
-      (when (eq visit t)
-	(set-visited-file-modtime)))))
 
+      ;; Set file modification time.
+      (when (or (eq visit t) (stringp visit))
+	(set-visited-file-modtime
+	 (tramp-compat-file-attribute-modification-time
+	  (file-attributes filename))))
+
+      ;; The end.
+      (when (and (null noninteractive)
+		 (or (eq visit t) (null visit) (stringp visit)))
+	(tramp-message v 0 "Wrote %s" filename))
+      (run-hooks 'tramp-handle-write-region-hook))))
 
 ;; Internal file name functions.
 
