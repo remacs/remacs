@@ -640,6 +640,11 @@ can now be searched via 'C-s'.
 
 ** Search and Replace
 
+*** Isearch supports a prefix argument for 'C-s' ('isearch-repeat-forward')
+and 'C-r' ('isearch-repeat-backward').  With a prefix argument, these
+commands repeat the search for the specified occurrence of the search string.
+A negative argument repeats the search in the opposite direction.
+
 *** 'isearch-lazy-count' shows the current match number and total number
 of matches in the Isearch prompt.  Customizable variables
 'lazy-count-prefix-format' and 'lazy-count-suffix-format' define the

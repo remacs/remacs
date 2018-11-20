@@ -1555,8 +1555,8 @@ Use `isearch-exit' to quit without signaling."
       (isearch-pop-state))
     (isearch-update)))
 
-(defun isearch-repeat (direction)
-  ;; Utility for isearch-repeat-forward and -backward.
+(defun isearch-repeat (direction &optional count)
+  ;; Utility for isearch-repeat-forward and isearch-repeat-backward.
   (if (eq isearch-forward (eq direction 'forward))
       ;; C-s in forward or C-r in reverse.
       (if (equal isearch-string "")
@@ -1587,32 +1587,67 @@ Use `isearch-exit' to quit without signaling."
 
   (if (equal isearch-string "")
       (setq isearch-success t)
-    (if (and isearch-success
-	     (equal (point) isearch-other-end)
-	     (not isearch-just-started))
-	;; If repeating a search that found
-	;; an empty string, ensure we advance.
-	(if (if isearch-forward (eobp) (bobp))
-	    ;; If there's nowhere to advance to, fail (and wrap next time).
-	    (progn
-	      (setq isearch-success nil)
-	      (ding))
-	  (forward-char (if isearch-forward 1 -1))
+    ;; For the case when count > 1, don't keep intermediate states
+    ;; added to isearch-cmds by isearch-push-state in this loop.
+    (let ((isearch-cmds isearch-cmds))
+      (while (<= 0 (setq count (1- (or count 1))))
+	(if (and isearch-success
+		 (equal (point) isearch-other-end)
+		 (not isearch-just-started))
+	    ;; If repeating a search that found
+	    ;; an empty string, ensure we advance.
+	    (if (if isearch-forward (eobp) (bobp))
+		;; If there's nowhere to advance to, fail (and wrap next time).
+		(progn
+		  (setq isearch-success nil)
+		  (ding))
+	      (forward-char (if isearch-forward 1 -1))
+	      (isearch-search))
 	  (isearch-search))
-      (isearch-search)))
+	(when (> count 0)
+	  ;; Update isearch-cmds, so if isearch-search fails later,
+	  ;; it can restore old successful state from isearch-cmds.
+	  (isearch-push-state))
+	;; Stop looping on failure.
+	(when (or (not isearch-success) isearch-error)
+	  (setq count 0)))))
 
   (isearch-push-state)
   (isearch-update))
 
-(defun isearch-repeat-forward ()
-  "Repeat incremental search forwards."
-  (interactive)
-  (isearch-repeat 'forward))
+(defun isearch-repeat-forward (&optional arg)
+  "Repeat incremental search forwards.
+With a prefix argument, repeat the search ARG times.
+A negative argument searches backwards."
+  (interactive "P")
+  (if arg
+      (let ((count (prefix-numeric-value arg)))
+        (cond ((< count 0)
+               (isearch-repeat-backward (abs count))
+               ;; Reverse the direction back
+               (isearch-repeat 'forward))
+              (t
+               ;; Take into account one iteration to reverse direction
+               (when (not isearch-forward) (setq count (1+ count)))
+               (isearch-repeat 'forward count))))
+    (isearch-repeat 'forward)))
 
-(defun isearch-repeat-backward ()
-  "Repeat incremental search backwards."
-  (interactive)
-  (isearch-repeat 'backward))
+(defun isearch-repeat-backward (&optional arg)
+  "Repeat incremental search backwards.
+With a prefix argument, repeat the search ARG times.
+A negative argument searches forwards."
+  (interactive "P")
+  (if arg
+      (let ((count (prefix-numeric-value arg)))
+        (cond ((< count 0)
+               (isearch-repeat-forward (abs count))
+               ;; Reverse the direction back
+               (isearch-repeat 'backward))
+              (t
+               ;; Take into account one iteration to reverse direction
+               (when isearch-forward (setq count (1+ count)))
+               (isearch-repeat 'backward count))))
+    (isearch-repeat 'backward)))
 
 
 ;;; Toggles for `isearch-regexp-function' and `search-default-mode'.
