@@ -4155,6 +4155,10 @@ extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
 
 /* Defined in fileio.c.  */
 
+extern bool check_executable (char *);
+extern bool check_existing (const char *);
+extern bool file_name_absolute_p (const char *);
+extern bool file_name_case_insensitive_p (const char *);
 extern Lisp_Object expand_and_dir_to_file (Lisp_Object);
 extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 				 Lisp_Object, Lisp_Object, Lisp_Object,
