@@ -714,8 +714,8 @@
 
 ;;;; (Autoloads here)
   (mapc (function (lambda (x)
-    (mapcar (function (lambda (func)
-      (autoload func (car x)))) (cdr x))))
+    (mapcar (function (lambda (func) (autoload func (car x))))
+            (cdr x))))
     '(
 
  ("calc-alg" calc-has-rules math-defsimplify

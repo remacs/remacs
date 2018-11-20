@@ -517,8 +517,9 @@
 (defvar math-poly-base-total-base)
 
 (defun math-total-polynomial-base (expr)
-  (let ((math-poly-base-total-base nil))
-    (math-polynomial-base expr 'math-polynomial-p1)
+  (let ((math-poly-base-total-base nil)
+        (math-poly-base-top-expr expr))
+    (math-polynomial-base expr #'math-polynomial-p1)
     (math-sort-poly-base-list math-poly-base-total-base)))
 
 ;; The variable math-poly-base-top-expr is local to math-polynomial-base
