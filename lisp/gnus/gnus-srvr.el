@@ -925,7 +925,11 @@ buffer.
   "Enter the group at the current line.
 If NUMBER, fetch this number of articles."
   (interactive "P")
-  (let ((group (gnus-browse-group-name)))
+  (let* ((full-name (gnus-browse-group-name))
+	 (group (if (gnus-native-method-p
+		     (gnus-find-method-for-group full-name))
+		    (gnus-group-short-name full-name)
+		  full-name)))
     (if (or (not (gnus-get-info group))
 	    (gnus-ephemeral-group-p group))
 	(unless (gnus-group-read-ephemeral-group
