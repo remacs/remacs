@@ -1,3 +1,104 @@
+2018-11-18  Martin Rudalics  <rudalics@gmx.at>
+
+	Fix description of some window hooks
+
+	* doc/lispref/windows.texi (Window Hooks): Remove text that
+	warns against using 'save-window-excursion' while running
+	'window-size-change-functions', it's no more relevant.
+	Clarify description of 'window-configuration-change-hook'.
+
+2018-11-18  Gary Fredericks  <fredericksgary@gmail.com>  (tiny change)
+
+	Run 'window--adjust-process-windows' when frame size changes (Bug#32720)
+
+	* lisp/window.el (window-size-change-functions): Run
+	'window--adjust-process-windows' from
+	'window-size-change-functions' too (Bug#32720, "another issue"
+	in Bug#33230).
+
+2018-11-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid errors in zone.el when there's overlay at EOB
+
+	* lisp/play/zone.el (zone): Make sure the window-end position
+	is calculated accurately, to avoid errors from
+	buffer-substring.  (Bug#33384)
+
+2018-11-16  Eli Zaretskii  <eliz@gnu.org>
+
+	Document Emacs 26 behavior of Dired's 'Z' on directories
+
+	* doc/emacs/dired.texi (Operating on Files): Document behavior
+	of 'Z' on directories.
+
+	* etc/NEWS: Belatedly announce the new behavior of Dired's 'Z'
+	on directory names and on .tar.gz archives.
+
+2018-11-15  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in the Emacs manual
+
+	* doc/emacs/rmail.texi (Rmail Deletion): Fix a typo.
+	Reported by Jorge P. de Morais Neto <jorge+list@disroot.org>
+	in emacs-manual-bugs@gnu.org
+
+2018-11-15  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix tempfile creation when byte compiling
+
+	This improves on the recent fix for master failing to build
+	on FreeBSD.  Suggested by Stefan Monnier in:
+	https://lists.gnu.org/r/emacs-devel/2018-01/msg00600.html
+	* lisp/emacs-lisp/bytecomp.el (byte-compile-file):
+	Put tempfile next to the target file, as was the original intent.
+
+	(cherry picked from commit 64c846738617d1d037eac0cefb6586c04317b0a1)
+
+2018-11-14  Markus Triska  <triska@metalevel.at>
+
+	Small documentation correction.
+
+	* doc/lispref/windows.texi (Textual Scrolling): In the description of
+	scroll-up-aggressively, refer to scroll-down-aggressively instead of
+	a recursive reference to scroll-up-aggressively.  (Bug#33369)
+
+2018-11-14  Eli Zaretskii  <eliz@gnu.org>
+
+	* src/coding.c (Fcheck_coding_systems_region): Doc fix.  (Bug#33372)
+
+2018-11-14  Michael Albinus  <michael.albinus@gmx.de>
+
+	Fix Bug#33364
+
+	* lisp/net/tramp.el (tramp-parse-sconfig-group): Support also
+	"Host host1 host2 ..." syntax.  (Bug#33364)
+
+2018-11-13  Michael Albinus  <michael.albinus@gmx.de>
+
+	* test/README: Explain $REMOTE_TEMPORARY_FILE_DIRECTORY.
+
+2018-11-12  Glenn Morris  <rgm@gnu.org>
+
+	Avoid kill-emacs-hook errors hanging batch mode
+
+	* src/emacs.c (Fkill_emacs): Prevent errors from kill-emacs-hook
+	hanging Emacs in batch mode.  (Bug#29955)
+
+	(cherry picked from commit 109da684c5124e22505917fe0255ca66f2a6bfc9)
+
+2018-11-12  Nicolas Petton  <nicolas@petton.fr>
+
+	Bump Emacs version to 26.1.90
+
+	* README:
+	* configure.ac:
+	* msdos/sed2v2.inp:
+	* nt/README.W32: Bump Emacs version to 26.1.90.
+
+2018-11-12  Nicolas Petton  <nicolas@petton.fr>
+
+	* etc/AUTHORS: Update.
+
 2018-11-12  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Work around dumping bug on GNU/Linux ppc64le
@@ -63347,7 +63448,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 1d79c2ebd9bd9aa36586e57463502373c0296d11 (inclusive).
+commit 72525076996cd709086b1afb47ab0d095322e9b7 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:

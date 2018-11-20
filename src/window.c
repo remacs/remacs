@@ -4970,25 +4970,21 @@ window_wants_header_line (struct window *w)
 	  : 0);
 }
 
-/* Return number of lines of text (not counting mode lines) in W.  */
+/* Return number of lines of text in window W, not counting the mode
+   line and header line, if any.  Do NOT use this for windows on GUI
+   frames; use window_body_height instead.  This function is only for
+   windows on TTY frames, where it is much more efficient.  */
 
 int
 window_internal_height (struct window *w)
 {
   int ht = w->total_lines;
 
-  if (!MINI_WINDOW_P (w))
-    {
-      if (!NILP (w->parent)
-	  || WINDOWP (w->contents)
-	  || !NILP (w->next)
-	  || !NILP (w->prev)
-	  || window_wants_mode_line (w))
-	--ht;
+  if (window_wants_mode_line (w))
+    --ht;
 
-      if (window_wants_header_line (w))
-	--ht;
-    }
+  if (window_wants_header_line (w))
+    --ht;
 
   return ht;
 }
@@ -5017,8 +5013,8 @@ window_scroll (Lisp_Object window, EMACS_INT n, bool whole, bool noerror)
   if (whole && Vfast_but_imprecise_scrolling)
     specbind (Qfontification_functions, Qnil);
 
-  /* If we must, use the pixel-based version which is much slower than
-     the line-based one but can handle varying line heights.  */
+  /* On GUI frames, use the pixel-based version which is much slower
+     than the line-based one but can handle varying line heights.  */
   if (FRAME_WINDOW_P (XFRAME (XWINDOW (window)->frame)))
     window_scroll_pixel_based (window, n, whole, noerror);
   else
