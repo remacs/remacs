@@ -1,6 +1,6 @@
 ;;; mhtml-mode.el --- HTML editing mode that handles CSS and JS -*- lexical-binding:t -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; Keywords: wp, hypermedia, comm, languages
 
@@ -341,9 +341,7 @@ This is used by `mhtml--pre-command'.")
              ((eq mhtml-tag-relative-indent 'ignore)
               (setq base-indent 0)))
             (narrow-to-region region-start (point-max))
-            (let ((prog-indentation-context (list base-indent
-                                                  (cons (point-min) nil)
-                                                  nil)))
+            (let ((prog-indentation-context (list base-indent)))
               (mhtml--with-locals submode
                 ;; indent-line-function was rebound by
                 ;; mhtml--with-locals.
@@ -366,7 +364,6 @@ Code inside a <script> element is indented using the rules from
 `js-mode'; and code inside a <style> element is indented using
 the rules from `css-mode'."
   (setq-local indent-line-function #'mhtml-indent-line)
-  (setq-local parse-sexp-lookup-properties t)
   (setq-local syntax-propertize-function #'mhtml-syntax-propertize)
   (setq-local font-lock-fontify-region-function
               #'mhtml--submode-fontify-region)

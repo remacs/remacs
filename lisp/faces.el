@@ -1,6 +1,6 @@
 ;;; faces.el --- Lisp faces -*- lexical-binding: t -*-
 
-;; Copyright (C) 1992-1996, 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1996, 1998-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
@@ -645,7 +645,7 @@ The following attributes are recognized:
 `:family'
 
 VALUE must be a string specifying the font family
-\(e.g. \"Monospace\") or a fontset.
+\(e.g. \"Monospace\").
 
 `:foundry'
 
@@ -761,9 +761,10 @@ from an X font name:
 
 `:font'
 
-Set font-related face attributes from VALUE.  VALUE must be a
-valid font name or font object.  Setting this attribute will also
-set the `:family', `:foundry', `:width', `:height', `:weight',
+Set font-related face attributes from VALUE.
+VALUE must be a valid font name or font object.  It can also
+be a fontset name.  Setting this attribute will also set
+the `:family', `:foundry', `:width', `:height', `:weight',
 and `:slant' attributes.
 
 `:inherit'

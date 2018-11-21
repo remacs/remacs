@@ -1,6 +1,6 @@
 ;;; advice.el --- An overloading mechanism for Emacs Lisp functions  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1993-1994, 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1994, 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Hans Chalupsky <hans@cs.buffalo.edu>
 ;; Maintainer: emacs-devel@gnu.org
@@ -1514,7 +1514,7 @@
 ;; `ad-return-value' in a piece of after advice. For example:
 ;;
 ;; (defmacro foom (x)
-;;   (` (list (, x))))
+;;   `(list ,x))
 ;; foom
 ;;
 ;; (foom '(a))
@@ -1547,8 +1547,8 @@
 ;; (defadvice foom (after fg-print-x act)
 ;;   "Print the value of X."
 ;;   (setq ad-return-value
-;;         (` (progn (print (, x))
-;;                   (, ad-return-value)))))
+;;         `(progn (print ,x)
+;;                 ,ad-return-value)))
 ;; foom
 ;;
 ;; (macroexpand '(foom '(a)))

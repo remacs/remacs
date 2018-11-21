@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    eval::un_autoload,
+    eval::{un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, member, memq, put, LispCons},
@@ -11,7 +11,7 @@ use crate::{
     objects::equal,
     remacs_sys::Lisp_Type,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to},
+    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
     remacs_sys::{Fload, Fmapc},
     remacs_sys::{
         Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
@@ -227,7 +227,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         Vautoload_queue = Qt;
     }
 
-    unsafe { unbind_to(count, feature) }
+    unbind_to(count, feature)
 }
 def_lisp_sym!(Qrequire, "require");
 

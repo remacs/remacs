@@ -1,6 +1,6 @@
 ;;; window.el --- GNU Emacs window commands aside from those written in C  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985, 1989, 1992-1994, 2000-2017 Free Software
+;; Copyright (C) 1985, 1989, 1992-1994, 2000-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -1008,8 +1008,9 @@ do not permit making a new window, a suitable existing window may
 be reused and have its `window-slot' parameter value accordingly
 modified.
 
-Unless `display-buffer-mark-dedicated' is non-nil, softly
-dedicate the side window used to BUFFER.  Return the window used
+Unless `display-buffer-mark-dedicated' is non-nil, dedicate the
+side window used to BUFFER so that it does not get reused by
+other `display-buffer' action functions.  Return the window used
 for displaying BUFFER, nil if no suitable window can be found.
 
 This function installs the `window-side' and `window-slot'

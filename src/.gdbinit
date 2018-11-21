@@ -1,4 +1,4 @@
-# Copyright (C) 1992-1998, 2000-2017 Free Software Foundation, Inc.
+# Copyright (C) 1992-1998, 2000-2018 Free Software Foundation, Inc.
 #
 # This file is part of GNU Emacs.
 #
@@ -44,18 +44,30 @@ handle SIGALRM ignore
 # Use $bugfix so that the value isn't a constant.
 # Using a constant runs into GDB bugs sometimes.
 define xgetptr
-  set $bugfix = $arg0
-  set $ptr = $bugfix & VALMASK
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
+  set $ptr = (EMACS_INT) $bugfix & VALMASK
 end
 
 define xgetint
-  set $bugfix = $arg0
-  set $int = $bugfix << (USE_LSB_TAG ? 0 : INTTYPEBITS) >> INTTYPEBITS
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
+  set $int = (EMACS_INT) $bugfix << (USE_LSB_TAG ? 0 : INTTYPEBITS) >> INTTYPEBITS
 end
 
 define xgettype
-  set $bugfix = $arg0
-  set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
+  set $type = (enum Lisp_Type) (USE_LSB_TAG ? (EMACS_INT) $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
 end
 
 define xgetsym
@@ -73,12 +85,6 @@ end
 # We save and restore print_output_debug_flag to prevent the w32 port
 # from calling OutputDebugString, which causes GDB to display each
 # character twice (yuk!).
-# NOTE(db48x): when debugging with rr, we can't set arbitrary
-# variables because that could cause the replay to diverge from the
-# recording. However, if we call a function instead, rr will fork a
-# copy of the process and then discard any changes that function
-# made. Thus instead of simply setting print_output_debug_flag, we
-# actually call debug_output_compilation_hack instead.
 define pr
   pp $
 end
@@ -91,9 +97,9 @@ end
 define pp
   set $tmp = $arg0
   set $output_debug = print_output_debug_flag
-  call debug_output_compilation_hack(false)
+  set print_output_debug_flag = 0
   call safe_debug_print ($tmp)
-  call debug_output_compilation_hack($output_debug)
+  set print_output_debug_flag = $output_debug
 end
 document pp
 Print the argument as an emacs s-expression
@@ -104,9 +110,8 @@ end
 define pv
   set $tmp = "$arg0"
   set $output_debug = print_output_debug_flag
-  call debug_output_compilation_hack(false)
+  set print_output_debug_flag = 0
   call safe_debug_print (find_symbol_value (intern ($tmp)))
-  call debug_output_compilation_hack($output_debug)
   set print_output_debug_flag = $output_debug
 end
 document pv
@@ -1186,7 +1191,7 @@ define xprintbytestr
   set $bstrsize = ($arg0->size_byte < 0) ? ($arg0->size & ~ARRAY_MARK_FLAG) : $arg0->size_byte
   printf "Bytecode: "
   if $bstrsize > 0
-    output/u ($arg0->size > 1000) ? 0 : ($data[0])@($bstrsize)
+    output/u ($arg0->size > 1000) ? 0 : ($data[0])@($bvsize)
   else
     printf ""
   end
@@ -1197,9 +1202,9 @@ end
 
 define xwhichsymbols
   set $output_debug = print_output_debug_flag
-  call debug_output_compilation_hack(false)
+  set print_output_debug_flag = 0
   call safe_debug_print (which_symbols ($arg0, $arg1))
-  call debug_output_compilation_hack($output_debug)
+  set print_output_debug_flag = $output_debug
 end
 document xwhichsymbols
   Print symbols which references a given lisp object
@@ -1316,19 +1321,26 @@ if hasattr(gdb, 'printing'):
       Lisp_Int0 = 2
       Lisp_Int1 = 6 if USE_LSB_TAG else 3
 
-      # Unpack the Lisp value from its containing structure, if necessary.
       val = self.val
       basic_type = gdb.types.get_basic_type (val.type)
+
+      # Unpack VAL from its containing structure, if necessary.
       if (basic_type.code == gdb.TYPE_CODE_STRUCT
           and gdb.types.has_field (basic_type, "i")):
         val = val["i"]
 
+      # Convert VAL to a Python integer.  Convert by hand, as this is
+      # simpler and works regardless of whether VAL is a pointer or
+      # integer.  Also, val.cast (gdb.lookup.type ("EMACS_UINT"))
+      # would have problems with GDB 7.12.1; see
+      # <http://patchwork.sourceware.org/patch/11557/>.
+      ival = int (val)
+
       # For nil, yield "XIL(0)", which is easier to read than "XIL(0x0)".
-      if not val:
+      if not ival:
         return "XIL(0)"
 
       # Extract the integer representation of the value and its Lisp type.
-      ival = int(val)
       itype = ival >> (0 if USE_LSB_TAG else VALBITS)
       itype = itype & ((1 << GCTYPEBITS) - 1)
 
@@ -1347,8 +1359,7 @@ if hasattr(gdb, 'printing'):
       # integers even when Lisp_Object is an integer.
       # Perhaps some day the pretty-printing could be fancier.
       # Prefer the unsigned representation to negative values, converting
-      # by hand as val.cast(gdb.lookup_type("EMACS_UINT") does not work in
-      # GDB 7.12.1; see <http://patchwork.sourceware.org/patch/11557/>.
+      # by hand as val.cast does not work in GDB 7.12.1 as noted above.
       if ival < 0:
         ival = ival + (1 << EMACS_INT_WIDTH)
       return "XIL(0x%x)" % ival
@@ -1361,8 +1372,6 @@ if hasattr(gdb, 'printing'):
   gdb.printing.register_pretty_printer (gdb.current_objfile (),
                                         build_pretty_printer (), True)
 end
-
-set history save on
 
 # GDB mishandles indentation with leading tabs when feeding it to Python.
 # Local Variables:

@@ -1,5 +1,5 @@
 /* Call a Lisp function interactively.
-   Copyright (C) 1985-1986, 1993-1995, 1997, 2000-2017 Free Software
+   Copyright (C) 1985-1986, 1993-1995, 1997, 2000-2018 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -21,6 +21,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include "lisp.h"
+#include "ptr-bounds.h"
 #include "character.h"
 #include "buffer.h"
 #include "keyboard.h"
@@ -403,6 +404,9 @@ invoke it.  If KEYS is omitted or nil, the return value of
   varies = (signed char *) (visargs + nargs);
 
   memclear (args, nargs * (2 * word_size + 1));
+  args = ptr_bounds_clip (args, nargs * sizeof *args);
+  visargs = ptr_bounds_clip (visargs, nargs * sizeof *visargs);
+  varies = ptr_bounds_clip (varies, nargs * sizeof *varies);
 
   if (!NILP (enable))
     specbind (Qenable_recursive_minibuffers, Qt);

@@ -1,5 +1,5 @@
 /* Primitive operations on Lisp data types for GNU Emacs Lisp interpreter.
-   Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2017 Free Software
+   Copyright (C) 1985-1986, 1988, 1993-1995, 1997-2018 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -1674,18 +1674,6 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
 }
 
 
-DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
-       doc: /* Return population count of VALUE.
-This is the number of one bits in the two's complement representation
-of VALUE.  If VALUE is negative, return the number of zero bits in the
-representation.  */)
-  (Lisp_Object value)
-{
-  CHECK_NUMBER (value);
-  EMACS_INT v = XINT (value) < 0 ? -1 - XINT (value) : XINT (value);
-  return make_number (rust_count_one_bits(v));
-}
-
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
@@ -2210,7 +2198,6 @@ syms_of_data (void)
 #endif
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
-  defsubr (&Slogcount);
   defsubr (&Slsh);
   defsubr (&Sash);
 #ifdef HAVE_MODULES

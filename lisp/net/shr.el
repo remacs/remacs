@@ -1,6 +1,6 @@
 ;;; shr.el --- Simple HTML Renderer -*- lexical-binding: t -*-
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: html
@@ -149,7 +149,7 @@ cid: URL as the argument.")
   "Alist of tag/function pairs used to alter how shr renders certain tags.
 For instance, eww uses this to alter rendering of title, forms
 and other things:
-((title . eww-tag-title)
+\((title . eww-tag-title)
  (form . eww-tag-form)
  ...)")
 
@@ -591,9 +591,15 @@ size, and full-buffer size."
 (defun shr-string-pixel-width (string)
   (if (not shr-use-fonts)
       (length string)
-    (with-temp-buffer
-      (insert string)
-      (shr-pixel-column))))
+    ;; Save and restore point across with-temp-buffer, since
+    ;; shr-pixel-column uses save-window-excursion, which can reset
+    ;; point to 1.
+    (let ((pt (point)))
+      (prog1
+	  (with-temp-buffer
+	    (insert string)
+	    (shr-pixel-column))
+	(goto-char pt)))))
 
 (defsubst shr--translate-insertion-chars ()
   ;; Remove soft hyphens.
@@ -994,7 +1000,8 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
 	 data)
     (let ((param (match-string 4 data))
 	  (payload (url-unhex-string (match-string 5 data))))
-      (when (string-match "^.*\\(;[ \t]*base64\\)$" param)
+      (when (and param
+                 (string-match "^.*\\(;[ \t]*base64\\)$" param))
 	(setq payload (ignore-errors
                         (base64-decode-string payload))))
       payload)))

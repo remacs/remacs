@@ -1,6 +1,6 @@
 ;;; url-http.el --- HTTP retrieval routines  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999, 2001, 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999, 2001, 2004-2018 Free Software Foundation, Inc.
 
 ;; Author: Bill Perry <wmperry@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -1384,7 +1384,7 @@ The return value of this function is the retrieval buffer."
                (error "error: %s" e)))
           (error "error: gnutls support needed!")))
        (t
-        (message "error response: %d" url-http-response-status)
+        (url-http-debug "error response: %d" url-http-response-status)
         (url-http-activate-callback))))))
 
 (defun url-http-async-sentinel (proc why)

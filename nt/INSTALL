@@ -1,7 +1,7 @@
 		    Building and Installing Emacs on MS-Windows
                           using the MSYS and MinGW tools
 
-  Copyright (C) 2013-2017 Free Software Foundation, Inc.
+  Copyright (C) 2013-2018 Free Software Foundation, Inc.
   See the end of the file for license conditions.
 
 The MSYS/MinGW build described here is supported on versions of
@@ -805,6 +805,13 @@ build will run on Windows 9X and newer systems).
   management engine to Lisp programs using the lcms2 library.
   Prebuilt binaries of lcms2 DLL (for 32-bit builds of Emacs) are
   available from the ezwinports site and from the MSYS2 project.
+
+* Optional support for JSON
+
+  Emacs can provide built-in support for JSON parsing and
+  serialization using the libjansson library.  Prebuilt binaries of
+  the libjansson DLL (for 32-bit builds of Emacs) are available from
+  the ezwinports site and from the MSYS2 project.
 
 
 This file is part of GNU Emacs.

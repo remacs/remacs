@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1992-2017 Free Software Foundation, Inc.
+# Copyright (C) 1992-2018 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -1183,3 +1183,13 @@ rustfmt:
 	(cd rust_src/remacs-util && cargo fmt)
 	(cd rust_src/remacs-macros && cargo fmt)
 	(cd rust_src/alloc_unexecmacosx && cargo fmt)
+
+.PHONY: gitmerge
+
+GITMERGE_EMACS = ./src/emacs${EXEEXT}
+GITMERGE_NMIN = 10
+
+gitmerge:
+	${GITMERGE_EMACS} -batch --no-site-file --no-site-lisp \
+	  -l ${srcdir}/admin/gitmerge.el \
+	  --eval '(setq gitmerge-minimum-missing ${GITMERGE_NMIN})' -f gitmerge

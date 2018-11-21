@@ -1,5 +1,5 @@
 /* Execution of byte code produced by bytecomp.el.
-   Copyright (C) 1985-1988, 1993, 2000-2017 Free Software Foundation,
+   Copyright (C) 1985-1988, 1993, 2000-2018 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -24,6 +24,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "buffer.h"
 #include "keyboard.h"
+#include "ptr-bounds.h"
 #include "syntax.h"
 #include "window.h"
 
@@ -352,13 +353,15 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
   unsigned char quitcounter = 1;
   EMACS_INT stack_items = XFASTINT (maxdepth) + 1;
   USE_SAFE_ALLOCA;
-  Lisp_Object *stack_base;
-  SAFE_ALLOCA_LISP_EXTRA (stack_base, stack_items, bytestr_length);
-  Lisp_Object *stack_lim = stack_base + stack_items;
+  void *alloc;
+  SAFE_ALLOCA_LISP_EXTRA (alloc, stack_items, bytestr_length);
+  ptrdiff_t item_bytes = stack_items * word_size;
+  Lisp_Object *stack_base = ptr_bounds_clip (alloc, item_bytes);
   Lisp_Object *top = stack_base;
-  memcpy (stack_lim, SDATA (bytestr), bytestr_length);
-  void *void_stack_lim = stack_lim;
-  unsigned char const *bytestr_data = void_stack_lim;
+  Lisp_Object *stack_lim = stack_base + stack_items;
+  unsigned char *bytestr_data = alloc;
+  bytestr_data = ptr_bounds_clip (bytestr_data + item_bytes, bytestr_length);
+  memcpy (bytestr_data, SDATA (bytestr), bytestr_length);
   unsigned char const *pc = bytestr_data;
   ptrdiff_t count = SPECPDL_INDEX ();
 

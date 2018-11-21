@@ -1,6 +1,6 @@
 ;;; fns-tests.el --- tests for src/fns.c
 
-;; Copyright (C) 2014-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -548,7 +548,7 @@
   (should-error (nconc (cyc2 1 2) 'tail) :type 'circular-list))
 
 (ert-deftest plist-get/odd-number-of-elements ()
-  "Test that ‘plist-get’ doesn’t signal an error on degenerate plists."
+  "Test that `plist-get' doesn't signal an error on degenerate plists."
   (should-not (plist-get '(:foo 1 :bar) :bar)))
 
 (ert-deftest lax-plist-get/odd-number-of-elements ()
