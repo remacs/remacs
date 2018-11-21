@@ -52,6 +52,8 @@ mod eval_macros;
 #[macro_use]
 mod lisp;
 #[macro_use]
+mod frames;
+#[macro_use]
 mod vector_macros;
 mod str2sig;
 
@@ -84,7 +86,6 @@ mod fileio;
 mod floatfns;
 mod fns;
 mod fonts;
-mod frames;
 mod hashtable;
 mod indent;
 mod interactive;
