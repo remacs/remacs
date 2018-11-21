@@ -887,21 +887,26 @@ as a regexp.  See the command `isearch-forward-regexp' for more information."
   (interactive "P\np")
   (isearch-mode nil (null not-regexp) nil (not no-recursive-edit)))
 
-(defun isearch-forward-symbol-at-point ()
+(defun isearch-forward-symbol-at-point (&optional arg)
   "Do incremental search forward for a symbol found near point.
 Like ordinary incremental search except that the symbol found at point
 is added to the search string initially as a regexp surrounded
 by symbol boundary constructs \\_< and \\_>.
-See the command `isearch-forward-symbol' for more information."
-  (interactive)
+See the command `isearch-forward-symbol' for more information.
+With a prefix argument, search for ARGth symbol forward if ARG is
+positive, or search for ARGth symbol backward if ARG is negative."
+  (interactive "P")
   (isearch-forward-symbol nil 1)
-  (let ((bounds (find-tag-default-bounds)))
+  (let ((bounds (find-tag-default-bounds))
+        (count (and arg (prefix-numeric-value arg))))
     (cond
      (bounds
       (when (< (car bounds) (point))
 	(goto-char (car bounds)))
       (isearch-yank-string
-       (buffer-substring-no-properties (car bounds) (cdr bounds))))
+       (buffer-substring-no-properties (car bounds) (cdr bounds)))
+      (when count
+        (isearch-repeat-forward count)))
      (t
       (setq isearch-error "No symbol at point")
       (isearch-push-state)
