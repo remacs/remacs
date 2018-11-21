@@ -1,6 +1,6 @@
 ;;; gnus-group.el --- group mode commands for Gnus
 
-;; Copyright (C) 1996-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -628,7 +628,7 @@ simple manner."
   "\M-e" gnus-group-edit-group-method
   "^" gnus-group-enter-server-mode
   [mouse-2] gnus-mouse-pick-group
-  [follow-link] 'mouse-face
+  [follow-link] mouse-face
   "<" beginning-of-buffer
   ">" end-of-buffer
   "\C-c\C-b" gnus-bug

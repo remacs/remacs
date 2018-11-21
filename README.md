@@ -141,21 +141,20 @@ more Emacs-y.
    something like `apt install build-essential automake clang`. On
    macOS, you'll need Xcode.
 
-3. You will need some C libraries. On Linux, you can install
-   everything you need with:
+3. Linux:
 
         apt install texinfo libjpeg-dev libtiff-dev \
           libgif-dev libxpm-dev libgtk-3-dev libgnutls28-dev \
           libncurses5-dev libxml2-dev libxt-dev
 
-    On macOS, you'll need libxml2 (via `xcode-select --install`) and
-    gnutls (via `brew install gnutls`).
-
-    On macOS, the default `makeinfo` command is outdated, you'll need
-    to update it (via `brew install texinfo`). To use the installed
-    version of `makeinfo` instead of the built-in (`/usr/bin/makeinfo`)
-    one, you'll need to make sure `/usr/local/opt/texinfo/bin` is
-    before `/usr/bin` in `PATH`.
+   MacOS:
+   
+        brew install libxml2 gnutls texinfo
+        
+    To use the installed version of `makeinfo` instead of the built-in 
+    (`/usr/bin/makeinfo`) one, you'll need to make sure `/usr/local/opt/texinfo/bin` 
+    is before `/usr/bin` in `PATH`.
+    Mojave: `export PKG_CONFIG_PATH="/usr/local/opt/libxml2/lib/pkgconfig"`
 
 ## Dockerized development environment
 

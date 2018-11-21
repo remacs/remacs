@@ -1,6 +1,6 @@
 ;;; gnus-sum.el --- summary mode commands for Gnus
 
-;; Copyright (C) 1996-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -1266,9 +1266,13 @@ For example: ((1 . cn-gb-2312) (2 . big5))."
   :type 'boolean
   :group 'gnus-summary-marks)
 
-(defcustom gnus-alter-articles-to-read-function nil
-  "Function to be called to alter the list of articles to be selected."
-  :type '(choice (const nil) function)
+(defcustom gnus-alter-articles-to-read-function
+  (lambda (_group article-list) article-list)
+  "Function to be called to alter the list of articles to be selected.
+This option defaults to a lambda form that simply returns the
+list of articles unchanged.  Use `add-function' to set one or
+more custom filter functions."
+  :type 'function
   :group 'gnus-summary)
 
 (defcustom gnus-orphan-score nil
@@ -5914,7 +5918,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	  (setq articles (nthcdr (- number select) articles))))
       (setq gnus-newsgroup-unselected
 	    (gnus-sorted-difference gnus-newsgroup-unreads articles))
-      (when gnus-alter-articles-to-read-function
+      (when (functionp gnus-alter-articles-to-read-function)
 	(setq articles
 	      (sort
 	       (funcall gnus-alter-articles-to-read-function
@@ -12270,21 +12274,27 @@ save those articles instead."
 		  (if (> (length articles) 1)
 		      (format "these %d articles" (length articles))
 		    "this article")))
+	 valid-names
 	 (to-newsgroup
-          (cond
-           ((null split-name)
-            (gnus-group-completing-read
-             prom
-             (gnus-remove-if-not 'gnus-valid-move-group-p gnus-active-hashtb t)
-             nil prefix nil default))
-           ((= 1 (length split-name))
-            (gnus-group-completing-read
-             prom
-	     (gnus-remove-if-not 'gnus-valid-move-group-p gnus-active-hashtb t)
-             nil prefix 'gnus-group-history (car split-name)))
-           (t
-            (gnus-completing-read
-             prom (nreverse split-name) nil nil 'gnus-group-history))))
+	  (progn
+	    (mapatoms (lambda (g)
+			(when (gnus-valid-move-group-p g)
+			  (push g valid-names)))
+		      gnus-active-hashtb)
+            (cond
+             ((null split-name)
+              (gnus-group-completing-read
+               prom
+               valid-names
+               nil prefix nil default))
+             ((= 1 (length split-name))
+              (gnus-group-completing-read
+               prom
+	       valid-names
+               nil prefix 'gnus-group-history (car split-name)))
+             (t
+              (gnus-completing-read
+               prom (nreverse split-name) nil nil 'gnus-group-history)))))
          (to-method (gnus-server-to-method (gnus-group-method to-newsgroup)))
 	 encoded)
     (when to-newsgroup

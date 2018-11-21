@@ -1,6 +1,6 @@
 /* NeXT/Open/GNUstep / macOS communication module.      -*- coding: utf-8 -*-
 
-Copyright (C) 1989, 1993-1994, 2005-2006, 2008-2017 Free Software
+Copyright (C) 1989, 1993-1994, 2005-2006, 2008-2018 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -6016,7 +6016,13 @@ not_in_argv (NSString *arg)
 
   if (!NSIsEmptyRect (visible))
     [self addCursorRect: visible cursor: currentCursor];
-  [currentCursor setOnMouseEntered: YES];
+
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 101300
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+  if ([currentCursor respondsToSelector: @selector(setOnMouseEntered)])
+#endif
+    [currentCursor setOnMouseEntered: YES];
+#endif
 }
 
 
@@ -6277,14 +6283,20 @@ not_in_argv (NSString *arg)
          by doCommandBySelector: deleteBackward: */
 - (void)insertText: (id)aString
 {
-  int code;
-  int len = [(NSString *)aString length];
-  int i;
+  NSString *s;
+  NSUInteger len;
 
   NSTRACE ("[EmacsView insertText:]");
 
+  if ([aString isKindOfClass:[NSAttributedString class]])
+    s = [aString string];
+  else
+    s = aString;
+
+  len = [s length];
+
   if (NS_KEYLOG)
-    NSLog (@"insertText '%@'\tlen = %d", aString, len);
+    NSLog (@"insertText '%@'\tlen = %lu", aString, (unsigned long) len);
   processingCompose = NO;
 
   if (!emacs_event)
@@ -6294,10 +6306,24 @@ not_in_argv (NSString *arg)
   if (workingText != nil)
     [self deleteWorkingText];
 
+  /* It might be preferable to use getCharacters:range: below,
+     cf. https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/CocoaPerformance/Articles/StringDrawing.html#//apple_ref/doc/uid/TP40001445-112378.
+     However, we probably can't use SAFE_NALLOCA here because it might
+     exit nonlocally.  */
+
   /* now insert the string as keystrokes */
-  for (i =0; i<len; i++)
+  for (NSUInteger i = 0; i < len; i++)
     {
-      code = [aString characterAtIndex: i];
+      NSUInteger code = [s characterAtIndex:i];
+      if (UTF_16_HIGH_SURROGATE_P (code) && i < len - 1)
+        {
+          unichar low = [s characterAtIndex:i + 1];
+          if (UTF_16_LOW_SURROGATE_P (low))
+            {
+              code = surrogates_to_codepoint (low, code);
+              ++i;
+            }
+        }
       /* TODO: still need this? */
       if (code == 0x2DC)
         code = '~'; /* 0x7E */
@@ -8746,7 +8772,14 @@ not_in_argv (NSString *arg)
 
   if (!NSIsEmptyRect (visible))
     [self addCursorRect: visible cursor: [NSCursor arrowCursor]];
-  [[NSCursor arrowCursor] setOnMouseEntered: YES];
+
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 101300
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+  if ([[NSCursor arrowCursor] respondsToSelector:
+                                @selector(setOnMouseEntered)])
+#endif
+    [[NSCursor arrowCursor] setOnMouseEntered: YES];
+#endif
 }
 
 

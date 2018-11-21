@@ -1,6 +1,6 @@
 ;;; cc-fonts.el --- font lock support for CC Mode
 
-;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             2002- Martin Stjernholm
@@ -1251,6 +1251,17 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; Got a cached hit in some other type of arglist.
 	  (type
 	   (cons 'arglist t))
+	  ;; We're at a C++ uniform initialization.
+	  ((and (c-major-mode-is 'c++-mode)
+		(eq (char-before match-pos) ?\()
+		(save-excursion
+		  (goto-char match-pos)
+		  (and
+		   (zerop (c-backward-token-2 2))
+		   (looking-at c-identifier-start)
+		   (c-got-face-at (point)
+				  '(font-lock-variable-name-face)))))
+	   (cons 'not-decl nil))
 	  ((and not-front-decl
 	   ;; The point is within the range of a previously
 	   ;; encountered type decl expression, so the arglist
@@ -1589,7 +1600,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (setq max-type-decl-end (point))))
 		(goto-char start-pos)
 		(c-font-lock-single-decl limit decl-or-cast match-pos
-					 context toplev))
+					 context
+					 (or toplev (nth 4 decl-or-cast))))
 
 	       (t t))))
 
@@ -2658,8 +2670,8 @@ need for `pike-font-lock-extra-types'.")
   ;; This function might do hidden buffer changes.
 
   (let (comment-beg region-beg)
-    (if (eq (get-text-property (point) 'face)
-	    'font-lock-comment-face)
+    (if (memq (get-text-property (point) 'face)
+	      '(font-lock-comment-face font-lock-comment-delimiter-face))
 	;; Handle the case when the fontified region starts inside a
 	;; comment.
 	(let ((start (c-literal-start)))
@@ -2679,8 +2691,15 @@ need for `pike-font-lock-extra-types'.")
 		     (or (not (c-got-face-at comment-beg
 					     c-literal-faces))
 			 (and (/= comment-beg (point-min))
+			      ;; Cheap check which is unreliable (the previous
+			      ;; character could be the end of a previous
+			      ;; comment).
 			      (c-got-face-at (1- comment-beg)
-					     c-literal-faces))))
+					     c-literal-faces)
+			      ;; Expensive reliable check.
+			      (save-excursion
+				(goto-char comment-beg)
+				(c-in-literal)))))
 	      (setq comment-beg nil))
 	    (setq region-beg comment-beg))
 

@@ -1,6 +1,6 @@
 ;;; gnus-topic.el --- a folding minor mode for Gnus group buffers
 
-;; Copyright (C) 1995-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
 ;; Author: Ilja Weis <kult@uni-paderborn.de>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -460,7 +460,7 @@ If LOWEST is non-nil, list all newsgroups of level LOWEST or higher."
 	(unless gnus-killed-hashtb
 	  (gnus-make-hashtable-from-killed))
 	(gnus-group-prepare-flat-list-dead
-	 (gnus-remove-if (lambda (group)
+	 (seq-remove (lambda (group)
 			   (or (gnus-group-entry group)
 			       (gnus-gethash group gnus-killed-hashtb)))
 			 not-in-list)

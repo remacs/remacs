@@ -1,6 +1,6 @@
 ;;; org-src.el --- Source code examples in Org       -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 ;;
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;;	   Bastien Guerry <bzg@gnu.org>
@@ -581,14 +581,15 @@ Escaping happens when a line starts with \"*\", \"#+\", \",*\" or
   (interactive "r")
   (save-excursion
     (goto-char end)
-    (while (re-search-backward "^[ \t]*,?\\(\\*\\|#\\+\\)" beg t)
+    (while (re-search-backward "^[ \t]*\\(,*\\(?:\\*\\|#\\+\\)\\)" beg t)
       (save-excursion (replace-match ",\\1" nil nil nil 1)))))
 
 (defun org-escape-code-in-string (s)
   "Escape lines in string S.
 Escaping happens when a line starts with \"*\", \"#+\", \",*\" or
 \",#+\" by appending a comma to it."
-  (replace-regexp-in-string "^[ \t]*,?\\(\\*\\|#\\+\\)" ",\\1" s nil nil 1))
+  (replace-regexp-in-string "^[ \t]*\\(,*\\(?:\\*\\|#\\+\\)\\)" ",\\1"
+			    s nil nil 1))
 
 (defun org-unescape-code-in-region (beg end)
   "Un-escape lines between BEG and END.
@@ -597,7 +598,7 @@ with \",*\", \",#+\", \",,*\" and \",,#+\"."
   (interactive "r")
   (save-excursion
     (goto-char end)
-    (while (re-search-backward "^[ \t]*,?\\(,\\)\\(?:\\*\\|#\\+\\)" beg t)
+    (while (re-search-backward "^[ \t]*,*\\(,\\)\\(?:\\*\\|#\\+\\)" beg t)
       (save-excursion (replace-match "" nil nil nil 1)))))
 
 (defun org-unescape-code-in-string (s)
@@ -605,7 +606,7 @@ with \",*\", \",#+\", \",,*\" and \",,#+\"."
 Un-escaping happens by removing the first comma on lines starting
 with \",*\", \",#+\", \",,*\" and \",,#+\"."
   (replace-regexp-in-string
-   "^[ \t]*,?\\(,\\)\\(?:\\*\\|#\\+\\)" "" s nil nil 1))
+   "^[ \t]*,*\\(,\\)\\(?:\\*\\|#\\+\\)" "" s nil nil 1))
 
 
 

@@ -1,6 +1,6 @@
 ;;; nnmail.el --- mail support functions for the Gnus mail backends
 
-;; Copyright (C) 1995-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news, mail
@@ -2034,7 +2034,7 @@ If TIME is nil, then return the cutoff time for oldness instead."
   "Remove all instances of GROUP from `nnmail-split-history'."
   (let ((history nnmail-split-history))
     (while history
-      (setcar history (gnus-remove-if (lambda (e) (string= (car e) group))
+      (setcar history (seq-remove (lambda (e) (string= (car e) group))
 				      (car history)))
       (pop history))
     (setq nnmail-split-history (delq nil nnmail-split-history))))

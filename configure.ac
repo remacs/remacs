@@ -4,7 +4,7 @@ dnl	autoconf
 dnl in the directory containing this script.
 dnl If you changed any AC_DEFINES, also run autoheader.
 dnl
-dnl Copyright (C) 1994-1996, 1999-2017 Free Software Foundation, Inc.
+dnl Copyright (C) 1994-1996, 1999-2018 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of GNU Emacs.
 dnl
@@ -350,6 +350,7 @@ OPTION_DEFAULT_ON([libsystemd],[don't compile with libsystemd support])
 OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
 OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
 OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
+OPTION_DEFAULT_ON([json], [don't compile with native JSON support])
 
 OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
@@ -891,10 +892,9 @@ AC_ARG_ENABLE([gcc-warnings],
 
 AC_ARG_ENABLE([check-lisp-object-type],
   [AS_HELP_STRING([--enable-check-lisp-object-type],
-     [Enable compile-time checks for the Lisp_Object data type,
-      which can catch some bugs during development.
-      The default is "no" if --enable-gcc-warnings is "no".])])
-if test "${enable_check_lisp_object_type-$gl_gcc_warnings}" != "no"; then
+     [Enable compile time checks for the Lisp_Object data type,
+      which can catch some bugs during development.])])
+if test "$enable_check_lisp_object_type" = yes; then
   AC_DEFINE([CHECK_LISP_OBJECT_TYPE], 1,
     [Define to enable compile-time checks for the Lisp_Object data type.])
 fi
@@ -1252,6 +1252,14 @@ case $opsys,$PAXCTL_notdumped,$emacs_uname_r in
 esac
 AC_SUBST([PAXCTL_dumped])
 AC_SUBST([PAXCTL_notdumped])
+
+# Makeinfo on macOS is ancient, check whether there is a more recent
+# version installed by Homebrew.
+AC_CHECK_PROG(HAVE_BREW, [brew], [yes])
+if test -n "$HAVE_BREW"; then
+  AC_PATH_PROG([MAKEINFO], [makeinfo], [],
+    [`brew --prefix texinfo 2>/dev/null`/bin$PATH_SEPARATOR$PATH])
+fi
 
 ## Require makeinfo >= 4.13 (last of the 4.x series) to build the manuals.
 if test "${MAKEINFO:=makeinfo}" != "no"; then
@@ -2838,6 +2846,27 @@ fi
 AC_SUBST(LIBSYSTEMD_LIBS)
 AC_SUBST(LIBSYSTEMD_CFLAGS)
 
+HAVE_JSON=no
+JSON_OBJ=
+
+if test "${with_json}" = yes; then
+  EMACS_CHECK_MODULES([JSON], [jansson >= 2.7],
+    [HAVE_JSON=yes], [HAVE_JSON=no])
+  if test "${HAVE_JSON}" = yes; then
+    AC_DEFINE(HAVE_JSON, 1, [Define if using Jansson.])
+    JSON_OBJ=json.o
+  fi
+
+  # Windows loads libjansson dynamically
+  if test "${opsys}" = "mingw32"; then
+    JSON_LIBS=
+  fi
+fi
+
+AC_SUBST(JSON_LIBS)
+AC_SUBST(JSON_CFLAGS)
+AC_SUBST(JSON_OBJ)
+
 NOTIFY_OBJ=
 NOTIFY_SUMMARY=no
 
@@ -3276,7 +3305,9 @@ AC_SUBST(LIBXPM)
 ### Use -ljpeg if available, unless '--with-jpeg=no'.
 HAVE_JPEG=no
 LIBJPEG=
-if test "${with_jpeg}" != "no"; then
+if test "${NS_IMPL_COCOA}" = yes; then
+  : # Cocoa provides its own jpeg support, so do nothing.
+elif test "${with_jpeg}" != "no"; then
   AC_CACHE_CHECK([for jpeglib 6b or later],
     [emacs_cv_jpeglib],
     [OLD_LIBS=$LIBS
@@ -3392,7 +3423,7 @@ HAVE_PNG=no
 LIBPNG=
 PNG_CFLAGS=
 if test "${NS_IMPL_COCOA}" = yes; then
-  : # Nothing to do
+  : # Cocoa provides its own png support, so do nothing.
 elif test "${with_png}" != no; then
   # mingw32 loads the library dynamically.
   if test "$opsys" = mingw32; then
@@ -3691,13 +3722,13 @@ if test "${with_xml2}" != "no"; then
 	xcsdkdir="" ;;
       esac
     fi
-    CPPFLAGS="$CPPFLAGS -I$xcsdkdir/usr/include/libxml2"
+    CPPFLAGS="$CPPFLAGS -isystem${xcsdkdir}/usr/include/libxml2"
     AC_CHECK_HEADER(libxml/HTMLparser.h,
       [AC_CHECK_DECL(HTML_PARSE_RECOVER, HAVE_LIBXML2=yes, ,
 		     [#include <libxml/HTMLparser.h>])])
     CPPFLAGS="$SAVE_CPPFLAGS"
     if test "${HAVE_LIBXML2}" = "yes"; then
-      LIBXML2_CFLAGS="-I'$xcsdkdir/usr/include/libxml2'"
+      LIBXML2_CFLAGS="-isystem${xcsdkdir}/usr/include/libxml2"
       LIBXML2_LIBS="-lxml2"
     fi
   fi
@@ -4790,7 +4821,7 @@ fi
 
 version=$PACKAGE_VERSION
 
-copyright="Copyright (C) 2017 Free Software Foundation, Inc."
+copyright="Copyright (C) 2018 Free Software Foundation, Inc."
 AC_DEFINE_UNQUOTED(COPYRIGHT, ["$copyright"],
   [Short copyright string for this version of Emacs.])
 AC_SUBST(copyright)
@@ -5145,7 +5176,7 @@ AC_SUBST(WINDOW_SYSTEM_OBJ)
 
 AH_TOP([/* GNU Emacs site configuration template file.
 
-Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2017
+Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2018
   Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -5215,7 +5246,7 @@ emacs_config_features=
 for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB X_TOOLKIT X11 NS MODULES \
-  XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
+  XWIDGETS LIBSYSTEMD JSON CANNOT_DUMP LCMS2; do
 
     case $opt in
       CANNOT_DUMP) eval val=\${$opt} ;;
@@ -5264,6 +5295,7 @@ AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
   Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
   Does Emacs use -lxft?                                   ${HAVE_XFT}
   Does Emacs use -lsystemd?                               ${HAVE_LIBSYSTEMD}
+  Does Emacs use -ljansson?                               ${HAVE_JSON}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
   Does Emacs have threading support in lisp?              ${threads_enabled}

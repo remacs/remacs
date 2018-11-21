@@ -1,6 +1,6 @@
 ;;; perl-mode.el --- Perl code editing commands for GNU Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1990, 1994, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1990, 1994, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: William F. Mann
 ;; Maintainer: emacs-devel@gnu.org
@@ -587,6 +587,7 @@ create a new comment."
 This is a non empty list of strings, the checker tool possibly
 followed by required arguments.  Once launched it will receive
 the Perl source to be checked as its standard input."
+  :version "26.1"
   :group 'perl
   :type '(repeat string))
 

@@ -18,12 +18,12 @@ use crate::{
     remacs_sys,
     remacs_sys::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
-        emacs_abort, globals, set_default_internal, set_internal, symbol_trapped_write,
-        wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
+        emacs_abort, globals, rust_count_one_bits, set_default_internal, set_internal,
+        symbol_trapped_write, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
-    remacs_sys::{Fcons, Fdelete, Ffset, Fget, Fpurecopy},
+    remacs_sys::{Fdelete, Ffset, Fget, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice,
@@ -291,9 +291,12 @@ pub fn defalias(
 
         if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
-            loadhist_attach(unsafe { Fcons(Qt, sym) });
+            loadhist_attach(LispObject::cons(Qt, sym));
         }
-        loadhist_attach(unsafe { Fcons(if autoload { Qautoload } else { Qdefun }, sym) });
+        loadhist_attach(LispObject::cons(
+            if autoload { Qautoload } else { Qdefun },
+            sym,
+        ));
     }
 
     // Handle automatic advice activation.
@@ -531,7 +534,7 @@ pub unsafe extern "C" fn do_symval_forwarding(valcontents: *const Lisp_Fwd) -> L
             // last-command and real-last-command, and people may rely on
             // that.  I took a quick look at the Lisp codebase, and I
             // don't think anything will break.  --lorentey
-            let frame = selected_frame().as_frame_or_error();
+            let frame = selected_frame();
             if !frame.is_live() {
                 emacs_abort();
             }
@@ -591,7 +594,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
             *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
         }
         Lisp_Fwd_Kboard_Obj => {
-            let frame = selected_frame().as_frame_or_error();
+            let frame = selected_frame();
             if !frame.is_live() {
                 emacs_abort();
             }
@@ -714,7 +717,7 @@ extern "C" fn harmonize_variable_watchers(alias: LispObject, base_variable: Lisp
 /// NEWVAL is the value it will be changed to.
 /// OPERATION is a symbol representing the kind of change, one of: `set',
 /// `let', `unlet', `makunbound', and `defvaralias'.
-/// WHERE is a buffer if the buffer-local value of the variable being
+/// WHERE is a buffer if the buffer-local value of the variable is being
 /// changed, nil otherwise.
 ///
 /// All writes to aliases of SYMBOL will call WATCH-FUNCTION too.
@@ -734,9 +737,11 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let mem = member(watch_function, watchers);
 
     if mem.is_nil() {
-        put(symbol, Qwatchers, unsafe {
-            Fcons(watch_function, watchers)
-        });
+        put(
+            symbol,
+            Qwatchers,
+            LispObject::cons(watch_function, watchers),
+        );
     }
 }
 
@@ -772,6 +777,16 @@ pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
         },
         _ => Qnil,
     }
+}
+
+/// Return population count of VALUE.
+/// This is the number of one bits in the two's complement representation
+/// of VALUE.  If VALUE is negative, return the number of zero bits in the
+/// representation.
+#[lisp_fn]
+pub fn logcount(value: EmacsInt) -> i32 {
+    let value = if value < 0 { -1 - value } else { value };
+    unsafe { rust_count_one_bits(value as usize) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

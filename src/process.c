@@ -1,6 +1,6 @@
 /* Asynchronous subprocess control for GNU Emacs.
 
-Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2017 Free Software
+Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2018 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -933,46 +933,6 @@ free_dns_request (Lisp_Object proc)
 }
 #endif
 
-
-/* This is how commands for the user decode process arguments.  It
-   accepts a process, a process name, a buffer, a buffer name, or nil.
-   Buffers denote the first process in the buffer, and nil denotes the
-   current buffer.  */
-
-Lisp_Object
-get_process (register Lisp_Object name)
-{
-  register Lisp_Object proc, obj;
-  if (STRINGP (name))
-    {
-      obj = Fget_process (name);
-      if (NILP (obj))
-	obj = Fget_buffer (name);
-      if (NILP (obj))
-	error ("Process %s does not exist", SDATA (name));
-    }
-  else if (NILP (name))
-    obj = Fcurrent_buffer ();
-  else
-    obj = name;
-
-  /* Now obj should be either a buffer object or a process object.  */
-  if (BUFFERP (obj))
-    {
-      if (NILP (BVAR (XBUFFER (obj), name)))
-        error ("Attempt to get process for a dead buffer");
-      proc = Fget_buffer_process (obj);
-      if (NILP (proc))
-        error ("Buffer %s has no process", SDATA (BVAR (XBUFFER (obj), name)));
-    }
-  else
-    {
-      CHECK_PROCESS (obj);
-      proc = obj;
-    }
-  return proc;
-}
-
 
 /* Fdelete_process promises to immediately forget about the process, but in
    reality, Emacs needs to remember those processes until they have been
@@ -1204,18 +1164,6 @@ a socket connection.  */)
   return XPROCESS (process)->type;
 }
 #endif
-
-DEFUN ("process-type", Fprocess_type, Sprocess_type, 1, 1, 0,
-       doc: /* Return the connection type of PROCESS.
-The value is either the symbol `real', `network', `serial', or `pipe'.
-PROCESS may be a process, a buffer, the name of a process or buffer, or
-nil, indicating the current buffer's process.  */)
-  (Lisp_Object process)
-{
-  Lisp_Object proc;
-  proc = get_process (process);
-  return XPROCESS (proc)->type;
-}
 
 DEFUN ("format-network-address", Fformat_network_address, Sformat_network_address,
        1, 2, 0,
@@ -7565,7 +7513,6 @@ returns non-`nil'.  */);
   defsubr (&Scontinue_process);
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);
-  defsubr (&Sprocess_type);
   defsubr (&Sinternal_default_process_sentinel);
   defsubr (&Sinternal_default_process_filter);
   defsubr (&Sset_process_coding_system);

@@ -1,6 +1,6 @@
 ;;; bzrmerge.el --- help merge one Emacs bzr branch to another
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: maint

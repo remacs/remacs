@@ -1,6 +1,6 @@
 ;;; gnus.el --- a newsreader for GNU Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1987-1990, 1993-1998, 2000-2017 Free Software
+;; Copyright (C) 1987-1990, 1993-1998, 2000-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
@@ -33,6 +33,7 @@
 (require 'wid-edit)
 (require 'mm-util)
 (require 'nnheader)
+(require 'seq)
 
 ;; These are defined afterwards with gnus-define-group-parameter
 (defvar gnus-ham-process-destinations)

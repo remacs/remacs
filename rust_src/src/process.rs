@@ -4,7 +4,7 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::LispBufferOrName,
+    buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     lists::{assoc, car, cdr, plist_put},
@@ -80,6 +80,48 @@ impl From<LispObject> for Option<LispProcessRef> {
     }
 }
 
+/// This is how commands for the user decode process arguments.  It
+/// accepts a process, a process name, a buffer, a buffer name, or nil.
+/// Buffers denote the first process in the buffer, and nil denotes the
+/// current buffer.
+#[no_mangle]
+pub extern "C" fn get_process(name: LispObject) -> LispObject {
+    let proc_or_buf = if name.is_string() {
+        let mut obj = get_process_lisp(name);
+
+        if obj.is_nil() {
+            obj = get_buffer(LispBufferOrName::from(name)).map_or_else(
+                || error!("Process {} does not exist", name.as_string_or_error()),
+                |b| b.as_lisp_obj(),
+            );
+        }
+        obj
+    } else if name.is_nil() {
+        current_buffer()
+    } else {
+        name
+    };
+
+    // Now obj should be either a buffer object or a process object.
+    match proc_or_buf.as_buffer() {
+        Some(b) => {
+            let name = b
+                .name()
+                .as_string()
+                .unwrap_or_else(|| error!("Attempt to get process for a dead buffer"));
+            let proc = get_buffer_process_internal(Some(b));
+            if proc.is_nil() {
+                error!("Buffer {:?} has no process.", unsafe {
+                    name.u.s.data as *mut libc::c_char
+                })
+            } else {
+                proc
+            }
+        }
+        None => proc_or_buf.as_process_or_error().as_lisp_obj(),
+    }
+}
+
 /// Return t if OBJECT is a process.
 #[lisp_fn]
 pub fn processp(object: LispObject) -> bool {
@@ -87,8 +129,8 @@ pub fn processp(object: LispObject) -> bool {
 }
 
 /// Return the process named NAME, or nil if there is none.
-#[lisp_fn]
-pub fn get_process(name: LispObject) -> LispObject {
+#[lisp_fn(name = "get-process", c_name = "get_process")]
+pub fn get_process_lisp(name: LispObject) -> LispObject {
     if name.is_process() {
         name
     } else {
@@ -130,16 +172,23 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// deleted or killed.
 #[lisp_fn]
 pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
-    buffer_or_name
-        .and_then(|b| b.as_buffer())
-        .and_then(|buf| {
+    get_buffer_process_internal(buffer_or_name.and_then(|b| b.as_buffer()))
+}
+
+pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> LispObject {
+    match buffer {
+        None => Qnil,
+        Some(buf) => {
             let obj = LispObject::from(buf);
-            unsafe { Vprocess_alist }.iter_cars().find(|item| {
-                let p = item.as_cons_or_error().cdr();
-                obj.eq(p.as_process_or_error().buffer)
-            })
-        })
-        .map_or(Qnil, |item| item.as_cons_or_error().cdr())
+            unsafe { Vprocess_alist }
+                .iter_cars()
+                .find(|item| {
+                    let p = item.as_cons_or_error().cdr();
+                    obj.eq(p.as_process_or_error().buffer)
+                })
+                .map_or(Qnil, |item| item.as_cons_or_error().cdr())
+        }
+    }
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.
@@ -261,6 +310,16 @@ pub fn process_coding_system(process: LispProcessRef) -> LispObject {
 #[lisp_fn]
 pub fn process_thread(process: LispProcessRef) -> LispObject {
     process.thread
+}
+
+/// Return the connection type of PROCESS.
+/// The value is either the symbol `real', `network', `serial', or `pipe'.
+/// PROCESS may be a process, a buffer, the name of a process or buffer, or
+/// nil, indicating the current buffer's process.
+#[lisp_fn]
+pub fn process_type(process: LispObject) -> LispObject {
+    let p_ref = get_process(process).as_process_or_error();
+    p_ref.ptype()
 }
 
 /// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).

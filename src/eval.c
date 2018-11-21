@@ -1,6 +1,6 @@
 /* Evaluator for GNU Emacs Lisp interpreter.
 
-Copyright (C) 1985-1987, 1993-1995, 1999-2017 Free Software Foundation,
+Copyright (C) 1985-1987, 1993-1995, 1999-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -910,6 +910,57 @@ internal_condition_case_n (Lisp_Object (*bfun) (ptrdiff_t, Lisp_Object *),
       eassert (handlerlist == c);
       handlerlist = c->next;
       return val;
+    }
+}
+
+static Lisp_Object
+internal_catch_all_1 (Lisp_Object (*function) (void *), void *argument)
+{
+  struct handler *c = push_handler_nosignal (Qt, CATCHER_ALL);
+  if (c == NULL)
+    return Qcatch_all_memory_full;
+
+  if (sys_setjmp (c->jmp) == 0)
+    {
+      Lisp_Object val = function (argument);
+      eassert (handlerlist == c);
+      handlerlist = c->next;
+      return val;
+    }
+  else
+    {
+      eassert (handlerlist == c);
+      Lisp_Object val = c->val;
+      handlerlist = c->next;
+      Fsignal (Qno_catch, val);
+    }
+}
+
+/* Like a combination of internal_condition_case_1 and internal_catch.
+   Catches all signals and throws.  Never exits nonlocally; returns
+   Qcatch_all_memory_full if no handler could be allocated.  */
+
+Lisp_Object
+internal_catch_all (Lisp_Object (*function) (void *), void *argument,
+                    Lisp_Object (*handler) (Lisp_Object))
+{
+  struct handler *c = push_handler_nosignal (Qt, CONDITION_CASE);
+  if (c == NULL)
+    return Qcatch_all_memory_full;
+
+  if (sys_setjmp (c->jmp) == 0)
+    {
+      Lisp_Object val = internal_catch_all_1 (function, argument);
+      eassert (handlerlist == c);
+      handlerlist = c->next;
+      return val;
+    }
+  else
+    {
+      eassert (handlerlist == c);
+      Lisp_Object val = c->val;
+      handlerlist = c->next;
+      return handler (val);
     }
 }
 
@@ -2499,7 +2550,7 @@ rebind_for_thread_switch (void)
     }
 }
 
-static void
+void
 do_one_unbind (union specbinding *this_binding, bool unwinding,
                enum Set_Internal_Bind bindflag)
 {
@@ -2603,36 +2654,6 @@ set_unwind_protect_ptr (ptrdiff_t count, void (*func) (void *), void *arg)
   p->unwind_ptr.kind = SPECPDL_UNWIND_PTR;
   p->unwind_ptr.func = func;
   p->unwind_ptr.arg = arg;
-}
-
-/* Pop and execute entries from the unwind-protect stack until the
-   depth COUNT is reached.  Return VALUE.  */
-
-Lisp_Object
-unbind_to (ptrdiff_t count, Lisp_Object value)
-{
-  Lisp_Object quitf = Vquit_flag;
-
-  Vquit_flag = Qnil;
-
-  while (specpdl_ptr != specpdl + count)
-    {
-      /* Copy the binding, and decrement specpdl_ptr, before we do
-	 the work to unbind it.  We decrement first
-	 so that an error in unbinding won't try to unbind
-	 the same entry again, and we copy the binding first
-	 in case more bindings are made during some of the code we run.  */
-
-      union specbinding this_binding;
-      this_binding = *--specpdl_ptr;
-
-      do_one_unbind (&this_binding, true, SET_INTERNAL_UNBIND);
-    }
-
-  if (NILP (Vquit_flag) && !NILP (quitf))
-    Vquit_flag = quitf;
-
-  return value;
 }
 
 void
@@ -3164,6 +3185,9 @@ alist of active lexical bindings.  */);
   Vsignaling_function = Qnil;
 
   inhibit_lisp_code = Qnil;
+
+  DEFSYM (Qcatch_all_memory_full, "catch-all-memory-full");
+  Funintern (Qcatch_all_memory_full, Qnil);
 
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);

@@ -1,6 +1,6 @@
 ;;; cc-engine.el --- core syntax guessing engine for CC mode -*- coding: utf-8 -*-
 
-;; Copyright (C) 1985, 1987, 1992-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992-2018 Free Software Foundation, Inc.
 
 ;; Authors:    2001- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -238,8 +238,8 @@
 ;; `c-macro-cache'.
 (defvar c-macro-cache-no-comment nil)
 (make-variable-buffer-local 'c-macro-cache-no-comment)
-;; Either nil, or the last character of the macro currently represented by
-;; `c-macro-cache' which isn't in a comment. */
+;; Either nil, or the position of a comment which is open at the end of the
+;; macro represented by `c-macro-cache'.
 
 (defun c-invalidate-macro-cache (beg _end)
   ;; Called from a before-change function.  If the change region is before or
@@ -382,8 +382,9 @@ comment at the start of cc-engine.el for more info."
     (point)))
 
 (defun c-no-comment-end-of-macro ()
-  ;; Go to the end of a CPP directive, or a pos just before which isn't in a
-  ;; comment.  For this purpose, open strings are ignored.
+  ;; Go to the start of the comment which is open at the end of the current
+  ;; CPP directive, or to the end of that directive.  For this purpose, open
+  ;; strings are ignored.
   ;;
   ;; This function must only be called from the beginning of a CPP construct.
   ;;
@@ -401,7 +402,7 @@ comment at the start of cc-engine.el for more info."
 	(setq s (parse-partial-sexp here there)))
       (when (and (nth 4 s)
 		 (not (eq (nth 7 s) 'syntax-table))) ; no pseudo comments.
-	(goto-char (1- (nth 8 s))))
+	(goto-char (nth 8 s)))
       (setq c-macro-cache-no-comment (point)))
     (point)))
 
@@ -3862,14 +3863,7 @@ comment at the start of cc-engine.el for more info."
   (if (eval-when-compile (memq 'category-properties c-emacs-features))
       ;; Emacs
       (c-with-<->-as-parens-suppressed
-       (if (and c-state-old-cpp-beg
-		(< c-state-old-cpp-beg here))
-	   (c-with-all-but-one-cpps-commented-out
-	    c-state-old-cpp-beg
-	    c-state-old-cpp-end
-	    (c-invalidate-state-cache-1 here))
-	 (c-with-cpps-commented-out
-	  (c-invalidate-state-cache-1 here))))
+       (c-invalidate-state-cache-1 here))
     ;; XEmacs
     (c-invalidate-state-cache-1 here)))
 
@@ -3902,12 +3896,7 @@ comment at the start of cc-engine.el for more info."
 	(if (eval-when-compile (memq 'category-properties c-emacs-features))
 	    ;; Emacs
 	    (c-with-<->-as-parens-suppressed
-	     (if (and here-cpp-beg (> here-cpp-end here-cpp-beg))
-		 (c-with-all-but-one-cpps-commented-out
-		  here-cpp-beg here-cpp-end
-		  (c-parse-state-1))
-	       (c-with-cpps-commented-out
-		(c-parse-state-1))))
+	     (c-parse-state-1))
 	  ;; XEmacs
 	  (c-parse-state-1))
       (setq c-state-old-cpp-beg
@@ -7572,8 +7561,8 @@ comment at the start of cc-engine.el for more info."
 
     ;; Skip leading type modifiers.  If any are found we know it's a
     ;; prefix of a type.
-    (when c-opt-type-modifier-key ; e.g. "const" "volatile", but NOT "typedef"
-      (while (looking-at c-opt-type-modifier-key)
+    (when c-opt-type-modifier-prefix-key ; e.g. "const" "volatile", but NOT "typedef"
+      (while (looking-at c-opt-type-modifier-prefix-key)
 	(goto-char (match-end 1))
 	(c-forward-syntactic-ws)
 	(setq res 'prefix)))
@@ -8167,9 +8156,9 @@ comment at the start of cc-engine.el for more info."
   ;; If a declaration is parsed:
   ;;
   ;;   The point is left at the first token after the first complete
-  ;;   declarator, if there is one.  The return value is a list of 4 elements,
+  ;;   declarator, if there is one.  The return value is a list of 5 elements,
   ;;   where the first is the position of the first token in the declarator.
-  ;;   (See below for the other three.)
+  ;;   (See below for the other four.)
   ;;   Some examples:
   ;;
   ;; 	 void foo (int a, char *b) stuff ...
@@ -8210,7 +8199,9 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;;   The third element of the return value is non-nil when the declaration
   ;;   parsed might be an expression.  The fourth element is the position of
-  ;;   the start of the type identifier.
+  ;;   the start of the type identifier.  The fifth element is t if either
+  ;;   CONTEXT was 'top, or the declaration is detected to be treated as top
+  ;;   level (e.g. with the keyword "extern").
   ;;
   ;; If a cast is parsed:
   ;;
@@ -8308,6 +8299,9 @@ comment at the start of cc-engine.el for more info."
 	;; Set when the symbol before `preceding-token-end' is known to
 	;; terminate the previous construct, or when we're at point-min.
 	at-decl-start
+	;; Set when we have encountered a keyword (e.g. "extern") which
+	;; causes the following declaration to be treated as though top-level.
+	make-top
 	;; Save `c-record-type-identifiers' and
 	;; `c-record-ref-identifiers' since ranges are recorded
 	;; speculatively and should be thrown away if it turns out
@@ -8339,7 +8333,9 @@ comment at the start of cc-engine.el for more info."
 
 	  (cond
 	  ;; Look for a specifier keyword clause.
-	   ((or (looking-at c-prefix-spec-kwds-re)
+	   ((or (and (looking-at c-make-top-level-key)
+		     (setq make-top t))
+		(looking-at c-prefix-spec-kwds-re)
 		(and (c-major-mode-is 'java-mode)
 		 (looking-at "@[A-Za-z0-9]+")))
 	    (save-match-data
@@ -8609,7 +8605,7 @@ comment at the start of cc-engine.el for more info."
 		 ;; construct here in C, since we want to recognize this as a
 		 ;; typeless function declaration.
 		 (not (and (c-major-mode-is 'c-mode)
-			   (eq context 'top)
+			   (or (eq context 'top) make-top)
 			   (eq (char-after) ?\)))))
 	    (if (eq (char-after) ?\))
 		(when (> paren-depth 0)
@@ -8657,7 +8653,7 @@ comment at the start of cc-engine.el for more info."
 					   ;; Recognize a top-level typeless
 					   ;; function declaration in C.
 					   (and (c-major-mode-is 'c-mode)
-						(eq context 'top)
+						(or (eq context 'top) make-top)
 						(eq (char-after) ?\))))))))
 			  (setq pos (c-up-list-forward (point)))
 			  (eq (char-before pos) ?\)))
@@ -8914,6 +8910,7 @@ comment at the start of cc-engine.el for more info."
 	 (when (and got-identifier
 		    (looking-at c-after-suffixed-type-decl-key)
 		    (or (eq context 'top)
+			make-top
 			(and (eq context nil)
 			     (match-beginning 1)))
 		    (if (and got-parens
@@ -9080,7 +9077,7 @@ comment at the start of cc-engine.el for more info."
 	 ;; CASE 19
 	 (or (eq context 'decl)
 	     (and (c-major-mode-is 'c-mode)
-		  (eq context 'top))))))
+		  (or (eq context 'top) make-top))))))
 
     ;; The point is now after the type decl expression.
 
@@ -9185,7 +9182,8 @@ comment at the start of cc-engine.el for more info."
 	    (and (or at-type-decl at-typedef)
 		 (cons at-type-decl at-typedef))
 	    maybe-expression
-	    type-start))
+	    type-start
+	    (or (eq context 'top) make-top)))
 
      (t
       ;; False alarm.  Restore the recorded ranges.
@@ -10431,7 +10429,7 @@ comment at the start of cc-engine.el for more info."
 		c-decl-block-key))
 	  (braceassignp 'dontknow)
 	  inexpr-brace-list bufpos macro-start res pos after-type-id-pos
-	  in-paren)
+	  in-paren parens-before-brace)
 
       (setq res (c-backward-token-2 1 t lim))
       ;; Checks to do only on the first sexp before the brace.
@@ -10449,6 +10447,9 @@ comment at the start of cc-engine.el for more info."
 		((and (looking-at c-symbol-start)
 		      (not (looking-at c-keywords-regexp)))
 		 (setq after-type-id-pos (point)))
+		((eq (char-after) ?\()
+		 (setq parens-before-brace t)
+		 nil)
 		(t nil))
 	       (save-excursion
 		 (cond
@@ -10496,6 +10497,14 @@ comment at the start of cc-engine.el for more info."
 	       (eq (char-before) ?\()))
 	;; Single identifier between '(' and '{'.  We have a bracelist.
 	(cons after-type-id-pos 'in-paren))
+
+       ;; Are we at the parens of a C++ lambda expression?
+       ((and parens-before-brace
+	     (save-excursion
+	       (and
+		(zerop (c-backward-token-2 1 t lim))
+		(c-looking-at-c++-lambda-capture-list))))
+	nil)			     ; a lambda expression isn't a brace list.
 
        (t
 	(goto-char pos)

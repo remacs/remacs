@@ -1,6 +1,6 @@
 ;;; sh-script.el --- shell-script editing commands for Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1993-1997, 1999, 2001-2017 Free Software Foundation,
+;; Copyright (C) 1993-1997, 1999, 2001-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Daniel Pfeiffer <occitan@esperanto.org>
@@ -2392,7 +2392,6 @@ whose value is the shell name (don't quote it)."
                       (funcall mksym "rules")
                       :forward-token  (funcall mksym "forward-token")
                       :backward-token (funcall mksym "backward-token")))
-        (setq-local parse-sexp-lookup-properties t)
         (unless sh-use-smie
           (setq-local sh-kw-alist (sh-feature sh-kw))
           (let ((regexp (sh-feature sh-kws-for-done)))
