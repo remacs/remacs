@@ -1610,7 +1610,6 @@ main (int argc, char **argv)
 {
   int rl = 0;
   bool skiplf = true;
-  char *cwd, *str;
   char string[BUFSIZ+1];
   int exit_status = EXIT_SUCCESS;
 
@@ -1660,7 +1659,7 @@ main (int argc, char **argv)
       start_daemon_and_retry_set_socket ();
     }
 
-  cwd = get_current_dir_name ();
+  char *cwd = get_current_dir_name ();
   if (cwd == 0)
     {
       message (true, "%s: %s\n", progname,
@@ -1803,10 +1802,10 @@ main (int argc, char **argv)
   else if (eval)
     {
       /* Read expressions interactively.  */
-      while ((str = fgets (string, BUFSIZ, stdin)))
+      while (fgets (string, BUFSIZ, stdin))
 	{
 	  send_to_emacs (emacs_socket, "-eval ");
-	  quote_argument (emacs_socket, str);
+	  quote_argument (emacs_socket, string);
 	}
       send_to_emacs (emacs_socket, " ");
     }
@@ -1876,7 +1875,7 @@ main (int argc, char **argv)
               /* -print STRING: Print STRING on the terminal. */
 	      if (!suppress_output)
 		{
-		  str = unquote_argument (p + strlen ("-print "));
+		  char *str = unquote_argument (p + strlen ("-print "));
 		  printf (&"\n%s"[skiplf], str);
 		  if (str[0])
 		    skiplf = str[strlen (str) - 1] == '\n';
@@ -1888,7 +1887,7 @@ main (int argc, char **argv)
                  Used to continue a preceding -print command.  */
 	      if (!suppress_output)
 		{
-		  str = unquote_argument (p + strlen ("-print-nonl "));
+		  char *str = unquote_argument (p + strlen ("-print-nonl "));
 		  printf ("%s", str);
 		  if (str[0])
 		    skiplf = str[strlen (str) - 1] == '\n';
@@ -1897,7 +1896,7 @@ main (int argc, char **argv)
           else if (strprefix ("-error ", p))
             {
               /* -error DESCRIPTION: Signal an error on the terminal. */
-              str = unquote_argument (p + strlen ("-error "));
+              char *str = unquote_argument (p + strlen ("-error "));
               if (!skiplf)
                 printf ("\n");
               fprintf (stderr, "*ERROR*: %s", str);
