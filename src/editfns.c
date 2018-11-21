@@ -2414,27 +2414,6 @@ It returns the number of characters changed.  */)
   return make_number (cnt);
 }
 
-DEFUN ("delete-region", Fdelete_region, Sdelete_region, 2, 2, "r",
-       doc: /* Delete the text between START and END.
-If called interactively, delete the region between point and mark.
-This command deletes buffer text without modifying the kill ring.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  validate_region (&start, &end);
-  del_range (XINT (start), XINT (end));
-  return Qnil;
-}
-
-DEFUN ("delete-and-extract-region", Fdelete_and_extract_region,
-       Sdelete_and_extract_region, 2, 2, 0,
-       doc: /* Delete the text between START and END and return it.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  validate_region (&start, &end);
-  if (XINT (start) == XINT (end))
-    return empty_unibyte_string;
-  return del_range_1 (XINT (start), XINT (end), 1, 1);
-}
 
 DEFUN ("widen", Fwiden, Swiden, 0, 0, "",
        doc: /* Remove restrictions (narrowing) from current buffer.
@@ -3898,8 +3877,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sreplace_buffer_contents);
   defsubr (&Ssubst_char_in_region);
   defsubr (&Stranslate_region_internal);
-  defsubr (&Sdelete_region);
-  defsubr (&Sdelete_and_extract_region);
   defsubr (&Swiden);
   defsubr (&Snarrow_to_region);
   defsubr (&Stranspose_regions);

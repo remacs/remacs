@@ -26,7 +26,7 @@ use crate::{
     numbers::LispNumber,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        buffer_overflow, build_string, current_message, del_range, downcase,
+        buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
         find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
         insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
         make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
@@ -1348,6 +1348,49 @@ pub fn field_string(pos: Option<LispNumber>) -> LispObject {
 pub fn field_string_no_properties(pos: Option<LispNumber>) -> LispObject {
     let (beg, end) = find_field(pos, false, None, None);
     unsafe { make_buffer_string(beg, end, false) }
+}
+
+/// Delete the text between START and END, including START but excluding END. If
+/// called interactively, delete the region between point and mark. This command
+/// deletes buffer text without modifying the kill ring.
+#[lisp_fn(intspec = "r")]
+pub fn delete_region(mut start: LispObject, mut end: LispObject) {
+    // Don't just call delete_and_extract_region and throw away the return value
+    // to avoid doing the extra, unnecessary work of copying the region to
+    // return it.
+    unsafe { validate_region(&mut start, &mut end) };
+    unsafe {
+        del_range(
+            start.as_fixnum_or_error() as ptrdiff_t,
+            end.as_fixnum_or_error() as ptrdiff_t,
+        )
+    };
+}
+
+/// Delete the text between START and END, including START but excluding END, and
+/// return it.
+#[lisp_fn]
+pub fn delete_and_extract_region(
+    mut start: LispObject,
+    mut end: LispObject,
+) -> Option<LispStringRef> {
+    unsafe { validate_region(&mut start, &mut end) };
+
+    let start_fixnum = start.as_fixnum_or_error();
+    let end_fixnum = end.as_fixnum_or_error();
+    if start_fixnum == end_fixnum {
+        Some(LispObject::empty_unibyte_string())
+    } else {
+        unsafe {
+            del_range_1(
+                start_fixnum as ptrdiff_t,
+                end_fixnum as ptrdiff_t,
+                true,
+                true,
+            )
+        }
+        .as_string()
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
