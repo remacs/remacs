@@ -84,6 +84,7 @@ char *w32_getenv (const char *);
 #include <unistd.h>
 
 #include <dosname.h>
+#include <intprops.h>
 #include <min-max.h>
 #include <unlocked-io.h>
 
@@ -91,8 +92,6 @@ char *w32_getenv (const char *);
 #define VERSION "unspecified"
 #endif
 
-/* Additional space when allocating buffers for filenames, etc.  */
-#define EXTRA_SPACE 100
 
 /* Name used to invoke this program.  */
 static char const *progname;
@@ -903,6 +902,26 @@ initialize_sockets (void)
 # endif /* WINDOWSNT */
 
 
+/* If the home directory is HOME, return the configuration file with
+   basename CONFIG_FILE.  Fail if there is no home directory or if the
+   configuration file could not be opened.  */
+
+static FILE *
+open_config (char const *home, char const *config_file)
+{
+  if (!home)
+    return NULL;
+  ptrdiff_t homelen = strlen (home);
+  static char const emacs_d_server[] = "/.emacs.d/server/";
+  ptrdiff_t suffixsize = sizeof emacs_d_server + strlen (config_file);
+  char *configname = xmalloc (homelen + suffixsize);
+  strcpy (stpcpy (stpcpy (configname, home), emacs_d_server), config_file);
+
+  FILE *config = fopen (configname, "rb");
+  free (configname);
+  return config;
+}
+
 /* Read the information needed to set up a TCP comm channel with
    the Emacs server: host, port, and authentication string.  */
 
@@ -912,35 +931,16 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
 {
   char dotted[32];
   char *port;
-  FILE *config = NULL;
+  FILE *config;
 
   if (IS_ABSOLUTE_FILE_NAME (config_file))
     config = fopen (config_file, "rb");
   else
     {
-      const char *home = egetenv ("HOME");
-
-      if (home)
-        {
-	  char *path = xmalloc (strlen (home) + strlen (config_file)
-				+ EXTRA_SPACE);
-	  char *z = stpcpy (path, home);
-	  z = stpcpy (z, "/.emacs.d/server/");
-	  strcpy (z, config_file);
-          config = fopen (path, "rb");
-	  free (path);
-        }
+      config = open_config (egetenv ("HOME"), config_file);
 # ifdef WINDOWSNT
-      if (!config && (home = egetenv ("APPDATA")))
-        {
-	  char *path = xmalloc (strlen (home) + strlen (config_file)
-				+ EXTRA_SPACE);
-	  char *z = stpcpy (path, home);
-	  z = stpcpy (z, "/.emacs.d/server/");
-	  strcpy (z, config_file);
-          config = fopen (path, "rb");
-	  free (path);
-        }
+      if (!config)
+	config = open_config (egetenv ("APPDATA"), config_file);
 # endif
     }
 
@@ -1203,6 +1203,8 @@ set_local_socket (const char *local_socket_name)
   char *tmpdir_storage = NULL;
   char *socket_name_storage = NULL;
   static char const subdir_format[] = "/emacs%"PRIuMAX"/";
+  int subdir_size_bound = (sizeof subdir_format - sizeof "%"PRIuMAX
+			   + INT_STRLEN_BOUND (uid_t) + 1);
 
   if (! (strchr (local_socket_name, '/')
 	 || (ISSLASH ('\\') && strchr (local_socket_name, '\\'))))
@@ -1227,10 +1229,9 @@ set_local_socket (const char *local_socket_name)
 	    tmpdir = "/tmp";
 	}
       socket_name_storage =
-	xmalloc (strlen (tmpdir) + strlen (server_name) + EXTRA_SPACE);
+	xmalloc (strlen (tmpdir) + strlen (server_name) + subdir_size_bound);
       char *z = stpcpy (socket_name_storage, tmpdir);
-      z += sprintf (z, subdir_format, uid);
-      strcpy (z, server_name);
+      strcpy (z + sprintf (z, subdir_format, uid), server_name);
       local_socket_name = socket_name_storage;
     }
 
@@ -1268,10 +1269,9 @@ set_local_socket (const char *local_socket_name)
 	      uintmax_t uid = pw->pw_uid;
 	      char *user_socket_name
 		= xmalloc (strlen (tmpdir) + strlen (server_name)
-			   + EXTRA_SPACE);
+			   + subdir_size_bound);
 	      char *z = stpcpy (user_socket_name, tmpdir);
-	      z += sprintf (z, subdir_format, uid);
-	      strcpy (z, server_name);
+	      strcpy (z + sprintf (z, subdir_format, uid), server_name);
 
 	      if (strlen (user_socket_name) < sizeof (server.sun_path))
 		strcpy (server.sun_path, user_socket_name);
