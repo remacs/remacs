@@ -721,16 +721,16 @@ the host returned by the function @command{(system-name)}.  See
 Similar to @option{su} method, @option{sudo} uses @command{sudo}.
 @command{sudo} must have sufficient rights to start a shell.
 
-Due to security reasons, a @option{sudo} connection is disabled after
-a predefined timeout (5 minutes per default).  This can be changed,
-see @ref{Predefined connection information}.
+For security reasons, a @option{sudo} connection is disabled after a
+predefined timeout (5 minutes per default).  This can be changed, see
+@ref{Predefined connection information}.
 
 @item @option{doas}
 @cindex method @option{doas}
 @cindex @option{doas} method
 
 This method is used on OpenBSD like the @command{sudo} command.  Like
-the @option{sudo} method, a @option{sudo} connection is disabled after
+the @option{sudo} method, a @option{doas} connection is disabled after
 a predefined timeout.
 
 @item @option{sg}
