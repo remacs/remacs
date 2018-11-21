@@ -21,8 +21,8 @@ use crate::{
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
         buffer_window_count, del_range, delete_all_overlays, globals, last_per_buffer_idx,
-        modify_overlay, set_buffer_internal_1, specbind, unchain_both, unchain_marker,
-        update_mode_lines,
+        lookup_char_property, marker_position, modify_overlay, set_buffer_internal_1, specbind,
+        unchain_both, unchain_marker, update_mode_lines,
     },
     remacs_sys::{
         pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
@@ -30,7 +30,7 @@ use crate::{
     },
     remacs_sys::{
         windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
-        Fget_text_property, Fnconc, Fnreverse, Foverlay_get, Fwiden,
+        Fget_text_property, Fnconc, Fnreverse, Fwiden,
     },
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
@@ -979,20 +979,27 @@ pub extern "C" fn build_overlay(
     }
 }
 
+/// Get the property of overlay OVERLAY with property name PROP.
+#[lisp_fn]
+pub fn overlay_get(overlay: LispOverlayRef, prop: LispObject) -> LispObject {
+    unsafe { lookup_char_property(overlay.plist, prop, false) }
+}
+
 // Mark OV as no longer associated with BUF.
 #[no_mangle]
-pub extern "C" fn drop_overlay(buf: LispBufferRef, ov: LispOverlayRef) {
-    let start = ov.start.as_marker_or_error();
-    let end = ov.end.as_marker_or_error();
-
+pub extern "C" fn drop_overlay(mut buf: LispBufferRef, ov: LispOverlayRef) {
+    let mut start = ov.start.as_marker_or_error();
+    let mut end = ov.end.as_marker_or_error();
     assert!(buf == marker_buffer(start).unwrap());
-    modify_overlay(
-        buf,
-        marker_position(start) as EmacsInt,
-        marker_position(end) as EmacsInt,
-    );
-    unchain_marker(start);
-    unchain_marker(end);
+    unsafe {
+        modify_overlay(
+            buf.as_mut(),
+            marker_position(ov.start),
+            marker_position(ov.end),
+        );
+        unchain_marker(start.as_mut());
+        unchain_marker(end.as_mut());
+    }
 }
 
 /// Delete the overlay OVERLAY from its buffer.
@@ -1006,7 +1013,7 @@ pub fn delete_overlay(overlay: LispOverlayRef) {
 
     unsafe {
         specbind(Qinhibit_quit, Qt);
-        unchain_both(buf_ref.as_mut(), overlay);
+        unchain_both(buf_ref.as_mut(), overlay.into());
         drop_overlay(buf_ref, overlay);
 
         // When deleting an overlay with before or after strings, turn off

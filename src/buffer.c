@@ -128,7 +128,6 @@ static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
 static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
-static void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -3565,7 +3564,7 @@ for the rear of the overlay advance when text is inserted there
 
 /* Mark a section of BUF as needing redisplay because of overlays changes.  */
 
-static void
+void
 modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 {
   if (start > end)
@@ -3584,7 +3583,7 @@ modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 
 /* Remove OVERLAY from LIST.  */
 
-static struct Lisp_Overlay *
+struct Lisp_Overlay *
 unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay)
 {
   register struct Lisp_Overlay *tail, **prev = &list;
@@ -5811,7 +5810,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Snext_overlay_change);
   defsubr (&Sprevious_overlay_change);
   defsubr (&Soverlay_recenter);
-  defsubr (&Soverlay_get);
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
 
