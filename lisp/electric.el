@@ -1,6 +1,6 @@
 ;;; electric.el --- window maker and Command loop for `electric' modes
 
-;; Copyright (C) 1985-1986, 1995, 2001-2017 Free Software Foundation,
+;; Copyright (C) 1985-1986, 1995, 2001-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: K. Shane Hartman
@@ -501,9 +501,11 @@ This requotes when a quoting key is typed."
          (let ((backtick ?\`))
            (if (or (eq last-command-event ?\`)
                    (and (or electric-quote-context-sensitive
-                            electric-quote-replace-double)
+                            (and electric-quote-replace-double
+                                 (eq last-command-event ?\")))
                         (save-excursion
                           (backward-char)
+                          (skip-syntax-backward "\\")
                           (or (bobp) (bolp)
                               (memq (char-before) (list q< q<<))
                               (memq (char-syntax (char-before))

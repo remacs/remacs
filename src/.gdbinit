@@ -1,4 +1,4 @@
-# Copyright (C) 1992-1998, 2000-2017 Free Software Foundation, Inc.
+# Copyright (C) 1992-1998, 2000-2018 Free Software Foundation, Inc.
 #
 # This file is part of GNU Emacs.
 #
@@ -44,18 +44,30 @@ handle SIGALRM ignore
 # Use $bugfix so that the value isn't a constant.
 # Using a constant runs into GDB bugs sometimes.
 define xgetptr
-  set $bugfix = $arg0
-  set $ptr = $bugfix & VALMASK
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
+  set $ptr = (EMACS_INT) $bugfix & VALMASK
 end
 
 define xgetint
-  set $bugfix = $arg0
-  set $int = $bugfix << (USE_LSB_TAG ? 0 : INTTYPEBITS) >> INTTYPEBITS
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
+  set $int = (EMACS_INT) $bugfix << (USE_LSB_TAG ? 0 : INTTYPEBITS) >> INTTYPEBITS
 end
 
 define xgettype
-  set $bugfix = $arg0
-  set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
+  if (CHECK_LISP_OBJECT_TYPE)
+    set $bugfix = $arg0.i
+  else
+    set $bugfix = $arg0
+  end
+  set $type = (enum Lisp_Type) (USE_LSB_TAG ? (EMACS_INT) $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
 end
 
 define xgetsym
@@ -73,12 +85,6 @@ end
 # We save and restore print_output_debug_flag to prevent the w32 port
 # from calling OutputDebugString, which causes GDB to display each
 # character twice (yuk!).
-# NOTE(db48x): when debugging with rr, we can't set arbitrary
-# variables because that could cause the replay to diverge from the
-# recording. However, if we call a function instead, rr will fork a
-# copy of the process and then discard any changes that function
-# made. Thus instead of simply setting print_output_debug_flag, we
-# actually call debug_output_compilation_hack instead.
 define pr
   pp $
 end
@@ -91,9 +97,9 @@ end
 define pp
   set $tmp = $arg0
   set $output_debug = print_output_debug_flag
-  call debug_output_compilation_hack(false)
+  set print_output_debug_flag = 0
   call safe_debug_print ($tmp)
-  call debug_output_compilation_hack($output_debug)
+  set print_output_debug_flag = $output_debug
 end
 document pp
 Print the argument as an emacs s-expression
@@ -104,9 +110,8 @@ end
 define pv
   set $tmp = "$arg0"
   set $output_debug = print_output_debug_flag
-  call debug_output_compilation_hack(false)
+  set print_output_debug_flag = 0
   call safe_debug_print (find_symbol_value (intern ($tmp)))
-  call debug_output_compilation_hack($output_debug)
   set print_output_debug_flag = $output_debug
 end
 document pv
@@ -1186,7 +1191,7 @@ define xprintbytestr
   set $bstrsize = ($arg0->size_byte < 0) ? ($arg0->size & ~ARRAY_MARK_FLAG) : $arg0->size_byte
   printf "Bytecode: "
   if $bstrsize > 0
-    output/u ($arg0->size > 1000) ? 0 : ($data[0])@($bstrsize)
+    output/u ($arg0->size > 1000) ? 0 : ($data[0])@($bvsize)
   else
     printf ""
   end
@@ -1197,9 +1202,9 @@ end
 
 define xwhichsymbols
   set $output_debug = print_output_debug_flag
-  call debug_output_compilation_hack(false)
+  set print_output_debug_flag = 0
   call safe_debug_print (which_symbols ($arg0, $arg1))
-  call debug_output_compilation_hack($output_debug)
+  set print_output_debug_flag = $output_debug
 end
 document xwhichsymbols
   Print symbols which references a given lisp object
@@ -1367,8 +1372,6 @@ if hasattr(gdb, 'printing'):
   gdb.printing.register_pretty_printer (gdb.current_objfile (),
                                         build_pretty_printer (), True)
 end
-
-set history save on
 
 # GDB mishandles indentation with leading tabs when feeding it to Python.
 # Local Variables:

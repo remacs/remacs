@@ -1,6 +1,6 @@
 ;;; regex-tests.el --- tests for regex.c functions -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -27,13 +27,13 @@
   "Path to regex-resources directory next to the \"regex-tests.el\" file.")
 
 (ert-deftest regex-word-cc-fallback-test ()
-  "Test that ‘[[:cc:]]*x’ matches ‘x’ (bug#24020).
+  "Test that \"[[:cc:]]*x\" matches \"x\" (bug#24020).
 
 Test that a regex of the form \"[[:cc:]]*x\" where CC is
 a character class which matches a multibyte character X, matches
 string \"x\".
 
-For example, ‘[[:word:]]*\u2620’ regex (note: \u2620 is a word
+For example, \"[[:word:]]*\u2620\" regex (note: \u2620 is a word
 character) must match a string \"\u2420\"."
   (dolist (class '("[[:word:]]" "\\sw"))
     (dolist (repeat '("*" "+"))

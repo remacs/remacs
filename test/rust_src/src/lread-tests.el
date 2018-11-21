@@ -1,6 +1,6 @@
 ;;; lread-tests.el --- tests for lread.c -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2018 Free Software Foundation, Inc.
 
 ;; Author: Philipp Stephani <phst@google.com>
 
@@ -180,6 +180,13 @@ literals (Bug#20852)."
       (should (equal (cdr data)
                      (list (concat (format-message "Loading `%s': " file-name)
                                    "old-style backquotes detected!")))))))
+
+(ert-deftest lread-tests--force-new-style-backquotes ()
+  (let ((data (should-error (read "(` (a b))"))))
+    (should (equal (cdr data) '("Old-style backquotes detected!"))))
+  (should (equal (let ((force-new-style-backquotes t))
+                   (read "(` (a b))"))
+                 '(`(a b)))))
 
 (ert-deftest lread-lread--substitute-object-in-subtree ()
   (let ((x (cons 0 1)))

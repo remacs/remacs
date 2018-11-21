@@ -1,6 +1,6 @@
 ;;; ns-win.el --- lisp side of interface with NeXT/Open/GNUstep/macOS window system  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1993-1994, 2005-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1994, 2005-2018 Free Software Foundation, Inc.
 
 ;; Authors: Carl Edman
 ;;	Christian Limpach
@@ -144,6 +144,8 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [?\s-z] 'undo)
 (define-key global-map [?\s-|] 'shell-command-on-region)
 (define-key global-map [s-kp-bar] 'shell-command-on-region)
+(define-key global-map [C-s- ] 'ns-do-show-character-palette)
+(define-key key-translation-map [C-s-268632064] [C-s- ])
 ;; (as in Terminal.app)
 (define-key global-map [s-right] 'ns-next-frame)
 (define-key global-map [s-left] 'ns-prev-frame)
@@ -354,7 +356,7 @@ See `ns-insert-working-text'."
   ;; Used prior to Emacs 25.
   (define-coding-system-alias 'utf-8-nfd 'utf-8-hfs)
 
-  (set-file-name-coding-system 'utf-8-hfs))
+  (set-file-name-coding-system 'utf-8-hfs-unix))
 
 ;;;; Inter-app communications support.
 
@@ -574,6 +576,12 @@ the last file dropped is selected."
 (defun ns-do-emacs-info-panel ()
   (interactive)
   (ns-emacs-info-panel))
+
+(declare-function ns-show-character-palette "nsfns.m" ())
+
+(defun ns-do-show-character-palette ()
+  (interactive)
+  (ns-show-character-palette))
 
 (defun ns-next-frame ()
   "Switch to next visible frame."

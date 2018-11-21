@@ -1,5 +1,5 @@
 /* Definitions and headers for communication with NeXT/Open/GNUstep API.
-   Copyright (C) 1989, 1993, 2005, 2008-2017 Free Software Foundation,
+   Copyright (C) 1989, 1993, 2005, 2008-2018 Free Software Foundation,
    Inc.
 
 This file is part of GNU Emacs.
@@ -585,6 +585,8 @@ typedef id instancetype;
   }
 - (instancetype) init;
 - (void) setText: (char *)text;
+- (void) setBackgroundColor: (NSColor *)col;
+- (void) setForegroundColor: (NSColor *)col;
 - (void) showAtX: (int)x Y: (int)y for: (int)seconds;
 - (void) hide;
 - (BOOL) isActive;
@@ -1322,5 +1324,10 @@ enum NSWindowTabbingMode
     NSWindowTabbingModePreferred,
     NSWindowTabbingModeDisallowed
   };
+#endif /* !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_12)  */
+
+#if !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_13)
+/* Deprecated in macOS 10.13.  */
+#define NSPasteboardNameGeneral NSGeneralPboard
 #endif
 #endif	/* HAVE_NS */

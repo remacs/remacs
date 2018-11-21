@@ -1,6 +1,6 @@
 ;;; time.el --- display time, load and mail indicator in mode line of Emacs
 
-;; Copyright (C) 1985-1987, 1993-1994, 1996, 2000-2017 Free Software
+;; Copyright (C) 1985-1987, 1993-1994, 1996, 2000-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -173,7 +173,9 @@ If the value is t instead of an alist, use the value of
 `legacy-style-world-list' otherwise."
 
   :group 'display-time
-  :type '(repeat (list string string))
+  :type '(choice (const :tag "Default" t)
+                 (repeat :tag "List of zones and labels"
+                         (list (string :tag "Zone") (string :tag "Label"))))
   :version "23.1")
 
 (defun time--display-world-list ()

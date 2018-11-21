@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Abbrevs
@@ -418,12 +418,11 @@ match in case.  If the value is @code{case-fold-search} (the default),
 then the variable @code{case-fold-search} controls whether to ignore
 case while searching for expansions (@pxref{Lax Search}).
 
-@vindex dabbrev-case-replace
   Normally, dynamic abbrev expansion preserves the case pattern
 @emph{of the dynamic abbrev you are expanding}, by converting the
 expansion to that case pattern.
 
-@vindex dabbrev-case-fold-search
+@vindex dabbrev-case-replace
   The variable @code{dabbrev-case-replace} controls whether to
 preserve the case pattern of the dynamic abbrev.  If it is @code{t},
 the dynamic abbrev's case pattern is preserved in most cases; if it is

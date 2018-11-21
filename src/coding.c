@@ -1,5 +1,5 @@
 /* Coding system handler (conversion, detection, etc).
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
      2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
@@ -1514,13 +1514,6 @@ encode_coding_utf_8 (struct coding_system *coding)
 
 /* See the above "GENERAL NOTES on `detect_coding_XXX ()' functions".
    Return true if a text is encoded in one of UTF-16 based coding systems.  */
-
-#define UTF_16_HIGH_SURROGATE_P(val) \
-  (((val) & 0xFC00) == 0xD800)
-
-#define UTF_16_LOW_SURROGATE_P(val) \
-  (((val) & 0xFC00) == 0xDC00)
-
 
 static bool
 detect_coding_utf_16 (struct coding_system *coding,
@@ -6360,6 +6353,27 @@ check_utf_8 (struct coding_system *coding)
 }
 
 
+/* Return whether STRING is a valid UTF-8 string.  STRING must be a
+   unibyte string.  */
+
+bool
+utf8_string_p (Lisp_Object string)
+{
+  eassert (!STRING_MULTIBYTE (string));
+  struct coding_system coding;
+  setup_coding_system (Qutf_8_unix, &coding);
+  /* We initialize only the fields that check_utf_8 accesses.  */
+  coding.head_ascii = -1;
+  coding.src_pos = 0;
+  coding.src_pos_byte = 0;
+  coding.src_chars = SCHARS (string);
+  coding.src_bytes = SBYTES (string);
+  coding.src_object = string;
+  coding.eol_seen = EOL_SEEN_NONE;
+  return check_utf_8 (&coding) != -1;
+}
+
+
 /* Detect how end-of-line of a text of length SRC_BYTES pointed by
    SOURCE is encoded.  If CATEGORY is one of
    coding_category_utf_16_XXXX, assume that CR and LF are encoded by
@@ -10846,6 +10860,7 @@ syms_of_coding (void)
   DEFSYM (Qiso_2022, "iso-2022");
 
   DEFSYM (Qutf_8, "utf-8");
+  DEFSYM (Qutf_8_unix, "utf-8-unix");
   DEFSYM (Qutf_8_emacs, "utf-8-emacs");
 
 #if defined (WINDOWSNT) || defined (CYGWIN)

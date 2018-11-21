@@ -1,6 +1,6 @@
 ;;; flymake.el --- A universal on-the-fly syntax checker  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
 ;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: Leo Liu <sdl.web@gmail.com>
@@ -124,13 +124,14 @@ If nil, never start checking buffer automatically like this."
 (make-obsolete-variable 'flymake-gui-warnings-enabled
 			"it no longer has any effect." "26.1")
 
+(define-obsolete-variable-alias 'flymake-start-syntax-check-on-find-file
+  'flymake-start-on-flymake-mode "26.1")
+
 (defcustom flymake-start-on-flymake-mode t
   "Start syntax check when `flymake-mode' is enabled.
 Specifically, start it when the buffer is actually displayed."
+  :version "26.1"
   :type 'boolean)
-
-(define-obsolete-variable-alias 'flymake-start-syntax-check-on-find-file
-  'flymake-start-on-flymake-mode "26.1")
 
 (defcustom flymake-log-level -1
   "Obsolete and ignored variable."
@@ -141,6 +142,7 @@ Specifically, start it when the buffer is actually displayed."
 
 (defcustom flymake-wrap-around t
   "If non-nil, moving to errors wraps around buffer boundaries."
+  :version "26.1"
   :type 'boolean)
 
 (when (fboundp 'define-fringe-bitmap)

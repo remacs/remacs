@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 
@@ -200,8 +200,6 @@ key sequence @kbd{C-S-backspace}.
 
 @node Other Kill Commands
 @subsection Other Kill Commands
-@findex kill-region
-@kindex C-w
 
 @table @kbd
 @item C-w
@@ -415,10 +413,10 @@ This is a line @point{}of sample text.
 @noindent
 with point shown by @point{}.  If you type @kbd{M-d M-@key{DEL} M-d
 M-@key{DEL}}, killing alternately forward and backward, you end up with
-@samp{a line of sample} as one entry in the kill ring, and @samp{This
-is@ @ text.} in the buffer.  (Note the double space between @samp{is}
-and @samp{text}, which you can clean up with @kbd{M-@key{SPC}} or
-@kbd{M-q}.)
+@samp{a line of sample} as one entry in the kill ring, and
+@w{@samp{This is@ @ text.}} in the buffer.  (Note the double space
+between @samp{is} and @samp{text}, which you can clean up with
+@kbd{M-@key{SPC}} or @kbd{M-q}.)
 
   Another way to kill the same text is to move back two words with
 @kbd{M-b M-b}, then kill all four words forward with @kbd{C-u M-d}.

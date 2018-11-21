@@ -1,6 +1,6 @@
 ;;; cc-defs.el --- compile time definitions for CC Mode
 
-;; Copyright (C) 1985, 1987, 1992-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992-2018 Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -87,7 +87,7 @@
 
 ;;; Variables also used at compile time.
 
-(defconst c-version "5.33"
+(defconst c-version "5.33.1"
   "CC Mode version number.")
 
 (defconst c-version-sym (intern c-version))
@@ -1413,59 +1413,6 @@ with value CHAR in the region [FROM to)."
      (c-restore-<->-as-parens)))
 
 ;;;;;;;;;;;;;;;
-
-(defconst c-cpp-delimiter '(14)) ; generic comment syntax
-;; This is the value of the `category' text property placed on every #
-;; which introduces a CPP construct and every EOL (or EOB, or character
-;; preceding //, etc.) which terminates it.  We can instantly "comment
-;; out" all CPP constructs by giving `c-cpp-delimiter' a syntax-table
-;; property '(14) (generic comment delimiter).
-(defmacro c-set-cpp-delimiters (beg end)
-  ;; This macro does a hidden buffer change.
-  `(progn
-     (c-put-char-property ,beg 'category 'c-cpp-delimiter)
-     (if (< ,end (point-max))
-	 (c-put-char-property ,end 'category 'c-cpp-delimiter))))
-(defmacro c-clear-cpp-delimiters (beg end)
-  ;; This macro does a hidden buffer change.
-  `(progn
-     (c-clear-char-property ,beg 'category)
-     (if (< ,end (point-max))
-	 (c-clear-char-property ,end 'category))))
-
-(defsubst c-comment-out-cpps ()
-  ;; Render all preprocessor constructs syntactically commented out.
-  (put 'c-cpp-delimiter 'syntax-table c-cpp-delimiter))
-(defsubst c-uncomment-out-cpps ()
-  ;; Restore the syntactic visibility of preprocessor constructs.
-  (put 'c-cpp-delimiter 'syntax-table nil))
-
-(defmacro c-with-cpps-commented-out (&rest forms)
-  ;; Execute FORMS... whilst the syntactic effect of all characters in
-  ;; all CPP regions is suppressed.  In particular, this is to suppress
-  ;; the syntactic significance of parens/braces/brackets to functions
-  ;; such as `scan-lists' and `parse-partial-sexp'.
-  `(unwind-protect
-       (c-save-buffer-state ()
-	   (c-comment-out-cpps)
-	   ,@forms)
-     (c-save-buffer-state ()
-       (c-uncomment-out-cpps))))
-
-(defmacro c-with-all-but-one-cpps-commented-out (beg end &rest forms)
-  ;; Execute FORMS... whilst the syntactic effect of all characters in
-  ;; every CPP region APART FROM THE ONE BETWEEN BEG and END is
-  ;; suppressed.
-  `(unwind-protect
-       (c-save-buffer-state ()
-	 (save-restriction
-	   (widen)
-	   (c-clear-cpp-delimiters ,beg ,end))
-	 ,`(c-with-cpps-commented-out ,@forms))
-     (c-save-buffer-state ()
-       (save-restriction
-	 (widen)
-	 (c-set-cpp-delimiters ,beg ,end)))))
 
 (defmacro c-self-bind-state-cache (&rest forms)
   ;; Bind the state cache to itself and execute the FORMS.  Return the result

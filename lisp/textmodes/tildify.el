@@ -1,6 +1,6 @@
 ;;; tildify.el --- adding hard spaces into texts -*- lexical-binding: t -*-
 
-;; Copyright (C) 1997-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
 ;; Author:     Milan Zamazal <pdm@zamazal.org>
 ;;             Michal Nazarewicz <mina86@mina86.com>
@@ -350,7 +350,7 @@ If ASK is nil, perform replace without asking user for confirmation.
 
 Returns (count . response) cons where count is number of string
 replacements done and response is one of symbols: t (all right), nil
-(quit), force (replace without further questions)."
+\(quit), force (replace without further questions)."
   (save-excursion
     (goto-char beg)
     (let ((regexp tildify-pattern)
