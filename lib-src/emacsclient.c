@@ -73,9 +73,11 @@ char *w32_getenv (const char *);
 #include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -144,7 +146,7 @@ static char const *server_file;
 static char const *tramp_prefix;
 
 /* PID of the Emacs server process.  */
-static int emacs_pid;
+static pid_t emacs_pid;
 
 /* If non-NULL, a string that should form a frame parameter alist to
    be used for the new frame.  */
@@ -692,7 +694,7 @@ fail (void)
       size_t new_argv_size = extra_args_size;
       char **new_argv = xmalloc (new_argv_size);
       char *s = xstrdup (alternate_editor);
-      unsigned toks = 0;
+      ptrdiff_t toks = 0;
 
       /* Unpack alternate_editor's space-separated tokens into new_argv.  */
       for (char *tok = s; tok != NULL && *tok != '\0';)
@@ -1200,12 +1202,13 @@ set_local_socket (const char *local_socket_name)
   char const *tmpdir = NULL;
   char *tmpdir_storage = NULL;
   char *socket_name_storage = NULL;
+  static char const subdir_format[] = "/emacs%"PRIuMAX"/";
 
   if (! (strchr (local_socket_name, '/')
 	 || (ISSLASH ('\\') && strchr (local_socket_name, '\\'))))
     {
       /* socket_name is a file name component.  */
-      long uid = geteuid ();
+      uintmax_t uid = geteuid ();
       tmpdir = egetenv ("TMPDIR");
       if (!tmpdir)
 	{
@@ -1226,7 +1229,7 @@ set_local_socket (const char *local_socket_name)
       socket_name_storage =
 	xmalloc (strlen (tmpdir) + strlen (server_name) + EXTRA_SPACE);
       char *z = stpcpy (socket_name_storage, tmpdir);
-      z += sprintf (z, "/emacs%ld/", uid);
+      z += sprintf (z, subdir_format, uid);
       strcpy (z, server_name);
       local_socket_name = socket_name_storage;
     }
@@ -1262,12 +1265,12 @@ set_local_socket (const char *local_socket_name)
 	  if (pw && (pw->pw_uid != geteuid ()))
 	    {
 	      /* We're running under su, apparently. */
-	      long uid = pw->pw_uid;
+	      uintmax_t uid = pw->pw_uid;
 	      char *user_socket_name
 		= xmalloc (strlen (tmpdir) + strlen (server_name)
 			   + EXTRA_SPACE);
 	      char *z = stpcpy (user_socket_name, tmpdir);
-	      z += sprintf (z, "/emacs%ld/", uid);
+	      z += sprintf (z, subdir_format, uid);
 	      strcpy (z, server_name);
 
 	      if (strlen (user_socket_name) < sizeof (server.sun_path))
@@ -1848,7 +1851,7 @@ main (int argc, char **argv)
           if (strprefix ("-emacs-pid ", p))
             {
               /* -emacs-pid PID: The process id of the Emacs process. */
-              emacs_pid = strtol (p + strlen ("-emacs-pid"), NULL, 10);
+	      emacs_pid = strtoumax (p + strlen ("-emacs-pid"), NULL, 10);
             }
           else if (strprefix ("-window-system-unsupported ", p))
             {
