@@ -248,6 +248,10 @@ pair of the form (KEY VALUE).  The following KEYs are defined:
     In general, the global default value shall be used, but for
     some methods, like \"su\" or \"sudo\", a shorter timeout
     might be desirable.
+  * `tramp-session-timeout'
+    How long a Tramp connection keeps open before being disconnected.
+    This is useful for methods like \"su\" or \"sudo\", which
+    shouldn't run an open connection in the background forever.
   * `tramp-case-insensitive'
     Whether the remote file system handles file names case insensitive.
     Only a non-nil value counts, the default value nil means to
@@ -4074,10 +4078,16 @@ Example:
 
 would yield t.  On the other hand, the following check results in nil:
 
-  (tramp-equal-remote \"/sudo::/etc\" \"/su::/etc\")"
-  (and (tramp-tramp-file-p file1)
-       (tramp-tramp-file-p file2)
-       (string-equal (file-remote-p file1) (file-remote-p file2))))
+  (tramp-equal-remote \"/sudo::/etc\" \"/su::/etc\")
+
+FILE1 and FILE2 could also be Tramp vectors."
+  (or (and (tramp-tramp-file-p file1)
+	   (tramp-tramp-file-p file2)
+	   (string-equal (file-remote-p file1) (file-remote-p file2)))
+      (and (tramp-file-name-p file1)
+	   (tramp-file-name-p file2)
+	   (string-equal (tramp-make-tramp-file-name file1 'localname)
+			 (tramp-make-tramp-file-name file2 'localname)))))
 
 ;;;###tramp-autoload
 (defun tramp-mode-string-to-int (mode-string)

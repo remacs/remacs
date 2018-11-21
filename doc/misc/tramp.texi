@@ -721,11 +721,17 @@ the host returned by the function @command{(system-name)}.  See
 Similar to @option{su} method, @option{sudo} uses @command{sudo}.
 @command{sudo} must have sufficient rights to start a shell.
 
+Due to security reasons, a @option{sudo} connection is disabled after
+a predefined timeout (5 minutes per default).  This can be changed,
+see @ref{Predefined connection information}.
+
 @item @option{doas}
 @cindex method @option{doas}
 @cindex @option{doas} method
 
-This method is used on OpenBSD like the @command{sudo} command.
+This method is used on OpenBSD like the @command{sudo} command.  Like
+the @option{sudo} method, a @option{sudo} connection is disabled after
+a predefined timeout.
 
 @item @option{sg}
 @cindex method @option{sg}
@@ -1825,6 +1831,24 @@ remote shell:
 The parameters @code{tramp-remote-shell} and
 @code{tramp-remote-shell-login} in @code{tramp-methods} now have new
 values for the remote host.
+
+A common use case is to override the session timeout of a connection,
+that is the time (in seconds) after a connection is disabled, and must
+be reestablished.  This can be set for any connection; for the
+@option{sudo} and @option{doas} methods there exist predefined values.
+A value of @code{nil} disables this feature.  For example:
+
+@lisp
+@group
+(add-to-list 'tramp-connection-properties
+             (list (regexp-quote "@trampfn{sudo,root@@system-name,}")
+                   "session-timeout" 30))
+@end group
+@end lisp
+
+@noindent
+@samp{system-name} stands here for the host returned by the function
+@command{(system-name)}.
 
 @var{property} could also be any property found in
 @code{tramp-persistency-file-name}.

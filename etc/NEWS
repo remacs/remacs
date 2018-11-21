@@ -832,6 +832,11 @@ Tramp for some look-alike remote file names.
 *** For some connection methods, like "su" or "sudo", the host name in
 ad-hoc multi-hop file names must match the previous hop.
 
++++
+*** For the connection methods "sudo" and "doas" there exists a
+timeout, after which the underlying session is disabled.  This is for
+security reasons.
+
 ** Rcirc
 
 ---

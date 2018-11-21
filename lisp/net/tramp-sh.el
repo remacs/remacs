@@ -271,14 +271,13 @@ The string is used in `tramp-methods'.")
     (tramp-remote-shell-args    ("-c"))
     (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
-(add-to-list
- 'tramp-methods
- '("sg"
-   (tramp-login-program        "sg")
-   (tramp-login-args           (("-") ("%u")))
-   (tramp-remote-shell         "/bin/sh")
-   (tramp-remote-shell-args    ("-c"))
-   (tramp-connection-timeout   10)))
+(add-to-list 'tramp-methods
+  '("sg"
+    (tramp-login-program        "sg")
+    (tramp-login-args           (("-") ("%u")))
+    (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-args    ("-c"))
+    (tramp-connection-timeout   10)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
   '("sudo"
@@ -292,7 +291,8 @@ The string is used in `tramp-methods'.")
     (tramp-remote-shell         "/bin/sh")
     (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
-    (tramp-connection-timeout   10)))
+    (tramp-connection-timeout   10)
+    (tramp-session-timeout      300)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
   '("doas"
@@ -300,7 +300,8 @@ The string is used in `tramp-methods'.")
     (tramp-login-args           (("-u" "%u") ("-s")))
     (tramp-remote-shell         "/bin/sh")
     (tramp-remote-shell-args    ("-c"))
-    (tramp-connection-timeout   10)))
+    (tramp-connection-timeout   10)
+    (tramp-session-timeout      300)))
 ;;;###tramp-autoload
 (add-to-list 'tramp-methods
   '("ksu"
@@ -4371,16 +4372,14 @@ Goes through the list `tramp-local-coding-commands' and
 		 vec 5 "Checking local encoding function `%s'" loc-enc)
 	      (tramp-message
 	       vec 5 "Checking local encoding command `%s' for sanity" loc-enc)
-	      (unless (zerop (tramp-call-local-coding-command
-			      loc-enc nil nil))
+	      (unless (zerop (tramp-call-local-coding-command loc-enc nil nil))
 		(throw 'wont-work-local nil)))
 	    (if (not (stringp loc-dec))
 		(tramp-message
 		 vec 5 "Checking local decoding function `%s'" loc-dec)
 	      (tramp-message
 	       vec 5 "Checking local decoding command `%s' for sanity" loc-dec)
-	      (unless (zerop (tramp-call-local-coding-command
-			      loc-dec nil nil))
+	      (unless (zerop (tramp-call-local-coding-command loc-dec nil nil))
 		(throw 'wont-work-local nil)))
 	    ;; Search for remote coding commands with the same format
 	    (while (and remote-commands (not found))
@@ -4702,6 +4701,19 @@ Goes through the list `tramp-inline-compress-commands'."
 				  " -o ControlPersist=no")))))))))
       tramp-ssh-controlmaster-options)))
 
+(defun tramp-timeout-session (vec)
+  "Close the connection VEC after a session timeout.
+If there is just some editing, retry it after 5 seconds."
+  (if (and tramp-locked tramp-locker
+	   (tramp-equal-remote vec tramp-current-connection))
+      (progn
+	(tramp-message
+	 vec 5 "Cannot timeout session, trying it again in %s seconds." 5)
+	(run-at-time 5 nil 'tramp-timeout-session vec))
+    (tramp-message
+     vec 3 "Timeout session %s" (tramp-make-tramp-file-name vec 'localname))
+    (tramp-cleanup-connection vec 'keep-debug)))
+
 (defun tramp-maybe-open-connection (vec)
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
@@ -4878,6 +4890,14 @@ connection if a previous connection has died for some reason."
 		      :method l-method :user l-user :domain l-domain
 		      :host l-host :port l-port))
 
+		    ;; Set session timeout.
+		    (when (tramp-get-method-parameter
+			   hop 'tramp-session-timeout)
+		      (tramp-set-connection-property
+		       p "session-timeout"
+		       (tramp-get-method-parameter
+			hop 'tramp-session-timeout)))
+
 		    ;; Add login environment.
 		    (when login-env
 		      (setq
@@ -4940,6 +4960,12 @@ connection if a previous connection has died for some reason."
 
 		;; Set connection-local variables.
 		(tramp-set-connection-local-variables vec)
+
+		;; Activate session timeout.
+		(when (tramp-get-connection-property p "session-timeout" nil)
+		  (run-at-time
+		   (tramp-get-connection-property p "session-timeout" nil) nil
+		   'tramp-timeout-session vec))
 
 		;; Make initial shell settings.
 		(tramp-open-connection-setup-interactive-shell p vec)
