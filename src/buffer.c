@@ -128,6 +128,7 @@ static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
 static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
+static void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -700,6 +701,19 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 
   return buf;
+}
+
+/* Mark OV as no longer associated with B.  */
+
+void
+drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
+{
+  eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
+  modify_overlay (b, marker_position (ov->start),
+		  marker_position (ov->end));
+  unchain_marker (XMARKER (ov->start));
+  unchain_marker (XMARKER (ov->end));
+
 }
 
 /* Delete all overlays of B and reset its overlay lists.  */
@@ -3562,10 +3576,28 @@ for the rear of the overlay advance when text is inserted there
   return overlay;
 }
 
+/* Mark a section of BUF as needing redisplay because of overlays changes.  */
+
+static void
+modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
+{
+  if (start > end)
+    {
+      ptrdiff_t temp = start;
+      start = end;
+      end = temp;
+    }
+
+  BUF_COMPUTE_UNCHANGED (buf, start, end);
+
+  bset_redisplay (buf);
+
+  ++BUF_OVERLAY_MODIFF (buf);
+}
 
 /* Remove OVERLAY from LIST.  */
 
-struct Lisp_Overlay *
+static struct Lisp_Overlay *
 unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay)
 {
   register struct Lisp_Overlay *tail, **prev = &list;
@@ -3578,6 +3610,18 @@ unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay)
 	break;
       }
   return list;
+}
+
+/* Remove OVERLAY from both overlay lists of B.  */
+
+void
+unchain_both (struct buffer *b, Lisp_Object overlay)
+{
+  struct Lisp_Overlay *ov = XOVERLAY (overlay);
+
+  set_buffer_overlays_before (b, unchain_overlay (b->overlays_before, ov));
+  set_buffer_overlays_after (b, unchain_overlay (b->overlays_after, ov));
+  eassert (XOVERLAY (overlay)->next == NULL);
 }
 
 DEFUN ("move-overlay", Fmove_overlay, Smove_overlay, 3, 4, 0,
@@ -3854,6 +3898,14 @@ for positions far away from POS).  */)
   return Qnil;
 }
 
+DEFUN ("overlay-get", Foverlay_get, Soverlay_get, 2, 2, 0,
+       doc: /* Get the property of overlay OVERLAY with property name PROP.  */)
+  (Lisp_Object overlay, Lisp_Object prop)
+{
+  CHECK_OVERLAY (overlay);
+  return lookup_char_property (XOVERLAY (overlay)->plist, prop, 0);
+}
+
 DEFUN ("overlay-put", Foverlay_put, Soverlay_put, 3, 3, 0,
        doc: /* Set one property of overlay OVERLAY: give property PROP value VALUE.
 VALUE will be returned.*/)
@@ -5780,6 +5832,7 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Snext_overlay_change);
   defsubr (&Sprevious_overlay_change);
   defsubr (&Soverlay_recenter);
+  defsubr (&Soverlay_get);
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
 
