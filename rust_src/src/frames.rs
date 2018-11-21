@@ -5,7 +5,8 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
-    remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method},
+    remacs_sys::Vframe_list,
+    remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
     windows::{select_window_lisp, selected_window, LispWindowRef},
@@ -411,6 +412,63 @@ pub fn frame_bottom_divider_width(frame: LispFrameOrSelected) -> i32 {
 pub fn delete_frame_lisp(frame: LispObject, force: bool) {
     unsafe {
         c_delete_frame(frame, force.into());
+    }
+}
+
+macro_rules! for_each_frame {
+    ($name:ident => $action:block) => {
+        for $name in unsafe { Vframe_list.iter_cars_unchecked() }
+            $action
+    };
+}
+
+// Return the next frame in the frame list after FRAME.
+#[no_mangle]
+pub extern "C" fn next_frame(frame: LispObject, minibuf: LispObject) -> LispObject {
+    let mut passed = 0;
+
+    while passed < 2 {
+        for_each_frame!(f => {
+	    if passed > 0 {
+	        let tmp = unsafe { candidate_frame(f, frame, minibuf) };
+	        if !tmp.is_nil() {
+	            return f;
+                }
+	    }
+            if frame.eq(f) {
+                passed += 1;
+            }
+        });
+    }
+
+    frame
+}
+
+// Return the previous frame in the frame list before FRAME.
+#[no_mangle]
+pub extern "C" fn prev_frame(frame: LispObject, minibuf: LispObject) -> LispObject {
+    let mut prev = Qnil;
+
+    for_each_frame!(f => {
+        if frame.eq(f) && !prev.is_nil() {
+            return prev;
+        }
+        let tmp = unsafe { candidate_frame(f, frame, minibuf) };
+        if !tmp.is_nil() {
+            prev = tmp;
+        }
+    });
+
+    // We've scanned the entire list.
+    if prev.is_nil() {
+        // We went through the whole frame list without finding a single
+        // acceptable frame.  Return the original frame.
+        frame
+    } else {
+        // There were no acceptable frames in the list before FRAME; otherwise,
+        // we would have returned directly from the loop.  Since PREV is the last
+        // acceptable frame in the list, return it.
+        prev
     }
 }
 
