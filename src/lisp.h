@@ -4886,6 +4886,10 @@ bool backtrace_debug_on_exit (union specbinding *pdl);
 
 void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
 
+enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
+extern bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind);
+
 INLINE_HEADER_END
 
 #endif /* EMACS_LISP_H */

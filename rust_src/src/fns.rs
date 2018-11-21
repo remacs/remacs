@@ -9,9 +9,9 @@ use crate::{
     lists::{assq, car, get, member, memq, put, LispCons},
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::Lisp_Type,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
+    remacs_sys::{compare_string_intervals, concat as lisp_concat, globals, record_unwind_protect},
+    remacs_sys::{equal_kind, Lisp_Type},
     remacs_sys::{Fload, Fmapc},
     remacs_sys::{
         Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
@@ -262,6 +262,22 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
             false,
         )
     }
+}
+
+#[no_mangle]
+pub extern "C" fn internal_equal_string(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+) -> bool {
+    let s1 = o1.as_string_or_error();
+    let s2 = o2.as_string_or_error();
+
+    s1.len_chars() == s2.len_chars()
+        && s1.len_bytes() == s2.len_bytes()
+        && s1.as_slice() == s2.as_slice()
+        && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
+            || unsafe { compare_string_intervals(o1, o2) })
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

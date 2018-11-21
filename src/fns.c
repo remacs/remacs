@@ -41,9 +41,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define gnutls_rnd w32_gnutls_rnd
 #endif
 
-enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
-bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-
 /* Random data-structure functions.  */
 
 DEFUN ("compare-strings", Fcompare_strings, Scompare_strings, 6, 7, 0,
@@ -1488,16 +1485,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       break;
 
     case Lisp_String:
-      if (SCHARS (o1) != SCHARS (o2))
-	return false;
-      if (SBYTES (o1) != SBYTES (o2))
-	return false;
-      if (memcmp (SDATA (o1), SDATA (o2), SBYTES (o1)))
-	return false;
-      if (equal_kind == EQUAL_INCLUDING_PROPERTIES
-	  && !compare_string_intervals (o1, o2))
-	return false;
-      return true;
+      return internal_equal_string(o1, o2, equal_kind);
 
     default:
       break;
