@@ -10,7 +10,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::current_buffer,
     data::{aref, indirect_function, set},
-    eval::autoload_do_load,
+    eval::{autoload_do_load, unbind_to},
     keyboard::lucid_event_type_list_p,
     lisp::{defsubr, LispObject},
     lists::nth,
@@ -18,12 +18,9 @@ use crate::{
     remacs_sys::{
         access_keymap, describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
         map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit, specbind,
-        unbind_to,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
-    remacs_sys::{
-        Fcons, Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri,
-    },
+    remacs_sys::{Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri},
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
     },
@@ -156,7 +153,7 @@ pub fn make_keymap(string: LispObject) -> LispObject {
     };
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
-    unsafe { Fcons(Qkeymap, Fcons(char_table, tail)) }
+    LispObject::cons(Qkeymap, LispObject::cons(char_table, tail))
 }
 
 /// Return t if OBJECT is a keymap.
@@ -313,7 +310,11 @@ pub unsafe extern "C" fn map_keymap(
 #[lisp_fn(name = "map-keymap", min = "2")]
 pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
     if sort_first {
-        return call!(intern("map-keymap-sorted"), function, keymap);
+        return call!(
+            LispObject::from(intern("map-keymap-sorted")),
+            function,
+            keymap
+        );
     }
     unsafe {
         map_keymap(
@@ -420,7 +421,7 @@ pub fn current_local_map() -> LispObject {
 /// Select KEYMAP as the local keymap.
 /// If KEYMAP is nil, that means no local keymap.
 #[lisp_fn]
-pub fn use_local_map(mut keymap: LispObject) -> () {
+pub fn use_local_map(mut keymap: LispObject) {
     if !keymap.is_nil() {
         let map = get_keymap(keymap, true, true);
         keymap = map;
@@ -455,7 +456,7 @@ pub fn current_global_map() -> LispObject {
 
 /// Select KEYMAP as the global keymap.
 #[lisp_fn]
-pub fn use_global_map(keymap: LispObject) -> () {
+pub fn use_global_map(keymap: LispObject) {
     unsafe { _current_global_map = get_keymap(keymap, true, true) };
 }
 
@@ -588,7 +589,7 @@ pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
 #[lisp_fn(min = "1", name = "describe-vector")]
 pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
     if describer.is_nil() {
-        describer = intern("princ");
+        describer = LispObject::from(intern("princ"));
     }
     unsafe { specbind(Qstandard_output, current_buffer()) };
     if !(vector.is_vector() || vector.is_char_table()) {
@@ -610,7 +611,7 @@ pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
         )
     };
 
-    unsafe { unbind_to(count, Qnil) };
+    unbind_to(count, Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));

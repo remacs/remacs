@@ -38,7 +38,7 @@
 
 (if (not (fboundp 'msdos-remember-default-colors))
     (error "%s: Loading pc-win.el but not compiled for MS-DOS"
-	   (invocation-name)))
+	   invocation-name))
 
 (declare-function msdos-remember-default-colors "msdos.c")
 (declare-function w16-set-clipboard-data "w16select.c")

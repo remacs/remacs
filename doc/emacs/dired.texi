@@ -14,8 +14,9 @@ optionally some of its subdirectories as well.  You can use the normal
 Emacs commands to move around in this buffer, and special Dired
 commands to operate on the listed files.
 
-    The Dired buffer is read-only, and inserting text in it is not
-allowed.  Ordinary printing characters such as @kbd{d} and @kbd{x} are
+  The Dired buffer is normally read-only, and inserting text in it is
+not allowed (however, the Wdired mode allows that, @pxref{Wdired}).
+Ordinary printing characters such as @kbd{d} and @kbd{x} are
 redefined for special Dired commands.  Some Dired commands @dfn{mark}
 or @dfn{flag} the @dfn{current file} (that is, the file on the current
 line); other commands operate on the marked files or on the flagged

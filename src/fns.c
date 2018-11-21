@@ -1584,70 +1584,6 @@ usage: (nconc &rest LISTS)  */)
   return val;
 }
 
-/* This is the guts of all mapping functions.
-   Apply FN to each element of SEQ, one by one, storing the results
-   into elements of VALS, a C vector of Lisp_Objects.  LENI is the
-   length of VALS, which should also be the length of SEQ.  Return the
-   number of results; although this is normally LENI, it can be less
-   if SEQ is made shorter as a side effect of FN.  */
-
-static EMACS_INT
-mapcar1 (EMACS_INT leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
-{
-  Lisp_Object tail, dummy;
-  EMACS_INT i;
-
-  if (VECTORP (seq) || COMPILEDP (seq))
-    {
-      for (i = 0; i < leni; i++)
-	{
-	  dummy = call1 (fn, AREF (seq, i));
-	  if (vals)
-	    vals[i] = dummy;
-	}
-    }
-  else if (BOOL_VECTOR_P (seq))
-    {
-      for (i = 0; i < leni; i++)
-	{
-	  dummy = call1 (fn, bool_vector_ref (seq, i));
-	  if (vals)
-	    vals[i] = dummy;
-	}
-    }
-  else if (STRINGP (seq))
-    {
-      ptrdiff_t i_byte;
-
-      for (i = 0, i_byte = 0; i < leni;)
-	{
-	  int c;
-	  ptrdiff_t i_before = i;
-
-	  FETCH_STRING_CHAR_ADVANCE (c, seq, i, i_byte);
-	  XSETFASTINT (dummy, c);
-	  dummy = call1 (fn, dummy);
-	  if (vals)
-	    vals[i_before] = dummy;
-	}
-    }
-  else   /* Must be a list, since Flength did not get an error */
-    {
-      tail = seq;
-      for (i = 0; i < leni; i++)
-	{
-	  if (! CONSP (tail))
-	    return i;
-	  dummy = call1 (fn, XCAR (tail));
-	  if (vals)
-	    vals[i] = dummy;
-	  tail = XCDR (tail);
-	}
-    }
-
-  return leni;
-}
-
 DEFUN ("mapconcat", Fmapconcat, Smapconcat, 3, 3, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
 In between each pair of results, stick in SEPARATOR.  Thus, " " as

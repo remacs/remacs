@@ -39,3 +39,5 @@
       (insert payload)
       (should (equal (buffer-string) payload)))))
 
+(ert-deftest test-message-box ()
+  (should-error (message-box)))

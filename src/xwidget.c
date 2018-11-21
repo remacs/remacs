@@ -392,8 +392,7 @@ webkit_javascript_finished_cb (GObject      *webview,
     /* FIXME: This might lead to disaster if LISP_CALLBACK’s object
        was garbage collected before now.  See the FIXME in
        Fxwidget_webkit_execute_script.  */
-    store_xwidget_js_callback_event (xw, XIL ((intptr_t) lisp_callback),
-                                     lisp_value);
+    store_xwidget_js_callback_event (xw, XPL (lisp_callback), lisp_value);
 }
 
 
@@ -723,7 +722,7 @@ argument procedure FUN.*/)
   /* FIXME: This hack might lead to disaster if FUN is garbage
      collected before store_xwidget_js_callback_event makes it visible
      to Lisp again.  See the FIXME in webkit_javascript_finished_cb.  */
-  gpointer callback_arg = (gpointer) (intptr_t) XLI (fun);
+  gpointer callback_arg = XLP (fun);
 
   /* JavaScript execution happens asynchronously.  If an elisp
      callback function is provided we pass it to the C callback

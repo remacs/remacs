@@ -91,9 +91,9 @@
 ;; is as follows (of course you need to modify the paths according to
 ;; your system):
 
-;; (setq python-shell-interpreter "C:\\Python27\\python.exe"
+;; (setq python-shell-interpreter "C:/Python27/python.exe"
 ;;       python-shell-interpreter-args
-;;       "-i C:\\Python27\\Scripts\\ipython-script.py")
+;;       "-i C:/Python27/Scripts/ipython-script.py")
 
 ;; Missing or delayed output used to happen due to differences between
 ;; Operating Systems' pipe buffering (e.g. CPython 3.3.4 in Windows 7.

@@ -781,7 +781,7 @@ to prepare for opening the first frame (e.g. open a connection to an X server)."
                                argval
                              (let ((case-fold-search t)
                                    i)
-                               (setq argval (invocation-name))
+                               (setq argval (copy-sequence invocation-name))
 
                                ;; Change any . or * characters in name to
                                ;; hyphens, so as to emulate behavior on X.

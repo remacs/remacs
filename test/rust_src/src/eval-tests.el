@@ -245,7 +245,9 @@
                             (lambda () (+ 3 3))))
   (run-hooks 'function-hook 'list-of-functions)
   (makunbound 'function-hook)
-  (makunbound 'list-of-functions))
+  (makunbound 'list-of-functions)
+
+  (should-error (run-hook-with-args)))
 
 (ert-deftest eval-tests--funcall()
   (let ((f (lambda () 1)))
@@ -269,7 +271,9 @@
   ;; Checks that Bug#24673 has been fixed.
   (should-error (funcall '(closure)) :type 'invalid-function)
 
-  (should-error (funcall (lambda)) :type 'invalid-function))
+  (should-error (funcall (lambda)) :type 'invalid-function)
+
+  (should-error (funcall)))
 
 ;; Local Variables:
 ;; byte-compile-warnings: (not lexical free-vars unresolved)

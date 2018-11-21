@@ -21,6 +21,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include "lisp.h"
+#include "ptr-bounds.h"
 #include "character.h"
 #include "buffer.h"
 #include "keyboard.h"
@@ -159,23 +160,6 @@ read_file_name (Lisp_Object default_filename, Lisp_Object mustmatch,
   return CALLN (Ffuncall, intern ("read-file-name"),
 		callint_message, Qnil, default_filename,
 		mustmatch, initial, predicate);
-}
-
-/* BEWARE: Calling this directly from C would defeat the purpose!  */
-DEFUN ("funcall-interactively", Ffuncall_interactively, Sfuncall_interactively,
-       1, MANY, 0, doc: /* Like `funcall' but marks the call as interactive.
-I.e. arrange that within the called function `called-interactively-p' will
-return non-nil.
-usage: (funcall-interactively FUNCTION &rest ARGUMENTS)  */)
-     (ptrdiff_t nargs, Lisp_Object *args)
-{
-  ptrdiff_t speccount = SPECPDL_INDEX ();
-  temporarily_switch_to_single_kboard (NULL);
-
-  /* Nothing special to do here, all the work is inside
-     `called-interactively-p'.  Which will look for us as a marker in the
-     backtrace.  */
-  return unbind_to (speccount, Ffuncall (nargs, args));
 }
 
 DEFUN ("call-interactively", Fcall_interactively, Scall_interactively, 1, 3, 0,
@@ -420,6 +404,9 @@ invoke it.  If KEYS is omitted or nil, the return value of
   varies = (signed char *) (visargs + nargs);
 
   memclear (args, nargs * (2 * word_size + 1));
+  args = ptr_bounds_clip (args, nargs * sizeof *args);
+  visargs = ptr_bounds_clip (visargs, nargs * sizeof *visargs);
+  varies = ptr_bounds_clip (varies, nargs * sizeof *varies);
 
   if (!NILP (enable))
     specbind (Qenable_recursive_minibuffers, Qt);
@@ -854,5 +841,4 @@ a way to turn themselves off when a mouse command switches windows.  */);
   Vmouse_leave_buffer_hook = Qnil;
 
   defsubr (&Scall_interactively);
-  defsubr (&Sfuncall_interactively);
 }

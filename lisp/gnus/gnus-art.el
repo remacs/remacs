@@ -5219,7 +5219,7 @@ available media-types."
 	    (gnus-completing-read
 	     "View as MIME type"
 	     (if pred
-		 (gnus-remove-if-not pred (mailcap-mime-types))
+		 (seq-filter pred (mailcap-mime-types))
 	       (mailcap-mime-types))
 	     nil nil nil
 	     (car default)))))

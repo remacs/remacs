@@ -5,6 +5,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{current_buffer, LispBufferOrName},
     editfns::field_end,
+    eval::unbind_to,
     keymap::get_keymap,
     lisp::defsubr,
     lisp::LispObject,
@@ -16,7 +17,7 @@ use crate::{
     },
     remacs_sys::{
         make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf, specbind,
-        unbind_to, EmacsInt, Fcopy_sequence, Ffuncall,
+        EmacsInt, Fcopy_sequence,
     },
     symbols::symbol_value,
     textprop::get_char_property,
@@ -82,7 +83,7 @@ pub fn minibuffer_prompt_end() -> EmacsInt {
         return beg;
     }
 
-    let end = field_end(Some(beg), false, None);
+    let end = field_end(Some(beg.into()), false, None);
     let buffer_end = buffer.zv as EmacsInt;
     if end == buffer_end && get_char_property(beg, Qfield, Qnil).is_nil() {
         beg
@@ -286,8 +287,7 @@ pub fn completing_read(
     def: LispObject,
     inherit_input_method: LispObject,
 ) -> LispObject {
-    callN_raw!(
-        Ffuncall,
+    call!(
         symbol_value(intern("completing-read-function")),
         prompt,
         collection,
@@ -349,7 +349,8 @@ pub fn read_string(
             }
         }
     }
-    unsafe { unbind_to(count, val) }
+
+    unbind_to(count, val)
 }
 
 pub fn read_command_or_variable(

@@ -9,10 +9,10 @@ use libc::{c_int, c_uchar, ptrdiff_t};
 use remacs_macros::lisp_fn;
 
 use crate::{
-    buffers::current_buffer,
+    buffers::{current_buffer, validate_region},
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
-    eval::progn,
+    eval::{progn, unbind_to},
     lisp::{defsubr, LispObject},
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
@@ -26,17 +26,18 @@ use crate::{
     numbers::LispNumber,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        buffer_overflow, build_string, current_message, downcase, find_before_next_newline,
-        find_newline, get_char_property_and_overlay, globals, insert, insert_and_inherit,
-        insert_from_buffer, make_buffer_string_both, make_save_obj_obj_obj_obj,
-        make_string_from_bytes, maybe_quit, message1, record_unwind_current_buffer,
-        record_unwind_protect, save_excursion_restore, save_restriction_restore,
-        save_restriction_save, scan_newline_from_point, set_buffer_internal_1, set_point,
-        set_point_both, unbind_to, update_buffer_properties,
+        buffer_overflow, build_string, current_message, del_range, downcase,
+        find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
+        insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
+        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
+        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, styled_format, update_buffer_properties,
+        STRING_BYTES,
     },
     remacs_sys::{
-        Fadd_text_properties, Fcons, Fcopy_sequence, Fformat_message, Fget_pos_property,
-        Fnext_single_char_property_change, Fprevious_single_char_property_change, Fx_popup_dialog,
+        Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
+        Fprevious_single_char_property_change, Fx_popup_dialog,
     },
     remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
@@ -410,7 +411,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
 /// usage: (fn STRING &rest PROPERTIES)
 #[lisp_fn(min = "1")]
 pub fn propertize(args: &[LispObject]) -> LispObject {
-    /* Number of args must be odd. */
+    // Number of args must be odd.
     if args.len() & 1 == 0 {
         error!("Wrong number of arguments");
     }
@@ -427,7 +428,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     while let Some(a) = it.next() {
         let b = it.next().unwrap(); // safe due to the odd check at the beginning
-        properties = unsafe { Fcons(*a, Fcons(*b, properties)) };
+        properties = LispObject::cons(*a, LispObject::cons(*b, properties));
     }
 
     unsafe {
@@ -562,19 +563,11 @@ pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
 /// is before LIMIT, then LIMIT will be returned instead.
 #[lisp_fn(min = "0")]
 pub fn field_beginning(
-    pos: Option<EmacsInt>,
+    pos: Option<LispNumber>,
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
-    let mut beg = 0;
-    rust_find_field(
-        pos.map(LispNumber::from),
-        escape_from_edge,
-        LispObject::from(limit),
-        &mut beg,
-        Qnil,
-        ptr::null_mut(),
-    );
+    let (beg, _) = find_field(pos, escape_from_edge, limit, None);
 
     beg as EmacsInt
 }
@@ -588,19 +581,11 @@ pub fn field_beginning(
 /// is after LIMIT, then LIMIT will be returned instead.
 #[lisp_fn(min = "0")]
 pub fn field_end(
-    pos: Option<EmacsInt>,
+    pos: Option<LispNumber>,
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
-    let mut end = 0;
-    rust_find_field(
-        pos.map(LispNumber::from),
-        escape_from_edge,
-        Qnil,
-        ptr::null_mut(),
-        LispObject::from(limit),
-        &mut end,
-    );
+    let (_, end) = find_field(pos, escape_from_edge, None, limit);
 
     end as EmacsInt
 }
@@ -699,10 +684,11 @@ pub fn constrain_to_field(
     // It is possible that NEW_POS is not within the same field as
     // OLD_POS; try to move NEW_POS so that it is.
     {
+        let tmp: LispNumber = old_pos.into();
         let field_bound = if fwd {
-            field_end(Some(old_pos), escape_from_edge, Some(new_pos))
+            field_end(Some(tmp), escape_from_edge, Some(new_pos))
         } else {
-            field_beginning(Some(old_pos), escape_from_edge, Some(new_pos))
+            field_beginning(Some(tmp), escape_from_edge, Some(new_pos))
         };
 
         let should_constrain = if field_bound < new_pos { fwd } else { !fwd };
@@ -878,9 +864,7 @@ pub fn insert_buffer_substring(
     let mut e = end.map_or(buf_ref.zv, |n| n.to_fixnum() as isize);
 
     if b > e {
-        let temp = b;
-        b = e;
-        e = temp;
+        std::mem::swap(&mut b, &mut e);
     }
 
     if !(buf_ref.begv <= b && e <= buf_ref.zv) {
@@ -896,6 +880,41 @@ pub fn insert_buffer_substring(
     };
 }
 
+/// Display a message at the bottom of the screen.
+/// The message also goes into the `*Messages*' buffer, if `message-log-max'
+/// is non-nil.  (In keyboard macros, that's all it does.)
+/// Return the message.
+///
+/// In batch mode, the message is printed to the standard error stream,
+/// followed by a newline.
+///
+/// The first argument is a format control string, and the rest are data
+/// to be formatted under control of the string.  Percent sign (%), grave
+/// accent (\\=`) and apostrophe (\\=') are special in the format; see
+/// `format-message' for details.  To display STRING without special
+/// treatment, use (message "%s" STRING).
+///
+/// If the first argument is nil or the empty string, the function clears
+/// any existing message; this lets the minibuffer contents show.  See
+/// also `current-message'.
+///
+/// usage: (message FORMAT-STRING &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn message(args: &mut [LispObject]) -> LispObject {
+    if args[0].is_nil()
+        || args[0]
+            .as_string()
+            .map_or(false, |mut s| unsafe { STRING_BYTES(s.as_mut()) == 0 })
+    {
+        unsafe { message1(ptr::null_mut()) };
+        args[0]
+    } else {
+        let val = format_message(args);
+        unsafe { message3(val) };
+        val
+    }
+}
+
 /// Display a message, in a dialog box if possible.
 /// If a dialog box is not available, use the echo area.
 /// The first argument is a format control string, and the rest are data
@@ -906,22 +925,46 @@ pub fn insert_buffer_substring(
 /// message; let the minibuffer contents show.
 ///
 /// usage: (message-box FORMAT-STRING &rest ARGS)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn message_box(args: &mut [LispObject]) -> LispObject {
     unsafe {
         if args[0].is_nil() {
             message1("".as_ptr() as *const ::libc::c_char);
             Qnil
         } else {
-            let val = Fformat_message(args.len() as isize, args.as_mut_ptr() as *mut LispObject);
-            let pane = list!(Fcons(
+            let val = format_message(args);
+            let pane = list!(LispObject::cons(
                 build_string("OK".as_ptr() as *const ::libc::c_char),
                 Qt
             ));
-            let menu = Fcons(val, pane);
+            let menu = LispObject::cons(val, pane);
             Fx_popup_dialog(Qt, menu, Qt);
             val
         }
+    }
+}
+
+/// Display a message in a dialog box or in the echo area.
+/// If this command was invoked with the mouse, use a dialog box if
+/// `use-dialog-box' is non-nil.
+/// Otherwise, use the echo area.
+/// The first argument is a format control string, and the rest are data
+/// to be formatted under control of the string.  See `format-message' for
+/// details.
+///
+/// If the first argument is nil or the empty string, clear any existing
+/// message; let the minibuffer contents show.
+///
+/// usage: (message-or-box FORMAT-STRING &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn message_or_box(args: &mut [LispObject]) -> LispObject {
+    if unsafe {
+        (globals.last_nonmenu_event.is_nil() || globals.last_nonmenu_event.is_cons())
+            && globals.use_dialog_box
+    } {
+        message_box(args)
+    } else {
+        message(args)
     }
 }
 
@@ -929,6 +972,105 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
 #[lisp_fn(name = "current-message", c_name = "current_message")]
 pub fn lisp_current_message() -> LispObject {
     unsafe { current_message() }
+}
+
+/// Format a string out of a format-string and arguments.
+/// The first argument is a format control string.
+/// The other arguments are substituted into it to make the result, a string.
+///
+/// The format control string may contain %-sequences meaning to substitute
+/// the next available argument, or the argument explicitly specified:
+///
+/// %s means print a string argument.  Actually, prints any object, with `princ'.
+/// %d means print as signed number in decimal.
+/// %o means print as unsigned number in octal, %x as unsigned number in hex.
+/// %X is like %x, but uses upper case.
+/// %e means print a number in exponential notation.
+/// %f means print a number in decimal-point notation.
+/// %g means print a number in exponential notation if the exponent would be
+///    less than -4 or greater than or equal to the precision (default: 6);
+///    otherwise it prints in decimal-point notation.
+/// %c means print a number as a single character.
+/// %S means print any object as an s-expression (using `prin1').
+///
+/// The argument used for %d, %o, %x, %e, %f, %g or %c must be a number.
+/// Use %% to put a single % into the output.
+///
+/// A %-sequence other than %% may contain optional field number, flag,
+/// width, and precision specifiers, as follows:
+///
+///   %<field><flags><width><precision>character
+///
+/// where field is [0-9]+ followed by a literal dollar "$", flags is
+/// [+ #-0]+, width is [0-9]+, and precision is a literal period "."
+/// followed by [0-9]+.
+///
+/// If a %-sequence is numbered with a field with positive value N, the
+/// Nth argument is substituted instead of the next one.  A format can
+/// contain either numbered or unnumbered %-sequences but not both, except
+/// that %% can be mixed with numbered %-sequences.
+///
+/// The + flag character inserts a + before any positive number, while a
+/// space inserts a space before any positive number; these flags only
+/// affect %d, %e, %f, and %g sequences, and the + flag takes precedence.
+/// The - and 0 flags affect the width specifier, as described below.
+///
+/// The # flag means to use an alternate display form for %o, %x, %X, %e,
+/// %f, and %g sequences: for %o, it ensures that the result begins with
+/// \"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
+/// for %e and %f, it causes a decimal point to be included even if the
+/// precision is zero; for %g, it causes a decimal point to be
+/// included even if the precision is zero, and also forces trailing
+/// zeros after the decimal point to be left in place.
+///
+/// The width specifier supplies a lower limit for the length of the
+/// printed representation.  The padding, if any, normally goes on the
+/// left, but it goes on the right if the - flag is present.  The padding
+/// character is normally a space, but it is 0 if the 0 flag is present.
+/// The 0 flag is ignored if the - flag is present, or the format sequence
+/// is something other than %d, %e, %f, and %g.
+///
+/// For %e and %f sequences, the number after the "." in the precision
+/// specifier says how many decimal places to show; if zero, the decimal
+/// point itself is omitted.  For %g, the precision specifies how many
+/// significant digits to print; zero or omitted are treated as 1.
+/// For %s and %S, the precision specifier truncates the string to the
+/// given width.
+///
+/// Text properties, if any, are copied from the format-string to the
+/// produced text.
+///
+/// usage: (format STRING &rest OBJECTS)
+#[lisp_fn(min = "1")]
+pub fn format(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        styled_format(
+            args.len() as isize,
+            args.as_mut_ptr() as *mut LispObject,
+            false,
+        )
+    }
+}
+
+/// Format a string out of a format-string and arguments.
+/// The first argument is a format control string.
+/// The other arguments are substituted into it to make the result, a string.
+///
+/// This acts like `format', except it also replaces each grave accent (\\=`)
+/// by a left quote, and each apostrophe (\\=') by a right quote.  The left
+/// and right quote replacement characters are specified by
+/// `text-quoting-style'.
+///
+/// usage: (format-message STRING &rest OBJECTS)
+#[lisp_fn(min = "1")]
+pub fn format_message(args: &mut [LispObject]) -> LispObject {
+    unsafe {
+        styled_format(
+            args.len() as isize,
+            args.as_mut_ptr() as *mut LispObject,
+            true,
+        )
+    }
 }
 
 /// Return the contents of the current buffer as a string.
@@ -945,6 +1087,33 @@ pub fn buffer_string() -> LispObject {
     let zv_byte = cur_buf.zv_byte;
 
     unsafe { make_buffer_string_both(begv, begv_byte, zv, zv_byte, true) }
+}
+
+/// Return the contents of part of the current buffer as a string.
+/// The two arguments START and END are character positions;
+/// they can be in either order.
+/// The string returned is multibyte if the buffer is multibyte.
+///
+/// This function copies the text properties of that part of the buffer
+/// into the result string; if you don't want the text properties,
+/// use `buffer-substring-no-properties' instead.
+#[lisp_fn]
+pub fn buffer_substring(mut beg: LispObject, mut end: LispObject) -> LispObject {
+    unsafe { validate_region(&mut beg, &mut end) };
+    let b = beg.as_fixnum_or_error();
+    let e = end.as_fixnum_or_error();
+    unsafe { make_buffer_string(b as isize, e as isize, true) }
+}
+
+/// Return the characters of part of the buffer, without the text properties.
+/// The two arguments START and END are character positions;
+/// they can be in either order.
+#[lisp_fn]
+pub fn buffer_substring_no_properties(mut beg: LispObject, mut end: LispObject) -> LispObject {
+    unsafe { validate_region(&mut beg, &mut end) };
+    let b = beg.as_fixnum_or_error();
+    let e = end.as_fixnum_or_error();
+    unsafe { make_buffer_string(b as isize, e as isize, false) }
 }
 
 // Save current buffer state for `save-excursion' special form.
@@ -988,7 +1157,7 @@ pub fn save_excursion(args: LispObject) -> LispObject {
 
     unsafe { record_unwind_protect(Some(save_excursion_restore), save_excursion_save()) };
 
-    unsafe { unbind_to(count, progn(args)) }
+    unbind_to(count, progn(args))
 }
 
 /// Record which buffer is current; execute BODY; make that buffer current.
@@ -1000,7 +1169,7 @@ pub fn save_current_buffer(args: LispObject) -> LispObject {
 
     unsafe { record_unwind_current_buffer() };
 
-    unsafe { unbind_to(count, progn(args)) }
+    unbind_to(count, progn(args))
 }
 
 /// Execute BODY, saving and restoring current buffer's restrictions.
@@ -1025,12 +1194,11 @@ pub fn save_restriction(body: LispObject) -> LispObject {
 
     unsafe { record_unwind_protect(Some(save_restriction_restore), save_restriction_save()) };
 
-    unsafe { unbind_to(count, progn(body)) }
+    unbind_to(count, progn(body))
 }
 
-// Find the field surrounding POS in *BEG and *END.  If POS is nil,
-// the value of point is used instead.  If BEG or END is null,
-// means don't store the beginning or end of the field.
+// Find the field surrounding POS in BEG and END.  If POS is nil,
+// the value of point is used instead.
 //
 // BEG_LIMIT and END_LIMIT serve to limit the ranged of the returned
 // results; they do not effect boundary behavior.
@@ -1044,39 +1212,15 @@ pub fn save_restriction(body: LispObject) -> LispObject {
 // value `boundary', and POS lies within it, then the two separated
 // fields are considered to be adjacent, and POS between them, when
 // finding the beginning and ending of the "merged" field.
-//
-// Either BEG or END may be 0, in which case the corresponding value
-// is not stored.
 
-#[no_mangle]
-pub extern "C" fn find_field(
-    pos: LispObject,
-    merge_at_boundary: LispObject,
-    beg_limit: LispObject,
-    beg: *mut ptrdiff_t,
-    end_limit: LispObject,
-    end: *mut ptrdiff_t,
-) {
-    rust_find_field(
-        pos.into(),
-        merge_at_boundary.into(),
-        beg_limit,
-        beg,
-        end_limit,
-        end,
-    );
-}
-
-pub fn rust_find_field(
+pub fn find_field(
     pos: Option<LispNumber>,
     merge_at_boundary: bool,
-    beg_limit: LispObject,
-    beg: *mut ptrdiff_t,
-    end_limit: LispObject,
-    end: *mut ptrdiff_t,
-) {
+    beg_limit: Option<EmacsInt>,
+    end_limit: Option<EmacsInt>,
+) -> (ptrdiff_t, ptrdiff_t) {
     let current_buffer = ThreadState::current_buffer();
-    let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as isize);
+    let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as ptrdiff_t);
 
     // Fields right before and after the point.
     let after_field =
@@ -1140,43 +1284,70 @@ pub fn rust_find_field(
     // three fields and consider the beginning as being the beginning of
     // the `x' field, and the end as being the end of the `y' field.
 
-    if !beg.is_null() {
-        unsafe {
-            if at_field_start {
-                // POS is at the edge of a field, and we should consider it as
-                // the beginning of the following field.
-                *beg = pos;
-            } else {
-                let mut p = pos.into();
-                // Find the previous field boundary.
-                if merge_at_boundary && before_field.eq(Qboundary) {
-                    // Skip a `boundary' field.
-                    p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
-                }
-                p = Fprevious_single_char_property_change(p, Qfield, Qnil, beg_limit);
-                *beg = p.as_fixnum().unwrap_or(current_buffer.begv as EmacsInt) as isize;
+    unsafe {
+        let beg = if at_field_start {
+            // POS is at the edge of a field, and we should consider it as
+            // the beginning of the following field.
+            pos
+        } else {
+            let mut p = pos.into();
+            let limit = beg_limit.into();
+            // Find the previous field boundary.
+            if merge_at_boundary && before_field.eq(Qboundary) {
+                // Skip a `boundary' field.
+                p = Fprevious_single_char_property_change(p, Qfield, Qnil, limit);
             }
-        }
-    }
+            p = Fprevious_single_char_property_change(p, Qfield, Qnil, limit);
+            p.as_fixnum().unwrap_or(current_buffer.begv as EmacsInt) as isize
+        };
 
-    if !end.is_null() {
-        unsafe {
-            if at_field_end {
-                // POS is at the edge of a field, and we should consider it as
-                // the end of the previous field.
-                *end = pos;
-            } else {
-                let mut p = pos.into();
-                // Find the next field boundary.
-                if merge_at_boundary && after_field.eq(Qboundary) {
-                    // Skip a `boundary' field.
-                    p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
-                }
-                p = Fnext_single_char_property_change(p, Qfield, Qnil, end_limit);
-                *end = p.as_fixnum().unwrap_or(current_buffer.zv as EmacsInt) as isize;
+        let end = if at_field_end {
+            // POS is at the edge of a field, and we should consider it as
+            // the end of the previous field.
+            pos
+        } else {
+            let mut p = pos.into();
+            let limit = end_limit.into();
+            // Find the next field boundary.
+            if merge_at_boundary && after_field.eq(Qboundary) {
+                // Skip a `boundary' field.
+                p = Fnext_single_char_property_change(p, Qfield, Qnil, limit);
             }
-        }
+            p = Fnext_single_char_property_change(p, Qfield, Qnil, limit);
+            p.as_fixnum().unwrap_or(current_buffer.zv as EmacsInt) as isize
+        };
+
+        (beg, end)
     }
+}
+
+/// Delete the field surrounding POS.
+/// A field is a region of text with the same `field' property.
+/// If POS is nil, the value of point is used for POS.
+#[lisp_fn(min = "0")]
+pub fn delete_field(pos: Option<LispNumber>) {
+    let (beg, end) = find_field(pos, false, None, None);
+    if beg != end {
+        unsafe { del_range(beg, end) };
+    }
+}
+
+/// Return the contents of the field surrounding POS as a string.
+/// A field is a region of text with the same `field' property.
+/// If POS is nil, the value of point is used for POS.
+#[lisp_fn(min = "0")]
+pub fn field_string(pos: Option<LispNumber>) -> LispObject {
+    let (beg, end) = find_field(pos, false, None, None);
+    unsafe { make_buffer_string(beg, end, true) }
+}
+
+/// Return the contents of the field around POS, without text properties.
+/// A field is a region of text with the same `field' property.
+/// If POS is nil, the value of point is used for POS.
+#[lisp_fn(min = "0")]
+pub fn field_string_no_properties(pos: Option<LispNumber>) -> LispObject {
+    let (beg, end) = find_field(pos, false, None, None);
+    unsafe { make_buffer_string(beg, end, false) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

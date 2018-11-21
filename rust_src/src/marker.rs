@@ -44,7 +44,7 @@ impl LispMarkerRef {
         }
     }
 
-    pub fn set_charpos(&mut self, charpos: ptrdiff_t) -> () {
+    pub fn set_charpos(&mut self, charpos: ptrdiff_t) {
         self.charpos = charpos;
     }
 
@@ -62,7 +62,7 @@ impl LispMarkerRef {
         }
     }
 
-    pub fn set_bytepos(&mut self, bytepos: ptrdiff_t) -> () {
+    pub fn set_bytepos(&mut self, bytepos: ptrdiff_t) {
         self.bytepos = bytepos;
     }
 
@@ -70,7 +70,7 @@ impl LispMarkerRef {
         unsafe { self.buffer.as_ref().map(|b| mem::transmute(b)) }
     }
 
-    pub fn set_buffer(mut self, b: *mut Lisp_Buffer) -> () {
+    pub fn set_buffer(mut self, b: *mut Lisp_Buffer) {
         self.buffer = b;
     }
 
@@ -84,7 +84,7 @@ impl LispMarkerRef {
         unsafe { self.next.as_ref().map(|n| mem::transmute(n)) }
     }
 
-    pub fn set_next(mut self, m: *mut Lisp_Marker) -> () {
+    pub fn set_next(mut self, m: *mut Lisp_Marker) {
         self.next = m;
     }
 }
@@ -355,7 +355,7 @@ pub fn attach_marker(
 /// collection, so we must be careful to ignore and preserve
 /// mark bits, including those in chain fields of markers.
 #[no_mangle]
-pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) -> () {
+pub extern "C" fn unchain_marker(marker: *mut Lisp_Marker) {
     unsafe {
         let marker_ref = LispMarkerRef::from_ptr(marker as *mut c_void)
             .unwrap_or_else(|| panic!("Invalid marker reference."));
@@ -838,7 +838,7 @@ pub unsafe extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: is
 }
 
 #[no_mangle]
-pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) -> () {
+pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) {
     let mut buf_ref = LispBufferRef::from_ptr(b as *mut c_void)
         .unwrap_or_else(|| panic!("Invalid buffer reference."));
     buf_ref.is_cached = false;
@@ -846,7 +846,7 @@ pub extern "C" fn clear_charpos_cache(b: *mut Lisp_Buffer) -> () {
 
 // Debugging
 
-fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) -> () {
+fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
     if !b.multibyte_characters_enabled() {
         return;
     }

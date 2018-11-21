@@ -3,18 +3,16 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    eval::un_autoload,
+    eval::{un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, member, memq, put, LispCons},
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{
-        compare_string_intervals, concat as lisp_concat, globals, record_unwind_protect, unbind_to,
-    },
+    remacs_sys::{compare_string_intervals, concat as lisp_concat, globals, record_unwind_protect},
     remacs_sys::{equal_kind, Lisp_Type},
-    remacs_sys::{Fcons, Fload, Fmapc},
+    remacs_sys::{Fload, Fmapc},
     remacs_sys::{
         Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
         Qwrong_number_of_arguments,
@@ -50,23 +48,23 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         if Vautoload_queue.is_not_nil() {
-            Vautoload_queue = Fcons(
-                Fcons(LispObject::from(0), globals.Vfeatures),
+            Vautoload_queue = LispObject::cons(
+                LispObject::cons(LispObject::from(0), globals.Vfeatures),
                 Vautoload_queue,
             );
         }
     }
     if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = Fcons(feature.as_lisp_obj(), globals.Vfeatures);
+            globals.Vfeatures = LispObject::cons(feature.as_lisp_obj(), globals.Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
-        put(feature.as_lisp_obj(), Qsubfeatures, subfeature);
+        put(feature, Qsubfeatures, subfeature);
     }
     unsafe {
-        globals.Vcurrent_load_list = Fcons(
-            Fcons(Qprovide, feature.as_lisp_obj()),
+        globals.Vcurrent_load_list = LispObject::cons(
+            LispObject::cons(Qprovide, feature.as_lisp_obj()),
             globals.Vcurrent_load_list,
         );
     }
@@ -180,7 +178,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     unsafe {
         // Update the list for any nested `require's that occur.
         record_unwind_protect(Some(require_unwind), require_nesting_list);
-        require_nesting_list = Fcons(feature, require_nesting_list);
+        require_nesting_list = LispObject::cons(feature, require_nesting_list);
 
         // Value saved here is to be restored into Vautoload_queue
         record_unwind_protect(Some(un_autoload), Vautoload_queue);
@@ -229,7 +227,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         Vautoload_queue = Qt;
     }
 
-    unsafe { unbind_to(count, feature) }
+    unbind_to(count, feature)
 }
 def_lisp_sym!(Qrequire, "require");
 

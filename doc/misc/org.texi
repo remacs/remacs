@@ -4,7 +4,7 @@
 @settitle The Org Manual
 @include docstyle.texi
 
-@set VERSION 9.1.2
+@set VERSION 9.1.4
 @set DATE 2017-09-17
 
 @c Version and Contact Info
@@ -1299,7 +1299,7 @@ level, all sibling headings.  With a double prefix argument, also show the
 entire subtree of the parent.
 @cindex show branches, command
 @orgcmd{C-c C-k,outline-show-branches}
-Expose all the headings of the subtree, CONTENT view for just one subtree.
+Expose all the headings of the subtree, CONTENTS view for just one subtree.
 @cindex show children, command
 @orgcmd{C-c @key{TAB},outline-show-children}
 Expose all direct children of the subtree.  With a numeric prefix argument N,
@@ -1461,10 +1461,10 @@ Demote current heading by one level.
 Promote the current subtree by one level.
 @orgcmd{M-S-@key{right},org-demote-subtree}
 Demote the current subtree by one level.
-@orgcmd{M-S-@key{up},org-move-subtree-up}
+@orgcmd{M-@key{up},org-move-subtree-up}
 Move subtree up (swap with previous subtree of same
 level).
-@orgcmd{M-S-@key{down},org-move-subtree-down}
+@orgcmd{M-@key{down},org-move-subtree-down}
 Move subtree down (swap with next subtree of same level).
 @orgcmd{M-h,org-mark-element}
 Mark the element at point.  Hitting repeatedly will mark subsequent elements
@@ -5818,8 +5818,7 @@ The following commands insert or update the dynamic block:
 Insert a dynamic block capturing a column view.  You will be prompted
 for the scope or ID of the view.
 @orgcmdkkc{C-c C-c,C-c C-x C-u,org-dblock-update}
-Update dynamic block at point.  The cursor needs to be in the
-@code{#+BEGIN} line of the dynamic block.
+Update dynamic block at point.
 @orgcmd{C-u C-c C-x C-u,org-update-all-dblocks}
 Update all dynamic blocks (@pxref{Dynamic blocks}).  This is useful if
 you have several clock table blocks, column-capturing blocks or other dynamic
@@ -6604,8 +6603,7 @@ argument, jump to the first clock report in the current document and
 update it.  The clock table always includes also trees with
 @code{:ARCHIVE:} tag.
 @orgcmdkkc{C-c C-c,C-c C-x C-u,org-dblock-update}
-Update dynamic block at point.  The cursor needs to be in the
-@code{#+BEGIN} line of the dynamic block.
+Update dynamic block at point.
 @orgkey{C-u C-c C-x C-u}
 Update all dynamic blocks (@pxref{Dynamic blocks}).  This is useful if
 you have several clock table blocks in a buffer.
@@ -7352,6 +7350,7 @@ gnus                             |  %:group, @r{for messages also all email fiel
 eww, w3, w3m                     |  %:url
 info                             |  %:file %:node
 calendar                         |  %:date
+org-protocol                     |  %:link %:description %:annotation
 @end smallexample
 
 @noindent
@@ -7593,22 +7592,15 @@ javascript:location.href='org-protocol://store-link?url='+
 @cindex capture protocol
 @cindex protocol, capture
 
-@cindex capture, %:url placeholder
-@cindex %:url template expansion in capture
-@cindex capture, %:title placeholder
-@cindex %:title template expansion in capture
 Activating @code{capture} handler pops up a @samp{Capture} buffer and fills
-the capture template associated to the @samp{X} key with them.  The template
-refers to the data through @code{%:url} and @code{%:title} placeholders.
-Moreover, any selected text in the browser is appended to the body of the
-entry.
+the capture template associated to the @samp{X} key with them.
 
 @example
 emacsclient org-protocol://capture?template=X?url=URL?title=TITLE?body=BODY
 @end example
 
-To use this feature, add a bookmark with an arbitrary name, e.g.
-@samp{Org: capture} and enter this as @samp{Location}:
+To use this feature, add a bookmark with an arbitrary name, e.g.  @samp{Org:
+capture} and enter this as @samp{Location}:
 
 @example
 javascript:location.href='org-protocol://template=x'+
@@ -7621,6 +7613,21 @@ javascript:location.href='org-protocol://template=x'+
 The result depends on the capture template used, which is set in the bookmark
 itself, as in the example above, or in
 @code{org-protocol-default-template-key}.
+
+@cindex capture, %:link placeholder
+@cindex %:link template expansion in capture
+@cindex capture, %:description placeholder
+@cindex %:description template expansion in capture
+@cindex capture, %:annotation placeholder
+@cindex %:annotation template expansion in capture
+The following template placeholders are available:
+
+@example
+%:link          The URL
+%:description   The webpage title
+%:annotation    Equivalent to [[%:link][%:description]]
+%i              The selected text
+@end example
 
 @node @code{open-source} protocol
 @subsection @code{open-source} protocol
@@ -10782,8 +10789,9 @@ Toggle inclusion of inlinetasks (@code{org-export-with-inlinetasks}).
 @cindex property, UNNUMBERED
 Toggle section-numbers (@code{org-export-with-section-numbers}).  When set to
 number @samp{n}, Org numbers only those headlines at level @samp{n} or above.
-Set @code{UNNUMBERED} property to non-@code{nil} to disable numbering of
-heading and subheadings entirely.
+Setting @code{UNNUMBERED} property to non-@code{nil} disables numbering of
+a heading.  Since subheadings inherit from this property, it affects their
+numbering, too.
 
 @item p:
 @vindex org-export-with-planning
