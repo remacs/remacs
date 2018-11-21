@@ -20,8 +20,9 @@ use crate::{
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-        buffer_window_count, del_range, delete_all_overlays, drop_overlay, globals,
-        last_per_buffer_idx, set_buffer_internal_1, specbind, unchain_both, update_mode_lines,
+        buffer_window_count, del_range, delete_all_overlays, globals, last_per_buffer_idx,
+        modify_overlay, set_buffer_internal_1, specbind, unchain_both, unchain_marker,
+        update_mode_lines,
     },
     remacs_sys::{
         pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
@@ -978,11 +979,26 @@ pub extern "C" fn build_overlay(
     }
 }
 
+// Mark OV as no longer associated with BUF.
+#[no_mangle]
+pub extern "C" fn drop_overlay(buf: LispBufferRef, ov: LispOverlayRef) {
+    let start = ov.start.as_marker_or_error();
+    let end = ov.end.as_marker_or_error();
+
+    assert!(buf == marker_buffer(start).unwrap());
+    modify_overlay(
+        buf,
+        marker_position(start) as EmacsInt,
+        marker_position(end) as EmacsInt,
+    );
+    unchain_marker(start);
+    unchain_marker(end);
+}
+
 /// Delete the overlay OVERLAY from its buffer.
 #[lisp_fn]
-pub fn delete_overlay(overlay: LispObject) {
-    let mut ov_ref = overlay.as_overlay_or_error();
-    let mut buf_ref = match marker_buffer(ov_ref.start.as_marker_or_error()) {
+pub fn delete_overlay(overlay: LispOverlayRef) {
+    let mut buf_ref = match marker_buffer(overlay.start.as_marker_or_error()) {
         Some(b) => b,
         None => return,
     };
@@ -991,14 +1007,14 @@ pub fn delete_overlay(overlay: LispObject) {
     unsafe {
         specbind(Qinhibit_quit, Qt);
         unchain_both(buf_ref.as_mut(), overlay);
-        drop_overlay(buf_ref.as_mut(), ov_ref.as_mut());
+        drop_overlay(buf_ref, overlay);
 
         // When deleting an overlay with before or after strings, turn off
         // display optimizations for the affected buffer, on the basis that
         // these strings may contain newlines.  This is easier to do than to
         // check for that situation during redisplay.
-        if windows_or_buffers_changed != 0 && Foverlay_get(overlay, Qbefore_string).is_not_nil()
-            || Foverlay_get(overlay, Qafter_string).is_not_nil()
+        if windows_or_buffers_changed != 0 && overlay_get(overlay, Qbefore_string).is_not_nil()
+            || overlay_get(overlay, Qafter_string).is_not_nil()
         {
             buf_ref.set_prevent_redisplay_optimizations_p(true);
         }

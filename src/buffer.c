@@ -115,7 +115,7 @@ static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
 static void swap_out_buffer_local_variables (struct buffer *b);
 static void reset_buffer_local_variables (struct buffer *, bool);
 
-void drop_overlay (struct buffer *, struct Lisp_Overlay *);
+extern void drop_overlay (struct buffer *, struct Lisp_Overlay *);
 void unchain_both (struct buffer *, Lisp_Object);
 
 /* Alist of all buffer names vs the buffers.  This used to be
@@ -701,19 +701,6 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 
   return buf;
-}
-
-/* Mark OV as no longer associated with B.  */
-
-void
-drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
-{
-  eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
-  modify_overlay (b, marker_position (ov->start),
-		  marker_position (ov->end));
-  unchain_marker (XMARKER (ov->start));
-  unchain_marker (XMARKER (ov->end));
-
 }
 
 /* Delete all overlays of B and reset its overlay lists.  */
@@ -3898,14 +3885,6 @@ for positions far away from POS).  */)
   return Qnil;
 }
 
-DEFUN ("overlay-get", Foverlay_get, Soverlay_get, 2, 2, 0,
-       doc: /* Get the property of overlay OVERLAY with property name PROP.  */)
-  (Lisp_Object overlay, Lisp_Object prop)
-{
-  CHECK_OVERLAY (overlay);
-  return lookup_char_property (XOVERLAY (overlay)->plist, prop, 0);
-}
-
 DEFUN ("overlay-put", Foverlay_put, Soverlay_put, 3, 3, 0,
        doc: /* Set one property of overlay OVERLAY: give property PROP value VALUE.
 VALUE will be returned.*/)
