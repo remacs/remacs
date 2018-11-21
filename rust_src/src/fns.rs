@@ -273,19 +273,11 @@ pub extern "C" fn internal_equal_string(
     let s1 = o1.as_string_or_error();
     let s2 = o2.as_string_or_error();
 
-    if s1.len_chars() != s2.len_chars() {
-        false
-    } else if s1.len_bytes() != s2.len_bytes() {
-        false
-    } else if s1.as_slice() != s2.as_slice() {
-        false
-    } else if kind == equal_kind::EQUAL_INCLUDING_PROPERTIES
-        && !unsafe { compare_string_intervals(o1, o2) }
-    {
-        false
-    } else {
-        true
-    }
+    s1.len_chars() == s2.len_chars()
+        && s1.len_bytes() == s2.len_bytes()
+        && s1.as_slice() == s2.as_slice()
+        && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
+            || unsafe { compare_string_intervals(o1, o2) })
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));
