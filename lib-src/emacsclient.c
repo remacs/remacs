@@ -772,10 +772,10 @@ sock_err_message (const char *function_name)
 }
 
 
-/* Let's send the data to Emacs when either
-   - the data ends in "\n", or
+/* Send to S the data in *DATA when either
+   - the data's last byte is '\n', or
    - the buffer is full (but this shouldn't happen)
-   Otherwise, we just accumulate it.  */
+   Otherwise, just accumulate the data.  */
 static void
 send_to_emacs (HSOCKET s, const char *data)
 {
@@ -823,33 +823,21 @@ static void
 quote_argument (HSOCKET s, const char *str)
 {
   char *copy = xmalloc (strlen (str) * 2 + 1);
-  const char *p;
-  char *q;
-
-  p = str;
-  q = copy;
-  while (*p)
+  char *q = copy;
+  if (*str == '-')
+    *q++ = '&', *q++ = *str++;
+  for (; *str; str++)
     {
-      if (*p == ' ')
-	{
-	  *q++ = '&';
-	  *q++ = '_';
-	  p++;
-	}
-      else if (*p == '\n')
-	{
-	  *q++ = '&';
-	  *q++ = 'n';
-	  p++;
-	}
-      else
-	{
-	  if (*p == '&' || (*p == '-' && p == str))
-	    *q++ = '&';
-	  *q++ = *p++;
-	}
+      char c = *str;
+      if (c == ' ')
+	*q++ = '&', c = '_';
+      else if (c == '\n')
+	*q++ = '&', c = 'n';
+      else if (c == '&')
+	*q++ = '&';
+      *q++ = c;
     }
-  *q++ = 0;
+  *q = 0;
 
   send_to_emacs (s, copy);
 
@@ -857,36 +845,31 @@ quote_argument (HSOCKET s, const char *str)
 }
 
 
-/* The inverse of quote_argument.  Removes quoting in string STR by
-   modifying the string in place.   Returns STR.  */
+/* The inverse of quote_argument.  Remove quoting in string STR by
+   modifying the addressed string in place.  Return STR.  */
 
 static char *
 unquote_argument (char *str)
 {
-  char *p, *q;
+  char const *p = str;
+  char *q = str;
+  char c;
 
-  if (! str)
-    return str;
-
-  p = str;
-  q = str;
-  while (*p)
+  do
     {
-      if (*p == '&')
-        {
-          p++;
-          if (*p == '&')
-            *p = '&';
-          else if (*p == '_')
-            *p = ' ';
-          else if (*p == 'n')
-            *p = '\n';
-          else if (*p == '-')
-            *p = '-';
-        }
-      *q++ = *p++;
+      c = *p++;
+      if (c == '&')
+	{
+	  c = *p++;
+	  if (c == '_')
+	    c = ' ';
+	  else if (c == 'n')
+	    c = '\n';
+	}
+      *q++ = c;
     }
-  *q = 0;
+  while (c);
+
   return str;
 }
 
