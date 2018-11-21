@@ -1194,125 +1194,123 @@ set_local_socket (const char *local_socket_name)
 
   server.sun_family = AF_UNIX;
 
-  {
-    int sock_status;
-    int saved_errno;
-    const char *server_name = local_socket_name;
-    const char *tmpdir = NULL;
-    char *tmpdir_storage = NULL;
-    char *socket_name_storage = NULL;
+  int sock_status;
+  int saved_errno;
+  char const *server_name = local_socket_name;
+  char const *tmpdir = NULL;
+  char *tmpdir_storage = NULL;
+  char *socket_name_storage = NULL;
 
-    if (! (strchr (local_socket_name, '/')
-	   || (ISSLASH ('\\') && strchr (local_socket_name, '\\'))))
-      {
-	/* socket_name is a file name component.  */
-	long uid = geteuid ();
-	tmpdir = egetenv ("TMPDIR");
-	if (!tmpdir)
-          {
+  if (! (strchr (local_socket_name, '/')
+	 || (ISSLASH ('\\') && strchr (local_socket_name, '\\'))))
+    {
+      /* socket_name is a file name component.  */
+      long uid = geteuid ();
+      tmpdir = egetenv ("TMPDIR");
+      if (!tmpdir)
+	{
 #  ifdef DARWIN_OS
 #   ifndef _CS_DARWIN_USER_TEMP_DIR
 #    define _CS_DARWIN_USER_TEMP_DIR 65537
 #   endif
-            size_t n = confstr (_CS_DARWIN_USER_TEMP_DIR, NULL, (size_t) 0);
-            if (n > 0)
-              {
-		tmpdir = tmpdir_storage = xmalloc (n);
-		confstr (_CS_DARWIN_USER_TEMP_DIR, tmpdir_storage, n);
-              }
-            else
+	  size_t n = confstr (_CS_DARWIN_USER_TEMP_DIR, NULL, (size_t) 0);
+	  if (n > 0)
+	    {
+	      tmpdir = tmpdir_storage = xmalloc (n);
+	      confstr (_CS_DARWIN_USER_TEMP_DIR, tmpdir_storage, n);
+	    }
+	  else
 #  endif
-              tmpdir = "/tmp";
-          }
-	socket_name_storage =
-	  xmalloc (strlen (tmpdir) + strlen (server_name) + EXTRA_SPACE);
-	char *z = stpcpy (socket_name_storage, tmpdir);
-	z += sprintf (z, "/emacs%ld/", uid);
-	strcpy (z, server_name);
-	local_socket_name = socket_name_storage;
-      }
+	    tmpdir = "/tmp";
+	}
+      socket_name_storage =
+	xmalloc (strlen (tmpdir) + strlen (server_name) + EXTRA_SPACE);
+      char *z = stpcpy (socket_name_storage, tmpdir);
+      z += sprintf (z, "/emacs%ld/", uid);
+      strcpy (z, server_name);
+      local_socket_name = socket_name_storage;
+    }
 
-    if (strlen (local_socket_name) < sizeof (server.sun_path))
-      strcpy (server.sun_path, local_socket_name);
-    else
-      {
-        message (true, "%s: socket-name %s too long\n",
-                 progname, local_socket_name);
-        fail ();
-      }
+  if (strlen (local_socket_name) < sizeof (server.sun_path))
+    strcpy (server.sun_path, local_socket_name);
+  else
+    {
+      message (true, "%s: socket-name %s too long\n",
+	       progname, local_socket_name);
+      fail ();
+    }
 
-    /* See if the socket exists, and if it's owned by us. */
-    sock_status = socket_status (server.sun_path);
-    saved_errno = errno;
-    if (sock_status && tmpdir)
-      {
-	/* Failing that, see if LOGNAME or USER exist and differ from
-	   our euid.  If so, look for a socket based on the UID
-	   associated with the name.  This is reminiscent of the logic
-	   that init_editfns uses to set the global Vuser_full_name.  */
+  /* See if the socket exists, and if it's owned by us. */
+  sock_status = socket_status (server.sun_path);
+  saved_errno = errno;
+  if (sock_status && tmpdir)
+    {
+      /* Failing that, see if LOGNAME or USER exist and differ from
+	 our euid.  If so, look for a socket based on the UID
+	 associated with the name.  This is reminiscent of the logic
+	 that init_editfns uses to set the global Vuser_full_name.  */
 
-	const char *user_name = egetenv ("LOGNAME");
+      char const *user_name = egetenv ("LOGNAME");
 
-	if (!user_name)
-	  user_name = egetenv ("USER");
+      if (!user_name)
+	user_name = egetenv ("USER");
 
-	if (user_name)
-	  {
-	    struct passwd *pw = getpwnam (user_name);
+      if (user_name)
+	{
+	  struct passwd *pw = getpwnam (user_name);
 
-	    if (pw && (pw->pw_uid != geteuid ()))
-	      {
-		/* We're running under su, apparently. */
-		long uid = pw->pw_uid;
-		char *user_socket_name
-		  = xmalloc (strlen (tmpdir) + strlen (server_name)
-			     + EXTRA_SPACE);
-		char *z = stpcpy (user_socket_name, tmpdir);
-		z += sprintf (z, "/emacs%ld/", uid);
-		strcpy (z, server_name);
+	  if (pw && (pw->pw_uid != geteuid ()))
+	    {
+	      /* We're running under su, apparently. */
+	      long uid = pw->pw_uid;
+	      char *user_socket_name
+		= xmalloc (strlen (tmpdir) + strlen (server_name)
+			   + EXTRA_SPACE);
+	      char *z = stpcpy (user_socket_name, tmpdir);
+	      z += sprintf (z, "/emacs%ld/", uid);
+	      strcpy (z, server_name);
 
-		if (strlen (user_socket_name) < sizeof (server.sun_path))
-		  strcpy (server.sun_path, user_socket_name);
-		else
-		  {
-		    message (true, "%s: socket-name %s too long\n",
-			     progname, user_socket_name);
-		    exit (EXIT_FAILURE);
-		  }
-		free (user_socket_name);
+	      if (strlen (user_socket_name) < sizeof (server.sun_path))
+		strcpy (server.sun_path, user_socket_name);
+	      else
+		{
+		  message (true, "%s: socket-name %s too long\n",
+			   progname, user_socket_name);
+		  exit (EXIT_FAILURE);
+		}
+	      free (user_socket_name);
 
-		sock_status = socket_status (server.sun_path);
-                saved_errno = errno;
-	      }
-	    else
-	      errno = saved_errno;
-	  }
-      }
+	      sock_status = socket_status (server.sun_path);
+	      saved_errno = errno;
+	    }
+	  else
+	    errno = saved_errno;
+	}
+    }
 
-    free (socket_name_storage);
-    free (tmpdir_storage);
+  free (socket_name_storage);
+  free (tmpdir_storage);
 
-    switch (sock_status)
-      {
-      case 1:
-	/* There's a socket, but it isn't owned by us.  */
-	message (true, "%s: Invalid socket owner\n", progname);
-	return INVALID_SOCKET;
+  switch (sock_status)
+    {
+    case 1:
+      /* There's a socket, but it isn't owned by us.  */
+      message (true, "%s: Invalid socket owner\n", progname);
+      return INVALID_SOCKET;
 
-      case 2:
-	/* `stat' failed */
-	if (saved_errno == ENOENT)
-	  message (true,
-		   ("%s: can't find socket; have you started the server?\n"
-		    "%s: To start the server in Emacs,"
-		    " type \"M-x server-start\".\n"),
-		   progname, progname);
-	else
-	  message (true, "%s: can't stat %s: %s\n",
-		   progname, server.sun_path, strerror (saved_errno));
-	return INVALID_SOCKET;
-      }
-  }
+    case 2:
+      /* `stat' failed */
+      if (saved_errno == ENOENT)
+	message (true,
+		 ("%s: can't find socket; have you started the server?\n"
+		  "%s: To start the server in Emacs,"
+		  " type \"M-x server-start\".\n"),
+		 progname, progname);
+      else
+	message (true, "%s: can't stat %s: %s\n",
+		 progname, server.sun_path, strerror (saved_errno));
+      return INVALID_SOCKET;
+    }
 
   if (connect (s, (struct sockaddr *) &server, strlen (server.sun_path) + 2)
       < 0)
