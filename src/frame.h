@@ -1612,10 +1612,6 @@ extern Lisp_Object make_monitor_attribute_list (struct MonitorInfo *monitors,
 #endif /* HAVE_WINDOW_SYSTEM */
 
 extern Lisp_Object
-next_frame (Lisp_Object frame, Lisp_Object minibuf);
-extern Lisp_Object
-prev_frame (Lisp_Object frame, Lisp_Object minibuf);
-extern Lisp_Object
 candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf);
 
 INLINE_HEADER_END
