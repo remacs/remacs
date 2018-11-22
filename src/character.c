@@ -236,23 +236,6 @@ lisp_string_width (Lisp_Object string, ptrdiff_t precision,
   return width;
 }
 
-DEFUN ("string-width", Fstring_width, Sstring_width, 1, 1, 0,
-       doc: /* Return width of STRING when displayed in the current buffer.
-Width is measured by how many columns it occupies on the screen.
-When calculating width of a multibyte character in STRING,
-only the base leading-code is considered; the validity of
-the following bytes is not checked.  Tabs in STRING are always
-taken to occupy `tab-width' columns.
-usage: (string-width STRING)  */)
-  (Lisp_Object str)
-{
-  Lisp_Object val;
-
-  CHECK_STRING (str);
-  XSETFASTINT (val, lisp_string_width (str, -1, NULL, NULL));
-  return val;
-}
-
 /* Return the number of characters in the NBYTES bytes at PTR.
    This works by looking at the contents and checking for multibyte
    sequences while assuming that there's no invalid sequence.
@@ -611,7 +594,6 @@ syms_of_character (void)
   Vchar_unify_table = Qnil;
 
   defsubr (&Schar_width);
-  defsubr (&Sstring_width);
   defsubr (&Sstring);
   defsubr (&Sunibyte_string);
   defsubr (&Schar_resolve_modifiers);
