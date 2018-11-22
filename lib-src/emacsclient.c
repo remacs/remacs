@@ -153,6 +153,7 @@ static char const *frame_parameters;
 
 static _Noreturn void print_help_and_exit (void);
 
+/* Long command-line options.  */
 
 static struct option const longopts[] =
 {
@@ -176,6 +177,15 @@ static struct option const longopts[] =
   { "tramp",	required_argument, NULL, 'T' },
   { 0, 0, 0, 0 }
 };
+
+/* Short options, in the same order as the corresponding long options.
+   There is no '-p' short option.  */
+static char const shortopts[] =
+  "nqueHVtca:F:"
+#ifndef NO_SOCKETS_IN_FILE_SYSTEM
+  "s:"
+#endif
+  "f:d:T:";
 
 
 /* Like malloc but get fatal error if memory is exhausted.  */
@@ -485,15 +495,8 @@ decode_options (int argc, char **argv)
 
   while (true)
     {
-      int opt = getopt_long_only (argc, argv,
-#ifndef NO_SOCKETS_IN_FILE_SYSTEM
-			     "VHnequa:s:f:d:F:tcT:",
-#else
-			     "VHnequa:f:d:F:tcT:",
-#endif
-			     longopts, 0);
-
-      if (opt == EOF)
+      int opt = getopt_long_only (argc, argv, shortopts, longopts, NULL);
+      if (opt < 0)
 	break;
 
       switch (opt)
