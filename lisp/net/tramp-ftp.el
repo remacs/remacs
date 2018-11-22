@@ -183,8 +183,9 @@ pass to the OPERATION."
 ;;;###tramp-autoload
 (defsubst tramp-ftp-file-name-p (filename)
   "Check if it's a filename that should be forwarded to Ange-FTP."
-  (string= (tramp-file-name-method (tramp-dissect-file-name filename))
-	   tramp-ftp-method))
+  (and (tramp-tramp-file-p filename)
+       (string= (tramp-file-name-method (tramp-dissect-file-name filename))
+		tramp-ftp-method)))
 
 ;;;###tramp-autoload
 (add-to-list 'tramp-foreign-file-name-handler-alist

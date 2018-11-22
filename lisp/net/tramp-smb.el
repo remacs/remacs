@@ -321,8 +321,9 @@ This can be used to disable echo etc."
 ;;;###tramp-autoload
 (defsubst tramp-smb-file-name-p (filename)
   "Check if it's a filename for SMB servers."
-  (string= (tramp-file-name-method (tramp-dissect-file-name filename))
-	   tramp-smb-method))
+  (and (tramp-tramp-file-p filename)
+       (string= (tramp-file-name-method (tramp-dissect-file-name filename))
+		tramp-smb-method)))
 
 ;;;###tramp-autoload
 (defun tramp-smb-file-name-handler (operation &rest args)

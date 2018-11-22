@@ -2088,7 +2088,7 @@ This uses \"avahi-browse\" in case D-Bus is not enabled in Avahi."
 ;;; TODO:
 
 ;; * (Customizable) unmount when exiting Emacs.  See tramp-archive.el.
-
+;;
 ;; * Host name completion for existing mount points (afp-server,
 ;;   smb-server, google-drive, nextcloud) or via smb-network or network.
 ;;

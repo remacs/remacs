@@ -3301,31 +3301,34 @@ User is always nil."
 	 (numchase-limit 20)
 	 symlink-target)
      (with-parsed-tramp-file-name result v1
-       (with-tramp-file-property v1 v1-localname "file-truename"
-	 (while (and (setq symlink-target (file-symlink-p result))
-		     (< numchase numchase-limit))
-	   (setq numchase (1+ numchase)
-		 result
-		 (with-parsed-tramp-file-name (expand-file-name result) v2
-		   (tramp-make-tramp-file-name
-		    v2
-		    (funcall
-		     (if (tramp-compat-file-name-quoted-p v2-localname)
-			 'tramp-compat-file-name-quote 'identity)
+       ;; We cache only the localname.
+       (tramp-make-tramp-file-name
+	v1
+	(with-tramp-file-property v1 v1-localname "file-truename"
+	  (while (and (setq symlink-target (file-symlink-p result))
+		      (< numchase numchase-limit))
+	    (setq numchase (1+ numchase)
+		  result
+		  (with-parsed-tramp-file-name (expand-file-name result) v2
+		    (tramp-make-tramp-file-name
+		     v2
+		     (funcall
+		      (if (tramp-compat-file-name-quoted-p v2-localname)
+			  'tramp-compat-file-name-quote 'identity)
 
-		     (if (stringp symlink-target)
-			 (if (file-remote-p symlink-target)
-			     (let (file-name-handler-alist)
-			       (tramp-compat-file-name-quote symlink-target))
-			   (expand-file-name
-			    symlink-target (file-name-directory v2-localname)))
-		       v2-localname))
-		    'nohop)))
-	   (when (>= numchase numchase-limit)
-	     (tramp-error
-	      v1 'file-error
-	      "Maximum number (%d) of symlinks exceeded" numchase-limit)))
-	 (directory-file-name result))))))
+		      (if (stringp symlink-target)
+			  (if (file-remote-p symlink-target)
+			      (let (file-name-handler-alist)
+				(tramp-compat-file-name-quote symlink-target))
+			    (expand-file-name
+			     symlink-target (file-name-directory v2-localname)))
+			v2-localname))
+		     'nohop)))
+	    (when (>= numchase numchase-limit)
+	      (tramp-error
+	       v1 'file-error
+	       "Maximum number (%d) of symlinks exceeded" numchase-limit)))
+	  (file-local-name (directory-file-name result))))))))
 
 (defun tramp-handle-find-backup-file-name (filename)
   "Like `find-backup-file-name' for Tramp files."
