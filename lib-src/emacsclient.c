@@ -959,6 +959,7 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
       exit (EXIT_FAILURE);
     }
 
+  memset (server, 0, sizeof *server);
   server->sin_family = AF_INET;
   server->sin_addr.s_addr = inet_addr (dotted);
   server->sin_port = htons (atoi (port));
@@ -977,16 +978,19 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
 static HSOCKET
 set_tcp_socket (const char *local_server_file)
 {
-  struct sockaddr_in server;
-  struct linger l_arg = {1, 1};
+  union {
+    struct sockaddr_in in;
+    struct sockaddr sa;
+  } server;
+  struct linger l_arg = { .l_onoff = 1, .l_linger = 1 };
   char auth_string[AUTH_KEY_LENGTH + 1];
 
-  if (! get_server_config (local_server_file, &server, auth_string))
+  if (! get_server_config (local_server_file, &server.in, auth_string))
     return INVALID_SOCKET;
 
-  if (server.sin_addr.s_addr != inet_addr ("127.0.0.1") && !quiet)
+  if (server.in.sin_addr.s_addr != inet_addr ("127.0.0.1") && !quiet)
     message (false, "%s: connected to remote socket at %s\n",
-             progname, inet_ntoa (server.sin_addr));
+	     progname, inet_ntoa (server.in.sin_addr));
 
   /* Open up an AF_INET socket.  */
   HSOCKET s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -1004,7 +1008,7 @@ set_tcp_socket (const char *local_server_file)
     }
 
   /* Set up the socket.  */
-  if (connect (s, (struct sockaddr *) &server, sizeof server) < 0)
+  if (connect (s, &server.sa, sizeof server.in) != 0)
     {
 # ifdef WINDOWSNT
       if(!(w32_window_app () && alternate_editor))
@@ -1013,7 +1017,7 @@ set_tcp_socket (const char *local_server_file)
       return INVALID_SOCKET;
     }
 
-  setsockopt (s, SOL_SOCKET, SO_LINGER, (char *) &l_arg, sizeof l_arg);
+  setsockopt (s, SOL_SOCKET, SO_LINGER, &l_arg, sizeof l_arg);
 
   /* Send the authentication.  */
   auth_string[AUTH_KEY_LENGTH] = '\0';
@@ -1183,21 +1187,22 @@ init_signals (void)
   signal (SIGTTOU, handle_sigtstp);
 }
 
+/* Create a local socket and connect it to Emacs.  */
 
 static HSOCKET
 set_local_socket (const char *local_socket_name)
 {
-  struct sockaddr_un server;
+  union {
+    struct sockaddr_un un;
+    struct sockaddr sa;
+  } server = {{ .sun_family = AF_UNIX }};
 
-  /* Open up an AF_UNIX socket in this person's home directory.  */
   HSOCKET s = socket (AF_UNIX, SOCK_STREAM, 0);
   if (s < 0)
     {
       message (true, "%s: socket: %s\n", progname, strerror (errno));
       return INVALID_SOCKET;
     }
-
-  server.sun_family = AF_UNIX;
 
   int sock_status;
   int saved_errno;
@@ -1221,7 +1226,7 @@ set_local_socket (const char *local_socket_name)
 #   ifndef _CS_DARWIN_USER_TEMP_DIR
 #    define _CS_DARWIN_USER_TEMP_DIR 65537
 #   endif
-	  size_t n = confstr (_CS_DARWIN_USER_TEMP_DIR, NULL, (size_t) 0);
+	  size_t n = confstr (_CS_DARWIN_USER_TEMP_DIR, NULL, 0);
 	  if (n > 0)
 	    {
 	      tmpdir = tmpdir_storage = xmalloc (n);
@@ -1238,8 +1243,8 @@ set_local_socket (const char *local_socket_name)
       local_socket_name = socket_name_storage;
     }
 
-  if (strlen (local_socket_name) < sizeof (server.sun_path))
-    strcpy (server.sun_path, local_socket_name);
+  if (strlen (local_socket_name) < sizeof server.un.sun_path)
+    strcpy (server.un.sun_path, local_socket_name);
   else
     {
       message (true, "%s: socket-name %s too long\n",
@@ -1248,7 +1253,7 @@ set_local_socket (const char *local_socket_name)
     }
 
   /* See if the socket exists, and if it's owned by us. */
-  sock_status = socket_status (server.sun_path);
+  sock_status = socket_status (server.un.sun_path);
   saved_errno = errno;
   if (sock_status && tmpdir)
     {
@@ -1276,8 +1281,8 @@ set_local_socket (const char *local_socket_name)
 	      char *z = stpcpy (user_socket_name, tmpdir);
 	      strcpy (z + sprintf (z, subdir_format, uid), server_name);
 
-	      if (strlen (user_socket_name) < sizeof (server.sun_path))
-		strcpy (server.sun_path, user_socket_name);
+	      if (strlen (user_socket_name) < sizeof server.un.sun_path)
+		strcpy (server.un.sun_path, user_socket_name);
 	      else
 		{
 		  message (true, "%s: socket-name %s too long\n",
@@ -1286,7 +1291,7 @@ set_local_socket (const char *local_socket_name)
 		}
 	      free (user_socket_name);
 
-	      sock_status = socket_status (server.sun_path);
+	      sock_status = socket_status (server.un.sun_path);
 	      saved_errno = errno;
 	    }
 	  else
@@ -1314,12 +1319,11 @@ set_local_socket (const char *local_socket_name)
 		 progname, progname);
       else
 	message (true, "%s: can't stat %s: %s\n",
-		 progname, server.sun_path, strerror (saved_errno));
+		 progname, server.un.sun_path, strerror (sock_status));
       return INVALID_SOCKET;
     }
 
-  if (connect (s, (struct sockaddr *) &server, strlen (server.sun_path) + 2)
-      < 0)
+  if (connect (s, &server.sa, sizeof server.un) != 0)
     {
       message (true, "%s: connect: %s\n", progname, strerror (errno));
       return INVALID_SOCKET;
