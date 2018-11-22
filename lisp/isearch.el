@@ -544,6 +544,9 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map    "\C-y" 'isearch-yank-kill)
     (define-key map "\M-s\C-e" 'isearch-yank-line)
 
+    (define-key map "\M-s\M-<" 'isearch-beginning-of-buffer)
+    (define-key map "\M-s\M->" 'isearch-end-of-buffer)
+
     (define-key map (char-to-string help-char) isearch-help-map)
     (define-key map [help] isearch-help-map)
     (define-key map [f1] isearch-help-map)
@@ -1622,8 +1625,12 @@ Use `isearch-exit' to quit without signaling."
 
 (defun isearch-repeat-forward (&optional arg)
   "Repeat incremental search forwards.
-With a prefix argument, repeat the search ARG times.
-A negative argument searches backwards."
+With a numeric argument, repeat the search ARG times.
+A negative argument searches backwards.
+\\<isearch-mode-map>
+This command finds the next relative occurrence of the current
+search string.  To find the absolute occurrence from the beginning
+of the buffer, type \\[isearch-beginning-of-buffer] with a numeric argument."
   (interactive "P")
   (if arg
       (let ((count (prefix-numeric-value arg)))
@@ -1639,8 +1646,12 @@ A negative argument searches backwards."
 
 (defun isearch-repeat-backward (&optional arg)
   "Repeat incremental search backwards.
-With a prefix argument, repeat the search ARG times.
-A negative argument searches forwards."
+With a numeric argument, repeat the search ARG times.
+A negative argument searches forwards.
+\\<isearch-mode-map>
+This command finds the next relative occurrence of the current
+search string.  To find the absolute occurrence from the end
+of the buffer, type \\[isearch-end-of-buffer] with a numeric argument."
   (interactive "P")
   (if arg
       (let ((count (prefix-numeric-value arg)))
@@ -1653,6 +1664,36 @@ A negative argument searches forwards."
                (when isearch-forward (setq count (1+ count)))
                (isearch-repeat 'backward count))))
     (isearch-repeat 'backward)))
+
+(defun isearch-beginning-of-buffer (&optional arg)
+  "Go to the first occurrence of the current search string.
+Move point to the beginning of the buffer and search forwards from the top.
+\\<isearch-mode-map>
+With a numeric argument, go to the ARGth absolute occurrence counting from
+the beginning of the buffer.  To find the next relative occurrence forwards,
+type \\[isearch-repeat-forward] with a numeric argument."
+  (interactive "p")
+  (if (and arg (< arg 0))
+      (isearch-end-of-buffer (abs arg))
+    ;; For the case when the match is at bobp,
+    ;; don't forward char in isearch-repeat
+    (setq isearch-just-started t)
+    (goto-char (point-min))
+    (isearch-repeat 'forward arg)))
+
+(defun isearch-end-of-buffer (&optional arg)
+  "Go to the last occurrence of the current search string.
+Move point to the end of the buffer and search backwards from the bottom.
+\\<isearch-mode-map>
+With a numeric argument, go to the ARGth absolute occurrence counting from
+the end of the buffer.  To find the next relative occurrence backwards,
+type \\[isearch-repeat-backward] with a numeric argument."
+  (interactive "p")
+  (if (and arg (< arg 0))
+      (isearch-beginning-of-buffer (abs arg))
+    (setq isearch-just-started t)
+    (goto-char (point-max))
+    (isearch-repeat 'backward arg)))
 
 
 ;;; Toggles for `isearch-regexp-function' and `search-default-mode'.
