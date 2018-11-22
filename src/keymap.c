@@ -584,7 +584,7 @@ store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
   return def;
 }
 
-static Lisp_Object
+Lisp_Object
 copy_keymap_item (Lisp_Object elt)
 {
   Lisp_Object res, tem;
@@ -645,12 +645,12 @@ copy_keymap_item (Lisp_Object elt)
 }
 
 static void
-copy_keymap_1 (Lisp_Object chartable, Lisp_Object idx, Lisp_Object elt)
+orig_copy_keymap_1 (Lisp_Object chartable, Lisp_Object idx, Lisp_Object elt)
 {
   Fset_char_table_range (chartable, idx, copy_keymap_item (elt));
 }
 
-DEFUN ("copy-keymap", Fcopy_keymap, Scopy_keymap, 1, 1, 0,
+DEFUN ("orig-copy-keymap", Forig_copy_keymap, Sorig_copy_keymap, 1, 1, 0,
        doc: /* Return a copy of the keymap KEYMAP.
 
 Note that this is almost never needed.  If you want a keymap that's like
@@ -680,7 +680,7 @@ is not copied.  */)
       if (CHAR_TABLE_P (elt))
 	{
 	  elt = Fcopy_sequence (elt);
-	  map_char_table (copy_keymap_1, Qnil, elt, elt);
+	  map_char_table (orig_copy_keymap_1, Qnil, elt, elt);
 	}
       else if (VECTORP (elt))
 	{
@@ -3210,7 +3210,7 @@ be preferred.  */);
   command_remapping_vector = Fmake_vector (make_number (2), Qremap);
   staticpro (&command_remapping_vector);
 
-  defsubr (&Scopy_keymap);
+  defsubr (&Sorig_copy_keymap);
   defsubr (&Scommand_remapping);
   defsubr (&Skey_binding);
   defsubr (&Sminor_mode_key_binding);
