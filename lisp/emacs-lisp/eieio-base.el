@@ -1,6 +1,6 @@
 ;;; eieio-base.el --- Base classes for EIEIO.  -*- lexical-binding:t -*-
 
-;;; Copyright (C) 2000-2002, 2004-2005, 2007-2017 Free Software
+;;; Copyright (C) 2000-2002, 2004-2005, 2007-2018 Free Software
 ;;; Foundation, Inc.
 
 ;; Author: Eric M. Ludlam  <zappo@gnu.org>
@@ -354,6 +354,26 @@ Second, any text properties will be stripped from strings."
 		   proposed-value))
 		 (t
 		  proposed-value))))
+        ;; For hash-tables and vectors, the top-level `read' will not
+        ;; "look inside" member values, so we need to do that
+        ;; explicitly.
+        ((hash-table-p proposed-value)
+         (maphash
+          (lambda (key value)
+            (when (class-p (car-safe value))
+              (setf (gethash key proposed-value)
+                    (eieio-persistent-convert-list-to-object
+                     value))))
+          proposed-value)
+         proposed-value)
+
+        ((vectorp proposed-value)
+         (dotimes (i (length proposed-value))
+           (when (class-p (car-safe (aref proposed-value i)))
+             (aset proposed-value i
+                   (eieio-persistent-convert-list-to-object
+                    (aref proposed-value i)))))
+         proposed-value)
 
 	 ((stringp proposed-value)
 	  ;; Else, check for strings, remove properties.

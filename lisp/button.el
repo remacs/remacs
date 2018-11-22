@@ -1,6 +1,6 @@
 ;;; button.el --- clickable buttons
 ;;
-;; Copyright (C) 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2018 Free Software Foundation, Inc.
 ;;
 ;; Author: Miles Bader <miles@gnu.org>
 ;; Keywords: extensions
@@ -232,7 +232,7 @@ property instead of `action'; if the button has no `mouse-action',
 the value of `action' is used instead.
 
 The action can either be a marker or a function.  If it's a
-marker then goto it.  Otherwise it it is a function then it is
+marker then goto it.  Otherwise if it is a function then it is
 called with BUTTON as only argument.  BUTTON is either an
 overlay, a buffer position, or (for buttons in the mode-line or
 header-line) a string."

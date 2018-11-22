@@ -5,31 +5,40 @@ use std;
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::EmacsInt;
-use remacs_sys::{bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible,
-                 globals, initial_define_key, insert_and_inherit, memory_full, replace_range,
-                 run_hook, scan_newline_from_point, set_point, set_point_both, syntax_property,
-                 syntaxcode, translate_char};
-use remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column, Fset};
-use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
-                 Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
-                 Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate};
 
-use character::{self, characterp};
-use editfns::{line_beginning_position, line_end_position, preceding_char};
-use frames::selected_frame;
-use keymap::{current_global_map, Ctl};
-use lisp::defsubr;
-use lisp::LispObject;
-use multibyte::{char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
-                MAX_MULTIBYTE_LENGTH};
-use numbers::MOST_POSITIVE_FIXNUM;
-use obarray::intern;
-use threads::ThreadState;
+use crate::{
+    character::{self, characterp},
+    data::set,
+    editfns::{line_beginning_position, line_end_position, preceding_char},
+    frames::selected_frame,
+    keymap::{current_global_map, Ctl},
+    lisp::defsubr,
+    lisp::LispObject,
+    multibyte::{
+        char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
+        MAX_MULTIBYTE_LENGTH,
+    },
+    numbers::MOST_POSITIVE_FIXNUM,
+    obarray::intern,
+    remacs_sys::EmacsInt,
+    remacs_sys::{
+        bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible, globals,
+        initial_define_key, insert_and_inherit, memory_full, replace_range, run_hook,
+        scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
+        translate_char,
+    },
+    remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column},
+    remacs_sys::{
+        Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
+        Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
+        Qundo_auto__this_command_amalgamating, Qundo_auto_amalgamate,
+    },
+    threads::ThreadState,
+};
 
 /// Add N to point; or subtract N if FORWARD is false. N defaults to 1.
 /// Validate the new location. Return nil.
-fn move_point(n: LispObject, forward: bool) -> () {
+fn move_point(n: LispObject, forward: bool) {
     // This used to just set point to 'point + n', and then check
     // to see if it was within boundaries. But now that SET_POINT can
     // potentially do a lot of stuff (calling entering and exiting
@@ -73,7 +82,7 @@ fn move_point(n: LispObject, forward: bool) -> () {
 /// right or to the left on the screen.  This is in contrast with
 /// \\[right-char], which see.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn forward_char(n: LispObject) -> () {
+pub fn forward_char(n: LispObject) {
     move_point(n, true)
 }
 
@@ -86,7 +95,7 @@ pub fn forward_char(n: LispObject) -> () {
 /// right or to the left on the screen.  This is in contrast with
 /// \\[left-char], which see.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn backward_char(n: LispObject) -> () {
+pub fn backward_char(n: LispObject) {
     move_point(n, false)
 }
 
@@ -108,7 +117,7 @@ pub fn forward_point(n: EmacsInt) -> EmacsInt {
 /// instead.  For instance, `(forward-line 0)' does the same thing as
 /// `(beginning-of-line)', except that it ignores field boundaries.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn beginning_of_line(n: Option<EmacsInt>) -> () {
+pub fn beginning_of_line(n: Option<EmacsInt>) {
     let pos = line_beginning_position(n);
 
     unsafe {
@@ -127,7 +136,7 @@ pub fn beginning_of_line(n: Option<EmacsInt>) -> () {
 /// not move.  To ignore field boundaries bind `inhibit-field-text-motion'
 /// to t.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn end_of_line(n: Option<EmacsInt>) -> () {
+pub fn end_of_line(n: Option<EmacsInt>) {
     let mut num = n.unwrap_or(1);
     let mut newpos: isize;
     let mut pt: isize;
@@ -207,15 +216,15 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
 /// The command `delete-forward-char' is preferable for interactive use, e.g.
 /// because it respects values of `delete-active-region' and `overwrite-mode'.
 #[lisp_fn(min = "1", intspec = "p\nP")]
-pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
+pub fn delete_char(n: EmacsInt, killflag: bool) {
     if n.abs() < 2 {
-        call_raw!(Qundo_auto_amalgamate);
+        call!(Qundo_auto_amalgamate);
     }
 
     let buffer = ThreadState::current_buffer();
     let pos = buffer.pt + n as isize;
     if killflag {
-        call_raw!(Qkill_forward_chars, LispObject::from(n));
+        call!(Qkill_forward_chars, LispObject::from(n));
     } else if n < 0 {
         if pos < buffer.begv {
             xsignal!(Qbeginning_of_buffer);
@@ -248,7 +257,7 @@ pub fn self_insert_command(n: EmacsInt) {
     }
 
     if n < 2 {
-        call_raw!(Qundo_auto_amalgamate);
+        call!(Qundo_auto_amalgamate);
     }
 
     // Barf if the key that invoked this was not a character.
@@ -263,9 +272,12 @@ pub fn self_insert_command(n: EmacsInt) {
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
         if val == 2 {
-            unsafe { Fset(Qundo_auto__this_command_amalgamating, Qnil) };
+            set(
+                Qundo_auto__this_command_amalgamating.as_symbol_or_error(),
+                Qnil,
+            );
         }
-        unsafe { frame_make_pointer_invisible(selected_frame().as_frame_or_error().as_mut()) };
+        unsafe { frame_make_pointer_invisible(selected_frame().as_mut()) };
     }
 }
 
@@ -384,14 +396,19 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     {
         let modiff = unsafe { (*current_buffer.text).modiff };
 
-        let sym = call_raw!(Qexpand_abbrev);
+        let sym = call!(Qexpand_abbrev);
 
         // If we expanded an abbrev which has a hook,
         // and the hook has a non-nil `no-self-insert' property,
         // return right away--don't really self-insert.  */
         if let Some(s) = sym.as_symbol() {
-            if let Some(f) = s.function.as_symbol() {
-                let prop = unsafe { Fget(LispObject::from(f), intern("no-self-insert")) };
+            if let Some(f) = s.get_function().as_symbol() {
+                let prop = unsafe {
+                    Fget(
+                        LispObject::from(f),
+                        LispObject::from(intern("no-self-insert")),
+                    )
+                };
                 if prop.is_not_nil() {
                     return 1;
                 }
@@ -409,12 +426,13 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         } else {
             c
         };
-        let mut string = unsafe { Fmake_string(LispObject::from(n), LispObject::from(mc)) };
+        let mut string = unsafe { Fmake_string(LispObject::from(n), LispObject::from(mc), Qnil) };
         if spaces_to_insert > 0 {
             let tem = unsafe {
                 Fmake_string(
                     LispObject::from(spaces_to_insert),
                     LispObject::from(' ' as Codepoint),
+                    Qnil,
                 )
             };
             string = unsafe { concat2(string, tem) };
@@ -463,7 +481,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                 let newpt_byte = current_buffer.pt_byte - 1;
                 current_buffer.set_pt_both(newpt, newpt_byte);
             }
-            let auto_fill_result = call_raw!(Qinternal_auto_fill);
+            let auto_fill_result = call!(Qinternal_auto_fill);
             // Test PT < ZV in case the auto-fill-function is strange.
             if c == '\n' as Codepoint && current_buffer.pt < current_buffer.zv {
                 let newpt = current_buffer.pt + 1;

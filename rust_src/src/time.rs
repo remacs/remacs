@@ -7,12 +7,14 @@ use libc::{c_int, c_long, time_t};
 
 use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
-use remacs_sys::{lisp_time, EmacsInt};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::list;
-use numbers::MOST_NEGATIVE_FIXNUM;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::list,
+    numbers::MOST_NEGATIVE_FIXNUM,
+    remacs_sys::{lisp_time, EmacsDouble, EmacsInt},
+};
 
 const LO_TIME_BITS: i32 = 16;
 
@@ -344,7 +346,7 @@ pub fn current_time() -> LispObject {
 /// If precise time stamps are required, use either `current-time',
 /// or (if you need time as a string) `format-time-string'.
 #[lisp_fn(min = "0")]
-pub fn float_time(time: LispObject) -> LispObject {
+pub fn float_time(time: LispObject) -> EmacsDouble {
     let mut high = LispObject::from_C(0);
     let mut low = LispObject::from_C(0);
     let mut usec = LispObject::from_C(0);
@@ -359,7 +361,7 @@ pub fn float_time(time: LispObject) -> LispObject {
         invalid_time();
     }
 
-    LispObject::from_float(t)
+    t
 }
 
 include!(concat!(env!("OUT_DIR"), "/time_exports.rs"));

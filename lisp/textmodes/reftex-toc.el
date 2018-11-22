@@ -1,6 +1,6 @@
 ;;; reftex-toc.el --- RefTeX's table of contents mode
 
-;; Copyright (C) 1997-2000, 2003-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2000, 2003-2018 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@science.uva.nl>
 ;; Maintainer: auctex-devel@gnu.org
@@ -216,7 +216,7 @@ When called with a raw C-u prefix, rescan the document first."
   (or reftex-support-index
       (setq reftex-toc-include-index-entries nil))
 
-  ;; Ensure access to scanning info and rescan buffer if prefix are is '(4)
+  ;; Ensure access to scanning info and rescan buffer if prefix arg is '(4)
   (reftex-access-scan-info current-prefix-arg)
 
   (let* ((this-buf (current-buffer))

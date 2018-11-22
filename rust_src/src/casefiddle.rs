@@ -3,28 +3,31 @@ use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
 
-use keymap::Ctl;
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::put;
-use remacs_sys::EmacsInt;
-use remacs_sys::{case_action, casify_object, casify_region, casify_region_nil};
-use remacs_sys::{control_x_map, initial_define_key, meta_map, scan_words, set_point};
-use remacs_sys::{Qdisabled, Qnil, Qt};
-use threads::ThreadState;
+use crate::{
+    keymap::Ctl,
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::put,
+    obarray::intern,
+    remacs_sys::EmacsInt,
+    remacs_sys::{case_action, casify_object, casify_region, casify_region_nil},
+    remacs_sys::{control_x_map, initial_define_key, meta_map, scan_words, set_point},
+    remacs_sys::{Qdisabled, Qnil, Qt},
+    symbols::symbol_value,
+    threads::ThreadState,
+};
 
-use obarray::intern;
-use symbols::symbol_value;
-
-fn casify_word(flag: case_action, words: EmacsInt) -> LispObject {
+fn casify_word(flag: case_action, words: EmacsInt) {
     let buffer_ref = ThreadState::current_buffer();
 
     let far_end = match unsafe { scan_words(buffer_ref.pt, words) } {
-        0 => if words <= 0 {
-            buffer_ref.begv
-        } else {
-            buffer_ref.zv
-        },
+        0 => {
+            if words <= 0 {
+                buffer_ref.begv
+            } else {
+                buffer_ref.zv
+            }
+        }
         n => n,
     };
 
@@ -37,7 +40,6 @@ fn casify_word(flag: case_action, words: EmacsInt) -> LispObject {
     };
 
     unsafe { set_point(new_pos) };
-    Qnil
 }
 
 /// Convert argument to capitalized form and return that.
@@ -72,8 +74,8 @@ pub fn capitalize_region(beg: LispObject, end: LispObject) -> LispObject {
 ///
 /// With negative argument, capitalize previous words but do not move.
 #[lisp_fn(intspec = "p")]
-pub fn capitalize_word(words: EmacsInt) -> LispObject {
-    casify_word(case_action::CASE_CAPITALIZE, words)
+pub fn capitalize_word(words: EmacsInt) {
+    casify_word(case_action::CASE_CAPITALIZE, words);
 }
 
 /// Convert argument to lower case and return that.
@@ -95,7 +97,7 @@ pub fn downcase(object: LispObject) -> LispObject {
 pub fn downcase_region(
     beg: LispObject,
     end: LispObject,
-    region_noncontiguous_p: LispObject,
+    region_noncontiguous_p: bool,
 ) -> LispObject {
     casefiddle_region(beg, end, region_noncontiguous_p, case_action::CASE_DOWN)
 }
@@ -107,8 +109,8 @@ pub fn downcase_region(
 ///
 /// With negative argument, convert previous words but do not move.
 #[lisp_fn(intspec = "p")]
-pub fn downcase_word(words: EmacsInt) -> LispObject {
-    casify_word(case_action::CASE_DOWN, words)
+pub fn downcase_word(words: EmacsInt) {
+    casify_word(case_action::CASE_DOWN, words);
 }
 
 /// Convert argument to upper case and return that.
@@ -157,11 +159,7 @@ pub fn upcase_initials_region(beg: LispObject, end: LispObject) -> LispObject {
     min = "2",
     intspec = "(list (region-beginning) (region-end) (region-noncontiguous-p))"
 )]
-pub fn upcase_region(
-    beg: LispObject,
-    end: LispObject,
-    region_noncontiguous_p: LispObject,
-) -> LispObject {
+pub fn upcase_region(beg: LispObject, end: LispObject, region_noncontiguous_p: bool) -> LispObject {
     casefiddle_region(beg, end, region_noncontiguous_p, case_action::CASE_UP)
 }
 
@@ -173,8 +171,8 @@ pub fn upcase_region(
 /// With negative argument, convert previous words but do not move.
 /// See also `capitalize-word'.
 #[lisp_fn(intspec = "p")]
-pub fn upcase_word(words: EmacsInt) -> LispObject {
-    casify_word(case_action::CASE_UP, words)
+pub fn upcase_word(words: EmacsInt) {
+    casify_word(case_action::CASE_UP, words);
 }
 
 // Fiddle with the case of a whole region. Used as a helper by
@@ -182,22 +180,21 @@ pub fn upcase_word(words: EmacsInt) -> LispObject {
 fn casefiddle_region(
     beg: LispObject,
     end: LispObject,
-    region_noncontiguous_p: LispObject,
+    region_noncontiguous_p: bool,
     action: case_action,
 ) -> LispObject {
-    if region_noncontiguous_p.is_nil() {
+    if !region_noncontiguous_p {
         unsafe { casify_region_nil(action, beg, end) }
     } else {
-        let mut bounds = call!(
+        let bounds = call!(
             symbol_value(intern("region-extract-function")),
-            intern("bounds")
+            LispObject::from(intern("bounds"))
         );
 
-        while let Some(cons) = bounds.as_cons() {
-            let car = cons.car().as_cons_or_error();
-            unsafe { casify_region_nil(action, car.car(), car.cdr()) };
-            bounds = cons.cdr();
-        }
+        bounds.iter_cars_unchecked().for_each(|elt| {
+            let (car, cdr) = elt.as_cons_or_error().as_tuple();
+            unsafe { casify_region_nil(action, car, cdr) };
+        });
 
         Qnil
     }

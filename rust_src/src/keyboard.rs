@@ -2,17 +2,20 @@
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::glyph_row_area;
-use remacs_sys::Fpos_visible_in_window_p;
-use remacs_sys::{make_lispy_position, window_box_left_offset};
-use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line};
-
-use frames::window_frame_live_or_selected_with_action;
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::LispCons;
-use numbers::IsLispNatnum;
-use windows::window_or_selected_unchecked;
+use crate::{
+    frames::window_frame_live_or_selected_with_action,
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::LispCons,
+    numbers::IsLispNatnum,
+    remacs_sys::{command_loop_level, glyph_row_area, minibuf_level},
+    remacs_sys::{make_lispy_position, window_box_left_offset},
+    remacs_sys::{Fpos_visible_in_window_p, Fthrow},
+    remacs_sys::{
+        Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error, Qvertical_line,
+    },
+    windows::LispWindowOrSelected,
+};
 
 /// Return position information for buffer position POS in WINDOW.
 /// POS defaults to point in WINDOW; WINDOW defaults to the selected window.
@@ -25,8 +28,8 @@ use windows::window_or_selected_unchecked;
 ///     IMAGE (DX . DY) (WIDTH . HEIGHT))
 /// The `posn-' functions access elements of such lists.
 #[lisp_fn(min = "0")]
-pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
-    let window = window_or_selected_unchecked(window);
+pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObject {
+    let window: LispObject = window.into();
 
     let tem = unsafe { Fpos_visible_in_window_p(pos, window, Qt) };
     if tem.is_nil() {
@@ -122,6 +125,35 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
 
         it.rest().is_nil()
     })
+}
+
+pub fn quit_recursive_edit(val: bool) -> ! {
+    unsafe {
+        if command_loop_level > 0 || minibuf_level > 0 {
+            Fthrow(Qexit, LispObject::from_bool(val));
+        }
+
+        let msg = "No recursive edit is in progress";
+        xsignal!(
+            Quser_error,
+            crate::remacs_sys::make_string(
+                msg.as_ptr() as *const ::libc::c_char,
+                msg.len() as ::libc::ptrdiff_t,
+            )
+        );
+    }
+}
+
+/// Exit from the innermost recursive edit or minibuffer.
+#[lisp_fn(intspec = "")]
+pub fn exit_recursive_edit() -> ! {
+    quit_recursive_edit(false);
+}
+
+/// Abort the command that requested this recursive edit or minibuffer input.
+#[lisp_fn(intspec = "")]
+pub fn abort_recursive_edit() -> ! {
+    quit_recursive_edit(true);
 }
 
 #[no_mangle]

@@ -3,11 +3,13 @@ use std::path;
 
 use remacs_macros::lisp_fn;
 
-use lisp::defsubr;
-use lists::LispCons;
-use math::{arithcompare, ArithComparison};
-use multibyte::LispStringRef;
-use threads::ThreadState;
+use crate::{
+    lisp::defsubr,
+    lists::LispCons,
+    math::{arithcompare, ArithComparison},
+    multibyte::LispStringRef,
+    threads::ThreadState,
+};
 
 /// Return t if (car A) is numerically less than (car B).
 #[lisp_fn]
@@ -32,6 +34,19 @@ pub fn directory_name_p(name: LispStringRef) -> bool {
 #[lisp_fn]
 pub fn clear_buffer_auto_save_failure() {
     ThreadState::current_buffer().auto_save_failure_time = 0;
+}
+
+/// Return t if current buffer has been auto-saved recently.
+/// More precisely, if it has been auto-saved since last read from or saved
+/// in the visited file.  If the buffer has no visited file,
+/// then any auto-save counts as "recent".
+#[lisp_fn]
+pub fn recent_auto_save_p() -> bool {
+    let cur_buf = ThreadState::current_buffer();
+
+    // FIXME: maybe we should return nil for indirect buffers since
+    //  they're never autosaved.
+    cur_buf.modifications_since_save() < cur_buf.auto_save_modified
 }
 
 include!(concat!(env!("OUT_DIR"), "/fileio_exports.rs"));

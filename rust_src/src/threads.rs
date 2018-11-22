@@ -5,13 +5,16 @@ use std::mem;
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qthreadp;
-use remacs_sys::{current_thread as current_thread_pointer, pvec_type, thread_state, Lisp_Type,
-                 SPECPDL_INDEX};
 
-use buffers::LispBufferRef;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
+use crate::{
+    buffers::LispBufferRef,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    remacs_sys::Qthreadp,
+    remacs_sys::{
+        current_thread as current_thread_pointer, pvec_type, thread_state, Lisp_Type, SPECPDL_INDEX,
+    },
+};
 
 pub type ThreadStateRef = ExternalPtr<thread_state>;
 
@@ -90,11 +93,11 @@ pub fn current_thread() -> LispObject {
 }
 
 /// Return the object that THREAD is blocking on.
-// If THREAD is blocked in `thread-join' on a second thread, return that
-// thread.
-// If THREAD is blocked in `mutex-lock', return the mutex.
-// If THREAD is blocked in `condition-wait', return the condition variable.
-// Otherwise, if THREAD is not blocked, return nil.
+/// If THREAD is blocked in `thread-join' on a second thread, return that
+/// thread.
+/// If THREAD is blocked in `mutex-lock', return the mutex.
+/// If THREAD is blocked in `condition-wait', return the condition variable.
+/// Otherwise, if THREAD is not blocked, return nil.
 #[lisp_fn(name = "thread--blocker")]
 pub fn thread_blocker(thread: ThreadStateRef) -> LispObject {
     thread.event_object

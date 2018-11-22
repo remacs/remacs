@@ -32,3 +32,54 @@
      (or
       (integerp id)
       (floatp id)))))
+
+(ert-deftest test-buffer-string ()
+  (let ((payload "test buffer contents"))
+    (with-temp-buffer
+      (insert payload)
+      (should (equal (buffer-string) payload)))))
+
+(ert-deftest test-message-box ()
+  (should-error (message-box)))
+
+(ert-deftest test-delete-region--start<end ()
+  (let ((payload "test buffer contents"))
+    (with-temp-buffer
+      (insert payload)
+      (delete-region 5 12)
+      (should (equal (buffer-string) "test contents")))))
+
+(ert-deftest test-delete-region--start=end ()
+  (let ((payload "test buffer contents"))
+    (with-temp-buffer
+      (insert payload)
+      (delete-region 10 10)
+      (should (equal (buffer-string) "test buffer contents")))))
+
+(ert-deftest test-delete-region--start>end ()
+  (let ((payload "test buffer contents"))
+    (with-temp-buffer
+      (insert payload)
+      (delete-region 12 5)
+      (should (equal (buffer-string) "test contents")))))
+
+(ert-deftest test-delete-and-extract-region--start<end ()
+  (let ((payload "test buffer contents"))
+    (with-temp-buffer
+      (insert payload)
+      (should (equal (delete-and-extract-region 5 12) " buffer"))
+      (should (equal (buffer-string) "test contents")))))
+
+(ert-deftest test-delete-and-extract-region--start=end ()
+  (let ((payload "test buffer contents"))
+    (with-temp-buffer
+      (insert payload)
+      (should (equal (delete-and-extract-region 10 10) ""))
+      (should (equal (buffer-string) "test buffer contents")))))
+
+(ert-deftest test-delete-and-extract-region--start>end ()
+  (let ((payload "test buffer contents"))
+    (with-temp-buffer
+      (insert payload)
+      (should (equal (delete-and-extract-region 12 5) " buffer"))
+      (should (equal (buffer-string) "test contents")))))

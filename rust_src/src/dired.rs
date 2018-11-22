@@ -3,13 +3,17 @@
 use remacs_macros::lisp_fn;
 
 #[cfg(unix)]
-use dired_unix::{directory_files_and_attributes_intro, directory_files_intro,
-                 file_attributes_intro, get_users};
+use crate::dired_unix::{
+    directory_files_and_attributes_intro, directory_files_intro, file_attributes_intro, get_users,
+};
 #[cfg(windows)]
 use dired_windows::{file_attributes_intro, get_users};
-use lisp::{defsubr, LispObject};
-use lists::car;
-use strings::string_lessp;
+
+use crate::{
+    lisp::{defsubr, LispObject},
+    lists::car,
+    strings::string_lessp,
+};
 
 /// Return a list of names of files in DIRECTORY.
 /// There are three optional arguments:
@@ -108,8 +112,8 @@ pub fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObjec
 /// Return t if first arg file attributes list is less than second.
 /// Comparison is in lexicographic order and case is significant.
 #[lisp_fn]
-pub fn file_attributes_lessp(f1: LispObject, f2: LispObject) -> LispObject {
-    LispObject::from_bool(string_lessp(car(f1), car(f2)))
+pub fn file_attributes_lessp(f1: LispObject, f2: LispObject) -> bool {
+    string_lessp(car(f1), car(f2))
 }
 
 /// Return a list of user names currently registered in the system.

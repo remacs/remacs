@@ -14,7 +14,7 @@
 This manual is for GNU Flymake (version @value{VERSION}, @value{UPDATED}),
 which is a universal on-the-fly syntax checker for GNU Emacs.
 
-Copyright @copyright{} 2004--2017 Free Software Foundation, Inc.
+Copyright @copyright{} 2004--2018 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -65,7 +65,7 @@ modify this GNU manual.''
 @cindex using flymake
 
 Flymake is a universal on-the-fly buffer checker implemented as an
-Emacs minor minor.  To use Flymake, you must first activate
+Emacs minor mode.  To use Flymake, you must first activate
 @code{flymake-mode} by using the command @kbd{flymake-mode}.
 
 When enabled, Flymake collects information about problems in the

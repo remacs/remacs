@@ -1,6 +1,6 @@
 /* Display generation from window structure and buffer text.
 
-Copyright (C) 1985-1988, 1993-1995, 1997-2017 Free Software Foundation,
+Copyright (C) 1985-1988, 1993-1995, 1997-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -11510,6 +11510,9 @@ echo_area_display (bool update_frame_p)
   struct frame *sf = SELECTED_FRAME ();
 
   mini_window = FRAME_MINIBUF_WINDOW (sf);
+  if (NILP (mini_window))
+    return;
+
   w = XWINDOW (mini_window);
   f = XFRAME (WINDOW_FRAME (w));
 
@@ -12320,7 +12323,7 @@ build_desired_tool_bar_string (struct frame *f)
   /* Reuse f->desired_tool_bar_string, if possible.  */
   if (size < size_needed || NILP (f->desired_tool_bar_string))
     fset_desired_tool_bar_string
-      (f, Fmake_string (make_number (size_needed), make_number (' ')));
+      (f, Fmake_string (make_number (size_needed), make_number (' '), Qnil));
   else
     {
       AUTO_LIST4 (props, Qdisplay, Qnil, Qmenu_item, Qnil);
@@ -13174,8 +13177,20 @@ hscroll_window_tree (Lisp_Object window)
 
 	  /* If the position of this window's point has explicitly
 	     changed, no more suspend auto hscrolling.  */
-	  if (NILP (Fequal (Fwindow_point (window), Fwindow_old_point (window))))
-	    w->suspend_auto_hscroll = false;
+	  if (w->suspend_auto_hscroll
+	      && NILP (Fequal (Fwindow_point (window),
+			       Fwindow_old_point (window))))
+	    {
+	      w->suspend_auto_hscroll = false;
+	      /* When hscrolling just the current line, and the rest
+		 of lines were temporarily hscrolled, but no longer
+		 are, force thorough redisplay of this window, to show
+		 the effect of disabling hscroll suspension immediately.  */
+	      if (w->min_hscroll == 0 && w->hscroll > 0
+		  && EQ (Fbuffer_local_value (Qauto_hscroll_mode, w->contents),
+			 Qcurrent_line))
+		SET_FRAME_GARBAGED (XFRAME (w->frame));
+	    }
 
 	  /* Remember window point.  */
 	  Fset_marker (w->old_pointm,
@@ -16054,8 +16069,10 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
 	 since the handling of this_line_start_pos, etc., in redisplay
 	 handles the same cases.  */
       && !EQ (window, minibuf_window)
-      && (FRAME_WINDOW_P (f)
-	  || !overlay_arrow_in_current_buffer_p ()))
+      /* When overlay arrow is shown in current buffer, point movement
+	 is no longer "simple", as it typically causes the overlay
+	 arrow to move as well.  */
+      && !overlay_arrow_in_current_buffer_p ())
     {
       int this_scroll_margin, top_scroll_margin;
       struct glyph_row *row = NULL;
@@ -17686,7 +17703,11 @@ try_window_reusing_current_matrix (struct window *w)
       /* Don't try to reuse the display if windows have been split
 	 or such.  */
       || windows_or_buffers_changed
-      || f->cursor_type_changed)
+      || f->cursor_type_changed
+      /* This function cannot handle buffers where the overlay arrow
+	 is shown on the fringes, because if the arrow position
+	 changes, we cannot just reuse the current matrix.  */
+      || overlay_arrow_in_current_buffer_p ())
     return false;
 
   /* Can't do this if showing trailing whitespace.  */
@@ -19458,19 +19479,34 @@ Only text-mode frames have frame glyph matrices.  */)
 }
 
 
-DEFUN ("dump-glyph-row", Fdump_glyph_row, Sdump_glyph_row, 1, 2, "",
+DEFUN ("dump-glyph-row", Fdump_glyph_row, Sdump_glyph_row, 1, 2, "P",
        doc: /* Dump glyph row ROW to stderr.
-GLYPH 0 means don't dump glyphs.
-GLYPH 1 means dump glyphs in short form.
-GLYPH > 1 or omitted means dump glyphs in long form.  */)
+Interactively, ROW is the prefix numeric argument and defaults to
+the row which displays point.
+Optional argument GLYPHS 0 means don't dump glyphs.
+GLYPHS 1 means dump glyphs in short form.
+GLYPHS > 1 or omitted means dump glyphs in long form.  */)
   (Lisp_Object row, Lisp_Object glyphs)
 {
   struct glyph_matrix *matrix;
   EMACS_INT vpos;
 
-  CHECK_NUMBER (row);
+  if (NILP (row))
+    {
+      int d1, d2, d3, d4, d5, ypos;
+      bool visible_p = pos_visible_p (XWINDOW (selected_window), PT,
+				      &d1, &d2, &d3, &d4, &d5, &ypos);
+      if (visible_p)
+	vpos = ypos;
+      else
+	vpos = 0;
+    }
+  else
+    {
+      CHECK_NUMBER (row);
+      vpos = XINT (row);
+    }
   matrix = XWINDOW (selected_window)->current_matrix;
-  vpos = XINT (row);
   if (vpos >= 0 && vpos < matrix->nrows)
     dump_glyph_row (MATRIX_ROW (matrix, vpos),
 		    vpos,
@@ -19479,11 +19515,12 @@ GLYPH > 1 or omitted means dump glyphs in long form.  */)
 }
 
 
-DEFUN ("dump-tool-bar-row", Fdump_tool_bar_row, Sdump_tool_bar_row, 1, 2, "",
+DEFUN ("dump-tool-bar-row", Fdump_tool_bar_row, Sdump_tool_bar_row, 1, 2, "P",
        doc: /* Dump glyph row ROW of the tool-bar of the current frame to stderr.
-GLYPH 0 means don't dump glyphs.
-GLYPH 1 means dump glyphs in short form.
-GLYPH > 1 or omitted means dump glyphs in long form.
+Interactively, ROW is the prefix numeric argument and defaults to zero.
+GLYPHS 0 means don't dump glyphs.
+GLYPHS 1 means dump glyphs in short form.
+GLYPHS > 1 or omitted means dump glyphs in long form.
 
 If there's no tool-bar, or if the tool-bar is not drawn by Emacs,
 do nothing.  */)
@@ -19494,8 +19531,13 @@ do nothing.  */)
   struct glyph_matrix *m = XWINDOW (sf->tool_bar_window)->current_matrix;
   EMACS_INT vpos;
 
-  CHECK_NUMBER (row);
-  vpos = XINT (row);
+  if (NILP (row))
+    vpos = 0;
+  else
+    {
+      CHECK_NUMBER (row);
+      vpos = XINT (row);
+    }
   if (vpos >= 0 && vpos < m->nrows)
     dump_glyph_row (MATRIX_ROW (m, vpos), vpos,
 		    TYPE_RANGED_INTEGERP (int, glyphs) ? XINT (glyphs) : 2);
@@ -20232,12 +20274,14 @@ extend_face_to_end_of_line (struct it *it)
 	  it->area = LEFT_MARGIN_AREA;
 	  it->face_id = default_face->id;
 	  while (it->glyph_row->used[LEFT_MARGIN_AREA]
-		 < WINDOW_LEFT_MARGIN_WIDTH (it->w))
+		 < WINDOW_LEFT_MARGIN_WIDTH (it->w)
+		 && g < it->glyph_row->glyphs[TEXT_AREA])
 	    {
 	      PRODUCE_GLYPHS (it);
 	      /* term.c:produce_glyphs advances it->current_x only for
 		 TEXT_AREA.  */
 	      it->current_x += it->pixel_width;
+	      g++;
 	    }
 
 	  it->current_x = saved_x;
@@ -20271,10 +20315,12 @@ extend_face_to_end_of_line (struct it *it)
 	  it->area = RIGHT_MARGIN_AREA;
 	  it->face_id = default_face->id;
 	  while (it->glyph_row->used[RIGHT_MARGIN_AREA]
-		 < WINDOW_RIGHT_MARGIN_WIDTH (it->w))
+		 < WINDOW_RIGHT_MARGIN_WIDTH (it->w)
+		 && g < it->glyph_row->glyphs[LAST_AREA])
 	    {
 	      PRODUCE_GLYPHS (it);
 	      it->current_x += it->pixel_width;
+	      g++;
 	    }
 
 	  it->area = TEXT_AREA;
@@ -21114,7 +21160,13 @@ should_produce_line_number (struct it *it)
 
 #ifdef HAVE_WINDOW_SYSTEM
   /* Don't display line number in tooltip frames.  */
-  if (FRAMEP (tip_frame) && EQ (WINDOW_FRAME (it->w), tip_frame))
+  if (FRAMEP (tip_frame) && EQ (WINDOW_FRAME (it->w), tip_frame)
+#ifdef USE_GTK
+      /* GTK builds store in tip_frame the frame that shows the tip,
+	 so we need an additional test.  */
+      && !NILP (Fframe_parameter (tip_frame, Qtooltip))
+#endif
+      )
     return false;
 #endif
 
@@ -21641,7 +21693,6 @@ display_line (struct it *it, int cursor_vpos)
 		      row->continued_p = true;
 		      row->ends_at_zv_p = false;
 		      row->exact_window_width_line_p = false;
-		      it->continuation_lines_width += x;
 
 		      /* Make sure that a non-default face is extended
 			 up to the right margin of the window.  */
@@ -23634,6 +23685,14 @@ display_mode_element (struct it *it, int depth, int field_width, int precision,
 	      {
 		Lisp_Object spec;
 		spec = safe__eval (true, XCAR (XCDR (elt)));
+		/* The :eval form could delete the frame stored in the
+		   iterator, which will cause a crash if we try to
+		   access faces and other fields (e.g., FRAME_KBOARD)
+		   on that frame.  This is a nonsensical thing to do,
+		   and signaling an error from redisplay might be
+		   dangerous, but we cannot continue with an invalid frame.  */
+		if (!FRAME_LIVE_P (it->f))
+		  signal_error (":eval deleted the frame being displayed", elt);
 		n += display_mode_element (it, depth, field_width - n,
 					   precision - n, spec, props,
 					   risky);
@@ -23837,7 +23896,8 @@ store_mode_line_string (const char *string, Lisp_Object lisp_string,
   if (field_width > len)
     {
       field_width -= len;
-      lisp_string = Fmake_string (make_number (field_width), make_number (' '));
+      lisp_string = Fmake_string (make_number (field_width), make_number (' '),
+				  Qnil);
       if (!NILP (props))
 	Fadd_text_properties (make_number (0), make_number (field_width),
 			      props, lisp_string);
@@ -25035,19 +25095,25 @@ invisible_prop (Lisp_Object propval, Lisp_Object list)
 }
 
 DEFUN ("invisible-p", Finvisible_p, Sinvisible_p, 1, 1, 0,
-       doc: /* Non-nil if the property makes the text invisible.
-POS-OR-PROP can be a marker or number, in which case it is taken to be
-a position in the current buffer and the value of the `invisible' property
-is checked; or it can be some other value, which is then presumed to be the
-value of the `invisible' property of the text of interest.
-The non-nil value returned can be t for truly invisible text or something
-else if the text is replaced by an ellipsis.  */)
-  (Lisp_Object pos_or_prop)
+       doc: /* Non-nil if text properties at POS cause text there to be currently invisible.
+POS should be a marker or a buffer position; the value of the `invisible'
+property at that position in the current buffer is examined.
+POS can also be the actual value of the `invisible' text or overlay
+property of the text of interest, in which case the value itself is
+examined.
+
+The non-nil value returned can be t for currently invisible text that is
+entirely hidden on display, or some other non-nil, non-t value if the
+text is replaced by an ellipsis.
+
+Note that whether text with `invisible' property is actually hidden on
+display may depend on `buffer-invisibility-spec', which see.  */)
+  (Lisp_Object pos)
 {
   Lisp_Object prop
-    = (NATNUMP (pos_or_prop) || MARKERP (pos_or_prop)
-       ? Fget_char_property (pos_or_prop, Qinvisible, Qnil)
-       : pos_or_prop);
+    = (NATNUMP (pos) || MARKERP (pos)
+       ? Fget_char_property (pos, Qinvisible, Qnil)
+       : pos);
   int invis = TEXT_PROP_MEANS_INVISIBLE (prop);
   return (invis == 0 ? Qnil
 	  : invis == 1 ? Qt
@@ -31839,7 +31905,7 @@ x_draw_bottom_divider (struct window *w)
       int x1 = WINDOW_RIGHT_EDGE_X (w);
       int y0 = WINDOW_BOTTOM_EDGE_Y (w) - WINDOW_BOTTOM_DIVIDER_WIDTH (w);
       int y1 = WINDOW_BOTTOM_EDGE_Y (w);
-      struct window *p = !NILP (w->parent) ? XWINDOW (w->parent) : false;
+      struct window *p = !NILP (w->parent) ? XWINDOW (w->parent) : NULL;
 
       /* If W is vertically combined and has a sibling below, don't draw
 	 over any right divider.  */
@@ -32555,6 +32621,9 @@ display-start position.
 These functions are called whenever the `window-start' marker is modified,
 either to point into another buffer (e.g. via `set-window-buffer') or another
 place in the same buffer.
+When each function is called, the `window-start' marker of its window
+argument has been already set to the new value, and the buffer which that
+window will display is set to be the current buffer.
 Note that the value of `window-end' is not valid when these functions are
 called.
 

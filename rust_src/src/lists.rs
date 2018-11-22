@@ -3,13 +3,15 @@
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type};
-use remacs_sys::{Fcons, CHECK_IMPURE};
-use remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use symbols::LispSymbolRef;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::{globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
+    remacs_sys::{Fcons, CHECK_IMPURE},
+    remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
+    symbols::LispSymbolRef,
+};
 
 // Cons support (LispType == 6 | 3)
 
@@ -62,6 +64,13 @@ impl LispObject {
         TailsIter::new(self, None)
     }
 
+    /// Iterate over all tails of self.  If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    /// No circular checks are performed.
+    pub fn iter_tails_unchecked(self) -> TailsNoCircularCheckIter {
+        TailsNoCircularCheckIter::new(self)
+    }
+
     /// Iterate over all tails of self.  self should be a plist, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
@@ -78,6 +87,13 @@ impl LispObject {
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_cars_safe(self) -> CarIter {
         CarIter::new(self, None)
+    }
+
+    /// Iterate over all cars of self. If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    /// No circular checks are performed.
+    pub fn iter_cars_unchecked(self) -> CarNoCircularCheckIter {
+        CarNoCircularCheckIter::new(self)
     }
 }
 
@@ -157,6 +173,33 @@ impl Iterator for TailsIter {
     }
 }
 
+pub struct TailsNoCircularCheckIter {
+    tail: LispObject,
+}
+
+impl TailsNoCircularCheckIter {
+    fn new(list: LispObject) -> Self {
+        Self { tail: list }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        // This is kind of like Peekable but even when None is returned there
+        // might still be a valid item in self.tail.
+        self.tail
+    }
+}
+
+impl Iterator for TailsNoCircularCheckIter {
+    type Item = LispCons;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tail.as_cons().and_then(|cons| {
+            self.tail = cons.cdr();
+            Some(cons)
+        })
+    }
+}
+
 pub struct CarIter {
     tails: TailsIter,
 }
@@ -174,6 +217,30 @@ impl CarIter {
 }
 
 impl Iterator for CarIter {
+    type Item = LispObject;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tails.next().map(|c| c.car())
+    }
+}
+
+pub struct CarNoCircularCheckIter {
+    tails: TailsNoCircularCheckIter,
+}
+
+impl CarNoCircularCheckIter {
+    pub fn new(list: LispObject) -> Self {
+        Self {
+            tails: TailsNoCircularCheckIter::new(list),
+        }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        self.tails.tail
+    }
+}
+
+impl Iterator for CarNoCircularCheckIter {
     type Item = LispObject;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -214,12 +281,12 @@ impl LispCons {
 
     /// Return the car (first cell).
     pub fn car(self) -> LispObject {
-        unsafe { (*self._extract()).car }
+        unsafe { (*self._extract()).u.s.as_ref().car }
     }
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        unsafe { (*self._extract()).u.cdr }
+        unsafe { (*self._extract()).u.s.as_ref().u.cdr }
     }
 
     pub fn as_tuple(self) -> (LispObject, LispObject) {
@@ -229,14 +296,14 @@ impl LispCons {
     /// Set the car of the cons cell.
     pub fn set_car(self, n: LispObject) {
         unsafe {
-            (*self._extract()).car = n;
+            (*self._extract()).u.s.as_mut().car = n;
         }
     }
 
     /// Set the car of the cons cell.
     pub fn set_cdr(self, n: LispObject) {
         unsafe {
-            (*self._extract()).u.cdr = n;
+            (*self._extract()).u.s.as_mut().u.cdr = n;
         }
     }
 
@@ -394,7 +461,8 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.car()))
-        }).unwrap_or(Qnil)
+        })
+        .unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the car of an element of LIST.
@@ -426,7 +494,8 @@ where
         .find(|item| {
             item.as_cons()
                 .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
-        }).unwrap_or(Qnil)
+        })
+        .unwrap_or(Qnil)
 }
 
 /// Return non-nil if KEY is `eq' to the cdr of an element of LIST.
@@ -622,10 +691,9 @@ pub fn get(symbol: LispSymbolRef, propname: LispObject) -> LispObject {
 /// Store SYMBOL's PROPNAME property with value VALUE.
 /// It can be retrieved with `(get SYMBOL PROPNAME)'.
 #[lisp_fn]
-pub fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispObject {
-    let mut sym = symbol.as_symbol_or_error();
-    let new_plist = plist_put(sym.get_plist(), propname, value);
-    sym.set_plist(new_plist);
+pub fn put(mut symbol: LispSymbolRef, propname: LispObject, value: LispObject) -> LispObject {
+    let new_plist = plist_put(symbol.get_plist(), propname, value);
+    symbol.set_plist(new_plist);
     value
 }
 
@@ -718,6 +786,66 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
 
 pub fn circular_list(obj: LispObject) -> ! {
     xsignal!(Qcircular_list, obj);
+}
+
+fn mapcar_over_iterator<I: Iterator<Item = LispObject>>(
+    output: &mut [LispObject],
+    fun: LispObject,
+    it: I,
+) -> EmacsInt {
+    let mut mapped = 0;
+
+    for (i, elt) in it.enumerate() {
+        let dummy = call!(fun, elt);
+        if output.len() > i {
+            output[i as usize] = dummy;
+        }
+        mapped = i + 1;
+    }
+
+    mapped as EmacsInt
+}
+
+// This is the guts of all mapping functions.
+// Apply FUN to each element of SEQ, one by one, storing the results
+// into elements of VALS, a C vector of Lisp_Objects.  LENI is the
+// length of VALS, which should also be the length of SEQ.  Return the
+// number of results; although this is normally LENI, it can be less
+// if SEQ is made shorter as a side effect of FN.
+#[no_mangle]
+pub extern "C" fn mapcar1(
+    leni: EmacsInt,
+    vals: *mut LispObject,
+    fun: LispObject,
+    seq: LispObject,
+) -> EmacsInt {
+    let mut safe_value = [Qnil];
+
+    let output = if vals.is_null() {
+        &mut safe_value
+    } else {
+        unsafe { std::slice::from_raw_parts_mut(vals, leni as usize) }
+    };
+
+    if let Some(v) = seq.as_vectorlike() {
+        if let Some(vc) = v.as_vector() {
+            return mapcar_over_iterator(output, fun, vc.iter());
+        } else if let Some(cf) = v.as_compiled() {
+            return mapcar_over_iterator(output, fun, cf.iter());
+        } else if let Some(bv) = v.as_bool_vector() {
+            return mapcar_over_iterator(output, fun, bv.iter());
+        }
+    }
+    if let Some(s) = seq.as_string() {
+        return mapcar_over_iterator(
+            output,
+            fun,
+            s.char_indices()
+                .map(|(_, c)| LispObject::from_fixnum(c as EmacsInt)),
+        );
+    }
+
+    mapcar_over_iterator(output, fun, seq.iter_cars_safe())
 }
 
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

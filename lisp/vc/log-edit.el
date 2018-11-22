@@ -1,6 +1,6 @@
 ;;; log-edit.el --- Major mode for editing CVS commit messages -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: pcl-cvs cvs commit log vc
@@ -623,7 +623,7 @@ Also saves its contents in the comment history and hides
       (setq buffer-read-only nil)
       (erase-buffer)
       (cvs-insert-strings files)
-      (setq buffer-read-only t)
+      (special-mode)
       (goto-char (point-min))
       (save-selected-window
 	(cvs-pop-to-buffer-same-frame buf)

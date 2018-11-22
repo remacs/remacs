@@ -17,13 +17,13 @@ macro_rules! xsignal {
     ($symbol:expr) => {
         #[allow(unused_unsafe)]
         unsafe {
-            ::remacs_sys::Fsignal($symbol, ::remacs_sys::Qnil);
+            crate::remacs_sys::Fsignal($symbol, crate::remacs_sys::Qnil);
         }
     };
     ($symbol:expr, $($tt:tt)+) => {
         #[allow(unused_unsafe)]
         unsafe {
-            ::remacs_sys::Fsignal($symbol, list!($($tt)+));
+            crate::remacs_sys::Fsignal($symbol, list!($($tt)+));
         }
     };
 }
@@ -31,29 +31,12 @@ macro_rules! xsignal {
 /// Macro to call Lisp functions with any number of arguments.
 /// Replaces call0, call1, etc. in the C layer.
 macro_rules! call {
-    ($func:expr, $($arg:expr),*) => {{
-        let mut argsarray = [$func, $($arg),*];
-        #[allow(unused_unsafe)]
-        unsafe {
-            ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
-        }
-    }}
-}
-
-macro_rules! call_raw {
-    ($func:expr, $($arg:expr),*) => {{
-        let mut argsarray = [$func, $($arg),*];
-        #[allow(unused_unsafe)]
-        unsafe {
-            ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
-        }
-    }};
-    ($func:expr) => {{
-        #[allow(unused_unsafe)]
-        unsafe {
-            ::remacs_sys::Ffuncall(1, &mut $func)
-        }
-    }}
+    ($func:expr, $($arg:expr),*) => {
+        crate::eval::funcall(&mut [$func, $($arg),*])
+    };
+    ($func:expr) => {
+        crate::eval::funcall(&mut [$func])
+    }
 }
 
 macro_rules! callN_raw {
@@ -70,7 +53,7 @@ macro_rules! message_with_string {
     ($str:expr, $obj:expr, $should_log:expr) => {
         #[allow(unused_unsafe)]
         unsafe {
-            ::remacs_sys::message_with_string(
+            crate::remacs_sys::message_with_string(
                 $str.as_ptr() as *const ::libc::c_char,
                 $obj,
                 $should_log,
@@ -85,37 +68,37 @@ macro_rules! error {
     ($str:expr) => {{
         #[allow(unused_unsafe)]
         let strobj = unsafe {
-            ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
+            crate::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
                                       $str.len() as ::libc::ptrdiff_t)
         };
-        xsignal!(::remacs_sys::Qerror, strobj);
+        xsignal!(crate::remacs_sys::Qerror, strobj);
     }};
     ($fmtstr:expr, $($arg:expr),*) => {{
         let formatted = format!($fmtstr, $($arg),*);
         #[allow(unused_unsafe)]
         let strobj = unsafe {
-            ::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
+            crate::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
                                       formatted.len() as ::libc::ptrdiff_t)
         };
-        xsignal!(::remacs_sys::Qerror, strobj);
+        xsignal!(crate::remacs_sys::Qerror, strobj);
     }};
 }
 
 /// Macro to format a "wrong argument type" error message.
 macro_rules! wrong_type {
     ($pred:expr, $arg:expr) => {
-        xsignal!(::remacs_sys::Qwrong_type_argument, $pred, $arg);
+        xsignal!(crate::remacs_sys::Qwrong_type_argument, $pred, $arg);
     };
 }
 
 macro_rules! args_out_of_range {
-    ($($tt:tt)+) => { xsignal!(::remacs_sys::Qargs_out_of_range, $($tt)+); };
+    ($($tt:tt)+) => { xsignal!(crate::remacs_sys::Qargs_out_of_range, $($tt)+); };
 }
 
 macro_rules! list {
     ($arg:expr, $($tt:tt)+) => { $crate::lisp::LispObject::cons($arg, list!($($tt)+)) };
     ($arg:expr) => { $crate::lisp::LispObject::cons($arg, list!()) };
-    () => { ::remacs_sys::Qnil };
+    () => { crate::remacs_sys::Qnil };
 }
 
 /// Macro that expands to nothing, but is used at build time to
@@ -156,14 +139,14 @@ macro_rules! defvar_lisp {
         #[allow(unused_unsafe)]
         unsafe {
             #[allow(const_err)]
-            static mut o_fwd: ::hacks::Hack<::data::Lisp_Objfwd> =
-                unsafe { ::hacks::Hack::uninitialized() };
-            ::remacs_sys::defvar_lisp(
+            static mut o_fwd: crate::hacks::Hack<crate::data::Lisp_Objfwd> =
+                unsafe { crate::hacks::Hack::uninitialized() };
+            crate::remacs_sys::defvar_lisp(
                 o_fwd.get_mut(),
                 concat!($lisp_name, "\0").as_ptr() as *const i8,
-                &mut ::remacs_sys::globals.$field_name,
+                &mut crate::remacs_sys::globals.$field_name,
             );
-            ::remacs_sys::globals.$field_name = $value;
+            crate::remacs_sys::globals.$field_name = $value;
         }
     }};
 }
@@ -225,12 +208,12 @@ macro_rules! defvar_kboard {
         #[allow(unused_unsafe)]
         unsafe {
             #[allow(const_err)]
-            static mut o_fwd: ::hacks::Hack<::data::Lisp_Kboard_Objfwd> =
-                unsafe { ::hacks::Hack::uninitialized() };
-            ::lread::defvar_kboard_offset(
+            static mut o_fwd: crate::hacks::Hack<crate::data::Lisp_Kboard_Objfwd> =
+                unsafe { crate::hacks::Hack::uninitialized() };
+            crate::lread::defvar_kboard_offset(
                 o_fwd.get_mut(),
                 concat!($lisp_name, "\0").as_ptr() as *const i8,
-                ::field_offset::offset_of!(::remacs_sys::kboard => $vname),
+                ::field_offset::offset_of!(crate::remacs_sys::kboard => $vname),
             );
         }
     }};
@@ -249,12 +232,12 @@ macro_rules! defvar_per_buffer {
         #[allow(unused_unsafe)]
         unsafe {
             #[allow(const_err)]
-            static mut o_fwd: ::hacks::Hack<::data::Lisp_Buffer_Objfwd> =
-                unsafe { ::hacks::Hack::uninitialized() };
-            ::lread::defvar_per_buffer_offset(
+            static mut o_fwd: crate::hacks::Hack<crate::data::Lisp_Buffer_Objfwd> =
+                unsafe { crate::hacks::Hack::uninitialized() };
+            crate::lread::defvar_per_buffer_offset(
                 o_fwd.get_mut(),
                 concat!($lname, "\0").as_ptr() as *const i8,
-                ::field_offset::offset_of!(::remacs_sys::Lisp_Buffer => $vname),
+                ::field_offset::offset_of!(crate::remacs_sys::Lisp_Buffer => $vname),
                 $pred,
             );
         }
@@ -277,14 +260,14 @@ macro_rules! verify_lisp_type {
     ($n:expr, Qcharacterp) => {
         if $n < 0 || $n > (EmacsInt::from($crate::multibyte::MAX_CHAR)) {
             wrong_type!(
-                ::remacs_sys::Qcharacterp,
+                crate::remacs_sys::Qcharacterp,
                 $crate::lisp::LispObject::from($n)
             );
         }
     };
     ($obj:expr, Qstringp) => {
         if !$obj.is_string() {
-            wrong_type!(::remacs_sys::Qstringp, $obj);
+            wrong_type!(crate::remacs_sys::Qstringp, $obj);
         }
     };
 }
@@ -297,6 +280,6 @@ macro_rules! verify_lisp_type {
 macro_rules! per_buffer_var_idx {
     ($field: ident) => {
         #[allow(unused_unsafe)]
-        (unsafe { buffer_local_flags.$field }).as_natnum_or_error() as usize
+        (unsafe { crate::remacs_sys::buffer_local_flags.$field }).as_natnum_or_error() as usize
     };
 }

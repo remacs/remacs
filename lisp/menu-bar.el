@@ -1,6 +1,6 @@
 ;;; menu-bar.el --- define a default menu bar
 
-;; Copyright (C) 1993-1995, 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1995, 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Richard M. Stallman
 ;; Maintainer: emacs-devel@gnu.org
@@ -669,7 +669,8 @@ The selected font will be the default on both the existing and future frames."
   (let ((need-save nil))
     ;; These are set with menu-bar-make-mm-toggle, which does not
     ;; put on a customized-value property.
-    (dolist (elt '(line-number-mode column-number-mode size-indication-mode
+    (dolist (elt '(global-display-line-numbers-mode display-line-numbers-type
+		   line-number-mode column-number-mode size-indication-mode
 		   cua-mode show-paren-mode transient-mark-mode
 		   blink-cursor-mode display-time-mode display-battery-mode
 		   ;; These are set by other functions that don't set
@@ -2293,8 +2294,8 @@ It must accept a buffer as its only required argument.")
 (define-minor-mode menu-bar-mode
   "Toggle display of a menu bar on each frame (Menu Bar mode).
 With a prefix argument ARG, enable Menu Bar mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-Menu Bar mode if ARG is omitted or nil.
+positive, and disable it otherwise.  If called from Lisp, also
+enable Menu Bar mode if ARG is omitted or nil.
 
 This command applies to all frames that exist and frames to be
 created in the future."

@@ -54,3 +54,15 @@
         ;; ensure widen is called
         (widen)
         (should (string= (buffer-string) ""))))))
+
+(ert-deftest test-buffer-list-for-frame-is-unique ()
+  (get-buffer-create "foo")
+  (get-buffer-create "bar")
+  (get-buffer-create "baz")
+  (let ((the-buffers (buffer-list (selected-frame))))
+    (should (equal (delq nil (delete-dups the-buffers))
+                   the-buffers))))
+
+(provide 'buffers-tests)
+
+;;; buffers-tests.el ends here

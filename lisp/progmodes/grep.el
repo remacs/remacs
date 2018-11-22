@@ -1,6 +1,6 @@
 ;;; grep.el --- run `grep' and display the results  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1987, 1993-1999, 2001-2017 Free Software
+;; Copyright (C) 1985-1987, 1993-1999, 2001-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Roland McGrath <roland@gnu.org>
@@ -162,6 +162,7 @@ Customize or call the function `grep-apply-setting'."
 (defcustom grep-use-null-filename-separator 'auto-detect
   "If non-nil, use `grep's `--null' option.
 This is done to disambiguate file names in `grep's output."
+  :version "26.1"
   :type '(choice (const :tag "Do Not Use `--null'" nil)
                  (const :tag "Use `--null'" t)
                  (other :tag "Not Set" auto-detect))
@@ -904,7 +905,9 @@ substitution string.  Note dynamic scoping of variables.")
 
 (defun grep-read-files (regexp)
   "Read a file-name pattern arg for interactive grep.
-The pattern can include shell wildcards."
+The pattern can include shell wildcards.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'."
   (let* ((bn (or (buffer-file-name)
 		 (replace-regexp-in-string "<[0-9]+>\\'" "" (buffer-name))))
 	 (fn (and bn
@@ -954,7 +957,9 @@ The pattern can include shell wildcards."
   "Run grep, searching for REGEXP in FILES in directory DIR.
 The search is limited to file names matching shell pattern FILES.
 FILES may use abbreviations defined in `grep-files-aliases', e.g.
-entering `ch' is equivalent to `*.[ch]'.
+entering `ch' is equivalent to `*.[ch]'.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'.
 
 With \\[universal-argument] prefix, you can edit the constructed shell command line
 before it is executed.
@@ -1032,7 +1037,9 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
   "Recursively grep for REGEXP in FILES in directory tree rooted at DIR.
 The search is limited to file names matching shell pattern FILES.
 FILES may use abbreviations defined in `grep-files-aliases', e.g.
-entering `ch' is equivalent to `*.[ch]'.
+entering `ch' is equivalent to `*.[ch]'.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'.
 
 With \\[universal-argument] prefix, you can edit the constructed shell command line
 before it is executed.

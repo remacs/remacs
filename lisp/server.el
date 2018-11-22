@@ -1,6 +1,6 @@
 ;;; server.el --- Lisp code for GNU Emacs running as server process -*- lexical-binding: t -*-
 
-;; Copyright (C) 1986-1987, 1992, 1994-2017 Free Software Foundation,
+;; Copyright (C) 1986-1987, 1992, 1994-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: William Sommerfeld <wesommer@athena.mit.edu>
@@ -527,8 +527,10 @@ Creates the directory if necessary and makes sure:
 	   (w32 (eq system-type 'windows-nt))
            (unsafe (cond
                     ((not (eq t (car attrs)))
-                     (format "it is a %s" (if (stringp (car attrs))
-                                              "symlink" "file")))
+                     (if (null attrs) "its attributes can't be checked"
+                       (format "it is a %s"
+                               (if (stringp (car attrs))
+                                   "symlink" "file"))))
                     ((and w32 (zerop uid)) ; on FAT32?
                      (display-warning
                       'server

@@ -915,7 +915,7 @@ This variable is set by `nnmaildir-request-article'.")
 	    (setq dirs (funcall srv-ls srv-dir nil "\\`[^.]" 'nosort)
 		  dirs (if (zerop (length target-prefix))
 			   dirs
-			 (gnus-remove-if
+			 (seq-remove
 			  (lambda (dir)
 			    (and (>= (length dir) (length target-prefix))
 				 (string= (substring dir 0

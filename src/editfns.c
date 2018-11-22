@@ -1,6 +1,6 @@
 /* Lisp functions pertaining to editing.                 -*- coding: utf-8 -*-
 
-Copyright (C) 1985-1987, 1989, 1993-2017 Free Software Foundation, Inc.
+Copyright (C) 1985-1987, 1989, 1993-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -56,6 +56,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "composite.h"
 #include "intervals.h"
+#include "ptr-bounds.h"
 #include "character.h"
 #include "buffer.h"
 #include "coding.h"
@@ -73,8 +74,9 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 				       Lisp_Object, struct tm *);
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
-static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
-static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
+void update_buffer_properties (ptrdiff_t, ptrdiff_t);
+
+void find_field (Lisp_Object, Lisp_Object, Lisp_Object, ptrdiff_t *, Lisp_Object, ptrdiff_t *);
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -457,191 +459,7 @@ at POSITION.  */)
     }
 }
 
-/* Find the field surrounding POS in *BEG and *END.  If POS is nil,
-   the value of point is used instead.  If BEG or END is null,
-   means don't store the beginning or end of the field.
-
-   BEG_LIMIT and END_LIMIT serve to limit the ranged of the returned
-   results; they do not effect boundary behavior.
-
-   If MERGE_AT_BOUNDARY is non-nil, then if POS is at the very first
-   position of a field, then the beginning of the previous field is
-   returned instead of the beginning of POS's field (since the end of a
-   field is actually also the beginning of the next input field, this
-   behavior is sometimes useful).  Additionally in the MERGE_AT_BOUNDARY
-   non-nil case, if two fields are separated by a field with the special
-   value `boundary', and POS lies within it, then the two separated
-   fields are considered to be adjacent, and POS between them, when
-   finding the beginning and ending of the "merged" field.
-
-   Either BEG or END may be 0, in which case the corresponding value
-   is not stored.  */
-
-void
-find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
-	    Lisp_Object beg_limit,
-	    ptrdiff_t *beg, Lisp_Object end_limit, ptrdiff_t *end)
-{
-  /* Fields right before and after the point.  */
-  Lisp_Object before_field, after_field;
-  /* True if POS counts as the start of a field.  */
-  bool at_field_start = 0;
-  /* True if POS counts as the end of a field.  */
-  bool at_field_end = 0;
-
-  if (NILP (pos))
-    XSETFASTINT (pos, PT);
-  else
-    CHECK_NUMBER_COERCE_MARKER (pos);
-
-  after_field
-    = get_char_property_and_overlay (pos, Qfield, Qnil, NULL);
-  before_field
-    = (XFASTINT (pos) > BEGV
-       ? get_char_property_and_overlay (make_number (XINT (pos) - 1),
-					Qfield, Qnil, NULL)
-       /* Using nil here would be a more obvious choice, but it would
-          fail when the buffer starts with a non-sticky field.  */
-       : after_field);
-
-  /* See if we need to handle the case where MERGE_AT_BOUNDARY is nil
-     and POS is at beginning of a field, which can also be interpreted
-     as the end of the previous field.  Note that the case where if
-     MERGE_AT_BOUNDARY is non-nil (see function comment) is actually the
-     more natural one; then we avoid treating the beginning of a field
-     specially.  */
-  if (NILP (merge_at_boundary))
-    {
-      Lisp_Object field = Fget_pos_property (pos, Qfield, Qnil);
-      if (!EQ (field, after_field))
-	at_field_end = 1;
-      if (!EQ (field, before_field))
-	at_field_start = 1;
-      if (NILP (field) && at_field_start && at_field_end)
-	/* If an inserted char would have a nil field while the surrounding
-	   text is non-nil, we're probably not looking at a
-	   zero-length field, but instead at a non-nil field that's
-	   not intended for editing (such as comint's prompts).  */
-	at_field_end = at_field_start = 0;
-    }
-
-  /* Note about special `boundary' fields:
-
-     Consider the case where the point (`.') is between the fields `x' and `y':
-
-	xxxx.yyyy
-
-     In this situation, if merge_at_boundary is non-nil, consider the
-     `x' and `y' fields as forming one big merged field, and so the end
-     of the field is the end of `y'.
-
-     However, if `x' and `y' are separated by a special `boundary' field
-     (a field with a `field' char-property of 'boundary), then ignore
-     this special field when merging adjacent fields.  Here's the same
-     situation, but with a `boundary' field between the `x' and `y' fields:
-
-	xxx.BBBByyyy
-
-     Here, if point is at the end of `x', the beginning of `y', or
-     anywhere in-between (within the `boundary' field), merge all
-     three fields and consider the beginning as being the beginning of
-     the `x' field, and the end as being the end of the `y' field.  */
-
-  if (beg)
-    {
-      if (at_field_start)
-	/* POS is at the edge of a field, and we should consider it as
-	   the beginning of the following field.  */
-	*beg = XFASTINT (pos);
-      else
-	/* Find the previous field boundary.  */
-	{
-	  Lisp_Object p = pos;
-	  if (!NILP (merge_at_boundary) && EQ (before_field, Qboundary))
-	    /* Skip a `boundary' field.  */
-	    p = Fprevious_single_char_property_change (p, Qfield, Qnil,
-						       beg_limit);
-
-	  p = Fprevious_single_char_property_change (p, Qfield, Qnil,
-						     beg_limit);
-	  *beg = NILP (p) ? BEGV : XFASTINT (p);
-	}
-    }
-
-  if (end)
-    {
-      if (at_field_end)
-	/* POS is at the edge of a field, and we should consider it as
-	   the end of the previous field.  */
-	*end = XFASTINT (pos);
-      else
-	/* Find the next field boundary.  */
-	{
-	  if (!NILP (merge_at_boundary) && EQ (after_field, Qboundary))
-	    /* Skip a `boundary' field.  */
-	    pos = Fnext_single_char_property_change (pos, Qfield, Qnil,
-						     end_limit);
-
-	  pos = Fnext_single_char_property_change (pos, Qfield, Qnil,
-						   end_limit);
-	  *end = NILP (pos) ? ZV : XFASTINT (pos);
-	}
-    }
-}
-
 
-DEFUN ("delete-field", Fdelete_field, Sdelete_field, 0, 1, 0,
-       doc: /* Delete the field surrounding POS.
-A field is a region of text with the same `field' property.
-If POS is nil, the value of point is used for POS.  */)
-  (Lisp_Object pos)
-{
-  ptrdiff_t beg, end;
-  find_field (pos, Qnil, Qnil, &beg, Qnil, &end);
-  if (beg != end)
-    del_range (beg, end);
-  return Qnil;
-}
-
-DEFUN ("field-string", Ffield_string, Sfield_string, 0, 1, 0,
-       doc: /* Return the contents of the field surrounding POS as a string.
-A field is a region of text with the same `field' property.
-If POS is nil, the value of point is used for POS.  */)
-  (Lisp_Object pos)
-{
-  ptrdiff_t beg, end;
-  find_field (pos, Qnil, Qnil, &beg, Qnil, &end);
-  return make_buffer_string (beg, end, 1);
-}
-
-DEFUN ("field-string-no-properties", Ffield_string_no_properties, Sfield_string_no_properties, 0, 1, 0,
-       doc: /* Return the contents of the field around POS, without text properties.
-A field is a region of text with the same `field' property.
-If POS is nil, the value of point is used for POS.  */)
-  (Lisp_Object pos)
-{
-  ptrdiff_t beg, end;
-  find_field (pos, Qnil, Qnil, &beg, Qnil, &end);
-  return make_buffer_string (beg, end, 0);
-}
-
-
-/* Save current buffer state for `save-excursion' special form.
-   We (ab)use Lisp_Misc_Save_Value to allow explicit free and so
-   offload some work from GC.  */
-
-Lisp_Object
-save_excursion_save (void)
-{
-  return make_save_obj_obj_obj_obj
-    (Fpoint_marker (),
-     Qnil,
-     /* Selected window if current buffer is shown in it, nil otherwise.  */
-     (EQ (XWINDOW (selected_window)->contents, Fcurrent_buffer ())
-      ? selected_window : Qnil),
-     Qnil);
-}
-
 /* Restore saved buffer before leaving `save-excursion' special form.  */
 
 void
@@ -678,43 +496,6 @@ save_excursion_restore (Lisp_Object info)
  out:
 
   free_misc (info);
-}
-
-DEFUN ("save-excursion", Fsave_excursion, Ssave_excursion, 0, UNEVALLED, 0,
-       doc: /* Save point, and current buffer; execute BODY; restore those things.
-Executes BODY just like `progn'.
-The values of point and the current buffer are restored
-even in case of abnormal exit (throw or error).
-
-If you only want to save the current buffer but not point,
-then just use `save-current-buffer', or even `with-current-buffer'.
-
-Before Emacs 25.1, `save-excursion' used to save the mark state.
-To save the marker state as well as the point and buffer, use
-`save-mark-and-excursion'.
-
-usage: (save-excursion &rest BODY)  */)
-  (Lisp_Object args)
-{
-  register Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_protect (save_excursion_restore, save_excursion_save ());
-
-  val = Fprogn (args);
-  return unbind_to (count, val);
-}
-
-DEFUN ("save-current-buffer", Fsave_current_buffer, Ssave_current_buffer, 0, UNEVALLED, 0,
-       doc: /* Record which buffer is current; execute BODY; make that buffer current.
-BODY is executed just like `progn'.
-usage: (save-current-buffer &rest BODY)  */)
-  (Lisp_Object args)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_current_buffer ();
-  return unbind_to (count, Fprogn (args));
 }
 
 DEFUN ("user-login-name", Fuser_login_name, Suser_login_name, 0, 1, 0,
@@ -1598,7 +1379,7 @@ emacs_setenv_TZ (const char *tzstring)
    type of object is Lisp_String).  INHERIT is passed to
    INSERT_FROM_STRING_FUNC as the last argument.  */
 
-static void
+void
 general_insert_function (void (*insert_func)
 			      (const char *, ptrdiff_t),
 			 void (*insert_from_string_func)
@@ -1822,7 +1603,7 @@ make_buffer_string_both (ptrdiff_t start, ptrdiff_t start_byte,
 /* Call Vbuffer_access_fontify_functions for the range START ... END
    in the current buffer, if necessary.  */
 
-static void
+void
 update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
 {
   /* If this buffer has some access functions,
@@ -1844,108 +1625,6 @@ update_buffer_properties (ptrdiff_t start, ptrdiff_t end)
       CALLN (Frun_hook_with_args, Qbuffer_access_fontify_functions,
 	     make_number (start), make_number (end));
     }
-}
-
-DEFUN ("buffer-substring", Fbuffer_substring, Sbuffer_substring, 2, 2, 0,
-       doc: /* Return the contents of part of the current buffer as a string.
-The two arguments START and END are character positions;
-they can be in either order.
-The string returned is multibyte if the buffer is multibyte.
-
-This function copies the text properties of that part of the buffer
-into the result string; if you don't want the text properties,
-use `buffer-substring-no-properties' instead.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  register ptrdiff_t b, e;
-
-  validate_region (&start, &end);
-  b = XINT (start);
-  e = XINT (end);
-
-  return make_buffer_string (b, e, 1);
-}
-
-DEFUN ("buffer-substring-no-properties", Fbuffer_substring_no_properties,
-       Sbuffer_substring_no_properties, 2, 2, 0,
-       doc: /* Return the characters of part of the buffer, without the text properties.
-The two arguments START and END are character positions;
-they can be in either order.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  register ptrdiff_t b, e;
-
-  validate_region (&start, &end);
-  b = XINT (start);
-  e = XINT (end);
-
-  return make_buffer_string (b, e, 0);
-}
-
-DEFUN ("buffer-string", Fbuffer_string, Sbuffer_string, 0, 0, 0,
-       doc: /* Return the contents of the current buffer as a string.
-If narrowing is in effect, this function returns only the visible part
-of the buffer.  */)
-  (void)
-{
-  return make_buffer_string_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, 1);
-}
-
-DEFUN ("insert-buffer-substring", Finsert_buffer_substring, Sinsert_buffer_substring,
-       1, 3, 0,
-       doc: /* Insert before point a substring of the contents of BUFFER.
-BUFFER may be a buffer or a buffer name.
-Arguments START and END are character positions specifying the substring.
-They default to the values of (point-min) and (point-max) in BUFFER.
-
-Point and before-insertion markers move forward to end up after the
-inserted text.
-Any other markers at the point of insertion remain before the text.
-
-If the current buffer is multibyte and BUFFER is unibyte, or vice
-versa, strings are converted from unibyte to multibyte or vice versa
-using `string-make-multibyte' or `string-make-unibyte', which see.  */)
-  (Lisp_Object buffer, Lisp_Object start, Lisp_Object end)
-{
-  register EMACS_INT b, e, temp;
-  register struct buffer *bp, *obuf;
-  Lisp_Object buf;
-
-  buf = Fget_buffer (buffer);
-  if (NILP (buf))
-    nsberror (buffer);
-  bp = XBUFFER (buf);
-  if (!BUFFER_LIVE_P (bp))
-    error ("Selecting deleted buffer");
-
-  if (NILP (start))
-    b = BUF_BEGV (bp);
-  else
-    {
-      CHECK_NUMBER_COERCE_MARKER (start);
-      b = XINT (start);
-    }
-  if (NILP (end))
-    e = BUF_ZV (bp);
-  else
-    {
-      CHECK_NUMBER_COERCE_MARKER (end);
-      e = XINT (end);
-    }
-
-  if (b > e)
-    temp = b, b = e, e = temp;
-
-  if (!(BUF_BEGV (bp) <= b && e <= BUF_ZV (bp)))
-    args_out_of_range (start, end);
-
-  obuf = current_buffer;
-  set_buffer_internal_1 (bp);
-  update_buffer_properties (b, e);
-  set_buffer_internal_1 (obuf);
-
-  insert_from_buffer (bp, b, e - b, 0);
-  return Qnil;
 }
 
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
@@ -2718,7 +2397,7 @@ It returns the number of characters changed.  */)
 		}
 	      else
 		{
-		  string = Fmake_string (make_number (1), val);
+		  string = Fmake_string (make_number (1), val, Qnil);
 		}
 	      replace_range (pos, pos + len, string, 1, 0, 1, 0);
 	      pos_byte += SBYTES (string);
@@ -2735,27 +2414,6 @@ It returns the number of characters changed.  */)
   return make_number (cnt);
 }
 
-DEFUN ("delete-region", Fdelete_region, Sdelete_region, 2, 2, "r",
-       doc: /* Delete the text between START and END.
-If called interactively, delete the region between point and mark.
-This command deletes buffer text without modifying the kill ring.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  validate_region (&start, &end);
-  del_range (XINT (start), XINT (end));
-  return Qnil;
-}
-
-DEFUN ("delete-and-extract-region", Fdelete_and_extract_region,
-       Sdelete_and_extract_region, 2, 2, 0,
-       doc: /* Delete the text between START and END and return it.  */)
-  (Lisp_Object start, Lisp_Object end)
-{
-  validate_region (&start, &end);
-  if (XINT (start) == XINT (end))
-    return empty_unibyte_string;
-  return del_range_1 (XINT (start), XINT (end), 1, 1);
-}
 
 DEFUN ("widen", Fwiden, Swiden, 0, 0, "",
        doc: /* Remove restrictions (narrowing) from current buffer.
@@ -2901,128 +2559,7 @@ save_restriction_restore (Lisp_Object data)
   if (cur)
     set_buffer_internal (cur);
 }
-
-DEFUN ("save-restriction", Fsave_restriction, Ssave_restriction, 0, UNEVALLED, 0,
-       doc: /* Execute BODY, saving and restoring current buffer's restrictions.
-The buffer's restrictions make parts of the beginning and end invisible.
-\(They are set up with `narrow-to-region' and eliminated with `widen'.)
-This special form, `save-restriction', saves the current buffer's restrictions
-when it is entered, and restores them when it is exited.
-So any `narrow-to-region' within BODY lasts only until the end of the form.
-The old restrictions settings are restored
-even in case of abnormal exit (throw or error).
-
-The value returned is the value of the last form in BODY.
-
-Note: if you are using both `save-excursion' and `save-restriction',
-use `save-excursion' outermost:
-    (save-excursion (save-restriction ...))
-
-usage: (save-restriction &rest BODY)  */)
-  (Lisp_Object body)
-{
-  register Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_protect (save_restriction_restore, save_restriction_save ());
-  val = Fprogn (body);
-  return unbind_to (count, val);
-}
 
-DEFUN ("message", Fmessage, Smessage, 1, MANY, 0,
-       doc: /* Display a message at the bottom of the screen.
-The message also goes into the `*Messages*' buffer, if `message-log-max'
-is non-nil.  (In keyboard macros, that's all it does.)
-Return the message.
-
-In batch mode, the message is printed to the standard error stream,
-followed by a newline.
-
-The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  Percent sign (%), grave
-accent (\\=`) and apostrophe (\\=') are special in the format; see
-`format-message' for details.  To display STRING without special
-treatment, use (message "%s" STRING).
-
-If the first argument is nil or the empty string, the function clears
-any existing message; this lets the minibuffer contents show.  See
-also `current-message'.
-
-usage: (message FORMAT-STRING &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  if (NILP (args[0])
-      || (STRINGP (args[0])
-	  && SBYTES (args[0]) == 0))
-    {
-      message1 (0);
-      return args[0];
-    }
-  else
-    {
-      Lisp_Object val = Fformat_message (nargs, args);
-      message3 (val);
-      return val;
-    }
-}
-
-DEFUN ("message-box", Fmessage_box, Smessage_box, 1, MANY, 0,
-       doc: /* Display a message, in a dialog box if possible.
-If a dialog box is not available, use the echo area.
-The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format-message' for
-details.
-
-If the first argument is nil or the empty string, clear any existing
-message; let the minibuffer contents show.
-
-usage: (message-box FORMAT-STRING &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  if (NILP (args[0]))
-    {
-      message1 (0);
-      return Qnil;
-    }
-  else
-    {
-      Lisp_Object val = Fformat_message (nargs, args);
-      Lisp_Object pane, menu;
-
-      pane = list1 (Fcons (build_string ("OK"), Qt));
-      menu = Fcons (val, pane);
-      Fx_popup_dialog (Qt, menu, Qt);
-      return val;
-    }
-}
-
-DEFUN ("message-or-box", Fmessage_or_box, Smessage_or_box, 1, MANY, 0,
-       doc: /* Display a message in a dialog box or in the echo area.
-If this command was invoked with the mouse, use a dialog box if
-`use-dialog-box' is non-nil.
-Otherwise, use the echo area.
-The first argument is a format control string, and the rest are data
-to be formatted under control of the string.  See `format-message' for
-details.
-
-If the first argument is nil or the empty string, clear any existing
-message; let the minibuffer contents show.
-
-usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
-      && use_dialog_box)
-    return Fmessage_box (nargs, args);
-  return Fmessage (nargs, args);
-}
-
-DEFUN ("current-message", Fcurrent_message, Scurrent_message, 0, 0, 0,
-       doc: /* Return the string currently displayed in the echo area, or nil if none.  */)
-  (void)
-{
-  return current_message ();
-}
 
 /* Convert the prefix of STR from ASCII decimal digits to a number.
    Set *STR_END to the address of the first non-digit.  Return the
@@ -3041,98 +2578,9 @@ str2num (char *str, char **str_end)
   return n;
 }
 
-DEFUN ("format", Fformat, Sformat, 1, MANY, 0,
-       doc: /* Format a string out of a format-string and arguments.
-The first argument is a format control string.
-The other arguments are substituted into it to make the result, a string.
-
-The format control string may contain %-sequences meaning to substitute
-the next available argument, or the argument explicitly specified:
-
-%s means print a string argument.  Actually, prints any object, with `princ'.
-%d means print as signed number in decimal.
-%o means print as unsigned number in octal, %x as unsigned number in hex.
-%X is like %x, but uses upper case.
-%e means print a number in exponential notation.
-%f means print a number in decimal-point notation.
-%g means print a number in exponential notation if the exponent would be
-   less than -4 or greater than or equal to the precision (default: 6);
-   otherwise it prints in decimal-point notation.
-%c means print a number as a single character.
-%S means print any object as an s-expression (using `prin1').
-
-The argument used for %d, %o, %x, %e, %f, %g or %c must be a number.
-Use %% to put a single % into the output.
-
-A %-sequence other than %% may contain optional field number, flag,
-width, and precision specifiers, as follows:
-
-  %<field><flags><width><precision>character
-
-where field is [0-9]+ followed by a literal dollar "$", flags is
-[+ #-0]+, width is [0-9]+, and precision is a literal period "."
-followed by [0-9]+.
-
-If a %-sequence is numbered with a field with positive value N, the
-Nth argument is substituted instead of the next one.  A format can
-contain either numbered or unnumbered %-sequences but not both, except
-that %% can be mixed with numbered %-sequences.
-
-The + flag character inserts a + before any positive number, while a
-space inserts a space before any positive number; these flags only
-affect %d, %e, %f, and %g sequences, and the + flag takes precedence.
-The - and 0 flags affect the width specifier, as described below.
-
-The # flag means to use an alternate display form for %o, %x, %X, %e,
-%f, and %g sequences: for %o, it ensures that the result begins with
-\"0\"; for %x and %X, it prefixes the result with \"0x\" or \"0X\";
-for %e and %f, it causes a decimal point to be included even if the
-the precision is zero; for %g, it causes a decimal point to be
-included even if the the precision is zero, and also forces trailing
-zeros after the decimal point to be left in place.
-
-The width specifier supplies a lower limit for the length of the
-printed representation.  The padding, if any, normally goes on the
-left, but it goes on the right if the - flag is present.  The padding
-character is normally a space, but it is 0 if the 0 flag is present.
-The 0 flag is ignored if the - flag is present, or the format sequence
-is something other than %d, %e, %f, and %g.
-
-For %e and %f sequences, the number after the "." in the precision
-specifier says how many decimal places to show; if zero, the decimal
-point itself is omitted.  For %g, the precision specifies how many
-significant digits to print; zero or omitted are treated as 1.
-For %s and %S, the precision specifier truncates the string to the
-given width.
-
-Text properties, if any, are copied from the format-string to the
-produced text.
-
-usage: (format STRING &rest OBJECTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return styled_format (nargs, args, false);
-}
-
-DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
-       doc: /* Format a string out of a format-string and arguments.
-The first argument is a format control string.
-The other arguments are substituted into it to make the result, a string.
-
-This acts like `format', except it also replaces each grave accent (\\=`)
-by a left quote, and each apostrophe (\\=') by a right quote.  The left
-and right quote replacement characters are specified by
-`text-quoting-style'.
-
-usage: (format-message STRING &rest OBJECTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return styled_format (nargs, args, true);
-}
-
 /* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
 
-static Lisp_Object
+Lisp_Object
 styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 {
   ptrdiff_t n;		/* The number of the next arg to substitute.  */
@@ -3177,9 +2625,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   ptrdiff_t nspec_bound = SCHARS (args[0]) >> 1;
 
   /* Allocate the info and discarded tables.  */
-  ptrdiff_t alloca_size;
-  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &alloca_size)
-      || INT_ADD_WRAPV (formatlen, alloca_size, &alloca_size)
+  ptrdiff_t info_size, alloca_size;
+  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &info_size)
+      || INT_ADD_WRAPV (formatlen, info_size, &alloca_size)
       || SIZE_MAX < alloca_size)
     memory_full (SIZE_MAX);
   info = SAFE_ALLOCA (alloca_size);
@@ -3187,6 +2635,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
      string was not copied into the output.
      It is 2 if byte I was not the first byte of its character.  */
   char *discarded = (char *) &info[nspec_bound];
+  info = ptr_bounds_clip (info, info_size);
+  discarded = ptr_bounds_clip (discarded, formatlen);
   memset (discarded, 0, formatlen);
 
   /* Try to determine whether the result should be multibyte.
@@ -3592,6 +3042,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  /* Don't use sprintf here, as it might mishandle prec.  */
 		  sprintf_buf[0] = XINT (arg);
 		  sprintf_bytes = prec != 0;
+		  sprintf_buf[sprintf_bytes] = '\0';
 		}
 	      else if (conversion == 'd' || conversion == 'i')
 		{
@@ -3691,11 +3142,19 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  char src0 = src[0];
 		  int exponent_bytes = 0;
 		  bool signedp = src0 == '-' || src0 == '+' || src0 == ' ';
-		  unsigned char after_sign = src[signedp];
-		  if (zero_flag && 0 <= char_hexdigit (after_sign))
+		  int prefix_bytes = (signedp
+				      + ((src[signedp] == '0'
+					  && (src[signedp + 1] == 'x'
+					      || src[signedp + 1] == 'X'))
+					 ? 2 : 0));
+		  if (zero_flag)
 		    {
-		      leading_zeros += padding;
-		      padding = 0;
+		      unsigned char after_prefix = src[prefix_bytes];
+		      if (0 <= char_hexdigit (after_prefix))
+			{
+			  leading_zeros += padding;
+			  padding = 0;
+			}
 		    }
 
 		  if (excess_precision
@@ -3714,13 +3173,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      nchars += padding;
 		    }
 
-		  *p = src0;
-		  src += signedp;
-		  p += signedp;
+		  memcpy (p, src, prefix_bytes);
+		  p += prefix_bytes;
+		  src += prefix_bytes;
 		  memset (p, '0', leading_zeros);
 		  p += leading_zeros;
 		  int significand_bytes
-		    = sprintf_bytes - signedp - exponent_bytes;
+		    = sprintf_bytes - prefix_bytes - exponent_bytes;
 		  memcpy (p, src, significand_bytes);
                   p += significand_bytes;
 		  src += significand_bytes;
@@ -3888,7 +3347,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else if (discarded[bytepos] == 1)
 		    {
 		      position++;
-		      if (translated == info[fieldn].start)
+		      if (fieldn < nspec && translated == info[fieldn].start)
 			{
 			  translated += info[fieldn].end - info[fieldn].start;
 			  fieldn++;
@@ -3908,7 +3367,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else if (discarded[bytepos] == 1)
 		    {
 		      position++;
-		      if (translated == info[fieldn].start)
+		      if (fieldn < nspec && translated == info[fieldn].start)
 			{
 			  translated += info[fieldn].end - info[fieldn].start;
 			  fieldn++;
@@ -4213,8 +3672,7 @@ Transposing beyond buffer boundaries is an error.  */)
         {
 	  USE_SAFE_ALLOCA;
 
-          modify_text (start1, end1);
-          modify_text (start2, end2);
+          modify_text (start1, end2);
           record_change (start1, len1);
           record_change (start2, len2);
           tmp_interval1 = copy_intervals (cur_intv, start1, len1);
@@ -4387,9 +3845,6 @@ functions if all the text being accessed has this property.  */);
   DEFVAR_LISP ("operating-system-release", Voperating_system_release,
 	       doc: /* The release of the operating system Emacs is running on.  */);
 
-  defsubr (&Sbuffer_substring);
-  defsubr (&Sbuffer_substring_no_properties);
-  defsubr (&Sbuffer_string);
   defsubr (&Sget_pos_property);
 
   /* Symbol for the text property used to mark fields.  */
@@ -4397,13 +3852,6 @@ functions if all the text being accessed has this property.  */);
 
   /* A special value for Qfield properties.  */
   DEFSYM (Qboundary, "boundary");
-
-  defsubr (&Sfield_string);
-  defsubr (&Sfield_string_no_properties);
-  defsubr (&Sdelete_field);
-
-  defsubr (&Ssave_excursion);
-  defsubr (&Ssave_current_buffer);
 
   defsubr (&Sinsert);
   defsubr (&Sinsert_before_markers);
@@ -4424,22 +3872,12 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Scurrent_time_zone);
   defsubr (&Sset_time_zone_rule);
   defsubr (&Ssystem_name);
-  defsubr (&Smessage);
-  defsubr (&Smessage_box);
-  defsubr (&Smessage_or_box);
-  defsubr (&Scurrent_message);
-  defsubr (&Sformat);
-  defsubr (&Sformat_message);
 
-  defsubr (&Sinsert_buffer_substring);
   defsubr (&Scompare_buffer_substrings);
   defsubr (&Sreplace_buffer_contents);
   defsubr (&Ssubst_char_in_region);
   defsubr (&Stranslate_region_internal);
-  defsubr (&Sdelete_region);
-  defsubr (&Sdelete_and_extract_region);
   defsubr (&Swiden);
   defsubr (&Snarrow_to_region);
-  defsubr (&Ssave_restriction);
   defsubr (&Stranspose_regions);
 }

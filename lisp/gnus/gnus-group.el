@@ -1,6 +1,6 @@
 ;;; gnus-group.el --- group mode commands for Gnus
 
-;; Copyright (C) 1996-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -628,7 +628,7 @@ simple manner."
   "\M-e" gnus-group-edit-group-method
   "^" gnus-group-enter-server-mode
   [mouse-2] gnus-mouse-pick-group
-  [follow-link] 'mouse-face
+  [follow-link] mouse-face
   "<" beginning-of-buffer
   ">" end-of-buffer
   "\C-c\C-b" gnus-bug
@@ -1359,6 +1359,8 @@ if it is a string, only list groups matching REGEXP."
 		       (and gnus-permanently-visible-groups
 			    (string-match gnus-permanently-visible-groups
 					  group))
+		       ;; Marked groups are always visible.
+		       (member group gnus-group-marked)
 		       (memq 'visible params)
 		       (cdr (assq 'visible params)))))))
 	  (gnus-group-insert-group-line
@@ -2998,7 +3000,7 @@ and NEW-NAME will be prompted for."
     ;; Set the info.
     (if (not (and info new-group))
 	(gnus-group-set-info form (or new-group group) part)
-      (setq info (gnus-copy-sequence info))
+      (setq info (copy-tree info))
       (setcar info new-group)
       (unless (gnus-server-equal method "native")
 	(unless (nthcdr 3 info)
@@ -3021,7 +3023,7 @@ and NEW-NAME will be prompted for."
 	   ;; Don't use `caddr' here since macros within the `interactive'
 	   ;; form won't be expanded.
 	   (car (cddr entry)))))
-  (setq method (gnus-copy-sequence method))
+  (setq method (copy-tree method))
   (let (entry)
     (while (setq entry (memq (assq 'eval method) method))
       (setcar entry (eval (cadar entry)))))

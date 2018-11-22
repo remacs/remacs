@@ -1,5 +1,5 @@
 /* NeXT/Open/GNUstep and macOS Cocoa menu and toolbar module.
-   Copyright (C) 2007-2017 Free Software Foundation, Inc.
+   Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -1362,6 +1362,16 @@ update_frame_tool_bar (struct frame *f)
   r.size.width = tooltipDims.width;
   r.size.height = tooltipDims.height;
   [textField setFrame: r];
+}
+
+- (void) setBackgroundColor: (NSColor *)col
+{
+  [textField setBackgroundColor: col];
+}
+
+- (void) setForegroundColor: (NSColor *)col
+{
+  [textField setTextColor: col];
 }
 
 - (void) showAtX: (int)x Y: (int)y for: (int)seconds

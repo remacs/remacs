@@ -1,5 +1,5 @@
 /* GNU Emacs routines to deal with syntax tables; also word and list parsing.
-   Copyright (C) 1985, 1987, 1993-1995, 1997-1999, 2001-2017 Free
+   Copyright (C) 1985, 1987, 1993-1995, 1997-1999, 2001-2018 Free
    Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -598,6 +598,26 @@ find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
       && MODIFF == find_start_modiff)
     return find_start_value;
 
+  if (!NILP (Vcomment_use_syntax_ppss))
+    {
+      EMACS_INT modiffs = CHARS_MODIFF;
+      Lisp_Object ppss = call1 (Qsyntax_ppss, make_number (pos));
+      if (modiffs != CHARS_MODIFF)
+	error ("syntax-ppss modified the buffer!");
+      TEMP_SET_PT_BOTH (opoint, opoint_byte);
+      Lisp_Object boc = Fnth (make_number (8), ppss);
+      if (NUMBERP (boc))
+        {
+          find_start_value = XINT (boc);
+          find_start_value_byte = CHAR_TO_BYTE (find_start_value);
+        }
+      else
+        {
+          find_start_value = pos;
+          find_start_value_byte = pos_byte;
+        }
+      goto found;
+    }
   if (!open_paren_in_column_0_is_defun_start)
     {
       find_start_value = BEGV;
@@ -867,6 +887,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 	case Sopen:
 	  /* Assume a defun-start point is outside of strings.  */
 	  if (open_paren_in_column_0_is_defun_start
+              && NILP (Vcomment_use_syntax_ppss)
 	      && (from == stop
 		  || (temp_byte = dec_bytepos (from_byte),
 		      FETCH_CHAR (temp_byte) == '\n')))
@@ -970,48 +991,6 @@ Currently, any char-table counts as a syntax table.  */)
       && EQ (XCHAR_TABLE (object)->purpose, Qsyntax_table))
     return Qt;
   return Qnil;
-}
-
-static void
-check_syntax_table (Lisp_Object obj)
-{
-  CHECK_TYPE (CHAR_TABLE_P (obj) && EQ (XCHAR_TABLE (obj)->purpose, Qsyntax_table),
-	      Qsyntax_table_p, obj);
-}
-
-DEFUN ("standard-syntax-table", Fstandard_syntax_table,
-   Sstandard_syntax_table, 0, 0, 0,
-       doc: /* Return the standard syntax table.
-This is the one used for new buffers.  */)
-  (void)
-{
-  return Vstandard_syntax_table;
-}
-
-DEFUN ("copy-syntax-table", Fcopy_syntax_table, Scopy_syntax_table, 0, 1, 0,
-       doc: /* Construct a new syntax table and return it.
-It is a copy of the TABLE, which defaults to the standard syntax table.  */)
-  (Lisp_Object table)
-{
-  Lisp_Object copy;
-
-  if (!NILP (table))
-    check_syntax_table (table);
-  else
-    table = Vstandard_syntax_table;
-
-  copy = Fcopy_sequence (table);
-
-  /* Only the standard syntax table should have a default element.
-     Other syntax tables should inherit from parents instead.  */
-  set_char_table_defalt (copy, Qnil);
-
-  /* Copied syntax tables should all have parents.
-     If we copied one with no parent, such as the standard syntax table,
-     use the standard syntax table as the copy's parent.  */
-  if (NILP (XCHAR_TABLE (copy)->parent))
-    Fset_char_table_parent (copy, Vstandard_syntax_table);
-  return copy;
 }
 
 /* Convert a letter which signifies a syntax code
@@ -3632,6 +3611,11 @@ void
 syms_of_syntax (void)
 {
   DEFSYM (Qsyntax_table_p, "syntax-table-p");
+  DEFSYM (Qsyntax_ppss, "syntax-ppss");
+  DEFVAR_LISP ("comment-use-syntax-ppss",
+	       Vcomment_use_syntax_ppss,
+	       doc: /* Non-nil means `forward-comment' can use `syntax-ppss' internally.  */);
+  Vcomment_use_syntax_ppss = Qt;
 
   staticpro (&Vsyntax_code_object);
 
@@ -3703,8 +3687,6 @@ In both cases, LIMIT bounds the search. */);
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
 
   defsubr (&Ssyntax_table_p);
-  defsubr (&Sstandard_syntax_table);
-  defsubr (&Scopy_syntax_table);
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);
   defsubr (&Sstring_to_syntax);

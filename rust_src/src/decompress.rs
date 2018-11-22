@@ -3,14 +3,18 @@ use std::cmp::min;
 use std::io::prelude::Read;
 use std::slice;
 
-use buffers::validate_region;
 use flate2::read::{DeflateDecoder, GzDecoder, ZlibDecoder};
-use lisp::defsubr;
-use lisp::LispObject;
 use remacs_macros::lisp_fn;
-use remacs_sys::{buf_charpos_to_bytepos, del_range, insert_from_gap, make_gap, maybe_quit,
-                 move_gap_both};
-use threads::ThreadState;
+
+use crate::{
+    buffers::validate_region,
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::{
+        buf_charpos_to_bytepos, del_range, insert_from_gap, make_gap, maybe_quit, move_gap_both,
+    },
+    threads::ThreadState,
+};
 
 /// Return t if zlib decompression is available in this instance of Emacs.
 #[lisp_fn]

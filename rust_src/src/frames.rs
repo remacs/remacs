@@ -1,13 +1,15 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{frame_dimension, output_method, Fcons, Fselect_window};
-use remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type};
-use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx};
 
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use windows::{selected_window, LispWindowRef};
+use crate::{
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method},
+    remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
+    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    windows::{select_window_lisp, selected_window, LispWindowRef},
+};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -27,6 +29,10 @@ impl LispFrameRef {
 
     pub fn is_visible(self) -> bool {
         self.visible() != 0
+    }
+
+    pub fn total_fringe_width(self) -> i32 {
+        self.left_fringe_width + self.right_fringe_width
     }
 }
 
@@ -58,6 +64,7 @@ impl LispObject {
         self.as_vectorlike().and_then(|v| v.as_frame())
     }
 
+    // Same as CHECK_FRAME
     pub fn as_frame_or_error(self) -> LispFrameRef {
         self.as_frame()
             .unwrap_or_else(|| wrong_type!(Qframep, self))
@@ -68,37 +75,58 @@ impl LispObject {
             .and_then(|f| if f.is_live() { Some(f) } else { None })
     }
 
+    // Same as CHECK_LIVE_FRAME
     pub fn as_live_frame_or_error(self) -> LispFrameRef {
         self.as_live_frame()
             .unwrap_or_else(|| wrong_type!(Qframe_live_p, self))
     }
 }
 
-/// Same as the `decode_any_frame` function
-pub fn frame_or_selected(object: LispObject) -> LispFrameRef {
-    let frame = if object.is_nil() {
-        selected_frame()
-    } else {
-        object
-    };
-
-    frame.as_frame_or_error()
+#[derive(Clone, Copy)]
+pub enum LispFrameOrSelected {
+    Frame(LispFrameRef),
+    Selected,
 }
 
-/// Same as the `decode_live_frame` function
-pub fn frame_live_or_selected(object: LispObject) -> LispFrameRef {
-    let frame = frame_or_selected(object);
-
-    if !frame.is_live() {
-        wrong_type!(Qframe_live_p, object);
+impl From<LispObject> for LispFrameOrSelected {
+    fn from(obj: LispObject) -> LispFrameOrSelected {
+        obj.map_or(LispFrameOrSelected::Selected, |o| {
+            LispFrameOrSelected::Frame(o.as_frame_or_error())
+        })
     }
+}
 
-    frame
+impl From<LispFrameOrSelected> for LispObject {
+    fn from(frame: LispFrameOrSelected) -> LispObject {
+        LispFrameRef::from(frame).into()
+    }
+}
+
+impl From<LispFrameOrSelected> for LispFrameRef {
+    fn from(frame: LispFrameOrSelected) -> LispFrameRef {
+        match frame {
+            LispFrameOrSelected::Frame(f) => f,
+            LispFrameOrSelected::Selected => unsafe { current_frame }.as_frame_or_error(),
+        }
+    }
+}
+
+impl LispFrameOrSelected {
+    pub fn live_or_error(self) -> LispFrameRef {
+        let frame = LispFrameRef::from(self);
+        if frame.is_live() {
+            frame
+        } else {
+            wrong_type!(Qframe_live_p, self.into());
+        }
+    }
 }
 
 pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
+    // Cannot use LispFrameOrSelected because the selected frame is not
+    // checked for live.
     if object.is_nil() {
-        selected_frame().as_frame_or_error()
+        selected_frame()
     } else if let Some(win) = object.as_valid_window() {
         // the window's frame does not need a live check
         win.frame.as_frame_or_error()
@@ -129,61 +157,8 @@ pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
 
 /// Return the frame that is now selected.
 #[lisp_fn]
-pub fn selected_frame() -> LispObject {
-    unsafe { current_frame }
-}
-
-/// Return non-nil if OBJECT is a frame which has not been deleted.
-/// Value is nil if OBJECT is not a live frame.  If object is a live
-/// frame, the return value indicates what sort of terminal device it is
-/// displayed on.  See the documentation of `framep' for possible
-/// return values.
-#[lisp_fn]
-pub fn frame_live_p(object: LispObject) -> LispObject {
-    if let Some(frame) = object.as_frame() {
-        if frame.is_live() {
-            return framep_1(frame);
-        }
-    }
-
-    Qnil
-}
-
-/// Return the selected window of FRAME-OR-WINDOW.
-/// If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
-/// Else if FRAME-OR-WINDOW denotes a valid window, return the selected
-/// window of that window's frame.  If FRAME-OR-WINDOW denotes a live frame,
-/// return the selected window of that frame.
-#[lisp_fn(min = "0")]
-pub fn frame_selected_window(frame_or_window: LispObject) -> LispObject {
-    let frame = window_frame_live_or_selected(frame_or_window);
-    frame.selected_window
-}
-
-/// Set selected window of FRAME to WINDOW.
-/// FRAME must be a live frame and defaults to the selected one.  If FRAME
-/// is the selected frame, this makes WINDOW the selected window.  Optional
-/// argument NORECORD non-nil means to neither change the order of recently
-/// selected windows nor the buffer list.  WINDOW must denote a live window.
-/// Return WINDOW.
-#[lisp_fn(min = "2")]
-pub fn set_frame_selected_window(
-    frame: LispObject,
-    window: LispObject,
-    norecord: LispObject,
-) -> LispObject {
-    let mut frame_ref = frame_live_or_selected(frame);
-    let w = window.as_live_window_or_error();
-
-    if frame_ref != w.frame.as_frame().unwrap() {
-        error!("In `set-frame-selected-window', WINDOW is not on FRAME")
-    }
-    if frame_ref == selected_frame().as_frame().unwrap() {
-        unsafe { Fselect_window(window, norecord) }
-    } else {
-        frame_ref.selected_window = window;
-        window
-    }
+pub fn selected_frame() -> LispFrameRef {
+    unsafe { current_frame }.as_frame_or_error()
 }
 
 /// Return non-nil if OBJECT is a frame.
@@ -194,8 +169,18 @@ pub fn set_frame_selected_window(
 ///  `ns' for an Emacs frame on a GNUstep or Macintosh Cocoa display,
 /// See also `frame-live-p'.
 #[lisp_fn]
-pub fn framep(object: LispObject) -> LispObject {
-    object.as_frame().map_or(Qnil, framep_1)
+pub fn framep(frame: Option<LispFrameRef>) -> LispObject {
+    frame.map_or(Qnil, framep_1)
+}
+
+/// Return non-nil if OBJECT is a frame which has not been deleted.
+/// Value is nil if OBJECT is not a live frame.  If object is a live
+/// frame, the return value indicates what sort of terminal device it is
+/// displayed on.  See the documentation of `framep' for possible
+/// return values.
+#[lisp_fn]
+pub fn frame_live_p(frame: Option<LispFrameRef>) -> LispObject {
+    frame.map_or(Qnil, |f| if f.is_live() { framep_1(f) } else { Qnil })
 }
 
 fn framep_1(frame: LispFrameRef) -> LispObject {
@@ -205,6 +190,43 @@ fn framep_1(frame: LispFrameRef) -> LispObject {
         output_method::output_w32 => Qw32,
         output_method::output_msdos_raw => Qpc,
         output_method::output_ns => Qns,
+    }
+}
+
+/// Return the selected window of FRAME-OR-WINDOW.
+/// If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
+/// Else if FRAME-OR-WINDOW denotes a valid window, return the selected
+/// window of that window's frame.  If FRAME-OR-WINDOW denotes a live frame,
+/// return the selected window of that frame.
+#[lisp_fn(min = "0")]
+pub fn frame_selected_window(frame_or_window: LispObject) -> LispWindowRef {
+    let frame = window_frame_live_or_selected(frame_or_window);
+    frame.selected_window.as_window_or_error()
+}
+
+/// Set selected window of FRAME to WINDOW.
+/// FRAME must be a live frame and defaults to the selected one.  If FRAME
+/// is the selected frame, this makes WINDOW the selected window.  Optional
+/// argument NORECORD non-nil means to neither change the order of recently
+/// selected windows nor the buffer list.  WINDOW must denote a live window.
+/// Return WINDOW.
+#[lisp_fn(min = "2")]
+pub fn set_frame_selected_window(
+    frame: LispFrameOrSelected,
+    window: LispObject,
+    norecord: LispObject,
+) -> LispWindowRef {
+    let mut frame_ref = frame.live_or_error();
+    let w = window.as_live_window_or_error();
+
+    if frame_ref != w.frame.as_frame().unwrap() {
+        error!("In `set-frame-selected-window', WINDOW is not on FRAME")
+    }
+    if frame_ref == selected_frame() {
+        select_window_lisp(window, norecord).as_window_or_error()
+    } else {
+        frame_ref.selected_window = window;
+        window.as_window_or_error()
     }
 }
 
@@ -222,19 +244,14 @@ fn framep_1(frame: LispFrameRef) -> LispObject {
 /// use `display-graphic-p' or any of the other `display-*-p'
 /// predicates which report frame's specific UI-related capabilities.
 #[lisp_fn(min = "0")]
-pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
-    let frame = frame.unwrap_or_else(|| selected_frame().as_frame_or_error());
-
+pub fn window_system(frame: LispFrameOrSelected) -> LispObject {
+    let frame = frame.into();
     let window_system = framep_1(frame);
 
-    if window_system.is_nil() {
-        wrong_type!(Qframep, frame.into());
-    }
-
-    if window_system.is_t() {
-        Qnil
-    } else {
-        window_system
+    match window_system {
+        Qnil => wrong_type!(Qframep, frame.into()),
+        Qt => Qnil,
+        _ => window_system,
     }
 }
 
@@ -264,22 +281,20 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 /// FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
 /// display.
 #[lisp_fn(min = "0")]
-pub fn frame_position(frame: LispObject) -> LispObject {
-    let frame_ref = frame_live_or_selected(frame);
-    unsafe {
-        Fcons(
-            LispObject::from(frame_ref.left_pos),
-            LispObject::from(frame_ref.top_pos),
-        )
-    }
+pub fn frame_position(frame: LispFrameOrSelected) -> LispObject {
+    let frame_ref = frame.live_or_error();
+    LispObject::cons(
+        LispObject::from(frame_ref.left_pos),
+        LispObject::from(frame_ref.top_pos),
+    )
 }
 
 /// Returns t if the mouse pointer displayed on FRAME is visible.
 /// Otherwise it returns nil. FRAME omitted or nil means the selected frame.
 /// This is useful when `make-pointer-invisible` is set
 #[lisp_fn(min = "0")]
-pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
-    let frame_ref = frame_or_selected(frame);
+pub fn frame_pointer_visible_p(frame: LispFrameOrSelected) -> bool {
+    let frame_ref: LispFrameRef = frame.into();
     !frame_ref.pointer_invisible()
 }
 
@@ -312,38 +327,91 @@ pub fn frame_first_window(frame_or_window: LispObject) -> LispWindowRef {
 
 /// Return width in columns of FRAME's text area.
 #[lisp_fn(min = "0")]
-pub fn frame_text_cols(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).text_cols)
+pub fn frame_text_cols(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.text_cols
 }
 
 /// Return height in lines of FRAME's text area.
 #[lisp_fn(min = "0")]
-pub fn frame_text_lines(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).text_lines)
+pub fn frame_text_lines(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.text_lines
 }
 
 /// Return number of total columns of FRAME.
 #[lisp_fn(min = "0")]
-pub fn frame_total_cols(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).total_cols)
+pub fn frame_total_cols(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.total_cols
 }
 
 /// Return number of total lines of FRAME.
 #[lisp_fn(min = "0")]
-pub fn frame_total_lines(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).total_lines)
+pub fn frame_total_lines(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.total_lines
 }
 
 /// Return text area width of FRAME in pixels.
 #[lisp_fn(min = "0")]
-pub fn frame_text_width(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).text_width)
+pub fn frame_text_width(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.text_width
 }
 
 /// Return text area height of FRAME in pixels.
 #[lisp_fn(min = "0")]
-pub fn frame_text_height(frame: LispObject) -> LispObject {
-    LispObject::from(frame_or_selected(frame).text_height)
+pub fn frame_text_height(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.text_height
+}
+
+/// Return fringe width of FRAME in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_fringe_width(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.total_fringe_width()
+}
+
+/// Return width of FRAME's internal border in pixels.
+#[lisp_fn(min = "0")]
+pub fn frame_internal_border_width(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.internal_border_width()
+}
+
+/// Return width (in pixels) of vertical window dividers on FRAME.
+#[lisp_fn(min = "0")]
+pub fn frame_right_divider_width(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.right_divider_width
+}
+
+/// Return width (in pixels) of horizontal window dividers on FRAME.
+#[lisp_fn(min = "0")]
+pub fn frame_bottom_divider_width(frame: LispFrameOrSelected) -> i32 {
+    let frame: LispFrameRef = frame.into();
+    frame.bottom_divider_width
+}
+
+/// Delete FRAME, permanently eliminating it from use.
+///
+/// FRAME must be a live frame and defaults to the selected one.
+///
+/// A frame may not be deleted if its minibuffer serves as surrogate
+/// minibuffer for another frame.  Normally, you may not delete a frame if
+/// all other frames are invisible, but if the second optional argument
+/// FORCE is non-nil, you may do so.
+///
+/// This function runs `delete-frame-functions' before actually
+/// deleting the frame, unless the frame is a tooltip.
+/// The functions are run with one argument, the frame to be deleted.
+#[lisp_fn(min = "0", name = "delete-frame", c_name = "delete_frame")]
+pub fn delete_frame_lisp(frame: LispObject, force: bool) {
+    unsafe {
+        c_delete_frame(frame, force.into());
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

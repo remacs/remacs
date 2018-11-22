@@ -1,6 +1,6 @@
 ;;; quail.el --- provides simple input method for multilingual text
 
-;; Copyright (C) 1997-1998, 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997-1998, 2000-2018 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -1330,7 +1330,9 @@ If STR has `advice' text property, append the following special event:
 (defvar quail-conversion-str nil)
 
 (defun quail-input-method (key)
-  (if (or buffer-read-only
+  (if (or (and buffer-read-only
+	       (not (or inhibit-read-only
+			(get-char-property (point) 'inhibit-read-only))))
 	  (and overriding-terminal-local-map
                ;; If the overriding map is `universal-argument-map', that
                ;; must mean the user has pressed 'C-u KEY'.  If KEY has a
@@ -2513,7 +2515,7 @@ package to describe."
       (setq buffer-read-only nil)
       ;; Without this, a keyboard layout with R2L characters might be
       ;; displayed reversed, right to left.  See the thread starting at
-      ;; https://lists.gnu.org/archive/html/emacs-devel/2012-03/msg00062.html
+      ;; https://lists.gnu.org/r/emacs-devel/2012-03/msg00062.html
       ;; for a description of one such situation.
       (setq bidi-paragraph-direction 'left-to-right)
       (insert "Input method: " (quail-name)

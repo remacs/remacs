@@ -1,6 +1,6 @@
 ;;; cl-generic.el --- CLOS-style generic functions for Elisp  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Version: 1.0
@@ -206,7 +206,8 @@ DEFAULT-BODY, if present, is used as the body of a default method.
 \(fn NAME ARGS [DOC-STRING] [OPTIONS-AND-METHODS...] &rest DEFAULT-BODY)"
   (declare (indent 2) (doc-string 3)
            (debug
-            (&define name cl-lambda-list lambda-doc
+            (&define [&or name ("setf" name :name setf)] listp
+                     lambda-doc
                      [&rest [&or
                              ("declare" &rest sexp)
                              (":argument-precedence-order" &rest sexp)
@@ -807,22 +808,26 @@ methods.")
   ;; able to preload cl-generic without also preloading the byte-compiler,
   ;; So we use `eval-when-compile' so as not keep it available longer than
   ;; strictly needed.
-(defmacro cl--generic-prefill-dispatchers (arg-or-context specializer)
+(defmacro cl--generic-prefill-dispatchers (arg-or-context &rest specializers)
   (unless (integerp arg-or-context)
     (setq arg-or-context `(&context . ,arg-or-context)))
   (unless (fboundp 'cl--generic-get-dispatcher)
     (require 'cl-generic))
   (let ((fun (cl--generic-get-dispatcher
-              `(,arg-or-context ,@(cl-generic-generalizers specializer)
-                                ,cl--generic-t-generalizer))))
+              `(,arg-or-context
+                ,@(apply #'append
+                         (mapcar #'cl-generic-generalizers specializers))
+                ,cl--generic-t-generalizer))))
     ;; Recompute dispatch at run-time, since the generalizers may be slightly
     ;; different (e.g. byte-compiled rather than interpreted).
     ;; FIXME: There is a risk that the run-time generalizer is not equivalent
     ;; to the compile-time one, in which case `fun' may not be correct
     ;; any more!
-    `(let ((dispatch `(,',arg-or-context
-                       ,@(cl-generic-generalizers ',specializer)
-                       ,cl--generic-t-generalizer)))
+    `(let ((dispatch
+            `(,',arg-or-context
+              ,@(apply #'append
+                       (mapcar #'cl-generic-generalizers ',specializers))
+              ,cl--generic-t-generalizer)))
        ;; (message "Prefilling for %S with \n%S" dispatch ',fun)
        (puthash dispatch ',fun cl--generic-dispatchers)))))
 
@@ -1204,6 +1209,7 @@ See the full list and their hierarchy in `cl--generic-typeof-types'."
    (cl-call-next-method)))
 
 (cl--generic-prefill-dispatchers 0 integer)
+(cl--generic-prefill-dispatchers 0 cl--generic-generalizer integer)
 
 ;;; Dispatch on major mode.
 

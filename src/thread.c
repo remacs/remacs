@@ -1,5 +1,5 @@
 /* Threading code.
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -26,7 +26,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "syssignal.h"
 
-static struct thread_state alignas (GCALIGNMENT) main_thread;
+static struct thread_state main_thread;
 
 struct thread_state *current_thread = &main_thread;
 
@@ -573,8 +573,15 @@ really_call_select (void *arg)
 			   sa->timeout, sa->sigmask);
 
   block_interrupt_signal (&oldset);
-  acquire_global_lock (self);
-  self->not_holding_lock = 0;
+  /* If we were interrupted by C-g while inside sa->func above, the
+     signal handler could have called maybe_reacquire_global_lock, in
+     which case we are already holding the lock and shouldn't try
+     taking it again, or else we will hang forever.  */
+  if (self->not_holding_lock)
+    {
+      acquire_global_lock (self);
+      self->not_holding_lock = 0;
+    }
   restore_signal_mask (&oldset);
 }
 

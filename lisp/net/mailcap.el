@@ -1,6 +1,6 @@
 ;;; mailcap.el --- MIME media types configuration -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
 ;; Author: William M. Perry <wmperry@aventail.com>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -99,6 +99,7 @@ When selecting a viewer for a given MIME type, the first viewer
 in this list with a matching MIME-TYPE and successful TEST is
 selected.  Only if none matches, the standard `mailcap-mime-data'
 is consulted."
+  :version "26.1"
   :type '(repeat
 	  (list
 	   (choice (function :tag "Function or mode")
@@ -323,7 +324,7 @@ means the viewer is always valid.  If it is a Lisp function, it is
 called with a list of items from any extra fields from the
 Content-Type header as argument to return a boolean value for the
 validity.  Otherwise, if it is a non-function Lisp symbol or list
-whose car is a symbol, it is `eval'led to yield the validity.  If it
+whose car is a symbol, it is `eval'uated to yield the validity.  If it
 is a string or list of strings, it represents a shell command to run
 to return a true or false shell value for the validity.")
 (put 'mailcap-mime-data 'risky-local-variable t)
@@ -1004,6 +1005,14 @@ If FORCE, re-parse even if already parsed."
 	   (not (eq (string-to-char extn) ?.)))
       (setq extn (concat "." extn)))
   (cdr (assoc (downcase extn) mailcap-mime-extensions)))
+
+(defun mailcap-file-name-to-mime-type (file-name)
+  "Return the MIME content type based on the FILE-NAME's extension.
+For instance, \"foo.png\" will result in \"image/png\"."
+  (mailcap-extension-to-mime
+   (if (string-match "\\(\\.[^.]+\\)\\'" file-name)
+       (match-string 1 file-name)
+     "")))
 
 (defun mailcap-mime-types ()
   "Return a list of MIME media types."

@@ -1,6 +1,6 @@
 ;;; delsel.el --- delete selection if you insert  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1992, 1997-1998, 2001-2017 Free Software Foundation,
+;; Copyright (C) 1992, 1997-1998, 2001-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Matthieu Devin <devin@lucid.com>
@@ -79,8 +79,7 @@ a non-positive integer, and enable the mode otherwise
 
 When Delete Selection mode is enabled, typed text replaces the selection
 if the selection is active.  Otherwise, typed text is just inserted at
-point regardless of any selection.  Also, commands that normally delete
-just one character will delete the entire selection instead.
+point regardless of any selection.
 
 See `delete-selection-helper' and `delete-selection-pre-hook' for
 information on adapting behavior of commands in Delete Selection mode."
@@ -256,12 +255,18 @@ See `delete-selection-helper'."
                                   (get this-command 'delete-selection)))))
 
 (defun delete-selection-uses-region-p ()
-  "Return t when the current command will be using the region
-rather than having `delete-selection' delete it, nil otherwise.
+  "Return t when `delete-selection-mode' should not delete the region.
+
+The `self-insert-command' could be the current command or may be
+called by the current command.  If this function returns nil,
+then `delete-selection' is allowed to delete the region.
 
 This function is intended for use as the value of the
 `delete-selection' property of a command, and shouldn't be used
-for anything else."
+for anything else.  In particular, `self-insert-command' has this
+function as its `delete-selection' property, so that \"electric\"
+self-insert commands that act on the region could adapt themselves
+to `delete-selection-mode'."
   (not (run-hook-with-args-until-success
         'self-insert-uses-region-functions)))
 

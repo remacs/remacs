@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node System Interface
@@ -512,7 +512,7 @@ terminal-initialization file.
 @end defopt
 
 @defopt term-file-aliases
-This variable is an an association list mapping terminal types to
+This variable is an association list mapping terminal types to
 their aliases.  For example, an element of the form @code{("vt102"
 . "vt100")} means to treat a terminal of type @samp{vt102} like one of
 type @samp{vt100}.

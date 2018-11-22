@@ -1,6 +1,6 @@
 ;;; composite.el --- support character composition
 
-;; Copyright (C) 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 ;; Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
 ;;   2008, 2009, 2010, 2011
@@ -337,8 +337,9 @@ When Automatic Composition mode is on, this function also finds a
 chunk of text that is automatically composed.  If such a chunk is
 found closer to POS than the position that has `composition'
 property, the value is a list of FROM, TO, and a glyph-string
-that specifies how the chunk is to be composed.  See the function
-`composition-get-gstring' for the format of the glyph-string."
+that specifies how the chunk is to be composed; DETAIL-P is
+ignored in this case.  See the function `composition-get-gstring'
+for the format of the glyph-string."
   (let ((result (find-composition-internal pos limit string detail-p)))
     (if (and detail-p (> (length result) 3) (nth 2 result) (not (nth 3 result)))
 	;; This is a valid rule-base composition.

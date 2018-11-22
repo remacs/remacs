@@ -1,10 +1,37 @@
 //! Indentation functions
 
-use remacs_macros::lisp_fn;
-use remacs_sys;
-use remacs_sys::EmacsInt;
+use std::ptr;
 
-use lisp::defsubr;
+use remacs_macros::lisp_fn;
+
+use crate::{
+    buffers::{point_byte, point_min_byte},
+    editfns::{point, point_min},
+    lisp::defsubr,
+    remacs_sys::{self, find_newline, position_indentation, EmacsInt},
+};
+
+/// Return the indentation of the current line.  This is the
+/// horizontal position of the character following any initial
+/// whitespace.
+#[lisp_fn]
+pub fn current_indentation() -> EmacsInt {
+    let mut posbyte = 0;
+    let pos = unsafe {
+        find_newline(
+            point() as isize,
+            point_byte() as isize,
+            point_min() as isize,
+            point_min_byte() as isize,
+            -1,
+            ptr::null_mut(),
+            &mut posbyte,
+            true,
+        );
+        position_indentation(posbyte)
+    };
+    pos as EmacsInt
+}
 
 /// Return the horizontal position of point.
 /// Beginning of line is column 0.

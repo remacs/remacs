@@ -1,5 +1,5 @@
 /* Functions to manipulate keymaps.
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -64,4 +64,7 @@ map_keymap_internal (Lisp_Object map,
 		     map_keymap_function_t fun,
 		     Lisp_Object args,
 		     void *data);
+extern void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
+                             void (*) (Lisp_Object, Lisp_Object), bool,
+                             Lisp_Object, Lisp_Object, bool, bool);
 #endif

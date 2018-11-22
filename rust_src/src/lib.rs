@@ -1,11 +1,10 @@
-#![feature(tool_lints)]
 #![allow(clippy::cyclomatic_complexity)]
 #![allow(clippy::wrong_self_convention)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![feature(const_fn)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
-#![allow(private_no_mangle_fns)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 // we need this to be able to inclde FieldOffsets in C structs
 #![allow(improper_ctypes)]
@@ -17,7 +16,10 @@
 #![feature(untagged_unions)]
 #![feature(never_type)]
 #![feature(const_fn_union)]
+#![feature(ptr_offset_from)]
 
+#[macro_use]
+extern crate if_chain;
 #[macro_use]
 extern crate lazy_static;
 
@@ -57,6 +59,7 @@ mod alloc;
 mod base64;
 mod buffers;
 mod bytecode;
+mod callint;
 mod casefiddle;
 mod casetab;
 mod category;
@@ -98,6 +101,7 @@ mod numbers;
 mod obarray;
 mod objects;
 mod process;
+mod profiler;
 #[allow(clippy::all)]
 mod remacs_sys;
 mod search;
@@ -124,7 +128,7 @@ static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
+pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};
 
 #[cfg(feature = "compile-errors")]
 mod compile_errors {

@@ -1,6 +1,6 @@
 /* Functions for the NeXT/Open/GNUstep and macOS window system.
 
-Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2017 Free Software
+Copyright (C) 1989, 1992-1994, 2005-2006, 2008-2018 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -1234,6 +1234,10 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qinternal_border_width, make_number (2),
                       "internalBorderWidth", "InternalBorderWidth",
                       RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qright_divider_width, make_number (0),
+		       NULL, NULL, RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qbottom_divider_width, make_number (0),
+		       NULL, NULL, RES_TYPE_NUMBER);
 
   /* default vertical scrollbars on right on Mac */
   {
@@ -1892,10 +1896,12 @@ If omitted or nil, that stands for the selected frame's display.  */)
     {
     case NSBackingStoreBuffered:
       return intern ("buffered");
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 101300
     case NSBackingStoreRetained:
       return intern ("retained");
     case NSBackingStoreNonretained:
       return intern ("non-retained");
+#endif
     default:
       error ("Strange value for backingType parameter of frame");
     }
@@ -1949,9 +1955,11 @@ If omitted or nil, that stands for the selected frame's display.  */)
     case NSBackingStoreBuffered:
       return Qt;
 
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 101300
     case NSBackingStoreRetained:
     case NSBackingStoreNonretained:
       return Qnil;
+#endif
 
     default:
       error ("Strange value for backingType parameter of frame");
@@ -2865,6 +2873,8 @@ Text larger than the specified size is clipped.  */)
   struct frame *f;
   char *str;
   NSSize size;
+  NSColor *color;
+  Lisp_Object t;
 
   specbind (Qinhibit_redisplay, Qt);
 
@@ -2891,6 +2901,14 @@ Text larger than the specified size is clipped.  */)
     ns_tooltip = [[EmacsTooltip alloc] init];
   else
     Fx_hide_tip ();
+
+  t = x_get_arg (NULL, parms, Qbackground_color, NULL, NULL, RES_TYPE_STRING);
+  if (ns_lisp_to_color (t, &color) == 0)
+    [ns_tooltip setBackgroundColor: color];
+
+  t = x_get_arg (NULL, parms, Qforeground_color, NULL, NULL, RES_TYPE_STRING);
+  if (ns_lisp_to_color (t, &color) == 0)
+    [ns_tooltip setForegroundColor: color];
 
   [ns_tooltip setText: str];
   size = [ns_tooltip frame].size;
@@ -3117,6 +3135,19 @@ position (0, 0) of the selected frame's terminal. */)
                            (pt.y - screen.frame.origin.y)));
 }
 
+DEFUN ("ns-show-character-palette",
+       Fns_show_character_palette,
+       Sns_show_character_palette, 0, 0, 0,
+       doc: /* Show the macOS character palette.  */)
+       (void)
+{
+  struct frame *f = SELECTED_FRAME ();
+  EmacsView *view = FRAME_NS_VIEW (f);
+  [NSApp orderFrontCharacterPalette:view];
+
+  return Qnil;
+}
+
 /* ==========================================================================
 
     Class implementations
@@ -3308,6 +3339,7 @@ be used as the image of the icon representing the frame.  */);
   defsubr (&Sns_frame_restack);
   defsubr (&Sns_set_mouse_absolute_pixel_position);
   defsubr (&Sns_mouse_absolute_pixel_position);
+  defsubr (&Sns_show_character_palette);
   defsubr (&Sx_display_mm_width);
   defsubr (&Sx_display_mm_height);
   defsubr (&Sx_display_screens);

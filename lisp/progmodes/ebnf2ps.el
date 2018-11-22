@@ -1,6 +1,6 @@
 ;;; ebnf2ps.el --- translate an EBNF to a syntactic chart on PostScript  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Maintainer: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
@@ -1135,7 +1135,7 @@ Please send all bug fixes and enhancements to
 ;; Thanks to Drew Adams <drew.adams@oracle.com> for suggestions:
 ;;    - `ebnf-arrow-extra-width', `ebnf-arrow-scale',
 ;;	`ebnf-production-name-p', `ebnf-stop-on-error',
-;;	`ebnf-file-suffix-regexp'and `ebnf-special-show-delimiter' variables.
+;;	`ebnf-file-suffix-regexp' and `ebnf-special-show-delimiter' variables.
 ;;    - `ebnf-delete-style', `ebnf-eps-file' and `ebnf-eps-directory'
 ;;	commands.
 ;;    - some docs fix.

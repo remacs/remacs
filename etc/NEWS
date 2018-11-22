@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.
 
-Copyright (C) 2017 Free Software Foundation, Inc.
+Copyright (C) 2017-2018 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
@@ -24,6 +24,28 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Installation Changes in Emacs 27.1
 
+** The new configure option '--with-json' adds support for JSON using
+the Jansson library.  It is on by default; use 'configure
+--with-json=no' to build without Jansson support.  The new JSON
+functions 'json-serialize', 'json-insert', 'json-parse-string', and
+'json-parse-buffer' are typically much faster than their Lisp
+counterparts from json.el.
+
+** Emacs has been ported to the -fcheck-pointer-bounds option of GCC.
+This causes Emacs to check bounds of some arrays addressed by its
+internal pointers, which can be helpful when debugging the Emacs
+interpreter or modules that it uses.  If your platform supports it you
+can enable it when configuring, e.g., './configure CFLAGS="-g3 -O2
+-mmpx -fcheck-pointer-bounds"' on Intel MPX platforms.
+
+** Emacs now normally uses a C pointer type instead of a C integer
+type to implement Lisp_Object, which is the fundamental machine word
+type internal to the Emacs Lisp interpreter.  This change aims to
+catch typos and support -fcheck-pointer-bounds.  The 'configure'
+option --enable-check-lisp-object-type is therefore no longer as
+useful and so is no longer enabled by default in developer builds,
+to reduce differences between developer and production builds.
+
 
 * Startup Changes in Emacs 27.1
 
@@ -39,6 +61,14 @@ text.
 +++
 ** New function 'logcount' calculates an integer's Hamming weight.
 
++++
+** New function 'libxml-available-p'.
+This function returns non-nil if libxml support is both compiled in
+and available at run time.  Lisp programs should use this function to
+detect built-in libxml support, instead of testing for that
+indirectly, e.g., by checking that functions like
+'libxml-parse-html-region' return nil.
+
 
 * Editing Changes in Emacs 27.1
 
@@ -48,12 +78,27 @@ This controls how long Emacs will wait for updates to the graphical
 state to take effect (making a frame visible, for example).
 
 +++
-** The new user option 'electric-quote-replace-double' controls
-whether '"' is also replaced in 'electric-quote-mode'.  If non-nil,
-'"' is replaced by a double typographic quote.
+** New user option 'electric-quote-replace-double'.
+This option controls whether '"' is replaced in 'electric-quote-mode',
+in addition to other quote characters.  If non-nil, ASCII double-quote
+characters that quote text "like this" are replaced by double
+typographic quotes, “like this”, in text modes, and in comments and
+strings in non-text modes.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
+
+** Footnote-mode
+*** Support Hebrew-style footnotes
+*** Footnote text lines are now aligned.
+Can be controlled via the new variable 'footnote-align-to-fn-text'.
+
+** CSS mode
+
+---
+*** A new command 'css-cycle-color-format' for cycling between color
+formats (e.g. "black" => "#000000" => "rgb(0, 0, 0)") has been added,
+bound to 'C-c C-f'.
 
 ** Dired
 
@@ -95,8 +140,39 @@ less verbose by removing non-essential information.
 dimensions, instead of always using 16 pixels. As a result, Tetris,
 Snake and Pong are more playable on HiDPI displays.
 
+** Filecache
+
+---
+*** Completing filenames in the minibuffer via 'C-TAB' now uses the
+styles as configured by the variable 'completion-styles'.
+
+** New macros 'thunk-let' and 'thunk-let*'.
+These macros are analogue to 'let' and 'let*', but create bindings that
+are evaluated lazily.
+
+** Eshell
+
+---
+*** Expansion of history event designators is disabled by default.
+To restore the old behavior, use
+
+    (add-hook 'eshell-expand-input-functions
+              #'eshell-expand-history-references)
+
+** Tramp
+
++++
+*** New connection method "owncloud", which allows to access OwnCloud
+or NextCloud hosted files and directories.
+
 
 * New Modes and Packages in Emacs 27.1
+
++++
+** Emacs can now visit files in archives as if they were directories.
+This feature uses Tramp and works only on systems which support GVFS,
+i.e. GNU/Linux, roughly spoken.  See the chapter "(tramp) Archive file
+names" in the Tramp manual for full documentation of these facilities.
 
 
 * Incompatible Lisp Changes in Emacs 27.1
@@ -111,8 +187,18 @@ them through 'format' first.  Even that is discouraged: for ElDoc
 support, you should set 'eldoc-documentation-function' instead of
 calling 'eldoc-message' directly.
 
+** Old-style backquotes now generate an error.  They have been
+generating warnings for a decade.  To interpret old-style backquotes
+as new-style, bind the new variable 'force-new-style-backquotes' to t.
+
 
 * Lisp Changes in Emacs 27.1
+
+** Internal parsing commands now use syntax-ppss and disregard
+open-paren-in-column-0-is-defun-start.  This affects mostly things like
+forward-comment, scan-sexps, and forward-sexp when parsing backward.
+The new variable 'comment-use-syntax-ppss' can be set to nil to recover the old
+behavior if needed.
 
 ---
 ** The 'file-system-info' function is now available on all platforms.
@@ -122,6 +208,20 @@ bug on OS X 10.8 and later (Bug#28639).
 ---
 ** The function 'get-free-disk-space' returns now a non-nil value for
 remote systems, which support this check.
+
++++
+** The function 'make-string' accepts an additional optional argument.
+If the optional third argument is non-nil, 'make-string' will produce
+a multibyte string even if its second argument is an ASCII character.
+
+** New JSON parsing and serialization functions 'json-serialize',
+'json-insert', 'json-parse-string', and 'json-parse-buffer'.  These
+are implemented in C using the Jansson library.
+
+---
+** The new function `mailcap-file-name-to-mime-type' has been added.
+It's a simple convenience function for looking up MIME types based on
+file name extensions.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems

@@ -3,7 +3,7 @@ ORG NEWS -- history of user-visible changes.   -*- mode: org; coding: utf-8 -*-
 #+LINK: doc http://orgmode.org/worg/doc.html#%s
 #+LINK: git http://orgmode.org/cgit.cgi/org-mode.git/commit/?id=%s
 
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Org bug reports to mailto:emacs-orgmode@gnu.org.
@@ -492,9 +492,6 @@ It used to be ~@samp~ but ~@asis~ is neutral and, therefore, more
 suitable as a default value.
 *** Texinfo default process includes ~--no-split~ option
 *** New entities : ~\dollar~ and ~\USD~
-*** ~org-parse-time-string~ accepts a new optional argument
-=ZONE= specifies the current time zone.
-*** ~org-time-string-to-seconds~ now accepts an optional =ZONE= argument
 *** Support for date style URLs in =org-protocol://open-source=
     URLs like =https://cool-blog.com/2017/05/20/cool-post/= are
     covered by rewrite rules.
@@ -1992,7 +1989,7 @@ This enables SVG generation from latex code blocks.
 
 *** New option: [[doc:org-habit-show-done-always-green][org-habit-show-done-always-green]]
 
-See [[https://lists.gnu.org/archive/html/emacs-orgmode/2013-05/msg00214.html][this message]] from Max Mikhanosha.
+See [[https://lists.gnu.org/r/emacs-orgmode/2013-05/msg00214.html][this message]] from Max Mikhanosha.
 
 *** New option: [[doc:org-babel-inline-result-wrap][org-babel-inline-result-wrap]]
 

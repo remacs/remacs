@@ -1,6 +1,6 @@
 ;;; diff-mode.el --- a mode for viewing/editing context diffs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: convenience patch diff vc
@@ -432,7 +432,7 @@ and the face `diff-added' for added lines.")
   "If non-nil, empty lines are valid in unified diffs.
 Some versions of diff replace all-blank context lines in unified format with
 empty lines.  This makes the format less robust, but is tolerated.
-See https://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01990.html")
+See https://lists.gnu.org/r/emacs-devel/2007-11/msg01990.html")
 
 (defconst diff-hunk-header-re
   (concat "^\\(?:" diff-hunk-header-re-unified ".*\\|\\*\\{15\\}.*\n\\*\\*\\* .+ \\*\\*\\*\\*\\|[0-9]+\\(,[0-9]+\\)?[acd][0-9]+\\(,[0-9]+\\)?\\)$"))
@@ -2005,9 +2005,6 @@ For use in `add-log-current-defun-function'."
     (replace-match (cdr (assq (char-before) '((?+ . "-") (?> . "<"))))))
   )
 
-(declare-function smerge-refine-subst "smerge-mode"
-                  (beg1 end1 beg2 end2 props-c &optional preproc props-r props-a))
-
 (defun diff--forward-while-leading-char (char bound)
   "Move point until reaching a line not starting with CHAR.
 Return new point, if it was moved."
@@ -2049,13 +2046,13 @@ Return new point, if it was moved."
                           (diff--forward-while-leading-char ?+ end)
                           (progn (diff--forward-while-leading-char ?\\ end)
                                  (setq end-add (point))))
-                 (smerge-refine-subst beg-del beg-add beg-add end-add
+                 (smerge-refine-regions beg-del beg-add beg-add end-add
                                       nil 'diff-refine-preproc props-r props-a)))))
           (`context
            (let* ((middle (save-excursion (re-search-forward "^---")))
                   (other middle))
              (while (re-search-forward "^\\(?:!.*\n\\)+" middle t)
-               (smerge-refine-subst (match-beginning 0) (match-end 0)
+               (smerge-refine-regions (match-beginning 0) (match-end 0)
                                     (save-excursion
                                       (goto-char other)
                                       (re-search-forward "^\\(?:!.*\n\\)+" end)
@@ -2070,7 +2067,7 @@ Return new point, if it was moved."
            (let ((beg1 (1+ (point))))
              (when (re-search-forward "^---.*\n" end t)
                ;; It's a combined add&remove, so there's something to do.
-               (smerge-refine-subst beg1 (match-beginning 0)
+               (smerge-refine-regions beg1 (match-beginning 0)
                                     (match-end 0) end
                                     nil 'diff-refine-preproc props-r props-a)))))))))
 

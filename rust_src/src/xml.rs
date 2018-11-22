@@ -2,11 +2,12 @@
 
 use remacs_macros::lisp_fn;
 
-use remacs_sys::Qnil;
-use remacs_sys::{init_libxml2_functions, parse_region};
-
-use lisp::defsubr;
-use lisp::LispObject;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    remacs_sys::Qnil,
+    remacs_sys::{init_libxml2_functions, parse_region},
+};
 
 fn libxml_parse_region(
     start: LispObject,
@@ -48,6 +49,13 @@ pub fn libxml_parse_xml_region(
     discard_comments: LispObject,
 ) -> LispObject {
     libxml_parse_region(start, end, base_url, discard_comments, false)
+}
+
+/// Return t if libxml2 support is available in this instance of Emacs.
+#[lisp_fn]
+pub fn libxml_available_p() -> bool {
+    // TODO(db48x)
+    false
 }
 
 include!(concat!(env!("OUT_DIR"), "/xml_exports.rs"));

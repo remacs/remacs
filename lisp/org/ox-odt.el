@@ -1,6 +1,6 @@
 ;;; ox-odt.el --- OpenDocument Text Exporter for Org Mode -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Jambunathan K <kjambunathan at gmail dot com>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -1159,12 +1159,8 @@ table of contents as a string, or nil."
   ;; Likewise, links, footnote references and regular targets are also
   ;; suppressed.
   (let* ((headlines (org-export-collect-headlines info depth scope))
-	 (backend (org-export-create-backend
-		   :parent (org-export-backend-name (plist-get info :back-end))
-		   :transcoders '((footnote-reference . ignore)
-				  (link . (lambda (object c i) c))
-				  (radio-target . (lambda (object c i) c))
-				  (target . ignore)))))
+	 (backend (org-export-toc-entry-backend
+		      (org-export-backend-name (plist-get info :back-end)))))
     (when headlines
       (org-odt--format-toc
        (and (not scope) (org-export-translate "Table of Contents" :utf-8 info))
@@ -3890,7 +3886,7 @@ contextual information."
 ;; themselves and the list can be arbitrarily deep.
 ;;
 ;; Inspired by following thread:
-;; https://lists.gnu.org/archive/html/emacs-orgmode/2011-03/msg01101.html
+;; https://lists.gnu.org/r/emacs-orgmode/2011-03/msg01101.html
 
 ;; Translate lists to tables
 

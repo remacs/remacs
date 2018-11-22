@@ -1,6 +1,6 @@
 /* Declarations having to do with GNU Emacs syntax tables.
 
-Copyright (C) 1985, 1993-1994, 1997-1998, 2001-2017 Free Software
+Copyright (C) 1985, 1993-1994, 1997-1998, 2001-2018 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -231,6 +231,7 @@ SETUP_BUFFER_SYNTAX_TABLE (void)
 
 extern ptrdiff_t scan_words (ptrdiff_t, EMACS_INT);
 extern void SETUP_SYNTAX_TABLE_FOR_OBJECT (Lisp_Object, ptrdiff_t, ptrdiff_t);
+extern void check_syntax_table (Lisp_Object obj);
 
 INLINE_HEADER_END
 

@@ -1,6 +1,6 @@
 ;;; erc-log.el --- Logging facilities for ERC.
 
-;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
 ;; Author: Lawrence Mitchell <wence@gmx.li>
 ;; Maintainer: emacs-devel@gnu.org
@@ -215,7 +215,7 @@ The function should take one argument, which is the text to filter."
 		 (const :tag "No filtering" nil)))
 
 
-;;;###autoload (autoload 'erc-log-mode "erc-log" nil t)
+;;;###autoload(autoload 'erc-log-mode "erc-log" nil t)
 (define-erc-module log nil
   "Automatically logs things you receive on IRC into files.
 Files are stored in `erc-log-channels-directory'; file name
@@ -455,6 +455,7 @@ You can save every individual message by putting this function on
 ;;; erc-log.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

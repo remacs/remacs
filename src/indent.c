@@ -1,5 +1,5 @@
 /* Indentation functions.
-   Copyright (C) 1985-1988, 1993-1995, 1998, 2000-2017 Free Software
+   Copyright (C) 1985-1988, 1993-1995, 1998, 2000-2018 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -52,7 +52,6 @@ ptrdiff_t last_known_column_point;
 static EMACS_INT last_known_column_modified;
 
 static ptrdiff_t current_column_1 (void);
-static ptrdiff_t position_indentation (ptrdiff_t);
 
 /* Get the display table to use for the current buffer.  */
 
@@ -836,20 +835,7 @@ The return value is COLUMN.  */)
 }
 
 
-DEFUN ("current-indentation", Fcurrent_indentation, Scurrent_indentation,
-       0, 0, 0,
-       doc: /* Return the indentation of the current line.
-This is the horizontal position of the character
-following any initial whitespace.  */)
-  (void)
-{
-  ptrdiff_t posbyte;
-
-  find_newline (PT, PT_BYTE, BEGV, BEGV_BYTE, -1, NULL, &posbyte, 1);
-  return make_number (position_indentation (posbyte));
-}
-
-static ptrdiff_t
+ptrdiff_t
 position_indentation (ptrdiff_t pos_byte)
 {
   register ptrdiff_t column = 0;
@@ -1939,21 +1925,26 @@ line_number_display_width (struct window *w, int *width, int *pixel_width)
   else
     {
       struct it it;
-      struct text_pos wstart;
+      struct text_pos startpos;
       bool saved_restriction = false;
       ptrdiff_t count = SPECPDL_INDEX ();
-      SET_TEXT_POS_FROM_MARKER (wstart, w->start);
+      SET_TEXT_POS_FROM_MARKER (startpos, w->start);
       void *itdata = bidi_shelve_cache ();
-      /* We must start from window's start point, but it could be
-	 outside the accessible region.  */
-      if (wstart.charpos < BEGV || wstart.charpos > ZV)
+      /* We want to start from window's start point, but it could be
+	 outside the accessible region, in which case we widen the
+	 buffer temporarily.  It could even be beyond the buffer's end
+	 (Org mode's display of source code snippets is known to cause
+	 that), in which case we just punt and start from point instead.  */
+      if (startpos.charpos > Z)
+	SET_TEXT_POS (startpos, PT, PT_BYTE);
+      if (startpos.charpos < BEGV || startpos.charpos > ZV)
 	{
 	  record_unwind_protect (save_restriction_restore,
 				 save_restriction_save ());
 	  Fwiden ();
 	  saved_restriction = true;
 	}
-      start_display (&it, w, wstart);
+      start_display (&it, w, startpos);
       /* The call to move_it_by_lines below will not generate a line
 	 number if the first line shown in the window is hscrolled
 	 such that all of its display elements are out of view.  So we
@@ -2354,7 +2345,6 @@ syms_of_indent (void)
 
   DEFSYM (Qcolumns, "columns");
 
-  defsubr (&Scurrent_indentation);
   defsubr (&Sindent_to);
   defsubr (&Smove_to_column);
   defsubr (&Sline_number_display_width);

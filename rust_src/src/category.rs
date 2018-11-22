@@ -1,17 +1,18 @@
 //! Routines to deal with category tables.
 
-use remacs_macros::lisp_fn;
-use remacs_sys::Qcategory_table;
+use crate::{
+    chartable::LispCharTableRef,
+    lisp::{defsubr, LispObject},
+    remacs_sys::Qcategory_table,
+    threads::ThreadState,
+};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use threads::ThreadState;
+use remacs_macros::lisp_fn;
 
 /// Return t if ARG is a category table.
 #[lisp_fn]
-pub fn category_table_p(arg: LispObject) -> bool {
-    arg.as_char_table()
-        .map_or(false, |table| table.purpose.eq(Qcategory_table))
+pub fn category_table_p(arg: Option<LispCharTableRef>) -> bool {
+    arg.map_or(false, |table| table.purpose.eq(Qcategory_table))
 }
 
 /// Return the current category table.

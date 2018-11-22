@@ -1,6 +1,6 @@
 ;;; editfns-tests.el -- tests for editfns.c
 
-;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2018 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -135,6 +135,12 @@
 
 (ert-deftest format-c-float ()
   (should-error (format "%c" 0.5)))
+
+;;; Test for Bug#29609.
+(ert-deftest format-sharp-0-x ()
+  (should (string-equal (format "%#08x" #x10) "0x000010"))
+  (should (string-equal (format "%#05X" #x10) "0X010"))
+  (should (string-equal (format "%#04x" 0) "0000")))
 
 ;;; Check format-time-string with various TZ settings.
 ;;; Use only POSIX-compatible TZ values, since the tests should work

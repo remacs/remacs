@@ -1,6 +1,6 @@
 ;;; allout.el --- extensive outline mode for use alone and with other modes
 
-;; Copyright (C) 1992-1994, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1994, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Ken Manheimer <ken dot manheimer at gmail...>
 ;; Maintainer: Ken Manheimer <ken dot manheimer at gmail...>
@@ -1687,7 +1687,7 @@ from what it did before, for backwards compatibility.
 MODE is the activation mode - see `allout-auto-activation' for
 valid values."
   (declare (obsolete allout-auto-activation "23.3"))
-  (custom-set-variables (list 'allout-auto-activation (format "%s" mode)))
+  (customize-set-variable 'allout-auto-activation (format "%s" mode))
   (format "%s" mode))
 
 ;;;_  > allout-setup-menubar ()

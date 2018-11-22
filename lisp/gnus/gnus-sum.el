@@ -1,6 +1,6 @@
 ;;; gnus-sum.el --- summary mode commands for Gnus
 
-;; Copyright (C) 1996-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -1266,9 +1266,13 @@ For example: ((1 . cn-gb-2312) (2 . big5))."
   :type 'boolean
   :group 'gnus-summary-marks)
 
-(defcustom gnus-alter-articles-to-read-function nil
-  "Function to be called to alter the list of articles to be selected."
-  :type '(choice (const nil) function)
+(defcustom gnus-alter-articles-to-read-function
+  (lambda (_group article-list) article-list)
+  "Function to be called to alter the list of articles to be selected.
+This option defaults to a lambda form that simply returns the
+list of articles unchanged.  Use `add-function' to set one or
+more custom filter functions."
+  :type 'function
   :group 'gnus-summary)
 
 (defcustom gnus-orphan-score nil
@@ -3992,7 +3996,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	(spam-initialize))
       ;; Save the active value in effect when the group was entered.
       (setq gnus-newsgroup-active
-	    (gnus-copy-sequence
+	    (copy-tree
 	     (gnus-active gnus-newsgroup-name)))
       (setq gnus-newsgroup-highest (cdr gnus-newsgroup-active))
       ;; You can change the summary buffer in some way with this hook.
@@ -5737,7 +5741,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	      (mail-header-number (car gnus-newsgroup-headers))
 	      gnus-newsgroup-end
 	      (mail-header-number
-	       (gnus-last-element gnus-newsgroup-headers))))
+	       (car (last gnus-newsgroup-headers)))))
       ;; GROUP is successfully selected.
       (or gnus-newsgroup-headers t)))))
 
@@ -5914,7 +5918,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	  (setq articles (nthcdr (- number select) articles))))
       (setq gnus-newsgroup-unselected
 	    (gnus-sorted-difference gnus-newsgroup-unreads articles))
-      (when gnus-alter-articles-to-read-function
+      (when (functionp gnus-alter-articles-to-read-function)
 	(setq articles
 	      (sort
 	       (funcall gnus-alter-articles-to-read-function
@@ -6076,12 +6080,12 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 		 (del
 		  (gnus-list-range-intersection
 		   gnus-newsgroup-articles
-		   (gnus-remove-from-range (gnus-copy-sequence old) list)))
+		   (gnus-remove-from-range (copy-tree old) list)))
 		 (add
 		  (gnus-list-range-intersection
 		   gnus-newsgroup-articles
 		   (gnus-remove-from-range
-		    (gnus-copy-sequence list) old))))
+		    (copy-tree list) old))))
 	    (when add
 	      (push (list add 'add (list (cdr type))) delta-marks))
 	    (when del
@@ -11962,7 +11966,7 @@ Argument REVERSE means reverse order."
   (interactive "P")
   (gnus-summary-sort 'chars reverse))
 
-(defun gnus-summary-sort-by-mark (&optional reverse)
+(defun gnus-summary-sort-by-marks (&optional reverse)
   "Sort the summary buffer by article marks.
 Argument REVERSE means reverse order."
   (interactive "P")
@@ -12270,21 +12274,27 @@ save those articles instead."
 		  (if (> (length articles) 1)
 		      (format "these %d articles" (length articles))
 		    "this article")))
+	 valid-names
 	 (to-newsgroup
-          (cond
-           ((null split-name)
-            (gnus-group-completing-read
-             prom
-             (gnus-remove-if-not 'gnus-valid-move-group-p gnus-active-hashtb t)
-             nil prefix nil default))
-           ((= 1 (length split-name))
-            (gnus-group-completing-read
-             prom
-	     (gnus-remove-if-not 'gnus-valid-move-group-p gnus-active-hashtb t)
-             nil prefix 'gnus-group-history (car split-name)))
-           (t
-            (gnus-completing-read
-             prom (nreverse split-name) nil nil 'gnus-group-history))))
+	  (progn
+	    (mapatoms (lambda (g)
+			(when (gnus-valid-move-group-p g)
+			  (push g valid-names)))
+		      gnus-active-hashtb)
+            (cond
+             ((null split-name)
+              (gnus-group-completing-read
+               prom
+               valid-names
+               nil prefix nil default))
+             ((= 1 (length split-name))
+              (gnus-group-completing-read
+               prom
+	       valid-names
+               nil prefix 'gnus-group-history (car split-name)))
+             (t
+              (gnus-completing-read
+               prom (nreverse split-name) nil nil 'gnus-group-history)))))
          (to-method (gnus-server-to-method (gnus-group-method to-newsgroup)))
 	 encoded)
     (when to-newsgroup
@@ -12915,7 +12925,7 @@ returned."
 	    (mail-header-number (car gnus-newsgroup-headers))
 	    gnus-newsgroup-end
 	    (mail-header-number
-	     (gnus-last-element gnus-newsgroup-headers))))
+	     (car (last gnus-newsgroup-headers)))))
     (when gnus-use-scoring
       (gnus-possibly-score-headers))))
 
@@ -13002,7 +13012,7 @@ If ALL is a number, fetch this number of articles."
 	i new)
     (unless new-active
       (error "Couldn't fetch new data"))
-    (setq gnus-newsgroup-active (gnus-copy-sequence new-active))
+    (setq gnus-newsgroup-active (copy-tree new-active))
     (setq i (cdr gnus-newsgroup-active)
 	  gnus-newsgroup-highest i)
     (while (> i old-high)

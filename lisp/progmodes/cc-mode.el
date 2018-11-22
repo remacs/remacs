@@ -1,6 +1,6 @@
 ;;; cc-mode.el --- major mode for editing C and similar languages
 
-;; Copyright (C) 1985, 1987, 1992-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992-2018 Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -389,7 +389,8 @@ control).  See \"cc-mode.el\" for more info."
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   ;; (define-key c-mode-base-map "\C-c\C-y"  'c-toggle-hungry-state)  Commented out by ACM, 2005-11-22.
   (define-key c-mode-base-map "\C-c\C-w" 'c-subword-mode)
-  (define-key c-mode-base-map "\C-c\C-k" 'c-toggle-comment-style))
+  (define-key c-mode-base-map "\C-c\C-k" 'c-toggle-comment-style)
+  (define-key c-mode-base-map "\C-c\C-z" 'c-display-defun-name))
 
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
@@ -1015,15 +1016,10 @@ Note that the style variables are always made local to the buffer."
 	      t)
 	     (t nil)))))))
 
-(defun c-neutralize-syntax-in-and-mark-CPP (_begg _endd _old-len)
-  ;; (i) "Neutralize" every preprocessor line wholly or partially in the
-  ;; changed region.  "Restore" lines which were CPP lines before the change
-  ;; and are no longer so.
-  ;;
-  ;; (ii) Mark each CPP construct by placing a `category' property value
-  ;; `c-cpp-delimiter' at its start and end.  The marked characters are the
-  ;; opening # and usually the terminating EOL, but sometimes the character
-  ;; before a comment delimiter.
+(defun c-neutralize-syntax-in-CPP (_begg _endd _old-len)
+  ;; "Neutralize" every preprocessor line wholly or partially in the changed
+  ;; region.  "Restore" lines which were CPP lines before the change and are
+  ;; no longer so.
   ;;
   ;; That is, set syntax-table properties on characters that would otherwise
   ;; interact syntactically with those outside the CPP line(s).
@@ -1043,12 +1039,7 @@ Note that the style variables are always made local to the buffer."
   (c-save-buffer-state (limits)
     ;; Clear 'syntax-table properties "punctuation":
     ;; (c-clear-char-property-with-value c-new-BEG c-new-END 'syntax-table '(1))
-
-    ;; CPP "comment" markers:
-    (if (eval-when-compile (memq 'category-properties c-emacs-features));Emacs.
-	(c-clear-char-property-with-value
-	 c-new-BEG c-new-END 'category 'c-cpp-delimiter))
-    ;; FIXME!!!  What about the "<" and ">" category properties?  2009-11-16
+    ;; The above is now done in `c-depropertize-CPP'.
 
     ;; Add needed properties to each CPP construct in the region.
     (goto-char c-new-BEG)
@@ -1075,11 +1066,7 @@ Note that the style variables are always made local to the buffer."
 	  (goto-char (match-beginning 1))
 	  (setq mbeg (point))
 	  (if (> (c-no-comment-end-of-macro) mbeg)
-	      (progn
-		(c-neutralize-CPP-line mbeg (point)) ; "punctuation" properties
-		(if (eval-when-compile
-                      (memq 'category-properties c-emacs-features)) ;Emacs.
-		    (c-set-cpp-delimiters mbeg (point)))) ; "comment" markers
+	      (c-neutralize-CPP-line mbeg (point)) ; "punctuation" properties
 	    (forward-line))	      ; no infinite loop with, e.g., "#//"
 	  )))))
 
@@ -1858,7 +1845,7 @@ Key bindings:
 
 ;;;###autoload
 (defun c-or-c++-mode ()
-  "Analyse buffer and enable either C or C++ mode.
+  "Analyze buffer and enable either C or C++ mode.
 
 Some people and projects use .h extension for C++ header files
 which is also the one used for C header files.  This makes

@@ -1,6 +1,6 @@
 ;;; reftex-ref.el --- code to create labels and references with RefTeX
 
-;; Copyright (C) 1997-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <dominik@science.uva.nl>
 ;; Maintainer: auctex-devel@gnu.org
@@ -134,7 +134,7 @@ This function is controlled by the settings of reftex-insert-label-flags."
 
   (interactive)
 
-  ;; Ensure access to scanning info and rescan buffer if prefix are is '(4).
+  ;; Ensure access to scanning info and rescan buffer if prefix arg is '(4).
   (reftex-access-scan-info current-prefix-arg)
 
   ;; Find out what kind of environment this is and abort if necessary.

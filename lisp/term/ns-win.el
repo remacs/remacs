@@ -1,6 +1,6 @@
 ;;; ns-win.el --- lisp side of interface with NeXT/Open/GNUstep/macOS window system  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1993-1994, 2005-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1994, 2005-2018 Free Software Foundation, Inc.
 
 ;; Authors: Carl Edman
 ;;	Christian Limpach
@@ -42,7 +42,7 @@
 (eval-when-compile (require 'cl-lib))
 (or (featurep 'ns)
     (error "%s: Loading ns-win.el but not compiled for GNUstep/macOS"
-           (invocation-name)))
+           invocation-name))
 
 ;; Documentation-purposes only: actually loaded in loadup.el.
 (require 'frame)
@@ -144,6 +144,8 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [?\s-z] 'undo)
 (define-key global-map [?\s-|] 'shell-command-on-region)
 (define-key global-map [s-kp-bar] 'shell-command-on-region)
+(define-key global-map [C-s- ] 'ns-do-show-character-palette)
+(define-key key-translation-map [C-s-268632064] [C-s- ])
 ;; (as in Terminal.app)
 (define-key global-map [s-right] 'ns-next-frame)
 (define-key global-map [s-left] 'ns-prev-frame)
@@ -354,7 +356,7 @@ See `ns-insert-working-text'."
   ;; Used prior to Emacs 25.
   (define-coding-system-alias 'utf-8-nfd 'utf-8-hfs)
 
-  (set-file-name-coding-system 'utf-8-hfs))
+  (set-file-name-coding-system 'utf-8-hfs-unix))
 
 ;;;; Inter-app communications support.
 
@@ -575,6 +577,12 @@ the last file dropped is selected."
   (interactive)
   (ns-emacs-info-panel))
 
+(declare-function ns-show-character-palette "nsfns.m" ())
+
+(defun ns-do-show-character-palette ()
+  (interactive)
+  (ns-show-character-palette))
+
 (defun ns-next-frame ()
   "Switch to next visible frame."
   (interactive)
@@ -594,7 +602,7 @@ the last file dropped is selected."
 (declare-function tool-bar-mode "tool-bar" (&optional arg))
 
 ;; Based on a function by David Reitter <dreitter@inf.ed.ac.uk> ;
-;; see https://lists.gnu.org/archive/html/emacs-devel/2005-09/msg00681.html .
+;; see https://lists.gnu.org/r/emacs-devel/2005-09/msg00681.html .
 (defun ns-toggle-toolbar (&optional frame)
   "Switches the tool bar on and off in frame FRAME.
  If FRAME is nil, the change applies to the selected frame."
@@ -878,7 +886,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
   ;; Mac OS X Lion introduces PressAndHold, which is unsupported by this port.
   ;; See this thread for more details:
-  ;; https://lists.gnu.org/archive/html/emacs-devel/2011-06/msg00505.html
+  ;; https://lists.gnu.org/r/emacs-devel/2011-06/msg00505.html
   (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")
 
   (x-apply-session-resources)

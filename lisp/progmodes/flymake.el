@@ -1,6 +1,6 @@
 ;;; flymake.el --- A universal on-the-fly syntax checker  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
 ;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: Leo Liu <sdl.web@gmail.com>
@@ -124,13 +124,14 @@ If nil, never start checking buffer automatically like this."
 (make-obsolete-variable 'flymake-gui-warnings-enabled
 			"it no longer has any effect." "26.1")
 
-(defcustom flymake-start-on-flymake-mode t
-  "Start syntax check when `flymake-mode'is enabled.
-Specifically, start it when the buffer is actually displayed."
-  :type 'boolean)
-
 (define-obsolete-variable-alias 'flymake-start-syntax-check-on-find-file
   'flymake-start-on-flymake-mode "26.1")
+
+(defcustom flymake-start-on-flymake-mode t
+  "Start syntax check when `flymake-mode' is enabled.
+Specifically, start it when the buffer is actually displayed."
+  :version "26.1"
+  :type 'boolean)
 
 (defcustom flymake-log-level -1
   "Obsolete and ignored variable."
@@ -141,6 +142,7 @@ Specifically, start it when the buffer is actually displayed."
 
 (defcustom flymake-wrap-around t
   "If non-nil, moving to errors wraps around buffer boundaries."
+  :version "26.1"
   :type 'boolean)
 
 (when (fboundp 'define-fringe-bitmap)
@@ -318,7 +320,11 @@ region is invalid."
             (goto-char (point-min))
             (forward-line (1- line))
             (cl-flet ((fallback-bol
-                       () (progn (back-to-indentation) (point)))
+                       ()
+                       (back-to-indentation)
+                       (if (eobp)
+                           (line-beginning-position 0)
+                         (point)))
                       (fallback-eol
                        (beg)
                        (progn
@@ -334,15 +340,17 @@ region is invalid."
                          (end (or (and sexp-end
                                        (not (= sexp-end beg))
                                        sexp-end)
-                                  (ignore-errors (goto-char (1+ beg)))))
-                         (safe-end (or end
-                                       (fallback-eol beg))))
-                    (cons (if end beg (fallback-bol))
-                          safe-end))
+                                  (and (< (goto-char (1+ beg)) (point-max))
+                                       (point)))))
+                    (if end
+                        (cons beg end)
+                      (cons (setq beg (fallback-bol))
+                            (fallback-eol beg))))
                 (let* ((beg (fallback-bol))
                        (end (fallback-eol beg)))
                   (cons beg end)))))))
-    (error (flymake-error "Invalid region line=%s col=%s" line col))))
+    (error (flymake-log :warning "Invalid region line=%s col=%s" line col)
+           nil)))
 
 (defvar flymake-diagnostic-functions nil
   "Special hook of Flymake backends that check a buffer.
@@ -406,6 +414,8 @@ Currently accepted REPORT-KEY arguments are:
 
 * `:force': value should be a boolean suggesting that Flymake
   consider the report even if it was somehow unexpected.")
+
+(put 'flymake-diagnostic-functions 'safe-local-variable #'null)
 
 (defvar flymake-diagnostic-types-alist
   `((:error
@@ -520,11 +530,12 @@ associated `flymake-category' return DEFAULT."
         (flymake--fringe-overlay-spec
          (overlay-get ov 'bitmap)))
       (default-maybe 'help-echo
-        (lambda (_window _ov pos)
-          (mapconcat
-           #'flymake--diag-text
-           (flymake-diagnostics pos)
-           "\n")))
+        (lambda (window _ov pos)
+          (with-selected-window window
+            (mapconcat
+             #'flymake--diag-text
+             (flymake-diagnostics pos)
+             "\n"))))
       (default-maybe 'severity (warning-numeric-level :error))
       (default-maybe 'priority (+ 100 (overlay-get ov 'severity))))
     ;; Some properties can't be overridden.
@@ -601,8 +612,8 @@ not expected."
           (null expected-token))
         ;; should never happen
         (flymake-error "Unexpected report from stopped backend %s" backend))
-       ((and (not (eq expected-token token))
-             (not force))
+       ((not (or (eq expected-token token)
+                 force))
         (flymake-error "Obsolete report from backend %s with explanation %s"
                        backend explanation))
        ((eq :panic report-action)
@@ -742,8 +753,11 @@ Interactively, with a prefix arg, FORCE is t."
           ()
           (remove-hook 'post-command-hook #'start-post-command
                        nil)
-          (with-current-buffer buffer
-            (flymake-start (remove 'post-command deferred) force)))
+          ;; The buffer may have disappeared already, e.g. because of
+          ;; code like `(with-temp-buffer (python-mode) ...)'.
+          (when (buffer-live-p buffer)
+            (with-current-buffer buffer
+              (flymake-start (remove 'post-command deferred) force))))
          (start-on-display
           ()
           (remove-hook 'window-configuration-change-hook #'start-on-display
@@ -946,7 +960,7 @@ applied."
              (message
               "%s"
               (funcall (overlay-get target 'help-echo)
-                       nil nil (point)))))
+                       (selected-window) target (point)))))
           (interactive
            (user-error "No more Flymake errors%s"
                        (if filter
@@ -1133,7 +1147,8 @@ POS can be a buffer position or a button"
 
 (defun flymake--diagnostics-buffer-entries ()
   (with-current-buffer flymake--diagnostics-buffer-source
-    (cl-loop for diag in (flymake-diagnostics)
+    (cl-loop for diag in
+             (cl-sort (flymake-diagnostics) #'< :key #'flymake-diagnostic-beg)
              for (line . col) =
              (save-excursion
                (goto-char (flymake--diag-beg diag))

@@ -1,22 +1,26 @@
 //* Random utility Lisp functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Lisp_Type;
-use remacs_sys::Vautoload_queue;
-use remacs_sys::{concat as lisp_concat, globals, record_unwind_protect, unbind_to};
-use remacs_sys::{Fcons, Fload, Fmapc};
-use remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
-                 Qwrong_number_of_arguments};
 
-use eval::un_autoload;
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::{assq, car, get, member, memq, put, LispCons};
-use obarray::loadhist_attach;
-use objects::equal;
-use symbols::LispSymbolRef;
-use threads::c_specpdl_index;
-use vectors::length;
+use crate::{
+    eval::{un_autoload, unbind_to},
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::{assq, car, get, member, memq, put, LispCons},
+    obarray::loadhist_attach,
+    objects::equal,
+    remacs_sys::Vautoload_queue,
+    remacs_sys::{compare_string_intervals, concat as lisp_concat, globals, record_unwind_protect},
+    remacs_sys::{equal_kind, Lisp_Type},
+    remacs_sys::{Fload, Fmapc},
+    remacs_sys::{
+        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
+        Qwrong_number_of_arguments,
+    },
+    symbols::LispSymbolRef,
+    threads::c_specpdl_index,
+    vectors::length,
+};
 
 /// Return t if FEATURE is present in this Emacs.
 ///
@@ -44,23 +48,23 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         if Vautoload_queue.is_not_nil() {
-            Vautoload_queue = Fcons(
-                Fcons(LispObject::from(0), globals.Vfeatures),
+            Vautoload_queue = LispObject::cons(
+                LispObject::cons(LispObject::from(0), globals.Vfeatures),
                 Vautoload_queue,
             );
         }
     }
     if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = Fcons(feature.as_lisp_obj(), globals.Vfeatures);
+            globals.Vfeatures = LispObject::cons(feature.as_lisp_obj(), globals.Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
-        put(feature.as_lisp_obj(), Qsubfeatures, subfeature);
+        put(feature, Qsubfeatures, subfeature);
     }
     unsafe {
-        globals.Vcurrent_load_list = Fcons(
-            Fcons(Qprovide, feature.as_lisp_obj()),
+        globals.Vcurrent_load_list = LispObject::cons(
+            LispObject::cons(Qprovide, feature.as_lisp_obj()),
             globals.Vcurrent_load_list,
         );
     }
@@ -128,10 +132,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // even if the feature specified is already loaded.
     // But not more than once in any file,
     // and not when we aren't loading or reading from a file.
-    let from_file = unsafe { globals.load_in_progress } || current_load_list
-        .iter_cars_safe()
-        .last()
-        .map_or(false, |elt| elt.is_string());
+    let from_file = unsafe { globals.load_in_progress }
+        || current_load_list
+            .iter_cars_safe()
+            .last()
+            .map_or(false, |elt| elt.is_string());
 
     if from_file {
         let tem = LispObject::cons(Qrequire, feature);
@@ -173,7 +178,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     unsafe {
         // Update the list for any nested `require's that occur.
         record_unwind_protect(Some(require_unwind), require_nesting_list);
-        require_nesting_list = Fcons(feature, require_nesting_list);
+        require_nesting_list = LispObject::cons(feature, require_nesting_list);
 
         // Value saved here is to be restored into Vautoload_queue
         record_unwind_protect(Some(un_autoload), Vautoload_queue);
@@ -222,7 +227,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
         Vautoload_queue = Qt;
     }
 
-    unsafe { unbind_to(count, feature) }
+    unbind_to(count, feature)
 }
 def_lisp_sym!(Qrequire, "require");
 
@@ -257,6 +262,22 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
             false,
         )
     }
+}
+
+#[no_mangle]
+pub extern "C" fn internal_equal_string(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+) -> bool {
+    let s1 = o1.as_string_or_error();
+    let s2 = o2.as_string_or_error();
+
+    s1.len_chars() == s2.len_chars()
+        && s1.len_bytes() == s2.len_bytes()
+        && s1.as_slice() == s2.as_slice()
+        && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
+            || unsafe { compare_string_intervals(o1, o2) })
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

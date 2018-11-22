@@ -1,35 +1,35 @@
 //! Minibuffer input and completion.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
-                 Qminibuffer_history, Qnil, Qt, Vminibuffer_list};
-use remacs_sys::{make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf,
-                 specbind, unbind_to, EmacsInt, Fcopy_sequence, Ffuncall};
 
-use buffers::{current_buffer, get_buffer};
-use editfns::field_end;
-use keymap::get_keymap;
-use lisp::defsubr;
-use lisp::LispObject;
-use lists::{car_safe, cdr_safe, memq};
-use obarray::{intern, lisp_intern};
-use symbols::symbol_value;
-use textprop::get_char_property;
-use threads::{c_specpdl_index, ThreadState};
+use crate::{
+    buffers::{current_buffer, LispBufferOrName},
+    editfns::field_end,
+    eval::unbind_to,
+    keymap::get_keymap,
+    lisp::defsubr,
+    lisp::LispObject,
+    lists::{car_safe, cdr_safe, memq},
+    obarray::{intern, lisp_intern},
+    remacs_sys::{
+        globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
+        Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
+    },
+    remacs_sys::{
+        make_buffer_string, minibuf_level, minibuf_prompt, minibuf_window, read_minibuf, specbind,
+        EmacsInt, Fcopy_sequence,
+    },
+    symbols::symbol_value,
+    textprop::get_char_property,
+    threads::{c_specpdl_index, ThreadState},
+};
 
 /// Return t if BUFFER is a minibuffer.
 /// No argument or nil as argument means use current buffer as BUFFER.
 /// BUFFER can be a buffer or a buffer name.
 #[lisp_fn(min = "0")]
-pub fn minibufferp(object: LispObject) -> bool {
-    let buffer = if object.is_nil() {
-        current_buffer()
-    } else if object.is_string() {
-        get_buffer(object)
-    } else {
-        object.as_buffer_or_error();
-        object
-    };
+pub fn minibufferp(buffer_or_name: Option<LispBufferOrName>) -> bool {
+    let buffer = buffer_or_name.map_or_else(current_buffer, LispObject::from);
     memq(buffer, unsafe { Vminibuffer_list }).is_not_nil()
 }
 
@@ -77,13 +77,14 @@ pub fn minibuffer_prompt() -> LispObject {
 /// Return (point-min) if current buffer is not a minibuffer.
 #[lisp_fn]
 pub fn minibuffer_prompt_end() -> EmacsInt {
-    let beg = ThreadState::current_buffer().beg() as EmacsInt;
-    if memq(current_buffer(), unsafe { Vminibuffer_list }).is_nil() {
+    let buffer = ThreadState::current_buffer();
+    let beg = buffer.beg() as EmacsInt;
+    if memq(buffer.into(), unsafe { Vminibuffer_list }).is_nil() {
         return beg;
     }
 
-    let end = field_end(Some(beg), false, None);
-    let buffer_end = ThreadState::current_buffer().zv as EmacsInt;
+    let end = field_end(Some(beg.into()), false, None);
+    let buffer_end = buffer.zv as EmacsInt;
     if end == buffer_end && get_char_property(beg, Qfield, Qnil).is_nil() {
         beg
     } else {
@@ -286,8 +287,7 @@ pub fn completing_read(
     def: LispObject,
     inherit_input_method: LispObject,
 ) -> LispObject {
-    callN_raw!(
-        Ffuncall,
+    call!(
         symbol_value(intern("completing-read-function")),
         prompt,
         collection,
@@ -349,7 +349,8 @@ pub fn read_string(
             }
         }
     }
-    unsafe { unbind_to(count, val) }
+
+    unbind_to(count, val)
 }
 
 pub fn read_command_or_variable(

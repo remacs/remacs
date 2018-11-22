@@ -5,16 +5,18 @@ use std::{mem, ptr};
 use libc::{c_int, c_void};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::build_string;
-use remacs_sys::{pvec_type, Lisp_Terminal};
-use remacs_sys::{Qnil, Qterminal_live_p};
 
-use dispnew::LispGlyphRef;
-use frames::selected_frame;
-use frames::LispFrameRef;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use vectors::LispVectorlikeRef;
+use crate {
+    dispnew::LispGlyphRef,
+    frames::selected_frame,
+    frames::LispFrameRef,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    remacs_sys::build_string,
+    remacs_sys::{pvec_type, Lisp_Terminal},
+    remacs_sys::{Qnil, Qterminal_live_p},
+    vectors::LispVectorlikeRef,
+};
 
 pub type LispTerminalRef = ExternalPtr<Lisp_Terminal>;
 

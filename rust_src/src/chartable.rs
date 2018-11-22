@@ -3,13 +3,17 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::uniprop_table_uncompress;
-use remacs_sys::{pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
-                 CHARTAB_SIZE_BITS};
-use remacs_sys::{Qchar_code_property_table, Qchar_table_p, Qnil};
 
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
+use crate::{
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    remacs_sys::uniprop_table_uncompress,
+    remacs_sys::{
+        pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
+        CHARTAB_SIZE_BITS,
+    },
+    remacs_sys::{Qchar_code_property_table, Qchar_table_p, Qnil},
+};
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 pub type LispSubCharTableRef = ExternalPtr<Lisp_Sub_Char_Table>;
@@ -50,6 +54,17 @@ impl From<LispObject> for Option<LispCharTableRef> {
 impl From<LispCharTableRef> for LispObject {
     fn from(ct: LispCharTableRef) -> Self {
         ct.as_lisp_obj()
+    }
+}
+
+impl LispObject {
+    pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
+        self.as_vectorlike().and_then(|v| v.as_sub_char_table())
+    }
+
+    pub fn as_sub_char_table_ascii(self) -> Option<LispSubCharTableAsciiRef> {
+        self.as_vectorlike()
+            .and_then(|v| v.as_sub_char_table_ascii())
     }
 }
 
@@ -103,7 +118,7 @@ impl LispCharTableRef {
     }
 
     pub fn extra_slots(self) -> isize {
-        (self.header.size & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
+        (unsafe { self.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
             - (1 << CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0 as isize)
     }
 
@@ -175,7 +190,7 @@ impl LispSubCharTableRef {
         let mut val = self._get(idx);
 
         if is_uniprop && uniprop_compressed_form_p(val) {
-            val = unsafe { uniprop_table_uncompress(self.as_lisp_obj(), idx as libc::c_uint) };
+            val = unsafe { uniprop_table_uncompress(self.as_lisp_obj(), idx as libc::c_int) };
         }
 
         if let Some(sub) = val.as_sub_char_table() {
@@ -209,10 +224,7 @@ pub fn char_table_parent(chartable: LispCharTableRef) -> Option<LispCharTableRef
 /// Set the parent char-table of CHARTABLE to PARENT.
 /// Return PARENT.  PARENT must be either nil or another char-table.
 #[lisp_fn]
-pub fn set_char_table_parent(
-    mut chartable: LispCharTableRef,
-    parent: Option<LispCharTableRef>,
-) -> () {
+pub fn set_char_table_parent(mut chartable: LispCharTableRef, parent: Option<LispCharTableRef>) {
     let mut temp = parent;
     while temp.is_some() {
         if let Some(p) = temp {

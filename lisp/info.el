@@ -1,6 +1,6 @@
 ;; info.el --- Info package for Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1986, 1992-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1992-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: help
@@ -1347,7 +1347,7 @@ is non-nil)."
 		       ;; Shouldn't really happen, but sometimes does,
 		       ;; eg on Debian systems with buggy packages;
 		       ;; so may as well try it.
-		       ;; https://lists.gnu.org/archive/html/emacs-devel/2012-03/msg00005.html
+		       ;; https://lists.gnu.org/r/emacs-devel/2012-03/msg00005.html
 		       (progn (setq file (expand-file-name "dir.gz" truename))
 			      (file-attributes file)))))
 		(setq dirs-done

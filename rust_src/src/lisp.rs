@@ -10,18 +10,18 @@ use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
 
-use remacs_sys;
-use remacs_sys::{build_string, internal_equal, make_float};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Lisp_Bits, USE_LSB_TAG,
-                 VALMASK};
-use remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type};
-use remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Qunbound, Vbuffer_alist};
-
-use buffers::LispBufferRef;
-use chartable::{LispSubCharTableAsciiRef, LispSubCharTableRef};
-use eval::FUNCTIONP;
-use lists::{list, CarIter};
-use vectors::LispBoolVecRef;
+use crate::{
+    buffers::LispBufferRef,
+    eval::FUNCTIONP,
+    lists::{list, CarIter},
+    remacs_sys,
+    remacs_sys::{build_string, internal_equal, make_float},
+    remacs_sys::{
+        equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
+    },
+    remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
+    remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist},
+};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -63,10 +63,6 @@ impl LispObject {
         self.0 as EmacsUint
     }
 
-    pub fn constant_unbound() -> LispObject {
-        Qunbound
-    }
-
     pub fn from_bool(v: bool) -> LispObject {
         if v {
             Qt
@@ -92,95 +88,7 @@ where
     }
 }
 
-impl From<()> for LispObject {
-    fn from(_v: ()) -> Self {
-        Qnil
-    }
-}
-
-impl From<Vec<LispObject>> for LispObject {
-    fn from(v: Vec<LispObject>) -> Self {
-        list(&v)
-    }
-}
-
-impl From<LispObject> for bool {
-    fn from(o: LispObject) -> Self {
-        o.is_not_nil()
-    }
-}
-
-impl From<bool> for LispObject {
-    fn from(v: bool) -> Self {
-        if v {
-            Qt
-        } else {
-            Qnil
-        }
-    }
-}
-
-impl From<LispObject> for u32 {
-    fn from(o: LispObject) -> Self {
-        o.as_fixnum_or_error() as u32
-    }
-}
-
-impl From<LispObject> for Option<u32> {
-    fn from(o: LispObject) -> Self {
-        match o.as_fixnum() {
-            None => None,
-            Some(n) => Some(n as u32),
-        }
-    }
-}
-
-/// Copies a Rust str into a new Lisp string
-impl<'a> From<&'a str> for LispObject {
-    fn from(s: &str) -> Self {
-        let cs = CString::new(s).unwrap();
-        unsafe { build_string(cs.as_ptr()) }
-    }
-}
-
-impl LispObject {
-    pub fn get_type(self) -> Lisp_Type {
-        let raw = self.to_C_unsigned();
-        let res = (if USE_LSB_TAG {
-            raw & (!VALMASK as EmacsUint)
-        } else {
-            raw >> Lisp_Bits::VALBITS
-        }) as u32;
-        unsafe { mem::transmute(res) }
-    }
-
-    pub fn tag_ptr<T>(external: ExternalPtr<T>, ty: Lisp_Type) -> LispObject {
-        let raw = external.as_ptr() as intptr_t;
-        let res = if USE_LSB_TAG {
-            let ptr = raw as intptr_t;
-            let tag = ty as intptr_t;
-            (ptr + tag) as EmacsInt
-        } else {
-            let ptr = raw as EmacsUint as uintptr_t;
-            let tag = ty as EmacsUint as uintptr_t;
-            ((tag << Lisp_Bits::VALBITS) + ptr) as EmacsInt
-        };
-
-        LispObject::from_C(res)
-    }
-
-    pub fn get_untaggedptr(self) -> *mut c_void {
-        (self.to_C() & VALMASK) as intptr_t as *mut c_void
-    }
-}
-
-// Misc support (LispType == Lisp_Misc == 1)
-
-// Lisp_Misc is a union. Now we don't really care about its variants except the
-// super type layout. LispMisc is an unsized type for this, and LispMiscAny is
-// only the header and a padding, which is consistent with the c version.
-// directly creating and moving or copying this struct is simply wrong!
-// If needed, we can calculate all variants size and allocate properly.
+// ExternalPtr
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -236,6 +144,42 @@ impl<T> PartialEq for ExternalPtr<T> {
     }
 }
 
+// Misc support (LispType == Lisp_Misc == 1)
+
+// Lisp_Misc is a union. Now we don't really care about its variants except the
+// super type layout. LispMisc is an unsized type for this, and LispMiscAny is
+// only the header and a padding, which is consistent with the c version.
+// directly creating and moving or copying this struct is simply wrong!
+// If needed, we can calculate all variants size and allocate properly.
+
+pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
+
+impl LispMiscRef {
+    pub fn get_type(self) -> Lisp_Misc_Type {
+        self.type_()
+    }
+}
+
+impl LispObject {
+    pub fn is_misc(self) -> bool {
+        self.get_type() == Lisp_Type::Lisp_Misc
+    }
+
+    pub fn as_misc(self) -> Option<LispMiscRef> {
+        if self.is_misc() {
+            unsafe { Some(self.to_misc_unchecked()) }
+        } else {
+            None
+        }
+    }
+
+    unsafe fn to_misc_unchecked(self) -> LispMiscRef {
+        LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
+    }
+}
+
+// Lisp_Subr support
+
 pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
 unsafe impl Sync for LispSubrRef {}
 
@@ -261,35 +205,115 @@ impl LispSubrRef {
     }
 }
 
-pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
+impl LispObject {
+    pub fn is_subr(self) -> bool {
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_SUBR))
+    }
 
-impl LispMiscRef {
-    pub fn get_type(self) -> Lisp_Misc_Type {
-        self.type_()
+    pub fn as_subr(self) -> Option<LispSubrRef> {
+        self.as_vectorlike().and_then(|v| v.as_subr())
+    }
+
+    pub fn as_subr_or_error(self) -> LispSubrRef {
+        self.as_subr().unwrap_or_else(|| wrong_type!(Qsubrp, self))
     }
 }
 
-#[test]
-fn test_lisp_misc_any_size() {
-    // Should be 32 bits, which is 4 bytes.
-    assert!(mem::size_of::<Lisp_Misc_Any>() == 4);
+impl From<LispObject> for LispSubrRef {
+    fn from(o: LispObject) -> Self {
+        o.as_subr_or_error()
+    }
+}
+
+// Other functions
+
+impl From<()> for LispObject {
+    fn from(_v: ()) -> Self {
+        Qnil
+    }
+}
+
+impl From<Vec<LispObject>> for LispObject {
+    fn from(v: Vec<LispObject>) -> Self {
+        list(&v)
+    }
+}
+
+impl From<LispObject> for bool {
+    fn from(o: LispObject) -> Self {
+        o.is_not_nil()
+    }
+}
+
+impl From<bool> for LispObject {
+    fn from(v: bool) -> Self {
+        if v {
+            Qt
+        } else {
+            Qnil
+        }
+    }
+}
+
+impl From<LispObject> for u32 {
+    fn from(o: LispObject) -> Self {
+        o.as_fixnum_or_error() as u32
+    }
+}
+
+impl From<LispObject> for Option<u32> {
+    fn from(o: LispObject) -> Self {
+        match o.as_fixnum() {
+            None => None,
+            Some(n) => Some(n as u32),
+        }
+    }
+}
+
+impl From<!> for LispObject {
+    fn from(_v: !) -> Self {
+        // I'm surprized that this works
+        Qnil
+    }
+}
+
+/// Copies a Rust str into a new Lisp string
+impl<'a> From<&'a str> for LispObject {
+    fn from(s: &str) -> Self {
+        let cs = CString::new(s).unwrap();
+        unsafe { build_string(cs.as_ptr()) }
+    }
 }
 
 impl LispObject {
-    pub fn is_misc(self) -> bool {
-        self.get_type() == Lisp_Type::Lisp_Misc
-    }
-
-    pub fn as_misc(self) -> Option<LispMiscRef> {
-        if self.is_misc() {
-            unsafe { Some(self.to_misc_unchecked()) }
+    pub fn get_type(self) -> Lisp_Type {
+        let raw = self.to_C_unsigned();
+        let res = (if USE_LSB_TAG {
+            raw & (!VALMASK as EmacsUint)
         } else {
-            None
-        }
+            raw >> Lisp_Bits::VALBITS
+        }) as u32;
+        unsafe { mem::transmute(res) }
     }
 
-    unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
+    pub fn tag_ptr<T>(external: ExternalPtr<T>, ty: Lisp_Type) -> LispObject {
+        let raw = external.as_ptr() as intptr_t;
+        let res = if USE_LSB_TAG {
+            let ptr = raw as intptr_t;
+            let tag = ty as intptr_t;
+            (ptr + tag) as EmacsInt
+        } else {
+            let ptr = raw as EmacsUint as uintptr_t;
+            let tag = ty as EmacsUint as uintptr_t;
+            ((tag << Lisp_Bits::VALBITS) + ptr) as EmacsInt
+        };
+
+        LispObject::from_C(res)
+    }
+
+    pub fn get_untaggedptr(self) -> *mut c_void {
+        (self.to_C() & VALMASK) as intptr_t as *mut c_void
     }
 }
 
@@ -407,37 +431,6 @@ impl LispObject {
         })
     }
 
-    pub fn is_subr(self) -> bool {
-        self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_SUBR))
-    }
-
-    pub fn as_subr(self) -> Option<LispSubrRef> {
-        self.as_vectorlike().and_then(|v| v.as_subr())
-    }
-
-    pub fn as_subr_or_error(self) -> LispSubrRef {
-        self.as_subr().unwrap_or_else(|| wrong_type!(Qsubrp, self))
-    }
-
-    pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
-        self.as_vectorlike().and_then(|v| v.as_sub_char_table())
-    }
-
-    pub fn as_sub_char_table_ascii(self) -> Option<LispSubCharTableAsciiRef> {
-        self.as_vectorlike()
-            .and_then(|v| v.as_sub_char_table_ascii())
-    }
-
-    pub fn is_bool_vector(self) -> bool {
-        self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR))
-    }
-
-    pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
-        self.as_vectorlike().and_then(|v| v.as_bool_vector())
-    }
-
     pub fn is_array(self) -> bool {
         self.is_vector() || self.is_string() || self.is_char_table() || self.is_bool_vector()
     }
@@ -449,12 +442,6 @@ impl LispObject {
     pub fn is_record(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_RECORD))
-    }
-}
-
-impl From<LispObject> for LispSubrRef {
-    fn from(o: LispObject) -> Self {
-        o.as_subr_or_error()
     }
 }
 
@@ -497,8 +484,6 @@ pub fn is_autoload(function: LispObject) -> bool {
         .map_or(false, |cell| cell.car().eq(Qautoload))
 }
 
-// Other functions
-
 impl LispObject {
     pub fn is_nil(self) -> bool {
         self == Qnil
@@ -518,10 +503,6 @@ impl LispObject {
         self == other
     }
 
-    pub fn ne(self, other: LispObject) -> bool {
-        self != other
-    }
-
     pub fn eql(self, other: LispObject) -> bool {
         if self.is_float() {
             self.equal_no_quit(other)
@@ -531,15 +512,35 @@ impl LispObject {
     }
 
     pub fn equal(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, EqualKind::Plain, 0, Qnil) }
+        unsafe { internal_equal(self, other, equal_kind::EQUAL_PLAIN, 0, Qnil) }
     }
 
     pub fn equal_no_quit(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, EqualKind::NoQuit, 0, Qnil) }
+        unsafe { internal_equal(self, other, equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
     }
 
     pub fn is_function(self) -> bool {
         FUNCTIONP(self)
+    }
+
+    pub fn map_or<T, F: FnOnce(LispObject) -> T>(self, default: T, action: F) -> T {
+        if self.is_nil() {
+            default
+        } else {
+            action(self)
+        }
+    }
+
+    pub fn map_or_else<T, F: FnOnce() -> T, F1: FnOnce(LispObject) -> T>(
+        self,
+        default: F,
+        action: F1,
+    ) -> T {
+        if self.is_nil() {
+            default()
+        } else {
+            action(self)
+        }
     }
 }
 
@@ -644,9 +645,15 @@ macro_rules! protect_statics_from_GC {
         pub fn rust_static_syms() {
             unsafe {
                 $(
-                    ::remacs_sys::staticpro(&$f as *const LispObject as *mut LispObject);
+                    crate::remacs_sys::staticpro(&$f as *const LispObject as *mut LispObject);
                 )+
             }
         }
     }
+}
+
+#[test]
+fn test_lisp_misc_any_size() {
+    // Should be 32 bits, which is 4 bytes.
+    assert!(mem::size_of::<Lisp_Misc_Any>() == 4);
 }

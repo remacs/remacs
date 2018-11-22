@@ -1,6 +1,6 @@
 /* Header file for the buffer manipulation primitives.
 
-Copyright (C) 1985-1986, 1993-1995, 1997-2017 Free Software Foundation,
+Copyright (C) 1985-1986, 1993-1995, 1997-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -505,7 +505,7 @@ struct buffer_text
 
 struct buffer
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* The name of this buffer.  */
   Lisp_Object name_;
@@ -958,6 +958,16 @@ bset_display_count (struct buffer *b, Lisp_Object val)
   b->display_count_ = val;
 }
 INLINE void
+bset_left_margin_cols (struct buffer *b, Lisp_Object val)
+{
+  b->left_margin_cols_ = val;
+}
+INLINE void
+bset_right_margin_cols (struct buffer *b, Lisp_Object val)
+{
+  b->right_margin_cols_ = val;
+}
+INLINE void
 bset_display_time (struct buffer *b, Lisp_Object val)
 {
   b->display_time_ = val;
@@ -1114,6 +1124,9 @@ extern struct buffer buffer_local_flags;
 
 extern struct buffer buffer_local_symbols;
 
+extern void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
+extern struct Lisp_Overlay *
+unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay);
 extern void delete_all_overlays (struct buffer *);
 extern void reset_buffer (struct buffer *);
 extern void compact_buffer (struct buffer *);

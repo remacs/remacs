@@ -42,10 +42,10 @@ pub unsafe extern "C" fn rust_make_temp(template: *mut c_char, flags: c_int) -> 
 }
 
 pub fn make_temporary_file(template: String, flags: i32) -> Result<(i32, String), i32> {
-    let mut validated_template = try!(validate_template(template));
+    let mut validated_template = validate_template(template)?;
     for _ in 0..NUM_RETRIES {
         generate_temporary_filename(&mut validated_template);
-        let attempt = try!(CString::new(validated_template.clone()).map_err(|_| EEXIST));
+        let attempt = CString::new(validated_template.clone()).map_err(|_| EEXIST)?;
         let file_handle = match open_temporary_file(&attempt, flags) {
             Ok(file) => file,
             Err(_) => continue,
@@ -169,7 +169,7 @@ fn test_rust_make_temp() {
     let name_copy = name.clone();
     let raw_ptr = name.into_raw();
     let save_errno = errno::errno();
-    let file_handle = rust_make_temp(raw_ptr, 0);
+    let file_handle = unsafe { rust_make_temp(raw_ptr, 0) };
     assert!(file_handle != -1);
     let new_name = unsafe { CString::from_raw(raw_ptr) };
     assert!(new_name != name_copy);
@@ -183,7 +183,7 @@ fn test_rust_make_temp_error_inval() {
     let fullpath = tmpdir.to_string_lossy().into_owned();
     let name = CString::new(fullpath).unwrap();
     let raw_ptr = name.into_raw();
-    let file_handle = rust_make_temp(raw_ptr, 0);
+    let file_handle = unsafe { rust_make_temp(raw_ptr, 0) };
     let error = errno::errno();
     assert!(file_handle == -1 && error == errno::Errno(EINVAL));
 }

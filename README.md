@@ -5,7 +5,7 @@
 
 A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust](https://www.rust-lang.org).
 
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
 
 - [Why Emacs?](#why-emacs)
@@ -13,16 +13,18 @@ A community-driven port of [Emacs](https://www.gnu.org/software/emacs/) to [Rust
 - [Why A Fork?](#why-a-fork)
 - [Getting Started](#getting-started)
     - [Requirements](#requirements)
+    - [Dockerized development environment](#dockerized-development-environment)
     - [Building Remacs](#building-remacs)
     - [Running Remacs](#running-remacs)
 - [Design Goals](#design-goals)
-- [Non-Design Goals](#non-design-goals)
+- [Progress](#progress)
 - [Porting Elisp Primitive Functions](#porting-elisp-primitive-functions)
 - [Contributing](#contributing)
 
 <!-- markdown-toc end -->
 
-## Why Emacs?
+
+# Why Emacs?
 
 Emacs will change how you think about programming.
 
@@ -74,7 +76,7 @@ Emacs doesn't have a monopoly on good ideas, and there are other great
 tools out there. Nonetheless, we believe the [Emacs learning curve pays
 off](https://i.stack.imgur.com/7Cu9Z.jpg).
 
-## Why Rust?
+# Why Rust?
 
 Rust is a great alternative to C.
 
@@ -100,7 +102,7 @@ it much easier for newcomers to contribute.
 
 Give it a try. We think you'll like it.
 
-## Why A Fork?
+# Why A Fork?
 
 Emacs is a widely used tool with a long history, broad platform
 support and strong backward compatibility requirements. The core team
@@ -126,9 +128,9 @@ There's a difference between **the idea of Emacs** and the **current
 implementation of Emacs**. Forking allows us to explore being even
 more Emacs-y.
 
-## Getting Started
+# Getting Started
 
-### Requirements
+## Requirements
 
 1. You will need
    [Rust installed](https://www.rust-lang.org/en-US/install.html). 
@@ -139,23 +141,22 @@ more Emacs-y.
    something like `apt install build-essential automake clang`. On
    macOS, you'll need Xcode.
 
-3. You will need some C libraries. On Linux, you can install
-   everything you need with:
+3. Linux:
 
         apt install texinfo libjpeg-dev libtiff-dev \
           libgif-dev libxpm-dev libgtk-3-dev libgnutls28-dev \
           libncurses5-dev libxml2-dev libxt-dev
 
-    On macOS, you'll need libxml2 (via `xcode-select --install`) and
-    gnutls (via `brew install gnutls`).
+   MacOS:
+   
+        brew install libxml2 gnutls texinfo
+        
+    To use the installed version of `makeinfo` instead of the built-in 
+    (`/usr/bin/makeinfo`) one, you'll need to make sure `/usr/local/opt/texinfo/bin` 
+    is before `/usr/bin` in `PATH`.
+    Mojave: `export PKG_CONFIG_PATH="/usr/local/opt/libxml2/lib/pkgconfig"`
 
-    On macOS, the default `makeinfo` command is outdated, you'll need
-    to update it (via `brew install texinfo`). To use the installed
-    version of `makeinfo` instead of the built-in (`/usr/bin/makeinfo`)
-    one, you'll need to make sure `/usr/local/opt/texinfo/bin` is
-    before `/usr/bin` in `PATH`.
-
-#### Dockerized development environment
+## Dockerized development environment
 
 If you don't want to bother with the above setup you can use the
 provided Docker environment. Make sure you have
@@ -184,7 +185,7 @@ the steps from [Building Remacs](#building-remacs) prefixed with
 `docker-compose exec remacs`, this will ensure the commands are
 executed inside the container.
 
-### Building Remacs
+## Building Remacs
 
 ```
 $ ./autogen.sh
@@ -203,7 +204,7 @@ For example:
 $ make CARGO_FLAGS="-vv" RUSTFLAGS="-Zunstable-options --cfg MARKER_DEBUG"
 ```
 
-### Running Remacs
+## Running Remacs
 
 You can now run your shiny new Remacs build!
 
@@ -213,23 +214,10 @@ You can now run your shiny new Remacs build!
 $ RUST_BACKTRACE=1 src/remacs -q
 ```
 
-## Design Goals
+# Design Goals
 
 **Compatibility**: Remacs should not break existing elisp code, and
 ideally provide the same FFI too.
-
-**Similar naming conventions**: Code in Remacs should use the same
-naming conventions for elisp namespaces, to make translation
-straightforward.
-
-This means that an elisp function `do-stuff` will have a corresponding
-Rust function `Fdo_stuff`, and a declaration struct `Sdo_stuff`. A
-lisp variable `do-stuff` will have a Rust variable `Vdo_stuff` and a
-symbol `'do-stuff` will have a Rust variable `Qdo_stuff`.
-
-Otherwise, we follow Rust naming conventions, with docstrings noting
-equivalent functions or macros in C. When incrementally porting, we
-may define Rust functions with the same name as their C predecessors.
 
 **Leverage Rust itself**: Remacs should make best use of Rust to
 ensure code is robust and performant.
@@ -241,13 +229,14 @@ code could benefit others.
 **Great docs**: Emacs has excellent documentation, Remacs should be no
 different.
 
-## Non-Design Goals
+# Progress
 
-**`etags`**: The
-[universal ctags project](https://github.com/universal-ctags/ctags)
-supports a wider range of languages and we recommend it instead.
+At this point we focus on porting lisp functions from C to Rust.
+Currently there are 467 functions in Rust and 996 in C (November 2018).
 
-## Porting Elisp Primitive Functions
+We also have a [progress section](https://github.com/Wilfred/remacs/wiki/Progress) in our wiki.
+
+# Porting Elisp Primitive Functions
 
 The first thing to look at is the C implementation for the `atan` function. It takes an optional second argument, which makes it interesting. The complicated mathematical bits, on the other hand, are handled by the standard library. This allows us to focus on the porting process without getting distracted by the math.
 
@@ -297,7 +286,7 @@ You can see that we don't have to check to see if our arguments are of the corre
 
 This code is so much better that it's hard to believe just how simple the implementation of the macro is. It just calls `.into()` on the arguments and the return value; the compiler does the rest when it dispatches this method call to the correct implementation.
 
-## Contributing
+# Contributing
 
 Pull requests welcome, no copyright assignment required. This project is under the
 [Rust code of conduct](https://www.rust-lang.org/en-US/conduct.html).

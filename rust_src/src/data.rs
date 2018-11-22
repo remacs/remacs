@@ -1,35 +1,42 @@
 //! data helpers
 
+use field_offset::FieldOffset;
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys;
-use remacs_sys::{aset_multibyte_string, bool_vector_binop_driver, build_string, emacs_abort,
-                 globals, update_buffer_defaults, wrong_choice, wrong_range, CHAR_TABLE_SET,
-                 CHECK_IMPURE};
-use remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type};
-use remacs_sys::{Fcons, Ffset, Fget, Fpurecopy};
-use remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang};
-use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
-                 Qchoice, Qcompiled_function, Qcondition_variable, Qcons,
-                 Qcyclic_function_indirection, Qdefalias_fset_function, Qdefun, Qfinalizer,
-                 Qfloat, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qframe,
-                 Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker, Qmodule_function,
-                 Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol, Qt,
-                 Qterminal, Qthread, Qunevalled, Quser_ptr, Qvector, Qwindow,
-                 Qwindow_configuration};
 
-use frames::selected_frame;
-use keymap::get_keymap;
-use lisp::{defsubr, is_autoload};
-use lisp::{LispObject, LispSubrRef};
-use lists::{get, memq, put};
-use math::leq;
-use multibyte::{is_ascii, is_single_byte_char};
-use obarray::loadhist_attach;
-use threads::ThreadState;
-
-use field_offset::FieldOffset;
+use crate::{
+    buffers::per_buffer_idx,
+    frames::selected_frame,
+    keymap::get_keymap,
+    lisp::{defsubr, is_autoload},
+    lisp::{LispObject, LispSubrRef, LiveBufferIter},
+    lists::{get, member, memq, put},
+    math::leq,
+    multibyte::{is_ascii, is_single_byte_char},
+    obarray::{loadhist_attach, map_obarray},
+    remacs_sys,
+    remacs_sys::{
+        aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
+        emacs_abort, globals, rust_count_one_bits, set_default_internal, set_internal,
+        symbol_trapped_write, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
+    },
+    remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
+    remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
+    remacs_sys::{Fdelete, Ffset, Fget, Fpurecopy},
+    remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
+    remacs_sys::{
+        Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice,
+        Qcompiled_function, Qcondition_variable, Qcons, Qcyclic_function_indirection,
+        Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object,
+        Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker,
+        Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol,
+        Qt, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector, Qvoid_variable,
+        Qwatchers, Qwindow, Qwindow_configuration,
+    },
+    symbols::LispSymbolRef,
+    threads::ThreadState,
+};
 
 // Lisp_Fwd predicates which can go away as the callers are ported to Rust
 #[no_mangle]
@@ -75,11 +82,7 @@ pub fn indirect_function(object: LispObject) -> LispObject {
 /// function indirections to find the final function binding and return it.
 /// Signal a cyclic-function-indirection error if there is a loop in the
 /// function chain of symbols.
-#[lisp_fn(
-    min = "1",
-    c_name = "indirect_function",
-    name = "indirect-function"
-)]
+#[lisp_fn(min = "1", c_name = "indirect_function", name = "indirect-function")]
 pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispObject {
     match object.as_symbol() {
         None => object,
@@ -265,8 +268,12 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
 ///
 /// The return value is undefined.
 #[lisp_fn(min = "2")]
-pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObject) -> LispObject {
-    let symbol = sym.as_symbol_or_error();
+pub fn defalias(
+    symbol: LispSymbolRef,
+    mut definition: LispObject,
+    docstring: LispObject,
+) -> LispObject {
+    let sym = LispObject::from(symbol);
 
     unsafe {
         if globals.Vpurify_flag != Qnil
@@ -282,11 +289,14 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
         // Only add autoload entries after dumping, because the ones before are
         // not useful and else we get loads of them from the loaddefs.el.
 
-        if is_autoload(symbol.function) {
+        if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
-            loadhist_attach(unsafe { Fcons(Qt, sym) });
+            loadhist_attach(LispObject::cons(Qt, sym));
         }
-        loadhist_attach(unsafe { Fcons(if autoload { Qautoload } else { Qdefun }, sym) });
+        loadhist_attach(LispObject::cons(
+            if autoload { Qautoload } else { Qdefun },
+            sym,
+        ));
     }
 
     // Handle automatic advice activation.
@@ -298,7 +308,7 @@ pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObje
     }
 
     if docstring.is_not_nil() {
-        put(sym, Qfunction_documentation, docstring);
+        put(symbol, Qfunction_documentation, docstring);
     }
 
     // We used to return `definition', but now that `defun' and `defmacro' expand
@@ -344,6 +354,76 @@ pub fn byteorder() -> u8 {
     } else {
         b'l'
     }
+}
+
+/// Return the default value of SYMBOL, but don't check for voidness.
+/// Return Qunbound if it is void.
+fn default_value(mut symbol: LispSymbolRef) -> LispObject {
+    while symbol.get_redirect() == symbol_redirect::SYMBOL_VARALIAS {
+        symbol = symbol.get_indirect_variable();
+    }
+    match symbol.get_redirect() {
+        symbol_redirect::SYMBOL_PLAINVAL => unsafe { symbol.get_value() },
+        symbol_redirect::SYMBOL_LOCALIZED => {
+            // If var is set up for a buffer that lacks a local value for it,
+            // the current value is nominally the default value.
+            // But the `realvalue' slot may be more up to date, since
+            // ordinary setq stores just that slot.  So use that.
+            let blv = unsafe { symbol.get_blv() };
+            let fwd = blv.get_fwd();
+            if !fwd.is_null() && blv.valcell.eq(blv.defcell) {
+                unsafe { do_symval_forwarding(fwd) }
+            } else {
+                blv.defcell.as_cons_or_error().cdr()
+            }
+        }
+        symbol_redirect::SYMBOL_FORWARDED => {
+            let valcontents = unsafe { symbol.get_fwd() };
+
+            // For a built-in buffer-local variable, get the default value
+            // rather than letting do_symval_forwarding get the current value.
+            if_chain! {
+                // if_chain! builds up a series of conditions and contitional assignments into one
+                // big pair of then/else arms. This should be converted into idiomatic Option-based
+                // code eventually.
+                if unsafe { (*valcontents).u_intfwd.ty } == Lisp_Fwd_Buffer_Obj;
+                let offset = unsafe { (*valcontents).u_buffer_objfwd.offset };
+                if unsafe {
+                    *offset.apply_ptr_mut(&mut buffer_local_flags)
+                }.as_fixnum_or_error() != 0;
+                then {
+                    unsafe { per_buffer_default(offset.get_byte_offset() as i32) }
+                } else {
+                    // For other variables, get the current value.
+                    unsafe { do_symval_forwarding(valcontents) }
+                }
+            }
+        }
+        _ => panic!("Symbol type has no default value"),
+    }
+}
+
+/// Return t if SYMBOL has a non-void default value.
+/// This is the value that is seen in buffers that do not have their own values
+/// for this variable.
+#[lisp_fn]
+pub fn default_boundp(symbol: LispSymbolRef) -> bool {
+    !default_value(symbol).eq(Qunbound)
+}
+
+/// Return SYMBOL's default value.
+/// This is the value that is seen in buffers that do not have their own values
+/// for this variable.  The default value is meaningful for variables with
+/// local bindings in certain buffers.
+#[lisp_fn(c_name = "default_value", name = "default-value")]
+pub fn default_value_lisp(symbol: LispSymbolRef) -> LispObject {
+    let value = default_value(symbol);
+
+    if value.eq(Qunbound) {
+        xsignal!(Qvoid_variable, symbol.into());
+    }
+
+    value
 }
 
 /***********************************************************************
@@ -433,7 +513,7 @@ pub struct Lisp_Kboard_Objfwd {
 /// This does not handle buffer-local variables; use
 /// swap_in_symval_forwarding for that.
 #[no_mangle]
-pub unsafe extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> LispObject {
+pub unsafe extern "C" fn do_symval_forwarding(valcontents: *const Lisp_Fwd) -> LispObject {
     match (*valcontents).u_intfwd.ty {
         Lisp_Fwd_Int => LispObject::from(*(*valcontents).u_intfwd.intvar),
         Lisp_Fwd_Bool => LispObject::from(*(*valcontents).u_boolfwd.boolvar),
@@ -454,7 +534,7 @@ pub unsafe extern "C" fn do_symval_forwarding(valcontents: *mut Lisp_Fwd) -> Lis
             // last-command and real-last-command, and people may rely on
             // that.  I took a quick look at the Lisp codebase, and I
             // don't think anything will break.  --lorentey
-            let frame = selected_frame().as_frame_or_error();
+            let frame = selected_frame();
             if !frame.is_live() {
                 emacs_abort();
             }
@@ -514,7 +594,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
             *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
         }
         Lisp_Fwd_Kboard_Obj => {
-            let frame = selected_frame().as_frame_or_error();
+            let frame = selected_frame();
             if !frame.is_live() {
                 emacs_abort();
             }
@@ -522,6 +602,29 @@ pub unsafe extern "C" fn store_symval_forwarding(
             *(*valcontents).u_kboard_objfwd.offset.apply_ptr_mut(kboard) = newval;
         }
         _ => emacs_abort(),
+    }
+}
+
+unsafe fn update_buffer_defaults(objvar: *const LispObject, newval: LispObject) {
+    // If this variable is a default for something stored
+    // in the buffer itself, such as default-fill-column,
+    // find the buffers that don't have local values for it
+    // and update them.
+    let defaults: *mut Lisp_Buffer = &mut buffer_defaults;
+    let defaults_as_object_ptr = defaults as *const LispObject;
+    if objvar > defaults_as_object_ptr && objvar < (defaults.add(1) as *const LispObject) {
+        let offset = objvar.offset_from(defaults_as_object_ptr);
+        let idx = per_buffer_idx(offset);
+
+        if idx <= 0 {
+            return;
+        }
+
+        LiveBufferIter::new().for_each(|mut buf| {
+            if !buf.value_p(idx as isize) {
+                buf.set_value(offset as usize, newval);
+            }
+        });
     }
 }
 
@@ -566,6 +669,124 @@ pub fn bool_vector_set_difference(a: LispObject, b: LispObject, c: LispObject) -
 #[lisp_fn]
 pub fn bool_vector_subsetp(a: LispObject, b: LispObject) -> LispObject {
     unsafe { bool_vector_binop_driver(a, b, b, BoolVectorOp::BoolVectorSubsetp) }
+}
+
+/// Set SYMBOL's value to NEWVAL, and return NEWVAL.
+#[lisp_fn]
+pub fn set(symbol: LispSymbolRef, newval: LispObject) -> LispObject {
+    unsafe {
+        set_internal(
+            LispObject::from(symbol),
+            newval,
+            Qnil,
+            Set_Internal_Bind::SET_INTERNAL_SET,
+        )
+    };
+    newval
+}
+
+/// Set SYMBOL's default value to VALUE.  SYMBOL and VALUE are evaluated.
+/// The default value is seen in buffers that do not have their own
+/// values for this variable.
+#[lisp_fn]
+pub fn set_default(symbol: LispSymbolRef, value: LispObject) -> LispObject {
+    unsafe {
+        set_default_internal(
+            LispObject::from(symbol),
+            value,
+            Set_Internal_Bind::SET_INTERNAL_SET,
+        )
+    };
+    value
+}
+
+extern "C" fn harmonize_variable_watchers(alias: LispObject, base_variable: LispObject) {
+    if !base_variable.eq(alias)
+        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable().into())
+    {
+        alias
+            .as_symbol_or_error()
+            .set_trapped_write(base_variable.as_symbol_or_error().get_trapped_write());
+    }
+}
+
+/// Cause WATCH-FUNCTION to be called when SYMBOL is set.
+///
+/// It will be called with 4 arguments: (SYMBOL NEWVAL OPERATION WHERE).
+/// SYMBOL is the variable being changed.
+/// NEWVAL is the value it will be changed to.
+/// OPERATION is a symbol representing the kind of change, one of: `set',
+/// `let', `unlet', `makunbound', and `defvaralias'.
+/// WHERE is a buffer if the buffer-local value of the variable is being
+/// changed, nil otherwise.
+///
+/// All writes to aliases of SYMBOL will call WATCH-FUNCTION too.
+#[lisp_fn]
+pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
+    let symbol = symbol.get_indirect_variable();
+
+    symbol.set_trapped_write(symbol_trapped_write::SYMBOL_TRAPPED_WRITE);
+
+    map_obarray(
+        unsafe { globals.Vobarray },
+        harmonize_variable_watchers,
+        symbol.into(),
+    );
+
+    let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
+    let mem = member(watch_function, watchers);
+
+    if mem.is_nil() {
+        put(
+            symbol,
+            Qwatchers,
+            LispObject::cons(watch_function, watchers),
+        );
+    }
+}
+
+/// Undo the effect of `add-variable-watcher'.
+/// Remove WATCH-FUNCTION from the list of functions to be called when
+/// SYMBOL (or its aliases) are set.
+#[lisp_fn]
+pub fn remove_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
+    let symbol = symbol.get_indirect_variable();
+
+    let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
+    let watchers = unsafe { Fdelete(watch_function, watchers) };
+
+    if watchers.is_nil() {
+        symbol.set_trapped_write(symbol_trapped_write::SYMBOL_UNTRAPPED_WRITE);
+
+        map_obarray(
+            unsafe { globals.Vobarray },
+            harmonize_variable_watchers,
+            symbol.into(),
+        );
+    }
+
+    put(symbol, Qwatchers, watchers);
+}
+
+/// Return a list of SYMBOL's active watchers.
+#[lisp_fn]
+pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
+    match symbol.get_trapped_write() {
+        symbol_trapped_write::SYMBOL_TRAPPED_WRITE => unsafe {
+            Fget(symbol.get_indirect_variable().into(), Qwatchers)
+        },
+        _ => Qnil,
+    }
+}
+
+/// Return population count of VALUE.
+/// This is the number of one bits in the two's complement representation
+/// of VALUE.  If VALUE is negative, return the number of zero bits in the
+/// representation.
+#[lisp_fn]
+pub fn logcount(value: EmacsInt) -> i32 {
+    let value = if value < 0 { -1 - value } else { value };
+    unsafe { rust_count_one_bits(value as usize) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

@@ -4,16 +4,21 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
-                 Fcopy_sequence};
-use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type,
-                 CHECK_IMPURE};
-use remacs_sys::{Qhash_table_p, Qhash_table_test};
 
-use data::aref;
-use lisp::defsubr;
-use lisp::{ExternalPtr, LispObject};
-use lists::{list, put};
+use crate::{
+    data::aref,
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    lists::{list, put},
+    remacs_sys::{
+        gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, Fcopy_sequence,
+    },
+    remacs_sys::{
+        pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, Lisp_Type, CHECK_IMPURE,
+    },
+    remacs_sys::{Qhash_table_p, Qhash_table_test},
+    symbols::LispSymbolRef,
+};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
@@ -86,6 +91,14 @@ impl LispHashTableRef {
         unsafe { gc_aset(self.key_and_value, 2 * idx + 1, value) };
     }
 
+    pub fn get_hash_key(self, idx: isize) -> LispObject {
+        aref(self.key_and_value, (2 * idx) as EmacsInt)
+    }
+
+    pub fn get_hash_hash(self, idx: isize) -> LispObject {
+        aref(self.hash, idx as EmacsInt)
+    }
+
     pub fn lookup(self, key: LispObject) -> HashLookupResult {
         // This allows `self` to be immutable.
         let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
@@ -102,20 +115,8 @@ impl LispHashTableRef {
         unsafe { hash_put(self.as_mut(), key, value, hash) }
     }
 
-    pub fn check_impure(self, object: LispHashTableRef) {
-        unsafe { CHECK_IMPURE(LispObject::from(object), self.as_ptr() as *mut c_void) };
-    }
-
     pub fn remove(mut self, key: LispObject) {
         unsafe { hash_remove_from_table(self.as_mut(), key) };
-    }
-
-    pub fn get_hash_hash(self, idx: isize) -> LispObject {
-        aref(self.hash, idx as EmacsInt)
-    }
-
-    pub fn get_hash_key(self, idx: isize) -> LispObject {
-        aref(self.key_and_value, (2 * idx) as EmacsInt)
     }
 
     pub fn size(self) -> usize {
@@ -124,6 +125,10 @@ impl LispHashTableRef {
 
     pub fn clear(mut self) {
         unsafe { hash_clear(self.as_mut()) }
+    }
+
+    pub fn check_impure(self, object: LispHashTableRef) {
+        unsafe { CHECK_IMPURE(LispObject::from(object), self.as_ptr() as *mut c_void) };
     }
 }
 
@@ -284,7 +289,7 @@ pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef)
 
 /// Remove KEY from TABLE.
 #[lisp_fn]
-pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
+pub fn remhash(key: LispObject, hash_table: LispHashTableRef) {
     hash_table.check_impure(hash_table);
     hash_table.remove(key);
 }
@@ -293,7 +298,7 @@ pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
 /// FUNCTION is called with two arguments, KEY and VALUE.
 /// `maphash' always returns nil.
 #[lisp_fn]
-pub fn maphash(function: LispObject, hash_table: LispHashTableRef) -> () {
+pub fn maphash(function: LispObject, hash_table: LispHashTableRef) {
     for (key, value) in hash_table.iter() {
         call!(function, key, value);
     }
@@ -357,7 +362,11 @@ pub fn clrhash(hash_table: LispHashTableRef) -> LispHashTableRef {
 /// It should be the case that if (eq (funcall HASH x1) (funcall HASH x2))
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
-pub fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
+pub fn define_hash_table_test(
+    name: LispSymbolRef,
+    test: LispObject,
+    hash: LispObject,
+) -> LispObject {
     let sym = Qhash_table_test;
     put(name, sym, list(&[test, hash]))
 }

@@ -1,6 +1,6 @@
 ;;; wid-edit.el --- Functions for creating and using widgets -*-byte-compile-dynamic: t; lexical-binding:t -*-
 ;;
-;; Copyright (C) 1996-1997, 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 1999-2018 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Maintainer: emacs-devel@gnu.org
@@ -832,7 +832,7 @@ button end points."
 
 ;; This alias exists only so that one can choose in doc-strings (e.g.
 ;; Custom-mode) which key-binding of widget-keymap one wants to refer to.
-;; https://lists.gnu.org/archive/html/emacs-devel/2008-11/msg00480.html
+;; https://lists.gnu.org/r/emacs-devel/2008-11/msg00480.html
 (define-obsolete-function-alias 'advertised-widget-backward
   'widget-backward "23.2")
 

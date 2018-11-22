@@ -1,6 +1,6 @@
 ;;; vc-bzr.el --- tests for vc/vc-bzr.el
 
-;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
 ;; Author: Glenn Morris <rgm@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -112,7 +112,7 @@
           (should (get-buffer "*vc-log*")))
       (delete-directory homedir t))))
 
-;; https://lists.gnu.org/archive/html/help-gnu-emacs/2012-04/msg00145.html
+;; https://lists.gnu.org/r/help-gnu-emacs/2012-04/msg00145.html
 (ert-deftest vc-bzr-test-faulty-bzr-autoloads ()
   "Test we can generate autoloads in a bzr directory when bzr is faulty."
   ;; Skipping on remacs until we figure out what's wrong.

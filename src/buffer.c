@@ -1,6 +1,6 @@
 /* Buffer manipulation primitives for GNU Emacs.
 
-Copyright (C) 1985-1989, 1993-1995, 1997-2017 Free Software Foundation,
+Copyright (C) 1985-1989, 1993-1995, 1997-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -65,7 +65,7 @@ struct buffer *all_buffers;
    Setting the default value also goes through the alist of buffers
    and stores into each buffer that does not say it has a local value.  */
 
-struct buffer alignas (GCALIGNMENT) buffer_defaults;
+struct buffer buffer_defaults;
 
 /* This structure marks which slots in a buffer have corresponding
    default values in buffer_defaults.
@@ -88,7 +88,7 @@ struct buffer buffer_local_flags;
 /* This structure holds the names of symbols whose values may be
    buffer-local.  It is indexed and accessed in the same way as the above.  */
 
-struct buffer alignas (GCALIGNMENT) buffer_local_symbols;
+struct buffer buffer_local_symbols;
 
 /* Return the symbol of the per-buffer variable at offset OFFSET in
    the buffer structure.  */
@@ -115,6 +115,9 @@ static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
 static void swap_out_buffer_local_variables (struct buffer *b);
 static void reset_buffer_local_variables (struct buffer *, bool);
 
+extern void drop_overlay (struct buffer *, struct Lisp_Overlay *);
+void unchain_both (struct buffer *, Lisp_Object);
+
 /* Alist of all buffer names vs the buffers.  This used to be
    a Lisp-visible variable, but is no longer, to prevent lossage
    due to user rplac'ing this alist or its elements.  */
@@ -125,7 +128,6 @@ static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
 static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
-static void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -700,19 +702,6 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
   return buf;
 }
 
-/* Mark OV as no longer associated with B.  */
-
-void
-drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
-{
-  eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
-  modify_overlay (b, marker_position (ov->start),
-		  marker_position (ov->end));
-  unchain_marker (XMARKER (ov->start));
-  unchain_marker (XMARKER (ov->end));
-
-}
-
 /* Delete all overlays of B and reset its overlay lists.  */
 
 void
@@ -854,7 +843,8 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
                           newlist = Fcons (elt, newlist);
                       }
                   newlist = Fnreverse (newlist);
-                  if (XSYMBOL (local_var)->trapped_write == SYMBOL_TRAPPED_WRITE)
+                  if (XSYMBOL (local_var)->u.s.trapped_write
+		      == SYMBOL_TRAPPED_WRITE)
                     notify_variable_watchers (local_var, newlist,
                                               Qmakunbound, Fcurrent_buffer ());
                   XSETCDR (XCAR (tmp), newlist);
@@ -867,7 +857,7 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
           else
             XSETCDR (last, XCDR (tmp));
 
-          if (XSYMBOL (local_var)->trapped_write == SYMBOL_TRAPPED_WRITE)
+          if (XSYMBOL (local_var)->u.s.trapped_write == SYMBOL_TRAPPED_WRITE)
             notify_variable_watchers (local_var, Qnil,
                                       Qmakunbound, Fcurrent_buffer ());
         }
@@ -919,7 +909,11 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
   else
     {
       char number[sizeof "-999999"];
-      int i = XFASTINT (Frandom (make_number (999999)));
+
+      /* Use XINT instead of XFASTINT to work around GCC bug 80776.  */
+      int i = XINT (Frandom (make_number (1000000)));
+      eassume (0 <= i && i < 1000000);
+
       AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
       genbase = concat2 (name, lnumber);
       if (NILP (Fget_buffer (genbase)))
@@ -956,7 +950,7 @@ buffer_local_value (Lisp_Object variable, Lisp_Object buffer)
   sym = XSYMBOL (variable);
 
  start:
-  switch (sym->redirect)
+  switch (sym->u.s.redirect)
     {
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_PLAINVAL: result = SYMBOL_VAL (sym); break;
@@ -1073,7 +1067,12 @@ No argument or nil as argument means use current buffer as BUFFER.  */)
 DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, Sset_buffer_modified_p,
        1, 1, 0,
        doc: /* Mark current buffer as modified or unmodified according to FLAG.
-A non-nil FLAG means mark the buffer modified.  */)
+A non-nil FLAG means mark the buffer modified.
+In addition, this function unconditionally forces redisplay of the
+mode lines of the windows that display the current buffer, and also
+locks or unlocks the file visited by the buffer, depending on whether
+the function's argument is non-nil, but only if both `buffer-file-name'
+and `buffer-file-truename' are non-nil.  */)
   (Lisp_Object flag)
 {
   Frestore_buffer_modified_p (flag);
@@ -1094,12 +1093,14 @@ A non-nil FLAG means mark the buffer modified.  */)
 
 DEFUN ("restore-buffer-modified-p", Frestore_buffer_modified_p,
        Srestore_buffer_modified_p, 1, 1, 0,
-       doc: /* Like `set-buffer-modified-p', with a difference concerning redisplay.
+       doc: /* Like `set-buffer-modified-p', but doesn't redisplay buffer's mode line.
+This function also locks and unlocks the file visited by the buffer,
+if both `buffer-file-truename' and `buffer-file-name' are non-nil.
+
 It is not ensured that mode lines will be updated to show the modified
 state of the current buffer.  Use with care.  */)
   (Lisp_Object flag)
 {
-  Lisp_Object fn;
 
   /* If buffer becoming modified, lock the file.
      If buffer becoming unmodified, unlock the file.  */
@@ -1108,15 +1109,18 @@ state of the current buffer.  Use with care.  */)
     ? current_buffer->base_buffer
     : current_buffer;
 
-  fn = BVAR (b, file_truename);
-  /* Test buffer-file-name so that binding it to nil is effective.  */
-  if (!NILP (fn) && ! NILP (BVAR (b, filename)))
+  if (!inhibit_modification_hooks)
     {
-      bool already = SAVE_MODIFF < MODIFF;
-      if (!already && !NILP (flag))
-	lock_file (fn);
-      else if (already && NILP (flag))
-	unlock_file (fn);
+      Lisp_Object fn = BVAR (b, file_truename);
+      /* Test buffer-file-name so that binding it to nil is effective.  */
+      if (!NILP (fn) && ! NILP (BVAR (b, filename)))
+        {
+          bool already = SAVE_MODIFF < MODIFF;
+          if (!already && !NILP (flag))
+	    lock_file (fn);
+          else if (already && NILP (flag))
+	    unlock_file (fn);
+        }
     }
 
   /* Here we have a problem.  SAVE_MODIFF is used here to encode
@@ -1820,7 +1824,7 @@ void set_buffer_internal_2 (register struct buffer *b)
 	{
 	  Lisp_Object var = XCAR (XCAR (tail));
 	  struct Lisp_Symbol *sym = XSYMBOL (var);
-	  if (sym->redirect == SYMBOL_LOCALIZED /* Just to be sure.  */
+	  if (sym->u.s.redirect == SYMBOL_LOCALIZED /* Just to be sure.  */
 	      && SYMBOL_BLV (sym)->fwd)
 	    /* Just reference the variable
 	       to cause it to become set for this buffer.  */
@@ -2404,7 +2408,7 @@ swap_out_buffer_local_variables (struct buffer *b)
   for (alist = oalist; CONSP (alist); alist = XCDR (alist))
     {
       Lisp_Object sym = XCAR (XCAR (alist));
-      eassert (XSYMBOL (sym)->redirect == SYMBOL_LOCALIZED);
+      eassert (XSYMBOL (sym)->u.s.redirect == SYMBOL_LOCALIZED);
       /* Need not do anything if some other buffer's binding is
 	 now cached.  */
       if (EQ (SYMBOL_BLV (XSYMBOL (sym))->where, buffer))
@@ -3560,7 +3564,7 @@ for the rear of the overlay advance when text is inserted there
 
 /* Mark a section of BUF as needing redisplay because of overlays changes.  */
 
-static void
+void
 modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 {
   if (start > end)
@@ -3579,7 +3583,7 @@ modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 
 /* Remove OVERLAY from LIST.  */
 
-static struct Lisp_Overlay *
+struct Lisp_Overlay *
 unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay)
 {
   register struct Lisp_Overlay *tail, **prev = &list;
@@ -3880,14 +3884,6 @@ for positions far away from POS).  */)
   return Qnil;
 }
 
-DEFUN ("overlay-get", Foverlay_get, Soverlay_get, 2, 2, 0,
-       doc: /* Get the property of overlay OVERLAY with property name PROP.  */)
-  (Lisp_Object overlay, Lisp_Object prop)
-{
-  CHECK_OVERLAY (overlay);
-  return lookup_char_property (XOVERLAY (overlay)->plist, prop, 0);
-}
-
 DEFUN ("overlay-put", Foverlay_put, Soverlay_put, 3, 3, 0,
        doc: /* Set one property of overlay OVERLAY: give property PROP value VALUE.
 VALUE will be returned.*/)
@@ -4617,6 +4613,8 @@ init_buffer_once (void)
 {
   int idx;
 
+  /* Items flagged permanent get an explicit permanent-local property
+     added in bindings.el, for clarity.  */
   memset (buffer_permanent_local_flags, 0, sizeof buffer_permanent_local_flags);
 
   /* 0 means not a lisp var, -1 means always local, else mask.  */
@@ -4666,7 +4664,9 @@ init_buffer_once (void)
   XSETFASTINT (BVAR (&buffer_local_flags, selective_display), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, selective_display_ellipses), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, tab_width), idx); ++idx;
-  XSETFASTINT (BVAR (&buffer_local_flags, truncate_lines), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, truncate_lines), idx);
+  /* Make this one a permanent local.  */
+  buffer_permanent_local_flags[idx++] = 1;
   XSETFASTINT (BVAR (&buffer_local_flags, word_wrap), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, ctl_arrow), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, fill_column), idx); ++idx;
@@ -4962,8 +4962,8 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
   bo_fwd->type = Lisp_Fwd_Buffer_Obj;
   bo_fwd->offset = offset;
   bo_fwd->predicate = predicate;
-  sym->declared_special = 1;
-  sym->redirect = SYMBOL_FORWARDED;
+  sym->u.s.declared_special = true;
+  sym->u.s.redirect = SYMBOL_FORWARDED;
   SET_SYMBOL_FWD (sym, (union Lisp_Fwd *) bo_fwd);
   XSETSYMBOL (PER_BUFFER_SYMBOL (offset), sym);
 
@@ -4972,20 +4972,6 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
        slot of buffer_local_flags.  */
     emacs_abort ();
 }
-
-/* Similar to defvar_lisp but define a variable whose value is the
-   Lisp_Object stored in the current buffer.  LNAME is the Lisp-level
-   variable name.  VNAME is the name of the buffer slot.  PREDICATE
-   is nil for a general Lisp variable.  If PREDICATE is non-nil, then
-   only Lisp values that satisfies the PREDICATE are allowed (except
-   that nil is allowed too).  DOC is a dummy where you write the doc
-   string as a comment.  */
-
-#define DEFVAR_PER_BUFFER(lname, vname, predicate, doc)		\
-  do {								\
-    static struct Lisp_Buffer_Objfwd bo_fwd;			\
-    defvar_per_buffer (&bo_fwd, lname, vname, predicate);	\
-  } while (0)
 
 extern void rust_syms_of_buffer(void);
 
@@ -5161,6 +5147,8 @@ file I/O and the behavior of various editing commands.
 
 This variable is buffer-local but you cannot set it directly;
 use the function `set-buffer-multibyte' to change a buffer's representation.
+To prevent any attempts to set it or make it buffer-local, Emacs will
+signal an error in those cases.
 See also Info node `(elisp)Text Representations'.  */);
   make_symbol_constant (intern_c_string ("enable-multibyte-characters"));
 
@@ -5264,7 +5252,7 @@ word-wrapping, you might want to reduce the value of
 in narrower windows.
 
 Instead of setting this variable directly, most users should use
-Visual Line mode .  Visual Line mode, when enabled, sets `word-wrap'
+Visual Line mode.  Visual Line mode, when enabled, sets `word-wrap'
 to t, and additionally redefines simple editing commands to act on
 visual lines rather than logical lines.  See the documentation of
 `visual-line-mode'.  */);
@@ -5822,7 +5810,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Snext_overlay_change);
   defsubr (&Sprevious_overlay_change);
   defsubr (&Soverlay_recenter);
-  defsubr (&Soverlay_get);
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
 

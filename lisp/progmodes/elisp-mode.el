@@ -1,6 +1,6 @@
 ;;; elisp-mode.el --- Emacs Lisp mode  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1986, 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1999-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp, languages
@@ -307,6 +307,8 @@ Blank lines separate paragraphs.  Semicolons start comments.
           (setq sexp (ignore-errors (butlast sexp)))))
     res))
 
+(defvar warning-minimum-log-level)
+
 (defun elisp--local-variables ()
   "Return a list of locally let-bound variables at point."
   (save-excursion
@@ -328,7 +330,7 @@ Blank lines separate paragraphs.  Semicolons start comments.
                                      (error form))))
              (sexp
               (unwind-protect
-                  (progn
+                  (let ((warning-minimum-log-level :emergency))
                     (advice-add 'macroexpand :around macroexpand-advice)
                     (macroexpand-all sexp))
                 (advice-remove 'macroexpand macroexpand-advice)))
@@ -899,10 +901,11 @@ Semicolons start comments.
 ;;; Emacs Lisp Byte-Code mode
 
 (eval-and-compile
-  (defconst emacs-list-byte-code-comment-re
+  (defconst emacs-lisp-byte-code-comment-re
     (concat "\\(#\\)@\\([0-9]+\\) "
             ;; Make sure it's a docstring and not a lazy-loaded byte-code.
-            "\\(?:[^(]\\|([^\"]\\)")))
+            "\\(?:[^(]\\|([^\"]\\)")
+    "Regular expression matching a dynamic doc string comment."))
 
 (defun elisp--byte-code-comment (end &optional _point)
   "Try to syntactically mark the #@NNN ....^_ docstrings in byte-code files."
@@ -911,7 +914,7 @@ Semicolons start comments.
                (eq (char-after (nth 8 ppss)) ?#))
       (let* ((n (save-excursion
                   (goto-char (nth 8 ppss))
-                  (when (looking-at emacs-list-byte-code-comment-re)
+                  (when (looking-at emacs-lisp-byte-code-comment-re)
                     (string-to-number (match-string 2)))))
              ;; `maxdiff' tries to make sure the loop below terminates.
              (maxdiff n))
@@ -937,7 +940,7 @@ Semicolons start comments.
   (elisp--byte-code-comment end (point))
   (funcall
    (syntax-propertize-rules
-    (emacs-list-byte-code-comment-re
+    (emacs-lisp-byte-code-comment-re
      (1 (prog1 "< b" (elisp--byte-code-comment end (point))))))
    start end))
 
@@ -1615,7 +1618,11 @@ Calls REPORT-FN directly."
             (generate-new-buffer " *checkdoc-temp*")))
       (unwind-protect
           (save-excursion
-            (checkdoc-current-buffer t))
+            ;; checkdoc-current-buffer can error if there are
+            ;; unbalanced parens, for example, but this shouldn't
+            ;; disable the backend (bug#29176).
+            (ignore-errors
+              (checkdoc-current-buffer t)))
         (kill-buffer checkdoc-diagnostic-buffer)))
     (funcall report-fn
              (cl-loop for (text start end _unfixable) in
@@ -1693,9 +1700,11 @@ current buffer state and calls REPORT-FN when done."
           (when (eq (process-status proc) 'exit)
             (unwind-protect
                 (cond
-                 ((not (eq proc (with-current-buffer source-buffer
-                                  elisp-flymake--byte-compile-process)))
-                  (flymake-log :warning "byte-compile process %s obsolete" proc))
+                 ((not (and (buffer-live-p source-buffer)
+                            (eq proc (with-current-buffer source-buffer
+                                       elisp-flymake--byte-compile-process))))
+                  (flymake-log :warning
+                               "byte-compile process %s obsolete" proc))
                  ((zerop (process-exit-status proc))
                   (elisp-flymake--byte-compile-done report-fn
                                                     source-buffer

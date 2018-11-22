@@ -1,13 +1,16 @@
 //! font support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX};
-use remacs_sys::{EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
 
-use lisp::defsubr;
-use lisp::LispObject;
-use obarray::intern;
-use vectors::LispVectorlikeRef;
+use crate::{
+    lisp::defsubr,
+    lisp::LispObject,
+    obarray::intern,
+    remacs_sys::font_match_p as c_font_match_p,
+    remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX},
+    remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec},
+    vectors::LispVectorlikeRef,
+};
 
 // A font is not a type in and of itself, it's just a group of three kinds of
 // pseudovector. This newtype allows us to define methods that yield the actual
@@ -50,21 +53,24 @@ impl LispObject {
     }
 
     pub fn is_font_entity(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_ENTITY_MAX)
-        })
+        self.is_font()
+            && self.as_vectorlike().map_or(false, |vec| {
+                vec.pseudovector_size() == EmacsInt::from(FONT_ENTITY_MAX)
+            })
     }
 
     pub fn is_font_object(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
-        })
+        self.is_font()
+            && self.as_vectorlike().map_or(false, |vec| {
+                vec.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
+            })
     }
 
     pub fn is_font_spec(self) -> bool {
-        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == EmacsInt::from(FONT_SPEC_MAX)
-        })
+        self.is_font()
+            && self.as_vectorlike().map_or(false, |vec| {
+                vec.pseudovector_size() == EmacsInt::from(FONT_SPEC_MAX)
+            })
     }
 }
 
@@ -85,7 +91,7 @@ impl FontExtraType {
         } else if extra_type.eq(unsafe { Qfont_object }) {
             FontExtraType::Object
         } else {
-            wrong_type!(intern("font-extra-type"), extra_type);
+            wrong_type!(LispObject::from(intern("font-extra-type")), extra_type);
         }
     }
 }
@@ -110,6 +116,19 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> bool {
             }
         }
     })
+}
+
+/// Return t if and only if font-spec SPEC matches with FONT.  FONT is a font-spec, font-entity,
+/// or font-object.
+#[lisp_fn]
+pub fn font_match_p(spec: LispObject, font: LispObject) -> bool {
+    if !spec.is_font_spec() {
+        wrong_type!(Qfont_spec, spec)
+    }
+    if !font.is_font() {
+        wrong_type!(Qfont, font)
+    }
+    unsafe { c_font_match_p(spec, font) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));

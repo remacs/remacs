@@ -3,29 +3,34 @@
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{backtrace_debug_on_exit, build_string, call_debugger, check_cons_list,
-                 do_debug_on_call, eval_sub, find_symbol_value, funcall_lambda, funcall_subr,
-                 globals, list2, maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
-                 record_unwind_save_match_data, specbind, unbind_to, COMPILEDP, MODULE_FUNCTIONP};
-use remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled};
-use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Fload, Fpurecopy, Fset, Fset_default};
-use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
-                 Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda,
-                 Qmacro, Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound,
-                 Qvariable_documentation, Qvoid_function, Qwrong_number_of_arguments};
 
-use remacs_sys::{Vautoload_queue, Vrun_hooks};
-
-use data::{defalias, indirect_function, indirect_function_lisp};
-use lisp::{defsubr, is_autoload};
-use lisp::{LispObject, LispSubrRef};
-use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons};
-use multibyte::LispStringRef;
-use obarray::loadhist_attach;
-use objects::equal;
-use symbols::{fboundp, symbol_function, LispSymbolRef};
-use threads::{c_specpdl_index, ThreadState};
-use vectors::length;
+use crate::{
+    data::{defalias, indirect_function, indirect_function_lisp, set, set_default},
+    lisp::{defsubr, is_autoload},
+    lisp::{LispObject, LispSubrRef},
+    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons},
+    multibyte::LispStringRef,
+    obarray::loadhist_attach,
+    objects::equal,
+    remacs_sys::{
+        backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
+        do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals, list2,
+        maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
+        record_unwind_save_match_data, specbind, COMPILEDP, MODULE_FUNCTIONP,
+    },
+    remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
+    remacs_sys::{Fapply, Fdefault_value, Ffset, Fload, Fpurecopy},
+    remacs_sys::{
+        QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
+        Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
+        Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation, Qvoid_function,
+        Qwrong_number_of_arguments,
+    },
+    remacs_sys::{Vautoload_queue, Vrun_hooks},
+    symbols::{fboundp, symbol_function, LispSymbolRef},
+    threads::{c_specpdl_index, ThreadState},
+    vectors::length,
+};
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   NOTE!!! Every function that can call EVAL must protect its args   *
@@ -193,7 +198,7 @@ pub fn setq(args: LispObject) -> LispObject {
         }
 
         if !lexical {
-            unsafe { Fset(sym, val) }; /* SYM is dynamically bound. */
+            set(sym.as_symbol_or_error(), val); /* SYM is dynamically bound. */
         }
     }
 
@@ -234,14 +239,17 @@ pub fn function(args: LispObject) -> LispObject {
                         let docstring = unsafe { eval_sub(car(tail)) };
                         docstring.as_string_or_error();
                         let (a, b) = cdr.as_cons().unwrap().as_tuple();
-                        cdr = unsafe { Fcons(a, Fcons(docstring, b.as_cons().unwrap().cdr())) };
+                        cdr = LispObject::cons(
+                            a,
+                            LispObject::cons(docstring, b.as_cons().unwrap().cdr()),
+                        );
                     }
                 }
 
                 return unsafe {
-                    Fcons(
+                    LispObject::cons(
                         Qclosure,
-                        Fcons(globals.Vinternal_interpreter_environment, cdr),
+                        LispObject::cons(globals.Vinternal_interpreter_environment, cdr),
                     )
                 };
             }
@@ -302,18 +310,18 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
     if unsafe { globals.Vpurify_flag } != Qnil {
         tem = unsafe { Fpurecopy(tem) };
     }
-    unsafe { Fset_default(sym, tem) };
     let sym_ref = sym.as_symbol_or_error();
+    set_default(sym_ref, tem);
     sym_ref.set_declared_special(true);
     if docstring.is_not_nil() {
         if unsafe { globals.Vpurify_flag } != Qnil {
             docstring = unsafe { Fpurecopy(docstring) };
         }
 
-        put(sym, Qvariable_documentation, docstring);
+        put(sym_ref, Qvariable_documentation, docstring);
     }
 
-    put(sym, Qrisky_local_variable, Qt);
+    put(sym_ref, Qrisky_local_variable, Qt);
     loadhist_attach(sym);
 
     sym_ref
@@ -374,8 +382,10 @@ pub fn letX(args: LispCons) -> LispObject {
                         // Lexically bind VAR by adding it to the interpreter's binding alist.
 
                         unsafe {
-                            let newenv =
-                                Fcons(Fcons(var, val), globals.Vinternal_interpreter_environment);
+                            let newenv = LispObject::cons(
+                                LispObject::cons(var, val),
+                                globals.Vinternal_interpreter_environment,
+                            );
 
                             if globals.Vinternal_interpreter_environment == lexenv {
                                 // Save the old lexical environment on the specpdl stack,
@@ -401,7 +411,8 @@ pub fn letX(args: LispCons) -> LispObject {
 
     // The symbols are bound. Now evaluate the body
     let val = Fprogn(body);
-    unsafe { unbind_to(count, val) }
+
+    unbind_to(count, val)
 }
 
 /// Bind variables according to VARLIST then eval BODY.
@@ -430,7 +441,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
                     if !bound {
                         // Lexically bind VAR by adding it to the lexenv alist.
-                        lexenv = unsafe { Fcons(Fcons(var, val), lexenv) };
+                        lexenv = LispObject::cons(LispObject::cons(var, val), lexenv);
                         dyn_bind = false;
                     }
                 }
@@ -453,20 +464,16 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
     // The symbols are bound. Now evaluate the body
     let val = Fprogn(body);
-    unsafe { unbind_to(count, val) }
+
+    unbind_to(count, val)
 }
 
 /// If TEST yields non-nil, eval BODY... and repeat.
 /// The order of execution is thus TEST, BODY, TEST, BODY and so on
 /// until TEST returns nil.
 /// usage: (while TEST BODY...)
-#[lisp_fn(
-    name = "while",
-    c_name = "while",
-    min = "1",
-    unevalled = "true"
-)]
-pub fn lisp_while(args: LispCons) -> LispObject {
+#[lisp_fn(name = "while", c_name = "while", min = "1", unevalled = "true")]
+pub fn lisp_while(args: LispCons) {
     let (test, body) = args.as_tuple();
 
     while unsafe { eval_sub(test) } != Qnil {
@@ -474,8 +481,6 @@ pub fn lisp_while(args: LispCons) -> LispObject {
 
         progn(body);
     }
-
-    Qnil
 }
 
 /// Return result of expanding macros at top level of FORM.
@@ -503,7 +508,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             sym = def;
             tem = assq(sym, environment);
             if tem.is_nil() {
-                def = sym_ref.function;
+                def = sym_ref.get_function();
                 if def.is_not_nil() {
                     continue;
                 }
@@ -563,14 +568,14 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
         specbind(Qinternal_interpreter_environment, value);
     }
 
-    unsafe { unbind_to(count, eval_sub(form)) }
+    unbind_to(count, unsafe { eval_sub(form) })
 }
 
 /// Apply fn to arg.
 #[no_mangle]
-pub extern "C" fn apply1(mut func: LispObject, arg: LispObject) -> LispObject {
+pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
     if arg == Qnil {
-        Ffuncall(1, &mut func)
+        call!(func)
     } else {
         callN_raw!(Fapply, func, arg)
     }
@@ -585,7 +590,10 @@ fn signal_error(msg: &str, arg: LispObject) -> ! {
         Some(_) => arg,
     };
 
-    xsignal!(Qerror, Fcons(build_string(msg.as_ptr() as *const i8), arg));
+    xsignal!(
+        Qerror,
+        LispObject::cons(build_string(msg.as_ptr() as *const i8), arg)
+    );
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.
@@ -678,7 +686,7 @@ pub fn autoload(
     ty: LispObject,
 ) -> LispObject {
     // If function is defined and not as an autoload, don't override.
-    if function.function != Qnil && !is_autoload(function.function) {
+    if function.get_function() != Qnil && !is_autoload(function.get_function()) {
         return Qnil;
     }
 
@@ -691,7 +699,7 @@ pub fn autoload(
     }
 
     defalias(
-        function.as_lisp_obj(),
+        function,
         list!(Qautoload, file.as_lisp_obj(), docstring, interactive, ty),
         Qnil,
     )
@@ -830,8 +838,9 @@ pub fn autoload_do_load(
 
         // Once loading finishes, don't undo it.
         Vautoload_queue = Qt;
-        unbind_to(count, Qnil);
     }
+
+    unbind_to(count, Qnil);
 
     if funname.is_nil() || ignore_errors.is_not_nil() {
         Qnil
@@ -865,7 +874,7 @@ pub fn autoload_do_load(
 /// Instead, use `add-hook' and specify t for the LOCAL argument.
 /// usage: (run-hooks &rest HOOKS)
 #[lisp_fn]
-pub fn run_hooks(args: &[LispObject]) -> () {
+pub fn run_hooks(args: &[LispObject]) {
     for item in args {
         run_hook(*item);
     }
@@ -880,20 +889,19 @@ pub fn run_hooks(args: &[LispObject]) -> () {
 /// Do not use `make-local-variable' to make a hook variable buffer-local.
 /// Instead, use `add-hook' and specify t for the LOCAL argument.
 /// usage: (run-hook-with-args HOOK &rest ARGS)
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
     run_hook_with_args_internal(args, funcall_nil)
 }
 
-fn funcall_nil(args: &[LispObject]) -> LispObject {
-    let mut obj_array: Vec<LispObject> = args.to_vec();
-    Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr());
+fn funcall_nil(args: &mut [LispObject]) -> LispObject {
+    funcall(args);
     Qnil
 }
 
 /// Run the hook HOOK, giving each function no args.
 #[no_mangle]
-pub extern "C" fn run_hook(hook: LispObject) -> () {
+pub extern "C" fn run_hook(hook: LispObject) {
     run_hook_with_args(&mut [hook]);
 }
 
@@ -903,7 +911,7 @@ pub extern "C" fn run_hook(hook: LispObject) -> () {
 /// FUNCALL specifies how to call each function on the hook.
 fn run_hook_with_args_internal(
     args: &mut [LispObject],
-    func: fn(&[LispObject]) -> LispObject,
+    func: fn(&mut [LispObject]) -> LispObject,
 ) -> LispObject {
     // If we are dying or still initializing,
     // don't do anything -- it would probably crash if we tried.
@@ -1025,7 +1033,7 @@ fn resolve_fun(fun: LispObject) -> Result<LispFun, LispFunError> {
 /// Thus, (funcall \\='cons \\='x \\='y) returns (x . y).
 /// usage: (funcall FUNCTION &rest ARGUMENTS)
 #[allow(unused_assignments)]
-#[lisp_fn]
+#[lisp_fn(min = "1")]
 pub fn funcall(args: &mut [LispObject]) -> LispObject {
     unsafe { maybe_quit() };
 
@@ -1098,6 +1106,39 @@ pub fn funcall(args: &mut [LispObject]) -> LispObject {
     }
 
     val
+}
+
+/// Pop and execute entries from the unwind-protect stack until the
+/// depth COUNT is reached. Return VALUE.
+#[no_mangle]
+pub extern "C" fn unbind_to(count: libc::ptrdiff_t, value: LispObject) -> LispObject {
+    let mut current_thread = ThreadState::current_thread();
+
+    unsafe {
+        let quitf = globals.Vquit_flag;
+
+        globals.Vquit_flag = Qnil;
+
+        while current_thread.m_specpdl_ptr != current_thread.m_specpdl.offset(count) {
+            // Copy the binding, and decrement specpdl_ptr, before we
+            // do the work to unbind it.  We decrement first so that
+            // an error in unbinding won't try to unbind the same
+            // entry again, and we copy the binding first in case more
+            // bindings are made during some of the code we run.
+
+            current_thread.m_specpdl_ptr = current_thread.m_specpdl_ptr.offset(-1);
+
+            let this_binding = current_thread.m_specpdl_ptr;
+
+            do_one_unbind(this_binding, true, Set_Internal_Bind::SET_INTERNAL_UNBIND);
+        }
+
+        if globals.Vquit_flag.is_nil() && quitf.is_not_nil() {
+            globals.Vquit_flag = quitf;
+        }
+    }
+
+    value
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

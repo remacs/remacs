@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Files
@@ -1809,7 +1809,9 @@ has these permissions, or a subset of them (@code{write-region} will
 not grant execute permissions even if the default file permissions
 allow execution).  On GNU and other POSIX-like systems, the default
 permissions are given by the bitwise complement of the @samp{umask}
-value.
+value, i.e.@: each bit that is set in the argument @var{mode} will be
+@emph{reset} in the default permissions with which Emacs creates
+files.
 
 The argument @var{mode} should be an integer which specifies the
 permissions, similar to @code{set-file-modes} above.  Only the lowest
@@ -2267,7 +2269,8 @@ because this is not portable.  Always use
 @code{file-name-as-directory}.
 
   To avoid the issues mentioned above, or if the @var{dirname} value
-might be nil (for example, from an element of @code{load-path}), use:
+might be @code{nil} (for example, from an element of @code{load-path}),
+use:
 
 @example
 (expand-file-name @var{relfile} @var{dirname})

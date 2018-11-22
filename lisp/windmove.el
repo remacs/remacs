@@ -1,6 +1,6 @@
 ;;; windmove.el --- directional window-selection routines
 ;;
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 ;;
 ;; Author: Hovav Shacham (hovav@cs.stanford.edu)
 ;; Created: 17 October 1998
@@ -425,7 +425,7 @@ supplied, if ARG is greater or smaller than zero, respectively."
 	 top-left
 	 ;; Don't care whether window is horizontally scrolled -
 	 ;; `posn-at-point' handles that already.  See also:
-	 ;; https://lists.gnu.org/archive/html/emacs-devel/2012-01/msg00638.html
+	 ;; https://lists.gnu.org/r/emacs-devel/2012-01/msg00638.html
 	 (posn-col-row
 	  (posn-at-point (window-point window) window))))))))
 

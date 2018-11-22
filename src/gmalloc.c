@@ -1,5 +1,5 @@
 /* Declarations for `malloc' and friends.
-   Copyright (C) 1990-1993, 1995-1996, 1999, 2002-2007, 2013-2017 Free
+   Copyright (C) 1990-1993, 1995-1996, 1999, 2002-2007, 2013-2018 Free
    Software Foundation, Inc.
 		  Written May 1989 by Mike Haertel.
 
@@ -39,6 +39,8 @@ License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 #ifdef emacs
 # include "lisp.h"
 #endif
+
+#include "ptr-bounds.h"
 
 #ifdef HAVE_MALLOC_H
 # if GNUC_PREREQ (4, 2, 0)
@@ -197,7 +199,8 @@ extern size_t _bytes_free;
 
 /* Internal versions of `malloc', `realloc', and `free'
    used when these functions need to call each other.
-   They are the same but don't call the hooks.  */
+   They are the same but don't call the hooks
+   and don't bound the resulting pointers.  */
 extern void *_malloc_internal (size_t);
 extern void *_realloc_internal (void *, size_t);
 extern void _free_internal (void *);
@@ -554,7 +557,7 @@ malloc_initialize_1 (void)
   _heapinfo[0].free.size = 0;
   _heapinfo[0].free.next = _heapinfo[0].free.prev = 0;
   _heapindex = 0;
-  _heapbase = (char *) _heapinfo;
+  _heapbase = (char *) ptr_bounds_init (_heapinfo);
   _heaplimit = BLOCK (_heapbase + heapsize * sizeof (malloc_info));
 
   register_heapinfo ();
@@ -915,7 +918,8 @@ malloc (size_t size)
      among multiple threads.  We just leave it for compatibility with
      glibc malloc (i.e., assignments to gmalloc_hook) for now.  */
   hook = gmalloc_hook;
-  return (hook != NULL ? *hook : _malloc_internal) (size);
+  void *result = (hook ? hook : _malloc_internal) (size);
+  return ptr_bounds_clip (result, size);
 }
 
 #if !(defined (_LIBC) || defined (HYBRID_MALLOC))
@@ -993,6 +997,7 @@ _free_internal_nolock (void *ptr)
 
   if (ptr == NULL)
     return;
+  ptr = ptr_bounds_init (ptr);
 
   PROTECT_MALLOC_STATE (0);
 
@@ -1304,6 +1309,7 @@ _realloc_internal_nolock (void *ptr, size_t size)
   else if (ptr == NULL)
     return _malloc_internal_nolock (size);
 
+  ptr = ptr_bounds_init (ptr);
   block = BLOCK (ptr);
 
   PROTECT_MALLOC_STATE (0);
@@ -1426,7 +1432,8 @@ realloc (void *ptr, size_t size)
     return NULL;
 
   hook = grealloc_hook;
-  return (hook != NULL ? *hook : _realloc_internal) (ptr, size);
+  void *result = (hook ? hook : _realloc_internal) (ptr, size);
+  return ptr_bounds_clip (result, size);
 }
 /* Copyright (C) 1991, 1992, 1994 Free Software Foundation, Inc.
 
@@ -1498,17 +1505,18 @@ extern void *__sbrk (ptrdiff_t increment);
 static void *
 gdefault_morecore (ptrdiff_t increment)
 {
-  void *result;
 #ifdef HYBRID_MALLOC
   if (!DUMPED)
     {
       return bss_sbrk (increment);
     }
 #endif
-  result = (void *) __sbrk (increment);
-  if (result == (void *) -1)
-    return NULL;
-  return result;
+#ifdef HAVE_SBRK
+  void *result = (void *) __sbrk (increment);
+  if (result != (void *) -1)
+    return result;
+#endif
+  return NULL;
 }
 
 void *(*__morecore) (ptrdiff_t) = gdefault_morecore;
@@ -1599,6 +1607,7 @@ aligned_alloc (size_t alignment, size_t size)
 	{
 	  l->exact = result;
 	  result = l->aligned = (char *) result + adj;
+	  result = ptr_bounds_clip (result, size);
 	}
       UNLOCK_ALIGNED_BLOCKS ();
       if (l == NULL)

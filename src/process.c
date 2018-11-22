@@ -1,6 +1,6 @@
 /* Asynchronous subprocess control for GNU Emacs.
 
-Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2017 Free Software
+Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2018 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -253,6 +253,9 @@ static int status_notify (struct Lisp_Process *, struct Lisp_Process *);
 static int read_process_output (Lisp_Object, int);
 static void create_pty (Lisp_Object);
 static void exec_sentinel (Lisp_Object, Lisp_Object);
+
+void add_process_read_fd (int);
+pid_t emacs_get_tty_pgrp (struct Lisp_Process *);
 
 /* Number of bits set in connect_wait_mask.  */
 static int num_pending_connects;
@@ -930,46 +933,6 @@ free_dns_request (Lisp_Object proc)
 }
 #endif
 
-
-/* This is how commands for the user decode process arguments.  It
-   accepts a process, a process name, a buffer, a buffer name, or nil.
-   Buffers denote the first process in the buffer, and nil denotes the
-   current buffer.  */
-
-Lisp_Object
-get_process (register Lisp_Object name)
-{
-  register Lisp_Object proc, obj;
-  if (STRINGP (name))
-    {
-      obj = Fget_process (name);
-      if (NILP (obj))
-	obj = Fget_buffer (name);
-      if (NILP (obj))
-	error ("Process %s does not exist", SDATA (name));
-    }
-  else if (NILP (name))
-    obj = Fcurrent_buffer ();
-  else
-    obj = name;
-
-  /* Now obj should be either a buffer object or a process object.  */
-  if (BUFFERP (obj))
-    {
-      if (NILP (BVAR (XBUFFER (obj), name)))
-        error ("Attempt to get process for a dead buffer");
-      proc = Fget_buffer_process (obj);
-      if (NILP (proc))
-        error ("Buffer %s has no process", SDATA (BVAR (XBUFFER (obj), name)));
-    }
-  else
-    {
-      CHECK_PROCESS (obj);
-      proc = obj;
-    }
-  return proc;
-}
-
 
 /* Fdelete_process promises to immediately forget about the process, but in
    reality, Emacs needs to remember those processes until they have been
@@ -1201,18 +1164,6 @@ a socket connection.  */)
   return XPROCESS (process)->type;
 }
 #endif
-
-DEFUN ("process-type", Fprocess_type, Sprocess_type, 1, 1, 0,
-       doc: /* Return the connection type of PROCESS.
-The value is either the symbol `real', `network', `serial', or `pipe'.
-PROCESS may be a process, a buffer, the name of a process or buffer, or
-nil, indicating the current buffer's process.  */)
-  (Lisp_Object process)
-{
-  Lisp_Object proc;
-  proc = get_process (process);
-  return XPROCESS (proc)->type;
-}
 
 DEFUN ("format-network-address", Fformat_network_address, Sformat_network_address,
        1, 2, 0,
@@ -3519,7 +3470,6 @@ usage: (make-network-process &rest ARGS)  */)
   Lisp_Object contact;
   struct Lisp_Process *p;
   const char *portstring UNINIT;
-  ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
   char portbuf[INT_BUFSIZE_BOUND (EMACS_INT)];
 #ifdef HAVE_LOCAL_SOCKETS
   struct sockaddr_un address_un;
@@ -3666,6 +3616,8 @@ usage: (make-network-process &rest ARGS)  */)
 
   if (!NILP (host))
     {
+      ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
+
       /* SERVICE can either be a string or int.
 	 Convert to a C string for later use by getaddrinfo.  */
       if (EQ (service, Qt))
@@ -3684,37 +3636,38 @@ usage: (make-network-process &rest ARGS)  */)
 	  portstring = SSDATA (service);
 	  portstringlen = SBYTES (service);
 	}
-    }
 
 #ifdef HAVE_GETADDRINFO_A
-  if (!NILP (host) && !NILP (Fplist_get (contact, QCnowait)))
-    {
-      ptrdiff_t hostlen = SBYTES (host);
-      struct req
-      {
-	struct gaicb gaicb;
-	struct addrinfo hints;
-	char str[FLEXIBLE_ARRAY_MEMBER];
-      } *req = xmalloc (FLEXSIZEOF (struct req, str,
-				    hostlen + 1 + portstringlen + 1));
-      dns_request = &req->gaicb;
-      dns_request->ar_name = req->str;
-      dns_request->ar_service = req->str + hostlen + 1;
-      dns_request->ar_request = &req->hints;
-      dns_request->ar_result = NULL;
-      memset (&req->hints, 0, sizeof req->hints);
-      req->hints.ai_family = family;
-      req->hints.ai_socktype = socktype;
-      strcpy (req->str, SSDATA (host));
-      strcpy (req->str + hostlen + 1, portstring);
+      if (!NILP (Fplist_get (contact, QCnowait)))
+	{
+	  ptrdiff_t hostlen = SBYTES (host);
+	  struct req
+	  {
+	    struct gaicb gaicb;
+	    struct addrinfo hints;
+	    char str[FLEXIBLE_ARRAY_MEMBER];
+	  } *req = xmalloc (FLEXSIZEOF (struct req, str,
+					hostlen + 1 + portstringlen + 1));
+	  dns_request = &req->gaicb;
+	  dns_request->ar_name = req->str;
+	  dns_request->ar_service = req->str + hostlen + 1;
+	  dns_request->ar_request = &req->hints;
+	  dns_request->ar_result = NULL;
+	  memset (&req->hints, 0, sizeof req->hints);
+	  req->hints.ai_family = family;
+	  req->hints.ai_socktype = socktype;
+	  strcpy (req->str, SSDATA (host));
+	  strcpy (req->str + hostlen + 1, portstring);
 
-      int ret = getaddrinfo_a (GAI_NOWAIT, &dns_request, 1, NULL);
-      if (ret)
-	error ("%s/%s getaddrinfo_a error %d", SSDATA (host), portstring, ret);
+	  int ret = getaddrinfo_a (GAI_NOWAIT, &dns_request, 1, NULL);
+	  if (ret)
+	    error ("%s/%s getaddrinfo_a error %d",
+		   SSDATA (host), portstring, ret);
 
-      goto open_socket;
-    }
+	  goto open_socket;
+	}
 #endif /* HAVE_GETADDRINFO_A */
+    }
 
   /* If we have a host, use getaddrinfo to resolve both host and service.
      Otherwise, use getservbyname to lookup the service.  */
@@ -5309,16 +5262,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		}
 	      else if (nread == -1 && would_block (errno))
 		;
-#ifdef WINDOWSNT
-	      /* FIXME: Is this special case still needed?  */
-	      /* Note that we cannot distinguish between no input
-		 available now and a closed pipe.
-		 With luck, a closed pipe will be accompanied by
-		 subprocess termination and SIGCHLD.  */
-	      else if (nread == 0 && !NETCONN_P (proc) && !SERIALCONN_P (proc)
-		       && !PIPECONN_P (proc))
-		;
-#endif
 #ifdef HAVE_PTYS
 	      /* On some OSs with ptys, when the process on one end of
 		 a pty exits, the other end gets an error reading with
@@ -7570,7 +7513,6 @@ returns non-`nil'.  */);
   defsubr (&Scontinue_process);
   defsubr (&Sprocess_send_eof);
   defsubr (&Ssignal_process);
-  defsubr (&Sprocess_type);
   defsubr (&Sinternal_default_process_sentinel);
   defsubr (&Sinternal_default_process_filter);
   defsubr (&Sset_process_coding_system);
@@ -7612,4 +7554,3 @@ returns non-`nil'.  */);
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
 }
-

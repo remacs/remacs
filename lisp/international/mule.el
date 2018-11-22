@@ -1,6 +1,6 @@
 ;;; mule.el --- basic commands for multilingual environment
 
-;; Copyright (C) 1997-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2018 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -773,7 +773,7 @@ never used by the other charsets.
 If it is a list, the elements must be charsets, nil, 94, or 96.  GN
 can be used by all the listed charsets.  If the list contains 94, any
 iso-2022 charset whose code-space ranges are 94 long can be designated
-to GN.  If the list contains 96, any charsets whose whose ranges are
+to GN.  If the list contains 96, any charsets whose ranges are
 96 long can be designated to GN.  If the first element is a charset,
 that charset is initially designated to GN.
 
@@ -2493,7 +2493,17 @@ This function is intended to be added to `auto-coding-functions'."
 	    (let* ((match (match-string 1))
 		   (sym (intern (downcase match))))
 	      (if (coding-system-p sym)
-		  sym
+                  ;; If the encoding tag is UTF-8 and the buffer's
+                  ;; encoding is one of the variants of UTF-8, use the
+                  ;; buffer's encoding.  This allows, e.g., saving an
+                  ;; XML file as UTF-8 with BOM when the tag says UTF-8.
+                  (let ((sym-type (coding-system-type sym))
+                        (bfcs-type
+                         (coding-system-type buffer-file-coding-system)))
+                    (if (and (coding-system-equal 'utf-8 sym-type)
+                             (coding-system-equal 'utf-8 bfcs-type))
+                        buffer-file-coding-system
+		      sym))
 		(message "Warning: unknown coding system \"%s\"" match)
 		nil))
           ;; Files without an encoding tag should be UTF-8. But users
@@ -2506,7 +2516,8 @@ This function is intended to be added to `auto-coding-functions'."
                    (coding-system-base
                     (detect-coding-region (point-min) size t)))))
             ;; Pure ASCII always comes back as undecided.
-            (if (memq detected '(utf-8 undecided))
+            (if (memq detected
+                      '(utf-8 'utf-8-with-signature 'utf-8-hfs undecided))
                 'utf-8
               (warn "File contents detected as %s.
   Consider adding an encoding attribute to the xml declaration,

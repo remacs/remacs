@@ -2,16 +2,17 @@
 use std::ptr;
 use std::slice;
 
-use base64_crate;
 use libc::{c_char, c_uchar};
-
 use remacs_macros::lisp_fn;
-use remacs_sys::make_unibyte_string;
 
-use lisp::defsubr;
-use lisp::LispObject;
-use multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR};
-use strings::MIME_LINE_LENGTH;
+use crate::{
+    base64_crate,
+    lisp::defsubr,
+    lisp::LispObject,
+    multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR},
+    remacs_sys::make_unibyte_string,
+    strings::MIME_LINE_LENGTH,
+};
 
 #[no_mangle]
 pub extern "C" fn base64_encode_1(
@@ -77,26 +78,25 @@ pub unsafe extern "C" fn base64_decode_1(
     let decoded = slice::from_raw_parts_mut(to as *mut u8, out_length as usize);
 
     // Use the MIME config to allow embedded newlines.
-    if let Ok(decoded_length) =
-        base64_crate::decode_config_slice(encoded, base64_crate::MIME, decoded)
-    {
-        if !nchars_return.is_null() {
-            *nchars_return = decoded_length as isize;
+    match base64_crate::decode_config_slice(encoded, base64_crate::MIME, decoded) {
+        Ok(decoded_length) => {
+            if !nchars_return.is_null() {
+                *nchars_return = decoded_length as isize;
+            }
+            if multibyte {
+                // Decode non-ASCII bytes into UTF-8 pairs.
+                let s: String = decoded[..decoded_length]
+                    .iter()
+                    .map(|&byte| byte as char)
+                    .collect();
+                let s_len = s.len();
+                ptr::copy_nonoverlapping(s.as_ptr(), to as *mut u8, s_len);
+                s.len() as isize
+            } else {
+                decoded_length as isize
+            }
         }
-        if multibyte {
-            // Decode non-ASCII bytes into UTF-8 pairs.
-            let s: String = decoded[..decoded_length]
-                .iter()
-                .map(|&byte| byte as char)
-                .collect();
-            let s_len = s.len();
-            ptr::copy_nonoverlapping(s.as_ptr(), to as *mut u8, s_len);
-            s.len() as isize
-        } else {
-            decoded_length as isize
-        }
-    } else {
-        -1
+        _ => -1,
     }
 }
 

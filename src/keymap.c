@@ -1,5 +1,5 @@
 /* Manipulation of keymaps
-   Copyright (C) 1985-1988, 1993-1995, 1998-2017 Free Software
+   Copyright (C) 1985-1988, 1993-1995, 1998-2018 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -88,11 +88,11 @@ static void describe_translation (Lisp_Object, Lisp_Object);
 static void describe_map (Lisp_Object, Lisp_Object,
                           void (*) (Lisp_Object, Lisp_Object),
 			  bool, Lisp_Object, Lisp_Object *, bool, bool);
-static void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
-                             void (*) (Lisp_Object, Lisp_Object), bool,
-                             Lisp_Object, Lisp_Object, bool, bool);
 static void silly_event_symbol_error (Lisp_Object);
 static Lisp_Object get_keyelt (Lisp_Object, bool);
+
+void map_keymap_item (map_keymap_function_t, Lisp_Object, Lisp_Object, Lisp_Object, void *);
+void map_keymap_char_table_item (Lisp_Object, Lisp_Object, Lisp_Object);
 
 static void
 CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
@@ -2838,31 +2838,6 @@ describe_map (Lisp_Object map, Lisp_Object prefix,
   SAFE_FREE ();
 }
 
-static void
-describe_vector_princ (Lisp_Object elt, Lisp_Object fun)
-{
-  Findent_to (make_number (16), make_number (1));
-  call1 (fun, elt);
-  Fterpri (Qnil, Qnil);
-}
-
-DEFUN ("describe-vector", Fdescribe_vector, Sdescribe_vector, 1, 2, 0,
-       doc: /* Insert a description of contents of VECTOR.
-This is text showing the elements of vector matched against indices.
-DESCRIBER is the output function used; nil means use `princ'.  */)
-  (Lisp_Object vector, Lisp_Object describer)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-  if (NILP (describer))
-    describer = intern ("princ");
-  specbind (Qstandard_output, Fcurrent_buffer ());
-  CHECK_VECTOR_OR_CHAR_TABLE (vector);
-  describe_vector (vector, Qnil, describer, describe_vector_princ, 0,
-		   Qnil, Qnil, 0, 0);
-
-  return unbind_to (count, Qnil);
-}
-
 /* Insert in the current buffer a description of the contents of VECTOR.
    We call ELT_DESCRIBER to insert the description of one value found
    in VECTOR.
@@ -2895,7 +2870,7 @@ DESCRIBER is the output function used; nil means use `princ'.  */)
 
    ARGS is simply passed as the second argument to ELT_DESCRIBER.  */
 
-static void
+void
 describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
 		 void (*elt_describer) (Lisp_Object, Lisp_Object),
 		 bool partial, Lisp_Object shadow, Lisp_Object entire_map,
@@ -3244,7 +3219,6 @@ be preferred.  */);
   defsubr (&Scurrent_active_maps);
   defsubr (&Saccessible_keymaps);
   defsubr (&Skey_description);
-  defsubr (&Sdescribe_vector);
   defsubr (&Ssingle_key_description);
   defsubr (&Stext_char_description);
   defsubr (&Swhere_is_internal);

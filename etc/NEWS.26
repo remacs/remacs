@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.
 
-Copyright (C) 2016-2017 Free Software Foundation, Inc.
+Copyright (C) 2016-2018 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
@@ -24,12 +24,15 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Installation Changes in Emacs 26.1
 
+---
 ** By default libgnutls is now required when building Emacs.
 Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
 
+---
 ** GnuTLS version 2.12.2 or later is now required, instead of merely
 version 2.6.6 or later.
 
++++
 ** The new option 'configure --with-mailutils' causes Emacs to rely on
 GNU Mailutils to retrieve email.  It is recommended, and is the
 default if GNU Mailutils is installed.  When --with-mailutils is not
@@ -39,12 +42,14 @@ via insecure channels.  To avoid this problem, use either
 --with-mailutils or --without-pop when configuring; --without-pop
 is the default on platforms other than native MS-Windows.
 
+---
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
 now the default in developer builds.  As before, use
 '--disable-gcc-warnings' to suppress GCC's warnings, and
 '--enable-gcc-warnings' to stop the build if GCC issues warnings.
 
+---
 ** When GCC warnings are enabled, '--enable-check-lisp-object-type' is
 now enabled by default when configuring.
 
@@ -62,6 +67,7 @@ configure option '--disable-libsystemd'.
 (If your Emacs is installed in a non-standard location, you may
 need to copy the emacs.service file to eg ~/.config/systemd/user/)
 
+---
 ** New configure option '--disable-build-details' attempts to build an
 Emacs that is more likely to be reproducible; that is, if you build
 and install Emacs twice, the second Emacs is a copy of the first.
@@ -80,11 +86,13 @@ linked to Little CMS exposes color management functions in Lisp: the
 color metrics 'lcms-cie-de2000' and 'lcms-cam02-ucs', as well as
 functions for conversion to and from CIE CAM02 and CAM02-UCS.
 
+---
 ** The configure option '--with-gameuser' now defaults to 'no',
 as this appears to be the most common configuration in practice.
 When it is 'no', the shared game directory and the auxiliary program
 update-game-score are no longer needed and are not installed.
 
+---
 ** Emacs no longer works on IRIX.  We expect that Emacs users are not
 affected by this, as SGI stopped supporting IRIX in December 2013.
 
@@ -248,15 +256,19 @@ whether the output buffer of an asynchronous command is shown
 immediately, or only when there is output.
 
 +++
-** The new user option 'mouse-select-region-move-to-beginning'
-controls the position of point when double-clicking mouse-1 on the end
-of a parenthetical grouping or string-delimiter: the default value nil
-keeps point at the end of the region, setting it to non-nil moves
-point to the beginning of the region.
+** New user option 'mouse-select-region-move-to-beginning'.
+This option controls the position of point when double-clicking
+mouse-1 on the end of a parenthetical grouping or string-delimiter:
+the default value nil keeps point at the end of the region, setting it
+to non-nil moves point to the beginning of the region.
 
 +++
-** The new user option 'mouse-drag-and-drop-region' allows to drag the
-entire region of text to another place or another buffer.
+** New user option 'mouse-drag-and-drop-region'.
+This option allows to drag the entire region of text to another place
+or another buffer.  Its behavior is customizable via the new options
+'mouse-drag-and-drop-region-cut-when-buffers-differ',
+'mouse-drag-and-drop-region-show-tooltip', and
+'mouse-drag-and-drop-region-show-cursor'.
 
 +++
 ** The new user option 'confirm-kill-processes' allows the user to
@@ -358,7 +370,7 @@ These local variables will thus not vanish on setting a major mode.
 
 +++
 ** A second dir-local file (.dir-locals-2.el) is now accepted.
-See the variable 'dir-locals-file-2' for more information.
+See the doc string of 'dir-locals-file' for more information.
 
 +++
 ** Connection-local variables can be used to specify local variables
@@ -424,17 +436,31 @@ want to reverse the direction of the scroll, customize
 'mwheel-flip-direction'.
 
 +++
-** Emacsclient has a new option '-u' / '--suppress-output'.
+** The default GnuTLS priority string now includes %DUMBFW.
+This is to avoid bad behavior in some firewalls, which causes the
+connection to be closed by the remote host.
+
+** Emacsclient changes
+
++++
+*** Emacsclient has a new option '-u' / '--suppress-output'.
 This option suppresses display of return values from the server
 process.
 
 +++
-** Emacsclient has a new option '-T' / '--tramp'.
+*** Emacsclient has a new option '-T' / '--tramp'.
 This helps with using a local Emacs session as the server for a remote
 emacsclient.  With appropriate setup, one can now set the EDITOR
 environment variable on a remote machine to emacsclient, and
 use the local Emacs to edit remote files via Tramp.  See the node
 "(emacs) emacsclient Options" in the user manual for the details.
+
++++
+*** Emacsclient now accepts command-line options in ALTERNATE_EDITOR
+and '--alternate-editor'. For example, ALTERNATE_EDITOR="emacs -Q -nw".
+Arguments may be quoted "like this", so that for example an absolute
+path containing a space may be specified; quote escaping is not
+supported.
 
 ---
 ** New user option 'dig-program-options' and extended functionality
@@ -488,13 +514,7 @@ line-number display in a window can use the new function
 Users and developers are encouraged to switch to this new feature
 instead.
 
-+++
-** emacsclient now accepts command-line options in ALTERNATE_EDITOR
-and '--alternate-editor'. For example, ALTERNATE_EDITOR="emacs -Q -nw".
-Arguments may be quoted "like this", so that for example an absolute
-path containing a space may be specified; quote escaping is not
-supported.
-
+---
 ** The new user option 'arabic-shaper-ZWNJ-handling' controls how to
 handle ZWNJ in Arabic text rendering.
 
@@ -587,6 +607,7 @@ Negative prefix arg flips the direction of selection.  Also,
 defun are selected unless they are separated from the defun by a blank
 line.
 
+---
 ** New command 'replace-buffer-contents'.
 This command replaces the contents of the accessible portion of the
 current buffer with the contents of the accessible portion of a
@@ -614,7 +635,7 @@ state to take effect (making a frame visible, for example).
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
 ---
-** Emacs 26.1 comes with Org v9.1.2.
+** Emacs 26.1 comes with Org v9.1.4.
 See the file ORG-NEWS for user-visible changes in Org.
 
 ---
@@ -691,6 +712,10 @@ A new option 'ediff-show-ancestor' and a new toggle
 *** Key 'U' is bound to 'Buffer-menu-unmark-all' and key 'M-DEL' is
 bound to 'Buffer-menu-unmark-all-buffers'.
 
++++
+** hideshow mode got four key bindings that are analogous to outline
+mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e'.
+
 ** bs
 
 ---
@@ -719,7 +744,6 @@ method is an NNTP select method.
 added: 'C-c C-s C-m C-m'.
 
 +++
-
 *** In 'message-citation-line-format' the '%Z' format is now the time
 zone name instead of the numeric form.  The '%z' format continues to
 be the numeric form.  The new behavior is compatible with
@@ -792,6 +816,13 @@ whose content matches a regexp; bound to '% g'.
 *** New user option 'comint-move-point-for-matching-input' to control
 where to place point after 'C-c M-r' and 'C-c M-s'.
 
++++
+*** New user option 'comint-terminfo-terminal'.
+This option allows control of the value of the TERM environment
+variable Emacs puts into the environment of the Comint mode and its
+derivatives, such as Shell mode and Compilation Shell minor-mode.  The
+default is "dumb", for compatibility with previous behavior.
+
 ** Compilation mode
 
 ---
@@ -834,6 +865,14 @@ code.
 'eshell-input-filter-default', and has a new custom option
 'eshell-input-filter-initial-space' to ignore adding commands prefixed
 with blank space to eshell history.
+
+** EUDC
+
+---
+*** Backward compatibility support for BBDB versions less than 3
+(i.e., BBDB 2.x) is deprecated and will likely be removed in the next
+major release of Emacs.  Users of BBDB 2.x should plan to upgrade to
+BBDB 3.x.
 
 ** eww
 
@@ -982,6 +1021,7 @@ there are now top-level domains added all the time.  Message will no
 longer warn about sending emails to top-level domains it hasn't heard
 about.
 
+---
 *** 'message-beginning-of-line' (bound to 'C-a') understands folded headers.
 In 'visual-line-mode' it will look for the true beginning of a header
 while in non-'visual-line-mode' it will move the point to the indented
@@ -1083,11 +1123,11 @@ This allows better indentation support in modes that support multiple
 programming languages in the same buffer, like literate programming
 environments or ANTLR programs with embedded Python code.
 
-A major mode can provide indentation context for a sub-mode through
-the 'prog-indentation-context' variable.  To support this, modes that
-provide indentation should use 'prog-widen' instead of 'widen' and
-'prog-first-column' instead of a literal zero.  See the node
-"(elisp) Mode-Specific Indent" in the ELisp manual for more details.
+A major mode can provide indentation context for a sub-mode.  To
+support this, modes should use 'prog-first-column' instead of a
+literal zero and avoid calling 'widen' in their indentation functions.
+See the node "(elisp) Mode-Specific Indent" in the ELisp manual for
+more details.
 
 ** ERC
 
@@ -1114,11 +1154,6 @@ string is computed dynamically based on 'url-privacy-level'.
 
 ** VC and related modes
 
----
-*** The VC state indicator in the mode line now defaults to more
-colorful faces to make it more obvious to the user what the state is.
-See the 'vc-faces' customization group.
-
 +++
 *** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
 branch-related commands on a keymap bound to 'B'.
@@ -1131,9 +1166,12 @@ branch-related commands on a keymap bound to 'B'.
 
 ---
 *** Opening a .h file will turn C or C++ mode depending on language used.
-This is done with the help of 'c-or-c++-mode' function which analyses
-contents of the buffer to determine whether it's a C or C++ source
-file.
+This is done with the help of the 'c-or-c++-mode' function, which
+analyzes buffer contents to infer whether it's a C or C++ source file.
+
+---
+** New option 'cpp-message-min-time-interval' to allow user control
+of progress messages in cpp.el.
 
 ---
 ** New DNS mode command 'dns-mode-ipv6-to-nibbles' to convert IPv6 addresses
@@ -1185,11 +1223,23 @@ New user options `term-char-mode-buffer-read-only' and
 are non-nil by default.  Customize these options to nil if you want
 the previous behavior.
 
+** Xref
+
++++
+*** When an *xref* buffer is needed, 'TAB' quits and jumps to an xref.
+
+A new command 'xref-quit-and-goto-xref', bound to 'TAB' in *xref*
+buffers, quits the window before jumping to the destination.  In many
+situations, the intended window configuration is restored, just as if
+the *xref* buffer hadn't been necessary in the first place.
+
 
 * New Modes and Packages in Emacs 26.1
 
+---
 ** New Elisp data-structure library 'radix-tree'.
 
+---
 ** New library 'xdg' with utilities for some XDG standards and specs.
 
 ** HTML
@@ -1199,14 +1249,18 @@ the previous behavior.
 mode for *.html files.  This mode handles indentation,
 fontification, and commenting for embedded JavaScript and CSS.
 
+---
 ** New mode 'conf-toml-mode' is a sub-mode of 'conf-mode', specialized
 for editing TOML files.
 
+---
 ** New mode 'conf-desktop-mode' is a sub-mode of 'conf-unix-mode',
 specialized for editing freedesktop.org desktop entries.
 
+---
 ** New minor mode 'pixel-scroll-mode' provides smooth pixel-level scrolling.
 
+---
 ** New major mode 'less-css-mode' (a minor variant of 'css-mode') for
 editing Less files.
 
@@ -1228,6 +1282,11 @@ table implementation.  This uses a new bytecode op 'switch', which
 isn't compatible with previous Emacs versions.  This functionality can
 be disabled by setting 'byte-compile-cond-use-jump-table' to nil.
 
++++
+** If 'comment-auto-fill-only-comments' is non-nil, 'auto-fill-function'
+is now called only if either no comment syntax is defined for the
+current buffer or the self-insertion takes place within a comment.
+
 ---
 ** The alist 'ucs-names' is now a hash table.
 
@@ -1243,10 +1302,6 @@ binding syntax as 'and-let*'.
 ** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
 mode to send the same escape sequences that xterm does.  This makes
 things like 'forward-word' in readline work.
-
----
-** hideshow mode got four key bindings that are analogous to outline
-mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e'.
 
 ---
 ** Customizable variable 'query-replace-from-to-separator'
@@ -1423,6 +1478,39 @@ them through 'format' first.  Even that is discouraged: for ElDoc
 support, you should set 'eldoc-documentation-function' instead of
 calling 'eldoc-message' directly.
 
+---
+** Using '&rest' or '&optional' incorrectly is now an error.
+For example giving '&optional' without a following variable, or
+passing '&optional' multiple times:
+
+    (defun foo (&optional &rest x))
+    (defun bar (&optional &optional x))
+
+Previously, Emacs would just ignore the extra keyword, or give
+incorrect results in certain cases.
+
+---
+** The pinentry.el library has been removed.
+That package (and the corresponding change in GnuPG and pinentry)
+was intended to provide a way to input passphrase through Emacs with
+GnuPG 2.0.  However, the change to support that was only implemented
+in GnuPG >= 2.1 and didn't get backported to GnuPG 2.0.  And with
+GnuPG 2.1 and later, pinentry.el is not needed at all.  So the
+library was useless, and we removed it.  GnuPG 2.0 is no longer
+supported by the upstream project.
+
+To adapt to the change, you may need to set 'epa-pinentry-mode' to the
+symbol 'loopback'.
+
+Note that previously, it was said that passphrase input through
+minibuffer would be much less secure than other graphical pinentry
+programs.  However, these days the difference is insignificant: the
+'read-password' function sufficiently protects input from leakage to
+message logs.  Emacs still doesn't use secure memory to protect
+passphrases, but it was also removed from other pinentry programs as
+the attack is unrealistic on modern computer systems which don't
+utilize swap memory usually.
+
 
 * Lisp Changes in Emacs 26.1
 
@@ -1496,10 +1584,18 @@ and 'gnutls-symmetric-decrypt'.
 See the node "(elisp) GnuTLS Cryptography" in the ELisp manual for details.
 
 +++
+** The function 'gnutls-available-p' now returns a list of capabilities
+supported by the GnuTLS library used by Emacs.
+
++++
 ** Emacs now supports records for user-defined types, via the new
 functions 'make-record', 'record', and 'recordp'.  Records are now
 used internally to represent cl-defstruct and defclass instances, for
 example.
+
+If your program defines new record types, you should use
+package-naming conventions for naming those types.  This is so any
+potential conflicts with other types are avoided.
 
 +++
 ** 'save-some-buffers' now uses 'save-some-buffers-default-predicate'
@@ -1666,7 +1762,7 @@ job of signaling list cycles instead of looping indefinitely.
 
 +++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
-can be used for creation of temporary files of remote or mounted directories.
+can be used for creation of temporary files on remote or mounted directories.
 
 +++
 ** On GNU platforms when operating on a local file, 'file-attributes'
@@ -1694,7 +1790,7 @@ operating recursively and when some other process deletes the directory
 or its files before 'delete-directory' gets to them.
 
 +++
-*** New error type 'user-search-failed' like 'search-failed' but
+** New error type 'user-search-failed' like 'search-failed' but
 avoids debugger like 'user-error'.
 
 +++
@@ -1795,6 +1891,11 @@ handle fitting a frame to its buffer individually.
 **** 'drag-internal-border', 'drag-with-header-line',
 'drag-with-mode-line', 'snap-width', 'top-visible' and 'bottom-visible'
 allow to drag and resize frames with the mouse.
+
++++
+**** 'minibuffer' is now set to the default minibuffer window when
+initially specified as nil and is not reset to nil when initially
+specifying a minibuffer window.
 
 *** The new function 'frame-list-z-order' returns a list of all frames
 in Z (stacking) order.

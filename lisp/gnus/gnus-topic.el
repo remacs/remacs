@@ -1,6 +1,6 @@
 ;;; gnus-topic.el --- a folding minor mode for Gnus group buffers
 
-;; Copyright (C) 1995-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
 ;; Author: Ilja Weis <kult@uni-paderborn.de>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -220,6 +220,8 @@ If RECURSIVE is t, return groups in its subtopics too."
 	   ;; Check for permanent visibility.
 	   (and gnus-permanently-visible-groups
 		(string-match gnus-permanently-visible-groups group))
+	   ;; Marked groups are always visible.
+	   (member group gnus-group-marked)
 	   (memq 'visible params)
 	   (cdr (assq 'visible params)))
        ;; Add this group to the list of visible groups.
@@ -458,7 +460,7 @@ If LOWEST is non-nil, list all newsgroups of level LOWEST or higher."
 	(unless gnus-killed-hashtb
 	  (gnus-make-hashtable-from-killed))
 	(gnus-group-prepare-flat-list-dead
-	 (gnus-remove-if (lambda (group)
+	 (seq-remove (lambda (group)
 			   (or (gnus-group-entry group)
 			       (gnus-gethash group gnus-killed-hashtb)))
 			 not-in-list)

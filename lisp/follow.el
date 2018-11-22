@@ -1,6 +1,6 @@
 ;;; follow.el --- synchronize windows showing the same buffer
 
-;; Copyright (C) 1995-1997, 1999, 2001-2017 Free Software Foundation,
+;; Copyright (C) 1995-1997, 1999, 2001-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Anders Lindgren
@@ -416,6 +416,7 @@ This command runs the normal hook `follow-mode-hook'.
 
 Keys specific to Follow mode:
 \\{follow-mode-map}"
+  :lighter follow-mode-line-text
   :keymap follow-mode-map
   (if follow-mode
       (progn
@@ -1117,7 +1118,7 @@ Otherwise, return nil."
 ;;; Redisplay
 
 ;; Redraw all the windows on the screen, starting with the top window.
-;; The window used as as marker is WIN, or the selected window if WIN
+;; The window used as marker is WIN, or the selected window if WIN
 ;; is nil.  Start every window directly after the end of the previous
 ;; window, to make sure long lines are displayed correctly.
 

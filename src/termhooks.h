@@ -1,6 +1,6 @@
 /* Parameters and display hooks for terminal devices.
 
-Copyright (C) 1985-1986, 1993-1994, 2001-2017 Free Software Foundation,
+Copyright (C) 1985-1986, 1993-1994, 2001-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -373,7 +373,7 @@ extern struct tty_display_info *gpm_tty;
 struct terminal
 {
   /* This is for Lisp; the terminal code does not refer to it.  */
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* Parameter alist of this terminal.  */
   Lisp_Object param_alist;

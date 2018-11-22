@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Search
@@ -1614,6 +1614,14 @@ to go back to the position of the previous occurrence (or what used to
 be an occurrence), in case you changed it by mistake or want to
 reexamine it.
 
+@item u
+to undo the last replacement and go back to where that replacement was
+made.
+
+@item U
+to undo all the replacements and go back to where the first
+replacement was made.
+
 @item C-r
 to enter a recursive editing level, in case the occurrence needs to be
 edited rather than just replaced with @var{newstring}.  When you are
@@ -1727,7 +1735,8 @@ a multi-file incremental search is activated automatically.
 @cindex match (face name)
 @vindex list-matching-lines-default-context-lines
 @vindex list-matching-lines-jump-to-current-line
-@cindex list-matching-lines-current-line-face (face name)
+@c Too long.
+@c @cindex list-matching-lines-current-line-face (face name)
 @kindex M-s o
 @findex occur
 @item M-x occur
@@ -1738,12 +1747,13 @@ prompt, you can reuse search strings from previous incremental
 searches.  The text that matched is highlighted using the @code{match}
 face.  A numeric argument @var{n} specifies that @var{n} lines of
 context are to be displayed before and after each matching line.
+
 The default number of context lines is specified by the variable
-@code{list-matching-lines-default-context-lines}.
-When @code{list-matching-lines-jump-to-current-line} is non-nil,
-the current line is shown highlighted with face
-@code{list-matching-lines-current-line-face} and the point is set
-at the first match after such line.
+@code{list-matching-lines-default-context-lines}.  When
+@code{list-matching-lines-jump-to-current-line} is non-@code{nil} the
+current line is shown highlighted with face
+@code{list-matching-lines-current-line-face} and the point is set at
+the first match after such line.
 
 You can also run @kbd{M-s o} when an incremental search is active;
 this uses the current search string.
