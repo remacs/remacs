@@ -1,6 +1,6 @@
 ;;; electric-tests.el --- tests for electric.el
 
-;; Copyright (C) 2013-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2018 Free Software Foundation, Inc.
 
 ;; Author: João Távora <joaotavora@gmail.com>
 ;; Keywords:
@@ -734,6 +734,31 @@ baz\"\""
   :fixture-fn #'electric-quote-local-mode
   :bindings '((electric-quote-replace-double . t))
   :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-replace-double-no-context-single
+  " " "-'" :expected-string " ’" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-replace-double-escaped-open
+  "foo \\" "-----\"" :expected-string "foo \\“"
+  :expected-point 7 :modes '(emacs-lisp-mode c-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t)
+              (electric-quote-comment . t)
+              (electric-quote-string . t))
+  :test-in-comments t :test-in-strings t :test-in-code nil)
+
+(define-electric-pair-test electric-quote-replace-double-escaped-close
+  "foo \\“foo\\" "----------\"" :expected-string "foo \\“foo\\”"
+  :expected-point 12 :modes '(emacs-lisp-mode c-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t)
+              (electric-quote-comment . t)
+              (electric-quote-string . t))
+  :test-in-comments t :test-in-strings t :test-in-code nil)
 
 ;; Simulate ‘markdown-mode’: it sets both ‘comment-start’ and
 ;; ‘comment-use-syntax’, but derives from ‘text-mode’.

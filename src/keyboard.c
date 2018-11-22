@@ -1,6 +1,6 @@
 /* Keyboard and mouse input; editor command loop.
 
-Copyright (C) 1985-1989, 1993-1997, 1999-2017 Free Software Foundation,
+Copyright (C) 1985-1989, 1993-1997, 1999-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -1837,6 +1837,7 @@ int poll_suppress_count;
 
 static struct atimer *poll_timer;
 
+#if defined CYGWIN || defined DOS_NT
 /* Poll for input, so that we catch a C-g if it comes in.  */
 void
 poll_for_input_1 (void)
@@ -1845,6 +1846,7 @@ poll_for_input_1 (void)
       && !waiting_for_input)
     gobble_input ();
 }
+#endif
 
 /* Timer callback function for poll_timer.  TIMER is equal to
    poll_timer.  */
@@ -1896,20 +1898,22 @@ start_polling (void)
 #endif
 }
 
+#ifdef DOS_NT
 /* True if we are using polling to handle input asynchronously.  */
 
 bool
 input_polling_used (void)
 {
-#ifdef POLL_FOR_INPUT
+# ifdef POLL_FOR_INPUT
   /* XXX This condition was (read_socket_hook && !interrupt_input),
      but read_socket_hook is not global anymore.  Let's pretend that
      it's always set.  */
   return !interrupt_input;
-#else
-  return 0;
-#endif
+# else
+  return false;
+# endif
 }
+#endif
 
 /* Turn off polling.  */
 

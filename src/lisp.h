@@ -1,6 +1,6 @@
 /* Fundamental definitions for GNU Emacs Lisp interpreter. -*- coding: utf-8 -*-
 
-Copyright (C) 1985-1987, 1993-1995, 1997-2017 Free Software Foundation,
+Copyright (C) 1985-1987, 1993-1995, 1997-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -569,7 +569,6 @@ enum Lisp_Fwd_Type
    make a pointer to the function that frees the resources a slot in
    your object -- this way, the same object could be used to represent
    several disparate C structures.  */
-
 
 /* A Lisp_Object is a tagged pointer or integer.  Ordinarily it is a
    Lisp_Word.  However, if CHECK_LISP_OBJECT_TYPE, it is a wrapper
@@ -3961,6 +3960,8 @@ extern Lisp_Object Vrun_hooks;
 extern Lisp_Object Vsignaling_function;
 extern Lisp_Object inhibit_lisp_code;
 
+extern void do_one_unbind (union specbinding *, bool, enum Set_Internal_Bind);
+
 /* To run a normal hook, use the appropriate function from the list below.
    The calling convention:
 
@@ -4104,6 +4105,7 @@ extern void syms_of_module (void);
 extern void mark_threads (void);
 
 /* Defined in editfns.c.  */
+extern Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 extern void insert1 (Lisp_Object);
 extern Lisp_Object save_excursion_save (void);
 extern Lisp_Object save_restriction_save (void);
@@ -4637,6 +4639,9 @@ extern void init_system_name (void);
 #define make_fixnum_or_float(val) \
    (FIXNUM_OVERFLOW_P (val) ? make_float (val) : make_number (val))
 
+extern EMACS_INT
+mapcar1 (EMACS_INT leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq);
+
 /* SAFE_ALLOCA normally allocates memory on the stack, but if size is
    larger than MAX_ALLOCA, use xmalloc to avoid overflowing the stack.  */
 
@@ -4880,6 +4885,10 @@ Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
 bool backtrace_debug_on_exit (union specbinding *pdl);
 
 void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
+
+enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
+extern bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind);
 
 INLINE_HEADER_END
 

@@ -14,11 +14,11 @@ use crate::{
     objects::equal,
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
-        eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals, list2, maybe_gc,
-        maybe_quit, record_in_backtrace, record_unwind_protect, record_unwind_save_match_data,
-        specbind, unbind_to, COMPILEDP, MODULE_FUNCTIONP,
+        do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals, list2,
+        maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
+        record_unwind_save_match_data, specbind, COMPILEDP, MODULE_FUNCTIONP,
     },
-    remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled},
+    remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
     remacs_sys::{Fapply, Fdefault_value, Ffset, Fload, Fpurecopy},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
@@ -411,7 +411,8 @@ pub fn letX(args: LispCons) -> LispObject {
 
     // The symbols are bound. Now evaluate the body
     let val = Fprogn(body);
-    unsafe { unbind_to(count, val) }
+
+    unbind_to(count, val)
 }
 
 /// Bind variables according to VARLIST then eval BODY.
@@ -463,7 +464,8 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
     // The symbols are bound. Now evaluate the body
     let val = Fprogn(body);
-    unsafe { unbind_to(count, val) }
+
+    unbind_to(count, val)
 }
 
 /// If TEST yields non-nil, eval BODY... and repeat.
@@ -566,7 +568,7 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
         specbind(Qinternal_interpreter_environment, value);
     }
 
-    unsafe { unbind_to(count, eval_sub(form)) }
+    unbind_to(count, unsafe { eval_sub(form) })
 }
 
 /// Apply fn to arg.
@@ -836,8 +838,9 @@ pub fn autoload_do_load(
 
         // Once loading finishes, don't undo it.
         Vautoload_queue = Qt;
-        unbind_to(count, Qnil);
     }
+
+    unbind_to(count, Qnil);
 
     if funname.is_nil() || ignore_errors.is_not_nil() {
         Qnil
@@ -1103,6 +1106,39 @@ pub fn funcall(args: &mut [LispObject]) -> LispObject {
     }
 
     val
+}
+
+/// Pop and execute entries from the unwind-protect stack until the
+/// depth COUNT is reached. Return VALUE.
+#[no_mangle]
+pub extern "C" fn unbind_to(count: libc::ptrdiff_t, value: LispObject) -> LispObject {
+    let mut current_thread = ThreadState::current_thread();
+
+    unsafe {
+        let quitf = globals.Vquit_flag;
+
+        globals.Vquit_flag = Qnil;
+
+        while current_thread.m_specpdl_ptr != current_thread.m_specpdl.offset(count) {
+            // Copy the binding, and decrement specpdl_ptr, before we
+            // do the work to unbind it.  We decrement first so that
+            // an error in unbinding won't try to unbind the same
+            // entry again, and we copy the binding first in case more
+            // bindings are made during some of the code we run.
+
+            current_thread.m_specpdl_ptr = current_thread.m_specpdl_ptr.offset(-1);
+
+            let this_binding = current_thread.m_specpdl_ptr;
+
+            do_one_unbind(this_binding, true, Set_Internal_Bind::SET_INTERNAL_UNBIND);
+        }
+
+        if globals.Vquit_flag.is_nil() && quitf.is_not_nil() {
+            globals.Vquit_flag = quitf;
+        }
+    }
+
+    value
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

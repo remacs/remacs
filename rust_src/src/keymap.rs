@@ -10,7 +10,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::current_buffer,
     data::{aref, indirect_function, set},
-    eval::autoload_do_load,
+    eval::{autoload_do_load, unbind_to},
     keyboard::lucid_event_type_list_p,
     lisp::{defsubr, LispObject},
     lists::nth,
@@ -18,7 +18,6 @@ use crate::{
     remacs_sys::{
         access_keymap, describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
         map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit, specbind,
-        unbind_to,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri},
@@ -612,7 +611,7 @@ pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
         )
     };
 
-    unsafe { unbind_to(count, Qnil) };
+    unbind_to(count, Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));

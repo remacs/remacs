@@ -56,14 +56,6 @@ extern "C" {
     pub fn wrong_range(min: LispObject, max: LispObject, wrong: LispObject) -> !;
 }
 
-/// Type of comparison for `internal_equal()`.
-#[repr(C)]
-pub enum EqualKind {
-    NoQuit,
-    Plain,
-    IncludingProperties,
-}
-
 #[repr(C)]
 pub enum BoolVectorOp {
     BoolVectorExclusiveOr,
@@ -77,13 +69,6 @@ pub enum BoolVectorOp {
 extern "C" {
     // these weren't declared in a header, for example
     pub static Vprocess_alist: Lisp_Object;
-    pub fn internal_equal(
-        o1: Lisp_Object,
-        o2: Lisp_Object,
-        kind: EqualKind,
-        depth: libc::c_int,
-        ht: Lisp_Object,
-    ) -> bool;
     pub fn update_buffer_defaults(objvar: *mut LispObject, newval: LispObject);
     pub fn concat(
         nargs: ptrdiff_t,
@@ -132,7 +117,6 @@ extern "C" {
     #[cfg(unix)]
     pub fn filemode_string(f: LispObject) -> LispObject;
 
-    pub fn drop_overlay(b: *mut Lisp_Buffer, ov: *mut Lisp_Overlay);
     pub fn unchain_both(b: *mut Lisp_Buffer, ov: LispObject);
     pub fn emacs_get_tty_pgrp(p: *mut Lisp_Process) -> libc::pid_t;
     pub fn update_buffer_properties(start: ptrdiff_t, end: ptrdiff_t);

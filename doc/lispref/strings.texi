@@ -1,6 +1,6 @@
 @c -*- mode: texinfo; coding: utf-8 -*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Strings and Characters
@@ -1204,6 +1204,7 @@ a character, functions are unable to perform proper substitution and
 result may differ compared to treating a one-character string.  For
 example:
 
+@ifnottex
 @example
 @group
 (upcase "ﬁ")  ; note: single character, ligature "fi"
@@ -1214,6 +1215,19 @@ example:
      @result{} 64257  ; i.e. ?ﬁ
 @end group
 @end example
+@end ifnottex
+@iftex
+@example
+@group
+(upcase "@r{fi}")  ; note: single character, ligature "fi"
+     @result{} "FI"
+@end group
+@group
+(upcase ?@r{fi})
+     @result{} 64257  ; i.e. ?@r{fi}
+@end group
+@end example
+@end iftex
 
   To avoid this, a character must first be converted into a string,
 using @code{string} function, before being passed to one of the casing

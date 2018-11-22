@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Building
@@ -303,6 +303,11 @@ And here's how to do it in csh:
 if ($?prompt) set prompt = @dots{}
 @end example
 
+@vindex TERM, environment variable, in compilation mode
+  If you want to customize the value of the @env{TERM} environment
+variable passed to the compilation subshell, customize the variable
+@code{comint-terminfo-terminal} (@pxref{Shell Options}).
+
   Emacs does not expect a compiler process to launch asynchronous
 subprocesses; if it does, and they keep running after the main
 compiler process has terminated, Emacs may kill them or their output
@@ -382,10 +387,11 @@ match will be highlighted, instead of the entire source line.
   The @command{grep} commands will offer to save buffers before
 running.  This is controlled by the @code{grep-save-buffers} variable.
 The possible values are either @code{nil} (don't save), @code{ask}
-(ask before saving), a function which will be used as a predicate (and
-is called with the file name as the parameter and should return
-non-nil if the buffer is to be saved), and any other non-@code{nil}
-value means that all buffers should be saved without asking.
+(ask before saving), or a function which will be used as a predicate
+(and is called with the file name as the parameter and should return
+non-@code{nil} if the buffer is to be saved).  Any other
+non-@code{nil} value means that all buffers should be saved without
+asking.
 
 @findex grep-find
 @findex find-grep

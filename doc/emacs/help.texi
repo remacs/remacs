@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Help
@@ -451,7 +451,6 @@ you can go forward by using @kbd{C-c C-f} or @kbd{r}
 @cindex help, viewing web pages
 @cindex viewing web pages in help
 @cindex web pages, viewing in help
-@findex browse-url
   A help buffer can also contain hyperlinks to Info manuals, source
 code definitions, and URLs (web pages).  The first two are opened in
 Emacs, and the third using a web browser via the @code{browse-url}
@@ -493,10 +492,11 @@ buffer (@pxref{Package Menu}).
 @findex describe-package
 @kindex C-h P
   @kbd{C-h P} (@code{describe-package}) prompts for the name of a
-package, and displays a help buffer describing the attributes of the
-package and the features that it implements.  The buffer lists the
-keywords that relate to the package in the form of buttons.  Click on
-a button to see other packages related to that keyword.
+package (@pxref{Packages}, and displays a help buffer describing the
+attributes of the package and the features that it implements.  The
+buffer lists the keywords that relate to the package in the form of
+buttons.  Click on a button to see other packages related to that
+keyword.
 
 @node Language Help
 @section Help for International Language Support
@@ -666,7 +666,7 @@ Emacs (@code{describe-no-warranty}).
 @node Help Echo
 @section Help on Active Text and Tooltips
 
-@cindex tooltips
+@cindex tooltip help
 @cindex balloon help
 @cindex active text
   In Emacs, stretches of @dfn{active text} (text that does something

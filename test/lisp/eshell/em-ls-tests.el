@@ -1,6 +1,6 @@
 ;;; tests/em-ls-tests.el --- em-ls test suite
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; Author: Tino Calancha <tino.calancha@gmail.com>
 

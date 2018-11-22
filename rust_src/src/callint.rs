@@ -1,10 +1,10 @@
 //! Call a Lisp function interactively.
 
 use crate::{
-    eval::funcall,
+    eval::{funcall, unbind_to},
     lisp::{defsubr, LispObject},
     remacs_macros::lisp_fn,
-    remacs_sys::{temporarily_switch_to_single_kboard, unbind_to},
+    remacs_sys::temporarily_switch_to_single_kboard,
     threads::c_specpdl_index,
 };
 
@@ -90,7 +90,7 @@ pub fn funcall_interactively(args: &mut [LispObject]) -> LispObject {
 
     unsafe { temporarily_switch_to_single_kboard(std::ptr::null_mut()) };
 
-    unsafe { unbind_to(count, funcall(args)) }
+    unbind_to(count, funcall(args))
 }
 
 include!(concat!(env!("OUT_DIR"), "/callint_exports.rs"));

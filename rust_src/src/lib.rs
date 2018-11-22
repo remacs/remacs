@@ -1,6 +1,7 @@
 #![allow(clippy::cyclomatic_complexity)]
 #![allow(clippy::wrong_self_convention)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![feature(const_fn)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]

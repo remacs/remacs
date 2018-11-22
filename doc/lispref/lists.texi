@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Lists
@@ -1514,9 +1514,10 @@ of property lists and association lists.
 @defun assoc key alist &optional testfn
 This function returns the first association for @var{key} in
 @var{alist}, comparing @var{key} against the alist elements using
-@var{testfn} if non-nil, or @code{equal} if nil (@pxref{Equality
-Predicates}).  It returns @code{nil} if no association in @var{alist}
-has a @sc{car} equal to @var{key}.  For example:
+@var{testfn} if it is non-@code{nil} and @code{equal} otherwise
+(@pxref{Equality Predicates}).  It returns @code{nil} if no
+association in @var{alist} has a @sc{car} equal to @var{key}.  For
+example:
 
 @smallexample
 (setq trees '((pine . cones) (oak . acorns) (maple . seeds)))

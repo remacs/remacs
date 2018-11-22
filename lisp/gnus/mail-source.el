@@ -1,6 +1,6 @@
 ;;; mail-source.el --- functions for fetching mail
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news, mail
@@ -1097,7 +1097,8 @@ This only works when `display-time' is enabled."
 	      ;; remember password
 	      (with-current-buffer buf
 		(when (and imap-password
-			   (not (assoc from mail-source-password-cache)))
+			   (not (member (cons from imap-password)
+                                        mail-source-password-cache)))
 		  (push (cons from imap-password) mail-source-password-cache)))
 	      ;; if predicate is nil, use all uids
 	      (dolist (uid (imap-search (or predicate "1:*") buf))

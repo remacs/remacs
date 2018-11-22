@@ -1,6 +1,6 @@
 ;;; replace.el --- replace commands for Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1987, 1992, 1994, 1996-1997, 2000-2017 Free
+;; Copyright (C) 1985-1987, 1992, 1994, 1996-1997, 2000-2018 Free
 ;; Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -2212,7 +2212,10 @@ It is called with three arguments, as if it were
   (if query-replace-lazy-highlight
       (let ((isearch-string search-string)
 	    (isearch-regexp regexp-flag)
-	    (isearch-regexp-function delimited-flag)
+	    (isearch-regexp-function (or delimited-flag
+					 (and replace-char-fold
+					      (not regexp-flag)
+					      #'char-fold-to-regexp)))
 	    (isearch-lax-whitespace
 	     replace-lax-whitespace)
 	    (isearch-regexp-lax-whitespace

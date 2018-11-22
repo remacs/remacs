@@ -1,6 +1,6 @@
 /* Random utility Lisp functions.
 
-Copyright (C) 1985-1987, 1993-1995, 1997-2017 Free Software Foundation,
+Copyright (C) 1985-1987, 1993-1995, 1997-2018 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -40,9 +40,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #if defined WINDOWSNT && defined HAVE_GNUTLS3
 # define gnutls_rnd w32_gnutls_rnd
 #endif
-
-enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
-bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 
 /* Random data-structure functions.  */
 
@@ -1488,16 +1485,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       break;
 
     case Lisp_String:
-      if (SCHARS (o1) != SCHARS (o2))
-	return false;
-      if (SBYTES (o1) != SBYTES (o2))
-	return false;
-      if (memcmp (SDATA (o1), SDATA (o2), SBYTES (o1)))
-	return false;
-      if (equal_kind == EQUAL_INCLUDING_PROPERTIES
-	  && !compare_string_intervals (o1, o2))
-	return false;
-      return true;
+      return internal_equal_string(o1, o2, equal_kind);
 
     default:
       break;
@@ -1596,70 +1584,6 @@ usage: (nconc &rest LISTS)  */)
   return val;
 }
 
-/* This is the guts of all mapping functions.
-   Apply FN to each element of SEQ, one by one, storing the results
-   into elements of VALS, a C vector of Lisp_Objects.  LENI is the
-   length of VALS, which should also be the length of SEQ.  Return the
-   number of results; although this is normally LENI, it can be less
-   if SEQ is made shorter as a side effect of FN.  */
-
-static EMACS_INT
-mapcar1 (EMACS_INT leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
-{
-  Lisp_Object tail, dummy;
-  EMACS_INT i;
-
-  if (VECTORP (seq) || COMPILEDP (seq))
-    {
-      for (i = 0; i < leni; i++)
-	{
-	  dummy = call1 (fn, AREF (seq, i));
-	  if (vals)
-	    vals[i] = dummy;
-	}
-    }
-  else if (BOOL_VECTOR_P (seq))
-    {
-      for (i = 0; i < leni; i++)
-	{
-	  dummy = call1 (fn, bool_vector_ref (seq, i));
-	  if (vals)
-	    vals[i] = dummy;
-	}
-    }
-  else if (STRINGP (seq))
-    {
-      ptrdiff_t i_byte;
-
-      for (i = 0, i_byte = 0; i < leni;)
-	{
-	  int c;
-	  ptrdiff_t i_before = i;
-
-	  FETCH_STRING_CHAR_ADVANCE (c, seq, i, i_byte);
-	  XSETFASTINT (dummy, c);
-	  dummy = call1 (fn, dummy);
-	  if (vals)
-	    vals[i_before] = dummy;
-	}
-    }
-  else   /* Must be a list, since Flength did not get an error */
-    {
-      tail = seq;
-      for (i = 0; i < leni; i++)
-	{
-	  if (! CONSP (tail))
-	    return i;
-	  dummy = call1 (fn, XCAR (tail));
-	  if (vals)
-	    vals[i] = dummy;
-	  tail = XCDR (tail);
-	}
-    }
-
-  return leni;
-}
-
 DEFUN ("mapconcat", Fmapconcat, Smapconcat, 3, 3, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
 In between each pair of results, stick in SEPARATOR.  Thus, " " as
@@ -2083,6 +2007,7 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
      and delete the old.  (Insert first in order to preserve markers.)  */
   TEMP_SET_PT_BOTH (XFASTINT (beg), ibeg);
   insert_1_both (decoded, inserted_chars, decoded_length, 0, 1, 0);
+  signal_after_change (XFASTINT (beg), 0, inserted_chars);
   SAFE_FREE ();
 
   /* Delete the original text.  */
