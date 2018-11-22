@@ -1225,7 +1225,12 @@ return t; if SYM is q or ESC, return nil."
 
 ;;;###autoload
 (defun dired-do-compress (&optional arg)
-  "Compress or uncompress marked (or next ARG) files."
+  "Compress or uncompress marked (or next ARG) files.
+If invoked on a directory, compress all of the files in
+the directory and all of its subdirectories, recursively,
+into a .tar.gz archive.
+If invoked on a .tar.gz or a .tgz or a .zip or a .7z archive,
+uncompress and unpack all the files in the archive."
   (interactive "P")
   (dired-map-over-marks-check #'dired-compress arg 'compress t))
 
