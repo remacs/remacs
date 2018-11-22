@@ -56,12 +56,12 @@ often cause crashes.  Set it to nil if you really need those fonts.
 *** The 'Z' command on a directory name compresses all of its files.
 It produces a compressed '.tar.gz' archive with all the files in the
 directory and all of its subdirectories.  For symmetry, 'Z' on a
-'.tar.gz' or a '.tgz' archive extracts all the archived files into
-the current directory; thus, typing 'Z' on a '.tar.gz' archive created
-by a previous 'Z' command will extract the archived files into a
+'.tar.gz' or a '.tgz' archive extracts all the archived files into the
+current directory; thus, typing 'Z' on a '.tar.gz' archive created by
+a previous 'Z' command will extract the archived files into a
 directory whose name is the archive name sans the '.tar.gz' or '.tgz'
-extension.  (This change was actually made in Emacs 26.1, but was not
-called out in its NEWS.)
+extension.  (This change was actually made in Emacs 25.1 and 26.1, but
+was only partially called out in their NEWS.)
 
 ** Ibuffer
 
