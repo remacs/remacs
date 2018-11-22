@@ -753,14 +753,17 @@ enum { AUTH_KEY_LENGTH = 64 };
 /* Socket used to communicate with the Emacs server process.  */
 static HSOCKET emacs_socket = 0;
 
-/* On Windows, the socket library was historically separate from the
-   standard C library, so errors are handled differently.  */
-
 static void
 sock_err_message (const char *function_name)
 {
 # ifdef WINDOWSNT
-  char* msg = NULL;
+  /* On Windows, the socket library was historically separate from the
+     standard C library, so errors are handled differently.  */
+
+  if (w32_window_app () && alternate_editor)
+    return;
+
+  char *msg = NULL;
 
   FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM
                  | FORMAT_MESSAGE_ALLOCATE_BUFFER
@@ -1000,9 +1003,6 @@ set_tcp_socket (const char *local_server_file)
 	 yet; popping out a modal dialog at this stage would make -a
 	 option totally useless for emacsclientw -- the user will
 	 still get an error message if the alternate editor fails.  */
-# ifdef WINDOWSNT
-      if(!(w32_window_app () && alternate_editor))
-# endif
       sock_err_message ("socket");
       return INVALID_SOCKET;
     }
@@ -1010,9 +1010,6 @@ set_tcp_socket (const char *local_server_file)
   /* Set up the socket.  */
   if (connect (s, &server.sa, sizeof server.in) != 0)
     {
-# ifdef WINDOWSNT
-      if(!(w32_window_app () && alternate_editor))
-# endif
       sock_err_message ("connect");
       return INVALID_SOCKET;
     }
