@@ -59,9 +59,9 @@ directory and all of its subdirectories.  For symmetry, 'Z' on a
 '.tar.gz' or a '.tgz' archive extracts all the archived files into the
 current directory; thus, typing 'Z' on a '.tar.gz' archive created by
 a previous 'Z' command will extract the archived files into a
-directory whose name is the archive name sans the '.tar.gz' or '.tgz'
-extension.  (This change was actually made in Emacs 25.1 and 26.1, but
-was only partially called out in their NEWS.)
+directory whose name is the archive name sans the '.tar.gz' extension.
+(This change was actually made in Emacs 25.1 but was only
+partially called out in its NEWS; 'tgz' handling was added in 26.1.)
 
 ** Ibuffer
 
