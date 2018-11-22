@@ -908,10 +908,8 @@ Subclasses to override slot attributes.")
 (eieio-test-dump-trace)
 
 (ert-deftest eieio-test-37-obsolete-name-in-constructor ()
-  ;; Skipping on Remacs as this fails non-deterministically on Travis
-  ;; https://github.com/Wilfred/remacs/issues/159
-  (skip-unless (equal invocation-name "emacs"))
-  ;; FIXME repeated intermittent failures on hydra (bug#24503)
+  ;; FIXME repeated intermittent failures on hydra and elsewhere (bug#24503).
+  :tags '(:unstable)
   (with-current-buffer "*trace-output*"
     (erase-buffer))
   (unwind-protect

@@ -1077,11 +1077,11 @@ struct x_output
    window or, if there is no parent window, the screen. */
 #define NS_PARENT_WINDOW_LEFT_POS(f)                                    \
   (FRAME_PARENT_FRAME (f) != NULL                                       \
-   ? [[FRAME_NS_VIEW (f) window] parentWindow].frame.origin.x : 0)
+   ? [FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window].frame.origin.x : 0)
 #define NS_PARENT_WINDOW_TOP_POS(f)                                     \
   (FRAME_PARENT_FRAME (f) != NULL                                       \
-   ? ([[FRAME_NS_VIEW (f) window] parentWindow].frame.origin.y          \
-      + [[FRAME_NS_VIEW (f) window] parentWindow].frame.size.height     \
+   ? ([FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window].frame.origin.y    \
+      + [FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window].frame.size.height \
       - FRAME_NS_TITLEBAR_HEIGHT (FRAME_PARENT_FRAME (f)))              \
    : [[[NSScreen screens] objectAtIndex: 0] frame].size.height)
 

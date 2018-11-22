@@ -142,7 +142,10 @@ are not abstract."
 	      (find-lisp-object-file-name ctr def)))
       (when location
 	(insert (substitute-command-keys " in `"))
-	(help-insert-xref-button
+	;; The `cl-type-definition' button type can't be autoloaded
+	;; due to circularity during bootstrap (Bug#28899).
+        (require 'cl-extra)
+        (help-insert-xref-button
 	 (help-fns-short-filename location)
 	 'cl-type-definition ctr location 'define-type)
 	(insert (substitute-command-keys "'")))

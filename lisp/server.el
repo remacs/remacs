@@ -1061,9 +1061,8 @@ The following commands are accepted by the client:
           ;; supported any more.
           (cl-assert (eq (match-end 0) (length string)))
 	  (let ((request (substring string 0 (match-beginning 0)))
-		(coding-system (and (default-value 'enable-multibyte-characters)
-				    (or file-name-coding-system
-					default-file-name-coding-system)))
+		(coding-system (or file-name-coding-system
+				   default-file-name-coding-system))
 		nowait     ; t if emacsclient does not want to wait for us.
 		frame      ; Frame opened for the client (if any).
 		display    ; Open frame on this display.

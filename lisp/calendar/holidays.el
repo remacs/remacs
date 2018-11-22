@@ -522,7 +522,6 @@ strings describing those holidays that apply on DATE, or nil if none do."
           (setq holiday-list (append holiday-list (cdr h)))))))
 
 
-;; Formerly cal-tex-list-holidays.
 (defun holiday-in-range (d1 d2)
   "Generate a list of all holidays in range from absolute date D1 to D2."
   (let* ((start (calendar-gregorian-from-absolute d1))

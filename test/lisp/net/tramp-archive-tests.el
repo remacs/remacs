@@ -46,6 +46,11 @@
   (file-name-as-directory tramp-archive-test-file-archive)
   "The test archive.")
 
+(defconst tramp-archive-test-directory
+  (file-truename
+   (expand-file-name "foo.iso" tramp-archive-test-resource-directory))
+  "A directory file name, which looks like an archive.")
+
 (setq password-cache-expiry nil
       tramp-verbose 0
       tramp-cache-read-persistent-data t ;; For auth-sources.
@@ -94,14 +99,51 @@ variables, so we check the Emacs version directly."
   "Check archive file name syntax."
   (should-not (tramp-archive-file-name-p tramp-archive-test-file-archive))
   (should (tramp-archive-file-name-p tramp-archive-test-archive))
+  (should
+   (string-equal
+    (tramp-archive-file-name-archive tramp-archive-test-archive)
+    tramp-archive-test-file-archive))
+  (should
+   (string-equal
+    (tramp-archive-file-name-localname tramp-archive-test-archive) "/"))
   (should (tramp-archive-file-name-p (concat tramp-archive-test-archive "foo")))
   (should
+   (string-equal
+    (tramp-archive-file-name-localname
+     (concat tramp-archive-test-archive "foo"))
+    "/foo"))
+  (should
    (tramp-archive-file-name-p (concat tramp-archive-test-archive "foo/bar")))
+  (should
+   (string-equal
+    (tramp-archive-file-name-localname
+     (concat tramp-archive-test-archive "foo/bar"))
+    "/foo/bar"))
   ;; A file archive inside a file archive.
   (should
-   (tramp-archive-file-name-p (concat tramp-archive-test-archive "foo.tar")))
+   (tramp-archive-file-name-p (concat tramp-archive-test-archive "baz.tar")))
   (should
-   (tramp-archive-file-name-p (concat tramp-archive-test-archive "foo.tar/"))))
+   (string-equal
+    (tramp-archive-file-name-archive
+     (concat tramp-archive-test-archive "baz.tar"))
+    tramp-archive-test-file-archive))
+  (should
+   (string-equal
+    (tramp-archive-file-name-localname
+     (concat tramp-archive-test-archive "baz.tar"))
+    "/baz.tar"))
+  (should
+   (tramp-archive-file-name-p (concat tramp-archive-test-archive "baz.tar/")))
+  (should
+   (string-equal
+    (tramp-archive-file-name-archive
+     (concat tramp-archive-test-archive "baz.tar/"))
+    (concat tramp-archive-test-archive "baz.tar")))
+  (should
+   (string-equal
+    (tramp-archive-file-name-localname
+     (concat tramp-archive-test-archive "baz.tar/"))
+    "/")))
 
 (ert-deftest tramp-archive-test02-file-name-dissect ()
   "Check archive file name components."
@@ -145,13 +187,14 @@ variables, so we check the Emacs version directly."
 
   ;; File archive in file archive.
   (let* ((tramp-archive-test-file-archive
-	  (concat tramp-archive-test-archive "bar.tar"))
+	  (concat tramp-archive-test-archive "baz.tar"))
 	 (tramp-archive-test-archive
 	  (file-name-as-directory tramp-archive-test-file-archive))
 	 (tramp-methods (cons `(,tramp-archive-method) tramp-methods))
 	 (tramp-gvfs-methods tramp-archive-all-gvfs-methods))
     (unwind-protect
-	(with-parsed-tramp-archive-file-name tramp-archive-test-archive nil
+	(with-parsed-tramp-archive-file-name
+	    (expand-file-name "bar" tramp-archive-test-archive) nil
 	  (should (string-equal method tramp-archive-method))
 	  (should-not user)
 	  (should-not domain)
@@ -184,7 +227,7 @@ variables, so we check the Emacs version directly."
 		nil "/"))
 	      (file-name-nondirectory tramp-archive-test-file-archive)))))
 	  (should-not port)
-	  (should (string-equal localname "/"))
+	  (should (string-equal localname "/bar"))
 	  (should (string-equal archive tramp-archive-test-file-archive)))
 
       ;; Cleanup.
@@ -203,6 +246,21 @@ variables, so we check the Emacs version directly."
   ;; `expand-file-name' does not care file archive boundaries.
   (should (string-equal (expand-file-name "/foo.tar/./file") "/foo.tar/file"))
   (should (string-equal (expand-file-name "/foo.tar/../file") "/file")))
+
+;; This test is inspired by Bug#30293.
+(ert-deftest tramp-archive-test05-expand-file-name-non-archive-directory ()
+  "Check existing directories with archive file name syntax.
+They shall still be supported"
+  (should (file-directory-p tramp-archive-test-directory))
+  ;; `tramp-archive-file-name-p' tests only for file name syntax.  It
+  ;; doesn't test, whether it is really a file archive.
+  (should
+   (tramp-archive-file-name-p
+    (file-name-as-directory tramp-archive-test-directory)))
+  (should
+   (file-directory-p (file-name-as-directory tramp-archive-test-directory)))
+  (should
+   (file-exists-p (expand-file-name "foo" tramp-archive-test-directory))))
 
 (ert-deftest tramp-archive-test06-directory-file-name ()
   "Check `directory-file-name'.
@@ -290,9 +348,8 @@ This checks also `file-name-as-directory', `file-name-directory',
 	     :type tramp-file-missing))
 
       ;; Cleanup.
-      (ignore-errors
-	(tramp-archive--test-delete tmp-name)
-	(tramp-archive-cleanup-hash)))))
+      (ignore-errors (tramp-archive--test-delete tmp-name))
+      (tramp-archive-cleanup-hash))))
 
 (ert-deftest tramp-archive-test09-insert-file-contents ()
   "Check `insert-file-contents'."
@@ -444,7 +501,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   (skip-unless tramp-gvfs-enabled)
 
   (let ((tmp-name tramp-archive-test-archive)
-	(files '("." ".." "bar" "foo.hrd" "foo.lnk" "foo.txt")))
+	(files '("." ".." "bar"  "baz.tar" "foo.hrd" "foo.lnk" "foo.txt")))
     (unwind-protect
 	(progn
 	  (should (file-directory-p tmp-name))
@@ -656,7 +713,7 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 	  ;; Local files.
 	  (should (equal (file-name-completion "fo" tmp-name) "foo."))
 	  (should (equal (file-name-completion "foo.txt" tmp-name) t))
-	  (should (equal (file-name-completion "b" tmp-name) "bar/"))
+	  (should (equal (file-name-completion "b" tmp-name) "ba"))
 	  (should-not (file-name-completion "a" tmp-name))
 	  (should
 	   (equal
@@ -668,18 +725,18 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 	  (should
 	   (equal
 	    (sort (file-name-all-completions "b" tmp-name) 'string-lessp)
-	    '("bar/")))
+	    '("bar/" "baz.tar")))
 	  (should-not (file-name-all-completions "a" tmp-name))
 	  ;; `completion-regexp-list' restricts the completion to
 	  ;; files which match all expressions in this list.
 	  (let ((completion-regexp-list
 		 `(,directory-files-no-dot-files-regexp "b")))
 	    (should
-	     (equal (file-name-completion "" tmp-name) "bar/"))
+	     (equal (file-name-completion "" tmp-name) "ba"))
 	    (should
 	     (equal
 	      (sort (file-name-all-completions "" tmp-name) 'string-lessp)
-	      '("bar/")))))
+	      '("bar/" "baz.tar")))))
 
       ;; Cleanup.
       (tramp-archive-cleanup-hash))))

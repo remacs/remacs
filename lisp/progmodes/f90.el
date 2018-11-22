@@ -123,7 +123,6 @@
 ;;    mechanism for treating multi-line directives (continued by \ ).
 ;; 7) f77 do-loops do 10 i=.. ; ; 10 continue are not correctly indented.
 ;;    You are urged to use f90-do loops (with labels if you wish).
-;; 8) The highlighting mode under XEmacs is not as complete as under Emacs.
 
 ;; List of user commands
 ;;   f90-previous-statement         f90-next-statement
@@ -1847,10 +1846,8 @@ A block is a subroutine, if-endif, etc."
     (push-mark)
     (goto-char pos)
     (setq program (f90-beginning-of-subprogram))
-    (if (featurep 'xemacs)
-        (zmacs-activate-region)
-      (setq mark-active t
-            deactivate-mark nil))
+    (setq mark-active t
+          deactivate-mark nil)
     program))
 
 (defun f90-comment-region (beg-region end-region)
@@ -2042,9 +2039,7 @@ If run in the middle of a line, the line is not broken."
     (goto-char save-point)
     (set-marker end-region-mark nil)
     (set-marker save-point nil)
-    (if (featurep 'xemacs)
-        (zmacs-deactivate-region)
-      (deactivate-mark))))
+    (deactivate-mark)))
 
 (defun f90-indent-subprogram ()
   "Properly indent the subprogram containing point."
@@ -2157,9 +2152,7 @@ Like `join-line', but handles F90 syntax."
             f90-cache-position (point)))
     (setq f90-cache-position nil)
     (set-marker end-region-mark nil)
-    (if (featurep 'xemacs)
-        (zmacs-deactivate-region)
-      (deactivate-mark))))
+    (deactivate-mark)))
 
 (defun f90-fill-paragraph (&optional justify)
   "In a comment, fill it as a paragraph, else fill the current statement.

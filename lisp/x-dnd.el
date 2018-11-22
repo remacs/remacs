@@ -264,9 +264,8 @@ STRING is the uri-list as a string.  The URIs are separated by \\r\\n."
 WINDOW is the window where the drop happened.
 STRING is the file names as a string, separated by nulls."
   (let ((uri-list (split-string string "[\0\r\n]" t))
-	(coding (and (default-value 'enable-multibyte-characters)
-		     (or file-name-coding-system
-			 default-file-name-coding-system)))
+	(coding (or file-name-coding-system
+		    default-file-name-coding-system))
 	retval)
     (dolist (bf uri-list)
       ;; If one URL is handled, treat as if the whole drop succeeded.

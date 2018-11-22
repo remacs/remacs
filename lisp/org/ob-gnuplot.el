@@ -116,6 +116,8 @@ code."
            (timefmt (cdr (assq :timefmt params)))
            (time-ind (or (cdr (assq :timeind params))
                          (when timefmt 1)))
+	   (directory (and (buffer-file-name)
+			   (file-name-directory (buffer-file-name))))
 	   (add-to-body (lambda (text) (setq body (concat text "\n" body)))))
       ;; append header argument settings to body
       (when title (funcall add-to-body (format "set title '%s'" title)))
@@ -161,7 +163,10 @@ code."
 			  (format "\\$%s" (car pair)) (cdr pair) body)))
 	    vars)
       (when prologue (funcall add-to-body prologue))
-      (when epilogue (setq body (concat body "\n" epilogue))))
+      (when epilogue (setq body (concat body "\n" epilogue)))
+      ;; Setting the directory needs to be done first so that
+      ;; subsequent 'output' directive goes to the right place.
+      (when directory (funcall add-to-body (format "cd '%s'" directory))))
     body))
 
 (defun org-babel-execute:gnuplot (body params)

@@ -101,7 +101,7 @@ Kill up to the end of a word (@code{kill-word}).
 @item M-@key{DEL}
 Kill back to the beginning of a word (@code{backward-kill-word}).
 @item M-@@
-Mark the end of the next word (@code{mark-word}).
+Set mark at the end of the next word (@code{mark-word}).
 @item M-t
 Transpose two words or drag a word across others
 (@code{transpose-words}).
@@ -381,12 +381,13 @@ at the end).
   @kbd{C-x C-p C-w} is a handy way to kill a page to move it
 elsewhere.  If you move to another page delimiter with @kbd{C-x [} and
 @kbd{C-x ]}, then yank the killed page, all the pages will be properly
-delimited once again.  The reason @kbd{C-x C-p} includes only the
-following page delimiter in the region is to ensure that.
+delimited once again.  Making sure this works as expected is the
+reason @kbd{C-x C-p} includes only the following page delimiter in the
+region.
 
   A numeric argument to @kbd{C-x C-p} specifies which page to go to,
-relative to the current one.  Zero means the current page, one
-the next page, and @minus{}1 the previous one.
+relative to the current one.  Zero means the current page, one means
+the next page, and @minus{}1 means the previous one.
 
 @kindex C-x l
 @findex count-lines-page
@@ -636,8 +637,11 @@ line.  If a function returns a non-@code{nil} value, Emacs will not
 break the line there.  Functions you can use there include:
 @code{fill-single-word-nobreak-p} (don't break after the first word of
 a sentence or before the last); @code{fill-single-char-nobreak-p}
-(don't break after a one-letter word); and @code{fill-french-nobreak-p}
-(don't break after @samp{(} or before @samp{)}, @samp{:} or @samp{?}).
+(don't break after a one-letter word preceded by a whitespace
+character); @code{fill-french-nobreak-p} (don't break after @samp{(}
+or before @samp{)}, @samp{:} or @samp{?}); and
+@code{fill-polish-nobreak-p} (don't break after a one letter word,
+even if preceded by a non-whitespace character).
 
 @node Fill Prefix
 @subsection The Fill Prefix

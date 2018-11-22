@@ -568,7 +568,10 @@ enum Lisp_Fwd_Type
    resources allocated for it that are not Lisp objects.  You can even
    make a pointer to the function that frees the resources a slot in
    your object -- this way, the same object could be used to represent
-   several disparate C structures.  */
+   several disparate C structures.
+
+   You also need to add the new type to the constant
+   `cl--typeof-types' in lisp/emacs-lisp/cl-preloaded.el.  */
 
 /* A Lisp_Object is a tagged pointer or integer.  Ordinarily it is a
    Lisp_Word.  However, if CHECK_LISP_OBJECT_TYPE, it is a wrapper
@@ -4525,6 +4528,11 @@ extern void syms_of_gfilenotify (void);
 #ifdef HAVE_W32NOTIFY
 /* Defined on w32notify.c.  */
 extern void syms_of_w32notify (void);
+#endif
+
+#if defined HAVE_NTGUI || defined CYGWIN
+/* Defined in w32cygwinx.c.  */
+extern void syms_of_w32cygwinx (void);
 #endif
 
 /* Defined in xfaces.c.  */

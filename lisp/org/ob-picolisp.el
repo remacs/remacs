@@ -39,9 +39,9 @@
 ;; directory).
 
 ;; Although it might seem more natural to use Emacs Lisp for most
-;; Lisp-based programming tasks inside Org-Mode, an Emacs library
-;; written in Emacs Lisp, PicoLisp has at least two outstanding
-;; features that make it a valuable addition to Org-Babel:
+;; Lisp-based programming tasks inside Org, an Emacs library written
+;; in Emacs Lisp, PicoLisp has at least two outstanding features that
+;; make it a valuable addition to Org Babel:
 
 ;; PicoLisp _is_ an object-oriented database with a Prolog-based query
 ;; language implemented in PicoLisp (Pilog). Database objects are

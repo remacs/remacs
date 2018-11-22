@@ -254,9 +254,18 @@
   (should (equal (css--color-to-4-dpc "#fafbfc")
                  "#fafafbfbfcfc")))
 
+(ert-deftest css-test-format-hex ()
+  (should (equal (css--format-hex "#fff") "#fff"))
+  (should (equal (css--format-hex "#ffffff") "#fff"))
+  (should (equal (css--format-hex "#aabbcc") "#abc"))
+  (should (equal (css--format-hex "#12ff34") "#12ff34"))
+  (should (equal (css--format-hex "#aabbccdd") "#abcd"))
+  (should (equal (css--format-hex "#aabbccde") "#aabbccde"))
+  (should (equal (css--format-hex "#abcdef") "#abcdef")))
+
 (ert-deftest css-test-named-color-to-hex ()
-  (dolist (item '(("black" "#000000")
-                  ("white" "#ffffff")
+  (dolist (item '(("black" "#000")
+                  ("white" "#fff")
                   ("salmon" "#fa8072")))
     (with-temp-buffer
       (css-mode)
@@ -281,7 +290,9 @@
                   ("#fff" "rgb(255, 255, 255)")
                   ("#ffffff" "rgb(255, 255, 255)")
                   ("#ffffff80" "rgba(255, 255, 255, 0.5)")
-                  ("#fff8" "rgba(255, 255, 255, 0.5)")))
+                  ("#fff0" "rgba(255, 255, 255, 0)")
+                  ("#fff8" "rgba(255, 255, 255, 0.53)")
+                  ("#ffff" "rgba(255, 255, 255, 1)")))
     (with-temp-buffer
       (css-mode)
       (insert (nth 0 item))
@@ -293,7 +304,9 @@
                   ("rgb(255, 255, 255)" "white")
                   ("rgb(255, 255, 240)" "ivory")
                   ("rgb(18, 52, 86)" "#123456")
-                  ("rgba(18, 52, 86, 0.5)" "#12345680")))
+                  ("rgba(18, 52, 86, 0.5)" "#12345680")
+                  ("rgba(18, 52, 86, 50%)" "#12345680")
+                  ("rgba(50%, 50%, 50%, 50%)" "#80808080")))
     (with-temp-buffer
       (css-mode)
       (insert (nth 0 item))
@@ -305,7 +318,7 @@
     (css-mode)
     (insert "black")
     (css-cycle-color-format)
-    (should (equal (buffer-string) "#000000"))
+    (should (equal (buffer-string) "#000"))
     (css-cycle-color-format)
     (should (equal (buffer-string) "rgb(0, 0, 0)"))
     (css-cycle-color-format)
@@ -330,11 +343,11 @@
 (ert-deftest css-test-rgb-parser ()
   (with-temp-buffer
     (css-mode)
-    (dolist (input '("255, 0, 127"
-                     "255, /* comment */ 0, 127"
-                     "255 0 127"
-                     "255, 0, 127, 0.75"
-                     "255 0 127 / 0.75"
+    (dolist (input '("255, 0, 128"
+                     "255, /* comment */ 0, 128"
+                     "255 0 128"
+                     "255, 0, 128, 0.75"
+                     "255 0 128 / 0.75"
                      "100%, 0%, 50%"
                      "100%, 0%, 50%, 0.115"
                      "100% 0% 50%"
@@ -342,7 +355,7 @@
       (erase-buffer)
       (save-excursion
         (insert input ")"))
-      (should (equal (css--rgb-color) "#ff007f")))))
+      (should (equal (css--rgb-color) "#ff0080")))))
 
 (ert-deftest css-test-hsl-parser ()
   (with-temp-buffer

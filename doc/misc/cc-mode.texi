@@ -5634,15 +5634,15 @@ Works with:
 @end ifinfo
 
 @macro sssTBasicOffset
-<--> @i{c-basic-offset}@c
+<--> @i{c-basic-offset}
 @end macro
 
 @macro sssTsssTBasicOffset
-<--><--> @i{c-basic-offset}@c
+<--><--> @i{c-basic-offset}
 @end macro
 
 @macro hereFn{func}
-<- @i{\func\}@c
+<- @i{\func\}
 @end macro
 
 @c The TeX backend seems to insert extra spaces around the argument. :P

@@ -441,7 +441,7 @@ argument, which specifies how many days, weeks, months or years to print
   If the variable @code{cal-tex-holidays} is non-@code{nil} (the default),
 then the printed calendars show the holidays in @code{calendar-holidays}.
 If the variable @code{cal-tex-diary} is non-@code{nil} (the default is
-@code{nil}), diary entries are included also (in monthly, filofax, and
+@code{nil}), diary entries are included also (in monthly, Filofax, and
 iso-week calendars only).  If the variable @code{cal-tex-rules} is
 non-@code{nil} (the default is @code{nil}), the calendar displays ruled
 pages in styles that have sufficient room.  Consult the documentation of

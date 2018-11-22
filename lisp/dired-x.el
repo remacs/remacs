@@ -1128,7 +1128,9 @@ Each element of this list looks like
     (REGEXP COMMAND...)
 
 where each COMMAND can either be a string or a Lisp expression that evaluates
-to a string.  This expression can access the file name as the variable `file'.
+to a string.  If this expression needs to consult the name of the file for
+which the shell commands are being requested, it can access that file name
+as the variable `file'.
 If several COMMANDs are given, the first one will be the default
 and the rest will be added temporarily to the history and can be retrieved
 with \\[previous-history-element] (M-p) .

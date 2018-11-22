@@ -5569,7 +5569,7 @@ w32_read_socket (struct terminal *terminal,
 	struct frame *f = XFRAME (frame);
 	/* The tooltip has been drawn already.  Avoid the
 	   SET_FRAME_GARBAGED below.  */
-	if (EQ (frame, tip_frame))
+	if (FRAME_TOOLTIP_P (f))
 	  continue;
 
 	/* Check "visible" frames and mark each as obscured or not.
@@ -6046,7 +6046,7 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
       /* Don't change the size of a tip frame; there's no point in
 	 doing it because it's done in Fx_show_tip, and it leads to
 	 problems because the tip frame has no widget.  */
-      if (NILP (tip_frame) || XFRAME (tip_frame) != f)
+      if (!FRAME_TOOLTIP_P (f))
 	adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 			   FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 3,
 			   false, Qfont);

@@ -1824,7 +1824,7 @@ This class implements the @code{ede-cpp-root} project type.
 @table @code
 @item :include-path
 Type: @code{list} @*
-Default Value: @code{(quote ("/include" "../include/"))}
+Default Value: @code{("/include" "../include/")}
 
 The default locate function expands filenames within a project.
 If a header file (.h, .hh, etc.)@: name is expanded, and
@@ -2262,14 +2262,14 @@ The variable GNUSTEP_INSTALLATION_DOMAIN is set at this value.
 
 @item :preamble
 Type: @code{(or null list)} @*
-Default Value: @code{(quote ("GNUmakefile.preamble"))}
+Default Value: @code{("GNUmakefile.preamble")}
 
 The auxiliary makefile for additional variables.
 Included just before the specific target files.
 
 @item :postamble
 Type: @code{(or null list)} @*
-Default Value: @code{(quote ("GNUmakefile.postamble"))}
+Default Value: @code{("GNUmakefile.postamble")}
 
 The auxiliary makefile for additional rules.
 Included just after the specific target files.

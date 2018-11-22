@@ -253,21 +253,46 @@ It must be supported by libarchive(3).")
   "Alist of handler functions for GVFS archive method.
 Operations not mentioned here will be handled by the default Emacs primitives.")
 
+(defsubst tramp-archive-file-name-for-operation (operation &rest args)
+  "Like `tramp-file-name-for-operation', but for archive file name syntax."
+  (cl-letf (((symbol-function 'tramp-tramp-file-p) 'tramp-archive-file-name-p))
+    (apply 'tramp-file-name-for-operation operation args)))
+
+(defun tramp-archive-run-real-handler (operation args)
+  "Invoke normal file name handler for OPERATION.
+First arg specifies the OPERATION, second arg is a list of arguments to
+pass to the OPERATION."
+  (let* ((inhibit-file-name-handlers
+	  `(tramp-archive-file-name-handler
+	    .
+	    ,(and (eq inhibit-file-name-operation operation)
+		  inhibit-file-name-handlers)))
+	 (inhibit-file-name-operation operation))
+    (apply operation args)))
+
 ;;;###tramp-autoload
 (defun tramp-archive-file-name-handler (operation &rest args)
   "Invoke the GVFS archive related OPERATION.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
-  (unless tramp-gvfs-enabled
-    (tramp-compat-user-error nil "Package `tramp-archive' not supported"))
-  (let ((tramp-methods (cons `(,tramp-archive-method) tramp-methods))
-	(tramp-gvfs-methods tramp-archive-all-gvfs-methods)
-	(fn (assoc operation tramp-archive-file-name-handler-alist)))
-    (when (eq (cdr fn) 'tramp-archive-handle-not-implemented)
-      (setq args (cons operation args)))
-    (if fn
-	(save-match-data (apply (cdr fn) args))
-      (tramp-run-real-handler operation args))))
+  (let* ((filename (apply 'tramp-archive-file-name-for-operation
+			  operation args))
+	 (archive (tramp-archive-file-name-archive filename)))
+    ;; The file archive could be a directory, see Bug#30293.
+    (if (and archive
+	     (tramp-archive-run-real-handler 'file-directory-p (list archive)))
+	(tramp-archive-run-real-handler operation args)
+      ;; Now run the handler.
+      (unless tramp-gvfs-enabled
+	(tramp-compat-user-error nil "Package `tramp-archive' not supported"))
+      (let ((tramp-methods (cons `(,tramp-archive-method) tramp-methods))
+	    (tramp-gvfs-methods tramp-archive-all-gvfs-methods)
+	    (fn (assoc operation tramp-archive-file-name-handler-alist)))
+	(when (eq (cdr fn) 'tramp-archive-handle-not-implemented)
+	  (setq args (cons operation args)))
+	(if fn
+	    (save-match-data (apply (cdr fn) args))
+	  (tramp-archive-run-real-handler operation args))))))
 
 ;; Mark `operations' the handler is responsible for.
 (put 'tramp-archive-file-name-handler 'operations
@@ -300,28 +325,49 @@ pass to the OPERATION."
        (string-match tramp-archive-file-name-regexp name)
        t))
 
-(defvar tramp-archive-hash (make-hash-table :test 'equal)
-  "Hash table for archive local copies.")
+(defun tramp-archive-file-name-archive (name)
+  "Return archive part of NAME."
+  (and (tramp-archive-file-name-p name)
+       (match-string 1 name)))
 
-(defun tramp-archive-local-copy (archive)
-  "Return copy of ARCHIVE, usable by GVFS.
-ARCHIVE is the archive component of an archive file name."
-  (setq archive (file-truename archive))
-  (let ((tramp-verbose 0))
-    (with-tramp-connection-property
-	;; This is just an auxiliary VEC for caching properties.
-	(make-tramp-file-name :method tramp-archive-method :host archive)
-	"archive"
+(defun tramp-archive-file-name-localname (name)
+  "Return localname part of NAME."
+  (and (tramp-archive-file-name-p name)
+       (match-string 2 name)))
+
+(defvar tramp-archive-hash (make-hash-table :test 'equal)
+  "Hash table for archive local copies.
+The hash key is the archive name.  The value is a cons of the
+used `tramp-file-name' structure for tramp-gvfs, and the file
+name of a local copy, if any.")
+
+(defun tramp-archive-dissect-file-name (name)
+  "Return a `tramp-file-name' structure.
+The structure consists of the `tramp-archive-method' method, the
+hexlified archive name as host, and the localname.  The archive
+name is kept in slot `hop'"
+  (save-match-data
+    (unless (tramp-archive-file-name-p name)
+      (tramp-compat-user-error nil "Not an archive file name: \"%s\"" name))
+    (let* ((localname (tramp-archive-file-name-localname name))
+	   (archive (file-truename (tramp-archive-file-name-archive name)))
+	   (vec (make-tramp-file-name
+		 :method tramp-archive-method :hop archive)))
+
       (cond
+       ;; The value is already in the hash table.
+       ((gethash archive tramp-archive-hash)
+	(setq vec (car (gethash archive tramp-archive-hash))))
+
        ;; File archives inside file archives.
        ((tramp-archive-file-name-p archive)
 	(let ((archive
 	       (tramp-make-tramp-file-name
 		(tramp-archive-dissect-file-name archive) nil 'noarchive)))
-	  ;; We call `file-attributes' in order to mount the archive.
-	  (file-attributes archive)
-	  (puthash archive nil tramp-archive-hash)
-	  archive))
+	  (setf (tramp-file-name-host vec)
+		(url-hexify-string (tramp-gvfs-url-file-name archive))))
+	(puthash archive (list vec) tramp-archive-hash))
+
        ;; http://...
        ((and url-handler-mode
 	     tramp-compat-use-url-tramp-p
@@ -332,26 +378,31 @@ ARCHIVE is the archive component of an archive file name."
 		 (url-type (url-generic-parse-url archive))
 		 url-tramp-protocols))
 	       (archive (url-tramp-convert-url-to-tramp archive)))
-	  (puthash archive nil tramp-archive-hash)
-	  archive))
+	  (setf (tramp-file-name-host vec)
+		(url-hexify-string (tramp-gvfs-url-file-name archive))))
+	(puthash archive (list vec) tramp-archive-hash))
+
        ;; GVFS supported schemes.
        ((or (tramp-gvfs-file-name-p archive)
 	    (not (file-remote-p archive)))
-	(puthash archive nil tramp-archive-hash)
-	archive)
+	(setf (tramp-file-name-host vec)
+	      (url-hexify-string (tramp-gvfs-url-file-name archive)))
+	(puthash archive (list vec) tramp-archive-hash))
+
        ;; Anything else.  Here we call `file-local-copy', which we
        ;; have avoided so far.
-       (t (let ((inhibit-file-name-operation 'file-local-copy)
-		(inhibit-file-name-handlers
-		 (cons 'jka-compr-handler inhibit-file-name-handlers))
-		result)
-	    (or (and (setq result (gethash archive tramp-archive-hash nil))
-		     (file-readable-p result))
-		(puthash
-		 archive
-		 (setq result (file-local-copy archive))
-		 tramp-archive-hash))
-	    result))))))
+       (t (let* ((inhibit-file-name-operation 'file-local-copy)
+		 (inhibit-file-name-handlers
+		  (cons 'jka-compr-handler inhibit-file-name-handlers))
+		 (copy (file-local-copy archive)))
+	    (setf (tramp-file-name-host vec)
+		  (url-hexify-string (tramp-gvfs-url-file-name copy)))
+	    (puthash archive (cons vec copy) tramp-archive-hash))))
+
+      ;; So far, `vec' handles just the mount point.  Add `localname',
+      ;; which shouldn't be pushed to the hash.
+      (setf (tramp-file-name-localname vec) localname)
+      vec)))
 
 ;;;###tramp-autoload
 (defun tramp-archive-cleanup-hash ()
@@ -360,16 +411,10 @@ ARCHIVE is the archive component of an archive file name."
    (lambda (key value)
      ;; Unmount local copy.
      (ignore-errors
-       (let ((tramp-gvfs-methods tramp-archive-all-gvfs-methods)
-	     (file-archive (file-name-as-directory key)))
-	 (tramp-message
-	  (and (tramp-tramp-file-p key) (tramp-dissect-file-name key)) 3
-	  "Unmounting %s" file-archive)
-	 (tramp-gvfs-unmount
-	  (tramp-dissect-file-name
-	   (tramp-archive-gvfs-file-name file-archive)))))
+       (tramp-message (car value) 3 "Unmounting %s" (or (cdr value) key))
+       (tramp-gvfs-unmount (car value)))
      ;; Delete local copy.
-     (ignore-errors (when value (delete-file value)))
+     (ignore-errors (delete-file (cdr value)))
      (remhash key tramp-archive-hash))
    tramp-archive-hash)
   (clrhash tramp-archive-hash))
@@ -379,24 +424,6 @@ ARCHIVE is the archive component of an archive file name."
 	  (lambda ()
 	    (remove-hook 'kill-emacs-hook
 			 'tramp-archive-cleanup-hash)))
-
-(defun tramp-archive-dissect-file-name (name)
-  "Return a `tramp-file-name' structure.
-The structure consists of the `tramp-archive-method' method, the
-hexlified archive name as host, and the localname.  The archive
-name is kept in slot `hop'"
-  (save-match-data
-    (unless (tramp-archive-file-name-p name)
-      (tramp-compat-user-error nil "Not an archive file name: \"%s\"" name))
-    ;; The `string-match' happened in `tramp-archive-file-name-p'.
-    (let ((archive (match-string 1 name))
-	  (localname (match-string 2 name))
-	  (tramp-verbose 0))
-      (make-tramp-file-name
-       :method tramp-archive-method :user nil :domain nil :host
-       (url-hexify-string
-	(tramp-gvfs-url-file-name (tramp-archive-local-copy archive)))
-       :port nil :localname localname :hop archive))))
 
 (defsubst tramp-file-name-archive (vec)
   "Extract the archive file name from VEC.
@@ -542,7 +569,7 @@ offered."
   "Generic handler for operations not implemented for file archives."
   (let ((v (ignore-errors
 	     (tramp-archive-dissect-file-name
-	      (apply 'tramp-file-name-for-operation operation args)))))
+	      (apply 'tramp-archive-file-name-for-operation operation args)))))
     (tramp-message v 10 "%s" (cons operation args))
     (tramp-error
      v 'file-error

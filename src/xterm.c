@@ -937,12 +937,7 @@ static void
 x_update_begin (struct frame *f)
 {
 #ifdef USE_CAIRO
-  if (! NILP (tip_frame) && XFRAME (tip_frame) == f
-      && ! FRAME_VISIBLE_P (f)
-#ifdef USE_GTK
-      && !NILP (Fframe_parameter (tip_frame, Qtooltip))
-#endif
-      )
+  if (FRAME_TOOLTIP_P (f) && !FRAME_VISIBLE_P (f))
     return;
 
   if (! FRAME_CR_SURFACE (f))
@@ -6277,7 +6272,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       /* Redo the mouse-highlight after the tooltip has gone.  */
       if (event->xunmap.window == tip_window)
         {
-          tip_window = 0;
+          tip_window = None;
           x_redo_mouse_highlight (dpyinfo);
         }
 
@@ -7987,11 +7982,7 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
       /* Don't change the size of a tip frame; there's no point in
 	 doing it because it's done in Fx_show_tip, and it leads to
 	 problems because the tip frame has no widget.  */
-      if (NILP (tip_frame) || XFRAME (tip_frame) != f
-#ifdef USE_GTK
-	  || NILP (Fframe_parameter (tip_frame, Qtooltip))
-#endif
-	  )
+      if (!FRAME_TOOLTIP_P (f))
 	{
 	  adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 			     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 3,
@@ -8308,6 +8299,9 @@ void
 x_set_offset (struct frame *f, register int xoff, register int yoff, int change_gravity)
 {
   int modified_top, modified_left;
+#ifdef USE_GTK
+  int scale = xg_get_scale (f);
+#endif
 
   if (change_gravity > 0)
     {
@@ -8329,11 +8323,12 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
   if (x_gtk_use_window_move)
     {
       /* When a position change was requested and the outer GTK widget
-	 has been realized already, leave it to gtk_window_move to DTRT
-	 and return.  Used for Bug#25851 and Bug#25943.  */
+	 has been realized already, leave it to gtk_window_move to
+	 DTRT and return.  Used for Bug#25851 and Bug#25943.  Convert
+	 from X pixels to GTK scaled pixels.  */
       if (change_gravity != 0 && FRAME_GTK_OUTER_WIDGET (f))
 	gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-			 f->left_pos, f->top_pos);
+			 f->left_pos / scale, f->top_pos / scale);
       unblock_input ();
       return;
     }
@@ -8350,8 +8345,9 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
       modified_top += FRAME_X_OUTPUT (f)->move_offset_top;
     }
 
+  /* Make sure we adjust for possible scaling.  */
   gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-		   modified_left, modified_top);
+		   modified_left / scale, modified_top / scale);
 
   x_sync_with_move (f, f->left_pos, f->top_pos,
                     FRAME_DISPLAY_INFO (f)->wm_type == X_WMTYPE_UNKNOWN);
@@ -9186,7 +9182,7 @@ x_set_window_size (struct frame *f, bool change_gravity,
   /* The following breaks our calculations.  If it's really needed,
      think of something else.  */
 #if false
-  if (NILP (tip_frame) || XFRAME (tip_frame) != f)
+  if (!FRAME_TOOLTIP_P (f))
     {
       int text_width, text_height;
 
