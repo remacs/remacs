@@ -1484,13 +1484,6 @@ start_daemon_and_retry_set_socket (void)
       /* Try connecting, the daemon should have started by now.  */
       message (true,
 	       "Emacs daemon should have started, trying to connect again\n");
-
-      if ((emacs_socket = set_socket (1)) == INVALID_SOCKET)
-	{
-	  message (true, ("Error: Cannot connect "
-			  "even after starting the Emacs daemon\n"));
-	  exit (EXIT_FAILURE);
-	}
     }
   else if (dpid < 0)
     {
@@ -1518,6 +1511,7 @@ start_daemon_and_retry_set_socket (void)
 #  endif
       execvp ("emacs", d_argv);
       message (true, "%s: error starting emacs daemon\n", progname);
+      exit (EXIT_FAILURE);
     }
 # else  /* WINDOWSNT */
   DWORD wait_result;
@@ -1583,13 +1577,15 @@ start_daemon_and_retry_set_socket (void)
   if (!w32_window_app ())
     message (true,
 	     "Emacs daemon should have started, trying to connect again\n");
-  if ((emacs_socket = set_socket (1)) == INVALID_SOCKET)
+# endif /* WINDOWSNT */
+
+  emacs_socket = set_socket (true);
+  if (emacs_socket == INVALID_SOCKET)
     {
       message (true,
 	       "Error: Cannot connect even after starting the Emacs daemon\n");
       exit (EXIT_FAILURE);
     }
-# endif	/* WINDOWSNT */
 }
 #endif /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
 
