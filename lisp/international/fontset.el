@@ -826,7 +826,8 @@
              (#x1F680 . #x1F6FF)	;; Transport and Map Symbols
              (#x1F700 . #x1F77F)	;; Alchemical Symbols
              (#x1F780 . #x1F7FF)	;; Geometric Shapes Extended
-             (#x1F800 . #x1F8FF)))	;; Supplemental Arrows-C
+             (#x1F800 . #x1F8FF)	;; Supplemental Arrows-C
+             (#x1F900 . #x1F9FF)))	;; Supplemental Symbols and Pictographs
     (set-fontset-font "fontset-default" symbol-subgroup
                       '("Symbola" . "iso10646-1") nil 'prepend))
   ;; Box Drawing and Block Elements
