@@ -815,9 +815,16 @@
              (#x4DC0 . #x4DFF)	;; Yijing Hexagram Symbols
              (#xFE10 . #xFE1F)	;; Vertical Forms
              (#x10100 . #x1013F)	;; Aegean Numbers
+             (#x10190 . #x101CF)	;; Ancient Symbols
+             (#x101D0 . #x101FF)	;; Phaistos Disc
              (#x102E0 . #x102FF)	;; Coptic Epact Numbers
              (#x1D000 . #x1D0FF)	;; Byzantine Musical Symbols
              (#x1D200 . #x1D24F)	;; Ancient Greek Musical Notation
+             (#x1D2E0 . #x1D2FF)	;; Mayan Numerals
+             (#x1D300 . #x1D35F)	;; Tai Xuan Jing Symbols
+             (#x1D360 . #x1D37F)	;; Counting Rod Numerals
+             (#x1F000 . #x1F02F)	;; Mahjong Tiles
+             (#x1F030 . #x1F09F)	;; Domino Tiles
              (#x1F0A0 . #x1F0FF)	;; Playing Cards
              (#x1F100 . #x1F1FF)	;; Enclosed Alphanumeric Suppl
              (#x1F300 . #x1F5FF)	;; Misc Symbols and Pictographs
@@ -827,7 +834,8 @@
              (#x1F700 . #x1F77F)	;; Alchemical Symbols
              (#x1F780 . #x1F7FF)	;; Geometric Shapes Extended
              (#x1F800 . #x1F8FF)	;; Supplemental Arrows-C
-             (#x1F900 . #x1F9FF)))	;; Supplemental Symbols and Pictographs
+             (#x1F900 . #x1F9FF)	;; Supplemental Symbols and Pictographs
+             (#x1FA00 . #x1FA6F)))	;; Chess Symbols
     (set-fontset-font "fontset-default" symbol-subgroup
                       '("Symbola" . "iso10646-1") nil 'prepend))
   ;; Box Drawing and Block Elements
