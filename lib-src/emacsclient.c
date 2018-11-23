@@ -1001,7 +1001,9 @@ set_tcp_socket (const char *local_server_file)
       return INVALID_SOCKET;
     }
 
-  setsockopt (s, SOL_SOCKET, SO_LINGER, &l_arg, sizeof l_arg);
+  /* The cast to 'const char *' is to avoid a compiler warning when
+     compiling for MS-Windows sockets.  */
+  setsockopt (s, SOL_SOCKET, SO_LINGER, (const char *) &l_arg, sizeof l_arg);
 
   /* Send the authentication.  */
   auth_string[AUTH_KEY_LENGTH] = '\0';
