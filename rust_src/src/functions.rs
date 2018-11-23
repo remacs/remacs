@@ -104,5 +104,5 @@ pub extern "C" fn make_string(s: *const c_char, length: isize) -> LispObject {
 #[allow(dead_code)]
 #[no_mangle]
 pub extern "C" fn make_unibyte_string(s: *const c_char, length: isize) -> LispObject {
-    LispObject::local_unibyte_string("")
+    mock_unibyte_string!()
 }
