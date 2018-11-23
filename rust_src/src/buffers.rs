@@ -29,7 +29,7 @@ use crate::{
     },
     remacs_sys::{
         pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
-        Lisp_Type, Vbuffer_alist,
+        Lisp_String, Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
         windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
@@ -1083,7 +1083,9 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let mut rng = rand::thread_rng();
         // Since random only contains ascii chars, we can use
         // mock_unibyte_string
-        let suffix = mock_unibyte_string!(format!("-{}", range.ind_sample(&mut rng)));
+        let mut suffix: Lisp_String =
+            LispObject::local_unibyte_string(&format!("-{}", range.ind_sample(&mut rng)));
+        let suffix: LispObject = ExternalPtr::new(&mut suffix as *mut Lisp_String).as_lisp_obj();
         let genname = unsafe { concat2(name.into(), suffix) };
         if get_buffer(LispBufferOrName::Name(genname)).is_none() {
             return genname.into();
@@ -1095,7 +1097,9 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
 
     let mut suffix_count = 2;
     loop {
-        let suffix = mock_unibyte_string!(format!("<{}>", suffix_count));
+        let mut suffix: Lisp_String =
+            LispObject::local_unibyte_string(&format!("<{}>", suffix_count));
+        let suffix: LispObject = ExternalPtr::new(&mut suffix as *mut Lisp_String).as_lisp_obj();
         let candidate = unsafe { concat2(basename, suffix) };
         let buf = get_buffer(LispBufferOrName::Name(candidate));
         if buf.is_none() || string_equal(candidate, ignore) {
