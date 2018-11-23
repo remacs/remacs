@@ -13,14 +13,18 @@ use crate::{
     eval::{autoload_do_load, unbind_to},
     keyboard::lucid_event_type_list_p,
     lisp::{defsubr, LispObject},
-    lists::nth,
+    lists::{nth, setcdr},
     obarray::intern,
     remacs_sys::{
-        access_keymap, describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
-        map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, maybe_quit, specbind,
+        access_keymap, copy_keymap_item, describe_vector, make_save_funcptr_ptr_obj,
+        map_char_table, map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
+        map_keymap_item, maybe_quit, specbind,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
-    remacs_sys::{Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy, Fterpri},
+    remacs_sys::{
+        Fcopy_sequence, Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy,
+        Fset_char_table_range, Fterpri,
+    },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
     },
@@ -612,6 +616,69 @@ pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
     };
 
     unbind_to(count, Qnil);
+}
+
+#[no_mangle]
+pub extern "C" fn copy_keymap_1(chartable: LispObject, idx: LispObject, elt: LispObject) {
+    unsafe { Fset_char_table_range(chartable, idx, copy_keymap_item(elt)) };
+}
+
+/// Return a copy of the keymap KEYMAP.
+///
+/// Note that this is almost never needed.  If you want a keymap that's like
+/// another yet with a few changes, you should use map inheritance rather
+/// than copying.  I.e. something like:
+///
+/// (let ((map (make-sparse-keymap)))
+/// (set-keymap-parent map <theirmap>)
+/// (define-key map ...)
+/// ...)
+///
+/// After performing `copy-keymap', the copy starts out with the same definitions
+/// of KEYMAP, but changing either the copy or KEYMAP does not affect the other.
+/// Any key definitions that are subkeymaps are recursively copied.
+/// However, a key definition which is a symbol whose definition is a keymap
+/// is not copied.
+#[lisp_fn]
+pub fn copy_keymap(keymap: LispObject) -> LispObject {
+    let mut keymap = get_keymap(keymap, true, false);
+    let mut tail = list!(Qkeymap);
+    let copy = tail;
+
+    keymap = keymap.as_cons_or_error().cdr(); // Skip the `keymap' symbol.
+
+    while let Some(cons) = keymap.as_cons() {
+        let mut elt = cons.car();
+        if elt.eq(Qkeymap) {
+            break;
+        }
+
+        if elt.is_char_table() {
+            elt = unsafe { Fcopy_sequence(elt) };
+            unsafe { map_char_table(Some(copy_keymap_1), Qnil, elt, elt) };
+        } else if let Some(v) = elt.as_vector() {
+            elt = unsafe { Fcopy_sequence(elt) };
+            let mut v2 = elt.as_vector().unwrap();
+            for (i, obj) in v.iter().enumerate() {
+                v2.set(i, unsafe { copy_keymap_item(obj) });
+            }
+        } else if let Some(cons_1) = elt.as_cons() {
+            let front = cons_1.car();
+            if front.eq(Qkeymap) {
+                // This is a sub keymap
+                elt = copy_keymap(elt);
+            } else {
+                elt = LispObject::cons(front, unsafe { copy_keymap_item(cons_1.cdr()) });
+            }
+        }
+
+        setcdr(tail.as_cons().unwrap(), list!(elt));
+        tail = tail.as_cons().unwrap().cdr();
+        keymap = cons.cdr();
+    }
+
+    setcdr(tail.as_cons().unwrap(), keymap);
+    copy
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
