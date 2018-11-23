@@ -732,21 +732,7 @@ fail (void)
 }
 
 
-#if !defined (HAVE_SOCKETS) || !defined (HAVE_INET_SOCKETS)
-
-int
-main (int argc, char **argv)
-{
-  main_argc = argc;
-  main_argv = argv;
-  progname = argv[0];
-  message (true, ("%s: Sorry, the Emacs server is supported only\n"
-		  "on systems with Berkeley sockets.\n"),
-	   argv[0]);
-  fail ();
-}
-
-#else /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
+#if defined HAVE_SOCKETS && defined HAVE_INET_SOCKETS
 
 enum { AUTH_KEY_LENGTH = 64 };
 
@@ -1519,7 +1505,7 @@ start_daemon_and_retry_set_socket (void)
       d_argv[0] = emacs;
       d_argv[1] = daemon_option;
       d_argv[2] = 0;
-#ifndef NO_SOCKETS_IN_FILE_SYSTEM
+#  ifndef NO_SOCKETS_IN_FILE_SYSTEM
       if (socket_name != NULL)
 	{
 	  /* Pass  --daemon=socket_name as argument.  */
@@ -1529,7 +1515,7 @@ start_daemon_and_retry_set_socket (void)
 	  strcpy (stpcpy (daemon_arg, deq), socket_name);
 	  d_argv[1] = daemon_arg;
 	}
-#endif
+#  endif
       execvp ("emacs", d_argv);
       message (true, "%s: error starting emacs daemon\n", progname);
     }
@@ -1605,26 +1591,32 @@ start_daemon_and_retry_set_socket (void)
     }
 # endif	/* WINDOWSNT */
 }
+#endif /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
 
 int
 main (int argc, char **argv)
 {
-  int rl = 0;
-  bool skiplf = true;
-  char string[BUFSIZ+1];
-  int exit_status = EXIT_SUCCESS;
-
   main_argc = argc;
   main_argv = argv;
-  progname = argv[0];
+  progname = argv[0] ? argv[0] : "emacsclient";
 
-#ifdef HAVE_NTGUI
+#if ! (defined HAVE_SOCKETS && defined HAVE_INET_SOCKETS)
+  message (true, "%s: Sorry, support for Berkeley sockets is required.\n",
+	   progname);
+  fail ();
+#else /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
+  int rl = 0;
+  bool skiplf = true;
+  char string[BUFSIZ + 1];
+  int exit_status = EXIT_SUCCESS;
+
+# ifdef HAVE_NTGUI
   /* On Windows 7 and later, we need to explicitly associate
      emacsclient with emacs so the UI behaves sensibly.  This
      association does no harm if we're not actually connecting to an
      Emacs using a window display.  */
   w32_set_user_model_id ();
-#endif /* HAVE_NTGUI */
+# endif /* HAVE_NTGUI */
 
   /* Process options.  */
   decode_options (argc, argv);
@@ -1637,7 +1629,7 @@ main (int argc, char **argv)
       exit (EXIT_FAILURE);
     }
 
-#ifndef WINDOWSNT
+# ifndef WINDOWSNT
   if (tty)
     {
       pid_t pgrp = getpgrp ();
@@ -1645,7 +1637,7 @@ main (int argc, char **argv)
       if (0 <= tcpgrp && tcpgrp != pgrp)
 	kill (-pgrp, SIGTTIN);
     }
-#endif /* !WINDOWSNT */
+# endif /* !WINDOWSNT */
 
   /* If alternate_editor is the empty string, start the emacs daemon
      in case of failure to connect.  */
@@ -1935,6 +1927,5 @@ main (int argc, char **argv)
 
   CLOSE_SOCKET (emacs_socket);
   return exit_status;
-}
-
 #endif /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
+}
