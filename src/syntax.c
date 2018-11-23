@@ -178,8 +178,6 @@ static ptrdiff_t find_start_begv;
 static EMACS_INT find_start_modiff;
 
 
-static Lisp_Object skip_chars (bool, Lisp_Object, Lisp_Object, bool);
-static Lisp_Object skip_syntaxes (bool, Lisp_Object, Lisp_Object);
 Lisp_Object scan_lists (EMACS_INT, EMACS_INT, EMACS_INT, bool);
 static void scan_sexps_forward (struct lisp_parse_state *,
                                 ptrdiff_t, ptrdiff_t, ptrdiff_t, EMACS_INT,
@@ -1488,90 +1486,7 @@ scan_words (ptrdiff_t from, EMACS_INT count)
   return from;
 }
 
-DEFUN ("forward-word", Fforward_word, Sforward_word, 0, 1, "^p",
-       doc: /* Move point forward ARG words (backward if ARG is negative).
-If ARG is omitted or nil, move point forward one word.
-Normally returns t.
-If an edge of the buffer or a field boundary is reached, point is
-left there and the function returns nil.  Field boundaries are not
-noticed if `inhibit-field-text-motion' is non-nil.
-
-The word boundaries are normally determined by the buffer's syntax
-table, but `find-word-boundary-function-table', such as set up
-by `subword-mode', can change that.  If a Lisp program needs to
-move by words determined strictly by the syntax table, it should
-use `forward-word-strictly' instead.  */)
-  (Lisp_Object arg)
-{
-  Lisp_Object tmp;
-  ptrdiff_t orig_val, val;
-
-  if (NILP (arg))
-    XSETFASTINT (arg, 1);
-  else
-    CHECK_NUMBER (arg);
-
-  val = orig_val = scan_words (PT, XINT (arg));
-  if (! orig_val)
-    val = XINT (arg) > 0 ? ZV : BEGV;
-
-  /* Avoid jumping out of an input field.  */
-  tmp = Fconstrain_to_field (make_number (val), make_number (PT),
-			     Qnil, Qnil, Qnil);
-  val = XFASTINT (tmp);
-
-  SET_PT (val);
-  return val == orig_val ? Qt : Qnil;
-}
-
-DEFUN ("skip-chars-forward", Fskip_chars_forward, Sskip_chars_forward, 1, 2, 0,
-       doc: /* Move point forward, stopping before a char not in STRING, or at pos LIM.
-STRING is like the inside of a `[...]' in a regular expression
-except that `]' is never special and `\\' quotes `^', `-' or `\\'
- (but not at the end of a range; quoting is never needed there).
-Thus, with arg "a-zA-Z", this skips letters stopping before first nonletter.
-With arg "^a-zA-Z", skips nonletters stopping before first letter.
-Char classes, e.g. `[:alpha:]', are supported.
-
-Returns the distance traveled, either zero or positive.  */)
-  (Lisp_Object string, Lisp_Object lim)
-{
-  return skip_chars (1, string, lim, 1);
-}
-
-DEFUN ("skip-chars-backward", Fskip_chars_backward, Sskip_chars_backward, 1, 2, 0,
-       doc: /* Move point backward, stopping after a char not in STRING, or at pos LIM.
-See `skip-chars-forward' for details.
-Returns the distance traveled, either zero or negative.  */)
-  (Lisp_Object string, Lisp_Object lim)
-{
-  return skip_chars (0, string, lim, 1);
-}
-
-DEFUN ("skip-syntax-forward", Fskip_syntax_forward, Sskip_syntax_forward, 1, 2, 0,
-       doc: /* Move point forward across chars in specified syntax classes.
-SYNTAX is a string of syntax code characters.
-Stop before a char whose syntax is not in SYNTAX, or at position LIM.
-If SYNTAX starts with ^, skip characters whose syntax is NOT in SYNTAX.
-This function returns the distance traveled, either zero or positive.  */)
-  (Lisp_Object syntax, Lisp_Object lim)
-{
-  return skip_syntaxes (1, syntax, lim);
-}
-
-DEFUN ("skip-syntax-backward", Fskip_syntax_backward, Sskip_syntax_backward, 1, 2, 0,
-       doc: /* Move point backward across chars in specified syntax classes.
-SYNTAX is a string of syntax code characters.
-Stop on reaching a char whose syntax is not in SYNTAX, or at position LIM.
-If SYNTAX starts with ^, skip characters whose syntax is NOT in SYNTAX.
-This function returns either zero or a negative number, and the absolute value
-of this is the distance traveled.  */)
-  (Lisp_Object syntax, Lisp_Object lim)
-{
-  return skip_syntaxes (0, syntax, lim);
-}
-
-static Lisp_Object
+Lisp_Object
 skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 	    bool handle_iso_classes)
 {
@@ -2022,7 +1937,7 @@ skip_chars (bool forwardp, Lisp_Object string, Lisp_Object lim,
 }
 
 
-static Lisp_Object
+Lisp_Object
 skip_syntaxes (bool forwardp, Lisp_Object string, Lisp_Object lim)
 {
   int c;
@@ -3692,13 +3607,6 @@ In both cases, LIMIT bounds the search. */);
   defsubr (&Sstring_to_syntax);
   defsubr (&Smodify_syntax_entry);
   defsubr (&Sinternal_describe_syntax_value);
-
-  defsubr (&Sforward_word);
-
-  defsubr (&Sskip_chars_forward);
-  defsubr (&Sskip_chars_backward);
-  defsubr (&Sskip_syntax_forward);
-  defsubr (&Sskip_syntax_backward);
 
   defsubr (&Sforward_comment);
   defsubr (&Sscan_sexps);

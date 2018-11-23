@@ -3521,6 +3521,8 @@ extern void syms_of_charset (void);
 struct charset;
 
 /* Defined in syntax.c.  */
+extern Lisp_Object skip_chars (bool, Lisp_Object, Lisp_Object, bool);
+extern Lisp_Object skip_syntaxes (bool, Lisp_Object, Lisp_Object);
 extern void init_syntax_once (void);
 extern void syms_of_syntax (void);
 
