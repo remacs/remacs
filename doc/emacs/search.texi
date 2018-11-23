@@ -315,7 +315,7 @@ string that failed to match is highlighted using the face
 
   At this point, there are several things you can do.  If your string
 was mistyped, use @key{DEL} to cancel a previous input item
-(@pxref{Basic Isearch}), @kbd{C-M-w} to erase one character at a time,
+(@pxref{Basic Isearch}), @kbd{C-M-d} to erase one character at a time,
 or @kbd{M-e} to edit it.  If you like the place you have found, you
 can type @key{RET} to remain there.  Or you can type @kbd{C-g}, which
 removes from the search string the characters that could not be found
