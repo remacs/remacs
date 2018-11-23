@@ -171,7 +171,7 @@ include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
 
 #[test]
 fn test_multibyte_stringp() {
-    let string = mock_unibyte_string!();
+    let string = LispObject::local_unibyte_string("");
     assert!(!multibyte_string_p(string));
 
     let flt = mock_float!();
@@ -183,15 +183,15 @@ fn test_multibyte_stringp() {
 
 #[test]
 fn already_unibyte() {
-    let single = mock_unibyte_string!();
+    let single = LispObject::local_unibyte_string("");
     assert!(string_to_unibyte(LispStringRef::from(single)) == single);
 }
 
 #[test]
 fn str_equality() {
-    let string1 = mock_unibyte_string!("Hello World");
-    let string2 = mock_unibyte_string!("Hello World");
-    let string3 = mock_unibyte_string!("Goodbye World");
+    let string1 = LispObject::local_unibyte_string("Hello World");
+    let string2 = LispObject::local_unibyte_string("Hello World");
+    let string3 = LispObject::local_unibyte_string("Goodbye World");
     assert!(string_equal(string1, string2));
     assert!(string_equal(string2, string1));
     assert!(!string_equal(string1, string3));
@@ -200,8 +200,8 @@ fn str_equality() {
 
 #[test]
 fn test_stringlessp() {
-    let string = mock_unibyte_string!("Hello World");
-    let string2 = mock_unibyte_string!("World Hello");
+    let string = LispObject::local_unibyte_string("Hello World");
+    let string2 = LispObject::local_unibyte_string("World Hello");
     assert!(string_lessp(string, string2));
     assert!(!string_lessp(string2, string));
 }
