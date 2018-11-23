@@ -127,27 +127,23 @@ pub fn forward_word(arg: Option<EmacsInt>) -> bool {
     let cur_buf = ThreadState::current_buffer();
     let point = cur_buf.pt;
 
-    let val = match unsafe { scan_words(point, arg) } {
+    let (mut val, orig_val) = match unsafe { scan_words(point, arg) } {
         0 => {
-            if arg > 0 {
-                cur_buf.zv
-            } else {
-                cur_buf.begv
-            }
+            let val = if arg > 0 { cur_buf.zv } else { cur_buf.begv };
+            (val, 0)
         }
-        n => n,
+        n => (n, n),
     };
-
     // Avoid jumping out of an input field.
-    let tmp = constrain_to_field(
+    val = constrain_to_field(
         Some(LispNumber::Fixnum(val as EmacsInt)),
         LispNumber::Fixnum(point as EmacsInt),
         false,
         false,
         Qnil,
     ) as isize;
-    unsafe { set_point(tmp) };
-    val == tmp
+    unsafe { set_point(val) };
+    val == orig_val
 }
 
 /// Move point forward, stopping before a char not in STRING, or at pos LIM.
