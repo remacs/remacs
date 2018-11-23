@@ -485,7 +485,7 @@ message (bool is_error, const char *format, ...)
 }
 
 /* Decode the options from argv and argc.
-   The global variable `optind' will say how many arguments we used up.  */
+   The global variable 'optind' will say how many arguments we used up.  */
 
 static void
 decode_options (int argc, char **argv)
@@ -584,7 +584,7 @@ decode_options (int argc, char **argv)
 
   /* If the -c option is used (without -t) and no --display argument
      is provided, try $DISPLAY.
-     Without the -c option, we used to set `display' to $DISPLAY by
+     Without the -c option, we used to set 'display' to $DISPLAY by
      default, but this changed the default behavior and is sometimes
      inconvenient.  So we force users to use "--display $DISPLAY" if
      they want Emacs to connect to their current display.
@@ -1011,6 +1011,7 @@ set_tcp_socket (const char *local_server_file)
   if (connect (s, &server.sa, sizeof server.in) != 0)
     {
       sock_err_message ("connect");
+      CLOSE_SOCKET (s);
       return INVALID_SOCKET;
     }
 
@@ -1083,8 +1084,8 @@ find_tty (const char **tty_type, const char **tty_name, bool noabort)
 # ifndef NO_SOCKETS_IN_FILE_SYSTEM
 
 /* Three possibilities:
-   2 - can't be `stat'ed		(sets errno)
-   1 - isn't owned by us
+  >0 - 'stat' failed with this errno value
+  -1 - isn't owned by us
    0 - success: none of the above */
 
 static int
@@ -1092,11 +1093,11 @@ socket_status (const char *name)
 {
   struct stat statbfr;
 
-  if (stat (name, &statbfr) == -1)
-    return 2;
+  if (stat (name, &statbfr) != 0)
+    return errno;
 
   if (statbfr.st_uid != geteuid ())
-    return 1;
+    return -1;
 
   return 0;
 }
@@ -1201,8 +1202,6 @@ set_local_socket (const char *local_socket_name)
       return INVALID_SOCKET;
     }
 
-  int sock_status;
-  int saved_errno;
   char const *server_name = local_socket_name;
   char const *tmpdir = NULL;
   char *tmpdir_storage = NULL;
@@ -1250,8 +1249,7 @@ set_local_socket (const char *local_socket_name)
     }
 
   /* See if the socket exists, and if it's owned by us. */
-  sock_status = socket_status (server.un.sun_path);
-  saved_errno = errno;
+  int sock_status = socket_status (server.un.sun_path);
   if (sock_status && tmpdir)
     {
       /* Failing that, see if LOGNAME or USER exist and differ from
@@ -1289,10 +1287,7 @@ set_local_socket (const char *local_socket_name)
 	      free (user_socket_name);
 
 	      sock_status = socket_status (server.un.sun_path);
-	      saved_errno = errno;
 	    }
-	  else
-	    errno = saved_errno;
 	}
     }
 
@@ -1301,14 +1296,20 @@ set_local_socket (const char *local_socket_name)
 
   switch (sock_status)
     {
-    case 1:
+    case -1:
       /* There's a socket, but it isn't owned by us.  */
       message (true, "%s: Invalid socket owner\n", progname);
-      return INVALID_SOCKET;
+      break;
 
-    case 2:
-      /* `stat' failed */
-      if (saved_errno == ENOENT)
+    case 0:
+      if (connect (s, &server.sa, sizeof server.un) == 0)
+	return s;
+      message (true, "%s: connect: %s\n", progname, strerror (errno));
+      break;
+
+    default:
+      /* 'stat' failed.  */
+      if (sock_status == ENOENT)
 	message (true,
 		 ("%s: can't find socket; have you started the server?\n"
 		  "%s: To start the server in Emacs,"
@@ -1317,16 +1318,11 @@ set_local_socket (const char *local_socket_name)
       else
 	message (true, "%s: can't stat %s: %s\n",
 		 progname, server.un.sun_path, strerror (sock_status));
-      return INVALID_SOCKET;
+      break;
     }
 
-  if (connect (s, &server.sa, sizeof server.un) != 0)
-    {
-      message (true, "%s: connect: %s\n", progname, strerror (errno));
-      return INVALID_SOCKET;
-    }
-
-  return s;
+  CLOSE_SOCKET (s);
+  return INVALID_SOCKET;
 }
 # endif /* ! NO_SOCKETS_IN_FILE_SYSTEM */
 
