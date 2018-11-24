@@ -1081,7 +1081,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     let basename = if name.byte_at(0) == b' ' {
         let range = Range::new(0, 1000000);
         let mut rng = rand::thread_rng();
-        let s = format!("-{}", range.ind_sample(&mut rng));
+        let mut s = format!("-{}", range.ind_sample(&mut rng));
         local_unibyte_string!(suffix, s);
         let genname = unsafe { concat2(name.into(), suffix) };
         if get_buffer(LispBufferOrName::Name(genname)).is_none() {
@@ -1094,7 +1094,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
 
     let mut suffix_count = 2;
     loop {
-        let s = format!("<{}>", suffix_count);
+        let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
         let candidate = unsafe { concat2(basename, suffix) };
         if string_equal(candidate, ignore) || Fget_buffer(candidate).is_nil() {

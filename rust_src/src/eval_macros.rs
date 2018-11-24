@@ -284,11 +284,13 @@ macro_rules! per_buffer_var_idx {
     };
 }
 
+// Creates a Lisp_String from $string on the stack and a LispObject
+// pointing the Lisp_String. Assigns the LispObject to $name
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! local_unibyte_string {
     ($name: ident, $string: expr) => {
-        let mut bytes: Vec<u8> = ($string).bytes().collect();
+        let bytes = unsafe { ($string).as_mut_str().as_bytes_mut() };
         let len = bytes.len() as ::libc::ptrdiff_t;
         let mut obj = crate::remacs_sys::Lisp_String {
             u: crate::remacs_sys::Lisp_String__bindgen_ty_1 {
