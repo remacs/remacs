@@ -1318,8 +1318,9 @@ update_frame_tool_bar (struct frame *f)
 
 - (instancetype)init
 {
-  NSColor *col = [NSColor colorWithCalibratedRed: 1.0 green: 1.0
+  NSColor *bgcol = [NSColor colorWithCalibratedRed: 1.0 green: 1.0
                                             blue: 0.792 alpha: 0.95];
+  NSColor *fgcol = [NSColor blackColor];
   NSFont *font = [NSFont toolTipsFontOfSize: 0];
   NSFont *sfont = [font screenFont];
   int height = [sfont ascender] - [sfont descender];
@@ -1328,7 +1329,8 @@ update_frame_tool_bar (struct frame *f)
 
   textField = [[NSTextField alloc] initWithFrame: r];
   [textField setFont: font];
-  [textField setBackgroundColor: col];
+  [textField setTextColor: fgcol];
+  [textField setBackgroundColor: bgcol];
 
   [textField setEditable: NO];
   [textField setSelectable: NO];
@@ -1345,7 +1347,7 @@ update_frame_tool_bar (struct frame *f)
   [win setReleasedWhenClosed: NO];
   [win setDelegate: self];
   [[win contentView] addSubview: textField];
-/*  [win setBackgroundColor: col]; */
+/*  [win setBackgroundColor: bgcol]; */
   [win setOpaque: NO];
 
   return self;
