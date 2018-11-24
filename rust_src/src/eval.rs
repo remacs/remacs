@@ -1223,8 +1223,8 @@ pub fn unwind_protect(args: LispCons) -> LispObject {
 /// If a throw happens, it specifies the value to return from `catch'.
 /// usage: (catch TAG BODY...)
 #[lisp_fn(min = "1", unevalled = "true")]
-pub fn catch(args: LispObject) -> LispObject {
-    let (tag, body) = args.as_cons_or_error().as_tuple();
+pub fn catch(args: LispCons) -> LispObject {
+    let (tag, body) = args.as_tuple();
 
     let val = unsafe { eval_sub(tag) };
 
