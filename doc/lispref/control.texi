@@ -6,6 +6,7 @@
 @node Control Structures
 @chapter Control Structures
 @cindex special forms for control structures
+@cindex forms for control structures
 @cindex control structures
 
   A Lisp program consists of a set of @dfn{expressions}, or
@@ -48,6 +49,7 @@ structure constructs (@pxref{Macros}).
 @section Sequencing
 @cindex sequencing
 @cindex sequential execution
+@cindex forms for sequential execution
 
   Evaluating forms in the order they appear is the most common way
 control passes from one form to another.  In some contexts, such as in a
@@ -146,6 +148,7 @@ following @var{forms}, in textual order, returning the result of
 @node Conditionals
 @section Conditionals
 @cindex conditional evaluation
+@cindex forms, conditional
 
   Conditional control structures choose among alternatives.  Emacs Lisp
 has five conditional forms: @code{if}, which is much the same as in
@@ -1273,6 +1276,7 @@ up being equivalent to @code{dolist} (@pxref{Iteration}).
 @section Iteration
 @cindex iteration
 @cindex recursion
+@cindex forms, iteration
 
   Iteration means executing part of a program repetitively.  For
 example, you might want to repeat some computation once for each element
@@ -1496,6 +1500,7 @@ exited.
 
 @node Catch and Throw
 @subsection Explicit Nonlocal Exits: @code{catch} and @code{throw}
+@cindex forms for nonlocal exits
 
   Most control constructs affect only the flow of control within the
 construct itself.  The function @code{throw} is the exception to this
@@ -1867,6 +1872,7 @@ variables precisely as they were at the time of the error.
 @subsubsection Writing Code to Handle Errors
 @cindex error handler
 @cindex handling errors
+@cindex forms for handling errors
 
   The usual effect of signaling an error is to terminate the command
 that is running and return immediately to the Emacs editor command loop.
@@ -2235,6 +2241,7 @@ and their conditions.
 @node Cleanups
 @subsection Cleaning Up from Nonlocal Exits
 @cindex nonlocal exits, cleaning up
+@cindex forms for cleanup
 
   The @code{unwind-protect} construct is essential whenever you
 temporarily put a data structure in an inconsistent state; it permits
