@@ -687,6 +687,9 @@ the shift key.
 *** Isearch now remembers the regexp-based search mode for words/symbols
 and case-sensitivity together with search strings in the search ring.
 
+---
+*** Isearch now has its own tool-bar and menu-bar menu.
+
 ** Debugger
 
 +++
