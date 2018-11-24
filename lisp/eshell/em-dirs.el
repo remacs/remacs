@@ -552,15 +552,16 @@ in the minibuffer:
 
 (defun eshell-write-last-dir-ring ()
   "Write the buffer's `eshell-last-dir-ring' to a history file."
-  (let ((file eshell-last-dir-ring-file-name))
+  (let* ((file eshell-last-dir-ring-file-name)
+	 (resolved-file (file-truename file)))
     (cond
      ((or (null file)
 	  (equal file "")
 	  (null eshell-last-dir-ring)
 	  (ring-empty-p eshell-last-dir-ring))
       nil)
-     ((not (file-writable-p file))
-      (message "Cannot write last-dir-ring file %s" file))
+     ((not (file-writable-p resolved-file))
+      (message "Cannot write last-dir-ring file %s" resolved-file))
      (t
       (let* ((ring eshell-last-dir-ring)
 	     (index (ring-length ring)))
@@ -570,7 +571,7 @@ in the minibuffer:
 	    (insert (ring-ref ring index) ?\n))
 	  (insert (eshell/pwd) ?\n)
 	  (eshell-with-private-file-modes
-	   (write-region (point-min) (point-max) file nil
+	   (write-region (point-min) (point-max) resolved-file nil
 			 'no-message))))))))
 
 (provide 'em-dirs)
