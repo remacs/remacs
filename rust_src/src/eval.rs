@@ -14,8 +14,8 @@ use crate::{
     objects::equal,
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
-        do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals, list2,
-        maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
+        do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals,
+        internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
         record_unwind_save_match_data, specbind, COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
@@ -1213,6 +1213,22 @@ pub fn unwind_protect(args: LispCons) -> LispObject {
     unsafe { record_unwind_protect(Some(prog_ignore), unwindforms) };
 
     unbind_to(count, unsafe { eval_sub(bodyform) })
+}
+
+/// Eval BODY allowing nonlocal exits using `throw'.
+/// TAG is evalled to get the tag to use; it must not be nil.
+/// Then the BODY is executed.
+/// Within BODY, a call to `throw' with the same TAG exits BODY and this `catch'.
+/// If no throw happens, `catch' returns the value of the last BODY form.
+/// If a throw happens, it specifies the value to return from `catch'.
+/// usage: (catch TAG BODY...)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn catch(args: LispObject) -> LispObject {
+    let (tag, body) = args.as_cons_or_error().as_tuple();
+
+    let val = unsafe { eval_sub(tag) };
+
+    unsafe { internal_catch(val, Some(Fprogn), body) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
