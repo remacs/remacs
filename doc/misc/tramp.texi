@@ -86,7 +86,6 @@ Archive}.
 For the end user:
 
 * Obtaining @value{tramp}::             How to obtain @value{tramp}.
-* History::                     History of @value{tramp}.
 @ifset installchapter
 * Installation::                Installing @value{tramp} with your Emacs.
 @end ifset
@@ -379,32 +378,6 @@ $ autoconf
 @end example
 
 
-@node History
-@chapter History of @value{tramp}
-@cindex history
-@cindex development history
-
-@value{tramp} development started at the end of November 1998 as
-@file{rssh.el}.  It provided only one method of access.  It used
-@command{ssh} for login and @command{scp} to transfer file contents.
-The name was changed to @file{rcp.el} before it got its present name
-@value{tramp}.  New methods of remote access were added, so was support
-for version control.
-
-April 2000 was the first time when multi-hop methods were added.  In
-July 2002, @value{tramp} unified file names with Ange FTP@.  In July
-2004, proxy hosts replaced multi-hop methods.  Running commands on
-remote hosts was introduced in December 2005.  Support for gateways
-since April 2007 (and removed in December 2016).  GVFS integration
-started in February 2009.  Remote commands on MS Windows hosts since
-September 2011.  Ad-hoc multi-hop methods (with a changed syntax)
-re-enabled in November 2011.  In November 2012, added Juergen
-Hoetzel's @file{tramp-adb.el}.  Archive file names are supported since
-December 2017.
-
-XEmacs support was stopped in January 2016.  Since March 2017,
-@value{tramp} syntax mandates a method.
-
 @c Installation chapter is necessary only in case of standalone
 @c installation.  Text taken from trampinst.texi.
 @ifset installchapter
@@ -560,6 +533,18 @@ account), or @file{@trampfn{nextcloud,user@@host#8081,/path/to/file}}
 An Android device, which is connected via USB to your local host, can
 be accessed via the @command{adb} command.  No user or host name is
 needed.  The file name syntax is @file{@trampfn{adb,,/path/to/file}}.
+
+
+@anchor{Quick Start Guide: @option{rclone} method}
+@section Using @command{rclone}
+@cindex method @option{rclone}
+@cindex @option{rclone} method
+
+A convenient way to access system storages is the @command{rclone}
+program.  If you have configured a storage in @command{rclone} under a
+name @samp{storage} (for example), you could access it via the remote
+file name syntax @file{@trampfn{rclone,storage,/path/to/file}}.  User
+names are not needed.
 
 
 @node Configuration
@@ -1053,6 +1038,48 @@ For Android devices connected through TCP/IP, a port number can be
 specified using @file{device#42} host name syntax or @value{tramp} can
 use the default value as declared in @command{adb} command.  Port
 numbers are not applicable to Android devices connected through USB@.
+
+
+@item @option{rclone}
+@cindex method @option{rclone}
+@cindex @option{rclone} method
+
+@vindex tramp-rclone-program
+The program @command{rclone} allows to access different system
+storages in the cloud, see @url{https://rclone.org/} for a list of
+supported systems.  If the @command{rclone} program isn't found in
+your @env{PATH} environment variable, you can tell Tramp its absolute
+path via the user option @code{tramp-rclone-program}.
+
+A system storage must be configured via the @command{rclone config}
+command, outside Emacs.  If you have configured a storage in
+@command{rclone} under a name @samp{storage} (for example), you could
+access it via the remote file name
+
+@example
+@trampfn{rclone,storage,/path/to/file}
+@end example
+
+User names are part of the @command{rclone} configuration, and not
+needed in the remote file name.  If a user name is contained in the
+remote file name, it is ignored.
+
+Internally, Tramp mounts the remote system storage at location
+@file{/tmp/tramp.rclone.storage}, with @file{storage} being the name
+of the configured system storage.
+
+Optional flags to the different @option{rclone} operations could be
+passed as connection property, @xref{Predefined connection
+information}.  Supported properties are @samp{mount-args},
+@samp{copyto-args} and @samp{moveto-args}.
+
+Access via @option{rclone} is slow.  If you have an alternative method
+for accessing the system storage, you shall prefer this.  @ref{GVFS
+based methods} for example, methods @option{gdrive} and
+@option{nextcloud}.
+
+@strong{Note}: The @option{rclone} method is experimental, don't use
+it in production systems!
 
 @end table
 

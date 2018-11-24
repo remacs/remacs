@@ -823,6 +823,10 @@ process.  It now accepts signals specified either by name or by its number.
 or NextCloud hosted files and directories.
 
 +++
+*** New connection method "rclone", which allows to access system
+storages via the 'rclone' program.  This feature is experimental.
+
++++
 *** Connection methods "obex" and "synce" are removed, because they
 are obsoleted in GVFS.
 
