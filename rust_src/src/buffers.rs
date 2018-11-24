@@ -1082,7 +1082,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let range = Range::new(0, 1000000);
         let mut rng = rand::thread_rng();
         let s = format!("-{}", range.ind_sample(&mut rng));
-        static_unibyte_string!(suffix, s);
+        local_unibyte_string!(suffix, s);
         let genname = unsafe { concat2(name.into(), suffix) };
         if get_buffer(LispBufferOrName::Name(genname)).is_none() {
             return genname.into();
@@ -1095,7 +1095,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     let mut suffix_count = 2;
     loop {
         let s = format!("<{}>", suffix_count);
-        static_unibyte_string!(suffix, s);
+        local_unibyte_string!(suffix, s);
         let candidate = unsafe { concat2(basename, suffix) };
         let buf = get_buffer(LispBufferOrName::Name(candidate));
         if buf.is_none() || string_equal(candidate, ignore) {

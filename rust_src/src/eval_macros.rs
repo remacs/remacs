@@ -311,7 +311,7 @@ macro_rules! mock_unibyte_string {
 
 #[macro_export]
 #[allow(unused_macros)]
-macro_rules! static_unibyte_string {
+macro_rules! local_unibyte_string {
     ($name: ident, $string: expr) => {
         let mut bytes: Vec<u8> = ($string).bytes().collect();
         // let strcopy = std::ffi::CString::new($string)
