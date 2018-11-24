@@ -289,11 +289,7 @@ macro_rules! per_buffer_var_idx {
 macro_rules! local_unibyte_string {
     ($name: ident, $string: expr) => {
         let mut bytes: Vec<u8> = ($string).bytes().collect();
-        // let strcopy = std::ffi::CString::new($string)
-        // .expect("String passed to CString should not contain null bytes");
-        // let bytes = strcopy.as_bytes();
         let len = bytes.len() as ::libc::ptrdiff_t;
-        // let ptr = strcopy.into_raw();
         let mut obj = crate::remacs_sys::Lisp_String {
             u: crate::remacs_sys::Lisp_String__bindgen_ty_1 {
                 s: crate::remacs_sys::Lisp_String__bindgen_ty_1__bindgen_ty_1 {
