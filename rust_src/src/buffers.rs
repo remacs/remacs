@@ -1081,7 +1081,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     }
 
     let basename = if name.byte_at(0) == b' ' {
-        let range = Range::new(0, 1000000);
+        let range = Range::new(0, 1_000_000);
         let mut rng = rand::thread_rng();
         let mut s = format!("-{}", range.ind_sample(&mut rng));
         local_unibyte_string!(suffix, s);
