@@ -65,7 +65,7 @@ pub fn point() -> EmacsInt {
 /// `(with-current-buffer BUFFER (- (point-max) (point-min)))'.
 #[lisp_fn(min = "0")]
 pub fn buffer_size(buffer: LispBufferOrCurrent) -> EmacsInt {
-    let buffer_ref = buffer.unwrap();
+    let buffer_ref: LispBufferRef = buffer.into();
     (buffer_ref.z() - buffer_ref.beg()) as EmacsInt
 }
 
