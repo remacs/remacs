@@ -308,3 +308,28 @@ macro_rules! mock_unibyte_string {
         crate::lisp::LispObject::tag_ptr(ptr, crate::remacs_sys::Lisp_Type::Lisp_String)
     }};
 }
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! static_unibyte_string {
+    ($name: ident, $string: expr) => {
+        let mut bytes: Vec<u8> = ($string).bytes().collect();
+        // let strcopy = std::ffi::CString::new($string)
+        // .expect("String passed to CString should not contain null bytes");
+        // let bytes = strcopy.as_bytes();
+        let len = bytes.len() as ::libc::ptrdiff_t;
+        // let ptr = strcopy.into_raw();
+        let mut obj = crate::remacs_sys::Lisp_String {
+            u: crate::remacs_sys::Lisp_String__bindgen_ty_1 {
+                s: crate::remacs_sys::Lisp_String__bindgen_ty_1__bindgen_ty_1 {
+                    size: len,
+                    size_byte: -1,
+                    intervals: ::std::ptr::null_mut(),
+                    data: bytes.as_mut_ptr() as *mut u8,
+                },
+            },
+        };
+        let $name = crate::lisp::ExternalPtr::new(&mut obj as *mut crate::remacs_sys::Lisp_String)
+            .as_lisp_obj();
+    };
+}

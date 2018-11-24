@@ -279,23 +279,6 @@ impl LispObject {
     pub fn empty_unibyte_string() -> LispStringRef {
         LispStringRef::from(unsafe { empty_unibyte_string })
     }
-
-    // Creates a LispObject on stack representing the unibyte string `s`
-    pub fn local_unibyte_string(s: &str) -> Lisp_String {
-        let strcopy = std::ffi::CString::new(s)
-            .expect("String passed to CString should not contain null bytes");
-        let len = strcopy.as_bytes().len() as ::libc::ptrdiff_t;
-        Lisp_String {
-            u: crate::remacs_sys::Lisp_String__bindgen_ty_1 {
-                s: crate::remacs_sys::Lisp_String__bindgen_ty_1__bindgen_ty_1 {
-                    size: len,
-                    size_byte: -1,
-                    intervals: ::std::ptr::null_mut(),
-                    data: strcopy.into_raw() as *mut u8,
-                },
-            },
-        }
-    }
 }
 
 pub fn is_ascii(c: Codepoint) -> bool {
