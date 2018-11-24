@@ -1512,7 +1512,10 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	 (c-syntactic-skip-backward "^;{}" bod-lim t)
 	 (> (point) bod-lim)
 	 (progn (c-forward-syntactic-ws)
-		(setq bo-decl (point))
+		;; Have we got stuck in a comment at EOB?
+		(not (and (eobp)
+			  (c-literal-start))))
+	 (progn (setq bo-decl (point))
 		(or (not (looking-at c-protection-key))
 		    (c-forward-keyword-clause 1)))
 	 (progn
