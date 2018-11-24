@@ -1230,6 +1230,7 @@ If nil, return `tramp-default-port'."
   (or (tramp-file-name-port vec)
       (tramp-get-method-parameter vec 'tramp-default-port)))
 
+;; Comparision of file names is performed by `tramp-equal-remote'.
 (defun tramp-file-name-equal-p (vec1 vec2)
   "Check, whether VEC1 and VEC2 denote the same `tramp-file-name'."
   (and (tramp-file-name-p vec1) (tramp-file-name-p vec2)
@@ -4068,6 +4069,7 @@ If it doesn't exist, generate a new one."
   (with-tramp-connection-property (tramp-get-connection-process vec) "device"
     (cons -1 (setq tramp-devices (1+ tramp-devices)))))
 
+;; Comparision of vectors is performed by `tramp-file-name-equal-p'.
 (defun tramp-equal-remote (file1 file2)
   "Check, whether the remote parts of FILE1 and FILE2 are identical.
 The check depends on method, user and host name of the files.  If
@@ -4077,20 +4079,14 @@ account.
 
 Example:
 
-  (tramp-equal-remote \"/ssh::/etc\" \"/<your host name>:/home\")
+  (tramp-equal-remote \"/ssh::/etc\" \"/-:<your host name>:/home\")
 
 would yield t.  On the other hand, the following check results in nil:
 
-  (tramp-equal-remote \"/sudo::/etc\" \"/su::/etc\")
-
-FILE1 and FILE2 could also be Tramp vectors."
-  (or (and (tramp-tramp-file-p file1)
-	   (tramp-tramp-file-p file2)
-	   (string-equal (file-remote-p file1) (file-remote-p file2)))
-      (and (tramp-file-name-p file1)
-	   (tramp-file-name-p file2)
-	   (string-equal (tramp-make-tramp-file-name file1 'localname)
-			 (tramp-make-tramp-file-name file2 'localname)))))
+  (tramp-equal-remote \"/sudo::/etc\" \"/su::/etc\")"
+  (and (tramp-tramp-file-p file1)
+       (tramp-tramp-file-p file2)
+       (string-equal (file-remote-p file1) (file-remote-p file2))))
 
 ;;;###tramp-autoload
 (defun tramp-mode-string-to-int (mode-string)

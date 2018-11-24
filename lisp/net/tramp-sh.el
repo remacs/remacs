@@ -4704,7 +4704,7 @@ Goes through the list `tramp-inline-compress-commands'."
   "Close the connection VEC after a session timeout.
 If there is just some editing, retry it after 5 seconds."
   (if (and tramp-locked tramp-locker
-	   (tramp-equal-remote vec tramp-current-connection))
+	   (tramp-file-name-equal-p vec (car tramp-current-connection)))
       (progn
 	(tramp-message
 	 vec 5 "Cannot timeout session, trying it again in %s seconds." 5)
