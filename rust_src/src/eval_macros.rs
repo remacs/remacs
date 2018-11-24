@@ -285,7 +285,8 @@ macro_rules! per_buffer_var_idx {
 }
 
 // Creates a Lisp_String from $string on the stack and a LispObject
-// pointing the Lisp_String. Assigns the LispObject to $name
+// pointing the Lisp_String. Assigns the LispObject to $name. See
+// `generate-new-buffer-name` for sample usage.
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! local_unibyte_string {
@@ -305,4 +306,16 @@ macro_rules! local_unibyte_string {
         let $name = crate::lisp::ExternalPtr::new(&mut obj as *mut crate::remacs_sys::Lisp_String)
             .as_lisp_obj();
     };
+}
+
+#[test]
+pub fn test_local_unibyte_string() {
+    let mut s = String::from("abc");
+    local_unibyte_string!(a, s);
+    assert_eq!(a.as_string_or_error().byte_at(0), b'a');
+    assert_eq!(a.as_string_or_error().len_chars(), 3);
+    s = String::from("defg");
+    local_unibyte_string!(a, s);
+    assert_eq!(a.as_string_or_error().byte_at(0), b'd');
+    assert_eq!(a.as_string_or_error().len_chars(), 4);
 }
