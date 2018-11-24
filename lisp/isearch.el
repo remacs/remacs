@@ -623,6 +623,12 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map [isearch-delete-char]
       '(menu-item "Undo last input item" isearch-delete-char
                   :help "Undo the effect of the last Isearch command"))
+    (define-key map [isearch-end-of-buffer]
+      '(menu-item "Go to last match" isearch-end-of-buffer
+                  :help "Go to last occurrence of current search string"))
+    (define-key map [isearch-beginning-of-buffer]
+      '(menu-item "Go to first match" isearch-beginning-of-buffer
+                  :help "Go to first occurrence of current search string"))
     (define-key map [isearch-repeat-backward]
       '(menu-item "Repeat search backward" isearch-repeat-backward
                   :help "Repeat current search backward"))
@@ -978,6 +984,8 @@ Type \\[isearch-exit] to exit, leaving point at location found.
 Type LFD (C-j) to match end of line.
 Type \\[isearch-repeat-forward] to search again forward,\
  \\[isearch-repeat-backward] to search again backward.
+Type \\[isearch-beginning-of-buffer] to go to the first match,\
+ \\[isearch-end-of-buffer] to go to the last match.
 Type \\[isearch-yank-word-or-char] to yank next word or character in buffer
   onto the end of the search string, and search for it.
 Type \\[isearch-del-char] to delete character from end of search string.
