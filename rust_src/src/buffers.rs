@@ -1060,6 +1060,10 @@ pub fn erase_buffer() {
     }
 }
 
+// We split this away from generate-new-buffer, because rename-buffer
+// and set-visited-file-name ought to be able to use this to really
+// rename the buffer properly.
+
 /// Return a string that is the name of no existing buffer based on NAME.
 /// If there is no live buffer named NAME, then return NAME.
 /// Otherwise modify name by appending `<NUMBER>', incrementing NUMBER
@@ -1072,9 +1076,7 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if get_buffer(LispBufferOrName::Name(name.into())).is_none()
-        || (ignore != Qnil && string_equal(name.into(), ignore))
-    {
+    if (ignore != Qnil && string_equal(name.into(), ignore)) || Fget_buffer(name.into()).is_nil() {
         return name;
     }
 
