@@ -1023,7 +1023,6 @@ of command line.")
     (file-truename . tramp-sh-handle-file-truename)
     (file-writable-p . tramp-sh-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
-    ;; `find-file-noselect' performed by default handler.
     ;; `get-file-buffer' performed by default handler.
     (insert-directory . tramp-sh-handle-insert-directory)
     (insert-file-contents . tramp-handle-insert-file-contents)

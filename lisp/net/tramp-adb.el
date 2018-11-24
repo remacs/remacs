@@ -141,7 +141,6 @@ It is used for TCP/IP devices."
     (file-truename . tramp-adb-handle-file-truename)
     (file-writable-p . tramp-adb-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
-    ;; `find-file-noselect' performed by default handler.
     ;; `get-file-buffer' performed by default handler.
     (insert-directory . tramp-handle-insert-directory)
     (insert-file-contents . tramp-handle-insert-file-contents)

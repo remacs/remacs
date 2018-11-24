@@ -262,7 +262,6 @@ See `tramp-actions-before-shell' for more info.")
     (file-truename . tramp-handle-file-truename)
     (file-writable-p . tramp-smb-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
-    ;; `find-file-noselect' performed by default handler.
     ;; `get-file-buffer' performed by default handler.
     (insert-directory . tramp-smb-handle-insert-directory)
     (insert-file-contents . tramp-handle-insert-file-contents)

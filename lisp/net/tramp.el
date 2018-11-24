@@ -2175,7 +2175,7 @@ ARGS are the arguments OPERATION has been called with."
 	      file-ownership-preserved-p file-readable-p
 	      file-regular-p file-remote-p file-selinux-context
 	      file-symlink-p file-truename file-writable-p
-	      find-backup-file-name find-file-noselect get-file-buffer
+	      find-backup-file-name get-file-buffer
 	      insert-directory insert-file-contents load
 	      make-directory make-directory-internal set-file-acl
 	      set-file-modes set-file-selinux-context set-file-times
@@ -4445,7 +4445,7 @@ ALIST is of the form ((FROM . TO) ...)."
 It always returns a return code.  The Lisp error raised when
 PROGRAM is nil is trapped also, returning 1.  Furthermore, traces
 are written with verbosity of 6."
-  (let ((default-directory  (tramp-compat-temporary-file-directory))
+  (let ((default-directory (tramp-compat-temporary-file-directory))
 	(destination (if (eq destination t) (current-buffer) destination))
 	output error result)
     (tramp-message

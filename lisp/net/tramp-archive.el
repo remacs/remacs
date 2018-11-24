@@ -253,7 +253,6 @@ It must be supported by libarchive(3).")
     (file-truename . tramp-archive-handle-file-truename)
     (file-writable-p . ignore)
     (find-backup-file-name . ignore)
-    ;; `find-file-noselect' performed by default handler.
     ;; `get-file-buffer' performed by default handler.
     (insert-directory . tramp-archive-handle-insert-directory)
     (insert-file-contents . tramp-archive-handle-insert-file-contents)
