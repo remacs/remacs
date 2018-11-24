@@ -782,7 +782,11 @@ If LIMIT is non-nil, show no more than this many entries."
 (defun vc-bzr-expanded-log-entry (revision)
   (with-temp-buffer
     (apply 'vc-bzr-command "log" t nil nil
-	   (list "--long" (format "-r%s" revision)))
+           (append
+            (list "--long" (format "-r%s" revision))
+            (if (stringp vc-bzr-log-switches)
+                (list vc-bzr-log-switches)
+              vc-bzr-log-switches)))
     (goto-char (point-min))
     (when (looking-at "^-+\n")
       ;; Indent the expanded log entry.
