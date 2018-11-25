@@ -1414,27 +1414,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       goto tail_recurse;
 
     case Lisp_Misc:
-      if (XMISCTYPE (o1) != XMISCTYPE (o2))
-	return false;
-      if (OVERLAYP (o1))
-	{
-	  if (!internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
-			       equal_kind, depth + 1, ht)
-	      || !internal_equal (OVERLAY_END (o1), OVERLAY_END (o2),
-				  equal_kind, depth + 1, ht))
-	    return false;
-	  o1 = XOVERLAY (o1)->plist;
-	  o2 = XOVERLAY (o2)->plist;
-	  depth++;
-	  goto tail_recurse;
-	}
-      if (MARKERP (o1))
-	{
-	  return (XMARKER (o1)->buffer == XMARKER (o2)->buffer
-		  && (XMARKER (o1)->buffer == 0
-		      || XMARKER (o1)->bytepos == XMARKER (o2)->bytepos));
-	}
-      break;
+      return internal_equal_misc(o1, o2,  equal_kind, depth, ht);
 
     case Lisp_Vectorlike:
       {
