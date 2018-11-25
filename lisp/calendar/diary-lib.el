@@ -1412,13 +1412,15 @@ marks.  This is intended to deal with deleted diary entries."
           (setq file-glob-attrs (nth 1 (diary-pull-attrs nil '())))
           (with-syntax-table diary-syntax-table
             (save-excursion
-              (diary-mark-entries-1 'calendar-mark-date-pattern)
-              (diary-mark-sexp-entries)
-              ;; Although it looks like mark-entries-hook runs every time,
-              ;; diary-mark-included-diary-files binds it to nil
-              ;; (essentially) when it runs in included files.
-              (run-hooks 'diary-nongregorian-marking-hook
-                         'diary-mark-entries-hook))))
+              (save-restriction
+                (widen)                 ; bug#33423
+                (diary-mark-entries-1 'calendar-mark-date-pattern)
+                (diary-mark-sexp-entries)
+                ;; Although it looks like mark-entries-hook runs every time,
+                ;; diary-mark-included-diary-files binds it to nil
+                ;; (essentially) when it runs in included files.
+                (run-hooks 'diary-nongregorian-marking-hook
+                           'diary-mark-entries-hook)))))
       (and temp-buff (buffer-name temp-buff) (kill-buffer temp-buff)))
     (or d-incp (message "Marking diary entries...done"))))
 
