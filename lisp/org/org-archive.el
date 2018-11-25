@@ -429,7 +429,7 @@ Archiving time is retained in the ARCHIVE_TIME node property."
 	(looking-at org-outline-regexp)
 	(setq leader (match-string 0)
 	      level (funcall outline-level))
-	(setq pos (point))
+	(setq pos (point-marker))
 	(condition-case nil
 	    (outline-up-heading 1 t)
 	  (error (setq e (point-max)) (goto-char (point-min))))

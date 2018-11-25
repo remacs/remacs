@@ -580,15 +580,15 @@ Here are some examples of expressions that use @code{quote}:
 @end group
 @group
 ''foo
-     @result{} (quote foo)
+     @result{} 'foo
 @end group
 @group
 '(quote foo)
-     @result{} (quote foo)
+     @result{} 'foo
 @end group
 @group
 ['foo]
-     @result{} [(quote foo)]
+     @result{} ['foo]
 @end group
 @end example
 

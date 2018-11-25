@@ -8775,7 +8775,16 @@ move_it_in_display_line_to (struct it *it,
 
       if (it->line_wrap == TRUNCATE)
 	{
-	  if (BUFFER_POS_REACHED_P ())
+	  /* If it->pixel_width is zero, the last PRODUCE_GLYPHS call
+	     produced something that doesn't consume any screen estate
+	     in the text area, so we don't want to exit the loop at
+	     TO_CHARPOS, before we produce the glyph for that buffer
+	     position.  This happens, e.g., when there's an overlay at
+	     TO_CHARPOS that draws a fringe bitmap.  */
+	  if (BUFFER_POS_REACHED_P ()
+	      && (it->pixel_width > 0
+		  || IT_CHARPOS (*it) > to_charpos
+		  || it->area != TEXT_AREA))
 	    {
 	      result = MOVE_POS_MATCH_OR_ZV;
 	      break;
@@ -11866,7 +11875,7 @@ x_consider_frame_title (Lisp_Object frame)
   if ((FRAME_WINDOW_P (f)
        || FRAME_MINIBUF_ONLY_P (f)
        || f->explicit_name)
-      && NILP (Fframe_parameter (frame, Qtooltip)))
+      && !FRAME_TOOLTIP_P (f))
     {
       /* Do we have more than one visible frame on this X display?  */
       Lisp_Object tail, other_frame, fmt;
@@ -11883,8 +11892,8 @@ x_consider_frame_title (Lisp_Object frame)
 	  if (tf != f
 	      && FRAME_KBOARD (tf) == FRAME_KBOARD (f)
 	      && !FRAME_MINIBUF_ONLY_P (tf)
-	      && !EQ (other_frame, tip_frame)
 	      && !FRAME_PARENT_FRAME (tf)
+	      && !FRAME_TOOLTIP_P (tf)
 	      && (FRAME_VISIBLE_P (tf) || FRAME_ICONIFIED_P (tf)))
 	    break;
 	}
@@ -11953,13 +11962,6 @@ prepare_menu_bars (void)
 {
   bool all_windows = windows_or_buffers_changed || update_mode_lines;
   bool some_windows = REDISPLAY_SOME_P ();
-  Lisp_Object tooltip_frame;
-
-#ifdef HAVE_WINDOW_SYSTEM
-  tooltip_frame = tip_frame;
-#else
-  tooltip_frame = Qnil;
-#endif
 
   if (FUNCTIONP (Vpre_redisplay_function))
     {
@@ -12000,7 +12002,7 @@ prepare_menu_bars (void)
 	      && !XBUFFER (w->contents)->text->redisplay)
 	    continue;
 
-	  if (!EQ (frame, tooltip_frame)
+	  if (!FRAME_TOOLTIP_P (f)
 	      && !FRAME_PARENT_FRAME (f)
 	      && (FRAME_ICONIFIED_P (f)
 		  || FRAME_VISIBLE_P (f) == 1
@@ -12038,7 +12040,7 @@ prepare_menu_bars (void)
 	  struct window *w = XWINDOW (FRAME_SELECTED_WINDOW (f));
 
 	  /* Ignore tooltip frame.  */
-	  if (EQ (frame, tooltip_frame))
+	  if (FRAME_TOOLTIP_P (f))
 	    continue;
 
 	  if (some_windows
@@ -21160,13 +21162,7 @@ should_produce_line_number (struct it *it)
 
 #ifdef HAVE_WINDOW_SYSTEM
   /* Don't display line number in tooltip frames.  */
-  if (FRAMEP (tip_frame) && EQ (WINDOW_FRAME (it->w), tip_frame)
-#ifdef USE_GTK
-      /* GTK builds store in tip_frame the frame that shows the tip,
-	 so we need an additional test.  */
-      && !NILP (Fframe_parameter (tip_frame, Qtooltip))
-#endif
-      )
+  if (FRAME_TOOLTIP_P (XFRAME (WINDOW_FRAME (it->w))))
     return false;
 #endif
 
@@ -30836,9 +30832,11 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 		= buffer_local_value (Qmode_line_default_help_echo,
 				      w->contents);
 
-	      if (STRINGP (default_help))
+	      if (FUNCTIONP (default_help) || STRINGP (default_help))
 		{
-		  help_echo_string = default_help;
+		  help_echo_string = (FUNCTIONP (default_help)
+				      ? safe_call1 (default_help, window)
+				      : default_help);
 		  XSETWINDOW (help_echo_window, w);
 		  help_echo_object = Qnil;
 		  help_echo_pos = -1;
@@ -32521,8 +32519,8 @@ A value of zero means always recenter point if it moves off screen.  */);
 
   DEFVAR_INT ("scroll-margin", scroll_margin,
     doc: /* Number of lines of margin at the top and bottom of a window.
-Recenter the window whenever point gets within this many lines
-of the top or bottom of the window.  */);
+Trigger automatic scrolling whenever point gets within this many lines
+of the top or bottom of the window (see info node `Auto Scrolling').  */);
   scroll_margin = 0;
 
   DEFVAR_LISP ("maximum-scroll-margin", Vmaximum_scroll_margin,

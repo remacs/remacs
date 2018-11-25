@@ -607,7 +607,7 @@ This also saves the value of `send-mail-function' via Customize."
   (kill-local-variable 'buffer-file-coding-system)
   ;; This doesn't work for enable-multibyte-characters.
   ;; (kill-local-variable 'enable-multibyte-characters)
-  (set-buffer-multibyte (default-value 'enable-multibyte-characters))
+  (set-buffer-multibyte t)
   (if current-input-method
       (deactivate-input-method))
 

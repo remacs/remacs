@@ -104,7 +104,7 @@ value for the variable @code{comment-start}, which determines how
 source code comments are delimited (@pxref{Comments}).
 
   To view the documentation for the current major mode, including a
-list of its key bindings, type @code{C-h m} (@code{describe-mode}).
+list of its key bindings, type @kbd{C-h m} (@code{describe-mode}).
 @xref{Misc Help}.
 
 @cindex mode hook

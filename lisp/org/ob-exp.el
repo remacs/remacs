@@ -58,9 +58,13 @@ returned is the value of the last form in BODY.  Assume that
 point is at the beginning of the Babel block."
   (declare (indent 1) (debug body))
   `(let ((source (get-text-property (point) 'org-reference)))
-     (with-current-buffer org-babel-exp-reference-buffer
+     ;; Source blocks created during export process (e.g., by other
+     ;; source blocks) are not referenced.  In this case, do not move
+     ;; point at all.
+     (with-current-buffer (if source org-babel-exp-reference-buffer
+			    (current-buffer))
        (org-with-wide-buffer
-	(goto-char source)
+	(when source (goto-char source))
 	,@body))))
 
 (defun org-babel-exp-src-block ()

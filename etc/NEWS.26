@@ -635,7 +635,7 @@ state to take effect (making a frame visible, for example).
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
 ---
-** Emacs 26.1 comes with Org v9.1.4.
+** Emacs 26.1 comes with Org v9.1.6.
 See the file ORG-NEWS for user-visible changes in Org.
 
 ---
@@ -1037,6 +1037,13 @@ located and whether GnuPG's option '--homedir' is used or not.
 ---
 *** Deleting a package no longer respects 'delete-by-moving-to-trash'.
 
+** Python
+
++++
+*** The new variable 'python-indent-def-block-scale' has been added.
+It controls the depth of indentation of arguments inside multi-line
+function signatures.
+
 ** Tramp
 
 +++
@@ -1369,11 +1376,6 @@ second argument instead of its first.
 ** The variable 'old-style-backquotes' has been made internal and
 renamed to 'lread--old-style-backquotes'.  No user code should use
 this variable.
-
----
-** To avoid confusion caused by "smart quotes", the reader no longer
-accepts Lisp symbols which begin with the following quotation
-characters: ‘’‛“”‟〞＂＇, unless they are escaped with backslash.
 
 +++
 ** 'default-file-name-coding-system' now defaults to a coding system

@@ -230,11 +230,10 @@ Properties can be set with
 ;; filtering functions) is copied to FILTERED as is.  Keyword values :save,
 ;; :restore and :never tell the function to copy CURRENT to FILTERED in the
 ;; respective situations, that is, when saving, restoring, or never at all.
-;; Values :save and :restore are not used in this package, because usually if
-;; you don't want to save a parameter, you don't want to restore it either.
-;; But they can be useful, for example, if you already have a saved frameset
-;; created with some intent, and want to reuse it for a different objective
-;; where the expected parameter list has different requirements.
+;; Values :save and :restore can be useful, for example, if you already
+;; have a saved frameset created with some intent, and want to reuse it for
+;; a different objective where the expected parameter list has different
+;; requirements.
 ;;
 ;; Finally, the value can also be a filtering function, or a filtering
 ;; function plus some arguments.  The function is called for each matching
@@ -290,6 +289,11 @@ Properties can be set with
 ;;   automatically set to t, and then `name' no longer changes dynamically.
 ;;   So, in general, not saving `name' is the right thing to do, though
 ;;   surely there are applications that will want to override this filter.
+;;
+;; - `frameset--text-pixel-height', `frameset--text-pixel-width': These are used to
+;;   save the pixel width and height of a frame. They are necessary
+;;   during restore, but should not be set on the actual frame after
+;;   restoring, so `:save' is used to ensure they are only saved.
 ;;
 ;; - `font', `fullscreen', `height' and `width': These parameters suffer
 ;;   from the fact that they are badly mangled when going through a
@@ -442,32 +446,34 @@ DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 ;;;###autoload
 (defvar frameset-persistent-filter-alist
   (nconc
-   '((background-color   . frameset-filter-sanitize-color)
-     (buffer-list        . :never)
-     (buffer-predicate   . :never)
-     (buried-buffer-list . :never)
+   '((background-color            . frameset-filter-sanitize-color)
+     (buffer-list                 . :never)
+     (buffer-predicate            . :never)
+     (buried-buffer-list          . :never)
      ;; Don't save the 'client' parameter to avoid that a subsequent
      ;; `save-buffers-kill-terminal' in a non-client session barks at
      ;; the user (Bug#29067).
-     (client             . :never)
-     (delete-before      . :never)
-     (font               . frameset-filter-font-param)
-     (foreground-color   . frameset-filter-sanitize-color)
-     (fullscreen         . frameset-filter-shelve-param)
-     (GUI:font           . frameset-filter-unshelve-param)
-     (GUI:fullscreen     . frameset-filter-unshelve-param)
-     (GUI:height         . frameset-filter-unshelve-param)
-     (GUI:width          . frameset-filter-unshelve-param)
-     (height             . frameset-filter-shelve-param)
-     (outer-window-id    . :never)
-     (parent-frame       . :never)
-     (parent-id          . :never)
-     (mouse-wheel-frame  . :never)
-     (tty                . frameset-filter-tty-to-GUI)
-     (tty-type           . frameset-filter-tty-to-GUI)
-     (width              . frameset-filter-shelve-param)
-     (window-id          . :never)
-     (window-system      . :never))
+     (client                      . :never)
+     (delete-before               . :never)
+     (font                        . frameset-filter-font-param)
+     (foreground-color            . frameset-filter-sanitize-color)
+     (frameset--text-pixel-height . :save)
+     (frameset--text-pixel-width  . :save)
+     (fullscreen                  . frameset-filter-shelve-param)
+     (GUI:font                    . frameset-filter-unshelve-param)
+     (GUI:fullscreen              . frameset-filter-unshelve-param)
+     (GUI:height                  . frameset-filter-unshelve-param)
+     (GUI:width                   . frameset-filter-unshelve-param)
+     (height                      . frameset-filter-shelve-param)
+     (outer-window-id             . :never)
+     (parent-frame                . :never)
+     (parent-id                   . :never)
+     (mouse-wheel-frame           . :never)
+     (tty                         . frameset-filter-tty-to-GUI)
+     (tty-type                    . frameset-filter-tty-to-GUI)
+     (width                       . frameset-filter-shelve-param)
+     (window-id                   . :never)
+     (window-system               . :never))
    frameset-session-filter-alist)
   "Parameters to filter for persistent framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")

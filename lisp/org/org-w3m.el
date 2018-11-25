@@ -57,7 +57,7 @@
      :description (or w3m-current-title w3m-current-url))))
 
 (defun org-w3m-copy-for-org-mode ()
-  "Copy current buffer content or active region with `org-mode' style links.
+  "Copy current buffer content or active region with Org style links.
 This will encode `link-title' and `link-location' with
 `org-make-link-string', and insert the transformed test into the kill ring,
 so that it can be yanked into an Org  buffer with links working correctly."
@@ -94,7 +94,7 @@ so that it can be yanked into an Org  buffer with links working correctly."
               ;; get link title at current point.
               (setq link-title (buffer-substring (point)
                                                  (org-w3m-get-anchor-end)))
-              ;; concat `org-mode' style url to `return-content'.
+              ;; concat Org style url to `return-content'.
               (setq return-content (concat return-content
                                            (org-make-link-string
                                             link-location link-title))))

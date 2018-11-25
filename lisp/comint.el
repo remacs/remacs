@@ -1434,14 +1434,14 @@ If nil, Isearch operates on the whole comint buffer."
 (defun comint-history-isearch-backward ()
   "Search for a string backward in input history using Isearch."
   (interactive)
-  (let ((comint-history-isearch t))
-    (isearch-backward nil t)))
+  (setq comint-history-isearch t)
+  (isearch-backward nil t))
 
 (defun comint-history-isearch-backward-regexp ()
   "Search for a regular expression backward in input history using Isearch."
   (interactive)
-  (let ((comint-history-isearch t))
-    (isearch-backward-regexp nil t)))
+  (setq comint-history-isearch t)
+  (isearch-backward-regexp nil t))
 
 (defvar-local comint-history-isearch-message-overlay nil)
 
@@ -1472,7 +1472,9 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
   (setq isearch-message-function nil)
   (setq isearch-wrap-function nil)
   (setq isearch-push-state-function nil)
-  (remove-hook 'isearch-mode-end-hook 'comint-history-isearch-end t))
+  (remove-hook 'isearch-mode-end-hook 'comint-history-isearch-end t)
+  (unless isearch-suspended
+    (custom-reevaluate-setting 'comint-history-isearch)))
 
 (defun comint-goto-input (pos)
   "Put input history item of the absolute history position POS."
@@ -2477,9 +2479,7 @@ Sets mark to the value of point when this command is run."
     (comint-truncate-buffer)))
 
 (defun comint-interrupt-subjob ()
-  "Interrupt the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Interrupt the current subjob."
   (interactive)
   (comint-skip-input)
   (interrupt-process nil comint-ptyp)
@@ -2487,25 +2487,19 @@ between the process mark and point."
   )
 
 (defun comint-kill-subjob ()
-  "Send kill signal to the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Send kill signal to the current subjob."
   (interactive)
   (comint-skip-input)
   (kill-process nil comint-ptyp))
 
 (defun comint-quit-subjob ()
-  "Send quit signal to the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Send quit signal to the current subjob."
   (interactive)
   (comint-skip-input)
   (quit-process nil comint-ptyp))
 
 (defun comint-stop-subjob ()
   "Stop the current subjob.
-This command also kills the pending input
-between the process mark and point.
 
 WARNING: if there is no current subjob, you can end up suspending
 the top-level process running in the buffer.  If you accidentally do

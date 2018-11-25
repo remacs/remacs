@@ -2232,8 +2232,7 @@ Do you want to revisit the file normally now? ")
       (kill-local-variable 'cursor-type)
       (let ((inhibit-read-only t))
 	(erase-buffer))
-      (and (default-value 'enable-multibyte-characters)
-	   (not rawfile)
+      (and (not rawfile)
 	   (set-buffer-multibyte t))
       (if rawfile
 	  (condition-case ()
@@ -3315,7 +3314,15 @@ n  -- to ignore the local variables list.")
 
       ;; Display the buffer and read a choice.
       (save-window-excursion
-	(pop-to-buffer buf)
+	(pop-to-buffer buf `((display-buffer--maybe-same-window
+                              display-buffer-reuse-window
+                              display-buffer--maybe-pop-up-frame-or-window
+                              display-buffer-at-bottom)
+	                     ,(if temp-buffer-resize-mode
+		                  '(window-height . resize-temp-buffer-window)
+	                        '(window-height . fit-window-to-buffer))
+	                     ,(when temp-buffer-resize-mode
+	                        '(preserve-size . (nil . t)))))
 	(let* ((exit-chars '(?y ?n ?\s ?\C-g ?\C-v))
 	       (prompt (format "Please type %s%s: "
 			       (if offer-save "y, n, or !" "y or n")
@@ -5213,7 +5220,8 @@ view the differences using `diff-buffer-with-file'.
 This command first saves any buffers where `buffer-save-without-query' is
 non-nil, without asking.
 
-Optional argument (the prefix) non-nil means save all with no questions.
+Optional argument ARG (interactively, prefix argument) non-nil means save
+all with no questions.
 Optional second argument PRED determines which buffers are considered:
 If PRED is nil, all the file-visiting buffers are considered.
 If PRED is t, then certain non-file buffers will also be considered.
@@ -6465,9 +6473,10 @@ The return value is a string describing the amount of free
 space (normally, the number of free 1KB blocks).
 
 If DIR's free space cannot be obtained, this function returns nil."
-  (let ((avail (nth 2 (file-system-info dir))))
-    (if avail
-	(format "%.0f" (/ avail 1024)))))
+  (save-match-data
+    (let ((avail (nth 2 (file-system-info dir))))
+      (if avail
+	  (format "%.0f" (/ avail 1024))))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp
@@ -6917,8 +6926,17 @@ if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
                   (setq active t))
              (setq processes (cdr processes)))
            (or (not active)
-               (with-current-buffer-window
-                (get-buffer-create "*Process List*") nil
+               (with-displayed-buffer-window
+                (get-buffer-create "*Process List*")
+                `((display-buffer--maybe-same-window
+                   display-buffer-reuse-window
+                   display-buffer--maybe-pop-up-frame-or-window
+                   display-buffer-at-bottom)
+	          ,(if temp-buffer-resize-mode
+		       '(window-height . resize-temp-buffer-window)
+	             '(window-height . fit-window-to-buffer))
+	          ,(when temp-buffer-resize-mode
+	             '(preserve-size . (nil . t))))
                 #'(lambda (window _value)
                     (with-selected-window window
                       (unwind-protect

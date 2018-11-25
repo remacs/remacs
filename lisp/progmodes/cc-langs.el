@@ -617,6 +617,12 @@ EOL terminated statements."
   c++ t)
 (c-lang-defvar c-has-quoted-numbers (c-lang-const c-has-quoted-numbers))
 
+(c-lang-defconst c-has-compound-literals
+  "Whether literal initializers {...} are used other than in initializations."
+  t nil
+  (c c++) t)
+(c-lang-defvar c-has-compound-literals (c-lang-const c-has-compound-literals))
+
 (c-lang-defconst c-modified-constant
   "Regexp that matches a “modified” constant literal such as \"L\\='a\\='\",
 a “long character”.  In particular, this recognizes forms of constant
@@ -2100,6 +2106,18 @@ will be handled."
    (c-lang-const c-other-block-decl-kwds))
   "Alist associating keywords in c-other-decl-block-decl-kwds with
 their matching \"in\" syntactic symbols.")
+
+(c-lang-defconst c-defun-type-name-decl-kwds
+  "Keywords introducing a named block, where the name is a \"defun\"
+    name."
+  t (append (c-lang-const c-class-decl-kwds)
+	    (c-lang-const c-brace-list-decl-kwds)))
+
+(c-lang-defconst c-defun-type-name-decl-key
+  ;; Regexp matching a keyword in `c-defun-name-decl-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-defun-type-name-decl-kwds)))
+(c-lang-defvar c-defun-type-name-decl-key
+  (c-lang-const c-defun-type-name-decl-key))
 
 (c-lang-defconst c-typedef-decl-kwds
   "Keywords introducing declarations where the identifier(s) being

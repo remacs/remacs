@@ -188,6 +188,7 @@ to them."
 	(url-find-file-dired filename)
       (with-current-buffer
 	  (setq buffer (generate-new-buffer " *url-file*"))
+        (require 'mm-util)
 	(mm-disable-multibyte)
 	(setq url-current-object url)
 	(insert "Content-type: " (or content-type "application/octet-stream") "\n")

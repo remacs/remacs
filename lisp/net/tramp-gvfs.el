@@ -1304,14 +1304,14 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 	       'start-process
 	       "gvfs-monitor" (generate-new-buffer " *gvfs-monitor*")
 	       (if (tramp-gvfs-gio-tool-p v)
-		   `("gio" "monitor" ,(tramp-gvfs-url-file-name file-name)))
-	       `("gvfs-monitor-file" (tramp-gvfs-url-file-name file-name)))))
+		   `("gio" "monitor" ,(tramp-gvfs-url-file-name file-name))
+		 `("gvfs-monitor-file" (tramp-gvfs-url-file-name file-name))))))
       (if (not (processp p))
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name)
 	(tramp-message
 	 v 6 "Run `%s', %S" (mapconcat 'identity (process-command p) " ") p)
-	(tramp-set-connection-property p "vector" v)
+	(process-put p 'vector v)
 	(process-put p 'events events)
 	(process-put p 'watch-name localname)
 	(process-put p 'adjust-window-size-function 'ignore)
@@ -1322,7 +1322,7 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 	(tramp-accept-process-output p 1)
 	(unless (process-live-p p)
 	  (tramp-error
-	   v 'file-notify-error "Monitoring not supported for `%s'" file-name))
+	   p 'file-notify-error "Monitoring not supported for `%s'" file-name))
 	p))))
 
 (defun tramp-gvfs-monitor-file-process-filter (proc string)
@@ -1778,13 +1778,16 @@ file-notify events."
 
 (defun tramp-gvfs-unmount (vec)
   "Unmount the object identified by VEC."
-  (let ((vec (copy-tramp-file-name vec)))
-    (setf (tramp-file-name-localname vec) "/"
-	  (tramp-file-name-hop vec) nil)
-    (when (tramp-gvfs-connection-mounted-p vec)
-      (tramp-gvfs-send-command
-       vec "gvfs-mount" "-u"
-       (tramp-gvfs-url-file-name (tramp-make-tramp-file-name vec))))))
+  (setf (tramp-file-name-localname vec) "/"
+	(tramp-file-name-hop vec) nil)
+  (when (tramp-gvfs-connection-mounted-p vec)
+    (tramp-gvfs-send-command
+     vec "gvfs-mount" "-u"
+     (tramp-gvfs-url-file-name (tramp-make-tramp-file-name vec))))
+  (while (tramp-gvfs-connection-mounted-p vec)
+    (read-event nil nil 0.1))
+  (tramp-flush-connection-properties vec)
+  (tramp-flush-connection-properties (tramp-get-connection-process vec)))
 
 (defun tramp-gvfs-mount-spec-entry (key value)
   "Construct a mount-spec entry to be used in a mount_spec.
@@ -1930,7 +1933,7 @@ connection if a previous connection has died for some reason."
 	      :name (tramp-buffer-name vec)
 	      :buffer (tramp-get-connection-buffer vec)
 	      :server t :host 'local :service t :noquery t)))
-      (tramp-set-connection-property p "vector" vec)
+      (process-put p 'vector vec)
       (set-process-query-on-exit-flag p nil)))
 
   (unless (tramp-gvfs-connection-mounted-p vec)

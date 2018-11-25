@@ -58,6 +58,12 @@ on GUI frames when tooltips are displayed in the echo area.  Instead,
 it resizes the echo area as needed to accommodate the full tool-tip
 text.
 
+---
+** Show modeline tooltips only if the corresponding action applies.
+Customize the option 'mode-line-default-help-echo' to restore the old
+behavior where the tooltip text is also shown when the corresponding
+action does not apply.
+
 +++
 ** New function 'logcount' calculates an integer's Hamming weight.
 
@@ -68,6 +74,18 @@ and available at run time.  Lisp programs should use this function to
 detect built-in libxml support, instead of testing for that
 indirectly, e.g., by checking that functions like
 'libxml-parse-html-region' return nil.
+
++++
+** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.
+It blocks line breaking after a one-letter word, also in the case when
+this word is preceded by a non-space, but non-alphanumeric character.
+
++++
+** The limit on repetitions in regexps has been raised to 2^16-1.
+It was previously limited to 2^15-1.  For example, the following
+regular expression was previously invalid, but is now accepted:
+
+   x\{32768\}
 
 
 * Editing Changes in Emacs 27.1
@@ -82,11 +100,22 @@ state to take effect (making a frame visible, for example).
 This option controls whether '"' is replaced in 'electric-quote-mode',
 in addition to other quote characters.  If non-nil, ASCII double-quote
 characters that quote text "like this" are replaced by double
-typographic quotes, “like this”, in text modes, and in comments and
-strings in non-text modes.
+typographic quotes, “like this”, in text modes, and in comments in
+non-text modes.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
+
+** Ecomplete
+*** The ecomplete sorting has changed to a decay-based algorithm.
+This can be controlled by the new `ecomplete-sort-predicate' variable.
+
+*** The 'ecompleterc' file is now placed in ~/.emacs.d/ecompleterc by default
+Of course it will still find it if you have it in ~/.ecompleterc
+
+** Smtpmail
+Authentication mechanisms can be added via external packages, by
+defining new cl-defmethod of smtpmail-try-auth-method.
 
 ** Footnote-mode
 *** Support Hebrew-style footnotes
@@ -191,8 +220,27 @@ calling 'eldoc-message' directly.
 generating warnings for a decade.  To interpret old-style backquotes
 as new-style, bind the new variable 'force-new-style-backquotes' to t.
 
+** Defining a Common Lisp structure using 'cl-defstruct' or
+'cl-struct-define' whose name clashes with a builtin type (e.g.,
+'integer' or 'hash-table') now signals an error.
+
 
 * Lisp Changes in Emacs 27.1
+
++++
+** New function assoc-delete-all.
+
+** 'print-quoted' now defaults to t, so if you want to see
+(quote x) instead of 'x you will have to bind it to nil where applicable.
+
+** To avoid confusion caused by "smart quotes", the reader signals an
+error when reading Lisp symbols which begin with one of the following
+quotation characters: ‘’‛“”‟〞＂＇.  A symbol beginning with such a
+character can be written by escaping the quotation character with a
+backslash.  For example:
+
+    (read "‘smart") => (invalid-read-syntax "strange quote" "‘")
+    (read "\\‘smart") == (intern "‘smart")
 
 ** Internal parsing commands now use syntax-ppss and disregard
 open-paren-in-column-0-is-defun-start.  This affects mostly things like
@@ -223,8 +271,16 @@ are implemented in C using the Jansson library.
 It's a simple convenience function for looking up MIME types based on
 file name extensions.
 
++++
+** The new function 'read-answer' accepts either long or short answers
+depending on the new customizable variable 'read-answer-short'.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
+
+---
+** Battery status is now supported in all Cygwin builds.
+Previously it was supported only in the Cygwin-w32 build.
 
 
 ----------------------------------------------------------------------
