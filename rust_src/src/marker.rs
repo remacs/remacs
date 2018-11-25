@@ -30,39 +30,39 @@ impl LispMarkerRef {
         unsafe { mem::transmute(self.as_ptr()) }
     }
 
-    pub fn charpos(self) -> Option<ptrdiff_t> {
+    pub fn charpos(self) -> Option<isize> {
         match self.buffer() {
             None => None,
             Some(_) => Some(self.charpos),
         }
     }
 
-    pub fn charpos_or_error(self) -> ptrdiff_t {
+    pub fn charpos_or_error(self) -> isize {
         match self.buffer() {
             None => error!("Marker does not point anywhere"),
             Some(_) => self.charpos,
         }
     }
 
-    pub fn set_charpos(&mut self, charpos: ptrdiff_t) {
+    pub fn set_charpos(&mut self, charpos: isize) {
         self.charpos = charpos;
     }
 
-    pub fn bytepos(self) -> Option<ptrdiff_t> {
+    pub fn bytepos(self) -> Option<isize> {
         match self.buffer() {
             None => None,
             Some(_) => Some(self.bytepos),
         }
     }
 
-    pub fn bytepos_or_error(self) -> ptrdiff_t {
+    pub fn bytepos_or_error(self) -> isize {
         match self.buffer() {
             None => error!("Marker does not point anywhere"),
             Some(_) => self.bytepos,
         }
     }
 
-    pub fn set_bytepos(&mut self, bytepos: ptrdiff_t) {
+    pub fn set_bytepos(&mut self, bytepos: isize) {
         self.bytepos = bytepos;
     }
 
