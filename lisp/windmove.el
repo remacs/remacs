@@ -678,6 +678,73 @@ Default value of MODIFIERS is `shift-meta'."
   (global-set-key (vector (append modifiers '(down)))  'windmove-display-down)
   (global-set-key (vector (append modifiers '(?0)))    'windmove-display-same-window))
 
+;;; Directional window deletion
+
+(defun windmove-delete-in-direction (dir &optional arg)
+  "Delete the window at direction DIR.
+If prefix ARG is `C-u', delete the selected window and
+select the window at direction DIR.
+When `windmove-wrap-around' is non-nil, takes the window
+from the opposite side of the frame."
+  (let ((other-window (window-in-direction dir nil nil arg
+                                           windmove-wrap-around t)))
+    (cond ((null other-window)
+           (user-error "No window %s from selected window" dir))
+          (t
+           (if (not (consp arg))
+               (delete-window other-window)
+             (delete-window (selected-window))
+             (select-window other-window))))))
+
+;;;###autoload
+(defun windmove-delete-left (&optional arg)
+  "Delete the window to the left of the current one.
+If prefix ARG is `C-u', delete the selected window and
+select the window that was to the left of the current one."
+  (interactive "P")
+  (windmove-delete-in-direction 'left arg))
+
+;;;###autoload
+(defun windmove-delete-up (&optional arg)
+  "Delete the window above the current one.
+If prefix ARG is `C-u', delete the selected window and
+select the window that was above the current one."
+  (interactive "P")
+  (windmove-delete-in-direction 'up arg))
+
+;;;###autoload
+(defun windmove-delete-right (&optional arg)
+  "Delete the window to the right of the current one.
+If prefix ARG is `C-u', delete the selected window and
+select the window that was to the right of the current one."
+  (interactive "P")
+  (windmove-delete-in-direction 'right arg))
+
+;;;###autoload
+(defun windmove-delete-down (&optional arg)
+  "Delete the window below the current one.
+If prefix ARG is `C-u', delete the selected window and
+select the window that was below the current one."
+  (interactive "P")
+  (windmove-delete-in-direction 'down arg))
+
+;;;###autoload
+(defun windmove-delete-default-keybindings (&optional prefix modifiers)
+  "Set up keybindings for directional window deletion.
+Keys are bound to commands that delete windows in the specified
+direction.  Keybindings are of the form PREFIX MODIFIERS-{left,right,up,down},
+where PREFIX is a prefix key and MODIFIERS is either a list of modifiers or
+a single modifier.  Default value of PREFIX is `C-x' and MODIFIERS is `shift'."
+  (interactive)
+  (unless prefix (setq prefix '(?\C-x)))
+  (unless (listp prefix) (setq prefix (list prefix)))
+  (unless modifiers (setq modifiers '(shift)))
+  (unless (listp modifiers) (setq modifiers (list modifiers)))
+  (global-set-key (vector prefix (append modifiers '(left)))  'windmove-delete-left)
+  (global-set-key (vector prefix (append modifiers '(right))) 'windmove-delete-right)
+  (global-set-key (vector prefix (append modifiers '(up)))    'windmove-delete-up)
+  (global-set-key (vector prefix (append modifiers '(down)))  'windmove-delete-down))
+
 (provide 'windmove)
 
 ;;; windmove.el ends here

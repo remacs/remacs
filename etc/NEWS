@@ -304,6 +304,9 @@ back, customize 'follow-hide-ghost-cursors' to nil.
 
 ** Windmove
 
+*** 'windmove-create-window' when non-nil makes a new window on moving off
+the edge of the frame.
+
 *** Windmove supports directional window display and selection.
 The new command 'windmove-display-default-keybindings' binds default
 keys with provided modifiers (by default, Shift-Meta) to the commands
@@ -316,8 +319,13 @@ creating the window if necessary.  A special key can be customized to
 display the buffer in the same window, for example, 'S-M-0 C-h e'
 displays the *Messages* buffer in the same window.
 
-*** 'windmove-create-window' when non-nil makes a new window on moving off
-the edge of the frame.
+*** Windmove also supports directional window deletion.
+The new command 'windmove-delete-default-keybindings' binds default
+keys with provided prefix (by default, C-x) and modifiers (by default,
+Shift) to the commands that delete the window in the specified
+direction.  For example, 'C-x S-down' deletes the window below.
+With a prefix arg 'C-u', deletes the selected window and selects
+the window that was in the specified direction.
 
 ** Octave mode
 The mode is automatically enabled in files that start with the
