@@ -42,6 +42,12 @@
   (should (eq (window-new-total) (window-total-height)))
   (should (eq (window-new-total (selected-window)) (window-total-height))))
 
+(ert-deftest window-new-normal ()
+  (set-window-new-normal nil 1.0)
+  (should (= (window-new-normal) 1.0))
+  (set-window-new-normal nil 0.23)
+  (should (= (window-new-normal) 0.23)))
+
 (ert-deftest window-use-time ()
   (let ((use-time (window-use-time)))
     (should (eq 'integer (type-of use-time)))
