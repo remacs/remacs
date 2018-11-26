@@ -89,7 +89,7 @@ pub enum LispFrameOrSelected {
 }
 
 impl From<LispObject> for LispFrameOrSelected {
-    fn from(obj: LispObject) -> LispFrameOrSelected {
+    fn from(obj: LispObject) -> Self {
         obj.map_or(LispFrameOrSelected::Selected, |o| {
             LispFrameOrSelected::Frame(o.as_frame_or_error())
         })
@@ -97,13 +97,13 @@ impl From<LispObject> for LispFrameOrSelected {
 }
 
 impl From<LispFrameOrSelected> for LispObject {
-    fn from(frame: LispFrameOrSelected) -> LispObject {
+    fn from(frame: LispFrameOrSelected) -> Self {
         LispFrameRef::from(frame).into()
     }
 }
 
 impl From<LispFrameOrSelected> for LispFrameRef {
-    fn from(frame: LispFrameOrSelected) -> LispFrameRef {
+    fn from(frame: LispFrameOrSelected) -> Self {
         match frame {
             LispFrameOrSelected::Frame(f) => f,
             LispFrameOrSelected::Selected => unsafe { current_frame }.as_frame_or_error(),

@@ -47,11 +47,11 @@ use crate::{
 pub struct LispObject(pub EmacsInt);
 
 impl LispObject {
-    pub fn from_C(n: EmacsInt) -> LispObject {
+    pub fn from_C(n: EmacsInt) -> Self {
         LispObject(n)
     }
 
-    pub fn from_C_unsigned(n: EmacsUint) -> LispObject {
+    pub fn from_C_unsigned(n: EmacsUint) -> Self {
         Self::from_C(n as EmacsInt)
     }
 
@@ -63,7 +63,7 @@ impl LispObject {
         self.0 as EmacsUint
     }
 
-    pub fn from_bool(v: bool) -> LispObject {
+    pub fn from_bool(v: bool) -> Self {
         if v {
             Qt
         } else {
@@ -71,7 +71,7 @@ impl LispObject {
         }
     }
 
-    pub fn from_float(v: EmacsDouble) -> LispObject {
+    pub fn from_float(v: EmacsDouble) -> Self {
         unsafe { make_float(v) }
     }
 }
@@ -104,7 +104,7 @@ impl<T> Clone for ExternalPtr<T> {
 }
 
 impl<T> ExternalPtr<T> {
-    pub fn new(p: *mut T) -> ExternalPtr<T> {
+    pub fn new(p: *mut T) -> Self {
         ExternalPtr(p)
     }
 
@@ -139,7 +139,7 @@ impl<T> DerefMut for ExternalPtr<T> {
 }
 
 impl<T> PartialEq for ExternalPtr<T> {
-    fn eq(&self, other: &ExternalPtr<T>) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.as_ptr() == other.as_ptr()
     }
 }
