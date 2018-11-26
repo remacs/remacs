@@ -41,6 +41,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 char *w32_getenv (const char *);
 # define egetenv(VAR) w32_getenv (VAR)
 
+# undef signal
+
 #else /* !WINDOWSNT */
 
 # ifdef HAVE_NTGUI
@@ -67,8 +69,6 @@ char *w32_getenv (const char *);
 # define egetenv(VAR) getenv (VAR)
 
 #endif /* !WINDOWSNT */
-
-#undef signal
 
 #include <ctype.h>
 #include <errno.h>
@@ -144,7 +144,7 @@ static char const *server_file;
 /* If non-NULL, the tramp prefix emacs must use to find the files.  */
 static char const *tramp_prefix;
 
-/* PID of the Emacs server process.  */
+/* If nonzero, PID of the Emacs server process.  */
 static pid_t emacs_pid;
 
 /* If non-NULL, a string that should form a frame parameter alist to
@@ -734,10 +734,13 @@ fail (void)
 
 #if defined HAVE_SOCKETS && defined HAVE_INET_SOCKETS
 
-enum { AUTH_KEY_LENGTH = 64 };
+# ifndef NO_SOCKETS_IN_FILE_SYSTEM
+static void act_on_signals (HSOCKET);
+# else
+static void act_on_signals (HSOCKET s) {}
+# endif
 
-/* Socket used to communicate with the Emacs server process.  */
-static HSOCKET emacs_socket = 0;
+enum { AUTH_KEY_LENGTH = 64 };
 
 static void
 sock_err_message (const char *function_name)
@@ -790,16 +793,22 @@ send_to_emacs (HSOCKET s, const char *data)
       if (sblen == SEND_BUFFER_SIZE
 	  || (0 < sblen && send_buffer[sblen - 1] == '\n'))
 	{
-	  int sent = send (s, send_buffer, sblen, 0);
-	  if (sent < 0)
+	  int sent;
+	  while ((sent = send (s, send_buffer, sblen, 0)) < 0)
 	    {
-	      message (true, "%s: failed to send %d bytes to socket: %s\n",
-		       progname, sblen, strerror (errno));
-	      fail ();
+	      if (errno != EINTR)
+		{
+		  message (true, "%s: failed to send %d bytes to socket: %s\n",
+			   progname, sblen, strerror (errno));
+		  fail ();
+		}
+	      /* Act on signals not requiring communication to Emacs,
+		 but defer action on the others to avoid confusing the
+		 communication currently in progress.  */
+	      act_on_signals (INVALID_SOCKET);
 	    }
-	  if (sent != sblen)
-	    memmove (send_buffer, &send_buffer[sent], sblen - sent);
 	  sblen -= sent;
+	  memmove (send_buffer, &send_buffer[sent], sblen);
 	}
 
       dlen -= part;
@@ -1091,86 +1100,181 @@ socket_status (const char *name)
 }
 
 
-/* A signal handler that passes the signal to the Emacs process.
-   Useful for SIGWINCH.  */
+/* Signal handlers merely set a flag, to avoid race conditions on
+   POSIXish systems.  Non-POSIX platforms lacking sigaction make do
+   with traditional calls to 'signal'; races are rare so this usually
+   works.  Although this approach may treat multiple deliveries of SIG
+   as a single delivery and may act on signals in a different order
+   than received, that is OK for emacsclient.  Also, this approach may
+   omit output if a printf call is interrupted by a signal, but printf
+   output is not that important (emacsclient does not check for printf
+   errors, after all) so this is also OK for emacsclient.  */
 
+/* Reinstall for SIG the signal handler HANDLER if needed.  It is
+   needed on a non-POSIX or traditional platform where an interrupt
+   resets the signal handler to SIG_DFL.  */
 static void
-pass_signal_to_emacs (int signalnum)
+reinstall_handler_if_needed (int sig, void (*handler) (int))
 {
-  int old_errno = errno;
-
-  if (emacs_pid)
-    kill (emacs_pid, signalnum);
-
-  signal (signalnum, pass_signal_to_emacs);
-  errno = old_errno;
+#  ifndef SA_RESETHAND
+  /* This is a platform without POSIX's sigaction.  */
+  signal (sig, handler);
+#  endif
 }
 
-/* Signal handler for SIGCONT; notify the Emacs process that it can
-   now resume our tty frame.  */
+/* Flags for each signal, and handlers that set the flags.  */
+
+static sig_atomic_t volatile
+  got_sigcont, got_sigtstp, got_sigttou, got_sigwinch;
 
 static void
-handle_sigcont (int signalnum)
+handle_sigcont (int sig)
 {
-  int old_errno = errno;
-  pid_t pgrp = getpgrp ();
-  pid_t tcpgrp = tcgetpgrp (STDOUT_FILENO);
+  got_sigcont = 1;
+  reinstall_handler_if_needed (sig, handle_sigcont);
+}
+static void
+handle_sigtstp (int sig)
+{
+  got_sigtstp = 1;
+  reinstall_handler_if_needed (sig, handle_sigtstp);
+}
+static void
+handle_sigttou (int sig)
+{
+  got_sigttou = 1;
+  reinstall_handler_if_needed (sig, handle_sigttou);
+}
+static void
+handle_sigwinch (int sig)
+{
+  got_sigwinch = 1;
+  reinstall_handler_if_needed (sig, handle_sigwinch);
+}
 
-  if (tcpgrp == pgrp)
+/* Install for signal SIG the handler HANDLER.  However, if FLAG is
+   non-null and if the signal is currently being ignored, do not
+   install the handler and keep *FLAG zero.  */
+
+static void
+install_handler (int sig, void (*handler) (int), sig_atomic_t volatile *flag)
+{
+#  ifdef SA_RESETHAND
+  if (flag)
     {
-      /* We are in the foreground.  */
-      send_to_emacs (emacs_socket, "-resume \n");
+      struct sigaction oact;
+      if (sigaction (sig, NULL, &oact) == 0 && oact.sa_handler == SIG_IGN)
+	return;
     }
-  else if (0 <= tcpgrp && tty)
+  struct sigaction act = { .sa_handler = handler };
+  sigemptyset (&act.sa_mask);
+  sigaction (sig, &act, NULL);
+#  else
+  void (*ohandler) (int) = signal (sig, handler);
+  if (flag)
     {
-      /* We are in the background; cancel the continue.  */
-      kill (-pgrp, SIGTTIN);
+      if (ohandler == SIG_IGN)
+	{
+	  signal (sig, SIG_IGN);
+	  /* While HANDLER was mistakenly installed a signal may have
+	     arrived and set *FLAG, so clear *FLAG now.  */
+	  *flag = 0;
+	}
     }
-
-  signal (signalnum, handle_sigcont);
-  errno = old_errno;
+#  endif
 }
 
-/* Signal handler for SIGTSTP; notify the Emacs process that we are
-   going to sleep.  Normally the suspend is initiated by Emacs via
-   server-handle-suspend-tty, but if the server gets out of sync with
-   reality, we may get a SIGTSTP on C-z.  Handling this signal and
-   notifying Emacs about it should get things under control again.  */
-
-static void
-handle_sigtstp (int signalnum)
-{
-  int old_errno = errno;
-  sigset_t set;
-
-  if (emacs_socket)
-    send_to_emacs (emacs_socket, "-suspend \n");
-
-  /* Unblock this signal and call the default handler by temporarily
-     changing the handler and resignaling.  */
-  sigprocmask (SIG_BLOCK, NULL, &set);
-  sigdelset (&set, signalnum);
-  signal (signalnum, SIG_DFL);
-  raise (signalnum);
-  sigprocmask (SIG_SETMASK, &set, NULL); /* Let's the above signal through. */
-  signal (signalnum, handle_sigtstp);
-
-  errno = old_errno;
-}
-
-
-/* Set up signal handlers before opening a frame on the current tty.  */
+/* Initial installation of signal handlers.  */
 
 static void
 init_signals (void)
 {
-  /* Don't pass SIGINT and SIGQUIT to Emacs, because it has no way of
-     deciding which terminal the signal came from.  C-g is now a
-     normal input event on secondary terminals.  */
-  signal (SIGWINCH, pass_signal_to_emacs);
-  signal (SIGCONT, handle_sigcont);
-  signal (SIGTSTP, handle_sigtstp);
-  signal (SIGTTOU, handle_sigtstp);
+  install_handler (SIGCONT, handle_sigcont, &got_sigcont);
+  install_handler (SIGTSTP, handle_sigtstp, &got_sigtstp);
+  install_handler (SIGTTOU, handle_sigttou, &got_sigttou);
+  install_handler (SIGWINCH, handle_sigwinch, &got_sigwinch);
+  /* Don't mess with SIGINT and SIGQUIT, as Emacs has no way to
+     determine which terminal the signal came from.  C-g is a normal
+     input event on secondary terminals.  */
+}
+
+/* Act on delivered tty-related signal SIG that normally has handler
+   HANDLER.  EMACS_SOCKET connects to Emacs.  */
+
+static void
+act_on_tty_signal (int sig, void (*handler) (int), HSOCKET emacs_socket)
+{
+  /* Notify Emacs that we are going to sleep.  Normally the suspend is
+     initiated by Emacs via server-handle-suspend-tty, but if the
+     server gets out of sync with reality, we may get a SIGTSTP on
+     C-z.  Handling this signal and notifying Emacs about it should
+     get things under control again.  */
+  send_to_emacs (emacs_socket, "-suspend \n");
+
+  /* Execute the default action by temporarily changing handling to
+     the default and resignaling.  */
+  install_handler (sig, SIG_DFL, NULL);
+  raise (sig);
+  install_handler (sig, handler, NULL);
+}
+
+/* Act on delivered signals if possible.  If EMACS_SOCKET is valid,
+   use it to communicate to Emacs.  */
+
+static void
+act_on_signals (HSOCKET emacs_socket)
+{
+  while (true)
+    {
+      bool took_action = false;
+
+      if (emacs_socket != INVALID_SOCKET)
+	{
+	  if (got_sigcont)
+	    {
+	      got_sigcont = 0;
+	      took_action = true;
+	      pid_t tcpgrp = tcgetpgrp (STDOUT_FILENO);
+	      if (0 <= tcpgrp)
+		{
+		  pid_t pgrp = getpgrp ();
+		  if (tcpgrp == pgrp)
+		    {
+		      /* We are in the foreground.  */
+		      send_to_emacs (emacs_socket, "-resume \n");
+		    }
+		  else if (tty)
+		    {
+		      /* We are in the background; cancel the continue.  */
+		      kill (-pgrp, SIGTTIN);
+		    }
+		}
+	    }
+
+	  if (got_sigtstp)
+	    {
+	      got_sigtstp = 0;
+	      took_action = true;
+	      act_on_tty_signal (SIGTSTP, handle_sigtstp, emacs_socket);
+	    }
+	  if (got_sigttou)
+	    {
+	      got_sigttou = 0;
+	      took_action = true;
+	      act_on_tty_signal (SIGTTOU, handle_sigttou, emacs_socket);
+	    }
+	}
+
+      if (emacs_pid && got_sigwinch)
+	{
+	  got_sigwinch = 0;
+	  took_action = true;
+	  kill (emacs_pid, SIGWINCH);
+	}
+
+      if (!took_action)
+	break;
+    }
 }
 
 /* Create a local socket and connect it to Emacs.  */
@@ -1464,7 +1568,7 @@ w32_give_focus (void)
 
 /* Start the emacs daemon and try to connect to it.  */
 
-static void
+static HSOCKET
 start_daemon_and_retry_set_socket (void)
 {
 # ifndef WINDOWSNT
@@ -1581,13 +1685,23 @@ start_daemon_and_retry_set_socket (void)
 	     "Emacs daemon should have started, trying to connect again\n");
 # endif /* WINDOWSNT */
 
-  emacs_socket = set_socket (true);
+  HSOCKET emacs_socket = set_socket (true);
   if (emacs_socket == INVALID_SOCKET)
     {
       message (true,
 	       "Error: Cannot connect even after starting the Emacs daemon\n");
       exit (EXIT_FAILURE);
     }
+  return emacs_socket;
+}
+
+/* Flush standard output and its underlying file descriptor.  */
+static void
+flush_stdout (HSOCKET emacs_socket)
+{
+  fflush (stdout);
+  while (fdatasync (STDOUT_FILENO) != 0 && errno == EINTR)
+    act_on_signals (emacs_socket);
 }
 #endif /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
 
@@ -1641,13 +1755,14 @@ main (int argc, char **argv)
      in case of failure to connect.  */
   bool start_daemon_if_needed = alternate_editor && !alternate_editor[0];
 
-  emacs_socket = set_socket (alternate_editor || start_daemon_if_needed);
+  HSOCKET emacs_socket = set_socket (alternate_editor
+				     || start_daemon_if_needed);
   if (emacs_socket == INVALID_SOCKET)
     {
       if (! start_daemon_if_needed)
 	fail ();
 
-      start_daemon_and_retry_set_socket ();
+      emacs_socket = start_daemon_and_retry_set_socket ();
     }
 
   char *cwd = get_current_dir_name ();
@@ -1719,6 +1834,8 @@ main (int argc, char **argv)
       if (find_tty (&tty_type, &tty_name, !tty))
 	{
 # ifndef NO_SOCKETS_IN_FILE_SYSTEM
+	  /* Install signal handlers before opening a frame on the
+	     current tty.  */
 	  init_signals ();
 # endif
 	  send_to_emacs (emacs_socket, "-tty ");
@@ -1809,20 +1926,16 @@ main (int argc, char **argv)
       printf ("Waiting for Emacs...");
       skiplf = false;
     }
-  fflush (stdout);
-  while (fdatasync (STDOUT_FILENO) != 0 && errno == EINTR)
-    continue;
+  flush_stdout (emacs_socket);
 
   /* Now, wait for an answer and print any messages.  */
   while (exit_status == EXIT_SUCCESS)
     {
       do
-        {
-          errno = 0;
-          rl = recv (emacs_socket, string, BUFSIZ, 0);
-        }
-      /* If we receive a signal (e.g. SIGWINCH, which we pass
-	 through to Emacs), on some OSes we get EINTR and must retry. */
+	{
+	  act_on_signals (emacs_socket);
+	  rl = recv (emacs_socket, string, BUFSIZ, 0);
+	}
       while (rl < 0 && errno == EINTR);
 
       if (rl <= 0)
@@ -1916,9 +2029,7 @@ main (int argc, char **argv)
 
   if (!skiplf)
     printf ("\n");
-  fflush (stdout);
-  while (fdatasync (STDOUT_FILENO) != 0 && errno == EINTR)
-    continue;
+  flush_stdout (emacs_socket);
 
   if (rl < 0)
     exit_status = EXIT_FAILURE;
