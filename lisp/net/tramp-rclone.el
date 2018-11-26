@@ -435,15 +435,10 @@ file names."
 
 (defun tramp-rclone-mounted-p (vec)
   "Check, whether storage system determined by VEC is mounted."
-  (or
-   ;; We set this property at the end of
-   ;; `tramp-rclone-maybe-open-connection'.  Let's use it as
-   ;; indicator.
-   (tramp-get-connection-property vec "uid-integer" nil)
-   ;; If it is mounted, "." is not shown.  If the endpoint is not
-   ;; connected, `directory-files' returns an error.
-   (ignore-errors
-     (not (member "." (directory-files (tramp-rclone-mount-point vec)))))))
+  (with-tramp-file-property vec "/" "mounted"
+    (string-match
+     (format "^%s:" (regexp-quote (tramp-file-name-host vec)))
+     (shell-command-to-string "mount"))))
 
 (defun tramp-rclone-flush-mount (vec)
   "Flush directory cache of VEC mount."
@@ -511,6 +506,7 @@ connection if a previous connection has died for some reason."
 			  (tramp-compat-temporary-file-directory)))
 		    (apply 'start-process (tramp-get-connection-name vec) buf
 			   tramp-rclone-program (delq nil args)))))
+	  (tramp-set-file-property vec "/" "mounted" t)
 	  (tramp-message
 	   vec 6 "%s" (mapconcat 'identity (process-command p) " "))
 	  (process-put p 'adjust-window-size-function 'ignore)
