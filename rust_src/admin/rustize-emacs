@@ -30,6 +30,8 @@ def build_lisp_fn_args(min_args=None, max_args=None, intspec=None,
     pieces = []
     if min_args != max_args and max_args != 'MANY':
         pieces.append(('min', min_args))
+    if max_args == 'UNEVALLED':
+        pieces.append(('unevalled', 'true'))
     if intspec is not None:
         pieces.append(('intspec', intspec))
     if lisp_name != func_name.replace('_', '-'):
@@ -126,7 +128,7 @@ pub extern "C" fn {name}({args}){return}
 
 
 def parse_c_definition(c_code):
-    defun_regex = re.compile(r'''^\s*DEFUN\s+\("(?P<lisp_name>[^"]+)",\s+F(?P<func_name>\w+),\s+S\w+,\s+(?P<min_args>\d),\s+(?P<max_args>\d),\s+(?P<intspec>0|"[^"]*"),
+    defun_regex = re.compile(r'''^\s*DEFUN\s+\("(?P<lisp_name>[^"]+)",\s+F(?P<func_name>\w+),\s+S\w+,\s+(?P<min_args>\d),\s+(?P<max_args>[^,]+),\s+(?P<intspec>0|"[^"]*"),
 \s+doc:\s+/\*\s+(?P<docstring>.+)\*/\s*.*\)
 \s*\((?P<func_args>[^\)]+)\)
 (?P<code>.+)''', re.DOTALL)

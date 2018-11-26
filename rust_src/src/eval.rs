@@ -140,8 +140,8 @@ pub extern "C" fn prog_ignore(body: LispObject) {
 /// whose values are discarded.
 /// usage: (prog1 FIRST BODY...)
 #[lisp_fn(min = "1", unevalled = "true")]
-pub fn prog1(args: LispObject) -> LispObject {
-    let (first, body) = args.as_cons_or_error().as_tuple();
+pub fn prog1(args: LispCons) -> LispObject {
+    let (first, body) = args.as_tuple();
 
     let val = unsafe { eval_sub(first) };
     progn(body);
@@ -153,11 +153,11 @@ pub fn prog1(args: LispObject) -> LispObject {
 /// remaining args, whose values are discarded.
 /// usage: (prog2 FORM1 FORM2 BODY...)
 #[lisp_fn(min = "2", unevalled = "true")]
-pub fn prog2(args: LispObject) -> LispObject {
-    let (form1, tail) = args.as_cons_or_error().as_tuple();
+pub fn prog2(args: LispCons) -> LispObject {
+    let (form1, tail) = args.as_tuple();
 
     unsafe { eval_sub(form1) };
-    prog1(tail)
+    prog1(tail.as_cons_or_error())
 }
 
 /// Set each SYM to the value of its VAL.
@@ -293,8 +293,8 @@ pub fn special_variable_p(symbol: LispSymbolRef) -> bool {
 /// The optional DOCSTRING specifies the variable's documentation string.
 /// usage: (defconst SYMBOL INITVALUE [DOCSTRING])
 #[lisp_fn(min = "2", unevalled = "true")]
-pub fn defconst(args: LispObject) -> LispSymbolRef {
-    let (sym, tail) = args.as_cons_or_error().as_tuple();
+pub fn defconst(args: LispCons) -> LispSymbolRef {
+    let (sym, tail) = args.as_tuple();
 
     let mut docstring = if cdr(tail).is_not_nil() {
         if cdr(cdr(tail)).is_not_nil() {
@@ -306,7 +306,7 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
         Qnil
     };
 
-    let mut tem = unsafe { eval_sub(car(cdr(args))) };
+    let mut tem = unsafe { eval_sub(car(tail)) };
     if unsafe { globals.Vpurify_flag } != Qnil {
         tem = unsafe { Fpurecopy(tem) };
     }
@@ -1139,6 +1139,21 @@ pub extern "C" fn unbind_to(count: libc::ptrdiff_t, value: LispObject) -> LispOb
     }
 
     value
+}
+
+/// Do BODYFORM, protecting with UNWINDFORMS.
+/// If BODYFORM completes normally, its value is returned
+/// after executing the UNWINDFORMS.
+/// If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
+/// usage: (unwind-protect BODYFORM UNWINDFORMS...)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn unwind_protect(args: LispCons) -> LispObject {
+    let (bodyform, unwindforms) = args.as_tuple();
+    let count = c_specpdl_index();
+
+    unsafe { record_unwind_protect(Some(prog_ignore), unwindforms) };
+
+    unbind_to(count, unsafe { eval_sub(bodyform) })
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
