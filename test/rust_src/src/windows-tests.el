@@ -61,7 +61,9 @@
     ;; Normal for current-window should be the same
     (should (= (window-new-normal) current-window-expected-normal))
     (select-window other-window)
-    (should (= (window-new-normal) other-window-expected-normal))))
+    (should (= (window-new-normal) other-window-expected-normal))
+    (delete-window other-window)
+    ))
 
 (ert-deftest window-use-time ()
   (let ((use-time (window-use-time)))
