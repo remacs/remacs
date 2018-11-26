@@ -1995,6 +1995,7 @@ main (int argc, char **argv)
 	        skiplf = str[strlen (str) - 1] == '\n';
               exit_status = EXIT_FAILURE;
             }
+#ifndef WINDOWSNT
 	  else if (strprefix ("-suspend ", p))
 	    {
 	      /* -suspend: Suspend this terminal, i.e., stop the process. */
@@ -2003,6 +2004,7 @@ main (int argc, char **argv)
 	      skiplf = true;
 	      kill (0, SIGSTOP);
 	    }
+#endif
 	  else
 	    {
 	      /* Unknown command. */
