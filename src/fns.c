@@ -1465,7 +1465,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       break;
 
     case Lisp_String:
-      return internal_equal_string(o1, o2, equal_kind);
+      return internal_equal_string(o1, o2, equal_kind, depth, ht);
 
     default:
       break;
