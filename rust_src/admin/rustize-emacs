@@ -28,7 +28,7 @@ def build_lisp_fn_args(min_args=None, max_args=None, intspec=None,
     elif intspec.startswith('"'):
         intspec = intspec.strip('"')
     pieces = []
-    if min_args != max_args and max_args != 'MANY':
+    if min_args != max_args:
         pieces.append(('min', min_args))
     if max_args == 'UNEVALLED':
         pieces.append(('unevalled', 'true'))
