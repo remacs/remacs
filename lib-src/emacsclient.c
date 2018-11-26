@@ -32,8 +32,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # include <io.h>
 # include <winsock2.h>
 
-# define NO_SOCKETS_IN_FILE_SYSTEM
-
 # define HSOCKET SOCKET
 # define CLOSE_SOCKET closesocket
 # define INITIALIZE() initialize_sockets ()
@@ -60,6 +58,8 @@ char *w32_getenv (const char *);
 #  endif /* HAVE_SOCKETS */
 # endif
 # include <arpa/inet.h>
+
+# define SOCKETS_IN_FILE_SYSTEM
 
 # define INVALID_SOCKET (-1)
 # define HSOCKET int
@@ -133,7 +133,7 @@ static bool tty;
    is not running.  --alternate-editor.   */
 static char *alternate_editor;
 
-#ifndef NO_SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
 /* If non-NULL, the filename of the UNIX socket.  */
 static char const *socket_name;
 #endif
@@ -168,7 +168,7 @@ static struct option const longopts[] =
   { "create-frame", no_argument,   NULL, 'c' },
   { "alternate-editor", required_argument, NULL, 'a' },
   { "frame-parameters", required_argument, NULL, 'F' },
-#ifndef NO_SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
   { "socket-name",	required_argument, NULL, 's' },
 #endif
   { "server-file",	required_argument, NULL, 'f' },
@@ -182,7 +182,7 @@ static struct option const longopts[] =
    There is no '-p' short option.  */
 static char const shortopts[] =
   "nqueHVtca:F:"
-#ifndef NO_SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
   "s:"
 #endif
   "f:d:T:";
@@ -510,7 +510,7 @@ decode_options (int argc, char **argv)
 	  alternate_editor = optarg;
 	  break;
 
-#ifndef NO_SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
 	case 's':
 	  socket_name = optarg;
 	  break;
@@ -665,7 +665,7 @@ The following OPTIONS are accepted:\n\
 			Visit the file in the given display\n\
 ", "\
 --parent-id=ID          Open in parent window ID, via XEmbed\n"
-#ifndef NO_SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
 "-s SOCKET, --socket-name=SOCKET\n\
 			Set filename of the UNIX socket for communication\n"
 #endif
@@ -734,10 +734,11 @@ fail (void)
 
 #if defined HAVE_SOCKETS && defined HAVE_INET_SOCKETS
 
-# ifndef NO_SOCKETS_IN_FILE_SYSTEM
+# ifdef SOCKETS_IN_FILE_SYSTEM
 static void act_on_signals (HSOCKET);
 # else
 static void act_on_signals (HSOCKET s) {}
+static void init_signals (void) {}
 # endif
 
 enum { AUTH_KEY_LENGTH = 64 };
@@ -1078,7 +1079,7 @@ find_tty (const char **tty_type, const char **tty_name, bool noabort)
 }
 
 
-# ifndef NO_SOCKETS_IN_FILE_SYSTEM
+# ifdef SOCKETS_IN_FILE_SYSTEM
 
 /* Three possibilities:
   >0 - 'stat' failed with this errno value
@@ -1416,7 +1417,7 @@ set_local_socket (const char *local_socket_name)
   CLOSE_SOCKET (s);
   return INVALID_SOCKET;
 }
-# endif /* ! NO_SOCKETS_IN_FILE_SYSTEM */
+# endif /* SOCKETS_IN_FILE_SYSTEM */
 
 static HSOCKET
 set_socket (bool no_exit_if_error)
@@ -1426,7 +1427,7 @@ set_socket (bool no_exit_if_error)
 
   INITIALIZE ();
 
-# ifndef NO_SOCKETS_IN_FILE_SYSTEM
+# ifdef SOCKETS_IN_FILE_SYSTEM
   /* Explicit --socket-name argument.  */
   if (!socket_name)
     socket_name = egetenv ("EMACS_SOCKET_NAME");
@@ -1457,7 +1458,7 @@ set_socket (bool no_exit_if_error)
       exit (EXIT_FAILURE);
     }
 
-# ifndef NO_SOCKETS_IN_FILE_SYSTEM
+# ifdef SOCKETS_IN_FILE_SYSTEM
   /* Implicit local socket.  */
   s = set_local_socket ("server");
   if (s != INVALID_SOCKET)
@@ -1471,7 +1472,7 @@ set_socket (bool no_exit_if_error)
 
   /* No implicit or explicit socket, and no alternate editor.  */
   message (true, "%s: No socket or alternate editor.  Please use:\n\n"
-# ifndef NO_SOCKETS_IN_FILE_SYSTEM
+# ifdef SOCKETS_IN_FILE_SYSTEM
 "\t--socket-name\n"
 # endif
 "\t--server-file      (or environment variable EMACS_SERVER_FILE)\n\
@@ -1604,7 +1605,7 @@ start_daemon_and_retry_set_socket (void)
       d_argv[0] = emacs;
       d_argv[1] = daemon_option;
       d_argv[2] = 0;
-#  ifndef NO_SOCKETS_IN_FILE_SYSTEM
+#  ifdef SOCKETS_IN_FILE_SYSTEM
       if (socket_name != NULL)
 	{
 	  /* Pass  --daemon=socket_name as argument.  */
@@ -1833,11 +1834,10 @@ main (int argc, char **argv)
 
       if (find_tty (&tty_type, &tty_name, !tty))
 	{
-# ifndef NO_SOCKETS_IN_FILE_SYSTEM
 	  /* Install signal handlers before opening a frame on the
 	     current tty.  */
 	  init_signals ();
-# endif
+
 	  send_to_emacs (emacs_socket, "-tty ");
 	  quote_argument (emacs_socket, tty_name);
 	  send_to_emacs (emacs_socket, " ");
