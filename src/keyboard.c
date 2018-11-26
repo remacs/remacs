@@ -300,7 +300,6 @@ static union buffered_input_event *volatile kbd_store_ptr;
    dequeuing functions?  Such a flag could be screwed up by interrupts
    at inopportune times.  */
 
-static void recursive_edit_unwind (Lisp_Object buffer);
 static Lisp_Object command_loop (void);
 
 static void echo_now (void);
@@ -719,49 +718,6 @@ force_auto_save_soon (void)
 }
 #endif
 
-DEFUN ("recursive-edit", Frecursive_edit, Srecursive_edit, 0, 0, "",
-       doc: /* Invoke the editor command loop recursively.
-To get out of the recursive edit, a command can throw to `exit' -- for
-instance (throw \\='exit nil).
-If you throw a value other than t, `recursive-edit' returns normally
-to the function that called it.  Throwing a t value causes
-`recursive-edit' to quit, so that control returns to the command loop
-one level up.
-
-This function is called by the editor initialization to begin editing.  */)
-  (void)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-  Lisp_Object buffer;
-
-  /* If we enter while input is blocked, don't lock up here.
-     This may happen through the debugger during redisplay.  */
-  if (input_blocked_p ())
-    return Qnil;
-
-  if (command_loop_level >= 0
-      && current_buffer != XBUFFER (XWINDOW (selected_window)->contents))
-    buffer = Fcurrent_buffer ();
-  else
-    buffer = Qnil;
-
-  /* Don't do anything interesting between the increment and the
-     record_unwind_protect!  Otherwise, we could get distracted and
-     never decrement the counter again.  */
-  command_loop_level++;
-  update_mode_lines = 17;
-  record_unwind_protect (recursive_edit_unwind, buffer);
-
-  /* If we leave recursive_edit_1 below with a `throw' for instance,
-     like it is done in the splash screen display, we have to
-     make sure that we restore single_kboard as command_loop_1
-     would have done if it were left normally.  */
-  if (command_loop_level > 0)
-    temporarily_switch_to_single_kboard (SELECTED_FRAME ());
-
-  recursive_edit_1 ();
-  return unbind_to (count, Qnil);
-}
 
 void
 recursive_edit_unwind (Lisp_Object buffer)
@@ -11094,7 +11050,6 @@ syms_of_keyboard (void)
   defsubr (&Sevent_convert_list);
   defsubr (&Sread_key_sequence);
   defsubr (&Sread_key_sequence_vector);
-  defsubr (&Srecursive_edit);
   defsubr (&Strack_mouse);
   defsubr (&Sinput_pending_p);
   defsubr (&Srecent_keys);
