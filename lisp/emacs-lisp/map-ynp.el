@@ -79,6 +79,7 @@ are meaningful here.
 
 Returns the number of actions taken."
   (let* ((actions 0)
+         (msg (current-message))
 	 user-keys mouse-event map prompt char elt def
 	 ;; Non-nil means we should use mouse menus to ask.
 	 use-menus
@@ -250,9 +251,10 @@ the current %s and exit."
       (if delayed-switch-frame
 	  (setq unread-command-events
 		(cons delayed-switch-frame unread-command-events))))
-    ;; Clear the last prompt from the minibuffer.
+    ;; Clear the last prompt from the minibuffer, and restore the
+    ;; previous echo-area message, if any.
     (let ((message-log-max nil))
-      (message ""))
+      (message (or msg "")))
     ;; Return the number of actions that were taken.
     actions))
 
