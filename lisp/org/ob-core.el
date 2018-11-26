@@ -283,9 +283,9 @@ environment, to override this check."
 	 (name (nth 4 info))
 	 (name-string (if name (format " (%s) " name) " ")))
     (pcase evalp
-      ('nil nil)
-      ('t t)
-      ('query (or
+      (`nil nil)
+      (`t t)
+      (`query (or
 	       (and (not (bound-and-true-p
 			  org-babel-confirm-evaluate-answer-no))
 		    (yes-or-no-p
@@ -1991,7 +1991,7 @@ to HASH."
     (catch :found
       (org-with-wide-buffer
        (pcase (org-element-type context)
-	 ((or 'inline-babel-call 'inline-src-block)
+	 ((or `inline-babel-call `inline-src-block)
 	  ;; Results for inline objects are located right after them.
 	  ;; There is no RESULTS line to insert either.
 	  (let ((limit (org-element-property
@@ -2013,7 +2013,7 @@ to HASH."
 				(skip-chars-backward " \t")
 				(point)))
 			     (point))))))))
-	 ((or 'babel-call 'src-block)
+	 ((or `babel-call `src-block)
 	  (let* ((name (org-element-property :name context))
 		 (named-results (and name (org-babel-find-named-result name))))
 	    (goto-char (or named-results (org-element-property :end context)))
@@ -2067,20 +2067,20 @@ Return nil if ELEMENT cannot be read."
   (org-with-wide-buffer
    (goto-char (org-element-property :post-affiliated element))
    (pcase (org-element-type element)
-     ('fixed-width
+     (`fixed-width
       (let ((v (org-trim (org-element-property :value element))))
 	(or (org-babel--string-to-number v) v)))
-     ('table (org-babel-read-table))
-     ('plain-list (org-babel-read-list))
-     ('example-block
+     (`table (org-babel-read-table))
+     (`plain-list (org-babel-read-list))
+     (`example-block
       (let ((v (org-element-property :value element)))
 	(if (or org-src-preserve-indentation
 		(org-element-property :preserve-indent element))
 	    v
 	  (org-remove-indentation v))))
-     ('export-block
+     (`export-block
       (org-remove-indentation (org-element-property :value element)))
-     ('paragraph
+     (`paragraph
       ;; Treat paragraphs containing a single link specially.
       (skip-chars-forward " \t")
       (if (and (looking-at org-bracket-link-regexp)
@@ -2093,7 +2093,7 @@ Return nil if ELEMENT cannot be read."
 	(buffer-substring-no-properties
 	 (org-element-property :contents-begin element)
 	 (org-element-property :contents-end element))))
-     ((or 'center-block 'quote-block 'verse-block 'special-block)
+     ((or `center-block `quote-block `verse-block `special-block)
       (org-remove-indentation
        (buffer-substring-no-properties
 	(org-element-property :contents-begin element)

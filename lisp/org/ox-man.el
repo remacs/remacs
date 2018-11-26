@@ -552,9 +552,9 @@ contextual information."
   (let* ((bullet (org-element-property :bullet item))
          (type (org-element-property :type (org-element-property :parent item)))
          (checkbox (pcase (org-element-property :checkbox item)
-                     ('on "\\o'\\(sq\\(mu'")
-                     ('off "\\(sq ")
-                     ('trans "\\o'\\(sq\\(mi'")))
+                     (`on "\\o'\\(sq\\(mu'")
+                     (`off "\\(sq ")
+                     (`trans "\\o'\\(sq\\(mi'")))
 
          (tag (let ((tag (org-element-property :tag item)))
                 ;; Check-boxes must belong to the tag.
@@ -861,7 +861,7 @@ a communication channel."
 	    (push "|" alignment))
 	  (push
 	   (concat (pcase (org-export-table-cell-alignment cell info)
-		     ('left "l") ('right "r") ('center "c"))
+		     (`left "l") (`right "r") (`center "c"))
 		   width
 		   divider)
 	   alignment)

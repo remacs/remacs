@@ -427,7 +427,7 @@ instead"
       (lambda (datum)
 	(let ((key (org-element-property :key datum)))
 	  (pcase (org-element-type datum)
-	    ('keyword
+	    (`keyword
 	     (let ((value (org-element-property :value datum)))
 	       (and (string= key "PROPERTY")
 		    (string-match deprecated-re value)
@@ -435,7 +435,7 @@ instead"
 			  (format "Deprecated syntax for \"%s\".  \
 Use header-args instead"
 				  (match-string-no-properties 1 value))))))
-	    ('node-property
+	    (`node-property
 	     (and (member-ignore-case key deprecated-babel-properties)
 		  (list
 		   (org-element-property :begin datum)
@@ -789,11 +789,11 @@ Use \"export %s\" instead"
       (let ((name (org-trim (match-string-no-properties 0)))
 	    (element (org-element-at-point)))
 	(pcase (org-element-type element)
-	  ((or 'drawer 'property-drawer)
+	  ((or `drawer `property-drawer)
 	   (goto-char (org-element-property :end element))
 	   nil)
-	  ((or 'comment-block 'example-block 'export-block 'src-block
-	       'verse-block)
+	  ((or `comment-block `example-block `export-block `src-block
+	       `verse-block)
 	   nil)
 	  (_
 	   (push (list (line-beginning-position)
@@ -920,7 +920,7 @@ Use \"export %s\" instead"
 				      node-property src-block)
       (lambda (datum)
 	(pcase (org-element-type datum)
-	  ((or 'babel-call 'inline-babel-call)
+	  ((or `babel-call `inline-babel-call)
 	   (funcall verify
 		    datum
 		    nil
@@ -928,13 +928,13 @@ Use \"export %s\" instead"
 			       (list
 				(org-element-property :inside-header datum)
 				(org-element-property :end-header datum)))))
-	  ('inline-src-block
+	  (`inline-src-block
 	   (funcall verify
 		    datum
 		    (org-element-property :language datum)
 		    (org-babel-parse-header-arguments
 		     (org-element-property :parameters datum))))
-	  ('keyword
+	  (`keyword
 	   (when (string= (org-element-property :key datum) "PROPERTY")
 	     (let ((value (org-element-property :value datum)))
 	       (when (string-match "\\`header-args\\(?::\\(\\S-+\\)\\)?\\+? *"
@@ -944,7 +944,7 @@ Use \"export %s\" instead"
 			  (match-string 1 value)
 			  (org-babel-parse-header-arguments
 			   (substring value (match-end 0))))))))
-	  ('node-property
+	  (`node-property
 	   (let ((key (org-element-property :key datum)))
 	     (when (let ((case-fold-search t))
 		     (string-match "\\`HEADER-ARGS\\(?::\\(\\S-+\\)\\)?\\+?"
@@ -954,7 +954,7 @@ Use \"export %s\" instead"
 			(match-string 1 key)
 			(org-babel-parse-header-arguments
 			 (org-element-property :value datum))))))
-	  ('src-block
+	  (`src-block
 	   (funcall verify
 		    datum
 		    (org-element-property :language datum)
@@ -980,13 +980,13 @@ Use \"export %s\" instead"
 		(org-babel-parse-header-arguments
 		 (org-trim
 		  (pcase type
-		    ('src-block
+		    (`src-block
 		     (mapconcat
 		      #'identity
 		      (cons (org-element-property :parameters datum)
 			    (org-element-property :header datum))
 		      " "))
-		    ('inline-src-block
+		    (`inline-src-block
 		     (or (org-element-property :parameters datum) ""))
 		    (_
 		     (concat
@@ -1065,9 +1065,9 @@ Use \"export %s\" instead"
 \\{org-lint--report-mode-map}"
   (setf tabulated-list-format
 	`[("Line" 6
-	   ,(lambda (a b)
-	      (< (string-to-number (aref (cadr a) 0))
-		 (string-to-number (aref (cadr b) 0))))
+	   (lambda (a b)
+	     (< (string-to-number (aref (cadr a) 0))
+		(string-to-number (aref (cadr b) 0))))
 	   :right-align t)
 	  ("Trust" 5 t)
 	  ("Warning" 0 t)])
@@ -1207,8 +1207,8 @@ ARG can also be a list of checker names, as symbols, to run."
     (message "Org linting process starting..."))
   (let ((checkers
 	 (pcase arg
-	   ('nil org-lint--checkers)
-	   ('(4)
+	   (`nil org-lint--checkers)
+	   (`(4)
 	    (let ((category
 		   (completing-read
 		    "Checker category: "
@@ -1218,7 +1218,7 @@ ARG can also be a list of checker names, as symbols, to run."
 	       (lambda (c)
 		 (assoc-string (org-lint-checker-categories c) category))
 	       org-lint--checkers)))
-	   ('(16)
+	   (`(16)
 	    (list
 	     (let ((name (completing-read
 			  "Checker name: "

@@ -5127,7 +5127,7 @@ information."
        ;; Make sure that contents are exported as Org data when :raw
        ;; parameter is non-nil.
        ,(when (and backend (plist-get params :raw))
-	  '(setq contents
+	  `(setq contents
 		 ;; Since we don't know what are the pseudo object
 		 ;; types defined in backend, we cannot pass them to
 		 ;; `org-element-interpret-data'.  As a consequence,

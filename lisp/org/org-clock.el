@@ -1692,11 +1692,11 @@ Optional argument N tells to change by that many units."
 	    (org-timestamp-change
 	     (round (/ (float-time tdiff)
 		       (pcase timestamp?
-			 ('minute 60)
-			 ('hour 3600)
-			 ('day (* 24 3600))
-			 ('month (* 24 3600 31))
-			 ('year (* 24 3600 365.2)))))
+			 (`minute 60)
+			 (`hour 3600)
+			 (`day (* 24 3600))
+			 (`month (* 24 3600 31))
+			 (`year (* 24 3600 365.2)))))
 	     timestamp? 'updown)))))))
 
 ;;;###autoload
@@ -2045,7 +2045,7 @@ in the buffer and update it."
     (org-find-dblock "clocktable")
     (org-show-entry))
   (pcase (org-in-clocktable-p)
-    ('nil
+    (`nil
      (org-create-dblock
       (org-combine-plists
        (list :scope (if (org-before-first-heading-p) 'file 'subtree))
@@ -2194,21 +2194,21 @@ have priority."
 	(error "Looking forward with quarters isn't implemented"))))
     (when (= shift 0)
       (pcase key
-	('yesterday (setq key 'today   shift -1))
-	('lastweek  (setq key 'week    shift -1))
-	('lastmonth (setq key 'month   shift -1))
-	('lastyear  (setq key 'year    shift -1))
-	('lastq     (setq key 'quarter shift -1))))
+	(`yesterday (setq key 'today   shift -1))
+	(`lastweek  (setq key 'week    shift -1))
+	(`lastmonth (setq key 'month   shift -1))
+	(`lastyear  (setq key 'year    shift -1))
+	(`lastq     (setq key 'quarter shift -1))))
     ;; Prepare start and end times depending on KEY's type.
     (pcase key
-      ((or 'day 'today) (setq m 0 h 0 h1 24 d (+ d shift)))
-      ((or 'week 'thisweek)
+      ((or `day `today) (setq m 0 h 0 h1 24 d (+ d shift)))
+      ((or `week `thisweek)
        (let* ((ws (or wstart 1))
 	      (diff (+ (* -7 shift) (if (= dow 0) (- 7 ws) (- dow ws)))))
 	 (setq m 0 h 0 d (- d diff) d1 (+ 7 d))))
-      ((or 'month 'thismonth)
+      ((or `month `thismonth)
        (setq h 0 m 0 d (or mstart 1) month (+ month shift) month1 (1+ month)))
-      ((or 'quarter 'thisq)
+      ((or `quarter `thisq)
        ;; Compute if this shift remains in this year.  If not, compute
        ;; how many years and quarters we have to shift (via floor*) and
        ;; compute the shifted years, months and quarters.
@@ -2231,13 +2231,13 @@ have priority."
 	 (setq shiftedy y)
 	 (let ((qshift (* 3 (1- (+ q shift)))))
 	   (setq m 0 h 0 d 1 month (+ 1 qshift) month1 (+ 4 qshift))))))
-      ((or 'year 'thisyear)
+      ((or `year `thisyear)
        (setq m 0 h 0 d 1 month 1 y (+ y shift) y1 (1+ y)))
-      ((or 'interactive 'untilnow))	; Special cases, ignore them.
+      ((or `interactive `untilnow))	; Special cases, ignore them.
       (_ (user-error "No such time block %s" key)))
     ;; Format start and end times according to AS-STRINGS.
     (let* ((start (pcase key
-		    ('interactive (org-read-date nil t nil "Range start? "))
+		    (`interactive (org-read-date nil t nil "Range start? "))
                     ;; In theory, all clocks started after the dawn of
                     ;; humanity.  However, the platform's clock
                     ;; support might not go back that far.  Choose the
@@ -2246,15 +2246,15 @@ have priority."
                     ;; that works, otherwise 0 (1970).  Going back
                     ;; billions of years would loop forever on Mac OS
                     ;; X 10.6 with Emacs 26 and earlier (Bug#27736).
-		    ('untilnow
+		    (`untilnow
                      (let ((old 0))
                        (dolist (older '((-32768 0) (-33554432 0)) old)
                          (when (ignore-errors (decode-time older))
 			   (setq old older)))))
 		    (_ (encode-time 0 m h d month y))))
 	   (end (pcase key
-		  ('interactive (org-read-date nil t nil "Range end? "))
-		  ('untilnow (current-time))
+		  (`interactive (org-read-date nil t nil "Range end? "))
+		  (`untilnow (current-time))
 		  (_ (encode-time 0
 				  (or m1 m)
 				  (or h1 h)
@@ -2263,15 +2263,15 @@ have priority."
 				  (or y1 y)))))
 	   (text
 	    (pcase key
-	      ((or 'day 'today) (format-time-string "%A, %B %d, %Y" start))
-	      ((or 'week 'thisweek) (format-time-string "week %G-W%V" start))
-	      ((or 'month 'thismonth) (format-time-string "%B %Y" start))
-	      ((or 'year 'thisyear) (format-time-string "the year %Y" start))
-	      ((or 'quarter 'thisq)
+	      ((or `day `today) (format-time-string "%A, %B %d, %Y" start))
+	      ((or `week `thisweek) (format-time-string "week %G-W%V" start))
+	      ((or `month `thismonth) (format-time-string "%B %Y" start))
+	      ((or `year `thisyear) (format-time-string "the year %Y" start))
+	      ((or `quarter `thisq)
 	       (concat (org-count-quarter shiftedq)
 		       " quarter of " (number-to-string shiftedy)))
-	      ('interactive "(Range interactively set)")
-	      ('untilnow "now"))))
+	      (`interactive "(Range interactively set)")
+	      (`untilnow "now"))))
       (if (not as-strings) (list start end text)
 	(let ((f (cdr org-time-stamp-formats)))
 	  (list (format-time-string f start)
@@ -2375,11 +2375,11 @@ the currently selected interval size."
   (catch 'exit
     (let* ((scope (plist-get params :scope))
 	   (files (pcase scope
-		    ('agenda
+		    (`agenda
 		     (org-agenda-files t))
-		    ('agenda-with-archives
+		    (`agenda-with-archives
 		     (org-add-archive-files (org-agenda-files t)))
-		    ('file-with-archives
+		    (`file-with-archives
 		     (and buffer-file-name
 			  (org-add-archive-files (list buffer-file-name))))
 		    ((pred functionp) (funcall scope))
@@ -2502,7 +2502,7 @@ from the dynamic block definition."
       (setq narrow (intern (format "%d!" narrow))))
 
     (pcase narrow
-      ((or 'nil (pred integerp)) nil)	;nothing to do
+      ((or `nil (pred integerp)) nil)	;nothing to do
       ((and (pred symbolp)
 	    (guard (string-match-p "\\`[0-9]+!\\'" (symbol-name narrow))))
        (setq narrow-cut-p t)

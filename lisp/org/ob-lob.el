@@ -105,8 +105,8 @@ after REF in the Library of Babel."
 		(when (equal name (org-element-property :name element))
 		  (throw :found
 			 (pcase (org-element-type element)
-			   ('src-block (org-babel-get-src-block-info t element))
-			   ('babel-call (org-babel-lob-get-info element))
+			   (`src-block (org-babel-get-src-block-info t element))
+			   (`babel-call (org-babel-lob-get-info element))
 			   ;; Non-executable data found.  Since names
 			   ;; are supposed to be unique throughout
 			   ;; a document, bail out.

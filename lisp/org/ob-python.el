@@ -265,10 +265,10 @@ string.  If RESULT-TYPE equals `value' then return the value of the
 last statement in BODY, as elisp."
   (let ((raw
          (pcase result-type
-           ('output (org-babel-eval org-babel-python-command
+           (`output (org-babel-eval org-babel-python-command
 				    (concat (if preamble (concat preamble "\n"))
 					    body)))
-           ('value (let ((tmp-file (org-babel-temp-file "python-")))
+           (`value (let ((tmp-file (org-babel-temp-file "python-")))
 		     (org-babel-eval
 		      org-babel-python-command
 		      (concat
@@ -314,7 +314,7 @@ last statement in BODY, as elisp."
 		       (funcall send-wait)))
          (results
           (pcase result-type
-            ('output
+            (`output
 	     (let ((body (if (string-match-p ".\n+." body) ; Multiline
 			     (let ((tmp-src-file (org-babel-temp-file
 						  "python-")))
@@ -332,7 +332,7 @@ last statement in BODY, as elisp."
 		   (insert org-babel-python-eoe-indicator)
 		   (funcall send-wait))
 		 2) "\n")))
-            ('value
+            (`value
              (let ((tmp-file (org-babel-temp-file "python-")))
                (org-babel-comint-with-output
                    (session org-babel-python-eoe-indicator nil body)

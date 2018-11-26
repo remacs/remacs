@@ -38,7 +38,7 @@
 (defun org-entities--user-safe-p (v)
   "Non-nil if V is a safe value for `org-entities-user'."
   (pcase v
-    ('nil t)
+    (`nil t)
     (`(,(and (pred stringp)
 	     (pred (string-match-p "\\`[a-zA-Z][a-zA-Z0-9]*\\'")))
        ,(pred stringp) ,(pred booleanp) ,(pred stringp)

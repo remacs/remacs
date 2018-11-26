@@ -166,11 +166,11 @@ Emacs Lisp representation of the value of the variable."
 			     (goto-char
 			      (org-element-property :post-affiliated e))
 			     (pcase (org-element-type e)
-			       ('babel-call
+			       (`babel-call
 				(throw :found
 				       (org-babel-execute-src-block
 					nil (org-babel-lob-get-info e) params)))
-			       ('src-block
+			       (`src-block
 				(throw :found
 				       (org-babel-execute-src-block
 					nil nil

@@ -588,9 +588,9 @@ is cleared and contents are removed in the process."
   (when datum
     (let ((type (org-element-type datum)))
       (pcase type
-	('org-data (list 'org-data nil))
-	('plain-text (substring-no-properties datum))
-	('nil (copy-sequence datum))
+	(`org-data (list 'org-data nil))
+	(`plain-text (substring-no-properties datum))
+	(`nil (copy-sequence datum))
 	(_
 	 (list type (plist-put (copy-sequence (nth 1 datum)) :parent nil)))))))
 
@@ -1285,9 +1285,9 @@ CONTENTS is the contents of the element."
      bullet
      (and counter (format "[@%d] " counter))
      (pcase checkbox
-       ('on "[X] ")
-       ('off "[ ] ")
-       ('trans "[-] ")
+       (`on "[X] ")
+       (`off "[ ] ")
+       (`trans "[-] ")
        (_ nil))
      (and tag (format "%s :: " tag))
      (when contents
@@ -3185,13 +3185,13 @@ CONTENTS is the contents of the object, or nil."
 			    ;; a format string, escape percent signs
 			    ;; in description.
 			    (replace-regexp-in-string "%" "%%" contents)))
-		   ((or 'bracket
-			'nil
+		   ((or `bracket
+			`nil
 			(guard (member type '("coderef" "custom-id" "fuzzy"))))
 		    "[[%s]]")
 		   ;; Otherwise, just obey to `:format'.
-		   ('angle "<%s>")
-		   ('plain "%s")
+		   (`angle "<%s>")
+		   (`plain "%s")
 		   (f (error "Wrong `:format' value: %s" f)))))
 	(format fmt
 		(pcase type
@@ -3581,19 +3581,19 @@ Assume point is at the beginning of the timestamp."
   (let* ((repeat-string
 	  (concat
 	   (pcase (org-element-property :repeater-type timestamp)
-	     ('cumulate "+") ('catch-up "++") ('restart ".+"))
+	     (`cumulate "+") (`catch-up "++") (`restart ".+"))
 	   (let ((val (org-element-property :repeater-value timestamp)))
 	     (and val (number-to-string val)))
 	   (pcase (org-element-property :repeater-unit timestamp)
-	     ('hour "h") ('day "d") ('week "w") ('month "m") ('year "y"))))
+	     (`hour "h") (`day "d") (`week "w") (`month "m") (`year "y"))))
 	 (warning-string
 	  (concat
 	   (pcase (org-element-property :warning-type timestamp)
-	     ('first "--") ('all "-"))
+	     (`first "--") (`all "-"))
 	   (let ((val (org-element-property :warning-value timestamp)))
 	     (and val (number-to-string val)))
 	   (pcase (org-element-property :warning-unit timestamp)
-	     ('hour "h") ('day "d") ('week "w") ('month "m") ('year "y"))))
+	     (`hour "h") (`day "d") (`week "w") (`month "m") (`year "y"))))
 	 (build-ts-string
 	  ;; Build an Org timestamp string from TIME.  ACTIVEP is
 	  ;; non-nil when time stamp is active.  If WITH-TIME-P is
@@ -3622,7 +3622,7 @@ Assume point is at the beginning of the timestamp."
 	      ts)))
 	 (type (org-element-property :type timestamp)))
     (pcase type
-      ((or 'active 'inactive)
+      ((or `active `inactive)
        (let* ((minute-start (org-element-property :minute-start timestamp))
 	      (minute-end (org-element-property :minute-end timestamp))
 	      (hour-start (org-element-property :hour-start timestamp))
@@ -3642,7 +3642,7 @@ Assume point is at the beginning of the timestamp."
 	  (and hour-start minute-start)
 	  (and time-range-p hour-end)
 	  (and time-range-p minute-end))))
-      ((or 'active-range 'inactive-range)
+      ((or `active-range `inactive-range)
        (let ((minute-start (org-element-property :minute-start timestamp))
 	     (minute-end (org-element-property :minute-end timestamp))
 	     (hour-start (org-element-property :hour-start timestamp))
@@ -4227,17 +4227,17 @@ otherwise.  Modes can be either `first-section', `item',
 `table-row' or nil."
   (if parentp
       (pcase type
-	('headline 'section)
-	('inlinetask 'planning)
-	('plain-list 'item)
-	('property-drawer 'node-property)
-	('section 'planning)
-	('table 'table-row))
+	(`headline 'section)
+	(`inlinetask 'planning)
+	(`plain-list 'item)
+	(`property-drawer 'node-property)
+	(`section 'planning)
+	(`table 'table-row))
     (pcase type
-      ('item 'item)
-      ('node-property 'node-property)
-      ('planning 'property-drawer)
-      ('table-row 'table-row))))
+      (`item 'item)
+      (`node-property 'node-property)
+      (`planning 'property-drawer)
+      (`table-row 'table-row))))
 
 (defun org-element--parse-elements
     (beg end mode structure granularity visible-only acc)
@@ -5018,8 +5018,8 @@ the cache."
 		lower element
 		upper element)))))
     (pcase side
-      ('both (cons lower upper))
-      ('nil lower)
+      (`both (cons lower upper))
+      (`nil lower)
       (_ upper))))
 
 (defun org-element--cache-put (element)
@@ -5513,8 +5513,8 @@ that range.  See `after-change-functions' for more information."
 	 ;; case for headline editing: if a headline is modified but
 	 ;; not removed, do not extend.
 	 (when (pcase org-element--cache-change-warning
-		 ('t t)
-		 ('headline
+		 (`t t)
+		 (`headline
 		  (not (and (org-with-limited-levels (org-at-heading-p))
 			    (= (line-end-position) bottom))))
 		 (_

@@ -742,24 +742,24 @@ If BUFFER is non-nil, test it instead."
 
 (defun org-src-switch-to-buffer (buffer context)
   (pcase org-src-window-setup
-    ('current-window (pop-to-buffer-same-window buffer))
-    ('other-window
+    (`current-window (pop-to-buffer-same-window buffer))
+    (`other-window
      (switch-to-buffer-other-window buffer))
-    ('other-frame
+    (`other-frame
      (pcase context
-       ('exit
+       (`exit
 	(let ((frame (selected-frame)))
 	  (switch-to-buffer-other-frame buffer)
 	  (delete-frame frame)))
-       ('save
+       (`save
 	(kill-buffer (current-buffer))
 	(pop-to-buffer-same-window buffer))
        (_ (switch-to-buffer-other-frame buffer))))
-    ('reorganize-frame
+    (`reorganize-frame
      (when (eq context 'edit) (delete-other-windows))
      (org-switch-to-buffer-other-window buffer)
      (when (eq context 'exit) (delete-other-windows)))
-    ('switch-invisibly (set-buffer buffer))
+    (`switch-invisibly (set-buffer buffer))
     (_
      (message "Invalid value %s for `org-src-window-setup'"
 	      org-src-window-setup)

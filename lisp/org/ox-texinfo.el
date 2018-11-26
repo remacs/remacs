@@ -452,10 +452,10 @@ This is used to choose a separator for constructs like \\verb."
 INFO is a plist used as a communication channel.  See
 `org-texinfo-text-markup-alist' for details."
   (pcase (cdr (assq markup org-texinfo-text-markup-alist))
-    ('nil text)				;no markup: return raw text
-    ('code (format "@code{%s}" (org-texinfo--sanitize-content text)))
-    ('samp (format "@samp{%s}" (org-texinfo--sanitize-content text)))
-    ('verb
+    (`nil text)				;no markup: return raw text
+    (`code (format "@code{%s}" (org-texinfo--sanitize-content text)))
+    (`samp (format "@samp{%s}" (org-texinfo--sanitize-content text)))
+    (`verb
      (let ((separator (org-texinfo--find-verb-separator text)))
        (format "@verb{%s%s%s}" separator text separator)))
     ;; Else use format string.
@@ -872,7 +872,7 @@ contextual information."
 	      unnumbered)
 	     ((org-export-numbered-headline-p headline info) numbered)
 	     (t unnumbered)))
-	   ('nil 'plain-list)
+	   (`nil 'plain-list)
 	   (_ (user-error "Invalid Texinfo class specification: %S" class))))
 	(_ (user-error "Invalid Texinfo class specification: %S" class)))))))
 
@@ -993,7 +993,7 @@ contextual information."
 			 (list tag))))))
     (format "%s\n%s"
 	    (pcase items
-	      ('nil "@item")
+	      (`nil "@item")
 	      (`(,item) (concat "@item " item))
 	      (`(,item . ,items)
 	       (concat "@item " item "\n"
@@ -1077,18 +1077,18 @@ INFO is a plist holding contextual information.  See
 		 (org-export-resolve-fuzzy-link link info)
 	       (org-export-resolve-id-link link info))))
 	(pcase (org-element-type destination)
-	  ('nil
+	  (`nil
 	   (format org-texinfo-link-with-unknown-path-format
 		   (org-texinfo--sanitize-content path)))
 	  ;; Id link points to an external file.
-	  ('plain-text
+	  (`plain-text
 	   (if desc (format "@uref{file://%s,%s}" destination desc)
 	     (format "@uref{file://%s}" destination)))
-	  ((or 'headline
+	  ((or `headline
 	       ;; Targets within headlines cannot be turned into
 	       ;; @anchor{}, so we refer to the headline parent
 	       ;; directly.
-	       (and 'target
+	       (and `target
 		    (guard (eq 'headline
 			       (org-element-type
 				(org-element-property :parent destination))))))
@@ -1547,9 +1547,9 @@ information."
   (let ((value (org-texinfo-plain-text
 		(org-timestamp-translate timestamp) info)))
     (pcase (org-element-property :type timestamp)
-      ((or 'active 'active-range)
+      ((or `active `active-range)
        (format (plist-get info :texinfo-active-timestamp-format) value))
-      ((or 'inactive 'inactive-range)
+      ((or `inactive `inactive-range)
        (format (plist-get info :texinfo-inactive-timestamp-format) value))
       (_ (format (plist-get info :texinfo-diary-timestamp-format) value)))))
 

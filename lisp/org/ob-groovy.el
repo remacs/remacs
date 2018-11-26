@@ -83,12 +83,12 @@ If RESULT-TYPE equals `value' then return the value of the last statement
 in BODY as elisp."
   (when session (error "Sessions are not (yet) supported for Groovy"))
   (pcase result-type
-    ('output
+    (`output
      (let ((src-file (org-babel-temp-file "groovy_")))
        (progn (with-temp-file src-file (insert body))
               (org-babel-eval
                (concat org-babel-groovy-command " " src-file) ""))))
-    ('value
+    (`value
      (let* ((src-file (org-babel-temp-file "groovy_"))
             (wrapper (format org-babel-groovy-wrapper-method body)))
        (with-temp-file src-file (insert wrapper))

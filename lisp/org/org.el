@@ -5236,12 +5236,12 @@ When optional argument SKIP-KEY is non-nil, skip selection keys
 next to tags."
   (mapconcat (lambda (token)
 	       (pcase token
-		 ('(:startgroup) "{")
-		 ('(:endgroup) "}")
-		 ('(:startgrouptag) "[")
-		 ('(:endgrouptag) "]")
-		 ('(:grouptags) ":")
-		 ('(:newline) "\\n")
+		 (`(:startgroup) "{")
+		 (`(:endgroup) "}")
+		 (`(:startgrouptag) "[")
+		 (`(:endgrouptag) "]")
+		 (`(:grouptags) ":")
+		 (`(:newline) "\\n")
 		 ((and
 		   (guard (not skip-key))
 		   `(,(and tag (pred stringp)) . ,(and key (pred characterp))))
@@ -5266,7 +5266,7 @@ a string, summarizing TAGS, as a list of strings."
 	 (when (eq group-status 'append)
 	   (push (nreverse current-group) groups))
 	 (setq group-status nil current-group nil))
-	('(:grouptags) (setq group-status 'append))
+	(`(:grouptags) (setq group-status 'append))
 	((and `(,tag . ,_) (guard group-status))
 	 (if (eq group-status 'append) (push tag current-group)
 	   (setq current-group (list tag))))
@@ -7744,7 +7744,7 @@ When NEXT is non-nil, check the next line instead."
 When optional argument PARENT is non-nil, consider parent
 headline instead of current one."
   (pcase (assq 'heading org-blank-before-new-entry)
-    ('(heading . auto)
+    (`(heading . auto)
      (save-excursion
        (org-with-limited-levels
         (unless (and (org-before-first-heading-p)
@@ -7884,7 +7884,7 @@ When NO-COMMENT is non-nil, don't include COMMENT string."
       (let ((todo (and (not no-todo) (match-string 2)))
 	    (priority (and (not no-priority) (match-string 3)))
 	    (headline (pcase (match-string 4)
-			('nil "")
+			(`nil "")
 			((and (guard no-comment) h)
 			 (replace-regexp-in-string
 			  (eval-when-compile
@@ -8768,7 +8768,7 @@ with the original repeater."
 	   (template (buffer-substring beg end))
 	   (shift-n (and doshift (string-to-number (match-string 1 shift))))
 	   (shift-what (pcase (and doshift (match-string 2 shift))
-			 ('nil nil)
+			 (`nil nil)
 			 ("d" 'day)
 			 ("w" (setq shift-n (* 7 shift-n)) 'day)
 			 ("m" 'month)
@@ -9690,7 +9690,7 @@ active region."
 		   (push (cons f (copy-sequence org-store-link-plist))
 			 results-alist)))
 	       (pcase results-alist
-		 ('nil nil)
+		 (`nil nil)
 		 (`((,_ . ,_)) t)	;single choice: nothing to do
 		 (`((,name . ,_) . ,_)
 		  ;; Reinstate link plist associated to the chosen
@@ -11552,13 +11552,13 @@ order.")
 				#'identity
 				(append
 				 (pcase org-refile-use-outline-path
-				   ('file (list (file-name-nondirectory
+				   (`file (list (file-name-nondirectory
 						 (buffer-file-name
 						  (buffer-base-buffer)))))
-				   ('full-file-path
+				   (`full-file-path
 				    (list (buffer-file-name
 					   (buffer-base-buffer))))
-				   ('buffer-name
+				   (`buffer-name
 				    (list (buffer-name
 					   (buffer-base-buffer))))
 				   (_ nil))
@@ -13251,14 +13251,14 @@ TYPE is either `deadline' or `scheduled'.  See `org-deadline' or
 					  old-date)
 			    (match-string 1 old-date)))))
     (pcase arg
-      ('(4)
+      (`(4)
        (when (and old-date log)
 	 (org-add-log-setup (if deadline? 'deldeadline 'delschedule)
 			    nil old-date log))
        (org-remove-timestamp-with-keyword keyword)
        (message (if deadline? "Item no longer has a deadline."
 		  "Item is no longer scheduled.")))
-      ('(16)
+      (`(16)
        (save-excursion
 	 (org-back-to-heading t)
 	 (let ((regexp (if deadline? org-deadline-time-regexp
@@ -14779,8 +14779,8 @@ If ONOFF is `on' or `off', don't toggle but set to this state."
 	       (nreverse (org-split-string tags ":")))))
 	  res)
       (pcase onoff
-	('off (setq current (delete tag current)))
-	((or 'on (guard (not (member tag current))))
+	(`off (setq current (delete tag current)))
+	((or `on (guard (not (member tag current))))
 	 (setq res t)
 	 (cl-pushnew tag current :test #'equal))
 	(_ (setq current (delete tag current))))
@@ -14830,7 +14830,7 @@ If DATA is nil or the empty string, all tags are removed."
   (interactive "sTags: ")
   (let ((data
 	 (pcase (if (stringp data) (org-trim data) data)
-	   ((or 'nil "") nil)
+	   ((or `nil "") nil)
 	   ((pred listp) (format ":%s:" (mapconcat #'identity data ":")))
 	   ((pred stringp)
 	    (format ":%s:"
@@ -17207,9 +17207,9 @@ The internal representation needed by the calendar is (month day year).
 This is a wrapper to handle the brain-dead convention in calendar that
 user function argument order change dependent on argument order."
   (pcase calendar-date-style
-    ('american (list arg1 arg2 arg3))
-    ('european (list arg2 arg1 arg3))
-    ('iso (list arg2 arg3 arg1))))
+    (`american (list arg1 arg2 arg3))
+    (`european (list arg2 arg1 arg3))
+    (`iso (list arg2 arg3 arg1))))
 
 (defun org-eval-in-calendar (form &optional keepdate)
   "Eval FORM in the calendar window and return to current window.
@@ -18015,14 +18015,14 @@ When SUPPRESS-TMP-DELAY is non-nil, suppress delays like \"--2d\"."
 	 (pcase origin-cat
 	   ;; `day' category ends before `hour' if any, or at the end
 	   ;; of the day name.
-	   ('day (min (or (match-beginning 7) (1- (match-end 5))) origin))
-	   ('hour (min (match-end 7) origin))
-	   ('minute (min (1- (match-end 8)) origin))
+	   (`day (min (or (match-beginning 7) (1- (match-end 5))) origin))
+	   (`hour (min (match-end 7) origin))
+	   (`minute (min (1- (match-end 8)) origin))
 	   ((pred integerp) (min (1- (match-end 0)) origin))
 	   ;; Point was right after the time-stamp.  However, the
 	   ;; time-stamp length might have changed, so refer to
 	   ;; (match-end 0) instead.
-	   ('after (match-end 0))
+	   (`after (match-end 0))
 	   ;; `year' and `month' have both fixed size: point couldn't
 	   ;; have moved into another part.
 	   (_ origin))))
@@ -20709,7 +20709,7 @@ Otherwise, return a user error."
   (let ((element (org-element-at-point)))
     (barf-if-buffer-read-only)
     (pcase (org-element-type element)
-      ('src-block
+      (`src-block
        (if (not arg) (org-edit-src-code)
 	 (let* ((info (org-babel-get-src-block-info))
 		(lang (nth 0 info))
@@ -20722,7 +20722,7 @@ Otherwise, return a user error."
 	     (switch-to-buffer
 	      (funcall (intern (concat "org-babel-prep-session:" lang))
 		       session params))))))
-      ('keyword
+      (`keyword
        (if (member (org-element-property :key element) '("INCLUDE" "SETUPFILE"))
            (org-open-link-from-string
 	    (format "[[%s]]"
@@ -20738,24 +20738,24 @@ Otherwise, return a user error."
 			      (match-string 0 value))
 			     (t (user-error "No valid file specified")))))))
          (user-error "No special environment to edit here")))
-      ('table
+      (`table
        (if (eq (org-element-property :type element) 'table.el)
            (org-edit-table.el)
          (call-interactively 'org-table-edit-formulas)))
       ;; Only Org tables contain `table-row' type elements.
-      ('table-row (call-interactively 'org-table-edit-formulas))
-      ('example-block (org-edit-src-code))
-      ('export-block (org-edit-export-block))
-      ('fixed-width (org-edit-fixed-width-region))
-      ('latex-environment (org-edit-latex-environment))
+      (`table-row (call-interactively 'org-table-edit-formulas))
+      (`example-block (org-edit-src-code))
+      (`export-block (org-edit-export-block))
+      (`fixed-width (org-edit-fixed-width-region))
+      (`latex-environment (org-edit-latex-environment))
       (_
        ;; No notable element at point.  Though, we may be at a link or
        ;; a footnote reference, which are objects.  Thus, scan deeper.
        (let ((context (org-element-context element)))
 	 (pcase (org-element-type context)
-	   ('footnote-reference (org-edit-footnote-reference))
-	   ('inline-src-block (org-edit-inline-src-code))
-	   ('link (call-interactively #'ffap))
+	   (`footnote-reference (org-edit-footnote-reference))
+	   (`inline-src-block (org-edit-inline-src-code))
+	   (`link (call-interactively #'ffap))
 	   (_ (user-error "No special environment to edit here"))))))))
 
 (defvar org-table-coordinate-overlays) ; defined in org-table.el
@@ -20842,7 +20842,7 @@ This command does many different things, depending on context:
       ;; a src block.  Hence, we first check if point is in such
       ;; a block and then if it is at a blank line.
       (pcase type
-	((or 'inline-src-block 'src-block)
+	((or `inline-src-block `src-block)
 	 (unless org-babel-no-eval-on-ctrl-c-ctrl-c
 	   (org-babel-eval-wipe-error-buffer)
 	   (org-babel-execute-src-block
@@ -20852,22 +20852,22 @@ This command does many different things, depending on context:
 	     (user-error
 	      (substitute-command-keys
 	       "`\\[org-ctrl-c-ctrl-c]' can do nothing useful here"))))
-	((or 'babel-call 'inline-babel-call)
+	((or `babel-call `inline-babel-call)
 	 (let ((info (org-babel-lob-get-info context)))
 	   (when info (org-babel-execute-src-block nil info))))
-	('clock (org-clock-update-time-maybe))
-	('dynamic-block
+	(`clock (org-clock-update-time-maybe))
+	(`dynamic-block
 	 (save-excursion
 	   (goto-char (org-element-property :post-affiliated context))
 	   (org-update-dblock)))
-	('footnote-definition
+	(`footnote-definition
 	 (goto-char (org-element-property :post-affiliated context))
 	 (call-interactively 'org-footnote-action))
-	('footnote-reference (call-interactively #'org-footnote-action))
-	((or 'headline 'inlinetask)
+	(`footnote-reference (call-interactively #'org-footnote-action))
+	((or `headline `inlinetask)
 	 (save-excursion (goto-char (org-element-property :begin context))
 			 (call-interactively #'org-set-tags)))
-	('item
+	(`item
 	 ;; At an item: `C-u C-u' sets checkbox to "[-]"
 	 ;; unconditionally, whereas `C-u' will toggle its presence.
 	 ;; Without a universal argument, if the item has a checkbox,
@@ -20905,7 +20905,7 @@ This command does many different things, depending on context:
 	     (when block-item
 	       (message "Checkboxes were removed due to empty box at line %d"
 			(org-current-line block-item))))))
-	('keyword
+	(`keyword
 	 (let ((org-inhibit-startup-visibility-stuff t)
 	       (org-startup-align-all-tables nil))
 	   (when (boundp 'org-table-coordinate-overlays)
@@ -20913,7 +20913,7 @@ This command does many different things, depending on context:
 	     (setq org-table-coordinate-overlays nil))
 	   (org-save-outline-visibility 'use-markers (org-mode-restart)))
 	 (message "Local setup has been refreshed"))
-	('plain-list
+	(`plain-list
 	 ;; At a plain list, with a double C-u argument, set
 	 ;; checkboxes of each item to "[-]", whereas a single one
 	 ;; will toggle their presence according to the state of the
@@ -20946,13 +20946,13 @@ This command does many different things, depending on context:
 	    struct (org-list-parents-alist struct) old-struct)
 	   (org-update-checkbox-count-maybe)
 	   (save-excursion (goto-char beginm) (org-list-send-list 'maybe))))
-	((or 'property-drawer 'node-property)
+	((or `property-drawer `node-property)
 	 (call-interactively #'org-property-action))
-	('radio-target
+	(`radio-target
 	 (call-interactively #'org-update-radio-target-regexp))
-	('statistics-cookie
+	(`statistics-cookie
 	 (call-interactively #'org-update-statistics-cookies))
-	((or 'table 'table-cell 'table-row)
+	((or `table `table-cell `table-row)
 	 ;; At a table, recalculate every field and align it.  Also
 	 ;; send the table if necessary.  If the table has
 	 ;; a `table.el' type, just give up.  At a table row or cell,
@@ -20975,9 +20975,9 @@ Use `\\[org-edit-special]' to edit table.el tables"))
 	     (cond (arg (call-interactively #'org-table-recalculate))
 		   ((org-table-maybe-recalculate-line))
 		   (t (org-table-align))))))
-	((or 'timestamp (and 'planning (guard (org-at-timestamp-p 'lax))))
+	((or `timestamp (and `planning (guard (org-at-timestamp-p 'lax))))
 	 (org-timestamp-change 0 'day))
-	((and 'nil (guard (org-at-heading-p)))
+	((and `nil (guard (org-at-heading-p)))
 	 ;; When point is on an unsupported object type, we can miss
 	 ;; the fact that it also is at a heading.  Handle it here.
 	 (call-interactively #'org-set-tags))

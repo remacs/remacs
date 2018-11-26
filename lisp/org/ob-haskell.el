@@ -89,8 +89,8 @@
     (org-babel-reassemble-table
      (let ((result
             (pcase result-type
-              ('output (mapconcat #'identity (reverse (cdr results)) "\n"))
-              ('value (car results)))))
+              (`output (mapconcat #'identity (reverse (cdr results)) "\n"))
+              (`value (car results)))))
        (org-babel-result-cond (cdr (assq :result-params params))
 	 result (org-babel-script-escape result)))
      (org-babel-pick-name (cdr (assq :colname-names params))

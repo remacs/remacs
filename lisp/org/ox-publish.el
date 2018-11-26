@@ -618,7 +618,7 @@ files, when entire projects are published (see
 	 (project-plist (cdr project))
 	 (publishing-function
 	  (pcase (org-publish-property :publishing-function project)
-	    ('nil (user-error "No publishing function chosen"))
+	    (`nil (user-error "No publishing function chosen"))
 	    ((and f (pred listp)) f)
 	    (f (list f))))
 	 (base-dir
@@ -703,7 +703,7 @@ return a string.  Return value is a list as returned by
 	       (file-name-as-directory
 		(org-publish-property :base-directory project)))))
     (pcase style
-      ('list
+      (`list
        (cons 'unordered
 	     (mapcar
 	      (lambda (f)
@@ -712,7 +712,7 @@ return a string.  Return value is a list as returned by
 			       style
 			       project)))
 	      files)))
-      ('tree
+      (`tree
        (letrec ((files-only (cl-remove-if #'directory-name-p files))
 		(directories (cl-remove-if-not #'directory-name-p files))
 		(subtree-to-list
@@ -778,7 +778,7 @@ Default for SITEMAP-FILENAME is `sitemap.org'."
 	    (let ((retval t))
 	      ;; First we sort files:
 	      (pcase sort-files
-		('alphabetically
+		(`alphabetically
 		 (let ((A (if (funcall org-file-p a)
 			      (concat (file-name-directory a)
 				      (org-publish-find-title a project))
@@ -791,7 +791,7 @@ Default for SITEMAP-FILENAME is `sitemap.org'."
 			 (if ignore-case
 			     (not (string-lessp (upcase B) (upcase A)))
 			   (not (string-lessp B A))))))
-		((or 'anti-chronologically 'chronologically)
+		((or `anti-chronologically `chronologically)
 		 (let* ((adate (org-publish-find-date a project))
 			(bdate (org-publish-find-date b project))
 			(A (+ (ash (car adate) 16) (cadr adate)))
@@ -800,7 +800,7 @@ Default for SITEMAP-FILENAME is `sitemap.org'."
 			 (if (eq sort-files 'chronologically)
 			     (<= A B)
 			   (>= A B)))))
-		('nil nil)
+		(`nil nil)
 		(_ (user-error "Invalid sort value %s" sort-files)))
 	      ;; Directory-wise wins:
 	      (when (memq sort-folders '(first last))
@@ -1104,9 +1104,9 @@ publishing directory."
 		       "[[%s][%s]]"
 		       ;; Destination.
 		       (pcase (car target)
-			 ('nil (format "file:%s" file))
-			 ('id (format "id:%s" (cdr target)))
-			 ('custom-id (format "file:%s::#%s" file (cdr target)))
+			 (`nil (format "file:%s" file))
+			 (`id (format "id:%s" (cdr target)))
+			 (`custom-id (format "file:%s::#%s" file (cdr target)))
 			 (_ (format "file:%s::*%s" file (cdr target))))
 		       ;; Description.
 		       (car (last entry)))))

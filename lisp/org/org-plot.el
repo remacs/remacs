@@ -200,9 +200,9 @@ manner suitable for prepending to a user-specified script."
 	 (y-labels (plist-get params :ylabels))
 	 (plot-str "'%s' using %s%d%s with %s title '%s'")
 	 (plot-cmd (pcase type
-		     ('2d "plot")
-		     ('3d "splot")
-		     ('grid "splot")))
+		     (`2d "plot")
+		     (`3d "splot")
+		     (`grid "splot")))
 	 (script "reset")
 	 ;; ats = add-to-script
 	 (ats (lambda (line) (setf script (concat script "\n" line))))
@@ -211,9 +211,9 @@ manner suitable for prepending to a user-specified script."
       (funcall ats (format "set term %s" (file-name-extension file)))
       (funcall ats (format "set output '%s'" file)))
     (pcase type				; type
-      ('2d ())
-      ('3d (when map (funcall ats "set map")))
-      ('grid (funcall ats (if map "set pm3d map" "set pm3d"))))
+      (`2d ())
+      (`3d (when map (funcall ats "set map")))
+      (`grid (funcall ats (if map "set pm3d map" "set pm3d"))))
     (when title (funcall ats (format "set title '%s'" title))) ; title
     (mapc ats lines)					       ; line
     (dolist (el sets) (funcall ats (format "set %s" el)))      ; set
@@ -239,7 +239,7 @@ manner suitable for prepending to a user-specified script."
 			       "%Y-%m-%d-%H:%M:%S") "\"")))
     (unless preface
       (pcase type			; plot command
-	('2d (dotimes (col num-cols)
+	(`2d (dotimes (col num-cols)
 	       (unless (and (eq type '2d)
 			    (or (and ind (equal (1+ col) ind))
 				(and deps (not (member (1+ col) deps)))))
@@ -255,10 +255,10 @@ manner suitable for prepending to a user-specified script."
 				(or (nth col col-labels)
 				    (format "%d" (1+ col))))
 			plot-lines)))))
-	('3d
+	(`3d
 	 (setq plot-lines (list (format "'%s' matrix with %s title ''"
 					data-file with))))
-	('grid
+	(`grid
 	 (setq plot-lines (list (format "'%s' with %s title ''"
 					data-file with)))))
       (funcall ats
@@ -303,9 +303,9 @@ line directly before or after the table."
 			(setf params (org-plot/collect-options params))))
       ;; Dump table to datafile (very different for grid).
       (pcase (plist-get params :plot-type)
-	('2d   (org-plot/gnuplot-to-data table data-file params))
-	('3d   (org-plot/gnuplot-to-data table data-file params))
-	('grid (let ((y-labels (org-plot/gnuplot-to-grid-data
+	(`2d   (org-plot/gnuplot-to-data table data-file params))
+	(`3d   (org-plot/gnuplot-to-data table data-file params))
+	(`grid (let ((y-labels (org-plot/gnuplot-to-grid-data
 				table data-file params)))
 		 (when y-labels (plist-put params :ylabels y-labels)))))
       ;; Check for timestamp ind column.
