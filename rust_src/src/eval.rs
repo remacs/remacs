@@ -1141,4 +1141,19 @@ pub extern "C" fn unbind_to(count: libc::ptrdiff_t, value: LispObject) -> LispOb
     value
 }
 
+/// Do BODYFORM, protecting with UNWINDFORMS.
+/// If BODYFORM completes normally, its value is returned
+/// after executing the UNWINDFORMS.
+/// If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
+/// usage: (unwind-protect BODYFORM UNWINDFORMS...)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn unwind_protect(args: LispCons) -> LispObject {
+    let (bodyform, unwindforms) = args.as_tuple();
+    let count = c_specpdl_index();
+
+    unsafe { record_unwind_protect(Some(prog_ignore), unwindforms) };
+
+    unbind_to(count, unsafe { eval_sub(bodyform) })
+}
+
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

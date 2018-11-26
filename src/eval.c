@@ -671,23 +671,6 @@ Both TAG and VALUE are evalled.  */
       }
   xsignal2 (Qno_catch, tag, value);
 }
-
-
-DEFUN ("unwind-protect", Funwind_protect, Sunwind_protect, 1, UNEVALLED, 0,
-       doc: /* Do BODYFORM, protecting with UNWINDFORMS.
-If BODYFORM completes normally, its value is returned
-after executing the UNWINDFORMS.
-If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
-usage: (unwind-protect BODYFORM UNWINDFORMS...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  record_unwind_protect (prog_ignore, XCDR (args));
-  val = eval_sub (XCAR (args));
-  return unbind_to (count, val);
-}
 
 DEFUN ("condition-case", Fcondition_case, Scondition_case, 2, UNEVALLED, 0,
        doc: /* Regain control when an error is signaled.
@@ -3196,7 +3179,6 @@ alist of active lexical bindings.  */);
   DEFSYM (Qdefvaralias, "defvaralias");
   defsubr (&Scatch);
   defsubr (&Sthrow);
-  defsubr (&Sunwind_protect);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
   defsubr (&Sapply);
