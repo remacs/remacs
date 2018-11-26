@@ -18,6 +18,7 @@
 #![feature(const_fn_union)]
 #![feature(ptr_offset_from)]
 
+extern crate errno;
 #[macro_use]
 extern crate if_chain;
 #[macro_use]

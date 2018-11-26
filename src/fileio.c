@@ -135,7 +135,7 @@ static bool e_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 
 /* Return true if FILENAME exists.  */
 
-static bool
+bool
 check_existing (const char *filename)
 {
   return faccessat (AT_FDCWD, filename, F_OK, AT_EACCESS) == 0;
@@ -143,7 +143,7 @@ check_existing (const char *filename)
 
 /* Return true if file FILENAME exists and can be executed.  */
 
-static bool
+bool
 check_executable (char *filename)
 {
   return faccessat (AT_FDCWD, filename, X_OK, AT_EACCESS) == 0;
@@ -1562,7 +1562,7 @@ See also the function `substitute-in-file-name'.")
 
 
 /* If /~ or // appears, discard everything through first slash.  */
-static bool
+bool
 file_name_absolute_p (const char *filename)
 {
   return
@@ -2167,7 +2167,7 @@ internal_delete_file (Lisp_Object filename)
    NFS-mounted Windows volumes, might be case-insensitive.  Can we
    detect this?  */
 
-static bool
+bool
 file_name_case_insensitive_p (const char *filename)
 {
   /* Use pathconf with _PC_CASE_INSENSITIVE or _PC_CASE_SENSITIVE if
@@ -2191,27 +2191,6 @@ file_name_case_insensitive_p (const char *filename)
 #else
   return false;
 #endif
-}
-
-DEFUN ("file-name-case-insensitive-p", Ffile_name_case_insensitive_p,
-       Sfile_name_case_insensitive_p, 1, 1, 0,
-       doc: /* Return t if file FILENAME is on a case-insensitive filesystem.
-The arg must be a string.  */)
-  (Lisp_Object filename)
-{
-  Lisp_Object handler;
-
-  CHECK_STRING (filename);
-  filename = Fexpand_file_name (filename, Qnil);
-
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (filename, Qfile_name_case_insensitive_p);
-  if (!NILP (handler))
-    return call2 (handler, Qfile_name_case_insensitive_p, filename);
-
-  filename = ENCODE_FILE (filename);
-  return file_name_case_insensitive_p (SSDATA (filename)) ? Qt : Qnil;
 }
 
 DEFUN ("rename-file", Frename_file, Srename_file, 2, 3,
@@ -2441,71 +2420,6 @@ This happens for interactive use with M-x.  */)
     }
 
   report_file_error ("Making symbolic link", list2 (target, linkname));
-}
-
-
-
-DEFUN ("file-name-absolute-p", Ffile_name_absolute_p, Sfile_name_absolute_p,
-       1, 1, 0,
-       doc: /* Return t if FILENAME is an absolute file name or starts with `~'.
-On Unix, absolute file names start with `/'.  */)
-  (Lisp_Object filename)
-{
-  CHECK_STRING (filename);
-  return file_name_absolute_p (SSDATA (filename)) ? Qt : Qnil;
-}
-
-
-DEFUN ("file-exists-p", Ffile_exists_p, Sfile_exists_p, 1, 1, 0,
-       doc: /* Return t if file FILENAME exists (whether or not you can read it.)
-See also `file-readable-p' and `file-attributes'.
-This returns nil for a symlink to a nonexistent file.
-Use `file-symlink-p' to test for such links.  */)
-  (Lisp_Object filename)
-{
-  Lisp_Object absname;
-  Lisp_Object handler;
-
-  CHECK_STRING (filename);
-  absname = Fexpand_file_name (filename, Qnil);
-
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (absname, Qfile_exists_p);
-  if (!NILP (handler))
-    {
-      Lisp_Object result = call2 (handler, Qfile_exists_p, absname);
-      errno = 0;
-      return result;
-    }
-
-  absname = ENCODE_FILE (absname);
-
-  return check_existing (SSDATA (absname)) ? Qt : Qnil;
-}
-
-DEFUN ("file-executable-p", Ffile_executable_p, Sfile_executable_p, 1, 1, 0,
-       doc: /* Return t if FILENAME can be executed by you.
-For a directory, this means you can access files in that directory.
-\(It is generally better to use `file-accessible-directory-p' for that
-purpose, though.)  */)
-  (Lisp_Object filename)
-{
-  Lisp_Object absname;
-  Lisp_Object handler;
-
-  CHECK_STRING (filename);
-  absname = Fexpand_file_name (filename, Qnil);
-
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (absname, Qfile_executable_p);
-  if (!NILP (handler))
-    return call2 (handler, Qfile_executable_p, absname);
-
-  absname = ENCODE_FILE (absname);
-
-  return (check_executable (SSDATA (absname)) ? Qt : Qnil);
 }
 
 DEFUN ("file-readable-p", Ffile_readable_p, Sfile_readable_p, 1, 1, 0,
@@ -6084,13 +5998,9 @@ This includes interactive calls to `delete-file' and
   defsubr (&Smake_directory_internal);
   defsubr (&Sdelete_directory_internal);
   defsubr (&Sdelete_file);
-  defsubr (&Sfile_name_case_insensitive_p);
   defsubr (&Srename_file);
   defsubr (&Sadd_name_to_file);
   defsubr (&Smake_symbolic_link);
-  defsubr (&Sfile_name_absolute_p);
-  defsubr (&Sfile_exists_p);
-  defsubr (&Sfile_executable_p);
   defsubr (&Sfile_readable_p);
   defsubr (&Sfile_writable_p);
   defsubr (&Saccess_file);
