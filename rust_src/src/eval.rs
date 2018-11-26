@@ -899,6 +899,65 @@ fn funcall_nil(args: &mut [LispObject]) -> LispObject {
     Qnil
 }
 
+// NB this one still documents a specific non-nil return value.  (As
+// did run-hook-with-args and run-hook-with-args-until-failure until
+// they were changed in 24.1.)
+
+/// Run HOOK with the specified arguments ARGS.
+/// HOOK should be a symbol, a hook variable.  The value of HOOK
+/// may be nil, a function, or a list of functions.  Call each
+/// function in order with arguments ARGS, stopping at the first
+/// one that returns non-nil, and return that value.  Otherwise (if
+/// all functions return nil, or if there are no functions to call),
+/// return nil.
+///
+/// Do not use `make-local-variable' to make a hook variable buffer-local.
+/// Instead, use `add-hook' and specify t for the LOCAL argument.
+/// usage: (run-hook-with-args-until-success HOOK &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn run_hook_with_args_until_success(args: &mut [LispObject]) -> LispObject {
+    run_hook_with_args_internal(args, funcall)
+}
+
+fn funcall_not(args: &mut [LispObject]) -> LispObject {
+    funcall(args).is_nil().into()
+}
+
+/// Run HOOK with the specified arguments ARGS.
+/// HOOK should be a symbol, a hook variable.  The value of HOOK may
+/// be nil, a function, or a list of functions.  Call each function in
+/// order with arguments ARGS, stopping at the first one that returns
+/// nil, and return nil.  Otherwise (if all functions return non-nil,
+/// or if there are no functions to call), return non-nil (do not rely
+/// on the precise return value in this case).
+///
+/// Do not use `make-local-variable' to make a hook variable buffer-local.
+/// Instead, use `add-hook' and specify t for the LOCAL argument.
+/// usage: (run-hook-with-args-until-failure HOOK &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn run_hook_with_args_until_failure(args: &mut [LispObject]) -> bool {
+    run_hook_with_args_internal(args, funcall_not).is_nil()
+}
+
+fn run_hook_wrapped_funcall(args: &mut [LispObject]) -> LispObject {
+    args.swap(0, 1);
+    let ret = funcall(args);
+    args.swap(0, 1);
+    ret
+}
+
+/// Run HOOK, passing each function through WRAP-FUNCTION.
+/// I.e. instead of calling each function FUN directly with arguments
+/// ARGS, it calls WRAP-FUNCTION with arguments FUN and ARGS.
+///
+/// As soon as a call to WRAP-FUNCTION returns non-nil,
+/// `run-hook-wrapped' aborts and returns that value.
+/// usage: (run-hook-wrapped HOOK WRAP-FUNCTION &rest ARGS)
+#[lisp_fn(min = "2")]
+pub fn run_hook_wrapped(args: &mut [LispObject]) -> LispObject {
+    run_hook_with_args_internal(args, run_hook_wrapped_funcall)
+}
+
 /// Run the hook HOOK, giving each function no args.
 #[no_mangle]
 pub extern "C" fn run_hook(hook: LispObject) {
