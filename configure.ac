@@ -4370,20 +4370,6 @@ AC_CHECK_MEMBERS([struct unipair.unicode], [], [], [[#include <linux/kd.h>]])
 
 AC_CHECK_FUNCS_ONCE([sbrk])
 
-ok_so_far=yes
-AC_CHECK_FUNC(socket, , ok_so_far=no)
-if test $ok_so_far = yes; then
-  AC_CHECK_HEADER(netinet/in.h, , ok_so_far=no)
-fi
-if test $ok_so_far = yes; then
-  AC_CHECK_HEADER(arpa/inet.h, , ok_so_far=no)
-fi
-if test $ok_so_far = yes; then
-dnl Fixme: Not used.  Should this be HAVE_SOCKETS?
-  AC_DEFINE(HAVE_INET_SOCKETS, 1,
-	    [Define to 1 if you have inet sockets.])
-fi
-
 AC_FUNC_FORK
 
 AC_CHECK_FUNCS(snprintf)
@@ -4461,7 +4447,6 @@ fi
 
 dnl Everybody supports this, except MS-DOS.
 dnl Seems like the kind of thing we should be testing for, though.
-dnl Compare with HAVE_INET_SOCKETS (which is unused...) above.
 AC_DEFINE(HAVE_SOCKETS, 1, [Define if the system supports
   4.2-compatible sockets.])
 

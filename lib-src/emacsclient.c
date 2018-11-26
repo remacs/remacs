@@ -44,20 +44,15 @@ char *w32_getenv (const char *);
 #else /* !WINDOWSNT */
 
 # ifdef HAVE_NTGUI
-# include <windows.h>
-# endif /* HAVE_NTGUI */
+#  include <windows.h>
+# endif
 
 # include "syswait.h"
 
-# ifdef HAVE_INET_SOCKETS
-#  include <netinet/in.h>
-#  ifdef HAVE_SOCKETS
-#    include <sys/types.h>
-#    include <sys/socket.h>
-#    include <sys/un.h>
-#  endif /* HAVE_SOCKETS */
-# endif
 # include <arpa/inet.h>
+# include <netinet/in.h>
+# include <sys/socket.h>
+# include <sys/un.h>
 
 # define SOCKETS_IN_FILE_SYSTEM
 
@@ -732,21 +727,19 @@ fail (void)
 }
 
 
-#if defined HAVE_SOCKETS && defined HAVE_INET_SOCKETS
-
-# ifdef SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
 static void act_on_signals (HSOCKET);
-# else
+#else
 static void act_on_signals (HSOCKET s) {}
 static void init_signals (void) {}
-# endif
+#endif
 
 enum { AUTH_KEY_LENGTH = 64 };
 
 static void
 sock_err_message (const char *function_name)
 {
-# ifdef WINDOWSNT
+#ifdef WINDOWSNT
   /* On Windows, the socket library was historically separate from the
      standard C library, so errors are handled differently.  */
 
@@ -763,9 +756,9 @@ sock_err_message (const char *function_name)
   message (true, "%s: %s: %s\n", progname, function_name, msg);
 
   LocalFree (msg);
-# else
+#else
   message (true, "%s: %s: %s\n", progname, function_name, strerror (errno));
-# endif
+#endif
 }
 
 
@@ -877,7 +870,7 @@ unquote_argument (char *str)
 }
 
 
-# ifdef WINDOWSNT
+#ifdef WINDOWSNT
 /* Wrapper to make WSACleanup a cdecl, as required by atexit.  */
 void __cdecl close_winsock (void);
 void __cdecl
@@ -901,7 +894,7 @@ initialize_sockets (void)
 
   atexit (close_winsock);
 }
-# endif /* WINDOWSNT */
+#endif /* WINDOWSNT */
 
 
 /* If the home directory is HOME, return the configuration file with
@@ -940,10 +933,10 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
   else
     {
       config = open_config (egetenv ("HOME"), config_file);
-# ifdef WINDOWSNT
+#ifdef WINDOWSNT
       if (!config)
 	config = open_config (egetenv ("APPDATA"), config_file);
-# endif
+#endif
     }
 
   if (! config)
@@ -1079,7 +1072,7 @@ find_tty (const char **tty_type, const char **tty_name, bool noabort)
 }
 
 
-# ifdef SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
 
 /* Three possibilities:
   >0 - 'stat' failed with this errno value
@@ -1117,10 +1110,10 @@ socket_status (const char *name)
 static void
 reinstall_handler_if_needed (int sig, void (*handler) (int))
 {
-#  ifndef SA_RESETHAND
+# ifndef SA_RESETHAND
   /* This is a platform without POSIX's sigaction.  */
   signal (sig, handler);
-#  endif
+# endif
 }
 
 /* Flags for each signal, and handlers that set the flags.  */
@@ -1160,7 +1153,7 @@ handle_sigwinch (int sig)
 static void
 install_handler (int sig, void (*handler) (int), sig_atomic_t volatile *flag)
 {
-#  ifdef SA_RESETHAND
+# ifdef SA_RESETHAND
   if (flag)
     {
       struct sigaction oact;
@@ -1170,7 +1163,7 @@ install_handler (int sig, void (*handler) (int), sig_atomic_t volatile *flag)
   struct sigaction act = { .sa_handler = handler };
   sigemptyset (&act.sa_mask);
   sigaction (sig, &act, NULL);
-#  else
+# else
   void (*ohandler) (int) = signal (sig, handler);
   if (flag)
     {
@@ -1182,7 +1175,7 @@ install_handler (int sig, void (*handler) (int), sig_atomic_t volatile *flag)
 	  *flag = 0;
 	}
     }
-#  endif
+# endif
 }
 
 /* Initial installation of signal handlers.  */
@@ -1311,10 +1304,10 @@ set_local_socket (const char *local_socket_name)
       tmpdir = egetenv ("TMPDIR");
       if (!tmpdir)
 	{
-#  ifdef DARWIN_OS
-#   ifndef _CS_DARWIN_USER_TEMP_DIR
-#    define _CS_DARWIN_USER_TEMP_DIR 65537
-#   endif
+# ifdef DARWIN_OS
+#  ifndef _CS_DARWIN_USER_TEMP_DIR
+#   define _CS_DARWIN_USER_TEMP_DIR 65537
+#  endif
 	  size_t n = confstr (_CS_DARWIN_USER_TEMP_DIR, NULL, 0);
 	  if (n > 0)
 	    {
@@ -1322,7 +1315,7 @@ set_local_socket (const char *local_socket_name)
 	      confstr (_CS_DARWIN_USER_TEMP_DIR, tmpdir_storage, n);
 	    }
 	  else
-#  endif
+# endif
 	    tmpdir = "/tmp";
 	}
       socket_name_storage =
@@ -1417,7 +1410,7 @@ set_local_socket (const char *local_socket_name)
   CLOSE_SOCKET (s);
   return INVALID_SOCKET;
 }
-# endif /* SOCKETS_IN_FILE_SYSTEM */
+#endif /* SOCKETS_IN_FILE_SYSTEM */
 
 static HSOCKET
 set_socket (bool no_exit_if_error)
@@ -1427,7 +1420,7 @@ set_socket (bool no_exit_if_error)
 
   INITIALIZE ();
 
-# ifdef SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
   /* Explicit --socket-name argument.  */
   if (!socket_name)
     socket_name = egetenv ("EMACS_SOCKET_NAME");
@@ -1441,7 +1434,7 @@ set_socket (bool no_exit_if_error)
 	       progname, socket_name);
       exit (EXIT_FAILURE);
     }
-# endif
+#endif
 
   /* Explicit --server-file arg or EMACS_SERVER_FILE variable.  */
   if (!local_server_file)
@@ -1458,12 +1451,12 @@ set_socket (bool no_exit_if_error)
       exit (EXIT_FAILURE);
     }
 
-# ifdef SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
   /* Implicit local socket.  */
   s = set_local_socket ("server");
   if (s != INVALID_SOCKET)
     return s;
-# endif
+#endif
 
   /* Implicit server file.  */
   s = set_tcp_socket ("server");
@@ -1472,16 +1465,16 @@ set_socket (bool no_exit_if_error)
 
   /* No implicit or explicit socket, and no alternate editor.  */
   message (true, "%s: No socket or alternate editor.  Please use:\n\n"
-# ifdef SOCKETS_IN_FILE_SYSTEM
+#ifdef SOCKETS_IN_FILE_SYSTEM
 "\t--socket-name\n"
-# endif
+#endif
 "\t--server-file      (or environment variable EMACS_SERVER_FILE)\n\
 \t--alternate-editor (or environment variable ALTERNATE_EDITOR)\n",
            progname);
   exit (EXIT_FAILURE);
 }
 
-# ifdef HAVE_NTGUI
+#ifdef HAVE_NTGUI
 FARPROC set_fg;  /* Pointer to AllowSetForegroundWindow.  */
 FARPROC get_wc;  /* Pointer to RealGetWindowClassA.  */
 
@@ -1565,14 +1558,14 @@ w32_give_focus (void)
       && (get_wc = GetProcAddress (user32, "RealGetWindowClassA")))
     EnumWindows (w32_find_emacs_process, (LPARAM) 0);
 }
-# endif /* HAVE_NTGUI */
+#endif /* HAVE_NTGUI */
 
 /* Start the emacs daemon and try to connect to it.  */
 
 static HSOCKET
 start_daemon_and_retry_set_socket (void)
 {
-# ifndef WINDOWSNT
+#ifndef WINDOWSNT
   pid_t dpid;
   int status;
 
@@ -1605,7 +1598,7 @@ start_daemon_and_retry_set_socket (void)
       d_argv[0] = emacs;
       d_argv[1] = daemon_option;
       d_argv[2] = 0;
-#  ifdef SOCKETS_IN_FILE_SYSTEM
+# ifdef SOCKETS_IN_FILE_SYSTEM
       if (socket_name != NULL)
 	{
 	  /* Pass  --daemon=socket_name as argument.  */
@@ -1615,12 +1608,12 @@ start_daemon_and_retry_set_socket (void)
 	  strcpy (stpcpy (daemon_arg, deq), socket_name);
 	  d_argv[1] = daemon_arg;
 	}
-#  endif
+# endif
       execvp ("emacs", d_argv);
       message (true, "%s: error starting emacs daemon\n", progname);
       exit (EXIT_FAILURE);
     }
-# else  /* WINDOWSNT */
+#else  /* WINDOWSNT */
   DWORD wait_result;
   HANDLE w32_daemon_event;
   STARTUPINFO si;
@@ -1684,7 +1677,7 @@ start_daemon_and_retry_set_socket (void)
   if (!w32_window_app ())
     message (true,
 	     "Emacs daemon should have started, trying to connect again\n");
-# endif /* WINDOWSNT */
+#endif /* WINDOWSNT */
 
   HSOCKET emacs_socket = set_socket (true);
   if (emacs_socket == INVALID_SOCKET)
@@ -1704,7 +1697,6 @@ flush_stdout (HSOCKET emacs_socket)
   while (fdatasync (STDOUT_FILENO) != 0 && errno == EINTR)
     act_on_signals (emacs_socket);
 }
-#endif /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
 
 int
 main (int argc, char **argv)
@@ -1713,23 +1705,18 @@ main (int argc, char **argv)
   main_argv = argv;
   progname = argv[0] ? argv[0] : "emacsclient";
 
-#if ! (defined HAVE_SOCKETS && defined HAVE_INET_SOCKETS)
-  message (true, "%s: Sorry, support for Berkeley sockets is required.\n",
-	   progname);
-  fail ();
-#else /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
   int rl = 0;
   bool skiplf = true;
   char string[BUFSIZ + 1];
   int exit_status = EXIT_SUCCESS;
 
-# ifdef HAVE_NTGUI
+#ifdef HAVE_NTGUI
   /* On Windows 7 and later, we need to explicitly associate
      emacsclient with emacs so the UI behaves sensibly.  This
      association does no harm if we're not actually connecting to an
      Emacs using a window display.  */
   w32_set_user_model_id ();
-# endif /* HAVE_NTGUI */
+#endif
 
   /* Process options.  */
   decode_options (argc, argv);
@@ -1742,7 +1729,7 @@ main (int argc, char **argv)
       exit (EXIT_FAILURE);
     }
 
-# ifndef WINDOWSNT
+#ifndef WINDOWSNT
   if (tty)
     {
       pid_t pgrp = getpgrp ();
@@ -1750,7 +1737,7 @@ main (int argc, char **argv)
       if (0 <= tcpgrp && tcpgrp != pgrp)
 	kill (-pgrp, SIGTTIN);
     }
-# endif /* !WINDOWSNT */
+#endif
 
   /* If alternate_editor is the empty string, start the emacs daemon
      in case of failure to connect.  */
@@ -1774,10 +1761,10 @@ main (int argc, char **argv)
       fail ();
     }
 
-# ifdef HAVE_NTGUI
+#ifdef HAVE_NTGUI
   if (display && !strcmp (display, "w32"))
   w32_give_focus ();
-# endif /* HAVE_NTGUI */
+#endif
 
   /* Send over our environment and current directory. */
   if (create_frame)
@@ -1879,7 +1866,7 @@ main (int argc, char **argv)
                   continue;
                 }
             }
-# ifdef WINDOWSNT
+#ifdef WINDOWSNT
 	  else if (! IS_ABSOLUTE_FILE_NAME (argv[i])
 		   && (isalpha (argv[i][0]) && argv[i][1] == ':'))
 	    /* Windows can have a different default directory for each
@@ -1898,7 +1885,7 @@ main (int argc, char **argv)
 	      else
 		free (filename);
 	    }
-# endif
+#endif
 
           send_to_emacs (emacs_socket, "-file ");
 	  if (tramp_prefix && IS_ABSOLUTE_FILE_NAME (argv[i]))
@@ -2008,7 +1995,6 @@ main (int argc, char **argv)
 	        skiplf = str[strlen (str) - 1] == '\n';
               exit_status = EXIT_FAILURE;
             }
-# ifdef SIGSTOP
 	  else if (strprefix ("-suspend ", p))
 	    {
 	      /* -suspend: Suspend this terminal, i.e., stop the process. */
@@ -2017,7 +2003,6 @@ main (int argc, char **argv)
 	      skiplf = true;
 	      kill (0, SIGSTOP);
 	    }
-# endif
 	  else
 	    {
 	      /* Unknown command. */
@@ -2036,5 +2021,4 @@ main (int argc, char **argv)
 
   CLOSE_SOCKET (emacs_socket);
   return exit_status;
-#endif /* HAVE_SOCKETS && HAVE_INET_SOCKETS */
 }
