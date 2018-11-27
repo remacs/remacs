@@ -254,7 +254,9 @@ the current %s and exit."
     ;; Clear the last prompt from the minibuffer, and restore the
     ;; previous echo-area message, if any.
     (let ((message-log-max nil))
-      (message (or msg "")))
+      (if msg
+          (message "%s" msg)
+        (message "")))
     ;; Return the number of actions that were taken.
     actions))
 
