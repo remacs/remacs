@@ -78,6 +78,8 @@ Returns the newly constructed xwidget, or nil if construction fails.  */)
    Lisp_Object title, Lisp_Object width, Lisp_Object height,
    Lisp_Object arguments, Lisp_Object buffer)
 {
+  if (!xg_gtk_initialized)
+    error ("make-xwidget: GTK has not been initialized");
   CHECK_SYMBOL (type);
   CHECK_NATNUM (width);
   CHECK_NATNUM (height);
@@ -508,6 +510,10 @@ xwidget_init_view (struct xwidget *xww,
                    struct glyph_string *s,
                    int x, int y)
 {
+
+  if (!xg_gtk_initialized)
+    error ("xwidget_init_view: GTK has not been initialized");
+
   struct xwidget_view *xv = allocate_xwidget_view ();
   Lisp_Object val;
 

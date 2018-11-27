@@ -147,6 +147,8 @@ struct xg_frame_tb_info
   GtkTextDirection dir;
 };
 
+bool xg_gtk_initialized;        /* Used to make sure xwidget calls are possible */
+
 static GtkWidget * xg_get_widget_from_map (ptrdiff_t idx);
 
 
@@ -5306,6 +5308,8 @@ xg_initialize (void)
 #ifdef HAVE_FREETYPE
   x_last_font_name = NULL;
 #endif
+
+  xg_gtk_initialized = true;
 }
 
 #endif /* USE_GTK */

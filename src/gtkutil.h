@@ -202,5 +202,6 @@ extern void xg_initialize (void);
    to indicate that the callback should do nothing.  */
 extern bool xg_ignore_gtk_scrollbar;
 
+extern bool xg_gtk_initialized;
 #endif /* USE_GTK */
 #endif /* GTKUTIL_H */
