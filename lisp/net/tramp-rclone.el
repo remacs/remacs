@@ -170,26 +170,27 @@ pass to the OPERATION."
 ;;;###tramp-autoload
 (defun tramp-rclone-parse-device-names (_ignore)
   "Return a list of (nil host) tuples allowed to access."
-  (with-timeout (10)
-    (with-temp-buffer
-      ;; `call-process' does not react on timer under MS Windows.
-      ;; That's why we use `start-process'.
-      (let ((p (start-process
-		tramp-rclone-program (current-buffer)
-		tramp-rclone-program "listremotes"))
-	    (v (make-tramp-file-name :method tramp-rclone-method))
-	    result)
-	(tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
-	(process-put p 'adjust-window-size-function 'ignore)
-	(set-process-query-on-exit-flag p nil)
-	(while (process-live-p p)
-	  (accept-process-output p 0.1))
-	(accept-process-output p 0.1)
-	(tramp-message v 6 "\n%s" (buffer-string))
-	(goto-char (point-min))
-	(while (search-forward-regexp "^\\(\\S-+\\):$" nil t)
-	  (push (list nil (match-string 1)) result))
-	result))))
+  (with-tramp-connection-property nil "rclone-device-names"
+    (with-timeout (10)
+      (with-temp-buffer
+	;; `call-process' does not react on timer under MS Windows.
+	;; That's why we use `start-process'.
+	(let ((p (start-process
+		  tramp-rclone-program (current-buffer)
+		  tramp-rclone-program "listremotes"))
+	      (v (make-tramp-file-name :method tramp-rclone-method))
+	      result)
+	  (tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
+	  (process-put p 'adjust-window-size-function 'ignore)
+	  (set-process-query-on-exit-flag p nil)
+	  (while (process-live-p p)
+	    (accept-process-output p 0.1))
+	  (accept-process-output p 0.1)
+	  (tramp-message v 6 "\n%s" (buffer-string))
+	  (goto-char (point-min))
+	  (while (search-forward-regexp "^\\(\\S-+\\):$" nil t)
+	    (push (list nil (match-string 1)) result))
+	  result)))))
 
 
 ;; File name primitives.
@@ -489,7 +490,7 @@ file names."
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
 connection if a previous connection has died for some reason."
-  (unless (or (null non-essential) (tramp-rclone-mounted-p vec))
+  (unless (tramp-rclone-mounted-p vec)
     (let ((host (tramp-file-name-host vec)))
       (if (zerop (length host))
 	  (tramp-error vec 'file-error "Storage %s not connected" host))
