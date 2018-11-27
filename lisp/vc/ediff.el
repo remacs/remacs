@@ -927,6 +927,7 @@ MERGE-AUTOSTORE-DIR is the directory in which to store merged files."
 ;;;###autoload
 (defun ediff-windows-wordwise (dumb-mode &optional wind-A wind-B startup-hooks)
   "Compare WIND-A and WIND-B, which are selected by clicking, wordwise.
+This compares the portions of text visible in each of the two windows.
 With prefix argument, DUMB-MODE, or on a non-windowing display, works as
 follows:
 If WIND-A is nil, use selected window.
@@ -940,6 +941,7 @@ arguments after setting up the Ediff buffers."
 ;;;###autoload
 (defun ediff-windows-linewise (dumb-mode &optional wind-A wind-B startup-hooks)
   "Compare WIND-A and WIND-B, which are selected by clicking, linewise.
+This compares the portions of text visible in each of the two windows.
 With prefix argument, DUMB-MODE, or on a non-windowing display, works as
 follows:
 If WIND-A is nil, use selected window.
@@ -950,7 +952,8 @@ arguments after setting up the Ediff buffers."
   (ediff-windows dumb-mode wind-A wind-B
 		 startup-hooks 'ediff-windows-linewise nil))
 
-;; Compare WIND-A and WIND-B, which are selected by clicking.
+;; Compare visible portions of text in WIND-A and WIND-B, which are
+;; selected by clicking.
 ;; With prefix argument, DUMB-MODE, or on a non-windowing display,
 ;; works as follows:
 ;; If WIND-A is nil, use selected window.
@@ -991,8 +994,8 @@ arguments after setting up the Ediff buffers."
   "Run Ediff on a pair of regions in specified buffers.
 BUFFER-A and BUFFER-B are the buffers to be compared.
 Regions (i.e., point and mark) can be set in advance or marked interactively.
-This function is effective only for relatively small regions, up to 200
-lines.  For large regions, use `ediff-regions-linewise'.
+This function might be slow for large regions.  If you find it slow,
+use `ediff-regions-linewise' instead.
 STARTUP-HOOKS is a list of functions that Emacs calls without
 arguments after setting up the Ediff buffers."
   (interactive
