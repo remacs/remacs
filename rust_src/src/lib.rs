@@ -61,6 +61,7 @@ mod base64;
 mod buffers;
 mod bytecode;
 mod callint;
+mod callproc;
 mod casefiddle;
 mod casetab;
 mod category;
