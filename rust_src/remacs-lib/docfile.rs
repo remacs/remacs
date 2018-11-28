@@ -59,7 +59,15 @@ pub unsafe extern "C" fn scan_rust_file(
             }
             in_docstring = true;
             if line.starts_with("/// usage: (") {
-                docstring_usage.push_str(&line[11..]);
+                docstring = format!("{}\n", docstring.trim_right());
+                let begin = &line[11..];
+                // Now find the first space after the function name. If there is a space
+                // capture the rest of the usage text.
+                // The function name is dropped either way.
+                if let Some(mut pos) = begin.find(' ') {
+                    pos += 11;
+                    docstring_usage.push_str(&line[pos..]);
+                }
             } else {
                 docstring.push_str(line[3..].trim_left());
                 docstring.push('\n');
@@ -128,12 +136,13 @@ pub unsafe extern "C" fn scan_rust_file(
             } else {
                 // Create usage line (fn ARG1 ...) from signature if necessary
                 if docstring_usage.is_empty() {
-                    docstring_usage.push_str("(fn ");
                     for (i, chunk) in args.chunks(2).enumerate() {
                         if chunk[1].contains("&mut") || chunk[1].contains("&[") {
-                            docstring_usage.push_str("&rest ");
+                            docstring_usage.push(' ');
+                            docstring_usage.push_str("&rest");
                         } else if i == attr_props.min as usize {
-                            docstring_usage.push_str("&optional ");
+                            docstring_usage.push(' ');
+                            docstring_usage.push_str("&optional");
                         }
                         let argname = chunk[0]
                             .trim()
@@ -141,15 +150,14 @@ pub unsafe extern "C" fn scan_rust_file(
                             .trim()
                             .to_uppercase()
                             .replace("_", "-");
-                        docstring_usage.push_str(&argname);
                         docstring_usage.push(' ');
+                        docstring_usage.push_str(&argname);
                     }
-                    docstring_usage.pop();
                     docstring_usage.push(')');
                 }
                 // Print contents for docfile to stdout
                 print!(
-                    "\x1fF{}\n{}\n{}",
+                    "\x1fF{}\n{}\n(fn{}",
                     attr_props.name, docstring, docstring_usage
                 );
             }
