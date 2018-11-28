@@ -1022,12 +1022,13 @@ windows in the frame are removed."
   (when delete-other-windows-flag
     (delete-other-windows)))
 
-;; FIXME: Maybe out of date?  --xfq
 (if (boundp 'customize-package-emacs-version-alist)
     (add-to-list 'customize-package-emacs-version-alist
                  '(MH-E ("6.0" . "22.1") ("6.1" . "22.1") ("7.0" . "22.1")
                         ("7.1" . "22.1") ("7.2" . "22.1") ("7.3" . "22.1")
-                        ("7.4" . "22.1") ("8.0" . "22.1"))))
+                        ("7.4" . "22.1") ("8.0" . "22.1") ("8.1" . "23.1")
+                        ("8.2" . "23.1") ("8.3" . "24.1") ("8.4" . "24.4")
+                        ("8.5" . "24.4") ("8.6" . "24.4"))))
 
 
 
