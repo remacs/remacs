@@ -497,7 +497,7 @@ Height |  | | Height                           | |  | Height
 In practice not all of the areas shown in the drawing will or may be
 present.  The meaning of these areas is described below.
 
-@table @samp
+@table @asis
 @item Outer Frame
 @cindex outer frame
 @cindex outer edges
