@@ -210,11 +210,11 @@ ancestors.  Ediff selects only the files that are under version control.
 
 @item ediff-windows-wordwise
 @findex ediff-windows-wordwise
-Compare windows word-by-word.
+Compare text visible in 2 windows word-by-word.
 
 @item ediff-windows-linewise
 @findex ediff-windows-linewise
-Compare windows line-by-line.
+Compare text visible in 2 windows line-by-line.
 
 @item ediff-regions-wordwise
 @findex ediff-regions-wordwise
@@ -373,13 +373,12 @@ The commands @code{ediff-windows-wordwise},
 @code{ediff-windows-linewise}, @code{ediff-regions-wordwise} and
 @code{ediff-regions-linewise} do comparison on parts of existing Emacs
 buffers.  The commands @code{ediff-windows-wordwise} and
-@code{ediff-regions-wordwise} are intended for relatively small segments
-of buffers (e.g., up to 100 lines, depending on the speed of your machine),
+@code{ediff-regions-wordwise} could be slow on very large buffers,
 as they perform comparison on the basis of words rather than lines.
-(Word-wise comparison of large chunks of text can be slow.)
+(Word-wise comparison of large chunks of text is relatively expensive.)
 
-To compare large regions, use @code{ediff-regions-linewise}.  This
-command displays differences much like @code{ediff-files} and
+To compare very large regions, use @code{ediff-regions-linewise}.
+This command displays differences much like @code{ediff-files} and
 @code{ediff-buffers}.
 
 The functions @code{ediff-patch-file} and @code{ediff-patch-buffer} apply a
