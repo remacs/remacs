@@ -124,6 +124,7 @@
 (require 'backquote)
 (require 'macroexp)
 (require 'cconv)
+(require 'compile)
 ;; Refrain from using cl-lib at run-time here, since it otherwise prevents
 ;; us from emitting warnings when compiling files which use cl-lib without
 ;; requiring it! (bug#30635)
@@ -1006,6 +1007,24 @@ Each function's symbol gets added to `byte-compile-noruntime-functions'."
 
 ;;; byte compiler messages
 
+(defun emacs-lisp-compilation-file-name-or-buffer (str)
+  "Return file name or buffer given by STR.
+If STR is a \"normal\" filename, just return it.
+If STR is something like \"Buffer foo.el\", return #<buffer foo.el>
+\(if it is still live) or the string \"foo.el\" otherwise."
+  (if (string-match "Buffer \\(.*\\)\\'" str)
+      (or (get-buffer (match-string-no-properties 1 str))
+          (match-string-no-properties 1 str))
+    str))
+
+(defconst emacs-lisp-compilation-parse-errors-filename-function
+  'emacs-lisp-compilation-file-name-or-buffer
+  "The value for `compilation-parse-errors-filename-function' for when
+we go into emacs-lisp-compilation-mode.")
+
+(define-compilation-mode emacs-lisp-compilation-mode "elisp-compile"
+  "The variant of `compilation-mode' used for emacs-lisp error buffers")
+
 (defvar byte-compile-current-form nil)
 (defvar byte-compile-dest-file nil)
 (defvar byte-compile-current-file nil)
@@ -1160,12 +1179,14 @@ Each function's symbol gets added to `byte-compile-noruntime-functions'."
 ;; Return the position of the start of the page in the log buffer.
 ;; But do nothing in batch mode.
 (defun byte-compile-log-file ()
-  (and (not (equal byte-compile-current-file byte-compile-last-logged-file))
+  (and (not
+        (and (get-buffer byte-compile-log-buffer)
+             (equal byte-compile-current-file byte-compile-last-logged-file)))
        (not noninteractive)
        (with-current-buffer (get-buffer-create byte-compile-log-buffer)
 	 (goto-char (point-max))
 	 (let* ((inhibit-read-only t)
-		(dir (and byte-compile-current-file
+		(dir (and (stringp byte-compile-current-file)
 			  (file-name-directory byte-compile-current-file)))
 		(was-same (equal default-directory dir))
 		pt)
@@ -1180,7 +1201,7 @@ Each function's symbol gets added to `byte-compile-noruntime-functions'."
 	       (insert "\f\nCompiling "
 		       (if (stringp byte-compile-current-file)
 			   (concat "file " byte-compile-current-file)
-			 (concat "buffer "
+			 (concat "in buffer "
                                  (buffer-name byte-compile-current-file)))
 		       " at " (current-time-string) "\n")
 	     (insert "\f\nCompiling no file at " (current-time-string) "\n"))
@@ -1192,7 +1213,8 @@ Each function's symbol gets added to `byte-compile-noruntime-functions'."
 	   (setq byte-compile-last-logged-file byte-compile-current-file
 		 byte-compile-last-warned-form nil)
 	   ;; Do this after setting default-directory.
-	   (unless (derived-mode-p 'compilation-mode) (compilation-mode))
+	   (unless (derived-mode-p 'compilation-mode)
+             (emacs-lisp-compilation-mode))
 	   (compilation-forget-errors)
 	   pt))))
 
@@ -1981,7 +2003,7 @@ With argument ARG, insert value in current buffer after the form."
   (save-excursion
     (end-of-defun)
     (beginning-of-defun)
-    (let* ((byte-compile-current-file nil)
+    (let* ((byte-compile-current-file (current-buffer))
 	   (byte-compile-current-buffer (current-buffer))
 	   (byte-compile-read-position (point))
 	   (byte-compile-last-position byte-compile-read-position)
