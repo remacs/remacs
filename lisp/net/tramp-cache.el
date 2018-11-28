@@ -28,7 +28,7 @@
 ;; An implementation of information caching for remote files.
 
 ;; Each connection, identified by a `tramp-file-name' structure or by
-;; a process, has a unique cache. We distinguish 3 kind of caches,
+;; a process, has a unique cache. We distinguish 4 kind of caches,
 ;; depending on the key:
 ;;
 ;; - localname is NIL.  This are reusable properties.  Examples:
@@ -49,6 +49,16 @@
 ;;   an open connection.  Examples: "scripts" keeps shell script
 ;;   definitions already sent to the remote shell, "last-cmd-time" is
 ;;   the time stamp a command has been sent to the remote process.
+;;
+;; - The key is `nil'.  This are temporary properties related to the
+;;   local machine.  Examples: "parse-passwd" and "parse-group" keep
+;;   the results of parsing "/etc/passwd" and "/etc/group", "locale"
+;;   is the used shell locale.
+
+;; Some properties are handled special:
+;;
+;; - "process-name", "process-buffer" and "first-password-request" are
+;;   not saved in the file `tramp-persistency-file-name'.
 
 ;;; Code:
 

@@ -1796,12 +1796,12 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 	(if (string-match "\\([ACDEHNORrsSTV]+\\)?$" line)
 	    (setq
 	     mode (or (match-string 1 line) "")
-	     mode (save-match-data (format
+	     mode (format
 		    "%s%s"
-		    (if (string-match "D" mode) "d" "-")
+		    (if (string-match-p "D" mode) "d" "-")
 		    (mapconcat
 		     (lambda (_x) "") "    "
-		     (concat "r" (if (string-match "R" mode) "-" "w") "x"))))
+		     (concat "r" (if (string-match "R" mode) "-" "w") "x")))
 	     line (substring line 0 -6))
 	  (cl-return))
 

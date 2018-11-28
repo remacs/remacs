@@ -518,15 +518,14 @@ connection if a previous connection has died for some reason."
 
   ;; In `tramp-check-cached-permissions', the connection properties
   ;; {uig,gid}-{integer,string} are used.  We set them to proper values.
-  (unless (tramp-get-connection-property vec "uid-integer" nil)
-    (tramp-set-connection-property
-     vec "uid-integer" (tramp-get-local-uid 'integer))
-    (tramp-set-connection-property
-     vec "gid-integer" (tramp-get-local-gid 'integer))
-    (tramp-set-connection-property
-     vec "uid-string" (tramp-get-local-uid 'string))
-    (tramp-set-connection-property
-     vec "gid-string" (tramp-get-local-gid 'string))))
+  (with-tramp-connection-property
+      vec "uid-integer" (tramp-get-local-uid 'integer))
+  (with-tramp-connection-property
+      vec "gid-integer" (tramp-get-local-gid 'integer))
+  (with-tramp-connection-property
+      vec "uid-string" (tramp-get-local-uid 'string))
+  (with-tramp-connection-property
+      vec "gid-string" (tramp-get-local-gid 'string)))
 
 (defun tramp-rclone-send-command (vec &rest args)
   "Send the COMMAND to connection VEC."
