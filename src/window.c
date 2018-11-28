@@ -510,18 +510,6 @@ re-enlarged to its previous size.  */)
   return NILP (horizontal) ? w->normal_lines : w->normal_cols;
 }
 
-DEFUN ("window-new-normal", Fwindow_new_normal, Swindow_new_normal, 0, 1, 0,
-       doc: /* Return new normal size of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-
-The new normal size of WINDOW is the value set by the last call of
-`set-window-new-normal' for WINDOW.  If valid, it will be shortly
-installed as WINDOW's normal size (see `window-normal-size').  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->new_normal;
-}
-
 DEFUN ("window-new-pixel", Fwindow_new_pixel, Swindow_new_pixel, 0, 1, 0,
        doc: /* Return new pixel size of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -6896,8 +6884,7 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
   defsubr (&Swindow_normal_size);
-  defsubr (&Swindow_new_pixel);
-  defsubr (&Swindow_new_normal);
+  defsubr (&Swindow_new_pixel); 
   defsubr (&Swindow_pixel_left);
   defsubr (&Swindow_pixel_top);
   defsubr (&Swindow_left_column);
