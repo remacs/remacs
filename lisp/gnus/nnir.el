@@ -657,7 +657,7 @@ skips all prompting."
   (let ((backend (car (gnus-server-to-method server))))
     (if backend
 	(nnoo-change-server backend server definitions)
-      (add-hook 'gnus-summary-mode-hook 'nnir-mode)
+      (add-hook 'gnus-summary-prepared-hook 'nnir-mode)
       (nnoo-change-server 'nnir server definitions))))
 
 (deffoo nnir-request-group (group &optional server dont-check _info)
