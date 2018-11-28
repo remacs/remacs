@@ -269,7 +269,7 @@ the current %s and exit."
   "If non-nil, `read-answer' accepts single-character answers.
 If t, accept short (single key-press) answers to the question.
 If nil, require long answers.  If `auto', accept short answers if
-the function cell of `yes-or-no-p' is set to `y-or-on-p'."
+the function cell of `yes-or-no-p' is set to `y-or-n-p'."
   :type '(choice (const :tag "Accept short answers" t)
                  (const :tag "Require long answer" nil)
                  (const :tag "Guess preference" auto))
