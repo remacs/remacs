@@ -1801,7 +1801,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 		    (if (string-match-p "D" mode) "d" "-")
 		    (mapconcat
 		     (lambda (_x) "") "    "
-		     (concat "r" (if (string-match "R" mode) "-" "w") "x")))
+		     (concat "r" (if (string-match-p "R" mode) "-" "w") "x")))
 	     line (substring line 0 -6))
 	  (cl-return))
 
