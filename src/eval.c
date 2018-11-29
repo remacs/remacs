@@ -1716,75 +1716,6 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
 
 /* Run hook variables in various ways.  */
 
-/* NB this one still documents a specific non-nil return value.
-   (As did run-hook-with-args and run-hook-with-args-until-failure
-   until they were changed in 24.1.)  */
-DEFUN ("run-hook-with-args-until-success", Frun_hook_with_args_until_success,
-       Srun_hook_with_args_until_success, 1, MANY, 0,
-       doc: /* Run HOOK with the specified arguments ARGS.
-HOOK should be a symbol, a hook variable.  The value of HOOK
-may be nil, a function, or a list of functions.  Call each
-function in order with arguments ARGS, stopping at the first
-one that returns non-nil, and return that value.  Otherwise (if
-all functions return nil, or if there are no functions to call),
-return nil.
-
-Do not use `make-local-variable' to make a hook variable buffer-local.
-Instead, use `add-hook' and specify t for the LOCAL argument.
-usage: (run-hook-with-args-until-success HOOK &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return run_hook_with_args (nargs, args, Ffuncall);
-}
-
-static Lisp_Object
-funcall_not (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return NILP (Ffuncall (nargs, args)) ? Qt : Qnil;
-}
-
-DEFUN ("run-hook-with-args-until-failure", Frun_hook_with_args_until_failure,
-       Srun_hook_with_args_until_failure, 1, MANY, 0,
-       doc: /* Run HOOK with the specified arguments ARGS.
-HOOK should be a symbol, a hook variable.  The value of HOOK
-may be nil, a function, or a list of functions.  Call each
-function in order with arguments ARGS, stopping at the first
-one that returns nil, and return nil.  Otherwise (if all functions
-return non-nil, or if there are no functions to call), return non-nil
-\(do not rely on the precise return value in this case).
-
-Do not use `make-local-variable' to make a hook variable buffer-local.
-Instead, use `add-hook' and specify t for the LOCAL argument.
-usage: (run-hook-with-args-until-failure HOOK &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return NILP (run_hook_with_args (nargs, args, funcall_not)) ? Qt : Qnil;
-}
-
-static Lisp_Object
-run_hook_wrapped_funcall (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object tmp = args[0], ret;
-  args[0] = args[1];
-  args[1] = tmp;
-  ret = Ffuncall (nargs, args);
-  args[1] = args[0];
-  args[0] = tmp;
-  return ret;
-}
-
-DEFUN ("run-hook-wrapped", Frun_hook_wrapped, Srun_hook_wrapped, 2, MANY, 0,
-       doc: /* Run HOOK, passing each function through WRAP-FUNCTION.
-I.e. instead of calling each function FUN directly with arguments ARGS,
-it calls WRAP-FUNCTION with arguments FUN and ARGS.
-As soon as a call to WRAP-FUNCTION returns non-nil, `run-hook-wrapped'
-aborts and returns that value.
-usage: (run-hook-wrapped HOOK WRAP-FUNCTION &rest ARGS)  */)
-     (ptrdiff_t nargs, Lisp_Object *args)
-{
-  return run_hook_with_args (nargs, args, run_hook_wrapped_funcall);
-}
-
 /* ARGS[0] should be a hook symbol.
    Call each of the functions in the hook value, passing each of them
    as arguments all the rest of ARGS (all NARGS - 1 elements).
@@ -3183,9 +3114,6 @@ alist of active lexical bindings.  */);
   defsubr (&Ssignal);
   defsubr (&Sapply);
   defsubr (&Sfunc_arity);
-  defsubr (&Srun_hook_with_args_until_success);
-  defsubr (&Srun_hook_with_args_until_failure);
-  defsubr (&Srun_hook_wrapped);
   defsubr (&Sfetch_bytecode);
   defsubr (&Sbacktrace_debug);
   DEFSYM (QCdebug_on_exit, ":debug-on-exit");
