@@ -4,8 +4,9 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::{defsubr, LispObject},
-    remacs_sys::bounded_number,
     remacs_sys::globals,
+    remacs_sys::EmacsInt,
+    remacs_sys::{bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector},
 };
 
 /// Return a list of counters that measure how much consing there has been.
@@ -33,6 +34,27 @@ pub fn memory_use_counts() -> Vec<LispObject> {
             bounded_number(globals.strings_consed),
         ]
     }
+}
+
+/// Return a new bool-vector of length LENGTH, using INIT for each element.
+/// LENGTH must be a number.  INIT matters only in whether it is t or nil.
+#[lisp_fn]
+pub fn make_bool_vector(length: EmacsInt, init: bool) -> LispObject {
+    unsafe { bool_vector_fill(make_uninit_bool_vector(length), init.into()) }
+}
+
+/// Return a new bool-vector with specified arguments as elements.
+/// Any number of arguments, even zero arguments, are allowed.
+/// usage: (bool-vector &rest OBJECTS)
+#[lisp_fn]
+pub fn bool_vector(args: &mut [LispObject]) -> LispObject {
+    let vector = unsafe { make_uninit_bool_vector(args.len() as EmacsInt) };
+
+    for (i, arg) in args.iter().enumerate() {
+        unsafe { bool_vector_set(vector, i as EmacsInt, arg.is_not_nil()) }
+    }
+
+    vector
 }
 
 include!(concat!(env!("OUT_DIR"), "/alloc_exports.rs"));

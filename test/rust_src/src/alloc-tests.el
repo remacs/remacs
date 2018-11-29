@@ -8,5 +8,8 @@
     (dolist (count counts)
       (should (integerp count)))))
 
+(ert-deftest bool-vector ()
+  (should (bool-vector)))
+
 (provide 'alloc-tests)
 ;;; alloc-tests.el ends here
