@@ -172,7 +172,7 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// deleted or killed.
 #[lisp_fn]
 pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
-    get_buffer_process_internal(buffer_or_name.and_then(|b| b.as_buffer()))
+    get_buffer_process_internal(buffer_or_name.and_then(|b| b.into()))
 }
 
 pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> LispObject {
