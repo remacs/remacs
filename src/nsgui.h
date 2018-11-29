@@ -73,6 +73,8 @@ typedef unichar XChar2b;
 #define XCHAR2B_BYTE2(chp) \
   (*(chp) & 0x00ff)
 
+/* Used in xdisp.c when comparing faces and frame colors.  */
+extern unsigned long ns_color_index_to_rgba(int idx, struct frame *f);
 
 /* XXX: xfaces requires these structures, but the question is are we
         forced to use them?  */

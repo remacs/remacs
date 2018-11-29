@@ -20287,7 +20287,7 @@ extend_face_to_end_of_line (struct it *it)
   if (FRAME_WINDOW_P (f)
       && MATRIX_ROW_DISPLAYS_TEXT_P (it->glyph_row)
       && face->box == FACE_NO_BOX
-      && face->background == FRAME_BACKGROUND_PIXEL (f)
+      && FACE_COLOR_TO_PIXEL (face->background, f) == FRAME_BACKGROUND_PIXEL (f)
 #ifdef HAVE_WINDOW_SYSTEM
       && !face->stipple
 #endif
@@ -20432,7 +20432,7 @@ extend_face_to_end_of_line (struct it *it)
 	  && (it->glyph_row->used[LEFT_MARGIN_AREA]
 	      < WINDOW_LEFT_MARGIN_WIDTH (it->w))
 	  && !it->glyph_row->mode_line_p
-	  && default_face->background != FRAME_BACKGROUND_PIXEL (f))
+	  && FACE_COLOR_TO_PIXEL (face->background, f) != FRAME_BACKGROUND_PIXEL (f))
 	{
 	  struct glyph *g = it->glyph_row->glyphs[LEFT_MARGIN_AREA];
 	  struct glyph *e = g + it->glyph_row->used[LEFT_MARGIN_AREA];
@@ -20473,7 +20473,7 @@ extend_face_to_end_of_line (struct it *it)
 	  && (it->glyph_row->used[RIGHT_MARGIN_AREA]
 	      < WINDOW_RIGHT_MARGIN_WIDTH (it->w))
 	  && !it->glyph_row->mode_line_p
-	  && default_face->background != FRAME_BACKGROUND_PIXEL (f))
+	  && FACE_COLOR_TO_PIXEL (face->background, f) != FRAME_BACKGROUND_PIXEL (f))
 	{
 	  struct glyph *g = it->glyph_row->glyphs[RIGHT_MARGIN_AREA];
 	  struct glyph *e = g + it->glyph_row->used[RIGHT_MARGIN_AREA];
