@@ -646,7 +646,7 @@ an alist of attribute/value pairs."
 	       (not (equal "" sizelimit)))
 	  (setq arglist (nconc arglist (list (format "-z%s" sizelimit)))))
       (if passwd
-	  (let* ((process-connection-type nil)
+	  (let* ((process-connection-type t)
 		 (proc-args (append arglist ldap-ldapsearch-args
 				    filter))
 		 (proc (apply #'start-process "ldapsearch" buf
