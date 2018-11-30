@@ -527,6 +527,7 @@ will use an up-to-date value of `auto-revert-interval'"
       (maphash
        (lambda (key _value)
          (when (and
+                (file-notify-valid-p key)
                 (equal (file-notify--watch-absolute-filename
                         (gethash key file-notify-descriptors))
                        (directory-file-name file))
