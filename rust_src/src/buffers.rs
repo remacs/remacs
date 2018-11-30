@@ -1076,7 +1076,9 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if (ignore != Qnil && string_equal(name.into(), ignore)) || Fget_buffer(name.into()).is_nil() {
+    if (ignore != Qnil && string_equal(name.into(), ignore))
+        || get_buffer(LispBufferOrName::Name(name.into())).is_none()
+    {
         return name;
     }
 
@@ -1099,7 +1101,9 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
         let mut s = format!("<{}>", suffix_count);
         local_unibyte_string!(suffix, s);
         let candidate = unsafe { concat2(basename, suffix) };
-        if string_equal(candidate, ignore) || Fget_buffer(candidate).is_nil() {
+        if string_equal(candidate, ignore)
+            || get_buffer(LispBufferOrName::Name(candidate)).is_none()
+        {
             return candidate.into();
         }
         suffix_count += 1;
