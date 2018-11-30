@@ -92,7 +92,7 @@ volatile int interrupt_input_blocked;
    The maybe_quit function checks this.  */
 volatile bool pending_signals;
 
-#define KBD_BUFFER_SIZE 4096
+enum { KBD_BUFFER_SIZE = 4096 };
 
 KBOARD *initial_kboard;
 KBOARD *current_kboard;
@@ -286,15 +286,11 @@ static bool input_was_pending;
 static union buffered_input_event kbd_buffer[KBD_BUFFER_SIZE];
 
 /* Pointer to next available character in kbd_buffer.
-   If kbd_fetch_ptr == kbd_store_ptr, the buffer is empty.
-   This may be kbd_buffer + KBD_BUFFER_SIZE, meaning that the
-   next available char is in kbd_buffer[0].  */
+   If kbd_fetch_ptr == kbd_store_ptr, the buffer is empty.  */
 static union buffered_input_event *kbd_fetch_ptr;
 
-/* Pointer to next place to store character in kbd_buffer.  This
-   may be kbd_buffer + KBD_BUFFER_SIZE, meaning that the next
-   character should go in kbd_buffer[0].  */
-static union buffered_input_event *volatile kbd_store_ptr;
+/* Pointer to next place to store character in kbd_buffer.  */
+static union buffered_input_event *kbd_store_ptr;
 
 /* The above pair of variables forms a "queue empty" flag.  When we
    enqueue a non-hook event, we increment kbd_store_ptr.  When we
@@ -302,8 +298,7 @@ static union buffered_input_event *volatile kbd_store_ptr;
    there is input available if the two pointers are not equal.
 
    Why not just have a flag set and cleared by the enqueuing and
-   dequeuing functions?  Such a flag could be screwed up by interrupts
-   at inopportune times.  */
+   dequeuing functions?  The code is a bit simpler this way.  */
 
 static void recursive_edit_unwind (Lisp_Object buffer);
 static Lisp_Object command_loop (void);
@@ -374,6 +369,20 @@ static void timer_resume_idle (void);
 static void deliver_user_signal (int);
 static char *find_user_signal_name (int);
 static void store_user_signal_events (void);
+
+/* Advance or retreat a buffered input event pointer.  */
+
+static union buffered_input_event *
+next_kbd_event (union buffered_input_event *ptr)
+{
+  return ptr == kbd_buffer + KBD_BUFFER_SIZE - 1 ? kbd_buffer : ptr + 1;
+}
+
+static union buffered_input_event *
+prev_kbd_event (union buffered_input_event *ptr)
+{
+  return ptr == kbd_buffer ? kbd_buffer + KBD_BUFFER_SIZE - 1 : ptr - 1;
+}
 
 /* Like EVENT_START, but assume EVENT is an event.
    This pacifies gcc -Wnull-dereference, which might otherwise
@@ -3338,8 +3347,6 @@ readable_events (int flags)
 
 	  do
 	    {
-              if (event == kbd_buffer + KBD_BUFFER_SIZE)
-                event = kbd_buffer;
 	      if (!(
 #ifdef USE_TOOLKIT_SCROLL_BARS
 		    (flags & READABLE_EVENTS_FILTER_EVENTS) &&
@@ -3356,7 +3363,7 @@ readable_events (int flags)
 		  && !((flags & READABLE_EVENTS_FILTER_EVENTS)
 		       && event->kind == BUFFER_SWITCH_EVENT))
 		return 1;
-	      event++;
+	      event = next_kbd_event (event);
 	    }
 	  while (event != kbd_store_ptr);
         }
@@ -3410,12 +3417,8 @@ event_to_kboard (struct input_event *event)
 static int
 kbd_buffer_nr_stored (void)
 {
-  return kbd_fetch_ptr == kbd_store_ptr
-    ? 0
-    : (kbd_fetch_ptr < kbd_store_ptr
-       ? kbd_store_ptr - kbd_fetch_ptr
-       : ((kbd_buffer + KBD_BUFFER_SIZE) - kbd_fetch_ptr
-          + (kbd_store_ptr - kbd_buffer)));
+  int n = kbd_store_ptr - kbd_fetch_ptr;
+  return n + (n < 0 ? KBD_BUFFER_SIZE : 0);
 }
 #endif	/* Store an event obtained at interrupt level into kbd_buffer, fifo */
 
@@ -3466,12 +3469,10 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
 		(kb, list2 (make_lispy_switch_frame (event->ie.frame_or_window),
 			    make_fixnum (c)));
 	      kb->kbd_queue_has_data = true;
-	      union buffered_input_event *sp;
-	      for (sp = kbd_fetch_ptr; sp != kbd_store_ptr; sp++)
-		{
-		  if (sp == kbd_buffer + KBD_BUFFER_SIZE)
-		    sp = kbd_buffer;
 
+	      for (union buffered_input_event *sp = kbd_fetch_ptr;
+		   sp != kbd_store_ptr; sp = next_kbd_event (sp))
+		{
 		  if (event_to_kboard (&sp->ie) == kb)
 		    {
 		      sp->ie.kind = NO_EVENT;
@@ -3516,22 +3517,18 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
      Just ignore the second one.  */
   else if (event->kind == BUFFER_SWITCH_EVENT
 	   && kbd_fetch_ptr != kbd_store_ptr
-	   && ((kbd_store_ptr == kbd_buffer
-		? kbd_buffer + KBD_BUFFER_SIZE - 1
-		: kbd_store_ptr - 1)->kind) == BUFFER_SWITCH_EVENT)
+	   && prev_kbd_event (kbd_store_ptr)->kind == BUFFER_SWITCH_EVENT)
     return;
-
-  if (kbd_store_ptr - kbd_buffer == KBD_BUFFER_SIZE)
-    kbd_store_ptr = kbd_buffer;
 
   /* Don't let the very last slot in the buffer become full,
      since that would make the two pointers equal,
      and that is indistinguishable from an empty buffer.
      Discard the event if it would fill the last slot.  */
-  if (kbd_fetch_ptr - 1 != kbd_store_ptr)
+  union buffered_input_event *next_slot = next_kbd_event (kbd_store_ptr);
+  if (kbd_fetch_ptr != next_slot)
     {
       *kbd_store_ptr = *event;
-      ++kbd_store_ptr;
+      kbd_store_ptr = next_slot;
 #ifdef subprocesses
       if (kbd_buffer_nr_stored () > KBD_BUFFER_SIZE / 2
 	  && ! kbd_on_hold_p ())
@@ -3574,11 +3571,8 @@ kbd_buffer_store_buffered_event (union buffered_input_event *event,
 void
 kbd_buffer_unget_event (struct selection_input_event *event)
 {
-  if (kbd_fetch_ptr == kbd_buffer)
-    kbd_fetch_ptr = kbd_buffer + KBD_BUFFER_SIZE;
-
   /* Don't let the very last slot in the buffer become full,  */
-  union buffered_input_event *kp = kbd_fetch_ptr - 1;
+  union buffered_input_event *kp = prev_kbd_event (kbd_fetch_ptr);
   if (kp != kbd_store_ptr)
     {
       kp->sie = *event;
@@ -3666,12 +3660,9 @@ kbd_buffer_store_help_event (Lisp_Object frame, Lisp_Object help)
 void
 discard_mouse_events (void)
 {
-  union buffered_input_event *sp;
-  for (sp = kbd_fetch_ptr; sp != kbd_store_ptr; sp++)
+  for (union buffered_input_event *sp = kbd_fetch_ptr;
+       sp != kbd_store_ptr; sp = next_kbd_event (sp))
     {
-      if (sp == kbd_buffer + KBD_BUFFER_SIZE)
-	sp = kbd_buffer;
-
       if (sp->kind == MOUSE_CLICK_EVENT
 	  || sp->kind == WHEEL_EVENT
           || sp->kind == HORIZ_WHEEL_EVENT
@@ -3696,18 +3687,13 @@ discard_mouse_events (void)
 bool
 kbd_buffer_events_waiting (void)
 {
-  union buffered_input_event *sp;
-
-  for (sp = kbd_fetch_ptr;
-       sp != kbd_store_ptr && sp->kind == NO_EVENT;
-       ++sp)
-    {
-      if (sp == kbd_buffer + KBD_BUFFER_SIZE)
-	sp = kbd_buffer;
-    }
-
-  kbd_fetch_ptr = sp;
-  return sp != kbd_store_ptr && sp->kind != NO_EVENT;
+  for (union buffered_input_event *sp = kbd_fetch_ptr;
+       ; sp = next_kbd_event (sp))
+    if (sp == kbd_store_ptr || sp->kind != NO_EVENT)
+      {
+	kbd_fetch_ptr = sp;
+	return sp != kbd_store_ptr && sp->kind != NO_EVENT;
+      }
 }
 
 
@@ -3836,11 +3822,7 @@ kbd_buffer_get_event (KBOARD **kbp,
      mouse movement enabled and available.  */
   if (kbd_fetch_ptr != kbd_store_ptr)
     {
-      union buffered_input_event *event;
-
-      event = ((kbd_fetch_ptr < kbd_buffer + KBD_BUFFER_SIZE)
-	       ? kbd_fetch_ptr
-	       : kbd_buffer);
+      union buffered_input_event *event = kbd_fetch_ptr;
 
       *kbp = event_to_kboard (&event->ie);
       if (*kbp == 0)
@@ -3861,7 +3843,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	     since otherwise swallow_events will see it
 	     and process it again.  */
 	  struct selection_input_event copy = event->sie;
-	  kbd_fetch_ptr = event + 1;
+	  kbd_fetch_ptr = next_kbd_event (event);
 	  input_pending = readable_events (0);
 	  x_handle_selection_event (&copy);
 #else
@@ -3876,7 +3858,7 @@ kbd_buffer_get_event (KBOARD **kbp,
     || defined (HAVE_NS) || defined (USE_GTK)
       case MENU_BAR_ACTIVATE_EVENT:
 	{
-	  kbd_fetch_ptr = event + 1;
+	  kbd_fetch_ptr = next_kbd_event (event);
 	  input_pending = readable_events (0);
 	  if (FRAME_LIVE_P (XFRAME (event->ie.frame_or_window)))
 	    x_activate_menubar (XFRAME (event->ie.frame_or_window));
@@ -3921,7 +3903,7 @@ kbd_buffer_get_event (KBOARD **kbp,
       case SELECT_WINDOW_EVENT:
         {
           obj = make_lispy_event (&event->ie);
-          kbd_fetch_ptr = event + 1;
+          kbd_fetch_ptr = next_kbd_event (event);
         }
         break;
       default:
@@ -3975,7 +3957,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 
 	      /* Wipe out this event, to catch bugs.  */
 	      clear_event (&event->ie);
-	      kbd_fetch_ptr = event + 1;
+	      kbd_fetch_ptr = next_kbd_event (event);
 	    }
 	}
       }
@@ -4042,17 +4024,9 @@ kbd_buffer_get_event (KBOARD **kbp,
 static void
 process_special_events (void)
 {
-  union buffered_input_event *event;
-
-  for (event = kbd_fetch_ptr; event != kbd_store_ptr; ++event)
+  for (union buffered_input_event *event = kbd_fetch_ptr;
+       event != kbd_store_ptr; event = next_kbd_event (event))
     {
-      if (event == kbd_buffer + KBD_BUFFER_SIZE)
-	{
-	  event = kbd_buffer;
-	  if (event == kbd_store_ptr)
-	    break;
-	}
-
       /* If we find a stored X selection request, handle it now.  */
       if (event->kind == SELECTION_REQUEST_EVENT
 	  || event->kind == SELECTION_CLEAR_EVENT)
@@ -4066,28 +4040,21 @@ process_special_events (void)
 	     cyclically.  */
 
 	  struct selection_input_event copy = event->sie;
-	  union buffered_input_event *beg
-	    = (kbd_fetch_ptr == kbd_buffer + KBD_BUFFER_SIZE)
-	    ? kbd_buffer : kbd_fetch_ptr;
+	  int moved_events;
 
-	  if (event > beg)
-	    memmove (beg + 1, beg, (event - beg) * sizeof *beg);
-	  else if (event < beg)
+	  if (event < kbd_fetch_ptr)
 	    {
-	      if (event > kbd_buffer)
-		memmove (kbd_buffer + 1, kbd_buffer,
-			 (event - kbd_buffer) * sizeof *kbd_buffer);
-	      *kbd_buffer = *(kbd_buffer + KBD_BUFFER_SIZE - 1);
-	      if (beg < kbd_buffer + KBD_BUFFER_SIZE - 1)
-		memmove (beg + 1, beg,
-			 (kbd_buffer + KBD_BUFFER_SIZE - 1 - beg) * sizeof *beg);
+	      memmove (kbd_buffer + 1, kbd_buffer,
+		       (event - kbd_buffer) * sizeof *kbd_buffer);
+	      kbd_buffer[0] = kbd_buffer[KBD_BUFFER_SIZE - 1];
+	      moved_events = kbd_buffer + KBD_BUFFER_SIZE - 1 - kbd_fetch_ptr;
 	    }
-
-	  if (kbd_fetch_ptr == kbd_buffer + KBD_BUFFER_SIZE)
-	    kbd_fetch_ptr = kbd_buffer + 1;
 	  else
-	    kbd_fetch_ptr++;
+	    moved_events = event - kbd_fetch_ptr;
 
+	  memmove (kbd_fetch_ptr + 1, kbd_fetch_ptr,
+		   moved_events * sizeof *kbd_fetch_ptr);
+	  kbd_fetch_ptr = next_kbd_event (kbd_fetch_ptr);
 	  input_pending = readable_events (0);
 	  x_handle_selection_event (&copy);
 #else
@@ -10261,11 +10228,10 @@ stuff_buffered_input (Lisp_Object stuffstring)
 
      rms: we should stuff everything back into the kboard
      it came from.  */
-  for (; kbd_fetch_ptr != kbd_store_ptr; kbd_fetch_ptr++)
+  for (; kbd_fetch_ptr != kbd_store_ptr;
+       kbd_fetch_ptr = next_kbd_event (kbd_fetch_ptr))
     {
 
-      if (kbd_fetch_ptr == kbd_buffer + KBD_BUFFER_SIZE)
-	kbd_fetch_ptr = kbd_buffer;
       if (kbd_fetch_ptr->kind == ASCII_KEYSTROKE_EVENT)
 	stuff_char (kbd_fetch_ptr->ie.code);
 
@@ -12003,21 +11969,18 @@ mark_kboards (void)
       mark_object (KVAR (kb, echo_string));
       mark_object (KVAR (kb, echo_prompt));
     }
-  {
-    union buffered_input_event *event;
-    for (event = kbd_fetch_ptr; event != kbd_store_ptr; event++)
-      {
-	if (event == kbd_buffer + KBD_BUFFER_SIZE)
-	  event = kbd_buffer;
-	/* These two special event types has no Lisp_Objects to mark.  */
-	if (event->kind != SELECTION_REQUEST_EVENT
-	    && event->kind != SELECTION_CLEAR_EVENT)
-	  {
-	    mark_object (event->ie.x);
-	    mark_object (event->ie.y);
-	    mark_object (event->ie.frame_or_window);
-	    mark_object (event->ie.arg);
-	  }
-      }
-  }
+
+  for (union buffered_input_event *event = kbd_fetch_ptr;
+       event != kbd_store_ptr; event = next_kbd_event (event))
+    {
+      /* These two special event types have no Lisp_Objects to mark.  */
+      if (event->kind != SELECTION_REQUEST_EVENT
+	  && event->kind != SELECTION_CLEAR_EVENT)
+	{
+	  mark_object (event->ie.x);
+	  mark_object (event->ie.y);
+	  mark_object (event->ie.frame_or_window);
+	  mark_object (event->ie.arg);
+	}
+    }
 }
