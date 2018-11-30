@@ -5,7 +5,8 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
-    remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method},
+    remacs_sys::Vframe_list,
+    remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
     windows::{select_window_lisp, selected_window, LispWindowRef},
@@ -80,6 +81,13 @@ impl LispObject {
         self.as_live_frame()
             .unwrap_or_else(|| wrong_type!(Qframe_live_p, self))
     }
+}
+
+macro_rules! for_each_frame {
+    ($name:ident => $action:block) => {
+        for $name in unsafe { Vframe_list.iter_cars_unchecked() }.map(|f| f.as_frame_or_error())
+            $action
+    };
 }
 
 #[derive(Clone, Copy)]
@@ -411,6 +419,88 @@ pub fn frame_bottom_divider_width(frame: LispFrameOrSelected) -> i32 {
 pub fn delete_frame_lisp(frame: LispObject, force: bool) {
     unsafe {
         c_delete_frame(frame, force.into());
+    }
+}
+
+/// Return the next frame in the frame list after FRAME.
+/// It considers only frames on the same terminal as FRAME.
+/// By default, skip minibuffer-only frames.
+/// If omitted, FRAME defaults to the selected frame.
+/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+/// If MINIFRAME is a window, include only its own frame
+/// and any frame now using that window as the minibuffer.
+/// If MINIFRAME is `visible', include all visible frames.
+/// If MINIFRAME is 0, include all visible and iconified frames.
+/// Otherwise, include all frames.
+#[lisp_fn(min = "0")]
+pub fn next_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
+    let frame_ref = frame.live_or_error();
+    let frame_obj = frame_ref.into();
+
+    // Track how many times have we passed FRAME in the list.
+    let mut passed = 0;
+
+    // Go through the list at most twice. This treats the frame list
+    // as a circular list allowing for 'next' to occur before FRAME.
+    // Once the desired frame is found in the list, the next frame that is
+    // a valid candidate will be returned regardless of its position.
+    while passed < 2 {
+        for_each_frame!(f => {
+	    if passed > 0 {
+	        let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
+	        if !tmp.is_nil() {
+                    // Found a valid candidate, stop looking.
+	            return f;
+                }
+	    }
+            if frame_ref == f {
+                // Count the number of times FRAME has been found in the list.
+                passed += 1;
+            }
+        });
+    }
+
+    frame_ref
+}
+
+/// Return the previous frame in the frame list before FRAME.
+/// It considers only frames on the same terminal as FRAME.
+/// By default, skip minibuffer-only frames.
+/// If omitted, FRAME defaults to the selected frame.
+/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+/// If MINIFRAME is a window, include only its own frame
+/// and any frame now using that window as the minibuffer.
+/// If MINIFRAME is `visible', include all visible frames.
+/// If MINIFRAME is 0, include all visible and iconified frames.
+/// Otherwise, include all frames.
+#[lisp_fn(min = "0")]
+pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
+    let frame_ref = frame.live_or_error();
+    let frame_obj: LispObject = frame_ref.into();
+    let mut prev = Qnil;
+
+    for_each_frame!(f => {
+        if frame_ref == f && !prev.is_nil() {
+            // frames match and there is a previous frame, return it.
+            return prev.as_frame_or_error();
+        }
+        let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
+        if !tmp.is_nil() {
+            // found a candidate, remember it.
+            prev = tmp;
+        }
+    });
+
+    // We've scanned the entire list.
+    if prev.is_nil() {
+        // We went through the whole frame list without finding a single
+        // acceptable frame.  Return the original frame.
+        frame_ref
+    } else {
+        // There were no acceptable frames in the list before FRAME; otherwise,
+        // we would have returned directly from the loop.  Since PREV is the last
+        // acceptable frame in the list, return it.
+        prev.as_frame_or_error()
     }
 }
 
