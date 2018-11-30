@@ -360,10 +360,15 @@ x_begin_cr_clip (struct frame *f, GC gc)
 
       if (! FRAME_CR_SURFACE (f))
         {
+	  int scale = 1;
+#ifdef USE_GTK
+	  scale = xg_get_scale (f);
+#endif
+
 	  FRAME_CR_SURFACE (f) =
 	    cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-					FRAME_PIXEL_WIDTH (f),
-					FRAME_PIXEL_HEIGHT (f));
+					scale * FRAME_PIXEL_WIDTH (f),
+					scale * FRAME_PIXEL_HEIGHT (f));
 	}
       cr = cairo_create (FRAME_CR_SURFACE (f));
       FRAME_CR_CONTEXT (f) = cr;
@@ -1006,8 +1011,9 @@ x_update_begin (struct frame *f)
       if (FRAME_GTK_WIDGET (f))
         {
           GdkWindow *w = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
-          width = gdk_window_get_width (w);
-          height = gdk_window_get_height (w);
+	  int scale = xg_get_scale (f);
+	  width = scale * gdk_window_get_width (w);
+          height = scale * gdk_window_get_height (w);
         }
       else
 #endif
