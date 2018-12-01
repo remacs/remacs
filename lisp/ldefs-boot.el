@@ -4582,9 +4582,8 @@ a separate buffer.
 
 (autoload 'checkdoc-continue "checkdoc" "\
 Find the next doc string in the current buffer which has a style error.
-Prefix argument TAKE-NOTES means to continue through the whole buffer and
-save warnings in a separate buffer.  Second optional argument START-POINT
-is the starting location.  If this is nil, `point-min' is used instead.
+Prefix argument TAKE-NOTES means to continue through the whole
+buffer and save warnings in a separate buffer.
 
 \(fn &optional TAKE-NOTES)" t nil)
 
@@ -6969,13 +6968,22 @@ The position information includes POS; the total size of BUFFER; the
 region limits, if narrowed; the column number; and the horizontal
 scroll amount, if the buffer is horizontally scrolled.
 
-The character information includes the character code; charset and
-code points in it; syntax; category; how the character is encoded in
-BUFFER and in BUFFER's file; character composition information (if
-relevant); the font and font glyphs used to display the character;
-the character's canonical name and other properties defined by the
-Unicode Data Base; and widgets, buttons, overlays, and text properties
-relevant to POS.
+The character information includes:
+ its codepoint;
+ its charset (see `char-charset'), overridden by the `charset' text
+   property at POS, if any;
+ the codepoint of the character in the above charset;
+ the character's script (as defined by `char-script-table')
+ the character's syntax, as produced by `syntax-after'
+   and `internal-describe-syntax-value';
+ its category (see `char-category-set' and `describe-char-categories');
+ how to input the character using the keyboard and input methods;
+ how the character is encoded in BUFFER and in BUFFER's file;
+ the font and font glyphs used to display the character;
+ the composition information for displaying the character (if relevant);
+ the character's canonical name and other properties defined by the
+   Unicode Data Base;
+ and widgets, buttons, overlays, and text properties relevant to POS.
 
 \(fn POS &optional BUFFER)" t nil)
 
@@ -9283,6 +9291,7 @@ MERGE-AUTOSTORE-DIR is the directory in which to store merged files.
 
 (autoload 'ediff-windows-wordwise "ediff" "\
 Compare WIND-A and WIND-B, which are selected by clicking, wordwise.
+This compares the portions of text visible in each of the two windows.
 With prefix argument, DUMB-MODE, or on a non-windowing display, works as
 follows:
 If WIND-A is nil, use selected window.
@@ -9294,6 +9303,7 @@ arguments after setting up the Ediff buffers.
 
 (autoload 'ediff-windows-linewise "ediff" "\
 Compare WIND-A and WIND-B, which are selected by clicking, linewise.
+This compares the portions of text visible in each of the two windows.
 With prefix argument, DUMB-MODE, or on a non-windowing display, works as
 follows:
 If WIND-A is nil, use selected window.
@@ -9307,8 +9317,8 @@ arguments after setting up the Ediff buffers.
 Run Ediff on a pair of regions in specified buffers.
 BUFFER-A and BUFFER-B are the buffers to be compared.
 Regions (i.e., point and mark) can be set in advance or marked interactively.
-This function is effective only for relatively small regions, up to 200
-lines.  For large regions, use `ediff-regions-linewise'.
+This function might be slow for large regions.  If you find it slow,
+use `ediff-regions-linewise' instead.
 STARTUP-HOOKS is a list of functions that Emacs calls without
 arguments after setting up the Ediff buffers.
 
@@ -24950,34 +24960,45 @@ variable name being but a special case of it).
 (function-put 'pcase-lambda 'lisp-indent-function 'defun)
 
 (autoload 'pcase-let* "pcase" "\
-Like `let*' but where you can use `pcase' patterns for bindings.
-BODY should be an expression, and BINDINGS should be a list of bindings
-of the form (PATTERN EXP).
-See `pcase-let' for discussion of how PATTERN is matched.
+Like `let*', but supports destructuring BINDINGS using `pcase' patterns.
+As with `pcase-let', BINDINGS are of the form (PATTERN EXP), but the
+EXP in each binding in BINDINGS can use the results of the destructuring
+bindings that precede it in BINDINGS' order.
+
+Each EXP should match (i.e. be of compatible structure) to its
+respective PATTERN; a mismatch may signal an error or may go
+undetected, binding variables to arbitrary values, such as nil.
 
 \(fn BINDINGS &rest BODY)" nil t)
 
 (function-put 'pcase-let* 'lisp-indent-function '1)
 
 (autoload 'pcase-let "pcase" "\
-Like `let' but where you can use `pcase' patterns for bindings.
-BODY should be a list of expressions, and BINDINGS should be a list of bindings
-of the form (PATTERN EXP).
-The PATTERNs are only used to extract data, so the code does not test
-whether the data does match the corresponding patterns: a mismatch
-may signal an error or may go undetected, binding variables to arbitrary
-values, such as nil.
+Like `let', but supports destructuring BINDINGS using `pcase' patterns.
+BODY should be a list of expressions, and BINDINGS should be a list of
+bindings of the form (PATTERN EXP).
+All EXPs are evaluated first, and then used to perform destructuring
+bindings by matching each EXP against its respective PATTERN.  Then
+BODY is evaluated with those bindings in effect.
+
+Each EXP should match (i.e. be of compatible structure) to its
+respective PATTERN; a mismatch may signal an error or may go
+undetected, binding variables to arbitrary values, such as nil.
 
 \(fn BINDINGS &rest BODY)" nil t)
 
 (function-put 'pcase-let 'lisp-indent-function '1)
 
 (autoload 'pcase-dolist "pcase" "\
-Superset of `dolist' where the VAR binding can be a `pcase' PATTERN.
-More specifically, this is just a shorthand for the following combination
-of `dolist' and `pcase-let':
-
-    (dolist (x LIST) (pcase-let ((PATTERN x)) BODY...))
+Eval BODY once for each set of bindings defined by PATTERN and LIST elements.
+PATTERN should be a `pcase' pattern describing the structure of
+LIST elements, and LIST is a list of objects that match PATTERN,
+i.e. have a structure that is compatible with PATTERN.
+For each element of LIST, this macro binds the variables in
+PATTERN to the corresponding subfields of the LIST element, and
+then evaluates BODY with these bindings in effect.  The
+destructuring bindings of variables in PATTERN to the subfields
+of the elements of LIST is performed as if by `pcase-let'.
 
 \(fn (PATTERN LIST) BODY...)" nil t)
 
