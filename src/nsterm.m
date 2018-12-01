@@ -1891,7 +1891,7 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
           [[child parentWindow] removeChildWindow:child];
 #if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 101000
-          if ([child respondsToSelector:@selector(setAccessibilitySubrole:)]
+          if ([child respondsToSelector:@selector(setAccessibilitySubrole:)])
 #endif
               [child setAccessibilitySubrole:NSAccessibilityStandardWindowSubrole];
 #endif
@@ -1905,7 +1905,7 @@ x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
                          ordered: NSWindowAbove];
 #if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 101000
-          if ([child respondsToSelector:@selector(setAccessibilitySubrole:)]
+          if ([child respondsToSelector:@selector(setAccessibilitySubrole:)])
 #endif
               [child setAccessibilitySubrole:NSAccessibilityFloatingWindowSubrole];
 #endif
