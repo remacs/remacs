@@ -275,6 +275,15 @@
 
   (should-error (funcall)))
 
+(ert-deftest eval-tests--catch-base()
+  "Check (catch) base cases"
+
+  (should (eq (catch 'found) nil))
+  (should (eq (catch 'found (throw 'found t)) t))
+  (should (eq (catch 'found t) t))
+  (should (eq (catch 'found (dolist (n '(1 2 3)) (throw 'found n))) 1))
+  (should (eq (catch 'found (dolist (n '(1 (error "Should not be evaluated"))) (throw 'found n))) 1)))
+
 ;; Local Variables:
 ;; byte-compile-warnings: (not lexical free-vars unresolved)
 ;; End:

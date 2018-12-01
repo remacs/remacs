@@ -555,22 +555,6 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
   return sym;
 }
 
-
-DEFUN ("catch", Fcatch, Scatch, 1, UNEVALLED, 0,
-       doc: /* Eval BODY allowing nonlocal exits using `throw'.
-TAG is evalled to get the tag to use; it must not be nil.
-
-Then the BODY is executed.
-Within BODY, a call to `throw' with the same TAG exits BODY and this `catch'.
-If no throw happens, `catch' returns the value of the last BODY form.
-If a throw happens, it specifies the value to return from `catch'.
-usage: (catch TAG BODY...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object tag = eval_sub (XCAR (args));
-  return internal_catch (tag, Fprogn, XCDR (args));
-}
-
 /* Assert that E is true, but do not evaluate E.  Use this instead of
    eassert (E) when E contains variables that might be clobbered by a
    longjmp.  */
@@ -3108,7 +3092,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
-  defsubr (&Scatch);
   defsubr (&Sthrow);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
