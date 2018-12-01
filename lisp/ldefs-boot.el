@@ -2289,7 +2289,7 @@ a reflection.
  (define-key ctl-x-r-map "M" 'bookmark-set-no-overwrite)
  (define-key ctl-x-r-map "l" 'bookmark-bmenu-list)
 
-(defvar bookmark-map (let ((map (make-sparse-keymap))) (define-key map "x" 'bookmark-set) (define-key map "m" 'bookmark-set) (define-key map "M" 'bookmark-set-no-overwrite) (define-key map "j" 'bookmark-jump) (define-key map "g" 'bookmark-jump) (define-key map "o" 'bookmark-jump-other-window) (define-key map "i" 'bookmark-insert) (define-key map "e" 'edit-bookmarks) (define-key map "f" 'bookmark-insert-location) (define-key map "r" 'bookmark-rename) (define-key map "d" 'bookmark-delete) (define-key map "l" 'bookmark-load) (define-key map "w" 'bookmark-write) (define-key map "s" 'bookmark-save) map) "\
+(defvar bookmark-map (let ((map (make-sparse-keymap))) (define-key map "x" 'bookmark-set) (define-key map "m" 'bookmark-set) (define-key map "M" 'bookmark-set-no-overwrite) (define-key map "j" 'bookmark-jump) (define-key map "g" 'bookmark-jump) (define-key map "o" 'bookmark-jump-other-window) (define-key map "5" 'bookmark-jump-other-frame) (define-key map "i" 'bookmark-insert) (define-key map "e" 'edit-bookmarks) (define-key map "f" 'bookmark-insert-location) (define-key map "r" 'bookmark-rename) (define-key map "d" 'bookmark-delete) (define-key map "l" 'bookmark-load) (define-key map "w" 'bookmark-write) (define-key map "s" 'bookmark-save) map) "\
 Keymap containing bindings to bookmark functions.
 It is not bound to any key by default: to bind it
 so that you have a bookmark prefix, just use `global-set-key' and bind a
@@ -2377,6 +2377,11 @@ DISPLAY-FUNC would be `switch-to-buffer-other-window'.
 
 (autoload 'bookmark-jump-other-window "bookmark" "\
 Jump to BOOKMARK in another window.  See `bookmark-jump' for more.
+
+\(fn BOOKMARK)" t nil)
+
+(autoload 'bookmark-jump-other-frame "bookmark" "\
+Jump to BOOKMARK in another frame.  See `bookmark-jump' for more.
 
 \(fn BOOKMARK)" t nil)
 
@@ -3086,7 +3091,7 @@ and corresponding effects.
 
 \(fn &optional ARG)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "bytecomp" '("batch-byte-compile-file" "byte-" "displaying-byte-compile-warnings" "emacs-lisp-file-regexp" "no-byte-compile")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "bytecomp" '("batch-byte-compile-file" "byte-" "displaying-byte-compile-warnings" "emacs-lisp-" "no-byte-compile")))
 
 ;;;***
 
@@ -4627,9 +4632,8 @@ a separate buffer.
 
 (autoload 'checkdoc-continue "checkdoc" "\
 Find the next doc string in the current buffer which has a style error.
-Prefix argument TAKE-NOTES means to continue through the whole buffer and
-save warnings in a separate buffer.  Second optional argument START-POINT
-is the starting location.  If this is nil, `point-min' is used instead.
+Prefix argument TAKE-NOTES means to continue through the whole
+buffer and save warnings in a separate buffer.
 
 \(fn &optional TAKE-NOTES)" t nil)
 
@@ -7064,13 +7068,22 @@ The position information includes POS; the total size of BUFFER; the
 region limits, if narrowed; the column number; and the horizontal
 scroll amount, if the buffer is horizontally scrolled.
 
-The character information includes the character code; charset and
-code points in it; syntax; category; how the character is encoded in
-BUFFER and in BUFFER's file; character composition information (if
-relevant); the font and font glyphs used to display the character;
-the character's canonical name and other properties defined by the
-Unicode Data Base; and widgets, buttons, overlays, and text properties
-relevant to POS.
+The character information includes:
+ its codepoint;
+ its charset (see `char-charset'), overridden by the `charset' text
+   property at POS, if any;
+ the codepoint of the character in the above charset;
+ the character's script (as defined by `char-script-table')
+ the character's syntax, as produced by `syntax-after'
+   and `internal-describe-syntax-value';
+ its category (see `char-category-set' and `describe-char-categories');
+ how to input the character using the keyboard and input methods;
+ how the character is encoded in BUFFER and in BUFFER's file;
+ the font and font glyphs used to display the character;
+ the composition information for displaying the character (if relevant);
+ the character's canonical name and other properties defined by the
+   Unicode Data Base;
+ and widgets, buttons, overlays, and text properties relevant to POS.
 
 \(fn POS &optional BUFFER)" t nil)
 
@@ -9393,6 +9406,7 @@ MERGE-AUTOSTORE-DIR is the directory in which to store merged files.
 
 (autoload 'ediff-windows-wordwise "ediff" "\
 Compare WIND-A and WIND-B, which are selected by clicking, wordwise.
+This compares the portions of text visible in each of the two windows.
 With prefix argument, DUMB-MODE, or on a non-windowing display, works as
 follows:
 If WIND-A is nil, use selected window.
@@ -9404,6 +9418,7 @@ arguments after setting up the Ediff buffers.
 
 (autoload 'ediff-windows-linewise "ediff" "\
 Compare WIND-A and WIND-B, which are selected by clicking, linewise.
+This compares the portions of text visible in each of the two windows.
 With prefix argument, DUMB-MODE, or on a non-windowing display, works as
 follows:
 If WIND-A is nil, use selected window.
@@ -9417,8 +9432,8 @@ arguments after setting up the Ediff buffers.
 Run Ediff on a pair of regions in specified buffers.
 BUFFER-A and BUFFER-B are the buffers to be compared.
 Regions (i.e., point and mark) can be set in advance or marked interactively.
-This function is effective only for relatively small regions, up to 200
-lines.  For large regions, use `ediff-regions-linewise'.
+This function might be slow for large regions.  If you find it slow,
+use `ediff-regions-linewise' instead.
 STARTUP-HOOKS is a list of functions that Emacs calls without
 arguments after setting up the Ediff buffers.
 
@@ -25052,34 +25067,45 @@ variable name being but a special case of it).
 (function-put 'pcase-lambda 'lisp-indent-function 'defun)
 
 (autoload 'pcase-let* "pcase" "\
-Like `let*' but where you can use `pcase' patterns for bindings.
-BODY should be an expression, and BINDINGS should be a list of bindings
-of the form (PATTERN EXP).
-See `pcase-let' for discussion of how PATTERN is matched.
+Like `let*', but supports destructuring BINDINGS using `pcase' patterns.
+As with `pcase-let', BINDINGS are of the form (PATTERN EXP), but the
+EXP in each binding in BINDINGS can use the results of the destructuring
+bindings that precede it in BINDINGS' order.
+
+Each EXP should match (i.e. be of compatible structure) to its
+respective PATTERN; a mismatch may signal an error or may go
+undetected, binding variables to arbitrary values, such as nil.
 
 \(fn BINDINGS &rest BODY)" nil t)
 
 (function-put 'pcase-let* 'lisp-indent-function '1)
 
 (autoload 'pcase-let "pcase" "\
-Like `let' but where you can use `pcase' patterns for bindings.
-BODY should be a list of expressions, and BINDINGS should be a list of bindings
-of the form (PATTERN EXP).
-The PATTERNs are only used to extract data, so the code does not test
-whether the data does match the corresponding patterns: a mismatch
-may signal an error or may go undetected, binding variables to arbitrary
-values, such as nil.
+Like `let', but supports destructuring BINDINGS using `pcase' patterns.
+BODY should be a list of expressions, and BINDINGS should be a list of
+bindings of the form (PATTERN EXP).
+All EXPs are evaluated first, and then used to perform destructuring
+bindings by matching each EXP against its respective PATTERN.  Then
+BODY is evaluated with those bindings in effect.
+
+Each EXP should match (i.e. be of compatible structure) to its
+respective PATTERN; a mismatch may signal an error or may go
+undetected, binding variables to arbitrary values, such as nil.
 
 \(fn BINDINGS &rest BODY)" nil t)
 
 (function-put 'pcase-let 'lisp-indent-function '1)
 
 (autoload 'pcase-dolist "pcase" "\
-Superset of `dolist' where the VAR binding can be a `pcase' PATTERN.
-More specifically, this is just a shorthand for the following combination
-of `dolist' and `pcase-let':
-
-    (dolist (x LIST) (pcase-let ((PATTERN x)) BODY...))
+Eval BODY once for each set of bindings defined by PATTERN and LIST elements.
+PATTERN should be a `pcase' pattern describing the structure of
+LIST elements, and LIST is a list of objects that match PATTERN,
+i.e. have a structure that is compatible with PATTERN.
+For each element of LIST, this macro binds the variables in
+PATTERN to the corresponding subfields of the LIST element, and
+then evaluates BODY with these bindings in effect.  The
+destructuring bindings of variables in PATTERN to the subfields
+of the elements of LIST is performed as if by `pcase-let'.
 
 \(fn (PATTERN LIST) BODY...)" nil t)
 
@@ -34501,8 +34527,10 @@ MENU is like the MENU argument to `x-popup-menu': either a
 keymap or an alist of alists.
 DEFAULT-ITEM, if non-nil, specifies an initial default choice.
 Its value should be an event that has a binding in MENU.
+NO-EXECUTE, if non-nil, means to return the command the user selects
+instead of executing it.
 
-\(fn MENU &optional IN-POPUP DEFAULT-ITEM)" nil nil)
+\(fn MENU &optional IN-POPUP DEFAULT-ITEM NO-EXECUTE)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tmm" '("tmm-")))
 
@@ -34846,6 +34874,14 @@ Reenable Ange-FTP, when Tramp is unloaded.
 ;;; Generated autoloads from net/tramp-gvfs.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-gvfs" '("tramp-" "with-tramp-dbus-")))
+
+;;;***
+
+;;;### (autoloads nil "tramp-rclone" "net/tramp-rclone.el" (0 0 0
+;;;;;;  0))
+;;; Generated autoloads from net/tramp-rclone.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-rclone" '("tramp-rclone-")))
 
 ;;;***
 
@@ -38529,7 +38565,8 @@ With no prefix argument, or with prefix argument equal to zero,
 \"left\" is relative to the position of point in the window; otherwise
 it is relative to the top edge (for positive ARG) or the bottom edge
 \(for negative ARG) of the current window.
-If no window is at the desired location, an error is signaled.
+If no window is at the desired location, an error is signaled
+unless `windmove-create-window' is non-nil and a new window is created.
 
 \(fn &optional ARG)" t nil)
 
@@ -38539,7 +38576,8 @@ With no prefix argument, or with prefix argument equal to zero, \"up\"
 is relative to the position of point in the window; otherwise it is
 relative to the left edge (for positive ARG) or the right edge (for
 negative ARG) of the current window.
-If no window is at the desired location, an error is signaled.
+If no window is at the desired location, an error is signaled
+unless `windmove-create-window' is non-nil and a new window is created.
 
 \(fn &optional ARG)" t nil)
 
@@ -38549,7 +38587,8 @@ With no prefix argument, or with prefix argument equal to zero,
 \"right\" is relative to the position of point in the window;
 otherwise it is relative to the top edge (for positive ARG) or the
 bottom edge (for negative ARG) of the current window.
-If no window is at the desired location, an error is signaled.
+If no window is at the desired location, an error is signaled
+unless `windmove-create-window' is non-nil and a new window is created.
 
 \(fn &optional ARG)" t nil)
 
@@ -38559,7 +38598,8 @@ With no prefix argument, or with prefix argument equal to zero,
 \"down\" is relative to the position of point in the window; otherwise
 it is relative to the left edge (for positive ARG) or the right edge
 \(for negative ARG) of the current window.
-If no window is at the desired location, an error is signaled.
+If no window is at the desired location, an error is signaled
+unless `windmove-create-window' is non-nil and a new window is created.
 
 \(fn &optional ARG)" t nil)
 
@@ -38570,6 +38610,81 @@ where MODIFIERS is either a list of modifiers or a single modifier.
 Default value of MODIFIERS is `shift'.
 
 \(fn &optional MODIFIERS)" t nil)
+
+(autoload 'windmove-display-left "windmove" "\
+Display the next buffer in window to the left of the current one.
+See the logic of the prefix ARG in `windmove-display-in-direction'.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-display-up "windmove" "\
+Display the next buffer in window above the current one.
+See the logic of the prefix ARG in `windmove-display-in-direction'.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-display-right "windmove" "\
+Display the next buffer in window to the right of the current one.
+See the logic of the prefix ARG in `windmove-display-in-direction'.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-display-down "windmove" "\
+Display the next buffer in window below the current one.
+See the logic of the prefix ARG in `windmove-display-in-direction'.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-display-same-window "windmove" "\
+Display the next buffer in the same window.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-display-default-keybindings "windmove" "\
+Set up keybindings for directional buffer display.
+Keys are bound to commands that display the next buffer in the specified
+direction.  Keybindings are of the form MODIFIERS-{left,right,up,down},
+where MODIFIERS is either a list of modifiers or a single modifier.
+Default value of MODIFIERS is `shift-meta'.
+
+\(fn &optional MODIFIERS)" t nil)
+
+(autoload 'windmove-delete-left "windmove" "\
+Delete the window to the left of the current one.
+If prefix ARG is `C-u', delete the selected window and
+select the window that was to the left of the current one.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-delete-up "windmove" "\
+Delete the window above the current one.
+If prefix ARG is `C-u', delete the selected window and
+select the window that was above the current one.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-delete-right "windmove" "\
+Delete the window to the right of the current one.
+If prefix ARG is `C-u', delete the selected window and
+select the window that was to the right of the current one.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-delete-down "windmove" "\
+Delete the window below the current one.
+If prefix ARG is `C-u', delete the selected window and
+select the window that was below the current one.
+
+\(fn &optional ARG)" t nil)
+
+(autoload 'windmove-delete-default-keybindings "windmove" "\
+Set up keybindings for directional window deletion.
+Keys are bound to commands that delete windows in the specified
+direction.  Keybindings are of the form PREFIX MODIFIERS-{left,right,up,down},
+where PREFIX is a prefix key and MODIFIERS is either a list of modifiers or
+a single modifier.  Default value of PREFIX is `C-x' and MODIFIERS is `shift'.
+
+\(fn &optional PREFIX MODIFIERS)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "windmove" '("windmove-")))
 
