@@ -1120,13 +1120,15 @@ line, and no execution takes place."
 (defcustom gdb-show-changed-values t
   "If non-nil change the face of out of scope variables and changed values.
 Out of scope variables are suppressed with `shadow' face.
-Changed values are highlighted with the face `font-lock-warning-face'."
+Changed values are highlighted with the face `font-lock-warning-face'.
+Used by Speedbar."
   :type 'boolean
   :group 'gdb
   :version "22.1")
 
 (defcustom gdb-max-children 40
-  "Maximum number of children before expansion requires confirmation."
+  "Maximum number of children before expansion requires confirmation.
+Used by Speedbar."
   :type 'integer
   :group 'gdb
   :version "22.1")
