@@ -1378,7 +1378,8 @@ manpage command."
 
       (with-current-buffer Man-buffer
 	(save-excursion
-	  (let ((case-fold-search nil))
+	  (let ((case-fold-search nil)
+                (inhibit-read-only t))
 	    (goto-char (point-min))
 	    (cond ((or (looking-at "No \\(manual \\)*entry for")
 		       (looking-at "[^\n]*: nothing appropriate$"))
