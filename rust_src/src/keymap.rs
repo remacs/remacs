@@ -9,7 +9,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::current_buffer,
-    data::{aref, indirect_function, set},
+    data::{aref, fset, indirect_function, set},
     eval::{autoload_do_load, unbind_to},
     keyboard::lucid_event_type_list_p,
     lisp::{defsubr, LispObject},
@@ -22,12 +22,13 @@ use crate::{
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcopy_sequence, Fevent_convert_list, Ffset, Findent_to, Fmake_char_table, Fpurecopy,
+        Fcopy_sequence, Fevent_convert_list, Findent_to, Fmake_char_table, Fpurecopy,
         Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
         Qautoload, Qkeymap, Qkeymapp, Qnil, Qstandard_output, Qt, Qvector_or_char_table_p,
     },
+    symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
 };
 
@@ -544,16 +545,16 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
 /// This function returns COMMAND.
 #[lisp_fn(min = "1")]
 pub fn define_prefix_command(
-    command: LispObject,
+    command: LispSymbolRef,
     mapvar: LispObject,
     name: LispObject,
-) -> LispObject {
+) -> LispSymbolRef {
     let map = make_sparse_keymap(name);
-    unsafe { Ffset(command, map) };
+    fset(command, map);
     if mapvar.is_not_nil() {
         set(mapvar.as_symbol_or_error(), map);
     } else {
-        set(command.as_symbol_or_error(), map);
+        set(command, map);
     }
     command
 }
