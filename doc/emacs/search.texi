@@ -53,6 +53,9 @@ Incremental search forward (@code{isearch-forward}).
 Incremental search backward (@code{isearch-backward}).
 @end table
 
+You can also invoke incremental search from the menu bar's
+@samp{Edit->Search} menu.
+
 @menu
 * Basic Isearch::        Basic incremental search commands.
 * Repeat Isearch::       Searching for the same string again.
@@ -425,7 +428,7 @@ of the keymap @code{isearch-mode-map} (@pxref{Keymaps}).
 @subsection Not Exiting Incremental Search
 
 This subsection describes how to control whether typing a command not
-specifically meaningful is searches exits the search before executing
+specifically meaningful in searches exits the search before executing
 the command.  It also describes two categories of commands which you
 can type without exiting the current incremental search, even though
 they are not themselves part of incremental search.
@@ -548,7 +551,7 @@ command for nonincremental search, if the string you specify is empty.
 @key{RET}} does likewise, invoking the nonincremental
 backward-searching command.
 
-  Nonincremental search can also be invoked form the menu bar's
+  Nonincremental search can also be invoked from the menu bar's
 @samp{Edit->Search} menu.
 
 @findex search-forward
@@ -1672,8 +1675,8 @@ line.  In particular, @kbd{C-g} simply exits the @code{query-replace}.
 
   To restart a @code{query-replace} once it is exited, use @kbd{C-x
 @key{ESC} @key{ESC}}, which repeats the @code{query-replace} because it
-used the minibuffer to read its arguments.  @xref{Repetition, C-x ESC
-ESC}.
+used the minibuffer to read its arguments.  @xref{Repetition, C-x @key{ESC}
+@key{ESC}}.
 
 @cindex invisible text, and query-replace
   The option @code{search-invisible} determines how @code{query-replace}

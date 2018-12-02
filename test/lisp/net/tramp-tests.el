@@ -2993,11 +2993,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Symbolic links could look like a remote file name.
 	    ;; They must be quoted then.
 	    (delete-file tmp-name2)
-	    (make-symbolic-link
-	     (funcall
-	      (if quoted 'tramp-compat-file-name-unquote 'identity)
-	      "/penguin:motd:")
-	     tmp-name2)
+	    (make-symbolic-link "/penguin:motd:" tmp-name2)
 	    (should (file-symlink-p tmp-name2))
 	    (should
 	     (string-equal

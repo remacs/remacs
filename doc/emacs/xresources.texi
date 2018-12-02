@@ -764,7 +764,7 @@ This is the state for data that has been selected by the user.  It can
 be selected text or items selected in a list.  This state is not used
 in Emacs.
 @item INSENSITIVE
-This is the state for widgets that are visible, but they can not be
+This is the state for widgets that are visible, but they cannot be
 manipulated in the usual way---for example, buttons that can't be
 pressed, and disabled menu items.  To display disabled menu items in
 yellow, use @code{fg[INSENSITIVE] = "yellow"}.

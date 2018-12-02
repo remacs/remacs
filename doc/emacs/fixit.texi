@@ -159,9 +159,10 @@ last two characters on the line.  So, if you catch your transposition error
 right away, you can fix it with just a @kbd{C-t}.  If you don't catch it so
 fast, you must move the cursor back between the two transposed
 characters before you type @kbd{C-t}.  If you transposed a space with
-the last character of the word before it, the word motion commands are
-a good way of getting there.  Otherwise, a reverse search (@kbd{C-r})
-is often the best way.  @xref{Search}.
+the last character of the word before it, the word motion commands
+(@kbd{M-f}, @kbd{M-b}, etc.) are a good way of getting there.
+Otherwise, a reverse search (@kbd{C-r}) is often the best way.
+@xref{Search}.
 
 @kindex C-x C-t
 @findex transpose-lines
@@ -181,22 +182,23 @@ punctuation characters between the words do not move.  For example,
   @kbd{C-M-t} (@code{transpose-sexps}) is a similar command for
 transposing two expressions (@pxref{Expressions}), and @kbd{C-x C-t}
 (@code{transpose-lines}) exchanges lines.  They work like @kbd{M-t}
-except as regards what units of text they transpose.
+except as regards the units of text they transpose.
 
   A numeric argument to a transpose command serves as a repeat count: it
-tells the transpose command to move the character (word, expression, line)
-before or containing point across several other characters (words,
-expressions, lines).  For example, @kbd{C-u 3 C-t} moves the character before
-point forward across three other characters.  It would change
-@samp{f@point{}oobar} into @samp{oobf@point{}ar}.  This is equivalent to
-repeating @kbd{C-t} three times.  @kbd{C-u - 4 M-t} moves the word
-before point backward across four words.  @kbd{C-u - C-M-t} would cancel
-the effect of plain @kbd{C-M-t}.
+tells the transpose command to move the character (or word or
+expression or line) before or containing point across several other
+characters (or words or expressions or lines).  For example, @kbd{C-u
+3 C-t} moves the character before point forward across three other
+characters.  It would change @samp{f@point{}oobar} into
+@samp{oobf@point{}ar}.  This is equivalent to repeating @kbd{C-t}
+three times.  @kbd{C-u - 4 M-t} moves the word before point backward
+across four words.  @kbd{C-u - C-M-t} would cancel the effect of plain
+@kbd{C-M-t}.
 
   A numeric argument of zero is assigned a special meaning (because
 otherwise a command with a repeat count of zero would do nothing): to
-transpose the character (word, expression, line) ending after point
-with the one ending after the mark.
+transpose the character (or word or expression or line) ending after
+point with the one ending after the mark.
 
 @node Fixing Case
 @section Case Conversion
@@ -227,9 +229,10 @@ case-convert it and go on typing.  @xref{Case}.
 
   This section describes the commands to check the spelling of a
 single word or of a portion of a buffer.  These commands only work if
-the spelling checker program Hunspell, Aspell, Ispell or Enchant is installed.
-These programs are not part of Emacs, but one of them is usually
-installed in GNU/Linux and other free operating systems.
+a spelling checker program, one of Hunspell, Aspell, Ispell or
+Enchant, is installed.  These programs are not part of Emacs, but one
+of them is usually installed in GNU/Linux and other free operating
+systems.
 @ifnottex
 @xref{Top, Aspell,, aspell, The Aspell Manual}.
 @end ifnottex

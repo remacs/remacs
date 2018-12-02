@@ -58,8 +58,8 @@ compile}.  This reads a shell command line using the minibuffer, and
 then executes the command by running a shell as a subprocess (or
 @dfn{inferior process}) of Emacs.  The output is inserted in a buffer
 named @file{*compilation*}.  The current buffer's default directory is
-used as the working directory for the execution of the command;
-normally, therefore, compilation takes place in this directory.
+used as the working directory for the execution of the command, so by
+default compilation takes place in that directory.
 
 @vindex compile-command
   The default compilation command is @samp{make -k}, which is usually
@@ -209,14 +209,13 @@ through errors in the opposite direction.
 act on the errors or matches listed in @file{*compilation*} and
 @file{*grep*} buffers; they also know how to iterate through error or
 match lists produced by other commands, such as @kbd{M-x occur}
-(@pxref{Other Repeating Search}).  If you are already in a buffer
-containing error messages or matches, those are the ones that are
-iterated through; otherwise, Emacs looks for a buffer containing error
-messages or matches amongst the windows of the selected frame, then
-for one that @code{next-error} or @code{previous-error} previously
-iterated through, and finally amongst all other buffers.  If the
-buffer chosen for iterating through is not currently displayed in a
-window, it will be displayed.
+(@pxref{Other Repeating Search}).  If the current buffer contains
+error messages or matches, these commands will iterate through them;
+otherwise, Emacs looks for a buffer containing error messages or
+matches amongst the windows of the selected frame, then for any buffer
+that @code{next-error} or @code{previous-error} previously visited,
+and finally all other buffers.  Any buffer these commands iterate
+through that is not currently displayed in a window will be displayed.
 
 @vindex compilation-skip-threshold
   By default, the @code{next-error} and @code{previous-error} commands
@@ -601,15 +600,16 @@ to recompile and restart the program.
 @vindex gud-tooltip-echo-area
   GUD Tooltip mode is a global minor mode that adds tooltip support to
 GUD@.  To toggle this mode, type @kbd{M-x gud-tooltip-mode}.  It is
-disabled by default.  If enabled, you can move the mouse cursor over a
+disabled by default.  If enabled, you can move the mouse pointer over a
 variable, a function, or a macro (collectively called
 @dfn{identifiers}) to show their values in tooltips
-(@pxref{Tooltips}).  Alternatively, mark an identifier or an
-expression by dragging the mouse over it, then leave the mouse in the
-marked area to have the value of the expression displayed in a
-tooltip.  The GUD Tooltip mode takes effect in the GUD interaction
-buffer, and in all source buffers with major modes listed in the
-variable @code{gud-tooltip-modes}.  If the variable
+(@pxref{Tooltips}).  If just placing the mouse pointer over an
+expression doesn't show the value of the expression you had in mind,
+you can tell Emacs more explicitly what expression to evaluate by
+dragging the mouse over the expression, then leaving the mouse inside
+the marked area.  The GUD Tooltip mode takes effect in the GUD
+interaction buffer, and in all source buffers with major modes listed
+in the variable @code{gud-tooltip-modes}.  If the variable
 @code{gud-tooltip-echo-area} is non-@code{nil}, or if you turned off
 the tooltip mode, values are shown in the echo area instead of a
 tooltip.
