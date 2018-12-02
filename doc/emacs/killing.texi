@@ -170,7 +170,7 @@ up to the end of the line; if point was originally at the beginning of
 the line, this leaves the line blank.
 
   Spaces and tabs at the end of the line are ignored when deciding
-which case applies.  As long as point is after the last visible
+which case applies.  As long as point is after the last non-whitespace
 character in the line, you can be sure that @kbd{C-k} will kill the
 newline.  To kill an entire non-blank line, go to the beginning and
 type @kbd{C-k} twice.

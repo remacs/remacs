@@ -57,17 +57,17 @@ the minibuffer (since typing @key{RET} would no longer submit that
 default).  If you ever bring back the original minibuffer text, the
 prompt again shows the default.  Furthermore, if you change the
 variable @code{minibuffer-eldef-shorten-default} to a non-@code{nil}
-value, the default argument is displayed as @samp{[@var{default}]}
-instead of @samp{(default @var{default})}, saving some screen space.
-To enable this minor mode, type @kbd{M-x
+value, the default argument is displayed as @samp{[@var{default-arg}]}
+instead of @samp{(default @var{default-arg})}, saving some screen
+space.  To enable this minor mode, type @kbd{M-x
 minibuffer-electric-default-mode}.
 
   Since the minibuffer appears in the echo area, it can conflict with
 other uses of the echo area.  If an error message or an informative
 message is emitted while the minibuffer is active, the message hides
 the minibuffer for a few seconds, or until you type something; then
-the minibuffer comes back.  While the minibuffer is in use, keystrokes
-do not echo.
+the minibuffer comes back.  While the minibuffer is in use, Emacs does
+not echo keystrokes.
 
 @node Minibuffer File
 @section Minibuffers for File Names
@@ -118,6 +118,12 @@ second slash in the pair.  In the example above,
 @file{/etc/termcap}.  The ignored part of the file name is dimmed if
 the terminal allows it.  (To disable this dimming, turn off File Name
 Shadow mode with the command @kbd{M-x file-name-shadow-mode}.)
+
+  When completing remote file names (@pxref{Remote Files}), a double
+slash behaves slightly differently: it causes Emacs to ignore only the
+file-name part, leaving the rest (method, host and username, etc.)
+intact.  Typing three slashes in a row ignores everything in remote
+file names.  @xref{File name completion,,, tramp, The Tramp Manual}.
 
 @cindex home directory shorthand
   Emacs interprets @file{~/} as your home directory.  Thus,
@@ -217,7 +223,7 @@ set the variable @code{enable-recursive-minibuffers} to @code{t}.
   When not active, the minibuffer is in @code{minibuffer-inactive-mode},
 and clicking @kbd{mouse-1} there shows the @file{*Messages*} buffer.
 If you use a dedicated frame for minibuffers, Emacs also recognizes
-certain keys there, for example @kbd{n} to make a new frame.
+certain keys there, for example, @kbd{n} to make a new frame.
 
 @node Completion
 @section Completion
@@ -760,10 +766,10 @@ you type the required password, press @key{RET} to submit it.  To
 prevent others from seeing your password, every character you type is
 displayed as a dot (@samp{.}) instead of its usual form.
 
-  Most of the features and commands associated with the minibuffer can
-@emph{not} be used when entering a password.  There is no history or
-completion, and you cannot change windows or perform any other action
-with Emacs until you have submitted the password.
+  Most of the features and commands associated with the minibuffer
+@emph{cannot} be used when entering a password.  There is no history
+or completion, and you cannot change windows or perform any other
+action with Emacs until you have submitted the password.
 
   While you are typing the password, you may press @key{DEL} to delete
 backwards, removing the last character entered.  @kbd{C-u} deletes
