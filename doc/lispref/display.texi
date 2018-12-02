@@ -581,7 +581,7 @@ truncated to fit it.
   The variable @code{max-mini-window-height}, which specifies the
 maximum height for resizing minibuffer windows, also applies to the
 echo area (which is really a special use of the minibuffer window;
-@pxref{Minibuffer Misc}).
+@pxref{Minibuffer Windows}).
 
 @node Warnings
 @section Reporting Warnings

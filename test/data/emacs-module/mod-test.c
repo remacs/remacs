@@ -299,11 +299,11 @@ provide (emacs_env *env, const char *feature)
 static void
 bind_function (emacs_env *env, const char *name, emacs_value Sfun)
 {
-  emacs_value Qfset = env->intern (env, "fset");
+  emacs_value Qdefalias = env->intern (env, "defalias");
   emacs_value Qsym = env->intern (env, name);
   emacs_value args[] = { Qsym, Sfun };
 
-  env->funcall (env, Qfset, 2, args);
+  env->funcall (env, Qdefalias, 2, args);
 }
 
 /* Module init function.  */

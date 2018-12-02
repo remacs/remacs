@@ -963,7 +963,8 @@ the function needs to examine, starting with FILE."
                     (null file)
                     (string-match locate-dominating-stop-dir-regexp file)))
       (setq try (if (stringp name)
-                    (file-exists-p (expand-file-name name file))
+                    (and (file-directory-p file)
+                         (file-exists-p (expand-file-name name file)))
                   (funcall name file)))
       (cond (try (setq root file))
             ((equal file (setq file (file-name-directory
@@ -3314,15 +3315,7 @@ n  -- to ignore the local variables list.")
 
       ;; Display the buffer and read a choice.
       (save-window-excursion
-	(pop-to-buffer buf `((display-buffer--maybe-same-window
-                              display-buffer-reuse-window
-                              display-buffer--maybe-pop-up-frame-or-window
-                              display-buffer-at-bottom)
-	                     ,(if temp-buffer-resize-mode
-		                  '(window-height . resize-temp-buffer-window)
-	                        '(window-height . fit-window-to-buffer))
-	                     ,(when temp-buffer-resize-mode
-	                        '(preserve-size . (nil . t)))))
+	(pop-to-buffer buf '(display-buffer--maybe-at-bottom))
 	(let* ((exit-chars '(?y ?n ?\s ?\C-g ?\C-v))
 	       (prompt (format "Please type %s%s: "
 			       (if offer-save "y, n, or !" "y or n")
@@ -6928,15 +6921,7 @@ if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
            (or (not active)
                (with-displayed-buffer-window
                 (get-buffer-create "*Process List*")
-                `((display-buffer--maybe-same-window
-                   display-buffer-reuse-window
-                   display-buffer--maybe-pop-up-frame-or-window
-                   display-buffer-at-bottom)
-	          ,(if temp-buffer-resize-mode
-		       '(window-height . resize-temp-buffer-window)
-	             '(window-height . fit-window-to-buffer))
-	          ,(when temp-buffer-resize-mode
-	             '(preserve-size . (nil . t))))
+                '(display-buffer--maybe-at-bottom)
                 #'(lambda (window _value)
                     (with-selected-window window
                       (unwind-protect
@@ -6976,60 +6961,75 @@ only these files will be asked to be saved."
 ;; We depend on being the last handler on the list,
 ;; so that anything else which does need handling
 ;; has been handled already.
-;; So it is safe for us to inhibit *all* magic file name handlers.
+;; So it is safe for us to inhibit *all* magic file name handlers for
+;; operations, which return a file name.  See Bug#29579.
 
 (defun file-name-non-special (operation &rest arguments)
-  (let ((file-name-handler-alist nil)
-	(default-directory
-          ;; Some operations respect file name handlers in
-          ;; `default-directory'.  Because core function like
-          ;; `call-process' don't care about file name handlers in
-          ;; `default-directory', we here have to resolve the
-          ;; directory into a local one.  For `process-file',
-          ;; `start-file-process', and `shell-command', this fixes
-          ;; Bug#25949.
-	  (if (memq operation '(insert-directory process-file start-file-process
-                                                 shell-command))
-	      (directory-file-name
-	       (expand-file-name
-		(unhandled-file-name-directory default-directory)))
-	    default-directory))
-	;; Get a list of the indices of the args which are file names.
-	(file-arg-indices
-	 (cdr (or (assq operation
-			;; The first six are special because they
-			;; return a file name.  We want to include the /:
-			;; in the return value.
-			;; So just avoid stripping it in the first place.
-			'((expand-file-name . nil)
-			  (file-name-directory . nil)
-			  (file-name-as-directory . nil)
-			  (directory-file-name . nil)
-			  (file-name-sans-versions . nil)
-			  (find-backup-file-name . nil)
-			  ;; `identity' means just return the first arg
-			  ;; not stripped of its quoting.
-			  (substitute-in-file-name identity)
-			  ;; `add' means add "/:" to the result.
-			  (file-truename add 0)
-			  (insert-file-contents insert-file-contents 0)
-			  ;; `unquote-then-quote' means set buffer-file-name
-			  ;; temporarily to unquoted filename.
-			  (verify-visited-file-modtime unquote-then-quote)
-			  ;; List the arguments which are filenames.
-			  (file-name-completion 1)
-			  (file-name-all-completions 1)
-			  (write-region 2 5)
-			  (rename-file 0 1)
-			  (copy-file 0 1)
-			  (make-symbolic-link 0 1)
-			  (add-name-to-file 0 1)))
-		  ;; For all other operations, treat the first argument only
-		  ;; as the file name.
-		  '(nil 0))))
-	method
-	;; Copy ARGUMENTS so we can replace elements in it.
-	(arguments (copy-sequence arguments)))
+  (let* ((op-returns-file-name-list
+          '(expand-file-name file-name-directory file-name-as-directory
+                             directory-file-name file-name-sans-versions
+                             find-backup-file-name file-remote-p))
+         (file-name-handler-alist
+          (and
+           (not (memq operation op-returns-file-name-list))
+           file-name-handler-alist))
+	 (default-directory
+           ;; Some operations respect file name handlers in
+           ;; `default-directory'.  Because core function like
+           ;; `call-process' don't care about file name handlers in
+           ;; `default-directory', we here have to resolve the
+           ;; directory into a local one.  For `process-file',
+           ;; `start-file-process', and `shell-command', this fixes
+           ;; Bug#25949.
+	   (if (memq operation
+                     '(insert-directory process-file start-file-process
+                                        shell-command temporary-file-directory))
+	       (directory-file-name
+	        (expand-file-name
+		 (unhandled-file-name-directory default-directory)))
+	     default-directory))
+	 ;; Get a list of the indices of the args which are file names.
+	 (file-arg-indices
+	  (cdr (or (assq operation
+			 ;; The first seven are special because they
+			 ;; return a file name.  We want to include the /:
+			 ;; in the return value.
+			 ;; So just avoid stripping it in the first place.
+                         (append
+                          (mapcar 'list op-returns-file-name-list)
+			  '(;; `identity' means just return the first arg
+			    ;; not stripped of its quoting.
+			    (substitute-in-file-name identity)
+			    ;; `add' means add "/:" to the result.
+			    (file-truename add 0)
+			    (insert-file-contents insert-file-contents 0)
+			    ;; `unquote-then-quote' means set buffer-file-name
+			    ;; temporarily to unquoted filename.
+			    (verify-visited-file-modtime unquote-then-quote)
+			    ;; List the arguments which are filenames.
+			    (file-name-completion 0 1)
+			    (file-name-all-completions 0 1)
+                            (file-equal-p 0 1)
+                            (file-newer-than-file-p 0 1)
+			    (write-region 2 5)
+			    (rename-file 0 1)
+			    (copy-file 0 1)
+			    (copy-directory 0 1)
+			    (file-in-directory-p 0 1)
+			    (make-symbolic-link 0 1)
+			    (add-name-to-file 0 1)
+                            (make-auto-save-file-name buffer-file-name)
+                            (set-visited-file-modtime buffer-file-name)
+                            ;; These file-notify-* operations take a
+                            ;; descriptor.
+                            (file-notify-rm-watch . nil)
+                            (file-notify-valid-p . nil))))
+		   ;; For all other operations, treat the first argument only
+		   ;; as the file name.
+		   '(nil 0))))
+	 method
+	 ;; Copy ARGUMENTS so we can replace elements in it.
+	 (arguments (copy-sequence arguments)))
     (if (symbolp (car file-arg-indices))
 	(setq method (pop file-arg-indices)))
     ;; Strip off the /: from the file names that have it.
@@ -7046,6 +7046,12 @@ only these files will be asked to be saved."
     (pcase method
       (`identity (car arguments))
       (`add (file-name-quote (apply operation arguments)))
+      (`buffer-file-name
+       (let ((buffer-file-name
+              (if (string-match "\\`/:" buffer-file-name)
+                  (substring buffer-file-name (match-end 0))
+                buffer-file-name)))
+         (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect

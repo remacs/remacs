@@ -293,8 +293,8 @@ see @ref{Drag and Drop}, and @ref{Misc Dired Features}.
 
   On text-mode terminals and on graphical displays when Emacs was
 built without a GUI toolkit, you can visit files via the menu-bar
-@samp{File} menu, which has a @samp{Visit New File} and @samp{Open
-File} items.
+@samp{File} menu, which has the @samp{Visit New File} and the
+@samp{Open File} items.
 
   Each time you visit a file, Emacs automatically scans its contents
 to detect what character encoding and end-of-line convention it uses,

@@ -106,7 +106,7 @@ m4_defun([gl_MANYWARN_ALL_GCC(C)],
   # To compare this list to your installed GCC's, run this Bash command:
   #
   # comm -3 \
-  #  <(sed -n 's/^  *\(-[^ ]*\) .*/\1/p' manywarnings.m4 | sort) \
+  #  <(sed -n 's/^  *\(-[^ 0-9][^ ]*\) .*/\1/p' manywarnings.m4 | sort) \
   #  <(gcc --help=warnings | sed -n 's/^  \(-[^ ]*\) .*/\1/p' | sort |
   #      grep -v -x -F -f <(
   #         awk '/^[^#]/ {print $1}' ../build-aux/gcc-warning.spec))
