@@ -119,6 +119,7 @@ mod threads;
 mod time;
 mod util;
 mod vectors;
+mod vterm;
 mod window_configuration;
 mod windows;
 mod xml;
