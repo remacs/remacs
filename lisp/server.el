@@ -281,7 +281,10 @@ changed while a server is running."
   (if internal--daemon-sockname
       (file-name-directory internal--daemon-sockname)
     (and (featurep 'make-network-process '(:family local))
-         (format "%s/emacs%d" (or (getenv "TMPDIR") "/tmp") (user-uid))))
+	 (let ((xdg_runtime_dir (getenv "XDG_RUNTIME_DIR")))
+	   (if xdg_runtime_dir
+	       (format "%s/emacs" xdg_runtime_dir)
+	     (format "%s/emacs%d" (or (getenv "TMPDIR") "/tmp") (user-uid))))))
   "The directory in which to place the server socket.
 If local sockets are not supported, this is nil.")
 

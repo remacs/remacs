@@ -87,6 +87,11 @@ char *w32_getenv (const char *);
 #define VERSION "unspecified"
 #endif
 
+/* Work around GCC bug 88251.  */
+#if GNUC_PREREQ (7, 0, 0)
+# pragma GCC diagnostic ignored "-Wformat-truncation=2"
+#endif
+
 
 /* Name used to invoke this program.  */
 static char const *progname;
@@ -1271,10 +1276,41 @@ act_on_signals (HSOCKET emacs_socket)
     }
 }
 
-/* Create a local socket and connect it to Emacs.  */
+/* Create in SOCKNAME (of size SOCKNAMESIZE) a name for a local socket.
+   The first TMPDIRLEN bytes of SOCKNAME are already initialized to be
+   the name of a temporary directory.  Use UID and SERVER_NAME to
+   concoct the name.  Return the total length of the name if successful,
+   -1 if it does not fit (and store a truncated name in that case).
+   Fail if TMPDIRLEN is out of range.  */
+
+static int
+local_sockname (char *sockname, int socknamesize, int tmpdirlen,
+		uintmax_t uid, char const *server_name)
+{
+  /* If ! (0 <= TMPDIRLEN && TMPDIRLEN < SOCKNAMESIZE) the truncated
+     temporary directory name is already in SOCKNAME, so nothing more
+     need be stored.  */
+  if (0 <= tmpdirlen)
+    {
+      int remaining = socknamesize - tmpdirlen;
+      if (0 < remaining)
+	{
+	  int suffixlen = snprintf (&sockname[tmpdirlen], remaining,
+				    "/emacs%"PRIuMAX"/%s", uid, server_name);
+	  if (0 <= suffixlen && suffixlen < remaining)
+	    return tmpdirlen + suffixlen;
+	}
+    }
+  return -1;
+}
+
+/* Create a local socket for SERVER_NAME and connect it to Emacs.  If
+   SERVER_NAME is a file name component, the local socket name
+   relative to a well-known location in a temporary directory.
+   Otherwise, the local socket name is SERVER_NAME.  */
 
 static HSOCKET
-set_local_socket (const char *local_socket_name)
+set_local_socket (char const *server_name)
 {
   union {
     struct sockaddr_un un;
@@ -1288,55 +1324,54 @@ set_local_socket (const char *local_socket_name)
       return INVALID_SOCKET;
     }
 
-  char const *server_name = local_socket_name;
-  char const *tmpdir = NULL;
-  char *tmpdir_storage = NULL;
-  char *socket_name_storage = NULL;
-  static char const subdir_format[] = "/emacs%"PRIuMAX"/";
-  int subdir_size_bound = (sizeof subdir_format - sizeof "%"PRIuMAX
-			   + INT_STRLEN_BOUND (uid_t) + 1);
+  char *sockname = server.un.sun_path;
+  enum { socknamesize = sizeof server.un.sun_path };
+  int tmpdirlen = -1;
+  int socknamelen = -1;
 
-  if (! (strchr (local_socket_name, '/')
-	 || (ISSLASH ('\\') && strchr (local_socket_name, '\\'))))
+  if (strchr (server_name, '/')
+      || (ISSLASH ('\\') && strchr (server_name, '\\')))
+    socknamelen = snprintf (sockname, socknamesize, "%s", server_name);
+  else
     {
       /* socket_name is a file name component.  */
-      uintmax_t uid = geteuid ();
-      tmpdir = egetenv ("TMPDIR");
-      if (!tmpdir)
+      char const *xdg_runtime_dir = egetenv ("XDG_RUNTIME_DIR");
+      if (xdg_runtime_dir)
+	socknamelen = snprintf (sockname, socknamesize, "%s/emacs/%s",
+				xdg_runtime_dir, server_name);
+      else
 	{
+	  char const *tmpdir = egetenv ("TMPDIR");
+	  if (tmpdir)
+	    tmpdirlen = snprintf (sockname, socknamesize, "%s", tmpdir);
+	  else
+	    {
 # ifdef DARWIN_OS
 #  ifndef _CS_DARWIN_USER_TEMP_DIR
 #   define _CS_DARWIN_USER_TEMP_DIR 65537
 #  endif
-	  size_t n = confstr (_CS_DARWIN_USER_TEMP_DIR, NULL, 0);
-	  if (n > 0)
-	    {
-	      tmpdir = tmpdir_storage = xmalloc (n);
-	      confstr (_CS_DARWIN_USER_TEMP_DIR, tmpdir_storage, n);
-	    }
-	  else
+	      size_t n = confstr (_CS_DARWIN_USER_TEMP_DIR,
+				  sockname, socknamesize);
+	      if (0 < n && n < (size_t) -1)
+	        tmpdirlen = min (n - 1, socknamesize);
 # endif
-	    tmpdir = "/tmp";
+	      if (tmpdirlen < 0)
+		tmpdirlen = snprintf (sockname, socknamesize, "/tmp");
+	    }
+	  socknamelen = local_sockname (sockname, socknamesize, tmpdirlen,
+					geteuid (), server_name);
 	}
-      socket_name_storage =
-	xmalloc (strlen (tmpdir) + strlen (server_name) + subdir_size_bound);
-      char *z = stpcpy (socket_name_storage, tmpdir);
-      strcpy (z + sprintf (z, subdir_format, uid), server_name);
-      local_socket_name = socket_name_storage;
     }
 
-  if (strlen (local_socket_name) < sizeof server.un.sun_path)
-    strcpy (server.un.sun_path, local_socket_name);
-  else
+  if (! (0 <= socknamelen && socknamelen < socknamesize))
     {
-      message (true, "%s: socket-name %s too long\n",
-	       progname, local_socket_name);
+      message (true, "%s: socket-name %s... too long\n", progname, sockname);
       fail ();
     }
 
   /* See if the socket exists, and if it's owned by us. */
-  int sock_status = socket_status (server.un.sun_path);
-  if (sock_status && tmpdir)
+  int sock_status = socket_status (sockname);
+  if (sock_status)
     {
       /* Failing that, see if LOGNAME or USER exist and differ from
 	 our euid.  If so, look for a socket based on the UID
@@ -1355,30 +1390,19 @@ set_local_socket (const char *local_socket_name)
 	  if (pw && (pw->pw_uid != geteuid ()))
 	    {
 	      /* We're running under su, apparently. */
-	      uintmax_t uid = pw->pw_uid;
-	      char *user_socket_name
-		= xmalloc (strlen (tmpdir) + strlen (server_name)
-			   + subdir_size_bound);
-	      char *z = stpcpy (user_socket_name, tmpdir);
-	      strcpy (z + sprintf (z, subdir_format, uid), server_name);
-
-	      if (strlen (user_socket_name) < sizeof server.un.sun_path)
-		strcpy (server.un.sun_path, user_socket_name);
-	      else
+	      socknamelen = local_sockname (sockname, socknamesize, tmpdirlen,
+					    pw->pw_uid, server_name);
+	      if (socknamelen < 0)
 		{
-		  message (true, "%s: socket-name %s too long\n",
-			   progname, user_socket_name);
+		  message (true, "%s: socket-name %s... too long\n",
+			   progname, sockname);
 		  exit (EXIT_FAILURE);
 		}
-	      free (user_socket_name);
 
-	      sock_status = socket_status (server.un.sun_path);
+	      sock_status = socket_status (sockname);
 	    }
 	}
     }
-
-  free (socket_name_storage);
-  free (tmpdir_storage);
 
   switch (sock_status)
     {
@@ -1403,7 +1427,7 @@ set_local_socket (const char *local_socket_name)
 		 progname, progname);
       else
 	message (true, "%s: can't stat %s: %s\n",
-		 progname, server.un.sun_path, strerror (sock_status));
+		 progname, sockname, strerror (sock_status));
       break;
     }
 
@@ -1421,12 +1445,12 @@ set_socket (bool no_exit_if_error)
   INITIALIZE ();
 
 #ifdef SOCKETS_IN_FILE_SYSTEM
-  /* Explicit --socket-name argument.  */
   if (!socket_name)
     socket_name = egetenv ("EMACS_SOCKET_NAME");
 
   if (socket_name)
     {
+      /* Explicit --socket-name argument, or environment variable.  */
       s = set_local_socket (socket_name);
       if (s != INVALID_SOCKET || no_exit_if_error)
 	return s;

@@ -2005,8 +2005,10 @@ or by invoking @code{server-start} from @file{.emacs}:
 (if (@var{some conditions are met}) (server-start))
 @end lisp
 
-When this is done, Emacs creates a Unix domain socket named
-@file{server} in @file{/tmp/emacs@var{userid}}. See
+When this is done, Emacs by default creates a Unix domain socket named
+@file{server} in a well-known directory, typically
+@file{$XDG_RUNTIME_DIR/emacs} if Emacs is running under an X Window System
+desktop and @file{$TMPDIR/emacs@var{userid}} otherwise.  See the variable
 @code{server-socket-dir}.
 
 To get your news reader, mail reader, etc., to invoke

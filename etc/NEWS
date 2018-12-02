@@ -128,6 +128,12 @@ command-line value specified via '--socket-name' will override the
 environment, and the natural default to TMPDIR, then "/tmp", continues
 to apply.
 
++++
+*** Emacs and emacsclient now default to $XDG_RUNTIME_DIR/emacs
+as the directory for client/server sockets, if Emacs is running
+under an X Window System desktop that sets the XDG_RUNTIME_DIR
+environment variable to indicate where session sockets should go.
+
 ---
 *** When run by root, emacsclient no longer connects to non-root sockets.
 (Instead you can use Tramp methods to run root commands in a non-root Emacs.)
