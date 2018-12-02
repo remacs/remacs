@@ -12011,12 +12011,7 @@ mark_kboards (void)
     for (event = kbd_fetch_ptr; event != kbd_store_ptr; event++)
       {
 	if (event == kbd_buffer + KBD_BUFFER_SIZE)
-	  {
-	    event = kbd_buffer;
-	    if (event == kbd_store_ptr)
-	      break;
-	  }
-
+	  event = kbd_buffer;
 	/* These two special event types has no Lisp_Objects to mark.  */
 	if (event->kind != SELECTION_REQUEST_EVENT
 	    && event->kind != SELECTION_CLEAR_EVENT)
