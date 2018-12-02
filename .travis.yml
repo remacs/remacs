@@ -58,6 +58,7 @@ jobs:
       env:
         # Ensure that we build without warnings.
         - CARGO_FLAGS="--features 'strict'"
+        - RUST_BACKTRACE=1
       os: linux
       before_script:
         - sudo apt install -y libgtk-3-dev
@@ -80,6 +81,7 @@ jobs:
         # Ensure that we build without warnings.
         - CARGO_FLAGS="--features 'strict'"
         - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
+        - RUST_BACKTRACE=1
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
       script:
