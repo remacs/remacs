@@ -350,7 +350,15 @@ fn env_var(name: &str) -> String {
 
 // What to ignore when walking the list of files
 fn ignore(path: &str) -> bool {
-    path == "" || path.starts_with('.') || path == "lib.rs" || path == "functions.rs"
+    path == ""
+        || path.starts_with('.')
+        || path == "lib.rs"
+        || path == "functions.rs"
+        || if cfg!(feature = "libvterm") {
+            false
+        } else {
+            path == "vterm.rs"
+        }
 }
 
 fn generate_include_files() -> Result<(), BuildError> {

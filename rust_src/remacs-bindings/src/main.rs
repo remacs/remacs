@@ -292,7 +292,8 @@ fn run_bindgen(path: &str) {
                 .rustified_enum("output_method")
                 .rustified_enum("pvec_type")
                 .rustified_enum("symbol_redirect")
-                .rustified_enum("syntaxcode");
+                .rustified_enum("syntaxcode")
+                .rustified_enum("VTermProp");
 
             if cfg!(target_os = "windows") {
                 builder = builder

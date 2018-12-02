@@ -121,6 +121,8 @@ mod threads;
 mod time;
 mod util;
 mod vectors;
+#[cfg(feature = "libvterm")]
+mod vterm;
 mod window_configuration;
 mod windows;
 mod xfaces;

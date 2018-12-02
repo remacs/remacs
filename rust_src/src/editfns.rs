@@ -187,14 +187,18 @@ pub fn goto_char(position: LispObject) -> LispObject {
     if position.is_marker() {
         set_point_from_marker(position);
     } else if let Some(num) = position.as_fixnum() {
-        let mut cur_buf = ThreadState::current_buffer_unchecked();
-        let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
-        unsafe { set_point_both(pos, bytepos) };
+        goto_pos(num);
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
     };
     position
+}
+
+pub fn goto_pos(pos: EmacsInt) {
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
+    let p = clip_to_bounds(cur_buf.begv, pos, cur_buf.zv);
+    let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), p) };
+    unsafe { set_point_both(p, bytepos) };
 }
 
 /// Return the byte position for character position POSITION.

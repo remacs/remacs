@@ -351,6 +351,7 @@ OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
 OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
 OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
 OPTION_DEFAULT_ON([json], [don't compile with native JSON support])
+OPTION_DEFAULT_ON([libvterm],[don't compile with libvterm support])
 
 OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
@@ -3795,6 +3796,17 @@ fi
 AC_SUBST(LIBXML2_LIBS)
 AC_SUBST(LIBXML2_CFLAGS)
 
+dnl ### Use libvterm (-lvterm) if available
+HAVE_LIBVTERM=no
+if test "${with_libvterm}" != "no"; then
+  EMACS_CHECK_MODULES([LIBVTERM], [vterm])
+  if test "${HAVE_LIBVTERM}" = "yes"; then
+    AC_DEFINE(HAVE_LIBVTERM, 1, [Define to 1 if libvterm library is present.])
+  fi
+fi
+AC_SUBST(LIBVTERM_LIBS)
+AC_SUBST(LIBVTERM_CFLAGS)
+
 BLESSMAIL_TARGET=
 LIBS_MAIL=
 if test ! "$with_mailutils"; then
@@ -5479,6 +5491,9 @@ case "$window_system" in
         CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-w32\", "
     ;;
 esac
+if test "$HAVE_LIBVTERM" = "yes"; then
+   CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"libvterm\", "
+fi
 AC_SUBST(CARGO_DEFAULT_FEATURES)
 AC_CONFIG_FILES([rust_src/Cargo.toml])
 

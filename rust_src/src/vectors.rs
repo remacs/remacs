@@ -32,6 +32,9 @@ use crate::{
     windows::LispWindowRef,
 };
 
+#[cfg(feature = "libvterm")]
+use crate::vterm::LispVterminalRef;
+
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
 pub type LispBoolVecRef = ExternalPtr<Lisp_Bool_Vector>;
@@ -214,6 +217,15 @@ impl LispVectorlikeRef {
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
         if self.is_pseudovector(pvec_type::PVEC_BUFFER) {
+            Some(unsafe { mem::transmute(self) })
+        } else {
+            None
+        }
+    }
+
+    #[cfg(feature = "libvterm")]
+    pub fn as_vterminal(self) -> Option<LispVterminalRef> {
+        if self.is_pseudovector(pvec_type::PVEC_VTERMINAL) {
             Some(unsafe { mem::transmute(self) })
         } else {
             None

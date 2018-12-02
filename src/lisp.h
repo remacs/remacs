@@ -34,6 +34,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <intprops.h>
 #include <verify.h>
 
+#ifdef HAVE_LIBVTERM
+#include <vterm.h>
+#endif
+
 INLINE_HEADER_BEGIN
 
 /* Define a TYPE constant ID as an externally visible name.  Use like this:
@@ -452,7 +456,6 @@ typedef EMACS_INT Lisp_Word;
 #else
 #define ENUM_BF(TYPE) enum TYPE
 #endif
-
 
 enum Lisp_Type
   {
@@ -960,6 +963,7 @@ enum pvec_type
   PVEC_BUFFER,
   PVEC_HASH_TABLE,
   PVEC_TERMINAL,
+  PVEC_VTERMINAL,
   PVEC_WINDOW_CONFIGURATION,
   PVEC_SUBR,
   PVEC_OTHER,            /* Should never be visible to Elisp code.  */
@@ -4912,7 +4916,82 @@ extern bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp
 extern bool internal_equal_cons (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 extern bool internal_equal_misc (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_vectorlike (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+
+extern Lisp_Object allocate_misc (enum Lisp_Misc_Type);
+
+#ifdef HAVE_LIBVTERM
+typedef struct VtermScrollbackLine {
+  size_t cols;
+  VTermScreenCell cells[];
+} VtermScrollbackLine;
+
+typedef struct VtermCursor {
+  int row, col;
+  bool blinking;
+  bool visible;
+} VtermCursor;
+
+typedef struct vterminal {
+  /* This is for Lisp; the terminal code does not refer to it.  */
+  union vectorlike_header header;
+
+  Lisp_Object process;
+
+  VTerm *vt;
+  VTermScreen *vts;
+  // buffer used to:
+  //  - convert VTermScreen cell arrays into utf8 strings
+  //  - receive data from libvterm as a result of key presses.
+  VtermScrollbackLine **sb_buffer; // Scrollback buffer storage for libvterm
+  size_t sb_current;          // number of rows pushed to sb_buffer
+  size_t sb_size;             // sb_buffer size
+  // "virtual index" that points to the first sb_buffer row that we need to
+  // push to the terminal buffer when refreshing the scrollback. When negative,
+  // it actually points to entries that are no longer in sb_buffer (because the
+  // window height has increased) and must be deleted from the terminal buffer
+  int sb_pending;
+
+  int invalid_start, invalid_end; // invalid rows in libvterm screen
+  bool is_invalidated;
+
+  VtermCursor cursor;
+  char *title;
+  bool is_title_changed;
+
+  bool pending_resize;
+} vterminal;
+
+extern vterminal *allocate_vterm (void);
+
+extern VTermScreenCallbacks vterm_screen_callbacks;
+
+extern int row_to_linenr(vterminal *term, int row);
+
+extern Lisp_Object refresh_lines (vterminal *term, int start_row, int end_row, int end_col);
+
+extern unsigned char * vterm_process_input (unsigned char *key, VTermModifier modifier, ptrdiff_t len);
+
+extern size_t get_col_offset(vterminal *term, int row, int end_col);
+
+extern Lisp_Object vterminal_render_text (char *buffer, int len, VTermScreenCell *cell);
+
+extern int vterminal_movecursor(VTermPos new, VTermPos old, int visible,
+                           void *data);
+
+extern int vterminal_damage(VTermRect rect, void *data);
+
+extern int vterminal_moverect(VTermRect dest, VTermRect src, void *data);
+
+extern VTermColor rgb_string_to_color(Lisp_Object string);
+
+extern Lisp_Object color_to_rgb_string(VTermColor color);
+
+extern int vterminal_settermprop(VTermProp prop, VTermValue *val, void *user_data);
+
+extern bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
+                              uint32_t *codepoint);
+
+#endif
 
 INLINE_HEADER_END
 
