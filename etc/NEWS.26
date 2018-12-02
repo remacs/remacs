@@ -178,6 +178,11 @@ optional argument to do so.
 
 * Changes in Emacs 26.2 on Non-Free Operating Systems
 
+** macOS features can now be detected at run-time as well as at
+build-time.  See nextstep/INSTALL for details.
+(This change was actually made in Emacs 26.1, but was undocumented and
+not called out in its NEWS.)
+
 
 * Installation Changes in Emacs 26.1
 
