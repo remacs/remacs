@@ -311,7 +311,7 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
 			  ignore, pixelwise));
   /* Don't allow too small height of text-mode frames, or else cm.c
      might abort in cmcheckmagic.  */
-  if ((FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f)) && NILP (horizontal))
+  if (FRAME_TERMCAP_P (f) && NILP (horizontal))
     {
       int min_height = (FRAME_MENU_BAR_LINES (f)
 			+ FRAME_WANTS_MODELINE_P (f)
