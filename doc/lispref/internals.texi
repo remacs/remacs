@@ -2049,45 +2049,76 @@ if that window no longer displays this buffer.
 The frame that this window is on, as a Lisp object.
 
 @item mini
-Non-zero if this window is a minibuffer window.
+Non-zero if this window is a minibuffer window, a window showing the
+minibuffer or the echo area.
+
+@item pseudo_window_p
+@cindex pseudo window
+Non-zero if this window is a @dfn{pseudo window}.  A pseudo window is
+either a window used to display the menu bar or the tool bar (when
+Emacs uses toolkits that don't display their own menu bar and tool
+bar) or a window showing a tooltip on a tooltip frame.  Pseudo windows
+are in general not accessible from Lisp code.
 
 @item parent
-Internally, Emacs arranges windows in a tree; each group of siblings has
-a parent window whose area includes all the siblings.  This field points
-to a window's parent, as a Lisp object.
+Internally, Emacs arranges windows in a tree; each group of siblings
+has a parent window whose area includes all the siblings.  This field
+points to the window's parent in that tree, as a Lisp object.  For the
+root window of the tree and a minibuffer window this is always
+@code{nil}.
 
 Parent windows do not display buffers, and play little role in display
-except to shape their child windows.  Emacs Lisp programs usually have
-no access to the parent windows; they operate on the windows at the
+except to shape their child windows.  Emacs Lisp programs cannot
+directly manipulate parent windows; they operate on the windows at the
 leaves of the tree, which actually display buffers.
+
+@item contents
+For a leaf window and windows showing a tooltip, this is the buffer,
+as a Lisp object, that the window is displaying.  For an internal
+(``parent'') window, this is its first child window.  For a pseudo
+window showing a menu or tool bar this is @code{nil}.  It is also
+@code{nil} for a window that has been deleted.
 
 @item next
 @itemx prev
-The next sibling and previous sibling of this window.  @code{next} is
-@code{nil} if the window is the right-most or bottom-most in its group;
-@code{prev} is @code{nil} if it is the left-most or top-most in its
-group.  Whether the sibling is left/right or up/down is determined by
-the @code{horizontal} field: if it's non-zero, the siblings are
-arranged horizontally.
+The next and previous sibling of this window as Lisp objects.
+@code{next} is @code{nil} if the window is the right-most or
+bottom-most in its group; @code{prev} is @code{nil} if it is the
+left-most or top-most in its group.  Whether the sibling is left/right
+or up/down is determined by the @code{horizontal} field of the
+sibling's parent: if it's non-zero, the siblings are arranged
+horizontally.
+
+As a special case, @code{next} of a frame's root window points to the
+frame's minibuffer window, provided this is not a minibuffer-only or
+minibuffer-less frame.  On such frames @code{prev} of the minibuffer
+window points to that frame's root window.  In any other case, the
+root window's @code{next} and the minibuffer window's (if present)
+@code{prev} fields are @code{nil}.
 
 @item left_col
 The left-hand edge of the window, measured in columns, relative to the
-leftmost column in the frame (column 0).
+leftmost column (column 0) of the window's native frame.
 
 @item top_line
 The top edge of the window, measured in lines, relative to the topmost
-line in the frame (line 0).
+line (line 0) of the window's native frame.
+
+@item pixel_left
+@itemx pixel_top
+The left-hand and top edges of this window, measured in pixels,
+relative to the top-left corner (0, 0) of the window's native frame.
 
 @item total_cols
 @itemx total_lines
-The width and height of the window, measured in columns and lines
-respectively.  The width includes the scroll bar and fringes, and/or
-the separator line on the right of the window (if any).
+The total width and height of the window, measured in columns and
+lines respectively.  The values include scroll bars and fringes,
+dividers and/or the separator line on the right of the window (if
+any).
 
-@item contents
-For leaf windows, this is the buffer, as a Lisp object, that the
-window is displaying.  For an internal (``parent'') window, this is
-its child window.  It can also be @code{nil}, for a pseudo-window.
+@item pixel_width;
+@itemx pixel_height;
+The total width and height of the window measured in pixels.
 
 @item start
 A marker pointing to the position in the buffer that is the first
@@ -2141,8 +2172,14 @@ in this window.
 A non-zero value means the window's buffer was modified when the
 window was last updated.
 
-@item vertical_scroll_bar
-This window's vertical scroll bar, a Lisp object.
+@item vertical_scroll_bar_type
+@itemx horizontal_scroll_bar_type
+The types of this window's vertical and horizontal scroll bars.
+
+@item scroll_bar_width
+@itemx scroll_bar_height
+The width of this window's vertical scroll bar and the height of this
+window's horizontal scroll bar, in pixels.
 
 @item left_margin_cols
 @itemx right_margin_cols
@@ -2226,6 +2263,14 @@ Vertical scroll amount, in pixels.  Normally, this is 0.
 @item dedicated
 Non-@code{nil} if this window is dedicated to its buffer.
 
+@item combination_limit
+This window's combination limit, meaningful only for a parent window.
+If this is @code{t}, then it is not allowed to delete this window and
+recombine its child windows with other siblings of this window.
+
+@item window_parameters
+The alist of this window's parameters.
+
 @item display_table
 The window's display table, or @code{nil} if none is specified for it.
 
@@ -2249,11 +2294,6 @@ the line number as long as the window shows that buffer.
 @item column_number_displayed
 The column number currently displayed in this window's mode line, or
 @minus{}1 if column numbers are not being displayed.
-
-@item pseudo_window_p
-This is non-zero for windows that display the menu bar and the tool
-bar (when Emacs uses toolkits that don't display their own menu bar
-and tool bar).
 
 @item current_matrix
 @itemx desired_matrix
