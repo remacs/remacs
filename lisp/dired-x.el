@@ -1335,8 +1335,7 @@ displayed this way is restricted by the height of the current window and
 To keep Dired buffer displayed, type \\[split-window-below] first.
 To display just marked files, type \\[delete-other-windows] first."
   (interactive "P")
-  (dired-simultaneous-find-file (dired-get-marked-files nil nil nil nil t)
-                                noselect))
+  (dired-simultaneous-find-file (dired-get-marked-files) noselect))
 
 (defun dired-simultaneous-find-file (file-list noselect)
   "Visit all files in FILE-LIST and display them simultaneously.

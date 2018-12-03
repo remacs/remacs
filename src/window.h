@@ -178,9 +178,6 @@ struct window
     /* An alist with parameters.  */
     Lisp_Object window_parameters;
 
-    /* The help echo text for this window.  Qnil if there's none.  */
-    Lisp_Object mode_line_help_echo;
-
     /* No Lisp data may follow below this point without changing
        mark_object in alloc.c.  The member current_matrix must be the
        first non-Lisp member.  */
@@ -448,12 +445,6 @@ INLINE void
 wset_redisplay_end_trigger (struct window *w, Lisp_Object val)
 {
   w->redisplay_end_trigger = val;
-}
-
-INLINE void
-wset_mode_line_help_echo (struct window *w, Lisp_Object val)
-{
-  w->mode_line_help_echo = val;
 }
 
 INLINE void

@@ -449,11 +449,8 @@ places where they originally did not directly appear."
 					;defconst, defvar
     (`(,(and sym (or `defconst `defvar)) ,definedsymbol . ,forms)
      `(,sym ,definedsymbol
-            . ,(when (consp forms)
-                 (cons (cconv-convert (car forms) env extend)
-                       ;; The rest (i.e. docstring, of any) is not evaluated,
-                       ;; and may be an invalid expression (e.g. ($# . 678)).
-                       (cdr forms)))))
+            . ,(mapcar (lambda (form) (cconv-convert form env extend))
+                       forms)))
 
 					;condition-case
     ((and `(condition-case ,var ,protected-form . ,handlers)

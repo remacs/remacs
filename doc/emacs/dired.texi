@@ -76,7 +76,7 @@ C-x d  ~/foo/*/*.el  @key{RET}
 
 The former lists all the files with extension @samp{.el} in directory
 @samp{foo}.  The latter lists the files with extension @samp{.el}
-in all the subdirectories of @samp{foo}.
+in subdirectories 2 levels of depth below @samp{foo}.
 
 The usual history and completion commands can be used in the minibuffer;
 in particular, @kbd{M-n} puts the name of the visited file (if any) in
@@ -241,7 +241,7 @@ Even if you have set @code{dired-recursive-deletes} to @code{nil},
 you might want sometimes to delete recursively directories
 without being asked for confirmation for all of them.  This is handy
 when you have marked many directories for deletion and you are very
-sure that all of them can safely be deleted.  For every nonempty
+sure that all of them can safely being deleted.  For every nonempty
 directory you are asked for confirmation; if you answer @code{all},
 then all the remaining directories will be deleted without more
 questions.
@@ -488,11 +488,10 @@ Remove all marks from all the files in this Dired buffer
 @kindex M-DEL @r{(Dired)}
 @findex dired-unmark-all-files
 Remove all marks that use the character @var{markchar}
-(@code{dired-unmark-all-files}).  If invoked with @kbd{M-@key{DEL}},
-the command prompts for @var{markchar}.  That @var{markchar} is a
-single character---do not use @key{RET} to terminate it.  See the
-description of the @kbd{* c} command below, which lets you replace one
-mark character with another.
+(@code{dired-unmark-all-files}).  The argument is a single
+character---do not use @key{RET} to terminate it.  See the description
+of the @kbd{* c} command below, which lets you replace one mark
+character with another.
 
 With a numeric argument, this command queries about each marked file,
 asking whether to remove its mark.  You can answer @kbd{y} meaning yes,
@@ -504,7 +503,7 @@ files without asking about them.
 @findex dired-next-marked-file
 @kindex * C-n @r{(Dired)}
 @kindex M-@} @r{(Dired)}
-Move down to the next marked file (@code{dired-next-marked-file}).
+Move down to the next marked file (@code{dired-next-marked-file})
 A file is ``marked'' if it has any kind of mark.
 
 @item * C-p
@@ -512,7 +511,7 @@ A file is ``marked'' if it has any kind of mark.
 @findex dired-prev-marked-file
 @kindex * C-p @r{(Dired)}
 @kindex M-@{ @r{(Dired)}
-Move up to the previous marked file (@code{dired-prev-marked-file}).
+Move up to the previous marked file (@code{dired-prev-marked-file})
 
 @item t
 @itemx * t
@@ -575,9 +574,9 @@ the regular expression @var{regexp}
 name.  Note that if a file is visited in an Emacs buffer,
 and @code{dired-always-read-filesystem} is @code{nil} (the default), this
 command will look in the buffer without revisiting the file, so the results
-might be inconsistent with the file on disk if its contents have changed
-since it was last visited.  If you don't want this, you may wish to
-revert the files you have visited in your buffers, or to turn on
+might be inconsistent with the file on disk if its contents has changed
+since it was last visited.  If you don't want this, you may wish
+reverting the files you have visited in your buffers, or turning on
 the @code{auto-revert} mode in those buffers, before invoking this
 command.  @xref{Reverting}.  If you prefer that this command always revisit
 the file, without having to revert the file or enable @code{auto-revert}
@@ -738,8 +737,8 @@ this.)
 
 @vindex dired-chown-program
 The variable @code{dired-chown-program} specifies the name of the
-program to use to do the work.  (This variable is necessary because
-different systems put @command{chown} in different places).
+program to use to do the work (different systems put @command{chown}
+in different places).
 
 @findex dired-do-touch
 @kindex T @r{(Dired)}
@@ -909,7 +908,7 @@ treat it specially.
 Otherwise, if the command string contains @samp{?} surrounded by
 whitespace or @samp{`?`}, Emacs runs the shell command once
 @emph{for each file}, substituting the current file name for @samp{?}
-and @samp{`?`} each time.  You can use both @samp{?} and @samp{`?`} more
+and @samp{`?`} each time.  You can use both @samp{?} or @samp{`?`} more
 than once in the command; the same file name replaces each occurrence.
 If you mix them with @samp{*} the command signals an error.
 
@@ -1402,7 +1401,7 @@ display the next image.  Typing @key{DEL}
 the previous thumbnail and displays that instead.
 
 @vindex image-dired-external-viewer
-  To view the image in its original size, either provide a prefix
+  To view and the image in its original size, either provide a prefix
 argument (@kbd{C-u}) before pressing @key{RET}, or type
 @kbd{C-@key{RET}} (@code{image-dired-thumbnail-display-external}) to
 display the image in an external viewer.  You must first configure
@@ -1437,8 +1436,7 @@ a comment from Dired (@code{image-dired-dired-comment-files}).
   Image-Dired also provides simple image manipulation.  In the
 thumbnail buffer, type @kbd{L} to rotate the original image 90 degrees
 anti clockwise, and @kbd{R} to rotate it 90 degrees clockwise.  This
-rotation is lossless, and uses an external utility called
-@command{jpegtran}, which you need to install first.
+rotation is lossless, and uses an external utility called JpegTRAN.
 
 @node Misc Dired Features
 @section Other Dired Features

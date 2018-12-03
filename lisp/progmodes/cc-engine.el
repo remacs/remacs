@@ -10665,8 +10665,7 @@ comment at the start of cc-engine.el for more info."
    ;; This will pick up brace list declarations.
    (save-excursion
      (goto-char containing-sexp)
-     (and (c-backward-over-enum-header)
-	  (point)))
+     (c-backward-over-enum-header))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
      (let ((bufpos t)
@@ -11291,7 +11290,9 @@ comment at the start of cc-engine.el for more info."
 		     (cdr (assoc (match-string 1)
 				 c-other-decl-block-key-in-symbols-alist))
 		     (max (c-point 'boi paren-pos) (point))))
-		   ((c-inside-bracelist-p paren-pos paren-state nil)
+		   ((save-excursion
+		      (goto-char paren-pos)
+		      (c-looking-at-or-maybe-in-bracelist containing-sexp))
 		    (if (save-excursion
 			  (goto-char paren-pos)
 			  (c-looking-at-statement-block))
@@ -11383,9 +11384,10 @@ comment at the start of cc-engine.el for more info."
 
        ;; CASE B.2: brace-list-open
        ((or (consp special-brace-list)
-	    (c-inside-bracelist-p (point)
-				  (cons containing-sexp paren-state)
-				  nil))
+	    (consp
+	     (c-looking-at-or-maybe-in-bracelist
+	      containing-sexp beg-of-same-or-containing-stmt))
+	    )
 	;; The most semantically accurate symbol here is
 	;; brace-list-open, but we normally report it simply as a
 	;; statement-cont.  The reason is that one normally adjusts

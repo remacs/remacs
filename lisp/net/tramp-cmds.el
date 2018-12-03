@@ -144,8 +144,7 @@ This includes password cache, file cache, connection cache, buffers."
   (clrhash tramp-cache-data)
 
   ;; Cleanup local copies of archives.
-  (when (bound-and-true-p tramp-archive-enabled)
-    (tramp-archive-cleanup-hash))
+  (tramp-archive-cleanup-hash)
 
   ;; Remove buffers.
   (dolist (name (tramp-list-tramp-buffers))

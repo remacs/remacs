@@ -17,9 +17,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
-(require 'cl-lib)
 (require 'ert)
-(require 'help-fns)
 
 (defconst mod-test-emacs
   (expand-file-name invocation-name invocation-directory)
@@ -262,27 +260,5 @@ during garbage collection."
   (module--test-assertion
       (rx "Module function called during garbage collection\n")
     (mod-test-invalid-finalizer)))
-
-(ert-deftest module/describe-function-1 ()
-  "Check that Bug#30163 is fixed."
-  (with-temp-buffer
-    (let ((standard-output (current-buffer)))
-      (describe-function-1 #'mod-test-sum)
-      (should (equal
-               (buffer-substring-no-properties 1 (point-max))
-               (format "a module function in `data/emacs-module/mod-test%s'.
-
-(mod-test-sum a b)
-
-Return A + B"
-                       module-file-suffix))))))
-
-(ert-deftest module/load-history ()
-  "Check that Bug#30164 is fixed."
-  (load mod-test-file)
-  (cl-destructuring-bind (file &rest entries) (car load-history)
-    (should (equal (file-name-sans-extension file) mod-test-file))
-    (should (member '(provide . mod-test) entries))
-    (should (member '(defun . mod-test-sum) entries))))
 
 ;;; emacs-module-tests.el ends here

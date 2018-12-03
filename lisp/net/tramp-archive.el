@@ -112,17 +112,8 @@
 (defvar url-handler-regexp)
 (defvar url-tramp-protocols)
 
-;; We cannot check `tramp-gvfs-enabled' in loaddefs.el, because this
-;; would load Tramp. So we make a cheaper check.
-;;;###autoload
-(defvar tramp-archive-enabled (featurep 'dbusbind)
-  "Non-nil when file archive support is available.")
-
-;; After loading tramp-gvfs.el, we know it better.
-(setq tramp-archive-enabled tramp-gvfs-enabled)
-
 ;; <https://github.com/libarchive/libarchive/wiki/LibarchiveFormats>
-;;;###autoload
+;;;###tramp-autoload
 (defconst tramp-archive-suffixes
   ;; "cab", "lzh" and "zip" are included with lower and upper letters,
   ;; because Microsoft Windows provides them often with capital
@@ -152,36 +143,25 @@
 It must be supported by libarchive(3).")
 
 ;; <http://unix-memo.readthedocs.io/en/latest/vfs.html>
-;;    read and write: tar, cpio, pax , gzip , zip, bzip2, xz, lzip, lzma, ar, mtree, iso9660, compress.
-;;    read only: 7-Zip, mtree, xar, lha/lzh, rar, microsoft cab.
+;;    read and write: tar, cpio, pax , gzip , zip, bzip2, xz, lzip, lzma, ar, mtree, iso9660, compress,
+;;    read only: 7-Zip, mtree, xar, lha/lzh, rar, microsoft cab,
 
-;;;###autoload
+;;;###tramp-autoload
 (defconst tramp-archive-compression-suffixes
   '("bz2" "gz" "lrz" "lz" "lz4" "lzma" "lzo" "uu" "xz" "Z")
   "List of suffixes which indicate a compressed file.
 It must be supported by libarchive(3).")
 
-;; The definition of `tramp-archive-file-name-regexp' contains calls
-;; to `regexp-opt', which cannot be autoloaded while loading
-;; loaddefs.el.  So we use a macro, which is evaluated only when needed.
-;;;###autoload
-(progn (defmacro tramp-archive-autoload-file-name-regexp ()
-  "Regular expression matching archive file names."
-  `(concat
+;;;###tramp-autoload
+(defconst tramp-archive-file-name-regexp
+  (concat
     "\\`" "\\(" ".+" "\\."
       ;; Default suffixes ...
       (regexp-opt tramp-archive-suffixes)
       ;; ... with compression.
       "\\(?:" "\\." (regexp-opt tramp-archive-compression-suffixes) "\\)*"
     "\\)" ;; \1
-    "\\(" "/" ".*" "\\)" "\\'"))) ;; \2
-
-;; In older Emacsen (prior 27.1), `tramp-archive-autoload-file-name-regexp'
-;; is not autoloaded.  So we cannot expect it to be known in
-;; tramp-loaddefs.el. But it exists, when tramp-archive.el is loaded.
-;;;###tramp-autoload
-(defconst tramp-archive-file-name-regexp
-  (ignore-errors (tramp-archive-autoload-file-name-regexp))
+    "\\(" "/" ".*" "\\)" "\\'") ;; \2
   "Regular expression matching archive file names.")
 
 ;;;###tramp-autoload
@@ -270,7 +250,7 @@ It must be supported by libarchive(3).")
     (vc-registered . ignore)
     (verify-visited-file-modtime . tramp-handle-verify-visited-file-modtime)
     (write-region . tramp-archive-handle-not-implemented))
-  "Alist of handler functions for file archive method.
+  "Alist of handler functions for GVFS archive method.
 Operations not mentioned here will be handled by the default Emacs primitives.")
 
 (defsubst tramp-archive-file-name-for-operation (operation &rest args)
@@ -292,7 +272,7 @@ pass to the OPERATION."
 
 ;;;###tramp-autoload
 (defun tramp-archive-file-name-handler (operation &rest args)
-  "Invoke the file archive related OPERATION.
+  "Invoke the GVFS archive related OPERATION.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (let* ((filename (apply 'tramp-archive-file-name-for-operation
@@ -303,41 +283,16 @@ pass to the OPERATION."
 	     (tramp-archive-run-real-handler 'file-directory-p (list archive)))
 	(tramp-archive-run-real-handler operation args)
       ;; Now run the handler.
-      (unless tramp-archive-enabled
+      (unless tramp-gvfs-enabled
 	(tramp-compat-user-error nil "Package `tramp-archive' not supported"))
       (let ((tramp-methods (cons `(,tramp-archive-method) tramp-methods))
 	    (tramp-gvfs-methods tramp-archive-all-gvfs-methods)
-	    ;; Set uid and gid.  gvfsd-archive could do it, but it doesn't.
-	    (tramp-unknown-id-integer (user-uid))
-	    (tramp-unknown-id-string (user-login-name))
 	    (fn (assoc operation tramp-archive-file-name-handler-alist)))
 	(when (eq (cdr fn) 'tramp-archive-handle-not-implemented)
 	  (setq args (cons operation args)))
 	(if fn
 	    (save-match-data (apply (cdr fn) args))
 	  (tramp-archive-run-real-handler operation args))))))
-
-;;;###autoload
-(progn (defun tramp-register-archive-file-name-handler ()
-  "Add archive file name handler to `file-name-handler-alist'."
-  (when tramp-archive-enabled
-    (add-to-list 'file-name-handler-alist
-	         (cons (tramp-archive-autoload-file-name-regexp)
-		       'tramp-autoload-file-name-handler))
-    (put 'tramp-archive-file-name-handler 'safe-magic t))))
-
-;;;###autoload
-(progn
-  (add-hook 'after-init-hook 'tramp-register-archive-file-name-handler)
-  (add-hook
-   'tramp-archive-unload-hook
-   (lambda ()
-     (remove-hook
-      'after-init-hook 'tramp-register-archive-file-name-handler))))
-
-;; In older Emacsen (prior 27.1), the autoload above does not exist.
-;; So we call it again; it doesn't hurt.
-(tramp-register-archive-file-name-handler)
 
 ;; Mark `operations' the handler is responsible for.
 (put 'tramp-archive-file-name-handler 'operations
@@ -354,6 +309,12 @@ pass to the OPERATION."
      (lambda ()
        (remove-hook
 	'url-handler-mode-hook 'tramp-register-file-name-handlers)))))
+
+;; Debug.
+;(trace-function-background 'tramp-archive-file-name-handler)
+;(trace-function-background 'tramp-gvfs-file-name-handler)
+;(trace-function-background 'tramp-file-name-archive)
+;(trace-function-background 'tramp-archive-dissect-file-name)
 
 
 ;; File name conversions.
@@ -380,14 +341,10 @@ The hash key is the archive name.  The value is a cons of the
 used `tramp-file-name' structure for tramp-gvfs, and the file
 name of a local copy, if any.")
 
-(defsubst tramp-archive-gvfs-host (archive)
-  "Return host name of ARCHIVE as used in GVFS for mounting"
-  (url-hexify-string (tramp-gvfs-url-file-name archive)))
-
 (defun tramp-archive-dissect-file-name (name)
   "Return a `tramp-file-name' structure.
 The structure consists of the `tramp-archive-method' method, the
-hexified archive name as host, and the localname.  The archive
+hexlified archive name as host, and the localname.  The archive
 name is kept in slot `hop'"
   (save-match-data
     (unless (tramp-archive-file-name-p name)
@@ -407,7 +364,8 @@ name is kept in slot `hop'"
 	(let ((archive
 	       (tramp-make-tramp-file-name
 		(tramp-archive-dissect-file-name archive) nil 'noarchive)))
-	  (setf (tramp-file-name-host vec) (tramp-archive-gvfs-host archive)))
+	  (setf (tramp-file-name-host vec)
+		(url-hexify-string (tramp-gvfs-url-file-name archive))))
 	(puthash archive (list vec) tramp-archive-hash))
 
        ;; http://...
@@ -420,13 +378,15 @@ name is kept in slot `hop'"
 		 (url-type (url-generic-parse-url archive))
 		 url-tramp-protocols))
 	       (archive (url-tramp-convert-url-to-tramp archive)))
-	  (setf (tramp-file-name-host vec) (tramp-archive-gvfs-host archive)))
+	  (setf (tramp-file-name-host vec)
+		(url-hexify-string (tramp-gvfs-url-file-name archive))))
 	(puthash archive (list vec) tramp-archive-hash))
 
        ;; GVFS supported schemes.
        ((or (tramp-gvfs-file-name-p archive)
 	    (not (file-remote-p archive)))
-	(setf (tramp-file-name-host vec) (tramp-archive-gvfs-host archive))
+	(setf (tramp-file-name-host vec)
+	      (url-hexify-string (tramp-gvfs-url-file-name archive)))
 	(puthash archive (list vec) tramp-archive-hash))
 
        ;; Anything else.  Here we call `file-local-copy', which we
@@ -435,7 +395,8 @@ name is kept in slot `hop'"
 		 (inhibit-file-name-handlers
 		  (cons 'jka-compr-handler inhibit-file-name-handlers))
 		 (copy (file-local-copy archive)))
-	    (setf (tramp-file-name-host vec) (tramp-archive-gvfs-host copy))
+	    (setf (tramp-file-name-host vec)
+		  (url-hexify-string (tramp-gvfs-url-file-name copy)))
 	    (puthash archive (cons vec copy) tramp-archive-hash))))
 
       ;; So far, `vec' handles just the mount point.  Add `localname',
@@ -622,11 +583,9 @@ offered."
 
 ;;; TODO:
 
-;; * Check, whether we could retrieve better file attributes like uid,
-;;   gid, permissions.  See gvfsbackendarchive.c
-;;   (archive_file_set_info_from_entry), where it is commented out.
+;; * See, whether we could retrieve better file attributes like uid,
+;;   gid, permissions.
 ;;
 ;; * Implement write access, when possible.
-;;   https://bugzilla.gnome.org/show_bug.cgi?id=589617
 
 ;;; tramp-archive.el ends here

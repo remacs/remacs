@@ -645,7 +645,7 @@ marked file, return (t FILENAME) instead of (FILENAME)."
      ;; save-excursion loses, again
      (dired-move-to-filename)))
 
-(defun dired-get-marked-files (&optional localp arg filter distinguish-one-marked error)
+(defun dired-get-marked-files (&optional localp arg filter distinguish-one-marked)
   "Return the marked files' names as list of strings.
 The list is in the same order as the buffer, that is, the car is the
   first marked file.
@@ -662,10 +662,7 @@ Optional third argument FILTER, if non-nil, is a function to select
 
 If DISTINGUISH-ONE-MARKED is non-nil, then if we find just one marked file,
 return (t FILENAME) instead of (FILENAME).
-Don't use that together with FILTER.
-
-If ERROR is non-nil, signal an error when the list of found files is empty.
-ERROR can be a string with the error message."
+Don't use that together with FILTER."
   (let ((all-of-them
 	 (save-excursion
 	   (delq nil (dired-map-over-marks
@@ -675,17 +672,13 @@ ERROR can be a string with the error message."
     (when (equal all-of-them '(t))
       (setq all-of-them nil))
     (if (not filter)
-	(setq result
-              (if (and distinguish-one-marked (eq (car all-of-them) t))
-	          all-of-them
-	        (nreverse all-of-them)))
+	(if (and distinguish-one-marked (eq (car all-of-them) t))
+	    all-of-them
+	  (nreverse all-of-them))
       (dolist (file all-of-them)
 	(if (funcall filter file)
-	    (push file result))))
-    (when (and (null result) error)
-      (user-error (if (stringp error) error "No files specified")))
-    result))
-
+	    (push file result)))
+      result)))
 
 ;; The dired command
 
