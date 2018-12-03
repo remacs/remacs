@@ -7,8 +7,8 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::LispObject,
-    remacs_sys::{globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
-    remacs_sys::{Fcons, CHECK_IMPURE},
+    remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
+    remacs_sys::{internal_equal, Fcons, CHECK_IMPURE},
     remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
     symbols::LispSymbolRef,
 };
@@ -17,7 +17,7 @@ use crate::{
 
 /// A newtype for objects we know are conses.
 #[repr(transparent)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct LispCons(LispObject);
 
 impl LispObject {
@@ -51,50 +51,112 @@ impl LispObject {
         self.is_cons() || self.is_nil()
     }
 
+    pub fn iter_tails_v2(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        self.iter_tails_internal(Qlistp, end_checks, circular_checks)
+    }
+
+    pub fn iter_tails_plist_v2(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        self.iter_tails_internal(Qplistp, end_checks, circular_checks)
+    }
+
+    fn iter_tails_internal(
+        self,
+        ty: LispObject,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        TailsIter::new(self, ty, end_checks, circular_checks)
+    }
+
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(self, Some(Qlistp))
+        self.iter_tails_internal(Qlistp, LispConsEndChecks::on, LispConsCircularChecks::on)
+    }
+
+    pub fn iter_tails_noendchecked(self) -> TailsIter {
+        self.iter_tails_internal(Qlistp, LispConsEndChecks::off, LispConsCircularChecks::on)
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_tails_safe(self) -> TailsIter {
-        TailsIter::new(self, None)
+        self.iter_tails_internal(Qlistp, LispConsEndChecks::off, LispConsCircularChecks::safe)
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     /// No circular checks are performed.
-    pub fn iter_tails_unchecked(self) -> TailsNoCircularCheckIter {
-        TailsNoCircularCheckIter::new(self)
+    pub fn iter_tails_unchecked(self) -> TailsIter {
+        self.iter_tails_internal(Qlistp, LispConsEndChecks::off, LispConsCircularChecks::off)
     }
 
     /// Iterate over all tails of self.  self should be a plist, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails_plist(self) -> TailsIter {
-        TailsIter::new(self, Some(Qplistp))
+        self.iter_tails_internal(Qplistp, LispConsEndChecks::on, LispConsCircularChecks::on)
+    }
+
+    pub fn iter_cars_v2(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> CarIter {
+        CarIter::new(self.iter_tails_internal(Qlistp, end_checks, circular_checks))
     }
 
     /// Iterate over the car cells of a list.
     pub fn iter_cars(self) -> CarIter {
-        CarIter::new(self, Some(Qlistp))
+        CarIter::new(self.iter_tails_internal(
+            Qlistp,
+            LispConsEndChecks::on,
+            LispConsCircularChecks::on,
+        ))
     }
 
     /// Iterate over all cars of self. If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_cars_safe(self) -> CarIter {
-        CarIter::new(self, None)
+        CarIter::new(self.iter_tails_internal(
+            Qlistp,
+            LispConsEndChecks::off,
+            LispConsCircularChecks::safe,
+        ))
     }
 
     /// Iterate over all cars of self. If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     /// No circular checks are performed.
-    pub fn iter_cars_unchecked(self) -> CarNoCircularCheckIter {
-        CarNoCircularCheckIter::new(self)
+    pub fn iter_cars_unchecked(self) -> CarIter {
+        CarIter::new(self.iter_tails_internal(
+            Qlistp,
+            LispConsEndChecks::off,
+            LispConsCircularChecks::off,
+        ))
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum LispConsEndChecks {
+    off, // no checks
+    on,  // error when the last item inspected is not a valid cons cell.
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum LispConsCircularChecks {
+    off,  // no checks
+    safe, // checked, exits when a circular list is found.
+    on,   // raises error when a circular list is found.
 }
 
 /// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
@@ -103,18 +165,36 @@ pub struct TailsIter {
     tail: LispObject,
     tortoise: LispObject,
     errsym: Option<LispObject>,
+    circular_checks: LispConsCircularChecks,
+    circular_errsym: Option<LispObject>,
     max: isize,
     n: isize,
     q: u16,
 }
 
 impl TailsIter {
-    fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
+    pub fn new(
+        list: LispObject,
+        ty: LispObject,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> Self {
+        let errsym = match end_checks {
+            LispConsEndChecks::on => Some(ty),
+            _ => None,
+        };
+        let circular_errsym = match circular_checks {
+            LispConsCircularChecks::on => Some(ty),
+            _ => None,
+        };
+
         Self {
             list,
             tail: list,
             tortoise: list,
             errsym,
+            circular_checks,
+            circular_errsym,
             max: 2,
             n: 0,
             q: 2,
@@ -127,12 +207,33 @@ impl TailsIter {
         self.tail
     }
 
-    fn circular(&self) -> Option<LispCons> {
-        if self.errsym.is_some() {
-            circular_list(self.tail);
+    fn check_circular(&mut self, cons: LispCons) -> Option<LispCons> {
+        self.q = self.q.wrapping_sub(1);
+        if self.q != 0 {
+            if self.tail == self.tortoise {
+                if self.errsym.is_some() {
+                    circular_list(self.tail);
+                }
+                return None;
+            }
         } else {
-            None
+            self.n = self.n.wrapping_sub(1);
+            if self.n > 0 {
+                if self.tail == self.tortoise {
+                    if self.errsym.is_some() {
+                        circular_list(self.tail);
+                    }
+                    return None;
+                }
+            } else {
+                self.max <<= 1;
+                self.q = self.max as u16;
+                self.n = self.max >> 16;
+                self.tortoise = self.tail;
+            }
         }
+
+        Some(cons)
     }
 }
 
@@ -142,77 +243,31 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                if self.errsym.is_some() && self.tail.is_not_nil() {
+                if self.tail.is_not_nil() && self.errsym.is_some() {
                     wrong_type!(self.errsym.unwrap(), self.list)
                 }
                 None
             }
-            Some(tail_cons) => {
-                self.tail = tail_cons.cdr();
-                self.q = self.q.wrapping_sub(1);
-                if self.q != 0 {
-                    if self.tail == self.tortoise {
-                        return self.circular();
-                    }
-                } else {
-                    self.n = self.n.wrapping_sub(1);
-                    if self.n > 0 {
-                        if self.tail == self.tortoise {
-                            return self.circular();
-                        }
-                    } else {
-                        self.max <<= 1;
-                        self.q = self.max as u16;
-                        self.n = self.max >> 16;
-                        self.tortoise = self.tail;
-                    }
+            Some(cons) => {
+                self.tail = cons.cdr();
+                match self.circular_checks {
+                    LispConsCircularChecks::off => Some(cons),
+                    _ => self.check_circular(cons),
                 }
-                Some(tail_cons)
             }
         }
     }
 }
 
-pub struct TailsNoCircularCheckIter {
-    tail: LispObject,
-}
-
-impl TailsNoCircularCheckIter {
-    fn new(list: LispObject) -> Self {
-        Self { tail: list }
-    }
-
-    pub fn rest(&self) -> LispObject {
-        // This is kind of like Peekable but even when None is returned there
-        // might still be a valid item in self.tail.
-        self.tail
-    }
-}
-
-impl Iterator for TailsNoCircularCheckIter {
-    type Item = LispCons;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.tail.as_cons().and_then(|cons| {
-            self.tail = cons.cdr();
-            Some(cons)
-        })
-    }
-}
-
-pub struct CarIter {
-    tails: TailsIter,
-}
+pub struct CarIter(TailsIter);
 
 impl CarIter {
-    pub fn new(list: LispObject, errsym: Option<LispObject>) -> Self {
-        Self {
-            tails: TailsIter::new(list, errsym),
-        }
+    pub fn new(tails: TailsIter) -> Self {
+        Self(tails)
     }
 
     pub fn rest(&self) -> LispObject {
-        self.tails.tail
+        self.0.tail
     }
 }
 
@@ -220,31 +275,7 @@ impl Iterator for CarIter {
     type Item = LispObject;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.tails.next().map(|c| c.car())
-    }
-}
-
-pub struct CarNoCircularCheckIter {
-    tails: TailsNoCircularCheckIter,
-}
-
-impl CarNoCircularCheckIter {
-    pub fn new(list: LispObject) -> Self {
-        Self {
-            tails: TailsNoCircularCheckIter::new(list),
-        }
-    }
-
-    pub fn rest(&self) -> LispObject {
-        self.tails.tail
-    }
-}
-
-impl Iterator for CarNoCircularCheckIter {
-    type Item = LispObject;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.tails.next().map(|c| c.car())
+        self.0.next().map(|cons| cons.car())
     }
 }
 
@@ -311,6 +342,41 @@ impl LispCons {
     pub fn check_impure(self) {
         unsafe {
             CHECK_IMPURE(self.0, self._extract() as *mut c_void);
+        }
+    }
+
+    pub fn equal(
+        self,
+        other: LispCons,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool {
+        let (circular_checks, item_depth, item_ht) = if kind == equal_kind::EQUAL_NO_QUIT {
+            (LispConsCircularChecks::off, 0, Qnil)
+        } else {
+            (LispConsCircularChecks::on, depth + 1, ht)
+        };
+
+        let mut it1 = LispObject::from(self).iter_tails_v2(LispConsEndChecks::off, circular_checks);
+        let mut it2 =
+            LispObject::from(other).iter_tails_v2(LispConsEndChecks::off, circular_checks);
+        loop {
+            match (it1.next(), it2.next()) {
+                (Some(cons1), Some(cons2)) => {
+                    let (item1, tail1) = cons1.as_tuple();
+                    let (item2, tail2) = cons2.as_tuple();
+                    if !unsafe { internal_equal(item1, item2, kind, item_depth, item_ht) } {
+                        return false;
+                    } else if tail1.eq(tail2) {
+                        return true;
+                    }
+                    (None, None) => break,
+                    _ => return false,
+                }
+            }
+
+            unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
         }
     }
 }

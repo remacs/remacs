@@ -13,7 +13,7 @@ use std::slice;
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
-    lists::{list, CarIter},
+    lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks, TailsIter},
     remacs_sys,
     remacs_sys::{build_string, internal_equal, make_float},
     remacs_sys::{
@@ -468,15 +468,16 @@ impl LispObject {
 /// `$data` should be an `alist` and `$iter_item` type should implement `From<LispObject>`
 macro_rules! impl_alistval_iter {
     ($iter_name:ident, $iter_item:ty, $data: expr) => {
-        pub struct $iter_name {
-            tails: CarIter,
-        }
+        pub struct $iter_name(CarIter);
 
         impl $iter_name {
             pub fn new() -> Self {
-                Self {
-                    tails: CarIter::new($data, Some(Qlistp)),
-                }
+                $iter_name(CarIter::new(TailsIter::new(
+                    $data,
+                    Qlistp,
+                    LispConsEndChecks::on,
+                    LispConsCircularChecks::on,
+                )))
             }
         }
 
@@ -484,7 +485,7 @@ macro_rules! impl_alistval_iter {
             type Item = $iter_item;
 
             fn next(&mut self) -> Option<Self::Item> {
-                self.tails
+                self.0
                     .next()
                     .and_then(|o| o.as_cons())
                     .map(|p| p.cdr())
