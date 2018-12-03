@@ -729,8 +729,7 @@ If ARGS are provided, then pass MESSAGE through `format-message'."
 
 (defun minibuffer-completion-contents ()
   "Return the user input in a minibuffer before point as a string.
-In Emacs 22, that was what completion commands operated on.
-If the current buffer is not a minibuffer, return everything before point."
+In Emacs-22, that was what completion commands operated on."
   (declare (obsolete nil "24.4"))
   (buffer-substring (minibuffer-prompt-end) (point)))
 
@@ -1824,7 +1823,12 @@ variables.")
              ;; window, mark it as softly-dedicated, so bury-buffer in
              ;; minibuffer-hide-completions will know whether to
              ;; delete the window or not.
-             (display-buffer-mark-dedicated 'soft))
+             (display-buffer-mark-dedicated 'soft)
+             ;; Disable `pop-up-windows' temporarily to allow
+             ;; `display-buffer--maybe-pop-up-frame-or-window'
+             ;; in the display actions below to pop up a frame
+             ;; if `pop-up-frames' is non-nil, but not to pop up a window.
+             (pop-up-windows nil))
         (with-displayed-buffer-window
           "*Completions*"
           ;; This is a copy of `display-buffer-fallback-action'
@@ -1832,7 +1836,7 @@ variables.")
           ;; with `display-buffer-at-bottom'.
           `((display-buffer--maybe-same-window
              display-buffer-reuse-window
-             display-buffer--maybe-pop-up-frame
+             display-buffer--maybe-pop-up-frame-or-window
              ;; Use `display-buffer-below-selected' for inline completions,
              ;; but not in the minibuffer (e.g. in `eval-expression')
              ;; for which `display-buffer-at-bottom' is used.

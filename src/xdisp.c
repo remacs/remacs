@@ -34,41 +34,26 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    in xdisp.c is the only entry into the inner redisplay code.
 
    The following diagram shows how redisplay code is invoked.  As you
-   can see, Lisp calls redisplay and vice versa.
-
-   Under window systems like X, some portions of the redisplay code
-   are also called asynchronously, due to mouse movement or expose
-   events.  "Asynchronously" in this context means that any C function
-   which calls maybe_quit or process_pending_signals could enter
-   redisplay via expose_frame and/or note_mouse_highlight, if X events
-   were recently reported to Emacs about mouse movements or frame(s)
-   that were exposed.  And such redisplay could invoke the Lisp
-   interpreter, e.g. via the :eval forms in mode-line-format, and as
-   result the global state could change.  It is therefore very
-   important that C functions which might cause such "asynchronous"
-   redisplay, but cannot tolerate the results, use
-   block_input/unblock_input around code fragments which assume that
-   global Lisp state doesn't change.  If you don't follow this rule,
-   you will encounter bugs which are very hard to explain.  One place
-   that needs to take such precautions is timer_check, some of whose
-   code cannot tolerate changes in timer alists while it processes
-   timers.
+   can see, Lisp calls redisplay and vice versa.  Under window systems
+   like X, some portions of the redisplay code are also called
+   asynchronously during mouse movement or expose events.  It is very
+   important that these code parts do NOT use the C library (malloc,
+   free) because many C libraries under Unix are not reentrant.  They
+   may also NOT call functions of the Lisp interpreter which could
+   change the interpreter's state.  If you don't follow these rules,
+   you will encounter bugs which are very hard to explain.
 
    +--------------+   redisplay     +----------------+
    | Lisp machine |---------------->| Redisplay code |<--+
    +--------------+   (xdisp.c)     +----------------+   |
 	  ^				     |		 |
 	  +----------------------------------+           |
-	    Block input to prevent this when             |
-	    called asynchronously!			 |
-							 |
-		    note_mouse_highlight (asynchronous)	 |
-							 |
-				    X mouse events  -----+
-							 |
-			    expose_frame (asynchronous)	 |
-							 |
-				   X expose events  -----+
+	    Don't use this path when called		 |
+	    asynchronously!				 |
+                                                         |
+                           expose_window (asynchronous)  |
+                                                         |
+			           X expose events  -----+
 
    What does redisplay do?  Obviously, it has to figure out somehow what
    has been changed since the last time the display has been updated,
@@ -440,8 +425,10 @@ static Lisp_Object default_invis_vector[3];
 
 Lisp_Object echo_area_window;
 
-/* Stack of messages, which are pushed by push_message and popped and
-   displayed by restore_message.  */
+/* List of pairs (MESSAGE . MULTIBYTE).  The function save_message
+   pushes the current message and the value of
+   message_enable_multibyte on the stack, the function restore_message
+   pops the stack and displays MESSAGE again.  */
 
 static Lisp_Object Vmessage_stack;
 
@@ -23207,23 +23194,6 @@ display_mode_lines (struct window *w)
   Lisp_Object old_frame_selected_window = XFRAME (new_frame)->selected_window;
   int n = 0;
 
-  if (window_wants_mode_line (w))
-    {
-      Lisp_Object window;
-      Lisp_Object default_help
-	= buffer_local_value (Qmode_line_default_help_echo, w->contents);
-
-      /* Set up mode line help echo.  Do this before selecting w so it
-	 can reasonably tell whether a mouse click will select w.  */
-      XSETWINDOW (window, w);
-      if (FUNCTIONP (default_help))
-	wset_mode_line_help_echo (w, safe_call1 (default_help, window));
-      else if (STRINGP (default_help))
-	wset_mode_line_help_echo (w, default_help);
-      else
-	wset_mode_line_help_echo (w, Qnil);
-    }
-
   selected_frame = new_frame;
   /* FIXME: If we were to allow the mode-line's computation changing the buffer
      or window's point, then we'd need select_window_1 here as well.  */
@@ -23238,6 +23208,7 @@ display_mode_lines (struct window *w)
     {
       Lisp_Object window_mode_line_format
 	= window_parameter (w, Qmode_line_format);
+
       struct window *sel_w = XWINDOW (old_selected_window);
 
       /* Select mode line face based on the real selected window.  */
@@ -30742,6 +30713,9 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   struct window *w = XWINDOW (window);
   struct frame *f = XFRAME (w->frame);
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+#ifdef HAVE_WINDOW_SYSTEM
+  Display_Info *dpyinfo;
+#endif
   Cursor cursor = No_Cursor;
   Lisp_Object pointer = Qnil;
   int dx, dy, width, height;
@@ -30835,8 +30809,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
   /* Set the help text and mouse pointer.  If the mouse is on a part
      of the mode line without any text (e.g. past the right edge of
-     the mode line text), use that windows's mode line help echo if it
-     has been set.  */
+     the mode line text), use the default help text and pointer.  */
   if (STRINGP (string) || area == ON_MODE_LINE)
     {
       /* Arrange to display the help by setting the global variables
@@ -30853,13 +30826,21 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	      help_echo_object = string;
 	      help_echo_pos = charpos;
 	    }
-	  else if (area == ON_MODE_LINE
-		   && !NILP (w->mode_line_help_echo))
+	  else if (area == ON_MODE_LINE)
 	    {
-	      help_echo_string =  w->mode_line_help_echo;
-	      XSETWINDOW (help_echo_window, w);
-	      help_echo_object = Qnil;
-	      help_echo_pos = -1;
+	      Lisp_Object default_help
+		= buffer_local_value (Qmode_line_default_help_echo,
+				      w->contents);
+
+	      if (FUNCTIONP (default_help) || STRINGP (default_help))
+		{
+		  help_echo_string = (FUNCTIONP (default_help)
+				      ? safe_call1 (default_help, window)
+				      : default_help);
+		  XSETWINDOW (help_echo_window, w);
+		  help_echo_object = Qnil;
+		  help_echo_pos = -1;
+		}
 	    }
 	}
 
@@ -30871,6 +30852,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 			    || minibuf_level
 			    || NILP (Vresize_mini_windows));
 
+	  dpyinfo = FRAME_DISPLAY_INFO (f);
 	  if (STRINGP (string))
 	    {
 	      cursor = FRAME_X_OUTPUT (f)->nontext_cursor;
@@ -30880,28 +30862,25 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
 	      /* Change the mouse pointer according to what is under X/Y.  */
 	      if (NILP (pointer)
-		  && (area == ON_MODE_LINE || area == ON_HEADER_LINE))
+		  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE)))
 		{
 		  Lisp_Object map;
-
 		  map = Fget_text_property (pos, Qlocal_map, string);
 		  if (!KEYMAPP (map))
 		    map = Fget_text_property (pos, Qkeymap, string);
-		  if (!KEYMAPP (map) && draggable && area == ON_MODE_LINE)
-		    cursor = FRAME_X_OUTPUT (f)->vertical_drag_cursor;
+		  if (!KEYMAPP (map) && draggable)
+		    cursor = dpyinfo->vertical_scroll_bar_cursor;
 		}
 	    }
-	  else if (draggable && area == ON_MODE_LINE)
-	    cursor = FRAME_X_OUTPUT (f)->vertical_drag_cursor;
-	  else
-	    cursor = FRAME_X_OUTPUT (f)->nontext_cursor;
+	  else if (draggable)
+	    /* Default mode-line pointer.  */
+	    cursor = FRAME_DISPLAY_INFO (f)->vertical_scroll_bar_cursor;
 	}
 #endif
     }
 
   /* Change the mouse face according to what is under X/Y.  */
   bool mouse_face_shown = false;
-
   if (STRINGP (string))
     {
       mouse_face = Fget_text_property (pos, Qmouse_face, string);

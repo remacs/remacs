@@ -3,10 +3,6 @@
 Copyright (C) 1986, 1988, 1993-1994, 1996, 1999-2018 Free Software
 Foundation, Inc.
 
-Author: Jon Arnold
-	Roman Budzianowski
-	Robert Krawitz
-
 This file is part of GNU Emacs.
 
 GNU Emacs is free software: you can redistribute it and/or modify
@@ -23,6 +19,9 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* X pop-up deck-of-cards menu facility for GNU Emacs.
+ *
+ * Written by Jon Arnold and Roman Budzianowski
+ * Mods and rewrite by Robert Krawitz
  *
  */
 
@@ -141,6 +140,7 @@ x_menu_wait_for_event (void *data)
 }
 
 
+
 
 DEFUN ("x-menu-bar-open-internal", Fx_menu_bar_open_internal, Sx_menu_bar_open_internal, 0, 1, "i",
        doc: /* Start key navigation of the menu bar in FRAME.
@@ -1340,8 +1340,7 @@ popup_activated (void)
 /* The following is used by delayed window autoselection.  */
 
 DEFUN ("menu-or-popup-active-p", Fmenu_or_popup_active_p, Smenu_or_popup_active_p, 0, 0, 0,
-       doc: /* Return t if a menu or popup dialog is active.
-\(On MS Windows, this refers to the selected frame.)  */)
+       doc: /* Return t if a menu or popup dialog is active.  */)
   (void)
 {
   return (popup_activated ()) ? Qt : Qnil;

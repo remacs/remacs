@@ -37,8 +37,7 @@ extern char *BC;
 extern char *UP;
 
 #ifdef TERMINFO
-int tigetflag (const char *);
-char *tigetstr (const char *);
+char *tigetstr(const char *);
 #endif
 
 #endif /* EMACS_TPARAM_H */

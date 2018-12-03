@@ -1,4 +1,4 @@
-# serial 18  -*- Autoconf -*-
+# serial 17  -*- Autoconf -*-
 # Enable extensions on systems that normally disable them.
 
 # Copyright (C) 2003, 2006-2018 Free Software Foundation, Inc.
@@ -118,11 +118,6 @@ dnl configure.ac when using autoheader 2.62.
 #ifndef _XOPEN_SOURCE
 # undef _XOPEN_SOURCE
 #endif
-/* Enable X/Open compliant socket functions that do not require linking
-   with -lxnet on HP-UX 11.11.  */
-#ifndef _HPUX_ALT_XOPEN_SOCKET_API
-# undef _HPUX_ALT_XOPEN_SOCKET_API
-#endif
 /* Enable general extensions on Solaris.  */
 #ifndef __EXTENSIONS__
 # undef __EXTENSIONS__
@@ -168,7 +163,6 @@ dnl configure.ac when using autoheader 2.62.
           [ac_cv_should_define__xopen_source=yes])])])
   test $ac_cv_should_define__xopen_source = yes &&
     AC_DEFINE([_XOPEN_SOURCE], [500])
-  AC_DEFINE([_HPUX_ALT_XOPEN_SOCKET_API])
 ])# AC_USE_SYSTEM_EXTENSIONS
 
 # gl_USE_SYSTEM_EXTENSIONS

@@ -112,7 +112,7 @@ control operations.
 
   Some uncommon or intricate version control operations, such as
 altering repository settings, are not supported in VC@.  You should
-perform such tasks outside VC, e.g., via the command line.
+perform such tasks outside Emacs, e.g., via the command line.
 
   This section provides a general overview of version control, and
 describes the version control systems that VC supports.  You can skip
@@ -130,7 +130,7 @@ you want to use.
 @end menu
 
 @node Why Version Control?
-@subsubsection Understanding the Problems it Addresses
+@subsubsection Understanding the problems it addresses
 
   Version control systems provide you with three important
 capabilities:
@@ -147,10 +147,10 @@ detected and resolved.
 
 @item
 @dfn{History}: the ability to attach historical data to your data,
-such as explanatory comments about the intention behind each change.
-Even for a programmer working solo, change histories are an important
-aid to memory; for a multi-person project, they are a vitally
-important form of communication among developers.
+such as explanatory comments about the intention behind each change to
+it.  Even for a programmer working solo, change histories are an
+important aid to memory; for a multi-person project, they are a
+vitally important form of communication among developers.
 @end itemize
 
 @node Version Control Systems
@@ -272,7 +272,7 @@ or changeset-based; and centralized or decentralized.  VC handles all
 these modes of operation, but it cannot hide the differences.
 
 @node VCS Merging
-@subsubsection Merge-based vs Lock-based Version Control
+@subsubsection Merge-based vs lock-based Version Control
 
   A version control system typically has some mechanism to coordinate
 between users who want to change the same file.  There are two ways to
@@ -542,13 +542,13 @@ been changed in the repository, offer to update it.
   These rules also apply when you use RCS in its non-locking mode,
 except that changes are not automatically merged from the repository.
 Nothing informs you if another user has committed changes in the same
-file since you began editing it; when you commit your revision, that
-other user's changes are removed (however, they remain in the
-repository and are thus not irrevocably lost).  Therefore, you must
-verify that the current revision is unchanged before committing your
-changes.  In addition, locking is possible with RCS even in this mode:
-@kbd{C-x v v} with an unmodified file locks the file, just as it does
-with RCS in its normal locking mode (@pxref{VC With A Locking VCS}).
+file since you began editing it; when you commit your revision, his
+changes are removed (however, they remain in the repository and are
+thus not irrevocably lost).  Therefore, you must verify that the
+current revision is unchanged before committing your changes.  In
+addition, locking is possible with RCS even in this mode: @kbd{C-x v
+v} with an unmodified file locks the file, just as it does with RCS in
+its normal locking mode (@pxref{VC With A Locking VCS}).
 
 @node VC With A Locking VCS
 @subsubsection Basic Version Control with Locking
@@ -1899,7 +1899,7 @@ Move to the previous reference and display it in the other window
 @findex xref-show-location-at-point
 Display the reference on the current line in the other window
 (@code{xref-show-location-at-point}).
-@item @key{TAB}
+@item TAB
 @findex xref-quit-and-goto-xref
 Display the reference on the current line and bury the @file{*xref*}
 buffer (@code{xref-quit-and-goto-xref}).

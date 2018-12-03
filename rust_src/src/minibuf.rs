@@ -108,6 +108,19 @@ pub fn minibuffer_contents_no_properties() -> LispObject {
     unsafe { make_buffer_string(prompt_end, ThreadState::current_buffer().zv, false) }
 }
 
+/// Return the user input in a minibuffer before point as a string.
+/// That is what completion commands operate on.
+/// If the current buffer is not a minibuffer, return its entire contents.
+#[lisp_fn]
+pub fn minibuffer_completion_contents() -> LispObject {
+    let prompt_end = minibuffer_prompt_end() as isize;
+    let pt = ThreadState::current_buffer().pt;
+    if pt < prompt_end {
+        error!("Cannot do completion in the prompt");
+    }
+    unsafe { make_buffer_string(prompt_end, pt, true) }
+}
+
 /// Read a string from the minibuffer, prompting with string PROMPT.
 /// The optional second arg INITIAL-CONTENTS is an obsolete alternative to
 ///   DEFAULT-VALUE.  It normally should be nil in new code, except when

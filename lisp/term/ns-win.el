@@ -125,6 +125,7 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [?\s-h] 'ns-do-hide-emacs)
 (define-key global-map [?\s-H] 'ns-do-hide-others)
 (define-key global-map [?\M-\s-h] 'ns-do-hide-others)
+(define-key key-translation-map [?\M-\s-\u02D9] [?\M-\s-h])
 (define-key global-map [?\s-j] 'exchange-point-and-mark)
 (define-key global-map [?\s-k] 'kill-current-buffer)
 (define-key global-map [?\s-l] 'goto-line)
@@ -143,7 +144,8 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [?\s-z] 'undo)
 (define-key global-map [?\s-|] 'shell-command-on-region)
 (define-key global-map [s-kp-bar] 'shell-command-on-region)
-(define-key global-map [?\C-\s- ] 'ns-do-show-character-palette)
+(define-key global-map [C-s- ] 'ns-do-show-character-palette)
+(define-key key-translation-map [C-s-268632064] [C-s- ])
 ;; (as in Terminal.app)
 (define-key global-map [s-right] 'ns-next-frame)
 (define-key global-map [s-left] 'ns-prev-frame)
@@ -437,7 +439,14 @@ Lines are highlighted according to `ns-input-line'."
 ;;;; File handling.
 
 (defun x-file-dialog (prompt dir default_filename mustmatch only_dir_p)
-"SKIP: real doc in xfns.c."
+"Read file name, prompting with PROMPT in directory DIR.
+Use a file selection dialog.  Select DEFAULT-FILENAME in the dialog's file
+selection box, if specified.  If MUSTMATCH is non-nil, the returned file
+or directory must exist.
+
+This function is only defined on NS, MS Windows, and X Windows with the
+Motif or Gtk toolkits.  With the Motif toolkit, ONLY-DIR-P is ignored.
+Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories."
   (ns-read-file-name prompt dir mustmatch default_filename only_dir_p))
 
 (defun ns-open-file-using-panel ()
@@ -800,8 +809,8 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
 
 ;; Set some options to be as Nextstep-like as possible.
-(setq frame-title-format "%b"
-      icon-title-format "%b")
+(setq frame-title-format t
+      icon-title-format t)
 
 
 (defvar ns-initialized nil
@@ -833,7 +842,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
             (format "Creation of the standard fontset failed: %s" err)
             :error)))
 
-  (x-open-connection (or (system-name) "") x-command-line-resources t)
+  (x-open-connection (system-name) x-command-line-resources t)
 
   ;; Add GNUstep menu items Services, Hide and Quit.  Rename Help to Info
   ;; and put it first (i.e. omit from menu-bar-final-items.

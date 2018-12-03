@@ -37,7 +37,6 @@ GNUstep port and post-20 update by Adrian Robert (arobert@cogsci.ucsd.edu)
 #include <time.h>
 #include <signal.h>
 #include <unistd.h>
-#include <stdbool.h>
 
 #include <c-ctype.h>
 #include <c-strcase.h>
@@ -352,56 +351,31 @@ static CGPoint menu_mouse_point;
 #define NSRightCommandKeyMask   (0x000010 | NSEventModifierFlagCommand)
 #define NSLeftAlternateKeyMask  (0x000020 | NSEventModifierFlagOption)
 #define NSRightAlternateKeyMask (0x000040 | NSEventModifierFlagOption)
-
-static unsigned int
-ev_modifiers_helper (unsigned int flags, unsigned int left_mask,
-                     unsigned int right_mask, unsigned int either_mask,
-                     Lisp_Object left_modifier, Lisp_Object right_modifier)
-{
-  unsigned int modifiers = 0;
-
-  if (flags & either_mask)
-    {
-      BOOL left_key = (flags & left_mask) == left_mask;
-      BOOL right_key = (flags & right_mask) == right_mask
-        && ! EQ (right_modifier, Qleft);
-
-      if (right_key)
-        modifiers |= parse_solitary_modifier (right_modifier);
-
-      /* GNUstep (and possibly macOS in certain circumstances) doesn't
-         differentiate between the left and right keys, so if we can't
-         identify which key it is, we use the left key setting.  */
-      if (left_key || ! right_key)
-        modifiers |= parse_solitary_modifier (left_modifier);
-    }
-
-  return modifiers;
-}
-
-#define EV_MODIFIERS2(flags)                                            \
-  (((flags & NSEventModifierFlagHelp) ?                                 \
-    hyper_modifier : 0)                                                 \
-   | ((flags & NSEventModifierFlagShift) ?                              \
-      shift_modifier : 0)                                               \
-   | ((flags & NS_FUNCTION_KEY_MASK) ?                                  \
-      parse_solitary_modifier (ns_function_modifier) : 0)               \
-   | ev_modifiers_helper (flags, NSLeftControlKeyMask,                  \
-                          NSRightControlKeyMask,                        \
-                          NSEventModifierFlagControl,                   \
-                          ns_control_modifier,                          \
-                          ns_right_control_modifier)                    \
-   | ev_modifiers_helper (flags, NSLeftCommandKeyMask,                  \
-                          NSRightCommandKeyMask,                        \
-                          NSEventModifierFlagCommand,                   \
-                          ns_command_modifier,                          \
-                          ns_right_command_modifier)                    \
-   | ev_modifiers_helper (flags, NSLeftAlternateKeyMask,                \
-                          NSRightAlternateKeyMask,                      \
-                          NSEventModifierFlagOption,                    \
-                          ns_alternate_modifier,                        \
-                          ns_right_alternate_modifier))
-
+#define EV_MODIFIERS2(flags)                          \
+    (((flags & NSEventModifierFlagHelp) ?           \
+           hyper_modifier : 0)                        \
+     | (!EQ (ns_right_alternate_modifier, Qleft) && \
+        ((flags & NSRightAlternateKeyMask) \
+         == NSRightAlternateKeyMask) ? \
+           parse_solitary_modifier (ns_right_alternate_modifier) : 0) \
+     | ((flags & NSEventModifierFlagOption) ?                 \
+           parse_solitary_modifier (ns_alternate_modifier) : 0)   \
+     | ((flags & NSEventModifierFlagShift) ?     \
+           shift_modifier : 0)                        \
+     | (!EQ (ns_right_control_modifier, Qleft) && \
+        ((flags & NSRightControlKeyMask) \
+         == NSRightControlKeyMask) ? \
+           parse_solitary_modifier (ns_right_control_modifier) : 0) \
+     | ((flags & NSEventModifierFlagControl) ?      \
+           parse_solitary_modifier (ns_control_modifier) : 0)     \
+     | ((flags & NS_FUNCTION_KEY_MASK) ?  \
+           parse_solitary_modifier (ns_function_modifier) : 0)    \
+     | (!EQ (ns_right_command_modifier, Qleft) && \
+        ((flags & NSRightCommandKeyMask) \
+         == NSRightCommandKeyMask) ? \
+           parse_solitary_modifier (ns_right_command_modifier) : 0) \
+     | ((flags & NSEventModifierFlagCommand) ?      \
+           parse_solitary_modifier (ns_command_modifier):0))
 #define EV_MODIFIERS(e) EV_MODIFIERS2 ([e modifierFlags])
 
 #define EV_UDMODIFIERS(e)                                      \
@@ -469,37 +443,10 @@ static void ns_judge_scroll_bars (struct frame *f);
    ========================================================================== */
 
 void
-ns_set_represented_filename (struct frame *f)
+ns_set_represented_filename (NSString *fstr, struct frame *f)
 {
-  Lisp_Object filename, encoded_filename;
-  Lisp_Object buf = XWINDOW (f->selected_window)->contents;
-  NSAutoreleasePool *pool;
-  NSString *fstr;
-
-  NSTRACE ("ns_set_represented_filename");
-
-  if (f->explicit_name || ! NILP (f->title))
-    return;
-
-  block_input ();
-  pool = [[NSAutoreleasePool alloc] init];
-  filename = BVAR (XBUFFER (buf), filename);
-
-  if (! NILP (filename))
-    {
-      encoded_filename = ENCODE_UTF_8 (filename);
-
-      fstr = [NSString stringWithUTF8String: SSDATA (encoded_filename)];
-      if (fstr == nil) fstr = @"";
-    }
-  else
-    fstr = @"";
-
   represented_filename = [fstr retain];
   represented_frame = f;
-
-  [pool release];
-  unblock_input ();
 }
 
 void
@@ -5997,6 +5944,7 @@ not_in_argv (NSString *arg)
 @end  /* EmacsApp */
 
 
+
 /* ==========================================================================
 
     EmacsView implementation
@@ -6102,6 +6050,7 @@ not_in_argv (NSString *arg)
   int code;
   unsigned fnKeysym = 0;
   static NSMutableArray *nsEvArray;
+  int left_is_none;
   unsigned int flags = [theEvent modifierFlags];
 
   NSTRACE ("[EmacsView keyDown:]");
@@ -6143,8 +6092,10 @@ not_in_argv (NSString *arg)
 
   if (!processingCompose)
     {
-      /* FIXME: What should happen for key sequences with more than
-         one character?  */
+      /* When using screen sharing, no left or right information is sent,
+         so use Left key in those cases.  */
+      int is_left_key, is_right_key;
+
       code = ([[theEvent charactersIgnoringModifiers] length] == 0) ?
         0 : [[theEvent charactersIgnoringModifiers] characterAtIndex: 0];
 
@@ -6182,55 +6133,140 @@ not_in_argv (NSString *arg)
             code = fnKeysym;
         }
 
-      /* The ⌘ and ⌥ modifiers can be either shift-like (for alternate
-         character input) or control-like (as command prefix).  If we
-         have only shift-like modifiers, then we should use the
-         translated characters (returned by the characters method); if
-         we have only control-like modifiers, then we should use the
-         untranslated characters (returned by the
-         charactersIgnoringModifiers method).  An annoyance happens if
-         we have both shift-like and control-like modifiers because
-         the NSEvent API doesn’t let us ignore only some modifiers.
-         Therefore we ignore all shift-like modifiers in that
-         case.  */
+      /* are there modifiers? */
+      emacs_event->modifiers = 0;
 
-      /* EV_MODIFIERS2 uses parse_solitary_modifier on all known
-         modifier keys, which returns 0 for shift-like modifiers.
-         Therefore its return value is the set of control-like
-         modifiers.  */
-      emacs_event->modifiers = EV_MODIFIERS2 (flags);
+      if (flags & NSEventModifierFlagHelp)
+          emacs_event->modifiers |= hyper_modifier;
 
-      /* Function keys (such as the F-keys, arrow keys, etc.) set
-         modifiers as though the fn key has been pressed when it
-         hasn't.  Also some combinations of fn and a function key
-         return a different key than was pressed (e.g. fn-<left> gives
-         <home>).  We need to unset the fn modifier in these cases.
-         FIXME: Can we avoid setting it in the first place.  */
-      if (fnKeysym && (flags & NS_FUNCTION_KEY_MASK))
-        emacs_event->modifiers ^= parse_solitary_modifier (ns_function_modifier);
+      if (flags & NSEventModifierFlagShift)
+        emacs_event->modifiers |= shift_modifier;
 
-      if (NS_KEYLOG)
-        fprintf (stderr, "keyDown: code =%x\tfnKey =%x\tflags = %x\tmods = %x\n",
-                 code, fnKeysym, flags, emacs_event->modifiers);
+      is_right_key = (flags & NSRightCommandKeyMask) == NSRightCommandKeyMask;
+      is_left_key = (flags & NSLeftCommandKeyMask) == NSLeftCommandKeyMask
+        || (! is_right_key && (flags & NSEventModifierFlagCommand) == NSEventModifierFlagCommand);
 
-      /* If it was a function key or had control-like modifiers, pass
-         it directly to Emacs.  */
+      if (is_right_key)
+        emacs_event->modifiers |= parse_solitary_modifier
+          (EQ (ns_right_command_modifier, Qleft)
+           ? ns_command_modifier
+           : ns_right_command_modifier);
+
+      if (is_left_key)
+        {
+          emacs_event->modifiers |= parse_solitary_modifier
+            (ns_command_modifier);
+
+          /* if super (default), take input manager's word so things like
+             dvorak / qwerty layout work */
+          if (EQ (ns_command_modifier, Qsuper)
+              && !fnKeysym
+              && [[theEvent characters] length] != 0)
+            {
+              /* XXX: the code we get will be unshifted, so if we have
+                 a shift modifier, must convert ourselves */
+              if (!(flags & NSEventModifierFlagShift))
+                code = [[theEvent characters] characterAtIndex: 0];
+#if 0
+              /* this is ugly and also requires linking w/Carbon framework
+                 (for LMGetKbdType) so for now leave this rare (?) case
+                 undealt with.. in future look into CGEvent methods */
+              else
+                {
+                  long smv = GetScriptManagerVariable (smKeyScript);
+                  Handle uchrHandle = GetResource
+                    ('uchr', GetScriptVariable (smv, smScriptKeys));
+                  UInt32 dummy = 0;
+                  UCKeyTranslate ((UCKeyboardLayout *) *uchrHandle,
+                                 [[theEvent characters] characterAtIndex: 0],
+                                 kUCKeyActionDisplay,
+                                 (flags & ~NSEventModifierFlagCommand) >> 8,
+                                 LMGetKbdType (), kUCKeyTranslateNoDeadKeysMask,
+                                 &dummy, 1, &dummy, &code);
+                  code &= 0xFF;
+                }
+#endif
+            }
+        }
+
+      is_right_key = (flags & NSRightControlKeyMask) == NSRightControlKeyMask;
+      is_left_key = (flags & NSLeftControlKeyMask) == NSLeftControlKeyMask
+        || (! is_right_key && (flags & NSEventModifierFlagControl) == NSEventModifierFlagControl);
+
+      if (is_right_key)
+          emacs_event->modifiers |= parse_solitary_modifier
+              (EQ (ns_right_control_modifier, Qleft)
+               ? ns_control_modifier
+               : ns_right_control_modifier);
+
+      if (is_left_key)
+        emacs_event->modifiers |= parse_solitary_modifier
+          (ns_control_modifier);
+
+      if (flags & NS_FUNCTION_KEY_MASK && !fnKeysym)
+          emacs_event->modifiers |=
+            parse_solitary_modifier (ns_function_modifier);
+
+      left_is_none = NILP (ns_alternate_modifier)
+        || EQ (ns_alternate_modifier, Qnone);
+
+      is_right_key = (flags & NSRightAlternateKeyMask)
+        == NSRightAlternateKeyMask;
+      is_left_key = (flags & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask
+        || (! is_right_key
+            && (flags & NSEventModifierFlagOption) == NSEventModifierFlagOption);
+
+      if (is_right_key)
+        {
+          if ((NILP (ns_right_alternate_modifier)
+               || EQ (ns_right_alternate_modifier, Qnone)
+               || (EQ (ns_right_alternate_modifier, Qleft) && left_is_none))
+              && !fnKeysym)
+            {   /* accept pre-interp alt comb */
+              if ([[theEvent characters] length] > 0)
+                code = [[theEvent characters] characterAtIndex: 0];
+              /*HACK: clear lone shift modifier to stop next if from firing */
+              if (emacs_event->modifiers == shift_modifier)
+                emacs_event->modifiers = 0;
+            }
+          else
+            emacs_event->modifiers |= parse_solitary_modifier
+              (EQ (ns_right_alternate_modifier, Qleft)
+               ? ns_alternate_modifier
+               : ns_right_alternate_modifier);
+        }
+
+      if (is_left_key) /* default = meta */
+        {
+          if (left_is_none && !fnKeysym)
+            {   /* accept pre-interp alt comb */
+              if ([[theEvent characters] length] > 0)
+                code = [[theEvent characters] characterAtIndex: 0];
+              /*HACK: clear lone shift modifier to stop next if from firing */
+              if (emacs_event->modifiers == shift_modifier)
+                emacs_event->modifiers = 0;
+            }
+          else
+              emacs_event->modifiers |=
+                parse_solitary_modifier (ns_alternate_modifier);
+        }
+
+  if (NS_KEYLOG)
+    fprintf (stderr, "keyDown: code =%x\tfnKey =%x\tflags = %x\tmods = %x\n",
+             (unsigned) code, fnKeysym, flags, emacs_event->modifiers);
+
+      /* if it was a function key or had modifiers, pass it directly to emacs */
       if (fnKeysym || (emacs_event->modifiers
                        && (emacs_event->modifiers != shift_modifier)
                        && [[theEvent charactersIgnoringModifiers] length] > 0))
 /*[[theEvent characters] length] */
         {
           emacs_event->kind = NON_ASCII_KEYSTROKE_EVENT;
-          /* FIXME: What are the next four lines supposed to do?  */
           if (code < 0x20)
             code |= (1<<28)|(3<<16);
           else if (code == 0x7f)
             code |= (1<<28)|(3<<16);
           else if (!fnKeysym)
-            /* FIXME: This seems wrong, characters in the range
-               [0x80, 0xFF] are not ASCII characters.  Can’t we just
-               use MULTIBYTE_CHAR_KEYSTROKE_EVENT here for all kinds
-               of characters?  */
             emacs_event->kind = code > 0xFF
               ? MULTIBYTE_CHAR_KEYSTROKE_EVENT : ASCII_KEYSTROKE_EVENT;
 
@@ -6241,32 +6277,11 @@ not_in_argv (NSString *arg)
         }
     }
 
-  /* If we get here, a non-function key without control-like modifiers
-     was hit.  Use interpretKeyEvents, which in turn will call
-     insertText; see
-     https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/EventOverview/HandlingKeyEvents/HandlingKeyEvents.html.  */
 
   if (NS_KEYLOG && !processingCompose)
     fprintf (stderr, "keyDown: Begin compose sequence.\n");
 
-  /* FIXME: interpretKeyEvents doesn’t seem to send insertText if ⌘ is
-     used as shift-like modifier, at least on El Capitan.  Mask it
-     out.  This shouldn’t be needed though; we should figure out what
-     the correct way of handling ⌘ is.  */
-  if ([theEvent modifierFlags] & NSEventModifierFlagCommand)
-    theEvent = [NSEvent keyEventWithType:[theEvent type]
-                                location:[theEvent locationInWindow]
-                           modifierFlags:[theEvent modifierFlags] & ~NSEventModifierFlagCommand
-                               timestamp:[theEvent timestamp]
-                            windowNumber:[theEvent windowNumber]
-                                 context:nil
-                              characters:[theEvent characters]
-                        charactersIgnoringModifiers:[theEvent charactersIgnoringModifiers]
-                               isARepeat:[theEvent isARepeat]
-                                 keyCode:[theEvent keyCode]];
-
   processingCompose = YES;
-  /* FIXME: Use [NSArray arrayWithObject:theEvent]?  */
   [nsEvArray addObject: theEvent];
   [self interpretKeyEvents: nsEvArray];
   [nsEvArray removeObject: theEvent];
@@ -9380,17 +9395,27 @@ This variable is ignored on macOS < 10.7 and GNUstep.  Default is t.  */);
 
   /* TODO: move to common code */
   DEFVAR_LISP ("x-toolkit-scroll-bars", Vx_toolkit_scroll_bars,
-	       doc: /* SKIP: real doc in xterm.c.  */);
+	       doc: /* Which toolkit scroll bars Emacs uses, if any.
+A value of nil means Emacs doesn't use toolkit scroll bars.
+With the X Window system, the value is a symbol describing the
+X toolkit.  Possible values are: gtk, motif, xaw, or xaw3d.
+With MS Windows or Nextstep, the value is t.  */);
   Vx_toolkit_scroll_bars = Qt;
 
   DEFVAR_BOOL ("x-use-underline-position-properties",
 	       x_use_underline_position_properties,
-     doc: /* SKIP: real doc in xterm.c.  */);
+     doc: /*Non-nil means make use of UNDERLINE_POSITION font properties.
+A value of nil means ignore them.  If you encounter fonts with bogus
+UNDERLINE_POSITION font properties, for example 7x13 on XFree prior
+to 4.1, set this to nil. */);
   x_use_underline_position_properties = 0;
 
   DEFVAR_BOOL ("x-underline-at-descent-line",
 	       x_underline_at_descent_line,
-     doc: /* SKIP: real doc in xterm.c.  */);
+     doc: /* Non-nil means to draw the underline at the same place as the descent line.
+A value of nil means to draw the underline according to the value of the
+variable `x-use-underline-position-properties', which is usually at the
+baseline level.  The default value is nil.  */);
   x_underline_at_descent_line = 0;
 
   /* Tell Emacs about this window system.  */

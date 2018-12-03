@@ -589,8 +589,8 @@ variable by the command `isearch-toggle-lax-whitespace'.")
 (defvar isearch-cmds nil
   "Stack of search status elements.
 Each element is an `isearch--state' struct where the slots are
- [STRING MESSAGE POINT SUCCESS FORWARD OTHER-END WORD/REGEXP-FUNCTION
-  ERROR WRAPPED BARRIER CASE-FOLD-SEARCH POP-FUN]")
+ [STRING MESSAGE POINT SUCCESS FORWARD OTHER-END WORD
+  ERROR WRAPPED BARRIER CASE-FOLD-SEARCH]")
 
 (defvar isearch-string "")  ; The current search string.
 (defvar isearch-message "") ; text-char-description version of isearch-string
@@ -1853,11 +1853,11 @@ replacements from Isearch is `M-s w ... M-%'."
       (concat "Query replace"
               (isearch--describe-regexp-mode (or delimited isearch-regexp-function) t)
 	      (if backward " backward" "")
-	      (if (use-region-p) " in region" ""))
+	      (if (and transient-mark-mode mark-active) " in region" ""))
       isearch-regexp)
      t isearch-regexp (or delimited isearch-regexp-function) nil nil
-     (if (use-region-p) (region-beginning))
-     (if (use-region-p) (region-end))
+     (if (and transient-mark-mode mark-active) (region-beginning))
+     (if (and transient-mark-mode mark-active) (region-end))
      backward))
   (and isearch-recursive-edit (exit-recursive-edit)))
 
@@ -1920,8 +1920,7 @@ characters in that string."
 			   'isearch-regexp-function-descr
                            (isearch--describe-regexp-mode isearch-regexp-function))
 	     regexp)
-	   nlines
-	   (if (use-region-p) (region-bounds)))))
+	   nlines)))
 
 (declare-function hi-lock-read-face-name "hi-lock" ())
 
