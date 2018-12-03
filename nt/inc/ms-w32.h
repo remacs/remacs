@@ -311,7 +311,7 @@ extern int execve (const char *, char * const *, char * const *);
 #else
 extern intptr_t execve (const char *, char * const *, char * const *);
 #endif
-#define fdatasync _commit
+#define tcdrain _commit
 #define fdopen	  _fdopen
 #define fsync	  _commit
 #define ftruncate _chsize

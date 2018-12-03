@@ -1745,10 +1745,8 @@ static void
 flush_stdout (HSOCKET emacs_socket)
 {
   fflush (stdout);
-#ifndef DOS_NT
   while (tcdrain (STDOUT_FILENO) != 0 && errno == EINTR)
     act_on_signals (emacs_socket);
-#endif
 }
 
 int
