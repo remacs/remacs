@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2018 Free Software Foundation, Inc.
 
-timestamp='2018-08-29'
+timestamp='2018-11-28'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -1161,6 +1161,7 @@ case $cpu-$vendor in
 			| alpha64 | alpha64ev[4-8] | alpha64ev56 | alpha64ev6[78] \
 			| alphapca5[67] | alpha64pca5[67] \
 			| am33_2.0 \
+			| amdgcn \
 			| arc | arceb \
 			| arm  | arm[lb]e | arme[lb] | armv* \
 			| avr | avr32 \
@@ -1360,7 +1361,7 @@ case $os in
 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
-	     | midnightbsd*)
+	     | midnightbsd* | amdhsa* | unleashed*)
 	# Remember, each alternative MUST END IN *, to match a version number.
 		;;
 	qnx*)

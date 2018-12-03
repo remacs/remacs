@@ -2,7 +2,7 @@
 # Attempt to guess a canonical system name.
 #   Copyright 1992-2018 Free Software Foundation, Inc.
 
-timestamp='2018-08-29'
+timestamp='2018-11-28'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -1423,6 +1423,9 @@ EOF
 	exit ;;
     amd64:Isilon\ OneFS:*:*)
 	echo x86_64-unknown-onefs
+	exit ;;
+    *:Unleashed:*:*)
+	echo "$UNAME_MACHINE"-unknown-unleashed"$UNAME_RELEASE"
 	exit ;;
 esac
 

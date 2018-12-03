@@ -68,7 +68,7 @@ __memrchr (void const *s, int c_in, size_t n)
     if (*--char_ptr == c)
       return (void *) char_ptr;
 
-  longword_ptr = (const longword *) char_ptr;
+  longword_ptr = (const void *) char_ptr;
 
   /* All these elucidatory comments refer to 4-byte longwords,
      but the theory applies equally well to any size longwords.  */

@@ -650,6 +650,9 @@ AC_DEFUN([gl_INIT],
   if test $NEED_LOCALTIME_BUFFER = 1; then
     func_gl_gnulib_m4code_2049e887c7e5308faad27b3f894bb8c9
   fi
+  if test $REPLACE_MKTIME = 1; then
+    func_gl_gnulib_m4code_21ee726a3540c09237a8e70c0baf7467
+  fi
   if test $HAVE_READLINKAT = 0; then
     func_gl_gnulib_m4code_260941c0e5dc67ec9e87d1fb321c300b
   fi
