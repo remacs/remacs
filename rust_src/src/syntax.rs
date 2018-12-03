@@ -24,6 +24,16 @@ pub fn syntax_table() -> LispObject {
     ThreadState::current_buffer().syntax_table_
 }
 
+/// Return t if OBJECT is a syntax table.
+/// Currently, any char-table counts as a syntax table.
+#[lisp_fn]
+pub fn syntax_table_p(object: LispObject) -> bool {
+    object.is_char_table()
+        && object
+            .as_char_table()
+            .map_or(false, |v| v.purpose == Qsyntax_table)
+}
+
 /// Scan from character number FROM by COUNT lists.
 /// Scan forward if COUNT is positive, backward if COUNT is negative.
 /// Return the character number of the position thus found.
