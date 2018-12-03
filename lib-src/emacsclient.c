@@ -1423,7 +1423,7 @@ set_local_socket (char const *server_name)
 
   if (sock_status == 0)
     {
-      HSOCKET s = cloexec_socket (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+      HSOCKET s = cloexec_socket (AF_UNIX, SOCK_STREAM, 0);
       if (s < 0)
 	{
 	  message (true, "%s: socket: %s\n", progname, strerror (errno));
