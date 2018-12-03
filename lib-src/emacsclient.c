@@ -50,6 +50,7 @@ char *w32_getenv (const char *);
 # include "syswait.h"
 
 # include <arpa/inet.h>
+# include <fcntl.h>
 # include <netinet/in.h>
 # include <sys/socket.h>
 # include <sys/un.h>
@@ -976,6 +977,24 @@ get_server_config (const char *config_file, struct sockaddr_in *server,
   return true;
 }
 
+/* Like socket (DOMAIN, TYPE, PROTOCOL), except arrange for the
+   resulting file descriptor to be close-on-exec.  */
+
+static HSOCKET
+cloexec_socket (int domain, int type, int protocol)
+{
+#ifdef SOCK_CLOEXEC
+  return socket (domain, type | SOCK_CLOEXEC, protocol);
+#else
+  HSOCKET s = socket (domain, type, protocol);
+# ifndef WINDOWSNT
+  if (0 <= s)
+    fcntl (s, F_SETFD, FD_CLOEXEC);
+# endif
+  return s;
+#endif
+}
+
 static HSOCKET
 set_tcp_socket (const char *local_server_file)
 {
@@ -994,7 +1013,7 @@ set_tcp_socket (const char *local_server_file)
 	     progname, inet_ntoa (server.in.sin_addr));
 
   /* Open up an AF_INET socket.  */
-  HSOCKET s = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  HSOCKET s = cloexec_socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (s < 0)
     {
       /* Since we have an alternate to try out, this is not an error
@@ -1404,7 +1423,7 @@ set_local_socket (char const *server_name)
 
   if (sock_status == 0)
     {
-      HSOCKET s = socket (AF_UNIX, SOCK_STREAM, 0);
+      HSOCKET s = cloexec_socket (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
       if (s < 0)
 	{
 	  message (true, "%s: socket: %s\n", progname, strerror (errno));
