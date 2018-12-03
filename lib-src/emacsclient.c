@@ -1079,20 +1079,21 @@ find_tty (const char **tty_type, const char **tty_name, bool noabort)
 
 #ifdef SOCKETS_IN_FILE_SYSTEM
 
-/* Three possibilities:
+/* Return the file status of NAME, ordinarily a socket.
+   It should be owned by UID.  Return one of the following:
   >0 - 'stat' failed with this errno value
   -1 - isn't owned by us
    0 - success: none of the above */
 
 static int
-socket_status (const char *name)
+socket_status (const char *name, uid_t uid)
 {
   struct stat statbfr;
 
   if (stat (name, &statbfr) != 0)
     return errno;
 
-  if (statbfr.st_uid != geteuid ())
+  if (statbfr.st_uid != uid)
     return -1;
 
   return 0;
@@ -1316,18 +1317,11 @@ set_local_socket (char const *server_name)
     struct sockaddr_un un;
     struct sockaddr sa;
   } server = {{ .sun_family = AF_UNIX }};
-
-  HSOCKET s = socket (AF_UNIX, SOCK_STREAM, 0);
-  if (s < 0)
-    {
-      message (true, "%s: socket: %s\n", progname, strerror (errno));
-      return INVALID_SOCKET;
-    }
-
   char *sockname = server.un.sun_path;
   enum { socknamesize = sizeof server.un.sun_path };
   int tmpdirlen = -1;
   int socknamelen = -1;
+  uid_t uid = geteuid ();
 
   if (strchr (server_name, '/')
       || (ISSLASH ('\\') && strchr (server_name, '\\')))
@@ -1359,7 +1353,7 @@ set_local_socket (char const *server_name)
 		tmpdirlen = snprintf (sockname, socknamesize, "/tmp");
 	    }
 	  socknamelen = local_sockname (sockname, socknamesize, tmpdirlen,
-					geteuid (), server_name);
+					uid, server_name);
 	}
     }
 
@@ -1370,7 +1364,7 @@ set_local_socket (char const *server_name)
     }
 
   /* See if the socket exists, and if it's owned by us. */
-  int sock_status = socket_status (sockname);
+  int sock_status = socket_status (sockname, uid);
   if (sock_status)
     {
       /* Failing that, see if LOGNAME or USER exist and differ from
@@ -1387,7 +1381,7 @@ set_local_socket (char const *server_name)
 	{
 	  struct passwd *pw = getpwnam (user_name);
 
-	  if (pw && (pw->pw_uid != geteuid ()))
+	  if (pw && pw->pw_uid != uid)
 	    {
 	      /* We're running under su, apparently. */
 	      socknamelen = local_sockname (sockname, socknamesize, tmpdirlen,
@@ -1399,39 +1393,49 @@ set_local_socket (char const *server_name)
 		  exit (EXIT_FAILURE);
 		}
 
-	      sock_status = socket_status (sockname);
+	      sock_status = socket_status (sockname, uid);
 	    }
 	}
     }
 
-  switch (sock_status)
+  if (sock_status == 0)
     {
-    case -1:
-      /* There's a socket, but it isn't owned by us.  */
-      message (true, "%s: Invalid socket owner\n", progname);
-      break;
+      HSOCKET s = socket (AF_UNIX, SOCK_STREAM, 0);
+      if (s < 0)
+	{
+	  message (true, "%s: socket: %s\n", progname, strerror (errno));
+	  return INVALID_SOCKET;
+	}
+      if (connect (s, &server.sa, sizeof server.un) != 0)
+	{
+	  message (true, "%s: connect: %s\n", progname, strerror (errno));
+	  CLOSE_SOCKET (s);
+	  return INVALID_SOCKET;
+	}
 
-    case 0:
-      if (connect (s, &server.sa, sizeof server.un) == 0)
+      struct stat connect_stat;
+      if (fstat (s, &connect_stat) != 0)
+	sock_status = errno;
+      else if (connect_stat.st_uid == uid)
 	return s;
-      message (true, "%s: connect: %s\n", progname, strerror (errno));
-      break;
-
-    default:
-      /* 'stat' failed.  */
-      if (sock_status == ENOENT)
-	message (true,
-		 ("%s: can't find socket; have you started the server?\n"
-		  "%s: To start the server in Emacs,"
-		  " type \"M-x server-start\".\n"),
-		 progname, progname);
       else
-	message (true, "%s: can't stat %s: %s\n",
-		 progname, sockname, strerror (sock_status));
-      break;
+	sock_status = -1;
+
+      CLOSE_SOCKET (s);
     }
 
-  CLOSE_SOCKET (s);
+  if (sock_status < 0)
+    message (true, "%s: Invalid socket owner\n", progname);
+  else if (sock_status == ENOENT)
+    message (true,
+	     ("%s: can't find socket; have you started the server?\n"
+	      "%s: To start the server in Emacs,"
+	      " type \"M-x server-start\".\n"),
+	     progname, progname);
+  else
+    message (true, "%s: can't stat %s: %s\n",
+	     progname, sockname, strerror (sock_status));
+
   return INVALID_SOCKET;
 }
 #endif /* SOCKETS_IN_FILE_SYSTEM */
