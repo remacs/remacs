@@ -92,7 +92,6 @@
 #  faccessat \
 #  fcntl \
 #  fcntl-h \
-#  fdatasync \
 #  fdopendir \
 #  filemode \
 #  filevercmp \
@@ -731,7 +730,6 @@ LIB_ACL = @LIB_ACL@
 LIB_CLOCK_GETTIME = @LIB_CLOCK_GETTIME@
 LIB_EACCESS = @LIB_EACCESS@
 LIB_EXECINFO = @LIB_EXECINFO@
-LIB_FDATASYNC = @LIB_FDATASYNC@
 LIB_MATH = @LIB_MATH@
 LIB_PTHREAD = @LIB_PTHREAD@
 LIB_PTHREAD_SIGMASK = @LIB_PTHREAD_SIGMASK@
@@ -1585,17 +1583,6 @@ EXTRA_DIST += fcntl.in.h
 
 endif
 ## end   gnulib module fcntl-h
-
-## begin gnulib module fdatasync
-ifeq (,$(OMIT_GNULIB_MODULE_fdatasync))
-
-
-EXTRA_DIST += fdatasync.c
-
-EXTRA_libgnu_a_SOURCES += fdatasync.c
-
-endif
-## end   gnulib module fdatasync
 
 ## begin gnulib module fdopendir
 ifeq (,$(OMIT_GNULIB_MODULE_fdopendir))

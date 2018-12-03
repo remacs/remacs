@@ -1519,19 +1519,19 @@ reset_sys_modes (struct tty_display_info *tty_out)
   if (tty_out->terminal->reset_terminal_modes_hook)
     tty_out->terminal->reset_terminal_modes_hook (tty_out->terminal);
 
+#ifndef DOS_NT
   /* Avoid possible loss of output when changing terminal modes.  */
-  while (fdatasync (fileno (tty_out->output)) != 0 && errno == EINTR)
+  while (tcdrain (fileno (tty_out->output)) != 0 && errno == EINTR)
     continue;
 
-#ifndef DOS_NT
-#ifdef F_SETOWN
+# ifdef F_SETOWN
   if (interrupt_input)
     {
       reset_sigio (fileno (tty_out->input));
       fcntl (fileno (tty_out->input), F_SETOWN,
              old_fcntl_owner[fileno (tty_out->input)]);
     }
-#endif /* F_SETOWN */
+# endif /* F_SETOWN */
   fcntl (fileno (tty_out->input), F_SETFL,
          fcntl (fileno (tty_out->input), F_GETFL, 0) & ~O_NONBLOCK);
 #endif

@@ -65,6 +65,10 @@ char *w32_getenv (const char *);
 
 #endif /* !WINDOWSNT */
 
+#ifndef DOS_NT
+# include <termios.h>
+#endif
+
 #include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
@@ -1722,8 +1726,10 @@ static void
 flush_stdout (HSOCKET emacs_socket)
 {
   fflush (stdout);
-  while (fdatasync (STDOUT_FILENO) != 0 && errno == EINTR)
+#ifndef DOS_NT
+  while (tcdrain (STDOUT_FILENO) != 0 && errno == EINTR)
     act_on_signals (emacs_socket);
+#endif
 }
 
 int

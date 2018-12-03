@@ -204,8 +204,6 @@ LIBRESOLV=@LIBRESOLV@
 LIBS_MAIL=@LIBS_MAIL@
 ## empty or -lrt or -lposix4 if HAVE_CLOCK_GETTIME
 LIB_CLOCK_GETTIME = @LIB_CLOCK_GETTIME@
-## empty or -lrt or -lposix4 if HAVE_FDATASYNC
-LIB_FDATASYNC = @LIB_FDATASYNC@
 ## empty or -lwsock2 for MinGW
 LIB_WSOCK32=@LIB_WSOCK32@
 
@@ -396,12 +394,12 @@ pop.o: ${srcdir}/pop.c ${srcdir}/pop.h ${srcdir}/../lib/min-max.h $(config_h)
 
 emacsclient${EXEEXT}: ${srcdir}/emacsclient.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< \
-	   -DVERSION="\"${version}\"" $(NTLIB) $(LOADLIBES) $(LIB_FDATASYNC) \
+	   -DVERSION="\"${version}\"" $(NTLIB) $(LOADLIBES) \
 	   $(LIB_WSOCK32) $(LIBS_ECLIENT) -o $@
 
 emacsclientw${EXEEXT}: ${srcdir}/emacsclient.c $(NTLIB) $(CLIENTRES) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $(CLIENTRES) -mwindows $< \
-	   -DVERSION="\"${version}\"" $(LOADLIBES) $(LIB_FDATASYNC) \
+	   -DVERSION="\"${version}\"" $(LOADLIBES) \
 	   $(LIB_WSOCK32) $(LIBS_ECLIENT) -o $@
 
 NTINC = ${srcdir}/../nt/inc

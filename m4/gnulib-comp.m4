@@ -81,7 +81,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module faccessat:
   # Code from module fcntl:
   # Code from module fcntl-h:
-  # Code from module fdatasync:
   # Code from module fdopendir:
   # Code from module filemode:
   # Code from module filevercmp:
@@ -241,11 +240,6 @@ AC_DEFUN([gl_INIT],
   fi
   gl_FCNTL_MODULE_INDICATOR([fcntl])
   gl_FCNTL_H
-  gl_FUNC_FDATASYNC
-  if test $HAVE_FDATASYNC = 0; then
-    AC_LIBOBJ([fdatasync])
-  fi
-  gl_UNISTD_MODULE_INDICATOR([fdatasync])
   gl_FUNC_FDOPENDIR
   if test $HAVE_FDOPENDIR = 0 || test $REPLACE_FDOPENDIR = 1; then
     AC_LIBOBJ([fdopendir])
@@ -880,7 +874,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/faccessat.c
   lib/fcntl.c
   lib/fcntl.in.h
-  lib/fdatasync.c
   lib/fdopendir.c
   lib/filemode.c
   lib/filemode.h
@@ -1028,7 +1021,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/fcntl-o.m4
   m4/fcntl.m4
   m4/fcntl_h.m4
-  m4/fdatasync.m4
   m4/fdopendir.m4
   m4/filemode.m4
   m4/flexmember.m4
