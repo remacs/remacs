@@ -2746,9 +2746,13 @@ to the barrier."
 (defcustom isearch-allow-scroll nil
   "Whether scrolling is allowed during incremental search.
 If non-nil, scrolling commands can be used in Isearch mode.
-However, the current match will never scroll offscreen.
-If nil, scrolling commands will first cancel Isearch mode."
-  :type 'boolean
+However, you cannot scroll far enough that the current match is
+no longer visible (is off screen).  But if the value is `unlimited'
+that limitation is removed and you can scroll any distance off screen.
+If nil, scrolling commands exit Isearch mode."
+  :type '(choice (const :tag "Scrolling exits Isearch" nil)
+                 (const :tag "Scrolling with current match on screen" t)
+                 (const :tag "Scrolling with current match off screen" unlimited))
   :group 'isearch)
 
 (defcustom isearch-allow-prefix t
@@ -2846,7 +2850,8 @@ See more for options in `search-exit-option'."
 	       (or (eq (get this-command 'isearch-scroll) t)
 		   (eq (get this-command 'scroll-command) t))))
       (when isearch-allow-scroll
-	(setq isearch-pre-scroll-point (point))))
+	(unless (eq isearch-allow-scroll 'unlimited)
+          (setq isearch-pre-scroll-point (point)))))
      ;; A mouse click on the isearch message starts editing the search string.
      ((and (eq (car-safe main-event) 'down-mouse-1)
 	   (window-minibuffer-p (posn-window (event-start main-event))))
@@ -2875,29 +2880,31 @@ See more for options in `search-exit-option'."
       (isearch-clean-overlays)))))
 
 (defun isearch-post-command-hook ()
-  (cond
-   (isearch-pre-scroll-point
-    (let ((ab-bel (isearch-string-out-of-window isearch-pre-scroll-point)))
-      (if ab-bel
-	  (isearch-back-into-window (eq ab-bel 'above) isearch-pre-scroll-point)
-	(goto-char isearch-pre-scroll-point)))
-    (setq isearch-pre-scroll-point nil)
-    (isearch-update))
-   ((memq search-exit-option '(move shift-move))
-    (when (and isearch-pre-move-point
-               (not (eq isearch-pre-move-point (point))))
-      (let ((string (buffer-substring-no-properties
-                     (or isearch-other-end isearch-opoint) (point))))
-        (if isearch-regexp (setq string (regexp-quote string)))
-        (setq isearch-string string)
-        (setq isearch-message (mapconcat 'isearch-text-char-description
-                                         string ""))
-        (setq isearch-yank-flag t)
-        (setq isearch-forward (<= (or isearch-other-end isearch-opoint) (point)))
-        (when isearch-forward
-          (goto-char isearch-pre-move-point))
-        (isearch-search-and-update)))
-    (setq isearch-pre-move-point nil)))
+   (when isearch-pre-scroll-point
+     (let ((ab-bel (isearch-string-out-of-window isearch-pre-scroll-point)))
+       (if ab-bel
+	   (isearch-back-into-window (eq ab-bel 'above) isearch-pre-scroll-point)
+	 (goto-char isearch-pre-scroll-point)))
+     (setq isearch-pre-scroll-point nil)
+     (isearch-update))
+   (when (eq isearch-allow-scroll 'unlimited)
+     (when isearch-lazy-highlight
+       (isearch-lazy-highlight-new-loop)))
+   (when (memq search-exit-option '(move shift-move))
+     (when (and isearch-pre-move-point
+                (not (eq isearch-pre-move-point (point))))
+       (let ((string (buffer-substring-no-properties
+                      (or isearch-other-end isearch-opoint) (point))))
+         (if isearch-regexp (setq string (regexp-quote string)))
+         (setq isearch-string string)
+         (setq isearch-message (mapconcat 'isearch-text-char-description
+                                          string ""))
+         (setq isearch-yank-flag t)
+         (setq isearch-forward (<= (or isearch-other-end isearch-opoint) (point)))
+         (when isearch-forward
+           (goto-char isearch-pre-move-point))
+         (isearch-search-and-update)))
+     (setq isearch-pre-move-point nil))
   (force-mode-line-update))
 
 (defun isearch-quote-char (&optional count)

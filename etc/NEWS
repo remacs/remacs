@@ -697,6 +697,9 @@ position after moving point in the current buffer.  'shift-move'
 extends the search string by motion commands while holding down
 the shift key.
 
+*** 'isearch-allow-scroll' provides new option 'unlimited' to allow
+scrolling any distance off screen.
+
 ---
 *** Isearch now remembers the regexp-based search mode for words/symbols
 and case-sensitivity together with search strings in the search ring.
