@@ -426,7 +426,7 @@ Thus, this does not include the shell's current directory.")
           (while (looking-at
                   (eval-when-compile
                     (concat
-                     "\\(?:[^\s\t\n\\\"']+"
+                     "\\(?:[^\s\t\n\\\"';]+"
                      "\\|'\\([^']*\\)'?"
                      "\\|\"\\(\\(?:[^\"\\]\\|\\\\.\\)*\\)\"?"
                      "\\|\\\\\\(\\(?:.\\|\n\\)?\\)\\)")))
@@ -490,7 +490,7 @@ Shell buffers.  It implements `shell-completion-execonly' for
   (setq comint-input-autoexpand shell-input-autoexpand)
   ;; Not needed in shell-mode because it's inherited from comint-mode, but
   ;; placed here for read-shell-command.
-  (add-hook 'completion-at-point-functions 'comint-completion-at-point nil t))
+  (add-hook 'completion-at-point-functions #'comint-completion-at-point nil t))
 
 (put 'shell-mode 'mode-class 'special)
 
@@ -606,7 +606,7 @@ buffer."
       ;; Bypass a bug in certain versions of bash.
       (when (string-equal shell "bash")
         (add-hook 'comint-preoutput-filter-functions
-                  'shell-filter-ctrl-a-ctrl-b nil t)))
+                  #'shell-filter-ctrl-a-ctrl-b nil t)))
     (comint-read-input-ring t)))
 
 (defun shell-apply-ansi-color (beg end face)
@@ -751,7 +751,7 @@ Otherwise, one argument `-i' is passed to the shell.
            (xargs-name (intern-soft (concat "explicit-" name "-args"))))
       (unless (file-exists-p startfile)
         (setq startfile (concat user-emacs-directory "init_" name ".sh")))
-      (apply 'make-comint-in-buffer "shell" buffer prog
+      (apply #'make-comint-in-buffer "shell" buffer prog
              (if (file-exists-p startfile) startfile)
              (if (and xargs-name (boundp xargs-name))
                  (symbol-value xargs-name)
@@ -973,10 +973,10 @@ this feature; see the function `dirtrack-mode'."
   nil nil nil
   (setq list-buffers-directory (if shell-dirtrack-mode default-directory))
   (if shell-dirtrack-mode
-      (add-hook 'comint-input-filter-functions 'shell-directory-tracker nil t)
-    (remove-hook 'comint-input-filter-functions 'shell-directory-tracker t)))
+      (add-hook 'comint-input-filter-functions #'shell-directory-tracker nil t)
+    (remove-hook 'comint-input-filter-functions #'shell-directory-tracker t)))
 
-(define-obsolete-function-alias 'shell-dirtrack-toggle 'shell-dirtrack-mode
+(define-obsolete-function-alias 'shell-dirtrack-toggle #'shell-dirtrack-mode
   "23.1")
 
 (defun shell-cd (dir)

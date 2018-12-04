@@ -30,4 +30,12 @@
   "Test problem found by Filipp Gunbin in emacs-devel."
   (should (equal (car (shell--unquote&requote-argument "te'st" 2)) "test")))
 
+(ert-deftest shell-tests-completion-before-semi ()
+  (with-temp-buffer
+    (shell-mode)
+    (insert "cd ba;")
+    (forward-char -1)
+    (should (equal (shell--parse-pcomplete-arguments)
+                   '(("cd" "ba") 1 4)))))
+
 ;;; shell-tests.el ends here
