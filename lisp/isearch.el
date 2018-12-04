@@ -72,21 +72,11 @@
 If t, random control and meta characters terminate the search
 and are then executed normally.
 If `edit', edit the search string instead of exiting.
-If `move', extend the search string by motion commands
-that have the `isearch-move' property on their symbols
-equal to `enabled', or the shift-translated command is
-not disabled by the value `disabled' of the same property.
-If `shift-move', extend the search string by motion commands
-while holding down the shift key.
-Both `move' and `shift-move' extend the search string by yanking text
-that ends at the new position after moving point in the current buffer.
 If `append', the characters which you type that are not interpreted by
 the incremental search are simply appended to the search string.
 If nil, run the command without exiting Isearch."
   :type '(choice (const :tag "Terminate incremental search" t)
                  (const :tag "Edit the search string" edit)
-                 (const :tag "Extend the search string by motion commands" move)
-                 (const :tag "Extend the search string by shifted motion keys" shift-move)
                  (const :tag "Append control characters to the search string" append)
                  (const :tag "Don't terminate incremental search" nil))
   :version "27.1")
@@ -2816,6 +2806,21 @@ the bottom."
 (defvar isearch-pre-scroll-point nil)
 (defvar isearch-pre-move-point nil)
 
+(defcustom isearch-yank-on-move nil
+  "Motion keys yank text to the search string while you move the cursor.
+If `shift', extend the search string by motion commands while holding down
+the shift key.  The search string is extended by yanking text that
+ends at the new position after moving point in the current buffer.
+If t, extend the search string without the shift key pressed
+by motion commands that have the `isearch-move' property on their
+symbols equal to `enabled', or for which the shift-translated command
+is not disabled by the value `disabled' of property `isearch-move'."
+  :type '(choice (const :tag "Motion keys exit Isearch" nil)
+                 (const :tag "Motion keys extend the search string" t)
+                 (const :tag "Shifted motion keys extend the search string" shift))
+  :group 'isearch
+  :version "27.1")
+
 (defun isearch-pre-command-hook ()
   "Decide whether to exit Isearch mode before executing the command.
 Don't exit Isearch if the key sequence that invoked this command
@@ -2859,13 +2864,13 @@ See more for options in `search-exit-option'."
       (read-event)
       (setq this-command 'isearch-edit-string))
      ;; Don't terminate the search for motion commands.
-     ((or (and (eq search-exit-option 'move)
+     ((or (and (eq isearch-yank-on-move t)
                (symbolp this-command)
                (or (eq (get this-command 'isearch-move) 'enabled)
                    (and (not (eq (get this-command 'isearch-move) 'disabled))
                         (stringp (nth 1 (interactive-form this-command)))
                         (string-match-p "^^" (nth 1 (interactive-form this-command))))))
-          (and (eq search-exit-option 'shift-move)
+          (and (eq isearch-yank-on-move 'shift)
                this-command-keys-shift-translated))
       (setq this-command-keys-shift-translated nil)
       (setq isearch-pre-move-point (point)))
@@ -2890,9 +2895,8 @@ See more for options in `search-exit-option'."
    (when (eq isearch-allow-scroll 'unlimited)
      (when isearch-lazy-highlight
        (isearch-lazy-highlight-new-loop)))
-   (when (memq search-exit-option '(move shift-move))
-     (when (and isearch-pre-move-point
-                (not (eq isearch-pre-move-point (point))))
+   (when isearch-pre-move-point
+     (when (not (eq isearch-pre-move-point (point)))
        (let ((string (buffer-substring-no-properties
                       (or isearch-other-end isearch-opoint) (point))))
          (if isearch-regexp (setq string (regexp-quote string)))
@@ -3188,12 +3192,12 @@ the word mode."
 
 (defun isearch-message-suffix (&optional c-q-hack)
   (propertize (concat (if c-q-hack "^Q" "")
-	              (if isearch-error
-	                  (concat " [" isearch-error "]")
-	                "")
-                      (isearch-lazy-count-format 'suffix)
-	              (or isearch-message-suffix-add ""))
-              'face 'minibuffer-prompt))
+		      (isearch-lazy-count-format 'suffix)
+		      (if isearch-error
+			  (concat " [" isearch-error "]")
+			"")
+		      (or isearch-message-suffix-add ""))
+	      'face 'minibuffer-prompt))
 
 (defun isearch-lazy-count-format (&optional suffix-p)
   "Format the current match number and the total number of matches.

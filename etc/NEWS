@@ -691,11 +691,10 @@ highlight in one iteration while processing the full buffer.
 'C-M-d'.
 
 +++
-*** 'search-exit-option' provides new options 'move' and 'shift-move'
+*** New variable 'isearch-yank-on-move' provides options 't' and 'shift'
 to extend the search string by yanking text that ends at the new
-position after moving point in the current buffer.  'shift-move'
-extends the search string by motion commands while holding down
-the shift key.
+position after moving point in the current buffer.  'shift' extends
+the search string by motion commands while holding down the shift key.
 
 *** 'isearch-allow-scroll' provides new option 'unlimited' to allow
 scrolling any distance off screen.

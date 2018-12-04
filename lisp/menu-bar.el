@@ -277,6 +277,15 @@
 ;; The Edit->Search->Incremental Search menu
 (defvar menu-bar-i-search-menu
   (let ((menu (make-sparse-keymap "Incremental Search")))
+    (bindings--define-key menu [isearch-forward-symbol-at-point]
+      '(menu-item "Forward Symbol at Point..." isearch-forward-symbol-at-point
+        :help "Search forward for a symbol found at point"))
+    (bindings--define-key menu [isearch-forward-symbol]
+      '(menu-item "Forward Symbol..." isearch-forward-symbol
+        :help "Search forward for a symbol as you type it"))
+    (bindings--define-key menu [isearch-forward-word]
+      '(menu-item "Forward Word..." isearch-forward-word
+        :help "Search forward for a word as you type it"))
     (bindings--define-key menu [isearch-backward-regexp]
       '(menu-item "Backward Regexp..." isearch-backward-regexp
         :help "Search backwards for a regular expression as you type it"))

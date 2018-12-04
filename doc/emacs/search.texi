@@ -548,12 +548,12 @@ an incremental search.  This feature is disabled if
 
 @item Motion Commands
 @cindex motion commands, during incremental search
-When @code{search-exit-option} is customized to @code{shift-move},
+When @code{isearch-yank-on-move} is customized to @code{shift},
 you can extend the search string by holding down the shift key while
 typing cursor motion commands.  It will yank text that ends at the new
 position after moving point in the current buffer.
 
-When @code{search-exit-option} is @code{move}, you can extend the
+When @code{isearch-yank-on-move} is @code{t}, you can extend the
 search string without using the shift key for cursor motion commands,
 but it applies only for certain motion command that have the
 @code{isearch-move} property on their symbols.
