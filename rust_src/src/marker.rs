@@ -95,7 +95,13 @@ impl LispMarkerRef {
         _depth: i32,
         _ht: LispObject,
     ) -> bool {
-        self.buffer == other.buffer && (self.buffer.is_null() || self.bytepos == other.bytepos)
+        if self.buffer != other.buffer {
+            false
+        } else if self.buffer.is_null() {
+            true
+        } else {
+            self.bytepos == other.bytepos
+        }
     }
 }
 
