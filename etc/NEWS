@@ -1307,6 +1307,11 @@ a multibyte string even if its second argument is an ASCII character.
 ** '(format "%d" X)' no longer mishandles a floating-point number X that
 does not fit in a machine integer.
 
+---
+** New coding-system 'ibm038'.
+This is the International EBCDIC encoding, also available as aliases
+'ebcdic-int' and 'cp038'.
+
 +++
 ** In the DST slot, 'encode-time' and 'parse-time-string' now return -1
 if it is not known whether daylight saving time is in effect.

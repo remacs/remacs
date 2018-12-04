@@ -1066,6 +1066,15 @@
   :mime-charset 'ebcdic-uk
   :map "EBCDICUK")
 
+(define-charset 'ibm038
+  "International version of EBCDIC"
+  :short-name "IBM038"
+  :code-space [0 255]
+  :mime-charset 'ibm038
+  :map "IBM038")
+(define-charset-alias 'ebcdic-int 'ibm038)
+(define-charset-alias 'cp038 'ibm038)
+
 (define-charset 'ibm1047
   ;; Says groff:
   "IBM1047, `EBCDIC Latin 1/Open Systems' used by OS/390 Unix."

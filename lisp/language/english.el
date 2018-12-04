@@ -62,6 +62,14 @@ Nothing special is needed to handle English.")
   :mnemonic ?*)
 (define-coding-system-alias 'cp1047 'ibm1047)
 
+(define-coding-system 'ibm038
+  "International version of EBCDIC"
+  :coding-type 'charset
+  :charset-list '(ibm038)
+  :mnemonic ?*)
+(define-coding-system-alias 'ebcdic-int 'ibm038)
+(define-coding-system-alias 'cp038 'ibm038)
+
 ;; Make "ASCII" an alias of "English" language environment.
 (set-language-info-alist
  "ASCII" (cdr (assoc "English" language-info-alist)))
