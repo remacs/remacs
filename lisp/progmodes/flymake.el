@@ -4,7 +4,8 @@
 
 ;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
-;; Version: 1.0
+;; Version: 1.0.1
+;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: c languages tools
 
 ;; This file is part of GNU Emacs.
