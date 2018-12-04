@@ -159,6 +159,9 @@ This expects `auto-revert--messages' to be bound by
 (ert-deftest auto-revert-test02-auto-revert-deleted-file ()
   "Check autorevert for a deleted file."
   :tags '(:expensive-test)
+  ;; Repeated unpredictable failures, bug#32645.
+  ;; Unlikely to be hydra-specific?
+  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
 
   (let ((tmpfile (make-temp-file "auto-revert-test"))
         buf desc)
