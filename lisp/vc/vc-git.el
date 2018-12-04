@@ -1475,12 +1475,16 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 	(if (eq next-error-last-buffer (current-buffer))
 	    (setq default-directory dir))))))
 
+(autoload 'vc-dir-marked-files "vc-dir")
+
 (defun vc-git-stash (name)
   "Create a stash."
   (interactive "sStash name: ")
   (let ((root (vc-git-root default-directory)))
     (when root
-      (apply #'vc-git--call nil "stash" "push" "-m" name (vc-dir-marked-files))
+      (apply #'vc-git--call nil "stash" "push" "-m" name
+             (when (derived-mode-p 'vc-dir-mode)
+               (vc-dir-marked-files)))
       (vc-resynch-buffer root t t))))
 
 (defvar vc-git-stash-read-history nil
