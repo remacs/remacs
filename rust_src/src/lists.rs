@@ -185,7 +185,6 @@ pub struct TailsIter {
     tortoise: LispObject,
     errsym: Option<LispObject>,
     circular_checks: LispConsCircularChecks,
-    circular_errsym: Option<LispObject>,
     max: isize,
     n: isize,
     q: u16,
@@ -202,10 +201,6 @@ impl TailsIter {
             LispConsEndChecks::on => Some(ty),
             _ => None,
         };
-        let circular_errsym = match circular_checks {
-            LispConsCircularChecks::on => Some(ty),
-            _ => None,
-        };
 
         Self {
             list,
@@ -213,7 +208,6 @@ impl TailsIter {
             tortoise: list,
             errsym,
             circular_checks,
-            circular_errsym,
             max: 2,
             n: 0,
             q: 2,
@@ -230,19 +224,19 @@ impl TailsIter {
         self.q = self.q.wrapping_sub(1);
         if self.q != 0 {
             if self.tail == self.tortoise {
-                if self.circular_errsym.is_some() {
-                    circular_list(self.tail);
+                match self.circular_checks {
+                    LispConsCircularChecks::on => circular_list(self.tail),
+                    _ => return None,
                 }
-                return None;
             }
         } else {
             self.n = self.n.wrapping_sub(1);
             if self.n > 0 {
                 if self.tail == self.tortoise {
-                    if self.circular_errsym.is_some() {
-                        circular_list(self.tail);
+                    match self.circular_checks {
+                        LispConsCircularChecks::on => circular_list(self.tail),
+                        _ => return None,
                     }
-                    return None;
                 }
             } else {
                 self.max <<= 1;
@@ -262,8 +256,8 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                if self.tail.is_not_nil() && self.errsym.is_some() {
-                    wrong_type!(self.errsym.unwrap(), self.list)
+                if self.tail.is_not_nil() {
+                    self.errsym.map(|errsym| wrong_type!(errsym, self.list));
                 }
                 None
             }
