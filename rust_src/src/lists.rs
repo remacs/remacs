@@ -929,7 +929,11 @@ pub extern "C" fn mapcar1(
         );
     }
 
-    mapcar_over_iterator(output, fun, seq.iter_cars_safe())
+    mapcar_over_iterator(
+        output,
+        fun,
+        seq.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off),
+    )
 }
 
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));
