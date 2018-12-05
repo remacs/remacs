@@ -274,7 +274,7 @@ pub extern "C" fn internal_equal_cons(
 ) -> bool {
     match (o1.as_cons(), o2.as_cons()) {
         (Some(cons1), Some(cons2)) => cons1.equal(cons2, kind, depth, ht),
-        _ => return false,
+        _ => false,
     }
 }
 
