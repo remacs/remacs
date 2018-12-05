@@ -803,7 +803,8 @@ pub fn make_list(length: EmacsUint, init: LispObject) -> LispObject {
 /// which is at least the number of distinct elements.
 #[lisp_fn]
 pub fn safe_length(list: LispObject) -> usize {
-    list.iter_tails_safe().count()
+    list.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::safe)
+        .count()
 }
 
 // Used by sort() in vectors.rs.
