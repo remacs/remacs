@@ -158,6 +158,24 @@ impl LispMiscRef {
     pub fn get_type(self) -> Lisp_Misc_Type {
         self.type_()
     }
+
+    pub fn equal(
+        self,
+        other: LispMiscRef,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool {
+        if self.get_type() != other.get_type() {
+            false
+        } else if let (Some(ov1), Some(ov2)) = (self.as_overlay(), other.as_overlay()) {
+            ov1.equal(ov2, kind, depth, ht)
+        } else if let (Some(marker1), Some(marker2)) = (self.as_marker(), other.as_marker()) {
+            marker1.equal(marker2, kind, depth, ht)
+        } else {
+            false
+        }
+    }
 }
 
 impl LispObject {

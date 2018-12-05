@@ -13,20 +13,20 @@ use crate::{
     eval::unbind_to,
     frames::LispFrameRef,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject, LiveBufferIter},
+    lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
     lists::{car, cdr, list, member},
     marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::{multibyte_length_by_head, string_char},
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-        buffer_window_count, del_range, delete_all_overlays, globals, last_per_buffer_idx,
-        lookup_char_property, marker_position, modify_overlay, set_buffer_internal_1, specbind,
-        unchain_both, unchain_marker, update_mode_lines,
+        buffer_window_count, del_range, delete_all_overlays, globals, internal_equal,
+        last_per_buffer_idx, lookup_char_property, marker_position, modify_overlay,
+        set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
     },
     remacs_sys::{
-        pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
-        Lisp_Type, Vbuffer_alist,
+        equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
+        Lisp_Overlay, Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
         windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
@@ -428,13 +428,7 @@ impl LispObject {
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
-        self.as_misc().and_then(|m| {
-            if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
-                unsafe { Some(mem::transmute(m)) }
-            } else {
-                None
-            }
-        })
+        self.as_misc().and_then(|m| m.as_overlay())
     }
 
     pub fn as_overlay_or_error(self) -> LispOverlayRef {
@@ -461,6 +455,16 @@ impl From<LispObject> for Option<LispOverlayRef> {
     }
 }
 
+impl LispMiscRef {
+    pub fn as_overlay(self) -> Option<LispOverlayRef> {
+        if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
+            unsafe { Some(mem::transmute(self)) }
+        } else {
+            None
+        }
+    }
+}
+
 impl LispOverlayRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)
@@ -469,6 +473,20 @@ impl LispOverlayRef {
     pub fn iter(self) -> LispOverlayIter {
         LispOverlayIter {
             current: Some(self),
+        }
+    }
+
+    pub fn equal(
+        self,
+        other: LispOverlayRef,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool {
+        unsafe {
+            let overlays_equal = internal_equal(self.start, other.start, kind, depth + 1, ht)
+                && internal_equal(self.end, other.end, kind, depth + 1, ht);
+            overlays_equal && internal_equal(self.plist, other.plist, kind, depth + 1, ht)
         }
     }
 }

@@ -10,7 +10,7 @@ use crate::{
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{compare_string_intervals, concat as lisp_concat, globals, record_unwind_protect},
+    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
     remacs_sys::{equal_kind, Lisp_Type},
     remacs_sys::{Fload, Fmapc},
     remacs_sys::{
@@ -269,15 +269,27 @@ pub extern "C" fn internal_equal_string(
     o1: LispObject,
     o2: LispObject,
     kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
 ) -> bool {
     let s1 = o1.as_string_or_error();
     let s2 = o2.as_string_or_error();
 
-    s1.len_chars() == s2.len_chars()
-        && s1.len_bytes() == s2.len_bytes()
-        && s1.as_slice() == s2.as_slice()
-        && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
-            || unsafe { compare_string_intervals(o1, o2) })
+    s1.equal(s2, kind, depth, ht)
+}
+
+#[no_mangle]
+pub extern "C" fn internal_equal_misc(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
+) -> bool {
+    match (o1.as_misc(), o2.as_misc()) {
+        (Some(m1), Some(m2)) => m1.equal(m2, kind, depth, ht),
+        _ => false,
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

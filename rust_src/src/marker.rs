@@ -8,10 +8,10 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::{current_buffer, LispBufferRef},
-    lisp::{defsubr, ExternalPtr, LispObject},
+    lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject},
     multibyte::multibyte_chars_in_text,
     remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
-    remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type},
+    remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type},
     remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
     threads::ThreadState,
     util::clip_to_bounds,
@@ -87,6 +87,22 @@ impl LispMarkerRef {
     pub fn set_next(mut self, m: *mut Lisp_Marker) {
         self.next = m;
     }
+
+    pub fn equal(
+        self,
+        other: LispMarkerRef,
+        _kind: equal_kind::Type,
+        _depth: i32,
+        _ht: LispObject,
+    ) -> bool {
+        if self.buffer != other.buffer {
+            false
+        } else if self.buffer.is_null() {
+            true
+        } else {
+            self.bytepos == other.bytepos
+        }
+    }
 }
 
 impl From<LispObject> for LispMarkerRef {
@@ -114,18 +130,22 @@ impl LispObject {
     }
 
     pub fn as_marker(self) -> Option<LispMarkerRef> {
-        self.as_misc().and_then(|m| {
-            if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
-                unsafe { Some(mem::transmute(m)) }
-            } else {
-                None
-            }
-        })
+        self.as_misc().and_then(|m| m.as_marker())
     }
 
     pub fn as_marker_or_error(self) -> LispMarkerRef {
         self.as_marker()
             .unwrap_or_else(|| wrong_type!(Qmarkerp, self))
+    }
+}
+
+impl LispMiscRef {
+    pub fn as_marker(self) -> Option<LispMarkerRef> {
+        if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
+            unsafe { Some(mem::transmute(self)) }
+        } else {
+            None
+        }
     }
 }
 
