@@ -220,6 +220,7 @@ impl TailsIter {
         self.tail
     }
 
+    // This function must only be called when LispConsCircularCheck is either on or safe.
     fn check_circular(&mut self, cons: LispCons) -> Option<LispCons> {
         self.q = self.q.wrapping_sub(1);
         if self.q != 0 {
@@ -257,7 +258,9 @@ impl Iterator for TailsIter {
         match self.tail.as_cons() {
             None => {
                 if self.tail.is_not_nil() {
-                    self.errsym.map(|errsym| wrong_type!(errsym, self.list));
+                    if let Some(errsym) = self.errsym {
+                        wrong_type!(errsym, self.list);
+                    }
                 }
                 None
             }
