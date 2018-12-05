@@ -499,18 +499,16 @@ pub fn nthcdr(n: EmacsInt, list: LispObject) -> LispObject {
 /// N counts from zero.  If LIST is not that long, nil is returned.
 #[lisp_fn]
 pub fn nth(n: EmacsInt, list: LispObject) -> LispObject {
-    if n < 0 {
-        car(list)
-    } else {
-        list.iter_cars_safe().nth(n as usize).unwrap_or(Qnil)
-    }
+    car(nthcdr(n, list))
 }
 
 fn lookup_member<CmpFunc>(elt: LispObject, list: LispObject, cmp: CmpFunc) -> LispObject
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_tails().find(|item| cmp(elt, item.car())).into()
+    list.iter_tails_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .find(|item| cmp(elt, item.car()))
+        .into()
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
@@ -541,11 +539,8 @@ fn assoc_impl<CmpFunc>(key: LispObject, list: LispObject, cmp: CmpFunc) -> LispO
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_cars()
-        .find(|item| {
-            item.as_cons()
-                .map_or_else(|| false, |cons| cmp(key, cons.car()))
-        })
+    list.iter_cars_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .find(|item| item.as_cons().map_or(false, |cons| cmp(key, cons.car())))
         .unwrap_or(Qnil)
 }
 
@@ -574,11 +569,8 @@ fn rassoc_impl<CmpFunc>(key: LispObject, list: LispObject, cmp: CmpFunc) -> Lisp
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_cars()
-        .find(|item| {
-            item.as_cons()
-                .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
-        })
+    list.iter_cars_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .find(|item| item.as_cons().map_or(false, |cons| cmp(key, cons.cdr())))
         .unwrap_or(Qnil)
 }
 
@@ -609,20 +601,20 @@ pub fn rassoc(key: LispObject, list: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
     let mut prev = None;
-    list.iter_tails().fold(list, |remaining, tail| {
-        let (item, rest) = tail.as_tuple();
-        if elt.eq(item) {
-            if let Some(cons) = prev {
-                setcdr(cons, rest);
+    list.iter_tails_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .fold(list, |remaining, tail| {
+            let (item, rest) = tail.as_tuple();
+            if elt.eq(item) {
+                match prev {
+                    Some(cons) => setcdr(cons, rest),
+                    None => return rest,
+                };
             } else {
-                return rest;
+                prev = Some(tail);
             }
-        } else {
-            prev = Some(tail);
-        }
 
-        remaining
-    })
+            remaining
+        })
 }
 
 /// Extract a value from a property list.
@@ -784,7 +776,7 @@ pub fn put(mut symbol: LispSymbolRef, propname: LispObject, value: LispObject) -
 /// Return a newly created list with specified arguments as elements.
 /// Any number of arguments, even zero arguments, are allowed.
 /// usage: (fn &rest OBJECTS)
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn list(args: &[LispObject]) -> LispObject {
     args.iter()
         .rev()
