@@ -56,7 +56,7 @@ impl LispObject {
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
     ) -> TailsIter {
-        self.iter_tails_internal(Qlistp, end_checks, circular_checks)
+        TailsIter::new(self, Qlistp, end_checks, circular_checks)
     }
 
     pub fn iter_tails_plist_v2(
@@ -64,47 +64,63 @@ impl LispObject {
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
     ) -> TailsIter {
-        self.iter_tails_internal(Qplistp, end_checks, circular_checks)
-    }
-
-    fn iter_tails_internal(
-        self,
-        ty: LispObject,
-        end_checks: LispConsEndChecks,
-        circular_checks: LispConsCircularChecks,
-    ) -> TailsIter {
-        TailsIter::new(self, ty, end_checks, circular_checks)
+        TailsIter::new(self, Qplistp, end_checks, circular_checks)
     }
 
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails(self) -> TailsIter {
-        self.iter_tails_internal(Qlistp, LispConsEndChecks::on, LispConsCircularChecks::on)
+        TailsIter::new(
+            self,
+            Qlistp,
+            LispConsEndChecks::on,
+            LispConsCircularChecks::on,
+        )
     }
 
     pub fn iter_tails_noendchecked(self) -> TailsIter {
-        self.iter_tails_internal(Qlistp, LispConsEndChecks::off, LispConsCircularChecks::on)
+        TailsIter::new(
+            self,
+            Qlistp,
+            LispConsEndChecks::off,
+            LispConsCircularChecks::on,
+        )
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_tails_safe(self) -> TailsIter {
-        self.iter_tails_internal(Qlistp, LispConsEndChecks::off, LispConsCircularChecks::safe)
+        TailsIter::new(
+            self,
+            Qlistp,
+            LispConsEndChecks::off,
+            LispConsCircularChecks::safe,
+        )
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     /// No circular checks are performed.
     pub fn iter_tails_unchecked(self) -> TailsIter {
-        self.iter_tails_internal(Qlistp, LispConsEndChecks::off, LispConsCircularChecks::off)
+        TailsIter::new(
+            self,
+            Qlistp,
+            LispConsEndChecks::off,
+            LispConsCircularChecks::off,
+        )
     }
 
     /// Iterate over all tails of self.  self should be a plist, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails_plist(self) -> TailsIter {
-        self.iter_tails_internal(Qplistp, LispConsEndChecks::on, LispConsCircularChecks::on)
+        TailsIter::new(
+            self,
+            Qplistp,
+            LispConsEndChecks::on,
+            LispConsCircularChecks::on,
+        )
     }
 
     pub fn iter_cars_v2(
@@ -112,12 +128,13 @@ impl LispObject {
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
     ) -> CarIter {
-        CarIter::new(self.iter_tails_internal(Qlistp, end_checks, circular_checks))
+        CarIter::new(TailsIter::new(self, Qlistp, end_checks, circular_checks))
     }
 
     /// Iterate over the car cells of a list.
     pub fn iter_cars(self) -> CarIter {
-        CarIter::new(self.iter_tails_internal(
+        CarIter::new(TailsIter::new(
+            self,
             Qlistp,
             LispConsEndChecks::on,
             LispConsCircularChecks::on,
@@ -127,7 +144,8 @@ impl LispObject {
     /// Iterate over all cars of self. If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_cars_safe(self) -> CarIter {
-        CarIter::new(self.iter_tails_internal(
+        CarIter::new(TailsIter::new(
+            self,
             Qlistp,
             LispConsEndChecks::off,
             LispConsCircularChecks::safe,
@@ -138,7 +156,8 @@ impl LispObject {
     /// iteration will stop at the first non-cons without signaling.
     /// No circular checks are performed.
     pub fn iter_cars_unchecked(self) -> CarIter {
-        CarIter::new(self.iter_tails_internal(
+        CarIter::new(TailsIter::new(
+            self,
             Qlistp,
             LispConsEndChecks::off,
             LispConsCircularChecks::off,
@@ -211,7 +230,7 @@ impl TailsIter {
         self.q = self.q.wrapping_sub(1);
         if self.q != 0 {
             if self.tail == self.tortoise {
-                if self.errsym.is_some() {
+                if self.circular_errsym.is_some() {
                     circular_list(self.tail);
                 }
                 return None;
@@ -220,7 +239,7 @@ impl TailsIter {
             self.n = self.n.wrapping_sub(1);
             if self.n > 0 {
                 if self.tail == self.tortoise {
-                    if self.errsym.is_some() {
+                    if self.circular_errsym.is_some() {
                         circular_list(self.tail);
                     }
                     return None;
@@ -251,6 +270,8 @@ impl Iterator for TailsIter {
             Some(cons) => {
                 self.tail = cons.cdr();
                 match self.circular_checks {
+                    // when off we do not checks at all. When 'safe' the checks are performed
+                    // and the iteration exits but no errors are raised.
                     LispConsCircularChecks::off => Some(cons),
                     _ => self.check_circular(cons),
                 }
@@ -371,13 +392,13 @@ impl LispCons {
                     } else if tail1.eq(tail2) {
                         return true;
                     }
-                    (None, None) => break,
-                    _ => return false,
                 }
+                (None, None) => break,
+                _ => return false,
             }
-
-            unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
         }
+
+        unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
     }
 }
 
