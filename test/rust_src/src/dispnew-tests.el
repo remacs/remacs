@@ -19,5 +19,10 @@
   (let ((visible-bell nil))
     (ding-with-args)))
 
+(ert-deftest test-redisplay ()
+  (redisplay)
+  (redisplay t)
+  (redisplay 'force))
+
 (provide 'dispnew-tests)
 ;;; dispnew-tests.el ends here

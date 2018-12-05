@@ -6,16 +6,22 @@ use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    eval::unbind_to,
     frames::{selected_frame, LispFrameOrSelected, LispFrameRef},
-    lisp::{defsubr, ExternalPtr},
+    lisp::{defsubr, ExternalPtr, LispObject},
     remacs_sys::{
-        bitch_at_user, clear_current_matrices, dtotimespec, fset_redisplay,
-        mark_window_display_accurate, putchar_unlocked, ring_bell, timespec_add, timespec_sub,
-        wait_reading_process_output,
+        bitch_at_user, clear_current_matrices, detect_input_pending_run_timers, dtotimespec,
+        fset_redisplay, mark_window_display_accurate, putchar_unlocked,
+        redisplay_preserve_echo_area, ring_bell, specbind, swallow_events, timespec_add,
+        timespec_sub, wait_reading_process_output,
     },
-    remacs_sys::{noninteractive, redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX},
+    remacs_sys::{
+        globals, noninteractive, redisplaying_p, Qnil, Qredisplay_dont_pause, Qt, Vframe_list,
+        WAIT_READING_MAX,
+    },
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph},
     terminal::{clear_frame, update_begin, update_end},
+    threads::c_specpdl_index,
     windows::{LispWindowOrSelected, LispWindowRef},
 };
 
@@ -152,6 +158,41 @@ pub fn ding(arg: LispObject) {
                 ring_bell(selected_frame().as_mut())
             }
         }
+    }
+}
+
+/// Perform redisplay.
+/// Optional arg FORCE, if non-nil, prevents redisplay from being
+/// preempted by arriving input, even if `redisplay-dont-pause' is nil.
+/// If `redisplay-dont-pause' is non-nil (the default), redisplay is never
+/// preempted by arriving input, so FORCE does nothing.
+///
+/// Return t if redisplay was performed, nil if redisplay was preempted
+/// immediately by pending input.
+#[lisp_fn(min = "0")]
+pub fn redisplay(force: LispObject) -> bool {
+    let force: bool = force.is_not_nil();
+
+    unsafe {
+        swallow_events(true);
+
+        let ret =
+            (detect_input_pending_run_timers(true) && !force && !globals.redisplay_dont_pause)
+                || globals.Vexecuting_kbd_macro.is_not_nil();
+
+        if ret {
+            let count = c_specpdl_index();
+
+            if force && !globals.redisplay_dont_pause {
+                specbind(Qredisplay_dont_pause, Qt);
+            }
+
+            redisplay_preserve_echo_area(2);
+
+            unbind_to(count, Qnil);
+        }
+
+        ret
     }
 }
 

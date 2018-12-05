@@ -5605,35 +5605,6 @@ sit_for (Lisp_Object timeout, bool reading, int display_option)
   return detect_input_pending () ? Qnil : Qt;
 }
 
-
-DEFUN ("redisplay", Fredisplay, Sredisplay, 0, 1, 0,
-       doc: /* Perform redisplay.
-Optional arg FORCE, if non-nil, prevents redisplay from being
-preempted by arriving input, even if `redisplay-dont-pause' is nil.
-If `redisplay-dont-pause' is non-nil (the default), redisplay is never
-preempted by arriving input, so FORCE does nothing.
-
-Return t if redisplay was performed, nil if redisplay was preempted
-immediately by pending input.  */)
-  (Lisp_Object force)
-{
-  ptrdiff_t count;
-
-  swallow_events (true);
-  if ((detect_input_pending_run_timers (1)
-       && NILP (force) && !redisplay_dont_pause)
-      || !NILP (Vexecuting_kbd_macro))
-    return Qnil;
-
-  count = SPECPDL_INDEX ();
-  if (!NILP (force) && !redisplay_dont_pause)
-    specbind (Qredisplay_dont_pause, Qt);
-  redisplay_preserve_echo_area (2);
-  unbind_to (count, Qnil);
-  return Qt;
-}
-
-
 
 /***********************************************************************
 			 Other Lisp Functions
@@ -5979,7 +5950,6 @@ syms_of_display (void)
 {
   defsubr (&Sframe_or_buffer_changed_p);
   defsubr (&Sopen_termscript);
-  defsubr (&Sredisplay);
   defsubr (&Ssend_string_to_terminal);
 
 #ifdef GLYPH_DEBUG
