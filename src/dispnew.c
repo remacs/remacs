@@ -5520,26 +5520,6 @@ when TERMINAL is nil.  */)
   return Qnil;
 }
 
-
-DEFUN ("ding", Fding, Sding, 0, 1, 0,
-       doc: /* Beep, or flash the screen.
-Also, unless an argument is given,
-terminate any keyboard macro currently executing.  */)
-  (Lisp_Object arg)
-{
-  if (!NILP (arg))
-    {
-      if (noninteractive)
-	putchar_unlocked (07);
-      else
-	ring_bell (XFRAME (selected_frame));
-    }
-  else
-    bitch_at_user ();
-
-  return Qnil;
-}
-
 void
 bitch_at_user (void)
 {
@@ -5999,7 +5979,6 @@ syms_of_display (void)
 {
   defsubr (&Sframe_or_buffer_changed_p);
   defsubr (&Sopen_termscript);
-  defsubr (&Sding);
   defsubr (&Sredisplay);
   defsubr (&Ssend_string_to_terminal);
 

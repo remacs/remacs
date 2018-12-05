@@ -3637,6 +3637,7 @@ _Noreturn void __executable_start (void);
 #endif
 extern Lisp_Object Vwindow_system;
 extern Lisp_Object sit_for (Lisp_Object, bool, int);
+extern void bitch_at_user (void);
 
 /* Defined in xdisp.c.  */
 extern bool noninteractive_need_newline;

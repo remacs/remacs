@@ -6,13 +6,14 @@ use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    frames::{LispFrameOrSelected, LispFrameRef},
+    frames::{selected_frame, LispFrameOrSelected, LispFrameRef},
     lisp::{defsubr, ExternalPtr},
     remacs_sys::{
-        clear_current_matrices, dtotimespec, fset_redisplay, mark_window_display_accurate,
-        timespec_add, timespec_sub, wait_reading_process_output,
+        bitch_at_user, clear_current_matrices, dtotimespec, fset_redisplay,
+        mark_window_display_accurate, putchar_unlocked, ring_bell, timespec_add, timespec_sub,
+        wait_reading_process_output,
     },
-    remacs_sys::{redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX},
+    remacs_sys::{noninteractive, redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph},
     terminal::{clear_frame, update_begin, update_end},
     windows::{LispWindowOrSelected, LispWindowRef},
@@ -134,6 +135,24 @@ pub fn internal_show_cursor(window: LispWindowOrSelected, show: bool) {
 pub fn internal_show_cursor_p(window: LispWindowOrSelected) -> bool {
     let win: LispWindowRef = window.into();
     !win.cursor_off_p()
+}
+
+/// Beep, or flash the screen.
+/// Also, unless an argument is given,
+/// terminate any keyboard macro currently executing.
+#[lisp_fn(min = "0")]
+pub fn ding(arg: LispObject) {
+    if arg.is_nil() {
+        unsafe { bitch_at_user() }
+    } else {
+        unsafe {
+            if noninteractive {
+                putchar_unlocked(7);
+            } else {
+                ring_bell(selected_frame().as_mut())
+            }
+        }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/dispnew_exports.rs"));
