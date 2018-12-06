@@ -765,7 +765,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     let queue = Vautoload_queue;
     Vautoload_queue = oldqueue;
 
-    for first in queue.iter_cars_safe() {
+    for first in queue.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
         if first.eq(LispObject::from(0)) {
@@ -994,7 +994,7 @@ fn run_hook_with_args_internal(
         args[0] = val;
         func(args)
     } else {
-        for item in val.iter_cars_safe() {
+        for item in val.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
             if ret.is_not_nil() {
                 break;
             }
@@ -1011,7 +1011,9 @@ fn run_hook_with_args_internal(
                     args[0] = global_vals;
                     ret = func(args);
                 } else {
-                    for gval in global_vals.iter_cars_safe() {
+                    for gval in global_vals
+                        .iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
+                    {
                         if ret.is_not_nil() {
                             break;
                         }
