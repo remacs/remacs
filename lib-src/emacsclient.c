@@ -1095,6 +1095,26 @@ find_tty (const char **tty_type, const char **tty_name, bool noabort)
   return true;
 }
 
+/* Return the process group if in the foreground, the negative of the
+   process group if in the background, and zero if there is no
+   foreground process group for the controlling terminal.
+   Unfortunately, use of this function introduces an unavoidable race,
+   since whether the process is in the foreground or background can
+   change at any time.  */
+
+static pid_t
+process_grouping (void)
+{
+#ifdef SOCKETS_IN_FILE_SYSTEM
+  pid_t tcpgrp = tcgetpgrp (STDOUT_FILENO);
+  if (0 <= tcpgrp)
+    {
+      pid_t pgrp = getpgrp ();
+      return tcpgrp == pgrp ? pgrp : -pgrp;
+    }
+#endif
+  return 0;
+}
 
 #ifdef SOCKETS_IN_FILE_SYSTEM
 
@@ -1253,21 +1273,17 @@ act_on_signals (HSOCKET emacs_socket)
 	    {
 	      got_sigcont = 0;
 	      took_action = true;
-	      pid_t tcpgrp = tcgetpgrp (STDOUT_FILENO);
-	      if (0 <= tcpgrp)
+	      pid_t grouping = process_grouping ();
+	      if (grouping < 0)
 		{
-		  pid_t pgrp = getpgrp ();
-		  if (tcpgrp == pgrp)
+		  if (tty)
 		    {
-		      /* We are in the foreground.  */
-		      send_to_emacs (emacs_socket, "-resume \n");
-		    }
-		  else if (tty)
-		    {
-		      /* We are in the background; cancel the continue.  */
-		      kill (-pgrp, SIGTTIN);
+		      /* Cancel the continue.  */
+		      kill (grouping, SIGTTIN);
 		    }
 		}
+	      else
+		send_to_emacs (emacs_socket, "-resume \n");
 	    }
 
 	  if (got_sigtstp)
@@ -1767,13 +1783,12 @@ main (int argc, char **argv)
       exit (EXIT_FAILURE);
     }
 
-#ifndef WINDOWSNT
+#ifdef SOCKETS_IN_FILE_SYSTEM
   if (tty)
     {
-      pid_t pgrp = getpgrp ();
-      pid_t tcpgrp = tcgetpgrp (STDOUT_FILENO);
-      if (0 <= tcpgrp && tcpgrp != pgrp)
-	kill (-pgrp, SIGTTIN);
+      pid_t grouping = process_grouping ();
+      if (grouping < 0)
+	kill (grouping, SIGTTIN);
     }
 #endif
 
@@ -1946,7 +1961,7 @@ main (int argc, char **argv)
   send_to_emacs (emacs_socket, "\n");
 
   /* Wait for an answer. */
-  if (!eval && !tty && !nowait && !quiet)
+  if (!eval && !tty && !nowait && !quiet && 0 <= process_grouping ())
     {
       printf ("Waiting for Emacs...");
       skiplf = false;
@@ -2052,7 +2067,7 @@ main (int argc, char **argv)
 	}
     }
 
-  if (!skiplf)
+  if (!skiplf && 0 <= process_grouping ())
     printf ("\n");
 
   if (rl < 0)
