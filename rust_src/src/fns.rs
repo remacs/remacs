@@ -7,6 +7,7 @@ use crate::{
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, member, memq, put, LispCons},
+    lists::{LispConsCircularChecks, LispConsEndChecks},
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
@@ -133,9 +134,8 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // and not when we aren't loading or reading from a file.
     let from_file = unsafe { globals.load_in_progress }
         || current_load_list
-            .iter_cars_safe()
-            .last()
-            .map_or(false, |elt| elt.is_string());
+            .iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
+            .any(|elt| elt.cdr().is_nil() && elt.car().is_string());
 
     if from_file {
         let tem = LispObject::cons(Qrequire, feature);
@@ -163,7 +163,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // but if we require the same feature recursively 3 times,
     // signal an error.
     let nesting = unsafe { require_nesting_list }
-        .iter_cars()
+        .iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
         .filter(|elt| equal(feature, *elt))
         .count();
 
