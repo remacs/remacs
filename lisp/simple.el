@@ -4006,7 +4006,9 @@ Also, delete any process that is exited or signaled."
 		  (tty (or (process-tty-name p) "--"))
 		  (thread
                    (cond
-                    ((null (process-thread p)) "--")
+                    ((or
+                      (null (process-thread p))
+                      (not (fboundp 'thread-name))) "--")
                     ((eq (process-thread p) main-thread) "Main")
                     ((thread-name (process-thread p)))))
 		  (cmd
