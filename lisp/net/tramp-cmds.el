@@ -261,7 +261,7 @@ buffer in your bug report.
 	(set varsym (read (format "(%s)" (tramp-cache-print val))))
       ;; There are non-7bit characters to be masked.
       (when (and (stringp val)
-		 (string-match
+		 (string-match-p
 		  (concat "[^" (bound-and-true-p mm-7bit-chars) "]") val))
 	(with-current-buffer reporter-eval-buffer
 	  (set
@@ -277,10 +277,11 @@ buffer in your bug report.
       ;; Remove string quotation.
       (forward-line -1)
       (when (looking-at
-	     (concat "\\(^.*\\)" "\""                       ;; \1 "
-		     "\\((base64-decode-string \\)" "\\\\"  ;; \2 \
-		     "\\(\".*\\)" "\\\\"                    ;; \3 \
-		     "\\(\")\\)" "\"$"))                    ;; \4 "
+	     (eval-when-compile
+	       (concat "\\(^.*\\)" "\""                       ;; \1 "
+		       "\\((base64-decode-string \\)" "\\\\"  ;; \2 \
+		       "\\(\".*\\)" "\\\\"                    ;; \3 \
+		       "\\(\")\\)" "\"$")))                   ;; \4 "
 	(replace-match "\\1\\2\\3\\4")
 	(beginning-of-line)
 	(insert " ;; Variable encoded due to non-printable characters.\n"))
@@ -305,7 +306,7 @@ buffer in your bug report.
 	   (delq nil
 		 (mapcar
 		  (lambda (b)
-                    (when (string-match "\\*tramp/" (buffer-name b)) b))
+                    (when (string-match-p "\\*tramp/" (buffer-name b)) b))
 		  (buffer-list))))
     (let ((reporter-eval-buffer buffer)
 	  (elbuf (get-buffer-create " *tmp-reporter-buffer*")))
@@ -333,7 +334,7 @@ buffer in your bug report.
   (insert "\nload-path shadows:\n==================\n")
   (ignore-errors
     (mapc
-     (lambda (x) (when (string-match "tramp" x) (insert x "\n")))
+     (lambda (x) (when (string-match-p "tramp" x) (insert x "\n")))
      (split-string (list-load-path-shadows t) "\n")))
 
   ;; Append buffers only when we are in message mode.

@@ -259,10 +259,11 @@ pass to the OPERATION."
 	(goto-char (point-min))
 	(forward-line)
 	(when (looking-at
-	       (concat "[[:space:]]*[^[:space:]]+"
-		       "[[:space:]]+\\([[:digit:]]+\\)"
-		       "[[:space:]]+\\([[:digit:]]+\\)"
-		       "[[:space:]]+\\([[:digit:]]+\\)"))
+	       (eval-when-compile
+		 (concat "[[:space:]]*[^[:space:]]+"
+			 "[[:space:]]+\\([[:digit:]]+\\)"
+			 "[[:space:]]+\\([[:digit:]]+\\)"
+			 "[[:space:]]+\\([[:digit:]]+\\)")))
 	  ;; The values are given as 1k numbers, so we must change
 	  ;; them to number of bytes.
 	  (list (* 1024 (string-to-number (match-string 1)))
@@ -462,7 +463,7 @@ pass to the OPERATION."
 		     (sort result (lambda (x y) (string< (car x) (car y))))))
 	     (delq nil
 		   (mapcar (lambda (x)
-			     (if (or (not match) (string-match match (car x)))
+			     (if (or (not match) (string-match-p match (car x)))
 				 x))
 			   result)))))))))
 
@@ -499,7 +500,7 @@ Convert (\"-al\") to (\"-a\" \"-l\").  Remove arguments like \"--dired\"."
 		  (delq nil
 			(mapcar
 			 (lambda (s)
-			   (and (not (string-match "\\(^--\\|^[^-]\\)" s)) s))
+			   (and (not (string-match-p "\\(^--\\|^[^-]\\)" s)) s))
 			 switches))))))
 
 (defun tramp-adb-sh-fix-ls-output (&optional sort-by-time)
@@ -514,7 +515,7 @@ Emacs dired can't find files."
 	 "[[:space:]]\\([[:space:]][0-9]\\{4\\}-[0-9][0-9]-[0-9][0-9][[:space:]]\\)" nil t)
       (replace-match "0\\1" "\\1" nil)
       ;; Insert missing "/".
-      (when (looking-at "[0-9][0-9]:[0-9][0-9][[:space:]]+$")
+      (when (looking-at-p "[0-9][0-9]:[0-9][0-9][[:space:]]+$")
 	(end-of-line)
 	(insert "/")))
     ;; Sort entries.
@@ -594,28 +595,27 @@ Emacs dired can't find files."
    filename
    (with-parsed-tramp-file-name (expand-file-name directory) nil
      (with-tramp-file-property v localname "file-name-all-completions"
-       (save-match-data
-	 (tramp-adb-send-command
-	  v (format "%s -a %s"
-		    (tramp-adb-get-ls-command v)
-		    (tramp-shell-quote-argument localname)))
-	 (mapcar
-	  (lambda (f)
-	    (if (file-directory-p (expand-file-name f directory))
-		(file-name-as-directory f)
-	      f))
-	  (with-current-buffer (tramp-get-buffer v)
-	    (delete-dups
-	     (append
-	      ;; In older Android versions, "." and ".." are not
-	      ;; included.  In newer versions (toybox, since Android
-	      ;; 6) they are.  We fix this by `delete-dups'.
-	      '("." "..")
-	      (delq
-	       nil
-	       (mapcar
-		(lambda (l) (and (not (string-match  "^[[:space:]]*$" l)) l))
-		(split-string (buffer-string) "\n"))))))))))))
+       (tramp-adb-send-command
+	v (format "%s -a %s"
+		  (tramp-adb-get-ls-command v)
+		  (tramp-shell-quote-argument localname)))
+       (mapcar
+	(lambda (f)
+	  (if (file-directory-p (expand-file-name f directory))
+	      (file-name-as-directory f)
+	    f))
+	(with-current-buffer (tramp-get-buffer v)
+	  (delete-dups
+	   (append
+	    ;; In older Android versions, "." and ".." are not
+	    ;; included.  In newer versions (toybox, since Android 6)
+	    ;; they are.  We fix this by `delete-dups'.
+	    '("." "..")
+	    (delq
+	     nil
+	     (mapcar
+	      (lambda (l) (and (not (string-match-p  "^[[:space:]]*$" l)) l))
+	      (split-string (buffer-string) "\n")))))))))))
 
 (defun tramp-adb-handle-file-local-copy (filename)
   "Like `file-local-copy' for Tramp files."
@@ -967,7 +967,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 (defun tramp-adb-handle-shell-command
   (command &optional output-buffer error-buffer)
   "Like `shell-command' for Tramp files."
-  (let* ((asynchronous (string-match "[ \t]*&[ \t]*\\'" command))
+  (let* ((asynchronous (string-match-p "[ \t]*&[ \t]*\\'" command))
 	 ;; We cannot use `shell-file-name' and `shell-command-switch',
 	 ;; they are variables of the local host.
 	 (args (list "sh" "-c" (substring command 0 asynchronous)))
@@ -1111,7 +1111,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		    p))))
 
 	  ;; Save exit.
-	  (if (string-match tramp-temp-buffer-name (buffer-name))
+	  (if (string-match-p tramp-temp-buffer-name (buffer-name))
 	      (ignore-errors
 		(set-process-buffer (tramp-get-connection-process v) nil)
 		(kill-buffer (current-buffer)))

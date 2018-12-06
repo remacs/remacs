@@ -378,6 +378,7 @@ pass to the OPERATION."
 (defun tramp-archive-file-name-p (name)
   "Return t if NAME is a string with archive file name syntax."
   (and (stringp name)
+       ;; We cannot use `string-match-p', the matches are used.
        (string-match tramp-archive-file-name-regexp name)
        t))
 
@@ -430,8 +431,9 @@ name is kept in slot `hop'"
        ;; http://...
        ((and url-handler-mode
 	     tramp-compat-use-url-tramp-p
-             (string-match url-handler-regexp archive)
-	     (string-match "https?" (url-type (url-generic-parse-url archive))))
+             (string-match-p url-handler-regexp archive)
+	     (string-match-p
+	      "https?" (url-type (url-generic-parse-url archive))))
 	(let* ((url-tramp-protocols
 		(cons
 		 (url-type (url-generic-parse-url archive))

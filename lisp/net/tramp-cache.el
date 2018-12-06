@@ -104,7 +104,7 @@ matching entries of `tramp-connection-properties'."
 	     (puthash key (make-hash-table :test 'equal) tramp-cache-data)))
 	(when (tramp-file-name-p key)
 	  (dolist (elt tramp-connection-properties)
-	    (when (string-match
+	    (when (string-match-p
 		   (or (nth 0 elt) "")
 		   (tramp-make-tramp-file-name key 'noloc 'nohop))
 	      (tramp-set-connection-property key (nth 1 elt) (nth 2 elt)))))
@@ -217,8 +217,8 @@ Remove also properties of all files in subdirectories."
      (lambda (key _value)
        (when (and (tramp-file-name-p key)
 		  (stringp (tramp-file-name-localname key))
-		  (string-match (regexp-quote directory)
-				(tramp-file-name-localname key)))
+		  (string-match-p (regexp-quote directory)
+				  (tramp-file-name-localname key)))
 	 (remhash key tramp-cache-data)))
      tramp-cache-data)
     ;; Remove file properties of symlinks.
@@ -236,7 +236,7 @@ Remove also properties of all files in subdirectories."
 This is suppressed for temporary buffers."
   (save-match-data
     (unless (or (null (buffer-name))
-		(string-match "^\\( \\|\\*\\)" (buffer-name)))
+		(string-match-p "^\\( \\|\\*\\)" (buffer-name)))
       (let ((bfn (if (stringp (buffer-file-name))
 		     (buffer-file-name)
 		   default-directory))

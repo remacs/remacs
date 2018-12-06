@@ -97,7 +97,7 @@ Add the extension of F, if existing."
                          ;; The returned command name could be truncated
                          ;; to 15 characters.  Therefore, we cannot check
                          ;; for `string-equal'.
-                         (and comm (string-match
+                         (and comm (string-match-p
                                     (concat "^" (regexp-quote comm))
                                     process-name))))
 	      (setq result t)))))))))
@@ -195,7 +195,7 @@ This is a string of ten letters or dashes as in ls -l."
     (defsubst tramp-compat-file-name-quoted-p (name)
       "Whether NAME is quoted with prefix \"/:\".
 If NAME is a remote file name, check the local part of NAME."
-      (string-match "^/:" (or (file-remote-p name 'localname) name))))
+      (string-prefix-p "/:" (or (file-remote-p name 'localname) name))))
 
   (if (fboundp 'file-name-quote)
       (defalias 'tramp-compat-file-name-quote 'file-name-quote)
@@ -212,14 +212,11 @@ If NAME is a remote file name, the local part of NAME is quoted."
     (defsubst tramp-compat-file-name-unquote (name)
       "Remove quotation prefix \"/:\" from file NAME.
 If NAME is a remote file name, the local part of NAME is unquoted."
-      (save-match-data
-	(let ((localname (or (file-remote-p name 'localname) name)))
-	  (when (tramp-compat-file-name-quoted-p localname)
-	    (setq
-	     localname
-	     (replace-match
-	      (if (= (length localname) 2) "/" "") nil t localname)))
-	  (concat (file-remote-p name) localname))))))
+      (let ((localname (or (file-remote-p name 'localname) name)))
+	(when (tramp-compat-file-name-quoted-p localname)
+	  (setq
+	   localname (if (= (length localname) 2) "/" (substring localname 2))))
+	(concat (file-remote-p name) localname)))))
 
 ;; `tramp-syntax' has changed its meaning in Emacs 26.  We still
 ;; support old settings.

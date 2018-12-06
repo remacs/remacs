@@ -677,7 +677,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (when match
       (setq result
 	    (delete nil
-		    (mapcar (lambda (x) (when (string-match match x) x))
+		    (mapcar (lambda (x) (when (string-match-p match x) x))
 			    result))))
     ;; Append directory.
     (when full
@@ -728,10 +728,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
       (widen)
       (tramp-message vec 10 "\n%s" (buffer-string))
       (goto-char (point-min))
-      (while (and (not (eobp)) (not (looking-at "^REVISION:")))
+      (while (and (not (eobp)) (not (looking-at-p "^REVISION:")))
 	(forward-line)
 	(delete-region (point-min) (point)))
-      (while (and (not (eobp)) (looking-at "^.+:.+"))
+      (while (and (not (eobp)) (looking-at-p "^.+:.+"))
  	(forward-line))
       (delete-region (point) (point-max))
       (throw 'tramp-action 'ok))))
@@ -816,7 +816,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
 	    ;; Check result.
 	    (when entry
-	      (list (and (string-match "d" (nth 1 entry))
+	      (list (and (string-match-p "d" (nth 1 entry))
 			 t)              ;0 file type
 		    -1	                 ;1 link count
 		    uid	                 ;2 uid
@@ -933,15 +933,14 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
    filename
    (with-parsed-tramp-file-name (expand-file-name directory) nil
      (with-tramp-file-property v localname "file-name-all-completions"
-       (save-match-data
-	 (delete-dups
-	  (mapcar
-	   (lambda (x)
-	     (list
-	      (if (string-match "d" (nth 1 x))
-		  (file-name-as-directory (nth 0 x))
-		(nth 0 x))))
-	   (tramp-smb-get-file-entries directory))))))))
+       (delete-dups
+	(mapcar
+	 (lambda (x)
+	   (list
+	    (if (string-match-p "d" (nth 1 x))
+		(file-name-as-directory (nth 0 x))
+	      (nth 0 x))))
+	 (tramp-smb-get-file-entries directory)))))))
 
 (defun tramp-smb-handle-file-system-info (filename)
   "Like `file-system-info' for Tramp files."
@@ -956,9 +955,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (goto-char (point-min))
 	  (forward-line)
 	  (when (looking-at
-		 (concat "[[:space:]]*\\([[:digit:]]+\\)"
-			 " blocks of size \\([[:digit:]]+\\)"
-			 "\\. \\([[:digit:]]+\\) blocks available"))
+		 (eval-when-compile
+		   (concat "[[:space:]]*\\([[:digit:]]+\\)"
+			   " blocks of size \\([[:digit:]]+\\)"
+			   "\\. \\([[:digit:]]+\\) blocks available")))
 	    (setq blocksize (string-to-number (match-string 2))
 		  total (* blocksize (string-to-number (match-string 1)))
 		  avail (* blocksize (string-to-number (match-string 3)))))
@@ -975,7 +975,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 (defun tramp-smb-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
   (if (file-exists-p filename)
-      (string-match
+      (string-match-p
        "w"
        (or (tramp-compat-file-attribute-modes (file-attributes filename)) ""))
     (let ((dir (file-name-directory filename)))
@@ -1027,7 +1027,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		     ;; Check for matching entries.
 		     (mapcar
 		      (lambda (x)
-			(when (string-match
+			(when (string-match-p
 			       (format "^%s" base) (nth 0 x))
 			  x))
 		      entries)
@@ -1039,14 +1039,14 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		(sort
 		 entries
 		 (lambda (x y)
-		   (if (string-match "t" switches)
+		   (if (string-match-p "t" switches)
 		       ;; Sort by date.
 		       (time-less-p (nth 3 y) (nth 3 x))
 		     ;; Sort by name.
 		     (string-lessp (nth 0 x) (nth 0 y))))))
 
 	  ;; Handle "-F" switch.
-	  (when (string-match "F" switches)
+	  (when (string-match-p "F" switches)
 	    (mapc
 	     (lambda (x)
 	       (when (not (zerop (length (car x))))
@@ -1075,7 +1075,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 			   (expand-file-name
 			    (nth 0 x) (file-name-directory filename))
 			   'string)))))
-		 (when (string-match "l" switches)
+		 (when (string-match-p "l" switches)
 		   (insert
 		    (format
 		     "%10s %3d %-8s %-8s %8s %s "
@@ -1106,7 +1106,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		   (put-text-property start (point) 'dired-filename t))
 
 		 ;; Insert symlink.
-		 (when (and (string-match "l" switches)
+		 (when (and (string-match-p "l" switches)
 			    (stringp (tramp-compat-file-attribute-type attr)))
 		   (insert " -> " (tramp-compat-file-attribute-type attr))))
 
@@ -1121,18 +1121,17 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (unless (file-name-absolute-p dir)
     (setq dir (expand-file-name dir default-directory)))
   (with-parsed-tramp-file-name dir nil
-    (save-match-data
-      (let* ((ldir (file-name-directory dir)))
-	;; Make missing directory parts.
-	(when (and parents
-		   (tramp-smb-get-share v)
-		   (not (file-directory-p ldir)))
-	  (make-directory ldir parents))
-	;; Just do it.
-	(when (file-directory-p ldir)
-	  (make-directory-internal dir))
-	(unless (file-directory-p dir)
-	  (tramp-error v 'file-error "Couldn't make directory %s" dir))))))
+    (let* ((ldir (file-name-directory dir)))
+      ;; Make missing directory parts.
+      (when (and parents
+		 (tramp-smb-get-share v)
+		 (not (file-directory-p ldir)))
+	(make-directory ldir parents))
+      ;; Just do it.
+      (when (file-directory-p ldir)
+	(make-directory-internal dir))
+      (unless (file-directory-p dir)
+	(tramp-error v 'file-error "Couldn't make directory %s" dir)))))
 
 (defun tramp-smb-handle-make-directory-internal (directory)
   "Like `make-directory-internal' for Tramp files."
@@ -1140,21 +1139,19 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (unless (file-name-absolute-p directory)
     (setq directory (expand-file-name directory default-directory)))
   (with-parsed-tramp-file-name directory nil
-    (save-match-data
-      (let* ((file (tramp-smb-get-localname v)))
-	(when (file-directory-p (file-name-directory directory))
-	  (tramp-smb-send-command
-	   v
-	   (if (tramp-smb-get-cifs-capabilities v)
-	       (format "posix_mkdir \"%s\" %o" file (default-file-modes))
-	     (format "mkdir \"%s\"" file)))
-	  ;; We must also flush the cache of the directory, because
-	  ;; `file-attributes' reads the values from there.
-	  (tramp-flush-file-properties v (file-name-directory localname))
-	  (tramp-flush-file-properties v localname))
-	(unless (file-directory-p directory)
-	  (tramp-error
-	   v 'file-error "Couldn't make directory %s" directory))))))
+    (let* ((file (tramp-smb-get-localname v)))
+      (when (file-directory-p (file-name-directory directory))
+	(tramp-smb-send-command
+	 v
+	 (if (tramp-smb-get-cifs-capabilities v)
+	     (format "posix_mkdir \"%s\" %o" file (default-file-modes))
+	   (format "mkdir \"%s\"" file)))
+	;; We must also flush the cache of the directory, because
+	;; `file-attributes' reads the values from there.
+	(tramp-flush-file-properties v (file-name-directory localname))
+	(tramp-flush-file-properties v localname))
+      (unless (file-directory-p directory)
+	(tramp-error v 'file-error "Couldn't make directory %s" directory)))))
 
 (defun tramp-smb-handle-make-symbolic-link
   (target linkname &optional ok-if-already-exists)
@@ -1510,7 +1507,7 @@ component is used as the target of the symlink."
 
 	;; Save exit.
 	(with-current-buffer (tramp-get-connection-buffer v)
-	  (if (string-match tramp-temp-buffer-name (buffer-name))
+	  (if (string-match-p tramp-temp-buffer-name (buffer-name))
 	      (progn
 		(set-process-buffer (tramp-get-connection-process v) nil)
 		(kill-buffer (current-buffer)))
@@ -1621,7 +1618,7 @@ If VEC has no cifs capabilities, exchange \"/\" by \"\\\\\"."
 
       ;; A period followed by a space, or trailing periods and spaces,
       ;; are not supported.
-      (when (string-match "\\. \\|\\.$\\| $" localname)
+      (when (string-match-p "\\. \\|\\.$\\| $" localname)
 	(tramp-error
 	 vec 'file-error
 	 "Invalid file name %s" (tramp-make-tramp-file-name vec localname)))
@@ -1775,7 +1772,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 	  (cl-return))
 
 	;; weekday.
-	(if (string-match "\\(\\w+\\)$" line)
+	(if (string-match-p "\\(\\w+\\)$" line)
 	    (setq line (substring line 0 -5))
 	  (cl-return))
 
@@ -2086,7 +2083,6 @@ Returns nil if an error message has appeared."
 
 (defun tramp-smb-call-winexe (vec)
   "Apply a remote command, if possible, using `tramp-smb-winexe-program'."
-
   ;; Check for program.
   (unless (executable-find tramp-smb-winexe-program)
     (tramp-error
