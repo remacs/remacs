@@ -1997,7 +1997,7 @@ handled properly.  BODY shall not contain a timeout."
   (skip-unless (tramp--test-enabled))
 
   ;; These are the methods the test doesn't fail.
-  (when (or (tramp--test-adb-p) (tramp--test-gvfs-p)
+  (when (or (tramp--test-adb-p) (tramp--test-gvfs-p) (tramp--test-rclone-p)
 	    (tramp-smb-file-name-p tramp-test-temporary-file-directory))
     (setf (ert-test-expected-result-type
 	   (ert-get-test 'tramp-test05-expand-file-name-relative))
@@ -4551,6 +4551,11 @@ This does not support external Emacs calls."
   (string-equal
    "nextcloud" (file-remote-p tramp-test-temporary-file-directory 'method)))
 
+(defun tramp--test-rclone-p ()
+  "Check, whether the remote host is offered by rclone.
+This requires restrictions of file name syntax."
+  (tramp-rclone-file-name-p tramp-test-temporary-file-directory))
+
 (defun tramp--test-rsync-p ()
   "Check, whether the rsync method is used.
 This does not support special file names."
@@ -4755,7 +4760,9 @@ This requires restrictions of file name syntax."
   ;; expanded to <TAB>.
   (let ((files
 	 (list
-	  (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
+	  (if (or (tramp--test-gvfs-p)
+		  (tramp--test-rclone-p)
+		  (tramp--test-windows-nt-or-smb-p))
 	      "foo bar baz"
 	    (if (or (tramp--test-adb-p)
 		    (tramp--test-docker-p)
@@ -4781,7 +4788,9 @@ This requires restrictions of file name syntax."
 	  (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
 	      "!foo!bar!baz!"
 	    "!foo|bar!baz|")
-	  (if (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))
+	  (if (or (tramp--test-gvfs-p)
+		  (tramp--test-rclone-p)
+		  (tramp--test-windows-nt-or-smb-p))
 	      ";foo;bar;baz;"
 	    ":foo;bar:baz;")
 	  (unless (or (tramp--test-gvfs-p) (tramp--test-windows-nt-or-smb-p))

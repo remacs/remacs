@@ -39,6 +39,7 @@
 (require 'tramp)
 
 ;; TODDDDDDDDDO: REPLACE
+(require 'tramp-adb)
 (require 'tramp-gvfs)
 
 ;;;###tramp-autoload
@@ -85,7 +86,7 @@
     (dired-compress-file . ignore)
     (dired-uncache . tramp-handle-dired-uncache)
     (exec-path . ignore)
-    ;; `expand-file-name' performed by default handler.
+    (expand-file-name . tramp-adb-handle-expand-file-name)
     (file-accessible-directory-p . tramp-handle-file-accessible-directory-p)
     (file-acl . ignore)
     (file-attributes . tramp-rclone-handle-file-attributes)
@@ -258,7 +259,15 @@ file names."
 	    (with-parsed-tramp-file-name filename v1
 	      (tramp-flush-file-properties
 	       v1 (file-name-directory v1-localname))
-	      (tramp-flush-file-properties v1 v1-localname)))
+	      (tramp-flush-file-properties v1 v1-localname)
+	      (when (tramp-rclone-file-name-p filename)
+		(tramp-rclone-flush-directory-cache v1)
+		;; The mount point's directory cache might need time
+		;; to flush.
+		(while (file-exists-p filename)
+		  (tramp-flush-file-properties
+		   v1 (file-name-directory v1-localname))
+		  (tramp-flush-file-properties v1 v1-localname)))))
 
 	  (when t2
 	    (with-parsed-tramp-file-name newname v2
@@ -266,7 +275,13 @@ file names."
 	       v2 (file-name-directory v2-localname))
 	      (tramp-flush-file-properties v2 v2-localname)
 	      (when (tramp-rclone-file-name-p newname)
-		(tramp-rclone-flush-mount v2)))))))))
+		(tramp-rclone-flush-directory-cache v2)
+		;; The mount point's directory cache might need time
+		;; to flush.
+		(while (not (file-exists-p newname))
+		  (tramp-flush-file-properties
+		   v2 (file-name-directory v2-localname))
+		  (tramp-flush-file-properties v2 v2-localname))))))))))
 
 (defun tramp-rclone-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
@@ -289,17 +304,18 @@ file names."
     (directory &optional recursive trash)
   "Like `delete-directory' for Tramp files."
   (with-parsed-tramp-file-name (expand-file-name directory) nil
+    (delete-directory (tramp-rclone-local-file-name directory) recursive trash)
     (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-directory-properties v localname)
-    (delete-directory
-     (tramp-rclone-local-file-name directory) recursive trash)))
+    (tramp-rclone-flush-directory-cache v)))
 
 (defun tramp-rclone-handle-delete-file (filename &optional trash)
   "Like `delete-file' for Tramp files."
   (with-parsed-tramp-file-name (expand-file-name filename) nil
+    (delete-file (tramp-rclone-local-file-name filename) trash)
     (tramp-flush-file-properties v (file-name-directory localname))
     (tramp-flush-file-properties v localname)
-    (delete-file (tramp-rclone-local-file-name filename) trash)))
+    (tramp-rclone-flush-directory-cache v)))
 
 (defun tramp-rclone-handle-directory-files
     (directory &optional full match nosort)
@@ -312,11 +328,11 @@ file names."
 	      (tramp-rclone-local-file-name directory) full match)))
 	;; Massage the result.
 	(when full
-	  (let* ((quoted (file-name-quoted-p directory))
+	  (let* ((quoted (tramp-compat-file-name-quoted-p directory))
 		 (local
 		  (concat "^" (regexp-quote (tramp-rclone-mount-point v))))
 		 (remote
-		  (funcall (if quoted 'file-name-quote 'identity)
+		  (funcall (if quoted 'tramp-compat-file-name-quote 'identity)
 			   (file-remote-p directory))))
 	    (setq result
 		  (mapcar
@@ -341,15 +357,32 @@ file names."
 
 (defun tramp-rclone-handle-file-executable-p (filename)
   "Like `file-executable-p' for Tramp files."
-  (file-executable-p (tramp-rclone-local-file-name filename)))
+  (with-parsed-tramp-file-name (expand-file-name filename) nil
+    (with-tramp-file-property v localname "file-executable-p"
+      (file-executable-p (tramp-rclone-local-file-name filename)))))
 
 (defun tramp-rclone-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for Tramp files."
-  (file-name-all-completions filename (tramp-rclone-local-file-name directory)))
+  (all-completions
+   filename
+   (delete-dups
+    (append
+     (file-name-all-completions
+      filename (tramp-rclone-local-file-name directory))
+     ;; Some storage systems do not return "." and "..".
+     (let (result)
+       (dolist (item '(".." ".") result)
+	 (when (string-prefix-p filename item)
+	   (catch 'match
+	     (dolist (elt completion-regexp-list)
+	       (unless (string-match-p elt item) (throw 'match nil)))
+	     (setq result (cons (concat item "/") result))))))))))
 
 (defun tramp-rclone-handle-file-readable-p (filename)
   "Like `file-readable-p' for Tramp files."
-  (file-readable-p (tramp-rclone-local-file-name filename)))
+  (with-parsed-tramp-file-name (expand-file-name filename) nil
+    (with-tramp-file-property v localname "file-readable-p"
+      (file-readable-p (tramp-rclone-local-file-name filename)))))
 
 (defun tramp-rclone-handle-file-system-info (filename)
   "Like `file-system-info' for Tramp files."
@@ -401,13 +434,14 @@ file names."
 (defun tramp-rclone-handle-make-directory (dir &optional parents)
   "Like `make-directory' for Tramp files."
   (with-parsed-tramp-file-name (expand-file-name dir) nil
+    (make-directory (tramp-rclone-local-file-name dir) parents)
     ;; When PARENTS is non-nil, DIR could be a chain of non-existent
     ;; directories a/b/c/...  Instead of checking, we simply flush the
-    ;; whole cache.
+    ;; whole file cache.
     (tramp-flush-file-properties v localname)
     (tramp-flush-directory-properties
      v (if parents "/" (file-name-directory localname)))
-    (make-directory (tramp-rclone-local-file-name dir) parents)))
+    (tramp-rclone-flush-directory-cache v)))
 
 (defun tramp-rclone-handle-rename-file
   (filename newname &optional ok-if-already-exists)
@@ -436,24 +470,38 @@ file names."
 
 (defun tramp-rclone-mounted-p (vec)
   "Check, whether storage system determined by VEC is mounted."
-  (with-tramp-file-property vec "/" "mounted"
-    (string-match
-     (format "^%s:" (regexp-quote (tramp-file-name-host vec)))
-     (shell-command-to-string "mount"))))
+  (when (tramp-get-connection-process vec)
+    ;; We cannot use `with-connection-property', because we don't want
+    ;; to cache a nil result.
+    (or (tramp-get-connection-property
+	 (tramp-get-connection-process vec) "mounted" nil)
+	(tramp-set-connection-property
+	 (tramp-get-connection-process vec) "mounted"
+	 (let* ((default-directory temporary-file-directory)
+		(mount (shell-command-to-string "mount -t fuse.rclone")))
+	   (tramp-message vec 6 "%s" "mount -t fuse.rclone")
+	   (tramp-message vec 6 "\n%s" mount)
+	   (when (string-match
+		  (format
+		   "^\\(%s:\\S-*\\)" (regexp-quote (tramp-file-name-host vec)))
+		  mount)
+	     (match-string 1 mount)))))))
 
-(defun tramp-rclone-flush-mount (vec)
+(defun tramp-rclone-flush-directory-cache (vec)
   "Flush directory cache of VEC mount."
   (let ((rclone-pid
 	 ;; Identify rclone process.
-	 (with-tramp-file-property vec "/" "rclone-pid"
-	   (catch 'pid
-	     (dolist (pid (list-system-processes)) ;; "pidof rclone" ?
-	       (and (string-match
-		     (regexp-quote
-		      (format "rclone mount %s:" (tramp-file-name-host vec)))
-		     (or (cdr (assoc 'args (process-attributes pid))) ""))
-		    (throw 'pid pid)))))))
-    ;; Send a SIGHUP in order to flush directory caches.
+	 (when (tramp-get-connection-process vec)
+	   (with-tramp-connection-property
+	       (tramp-get-connection-process vec) "rclone-pid"
+	     (catch 'pid
+	       (dolist (pid (list-system-processes)) ;; "pidof rclone" ?
+		 (and (string-match-p
+		       (regexp-quote
+			(format "rclone mount %s:" (tramp-file-name-host vec)))
+		       (or (cdr (assoc 'args (process-attributes pid))) ""))
+		      (throw 'pid pid))))))))
+    ;; Send a SIGHUP in order to flush directory cache.
     (when rclone-pid
       (tramp-message
        vec 6 "Send SIGHUP %d: %s"
@@ -462,15 +510,16 @@ file names."
 
 (defun tramp-rclone-local-file-name (filename)
   "Return local mount name of FILENAME."
-  (with-parsed-tramp-file-name (expand-file-name filename) nil
+  (setq filename (tramp-compat-file-name-unquote (expand-file-name filename)))
+  (with-parsed-tramp-file-name filename nil
     ;; As long as we call `tramp-rclone-maybe-open-connection' here,
     ;; we cache the result.
     (with-tramp-file-property v localname "local-file-name"
       (tramp-rclone-maybe-open-connection v)
-      (let ((quoted (file-name-quoted-p localname))
-	    (localname (file-name-unquote localname)))
+      (let ((quoted (tramp-compat-file-name-quoted-p localname))
+	    (localname (tramp-compat-file-name-unquote localname)))
 	(funcall
-	 (if quoted 'file-name-quote 'identity)
+	 (if quoted 'tramp-compat-file-name-quote 'identity)
 	 (expand-file-name
 	  (if (file-name-absolute-p localname)
 	      (substring localname 1) localname)
@@ -478,43 +527,59 @@ file names."
 
 (defun tramp-rclone-remote-file-name (filename)
   "Return FILENAME as used in the `rclone' command."
-  (setq filename (file-name-unquote (expand-file-name filename)))
+  (setq filename (tramp-compat-file-name-unquote (expand-file-name filename)))
   (if (tramp-rclone-file-name-p filename)
       (with-parsed-tramp-file-name filename nil
-	;; TODO: This shall be handled by `expand-file-name'.
-	(setq localname (replace-regexp-in-string "^\\." "" (or localname "")))
-	(format "%s:%s" host localname))
+	;; As long as we call `tramp-rclone-maybe-open-connection' here,
+	;; we cache the result.
+	(with-tramp-file-property v localname "remote-file-name"
+	  (tramp-rclone-maybe-open-connection v)
+	  ;; TODO: This shall be handled by `expand-file-name'.
+	  (setq localname
+		(replace-regexp-in-string "^\\." "" (or localname "")))
+	  (format "%s%s" (tramp-rclone-mounted-p v) localname)))
+    ;; It is a local file name.
     filename))
 
 (defun tramp-rclone-maybe-open-connection (vec)
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
 connection if a previous connection has died for some reason."
-  (unless (tramp-rclone-mounted-p vec)
-    (let ((host (tramp-file-name-host vec)))
+  (let ((host (tramp-file-name-host vec)))
+    (when (rassoc `(,host) (tramp-rclone-parse-device-names nil))
       (if (zerop (length host))
 	  (tramp-error vec 'file-error "Storage %s not connected" host))
-      (with-tramp-progress-reporter vec 3 "Mounting rclone storage"
-	(unless (file-directory-p (tramp-rclone-mount-point vec))
-	  (make-directory (tramp-rclone-mount-point vec) 'parents))
-	(let* ((buf (tramp-get-connection-buffer vec))
-	       (coding-system-for-read 'utf-8-dos) ;is this correct?
-	       (process-connection-type tramp-process-connection-type)
-	       (args `("mount" ,(concat host ":")
-		       ,(tramp-rclone-mount-point vec)
-		       ,(tramp-get-method-parameter vec 'tramp-mount-args)))
-	       (p (let ((default-directory
-			  (tramp-compat-temporary-file-directory)))
-		    (apply 'start-process (tramp-get-connection-name vec) buf
-			   tramp-rclone-program (delq nil args)))))
-	  (tramp-set-file-property vec "/" "mounted" t)
-	  (tramp-message
-	   vec 6 "%s" (mapconcat 'identity (process-command p) " "))
-	  (process-put p 'adjust-window-size-function 'ignore)
+
+      ;; We need a process bound to the connection buffer.  Therefore,
+      ;; we create a dummy process.  Maybe there is a better solution?
+      (unless (get-buffer-process (tramp-get-connection-buffer vec))
+	(let ((p (make-network-process
+		  :name (tramp-buffer-name vec)
+		  :buffer (tramp-get-connection-buffer vec)
+		  :server t :host 'local :service t :noquery t)))
+	  (process-put p 'vector vec)
 	  (set-process-query-on-exit-flag p nil)
 
 	  ;; Set connection-local variables.
-	  (tramp-set-connection-local-variables vec)))))
+	  (tramp-set-connection-local-variables vec)))
+
+      ;; Create directory.
+      (unless (file-directory-p (tramp-rclone-mount-point vec))
+	(make-directory (tramp-rclone-mount-point vec) 'parents))
+
+      ;; Mount.  This command does not return, so we use 0 as
+      ;; DESTINATION of `tramp-call-process'.
+      (unless (tramp-rclone-mounted-p vec)
+	(apply
+	 'tramp-call-process
+	 vec tramp-rclone-program nil 0 nil
+	 (delq nil
+	       `("mount" ,(concat host ":/")
+		 ,(tramp-rclone-mount-point vec)
+		 ;; This could be nil.
+		 ,(tramp-get-method-parameter vec 'tramp-mount-args))))
+	(while (not (file-exists-p (tramp-make-tramp-file-name vec 'localname)))
+	  (tramp-cleanup-connection vec 'keep-debug 'keep-password)))))
 
   ;; In `tramp-check-cached-permissions', the connection properties
   ;; {uig,gid}-{integer,string} are used.  We set them to proper values.
@@ -529,7 +594,6 @@ connection if a previous connection has died for some reason."
 
 (defun tramp-rclone-send-command (vec &rest args)
   "Send the COMMAND to connection VEC."
-;  (tramp-rclone-maybe-open-connection vec)
   (with-current-buffer (tramp-get-connection-buffer vec)
     (erase-buffer)
     (let ((flags (tramp-get-method-parameter
