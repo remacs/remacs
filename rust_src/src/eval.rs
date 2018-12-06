@@ -731,7 +731,7 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
                     // Autoloaded symbols are functions, except if they load
                     // macros or keymaps.
                     let mut it =
-                        obj.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off);
+                        cons.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off);
                     for _ in 0..4 {
                         if it.next().is_none() {
                             break;

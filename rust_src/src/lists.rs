@@ -494,9 +494,8 @@ impl LispCons {
             (LispConsCircularChecks::on, depth + 1, ht)
         };
 
-        let mut it1 = LispObject::from(self).iter_tails_v2(LispConsEndChecks::off, circular_checks);
-        let mut it2 =
-            LispObject::from(other).iter_tails_v2(LispConsEndChecks::off, circular_checks);
+        let mut it1 = self.iter_tails_v2(LispConsEndChecks::off, circular_checks);
+        let mut it2 = other.iter_tails_v2(LispConsEndChecks::off, circular_checks);
         loop {
             match (it1.next(), it2.next()) {
                 (Some(cons1), Some(cons2)) => {
@@ -525,6 +524,14 @@ impl LispCons {
             error!("List too long");
         }
         len
+    }
+
+    pub fn iter_tails_v2(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        TailsIter::new(self.0, Qlistp, end_checks, circular_checks)
     }
 
     pub fn iter_cars_v2(
