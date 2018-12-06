@@ -8,7 +8,7 @@ use crate::{
     frames::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::defsubr,
     lisp::LispObject,
-    lists::LispCons,
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     numbers::IsLispNatnum,
     remacs_sys::{
         command_loop_level, glyph_row_area, interrupt_input_blocked, minibuf_level,
@@ -115,7 +115,7 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
             return false;
         }
 
-        let mut it = event.as_obj().iter_cars_safe();
+        let mut it = event.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off);
 
         if !it.all(|elt| elt.is_fixnum() || elt.is_symbol()) {
             return false;

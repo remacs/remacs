@@ -520,6 +520,14 @@ impl LispCons {
         }
         len
     }
+
+    pub fn iter_cars_v2(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> CarIter {
+        CarIter::new(TailsIter::new(self.0, Qlistp, end_checks, circular_checks))
+    }
 }
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
