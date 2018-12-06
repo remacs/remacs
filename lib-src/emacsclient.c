@@ -66,10 +66,6 @@ char *w32_getenv (const char *);
 
 #endif /* !WINDOWSNT */
 
-#ifndef DOS_NT
-# include <termios.h>
-#endif
-
 #include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
@@ -1740,15 +1736,6 @@ start_daemon_and_retry_set_socket (void)
   return emacs_socket;
 }
 
-/* Flush standard output and its underlying file descriptor.  */
-static void
-flush_stdout (HSOCKET emacs_socket)
-{
-  fflush (stdout);
-  while (tcdrain (STDOUT_FILENO) != 0 && errno == EINTR)
-    act_on_signals (emacs_socket);
-}
-
 int
 main (int argc, char **argv)
 {
@@ -1964,7 +1951,7 @@ main (int argc, char **argv)
       printf ("Waiting for Emacs...");
       skiplf = false;
     }
-  flush_stdout (emacs_socket);
+  fflush (stdout);
 
   /* Now, wait for an answer and print any messages.  */
   while (exit_status == EXIT_SUCCESS)
@@ -2067,7 +2054,6 @@ main (int argc, char **argv)
 
   if (!skiplf)
     printf ("\n");
-  flush_stdout (emacs_socket);
 
   if (rl < 0)
     exit_status = EXIT_FAILURE;
