@@ -1998,33 +1998,41 @@ Saves the buffer to the file."
 	(set (make-local-variable 'vc-parent-buffer) filebuf))
       result-buf)))
 
-(defun vc-find-revision-no-save (file revision &optional backend)
-  "Read REVISION of FILE into a buffer and return the buffer.
-Unlike `vc-find-revision-save', doesn't save the created buffer to file."
-  (let ((filebuf (or (get-file-buffer file) (current-buffer)))
-        (filename (vc-version-backup-file-name file revision 'manual)))
-    (unless (or (get-file-buffer filename)
-                (file-exists-p filename))
+(defun vc-find-revision-no-save (file revision &optional backend buffer)
+  "Read REVISION of FILE into BUFFER and return the buffer.
+If BUFFER omitted or nil, this function creates a new buffer and sets
+`buffer-file-name' to the name constructed from the file name and the
+revision number.
+Unlike `vc-find-revision-save', doesn't save the buffer to the file."
+  (let* ((buffer (when (buffer-live-p buffer) buffer))
+         (filebuf (or buffer (get-file-buffer file) (current-buffer)))
+         (filename (unless buffer (vc-version-backup-file-name file revision 'manual))))
+    (unless (and (not buffer)
+                 (or (get-file-buffer filename)
+                     (file-exists-p filename)))
       (with-current-buffer filebuf
 	(let ((failed t))
 	  (unwind-protect
 	      (let ((coding-system-for-read 'no-conversion)
-		    (coding-system-for-write 'no-conversion))
-		(with-current-buffer (create-file-buffer filename)
-                  (setq buffer-file-name filename)
+                    (coding-system-for-write 'no-conversion))
+		(with-current-buffer (or buffer (create-file-buffer filename))
+                  (unless buffer (setq buffer-file-name filename))
 		  (let ((outbuf (current-buffer)))
 		    (with-current-buffer filebuf
 		      (if backend
 			  (vc-call-backend backend 'find-revision file revision outbuf)
 			(vc-call find-revision file revision outbuf))))
                   (goto-char (point-min))
-                  (normal-mode)
+                  (if buffer (let ((buffer-file-name file)) (normal-mode)) (normal-mode))
 	          (set-buffer-modified-p nil)
                   (setq buffer-read-only t))
 		(setq failed nil))
-	    (when (and failed (get-file-buffer filename))
+	    (when (and failed (unless buffer (get-file-buffer filename)))
+	      (with-current-buffer (get-file-buffer filename)
+		(set-buffer-modified-p nil))
 	      (kill-buffer (get-file-buffer filename)))))))
-    (let ((result-buf (or (get-file-buffer filename)
+    (let ((result-buf (or buffer
+                          (get-file-buffer filename)
                           (find-file-noselect filename))))
       (with-current-buffer result-buf
 	(set (make-local-variable 'vc-parent-buffer) filebuf))
