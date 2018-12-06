@@ -2120,7 +2120,11 @@ next element of the minibuffer history in the minibuffer."
 	 (prompt-end (minibuffer-prompt-end))
 	 (old-column (unless (and (eolp) (> (point) prompt-end))
 		       (if (= (line-number-at-pos) 1)
-			   (max (- (current-column) (1- prompt-end)) 0)
+			   (max (- (current-column)
+				   (save-excursion
+				     (goto-char (1- prompt-end))
+				     (current-column)))
+				0)
 			 (current-column)))))
     (condition-case nil
 	(with-no-warnings
@@ -2139,7 +2143,10 @@ next element of the minibuffer history in the minibuffer."
        (goto-char (point-max))
        (when old-column
 	 (if (= (line-number-at-pos) 1)
-	     (move-to-column (+ old-column (1- (minibuffer-prompt-end))))
+	     (move-to-column (+ old-column
+				(save-excursion
+				  (goto-char (1- (minibuffer-prompt-end)))
+				  (current-column))))
 	   (move-to-column old-column)))))))
 
 (defun previous-line-or-history-element (&optional arg)
@@ -2154,7 +2161,11 @@ previous element of the minibuffer history in the minibuffer."
 	 (prompt-end (minibuffer-prompt-end))
 	 (old-column (unless (and (eolp) (> (point) prompt-end))
 		       (if (= (line-number-at-pos) 1)
-			   (max (- (current-column) (1- prompt-end)) 0)
+			   (max (- (current-column)
+				   (save-excursion
+				     (goto-char (1- prompt-end))
+				     (current-column)))
+				0)
 			 (current-column)))))
     (condition-case nil
 	(with-no-warnings
@@ -2173,7 +2184,10 @@ previous element of the minibuffer history in the minibuffer."
        (goto-char (minibuffer-prompt-end))
        (if old-column
 	   (if (= (line-number-at-pos) 1)
-	       (move-to-column (+ old-column (1- (minibuffer-prompt-end))))
+	       (move-to-column (+ old-column
+				  (save-excursion
+				    (goto-char (1- (minibuffer-prompt-end)))
+				    (current-column))))
 	     (move-to-column old-column))
 	 ;; Put the cursor at the end of the visual line instead of the
 	 ;; logical line, so the next `previous-line-or-history-element'
