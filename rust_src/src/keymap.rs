@@ -262,7 +262,7 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn keymap_prompt(map: LispObject) -> LispObject {
     let map = get_keymap(map, false, false);
-    for elt in map.iter_cars_safe() {
+    for elt in map.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let mut tem = elt;
         if tem.is_string() {
             return tem;
@@ -356,7 +356,7 @@ pub unsafe extern "C" fn map_keymap_internal(
     };
 
     let mut parent = tail;
-    for tail_cons in tail.iter_tails_safe() {
+    for tail_cons in tail.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let binding = tail_cons.car();
         if binding.eq(Qkeymap) {
             break;
