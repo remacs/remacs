@@ -103,11 +103,10 @@ pub fn lisp_if(args: LispObject) -> LispObject {
 pub fn cond(args: LispObject) -> LispObject {
     let mut val = Qnil;
 
-    for clause in args.iter_cars_safe() {
-        let cell = clause.as_cons_or_error();
-        val = unsafe { eval_sub(cell.car()) };
+    for clause in args.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        let (head, tail) = clause.as_cons_or_error().as_tuple();
+        val = unsafe { eval_sub(head) };
         if val != Qnil {
-            let tail = cell.cdr();
             if tail.is_not_nil() {
                 val = progn(tail);
             }
@@ -122,7 +121,7 @@ pub fn cond(args: LispObject) -> LispObject {
 /// usage: (progn BODY...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn progn(body: LispObject) -> LispObject {
-    body.iter_cars_safe()
+    body.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
         .map(|form| unsafe { eval_sub(form) })
         .last()
         .into()
@@ -171,7 +170,9 @@ pub fn prog2(args: LispCons) -> LispObject {
 pub fn setq(args: LispObject) -> LispObject {
     let mut val = args;
 
-    let mut it = args.iter_cars().enumerate();
+    let mut it = args
+        .iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
+        .enumerate();
     while let Some((nargs, sym)) = it.next() {
         let (_, arg) = it.next().unwrap_or_else(|| {
             xsignal!(
