@@ -332,7 +332,7 @@ impl TailsIter2 {
     }
 
     // This function must only be called when LispConsCircularCheck is either on or safe.
-    fn check_circular(&mut self, cons: LispCons) {
+    fn check_circular(&mut self) {
         self.q = self.q.wrapping_sub(1);
         if self.q != 0 {
             if self.tail == self.tortoise {
