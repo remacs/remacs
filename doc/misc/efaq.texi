@@ -2011,8 +2011,12 @@ When this is done, Emacs by default creates a Unix domain socket named
 desktop and @file{$TMPDIR/emacs@var{userid}} otherwise.  See the variable
 @code{server-socket-dir}.  Traditionally, Emacs used
 @file{$TMPDIR/emacs@var{userid}} even when running under an X desktop;
-if you prefer this traditional (and less-secure) behavior, unset
-@env{XDG_RUNTIME_DIR} before invoking Emacs and @samp{emacsclient}.
+if you prefer this traditional (and less-secure) behavior, you
+can set the environment variable @env{EMACS_SOCKET_NAME} to
+@samp{$TMPDIR/emacs@var{userid}/server} before invoking Emacs and
+@samp{emacsclient}, although it will be your responsibility to create
+the directory @samp{$TMPDIR/emacs@var{userid}} with appropriate
+ownership and permissions.
 
 To get your news reader, mail reader, etc., to invoke
 @samp{emacsclient}, try setting the environment variable @code{EDITOR}
