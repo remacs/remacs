@@ -22,6 +22,12 @@ use crate::{
 pub struct LispCons(LispObject);
 
 impl LispObject {
+    pub fn check_list(self) {
+        if !(self.is_cons() || self.is_nil()) {
+            wrong_type!(Qlistp, self);
+        }
+    }
+
     pub fn is_cons(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Cons
     }

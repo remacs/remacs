@@ -365,7 +365,7 @@ pub fn letX(args: LispCons) -> LispObject {
 
     let lexenv = unsafe { globals.Vinternal_interpreter_environment };
 
-    for var in varlist.iter_cars() {
+    for var in varlist.iter_cars_v2(LispConsEndChecks::on, LispConsCircularChecks::off) {
         unsafe { maybe_quit() };
 
         let (var, val) = let_binding_value(var);
@@ -426,9 +426,11 @@ pub fn lisp_let(args: LispCons) -> LispObject {
     let count = c_specpdl_index();
     let (varlist, body) = args.as_tuple();
 
+    varlist.check_list();
+
     let mut lexenv = unsafe { globals.Vinternal_interpreter_environment };
 
-    for var in varlist.iter_cars() {
+    for var in varlist.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (var, val) = let_binding_value(var);
 
         let mut dyn_bind = true;
@@ -479,7 +481,7 @@ pub fn lisp_while(args: LispCons) {
     while unsafe { eval_sub(test) } != Qnil {
         unsafe { maybe_quit() };
 
-        progn(body);
+        prog_ignore(body);
     }
 }
 
@@ -522,15 +524,18 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             // SYM is not mentioned in ENVIRONMENT.
             // Look at its function definition.
             def = autoload_do_load(def, sym, Qmacro);
-            if let Some(cell) = def.as_cons() {
-                let func = cell.car();
-                if !func.eq(Qmacro) {
+            match def.as_cons() {
+                Some(cell) => {
+                    let func = cell.car();
+                    if !func.eq(Qmacro) {
+                        break;
+                    }
+                    cell.cdr()
+                }
+                None => {
+                    // Not defined or definition not suitable.
                     break;
                 }
-                cell.cdr()
-            } else {
-                // Not defined or definition not suitable.
-                break;
             }
         } else {
             let next = tem.as_cons_or_error().cdr();
@@ -584,7 +589,7 @@ pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
 /// Signal `error' with message MSG, and additional arg ARG.
 /// If ARG is not a genuine list, make it a one-element list.
 fn signal_error(msg: &str, arg: LispObject) -> ! {
-    let it = arg.iter_tails_safe();
+    let it = arg.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::safe);
     let arg = match it.last() {
         None => list!(arg),
         Some(_) => arg,
@@ -725,7 +730,8 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
                 if cons.car().eq(Qautoload) {
                     // Autoloaded symbols are functions, except if they load
                     // macros or keymaps.
-                    let mut it = obj.iter_tails_safe();
+                    let mut it =
+                        obj.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off);
                     for _ in 0..4 {
                         if it.next().is_none() {
                             break;
