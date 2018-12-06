@@ -525,6 +525,33 @@ x_create_bitmap_mask (struct frame *f, ptrdiff_t id)
 			    Image types
  ***********************************************************************/
 
+/* Each image format (JPEG, TIFF, ...) supported is described by
+   a structure of the type below.  */
+
+struct image_type
+{
+  /* Index of a symbol uniquely identifying the image type, e.g., 'jpeg'.  */
+  int type;
+
+  /* Check that SPEC is a valid image specification for the given
+     image type.  Value is true if SPEC is valid.  */
+  bool (*valid_p) (Lisp_Object spec);
+
+  /* Load IMG which is used on frame F from information contained in
+     IMG->spec.  Value is true if successful.  */
+  bool (*load) (struct frame *f, struct image *img);
+
+  /* Free resources of image IMG which is used on frame F.  */
+  void (*free) (struct frame *f, struct image *img);
+
+  /* Initialization function (used for dynamic loading of image
+     libraries on Windows), or NULL if none.  */
+  bool (*init) (void);
+
+  /* Next in list of all supported image types.  */
+  struct image_type *next;
+};
+
 /* List of supported image types.  Use define_image_type to add new
    types.  Use lookup_image_type to find a type for a given symbol.  */
 

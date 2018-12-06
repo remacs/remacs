@@ -2935,34 +2935,6 @@ struct redisplay_interface
 
 #ifdef HAVE_WINDOW_SYSTEM
 
-/* Each image format (JPEG, TIFF, ...) supported is described by
-   a structure of the type below.  */
-
-struct image_type
-{
-  /* Index of a symbol uniquely identifying the image type, e.g., 'jpeg'.  */
-  int type;
-
-  /* Check that SPEC is a valid image specification for the given
-     image type.  Value is true if SPEC is valid.  */
-  bool (* valid_p) (Lisp_Object spec);
-
-  /* Load IMG which is used on frame F from information contained in
-     IMG->spec.  Value is true if successful.  */
-  bool (* load) (struct frame *f, struct image *img);
-
-  /* Free resources of image IMG which is used on frame F.  */
-  void (* free) (struct frame *f, struct image *img);
-
-  /* Initialization function (used for dynamic loading of image
-     libraries on Windows), or NULL if none.  */
-  bool (* init) (void);
-
-  /* Next in list of all supported image types.  */
-  struct image_type *next;
-};
-
-
 /* Structure describing an image.  Specific image formats like XBM are
    converted into this form, so that display only has to deal with
    this type of image.  */
