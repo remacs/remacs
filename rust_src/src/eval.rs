@@ -8,7 +8,8 @@ use crate::{
     data::{defalias, indirect_function, indirect_function_lisp, set, set_default},
     lisp::{defsubr, is_autoload},
     lisp::{LispObject, LispSubrRef},
-    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons},
+    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr},
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::loadhist_attach,
     objects::equal,
@@ -43,16 +44,7 @@ use crate::{
 /// usage: (or CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn or(args: LispObject) -> LispObject {
-    let mut val = Qnil;
-
-    for elt in args.iter_cars_safe() {
-        val = unsafe { eval_sub(elt) };
-        if val != Qnil {
-            break;
-        }
-    }
-
-    val
+    walk_all(args, Qnil, |a, b| a != b)
 }
 
 /// Eval args until one of them yields nil, then return nil.
@@ -61,11 +53,18 @@ pub fn or(args: LispObject) -> LispObject {
 /// usage: (and CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn and(args: LispObject) -> LispObject {
-    let mut val = Qt;
+    walk_all(args, Qt, |a, b| a == b)
+}
 
-    for elt in args.iter_cars_safe() {
+fn walk_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
+where
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
+{
+    let mut val = initial;
+
+    for elt in args.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
         val = unsafe { eval_sub(elt) };
-        if val == Qnil {
+        if cmp(val, Qnil) {
             break;
         }
     }
