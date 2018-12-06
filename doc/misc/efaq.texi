@@ -2009,7 +2009,10 @@ When this is done, Emacs by default creates a Unix domain socket named
 @file{server} in a well-known directory, typically
 @file{$XDG_RUNTIME_DIR/emacs} if Emacs is running under an X Window System
 desktop and @file{$TMPDIR/emacs@var{userid}} otherwise.  See the variable
-@code{server-socket-dir}.
+@code{server-socket-dir}.  Traditionally, Emacs used
+@file{$TMPDIR/emacs@var{userid}} even when running under an X desktop;
+if you prefer this traditional (and less-secure) behavior, unset
+@env{XDG_RUNTIME_DIR} before invoking Emacs and @samp{emacsclient}.
 
 To get your news reader, mail reader, etc., to invoke
 @samp{emacsclient}, try setting the environment variable @code{EDITOR}

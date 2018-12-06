@@ -133,6 +133,8 @@ to apply.
 as the directory for client/server sockets, if Emacs is running
 under an X Window System desktop that sets the XDG_RUNTIME_DIR
 environment variable to indicate where session sockets should go.
+To get the old and less-secure behavior, unset XDG_RUNTIME_DIR before
+invoking emacs and emacsclient.
 
 ---
 *** When run by root, emacsclient no longer connects to non-root sockets.
