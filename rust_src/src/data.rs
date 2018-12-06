@@ -16,23 +16,25 @@ use crate::{
     multibyte::{is_ascii, is_single_byte_char},
     obarray::{loadhist_attach, map_obarray},
     remacs_sys,
+    remacs_sys::Vautoload_queue,
     remacs_sys::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
         emacs_abort, globals, rust_count_one_bits, set_default_internal, set_internal,
-        symbol_trapped_write, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
+        symbol_trapped_write, valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET,
+        CHECK_IMPURE,
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
-    remacs_sys::{Fdelete, Ffset, Fget, Fpurecopy},
+    remacs_sys::{Fdelete, Fget, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice,
         Qcompiled_function, Qcondition_variable, Qcons, Qcyclic_function_indirection,
         Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object,
         Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker,
-        Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol,
-        Qt, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector, Qvoid_variable,
-        Qwatchers, Qwindow, Qwindow_configuration,
+        Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qsetting_constant,
+        Qstring, Qsubr, Qsymbol, Qt, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector,
+        Qvoid_variable, Qwatchers, Qwindow, Qwindow_configuration,
     },
     symbols::LispSymbolRef,
     threads::ThreadState,
@@ -304,7 +306,7 @@ pub fn defalias(
     if hook.is_not_nil() {
         call!(hook, sym, definition);
     } else {
-        unsafe { Ffset(sym, definition) };
+        fset(symbol, definition);
     }
 
     if docstring.is_not_nil() {
@@ -787,6 +789,41 @@ pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
 pub fn logcount(value: EmacsInt) -> i32 {
     let value = if value < 0 { -1 - value } else { value };
     unsafe { rust_count_one_bits(value as usize) }
+}
+
+/// Set SYMBOL's function definition to DEFINITION, and return DEFINITION.
+#[lisp_fn]
+pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
+    let sym_obj = symbol.as_lisp_obj();
+    if sym_obj.is_nil() {
+        // Perhaps not quite the right error signal, but seems good enough.
+        xsignal!(Qsetting_constant, sym_obj);
+    }
+
+    let function = symbol.get_function();
+
+    unsafe {
+        if Vautoload_queue.is_not_nil() && function.is_not_nil() {
+            Vautoload_queue =
+                LispObject::cons(LispObject::cons(sym_obj, function), Vautoload_queue);
+        }
+    }
+
+    if is_autoload(function) {
+        put(symbol, Qautoload, function.as_cons_or_error().cdr());
+    }
+
+    // Convert to eassert or remove after GC bug is found.  In the
+    // meantime, check unconditionally, at a slight perf hit.
+    unsafe {
+        if valid_lisp_object_p(definition) == 0 {
+            panic!("Invalid Lisp object: {:?}", definition);
+        }
+    }
+
+    symbol.set_function(definition);
+
+    definition
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));
