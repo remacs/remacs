@@ -59,6 +59,14 @@ impl LispObject {
         TailsIter::new(self, Qlistp, end_checks, circular_checks)
     }
 
+    pub fn iter_tails_v2_1(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter2 {
+        TailsIter2::new(self, Qlistp, end_checks, circular_checks)
+    }
+
     pub fn iter_tails_plist_v2(
         self,
         end_checks: LispConsEndChecks,
@@ -165,13 +173,13 @@ impl LispObject {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LispConsEndChecks {
     off, // no checks
     on,  // error when the last item inspected is not a valid cons cell.
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LispConsCircularChecks {
     off,  // no checks
     safe, // checked, exits when a circular list is found.
@@ -257,6 +265,7 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
+                // FIXME: SHALEH: in Emacs, if a value is returned no error is raised. Here we always check.
                 if self.tail.is_not_nil() {
                     if let Some(errsym) = self.errsym {
                         wrong_type!(errsym, self.list);
@@ -273,6 +282,113 @@ impl Iterator for TailsIter {
                     _ => self.check_circular(cons),
                 }
             }
+        }
+    }
+}
+
+pub struct TailsIter2 {
+    list: LispObject,
+    tail: LispObject,
+    prev: Option<LispObject>,
+    tortoise: LispObject,
+    errsym: Option<LispObject>,
+    circular_checks: LispConsCircularChecks,
+    max: isize,
+    n: isize,
+    q: u16,
+}
+
+impl TailsIter2 {
+    pub fn new(
+        list: LispObject,
+        ty: LispObject,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> Self {
+        let errsym = match end_checks {
+            LispConsEndChecks::on => Some(ty),
+            _ => None,
+        };
+
+        Self {
+            list,
+            tail: list,
+            prev: None,
+            tortoise: list,
+            errsym,
+            circular_checks,
+            max: 2,
+            n: 0,
+            q: 2,
+        }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        // This is kind of like Peekable but even when None is returned there
+        // might still be a valid item in self.tail.
+        self.tail
+    }
+
+    // This function must only be called when LispConsCircularCheck is either on or safe.
+    fn check_circular(&mut self, cons: LispCons) {
+        self.q = self.q.wrapping_sub(1);
+        if self.q != 0 {
+            if self.tail == self.tortoise {
+                if self.circular_checks == LispConsCircularChecks::on {
+                    circular_list(self.tail);
+                }
+            }
+        } else {
+            self.n = self.n.wrapping_sub(1);
+            if self.n > 0 {
+                if self.tail == self.tortoise {
+                    if self.circular_checks == LispConsCircularChecks::on {
+                        circular_list(self.tail);
+                    }
+                }
+            } else {
+                self.max <<= 1;
+                self.q = self.max as u16;
+                self.n = self.max >> 16;
+                self.tortoise = self.tail;
+            }
+        }
+    }
+}
+
+impl Iterator for TailsIter2 {
+    type Item = LispObject;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.tail.is_nil() {
+            if let Some(obj) = self.prev {
+                if obj.is_not_nil() {
+                    if let Some(errsym) = self.errsym {
+                        wrong_type!(errsym, self.list);
+                    }
+                }
+            }
+            None
+        } else {
+            let next = match self.tail.as_cons() {
+                None => {
+                    self.prev = Some(self.tail);
+                    Qnil
+                }
+                Some(cons) => {
+                    // when off we do no checks at all. When 'safe' the checks are performed
+                    // and the iteration exits but no errors are raised.
+                    if self.circular_checks != LispConsCircularChecks::off {
+                        self.check_circular(cons);
+                    }
+                    self.prev = None;
+                    cons.cdr()
+                }
+            };
+
+            let value = self.tail;
+            self.tail = next;
+            Some(value)
         }
     }
 }
@@ -483,13 +599,13 @@ pub fn cdr_safe(object: LispObject) -> LispObject {
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
 pub fn nthcdr(n: EmacsInt, list: LispObject) -> LispObject {
-    if n < 0 {
+    if n <= 0 {
         list
     } else {
-        let mut it = list.iter_tails_safe();
+        let mut it = list.iter_tails_v2_1(LispConsEndChecks::on, LispConsCircularChecks::safe);
 
         match it.nth(n as usize) {
-            Some(value) => value.as_obj(),
+            Some(value) => value,
             None => it.rest(),
         }
     }
@@ -828,20 +944,22 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
 
     loop {
         if l1.is_nil() {
-            if let Some(cons) = tail {
-                setcdr(cons, l2);
-                return value;
-            } else {
-                return l2;
-            }
+            match tail {
+                Some(cons) => {
+                    setcdr(cons, l2);
+                    return value;
+                }
+                None => return l2,
+            };
         }
         if l2.is_nil() {
-            if let Some(cons) = tail {
-                setcdr(cons, l1);
-                return value;
-            } else {
-                return l1;
-            }
+            match tail {
+                Some(cons) => {
+                    setcdr(cons, l1);
+                    return value;
+                }
+                None => return l1,
+            };
         }
 
         let item;
@@ -852,11 +970,14 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
             item = l2;
             l2 = cdr(l2);
         }
-        if let Some(cons) = tail {
-            setcdr(cons, item);
-        } else {
-            value = item;
-        }
+        match tail {
+            Some(cons) => {
+                setcdr(cons, item);
+            }
+            None => {
+                value = item;
+            }
+        };
         tail = item.as_cons();
     }
 }
