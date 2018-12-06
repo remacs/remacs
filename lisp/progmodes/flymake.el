@@ -4,7 +4,7 @@
 
 ;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
-;; Version: 1.0.1
+;; Version: 1.0.2
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: c languages tools
 
@@ -220,24 +220,25 @@ Specifically, start it when the saved buffer is actually displayed."
   :version "26.1"
   :type 'boolean)
 
-(define-fringe-bitmap 'flymake-double-exclamation-mark
-  (vector #b00000000
-          #b00000000
-          #b00000000
-          #b00000000
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b00000000
-          #b01100110
-          #b00000000
-          #b00000000
-          #b00000000))
+(when (fboundp 'define-fringe-bitmap)
+  (define-fringe-bitmap 'flymake-double-exclamation-mark
+    (vector #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b00000000
+            #b01100110
+            #b00000000
+            #b00000000
+            #b00000000)))
 
 (defvar-local flymake-timer nil
   "Timer for starting syntax check.")
