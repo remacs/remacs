@@ -8,6 +8,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     frames::{LispFrameOrSelected, LispFrameRef},
     lisp::{defsubr, ExternalPtr},
+    lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::{
         clear_current_matrices, dtotimespec, fset_redisplay, mark_window_display_accurate,
         timespec_add, timespec_sub, wait_reading_process_output,
