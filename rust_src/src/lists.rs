@@ -34,11 +34,7 @@ impl LispObject {
     }
 
     pub fn as_cons_or_error(self) -> LispCons {
-        if self.is_cons() {
-            LispCons(self)
-        } else {
-            wrong_type!(Qconsp, self)
-        }
+        self.as_cons().unwrap_or_else(|| wrong_type!(Qconsp, self))
     }
 }
 
@@ -530,13 +526,13 @@ pub fn consp(object: LispObject) -> bool {
 /// Otherwise, return nil.
 #[lisp_fn]
 pub fn listp(object: LispObject) -> bool {
-    object.is_cons() || object.is_nil()
+    object.is_nil() || consp(object)
 }
 
 /// Return t if OBJECT is not a list.  Lists include nil.
 #[lisp_fn]
 pub fn nlistp(object: LispObject) -> bool {
-    !(object.is_cons() || object.is_nil())
+    !listp(object)
 }
 
 /// Set the car of CELL to be NEWCAR. Returns NEWCAR.
