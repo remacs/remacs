@@ -399,7 +399,10 @@ handled properly.  BODY shall not contain a timeout."
 	(tramp-default-host "default-host")
 	tramp-default-method-alist
 	tramp-default-user-alist
-	tramp-default-host-alist)
+	tramp-default-host-alist
+	;; Suppress check for multihops.
+	(tramp-cache-data  (make-hash-table :test 'equal))
+	(tramp-connection-properties '((nil "login-program" t))))
     ;; Expand `tramp-default-user' and `tramp-default-host'.
     (should (string-equal
 	     (file-remote-p "/method::")
@@ -836,6 +839,9 @@ handled properly.  BODY shall not contain a timeout."
 	(tramp-default-host "default-host")
 	tramp-default-user-alist
 	tramp-default-host-alist
+	;; Suppress check for multihops.
+	(tramp-cache-data  (make-hash-table :test 'equal))
+	(tramp-connection-properties '((nil "login-program" t)))
 	(syntax tramp-syntax))
     (unwind-protect
 	(progn
@@ -1157,6 +1163,9 @@ handled properly.  BODY shall not contain a timeout."
 	tramp-default-method-alist
 	tramp-default-user-alist
 	tramp-default-host-alist
+	;; Suppress check for multihops.
+	(tramp-cache-data  (make-hash-table :test 'equal))
+	(tramp-connection-properties '((nil "login-program" t)))
 	(syntax tramp-syntax))
     (unwind-protect
 	(progn
@@ -1851,6 +1860,16 @@ handled properly.  BODY shall not contain a timeout."
 (ert-deftest tramp-test03-file-name-method-rules ()
   "Check file name rules for some methods."
   (skip-unless (tramp--test-enabled))
+  ;; `user-error' has appeared in Emacs 24.3.
+  (skip-unless (fboundp 'user-error))
+
+  ;; Multi hops are allowed for inline methods only.
+  (should-error
+   (file-remote-p "/ssh:user1@host1|method:user2@host2:/path/to/file")
+   :type 'user-error)
+  (should-error
+   (file-remote-p "/method:user1@host1|ssh:user2@host2:/path/to/file")
+   :type 'user-error)
 
   ;; Samba does not support file names with periods followed by
   ;; spaces, and trailing periods or spaces.

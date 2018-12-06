@@ -1391,19 +1391,36 @@ default values are used."
 		  (and hop
 		       (format-spec hop (format-spec-make ?h host ?u user))))))
 
-	(make-tramp-file-name
-	 :method method :user user :domain domain :host host :port port
-	 :localname localname :hop hop)))))
+	;; Return result.
+	(prog1
+	    (setq v (make-tramp-file-name
+		     :method method :user user :domain domain :host host
+		     :port port :localname localname :hop hop))
+	  ;; Only some methods from tramp-sh.el do support multi-hops.
+	  (when (and
+		 hop
+		 (or (not (tramp-get-method-parameter v 'tramp-login-program))
+		     (tramp-get-method-parameter v 'tramp-copy-program)))
+	    (tramp-user-error
+	     v "Method `%s' is not supported for multi-hops." method)))))))
 
 (defun tramp-dissect-hop-name (name &optional nodefault)
   "Return a `tramp-file-name' structure of `hop' part of NAME.
 See `tramp-dissect-file-name' for details."
-  (tramp-dissect-file-name
-   (concat
-    tramp-prefix-format
-    (replace-regexp-in-string
-     (concat tramp-postfix-hop-regexp "$") tramp-postfix-host-format name))
-   nodefault))
+  (let ((v (tramp-dissect-file-name
+	    (concat tramp-prefix-format
+		    (replace-regexp-in-string
+		     (concat tramp-postfix-hop-regexp "$")
+		     tramp-postfix-host-format name))
+	    nodefault)))
+    ;; Only some methods from tramp-sh.el do support multi-hops.
+    (when (or (not (tramp-get-method-parameter v 'tramp-login-program))
+	      (tramp-get-method-parameter v 'tramp-copy-program))
+      (tramp-user-error
+       v "Method `%s' is not supported for multi-hops."
+       (tramp-file-name-method v)))
+    ;; Return result.
+    v))
 
 (defun tramp-buffer-name (vec)
   "A name for the connection buffer VEC."
