@@ -265,7 +265,6 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                // FIXME: SHALEH: in Emacs, if a value is returned no error is raised. Here we always check.
                 if self.tail.is_not_nil() {
                     if let Some(errsym) = self.errsym {
                         wrong_type!(errsym, self.list);
