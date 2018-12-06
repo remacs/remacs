@@ -14,6 +14,7 @@ use crate::{
     keyboard::lucid_event_type_list_p,
     lisp::{defsubr, LispObject},
     lists::{nth, setcdr},
+    lists::{LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
     remacs_sys::{
         access_keymap, copy_keymap_item, describe_vector, make_save_funcptr_ptr_obj,
@@ -179,7 +180,7 @@ pub fn keymapp(object: LispObject) -> bool {
 pub extern "C" fn keymap_parent(keymap: LispObject, autoload: bool) -> LispObject {
     let map = get_keymap(keymap, true, autoload);
     let mut current = Qnil;
-    for elt in map.iter_tails_safe() {
+    for elt in map.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
         current = elt.cdr();
         if keymapp(current) {
             return current;
