@@ -216,7 +216,7 @@ pub fn function(args: LispObject) -> LispObject {
     let (quoted, tail) = cell.as_tuple();
 
     if tail.is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args));
+        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args).into());
     }
 
     if unsafe { globals.Vinternal_interpreter_environment != Qnil } {

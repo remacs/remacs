@@ -7,6 +7,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::LispObject,
+    numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
     remacs_sys::{internal_equal, Fcons, CHECK_IMPURE},
     remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
@@ -507,6 +508,17 @@ impl LispCons {
         }
 
         unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
+    }
+
+    pub fn length(self) -> usize {
+        let len = self
+            .0
+            .iter_tails_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+            .count();
+        if len > MOST_POSITIVE_FIXNUM as usize {
+            error!("List too long");
+        }
+        len
     }
 }
 
