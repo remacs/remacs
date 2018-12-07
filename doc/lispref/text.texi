@@ -3395,7 +3395,7 @@ property is obsolete; use the @code{cursor-intangible} property instead.
 @kindex cursor-intangible @r{(text property)}
 @findex cursor-intangible-mode
 When the minor mode @code{cursor-intangible-mode} is turned on, point
-is moved away of any position that has a non-@code{nil}
+is moved away from any position that has a non-@code{nil}
 @code{cursor-intangible} property, just before redisplay happens.
 
 @item field
