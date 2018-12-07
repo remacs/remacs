@@ -381,7 +381,7 @@ impl Iterator for TailsIter2 {
                     // when off we do no checks at all. When 'safe' the checks are performed
                     // and the iteration exits but no errors are raised.
                     if self.circular_checks != LispConsCircularChecks::off {
-                        self.check_circular(cons);
+                        self.check_circular();
                     }
                     self.prev = None;
                     cons.cdr()
@@ -768,21 +768,13 @@ pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
 /// properties on the list.  This function never signals an error.
 #[lisp_fn]
 pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    let mut prop_item = true;
-    for tail in plist.iter_tails_safe() {
-        if prop_item {
-            match tail.cdr().as_cons() {
-                None => break,
-                Some(tail_cdr_cons) => {
-                    if tail.car().eq(prop) {
-                        return tail_cdr_cons.car();
-                    }
-                }
-            }
-        }
-        prop_item = !prop_item;
-    }
-    Qnil
+    plist_get_internal(
+        plist,
+        prop,
+        LispObject::eq,
+        LispConsEndChecks::off,
+        LispConsCircularChecks::off,
+    )
 }
 
 /// Extract a value from a property list, comparing with `equal'.
@@ -792,26 +784,46 @@ pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
 /// one of the properties on the list.
 #[lisp_fn]
 pub fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    let mut prop_item = true;
-    for tail in plist.iter_tails_plist() {
-        if prop_item {
-            match tail.cdr().as_cons() {
-                None => {
-                    // need an extra check here to catch odd-length lists
-                    if tail.as_obj().is_not_nil() {
-                        wrong_type!(Qplistp, plist)
-                    }
-                    break;
+    plist_get_internal(
+        plist,
+        prop,
+        LispObject::equal,
+        LispConsEndChecks::on,
+        LispConsCircularChecks::on,
+    )
+}
+
+fn plist_get_internal<CmpFunc>(
+    plist: LispObject,
+    prop: LispObject,
+    cmp: CmpFunc,
+    end_checks: LispConsEndChecks,
+    circular_checks: LispConsCircularChecks,
+) -> LispObject
+where
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
+{
+    for tail in plist
+        .iter_tails_plist_v2(end_checks, circular_checks)
+        .step_by(2)
+    {
+        match tail.cdr().as_cons() {
+            None => {
+                // need an extra check here to catch odd-length lists
+                if end_checks == LispConsEndChecks::on && tail.as_obj().is_not_nil() {
+                    wrong_type!(Qplistp, plist)
                 }
-                Some(tail_cdr_cons) => {
-                    if tail.car().equal(prop) {
-                        return tail_cdr_cons.car();
-                    }
+
+                break;
+            }
+            Some(tail_cdr_cons) => {
+                if cmp(tail.car(), prop) {
+                    return tail_cdr_cons.car();
                 }
             }
         }
-        prop_item = !prop_item;
     }
+
     Qnil
 }
 
