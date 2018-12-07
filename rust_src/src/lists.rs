@@ -768,7 +768,7 @@ pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
 /// properties on the list.  This function never signals an error.
 #[lisp_fn]
 pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    plist_get_internal(
+    internal_plist_get(
         plist,
         prop,
         LispObject::eq,
@@ -784,7 +784,7 @@ pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
 /// one of the properties on the list.
 #[lisp_fn]
 pub fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    plist_get_internal(
+    internal_plist_get(
         plist,
         prop,
         LispObject::equal,
@@ -793,7 +793,7 @@ pub fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
     )
 }
 
-fn plist_get_internal<CmpFunc>(
+fn internal_plist_get<CmpFunc>(
     plist: LispObject,
     prop: LispObject,
     cmp: CmpFunc,
@@ -834,15 +834,11 @@ where
 /// property and a property with the value nil.
 /// The value is actually the tail of PLIST whose car is PROP.
 #[lisp_fn]
-pub fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
-    let mut prop_item = true;
-    for tail in plist.iter_tails_plist() {
-        if prop_item && prop.eq(tail.car()) {
-            return tail.as_obj();
-        }
-        prop_item = !prop_item;
-    }
-    Qnil
+pub fn plist_member(plist: LispObject, prop: LispObject) -> Option<LispCons> {
+    plist
+        .iter_tails_plist_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .step_by(2)
+        .find(|tail| prop.eq(tail.car()))
 }
 
 fn internal_plist_put<CmpFunc>(
