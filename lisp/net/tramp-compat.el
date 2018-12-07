@@ -187,15 +187,23 @@ This is a string of ten letters or dashes as in ls -l."
   (if (get 'file-missing 'error-conditions) 'file-missing 'file-error)
   "The error symbol for the `file-missing' error.")
 
-;; `file-name-quoted-p', `file-name-quote' and `file-name-unquote' are
-;; introduced in Emacs 26.
+;; `file-local-name', `file-name-quoted-p', `file-name-quote' and
+;; `file-name-unquote' are introduced in Emacs 26.
 (eval-and-compile
+  (if (fboundp 'file-local-name)
+      (defalias 'tramp-compat-file-local-name 'file-local-name)
+    (defsubst tramp-compat-file-local-name (name)
+      "Return the local name component of NAME.
+It returns a file name which can be used directly as argument of
+`process-file', `start-file-process', or `shell-command'."
+      (or (file-remote-p name 'localname) name)))
+
   (if (fboundp 'file-name-quoted-p)
       (defalias 'tramp-compat-file-name-quoted-p 'file-name-quoted-p)
     (defsubst tramp-compat-file-name-quoted-p (name)
       "Whether NAME is quoted with prefix \"/:\".
 If NAME is a remote file name, check the local part of NAME."
-      (string-prefix-p "/:" (or (file-remote-p name 'localname) name))))
+      (string-prefix-p "/:" (tramp-compat-file-local-name name))))
 
   (if (fboundp 'file-name-quote)
       (defalias 'tramp-compat-file-name-quote 'file-name-quote)
@@ -205,14 +213,14 @@ If NAME is a remote file name, the local part of NAME is quoted."
       (if (tramp-compat-file-name-quoted-p name)
 	  name
 	(concat
-	 (file-remote-p name) "/:" (or (file-remote-p name 'localname) name)))))
+	 (file-remote-p name) "/:" (tramp-compat-file-local-name name)))))
 
   (if (fboundp 'file-name-unquote)
       (defalias 'tramp-compat-file-name-unquote 'file-name-unquote)
     (defsubst tramp-compat-file-name-unquote (name)
       "Remove quotation prefix \"/:\" from file NAME.
 If NAME is a remote file name, the local part of NAME is unquoted."
-      (let ((localname (or (file-remote-p name 'localname) name)))
+      (let ((localname (tramp-compat-file-local-name name)))
 	(when (tramp-compat-file-name-quoted-p localname)
 	  (setq
 	   localname (if (= (length localname) 2) "/" (substring localname 2))))

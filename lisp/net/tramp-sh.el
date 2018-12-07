@@ -2192,8 +2192,8 @@ the uid and gid from FILENAME."
 			    v 'file-error
 			    "Unknown operation `%s', must be `copy' or `rename'"
 			    op))))
-	     (localname1 (if t1 (file-remote-p filename 'localname) filename))
-	     (localname2 (if t2 (file-remote-p newname 'localname) newname))
+	     (localname1 (tramp-compat-file-local-name filename))
+	     (localname2 (tramp-compat-file-local-name newname))
 	     (prefix (file-remote-p (if t1 filename newname)))
              cmd-result)
 	(when (and (eq op 'copy) (file-directory-p filename))
@@ -3087,7 +3087,7 @@ the result will be a local, non-Tramp, file name."
   (append
    (tramp-get-remote-path (tramp-dissect-file-name default-directory))
    ;; The equivalent to `exec-directory'.
-   `(,(file-remote-p default-directory 'localname))))
+   `(,(tramp-compat-file-local-name default-directory))))
 
 (defun tramp-sh-handle-file-local-copy (filename)
   "Like `file-local-copy' for Tramp files."
@@ -4448,8 +4448,7 @@ Goes through the list `tramp-local-coding-commands' and
 			      (format-spec
 			       value
 			       (format-spec-make
-				?t
-				(file-remote-p tmpfile 'localname)))))
+				?t (tramp-compat-file-local-name tmpfile)))))
 		      (tramp-maybe-send-script vec value name)
 		      (setq rem-dec name)))
 		  (tramp-message
@@ -5531,7 +5530,7 @@ This command is returned only if `delete-by-moving-to-trash' is non-nil."
 	   "%s -t %s %s"
 	   result
 	   (format-time-string "%Y%m%d%H%M.%S")
-	   (file-remote-p tmpfile 'localname))))
+	   (tramp-compat-file-local-name tmpfile))))
 	(delete-file tmpfile))
       result)))
 

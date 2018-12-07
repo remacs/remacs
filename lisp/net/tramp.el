@@ -169,6 +169,7 @@ See the variable `tramp-encoding-shell' for more information."
 This is a list of entries of the form (NAME PARAM1 PARAM2 ...).
 Each NAME stands for a remote access method.  Each PARAM is a
 pair of the form (KEY VALUE).  The following KEYs are defined:
+
   * `tramp-remote-shell'
     This specifies the shell to use on the remote host.  This
     MUST be a Bourne-like shell.  It is normally not necessary to
@@ -177,19 +178,23 @@ pair of the form (KEY VALUE).  The following KEYs are defined:
     for it.  Also note that \"/bin/sh\" exists on all Unixen,
     this might not be true for the value that you decide to use.
     You Have Been Warned.
+
   * `tramp-remote-shell-login'
     This specifies the arguments to let `tramp-remote-shell' run
     as a login shell.  It defaults to (\"-l\"), but some shells,
     like ksh, require another argument.  See
     `tramp-connection-properties' for a way to overwrite the
     default value.
+
   * `tramp-remote-shell-args'
     For implementation of `shell-command', this specifies the
     arguments to let `tramp-remote-shell' run a single command.
+
   * `tramp-login-program'
     This specifies the name of the program to use for logging in to the
     remote host.  This may be the name of rsh or a workalike program,
     or the name of telnet or a workalike, or the name of su or a workalike.
+
   * `tramp-login-args'
     This specifies the list of arguments to pass to the above
     mentioned program.  Please note that this is a list of list of arguments,
@@ -205,58 +210,87 @@ pair of the form (KEY VALUE).  The following KEYs are defined:
     `tramp-make-tramp-temp-file'.  \"%k\" indicates the keep-date
     parameter of a program, if exists.  \"%c\" adds additional
     `tramp-ssh-controlmaster-options' options for the first hop.
+    The existence of `tramp-login-args', combined with the absence of
+    `tramp-copy-args', is an indication that the method is capable of
+     multi-hops.
+
   * `tramp-login-env'
      A list of environment variables and their values, which will
      be set when calling `tramp-login-program'.
+
   * `tramp-async-args'
     When an asynchronous process is started, we know already that
     the connection works.  Therefore, we can pass additional
     parameters to suppress diagnostic messages, in order not to
     tamper the process output.
+
   * `tramp-copy-program'
     This specifies the name of the program to use for remotely copying
     the file; this might be the absolute filename of scp or the name of
     a workalike program.  It is always applied on the local host.
+
   * `tramp-copy-args'
     This specifies the list of parameters to pass to the above mentioned
     program, the hints for `tramp-login-args' also apply here.
+
   * `tramp-copy-env'
      A list of environment variables and their values, which will
      be set when calling `tramp-copy-program'.
+
   * `tramp-remote-copy-program'
     The listener program to be applied on remote side, if needed.
+
   * `tramp-remote-copy-args'
     The list of parameters to pass to the listener program, the hints
     for `tramp-login-args' also apply here.  Additionally, \"%r\" could
     be used here and in `tramp-copy-args'.  It denotes a randomly
     chosen port for the remote listener.
+
   * `tramp-copy-keep-date'
     This specifies whether the copying program when the preserves the
     timestamp of the original file.
+
   * `tramp-copy-keep-tmpfile'
     This specifies whether a temporary local file shall be kept
     for optimization reasons (useful for \"rsync\" methods).
+
   * `tramp-copy-recursive'
     Whether the operation copies directories recursively.
+
   * `tramp-default-port'
     The default port of a method.
+
   * `tramp-tmpdir'
     A directory on the remote host for temporary files.  If not
     specified, \"/tmp\" is taken as default.
+
   * `tramp-connection-timeout'
     This is the maximum time to be spent for establishing a connection.
     In general, the global default value shall be used, but for
     some methods, like \"su\" or \"sudo\", a shorter timeout
     might be desirable.
+
   * `tramp-session-timeout'
     How long a Tramp connection keeps open before being disconnected.
     This is useful for methods like \"su\" or \"sudo\", which
     shouldn't run an open connection in the background forever.
+
   * `tramp-case-insensitive'
     Whether the remote file system handles file names case insensitive.
     Only a non-nil value counts, the default value nil means to
     perform further checks on the remote host.  See
     `tramp-connection-properties' for a way to overwrite this.
+
+  * `tramp-mount-args'
+  * `tramp-copyto-args'
+  * `tramp-moveto-args'
+  * `tramp-about-args'
+    These parameters, a list of list like `tramp-login-args', are used
+    for the \"rclone\" method, and are appended to the respective
+    \"rclone\" commands.  In general, they shouldn't be changed inside
+    `tramp-methods'; it is recommended to change their values via
+    `tramp-connection-properties'.  Unlike `tramp-login-args' there is
+     no pattern replacement.
 
 What does all this mean?  Well, you should specify `tramp-login-program'
 for all methods; this program is used to log in to the remote site.  Then,
@@ -2993,6 +3027,7 @@ Host is always \"localhost\"."
 (defun tramp-parse-netrc (filename)
   "Return a list of (user host) tuples allowed to access.
 User may be nil."
+  (require 'netrc)
   (mapcar
    (lambda (item)
      (and (assoc "machine" item)
@@ -3101,6 +3136,28 @@ User is always nil."
       (if (file-directory-p dir) dir (file-name-directory dir)) nil
     (tramp-flush-directory-properties v localname)))
 
+(defun tramp-handle-expand-file-name (name &optional dir)
+  "Like `expand-file-name' for Tramp files."
+  ;; If DIR is not given, use DEFAULT-DIRECTORY or "/".
+  (setq dir (or dir default-directory "/"))
+  ;; Unless NAME is absolute, concat DIR and NAME.
+  (unless (file-name-absolute-p name)
+    (setq name (concat (file-name-as-directory dir) name)))
+  ;; If NAME is not a Tramp file, run the real handler.
+  (if (not (tramp-tramp-file-p name))
+      (tramp-run-real-handler 'expand-file-name (list name nil))
+    ;; Dissect NAME.
+    (with-parsed-tramp-file-name name nil
+      (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
+	(setq localname (concat "/" localname)))
+      ;; Do normal `expand-file-name' (this does "/./" and "/../").
+      ;; `default-directory' is bound, because on Windows there would
+      ;; be problems with UNC shares or Cygwin mounts.
+      (let ((default-directory (tramp-compat-temporary-file-directory)))
+	(tramp-make-tramp-file-name
+	 v (tramp-drop-volume-letter
+	    (tramp-run-real-handler 'expand-file-name (list localname))))))))
+
 (defun tramp-handle-file-accessible-directory-p (filename)
   "Like `file-accessible-directory-p' for Tramp files."
   (and (file-directory-p filename)
@@ -3135,6 +3192,17 @@ User is always nil."
 	 (file-remote-p (expand-file-name filename))
 	 (file-remote-p (expand-file-name directory)))
     (tramp-run-real-handler 'file-in-directory-p (list filename directory))))
+
+(defun tramp-handle-file-local-copy (filename)
+  "Like `file-local-copy' for Tramp files."
+  (with-parsed-tramp-file-name filename nil
+    (unless (file-exists-p filename)
+      (tramp-error
+       v tramp-file-missing
+       "Cannot make local copy of non-existing file `%s'" filename))
+    (let ((tmpfile (tramp-compat-make-temp-file filename)))
+      (copy-file filename tmpfile 'ok-if-already-exists 'keep-time)
+      tmpfile)))
 
 (defun tramp-handle-file-modes (filename)
   "Like `file-modes' for Tramp files."
@@ -3184,7 +3252,7 @@ User is always nil."
 		  ;; lower case letters.  This avoids us to create a
 		  ;; temporary file.
 		  (while (and (string-match-p
-			       "[a-z]" (file-remote-p candidate 'localname))
+			       "[a-z]" (tramp-compat-file-local-name candidate))
 			      (not (file-exists-p candidate)))
 		    (setq candidate
 			  (directory-file-name
@@ -3195,7 +3263,7 @@ User is always nil."
 		  ;; so there is no compatibility problem calling it.
 		  (unless
 		      (string-match-p
-		       "[a-z]" (file-remote-p candidate 'localname))
+		       "[a-z]" (tramp-compat-file-local-name candidate))
 		    (setq tmpfile
 			  (let ((default-directory
 				  (file-name-directory filename)))
@@ -3208,7 +3276,7 @@ User is always nil."
 		      (file-exists-p
 		       (concat
 			(file-remote-p candidate)
-			(upcase (file-remote-p candidate 'localname))))
+			(upcase (tramp-compat-file-local-name candidate))))
 		    ;; Cleanup.
 		    (when tmpfile (delete-file tmpfile)))))))))))
 
@@ -3341,7 +3409,17 @@ User is always nil."
 	      (tramp-error
 	       v1 'file-error
 	       "Maximum number (%d) of symlinks exceeded" numchase-limit)))
-	  (file-remote-p (directory-file-name result) 'localname)))))))
+	  (tramp-compat-file-local-name (directory-file-name result))))))))
+
+(defun tramp-handle-file-writable-p (filename)
+  "Like `file-writable-p' for Tramp files."
+  (with-parsed-tramp-file-name filename nil
+    (with-tramp-file-property v localname "file-writable-p"
+      (if (file-exists-p filename)
+	  (tramp-check-cached-permissions v ?w)
+	;; If file doesn't exist, check if directory is writable.
+	(and (file-directory-p (file-name-directory filename))
+	     (file-writable-p (file-name-directory filename)))))))
 
 (defun tramp-handle-find-backup-file-name (filename)
   "Like `find-backup-file-name' for Tramp files."
@@ -3716,6 +3794,48 @@ of."
 	   ;; If file does not exist, say it is not modified if and
 	   ;; only if that agrees with the buffer's record.
 	   (t (tramp-compat-time-equal-p mt tramp-time-doesnt-exist))))))))
+
+(defun tramp-handle-write-region
+  (start end filename &optional append visit lockname mustbenew)
+  "Like `write-region' for Tramp files."
+  (setq filename (expand-file-name filename))
+  (with-parsed-tramp-file-name filename nil
+    (when (and mustbenew (file-exists-p filename)
+	       (or (eq mustbenew 'excl)
+		   (not
+		    (y-or-n-p
+		     (format "File %s exists; overwrite anyway? " filename)))))
+      (tramp-error v 'file-already-exists filename))
+
+    (let ((tmpfile (tramp-compat-make-temp-file filename)))
+      (when (and append (file-exists-p filename))
+	(copy-file filename tmpfile 'ok))
+      ;; We say `no-message' here because we don't want the visited file
+      ;; modtime data to be clobbered from the temp file.  We call
+      ;; `set-visited-file-modtime' ourselves later on.
+      (tramp-run-real-handler
+       'write-region (list start end tmpfile append 'no-message lockname))
+      (condition-case nil
+	  (rename-file tmpfile filename 'ok-if-already-exists)
+	(error
+	 (delete-file tmpfile)
+	 (tramp-error
+	  v 'file-error "Couldn't write region to `%s'" filename))))
+
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
+
+    ;; Set file modification time.
+    (when (or (eq visit t) (stringp visit))
+      (set-visited-file-modtime
+       (tramp-compat-file-attribute-modification-time
+	(file-attributes filename))))
+
+    ;; The end.
+    (when (and (null noninteractive)
+	       (or (eq visit t) (null visit) (stringp visit)))
+      (tramp-message v 0 "Wrote %s" filename))
+    (run-hooks 'tramp-handle-write-region-hook)))
 
 ;; This is used in tramp-gvfs.el and tramp-sh.el.
 (defconst tramp-gio-events
@@ -4344,7 +4464,7 @@ This handles also chrooted environments, which are not regarded as local."
 	   (tramp-make-tramp-file-name
 	    vec (or (tramp-get-method-parameter vec 'tramp-tmpdir) "/tmp"))))
       (or (and (file-directory-p dir) (file-writable-p dir)
-	       (file-remote-p dir 'localname))
+	       (tramp-compat-file-local-name dir))
 	  (tramp-error vec 'file-error "Directory %s not accessible" dir))
       dir)))
 

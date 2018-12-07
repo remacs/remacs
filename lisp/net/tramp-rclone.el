@@ -31,16 +31,12 @@
 ;; A remote file under rclone control has the form
 ;; "/rclone:<remote>:/path/to/file".  <remote> is the name of a
 ;; storage system in rclone's configuration.  Therefore, such a remote
-;; file name does not know any user or port specification.
+;; file name does not know of any user or port specification.
 
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
 (require 'tramp)
-
-;; TODDDDDDDDDO: REPLACE
-(require 'tramp-adb)
-(require 'tramp-gvfs)
 
 ;;;###tramp-autoload
 (defconst tramp-rclone-method "rclone"
@@ -86,7 +82,7 @@
     (dired-compress-file . ignore)
     (dired-uncache . tramp-handle-dired-uncache)
     (exec-path . ignore)
-    (expand-file-name . tramp-adb-handle-expand-file-name)
+    (expand-file-name . tramp-handle-expand-file-name)
     (file-accessible-directory-p . tramp-handle-file-accessible-directory-p)
     (file-acl . ignore)
     (file-attributes . tramp-rclone-handle-file-attributes)
@@ -95,7 +91,7 @@
     (file-executable-p . tramp-rclone-handle-file-executable-p)
     (file-exists-p . tramp-handle-file-exists-p)
     (file-in-directory-p . tramp-handle-file-in-directory-p)
-    (file-local-copy . tramp-gvfs-handle-file-local-copy)
+    (file-local-copy . tramp-handle-file-local-copy)
     (file-modes . tramp-handle-file-modes)
     (file-name-all-completions . tramp-rclone-handle-file-name-all-completions)
     (file-name-as-directory . tramp-handle-file-name-as-directory)
@@ -116,7 +112,7 @@
     (file-symlink-p . tramp-handle-file-symlink-p)
     (file-system-info . tramp-rclone-handle-file-system-info)
     (file-truename . tramp-handle-file-truename)
-    (file-writable-p . tramp-gvfs-handle-file-writable-p)
+    (file-writable-p . tramp-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
     ;; `get-file-buffer' performed by default handler.
     (insert-directory . tramp-handle-insert-directory)
@@ -141,7 +137,7 @@
     (unhandled-file-name-directory . ignore)
     (vc-registered . ignore)
     (verify-visited-file-modtime . tramp-handle-verify-visited-file-modtime)
-    (write-region . tramp-gvfs-handle-write-region))
+    (write-region . tramp-handle-write-region))
   "Alist of handler functions for Tramp RCLONE method.
 Operations not mentioned here will be handled by the default Emacs primitives.")
 
@@ -328,12 +324,10 @@ file names."
 	      (tramp-rclone-local-file-name directory) full match)))
 	;; Massage the result.
 	(when full
-	  (let* ((quoted (tramp-compat-file-name-quoted-p directory))
-		 (local
-		  (concat "^" (regexp-quote (tramp-rclone-mount-point v))))
-		 (remote
-		  (funcall (if quoted 'tramp-compat-file-name-quote 'identity)
-			   (file-remote-p directory))))
+	  (let ((local (concat "^" (regexp-quote (tramp-rclone-mount-point v))))
+		(remote (funcall (if (tramp-compat-file-name-quoted-p directory)
+				     'tramp-compat-file-name-quote 'identity)
+				 (file-remote-p directory))))
 	    (setq result
 		  (mapcar
 		   (lambda (x) (replace-regexp-in-string local remote x))
@@ -427,8 +421,7 @@ file names."
 	 (insert-file-contents
 	  (tramp-rclone-local-file-name filename) visit beg end replace)))
     (prog1
-	(list (expand-file-name filename)
-	      (cadr result))
+	(list (expand-file-name filename) (cadr result))
       (when visit (setq buffer-file-name filename)))))
 
 (defun tramp-rclone-handle-make-directory (dir &optional parents)
@@ -609,10 +602,7 @@ connection if a previous connection has died for some reason."
 
 ;;; TODO:
 
-;; * Refactor tramp-gvfs.el in order to move used functions to
-;;   tramp.el.
-;;
-;; * If possible, get rid of rclone mount.  Maybe it is more
+;; * If possible, get rid of "rclone mount".  Maybe it is more
 ;;   performant then.
 
 ;;; tramp-rclone.el ends here

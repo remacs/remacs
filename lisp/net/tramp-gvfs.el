@@ -546,7 +546,7 @@ It has been changed in GVFS 1.14.")
     (file-executable-p . tramp-gvfs-handle-file-executable-p)
     (file-exists-p . tramp-handle-file-exists-p)
     (file-in-directory-p . tramp-handle-file-in-directory-p)
-    (file-local-copy . tramp-gvfs-handle-file-local-copy)
+    (file-local-copy . tramp-handle-file-local-copy)
     (file-modes . tramp-handle-file-modes)
     (file-name-all-completions . tramp-gvfs-handle-file-name-all-completions)
     (file-name-as-directory . tramp-handle-file-name-as-directory)
@@ -567,7 +567,7 @@ It has been changed in GVFS 1.14.")
     (file-symlink-p . tramp-handle-file-symlink-p)
     (file-system-info . tramp-gvfs-handle-file-system-info)
     (file-truename . tramp-handle-file-truename)
-    (file-writable-p . tramp-gvfs-handle-file-writable-p)
+    (file-writable-p . tramp-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
     ;; `get-file-buffer' performed by default handler.
     (insert-directory . tramp-handle-insert-directory)
@@ -592,7 +592,7 @@ It has been changed in GVFS 1.14.")
     (unhandled-file-name-directory . ignore)
     (vc-registered . ignore)
     (verify-visited-file-modtime . tramp-handle-verify-visited-file-modtime)
-    (write-region . tramp-gvfs-handle-write-region))
+    (write-region . tramp-handle-write-region))
   "Alist of handler functions for Tramp GVFS method.
 Operations not mentioned here will be handled by the default Emacs primitives.")
 
@@ -1132,17 +1132,6 @@ If FILE-SYSTEM is non-nil, return file system attributes."
     (with-tramp-file-property v localname "file-executable-p"
       (tramp-check-cached-permissions v ?x))))
 
-(defun tramp-gvfs-handle-file-local-copy (filename)
-  "Like `file-local-copy' for Tramp files."
-  (with-parsed-tramp-file-name filename nil
-    (unless (file-exists-p filename)
-      (tramp-error
-       v tramp-file-missing
-       "Cannot make local copy of non-existing file `%s'" filename))
-    (let ((tmpfile (tramp-compat-make-temp-file filename)))
-      (copy-file filename tmpfile 'ok-if-already-exists 'keep-time)
-      tmpfile)))
-
 (defun tramp-gvfs-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for Tramp files."
   (unless (string-match-p "/" filename)
@@ -1280,16 +1269,6 @@ file-notify events."
 	      (- (string-to-number size) (string-to-number used))
 	      (string-to-number free))))))
 
-(defun tramp-gvfs-handle-file-writable-p (filename)
-  "Like `file-writable-p' for Tramp files."
-  (with-parsed-tramp-file-name filename nil
-    (with-tramp-file-property v localname "file-writable-p"
-      (if (file-exists-p filename)
-	  (tramp-check-cached-permissions v ?w)
-	;; If file doesn't exist, check if directory is writable.
-	(and (file-directory-p (file-name-directory filename))
-	     (file-writable-p (file-name-directory filename)))))))
-
 (defun tramp-gvfs-handle-make-directory (dir &optional parents)
   "Like `make-directory' for Tramp files."
   (setq dir (directory-file-name (expand-file-name dir)))
@@ -1323,48 +1302,6 @@ file-notify events."
        'keep-date 'preserve-uid-gid)
     (tramp-run-real-handler
      'rename-file (list filename newname ok-if-already-exists))))
-
-(defun tramp-gvfs-handle-write-region
-  (start end filename &optional append visit lockname mustbenew)
-  "Like `write-region' for Tramp files."
-  (setq filename (expand-file-name filename))
-  (with-parsed-tramp-file-name filename nil
-    (when (and mustbenew (file-exists-p filename)
-	       (or (eq mustbenew 'excl)
-		   (not
-		    (y-or-n-p
-		     (format "File %s exists; overwrite anyway? " filename)))))
-      (tramp-error v 'file-already-exists filename))
-
-    (let ((tmpfile (tramp-compat-make-temp-file filename)))
-      (when (and append (file-exists-p filename))
-	(copy-file filename tmpfile 'ok))
-      ;; We say `no-message' here because we don't want the visited file
-      ;; modtime data to be clobbered from the temp file.  We call
-      ;; `set-visited-file-modtime' ourselves later on.
-      (tramp-run-real-handler
-       'write-region (list start end tmpfile append 'no-message lockname))
-      (condition-case nil
-	  (rename-file tmpfile filename 'ok-if-already-exists)
-	(error
-	 (delete-file tmpfile)
-	 (tramp-error
-	  v 'file-error "Couldn't write region to `%s'" filename))))
-
-    (tramp-flush-file-properties v (file-name-directory localname))
-    (tramp-flush-file-properties v localname)
-
-    ;; Set file modification time.
-    (when (or (eq visit t) (stringp visit))
-      (set-visited-file-modtime
-       (tramp-compat-file-attribute-modification-time
-	(file-attributes filename))))
-
-    ;; The end.
-    (when (and (null noninteractive)
-	       (or (eq visit t) (null visit) (stringp visit)))
-      (tramp-message v 0 "Wrote %s" filename))
-    (run-hooks 'tramp-handle-write-region-hook)))
 
 
 ;; File name conversions.

@@ -108,7 +108,7 @@ It is used for TCP/IP devices."
     (dired-compress-file . ignore)
     (dired-uncache . tramp-handle-dired-uncache)
     (exec-path . tramp-adb-handle-exec-path)
-    (expand-file-name . tramp-adb-handle-expand-file-name)
+    (expand-file-name . tramp-handle-expand-file-name)
     (file-accessible-directory-p . tramp-handle-file-accessible-directory-p)
     (file-acl . ignore)
     (file-attributes . tramp-adb-handle-file-attributes)
@@ -225,28 +225,6 @@ pass to the OPERATION."
 	     ":" tramp-prefix-port-format (car (cdr elt)))))
 	 result)
 	result))))
-
-(defun tramp-adb-handle-expand-file-name (name &optional dir)
-  "Like `expand-file-name' for Tramp files."
-  ;; If DIR is not given, use DEFAULT-DIRECTORY or "/".
-  (setq dir (or dir default-directory "/"))
-  ;; Unless NAME is absolute, concat DIR and NAME.
-  (unless (file-name-absolute-p name)
-    (setq name (concat (file-name-as-directory dir) name)))
-  ;; If NAME is not a Tramp file, run the real handler.
-  (if (not (tramp-tramp-file-p name))
-      (tramp-run-real-handler 'expand-file-name (list name nil))
-    ;; Dissect NAME.
-    (with-parsed-tramp-file-name name nil
-      (unless (tramp-run-real-handler 'file-name-absolute-p (list localname))
-	(setq localname (concat "/" localname)))
-      ;; Do normal `expand-file-name' (this does "/./" and "/../").
-      ;; `default-directory' is bound, because on Windows there would
-      ;; be problems with UNC shares or Cygwin mounts.
-      (let ((default-directory (tramp-compat-temporary-file-directory)))
-	(tramp-make-tramp-file-name
-	 v (tramp-drop-volume-letter
-	    (tramp-run-real-handler 'expand-file-name (list localname))))))))
 
 (defun tramp-adb-handle-file-system-info (filename)
   "Like `file-system-info' for Tramp files."
@@ -640,7 +618,7 @@ Emacs dired can't find files."
       tmpfile)))
 
 (defun tramp-adb-handle-file-writable-p (filename)
-  "Like `tramp-sh-handle-file-writable-p'.
+  "Like `file-writable-p' for Tramp files.
 But handle the case, if the \"test\" command is not available."
   (with-parsed-tramp-file-name filename nil
     (with-tramp-file-property v localname "file-writable-p"
@@ -754,8 +732,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    v 0 (format "Copying %s to %s" filename newname)
 
 	  (if (and t1 t2 (tramp-equal-remote filename newname))
-	      (let ((l1 (file-remote-p filename 'localname))
-		    (l2 (file-remote-p newname 'localname)))
+	      (let ((l1 (tramp-compat-file-local-name filename))
+		    (l2 (tramp-compat-file-local-name newname)))
 		(when (and (not ok-if-already-exists)
 			   (file-exists-p newname))
 		  (tramp-error v 'file-already-exists newname))
@@ -835,8 +813,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (if (and t1 t2
 		   (tramp-equal-remote filename newname)
 		   (not (file-directory-p filename)))
-	      (let ((l1 (file-remote-p filename 'localname))
-		    (l2 (file-remote-p newname 'localname)))
+	      (let ((l1 (tramp-compat-file-local-name filename))
+		    (l2 (tramp-compat-file-local-name newname)))
 		(when (and (not ok-if-already-exists)
 			   (file-exists-p newname))
 		  (tramp-error v 'file-already-exists newname))
@@ -1132,7 +1110,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	  (read (current-buffer)))
 	":" 'omit)))
    ;; The equivalent to `exec-directory'.
-   `(,(file-remote-p default-directory 'localname))))
+   `(,(tramp-compat-file-local-name default-directory))))
 
 (defun tramp-adb-get-device (vec)
   "Return full host name from VEC to be used in shell execution.
