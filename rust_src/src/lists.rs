@@ -845,32 +845,36 @@ pub fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
     Qnil
 }
 
-fn internal_plist_put<F>(plist: LispObject, prop: LispObject, val: LispObject, cmp: F) -> LispObject
+fn internal_plist_put<CmpFunc>(
+    plist: LispObject,
+    prop: LispObject,
+    val: LispObject,
+    cmp: CmpFunc,
+) -> LispObject
 where
-    F: Fn(LispObject, LispObject) -> bool,
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    let mut prop_item = true;
     let mut last_cons = None;
-    for tail in plist.iter_tails_plist() {
-        if prop_item {
-            match tail.cdr().as_cons() {
-                None => {
-                    // need an extra check here to catch odd-length lists
-                    if tail.as_obj().is_not_nil() {
-                        wrong_type!(Qplistp, plist)
-                    }
-                    break;
+    for tail in plist
+        .iter_tails_plist_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .step_by(2)
+    {
+        match tail.cdr().as_cons() {
+            None => {
+                // need an extra check here to catch odd-length lists
+                if tail.as_obj().is_not_nil() {
+                    wrong_type!(Qplistp, plist)
                 }
-                Some(tail_cdr_cons) => {
-                    if cmp(tail.car(), prop) {
-                        tail_cdr_cons.set_car(val);
-                        return plist;
-                    }
-                    last_cons = Some(tail);
+                break;
+            }
+            Some(tail_cdr_cons) => {
+                if cmp(tail.car(), prop) {
+                    tail_cdr_cons.set_car(val);
+                    return plist;
                 }
+                last_cons = Some(tail);
             }
         }
-        prop_item = !prop_item;
     }
     match last_cons {
         None => LispObject::cons(prop, LispObject::cons(val, Qnil)),
