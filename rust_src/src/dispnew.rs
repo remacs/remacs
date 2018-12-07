@@ -10,14 +10,13 @@ use crate::{
     frames::{selected_frame, LispFrameOrSelected, LispFrameRef},
     lisp::{defsubr, ExternalPtr, LispObject},
     remacs_sys::{
-        bitch_at_user, clear_current_matrices, detect_input_pending_run_timers, dtotimespec,
-        fset_redisplay, mark_window_display_accurate, putchar_unlocked,
-        redisplay_preserve_echo_area, ring_bell, specbind, swallow_events, timespec_add,
-        timespec_sub, wait_reading_process_output,
+        clear_current_matrices, detect_input_pending_run_timers, dtotimespec, fset_redisplay,
+        mark_window_display_accurate, putchar_unlocked, redisplay_preserve_echo_area, ring_bell,
+        specbind, swallow_events, timespec_add, timespec_sub, wait_reading_process_output,
     },
     remacs_sys::{
-        globals, noninteractive, redisplaying_p, Qnil, Qredisplay_dont_pause, Qt, Vframe_list,
-        WAIT_READING_MAX,
+        globals, noninteractive, redisplaying_p, Qnil, Qredisplay_dont_pause, Qt, Quser_error,
+        Vframe_list, WAIT_READING_MAX,
     },
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph},
     terminal::{clear_frame, update_begin, update_end},
@@ -143,22 +142,33 @@ pub fn internal_show_cursor_p(window: LispWindowOrSelected) -> bool {
     !win.cursor_off_p()
 }
 
+/// Return whether input is coming from the keyboard.
+// Corresponds to the INTERACTIVE macro in commands.h.
+pub fn is_interactive() -> bool {
+    unsafe { globals.Vexecuting_kbd_macro.is_nil() && !noninteractive }
+}
+
+#[no_mangle]
+pub extern "C" fn ding_internal(terminate_macro: bool) {
+    unsafe {
+        if noninteractive {
+            putchar_unlocked(0o7);
+        } else if terminate_macro && !is_interactive() {
+            // Stop executing a keyboard macro.
+            let msg = "Keyboard macro terminated by a command ringing the bell";
+            xsignal!(Quser_error, msg.into());
+        } else {
+            ring_bell(selected_frame().as_mut())
+        }
+    }
+}
+
 /// Beep, or flash the screen.
 /// Also, unless an argument is given,
 /// terminate any keyboard macro currently executing.
 #[lisp_fn(min = "0")]
 pub fn ding(arg: LispObject) {
-    if arg.is_nil() {
-        unsafe { bitch_at_user() }
-    } else {
-        unsafe {
-            if noninteractive {
-                putchar_unlocked(7);
-            } else {
-                ring_bell(selected_frame().as_mut())
-            }
-        }
-    }
+    ding_internal(arg.is_nil())
 }
 
 /// Perform redisplay.

@@ -5519,23 +5519,6 @@ when TERMINAL is nil.  */)
   unblock_input ();
   return Qnil;
 }
-
-void
-bitch_at_user (void)
-{
-  if (noninteractive)
-    putchar_unlocked (07);
-  else if (!INTERACTIVE)  /* Stop executing a keyboard macro.  */
-    {
-      const char *msg
-	= "Keyboard macro terminated by a command ringing the bell";
-      Fsignal (Quser_error, list1 (build_string (msg)));
-    }
-  else
-    ring_bell (XFRAME (selected_frame));
-}
-
-
 
 /***********************************************************************
 			  Sleeping, Waiting
