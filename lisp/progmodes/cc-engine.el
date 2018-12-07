@@ -1080,12 +1080,15 @@ comment at the start of cc-engine.el for more info."
 		(let ((before-sws-pos (point))
 		      ;; The end position of the area to search for statement
 		      ;; barriers in this round.
-		      (maybe-after-boundary-pos pos))
+		      (maybe-after-boundary-pos pos)
+		      comma-delimited)
 
 		  ;; Go back over exactly one logical sexp, taking proper
 		  ;; account of macros and escaped EOLs.
 		  (while
 		      (progn
+			(setq comma-delimited (and (not comma-delim)
+						   (eq (char-before) ?\,)))
 			(unless (c-safe (c-backward-sexp) t)
 			  ;; Give up if we hit an unbalanced block.  Since the
 			  ;; stack won't be empty the code below will report a
@@ -1121,6 +1124,7 @@ comment at the start of cc-engine.el for more info."
 			 ;; Just gone back over a brace block?
 			 ((and
 			   (eq (char-after) ?{)
+			   (not comma-delimited)
 			   (not (c-looking-at-inexpr-block lim nil t))
 			   (save-excursion
 			     (c-backward-token-2 1 t nil)
@@ -1132,8 +1136,11 @@ comment at the start of cc-engine.el for more info."
 			      (if (and (looking-at c-symbol-start)
 				       (not (looking-at c-keywords-regexp)))
 				  (c-backward-token-2 1 t nil))
-			      (not (looking-at
-				    c-opt-block-decls-with-vars-key)))))
+			      (and
+			       (not (looking-at
+				     c-opt-block-decls-with-vars-key))
+			       (or comma-delim
+				   (not (eq (char-after) ?\,)))))))
 			  (save-excursion
 			    (c-forward-sexp) (point)))
 			 ;; Just gone back over some paren block?
@@ -12711,7 +12718,7 @@ comment at the start of cc-engine.el for more info."
 			       (c-back-over-member-initializers)
 			       (point)))
 			    (c-most-enclosing-brace state-cache (point))))
-	      (c-beginning-of-statement-1 lim)
+	      (c-beginning-of-statement-1 lim nil nil t)
 	      (c-add-stmt-syntax 'brace-list-intro nil t lim paren-state)))
 
 	   ;; CASE 9D: this is just a later brace-list-entry or
