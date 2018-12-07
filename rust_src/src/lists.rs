@@ -773,7 +773,7 @@ pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
         prop,
         LispObject::eq,
         LispConsEndChecks::off,
-        LispConsCircularChecks::off,
+        LispConsCircularChecks::safe,
     )
 }
 
