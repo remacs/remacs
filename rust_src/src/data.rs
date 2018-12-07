@@ -18,10 +18,9 @@ use crate::{
     remacs_sys,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
-        aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string,
-        emacs_abort, globals, rust_count_one_bits, set_default_internal, set_internal,
-        symbol_trapped_write, valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET,
-        CHECK_IMPURE,
+        aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string, globals,
+        rust_count_one_bits, set_default_internal, set_internal, symbol_trapped_write,
+        valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET, CHECK_IMPURE,
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
@@ -538,12 +537,12 @@ pub unsafe extern "C" fn do_symval_forwarding(valcontents: *const Lisp_Fwd) -> L
             // don't think anything will break.  --lorentey
             let frame = selected_frame();
             if !frame.is_live() {
-                emacs_abort();
+                panic!("Selected frame is not live");
             }
             let kboard = (*frame.terminal).kboard;
             *(*valcontents).u_kboard_objfwd.offset.apply_ptr(kboard)
         }
-        _ => emacs_abort(),
+        _ => panic!("Unknown intfwd type"),
     }
 }
 
@@ -598,12 +597,12 @@ pub unsafe extern "C" fn store_symval_forwarding(
         Lisp_Fwd_Kboard_Obj => {
             let frame = selected_frame();
             if !frame.is_live() {
-                emacs_abort();
+                panic!("Selected frame is not live");
             }
             let kboard = (*frame.terminal).kboard;
             *(*valcontents).u_kboard_objfwd.offset.apply_ptr_mut(kboard) = newval;
         }
-        _ => emacs_abort(),
+        _ => panic!("Unknown intfwd type"),
     }
 }
 
