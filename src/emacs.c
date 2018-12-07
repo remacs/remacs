@@ -736,6 +736,8 @@ main (int argc, char **argv)
   /* Initialize the codepage for file names, needed to decode
      non-ASCII file names during startup.  */
   w32_init_file_name_codepage ();
+  /* Initialize the startup directory, needed for emacs_wd below.  */
+  w32_init_current_directory ();
 #endif
   w32_init_main_thread ();
 #endif
@@ -816,6 +818,10 @@ main (int argc, char **argv)
           exit (1);
         }
       original_pwd = emacs_wd;
+#ifdef WINDOWSNT
+      /* Reinitialize Emacs's notion of the startup directory.  */
+      w32_init_current_directory ();
+#endif
       emacs_wd = emacs_get_current_dir_name ();
     }
 

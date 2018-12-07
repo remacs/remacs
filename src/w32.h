@@ -201,6 +201,7 @@ extern int  codepage_for_filenames (CPINFO *);
 extern Lisp_Object ansi_encode_filename (Lisp_Object);
 extern int  w32_copy_file (const char *, const char *, int, int, int);
 extern int  w32_accessible_directory_p (const char *, ptrdiff_t);
+extern void w32_init_current_directory (void);
 
 extern BOOL init_winsock (int load_now);
 extern void srandom (int);
