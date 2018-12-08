@@ -347,7 +347,7 @@ independently replaces consecutive years with a range."
   "Insert a copyright by $ORGANIZATION notice at cursor."
   "Company: "
   comment-start
-  "Copyright (C) " '(format-time-string "%Y") " by "
+  "Copyright (C) " `(format-time-string "%Y") " by "
   (or (getenv "ORGANIZATION")
       str)
   '(if (copyright-offset-too-large-p)
