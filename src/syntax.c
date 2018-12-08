@@ -3594,7 +3594,6 @@ In both cases, LIMIT bounds the search. */);
   DEFSYM (Qcomment_end_can_be_escaped, "comment-end-can-be-escaped");
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
 
-  defsubr (&Ssyntax_table_p);
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);
   defsubr (&Sstring_to_syntax);
