@@ -3388,12 +3388,11 @@ allocate_vectorlike (ptrdiff_t len)
 struct Lisp_Vector *
 allocate_vector (EMACS_INT len)
 {
-  struct Lisp_Vector *v;
-  ptrdiff_t nbytes_max = min (PTRDIFF_MAX, SIZE_MAX);
-
-  if (min ((nbytes_max - header_size) / word_size, MOST_POSITIVE_FIXNUM) < len)
+  ptrdiff_t wordbytes_max = (min (PTRDIFF_MAX, SIZE_MAX)
+			     - header_size - large_vector_offset);
+  if (min (wordbytes_max / word_size, MOST_POSITIVE_FIXNUM) < len)
     memory_full (SIZE_MAX);
-  v = allocate_vectorlike (len);
+  struct Lisp_Vector *v = allocate_vectorlike (len);
   if (len)
     v->header.size = len;
   return v;
