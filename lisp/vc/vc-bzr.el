@@ -1247,7 +1247,11 @@ stream.  Standard error output is discarded."
   (let ((vc-bzr-revisions '())
         (default-directory (file-name-directory (car files))))
     (with-temp-buffer
-      (vc-bzr-command "log" t 0 files "--line")
+      (apply 'vc-bzr-command "log" t 0 files
+             (append '("--line")
+                     (if (stringp vc-bzr-log-switches)
+                         (list vc-bzr-log-switches)
+                       vc-bzr-log-switches)))
       (let ((start (point-min))
             (loglines (buffer-substring-no-properties (point-min) (point-max))))
         (while (string-match "^\\([0-9]+\\):" loglines)
