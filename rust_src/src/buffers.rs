@@ -1,6 +1,8 @@
 //! Functions operating on buffers.
 
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
+use rand::distributions::range::Range;
+use rand::distributions::IndependentSample;
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
@@ -16,11 +18,12 @@ use crate::{
     lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
     lists::{car, cdr, list, member},
     marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
+    multibyte::LispStringRef,
     multibyte::{multibyte_length_by_head, string_char},
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-        buffer_window_count, del_range, delete_all_overlays, globals, internal_equal,
+        buffer_window_count, concat2, del_range, delete_all_overlays, globals, internal_equal,
         last_per_buffer_idx, lookup_char_property, marker_position, modify_overlay,
         set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
     },
@@ -1069,6 +1072,56 @@ pub fn erase_buffer() {
         // if future size is less than past size.  Use of erase-buffer
         // implies that the future text is not really related to the past text.
         cur_buf.save_length_ = LispObject::from(0);
+    }
+}
+
+// We split this away from generate-new-buffer, because rename-buffer
+// and set-visited-file-name ought to be able to use this to really
+// rename the buffer properly.
+
+/// Return a string that is the name of no existing buffer based on NAME.
+/// If there is no live buffer named NAME, then return NAME.
+/// Otherwise modify name by appending `<NUMBER>', incrementing NUMBER
+/// (starting at 2) until an unused name is found, and then return that name.
+/// Optional second argument IGNORE specifies a name that is okay to use (if
+/// it is in the sequence to be tried) even if a buffer with that name exists.
+///
+/// If NAME begins with a space (i.e., a buffer that is not normally
+/// visible to users), then if buffer NAME already exists a random number
+/// is first appended to NAME, to speed up finding a non-existent buffer.
+#[lisp_fn(min = "1")]
+pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
+    if (ignore != Qnil && string_equal(name.into(), ignore))
+        || get_buffer(LispBufferOrName::Name(name.into())).is_none()
+    {
+        return name;
+    }
+
+    let basename = if name.byte_at(0) == b' ' {
+        let range = Range::new(0, 1_000_000);
+        let mut rng = rand::thread_rng();
+        let mut s = format!("-{}", range.ind_sample(&mut rng));
+        local_unibyte_string!(suffix, s);
+        let genname = unsafe { concat2(name.into(), suffix) };
+        if get_buffer(LispBufferOrName::Name(genname)).is_none() {
+            return genname.into();
+        }
+        genname
+    } else {
+        name.into()
+    };
+
+    let mut suffix_count = 2;
+    loop {
+        let mut s = format!("<{}>", suffix_count);
+        local_unibyte_string!(suffix, s);
+        let candidate = unsafe { concat2(basename, suffix) };
+        if string_equal(candidate, ignore)
+            || get_buffer(LispBufferOrName::Name(candidate)).is_none()
+        {
+            return candidate.into();
+        }
+        suffix_count += 1;
     }
 }
 
