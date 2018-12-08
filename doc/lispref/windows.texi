@@ -2607,6 +2607,12 @@ suitable @code{window-height} or @code{window-width} entry, see above.
 If splitting the selected window fails and there is a non-dedicated
 window below the selected one showing some other buffer, this function
 tries to use that window for showing @var{buffer}.
+
+If @var{alist} contains a @code{window-min-height} entry, this
+function ensures that the window used is or can become at least as
+high as specified by that entry's value.  Note that this is only a
+guarantee.  In order to actually resize the window used, @var{alist}
+must also provide an appropriate @code{window-height} entry.
 @end defun
 
 @defun display-buffer-at-bottom buffer alist
@@ -2789,6 +2795,22 @@ there is no guarantee that the window manager will comply.
 The value specifies an alist of window parameters to give the chosen
 window.  All action functions that choose a window should process this
 entry.
+
+@vindex window-min-height@r{, a buffer display action alist entry}
+@item window-min-height
+The value specifies a minimum height of the window used, in lines.  If
+a window is not or cannot be made as high as specified by this entry,
+the window is not considered for use.  The only client of this entry
+is presently @code{display-buffer-below-selected}.
+
+Note that providing such an entry alone does not necessarily make the
+window as tall as specified by its value.  To actually resize an
+existing window or make a new window as tall as specified by that
+value, a @code{window-height} entry specifying that value should be
+provided as well.  Such a @code{window-height} entry can, however,
+specify a completely different value or ask the window height to be
+fit to that of its buffer in which case the @code{window-min-height}
+entry provides the guaranteed minimum height of the window used.
 
 @vindex window-height@r{, a buffer display action alist entry}
 @item window-height

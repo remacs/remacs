@@ -1235,6 +1235,12 @@ A buffer-local value of this hook is now run only if at least one
 window showing the buffer has changed its size.
 
 +++
+** New buffer display action alist entry 'window-min-height'.
+Such an entry allows to specify a minimum height of the window used
+for displaying a buffer.  'display-buffer-below-selected' is the only
+action function to respect it at the moment.
+
++++
 ** The function 'assoc-delete-all' now takes an optional predicate argument.
 
 +++

@@ -7465,22 +7465,45 @@ If there is a window below the selected one and that window
 already displays BUFFER, use that window.  Otherwise, try to
 create a new window below the selected one and show BUFFER there.
 If that attempt fails as well and there is a non-dedicated window
-below the selected one, use that window."
-  (let (window)
+below the selected one, use that window.
+
+If ALIST contains a 'window-min-height' entry, this function
+ensures that the window used is or can become at least as high as
+specified by that entry's value.  Note that such an entry alone
+will not resize the window per se.  In order to do that, ALIST
+must also contain a 'window-height' entry with the same value."
+  (let ((min-height (cdr (assq 'window-min-height alist)))
+	window)
     (or (and (setq window (window-in-direction 'below))
-	     (eq buffer (window-buffer window))
+             (eq buffer (window-buffer window))
+	     (or (not (numberp min-height))
+		 (>= (window-height window) min-height)
+		 ;; 'window--display-buffer' can resize this window if
+		 ;; and only if it has a 'quit-restore' parameter
+		 ;; certifying that it always showed BUFFER before.
+		 (let ((height (window-height window))
+		       (quit-restore (window-parameter window 'quit-restore)))
+		   (and quit-restore
+			(eq (nth 1 quit-restore) 'window)
+			(window-resizable-p window (- min-height height)))))
 	     (window--display-buffer buffer window 'reuse alist))
 	(and (not (frame-parameter nil 'unsplittable))
-	     (let ((split-height-threshold 0)
+             (or (not (numberp min-height))
+		 (window-sizable-p nil (- min-height)))
+             (let ((split-height-threshold 0)
 		   split-width-threshold)
-	       (setq window (window--try-to-split-window
+               (setq window (window--try-to-split-window
                              (selected-window) alist)))
-	     (window--display-buffer
-	      buffer window 'window alist display-buffer-mark-dedicated))
+             (window--display-buffer
+              buffer window 'window alist display-buffer-mark-dedicated))
 	(and (setq window (window-in-direction 'below))
-	     (not (window-dedicated-p window))
+             (not (window-dedicated-p window))
+	     (or (not (numberp min-height))
+		 ;; A window that showed another buffer before cannot
+		 ;; be resized.
+		 (>= (window-height window) min-height))
 	     (window--display-buffer
-	      buffer window 'reuse alist display-buffer-mark-dedicated)))))
+              buffer window 'reuse alist display-buffer-mark-dedicated)))))
 
 (defun display-buffer--maybe-at-bottom (buffer alist)
   (let ((alist (append alist `(,(if temp-buffer-resize-mode
