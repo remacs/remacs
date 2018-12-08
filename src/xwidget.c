@@ -30,6 +30,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <webkit2/webkit2.h>
 #include <JavaScriptCore/JavaScript.h>
 
+/* Suppress GCC deprecation warnings starting in WebKitGTK+ 2.21.1 for
+   webkit_javascript_result_get_global_context and
+   webkit_javascript_result_get_value (Bug#33679).
+   FIXME: Use the JavaScriptCore GLib API instead, and remove this hack.  */
+#if WEBKIT_CHECK_VERSION (2, 21, 1) && GNUC_PREREQ (4, 2, 0)
+# pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 static struct xwidget *
 allocate_xwidget (void)
 {
