@@ -28,10 +28,9 @@ pub fn syntax_table() -> LispObject {
 /// Currently, any char-table counts as a syntax table.
 #[lisp_fn]
 pub fn syntax_table_p(object: LispObject) -> bool {
-    object.is_char_table()
-        && object
-            .as_char_table()
-            .map_or(false, |v| v.purpose == Qsyntax_table)
+    object
+        .as_char_table()
+        .map_or(false, |v| v.purpose == Qsyntax_table)
 }
 
 def_lisp_sym!(Qsyntax_table, "syntax-table-p");
