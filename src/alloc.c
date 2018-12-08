@@ -3358,10 +3358,8 @@ allocate_vectorlike (ptrdiff_t len)
 	p = allocate_vector_from_block (vroundup (nbytes));
       else
 	{
-	  struct large_vector *lv
-	    = lisp_malloc ((large_vector_offset + header_size
-			    + len * word_size),
-			   MEM_TYPE_VECTORLIKE);
+	  struct large_vector *lv = lisp_malloc (large_vector_offset + nbytes,
+						 MEM_TYPE_VECTORLIKE);
 	  lv->next = large_vectors;
 	  large_vectors = lv;
 	  p = large_vector_vec (lv);
