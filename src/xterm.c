@@ -1013,7 +1013,7 @@ x_update_begin (struct frame *f)
           GdkWindow *w = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
 	  int scale = xg_get_scale (f);
 	  width = scale * gdk_window_get_width (w);
-          height = scale * gdk_window_get_height (w);
+	  height = scale * gdk_window_get_height (w);
         }
       else
 #endif
