@@ -979,18 +979,6 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 
   return from != comment_end;
 }
-
-DEFUN ("syntax-table-p", Fsyntax_table_p, Ssyntax_table_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a syntax table.
-Currently, any char-table counts as a syntax table.  */)
-  (Lisp_Object object)
-{
-  if (CHAR_TABLE_P (object)
-      && EQ (XCHAR_TABLE (object)->purpose, Qsyntax_table))
-    return Qt;
-  return Qnil;
-}
-
 /* Convert a letter which signifies a syntax code
  into the code it signifies.
  This is used by modify-syntax-entry, and other things.  */
