@@ -45,7 +45,7 @@ pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObjec
         return Qnil;
     }
 
-    let mut it = tem.iter_cars();
+    let mut it = tem.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off);
     let x = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
     let mut y = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
 

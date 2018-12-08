@@ -54,6 +54,9 @@ impl LispObject {
         self.is_cons() || self.is_nil()
     }
 
+    /// Iterate over all tails of self.  self should be a list, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
     pub fn iter_tails_v2(
         self,
         end_checks: LispConsEndChecks,
@@ -70,6 +73,9 @@ impl LispObject {
         TailsIter2::new(self, Qlistp, end_checks, circular_checks)
     }
 
+    /// Iterate over all tails of self.  self should be a plist, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
     pub fn iter_tails_plist_v2(
         self,
         end_checks: LispConsEndChecks,
@@ -78,101 +84,13 @@ impl LispObject {
         TailsIter::new(self, Qplistp, end_checks, circular_checks)
     }
 
-    /// Iterate over all tails of self.  self should be a list, i.e. a chain
-    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
-    /// will be signaled.
-    pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::on,
-            LispConsCircularChecks::on,
-        )
-    }
-
-    pub fn iter_tails_noendchecked(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::on,
-        )
-    }
-
-    /// Iterate over all tails of self.  If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    pub fn iter_tails_safe(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::safe,
-        )
-    }
-
-    /// Iterate over all tails of self.  If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    /// No circular checks are performed.
-    pub fn iter_tails_unchecked(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::off,
-        )
-    }
-
-    /// Iterate over all tails of self.  self should be a plist, i.e. a chain
-    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
-    /// will be signaled.
-    pub fn iter_tails_plist(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qplistp,
-            LispConsEndChecks::on,
-            LispConsCircularChecks::on,
-        )
-    }
-
+    /// Iterate over the car cells of a list.
     pub fn iter_cars_v2(
         self,
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
     ) -> CarIter {
         CarIter::new(TailsIter::new(self, Qlistp, end_checks, circular_checks))
-    }
-
-    /// Iterate over the car cells of a list.
-    pub fn iter_cars(self) -> CarIter {
-        CarIter::new(TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::on,
-            LispConsCircularChecks::on,
-        ))
-    }
-
-    /// Iterate over all cars of self. If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    pub fn iter_cars_safe(self) -> CarIter {
-        CarIter::new(TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::safe,
-        ))
-    }
-
-    /// Iterate over all cars of self. If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    /// No circular checks are performed.
-    pub fn iter_cars_unchecked(self) -> CarIter {
-        CarIter::new(TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::off,
-        ))
     }
 }
 
