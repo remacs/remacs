@@ -3518,7 +3518,6 @@ init_syntax_once (void)
 void
 syms_of_syntax (void)
 {
-  DEFSYM (Qsyntax_table_p, "syntax-table-p");
   DEFSYM (Qsyntax_ppss, "syntax-ppss");
   DEFVAR_LISP ("comment-use-syntax-ppss",
 	       Vcomment_use_syntax_ppss,

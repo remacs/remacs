@@ -34,6 +34,8 @@ pub fn syntax_table_p(object: LispObject) -> bool {
             .map_or(false, |v| v.purpose == Qsyntax_table)
 }
 
+def_lisp_sym!(Qsyntax_table, "syntax-table-p");
+
 /// Scan from character number FROM by COUNT lists.
 /// Scan forward if COUNT is positive, backward if COUNT is negative.
 /// Return the character number of the position thus found.
