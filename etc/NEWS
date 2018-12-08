@@ -820,8 +820,15 @@ To restore the old behavior, use
 'eshell-uniqify-list'.
 
 *** The function 'eshell/kill' is now able to handle signal switches.
-Previously 'eshell/kill' would fail if provided a kill signal to send to the
-process.  It now accepts signals specified either by name or by its number.
+Previously 'eshell/kill' would fail if provided a kill signal to send
+to the process.  It now accepts signals specified either by name or by
+its number.
+
+---
+*** Emacs now follows symlinks in history-related files.
+The files specified by 'eshell-history-file-name' and
+'eshell-last-dir-ring-file-name' can include symlinks; these are now
+followed when Emacs writes the relevant history variables to the disk.
 
 ** Shell
 
