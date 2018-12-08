@@ -5317,11 +5317,12 @@ is non-nil)."
 	 (total-sum parent-size)
 	 failed size sub-total sub-delta sub-amount rest)
     (while sub
-      (setq number-of-children (1+ number-of-children))
-      (when (window-size-fixed-p sub horizontal)
-	(setq total-sum
-	      (- total-sum (window-size sub horizontal t)))
-	(set-window-new-normal sub 'ignore))
+      (if (window-size-fixed-p sub horizontal)
+          (progn
+            (setq total-sum
+	          (- total-sum (window-size sub horizontal t)))
+	    (set-window-new-normal sub 'ignore))
+        (setq number-of-children (1+ number-of-children)))
       (setq sub (window-right sub)))
 
     (setq failed t)
@@ -5346,16 +5347,16 @@ is non-nil)."
 	    (set-window-new-normal sub 'skip)))
 	(setq sub (window-right sub))))
 
-    ;; How can we be sure that `number-of-children' is NOT zero here ?
-    (setq rest (% total-sum number-of-children))
-    ;; Fix rounding by trying to enlarge non-stuck windows by one line
-    ;; (column) until `rest' is zero.
-    (setq sub first)
-    (while (and sub (> rest 0))
-      (unless (window--resize-child-windows-skip-p window)
-	(set-window-new-pixel sub (min rest char-size) t)
-	(setq rest (- rest char-size)))
-      (setq sub (window-right sub)))
+    (when (> number-of-children 0)
+      (setq rest (% total-sum number-of-children))
+      ;; Fix rounding by trying to enlarge non-stuck windows by one line
+      ;; (column) until `rest' is zero.
+      (setq sub first)
+      (while (and sub (> rest 0))
+        (unless (window--resize-child-windows-skip-p window)
+	  (set-window-new-pixel sub (min rest char-size) t)
+	  (setq rest (- rest char-size)))
+        (setq sub (window-right sub))))
 
     ;; Fix rounding by trying to enlarge stuck windows by one line
     ;; (column) until `rest' equals zero.
