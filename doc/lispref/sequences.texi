@@ -1298,9 +1298,9 @@ not evaluate or even examine the elements of the vector.
 @example
 @group
 (setq avector [1 two '(three) "four" [five]])
-     @result{} [1 two (quote (three)) "four" [five]]
+     @result{} [1 two '(three) "four" [five]]
 (eval avector)
-     @result{} [1 two (quote (three)) "four" [five]]
+     @result{} [1 two '(three) "four" [five]]
 (eq avector (eval avector))
      @result{} t
 @end group
@@ -1390,9 +1390,9 @@ list with the same elements:
 @example
 @group
 (setq avector [1 two (quote (three)) "four" [five]])
-     @result{} [1 two (quote (three)) "four" [five]]
+     @result{} [1 two '(three) "four" [five]]
 (append avector nil)
-     @result{} (1 two (quote (three)) "four" [five])
+     @result{} (1 two '(three) "four" [five])
 @end group
 @end example
 

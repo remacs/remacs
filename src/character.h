@@ -682,6 +682,8 @@ extern bool graphicp (int);
 extern bool printablep (int);
 extern bool blankp (int);
 
+extern bool confusable_symbol_character_p (int ch);
+
 /* Return a translation table of id number ID.  */
 #define GET_TRANSLATION_TABLE(id) \
   (XCDR (XVECTOR (Vtranslation_table_vector)->contents[(id)]))

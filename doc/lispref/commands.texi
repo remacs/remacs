@@ -748,7 +748,7 @@ part of the prompt.
 @group
 (execute-extended-command 3)
 ---------- Buffer: Minibuffer ----------
-3 M-x forward-word RET
+3 M-x forward-word @key{RET}
 ---------- Buffer: Minibuffer ----------
      @result{} t
 @end group

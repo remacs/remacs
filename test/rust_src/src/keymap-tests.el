@@ -1,26 +1,61 @@
+;;; keymap-tests.el --- Test suite for src/keymap.rs
+
+;;; Code:
+
 (require 'ert)
 
-(ert-deftest keymap-tests--map-keymap ()
-  (let* ((sample-keymap '(keymap
+(ert-deftest keymap-tests--copy-keymap ()
+  (let ((sample-keymap '(keymap
                          (27 keymap
                              (24 . lisp-send-defun)
                              (28 . forward-line))
                          (3 keymap
                             (25 . run-lisp))))
-        (sample-keymap-with-parent '(keymap
-                                     (3 keymap
-                                        (25 . run-lisp))
-                                     (27 keymap
-                                         (24 . lisp-send-defun))
-                                     keymap
-                                     (127 . backward-delete-char-untabify)
-                                     (26 keymap
-                                         (17 . indent-sexp))))
-        (keys nil)
-        (values nil)
-        (test-function '(lambda (key value)
-                          (push key keys)
-                          (push value values))))
+        (sample-keymap-long `(keymap
+                              (3 keymap
+                                 (25 . run-lisp))
+                              (27 keymap
+                                  (24 . lisp-send-defun))
+                              ,(make-char-table 'test 0)
+                              [0 0 0 0 0 0]
+                              keymap
+                              (127 . backward-delete-char-untabify)
+                              (26 keymap
+                                  (17 . indent-sexp))
+                              )))
+
+    ;; Test copying
+    (should (equal (copy-keymap sample-keymap) sample-keymap))
+    (should (equal (copy-keymap sample-keymap-long) sample-keymap-long))
+
+    ;; Test empty keymap
+    (should (equal (copy-keymap '(keymap)) '(keymap)))
+
+    ;; Test invalid inputs
+    (should-error (copy-keymap nil))
+    (should-error (copy-keymap "string"))))
+
+(ert-deftest keymap-tests--map-keymap ()
+  (let* ((sample-keymap '(keymap
+                          (27 keymap
+                              (24 . lisp-send-defun)
+                              (28 . forward-line))
+                          (3 keymap
+                             (25 . run-lisp))))
+         (sample-keymap-with-parent '(keymap
+                                      (3 keymap
+                                         (25 . run-lisp))
+                                      (27 keymap
+                                          (24 . lisp-send-defun))
+                                      keymap
+                                      (127 . backward-delete-char-untabify)
+                                      (26 keymap
+                                          (17 . indent-sexp))))
+         (keys nil)
+         (values nil)
+         (test-function '(lambda (key value)
+                           (push key keys)
+                           (push value values))))
 
     ;; Test simple keymap with children
     (map-keymap test-function sample-keymap)
@@ -121,14 +156,14 @@
     (should-error (map-keymap-internal "test" nil))
     (should-error (map-keymap-internal  test-function nil))
     (should-error (map-keymap-internal test-function '(test)))))
-  
+
 (ert-deftest keymap-tests--set-keymap-parent ()
   (let ((sample-keymap '(keymap
                          (3 keymap
                             ;; C-c C-z
                             (26 . emacs-version))))
         (map (make-sparse-keymap)))
-    
+
     (should (equal (set-keymap-parent map sample-keymap) sample-keymap))
     (should (equal map '(keymap keymap (3 keymap (26 . emacs-version)))))
 
@@ -182,7 +217,7 @@
 (ert-deftest keymap-tests--make-keymap ()
   (should (equal (make-keymap) '(keymap
                                  #^[nil nil keymap nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil])))
-  
+
   (should (equal (make-keymap "menu-name") '(keymap
                                              #^[nil nil keymap nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil] "menu-name"))))
 
@@ -198,7 +233,7 @@
                             ;; C-c C-z
                             (26 . emacs-version)))))
     (should (keymapp sample-keymap))
-    
+
     (use-local-map nil)
     (should-not (current-local-map))
     (use-local-map sample-keymap)
@@ -212,8 +247,12 @@
         (backup-keymap (current-global-map)))
     (should (keymapp sample-keymap))
     (should (keymapp backup-keymap))
-    
+
     (should-error (use-global-map nil))
     (use-global-map sample-keymap)
     (should (equal (current-global-map) '(keymap (3 keymap (26 . emacs-version)))))
     (use-global-map backup-keymap)))
+
+(provide 'rust-keymap-tests)
+
+;;; keymap-tests.el ends here

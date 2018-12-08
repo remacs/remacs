@@ -108,9 +108,9 @@ point unchanged, so that the text and point move up or down together.
   By default, these commands signal an error (by beeping or flashing
 the screen) if no more scrolling is possible, because the window has
 reached the beginning or end of the buffer.  If you change the
-variable @code{scroll-error-top-bottom} to @code{t}, the command moves
-point to the farthest possible position.  If point is already there,
-the command signals an error.
+variable @code{scroll-error-top-bottom} to @code{t}, these commands
+move point to the farthest possible position.  If point is already
+there, the commands signal an error.
 
 @vindex scroll-preserve-screen-position
 @cindex @code{scroll-command} property
@@ -270,7 +270,7 @@ parts of the window height from the bottom window edge.  Thus, larger
 view.  The default value, @code{nil}, is equivalent to 0.5.
 
   Likewise, @code{scroll-down-aggressively} is used when point goes
-above the bottom window edge (i.e., scrolling backward).  The value
+above the top window edge (i.e., scrolling backward).  The value
 specifies how far point should be from the top margin of the window
 after scrolling.  Thus, as with @code{scroll-up-aggressively}, a
 larger value is more aggressive.
@@ -330,8 +330,8 @@ scrolling away from that edge.
 scroll the window when point gets too close to the edge.  Zero, the
 default value, means to center point horizontally within the window.
 A positive integer value specifies the number of columns to scroll by.
-A floating-point number specifies the fraction of the window's width
-to scroll by.
+A floating-point number (whose value should be between 0 and 1)
+specifies the fraction of the window's width to scroll by.
 
   You can also perform explicit horizontal scrolling with the
 following commands:
@@ -957,7 +957,7 @@ mode for all buffers, use @kbd{M-x global-hi-lock-mode} or place
 
   Hi Lock mode works like Font Lock mode (@pxref{Font Lock}), except
 that you specify explicitly the regular expressions to highlight.  You
-control them with the commands described below.  (The key bindings
+can control them with the following commands.  (The key bindings
 below that begin with @kbd{C-x w} are deprecated in favor of the
 global @kbd{M-s h} bindings, and will be removed in some future Emacs
 version.)
@@ -991,16 +991,15 @@ expressions to highlight in different ways.
 @kindex M-s h u
 @kindex C-x w r
 @findex unhighlight-regexp
-Unhighlight @var{regexp} (@code{unhighlight-regexp}).
-
-If you invoke this from the menu, you select the expression to
-unhighlight from a list.  If you invoke this from the keyboard, you
-use the minibuffer.  It will show the most recently added regular
-expression; use @kbd{M-n} to show the next older expression and
-@kbd{M-p} to select the next newer expression.  (You can also type the
-expression by hand, with completion.)  When the expression you want to
-unhighlight appears in the minibuffer, press @kbd{@key{RET}} to exit
-the minibuffer and unhighlight it.
+Unhighlight @var{regexp} (@code{unhighlight-regexp}).  If you invoke
+this from the menu, you select the expression to unhighlight from a
+list.  If you invoke this from the keyboard, you use the minibuffer.
+It will show the most recently added regular expression; use @kbd{M-n}
+to show the next older expression and @kbd{M-p} to select the next
+newer expression.  (You can also type the expression by hand, with
+completion.)  When the expression you want to unhighlight appears in
+the minibuffer, press @kbd{@key{RET}} to exit the minibuffer and
+unhighlight it.
 
 @item M-s h l @var{regexp} @key{RET} @var{face} @key{RET}
 @itemx C-x w l @var{regexp} @key{RET} @var{face} @key{RET}
@@ -1087,11 +1086,11 @@ mode's symbol is a member of the list @code{hi-lock-exclude-modes}.
   On graphical displays, each Emacs window normally has narrow
 @dfn{fringes} on the left and right edges.  The fringes are used to
 display symbols that provide information about the text in the window.
-You can type @kbd{M-x fringe-mode} to disable the fringes, or modify
-their width.  This command affects fringes in all frames; to modify
-fringes on the selected frame only, use @kbd{M-x set-fringe-style}.
-You can make your changes to the fringes permanent by customizing the
-variable @code{fringe-mode}.
+You can type @kbd{M-x fringe-mode} to toggle display of the fringes or
+to modify their width.  This command affects fringes in all frames; to
+modify fringes on the selected frame only, use @kbd{M-x
+set-fringe-style}.  You can make your changes to the fringes permanent
+by customizing the variable @code{fringe-mode}.
 
   The most common use of the fringes is to indicate a continuation
 line (@pxref{Continuation Lines}).  When one line of text is split
@@ -1393,13 +1392,13 @@ the option @code{display-time-mode}.  The information added to the mode
 line looks like this:
 
 @example
-@var{hh}:@var{mm}pm @var{l.ll}
+@var{hh}:@var{mm}PM @var{l.ll}
 @end example
 
 @noindent
 @vindex display-time-24hr-format
 Here @var{hh} and @var{mm} are the hour and minute, followed always by
-@samp{am} or @samp{pm}.  @var{l.ll} is the average number, collected
+@samp{AM} or @samp{PM}.  @var{l.ll} is the average number, collected
 for the last few minutes, of processes in the whole system that were
 either running or ready to run (i.e., were waiting for an available
 processor).  (Some fields may be missing if your operating system
@@ -1767,6 +1766,11 @@ convenient way to turn on display of line numbers.  This mode has a globalized
 variant, @code{global-display-line-numbers-mode}.  The user option
 @code{display-line-numbers-type} controls which sub-mode of
 line-number display, described above, will these modes activate.
+
+@noindent
+Note that line numbers are not displayed in the minibuffer and in the
+tooltips, even if you turn on @code{display-line-numbers-mode}
+globally.
 
 @vindex display-line-numbers-current-absolute
 When Emacs displays relative line numbers, you can control the number

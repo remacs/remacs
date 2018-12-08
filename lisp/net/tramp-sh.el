@@ -2507,7 +2507,7 @@ The method used must be an out-of-band method."
 			     (tramp-get-connection-buffer v)
 			     command))))
 		  (tramp-message orig-vec 6 "%s" command)
-		  (tramp-set-connection-property p "vector" orig-vec)
+		  (process-put p 'vector orig-vec)
 		  (process-put p 'adjust-window-size-function 'ignore)
 		  (set-process-query-on-exit-flag p nil)
 
@@ -2822,7 +2822,7 @@ the result will be a local, non-Tramp, file name."
 (defun tramp-process-sentinel (proc event)
   "Flush file caches."
   (unless (process-live-p proc)
-    (let ((vec (tramp-get-connection-property proc "vector" nil)))
+    (let ((vec (process-get proc 'vector)))
       (when vec
 	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
         (tramp-flush-connection-properties proc)
@@ -3563,19 +3563,7 @@ Fall back to normal file name handler if no Tramp handler exists."
     (let ((default-directory (file-name-directory file-name))
 	  command events filter p sequence)
       (cond
-       ;; gvfs-monitor-dir.
-       ((setq command (tramp-get-remote-gvfs-monitor-dir v))
-	(setq filter 'tramp-sh-gvfs-monitor-dir-process-filter
-	      events
-	      (cond
-	       ((and (memq 'change flags) (memq 'attribute-change flags))
-		'(created changed changes-done-hint moved deleted
-			  attribute-changed))
-	       ((memq 'change flags)
-		'(created changed changes-done-hint moved deleted))
-	       ((memq 'attribute-change flags) '(attribute-changed)))
-	      sequence `(,command ,localname)))
-       ;; inotifywait.
+       ;; "inotifywait".
        ((setq command (tramp-get-remote-inotifywait v))
 	(setq filter 'tramp-sh-inotifywait-process-filter
 	      events
@@ -3593,6 +3581,30 @@ Fall back to normal file name handler if no Tramp handler exists."
 	      (mapcar
 	       (lambda (x) (intern-soft (replace-regexp-in-string "_" "-" x)))
 	       (split-string events "," 'omit))))
+       ;; "gio monitor".
+       ((setq command (tramp-get-remote-gio-monitor v))
+	(setq filter 'tramp-sh-gio-monitor-process-filter
+	      events
+	      (cond
+	       ((and (memq 'change flags) (memq 'attribute-change flags))
+		'(created changed changes-done-hint moved deleted
+			  attribute-changed))
+	       ((memq 'change flags)
+		'(created changed changes-done-hint moved deleted))
+	       ((memq 'attribute-change flags) '(attribute-changed)))
+	      sequence `(,command "monitor" ,localname)))
+       ;; "gvfs-monitor-dir".
+       ((setq command (tramp-get-remote-gvfs-monitor-dir v))
+	(setq filter 'tramp-sh-gvfs-monitor-dir-process-filter
+	      events
+	      (cond
+	       ((and (memq 'change flags) (memq 'attribute-change flags))
+		'(created changed changes-done-hint moved deleted
+			  attribute-changed))
+	       ((memq 'change flags)
+		'(created changed changes-done-hint moved deleted))
+	       ((memq 'attribute-change flags) '(attribute-changed)))
+	      sequence `(,command ,localname)))
        ;; None.
        (t (tramp-error
 	   v 'file-notify-error
@@ -3612,7 +3624,7 @@ Fall back to normal file name handler if no Tramp handler exists."
 	   "`%s' failed to start on remote host"
 	   (mapconcat 'identity sequence " "))
 	(tramp-message v 6 "Run `%s', %S" (mapconcat 'identity sequence " ") p)
-	(tramp-set-connection-property p "vector" v)
+	(process-put p 'vector v)
 	;; Needed for process filter.
 	(process-put p 'events events)
 	(process-put p 'watch-name localname)
@@ -3623,8 +3635,66 @@ Fall back to normal file name handler if no Tramp handler exists."
 	(tramp-accept-process-output p 1)
 	(unless (process-live-p p)
 	  (tramp-error
-	   v 'file-notify-error "Monitoring not supported for `%s'" file-name))
+	   p 'file-notify-error "Monitoring not supported for `%s'" file-name))
 	p))))
+
+(defun tramp-sh-gio-monitor-process-filter (proc string)
+  "Read output from \"gio monitor\" and add corresponding file-notify events."
+  (let ((events (process-get proc 'events))
+	(remote-prefix
+	 (with-current-buffer (process-buffer proc)
+	   (file-remote-p default-directory)))
+	(rest-string (process-get proc 'rest-string)))
+    (when rest-string
+      (tramp-message proc 10 "Previous string:\n%s" rest-string))
+    (tramp-message proc 6 "%S\n%s" proc string)
+    (setq string (concat rest-string string)
+          ;; Fix action names.
+          string (replace-regexp-in-string
+	          "attributes changed" "attribute-changed" string)
+          string (replace-regexp-in-string
+	          "changes done" "changes-done-hint" string)
+          string (replace-regexp-in-string
+	          "renamed to" "moved" string))
+    ;; https://bugs.launchpad.net/bugs/1742946
+    (when (string-match "Monitoring not supported\\|No locations given" string)
+      (delete-process proc))
+
+    (while (string-match
+	    (concat "^[^:]+:"
+		    "[[:space:]]\\([^:]+\\):"
+		    "[[:space:]]"  (regexp-opt tramp-gio-events t)
+		    "\\([[:space:]]\\([^:]+\\)\\)?$")
+	    string)
+
+      (let* ((file (match-string 1 string))
+	     (file1 (match-string 4 string))
+	     (object
+	      (list
+	       proc
+	       (list
+		(intern-soft (match-string 2 string)))
+	       ;; File names are returned as absolute paths.  We must
+	       ;; add the remote prefix.
+	       (concat remote-prefix file)
+	       (when file1 (concat remote-prefix file1)))))
+	(setq string (replace-match "" nil nil string))
+	;; Remove watch when file or directory to be watched is deleted.
+	(when (and (member (cl-caadr object) '(moved deleted))
+		   (string-equal file (process-get proc 'watch-name)))
+	  (delete-process proc))
+	;; Usually, we would add an Emacs event now.  Unfortunately,
+	;; `unread-command-events' does not accept several events at
+	;; once.  Therefore, we apply the handler directly.
+	(when (member (cl-caadr object) events)
+	  (tramp-compat-funcall
+	   'file-notify-handle-event
+	   `(file-notify ,object file-notify-callback)))))
+
+    ;; Save rest of the string.
+    (when (zerop (length string)) (setq string nil))
+    (when string (tramp-message proc 10 "Rest string:\n%s" string))
+    (process-put proc 'rest-string string)))
 
 (defun tramp-sh-gvfs-monitor-dir-process-filter (proc string)
   "Read output from \"gvfs-monitor-dir\" and add corresponding \
@@ -3641,8 +3711,6 @@ file-notify events."
 	  ;; Attribute change is returned in unused wording.
 	  string (replace-regexp-in-string
 		  "ATTRIB CHANGED" "ATTRIBUTE_CHANGED" string))
-    (when (string-match "Monitoring not supported" string)
-      (delete-process proc))
 
     (while (string-match
 	    (concat "^[\n\r]*"
@@ -3688,12 +3756,11 @@ file-notify events."
     (tramp-message proc 6 "%S\n%s" proc string)
     (dolist (line (split-string string "[\n\r]+" 'omit))
       ;; Check, whether there is a problem.
-      (unless
-	  (string-match
-	   (concat "^[^[:blank:]]+"
-		   "[[:blank:]]+\\([^[:blank:]]+\\)+"
-		   "\\([[:blank:]]+\\([^\n\r]+\\)\\)?")
-	   line)
+      (unless (string-match
+	       (concat "^[^[:blank:]]+"
+		       "[[:blank:]]+\\([^[:blank:]]+\\)+"
+		       "\\([[:blank:]]+\\([^\n\r]+\\)\\)?")
+	       line)
 	(tramp-error proc 'file-notify-error "%s" line))
 
       (let ((object
@@ -4027,7 +4094,7 @@ file exists and nonzero exit status otherwise."
   "Wait for shell prompt and barf if none appears.
 Looks at process PROC to see if a shell prompt appears in TIMEOUT
 seconds.  If not, it produces an error message with the given ERROR-ARGS."
-  (let ((vec (tramp-get-connection-property proc "vector" nil)))
+  (let ((vec (process-get proc 'vector)))
     (condition-case nil
 	(tramp-wait-for-regexp
 	 proc timeout
@@ -4115,7 +4182,7 @@ process to set up.  VEC specifies the connection."
 		   (memq 'utf-8-hfs (coding-system-list)))
 	  (setq cs-decode 'utf-8-hfs
 		cs-encode 'utf-8-hfs))
-	(set-buffer-process-coding-system cs-decode cs-encode)
+	(set-process-coding-system proc cs-decode cs-encode)
 	(tramp-message
 	 vec 5 "Setting coding system to `%s' and `%s'" cs-decode cs-encode)))
 
@@ -4461,13 +4528,14 @@ Goes through the list `tramp-inline-compress-commands'."
 	      (zerop
 	       (tramp-call-local-coding-command
 		(format
+		 "echo %s | %s | %s" magic
 		 ;; Windows shells need the program file name after
 		 ;; the pipe symbol be quoted if they use forward
 		 ;; slashes as directory separators.
-		 (if (memq system-type '(windows-nt))
-		     "echo %s | \"%s\" | \"%s\""
-		   "echo %s | %s | %s")
-		 magic compress decompress)
+		 (mapconcat
+		  'shell-quote-argument (split-string compress) " ")
+		 (mapconcat
+		  'shell-quote-argument (split-string decompress) " "))
 		nil nil))
 	    (throw 'next nil))
 	  (tramp-message
@@ -4743,8 +4811,8 @@ connection if a previous connection has died for some reason."
 			     (list tramp-encoding-shell))))))
 
 		;; Set sentinel and query flag.  Initialize variables.
-		(tramp-set-connection-property p "vector" vec)
 		(set-process-sentinel p 'tramp-process-sentinel)
+		(process-put p 'vector vec)
 		(process-put p 'adjust-window-size-function 'ignore)
 		(set-process-query-on-exit-flag p nil)
 		(setq tramp-current-connection (cons vec (current-time)))
@@ -5454,6 +5522,12 @@ This command is returned only if `delete-by-moving-to-trash' is non-nil."
        (tramp-send-command-and-check
 	vec (format "%s --block-size=1 --output=size,used,avail /" result))
        result))))
+
+(defun tramp-get-remote-gio-monitor (vec)
+  "Determine remote `gio-monitor' command."
+  (with-tramp-connection-property vec "gio-monitor"
+    (tramp-message vec 5 "Finding a suitable `gio-monitor' command")
+    (tramp-find-executable vec "gio" (tramp-get-remote-path vec) t t)))
 
 (defun tramp-get-remote-gvfs-monitor-dir (vec)
   "Determine remote `gvfs-monitor-dir' command."

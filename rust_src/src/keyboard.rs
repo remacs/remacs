@@ -3,18 +3,27 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    frames::window_frame_live_or_selected_with_action,
+    buffers::current_buffer,
+    eval::unbind_to,
+    frames::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::defsubr,
     lisp::LispObject,
     lists::LispCons,
     numbers::IsLispNatnum,
-    remacs_sys::{command_loop_level, glyph_row_area, minibuf_level},
-    remacs_sys::{make_lispy_position, window_box_left_offset},
+    remacs_sys::{
+        command_loop_level, glyph_row_area, interrupt_input_blocked, minibuf_level,
+        recursive_edit_1, recursive_edit_unwind, update_mode_lines,
+    },
+    remacs_sys::{
+        make_lispy_position, record_unwind_protect, temporarily_switch_to_single_kboard,
+        window_box_left_offset,
+    },
     remacs_sys::{Fpos_visible_in_window_p, Fthrow},
     remacs_sys::{
         Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error, Qvertical_line,
     },
-    windows::LispWindowOrSelected,
+    threads::c_specpdl_index,
+    windows::{selected_window, LispWindowOrSelected},
 };
 
 /// Return position information for buffer position POS in WINDOW.
@@ -154,6 +163,52 @@ pub fn exit_recursive_edit() -> ! {
 #[lisp_fn(intspec = "")]
 pub fn abort_recursive_edit() -> ! {
     quit_recursive_edit(true);
+}
+
+/// Invoke the editor command loop recursively.
+/// To get out of the recursive edit, a command can throw to `exit' -- for
+/// instance (throw \\='exit nil).
+/// If you throw a value other than t, `recursive-edit' returns normally
+/// to the function that called it.  Throwing a t value causes
+/// `recursive-edit' to quit, so that control returns to the command loop
+/// one level up.
+///
+/// This function is called by the editor initialization to begin editing.
+#[lisp_fn(intspec = "")]
+pub fn recursive_edit() {
+    let count = c_specpdl_index();
+
+    // If we enter while input is blocked, don't lock up here.
+    // This may happen through the debugger during redisplay.
+    if unsafe { interrupt_input_blocked } > 0 {
+        return;
+    }
+
+    let buf = if unsafe { command_loop_level >= 0 }
+        && selected_window()
+            .as_window()
+            .map_or(true, |w| !w.contents.eq(current_buffer()))
+    {
+        current_buffer()
+    } else {
+        Qnil
+    };
+
+    // Don't do anything interesting between the increment and the
+    // record_unwind_protect!  Otherwise, we could get distracted and
+    // never decrement the counter again.
+    unsafe {
+        command_loop_level += 1;
+        update_mode_lines = 17;
+        record_unwind_protect(Some(recursive_edit_unwind), buf);
+
+        if command_loop_level > 0 {
+            temporarily_switch_to_single_kboard(selected_frame().as_mut());
+        }
+
+        recursive_edit_1();
+        unbind_to(count, Qnil);
+    }
 }
 
 #[no_mangle]

@@ -81,11 +81,11 @@ pub fn redraw_frame_lisp(frame: LispFrameOrSelected) {
 /// Clear and redisplay all visible frames.
 #[lisp_fn]
 pub fn redraw_display() {
-    unsafe { Vframe_list }
-        .iter_cars()
-        .map(|f| f.as_frame_or_error())
-        .filter(|f| f.visible() != 0)
-        .for_each(|f| redraw_frame(f))
+    for_each_frame!(frame => {
+        if frame.visible() != 0 {
+            redraw_frame(frame);
+        }
+    });
 }
 
 /// Set WINDOW->must_be_updated_p to ON_P for all windows in

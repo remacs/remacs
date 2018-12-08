@@ -67,4 +67,8 @@ map_keymap_internal (Lisp_Object map,
 extern void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
                              void (*) (Lisp_Object, Lisp_Object), bool,
                              Lisp_Object, Lisp_Object, bool, bool);
+
+extern Lisp_Object
+copy_keymap_item (Lisp_Object elt);
+
 #endif

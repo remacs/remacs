@@ -23,6 +23,10 @@ use crate::{
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
+    pub fn as_lisp_obj(mut self) -> LispObject {
+        unsafe { make_lisp_symbol(self.as_mut()) }
+    }
+
     pub fn symbol_name(self) -> LispObject {
         let s = unsafe { self.u.s.as_ref() };
         s.name
@@ -72,7 +76,7 @@ impl LispSymbolRef {
         self.get_trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
     }
 
-    pub unsafe fn get_alias(self) -> LispSymbolRef {
+    pub unsafe fn get_alias(self) -> Self {
         debug_assert!(self.is_alias());
         let s = self.u.s.as_ref();
         LispSymbolRef::new(s.val.alias)
@@ -84,10 +88,6 @@ impl LispSymbolRef {
 
     pub fn set_declared_special(mut self, value: bool) {
         unsafe { set_symbol_declared_special(self.as_mut(), value) };
-    }
-
-    pub fn as_lisp_obj(mut self) -> LispObject {
-        unsafe { make_lisp_symbol(self.as_mut()) }
     }
 
     /// Return the symbol holding SYMBOL's value.  Signal
@@ -170,7 +170,7 @@ impl From<LispSymbolRef> for LispObject {
 }
 
 impl From<LispObject> for Option<LispSymbolRef> {
-    fn from(o: LispObject) -> Option<LispSymbolRef> {
+    fn from(o: LispObject) -> Self {
         o.as_symbol()
     }
 }

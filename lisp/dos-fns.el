@@ -212,9 +212,7 @@ returned unaltered."
 ;; Override settings chosen at startup.
 (defun dos-set-default-process-coding-system ()
   (setq default-process-coding-system
-	(if (default-value 'enable-multibyte-characters)
-	    '(undecided-dos . undecided-dos)
-	  '(raw-text-dos . raw-text-dos))))
+	'(undecided-dos . undecided-dos)))
 
 (add-hook 'before-init-hook 'dos-set-default-process-coding-system)
 

@@ -373,7 +373,10 @@ handled properly.  BODY shall not contain a timeout."
   "Check remote file name components."
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
-	(tramp-default-host "default-host"))
+	(tramp-default-host "default-host")
+	tramp-default-method-alist
+	tramp-default-user-alist
+	tramp-default-host-alist)
     ;; Expand `tramp-default-user' and `tramp-default-host'.
     (should (string-equal
 	     (file-remote-p "/method::")
@@ -723,7 +726,55 @@ handled properly.  BODY shall not contain a timeout."
 	"|method3:user3@host3:/path/to/file")
        'hop)
       (format "%s:%s@%s|%s:%s@%s|"
-	      "method1" "user1" "host1" "method2" "user2" "host2")))))
+	      "method1" "user1" "host1" "method2" "user2" "host2")))
+
+    ;; Expand `tramp-default-method-alist'.
+    (add-to-list 'tramp-default-method-alist '("host1" "user1" "method1"))
+    (add-to-list 'tramp-default-method-alist '("host2" "user2" "method2"))
+    (add-to-list 'tramp-default-method-alist '("host3" "user3" "method3"))
+    (should
+     (string-equal
+      (file-remote-p
+       (concat
+	"/-:user1@host1"
+	"|-:user2@host2"
+	"|-:user3@host3:/path/to/file"))
+      (format "/%s:%s@%s|%s:%s@%s|%s:%s@%s:"
+	      "-" "user1" "host1"
+	      "-" "user2" "host2"
+	      "method3" "user3" "host3")))
+
+    ;; Expand `tramp-default-user-alist'.
+    (add-to-list 'tramp-default-user-alist '("method1" "host1" "user1"))
+    (add-to-list 'tramp-default-user-alist '("method2" "host2" "user2"))
+    (add-to-list 'tramp-default-user-alist '("method3" "host3" "user3"))
+    (should
+     (string-equal
+      (file-remote-p
+       (concat
+	"/method1:host1"
+	"|method2:host2"
+	"|method3:host3:/path/to/file"))
+      (format "/%s:%s|%s:%s|%s:%s@%s:"
+	      "method1" "host1"
+	      "method2" "host2"
+	      "method3" "user3" "host3")))
+
+    ;; Expand `tramp-default-host-alist'.
+    (add-to-list 'tramp-default-host-alist '("method1" "user1" "host1"))
+    (add-to-list 'tramp-default-host-alist '("method2" "user2" "host2"))
+    (add-to-list 'tramp-default-host-alist '("method3" "user3" "host3"))
+    (should
+     (string-equal
+      (file-remote-p
+       (concat
+	"/method1:user1@"
+	"|method2:user2@"
+	"|method3:user3@:/path/to/file"))
+      (format "/%s:%s@|%s:%s@|%s:%s@%s:"
+	      "method1" "user1"
+	      "method2" "user2"
+	      "method3" "user3" "host3")))))
 
 (ert-deftest tramp-test02-file-name-dissect-simplified ()
   "Check simplified file name components."
@@ -731,6 +782,8 @@ handled properly.  BODY shall not contain a timeout."
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
 	(tramp-default-host "default-host")
+	tramp-default-user-alist
+	tramp-default-host-alist
 	(syntax tramp-syntax))
     (unwind-protect
 	(progn
@@ -978,7 +1031,39 @@ handled properly.  BODY shall not contain a timeout."
 	      "|user3@host3:/path/to/file")
 	     'hop)
 	    (format "%s@%s|%s@%s|"
-		    "user1" "host1" "user2" "host2"))))
+		    "user1" "host1" "user2" "host2")))
+
+	  ;; Expand `tramp-default-user-alist'.
+	  (add-to-list 'tramp-default-user-alist '(nil "host1" "user1"))
+	  (add-to-list 'tramp-default-user-alist '(nil "host2" "user2"))
+	  (add-to-list 'tramp-default-user-alist '(nil "host3" "user3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/host1"
+	      "|host2"
+	      "|host3:/path/to/file"))
+	    (format "/%s|%s|%s@%s:"
+		    "host1"
+		    "host2"
+		    "user3" "host3")))
+
+	  ;; Expand `tramp-default-host-alist'.
+	  (add-to-list 'tramp-default-host-alist '(nil "user1" "host1"))
+	  (add-to-list 'tramp-default-host-alist '(nil "user2" "host2"))
+	  (add-to-list 'tramp-default-host-alist '(nil "user3" "host3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/user1@"
+	      "|user2@"
+	      "|user3@:/path/to/file"))
+	    (format "/%s@|%s@|%s@%s:"
+		    "user1"
+		    "user2"
+		    "user3" "host3"))))
 
       ;; Exit.
       (tramp-change-syntax syntax))))
@@ -989,6 +1074,9 @@ handled properly.  BODY shall not contain a timeout."
   (let ((tramp-default-method "default-method")
 	(tramp-default-user "default-user")
 	(tramp-default-host "default-host")
+	tramp-default-method-alist
+	tramp-default-user-alist
+	tramp-default-host-alist
 	(syntax tramp-syntax))
     (unwind-protect
 	(progn
@@ -1546,7 +1634,55 @@ handled properly.  BODY shall not contain a timeout."
 	      "|method3/user3@host3]/path/to/file")
 	     'hop)
 	    (format "%s/%s@%s|%s/%s@%s|"
-		    "method1" "user1" "host1" "method2" "user2" "host2"))))
+		    "method1" "user1" "host1" "method2" "user2" "host2")))
+
+	  ;; Expand `tramp-default-method-alist'.
+	  (add-to-list 'tramp-default-method-alist '("host1" "user1" "method1"))
+	  (add-to-list 'tramp-default-method-alist '("host2" "user2" "method2"))
+	  (add-to-list 'tramp-default-method-alist '("host3" "user3" "method3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[/user1@host1"
+	      "|/user2@host2"
+	      "|/user3@host3]/path/to/file"))
+	    (format "/[/%s@%s|/%s@%s|%s/%s@%s]"
+		    "user1" "host1"
+		    "user2" "host2"
+		    "method3" "user3" "host3")))
+
+	  ;; Expand `tramp-default-user-alist'.
+	  (add-to-list 'tramp-default-user-alist '("method1" "host1" "user1"))
+	  (add-to-list 'tramp-default-user-alist '("method2" "host2" "user2"))
+	  (add-to-list 'tramp-default-user-alist '("method3" "host3" "user3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/host1"
+	      "|method2/host2"
+	      "|method3/host3]/path/to/file"))
+	    (format "/[%s/%s|%s/%s|%s/%s@%s]"
+		    "method1" "host1"
+		    "method2" "host2"
+		    "method3" "user3" "host3")))
+
+	  ;; Expand `tramp-default-host-alist'.
+	  (add-to-list 'tramp-default-host-alist '("method1" "user1" "host1"))
+	  (add-to-list 'tramp-default-host-alist '("method2" "user2" "host2"))
+	  (add-to-list 'tramp-default-host-alist '("method3" "user3" "host3"))
+	  (should
+	   (string-equal
+	    (file-remote-p
+	     (concat
+	      "/[method1/user1@"
+	      "|method2/user2@"
+	      "|method3/user3@]/path/to/file"))
+	    (format "/[%s/%s@|%s/%s@|%s/%s@%s]"
+		    "method1" "user1"
+		    "method2" "user2"
+		    "method3" "user3" "host3"))))
 
       ;; Exit.
       (tramp-change-syntax syntax))))
@@ -1577,39 +1713,59 @@ handled properly.  BODY shall not contain a timeout."
 
 (ert-deftest tramp-test04-substitute-in-file-name ()
   "Check `substitute-in-file-name'."
-  (should (string-equal (substitute-in-file-name "/method:host://foo") "/foo"))
+  (should (string-equal (substitute-in-file-name "/method:host:///foo") "/foo"))
+  (should
+   (string-equal
+    (substitute-in-file-name "/method:host://foo") "/method:host:/foo"))
+  (should
+   (string-equal (substitute-in-file-name "/method:host:/path///foo") "/foo"))
   (should
    (string-equal
     (substitute-in-file-name "/method:host:/path//foo") "/method:host:/foo"))
-  (should
-   (string-equal (substitute-in-file-name "/method:host:/path///foo") "/foo"))
   ;; Quoting local part.
+  (should
+   (string-equal
+    (substitute-in-file-name "/method:host:/:///foo") "/method:host:/:///foo"))
   (should
    (string-equal
     (substitute-in-file-name "/method:host:/://foo") "/method:host:/://foo"))
   (should
    (string-equal
-    (substitute-in-file-name "/method:host:/:/path//foo")
-    "/method:host:/:/path//foo"))
-  (should
-   (string-equal
     (substitute-in-file-name "/method:host:/:/path///foo")
     "/method:host:/:/path///foo"))
-
   (should
    (string-equal
-    (substitute-in-file-name "/method:host:/path/~/foo") "/method:host:~/foo"))
+    (substitute-in-file-name "/method:host:/:/path//foo")
+    "/method:host:/:/path//foo"))
+
   (should
-   (string-equal (substitute-in-file-name "/method:host:/path//~/foo") "~/foo"))
+   (string-equal (substitute-in-file-name "/method:host://~foo") "/~foo"))
+  (should
+   (string-equal
+    (substitute-in-file-name "/method:host:/~foo") "/method:host:/~foo"))
+  (should
+   (string-equal (substitute-in-file-name "/method:host:/path//~foo") "/~foo"))
+  ;; (substitute-in-file-name "/path/~foo") expands only to "/~foo"",
+  ;; if $LOGNAME or $USER is "foo".  Otherwise, it doesn't expand.
+  (should
+   (string-equal
+    (substitute-in-file-name
+     "/method:host:/path/~foo") "/method:host:/path/~foo"))
   ;; Quoting local part.
   (should
    (string-equal
-    (substitute-in-file-name "/method:host:/:/path/~/foo")
-    "/method:host:/:/path/~/foo"))
+    (substitute-in-file-name "/method:host:/://~foo") "/method:host:/://~foo"))
   (should
    (string-equal
-    (substitute-in-file-name "/method:host:/:/path//~/foo")
-    "/method:host:/:/path//~/foo"))
+    (substitute-in-file-name "/method:host:/:/~foo") "/method:host:/:/~foo"))
+  (should
+   (string-equal
+    (substitute-in-file-name
+     "/method:host:/:/path//~foo") "/method:host:/:/path//~foo"))
+  (should
+   (string-equal
+    (substitute-in-file-name
+     "/method:host:/:/path/~foo") "/method:host:/:/path/~foo"))
 
   (let (process-environment)
     (should
@@ -1912,8 +2068,8 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `copy-file'."
   (skip-unless (tramp--test-enabled))
 
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -2023,8 +2179,8 @@ This checks also `file-name-as-directory', `file-name-directory',
   "Check `rename-file'."
   (skip-unless (tramp--test-enabled))
 
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -2878,7 +3034,10 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      ;; We must unquote it.
 	      (should
 	       (string-equal
-		(tramp-compat-file-name-unquote (file-truename tmp-name1))
+		(funcall
+		 (if (tramp--test-emacs27-p)
+		     'tramp-compat-file-name-unquote 'identity)
+		 (file-truename tmp-name1))
 		(tramp-compat-file-name-unquote (file-truename tmp-name3))))))
 
 	;; Cleanup.
@@ -3010,8 +3169,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (file-acl tramp-test-temporary-file-directory))
 
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -3088,8 +3247,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
    (not (equal (file-selinux-context tramp-test-temporary-file-directory)
 	       '(nil nil nil nil))))
 
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
@@ -4083,6 +4242,12 @@ Some semantics has been changed for there, w/o new functions or
 variables, so we check the Emacs version directly."
   (>= emacs-major-version 26))
 
+(defun tramp--test-emacs27-p ()
+  "Check for Emacs version >= 27.1.
+Some semantics has been changed for there, w/o new functions or
+variables, so we check the Emacs version directly."
+  (>= emacs-major-version 27))
+
 (defun tramp--test-adb-p ()
   "Check, whether the remote host runs Android.
 This requires restrictions of file name syntax."
@@ -4163,8 +4328,8 @@ This requires restrictions of file name syntax."
 
 (defun tramp--test-check-files (&rest files)
   "Run a simple but comprehensive test over every file in FILES."
-  ;; `filename-non-special' has been fixed in Emacs 26.1, see Bug#29579.
-  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs26-p))
+  ;; `filename-non-special' has been fixed in Emacs 27.1, see Bug#29579.
+  (dolist (quoted (if (and tramp--test-expensive-test (tramp--test-emacs27-p))
 		      '(nil t) '(nil)))
     ;; We must use `file-truename' for the temporary directory,
     ;; because it could be located on a symlinked directory.  This

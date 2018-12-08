@@ -7289,12 +7289,23 @@ text-only terminal), try with `display-buffer-pop-up-frame'.
 
 If that cannot be done, and `pop-up-windows' is non-nil, try
 again with `display-buffer-pop-up-window'."
-  (or (and (if (eq pop-up-frames 'graphic-only)
-	       (display-graphic-p)
-	     pop-up-frames)
-	   (display-buffer-pop-up-frame buffer alist))
-      (and pop-up-windows
-	   (display-buffer-pop-up-window buffer alist))))
+  (or (display-buffer--maybe-pop-up-frame buffer alist)
+      (display-buffer--maybe-pop-up-window buffer alist)))
+
+(defun display-buffer--maybe-pop-up-frame (buffer alist)
+  "Try displaying BUFFER based on `pop-up-frames'.
+If `pop-up-frames' is non-nil (and not `graphic-only' on a
+text-only terminal), try with `display-buffer-pop-up-frame'."
+  (and (if (eq pop-up-frames 'graphic-only)
+	   (display-graphic-p)
+	 pop-up-frames)
+       (display-buffer-pop-up-frame buffer alist)))
+
+(defun display-buffer--maybe-pop-up-window (buffer alist)
+  "Try displaying BUFFER based on `pop-up-windows'.
+If `pop-up-windows' is non-nil, try with `display-buffer-pop-up-window'."
+  (and pop-up-windows
+       (display-buffer-pop-up-window buffer alist)))
 
 (defun display-buffer-in-child-frame (buffer alist)
   "Display BUFFER in a child frame.
@@ -7360,6 +7371,17 @@ below the selected one, use that window."
 	     (window--display-buffer
 	      buffer window 'reuse alist display-buffer-mark-dedicated)))))
 
+(defun display-buffer--maybe-at-bottom (buffer alist)
+  (let ((alist (append alist `(,(if temp-buffer-resize-mode
+		                    '(window-height . resize-temp-buffer-window)
+	                          '(window-height . fit-window-to-buffer))
+	                       ,(when temp-buffer-resize-mode
+	                          '(preserve-size . (nil . t)))))))
+    (or (display-buffer--maybe-same-window buffer alist)
+        (display-buffer-reuse-window buffer alist)
+        (display-buffer--maybe-pop-up-frame buffer alist)
+        (display-buffer-at-bottom buffer alist))))
+
 (defun display-buffer-at-bottom (buffer alist)
   "Try displaying BUFFER in a window at the bottom of the selected frame.
 This either reuses such a window provided it shows BUFFER
@@ -7376,8 +7398,8 @@ selected frame."
 	 (setq bottom-window-shows-buffer t)
 	 (setq bottom-window window))
 	((not bottom-window)
-	 (setq bottom-window window)))
-       nil nil 'nomini))
+	 (setq bottom-window window))))
+     nil nil 'nomini)
     (or (and bottom-window-shows-buffer
 	     (window--display-buffer
 	      buffer bottom-window 'reuse alist display-buffer-mark-dedicated))
@@ -8452,7 +8474,7 @@ of WINDOW.
 Optional argument LEFT, if non-nil, means to return values suitable for
 buffers displaying right to left text."
   ;; Process lines as returned by ‘window-lines-pixel-dimensions’.
-  ;; STACK is a stack that contains rows that have to be processed yet.
+  ;; STACK is a stack that contains rows that have yet to be processed.
   (let* ((window (window-normalize-window window t))
 	 (disjoint (and (consp count) (cdr count)))
 	 (count (or (and (numberp count) count)

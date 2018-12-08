@@ -47,11 +47,11 @@ use crate::{
 pub struct LispObject(pub EmacsInt);
 
 impl LispObject {
-    pub fn from_C(n: EmacsInt) -> LispObject {
+    pub fn from_C(n: EmacsInt) -> Self {
         LispObject(n)
     }
 
-    pub fn from_C_unsigned(n: EmacsUint) -> LispObject {
+    pub fn from_C_unsigned(n: EmacsUint) -> Self {
         Self::from_C(n as EmacsInt)
     }
 
@@ -63,7 +63,7 @@ impl LispObject {
         self.0 as EmacsUint
     }
 
-    pub fn from_bool(v: bool) -> LispObject {
+    pub fn from_bool(v: bool) -> Self {
         if v {
             Qt
         } else {
@@ -71,7 +71,7 @@ impl LispObject {
         }
     }
 
-    pub fn from_float(v: EmacsDouble) -> LispObject {
+    pub fn from_float(v: EmacsDouble) -> Self {
         unsafe { make_float(v) }
     }
 }
@@ -104,7 +104,7 @@ impl<T> Clone for ExternalPtr<T> {
 }
 
 impl<T> ExternalPtr<T> {
-    pub fn new(p: *mut T) -> ExternalPtr<T> {
+    pub fn new(p: *mut T) -> Self {
         ExternalPtr(p)
     }
 
@@ -139,7 +139,7 @@ impl<T> DerefMut for ExternalPtr<T> {
 }
 
 impl<T> PartialEq for ExternalPtr<T> {
-    fn eq(&self, other: &ExternalPtr<T>) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.as_ptr() == other.as_ptr()
     }
 }
@@ -157,6 +157,24 @@ pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
 impl LispMiscRef {
     pub fn get_type(self) -> Lisp_Misc_Type {
         self.type_()
+    }
+
+    pub fn equal(
+        self,
+        other: LispMiscRef,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool {
+        if self.get_type() != other.get_type() {
+            false
+        } else if let (Some(ov1), Some(ov2)) = (self.as_overlay(), other.as_overlay()) {
+            ov1.equal(ov2, kind, depth, ht)
+        } else if let (Some(marker1), Some(marker2)) = (self.as_marker(), other.as_marker()) {
+            marker1.equal(marker2, kind, depth, ht)
+        } else {
+            false
+        }
     }
 }
 

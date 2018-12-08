@@ -151,8 +151,10 @@ See also `diary-comment-start'."
   :group 'diary)
 
 (defcustom diary-hook nil
-  "List of functions called after the display of the diary.
-Used for example by the appointment package - see `appt-activate'."
+  "Hook run after displaying the diary.
+Used for example by the appointment package - see `appt-activate'.
+The variables `number' and `original-date' are dynamically bound around
+the call."
   :type 'hook
   :group 'diary)
 
@@ -738,7 +740,7 @@ Or to `diary-mark-entries'.")
 
 (defvar diary-saved-point)              ; bound in diary-list-entries
 (defvar diary-including)
-(defvar date-string)                    ; bound in diary-list-entries
+(defvar diary--date-string)                    ; bound in diary-list-entries
 
 (defun diary-list-entries (date number &optional list-only)
   "Create and display a buffer containing the relevant lines in `diary-file'.
@@ -779,10 +781,10 @@ After preparing the initial list, hooks run in this order:
   `diary-hook' runs last, after the diary is displayed.
       This is used e.g. by `appt-check'.
 
-Functions called by these hooks may use the variables ORIGINAL-DATE
-and NUMBER, which are the arguments with which this function was called.
-Note that hook functions should _not_ use DATE, but ORIGINAL-DATE.
-\(Sexp diary entries may use DATE - see `diary-list-sexp-entries'.)
+Functions called by these hooks may use the variables `original-date'
+and `number', which are the arguments with which this function was called.
+Note that hook functions should _not_ use `date', but `original-date'.
+\(Sexp diary entries may use `date' - see `diary-list-sexp-entries'.)
 
 This function displays the list using `diary-display-function', unless
 LIST-ONLY is non-nil, in which case it just returns the list."
@@ -792,7 +794,7 @@ LIST-ONLY is non-nil, in which case it just returns the list."
                    diary-number-of-entries)))
   (when (> number 0)
     (let* ((original-date date)    ; save for possible use in the hooks
-           (date-string (calendar-date-string date))
+           (diary--date-string (calendar-date-string date))
            (diary-buffer (find-buffer-visiting diary-file))
            ;; Dynamically bound in diary-include-files.
            (d-incp (and (boundp 'diary-including) diary-including))
@@ -872,7 +874,9 @@ LIST-ONLY is non-nil, in which case it just returns the list."
                                   (copy-sequence
                                    (car display-buffer-fallback-action))))))
                       (funcall diary-display-function)))
-                  (run-hooks 'diary-hook)))))
+                  (calendar-dlet* ((number number)
+                                   (original-date original-date))
+                    (run-hooks 'diary-hook))))))
         (and temp-buff (buffer-name temp-buff) (kill-buffer temp-buff)))
       (or d-incp (message "Preparing diary...done"))
       diary-entries-list)))
@@ -948,7 +952,7 @@ Returns a cons (NOENTRIES . HOLIDAY-STRING)."
     (let* ((holiday-list (if diary-show-holidays-flag
                              (calendar-check-holidays original-date)))
            (hol-string (format "%s%s%s"
-                               date-string
+                               diary--date-string
                                (if holiday-list ": " "")
                                (mapconcat #'identity holiday-list "; ")))
            (msg (format "No diary entries for %s" hol-string))
@@ -966,9 +970,10 @@ Returns a cons (NOENTRIES . HOLIDAY-STRING)."
             (message "%s" msg)
           ;; holiday-list which is too wide for a message gets a buffer.
           (calendar-in-read-only-buffer holiday-buffer
-            (calendar-set-mode-line (format "Holidays for %s" date-string))
+            (calendar-set-mode-line (format "Holidays for %s"
+                                            diary--date-string))
             (insert (mapconcat #'identity holiday-list "\n")))
-          (message "No diary entries for %s" date-string)))
+          (message "No diary entries for %s" diary--date-string)))
       (cons noentries hol-string)))
 
 
@@ -1122,7 +1127,7 @@ This is an option for `diary-display-function'."
       (if (eq major-mode 'diary-fancy-display-mode)
           (run-hooks 'diary-fancy-display-mode-hook)
         (diary-fancy-display-mode))
-      (calendar-set-mode-line date-string))))
+      (calendar-set-mode-line diary--date-string))))
 
 ;; FIXME modernize?
 (defun diary-print-entries ()
@@ -1664,7 +1669,7 @@ Sexp diary entries must be prefaced by a `diary-sexp-entry-symbol'
 
                   %%(SEXP) ENTRY
 
-Both ENTRY and DATE are available when the SEXP is evaluated.  If
+Both `entry' and `date' are available when the SEXP is evaluated.  If
 the SEXP returns nil, the diary entry does not apply.  If it
 returns a non-nil value, ENTRY will be taken to apply to DATE; if
 the value is a string, that string will be the diary entry in the
@@ -2044,7 +2049,8 @@ calendar."
         (when (setq diary-entry (eval sexp))
           ;; Discard any mark portion from diary-anniversary, etc.
           (if (consp diary-entry) (setq diary-entry (cdr diary-entry)))
-          (mapconcat #'eval diary-remind-message ""))))
+          (calendar-dlet* ((days days))
+            (mapconcat #'eval diary-remind-message "")))))
      ;; Diary entry may apply to one of a list of days before date.
      ((and (listp days) days)
       (or (diary-remind sexp (car days) marking)

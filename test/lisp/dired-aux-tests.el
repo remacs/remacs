@@ -59,7 +59,7 @@
        (unwind-protect
            (if ,yes-or-no
                (cl-letf (((symbol-function 'yes-or-no-p)
-                          (lambda (prompt) (eq ,yes-or-no 'yes))))
+                          (lambda (_prompt) (eq ,yes-or-no 'yes))))
                  ,@body)
              ,@body)
          ;; clean up

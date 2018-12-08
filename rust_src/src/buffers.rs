@@ -15,7 +15,7 @@ use crate::{
     eval::unbind_to,
     frames::LispFrameRef,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject, LiveBufferIter},
+    lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
     lists::{car, cdr, list, member},
     marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::LispStringRef,
@@ -23,13 +23,13 @@ use crate::{
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-        buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
-        lookup_char_property, marker_position, modify_overlay, set_buffer_internal_1, specbind,
-        unchain_both, unchain_marker, update_mode_lines,
+        buffer_window_count, concat2, del_range, delete_all_overlays, globals, internal_equal,
+        last_per_buffer_idx, lookup_char_property, marker_position, modify_overlay,
+        set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
     },
     remacs_sys::{
-        pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay,
-        Lisp_Type, Vbuffer_alist,
+        equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
+        Lisp_Overlay, Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
         windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
@@ -431,13 +431,7 @@ impl LispObject {
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
-        self.as_misc().and_then(|m| {
-            if m.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
-                unsafe { Some(mem::transmute(m)) }
-            } else {
-                None
-            }
-        })
+        self.as_misc().and_then(|m| m.as_overlay())
     }
 
     pub fn as_overlay_or_error(self) -> LispOverlayRef {
@@ -464,6 +458,16 @@ impl From<LispObject> for Option<LispOverlayRef> {
     }
 }
 
+impl LispMiscRef {
+    pub fn as_overlay(self) -> Option<LispOverlayRef> {
+        if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
+            unsafe { Some(mem::transmute(self)) }
+        } else {
+            None
+        }
+    }
+}
+
 impl LispOverlayRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)
@@ -472,6 +476,20 @@ impl LispOverlayRef {
     pub fn iter(self) -> LispOverlayIter {
         LispOverlayIter {
             current: Some(self),
+        }
+    }
+
+    pub fn equal(
+        self,
+        other: LispOverlayRef,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool {
+        unsafe {
+            let overlays_equal = internal_equal(self.start, other.start, kind, depth + 1, ht)
+                && internal_equal(self.end, other.end, kind, depth + 1, ht);
+            overlays_equal && internal_equal(self.plist, other.plist, kind, depth + 1, ht)
         }
     }
 }
@@ -495,18 +513,6 @@ impl Iterator for LispOverlayIter {
     }
 }
 
-impl LispObject {
-    /// Return SELF as a struct buffer pointer, defaulting to the current buffer.
-    /// Same as the decode_buffer function in buffer.h
-    pub fn as_buffer_or_current_buffer(self) -> LispBufferRef {
-        if self.is_nil() {
-            ThreadState::current_buffer()
-        } else {
-            self.as_buffer_or_error()
-        }
-    }
-}
-
 pub type LispBufferLocalValueRef = ExternalPtr<Lisp_Buffer_Local_Value>;
 
 impl LispBufferLocalValueRef {
@@ -526,10 +532,6 @@ pub enum LispBufferOrName {
 }
 
 impl LispBufferOrName {
-    pub fn as_buffer(self) -> Option<LispBufferRef> {
-        self.into()
-    }
-
     pub fn as_buffer_or_current_buffer(self) -> Option<LispBufferRef> {
         let obj = LispObject::from(self);
         obj.map_or_else(|| Some(ThreadState::current_buffer()), |o| o.as_buffer())
@@ -584,27 +586,39 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
 
 impl From<LispBufferOrName> for LispBufferRef {
     fn from(v: LispBufferOrName) -> LispBufferRef {
-        v.as_buffer().unwrap_or_else(|| nsberror(v.into()))
+        Option::<LispBufferRef>::from(v).unwrap_or_else(|| nsberror(v.into()))
     }
 }
 
-pub struct LispBufferOrCurrent(LispBufferRef);
+pub enum LispBufferOrCurrent {
+    Buffer(LispBufferRef),
+    Current,
+}
 
 impl From<LispObject> for LispBufferOrCurrent {
     fn from(obj: LispObject) -> LispBufferOrCurrent {
-        LispBufferOrCurrent(obj.as_buffer_or_current_buffer())
+        match obj.as_buffer() {
+            None => LispBufferOrCurrent::Current,
+            Some(buf) => LispBufferOrCurrent::Buffer(buf),
+        }
     }
 }
 
 impl From<LispBufferOrCurrent> for LispObject {
     fn from(buffer: LispBufferOrCurrent) -> LispObject {
-        buffer.unwrap().into()
+        match buffer {
+            LispBufferOrCurrent::Current => Qnil,
+            LispBufferOrCurrent::Buffer(buf) => buf.into(),
+        }
     }
 }
 
-impl LispBufferOrCurrent {
-    pub fn unwrap(self) -> LispBufferRef {
-        self.0
+impl From<LispBufferOrCurrent> for LispBufferRef {
+    fn from(buffer: LispBufferOrCurrent) -> LispBufferRef {
+        match buffer {
+            LispBufferOrCurrent::Buffer(buf) => buf,
+            LispBufferOrCurrent::Current => ThreadState::current_buffer(),
+        }
     }
 }
 
@@ -675,7 +689,7 @@ pub fn current_buffer() -> LispObject {
 /// No argument or nil as argument means use the current buffer.
 #[lisp_fn(min = "0")]
 pub fn buffer_file_name(buffer: LispBufferOrCurrent) -> LispObject {
-    let buf = buffer.unwrap();
+    let buf: LispBufferRef = buffer.into();
 
     buf.filename_
 }
@@ -684,7 +698,7 @@ pub fn buffer_file_name(buffer: LispBufferOrCurrent) -> LispObject {
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
 pub fn buffer_modified_p(buffer: LispBufferOrCurrent) -> bool {
-    let buf = buffer.unwrap();
+    let buf: LispBufferRef = buffer.into();
     buf.modifications_since_save() < buf.modifications()
 }
 
@@ -693,7 +707,7 @@ pub fn buffer_modified_p(buffer: LispBufferOrCurrent) -> bool {
 /// Return nil if BUFFER has been killed.
 #[lisp_fn(min = "0")]
 pub fn buffer_name(buffer: LispBufferOrCurrent) -> LispObject {
-    let buf = buffer.unwrap();
+    let buf: LispBufferRef = buffer.into();
     buf.name_
 }
 
@@ -703,7 +717,7 @@ pub fn buffer_name(buffer: LispBufferOrCurrent) -> LispObject {
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
 pub fn buffer_modified_tick(buffer: LispBufferOrCurrent) -> EmacsInt {
-    let buf = buffer.unwrap();
+    let buf: LispBufferRef = buffer.into();
     buf.modifications()
 }
 
@@ -717,7 +731,7 @@ pub fn buffer_modified_tick(buffer: LispBufferOrCurrent) -> EmacsInt {
 /// buffer as BUFFER.
 #[lisp_fn(min = "0")]
 pub fn buffer_chars_modified_tick(buffer: LispBufferOrCurrent) -> EmacsInt {
-    let buf = buffer.unwrap();
+    let buf: LispBufferRef = buffer.into();
     buf.char_modifications()
 }
 
@@ -937,7 +951,7 @@ pub fn buffer_local_value_lisp(variable: LispObject, buffer: LispObject) -> Lisp
 /// BUFFER defaults to the current buffer.
 #[lisp_fn(min = "0")]
 pub fn buffer_base_buffer(buffer: LispBufferOrCurrent) -> Option<LispBufferRef> {
-    let buf = buffer.unwrap();
+    let buf: LispBufferRef = buffer.into();
     buf.base_buffer()
 }
 
@@ -952,8 +966,8 @@ pub fn force_mode_line_update(all: bool) -> bool {
         unsafe {
             update_mode_lines = 10;
         }
-        // FIXME: This can't be right.
-        current_buffer.set_prevent_redisplay_optimizations_p(true);
+    // FIXME: This can't be right.
+    // current_buffer.set_prevent_redisplay_optimizations_p(true);
     } else if 0 < unsafe { buffer_window_count(current_buffer.as_mut()) } {
         unsafe {
             bset_update_mode_line(current_buffer.as_mut());
@@ -1037,7 +1051,8 @@ pub fn delete_overlay(overlay: LispOverlayRef) {
 /// BUFFER omitted or nil means delete all overlays of the current buffer.
 #[lisp_fn(min = "0", name = "delete-all-overlays")]
 pub fn delete_all_overlays_lisp(buffer: LispBufferOrCurrent) {
-    unsafe { delete_all_overlays(buffer.unwrap().as_mut()) };
+    let mut buf: LispBufferRef = buffer.into();
+    unsafe { delete_all_overlays(buf.as_mut()) };
 }
 
 /// Delete the entire contents of the current buffer.

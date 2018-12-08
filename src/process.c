@@ -152,6 +152,18 @@ static bool kbd_is_on_hold;
    when exiting.  */
 bool inhibit_sentinels;
 
+union u_sockaddr
+{
+  struct sockaddr sa;
+  struct sockaddr_in in;
+#ifdef AF_INET6
+  struct sockaddr_in6 in6;
+#endif
+#ifdef HAVE_LOCAL_SOCKETS
+  struct sockaddr_un un;
+#endif
+};
+
 #ifndef SOCK_CLOEXEC
 # define SOCK_CLOEXEC 0
 #endif
@@ -1115,7 +1127,7 @@ optional KEY arg.  If KEY is nil, value is a cons cell of the form
 connection; it is t for a pipe connection.  If KEY is t, the complete
 contact information for the connection is returned, else the specific
 value for the keyword KEY is returned.  See `make-network-process',
-`make-serial-process', or `make pipe-process' for the list of keywords.
+`make-serial-process', or `make-pipe-process' for the list of keywords.
 If PROCESS is a non-blocking network process that hasn't been fully
 set up yet, this function will block until socket setup has completed.  */)
   (Lisp_Object process, Lisp_Object key)
@@ -1253,9 +1265,8 @@ to make it unique.
 
 :buffer BUFFER -- BUFFER is the buffer (or buffer-name) to associate
 with the process.  Process output goes at end of that buffer, unless
-you specify an output stream or filter function to handle the output.
-BUFFER may be also nil, meaning that this process is not associated
-with any buffer.
+you specify a filter function to handle the output.  BUFFER may be
+also nil, meaning that this process is not associated with any buffer.
 
 :command COMMAND -- COMMAND is a list starting with the program file
 name, followed by strings to give to the program as arguments.
@@ -1321,6 +1332,8 @@ usage: (make-process &rest ARGS)  */)
   if (!NILP (program))
     CHECK_STRING (program);
 
+  bool query_on_exit = NILP (Fplist_get (contact, QCnoquery));
+
   stderrproc = Qnil;
   xstderr = Fplist_get (contact, QCstderr);
   if (PROCESSP (xstderr))
@@ -1336,7 +1349,9 @@ usage: (make-process &rest ARGS)  */)
 			  QCname,
 			  concat2 (name, build_string (" stderr")),
 			  QCbuffer,
-			  Fget_buffer_create (xstderr));
+			  Fget_buffer_create (xstderr),
+			  QCnoquery,
+			  query_on_exit ? Qnil : Qt);
     }
 
   proc = make_process (name);
@@ -1350,7 +1365,7 @@ usage: (make-process &rest ARGS)  */)
   pset_filter (XPROCESS (proc), Fplist_get (contact, QCfilter));
   pset_command (XPROCESS (proc), Fcopy_sequence (command));
 
-  if (tem = Fplist_get (contact, QCnoquery), !NILP (tem))
+  if (!query_on_exit)
     XPROCESS (proc)->kill_without_query = 1;
   if (tem = Fplist_get (contact, QCstop), !NILP (tem))
     pset_command (XPROCESS (proc), Qt);
@@ -1941,8 +1956,8 @@ arguments are defined:
 
 :buffer BUFFER -- BUFFER is the buffer (or buffer-name) to associate
 with the process.  Process output goes at the end of that buffer,
-unless you specify an output stream or filter function to handle the
-output.  If BUFFER is not given, the value of NAME is used.
+unless you specify a filter function to handle the output.  If BUFFER
+is not given, the value of NAME is used.
 
 :coding CODING -- If CODING is a symbol, it specifies the coding
 system used for both reading and writing for this process.  If CODING
@@ -2656,8 +2671,8 @@ the value of PORT is used.
 
 :buffer BUFFER -- BUFFER is the buffer (or buffer-name) to associate
 with the process.  Process output goes at the end of that buffer,
-unless you specify an output stream or filter function to handle the
-output.  If BUFFER is not given, the value of NAME is used.
+unless you specify a filter function to handle the output.  If BUFFER
+is not given, the value of NAME is used.
 
 :coding CODING -- If CODING is a symbol, it specifies the coding
 system used for both reading and writing for this process.  If CODING
@@ -3319,9 +3334,8 @@ to make it unique.
 
 :buffer BUFFER -- BUFFER is the buffer (or buffer-name) to associate
 with the process.  Process output goes at end of that buffer, unless
-you specify an output stream or filter function to handle the output.
-BUFFER may be also nil, meaning that this process is not associated
-with any buffer.
+you specify a filter function to handle the output.  BUFFER may be
+also nil, meaning that this process is not associated with any buffer.
 
 :host HOST -- HOST is name of the host to connect to, or its IP
 address.  The symbol `local' specifies the local host.  If specified
@@ -3392,8 +3406,7 @@ The stopped state is cleared by `continue-process' and set by
 
 :filter-multibyte BOOL -- If BOOL is non-nil, strings given to the
 process filter are multibyte, otherwise they are unibyte.
-If this keyword is not specified, the strings are multibyte if
-the default value of `enable-multibyte-characters' is non-nil.
+If this keyword is not specified, the strings are multibyte.
 
 :sentinel SENTINEL -- Install SENTINEL as the process sentinel.
 
@@ -4310,16 +4323,7 @@ server_accept_connection (Lisp_Object server, int channel)
   struct Lisp_Process *ps = XPROCESS (server);
   struct Lisp_Process *p;
   int s;
-  union u_sockaddr {
-    struct sockaddr sa;
-    struct sockaddr_in in;
-#ifdef AF_INET6
-    struct sockaddr_in6 in6;
-#endif
-#ifdef HAVE_LOCAL_SOCKETS
-    struct sockaddr_un un;
-#endif
-  } saddr;
+  union u_sockaddr saddr;
   socklen_t len = sizeof saddr;
   ptrdiff_t count;
 
@@ -7297,6 +7301,18 @@ init_process_emacs (int sockfd)
 #endif
 
   external_sock_fd = sockfd;
+  Lisp_Object sockname = Qnil;
+# if HAVE_GETSOCKNAME
+  if (0 <= sockfd)
+    {
+      union u_sockaddr sa;
+      socklen_t salen = sizeof sa;
+      if (getsockname (sockfd, &sa.sa, &salen) == 0)
+	sockname = conv_sockaddr_to_lisp (&sa.sa, salen);
+    }
+# endif
+  Vinternal__daemon_sockname = sockname;
+
   max_desc = -1;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
@@ -7480,6 +7496,10 @@ The arguments of the functions are the same as for `interrupt-process'.
 These functions are called in the order of the list, until one of them
 returns non-`nil'.  */);
   Vinterrupt_process_functions = list1 (Qinternal_default_interrupt_process);
+
+  DEFVAR_LISP ("internal--daemon-sockname", Vinternal__daemon_sockname,
+	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
+  Vinternal__daemon_sockname = Qnil;
 
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");

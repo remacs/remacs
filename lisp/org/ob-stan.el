@@ -49,11 +49,12 @@
 
 (defcustom org-babel-stan-cmdstan-directory nil
   "CmdStan source directory.
-'make' will be called from this directory to compile the Stan
-block.  When nil, executing Stan blocks dumps the content to a
-plain text file."
+Call \"make\" from this directory to compile the Stan block.
+When nil, executing Stan blocks dumps the content to a file."
   :group 'org-babel
-  :type 'string)
+  :type '(choice
+	  (directory :tag "Compilation directory")
+	  (const :tag "Dump to a file" nil)))
 
 (defvar org-babel-default-header-args:stan
   '((:results . "file")))
