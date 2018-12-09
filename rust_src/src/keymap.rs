@@ -180,7 +180,7 @@ pub fn keymapp(object: LispObject) -> bool {
 pub extern "C" fn keymap_parent(keymap: LispObject, autoload: bool) -> LispObject {
     let map = get_keymap(keymap, true, autoload);
     let mut current = Qnil;
-    for elt in map.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+    for elt in map.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off) {
         current = elt.cdr();
         if keymapp(current) {
             return current;
@@ -262,7 +262,7 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn keymap_prompt(map: LispObject) -> LispObject {
     let map = get_keymap(map, false, false);
-    for elt in map.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+    for elt in map.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let mut tem = elt;
         if tem.is_string() {
             return tem;
@@ -356,7 +356,7 @@ pub unsafe extern "C" fn map_keymap_internal(
     };
 
     let mut parent = tail;
-    for tail_cons in tail.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+    for tail_cons in tail.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let binding = tail_cons.car();
         if binding.eq(Qkeymap) {
             break;

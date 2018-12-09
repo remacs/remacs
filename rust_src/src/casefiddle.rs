@@ -188,7 +188,7 @@ fn casefiddle_region(
             LispObject::from(intern("bounds"))
         );
 
-        for elt in bounds.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        for elt in bounds.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
             let (car, cdr) = elt.as_cons_or_error().as_tuple();
             unsafe { casify_region(action, car, cdr) };
         }

@@ -86,8 +86,8 @@ impl LispObject {
 
 macro_rules! for_each_frame {
     ($name:ident => $action:block) => {
-        let frame_it = unsafe { Vframe_list.iter_cars_v2(LispConsEndChecks::off,
-                                                             LispConsCircularChecks::off) };
+        let frame_it = unsafe { Vframe_list.iter_cars(LispConsEndChecks::off,
+                                                      LispConsCircularChecks::off) };
         for $name in frame_it.map(|f| f.as_frame_or_error())
             $action
     };

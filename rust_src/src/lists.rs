@@ -57,7 +57,7 @@ impl LispObject {
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
-    pub fn iter_tails_v2(
+    pub fn iter_tails(
         self,
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
@@ -68,7 +68,7 @@ impl LispObject {
     /// Iterate over all tails of self.  self should be a plist, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
-    pub fn iter_tails_plist_v2(
+    pub fn iter_tails_plist(
         self,
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
@@ -77,7 +77,7 @@ impl LispObject {
     }
 
     /// Iterate over the car cells of a list.
-    pub fn iter_cars_v2(
+    pub fn iter_cars(
         self,
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
@@ -297,8 +297,8 @@ impl LispCons {
             (LispConsCircularChecks::on, depth + 1, ht)
         };
 
-        let mut it1 = self.iter_tails_v2(LispConsEndChecks::off, circular_checks);
-        let mut it2 = other.iter_tails_v2(LispConsEndChecks::off, circular_checks);
+        let mut it1 = self.iter_tails(LispConsEndChecks::off, circular_checks);
+        let mut it2 = other.iter_tails(LispConsEndChecks::off, circular_checks);
         loop {
             match (it1.next(), it2.next()) {
                 (Some(cons1), Some(cons2)) => {
@@ -321,7 +321,7 @@ impl LispCons {
     pub fn length(self) -> usize {
         let len = self
             .0
-            .iter_tails_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+            .iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
             .count();
         if len > MOST_POSITIVE_FIXNUM as usize {
             error!("List too long");
@@ -329,7 +329,7 @@ impl LispCons {
         len
     }
 
-    pub fn iter_tails_v2(
+    pub fn iter_tails(
         self,
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
@@ -337,7 +337,7 @@ impl LispCons {
         TailsIter::new(self.0, Qlistp, end_checks, circular_checks)
     }
 
-    pub fn iter_cars_v2(
+    pub fn iter_cars(
         self,
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
@@ -434,7 +434,7 @@ pub fn nthcdr(n: EmacsInt, list: LispObject) -> LispObject {
         return list;
     }
 
-    let mut it = list.iter_tails_v2(LispConsEndChecks::on, LispConsCircularChecks::safe);
+    let mut it = list.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::safe);
     for _ in 0..n {
         it.next();
     }
@@ -452,7 +452,7 @@ fn lookup_member<CmpFunc>(elt: LispObject, list: LispObject, cmp: CmpFunc) -> Li
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_tails_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+    list.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
         .find(|item| cmp(elt, item.car()))
         .into()
 }
@@ -485,7 +485,7 @@ fn assoc_impl<CmpFunc>(key: LispObject, list: LispObject, cmp: CmpFunc) -> LispO
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_cars_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+    list.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on)
         .find(|item| item.as_cons().map_or(false, |cons| cmp(key, cons.car())))
         .unwrap_or(Qnil)
 }
@@ -515,7 +515,7 @@ fn rassoc_impl<CmpFunc>(key: LispObject, list: LispObject, cmp: CmpFunc) -> Lisp
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_cars_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+    list.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on)
         .find(|item| item.as_cons().map_or(false, |cons| cmp(key, cons.cdr())))
         .unwrap_or(Qnil)
 }
@@ -547,7 +547,7 @@ pub fn rassoc(key: LispObject, list: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
     let mut prev = None;
-    list.iter_tails_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+    list.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
         .fold(list, |remaining, tail| {
             let (item, rest) = tail.as_tuple();
             if elt.eq(item) {
@@ -606,7 +606,7 @@ where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
     for tail in plist
-        .iter_tails_plist_v2(end_checks, circular_checks)
+        .iter_tails_plist(end_checks, circular_checks)
         .step_by(2)
     {
         match tail.cdr().as_cons() {
@@ -638,7 +638,7 @@ where
 #[lisp_fn]
 pub fn plist_member(plist: LispObject, prop: LispObject) -> Option<LispCons> {
     plist
-        .iter_tails_plist_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .iter_tails_plist(LispConsEndChecks::on, LispConsCircularChecks::on)
         .step_by(2)
         .find(|tail| prop.eq(tail.car()))
 }
@@ -654,7 +654,7 @@ where
 {
     let mut last_cons = None;
     for tail in plist
-        .iter_tails_plist_v2(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .iter_tails_plist(LispConsEndChecks::on, LispConsCircularChecks::on)
         .step_by(2)
     {
         match tail.cdr().as_cons() {
@@ -753,7 +753,7 @@ pub fn make_list(length: EmacsUint, init: LispObject) -> LispObject {
 /// which is at least the number of distinct elements.
 #[lisp_fn]
 pub fn safe_length(list: LispObject) -> usize {
-    list.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::safe)
+    list.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::safe)
         .count()
 }
 
@@ -888,7 +888,7 @@ pub extern "C" fn mapcar1(
     mapcar_over_iterator(
         output,
         fun,
-        seq.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off),
+        seq.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off),
     )
 }
 

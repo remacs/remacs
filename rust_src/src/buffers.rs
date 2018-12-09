@@ -576,7 +576,7 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
             LispBufferOrName::Buffer(b) => b,
             LispBufferOrName::Name(name) => {
                 let tem = unsafe { Vbuffer_alist }
-                    .iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
+                    .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
                     .find(|&item| string_equal(car(item), name));
 
                 cdr(tem.into())
@@ -631,7 +631,7 @@ impl From<LispBufferOrCurrent> for LispBufferRef {
 #[lisp_fn(min = "0")]
 pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
     let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }
-        .iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
         .map(cdr)
         .collect();
 

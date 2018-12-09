@@ -62,7 +62,7 @@ where
 {
     let mut val = initial;
 
-    for elt in args.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+    for elt in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         val = unsafe { eval_sub(elt) };
         if cmp(val, Qnil) {
             break;
@@ -103,7 +103,7 @@ pub fn lisp_if(args: LispObject) -> LispObject {
 pub fn cond(args: LispObject) -> LispObject {
     let mut val = Qnil;
 
-    for clause in args.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+    for clause in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (head, tail) = clause.as_cons_or_error().as_tuple();
         val = unsafe { eval_sub(head) };
         if val != Qnil {
@@ -121,7 +121,7 @@ pub fn cond(args: LispObject) -> LispObject {
 /// usage: (progn BODY...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn progn(body: LispObject) -> LispObject {
-    body.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
+    body.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
         .map(|form| unsafe { eval_sub(form) })
         .last()
         .into()
@@ -171,7 +171,7 @@ pub fn setq(args: LispObject) -> LispObject {
     let mut val = args;
 
     let mut it = args
-        .iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
         .enumerate();
     while let Some((nargs, sym)) = it.next() {
         let (_, arg) = it.next().unwrap_or_else(|| {
@@ -365,7 +365,7 @@ pub fn letX(args: LispCons) -> LispObject {
 
     let lexenv = unsafe { globals.Vinternal_interpreter_environment };
 
-    for var in varlist.iter_cars_v2(LispConsEndChecks::on, LispConsCircularChecks::off) {
+    for var in varlist.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::off) {
         unsafe { maybe_quit() };
 
         let (var, val) = let_binding_value(var);
@@ -430,7 +430,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
     let mut lexenv = unsafe { globals.Vinternal_interpreter_environment };
 
-    for var in varlist.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+    for var in varlist.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (var, val) = let_binding_value(var);
 
         let mut dyn_bind = true;
@@ -589,7 +589,7 @@ pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
 /// Signal `error' with message MSG, and additional arg ARG.
 /// If ARG is not a genuine list, make it a one-element list.
 fn signal_error(msg: &str, arg: LispObject) -> ! {
-    let it = arg.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::safe);
+    let it = arg.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::safe);
     let arg = match it.last() {
         None => list!(arg),
         Some(_) => arg,
@@ -731,7 +731,7 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
                     // Autoloaded symbols are functions, except if they load
                     // macros or keymaps.
                     let mut it =
-                        cons.iter_tails_v2(LispConsEndChecks::off, LispConsCircularChecks::off);
+                        cons.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off);
                     for _ in 0..4 {
                         if it.next().is_none() {
                             break;
@@ -765,7 +765,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     let queue = Vautoload_queue;
     Vautoload_queue = oldqueue;
 
-    for first in queue.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+    for first in queue.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
         if first.eq(LispObject::from(0)) {
@@ -994,7 +994,7 @@ fn run_hook_with_args_internal(
         args[0] = val;
         func(args)
     } else {
-        for item in val.iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        for item in val.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
             if ret.is_not_nil() {
                 break;
             }
@@ -1011,8 +1011,8 @@ fn run_hook_with_args_internal(
                     args[0] = global_vals;
                     ret = func(args);
                 } else {
-                    for gval in global_vals
-                        .iter_cars_v2(LispConsEndChecks::off, LispConsCircularChecks::off)
+                    for gval in
+                        global_vals.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
                     {
                         if ret.is_not_nil() {
                             break;
