@@ -44,7 +44,7 @@ use crate::{
 /// usage: (or CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn or(args: LispObject) -> LispObject {
-    walk_all(args, Qnil, |a, b| a != b)
+    eval_and_compare_all(args, Qnil, |a, b| a != b)
 }
 
 /// Eval args until one of them yields nil, then return nil.
@@ -53,10 +53,12 @@ pub fn or(args: LispObject) -> LispObject {
 /// usage: (and CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn and(args: LispObject) -> LispObject {
-    walk_all(args, Qt, |a, b| a == b)
+    eval_and_compare_all(args, Qt, |a, b| a == b)
 }
 
-fn walk_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
+/// Eval each item in ARGS and then compare it using CMP.
+/// INITIAL is returned if the list has no cons cells.
+fn eval_and_compare_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
