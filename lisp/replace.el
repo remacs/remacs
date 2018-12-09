@@ -1657,7 +1657,10 @@ See also `multi-occur'."
                   (lines 0)               ; count of matching lines
 	          (matches 0)             ; count of matches
 		  (headerpt (with-current-buffer out-buf (point)))
-                  )
+		  (orig-line (if (not (overlayp boo))
+				 (line-number-at-pos)
+			       (line-number-at-pos
+				(overlay-get boo 'occur--orig-point)))))
 	      (save-excursion
                 ;; begin searching in the buffer
 		(goto-char (if (overlayp boo) (overlay-start boo) (point-min)))
@@ -1665,9 +1668,6 @@ See also `multi-occur'."
 	        (let* ((limit (if (overlayp boo) (overlay-end boo) (point-max)))
                        (start-line (line-number-at-pos))
 		       (curr-line start-line) ; line count
-		       (orig-line (if (not (overlayp boo)) 1
-                                    (line-number-at-pos
-                                     (overlay-get boo 'occur--orig-point))))
 		       (orig-line-shown-p)
 		       (prev-line nil)        ; line number of prev match endpt
 		       (prev-after-lines nil) ; context lines of prev match
@@ -1796,7 +1796,7 @@ See also `multi-occur'."
 				(setq orig-line-shown-p t)
 				(save-excursion
 				  (goto-char (point-min))
-				  (forward-line (- orig-line start-line 1))
+				  (forward-line (1- orig-line))
 				  (occur-engine-line (line-beginning-position)
 						     (line-end-position) keep-props)))))
 		        ;; Actually insert the match display data
@@ -1834,7 +1834,7 @@ See also `multi-occur'."
 		    (let ((orig-line-str
 			   (save-excursion
 			     (goto-char (point-min))
-			     (forward-line (- orig-line start-line 1))
+			     (forward-line (1- orig-line))
 			     (occur-engine-line (line-beginning-position)
 						(line-end-position) keep-props))))
 		      (add-face-text-property
