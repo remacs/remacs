@@ -13,7 +13,7 @@ use std::slice;
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
-    lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks, TailsIter},
+    lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks},
     process::LispProcessRef,
     remacs_sys,
     remacs_sys::{build_string, internal_equal, make_float},
@@ -473,12 +473,7 @@ macro_rules! impl_alistval_iter {
 
         impl $iter_name {
             pub fn new() -> Self {
-                $iter_name(CarIter::new(TailsIter::new(
-                    $data,
-                    Qlistp,
-                    LispConsEndChecks::on,
-                    LispConsCircularChecks::on,
-                )))
+                $iter_name($data.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on))
             }
         }
 
