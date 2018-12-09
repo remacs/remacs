@@ -3398,8 +3398,10 @@ When the minor mode @code{cursor-intangible-mode} is turned on, point
 is moved away from any position that has a non-@code{nil}
 @code{cursor-intangible} property, just before redisplay happens.
 
+@vindex cursor-sensor-inhibit
 When the variable @code{cursor-sensor-inhibit} is non-@code{nil}, the
-@code{cursor-intangible} property is ignored.
+@code{cursor-intangible} property and the
+@code{cursor-sensor-functions} property (described below) are ignored.
 
 @item field
 @kindex field @r{(text property)}
