@@ -1748,6 +1748,7 @@ See also `multi-occur'."
                           (when (and list-matching-lines-jump-to-current-line
                                      (not multi-occur-p)
                                      (not orig-line-shown-p)
+                                     orig-line
                                      (>= curr-line orig-line))
                             (insert
                              (concat
@@ -1774,7 +1775,8 @@ See also `multi-occur'."
                   ;; Insert original line if haven't done yet.
                   (when (and list-matching-lines-jump-to-current-line
                              (not multi-occur-p)
-                             (not orig-line-shown-p))
+                             (not orig-line-shown-p)
+                             orig-line)
                     (with-current-buffer out-buf
                       (insert
                        (concat
