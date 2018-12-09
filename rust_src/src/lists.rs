@@ -55,8 +55,8 @@ impl LispObject {
     }
 
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
-    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
-    /// will be signaled.
+    /// of cons cells ending in nil.
+    /// wrong-type-argument error will be signaled if END_CHECKS is 'on'.
     pub fn iter_tails(
         self,
         end_checks: LispConsEndChecks,
@@ -66,8 +66,8 @@ impl LispObject {
     }
 
     /// Iterate over all tails of self.  self should be a plist, i.e. a chain
-    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
-    /// will be signaled.
+    /// of cons cells ending in nil.
+    /// wrong-type-argument error will be signaled if END_CHECKS is 'on'.
     pub fn iter_tails_plist(
         self,
         end_checks: LispConsEndChecks,
