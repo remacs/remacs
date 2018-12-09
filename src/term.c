@@ -1359,8 +1359,7 @@ term_get_fkeys_1 (void)
       char *sequence = tgetstr (keys[i].cap, address);
       if (sequence)
 	Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (sequence),
-		     Fmake_vector (make_fixnum (1),
-				   intern (keys[i].name)));
+		     make_vector (1, intern (keys[i].name)));
     }
 
   /* The uses of the "k0" capability are inconsistent; sometimes it
@@ -1379,13 +1378,13 @@ term_get_fkeys_1 (void)
 	  /* Define f0 first, so that f10 takes precedence in case the
 	     key sequences happens to be the same.  */
 	  Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (k0),
-		       Fmake_vector (make_fixnum (1), intern ("f0")));
+		       make_vector (1, intern ("f0")));
 	Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (k_semi),
-		     Fmake_vector (make_fixnum (1), intern ("f10")));
+		     make_vector (1, intern ("f10")));
       }
     else if (k0)
       Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (k0),
-		   Fmake_vector (make_fixnum (1), intern (k0_name)));
+		   make_vector (1, intern (k0_name)));
   }
 
   /* Set up cookies for numbered function keys above f10. */
@@ -1408,8 +1407,7 @@ term_get_fkeys_1 (void)
 	    {
 	      sprintf (fkey, "f%d", i);
 	      Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (sequence),
-			   Fmake_vector (make_fixnum (1),
-					 intern (fkey)));
+			   make_vector (1, intern (fkey)));
 	    }
 	}
       }
@@ -1425,8 +1423,7 @@ term_get_fkeys_1 (void)
 	  char *sequence = tgetstr (cap2, address);			\
 	  if (sequence)                                                 \
 	    Fdefine_key (KVAR (kboard, Vinput_decode_map), build_string (sequence), \
-			 Fmake_vector (make_fixnum (1),                 \
-				       intern (sym)));                  \
+			 make_vector (1, intern (sym)));		\
 	}
 
       /* if there's no key_next keycap, map key_npage to `next' keysym */

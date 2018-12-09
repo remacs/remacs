@@ -54,8 +54,7 @@ make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
      with the vectors we'll put in them.  */
   ptrdiff_t i = ASIZE (h->key_and_value) >> 1;
   while (i > 0)
-    set_hash_key_slot (h, --i,
-		       Fmake_vector (make_fixnum (max_stack_depth), Qnil));
+    set_hash_key_slot (h, --i, make_nil_vector (max_stack_depth));
   return log;
 }
 
@@ -422,7 +421,7 @@ Before returning, a new log is allocated for future samples.  */)
   cpu_log = (profiler_cpu_running
 	     ? make_log (profiler_log_size, profiler_max_stack_depth)
 	     : Qnil);
-  Fputhash (Fmake_vector (make_fixnum (1), QAutomatic_GC),
+  Fputhash (make_vector (1, QAutomatic_GC),
 	    make_fixnum (cpu_gc_count),
 	    result);
   cpu_gc_count = 0;

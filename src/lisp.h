@@ -3694,6 +3694,7 @@ build_string (const char *str)
 }
 
 extern Lisp_Object pure_cons (Lisp_Object, Lisp_Object);
+extern Lisp_Object make_vector (ptrdiff_t, Lisp_Object);
 extern void make_byte_code (struct Lisp_Vector *);
 extern struct Lisp_Vector *allocate_vector (ptrdiff_t);
 
@@ -3724,6 +3725,16 @@ make_uninit_sub_char_table (int depth, int min_char)
   XSUB_CHAR_TABLE (v)->depth = depth;
   XSUB_CHAR_TABLE (v)->min_char = min_char;
   return v;
+}
+
+/* Make a vector of SIZE nils.  */
+
+INLINE Lisp_Object
+make_nil_vector (ptrdiff_t size)
+{
+  Lisp_Object vec = make_uninit_vector (size);
+  memclear (XVECTOR (vec)->contents, size * word_size);
+  return vec;
 }
 
 extern struct Lisp_Vector *allocate_pseudovector (int, int, int,

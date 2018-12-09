@@ -4028,7 +4028,7 @@ xpm_make_color_table_v (void (**put_func) (Lisp_Object, const char *, int,
 {
   *put_func = xpm_put_color_table_v;
   *get_func = xpm_get_color_table_v;
-  return Fmake_vector (make_fixnum (256), Qnil);
+  return make_nil_vector (256);
 }
 
 static void

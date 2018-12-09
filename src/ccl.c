@@ -2275,7 +2275,7 @@ void
 syms_of_ccl (void)
 {
   staticpro (&Vccl_program_table);
-  Vccl_program_table = Fmake_vector (make_fixnum (32), Qnil);
+  Vccl_program_table = make_nil_vector (32);
 
   DEFSYM (Qccl, "ccl");
   DEFSYM (Qcclp, "cclp");
@@ -2291,7 +2291,7 @@ syms_of_ccl (void)
 
   DEFVAR_LISP ("code-conversion-map-vector", Vcode_conversion_map_vector,
 	       doc: /* Vector of code conversion maps.  */);
-  Vcode_conversion_map_vector = Fmake_vector (make_fixnum (16), Qnil);
+  Vcode_conversion_map_vector = make_nil_vector (16);
 
   DEFVAR_LISP ("font-ccl-encoder-alist", Vfont_ccl_encoder_alist,
 	       doc: /* Alist of fontname patterns vs corresponding CCL program.

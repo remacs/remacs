@@ -1093,7 +1093,7 @@ binding KEY to DEF is added at the front of KEYMAP.  */)
 
   if (VECTORP (def) && ASIZE (def) > 0 && CONSP (AREF (def, 0)))
     { /* DEF is apparently an XEmacs-style keyboard macro.  */
-      Lisp_Object tmp = Fmake_vector (make_fixnum (ASIZE (def)), Qnil);
+      Lisp_Object tmp = make_nil_vector (ASIZE (def));
       ptrdiff_t i = ASIZE (def);
       while (--i >= 0)
 	{
@@ -1931,14 +1931,12 @@ then the value includes only maps for prefixes that start with PREFIX.  */)
 	     we don't have to deal with the possibility of a string.  */
 	  if (STRINGP (prefix))
 	    {
-	      int i, i_byte, c;
-	      Lisp_Object copy;
-
-	      copy = Fmake_vector (make_fixnum (SCHARS (prefix)), Qnil);
-	      for (i = 0, i_byte = 0; i < SCHARS (prefix);)
+	      ptrdiff_t i_byte = 0;
+	      Lisp_Object copy = make_nil_vector (SCHARS (prefix));
+	      for (ptrdiff_t i = 0; i < SCHARS (prefix); )
 		{
-		  int i_before = i;
-
+		  ptrdiff_t i_before = i;
+		  int c;
 		  FETCH_STRING_CHAR_ADVANCE (c, prefix, i, i_byte);
 		  if (SINGLE_BYTE_CHAR_P (c) && (c & 0200))
 		    c ^= 0200 | meta_modifier;
@@ -3141,7 +3139,7 @@ describe_map (Lisp_Object map, Lisp_Object prefix,
   /* This vector gets used to present single keys to Flookup_key.  Since
      that is done once per keymap element, we don't want to cons up a
      fresh vector every time.  */
-  kludge = Fmake_vector (make_fixnum (1), Qnil);
+  kludge = make_nil_vector (1);
   definition = Qnil;
 
   map = call1 (Qkeymap_canonicalize, map);
@@ -3390,7 +3388,7 @@ describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
   /* This vector gets used to present single keys to Flookup_key.  Since
      that is done once per vector element, we don't want to cons up a
      fresh vector every time.  */
-  kludge = Fmake_vector (make_fixnum (1), Qnil);
+  kludge = make_nil_vector (1);
 
   if (partial)
     suppress = intern ("suppress-keymap");
@@ -3690,7 +3688,7 @@ be preferred.  */);
   DEFSYM (Qremap, "remap");
   DEFSYM (QCadvertised_binding, ":advertised-binding");
 
-  command_remapping_vector = Fmake_vector (make_fixnum (2), Qremap);
+  command_remapping_vector = make_vector (2, Qremap);
   staticpro (&command_remapping_vector);
 
   where_is_cache_keymaps = Qt;

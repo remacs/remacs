@@ -733,7 +733,7 @@ save_script_callback (struct xwidget *xw, Lisp_Object script, Lisp_Object fun)
 {
   Lisp_Object cbs = xw->script_callbacks;
   if (NILP (cbs))
-    xw->script_callbacks = cbs = Fmake_vector (make_fixnum (32), Qnil);
+    xw->script_callbacks = cbs = make_nil_vector (32);
 
   /* Find first free index.  */
   ptrdiff_t idx;

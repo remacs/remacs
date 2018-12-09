@@ -5410,8 +5410,7 @@ void
 syms_of_buffer (void)
 {
   staticpro (&last_overlay_modification_hooks);
-  last_overlay_modification_hooks
-    = Fmake_vector (make_fixnum (10), Qnil);
+  last_overlay_modification_hooks = make_nil_vector (10);
 
   staticpro (&QSFundamental);
   staticpro (&Vbuffer_alist);

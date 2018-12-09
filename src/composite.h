@@ -274,7 +274,7 @@ enum lglyph_indices
     LGLYPH_SIZE
   };
 
-#define LGLYPH_NEW() Fmake_vector (make_fixnum (LGLYPH_SIZE), Qnil)
+#define LGLYPH_NEW() make_nil_vector (LGLYPH_SIZE)
 #define LGLYPH_FROM(g) XFIXNUM (AREF ((g), LGLYPH_IX_FROM))
 #define LGLYPH_TO(g) XFIXNUM (AREF ((g), LGLYPH_IX_TO))
 #define LGLYPH_CHAR(g) XFIXNUM (AREF ((g), LGLYPH_IX_CHAR))

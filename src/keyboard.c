@@ -6448,12 +6448,7 @@ modify_event_symbol (ptrdiff_t symbol_num, int modifiers, Lisp_Object symbol_kin
     {
       if (! VECTORP (*symbol_table)
 	  || ASIZE (*symbol_table) != table_size)
-	{
-	  Lisp_Object size;
-
-	  XSETFASTINT (size, table_size);
-	  *symbol_table = Fmake_vector (size, Qnil);
-	}
+	*symbol_table = make_nil_vector (table_size);
 
       value = AREF (*symbol_table, symbol_num);
     }
@@ -7362,7 +7357,7 @@ menu_bar_items (Lisp_Object old)
   if (!NILP (old))
     menu_bar_items_vector = old;
   else
-    menu_bar_items_vector = Fmake_vector (make_fixnum (24), Qnil);
+    menu_bar_items_vector = make_nil_vector (24);
   menu_bar_items_index = 0;
 
   /* Build our list of keymaps.
@@ -7605,8 +7600,7 @@ parse_menu_item (Lisp_Object item, int inmenubar)
 
   /* Create item_properties vector if necessary.  */
   if (NILP (item_properties))
-    item_properties
-      = Fmake_vector (make_fixnum (ITEM_PROPERTY_ENABLE + 1), Qnil);
+    item_properties = make_nil_vector (ITEM_PROPERTY_ENABLE + 1);
 
   /* Initialize optional entries.  */
   for (i = ITEM_PROPERTY_DEF; i < ITEM_PROPERTY_ENABLE; i++)
@@ -8100,8 +8094,7 @@ parse_tool_bar_item (Lisp_Object key, Lisp_Object item)
 	set_prop (i, Qnil);
     }
   else
-    tool_bar_item_properties
-      = Fmake_vector (make_fixnum (TOOL_BAR_ITEM_NSLOTS), Qnil);
+    tool_bar_item_properties = make_nil_vector (TOOL_BAR_ITEM_NSLOTS);
 
   /* Set defaults.  */
   set_prop (TOOL_BAR_ITEM_KEY, key);
@@ -8296,7 +8289,7 @@ init_tool_bar_items (Lisp_Object reuse)
   if (VECTORP (reuse))
     tool_bar_items_vector = reuse;
   else
-    tool_bar_items_vector = Fmake_vector (make_fixnum (64), Qnil);
+    tool_bar_items_vector = make_nil_vector (64);
   ntool_bar_items = 0;
 }
 
@@ -11184,32 +11177,31 @@ syms_of_keyboard (void)
       }
   }
 
-  button_down_location = Fmake_vector (make_fixnum (5), Qnil);
+  button_down_location = make_nil_vector (5);
   staticpro (&button_down_location);
-  mouse_syms = Fmake_vector (make_fixnum (5), Qnil);
+  mouse_syms = make_nil_vector (5);
   staticpro (&mouse_syms);
-  wheel_syms = Fmake_vector (make_fixnum (ARRAYELTS (lispy_wheel_names)),
-			     Qnil);
+  wheel_syms = make_nil_vector (ARRAYELTS (lispy_wheel_names));
   staticpro (&wheel_syms);
 
   {
     int i;
     int len = ARRAYELTS (modifier_names);
 
-    modifier_symbols = Fmake_vector (make_fixnum (len), Qnil);
+    modifier_symbols = make_nil_vector (len);
     for (i = 0; i < len; i++)
       if (modifier_names[i])
 	ASET (modifier_symbols, i, intern_c_string (modifier_names[i]));
     staticpro (&modifier_symbols);
   }
 
-  recent_keys = Fmake_vector (make_fixnum (NUM_RECENT_KEYS), Qnil);
+  recent_keys = make_nil_vector (NUM_RECENT_KEYS);
   staticpro (&recent_keys);
 
-  this_command_keys = Fmake_vector (make_fixnum (40), Qnil);
+  this_command_keys = make_nil_vector (40);
   staticpro (&this_command_keys);
 
-  raw_keybuf = Fmake_vector (make_fixnum (30), Qnil);
+  raw_keybuf = make_nil_vector (30);
   staticpro (&raw_keybuf);
 
   DEFSYM (Qcommand_execute, "command-execute");

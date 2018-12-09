@@ -3353,7 +3353,7 @@ static struct Lisp_Vector *
 allocate_vectorlike (ptrdiff_t len)
 {
   eassert (0 < len && len <= VECTOR_ELTS_MAX);
-  size_t nbytes = header_size + len * word_size;
+  ptrdiff_t nbytes = header_size + len * word_size;
   struct Lisp_Vector *p;
 
   MALLOC_BLOCK_INPUT;
@@ -3496,8 +3496,16 @@ See also the function `vector'.  */)
 {
   CHECK_TYPE (FIXNATP (length) && XFIXNAT (length) <= PTRDIFF_MAX,
 	      Qwholenump, length);
-  struct Lisp_Vector *p = allocate_vector (XFIXNAT (length));
-  for (ptrdiff_t i = 0; i < XFIXNAT (length); i++)
+  return make_vector (XFIXNAT (length), init);
+}
+
+/* Return a new vector of length LENGTH with each element being INIT.  */
+
+Lisp_Object
+make_vector (ptrdiff_t length, Lisp_Object init)
+{
+  struct Lisp_Vector *p = allocate_vector (length);
+  for (ptrdiff_t i = 0; i < length; i++)
     p->contents[i] = init;
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }

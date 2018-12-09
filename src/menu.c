@@ -86,7 +86,7 @@ init_menu_items (void)
   if (NILP (menu_items))
     {
       menu_items_allocated = 60;
-      menu_items = Fmake_vector (make_fixnum (menu_items_allocated), Qnil);
+      menu_items = make_nil_vector (menu_items_allocated);
     }
 
   menu_items_inuse = Qt;

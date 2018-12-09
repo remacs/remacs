@@ -817,7 +817,7 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
         size_t size = json_array_size (json);
         if (FIXNUM_OVERFLOW_P (size))
           overflow_error ();
-        Lisp_Object result = Fmake_vector (make_fixed_natnum (size), Qunbound);
+        Lisp_Object result = make_vector (size, Qunbound);
         for (ptrdiff_t i = 0; i < size; ++i)
           ASET (result, i,
                 json_to_lisp (json_array_get (json, i), conf));

@@ -4628,7 +4628,7 @@ x_make_monitor_attribute_list (struct MonitorInfo *monitors,
                                struct x_display_info *dpyinfo,
                                const char *source)
 {
-  Lisp_Object monitor_frames = Fmake_vector (make_fixnum (n_monitors), Qnil);
+  Lisp_Object monitor_frames = make_nil_vector (n_monitors);
   Lisp_Object frame, rest;
 
   FOR_EACH_FRAME (rest, frame)
@@ -4931,7 +4931,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
 #endif
   n_monitors = gdk_screen_get_n_monitors (gscreen);
 #endif
-  monitor_frames = Fmake_vector (make_fixnum (n_monitors), Qnil);
+  monitor_frames = make_nil_vector (n_monitors);
   monitors = xzalloc (n_monitors * sizeof *monitors);
 
   FOR_EACH_FRAME (rest, frame)

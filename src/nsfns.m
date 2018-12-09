@@ -2476,7 +2476,7 @@ ns_make_monitor_attribute_list (struct MonitorInfo *monitors,
                                 int primary_monitor,
                                 const char *source)
 {
-  Lisp_Object monitor_frames = Fmake_vector (make_fixnum (n_monitors), Qnil);
+  Lisp_Object monitor_frames = make_nil_vector (n_monitors);
   Lisp_Object frame, rest;
   NSArray *screens = [NSScreen screens];
   int i;

@@ -374,10 +374,10 @@ font_style_to_value (enum font_property_index prop, Lisp_Object val,
       if (! noerror)
 	return -1;
       eassert (len < 255);
-      elt = Fmake_vector (make_fixnum (2), make_fixnum (100));
+      elt = make_vector (2, make_fixnum (100));
       ASET (elt, 1, val);
       ASET (font_style_table, prop - FONT_WEIGHT_INDEX,
-	    CALLN (Fvconcat, table, Fmake_vector (make_fixnum (1), elt)));
+	    CALLN (Fvconcat, table, make_vector (1, elt)));
       return (100 << 8) | (i << 4);
     }
   else
@@ -2035,7 +2035,7 @@ font_otf_DeviceTable (OTF_DeviceTable *device_table)
 Lisp_Object
 font_otf_ValueRecord (int value_format, OTF_ValueRecord *value_record)
 {
-  Lisp_Object val = Fmake_vector (make_fixnum (8), Qnil);
+  Lisp_Object val = make_nil_vector (8);
 
   if (value_format & OTF_XPlacement)
     ASET (val, 0, make_fixnum (value_record->XPlacement));
@@ -2059,9 +2059,7 @@ font_otf_ValueRecord (int value_format, OTF_ValueRecord *value_record)
 Lisp_Object
 font_otf_Anchor (OTF_Anchor *anchor)
 {
-  Lisp_Object val;
-
-  val = Fmake_vector (make_fixnum (anchor->AnchorFormat + 1), Qnil);
+  Lisp_Object val = make_nil_vector (anchor->AnchorFormat + 1);
   ASET (val, 0, make_fixnum (anchor->XCoordinate));
   ASET (val, 1, make_fixnum (anchor->YCoordinate));
   if (anchor->AnchorFormat == 2)
@@ -5170,14 +5168,13 @@ If the named font is not yet loaded, return nil.  */)
 static Lisp_Object
 build_style_table (const struct table_entry *entry, int nelement)
 {
-  int i, j;
-  Lisp_Object table, elt;
-
-  table = make_uninit_vector (nelement);
-  for (i = 0; i < nelement; i++)
+  Lisp_Object table = make_uninit_vector (nelement);
+  for (int i = 0; i < nelement; i++)
     {
-      for (j = 0; entry[i].names[j]; j++);
-      elt = Fmake_vector (make_fixnum (j + 1), Qnil);
+      int j;
+      for (j = 0; entry[i].names[j]; j++)
+	continue;
+      Lisp_Object elt = make_nil_vector (j + 1);
       ASET (elt, 0, make_fixnum (entry[i].numeric));
       for (j = 0; entry[i].names[j]; j++)
 	ASET (elt, j + 1, intern_c_string (entry[i].names[j]));
@@ -5359,7 +5356,7 @@ syms_of_font (void)
   scratch_font_prefer = Ffont_spec (0, NULL);
 
   staticpro (&Vfont_log_deferred);
-  Vfont_log_deferred = Fmake_vector (make_fixnum (3), Qnil);
+  Vfont_log_deferred = make_nil_vector (3);
 
 #if 0
 #ifdef HAVE_LIBOTF

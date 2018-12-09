@@ -2474,7 +2474,7 @@ x_handle_dnd_message (struct frame *f, const XClientMessageEvent *event,
       data = (unsigned char *) idata;
     }
 
-  vec = Fmake_vector (make_fixnum (4), Qnil);
+  vec = make_nil_vector (4);
   ASET (vec, 0, SYMBOL_NAME (x_atom_to_symbol (FRAME_DISPLAY_INFO (f),
 					       event->message_type)));
   ASET (vec, 1, frame);

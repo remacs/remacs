@@ -2992,7 +2992,7 @@ macfont_shape (Lisp_Object lgstring)
 
       if (NILP (lglyph))
         {
-          lglyph = Fmake_vector (make_fixnum (LGLYPH_SIZE), Qnil);
+          lglyph = make_nil_vector (LGLYPH_SIZE);
           LGSTRING_SET_GLYPH (lgstring, i, lglyph);
         }
 
@@ -3044,9 +3044,7 @@ macfont_shape (Lisp_Object lgstring)
       wadjust = lround (gl->advance);
       if (xoff != 0 || yoff != 0 || wadjust != metrics.width)
         {
-          Lisp_Object vec;
-
-          vec = Fmake_vector (make_fixnum (3), Qnil);
+          Lisp_Object vec = make_uninit_vector (3);
           ASET (vec, 0, make_fixnum (xoff));
           ASET (vec, 1, make_fixnum (yoff));
           ASET (vec, 2, make_fixnum (wadjust));

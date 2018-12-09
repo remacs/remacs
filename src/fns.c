@@ -732,7 +732,7 @@ concat (ptrdiff_t nargs, Lisp_Object *args,
   if (target_type == Lisp_Cons)
     val = Fmake_list (make_fixnum (result_len), Qnil);
   else if (target_type == Lisp_Vectorlike)
-    val = Fmake_vector (make_fixnum (result_len), Qnil);
+    val = make_nil_vector (result_len);
   else if (some_multibyte)
     val = make_uninit_multibyte_string (result_len, result_len_byte);
   else
@@ -3127,7 +3127,7 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 #ifdef DAY_1
   else if (EQ (item, Qdays))	/* e.g. for calendar-day-name-array */
     {
-      Lisp_Object v = Fmake_vector (make_fixnum (7), Qnil);
+      Lisp_Object v = make_nil_vector (7);
       const int days[7] = {DAY_1, DAY_2, DAY_3, DAY_4, DAY_5, DAY_6, DAY_7};
       int i;
       synchronize_system_time_locale ();
@@ -3146,12 +3146,11 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 #ifdef MON_1
   else if (EQ (item, Qmonths))	/* e.g. for calendar-month-name-array */
     {
-      Lisp_Object v = Fmake_vector (make_fixnum (12), Qnil);
+      Lisp_Object v = make_nil_vector (12);
       const int months[12] = {MON_1, MON_2, MON_3, MON_4, MON_5, MON_6, MON_7,
 			      MON_8, MON_9, MON_10, MON_11, MON_12};
-      int i;
       synchronize_system_time_locale ();
-      for (i = 0; i < 12; i++)
+      for (int i = 0; i < 12; i++)
 	{
 	  str = nl_langinfo (months[i]);
 	  AUTO_STRING (val, str);
@@ -3987,10 +3986,10 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
   h->rehash_threshold = rehash_threshold;
   h->rehash_size = rehash_size;
   h->count = 0;
-  h->key_and_value = Fmake_vector (make_fixnum (2 * size), Qnil);
-  h->hash = Fmake_vector (make_fixnum (size), Qnil);
-  h->next = Fmake_vector (make_fixnum (size), make_fixnum (-1));
-  h->index = Fmake_vector (make_fixnum (index_size), make_fixnum (-1));
+  h->key_and_value = make_nil_vector (2 * size);
+  h->hash = make_nil_vector (size);
+  h->next = make_vector (size, make_fixnum (-1));
+  h->index = make_vector (index_size, make_fixnum (-1));
   h->pure = pure;
 
   /* Set up the free list.  */
@@ -4085,8 +4084,7 @@ maybe_resize_hash_table (struct Lisp_Hash_Table *h)
       set_hash_key_and_value (h, larger_vector (h->key_and_value,
 						2 * (new_size - old_size), -1));
       set_hash_hash (h, larger_vector (h->hash, new_size - old_size, -1));
-      set_hash_index (h, Fmake_vector (make_fixnum (index_size),
-				       make_fixnum (-1)));
+      set_hash_index (h, make_vector (index_size, make_fixnum (-1)));
       set_hash_next (h, larger_vecalloc (h->next, new_size - old_size, -1));
 
       /* Update the free list.  Do it so that new entries are added at

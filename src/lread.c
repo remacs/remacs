@@ -3846,23 +3846,17 @@ string_to_number (char const *string, int base, ptrdiff_t *plen)
 static Lisp_Object
 read_vector (Lisp_Object readcharfun, bool bytecodeflag)
 {
-  ptrdiff_t i, size;
-  Lisp_Object *ptr;
-  Lisp_Object tem, item, vector;
-  struct Lisp_Cons *otem;
-  Lisp_Object len;
-
-  tem = read_list (1, readcharfun);
-  len = Flength (tem);
-  if (bytecodeflag && XFIXNAT (len) <= COMPILED_STACK_DEPTH)
+  Lisp_Object tem = read_list (1, readcharfun);
+  Lisp_Object len = Flength (tem);
+  ptrdiff_t size = XFIXNAT (len);
+  if (bytecodeflag && size <= COMPILED_STACK_DEPTH)
     error ("Invalid byte code");
-  vector = Fmake_vector (len, Qnil);
+  Lisp_Object vector = make_nil_vector (size);
 
-  size = XFIXNAT (len);
-  ptr = XVECTOR (vector)->contents;
-  for (i = 0; i < size; i++)
+  Lisp_Object *ptr = XVECTOR (vector)->contents;
+  for (ptrdiff_t i = 0; i < size; i++)
     {
-      item = Fcar (tem);
+      Lisp_Object item = Fcar (tem);
       /* If `load-force-doc-strings' is t when reading a lazily-loaded
 	 bytecode object, the docstring containing the bytecode and
 	 constants values must be treated as unibyte and passed to
@@ -3896,7 +3890,7 @@ read_vector (Lisp_Object readcharfun, bool bytecodeflag)
 		  if (!CONSP (item))
 		    error ("Invalid byte code");
 
-		  otem = XCONS (item);
+		  struct Lisp_Cons *otem = XCONS (item);
 		  bytestr = XCAR (item);
 		  item = XCDR (item);
 		  free_cons (otem);
@@ -3916,7 +3910,7 @@ read_vector (Lisp_Object readcharfun, bool bytecodeflag)
 	    }
 	}
       ASET (vector, i, item);
-      otem = XCONS (tem);
+      struct Lisp_Cons *otem = XCONS (tem);
       tem = Fcdr (tem);
       free_cons (otem);
     }
@@ -4383,7 +4377,7 @@ OBARRAY defaults to the value of `obarray'.  */)
 void
 init_obarray (void)
 {
-  Vobarray = Fmake_vector (make_fixnum (OBARRAY_SIZE), make_fixnum (0));
+  Vobarray = make_vector (OBARRAY_SIZE, make_fixnum (0));
   initial_obarray = Vobarray;
   staticpro (&initial_obarray);
 

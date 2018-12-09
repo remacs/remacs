@@ -2615,8 +2615,7 @@ Value is a vector of face attributes.  */)
   /* Add a global definition if there is none.  */
   if (NILP (global_lface))
     {
-      global_lface = Fmake_vector (make_fixnum (LFACE_VECTOR_SIZE),
-				   Qunspecified);
+      global_lface = make_vector (LFACE_VECTOR_SIZE, Qunspecified);
       ASET (global_lface, 0, Qface);
       Vface_new_frame_defaults = Fcons (Fcons (face, global_lface),
 					Vface_new_frame_defaults);
@@ -2643,8 +2642,7 @@ Value is a vector of face attributes.  */)
     {
       if (NILP (lface))
 	{
-	  lface = Fmake_vector (make_fixnum (LFACE_VECTOR_SIZE),
-				Qunspecified);
+	  lface = make_vector (LFACE_VECTOR_SIZE, Qunspecified);
 	  ASET (lface, 0, Qface);
 	  fset_face_alist (f, Fcons (Fcons (face, lface), f->face_alist));
 	}
@@ -4775,9 +4773,7 @@ DEFUN ("face-attributes-as-vector", Fface_attributes_as_vector,
        doc: /* Return a vector of face attributes corresponding to PLIST.  */)
   (Lisp_Object plist)
 {
-  Lisp_Object lface;
-  lface = Fmake_vector (make_fixnum (LFACE_VECTOR_SIZE),
-			Qunspecified);
+  Lisp_Object lface = make_vector (LFACE_VECTOR_SIZE, Qunspecified);
   merge_face_ref (NULL, XFRAME (selected_frame),
                   plist, XVECTOR (lface)->contents,
 		  true, 0);

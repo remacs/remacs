@@ -7044,8 +7044,7 @@ saved by this function.  */)
   tem = make_uninit_vector (n_windows);
   data->saved_windows = tem;
   for (i = 0; i < n_windows; i++)
-    ASET (tem, i,
-	  Fmake_vector (make_fixnum (VECSIZE (struct saved_window)), Qnil));
+    ASET (tem, i, make_nil_vector (VECSIZE (struct saved_window)));
   save_window_save (FRAME_ROOT_WINDOW (f), XVECTOR (tem), 0);
   XSETWINDOW_CONFIGURATION (tem, data);
   return (tem);

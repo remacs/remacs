@@ -10062,36 +10062,28 @@ DEFUN ("define-coding-system-internal", Fdefine_coding_system_internal,
 usage: (define-coding-system-internal ...)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object name;
-  Lisp_Object spec_vec;		/* [ ATTRS ALIASE EOL_TYPE ] */
-  Lisp_Object attrs;		/* Vector of attributes.  */
-  Lisp_Object eol_type;
-  Lisp_Object aliases;
-  Lisp_Object coding_type, charset_list, safe_charsets;
   enum coding_category category;
-  Lisp_Object tail, val;
   int max_charset_id = 0;
-  int i;
 
   if (nargs < coding_arg_max)
     goto short_args;
 
-  attrs = Fmake_vector (make_fixnum (coding_attr_last_index), Qnil);
+  Lisp_Object attrs = make_nil_vector (coding_attr_last_index);
 
-  name = args[coding_arg_name];
+  Lisp_Object name = args[coding_arg_name];
   CHECK_SYMBOL (name);
   ASET (attrs, coding_attr_base_name, name);
 
-  val = args[coding_arg_mnemonic];
+  Lisp_Object val = args[coding_arg_mnemonic];
   if (! STRINGP (val))
     CHECK_CHARACTER (val);
   ASET (attrs, coding_attr_mnemonic, val);
 
-  coding_type = args[coding_arg_coding_type];
+  Lisp_Object coding_type = args[coding_arg_coding_type];
   CHECK_SYMBOL (coding_type);
   ASET (attrs, coding_attr_type, coding_type);
 
-  charset_list = args[coding_arg_charset_list];
+  Lisp_Object charset_list = args[coding_arg_charset_list];
   if (SYMBOLP (charset_list))
     {
       if (EQ (charset_list, Qiso_2022))
@@ -10106,7 +10098,7 @@ usage: (define-coding-system-internal ...)  */)
 	    error ("Invalid charset-list");
 	  charset_list = Vemacs_mule_charset_list;
 	}
-      for (tail = charset_list; CONSP (tail); tail = XCDR (tail))
+      for (Lisp_Object tail = charset_list; CONSP (tail); tail = XCDR (tail))
 	{
 	  if (! RANGED_FIXNUMP (0, XCAR (tail), INT_MAX - 1))
 	    error ("Invalid charset-list");
@@ -10117,7 +10109,7 @@ usage: (define-coding-system-internal ...)  */)
   else
     {
       charset_list = Fcopy_sequence (charset_list);
-      for (tail = charset_list; CONSP (tail); tail = XCDR (tail))
+      for (Lisp_Object tail = charset_list; CONSP (tail); tail = XCDR (tail))
 	{
 	  struct charset *charset;
 
@@ -10138,9 +10130,9 @@ usage: (define-coding-system-internal ...)  */)
     }
   ASET (attrs, coding_attr_charset_list, charset_list);
 
-  safe_charsets = make_uninit_string (max_charset_id + 1);
+  Lisp_Object safe_charsets = make_uninit_string (max_charset_id + 1);
   memset (SDATA (safe_charsets), 255, max_charset_id + 1);
-  for (tail = charset_list; CONSP (tail); tail = XCDR (tail))
+  for (Lisp_Object tail = charset_list; CONSP (tail); tail = XCDR (tail))
     SSET (safe_charsets, XFIXNAT (XCAR (tail)), 0);
   ASET (attrs, coding_attr_safe_charsets, safe_charsets);
 
@@ -10194,9 +10186,9 @@ usage: (define-coding-system-internal ...)  */)
 	 If Nth element is a list of charset IDs, N is the first byte
 	 of one of them.  The list is sorted by dimensions of the
 	 charsets.  A charset of smaller dimension comes first. */
-      val = Fmake_vector (make_fixnum (256), Qnil);
+      val = make_nil_vector (256);
 
-      for (tail = charset_list; CONSP (tail); tail = XCDR (tail))
+      for (Lisp_Object tail = charset_list; CONSP (tail); tail = XCDR (tail))
 	{
 	  struct charset *charset = CHARSET_FROM_ID (XFIXNAT (XCAR (tail)));
 	  int dim = CHARSET_DIMENSION (charset);
@@ -10205,7 +10197,7 @@ usage: (define-coding-system-internal ...)  */)
 	  if (CHARSET_ASCII_COMPATIBLE_P (charset))
 	    ASET (attrs, coding_attr_ascii_compat, Qt);
 
-	  for (i = charset->code_space[idx];
+	  for (int i = charset->code_space[idx];
 	       i <= charset->code_space[idx + 1]; i++)
 	    {
 	      Lisp_Object tmp, tmp2;
@@ -10265,7 +10257,7 @@ usage: (define-coding-system-internal ...)  */)
 
       val = args[coding_arg_ccl_valids];
       valids = Fmake_string (make_fixnum (256), make_fixnum (0), Qnil);
-      for (tail = val; CONSP (tail); tail = XCDR (tail))
+      for (Lisp_Object tail = val; CONSP (tail); tail = XCDR (tail))
 	{
 	  int from, to;
 
@@ -10290,7 +10282,7 @@ usage: (define-coding-system-internal ...)  */)
 				     XCAR (val), make_fixnum (255));
 	      to = XFIXNUM (XCDR (val));
 	    }
-	  for (i = from; i <= to; i++)
+	  for (int i = from; i <= to; i++)
 	    SSET (valids, i, 1);
 	}
       ASET (attrs, coding_attr_ccl_valids, valids);
@@ -10344,7 +10336,7 @@ usage: (define-coding-system-internal ...)  */)
 
       initial = Fcopy_sequence (args[coding_arg_iso2022_initial]);
       CHECK_VECTOR (initial);
-      for (i = 0; i < 4; i++)
+      for (int i = 0; i < 4; i++)
 	{
 	  val = AREF (initial, i);
 	  if (! NILP (val))
@@ -10366,7 +10358,7 @@ usage: (define-coding-system-internal ...)  */)
       CHECK_FIXNUM_CDR (reg_usage);
 
       request = Fcopy_sequence (args[coding_arg_iso2022_request]);
-      for (tail = request; CONSP (tail); tail = XCDR (tail))
+      for (Lisp_Object tail = request; CONSP (tail); tail = XCDR (tail))
 	{
 	  int id;
 	  Lisp_Object tmp1;
@@ -10377,13 +10369,14 @@ usage: (define-coding-system-internal ...)  */)
 	  CHECK_CHARSET_GET_ID (tmp1, id);
 	  CHECK_FIXNAT_CDR (val);
 	  if (XFIXNUM (XCDR (val)) >= 4)
-	    error ("Invalid graphic register number: %"pI"d", XFIXNUM (XCDR (val)));
+	    error ("Invalid graphic register number: %"pI"d",
+		   XFIXNUM (XCDR (val)));
 	  XSETCAR (val, make_fixnum (id));
 	}
 
       flags = args[coding_arg_iso2022_flags];
       CHECK_FIXNAT (flags);
-      i = XFIXNUM (flags) & INT_MAX;
+      int i = XFIXNUM (flags) & INT_MAX;
       if (EQ (args[coding_arg_charset_list], Qiso_2022))
 	i |= CODING_ISO_FLAG_FULL_SUPPORT;
       flags = make_fixnum (i);
@@ -10542,19 +10535,19 @@ usage: (define-coding-system-internal ...)  */)
 	       Fcons (CODING_ATTR_ASCII_COMPAT (attrs),
 		      CODING_ATTR_PLIST (attrs))));
 
-  eol_type = args[coding_arg_eol_type];
+  Lisp_Object eol_type = args[coding_arg_eol_type];
   if (! NILP (eol_type)
       && ! EQ (eol_type, Qunix)
       && ! EQ (eol_type, Qdos)
       && ! EQ (eol_type, Qmac))
     error ("Invalid eol-type");
 
-  aliases = list1 (name);
+  Lisp_Object aliases = list1 (name);
 
   if (NILP (eol_type))
     {
       eol_type = make_subsidiaries (name);
-      for (i = 0; i < 3; i++)
+      for (int i = 0; i < 3; i++)
 	{
 	  Lisp_Object this_spec, this_name, this_aliases, this_eol_type;
 
@@ -10575,7 +10568,7 @@ usage: (define-coding-system-internal ...)  */)
 	}
     }
 
-  spec_vec = make_uninit_vector (3);
+  Lisp_Object spec_vec = make_uninit_vector (3);
   ASET (spec_vec, 0, attrs);
   ASET (spec_vec, 1, aliases);
   ASET (spec_vec, 2, eol_type);
@@ -10587,12 +10580,9 @@ usage: (define-coding-system-internal ...)  */)
     Vcoding_system_alist = Fcons (Fcons (Fsymbol_name (name), Qnil),
 				  Vcoding_system_alist);
 
-  {
-    int id = coding_categories[category].id;
-
-    if (id < 0 || EQ (name, CODING_ID_NAME (id)))
+  int id = coding_categories[category].id;
+  if (id < 0 || EQ (name, CODING_ID_NAME (id)))
       setup_coding_system (name, &coding_categories[category]);
-  }
 
   return Qnil;
 
@@ -10915,8 +10905,7 @@ syms_of_coding (void)
   DEFSYM (QCpre_write_conversion, ":pre-write-conversion");
   DEFSYM (QCascii_compatible_p, ":ascii-compatible-p");
 
-  Vcoding_category_table
-    = Fmake_vector (make_fixnum (coding_category_max), Qnil);
+  Vcoding_category_table = make_nil_vector (coding_category_max);
   staticpro (&Vcoding_category_table);
   /* Followings are target of code detection.  */
   ASET (Vcoding_category_table, coding_category_iso_7,
@@ -11220,7 +11209,7 @@ a coding system of ISO 2022 variant which has a flag
 `accept-latin-extra-code' t (e.g. iso-latin-1) on reading a file
 or reading output of a subprocess.
 Only 128th through 159th elements have a meaning.  */);
-  Vlatin_extra_code_table = Fmake_vector (make_fixnum (256), Qnil);
+  Vlatin_extra_code_table = make_nil_vector (256);
 
   DEFVAR_LISP ("select-safe-coding-system-function",
 	       Vselect_safe_coding_system_function,

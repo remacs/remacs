@@ -10977,7 +10977,7 @@ with_echo_area_buffer_unwind_data (struct window *w)
   Vwith_echo_area_save_vector = Qnil;
 
   if (NILP (vector))
-    vector = Fmake_vector (make_fixnum (11), Qnil);
+    vector = make_nil_vector (11);
 
   XSETBUFFER (tmp, current_buffer); ASET (vector, i, tmp); ++i;
   ASET (vector, i, Vdeactivate_mark); ++i;
@@ -11850,7 +11850,7 @@ format_mode_line_unwind_data (struct frame *target_frame,
   Vmode_line_unwind_vector = Qnil;
 
   if (NILP (vector))
-    vector = Fmake_vector (make_fixnum (10), Qnil);
+    vector = make_nil_vector (10);
 
   ASET (vector, 0, make_fixnum (mode_line_target));
   ASET (vector, 1, make_fixnum (MODE_LINE_NOPROP_LEN (0)));

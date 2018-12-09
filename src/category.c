@@ -271,8 +271,7 @@ DEFUN ("make-category-table", Fmake_category_table, Smake_category_table,
   set_char_table_defalt (val, MAKE_CATEGORY_SET);
   for (i = 0; i < (1 << CHARTAB_SIZE_BITS_0); i++)
     set_char_table_contents (val, i, MAKE_CATEGORY_SET);
-  Fset_char_table_extra_slot (val, make_fixnum (0),
-			      Fmake_vector (make_fixnum (95), Qnil));
+  Fset_char_table_extra_slot (val, make_fixnum (0), make_nil_vector (95));
   return val;
 }
 
@@ -446,7 +445,7 @@ init_category_once (void)
   /* Set a category set which contains nothing to the default.  */
   set_char_table_defalt (Vstandard_category_table, MAKE_CATEGORY_SET);
   Fset_char_table_extra_slot (Vstandard_category_table, make_fixnum (0),
-			      Fmake_vector (make_fixnum (95), Qnil));
+			      make_nil_vector (95));
 }
 
 void

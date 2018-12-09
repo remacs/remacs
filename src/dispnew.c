@@ -5938,7 +5938,7 @@ pass nil for VARIABLE.  */)
       || n + 20 < ASIZE (state) / 2)
     /* Add 20 extra so we grow it less often.  */
     {
-      state = Fmake_vector (make_fixnum (n + 20), Qlambda);
+      state = make_vector (n + 20, Qlambda);
       if (! NILP (variable))
 	Fset (variable, state);
       else
@@ -6236,7 +6236,7 @@ syms_of_display (void)
   defsubr (&Sdump_redisplay_history);
 #endif
 
-  frame_and_buffer_state = Fmake_vector (make_fixnum (20), Qlambda);
+  frame_and_buffer_state = make_vector (20, Qlambda);
   staticpro (&frame_and_buffer_state);
 
   /* This is the "purpose" slot of a display table.  */

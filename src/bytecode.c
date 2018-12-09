@@ -1494,13 +1494,9 @@ If a symbol has a property named `byte-code-meter' whose value is an
 integer, it is incremented each time that symbol's function is called.  */);
 
   byte_metering_on = false;
-  Vbyte_code_meter = Fmake_vector (make_fixnum (256), make_fixnum (0));
+  Vbyte_code_meter = make_nil_vector (256);
   DEFSYM (Qbyte_code_meter, "byte-code-meter");
-  {
-    int i = 256;
-    while (i--)
-      ASET (Vbyte_code_meter, i,
-           Fmake_vector (make_fixnum (256), make_fixnum (0)));
-  }
+  for (int i = 0; i < 256; i++)
+    ASET (Vbyte_code_meter, i, make_vector (256, make_fixnum (0)));
 #endif
 }
