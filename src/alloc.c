@@ -2398,6 +2398,8 @@ make_uninit_bool_vector (EMACS_INT nbits)
   EMACS_INT needed_elements = ((bool_header_size - header_size + word_bytes
 				+ word_size - 1)
 			       / word_size);
+  if (PTRDIFF_MAX < needed_elements)
+    memory_full (SIZE_MAX);
   struct Lisp_Bool_Vector *p
     = (struct Lisp_Bool_Vector *) allocate_vector (needed_elements);
   XSETVECTOR (val, p);
@@ -3334,67 +3336,68 @@ sweep_vectors (void)
     }
 }
 
+static ptrdiff_t const VECTOR_ELTS_MAX
+  = min (((min (PTRDIFF_MAX, SIZE_MAX) - header_size - large_vector_offset)
+	  / word_size),
+	 MOST_POSITIVE_FIXNUM);
+
 /* Value is a pointer to a newly allocated Lisp_Vector structure
-   with room for LEN Lisp_Objects.  */
+   with room for LEN Lisp_Objects.  LEN must be positive and
+   at most VECTOR_ELTS_MAX.  */
 
 static struct Lisp_Vector *
 allocate_vectorlike (ptrdiff_t len)
 {
-  if (len == 0)
-    return XVECTOR (zero_vector);
+  eassert (0 < len && len <= VECTOR_ELTS_MAX);
+  size_t nbytes = header_size + len * word_size;
+  struct Lisp_Vector *p;
+
+  MALLOC_BLOCK_INPUT;
+
+#ifdef DOUG_LEA_MALLOC
+  if (!mmap_lisp_allowed_p ())
+    mallopt (M_MMAP_MAX, 0);
+#endif
+
+  if (nbytes <= VBLOCK_BYTES_MAX)
+    p = allocate_vector_from_block (vroundup (nbytes));
   else
     {
-      size_t nbytes = header_size + len * word_size;
-      struct Lisp_Vector *p;
-
-      MALLOC_BLOCK_INPUT;
-
-#ifdef DOUG_LEA_MALLOC
-      if (!mmap_lisp_allowed_p ())
-        mallopt (M_MMAP_MAX, 0);
-#endif
-
-      if (nbytes <= VBLOCK_BYTES_MAX)
-	p = allocate_vector_from_block (vroundup (nbytes));
-      else
-	{
-	  struct large_vector *lv = lisp_malloc (large_vector_offset + nbytes,
-						 MEM_TYPE_VECTORLIKE);
-	  lv->next = large_vectors;
-	  large_vectors = lv;
-	  p = large_vector_vec (lv);
-	}
-
-#ifdef DOUG_LEA_MALLOC
-      if (!mmap_lisp_allowed_p ())
-        mallopt (M_MMAP_MAX, MMAP_MAX_AREAS);
-#endif
-
-      if (find_suspicious_object_in_range (p, (char *) p + nbytes))
-        emacs_abort ();
-
-      consing_since_gc += nbytes;
-      vector_cells_consed += len;
-
-      MALLOC_UNBLOCK_INPUT;
-
-      return ptr_bounds_clip (p, nbytes);
+      struct large_vector *lv = lisp_malloc (large_vector_offset + nbytes,
+					     MEM_TYPE_VECTORLIKE);
+      lv->next = large_vectors;
+      large_vectors = lv;
+      p = large_vector_vec (lv);
     }
+
+#ifdef DOUG_LEA_MALLOC
+  if (!mmap_lisp_allowed_p ())
+    mallopt (M_MMAP_MAX, MMAP_MAX_AREAS);
+#endif
+
+  if (find_suspicious_object_in_range (p, (char *) p + nbytes))
+    emacs_abort ();
+
+  consing_since_gc += nbytes;
+  vector_cells_consed += len;
+
+  MALLOC_UNBLOCK_INPUT;
+
+  return ptr_bounds_clip (p, nbytes);
 }
 
 
 /* Allocate a vector with LEN slots.  */
 
 struct Lisp_Vector *
-allocate_vector (EMACS_INT len)
+allocate_vector (ptrdiff_t len)
 {
-  ptrdiff_t wordbytes_max = (min (PTRDIFF_MAX, SIZE_MAX)
-			     - header_size - large_vector_offset);
-  if (min (wordbytes_max / word_size, MOST_POSITIVE_FIXNUM) < len)
+  if (len == 0)
+    return XVECTOR (zero_vector);
+  if (VECTOR_ELTS_MAX < len)
     memory_full (SIZE_MAX);
   struct Lisp_Vector *v = allocate_vectorlike (len);
-  if (len)
-    v->header.size = len;
+  v->header.size = len;
   return v;
 }
 
@@ -3405,14 +3408,16 @@ struct Lisp_Vector *
 allocate_pseudovector (int memlen, int lisplen,
 		       int zerolen, enum pvec_type tag)
 {
-  struct Lisp_Vector *v = allocate_vectorlike (memlen);
-
   /* Catch bogus values.  */
+  enum { size_max = (1 << PSEUDOVECTOR_SIZE_BITS) - 1 };
+  enum { rest_max = (1 << PSEUDOVECTOR_REST_BITS) - 1 };
+  verify (size_max + rest_max <= VECTOR_ELTS_MAX);
   eassert (0 <= tag && tag <= PVEC_FONT);
   eassert (0 <= lisplen && lisplen <= zerolen && zerolen <= memlen);
-  eassert (memlen - lisplen <= (1 << PSEUDOVECTOR_REST_BITS) - 1);
-  eassert (lisplen <= PSEUDOVECTOR_SIZE_MASK);
+  eassert (lisplen <= size_max);
+  eassert (memlen <= size_max + rest_max);
 
+  struct Lisp_Vector *v = allocate_vectorlike (memlen);
   /* Only the first LISPLEN slots will be traced normally by the GC.  */
   memclear (v->contents, zerolen * word_size);
   XSETPVECTYPESIZE (v, tag, lisplen, memlen - lisplen);
@@ -3485,7 +3490,8 @@ DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,
 See also the function `vector'.  */)
   (Lisp_Object length, Lisp_Object init)
 {
-  CHECK_FIXNAT (length);
+  CHECK_TYPE (FIXNATP (length) && XFIXNAT (length) <= PTRDIFF_MAX,
+	      Qwholenump, length);
   struct Lisp_Vector *p = allocate_vector (XFIXNAT (length));
   for (ptrdiff_t i = 0; i < XFIXNAT (length); i++)
     p->contents[i] = init;

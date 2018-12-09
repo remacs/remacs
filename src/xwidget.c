@@ -310,11 +310,15 @@ webkit_js_to_lisp (JSContextRef context, JSValueRef value)
         if (JSValueIsArray (context, value))
           {
             JSStringRef pname = JSStringCreateWithUTF8CString("length");
-            JSValueRef len = JSObjectGetProperty (context, (JSObjectRef) value, pname, NULL);
-            EMACS_INT n = JSValueToNumber (context, len, NULL);
+	    JSValueRef len = JSObjectGetProperty (context, (JSObjectRef) value,
+						  pname, NULL);
+	    double dlen = JSValueToNumber (context, len, NULL);
             JSStringRelease(pname);
 
             Lisp_Object obj;
+	    if (! (0 <= dlen && dlen < PTRDIFF_MAX + 1.0))
+	      memory_full (SIZE_MAX);
+	    ptrdiff_t n = dlen;
             struct Lisp_Vector *p = allocate_vector (n);
 
             for (ptrdiff_t i = 0; i < n; ++i)
@@ -333,10 +337,12 @@ webkit_js_to_lisp (JSContextRef context, JSValueRef value)
             JSPropertyNameArrayRef properties =
               JSObjectCopyPropertyNames (context, (JSObjectRef) value);
 
-            ptrdiff_t n = JSPropertyNameArrayGetCount (properties);
+	    size_t n = JSPropertyNameArrayGetCount (properties);
             Lisp_Object obj;
 
             /* TODO: can we use a regular list here?  */
+	    if (PTRDIFF_MAX < n)
+	      memory_full (n);
             struct Lisp_Vector *p = allocate_vector (n);
 
             for (ptrdiff_t i = 0; i < n; ++i)

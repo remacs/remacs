@@ -3695,7 +3695,7 @@ build_string (const char *str)
 
 extern Lisp_Object pure_cons (Lisp_Object, Lisp_Object);
 extern void make_byte_code (struct Lisp_Vector *);
-extern struct Lisp_Vector *allocate_vector (EMACS_INT);
+extern struct Lisp_Vector *allocate_vector (ptrdiff_t);
 
 /* Make an uninitialized vector for SIZE objects.  NOTE: you must
    be sure that GC cannot happen until the vector is completely
@@ -3709,12 +3709,7 @@ extern struct Lisp_Vector *allocate_vector (EMACS_INT);
 INLINE Lisp_Object
 make_uninit_vector (ptrdiff_t size)
 {
-  Lisp_Object v;
-  struct Lisp_Vector *p;
-
-  p = allocate_vector (size);
-  XSETVECTOR (v, p);
-  return v;
+  return make_lisp_ptr (allocate_vector (size), Lisp_Vectorlike);
 }
 
 /* Like above, but special for sub char-tables.  */
