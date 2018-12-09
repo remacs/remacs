@@ -1179,9 +1179,7 @@ we go into emacs-lisp-compilation-mode.")
 ;; Return the position of the start of the page in the log buffer.
 ;; But do nothing in batch mode.
 (defun byte-compile-log-file ()
-  (and (not
-        (and (get-buffer byte-compile-log-buffer)
-             (equal byte-compile-current-file byte-compile-last-logged-file)))
+  (and (not (equal byte-compile-current-file byte-compile-last-logged-file))
        (not noninteractive)
        (with-current-buffer (get-buffer-create byte-compile-log-buffer)
 	 (goto-char (point-max))
@@ -1204,7 +1202,7 @@ we go into emacs-lisp-compilation-mode.")
 			 (concat "in buffer "
                                  (buffer-name byte-compile-current-file)))
 		       " at " (current-time-string) "\n")
-	     (insert "\f\nCompiling no file at " (current-time-string) "\n"))
+	     (insert "\f\nCompiling internal form(s) at " (current-time-string) "\n"))
 	   (when dir
 	     (setq default-directory dir)
 	     (unless was-same
