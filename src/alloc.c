@@ -3340,9 +3340,10 @@ sweep_vectors (void)
    can be used in an integer constant expression.  */
 
 #define VECTOR_ELTS_MAX \
-  min (((min (PTRDIFF_MAX, SIZE_MAX) - header_size - large_vector_offset) \
-	/ word_size), \
-       MOST_POSITIVE_FIXNUM)
+  ((ptrdiff_t) \
+   min (((min (PTRDIFF_MAX, SIZE_MAX) - header_size - large_vector_offset) \
+	 / word_size), \
+	MOST_POSITIVE_FIXNUM))
 
 /* Value is a pointer to a newly allocated Lisp_Vector structure
    with room for LEN Lisp_Objects.  LEN must be positive and
