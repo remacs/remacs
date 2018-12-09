@@ -1854,8 +1854,7 @@ handled properly.  BODY shall not contain a timeout."
 	 "%s|%s:foo:"
 	 (substring (file-remote-p tramp-test-temporary-file-directory) 0 -1)
 	 m))
-       :type
-       (if (tramp-method-out-of-band-p vec 0) 'file-error 'user-error)))))
+       :type 'user-error))))
 
 (ert-deftest tramp-test03-file-name-method-rules ()
   "Check file name rules for some methods."
