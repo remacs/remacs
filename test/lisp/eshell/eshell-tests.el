@@ -31,6 +31,9 @@
 (defmacro with-temp-eshell (&rest body)
   "Evaluate BODY in a temporary Eshell buffer."
   `(let* ((eshell-directory-name (make-temp-file "eshell" t))
+          ;; We want no history file, so prevent Eshell from falling
+          ;; back on $HISTFILE.
+          (_ (setenv "HISTFILE"))
           (eshell-history-file-name nil)
           (eshell-buffer (eshell t)))
      (unwind-protect

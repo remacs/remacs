@@ -553,7 +553,7 @@ in the minibuffer:
 (defun eshell-write-last-dir-ring ()
   "Write the buffer's `eshell-last-dir-ring' to a history file."
   (let* ((file eshell-last-dir-ring-file-name)
-	 (resolved-file (file-truename file)))
+	 (resolved-file (if (stringp file) (file-truename file))))
     (cond
      ((or (null file)
 	  (equal file "")

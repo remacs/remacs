@@ -467,7 +467,7 @@ Useful within process sentinels.
 
 See also `eshell-read-history'."
   (let* ((file (or filename eshell-history-file-name))
-	 (resolved-file (file-truename file)))
+	 (resolved-file (if (stringp file) (file-truename file))))
     (cond
      ((or (null file)
 	  (equal file "")
