@@ -42,7 +42,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::Qstringp,
     remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
-    remacs_sys::{compare_string_intervals, emacs_abort, empty_unibyte_string},
+    remacs_sys::{compare_string_intervals, empty_unibyte_string},
 };
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
@@ -590,7 +590,7 @@ pub unsafe extern "C" fn multibyte_chars_in_text(
     let mut chars = 0;
     // TODO: make this an iterator?
     while idx < len {
-        idx += multibyte_length(&slice[idx..], true).unwrap_or_else(|| emacs_abort());
+        idx += multibyte_length(&slice[idx..], true).unwrap_or_else(|| panic!());
         chars += 1;
     }
     chars as ptrdiff_t

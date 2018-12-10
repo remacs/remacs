@@ -147,9 +147,10 @@ pub unsafe fn defvar_per_buffer_offset(
     *local = sym.as_lisp_obj();
     let flags = offset.apply(&remacs_sys::buffer_local_flags);
     if flags.is_nil() {
-        // Did a DEFVAR_PER_BUFFER without initializing the corresponding
-        // slot of buffer_local_flags.
-        remacs_sys::emacs_abort();
+        panic!(
+            "Did a DEFVAR_PER_BUFFER without initializing
+             the corresponding slot of buffer_local_flags."
+        );
     }
 }
 

@@ -5,7 +5,7 @@ use std::ptr;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    data::{defalias, indirect_function, indirect_function_lisp, set, set_default},
+    data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
     lisp::{defsubr, is_autoload},
     lisp::{LispObject, LispSubrRef},
     lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr},
@@ -20,7 +20,7 @@ use crate::{
         record_unwind_save_match_data, specbind, COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
-    remacs_sys::{Fapply, Fdefault_value, Ffset, Fload, Fpurecopy},
+    remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
@@ -773,7 +773,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
         if first.eq(LispObject::from(0)) {
             globals.Vfeatures = second;
         } else {
-            Ffset(first, second);
+            fset(first.as_symbol_or_error(), second);
         }
     }
 }

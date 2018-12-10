@@ -141,34 +141,6 @@ DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
 
 /* Extract and set components of symbols.  */
 
-DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
-       doc: /* Set SYMBOL's function definition to DEFINITION, and return DEFINITION.  */)
-  (register Lisp_Object symbol, Lisp_Object definition)
-{
-  register Lisp_Object function;
-  CHECK_SYMBOL (symbol);
-  /* Perhaps not quite the right error signal, but seems good enough.  */
-  if (NILP (symbol))
-    xsignal1 (Qsetting_constant, symbol);
-
-  function = XSYMBOL (symbol)->u.s.function;
-
-  if (!NILP (Vautoload_queue) && !NILP (function))
-    Vautoload_queue = Fcons (Fcons (symbol, function), Vautoload_queue);
-
-  if (AUTOLOADP (function))
-    Fput (symbol, Qautoload, XCDR (function));
-
-  /* Convert to eassert or remove after GC bug is found.  In the
-     meantime, check unconditionally, at a slight perf hit.  */
-  if (! valid_lisp_object_p (definition))
-    emacs_abort ();
-
-  set_symbol_function (symbol, definition);
-
-  return definition;
-}
-
 DEFUN ("interactive-form", Finteractive_form, Sinteractive_form, 1, 1, 0,
        doc: /* Return the interactive form of CMD or nil if none.
 If CMD is not a command, the return value is nil.
@@ -2184,7 +2156,6 @@ syms_of_data (void)
 
   defsubr (&Sinteractive_form);
   defsubr (&Smodule_function_p);
-  defsubr (&Sfset);
   defsubr (&Ssetq_default);
   defsubr (&Smake_variable_buffer_local);
   defsubr (&Smake_local_variable);

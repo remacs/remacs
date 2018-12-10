@@ -3638,6 +3638,9 @@ _Noreturn void __executable_start (void);
 extern Lisp_Object Vwindow_system;
 extern Lisp_Object sit_for (Lisp_Object, bool, int);
 
+/* Defined in dispnew.rs.  */
+extern void ding_internal (bool);
+
 /* Defined in xdisp.c.  */
 extern bool noninteractive_need_newline;
 extern Lisp_Object echo_area_buffer[2];
