@@ -22,17 +22,29 @@
 
 ;;; Commentary:
 
-;; This package implements the `cursor-intangible' property, which is
-;; meant to replace the old `intangible' property.  To use it, just enable the
-;; `cursor-intangible-mode', after which this package will move point away from
-;; any position that has a non-nil `cursor-intangible' property.  This is only
-;; done just before redisplay happens, contrary to the old `intangible'
-;; property which was done at a much lower level.
+;; This package implements the `cursor-intangible' and
+;; `cursor-sensor-functions' properties, which are meant to replace
+;; the old `intangible', `point-entered', and `point-left' properties.
+
+;; To use `cursor-intangible', just enable the
+;; `cursor-intangible-mode' minor mode, after which this package will
+;; move point away from any position that has a non-nil
+;; `cursor-intangible' property.  This is only done just before
+;; redisplay happens, contrary to the old `intangible' property which
+;; was done at a much lower level.
+
+;; To use `cursor-sensor-functions', enable the `cursor-sensor-mode'
+;; minor mode, after which the `cursor-sensor-functions' will be
+;; called just before redisplay happens, according to the movement of
+;; the cursor since the last redisplay.
 
 ;;; Code:
 
 ;;;###autoload
-(defvar cursor-sensor-inhibit nil)
+(defvar cursor-sensor-inhibit nil
+  "When non-nil, suspend `cursor-sensor-mode' and `cursor-intangible-mode'.
+By convention, this is a list of symbols where each symbol stands for the
+\"cause\" of the suspension.")
 
 (defun cursor-sensor--intangible-p (pos)
   (let ((p (get-pos-property pos 'cursor-intangible)))

@@ -2739,6 +2739,8 @@ proxy @samp{bird@@bastion} to a remote file on @samp{you@@remotehost}:
 @kbd{C-x C-f @value{prefix}ssh@value{postfixhop}bird@@bastion|ssh@value{postfixhop}you@@remotehost@value{postfix}/path @key{RET}}
 @end example
 
+Each involved method must be an inline method (@pxref{Inline methods}).
+
 @value{tramp} adds the ad-hoc definitions on the fly to
 @code{tramp-default-proxies-alist} and is available for re-use
 during that Emacs session.  Subsequent @value{tramp} connections to
