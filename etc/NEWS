@@ -398,6 +398,10 @@ with conflicts existed in earlier versions of Emacs, but incorrectly
 never detected a conflict due to invalid assumptions about cached
 values.
 
++++
+*** 'C-u C-x v D' ('vc-root-version-diff') prompts for two revisions
+and compares their entire trees.
+
 ** Diff mode
 *** Hunks are now automatically refined by default.
 To disable it, set the new defcustom 'diff-font-lock-refine' to nil.

@@ -1817,7 +1817,7 @@ Return t if the buffer had changes, nil otherwise."
 
 ;;;###autoload
 (defun vc-version-diff (_files rev1 rev2)
-  "Report diffs between revisions of the fileset in the repository history."
+  "Report diffs between REV1 and REV2 revisions of the fileset."
   (interactive (vc-diff-build-argument-list-internal))
   ;; All that was just so we could do argument completion!
   (when (and (not rev1) rev2)
@@ -1826,6 +1826,28 @@ Return t if the buffer had changes, nil otherwise."
   ;; placement rules for (interactive) don't actually leave us a choice.
   (vc-diff-internal t (vc-deduce-fileset t) rev1 rev2
 		    (called-interactively-p 'interactive)))
+
+;;;###autoload
+(defun vc-root-version-diff (_files rev1 rev2)
+  "Report diffs between REV1 and REV2 revisions of the whole tree."
+  (interactive (vc-diff-build-argument-list-internal))
+  ;; This is a mix of `vc-root-diff' and `vc-version-diff'
+  (when (and (not rev1) rev2)
+    (error "Not a valid revision range"))
+  (let ((backend (vc-deduce-backend))
+        (default-directory default-directory)
+        rootdir)
+    (if backend
+        (setq rootdir (vc-call-backend backend 'root default-directory))
+      (setq rootdir (read-directory-name "Directory for VC root-diff: "))
+      (setq backend (vc-responsible-backend rootdir))
+      (if backend
+          (setq default-directory rootdir)
+        (error "Directory is not version controlled")))
+    (let ((default-directory rootdir))
+      (vc-diff-internal
+       t (list backend (list rootdir)) rev1 rev2
+       (called-interactively-p 'interactive)))))
 
 ;;;###autoload
 (defun vc-diff (&optional historic not-urgent)
@@ -1900,10 +1922,8 @@ The optional argument NOT-URGENT non-nil means it is ok to say no to
 saving the buffer."
   (interactive (list current-prefix-arg t))
   (if historic
-      ;; FIXME: this does not work right, `vc-version-diff' ends up
-      ;; calling `vc-deduce-fileset' to find the files to diff, and
-      ;; that's not what we want here, we want the diff for the VC root dir.
-      (call-interactively 'vc-version-diff)
+      ;; We want the diff for the VC root dir.
+      (call-interactively 'vc-root-version-diff)
     (when buffer-file-name (vc-buffer-sync not-urgent))
     (let ((backend (vc-deduce-backend))
 	  (default-directory default-directory)
