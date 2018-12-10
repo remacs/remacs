@@ -51,7 +51,7 @@
   ;; We used to include "sync" in there, but in my experience it only
   ;; caused false positives.  --Stef
   (let ((skip "back[- ]?port\\|cherry picked from commit\\|\
-\\(do\\( no\\|n['’]\\)t\\|no need to\\) merge\\|\
+\\(do\\( no\\|n['’]\\)t\\|no need to\\) merge\\|not to be merged\\|\
 bump \\(Emacs \\)?version\\|Auto-commit"))
     (if noninteractive skip
       ;; "Regenerate" is quite prone to false positives.
