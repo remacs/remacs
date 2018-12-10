@@ -38,6 +38,27 @@
 ;; called just before redisplay happens, according to the movement of
 ;; the cursor since the last redisplay.
 
+;;;; Motivation
+
+;; The old properties were very problematic in practice because they
+;; operate at a much lower level and hence affect all motion
+;; *functions* like goto-char, forward-char, ... hence breaking
+;; invariants like:
+;;
+;;    (forward-char N) == (progn (forward-char N1) (forward-char (- N N1)))
+;;    (point) == (progn (forward-char N) (forward-char -N) (point))
+;;    (+ N (point)) == (progn (forward-char N) (point))
+;;
+;; The problems would usually show up due to interaction between
+;; unrelated code working in the same buffer, where one code used those
+;; properties and the other (unknowingly) assumed those aren't used.
+;; In practice a *lot* of code assumes there's no such funny business.
+;;
+;; Worse: all(?) packages using those properties don't actually want those
+;; properties to affect motion at such a low-level, they only want to
+;; affect the overall effect of commands, but not the effect of every
+;; single point-motion that a given command happened to use internally.
+
 ;;; Code:
 
 ;;;###autoload
