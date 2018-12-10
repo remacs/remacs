@@ -270,6 +270,19 @@ A nil value for either argument stands for the current time."
 	    (unload-feature 'tramp-loaddefs 'force)
 	    (unload-feature 'tramp-compat 'force)))
 
+;; There does not exist a common `flatten-list' yet, this is discussed
+;; in Bug#33309.  For the time being we implement our own version,
+;; derived from `eshell-flatten-list'.
+(defun tramp-compat-flatten-list (args)
+  "Flatten any lists within ARGS, so that there are no sublists."
+  (let ((new-list (list t)))
+    (dolist (a args)
+      (if (and (listp a)
+	       (listp (cdr a)))
+	  (nconc new-list (tramp-compat-flatten-list a))
+	(nconc new-list (list a))))
+    (cdr new-list)))
+
 (provide 'tramp-compat)
 
 ;;; TODO:
