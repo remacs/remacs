@@ -4997,7 +4997,8 @@ extract_data_from_object (Lisp_Object spec,
 	}
 
       if (STRING_MULTIBYTE (object))
-	object = code_convert_string (object, coding_system, Qnil, 1, 0, 1);
+	object = code_convert_string (object, coding_system,
+				      Qnil, true, false, true);
 
       ptrdiff_t size = SCHARS (object), start_char, end_char;
       validate_subarray (object, start, end, size, &start_char, &end_char);
@@ -5052,7 +5053,7 @@ extract_data_from_object (Lisp_Object spec,
 	    coding_system = Vcoding_system_for_write;
 	  else
 	    {
-	      bool force_raw_text = 0;
+	      bool force_raw_text = false;
 
 	      coding_system = BVAR (XBUFFER (object), buffer_file_coding_system);
 	      if (NILP (coding_system)
@@ -5060,14 +5061,15 @@ extract_data_from_object (Lisp_Object spec,
 		{
 		  coding_system = Qnil;
 		  if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
-		    force_raw_text = 1;
+		    force_raw_text = true;
 		}
 
 	      if (NILP (coding_system) && !NILP (Fbuffer_file_name (object)))
 		{
 		  /* Check file-coding-system-alist.  */
 		  Lisp_Object val = CALLN (Ffind_operation_coding_system,
-					   Qwrite_region, start, end,
+					   Qwrite_region,
+					   make_fixnum (b), make_fixnum (e),
 					   Fbuffer_file_name (object));
 		  if (CONSP (val) && !NILP (XCDR (val)))
 		    coding_system = XCDR (val);
@@ -5103,14 +5105,15 @@ extract_data_from_object (Lisp_Object spec,
 	    }
 	}
 
-      object = make_buffer_string (b, e, 0);
+      object = make_buffer_string (b, e, false);
       set_buffer_internal (prev);
       /* Discard the unwind protect for recovering the current
 	 buffer.  */
       specpdl_ptr--;
 
       if (STRING_MULTIBYTE (object))
-	object = code_convert_string (object, coding_system, Qnil, 1, 0, 0);
+	object = code_convert_string (object, coding_system,
+				      Qnil, true, false, false);
       *start_byte = 0;
       *end_byte = SBYTES (object);
     }
@@ -5395,7 +5398,7 @@ invoked by mouse clicks and mouse menu items.
 
 On some platforms, file selection dialogs are also enabled if this is
 non-nil.  */);
-  use_dialog_box = 1;
+  use_dialog_box = true;
 
   DEFVAR_BOOL ("use-file-dialog", use_file_dialog,
     doc: /* Non-nil means mouse commands use a file dialog to ask for files.
@@ -5403,7 +5406,7 @@ This applies to commands from menus and tool bar buttons even when
 they are initiated from the keyboard.  If `use-dialog-box' is nil,
 that disables the use of a file dialog, regardless of the value of
 this variable.  */);
-  use_file_dialog = 1;
+  use_file_dialog = true;
 
   defsubr (&Sidentity);
   defsubr (&Srandom);
