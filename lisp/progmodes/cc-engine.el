@@ -8514,6 +8514,8 @@ comment at the start of cc-engine.el for more info."
 	  got-parens
 	  ;; True if there is an identifier in the declarator.
 	  got-identifier
+	  ;; True if we find a number where an identifier was expected.
+	  got-number
 	  ;; True if there's a non-close-paren match of
 	  ;; `c-type-decl-suffix-key'.
 	  got-suffix
@@ -8591,7 +8593,9 @@ comment at the start of cc-engine.el for more info."
 	  (and (looking-at c-identifier-start)
 	       (setq pos (point))
 	       (setq got-identifier (c-forward-name))
-	       (setq name-start pos)))
+	       (setq name-start pos))
+	  (when (looking-at "[0-9]")
+	    (setq got-number t))) ; We've probably got an arithmetic expression.
 
       ;; Skip over type decl suffix operators and trailing noise macros.
       (while
@@ -9056,7 +9060,7 @@ comment at the start of cc-engine.el for more info."
 
 	   ;; CASE 18
 	   (when (and (not (memq context '(nil top)))
-		      (or got-prefix
+		      (or (and got-prefix (not got-number))
 			  (and (eq context 'decl)
 			       (not c-recognize-paren-inits)
 			       (or got-parens got-suffix))))
