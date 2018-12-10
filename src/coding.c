@@ -617,23 +617,7 @@ inhibit_flag (int encoded_flag, bool var)
   do {							\
     (attrs) = CODING_ID_ATTRS ((coding)->id);		\
     (charset_list) = CODING_ATTR_CHARSET_LIST (attrs);	\
-  } while (0)
-
-static void
-CHECK_FIXNAT_CAR (Lisp_Object x)
-{
-  Lisp_Object tmp = XCAR (x);
-  CHECK_FIXNAT (tmp);
-  XSETCAR (x, tmp);
-}
-
-static void
-CHECK_FIXNAT_CDR (Lisp_Object x)
-{
-  Lisp_Object tmp = XCDR (x);
-  CHECK_FIXNAT (tmp);
-  XSETCDR (x, tmp);
-}
+  } while (false)
 
 /* True if CODING's destination can be grown.  */
 
@@ -10271,15 +10255,9 @@ usage: (define-coding-system-internal ...)  */)
 	  else
 	    {
 	      CHECK_CONS (val);
-	      CHECK_FIXNAT_CAR (val);
-	      CHECK_FIXNUM_CDR (val);
-	      if (XFIXNUM (XCAR (val)) > 255)
-		args_out_of_range_3 (XCAR (val),
-				     make_fixnum (0), make_fixnum (255));
+	      CHECK_RANGED_INTEGER (XCAR (val), 0, 255);
 	      from = XFIXNUM (XCAR (val));
-	      if (! (from <= XFIXNUM (XCDR (val)) && XFIXNUM (XCDR (val)) <= 255))
-		args_out_of_range_3 (XCDR (val),
-				     XCAR (val), make_fixnum (255));
+	      CHECK_RANGED_INTEGER (XCDR (val), from, 255);
 	      to = XFIXNUM (XCDR (val));
 	    }
 	  for (int i = from; i <= to; i++)
@@ -10354,23 +10332,18 @@ usage: (define-coding-system-internal ...)  */)
 
       reg_usage = args[coding_arg_iso2022_reg_usage];
       CHECK_CONS (reg_usage);
-      CHECK_FIXNUM_CAR (reg_usage);
-      CHECK_FIXNUM_CDR (reg_usage);
+      CHECK_FIXNUM (XCAR (reg_usage));
+      CHECK_FIXNUM (XCDR (reg_usage));
 
       request = Fcopy_sequence (args[coding_arg_iso2022_request]);
       for (Lisp_Object tail = request; CONSP (tail); tail = XCDR (tail))
 	{
 	  int id;
-	  Lisp_Object tmp1;
 
 	  val = XCAR (tail);
 	  CHECK_CONS (val);
-	  tmp1 = XCAR (val);
-	  CHECK_CHARSET_GET_ID (tmp1, id);
-	  CHECK_FIXNAT_CDR (val);
-	  if (XFIXNUM (XCDR (val)) >= 4)
-	    error ("Invalid graphic register number: %"pI"d",
-		   XFIXNUM (XCDR (val)));
+	  CHECK_CHARSET_GET_ID (XCAR (val), id);
+	  CHECK_RANGED_INTEGER (XCDR (val), 0, 3);
 	  XSETCAR (val, make_fixnum (id));
 	}
 

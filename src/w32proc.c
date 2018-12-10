@@ -3476,8 +3476,8 @@ If successful, the new layout id is returned, otherwise nil.  */)
   HKL kl;
 
   CHECK_CONS (layout);
-  CHECK_FIXNUM_CAR (layout);
-  CHECK_FIXNUM_CDR (layout);
+  CHECK_FIXNUM (XCAR (layout));
+  CHECK_FIXNUM (XCDR (layout));
 
   kl = (HKL) (UINT_PTR) ((XFIXNUM (XCAR (layout)) & 0xffff)
 			 | (XFIXNUM (XCDR (layout)) << 16));

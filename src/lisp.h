@@ -2906,24 +2906,6 @@ CHECK_INTEGER (Lisp_Object x)
     else								\
       CHECK_TYPE (INTEGERP (x), Qnumber_or_marker_p, x);		\
   } while (false)
-
-/* Since we can't assign directly to the CAR or CDR fields of a cons
-   cell, use these when checking that those fields contain numbers.  */
-INLINE void
-CHECK_FIXNUM_CAR (Lisp_Object x)
-{
-  Lisp_Object tmp = XCAR (x);
-  CHECK_FIXNUM (tmp);
-  XSETCAR (x, tmp);
-}
-
-INLINE void
-CHECK_FIXNUM_CDR (Lisp_Object x)
-{
-  Lisp_Object tmp = XCDR (x);
-  CHECK_FIXNUM (tmp);
-  XSETCDR (x, tmp);
-}
 
 /* Define a built-in function for calling from Lisp.
  `lname' should be the name to give the function in Lisp,
