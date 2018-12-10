@@ -434,6 +434,11 @@ pub fn nthcdr(n: EmacsInt, list: LispObject) -> LispObject {
         return list;
     }
 
+    // The iterator's `nth` method looks like it would fit here. However, it has
+    // different semantics from Lisp. Lisp will happily return the `nth` item even if
+    // it is not a valid cons cell. The tails iterator does not handle this.
+    // By counting down manually, the code can exit before the iterator would
+    // allowing `rest()` to still have valid data.
     let mut it = list.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::safe);
     for _ in 0..n {
         it.next();
