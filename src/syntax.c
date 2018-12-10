@@ -979,18 +979,6 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 
   return from != comment_end;
 }
-
-DEFUN ("syntax-table-p", Fsyntax_table_p, Ssyntax_table_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a syntax table.
-Currently, any char-table counts as a syntax table.  */)
-  (Lisp_Object object)
-{
-  if (CHAR_TABLE_P (object)
-      && EQ (XCHAR_TABLE (object)->purpose, Qsyntax_table))
-    return Qt;
-  return Qnil;
-}
-
 /* Convert a letter which signifies a syntax code
  into the code it signifies.
  This is used by modify-syntax-entry, and other things.  */
@@ -3530,7 +3518,6 @@ init_syntax_once (void)
 void
 syms_of_syntax (void)
 {
-  DEFSYM (Qsyntax_table_p, "syntax-table-p");
   DEFSYM (Qsyntax_ppss, "syntax-ppss");
   DEFVAR_LISP ("comment-use-syntax-ppss",
 	       Vcomment_use_syntax_ppss,
@@ -3606,7 +3593,6 @@ In both cases, LIMIT bounds the search. */);
   DEFSYM (Qcomment_end_can_be_escaped, "comment-end-can-be-escaped");
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
 
-  defsubr (&Ssyntax_table_p);
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);
   defsubr (&Sstring_to_syntax);
