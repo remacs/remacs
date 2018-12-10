@@ -149,12 +149,12 @@ more Emacs-y.
 
    MacOS:
    
-        brew install libxml2 gnutls texinfo
+        brew install gnutls texinfo
         
     To use the installed version of `makeinfo` instead of the built-in 
     (`/usr/bin/makeinfo`) one, you'll need to make sure `/usr/local/opt/texinfo/bin` 
     is before `/usr/bin` in `PATH`.
-    Mojave: `export PKG_CONFIG_PATH="/usr/local/opt/libxml2/lib/pkgconfig"`
+    Mojave install libxml2 headers with: `open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg`
 
 ## Dockerized development environment
 
