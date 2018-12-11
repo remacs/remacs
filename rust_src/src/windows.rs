@@ -1,6 +1,6 @@
 //! Functions operating on windows.
 
-use std::ptr;
+use std::{mem, ptr};
 
 use libc::c_int;
 
@@ -14,6 +14,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
+    objects::equal,
     remacs_sys::globals,
     remacs_sys::{
         estimate_mode_line_height, minibuf_level,
@@ -22,15 +23,20 @@ use crate::{
         update_mode_lines, window_body_width, window_list_1, window_menu_bar_p, window_tool_bar_p,
         wset_redisplay,
     },
-    remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window},
     remacs_sys::{
-        Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone, Qwindow_live_p,
-        Qwindow_valid_p, Qwindowp,
+        face_id, glyph_matrix, pvec_type, save_window_data, saved_window, EmacsInt, Lisp_Type,
+        Lisp_Window,
+    },
+    remacs_sys::{
+        Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
+        Qwindow_configuration_p, Qwindow_live_p, Qwindow_valid_p, Qwindowp,
     },
     threads::ThreadState,
 };
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
+pub type SaveWindowDataRef = ExternalPtr<save_window_data>;
+pub type SavedWindowRef = ExternalPtr<saved_window>;
 
 impl LispWindowRef {
     pub fn as_lisp_obj(self) -> LispObject {
@@ -244,6 +250,12 @@ impl From<LispObject> for Option<LispWindowRef> {
     }
 }
 
+impl From<LispObject> for SaveWindowDataRef {
+    fn from(o: LispObject) -> Self {
+        o.as_window_configuration_or_error()
+    }
+}
+
 impl LispObject {
     pub fn is_window(self) -> bool {
         self.as_vectorlike()
@@ -289,14 +301,15 @@ impl LispObject {
             .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
 
-    /*
-    pub fn is_window_configuration(self) -> bool {
-        self.as_vectorlike().map_or(
-            false,
-            |v| v.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION),
-        )
+    pub fn as_window_configuration(self) -> Option<SaveWindowDataRef> {
+        self.as_vectorlike()
+            .and_then(|v| v.as_window_configuration())
     }
-     */
+
+    pub fn as_window_configuration_or_error(self) -> SaveWindowDataRef {
+        self.as_window_configuration()
+            .unwrap_or_else(|| wrong_type!(Qwindow_configuration_p, self))
+    }
 }
 
 pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
@@ -1151,6 +1164,121 @@ pub fn select_window_lisp(window: LispObject, norecord: LispObject) -> LispObjec
 pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
     let win: LispWindowRef = window.into();
     EmacsInt::from(win.top_line)
+}
+
+impl SaveWindowDataRef {
+    pub fn equal(self, other: Self, ignore_positions: bool) -> bool {
+        // Frame settings must match.
+        self.frame_cols == other.frame_cols
+            && self.frame_lines == other.frame_lines
+            && self.frame_menu_bar_lines == other.frame_menu_bar_lines
+            && self.selected_frame.eq(other.selected_frame)
+            && self.f_current_buffer.eq(other.f_current_buffer)
+            && (ignore_positions
+                || (self.minibuf_scroll_window.eq(other.minibuf_scroll_window)
+                    && self
+                        .minibuf_selected_window
+                        .eq(other.minibuf_selected_window)))
+            && self.focus_frame.eq(other.focus_frame)
+    }
+}
+
+impl SavedWindowRef {
+    pub fn equal(self, other: Self, ignore_positions: bool) -> bool {
+        // Windows' buffers must match.
+        self.buffer.eq(other.buffer)
+          && self.pixel_left.eq(other.pixel_left)
+	  && self.pixel_top.eq(other.pixel_top)
+	  && self.pixel_height.eq(other.pixel_height)
+	  && self.pixel_width.eq(other.pixel_width)
+	  && self.left_col.eq(other.left_col)
+	  && self.top_line.eq(other.top_line)
+	  && self.total_cols.eq(other.total_cols)
+	  && self.total_lines.eq(other.total_lines)
+	  && self.display_table.eq(other.display_table)
+	  // The next two check the window structure for equality.
+	  && self.parent.eq(other.parent)
+	  && self.prev.eq(other.prev)
+	  && (ignore_positions
+	      || (self.hscroll.eq(other.hscroll)
+		  && self.min_hscroll.eq(other.min_hscroll)
+		  && self.start_at_line_beg.eq(other.start_at_line_beg)
+		  && equal(self.start, other.start))
+		  && equal(self.pointm, other.pointm))
+	  && self.left_margin_cols.eq(other.left_margin_cols)
+	  && self.right_margin_cols.eq(other.right_margin_cols)
+	  && self.left_fringe_width.eq(other.left_fringe_width)
+	  && self.right_fringe_width.eq(other.right_fringe_width)
+	  && self.fringes_outside_margins.eq(other.fringes_outside_margins)
+	  && self.scroll_bar_width.eq(other.scroll_bar_width)
+	  && self.scroll_bar_height.eq(other.scroll_bar_height)
+	  && self.vertical_scroll_bar_type.eq(other.vertical_scroll_bar_type)
+	  && self.horizontal_scroll_bar_type.eq(other.horizontal_scroll_bar_type)
+    }
+}
+
+// Return true if window configurations CONFIGURATION1 and CONFIGURATION2
+// describe the same state of affairs.  This is used by Fequal.
+//
+// IGNORE_POSITIONS means ignore non-matching scroll positions
+// and the like.
+//
+// This ignores a couple of things like the dedication status of
+// window, combination_limit and the like.  This might have to be
+// fixed.
+#[no_mangle]
+pub extern "C" fn compare_window_configurations(
+    conf1: LispObject,
+    conf2: LispObject,
+    ignore_positions: bool,
+) -> bool {
+    compare_window_configurations_rust(
+        conf1.as_window_configuration_or_error(),
+        conf2.as_window_configuration_or_error(),
+        ignore_positions,
+    )
+}
+
+pub fn compare_window_configurations_rust(
+    conf1: SaveWindowDataRef,
+    conf2: SaveWindowDataRef,
+    ignore_positions: bool,
+) -> bool {
+    if conf1.equal(conf2, ignore_positions) {
+        return false;
+    }
+
+    let sws1 = conf1.saved_windows.as_vector_or_error();
+    let sws2 = conf2.saved_windows.as_vector_or_error();
+
+    // Verify that the two configurations have the same number of windows.
+    if sws1.len() != sws2.len() {
+        return false;
+    }
+
+    for i in 0..sws1.len() {
+        let sw1 = unsafe { mem::transmute::<_, SavedWindowRef>(sws1.get(i as usize)) };
+        let sw2 = unsafe { mem::transmute::<_, SavedWindowRef>(sws2.get(i as usize)) };
+
+        // The "current" windows in the two configurations must
+        // correspond to each other.
+        if conf1.current_window.eq(sw1.window) != conf2.current_window.eq(sw2.window) {
+            return false;
+        }
+        if !sw1.equal(sw2, ignore_positions) {
+            return false;
+        }
+    }
+
+    true
+}
+
+/// Compare two window configurations as regards the structure of windows.
+/// This function ignores details such as the values of point
+/// and scrolling positions.
+#[lisp_fn]
+pub fn compare_window_configurations_lisp(x: SaveWindowDataRef, y: SaveWindowDataRef) -> bool {
+    compare_window_configurations_rust(x, y, true)
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

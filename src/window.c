@@ -5378,58 +5378,6 @@ from the top of the window.  */)
 
 
 
-/***********************************************************************
-			 Window Configuration
- ***********************************************************************/
-
-struct save_window_data
-  {
-    union vectorlike_header header;
-    Lisp_Object selected_frame;
-    Lisp_Object current_window;
-    Lisp_Object f_current_buffer;
-    Lisp_Object minibuf_scroll_window;
-    Lisp_Object minibuf_selected_window;
-    Lisp_Object root_window;
-    Lisp_Object focus_frame;
-    /* A vector, each of whose elements is a struct saved_window
-       for one window.  */
-    Lisp_Object saved_windows;
-
-    /* All fields above are traced by the GC.
-       From `frame-cols' down, the fields are ignored by the GC.  */
-    /* We should be able to do without the following two.  */
-    int frame_cols, frame_lines;
-    /* These two should get eventually replaced by their pixel
-       counterparts.  */
-    int frame_menu_bar_lines, frame_tool_bar_lines;
-    int frame_text_width, frame_text_height;
-    /* These are currently unused.  We need them as soon as we convert
-       to pixels.  */
-    int frame_menu_bar_height, frame_tool_bar_height;
-  };
-
-/* This is saved as a Lisp_Vector.  */
-struct saved_window
-{
-  union vectorlike_header header;
-
-  Lisp_Object window, buffer, start, pointm, old_pointm;
-  Lisp_Object pixel_left, pixel_top, pixel_height, pixel_width;
-  Lisp_Object pixel_height_before_size_change, pixel_width_before_size_change;
-  Lisp_Object left_col, top_line, total_cols, total_lines;
-  Lisp_Object normal_cols, normal_lines;
-  Lisp_Object hscroll, min_hscroll, hscroll_whole, suspend_auto_hscroll;
-  Lisp_Object parent, prev;
-  Lisp_Object start_at_line_beg;
-  Lisp_Object display_table;
-  Lisp_Object left_margin_cols, right_margin_cols;
-  Lisp_Object left_fringe_width, right_fringe_width, fringes_outside_margins;
-  Lisp_Object scroll_bar_width, vertical_scroll_bar_type, dedicated;
-  Lisp_Object scroll_bar_height, horizontal_scroll_bar_type;
-  Lisp_Object combination_limit, window_parameters;
-};
-
 #define SAVED_WINDOW_N(swv,n) \
   ((struct saved_window *) (XVECTOR ((swv)->contents[(n)])))
 
@@ -6536,106 +6484,6 @@ foreach_window_1 (struct window *w, bool (*fn) (struct window *, void *),
 			    Initialization
  ***********************************************************************/
 
-/* Return true if window configurations CONFIGURATION1 and CONFIGURATION2
-   describe the same state of affairs.  This is used by Fequal.
-
-   IGNORE_POSITIONS means ignore non-matching scroll positions
-   and the like.
-
-   This ignores a couple of things like the dedication status of
-   window, combination_limit and the like.  This might have to be
-   fixed.  */
-
-bool
-compare_window_configurations (Lisp_Object configuration1,
-			       Lisp_Object configuration2,
-			       bool ignore_positions)
-{
-  register struct save_window_data *d1, *d2;
-  struct Lisp_Vector *sws1, *sws2;
-  ptrdiff_t i;
-
-  CHECK_WINDOW_CONFIGURATION (configuration1);
-  CHECK_WINDOW_CONFIGURATION (configuration2);
-
-  d1 = (struct save_window_data *) XVECTOR (configuration1);
-  d2 = (struct save_window_data *) XVECTOR (configuration2);
-  sws1 = XVECTOR (d1->saved_windows);
-  sws2 = XVECTOR (d2->saved_windows);
-
-  /* Frame settings must match.  */
-  if (d1->frame_cols != d2->frame_cols
-      || d1->frame_lines != d2->frame_lines
-      || d1->frame_menu_bar_lines != d2->frame_menu_bar_lines
-      || !EQ (d1->selected_frame, d2->selected_frame)
-      || !EQ (d1->f_current_buffer, d2->f_current_buffer)
-      || (!ignore_positions
-	  && (!EQ (d1->minibuf_scroll_window, d2->minibuf_scroll_window)
-	      || !EQ (d1->minibuf_selected_window, d2->minibuf_selected_window)))
-      || !EQ (d1->focus_frame, d2->focus_frame)
-      /* Verify that the two configurations have the same number of windows.  */
-      || sws1->header.size != sws2->header.size)
-    return false;
-
-  for (i = 0; i < sws1->header.size; i++)
-    {
-      struct saved_window *sw1, *sw2;
-
-      sw1 = SAVED_WINDOW_N (sws1, i);
-      sw2 = SAVED_WINDOW_N (sws2, i);
-
-      if (
-	   /* The "current" windows in the two configurations must
-	      correspond to each other.  */
-	  EQ (d1->current_window, sw1->window)
-	  != EQ (d2->current_window, sw2->window)
-	  /* Windows' buffers must match.  */
-	  || !EQ (sw1->buffer, sw2->buffer)
-	  || !EQ (sw1->pixel_left, sw2->pixel_left)
-	  || !EQ (sw1->pixel_top, sw2->pixel_top)
-	  || !EQ (sw1->pixel_height, sw2->pixel_height)
-	  || !EQ (sw1->pixel_width, sw2->pixel_width)
-	  || !EQ (sw1->left_col, sw2->left_col)
-	  || !EQ (sw1->top_line, sw2->top_line)
-	  || !EQ (sw1->total_cols, sw2->total_cols)
-	  || !EQ (sw1->total_lines, sw2->total_lines)
-	  || !EQ (sw1->display_table, sw2->display_table)
-	  /* The next two disjuncts check the window structure for
-	     equality.  */
-	  || !EQ (sw1->parent, sw2->parent)
-	  || !EQ (sw1->prev, sw2->prev)
-	  || (!ignore_positions
-	      && (!EQ (sw1->hscroll, sw2->hscroll)
-		  || !EQ (sw1->min_hscroll, sw2->min_hscroll)
-		  || !EQ (sw1->start_at_line_beg, sw2->start_at_line_beg)
-		  || NILP (Fequal (sw1->start, sw2->start))
-		  || NILP (Fequal (sw1->pointm, sw2->pointm))))
-	  || !EQ (sw1->left_margin_cols, sw2->left_margin_cols)
-	  || !EQ (sw1->right_margin_cols, sw2->right_margin_cols)
-	  || !EQ (sw1->left_fringe_width, sw2->left_fringe_width)
-	  || !EQ (sw1->right_fringe_width, sw2->right_fringe_width)
-	  || !EQ (sw1->fringes_outside_margins, sw2->fringes_outside_margins)
-	  || !EQ (sw1->scroll_bar_width, sw2->scroll_bar_width)
-	  || !EQ (sw1->scroll_bar_height, sw2->scroll_bar_height)
-	  || !EQ (sw1->vertical_scroll_bar_type, sw2->vertical_scroll_bar_type)
-	  || !EQ (sw1->horizontal_scroll_bar_type, sw2->horizontal_scroll_bar_type))
-	return false;
-    }
-
-  return true;
-}
-
-DEFUN ("compare-window-configurations", Fcompare_window_configurations,
-       Scompare_window_configurations, 2, 2, 0,
-       doc: /* Compare two window configurations as regards the structure of windows.
-This function ignores details such as the values of point
-and scrolling positions.  */)
-  (Lisp_Object x, Lisp_Object y)
-{
-  if (compare_window_configurations (x, y, true))
-    return Qt;
-  return Qnil;
-}
 
 void
 init_window_once (void)
@@ -6936,7 +6784,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_scroll_bars);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
-  defsubr (&Scompare_window_configurations);
   defsubr (&Swindow_parameters);
 }
 
