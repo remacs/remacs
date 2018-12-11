@@ -1,7 +1,7 @@
 //! Functions operating on buffers.
 
-use std::{self, mem, ptr};
 use std::sync::Mutex;
+use std::{self, mem, ptr};
 
 use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
 
