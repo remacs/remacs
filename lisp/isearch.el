@@ -2811,10 +2811,10 @@ the bottom."
 If `shift', extend the search string by motion commands while holding down
 the shift key.  The search string is extended by yanking text that
 ends at the new position after moving point in the current buffer.
-If t, extend the search string without the shift key pressed
-by motion commands that have the `isearch-move' property on their
-symbols equal to `enabled', or for which the shift-translated command
-is not disabled by the value `disabled' of property `isearch-move'."
+If t, extend the search string without the shift key pressed.
+To enable motion commands, put the `isearch-move' property on their
+symbols to `enabled', or to disable an automatically detected
+shift-translated command, use the property value `disabled'."
   :type '(choice (const :tag "Motion keys exit Isearch" nil)
                  (const :tag "Motion keys extend the search string" t)
                  (const :tag "Shifted motion keys extend the search string" shift))
@@ -2864,14 +2864,15 @@ See more for options in `search-exit-option'."
       (read-event)
       (setq this-command 'isearch-edit-string))
      ;; Don't terminate the search for motion commands.
-     ((or (and (eq isearch-yank-on-move t)
-               (symbolp this-command)
-               (or (eq (get this-command 'isearch-move) 'enabled)
-                   (and (not (eq (get this-command 'isearch-move) 'disabled))
-                        (stringp (nth 1 (interactive-form this-command)))
-                        (string-match-p "^^" (nth 1 (interactive-form this-command))))))
-          (and (eq isearch-yank-on-move 'shift)
-               this-command-keys-shift-translated))
+     ((and isearch-yank-on-move
+           (symbolp this-command)
+           (not (eq (get this-command 'isearch-move) 'disabled))
+           (or (eq (get this-command 'isearch-move) 'enabled)
+               (and (eq isearch-yank-on-move t)
+                    (stringp (nth 1 (interactive-form this-command)))
+                    (string-match-p "^^" (nth 1 (interactive-form this-command))))
+               (and (eq isearch-yank-on-move 'shift)
+                    this-command-keys-shift-translated)))
       (setq this-command-keys-shift-translated nil)
       (setq isearch-pre-move-point (point)))
      ;; Append control characters to the search string
