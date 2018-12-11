@@ -7193,7 +7193,7 @@ that allows the selected frame)."
     (when window
       (prog1
           (window--display-buffer
-           buffer window 'frame alist display-buffer-mark-dedicated)
+           buffer window 'reuse alist display-buffer-mark-dedicated)
         (unless (cdr (assq 'inhibit-switch-frame alist))
           (window--maybe-raise-frame frame))))))
 
