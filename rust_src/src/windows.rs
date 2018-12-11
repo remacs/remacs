@@ -1,6 +1,6 @@
 //! Functions operating on windows.
 
-use std::ptr;
+use std::{mem, ptr};
 
 use libc::c_int;
 
@@ -14,6 +14,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
+    objects::equal,
     remacs_sys::globals,
     remacs_sys::Fcopy_alist,
     remacs_sys::{
@@ -23,15 +24,20 @@ use crate::{
         update_mode_lines, window_body_width, window_list_1, window_menu_bar_p, window_tool_bar_p,
         wset_redisplay,
     },
-    remacs_sys::{face_id, glyph_matrix, pvec_type, EmacsInt, Lisp_Type, Lisp_Window},
     remacs_sys::{
-        Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone, Qwindow_live_p,
-        Qwindow_valid_p, Qwindowp,
+        face_id, glyph_matrix, pvec_type, save_window_data, saved_window, EmacsInt, Lisp_Type,
+        Lisp_Window,
+    },
+    remacs_sys::{
+        Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnil, Qnone,
+        Qwindow_configuration_p, Qwindow_live_p, Qwindow_valid_p, Qwindowp,
     },
     threads::ThreadState,
 };
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
+pub type SaveWindowDataRef = ExternalPtr<save_window_data>;
+pub type SavedWindowRef = ExternalPtr<saved_window>;
 
 impl LispWindowRef {
     /// Check if window is a live window (displays a buffer).
@@ -238,6 +244,12 @@ impl From<LispWindowRef> for LispObject {
 impl From<LispObject> for Option<LispWindowRef> {
     fn from(o: LispObject) -> Self {
         o.as_window()
+    }
+}
+
+impl From<LispObject> for SaveWindowDataRef {
+    fn from(o: LispObject) -> Self {
+        o.as_window_configuration_or_error()
     }
 }
 
