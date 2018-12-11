@@ -1530,7 +1530,7 @@ change; the point does."
               ;; Sanity check of the point marker.
               (when (and (markerp point)
                          (eq (marker-buffer point) buffer))
-                (unless (and (nth 0 prev)
+                (unless (and (nth 1 prev)
                              (dired-goto-file (nth 1 prev)))
                   (goto-char (point-min))
 	          (forward-line (1- (nth 2 prev))))
