@@ -7137,6 +7137,11 @@ set_window_fringes (struct window *w, Lisp_Object left_width,
       w->right_fringe_width = right;
       w->fringes_outside_margins = outside;
 
+      /* This is needed to trigger immediate redisplay of the window
+	 when its fringes are changed, because fringes are redrawn
+	 only if update_window is called, so we must trigger that even
+	 if the window's glyph matrices did not change at all.  */
+      windows_or_buffers_changed = 35;
       return w;
     }
   else
@@ -7254,6 +7259,12 @@ set_window_scroll_bars (struct window *w, Lisp_Object width,
   wset_horizontal_scroll_bar_type (w, Qnil);
 #endif
 
+  /* This is needed to trigger immediate redisplay of the window when
+     scroll bars are changed, because scroll bars are redisplayed only
+     if more than a single window needs to be considered, see
+     redisplay_internal.  */
+  if (changed)
+    windows_or_buffers_changed = 31;
   return changed ? w : NULL;
 }
 
