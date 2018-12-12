@@ -2033,20 +2033,25 @@ Unlike `vc-find-revision-save', doesn't save the buffer to the file."
       (with-current-buffer filebuf
 	(let ((failed t))
 	  (unwind-protect
-	      (let ((coding-system-for-read 'no-conversion)
-                    (coding-system-for-write 'no-conversion))
-		(with-current-buffer (or buffer (create-file-buffer filename))
-                  (unless buffer (setq buffer-file-name filename))
-		  (let ((outbuf (current-buffer)))
-		    (with-current-buffer filebuf
-		      (if backend
-			  (vc-call-backend backend 'find-revision file revision outbuf)
-			(vc-call find-revision file revision outbuf))))
-                  (goto-char (point-min))
-                  (if buffer (let ((buffer-file-name file)) (normal-mode)) (normal-mode))
-	          (set-buffer-modified-p nil)
-                  (setq buffer-read-only t))
-		(setq failed nil))
+	      (with-current-buffer (or buffer (create-file-buffer filename))
+                (unless buffer (setq buffer-file-name filename))
+		(let ((outbuf (current-buffer)))
+		  (with-current-buffer filebuf
+		    (if backend
+			(vc-call-backend backend 'find-revision file revision outbuf)
+		      (vc-call find-revision file revision outbuf))))
+                (decode-coding-inserted-region (point-min) (point-max) file)
+                (after-insert-file-set-coding (- (point-max) (point-min)))
+                (goto-char (point-min))
+                (if buffer
+                    ;; For non-interactive, skip any questions
+                    (let ((enable-local-variables :safe) ;; to find `mode:'
+                          (buffer-file-name file))
+                      (ignore-errors (set-auto-mode)))
+                  (normal-mode))
+	        (set-buffer-modified-p nil)
+                (setq buffer-read-only t))
+		(setq failed nil)
 	    (when (and failed (unless buffer (get-file-buffer filename)))
 	      (with-current-buffer (get-file-buffer filename)
 		(set-buffer-modified-p nil))
