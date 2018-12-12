@@ -9,7 +9,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::{
         equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
-        CHARTAB_SIZE_BITS,
+        CHARTAB_SIZE_BITS, CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0,
     },
     remacs_sys::{internal_equal, uniprop_table_uncompress},
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
@@ -151,17 +151,37 @@ impl LispCharTableRef {
     }
 
     pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
-        let size1 = unsafe { self.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize;
+        let mut size1 =
+            unsafe { self.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize;
         let size2 = unsafe { other.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize;
         if size1 != size2 {
             return false;
         }
 
+        let extras = if size1 > 1 << CHARTAB_SIZE_BITS_0 {
+            let tmp = size1 & !(1 << CHARTAB_SIZE_BITS_0);
+            size1 = 1 << CHARTAB_SIZE_BITS_0;
+            tmp
+        } else {
+            0
+        };
         for i in 0..size1 {
-            let v1 = self.contents[i as usize];
-            let v2 = other.contents[i as usize];
+            let v1 = self.contents[i];
+            let v2 = other.contents[i];
             if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
                 return false;
+            }
+        }
+        if extras > 0 {
+            let self_extras = unsafe { self.extras.as_slice(extras) };
+            let other_extras = unsafe { other.extras.as_slice(extras) };
+
+            for i in 0..extras {
+                let v1 = self_extras[i];
+                let v2 = other_extras[i];
+                if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
+                    return false;
+                }
             }
         }
 
@@ -232,7 +252,7 @@ impl LispSubCharTableRef {
 
             let slice1 = self.contents.as_slice(size);
             let slice2 = other.contents.as_slice(size);
-            for i in 0..size {
+            for i in 0..size1 {
                 let v1 = slice1[i];
                 let v2 = slice2[i];
                 if !internal_equal(v1, v2, kind, depth + 1, ht) {
