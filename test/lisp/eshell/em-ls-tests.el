@@ -78,6 +78,11 @@
 
 (ert-deftest em-ls-test-bug27844 ()
   "Test for https://debbugs.gnu.org/27844 ."
+  ;; FIXME: it would be better to use something other than source-directory
+  ;; in this test.
+  (skip-unless (and source-directory
+                    (file-exists-p
+                     (expand-file-name "lisp/subr.el" source-directory))))
   (let ((orig eshell-ls-use-in-dired)
         (dired-use-ls-dired 'unspecified)
         buf insert-directory-program)
