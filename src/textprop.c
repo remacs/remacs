@@ -111,9 +111,6 @@ CHECK_STRING_OR_BUFFER (Lisp_Object x)
    to by BEGIN and END may be integers or markers; if the latter, they
    are coerced to integers.
 
-   When OBJECT is a string, we increment *BEGIN and *END
-   to make them origin-one.
-
    Note that buffer points don't correspond to interval indices.
    For example, point-max is 1 greater than the index of the last
    character.  This difference is handled in the caller, which uses
@@ -175,9 +172,6 @@ validate_interval_range (Lisp_Object object, Lisp_Object *begin,
       if (! (0 <= XFIXNUM (*begin) && XFIXNUM (*begin) <= XFIXNUM (*end)
 	     && XFIXNUM (*end) <= len))
 	args_out_of_range (*begin, *end);
-      XSETFASTINT (*begin, XFIXNAT (*begin));
-      if (begin != end)
-	XSETFASTINT (*end, XFIXNAT (*end));
       i = string_intervals (object);
 
       if (len == 0)
@@ -1348,12 +1342,8 @@ Lisp_Object
 set_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object properties,
 		     Lisp_Object object, Lisp_Object coherent_change_p)
 {
-  register INTERVAL i;
-  Lisp_Object ostart, oend;
+  INTERVAL i;
   bool first_time = true;
-
-  ostart = start;
-  oend = end;
 
   properties = validate_plist (properties);
 
@@ -1381,11 +1371,6 @@ set_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object properties,
       /* If buffer has no properties, and we want none, return now.  */
       if (NILP (properties))
 	return Qnil;
-
-      /* Restore the original START and END values
-	 because validate_interval_range increments them for strings.  */
-      start = ostart;
-      end = oend;
 
       i = validate_interval_range (object, &start, &end, hard);
       /* This can return if start == end.  */
@@ -1887,45 +1872,30 @@ Lisp_Object
 copy_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object src,
 		      Lisp_Object pos, Lisp_Object dest, Lisp_Object prop)
 {
-  INTERVAL i;
-  Lisp_Object res;
-  Lisp_Object stuff;
-  Lisp_Object plist;
-  ptrdiff_t s, e, e2, p, len;
-  bool modified = false;
-
-  i = validate_interval_range (src, &start, &end, soft);
+  INTERVAL i = validate_interval_range (src, &start, &end, soft);
   if (!i)
     return Qnil;
 
   CHECK_FIXNUM_COERCE_MARKER (pos);
-  {
-    Lisp_Object dest_start, dest_end;
 
-    e = XFIXNUM (pos) + (XFIXNUM (end) - XFIXNUM (start));
-    if (MOST_POSITIVE_FIXNUM < e)
-      args_out_of_range (pos, end);
-    dest_start = pos;
-    XSETFASTINT (dest_end, e);
-    /* Apply this to a copy of pos; it will try to increment its arguments,
-       which we don't want.  */
-    validate_interval_range (dest, &dest_start, &dest_end, soft);
-  }
+  EMACS_INT dest_e = XFIXNUM (pos) + (XFIXNUM (end) - XFIXNUM (start));
+  if (MOST_POSITIVE_FIXNUM < dest_e)
+    args_out_of_range (pos, end);
+  Lisp_Object dest_end = make_fixnum (dest_e);
+  validate_interval_range (dest, &pos, &dest_end, soft);
 
-  s = XFIXNUM (start);
-  e = XFIXNUM (end);
-  p = XFIXNUM (pos);
+  ptrdiff_t s = XFIXNUM (start), e = XFIXNUM (end), p = XFIXNUM (pos);
 
-  stuff = Qnil;
+  Lisp_Object stuff = Qnil;
 
   while (s < e)
     {
-      e2 = i->position + LENGTH (i);
+      ptrdiff_t e2 = i->position + LENGTH (i);
       if (e2 > e)
 	e2 = e;
-      len = e2 - s;
+      ptrdiff_t len = e2 - s;
 
-      plist = i->plist;
+      Lisp_Object plist = i->plist;
       if (! NILP (prop))
 	while (! NILP (plist))
 	  {
@@ -1950,9 +1920,11 @@ copy_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object src,
       s = i->position;
     }
 
+  bool modified = false;
+
   while (! NILP (stuff))
     {
-      res = Fcar (stuff);
+      Lisp_Object res = Fcar (stuff);
       res = Fadd_text_properties (Fcar (res), Fcar (Fcdr (res)),
 				  Fcar (Fcdr (Fcdr (res))), dest);
       if (! NILP (res))
