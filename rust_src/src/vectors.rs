@@ -25,7 +25,8 @@ use crate::{
     },
     remacs_sys::{Qarrayp, Qsequencep, Qvectorp},
     threads::ThreadStateRef,
-    windows::{LispWindowRef, SaveWindowDataRef},
+    window_configuration::SaveWindowDataRef,
+    windows::LispWindowRef,
 };
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
