@@ -11,7 +11,6 @@ use crate::{
     frames::{LispFrameOrSelected, LispFrameRef},
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
-    lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::{
         clear_current_matrices, detect_input_pending_run_timers, dtotimespec, fset_redisplay,
         mark_window_display_accurate, putchar_unlocked, redisplay_preserve_echo_area, ring_bell,
