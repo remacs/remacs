@@ -229,6 +229,93 @@ impl LispWindowRef {
     }
 }
 
+impl SaveWindowDataRef {
+    pub fn equal(self, other: Self, ignore_positions: bool) -> bool {
+        // Frame settings must match.
+        if !(self.frame_cols == other.frame_cols
+            && self.frame_lines == other.frame_lines
+            && self.frame_menu_bar_lines == other.frame_menu_bar_lines
+            && self.selected_frame.eq(other.selected_frame)
+            && self.f_current_buffer.eq(other.f_current_buffer))
+        {
+            return false;
+        }
+
+        if !(ignore_positions
+            || (self.minibuf_scroll_window.eq(other.minibuf_scroll_window)
+                && self
+                    .minibuf_selected_window
+                    .eq(other.minibuf_selected_window)))
+        {
+            return false;
+        }
+
+        if !self.focus_frame.eq(other.focus_frame) {
+            return false;
+        }
+
+        true
+    }
+}
+
+impl SavedWindowRef {
+    pub fn equal(self, other: Self, ignore_positions: bool) -> bool {
+        // Windows' buffers must match.
+        if !self.buffer.eq(other.buffer) {
+            return false;
+        }
+
+        if !(self.pixel_left.eq(other.pixel_left)
+            && self.pixel_top.eq(other.pixel_top)
+            && self.pixel_height.eq(other.pixel_height)
+            && self.pixel_width.eq(other.pixel_width)
+            && self.left_col.eq(other.left_col)
+            && self.top_line.eq(other.top_line)
+            && self.total_cols.eq(other.total_cols)
+            && self.total_lines.eq(other.total_lines)
+            && self.display_table.eq(other.display_table))
+        {
+            return false;
+        }
+
+        // The next two check the window structure for equality.
+        if !(self.parent.eq(other.parent) && self.prev.eq(other.prev)) {
+            return false;
+        }
+
+        if !(ignore_positions
+            || (self.hscroll.eq(other.hscroll)
+                && self.min_hscroll.eq(other.min_hscroll)
+                && self.start_at_line_beg.eq(other.start_at_line_beg)
+                && equal(self.start, other.start))
+                && equal(self.pointm, other.pointm))
+        {
+            return false;
+        }
+
+        if !(self.left_margin_cols.eq(other.left_margin_cols)
+            && self.right_margin_cols.eq(other.right_margin_cols)
+            && self.left_fringe_width.eq(other.left_fringe_width)
+            && self.right_fringe_width.eq(other.right_fringe_width)
+            && self
+                .fringes_outside_margins
+                .eq(other.fringes_outside_margins)
+            && self.scroll_bar_width.eq(other.scroll_bar_width)
+            && self.scroll_bar_height.eq(other.scroll_bar_height)
+            && self
+                .vertical_scroll_bar_type
+                .eq(other.vertical_scroll_bar_type)
+            && self
+                .horizontal_scroll_bar_type
+                .eq(other.horizontal_scroll_bar_type))
+        {
+            return false;
+        }
+
+        true
+    }
+}
+
 impl From<LispObject> for LispWindowRef {
     fn from(o: LispObject) -> Self {
         o.as_window_or_error()
