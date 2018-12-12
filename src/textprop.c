@@ -1421,34 +1421,25 @@ set_text_properties (Lisp_Object start, Lisp_Object end, Lisp_Object properties,
 /* Replace properties of text from START to END with new list of
    properties PROPERTIES.  OBJECT is the buffer or string containing
    the text.  This does not obey any hooks.
-   You should provide the interval that START is located in as I.
-   START and END can be in any order.  */
+   I is the interval that START is located in.  */
 
 void
-set_text_properties_1 (Lisp_Object start, Lisp_Object end, Lisp_Object properties, Lisp_Object object, INTERVAL i)
+set_text_properties_1 (Lisp_Object start, Lisp_Object end,
+		       Lisp_Object properties, Lisp_Object object, INTERVAL i)
 {
-  register INTERVAL prev_changed = NULL;
-  register ptrdiff_t s, len;
-  INTERVAL unchanged;
+  INTERVAL prev_changed = NULL;
+  ptrdiff_t s = XFIXNUM (start);
+  ptrdiff_t len = XFIXNUM (end) - s;
 
-  if (XFIXNUM (start) < XFIXNUM (end))
-    {
-      s = XFIXNUM (start);
-      len = XFIXNUM (end) - s;
-    }
-  else if (XFIXNUM (end) < XFIXNUM (start))
-    {
-      s = XFIXNUM (end);
-      len = XFIXNUM (start) - s;
-    }
-  else
+  if (len == 0)
     return;
+  eassert (0 < len);
 
   eassert (i);
 
   if (i->position != s)
     {
-      unchanged = i;
+      INTERVAL unchanged = i;
       i = split_interval_right (unchanged, s - unchanged->position);
 
       if (LENGTH (i) > len)
