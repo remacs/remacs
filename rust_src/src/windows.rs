@@ -1253,6 +1253,21 @@ pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
     EmacsInt::from(win.top_line)
 }
 
+/// Return t if OBJECT is a window-configuration object.
+#[lisp_fn]
+pub fn window_configuration_p(object: LispObject) -> bool {
+    object.as_window_configuration().is_some()
+}
+
+/// Return the frame that CONFIG, a window-configuration object, is about.
+#[lisp_fn]
+pub fn window_configuration_frame(config: SaveWindowDataRef) -> LispFrameRef {
+    let saved_windows = config.saved_windows.as_vector().unwrap();
+    let obj = saved_windows.get(0);
+    let saved = SavedWindowRef::new(obj.as_vector().unwrap().as_mut() as *mut saved_window);
+    saved.window.as_window_or_error().frame.as_frame_or_error()
+}
+
 // Return true if window configurations CONFIGURATION1 and CONFIGURATION2
 // describe the same state of affairs.  This is used by Fequal.
 //
@@ -1295,10 +1310,8 @@ pub fn compare_window_configurations_rust(
     for i in 0..sws1.len() {
         let obj1 = sws1.get(i as usize);
         let obj2 = sws2.get(i as usize);
-        let sw1 =
-            unsafe { SavedWindowRef::new(obj1.as_vector().unwrap().as_mut() as *mut saved_window) };
-        let sw2 =
-            unsafe { SavedWindowRef::new(obj2.as_vector().unwrap().as_mut() as *mut saved_window) };
+        let sw1 = SavedWindowRef::new(obj1.as_vector().unwrap().as_mut() as *mut saved_window);
+        let sw2 = SavedWindowRef::new(obj2.as_vector().unwrap().as_mut() as *mut saved_window);
 
         // The "current" windows in the two configurations must
         // correspond to each other.

@@ -5381,27 +5381,6 @@ from the top of the window.  */)
 #define SAVED_WINDOW_N(swv,n) \
   ((struct saved_window *) (XVECTOR ((swv)->contents[(n)])))
 
-DEFUN ("window-configuration-p", Fwindow_configuration_p, Swindow_configuration_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a window-configuration object.  */)
-  (Lisp_Object object)
-{
-  return WINDOW_CONFIGURATIONP (object) ? Qt : Qnil;
-}
-
-DEFUN ("window-configuration-frame", Fwindow_configuration_frame, Swindow_configuration_frame, 1, 1, 0,
-       doc: /* Return the frame that CONFIG, a window-configuration object, is about.  */)
-  (Lisp_Object config)
-{
-  register struct save_window_data *data;
-  struct Lisp_Vector *saved_windows;
-
-  CHECK_WINDOW_CONFIGURATION (config);
-
-  data = (struct save_window_data *) XVECTOR (config);
-  saved_windows = XVECTOR (data->saved_windows);
-  return XWINDOW (SAVED_WINDOW_N (saved_windows, 0)->window)->frame;
-}
-
 DEFUN ("set-window-configuration", Fset_window_configuration,
        Sset_window_configuration, 1, 1, 0,
        doc: /* Set the configuration of windows and buffers as specified by CONFIGURATION.
@@ -6773,8 +6752,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_text_width);
   defsubr (&Swindow_text_height);
   defsubr (&Smove_to_window_line);
-  defsubr (&Swindow_configuration_p);
-  defsubr (&Swindow_configuration_frame);
   defsubr (&Sset_window_configuration);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
