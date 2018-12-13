@@ -8,8 +8,8 @@ use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::{
-        equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
-        CHARTAB_SIZE_BITS, CHARTAB_SIZE_BITS::CHARTAB_SIZE_BITS_0,
+        char_table_specials, equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table,
+        Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
     remacs_sys::{internal_equal, uniprop_table_uncompress},
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
@@ -158,13 +158,31 @@ impl LispCharTableRef {
             return false;
         }
 
-        let extras = if size1 > 1 << CHARTAB_SIZE_BITS_0 {
-            let tmp = size1 & !(1 << CHARTAB_SIZE_BITS_0);
-            size1 = 1 << CHARTAB_SIZE_BITS_0;
+        let extras = if size1 > char_table_specials::CHAR_TABLE_STANDARD_SLOTS as usize {
+            let tmp = size1 - char_table_specials::CHAR_TABLE_STANDARD_SLOTS as usize;
+            size1 = char_table_specials::CHAR_TABLE_STANDARD_SLOTS as usize;
             tmp
         } else {
             0
         };
+
+        // char table is 4 LispObjects + an array
+        size1 -= 4;
+
+        unsafe {
+            if !internal_equal(self.defalt, other.defalt, kind, depth + 1, ht) {
+                return false;
+            }
+            if !internal_equal(self.parent, other.parent, kind, depth + 1, ht) {
+                return false;
+            }
+            if !internal_equal(self.purpose, other.purpose, kind, depth + 1, ht) {
+                return false;
+            }
+            if !internal_equal(self.ascii, other.ascii, kind, depth + 1, ht) {
+                return false;
+            }
+        }
         for i in 0..size1 {
             let v1 = self.contents[i];
             let v2 = other.contents[i];
@@ -243,10 +261,19 @@ impl LispSubCharTableRef {
 
     pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
         unsafe {
-            let size1 = self.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize;
+            let mut size1 =
+                self.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize;
             let size2 =
                 other.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize;
             if size1 != size2 {
+                return false;
+            }
+
+            size1 -= 2; // account for depth and min_char
+            if self.depth != other.depth {
+                return false;
+            }
+            if self.min_char != other.min_char {
                 return false;
             }
 

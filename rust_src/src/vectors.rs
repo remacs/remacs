@@ -20,9 +20,9 @@ use crate::{
     process::LispProcessRef,
     remacs_sys::internal_equal,
     remacs_sys::{
-        equal_kind, pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
-        Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, BOOL_VECTOR_BITS_PER_CHAR,
-        PSEUDOVECTOR_FLAG,
+        equal_kind, pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Char_Table, Lisp_Type, Lisp_Vector,
+        Lisp_Vectorlike, Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD,
+        BOOL_VECTOR_BITS_PER_CHAR, PSEUDOVECTOR_FLAG,
     },
     remacs_sys::{Qarrayp, Qsequencep, Qvectorp},
     threads::ThreadStateRef,
@@ -238,9 +238,9 @@ impl LispVectorlikeRef {
         }
     }
 
-    pub fn as_char_table(self) -> Option<LispCharTableRef> {
+    pub fn as_char_table(mut self) -> Option<LispCharTableRef> {
         if self.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
-            Some(unsafe { mem::transmute(self) })
+            Some(LispCharTableRef::new(self.as_mut() as *mut Lisp_Char_Table))
         } else {
             None
         }
@@ -347,7 +347,6 @@ macro_rules! impl_vectorlike_ref {
                 depth: i32,
                 ht: LispObject,
             ) -> bool {
-                println!("EQUAL {:?}", unsafe { self.header.size });
                 for i in 0..self.len() {
                     let v1 = self.get(i as usize);
                     let v2 = other.get(i as usize);
@@ -473,9 +472,7 @@ impl LispBoolVecRef {
         }
     }
 
-    pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
-        println!("bv");
-
+    pub fn equal(self, other: Self, _kind: equal_kind::Type, _depth: i32, _ht: LispObject) -> bool {
         let bits_per = BOOL_VECTOR_BITS_PER_CHAR as usize;
         // Bool vectors are compared much like strings.
         self.len() == other.len()
