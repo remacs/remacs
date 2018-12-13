@@ -831,6 +831,14 @@ working tree containing the current VC fileset).  If you invoke this
 command from a Dired buffer, it applies to the working tree containing
 the directory.
 
+@findex vc-root-version-diff
+@kindex C-u C-x v D
+  To compare two arbitrary revisions of the whole trees, call
+@code{vc-root-diff} with a prefix argument: @kbd{C-u C-x v D}.  This
+prompts for two revision IDs (@pxref{VCS Concepts}), and displays a
+diff between those versions of the entire version-controlled directory
+trees (RCS, SCCS, CVS, and SRC do not support this feature).
+
 @vindex vc-diff-switches
   You can customize the @command{diff} options that @kbd{C-x v =} and
 @kbd{C-x v D} use for generating diffs.  The options used are taken
@@ -963,6 +971,7 @@ and the maximum number of revisions to display.
 Directory Mode}) or a Dired buffer (@pxref{Dired}), it applies to the
 file listed on the current line.
 
+@kindex C-x v L
 @findex vc-print-root-log
 @findex log-view-toggle-entry-display
   @kbd{C-x v L} (@code{vc-print-root-log}) displays a

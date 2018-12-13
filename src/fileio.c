@@ -1692,6 +1692,34 @@ get_homedir (void)
       if (!home)
 	return "";
     }
+#ifdef DOS_NT
+  /* If home is a drive-relative directory, expand it.  */
+  if (IS_DRIVE (*home)
+      && IS_DEVICE_SEP (home[1])
+      && !IS_DIRECTORY_SEP (home[2]))
+    {
+# ifdef WINDOWSNT
+      static char hdir[MAX_UTF8_PATH];
+# else
+      static char hdir[MAXPATHLEN];
+# endif
+      if (!getdefdir (c_toupper (*home) - 'A' + 1, hdir))
+	{
+	  hdir[0] = c_toupper (*home);
+	  hdir[1] = ':';
+	  hdir[2] = '/';
+	  hdir[3] = '\0';
+	}
+      if (home[2])
+	{
+	  size_t homelen = strlen (hdir);
+	  if (!IS_DIRECTORY_SEP (hdir[homelen - 1]))
+	    strcat (hdir, "/");
+	  strcat (hdir, home + 2);
+	}
+      home = hdir;
+    }
+#endif
   if (IS_ABSOLUTE_FILE_NAME (home))
     return home;
   if (!emacs_wd)

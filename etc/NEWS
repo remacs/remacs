@@ -304,6 +304,12 @@ the node "(emacs) Directory Variables" of the user manual.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** map.el
+*** Now defined via generic functions that can be extended via cl-defmethod.
+*** Deprecate the 'map-put' macro in favor of a new 'map-put!' function.
+*** map-contains-key now returns a boolean rather than the key.
+*** Deprecate the 'testfn' args of 'map-elt' and 'map-contains-key'.
+
 ---
 ** Follow mode
 In the current follow group of windows, "ghost" cursors are no longer
@@ -397,6 +403,10 @@ Code that attempted to invoke 'smerge-mode' when visiting an Hg file
 with conflicts existed in earlier versions of Emacs, but incorrectly
 never detected a conflict due to invalid assumptions about cached
 values.
+
++++
+*** 'C-u C-x v D' ('vc-root-version-diff') prompts for two revisions
+and compares their entire trees.
 
 ** Diff mode
 *** Hunks are now automatically refined by default.

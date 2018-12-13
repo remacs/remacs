@@ -78,6 +78,11 @@
 
 (ert-deftest em-ls-test-bug27844 ()
   "Test for https://debbugs.gnu.org/27844 ."
+  ;; FIXME: it would be better to use something other than source-directory
+  ;; in this test.
+  (skip-unless (and source-directory
+                    (file-exists-p
+                     (expand-file-name "lisp/subr.el" source-directory))))
   (let ((orig eshell-ls-use-in-dired)
         (dired-use-ls-dired 'unspecified)
         buf insert-directory-program)
@@ -89,6 +94,15 @@
           (should (cdr (dired-get-marked-files)))
           (kill-buffer buf)
           (setq buf (dired (expand-file-name "lisp/subr.el" source-directory)))
+          (when (getenv "EMACS_HYDRA_CI")
+            (message "X1%s" (buffer-substring-no-properties
+                             (point-min) (point-max)))
+            (message "X2%s" (buffer-substring-no-properties
+                             (line-beginning-position)
+                             (line-end-position)))
+            (message "X3%s" (buffer-substring-no-properties
+                             (point)
+                             (line-end-position))))
           (should (looking-at "subr\\.el")))
       (customize-set-variable 'eshell-ls-use-in-dired orig)
       (and (buffer-live-p buf) (kill-buffer)))))
