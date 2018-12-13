@@ -145,13 +145,13 @@ pub fn window_configuration_frame(config: SaveWindowDataRef) -> LispFrameRef {
 // fixed.
 #[no_mangle]
 pub extern "C" fn compare_window_configurations(
-    conf1: LispObject,
-    conf2: LispObject,
+    configuration1: LispObject,
+    configuration2: LispObject,
     ignore_positions: bool,
 ) -> bool {
     compare_window_configurations_rust(
-        conf1.as_window_configuration_or_error(),
-        conf2.as_window_configuration_or_error(),
+        configuration1.as_window_configuration_or_error(),
+        configuration2.as_window_configuration_or_error(),
         ignore_positions,
     )
 }
