@@ -23041,7 +23041,7 @@ Emacs UBA implementation, in particular with the test suite.  */)
     }
   else
     {
-      CHECK_FIXNUM_COERCE_MARKER (vpos);
+      CHECK_FIXNUM (vpos);
       nrow = XFIXNUM (vpos);
     }
 
