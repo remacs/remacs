@@ -2741,6 +2741,8 @@ proxy @samp{bird@@bastion} to a remote file on @samp{you@@remotehost}:
 
 Each involved method must be an inline method (@pxref{Inline methods}).
 
+Proxies can take patterns @code{%h} or @code{%u}.
+
 @value{tramp} adds the ad-hoc definitions on the fly to
 @code{tramp-default-proxies-alist} and is available for re-use
 during that Emacs session.  Subsequent @value{tramp} connections to
