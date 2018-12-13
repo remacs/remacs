@@ -4,7 +4,7 @@
 
 ;; Author:  Pavel Kobyakov <pk_at_work@yahoo.com>
 ;; Maintainer: João Távora <joaotavora@gmail.com>
-;; Version: 1.0.2
+;; Version: 1.0.3
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: c languages tools
 
@@ -293,7 +293,7 @@ generated it."
 
 (cl-defstruct (flymake--diag
                (:constructor flymake--diag-make))
-  buffer beg end type text backend data overlay)
+  buffer beg end type text backend data overlay-properties overlay)
 
 ;;;###autoload
 (defun flymake-make-diagnostic (buffer
@@ -301,13 +301,20 @@ generated it."
                                 end
                                 type
                                 text
-                                &optional data)
+                                &optional data
+                                overlay-properties)
   "Make a Flymake diagnostic for BUFFER's region from BEG to END.
 TYPE is a key to symbol and TEXT is a description of the problem
 detected in this region.  DATA is any object that the caller
-wishes to attach to the created diagnostic for later retrieval."
+wishes to attach to the created diagnostic for later retrieval.
+
+OVERLAY-PROPERTIES is an an alist of properties attached to the
+created diagnostic, overriding the default properties and any
+properties of `flymake-overlay-control' of the diagnostic's
+type."
   (flymake--diag-make :buffer buffer :beg beg :end end
-                      :type type :text text :data data))
+                      :type type :text text :data data
+                      :overlay-properties overlay-properties))
 
 ;;;###autoload
 (defun flymake-diagnostics (&optional beg end)
@@ -600,7 +607,9 @@ associated `flymake-category' return DEFAULT."
     ;; properties.
     (cl-loop
      for (ov-prop . value) in
-     (append (reverse ; ensure ealier props override later ones
+     (append (reverse
+              (flymake--diag-overlay-properties diagnostic))
+             (reverse ; ensure ealier props override later ones
               (flymake--lookup-type-property type 'flymake-overlay-control))
              (alist-get type flymake-diagnostic-types-alist))
      do (overlay-put ov ov-prop value))
