@@ -1,9 +1,11 @@
 //! Functions operating on buffers.
 
-use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
-use rand::distributions::range::Range;
-use rand::distributions::IndependentSample;
+use std::sync::Mutex;
 use std::{self, mem, ptr};
+
+use libc::{self, c_char, c_int, c_uchar, c_void, ptrdiff_t};
+
+use rand::{Rng, StdRng};
 
 use remacs_macros::lisp_fn;
 
@@ -1098,9 +1100,11 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     }
 
     let basename = if name.byte_at(0) == b' ' {
-        let range = Range::new(0, 1_000_000);
-        let mut rng = rand::thread_rng();
-        let mut s = format!("-{}", range.ind_sample(&mut rng));
+        lazy_static! {
+            static ref shared_rng: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
+        }
+        let mut rng = shared_rng.lock().unwrap();
+        let mut s = format!("-{}", rng.gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
         let genname = unsafe { concat2(name.into(), suffix) };
         if get_buffer(LispBufferOrName::Name(genname)).is_none() {
