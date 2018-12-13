@@ -147,9 +147,9 @@ more Emacs-y.
           libgif-dev libxpm-dev libgtk-3-dev libgnutls28-dev \
           libncurses5-dev libxml2-dev libxt-dev
 
-   MacOS:
+   macOS:
    
-        brew install gnutls texinfo
+        brew install gnutls texinfo autoconf
         
     To use the installed version of `makeinfo` instead of the built-in 
     (`/usr/bin/makeinfo`) one, you'll need to make sure `/usr/local/opt/texinfo/bin` 
