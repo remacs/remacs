@@ -288,15 +288,6 @@ impl LispObject {
         self.as_valid_window()
             .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
-
-    /*
-    pub fn is_window_configuration(self) -> bool {
-        self.as_vectorlike().map_or(
-            false,
-            |v| v.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION),
-        )
-    }
-     */
 }
 
 pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
