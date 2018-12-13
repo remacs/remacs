@@ -435,10 +435,23 @@ Must called from within a `tar-mode' buffer."
      (save-excursion (should (search-forward "Summary: A single-file package with no dependencies" nil t)))
      (save-excursion (should (search-forward "Homepage: http://doodles.au" nil t)))
      (save-excursion (should (re-search-forward "Keywords: \\[?frobnicate\\]?" nil t)))
-     ;; No description, though. Because at this point we don't know
-     ;; what archive the package originated from, and we don't have
-     ;; its readme file saved.
+     (save-excursion (should (search-forward "This package provides a minor mode to frobnicate"
+                                             nil t)))
      )))
+
+(ert-deftest package-test-describe-installed-multi-file-package ()
+  "Test displaying of the readme for installed multi-file package."
+
+  (with-package-test ()
+    (package-initialize)
+    (package-refresh-contents)
+    (package-install 'multi-file)
+    (with-fake-help-buffer
+     (describe-package 'multi-file)
+     (goto-char (point-min))
+     (should (search-forward "Homepage: http://puddles.li" nil t))
+     (should (search-forward "This is a bare-bones readme file for the multi-file"
+                             nil t)))))
 
 (ert-deftest package-test-describe-non-installed-package ()
   "Test displaying of the readme for non-installed package."

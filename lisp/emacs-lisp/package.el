@@ -2123,6 +2123,9 @@ If NOSAVE is non-nil, the package is not removed from
            (add-hook 'post-command-hook #'package-menu--post-refresh)
            (delete-directory dir t)
            ;; Remove NAME-VERSION.signed and NAME-readme.txt files.
+           ;;
+           ;; NAME-readme.txt files are no longer created, but they
+           ;; may be left around from an earlier install.
            (dolist (suffix '(".signed" "readme.txt"))
              (let* ((version (package-version-join (package-desc-version pkg-desc)))
                     (file (concat (if (string= suffix ".signed")
@@ -2232,6 +2235,45 @@ Otherwise no newline is inserted."
     (insert "\n")))
 
 (declare-function lm-commentary "lisp-mnt" (&optional file))
+
+(defun package--get-description (desc)
+  "Return a string containing the long description of the package DESC.
+The description is read from the installed package files."
+  ;; Installed packages have nil for kind, so we look for README
+  ;; first, then fall back to the Commentary header.
+
+  ;; We don’t include README.md here, because that is often the home
+  ;; page on a site like github, and not suitable as the package long
+  ;; description.
+  (let ((files '("README-elpa" "README-elpa.md" "README" "README.rst" "README.org"))
+        file
+        (srcdir (package-desc-dir desc))
+        result)
+    (while (and files
+                (not result))
+      (setq file (pop files))
+      (when (file-readable-p (expand-file-name file srcdir))
+        ;; Found a README.
+        (with-temp-buffer
+          (insert-file-contents (expand-file-name file srcdir))
+          (setq result (buffer-string)))))
+
+    (or
+     result
+
+     ;; Look for Commentary header.
+     (let ((mainsrcfile (expand-file-name (format "%s.el" (package-desc-name desc))
+                                          srcdir)))
+       (when (file-readable-p mainsrcfile)
+         (with-temp-buffer
+           (insert (or (lm-commentary mainsrcfile) ""))
+           (goto-char (point-min))
+           (when (re-search-forward "^;;; Commentary:\n" nil t)
+             (replace-match ""))
+           (while (re-search-forward "^\\(;+ ?\\)" nil t)
+             (replace-match ""))
+           (buffer-string))))
+     )))
 
 (defun describe-package-1 (pkg)
   (require 'lisp-mnt)
@@ -2406,7 +2448,8 @@ Otherwise no newline is inserted."
     (insert "\n")
 
     (if built-in
-        ;; For built-in packages, insert the commentary.
+        ;; For built-in packages, get the description from the
+        ;; Commentary header.
         (let ((fn (locate-file (format "%s.el" name) load-path
                                load-file-rep-suffixes))
               (opoint (point)))
@@ -2417,27 +2460,25 @@ Otherwise no newline is inserted."
               (replace-match ""))
             (while (re-search-forward "^\\(;+ ?\\)" nil t)
               (replace-match ""))))
-      (let* ((basename (format "%s-readme.txt" name))
-             (readme (expand-file-name basename package-user-dir))
-             readme-string)
-        ;; For elpa packages, try downloading the commentary.  If that
-        ;; fails, try an existing readme file in `package-user-dir'.
-        (cond ((and (package-desc-archive desc)
-                    (package--with-response-buffer (package-archive-base desc)
-                      :file basename :noerror t
-                      (save-excursion
-                        (goto-char (point-max))
-                        (unless (bolp)
-                          (insert ?\n)))
-                      (write-region nil nil
-                                    (expand-file-name readme package-user-dir)
-                                    nil 'silent)
-                      (setq readme-string (buffer-string))
-                      t))
-               (insert readme-string))
-              ((file-readable-p readme)
-               (insert-file-contents readme)
-               (goto-char (point-max))))))))
+
+      (if (package-installed-p desc)
+          ;; For installed packages, get the description from the installed files.
+          (insert (package--get-description desc))
+
+        ;; For non-built-in, non-installed packages, get description from the archive.
+        (let* ((basename (format "%s-readme.txt" name))
+               readme-string)
+
+          (package--with-response-buffer (package-archive-base desc)
+            :file basename :noerror t
+            (save-excursion
+              (goto-char (point-max))
+              (unless (bolp)
+                (insert ?\n)))
+            (setq readme-string (buffer-string))
+            t)
+          (insert readme-string))
+        ))))
 
 (defun package-install-button-action (button)
   (let ((pkg-desc (button-get button 'package-desc)))
