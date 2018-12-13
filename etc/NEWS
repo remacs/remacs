@@ -30,6 +30,10 @@ arranges for the included mini-gmp library to be built and used.
 The new 'configure' option '--without-libgmp' uses mini-gmp even if a
 suitable libgmp is available.
 
+** The new configure option '--with-harfbuzz' adds support for the
+HarfBuzz text shaping engine.  It is on by default; use './configure
+--without-harfbuzz' to build without it.
+
 ** The new configure option '--with-json' adds support for JSON using
 the Jansson library.  It is on by default; use './configure
 --with-json=no' to build without Jansson support.  The new JSON

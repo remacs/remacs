@@ -358,7 +358,7 @@ OPTION_DEFAULT_ON([imagemagick],[don't compile with ImageMagick image support])
 OPTION_DEFAULT_ON([json], [don't compile with native JSON support])
 
 OPTION_DEFAULT_ON([xft],[don't use XFT for anti aliased fonts])
-OPTION_DEFAULT_OFF([harfbuzz],[use HarfBuzz for text shaping (experimental)])
+OPTION_DEFAULT_ON([harfbuzz],[don't use HarfBuzz for text shaping])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
 OPTION_DEFAULT_ON([m17n-flt],[don't use m17n-flt for text shaping])
 
