@@ -1058,6 +1058,18 @@ pub fn scroll_down(arg: LispObject) {
     unsafe { scroll_command(arg, -1) };
 }
 
+/// Return new normal size of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The new normal size of WINDOW is the value set by the last call of
+/// `set-window-new-normal' for WINDOW.  If valid, it will be shortly
+/// installed as WINDOW's normal size (see `window-normal-size').
+#[lisp_fn(min = "0")]
+pub fn window_new_normal(window: LispWindowValidOrSelected) -> LispObject {
+    let win: LispWindowRef = window.into();
+    win.new_normal
+}
+
 /// Return the new total size of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 ///

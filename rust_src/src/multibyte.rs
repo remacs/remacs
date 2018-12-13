@@ -41,8 +41,8 @@ use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::Qstringp,
-    remacs_sys::{char_bits, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
-    remacs_sys::{emacs_abort, empty_unibyte_string},
+    remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
+    remacs_sys::{compare_string_intervals, empty_unibyte_string},
 };
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
@@ -165,6 +165,20 @@ impl LispStringRef {
 
     pub fn set_byte(&mut self, idx: ptrdiff_t, elt: c_uchar) {
         unsafe { ptr::write(self.data_ptr().offset(idx), elt) };
+    }
+
+    pub fn equal(
+        self,
+        other: LispStringRef,
+        kind: equal_kind::Type,
+        _depth: i32,
+        _ht: LispObject,
+    ) -> bool {
+        self.len_chars() == other.len_chars()
+            && self.len_bytes() == other.len_bytes()
+            && self.as_slice() == other.as_slice()
+            && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
+                || unsafe { compare_string_intervals(self.into(), other.into()) })
     }
 }
 
@@ -576,7 +590,7 @@ pub unsafe extern "C" fn multibyte_chars_in_text(
     let mut chars = 0;
     // TODO: make this an iterator?
     while idx < len {
-        idx += multibyte_length(&slice[idx..], true).unwrap_or_else(|| emacs_abort());
+        idx += multibyte_length(&slice[idx..], true).unwrap_or_else(|| panic!());
         chars += 1;
     }
     chars as ptrdiff_t

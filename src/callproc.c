@@ -89,7 +89,6 @@ enum
     CALLPROC_FDS
   };
 
-static Lisp_Object call_process (ptrdiff_t, Lisp_Object *, int, ptrdiff_t);
 
 /* Return the current buffer's working directory, or the home
    directory if it's unreachable, as a string suitable for a system call.
@@ -202,60 +201,6 @@ static mode_t const default_output_mode = S_IREAD | S_IWRITE;
 static mode_t const default_output_mode = 0666;
 #endif
 
-DEFUN ("call-process", Fcall_process, Scall_process, 1, MANY, 0,
-       doc: /* Call PROGRAM synchronously in separate process.
-The remaining arguments are optional.
-The program's input comes from file INFILE (nil means `/dev/null').
-Insert output in DESTINATION before point; t means current buffer; nil for DESTINATION
- means discard it; 0 means discard and don't wait; and `(:file FILE)', where
- FILE is a file name string, means that it should be written to that file
- (if the file already exists it is overwritten).
-DESTINATION can also have the form (REAL-BUFFER STDERR-FILE); in that case,
-REAL-BUFFER says what to do with standard output, as above,
-while STDERR-FILE says what to do with standard error in the child.
-STDERR-FILE may be nil (discard standard error output),
-t (mix it with ordinary output), or a file name string.
-
-Fourth arg DISPLAY non-nil means redisplay buffer as output is inserted.
-Remaining arguments are strings passed as command arguments to PROGRAM.
-
-If executable PROGRAM can't be found as an executable, `call-process'
-signals a Lisp error.  `call-process' reports errors in execution of
-the program only through its return and output.
-
-If DESTINATION is 0, `call-process' returns immediately with value nil.
-Otherwise it waits for PROGRAM to terminate
-and returns a numeric exit status or a signal description string.
-If you quit, the process is killed with SIGINT, or SIGKILL if you quit again.
-
-The process runs in `default-directory' if that is local (as
-determined by `unhandled-file-name-directory'), or "~" otherwise.  If
-you want to run a process in a remote directory use `process-file'.
-
-usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object infile, encoded_infile;
-  int filefd;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  if (nargs >= 2 && ! NILP (args[1]))
-    {
-      infile = Fexpand_file_name (args[1], BVAR (current_buffer, directory));
-      CHECK_STRING (infile);
-    }
-  else
-    infile = build_string (NULL_DEVICE);
-
-  encoded_infile = ENCODE_FILE (infile);
-
-  filefd = emacs_open (SSDATA (encoded_infile), O_RDONLY, 0);
-  if (filefd < 0)
-    report_file_error ("Opening process input file", infile);
-  record_unwind_protect_int (close_file_unwind, filefd);
-  return unbind_to (count, call_process (nargs, args, filefd, -1));
-}
-
 /* Like Fcall_process (NARGS, ARGS), except use FILEFD as the input file.
 
    If TEMPFILE_INDEX is nonnegative, it is the specpdl index of an
@@ -264,7 +209,7 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
 
    At entry, the specpdl stack top entry must be close_file_unwind (FILEFD).  */
 
-static Lisp_Object
+Lisp_Object
 call_process (ptrdiff_t nargs, Lisp_Object *args, int filefd,
 	      ptrdiff_t tempfile_index)
 {
@@ -1607,7 +1552,6 @@ use.
 See `setenv' and `getenv'.  */);
   Vprocess_environment = Qnil;
 
-  defsubr (&Scall_process);
   defsubr (&Sgetenv_internal);
   defsubr (&Scall_process_region);
 }

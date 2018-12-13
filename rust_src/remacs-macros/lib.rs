@@ -117,6 +117,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         #[no_mangle]
         #[allow(clippy::not_unsafe_ptr_arg_deref)]
         #[allow(clippy::transmute_ptr_to_ptr)]
+        #[allow(clippy::diverging_sub_expression)]
         pub extern "C" fn #fname(#cargs) -> crate::lisp::LispObject {
             #body
 

@@ -395,35 +395,35 @@ the daily/weekly agenda, see `org-agenda-skip-function'.")
 				   (choice
 				    :tag "Condition type"
 				    (list :tag "Regexp matches" :inline t
-					  (const :format "" 'regexp)
+					  (const :format "" regexp)
 					  (regexp))
 				    (list :tag "Regexp does not match" :inline t
-					  (const :format "" 'notregexp)
+					  (const :format "" notregexp)
 					  (regexp))
 				    (list :tag "TODO state is" :inline t
-					  (const 'todo)
+					  (const todo)
 					  (choice
-					   (const :tag "Any not-done state" 'todo)
-					   (const :tag "Any done state" 'done)
-					   (const :tag "Any state" 'any)
+					   (const :tag "Any not-done state" todo)
+					   (const :tag "Any done state" done)
+					   (const :tag "Any state" any)
 					   (list :tag "Keyword list"
 						 (const :format "" quote)
 						 (repeat (string :tag "Keyword")))))
 				    (list :tag "TODO state is not" :inline t
-					  (const 'nottodo)
+					  (const nottodo)
 					  (choice
-					   (const :tag "Any not-done state" 'todo)
-					   (const :tag "Any done state" 'done)
-					   (const :tag "Any state" 'any)
+					   (const :tag "Any not-done state" todo)
+					   (const :tag "Any done state" done)
+					   (const :tag "Any state" any)
 					   (list :tag "Keyword list"
 						 (const :format "" quote)
 						 (repeat (string :tag "Keyword")))))
-				    (const :tag "scheduled" 'scheduled)
-				    (const :tag "not scheduled" 'notscheduled)
-				    (const :tag "deadline" 'deadline)
-				    (const :tag "no deadline" 'notdeadline)
-				    (const :tag "timestamp" 'timestamp)
-				    (const :tag "no timestamp" 'nottimestamp))))))
+				    (const :tag "scheduled" scheduled)
+				    (const :tag "not scheduled" notscheduled)
+				    (const :tag "deadline" deadline)
+				    (const :tag "no deadline" notdeadline)
+				    (const :tag "timestamp" timestamp)
+				    (const :tag "no timestamp" nottimestamp))))))
 		   (list :tag "Non-standard skipping condition"
 			 :value (org-agenda-skip-function)
 			 (const org-agenda-skip-function)
@@ -3563,7 +3563,7 @@ removed from the entry content.  Currently only `planning' is allowed here."
     txt))
 
 (defun org-check-for-org-mode ()
-  "Make sure current buffer is in org-mode.  Error if not."
+  "Make sure current buffer is in Org mode.  Error if not."
   (or (derived-mode-p 'org-mode)
       (error "Cannot execute Org agenda command on buffer in %s"
 	     major-mode)))
@@ -4509,7 +4509,7 @@ is active."
 	  (with-current-buffer buffer
 	    (with-syntax-table (org-search-syntax-table)
 	      (unless (derived-mode-p 'org-mode)
-		(error "Agenda file %s is not in `org-mode'" file))
+		(error "Agenda file %s is not in Org mode" file))
 	      (let ((case-fold-search t))
 		(save-excursion
 		  (save-restriction
@@ -4774,7 +4774,7 @@ The prefix arg TODO-ONLY limits the search to TODO entries."
 		    rtnall (append rtnall rtn))
 	    (with-current-buffer buffer
 	      (unless (derived-mode-p 'org-mode)
-		(error "Agenda file %s is not in `org-mode'" file))
+		(error "Agenda file %s is not in Org mode" file))
 	      (save-excursion
 		(save-restriction
 		  (if (eq buffer org-agenda-restrict)
@@ -5067,9 +5067,9 @@ of what a project is and how to check if it stuck, customize the variable
 
 (defun org-agenda-cleanup-fancy-diary ()
   "Remove unwanted stuff in buffer created by `fancy-diary-display'.
-This gets rid of the date, the underline under the date, and
-the dummy entry installed by `org-mode' to ensure non-empty diary for each
-date.  It also removes lines that contain only whitespace."
+This gets rid of the date, the underline under the date, and the
+dummy entry installed by Org mode to ensure non-empty diary for
+each date.  It also removes lines that contain only whitespace."
   (goto-char (point-min))
   (if (looking-at ".*?:[ \t]*")
       (progn
@@ -5214,7 +5214,7 @@ the documentation of `org-diary'."
 	(list (format "ORG-AGENDA-ERROR: No such org-file %s" file))
       (with-current-buffer buffer
 	(unless (derived-mode-p 'org-mode)
-	  (error "Agenda file %s is not in `org-mode'" file))
+	  (error "Agenda file %s is not in Org mode" file))
 	(setq org-agenda-buffer (or org-agenda-buffer buffer))
 	(setf org-agenda-current-date date)
 	(save-excursion

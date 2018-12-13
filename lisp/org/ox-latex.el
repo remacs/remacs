@@ -2180,19 +2180,16 @@ contextual information."
 			 (nth (1- level) '("i" "ii" "iii" "iv"))
 			 (1- count)))))
 	 (checkbox (cl-case (org-element-property :checkbox item)
-		     (on "$\\boxtimes$ ")
-		     (off "$\\square$ ")
-		     (trans "$\\boxminus$ ")))
+		     (on "$\\boxtimes$")
+		     (off "$\\square$")
+		     (trans "$\\boxminus$")))
 	 (tag (let ((tag (org-element-property :tag item)))
-		;; Check-boxes must belong to the tag.
-		(and tag (format "[{%s}] "
-				 (concat checkbox
-					 (org-export-data tag info)))))))
+		(and tag (org-export-data tag info)))))
     (concat counter
 	    "\\item"
 	    (cond
-	     (tag)
-	     (checkbox (concat " " checkbox))
+	     ((and checkbox tag) (format "[{%s %s}] " checkbox tag))
+	     ((or checkbox tag) (format "[{%s}] " (or checkbox tag)))
 	     ;; Without a tag or a check-box, if CONTENTS starts with
 	     ;; an opening square bracket, add "\relax" to "\item",
 	     ;; unless the brackets comes from an initial export

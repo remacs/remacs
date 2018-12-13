@@ -183,6 +183,10 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
 ;; History of Git commands.
 (defvar vc-git-history nil)
 
+;; Clear up the cache to force vc-call to check again and discover
+;; new functions when we reload this file.
+(put 'Git 'vc-functions nil)
+
 ;;; BACKEND PROPERTIES
 
 (defun vc-git-revision-granularity () 'repository)
@@ -995,7 +999,7 @@ This prompts for a branch to merge from."
 (autoload 'vc-setup-buffer "vc-dispatcher")
 
 (defcustom vc-git-print-log-follow nil
-  "If true, follow renames in Git logs for files."
+  "If true, follow renames in Git logs for a single file."
   :type 'boolean
   :version "26.1")
 
@@ -1020,8 +1024,10 @@ If LIMIT is non-nil, show no more than this many entries."
 	       (append
 		'("log" "--no-color")
                 (when (and vc-git-print-log-follow
-                           (not (cl-some #'file-directory-p files)))
-                  ;; "--follow" on directories is broken
+                           (null (cdr files))
+                           (car files)
+                           (not (file-directory-p (car files))))
+                  ;; "--follow" on directories or multiple files is broken
                   ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=8756
                   ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=16422
                   (list "--follow"))

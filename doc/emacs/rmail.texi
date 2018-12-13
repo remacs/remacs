@@ -175,6 +175,7 @@ Move to the next message containing a match for @var{regexp}
 
 @item - M-s @var{regexp} @key{RET}
 Move to the previous message containing a match for @var{regexp}.
+(This is @kbd{M-s} with a negative argument.)
 @end table
 
 @kindex n @r{(Rmail)}

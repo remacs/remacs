@@ -31,6 +31,7 @@
 SHELL = @SHELL@
 
 srcdir = @srcdir@
+abs_top_srcdir=@abs_top_srcdir@
 VPATH = $(srcdir)
 
 FIND_DELETE = @FIND_DELETE@
@@ -119,14 +120,15 @@ emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
  EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
  $(GDB) "$(EMACS)" $(MODULES_EMACSOPT) $(EMACSOPT)
 
-test_module_dir := $(srcdir)/data/emacs-module
+test_module_dir := data/emacs-module
 
 .PHONY: all check
 
 all: check
 
-SELECTOR_DEFAULT = (quote (not (tag :expensive-test)))
-SELECTOR_EXPENSIVE = nil
+SELECTOR_DEFAULT = (quote (not (or (tag :expensive-test) (tag :unstable))))
+SELECTOR_EXPENSIVE = (quote (not (tag :unstable)))
+SELECTOR_ALL = nil
 ifdef SELECTOR
 SELECTOR_ACTUAL=$(SELECTOR)
 else ifndef MAKECMDGOALS
@@ -225,12 +227,13 @@ else
 FPIC_CFLAGS = -fPIC
 endif
 
-MODULE_CFLAGS = -I$(srcdir)/../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
+MODULE_CFLAGS = -I../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
   $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
 
 test_module = $(test_module_dir)/mod-test${SO}
 src/emacs-module-tests.log: $(test_module)
 $(test_module): $(test_module:${SO}=.c) $(srcdir)/../src/emacs-module.h
+	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
 	  -o $@ $<
 endif
@@ -250,6 +253,11 @@ check: mostlyclean check-no-automated-subdir
 .PHONY: check-expensive
 check-expensive: mostlyclean check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_EXPENSIVE}"
+
+## Run all tests, regardless of tag.
+.PHONY: check-all
+check-all: mostlyclean check-no-automated-subdir
+	@${MAKE} check-doit SELECTOR="${SELECTOR_ALL}"
 
 ## Re-run all tests which are outdated. A test is outdated if its
 ## logfile is out-of-date with either the test file, or the source

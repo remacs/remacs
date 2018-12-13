@@ -91,7 +91,7 @@ invoked by clicking with the left mouse button, @kbd{mouse-1}, in the
 text area of a window.  This moves point to the position where you
 clicked.  If that window was not the selected window, it becomes the
 selected window.  You can also activate a region by double-clicking
-mouse-1 (@pxref{Word and Line Mouse}).
+@kbd{mouse-1} (@pxref{Word and Line Mouse}).
 
 @vindex x-mouse-click-focus-ignore-position
   Normally, if the frame you clicked in was not the selected frame, it
@@ -241,13 +241,13 @@ this to move point to the beginning of the region, scrolling the
 display backward if necessary.
 
 @item Double-Drag-mouse-1
-Select the text you drag across, in the form of whole words.
+Select the text you drag across, in units of whole words.
 
 @item Triple-mouse-1
 Select the line you click on.
 
 @item Triple-Drag-mouse-1
-Select the text you drag across, in the form of whole lines.
+Select the text you drag across, in units of whole lines.
 @end table
 
 @node Mouse References
@@ -305,7 +305,7 @@ button.
 @node Menu Mouse Clicks
 @section Mouse Clicks for Menus
 
-  Several mouse clicks with the @key{CTRL} and @key{SHIFT} modifiers
+  Several mouse clicks with the @key{Ctrl} and @key{SHIFT} modifiers
 bring up menus.
 
 @table @kbd
@@ -402,10 +402,11 @@ boundary to the left or right.
   The prefix key @kbd{C-x 5} is analogous to @kbd{C-x 4}.  Whereas
 each @kbd{C-x 4} command pops up a buffer in a different window in the
 selected frame (@pxref{Pop Up Window}), the @kbd{C-x 5} commands use a
-different frame.  If an existing visible or iconified (a.k.a.@: ``minimized'')
-frame already displays the requested buffer, that frame is raised and
-deiconified (``un-minimized''); otherwise, a new frame is created on
-the current display terminal.
+different frame.  If an existing visible or iconified (a.k.a.@:
+``minimized'', @pxref{Visibility of Frames,,, elisp, The Emacs Lisp
+Reference Manual}) frame already displays the requested buffer, that
+frame is raised and deiconified (``un-minimized''); otherwise, a new
+frame is created on the current display terminal.
 
   The various @kbd{C-x 5} commands differ in how they find or create the
 buffer to select:
@@ -635,7 +636,7 @@ Monospace-12:weight=bold:slant=italic
 
 For a more detailed description of Fontconfig patterns, see the
 Fontconfig manual, which is distributed with Fontconfig and available
-online at @url{http://fontconfig.org/fontconfig-user.html}.
+online at @url{https://fontconfig.org/fontconfig-user.html}.
 
 @cindex GTK font pattern
   The second way to specify a font is to use a @dfn{GTK font pattern}.
@@ -942,11 +943,13 @@ that.
 
   On graphical displays, there is a @dfn{vertical scroll bar} on the
 side of each Emacs window.  Clicking @kbd{mouse-1} on the scroll bar's
-up and down buttons scrolls the window by one line at a time.  Clicking
-@kbd{mouse-1} above or below the scroll bar's inner box scrolls the
-window by nearly the entire height of the window, like @kbd{M-v} and
-@kbd{C-v} respectively (@pxref{Moving Point}).  Dragging the inner box
-scrolls continuously.
+up and down buttons scrolls the window by one line at a time (but some
+toolkits allow you to customize the scroll bars to not have those
+buttons).  Clicking @kbd{mouse-1} above or below the scroll bar's
+inner box scrolls the window by nearly the entire height of the
+window, like @kbd{M-v} and @kbd{C-v} respectively (@pxref{Moving
+Point}).  (This, too, can behave differently with some toolkits.)
+Dragging the inner box scrolls continuously.
 
   If Emacs is compiled on the X Window System without X toolkit
 support, the scroll bar behaves differently.  Clicking @kbd{mouse-1}
@@ -967,7 +970,7 @@ variable @code{scroll-bar-mode}.  Its value should be either
 @code{right} (put scroll bars on the right side of windows), @code{left}
 (put them on the left), or @code{nil} (disable vertical scroll bars).
 By default, Emacs puts scroll bars on the right if it was compiled with
-GTK+ support on the X Window System, and on MS-Windows or Mac OS; Emacs
+GTK+ support on the X Window System, and on MS-Windows or macOS; Emacs
 puts scroll bars on the left if compiled on the X Window System without
 GTK+ support (following the old convention for X applications).
 
@@ -986,12 +989,14 @@ variable @code{scroll-bar-adjust-thumb-portion} to control
 when the end of the buffer is visible.  If its value is
 non-@code{nil}, the scroll bar can be dragged downwards even if the
 end of the buffer is shown; if @code{nil}, the thumb will be at the
-bottom when the end of the buffer is shown.  You can not over-scroll
+bottom when the end of the buffer is shown.  You cannot over-scroll
 when the entire buffer is visible.
 
 @cindex scroll-bar face
   The visual appearance of the scroll bars is controlled by the
-@code{scroll-bar} face.
+@code{scroll-bar} face.  (Some toolkits, such as GTK and MS-Windows,
+ignore this face; the scroll-bar appearance there can only be
+customized system-wide, for GTK @pxref{GTK resources}).
 
 @cindex vertical border
   On graphical frames, vertical scroll bars implicitly serve to separate
@@ -1011,10 +1016,12 @@ Manual}.
 @cindex Horizontal Scroll Bar mode
   On graphical displays with toolkit support, Emacs may also supply a
 @dfn{horizontal scroll bar} on the bottom of each window.  Clicking
-@kbd{mouse-1} on that scroll bar's left and right buttons scrolls
-the window horizontally by one column at a time.  Clicking @kbd{mouse-1}
-on the left or right of the scroll bar's inner box scrolls the window by
-four columns.  Dragging the inner box scrolls the window continuously.
+@kbd{mouse-1} on that scroll bar's left and right buttons scrolls the
+window horizontally by one column at a time.  (Note that some toolkits
+allow customizations of the scroll bar that cause these buttons not to
+be shown.)  Clicking @kbd{mouse-1} on the left or right of the scroll
+bar's inner box scrolls the window by four columns.  Dragging the
+inner box scrolls the window continuously.
 
   Note that such horizontal scrolling can make the window's position of
 point disappear on the left or the right.  Typing a character to insert
@@ -1066,7 +1073,7 @@ customize the options @code{window-divider-default-bottom-width} and
 @code{window-divider-default-right-width}.
 
   When vertical scroll bars are disabled, dividers can be also useful to
-make the first pixel column of a window visible which would be otherwise
+make the first pixel column of a window visible, which would be otherwise
 covered by the vertical border used to separate side-by-side windows
 (@pxref{Scroll Bars}).
 
@@ -1369,7 +1376,7 @@ can use @kbd{M-x xterm-mouse-mode} to give Emacs control over simple
 uses of the mouse---basically, only non-modified single clicks are
 supported.  Newer versions of @command{xterm} also support
 mouse-tracking.  The normal @command{xterm} mouse functionality for
-such clicks is still available by holding down the @kbd{SHIFT} key
+such clicks is still available by holding down the @key{SHIFT} key
 when you press the mouse button.  Xterm Mouse mode is a global minor
 mode (@pxref{Minor Modes}).  Repeating the command turns the mode off
 again.

@@ -1283,7 +1283,7 @@ connection if a previous connection has died for some reason."
 	    (tramp-adb-wait-for-output p 30)
 	    (unless (process-live-p p)
 	      (tramp-error  vec 'file-error "Terminated!"))
-	    (tramp-set-connection-property p "vector" vec)
+	    (process-put p 'vector vec)
 	    (process-put p 'adjust-window-size-function 'ignore)
 	    (set-process-query-on-exit-flag p nil)
 

@@ -283,3 +283,39 @@ macro_rules! per_buffer_var_idx {
         (unsafe { crate::remacs_sys::buffer_local_flags.$field }).as_natnum_or_error() as usize
     };
 }
+
+// Creates a Lisp_String from $string on the stack and a LispObject
+// pointing the Lisp_String. Assigns the LispObject to $name. See
+// `generate-new-buffer-name` for sample usage.
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! local_unibyte_string {
+    ($name: ident, $string: expr) => {
+        let bytes = unsafe { ($string).as_mut_str().as_bytes_mut() };
+        let len = bytes.len() as ::libc::ptrdiff_t;
+        let mut obj = crate::remacs_sys::Lisp_String {
+            u: crate::remacs_sys::Lisp_String__bindgen_ty_1 {
+                s: crate::remacs_sys::Lisp_String__bindgen_ty_1__bindgen_ty_1 {
+                    size: len,
+                    size_byte: -1,
+                    intervals: ::std::ptr::null_mut(),
+                    data: bytes.as_mut_ptr() as *mut u8,
+                },
+            },
+        };
+        let $name = crate::lisp::ExternalPtr::new(&mut obj as *mut crate::remacs_sys::Lisp_String)
+            .as_lisp_obj();
+    };
+}
+
+#[test]
+pub fn test_local_unibyte_string() {
+    let mut s = String::from("abc");
+    local_unibyte_string!(a, s);
+    assert_eq!(a.as_string_or_error().byte_at(0), b'a');
+    assert_eq!(a.as_string_or_error().len_chars(), 3);
+    s = String::from("defg");
+    local_unibyte_string!(a, s);
+    assert_eq!(a.as_string_or_error().byte_at(0), b'd');
+    assert_eq!(a.as_string_or_error().len_chars(), 4);
+}

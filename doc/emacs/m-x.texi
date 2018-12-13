@@ -56,7 +56,10 @@ of entering the command name.  This takes you back to command level.
   To pass a numeric argument to the command you are invoking with
 @kbd{M-x}, specify the numeric argument before @kbd{M-x}.  The
 argument value appears in the prompt while the command name is being
-read, and finally @kbd{M-x} passes the argument to that command.
+read, and finally @kbd{M-x} passes the argument to that command.  For
+example, to pass the numeric argument of 42 to the command
+@code{forward-char} you can type @kbd{C-u 42 M-x forward-char
+@key{RET}}.
 
 @vindex suggest-key-bindings
   When the command you run with @kbd{M-x} has a key binding, Emacs

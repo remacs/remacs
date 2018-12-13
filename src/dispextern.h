@@ -3411,15 +3411,6 @@ void gamma_correct (struct frame *, COLORREF *);
 void x_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
 void x_change_tool_bar_height (struct frame *f, int);
 
-/* The frame used to display a tooltip.
-
-   Note: In a GTK build with non-zero x_gtk_use_system_tooltips, this
-   variable holds the frame that shows the tooltip, not the frame of
-   the tooltip itself, so checking whether a frame is a tooltip frame
-   cannot just compare the frame to what this variable holds.  */
-extern Lisp_Object tip_frame;
-
-extern Window tip_window;
 extern frame_parm_handler x_frame_parm_handlers[];
 
 extern void start_hourglass (void);
@@ -3468,7 +3459,6 @@ extern Lisp_Object marginal_area_string (struct window *, enum window_part,
 extern void redraw_frame (struct frame *);
 extern bool update_frame (struct frame *, bool, bool);
 extern void update_frame_with_menu (struct frame *, int, int);
-extern void bitch_at_user (void);
 extern void adjust_frame_glyphs (struct frame *);
 void free_glyphs (struct frame *);
 void free_window_matrices (struct window *);

@@ -135,10 +135,11 @@ detailed description of these mouse commands.
 typing certain cursor motion commands (such as @kbd{S-@key{RIGHT}},
 @kbd{S-C-f}, @kbd{S-C-n}, etc.).  This is called @dfn{shift-selection}.
 It sets the mark at point before moving point, but only if there is no
-active mark set via shift-selection.  The mark set by mouse commands
-and by shift-selection behaves slightly differently from the usual
-mark: any subsequent unshifted cursor motion command deactivates it
-automatically.  For details, see @ref{Shift Selection}.
+active mark set via a previous shift-selection or mouse commands.  The
+mark set by mouse commands and by shift-selection behaves slightly
+differently from the usual mark: any subsequent unshifted cursor motion
+command deactivates it automatically.  For details, see @ref{Shift
+Selection}.
 
   Many commands that insert text, such as @kbd{C-y} (@code{yank}), set
 the mark at the other end of the inserted text, without activating it.
@@ -161,7 +162,7 @@ object such as a word, list, paragraph or page:
 
 @table @kbd
 @item M-@@
-Set mark after end of next word (@code{mark-word}).  This does not
+Set mark at the end of the next word (@code{mark-word}).  This does not
 move point.
 @item C-M-@@
 Set mark after end of following balanced expression
@@ -259,7 +260,7 @@ change the variable @code{use-empty-active-region} to @code{t}.
 
 @vindex delete-active-region
   As described in @ref{Erasing}, the @key{DEL}
-(@code{backward-delete-char}) and @key{delete}
+(@code{backward-delete-char}) and @key{Delete}
 (@code{delete-forward-char}) commands also act this way.  If the mark
 is active, they delete the text in the region.  (As an exception, if
 you supply a numeric argument @var{n}, where @var{n} is not one, these
@@ -272,7 +273,7 @@ active.  If you change the value to @code{kill}, these commands
 @vindex mark-even-if-inactive
   Other commands always operate on the region, and have no default
 behavior.  Such commands usually have the word @code{region} in their
-names, like @kbd{C-w} (@code{kill-region}) and @code{C-x C-u}
+names, like @kbd{C-w} (@code{kill-region}) and @kbd{C-x C-u}
 (@code{upcase-region}).  If the mark is inactive, they operate on the
 @dfn{inactive region}---that is, on the text between point and the
 position at which the mark was last set (@pxref{Mark Ring}).  To

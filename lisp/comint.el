@@ -1434,24 +1434,32 @@ If nil, Isearch operates on the whole comint buffer."
 (defun comint-history-isearch-backward ()
   "Search for a string backward in input history using Isearch."
   (interactive)
-  (let ((comint-history-isearch t))
-    (isearch-backward nil t)))
+  (setq comint-history-isearch t)
+  (isearch-backward nil t))
 
 (defun comint-history-isearch-backward-regexp ()
   "Search for a regular expression backward in input history using Isearch."
   (interactive)
-  (let ((comint-history-isearch t))
-    (isearch-backward-regexp nil t)))
+  (setq comint-history-isearch t)
+  (isearch-backward-regexp nil t))
 
 (defvar-local comint-history-isearch-message-overlay nil)
 
 (defun comint-history-isearch-setup ()
   "Set up a comint for using Isearch to search the input history.
 Intended to be added to `isearch-mode-hook' in `comint-mode'."
-  (when (or (eq comint-history-isearch t)
-	    (and (eq comint-history-isearch 'dwim)
-		 ;; Point is at command line.
-		 (comint-after-pmark-p)))
+  (when (and
+         ;; Prompt is not empty like in Async Shell Command buffers
+         ;; or in finished shell buffers
+         (not (eq (save-excursion
+		    (goto-char (comint-line-beginning-position))
+		    (forward-line 0)
+		    (point))
+		  (comint-line-beginning-position)))
+	 (or (eq comint-history-isearch t)
+	     (and (eq comint-history-isearch 'dwim)
+		  ;; Point is at command line.
+		  (comint-after-pmark-p))))
     (setq isearch-message-prefix-add "history ")
     (setq-local isearch-search-fun-function
                 #'comint-history-isearch-search)
@@ -1472,7 +1480,9 @@ Intended to be added to `isearch-mode-hook' in `comint-mode'."
   (setq isearch-message-function nil)
   (setq isearch-wrap-function nil)
   (setq isearch-push-state-function nil)
-  (remove-hook 'isearch-mode-end-hook 'comint-history-isearch-end t))
+  (remove-hook 'isearch-mode-end-hook 'comint-history-isearch-end t)
+  (unless isearch-suspended
+    (custom-reevaluate-setting 'comint-history-isearch)))
 
 (defun comint-goto-input (pos)
   "Put input history item of the absolute history position POS."
@@ -2279,8 +2289,10 @@ If this takes us past the end of the current line, don't skip at all."
 
 (defun comint-after-pmark-p ()
   "Return t if point is after the process output marker."
-  (let ((pmark (process-mark (get-buffer-process (current-buffer)))))
-    (<= (marker-position pmark) (point))))
+  (let ((process (get-buffer-process (current-buffer))))
+    (when process
+      (let ((pmark (process-mark process)))
+        (<= (marker-position pmark) (point))))))
 
 (defun comint-simple-send (proc string)
   "Default function for sending to PROC input STRING.
@@ -2477,9 +2489,7 @@ Sets mark to the value of point when this command is run."
     (comint-truncate-buffer)))
 
 (defun comint-interrupt-subjob ()
-  "Interrupt the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Interrupt the current subjob."
   (interactive)
   (comint-skip-input)
   (interrupt-process nil comint-ptyp)
@@ -2487,25 +2497,19 @@ between the process mark and point."
   )
 
 (defun comint-kill-subjob ()
-  "Send kill signal to the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Send kill signal to the current subjob."
   (interactive)
   (comint-skip-input)
   (kill-process nil comint-ptyp))
 
 (defun comint-quit-subjob ()
-  "Send quit signal to the current subjob.
-This command also kills the pending input
-between the process mark and point."
+  "Send quit signal to the current subjob."
   (interactive)
   (comint-skip-input)
   (quit-process nil comint-ptyp))
 
 (defun comint-stop-subjob ()
   "Stop the current subjob.
-This command also kills the pending input
-between the process mark and point.
 
 WARNING: if there is no current subjob, you can end up suspending
 the top-level process running in the buffer.  If you accidentally do

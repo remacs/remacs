@@ -704,7 +704,6 @@ fn run_bindgen() {
                 .blacklist_item("emacs_abort")
                 .blacklist_item("Fsignal")
                 .blacklist_item("memory_full")
-                .blacklist_item("bitch_at_user")
                 .blacklist_item("wrong_choice")
                 .blacklist_item("wrong_range")
                 // these are defined in data.rs

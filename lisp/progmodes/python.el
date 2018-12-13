@@ -4,7 +4,7 @@
 
 ;; Author: Fabián E. Gallina <fgallina@gnu.org>
 ;; URL: https://github.com/fgallina/python.el
-;; Version: 0.25.2
+;; Version: 0.26
 ;; Package-Requires: ((emacs "24.1") (cl-lib "1.0"))
 ;; Maintainer: emacs-devel@gnu.org
 ;; Created: Jul 2010
@@ -752,6 +752,12 @@ It makes underscores and dots word constituent chars.")
   :type '(repeat symbol)
   :group 'python)
 
+(defcustom python-indent-def-block-scale 2
+  "Multiplier applied to indentation inside multi-line def blocks."
+  :version "26.1"
+  :type 'integer
+  :safe 'natnump)
+
 (defvar python-indent-current-level 0
   "Deprecated var available for compatibility.")
 
@@ -1071,9 +1077,9 @@ possibilities can be narrowed to specific indentation points."
                          (current-indentation)))
                      opening-block-start-points))))
         (`(,(or :inside-paren-newline-start-from-block) . ,start)
-         ;; Add two indentation levels to make the suite stand out.
          (goto-char start)
-         (+ (current-indentation) (* python-indent-offset 2))))))
+         (+ (current-indentation)
+            (* python-indent-offset python-indent-def-block-scale))))))
 
 (defun python-indent--calculate-levels (indentation)
   "Calculate levels list given INDENTATION.
@@ -1468,7 +1474,7 @@ nested definitions."
 (defun python-nav-beginning-of-statement ()
   "Move to start of current statement."
   (interactive "^")
-  (back-to-indentation)
+  (forward-line 0)
   (let* ((ppss (syntax-ppss))
          (context-point
           (or
@@ -1483,6 +1489,7 @@ nested definitions."
              (python-info-line-ends-backslash-p))
            (forward-line -1)
            (python-nav-beginning-of-statement))))
+  (back-to-indentation)
   (point-marker))
 
 (defun python-nav-end-of-statement (&optional noend)

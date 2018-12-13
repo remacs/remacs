@@ -5123,14 +5123,21 @@ these functions, and neither do certain internal buffer changes, such
 as changes in buffers created by Emacs internally for certain jobs,
 that should not be visible to Lisp programs.
 
-  Do @emph{not} expect the before-change hooks and the after-change
-hooks be called in balanced pairs around each buffer change.  Also
-don't expect the before-change hooks to be called for every chunk of
-text Emacs is about to delete.  These hooks are provided on the
-assumption that Lisp programs will use either before- or the
-after-change hooks, but not both, and the boundaries of the region
-where the changes happen might include more than just the actual
-changed text, or even lump together several changes done piecemeal.
+The vast majority of buffer changing primitives will call
+@code{before-change-functions} and @code{after-change-functions} in
+balanced pairs, once for each change, where the arguments to these
+hooks exactly delimit the change being made.  Yet, hook functions
+should not rely on this always being the case, because some complex
+primitives call @code{before-change-functions} once before making
+changes, and then call @code{after-change-functions} zero or more
+times, depending on how many individual changes the primitive is
+making.  When that happens, the arguments to
+@code{before-change-functions} will enclose a region in which the
+individual changes are made, but won't necessarily be the minimal such
+region, and the arguments to each successive call of
+@code{after-change-functions} will then delimit the part of text being
+changed exactly.  In general, we advise to use either before- or the
+after-change hooks, but not both.
 
 @defmac combine-after-change-calls body@dots{}
 The macro executes @var{body} normally, but arranges to call the

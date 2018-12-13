@@ -499,6 +499,7 @@ further value candidates, since that list would be infinite.")
     ("red" . "#ff0000")
     ("purple" . "#800080")
     ("fuchsia" . "#ff00ff")
+    ("magenta" . "#ff00ff")
     ("green" . "#008000")
     ("lime" . "#00ff00")
     ("olive" . "#808000")
@@ -507,6 +508,7 @@ further value candidates, since that list would be infinite.")
     ("blue" . "#0000ff")
     ("teal" . "#008080")
     ("aqua" . "#00ffff")
+    ("cyan" . "#00ffff")
     ("orange" . "#ffa500")
     ("aliceblue" . "#f0f8ff")
     ("antiquewhite" . "#faebd7")
@@ -954,11 +956,11 @@ the returned hex string."
       (let* ((is-percent (match-beginning 1))
 	     (str (match-string (if is-percent 1 2)))
 	     (number (string-to-number str)))
-	(when is-percent
-	  (setq number (* 255 (/ number 100.0))))
-        (if (and include-alpha (= iter 3))
-            (push (round (* number 255)) result)
-          (push (min (max 0 (truncate number)) 255) result))
+	(if is-percent
+	    (setq number (* 255 (/ number 100.0)))
+          (when (and include-alpha (= iter 3))
+            (setq number (* number 255))))
+        (push (min (max 0 (round number)) 255) result)
 	(goto-char (match-end 0))
 	(css--color-skip-blanks)
 	(cl-incf iter)
@@ -1215,7 +1217,8 @@ for determining whether point is within a selector."
   (pcase (cons kind token)
     (`(:elem . basic) css-indent-offset)
     (`(:elem . arg) 0)
-    (`(:list-intro . ,(or `";" `"")) t) ;"" stands for BOB (bug#15467).
+    ;; "" stands for BOB (bug#15467).
+    (`(:list-intro . ,(or `";" `"" `":-property")) t)
     (`(:before . "{")
      (when (or (smie-rule-hanging-p) (smie-rule-bolp))
        (smie-backward-sexp ";")
@@ -1412,6 +1415,15 @@ should not be mixed with those in color.el."
           (apply-partially #'make-list (if six-digits 2 4))
           (seq-partition (seq-drop hex 1) (if six-digits 2 1)))))))
 
+(defun css--format-hex (hex)
+  "Format a CSS hex color by shortening it if possible."
+  (let ((parts (seq-partition (seq-drop hex 1) 2)))
+    (if (and (>= (length hex) 6)
+             (seq-every-p (lambda (p) (eq (elt p 0) (elt p 1))) parts))
+        (apply #'string
+               (cons ?# (mapcar (lambda (p) (elt p 0)) parts)))
+      hex)))
+
 (defun css--named-color-to-hex ()
   "Convert named CSS color at point to hex format.
 Return non-nil if a conversion was made.
@@ -1425,7 +1437,7 @@ should not be mixed with those in color.el."
     (when (member (word-at-point) (mapcar #'car css--color-map))
       (looking-at css--colors-regexp)
       (let ((color (css--compute-color (point) (match-string 0))))
-        (replace-match color))
+        (replace-match (css--format-hex color)))
       t)))
 
 (defun css--format-rgba-alpha (alpha)
@@ -1457,7 +1469,7 @@ should not be mixed with those in color.el."
          (if-let* ((alpha (css--hex-alpha hex))
                    (a (css--format-rgba-alpha
                        (/ (string-to-number alpha 16)
-                          (float (expt 16 (length alpha)))))))
+                          (float (- (expt 16 (length alpha)) 1))))))
              (format "rgba(%d, %d, %d, %s)" r g b a)
            (format "rgb(%d, %d, %d)" r g b))
          t))
@@ -1489,7 +1501,9 @@ should not be mixed with those in color.el."
           (kill-sexp)
           (let ((named-color (seq-find (lambda (x) (equal (cdr x) color))
                                        css--color-map)))
-            (insert (if named-color (car named-color) color)))
+            (insert (if named-color
+                        (car named-color)
+                      (css--format-hex color))))
           t)))))
 
 (defun css-cycle-color-format ()

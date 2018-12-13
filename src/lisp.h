@@ -568,7 +568,10 @@ enum Lisp_Fwd_Type
    resources allocated for it that are not Lisp objects.  You can even
    make a pointer to the function that frees the resources a slot in
    your object -- this way, the same object could be used to represent
-   several disparate C structures.  */
+   several disparate C structures.
+
+   You also need to add the new type to the constant
+   `cl--typeof-types' in lisp/emacs-lisp/cl-preloaded.el.  */
 
 /* A Lisp_Object is a tagged pointer or integer.  Ordinarily it is a
    Lisp_Word.  However, if CHECK_LISP_OBJECT_TYPE, it is a wrapper
@@ -3521,6 +3524,8 @@ extern void syms_of_charset (void);
 struct charset;
 
 /* Defined in syntax.c.  */
+extern Lisp_Object skip_chars (bool, Lisp_Object, Lisp_Object, bool);
+extern Lisp_Object skip_syntaxes (bool, Lisp_Object, Lisp_Object);
 extern void init_syntax_once (void);
 extern void syms_of_syntax (void);
 
@@ -3632,6 +3637,9 @@ _Noreturn void __executable_start (void);
 #endif
 extern Lisp_Object Vwindow_system;
 extern Lisp_Object sit_for (Lisp_Object, bool, int);
+
+/* Defined in dispnew.rs.  */
+extern void ding_internal (bool);
 
 /* Defined in xdisp.c.  */
 extern bool noninteractive_need_newline;
@@ -4150,6 +4158,10 @@ extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
 
 /* Defined in fileio.c.  */
 
+extern bool check_executable (char *);
+extern bool check_existing (const char *);
+extern bool file_name_absolute_p (const char *);
+extern bool file_name_case_insensitive_p (const char *);
 extern Lisp_Object expand_and_dir_to_file (Lisp_Object);
 extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 				 Lisp_Object, Lisp_Object, Lisp_Object,
@@ -4162,7 +4174,7 @@ extern _Noreturn void report_file_error (const char *, Lisp_Object);
 extern _Noreturn void report_file_notify_error (const char *, Lisp_Object);
 extern bool internal_delete_file (Lisp_Object);
 extern Lisp_Object emacs_readlinkat (int, const char *);
-extern bool file_directory_p (const char *);
+extern bool file_directory_p (Lisp_Object);
 extern bool file_accessible_directory_p (Lisp_Object);
 extern void init_fileio (void);
 extern void syms_of_fileio (void);
@@ -4230,7 +4242,6 @@ extern void syms_of_callint (void);
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP};
 Lisp_Object casify_object (enum case_action flag, Lisp_Object obj);
 ptrdiff_t casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e);
-Lisp_Object casify_region_nil (enum case_action flag, Lisp_Object b, Lisp_Object e);
 extern void syms_of_casefiddle (void);
 extern void keys_of_casefiddle (void);
 
@@ -4242,6 +4253,7 @@ extern void syms_of_casetab (void);
 
 /* Defined in keyboard.c.  */
 
+extern void recursive_edit_unwind (Lisp_Object buffer);
 extern Lisp_Object echo_message_buffer;
 extern struct kboard *echo_kboard;
 extern void cancel_echoing (void);
@@ -4373,6 +4385,7 @@ extern void init_callproc_1 (void);
 extern void init_callproc (void);
 extern void set_initial_environment (void);
 extern void syms_of_callproc (void);
+extern Lisp_Object call_process (ptrdiff_t, Lisp_Object *, int, ptrdiff_t);
 
 /* Defined in doc.c.  */
 enum text_quoting_style
@@ -4525,6 +4538,11 @@ extern void syms_of_gfilenotify (void);
 #ifdef HAVE_W32NOTIFY
 /* Defined on w32notify.c.  */
 extern void syms_of_w32notify (void);
+#endif
+
+#if defined HAVE_NTGUI || defined CYGWIN
+/* Defined in w32cygwinx.c.  */
+extern void syms_of_w32cygwinx (void);
 #endif
 
 /* Defined in xfaces.c.  */
@@ -4888,7 +4906,8 @@ void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
 
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 extern bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
-extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind);
+extern bool internal_equal_misc (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 
 INLINE_HEADER_END
 

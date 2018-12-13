@@ -65,7 +65,7 @@ pub fn point() -> EmacsInt {
 /// `(with-current-buffer BUFFER (- (point-max) (point-min)))'.
 #[lisp_fn(min = "0")]
 pub fn buffer_size(buffer: LispBufferOrCurrent) -> EmacsInt {
-    let buffer_ref = buffer.unwrap();
+    let buffer_ref: LispBufferRef = buffer.into();
     (buffer_ref.z() - buffer_ref.beg()) as EmacsInt
 }
 
@@ -1147,7 +1147,7 @@ pub extern "C" fn save_excursion_save() -> LispObject {
 /// then just use `save-current-buffer', or even `with-current-buffer'.
 ///
 /// Before Emacs 25.1, `save-excursion' used to save the mark state.
-/// To save the marker state as well as the point and buffer, use
+/// To save the mark state as well as point and the current buffer, use
 /// `save-mark-and-excursion'.
 ///
 /// usage: (save-excursion &rest BODY)
