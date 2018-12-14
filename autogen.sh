@@ -158,8 +158,17 @@ check_rust_version ()
     rustup_active_version=$(rustup show | awk '/active toolchain/ {getline; getline; getline; print}')
     echo $rustup_active_version | grep $remacs_version >/dev/null && return 0
 
-    rustup_installed=$(rustup show | awk '/installed/{flag=1; next} /active/{flag=0} flag')
-    echo $rustup_installed | grep $remacs_version >/dev/null || return 1
+    if rustup show | grep -e "active\|installed toolchain" >/dev/null; then
+        rustup_installed=$(rustup show | awk '/installed/{flag=1; next} /active/{flag=0} flag')
+        echo $rustup_installed | grep $remacs_version >/dev/null || return 1
+    else
+        rustup_installed=$(rustup show | grep "overridden by")
+        if echo $rustup_installed | grep $remacs_version >/dev/null; then
+            return 0
+        else
+            return 1
+        fi
+    fi
 
     echo $rustup_active_version | grep 'directory override'  >/dev/null && return 2
 
