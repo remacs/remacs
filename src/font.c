@@ -4262,18 +4262,6 @@ If FRAME is omitted or nil, the selected frame is used.  */)
   return list;
 }
 
-DEFUN ("find-font", Ffind_font, Sfind_font, 1, 2, 0,
-       doc: /* Return a font-entity matching with FONT-SPEC on the current frame.
-Optional 2nd argument FRAME, if non-nil, specifies the target frame.  */)
-  (Lisp_Object font_spec, Lisp_Object frame)
-{
-  Lisp_Object val = Flist_fonts (font_spec, frame, make_number (1), Qnil);
-
-  if (CONSP (val))
-    val = XCAR (val);
-  return val;
-}
-
 DEFUN ("font-xlfd-name", Ffont_xlfd_name, Sfont_xlfd_name, 1, 2, 0,
        doc: /*  Return XLFD name of FONT.
 FONT is a font-spec, font-entity, or font-object.
@@ -5339,7 +5327,6 @@ syms_of_font (void)
   defsubr (&Sfont_put);
   defsubr (&Slist_fonts);
   defsubr (&Sfont_family_list);
-  defsubr (&Sfind_font);
   defsubr (&Sfont_xlfd_name);
   defsubr (&Sclear_font_cache);
   defsubr (&Sfont_shape_gstring);

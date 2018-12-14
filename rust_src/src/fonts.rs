@@ -7,8 +7,9 @@ use crate::{
     lisp::LispObject,
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
+    remacs_sys::Flist_fonts,
     remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX},
-    remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec},
+    remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qnil},
     vectors::LispVectorlikeRef,
 };
 
@@ -129,6 +130,17 @@ pub fn font_match_p(spec: LispObject, font: LispObject) -> bool {
         wrong_type!(Qfont, font)
     }
     unsafe { c_font_match_p(spec, font) }
+}
+
+/// Return a font-entity matching with FONT-SPEC on the current frame.
+/// Optional 2nd argument FRAME, if non-nil, specifies the target frame.
+#[lisp_fn(min = "1")]
+pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
+    let val = unsafe { Flist_fonts(spec, frame, LispObject::from(1), Qnil) };
+    match val.as_cons() {
+        Some(cons) => cons.car(),
+        None => val,
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));
