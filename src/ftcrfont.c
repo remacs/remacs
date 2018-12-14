@@ -41,6 +41,9 @@ struct ftcrfont_info
   bool maybe_otf;	  /* Flag to tell if this may be OTF or not.  */
   OTF *otf;
 #endif	/* HAVE_LIBOTF */
+#ifdef HAVE_HARFBUZZ
+  hb_font_t *hb_font;
+#endif  /* HAVE_HARFBUZZ */
   FT_Size ft_size;
   int index;
   FT_Matrix matrix;
