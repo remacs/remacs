@@ -2,7 +2,8 @@
 arch: x86_64
 distro: ubuntu:cosmic
 base_config: |
-    RUN apt-get update && apt-get install -y \
+    RUN apt-get update && apt-get dist-upgrade -y
+    RUN apt-get install -y \
         automake \
         build-essential \
         clang \
