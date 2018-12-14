@@ -94,15 +94,6 @@
           (should (cdr (dired-get-marked-files)))
           (kill-buffer buf)
           (setq buf (dired (expand-file-name "lisp/subr.el" source-directory)))
-          (when (getenv "EMACS_HYDRA_CI")
-            (message "X1%s" (buffer-substring-no-properties
-                             (point-min) (point-max)))
-            (message "X2%s" (buffer-substring-no-properties
-                             (line-beginning-position)
-                             (line-end-position)))
-            (message "X3%s" (buffer-substring-no-properties
-                             (point)
-                             (line-end-position))))
           (should (looking-at "subr\\.el")))
       (customize-set-variable 'eshell-ls-use-in-dired orig)
       (and (buffer-live-p buf) (kill-buffer)))))
