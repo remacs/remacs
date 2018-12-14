@@ -19,6 +19,7 @@ RUN apt-get install -y \
     libxt-dev \
     texinfo
 
+
 ENV PATH "/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 RUN curl https://sh.rustup.rs -o rustup.sh && \
@@ -26,3 +27,4 @@ RUN curl https://sh.rustup.rs -o rustup.sh && \
         --default-host x86_64-unknown-linux-gnu \
         --default-toolchain nightly-2018-11-03 -y && \
     rustup default nightly-2018-11-03
+
