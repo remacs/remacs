@@ -3314,7 +3314,7 @@ if test "${HAVE_X11}" = "yes"; then
       AC_DEFINE(HAVE_FREETYPE, 1,
 		[Define to 1 if using the freetype and fontconfig libraries.])
       if test "${with_harfbuzz}" != "no"; then
-	EMACS_CHECK_MODULES([HARFBUZZ], [harfbuzz])
+	EMACS_CHECK_MODULES([HARFBUZZ], [harfbuzz >= 0.9.42])
 	if test "$HAVE_HARFBUZZ" = "yes"; then
 	  AC_DEFINE(HAVE_HARFBUZZ, 1, [Define to 1 if using HarfBuzz.])
 	  AC_CHECK_LIB(harfbuzz, hb_ft_font_create_referenced,
