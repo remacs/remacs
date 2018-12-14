@@ -243,6 +243,9 @@ The default implementation delegates to `map-filter'."
 The default implementation delegates to `map-length'."
   (zerop (map-length map)))
 
+(cl-defmethod map-empty-p ((map list))
+  (null map))
+
 (cl-defgeneric map-contains-key (map key &optional testfn)
   ;; FIXME: The test function to use generally depends on the map object,
   ;; so specifying `testfn' here is problematic: e.g. for hash-tables
@@ -259,7 +262,8 @@ The default implementation delegates to `map-do'."
     nil))
 
 (cl-defmethod map-contains-key ((map list) key &optional testfn)
-  (alist-get key map nil nil (or testfn #'equal)))
+  (let ((v '(nil)))
+    (not (eq v (alist-get key map v nil (or testfn #'equal))))))
 
 (cl-defmethod map-contains-key ((map array) key &optional _testfn)
   (and (integerp key)
@@ -332,16 +336,16 @@ MAP can be a list, hash-table or array."
 ;; FIXME: I wish there was a way to avoid this η-redex!
 (cl-defmethod map-into (map (_type (eql list))) (map-pairs map))
 
-(cl-defgeneric map-put! (map key v)
+(cl-defgeneric map-put! (map key value)
   "Associate KEY with VALUE in MAP and return VALUE.
 If KEY is already present in MAP, replace the associated value
 with VALUE."
   (map--dispatch map
     :list (let ((p (assoc key map)))
-            (if p (setcdr p v)
+            (if p (setcdr p value)
               (error "No place to change the mapping for %S" key)))
-    :hash-table (puthash key v map)
-    :array (aset map key v)))
+    :hash-table (puthash key value map)
+    :array (aset map key value)))
 
 ;; There shouldn't be old source code referring to `map--put', yet we do
 ;; need to keep it for backward compatibility with .elc files where the
