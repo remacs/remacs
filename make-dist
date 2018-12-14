@@ -222,18 +222,23 @@ if [ $check = yes ]; then
 
   error=no
 
+  temp_el=/tmp/make-dist.tmp.$$
+  temp_elc=$temp_el.1
+  temp_elelc=$temp_el.2
+  temp_elcel=$temp_el.3
+
   ls -1 lisp/[a-zA-Z]*.el lisp/[a-z]*/[a-zA-Z0-9]*.el \
 	lisp/[a-z]*/[a-z]*/[a-zA-Z0-9]*.el \
-	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.el > /tmp/el
+	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.el > $temp_el
 
   ls -1 lisp/[a-zA-Z]*.elc lisp/[a-z]*/[a-zA-Z0-9]*.elc \
 	lisp/[a-z]*/[a-z]*/[a-zA-Z0-9]*.elc \
-	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.elc > /tmp/elc
+	lisp/[a-z]*/[a-z]*/[a-z]*/[a-zA-Z0-9]*.elc > $temp_elc
 
   ## Check for .elc files with no corresponding .el file.
-  sed 's/\.el$/.elc/' /tmp/el > /tmp/elelc
+  sed 's/\.el$/.elc/' $temp_el > $temp_elelc
 
-  bogosities=`comm -13 /tmp/elelc /tmp/elc`
+  bogosities=`comm -13 $temp_elelc $temp_elc`
   if [ x"${bogosities}" != x"" ]; then
     error=yes
     echo "The following .elc files have no corresponding .el files:"
@@ -241,15 +246,15 @@ if [ $check = yes ]; then
   fi
 
   ### Check for .el files with no corresponding .elc file.
-  sed 's/\.elc$/.el/' /tmp/elc > /tmp/elcel
-  losers=`comm -23 /tmp/el /tmp/elcel`
+  sed 's/\.elc$/.el/' $temp_elc > $temp_elcel
+  losers=`comm -23 $temp_el $temp_elcel`
 
   bogosities=
   while read elc; do
       el=`echo $elc | sed 's/c$//'`
       [ -r $el ] || continue
       [ $elc -nt $el ] || bogosities="$bogosities $elc"
-  done < /tmp/elc
+  done < $temp_elc
 
   if [ x"${bogosities}" != x"" ]; then
       error=yes
@@ -257,7 +262,7 @@ if [ $check = yes ]; then
       echo "${bogosities}"
   fi
 
-  rm -f /tmp/el /tmp/elc /tmp/elcel /tmp/elelc
+  rm -f $temp_el*
 
   bogosities=
   for file in $losers; do
@@ -278,7 +283,7 @@ if [ $check = yes ]; then
 
   ## This is only a crude check, eg it does not handle .info
   ## files with multiple .texi source files.
-  find doc -name '*.texi' > /tmp/el
+  find doc -name '*.texi' > $temp_el
 
   bogosities=
   while read texi; do
@@ -287,9 +292,9 @@ if [ $check = yes ]; then
       info=info/$info
       [ -r $info ] || continue
       [ $info -nt $texi ] || bogosities="$bogosities $info"
-  done < /tmp/el
+  done < $temp_el
 
-  rm -f /tmp/el
+  rm -f $temp_el
 
   if [ x"${bogosities}" != x"" ]; then
     error=yes
@@ -655,13 +660,13 @@ if [ "${newer}" ]; then
   ## We remove .elc files unconditionally, on the theory that anyone picking
   ## up an incremental distribution already has a running Emacs to byte-compile
   ## them with.
-  find ${tempparent} \( -name '*.elc' -o ! -newer ${newer} \) \
+  find ${tempdir} \( -name '*.elc' -o ! -newer ${newer} \) \
     -exec rm -f {} \; || exit
 fi
 
 ## Don't distribute backups, autosaves, etc.
 echo "Removing unwanted files"
-find ${tempparent} \( -name '*~' -o -name '#*#' -o -name '.*ignore' -o -name '=*' -o -name 'TAGS' \) -exec rm -f {} \; || exit
+find ${tempdir} \( -name '*~' -o -name '#*#' -o -name '.*ignore' -o -name '=*' -o -name 'TAGS' \) -exec rm -f {} \; || exit
 
 if [ "${make_tar}" = yes ]; then
   echo "Looking for $default_gzip"
@@ -685,7 +690,7 @@ if [ "${make_tar}" = yes ]; then
   esac
   echo "Creating tar file"
   taropt='--numeric-owner --owner=0 --group=0 --mode=go+u,go-w'
-  tar --sort=name -cf /dev/null $tempparent/$emacsname/src/lisp.h 2>/tmp/out &&
+  tar --sort=name -cf /dev/null $tempdir/src/lisp.h 2>/dev/null &&
     taropt="$taropt --sort=name"
   [ "$verbose" = "yes" ] && taropt="$taropt --verbose"
 
@@ -704,6 +709,7 @@ if [ "${make_tar}" = yes ]; then
   ) >$emacsname.tar$gzip_extension || exit
 fi
 
+## Why are we deleting the staging directory if clean_up is no?
 if [ "${clean_up}" != yes ]; then
   (cd ${tempparent} && mv ${emacsname} ..) &&
   rm -rf ${tempparent}
