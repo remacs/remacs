@@ -266,7 +266,7 @@ if [ $check = yes ]; then
 
   bogosities=
   for file in $losers; do
-    grep -q "no-byte-compile: t" $file && continue
+    grep -q "^;.*no-byte-compile: t" $file && continue
     case $file in
       site-init.el | site-load.el | site-start.el | default.el) continue ;;
     esac
