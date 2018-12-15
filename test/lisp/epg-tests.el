@@ -108,6 +108,8 @@
 
 (ert-deftest epg-decrypt-1 ()
   (with-epg-tests (:require-passphrase t)
+    (with-temp-file (expand-file-name "gpg.conf" epg-tests-home-directory)
+      (insert "ignore-mdc-error"))
     (should (equal "test"
 		   (epg-decrypt-string epg-tests-context "\
 -----BEGIN PGP MESSAGE-----

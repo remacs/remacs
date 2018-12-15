@@ -35,8 +35,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 struct ftcrfont_info
 {
   struct font font;
-  /* The following six members must be here in this order to be
-     compatible with struct ftfont_info (in ftfont.c).  */
+  /* The following members up to and including 'matrix' must be here
+     in this order to be compatible with struct ftfont_info (in
+     ftfont.c).  */
 #ifdef HAVE_LIBOTF
   bool maybe_otf;	  /* Flag to tell if this may be OTF or not.  */
   OTF *otf;

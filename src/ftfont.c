@@ -56,8 +56,9 @@ struct ftfont_info
 {
   struct font font;
 #ifdef HAVE_LIBOTF
-  /* The following four members must be here in this order to be
-     compatible with struct xftfont_info (in xftfont.c).  */
+  /* The following members up to and including 'matrix' must be here in
+     this order to be compatible with struct xftfont_info (in
+     xftfont.c).  */
   bool maybe_otf;	/* Flag to tell if this may be OTF or not.  */
   OTF *otf;
 #endif	/* HAVE_LIBOTF */
