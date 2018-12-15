@@ -478,21 +478,6 @@ ftfont_get_otf (struct ftfont_info *ftfont_info)
 
 #ifdef HAVE_HARFBUZZ
 
-# ifndef HAVE_HB_FT_FONT_CREATE_REFERENCED
-static void
-ft_face_destroy (void *data)
-{
-  FT_Done_Face (data);
-}
-
-static hb_font_t *
-hb_ft_font_create_referenced (FT_Face face)
-{
-  FT_Reference_Face (face);
-  return hb_ft_font_create (face, ft_face_destroy);
-}
-# endif
-
 static hb_font_t *
 ftfont_get_hb_font (struct ftfont_info *ftfont_info)
 {

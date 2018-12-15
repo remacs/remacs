@@ -3317,13 +3317,6 @@ if test "${HAVE_X11}" = "yes"; then
 	EMACS_CHECK_MODULES([HARFBUZZ], [harfbuzz >= 0.9.42])
 	if test "$HAVE_HARFBUZZ" = "yes"; then
 	  AC_DEFINE(HAVE_HARFBUZZ, 1, [Define to 1 if using HarfBuzz.])
-	  AC_CHECK_LIB(harfbuzz, hb_ft_font_create_referenced,
-		       HAVE_HB_FT_FONT_CREATE_REFERENCED=yes,
-		       HAVE_HB_FT_FONT_CREATE_REFERENCED=no)
-	  if test "${HAVE_HB_FT_FONT_CREATE_REFERENCED}" = "yes"; then
-	    AC_DEFINE(HAVE_HB_FT_FONT_CREATE_REFERENCED, 1,
-		      [Define to 1 if HarfBuzz has hb_ft_font_create_referenced.])
-	  fi
 	fi
       fi
       if test "${with_libotf}" != "no"; then
