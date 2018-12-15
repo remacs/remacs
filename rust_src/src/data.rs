@@ -170,8 +170,8 @@ pub fn subr_lang(subr: LispSubrRef) -> LispObject {
     }
 }
 
-/// Return the element of ARG at index IDX.
-/// ARG may be a vector, a string, a char-table, a bool-vector, a record,
+/// Return the element of ARRAY at index IDX.
+/// ARRAY may be a vector, a string, a char-table, a bool-vector, a record,
 /// or a byte-code object.  IDX starts at 0.
 #[lisp_fn]
 pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
