@@ -240,12 +240,13 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
                              (gfile-monitor-name file-notify--test-desc)))
           (cdr (assq file-notify--test-desc file-notify--test-monitors))))))
 
-(defmacro file-notify--deftest-remote (test docstring)
+(defmacro file-notify--deftest-remote (test docstring &optional expected)
   "Define ert `TEST-remote' for remote files."
   (declare (indent 1))
   `(ert-deftest ,(intern (concat (symbol-name test) "-remote")) ()
      ,docstring
      :tags '(:expensive-test)
+     :expected-result (or ,expected :passed)
      (let* ((temporary-file-directory
 	     file-notify-test-remote-temporary-file-directory)
 	    (ert-test (ert-get-test ',test)))
@@ -917,7 +918,8 @@ delivered."
       (file-notify--test-cleanup))))
 
 (file-notify--deftest-remote file-notify-test04-autorevert
-  "Check autorevert via file notification for remote files.")
+  "Check autorevert via file notification for remote files."
+  (if (getenv "EMACS_HYDRA_CI") :failed :passed)) ; fixme bug#33735
 
 (ert-deftest file-notify-test05-file-validity ()
   "Check `file-notify-valid-p' for files."
@@ -1239,7 +1241,8 @@ delivered."
     (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test08-backup
-  "Check that backup keeps file notification for remote files.")
+  "Check that backup keeps file notification for remote files."
+  (if (getenv "EMACS_HYDRA_CI") :failed :passed)) ; fixme bug#33735
 
 (ert-deftest file-notify-test09-watched-file-in-watched-dir ()
   "Watches a directory and a file in that directory separately.
