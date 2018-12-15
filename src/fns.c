@@ -1387,31 +1387,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       }
 
     case Lisp_Cons:
-      if (equal_kind == EQUAL_NO_QUIT)
-	for (; CONSP (o1); o1 = XCDR (o1))
-	  {
-	    if (! CONSP (o2))
-	      return false;
-	    if (! equal_no_quit (XCAR (o1), XCAR (o2)))
-	      return false;
-	    o2 = XCDR (o2);
-	    if (EQ (XCDR (o1), o2))
-	      return true;
-	  }
-      else
-	FOR_EACH_TAIL (o1)
-	  {
-	    if (! CONSP (o2))
-	      return false;
-	    if (! internal_equal (XCAR (o1), XCAR (o2),
-				  equal_kind, depth + 1, ht))
-	      return false;
-	    o2 = XCDR (o2);
-	    if (EQ (XCDR (o1), o2))
-	      return true;
-	  }
-      depth++;
-      goto tail_recurse;
+      return internal_equal_cons(o1, o2, equal_kind, depth, ht);
 
     case Lisp_Misc:
       return internal_equal_misc(o1, o2,  equal_kind, depth, ht);

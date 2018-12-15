@@ -4906,6 +4906,7 @@ void do_debug_on_call (Lisp_Object code, ptrdiff_t count);
 
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 extern bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+extern bool internal_equal_cons (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 extern bool internal_equal_misc (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 
