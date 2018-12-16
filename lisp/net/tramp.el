@@ -75,6 +75,13 @@
   :link '(custom-manual "(tramp)Top")
   :version "22.1")
 
+(eval-and-compile ;; So it's also available in tramp-loaddefs.el!
+  (defmacro tramp--with-startup (&rest body)
+    "Schedule BODY to be executed at the end of tramp.el."
+    `(add-hook 'tramp--startup-hook (lambda () ,@body))))
+
+(require 'tramp-loaddefs)
+
 ;; Maybe we need once a real Tramp mode, with key bindings etc.
 ;;;###autoload
 (defcustom tramp-mode t
@@ -163,7 +170,6 @@ See the variable `tramp-encoding-shell' for more information."
   :group 'tramp
   :type '(choice (const nil) string))
 
-;;;###tramp-autoload
 (defvar tramp-methods nil
   "Alist of methods for remote files.
 This is a list of entries of the form (NAME PARAM1 PARAM2 ...).
@@ -344,7 +350,6 @@ Also see `tramp-default-method-alist'."
   :group 'tramp
   :type 'string)
 
-;;;###tramp-autoload
 (defcustom tramp-default-method-alist nil
   "Default method to use for specific host/user pairs.
 This is an alist of items (HOST USER METHOD).  The first matching item
@@ -374,7 +379,6 @@ This variable is regarded as obsolete, and will be removed soon."
   :group 'tramp
   :type '(choice (const nil) string))
 
-;;;###tramp-autoload
 (defcustom tramp-default-user-alist nil
   "Default user to use for specific method/host pairs.
 This is an alist of items (METHOD HOST USER).  The first matching item
@@ -396,7 +400,6 @@ Useful for su and sudo methods mostly."
   :group 'tramp
   :type 'string)
 
-;;;###tramp-autoload
 (defcustom tramp-default-host-alist nil
   "Default host to use for specific method/user pairs.
 This is an alist of items (METHOD USER HOST).  The first matching item
@@ -456,7 +459,6 @@ host runs a registered shell, it shall be added to this list, too."
   :group 'tramp
   :type '(repeat (regexp :tag "Host regexp")))
 
-;;;###tramp-autoload
 (defcustom tramp-local-host-regexp
   (concat
    "\\`"
@@ -683,7 +685,6 @@ Useful for \"rsync\" like methods.")
 (make-variable-buffer-local 'tramp-temp-buffer-file-name)
 (put 'tramp-temp-buffer-file-name 'permanent-local t)
 
-;;;###tramp-autoload
 (defcustom tramp-syntax 'default
   "Tramp filename syntax to be used.
 
@@ -702,8 +703,8 @@ Customize.  See also `tramp-change-syntax'."
 		 (const :tag "Ange-FTP" simplified)
 		 (const :tag "XEmacs" separate))
   :require 'tramp
-  :initialize 'custom-initialize-set
-  :set 'tramp-set-syntax)
+  :initialize #'custom-initialize-default
+  :set #'tramp-set-syntax)
 
 (defun tramp-set-syntax (symbol value)
   "Set SYMBOL to value VALUE.
@@ -711,7 +712,7 @@ Used in user option `tramp-syntax'.  There are further variables
 to be set, depending on VALUE."
   ;; Check allowed values.
   (unless (memq value (tramp-syntax-values))
-    (tramp-user-error "Wrong `tramp-syntax' %s" tramp-syntax))
+    (tramp-user-error "Wrong `tramp-syntax' %s" value))
   ;; Cleanup existing buffers.
   (unless (eq (symbol-value symbol) value)
     (tramp-cleanup-all-buffers))
@@ -743,14 +744,15 @@ to be set, depending on VALUE."
 ;; value of `tramp-file-name-regexp'.  Other Tramp syntax variables
 ;; must be initialized as well to proper values.  We do not call
 ;; `custom-set-variable', this would load Tramp via custom.el.
-(eval-after-load 'tramp
-  '(tramp-set-syntax 'tramp-syntax (tramp-compat-tramp-syntax)))
+(tramp--with-startup
+  (tramp-set-syntax 'tramp-syntax (tramp-compat-tramp-syntax)))
 
 (defun tramp-syntax-values ()
   "Return possible values of `tramp-syntax', a list"
   (let ((values (cdr (get 'tramp-syntax 'custom-type))))
-    (setq values (mapcar 'last values)
-	  values (mapcar 'car values))))
+    (setq values (mapcar #'last values)
+	  values (mapcar #'car values))
+    values))
 
 (defun tramp-lookup-syntax (alist)
   "Look up a syntax string in ALIST according to `tramp-compat-tramp-syntax.'
@@ -767,14 +769,14 @@ Raise an error if `tramp-syntax' is invalid."
 (defun tramp-build-prefix-format ()
   (tramp-lookup-syntax tramp-prefix-format-alist))
 
-(defvar tramp-prefix-format (tramp-build-prefix-format)
+(defvar tramp-prefix-format nil ;Initialized when defining `tramp-syntax'!
   "String matching the very beginning of Tramp file names.
 Used in `tramp-make-tramp-file-name'.")
 
 (defun tramp-build-prefix-regexp ()
   (concat "^" (regexp-quote tramp-prefix-format)))
 
-(defvar tramp-prefix-regexp (tramp-build-prefix-regexp)
+(defvar tramp-prefix-regexp nil ;Initialized when defining `tramp-syntax'!
   "Regexp matching the very beginning of Tramp file names.
 Should always start with \"^\". Derived from `tramp-prefix-format'.")
 
@@ -787,7 +789,7 @@ Should always start with \"^\". Derived from `tramp-prefix-format'.")
 (defun tramp-build-method-regexp ()
   (tramp-lookup-syntax tramp-method-regexp-alist))
 
-(defvar tramp-method-regexp (tramp-build-method-regexp)
+(defvar tramp-method-regexp nil ;Initialized when defining `tramp-syntax'!
   "Regexp matching methods identifiers.
 The `ftp' syntax does not support methods.")
 
@@ -800,7 +802,7 @@ The `ftp' syntax does not support methods.")
 (defun tramp-build-postfix-method-format ()
   (tramp-lookup-syntax tramp-postfix-method-format-alist))
 
-(defvar tramp-postfix-method-format (tramp-build-postfix-method-format)
+(defvar tramp-postfix-method-format nil ;Init'd when defining `tramp-syntax'!
   "String matching delimiter between method and user or host names.
 The `ftp' syntax does not support methods.
 Used in `tramp-make-tramp-file-name'.")
@@ -808,18 +810,16 @@ Used in `tramp-make-tramp-file-name'.")
 (defun tramp-build-postfix-method-regexp ()
   (regexp-quote tramp-postfix-method-format))
 
-(defvar tramp-postfix-method-regexp (tramp-build-postfix-method-regexp)
+(defvar tramp-postfix-method-regexp nil ;Init'd when defining `tramp-syntax'!
   "Regexp matching delimiter between method and user or host names.
 Derived from `tramp-postfix-method-format'.")
 
 (defconst tramp-user-regexp "[^/|: \t]+"
   "Regexp matching user names.")
 
-;;;###tramp-autoload
 (defconst tramp-prefix-domain-format "%"
   "String matching delimiter between user and domain names.")
 
-;;;###tramp-autoload
 (defconst tramp-prefix-domain-regexp (regexp-quote tramp-prefix-domain-format)
   "Regexp matching delimiter between user and domain names.
 Derived from `tramp-prefix-domain-format'.")
@@ -853,14 +853,14 @@ Derived from `tramp-postfix-user-format'.")
 (defun tramp-build-prefix-ipv6-format ()
   (tramp-lookup-syntax tramp-prefix-ipv6-format-alist))
 
-(defvar tramp-prefix-ipv6-format (tramp-build-prefix-ipv6-format)
+(defvar tramp-prefix-ipv6-format nil ;Initialized when defining `tramp-syntax'!
   "String matching left hand side of IPv6 addresses.
 Used in `tramp-make-tramp-file-name'.")
 
 (defun tramp-build-prefix-ipv6-regexp ()
   (regexp-quote tramp-prefix-ipv6-format))
 
-(defvar tramp-prefix-ipv6-regexp (tramp-build-prefix-ipv6-regexp)
+(defvar tramp-prefix-ipv6-regexp nil ;Initialized when defining `tramp-syntax'!
   "Regexp matching left hand side of IPv6 addresses.
 Derived from `tramp-prefix-ipv6-format'.")
 
@@ -879,14 +879,14 @@ Derived from `tramp-prefix-ipv6-format'.")
 (defun tramp-build-postfix-ipv6-format ()
   (tramp-lookup-syntax tramp-postfix-ipv6-format-alist))
 
-(defvar tramp-postfix-ipv6-format (tramp-build-postfix-ipv6-format)
+(defvar tramp-postfix-ipv6-format nil ;Initialized when defining `tramp-syntax'!
   "String matching right hand side of IPv6 addresses.
 Used in `tramp-make-tramp-file-name'.")
 
 (defun tramp-build-postfix-ipv6-regexp ()
   (regexp-quote tramp-postfix-ipv6-format))
 
-(defvar tramp-postfix-ipv6-regexp (tramp-build-postfix-ipv6-regexp)
+(defvar tramp-postfix-ipv6-regexp nil ;Initialized when defining `tramp-syntax'!
   "Regexp matching right hand side of IPv6 addresses.
 Derived from `tramp-postfix-ipv6-format'.")
 
@@ -922,14 +922,14 @@ Derived from `tramp-postfix-hop-format'.")
 (defun tramp-build-postfix-host-format ()
   (tramp-lookup-syntax tramp-postfix-host-format-alist))
 
-(defvar tramp-postfix-host-format (tramp-build-postfix-host-format)
+(defvar tramp-postfix-host-format nil ;Initialized when defining `tramp-syntax'!
   "String matching delimiter between host names and localnames.
 Used in `tramp-make-tramp-file-name'.")
 
 (defun tramp-build-postfix-host-regexp ()
   (regexp-quote tramp-postfix-host-format))
 
-(defvar tramp-postfix-host-regexp (tramp-build-postfix-host-regexp)
+(defvar tramp-postfix-host-regexp nil ;Initialized when defining `tramp-syntax'!
   "Regexp matching delimiter between host names and localnames.
 Derived from `tramp-postfix-host-format'.")
 
@@ -956,7 +956,7 @@ It is expected, that `tramp-syntax' has the proper value."
 	   "\\(?:" tramp-prefix-port-regexp  tramp-port-regexp "\\)?" "\\)?"))
 
 (defvar tramp-remote-file-name-spec-regexp
-  (tramp-build-remote-file-name-spec-regexp)
+   nil ;Initialized when defining `tramp-syntax'!
   "Regular expression matching a Tramp file name between prefix and postfix.")
 
 (defun tramp-build-file-name-structure ()
@@ -972,7 +972,7 @@ See `tramp-file-name-structure'."
     "\\(" tramp-localname-regexp "\\)")
    5 6 7 8 1))
 
-(defvar tramp-file-name-structure (tramp-build-file-name-structure)
+(defvar tramp-file-name-structure nil ;Initialized when defining `tramp-syntax'!
   "List of six elements (REGEXP METHOD USER HOST FILE HOP), detailing \
 the Tramp file name structure.
 
@@ -1065,7 +1065,7 @@ See `tramp-file-name-structure' for more explanations.")
   (tramp-lookup-syntax tramp-completion-file-name-regexp-alist))
 
 (defvar tramp-completion-file-name-regexp
-  (tramp-build-completion-file-name-regexp)
+   nil ;Initialized when defining `tramp-syntax'!
   "Regular expression matching file names handled by Tramp completion.
 This regexp should match partial Tramp file names only.
 
@@ -1225,7 +1225,6 @@ Operations not mentioned here will be handled by Tramp's file
 name handler functions, or the normal Emacs functions.")
 
 ;; Handlers for foreign methods, like FTP or SMB, shall be plugged here.
-;;;###tramp-autoload
 (defvar tramp-foreign-file-name-handler-alist nil
   "Alist of elements (FUNCTION . HANDLER) for foreign methods handled specially.
 If (FUNCTION FILENAME) returns non-nil, then all I/O on that file is done by
@@ -1295,7 +1294,6 @@ entry does not exist, return nil."
   "Return unquoted localname component of VEC."
   (tramp-compat-file-name-unquote (tramp-file-name-localname vec)))
 
-;;;###tramp-autoload
 (defun tramp-tramp-file-p (name)
   "Return t if NAME is a string with Tramp file name syntax."
   (and tramp-mode (stringp name)
@@ -1998,7 +1996,6 @@ letter into the file name.  This function removes it."
 
 ;;; Config Manipulation Functions:
 
-;;;###tramp-autoload
 (defun tramp-set-completion-function (method function-list)
   "Sets the list of completion functions for METHOD.
 FUNCTION-LIST is a list of entries of the form (FUNCTION FILE).
@@ -2501,7 +2498,7 @@ remote file names."
 	   (setf (cadr (symbol-function atom))
 		 (expand-file-name (cadr (symbol-function atom)) dir))))))))
 
-(eval-after-load 'tramp (tramp-use-absolute-autoload-file-names))
+(tramp--with-startup (tramp-use-absolute-autoload-file-names))
 
 (defun tramp-register-file-name-handlers ()
   "Add Tramp file name handlers to `file-name-handler-alist'."
@@ -2514,12 +2511,12 @@ remote file names."
   ;; `tramp-archive-file-name-handler', this shall be done by the
   ;; respective foreign handlers.
   (add-to-list 'file-name-handler-alist
-	       (cons tramp-file-name-regexp 'tramp-file-name-handler))
+	       (cons tramp-file-name-regexp #'tramp-file-name-handler))
   (put 'tramp-file-name-handler 'safe-magic t)
 
   (add-to-list 'file-name-handler-alist
 	       (cons tramp-completion-file-name-regexp
-		     'tramp-completion-file-name-handler))
+		     #'tramp-completion-file-name-handler))
   (put 'tramp-completion-file-name-handler 'safe-magic t)
   ;; Mark `operations' the handler is responsible for.
   (put 'tramp-completion-file-name-handler 'operations
@@ -2528,7 +2525,7 @@ remote file names."
   (when (bound-and-true-p tramp-archive-enabled)
     (add-to-list 'file-name-handler-alist
 	         (cons tramp-archive-file-name-regexp
-		       'tramp-archive-file-name-handler))
+		       #'tramp-archive-file-name-handler))
     (put 'tramp-archive-file-name-handler 'safe-magic t))
 
   ;; If jka-compr or epa-file are already loaded, move them to the
@@ -2539,10 +2536,9 @@ remote file names."
 	(setq file-name-handler-alist
 	      (cons entry (delete entry file-name-handler-alist)))))))
 
-(eval-after-load 'tramp (tramp-register-file-name-handlers))
+(tramp--with-startup (tramp-register-file-name-handlers))
 
-;;;###tramp-autoload
-(progn (defun tramp-register-foreign-file-name-handler
+(defun tramp-register-foreign-file-name-handler
     (func handler &optional append)
   "Register (FUNC . HANDLER) in `tramp-foreign-file-name-handler-alist'.
 FUNC is the function, which determines whether HANDLER is to be called.
@@ -2556,8 +2552,8 @@ Add operations defined in `HANDLER-alist' to `tramp-file-name-handler'."
         (append
          (get 'tramp-file-name-handler 'operations)
          (mapcar
-          'car
-          (symbol-value (intern (concat (symbol-name handler) "-alist")))))))))
+          #'car
+          (symbol-value (intern (concat (symbol-name handler) "-alist"))))))))
 
 (defun tramp-exists-file-name-handler (operation &rest args)
   "Check, whether OPERATION runs a file name handler."
@@ -2895,7 +2891,6 @@ User is always nil."
 	(goto-char (point-min))
         (cl-loop while (not (eobp)) collect (funcall function))))))
 
-;;;###tramp-autoload
 (defun tramp-parse-rhosts (filename)
   "Return a list of (user host) tuples allowed to access.
 Either user or host may be nil."
@@ -2914,7 +2909,6 @@ Either user or host may be nil."
      (forward-line 1)
      result))
 
-;;;###tramp-autoload
 (defun tramp-parse-shosts (filename)
   "Return a list of (user host) tuples allowed to access.
 User is always nil."
@@ -2925,7 +2919,6 @@ User is always nil."
 User is always nil."
    (tramp-parse-group (concat "^\\(" tramp-host-regexp "\\)") 1 ","))
 
-;;;###tramp-autoload
 (defun tramp-parse-sconfig (filename)
   "Return a list of (user host) tuples allowed to access.
 User is always nil."
@@ -2952,14 +2945,12 @@ User is always nil."
      when (and (not (string-match "^\\.\\.?$" f)) (string-match regexp f))
      collect (list nil (match-string 1 f)))))
 
-;;;###tramp-autoload
 (defun tramp-parse-shostkeys (dirname)
   "Return a list of (user host) tuples allowed to access.
 User is always nil."
   (tramp-parse-shostkeys-sknownhosts
    dirname (concat "^key_[0-9]+_\\(" tramp-host-regexp "\\)\\.pub$")))
 
-;;;###tramp-autoload
 (defun tramp-parse-sknownhosts (dirname)
   "Return a list of (user host) tuples allowed to access.
 User is always nil."
@@ -2967,7 +2958,6 @@ User is always nil."
    dirname
    (concat "^\\(" tramp-host-regexp "\\)\\.ssh-\\(dss\\|rsa\\)\\.pub$")))
 
-;;;###tramp-autoload
 (defun tramp-parse-hosts (filename)
   "Return a list of (user host) tuples allowed to access.
 User is always nil."
@@ -2979,7 +2969,6 @@ User is always nil."
    (tramp-parse-group
     (concat "^\\(" tramp-ipv6-regexp "\\|" tramp-host-regexp "\\)") 1 " \t"))
 
-;;;###tramp-autoload
 (defun tramp-parse-passwd (filename)
   "Return a list of (user host) tuples allowed to access.
 Host is always \"localhost\"."
@@ -3002,7 +2991,6 @@ Host is always \"localhost\"."
      (forward-line 1)
      result))
 
-;;;###tramp-autoload
 (defun tramp-parse-etc-group (filename)
   "Return a list of (group host) tuples allowed to access.
 Host is always \"localhost\"."
@@ -3025,7 +3013,6 @@ Host is always \"localhost\"."
      (forward-line 1)
      result))
 
-;;;###tramp-autoload
 (defun tramp-parse-netrc (filename)
   "Return a list of (user host) tuples allowed to access.
 User may be nil."
@@ -3036,7 +3023,6 @@ User may be nil."
 	  `(,(cdr (assoc "login" item)) ,(cdr (assoc "machine" item)))))
    (netrc-parse filename)))
 
-;;;###tramp-autoload
 (defun tramp-parse-putty (registry-or-dirname)
   "Return a list of (user host) tuples allowed to access.
 User is always nil."
@@ -3751,6 +3737,12 @@ support symbolic links."
 	  (concat filename "/")
 	filename))))
 
+(defconst tramp-time-dont-know '(0 0 0 1000)
+  "An invalid time value, used as \"Don’t know\" value.")
+
+(defconst tramp-time-doesnt-exist '(-1 65535)
+  "An invalid time value, used as \"Doesn’t exist\" value.")
+
 (defun tramp-handle-set-visited-file-modtime (&optional time-list)
   "Like `set-visited-file-modtime' for Tramp files."
   (unless (buffer-file-name)
@@ -4223,7 +4215,6 @@ would yield t.  On the other hand, the following check results in nil:
        (tramp-tramp-file-p file2)
        (string-equal (file-remote-p file1) (file-remote-p file2))))
 
-;;;###tramp-autoload
 (defun tramp-mode-string-to-int (mode-string)
   "Converts a ten-letter `drwxrwxrwx'-style mode string into mode bits."
   (let* (case-fold-search
@@ -4303,7 +4294,6 @@ would yield t.  On the other hand, the following check results in nil:
   "A list of file types returned from the `stat' system call.
 This is used to map a mode number to a permission string.")
 
-;;;###tramp-autoload
 (defun tramp-file-mode-from-int (mode)
   "Turn an integer representing a file mode into an ls(1)-like string."
   (let ((type	(cdr
@@ -4351,7 +4341,6 @@ If FILENAME is remote, a file name handler is called."
 	   nil "chown" nil nil nil
 	   (format "%d:%d" uid gid) (shell-quote-argument filename)))))))
 
-;;;###tramp-autoload
 (defun tramp-get-local-uid (id-format)
   "The uid of the local user, in ID-FORMAT.
 ID-FORMAT valid values are `string' and `integer'."
@@ -4359,7 +4348,6 @@ ID-FORMAT valid values are `string' and `integer'."
   (with-tramp-connection-property nil (format "uid-%s" id-format)
     (if (equal id-format 'integer) (user-uid) (user-login-name))))
 
-;;;###tramp-autoload
 (defun tramp-get-local-gid (id-format)
   "The gid of the local user, in ID-FORMAT.
 ID-FORMAT valid values are `string' and `integer'."
@@ -4398,7 +4386,6 @@ VEC is used for tracing."
       (when vec (tramp-message vec 7 "locale %s" (or locale "C")))
       (or locale "C"))))
 
-;;;###tramp-autoload
 (defun tramp-check-cached-permissions (vec access)
   "Check `file-attributes' caches for VEC.
 Return t if according to the cache access type ACCESS is known to
@@ -4459,7 +4446,6 @@ be granted."
 			(tramp-compat-file-attribute-group-id
 			 file-attr))))))))))))
 
-;;;###tramp-autoload
 (defun tramp-local-host-p (vec)
   "Return t if this points to the local host, nil otherwise.
 This handles also chrooted environments, which are not regarded as local."
@@ -4495,7 +4481,6 @@ This handles also chrooted environments, which are not regarded as local."
 	  (tramp-error vec 'file-error "Directory %s not accessible" dir))
       dir)))
 
-;;;###tramp-autoload
 (defun tramp-make-tramp-temp-file (vec)
   "Create a temporary file on the remote host identified by VEC.
 Return the local name of the temporary file."
@@ -4522,11 +4507,11 @@ Return the local name of the temporary file."
   (when (stringp tramp-temp-buffer-file-name)
     (ignore-errors (delete-file tramp-temp-buffer-file-name))))
 
-(add-hook 'kill-buffer-hook 'tramp-delete-temp-file-function)
+(add-hook 'kill-buffer-hook #'tramp-delete-temp-file-function)
 (add-hook 'tramp-unload-hook
 	  (lambda ()
 	    (remove-hook 'kill-buffer-hook
-			 'tramp-delete-temp-file-function)))
+			 #'tramp-delete-temp-file-function)))
 
 (defun tramp-handle-make-auto-save-file-name ()
   "Like `make-auto-save-file-name' for Tramp files.
@@ -4657,7 +4642,6 @@ are written with verbosity of 6."
        (tramp-message vec 6 "%d\n%s" result (error-message-string err))))
     result))
 
-;;;###tramp-autoload
 (defun tramp-read-passwd (proc &optional prompt)
   "Read a password from user (compat function).
 Consults the auth-source package.
@@ -4730,7 +4714,6 @@ Invokes `password-read' if available, `read-passwd' else."
       ;; Reenable the timers.
       (with-timeout-unsuspend stimers))))
 
-;;;###tramp-autoload
 (defun tramp-clear-passwd (vec)
   "Clear password cache for connection related to VEC."
   (let ((method (tramp-file-name-method vec))
@@ -4745,15 +4728,6 @@ Invokes `password-read' if available, `read-passwd' else."
        :host ,host-port :port ,method))
     (password-cache-remove (tramp-make-tramp-file-name vec 'noloc 'nohop))))
 
-;;;###tramp-autoload
-(defconst tramp-time-dont-know '(0 0 0 1000)
-  "An invalid time value, used as \"Don’t know\" value.")
-
-;;;###tramp-autoload
-(defconst tramp-time-doesnt-exist '(-1 65535)
-  "An invalid time value, used as \"Doesn’t exist\" value.")
-
-;;;###tramp-autoload
 (defun tramp-time-diff (t1 t2)
   "Return the difference between the two times, in seconds.
 T1 and T2 are time values (as returned by `current-time' for example)."
@@ -4784,7 +4758,6 @@ T1 and T2 are time values (as returned by `current-time' for example)."
 ;;
 ;; Thanks to Mario DeWeerd for the hint that it is sufficient for this
 ;; function to work with Bourne-like shells.
-;;;###tramp-autoload
 (defun tramp-shell-quote-argument (s)
   "Similar to `shell-quote-argument', but groks newlines.
 Only works for Bourne-like shells."
@@ -4835,11 +4808,11 @@ Only works for Bourne-like shells."
 
 ;; `interrupt-process-functions' exists since Emacs 26.1.
 (when (boundp 'interrupt-process-functions)
-  (add-hook 'interrupt-process-functions 'tramp-interrupt-process)
+  (add-hook 'interrupt-process-functions #'tramp-interrupt-process)
   (add-hook
    'tramp-unload-hook
    (lambda ()
-     (remove-hook 'interrupt-process-functions 'tramp-interrupt-process))))
+     (remove-hook 'interrupt-process-functions #'tramp-interrupt-process))))
 
 ;;; Integration of eshell.el:
 
@@ -4882,6 +4855,9 @@ Only works for Bourne-like shells."
   (ignore-errors (unload-feature 'tramp 'force)))
 
 (provide 'tramp)
+
+(run-hooks 'tramp--startup-hook)
+(setq tramp--startup-hook nil)
 
 ;;; TODO:
 ;;

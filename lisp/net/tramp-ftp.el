@@ -95,22 +95,19 @@ present for backward compatibility."
 
 ;; ... and add it to the method list.
 ;;;###tramp-autoload
-(add-to-list 'tramp-methods (cons tramp-ftp-method nil))
+(tramp--with-startup
+ (add-to-list 'tramp-methods (cons tramp-ftp-method nil))
 
-;; Add some defaults for `tramp-default-method-alist'.
-;;;###tramp-autoload
-(add-to-list 'tramp-default-method-alist
-	     (list "\\`ftp\\." nil tramp-ftp-method))
-;;;###tramp-autoload
-(add-to-list 'tramp-default-method-alist
-	     (list nil "\\`\\(anonymous\\|ftp\\)\\'" tramp-ftp-method))
+ ;; Add some defaults for `tramp-default-method-alist'.
+ (add-to-list 'tramp-default-method-alist
+	      (list "\\`ftp\\." nil tramp-ftp-method))
+ (add-to-list 'tramp-default-method-alist
+	      (list nil "\\`\\(anonymous\\|ftp\\)\\'" tramp-ftp-method))
 
-;; Add completion function for FTP method.
-;;;###tramp-autoload
-(eval-after-load 'tramp
-  '(tramp-set-completion-function
-     tramp-ftp-method
-     '((tramp-parse-netrc "~/.netrc"))))
+ ;; Add completion function for FTP method.
+ (tramp-set-completion-function
+  tramp-ftp-method
+  '((tramp-parse-netrc "~/.netrc"))))
 
 ;;;###tramp-autoload
 (defun tramp-ftp-file-name-handler (operation &rest args)
@@ -188,8 +185,9 @@ pass to the OPERATION."
 		tramp-ftp-method)))
 
 ;;;###tramp-autoload
-(add-to-list 'tramp-foreign-file-name-handler-alist
-	     (cons 'tramp-ftp-file-name-p 'tramp-ftp-file-name-handler))
+(tramp--with-startup
+ (add-to-list 'tramp-foreign-file-name-handler-alist
+	      (cons #'tramp-ftp-file-name-p #'tramp-ftp-file-name-handler)))
 
 (add-hook 'tramp-unload-hook
 	  (lambda ()

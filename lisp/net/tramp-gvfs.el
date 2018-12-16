@@ -147,12 +147,13 @@
 
 ;; Add defaults for `tramp-default-user-alist' and `tramp-default-host-alist'.
 ;;;###tramp-autoload
-(when (string-match "\\(.+\\)@\\(\\(?:gmail\\|googlemail\\)\\.com\\)"
-		    user-mail-address)
-  (add-to-list 'tramp-default-user-alist
-	       `("\\`gdrive\\'" nil ,(match-string 1 user-mail-address)))
-  (add-to-list 'tramp-default-host-alist
-	       '("\\`gdrive\\'" nil ,(match-string 2 user-mail-address))))
+(tramp--with-startup
+ (when (string-match "\\(.+\\)@\\(\\(?:gmail\\|googlemail\\)\\.com\\)"
+		     user-mail-address)
+   (add-to-list 'tramp-default-user-alist
+	        `("\\`gdrive\\'" nil ,(match-string 1 user-mail-address)))
+   (add-to-list 'tramp-default-host-alist
+	        '("\\`gdrive\\'" nil ,(match-string 2 user-mail-address)))))
 
 ;;;###tramp-autoload
 (defcustom tramp-gvfs-zeroconf-domain "local"
@@ -165,9 +166,10 @@
 ;; completion.
 ;;;###tramp-autoload
 (when (featurep 'dbusbind)
-  (dolist (elt tramp-gvfs-methods)
-    (unless (assoc elt tramp-methods)
-      (add-to-list 'tramp-methods (cons elt nil)))))
+  (tramp--with-startup
+   (dolist (elt tramp-gvfs-methods)
+     (unless (assoc elt tramp-methods)
+       (add-to-list 'tramp-methods (cons elt nil))))))
 
 (defconst tramp-gvfs-path-tramp (concat dbus-path-emacs "/Tramp")
   "The preceding object path for own objects.")
@@ -621,8 +623,9 @@ pass to the OPERATION."
 
 ;;;###tramp-autoload
 (when (featurep 'dbusbind)
-  (tramp-register-foreign-file-name-handler
-   'tramp-gvfs-file-name-p 'tramp-gvfs-file-name-handler))
+  (tramp--with-startup
+   (tramp-register-foreign-file-name-handler
+    #'tramp-gvfs-file-name-p #'tramp-gvfs-file-name-handler)))
 
 
 ;; D-Bus helper function.

@@ -35,6 +35,7 @@
 ;;; Code:
 
 (require 'tramp)
+(eval-when-compile (require 'tramp-sh)) ;For tramp-stat-marker
 (require 'server)
 
 ;;;###tramp-autoload
@@ -42,18 +43,16 @@
   "When this method name is used, call sudoedit for editing a file.")
 
 ;;;###tramp-autoload
-(add-to-list 'tramp-methods
-  `(,tramp-sudoedit-method
-    (tramp-sudo-login      (("sudo") ("-u" "%u") ("-S") ("-H")
-			    ("-p" "Password:") ("--")))))
+(tramp--with-startup
+ (add-to-list 'tramp-methods
+              `(,tramp-sudoedit-method
+                (tramp-sudo-login      (("sudo") ("-u" "%u") ("-S") ("-H")
+			                ("-p" "Password:") ("--")))))
 
-;;;###tramp-autoload
-(add-to-list 'tramp-default-user-alist '("\\`sudoedit\\'" nil "root"))
+ (add-to-list 'tramp-default-user-alist '("\\`sudoedit\\'" nil "root"))
 
-;;;###tramp-autoload
-(eval-after-load 'tramp
-  '(tramp-set-completion-function
-    tramp-sudoedit-method tramp-completion-function-alist-su))
+ (tramp-set-completion-function
+  tramp-sudoedit-method tramp-completion-function-alist-su))
 
 (defconst tramp-sudoedit-sudo-actions
   '((tramp-password-prompt-regexp tramp-action-password)
@@ -161,8 +160,9 @@ pass to the OPERATION."
       (tramp-run-real-handler operation args))))
 
 ;;;###tramp-autoload
-(tramp-register-foreign-file-name-handler
- 'tramp-sudoedit-file-name-p 'tramp-sudoedit-file-name-handler)
+(tramp--with-startup
+ (tramp-register-foreign-file-name-handler
+  #'tramp-sudoedit-file-name-p #'tramp-sudoedit-file-name-handler))
 
 
 ;; File name primitives.
@@ -235,7 +235,7 @@ absolute file names."
 	  (file-modes (tramp-default-file-modes filename))
 	  ;; `file-extended-attributes' exists since Emacs 24.4.
 	  (attributes (and preserve-extended-attributes
-			   (apply 'file-extended-attributes (list filename))))
+			   (apply #'file-extended-attributes (list filename))))
 	  (sudoedit-operation
 	   (cond
 	    ((and (eq op 'copy) preserve-uid-gid) '("cp" "-f" "-p"))
@@ -288,7 +288,7 @@ absolute file names."
 	;; `set-file-extended-attributes' exists since Emacs 24.4.
 	(when attributes
 	  (ignore-errors
-	    (apply 'set-file-extended-attributes (list newname attributes))))
+	    (apply #'set-file-extended-attributes (list newname attributes))))
 
 	(when (and t1 (eq op 'rename))
 	  (with-parsed-tramp-file-name filename v1
@@ -659,7 +659,7 @@ component is used as the target of the symlink."
     (when (and (stringp acl-string) (tramp-sudoedit-remote-acl-p v))
       ;; Massage `acl-string'.
       (setq acl-string
-	    (mapconcat 'identity (split-string acl-string "\n" 'omit) ","))
+	    (mapconcat #'identity (split-string acl-string "\n" 'omit) ","))
       (prog1
 	  (tramp-sudoedit-send-command
 	   v "setfacl" "-m"
@@ -809,17 +809,17 @@ in case of error, t otherwise."
 		  (tramp-compat-flatten-list (delq nil args))))
 	   (delete-exited-processes t)
 	   (process-connection-type tramp-process-connection-type)
-	   (p (apply 'start-process
+	   (p (apply #'start-process
 		     (tramp-get-connection-name vec) (current-buffer) args))
 	   ;; We suppress the messages `Waiting for prompts from remote shell'.
 	   (tramp-verbose (if (= tramp-verbose 3) 2 tramp-verbose))
 	   ;; We do not want to save the password.
 	   auth-source-save-behavior)
-      (tramp-message vec 6 "%s" (mapconcat 'identity (process-command p) " "))
+      (tramp-message vec 6 "%s" (mapconcat #'identity (process-command p) " "))
       ;; Avoid process status message in output buffer.
-      (set-process-sentinel p 'ignore)
+      (set-process-sentinel p #'ignore)
       (process-put p 'vector vec)
-      (process-put p 'adjust-window-size-function 'ignore)
+      (process-put p 'adjust-window-size-function #'ignore)
       (set-process-query-on-exit-flag p nil)
       (tramp-process-actions p vec nil tramp-sudoedit-sudo-actions)
       (tramp-message vec 6 "%s\n%s" (process-exit-status p) (buffer-string))
@@ -830,7 +830,7 @@ in case of error, t otherwise."
 (defun tramp-sudoedit-send-command-and-read (vec &rest args)
   "Run command ARGS and return the output, which must be a Lisp expression.
 In case there is no valid Lisp expression, it raises an error."
-  (when (apply 'tramp-sudoedit-send-command vec args)
+  (when (apply #'tramp-sudoedit-send-command vec args)
     (with-current-buffer (tramp-get-connection-buffer vec)
       ;; Replace stat marker.
       (goto-char (point-min))
@@ -856,7 +856,7 @@ In case there is no valid Lisp expression, it raises an error."
 
 (defun tramp-sudoedit-send-command-string (vec &rest args)
   "Run command ARGS and return the output as astring."
-  (when (apply 'tramp-sudoedit-send-command vec args)
+  (when (apply #'tramp-sudoedit-send-command vec args)
     (with-current-buffer (tramp-get-connection-buffer vec)
       (tramp-message vec 6 "\n%s" (buffer-string))
       (goto-char (point-max))

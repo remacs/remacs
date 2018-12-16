@@ -45,8 +45,6 @@
 (require 'timer)
 (require 'ucs-normalize)
 
-(require 'tramp-loaddefs)
-
 ;; For not existing functions, obsolete functions, or functions with a
 ;; changed argument list, there are compiler warnings.  We want to
 ;; avoid them in cases we know what we do.
@@ -230,6 +228,7 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 ;; support old settings.
 (defsubst tramp-compat-tramp-syntax ()
   "Return proper value of `tramp-syntax'."
+  (defvar tramp-syntax)
   (cond ((eq tramp-syntax 'ftp) 'default)
 	((eq tramp-syntax 'sep) 'separate)
 	(t tramp-syntax)))

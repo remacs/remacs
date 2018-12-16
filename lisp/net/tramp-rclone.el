@@ -50,13 +50,14 @@
   :type 'string)
 
 ;;;###tramp-autoload
-(add-to-list
- 'tramp-methods
- `(,tramp-rclone-method
-   (tramp-mount-args nil)
-   (tramp-copyto-args nil)
-   (tramp-moveto-args nil)
-   (tramp-about-args ("--full"))))
+(tramp--with-startup
+ (add-to-list
+  'tramp-methods
+  `(,tramp-rclone-method
+    (tramp-mount-args nil)
+    (tramp-copyto-args nil)
+    (tramp-moveto-args nil)
+    (tramp-about-args ("--full")))))
 
 ;;;###tramp-autoload
 (eval-after-load 'tramp
@@ -162,8 +163,9 @@ pass to the OPERATION."
       (tramp-run-real-handler operation args))))
 
 ;;;###tramp-autoload
-(tramp-register-foreign-file-name-handler
- 'tramp-rclone-file-name-p 'tramp-rclone-file-name-handler)
+(tramp--with-startup
+ (tramp-register-foreign-file-name-handler
+  #'tramp-rclone-file-name-p #'tramp-rclone-file-name-handler))
 
 ;;;###tramp-autoload
 (defun tramp-rclone-parse-device-names (_ignore)

@@ -38,30 +38,31 @@
 ;; ... and add it to the method list.
 ;;;###tramp-autoload
 (unless (memq system-type '(cygwin windows-nt))
-  (add-to-list 'tramp-methods
-    `(,tramp-smb-method
-      ;; We define an empty command, because `tramp-smb-call-winexe'
-      ;; opens already the powershell.  Used in `tramp-handle-shell-command'.
-      (tramp-remote-shell "")
-      ;; This is just a guess.  We don't know whether the share "C$"
-      ;; is available for public use, and whether the user has write
-      ;; access.
-      (tramp-tmpdir "/C$/Temp")
-      ;; Another guess.  We might implement a better check later on.
-      (tramp-case-insensitive t))))
+  (tramp--with-startup
+   (add-to-list 'tramp-methods
+                `(,tramp-smb-method
+                  ;; We define an empty command, because
+                  ;; `tramp-smb-call-winexe' opens already the powershell.
+                  ;; Used in `tramp-handle-shell-command'.
+                  (tramp-remote-shell "")
+                  ;; This is just a guess.  We don't know whether the share "C$"
+                  ;; is available for public use, and whether the user has write
+                  ;; access.
+                  (tramp-tmpdir "/C$/Temp")
+                  ;; Another guess.  We might implement a better check later on.
+                  (tramp-case-insensitive t)))))
 
 ;; Add a default for `tramp-default-user-alist'. Rule: For the SMB method,
 ;; the anonymous user is chosen.
 ;;;###tramp-autoload
-(add-to-list 'tramp-default-user-alist
-	     `(,(concat "\\`" tramp-smb-method "\\'") nil nil))
+(tramp--with-startup
+ (add-to-list 'tramp-default-user-alist
+	      `(,(concat "\\`" tramp-smb-method "\\'") nil nil))
 
-;; Add completion function for SMB method.
-;;;###tramp-autoload
-(eval-after-load 'tramp
-  '(tramp-set-completion-function
-    tramp-smb-method
-    '((tramp-parse-netrc "~/.netrc"))))
+ ;; Add completion function for SMB method.
+ (tramp-set-completion-function
+  tramp-smb-method
+  '((tramp-parse-netrc "~/.netrc"))))
 
 ;;;###tramp-autoload
 (defcustom tramp-smb-program "smbclient"
@@ -337,8 +338,9 @@ pass to the OPERATION."
 
 ;;;###tramp-autoload
 (unless (memq system-type '(cygwin windows-nt))
-  (tramp-register-foreign-file-name-handler
-   'tramp-smb-file-name-p 'tramp-smb-file-name-handler))
+  (tramp--with-startup
+   (tramp-register-foreign-file-name-handler
+    #'tramp-smb-file-name-p #'tramp-smb-file-name-handler)))
 
 ;; File name primitives.
 
