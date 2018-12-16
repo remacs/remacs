@@ -50,10 +50,11 @@
 ;;   definitions already sent to the remote shell, "last-cmd-time" is
 ;;   the time stamp a command has been sent to the remote process.
 ;;
-;; - The key is `nil'.  This are temporary properties related to the
+;; - The key is nil.  This are temporary properties related to the
 ;;   local machine.  Examples: "parse-passwd" and "parse-group" keep
-;;   the results of parsing "/etc/passwd" and "/etc/group", "locale"
-;;   is the used shell locale.
+;;   the results of parsing "/etc/passwd" and "/etc/group",
+;;   "{uid,gid}-{integer,string}" are the local uid and gid, and
+;;   "locale" is the used shell locale.
 
 ;; Some properties are handled special:
 ;;

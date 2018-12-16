@@ -468,6 +468,19 @@ The method @option{sg} stands for ``switch group''; the changed group
 must be used here as user name.  The default host name is the same.
 
 
+@anchor{Quick Start Guide: @option{sudoedit} method}
+@section Using @command{sudoedit}
+@cindex method @option{sudoedit}
+@cindex @option{sudoedit} method
+
+The @option{sudoedit} method is similar to the @option{sudo} method.
+However, it is a different implementation: it does not keep an open
+session running in the background.  This is for security reasons; on
+the backside this method is less performant than the @option{sudo}
+method, it is restricted to the @samp{localhost} only, and it does not
+support external processes.
+
+
 @anchor{Quick Start Guide: @option{smb} method}
 @section Using @command{smbclient}
 @cindex method @option{smb}
@@ -918,6 +931,30 @@ is sometimes the only combination suitable for accessing routers or
 NAS hosts.  These dumb devices have severely restricted local shells,
 such as the @command{busybox} and do not host any other encode or
 decode programs.
+
+@item @option{sudoedit}
+@cindex method @option{sudoedit}
+@cindex @option{sudoedit} method
+
+The @option{sudoedit} method allows to edit a file as a different user
+on the local host.  You could regard this as @value{tramp}'s
+implementation of the @command{sudoedit}.  Contrary to the
+@option{sudo} method, all magic file name functions are implemented by
+single @command{sudo @dots{}}  commands.  The purpose is to make
+editing such a file as secure as possible; there must be no session
+running in the Emacs background which could be attacked from inside
+Emacs.
+
+Consequently, external processes are not implemented.
+
+The host name of such remote file names must represent the local host.
+Since the default value is already proper, it is recommended not to
+use any host name in the remote file name, like
+@file{@trampfn{sudoedit,,/path/to/file}} or
+@file{@trampfn{sudoedit,user@@,/path/to/file}}.
+
+Like the @option{sudo} method, a @option{sudoedit} password expires
+after a predefined timeout.
 
 @item @option{ftp}
 @cindex method @option{ftp}

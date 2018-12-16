@@ -3009,7 +3009,7 @@ This tests also `file-readable-p', `file-regular-p' and
   "Check `file-modes'.
 This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
   (skip-unless (tramp--test-enabled))
-  (skip-unless (tramp--test-sh-p))
+  (skip-unless (or (tramp--test-sh-p) (tramp--test-sudoedit-p)))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
@@ -3309,7 +3309,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 (ert-deftest tramp-test22-file-times ()
   "Check `set-file-times' and `file-newer-than-file-p'."
   (skip-unless (tramp--test-enabled))
-  (skip-unless (or (tramp--test-adb-p) (tramp--test-sh-p)))
+  (skip-unless
+   (or (tramp--test-adb-p) (tramp--test-sh-p) (tramp--test-sudoedit-p)))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
@@ -4567,6 +4568,10 @@ This does not support special file names."
    (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
    'tramp-sh-file-name-handler))
 
+(defun tramp--test-sudoedit-p ()
+  "Check, whether the sudoedit method is used."
+  (tramp-sudoedit-file-name-p tramp-test-temporary-file-directory))
+
 (defun tramp--test-windows-nt ()
   "Check, whether the locale host runs MS Windows."
   (eq system-type 'windows-nt))
@@ -4761,6 +4766,7 @@ This requires restrictions of file name syntax."
 	 (list
 	  (if (or (tramp--test-gvfs-p)
 		  (tramp--test-rclone-p)
+		  (tramp--test-sudoedit-p)
 		  (tramp--test-windows-nt-or-smb-p))
 	      "foo bar baz"
 	    (if (or (tramp--test-adb-p)

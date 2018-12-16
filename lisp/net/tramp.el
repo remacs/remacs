@@ -2234,7 +2234,9 @@ ARGS are the arguments OPERATION has been called with."
 	      ;; Emacs 26+ only.
 	      file-name-case-insensitive-p
 	      ;; Emacs 27+ only.
-	      file-system-info))
+	      file-system-info
+	      ;; Tramp internal magic file name function.
+	      tramp-set-file-uid-gid))
     (if (file-name-absolute-p (nth 0 args))
 	(nth 0 args)
       default-directory))
@@ -4329,24 +4331,49 @@ This is used internally by `tramp-file-mode-from-int'."
 		(and suid (upcase suid-text)) ; suid, !execute
 		(and x "x") "-"))))	; !suid
 
+;; This is a Tramp internal function.  A general `set-file-uid-gid'
+;; outside Tramp is not needed, I believe.
+(defun tramp-set-file-uid-gid (filename &optional uid gid)
+  "Set the ownership for FILENAME.
+If UID and GID are provided, these values are used; otherwise uid
+and gid of the corresponding remote or local user is taken,
+depending whether FILENAME is remote or local.  Both parameters
+must be non-negative integers.
+If FILENAME is remote, a file name handler is called."
+  (let ((handler (find-file-name-handler filename 'tramp-set-file-uid-gid)))
+    (if handler
+	(funcall handler 'tramp-set-file-uid-gid filename uid gid)
+      ;; On W32 "chown" does not work.
+      (unless (memq system-type '(ms-dos windows-nt))
+	(let ((uid (or (and (natnump uid) uid) (tramp-get-local-uid 'integer)))
+	      (gid (or (and (natnump gid) gid) (tramp-get-local-gid 'integer))))
+	  (tramp-call-process
+	   nil "chown" nil nil nil
+	   (format "%d:%d" uid gid) (shell-quote-argument filename)))))))
+
 ;;;###tramp-autoload
 (defun tramp-get-local-uid (id-format)
   "The uid of the local user, in ID-FORMAT.
 ID-FORMAT valid values are `string' and `integer'."
-  (if (equal id-format 'integer) (user-uid) (user-login-name)))
+  ;; We use key nil for local connection properties.
+  (with-tramp-connection-property nil (format "uid-%s" id-format)
+    (if (equal id-format 'integer) (user-uid) (user-login-name))))
 
 ;;;###tramp-autoload
 (defun tramp-get-local-gid (id-format)
   "The gid of the local user, in ID-FORMAT.
 ID-FORMAT valid values are `string' and `integer'."
-  (cond
-   ;; `group-gid' has been introduced with Emacs 24.4.
-   ((and (fboundp 'group-gid) (equal id-format 'integer))
-    (tramp-compat-funcall 'group-gid))
-   ;; `group-name' has been introduced with Emacs 27.1.
-   ((and (fboundp 'group-name) (equal id-format 'string))
-    (tramp-compat-funcall 'group-name (tramp-compat-funcall 'group-gid)))
-   ((tramp-compat-file-attribute-group-id (file-attributes "~/" id-format)))))
+  ;; We use key nil for local connection properties.
+  (with-tramp-connection-property nil (format "gid-%s" id-format)
+    (cond
+     ;; `group-gid' has been introduced with Emacs 24.4.
+     ((and (fboundp 'group-gid) (equal id-format 'integer))
+      (tramp-compat-funcall 'group-gid))
+     ;; `group-name' has been introduced with Emacs 27.1.
+     ((and (fboundp 'group-name) (equal id-format 'string))
+      (tramp-compat-funcall 'group-name (tramp-compat-funcall 'group-gid)))
+     ((tramp-compat-file-attribute-group-id
+       (file-attributes "~/" id-format))))))
 
 (defun tramp-get-local-locale (&optional vec)
   "Determine locale, supporting UTF8 if possible.

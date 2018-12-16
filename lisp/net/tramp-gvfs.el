@@ -589,6 +589,7 @@ It has been changed in GVFS 1.14.")
     (start-file-process . ignore)
     (substitute-in-file-name . tramp-handle-substitute-in-file-name)
     (temporary-file-directory . tramp-handle-temporary-file-directory)
+    (tramp-set-file-uid-gid . ignore)
     (unhandled-file-name-directory . ignore)
     (vc-registered . ignore)
     (verify-visited-file-modtime . tramp-handle-verify-visited-file-modtime)
@@ -1843,7 +1844,7 @@ connection if a previous connection has died for some reason."
 	 (tramp-get-connection-process vec) "connected" t))))
 
   ;; In `tramp-check-cached-permissions', the connection properties
-  ;; {uig,gid}-{integer,string} are used.  We set them to proper values.
+  ;; "{uid,gid}-{integer,string}" are used.  We set them to proper values.
   (unless tramp-gvfs-get-remote-uid-gid-in-progress
     (let ((tramp-gvfs-get-remote-uid-gid-in-progress t))
       (tramp-gvfs-get-remote-uid vec 'integer)

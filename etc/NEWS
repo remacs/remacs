@@ -865,6 +865,12 @@ or NextCloud hosted files and directories.
 storages via the 'rclone' program.  This feature is experimental.
 
 +++
+*** New connection method "sudoedit", which allows to edit local files
+with different user credentials.  Contrary to the "sudo" method, no
+session is run permanently in the background.  This is for security
+reasons.
+
++++
 *** Connection methods "obex" and "synce" are removed, because they
 are obsoleted in GVFS.
 

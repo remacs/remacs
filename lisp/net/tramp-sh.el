@@ -1044,6 +1044,7 @@ of command line.")
     (start-file-process . tramp-sh-handle-start-file-process)
     (substitute-in-file-name . tramp-handle-substitute-in-file-name)
     (temporary-file-directory . tramp-handle-temporary-file-directory)
+    (tramp-set-file-uid-gid . tramp-sh-handle-set-file-uid-gid)
     (unhandled-file-name-directory . ignore)
     (vc-registered . tramp-sh-handle-vc-registered)
     (verify-visited-file-modtime . tramp-sh-handle-verify-visited-file-modtime)
@@ -1516,39 +1517,26 @@ of."
 	      "")
 	    (tramp-shell-quote-argument localname)))))))
 
-(defun tramp-set-file-uid-gid (filename &optional uid gid)
-  "Set the ownership for FILENAME.
-If UID and GID are provided, these values are used; otherwise uid
-and gid of the corresponding user is taken.  Both parameters must
-be non-negative integers."
+(defun tramp-sh-handle-set-file-uid-gid (filename &optional uid gid)
+  "Like `tramp-set-file-uid-gid' for Tramp files."
   ;; Modern Unices allow chown only for root.  So we might need
   ;; another implementation, see `dired-do-chown'.  OTOH, it is mostly
   ;; working with su(do)? when it is needed, so it shall succeed in
   ;; the majority of cases.
   ;; Don't modify `last-coding-system-used' by accident.
   (let ((last-coding-system-used last-coding-system-used))
-    (if (tramp-tramp-file-p filename)
-	(with-parsed-tramp-file-name filename nil
-	  (if (and (zerop (user-uid)) (tramp-local-host-p v))
-	      ;; If we are root on the local host, we can do it directly.
-	      (tramp-set-file-uid-gid localname uid gid)
-	    (let ((uid (or (and (natnump uid) uid)
-			   (tramp-get-remote-uid v 'integer)))
-		  (gid (or (and (natnump gid) gid)
-			   (tramp-get-remote-gid v 'integer))))
-	      (tramp-send-command
-	       v (format
-		  "chown %d:%d %s" uid gid
-		  (tramp-shell-quote-argument localname))))))
-
-      ;; We handle also the local part, because there doesn't exist
-      ;; `set-file-uid-gid'.  On W32 "chown" does not work.
-      (unless (memq system-type '(ms-dos windows-nt))
-	(let ((uid (or (and (natnump uid) uid) (tramp-get-local-uid 'integer)))
-	      (gid (or (and (natnump gid) gid) (tramp-get-local-gid 'integer))))
-	  (tramp-call-process
-	   nil "chown" nil nil nil
-	   (format "%d:%d" uid gid) (shell-quote-argument filename)))))))
+    (with-parsed-tramp-file-name filename nil
+      (if (and (zerop (user-uid)) (tramp-local-host-p v))
+	  ;; If we are root on the local host, we can do it directly.
+	  (tramp-set-file-uid-gid localname uid gid)
+	(let ((uid (or (and (natnump uid) uid)
+		       (tramp-get-remote-uid v 'integer)))
+	      (gid (or (and (natnump gid) gid)
+		       (tramp-get-remote-gid v 'integer))))
+	  (tramp-send-command
+	   v (format
+	      "chown %d:%d %s" uid gid
+	      (tramp-shell-quote-argument localname))))))))
 
 (defun tramp-remote-selinux-p (vec)
   "Check, whether SELINUX is enabled on the remote host."
@@ -2114,6 +2102,7 @@ file names."
 
 	  ;; Handle `preserve-extended-attributes'.  We ignore possible
 	  ;; errors, because ACL strings could be incompatible.
+	  ;; `set-file-extended-attributes' exists since Emacs 24.4.
 	  (when attributes
 	    (ignore-errors
 	      (apply 'set-file-extended-attributes (list newname attributes))))

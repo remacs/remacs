@@ -134,6 +134,7 @@
     (start-file-process . ignore)
     (substitute-in-file-name . tramp-handle-substitute-in-file-name)
     (temporary-file-directory . tramp-handle-temporary-file-directory)
+    (tramp-set-file-uid-gid . ignore)
     (unhandled-file-name-directory . ignore)
     (vc-registered . ignore)
     (verify-visited-file-modtime . tramp-handle-verify-visited-file-modtime)
@@ -575,7 +576,7 @@ connection if a previous connection has died for some reason."
 	  (tramp-cleanup-connection vec 'keep-debug 'keep-password)))))
 
   ;; In `tramp-check-cached-permissions', the connection properties
-  ;; {uig,gid}-{integer,string} are used.  We set them to proper values.
+  ;; "{uid,gid}-{integer,string}" are used.  We set them to proper values.
   (with-tramp-connection-property
       vec "uid-integer" (tramp-get-local-uid 'integer))
   (with-tramp-connection-property
