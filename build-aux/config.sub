@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2018 Free Software Foundation, Inc.
 
-timestamp='2018-11-28'
+timestamp='2018-12-16'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -111,7 +111,7 @@ case $# in
 esac
 
 # Split fields of configuration type
-IFS="-" read -r field1 field2 field3 field4 <<EOF
+IFS="-" read field1 field2 field3 field4 <<EOF
 $1
 EOF
 
@@ -918,7 +918,7 @@ case $basic_machine in
 		;;
 
 	*-*)
-		IFS="-" read -r cpu vendor <<EOF
+		IFS="-" read cpu vendor <<EOF
 $basic_machine
 EOF
 		;;

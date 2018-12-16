@@ -139,7 +139,7 @@
    Headers that should use flexible arrays only if they're "real"
    (e.g. only if they won't affect sizeof()) should test
    #if __glibc_c99_flexarr_available.  */
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L && !defined __HP_cc
 # define __flexarr	[]
 # define __glibc_c99_flexarr_available 1
 #elif __GNUC_PREREQ (2,97)

@@ -34,6 +34,7 @@ struct tm *localtime_buffer_addr = &tm_zero_buffer;
 
 struct tm *
 rpl_localtime (time_t const *timep)
+#undef localtime
 {
   struct tm *tm = localtime (timep);
 
@@ -46,6 +47,7 @@ rpl_localtime (time_t const *timep)
 /* Same as above, since gmtime and localtime use the same buffer.  */
 struct tm *
 rpl_gmtime (time_t const *timep)
+#undef gmtime
 {
   struct tm *tm = gmtime (timep);
 
