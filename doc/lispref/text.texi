@@ -5179,11 +5179,11 @@ class:
 
 @item A user interface for building JSONRPC applications
 
-In this scenario, the JSONRPC application instantiates
-@code{jsonrpc-connection} objects of one of its concrete subclasses
-using @code{make-instance}.  To initiate a contact to the remote
-endpoint, the JSONRPC application passes this object to the functions
-@code{jsonrpc-notify'}, @code{jsonrpc-request} and
+In this scenario, the JSONRPC application selects a concrete subclass
+of @code{jsonrpc-connection}, and proceeds to create objects of that
+subclass using @code{make-instance}.  To initiate a contact to the
+remote endpoint, the JSONRPC application passes this object to the
+functions @code{jsonrpc-notify'}, @code{jsonrpc-request} and
 @code{jsonrpc-async-request}.  For handling remotely initiated
 contacts, which generally come in asynchronously, the instantiation
 should include @code{:request-dispatcher} and
