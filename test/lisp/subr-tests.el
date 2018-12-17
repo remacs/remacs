@@ -383,9 +383,11 @@ See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=19350."
   (should (equal (flatten-tree 42)
                  '(42)))
   (should (equal (flatten-tree t)
-               '(t)))
+                 '(t)))
   (should (equal (flatten-tree nil)
-               nil))
+                 nil))
+  (should (equal (flatten-tree '((nil) ((((nil)))) nil))
+                 nil))
   (should (equal (flatten-tree '(1 ("foo" "bar") 2))
                  '(1 "foo" "bar" 2))))
 
