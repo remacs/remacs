@@ -1109,6 +1109,16 @@ unquoted file names."
     (with-temp-buffer
       (write-region nil nil nospecial nil :visit))))
 
+(ert-deftest files-tests-file-name-non-special-make-process ()
+  "Check that the ‘:file-handler’ argument of ‘make-process’
+works as expected if the default directory is quoted."
+  (let ((default-directory (file-name-quote invocation-directory))
+        (program (file-name-quote
+                  (expand-file-name invocation-name invocation-directory))))
+    (should (processp (make-process :name "name"
+                                    :command (list program "--version")
+                                    :file-handler t)))))
+
 (ert-deftest files-tests--insert-directory-wildcard-in-dir-p ()
   (let ((alist (list (cons "/home/user/*/.txt" (cons "/home/user/" "*/.txt"))
                      (cons "/home/user/.txt" nil)

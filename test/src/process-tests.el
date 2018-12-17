@@ -215,5 +215,54 @@
                                       (string-to-list "stdout\n")
                                       (string-to-list "stderr\n"))))))
 
+(ert-deftest make-process/file-handler/found ()
+  "Check that the ‘:file-handler’ argument of ‘make-process’
+works as expected if a file handler is found."
+  (let ((file-handler-calls 0))
+    (cl-flet ((file-handler
+               (&rest args)
+               (should (equal default-directory "test-handler:/dir/"))
+               (should (equal args '(make-process :name "name"
+                                                  :command ("/some/binary")
+                                                  :file-handler t)))
+               (cl-incf file-handler-calls)
+               'fake-process))
+      (let ((file-name-handler-alist (list (cons (rx bos "test-handler:")
+                                                 #'file-handler)))
+            (default-directory "test-handler:/dir/"))
+        (should (eq (make-process :name "name"
+                                  :command '("/some/binary")
+                                  :file-handler t)
+                    'fake-process))
+        (should (= file-handler-calls 1))))))
+
+(ert-deftest make-process/file-handler/not-found ()
+  "Check that the ‘:file-handler’ argument of ‘make-process’
+works as expected if no file handler is found."
+  (let ((file-name-handler-alist ())
+        (default-directory invocation-directory)
+        (program (expand-file-name invocation-name invocation-directory)))
+    (should (processp (make-process :name "name"
+                                    :command (list program "--version")
+                                    :file-handler t)))))
+
+(ert-deftest make-process/file-handler/disable ()
+  "Check ‘make-process’ works as expected if it shouldn’t use the
+file handler."
+  (let ((file-name-handler-alist (list (cons (rx bos "test-handler:")
+                                             #'process-tests--file-handler)))
+        (default-directory "test-handler:/dir/")
+        (program (expand-file-name invocation-name invocation-directory)))
+    (should (processp (make-process :name "name"
+                                    :command (list program "--version"))))))
+
+(defun process-tests--file-handler (operation &rest _args)
+  (cl-ecase operation
+    (unhandled-file-name-directory "/")
+    (make-process (ert-fail "file handler called unexpectedly"))))
+
+(put #'process-tests--file-handler 'operations
+     '(unhandled-file-name-directory make-process))
+
 (provide 'process-tests)
 ;; process-tests.el ends here.

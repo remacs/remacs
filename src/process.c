@@ -1661,6 +1661,11 @@ to the standard error of subprocess.  Specifying this implies
 `:connection-type' is set to `pipe'.  If STDERR is nil, standard error
 is mixed with standard output and sent to BUFFER or FILTER.
 
+:file-handler FILE-HANDLER -- If FILE-HANDLER is non-nil, then look
+for a file name handler for the current buffer's `default-directory'
+and invoke that file handler to make the process.  If there is no
+such handler, proceed as if FILE-HANDLER were nil.
+
 usage: (make-process &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
@@ -1673,6 +1678,15 @@ usage: (make-process &rest ARGS)  */)
 
   /* Save arguments for process-contact and clone-process.  */
   contact = Flist (nargs, args);
+
+  if (!NILP (Fplist_get (contact, QCfile_handler)))
+    {
+      Lisp_Object file_handler
+        = Ffind_file_name_handler (BVAR (current_buffer, directory),
+                                   Qmake_process);
+      if (!NILP (file_handler))
+        return CALLN (Fapply, file_handler, Qmake_process, contact);
+    }
 
   buffer = Fplist_get (contact, QCbuffer);
   if (!NILP (buffer))
@@ -8098,6 +8112,8 @@ init_process_emacs (int sockfd)
 void
 syms_of_process (void)
 {
+  DEFSYM (Qmake_process, "make-process");
+
 #ifdef subprocesses
 
   DEFSYM (Qprocessp, "processp");
@@ -8138,6 +8154,7 @@ syms_of_process (void)
   DEFSYM (Qreal, "real");
   DEFSYM (Qnetwork, "network");
   DEFSYM (Qserial, "serial");
+  DEFSYM (QCfile_handler, ":file-handler");
   DEFSYM (QCbuffer, ":buffer");
   DEFSYM (QChost, ":host");
   DEFSYM (QCservice, ":service");

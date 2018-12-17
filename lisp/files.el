@@ -7103,7 +7103,8 @@ only these files will be asked to be saved."
         (default-directory
 	  (if (memq operation
                     '(insert-directory process-file start-file-process
-                                       shell-command temporary-file-directory))
+                                       make-process shell-command
+                                       temporary-file-directory))
 	      (directory-file-name
 	       (expand-file-name
 		(unhandled-file-name-directory default-directory)))
@@ -7151,7 +7152,13 @@ only these files will be asked to be saved."
                           ;; These file-notify-* operations take a
                           ;; descriptor.
                           (file-notify-rm-watch)
-                          (file-notify-valid-p)))
+                          (file-notify-valid-p)
+                          ;; `make-process' uses keyword arguments and
+                          ;; doesn't mangle its filenames in any way.
+                          ;; It already strips /: from the binary
+                          ;; filename, so we don't have to do this
+                          ;; here.
+                          (make-process)))
 		  ;; For all other operations, treat the first
 		  ;; argument only as the file name.
 		  '(nil 0))))

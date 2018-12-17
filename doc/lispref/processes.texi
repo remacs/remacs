@@ -696,6 +696,12 @@ non-@code{nil} value should be either a buffer or a pipe process
 created with @code{make-pipe-process}, described below.  If
 @var{stderr} is @code{nil}, standard error is mixed with standard
 output, and both are sent to @var{buffer} or @var{filter}.
+
+@item :file-handler @var{file-handler}
+If @var{file-handler} is non-@code{nil}, then look for a file name
+handler for the current buffer's @code{default-directory}, and invoke
+that file handler to make the process.  If there is no such handler,
+proceed as if @var{file-handler} were @code{nil}.
 @end table
 
 The original argument list, modified with the actual connection
@@ -704,8 +710,8 @@ information, is available via the @code{process-contact} function.
 The current working directory of the subprocess is set to the current
 buffer's value of @code{default-directory} if that is local (as
 determined by `unhandled-file-name-directory'), or "~" otherwise.  If
-you want to run a process in a remote directory use
-@code{start-file-process}.
+you want to run a process in a remote directory, pass
+@code{:file-handler t} to @code{make-process}.
 @end defun
 
 @defun make-pipe-process &rest args
