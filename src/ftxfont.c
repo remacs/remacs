@@ -359,7 +359,7 @@ struct font_driver const ftxfont_driver =
   .otf_capability = ftfont_otf_capability,
 #endif
   .end_for_frame = ftxfont_end_for_frame,
-#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
+#if defined HAVE_LIBOTF && (defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ)
   .shape = ftfont_shape,
 #endif
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS

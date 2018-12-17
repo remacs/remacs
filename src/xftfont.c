@@ -672,7 +672,7 @@ xftfont_draw (struct glyph_string *s, int from, int to, int x, int y,
   return len;
 }
 
-#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
+#if defined HAVE_LIBOTF && (defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ)
 static Lisp_Object
 xftfont_shape (Lisp_Object lgstring)
 {
@@ -784,7 +784,7 @@ struct font_driver const xftfont_driver =
   .otf_capability = ftfont_otf_capability,
 #endif
   .end_for_frame = xftfont_end_for_frame,
-#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
+#if defined HAVE_LIBOTF && (defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ)
   .shape = xftfont_shape,
 #endif
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS
