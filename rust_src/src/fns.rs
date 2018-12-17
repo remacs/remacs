@@ -9,6 +9,7 @@ use crate::{
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, member, memq, put, LispCons},
+    numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
@@ -334,7 +335,7 @@ unsafe fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> li
 /// setgid so that it can read kernel information, and that usually isn't
 /// advisable.
 #[lisp_fn(min = "0")]
-pub fn load_average(use_floats: bool) -> Vec<LispObject> {
+pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
     let mut load_avg: [libc::c_double; 3] = [0.0, 0.0, 0.0];
     let loads = unsafe { getloadaverage(load_avg.as_mut_ptr(), 3) };
 
@@ -345,9 +346,9 @@ pub fn load_average(use_floats: bool) -> Vec<LispObject> {
     (0..loads as usize)
         .map(|i| {
             if use_floats {
-                LispObject::from(load_avg[i])
+                LispNumber::Float(load_avg[i])
             } else {
-                LispObject::from((100.0 * load_avg[i]) as i64)
+                LispNumber::Fixnum((100.0 * load_avg[i]) as i64)
             }
         })
         .collect()
