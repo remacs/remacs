@@ -145,7 +145,7 @@ more Emacs-y.
 
         apt install texinfo libjpeg-dev libtiff-dev \
           libgif-dev libxpm-dev libgtk-3-dev libgnutls28-dev \
-          libncurses5-dev libxml2-dev libxt-dev
+          libncurses5-dev libxml2-dev libxt-dev clang-7
 
    macOS:
    
