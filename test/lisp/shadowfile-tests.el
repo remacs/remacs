@@ -69,6 +69,7 @@
 
 ;; This should happen on hydra only.
 (when (getenv "EMACS_HYDRA_CI")
+  (require 'tramp-sh)
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 (defconst shadow-test-info-file
