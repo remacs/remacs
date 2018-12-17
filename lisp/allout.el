@@ -4351,7 +4351,7 @@ subtopics into siblings of the item."
             (let ((children-chart (allout-chart-subtree 1)))
               (if (listp (car children-chart))
                   ;; whoops:
-                  (setq children-chart (allout-flatten children-chart)))
+                  (setq children-chart (flatten-tree children-chart)))
               (save-excursion
                 (dolist (child-point children-chart)
                   (goto-char child-point)
@@ -6547,14 +6547,7 @@ If BEG is bigger than END we return 0."
   (apply 'concat
          (mapcar (lambda (char) (if (= char ?%) "%%" (char-to-string char)))
                  string)))
-;;;_  : lists
-;;;_   > allout-flatten (list)
-(defun allout-flatten (list)
-  "Return a list of all atoms in list."
-  ;; classic.
-  (cond ((null list) nil)
-        ((atom (car list)) (cons (car list) (allout-flatten (cdr list))))
-        (t (append (allout-flatten (car list)) (allout-flatten (cdr list))))))
+(define-obsolete-function-alias 'allout-flatten #'flatten-tree "27.1")
 ;;;_  : Compatibility:
 ;;;_   : xemacs undo-in-progress provision:
 (unless (boundp 'undo-in-progress)

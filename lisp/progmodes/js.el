@@ -623,8 +623,6 @@ then the \".\"s will be lined up:
   "Parse state at `js--last-parse-pos'.")
 (make-variable-buffer-local 'js--state-at-last-parse-pos)
 
-(define-obsolete-function-alias 'js--flatten-list #'flatten-tree "27.1")
-
 (defun js--maybe-join (prefix separator suffix &rest list)
   "Helper function for `js--update-quick-match-re'.
 If LIST contains any element that is not nil, return its non-nil
