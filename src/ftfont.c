@@ -2815,6 +2815,7 @@ get_hb_unicode_funcs (void)
   return funcs;
 }
 
+#ifdef HAVE_LIBOTF
 static Lisp_Object
 ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
                     FT_Matrix *matrix)
@@ -2929,6 +2930,7 @@ done:
   return make_fixnum (glyph_len);
 }
 
+#endif	/* HAVE_LIBOTF */
 #endif /* HAVE_HARFBUZZ */
 
 #if defined HAVE_LIBOTF && (defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ)
