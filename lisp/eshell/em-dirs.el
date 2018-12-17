@@ -259,7 +259,7 @@ Thus, this does not include the current directory.")
   (if (> (length args) 1)
       (error "%s: command not found" (car args))
     (throw 'eshell-replace-command
-	   (eshell-parse-command "cd" (eshell-flatten-list args)))))
+	   (eshell-parse-command "cd" (flatten-tree args)))))
 
 (defun eshell-parse-user-reference ()
   "An argument beginning with ~ is a filename to be expanded."
@@ -353,7 +353,7 @@ in the minibuffer:
 
 (defun eshell/cd (&rest args)           ; all but first ignored
   "Alias to extend the behavior of `cd'."
-  (setq args (eshell-flatten-list args))
+  (setq args (flatten-tree args))
   (let ((path (car args))
 	(subpath (car (cdr args)))
 	(case-fold-search (eshell-under-windows-p))

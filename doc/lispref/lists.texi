@@ -667,6 +667,18 @@ non-@code{nil}, it copies vectors too (and operates recursively on
 their elements).
 @end defun
 
+@defun flatten-tree tree
+Take @var{tree} and "flatten" it.
+This always returns a list containing all the terminal nodes, or
+leaves, of @var{tree}.  Dotted pairs are flattened as well, and nil
+elements are removed.
+@end defun
+
+@example
+(flatten-tree '(1 (2 . 3) nil (4 5 (6)) 7))
+    @result{}(1 2 3 4 5 6 7)
+@end example
+
 @defun number-sequence from &optional to separation
 This returns a list of numbers starting with @var{from} and
 incrementing by @var{separation}, and ending at or just before

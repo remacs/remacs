@@ -175,7 +175,7 @@ allowed."
   (let* (eshell-interpreter-alist
 	 (interp (eshell-find-interpreter (car args) (cdr args)))
 	 (program (car interp))
-	 (args (eshell-flatten-list
+	 (args (flatten-tree
 		(eshell-stringify-list (append (cdr interp)
 					       (cdr args)))))
 	 (term-buf

@@ -4773,7 +4773,7 @@ If LINE, insert the rebuilt thread starting on line LINE."
   (let (headers thread last-id)
     ;; First go up in this thread until we find the root.
     (setq last-id (gnus-root-id id)
-	  headers (message-flatten-list (gnus-id-to-thread last-id)))
+	  headers (flatten-tree (gnus-id-to-thread last-id)))
     ;; We have now found the real root of this thread.  It might have
     ;; been gathered into some loose thread, so we have to search
     ;; through the threads to find the thread we wanted.
@@ -5069,7 +5069,7 @@ Unscored articles will be counted as having a score of zero."
   "Return the highest article number in THREAD."
   (apply 'max (mapcar (lambda (header)
 			(mail-header-number header))
-		      (message-flatten-list thread))))
+		      (flatten-tree thread))))
 
 (defun gnus-article-sort-by-most-recent-date (h1 h2)
   "Sort articles by number."
@@ -5087,9 +5087,9 @@ Unscored articles will be counted as having a score of zero."
   "Return the highest article date in THREAD."
   (apply 'max
 	 (mapcar (lambda (header) (float-time
-				   (gnus-date-get-time
-				    (mail-header-date header))))
-		 (message-flatten-list thread))))
+			      (gnus-date-get-time
+			       (mail-header-date header))))
+		 (flatten-tree thread))))
 
 (defun gnus-thread-total-score-1 (root)
   ;; This function find the total score of the thread below ROOT.

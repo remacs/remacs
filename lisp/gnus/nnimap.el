@@ -804,7 +804,7 @@ textual parts.")
     (insert "\n--" boundary "--\n")))
 
 (defun nnimap-find-wanted-parts (structure)
-  (message-flatten-list (nnimap-find-wanted-parts-1 structure "")))
+  (flatten-tree (nnimap-find-wanted-parts-1 structure "")))
 
 (defun nnimap-find-wanted-parts-1 (structure prefix)
   (let ((num 1)

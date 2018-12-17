@@ -222,7 +222,7 @@ causing the user to wonder if anything's really going on..."
 
 (defun eshell-external-command (command args)
   "Insert output from an external COMMAND, using ARGS."
-  (setq args (eshell-stringify-list (eshell-flatten-list args)))
+  (setq args (eshell-stringify-list (flatten-tree args)))
   (let ((interp (eshell-find-interpreter
 		 command
 		 args

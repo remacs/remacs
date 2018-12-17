@@ -8051,7 +8051,7 @@ regular text mode tabbing command."
 If SHOW is non-nil, the arguments TEXT... are displayed in a temp buffer.
 The following arguments may contain lists of values."
   (if (and show
-	   (setq text (message-flatten-list text)))
+	   (setq text (flatten-tree text)))
       (save-window-excursion
         (with-output-to-temp-buffer " *MESSAGE information message*"
           (with-current-buffer " *MESSAGE information message*"
@@ -8061,15 +8061,7 @@ The following arguments may contain lists of values."
 	(funcall ask question))
     (funcall ask question)))
 
-(defun message-flatten-list (list)
-  "Return a new, flat list that contains all elements of LIST.
-
-\(message-flatten-list \\='(1 (2 3 (4 5 (6))) 7))
-=> (1 2 3 4 5 6 7)"
-  (cond ((consp list)
-	 (apply 'append (mapcar 'message-flatten-list list)))
-	(list
-	 (list list))))
+(define-obsolete-function-alias 'message-flatten-list #'flatten-tree "27.1")
 
 (defun message-generate-new-buffer-clone-locals (name &optional varstr)
   "Create and return a buffer with name based on NAME using `generate-new-buffer'.

@@ -62,7 +62,7 @@
   "Alias \"su\" to call TRAMP.
 
 Uses the system su through TRAMP's su method."
-  (setq args (eshell-stringify-list (eshell-flatten-list args)))
+  (setq args (eshell-stringify-list (flatten-tree args)))
   (let ((orig-args (copy-tree args)))
     (eshell-eval-using-options
      "su" args
@@ -100,7 +100,7 @@ Become another USER during a login session.")
   "Alias \"sudo\" to call Tramp.
 
 Uses the system sudo through TRAMP's sudo method."
-  (setq args (eshell-stringify-list (eshell-flatten-list args)))
+  (setq args (eshell-stringify-list (flatten-tree args)))
   (let ((orig-args (copy-tree args)))
     (eshell-eval-using-options
      "sudo" args

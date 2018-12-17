@@ -5448,5 +5448,30 @@ This function is called from lisp/Makefile and leim/Makefile."
     (setq file (concat (substring file 1 2) ":" (substring file 2))))
   file)
 
+(defun flatten-tree (tree)
+  "Take TREE and \"flatten\" it.
+This always returns a list containing all the terminal nodes, or
+\"leaves\", of TREE.  Dotted pairs are flattened as well, and nil
+elements are removed.
+
+\(flatten-tree \\='(1 (2 . 3) nil (4 5 (6)) 7))
+=> (1 2 3 4 5 6 7)
+
+TREE can be anything that can be made into a list.  For each
+element in TREE, if it is a cons cell return its car
+recursively.  Otherwise return the element."
+    (let (elems)
+    (setq tree (list tree))
+    (while (let ((elem (pop tree)))
+             (cond ((consp elem)
+                    (setq tree (cons (car elem) (cons (cdr elem) tree))))
+                   (elem
+                    (push elem elems)))
+             tree))
+    (nreverse elems)))
+
+;; Technically, `flatten-list' is a misnomer, but we provide it here
+;; for discoverability:
+(defalias 'flatten-list 'flatten-tree)
 
 ;;; subr.el ends here

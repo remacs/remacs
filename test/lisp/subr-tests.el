@@ -372,5 +372,22 @@ See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=19350."
                             (shell-quote-argument "%ca%")))
                    "without-caret %ca%"))))
 
+(ert-deftest subr-tests-flatten-tree ()
+  "Test `flatten-tree' behavior."
+  (should (equal (flatten-tree '(1 (2 . 3) nil (4 5 (6)) 7))
+                 '(1 2 3 4 5 6 7)))
+  (should (equal (flatten-tree '((1 . 2)))
+                 '(1 2)))
+  (should (equal (flatten-tree '(1 nil 2))
+                 '(1 2)))
+  (should (equal (flatten-tree 42)
+                 '(42)))
+  (should (equal (flatten-tree t)
+               '(t)))
+  (should (equal (flatten-tree nil)
+               nil))
+  (should (equal (flatten-tree '(1 ("foo" "bar") 2))
+                 '(1 "foo" "bar" 2))))
+
 (provide 'subr-tests)
 ;;; subr-tests.el ends here

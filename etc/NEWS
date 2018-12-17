@@ -1359,6 +1359,12 @@ are implemented in C using the Jansson library.
 ** New function 'ring-resize'.
 'ring-resize' can be used to grow or shrink a ring.
 
++++
+** New function 'flatten-tree'.
+'flatten-list' is provided as an alias. These functions take a tree
+and 'flatten' it such that the result is a list of all the terminal
+nodes.
+
 ** Mailcap
 
 ---
