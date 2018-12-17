@@ -854,7 +854,7 @@ can also be executed interactively independently of
   (unless (stringp file-name)
     (error "Invalid file-name"))
 
-  (let* ((dir       (file-name-directory file-name))
+  (let* ((dir       (file-name-directory (file-name-unquote file-name)))
          ;; Not sure what this slash-pos is all about, but I guess it's just
          ;; trying to remove the leading / of absolute file names.
 	 (slash-pos (string-match "/" dir))
