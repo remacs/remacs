@@ -2931,7 +2931,7 @@ done:
 
 #endif /* HAVE_HARFBUZZ */
 
-#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
+#if defined HAVE_LIBOTF && (defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ)
 
 Lisp_Object
 ftfont_shape (Lisp_Object lgstring)
@@ -2956,7 +2956,7 @@ ftfont_shape (Lisp_Object lgstring)
     }
 }
 
-#endif /* defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ */
+#endif /* HAVE_LIBOTF && (HAVE_M17N_FLT || defined HAVE_HARFBUZZ) */
 
 static const char *const ftfont_booleans [] = {
   ":antialias",
@@ -3037,7 +3037,7 @@ static struct font_driver const ftfont_driver =
 #ifdef HAVE_LIBOTF
   .otf_capability = ftfont_otf_capability,
 #endif
-#if defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ
+#if defined HAVE_LIBOTF && (defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ)
   .shape = ftfont_shape,
 #endif
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS
