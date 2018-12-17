@@ -48,6 +48,9 @@ panic = "abort"
 panic = "abort"
 
 [features]
+default = [@CARGO_DEFAULT_FEATURES@]
+# Compile with C xml2 library support.
+use-xml2 = []
 compile-errors = []
 # Treat warnings as a build error on Travis.
 strict = []

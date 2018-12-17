@@ -44,6 +44,7 @@ makefile
 /configure.lineno
 /conftest*
 lib/gnulib.mk
+rust_src/Cargo.toml
 src/config.h
 src/epaths.h
 src/emacs-module.h

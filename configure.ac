@@ -5429,6 +5429,14 @@ else
 fi || AC_MSG_ERROR(['src/epaths.h' could not be made.])
 ], [GCC="$GCC" CPPFLAGS="$CPPFLAGS" opsys="$opsys"])
 
+
+CARGO_DEFAULT_FEATURES=""
+if test "$HAVE_LIBXML2" = "yes"; then
+    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
+fi
+AC_SUBST(CARGO_DEFAULT_FEATURES)
+AC_CONFIG_FILES([rust_src/Cargo.toml])
+
 dnl NB we have to cheat and use the ac_... version because abs_top_srcdir
 dnl is not yet set, sigh.  Or we could use ../$srcdir/src/.gdbinit,
 dnl or a symlink?

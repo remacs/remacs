@@ -36,6 +36,7 @@ jobs:
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
         - travis_wait rustup component add rustfmt-preview
+        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
       script: ./.travis-format.sh
     - stage: cerrors
       os: linux  # No need to run this everywhere
