@@ -332,15 +332,15 @@ pub fn load_average(use_floats: LispObject) -> LispObject {
         error!("load-average not implemented for this operating system");
     }
 
-    (0..loads as usize).rev().fold(Qnil, |acc, i| {
-        let load = if use_floats.is_not_nil() {
+    let loadavg: Vec<LispObject> = (0..loads as usize).map(|i| {
+        if use_floats.is_not_nil() {
             LispObject::from(load_avg[i])
         } else {
             LispObject::from((100.0 * load_avg[i]) as i64)
-        };
+        }
+    }).collect();
 
-        LispObject::cons(load, acc)
-    })
+    LispObject::from(loadavg)
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));
