@@ -5449,17 +5449,13 @@ This function is called from lisp/Makefile and leim/Makefile."
   file)
 
 (defun flatten-tree (tree)
-  "Take TREE and \"flatten\" it.
-This always returns a list containing all the terminal nodes, or
-\"leaves\", of TREE.  Dotted pairs are flattened as well, and nil
-elements are removed.
+  "Return a \"flattened\" copy of TREE.
+In other words, return a list of the non-nil terminal nodes, or
+leaves, of the tree of cons cells rooted at TREE.  Leaves in the
+returned list are in the same order as in TREE.
 
 \(flatten-tree \\='(1 (2 . 3) nil (4 5 (6)) 7))
-=> (1 2 3 4 5 6 7)
-
-TREE can be anything that can be made into a list.  For each
-element in TREE, if it is a cons cell return its car
-recursively.  Otherwise return the element."
+=> (1 2 3 4 5 6 7)"
   (let (elems)
     (while (consp tree)
       (let ((elem (pop tree)))

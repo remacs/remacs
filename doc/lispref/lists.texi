@@ -668,10 +668,10 @@ their elements).
 @end defun
 
 @defun flatten-tree tree
-Take @var{tree} and "flatten" it.
-This always returns a list containing all the terminal nodes, or
-leaves, of @var{tree}.  Dotted pairs are flattened as well, and nil
-elements are removed.
+This function returns a ``flattened'' copy of @var{tree}, that is,
+a list containing all the non-@code{nil} terminal nodes, or leaves, of
+the tree of cons cells rooted at @var{tree}.  Leaves in the returned
+list are in the same order as in @var{tree}.
 @end defun
 
 @example
@@ -680,7 +680,7 @@ elements are removed.
 @end example
 
 @defun number-sequence from &optional to separation
-This returns a list of numbers starting with @var{from} and
+This function returns a list of numbers starting with @var{from} and
 incrementing by @var{separation}, and ending at or just before
 @var{to}.  @var{separation} can be positive or negative and defaults
 to 1.  If @var{to} is @code{nil} or numerically equal to @var{from},
