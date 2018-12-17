@@ -76,13 +76,25 @@ Evaluate BODY for each created map.
                          'b
                          '2))))
 
-(ert-deftest test-map-put ()
+(ert-deftest test-map-put! ()
   (with-maps-do map
     (setf (map-elt map 2) 'hello)
     (should (eq (map-elt map 2) 'hello)))
   (with-maps-do map
     (map-put map 2 'hello)
     (should (eq (map-elt map 2) 'hello)))
+  (with-maps-do map
+    (map-put! map 2 'hello)
+    (should (eq (map-elt map 2) 'hello))
+    (if (not (hash-table-p map))
+        (should-error (map-put! map 5 'value)
+                      ;; For vectors, it could arguably signal
+                      ;; map-not-inplace as well, but it currently doesn't.
+                      :type (if (listp map)
+                                'map-not-inplace
+                              'error))
+      (map-put! map 5 'value)
+      (should (eq (map-elt map 5) 'value))))
   (let ((ht (make-hash-table)))
     (setf (map-elt ht 2) 'a)
     (should (eq (map-elt ht 2)
@@ -92,7 +104,7 @@ Evaluate BODY for each created map.
     (should (eq (map-elt alist 2)
                 'a)))
   (let ((vec [3 4 5]))
-   (should-error (setf (map-elt vec 3) 6))))
+    (should-error (setf (map-elt vec 3) 6))))
 
 (ert-deftest test-map-put-alist-new-key ()
   "Regression test for Bug#23105."
@@ -105,9 +117,9 @@ Evaluate BODY for each created map.
   (let ((alist (list (cons "a" 1) (cons "b" 2)))
         ;; Make sure to use a non-eq "a", even when compiled.
         (noneq-key (string ?a)))
-    (map-put alist noneq-key 3 'equal)
+    (map-put alist noneq-key 3 #'equal)
     (should-not (cddr alist))
-    (map-put alist noneq-key 9)
+    (map-put alist noneq-key 9 #'eql)
     (should (cddr alist))))
 
 (ert-deftest test-map-put-return-value ()

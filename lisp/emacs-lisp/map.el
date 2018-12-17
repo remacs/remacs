@@ -95,12 +95,13 @@ Returns the result of evaluating the form associated with MAP-VAR's type."
            (t (error "Unsupported map type `%S': %S"
                      (type-of ,map-var) ,map-var)))))
 
+(define-error 'map-not-inplace "Cannot modify map in-place: %S")
+
 (cl-defgeneric map-elt (map key &optional default testfn)
   "Lookup KEY in MAP and return its associated value.
 If KEY is not found, return DEFAULT which defaults to nil.
 
 TESTFN is deprecated.  Its default depends on the MAP argument.
-If MAP is a list, the default is `eql' to lookup KEY.
 
 In the base definition, MAP can be an alist, hash-table, or array."
   (declare
@@ -110,15 +111,16 @@ In the base definition, MAP can be an alist, hash-table, or array."
         (macroexp-let2* nil
             ;; Eval them once and for all in the right order.
             ((key key) (default default) (testfn testfn))
-          `(if (listp ,mgetter)
-               ;; Special case the alist case, since it can't be handled by the
-               ;; map--put function.
-               ,(gv-get `(alist-get ,key (gv-synthetic-place
-                                          ,mgetter ,msetter)
-                                    ,default nil ,testfn)
-                        do)
-             ,(funcall do `(map-elt ,mgetter ,key ,default)
-                       (lambda (v) `(map-put! ,mgetter ,key ,v)))))))))
+          (funcall do `(map-elt ,mgetter ,key ,default)
+                   (lambda (v)
+                     `(condition-case nil
+                          ;; Silence warnings about the hidden 4th arg.
+                          (with-no-warnings (map-put! ,mgetter ,key ,v ,testfn))
+                        (map-not-inplace
+                         ,(funcall msetter
+                                   `(map-insert ,mgetter ,key ,v))))))))))
+   ;; `testfn' is deprecated.
+   (advertised-calling-convention (map key &optional default) "27.1"))
   (map--dispatch map
     :list (alist-get key map default nil testfn)
     :hash-table (gethash key map default)
@@ -336,16 +338,35 @@ MAP can be a list, hash-table or array."
 ;; FIXME: I wish there was a way to avoid this η-redex!
 (cl-defmethod map-into (map (_type (eql list))) (map-pairs map))
 
-(cl-defgeneric map-put! (map key value)
+(cl-defgeneric map-put! (map key value &optional testfn)
   "Associate KEY with VALUE in MAP and return VALUE.
 If KEY is already present in MAP, replace the associated value
-with VALUE."
+with VALUE.
+This operates by modifying MAP in place.
+If it cannot do that, it signals the `map-not-inplace' error.
+If you want to insert an element without modifying MAP, use `map-insert'."
+  ;; `testfn' only exists for backward compatibility with `map-put'!
+  (declare (advertised-calling-convention (map key value) "27.1"))
   (map--dispatch map
-    :list (let ((p (assoc key map)))
-            (if p (setcdr p value)
-              (error "No place to change the mapping for %S" key)))
+    :list (let ((oldmap map))
+            (setf (alist-get key map key nil (or testfn #'equal)) value)
+            (unless (eq oldmap map)
+              (signal 'map-not-inplace (list map))))
     :hash-table (puthash key value map)
+    ;; FIXME: If `key' is too large, should we signal `map-not-inplace'
+    ;; and let `map-insert' grow the array?
     :array (aset map key value)))
+
+(define-error 'map-inplace "Can only modify map in place: %S")
+
+(cl-defgeneric map-insert (map key value)
+  "Return a new map like MAP except that it associates KEY with VALUE.
+This does not modify MAP.
+If you want to insert an element in place, use `map-put!'."
+  (if (listp map)
+      (cons (cons key value) map)
+    ;; FIXME: Should we signal an error or use copy+put! ?
+    (signal 'map-inplace (list map))))
 
 ;; There shouldn't be old source code referring to `map--put', yet we do
 ;; need to keep it for backward compatibility with .elc files where the

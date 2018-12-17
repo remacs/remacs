@@ -307,8 +307,9 @@ the node "(emacs) Directory Variables" of the user manual.
 ** map.el
 *** Now defined via generic functions that can be extended via cl-defmethod.
 *** Deprecate the 'map-put' macro in favor of a new 'map-put!' function.
-*** map-contains-key now returns a boolean rather than the key.
+*** 'map-contains-key' now returns a boolean rather than the key.
 *** Deprecate the 'testfn' args of 'map-elt' and 'map-contains-key'.
+*** New generic function 'map-insert'.
 
 ---
 ** Follow mode
