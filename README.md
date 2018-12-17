@@ -138,8 +138,11 @@ more Emacs-y.
    This happens automatically, so don't override the toolchain manually.
 
 2. You will need a C compiler and toolchain. On Linux, you can do
-   something like `apt install build-essential automake clang`. On
-   macOS, you'll need Xcode.
+   something like:
+
+        apt install build-essential automake clang libclang-dev
+
+   On macOS, you'll need Xcode.
 
 3. Linux:
 
