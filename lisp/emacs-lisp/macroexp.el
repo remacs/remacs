@@ -94,7 +94,7 @@ each clause."
       clause)))
 
 (defun macroexp--compiler-macro (handler form)
-  (condition-case err
+  (condition-case-unless-debug err
       (apply handler form (cdr form))
     (error
      (message "Compiler-macro error for %S: %S" (car form) err)
