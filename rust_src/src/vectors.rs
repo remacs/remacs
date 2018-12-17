@@ -24,6 +24,7 @@ use crate::{
     },
     remacs_sys::{Qarrayp, Qsequencep, Qvectorp},
     threads::ThreadStateRef,
+    window_configuration::SaveWindowDataRef,
     windows::LispWindowRef,
 };
 
@@ -159,6 +160,14 @@ impl LispVectorlikeRef {
 
     pub fn as_window(self) -> Option<LispWindowRef> {
         if self.is_pseudovector(pvec_type::PVEC_WINDOW) {
+            Some(unsafe { mem::transmute(self) })
+        } else {
+            None
+        }
+    }
+
+    pub fn as_window_configuration(self) -> Option<SaveWindowDataRef> {
+        if self.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION) {
             Some(unsafe { mem::transmute(self) })
         } else {
             None

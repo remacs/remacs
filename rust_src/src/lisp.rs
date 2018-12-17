@@ -15,7 +15,6 @@ use crate::{
     eval::FUNCTIONP,
     lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks},
     process::LispProcessRef,
-    remacs_sys,
     remacs_sys::{build_string, internal_equal, make_float},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
@@ -193,7 +192,7 @@ impl LispObject {
     }
 
     unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
+        LispMiscRef::new(self.get_untaggedptr() as *mut Lisp_Misc_Any)
     }
 }
 

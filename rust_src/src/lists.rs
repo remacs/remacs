@@ -54,6 +54,22 @@ impl LispObject {
         self.is_cons() || self.is_nil()
     }
 
+    pub fn iter_tails_v2(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        TailsIter::new(self, Qlistp, end_checks, circular_checks)
+    }
+
+    pub fn iter_tails_plist_v2(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        TailsIter::new(self, Qplistp, end_checks, circular_checks)
+    }
+
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
     /// of cons cells ending in nil.
     /// wrong-type-argument error will be signaled if END_CHECKS is 'on'.

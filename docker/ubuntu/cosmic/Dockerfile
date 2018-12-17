@@ -1,13 +1,15 @@
-FROM ubuntu:xenial
+FROM ubuntu:cosmic
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get dist-upgrade -y
+RUN apt-get install -y \
     automake \
     build-essential \
     clang \
     curl \
+    git \
     libclang-dev \
     libgif-dev \
-    libgnutls-dev \
+    libgnutls28-dev \
     libgtk-3-dev \
     libjpeg-dev \
     libncurses5-dev \
