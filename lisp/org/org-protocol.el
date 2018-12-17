@@ -349,20 +349,20 @@ returned list."
 	  ret)
       l)))
 
-(if (fboundp 'flatten-tree)
-    (defalias 'org-protocol-flatten 'flatten-tree)
-  (defun org-protocol-flatten (list)
-    "Transform LIST into a flat list.
+(defalias 'org-protocol-flatten
+  (if (fboundp 'flatten-tree) 'flatten-tree
+    (lambda (list)
+      "Transform LIST into a flat list.
 
 Greedy handlers might receive a list like this from emacsclient:
 \((\"/dir/org-protocol:/greedy:/~/path1\" (23 . 12)) (\"/dir/param\"))
 where \"/dir/\" is the absolute path to emacsclients working directory.
 This function transforms it into a flat list."
-    (if (null list) ()
-      (if (listp list)
-	  (append (org-protocol-flatten (car list))
-                  (org-protocol-flatten (cdr list)))
-        (list list)))))
+      (if list
+	  (if (consp list)
+	      (append (org-protocol-flatten (car list))
+		      (org-protocol-flatten (cdr list)))
+	    (list list))))))
 
 (defun org-protocol-parse-parameters (info &optional new-style default-order)
   "Return a property list of parameters from INFO.
