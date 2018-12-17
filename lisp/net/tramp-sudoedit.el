@@ -798,13 +798,13 @@ in case of error, t otherwise."
 	   (user (or (tramp-file-name-user vec) ""))
 	   (spec (format-spec-make ?h host ?u user))
 	   (args (append
-		  (tramp-compat-flatten-list
+		  (tramp-compat-flatten-tree
 		   (mapcar
 		    (lambda (x)
 		      (setq x (mapcar (lambda (y) (format-spec y spec)) x))
 		      (unless (member "" x) x))
 		    login))
-		  (tramp-compat-flatten-list (delq nil args))))
+		  (tramp-compat-flatten-tree (delq nil args))))
 	   (delete-exited-processes t)
 	   (process-connection-type tramp-process-connection-type)
 	   (p (apply #'start-process

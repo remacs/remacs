@@ -264,23 +264,24 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 A nil value for either argument stands for the current time."
     (equal (or t1 (current-time)) (or t2 (current-time)))))
 
+(if (fboundp 'flatten-tree)
+    (defalias 'tramp-compat-flatten-tree 'flatten-tree)
+  (defun tramp-compat-flatten-tree (tree)
+    "Take TREE and \"flatten\" it."
+    (let (elems)
+      (setq tree (list tree))
+      (while (let ((elem (pop tree)))
+               (cond ((consp elem)
+                      (setq tree (cons (car elem) (cons (cdr elem) tree))))
+                     (elem
+                      (push elem elems)))
+               tree))
+      (nreverse elems))))
+
 (add-hook 'tramp-unload-hook
 	  (lambda ()
 	    (unload-feature 'tramp-loaddefs 'force)
 	    (unload-feature 'tramp-compat 'force)))
-
-;; There does not exist a common `flatten-list' yet, this is discussed
-;; in Bug#33309.  For the time being we implement our own version,
-;; derived from `eshell-flatten-list'.
-(defun tramp-compat-flatten-list (args)
-  "Flatten any lists within ARGS, so that there are no sublists."
-  (let ((new-list (list t)))
-    (dolist (a args)
-      (if (and (listp a)
-	       (listp (cdr a)))
-	  (nconc new-list (tramp-compat-flatten-list a))
-	(nconc new-list (list a))))
-    (cdr new-list)))
 
 (provide 'tramp-compat)
 
