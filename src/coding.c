@@ -307,15 +307,11 @@ Lisp_Object Vcoding_system_hash_table;
    file and process), not for in-buffer or Lisp string encoding.  */
 static Lisp_Object system_eol_type;
 
-#ifdef emacs
-
 /* Coding-systems are handed between Emacs Lisp programs and C internal
    routines by the following three variables.  */
 /* Coding system to be used to encode text for terminal display when
    terminal coding system is nil.  */
 struct coding_system safe_terminal_coding;
-
-#endif /* emacs */
 
 /* Two special coding systems.  */
 static Lisp_Object Vsjis_coding_system;
@@ -8478,7 +8474,6 @@ to_unicode (Lisp_Object str, Lisp_Object *buf)
 #endif /* WINDOWSNT || CYGWIN */
 
 
-#ifdef emacs
 /*** 8. Emacs Lisp library functions ***/
 
 DEFUN ("coding-system-p", Fcoding_system_p, Scoding_system_p, 1, 1, 0,
@@ -10732,8 +10727,6 @@ coding system whose eol-type is N.  */)
   return make_fixnum (n);
 }
 
-#endif /* emacs */
-
 
 /*** 9. Post-amble ***/
 
@@ -10776,8 +10769,6 @@ init_coding_once (void)
   emacs_mule_bytes[EMACS_MULE_LEADING_CODE_PRIVATE_21] = 4;
   emacs_mule_bytes[EMACS_MULE_LEADING_CODE_PRIVATE_22] = 4;
 }
-
-#ifdef emacs
 
 void
 syms_of_coding (void)
@@ -11321,4 +11312,3 @@ internal character representation.  */);
 #endif
   staticpro (&system_eol_type);
 }
-#endif /* emacs */

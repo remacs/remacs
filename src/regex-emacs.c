@@ -698,7 +698,6 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	  fprintf (stderr, "/%d", mcnt);
 	  break;
 
-# ifdef emacs
 	case at_dot:
 	  fprintf (stderr, "/at_dot");
 	  break;
@@ -714,7 +713,6 @@ print_partial_compiled_pattern (re_char *start, re_char *end)
 	  mcnt = *p++;
 	  fprintf (stderr, "/%d", mcnt);
 	  break;
-# endif /* emacs */
 
 	case begbuf:
 	  fprintf (stderr, "/begbuf");
@@ -753,9 +751,6 @@ print_compiled_pattern (struct re_pattern_buffer *bufp)
   printf ("re_nsub: %zu\t", bufp->re_nsub);
   printf ("regs_alloc: %d\t", bufp->regs_allocated);
   printf ("can_be_null: %d\t", bufp->can_be_null);
-#ifndef emacs
-  printf ("syntax: %lx\n", bufp->syntax);
-#endif
   fflush (stdout);
   /* Perhaps we should print the translate table?  */
 }

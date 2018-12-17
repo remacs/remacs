@@ -36,9 +36,7 @@ License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 #include <pthread.h>
 #endif
 
-#ifdef emacs
-# include "lisp.h"
-#endif
+#include "lisp.h"
 
 #include "ptr-bounds.h"
 
@@ -2022,11 +2020,7 @@ mabort (enum mcheck_status status)
 #else
   fprintf (stderr, "mcheck: %s\n", msg);
   fflush (stderr);
-# ifdef emacs
   emacs_abort ();
-# else
-  abort ();
-# endif
 #endif
 }
 

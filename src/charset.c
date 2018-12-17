@@ -2328,8 +2328,6 @@ init_charset_once (void)
   charset_ksc5601 = -1;
 }
 
-#ifdef emacs
-
 /* Allocate an initial charset table that is large enough to handle
    Emacs while it is bootstrapping.  As of September 2011, the size
    needs to be at least 166; make it a bit bigger to allow for future
@@ -2430,5 +2428,3 @@ the value may be a list of mnemonics.  */);
 			       MAX_5_BYTE_CHAR + 1);
   charset_unibyte = charset_iso_8859_1;
 }
-
-#endif /* emacs */
