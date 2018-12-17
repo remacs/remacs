@@ -76,6 +76,9 @@
   :version "22.1")
 
 (eval-and-compile ;; So it's also available in tramp-loaddefs.el!
+  (defvar tramp--startup-hook nil
+    "Forms to be executed at the end of tramp.el.")
+
   (defmacro tramp--with-startup (&rest body)
     "Schedule BODY to be executed at the end of tramp.el."
     `(add-hook 'tramp--startup-hook (lambda () ,@body))))
@@ -3830,6 +3833,13 @@ of."
 	       (or (eq visit t) (null visit) (stringp visit)))
       (tramp-message v 0 "Wrote %s" filename))
     (run-hooks 'tramp-handle-write-region-hook)))
+
+;; This is used in tramp-sh.el and tramp-sudoedit.el.
+(defconst tramp-stat-marker "/////"
+  "Marker in stat commands for file attributes.")
+
+(defconst tramp-stat-quoted-marker "\\/\\/\\/\\/\\/"
+  "Quoted marker in stat commands for file attributes.")
 
 ;; This is used in tramp-gvfs.el and tramp-sh.el.
 (defconst tramp-gio-events

@@ -57,7 +57,7 @@ present for backward compatibility."
   '(when (functionp 'tramp-disable-ange-ftp)
      (tramp-disable-ange-ftp)))
 
-;;;###autoload
+;;;###tramp-autoload
 (defun tramp-ftp-enable-ange-ftp ()
   "Reenable Ange-FTP, when Tramp is unloaded."
   ;; The following code is commented out in Ange-FTP.

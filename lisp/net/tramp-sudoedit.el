@@ -35,8 +35,6 @@
 ;;; Code:
 
 (require 'tramp)
-(eval-when-compile (require 'tramp-sh)) ;For tramp-stat-marker
-(require 'server)
 
 ;;;###tramp-autoload
 (defconst tramp-sudoedit-method "sudoedit"

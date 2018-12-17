@@ -72,7 +72,6 @@
 (defvar tramp-cache-data (make-hash-table :test 'equal)
   "Hash table for remote files properties.")
 
-;;;###tramp-autoload
 (defcustom tramp-connection-properties nil
   "List of static connection properties.
 Every entry has the form (REGEXP PROPERTY VALUE).  The regexp
@@ -86,7 +85,6 @@ details see the info pages."
 		       (choice :tag "        Property" string)
 		       (choice :tag "           Value" sexp))))
 
-;;;###tramp-autoload
 (defcustom tramp-persistency-file-name
   (expand-file-name (locate-user-emacs-file "tramp"))
   "File which keeps connection history for Tramp connections."

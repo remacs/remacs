@@ -24,6 +24,8 @@
 
 (require 'ert)
 (require 'tramp-archive)
+(defvar tramp-copy-size-limit)
+(defvar tramp-persistency-file-name)
 
 (defconst tramp-archive-test-resource-directory
   (let ((default-directory

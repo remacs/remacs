@@ -57,8 +57,12 @@
 (declare-function tramp-method-out-of-band-p "tramp-sh")
 (declare-function tramp-smb-get-localname "tramp-smb")
 (defvar auto-save-file-name-transforms)
+(defvar tramp-connection-properties)
 (defvar tramp-copy-size-limit)
+(defvar tramp-display-escape-sequence-regexp)
+(defvar tramp-inline-compress-start-size)
 (defvar tramp-persistency-file-name)
+(defvar tramp-remote-path)
 (defvar tramp-remote-process-environment)
 
 ;; Beautify batch mode.

@@ -42,7 +42,6 @@
 (defconst tramp-rclone-method "rclone"
   "When this method name is used, forward all calls to rclone mounts.")
 
-;;;###tramp-autoload
 (defcustom tramp-rclone-program "rclone"
   "Name of the rclone program."
   :group 'tramp
@@ -60,9 +59,9 @@
     (tramp-about-args ("--full")))))
 
 ;;;###tramp-autoload
-(eval-after-load 'tramp
-  '(tramp-set-completion-function
-    tramp-rclone-method '((tramp-rclone-parse-device-names ""))))
+(tramp--with-startup
+ (tramp-set-completion-function
+  tramp-rclone-method '((tramp-rclone-parse-device-names ""))))
 
 
 ;; New handlers should be added here.
