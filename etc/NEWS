@@ -413,6 +413,12 @@ and compares their entire trees.
 *** Hunks are now automatically refined by default.
 To disable it, set the new defcustom 'diff-font-lock-refine' to nil.
 
++++
+*** Better syntax highlighting of Diff hunks.
+Fragments of source in Diff hunks are now by default highlighted
+according to the appropriate major mode.  Customize the new option
+'diff-font-lock-syntax' to nil to disable this.
+
 *** File headers can be shortened, mimicking Magit's diff format.
 To enable it, set the new defcustom 'diff-font-lock-prettify' to t.
 
