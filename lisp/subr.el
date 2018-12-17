@@ -5460,14 +5460,14 @@ elements are removed.
 TREE can be anything that can be made into a list.  For each
 element in TREE, if it is a cons cell return its car
 recursively.  Otherwise return the element."
-    (let (elems)
-    (setq tree (list tree))
-    (while (let ((elem (pop tree)))
-             (cond ((consp elem)
-                    (setq tree (cons (car elem) (cons (cdr elem) tree))))
-                   (elem
-                    (push elem elems)))
-             tree))
+  (let (elems)
+    (while (consp tree)
+      (let ((elem (pop tree)))
+        (while (consp elem)
+          (push (cdr elem) tree)
+          (setq elem (car elem)))
+        (if elem (push elem elems))))
+    (if tree (push tree elems))
     (nreverse elems)))
 
 ;; Technically, `flatten-list' is a misnomer, but we provide it here
