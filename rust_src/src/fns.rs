@@ -324,7 +324,7 @@ pub extern "C" fn internal_equal_misc(
 /// setgid so that it can read kernel information, and that usually isn't
 /// advisable.
 #[lisp_fn(min = "0")]
-pub fn load_average(use_floats: bool) -> LispObject {
+pub fn load_average(use_floats: bool) -> Vec<LispObject> {
     let mut load_avg: [libc::c_double; 3] = [0.0, 0.0, 0.0];
     let loads = unsafe { libc::getloadavg(load_avg.as_mut_ptr(), 3) };
 
@@ -332,7 +332,7 @@ pub fn load_average(use_floats: bool) -> LispObject {
         error!("load-average not implemented for this operating system");
     }
 
-    let loadavg: Vec<LispObject> = (0..loads as usize)
+    (0..loads as usize)
         .map(|i| {
             if use_floats {
                 LispObject::from(load_avg[i])
@@ -340,9 +340,7 @@ pub fn load_average(use_floats: bool) -> LispObject {
                 LispObject::from((100.0 * load_avg[i]) as i64)
             }
         })
-        .collect();
-
-    LispObject::from(loadavg)
+        .collect()
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));
