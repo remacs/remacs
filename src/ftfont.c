@@ -474,9 +474,8 @@ ftfont_get_otf (struct ftfont_info *ftfont_info)
   ftfont_info->otf = otf;
   return otf;
 }
-#endif	/* HAVE_LIBOTF */
 
-#ifdef HAVE_HARFBUZZ
+# ifdef HAVE_HARFBUZZ
 
 static hb_font_t *
 ftfont_get_hb_font (struct ftfont_info *ftfont_info)
@@ -487,7 +486,8 @@ ftfont_get_hb_font (struct ftfont_info *ftfont_info)
   return ftfont_info->hb_font;
 }
 
-#endif	/* HAVE_HARFBUZZ */
+# endif	/* HAVE_HARFBUZZ */
+#endif	/* HAVE_LIBOTF */
 
 Lisp_Object
 ftfont_get_cache (struct frame *f)
