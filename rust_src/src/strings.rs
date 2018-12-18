@@ -173,8 +173,8 @@ pub fn clear_string(mut string: LispStringRef) {
 /// considered; the validity of the following bytes is not checked.  Tabs in
 /// STRING are always taken to occupy `tab-width' columns.
 #[lisp_fn]
-pub fn string_width(string: LispStringRef) -> EmacsInt {
-    string.string_width() as EmacsInt
+pub fn string_width(string: LispStringRef) -> usize {
+    string.width()
 }
 
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));

@@ -92,7 +92,7 @@ impl LispStringRef {
     /// width of a multibyte character in STRING, only the base leading-code is
     /// considered; the validity of the following bytes is not checked.  Tabs in
     /// STRING are always taken to occupy `tab-width' columns.
-    pub fn string_width(self) -> ptrdiff_t {
+    pub fn width(self) -> usize {
         unsafe { lisp_string_width(self.as_lisp_obj(), -1, ptr::null_mut(), ptr::null_mut()) }
     }
 
