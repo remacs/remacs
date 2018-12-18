@@ -11,7 +11,6 @@ use crate::{
     lists::{assq, car, get, member, memq, put, LispCons},
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys,
     remacs_sys::Vautoload_queue,
     remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
     remacs_sys::{equal_kind, Lisp_Type},
@@ -309,6 +308,16 @@ pub extern "C" fn internal_equal_misc(
     }
 }
 
+#[cfg(windows)]
+unsafe fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int {
+    crate::remacs_sys::getloadavg(loadavg, nelem)
+}
+
+#[cfg(not(windows))]
+unsafe fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int {
+    libc::getloadavg(loadavg, nelem)
+}
+
 /// Return list of 1 minute, 5 minute and 15 minute load averages.
 ///
 /// Each of the three load averages is multiplied by 100, then converted
@@ -327,11 +336,7 @@ pub extern "C" fn internal_equal_misc(
 #[lisp_fn(min = "0")]
 pub fn load_average(use_floats: bool) -> Vec<LispObject> {
     let mut load_avg: [libc::c_double; 3] = [0.0, 0.0, 0.0];
-    let loads = if cfg!(windows) {
-        unsafe { remacs_sys::getloadavg(load_avg.as_mut_ptr(), 3) }
-    } else {
-        unsafe { libc::getloadavg(load_avg.as_mut_ptr(), 3) }
-    };
+    let loads = unsafe { getloadaverage(load_avg.as_mut_ptr(), 3) };
 
     if loads < 0 {
         error!("load-average not implemented for this operating system");
