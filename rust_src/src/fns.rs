@@ -11,6 +11,7 @@ use crate::{
     lists::{assq, car, get, member, memq, put, LispCons},
     obarray::loadhist_attach,
     objects::equal,
+    remacs_sys,
     remacs_sys::Vautoload_queue,
     remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
     remacs_sys::{equal_kind, Lisp_Type},
@@ -326,7 +327,11 @@ pub extern "C" fn internal_equal_misc(
 #[lisp_fn(min = "0")]
 pub fn load_average(use_floats: bool) -> Vec<LispObject> {
     let mut load_avg: [libc::c_double; 3] = [0.0, 0.0, 0.0];
-    let loads = unsafe { libc::getloadavg(load_avg.as_mut_ptr(), 3) };
+    let loads = if cfg!(windows) {
+        unsafe { remacs_sys::getloadavg(load_avg.as_mut_ptr(), 3) }
+    } else {
+        unsafe { libc::getloadavg(load_avg.as_mut_ptr(), 3) }
+    };
 
     if loads < 0 {
         error!("load-average not implemented for this operating system");
