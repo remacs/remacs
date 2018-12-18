@@ -1535,16 +1535,6 @@ though when run from an idle timer with a delay of zero seconds.  */)
   return Fnreverse (rows);
 }
 
-DEFUN ("window-parameters", Fwindow_parameters, Swindow_parameters,
-       0, 1, 0,
-       doc: /* Return the parameters of WINDOW and their values.
-WINDOW must be a valid window and defaults to the selected one.  The
-return value is a list of elements of the form (PARAMETER . VALUE).  */)
-  (Lisp_Object window)
-{
-  return Fcopy_alist (decode_valid_window (window)->window_parameters);
-}
-
 struct Lisp_Char_Table *
 window_display_table (struct window *w)
 {
@@ -6761,7 +6751,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_scroll_bars);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
-  defsubr (&Swindow_parameters);
 }
 
 void
