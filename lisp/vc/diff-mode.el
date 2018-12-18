@@ -1697,10 +1697,11 @@ char-offset in TEXT."
 	      (delete-region divider-pos (point-max)))
 	    (delete-region (point-min) keep))
 	  ;; Remove line-prefix characters, and unneeded lines (unified diffs).
-	  (let ((kill-char (if destp ?- ?+)))
+          ;; Also skip lines like "\ No newline at end of file"
+	  (let ((kill-chars (list (if destp ?- ?+) ?\\)))
 	    (goto-char (point-min))
 	    (while (not (eobp))
-	      (if (eq (char-after) kill-char)
+	      (if (memq (char-after) kill-chars)
 		  (delete-region (point) (progn (forward-line 1) (point)))
 		(delete-char num-pfx-chars)
 		(forward-line 1)))))
@@ -2394,19 +2395,23 @@ and the position in MAX."
 
 (defvar diff-syntax-fontify-revisions (make-hash-table :test 'equal))
 
+(eval-when-compile (require 'subr-x)) ; for string-trim-right
+
 (defun diff-syntax-fontify-hunk (beg end old)
   "Highlight source language syntax in diff hunk between BEG and END.
 When OLD is non-nil, highlight the hunk from the old source."
   (remove-overlays beg end 'diff-mode 'syntax)
   (goto-char beg)
   (let* ((hunk (buffer-substring-no-properties beg end))
-         (text (or (ignore-errors (diff-hunk-text hunk (not old) nil)) ""))
+         (text (string-trim-right (or (ignore-errors (diff-hunk-text hunk (not old) nil)) "")))
 	 (line (if (looking-at "\\(?:\\*\\{15\\}.*\n\\)?[-@* ]*\\([0-9,]+\\)\\([ acd+]+\\([0-9,]+\\)\\)?")
 		   (if old (match-string 1)
 		     (if (match-end 3) (match-string 3) (match-string 1)))))
-         (line-nb (and line (string-match "\\([0-9]+\\),\\([0-9]+\\)" line)
-                       (list (string-to-number (match-string 1 line))
-                             (string-to-number (match-string 2 line)))))
+         (line-nb (when line
+                    (if (string-match "\\([0-9]+\\),\\([0-9]+\\)" line)
+                        (list (string-to-number (match-string 1 line))
+                              (string-to-number (match-string 2 line)))
+                      (list (string-to-number line) 1)))) ; One-line diffs
          props)
     (cond
      ((and diff-vc-backend (not (eq diff-font-lock-syntax 'hunk-only)))
@@ -2470,18 +2475,19 @@ When OLD is non-nil, highlight the hunk from the old source."
       (while (< (progn (forward-line 1) (point)) end)
         (when (or (and (not old) (not (looking-at-p "[-<]")))
                   (and      old  (not (looking-at-p "[+>]"))))
-          (if (and old (not (looking-at-p "[-<]")))
-              ;; Fontify context lines only from new source,
-              ;; don't refontify context lines from old source.
-              (pop props)
-            (let ((line-props (pop props))
-                  (bol (1+ (point))))
-              (dolist (prop line-props)
-                (let ((ol (make-overlay (+ bol (nth 0 prop))
-                                        (+ bol (nth 1 prop))
-                                        nil 'front-advance nil)))
-                  (overlay-put ol 'evaporate t)
-                  (overlay-put ol 'face (nth 2 prop)))))))))))
+          (unless (looking-at-p "\\\\") ; skip "\ No newline at end of file"
+            (if (and old (not (looking-at-p "[-<]")))
+                ;; Fontify context lines only from new source,
+                ;; don't refontify context lines from old source.
+                (pop props)
+              (let ((line-props (pop props))
+                    (bol (1+ (point))))
+                (dolist (prop line-props)
+                  (let ((ol (make-overlay (+ bol (nth 0 prop))
+                                          (+ bol (nth 1 prop))
+                                          nil 'front-advance nil)))
+                    (overlay-put ol 'evaporate t)
+                    (overlay-put ol 'face (nth 2 prop))))))))))))
 
 (defun diff-syntax-fontify-props (file text line-nb &optional no-init hunk-only)
   "Get font-lock properties from the source code.
