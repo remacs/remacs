@@ -1563,7 +1563,8 @@ Ran \\([0-9]+\\) tests, \\([0-9]+\\) results as expected\
       (message "-------")
       (with-temp-buffer
         (dolist (x (list (list skipped "skipped" "SKIPPED")
-                         (list unexpected "unexpected" "FAILED")))
+                         (list unexpected "unexpected"
+                               "\\(?:FAILED\\|PASSED\\)")))
           (mapc (lambda (l)
                   (erase-buffer)
                   (insert-file-contents l)
