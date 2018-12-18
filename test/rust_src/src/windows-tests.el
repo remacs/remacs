@@ -80,3 +80,10 @@
     (delete-window w2)
     (select-window w1)
     (should (eq (get-mru-window) w1))))
+
+(ert-deftest window-parameters ()
+  (should (eq nil (window-parameters)))
+  (should (eq nil (window-parameters (selected-window))))
+  (set-window-parameter (selected-window) 'test 'test)
+  (should (consp (window-parameters)))
+  (should (consp (window-parameters (selected-window)))))
