@@ -302,7 +302,7 @@ And here's how to do it in csh:
 if ($?prompt) set prompt = @dots{}
 @end example
 
-@vindex TERM, environment variable, in compilation mode
+@vindex TERM@r{, environment variable, in compilation mode}
   If you want to customize the value of the @env{TERM} environment
 variable passed to the compilation subshell, customize the variable
 @code{comint-terminfo-terminal} (@pxref{Shell Options}).
@@ -426,6 +426,15 @@ the variable @code{grep-files-aliases}.
 @code{grep-find-ignored-directories} are automatically skipped by
 @kbd{M-x rgrep}.  The default value includes the data directories used
 by various version control systems.
+
+@vindex grep-find-hide
+  By default, the shell commands constructed for @code{lgrep},
+@code{rgrep}, and @code{zgrep} are abbreviated for display by
+concealing the part that contains a long list of files and directories
+to ignore.  You can reveal the concealed part by clicking on the
+button with ellipsis, which represents them.  To disable this
+abbreviation of the shell commands, customize the option
+@code{grep-find-hide} to a @code{nil} value.
 
 @node Flymake
 @section Finding Syntax Errors On The Fly
@@ -642,7 +651,7 @@ Set a breakpoint on the source line that point is on.
 buffer, sets a debugger breakpoint on the current source line.  This
 command is available only after starting GUD@.  If you call it in a
 buffer that is not associated with any debugger subprocess, it signals
-a error.
+an error.
 
 @kindex C-x C-a @r{(GUD)}
   The following commands are available both in the GUD interaction
@@ -1089,9 +1098,9 @@ display the corresponding buffer in a new frame.
   When you create a buffer showing information about some specific
 thread, it becomes bound to that thread and keeps showing actual
 information while you debug your program.  The mode indicator for each
-GDB buffer shows the number of thread it is showing information about.
-The thread number is also included in the buffer name of bound
-buffers.
+GDB buffer shows the number of the thread whose information that
+buffer displays.  The thread number is also included in the name of
+each bound buffer.
 
   Further commands are available in the GDB Threads buffer which
 depend on the mode of GDB that is used for controlling execution of
@@ -1442,7 +1451,7 @@ buffer).  To disable this feature, change the variable
 @vindex load-dangerous-libraries
 @cindex Lisp files byte-compiled by XEmacs
   By default, Emacs refuses to load compiled Lisp files which were
-compiled with XEmacs, a modified versions of Emacs---they can cause
+compiled with XEmacs, a modified version of Emacs---they can cause
 Emacs to crash.  Set the variable @code{load-dangerous-libraries} to
 @code{t} if you want to try loading them.
 
