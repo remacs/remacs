@@ -2670,7 +2670,7 @@ ftfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 #endif	/* HAVE_LIBOTF */
 
 #ifdef HAVE_HARFBUZZ
-
+#ifdef HAVE_LIBOTF
 static hb_unicode_combining_class_t
 uni_combining (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
 {
@@ -2815,7 +2815,6 @@ get_hb_unicode_funcs (void)
   return funcs;
 }
 
-#ifdef HAVE_LIBOTF
 static Lisp_Object
 ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
                     FT_Matrix *matrix)
