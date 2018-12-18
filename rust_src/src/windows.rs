@@ -1074,6 +1074,41 @@ pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
     win.new_total
 }
 
+/// Setter for new total of Window
+pub extern "C" fn wset_new_total(win: &mut LispWindowRef, new_total: EmacsInt) {
+    win.new_total = new_total.into();
+}
+
+/// Set new total size of WINDOW to SIZE.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return SIZE.
+///
+/// Optional argument ADD non-nil means add SIZE to the new total size of
+/// WINDOW and return the sum.
+///
+/// The new total size of WINDOW, if valid, will be shortly installed as
+/// WINDOW's total height (see `window-total-height') or total width (see
+/// `window-total-width').
+///
+/// Note: This function does not operate on any child windows of WINDOW.
+#[lisp_fn(min = "2")]
+pub fn set_window_new_total(
+    window: LispWindowValidOrSelected,
+    size: EmacsInt,
+    add: LispObject,
+) -> LispObject {
+    let win: LispWindowRef = window.into();
+
+    let new_total: EmacsInt = if add.is_nil() {
+        size
+    } else {
+        EmacsInt::from(win.new_total) + size
+    };
+    wset_new_total(&mut win, new_total);
+
+    win.new_total
+}
+
 #[no_mangle]
 pub extern "C" fn wset_update_mode_line(mut w: LispWindowRef) {
     // If this window is the selected window on its frame, set the
