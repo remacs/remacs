@@ -2414,14 +2414,14 @@ emacs_mpz_mul (mpz_t rop, mpz_t const op1, mpz_t const op2)
 }
 
 static void
-emacs_mpz_mul_2exp (mpz_t rop, mpz_t const op1, mp_bitcnt_t op2)
+emacs_mpz_mul_2exp (mpz_t rop, mpz_t const op1, EMACS_INT op2)
 {
   /* Fudge factor derived from GMP 6.1.2, to avoid an abort in
      mpz_mul_2exp (look for the '+ 1' in its source code).  */
   enum { mul_2exp_extra_limbs = 1 };
   enum { lim = min (NLIMBS_LIMIT, GMP_NLIMBS_MAX - mul_2exp_extra_limbs) };
 
-  mp_bitcnt_t op2limbs = op2 / GMP_NUMB_BITS;
+  EMACS_INT op2limbs = op2 / GMP_NUMB_BITS;
   if (lim - emacs_mpz_size (op1) < op2limbs)
     overflow_error ();
   mpz_mul_2exp (rop, op1, op2);
@@ -3251,12 +3251,21 @@ If COUNT is negative, shifting is actually to the right.
 In this case, the sign bit is duplicated.  */)
   (Lisp_Object value, Lisp_Object count)
 {
-  /* The negative of the minimum value of COUNT that fits into a fixnum,
-     such that mpz_fdiv_q_exp supports -COUNT.  */
-  EMACS_INT minus_count_min = min (-MOST_NEGATIVE_FIXNUM,
-				   TYPE_MAXIMUM (mp_bitcnt_t));
   CHECK_INTEGER (value);
-  CHECK_RANGED_INTEGER (count, - minus_count_min, TYPE_MAXIMUM (mp_bitcnt_t));
+  CHECK_INTEGER (count);
+
+  if (! FIXNUMP (count))
+    {
+      if (EQ (value, make_fixnum (0)))
+	return value;
+      if (mpz_sgn (XBIGNUM (count)->value) < 0)
+	{
+	  EMACS_INT v = (FIXNUMP (value) ? XFIXNUM (value)
+			 : mpz_sgn (XBIGNUM (value)->value));
+	  return make_fixnum (v < 0 ? -1 : 0);
+	}
+      overflow_error ();
+    }
 
   if (XFIXNUM (count) <= 0)
     {
@@ -3275,7 +3284,11 @@ In this case, the sign bit is duplicated.  */)
 
   mpz_t *zval = bignum_integer (&mpz[0], value);
   if (XFIXNUM (count) < 0)
-    mpz_fdiv_q_2exp (mpz[0], *zval, - XFIXNUM (count));
+    {
+      if (TYPE_MAXIMUM (mp_bitcnt_t) < - XFIXNUM (count))
+	return make_fixnum (mpz_sgn (*zval) < 0 ? -1 : 0);
+      mpz_fdiv_q_2exp (mpz[0], *zval, - XFIXNUM (count));
+    }
   else
     emacs_mpz_mul_2exp (mpz[0], *zval, XFIXNUM (count));
   return make_integer_mpz ();
