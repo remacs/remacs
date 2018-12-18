@@ -1074,12 +1074,6 @@ pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
     win.new_total
 }
 
-/// Setter for new total of Window
-#[no_mangle]
-pub extern "C" fn wset_new_total(win: &mut LispWindowRef, new_total: EmacsInt) {
-    win.new_total = new_total.into();
-}
-
 /// Set new total size of WINDOW to SIZE.
 /// WINDOW must be a valid window and defaults to the selected one.
 /// Return SIZE.
@@ -1105,8 +1099,7 @@ pub fn set_window_new_total(
     } else {
         EmacsInt::from(win.new_total) + size
     };
-    wset_new_total(&mut win, new_total);
-
+    win.new_total = new_total.into();
     win.new_total
 }
 
