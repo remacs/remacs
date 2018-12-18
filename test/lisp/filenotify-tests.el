@@ -919,8 +919,7 @@ delivered."
       (file-notify--test-cleanup))))
 
 (file-notify--deftest-remote file-notify-test04-autorevert
-  "Check autorevert via file notification for remote files."
-  (if (getenv "EMACS_HYDRA_CI") :failed :passed)) ; fixme bug#33735
+  "Check autorevert via file notification for remote files.")
 
 (ert-deftest file-notify-test05-file-validity ()
   "Check `file-notify-valid-p' for files."
