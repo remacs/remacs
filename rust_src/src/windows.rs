@@ -1075,6 +1075,7 @@ pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
 }
 
 /// Setter for new total of Window
+#[no_mangle]
 pub extern "C" fn wset_new_total(win: &mut LispWindowRef, new_total: EmacsInt) {
     win.new_total = new_total.into();
 }
