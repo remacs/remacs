@@ -424,5 +424,17 @@ Evaluate BODY for each created sequence.
     (should (eq (seq-into vec 'vector) vec))
     (should (eq (seq-into str 'string) str))))
 
+(ert-deftest test-seq-first ()
+  (let ((lst '(1 2 3))
+        (vec [1 2 3]))
+    (should (eq (seq-first lst) 1))
+    (should (eq (seq-first vec) 1))))
+
+(ert-deftest test-seq-rest ()
+  (let ((lst '(1 2 3))
+        (vec [1 2 3]))
+    (should (equal (seq-rest lst) '(2 3)))
+    (should (equal (seq-rest vec) [2 3]))))
+
 (provide 'seq-tests)
 ;;; seq-tests.el ends here
