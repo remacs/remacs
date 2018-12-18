@@ -3989,6 +3989,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 (ert-deftest tramp-test32-environment-variables ()
   "Check that remote processes set / unset environment variables properly."
   :tags '(:expensive-test)
+  :expected-result (if (getenv "EMACS_HYDRA_CI") :failed :passed) ; bug#33781
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
