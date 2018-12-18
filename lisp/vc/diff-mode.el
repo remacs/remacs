@@ -255,7 +255,7 @@ in wrong fontification.  This is the fastest option, but less reliable."
   "Keymap for `diff-minor-mode'.  See also `diff-mode-shared-map'.")
 
 (define-minor-mode diff-auto-refine-mode
-  "Toggle automatic diff hunk highlighting (Diff Auto Refine mode).
+  "Toggle automatic diff hunk finer highlighting (Diff Auto Refine mode).
 
 Diff Auto Refine mode is a buffer-local minor mode used with
 `diff-mode'.  When enabled, Emacs automatically highlights
@@ -435,7 +435,9 @@ and the face `diff-added' for added lines.")
 		'diff-removed))))))
     ("^\\(?:Index\\|revno\\): \\(.+\\).*\n"
      (0 'diff-header) (1 'diff-index prepend))
+    ("^\\(?:index .*\\.\\.\\|diff \\).*\n" . 'diff-header)
     ("^Only in .*\n" . 'diff-nonexistent)
+    ("^Binary files .* differ\n" . 'diff-file-header)
     ("^\\(#\\)\\(.*\\)"
      (1 font-lock-comment-delimiter-face)
      (2 font-lock-comment-face))
@@ -1785,7 +1787,7 @@ NOPROMPT, if non-nil, means not to prompt the user."
                                 (vc-working-revision file)))))
 	   (buf (if revision
                     (let ((vc-find-revision-no-save t))
-                      (vc-find-revision file revision diff-vc-backend))
+                      (vc-find-revision (expand-file-name file) revision diff-vc-backend))
                   (find-file-noselect file))))
       ;; Update the user preference if he so wished.
       (when (> (prefix-numeric-value other-file) 8)
@@ -2321,9 +2323,9 @@ fixed, visit it in a buffer."
       ;; FIXME: Include the first space for context-style hunks!
       (while (re-search-forward "^[-+! ]" limit t)
         (let ((spec (alist-get (char-before)
-                               '((?+ . (left-fringe diff-fringe-add diff-added))
-                                 (?- . (left-fringe diff-fringe-del diff-removed))
-                                 (?! . (left-fringe diff-fringe-rep diff-changed))
+                               '((?+ . (left-fringe diff-fringe-add diff-indicator-added))
+                                 (?- . (left-fringe diff-fringe-del diff-indicator-removed))
+                                 (?! . (left-fringe diff-fringe-rep diff-indicator-changed))
                                  (?\s . (left-fringe diff-fringe-nul))))))
           (put-text-property (match-beginning 0) (match-end 0) 'display spec))))
     ;; Mimicks the output of Magit's diff.
@@ -2523,14 +2525,14 @@ hunk text is not found in the source file."
 
     (when (and beg end)
       (goto-char beg)
-      (when (text-property-not-all beg end 'fontified t)
-        (if file
-            ;; In a temporary or cached buffer
+      (if file
+          ;; In a temporary or cached buffer
+          (when (text-property-not-all beg end 'fontified t)
             (save-excursion
               (font-lock-fontify-region beg end)
-              (put-text-property beg end 'fontified t))
-          ;; In an existing buffer
-          (font-lock-ensure beg end)))
+              (put-text-property beg end 'fontified t)))
+        ;; In an existing buffer
+        (font-lock-ensure beg end))
 
       (while (< (point) end)
         (let* ((bol (point))
