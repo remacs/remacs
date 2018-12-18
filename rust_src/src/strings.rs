@@ -174,7 +174,7 @@ pub fn clear_string(mut string: LispStringRef) {
 /// STRING are always taken to occupy `tab-width' columns.
 #[lisp_fn]
 pub fn string_width(string: LispStringRef) -> EmacsInt {
-    string.len_chars() as EmacsInt
+    string.string_width() as EmacsInt
 }
 
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
