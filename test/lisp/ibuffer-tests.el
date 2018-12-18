@@ -312,8 +312,8 @@
                 (funcall create-non-file-buffer "ibuf-test-3.b" :size 50
                          :mode #'text-mode
                          :include-content "...but a multitude of drops?\n"))
-               (dirA (with-current-buffer bufA default-directory))
-               (dirB (with-current-buffer bufB default-directory)))
+               (dirA (regexp-quote (with-current-buffer bufA default-directory)))
+               (dirB (regexp-quote (with-current-buffer bufB default-directory))))
           (should (ibuffer-included-in-filters-p
                    bufA '((basename . "ibuf-test-3"))))
           (should (ibuffer-included-in-filters-p

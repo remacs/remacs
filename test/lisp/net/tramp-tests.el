@@ -4773,8 +4773,9 @@ process sentinels.  They shall not disturb each other."
      (string-match
       (format
        "Loading %s"
-       (expand-file-name
-	"tramp-cmds" (file-name-directory (locate-library "tramp"))))
+       (regexp-quote
+        (expand-file-name
+         "tramp-cmds" (file-name-directory (locate-library "tramp")))))
       (shell-command-to-string
        (format
 	"%s -batch -Q -L %s -l tramp-sh --eval %s"
