@@ -1,4 +1,4 @@
-;;; font-lock.el --- Electric font lock mode
+;;; font-lock.el --- Electric font lock mode  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1992-2018 Free Software Foundation, Inc.
 
@@ -656,7 +656,7 @@ be enabled."
       (cond (font-lock-fontified
 	     nil)
 	    ((or (null max-size) (> max-size (buffer-size)))
-	     (font-lock-fontify-buffer))
+             (with-no-warnings (font-lock-fontify-buffer)))
 	    (font-lock-verbose
 	     (message "Fontifying %s...buffer size greater than font-lock-maximum-size"
 		      (buffer-name)))))))
@@ -1095,7 +1095,8 @@ accessible portion of the current buffer."
 (defvar font-lock-ensure-function
   (lambda (beg end)
     (unless font-lock-fontified
-      (font-lock-fontify-region beg end)))
+      (save-excursion
+        (font-lock-fontify-region (or beg (point-min)) (or end (point-max))))))
   "Function to make sure a region has been fontified.
 Called with two arguments BEG and END.")
 
@@ -1779,7 +1780,7 @@ If SYNTACTIC-KEYWORDS is non-nil, it means these keywords are used for
 	  (cons t (cons keywords
 			(mapcar #'font-lock-compile-keyword keywords))))
     (if (and (not syntactic-keywords)
-	     (let ((beg-function syntax-begin-function))
+	     (let ((beg-function (with-no-warnings syntax-begin-function)))
 	       (or (eq beg-function #'beginning-of-defun)
                    (if (symbolp beg-function)
                        (get beg-function 'font-lock-syntax-paren-check))))
