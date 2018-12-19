@@ -2525,14 +2525,7 @@ hunk text is not found in the source file."
 
     (when (and beg end)
       (goto-char beg)
-      (if file
-          ;; In a temporary or cached buffer
-          (when (text-property-not-all beg end 'fontified t)
-            (save-excursion
-              (font-lock-fontify-region beg end)
-              (put-text-property beg end 'fontified t)))
-        ;; In an existing buffer
-        (font-lock-ensure beg end))
+      (font-lock-ensure beg end)
 
       (while (< (point) end)
         (let* ((bol (point))
