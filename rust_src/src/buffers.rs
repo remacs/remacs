@@ -20,7 +20,7 @@ use crate::{
     lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
     lists::{car, cdr, list, member},
     lists::{LispConsCircularChecks, LispConsEndChecks},
-    marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
+    marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::LispStringRef,
     multibyte::{multibyte_length_by_head, string_char},
     numbers::MOST_POSITIVE_FIXNUM,
@@ -1129,6 +1129,57 @@ pub unsafe fn per_buffer_idx(offset: isize) -> isize {
     let flags = &mut buffer_local_flags as *mut Lisp_Buffer as *mut LispObject;
     let obj = flags.offset(offset);
     (*obj).as_fixnum_or_error() as isize
+}
+
+/// Return a list of overlays which is a copy of the overlay list
+/// LIST, but for buffer BUFFER.
+#[no_mangle]
+pub unsafe extern "C" fn copy_overlays(
+    buffer: *mut Lisp_Buffer,
+    list: *mut Lisp_Overlay,
+) -> *mut Lisp_Overlay {
+    if list == ptr::null_mut() {
+        return list;
+    }
+
+    let mut result = ptr::null_mut();
+
+    let overlays_iter = LispOverlayRef::from_ptr(list as *mut c_void)
+        .unwrap_or_else(|| panic!("Invalid overlay reference."))
+        .iter();
+
+    let _ = overlays_iter.fold(None, |mut tail: Option<LispOverlayRef>, overlay| {
+        let mk_start = overlay.start.as_marker_or_error();
+        let start = build_marker(
+            buffer,
+            mk_start.charpos_or_error(),
+            mk_start.bytepos_or_error(),
+        );
+
+        start
+            .as_marker_or_error()
+            .set_insertion_type(mk_start.insertion_type());
+
+        let mk_end = overlay.end.as_marker_or_error();
+        let end = build_marker(buffer, mk_end.charpos_or_error(), mk_end.bytepos_or_error());
+        end.as_marker_or_error()
+            .set_insertion_type(mk_end.insertion_type());
+
+        let mut overlay_new =
+            build_overlay(start, end, Fcopy_sequence(overlay.plist)).as_overlay_or_error();
+
+        if let Some(mut tail_ref) = tail {
+            tail_ref.next = overlay_new.as_mut();
+            tail = Some(overlay_new);
+        } else {
+            result = overlay_new.as_mut();
+            tail = Some(overlay_new);
+        }
+
+        tail
+    });
+
+    result
 }
 
 #[no_mangle]
