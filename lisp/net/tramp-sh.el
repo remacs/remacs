@@ -3885,10 +3885,22 @@ This function expects to be in the right *tramp* buffer."
 I.e., for each directory in `tramp-remote-path', it is tested
 whether it exists and if so, it is added to the environment
 variable PATH."
-  (tramp-message vec 5 "Setting $PATH environment variable")
-  (tramp-send-command
-   vec (format "PATH=%s; export PATH"
-	       (mapconcat 'identity (tramp-get-remote-path vec) ":"))))
+  (let ((path (mapconcat 'identity (tramp-get-remote-path vec) ":"))
+	(path-max
+	 (with-tramp-connection-property vec "path-max"
+	   (tramp-send-command-and-read vec "getconf PATH_MAX /")))
+	index)
+    (tramp-message vec 5 "Setting $PATH environment variable")
+    (unless (< (length path) path-max)
+      (setq index path-max)
+      (while (not (string-equal (substring path (1- index) index) ":"))
+	(setq index (1- index)))
+      ;; FIXME: Is this sufficient? Or shall we raise an error?
+      (tramp-message
+       vec 2 "$PATH environment variable is too long. Ignoring \"%s\""
+       (substring path index))
+      (setq path (substring path 0 (1- index))))
+    (tramp-send-command vec (format "PATH=%s; export PATH" path))))
 
 ;; ------------------------------------------------------------
 ;; -- Communication with external shell --
