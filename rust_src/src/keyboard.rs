@@ -8,7 +8,7 @@ use crate::{
     frames::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::defsubr,
     lisp::LispObject,
-    lists::LispCons,
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     numbers::IsLispNatnum,
     remacs_sys::{
         command_loop_level, glyph_row_area, interrupt_input_blocked, minibuf_level,
@@ -45,34 +45,23 @@ pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObjec
         return Qnil;
     }
 
-    let mut it = tem.iter_cars();
-    let x = it.next().unwrap_or_else(|| LispObject::from(0));
-    let y = it.next().unwrap_or_else(|| LispObject::from(0));
-
-    let mut y_coord = y.as_fixnum_or_error();
-    let x_coord = x.as_fixnum_or_error();
+    let mut it = tem.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
+    let x = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
+    let mut y = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
 
     // Point invisible due to hscrolling?  X can be -1 when a
     // newline in a R2L line overflows into the left fringe.
-    if x_coord < -1 {
+    if x < -1 {
         return Qnil;
     }
     let aux_info = it.rest();
-    if aux_info.is_not_nil() && y_coord < 0 {
-        let rtop = it
-            .next()
-            .unwrap_or_else(|| LispObject::from(0))
-            .as_fixnum_or_error();
+    if aux_info.is_not_nil() && y < 0 {
+        let rtop = it.next().map_or(0, |v| v.as_fixnum_or_error());
 
-        y_coord += rtop;
+        y += rtop;
     }
 
-    posn_at_x_y(
-        LispObject::from(x_coord),
-        LispObject::from(y_coord),
-        window,
-        Qnil,
-    )
+    posn_at_x_y(x.into(), y.into(), window, Qnil)
 }
 
 /// Return position information for pixel coordinates X and Y.
@@ -126,7 +115,7 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
             return false;
         }
 
-        let mut it = event.as_obj().iter_cars_safe();
+        let mut it = event.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
 
         if !it.all(|elt| elt.is_fixnum() || elt.is_symbol()) {
             return false;

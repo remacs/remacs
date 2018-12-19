@@ -8,6 +8,7 @@ use crate::{
     lisp::defsubr,
     lisp::LispObject,
     lists::put,
+    lists::{LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
     remacs_sys::EmacsInt,
     remacs_sys::{case_action, casify_object, casify_region},
@@ -187,10 +188,10 @@ fn casefiddle_region(
             LispObject::from(intern("bounds"))
         );
 
-        bounds.iter_cars_unchecked().for_each(|elt| {
+        for elt in bounds.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
             let (car, cdr) = elt.as_cons_or_error().as_tuple();
             unsafe { casify_region(action, car, cdr) };
-        });
+        }
     }
 }
 

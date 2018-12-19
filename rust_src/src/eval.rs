@@ -8,7 +8,8 @@ use crate::{
     data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
     lisp::{defsubr, is_autoload},
     lisp::{LispObject, LispSubrRef},
-    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons},
+    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr},
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::loadhist_attach,
     objects::equal,
@@ -43,16 +44,7 @@ use crate::{
 /// usage: (or CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn or(args: LispObject) -> LispObject {
-    let mut val = Qnil;
-
-    for elt in args.iter_cars_safe() {
-        val = unsafe { eval_sub(elt) };
-        if val != Qnil {
-            break;
-        }
-    }
-
-    val
+    eval_and_compare_all(args, Qnil, |a, b| a != b)
 }
 
 /// Eval args until one of them yields nil, then return nil.
@@ -61,11 +53,20 @@ pub fn or(args: LispObject) -> LispObject {
 /// usage: (and CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn and(args: LispObject) -> LispObject {
-    let mut val = Qt;
+    eval_and_compare_all(args, Qt, |a, b| a == b)
+}
 
-    for elt in args.iter_cars_safe() {
+/// Eval each item in ARGS and then compare it using CMP.
+/// INITIAL is returned if the list has no cons cells.
+fn eval_and_compare_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
+where
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
+{
+    let mut val = initial;
+
+    for elt in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         val = unsafe { eval_sub(elt) };
-        if val == Qnil {
+        if cmp(val, Qnil) {
             break;
         }
     }
@@ -104,11 +105,10 @@ pub fn lisp_if(args: LispObject) -> LispObject {
 pub fn cond(args: LispObject) -> LispObject {
     let mut val = Qnil;
 
-    for clause in args.iter_cars_safe() {
-        let cell = clause.as_cons_or_error();
-        val = unsafe { eval_sub(cell.car()) };
+    for clause in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        let (head, tail) = clause.as_cons_or_error().as_tuple();
+        val = unsafe { eval_sub(head) };
         if val != Qnil {
-            let tail = cell.cdr();
             if tail.is_not_nil() {
                 val = progn(tail);
             }
@@ -123,7 +123,7 @@ pub fn cond(args: LispObject) -> LispObject {
 /// usage: (progn BODY...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn progn(body: LispObject) -> LispObject {
-    body.iter_cars_safe()
+    body.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
         .map(|form| unsafe { eval_sub(form) })
         .last()
         .into()
@@ -172,7 +172,9 @@ pub fn prog2(args: LispCons) -> LispObject {
 pub fn setq(args: LispObject) -> LispObject {
     let mut val = args;
 
-    let mut it = args.iter_cars().enumerate();
+    let mut it = args
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
+        .enumerate();
     while let Some((nargs, sym)) = it.next() {
         let (_, arg) = it.next().unwrap_or_else(|| {
             xsignal!(
@@ -216,7 +218,7 @@ pub fn function(args: LispObject) -> LispObject {
     let (quoted, tail) = cell.as_tuple();
 
     if tail.is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args));
+        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args).into());
     }
 
     if unsafe { globals.Vinternal_interpreter_environment != Qnil } {
@@ -365,7 +367,7 @@ pub fn letX(args: LispCons) -> LispObject {
 
     let lexenv = unsafe { globals.Vinternal_interpreter_environment };
 
-    for var in varlist.iter_cars() {
+    for var in varlist.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::off) {
         unsafe { maybe_quit() };
 
         let (var, val) = let_binding_value(var);
@@ -426,9 +428,11 @@ pub fn lisp_let(args: LispCons) -> LispObject {
     let count = c_specpdl_index();
     let (varlist, body) = args.as_tuple();
 
+    varlist.check_list();
+
     let mut lexenv = unsafe { globals.Vinternal_interpreter_environment };
 
-    for var in varlist.iter_cars() {
+    for var in varlist.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (var, val) = let_binding_value(var);
 
         let mut dyn_bind = true;
@@ -479,7 +483,7 @@ pub fn lisp_while(args: LispCons) {
     while unsafe { eval_sub(test) } != Qnil {
         unsafe { maybe_quit() };
 
-        progn(body);
+        prog_ignore(body);
     }
 }
 
@@ -522,15 +526,18 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             // SYM is not mentioned in ENVIRONMENT.
             // Look at its function definition.
             def = autoload_do_load(def, sym, Qmacro);
-            if let Some(cell) = def.as_cons() {
-                let func = cell.car();
-                if !func.eq(Qmacro) {
+            match def.as_cons() {
+                Some(cell) => {
+                    let func = cell.car();
+                    if !func.eq(Qmacro) {
+                        break;
+                    }
+                    cell.cdr()
+                }
+                None => {
+                    // Not defined or definition not suitable.
                     break;
                 }
-                cell.cdr()
-            } else {
-                // Not defined or definition not suitable.
-                break;
             }
         } else {
             let next = tem.as_cons_or_error().cdr();
@@ -584,7 +591,7 @@ pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
 /// Signal `error' with message MSG, and additional arg ARG.
 /// If ARG is not a genuine list, make it a one-element list.
 fn signal_error(msg: &str, arg: LispObject) -> ! {
-    let it = arg.iter_tails_safe();
+    let it = arg.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::safe);
     let arg = match it.last() {
         None => list!(arg),
         Some(_) => arg,
@@ -725,7 +732,8 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
                 if cons.car().eq(Qautoload) {
                     // Autoloaded symbols are functions, except if they load
                     // macros or keymaps.
-                    let mut it = obj.iter_tails_safe();
+                    let mut it =
+                        cons.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off);
                     for _ in 0..4 {
                         if it.next().is_none() {
                             break;
@@ -759,7 +767,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     let queue = Vautoload_queue;
     Vautoload_queue = oldqueue;
 
-    for first in queue.iter_cars_safe() {
+    for first in queue.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
         if first.eq(LispObject::from(0)) {
@@ -988,7 +996,7 @@ fn run_hook_with_args_internal(
         args[0] = val;
         func(args)
     } else {
-        for item in val.iter_cars_safe() {
+        for item in val.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
             if ret.is_not_nil() {
                 break;
             }
@@ -1005,7 +1013,9 @@ fn run_hook_with_args_internal(
                     args[0] = global_vals;
                     ret = func(args);
                 } else {
-                    for gval in global_vals.iter_cars_safe() {
+                    for gval in
+                        global_vals.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
+                    {
                         if ret.is_not_nil() {
                             break;
                         }

@@ -17,7 +17,6 @@ use crate::{
     lisp::{ExternalPtr, LispObject, LispSubrRef},
     lists::{inorder, nth, sort_list},
     multibyte::MAX_CHAR,
-    numbers::MOST_POSITIVE_FIXNUM,
     process::LispProcessRef,
     remacs_sys::{
         pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
@@ -455,31 +454,27 @@ impl<'a> ExactSizeIterator for LispBoolVecIterator<'a> {}
 /// the number of bytes in the string; it is the number of characters.
 /// To get the number of bytes, use `string-bytes'.
 #[lisp_fn]
-pub fn length(sequence: LispObject) -> LispObject {
-    if let Some(s) = sequence.as_string() {
-        LispObject::from(s.len_chars())
+pub fn length(sequence: LispObject) -> usize {
+    if sequence.is_nil() {
+        0
+    } else if let Some(s) = sequence.as_string() {
+        s.len_chars() as usize
     } else if let Some(vl) = sequence.as_vectorlike() {
         if let Some(v) = vl.as_vector() {
-            LispObject::from(v.len())
+            v.len()
         } else if let Some(bv) = vl.as_bool_vector() {
-            LispObject::from(bv.len())
+            bv.len()
         } else if vl.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
-            LispObject::from(EmacsInt::from(MAX_CHAR))
+            MAX_CHAR as usize
         } else if vl.is_pseudovector(pvec_type::PVEC_COMPILED)
             || vl.is_pseudovector(pvec_type::PVEC_RECORD)
         {
-            LispObject::from(vl.pseudovector_size())
+            vl.pseudovector_size() as usize
         } else {
             wrong_type!(Qsequencep, sequence);
         }
-    } else if sequence.is_cons() {
-        let len = sequence.iter_tails().count();
-        if len > MOST_POSITIVE_FIXNUM as usize {
-            error!("List too long");
-        }
-        LispObject::from(len)
-    } else if sequence.is_nil() {
-        LispObject::from(0)
+    } else if let Some(cons) = sequence.as_cons() {
+        cons.length()
     } else {
         wrong_type!(Qsequencep, sequence);
     }

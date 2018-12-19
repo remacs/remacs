@@ -13,14 +13,14 @@ use std::slice;
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
-    lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks, TailsIter},
-    remacs_sys,
+    lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks},
+    process::LispProcessRef,
     remacs_sys::{build_string, internal_equal, make_float},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
     remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
-    remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist},
+    remacs_sys::{Qautoload, Qnil, Qsubrp, Qt, Vbuffer_alist, Vprocess_alist},
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -192,7 +192,7 @@ impl LispObject {
     }
 
     unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
+        LispMiscRef::new(self.get_untaggedptr() as *mut Lisp_Misc_Any)
     }
 }
 
@@ -472,12 +472,7 @@ macro_rules! impl_alistval_iter {
 
         impl $iter_name {
             pub fn new() -> Self {
-                $iter_name(CarIter::new(TailsIter::new(
-                    $data,
-                    Qlistp,
-                    LispConsEndChecks::on,
-                    LispConsCircularChecks::on,
-                )))
+                $iter_name($data.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on))
             }
         }
 
@@ -496,6 +491,7 @@ macro_rules! impl_alistval_iter {
 }
 
 impl_alistval_iter! {LiveBufferIter, LispBufferRef, unsafe { Vbuffer_alist }}
+impl_alistval_iter! {ProcessIter, LispProcessRef, unsafe { Vprocess_alist }}
 
 pub fn is_autoload(function: LispObject) -> bool {
     function
