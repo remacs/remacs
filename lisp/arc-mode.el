@@ -637,7 +637,7 @@ the mode is invalid.  If ERROR is nil then nil will be returned."
 
 (defun archive-unixdate (low high)
   "Stringify Unix (LOW HIGH) date."
-  (let* ((time (cons high low))
+  (let* ((time (list high low))
 	 (str (current-time-string time)))
     (format "%s-%s-%s"
 	    (substring str 8 10)
@@ -646,8 +646,7 @@ the mode is invalid.  If ERROR is nil then nil will be returned."
 
 (defun archive-unixtime (low high)
   "Stringify Unix (LOW HIGH) time."
-  (let ((str (current-time-string (cons high low))))
-    (substring str 11 19)))
+  (format-time-string "%H:%M:%S" (list high low)))
 
 (defun archive-get-lineno ()
   (if (>= (point) archive-file-list-start)

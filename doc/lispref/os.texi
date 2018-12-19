@@ -1313,9 +1313,10 @@ This function returns the current time and date as a human-readable
 string.  The format does not vary for the initial part of the string,
 which contains the day of week, month, day of month, and time of day
 in that order: the number of characters used for these fields is
-always the same, so you can reliably
-use @code{substring} to extract them.  You should count
-characters from the beginning of the string rather than from the end,
+always the same, although (unless you require English weekday or
+month abbreviations regardless of locale) it is typically more
+convenient to use @code{format-time-string} than to extract
+fields from the output of @code{current-time-string},
 as the year might not have exactly four digits, and additional
 information may some day be added at the end.
 

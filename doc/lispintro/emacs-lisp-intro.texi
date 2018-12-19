@@ -15599,7 +15599,7 @@ like this:
    (recursive-lengths-list-many-files
     (files-in-below-directory "/usr/local/src/emacs/lisp/"))
    '<)
-  (insert (format "%s" (current-time-string))))
+  (insert (current-time-string)))
 @end ignore
 
 @node Counting function definitions

@@ -1475,7 +1475,6 @@ usage: (encode-time &optional TIME FORM &rest OBSOLESCENT-ARGUMENTS)  */)
     {
       if (6 < nargs)
 	zone = args[nargs - 1];
-      form = Qnil;
       tm.tm_sec  = check_tm_member (a, 0);
       tm.tm_min  = check_tm_member (args[1], 0);
       tm.tm_hour = check_tm_member (args[2], 0);
