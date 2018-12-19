@@ -112,6 +112,9 @@
 (ert-deftest vc-bzr-test-faulty-bzr-autoloads ()
   "Test we can generate autoloads in a bzr directory when bzr is faulty."
   (skip-unless (executable-find vc-bzr-program))
+  ;; Avoid vc-mode-line bug;
+  ;; http://lists.gnu.org/r/emacs-devel/2018-12/msg00368.html
+  (skip-unless (not (eq 0 (user-real-uid))))
   (let* ((homedir (make-temp-file "vc-bzr-test" t))
          (bzrdir (expand-file-name "bzr" homedir))
          (file (progn
