@@ -15,6 +15,7 @@ use crate::{
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
     remacs_sys::globals,
+    remacs_sys::Fcopy_alist,
     remacs_sys::{
         estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, scroll_command, select_window,
@@ -1142,6 +1143,15 @@ pub fn select_window_lisp(window: LispObject, norecord: LispObject) -> LispObjec
 pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
     let win: LispWindowRef = window.into();
     EmacsInt::from(win.top_line)
+}
+
+/// Return the parameters of WINDOW and their values.
+/// WINDOW must be a valid window and defaults to the selected one.  The
+/// return value is a list of elements of the form (PARAMETER . VALUE).
+#[lisp_fn(min = "0")]
+pub fn window_parameters(window: LispWindowValidOrSelected) -> LispObject {
+    let win: LispWindowRef = window.into();
+    unsafe { Fcopy_alist(win.window_parameters) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
