@@ -1680,42 +1680,6 @@ if `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.  */)
     }
 }
 
-DEFUN ("load-average", Fload_average, Sload_average, 0, 1, 0,
-       doc: /* Return list of 1 minute, 5 minute and 15 minute load averages.
-
-Each of the three load averages is multiplied by 100, then converted
-to integer.
-
-When USE-FLOATS is non-nil, floats will be used instead of integers.
-These floats are not multiplied by 100.
-
-If the 5-minute or 15-minute load averages are not available, return a
-shortened list, containing only those averages which are available.
-
-An error is thrown if the load average can't be obtained.  In some
-cases making it work would require Emacs being installed setuid or
-setgid so that it can read kernel information, and that usually isn't
-advisable.  */)
-  (Lisp_Object use_floats)
-{
-  double load_ave[3];
-  int loads = getloadavg (load_ave, 3);
-  Lisp_Object ret = Qnil;
-
-  if (loads < 0)
-    error ("load-average not implemented for this operating system");
-
-  while (loads-- > 0)
-    {
-      Lisp_Object load = (NILP (use_floats)
-			  ? make_number (100.0 * load_ave[loads])
-			  : make_float (load_ave[loads]));
-      ret = Fcons (load, ret);
-    }
-
-  return ret;
-}
-
 /* Primitives for work of the "widget" library.
    In an ideal world, this section would not have been necessary.
    However, lisp function calls being as slow as they are, it turns
@@ -3389,7 +3353,6 @@ this variable.  */);
   defsubr (&Smapcan);
   defsubr (&Smapconcat);
   defsubr (&Syes_or_no_p);
-  defsubr (&Sload_average);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);

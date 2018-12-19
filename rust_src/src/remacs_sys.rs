@@ -105,6 +105,7 @@ extern "C" {
     pub fn allocate_misc(t: Lisp_Misc_Type) -> LispObject;
     #[cfg(windows)]
     pub fn file_attributes_c(filename: LispObject, id_format: LispObject) -> LispObject;
+    pub fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int;
     #[cfg(unix)]
     pub fn file_attributes_c_internal(
         name: *const c_char,

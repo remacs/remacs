@@ -1,5 +1,7 @@
 //* Random utility Lisp functions.
 
+use libc;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -304,6 +306,51 @@ pub extern "C" fn internal_equal_misc(
         (Some(m1), Some(m2)) => m1.equal(m2, kind, depth, ht),
         _ => false,
     }
+}
+
+#[cfg(windows)]
+unsafe fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int {
+    crate::remacs_sys::getloadavg(loadavg, nelem)
+}
+
+#[cfg(not(windows))]
+unsafe fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int {
+    libc::getloadavg(loadavg, nelem)
+}
+
+/// Return list of 1 minute, 5 minute and 15 minute load averages.
+///
+/// Each of the three load averages is multiplied by 100, then converted
+/// to integer.
+///
+/// When USE-FLOATS is non-nil, floats will be used instead of integers.
+/// These floats are not multiplied by 100.
+///
+/// If the 5-minute or 15-minute load averages are not available, return a
+/// shortened list, containing only those averages which are available.
+///
+/// An error is thrown if the load average can't be obtained.  In some
+/// cases making it work would require Emacs being installed setuid or
+/// setgid so that it can read kernel information, and that usually isn't
+/// advisable.
+#[lisp_fn(min = "0")]
+pub fn load_average(use_floats: bool) -> Vec<LispObject> {
+    let mut load_avg: [libc::c_double; 3] = [0.0, 0.0, 0.0];
+    let loads = unsafe { getloadaverage(load_avg.as_mut_ptr(), 3) };
+
+    if loads < 0 {
+        error!("load-average not implemented for this operating system");
+    }
+
+    (0..loads as usize)
+        .map(|i| {
+            if use_floats {
+                LispObject::from(load_avg[i])
+            } else {
+                LispObject::from((100.0 * load_avg[i]) as i64)
+            }
+        })
+        .collect()
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));
