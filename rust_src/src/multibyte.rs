@@ -42,7 +42,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::Qstringp,
     remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
-    remacs_sys::{compare_string_intervals, empty_unibyte_string},
+    remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
 };
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
@@ -85,6 +85,17 @@ impl LispStringRef {
     pub fn len_chars(self) -> ptrdiff_t {
         let s = unsafe { self.u.s };
         s.size
+    }
+
+    /// Return width of STRING when displayed in the current buffer. Width is
+    /// measured by how many columns it occupies on the screen. When calculating
+    /// width of a multibyte character in STRING, only the base leading-code is
+    /// considered; the validity of the following bytes is not checked.  Tabs in
+    /// STRING are always taken to occupy `tab-width' columns.
+    pub fn width(self) -> usize {
+        unsafe {
+            lisp_string_width(self.as_lisp_obj(), -1, ptr::null_mut(), ptr::null_mut()) as usize
+        }
     }
 
     pub fn is_multibyte(self) -> bool {

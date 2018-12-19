@@ -167,6 +167,16 @@ pub fn clear_string(mut string: LispStringRef) {
     string.mark_as_unibyte();
 }
 
+/// Return width of STRING when displayed in the current buffer. Width is
+/// measured by how many columns it occupies on the screen. When calculating
+/// width of a multibyte character in STRING, only the base leading-code is
+/// considered; the validity of the following bytes is not checked.  Tabs in
+/// STRING are always taken to occupy `tab-width' columns.
+#[lisp_fn]
+pub fn string_width(string: LispStringRef) -> usize {
+    string.width()
+}
+
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
 
 #[test]
