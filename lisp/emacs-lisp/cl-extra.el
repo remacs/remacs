@@ -484,7 +484,7 @@ Optional second arg STATE is a random-state object."
 If STATE is t, return a new state object seeded from the time of day."
   (unless state (setq state cl--random-state))
   (if (cl-random-state-p state)
-      (copy-tree state t)
+      (copy-sequence state)
     (cl--make-random-state (if (integerp state) state (cl--random-time)))))
 
 ;; Implementation limits.
