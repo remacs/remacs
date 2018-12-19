@@ -258,6 +258,19 @@ impl From<Vec<LispObject>> for LispObject {
     }
 }
 
+impl<T> From<Vec<T>> for LispObject
+where
+    LispObject: From<T>,
+{
+    default fn from(v: Vec<T>) -> LispObject {
+        list(
+            &v.into_iter()
+                .map(LispObject::from)
+                .collect::<Vec<LispObject>>(),
+        )
+    }
+}
+
 impl From<LispObject> for bool {
     fn from(o: LispObject) -> Self {
         o.is_not_nil()

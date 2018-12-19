@@ -18,6 +18,7 @@
 #![feature(const_fn_union)]
 #![feature(ptr_offset_from)]
 #![feature(self_struct_ctor)]
+#![feature(specialization)]
 
 extern crate errno;
 #[macro_use]

@@ -187,16 +187,6 @@ impl From<LispNumber> for LispObject {
     }
 }
 
-impl From<Vec<LispNumber>> for LispObject {
-    fn from(v: Vec<LispNumber>) -> LispObject {
-        LispObject::from(
-            v.into_iter()
-                .map(LispObject::from)
-                .collect::<Vec<LispObject>>(),
-        )
-    }
-}
-
 impl LispObject {
     pub fn is_number(self) -> bool {
         self.is_fixnum() || self.is_float()
