@@ -418,7 +418,12 @@ pub fn frame_bottom_divider_width(frame: LispFrameOrSelected) -> i32 {
 /// This function runs `delete-frame-functions' before actually
 /// deleting the frame, unless the frame is a tooltip.
 /// The functions are run with one argument, the frame to be deleted.
-#[lisp_fn(min = "0", name = "delete-frame", c_name = "delete_frame")]
+#[lisp_fn(
+    intspec = "",
+    min = "0",
+    name = "delete-frame",
+    c_name = "delete_frame"
+)]
 pub fn delete_frame_lisp(frame: LispObject, force: bool) {
     unsafe {
         c_delete_frame(frame, force.into());
