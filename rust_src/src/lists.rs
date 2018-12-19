@@ -7,6 +7,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::LispObject,
+    numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
     remacs_sys::{internal_equal, Fcons, CHECK_IMPURE},
     remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
@@ -21,6 +22,12 @@ use crate::{
 pub struct LispCons(LispObject);
 
 impl LispObject {
+    pub fn check_list(self) {
+        if !(self.is_cons() || self.is_nil()) {
+            wrong_type!(Qlistp, self);
+        }
+    }
+
     pub fn is_cons(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Cons
     }
@@ -34,11 +41,7 @@ impl LispObject {
     }
 
     pub fn as_cons_or_error(self) -> LispCons {
-        if self.is_cons() {
-            LispCons(self)
-        } else {
-            wrong_type!(Qconsp, self)
-        }
+        self.as_cons().unwrap_or_else(|| wrong_type!(Qconsp, self))
     }
 }
 
@@ -68,110 +71,44 @@ impl LispObject {
     }
 
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
-    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
-    /// will be signaled.
-    pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::on,
-            LispConsCircularChecks::on,
-        )
-    }
-
-    pub fn iter_tails_noendchecked(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::on,
-        )
-    }
-
-    /// Iterate over all tails of self.  If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    pub fn iter_tails_safe(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::safe,
-        )
-    }
-
-    /// Iterate over all tails of self.  If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    /// No circular checks are performed.
-    pub fn iter_tails_unchecked(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::off,
-        )
+    /// of cons cells ending in nil.
+    /// wrong-type-argument error will be signaled if END_CHECKS is 'on'.
+    pub fn iter_tails(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        TailsIter::new(self, Qlistp, end_checks, circular_checks)
     }
 
     /// Iterate over all tails of self.  self should be a plist, i.e. a chain
-    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
-    /// will be signaled.
-    pub fn iter_tails_plist(self) -> TailsIter {
-        TailsIter::new(
-            self,
-            Qplistp,
-            LispConsEndChecks::on,
-            LispConsCircularChecks::on,
-        )
+    /// of cons cells ending in nil.
+    /// wrong-type-argument error will be signaled if END_CHECKS is 'on'.
+    pub fn iter_tails_plist(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        TailsIter::new(self, Qplistp, end_checks, circular_checks)
     }
 
-    pub fn iter_cars_v2(
+    /// Iterate over the car cells of a list.
+    pub fn iter_cars(
         self,
         end_checks: LispConsEndChecks,
         circular_checks: LispConsCircularChecks,
     ) -> CarIter {
         CarIter::new(TailsIter::new(self, Qlistp, end_checks, circular_checks))
     }
-
-    /// Iterate over the car cells of a list.
-    pub fn iter_cars(self) -> CarIter {
-        CarIter::new(TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::on,
-            LispConsCircularChecks::on,
-        ))
-    }
-
-    /// Iterate over all cars of self. If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    pub fn iter_cars_safe(self) -> CarIter {
-        CarIter::new(TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::safe,
-        ))
-    }
-
-    /// Iterate over all cars of self. If self is not a cons-chain,
-    /// iteration will stop at the first non-cons without signaling.
-    /// No circular checks are performed.
-    pub fn iter_cars_unchecked(self) -> CarIter {
-        CarIter::new(TailsIter::new(
-            self,
-            Qlistp,
-            LispConsEndChecks::off,
-            LispConsCircularChecks::off,
-        ))
-    }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LispConsEndChecks {
     off, // no checks
     on,  // error when the last item inspected is not a valid cons cell.
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LispConsCircularChecks {
     off,  // no checks
     safe, // checked, exits when a circular list is found.
@@ -376,9 +313,8 @@ impl LispCons {
             (LispConsCircularChecks::on, depth + 1, ht)
         };
 
-        let mut it1 = LispObject::from(self).iter_tails_v2(LispConsEndChecks::off, circular_checks);
-        let mut it2 =
-            LispObject::from(other).iter_tails_v2(LispConsEndChecks::off, circular_checks);
+        let mut it1 = self.iter_tails(LispConsEndChecks::off, circular_checks);
+        let mut it2 = other.iter_tails(LispConsEndChecks::off, circular_checks);
         loop {
             match (it1.next(), it2.next()) {
                 (Some(cons1), Some(cons2)) => {
@@ -396,6 +332,33 @@ impl LispCons {
         }
 
         unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
+    }
+
+    pub fn length(self) -> usize {
+        let len = self
+            .0
+            .iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
+            .count();
+        if len > MOST_POSITIVE_FIXNUM as usize {
+            error!("List too long");
+        }
+        len
+    }
+
+    pub fn iter_tails(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        TailsIter::new(self.0, Qlistp, end_checks, circular_checks)
+    }
+
+    pub fn iter_cars(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> CarIter {
+        CarIter::new(TailsIter::new(self.0, Qlistp, end_checks, circular_checks))
     }
 }
 
@@ -415,13 +378,13 @@ pub fn consp(object: LispObject) -> bool {
 /// Otherwise, return nil.
 #[lisp_fn]
 pub fn listp(object: LispObject) -> bool {
-    object.is_cons() || object.is_nil()
+    object.is_nil() || consp(object)
 }
 
 /// Return t if OBJECT is not a list.  Lists include nil.
 #[lisp_fn]
 pub fn nlistp(object: LispObject) -> bool {
-    !(object.is_cons() || object.is_nil())
+    !listp(object)
 }
 
 /// Set the car of CELL to be NEWCAR. Returns NEWCAR.
@@ -483,34 +446,36 @@ pub fn cdr_safe(object: LispObject) -> LispObject {
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
 pub fn nthcdr(n: EmacsInt, list: LispObject) -> LispObject {
-    if n < 0 {
-        list
-    } else {
-        let mut it = list.iter_tails_safe();
-
-        match it.nth(n as usize) {
-            Some(value) => value.as_obj(),
-            None => it.rest(),
-        }
+    if n <= 0 {
+        return list;
     }
+
+    // The iterator's `nth` method looks like it would fit here. However, it has
+    // different semantics from Lisp. Lisp will happily return the `nth` item even if
+    // it is not a valid cons cell. The tails iterator does not handle this.
+    // By counting down manually, the code can exit before the iterator would
+    // allowing `rest()` to still have valid data.
+    let mut it = list.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::safe);
+    for _ in 0..n {
+        it.next();
+    }
+    it.rest()
 }
 
 /// Return the Nth element of LIST.
 /// N counts from zero.  If LIST is not that long, nil is returned.
 #[lisp_fn]
 pub fn nth(n: EmacsInt, list: LispObject) -> LispObject {
-    if n < 0 {
-        car(list)
-    } else {
-        list.iter_cars_safe().nth(n as usize).unwrap_or(Qnil)
-    }
+    car(nthcdr(n, list))
 }
 
 fn lookup_member<CmpFunc>(elt: LispObject, list: LispObject, cmp: CmpFunc) -> LispObject
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_tails().find(|item| cmp(elt, item.car())).into()
+    list.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .find(|item| cmp(elt, item.car()))
+        .into()
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
@@ -541,11 +506,8 @@ fn assoc_impl<CmpFunc>(key: LispObject, list: LispObject, cmp: CmpFunc) -> LispO
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_cars()
-        .find(|item| {
-            item.as_cons()
-                .map_or_else(|| false, |cons| cmp(key, cons.car()))
-        })
+    list.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .find(|item| item.as_cons().map_or(false, |cons| cmp(key, cons.car())))
         .unwrap_or(Qnil)
 }
 
@@ -574,11 +536,8 @@ fn rassoc_impl<CmpFunc>(key: LispObject, list: LispObject, cmp: CmpFunc) -> Lisp
 where
     CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    list.iter_cars()
-        .find(|item| {
-            item.as_cons()
-                .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
-        })
+    list.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .find(|item| item.as_cons().map_or(false, |cons| cmp(key, cons.cdr())))
         .unwrap_or(Qnil)
 }
 
@@ -609,20 +568,20 @@ pub fn rassoc(key: LispObject, list: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
     let mut prev = None;
-    list.iter_tails().fold(list, |remaining, tail| {
-        let (item, rest) = tail.as_tuple();
-        if elt.eq(item) {
-            if let Some(cons) = prev {
-                setcdr(cons, rest);
+    list.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .fold(list, |remaining, tail| {
+            let (item, rest) = tail.as_tuple();
+            if elt.eq(item) {
+                match prev {
+                    Some(cons) => setcdr(cons, rest),
+                    None => return rest,
+                };
             } else {
-                return rest;
+                prev = Some(tail);
             }
-        } else {
-            prev = Some(tail);
-        }
 
-        remaining
-    })
+            remaining
+        })
 }
 
 /// Extract a value from a property list.
@@ -632,21 +591,13 @@ pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
 /// properties on the list.  This function never signals an error.
 #[lisp_fn]
 pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    let mut prop_item = true;
-    for tail in plist.iter_tails_safe() {
-        if prop_item {
-            match tail.cdr().as_cons() {
-                None => break,
-                Some(tail_cdr_cons) => {
-                    if tail.car().eq(prop) {
-                        return tail_cdr_cons.car();
-                    }
-                }
-            }
-        }
-        prop_item = !prop_item;
-    }
-    Qnil
+    internal_plist_get(
+        plist,
+        prop,
+        LispObject::eq,
+        LispConsEndChecks::off,
+        LispConsCircularChecks::safe,
+    )
 }
 
 /// Extract a value from a property list, comparing with `equal'.
@@ -656,26 +607,46 @@ pub fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
 /// one of the properties on the list.
 #[lisp_fn]
 pub fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    let mut prop_item = true;
-    for tail in plist.iter_tails_plist() {
-        if prop_item {
-            match tail.cdr().as_cons() {
-                None => {
-                    // need an extra check here to catch odd-length lists
-                    if tail.as_obj().is_not_nil() {
-                        wrong_type!(Qplistp, plist)
-                    }
-                    break;
+    internal_plist_get(
+        plist,
+        prop,
+        LispObject::equal,
+        LispConsEndChecks::on,
+        LispConsCircularChecks::on,
+    )
+}
+
+fn internal_plist_get<CmpFunc>(
+    plist: LispObject,
+    prop: LispObject,
+    cmp: CmpFunc,
+    end_checks: LispConsEndChecks,
+    circular_checks: LispConsCircularChecks,
+) -> LispObject
+where
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
+{
+    for tail in plist
+        .iter_tails_plist(end_checks, circular_checks)
+        .step_by(2)
+    {
+        match tail.cdr().as_cons() {
+            None => {
+                // need an extra check here to catch odd-length lists
+                if end_checks == LispConsEndChecks::on && tail.as_obj().is_not_nil() {
+                    wrong_type!(Qplistp, plist)
                 }
-                Some(tail_cdr_cons) => {
-                    if tail.car().equal(prop) {
-                        return tail_cdr_cons.car();
-                    }
+
+                break;
+            }
+            Some(tail_cdr_cons) => {
+                if cmp(tail.car(), prop) {
+                    return tail_cdr_cons.car();
                 }
             }
         }
-        prop_item = !prop_item;
     }
+
     Qnil
 }
 
@@ -686,43 +657,43 @@ pub fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
 /// property and a property with the value nil.
 /// The value is actually the tail of PLIST whose car is PROP.
 #[lisp_fn]
-pub fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
-    let mut prop_item = true;
-    for tail in plist.iter_tails_plist() {
-        if prop_item && prop.eq(tail.car()) {
-            return tail.as_obj();
-        }
-        prop_item = !prop_item;
-    }
-    Qnil
+pub fn plist_member(plist: LispObject, prop: LispObject) -> Option<LispCons> {
+    plist
+        .iter_tails_plist(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .step_by(2)
+        .find(|tail| prop.eq(tail.car()))
 }
 
-fn internal_plist_put<F>(plist: LispObject, prop: LispObject, val: LispObject, cmp: F) -> LispObject
+fn internal_plist_put<CmpFunc>(
+    plist: LispObject,
+    prop: LispObject,
+    val: LispObject,
+    cmp: CmpFunc,
+) -> LispObject
 where
-    F: Fn(LispObject, LispObject) -> bool,
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
 {
-    let mut prop_item = true;
     let mut last_cons = None;
-    for tail in plist.iter_tails_plist() {
-        if prop_item {
-            match tail.cdr().as_cons() {
-                None => {
-                    // need an extra check here to catch odd-length lists
-                    if tail.as_obj().is_not_nil() {
-                        wrong_type!(Qplistp, plist)
-                    }
-                    break;
+    for tail in plist
+        .iter_tails_plist(LispConsEndChecks::on, LispConsCircularChecks::on)
+        .step_by(2)
+    {
+        match tail.cdr().as_cons() {
+            None => {
+                // need an extra check here to catch odd-length lists
+                if tail.as_obj().is_not_nil() {
+                    wrong_type!(Qplistp, plist)
                 }
-                Some(tail_cdr_cons) => {
-                    if cmp(tail.car(), prop) {
-                        tail_cdr_cons.set_car(val);
-                        return plist;
-                    }
-                    last_cons = Some(tail);
+                break;
+            }
+            Some(tail_cdr_cons) => {
+                if cmp(tail.car(), prop) {
+                    tail_cdr_cons.set_car(val);
+                    return plist;
                 }
+                last_cons = Some(tail);
             }
         }
-        prop_item = !prop_item;
     }
     match last_cons {
         None => LispObject::cons(prop, LispObject::cons(val, Qnil)),
@@ -784,7 +755,7 @@ pub fn put(mut symbol: LispSymbolRef, propname: LispObject, value: LispObject) -
 /// Return a newly created list with specified arguments as elements.
 /// Any number of arguments, even zero arguments, are allowed.
 /// usage: (fn &rest OBJECTS)
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn list(args: &[LispObject]) -> LispObject {
     args.iter()
         .rev()
@@ -803,7 +774,8 @@ pub fn make_list(length: EmacsUint, init: LispObject) -> LispObject {
 /// which is at least the number of distinct elements.
 #[lisp_fn]
 pub fn safe_length(list: LispObject) -> usize {
-    list.iter_tails_safe().count()
+    list.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::safe)
+        .count()
 }
 
 // Used by sort() in vectors.rs.
@@ -835,20 +807,22 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
 
     loop {
         if l1.is_nil() {
-            if let Some(cons) = tail {
-                setcdr(cons, l2);
-                return value;
-            } else {
-                return l2;
-            }
+            match tail {
+                Some(cons) => {
+                    setcdr(cons, l2);
+                    return value;
+                }
+                None => return l2,
+            };
         }
         if l2.is_nil() {
-            if let Some(cons) = tail {
-                setcdr(cons, l1);
-                return value;
-            } else {
-                return l1;
-            }
+            match tail {
+                Some(cons) => {
+                    setcdr(cons, l1);
+                    return value;
+                }
+                None => return l1,
+            };
         }
 
         let item;
@@ -859,11 +833,14 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
             item = l2;
             l2 = cdr(l2);
         }
-        if let Some(cons) = tail {
-            setcdr(cons, item);
-        } else {
-            value = item;
-        }
+        match tail {
+            Some(cons) => {
+                setcdr(cons, item);
+            }
+            None => {
+                value = item;
+            }
+        };
         tail = item.as_cons();
     }
 }
@@ -929,7 +906,11 @@ pub extern "C" fn mapcar1(
         );
     }
 
-    mapcar_over_iterator(output, fun, seq.iter_cars_safe())
+    mapcar_over_iterator(
+        output,
+        fun,
+        seq.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off),
+    )
 }
 
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

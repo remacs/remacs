@@ -19,6 +19,7 @@ use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
     lists::{car, cdr, list, member},
+    lists::{LispConsCircularChecks, LispConsEndChecks},
     marker::{marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
     multibyte::LispStringRef,
     multibyte::{multibyte_length_by_head, string_char},
@@ -578,8 +579,12 @@ impl From<LispBufferOrName> for Option<LispBufferRef> {
     fn from(v: LispBufferOrName) -> Option<LispBufferRef> {
         let buffer = match v {
             LispBufferOrName::Buffer(b) => b,
-            LispBufferOrName::Name(n) => {
-                cdr(assoc_ignore_text_properties(n, unsafe { Vbuffer_alist }))
+            LispBufferOrName::Name(name) => {
+                let tem = unsafe { Vbuffer_alist }
+                    .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
+                    .find(|&item| string_equal(car(item), name));
+
+                cdr(tem.into())
             }
         };
         buffer.as_buffer()
@@ -630,7 +635,10 @@ impl From<LispBufferOrCurrent> for LispBufferRef {
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
 pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
-    let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }.iter_cars_safe().map(cdr).collect();
+    let mut buffers: Vec<LispObject> = unsafe { Vbuffer_alist }
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
+        .map(cdr)
+        .collect();
 
     match frame {
         None => list(&buffers),
@@ -658,18 +666,6 @@ pub fn overlayp(object: LispObject) -> bool {
 #[lisp_fn]
 pub fn buffer_live_p(object: Option<LispBufferRef>) -> bool {
     object.map_or(false, |m| m.is_live())
-}
-
-/// Like Fassoc, but use `Fstring_equal` to compare
-/// (which ignores text properties), and don't ever quit.
-fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
-    let result = list
-        .iter_tails_safe()
-        .find(|&item| string_equal(car(item.car()), key));
-    match result {
-        Some(elt) => elt.car(),
-        None => Qnil,
-    }
 }
 
 /// Return the buffer named BUFFER-OR-NAME.

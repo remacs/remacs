@@ -8,7 +8,8 @@ use crate::{
     eval::{un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
-    lists::{assq, car, get, member, memq, put, LispCons},
+    lists::{assq, car, get, member, memq, put},
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
@@ -22,7 +23,6 @@ use crate::{
     },
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
-    vectors::length,
 };
 
 /// Return t if FEATURE is present in this Emacs.
@@ -93,7 +93,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
 #[lisp_fn(unevalled = "true")]
 pub fn quote(args: LispCons) -> LispObject {
     if args.cdr().is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qquote, length(args.as_obj()));
+        xsignal!(Qwrong_number_of_arguments, Qquote, args.length().into());
     }
 
     args.car()
@@ -137,9 +137,8 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // and not when we aren't loading or reading from a file.
     let from_file = unsafe { globals.load_in_progress }
         || current_load_list
-            .iter_cars_safe()
-            .last()
-            .map_or(false, |elt| elt.is_string());
+            .iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off)
+            .any(|elt| elt.cdr().is_nil() && elt.car().is_string());
 
     if from_file {
         let tem = LispObject::cons(Qrequire, feature);
@@ -167,7 +166,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // but if we require the same feature recursively 3 times,
     // signal an error.
     let nesting = unsafe { require_nesting_list }
-        .iter_cars()
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
         .filter(|elt| equal(feature, *elt))
         .count();
 

@@ -6,7 +6,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    lisp::{ExternalPtr, LispObject, ProcessIter},
     lists::{assoc, car, cdr, plist_put},
     multibyte::LispStringRef,
     remacs_sys::{
@@ -80,6 +80,13 @@ impl From<LispObject> for Option<LispProcessRef> {
     }
 }
 
+macro_rules! for_each_process {
+    ($name:ident => $action:block) => {
+        for $name in ProcessIter::new()
+            $action
+    };
+}
+
 /// This is how commands for the user decode process arguments.  It
 /// accepts a process, a process name, a buffer, a buffer name, or nil.
 /// Buffers denote the first process in the buffer, and nil denotes the
@@ -109,13 +116,11 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
                 .name()
                 .as_string()
                 .unwrap_or_else(|| error!("Attempt to get process for a dead buffer"));
-            let proc = get_buffer_process_internal(Some(b));
-            if proc.is_nil() {
-                error!("Buffer {:?} has no process.", unsafe {
+            match get_buffer_process_internal(Some(b)) {
+                None => error!("Buffer {:?} has no process.", unsafe {
                     name.u.s.data as *mut libc::c_char
-                })
-            } else {
-                proc
+                }),
+                Some(proc) => proc.into(),
             }
         }
         None => proc_or_buf.as_process_or_error().as_lisp_obj(),
@@ -171,24 +176,20 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// Return nil if all processes associated with BUFFER have been
 /// deleted or killed.
 #[lisp_fn]
-pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
+pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> Option<LispProcessRef> {
     get_buffer_process_internal(buffer_or_name.and_then(|b| b.into()))
 }
 
-pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> LispObject {
-    match buffer {
-        None => Qnil,
-        Some(buf) => {
-            let obj = LispObject::from(buf);
-            unsafe { Vprocess_alist }
-                .iter_cars()
-                .find(|item| {
-                    let p = item.as_cons_or_error().cdr();
-                    obj.eq(p.as_process_or_error().buffer)
-                })
-                .map_or(Qnil, |item| item.as_cons_or_error().cdr())
-        }
+pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> Option<LispProcessRef> {
+    if let Some(buf) = buffer {
+        let obj = LispObject::from(buf);
+        for_each_process!(p => {
+            if obj.eq(p.buffer) {
+                return Some(p);
+            }
+        });
     }
+    None
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.

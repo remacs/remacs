@@ -5,6 +5,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
+    lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
     remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
@@ -85,7 +86,9 @@ impl LispObject {
 
 macro_rules! for_each_frame {
     ($name:ident => $action:block) => {
-        for $name in unsafe { Vframe_list.iter_cars_unchecked() }.map(|f| f.as_frame_or_error())
+        let frame_it = unsafe { Vframe_list.iter_cars(LispConsEndChecks::off,
+                                                      LispConsCircularChecks::off) };
+        for $name in frame_it.map(|f| f.as_frame_or_error())
             $action
     };
 }
