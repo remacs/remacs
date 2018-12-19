@@ -241,13 +241,14 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
                              (gfile-monitor-name file-notify--test-desc)))
           (cdr (assq file-notify--test-desc file-notify--test-monitors))))))
 
-(defmacro file-notify--deftest-remote (test docstring &optional expected)
+(defmacro file-notify--deftest-remote (test docstring &optional expected skip)
   "Define ert `TEST-remote' for remote files."
   (declare (indent 1))
   `(ert-deftest ,(intern (concat (symbol-name test) "-remote")) ()
      ,docstring
      :tags '(:expensive-test)
      :expected-result (or ,expected :passed)
+     (skip-unless (not ,skip))
      (let* ((temporary-file-directory
 	     file-notify-test-remote-temporary-file-directory)
 	    (ert-test (ert-get-test ',test)))
@@ -1161,8 +1162,10 @@ delivered."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
+;; Unpredictable failures, eg https://hydra.nixos.org/build/86016286
 (file-notify--deftest-remote file-notify-test07-many-events
-   "Check that events are not dropped for remote directories.")
+   "Check that events are not dropped for remote directories."
+   :passed (getenv "EMACS_HYDRA_CI"))
 
 (ert-deftest file-notify-test08-backup ()
   "Check that backup keeps file notification."
