@@ -1090,13 +1090,14 @@ pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
 pub fn set_window_new_total(
     window: LispWindowValidOrSelected,
     size: EmacsInt,
-    add: Option<LispObject>,
+    add: LispObject,
 ) -> LispObject {
     let mut win: LispWindowRef = window.into();
 
-    let new_total = match add {
-      None => size,
-      Some(_) => EmacsInt::from(win.new_total) + size,
+    let new_total = if add.is_nil() {
+        size
+    } else {
+        EmacsInt::from(win.new_total) + size
     };
     win.new_total = new_total.into();
     win.new_total
