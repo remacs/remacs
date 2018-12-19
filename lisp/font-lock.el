@@ -1093,14 +1093,9 @@ accessible portion of the current buffer."
                 (or beg (point-min)) (or end (point-max)))))
 
 (defvar font-lock-ensure-function
-  (lambda (_beg _end)
+  (lambda (beg end)
     (unless font-lock-fontified
-      (font-lock-default-fontify-buffer)
-      (unless font-lock-mode
-        ;; If font-lock is not enabled, we don't have the hooks in place to
-        ;; track modifications, so a subsequent call to font-lock-ensure can't
-        ;; assume that the fontification is still valid.
-        (setq font-lock-fontified nil))))
+      (font-lock-fontify-region beg end)))
   "Function to make sure a region has been fontified.
 Called with two arguments BEG and END.")
 
