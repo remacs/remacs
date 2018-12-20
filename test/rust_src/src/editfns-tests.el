@@ -83,3 +83,16 @@
       (insert payload)
       (should (equal (delete-and-extract-region 12 5) " buffer"))
       (should (equal (buffer-string) "test contents")))))
+
+(ert-deftest time-comparison ()
+  (let ((fixed-time '(23580 5248 742594 205000)))
+    (should (time-less-p fixed-time (current-time)))))
+
+(ert-deftest time-arithmetic ()
+  (let ((fixed-time '(23580 5248 742594 205000))
+        (more-time '(23580 5258 742594 205000))
+        (less-time '(23580 5228 742594 205000)))
+    (should (equal fixed-time (time-add fixed-time 0)))
+    (should (equal fixed-time (time-subtract fixed-time 0)))
+    (should (equal more-time (time-add fixed-time '(0 10))))
+    (should (equal less-time (time-subtract fixed-time '(0 20))))))
