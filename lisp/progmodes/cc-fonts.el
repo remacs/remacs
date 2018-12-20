@@ -1284,8 +1284,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		(save-excursion
 		  (goto-char match-pos)
 		  (while
-		      (progn (c-backward-token-2)
-			     (eq (char-after) ?\()))
+		      (and (zerop (c-backward-token-2))
+			   (eq (char-after) ?\()))
 		  (looking-at c-arithmetic-op-regexp)))
 	   (cons nil nil))
 	  ;; In a C++ member initialization list.
