@@ -346,8 +346,9 @@ The new command 'windmove-delete-default-keybindings' binds default
 keys with provided prefix (by default, C-x) and modifiers (by default,
 Shift) to the commands that delete the window in the specified
 direction.  For example, 'C-x S-down' deletes the window below.
-With a prefix arg 'C-u', deletes the selected window and selects
-the window that was in the specified direction.
+With a prefix arg 'C-u', also kills the buffer in that window.
+With `M-0', deletes the selected window and selects the window
+that was in the specified direction.
 
 ** Octave mode
 The mode is automatically enabled in files that start with the
