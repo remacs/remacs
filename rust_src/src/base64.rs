@@ -359,7 +359,7 @@ pub fn base64_encode_string(mut string: LispStringRef, no_line_break: bool) -> L
         length,
         encoded,
         allength,
-        no_line_break,
+        !no_line_break,
         string.is_multibyte(),
     );
     if encoded_length < 0 {
