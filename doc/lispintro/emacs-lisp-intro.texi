@@ -4636,7 +4636,7 @@ languages, not just Lisp, and C, and it works with non-programming
 text as well.  For example, @code{xref-find-definitions} will jump to
 the various nodes in the Texinfo source file of this document
 (provided that you've run the @command{etags} utility to record all
-the nodes in the manuals that come with Emacs; @pxref{Create tags
+the nodes in the manuals that come with Emacs; @pxref{Create Tags
 Table,,, emacs, The GNU Emacs Manual}).
 
 To use the @code{xref-find-definitions} command, type @kbd{M-.}
