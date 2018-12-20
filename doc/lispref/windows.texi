@@ -2263,6 +2263,12 @@ selected window or never appeared in it before, or if
 buffer.
 @end defopt
 
+@defopt switch-to-buffer-obey-display-actions
+If this variable is non-@code{nil}, @code{switch-to-buffer} respects
+display actions specified by @code{display-buffer-overriding-action},
+@code{display-buffer-alist} and other display related variables.
+@end defopt
+
 The next two commands are similar to @code{switch-to-buffer}, except for
 the described features.
 

@@ -588,7 +588,9 @@ By default, select the window with a displayed buffer.
 If prefix ARG is `C-u', reselect a previously selected window.
 If `windmove-display-no-select' is non-nil, this command doesn't
 select the window with a displayed buffer, and the meaning of
-the prefix argument is reversed."
+the prefix argument is reversed.
+When `switch-to-buffer-obey-display-actions' is non-nil,
+`switch-to-buffer' commands are also supported."
   (let* ((no-select (not (eq (consp arg) windmove-display-no-select))) ; xor
          (old-window (or (minibuffer-selected-window) (selected-window)))
          (new-window)
