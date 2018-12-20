@@ -1,6 +1,7 @@
 //! Lisp functions pertaining to editing.
 
 use std;
+use std::cmp::max;
 use std::ptr;
 
 use libc;
@@ -28,12 +29,12 @@ use crate::{
     remacs_sys::{
         buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
         find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
-        insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
-        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
-        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
-        save_restriction_restore, save_restriction_save, scan_newline_from_point,
-        set_buffer_internal_1, set_point, set_point_both, styled_format, update_buffer_properties,
-        STRING_BYTES,
+        insert_and_inherit, insert_from_buffer, lisp_time, make_buffer_string,
+        make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
+        message1, message3, record_unwind_current_buffer, record_unwind_protect,
+        save_excursion_restore, save_restriction_restore, save_restriction_save,
+        scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both, styled_format,
+        update_buffer_properties, STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
@@ -42,6 +43,7 @@ use crate::{
     remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
+    time::{lisp_time_struct, time_overflow, LO_TIME_BITS},
     util::clip_to_bounds,
     windows::selected_window,
 };
@@ -1391,6 +1393,96 @@ pub fn delete_and_extract_region(
         }
         .as_string()
     }
+}
+
+fn time_arith<F: FnOnce(lisp_time, lisp_time) -> lisp_time>(
+    a: LispObject,
+    b: LispObject,
+    op: F,
+) -> Vec<LispNumber> {
+    let mut alen: c_int = 0;
+    let mut blen: c_int = 0;
+    let ta = unsafe { lisp_time_struct(a, &mut alen) };
+    let tb = unsafe { lisp_time_struct(b, &mut blen) };
+    let t = op(ta, tb);
+    if LispObject::fixnum_overflow(t.hi) {
+        time_overflow();
+    }
+
+    let maxlen = max(alen, blen) as usize;
+    let mut v = Vec::with_capacity(maxlen);
+
+    if maxlen >= 2 {
+        v.push(LispNumber::Fixnum(t.hi));
+        v.push(LispNumber::Fixnum(t.lo.into()));
+    }
+    if maxlen >= 3 {
+        v.push(LispNumber::Fixnum(t.us.into()));
+    }
+    if maxlen > 3 {
+        v.push(LispNumber::Fixnum(t.ps.into()));
+    }
+
+    v
+}
+
+fn time_add(ta: lisp_time, tb: lisp_time) -> lisp_time {
+    let mut hi = EmacsInt::from(ta.hi + tb.hi);
+    let mut lo = ta.lo + tb.lo;
+    let mut us = ta.us + tb.us;
+    let mut ps = ta.ps + tb.ps;
+
+    if ps > 1_000_000 {
+        ps += 1;
+        us -= 1_000_000;
+    }
+    if us > 1_000_000 {
+        lo += 1;
+        us -= 1_000_000;
+    }
+    if lo > 1 << LO_TIME_BITS {
+        hi += 1;
+        lo -= 1 << LO_TIME_BITS;
+    }
+
+    lisp_time { hi, lo, us, ps }
+}
+
+fn time_subtract(ta: lisp_time, tb: lisp_time) -> lisp_time {
+    let mut hi = EmacsInt::from(ta.hi - tb.hi);
+    let mut lo = ta.lo - tb.lo;
+    let mut us = ta.us - tb.us;
+    let mut ps = ta.ps - tb.ps;
+
+    if ps < 0 {
+        us -= 1;
+        ps += 1_000_000;
+    }
+    if us < 0 {
+        lo -= 1;
+        us += 1_000_000;
+    }
+    if hi < 0 {
+        hi -= 1;
+        lo += 1 << LO_TIME_BITS;
+    }
+
+    lisp_time { hi, lo, us, ps }
+}
+
+/// Return the sum of two time values A and B, as a time value. A nil value for either argument
+/// stands for the current time. See `current-time-string' for the various forms of a time value.
+#[lisp_fn(name = "time-add", c_name = "time_add")]
+pub fn time_add_lisp(a: LispObject, b: LispObject) -> Vec<LispNumber> {
+    time_arith(a, b, time_add)
+}
+
+/// Return the difference between two time values A and B, as a time value. Use `float-time' to
+/// convert the difference into elapsed seconds.  A nil value for either argument stands for the
+/// current time.  See `current-time-string' for the various forms of a time value.
+#[lisp_fn(name = "time-subtract", c_name = "time_subtract")]
+pub fn time_subtract_lisp(a: LispObject, b: LispObject) -> Vec<LispNumber> {
+    time_arith(a, b, time_subtract)
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

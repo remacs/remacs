@@ -655,86 +655,6 @@ hi_time (time_t t);
 extern EMACS_INT
 lo_time (time_t t);
 
-static struct lisp_time
-time_add (struct lisp_time ta, struct lisp_time tb)
-{
-  EMACS_INT hi = ta.hi + tb.hi;
-  int lo = ta.lo + tb.lo;
-  int us = ta.us + tb.us;
-  int ps = ta.ps + tb.ps;
-  us += (1000000 <= ps);
-  ps -= (1000000 <= ps) * 1000000;
-  lo += (1000000 <= us);
-  us -= (1000000 <= us) * 1000000;
-  hi += (1 << LO_TIME_BITS <= lo);
-  lo -= (1 << LO_TIME_BITS <= lo) << LO_TIME_BITS;
-  return (struct lisp_time) { hi, lo, us, ps };
-}
-
-static struct lisp_time
-time_subtract (struct lisp_time ta, struct lisp_time tb)
-{
-  EMACS_INT hi = ta.hi - tb.hi;
-  int lo = ta.lo - tb.lo;
-  int us = ta.us - tb.us;
-  int ps = ta.ps - tb.ps;
-  us -= (ps < 0);
-  ps += (ps < 0) * 1000000;
-  lo -= (us < 0);
-  us += (us < 0) * 1000000;
-  hi -= (lo < 0);
-  lo += (lo < 0) << LO_TIME_BITS;
-  return (struct lisp_time) { hi, lo, us, ps };
-}
-
-static Lisp_Object
-time_arith (Lisp_Object a, Lisp_Object b,
-	    struct lisp_time (*op) (struct lisp_time, struct lisp_time))
-{
-  int alen, blen;
-  struct lisp_time ta = lisp_time_struct (a, &alen);
-  struct lisp_time tb = lisp_time_struct (b, &blen);
-  struct lisp_time t = op (ta, tb);
-  if (FIXNUM_OVERFLOW_P (t.hi))
-    time_overflow ();
-  Lisp_Object val = Qnil;
-
-  switch (max (alen, blen))
-    {
-    default:
-      val = Fcons (make_number (t.ps), val);
-      FALLTHROUGH;
-    case 3:
-      val = Fcons (make_number (t.us), val);
-      FALLTHROUGH;
-    case 2:
-      val = Fcons (make_number (t.lo), val);
-      val = Fcons (make_number (t.hi), val);
-      break;
-    }
-
-  return val;
-}
-
-DEFUN ("time-add", Ftime_add, Stime_add, 2, 2, 0,
-       doc: /* Return the sum of two time values A and B, as a time value.
-A nil value for either argument stands for the current time.
-See `current-time-string' for the various forms of a time value.  */)
-  (Lisp_Object a, Lisp_Object b)
-{
-  return time_arith (a, b, time_add);
-}
-
-DEFUN ("time-subtract", Ftime_subtract, Stime_subtract, 2, 2, 0,
-       doc: /* Return the difference between two time values A and B, as a time value.
-Use `float-time' to convert the difference into elapsed seconds.
-A nil value for either argument stands for the current time.
-See `current-time-string' for the various forms of a time value.  */)
-  (Lisp_Object a, Lisp_Object b)
-{
-  return time_arith (a, b, time_subtract);
-}
-
 DEFUN ("time-less-p", Ftime_less_p, Stime_less_p, 2, 2, 0,
        doc: /* Return non-nil if time value T1 is earlier than time value T2.
 A nil value for either argument stands for the current time.
@@ -3861,8 +3781,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);
   defsubr (&Suser_full_name);
-  defsubr (&Stime_add);
-  defsubr (&Stime_subtract);
   defsubr (&Stime_less_p);
   defsubr (&Sget_internal_run_time);
   defsubr (&Sformat_time_string);

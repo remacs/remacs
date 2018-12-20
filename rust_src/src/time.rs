@@ -16,7 +16,7 @@ use crate::{
     remacs_sys::{lisp_time, EmacsDouble, EmacsInt},
 };
 
-const LO_TIME_BITS: i32 = 16;
+pub const LO_TIME_BITS: i32 = 16;
 
 /// Return the upper part of the time T (everything but the bottom 16 bits).
 #[no_mangle]
@@ -320,7 +320,7 @@ fn invalid_time() -> ! {
 }
 
 /// Report that a time value is out of range for Emacs.
-fn time_overflow() -> ! {
+pub fn time_overflow() -> ! {
     error!("Specified time is not representable");
 }
 
