@@ -239,11 +239,13 @@ first will be printed into the backtrace buffer."
 	      (pop-to-buffer
 	       debugger-buffer
 	       `((display-buffer-reuse-window
-		  display-buffer-in-previous-window)
-		 . (,(when (and (window-live-p debugger-previous-window)
+		  display-buffer-in-previous-window
+		  display-buffer-below-selected)
+		 . ((window-min-height . 10)
+		    ,@(when (and (window-live-p debugger-previous-window)
 				(frame-visible-p
 				 (window-frame debugger-previous-window)))
-		       `(previous-window . ,debugger-previous-window)))))
+		       `((previous-window . ,debugger-previous-window))))))
 	      (setq debugger-window (selected-window))
 	      (if (eq debugger-previous-window debugger-window)
 		  (when debugger-jumping-flag
