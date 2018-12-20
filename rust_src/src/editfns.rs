@@ -43,7 +43,7 @@ use crate::{
     remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
-    time::{lisp_time_struct, time_overflow, LO_TIME_BITS},
+    time::{lisp_time_struct, time_overflow, LispTime, LO_TIME_BITS},
     util::clip_to_bounds,
     windows::selected_window,
 };
@@ -1395,7 +1395,7 @@ pub fn delete_and_extract_region(
     }
 }
 
-fn time_arith<F: FnOnce(lisp_time, lisp_time) -> lisp_time>(
+fn time_arith<F: FnOnce(LispTime, LispTime) -> LispTime>(
     a: LispObject,
     b: LispObject,
     op: F,
@@ -1410,23 +1410,11 @@ fn time_arith<F: FnOnce(lisp_time, lisp_time) -> lisp_time>(
     }
 
     let maxlen = max(alen, blen) as usize;
-    let mut v = Vec::with_capacity(maxlen);
 
-    if maxlen >= 2 {
-        v.push(t.hi);
-        v.push(t.lo.into());
-    }
-    if maxlen >= 3 {
-        v.push(t.us.into());
-    }
-    if maxlen > 3 {
-        v.push(t.ps.into());
-    }
-
-    v
+    t.into_vec(maxlen)
 }
 
-fn time_add(ta: lisp_time, tb: lisp_time) -> lisp_time {
+fn time_add(ta: LispTime, tb: LispTime) -> LispTime {
     let mut hi = ta.hi + tb.hi;
     let mut lo = ta.lo + tb.lo;
     let mut us = ta.us + tb.us;
@@ -1448,7 +1436,7 @@ fn time_add(ta: lisp_time, tb: lisp_time) -> lisp_time {
     lisp_time { hi, lo, us, ps }
 }
 
-fn time_subtract(ta: lisp_time, tb: lisp_time) -> lisp_time {
+fn time_subtract(ta: LispTime, tb: LispTime) -> LispTime {
     let mut hi = ta.hi - tb.hi;
     let mut lo = ta.lo - tb.lo;
     let mut us = ta.us - tb.us;

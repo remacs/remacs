@@ -18,6 +18,27 @@ use crate::{
 
 pub const LO_TIME_BITS: i32 = 16;
 
+pub type LispTime = lisp_time;
+
+impl LispTime {
+    pub fn into_vec(self, nelem: usize) -> Vec<EmacsInt> {
+        let mut v = Vec::with_capacity(nelem);
+
+        if nelem >= 2 {
+            v.push(self.hi);
+            v.push(self.lo.into());
+        }
+        if nelem >= 3 {
+            v.push(self.us.into());
+        }
+        if nelem > 3 {
+            v.push(self.ps.into());
+        }
+
+        v
+    }
+}
+
 /// Return the upper part of the time T (everything but the bottom 16 bits).
 #[no_mangle]
 pub extern "C" fn hi_time(t: time_t) -> EmacsInt {
