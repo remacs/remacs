@@ -1399,7 +1399,7 @@ fn time_arith<F: FnOnce(lisp_time, lisp_time) -> lisp_time>(
     a: LispObject,
     b: LispObject,
     op: F,
-) -> Vec<LispNumber> {
+) -> Vec<EmacsInt> {
     let mut alen: c_int = 0;
     let mut blen: c_int = 0;
     let ta = unsafe { lisp_time_struct(a, &mut alen) };
@@ -1413,21 +1413,21 @@ fn time_arith<F: FnOnce(lisp_time, lisp_time) -> lisp_time>(
     let mut v = Vec::with_capacity(maxlen);
 
     if maxlen >= 2 {
-        v.push(LispNumber::Fixnum(t.hi));
-        v.push(LispNumber::Fixnum(t.lo.into()));
+        v.push(t.hi);
+        v.push(t.lo.into());
     }
     if maxlen >= 3 {
-        v.push(LispNumber::Fixnum(t.us.into()));
+        v.push(t.us.into());
     }
     if maxlen > 3 {
-        v.push(LispNumber::Fixnum(t.ps.into()));
+        v.push(t.ps.into());
     }
 
     v
 }
 
 fn time_add(ta: lisp_time, tb: lisp_time) -> lisp_time {
-    let mut hi = EmacsInt::from(ta.hi + tb.hi);
+    let mut hi = ta.hi + tb.hi;
     let mut lo = ta.lo + tb.lo;
     let mut us = ta.us + tb.us;
     let mut ps = ta.ps + tb.ps;
@@ -1449,7 +1449,7 @@ fn time_add(ta: lisp_time, tb: lisp_time) -> lisp_time {
 }
 
 fn time_subtract(ta: lisp_time, tb: lisp_time) -> lisp_time {
-    let mut hi = EmacsInt::from(ta.hi - tb.hi);
+    let mut hi = ta.hi - tb.hi;
     let mut lo = ta.lo - tb.lo;
     let mut us = ta.us - tb.us;
     let mut ps = ta.ps - tb.ps;
@@ -1473,7 +1473,7 @@ fn time_subtract(ta: lisp_time, tb: lisp_time) -> lisp_time {
 /// Return the sum of two time values A and B, as a time value. A nil value for either argument
 /// stands for the current time. See `current-time-string' for the various forms of a time value.
 #[lisp_fn(name = "time-add", c_name = "time_add")]
-pub fn time_add_lisp(a: LispObject, b: LispObject) -> Vec<LispNumber> {
+pub fn time_add_lisp(a: LispObject, b: LispObject) -> Vec<EmacsInt> {
     time_arith(a, b, time_add)
 }
 
@@ -1481,7 +1481,7 @@ pub fn time_add_lisp(a: LispObject, b: LispObject) -> Vec<LispNumber> {
 /// convert the difference into elapsed seconds.  A nil value for either argument stands for the
 /// current time.  See `current-time-string' for the various forms of a time value.
 #[lisp_fn(name = "time-subtract", c_name = "time_subtract")]
-pub fn time_subtract_lisp(a: LispObject, b: LispObject) -> Vec<LispNumber> {
+pub fn time_subtract_lisp(a: LispObject, b: LispObject) -> Vec<EmacsInt> {
     time_arith(a, b, time_subtract)
 }
 
