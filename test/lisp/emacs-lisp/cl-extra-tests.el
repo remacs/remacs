@@ -94,4 +94,9 @@
     (should (equal (list lst3 (cdr lst3) (cddr lst3))
                    (cl-maplist fn3 lst lst2 lst3)))))
 
+(ert-deftest cl-extra-test-cl-make-random-state ()
+  (let ((s (cl-make-random-state)))
+    ;; Test for Bug#33731.
+    (should-not (eq s (cl-make-random-state s)))))
+
 ;;; cl-extra-tests.el ends here
