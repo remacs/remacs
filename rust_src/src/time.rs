@@ -1,5 +1,6 @@
 //! Time support
 
+use std::cmp::Ordering;
 use std::ptr;
 
 use libc::timespec as c_timespec;
@@ -36,6 +37,40 @@ impl LispTime {
         }
 
         v
+    }
+}
+
+macro_rules! return_if_different {
+    ($a:expr, $b:expr) => {{
+        let o = $a.cmp(&$b);
+        if o != Ordering::Equal {
+            return o;
+        }
+    }};
+}
+
+impl PartialEq for LispTime {
+    fn eq(&self, other: &LispTime) -> bool {
+        self.hi == other.hi && self.lo == other.lo && self.us == other.us && self.ps == other.ps
+    }
+}
+
+impl Eq for LispTime {}
+
+impl PartialOrd for LispTime {
+    fn partial_cmp(&self, other: &LispTime) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for LispTime {
+    fn cmp(&self, other: &LispTime) -> Ordering {
+        return_if_different!(self.hi, other.hi);
+        return_if_different!(self.lo, other.lo);
+        return_if_different!(self.us, other.us);
+        return_if_different!(self.ps, other.ps);
+
+        Ordering::Equal
     }
 }
 
