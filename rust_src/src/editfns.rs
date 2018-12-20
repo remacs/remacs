@@ -1485,4 +1485,30 @@ pub fn time_subtract_lisp(a: LispObject, b: LispObject) -> Vec<LispNumber> {
     time_arith(a, b, time_subtract)
 }
 
+macro_rules! return_if_different {
+    ($a:expr, $b:expr) => {{
+        if $a != $b {
+            return $a < $b;
+        }
+    }};
+}
+
+/// Return non-nil if time value T1 is earlier than time value T2.  A nil value for either
+/// argument stands for the current time.  See `current-time-string' for the various forms of a
+/// time value.
+#[lisp_fn]
+pub fn time_less_p(t1: LispObject, t2: LispObject) -> bool {
+    let mut t1len: c_int = 0;
+    let mut t2len: c_int = 0;
+    let a = unsafe { lisp_time_struct(t1, &mut t1len) };
+    let b = unsafe { lisp_time_struct(t2, &mut t2len) };
+
+    return_if_different!(a.hi, b.hi);
+    return_if_different!(a.lo, b.lo);
+    return_if_different!(a.us, b.us);
+    return_if_different!(a.ps, b.ps);
+
+    false
+}
+
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

@@ -655,23 +655,6 @@ hi_time (time_t t);
 extern EMACS_INT
 lo_time (time_t t);
 
-DEFUN ("time-less-p", Ftime_less_p, Stime_less_p, 2, 2, 0,
-       doc: /* Return non-nil if time value T1 is earlier than time value T2.
-A nil value for either argument stands for the current time.
-See `current-time-string' for the various forms of a time value.  */)
-  (Lisp_Object t1, Lisp_Object t2)
-{
-  int t1len, t2len;
-  struct lisp_time a = lisp_time_struct (t1, &t1len);
-  struct lisp_time b = lisp_time_struct (t2, &t2len);
-  return ((a.hi != b.hi ? a.hi < b.hi
-	   : a.lo != b.lo ? a.lo < b.lo
-	   : a.us != b.us ? a.us < b.us
-	   : a.ps < b.ps)
-	  ? Qt : Qnil);
-}
-
-
 DEFUN ("get-internal-run-time", Fget_internal_run_time, Sget_internal_run_time,
        0, 0, 0,
        doc: /* Return the current run time used by Emacs.
@@ -3781,7 +3764,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);
   defsubr (&Suser_full_name);
-  defsubr (&Stime_less_p);
   defsubr (&Sget_internal_run_time);
   defsubr (&Sformat_time_string);
   defsubr (&Sdecode_time);
