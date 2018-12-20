@@ -97,6 +97,9 @@ Returns the result of evaluating the form associated with MAP-VAR's type."
 
 (define-error 'map-not-inplace "Cannot modify map in-place: %S")
 
+(defsubst map--plist-p (list)
+  (and (consp list) (not (listp (car list)))))
+
 (cl-defgeneric map-elt (map key &optional default testfn)
   "Lookup KEY in MAP and return its associated value.
 If KEY is not found, return DEFAULT which defaults to nil.
@@ -122,7 +125,12 @@ In the base definition, MAP can be an alist, hash-table, or array."
    ;; `testfn' is deprecated.
    (advertised-calling-convention (map key &optional default) "27.1"))
   (map--dispatch map
-    :list (alist-get key map default nil testfn)
+    :list (if (map--plist-p map)
+              (let ((res (plist-get map key)))
+                (if (and default (null res) (not (plist-member map key)))
+                    default
+                  res))
+            (alist-get key map default nil testfn))
     :hash-table (gethash key map default)
     :array (if (and (>= key 0) (< key (seq-length map)))
                (seq-elt map key)
@@ -138,14 +146,31 @@ MAP can be a list, hash-table or array."
   (declare (obsolete "use map-put! or (setf (map-elt ...) ...) instead" "27.1"))
   `(setf (map-elt ,map ,key nil ,testfn) ,value))
 
-(cl-defgeneric map-delete (map key)
-  "Delete KEY from MAP and return MAP.
-No error is signaled if KEY is not a key of MAP.  If MAP is an
-array, store nil at the index KEY.
+(defun map--plist-delete (map key)
+  (let ((tail map) last)
+    (while (consp tail)
+      (cond
+       ((not (equal key (car tail)))
+        (setq last tail)
+        (setq tail (cddr last)))
+       (last
+        (setq tail (cddr tail))
+        (setf (cddr last) tail))
+       (t
+        (cl-assert (eq tail map))
+        (setq map (cddr map))
+        (setq tail map))))
+    map))
 
-MAP can be a list, hash-table or array."
+(cl-defgeneric map-delete (map key)
+  "Delete KEY in-place from MAP and return MAP.
+No error is signaled if KEY is not a key of MAP.
+If MAP is an array, store nil at the index KEY."
   (map--dispatch map
-    :list (setf (alist-get key map nil t) nil)
+    ;; FIXME: Signal map-not-inplace i.s.o returning a different list?
+    :list (if (map--plist-p map)
+              (setq map (map--plist-delete map key))
+            (setf (alist-get key map nil t) nil))
     :hash-table (remhash key map)
     :array (and (>= key 0)
                 (<= key (seq-length map))
@@ -164,29 +189,37 @@ Map can be a nested map composed of alists, hash-tables and arrays."
       default))
 
 (cl-defgeneric map-keys (map)
-  "Return the list of keys in MAP."
+  "Return the list of keys in MAP.
+The default implementation delegates to `map-apply'."
   (map-apply (lambda (key _) key) map))
 
 (cl-defgeneric map-values (map)
-  "Return the list of values in MAP."
+  "Return the list of values in MAP.
+The default implementation delegates to `map-apply'."
   (map-apply (lambda (_ value) value) map))
 
 (cl-defgeneric map-pairs (map)
-  "Return the elements of MAP as key/value association lists."
+  "Return the elements of MAP as key/value association lists.
+The default implementation delegates to `map-apply'."
   (map-apply #'cons map))
 
 (cl-defgeneric map-length (map)
   ;; FIXME: Should we rename this to `map-size'?
-  "Return the number of elements in the map."
+  "Return the number of elements in the map.
+The default implementation counts `map-keys'."
   (cond
    ((hash-table-p map) (hash-table-count map))
-   ((or (listp map) (arrayp map)) (length map))
+   ((listp map)
+    ;; FIXME: What about repeated/shadowed keys?
+    (if (map--plist-p map) (/ (length map) 2) (length map)))
+   ((arrayp map) (length map))
    (t (length (map-keys map)))))
 
 (cl-defgeneric map-copy (map)
   "Return a copy of MAP."
+  ;; FIXME: Clarify how deep is the copy!
   (map--dispatch map
-    :list (seq-copy map)
+    :list (seq-copy map)           ;FIXME: Probably not deep enough for alists!
     :hash-table (copy-hash-table map)
     :array (seq-copy map)))
 
@@ -337,9 +370,14 @@ MAP can be a list, hash-table or array."
   "Convert the map MAP into a map of type TYPE.")
 ;; FIXME: I wish there was a way to avoid this η-redex!
 (cl-defmethod map-into (map (_type (eql list))) (map-pairs map))
+(cl-defmethod map-into (map (_type (eql alist))) (map-pairs map))
+(cl-defmethod map-into (map (_type (eql plist)))
+  (let ((plist '()))
+    (map-do (lambda (k v) (setq plist `(,k ,v ,@plist))) map)
+    plist))
 
 (cl-defgeneric map-put! (map key value &optional testfn)
-  "Associate KEY with VALUE in MAP and return VALUE.
+  "Associate KEY with VALUE in MAP.
 If KEY is already present in MAP, replace the associated value
 with VALUE.
 This operates by modifying MAP in place.
@@ -348,10 +386,13 @@ If you want to insert an element without modifying MAP, use `map-insert'."
   ;; `testfn' only exists for backward compatibility with `map-put'!
   (declare (advertised-calling-convention (map key value) "27.1"))
   (map--dispatch map
-    :list (let ((oldmap map))
-            (setf (alist-get key map key nil (or testfn #'equal)) value)
-            (unless (eq oldmap map)
-              (signal 'map-not-inplace (list map))))
+    :list
+    (if (map--plist-p map)
+        (plist-put map key value)
+      (let ((oldmap map))
+        (setf (alist-get key map key nil (or testfn #'equal)) value)
+        (unless (eq oldmap map)
+          (signal 'map-not-inplace (list map)))))
     :hash-table (puthash key value map)
     ;; FIXME: If `key' is too large, should we signal `map-not-inplace'
     ;; and let `map-insert' grow the array?
@@ -364,7 +405,9 @@ If you want to insert an element without modifying MAP, use `map-insert'."
 This does not modify MAP.
 If you want to insert an element in place, use `map-put!'."
   (if (listp map)
-      (cons (cons key value) map)
+      (if (map--plist-p map)
+          `(,key ,value ,@map)
+        (cons (cons key value) map))
     ;; FIXME: Should we signal an error or use copy+put! ?
     (signal 'map-inplace (list map))))
 
@@ -374,11 +417,13 @@ If you want to insert an element in place, use `map-put!'."
 (define-obsolete-function-alias 'map--put #'map-put! "27.1")
 
 (cl-defmethod map-apply (function (map list))
-  (seq-map (lambda (pair)
-             (funcall function
-                      (car pair)
-                      (cdr pair)))
-           map))
+  (if (map--plist-p map)
+      (cl-call-next-method)
+    (seq-map (lambda (pair)
+               (funcall function
+                        (car pair)
+                        (cdr pair)))
+             map)))
 
 (cl-defmethod map-apply (function (map hash-table))
   (let (result)
@@ -395,13 +440,16 @@ If you want to insert an element in place, use `map-put!'."
                  (setq index (1+ index))))
              map)))
 
-(cl-defmethod map-do (function (alist list))
+(cl-defmethod map-do (function (map list))
   "Private function used to iterate over ALIST using FUNCTION."
-  (seq-do (lambda (pair)
-            (funcall function
-                     (car pair)
-                     (cdr pair)))
-          alist))
+  (if (map--plist-p map)
+      (while map
+        (funcall function (pop map) (pop map)))
+    (seq-do (lambda (pair)
+              (funcall function
+                       (car pair)
+                       (cdr pair)))
+            map)))
 
 (cl-defmethod map-do (function (array array))
   "Private function used to iterate over ARRAY using FUNCTION."

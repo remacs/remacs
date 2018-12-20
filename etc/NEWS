@@ -305,6 +305,7 @@ the node "(emacs) Directory Variables" of the user manual.
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
 ** map.el
+*** Now also understands plists
 *** Now defined via generic functions that can be extended via cl-defmethod.
 *** Deprecate the 'map-put' macro in favor of a new 'map-put!' function.
 *** 'map-contains-key' now returns a boolean rather than the key.

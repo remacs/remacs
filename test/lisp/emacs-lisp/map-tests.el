@@ -38,17 +38,19 @@ Evaluate BODY for each created map.
 \(fn (var map) body)"
   (declare (indent 1) (debug (symbolp body)))
   (let ((alist (make-symbol "alist"))
+        (plist (make-symbol "plist"))
         (vec (make-symbol "vec"))
         (ht (make-symbol "ht")))
    `(let ((,alist (list (cons 0 3)
                         (cons 1 4)
                         (cons 2 5)))
+          (,plist (list 0 3 1 4 2 5))
           (,vec (vector 3 4 5))
           (,ht (make-hash-table)))
       (puthash 0 3 ,ht)
       (puthash 1 4 ,ht)
       (puthash 2 5 ,ht)
-      (dolist (,var (list ,alist ,vec ,ht))
+      (dolist (,var (list ,alist ,plist ,vec ,ht))
         ,@body))))
 
 (ert-deftest test-map-elt ()
@@ -86,7 +88,8 @@ Evaluate BODY for each created map.
   (with-maps-do map
     (map-put! map 2 'hello)
     (should (eq (map-elt map 2) 'hello))
-    (if (not (hash-table-p map))
+    (if (not (or (hash-table-p map)
+                 (and (listp map) (not (listp (car map)))))) ;plist!
         (should-error (map-put! map 5 'value)
                       ;; For vectors, it could arguably signal
                       ;; map-not-inplace as well, but it currently doesn't.
