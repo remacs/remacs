@@ -1090,11 +1090,11 @@ pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
 pub fn set_window_new_total(
     window: LispWindowValidOrSelected,
     size: EmacsInt,
-    add: LispObject,
+    add: bool,
 ) -> LispObject {
     let mut win: LispWindowRef = window.into();
 
-    let new_total = if add.is_nil() {
+    let new_total = if !add {
         size
     } else {
         EmacsInt::from(win.new_total) + size
