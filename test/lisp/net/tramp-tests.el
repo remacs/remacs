@@ -4187,6 +4187,72 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
       ;; Cleanup.
       (ignore-errors (delete-file tmp-name)))))
 
+;; This test is inspired by Bug#33781.
+;; `exec-path' was introduced in Emacs 27.1.  `executable-find' has
+;; changed the number of parameters, so we use `apply' for older
+;; Emacsen.
+(ert-deftest tramp-test34-remote-path ()
+  "Check loooong `tramp-remote-path'."
+  (skip-unless (tramp--test-enabled))
+  (skip-unless (tramp--test-sh-p))
+  ;; Since Emacs 27.1.
+  (skip-unless (fboundp 'exec-path))
+
+  (let* ((tmp-name (tramp--test-make-temp-name))
+	 (default-directory tramp-test-temporary-file-directory)
+         (orig-exec-path (exec-path))
+         (tramp-remote-path tramp-remote-path)
+	 (orig-tramp-remote-path tramp-remote-path))
+    (unwind-protect
+	(progn
+          ;; Non existing directories are removed.
+          (setq tramp-remote-path
+                (cons (file-remote-p tmp-name 'localname) tramp-remote-path))
+          (tramp-cleanup-connection
+           (tramp-dissect-file-name tramp-test-temporary-file-directory)
+           'keep-debug 'keep-password)
+          (should (equal (with-no-warnings (exec-path)) orig-exec-path))
+          (setq tramp-remote-path orig-tramp-remote-path)
+
+          ;; Double entries are removed.
+          (setq tramp-remote-path (append '("/" "/") tramp-remote-path))
+          (tramp-cleanup-connection
+           (tramp-dissect-file-name tramp-test-temporary-file-directory)
+           'keep-debug 'keep-password)
+          (should
+	   (equal (with-no-warnings (exec-path)) (cons "/" orig-exec-path)))
+          (setq tramp-remote-path orig-tramp-remote-path)
+
+          ;; We make a super long `tramp-remote-path'.
+          (make-directory tmp-name)
+          (should (file-directory-p tmp-name))
+          (while (< (length (mapconcat 'identity orig-exec-path ":")) 5000)
+            (let ((dir (make-temp-file (file-name-as-directory tmp-name) 'dir)))
+              (should (file-directory-p dir))
+              (setq tramp-remote-path
+                    (cons (file-remote-p dir 'localname) tramp-remote-path)
+                    orig-exec-path
+                    (cons (file-remote-p dir 'localname) orig-exec-path))))
+          (tramp-cleanup-connection
+           (tramp-dissect-file-name tramp-test-temporary-file-directory)
+           'keep-debug 'keep-password)
+          (should (equal (with-no-warnings (exec-path)) orig-exec-path))
+          (should
+	   (string-equal
+	    ;; Ignore trailing newline.
+	    (substring (shell-command-to-string "echo $PATH") nil -1)
+	    ;; The last element of `exec-path' is `exec-directory'.
+	    (mapconcat 'identity (butlast orig-exec-path) ":")))
+	  ;; The shell "sh" shall always exist.
+	  (should (apply 'executable-find '("sh" remote))))
+
+      ;; Cleanup.
+      (tramp-cleanup-connection
+       (tramp-dissect-file-name tramp-test-temporary-file-directory)
+       'keep-debug 'keep-password)
+      (setq tramp-remote-path orig-tramp-remote-path)
+      (ignore-errors (delete-directory tmp-name 'recursive)))))
+
 (ert-deftest tramp-test35-vc-registered ()
   "Check `vc-registered'."
   :tags '(:expensive-test)
