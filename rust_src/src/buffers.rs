@@ -1138,7 +1138,7 @@ pub unsafe extern "C" fn copy_overlays(
     buffer: *mut Lisp_Buffer,
     list: *mut Lisp_Overlay,
 ) -> *mut Lisp_Overlay {
-    if list == ptr::null_mut() {
+    if list.is_null() {
         return list;
     }
 
@@ -1148,35 +1148,28 @@ pub unsafe extern "C" fn copy_overlays(
         .unwrap_or_else(|| panic!("Invalid overlay reference."))
         .iter();
 
-    let _ = overlays_iter.fold(None, |mut tail: Option<LispOverlayRef>, overlay| {
-        let mk_start = overlay.start.as_marker_or_error();
-        let start = build_marker(
-            buffer,
-            mk_start.charpos_or_error(),
-            mk_start.bytepos_or_error(),
-        );
-
-        start
+    let duplicate_marker = |marker_obj: LispObject| -> LispObject {
+        let mkr = marker_obj.as_marker_or_error();
+        let new_mkr = build_marker(buffer, mkr.charpos_or_error(), mkr.bytepos_or_error());
+        new_mkr
             .as_marker_or_error()
-            .set_insertion_type(mk_start.insertion_type());
+            .set_insertion_type(mkr.insertion_type());
+        new_mkr
+    };
 
-        let mk_end = overlay.end.as_marker_or_error();
-        let end = build_marker(buffer, mk_end.charpos_or_error(), mk_end.bytepos_or_error());
-        end.as_marker_or_error()
-            .set_insertion_type(mk_end.insertion_type());
+    let _ = overlays_iter.fold(None, |tail: Option<LispOverlayRef>, overlay| {
+        let start = duplicate_marker(overlay.start);
+        let end = duplicate_marker(overlay.end);
 
         let mut overlay_new =
             build_overlay(start, end, Fcopy_sequence(overlay.plist)).as_overlay_or_error();
 
-        if let Some(mut tail_ref) = tail {
-            tail_ref.next = overlay_new.as_mut();
-            tail = Some(overlay_new);
-        } else {
-            result = overlay_new.as_mut();
-            tail = Some(overlay_new);
+        match tail {
+            Some(mut tail_ref) => tail_ref.next = overlay_new.as_mut(),
+            None => result = overlay_new.as_mut(),
         }
 
-        tail
+        Some(overlay_new)
     });
 
     result
