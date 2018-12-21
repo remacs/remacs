@@ -115,7 +115,20 @@ impl LispFontObjectRef {
         unsafe { font_add_log(c_str.as_ptr(), self.into(), result) }
     }
 
-    #[allow(unused_variables)]
+    #[cfg(not(feature = "window-system"))]
+    pub fn close(mut self, mut _frame: LispFrameRef) {
+        if data::aref(self.into(), FONT_TYPE_INDEX.into()).is_nil() {
+            // Already closed
+            return;
+        }
+        self.add_log("close", LispObject::from(false));
+        unsafe {
+            if let Some(f) = (*self.driver).close {
+                f(self.as_mut())
+            }
+        }
+    }
+    #[cfg(feature = "window-system")]
     pub fn close(mut self, mut frame: LispFrameRef) {
         if data::aref(self.into(), FONT_TYPE_INDEX.into()).is_nil() {
             // Already closed
@@ -126,12 +139,9 @@ impl LispFontObjectRef {
             if let Some(f) = (*self.driver).close {
                 f(self.as_mut())
             }
-            #[cfg(feature = "window-system")]
-            {
-                let mut display_info = &mut *(*frame.output_data.x).display_info;
-                debug_assert!(display_info.n_fonts > 0);
-                display_info.n_fonts -= 1;
-            }
+            let mut display_info = &mut *(*frame.output_data.x).display_info;
+            debug_assert!(display_info.n_fonts > 0);
+            display_info.n_fonts -= 1;
         }
     }
 }
