@@ -2946,25 +2946,6 @@ font_open_entity (struct frame *f, Lisp_Object entity, int pixel_size)
 }
 
 
-/* Close FONT_OBJECT that is opened on frame F.  */
-
-static void
-font_close_object (struct frame *f, Lisp_Object font_object)
-{
-  struct font *font = XFONT_OBJECT (font_object);
-
-  if (NILP (AREF (font_object, FONT_TYPE_INDEX)))
-    /* Already closed.  */
-    return;
-  FONT_ADD_LOG ("close", font_object, Qnil);
-  font->driver->close (font);
-#ifdef HAVE_WINDOW_SYSTEM
-  eassert (FRAME_DISPLAY_INFO (f)->n_fonts);
-  FRAME_DISPLAY_INFO (f)->n_fonts--;
-#endif
-}
-
-
 /* Return 1 if FONT on F has a glyph for character C, 0 if not, -1 if
    FONT is a font-entity and it must be opened to check.  */
 
