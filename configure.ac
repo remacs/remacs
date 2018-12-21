@@ -5431,6 +5431,9 @@ CARGO_DEFAULT_FEATURES=""
 if test "$HAVE_LIBXML2" = "yes"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
 fi
+if test "$window_system" != "none"; then
+    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system\", "
+fi
 AC_SUBST(CARGO_DEFAULT_FEATURES)
 AC_CONFIG_FILES([rust_src/Cargo.toml])
 

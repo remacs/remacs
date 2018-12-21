@@ -125,9 +125,12 @@ impl LispFontObjectRef {
             if let Some(f) = (*self.driver).close {
                 f(self.as_mut())
             }
-            let mut display_info = &mut *(*frame.output_data.x).display_info;
-            debug_assert!(display_info.n_fonts > 0);
-            display_info.n_fonts -= 1;
+            #[cfg(feature = "window-system")]
+            {
+                let mut display_info = &mut *(*frame.output_data.x).display_info;
+                debug_assert!(display_info.n_fonts > 0);
+                display_info.n_fonts -= 1;
+            }
         }
     }
 }
