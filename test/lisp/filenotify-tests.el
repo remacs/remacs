@@ -180,7 +180,6 @@ Return nil when any other file notification watch is still active."
 
 ;; This should happen on hydra only.
 (when (getenv "EMACS_HYDRA_CI")
-  (require 'tramp-sh)
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 ;; We do not want to try and fail `file-notify-add-watch'.
