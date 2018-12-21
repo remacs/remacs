@@ -21,15 +21,7 @@ use crate::{
     threads::ThreadState,
 };
 
-#[no_mangle]
-pub extern "C" fn base64_encode_1(
-    from: *const c_char,
-    in_length: usize,
-    to: *mut c_char,
-    out_length: usize,
-    line_break: bool,
-    multibyte: bool,
-) -> isize {
+pub fn base64_encode_1(bytes: &[u8], line_break: bool, multibyte: bool) -> Result<String, ()> {
     let config = if line_break {
         // base64_crate::MIME, but with LF instead of CRLF
         base64_crate::Config::new(
@@ -41,10 +33,8 @@ pub extern "C" fn base64_encode_1(
     } else {
         base64_crate::STANDARD
     };
-    let bytes = unsafe { slice::from_raw_parts(from as *const u8, in_length as usize) };
-    let mut output = unsafe { slice::from_raw_parts_mut(to as *mut u8, out_length as usize) };
 
-    let encoded_size = if multibyte {
+    let encoded_string = if multibyte {
         // Transform non-ASCII characters in multibyte string to Latin1,
         // erroring out for non-Latin1 codepoints, and resolve raw 8-bit bytes.
         let mut input = Vec::with_capacity(bytes.len());
@@ -56,17 +46,17 @@ pub extern "C" fn base64_encode_1(
             } else if cp < 256 {
                 input.push(cp as c_uchar);
             } else {
-                return -1;
+                return Err(());
             }
             i += len;
         }
-        base64_crate::encode_config_slice(&input, config, &mut output)
+        base64_crate::encode_config(&input, config)
     } else {
         // Just encode the raw bytes.
-        base64_crate::encode_config_slice(bytes, config, &mut output)
+        base64_crate::encode_config(bytes, config)
     };
 
-    encoded_size as isize
+    Ok(encoded_string)
 }
 
 /// Base64-decode the data at FROM of LENGTH bytes into TO.  If MULTIBYTE, the
@@ -126,17 +116,8 @@ fn test_simple_base64_encode_1() {
     let input = "hello world";
     let mut encoded = [0u8; 20];
 
-    let length = base64_encode_1(
-        input.as_ptr() as *mut c_char,
-        input.as_bytes().len(),
-        encoded.as_mut_ptr() as *mut c_char,
-        encoded.len(),
-        false,
-        false,
-    );
-    assert!(length != -1);
-
-    assert_eq!(b"aGVsbG8gd29ybGQ=", &encoded[..length as usize]);
+    let encoded = base64_encode_1(input.as_bytes(), false, false).unwrap();
+    assert_eq!("aGVsbG8gd29ybGQ=", encoded);
 }
 
 #[test]
@@ -144,28 +125,15 @@ fn test_linewrap_base64_encode_1() {
     let input = "Emacs is a widely used tool with a long history, broad platform
 support and strong backward compatibility requirements. The core team
 is understandably cautious in making far-reaching changes.";
-    let mut encoded = [0u8; 500];
 
-    let length = base64_encode_1(
-        input.as_ptr() as *mut c_char,
-        input.as_bytes().len(),
-        (&mut encoded).as_mut_ptr() as *mut c_char,
-        500,
-        true,
-        false,
-    );
-    assert!(length != -1);
-
+    let encoded = base64_encode_1(input.as_bytes(), true, false).unwrap();
     let expected = "RW1hY3MgaXMgYSB3aWRlbHkgdXNlZCB0b29sIHdpdGggYSBsb25nIGhpc3RvcnksIGJyb2FkIHBs
 YXRmb3JtCnN1cHBvcnQgYW5kIHN0cm9uZyBiYWNrd2FyZCBjb21wYXRpYmlsaXR5IHJlcXVpcmVt
 ZW50cy4gVGhlIGNvcmUgdGVhbQppcyB1bmRlcnN0YW5kYWJseSBjYXV0aW91cyBpbiBtYWtpbmcg
 ZmFyLXJlYWNoaW5nIGNoYW5nZXMu"
         .to_string();
-    assert_eq!(
-        expected,
-        String::from_utf8_lossy(&encoded[..length as usize])
-    );
-    assert_eq!(expected.len(), length as usize);
+    assert_eq!(expected, encoded);
+    assert_eq!(expected.len(), encoded.len());
 }
 
 #[no_mangle]
@@ -400,28 +368,13 @@ bWFpbGluZyBsaXN0cywgc2VlIDxodHRwOi8vbGlzdHMuZ251Lm9yZy8+LgoK";
 /// Optional second argument NO-LINE-BREAK means do not break long lines
 /// into shorter lines.
 #[lisp_fn(min = "1")]
-pub fn base64_encode_string(mut string: LispStringRef, no_line_break: bool) -> LispObject {
-    // We need to allocate enough room for the encoded text
-    let length = string.len_bytes() as usize;
-    let allength = pad_base64_size(compute_encode_size(length));
-
-    // This function uses SAFE_ALLOCA in the c layer, however I cannot find an equivalent
-    // for rust. Instead, we will use a Vec to store the temporary char buffer.
-    let mut buffer: Vec<c_char> = Vec::with_capacity(allength as usize);
-    let encoded = buffer.as_mut_ptr();
-    let encoded_length = base64_encode_1(
-        string.sdata_ptr(),
-        length,
-        encoded,
-        allength,
-        !no_line_break,
-        string.is_multibyte(),
-    );
-    if encoded_length < 0 {
-        error!("Multibyte character in data for base64 encoding");
+pub fn base64_encode_string(string: LispStringRef, no_line_break: bool) -> LispObject {
+    match base64_encode_1(string.as_slice(), !no_line_break, string.is_multibyte()) {
+        Ok(encoded) => unsafe {
+            make_unibyte_string(encoded.as_ptr() as *const i8, encoded.len() as isize)
+        },
+        Err(_) => error!("Multibyte character in data for base64 encoding"),
     }
-
-    unsafe { make_unibyte_string(encoded, encoded_length) }
 }
 
 /// Base64-decode STRING and return the result.
@@ -470,26 +423,19 @@ pub fn base64_encode_region(
 
     // Allocate room for the extra 33% plus newlines
     let length = (endpos - begpos) as usize;
-    let allength = pad_base64_size(compute_encode_size(length));
+    let input = unsafe { slice::from_raw_parts(current_buffer.byte_pos_addr(begpos), length) };
 
-    let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
-    let encoded = buffer.as_mut_ptr();
-    let encoded_length = base64_encode_1(
-        current_buffer.byte_pos_addr(begpos) as *const libc::c_char,
-        length,
-        encoded,
-        allength,
-        !no_line_break,
-        current_buffer.multibyte_characters_enabled(),
-    );
-    if encoded_length < 0 {
-        error!("Multibyte character in data for base64 encoding");
-    }
+    let multibyte = current_buffer.multibyte_characters_enabled();
+    let encoded = match base64_encode_1(input, !no_line_break, multibyte) {
+        Ok(encoded) => encoded,
+        Err(_) => error!("Multibyte character in data for base64 encoding"),
+    };
+    let encoded_length = encoded.len() as isize;
 
     // We now insert the new contents and delete the old in the region
     unsafe {
         set_point_both(begpos, ibeg);
-        insert(encoded, encoded_length);
+        insert(encoded.as_ptr() as *const c_char, encoded_length);
         del_range_byte(begpos + encoded_length, endpos + encoded_length);
     }
 
