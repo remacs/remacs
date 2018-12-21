@@ -59,7 +59,7 @@ impl Debug for LispCons {
         let mut it = self.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::on);
         while let Some(car) = it.next() {
             if first {
-                first = falase;
+                first = false;
             } else {
                 write!(f, " ")?;
             }
