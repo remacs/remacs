@@ -41,15 +41,6 @@ impl LispTime {
     }
 }
 
-macro_rules! return_if_different {
-    ($a:expr, $b:expr) => {{
-        let o = $a.cmp(&$b);
-        if o != Ordering::Equal {
-            return o;
-        }
-    }};
-}
-
 impl PartialEq for LispTime {
     fn eq(&self, other: &LispTime) -> bool {
         self.hi == other.hi && self.lo == other.lo && self.us == other.us && self.ps == other.ps
@@ -66,12 +57,11 @@ impl PartialOrd for LispTime {
 
 impl Ord for LispTime {
     fn cmp(&self, other: &LispTime) -> Ordering {
-        return_if_different!(self.hi, other.hi);
-        return_if_different!(self.lo, other.lo);
-        return_if_different!(self.us, other.us);
-        return_if_different!(self.ps, other.ps);
-
-        Ordering::Equal
+        self.hi
+            .cmp(&other.hi)
+            .then(self.lo.cmp(&other.lo))
+            .then(self.us.cmp(&other.us))
+            .then(self.ps.cmp(&other.ps))
     }
 }
 
