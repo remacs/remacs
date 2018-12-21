@@ -115,6 +115,7 @@ impl LispFontObjectRef {
         unsafe { font_add_log(c_str.as_ptr(), self.into(), result) }
     }
 
+    #[allow(unused_variables)]
     pub fn close(mut self, mut frame: LispFrameRef) {
         if data::aref(self.into(), FONT_TYPE_INDEX.into()).is_nil() {
             // Already closed
