@@ -59,9 +59,9 @@ impl Ord for LispTime {
     fn cmp(&self, other: &LispTime) -> Ordering {
         self.hi
             .cmp(&other.hi)
-            .then(self.lo.cmp(&other.lo))
-            .then(self.us.cmp(&other.us))
-            .then(self.ps.cmp(&other.ps))
+            .then_with(|| self.lo.cmp(&other.lo))
+            .then_with(|| self.us.cmp(&other.us))
+            .then_with(|| self.ps.cmp(&other.ps))
     }
 }
 
