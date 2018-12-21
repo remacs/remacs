@@ -1,6 +1,8 @@
 //! Functions operating on vector(like)s, and general sequences.
 
 use std::cmp::Ordering;
+use std::fmt;
+use std::fmt::{Debug, Formatter};
 use std::mem;
 use std::ptr;
 
@@ -44,11 +46,13 @@ impl LispObject {
         self.as_vectorlike().map_or(false, |v| v.is_vector())
     }
 
+    pub fn force_vectorlike(self) -> LispVectorlikeRef {
+        unsafe { self.as_vectorlike_unchecked() }
+    }
+
     pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
         if self.is_vectorlike() {
-            Some(LispVectorlikeRef::new(
-                self.get_untaggedptr() as *mut Lisp_Vectorlike
-            ))
+            Some(unsafe { self.as_vectorlike_unchecked() })
         } else {
             None
         }
@@ -91,6 +95,31 @@ impl LispObject {
         };
 
         wrong_type!(Qarrayp, self);
+    }
+}
+
+impl Debug for LispVectorlikeRef {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        if let Some(v) = self.as_vector() {
+            let mut first = true;
+            write!(f, "[")?;
+            for el in v.as_slice() {
+                if first {
+                    first = false;
+                } else {
+                    write!(f, " ")?;
+                }
+                write!(f, "{:?}", el)?;
+            }
+            write!(f, "]")
+        } else {
+            write!(
+                f,
+                "#<VECTOR-LIKE @ {:p}: VAL({:#X})>",
+                self.as_ptr(),
+                LispObject::tag_ptr(*self, Lisp_Type::Lisp_Vectorlike).to_C()
+            )
+        }
     }
 }
 
