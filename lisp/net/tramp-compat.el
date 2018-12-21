@@ -264,6 +264,7 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 A nil value for either argument stands for the current time."
     (equal (or t1 (current-time)) (or t2 (current-time)))))
 
+;; `flatten-tree' has appeared in Emacs 27.1.
 (if (fboundp 'flatten-tree)
     (defalias 'tramp-compat-flatten-tree 'flatten-tree)
   (defun tramp-compat-flatten-tree (tree)

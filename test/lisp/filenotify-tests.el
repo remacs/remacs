@@ -31,6 +31,21 @@
 ;; remote host, set this environment variable to "/dev/null" or
 ;; whatever is appropriate on your system.
 
+;; For the remote file-notify library, Tramp checks for the existence
+;; of a respective command.  The first command found is used.  In
+;; order to use a dedicated one, the environment variable
+;; $REMOTE_FILE_NOTIFY_LIBRARY shall be set, possible values are
+;; "inotifywait", "gio-monitor" and "gvfs-monitor-dir".
+
+;; Local file-notify libraries are auto-detected during Emacs
+;; configuration.  This can be changed with a respective configuration
+;; argument, like
+;;
+;;   --with-file-notification=inotify
+;;   --with-file-notification=kqueue
+;;   --with-file-notification=gfile
+;;   --with-file-notification=w32
+
 ;; A whole test run can be performed calling the command `file-notify-test-all'.
 
 ;;; Code:
@@ -63,6 +78,12 @@
         (setenv "HOME" (file-name-unquote temporary-file-directory)))
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
+
+;; Filter suppressed remote file-notify libraries.
+(when (stringp (getenv "REMOTE_FILE_NOTIFY_LIBRARY"))
+  (dolist (lib '("inotifywait" "gio-monitor" "gvfs-monitor-dir"))
+    (unless (string-equal (getenv "REMOTE_FILE_NOTIFY_LIBRARY") lib)
+      (add-to-list 'tramp-connection-properties `(nil ,lib nil)))))
 
 (defvar file-notify--test-tmpdir nil)
 (defvar file-notify--test-tmpfile nil)
@@ -250,7 +271,8 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
      (skip-unless (not ,skip))
      (let* ((temporary-file-directory
 	     file-notify-test-remote-temporary-file-directory)
-	    (ert-test (ert-get-test ',test)))
+	    (ert-test (ert-get-test ',test))
+            vc-handled-backends)
        (skip-unless (file-notify--test-remote-enabled))
        (tramp-cleanup-connection
 	(tramp-dissect-file-name temporary-file-directory) nil 'keep-password)
@@ -1243,8 +1265,7 @@ delivered."
     (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test08-backup
-  "Check that backup keeps file notification for remote files."
-  (if (getenv "EMACS_HYDRA_CI") :failed :passed)) ; fixme bug#33735
+  "Check that backup keeps file notification for remote files.")
 
 (ert-deftest file-notify-test09-watched-file-in-watched-dir ()
   "Watches a directory and a file in that directory separately.

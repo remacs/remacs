@@ -3615,11 +3615,14 @@ Fall back to normal file name handler if no Tramp handler exists."
 	(string-match-p "Monitoring not supported\\|No locations given" string)
       (delete-process proc))
 
+    ;; Delete empty lines.
+    (setq string (replace-regexp-in-string "\n\n" "\n" string))
+
     (while (string-match
 	    (eval-when-compile
 	      (concat "^[^:]+:"
 		      "[[:space:]]\\([^:]+\\):"
-		      "[[:space:]]"  (regexp-opt tramp-gio-events t)
+		      "[[:space:]]" (regexp-opt tramp-gio-events t)
 		      "\\([[:space:]]\\([^:]+\\)\\)?$"))
 	    string)
 
@@ -3713,7 +3716,7 @@ file-notify events."
     (tramp-message proc 6 "%S\n%s" proc string)
     (dolist (line (split-string string "[\n\r]+" 'omit))
       ;; Check, whether there is a problem.
-      (unless (string-match-p
+      (unless (string-match
 	       (eval-when-compile
 		 (concat "^[^[:blank:]]+"
 			 "[[:blank:]]+\\([^[:blank:]]+\\)+"
@@ -3880,6 +3883,9 @@ This function expects to be in the right *tramp* buffer."
 	  (setq result (buffer-substring (point) (point-at-eol)))))
     result)))
 
+;; On hydra.nixos.org, the $PATH environment variable is too long to
+;; send it.  This is likely not due to PATH_MAX, but PIPE_BUF.  We
+;; check it, and use a temporary file in case of.  See Bug#33781.
 (defun tramp-set-remote-path (vec)
   "Sets the remote environment PATH to existing directories.
 I.e., for each directory in `tramp-remote-path', it is tested
@@ -3888,12 +3894,12 @@ variable PATH."
   (let ((command
 	 (format "PATH=%s; export PATH"
 		 (mapconcat 'identity (tramp-get-remote-path vec) ":")))
-	(path-max
-	 (with-tramp-connection-property vec "path-max"
-	   (tramp-send-command-and-read vec "getconf PATH_MAX /")))
+	(pipe-buf
+	 (with-tramp-connection-property vec "pipe-buf"
+	   (tramp-send-command-and-read vec "getconf PIPE_BUF /")))
 	tmpfile)
     (tramp-message vec 5 "Setting $PATH environment variable")
-    (if (< (length command) path-max)
+    (if (< (length command) pipe-buf)
 	(tramp-send-command vec command)
       ;; Use a temporary file.
       (setq tmpfile (tramp-make-tramp-temp-file vec))
@@ -5784,10 +5790,6 @@ function cell is returned to be applied on a buffer."
 ;; * When editing a remote CVS controlled file as a different user, VC
 ;;   gets confused about the file locking status.  Try to find out why
 ;;   the workaround doesn't work.
-;;
-;; * Allow out-of-band methods as _last_ multi-hop.  Open a connection
-;;   until the last but one hop via `start-file-process'.  Apply it
-;;   also for ftp and smb.
 ;;
 ;; * WIBNI if we had a command "trampclient"?  If I was editing in
 ;;   some shell with root privileges, it would be nice if I could
