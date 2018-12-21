@@ -112,11 +112,11 @@ impl LispFontObjectRef {
 
     pub fn add_log(self, action: &str, result: LispObject) {
         let c_str = CString::new(action).unwrap();
-        unsafe { font_add_log(c_str.as_ptr(), self.as_lisp_obj(), result) }
+        unsafe { font_add_log(c_str.as_ptr(), self.into(), result) }
     }
 
     pub fn close(mut self, mut frame: LispFrameRef) {
-        if data::aref(self.as_lisp_obj(), FONT_TYPE_INDEX.into()).is_nil() {
+        if data::aref(self.into(), FONT_TYPE_INDEX.into()).is_nil() {
             // Already closed
             return;
         }
@@ -217,11 +217,11 @@ pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
 }
 
 /// Close FONT-OBJECT
-#[lisp_fn]
-pub fn close_font(object: LispFontObjectRef, frame: LispFrameLiveOrSelected) {
+#[lisp_fn(min = "1")]
+pub fn close_font(font_object: LispFontObjectRef, frame: LispFrameLiveOrSelected) {
     let frame: LispFrameRef = frame.into();
     //unsafe { font_close_object(frame.as_mut(), object) }
-    object.close(frame)
+    font_object.close(frame)
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));
