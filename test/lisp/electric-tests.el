@@ -812,5 +812,109 @@ baz\"\""
   :bindings '((comment-start . "<!--") (comment-use-syntax . t))
   :test-in-comments nil :test-in-strings nil)
 
+
+;;; tests for `electric-layout-mode'
+
+(ert-deftest electric-layout-int-main-kernel-style ()
+  (ert-with-test-buffer ()
+    (c-mode)
+    (electric-layout-local-mode 1)
+    (electric-pair-local-mode 1)
+    (electric-indent-local-mode 1)
+    (setq-local electric-layout-rules
+                '((?\{ . (after-stay after))))
+    (insert "int main () ")
+    (let ((last-command-event ?\{))
+      (call-interactively (key-binding `[,last-command-event])))
+    (should (equal (buffer-string) "int main () {\n  \n}"))))
+
+(ert-deftest electric-layout-int-main-allman-style ()
+  (ert-with-test-buffer ()
+    (c-mode)
+    (electric-layout-local-mode 1)
+    (electric-pair-local-mode 1)
+    (electric-indent-local-mode 1)
+    (setq-local electric-layout-rules
+                '((?\{ . (before after-stay after))))
+    (insert "int main () ")
+    (let ((last-command-event ?\{))
+      (call-interactively (key-binding `[,last-command-event])))
+    (should (equal (buffer-string) "int main ()\n{\n  \n}"))))
+
+(define-derived-mode plainer-c-mode c-mode "pC"
+  "A plainer/saner C-mode with no internal electric machinery."
+  (c-toggle-electric-state -1)
+  (setq-local electric-indent-local-mode-hook nil)
+  (setq-local electric-indent-mode-hook nil)
+  (electric-indent-local-mode 1)
+  (dolist (key '(?\" ?\' ?\{ ?\} ?\( ?\) ?\[ ?\]))
+    (local-set-key (vector key) 'self-insert-command)))
+
+(ert-deftest electric-modes-in-c-mode-with-self-insert-command ()
+  (ert-with-test-buffer ()
+    (plainer-c-mode)
+    (electric-layout-local-mode 1)
+    (electric-pair-local-mode 1)
+    (electric-indent-local-mode 1)
+    (setq-local electric-layout-rules
+                '((?\{ . (before after-stay after))))
+    (insert "int main () ")
+    (let ((last-command-event ?\{))
+      (call-interactively (key-binding `[,last-command-event])))
+    (should (equal (buffer-string) "int main ()\n{\n  \n}"))))
+
+(ert-deftest electric-pair-mode-newline-between-parens ()
+  (ert-with-test-buffer ()
+    (plainer-c-mode)
+    (electric-layout-local-mode -1) ;; ensure e-l-m mode is off
+    (electric-pair-local-mode 1)
+    (insert-before-markers "int main () {}")
+    (backward-char 1)
+    (let ((last-command-event ?))
+      (call-interactively (key-binding `[,last-command-event])))
+    (should (equal (buffer-string) "int main () {\n  \n}"))))
+
+(ert-deftest electric-layout-mode-newline-between-parens-without-e-p-m ()
+  (ert-with-test-buffer ()
+    (plainer-c-mode)
+    (electric-layout-local-mode 1)
+    (electric-pair-local-mode -1) ;; ensure e-p-m mode is off
+    (electric-indent-local-mode 1)
+    (setq-local electric-layout-rules
+                '((?\n
+                   .
+                   (lambda ()
+                     (when (eq (save-excursion
+                                 (skip-chars-backward "\t\s")
+                                 (char-before (1- (point))))
+                               (matching-paren (char-after)))
+                       '(after-stay))))))
+    (insert "int main () {}")
+    (backward-char 1)
+    (let ((last-command-event ?))
+      (call-interactively (key-binding `[,last-command-event])))
+    (should (equal (buffer-string) "int main () {\n  \n}"))))
+
+(ert-deftest electric-layout-mode-newline-between-parens-without-e-p-m-2 ()
+  (ert-with-test-buffer ()
+    (plainer-c-mode)
+    (electric-layout-local-mode 1)
+    (electric-pair-local-mode -1) ;; ensure e-p-m mode is off
+    (electric-indent-local-mode 1)
+    (setq-local electric-layout-rules
+                '((lambda (char)
+                    (when (and
+                           (eq char ?\n)
+                           (eq (save-excursion
+                                 (skip-chars-backward "\t\s")
+                                 (char-before (1- (point))))
+                               (matching-paren (char-after))))
+                       '(after-stay)))))
+    (insert "int main () {}")
+    (backward-char 1)
+    (let ((last-command-event ?))
+      (call-interactively (key-binding `[,last-command-event])))
+    (should (equal (buffer-string) "int main () {\n  \n}"))))
+
 (provide 'electric-tests)
 ;;; electric-tests.el ends here

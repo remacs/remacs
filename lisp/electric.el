@@ -363,45 +363,91 @@ use `electric-indent-local-mode'."
 (defvar electric-layout-rules nil
   "List of rules saying where to automatically insert newlines.
 
-Each rule has the form (CHAR . WHERE) where CHAR is the char that
-was just inserted and WHERE specifies where to insert newlines
-and can be: nil, `before', `after', `around', `after-stay', or a
-function of no arguments that returns one of those symbols.
+Each rule has the form (CHAR . WHERE), the rule matching if the
+character just inserted was CHAR.  WHERE specifies where to
+insert newlines, and can be:
 
-The symbols specify where in relation to CHAR the newline
-character(s) should be inserted. `after-stay' means insert a
-newline after CHAR but stay in the same place.")
+* one of the symbols `before', `after', `around', `after-stay',
+  or nil.
+
+* a list of the preceding symbols, processed in order of
+  appearance to insert multiple newlines;
+
+* a function of no arguments that returns one of the previous
+  values.
+
+Each symbol specifies where, in relation to the position POS of
+the character inserted, the newline character(s) should be
+inserted.  `after-stay' means insert a newline after POS but stay
+in the same place.
+
+Instead of the (CHAR . WHERE) form, a rule can also be just a
+function of a single argument, the character just inserted.  It
+should return a value compatible with WHERE if the rule matches,
+or nil if it doesn't match.
+
+If multiple rules match, only first one is executed.")
 
 (defun electric-layout-post-self-insert-function ()
-  (let* ((rule (cdr (assq last-command-event electric-layout-rules)))
-         pos)
+  (when electric-layout-mode
+    (electric-layout-post-self-insert-function-1)))
+
+;; for edebug's sake, a separate function
+(defun electric-layout-post-self-insert-function-1 ()
+  (let* (pos
+         probe
+         (rules electric-layout-rules)
+         (rule
+          (catch 'done
+            (while (setq probe (pop rules))
+              (cond ((and (consp probe)
+                          (eq (car probe) last-command-event))
+                     (throw 'done (cdr probe)))
+                    ((functionp probe)
+                     (let ((res
+                            (save-excursion
+                              (goto-char
+                               (or pos (setq pos (electric--after-char-pos))))
+                              (funcall probe last-command-event))))
+                       (when res (throw 'done res)))))))))
     (when (and rule
-               (setq pos (electric--after-char-pos))
+               (or pos (setq pos (electric--after-char-pos)))
                ;; Not in a string or comment.
                (not (nth 8 (save-excursion (syntax-ppss pos)))))
-      (let ((end (point-marker))
-            (sym (if (functionp rule) (funcall rule) rule)))
-        (set-marker-insertion-type end (not (eq sym 'after-stay)))
-        (goto-char pos)
-        (pcase sym
-          ;; FIXME: we used `newline' down here which called
-          ;; self-insert-command and ran post-self-insert-hook recursively.
-          ;; It happened to make electric-indent-mode work automatically with
-          ;; electric-layout-mode (at the cost of re-indenting lines
-          ;; multiple times), but I'm not sure it's what we want.
-          ;;
-          ;; FIXME: check eolp before inserting \n?
-          ('before (goto-char (1- pos)) (skip-chars-backward " \t")
-                   (unless (bolp) (insert "\n")))
-          ('after  (insert "\n"))
-          ('after-stay (save-excursion
-                         (let ((electric-layout-rules nil))
-                           (newline 1 t))))
-          ('around (save-excursion
-                     (goto-char (1- pos)) (skip-chars-backward " \t")
-                     (unless (bolp) (insert "\n")))
-                   (insert "\n")))      ; FIXME: check eolp before inserting \n?
-        (goto-char end)))))
+      (goto-char pos)
+      (when (functionp rule) (setq rule (funcall rule)))
+      (dolist (sym (if (symbolp rule) (list rule) rule))
+        (let* ((nl-after
+                (lambda ()
+                  ;; FIXME: we use `newline', which calls
+                  ;; `self-insert-command' and ran
+                  ;; `post-self-insert-hook' recursively.  It
+                  ;; happened to make `electric-indent-mode' work
+                  ;; automatically with `electric-layout-mode' (at
+                  ;; the cost of re-indenting lines multiple times),
+                  ;; but I'm not sure it's what we want.
+                  ;;
+                  ;; FIXME: when `newline'ing, we exceptionally
+                  ;; prevent a specific behaviour of
+                  ;; `eletric-pair-mode', that of opening an extra
+                  ;; newline between newly inserted matching paris.
+                  ;; In theory that behaviour should be provided by
+                  ;; `electric-layout-mode' instead, which should be
+                  ;; possible given the current API.
+                  ;;
+                  ;; FIXME: check eolp before inserting \n?
+                  (let ((electric-layout-mode nil)
+                        (electric-pair-open-newline-between-pairs nil))
+                    (newline 1 t))))
+                 (nl-before (lambda ()
+                              (save-excursion
+                                (goto-char (1- pos)) (skip-chars-backward " \t")
+                                (unless (bolp) (funcall nl-after))))))
+            (pcase sym
+              ('before (funcall nl-before))
+              ('after  (funcall nl-after))
+              ('after-stay (save-excursion (funcall nl-after)))
+              ('around (funcall nl-before) (funcall nl-after))))))))
 
 (put 'electric-layout-post-self-insert-function 'priority  40)
 
@@ -418,6 +464,19 @@ The variable `electric-layout-rules' says when and how to insert newlines."
         (t
          (remove-hook 'post-self-insert-hook
                       #'electric-layout-post-self-insert-function))))
+
+;;;###autoload
+(define-minor-mode electric-layout-local-mode
+  "Toggle `electric-layout-mode' only in this buffer."
+  :variable (buffer-local-value 'electric-layout-mode (current-buffer))
+  (cond
+   ((eq electric-layout-mode (default-value 'electric-layout-mode))
+    (kill-local-variable 'electric-layout-mode))
+   ((not (default-value 'electric-layout-mode))
+    ;; Locally enabled, but globally disabled.
+    (electric-layout-mode 1)		  ; Setup the hooks.
+    (setq-default electric-layout-mode nil) ; But keep it globally disabled.
+    )))
 
 ;;; Electric quoting.
 
