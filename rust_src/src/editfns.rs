@@ -1396,11 +1396,10 @@ pub fn delete_and_extract_region(
     }
 }
 
-fn time_arith<F: FnOnce(LispTime, LispTime) -> LispTime>(
-    a: LispObject,
-    b: LispObject,
-    op: F,
-) -> Vec<EmacsInt> {
+fn time_arith<F>(a: LispObject, b: LispObject, op: F) -> Vec<EmacsInt>
+where
+    F: FnOnce(LispTime, LispTime) -> LispTime,
+{
     let mut alen: c_int = 0;
     let mut blen: c_int = 0;
     let ta = unsafe { lisp_time_struct(a, &mut alen) };
