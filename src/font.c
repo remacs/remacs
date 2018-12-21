@@ -4724,15 +4724,6 @@ DEFUN ("open-font", Fopen_font, Sopen_font, 1, 3, 0,
   return font_open_entity (f, font_entity, isize);
 }
 
-DEFUN ("close-font", Fclose_font, Sclose_font, 1, 2, 0,
-       doc: /* Close FONT-OBJECT.  */)
-  (Lisp_Object font_object, Lisp_Object frame)
-{
-  CHECK_FONT_OBJECT (font_object);
-  font_close_object (decode_live_frame (frame), font_object);
-  return Qnil;
-}
-
 DEFUN ("query-font", Fquery_font, Squery_font, 1, 1, 0,
        doc: /* Return information about FONT-OBJECT.
 The value is a vector:
@@ -5339,7 +5330,6 @@ syms_of_font (void)
 
 #ifdef FONT_DEBUG
   defsubr (&Sopen_font);
-  defsubr (&Sclose_font);
   defsubr (&Squery_font);
   defsubr (&Sfont_get_glyphs);
   defsubr (&Sfont_at);

@@ -133,6 +133,23 @@ impl LispFrameOrSelected {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct LispFrameLiveOrSelected(LispFrameRef);
+
+impl From<LispObject> for LispFrameLiveOrSelected {
+    fn from(obj: LispObject) -> LispFrameLiveOrSelected {
+        LispFrameLiveOrSelected(
+            obj.map_or_else(|| selected_frame(), |f| f.as_live_frame_or_error()),
+        )
+    }
+}
+
+impl From<LispFrameLiveOrSelected> for LispFrameRef {
+    fn from(f: LispFrameLiveOrSelected) -> LispFrameRef {
+        f.0
+    }
+}
+
 pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
     // Cannot use LispFrameOrSelected because the selected frame is not
     // checked for live.

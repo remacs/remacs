@@ -2,12 +2,18 @@
 
 use remacs_macros::lisp_fn;
 
+use std::{ffi::CString, mem};
+
 use crate::{
+    data,
+    frames::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::defsubr,
-    lisp::LispObject,
+    lisp::{ExternalPtr, LispObject},
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
+    remacs_sys::font_property_index::FONT_TYPE_INDEX,
     remacs_sys::Flist_fonts,
+    remacs_sys::{font_add_log, Lisp_Font_Object, Lisp_Type},
     remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX},
     remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qnil},
     vectors::LispVectorlikeRef,
@@ -97,6 +103,75 @@ impl FontExtraType {
     }
 }
 
+pub type LispFontObjectRef = ExternalPtr<Lisp_Font_Object>;
+
+impl LispFontObjectRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
+    pub fn add_log(self, action: &str, result: LispObject) {
+        unsafe {
+            font_add_log(
+                CString::new(action).unwrap().as_ptr(),
+                self.as_lisp_obj(),
+                result,
+            )
+        }
+    }
+
+    pub fn close(mut self, mut frame: LispFrameRef) {
+        if data::aref(self.as_lisp_obj(), FONT_TYPE_INDEX.into()).is_nil() {
+            // Already closed
+            return;
+        }
+        self.add_log("close", LispObject::from(false));
+        unsafe {
+            if let Some(f) = (*self.driver).close {
+                f(self.as_mut())
+            }
+            let mut display_info = &mut *(*frame.output_data.x).display_info;
+            debug_assert!(display_info.n_fonts > 0);
+            display_info.n_fonts -= 1;
+        }
+    }
+}
+
+impl From<LispFontObjectRef> for LispObject {
+    fn from(f: LispFontObjectRef) -> Self {
+        f.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for LispFontObjectRef {
+    fn from(o: LispObject) -> Self {
+        o.as_font_object_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispFontObjectRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_font_object()
+    }
+}
+
+impl LispObject {
+    pub fn as_font_object(self) -> Option<LispFontObjectRef> {
+        self.as_vectorlike().and_then(|v| {
+            if v.is_pseudovector(pvec_type::PVEC_FONT) && self.is_font_object() {
+                Some(unsafe { mem::transmute(self) })
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn as_font_object_or_error(self) -> LispFontObjectRef {
+        self.as_font_object()
+            .unwrap_or_else(|| wrong_type!(Qfont_object, self))
+    }
+}
+
 /// Return t if OBJECT is a font-spec, font-entity, or font-object.
 /// Return nil otherwise.
 /// Optional 2nd argument EXTRA-TYPE, if non-nil, specifies to check
@@ -141,6 +216,14 @@ pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
         Some(cons) => cons.car(),
         None => val,
     }
+}
+
+/// Close FONT-OBJECT
+#[lisp_fn]
+pub fn close_font(object: LispFontObjectRef, frame: LispFrameLiveOrSelected) {
+    let frame: LispFrameRef = frame.into();
+    //unsafe { font_close_object(frame.as_mut(), object) }
+    object.close(frame)
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));
