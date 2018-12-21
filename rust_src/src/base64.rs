@@ -1,17 +1,24 @@
 //! Base64 de- and encoding functions.
 use std::ptr;
-use std::slice;
+use std::{cmp::max, slice};
 
 use libc::{c_char, c_uchar};
 use remacs_macros::lisp_fn;
 
 use crate::{
     base64_crate,
+    buffers::validate_region,
     lisp::defsubr,
     lisp::LispObject,
+    marker::buf_charpos_to_bytepos,
     multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR},
-    remacs_sys::make_unibyte_string,
+    remacs_sys::EmacsInt,
+    remacs_sys::{
+        del_range_both, del_range_byte, insert, insert_1_both, make_unibyte_string, move_gap_both,
+        set_point, set_point_both, signal_after_change, temp_set_point_both,
+    },
     strings::MIME_LINE_LENGTH,
+    threads::ThreadState,
 };
 
 #[no_mangle]
@@ -440,6 +447,120 @@ pub fn base64_decode_string(mut string: LispStringRef) -> LispObject {
     }
     unsafe { buffer.set_len(decoded_length as usize) };
     unsafe { make_unibyte_string(decoded, decoded_length) }
+}
+
+/// Base64-encode the region between BEG and END. Return the length of the encoded text. Optional
+/// third argument NO-LINE-BREAK means do not break long lines into shorter lines.
+#[lisp_fn(min = "2", intspec = "r")]
+pub fn base64_encode_region(
+    mut beg: LispObject,
+    mut end: LispObject,
+    no_line_break: bool,
+) -> EmacsInt {
+    unsafe { validate_region(&mut beg, &mut end) };
+    let mut current_buffer = ThreadState::current_buffer();
+    let old_pos = current_buffer.pt;
+
+    let ibeg = beg.as_natnum_or_error() as isize;
+    let begpos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), ibeg) };
+    let iend = end.as_natnum_or_error() as isize;
+    let endpos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), iend) };
+
+    unsafe { move_gap_both(ibeg, begpos) };
+
+    // Allocate room for the extra 33% plus newlines
+    let length = (endpos - begpos) as usize;
+    let allength = pad_base64_size(compute_encode_size(length));
+
+    let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
+    let encoded = buffer.as_mut_ptr();
+    let encoded_length = base64_encode_1(
+        current_buffer.byte_pos_addr(begpos) as *const libc::c_char,
+        length,
+        encoded,
+        allength,
+        !no_line_break,
+        current_buffer.multibyte_characters_enabled(),
+    );
+    if encoded_length < 0 {
+        error!("Multibyte character in data for base64 encoding");
+    }
+
+    // We now insert the new contents and delete the old in the region
+    unsafe {
+        set_point_both(begpos, ibeg);
+        insert(encoded, encoded_length);
+        del_range_byte(begpos + encoded_length, endpos + encoded_length);
+    }
+
+    let pos_to_set = if old_pos >= iend {
+        old_pos + encoded_length - (iend - ibeg)
+    } else if old_pos > ibeg {
+        old_pos - ibeg
+    } else {
+        old_pos
+    };
+    unsafe { set_point(pos_to_set) };
+
+    encoded_length as i64
+}
+
+#[lisp_fn(intspec = "r")]
+pub fn base64_decode_region(mut beg: LispObject, mut end: LispObject) -> EmacsInt {
+    unsafe { validate_region(&mut beg, &mut end) };
+
+    let mut current_buffer = ThreadState::current_buffer();
+    let mut old_pos = current_buffer.pt;
+
+    let ibeg = beg.as_natnum_or_error() as isize;
+    let begpos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), ibeg) };
+    let iend = end.as_natnum_or_error() as isize;
+    let endpos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), iend) };
+
+    let multibyte = current_buffer.multibyte_characters_enabled();
+    let length = (endpos - begpos) as usize;
+    let allength = if multibyte { length * 2 } else { length };
+
+    let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
+    let decoded = buffer.as_mut_ptr();
+    let mut inserted_chars: libc::ptrdiff_t = 0;
+    let decoded_length = unsafe {
+        base64_decode_1(
+            current_buffer.byte_pos_addr(begpos) as *const libc::c_char,
+            length,
+            decoded,
+            allength,
+            multibyte,
+            &mut inserted_chars,
+        )
+    };
+
+    if decoded_length < 0 {
+        error!("Invalid base64 data");
+    }
+
+    // We've decoded it so insert the new contents and delete the old.
+    unsafe {
+        temp_set_point_both(current_buffer.as_mut(), ibeg, begpos);
+        insert_1_both(decoded, inserted_chars, decoded_length, false, true, false);
+        signal_after_change(ibeg, 0, inserted_chars);
+        del_range_both(
+            current_buffer.pt,
+            current_buffer.pt_byte,
+            iend + inserted_chars,
+            endpos + decoded_length,
+            true,
+        );
+    }
+
+    if old_pos >= iend {
+        old_pos += inserted_chars - (iend - ibeg);
+    } else if old_pos > ibeg {
+        old_pos = ibeg;
+    }
+    unsafe { set_point(max(current_buffer.zv, old_pos)) };
+
+    inserted_chars as i64
 }
 
 include!(concat!(env!("OUT_DIR"), "/base64_exports.rs"));
