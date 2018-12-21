@@ -111,13 +111,8 @@ impl LispFontObjectRef {
     }
 
     pub fn add_log(self, action: &str, result: LispObject) {
-        unsafe {
-            font_add_log(
-                CString::new(action).unwrap().as_ptr(),
-                self.as_lisp_obj(),
-                result,
-            )
-        }
+        let c_str = CString::new(action).unwrap();
+        unsafe { font_add_log(c_str.as_ptr(), self.as_lisp_obj(), result) }
     }
 
     pub fn close(mut self, mut frame: LispFrameRef) {
