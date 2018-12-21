@@ -1,6 +1,7 @@
 //! Time support
 
 use std::cmp::Ordering;
+use std::ops::{Add, Sub};
 use std::ptr;
 
 use libc::timespec as c_timespec;
@@ -17,7 +18,7 @@ use crate::{
     remacs_sys::{lisp_time, EmacsDouble, EmacsInt},
 };
 
-pub const LO_TIME_BITS: i32 = 16;
+const LO_TIME_BITS: i32 = 16;
 
 pub type LispTime = lisp_time;
 
@@ -71,6 +72,60 @@ impl Ord for LispTime {
         return_if_different!(self.ps, other.ps);
 
         Ordering::Equal
+    }
+}
+
+#[allow(clippy::suspicious_arithmetic_impl)]
+impl Add for LispTime {
+    type Output = LispTime;
+
+    fn add(self, other: LispTime) -> LispTime {
+        let mut hi = self.hi + other.hi;
+        let mut lo = self.lo + other.lo;
+        let mut us = self.us + other.us;
+        let mut ps = self.ps + other.ps;
+
+        if ps > 1_000_000 {
+            ps += 1;
+            us -= 1_000_000;
+        }
+        if us > 1_000_000 {
+            lo += 1;
+            us -= 1_000_000;
+        }
+        if lo > 1 << LO_TIME_BITS {
+            hi += 1;
+            lo -= 1 << LO_TIME_BITS;
+        }
+
+        LispTime { hi, lo, us, ps }
+    }
+}
+
+#[allow(clippy::suspicious_arithmetic_impl)]
+impl Sub for LispTime {
+    type Output = LispTime;
+
+    fn sub(self, other: LispTime) -> LispTime {
+        let mut hi = self.hi - other.hi;
+        let mut lo = self.lo - other.lo;
+        let mut us = self.us - other.us;
+        let mut ps = self.ps - other.ps;
+
+        if ps < 0 {
+            us -= 1;
+            ps += 1_000_000;
+        }
+        if us < 0 {
+            lo -= 1;
+            us += 1_000_000;
+        }
+        if hi < 0 {
+            hi -= 1;
+            lo += 1 << LO_TIME_BITS;
+        }
+
+        LispTime { hi, lo, us, ps }
     }
 }
 
