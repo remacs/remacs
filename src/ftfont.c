@@ -474,8 +474,9 @@ ftfont_get_otf (struct ftfont_info *ftfont_info)
   ftfont_info->otf = otf;
   return otf;
 }
+#endif	/* HAVE_LIBOTF */
 
-# ifdef HAVE_HARFBUZZ
+#ifdef HAVE_HARFBUZZ
 
 static hb_font_t *
 ftfont_get_hb_font (struct ftfont_info *ftfont_info)
@@ -486,8 +487,7 @@ ftfont_get_hb_font (struct ftfont_info *ftfont_info)
   return ftfont_info->hb_font;
 }
 
-# endif	/* HAVE_HARFBUZZ */
-#endif	/* HAVE_LIBOTF */
+#endif	/* HAVE_HARFBUZZ */
 
 Lisp_Object
 ftfont_get_cache (struct frame *f)
@@ -2670,7 +2670,7 @@ ftfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 #endif	/* HAVE_LIBOTF */
 
 #ifdef HAVE_HARFBUZZ
-#ifdef HAVE_LIBOTF
+
 static hb_unicode_combining_class_t
 uni_combining (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
 {
@@ -2929,10 +2929,9 @@ done:
   return make_fixnum (glyph_len);
 }
 
-#endif	/* HAVE_LIBOTF */
 #endif /* HAVE_HARFBUZZ */
 
-#if defined HAVE_LIBOTF && (defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ)
+#if (defined HAVE_M17N_FLT && defined HAVE_LIBOTF) || defined HAVE_HARFBUZZ
 
 Lisp_Object
 ftfont_shape (Lisp_Object lgstring)
@@ -2957,7 +2956,7 @@ ftfont_shape (Lisp_Object lgstring)
     }
 }
 
-#endif /* HAVE_LIBOTF && (HAVE_M17N_FLT || defined HAVE_HARFBUZZ) */
+#endif /* (defined HAVE_M17N_FLT && defined HAVE_LIBOTF) || defined HAVE_HARFBUZZ */
 
 static const char *const ftfont_booleans [] = {
   ":antialias",
@@ -3038,7 +3037,7 @@ static struct font_driver const ftfont_driver =
 #ifdef HAVE_LIBOTF
   .otf_capability = ftfont_otf_capability,
 #endif
-#if defined HAVE_LIBOTF && (defined HAVE_M17N_FLT || defined HAVE_HARFBUZZ)
+#if (defined HAVE_M17N_FLT && defined HAVE_LIBOTF) || defined HAVE_HARFBUZZ
   .shape = ftfont_shape,
 #endif
 #ifdef HAVE_OTF_GET_VARIATION_GLYPHS
