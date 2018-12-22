@@ -144,7 +144,7 @@ pub unsafe fn defvar_per_buffer_offset(
     sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(bo_fwd as *mut Lisp_Fwd);
     let local = offset.apply_mut(&mut remacs_sys::buffer_local_symbols);
-    *local = sym.as_lisp_obj();
+    *local = LispObject::from(sym);
     let flags = offset.apply(&remacs_sys::buffer_local_flags);
     if flags.is_nil() {
         panic!(

@@ -16,10 +16,6 @@ use crate::{
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     pub fn is_live(self) -> bool {
         !self.terminal.is_null()
     }
@@ -46,7 +42,7 @@ impl From<LispObject> for LispFrameRef {
 
 impl From<LispFrameRef> for LispObject {
     fn from(f: LispFrameRef) -> Self {
-        f.as_lisp_obj()
+        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 

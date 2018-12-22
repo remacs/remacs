@@ -34,10 +34,6 @@ use crate::{
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
     pub fn is_live(self) -> bool {
@@ -235,7 +231,7 @@ impl From<LispObject> for LispWindowRef {
 
 impl From<LispWindowRef> for LispObject {
     fn from(w: LispWindowRef) -> Self {
-        w.as_lisp_obj()
+        LispObject::tag_ptr(w, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -739,7 +735,7 @@ pub fn window_list(
     window: Option<LispWindowRef>,
 ) -> LispObject {
     let w_obj = match window {
-        Some(w) => w.as_lisp_obj(),
+        Some(w) => w.into(),
         None => LispFrameRef::from(frame).selected_window,
     };
 

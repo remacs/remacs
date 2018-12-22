@@ -303,8 +303,9 @@ macro_rules! local_unibyte_string {
                 },
             },
         };
-        let $name = crate::lisp::ExternalPtr::new(&mut obj as *mut crate::remacs_sys::Lisp_String)
-            .as_lisp_obj();
+        let $name = crate::lisp::LispObject::from(crate::lisp::ExternalPtr::new(
+            &mut obj as *mut crate::remacs_sys::Lisp_String,
+        ));
     };
 }
 

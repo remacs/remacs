@@ -702,12 +702,12 @@ pub fn autoload(
         // and assumed the docstring will be provided by Snarf-documentation, so it
         // passed us 0 instead.  But that leads to accidental sharing in purecopy's
         // hash-consing, so we use a (hopefully) unique integer instead.
-        docstring = LispObject::from(unsafe { function.as_lisp_obj().to_fixnum_unchecked() });
+        docstring = LispObject::from(unsafe { LispObject::from(function).to_fixnum_unchecked() });
     }
 
     defalias(
         function,
-        list!(Qautoload, file.as_lisp_obj(), docstring, interactive, ty),
+        list!(Qautoload, file.into(), docstring, interactive, ty),
         Qnil,
     )
 }

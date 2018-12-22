@@ -26,10 +26,6 @@ const MARKER_DEBUG: bool = true;
 const MARKER_DEBUG: bool = false;
 
 impl LispMarkerRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(self.as_ptr()) }
-    }
-
     pub fn charpos(self) -> Option<isize> {
         match self.buffer() {
             None => None,
@@ -113,7 +109,7 @@ impl From<LispObject> for LispMarkerRef {
 
 impl From<LispMarkerRef> for LispObject {
     fn from(m: LispMarkerRef) -> Self {
-        m.as_lisp_obj()
+        unsafe { mem::transmute(m.as_ptr()) }
     }
 }
 
@@ -305,7 +301,7 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
     let buffer_or_nil = marker
         .as_marker()
         .and_then(|m| m.buffer())
-        .map_or(Qnil, |b| b.as_lisp_obj());
+        .map_or(Qnil, LispObject::from);
 
     set_marker(new, marker, buffer_or_nil);
 

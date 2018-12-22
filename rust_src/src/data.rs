@@ -793,7 +793,7 @@ pub fn logcount(value: EmacsInt) -> i32 {
 /// Set SYMBOL's function definition to DEFINITION, and return DEFINITION.
 #[lisp_fn]
 pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
-    let sym_obj = symbol.as_lisp_obj();
+    let sym_obj = LispObject::from(symbol);
     if sym_obj.is_nil() {
         // Perhaps not quite the right error signal, but seems good enough.
         xsignal!(Qsetting_constant, sym_obj);

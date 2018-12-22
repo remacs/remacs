@@ -23,10 +23,6 @@ use crate::{
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
-    pub fn as_lisp_obj(mut self) -> LispObject {
-        unsafe { make_lisp_symbol(self.as_mut()) }
-    }
-
     pub fn symbol_name(self) -> LispObject {
         let s = unsafe { self.u.s.as_ref() };
         s.name
@@ -107,7 +103,7 @@ impl LispSymbolRef {
             tortoise = unsafe { tortoise.get_alias() };
 
             if hare == tortoise {
-                xsignal!(Qcyclic_variable_indirection, hare.as_lisp_obj())
+                xsignal!(Qcyclic_variable_indirection, hare.into())
             }
         }
 
@@ -164,8 +160,8 @@ impl From<LispObject> for LispSymbolRef {
 }
 
 impl From<LispSymbolRef> for LispObject {
-    fn from(s: LispSymbolRef) -> Self {
-        s.as_lisp_obj()
+    fn from(mut s: LispSymbolRef) -> Self {
+        unsafe { make_lisp_symbol(s.as_mut()) }
     }
 }
 
@@ -363,7 +359,7 @@ pub fn keywordp(object: LispObject) -> bool {
 pub fn indirect_variable_lisp(object: LispObject) -> LispObject {
     if let Some(symbol) = object.as_symbol() {
         let val = symbol.get_indirect_variable();
-        val.as_lisp_obj()
+        val.into()
     } else {
         object
     }

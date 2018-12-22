@@ -100,10 +100,6 @@ pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     pub fn is_read_only(self) -> bool {
         self.read_only_.into()
     }
@@ -417,7 +413,7 @@ impl From<LispObject> for LispBufferRef {
 
 impl From<LispBufferRef> for LispObject {
     fn from(b: LispBufferRef) -> Self {
-        b.as_lisp_obj()
+        LispObject::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -451,7 +447,7 @@ impl From<LispObject> for LispOverlayRef {
 
 impl From<LispOverlayRef> for LispObject {
     fn from(o: LispOverlayRef) -> Self {
-        o.as_lisp_obj()
+        LispObject::tag_ptr(o, Lisp_Type::Lisp_Misc)
     }
 }
 
@@ -472,10 +468,6 @@ impl LispMiscRef {
 }
 
 impl LispOverlayRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)
-    }
-
     pub fn iter(self) -> LispOverlayIter {
         LispOverlayIter {
             current: Some(self),
@@ -680,7 +672,7 @@ pub fn get_buffer(buffer_or_name: LispBufferOrName) -> Option<LispBufferRef> {
 /// Return the current buffer as a Lisp object.
 #[lisp_fn]
 pub fn current_buffer() -> LispObject {
-    ThreadState::current_buffer().as_lisp_obj()
+    ThreadState::current_buffer().into()
 }
 
 /// Return name of file BUFFER is visiting, or nil if none.
@@ -836,8 +828,9 @@ pub extern "C" fn nsberror(spec: LispObject) -> ! {
 #[lisp_fn]
 pub fn overlay_lists() -> LispObject {
     let list_overlays = |ol: LispOverlayRef| -> LispObject {
-        ol.iter()
-            .fold(Qnil, |accum, n| LispObject::cons(n.as_lisp_obj(), accum))
+        ol.iter().fold(Qnil, |accum, n| {
+            LispObject::cons(LispObject::from(n), accum)
+        })
     };
 
     let cur_buf = ThreadState::current_buffer();
@@ -875,7 +868,7 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
         assert!(begv_marker.is_not_nil());
         assert!(zv_marker.is_not_nil());
 
-        let buffer = buffer_ref.as_lisp_obj();
+        let buffer = LispObject::from(buffer_ref);
         set_marker_both(pt_marker, buffer, buffer_ref.pt, buffer_ref.pt_byte);
         set_marker_both(begv_marker, buffer, buffer_ref.begv, buffer_ref.begv_byte);
         set_marker_both(zv_marker, buffer, buffer_ref.zv, buffer_ref.zv_byte);
@@ -990,7 +983,7 @@ pub extern "C" fn build_overlay(
         overlay.plist = plist;
         overlay.next = ptr::null_mut();
 
-        overlay.as_lisp_obj()
+        overlay.into()
     }
 }
 

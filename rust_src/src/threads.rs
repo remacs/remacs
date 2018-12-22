@@ -38,15 +38,17 @@ impl ThreadStateRef {
     pub fn is_alive(self) -> bool {
         !self.m_specpdl.is_null()
     }
-
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
 }
 
 impl From<LispObject> for ThreadStateRef {
     fn from(o: LispObject) -> Self {
         o.as_thread_or_error()
+    }
+}
+
+impl From<ThreadStateRef> for LispObject {
+    fn from(t: ThreadStateRef) -> Self {
+        LispObject::tag_ptr(t, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -89,7 +91,7 @@ pub fn thread_alive_p(thread: ThreadStateRef) -> bool {
 /// Return the current thread.
 #[lisp_fn]
 pub fn current_thread() -> LispObject {
-    ThreadState::current_thread().as_lisp_obj()
+    ThreadState::current_thread().into()
 }
 
 /// Return the object that THREAD is blocking on.
