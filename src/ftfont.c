@@ -2949,11 +2949,14 @@ ftfont_shape (Lisp_Object lgstring)
   else
 #endif  /* HAVE_HARFBUZZ */
     {
+#if defined HAVE_M17N_FLT && defined HAVE_LIBOTF
       OTF *otf = ftfont_get_otf (ftfont_info);
 
       return ftfont_shape_by_flt (lgstring, font, ftfont_info->ft_size->face,
 				  otf, &ftfont_info->matrix);
+#endif  /* defined HAVE_M17N_FLT && defined HAVE_LIBOTF */
     }
+  return make_fixnum (0);
 }
 
 #endif /* (defined HAVE_M17N_FLT && defined HAVE_LIBOTF) || defined HAVE_HARFBUZZ */
