@@ -85,19 +85,33 @@ pub unsafe extern "C" fn base64_decode_1(
             }
             if multibyte {
                 // Decode non-ASCII bytes into UTF-8 pairs.
-                let s: String = decoded[..decoded_length]
-                    .iter()
-                    .map(|&byte| byte as char)
-                    .collect();
+                let s = encode_multibyte_string(&decoded[..decoded_length]);
                 let s_len = s.len();
                 ptr::copy_nonoverlapping(s.as_ptr(), to as *mut u8, s_len);
-                s.len() as isize
+                s_len as isize
             } else {
                 decoded_length as isize
             }
         }
         _ => -1,
     }
+}
+
+/// Encode some text we just got from decoding base64 data like C implementation does via
+/// BYTE8_STRING.
+fn encode_multibyte_string(v: &[u8]) -> Vec<u8> {
+    let mut res = Vec::with_capacity(v.len());
+
+    for &c in v {
+        if c >= 128 {
+            res.push(0xc0 | ((c) >> 6) & 0x01);
+            res.push(0x80 | (c & 0x3f));
+        } else {
+            res.push(c);
+        }
+    }
+
+    res
 }
 
 #[test]
@@ -244,8 +258,11 @@ fn test_multibyte_base64_decode_1() {
     };
     unsafe { decoded.set_len(length as usize) };
 
+    // We don't round-trip on multibyte decode but use a particular encoding
+    let decoded_multibyte = vec![68, 111, 98, 114, 193, 189, 32, 100, 101, 110];
+
     assert_eq!(clear.len(), length as usize);
-    assert_eq!(clear, String::from_utf8(decoded).unwrap());
+    assert_eq!(decoded_multibyte, decoded);
 
     // Now run again, but disable multibyte
 
@@ -268,6 +285,37 @@ fn test_multibyte_base64_decode_1() {
 
     assert_eq!(clear.len(), length as usize);
     assert_eq!(clear, &decoded[..]);
+
+    // Run it again with multibyte but with a more complex string
+    let input = "w7HDscOxw7HDocOhw6HDocOhw6HEkcSRxJHEkcSRxJHEkcOwCg==";
+    let clear = "ññññááááááđđđđđđđð\n";
+    let decoded_multibyte = vec![
+        193, 131, 192, 177, 193, 131, 192, 177, 193, 131, 192, 177, 193, 131, 192, 177, 193, 131,
+        192, 161, 193, 131, 192, 161, 193, 131, 192, 161, 193, 131, 192, 161, 193, 131, 192, 161,
+        193, 131, 192, 161, 193, 132, 192, 145, 193, 132, 192, 145, 193, 132, 192, 145, 193, 132,
+        192, 145, 193, 132, 192, 145, 193, 132, 192, 145, 193, 132, 192, 145, 193, 131, 192, 176,
+        10,
+    ];
+    let mut n = 0;
+    let mut decoded: Vec<u8> = Vec::new();
+    decoded.resize(compute_decode_size(input.len()), 0);
+
+    let length = unsafe {
+        base64_decode_1(
+            input.as_ptr() as *mut c_char,
+            input.as_bytes().len(),
+            decoded.as_mut_ptr() as *mut c_char,
+            decoded.len(),
+            true,
+            &mut n,
+        )
+    };
+    unsafe { decoded.set_len(length as usize) };
+
+    // We don't round-trip on multibyte decode but use a particular encoding
+    assert_eq!(clear.len(), n as usize);
+    assert_eq!(decoded_multibyte.len(), length as usize);
+    assert_eq!(decoded_multibyte, decoded);
 }
 
 #[test]
