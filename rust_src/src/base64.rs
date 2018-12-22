@@ -16,7 +16,6 @@ use crate::{
         del_range_both, del_range_byte, insert, insert_1_both, make_unibyte_string, move_gap_both,
         set_point, set_point_both, signal_after_change, temp_set_point_both,
     },
-    strings::MIME_LINE_LENGTH,
     threads::ThreadState,
 };
 
@@ -118,58 +117,6 @@ ZmFyLXJlYWNoaW5nIGNoYW5nZXMu"
         .to_string();
     assert_eq!(expected, encoded);
     assert_eq!(expected.len(), encoded.len());
-}
-
-#[no_mangle]
-pub extern "C" fn compute_decode_size(len: usize) -> usize {
-    ((len + 3) / 4) * 3
-}
-
-#[no_mangle]
-pub extern "C" fn compute_encode_size(len: usize) -> usize {
-    ((len * 4) / 3) + 4
-}
-
-#[no_mangle]
-pub extern "C" fn pad_base64_size(len: usize) -> usize {
-    len + (len / (MIME_LINE_LENGTH as usize)) + 1 + 6
-}
-
-#[test]
-fn test_compute_decode_size() {
-    assert_eq!(3, compute_decode_size(1));
-    assert_eq!(3, compute_decode_size(2));
-    assert_eq!(3, compute_decode_size(3));
-    assert_eq!(3, compute_decode_size(4));
-    assert_eq!(6, compute_decode_size(5));
-    assert_eq!(6, compute_decode_size(6));
-    assert_eq!(6, compute_decode_size(7));
-    assert_eq!(6, compute_decode_size(8));
-}
-
-#[test]
-fn test_compute_encode_size() {
-    assert_eq!(5, compute_encode_size(1));
-    assert_eq!(6, compute_encode_size(2));
-    assert_eq!(8, compute_encode_size(3));
-    assert_eq!(9, compute_encode_size(4));
-    assert_eq!(10, compute_encode_size(5));
-    assert_eq!(12, compute_encode_size(6));
-    assert_eq!(13, compute_encode_size(7));
-    assert_eq!(14, compute_encode_size(8));
-}
-
-#[test]
-fn test_pad_base64_size() {
-    assert_eq!(8, pad_base64_size(1));
-    assert_eq!(9, pad_base64_size(2));
-    assert_eq!(10, pad_base64_size(3));
-    assert_eq!(11, pad_base64_size(4));
-    assert_eq!(12, pad_base64_size(5));
-    assert_eq!(13, pad_base64_size(6));
-    assert_eq!(14, pad_base64_size(7));
-    assert_eq!(15, pad_base64_size(8));
-    assert_eq!(84, pad_base64_size(76));
 }
 
 #[test]
