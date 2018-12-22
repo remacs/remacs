@@ -2769,48 +2769,29 @@ uni_mirroring (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
   return bidi_mirror_char (ch);
 }
 
-static hb_script_t
-uni_script (hb_unicode_funcs_t *funcs, hb_codepoint_t ch, void *user_data)
-{
-  Lisp_Object script = CHAR_TABLE_REF (Vchar_script_table, ch);
-
-  if (SYMBOLP (script))
-    {
-      /* FIXME: from_string wants an ISO 15924 script tag here. */
-      return hb_script_from_string (SSDATA (SYMBOL_NAME (script)),
-                                    SBYTES (SYMBOL_NAME (script)));
-    }
-
-  return HB_SCRIPT_INVALID;
-}
-
-static hb_bool_t
-uni_compose (hb_unicode_funcs_t *funcs, hb_codepoint_t a, hb_codepoint_t b,
-             hb_codepoint_t *ab, void *user_data)
-{
-  /* FIXME: implement */
-  return false;
-}
-
-static hb_bool_t
-uni_decompose (hb_unicode_funcs_t *funcs, hb_codepoint_t ab, hb_codepoint_t *a,
-               hb_codepoint_t *b, void *user_data)
-{
-  /* FIXME: implement */
-  return false;
-}
-
 static hb_unicode_funcs_t *
 get_hb_unicode_funcs (void)
 {
-  hb_unicode_funcs_t *funcs = hb_unicode_funcs_create (NULL);
+  /* Subclass HarfBuzz's default Unicode functions and override functions that
+   * use data Emacs can provide. This way changing Emacs data is reflected in
+   * the shaped output.
+   */
+  hb_unicode_funcs_t *funcs = hb_unicode_funcs_create (hb_unicode_funcs_get_default ());
 
   hb_unicode_funcs_set_combining_class_func (funcs, uni_combining, NULL, NULL);
   hb_unicode_funcs_set_general_category_func (funcs, uni_general, NULL, NULL);
   hb_unicode_funcs_set_mirroring_func (funcs, uni_mirroring, NULL, NULL);
-  hb_unicode_funcs_set_script_func (funcs, uni_script, NULL, NULL);
+
+  /* FIXME: I don't know how to get Unicode character composition and
+   * decomposition from Emacs.
   hb_unicode_funcs_set_compose_func (funcs, uni_compose, NULL, NULL);
   hb_unicode_funcs_set_decompose_func (funcs, uni_decompose, NULL, NULL);
+  */
+
+  /* Emacs own script mapping for characters differs from Unicode, so we want
+   * to keep the default HarfBuzz's implementation here.
+  hb_unicode_funcs_set_script_func (funcs, uni_script, NULL, NULL);
+  */
 
   return funcs;
 }
