@@ -1615,7 +1615,7 @@ this command arranges for all errors to enter the debugger."
          (eval-expression-get-print-arguments current-prefix-arg)))
 
   (if (null eval-expression-debug-on-error)
-      (push (eval exp lexical-binding) values)
+      (push (eval (macroexpand-all exp) lexical-binding) values)
     (let ((old-value (make-symbol "t")) new-value)
       ;; Bind debug-on-error to something unique so that we can
       ;; detect when evalled code changes it.
