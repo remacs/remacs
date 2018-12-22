@@ -231,7 +231,6 @@ pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
 #[lisp_fn(min = "1")]
 pub fn close_font(font_object: LispFontObjectRef, frame: LispFrameLiveOrSelected) {
     let frame: LispFrameRef = frame.into();
-    //unsafe { font_close_object(frame.as_mut(), object) }
     font_object.close(frame)
 }
 
