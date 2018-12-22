@@ -245,9 +245,9 @@ It reports the git branch from which Emacs was built.
 
 +++
 ** New user option 'switch-to-buffer-obey-display-actions'.
-When non-nil, `switch-to-buffer' uses `pop-to-buffer-same-window' that
-respects display actions specified by `display-buffer-alist' and
-`display-buffer-overriding-action'.
+When non-nil, 'switch-to-buffer' uses 'pop-to-buffer-same-window' that
+respects display actions specified by 'display-buffer-alist' and
+'display-buffer-overriding-action'.
 
 
 * Editing Changes in Emacs 27.1
@@ -311,8 +311,8 @@ the node "(emacs) Directory Variables" of the user manual.
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
 ** map.el
-*** Now also understands plists
-*** Now defined via generic functions that can be extended via cl-defmethod.
+*** Now also understands plists.
+*** Now defined via generic functions that can be extended via 'cl-defmethod'.
 *** Deprecate the 'map-put' macro in favor of a new 'map-put!' function.
 *** 'map-contains-key' now returns a boolean rather than the key.
 *** Deprecate the 'testfn' args of 'map-elt' and 'map-contains-key'.
@@ -343,11 +343,11 @@ displays the *Messages* buffer in the same window.
 
 *** Windmove also supports directional window deletion.
 The new command 'windmove-delete-default-keybindings' binds default
-keys with provided prefix (by default, C-x) and modifiers (by default,
-Shift) to the commands that delete the window in the specified
+keys with provided prefix (by default, 'C-x') and modifiers (by default,
+'Shift') to the commands that delete the window in the specified
 direction.  For example, 'C-x S-down' deletes the window below.
 With a prefix arg 'C-u', also kills the buffer in that window.
-With `M-0', deletes the selected window and selects the window
+With 'M-0', deletes the selected window and selects the window
 that was in the specified direction.
 
 ** Octave mode
@@ -1149,7 +1149,7 @@ removed.
 * Lisp Changes in Emacs 27.1
 
 +++
-** self-insert-command takes the char to insert as (optional) argument
+** 'self-insert-command' takes the char to insert as (optional) argument.
 
 ** 'lookup-key' can take a list of keymaps as argument.
 
