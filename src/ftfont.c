@@ -2805,7 +2805,8 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
   hb_glyph_info_t *info;
   hb_glyph_position_t *pos;
 
-  /* FIXME: cache the buffer */
+  /* TODO: cache the buffer for slightly better performance and less
+   * allocations. */
   hb_buffer_t *hb_buffer = hb_buffer_create ();
   hb_buffer_pre_allocate (hb_buffer, text_len);
 
