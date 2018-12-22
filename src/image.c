@@ -2340,10 +2340,10 @@ x_find_image_fd (Lisp_Object file, int *pfd)
       file_found = ENCODE_FILE (file_found);
       if (fd == -2)
 	{
-	  /* The file exists locally, but has a file handler.  (This
-	     happens, e.g., under Auto Image File Mode.)  'openp'
-	     didn't open the file, so we should, because the caller
-	     expects that.  */
+	  /* The file exists locally, but has a file name handler.
+	     (This happens, e.g., under Auto Image File Mode.)
+	     'openp' didn't open the file, so we should, because the
+	     caller expects that.  */
 	  fd = emacs_open (SSDATA (file_found), O_RDONLY, 0);
 	}
     }

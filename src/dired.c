@@ -333,7 +333,7 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
   directory = Fexpand_file_name (directory, Qnil);
 
   /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
+     call the corresponding file name handler.  */
   handler = Ffind_file_name_handler (directory, Qdirectory_files);
   if (!NILP (handler))
     return call5 (handler, Qdirectory_files, directory,
@@ -368,7 +368,7 @@ which see.  */)
   directory = Fexpand_file_name (directory, Qnil);
 
   /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
+     call the corresponding file name handler.  */
   handler = Ffind_file_name_handler (directory, Qdirectory_files_and_attributes);
   if (!NILP (handler))
     return call6 (handler, Qdirectory_files_and_attributes,
@@ -403,13 +403,13 @@ is matched against file and directory names relative to DIRECTORY.  */)
   directory = Fexpand_file_name (directory, Qnil);
 
   /* If the directory name has special constructs in it,
-     call the corresponding file handler.  */
+     call the corresponding file name handler.  */
   handler = Ffind_file_name_handler (directory, Qfile_name_completion);
   if (!NILP (handler))
     return call4 (handler, Qfile_name_completion, file, directory, predicate);
 
   /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
+     call the corresponding file name handler.  */
   handler = Ffind_file_name_handler (file, Qfile_name_completion);
   if (!NILP (handler))
     return call4 (handler, Qfile_name_completion, file, directory, predicate);
@@ -431,13 +431,13 @@ is matched against file and directory names relative to DIRECTORY.  */)
   directory = Fexpand_file_name (directory, Qnil);
 
   /* If the directory name has special constructs in it,
-     call the corresponding file handler.  */
+     call the corresponding file name handler.  */
   handler = Ffind_file_name_handler (directory, Qfile_name_all_completions);
   if (!NILP (handler))
     return call3 (handler, Qfile_name_all_completions, file, directory);
 
   /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
+     call the corresponding file name handler.  */
   handler = Ffind_file_name_handler (file, Qfile_name_all_completions);
   if (!NILP (handler))
     return call3 (handler, Qfile_name_all_completions, file, directory);
@@ -901,11 +901,12 @@ so last access time will always be midnight of that day.  */)
     return Qnil;
 
   /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
+     call the corresponding file name handler.  */
   handler = Ffind_file_name_handler (filename, Qfile_attributes);
   if (!NILP (handler))
-    { /* Only pass the extra arg if it is used to help backward compatibility
-	 with old file handlers which do not implement the new arg.  --Stef  */
+    { /* Only pass the extra arg if it is used to help backward
+	 compatibility with old file name handlers which do not
+	 implement the new arg.  --Stef */
       if (NILP (id_format))
 	return call2 (handler, Qfile_attributes, filename);
       else

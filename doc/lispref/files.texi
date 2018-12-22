@@ -3067,7 +3067,7 @@ expression to define the class of names (all those that match the
 regular expression), plus a handler that implements all the primitive
 Emacs file operations for file names that match.
 
-@cindex file handler
+@cindex file name handler
 @vindex file-name-handler-alist
   The variable @code{file-name-handler-alist} holds a list of handlers,
 together with regular expressions that determine when to apply each
@@ -3354,8 +3354,8 @@ If @code{file-remote-p} returns the same identifier for two different
 filenames, that means they are stored on the same file system and can
 be accessed locally with respect to each other.  This means, for
 example, that it is possible to start a remote process accessing both
-files at the same time.  Implementers of file handlers need to ensure
-this principle is valid.
+files at the same time.  Implementers of file name handlers need to
+ensure this principle is valid.
 
 @var{identification} specifies which part of the identifier shall be
 returned as string.  @var{identification} can be the symbol

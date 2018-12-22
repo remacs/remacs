@@ -2255,7 +2255,7 @@ DEFUN ("combine-after-change-execute", Fcombine_after_change_execute,
 
   /* It is rare for combine_after_change_buffer to be invalid, but
      possible.  It can happen when combine-after-change-calls is
-     non-nil, and insertion calls a file handler (e.g. through
+     non-nil, and insertion calls a file name handler (e.g. through
      lock_file) which scribbles into a temp file -- cyd  */
   if (!BUFFERP (combine_after_change_buffer)
       || !BUFFER_LIVE_P (XBUFFER (combine_after_change_buffer)))

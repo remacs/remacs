@@ -8219,7 +8219,7 @@ a ShowWindow flag:
      URL, for example.  So we make it absolute only if it is an
      existing file; if it is a file that does not exist, tough.  */
   absdoc = Fexpand_file_name (document, Qnil);
-  /* Don't call file handlers for file-exists-p, since they might
+  /* Don't call file name handlers for file-exists-p, since they might
      attempt to access the file, which could fail or produce undesired
      consequences, see bug#16558 for an example.  */
   handler = Ffind_file_name_handler (absdoc, Qfile_exists_p);
@@ -9097,7 +9097,7 @@ DEFUN ("file-system-info", Ffile_system_info, Sfile_system_info, 1, 1, 0,
   encoded = ENCODE_FILE (filename);
 
   /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
+     call the corresponding file name handler.  */
   Lisp_Object handler = Ffind_file_name_handler (encoded, Qfile_system_info);
   if (!NILP (handler))
     {
