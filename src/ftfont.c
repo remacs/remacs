@@ -2774,8 +2774,7 @@ get_hb_unicode_funcs (void)
 {
   /* Subclass HarfBuzz's default Unicode functions and override functions that
    * use data Emacs can provide. This way changing Emacs data is reflected in
-   * the shaped output.
-   */
+   * the shaped output. */
   hb_unicode_funcs_t *funcs = hb_unicode_funcs_create (hb_unicode_funcs_get_default ());
 
   hb_unicode_funcs_set_combining_class_func (funcs, uni_combining, NULL, NULL);
@@ -2850,7 +2849,9 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
   if (glyph_len > LGSTRING_GLYPH_LEN (lgstring))
     return Qnil;
 
-  /* FIXME: Emacs wants the buffer reversed, WHY! */
+  /* Somewhere up the pipeline wants the glyphs in logical order, while keeping
+   * clusters in visual order. I don't know where exactly, but lets satisfy
+   * that. */
   if (HB_DIRECTION_IS_BACKWARD (hb_buffer_get_direction (hb_buffer)))
     hb_buffer_reverse_clusters (hb_buffer);
 
