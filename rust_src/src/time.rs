@@ -75,15 +75,15 @@ impl Add for LispTime {
         let mut us = self.us + other.us;
         let mut ps = self.ps + other.ps;
 
-        if ps > 1_000_000 {
-            ps += 1;
-            us -= 1_000_000;
+        if ps >= 1_000_000 {
+            us += 1;
+            ps -= 1_000_000;
         }
-        if us > 1_000_000 {
+        if us >= 1_000_000 {
             lo += 1;
             us -= 1_000_000;
         }
-        if lo > 1 << LO_TIME_BITS {
+        if lo >= 1 << LO_TIME_BITS {
             hi += 1;
             lo -= 1 << LO_TIME_BITS;
         }
