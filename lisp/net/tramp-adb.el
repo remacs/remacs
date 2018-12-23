@@ -144,6 +144,7 @@ It is used for TCP/IP devices."
     (make-directory . tramp-adb-handle-make-directory)
     (make-directory-internal . ignore)
     (make-nearby-temp-file . tramp-handle-make-nearby-temp-file)
+    (make-process . ignore)
     (make-symbolic-link . tramp-handle-make-symbolic-link)
     (process-file . tramp-adb-handle-process-file)
     (rename-file . tramp-adb-handle-rename-file)

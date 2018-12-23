@@ -4441,10 +4441,11 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
 
 ;; We can handle process-file in a restricted way (just for chown).
 ;; Nothing possible for `start-file-process'.
+(put 'exec-path 'ange-ftp 'ignore)
+(put 'make-process 'ange-ftp 'ignore)
 (put 'process-file 'ange-ftp 'ange-ftp-process-file)
 (put 'start-file-process 'ange-ftp 'ignore)
 (put 'shell-command 'ange-ftp 'ange-ftp-shell-command)
-(put 'exec-path 'ange-ftp 'ignore)
 
 ;;; Define ways of getting at unmodified Emacs primitives,
 ;;; turning off our handler.

@@ -122,6 +122,7 @@
     (make-directory . tramp-rclone-handle-make-directory)
     (make-directory-internal . ignore)
     (make-nearby-temp-file . tramp-handle-make-nearby-temp-file)
+    (make-process . ignore)
     (make-symbolic-link . tramp-handle-make-symbolic-link)
     (process-file . ignore)
     (rename-file . tramp-rclone-handle-rename-file)

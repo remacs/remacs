@@ -995,6 +995,7 @@ of command line.")
     (make-directory . tramp-sh-handle-make-directory)
     ;; `make-directory-internal' performed by default handler.
     (make-nearby-temp-file . tramp-handle-make-nearby-temp-file)
+    (make-process . ignore)
     (make-symbolic-link . tramp-sh-handle-make-symbolic-link)
     (process-file . tramp-sh-handle-process-file)
     (rename-file . tramp-sh-handle-rename-file)

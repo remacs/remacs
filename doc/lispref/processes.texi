@@ -700,8 +700,8 @@ output, and both are sent to @var{buffer} or @var{filter}.
 @item :file-handler @var{file-handler}
 If @var{file-handler} is non-@code{nil}, then look for a file name
 handler for the current buffer's @code{default-directory}, and invoke
-that file handler to make the process.  If there is no such handler,
-proceed as if @var{file-handler} were @code{nil}.
+that file name handler to make the process.  If there is no such
+handler, proceed as if @var{file-handler} were @code{nil}.
 @end table
 
 The original argument list, modified with the actual connection
@@ -709,9 +709,18 @@ information, is available via the @code{process-contact} function.
 
 The current working directory of the subprocess is set to the current
 buffer's value of @code{default-directory} if that is local (as
-determined by `unhandled-file-name-directory'), or "~" otherwise.  If
-you want to run a process in a remote directory, pass
-@code{:file-handler t} to @code{make-process}.
+determined by @code{unhandled-file-name-directory}), or @file{~}
+otherwise.  If you want to run a process in a remote directory, pass
+@code{:file-handler t} to @code{make-process}.  In that case, the
+current working directory is the local name component of
+@code{default-directory} (as determined by @code{file-local-name}).
+
+Depending on the implementation of the file name handler, it might not
+be possible to apply @var{filter} or @var{sentinel} to the resulting
+process object.  @xref{Filter Functions}, and @ref{Sentinels}.
+
+Some file name handlers may not support @code{make-process}.  In such
+cases, this function does nothing and returns @code{nil}.
 @end defun
 
 @defun make-pipe-process &rest args

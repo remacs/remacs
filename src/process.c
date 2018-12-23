@@ -1663,7 +1663,7 @@ is mixed with standard output and sent to BUFFER or FILTER.
 
 :file-handler FILE-HANDLER -- If FILE-HANDLER is non-nil, then look
 for a file name handler for the current buffer's `default-directory'
-and invoke that file handler to make the process.  If there is no
+and invoke that file name handler to make the process.  If there is no
 such handler, proceed as if FILE-HANDLER were nil.
 
 usage: (make-process &rest ARGS)  */)

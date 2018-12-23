@@ -2278,7 +2278,7 @@ ARGS are the arguments OPERATION has been called with."
 	      ;; Emacs 26+ only.
 	      make-nearby-temp-file temporary-file-directory
 	      ;; Emacs 27+ only.
-	      exec-path))
+	      exec-path make-process))
     default-directory)
    ;; PROC.
    ((member operation
