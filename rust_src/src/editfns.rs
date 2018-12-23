@@ -30,8 +30,10 @@ use crate::{
     remacs_sys::EmacsInt,
     remacs_sys::{
         buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
-        find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
-        insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
+        find_before_next_newline, find_newline, general_insert_function,
+        get_char_property_and_overlay, globals, insert, insert_and_inherit, insert_before_markers,
+        insert_before_markers_and_inherit, insert_from_buffer, insert_from_string,
+        insert_from_string_before_markers, make_buffer_string, make_buffer_string_both,
         make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
         record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
         save_restriction_restore, save_restriction_save, scan_newline_from_point,
@@ -1445,6 +1447,102 @@ pub fn widen() {
 
     // Changing the buffer bounds invalidates any recorded current column.
     invalidate_current_column();
+}
+
+/// Insert the arguments, either strings or characters, at point.
+/// Point and after-insertion markers move forward to end up after the inserted text.
+/// Any other markers at the point of insertion remain before the text.
+///
+/// If the current buffer is multibyte, unibyte strings are converted to multibyte for insertion
+/// (see `string-make-multibyte').  If the current buffer is unibyte, multibyte strings are
+/// converted to unibyte for insertion (see `string-make-unibyte').
+///
+/// When operating on binary data, it may be necessary to preserve the original bytes of a unibyte
+/// string when inserting it into a multibyte buffer; to accomplish this, apply
+/// `string-as-multibyte' to the string and insert the result.
+///
+/// usage: (insert &rest ARGS)
+#[lisp_fn(name = "insert", c_name = "insert")]
+pub fn insert_lisp(args: &[LispObject]) {
+    unsafe {
+        general_insert_function(
+            insert,
+            insert_from_string,
+            false,
+            args.len() as isize,
+            args.as_ptr(),
+        )
+    };
+}
+
+/// Insert the arguments at point, inheriting properties from adjoining text.  Point and
+/// after-insertion markers move forward to end up after the inserted text.  Any other markers at
+/// the point of insertion remain before the text.
+///
+/// If the current buffer is multibyte, unibyte strings are converted to multibyte for insertion
+/// (see `unibyte-char-to-multibyte').  If the current buffer is unibyte, multibyte strings are
+/// converted to unibyte for insertion.
+///
+/// usage: (insert-and-inherit &rest ARGS)
+#[lisp_fn(name = "insert-and-inherit", c_name = "insert_and_inherit")]
+pub fn insert_and_inherit_lisp(args: &[LispObject]) {
+    unsafe {
+        general_insert_function(
+            insert_and_inherit,
+            insert_from_string,
+            true,
+            args.len() as isize,
+            args.as_ptr(),
+        )
+    };
+}
+
+/// Insert strings or characters at point, relocating markers after the text.  Point and markers
+/// move forward to end up after the inserted text.
+///
+/// If the current buffer is multibyte, unibyte strings are converted to multibyte for insertion
+/// (see `unibyte-char-to-multibyte').  If the current buffer is unibyte, multibyte strings are
+/// converted to unibyte for insertion.
+///
+/// If an overlay begins at the insertion point, the inserted text falls outside the overlay; if a
+/// nonempty overlay ends at the insertion point, the inserted text falls inside that overlay.
+///
+/// usage: (insert-before-markers &rest ARGS)
+#[lisp_fn(name = "insert-before-markers", c_name = "insert_before_markers")]
+pub fn insert_before_markers_lisp(args: &[LispObject]) {
+    unsafe {
+        general_insert_function(
+            insert_before_markers,
+            insert_from_string_before_markers,
+            false,
+            args.len() as isize,
+            args.as_ptr(),
+        )
+    };
+}
+
+/// Insert text at point, relocating markers and inheriting properties.  Point and markers move
+/// forward to end up after the inserted text.
+///
+/// If the current buffer is multibyte, unibyte strings are converted to multibyte for insertion
+/// (see `unibyte-char-to-multibyte').  If the current buffer is unibyte, multibyte strings are
+/// converted to unibyte for insertion.
+///
+/// usage: (insert-before-markers-and-inherit &rest ARGS)
+#[lisp_fn(
+    name = "insert-before-markers-and-inherit",
+    c_name = "insert_and_inherit_before_markers"
+)]
+pub fn insert_and_inherit_before_markers_lisp(args: &[LispObject]) {
+    unsafe {
+        general_insert_function(
+            insert_before_markers_and_inherit,
+            insert_from_string_before_markers,
+            true,
+            args.len() as isize,
+            args.as_ptr(),
+        )
+    };
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
