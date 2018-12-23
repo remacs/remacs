@@ -1430,8 +1430,8 @@ un-obsoleting it.
 
 ** 'make-process' now takes a keyword argument ':file-handler'; if
 that is non-nil, it will look for a file name handler for the current
-buffer's 'default-directory' and invoke that file handler to make the
-process.  That way 'make-process' can start remote processes.
+buffer's 'default-directory' and invoke that file name handler to make
+the process.  That way 'make-process' can start remote processes.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
