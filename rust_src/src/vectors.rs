@@ -241,13 +241,15 @@ impl LispVectorlikeRef {
 
 macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
+        impl From<$type> for LispObject {
+            fn from(v: $type) -> Self {
+                LispObject::tag_ptr(v, Lisp_Type::Lisp_Vectorlike)
+            }
+        }
+
         impl $type {
             pub fn len(self) -> usize {
                 (unsafe { self.header.size } & ($size_mask as isize)) as usize
-            }
-
-            pub fn as_lisp_obj(self) -> LispObject {
-                LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
             }
 
             pub fn as_slice(&self) -> &[LispObject] {
@@ -276,7 +278,7 @@ macro_rules! impl_vectorlike_ref {
 
             pub fn set_checked(&mut self, idx: usize, item: LispObject) {
                 if idx >= self.len() {
-                    args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
+                    args_out_of_range!(LispObject::from(*self), LispObject::from(idx));
                 }
 
                 unsafe { self.set_unchecked(idx, item) };
@@ -341,13 +343,15 @@ impl_vectorlike_ref! { LispVectorRef, LispVecIterator, ptrdiff_t::max_value() }
 impl_vectorlike_ref! { LispVectorlikeSlotsRef, LispVecSlotsIterator,
 More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize }
 
+impl From<LispBoolVecRef> for LispObject {
+    fn from(b: LispBoolVecRef) -> Self {
+        LispObject::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
+    }
+}
+
 impl LispBoolVecRef {
     pub fn len(self) -> usize {
         self.size as usize
-    }
-
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
     pub fn as_slice(&self) -> &[usize] {
@@ -376,7 +380,7 @@ impl LispBoolVecRef {
 
     pub fn set_checked(&mut self, idx: usize, b: bool) {
         if idx >= self.len() {
-            args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
+            args_out_of_range!(LispObject::from(*self), LispObject::from(idx));
         }
 
         unsafe { self.set_unchecked(idx, b) }
