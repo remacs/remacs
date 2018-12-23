@@ -1428,6 +1428,7 @@ un-obsoleting it.
 +++
 ** New function 'group-name' returns a group name corresponding to GID.
 
++++
 ** 'make-process' now takes a keyword argument ':file-handler'; if
 that is non-nil, it will look for a file name handler for the current
 buffer's 'default-directory' and invoke that file name handler to make
