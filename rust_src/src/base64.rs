@@ -104,6 +104,20 @@ fn test_simple_base64_encode_1() {
 }
 
 #[test]
+fn test_multibyte_base64_encode_1() {
+    let input = "Dobrý den"; // Czech
+
+    // Treat the input as unibyte, meaning just a buffer of bytes
+    let encoded = base64_encode_1(input.as_bytes(), false, false).unwrap();
+    assert_eq!("RG9icsO9IGRlbg==", encoded);
+
+    // When we specify 'mutlibyte' we mean the input is encoded with emacs' own encoding
+    let as_multibyte = encode_multibyte_string(input.as_bytes());
+    let encoded = base64_encode_1(&as_multibyte, false, true).unwrap();
+    assert_eq!("RG9icsO9IGRlbg==", encoded);
+}
+
+#[test]
 fn test_linewrap_base64_encode_1() {
     let input = "Emacs is a widely used tool with a long history, broad platform
 support and strong backward compatibility requirements. The core team
@@ -131,25 +145,26 @@ fn test_simple_base64_decode_1() {
 
 #[test]
 fn test_multibyte_base64_decode_1() {
-    let input = "RG9icv0gZGVu";
+    let input = "RG9icsO9IGRlbg==";
     let clear = "Dobrý den"; // Czech
+
+    // When we specify multibyte we want the return to be encoded with bytes/chars > 128 using
+    // emacs' own encoding
 
     let (decoded, nchars) = base64_decode_1(input.as_bytes(), true).unwrap();
 
-    // We don't round-trip on multibyte decode but use a particular encoding
-    let decoded_multibyte = vec![68, 111, 98, 114, 193, 189, 32, 100, 101, 110];
+    let decoded_multibyte = vec![68, 111, 98, 114, 193, 131, 192, 189, 32, 100, 101, 110];
 
     assert_eq!(clear.len(), nchars);
     assert_eq!(decoded_multibyte, decoded);
+    assert_eq!(encode_multibyte_string(clear.as_bytes()), decoded_multibyte);
 
-    // Now run again, but disable multibyte
-
-    let clear = b"Dobr\xFD den"; // Czech
+    // Now run again, but disable multibyte so we get the unchanged result of base64-decoding
 
     let (decoded, nchars) = base64_decode_1(input.as_bytes(), false).unwrap();
 
     assert_eq!(clear.len(), nchars);
-    assert_eq!(clear, &decoded[..]);
+    assert_eq!(clear.as_bytes(), decoded.as_slice());
 
     // Run it again with multibyte but with a more complex string
     let input = "w7HDscOxw7HDocOhw6HDocOhw6HEkcSRxJHEkcSRxJHEkcOwCg==";
