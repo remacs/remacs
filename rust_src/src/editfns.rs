@@ -29,15 +29,15 @@ use crate::{
     numbers::LispNumber,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
-        find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
-        insert_and_inherit, insert_before_markers, insert_before_markers_and_inherit,
-        insert_from_buffer, insert_from_string_1, make_buffer_string, make_buffer_string_both,
-        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
-        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
-        save_restriction_restore, save_restriction_save, scan_newline_from_point,
-        set_buffer_internal_1, set_point, set_point_both, signal_after_change, styled_format,
-        update_buffer_properties, update_compositions, CHECK_BORDER, STRING_BYTES,
+        buffer_overflow, build_string, chars_in_text, current_message, del_range, del_range_1,
+        downcase, find_before_next_newline, find_newline, get_char_property_and_overlay, globals,
+        insert_1_both, insert_from_buffer, insert_from_string_1, make_buffer_string,
+        make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
+        message1, message3, record_unwind_current_buffer, record_unwind_protect,
+        save_excursion_restore, save_restriction_restore, save_restriction_save,
+        scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both,
+        signal_after_change, styled_format, update_buffer_properties, update_compositions,
+        CHECK_BORDER, STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
@@ -286,27 +286,27 @@ pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool)
     if BUF_BYTES_MAX / (len as isize) < (count as isize) {
         unsafe { buffer_overflow() };
     }
-    let mut n: ptrdiff_t = (count * (len as EmacsInt)) as ptrdiff_t;
-    let mut buffer = [0_i8; BUFSIZE];
+    let mut n = (count as usize) * len;
+    let mut buffer = [0_u8; BUFSIZE];
     // bufferlen is the number of bytes used when filling the buffer
     // with as many copies of str as possible, without overflowing it.
-    let bufferlen: ptrdiff_t = std::cmp::min(n, (BUFSIZE - (BUFSIZE % len)) as isize);
+    let bufferlen = std::cmp::min(n, BUFSIZE - (BUFSIZE % len));
     for i in 0..bufferlen {
-        buffer[i as usize] = str[(i % len as isize) as usize] as i8;
+        buffer[i] = str[i % len];
     }
     while n > bufferlen {
         unsafe { maybe_quit() };
         if inherit {
-            unsafe { insert_and_inherit(buffer.as_ptr(), bufferlen) };
+            insert_and_inherit(&buffer[..bufferlen]);
         } else {
-            unsafe { insert(buffer.as_ptr(), bufferlen) };
+            insert_slice(&buffer[..bufferlen]);
         }
         n -= bufferlen;
     }
     if inherit {
-        unsafe { insert_and_inherit(buffer.as_ptr(), n) };
+        insert_and_inherit(&buffer[..n]);
     } else {
-        unsafe { insert(buffer.as_ptr(), n) };
+        insert_slice(&buffer[..n]);
     }
 }
 
@@ -1465,7 +1465,7 @@ pub fn widen() {
 /// usage: (insert &rest ARGS)
 #[lisp_fn(name = "insert", c_name = "insert")]
 pub fn insert_lisp(args: &[LispObject]) {
-    unsafe { general_insert_function(insert, insert_from_string, false, args) };
+    unsafe { general_insert_function(insert_slice, insert_from_string, false, args) };
 }
 
 /// Insert the arguments at point, inheriting properties from adjoining text.  Point and
@@ -1584,8 +1584,8 @@ pub unsafe extern "C" fn insert_from_string_before_markers(
 /// Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC (if a type of object is
 /// Lisp_Int) or INSERT_FROM_STRING_FUNC (if a type of object is Lisp_String).  INHERIT is passed
 /// to INSERT_FROM_STRING_FUNC as the last argument
-unsafe fn general_insert_function(
-    insert_func: unsafe extern "C" fn(*const c_char, ptrdiff_t),
+unsafe fn general_insert_function<IF>(
+    insert_func: IF,
     insert_from_string_func: unsafe extern "C" fn(
         LispObject,
         ptrdiff_t,
@@ -1596,7 +1596,9 @@ unsafe fn general_insert_function(
     ),
     inherit: bool,
     args: &[LispObject],
-) {
+) where
+    IF: Fn(&[u8]),
+{
     for &val in args {
         if val.is_character() {
             let c = val.as_natnum_or_error() as Codepoint;
@@ -1608,11 +1610,106 @@ unsafe fn general_insert_function(
                 s[0] = raw_byte_from_codepoint(c);
                 1
             };
-            insert_func(s.as_ptr() as *const c_char, len as isize);
+            insert_func(&s[..len]);
         } else if let Some(string) = val.as_string() {
             insert_from_string_func(val, 0, 0, string.len_chars(), string.len_bytes(), inherit);
         } else {
             wrong_type!(Qchar_or_string_p, val);
+        }
+    }
+}
+
+/// Insert a string of specified length before point.  This function judges multibyteness based on
+/// enable_multibyte_characters in the current buffer; it never converts between single-byte and
+/// multibyte.
+///
+/// DO NOT use this for the contents of a Lisp string or a Lisp buffer!  prepare_to_modify_buffer
+/// could relocate the text.
+#[no_mangle]
+pub unsafe extern "C" fn insert(string: *const c_char, nbytes: ptrdiff_t) {
+    if nbytes > 0 {
+        let len = chars_in_text(string as *const c_uchar, nbytes);
+        insert_1_both(string, len, nbytes, false, true, false);
+
+        let pt = point() as isize;
+        let opoint = pt - len;
+        signal_after_change(opoint, 0, len);
+        update_compositions(opoint, pt, CHECK_BORDER as i32);
+    }
+}
+
+/// A version of inset that takes a slice instead of pointer and length
+pub fn insert_slice(string: &[u8]) {
+    unsafe { insert(string.as_ptr() as *const c_char, string.len() as isize) }
+}
+
+/// Likewise, but inherit text properties from neighboring characters.
+pub fn insert_and_inherit(string: &[u8]) {
+    let nbytes = string.len() as isize;
+    if nbytes > 0 {
+        unsafe {
+            let len = chars_in_text(string.as_ptr(), nbytes);
+            insert_1_both(
+                string.as_ptr() as *const c_char,
+                len,
+                nbytes,
+                true,
+                true,
+                false,
+            );
+
+            let pt = point() as isize;
+            let opoint = pt - len;
+            signal_after_change(opoint, 0, len);
+            update_compositions(opoint, pt, CHECK_BORDER as i32);
+        }
+    }
+}
+
+/// Like `insert' except that all markers pointing at the place where the insertion happens are
+/// adjusted to point after it.  Don't use this function to insert part of a Lisp string, since gc
+/// could happen and relocate it.
+pub fn insert_before_markers(string: &[u8]) {
+    let nbytes = string.len() as isize;
+    if nbytes > 0 {
+        unsafe {
+            let len = chars_in_text(string.as_ptr(), nbytes);
+            insert_1_both(
+                string.as_ptr() as *const c_char,
+                len,
+                nbytes,
+                false,
+                true,
+                true,
+            );
+
+            let pt = point() as isize;
+            let opoint = pt - len;
+            signal_after_change(opoint, 0, len);
+            update_compositions(opoint, pt, CHECK_BORDER as i32);
+        }
+    }
+}
+
+/// Likewise, but inherit text properties from neighboring characters.
+pub fn insert_before_markers_and_inherit(string: &[u8]) {
+    let nbytes = string.len() as isize;
+    if nbytes > 0 {
+        unsafe {
+            let len = chars_in_text(string.as_ptr(), nbytes);
+            insert_1_both(
+                string.as_ptr() as *const c_char,
+                len,
+                nbytes,
+                true,
+                true,
+                true,
+            );
+
+            let pt = point() as isize;
+            let opoint = pt - len;
+            signal_after_change(opoint, 0, len);
+            update_compositions(opoint, pt, CHECK_BORDER as i32);
         }
     }
 }

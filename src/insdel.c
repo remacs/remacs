@@ -651,42 +651,6 @@ copy_text (const unsigned char *from_addr, unsigned char *to_addr,
     }
 }
 
-/* Insert a string of specified length before point.
-   This function judges multibyteness based on
-   enable_multibyte_characters in the current buffer;
-   it never converts between single-byte and multibyte.
-
-   DO NOT use this for the contents of a Lisp string or a Lisp buffer!
-   prepare_to_modify_buffer could relocate the text.  */
-
-void
-insert (const char *string, ptrdiff_t nbytes)
-{
-  if (nbytes > 0)
-    {
-      ptrdiff_t len = chars_in_text ((unsigned char *) string, nbytes), opoint;
-      insert_1_both (string, len, nbytes, 0, 1, 0);
-      opoint = PT - len;
-      signal_after_change (opoint, 0, len);
-      update_compositions (opoint, PT, CHECK_BORDER);
-    }
-}
-
-/* Likewise, but inherit text properties from neighboring characters.  */
-
-void
-insert_and_inherit (const char *string, ptrdiff_t nbytes)
-{
-  if (nbytes > 0)
-    {
-      ptrdiff_t len = chars_in_text ((unsigned char *) string, nbytes), opoint;
-      insert_1_both (string, len, nbytes, 1, 1, 0);
-      opoint = PT - len;
-      signal_after_change (opoint, 0, len);
-      update_compositions (opoint, PT, CHECK_BORDER);
-    }
-}
-
 /* Insert the character C before point.  Do not inherit text properties.  */
 
 void
@@ -712,40 +676,6 @@ void
 insert_string (const char *s)
 {
   insert (s, strlen (s));
-}
-
-/* Like `insert' except that all markers pointing at the place where
-   the insertion happens are adjusted to point after it.
-   Don't use this function to insert part of a Lisp string,
-   since gc could happen and relocate it.  */
-
-void
-insert_before_markers (const char *string, ptrdiff_t nbytes)
-{
-  if (nbytes > 0)
-    {
-      ptrdiff_t len = chars_in_text ((unsigned char *) string, nbytes), opoint;
-      insert_1_both (string, len, nbytes, 0, 1, 1);
-      opoint = PT - len;
-      signal_after_change (opoint, 0, len);
-      update_compositions (opoint, PT, CHECK_BORDER);
-    }
-}
-
-/* Likewise, but inherit text properties from neighboring characters.  */
-
-void
-insert_before_markers_and_inherit (const char *string,
-				   ptrdiff_t nbytes)
-{
-  if (nbytes > 0)
-    {
-      ptrdiff_t len = chars_in_text ((unsigned char *) string, nbytes), opoint;
-      insert_1_both (string, len, nbytes, 1, 1, 1);
-      opoint = PT - len;
-      signal_after_change (opoint, 0, len);
-      update_compositions (opoint, PT, CHECK_BORDER);
-    }
 }
 
 #ifdef BYTE_COMBINING_DEBUG
