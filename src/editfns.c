@@ -2415,21 +2415,6 @@ It returns the number of characters changed.  */)
 }
 
 
-DEFUN ("widen", Fwiden, Swiden, 0, 0, "",
-       doc: /* Remove restrictions (narrowing) from current buffer.
-This allows the buffer's full text to be seen and edited.  */)
-  (void)
-{
-  if (BEG != BEGV || Z != ZV)
-    current_buffer->clip_changed = 1;
-  BEGV = BEG;
-  BEGV_BYTE = BEG_BYTE;
-  SET_BUF_ZV_BOTH (current_buffer, Z, Z_BYTE);
-  /* Changing the buffer bounds invalidates any recorded current column.  */
-  invalidate_current_column ();
-  return Qnil;
-}
-
 DEFUN ("narrow-to-region", Fnarrow_to_region, Snarrow_to_region, 2, 2, "r",
        doc: /* Restrict editing in this buffer to the current region.
 The rest of the text becomes temporarily invisible and untouchable
@@ -3877,7 +3862,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sreplace_buffer_contents);
   defsubr (&Ssubst_char_in_region);
   defsubr (&Stranslate_region_internal);
-  defsubr (&Swiden);
   defsubr (&Snarrow_to_region);
   defsubr (&Stranspose_regions);
 }
