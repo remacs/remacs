@@ -1291,52 +1291,6 @@ emacs_setenv_TZ (const char *tzstring)
   return 0;
 }
 
-/* Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC
-   (if a type of object is Lisp_Int) or INSERT_FROM_STRING_FUNC (if a
-   type of object is Lisp_String).  INHERIT is passed to
-   INSERT_FROM_STRING_FUNC as the last argument.  */
-
-void
-general_insert_function (void (*insert_func)
-			      (const char *, ptrdiff_t),
-			 void (*insert_from_string_func)
-			      (Lisp_Object, ptrdiff_t, ptrdiff_t,
-			       ptrdiff_t, ptrdiff_t, bool),
-			 bool inherit, ptrdiff_t nargs, Lisp_Object *args)
-{
-  ptrdiff_t argnum;
-  Lisp_Object val;
-
-  for (argnum = 0; argnum < nargs; argnum++)
-    {
-      val = args[argnum];
-      if (CHARACTERP (val))
-	{
-	  int c = XFASTINT (val);
-	  unsigned char str[MAX_MULTIBYTE_LENGTH];
-	  int len;
-
-	  if (!NILP (BVAR (current_buffer, enable_multibyte_characters)))
-	    len = CHAR_STRING (c, str);
-	  else
-	    {
-	      str[0] = CHAR_TO_BYTE8 (c);
-	      len = 1;
-	    }
-	  (*insert_func) ((char *) str, len);
-	}
-      else if (STRINGP (val))
-	{
-	  (*insert_from_string_func) (val, 0, 0,
-				      SCHARS (val),
-				      SBYTES (val),
-				      inherit);
-	}
-      else
-	wrong_type_argument (Qchar_or_string_p, val);
-    }
-}
-
 void
 insert1 (Lisp_Object arg)
 {

@@ -6,7 +6,7 @@ use std::ops::{Add, Sub};
 use std::ptr;
 
 use libc;
-use libc::{c_int, c_uchar, ptrdiff_t};
+use libc::{c_char, c_int, c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
 
@@ -22,29 +22,30 @@ use crate::{
         set_point_from_marker,
     },
     multibyte::{
-        is_single_byte_char, multibyte_char_at, raw_byte_codepoint, unibyte_to_char,
-        write_codepoint, MAX_MULTIBYTE_LENGTH,
+        is_single_byte_char, multibyte_char_at, raw_byte_codepoint, raw_byte_from_codepoint,
+        unibyte_to_char, write_codepoint, MAX_MULTIBYTE_LENGTH,
     },
     multibyte::{Codepoint, LispStringRef},
     numbers::LispNumber,
     remacs_sys::EmacsInt,
     remacs_sys::{
         buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
-        find_before_next_newline, find_newline, general_insert_function,
-        get_char_property_and_overlay, globals, insert, insert_and_inherit, insert_before_markers,
-        insert_before_markers_and_inherit, insert_from_buffer, insert_from_string_1,
-        make_buffer_string, make_buffer_string_both, make_save_obj_obj_obj_obj,
-        make_string_from_bytes, maybe_quit, message1, message3, record_unwind_current_buffer,
-        record_unwind_protect, save_excursion_restore, save_restriction_restore,
-        save_restriction_save, scan_newline_from_point, set_buffer_internal_1, set_point,
-        set_point_both, signal_after_change, styled_format, update_buffer_properties,
-        update_compositions, CHECK_BORDER, STRING_BYTES,
+        find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
+        insert_and_inherit, insert_before_markers, insert_before_markers_and_inherit,
+        insert_from_buffer, insert_from_string_1, make_buffer_string, make_buffer_string_both,
+        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
+        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, signal_after_change, styled_format,
+        update_buffer_properties, update_compositions, CHECK_BORDER, STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
         Fprevious_single_char_property_change, Fx_popup_dialog,
     },
-    remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
+    remacs_sys::{
+        Qboundary, Qchar_or_string_p, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt,
+    },
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
     time::{lisp_time_struct, time_overflow, LispTime},
@@ -1464,15 +1465,7 @@ pub fn widen() {
 /// usage: (insert &rest ARGS)
 #[lisp_fn(name = "insert", c_name = "insert")]
 pub fn insert_lisp(args: &[LispObject]) {
-    unsafe {
-        general_insert_function(
-            insert,
-            insert_from_string,
-            false,
-            args.len() as isize,
-            args.as_ptr(),
-        )
-    };
+    unsafe { general_insert_function(insert, insert_from_string, false, args) };
 }
 
 /// Insert the arguments at point, inheriting properties from adjoining text.  Point and
@@ -1486,15 +1479,7 @@ pub fn insert_lisp(args: &[LispObject]) {
 /// usage: (insert-and-inherit &rest ARGS)
 #[lisp_fn(name = "insert-and-inherit", c_name = "insert_and_inherit")]
 pub fn insert_and_inherit_lisp(args: &[LispObject]) {
-    unsafe {
-        general_insert_function(
-            insert_and_inherit,
-            insert_from_string,
-            true,
-            args.len() as isize,
-            args.as_ptr(),
-        )
-    };
+    unsafe { general_insert_function(insert_and_inherit, insert_from_string, true, args) };
 }
 
 /// Insert strings or characters at point, relocating markers after the text.  Point and markers
@@ -1515,8 +1500,7 @@ pub fn insert_before_markers_lisp(args: &[LispObject]) {
             insert_before_markers,
             insert_from_string_before_markers,
             false,
-            args.len() as isize,
-            args.as_ptr(),
+            args,
         )
     };
 }
@@ -1539,8 +1523,7 @@ pub fn insert_and_inherit_before_markers_lisp(args: &[LispObject]) {
             insert_before_markers_and_inherit,
             insert_from_string_before_markers,
             true,
-            args.len() as isize,
-            args.as_ptr(),
+            args,
         )
     };
 }
@@ -1596,6 +1579,42 @@ pub unsafe extern "C" fn insert_from_string_before_markers(
     insert_from_string_1(string, pos, pos_byte, length, length_byte, inherit, true);
     signal_after_change(opoint, 0, current_buffer.pt - opoint);
     update_compositions(opoint, current_buffer.pt, CHECK_BORDER as i32);
+}
+
+/// Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC (if a type of object is
+/// Lisp_Int) or INSERT_FROM_STRING_FUNC (if a type of object is Lisp_String).  INHERIT is passed
+/// to INSERT_FROM_STRING_FUNC as the last argument
+unsafe fn general_insert_function(
+    insert_func: unsafe extern "C" fn(*const c_char, ptrdiff_t),
+    insert_from_string_func: unsafe extern "C" fn(
+        LispObject,
+        ptrdiff_t,
+        ptrdiff_t,
+        ptrdiff_t,
+        ptrdiff_t,
+        bool,
+    ),
+    inherit: bool,
+    args: &[LispObject],
+) {
+    for &val in args {
+        if val.is_character() {
+            let c = val.as_natnum_or_error() as Codepoint;
+            let mut s = [0 as c_uchar; MAX_MULTIBYTE_LENGTH];
+            let multibyte = ThreadState::current_buffer_unchecked().multibyte_characters_enabled();
+            let len = if multibyte {
+                write_codepoint(&mut s, c)
+            } else {
+                s[0] = raw_byte_from_codepoint(c);
+                1
+            };
+            insert_func(s.as_ptr() as *const c_char, len as isize);
+        } else if let Some(string) = val.as_string() {
+            insert_from_string_func(val, 0, 0, string.len_chars(), string.len_bytes(), inherit);
+        } else {
+            wrong_type!(Qchar_or_string_p, val);
+        }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

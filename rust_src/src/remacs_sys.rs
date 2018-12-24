@@ -127,20 +127,6 @@ extern "C" {
         dest: Lisp_Object,
         op: BoolVectorOp,
     ) -> Lisp_Object;
-    pub fn general_insert_function(
-        insert_func: unsafe extern "C" fn(*const c_char, ptrdiff_t),
-        insert_from_string_func: unsafe extern "C" fn(
-            LispObject,
-            ptrdiff_t,
-            ptrdiff_t,
-            ptrdiff_t,
-            ptrdiff_t,
-            bool,
-        ),
-        inherit: bool,
-        nargs: ptrdiff_t,
-        args: *const LispObject,
-    );
 }
 
 // Max value for the first argument of wait_reading_process_output.
