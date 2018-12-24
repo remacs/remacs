@@ -1396,7 +1396,7 @@ pub fn delete_and_extract_region(
 /// Remove restrictions (narrowing) from current buffer.
 /// This allows the buffer's full text to be seen and edited.
 #[lisp_fn(intspec = "")]
-pub fn widen() -> bool {
+pub fn widen() {
     let mut buffer_ref = ThreadState::current_buffer();
 
     if buffer_ref.beg() != buffer_ref.begv || buffer_ref.z() != buffer_ref.zv {
@@ -1410,8 +1410,6 @@ pub fn widen() -> bool {
     unsafe {
         invalidate_current_column();
     }
-
-    false
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
