@@ -30,8 +30,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "region-cache.h"
 
-static void insert_from_string_1 (Lisp_Object, ptrdiff_t, ptrdiff_t, ptrdiff_t,
-				  ptrdiff_t, bool, bool);
+
 static void insert_from_buffer_1 (struct buffer *, ptrdiff_t, ptrdiff_t, bool);
 static void gap_left (ptrdiff_t, ptrdiff_t, bool);
 static void gap_right (ptrdiff_t, ptrdiff_t);
@@ -938,53 +937,10 @@ insert_1_both (const char *string,
   check_markers ();
 }
 
-/* Insert the part of the text of STRING, a Lisp object assumed to be
-   of type string, consisting of the LENGTH characters (LENGTH_BYTE bytes)
-   starting at position POS / POS_BYTE.  If the text of STRING has properties,
-   copy them into the buffer.
-
-   It does not work to use `insert' for this, because a GC could happen
-   before we copy the stuff into the buffer, and relocate the string
-   without insert noticing.  */
-
-void
-insert_from_string (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
-		    ptrdiff_t length, ptrdiff_t length_byte, bool inherit)
-{
-  ptrdiff_t opoint = PT;
-
-  if (SCHARS (string) == 0)
-    return;
-
-  insert_from_string_1 (string, pos, pos_byte, length, length_byte,
-			inherit, 0);
-  signal_after_change (opoint, 0, PT - opoint);
-  update_compositions (opoint, PT, CHECK_BORDER);
-}
-
-/* Like `insert_from_string' except that all markers pointing
-   at the place where the insertion happens are adjusted to point after it.  */
-
-void
-insert_from_string_before_markers (Lisp_Object string,
-				   ptrdiff_t pos, ptrdiff_t pos_byte,
-				   ptrdiff_t length, ptrdiff_t length_byte,
-				   bool inherit)
-{
-  ptrdiff_t opoint = PT;
-
-  if (SCHARS (string) == 0)
-    return;
-
-  insert_from_string_1 (string, pos, pos_byte, length, length_byte,
-			inherit, 1);
-  signal_after_change (opoint, 0, PT - opoint);
-  update_compositions (opoint, PT, CHECK_BORDER);
-}
 
 /* Subroutine of the insertion functions above.  */
 
-static void
+void
 insert_from_string_1 (Lisp_Object string, ptrdiff_t pos, ptrdiff_t pos_byte,
 		      ptrdiff_t nchars, ptrdiff_t nbytes,
 		      bool inherit, bool before_markers)

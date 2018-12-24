@@ -32,13 +32,13 @@ use crate::{
         buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
         find_before_next_newline, find_newline, general_insert_function,
         get_char_property_and_overlay, globals, insert, insert_and_inherit, insert_before_markers,
-        insert_before_markers_and_inherit, insert_from_buffer, insert_from_string,
-        insert_from_string_before_markers, make_buffer_string, make_buffer_string_both,
-        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
-        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
-        save_restriction_restore, save_restriction_save, scan_newline_from_point,
-        set_buffer_internal_1, set_point, set_point_both, styled_format, update_buffer_properties,
-        STRING_BYTES,
+        insert_before_markers_and_inherit, insert_from_buffer, insert_from_string_1,
+        make_buffer_string, make_buffer_string_both, make_save_obj_obj_obj_obj,
+        make_string_from_bytes, maybe_quit, message1, message3, record_unwind_current_buffer,
+        record_unwind_protect, save_excursion_restore, save_restriction_restore,
+        save_restriction_save, scan_newline_from_point, set_buffer_internal_1, set_point,
+        set_point_both, signal_after_change, styled_format, update_buffer_properties,
+        update_compositions, CHECK_BORDER, STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
@@ -1543,6 +1543,59 @@ pub fn insert_and_inherit_before_markers_lisp(args: &[LispObject]) {
             args.as_ptr(),
         )
     };
+}
+
+/// Insert the part of the text of STRING, a Lisp object assumed to be of type string, consisting
+/// of the LENGTH characters (LENGTH_BYTE bytes) starting at position POS / POS_BYTE.  If the text
+/// of STRING has properties,
+///copy them into the buffer.
+///
+/// It does not work to use `insert' for this, because a GC could happen before we copy the stuff
+/// into the buffer, and relocate the string without insert noticing.
+#[no_mangle]
+pub unsafe extern "C" fn insert_from_string(
+    string: LispObject,
+    pos: ptrdiff_t,
+    pos_byte: ptrdiff_t,
+    length: ptrdiff_t,
+    length_byte: ptrdiff_t,
+    inherit: bool,
+) {
+    let current_buffer = ThreadState::current_buffer_unchecked();
+    let opoint = current_buffer.pt;
+
+    let s: LispStringRef = string.into();
+    if s.len_chars() == 0 {
+        return;
+    }
+
+    insert_from_string_1(string, pos, pos_byte, length, length_byte, inherit, false);
+    signal_after_change(opoint, 0, current_buffer.pt - opoint);
+    update_compositions(opoint, current_buffer.pt, CHECK_BORDER as i32);
+}
+
+/// Like `insert_from_string' except that all markers pointing at the place where the insertion
+/// happens are adjusted to point after it.
+#[no_mangle]
+pub unsafe extern "C" fn insert_from_string_before_markers(
+    string: LispObject,
+    pos: ptrdiff_t,
+    pos_byte: ptrdiff_t,
+    length: ptrdiff_t,
+    length_byte: ptrdiff_t,
+    inherit: bool,
+) {
+    let current_buffer = ThreadState::current_buffer_unchecked();
+    let opoint = current_buffer.pt;
+
+    let s: LispStringRef = string.into();
+    if s.len_chars() == 0 {
+        return;
+    }
+
+    insert_from_string_1(string, pos, pos_byte, length, length_byte, inherit, true);
+    signal_after_change(opoint, 0, current_buffer.pt - opoint);
+    update_compositions(opoint, current_buffer.pt, CHECK_BORDER as i32);
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
