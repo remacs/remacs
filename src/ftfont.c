@@ -2850,8 +2850,8 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
     return Qnil;
 
   glyph_len = hb_buffer_get_length (hb_buffer);
-  /* FIXME: number of output glyphs can legitimately be larger than number of
-   * output characters, what to do in this case? */
+  /* FIXME: can't we just grew the lgstring in this case? Givving up is an
+   * overly heavy handed solution. */
   if (glyph_len > LGSTRING_GLYPH_LEN (lgstring))
     return Qnil;
 
