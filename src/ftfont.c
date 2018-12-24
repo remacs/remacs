@@ -2781,8 +2781,8 @@ get_hb_unicode_funcs (void)
   hb_unicode_funcs_set_general_category_func (funcs, uni_general, NULL, NULL);
   hb_unicode_funcs_set_mirroring_func (funcs, uni_mirroring, NULL, NULL);
 
-  /* FIXME: I don't know how to get Unicode character composition and
-   * decomposition from Emacs.
+  /* Use default implmentation for Unicode composition/decomposition, we might
+   * want to revisit this later.
   hb_unicode_funcs_set_compose_func (funcs, uni_compose, NULL, NULL);
   hb_unicode_funcs_set_decompose_func (funcs, uni_decompose, NULL, NULL);
   */
