@@ -71,9 +71,6 @@
 (require 'ring)
 (require 'project)
 
-(eval-when-compile
-  (require 'semantic/symref)) ;; for hit-lines slot
-
 (defgroup xref nil "Cross-referencing commands"
   :version "25.1"
   :group 'tools)
