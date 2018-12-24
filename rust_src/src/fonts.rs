@@ -1,5 +1,7 @@
 //! font support
 
+use std::ptr;
+
 use remacs_macros::lisp_fn;
 
 use std::{ffi::CString, mem};
@@ -12,11 +14,14 @@ use crate::{
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
     remacs_sys::font_property_index::FONT_TYPE_INDEX,
-    remacs_sys::Flist_fonts,
-    remacs_sys::{font_add_log, Lisp_Font_Object, Lisp_Type},
-    remacs_sys::{pvec_type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX},
+    remacs_sys::{font_add_log, font_at, Flist_fonts},
+    remacs_sys::{
+        pvec_type, Lisp_Font_Object, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX, FONT_SPEC_MAX,
+    },
     remacs_sys::{EmacsInt, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qnil},
+    threads::ThreadState,
     vectors::LispVectorlikeRef,
+    windows::{LispWindowLiveOrSelected, LispWindowRef},
 };
 
 // A font is not a type in and of itself, it's just a group of three kinds of
@@ -214,6 +219,51 @@ pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
 pub fn close_font(font_object: LispFontObjectRef, frame: LispFrameLiveOrSelected) {
     let frame: LispFrameRef = frame.into();
     font_object.close(frame)
+}
+
+/// Return a font-object for displaying a character at POSITION.
+/// Optional second arg WINDOW, if non-nil, is a window displaying
+/// the current buffer.  It defaults to the currently selected window.
+/// Optional third arg STRING, if non-nil, is a string containing the target
+/// character at index specified by POSITION.
+#[lisp_fn(min = "1", c_name = "font_at", name = "font-at")]
+pub fn font_at_lisp(
+    position: LispObject,
+    window: LispWindowLiveOrSelected,
+    string: LispObject,
+) -> LispObject {
+    let mut w: LispWindowRef = window.into();
+    let cur_buf = ThreadState::current_buffer_unchecked();
+
+    let pos = match string.as_string() {
+        Some(s) => {
+            let pos = EmacsInt::from(position) as isize;
+            if !(0 <= pos && pos < s.len_bytes()) {
+                args_out_of_range!(string, position);
+            }
+            pos
+        }
+
+        _ => {
+            if w.contents != cur_buf.into() {
+                error!("Specified window is not displaying the current buffer");
+            }
+            position.as_number_coerce_marker_or_error();
+            let pos = EmacsInt::from(position) as isize;
+
+            let begv = cur_buf.begv;
+            let zv = cur_buf.zv;
+            if !(begv <= pos && pos < zv) {
+                args_out_of_range!(
+                    position,
+                    LispObject::from(begv as EmacsInt),
+                    LispObject::from(zv as EmacsInt)
+                );
+            }
+            pos
+        }
+    };
+    unsafe { font_at(-1, pos, ptr::null_mut(), w.as_mut(), string) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));
