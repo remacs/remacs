@@ -2805,9 +2805,17 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
   hb_glyph_info_t *info;
   hb_glyph_position_t *pos;
 
-  /* TODO: cache the buffer for slightly better performance and less
-   * allocations. */
-  hb_buffer_t *hb_buffer = hb_buffer_create ();
+  /* Cache the HarfBuzz buffer for better performance and less allocations.
+   * We intentionally never destroy the buffer. */
+  static hb_buffer_t *hb_buffer = NULL;
+  if (! hb_buffer)
+    {
+      hb_buffer = hb_buffer_create ();
+      hb_unicode_funcs_t* ufuncs = get_hb_unicode_funcs();
+      hb_buffer_set_unicode_funcs(hb_buffer, ufuncs);
+    }
+
+  hb_buffer_clear_contents (hb_buffer);
   hb_buffer_pre_allocate (hb_buffer, text_len);
 
   for (i = 0; i < text_len; i++)
@@ -2823,10 +2831,7 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
 
   text_len = i;
   if (!text_len)
-    goto done;
-
-  hb_unicode_funcs_t* ufuncs = get_hb_unicode_funcs();
-  hb_buffer_set_unicode_funcs(hb_buffer, ufuncs);
+    return Qnil;
 
   hb_buffer_set_content_type (hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
   hb_buffer_set_cluster_level (hb_buffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
@@ -2842,7 +2847,7 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
 #endif
 
   if (!hb_shape_full (hb_font, hb_buffer, NULL, 0, NULL))
-    goto done;
+    return Qnil;
 
   glyph_len = hb_buffer_get_length (hb_buffer);
   /* FIXME: number of output glyphs can legitimately be larger than number of
@@ -2905,9 +2910,6 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
         LGLYPH_SET_ADJUSTMENT (lglyph, vec);
       }
     }
-
-done:
-  hb_buffer_destroy (hb_buffer);
 
   return make_fixnum (glyph_len);
 }
