@@ -1465,7 +1465,7 @@ pub fn widen() {
 /// usage: (insert &rest ARGS)
 #[lisp_fn(name = "insert", c_name = "insert")]
 pub fn insert_lisp(args: &[LispObject]) {
-    unsafe { general_insert_function(insert_slice, insert_from_string, false, args) };
+    general_insert_function(insert_slice, insert_from_string_safe, false, args);
 }
 
 /// Insert the arguments at point, inheriting properties from adjoining text.  Point and
@@ -1479,7 +1479,7 @@ pub fn insert_lisp(args: &[LispObject]) {
 /// usage: (insert-and-inherit &rest ARGS)
 #[lisp_fn(name = "insert-and-inherit", c_name = "insert_and_inherit")]
 pub fn insert_and_inherit_lisp(args: &[LispObject]) {
-    unsafe { general_insert_function(insert_and_inherit, insert_from_string, true, args) };
+    general_insert_function(insert_and_inherit, insert_from_string_safe, true, args);
 }
 
 /// Insert strings or characters at point, relocating markers after the text.  Point and markers
@@ -1495,14 +1495,12 @@ pub fn insert_and_inherit_lisp(args: &[LispObject]) {
 /// usage: (insert-before-markers &rest ARGS)
 #[lisp_fn(name = "insert-before-markers", c_name = "insert_before_markers")]
 pub fn insert_before_markers_lisp(args: &[LispObject]) {
-    unsafe {
-        general_insert_function(
-            insert_before_markers,
-            insert_from_string_before_markers,
-            false,
-            args,
-        )
-    };
+    general_insert_function(
+        insert_before_markers,
+        insert_from_string_before_markers_safe,
+        false,
+        args,
+    );
 }
 
 /// Insert text at point, relocating markers and inheriting properties.  Point and markers move
@@ -1518,14 +1516,12 @@ pub fn insert_before_markers_lisp(args: &[LispObject]) {
     c_name = "insert_and_inherit_before_markers"
 )]
 pub fn insert_and_inherit_before_markers_lisp(args: &[LispObject]) {
-    unsafe {
-        general_insert_function(
-            insert_before_markers_and_inherit,
-            insert_from_string_before_markers,
-            true,
-            args,
-        )
-    };
+    general_insert_function(
+        insert_before_markers_and_inherit,
+        insert_from_string_before_markers_safe,
+        true,
+        args,
+    );
 }
 
 /// Insert the part of the text of STRING, a Lisp object assumed to be of type string, consisting
@@ -1557,6 +1553,18 @@ pub unsafe extern "C" fn insert_from_string(
     update_compositions(opoint, current_buffer.pt, CHECK_BORDER as i32);
 }
 
+/// A safe-marked version of insert_from_string
+fn insert_from_string_safe(
+    string: LispObject,
+    pos: ptrdiff_t,
+    pos_byte: ptrdiff_t,
+    length: ptrdiff_t,
+    length_byte: ptrdiff_t,
+    inherit: bool,
+) {
+    unsafe { insert_from_string(string, pos, pos_byte, length, length_byte, inherit) };
+}
+
 /// Like `insert_from_string' except that all markers pointing at the place where the insertion
 /// happens are adjusted to point after it.
 #[no_mangle]
@@ -1581,23 +1589,31 @@ pub unsafe extern "C" fn insert_from_string_before_markers(
     update_compositions(opoint, current_buffer.pt, CHECK_BORDER as i32);
 }
 
+/// A safe-marked version of insert_from_string_before_markers
+fn insert_from_string_before_markers_safe(
+    string: LispObject,
+    pos: ptrdiff_t,
+    pos_byte: ptrdiff_t,
+    length: ptrdiff_t,
+    length_byte: ptrdiff_t,
+    inherit: bool,
+) {
+    unsafe {
+        insert_from_string_before_markers(string, pos, pos_byte, length, length_byte, inherit)
+    };
+}
+
 /// Insert NARGS Lisp objects in the array ARGS by calling INSERT_FUNC (if a type of object is
 /// Lisp_Int) or INSERT_FROM_STRING_FUNC (if a type of object is Lisp_String).  INHERIT is passed
 /// to INSERT_FROM_STRING_FUNC as the last argument
-unsafe fn general_insert_function<IF>(
+fn general_insert_function<IF, IFSF>(
     insert_func: IF,
-    insert_from_string_func: unsafe extern "C" fn(
-        LispObject,
-        ptrdiff_t,
-        ptrdiff_t,
-        ptrdiff_t,
-        ptrdiff_t,
-        bool,
-    ),
+    insert_from_string_func: IFSF,
     inherit: bool,
     args: &[LispObject],
 ) where
     IF: Fn(&[u8]),
+    IFSF: Fn(LispObject, ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t, bool),
 {
     for &val in args {
         if val.is_character() {
