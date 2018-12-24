@@ -3708,6 +3708,17 @@ support symbolic links."
 	  (when (with-current-buffer output-buffer (> (point-max) (point-min)))
 	    (display-message-or-buffer output-buffer)))))))
 
+(defun tramp-handle-start-file-process (name buffer program &rest args)
+  "Like `start-file-process' for Tramp files."
+  ;; `make-process' knows the `:file-error' argument since Emacs 27.1.
+  (tramp-file-name-handler
+   'make-process
+   :name name
+   :buffer buffer
+   :command (and program (cons program args))
+   :noquery nil
+   :file-handler t))
+
 (defun tramp-handle-substitute-in-file-name (filename)
   "Like `substitute-in-file-name' for Tramp files.
 \"//\" and \"/~\" substitute only in the local filename part."

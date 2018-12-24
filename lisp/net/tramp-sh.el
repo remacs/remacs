@@ -995,7 +995,7 @@ of command line.")
     (make-directory . tramp-sh-handle-make-directory)
     ;; `make-directory-internal' performed by default handler.
     (make-nearby-temp-file . tramp-handle-make-nearby-temp-file)
-    (make-process . ignore)
+    (make-process . tramp-sh-handle-make-process)
     (make-symbolic-link . tramp-sh-handle-make-symbolic-link)
     (process-file . tramp-sh-handle-process-file)
     (rename-file . tramp-sh-handle-rename-file)
@@ -1005,7 +1005,7 @@ of command line.")
     (set-file-times . tramp-sh-handle-set-file-times)
     (set-visited-file-modtime . tramp-sh-handle-set-visited-file-modtime)
     (shell-command . tramp-handle-shell-command)
-    (start-file-process . tramp-sh-handle-start-file-process)
+    (start-file-process . tramp-handle-start-file-process)
     (substitute-in-file-name . tramp-handle-substitute-in-file-name)
     (temporary-file-directory . tramp-handle-temporary-file-directory)
     (tramp-set-file-uid-gid . tramp-sh-handle-set-file-uid-gid)
@@ -2776,139 +2776,203 @@ the result will be a local, non-Tramp, file name."
 ;; We use BUFFER also as connection buffer during setup. Because of
 ;; this, its original contents must be saved, and restored once
 ;; connection has been setup.
-(defun tramp-sh-handle-start-file-process (name buffer program &rest args)
-  "Like `start-file-process' for Tramp files."
-  (with-parsed-tramp-file-name (expand-file-name default-directory) nil
-    (let* ((buffer
-	    (if buffer
-		(get-buffer-create buffer)
-	      ;; BUFFER can be nil.  We use a temporary buffer.
-	      (generate-new-buffer tramp-temp-buffer-name)))
-	   ;; When PROGRAM matches "*sh", and the first arg is "-c",
-	   ;; it might be that the arguments exceed the command line
-	   ;; length.  Therefore, we modify the command.
-	   (heredoc (and (stringp program)
-			 (string-match-p "sh$" program)
-			 (string-equal "-c" (car args))
-			 (= (length args) 2)))
-	   ;; When PROGRAM is nil, we just provide a tty.
-	   (args (if (not heredoc) args
-		   (let ((i 250))
-		     (while (and (< i (length (cadr args)))
-				 (string-match " " (cadr args) i))
-		       (setcdr
-			args
-			(list (replace-match " \\\\\n" nil nil (cadr args))))
-		       (setq i (+ i 250))))
-		   (cdr args)))
-	   ;; Use a human-friendly prompt, for example for `shell'.
-	   ;; We discard hops, if existing, that's why we cannot use
-	   ;; `file-remote-p'.
-	   (prompt (format "PS1=%s %s"
-			   (tramp-make-tramp-file-name v nil 'nohop)
-			   tramp-initial-end-of-output))
-	   ;; We use as environment the difference to toplevel
-	   ;; `process-environment'.
-	   env uenv
-	   (env (dolist (elt (cons prompt process-environment) env)
-                  (or (member elt (default-toplevel-value 'process-environment))
-                      (if (string-match-p "=" elt)
-                          (setq env (append env `(,elt)))
-                        (if (tramp-get-env-with-u-option v)
-                            (setq env (append `("-u" ,elt) env))
-                          (setq uenv (cons elt uenv)))))))
-	   (command
-	    (when (stringp program)
-	      (format "cd %s && %s exec %s env %s %s"
-		      (tramp-shell-quote-argument localname)
-                      (if uenv
-                          (format
-                           "unset %s &&"
-                           (mapconcat 'tramp-shell-quote-argument uenv " "))
-                        "")
-		      (if heredoc (format "<<'%s'" tramp-end-of-heredoc) "")
-		      (mapconcat 'tramp-shell-quote-argument env " ")
-		      (if heredoc
-			  (format "%s\n(\n%s\n) </dev/tty\n%s"
-				  program (car args) tramp-end-of-heredoc)
-			(mapconcat 'tramp-shell-quote-argument
-				   (cons program args) " ")))))
-	   (tramp-process-connection-type
-	    (or (null program) tramp-process-connection-type))
-	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
-	   (name1 name)
-	   (i 0)
-	   ;; We do not want to raise an error when
-	   ;; `start-file-process' has been started several times in
-	   ;; `eshell' and friends.
-	   tramp-current-connection
-	   ;; We do not want to run timers.
-	   timer-list timer-idle-list
-	   p)
+(defun tramp-sh-handle-make-process (&rest args)
+  "Like `make-process' for Tramp files."
+  (when args
+    (with-parsed-tramp-file-name (expand-file-name default-directory) nil
+      (let ((name (plist-get args :name))
+	    (buffer (plist-get args :buffer))
+	    (command (plist-get args :command))
+	    (coding (plist-get args :coding))
+	    (noquery (plist-get args :noquery))
+	    (stop (plist-get args :stop))
+	    (connection-type (plist-get args :connection-type))
+	    (filter (plist-get args :filter))
+	    (sentinel (plist-get args :sentinel))
+	    (stderr (plist-get args :stderr)))
+	(unless (stringp name)
+	  (signal 'wrong-type-argument (list 'stringp name)))
+	(unless (or (null buffer) (bufferp buffer) (stringp buffer))
+	  (signal 'wrong-type-argument (list 'stringp buffer)))
+	(unless (consp command)
+	  (signal 'wrong-type-argument (list 'consp command)))
+	(unless (or (null coding)
+		    (and (symbolp coding) (memq coding coding-system-list))
+		    (and (consp coding)
+			 (memq (car coding) coding-system-list)
+			 (memq (cdr coding) coding-system-list)))
+	  (signal 'wrong-type-argument (list 'symbolp coding)))
+	(unless (or (null connection-type) (memq connection-type '(pipe pty)))
+	  (signal 'wrong-type-argument (list 'symbolp connection-type)))
+	(unless (or (null filter) (functionp filter))
+	  (signal 'wrong-type-argument (list 'functionp filter)))
+	(unless (or (null sentinel) (functionp sentinel))
+	  (signal 'wrong-type-argument (list 'functionp sentinel)))
+	(unless (or (null stderr) (bufferp stderr) (stringp stderr))
+	  (signal 'wrong-type-argument (list 'stringp stderr)))
 
-      (while (get-process name1)
-	;; NAME must be unique as process name.
-	(setq i (1+ i)
-	      name1 (format "%s<%d>" name i)))
-      (setq name name1)
-      ;; Set the new process properties.
-      (tramp-set-connection-property v "process-name" name)
-      (tramp-set-connection-property v "process-buffer" buffer)
+	(let* ((buffer
+		(if buffer
+		    (get-buffer-create buffer)
+		  ;; BUFFER can be nil.  We use a temporary buffer.
+		  (generate-new-buffer tramp-temp-buffer-name)))
+	       (stderr (and stderr (get-buffer-create stderr)))
+	       (tmpstderr (and stderr (tramp-make-tramp-temp-file v)))
+	       (program (car command))
+	       (args (cdr command))
+	       ;; When PROGRAM matches "*sh", and the first arg is
+	       ;; "-c", it might be that the arguments exceed the
+	       ;; command line length.  Therefore, we modify the
+	       ;; command.
+	       (heredoc (and (stringp program)
+			     (string-match-p "sh$" program)
+			     (string-equal "-c" (car args))
+			     (= (length args) 2)))
+	       ;; When PROGRAM is nil, we just provide a tty.
+	       (args (if (not heredoc) args
+		       (let ((i 250))
+			 (while (and (< i (length (cadr args)))
+				     (string-match " " (cadr args) i))
+			   (setcdr
+			    args
+			    (list
+			     (replace-match " \\\\\n" nil nil (cadr args))))
+			   (setq i (+ i 250))))
+		       (cdr args)))
+	       ;; Use a human-friendly prompt, for example for
+	       ;; `shell'.  We discard hops, if existing, that's why
+	       ;; we cannot use `file-remote-p'.
+	       (prompt (format "PS1=%s %s"
+			       (tramp-make-tramp-file-name v nil 'nohop)
+			       tramp-initial-end-of-output))
+	       ;; We use as environment the difference to toplevel
+	       ;; `process-environment'.
+	       env uenv
+	       (env (dolist (elt (cons prompt process-environment) env)
+                      (or (member
+			   elt (default-toplevel-value 'process-environment))
+			  (if (string-match-p "=" elt)
+                              (setq env (append env `(,elt)))
+			    (if (tramp-get-env-with-u-option v)
+				(setq env (append `("-u" ,elt) env))
+                              (setq uenv (cons elt uenv)))))))
+	       (command
+		(when (stringp program)
+		  (format "cd %s && %s exec %s %s env %s %s"
+			  (tramp-shell-quote-argument localname)
+			  (if uenv
+                              (format
+                               "unset %s &&"
+                               (mapconcat 'tramp-shell-quote-argument uenv " "))
+			    "")
+			  (if heredoc (format "<<'%s'" tramp-end-of-heredoc) "")
+			  (if tmpstderr (format "2>'%s'" tmpstderr) "")
+			  (mapconcat 'tramp-shell-quote-argument env " ")
+			  (if heredoc
+			      (format "%s\n(\n%s\n) </dev/tty\n%s"
+				      program (car args) tramp-end-of-heredoc)
+			    (mapconcat 'tramp-shell-quote-argument
+				       (cons program args) " ")))))
+	       (tramp-process-connection-type
+		(or (null program) tramp-process-connection-type))
+	       (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
+	       (name1 name)
+	       (i 0)
+	       ;; We do not want to raise an error when `make-process'
+	       ;; has been started several times in `eshell' and
+	       ;; friends.
+	       tramp-current-connection
+	       ;; We do not want to run timers.
+	       timer-list timer-idle-list
+	       p)
 
-      (with-current-buffer (tramp-get-connection-buffer v)
-	(unwind-protect
-	    ;; We catch this event.  Otherwise, `start-process' could
-	    ;; be called on the local host.
-	    (save-excursion
-	      (save-restriction
-		;; Activate narrowing in order to save BUFFER
-		;; contents.  Clear also the modification time;
-		;; otherwise we might be interrupted by
-		;; `verify-visited-file-modtime'.
-		(let ((buffer-undo-list t)
-		      (buffer-read-only nil)
-		      (mark (point-max)))
-		  (clear-visited-file-modtime)
-		  (narrow-to-region (point-max) (point-max))
-		  ;; We call `tramp-maybe-open-connection', in order
-		  ;; to cleanup the prompt afterwards.
-		  (catch 'suppress
-		    (tramp-maybe-open-connection v)
-		    (setq p (tramp-get-connection-process v))
-		    ;; Set the pid of the remote shell.  This is
-		    ;; needed when sending signals remotely.
-		    (let ((pid (tramp-send-command-and-read v "echo $$")))
-		      (process-put p 'remote-pid pid)
-		      (tramp-set-connection-property p "remote-pid" pid))
-		    (widen)
-		    (delete-region mark (point-max))
-		    (narrow-to-region (point-max) (point-max))
-		    ;; Now do it.
-		    (if command
-			;; Send the command.
-			(tramp-send-command v command nil t) ; nooutput
-		      ;; Check, whether a pty is associated.
-		      (unless (process-get p 'remote-tty)
-			(tramp-error
-			 v 'file-error
-			 "pty association is not supported for `%s'" name))))
-		  ;; Set query flag and process marker for this
-		  ;; process.  We ignore errors, because the process
-		  ;; could have finished already.
+	  (while (get-process name1)
+	    ;; NAME must be unique as process name.
+	    (setq i (1+ i)
+		  name1 (format "%s<%d>" name i)))
+	  (setq name name1)
+	  ;; Set the new process properties.
+	  (tramp-set-connection-property v "process-name" name)
+	  (tramp-set-connection-property v "process-buffer" buffer)
+
+	  (with-current-buffer (tramp-get-connection-buffer v)
+	    (unwind-protect
+		;; We catch this event.  Otherwise, `make-process' could
+		;; be called on the local host.
+		(save-excursion
+		  (save-restriction
+		    ;; Activate narrowing in order to save BUFFER
+		    ;; contents.  Clear also the modification time;
+		    ;; otherwise we might be interrupted by
+		    ;; `verify-visited-file-modtime'.
+		    (let ((buffer-undo-list t)
+			  (buffer-read-only nil)
+			  (mark (point-max)))
+		      (clear-visited-file-modtime)
+		      (narrow-to-region (point-max) (point-max))
+		      ;; We call `tramp-maybe-open-connection', in
+		      ;; order to cleanup the prompt afterwards.
+		      (catch 'suppress
+			(tramp-maybe-open-connection v)
+			(setq p (tramp-get-connection-process v))
+			;; Set the pid of the remote shell.  This is
+			;; needed when sending signals remotely.
+			(let ((pid (tramp-send-command-and-read v "echo $$")))
+			  (process-put p 'remote-pid pid)
+			  (tramp-set-connection-property p "remote-pid" pid))
+			(widen)
+			(delete-region mark (point-max))
+			(narrow-to-region (point-max) (point-max))
+			;; Now do it.
+			(if command
+			    ;; Send the command.
+			    (tramp-send-command v command nil t) ; nooutput
+			  ;; Check, whether a pty is associated.
+			  (unless (process-get p 'remote-tty)
+			    (tramp-error
+			     v 'file-error
+			     "pty association is not supported for `%s'"
+			     name))))
+		      ;; Stop process if indicated.
+		      (when stop
+			(stop-process p))
+		      ;; Set sentinel and filter.
+		      (when sentinel
+			(set-process-sentinel p sentinel))
+		      (when filter
+			(set-process-filter p filter))
+		      ;; Set query flag and process marker for this
+		      ;; process.  We ignore errors, because the
+		      ;; process could have finished already.
+		      (ignore-errors
+			(set-process-query-on-exit-flag p (null noquery))
+			(set-marker (process-mark p) (point)))
+		      ;; Provide error buffer.  This shows only
+		      ;; initial error messages; messages arriving
+		      ;; later on shall be inserted by `auto-revert'.
+		      ;; The temporary file will still be existing.
+		      ;; TODO: Write a sentinel, which deletes the
+		      ;; temporary file.
+		      (when tmpstderr
+			;; We must flush them here already; otherwise
+			;; `insert-file-contents' will fail.
+			(tramp-flush-connection-property v "process-name")
+			(tramp-flush-connection-property v "process-buffer")
+			(with-current-buffer stderr
+			  (insert-file-contents
+			   (tramp-make-tramp-file-name v tmpstderr) 'visit)
+			  (auto-revert-mode)))
+		      ;; Return process.
+		      p)))
+
+	      ;; Save exit.
+	      (if (string-match-p tramp-temp-buffer-name (buffer-name))
 		  (ignore-errors
-		    (set-process-query-on-exit-flag p t)
-		    (set-marker (process-mark p) (point)))
-		  ;; Return process.
-		  p)))
-
-	  ;; Save exit.
-	  (if (string-match-p tramp-temp-buffer-name (buffer-name))
-	      (ignore-errors
-		(set-process-buffer p nil)
-		(kill-buffer (current-buffer)))
-	    (set-buffer-modified-p bmp))
-	  (tramp-flush-connection-property v "process-name")
-	  (tramp-flush-connection-property v "process-buffer"))))))
+		    (set-process-buffer p nil)
+		    (kill-buffer (current-buffer)))
+		(set-buffer-modified-p bmp))
+	      (tramp-flush-connection-property v "process-name")
+	      (tramp-flush-connection-property v "process-buffer"))))))))
 
 (defun tramp-sh-handle-process-file
   (program &optional infile destination display &rest args)
