@@ -2301,7 +2301,10 @@ It will be properly highlighted even when the call omits parens.")
 
 (defcustom ruby-flymake-use-rubocop-if-available t
   "Non-nil to use the RuboCop Flymake backend.
-Only takes effect if RuboCop is installed."
+Only takes effect if RuboCop is installed.
+
+If there is no Rubocop config file, Rubocop will be passed a flag
+'--lint' to only show syntax errors and important problems."
   :version "26.1"
   :type 'boolean
   :safe 'booleanp)

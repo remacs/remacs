@@ -506,6 +506,11 @@ Control whether Flymake starts checking the buffer on save.
 This enables more efficient backends.  See the docstring of
 'flymake-diagnostic-functions' or the Flymake manual for details.
 
+** Ruby
+
+*** The Rubocop Flymake diagnostic function will only run Lint cops if
+it can't find the config file.
+
 ** Package
 
 *** New function 'package-get-version' lets packages query their own version.
