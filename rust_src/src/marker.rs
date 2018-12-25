@@ -11,7 +11,7 @@ use crate::{
     lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject},
     multibyte::multibyte_chars_in_text,
     remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
-    remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type},
+    remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},
     remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
     threads::ThreadState,
     util::clip_to_bounds,
@@ -109,7 +109,7 @@ impl From<LispObject> for LispMarkerRef {
 
 impl From<LispMarkerRef> for LispObject {
     fn from(m: LispMarkerRef) -> Self {
-        unsafe { mem::transmute(m.as_ptr()) }
+        LispObject::tag_ptr(m, Lisp_Type::Lisp_Misc)
     }
 }
 
