@@ -2324,7 +2324,8 @@ Only takes effect if RuboCop is installed."
     (when buffer-file-name
       (setq config-dir (locate-dominating-file buffer-file-name
                                                ruby-rubocop-config))
-      (when config-dir
+      (if (not config-dir)
+          (setq command (append command '("--lint")))
         (setq command (append command (list "--config"
                                             (expand-file-name ruby-rubocop-config
                                                               config-dir)))))
