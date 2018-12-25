@@ -2323,6 +2323,7 @@ If there is no Rubocop config file, Rubocop will be passed a flag
   (let ((command (list "rubocop" "--stdin" buffer-file-name "--format" "emacs"
                        "--cache" "false" ; Work around a bug in old version.
                        "--display-cop-names"))
+        (default-directory default-directory)
         config-dir)
     (when buffer-file-name
       (setq config-dir (locate-dominating-file buffer-file-name
@@ -2331,7 +2332,12 @@ If there is no Rubocop config file, Rubocop will be passed a flag
           (setq command (append command '("--lint")))
         (setq command (append command (list "--config"
                                             (expand-file-name ruby-rubocop-config
-                                                              config-dir)))))
+                                                              config-dir))))
+        (when (ruby-flymake-rubocop--use-bundler-p config-dir)
+          (setq command (append '("bundle" "exec") command))
+          ;; In case of a project with multiple nested subprojects,
+          ;; each one with a Gemfile.
+          (setq default-directory config-dir)))
 
       (ruby-flymake--helper
        "rubocop-flymake"
@@ -2368,6 +2374,13 @@ If there is no Rubocop config file, Rubocop will be passed a flag
                                            (substring msg 3))
           into diags
           finally (funcall report-fn diags)))))))
+
+(defun ruby-flymake-rubocop--use-bundler-p (dir)
+  (let ((file (expand-file-name "Gemfile" dir)))
+    (and (file-exists-p file)
+         (with-temp-buffer
+           (insert-file-contents file)
+           (re-search-forward "^ *gem ['\"]rubocop['\"]" nil t)))))
 
 (defun ruby-flymake-auto (report-fn &rest args)
   (apply

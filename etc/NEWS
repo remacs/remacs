@@ -511,6 +511,8 @@ This enables more efficient backends.  See the docstring of
 *** The Rubocop Flymake diagnostic function will only run Lint cops if
 it can't find the config file.
 
+*** Rubocop is called with 'bundle exec' if Gemfile mentions it.
+
 ** Package
 
 *** New function 'package-get-version' lets packages query their own version.
