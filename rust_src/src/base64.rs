@@ -19,7 +19,7 @@ use crate::{
     threads::ThreadState,
 };
 
-pub fn base64_encode_1(bytes: &[u8], line_break: bool, multibyte: bool) -> Result<String, ()> {
+fn base64_encode_1(bytes: &[u8], line_break: bool, multibyte: bool) -> Result<String, ()> {
     let config = if line_break {
         // base64_crate::MIME, but with LF instead of CRLF
         base64_crate::Config::new(
@@ -59,7 +59,7 @@ pub fn base64_encode_1(bytes: &[u8], line_break: bool, multibyte: bool) -> Resul
 
 /// Base64-decode the data in ENCODED. If MULTIBYTE, the decoded result should be in multibyte
 /// form. It returns the decoded data and the number of bytes in the original decoded string.
-pub fn base64_decode_1(encoded: &[u8], multibyte: bool) -> Result<(Vec<u8>, usize), ()> {
+fn base64_decode_1(encoded: &[u8], multibyte: bool) -> Result<(Vec<u8>, usize), ()> {
     // Use the MIME config to allow embedded newlines.
     match base64_crate::decode_config(encoded, base64_crate::MIME) {
         Ok(decoded) => {
