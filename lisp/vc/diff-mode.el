@@ -272,7 +272,7 @@ well."
 
 (defface diff-header
   '((((class color) (min-colors 88) (background light))
-     :background "grey80")
+     :background "grey85")
     (((class color) (min-colors 88) (background dark))
      :background "grey45")
     (((class color))
@@ -282,7 +282,7 @@ well."
 
 (defface diff-file-header
   '((((class color) (min-colors 88) (background light))
-     :background "grey70" :weight bold)
+     :background "grey75" :weight bold)
     (((class color) (min-colors 88) (background dark))
      :background "grey60" :weight bold)
     (((class color))
@@ -2434,7 +2434,7 @@ When OLD is non-nil, highlight the hunk from the old source."
                       (insert-file-contents file t)
                       (setq props (diff-syntax-fontify-props file text line-nb)))))
               ;; Get properties from a cached revision
-              (let* ((buffer-name (format " diff-syntax:%s.~%s~"
+              (let* ((buffer-name (format " *diff-syntax:%s.~%s~*"
                                           (expand-file-name file) revision))
                      (buffer (gethash buffer-name diff-syntax-fontify-revisions)))
                 (unless (and buffer (buffer-live-p buffer))
