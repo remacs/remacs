@@ -3120,31 +3120,6 @@ Note: This function does not operate on any child windows of WINDOW.  */)
   return w->new_pixel;
 }
 
-DEFUN ("set-window-new-total", Fset_window_new_total, Sset_window_new_total, 2, 3, 0,
-       doc: /* Set new total size of WINDOW to SIZE.
-WINDOW must be a valid window and defaults to the selected one.
-Return SIZE.
-
-Optional argument ADD non-nil means add SIZE to the new total size of
-WINDOW and return the sum.
-
-The new total size of WINDOW, if valid, will be shortly installed as
-WINDOW's total height (see `window-total-height') or total width (see
-`window-total-width').
-
-Note: This function does not operate on any child windows of WINDOW.  */)
-     (Lisp_Object window, Lisp_Object size, Lisp_Object add)
-{
-  struct window *w = decode_valid_window (window);
-
-  CHECK_NUMBER (size);
-  if (NILP (add))
-    wset_new_total (w, size);
-  else
-    wset_new_total (w, make_number (XINT (w->new_total) + XINT (size)));
-
-  return w->new_total;
-}
 
 DEFUN ("set-window-new-normal", Fset_window_new_normal, Sset_window_new_normal, 1, 2, 0,
        doc: /* Set new normal size of WINDOW to SIZE.
@@ -6706,7 +6681,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_top);
   defsubr (&Swindow_left_column);
   defsubr (&Sset_window_new_pixel);
-  defsubr (&Sset_window_new_total);
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
   defsubr (&Swindow_resize_apply_total);

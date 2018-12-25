@@ -34,7 +34,7 @@ use crate::{
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> bool {
-    let mut tem = memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures });
+    let mut tem = memq(feature.into(), unsafe { globals.Vfeatures });
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(subfeature, get(feature, Qsubfeatures));
     }
@@ -57,9 +57,9 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
             );
         }
     }
-    if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_nil() {
+    if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = LispObject::cons(feature.as_lisp_obj(), globals.Vfeatures);
+            globals.Vfeatures = LispObject::cons(feature.into(), globals.Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
@@ -67,17 +67,17 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         globals.Vcurrent_load_list = LispObject::cons(
-            LispObject::cons(Qprovide, feature.as_lisp_obj()),
+            LispObject::cons(Qprovide, feature.into()),
             globals.Vcurrent_load_list,
         );
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.as_lisp_obj(), globals.Vafter_load_alist).as_cons() {
+        if let Some(c) = assq(feature.into(), globals.Vafter_load_alist).as_cons() {
             Fmapc(Qfuncall, c.cdr());
         }
     }
-    feature.as_lisp_obj()
+    feature.into()
 }
 
 /// Return the argument, without evaluating it.  `(quote x)' yields `x'.

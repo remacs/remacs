@@ -8496,21 +8496,6 @@ to_unicode (Lisp_Object str, Lisp_Object *buf)
 #ifdef emacs
 /*** 8. Emacs Lisp library functions ***/
 
-DEFUN ("coding-system-p", Fcoding_system_p, Scoding_system_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is nil or a coding-system.
-See the documentation of `define-coding-system' for information
-about coding-system objects.  */)
-  (Lisp_Object object)
-{
-  if (NILP (object)
-      || CODING_SYSTEM_ID (object) >= 0)
-    return Qt;
-  if (! SYMBOLP (object)
-      || NILP (Fget (object, Qcoding_system_define_form)))
-    return Qnil;
-  return Qt;
-}
-
 DEFUN ("read-non-nil-coding-system", Fread_non_nil_coding_system,
        Sread_non_nil_coding_system, 1, 1, 0,
        doc: /* Read a coding system from the minibuffer, prompting with string PROMPT.  */)
@@ -10970,7 +10955,6 @@ syms_of_coding (void)
      symbol as a coding system.  */
   DEFSYM (Qcoding_system_define_form, "coding-system-define-form");
 
-  defsubr (&Scoding_system_p);
   defsubr (&Sread_coding_system);
   defsubr (&Sread_non_nil_coding_system);
   defsubr (&Scheck_coding_system);

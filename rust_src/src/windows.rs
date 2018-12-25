@@ -34,10 +34,6 @@ use crate::{
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
     pub fn is_live(self) -> bool {
@@ -235,7 +231,7 @@ impl From<LispObject> for LispWindowRef {
 
 impl From<LispWindowRef> for LispObject {
     fn from(w: LispWindowRef) -> Self {
-        w.as_lisp_obj()
+        LispObject::tag_ptr(w, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -739,7 +735,7 @@ pub fn window_list(
     window: Option<LispWindowRef>,
 ) -> LispObject {
     let w_obj = match window {
-        Some(w) => w.as_lisp_obj(),
+        Some(w) => w.into(),
         None => LispFrameRef::from(frame).selected_window,
     };
 
@@ -1072,6 +1068,35 @@ pub fn window_new_normal(window: LispWindowValidOrSelected) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
     let win: LispWindowRef = window.into();
+    win.new_total
+}
+
+/// Set new total size of WINDOW to SIZE.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return SIZE.
+///
+/// Optional argument ADD non-nil means add SIZE to the new total size of
+/// WINDOW and return the sum.
+///
+/// The new total size of WINDOW, if valid, will be shortly installed as
+/// WINDOW's total height (see `window-total-height') or total width (see
+/// `window-total-width').
+///
+/// Note: This function does not operate on any child windows of WINDOW.
+#[lisp_fn(min = "2")]
+pub fn set_window_new_total(
+    window: LispWindowValidOrSelected,
+    size: EmacsInt,
+    add: bool,
+) -> LispObject {
+    let mut win: LispWindowRef = window.into();
+
+    let new_total = if !add {
+        size
+    } else {
+        EmacsInt::from(win.new_total) + size
+    };
+    win.new_total = new_total.into();
     win.new_total
 }
 

@@ -73,6 +73,7 @@ mod character;
 mod charset;
 mod chartable;
 mod cmds;
+mod coding;
 mod crypto;
 mod data;
 mod decompress;

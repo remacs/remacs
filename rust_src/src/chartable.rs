@@ -12,7 +12,7 @@ use crate::{
         pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table, Lisp_Type, More_Lisp_Bits,
         CHARTAB_SIZE_BITS,
     },
-    remacs_sys::{Qchar_code_property_table, Qchar_table_p, Qnil},
+    remacs_sys::{Qchar_code_property_table, Qchar_table_p},
 };
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
@@ -53,7 +53,7 @@ impl From<LispObject> for Option<LispCharTableRef> {
 
 impl From<LispCharTableRef> for LispObject {
     fn from(ct: LispCharTableRef) -> Self {
-        ct.as_lisp_obj()
+        LispObject::tag_ptr(ct, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -109,10 +109,6 @@ fn uniprop_compressed_form_p(obj: LispObject) -> bool {
 }
 
 impl LispCharTableRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     pub fn is_uniprop(self) -> bool {
         self.purpose == Qchar_code_property_table && self.extra_slots() == 5
     }
@@ -156,10 +152,6 @@ impl LispCharTableRef {
 }
 
 impl LispSubCharTableAsciiRef {
-    pub fn as_lisp_obj(&self) -> LispObject {
-        LispObject::tag_ptr(self.0, Lisp_Type::Lisp_Vectorlike)
-    }
-
     fn _get(self, idx: usize) -> LispObject {
         let size = chartab_size(self.0.depth);
         unsafe { self.0.contents.as_slice(size)[idx] }
@@ -172,11 +164,19 @@ impl LispSubCharTableAsciiRef {
     }
 }
 
-impl LispSubCharTableRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+impl From<LispSubCharTableAsciiRef> for LispObject {
+    fn from(s: LispSubCharTableAsciiRef) -> Self {
+        LispObject::tag_ptr(s.0, Lisp_Type::Lisp_Vectorlike)
     }
+}
 
+impl From<LispSubCharTableRef> for LispObject {
+    fn from(s: LispSubCharTableRef) -> Self {
+        LispObject::tag_ptr(s, Lisp_Type::Lisp_Vectorlike)
+    }
+}
+
+impl LispSubCharTableRef {
     fn _get(self, idx: usize) -> LispObject {
         unsafe {
             let d = self.depth;
@@ -190,7 +190,7 @@ impl LispSubCharTableRef {
         let mut val = self._get(idx);
 
         if is_uniprop && uniprop_compressed_form_p(val) {
-            val = unsafe { uniprop_table_uncompress(self.as_lisp_obj(), idx as libc::c_int) };
+            val = unsafe { uniprop_table_uncompress(self.into(), idx as libc::c_int) };
         }
 
         if let Some(sub) = val.as_sub_char_table() {
@@ -235,11 +235,7 @@ pub fn set_char_table_parent(mut chartable: LispCharTableRef, parent: Option<Lis
         }
     }
 
-    chartable.parent = if let Some(p) = parent {
-        p.as_lisp_obj()
-    } else {
-        Qnil
-    };
+    chartable.parent = parent.into();
     //parent
 }
 
