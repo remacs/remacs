@@ -1357,6 +1357,7 @@ NOPUSH is t and EDIT is t."
   (setq minibuffer-message-timeout isearch-original-minibuffer-message-timeout)
   (isearch-dehighlight)
   (lazy-highlight-cleanup lazy-highlight-cleanup)
+  (setq isearch-lazy-highlight-last-string nil)
   (let ((found-start (window-group-start))
 	(found-point (point)))
     (when isearch-window-configuration
@@ -3768,7 +3769,7 @@ by other Emacs features."
     (when isearch-lazy-count-current
       (setq isearch-lazy-count-current
             (gethash (point) isearch-lazy-count-hash 0))
-      (isearch-message nil t))))
+      (isearch-message))))
 
 (defun isearch-lazy-highlight-search (string bound)
   "Search ahead for the next or previous match, for lazy highlighting.
@@ -3971,7 +3972,7 @@ Attempt to do the search exactly the way the pending Isearch would."
 		    (setq isearch-lazy-count-total 0))
 		  (setq isearch-lazy-count-current
 			(gethash opoint isearch-lazy-count-hash 0))
-		  (isearch-message nil t))
+		  (isearch-message))
 	      (setq isearch-lazy-highlight-timer
 		    (run-at-time lazy-highlight-interval nil
 				 'isearch-lazy-highlight-buffer-update)))))))))
