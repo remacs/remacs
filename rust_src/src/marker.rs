@@ -11,7 +11,7 @@ use crate::{
     lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject},
     multibyte::multibyte_chars_in_text,
     remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
-    remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type},
+    remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},
     remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
     threads::ThreadState,
     util::clip_to_bounds,
@@ -109,7 +109,7 @@ impl From<LispObject> for LispMarkerRef {
 
 impl From<LispMarkerRef> for LispObject {
     fn from(m: LispMarkerRef) -> Self {
-        unsafe { mem::transmute(m.as_ptr()) }
+        LispObject::tag_ptr(m, Lisp_Type::Lisp_Misc)
     }
 }
 
@@ -282,7 +282,11 @@ pub fn set_marker_insertion_type(mut marker: LispMarkerRef, itype: LispObject) -
 /// POSITION is nil, makes marker point nowhere so it no longer slows down
 /// editing in any buffer.  Returns MARKER.
 #[lisp_fn(min = "2")]
-pub fn set_marker(marker: LispObject, position: LispObject, buffer: LispObject) -> LispObject {
+pub fn set_marker(
+    marker: LispMarkerRef,
+    position: LispObject,
+    buffer: LispObject,
+) -> LispMarkerRef {
     set_marker_internal(marker, position, buffer, false)
 }
 
@@ -303,7 +307,7 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
         .and_then(|m| m.buffer())
         .map_or(Qnil, LispObject::from);
 
-    set_marker(new, marker, buffer_or_nil);
+    set_marker(new.into(), marker, buffer_or_nil);
 
     if let Some(mut m) = new.as_marker() {
         m.set_insertion_type(itype.is_not_nil())
@@ -421,7 +425,7 @@ pub extern "C" fn set_marker_restricted(
     position: LispObject,
     buffer: LispObject,
 ) -> LispObject {
-    set_marker_internal(marker, position, buffer, true)
+    set_marker_internal(marker.into(), position, buffer, true).into()
 }
 
 /// Set the position of MARKER, specifying both the
@@ -495,30 +499,28 @@ impl LispObject {
 /// Internal function to set MARKER in BUFFER at POSITION.  Non-zero
 /// RESTRICTED means limit the POSITION by the visible part of BUFFER.
 fn set_marker_internal(
-    marker: LispObject,
+    mut marker: LispMarkerRef,
     position: LispObject,
     buffer: LispObject,
     restricted: bool,
-) -> LispObject {
+) -> LispMarkerRef {
     let buf = buffer
         .as_live_buffer()
         .or_else(|| current_buffer().as_live_buffer());
-    let mut m = marker.as_marker_or_error();
-
     // Set MARKER to point nowhere if BUFFER is dead, or
     // POSITION is nil or a marker points to nowhere.
     if position.is_nil() || (position.is_marker() && !position.has_buffer()) || buf.is_none() {
-        unchain_marker(m.as_mut());
+        unchain_marker(marker.as_mut());
 
     // Optimize the special case where we are copying the position of
     // an existing marker, and MARKER is already in the same buffer.
-    } else if position.as_marker().map_or(false, |p| p.buffer() == buf) && m.buffer() == buf {
+    } else if position.as_marker().map_or(false, |p| p.buffer() == buf) && marker.buffer() == buf {
         let pos = position.as_marker_or_error();
-        m.charpos = pos.charpos_or_error();
-        m.bytepos = pos.bytepos_or_error();
+        marker.charpos = pos.charpos_or_error();
+        marker.bytepos = pos.bytepos_or_error();
     } else {
         let b = buf.unwrap_or_else(|| panic!("Invalid buffer reference."));
-        set_marker_internal_else(m, position, restricted, b);
+        set_marker_internal_else(marker, position, restricted, b);
     }
     marker
 }
