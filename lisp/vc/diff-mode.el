@@ -2026,7 +2026,7 @@ For use in `add-log-current-defun-function'."
   '((default
      :inherit diff-refine-changed)
     (((class color) (min-colors 88) (background light))
-     :background "#ffbbbb")
+     :background "#ffcccc")
     (((class color) (min-colors 88) (background dark))
      :background "#aa2222"))
   "Face used for removed characters shown by `diff-refine-hunk'."
@@ -2036,7 +2036,7 @@ For use in `add-log-current-defun-function'."
   '((default
      :inherit diff-refine-changed)
     (((class color) (min-colors 88) (background light))
-     :background "#aaffaa")
+     :background "#bbffbb")
     (((class color) (min-colors 88) (background dark))
      :background "#22aa22"))
   "Face used for added characters shown by `diff-refine-hunk'."
