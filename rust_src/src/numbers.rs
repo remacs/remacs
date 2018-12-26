@@ -8,7 +8,9 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::LispObject,
-    remacs_sys::{EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG},
+    remacs_sys::{
+        EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG,
+    },
     remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump},
 };
 
@@ -136,7 +138,7 @@ impl LispObject {
 #[derive(Clone, Copy)]
 pub enum LispNumber {
     Fixnum(EmacsInt),
-    Float(f64),
+    Float(EmacsDouble),
 }
 
 pub trait IsLispNatnum {
