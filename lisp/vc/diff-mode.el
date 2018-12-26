@@ -302,7 +302,7 @@ well."
   '((default
      :inherit diff-changed)
     (((class color) (min-colors 88) (background light))
-     :background "#ffdddd")
+     :background "#ffeeee")
     (((class color) (min-colors 88) (background dark))
      :background "#553333")
     (((class color))
@@ -313,7 +313,7 @@ well."
   '((default
      :inherit diff-changed)
     (((class color) (min-colors 88) (background light))
-     :background "#ddffdd")
+     :background "#eeffee")
     (((class color) (min-colors 88) (background dark))
      :background "#335533")
     (((class color))
