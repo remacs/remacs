@@ -5400,6 +5400,17 @@ Otherwise, generate and save a value for `canlock-password' first."
 	     (message "Denied posting -- only quoted text.")
 	     nil)))))))
 
+(defun message--rotate-fixnum-left (n)
+  "Rotate the fixnum N left by one bit in a fixnum word.
+The result is a fixnum."
+  (logior (if (natnump n) 0 1)
+	  (ash (cond ((< (ash most-positive-fixnum -1) n)
+		      (logior n most-negative-fixnum))
+		     ((< n (ash most-negative-fixnum -1))
+		      (logand n most-positive-fixnum))
+		     (n))
+	       1)))
+
 (defun message-checksum ()
   "Return a \"checksum\" for the current buffer."
   (let ((sum 0))
@@ -5409,7 +5420,7 @@ Otherwise, generate and save a value for `canlock-password' first."
        (concat "^" (regexp-quote mail-header-separator) "$"))
       (while (not (eobp))
 	(when (not (looking-at "[ \t\n]"))
-	  (setq sum (logxor (ash sum 1) (if (natnump sum) 0 1)
+	  (setq sum (logxor (message--rotate-fixnum-left sum)
 			    (char-after))))
 	(forward-char 1)))
     sum))
