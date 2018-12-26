@@ -16,7 +16,7 @@
 static void fetch_cell(vterminal *, int , int , VTermScreenCell *);
 static bool compare_cells(VTermScreenCell *, VTermScreenCell *);
 static bool is_key(unsigned char *key, size_t len, const char *key_description);
-bool vterm_module_copy_string_contents (Lisp_Object lisp_str, char *buffer, ptrdiff_t *length);
+
 static int term_sb_push(int cols, const VTermScreenCell *cells, void *data) {
   vterminal *term = (vterminal *)data;
 
@@ -324,33 +324,6 @@ refresh_lines (vterminal *term, int start_row, int end_row, int end_col) {
 
   return text; 
 }
-
-
-static int
-term_settermprop(VTermProp prop, VTermValue *val, void *user_data) {
-  vterminal *term = (vterminal *)user_data;
-  switch (prop) {
-  case VTERM_PROP_CURSORVISIBLE:
-    vterminal_invalidate_terminal(term, term->cursor.row, term->cursor.row + 1);
-
-    term->cursor.visible = val->boolean;
-    break;
-  /* case VTERM_PROP_TITLE: */
-  /*   term_set_title(term, val->string); */
-  /*   break; */
-  case VTERM_PROP_CURSORBLINK:
-    term->cursor.blinking = val->boolean;
-    break;
-  case VTERM_PROP_ALTSCREEN:
-    vterminal_invalidate_terminal(term, 0, 0);
-    break;
-  default:
-    return 0;
-  }
-
-  return 1;
-}
-
 
 VTermScreenCallbacks vterm_screen_callbacks = {
     .damage = vterminal_damage,

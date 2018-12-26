@@ -33,8 +33,8 @@ use crate::{
         vterm_output_get_buffer_current, vterm_screen_enable_altscreen, vterm_screen_flush_damage,
         vterm_screen_reset, vterm_screen_set_damage_merge, vterm_set_size, vterm_set_utf8,
         vterm_state_get_cursorpos, vterm_state_set_default_colors, vterm_state_set_palette_color,
-        VTermColor, VTermDamageSize, VTermModifier, VTermPos, VTermRect, VTermScreenCell,
-        VTermState,
+        VTermColor, VTermDamageSize, VTermModifier, VTermPos, VTermProp, VTermRect,
+        VTermScreenCell, VTermState, VTermValue,
     },
     threads::ThreadState,
     vectors::length,
@@ -540,6 +540,26 @@ pub extern "C" fn vterminal_delete_lines(linenum: c_int, count: c_int) {
 }
 
 // vterm_screen_callbacks
+
+#[no_mangle]
+pub unsafe extern "C" fn term_settermprop(
+    prop: VTermProp,
+    val: *mut VTermValue,
+    user_data: *mut c_void,
+) -> c_int {
+    let term = user_data as *mut vterminal;
+
+    match prop {
+        VTermProp::VTERM_PROP_ALTSCREEN => vterminal_invalidate_terminal(term, 0, 0),
+        VTermProp::VTERM_PROP_CURSORVISIBLE => {
+            vterminal_invalidate_terminal(term, (*term).cursor.row, (*term).cursor.row + 1);
+            (*term).cursor.visible = if (*val).boolean != 0 { true } else { false };
+        }
+        _ => return 0,
+    }
+
+    1
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn vterminal_invalidate_terminal(

@@ -4987,6 +4987,8 @@ extern Lisp_Object color_to_rgb_string(VTermColor color);
 
 extern vterminal *mysave_value (Lisp_Object val);
 
+extern int term_settermprop(VTermProp prop, VTermValue *val, void *user_data);
+
 INLINE_HEADER_END
 
 #endif /* EMACS_LISP_H */
