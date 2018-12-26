@@ -106,10 +106,6 @@ impl FontExtraType {
 pub type LispFontObjectRef = ExternalPtr<Lisp_Font_Object>;
 
 impl LispFontObjectRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     pub fn add_log(self, action: &str, result: LispObject) {
         let c_str = CString::new(action).unwrap();
         unsafe { font_add_log(c_str.as_ptr(), self.into(), result) }
@@ -137,7 +133,7 @@ impl LispFontObjectRef {
 
 impl From<LispFontObjectRef> for LispObject {
     fn from(f: LispFontObjectRef) -> Self {
-        f.as_lisp_obj()
+        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
