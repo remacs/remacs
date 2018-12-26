@@ -1,6 +1,8 @@
 //! Lisp functions pertaining to editing.
 
 use std;
+use std::cmp::max;
+use std::ops::{Add, Sub};
 use std::ptr;
 
 use libc;
@@ -42,6 +44,7 @@ use crate::{
     remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
+    time::{lisp_time_struct, time_overflow, LispTime},
     util::clip_to_bounds,
     windows::selected_window,
 };
@@ -1391,6 +1394,52 @@ pub fn delete_and_extract_region(
         }
         .as_string()
     }
+}
+
+fn time_arith<F>(a: LispObject, b: LispObject, op: F) -> Vec<EmacsInt>
+where
+    F: FnOnce(LispTime, LispTime) -> LispTime,
+{
+    let mut alen: c_int = 0;
+    let mut blen: c_int = 0;
+    let ta = unsafe { lisp_time_struct(a, &mut alen) };
+    let tb = unsafe { lisp_time_struct(b, &mut blen) };
+    let t = op(ta, tb);
+    if LispObject::fixnum_overflow(t.hi) {
+        time_overflow();
+    }
+
+    let maxlen = max(alen, blen) as usize;
+
+    t.into_vec(maxlen)
+}
+
+/// Return the sum of two time values A and B, as a time value. A nil value for either argument
+/// stands for the current time. See `current-time-string' for the various forms of a time value.
+#[lisp_fn(name = "time-add", c_name = "time_add")]
+pub fn time_add_lisp(a: LispObject, b: LispObject) -> Vec<EmacsInt> {
+    time_arith(a, b, LispTime::add)
+}
+
+/// Return the difference between two time values A and B, as a time value. Use `float-time' to
+/// convert the difference into elapsed seconds.  A nil value for either argument stands for the
+/// current time.  See `current-time-string' for the various forms of a time value.
+#[lisp_fn(name = "time-subtract", c_name = "time_subtract")]
+pub fn time_subtract_lisp(a: LispObject, b: LispObject) -> Vec<EmacsInt> {
+    time_arith(a, b, LispTime::sub)
+}
+
+/// Return non-nil if time value T1 is earlier than time value T2.  A nil value for either
+/// argument stands for the current time.  See `current-time-string' for the various forms of a
+/// time value.
+#[lisp_fn]
+pub fn time_less_p(t1: LispObject, t2: LispObject) -> bool {
+    let mut t1len: c_int = 0;
+    let mut t2len: c_int = 0;
+    let a = unsafe { lisp_time_struct(t1, &mut t1len) };
+    let b = unsafe { lisp_time_struct(t2, &mut t2len) };
+
+    a < b
 }
 
 /// Remove restrictions (narrowing) from current buffer.
