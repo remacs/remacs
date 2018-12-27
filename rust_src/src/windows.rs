@@ -1179,4 +1179,30 @@ pub fn window_parameters(window: LispWindowValidOrSelected) -> LispObject {
     unsafe { Fcopy_alist(win.window_parameters) }
 }
 
+/// Return WINDOW's redisplay end trigger value.
+/// WINDOW must be a live window and defaults to the selected one.
+/// See `set-window-redisplay-end-trigger' for more information.
+#[lisp_fn(min = "0")]
+pub fn window_redisplay_end_trigger(window: LispWindowLiveOrSelected) -> LispObject {
+    let win: LispWindowRef = window.into();
+    win.redisplay_end_trigger
+}
+
+/// Set WINDOW's redisplay end trigger value to VALUE.
+/// WINDOW must be a live window and defaults to the selected one.  VALUE
+/// should be a buffer position (typically a marker) or nil.  If it is a
+/// buffer position, then if redisplay in WINDOW reaches a position beyond
+/// VALUE, the functions in `redisplay-end-trigger-functions' are called
+/// with two arguments: WINDOW, and the end trigger value.  Afterwards the
+/// end-trigger value is reset to nil.
+#[lisp_fn]
+pub fn set_window_redisplay_end_trigger(
+    window: LispWindowLiveOrSelected,
+    value: LispObject,
+) -> LispObject {
+    let mut win: LispWindowRef = window.into();
+    win.redisplay_end_trigger = value;
+    value
+}
+
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
