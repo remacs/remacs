@@ -41,15 +41,16 @@ pub fn coding_system_id(object: LispObject) -> isize {
 /// the coding system.
 /// Alternative to the CHECK_CODING_SYSTEM_GET_SPEC C macro.
 fn check_coding_system_get_spec(x: LispObject) -> LispObject {
-    let mut spec = coding_system_spec(x);
-    if spec.is_nil() {
-        check_coding_system_lisp(x);
-        spec = coding_system_spec(x);
-        if spec.is_nil() {
-            wrong_type!(Qcoding_system_p, x);
+    match coding_system_spec(x) {
+        Qnil => {
+            check_coding_system_lisp(x);
+            match coding_system_spec(x) {
+                Qnil => wrong_type!(Qcoding_system_p, x),
+                spec => spec,
+            }
         }
+        spec => spec,
     }
-    spec
 }
 
 /// Return t if OBJECT is nil or a coding-system.
@@ -82,10 +83,10 @@ pub fn check_coding_system_lisp(coding_system: LispObject) -> LispObject {
 /// Return the list of aliases of CODING-SYSTEM.
 #[lisp_fn]
 pub fn coding_system_aliases(coding_system: LispObject) -> LispObject {
-    let mut coding_system = coding_system;
-    if coding_system.is_nil() {
-        coding_system = Qno_conversion;
-    }
+    let coding_system = match coding_system {
+        Qnil => Qno_conversion,
+        coding_system => coding_system,
+    };
     let spec = check_coding_system_get_spec(coding_system);
     aref(spec, 1)
 }
