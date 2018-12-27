@@ -159,7 +159,7 @@ pub extern "C" fn ding_internal(terminate_macro: bool) {
         } else if terminate_macro && !is_interactive() {
             // Stop executing a keyboard macro.
             let msg = "Keyboard macro terminated by a command ringing the bell";
-            xsignal!(Quser_error, msg.into());
+            xsignal!(Quser_error, msg);
         } else {
             ring_bell(selected_frame().as_mut())
         }

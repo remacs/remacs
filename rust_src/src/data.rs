@@ -32,7 +32,7 @@ use crate::{
         Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object,
         Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker,
         Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qsetting_constant,
-        Qstring, Qsubr, Qsymbol, Qt, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector,
+        Qstring, Qsubr, Qsymbol, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector,
         Qvoid_variable, Qwatchers, Qwindow, Qwindow_configuration,
     },
     symbols::LispSymbolRef,
@@ -176,7 +176,7 @@ pub fn subr_lang(subr: LispSubrRef) -> LispObject {
 #[lisp_fn]
 pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     if idx < 0 {
-        xsignal!(Qargs_out_of_range, array, idx.into());
+        xsignal!(Qargs_out_of_range, array, idx);
     }
 
     let idx_u = idx as usize;
@@ -184,13 +184,13 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     if let Some(s) = array.as_string() {
         match s.char_indices().nth(idx_u) {
             None => {
-                xsignal!(Qargs_out_of_range, array, idx.into());
+                xsignal!(Qargs_out_of_range, array, idx);
             }
             Some((_, cp)) => EmacsInt::from(cp).into(),
         }
     } else if let Some(bv) = array.as_bool_vector() {
         if idx_u >= bv.len() {
-            xsignal!(Qargs_out_of_range, array, idx.into());
+            xsignal!(Qargs_out_of_range, array, idx);
         }
 
         unsafe { bv.get_unchecked(idx_u) }
@@ -198,13 +198,13 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
         ct.get(idx as isize)
     } else if let Some(v) = array.as_vector() {
         if idx_u >= v.len() {
-            xsignal!(Qargs_out_of_range, array, idx.into());
+            xsignal!(Qargs_out_of_range, array, idx);
         }
         unsafe { v.get_unchecked(idx_u) }
     } else if array.is_byte_code_function() || array.is_record() {
         let vl = array.as_vectorlike().unwrap();
         if idx >= vl.pseudovector_size() {
-            xsignal!(Qargs_out_of_range, array, idx.into());
+            xsignal!(Qargs_out_of_range, array, idx);
         }
         let v = unsafe { vl.as_vector_unchecked() };
         unsafe { v.get_unchecked(idx_u) }
@@ -235,7 +235,7 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
     } else if let Some(mut s) = array.as_string() {
         unsafe { CHECK_IMPURE(array, array.get_untaggedptr()) };
         if idx < 0 || idx >= s.len_chars() as EmacsInt {
-            args_out_of_range!(array, LispObject::from(idx));
+            args_out_of_range!(array, idx);
         }
 
         let c = newelt.as_character_or_error();
@@ -292,7 +292,7 @@ pub fn defalias(
 
         if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
-            loadhist_attach(LispObject::cons(Qt, sym));
+            loadhist_attach(LispObject::cons(true, sym));
         }
         loadhist_attach(LispObject::cons(
             if autoload { Qautoload } else { Qdefun },
@@ -334,7 +334,7 @@ pub fn subr_arity(subr: LispSubrRef) -> LispObject {
         LispObject::from(EmacsInt::from(subr.max_args()))
     };
 
-    LispObject::cons(LispObject::from(EmacsInt::from(minargs)), maxargs)
+    LispObject::cons(EmacsInt::from(minargs), maxargs)
 }
 
 /// Return name of subroutine SUBR.
@@ -421,7 +421,7 @@ pub fn default_value_lisp(symbol: LispSymbolRef) -> LispObject {
     let value = default_value(symbol);
 
     if value.eq(Qunbound) {
-        xsignal!(Qvoid_variable, symbol.into());
+        xsignal!(Qvoid_variable, symbol);
     }
 
     value
@@ -703,7 +703,7 @@ pub fn set_default(symbol: LispSymbolRef, value: LispObject) -> LispObject {
 
 extern "C" fn harmonize_variable_watchers(alias: LispObject, base_variable: LispObject) {
     if !base_variable.eq(alias)
-        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable().into())
+        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable())
     {
         alias
             .as_symbol_or_error()

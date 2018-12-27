@@ -148,7 +148,7 @@ pub trait IsLispNatnum {
 impl IsLispNatnum for EmacsInt {
     fn check_natnum(self) {
         if self < 0 {
-            wrong_type!(Qwholenump, LispObject::from(self));
+            wrong_type!(Qwholenump, self);
         }
     }
 }

@@ -46,8 +46,8 @@ impl LispObject {
 }
 
 impl LispObject {
-    pub fn cons(car: LispObject, cdr: LispObject) -> Self {
-        unsafe { Fcons(car, cdr) }
+    pub fn cons<A: Into<LispObject>, D: Into<LispObject>>(car: A, cdr: D) -> Self {
+        unsafe { Fcons(car.into(), cdr.into()) }
     }
 
     pub fn is_list(self) -> bool {

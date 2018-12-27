@@ -272,10 +272,7 @@ pub fn copysign(x1: EmacsDouble, x2: EmacsDouble) -> EmacsDouble {
 #[lisp_fn]
 pub fn frexp(x: EmacsDouble) -> LispObject {
     let (significand, exponent) = libm::frexp(x);
-    LispObject::cons(
-        LispObject::from_float(significand),
-        LispObject::from(exponent),
-    )
+    LispObject::cons(LispObject::from_float(significand), exponent)
 }
 
 /// Return SGNFCAND * 2**EXPONENT, as a floating point number.
@@ -409,7 +406,7 @@ where
         }
     }
 
-    xsignal!(Qrange_error, LispObject::from(name), arg)
+    xsignal!(Qrange_error, name, arg)
 }
 
 fn ceiling2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
