@@ -4581,8 +4581,8 @@ DEFUN ("accept-process-output", Faccept_process_output, Saccept_process_output,
        0, 4, 0,
        doc: /* Allow any pending output from subprocesses to be read by Emacs.
 It is given to their filter functions.
-Optional argument PROCESS means do not return until output has been
-received from PROCESS.
+Optional argument PROCESS means to return only after output is
+received from PROCESS or PROCESS closes the connection.
 
 Optional second argument SECONDS and third argument MILLISEC
 specify a timeout; return after that much time even if there is
@@ -4594,7 +4594,8 @@ If optional fourth argument JUST-THIS-ONE is non-nil, accept output
 from PROCESS only, suspending reading output from other processes.
 If JUST-THIS-ONE is an integer, don't run any timers either.
 Return non-nil if we received any output from PROCESS (or, if PROCESS
-is nil, from any process) before the timeout expired.  */)
+is nil, from any process) before the timeout expired or the
+corresponding connection was closed.  */)
   (Lisp_Object process, Lisp_Object seconds, Lisp_Object millisec,
    Lisp_Object just_this_one)
 {

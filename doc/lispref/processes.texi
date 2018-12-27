@@ -1795,7 +1795,8 @@ until output arrives from a process.
 This function allows Emacs to read pending output from processes.  The
 output is given to their filter functions.  If @var{process} is
 non-@code{nil} then this function does not return until some output
-has been received from @var{process}.
+has been received from @var{process} or @var{process} has closed the
+connection.
 
 The arguments @var{seconds} and @var{millisec} let you specify timeout
 periods.  The former specifies a period measured in seconds and the
@@ -1820,7 +1821,9 @@ speech synthesis.
 
 The function @code{accept-process-output} returns non-@code{nil} if it
 got output from @var{process}, or from any process if @var{process} is
-@code{nil}.  It returns @code{nil} if the timeout expired before output
+@code{nil}; this can occur even after a process has exited if the
+corresponding connection contains buffered data.  The function returns
+@code{nil} if the timeout expired or the connection was closed before output
 arrived.
 @end defun
 
