@@ -518,7 +518,7 @@ pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> Lisp
 /// otherwise used with utter care to avoid that running functions on
 /// `window-configuration-change-hook' is impeded forever.
 #[lisp_fn]
-pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> LispObject{
+pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> LispObject {
     let mut frame_ref = frame.live_or_error();
     frame_ref.set_after_make_frame(made.is_not_nil());
     frame_ref.set_inhibit_horizontal_resize(false);
