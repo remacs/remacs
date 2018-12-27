@@ -1182,7 +1182,7 @@ pub fn window_parameters(window: LispWindowValidOrSelected) -> LispObject {
 /// Return WINDOW's redisplay end trigger value.
 /// WINDOW must be a live window and defaults to the selected one.
 /// See `set-window-redisplay-end-trigger' for more information.
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn window_redisplay_end_trigger(window: LispWindowLiveOrSelected) -> LispObject {
     let win: LispWindowRef = window.into();
     win.redisplay_end_trigger
@@ -1195,7 +1195,7 @@ pub fn window_redisplay_end_trigger(window: LispWindowLiveOrSelected) -> LispObj
 /// VALUE, the functions in `redisplay-end-trigger-functions' are called
 /// with two arguments: WINDOW, and the end trigger value.  Afterwards the
 /// end-trigger value is reset to nil.
-#[lisp_fn(min = "2")]
+#[lisp_fn]
 pub fn set_window_redisplay_end_trigger(
     window: LispWindowLiveOrSelected,
     value: LispObject,
