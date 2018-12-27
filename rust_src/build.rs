@@ -639,11 +639,11 @@ fn run_bindgen() {
             .expect("Could not create bindings.rs");
         return;
     }
-    // Set by the Makefile to non-empty value if we need to generate the bindings
+    // Set by the Makefile to non-empty value if we need to regenerate the bindings
     let do_build = std::env::var_os("BUILD_BINDINGS");
     match do_build.as_ref() {
-        Some(s) if s == "" => return,
-        None => return,
+        Some(s) if s == "" && out_path.exists() => return,
+        None if out_path.exists() => return,
         _ => {}
     }
     let cflags = std::env::var_os("EMACS_CFLAGS");
