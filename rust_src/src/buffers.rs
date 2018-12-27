@@ -40,7 +40,7 @@ use crate::{
     },
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
-        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, Qvoid_variable,
+        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
     },
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
@@ -929,7 +929,7 @@ pub fn buffer_local_value_lisp(variable: LispObject, buffer: LispObject) -> Lisp
     let result = unsafe { buffer_local_value(variable, buffer) };
 
     if result.eq(Qunbound) {
-        xsignal!(Qvoid_variable, variable);
+        void_variable!(variable);
     }
 
     result

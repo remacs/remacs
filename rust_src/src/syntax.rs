@@ -91,7 +91,7 @@ pub extern "C" fn check_syntax_table(obj: LispObject) {
         .as_char_table()
         .map_or(true, |c| !c.purpose.eq(Qsyntax_table))
     {
-        xsignal!(Qsyntax_table_p, obj);
+        wrong_type!(Qsyntax_table_p, obj);
     }
 }
 

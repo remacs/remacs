@@ -14,7 +14,7 @@ use crate::{
     math::ArithOp,
     numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
     remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
-    remacs_sys::{Qarith_error, Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
+    remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
 };
 
 // Float support (LispType == Lisp_Float == 7 )
@@ -385,7 +385,7 @@ where
     } else {
         if let (Some(arg), Some(div)) = (arg.as_fixnum(), divisor.as_fixnum()) {
             if div == 0 {
-                xsignal!(Qarith_error);
+                arith_error!();
             }
             return int_round2(arg, div);
         }

@@ -15,9 +15,7 @@ use crate::{
         symbol_interned, symbol_redirect, symbol_trapped_write,
     },
     remacs_sys::{lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
-    remacs_sys::{
-        Qcyclic_variable_indirection, Qnil, Qsetting_constant, Qsymbolp, Qunbound, Qvoid_variable,
-    },
+    remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsymbolp, Qunbound},
 };
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
@@ -326,7 +324,7 @@ pub fn setplist(mut symbol: LispSymbolRef, newplist: LispObject) -> LispObject {
 pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
     let mut sym = symbol.as_symbol_or_error();
     if symbol.is_nil() || symbol.is_t() {
-        xsignal!(Qsetting_constant, symbol);
+        setting_constant!(symbol);
     }
     sym.set_function(Qnil);
     sym
@@ -370,7 +368,7 @@ pub fn indirect_variable_lisp(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn makunbound(symbol: LispSymbolRef) -> LispSymbolRef {
     if symbol.is_constant() {
-        xsignal!(Qsetting_constant, symbol);
+        setting_constant!(symbol);
     }
     set(symbol, Qunbound);
     symbol
@@ -383,7 +381,7 @@ pub fn makunbound(symbol: LispSymbolRef) -> LispSymbolRef {
 pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
     let val = unsafe { find_symbol_value(symbol.into()) };
     if val == Qunbound {
-        xsignal!(Qvoid_variable, symbol);
+        void_variable!(symbol);
     }
     val
 }

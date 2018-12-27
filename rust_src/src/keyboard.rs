@@ -19,9 +19,7 @@ use crate::{
         window_box_left_offset,
     },
     remacs_sys::{Fpos_visible_in_window_p, Fthrow},
-    remacs_sys::{
-        Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error, Qvertical_line,
-    },
+    remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line},
     threads::c_specpdl_index,
     windows::{selected_window, LispWindowOrSelected},
 };
@@ -131,14 +129,7 @@ pub fn quit_recursive_edit(val: bool) -> ! {
             Fthrow(Qexit, LispObject::from_bool(val));
         }
 
-        let msg = "No recursive edit is in progress";
-        xsignal!(
-            Quser_error,
-            crate::remacs_sys::make_string(
-                msg.as_ptr() as *const ::libc::c_char,
-                msg.len() as ::libc::ptrdiff_t,
-            )
-        );
+        user_error!("No recursive edit is in progress");
     }
 }
 

@@ -25,7 +25,6 @@ use crate::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
         Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation, Qvoid_function,
-        Qwrong_number_of_arguments,
     },
     remacs_sys::{Vautoload_queue, Vrun_hooks},
     symbols::{fboundp, symbol_function, LispSymbolRef},
@@ -177,7 +176,7 @@ pub fn setq(args: LispObject) -> LispObject {
         .enumerate();
     while let Some((nargs, sym)) = it.next() {
         let (_, arg) = it.next().unwrap_or_else(|| {
-            xsignal!(Qwrong_number_of_arguments, Qsetq, nargs + 1);
+            wrong_number_of_arguments!(Qsetq, nargs + 1);
         });
 
         val = unsafe { eval_sub(arg) };
@@ -214,7 +213,7 @@ pub fn function(args: LispObject) -> LispObject {
     let (quoted, tail) = cell.as_tuple();
 
     if tail.is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args));
+        wrong_number_of_arguments!(Qfunction, length(args));
     }
 
     if unsafe { globals.Vinternal_interpreter_environment != Qnil } {
