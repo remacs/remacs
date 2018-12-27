@@ -239,23 +239,23 @@ first will be printed into the backtrace buffer."
               (with-current-buffer debugger-buffer
                 (unless (derived-mode-p 'debugger-mode)
 	          (debugger-mode))
-	        (debugger-setup-buffer debugger-args))
-	      (when noninteractive
-		;; If the backtrace is long, save the beginning
-		;; and the end, but discard the middle.
-		(when (> (count-lines (point-min) (point-max))
-			 debugger-batch-max-lines)
+	        (debugger-setup-buffer debugger-args)
+	        (when noninteractive
+		  ;; If the backtrace is long, save the beginning
+		  ;; and the end, but discard the middle.
+		  (when (> (count-lines (point-min) (point-max))
+			   debugger-batch-max-lines)
+		    (goto-char (point-min))
+		    (forward-line (/ 2 debugger-batch-max-lines))
+		    (let ((middlestart (point)))
+		      (goto-char (point-max))
+		      (forward-line (- (/ 2 debugger-batch-max-lines)
+				       debugger-batch-max-lines))
+		      (delete-region middlestart (point)))
+		    (insert "...\n"))
 		  (goto-char (point-min))
-		  (forward-line (/ 2 debugger-batch-max-lines))
-		  (let ((middlestart (point)))
-		    (goto-char (point-max))
-		    (forward-line (- (/ 2 debugger-batch-max-lines)
-				     debugger-batch-max-lines))
-		    (delete-region middlestart (point)))
-		  (insert "...\n"))
-		(goto-char (point-min))
-		(message "%s" (buffer-string))
-		(kill-emacs -1))
+		  (message "%s" (buffer-string))
+		  (kill-emacs -1)))
 	      (pop-to-buffer
 	       debugger-buffer
 	       `((display-buffer-reuse-window
@@ -264,9 +264,9 @@ first will be printed into the backtrace buffer."
 		 . ((window-min-height . 10)
                     (window-height . fit-window-to-buffer)
 		    ,@(when (and (window-live-p debugger-previous-window)
-				(frame-visible-p
-				 (window-frame debugger-previous-window)))
-		       `((previous-window . ,debugger-previous-window))))))
+				 (frame-visible-p
+				  (window-frame debugger-previous-window)))
+		        `((previous-window . ,debugger-previous-window))))))
 	      (setq debugger-window (selected-window))
 	      (if (eq debugger-previous-window debugger-window)
 		  (when debugger-jumping-flag
