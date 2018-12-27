@@ -629,17 +629,19 @@ $(LIBREMACS_ARCHIVE): $(CSRC_HASH_FILE) globals.h $(rust_srcdir)/src/** $(rust_s
 	BUILD_BINDINGS="$(BUILD_BINDINGS)" \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
-clippy:
+clippy: $(CSRC_HASH_FILE)
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
+	BUILD_BINDINGS="$(BUILD_BINDINGS)" \
 	$(CARGO_CLIPPY) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
 .PHONY: clippy
 
-check check-maybe check-expensive: $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
+check check-maybe check-expensive: $(CSRC_HASH_FILE) $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
 	SRC_HASH="$(shell EMACS_CFLAGS="-I../rust_src $(EMACS_CFLAGS)" ../lib-src/hashdir)" \
+	BUILD_BINDINGS="$(BUILD_BINDINGS)" \
 	$(CARGO_TEST) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
 $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT): ${libsrc}/hashdir/Cargo.toml ${libsrc}/hashdir/src/main.rs
