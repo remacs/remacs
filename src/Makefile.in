@@ -606,14 +606,27 @@ $(RUSTFLAGS_FILE) : FORCE
 	diff -q $@ $@.tmp || cp $@.tmp $@
 	rm -f $@.tmp
 
+# We hash the C code and if it's different from the previous hash, we
+# set BUILD_BINDINGS=true. Otherwise it gets set empty. If
+# BUILD_BINDINGS=true the cargo build script runs bindgen to generate
+# the bindings. Otherwise it skips that step.
+BUILD_BINDINGS=""
+CSRC_HASH_FILE=$(rust_srcdir)/target/.csrchash
+$(CSRC_HASH_FILE) : FORCE $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
+	mkdir -p $(dir $@)
+	$(shell EMACS_CFLAGS="$(EMACS_CFLAGS)" ../lib-src/hashdir/target/$(CARGO_BUILD_DIR)/hashdir > $@.tmp)
+	$(eval BUILD_BINDINGS=$(shell diff -q $@ $@.tmp >/dev/null || (cp $@.tmp $@ && echo true)))
+	rm -f $@.tmp
+
 macosx_alloc_dir=$(rust_srcdir)/alloc_unexecmacosx
 MACOSX_ALLOC_INPUTS=$(macosx_alloc_dir)/src/** $(macosx_alloc_dir)/Cargo.*
 cargo_manifest=$(rust_srcdir)/Cargo.toml
 LIBREMACS_ARCHIVE=$(rust_srcdir)/target/$(CARGO_BUILD_DIR)/$(REMACSLIB_NAME)
-$(LIBREMACS_ARCHIVE): globals.h $(rust_srcdir)/src/** $(rust_srcdir)/Cargo.* $(MACOSX_ALLOC_INPUTS) $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
+$(LIBREMACS_ARCHIVE): $(CSRC_HASH_FILE) globals.h $(rust_srcdir)/src/** $(rust_srcdir)/Cargo.* $(MACOSX_ALLOC_INPUTS) $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
 	SRC_HASH="$(shell EMACS_CFLAGS="-I../rust_src $(EMACS_CFLAGS)" ../lib-src/hashdir/target/$(CARGO_BUILD_DIR)/hashdir)" \
+	BUILD_BINDINGS="$(BUILD_BINDINGS)" \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
 clippy:
