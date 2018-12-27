@@ -189,7 +189,7 @@ static reg_errcode_t extend_buffers (re_match_context_t *mctx, int min_len);
    We return 0 if we find a match and REG_NOMATCH if not.  */
 
 int
-regexec (const regex_t *_Restrict_ preg, const char *_Restrict_ string,
+regexec (const regex_t *__restrict preg, const char *__restrict string,
 	 size_t nmatch, regmatch_t pmatch[], int eflags)
 {
   reg_errcode_t err;
@@ -232,8 +232,8 @@ __typeof__ (__regexec) __compat_regexec;
 
 int
 attribute_compat_text_section
-__compat_regexec (const regex_t *_Restrict_ preg,
-		  const char *_Restrict_ string, size_t nmatch,
+__compat_regexec (const regex_t *__restrict preg,
+		  const char *__restrict string, size_t nmatch,
 		  regmatch_t pmatch[], int eflags)
 {
   return regexec (preg, string, nmatch, pmatch,
