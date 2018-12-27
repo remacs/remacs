@@ -151,9 +151,10 @@ impl LispCharTableRef {
     }
 
     pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
-        let mut size1 =
-            unsafe { self.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize;
-        let size2 = unsafe { other.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize;
+        let mut size1 = (unsafe { self.header.size }
+            & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize) as usize;
+        let size2 = (unsafe { other.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
+            as usize;
         if size1 != size2 {
             return false;
         }
@@ -277,8 +278,8 @@ impl LispSubCharTableRef {
                 return false;
             }
 
-            let slice1 = self.contents.as_slice(size);
-            let slice2 = other.contents.as_slice(size);
+            let slice1 = self.contents.as_slice(size1);
+            let slice2 = other.contents.as_slice(size1);
             for i in 0..size1 {
                 let v1 = slice1[i];
                 let v2 = slice2[i];
