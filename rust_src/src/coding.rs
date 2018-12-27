@@ -18,7 +18,7 @@ use crate::{
 };
 
 /// Return the spec vector of CODING_SYSTEM_SYMBOL.
-/// Same as the CODING_SYSTME_SPEC C macro.
+/// Same as the CODING_SYSTEM_SPEC C macro.
 fn coding_system_spec(coding_system: LispObject) -> LispObject {
     gethash(
         coding_system,
