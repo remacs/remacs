@@ -2919,7 +2919,7 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
   /* Work out the rectangle we will need to clear.  Because we're
      compositing rather than blitting, we need to clear the area under
      the image regardless of anything else.  */
-  if (!p->overlay_p)
+  if (p->bx >= 0 && !p->overlay_p)
     {
       clearRect = NSMakeRect (p->bx, p->by, p->nx, p->ny);
       clearRect = NSUnionRect (clearRect, imageRect);
