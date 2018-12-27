@@ -703,7 +703,7 @@ pub fn set_default(symbol: LispSymbolRef, value: LispObject) -> LispObject {
 
 extern "C" fn harmonize_variable_watchers(alias: LispObject, base_variable: LispObject) {
     if !base_variable.eq(alias)
-        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable().into())
+        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable())
     {
         alias
             .as_symbol_or_error()

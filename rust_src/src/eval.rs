@@ -693,7 +693,7 @@ pub fn autoload(
         return Qnil;
     }
 
-    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(LispObject::from(0)) {
+    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(0) {
         // `read1' in lread.c has found the docstring starting with "\
         // and assumed the docstring will be provided by Snarf-documentation, so it
         // passed us 0 instead.  But that leads to accidental sharing in purecopy's
@@ -766,7 +766,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     for first in queue.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
-        if first.eq(LispObject::from(0)) {
+        if first.eq(0) {
             globals.Vfeatures = second;
         } else {
             fset(first.as_symbol_or_error(), second);
