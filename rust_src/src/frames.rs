@@ -124,7 +124,7 @@ impl LispFrameOrSelected {
         if frame.is_live() {
             frame
         } else {
-            wrong_type!(Qframe_live_p, self.into());
+            wrong_type!(Qframe_live_p, self);
         }
     }
 }
@@ -256,7 +256,7 @@ pub fn window_system(frame: LispFrameOrSelected) -> LispObject {
     let window_system = framep_1(frame);
 
     match window_system {
-        Qnil => wrong_type!(Qframep, frame.into()),
+        Qnil => wrong_type!(Qframep, frame),
         Qt => Qnil,
         _ => window_system,
     }
@@ -290,10 +290,7 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_position(frame: LispFrameOrSelected) -> LispObject {
     let frame_ref = frame.live_or_error();
-    LispObject::cons(
-        LispObject::from(frame_ref.left_pos),
-        LispObject::from(frame_ref.top_pos),
-    )
+    LispObject::cons(frame_ref.left_pos, frame_ref.top_pos)
 }
 
 /// Returns t if the mouse pointer displayed on FRAME is visible.

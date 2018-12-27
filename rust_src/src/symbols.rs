@@ -103,7 +103,7 @@ impl LispSymbolRef {
             tortoise = unsafe { tortoise.get_alias() };
 
             if hare == tortoise {
-                xsignal!(Qcyclic_variable_indirection, hare.into())
+                xsignal!(Qcyclic_variable_indirection, hare)
             }
         }
 
@@ -370,7 +370,7 @@ pub fn indirect_variable_lisp(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn makunbound(symbol: LispSymbolRef) -> LispSymbolRef {
     if symbol.is_constant() {
-        xsignal!(Qsetting_constant, symbol.into());
+        xsignal!(Qsetting_constant, symbol);
     }
     set(symbol, Qunbound);
     symbol
@@ -383,7 +383,7 @@ pub fn makunbound(symbol: LispSymbolRef) -> LispSymbolRef {
 pub fn symbol_value(symbol: LispSymbolRef) -> LispObject {
     let val = unsafe { find_symbol_value(symbol.into()) };
     if val == Qunbound {
-        xsignal!(Qvoid_variable, symbol.into());
+        xsignal!(Qvoid_variable, symbol);
     }
     val
 }

@@ -75,7 +75,7 @@ pub fn set_syntax_table(table: LispCharTableRef) -> LispCharTableRef {
 
 fn check_syntax_table_p(table: LispCharTableRef) {
     if table.purpose != Qsyntax_table {
-        wrong_type!(Qsyntax_table_p, LispObject::from(table))
+        wrong_type!(Qsyntax_table_p, table)
     }
 }
 

@@ -278,7 +278,7 @@ macro_rules! impl_vectorlike_ref {
 
             pub fn set_checked(&mut self, idx: usize, item: LispObject) {
                 if idx >= self.len() {
-                    args_out_of_range!(LispObject::from(*self), LispObject::from(idx));
+                    args_out_of_range!(*self, idx);
                 }
 
                 unsafe { self.set_unchecked(idx, item) };
@@ -380,7 +380,7 @@ impl LispBoolVecRef {
 
     pub fn set_checked(&mut self, idx: usize, b: bool) {
         if idx >= self.len() {
-            args_out_of_range!(LispObject::from(*self), LispObject::from(idx));
+            args_out_of_range!(*self, idx);
         }
 
         unsafe { self.set_unchecked(idx, b) }

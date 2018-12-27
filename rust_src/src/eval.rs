@@ -177,11 +177,7 @@ pub fn setq(args: LispObject) -> LispObject {
         .enumerate();
     while let Some((nargs, sym)) = it.next() {
         let (_, arg) = it.next().unwrap_or_else(|| {
-            xsignal!(
-                Qwrong_number_of_arguments,
-                Qsetq,
-                LispObject::from(nargs + 1)
-            );
+            xsignal!(Qwrong_number_of_arguments, Qsetq, nargs + 1);
         });
 
         val = unsafe { eval_sub(arg) };
@@ -218,7 +214,7 @@ pub fn function(args: LispObject) -> LispObject {
     let (quoted, tail) = cell.as_tuple();
 
     if tail.is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args).into());
+        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args));
     }
 
     if unsafe { globals.Vinternal_interpreter_environment != Qnil } {
@@ -707,7 +703,7 @@ pub fn autoload(
 
     defalias(
         function,
-        list!(Qautoload, file.into(), docstring, interactive, ty),
+        list!(Qautoload, file, docstring, interactive, ty),
         Qnil,
     )
 }

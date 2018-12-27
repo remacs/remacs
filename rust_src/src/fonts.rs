@@ -92,7 +92,7 @@ impl FontExtraType {
         } else if extra_type.eq(unsafe { Qfont_object }) {
             FontExtraType::Object
         } else {
-            wrong_type!(LispObject::from(intern("font-extra-type")), extra_type);
+            wrong_type!(intern("font-extra-type"), extra_type);
         }
     }
 }

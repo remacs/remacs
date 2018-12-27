@@ -226,11 +226,7 @@ pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
 #[lisp_fn(min = "2")]
 pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     if byte < 0 || byte > 255 {
-        args_out_of_range!(
-            LispObject::from(byte),
-            LispObject::from(0),
-            LispObject::from(255)
-        )
+        args_out_of_range!(byte, 0, 255)
     }
     let buf = ThreadState::current_buffer();
     let toinsert = if byte >= 128 && buf.multibyte_characters_enabled() {
@@ -871,7 +867,7 @@ pub fn insert_buffer_substring(
     }
 
     if !(buf_ref.begv <= b && e <= buf_ref.zv) {
-        args_out_of_range!(beg.into(), end.into());
+        args_out_of_range!(beg, end);
     }
 
     let mut cur_buf = ThreadState::current_buffer();
@@ -938,7 +934,7 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
             let val = format_message(args);
             let pane = list!(LispObject::cons(
                 build_string("OK".as_ptr() as *const ::libc::c_char),
-                Qt
+                true
             ));
             let menu = LispObject::cons(val, pane);
             Fx_popup_dialog(Qt, menu, Qt);

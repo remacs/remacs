@@ -51,15 +51,13 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         if Vautoload_queue.is_not_nil() {
-            Vautoload_queue = LispObject::cons(
-                LispObject::cons(LispObject::from(0), globals.Vfeatures),
-                Vautoload_queue,
-            );
+            Vautoload_queue =
+                LispObject::cons(LispObject::cons(0, globals.Vfeatures), Vautoload_queue);
         }
     }
     if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = LispObject::cons(feature.into(), globals.Vfeatures);
+            globals.Vfeatures = LispObject::cons(feature, globals.Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
@@ -67,7 +65,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         globals.Vcurrent_load_list = LispObject::cons(
-            LispObject::cons(Qprovide, feature.into()),
+            LispObject::cons(Qprovide, feature),
             globals.Vcurrent_load_list,
         );
     }
@@ -93,7 +91,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
 #[lisp_fn(unevalled = "true")]
 pub fn quote(args: LispCons) -> LispObject {
     if args.cdr().is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qquote, args.length().into());
+        xsignal!(Qwrong_number_of_arguments, Qquote, args.length());
     }
 
     args.car()
