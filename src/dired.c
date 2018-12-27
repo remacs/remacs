@@ -236,6 +236,9 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 #endif
     ;
 
+  if (!NILP (match))
+    CHECK_STRING (match);
+
   /* Loop reading directory entries.  */
   for (struct dirent *dp; (dp = read_dirent (d, directory)); )
     {
