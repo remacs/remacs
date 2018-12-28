@@ -505,4 +505,22 @@ pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> Lisp
     }
 }
 
+/// Mark FRAME as made.
+/// FRAME nil means use the selected frame.  Second argument MADE non-nil
+/// means functions on `window-configuration-change-hook' are called
+/// whenever the window configuration of FRAME changes.  MADE nil means
+/// these functions are not called.
+///
+/// This function is currently called by `make-frame' only and should be
+/// otherwise used with utter care to avoid that running functions on
+/// `window-configuration-change-hook' is impeded forever.
+#[lisp_fn]
+pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> LispObject {
+    let mut frame_ref = frame.live_or_error();
+    frame_ref.set_after_make_frame(made.is_not_nil());
+    frame_ref.set_inhibit_horizontal_resize(false);
+    frame_ref.set_inhibit_vertical_resize(false);
+    made
+}
+
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
