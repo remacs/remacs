@@ -109,7 +109,7 @@ impl From<LispObject> for LispMarkerRef {
 
 impl From<LispMarkerRef> for LispObject {
     fn from(m: LispMarkerRef) -> Self {
-        LispObject::tag_ptr(m, Lisp_Type::Lisp_Misc)
+        Self::tag_ptr(m, Lisp_Type::Lisp_Misc)
     }
 }
 
