@@ -4909,6 +4909,7 @@ extern bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp
 extern bool internal_equal_cons (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 extern bool internal_equal_misc (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 extern bool internal_equal_string (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+extern bool internal_equal_vectorlike (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 
 INLINE_HEADER_END
 

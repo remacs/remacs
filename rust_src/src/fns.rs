@@ -303,6 +303,20 @@ pub extern "C" fn internal_equal_misc(
     }
 }
 
+#[no_mangle]
+pub extern "C" fn internal_equal_vectorlike(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
+) -> bool {
+    match (o1.as_vectorlike(), o2.as_vectorlike()) {
+        (Some(v1), Some(v2)) => v1.equal(v2, kind, depth, ht),
+        _ => false,
+    }
+}
+
 #[cfg(windows)]
 unsafe fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int {
     crate::remacs_sys::getloadavg(loadavg, nelem)

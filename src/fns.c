@@ -1393,52 +1393,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       return internal_equal_misc(o1, o2,  equal_kind, depth, ht);
 
     case Lisp_Vectorlike:
-      {
-	register int i;
-	ptrdiff_t size = ASIZE (o1);
-	/* Pseudovectors have the type encoded in the size field, so this test
-	   actually checks that the objects have the same type as well as the
-	   same size.  */
-	if (ASIZE (o2) != size)
-	  return false;
-	/* Boolvectors are compared much like strings.  */
-	if (BOOL_VECTOR_P (o1))
-	  {
-	    EMACS_INT size = bool_vector_size (o1);
-	    if (size != bool_vector_size (o2))
-	      return false;
-	    if (memcmp (bool_vector_data (o1), bool_vector_data (o2),
-			bool_vector_bytes (size)))
-	      return false;
-	    return true;
-	  }
-	if (WINDOW_CONFIGURATIONP (o1))
-	  {
-	    eassert (equal_kind != EQUAL_NO_QUIT);
-	    return compare_window_configurations (o1, o2, false);
-	  }
-
-	/* Aside from them, only true vectors, char-tables, compiled
-	   functions, and fonts (font-spec, font-entity, font-object)
-	   are sensible to compare, so eliminate the others now.  */
-	if (size & PSEUDOVECTOR_FLAG)
-	  {
-	    if (((size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS)
-		< PVEC_COMPILED)
-	      return false;
-	    size &= PSEUDOVECTOR_SIZE_MASK;
-	  }
-	for (i = 0; i < size; i++)
-	  {
-	    Lisp_Object v1, v2;
-	    v1 = AREF (o1, i);
-	    v2 = AREF (o2, i);
-	    if (!internal_equal (v1, v2, equal_kind, depth + 1, ht))
-	      return false;
-	  }
-	return true;
-      }
-      break;
+      return internal_equal_vectorlike(o1, o2, equal_kind, depth, ht);
 
     case Lisp_String:
       return internal_equal_string(o1, o2, equal_kind, depth, ht);
