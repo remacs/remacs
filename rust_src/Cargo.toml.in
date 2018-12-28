@@ -34,7 +34,6 @@ clippy = { version = "*", optional = true }
 lazy_static = "0.2.2"
 libc = "0.2"
 regex = "0.2"
-bindgen = { git = "https://github.com/rust-lang-nursery/rust-bindgen.git", rev = "badb49277dddf1ea5d407075f9deea48897b52df" }
 
 [lib]
 crate-type = ["staticlib"]
