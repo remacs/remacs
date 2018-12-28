@@ -227,7 +227,13 @@ impl LispBufferRef {
 
     /// Return the address of byte position N in current buffer.
     pub fn byte_pos_addr(self, n: ptrdiff_t) -> *mut c_uchar {
-        unsafe { (*self.text).beg.offset(n - BEG_BYTE) }
+        let offset = if n >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        };
+
+        unsafe { self.beg_addr().offset(offset + n - self.beg_byte()) }
     }
 
     /// Return the address of character at byte position BYTE_POS.
@@ -238,13 +244,7 @@ impl LispBufferRef {
 
     /// Return the byte at byte position N.
     pub fn fetch_byte(self, n: ptrdiff_t) -> u8 {
-        let offset = if n >= self.gpt_byte() {
-            self.gap_size()
-        } else {
-            0
-        };
-
-        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
+        unsafe { *self.byte_pos_addr(n) }
     }
 
     /// Return character at byte position POS.  See the caveat WARNING for
