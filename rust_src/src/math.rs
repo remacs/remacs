@@ -1,7 +1,7 @@
 //! Functions doing math on numbers.
 #![allow(clippy::float_cmp)]
 
-use crate::remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
+use crate::remacs_sys::{EmacsInt, Qnumberp};
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -19,7 +19,7 @@ pub fn lisp_mod(x: LispNumber, y: LispNumber) -> LispObject {
     match (x, y) {
         (LispNumber::Fixnum(mut i1), LispNumber::Fixnum(i2)) => {
             if i2 == 0 {
-                xsignal!(Qarith_error);
+                arith_error!();
             }
 
             i1 %= i2;
@@ -125,7 +125,7 @@ fn arith_driver(code: ArithOp, args: &[LispObject]) -> LispObject {
                             accum = next;
                         } else {
                             if next == 0 {
-                                xsignal!(Qarith_error);
+                                arith_error!();
                             }
                             if accum.checked_div(next).is_none() {
                                 overflow = true;
@@ -392,7 +392,7 @@ pub fn rem(x: LispNumber, y: LispNumber) -> EmacsInt {
     let y = y.to_fixnum();
 
     if y == 0 {
-        xsignal!(Qarith_error);
+        arith_error!();
     }
 
     x % y

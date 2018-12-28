@@ -27,13 +27,12 @@ use crate::{
     remacs_sys::{Fdelete, Fget, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
-        Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice,
-        Qcompiled_function, Qcondition_variable, Qcons, Qcyclic_function_indirection,
-        Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object,
-        Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker,
-        Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qsetting_constant,
-        Qstring, Qsubr, Qsymbol, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector,
-        Qvoid_variable, Qwatchers, Qwindow, Qwindow_configuration,
+        Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice, Qcompiled_function,
+        Qcondition_variable, Qcons, Qcyclic_function_indirection, Qdefalias_fset_function, Qdefun,
+        Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qframe,
+        Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker, Qmodule_function, Qmutex,
+        Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol, Qterminal, Qthread,
+        Qunbound, Qunevalled, Quser_ptr, Qvector, Qwatchers, Qwindow, Qwindow_configuration,
     },
     symbols::LispSymbolRef,
     threads::ThreadState,
@@ -176,7 +175,7 @@ pub fn subr_lang(subr: LispSubrRef) -> LispObject {
 #[lisp_fn]
 pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     if idx < 0 {
-        xsignal!(Qargs_out_of_range, array, idx);
+        args_out_of_range!(array, idx);
     }
 
     let idx_u = idx as usize;
@@ -184,13 +183,13 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     if let Some(s) = array.as_string() {
         match s.char_indices().nth(idx_u) {
             None => {
-                xsignal!(Qargs_out_of_range, array, idx);
+                args_out_of_range!(array, idx);
             }
             Some((_, cp)) => EmacsInt::from(cp).into(),
         }
     } else if let Some(bv) = array.as_bool_vector() {
         if idx_u >= bv.len() {
-            xsignal!(Qargs_out_of_range, array, idx);
+            args_out_of_range!(array, idx);
         }
 
         unsafe { bv.get_unchecked(idx_u) }
@@ -198,13 +197,13 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
         ct.get(idx as isize)
     } else if let Some(v) = array.as_vector() {
         if idx_u >= v.len() {
-            xsignal!(Qargs_out_of_range, array, idx);
+            args_out_of_range!(array, idx);
         }
         unsafe { v.get_unchecked(idx_u) }
     } else if array.is_byte_code_function() || array.is_record() {
         let vl = array.as_vectorlike().unwrap();
         if idx >= vl.pseudovector_size() {
-            xsignal!(Qargs_out_of_range, array, idx);
+            args_out_of_range!(array, idx);
         }
         let v = unsafe { vl.as_vector_unchecked() };
         unsafe { v.get_unchecked(idx_u) }
@@ -421,7 +420,7 @@ pub fn default_value_lisp(symbol: LispSymbolRef) -> LispObject {
     let value = default_value(symbol);
 
     if value.eq(Qunbound) {
-        xsignal!(Qvoid_variable, symbol);
+        void_variable!(symbol);
     }
 
     value
@@ -796,7 +795,7 @@ pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
     let sym_obj = LispObject::from(symbol);
     if sym_obj.is_nil() {
         // Perhaps not quite the right error signal, but seems good enough.
-        xsignal!(Qsetting_constant, sym_obj);
+        setting_constant!(sym_obj);
     }
 
     let function = symbol.get_function();

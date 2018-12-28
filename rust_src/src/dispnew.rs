@@ -18,8 +18,8 @@ use crate::{
         specbind, swallow_events, timespec_add, timespec_sub, wait_reading_process_output,
     },
     remacs_sys::{
-        globals, noninteractive, redisplaying_p, Qnil, Qredisplay_dont_pause, Qt, Quser_error,
-        Vframe_list, WAIT_READING_MAX,
+        globals, noninteractive, redisplaying_p, Qnil, Qredisplay_dont_pause, Qt, Vframe_list,
+        WAIT_READING_MAX,
     },
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph},
     terminal::{clear_frame, update_begin, update_end},
@@ -158,8 +158,7 @@ pub extern "C" fn ding_internal(terminate_macro: bool) {
             putchar_unlocked(0o7);
         } else if terminate_macro && !is_interactive() {
             // Stop executing a keyboard macro.
-            let msg = "Keyboard macro terminated by a command ringing the bell";
-            xsignal!(Quser_error, msg);
+            user_error!("Keyboard macro terminated by a command ringing the bell");
         } else {
             ring_bell(selected_frame().as_mut())
         }
