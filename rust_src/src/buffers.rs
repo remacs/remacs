@@ -16,6 +16,7 @@ use crate::{
     editfns::{point, widen},
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
+    fns::internal_equal,
     frames::LispFrameRef,
     lisp::defsubr,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
@@ -27,8 +28,8 @@ use crate::{
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
-        buffer_window_count, concat2, del_range, delete_all_overlays, globals, internal_equal,
-        last_per_buffer_idx, lookup_char_property, make_timespec, marker_position, modify_overlay,
+        buffer_window_count, concat2, del_range, delete_all_overlays, globals, last_per_buffer_idx,
+        lookup_char_property, make_timespec, marker_position, modify_overlay,
         set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
     },
     remacs_sys::{

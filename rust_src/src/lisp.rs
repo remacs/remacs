@@ -12,9 +12,10 @@ use libc::{c_char, c_void, intptr_t, uintptr_t};
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
+    fns::internal_equal,
     lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks},
     process::LispProcessRef,
-    remacs_sys::{build_string, internal_equal, make_float},
+    remacs_sys::{build_string, make_float},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },

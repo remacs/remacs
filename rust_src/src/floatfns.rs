@@ -13,7 +13,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     math::ArithOp,
     numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
-    remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
+    remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
     remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
 };
 
@@ -24,6 +24,19 @@ pub type LispFloatRef = ExternalPtr<Lisp_Float>;
 impl LispFloatRef {
     pub fn as_data(&self) -> &EmacsDouble {
         unsafe { &*(&self.u.data as *const EmacsDouble) }
+    }
+
+    fn to_float(self) -> EmacsDouble {
+        *self.as_data()
+    }
+
+    pub fn equal(self, other: Self, _kind: equal_kind::Type, _depth: i32, _ht: LispObject) -> bool {
+        let d1 = self.to_float();
+        let d2 = other.to_float();
+
+        // If d is a NaN, then d != d. Two NaNs should be `equal' even
+        // though they are not =.
+        d1 == d2 || (d1 != d1 && d2 != d2)
     }
 }
 
@@ -43,6 +56,14 @@ impl LispObject {
 
     pub fn force_float(self) -> EmacsDouble {
         unsafe { self.get_float_data_unchecked() }
+    }
+
+    pub fn as_floatref(self) -> Option<LispFloatRef> {
+        if self.is_float() {
+            Some(unsafe { self.to_float_unchecked() })
+        } else {
+            None
+        }
     }
 
     pub fn as_float(self) -> Option<EmacsDouble> {

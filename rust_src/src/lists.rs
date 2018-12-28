@@ -8,11 +8,12 @@ use libc::c_void;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    fns::internal_equal,
     lisp::defsubr,
     lisp::LispObject,
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
-    remacs_sys::{internal_equal, Fcons, CHECK_IMPURE},
+    remacs_sys::{Fcons, CHECK_IMPURE},
     remacs_sys::{Qcircular_list, Qconsp, Qlistp, Qnil, Qplistp},
     symbols::LispSymbolRef,
 };

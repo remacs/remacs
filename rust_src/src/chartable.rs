@@ -5,13 +5,14 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    fns::internal_equal,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
+    remacs_sys::uniprop_table_uncompress,
     remacs_sys::{
         char_table_specials, equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table,
         Lisp_Type, More_Lisp_Bits, CHARTAB_SIZE_BITS,
     },
-    remacs_sys::{internal_equal, uniprop_table_uncompress},
     remacs_sys::{Qchar_code_property_table, Qchar_table_p},
 };
 

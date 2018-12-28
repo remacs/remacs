@@ -1,4 +1,4 @@
-//* Random utility Lisp functions.
+//! Random utility Lisp functions.
 
 use std::ptr;
 
@@ -8,6 +8,10 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     eval::{un_autoload, unbind_to},
+    hashtable::{
+        HashLookupResult::{Found, Missing},
+        LispHashTableRef,
+    },
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
@@ -16,11 +20,13 @@ use crate::{
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
     remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
     remacs_sys::{equal_kind, EmacsInt, Lisp_Type},
-    remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
+    remacs_sys::{Fload, Fmake_hash_table},
+    remacs_sys::{
+        QCtest, Qeq, Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
+    },
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
     vectors::length,
@@ -274,8 +280,86 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
     }
 }
 
+// Return true if O1 and O2 are equal.  Do not quit or check for cycles.
+// Use this only on arguments that are cycle-free and not too large and
+// are not window configurations.
 #[no_mangle]
-pub extern "C" fn internal_equal_cons(
+pub extern "C" fn equal_no_quit(o1: LispObject, o2: LispObject) -> bool {
+    internal_equal(o1, o2, equal_kind::EQUAL_NO_QUIT, 0, Qnil)
+}
+
+// Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
+// of equality test to use: if it is EQUAL_NO_QUIT, do not check for
+// cycles or large arguments or quits; if EQUAL_PLAIN, do ordinary
+// Lisp equality; and if EQUAL_INCLUDING_PROPERTIES, do
+// equal-including-properties.
+//
+// If DEPTH is the current depth of recursion; signal an error if it
+// gets too deep.  HT is a hash table used to detect cycles; if nil,
+// it has not been allocated yet.  But ignore the last two arguments
+// if EQUAL_KIND == EQUAL_NO_QUIT.  */
+//
+#[no_mangle]
+pub extern "C" fn internal_equal(
+    o1: LispObject,
+    o2: LispObject,
+    equal_kind: equal_kind::Type,
+    depth: i32,
+    mut ht: LispObject,
+) -> bool {
+    if depth > 10 {
+        assert!(equal_kind != equal_kind::EQUAL_NO_QUIT);
+        if depth > 200 {
+            error!("Stack overflow in equal");
+        }
+        if ht.is_nil() {
+            ht = callN_raw!(Fmake_hash_table, QCtest, Qeq);
+        }
+        match o1.get_type() {
+            Lisp_Type::Lisp_Cons | Lisp_Type::Lisp_Misc | Lisp_Type::Lisp_Vectorlike => {
+                let table: LispHashTableRef = ht.into();
+                match table.lookup(o1) {
+                    Found(idx) => {
+                        // `o1' was seen already.
+                        let o2s = table.get_hash_value(idx);
+                        if memq(o2, o2s).is_nil() {
+                            table.set_hash_value(idx, LispObject::cons(o2, o2s));
+                        } else {
+                            return true;
+                        }
+                    }
+                    Missing(hash) => {
+                        table.put(o1, LispObject::cons(o2, Qnil), hash);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    if o1.eq(o2) {
+        return true;
+    }
+    if o1.get_type() != o2.get_type() {
+        return false;
+    }
+
+    match o1.get_type() {
+        Lisp_Type::Lisp_Float => internal_equal_float(o1, o2, equal_kind, depth, ht),
+
+        Lisp_Type::Lisp_Cons => internal_equal_cons(o1, o2, equal_kind, depth, ht),
+
+        Lisp_Type::Lisp_Misc => internal_equal_misc(o1, o2, equal_kind, depth, ht),
+
+        Lisp_Type::Lisp_Vectorlike => internal_equal_vectorlike(o1, o2, equal_kind, depth, ht),
+
+        Lisp_Type::Lisp_String => internal_equal_string(o1, o2, equal_kind, depth, ht),
+
+        _ => false,
+    }
+}
+
+pub fn internal_equal_cons(
     o1: LispObject,
     o2: LispObject,
     kind: equal_kind::Type,
@@ -288,8 +372,20 @@ pub extern "C" fn internal_equal_cons(
     }
 }
 
-#[no_mangle]
-pub extern "C" fn internal_equal_string(
+pub fn internal_equal_float(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
+) -> bool {
+    match (o1.as_floatref(), o2.as_floatref()) {
+        (Some(d1), Some(d2)) => d1.equal(d2, kind, depth, ht),
+        _ => false,
+    }
+}
+
+pub fn internal_equal_string(
     o1: LispObject,
     o2: LispObject,
     kind: equal_kind::Type,
@@ -302,8 +398,7 @@ pub extern "C" fn internal_equal_string(
     s1.equal(s2, kind, depth, ht)
 }
 
-#[no_mangle]
-pub extern "C" fn internal_equal_misc(
+pub fn internal_equal_misc(
     o1: LispObject,
     o2: LispObject,
     kind: equal_kind::Type,
@@ -316,8 +411,7 @@ pub extern "C" fn internal_equal_misc(
     }
 }
 
-#[no_mangle]
-pub extern "C" fn internal_equal_vectorlike(
+pub fn internal_equal_vectorlike(
     o1: LispObject,
     o2: LispObject,
     kind: equal_kind::Type,
