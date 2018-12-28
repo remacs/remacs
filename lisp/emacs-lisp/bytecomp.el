@@ -3534,7 +3534,7 @@ If it is nil, then the handler is \"byte-compile-SYMBOL.\""
 (byte-defop-compiler (>= byte-geq)	2-and)
 (byte-defop-compiler get		2)
 (byte-defop-compiler nth		2)
-(byte-defop-compiler substring		2-3)
+(byte-defop-compiler substring		1-3)
 (byte-defop-compiler (move-marker byte-set-marker) 2-3)
 (byte-defop-compiler set-marker	2-3)
 (byte-defop-compiler match-beginning	1)
