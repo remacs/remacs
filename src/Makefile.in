@@ -620,7 +620,7 @@ $(DEFINITIONS_FILE) $(BINDINGS_FILE) $(GLOBALS_FILE): $(filter-out ./macuvs.h,$(
 	$(MKDIR_P) $(dir $@)
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
-	$(CARGO_RUN) --manifest-path=$(rust_srcdir)/remacs-bindings/Cargo.toml -- $(basename $(notdir $@)) $@
+	$(CARGO_RUN) --release --manifest-path=$(rust_srcdir)/remacs-bindings/Cargo.toml -- $(basename $(notdir $@)) $@
 
 generated-bindings: $(DEFINITIONS_FILE) $(BINDINGS_FILE) $(GLOBALS_FILE)
 
