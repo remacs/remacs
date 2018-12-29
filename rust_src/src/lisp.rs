@@ -570,14 +570,14 @@ impl LispObject {
     where
         LispObject: From<T>,
     {
-        unsafe { internal_equal(self, other.into(), equal_kind::EQUAL_PLAIN, 0, Qnil) }
+        internal_equal(self, other.into(), equal_kind::EQUAL_PLAIN, 0, Qnil)
     }
 
     pub fn equal_no_quit<T>(self, other: T) -> bool
     where
         LispObject: From<T>,
     {
-        unsafe { internal_equal(self, other.into(), equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
+        internal_equal(self, other.into(), equal_kind::EQUAL_NO_QUIT, 0, Qnil)
     }
 
     pub fn is_function(self) -> bool {

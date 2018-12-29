@@ -16,7 +16,6 @@ use crate::{
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
-    multibyte::LispStringRef,
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
@@ -299,8 +298,7 @@ pub extern "C" fn equal_no_quit(o1: LispObject, o2: LispObject) -> bool {
 // it has not been allocated yet.  But ignore the last two arguments
 // if EQUAL_KIND == EQUAL_NO_QUIT.  */
 //
-#[no_mangle]
-pub extern "C" fn internal_equal(
+pub fn internal_equal(
     o1: LispObject,
     o2: LispObject,
     equal_kind: equal_kind::Type,
@@ -345,81 +343,26 @@ pub extern "C" fn internal_equal(
     }
 
     match o1.get_type() {
-        Lisp_Type::Lisp_Float => internal_equal_float(o1, o2, equal_kind, depth, ht),
-
-        Lisp_Type::Lisp_Cons => internal_equal_cons(o1, o2, equal_kind, depth, ht),
-
-        Lisp_Type::Lisp_Misc => internal_equal_misc(o1, o2, equal_kind, depth, ht),
-
-        Lisp_Type::Lisp_Vectorlike => internal_equal_vectorlike(o1, o2, equal_kind, depth, ht),
-
-        Lisp_Type::Lisp_String => internal_equal_string(o1, o2, equal_kind, depth, ht),
-
-        _ => false,
-    }
-}
-
-pub fn internal_equal_cons(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_cons(), o2.as_cons()) {
-        (Some(cons1), Some(cons2)) => cons1.equal(cons2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-pub fn internal_equal_float(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_floatref(), o2.as_floatref()) {
-        (Some(d1), Some(d2)) => d1.equal(d2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-pub fn internal_equal_string(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    let s1: LispStringRef = o1.into();
-    let s2: LispStringRef = o2.into();
-
-    s1.equal(s2, kind, depth, ht)
-}
-
-pub fn internal_equal_misc(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_misc(), o2.as_misc()) {
-        (Some(m1), Some(m2)) => m1.equal(m2, kind, depth, ht),
-        _ => false,
-    }
-}
-
-pub fn internal_equal_vectorlike(
-    o1: LispObject,
-    o2: LispObject,
-    kind: equal_kind::Type,
-    depth: i32,
-    ht: LispObject,
-) -> bool {
-    match (o1.as_vectorlike(), o2.as_vectorlike()) {
-        (Some(v1), Some(v2)) => v1.equal(v2, kind, depth, ht),
+        Lisp_Type::Lisp_Cons => match (o1.as_cons(), o2.as_cons()) {
+            (Some(cons1), Some(cons2)) => cons1.equal(cons2, equal_kind, depth, ht),
+            _ => false,
+        },
+        Lisp_Type::Lisp_Float => match (o1.as_floatref(), o2.as_floatref()) {
+            (Some(d1), Some(d2)) => d1.equal(d2, equal_kind, depth, ht),
+            _ => false,
+        },
+        Lisp_Type::Lisp_Misc => match (o1.as_misc(), o2.as_misc()) {
+            (Some(m1), Some(m2)) => m1.equal(m2, equal_kind, depth, ht),
+            _ => false,
+        },
+        Lisp_Type::Lisp_String => match (o1.as_string(), o2.as_string()) {
+            (Some(s1), Some(s2)) => s1.equal(s2, equal_kind, depth, ht),
+            _ => false,
+        },
+        Lisp_Type::Lisp_Vectorlike => match (o1.as_vectorlike(), o2.as_vectorlike()) {
+            (Some(v1), Some(v2)) => v1.equal(v2, equal_kind, depth, ht),
+            _ => false,
+        },
         _ => false,
     }
 }

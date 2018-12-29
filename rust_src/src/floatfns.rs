@@ -34,9 +34,8 @@ impl LispFloatRef {
         let d1 = self.to_float();
         let d2 = other.to_float();
 
-        // If d is a NaN, then d != d. Two NaNs should be `equal' even
-        // though they are not =.
-        d1 == d2 || (d1 != d1 && d2 != d2)
+        // Two NaNs should be `equal' even though they are not =.
+        d1 == d2 || (d1.is_nan() && d2.is_nan())
     }
 }
 

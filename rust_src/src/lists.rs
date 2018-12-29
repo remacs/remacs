@@ -365,7 +365,7 @@ impl LispCons {
                 (Some(cons1), Some(cons2)) => {
                     let (item1, tail1) = cons1.into();
                     let (item2, tail2) = cons2.into();
-                    if !unsafe { internal_equal(item1, item2, kind, item_depth, item_ht) } {
+                    if !internal_equal(item1, item2, kind, item_depth, item_ht) {
                         return false;
                     } else if tail1.eq(tail2) {
                         return true;
@@ -376,7 +376,7 @@ impl LispCons {
             }
         }
 
-        unsafe { internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht) }
+        internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht)
     }
 
     pub fn length(self) -> usize {

@@ -167,24 +167,23 @@ impl LispCharTableRef {
         // char table is 4 LispObjects + an array
         size1 -= 4;
 
-        unsafe {
-            if !internal_equal(self.defalt, other.defalt, kind, depth + 1, ht) {
-                return false;
-            }
-            if !internal_equal(self.parent, other.parent, kind, depth + 1, ht) {
-                return false;
-            }
-            if !internal_equal(self.purpose, other.purpose, kind, depth + 1, ht) {
-                return false;
-            }
-            if !internal_equal(self.ascii, other.ascii, kind, depth + 1, ht) {
-                return false;
-            }
+        if !internal_equal(self.defalt, other.defalt, kind, depth + 1, ht) {
+            return false;
         }
+        if !internal_equal(self.parent, other.parent, kind, depth + 1, ht) {
+            return false;
+        }
+        if !internal_equal(self.purpose, other.purpose, kind, depth + 1, ht) {
+            return false;
+        }
+        if !internal_equal(self.ascii, other.ascii, kind, depth + 1, ht) {
+            return false;
+        }
+
         for i in 0..size1 {
             let v1 = self.contents[i];
             let v2 = other.contents[i];
-            if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
+            if !internal_equal(v1, v2, kind, depth + 1, ht) {
                 return false;
             }
         }
@@ -195,7 +194,7 @@ impl LispCharTableRef {
             for i in 0..extras {
                 let v1 = self_extras[i];
                 let v2 = other_extras[i];
-                if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
+                if !internal_equal(v1, v2, kind, depth + 1, ht) {
                     return false;
                 }
             }

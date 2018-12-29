@@ -377,15 +377,11 @@ macro_rules! impl_vectorlike_ref {
                 depth: i32,
                 ht: LispObject,
             ) -> bool {
-                for i in 0..self.len() {
+                (0..self.len()).all(|i| {
                     let v1 = self.get(i as usize);
                     let v2 = other.get(i as usize);
-                    if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
-                        return false;
-                    }
-                }
-
-                true
+                    internal_equal(v1, v2, kind, depth + 1, ht)
+                })
             }
         }
 

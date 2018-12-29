@@ -521,11 +521,9 @@ impl LispOverlayRef {
         depth: i32,
         ht: LispObject,
     ) -> bool {
-        unsafe {
-            let overlays_equal = internal_equal(self.start, other.start, kind, depth + 1, ht)
-                && internal_equal(self.end, other.end, kind, depth + 1, ht);
-            overlays_equal && internal_equal(self.plist, other.plist, kind, depth + 1, ht)
-        }
+        let overlays_equal = internal_equal(self.start, other.start, kind, depth + 1, ht)
+            && internal_equal(self.end, other.end, kind, depth + 1, ht);
+        overlays_equal && internal_equal(self.plist, other.plist, kind, depth + 1, ht)
     }
 }
 
