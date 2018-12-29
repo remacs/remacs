@@ -382,8 +382,8 @@ This function is the default value of `compose-chars-after-function'."
 			   (looking-at pattern))
 			 (<= (match-end 0) limit))
 		    (setq result
-			  (funcall func pos (match-end 0) font-obj object)))
-	      (setq result (funcall func pos limit font-obj  object)))
+			  (funcall func pos (match-end 0) font-obj object nil)))
+	      (setq result (funcall func pos limit font-obj  object nil)))
 	    (if result (setq tail nil))))))
     result))
 
@@ -524,8 +524,9 @@ after a sequence of character events."
       (setq from (1+ from)))
     gstring))
 
-(defun compose-gstring-for-graphic (gstring)
-  "Compose glyph-string GSTRING for graphic display.
+(defun compose-gstring-for-graphic (gstring direction)
+  "Compose glyph-string GSTRING under bidi DIRECTION for graphic display.
+DIRECTION is either L2R or R2L, or nil if unknown.
 Combining characters are composed with the preceding base
 character.  If the preceding character is not a base character,
 each combining character is composed as a spacing character by
@@ -559,7 +560,7 @@ All non-spacing characters have this function in
 
      ;; A base character and the following non-spacing characters.
      (t
-      (let ((gstr (font-shape-gstring gstring)))
+      (let ((gstr (font-shape-gstring gstring direction)))
 	(if (and gstr
 		 (> (lglyph-to (lgstring-glyph gstr 0)) 0))
 	    gstr
@@ -686,12 +687,12 @@ All non-spacing characters have this function in
 	      (setq i (1+ i))))
 	  gstring))))))
 
-(defun compose-gstring-for-dotted-circle (gstring)
+(defun compose-gstring-for-dotted-circle (gstring direction)
   (let* ((dc (lgstring-glyph gstring 0)) ; glyph of dotted-circle
 	 (dc-id (lglyph-code dc))
 	 (fc (lgstring-glyph gstring 1)) ; glyph of the following char
 	 (fc-id (lglyph-code fc))
-	 (gstr (and nil (font-shape-gstring gstring))))
+	 (gstr (and nil (font-shape-gstring gstring direction))))
     (if (and gstr
 	     (or (= (lgstring-glyph-len gstr) 1)
 		 (and (= (lgstring-glyph-len gstr) 2)
@@ -742,7 +743,7 @@ All non-spacing characters have this function in
   (aset composition-function-table #x25CC
 	`([,(purecopy ".\\c^") 0 compose-gstring-for-dotted-circle])))
 
-(defun compose-gstring-for-terminal (gstring)
+(defun compose-gstring-for-terminal (gstring _direction)
   "Compose glyph-string GSTRING for terminal display.
 Non-spacing characters are composed with the preceding base
 character.  If the preceding character is not a base character,
@@ -799,10 +800,11 @@ prepending a space before it."
     gstring))
 
 
-(defun auto-compose-chars (func from to font-object string)
+(defun auto-compose-chars (func from to font-object string direction)
   "Compose the characters at FROM by FUNC.
-FUNC is called with one argument GSTRING which is built for characters
-in the region FROM (inclusive) and TO (exclusive).
+FUNC is called with two arguments: GSTRING, which is built for
+characters in the region FROM (inclusive) and TO (exclusive);
+and DIRECTION, which is the bidi directionality of the characters.
 
 If the character are composed on a graphic display, FONT-OBJECT
 is a font to use.  Otherwise, FONT-OBJECT is nil, and the function
@@ -819,7 +821,7 @@ This function is the default value of `auto-composition-function' (which see)."
 	gstring
       (or (fontp font-object 'font-object)
 	  (setq func 'compose-gstring-for-terminal))
-      (funcall func gstring))))
+      (funcall func gstring direction))))
 
 (put 'auto-composition-mode 'permanent-local t)
 

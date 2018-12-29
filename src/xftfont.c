@@ -674,13 +674,13 @@ xftfont_draw (struct glyph_string *s, int from, int to, int x, int y,
 
 #if (defined HAVE_M17N_FLT && defined HAVE_LIBOTF) || defined HAVE_HARFBUZZ
 static Lisp_Object
-xftfont_shape (Lisp_Object lgstring)
+xftfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct xftfont_info *xftfont_info = (struct xftfont_info *) font;
   FT_Face ft_face = XftLockFace (xftfont_info->xftfont);
   xftfont_info->ft_size = ft_face->size;
-  Lisp_Object val = ftfont_shape (lgstring);
+  Lisp_Object val = ftfont_shape (lgstring, direction);
   XftUnlockFace (xftfont_info->xftfont);
   return val;
 }

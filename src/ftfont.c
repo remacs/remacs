@@ -2797,7 +2797,7 @@ get_hb_unicode_funcs (void)
 
 static Lisp_Object
 ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
-                    FT_Matrix *matrix)
+                    FT_Matrix *matrix, Lisp_Object direction)
 {
   ptrdiff_t glyph_len = 0, text_len = LGSTRING_GLYPH_LEN (lgstring);
   ptrdiff_t i;
@@ -2836,15 +2836,38 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
   hb_buffer_set_content_type (hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
   hb_buffer_set_cluster_level (hb_buffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
 
-  /* FIXME: guess_segment_properties is BAD BAD BAD.
-   * we need to get these properties with the LGSTRING. */
-#if 1
+  /* Set the default properties for when they cannot be determined
+     below.  */
   hb_buffer_guess_segment_properties (hb_buffer);
-#else
-  hb_buffer_set_direction (hb_buffer, XXX);
+  hb_direction_t dir = HB_DIRECTION_INVALID;
+  if (EQ (direction, QL2R))
+    dir = HB_DIRECTION_LTR;
+  else if (EQ (direction, QR2L))
+    dir = HB_DIRECTION_RTL;
+  /* If the caller didn't provide a meaningful DIRECTION, let HarfBuzz
+     guess it.  */
+  if (dir != HB_DIRECTION_INVALID)
+    hb_buffer_set_direction (hb_buffer, dir);
+  /* Leave the script determination to HarfBuzz, until Emacs has a
+     better idea of the script of LGSTRING.  FIXME. */
+#if 0
   hb_buffer_set_script (hb_buffer, XXX);
-  hb_buffer_set_language (hb_buffer, XXX);
 #endif
+  /* FIXME: This can only handle the single global language, which
+     normally comes from the locale.  In addition, if
+     current-iso639-language is a list, we arbitrarily use the first
+     one.  We should instead have a notion of the language of the text
+     being shaped.  */
+  Lisp_Object lang = Vcurrent_iso639_language;
+  if (CONSP (Vcurrent_iso639_language))
+    lang = XCAR (Vcurrent_iso639_language);
+  if (SYMBOLP (lang))
+    {
+      Lisp_Object lang_str = SYMBOL_NAME (lang);
+      hb_buffer_set_language (hb_buffer,
+			      hb_language_from_string (SSDATA (lang_str),
+						       SBYTES (lang_str)));
+    }
 
   if (!hb_shape_full (hb_font, hb_buffer, NULL, 0, NULL))
     return Qnil;
@@ -2919,7 +2942,7 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
 #if (defined HAVE_M17N_FLT && defined HAVE_LIBOTF) || defined HAVE_HARFBUZZ
 
 Lisp_Object
-ftfont_shape (Lisp_Object lgstring)
+ftfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
@@ -2929,7 +2952,7 @@ ftfont_shape (Lisp_Object lgstring)
       hb_font_t *hb_font = ftfont_get_hb_font (ftfont_info);
 
       return ftfont_shape_by_hb (lgstring, ftfont_info->ft_size->face,
-				 hb_font, &ftfont_info->matrix);
+				 hb_font, &ftfont_info->matrix, direction);
     }
   else
 #endif  /* HAVE_HARFBUZZ */

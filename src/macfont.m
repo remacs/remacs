@@ -38,6 +38,12 @@ Original author: YAMAMOTO Mitsuharu
 
 #include <libkern/OSByteOrder.h>
 
+/* Values for `dir' argument to shaper functions.  */
+enum lgstring_direction
+  {
+    DIR_R2L = -1, DIR_UNKNOWN = 0, DIR_L2R = 1,
+  };
+
 static double mac_font_get_advance_width_for_glyph (CTFontRef, CGGlyph);
 static CGRect mac_font_get_bounding_rect_for_glyph (CTFontRef, CGGlyph);
 static CFArrayRef mac_font_create_available_families (void);
@@ -48,7 +54,8 @@ static Boolean mac_font_descriptor_supports_languages (CTFontDescriptorRef,
 						       CFArrayRef);
 static CFStringRef mac_font_create_preferred_family_for_attributes (CFDictionaryRef);
 static CFIndex mac_font_shape (CTFontRef, CFStringRef,
-			       struct mac_glyph_layout *, CFIndex);
+			       struct mac_glyph_layout *, CFIndex,
+			       enum lgstring_direction);
 static CFArrayRef mac_font_copy_default_descriptors_for_language (CFStringRef);
 static CFStringRef mac_font_copy_default_name_for_charset_and_languages (CFCharacterSetRef, CFArrayRef);
 #if USE_CT_GLYPH_INFO
@@ -317,7 +324,8 @@ mac_screen_font_get_metrics (ScreenFontRef font, CGFloat *ascent,
 
 static CFIndex
 mac_font_shape_1 (NSFont *font, NSString *string,
-                  struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len)
+                  struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len,
+		  enum lgstring_direction dir)
 {
   NSUInteger i;
   CFIndex result = 0;
@@ -581,11 +589,11 @@ mac_font_shape_1 (NSFont *font, NSString *string,
 static CFIndex
 mac_screen_font_shape (ScreenFontRef font, CFStringRef string,
                        struct mac_glyph_layout *glyph_layouts,
-                       CFIndex glyph_len)
+                       CFIndex glyph_len, enum lgstring_direction dir)
 {
   return mac_font_shape_1 ([(NSFont *)font printerFont],
                            (NSString *) string,
-                           glyph_layouts, glyph_len);
+                           glyph_layouts, glyph_len, dir);
 }
 
 static CGColorRef
@@ -2916,7 +2924,7 @@ macfont_draw (struct glyph_string *s, int from, int to, int x, int y,
 }
 
 static Lisp_Object
-macfont_shape (Lisp_Object lgstring)
+macfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct macfont_info *macfont_info = (struct macfont_info *) font;
@@ -2966,12 +2974,18 @@ macfont_shape (Lisp_Object lgstring)
                                                kCFAllocatorNull);
   if (string)
     {
+      enum lgstring_direction dir = DIR_UNKNOWN;
+
+      if (EQ (direction, QL2R))
+	dir = DIR_L2R;
+      else if (EQ (direction, QR2L))
+	dir = DIR_R2L;
       glyph_layouts = alloca (sizeof (struct mac_glyph_layout) * glyph_len);
       if (macfont_info->screen_font)
         used = mac_screen_font_shape (macfont_info->screen_font, string,
-                                      glyph_layouts, glyph_len);
+                                      glyph_layouts, glyph_len, dir);
       else
-        used = mac_font_shape (macfont, string, glyph_layouts, glyph_len);
+        used = mac_font_shape (macfont, string, glyph_layouts, glyph_len, dir);
       CFRelease (string);
     }
 
@@ -3652,7 +3666,8 @@ mac_font_create_line_with_string_and_font (CFStringRef string,
 
 static CFIndex
 mac_font_shape (CTFontRef font, CFStringRef string,
-		struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len)
+		struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len,
+		lgstring_direction dir)
 {
   CFIndex used, result = 0;
   CTLineRef ctline = mac_font_create_line_with_string_and_font (string, font);

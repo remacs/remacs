@@ -198,6 +198,9 @@ uniscribe_otf_capability (struct font *font)
    (N+1)th element of LGSTRING is nil, input of shaping is from the
    1st to (N)th elements.  In each input glyph, FROM, TO, CHAR, and
    CODE are already set.
+   DIRECTION is either L2R or R2L, or nil if unknown.  During
+   redisplay, this comes from applying the UBA, is passed from
+   composition_reseat_it, and is used by the HarfBuzz shaper.
 
    This function updates all fields of the input glyphs.  If the
    output glyphs (M) are more than the input glyphs (N), (N+1)th
@@ -206,7 +209,7 @@ uniscribe_otf_capability (struct font *font)
    than the length of LGSTRING, nil should be returned.  In that case,
    this function is called again with a larger LGSTRING.  */
 static Lisp_Object
-uniscribe_shape (Lisp_Object lgstring)
+uniscribe_shape (Lisp_Object lgstring, Lisp_Object direction)
 {
   struct font *font = CHECK_FONT_GET_OBJECT (LGSTRING_FONT (lgstring));
   struct uniscribe_font_info *uniscribe_font
@@ -394,6 +397,8 @@ uniscribe_shape (Lisp_Object lgstring)
 			 adjustment for the base character, which is
 			 then updated for each successive glyph in the
 			 grapheme cluster.  */
+		      /* FIXME: Should we use DIRECTION here instead
+			 of what ScriptItemize guessed?  */
 		      if (items[i].a.fRTL)
 			{
 			  int j1 = j;

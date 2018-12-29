@@ -700,7 +700,11 @@ struct font_driver
 
      Return the number of output codes.  If none of the features are
      applicable to the input data, return 0.  If GSTRING-OUT is too
-     short, return -1.  */
+     short, return -1.
+
+     Note: This method is currently not implemented by any font
+     back-end, and is only called by 'font-drive-otf' and
+     'font-otf-alternates', which are themselves ifdef'ed away. */
   int (*otf_drive) (struct font *font, Lisp_Object features,
                     Lisp_Object gstring_in, int from, int to,
                     Lisp_Object gstring_out, int idx, bool alternate_subst);
@@ -723,6 +727,9 @@ struct font_driver
      (N+1)th element of GSTRING is nil, input of shaping is from the
      1st to (N)th elements.  In each input glyph, FROM, TO, CHAR, and
      CODE are already set.
+     DIRECTION is either L2R or R2L, or nil if unknown.  During
+     redisplay, this comes from applying the UBA, is passed from
+     composition_reseat_it, and is used by the HarfBuzz shaper.
 
      This function updates all fields of the input glyphs.  If the
      output glyphs (M) are more than the input glyphs (N), (N+1)th
@@ -730,7 +737,7 @@ struct font_driver
      a new glyph object and storing it in GSTRING.  If (M) is greater
      than the length of GSTRING, nil should be return.  In that case,
      this function is called again with the larger GSTRING.  */
-  Lisp_Object (*shape) (Lisp_Object lgstring);
+  Lisp_Object (*shape) (Lisp_Object lgstring, Lisp_Object direction);
 
   /* Optional.
 
@@ -887,7 +894,7 @@ extern Lisp_Object ftfont_list_family (struct frame *);
 extern Lisp_Object ftfont_match (struct frame *, Lisp_Object);
 extern Lisp_Object ftfont_open (struct frame *, Lisp_Object, int);
 extern Lisp_Object ftfont_otf_capability (struct font *);
-extern Lisp_Object ftfont_shape (Lisp_Object);
+extern Lisp_Object ftfont_shape (Lisp_Object, Lisp_Object);
 extern unsigned ftfont_encode_char (struct font *, int);
 extern void ftfont_close (struct font *);
 extern void ftfont_filter_properties (Lisp_Object, Lisp_Object);
