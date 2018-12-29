@@ -835,7 +835,7 @@ styles for specific categories, such as files, buffers, etc."
 (defvar completion-category-defaults
   '((buffer (styles . (basic substring)))
     (unicode-name (styles . (basic substring)))
-    (project-file (styles . (basic substring)))
+    (project-file (styles . (substring)))
     (info-menu (styles . (basic substring))))
   "Default settings for specific completion categories.
 Each entry has the shape (CATEGORY . ALIST) where ALIST is
