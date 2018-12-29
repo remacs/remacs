@@ -14,7 +14,6 @@ use crate::{
     buffers::LispBufferRef,
     chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
     data::aref,
-    fns::internal_equal,
     frames::LispFrameRef,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispSubrRef},
@@ -127,13 +126,12 @@ impl Debug for LispVectorlikeRef {
 }
 
 impl LispVectorlikeRef {
-    pub fn equal(
-        self,
-        other: Self,
-        kind: equal_kind::Type,
-        depth: i32,
-        ht: &mut LispObject,
-    ) -> bool {
+    pub fn equal<T>(self, other: T, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool
+    where
+        Self: From<T>,
+    {
+        let other: Self = other.into();
+
         // Pseudovectors have the type encoded in the size field, so this test
         // actually checks that the objects have the same type as well as the
         // same size.
@@ -376,17 +374,22 @@ macro_rules! impl_vectorlike_ref {
                 $itertype::new(self)
             }
 
-            pub fn equal(
+            pub fn equal<T>(
                 self,
-                other: Self,
+                other: T,
                 kind: equal_kind::Type,
                 depth: i32,
                 ht: &mut LispObject,
-            ) -> bool {
+            ) -> bool
+            where
+                Self: From<T>,
+            {
+                let other: Self = other.into();
+
                 (0..self.len()).all(|i| {
                     let v1 = self.get(i as usize);
                     let v2 = other.get(i as usize);
-                    internal_equal(v1, v2, kind, depth + 1, ht)
+                    v1.equal_internal(v2, kind, depth + 1, ht)
                 })
             }
         }
@@ -504,13 +507,18 @@ impl LispBoolVecRef {
         }
     }
 
-    pub fn equal(
+    pub fn equal<T>(
         self,
-        other: Self,
+        other: T,
         _kind: equal_kind::Type,
         _depth: i32,
         _ht: &mut LispObject,
-    ) -> bool {
+    ) -> bool
+    where
+        Self: From<T>,
+    {
+        let other: Self = other.into();
+
         let bits_per = BOOL_VECTOR_BITS_PER_CHAR as usize;
         // Bool vectors are compared much like strings.
         self.len() == other.len()

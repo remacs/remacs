@@ -8,7 +8,6 @@ use libc::c_void;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    fns::internal_equal,
     lisp::defsubr,
     lisp::LispObject,
     numbers::MOST_POSITIVE_FIXNUM,
@@ -345,13 +344,12 @@ impl LispCons {
         }
     }
 
-    pub fn equal(
-        self,
-        other: LispCons,
-        kind: equal_kind::Type,
-        depth: i32,
-        ht: &mut LispObject,
-    ) -> bool {
+    pub fn equal<T>(self, other: T, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool
+    where
+        Self: From<T>,
+    {
+        let other: Self = other.into();
+
         let (circular_checks, item_depth) = if kind == equal_kind::EQUAL_NO_QUIT {
             *ht = Qnil;
             (LispConsCircularChecks::off, 0)
@@ -366,7 +364,7 @@ impl LispCons {
                 (Some(cons1), Some(cons2)) => {
                     let (item1, tail1) = cons1.into();
                     let (item2, tail2) = cons2.into();
-                    if !internal_equal(item1, item2, kind, item_depth, ht) {
+                    if !item1.equal_internal(item2, kind, item_depth, ht) {
                         return false;
                     } else if tail1.eq(tail2) {
                         return true;
@@ -377,7 +375,7 @@ impl LispCons {
             }
         }
 
-        internal_equal(it1.rest(), it2.rest(), kind, depth + 1, ht)
+        it1.rest().equal_internal(it2.rest(), kind, depth + 1, ht)
     }
 
     pub fn length(self) -> usize {
