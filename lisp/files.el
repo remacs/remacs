@@ -805,7 +805,6 @@ The path separator is colon in GNU and GNU-like systems."
     ;; locate-file doesn't support remote file names, so detect them
     ;; and support them here by hand.
     (and (file-remote-p (expand-file-name dir))
-         (file-name-absolute-p (expand-file-name dir))
          (file-accessible-directory-p (expand-file-name dir))
          (expand-file-name dir))
     (locate-file dir cd-path nil
