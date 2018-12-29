@@ -146,12 +146,13 @@ impl LispCharTableRef {
         val
     }
 
-    pub fn equal<T>(self, other: T, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool
-    where
-        Self: From<T>,
-    {
-        let other: Self = other.into();
-
+    pub fn equal(
+        self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispObject,
+    ) -> bool {
         let mut size1 = (unsafe { self.header.size }
             & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize) as usize;
         let size2 = (unsafe { other.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
@@ -193,10 +194,10 @@ impl LispCharTableRef {
             return false;
         }
 
-        if !(0..size1).all(|i| {
+        if (0..size1).any(|i| {
             let v1 = self.contents[i];
             let v2 = other.contents[i];
-            v1.equal_internal(v2, kind, depth + 1, ht)
+            !v1.equal_internal(v2, kind, depth + 1, ht)
         }) {
             return false;
         }
@@ -226,11 +227,13 @@ impl LispSubCharTableAsciiRef {
         self._get(chartab_idx(c, d, m))
     }
 
-    pub fn equal<T>(self, other: T, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool
-    where
-        Self: From<T>,
-    {
-        let other: Self = other.into();
+    pub fn equal(
+        self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispObject,
+    ) -> bool {
         self.0.equal(other.0, kind, depth, ht)
     }
 }
@@ -271,12 +274,13 @@ impl LispSubCharTableRef {
         val
     }
 
-    pub fn equal<T>(self, other: T, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool
-    where
-        Self: From<T>,
-    {
-        let other: Self = other.into();
-
+    pub fn equal(
+        self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispObject,
+    ) -> bool {
         let mut size1 =
             unsafe { self.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize };
         let size2 =

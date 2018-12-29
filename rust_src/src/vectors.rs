@@ -374,18 +374,13 @@ macro_rules! impl_vectorlike_ref {
                 $itertype::new(self)
             }
 
-            pub fn equal<T>(
+            pub fn equal(
                 self,
-                other: T,
+                other: Self,
                 kind: equal_kind::Type,
                 depth: i32,
                 ht: &mut LispObject,
-            ) -> bool
-            where
-                Self: From<T>,
-            {
-                let other: Self = other.into();
-
+            ) -> bool {
                 (0..self.len()).all(|i| {
                     let v1 = self.get(i as usize);
                     let v2 = other.get(i as usize);

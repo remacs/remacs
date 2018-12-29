@@ -12,15 +12,16 @@ use libc::{c_char, c_void, intptr_t, uintptr_t};
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
-    fns::internal_equal,
-    lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks},
+    hashtable::HashLookupResult::{Found, Missing},
+    lists::{list, memq, CarIter, LispConsCircularChecks, LispConsEndChecks},
     process::LispProcessRef,
-    remacs_sys::{build_string, make_float},
+    remacs_sys::{build_string, make_float, Fmake_hash_table},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
     remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
-    remacs_sys::{Qautoload, Qnil, Qsubrp, Qt, Vbuffer_alist, Vprocess_alist},
+    remacs_sys::{QCtest, Qautoload, Qeq, Qnil, Qsubrp, Qt},
+    remacs_sys::{Vbuffer_alist, Vprocess_alist},
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -574,17 +575,87 @@ impl LispObject {
         self.equal_internal(other.into(), equal_kind::EQUAL_PLAIN, 0, &mut ht)
     }
 
-    pub fn equal_internal<T>(
+    // Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
+    // of equality test to use: if it is EQUAL_NO_QUIT, do not check for
+    // cycles or large arguments or quits; if EQUAL_PLAIN, do ordinary
+    // Lisp equality; and if EQUAL_INCLUDING_PROPERTIES, do
+    // equal-including-properties.
+    //
+    // If DEPTH is the current depth of recursion; signal an error if it
+    // gets too deep.  HT is a hash table used to detect cycles; if nil,
+    // it has not been allocated yet.  But ignore the last two arguments
+    // if EQUAL_KIND == EQUAL_NO_QUIT.  */
+    //
+    pub fn equal_internal(
         self,
-        other: T,
+        other: Self,
         equal_kind: equal_kind::Type,
         depth: i32,
         ht: &mut LispObject,
-    ) -> bool
-    where
-        LispObject: From<T>,
-    {
-        internal_equal(self, other.into(), equal_kind, depth, ht)
+    ) -> bool {
+        if depth > 1 {
+            println!("In internal equal: {}, {}, {:?}", equal_kind, depth, ht);
+        }
+        if depth > 10 {
+            assert!(equal_kind != equal_kind::EQUAL_NO_QUIT);
+            if depth > 200 {
+                error!("Stack overflow in equal");
+            }
+            if ht.is_nil() {
+                *ht = callN_raw!(Fmake_hash_table, QCtest, Qeq);
+            }
+            match self.get_type() {
+                Lisp_Type::Lisp_Cons | Lisp_Type::Lisp_Misc | Lisp_Type::Lisp_Vectorlike => {
+                    let table = ht.as_hash_table_or_error();
+                    match table.lookup(self) {
+                        Found(idx) => {
+                            // `self' was seen already.
+                            let o2s = table.get_hash_value(idx);
+                            if memq(other, o2s).is_nil() {
+                                table.set_hash_value(idx, LispObject::cons(other, o2s));
+                            } else {
+                                return true;
+                            }
+                        }
+                        Missing(hash) => {
+                            table.put(self, LispObject::cons(other, Qnil), hash);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if self.eq(other) {
+            return true;
+        }
+        if self.get_type() != other.get_type() {
+            return false;
+        }
+
+        match self.get_type() {
+            Lisp_Type::Lisp_Cons => {
+                let cons1 = self.as_cons().unwrap();
+                cons1.equal(other.into(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_Float => {
+                let d1 = self.as_floatref().unwrap();
+                d1.equal(other.into(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_Misc => {
+                let m1 = self.as_misc().unwrap();
+                m1.equal(other.into(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_String => {
+                let s1 = self.as_string().unwrap();
+                s1.equal(other.into(), equal_kind, depth, ht)
+            }
+            Lisp_Type::Lisp_Vectorlike => {
+                let v1 = self.as_vectorlike().unwrap();
+                v1.equal(other.into(), equal_kind, depth, ht)
+            }
+            _ => false,
+        }
     }
 
     pub fn equal_no_quit<T>(self, other: T) -> bool
@@ -592,7 +663,7 @@ impl LispObject {
         LispObject: From<T>,
     {
         let mut ht = Qnil;
-        internal_equal(self, other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
+        self.equal_internal(other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
     }
 
     pub fn is_function(self) -> bool {

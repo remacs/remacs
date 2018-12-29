@@ -513,12 +513,13 @@ impl LispOverlayRef {
         }
     }
 
-    pub fn equal<T>(self, other: T, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool
-    where
-        Self: From<T>,
-    {
-        let other: Self = other.into();
-
+    pub fn equal(
+        self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispObject,
+    ) -> bool {
         let overlays_equal = self.start.equal_internal(other.start, kind, depth + 1, ht)
             && self.end.equal_internal(other.end, kind, depth + 1, ht);
         overlays_equal && self.plist.equal_internal(other.plist, kind, depth + 1, ht)

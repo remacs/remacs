@@ -344,14 +344,14 @@ impl LispCons {
         }
     }
 
-    pub fn equal<T>(self, other: T, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool
-    where
-        Self: From<T>,
-    {
-        let other: Self = other.into();
-
+    pub fn equal(
+        self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispObject,
+    ) -> bool {
         let (circular_checks, item_depth) = if kind == equal_kind::EQUAL_NO_QUIT {
-            *ht = Qnil;
             (LispConsCircularChecks::off, 0)
         } else {
             (LispConsCircularChecks::on, depth + 1)
