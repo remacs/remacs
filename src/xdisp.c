@@ -11850,7 +11850,7 @@ format_mode_line_unwind_data (struct frame *target_frame,
   Vmode_line_unwind_vector = Qnil;
 
   if (NILP (vector))
-    vector = make_nil_vector (10);
+    vector = make_nil_vector (12);
 
   ASET (vector, 0, make_fixnum (mode_line_target));
   ASET (vector, 1, make_fixnum (MODE_LINE_NOPROP_LEN (0)));
@@ -11867,12 +11867,24 @@ format_mode_line_unwind_data (struct frame *target_frame,
   ASET (vector, 7, owin);
   if (target_frame)
     {
+      Lisp_Object buffer = XWINDOW (target_frame->selected_window)->contents;
+      struct buffer *b = XBUFFER (buffer);
+      struct buffer *cb = current_buffer;
+
       /* Similarly to `with-selected-window', if the operation selects
 	 a window on another frame, we must restore that frame's
 	 selected window, and (for a tty) the top-frame.  */
       ASET (vector, 8, target_frame->selected_window);
       if (FRAME_TERMCAP_P (target_frame))
 	ASET (vector, 9, FRAME_TTY (target_frame)->top_frame);
+
+      /* If we select a window on another frame, make sure that that
+	 selection does not leave its buffer's point modified when
+	 unwinding (Bug#32777).  */
+      ASET (vector, 10, buffer);
+      current_buffer = b;
+      ASET (vector, 11, build_marker (current_buffer, PT, PT_BYTE));
+      current_buffer = cb;
     }
 
   return vector;
@@ -11912,6 +11924,24 @@ unwind_format_mode_line (Lisp_Object vector)
 	}
 
       Fselect_window (old_window, Qt);
+
+      /* Restore point of target_frame_window's buffer (Bug#32777).
+	 But do this only after old_window has been reselected to
+	 avoid that the window point of target_frame_window moves.  */
+      if (!NILP (target_frame_window))
+	{
+	  Lisp_Object buffer = AREF (vector, 10);
+
+	  if (BUFFER_LIVE_P (XBUFFER (buffer)))
+	    {
+	      struct buffer *cb = current_buffer;
+
+	      current_buffer = XBUFFER (buffer);
+	      set_point_from_marker (AREF (vector, 11));
+	      ASET (vector, 11, Qnil);
+	      current_buffer = cb;
+	    }
+	}
     }
 
   if (!NILP (AREF (vector, 6)))
