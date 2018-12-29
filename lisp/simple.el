@@ -3866,10 +3866,13 @@ interactively, this is t."
       (process-file shell-file-name nil t nil shell-command-switch command))))
 
 (defun process-file (program &optional infile buffer display &rest args)
-  "Process files synchronously in a separate process.
+  "Process files synchronously in a separate process that runs PROGRAM.
 Similar to `call-process', but may invoke a file handler based on
 `default-directory'.  The current working directory of the
 subprocess is `default-directory'.
+
+If PROGRAM is a remote file name, it should be processed
+by `file-local-name' before passing it to this function.
 
 File names in INFILE and BUFFER are handled normally, but file
 names in ARGS should be relative to `default-directory', as they
@@ -3915,12 +3918,15 @@ Similar to `start-process', but may invoke a file handler based on
 
 This handler ought to run PROGRAM, perhaps on the local host,
 perhaps on a remote host that corresponds to `default-directory'.
-In the latter case, the local part of `default-directory' becomes
-the working directory of the process.
+In the latter case, the local part of `default-directory', the one
+produced from it by `file-local-name', becomes the working directory
+of the process on the remote host.
 
 PROGRAM and PROGRAM-ARGS might be file names.  They are not
-objects of file handler invocation.  File handlers might not
-support pty association, if PROGRAM is nil."
+objects of file handler invocation, so they need to be obtained
+by calling `file-local-name', in case they are remote file names.
+
+File handlers might not support pty association, if PROGRAM is nil."
   (let ((fh (find-file-name-handler default-directory 'start-file-process)))
     (if fh (apply fh 'start-file-process name buffer program program-args)
       (apply 'start-process name buffer program program-args))))

@@ -451,7 +451,9 @@ present in @var{args}.  To avoid confusion, it may be best to avoid
 absolute file names in @var{args}, but rather to specify all file
 names as relative to @code{default-directory}.  The function
 @code{file-relative-name} is useful for constructing such relative
-file names.
+file names.  Alternatively, you can use @code{file-local-name}
+(@pxref{Magic File Names}) to obtain an absolute file name as seen
+from the remote host's perspective.
 @end defun
 
 @defvar process-file-side-effects
@@ -817,7 +819,12 @@ In the latter case, the local part of @code{default-directory} becomes
 the working directory of the process.
 
 This function does not try to invoke file name handlers for
-@var{program} or for the rest of @var{args}.
+@var{program} or for the rest of @var{args}.  For that reason, if
+@var{program} or any of @var{args} use the remote-file syntax
+(@pxref{Magic File Names}), they must be converted either to file
+names relative to @code{default-directory}, or to names that identify
+the files locally on the remote host, by running them through
+@code{file-local-name}.
 
 Depending on the implementation of the file handler, it might not be
 possible to apply @code{process-filter} or @code{process-sentinel} to

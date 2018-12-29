@@ -2519,9 +2519,9 @@ with @samp{/:}.
 @defmac file-name-quote name
 This macro adds the quotation prefix @samp{/:} to the file @var{name}.
 For a local file @var{name}, it prefixes @var{name} with @samp{/:}.
-If @var{name} is a remote file name, the local part of @var{name} is
-quoted.  If @var{name} is already a quoted file name, @var{name} is
-returned unchanged.
+If @var{name} is a remote file name, the local part of @var{name}
+(@pxref{Magic File Names}) is quoted.  If @var{name} is already a
+quoted file name, @var{name} is returned unchanged.
 
 @example
 @group
@@ -2700,8 +2700,8 @@ that remote host.  If such a directory does not exist, or
 @code{temporary-file-directory} is returned.
 @end defun
 
-In order to extract the local part of the path name from a temporary
-file, @code{file-local-name} could be used.
+In order to extract the local part of the file's name of a temporary
+file, use @code{file-local-name} (@pxref{Magic File Names}).
 
 @node File Name Completion
 @subsection File Name Completion
@@ -3382,11 +3382,24 @@ non-magic directory to serve as its current directory, and this function
 is a good way to come up with one.
 @end defun
 
+@cindex local part of remote file name
 @defun file-local-name filename
-This function returns the local part of file @var{filename}.  For a
-remote @var{filename}, it returns a file name which could be used
-directly as argument of a remote process.  If @var{filename} is local,
-this function returns the file name.
+This function returns the @dfn{local part} of @var{filename}.  This is
+the part of the file's name that identifies it on the remote host, and
+is typically obtained by removing from the remote file name the parts
+that specify the remote host and the method of accessing it.  For
+example:
+
+@smallexample
+(file-local-name "/ssh:@var{user}@@@var{host}:/foo/bar")
+     @result{} "/foo/bar"
+@end smallexample
+
+For a remote @var{filename}, this function returns a file name which
+could be used directly as an argument of a remote process
+(@pxref{Asynchronous Processes}, and @pxref{Synchronous Processes}),
+and as the program to run on the remote host.  If @var{filename} is
+local, this function returns it unchanged.
 @end defun
 
 @defopt remote-file-name-inhibit-cache
