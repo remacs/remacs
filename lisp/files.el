@@ -801,9 +801,16 @@ The path separator is colon in GNU and GNU-like systems."
     (setq cd-path (or (parse-colon-path (getenv "CDPATH"))
                       (list "./"))))
   (cd-absolute
-   (or (locate-file dir cd-path nil
-                    (lambda (f) (and (file-directory-p f) 'dir-ok)))
-       (error "No such directory found via CDPATH environment variable"))))
+   (or
+    ;; locate-file doesn't support remote file names, so detect them
+    ;; and support them here by hand.
+    (and (file-remote-p (expand-file-name dir))
+         (file-name-absolute-p (expand-file-name dir))
+         (file-accessible-directory-p (expand-file-name dir))
+         (expand-file-name dir))
+    (locate-file dir cd-path nil
+                 (lambda (f) (and (file-directory-p f) 'dir-ok)))
+    (error "No such directory found via CDPATH environment variable"))))
 
 (defun directory-files-recursively (dir regexp &optional include-directories)
   "Return list of all files under DIR that have file names matching REGEXP.
