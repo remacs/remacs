@@ -401,23 +401,38 @@ recognized."
   ;; removing it when it has no matches.  Neither seems natural
   ;; enough.  Removal is confusing; early expansion makes the prompt
   ;; too long.
-  (let* (;; (initial-input
-         ;;  (let ((common-prefix (try-completion "" collection)))
-         ;;    (if (> (length common-prefix) 0)
-         ;;        (file-name-directory common-prefix))))
+  (let* ((common-parent-directory
+          (let ((common-prefix (try-completion "" collection)))
+            (if (> (length common-prefix) 0)
+                (file-name-directory common-prefix))))
+         (cpd-length (length common-parent-directory))
+         (prompt (if (zerop cpd-length)
+                     prompt
+                   (concat prompt (format " in %s" common-parent-directory))))
+         ;; XXX: This requires collection to be "flat" as well.
+         (substrings (mapcar (lambda (s) (substring s cpd-length))
+                             (all-completions "" collection)))
+         (new-collection
+          (lambda (string pred action)
+            (cond
+             ((eq action 'metadata)
+              (if (functionp collection) (funcall collection nil nil 'metadata)))
+             (t
+	      (complete-with-action action substrings string pred)))))
          (new-prompt (if default
                          (format "%s (default %s): " prompt default)
                        (format "%s: " prompt)))
          (res (completing-read new-prompt
-                               collection predicate t
+                               new-collection predicate t
                                nil ;; initial-input
                                hist default inherit-input-method)))
-    (if (and (equal res default)
-             (not (test-completion res collection predicate)))
-        (completing-read (format "%s: " prompt)
-                         collection predicate t res hist nil
-                         inherit-input-method)
-      res)))
+    (when (and (equal res default)
+               (not (test-completion res collection predicate)))
+      (setq res
+            (completing-read (format "%s: " prompt)
+                             new-collection predicate t res hist nil
+                             inherit-input-method)))
+    (concat common-parent-directory res)))
 
 (declare-function multifile-continue "multifile" ())
 
