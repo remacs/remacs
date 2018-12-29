@@ -449,28 +449,35 @@ Only both edges of each range is checked."
 
 
 (defun rx-check-any-string (str)
-  "Check string argument STR for Rx `any'."
-  (let ((i 0)
-	c1 c2 l)
-    (if (= 0 (length str))
-	(error "String arg for Rx `any' must not be empty"))
-    (while (string-match ".-." str i)
-      ;; string before range: convert it to characters
-      (if (< i (match-beginning 0))
-	  (setq l (nconc
-		   l
-		   (append (substring str i (match-beginning 0)) nil))))
-      ;; range
-      (setq i (match-end 0)
-	    c1 (aref str (match-beginning 0))
-	    c2 (aref str (1- i)))
-      (cond
-       ((< c1 c2) (setq l (nconc l (list (cons c1 c2)))))
-       ((= c1 c2) (setq l (nconc l (list c1))))))
-    ;; rest?
-    (if (< i (length str))
-	(setq l (nconc l (append (substring str i) nil))))
-    l))
+  "Turn the `any' argument string STR into a list of characters.
+The original order is not preserved.  Ranges, \"A-Z\", become pairs, (?A . ?Z)."
+  (let ((decode-char
+         ;; Make sure raw bytes are decoded as such, to avoid confusion with
+         ;; U+0080..U+00FF.
+         (if (multibyte-string-p str)
+             #'identity
+           (lambda (c) (if (<= #x80 c #xff)
+                           (+ c #x3fff00)
+                         c))))
+        (len (length str))
+        (i 0)
+        (ret nil))
+    (if (= 0 len)
+        (error "String arg for Rx `any' must not be empty"))
+    (while (< i len)
+      (cond ((and (< i (- len 2))
+                  (= (aref str (+ i 1)) ?-))
+             ;; Range.
+             (let ((start (funcall decode-char (aref str i)))
+                   (end   (funcall decode-char (aref str (+ i 2)))))
+               (cond ((< start end) (push (cons start end) ret))
+                     ((= start end) (push start ret)))
+               (setq i (+ i 3))))
+            (t
+             ;; Single character.
+             (push (funcall decode-char (aref str i)) ret)
+             (setq i (+ i 1)))))
+    ret))
 
 
 (defun rx-check-any (arg)
