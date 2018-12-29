@@ -177,7 +177,7 @@ impl LispStringRef {
         other: LispStringRef,
         kind: equal_kind::Type,
         _depth: i32,
-        _ht: LispObject,
+        _ht: &mut LispObject,
     ) -> bool {
         self.len_chars() == other.len_chars()
             && self.len_bytes() == other.len_bytes()

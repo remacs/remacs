@@ -519,7 +519,7 @@ impl LispOverlayRef {
         other: LispOverlayRef,
         kind: equal_kind::Type,
         depth: i32,
-        ht: LispObject,
+        ht: &mut LispObject,
     ) -> bool {
         let overlays_equal = internal_equal(self.start, other.start, kind, depth + 1, ht)
             && internal_equal(self.end, other.end, kind, depth + 1, ht);

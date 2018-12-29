@@ -30,7 +30,13 @@ impl LispFloatRef {
         *self.as_data()
     }
 
-    pub fn equal(self, other: Self, _kind: equal_kind::Type, _depth: i32, _ht: LispObject) -> bool {
+    pub fn equal(
+        self,
+        other: Self,
+        _kind: equal_kind::Type,
+        _depth: i32,
+        _ht: &mut LispObject,
+    ) -> bool {
         let d1 = self.to_float();
         let d2 = other.to_float();
 

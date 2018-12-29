@@ -163,7 +163,7 @@ impl LispMiscRef {
         other: LispMiscRef,
         kind: equal_kind::Type,
         depth: i32,
-        ht: LispObject,
+        ht: &mut LispObject,
     ) -> bool {
         if self.get_type() != other.get_type() {
             false
@@ -570,14 +570,29 @@ impl LispObject {
     where
         LispObject: From<T>,
     {
-        internal_equal(self, other.into(), equal_kind::EQUAL_PLAIN, 0, Qnil)
+        let mut ht = Qnil;
+        self.equal_internal(other.into(), equal_kind::EQUAL_PLAIN, 0, &mut ht)
+    }
+
+    pub fn equal_internal<T>(
+        self,
+        other: T,
+        equal_kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispObject,
+    ) -> bool
+    where
+        LispObject: From<T>,
+    {
+        internal_equal(self, other.into(), equal_kind, depth, ht)
     }
 
     pub fn equal_no_quit<T>(self, other: T) -> bool
     where
         LispObject: From<T>,
     {
-        internal_equal(self, other.into(), equal_kind::EQUAL_NO_QUIT, 0, Qnil)
+        let mut ht = Qnil;
+        internal_equal(self, other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
     }
 
     pub fn is_function(self) -> bool {

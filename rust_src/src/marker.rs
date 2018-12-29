@@ -89,7 +89,7 @@ impl LispMarkerRef {
         other: LispMarkerRef,
         _kind: equal_kind::Type,
         _depth: i32,
-        _ht: LispObject,
+        _ht: &mut LispObject,
     ) -> bool {
         if self.buffer != other.buffer {
             false

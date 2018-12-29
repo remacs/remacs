@@ -284,7 +284,8 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
 // are not window configurations.
 #[no_mangle]
 pub extern "C" fn equal_no_quit(o1: LispObject, o2: LispObject) -> bool {
-    internal_equal(o1, o2, equal_kind::EQUAL_NO_QUIT, 0, Qnil)
+    let mut ht = Qnil;
+    internal_equal(o1, o2, equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
 }
 
 // Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
@@ -303,7 +304,7 @@ pub fn internal_equal(
     o2: LispObject,
     equal_kind: equal_kind::Type,
     depth: i32,
-    mut ht: LispObject,
+    ht: &mut LispObject,
 ) -> bool {
     if depth > 10 {
         assert!(equal_kind != equal_kind::EQUAL_NO_QUIT);
@@ -311,11 +312,11 @@ pub fn internal_equal(
             error!("Stack overflow in equal");
         }
         if ht.is_nil() {
-            ht = callN_raw!(Fmake_hash_table, QCtest, Qeq);
+            *ht = callN_raw!(Fmake_hash_table, QCtest, Qeq);
         }
         match o1.get_type() {
             Lisp_Type::Lisp_Cons | Lisp_Type::Lisp_Misc | Lisp_Type::Lisp_Vectorlike => {
-                let table: LispHashTableRef = ht.into();
+                let table: LispHashTableRef = (*ht).into();
                 match table.lookup(o1) {
                     Found(idx) => {
                         // `o1' was seen already.

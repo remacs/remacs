@@ -350,12 +350,13 @@ impl LispCons {
         other: LispCons,
         kind: equal_kind::Type,
         depth: i32,
-        ht: LispObject,
+        ht: &mut LispObject,
     ) -> bool {
-        let (circular_checks, item_depth, item_ht) = if kind == equal_kind::EQUAL_NO_QUIT {
-            (LispConsCircularChecks::off, 0, Qnil)
+        let (circular_checks, item_depth) = if kind == equal_kind::EQUAL_NO_QUIT {
+            *ht = Qnil;
+            (LispConsCircularChecks::off, 0)
         } else {
-            (LispConsCircularChecks::on, depth + 1, ht)
+            (LispConsCircularChecks::on, depth + 1)
         };
 
         let mut it1 = self.iter_tails(LispConsEndChecks::off, circular_checks);
@@ -365,7 +366,7 @@ impl LispCons {
                 (Some(cons1), Some(cons2)) => {
                     let (item1, tail1) = cons1.into();
                     let (item2, tail2) = cons2.into();
-                    if !internal_equal(item1, item2, kind, item_depth, item_ht) {
+                    if !internal_equal(item1, item2, kind, item_depth, ht) {
                         return false;
                     } else if tail1.eq(tail2) {
                         return true;
