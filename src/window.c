@@ -6965,6 +6965,12 @@ save_window_save (Lisp_Object window, struct Lisp_Vector *vector, ptrdiff_t i)
 
       if (BUFFERP (w->contents))
 	{
+	  Lisp_Object buffer_local_window_point_insertion_type
+	    = (buffer_local_value (Qwindow_point_insertion_type, w->contents));
+	  bool window_point_insertion_type
+	    = (!NILP (buffer_local_window_point_insertion_type)
+	       && !EQ (buffer_local_window_point_insertion_type, Qunbound));
+
 	  /* Save w's value of point in the window configuration.  If w
 	     is the selected window, then get the value of point from
 	     the buffer; pointm is garbage in the selected window.  */
@@ -6975,12 +6981,8 @@ save_window_save (Lisp_Object window, struct Lisp_Vector *vector, ptrdiff_t i)
 	  else
 	    p->pointm = Fcopy_marker (w->pointm, Qnil);
 	  p->old_pointm = Fcopy_marker (w->old_pointm, Qnil);
-	  XMARKER (p->pointm)->insertion_type
-	    = !NILP (buffer_local_value /* Don't signal error if void.  */
-		     (Qwindow_point_insertion_type, w->contents));
-	  XMARKER (p->old_pointm)->insertion_type
-	    = !NILP (buffer_local_value /* Don't signal error if void.  */
-		     (Qwindow_point_insertion_type, w->contents));
+	  XMARKER (p->pointm)->insertion_type = window_point_insertion_type;
+	  XMARKER (p->old_pointm)->insertion_type = window_point_insertion_type;
 
 	  p->start = Fcopy_marker (w->start, Qnil);
 	  p->start_at_line_beg = w->start_at_line_beg ? Qt : Qnil;

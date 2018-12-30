@@ -4278,7 +4278,7 @@ WINDOW must be a live window and defaults to the selected one."
 			(list (copy-marker start)
 			      (copy-marker
 			       ;; Preserve window-point-insertion-type
-			       ;; (Bug#12588).
+			       ;; (Bug#12855).
 			       point window-point-insertion-type)))))
 	  (set-window-prev-buffers
 	   window (cons entry (window-prev-buffers window)))))
@@ -6110,7 +6110,7 @@ element is BUFFER."
 	 (list 'other
 	       ;; A quadruple of WINDOW's buffer, start, point and height.
 	       (list (current-buffer) (window-start window)
-		     ;; Preserve window-point-insertion-type (Bug#12588).
+		     ;; Preserve window-point-insertion-type (Bug#12855).
 		     (copy-marker
 		      (window-point window) window-point-insertion-type)
 		     (if (window-combined-p window)
