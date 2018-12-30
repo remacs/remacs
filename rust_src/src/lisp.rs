@@ -644,6 +644,11 @@ impl LispObject {
         }
 
         match self.get_type() {
+            Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => self.eq(other),
+            Lisp_Type::Lisp_Symbol => {
+                let sym1 = self.as_symbol().unwrap();
+                sym1.equal(other.into(), equal_kind, depth, ht)
+            }
             Lisp_Type::Lisp_Cons => {
                 let cons1 = self.as_cons().unwrap();
                 cons1.equal(other.into(), equal_kind, depth, ht)
@@ -664,7 +669,6 @@ impl LispObject {
                 let v1 = self.as_vectorlike().unwrap();
                 v1.equal(other.as_vectorlike().unwrap(), equal_kind, depth, ht)
             }
-            _ => false,
         }
     }
 
