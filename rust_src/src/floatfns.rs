@@ -10,7 +10,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     libm,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     math::ArithOp,
     numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
     remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
@@ -29,9 +29,11 @@ impl LispFloatRef {
     fn to_float(self) -> EmacsDouble {
         *self.as_data()
     }
+}
 
-    pub fn equal(
-        self,
+impl LispStructuralEqual for LispFloatRef {
+    fn equal(
+        &self,
         other: Self,
         _kind: equal_kind::Type,
         _depth: i32,

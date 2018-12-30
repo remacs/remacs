@@ -18,7 +18,7 @@ use crate::{
     fileio::{expand_file_name, find_file_name_handler},
     frames::LispFrameRef,
     lisp::defsubr,
-    lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
+    lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists::{car, cdr, list, member},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     marker::{build_marker, marker_buffer, marker_position_lisp, set_marker_both, LispMarkerRef},
@@ -512,14 +512,10 @@ impl LispOverlayRef {
             current: Some(self),
         }
     }
+}
 
-    pub fn equal(
-        self,
-        other: Self,
-        kind: equal_kind::Type,
-        depth: i32,
-        ht: &mut LispObject,
-    ) -> bool {
+impl LispStructuralEqual for LispOverlayRef {
+    fn equal(&self, other: Self, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool {
         let overlays_equal = self.start.equal_internal(other.start, kind, depth + 1, ht)
             && self.end.equal_internal(other.end, kind, depth + 1, ht);
         overlays_equal && self.plist.equal_internal(other.plist, kind, depth + 1, ht)

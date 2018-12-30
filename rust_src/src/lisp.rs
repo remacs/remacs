@@ -537,6 +537,16 @@ pub fn is_autoload(function: LispObject) -> bool {
     }
 }
 
+pub trait LispStructuralEqual {
+    fn equal(
+        &self,
+        other: Self,
+        equal_kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispObject,
+    ) -> bool;
+}
+
 impl LispObject {
     pub fn is_nil(self) -> bool {
         self == Qnil

@@ -6,7 +6,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     remacs_sys::uniprop_table_uncompress,
     remacs_sys::{
         char_table_specials, equal_kind, pvec_type, Lisp_Char_Table, Lisp_Sub_Char_Table,
@@ -145,14 +145,10 @@ impl LispCharTableRef {
 
         val
     }
+}
 
-    pub fn equal(
-        self,
-        other: Self,
-        kind: equal_kind::Type,
-        depth: i32,
-        ht: &mut LispObject,
-    ) -> bool {
+impl LispStructuralEqual for LispCharTableRef {
+    fn equal(&self, other: Self, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool {
         let mut size1 = (unsafe { self.header.size }
             & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize) as usize;
         let size2 = (unsafe { other.header.size } & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)
@@ -226,14 +222,10 @@ impl LispSubCharTableAsciiRef {
         let m = self.0.min_char;
         self._get(chartab_idx(c, d, m))
     }
+}
 
-    pub fn equal(
-        self,
-        other: Self,
-        kind: equal_kind::Type,
-        depth: i32,
-        ht: &mut LispObject,
-    ) -> bool {
+impl LispStructuralEqual for LispSubCharTableAsciiRef {
+    fn equal(&self, other: Self, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool {
         self.0.equal(other.0, kind, depth, ht)
     }
 }
@@ -273,14 +265,10 @@ impl LispSubCharTableRef {
 
         val
     }
+}
 
-    pub fn equal(
-        self,
-        other: Self,
-        kind: equal_kind::Type,
-        depth: i32,
-        ht: &mut LispObject,
-    ) -> bool {
+impl LispStructuralEqual for LispSubCharTableRef {
+    fn equal(&self, other: Self, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool {
         let mut size1 =
             unsafe { self.header.size as usize & More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as usize };
         let size2 =

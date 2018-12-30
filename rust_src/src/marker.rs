@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     buffers::{current_buffer, LispBufferRef},
-    lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject},
+    lisp::{defsubr, ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual},
     multibyte::multibyte_chars_in_text,
     remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
     remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},
@@ -83,9 +83,11 @@ impl LispMarkerRef {
     pub fn set_next(mut self, m: *mut Lisp_Marker) {
         self.next = m;
     }
+}
 
-    pub fn equal(
-        self,
+impl LispStructuralEqual for LispMarkerRef {
+    fn equal(
+        &self,
         other: Self,
         _kind: equal_kind::Type,
         _depth: i32,

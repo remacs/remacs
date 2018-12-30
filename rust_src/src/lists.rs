@@ -9,7 +9,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::defsubr,
-    lisp::LispObject,
+    lisp::{LispObject, LispStructuralEqual},
     numbers::MOST_POSITIVE_FIXNUM,
     remacs_sys::{equal_kind, globals, EmacsInt, EmacsUint, Lisp_Cons, Lisp_Type},
     remacs_sys::{Fcons, CHECK_IMPURE},
@@ -344,13 +344,36 @@ impl LispCons {
         }
     }
 
-    pub fn equal(
+    pub fn length(self) -> usize {
+        let len = self
+            .0
+            .iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
+            .count();
+        if len > MOST_POSITIVE_FIXNUM as usize {
+            error!("List too long");
+        }
+        len
+    }
+
+    pub fn iter_tails(
         self,
-        other: Self,
-        kind: equal_kind::Type,
-        depth: i32,
-        ht: &mut LispObject,
-    ) -> bool {
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> TailsIter {
+        TailsIter::new(self.0, Qlistp, end_checks, circular_checks)
+    }
+
+    pub fn iter_cars(
+        self,
+        end_checks: LispConsEndChecks,
+        circular_checks: LispConsCircularChecks,
+    ) -> CarIter {
+        CarIter::new(TailsIter::new(self.0, Qlistp, end_checks, circular_checks))
+    }
+}
+
+impl LispStructuralEqual for LispCons {
+    fn equal(&self, other: Self, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool {
         let (circular_checks, item_depth) = if kind == equal_kind::EQUAL_NO_QUIT {
             (LispConsCircularChecks::off, 0)
         } else {
@@ -381,33 +404,6 @@ impl LispCons {
         }
 
         it1.rest().equal_internal(it2.rest(), kind, depth + 1, ht)
-    }
-
-    pub fn length(self) -> usize {
-        let len = self
-            .0
-            .iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
-            .count();
-        if len > MOST_POSITIVE_FIXNUM as usize {
-            error!("List too long");
-        }
-        len
-    }
-
-    pub fn iter_tails(
-        self,
-        end_checks: LispConsEndChecks,
-        circular_checks: LispConsCircularChecks,
-    ) -> TailsIter {
-        TailsIter::new(self.0, Qlistp, end_checks, circular_checks)
-    }
-
-    pub fn iter_cars(
-        self,
-        end_checks: LispConsEndChecks,
-        circular_checks: LispConsCircularChecks,
-    ) -> CarIter {
-        CarIter::new(TailsIter::new(self.0, Qlistp, end_checks, circular_checks))
     }
 }
 
