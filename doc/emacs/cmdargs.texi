@@ -1029,7 +1029,7 @@ specifies a window 164 columns wide, enough for two ordinary width
 windows side by side, and 55 lines tall.
 
   The default frame width is 80 characters and the default height is
-40 lines.  You can omit either the width or the height or both.  If
+36 lines.  You can omit either the width or the height or both.  If
 you start the geometry with an integer, Emacs interprets it as the
 width.  If you start with an @samp{x} followed by an integer, Emacs
 interprets it as the height.  Thus, @samp{81} specifies just the
