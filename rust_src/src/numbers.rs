@@ -7,9 +7,10 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::defsubr,
-    lisp::LispObject,
+    lisp::{LispObject, LispStructuralEqual},
     remacs_sys::{
-        EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK, USE_LSB_TAG,
+        equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,
+        USE_LSB_TAG,
     },
     remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump},
 };
@@ -163,6 +164,18 @@ impl LispNumber {
             LispNumber::Fixnum(v) => v,
             LispNumber::Float(v) => v as EmacsInt,
         }
+    }
+}
+
+impl LispStructuralEqual for EmacsInt {
+    fn equal(
+        &self,
+        other: Self,
+        _equal_kind: equal_kind::Type,
+        _depth: i32,
+        _ht: &mut LispObject,
+    ) -> bool {
+        *self == other
     }
 }
 

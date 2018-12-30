@@ -644,7 +644,10 @@ impl LispObject {
         }
 
         match self.get_type() {
-            Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => self.eq(other),
+            Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => {
+                let v = self.as_fixnum().unwrap();
+                v.equal(other.into(), equal_kind, depth, ht)
+            }
             Lisp_Type::Lisp_Symbol => {
                 let sym1 = self.as_symbol().unwrap();
                 sym1.equal(other.into(), equal_kind, depth, ht)
