@@ -8,7 +8,7 @@ use crate::{
     eval::{un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
-    lists::{assq, car, get, member, memq, put},
+    lists::{assq, car, get, member, memq, put, setcar},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     numbers::LispNumber,
     obarray::loadhist_attach,
@@ -360,6 +360,34 @@ pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
             }
         })
         .collect()
+}
+
+/// Return a copy of ALIST.
+/// This is an alist which represents the same mapping from objects to objects,
+/// but does not share the alist structure with ALIST.
+/// The objects mapped (cars and cdrs of elements of the alist)
+/// are shared, however.
+/// Elements of ALIST that are not conses are also shared.
+#[lisp_fn]
+pub fn copy_alist(mut alist: LispObject) -> LispObject {
+    if alist.is_nil() {
+        return alist;
+    }
+
+    let new_alist = unsafe { lisp_concat(1, &mut alist, Lisp_Type::Lisp_Cons, false) };
+
+    let mut tem = new_alist;
+    while tem.is_not_nil() {
+        debug_assert!(tem.is_cons());
+        let t = tem.as_cons().unwrap();
+        let car = t.car();
+
+        if let Some(c) = car.as_cons() {
+            setcar(t, LispObject::cons(c.car(), c.cdr()));
+        }
+        tem = t.cdr()
+    }
+    new_alist
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

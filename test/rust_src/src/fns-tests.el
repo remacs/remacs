@@ -11,3 +11,7 @@
   (should (floatp (car (load-average 42))))
   (should (floatp (car (load-average "asdf"))))
   (should (floatp (car (load-average '(gimme floats))))))
+
+(ert-deftest test-copy-alist ()
+  (let ((alist '(("foo" . "bar") ("foo" . "bar"))))
+    (should (equal alist (copy-alist alist)))))
