@@ -357,6 +357,9 @@ impl LispCons {
             (LispConsCircularChecks::on, depth + 1)
         };
 
+        // This is essentially a zip. However, one cons can end earlier than the other.
+        // Which requires that the iterators are available to call `rest()` on.
+        // Had `.zip()` been used this would not be possible as it consumes them.
         let mut it1 = self.iter_tails(LispConsEndChecks::off, circular_checks);
         let mut it2 = other.iter_tails(LispConsEndChecks::off, circular_checks);
         loop {
@@ -364,10 +367,12 @@ impl LispCons {
                 (Some(cons1), Some(cons2)) => {
                     let (item1, tail1) = cons1.into();
                     let (item2, tail2) = cons2.into();
-                    if !item1.equal_internal(item2, kind, item_depth, ht) {
+                    if item1.equal_internal(item2, kind, item_depth, ht) {
+                        if tail1.eq(tail2) {
+                            return true;
+                        }
+                    } else {
                         return false;
-                    } else if tail1.eq(tail2) {
-                        return true;
                     }
                 }
                 (None, None) => break,

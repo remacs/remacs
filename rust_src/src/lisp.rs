@@ -12,7 +12,10 @@ use libc::{c_char, c_void, intptr_t, uintptr_t};
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
-    hashtable::HashLookupResult::{Found, Missing},
+    hashtable::{
+        HashLookupResult::{Found, Missing},
+        LispHashTableRef,
+    },
     lists::{list, memq, CarIter, LispConsCircularChecks, LispConsEndChecks},
     process::LispProcessRef,
     remacs_sys::{build_string, make_float, Fmake_hash_table},
@@ -161,7 +164,7 @@ impl LispMiscRef {
 
     pub fn equal(
         self,
-        other: LispMiscRef,
+        other: Self,
         kind: equal_kind::Type,
         depth: i32,
         ht: &mut LispObject,
@@ -593,9 +596,6 @@ impl LispObject {
         depth: i32,
         ht: &mut LispObject,
     ) -> bool {
-        if depth > 1 {
-            println!("In internal equal: {}, {}, {:?}", equal_kind, depth, ht);
-        }
         if depth > 10 {
             assert!(equal_kind != equal_kind::EQUAL_NO_QUIT);
             if depth > 200 {
@@ -606,7 +606,7 @@ impl LispObject {
             }
             match self.get_type() {
                 Lisp_Type::Lisp_Cons | Lisp_Type::Lisp_Misc | Lisp_Type::Lisp_Vectorlike => {
-                    let table = ht.as_hash_table_or_error();
+                    let table: LispHashTableRef = (*ht).into();
                     match table.lookup(self) {
                         Found(idx) => {
                             // `self' was seen already.
@@ -640,11 +640,11 @@ impl LispObject {
             }
             Lisp_Type::Lisp_Float => {
                 let d1 = self.as_floatref().unwrap();
-                d1.equal(other.into(), equal_kind, depth, ht)
+                d1.equal(other.as_floatref().unwrap(), equal_kind, depth, ht)
             }
             Lisp_Type::Lisp_Misc => {
                 let m1 = self.as_misc().unwrap();
-                m1.equal(other.into(), equal_kind, depth, ht)
+                m1.equal(other.as_misc().unwrap(), equal_kind, depth, ht)
             }
             Lisp_Type::Lisp_String => {
                 let s1 = self.as_string().unwrap();
@@ -652,7 +652,7 @@ impl LispObject {
             }
             Lisp_Type::Lisp_Vectorlike => {
                 let v1 = self.as_vectorlike().unwrap();
-                v1.equal(other.into(), equal_kind, depth, ht)
+                v1.equal(other.as_vectorlike().unwrap(), equal_kind, depth, ht)
             }
             _ => false,
         }

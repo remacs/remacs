@@ -126,12 +126,13 @@ impl Debug for LispVectorlikeRef {
 }
 
 impl LispVectorlikeRef {
-    pub fn equal<T>(self, other: T, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool
-    where
-        Self: From<T>,
-    {
-        let other: Self = other.into();
-
+    pub fn equal(
+        self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispObject,
+    ) -> bool {
         // Pseudovectors have the type encoded in the size field, so this test
         // actually checks that the objects have the same type as well as the
         // same size.
@@ -502,18 +503,13 @@ impl LispBoolVecRef {
         }
     }
 
-    pub fn equal<T>(
+    pub fn equal(
         self,
-        other: T,
+        other: Self,
         _kind: equal_kind::Type,
         _depth: i32,
         _ht: &mut LispObject,
-    ) -> bool
-    where
-        Self: From<T>,
-    {
-        let other: Self = other.into();
-
+    ) -> bool {
         let bits_per = BOOL_VECTOR_BITS_PER_CHAR as usize;
         // Bool vectors are compared much like strings.
         self.len() == other.len()

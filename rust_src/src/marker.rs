@@ -86,7 +86,7 @@ impl LispMarkerRef {
 
     pub fn equal(
         self,
-        other: LispMarkerRef,
+        other: Self,
         _kind: equal_kind::Type,
         _depth: i32,
         _ht: &mut LispObject,
