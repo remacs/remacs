@@ -190,14 +190,15 @@ impl LispStructuralEqual for LispCharTableRef {
             return false;
         }
 
-        if (0..size1).any(|i| {
+        let all_equal = (0..size1).all(|i| {
             let v1 = self.contents[i];
             let v2 = other.contents[i];
-            !v1.equal_internal(v2, kind, depth + 1, ht)
-        }) {
+            v1.equal_internal(v2, kind, depth + 1, ht)
+        });
+        if !all_equal {
             return false;
         }
-        if extras <= 0 {
+        if extras == 0 {
             true
         } else {
             let self_extras = unsafe { self.extras.as_slice(extras) };
