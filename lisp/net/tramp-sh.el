@@ -4610,7 +4610,8 @@ Goes through the list `tramp-inline-compress-commands'."
 
 (defun tramp-compute-multi-hops (vec)
   "Expands VEC according to `tramp-default-proxies-alist'."
-  (let ((target-alist `(,vec))
+  (let ((saved-tdpa tramp-default-proxies-alist)
+	(target-alist `(,vec))
 	(hops (or (tramp-file-name-hop vec) ""))
 	(item vec)
 	choices proxy)
@@ -4676,9 +4677,9 @@ Goes through the list `tramp-inline-compress-commands'."
       (while (setq item (pop choices))
 	(when (or (not (tramp-get-method-parameter item 'tramp-login-program))
 		  (tramp-get-method-parameter item 'tramp-copy-program))
-	  (tramp-error
-	   vec 'file-error
-	   "Method `%s' is not supported for multi-hops."
+	  (setq tramp-default-proxies-alist saved-tdpa)
+	  (tramp-user-error
+	   vec "Method `%s' is not supported for multi-hops."
 	   (tramp-file-name-method item)))))
 
     ;; Some methods ("su", "sg", "sudo", "doas", "ksu") do not use the
@@ -4696,8 +4697,9 @@ Goes through the list `tramp-inline-compress-commands'."
 		'("%h") (tramp-get-method-parameter item 'tramp-login-args))
 	       ;; The host name must match previous hop.
 	       (string-match-p previous-host host))
+	    (setq tramp-default-proxies-alist saved-tdpa)
 	    (tramp-user-error
-	     item "Host name `%s' does not match `%s'" host previous-host))
+	     vec "Host name `%s' does not match `%s'" host previous-host))
 	  (setq previous-host (concat "^" (regexp-quote host) "$")))))
 
     ;; Result.
