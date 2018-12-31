@@ -7182,9 +7182,7 @@ that allows the selected frame)."
           (or (cdr (assq 'frame-predicate alist))
               (lambda (frame)
                 (and (not (eq frame (selected-frame)))
-                     (not (window-dedicated-p
-                           (or (get-lru-window frame)
-                               (frame-first-window frame))))))))
+                     (get-lru-window frame)))))
          (frame (car (filtered-frame-list predicate)))
          (window
           (and frame

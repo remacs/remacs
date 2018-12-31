@@ -2746,7 +2746,7 @@ Return an alist of (TYPE MATCH)."
   "A widget which groups other widgets inside."
   :convert-widget 'widget-types-convert-widget
   :copy 'widget-types-copy
-  :format "%v"
+  :format ":\n%v"
   :value-create 'widget-group-value-create
   :value-get 'widget-editable-list-value-get
   :default-get 'widget-group-default-get

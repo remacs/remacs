@@ -52,6 +52,7 @@ often cause crashes.  Set it to nil if you really need those fonts.
 * Changes in Specialized Modes and Packages in Emacs 26.2
 
 ** Dired
+
 +++
 *** The 'Z' command on a directory name compresses all of its files.
 It produces a compressed '.tar.gz' archive with all the files in the
@@ -171,7 +172,8 @@ changed in Emacs 26.1, in that it didn't consider text inside comments
 and strings as a potential list.  This change is now reverted, and
 'thing-at-point' behaves like it did before Emacs 26.1.
 
-To cater to use cases where comments and strings are to be ignored
+---
+** To cater to use cases where comments and strings are to be ignored
 when looking for a list, the function 'list-at-point' now takes an
 optional argument to do so.
 
