@@ -27991,7 +27991,7 @@ calc_line_height_property (struct it *it, Lisp_Object val, struct font *font,
   /* FIXME: Check for overflow in multiplication or conversion.  */
   if (FLOATP (val))
     height = (int)(XFLOAT_DATA (val) * height);
-  else
+  else if (INTEGERP (val))
     {
       intmax_t v;
       if (integer_to_intmax (val, &v))
