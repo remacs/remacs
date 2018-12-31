@@ -2778,13 +2778,14 @@ proxy @samp{bird@@bastion} to a remote file on @samp{you@@remotehost}:
 
 Each involved method must be an inline method (@pxref{Inline methods}).
 
-Proxies can take patterns @code{%h} or @code{%u}.
-
 @value{tramp} adds the ad-hoc definitions on the fly to
-@code{tramp-default-proxies-alist} and is available for re-use
-during that Emacs session.  Subsequent @value{tramp} connections to
-the same remote host can then use the shortcut form:
-@samp{@trampfn{ssh,you@@remotehost,/path}}.
+@code{tramp-default-proxies-alist} and is available for re-use during
+that Emacs session.  Subsequent @value{tramp} connections to the same
+remote host can then use the shortcut form:
+@samp{@trampfn{ssh,you@@remotehost,/path}}.  Ad-hoc definitions are
+removed from @code{tramp-default-proxies-alist} via the command
+@kbd{M-x tramp-cleanup-all-connections @key{RET}} (@pxref{Cleanup
+remote connections}).
 
 @defopt tramp-save-ad-hoc-proxies
 For ad-hoc definitions to be saved automatically in
@@ -3175,13 +3176,15 @@ as in @code{tramp-cleanup-connection}.
 
 @deffn Command tramp-cleanup-all-connections
 Flushes all active remote connection objects, the same as in
-@code{tramp-cleanup-connection}.
+@code{tramp-cleanup-connection}.  This command removes also ad-hoc
+proxy definitions (@pxref{Ad-hoc multi-hops}).
+
 @end deffn
 
 @deffn Command tramp-cleanup-all-buffers
 Just as for @code{tramp-cleanup-all-connections}, all remote
-connections are cleaned up in addition to killing buffers related to
-that remote connection.
+connections and ad-hoc proxy definition are cleaned up in addition to
+killing buffers related to that remote connection.
 @end deffn
 
 
