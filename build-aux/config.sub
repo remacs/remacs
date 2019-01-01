@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2019 Free Software Foundation, Inc.
 
-timestamp='2018-12-16'
+timestamp='2019-01-01'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -1361,7 +1361,7 @@ case $os in
 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
-	     | midnightbsd* | amdhsa* | unleashed*)
+	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
 	# Remember, each alternative MUST END IN *, to match a version number.
 		;;
 	qnx*)
