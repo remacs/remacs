@@ -6112,7 +6112,10 @@ if ARG is `toggle'; disable the mode otherwise.
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/cursor-sensor.el
 
-(defvar cursor-sensor-inhibit nil)
+(defvar cursor-sensor-inhibit nil "\
+When non-nil, suspend `cursor-sensor-mode' and `cursor-intangible-mode'.
+By convention, this is a list of symbols where each symbol stands for the
+\"cause\" of the suspension.")
 
 (autoload 'cursor-intangible-mode "cursor-sensor" "\
 Keep cursor outside of any `cursor-intangible' text property.
@@ -13089,7 +13092,7 @@ to get the effect of a C-q.
 
 ;;;### (autoloads nil "flymake" "progmodes/flymake.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/flymake.el
-(push (purecopy '(flymake 1 0)) package--builtin-versions)
+(push (purecopy '(flymake 1 0 3)) package--builtin-versions)
 
 (autoload 'flymake-log "flymake" "\
 Log, at level LEVEL, the message MSG formatted with ARGS.
@@ -13106,7 +13109,12 @@ TYPE is a key to symbol and TEXT is a description of the problem
 detected in this region.  DATA is any object that the caller
 wishes to attach to the created diagnostic for later retrieval.
 
-\(fn BUFFER BEG END TYPE TEXT &optional DATA)" nil nil)
+OVERLAY-PROPERTIES is an an alist of properties attached to the
+created diagnostic, overriding the default properties and any
+properties of `flymake-overlay-control' of the diagnostic's
+type.
+
+\(fn BUFFER BEG END TYPE TEXT &optional DATA OVERLAY-PROPERTIES)" nil nil)
 
 (autoload 'flymake-diagnostics "flymake" "\
 Get Flymake diagnostics in region determined by BEG and END.
@@ -19260,7 +19268,7 @@ locally, like so:
 
 ;;;### (autoloads nil "jsonrpc" "jsonrpc.el" (0 0 0 0))
 ;;; Generated autoloads from jsonrpc.el
-(push (purecopy '(jsonrpc 1 0 6)) package--builtin-versions)
+(push (purecopy '(jsonrpc 1 0 7)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "jsonrpc" '("jrpc-default-request-timeout" "jsonrpc-")))
 
@@ -20658,7 +20666,7 @@ Default bookmark handler for Man buffers.
 ;;; Generated autoloads from emacs-lisp/map.el
 (push (purecopy '(map 1 2)) package--builtin-versions)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "map" '("map")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "map" '("map-")))
 
 ;;;***
 
@@ -30271,7 +30279,7 @@ Like `mail' command, but display mail buffer in another frame.
 
 ;;;### (autoloads nil "seq" "emacs-lisp/seq.el" (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/seq.el
-(push (purecopy '(seq 2 20)) package--builtin-versions)
+(push (purecopy '(seq 2 21)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "seq" '("seq-")))
 
@@ -34747,7 +34755,7 @@ the output buffer or changing the window configuration.
 
 ;;;### (autoloads nil "tramp" "net/tramp.el" (0 0 0 0))
 ;;; Generated autoloads from net/tramp.el
-(push (purecopy '(tramp 2 4 1 -1)) package--builtin-versions)
+(push (purecopy '(tramp 2 4 1)) package--builtin-versions)
 
 (defvar tramp-mode t "\
 Whether Tramp is enabled.
@@ -34861,11 +34869,6 @@ Add archive file name handler to `file-name-handler-alist'." (when tramp-archive
 ;;;### (autoloads nil "tramp-ftp" "net/tramp-ftp.el" (0 0 0 0))
 ;;; Generated autoloads from net/tramp-ftp.el
 
-(autoload 'tramp-ftp-enable-ange-ftp "tramp-ftp" "\
-Reenable Ange-FTP, when Tramp is unloaded.
-
-\(fn)" nil nil)
-
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-ftp" '("tramp-")))
 
 ;;;***
@@ -34896,6 +34899,14 @@ Reenable Ange-FTP, when Tramp is unloaded.
 ;;; Generated autoloads from net/tramp-smb.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-smb" '("tramp-smb-")))
+
+;;;***
+
+;;;### (autoloads nil "tramp-sudoedit" "net/tramp-sudoedit.el" (0
+;;;;;;  0 0 0))
+;;; Generated autoloads from net/tramp-sudoedit.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "tramp-sudoedit" '("tramp-sudoedit-")))
 
 ;;;***
 
@@ -36260,7 +36271,12 @@ first backend that could register the file is used.
 \(fn &optional VC-FILESET COMMENT)" t nil)
 
 (autoload 'vc-version-diff "vc" "\
-Report diffs between revisions of the fileset in the repository history.
+Report diffs between REV1 and REV2 revisions of the fileset.
+
+\(fn FILES REV1 REV2)" t nil)
+
+(autoload 'vc-root-version-diff "vc" "\
+Report diffs between REV1 and REV2 revisions of the whole tree.
 
 \(fn FILES REV1 REV2)" t nil)
 
