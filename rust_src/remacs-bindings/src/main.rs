@@ -31,6 +31,14 @@ fn integer_max_constant(len: usize) -> &'static str {
     }
 }
 
+macro_rules! bindgen_config {
+    ($obj:ident, $($fn_name:ident( $($arg:expr),+ )),+) => {
+        $obj$($(
+            .$fn_name($arg)
+        )+)+
+    }
+}
+
 #[derive(Eq, PartialEq)]
 enum ParseState {
     ReadingGlobals,
@@ -234,70 +242,82 @@ fn run_bindgen(path: &str) {
                     builder.clang_arg("-Ic:\\Program Files\\LLVM\\lib\\clang\\6.0.0\\include");
             }
 
-            builder = builder
-                .clang_arg("-Demacs")
-                .header("../rust_src/wrapper.h")
-                .generate_inline_functions(true)
-                .derive_default(true)
-                .ctypes_prefix("::libc")
-                // we define these ourselves, for various reasons
-                .blacklist_item("Lisp_Object")
-                .blacklist_item("emacs_globals")
-                .blacklist_item("Q.*") // symbols like Qnil and so on
-                .blacklist_item("USE_LSB_TAG")
-                .blacklist_item("VALMASK")
-                .blacklist_item("PSEUDOVECTOR_FLAG")
-                // these two are found by bindgen on mac, but not linux
-                .blacklist_item("EMACS_INT_MAX")
-                .blacklist_item("VAL_MAX")
-                // this is wallpaper for a bug in bindgen, we don't lose much by it
-                // https://github.com/servo/rust-bindgen/issues/687
-                .blacklist_item("BOOL_VECTOR_BITS_PER_CHAR")
-                // this is wallpaper for a function argument that shadows a static of the same name
-                // https://github.com/servo/rust-bindgen/issues/804
-                .blacklist_item("face_change")
-                // these never return, and bindgen doesn't yet detect that, so we will do them manually
-                .blacklist_item("error")
-                .blacklist_item("circular_list")
-                .blacklist_item("wrong_type_argument")
-                .blacklist_item("nsberror")
-                .blacklist_item("emacs_abort")
-                .blacklist_item("Fsignal")
-                .blacklist_item("memory_full")
-                .blacklist_item("wrong_choice")
-                .blacklist_item("wrong_range")
-                // these are defined in data.rs
-                .blacklist_item("Lisp_Fwd")
-                .blacklist_item("Lisp_.*fwd")
-                // these are defined in remacs_lib
-                .blacklist_item("timespec")
-                .blacklist_item("current_timespec")
-                .blacklist_item("timex")
-                .blacklist_item("clock_adjtime")
-                // bindgen fails to generate this one correctly; it's hard
-                // https://github.com/rust-lang-nursery/rust-bindgen/issues/1318
-                .blacklist_item("max_align_t")
+            builder = bindgen_config!(
+                builder,
+                clang_arg("-Demacs"),
+                header("../rust_src/wrapper.h"),
+                generate_inline_functions(true),
+                derive_default(true),
+                ctypes_prefix("::libc"),
                 // by default we want C enums to be converted into a Rust module with constants in it
-                .default_enum_style(bindgen::EnumVariation::ModuleConsts)
+                default_enum_style(bindgen::EnumVariation::ModuleConsts),
+                // we define these ourselves, for various reasons
+                blacklist_item(
+                    "Lisp_Object",
+                    "emacs_globals",
+                    "Q.*", // symbols like Qnil and so on
+                    "USE_LSB_TAG",
+                    "VALMASK",
+                    "PSEUDOVECTOR_FLAG",
+                    // these two are found by bindgen on mac, but not linux
+                    "EMACS_INT_MAX",
+                    "VAL_MAX",
+                    // this is wallpaper for a bug in bindgen, we don't lose much by it
+                    // https://github.com/servo/rust-bindgen/issues/687
+                    "BOOL_VECTOR_BITS_PER_CHAR",
+                    // this is wallpaper for a function argument that shadows a static of the same name
+                    // https://github.com/servo/rust-bindgen/issues/804
+                    "face_change",
+                    // these never return, and bindgen doesn't yet detect that, so we will do them manually
+                    "error",
+                    "circular_list",
+                    "wrong_type_argument",
+                    "nsberror",
+                    "emacs_abort",
+                    "Fsignal",
+                    "memory_full",
+                    "wrong_choice",
+                    "wrong_range",
+                    // these are defined in data.rs
+                    "Lisp_Fwd",
+                    "Lisp_.*fwd",
+                    // these are defined in remacs_lib
+                    "timespec",
+                    "current_timespec",
+                    "timex",
+                    "clock_adjtime",
+                    // bindgen fails to generate this one correctly; it's hard
+                    // https://github.com/rust-lang-nursery/rust-bindgen/issues/1318
+                    "max_align_t"
+                ),
                 // enums with only one variant are better as simple constants
-                .constified_enum("EMACS_INT_WIDTH")
-                .constified_enum("BOOL_VECTOR_BITS_PER_CHAR")
-                .constified_enum("BITS_PER_BITS_WORD")
+                constified_enum(
+                    "EMACS_INT_WIDTH",
+                    "BOOL_VECTOR_BITS_PER_CHAR",
+                    "BITS_PER_BITS_WORD"
+                ),
                 // TODO(db48x): verify that these enums meet Rust's requirements (primarily that they have no duplicate variants)
-                .rustified_enum("Lisp_Misc_Type")
-                .rustified_enum("Lisp_Type")
-                .rustified_enum("case_action")
-                .rustified_enum("face_id")
-                .rustified_enum("output_method")
-                .rustified_enum("pvec_type")
-                .rustified_enum("symbol_redirect")
-                .rustified_enum("syntaxcode");
+                rustified_enum(
+                    "Lisp_Misc_Type",
+                    "Lisp_Type",
+                    "case_action",
+                    "face_id",
+                    "output_method",
+                    "pvec_type",
+                    "symbol_redirect",
+                    "syntaxcode"
+                )
+            );
 
             if cfg!(target_os = "windows") {
-                builder = builder
-                    .rustified_enum("_HEAP_INFORMATION_CLASS")
-                    .rustified_enum("SECURITY_IMPERSONATION_LEVEL")
-                    .rustified_enum("TOKEN_INFORMATION_CLASS");
+                builder = bindgen_config!(
+                    builder,
+                    rustified_enum(
+                        "_HEAP_INFORMATION_CLASS",
+                        "SECURITY_IMPERSONATION_LEVEL",
+                        "TOKEN_INFORMATION_CLASS"
+                    )
+                );
             }
 
             let bindings = builder
