@@ -6022,7 +6022,10 @@ Activates the region if needed.  Only lasts until the region is deactivated.
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/cursor-sensor.el
 
-(defvar cursor-sensor-inhibit nil)
+(defvar cursor-sensor-inhibit nil "\
+When non-nil, suspend `cursor-sensor-mode' and `cursor-intangible-mode'.
+By convention, this is a list of symbols where each symbol stands for the
+\"cause\" of the suspension.")
 
 (autoload 'cursor-intangible-mode "cursor-sensor" "\
 Keep cursor outside of any `cursor-intangible' text property.
