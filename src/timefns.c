@@ -44,7 +44,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_TZALLOC_BUG false
 #endif
 
-#define TM_YEAR_BASE 1900
+enum { TM_YEAR_BASE = 1900 };
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -1336,12 +1336,22 @@ usage: (decode-time &optional TIME ZONE)  */)
 
   if (!tm)
     time_error (localtime_errno);
-  if (! (MOST_NEGATIVE_FIXNUM - TM_YEAR_BASE <= local_tm.tm_year
-	 && local_tm.tm_year <= MOST_POSITIVE_FIXNUM - TM_YEAR_BASE))
-    time_overflow ();
 
-  /* Avoid overflow when INT_MAX < EMACS_INT_MAX.  */
-  EMACS_INT tm_year_base = TM_YEAR_BASE;
+  Lisp_Object year;
+  if (FASTER_TIMEFNS
+      && MOST_NEGATIVE_FIXNUM - TM_YEAR_BASE <= local_tm.tm_year
+      && local_tm.tm_year <= MOST_POSITIVE_FIXNUM - TM_YEAR_BASE)
+    {
+      /* Avoid overflow when INT_MAX - TM_YEAR_BASE < local_tm.tm_year.  */
+      EMACS_INT tm_year_base = TM_YEAR_BASE;
+      year = make_fixnum (local_tm.tm_year + tm_year_base);
+    }
+  else
+    {
+      mpz_set_si (mpz[0], local_tm.tm_year);
+      mpz_add_ui (mpz[0], mpz[0], TM_YEAR_BASE);
+      year = make_integer_mpz ();
+    }
 
   return CALLN (Flist,
 		make_fixnum (local_tm.tm_sec),
@@ -1349,7 +1359,7 @@ usage: (decode-time &optional TIME ZONE)  */)
 		make_fixnum (local_tm.tm_hour),
 		make_fixnum (local_tm.tm_mday),
 		make_fixnum (local_tm.tm_mon + 1),
-		make_fixnum (local_tm.tm_year + tm_year_base),
+		year,
 		make_fixnum (local_tm.tm_wday),
 		(local_tm.tm_isdst < 0 ? make_fixnum (-1)
 		 : local_tm.tm_isdst == 0 ? Qnil : Qt),
@@ -1360,7 +1370,7 @@ usage: (decode-time &optional TIME ZONE)  */)
 		 : Qnil));
 }
 
-/* Return OBJ - OFFSET, checking that OBJ is a valid fixnum and that
+/* Return OBJ - OFFSET, checking that OBJ is a valid integer and that
    the result is representable as an int.  0 <= OFFSET <= TM_YEAR_BASE.  */
 static int
 check_tm_member (Lisp_Object obj, int offset)
