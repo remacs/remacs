@@ -1,6 +1,6 @@
 /* Low-level bidirectional buffer/string-scanning functions for GNU Emacs.
 
-Copyright (C) 2000-2001, 2004-2005, 2009-2018 Free Software Foundation, Inc.
+Copyright (C) 2000-2001, 2004-2005, 2009-2019 Free Software Foundation, Inc.
 
 Author: Eli Zaretskii <eliz@gnu.org>
 
