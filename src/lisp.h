@@ -2683,13 +2683,6 @@ XFLOAT_DATA (Lisp_Object f)
 #define IEEE_FLOATING_POINT (FLT_RADIX == 2 && FLT_MANT_DIG == 24 \
 			     && FLT_MIN_EXP == -125 && FLT_MAX_EXP == 128)
 
-/* A character, declared with the following typedef, is a member
-   of some character set associated with the current buffer.  */
-#ifndef _UCHAR_T  /* Protect against something in ctab.h on AIX.  */
-#define _UCHAR_T
-typedef unsigned char UCHAR;
-#endif
-
 /* Meanings of slots in a Lisp_Compiled:  */
 
 enum Lisp_Compiled
