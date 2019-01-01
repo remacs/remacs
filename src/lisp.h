@@ -3592,9 +3592,10 @@ extern void mark_stack (char *, char *);
 extern void flush_stack_call_func (void (*func) (void *arg), void *arg);
 extern const char *pending_malloc_warning;
 extern Lisp_Object zero_vector;
-extern EMACS_INT consing_since_gc;
-extern EMACS_INT gc_relative_threshold;
-extern EMACS_INT memory_full_cons_threshold;
+typedef uintptr_t byte_ct;  /* System byte counts reported by GC.  */
+extern byte_ct consing_since_gc;
+extern byte_ct gc_relative_threshold;
+extern byte_ct memory_full_cons_threshold;
 extern Lisp_Object list1 (Lisp_Object);
 extern Lisp_Object list2 (Lisp_Object, Lisp_Object);
 extern Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);

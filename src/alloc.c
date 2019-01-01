@@ -231,26 +231,31 @@ struct emacs_globals globals;
 
 /* Number of bytes of consing done since the last gc.  */
 
-EMACS_INT consing_since_gc;
+byte_ct consing_since_gc;
 
 /* Similar minimum, computed from Vgc_cons_percentage.  */
 
-EMACS_INT gc_relative_threshold;
+byte_ct gc_relative_threshold;
 
 /* Minimum number of bytes of consing since GC before next GC,
    when memory is full.  */
 
-EMACS_INT memory_full_cons_threshold;
+byte_ct memory_full_cons_threshold;
 
 /* True during GC.  */
 
 bool gc_in_progress;
 
+/* Type of object counts reported by GC.  Unlike byte_ct, this can be
+   signed, e.g., it is less than 2**31 on a typical 32-bit machine.  */
+
+typedef intptr_t object_ct;
+
 /* Number of live and free conses etc.  */
 
-static EMACS_INT total_conses, total_symbols, total_buffers;
-static EMACS_INT total_free_conses, total_free_symbols;
-static EMACS_INT total_free_floats, total_floats;
+static object_ct total_conses, total_symbols, total_buffers;
+static object_ct total_free_conses, total_free_symbols;
+static object_ct total_free_floats, total_floats;
 
 /* Points to memory space allocated as "spare", to be freed if we run
    out of memory.  We keep one large block, four cons-blocks, and
@@ -1515,7 +1520,7 @@ static int interval_block_index = INTERVAL_BLOCK_SIZE;
 
 /* Number of free and live intervals.  */
 
-static EMACS_INT total_free_intervals, total_intervals;
+static object_ct total_free_intervals, total_intervals;
 
 /* List of free intervals.  */
 
@@ -1731,11 +1736,11 @@ static struct Lisp_String *string_free_list;
 
 /* Number of live and free Lisp_Strings.  */
 
-static EMACS_INT total_strings, total_free_strings;
+static object_ct total_strings, total_free_strings;
 
 /* Number of bytes used by live strings.  */
 
-static EMACS_INT total_string_bytes;
+static byte_ct total_string_bytes;
 
 /* Given a pointer to a Lisp_String S which is on the free-list
    string_free_list, return a pointer to its successor in the
@@ -3039,11 +3044,11 @@ Lisp_Object zero_vector;
 
 /* Number of live vectors.  */
 
-static EMACS_INT total_vectors;
+static object_ct total_vectors;
 
 /* Total size of live and free vectors, in Lisp_Object units.  */
 
-static EMACS_INT total_vector_slots, total_free_vector_slots;
+static object_ct total_vector_slots, total_free_vector_slots;
 
 /* Common shortcut to setup vector on a free list.  */
 
@@ -5556,28 +5561,29 @@ inhibit_garbage_collection (void)
   return count;
 }
 
-/* Used to avoid possible overflows when
-   converting from C to Lisp integers.  */
+/* Return the number of bytes in N objects each of size S, guarding
+   against overflow if size_t is narrower than byte_ct.  */
 
-static Lisp_Object
-bounded_number (EMACS_INT number)
+static byte_ct
+object_bytes (object_ct n, size_t s)
 {
-  return make_fixnum (min (MOST_POSITIVE_FIXNUM, number));
+  byte_ct b = s;
+  return n * b;
 }
 
 /* Calculate total bytes of live objects.  */
 
-static size_t
+static byte_ct
 total_bytes_of_live_objects (void)
 {
-  size_t tot = 0;
-  tot += total_conses  * sizeof (struct Lisp_Cons);
-  tot += total_symbols * sizeof (struct Lisp_Symbol);
+  byte_ct tot = 0;
+  tot += object_bytes (total_conses, sizeof (struct Lisp_Cons));
+  tot += object_bytes (total_symbols, sizeof (struct Lisp_Symbol));
   tot += total_string_bytes;
-  tot += total_vector_slots * word_size;
-  tot += total_floats  * sizeof (struct Lisp_Float);
-  tot += total_intervals * sizeof (struct interval);
-  tot += total_strings * sizeof (struct Lisp_String);
+  tot += object_bytes (total_vector_slots, word_size);
+  tot += object_bytes (total_floats, sizeof (struct Lisp_Float));
+  tot += object_bytes (total_intervals, sizeof (struct interval));
+  tot += object_bytes (total_strings, sizeof (struct Lisp_String));
   return tot;
 }
 
@@ -5743,7 +5749,7 @@ garbage_collect_1 (void *end)
   ptrdiff_t count = SPECPDL_INDEX ();
   struct timespec start;
   Lisp_Object retval = Qnil;
-  size_t tot_before = 0;
+  byte_ct tot_before = 0;
 
   /* Can't GC if pure storage overflowed because we can't determine
      if something is a pure object or not.  */
@@ -5898,10 +5904,10 @@ garbage_collect_1 (void *end)
       tot *= XFLOAT_DATA (Vgc_cons_percentage);
       if (0 < tot)
 	{
-	  if (tot < TYPE_MAXIMUM (EMACS_INT))
+	  if (tot < UINTPTR_MAX)
 	    gc_relative_threshold = tot;
 	  else
-	    gc_relative_threshold = TYPE_MAXIMUM (EMACS_INT);
+	    gc_relative_threshold = UINTPTR_MAX;
 	}
     }
 
@@ -5917,35 +5923,35 @@ garbage_collect_1 (void *end)
 
   Lisp_Object total[] = {
     list4 (Qconses, make_fixnum (sizeof (struct Lisp_Cons)),
-	   bounded_number (total_conses),
-	   bounded_number (total_free_conses)),
+	   make_int (total_conses),
+	   make_int (total_free_conses)),
     list4 (Qsymbols, make_fixnum (sizeof (struct Lisp_Symbol)),
-	   bounded_number (total_symbols),
-	   bounded_number (total_free_symbols)),
+	   make_int (total_symbols),
+	   make_int (total_free_symbols)),
     list4 (Qstrings, make_fixnum (sizeof (struct Lisp_String)),
-	   bounded_number (total_strings),
-	   bounded_number (total_free_strings)),
+	   make_int (total_strings),
+	   make_int (total_free_strings)),
     list3 (Qstring_bytes, make_fixnum (1),
-	   bounded_number (total_string_bytes)),
+	   make_int (total_string_bytes)),
     list3 (Qvectors,
 	   make_fixnum (header_size + sizeof (Lisp_Object)),
-	   bounded_number (total_vectors)),
+	   make_int (total_vectors)),
     list4 (Qvector_slots, make_fixnum (word_size),
-	   bounded_number (total_vector_slots),
-	   bounded_number (total_free_vector_slots)),
+	   make_int (total_vector_slots),
+	   make_int (total_free_vector_slots)),
     list4 (Qfloats, make_fixnum (sizeof (struct Lisp_Float)),
-	   bounded_number (total_floats),
-	   bounded_number (total_free_floats)),
+	   make_int (total_floats),
+	   make_int (total_free_floats)),
     list4 (Qintervals, make_fixnum (sizeof (struct interval)),
-	   bounded_number (total_intervals),
-	   bounded_number (total_free_intervals)),
+	   make_int (total_intervals),
+	   make_int (total_free_intervals)),
     list3 (Qbuffers, make_fixnum (sizeof (struct buffer)),
-	   bounded_number (total_buffers)),
+	   make_int (total_buffers)),
 
 #ifdef DOUG_LEA_MALLOC
     list4 (Qheap, make_fixnum (1024),
-	   bounded_number ((mallinfo ().uordblks + 1023) >> 10),
-	   bounded_number ((mallinfo ().fordblks + 1023) >> 10)),
+	   make_int ((mallinfo ().uordblks + 1023) >> 10),
+	   make_int ((mallinfo ().fordblks + 1023) >> 10)),
 #endif
   };
   retval = CALLMANY (Flist, total);
@@ -5973,11 +5979,9 @@ garbage_collect_1 (void *end)
   /* Collect profiling data.  */
   if (profiler_memory_running)
     {
-      size_t swept = 0;
-      size_t tot_after = total_bytes_of_live_objects ();
-      if (tot_before > tot_after)
-	swept = tot_before - tot_after;
-      malloc_probe (swept);
+      byte_ct tot_after = total_bytes_of_live_objects ();
+      byte_ct swept = tot_before <= tot_after ? 0 : tot_before - tot_after;
+      malloc_probe (min (swept, SIZE_MAX));
     }
 
   return retval;
@@ -6584,14 +6588,13 @@ NO_INLINE /* For better stack traces */
 static void
 sweep_conses (void)
 {
-  struct cons_block *cblk;
   struct cons_block **cprev = &cons_block;
   int lim = cons_block_index;
-  EMACS_INT num_free = 0, num_used = 0;
+  object_ct num_free = 0, num_used = 0;
 
   cons_free_list = 0;
 
-  for (cblk = cons_block; cblk; cblk = *cprev)
+  for (struct cons_block *cblk; (cblk = *cprev); )
     {
       int i = 0;
       int this_free = 0;
@@ -6663,18 +6666,16 @@ NO_INLINE /* For better stack traces */
 static void
 sweep_floats (void)
 {
-  register struct float_block *fblk;
   struct float_block **fprev = &float_block;
-  register int lim = float_block_index;
-  EMACS_INT num_free = 0, num_used = 0;
+  int lim = float_block_index;
+  object_ct num_free = 0, num_used = 0;
 
   float_free_list = 0;
 
-  for (fblk = float_block; fblk; fblk = *fprev)
+  for (struct float_block *fblk; (fblk = *fprev); )
     {
-      register int i;
       int this_free = 0;
-      for (i = 0; i < lim; i++)
+      for (int i = 0; i < lim; i++)
 	{
 	  struct Lisp_Float *afloat = ptr_bounds_copy (&fblk->floats[i], fblk);
 	  if (!FLOAT_MARKED_P (afloat))
@@ -6714,19 +6715,17 @@ NO_INLINE /* For better stack traces */
 static void
 sweep_intervals (void)
 {
-  register struct interval_block *iblk;
   struct interval_block **iprev = &interval_block;
-  register int lim = interval_block_index;
-  EMACS_INT num_free = 0, num_used = 0;
+  int lim = interval_block_index;
+  object_ct num_free = 0, num_used = 0;
 
   interval_free_list = 0;
 
-  for (iblk = interval_block; iblk; iblk = *iprev)
+  for (struct interval_block *iblk; (iblk = *iprev); )
     {
-      register int i;
       int this_free = 0;
 
-      for (i = 0; i < lim; i++)
+      for (int i = 0; i < lim; i++)
         {
           if (!iblk->intervals[i].gcmarkbit)
             {
@@ -6768,7 +6767,7 @@ sweep_symbols (void)
   struct symbol_block *sblk;
   struct symbol_block **sprev = &symbol_block;
   int lim = symbol_block_index;
-  EMACS_INT num_free = 0, num_used = ARRAYELTS (lispsym);
+  object_ct num_free = 0, num_used = ARRAYELTS (lispsym);
 
   symbol_free_list = NULL;
 
@@ -6955,13 +6954,13 @@ Frames, windows, buffers, and subprocesses count as vectors
   (void)
 {
   return listn (CONSTYPE_HEAP, 7,
-		bounded_number (cons_cells_consed),
-		bounded_number (floats_consed),
-		bounded_number (vector_cells_consed),
-		bounded_number (symbols_consed),
-		bounded_number (string_chars_consed),
-		bounded_number (intervals_consed),
-		bounded_number (strings_consed));
+		make_int (cons_cells_consed),
+		make_int (floats_consed),
+		make_int (vector_cells_consed),
+		make_int (symbols_consed),
+		make_int (string_chars_consed),
+		make_int (intervals_consed),
+		make_int (strings_consed));
 }
 
 static bool
