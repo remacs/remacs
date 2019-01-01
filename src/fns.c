@@ -118,7 +118,7 @@ To get the number of bytes, use `string-bytes'.  */)
 	i++;
       CHECK_LIST_END (sequence, sequence);
       if (MOST_POSITIVE_FIXNUM < i)
-	error ("List too long");
+	overflow_error ();
       val = make_fixnum (i);
     }
   else if (NILP (sequence))
@@ -161,7 +161,7 @@ A proper list is neither circular nor dotted (i.e., its last cdr is nil).  */
   if (!NILP (last_tail))
     return Qnil;
   if (MOST_POSITIVE_FIXNUM < len)
-    xsignal0 (Qoverflow_error);
+    overflow_error ();
   return make_fixnum (len);
 }
 
