@@ -2078,7 +2078,7 @@ alist in `woman-buffer-alist' and return nil."
   (char-to-string woman-escaped-escape-char)
   "Internal string representation of escaped escape characters.")
 
-(defconst woman-unpadded-space-char ?\^]
+(defconst woman-unpadded-space-char ?\^\]
   ;; An arbitrary unused control character
   "Internal character representation of unpadded space characters.")
 (defconst woman-unpadded-space-string
