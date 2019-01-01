@@ -815,7 +815,7 @@ json_to_lisp (json_t *json, struct json_configuration *conf)
         if (++lisp_eval_depth > max_lisp_eval_depth)
           xsignal0 (Qjson_object_too_deep);
         size_t size = json_array_size (json);
-        if (FIXNUM_OVERFLOW_P (size))
+        if (PTRDIFF_MAX < size)
           overflow_error ();
         Lisp_Object result = make_vector (size, Qunbound);
         for (ptrdiff_t i = 0; i < size; ++i)
