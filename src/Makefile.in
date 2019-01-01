@@ -351,6 +351,7 @@ CARGO_BUILD=@CARGO_BUILD@
 CARGO_CLEAN=@CARGO_CLEAN@
 CARGO_CLIPPY=@CARGO_CLIPPY@
 CARGO_TEST=@CARGO_TEST@
+CARGO_RUN=@CARGO_RUN@
 CARGO_FLAGS=@CARGO_FLAGS@
 
 ifeq ($(findstring --release,$(CARGO_FLAGS)),--release)
@@ -606,17 +607,34 @@ $(RUSTFLAGS_FILE) : FORCE
 	diff -q $@ $@.tmp || cp $@.tmp $@
 	rm -f $@.tmp
 
+HEADERS=$(wildcard $(srcdir)/*.h)
+
+DEFINITIONS_FILE=$(rust_srcdir)/generated/definitions.rs
+BINDINGS_FILE=$(rust_srcdir)/generated/bindings.rs
+GLOBALS_FILE=$(rust_srcdir)/generated/globals.rs
+# macuvs.h has a rule to regenerate it which depends on emacs being
+# built. That creates a circular dependency which we can break by not
+# depending on it as this is not a file that changes under normal
+# operation.
+$(DEFINITIONS_FILE) $(BINDINGS_FILE) $(GLOBALS_FILE): $(filter-out ./macuvs.h,$(HEADERS)) $(rust_srcdir)/wrapper.h
+	$(MKDIR_P) $(dir $@)
+	RUSTFLAGS="$(RUSTFLAGS)" \
+	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
+	$(CARGO_RUN) --release --manifest-path=$(rust_srcdir)/remacs-bindings/Cargo.toml -- $(basename $(notdir $@)) $@
+
+generated-bindings: $(DEFINITIONS_FILE) $(BINDINGS_FILE) $(GLOBALS_FILE)
+
 macosx_alloc_dir=$(rust_srcdir)/alloc_unexecmacosx
 MACOSX_ALLOC_INPUTS=$(macosx_alloc_dir)/src/** $(macosx_alloc_dir)/Cargo.*
 cargo_manifest=$(rust_srcdir)/Cargo.toml
 LIBREMACS_ARCHIVE=$(rust_srcdir)/target/$(CARGO_BUILD_DIR)/$(REMACSLIB_NAME)
-$(LIBREMACS_ARCHIVE): globals.h $(rust_srcdir)/src/** $(rust_srcdir)/Cargo.* $(MACOSX_ALLOC_INPUTS) $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT)
+$(LIBREMACS_ARCHIVE): globals.h $(rust_srcdir)/src/** $(rust_srcdir)/Cargo.* $(MACOSX_ALLOC_INPUTS) $(libsrc)/hashdir/target/$(CARGO_BUILD_DIR)/hashdir$(EXEEXT) generated-bindings
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
 	SRC_HASH="$(shell EMACS_CFLAGS="-I../rust_src $(EMACS_CFLAGS)" ../lib-src/hashdir/target/$(CARGO_BUILD_DIR)/hashdir)" \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)
 
-clippy:
+clippy: generated-bindings
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
 	$(CARGO_CLIPPY) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)

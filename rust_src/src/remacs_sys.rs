@@ -28,12 +28,12 @@ use crate::{
     lisp::LispObject,
 };
 
-include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
+include!("../generated/definitions.rs");
 
 type Lisp_Object = LispObject;
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-include!(concat!(env!("OUT_DIR"), "/globals.rs"));
+include!("../generated/bindings.rs");
+include!("../generated/globals.rs");
 
 pub const VAL_MAX: EmacsInt = (EMACS_INT_MAX >> (GCTYPEBITS - 1));
 pub const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
