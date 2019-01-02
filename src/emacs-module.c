@@ -665,13 +665,13 @@ module_vec_size (emacs_env *env, emacs_value vec)
   return ASIZE (lvec);
 }
 
-/* This function should return true if and only if maybe_quit would do
-   anything.  */
+/* This function should return true if and only if maybe_quit would
+   quit.  */
 static bool
 module_should_quit (emacs_env *env)
 {
   MODULE_FUNCTION_BEGIN_NO_CATCH (false);
-  return (! NILP (Vquit_flag) && NILP (Vinhibit_quit)) || pending_signals;
+  return QUITP;
 }
 
 
