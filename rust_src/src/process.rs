@@ -11,8 +11,8 @@ use crate::{
     multibyte::LispStringRef,
     remacs_sys::{
         add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-        get_process as cget_process, send_process, setup_process_coding_systems, update_status,
-        Fmapcar, STRING_BYTES,
+        get_process as cget_process, list_system_processes, send_process,
+        setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
@@ -526,6 +526,15 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
     } else {
         LispObject::from_fixnum(gid.into())
     }
+}
+
+/// Return a list of numerical process IDs of all running processes.
+/// If this functionality is unsupported, return nil.
+///
+/// See `process-attributes' for getting attributes of a process given its ID.
+#[lisp_fn(name = "list-system-processes")]
+pub fn list_system_processes_rust() -> LispObject {
+    unsafe { list_system_processes() }
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
