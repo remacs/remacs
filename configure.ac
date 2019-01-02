@@ -5048,11 +5048,13 @@ CARGO_CLEAN="$CARGO clean"
 CARGO_TEST="$CARGO test"
 CARGO_CLIPPY="$CARGO clippy"
 CARGO_RUN="$CARGO run"
+CARGO_DOC="$CARGO doc --all --open --document-private-items"
 
 AC_SUBST(CARGO_BUILD)
 AC_SUBST(CARGO_CLEAN)
 AC_SUBST(CARGO_CLIPPY)
 AC_SUBST(CARGO_RUN)
+AC_SUBST(CARGO_DOC)
 
 AC_ARG_ENABLE(rust-debug,
 [AS_HELP_STRING([--enable-rust-debug],
