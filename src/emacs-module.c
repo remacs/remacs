@@ -671,13 +671,21 @@ module_vec_size (emacs_env *env, emacs_value vec)
   return ASIZE (lvec);
 }
 
-/* This function should return true if and only if maybe_quit would do
-   anything.  */
+/* This function should return true if and only if maybe_quit would
+   quit.  */
 static bool
 module_should_quit (emacs_env *env)
 {
   MODULE_FUNCTION_BEGIN_NO_CATCH (false);
-  return (! NILP (Vquit_flag) && NILP (Vinhibit_quit)) || pending_signals;
+  return QUITP;
+}
+
+static enum emacs_process_input_result
+module_process_input (emacs_env *env)
+{
+  MODULE_FUNCTION_BEGIN (emacs_process_input_quit);
+  maybe_quit ();
+  return emacs_process_input_continue;
 }
 
 
@@ -1082,6 +1090,7 @@ initialize_environment (emacs_env *env, struct emacs_env_private *priv)
   env->vec_get = module_vec_get;
   env->vec_size = module_vec_size;
   env->should_quit = module_should_quit;
+  env->process_input = module_process_input;
   Vmodule_environments = Fcons (make_mint_ptr (env), Vmodule_environments);
   return env;
 }

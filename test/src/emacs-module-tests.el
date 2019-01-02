@@ -289,4 +289,24 @@ Return A + B"
     (should (member '(provide . mod-test) entries))
     (should (member '(defun . mod-test-sum) entries))))
 
+(ert-deftest mod-test-sleep-until ()
+  "Check that `mod-test-sleep-until' either returns normally or quits.
+Interactively, you can try hitting \\[keyboard-quit] to quit."
+  (dolist (arg '(nil t))
+    ;; Guard against some caller setting `inhibit-quit'.
+    (with-local-quit
+      (condition-case nil
+          (should (eq (with-local-quit
+                        ;; Because `inhibit-quit' is nil here, the next
+                        ;; form either quits or returns `finished'.
+                        (mod-test-sleep-until
+                         ;; Interactively, run for 5 seconds to give the
+                         ;; user time to quit.  In batch mode, run only
+                         ;; briefly since the user can't quit.
+                         (float-time (time-add nil (if noninteractive 0.1 5)))
+                         ;; should_quit or process_input
+                         arg))
+                      'finished))
+        (quit)))))
+
 ;;; emacs-module-tests.el ends here

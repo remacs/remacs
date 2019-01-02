@@ -1623,7 +1623,27 @@ purpose.
 @deftypefn Function bool should_quit (emacs_env *@var{env})
 This function returns @code{true} if the user wants to quit.  In that
 case, we recommend that your module function aborts any on-going
-processing and returns as soon as possible.
+processing and returns as soon as possible.  In most cases, use
+@code{process_input} instead.
+@end deftypefn
+
+To process input events in addition to checking whether the user wants
+to quit, use the following function, which is available since Emacs
+27.1.
+
+@anchor{process_input}
+@deftypefn Function enum emacs_process_input_result process_input (emacs_env *@var{env})
+This function processes pending input events.  It returns
+@code{emacs_process_input_quit} if the user wants to quit or an error
+occurred while processing signals.  In that case, we recommend that
+your module function aborts any on-going processing and returns as
+soon as possible.  If the module code may continue running,
+@code{process_input} returns @code{emacs_process_input_continue}.  The
+return value is @code{emacs_process_input_continue} if and only if
+there is no pending nonlocal exit in @code{env}.  If the module
+continues after calling @code{process_input}, global state such as
+variable values and buffer content may have been modified in arbitrary
+ways.
 @end deftypefn
 
 @node Module Nonlocal

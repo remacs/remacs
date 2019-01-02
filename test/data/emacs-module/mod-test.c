@@ -17,11 +17,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
+#include "config.h"
+
 #include <assert.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <string.h>
+#include <time.h>
+
 #include <emacs-module.h>
+
+#include "timespec.h"
 
 int plugin_is_GPL_compatible;
 
@@ -299,6 +307,64 @@ Fmod_test_invalid_finalizer (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
   return env->funcall (env, env->intern (env, "garbage-collect"), 0, NULL);
 }
 
+static void
+signal_wrong_type_argument (emacs_env *env, const char *predicate,
+                            emacs_value arg)
+{
+  emacs_value symbol = env->intern (env, "wrong-type-argument");
+  emacs_value elements[2] = {env->intern (env, predicate), arg};
+  emacs_value data = env->funcall (env, env->intern (env, "list"), 2, elements);
+  env->non_local_exit_signal (env, symbol, data);
+}
+
+static void
+signal_errno (emacs_env *env, const char *function)
+{
+  const char *message = strerror (errno);
+  emacs_value message_value = env->make_string (env, message, strlen (message));
+  emacs_value symbol = env->intern (env, "file-error");
+  emacs_value elements[2]
+    = {env->make_string (env, function, strlen (function)), message_value};
+  emacs_value data = env->funcall (env, env->intern (env, "list"), 2, elements);
+  env->non_local_exit_signal (env, symbol, data);
+}
+
+/* A long-running operation that occasionally calls `should_quit' or
+   `process_input'.  */
+
+static emacs_value
+Fmod_test_sleep_until (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
+                       void *data)
+{
+  assert (nargs == 2);
+  const double until_seconds = env->extract_float (env, args[0]);
+  if (env->non_local_exit_check (env))
+    return NULL;
+  if (until_seconds <= 0)
+    {
+      signal_wrong_type_argument (env, "cl-plusp", args[0]);
+      return NULL;
+    }
+  const bool process_input = env->is_not_nil (env, args[1]);
+  const struct timespec until = dtotimespec (until_seconds);
+  const struct timespec amount = make_timespec(0,  10000000);
+  while (true)
+    {
+      const struct timespec now = current_timespec ();
+      if (timespec_cmp (now, until) >= 0)
+        break;
+      if (nanosleep (&amount, NULL) && errno != EINTR)
+        {
+          signal_errno (env, "nanosleep");
+          return NULL;
+        }
+      if ((process_input
+           && env->process_input (env) == emacs_process_input_quit)
+          || env->should_quit (env))
+        return NULL;
+    }
+  return env->intern (env, "finished");
+}
 
 /* Lisp utilities for easier readability (simple wrappers).  */
 
@@ -367,6 +433,7 @@ emacs_module_init (struct emacs_runtime *ert)
   DEFUN ("mod-test-invalid-load", Fmod_test_invalid_load, 0, 0, NULL, NULL);
   DEFUN ("mod-test-invalid-finalizer", Fmod_test_invalid_finalizer, 0, 0,
          NULL, NULL);
+  DEFUN ("mod-test-sleep-until", Fmod_test_sleep_until, 2, 2, NULL, NULL);
 
 #undef DEFUN
 

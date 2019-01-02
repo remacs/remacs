@@ -1614,6 +1614,9 @@ given frame supports resizing.
 This is currently supported on GNUish hosts and on modern versions of
 MS-Windows.
 
+** New module environment function 'process_input' to process user
+input while module code is running.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
