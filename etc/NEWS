@@ -250,9 +250,10 @@ respects display actions specified by 'display-buffer-alist' and
 'display-buffer-overriding-action'.
 
 +++
-** New convenience functions in the seq.el library.  The new
-convenience functions 'seq-first' and 'seq-rest' give easy access to
-respectively the first and all but the first elements of sequences.
+** New convenience functions in the seq.el library.
+The new convenience functions 'seq-first' and 'seq-rest' give easy
+access to respectively the first and all but the first elements of
+sequences.
 
 
 * Editing Changes in Emacs 27.1
