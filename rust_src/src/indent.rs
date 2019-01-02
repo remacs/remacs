@@ -8,7 +8,11 @@ use crate::{
     buffers::{point_byte, point_min_byte},
     editfns::{point, point_min},
     lisp::defsubr,
-    remacs_sys::{self, find_newline, position_indentation, EmacsInt},
+    numbers::IsLispNatnum,
+    remacs_sys::{self, find_newline, position_indentation, scan_for_column, set_point, EmacsInt},
+    remacs_sys::{del_range, last_known_column, Findent_to, Finsert_char, Qnil, Qt},
+    remacs_sys::{last_known_column_modified, last_known_column_point, set_point_both},
+    threads::ThreadState,
 };
 
 /// Return the indentation of the current line.  This is the
@@ -50,6 +54,76 @@ pub fn current_indentation() -> EmacsInt {
 pub fn current_column() -> EmacsInt {
     let column = unsafe { remacs_sys::current_column() };
     column as EmacsInt
+}
+
+/// Move point to column COLUMN in the current line.
+/// Interactively, COLUMN is the value of prefix numeric argument.
+/// The column of a character is calculated by adding together the widths
+/// as displayed of the previous characters in the line.
+/// This function ignores line-continuation;
+/// there is no upper limit on the column number a character can have
+/// and horizontal scrolling has no effect.
+///
+/// If specified column is within a character, point goes after that character.
+/// If it's past end of line, point goes to end of line.
+///
+/// Optional second argument FORCE non-nil means if COLUMN is in the
+/// middle of a tab character, change it to spaces.
+/// In addition, if FORCE is t, and the line is too short to reach
+/// COLUMN, add spaces/tabs to get there.
+///
+/// The return value is the current column.
+#[lisp_fn(min = "1", intspec = "NMove to column")]
+pub fn move_to_column(column: EmacsInt, force: bool) -> EmacsInt {
+    column.check_natnum();
+    let buffer = &mut ThreadState::current_buffer();
+    let goal = column;
+
+    let mut col = goal;
+    let mut pos = buffer.zv as isize;
+    let mut prev_col = 0;
+
+    unsafe {
+        scan_for_column(&mut pos, &mut col, &mut prev_col);
+        set_point(pos);
+    }
+
+    let prev_col = prev_col as i64;
+
+    // If a tab char made us overshoot, change it to spaces and scan through it again
+    if !force && col > goal {
+        let pos_byte = buffer.dec_pos(buffer.pt_byte);
+        let c = buffer.fetch_char(pos_byte);
+
+        if c == '\t' as i32 && prev_col < goal {
+            unsafe {
+                // Insert spaces in front of the tab
+                set_point_both(buffer.pt - 1, buffer.pt_byte - 1);
+                Finsert_char((' ' as u8).into(), (goal - prev_col).into(), Qt);
+
+                // Delete the tab and indent to COL
+                del_range(buffer.pt, buffer.pt + 1);
+                Findent_to(col.into(), Qnil);
+                set_point_both(buffer.pt, buffer.pt_byte);
+            }
+
+            // Set the last_known... vars consistently.
+            col = goal;
+        }
+    }
+
+    // If line ends prematurely, add space to the end.
+    if col < goal && force {
+        col = goal;
+        unsafe { Findent_to(col.into(), Qnil) };
+    }
+
+    unsafe {
+        last_known_column = col as isize;
+        last_known_column_point = buffer.pt;
+        last_known_column_modified = buffer.modifications();
+    }
+    col.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));
