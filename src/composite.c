@@ -1167,7 +1167,9 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
    characters to be composed.  FACE, if non-NULL, is a base face of
    the character.  If STRING is not nil, it is a string containing the
    character to check, and CHARPOS and BYTEPOS are indices in the
-   string.  In that case, FACE must not be NULL.
+   string.  In that case, FACE must not be NULL.  PDIR is the base
+   direction of the current paragraph, and is used to calculate the
+   direction argument to pass to the font shaper.
 
    If the character is composed, setup members of CMP_IT (id, nglyphs,
    from, to, reversed_p), and return true.  Otherwise, update
@@ -1176,7 +1178,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 bool
 composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 		       ptrdiff_t bytepos, ptrdiff_t endpos, struct window *w,
-		       struct face *face, Lisp_Object string)
+		       bidi_dir_t pdir, struct face *face, Lisp_Object string)
 {
   if (cmp_it->ch == -2)
     {
@@ -1206,7 +1208,7 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
   else if (w)
     {
       Lisp_Object lgstring = Qnil;
-      Lisp_Object val, elt;
+      Lisp_Object val, elt, direction = Qnil;
 
       val = CHAR_TABLE_REF (Vcomposition_function_table, cmp_it->ch);
       for (EMACS_INT i = 0; i < cmp_it->rule_idx; i++, val = XCDR (val))
@@ -1221,8 +1223,12 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 		continue;
 	      if (XFIXNAT (AREF (elt, 1)) != cmp_it->lookback)
 		goto no_composition;
+	      if (pdir == L2R)
+		direction = QL2R;
+	      else if (pdir == R2L)
+		direction = QR2L;
 	      lgstring = autocmp_chars (elt, charpos, bytepos, endpos,
-					w, face, string, QL2R);
+					w, face, string, direction);
 	      if (composition_gstring_p (lgstring))
 		break;
 	      lgstring = Qnil;
@@ -1246,8 +1252,12 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	      else
 		bpos = CHAR_TO_BYTE (cpos);
 	    }
+	  if (pdir == L2R)
+	    direction = QR2L;
+	  else if (pdir == R2L)
+	    direction = QL2R;
 	  lgstring = autocmp_chars (elt, cpos, bpos, charpos + 1, w, face,
-				    string, QR2L);
+				    string, direction);
 	  if (! composition_gstring_p (lgstring)
 	      || cpos + LGSTRING_CHAR_LEN (lgstring) - 1 != charpos)
 	    /* Composition failed or didn't cover the current
