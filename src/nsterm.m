@@ -3121,7 +3121,6 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
             [img setXBMColor: bm_color];
           }
 
-#ifdef NS_IMPL_COCOA
           // Note: For periodic images, the full image height is "h + hd".
           // By using the height h, a suitable part of the image is used.
           NSRect fromRect = NSMakeRect(0, 0, p->wd, p->h);
@@ -3134,13 +3133,6 @@ ns_draw_fringe_bitmap (struct window *w, struct glyph_row *row,
                  fraction: 1.0
                respectFlipped: YES
                     hints: nil];
-#else
-          {
-            NSPoint pt = imageRect.origin;
-            pt.y += p->h;
-            [img compositeToPoint: pt operation: NSCompositingOperationSourceOver];
-          }
-#endif
         }
       ns_reset_clipping (f);
     }

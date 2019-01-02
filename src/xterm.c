@@ -38,11 +38,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/extensions/Xfixes.h>
 #endif
 
-/* Using Xft implies that XRender is available.  */
-#ifdef HAVE_XFT
-#include <X11/extensions/Xrender.h>
-#endif
-
 #ifdef HAVE_XDBE
 #include <X11/extensions/Xdbe.h>
 #endif
@@ -2976,6 +2971,46 @@ x_draw_glyph_string_box (struct glyph_string *s)
 }
 
 
+static void
+x_composite_image (struct glyph_string *s, Pixmap dest,
+                   int srcX, int srcY, int dstX, int dstY,
+                   int width, int height)
+{
+#ifdef HAVE_XRENDER
+  if (s->img->picture)
+    {
+      Picture destination;
+      XRenderPictFormat *default_format;
+      XRenderPictureAttributes attr;
+
+      /* FIXME: Should we do this each time or would it make sense to
+         store destination in the frame struct?  */
+      default_format = XRenderFindVisualFormat (s->display,
+                                                DefaultVisual (s->display, 0));
+      destination = XRenderCreatePicture (s->display, dest,
+                                          default_format, 0, &attr);
+
+      /* FIXME: It may make sense to use PictOpSrc instead of
+         PictOpOver, as I don't know if we care about alpha values too
+         much here.  */
+      XRenderComposite (s->display, PictOpOver,
+                        s->img->picture, s->img->mask_picture, destination,
+                        srcX, srcY,
+                        srcX, srcY,
+                        dstX, dstY,
+                        width, height);
+
+      XRenderFreePicture (s->display, destination);
+    }
+  else
+#endif
+    XCopyArea (s->display, s->img->pixmap,
+               dest, s->gc,
+               srcX, srcY,
+               width, height, dstX, dstY);
+}
+
+
 /* Draw foreground of image glyph string S.  */
 
 static void
@@ -3007,6 +3042,7 @@ x_draw_image_foreground (struct glyph_string *s)
 	     trust on the shape extension to be available
 	     (XShapeCombineRegion).  So, compute the rectangle to draw
 	     manually.  */
+          /* FIXME: Do we need to do this when using XRender compositing?  */
 	  unsigned long mask = (GCClipMask | GCClipXOrigin | GCClipYOrigin
 				| GCFunction);
 	  XGCValues xgcv;
@@ -3024,10 +3060,8 @@ x_draw_image_foreground (struct glyph_string *s)
 	  image_rect.width = s->slice.width;
 	  image_rect.height = s->slice.height;
 	  if (x_intersect_rectangles (&clip_rect, &image_rect, &r))
-            XCopyArea (s->display, s->img->pixmap,
-                       FRAME_X_DRAWABLE (s->f), s->gc,
-		       s->slice.x + r.x - x, s->slice.y + r.y - y,
-		       r.width, r.height, r.x, r.y);
+            x_composite_image (s, FRAME_X_DRAWABLE (s->f), s->slice.x + r.x - x, s->slice.y + r.y - y,
+                               r.x, r.y, r.width, r.height);
 	}
       else
 	{
@@ -3039,10 +3073,8 @@ x_draw_image_foreground (struct glyph_string *s)
 	  image_rect.width = s->slice.width;
 	  image_rect.height = s->slice.height;
 	  if (x_intersect_rectangles (&clip_rect, &image_rect, &r))
-            XCopyArea (s->display, s->img->pixmap,
-                       FRAME_X_DRAWABLE (s->f), s->gc,
-		       s->slice.x + r.x - x, s->slice.y + r.y - y,
-		       r.width, r.height, r.x, r.y);
+            x_composite_image (s, FRAME_X_DRAWABLE (s->f), s->slice.x + r.x - x, s->slice.y + r.y - y,
+                               r.x, r.y, r.width, r.height);
 
 	  /* When the image has a mask, we can expect that at
 	     least part of a mouse highlight or a block cursor will

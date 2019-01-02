@@ -3241,6 +3241,17 @@ either XPointer or XPointer*.])dnl
   CFLAGS=$late_CFLAGS
 fi
 
+# Check for XRender
+HAVE_XRENDER=no
+if test "${HAVE_X11}" = "yes"; then
+  AC_CHECK_LIB(Xrender, XRenderQueryExtension, HAVE_XRENDER=yes)
+  if test $HAVE_XRENDER = yes; then
+    XRENDER_LIBS="-lXrender"
+    AC_SUBST(XRENDER_LIBS)
+    AC_DEFINE([HAVE_XRENDER], 1, [Define to 1 if XRender is available.])
+  fi
+fi
+
 ### Start of font-backend (under any platform) section.
 # (nothing here yet -- this is a placeholder)
 ### End of font-backend (under any platform) section.
@@ -3263,15 +3274,12 @@ if test "${HAVE_X11}" = "yes"; then
       EMACS_CHECK_MODULES([XFT], [xft >= 0.13.0], [], [HAVE_XFT=no])
       ## Because xterm.c uses XRenderQueryExtension when XFT is
       ## enabled, we also need to link to -lXrender.
-      HAVE_XRENDER=no
-      AC_CHECK_LIB(Xrender, XRenderQueryExtension, HAVE_XRENDER=yes)
       if test "$HAVE_XFT" != no && test "$HAVE_XRENDER" != no; then
 	OLD_CPPFLAGS="$CPPFLAGS"
 	OLD_CFLAGS="$CFLAGS"
 	OLD_LIBS="$LIBS"
 	CPPFLAGS="$CPPFLAGS $XFT_CFLAGS"
 	CFLAGS="$CFLAGS $XFT_CFLAGS"
-	XFT_LIBS="-lXrender $XFT_LIBS"
 	LIBS="$XFT_LIBS $LIBS"
 	AC_CHECK_HEADER(X11/Xft/Xft.h,
 	  AC_CHECK_LIB(Xft, XftFontOpen, HAVE_XFT=yes, , $XFT_LIBS) , ,

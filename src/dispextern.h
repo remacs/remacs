@@ -31,6 +31,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/Intrinsic.h>
 #endif /* USE_X_TOOLKIT */
 
+#ifdef HAVE_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
 #else /* !HAVE_X_WINDOWS */
 
 /* X-related stuff used by non-X gui code.  */
@@ -2935,6 +2938,11 @@ struct redisplay_interface
 
 #ifdef HAVE_WINDOW_SYSTEM
 
+#if defined (HAVE_X_WINDOWS) && defined (HAVE_XRENDER) \
+  || defined (HAVE_NS)
+#define HAVE_NATIVE_SCALING
+#endif
+
 /* Structure describing an image.  Specific image formats like XBM are
    converted into this form, so that display only has to deal with
    this type of image.  */
@@ -2958,6 +2966,11 @@ struct image
      and the latter is outdated.  NULL means the X image has been
      synchronized to Pixmap.  */
   XImagePtr ximg, mask_img;
+
+#ifdef HAVE_NATIVE_SCALING
+  /* Picture versions of pixmap and mask for compositing.  */
+  Picture picture, mask_picture;
+#endif
 #endif
 
   /* Colors allocated for this image, if any.  Allocated via xmalloc.  */

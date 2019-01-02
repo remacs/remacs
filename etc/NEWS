@@ -1461,6 +1461,12 @@ that is non-nil, it will look for a file name handler for the current
 buffer's 'default-directory' and invoke that file name handler to make
 the process.  That way 'make-process' can start remote processes.
 
++++
+** Emacs now supports resizing images without ImageMagick on X window
+systems where the XRender extension is available, and on the NS port.
+The new function 'image-scaling-p' can be used to test whether any
+given frame supports resizing.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

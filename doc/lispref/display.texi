@@ -5112,6 +5112,47 @@ This adds a shadow rectangle around the image.  The value,
 @var{relief} is negative, shadows are drawn so that the image appears
 as a pressed button; otherwise, it appears as an unpressed button.
 
+@item :width @var{width}, :height @var{height}
+The @code{:width} and @code{:height} keywords are used for scaling the
+image.  If only one of them is specified, the other one will be
+calculated so as to preserve the aspect ratio.  If both are specified,
+aspect ratio may not be preserved.
+
+@item :max-width @var{max-width}, :max-height @var{max-height}
+The @code{:max-width} and @code{:max-height} keywords are used for
+scaling if the size of the image exceeds these values.  If
+@code{:width} is set, it will have precedence over @code{max-width},
+and if @code{:height} is set, it will have precedence over
+@code{max-height}, but you can otherwise mix these keywords as you
+wish.
+
+If both @code{:max-width} and @code{:height} are specified, but
+@code{:width} is not, preserving the aspect ratio might require that
+width exceeds @code{:max-width}.  If this happens, scaling will use a
+smaller value for the height so as to preserve the aspect ratio while
+not exceeding @code{:max-width}.  Similarly when both
+@code{:max-height} and @code{:width} are specified, but @code{:height}
+is not.  For example, if you have a 200x100 image and specify that
+@code{:width} should be 400 and @code{:max-height} should be 150,
+you'll end up with an image that is 300x150: Preserving the aspect
+ratio and not exceeding the ``max'' setting.  This combination of
+parameters is a useful way of saying ``display this image as large as
+possible, but no larger than the available display area''.
+
+@item :scale @var{scale}
+This should be a number, where values higher than 1 means to increase
+the size, and lower means to decrease the size, by multiplying both
+the width and height.  For instance, a value of 0.25 will make the
+image a quarter size of what it originally was.  If the scaling makes
+the image larger than specified by @code{:max-width} or
+@code{:max-height}, the resulting size will not exceed those two
+values.  If both @code{:scale} and @code{:height}/@code{:width} are
+specified, the height/width will be adjusted by the specified scaling
+factor.
+
+@item :index @var{frame}
+@xref{Multi-Frame Images}.
+
 @item :conversion @var{algorithm}
 This specifies a conversion algorithm that should be applied to the
 image before it is displayed; the value, @var{algorithm}, specifies
@@ -5251,6 +5292,16 @@ This function returns @code{t} if image @var{spec} has a mask bitmap.
 (@pxref{Input Focus}).
 @end defun
 
+@defun image-scaling-p &optional frame
+This function returns @code{t} if @var{frame} supports image scaling.
+@var{frame} @code{nil} or omitted means to use the selected frame
+(@pxref{Input Focus}).
+
+If image scaling is not supported, @code{:width}, @code{:height},
+@code{:scale}, @code{:max-width} and @code{:max-height} will only be
+usable through ImageMagick, if available (@pxref{ImageMagick Images}).
+@end defun
+
 @node XBM Images
 @subsection XBM Images
 @cindex XBM
@@ -5387,42 +5438,6 @@ color, which is used as the image's background color if the image
 supports transparency.  If the value is @code{nil}, it defaults to the
 frame's background color.
 
-@item :width @var{width}, :height @var{height}
-The @code{:width} and @code{:height} keywords are used for scaling the
-image.  If only one of them is specified, the other one will be
-calculated so as to preserve the aspect ratio.  If both are specified,
-aspect ratio may not be preserved.
-
-@item :max-width @var{max-width}, :max-height @var{max-height}
-The @code{:max-width} and @code{:max-height} keywords are used for
-scaling if the size of the image of the image exceeds these values.
-If @code{:width} is set it will have precedence over @code{max-width},
-and if @code{:height} is set it will have precedence over
-@code{max-height}, but you can otherwise mix these keywords as you
-wish.  @code{:max-width} and @code{:max-height} will always preserve
-the aspect ratio.
-
-If both @code{:width} and @code{:max-height} has been set (but
-@code{:height} has not been set), then @code{:max-height} will have
-precedence.  The same is the case for the opposite combination: The
-``max'' keyword has precedence.  That is, if you have a 200x100 image
-and specify that @code{:width} should be 400 and @code{:max-height}
-should be 150, you'll end up with an image that is 300x150: Preserving
-the aspect ratio and not exceeding the ``max'' setting.  This
-combination of parameters is a useful way of saying ``display this
-image as large as possible, but no larger than the available display
-area''.
-
-@item :scale @var{scale}
-This should be a number, where values higher than 1 means to increase
-the size, and lower means to decrease the size.  For instance, a value
-of 0.25 will make the image a quarter size of what it originally was.
-If the scaling makes the image larger than specified by
-@code{:max-width} or @code{:max-height}, the resulting size will not
-exceed those two values.  If both @code{:scale} and
-@code{:height}/@code{:width} are specified, the height/width will be
-adjusted by the specified scaling factor.
-
 @item :format @var{type}
 The value, @var{type}, should be a symbol specifying the type of the
 image data, as found in @code{image-format-suffixes}.  This is used
@@ -5431,9 +5446,6 @@ hint to ImageMagick to help it detect the image type.
 
 @item :rotation @var{angle}
 Specifies a rotation angle in degrees.
-
-@item :index @var{frame}
-@xref{Multi-Frame Images}.
 @end table
 
 @node SVG Images
