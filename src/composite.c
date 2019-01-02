@@ -1215,6 +1215,10 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	continue;
       if (charpos < endpos)
 	{
+	  if (pdir == L2R)
+	    direction = QL2R;
+	  else if (pdir == R2L)
+	    direction = QR2L;
 	  for (; CONSP (val); val = XCDR (val))
 	    {
 	      elt = XCAR (val);
@@ -1223,10 +1227,6 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 		continue;
 	      if (XFIXNAT (AREF (elt, 1)) != cmp_it->lookback)
 		goto no_composition;
-	      if (pdir == L2R)
-		direction = QL2R;
-	      else if (pdir == R2L)
-		direction = QR2L;
 	      lgstring = autocmp_chars (elt, charpos, bytepos, endpos,
 					w, face, string, direction);
 	      if (composition_gstring_p (lgstring))
