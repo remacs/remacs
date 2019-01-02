@@ -32390,7 +32390,9 @@ expose_window (struct window *w, XRectangle *fr)
 static bool
 expose_window_tree (struct window *w, XRectangle *r)
 {
+#ifndef HAVE_NS
   struct frame *f = XFRAME (w->frame);
+#endif
   bool mouse_face_overwritten_p = false;
 
   /* NS toolkits may have aleady modified the frame in expectation of
