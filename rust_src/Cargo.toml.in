@@ -27,7 +27,7 @@ if_chain = "0.1.3"
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]
-alloc_unexecmacosx = { version = "0.1.0", path = "alloc_unexecmacosx" }
+alloc_unexecmacosx = { version = "0.1.0", path = "alloc_unexecmacosx", optional = true }
 
 [build-dependencies]
 clippy = { version = "*", optional = true }
@@ -48,6 +48,10 @@ panic = "abort"
 
 [features]
 default = [@CARGO_DEFAULT_FEATURES@]
+# Use unexec crate on Mac
+unexecmacosx = ["alloc_unexecmacosx"]
+# unexec everywhere else
+unexec = []
 # Compile with C xml2 library support.
 use-xml2 = []
 compile-errors = []
