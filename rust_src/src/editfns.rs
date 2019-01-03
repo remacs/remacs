@@ -15,6 +15,7 @@ use crate::{
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::{progn, unbind_to},
+    indent::invalidate_current_column,
     lisp::{defsubr, LispObject},
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
@@ -30,12 +31,12 @@ use crate::{
     remacs_sys::{
         buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
         find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
-        insert_and_inherit, insert_from_buffer, invalidate_current_column, make_buffer_string,
-        make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
-        message1, message3, record_unwind_current_buffer, record_unwind_protect,
-        save_excursion_restore, save_restriction_restore, save_restriction_save,
-        scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both, styled_format,
-        update_buffer_properties, STRING_BYTES,
+        insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
+        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
+        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, styled_format, update_buffer_properties,
+        STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
@@ -1452,9 +1453,7 @@ pub fn widen() {
     buffer_ref.set_zv_both(buffer_ref.z(), buffer_ref.z_byte());
 
     // Changing the buffer bounds invalidates any recorded current column.
-    unsafe {
-        invalidate_current_column();
-    }
+    invalidate_current_column();
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
