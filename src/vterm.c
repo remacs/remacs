@@ -198,6 +198,25 @@ fetch_cell(vterminal *term, int row, int col, VTermScreenCell *cell) {
   }
 }
 
+static bool
+is_eol(vterminal *term, int end_col, int row, int col) {
+  /* This cell is EOL if this and every cell to the right is black */
+  if (row >= 0) {
+    VTermPos pos = {.row = row, .col = col};
+    return vterm_screen_is_eol(term->vts, pos);
+  }
+
+  VtermScrollbackLine *sbrow = term->sb_buffer[-row - 1];
+  int c;
+  for (c = col; c < end_col && c < sbrow->cols;) {
+    if (sbrow->cells[c].chars[0]) {
+      return 0;
+    }
+    c += sbrow->cells[c].width;
+  }
+  return 1;
+}
+
 size_t get_col_offset(vterminal *term, int row, int end_col) {
   int col = 0;
   size_t offset = 0;
@@ -275,6 +294,10 @@ refresh_lines (vterminal *term, int start_row, int end_row, int end_col) {
       
       lastCell = cell;
       if (cell.chars[0] == 0) {
+        if (is_eol(term, end_col, i, j)) {
+          /* This cell is EOL if this and every cell to the right is black */
+          break;
+        }
         buffer[length] = ' ';
         length++;
       } else {
@@ -343,7 +366,6 @@ VTermScreenCallbacks vterm_screen_callbacks = {
 void
 vterm_sb_buffer_size (vterminal *term) {
   int sb_size = 1000;
-  /* vterminal *term = global_term; */
   term->sb_buffer = malloc(sizeof(VtermScrollbackLine *) * term->sb_size);
 }
 
