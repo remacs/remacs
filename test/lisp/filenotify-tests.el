@@ -588,6 +588,7 @@ delivered."
 
 (ert-deftest file-notify-test03-events ()
   "Check file creation/change/removal notifications."
+  :tags (if (getenv "EMACS_EMBA_CI") '(:unstable))
   (skip-unless (file-notify--test-local-enabled))
 
   (unwind-protect
@@ -945,6 +946,7 @@ delivered."
 
 (ert-deftest file-notify-test05-file-validity ()
   "Check `file-notify-valid-p' for files."
+  :tags (if (getenv "EMACS_EMBA_CI") '(:unstable))
   (skip-unless (file-notify--test-local-enabled))
 
   (unwind-protect
@@ -1057,6 +1059,7 @@ delivered."
 
 (ert-deftest file-notify-test06-dir-validity ()
   "Check `file-notify-valid-p' for directories."
+  :tags (if (getenv "EMACS_EMBA_CI") '(:unstable))
   (skip-unless (file-notify--test-local-enabled))
 
   (unwind-protect
@@ -1115,7 +1118,8 @@ delivered."
 
 (ert-deftest file-notify-test07-many-events ()
   "Check that events are not dropped."
-  :tags '(:expensive-test)
+  :tags (if (getenv "EMACS_EMBA_CI")
+            '(:expensive-test :unstable) '(:expensive-test))
   (skip-unless (file-notify--test-local-enabled))
 
   (should
@@ -1274,7 +1278,8 @@ descriptors that were issued when registering the watches.  This
 test caters for the situation in bug#22736 where the callback for
 the directory received events for the file with the descriptor of
 the file watch."
-  :tags '(:expensive-test)
+  :tags (if (getenv "EMACS_EMBA_CI")
+            '(:expensive-test :unstable) '(:expensive-test))
   (skip-unless (file-notify--test-local-enabled))
 
   ;; A directory to be watched.
