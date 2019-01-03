@@ -122,6 +122,7 @@ mod util;
 mod vectors;
 mod window_configuration;
 mod windows;
+mod xfaces;
 mod xml;
 
 #[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
