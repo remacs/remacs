@@ -8,22 +8,23 @@ use std::{cmp, mem};
 
 use crate::{
     cmds::{forward_char, forward_line},
+    data::Fset,
+
     editfns::{goto_pos, line_beginning_position, line_end_position},
     lisp::ExternalPtr,
     lisp::{defsubr, LispObject},
     multibyte::LispStringRef,
     obarray::intern,
-
     remacs_sys::{
         allocate_vterm, color_to_rgb_string, get_col_offset, mysave_value, refresh_lines,
         rgb_string_to_color, row_to_linenr, term_process_key, vterm_output_read,
-        vterm_screen_callbacks, vterm_screen_set_callbacks,VtermScrollbackLine
+        vterm_screen_callbacks, vterm_screen_set_callbacks, VtermScrollbackLine,
     },
 
     remacs_sys::{
         buf_charpos_to_bytepos, code_convert_string_norecord, del_range, make_string, send_process,
-        vterminal, EmacsInt, Fput_text_property, Lisp_Misc_Type, Qbold, Qface, Qitalic, Qnil,
-        Qnormal, Qt, Qutf_8, Qvtermp, STRING_BYTES,
+        vterminal, EmacsInt, Fput_text_property, Lisp_Misc_Type, Qbold, Qcursor_type, Qface,
+        Qitalic, Qnil, Qnormal, Qt, Qutf_8, Qvtermp, STRING_BYTES,
     },
 
     // vterm
@@ -135,12 +136,12 @@ pub fn vterm_new_lisp(rows: EmacsInt, cols: EmacsInt, process: LispObject) -> Li
         (*term).invalid_start = 0;
         (*term).invalid_end = rows as c_int;
 
+        (*term).cursor.visible = true;
+
         (*term).process = process;
 
         val
     }
-
-
 }
 
 #[no_mangle]
@@ -224,6 +225,12 @@ pub unsafe extern "C" fn vterminal_refresh_scrollback(mut term: LispVterminalRef
 #[no_mangle]
 pub unsafe extern "C" fn vterminal_redraw(mut vterm: LispVterminalRef) {
     if vterm.is_invalidated {
+        if (*vterm).cursor.visible {
+            Fset(Qcursor_type, Qt);
+        } else {
+            Fset(Qcursor_type, Qnil);
+        }
+
         let bufline_before = line_beginning_position(None);
         vterminal_refresh_scrollback(vterm);
         vterminal_refresh_screen(vterm);
