@@ -4989,6 +4989,11 @@ extern vterminal *mysave_value (Lisp_Object val);
 
 extern int term_settermprop(VTermProp prop, VTermValue *val, void *user_data);
 
+extern bool utf8_to_codepoint(const unsigned char buffer[4], const size_t len,
+                              uint32_t *codepoint);
+
+extern bool is_key(unsigned char *key, size_t len, const char *key_description);
+
 INLINE_HEADER_END
 
 #endif /* EMACS_LISP_H */

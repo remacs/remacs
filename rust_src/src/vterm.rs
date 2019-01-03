@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 
-use libc::{c_char, c_int, c_uchar, c_void};
+use libc::{c_char, c_int, c_uchar, c_void, size_t};
 
 use std::{cmp, mem};
 
@@ -16,8 +16,8 @@ use crate::{
     multibyte::LispStringRef,
     obarray::intern,
     remacs_sys::{
-        allocate_vterm, color_to_rgb_string, get_col_offset, mysave_value, refresh_lines,
-        rgb_string_to_color, row_to_linenr, term_process_key, vterm_output_read,
+        allocate_vterm, color_to_rgb_string, get_col_offset, is_key, mysave_value, refresh_lines,
+        rgb_string_to_color, row_to_linenr, term_process_key, utf8_to_codepoint, vterm_output_read,
         vterm_screen_callbacks, vterm_screen_set_callbacks, VtermScrollbackLine,
     },
 
@@ -29,12 +29,13 @@ use crate::{
 
     // vterm
     remacs_sys::{
-        vterm_get_size, vterm_input_write, vterm_new, vterm_obtain_screen, vterm_obtain_state,
-        vterm_output_get_buffer_current, vterm_screen_enable_altscreen, vterm_screen_flush_damage,
-        vterm_screen_reset, vterm_screen_set_damage_merge, vterm_set_size, vterm_set_utf8,
-        vterm_state_get_cursorpos, vterm_state_set_default_colors, vterm_state_set_palette_color,
-        VTermColor, VTermDamageSize, VTermModifier, VTermPos, VTermProp, VTermRect,
-        VTermScreenCell, VTermState, VTermValue,
+        vterm_get_size, vterm_input_write, vterm_keyboard_key, vterm_keyboard_unichar, vterm_new,
+        vterm_obtain_screen, vterm_obtain_state, vterm_output_get_buffer_current,
+        vterm_screen_enable_altscreen, vterm_screen_flush_damage, vterm_screen_reset,
+        vterm_screen_set_damage_merge, vterm_set_size, vterm_set_utf8, vterm_state_get_cursorpos,
+        vterm_state_set_default_colors, vterm_state_set_palette_color, VTermColor, VTermDamageSize,
+        VTermKey, VTermModifier, VTermPos, VTermProp, VTermRect, VTermScreenCell, VTermState,
+        VTermValue,
     },
     threads::ThreadState,
     vectors::length,
@@ -253,7 +254,7 @@ pub fn vterminal_update(
     unsafe {
         if string.is_not_nil() {
             let mut utf8 = code_convert_string_norecord(string, Qutf_8, true).as_string_or_error();
-            let mut len = STRING_BYTES(utf8.as_mut()) as isize + 1;
+            let mut len = STRING_BYTES(utf8.as_mut()) as usize;
 
             let mut v: Vec<c_uchar> = Vec::with_capacity(len as usize);
 
@@ -261,7 +262,7 @@ pub fn vterminal_update(
                 v.as_mut_ptr() as *mut c_void,
                 utf8.data_ptr() as *mut c_void,
                 len as libc::size_t,
-            ) as *mut c_uchar;
+            ) as *const c_char;
 
             let mut modifier = VTermModifier::VTERM_MOD_NONE;
             if shift {
@@ -276,12 +277,44 @@ pub fn vterminal_update(
                 modifier = modifier | VTermModifier::VTERM_MOD_CTRL;
             }
 
-            term_process_key(
-                vterm.as_mut() as *mut vterminal,
-                key,
-                len as usize - 1,
-                modifier,
-            );
+            let is_key = |key: *const c_char, val: *const c_char, len: size_t| {
+                libc::memcmp(key as *mut c_void, val as *mut c_void, len) == 0
+            };
+
+            if is_key(key, "<return>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_ENTER, modifier);
+            } else if is_key(key, "<tab>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_TAB, modifier);
+            } else if is_key(key, "<backspace>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_BACKSPACE, modifier);
+            } else if is_key(key, "<escape>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_ESCAPE, modifier);
+            } else if is_key(key, "<up>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_UP, modifier);
+            } else if is_key(key, "<down>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_DOWN, modifier);
+            } else if is_key(key, "<left>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_LEFT, modifier);
+            } else if is_key(key, "<right>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_RIGHT, modifier);
+            } else if is_key(key, "<insert>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_INS, modifier);
+            } else if is_key(key, "<delete>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_DEL, modifier);
+            } else if is_key(key, "<home>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_HOME, modifier);
+            } else if is_key(key, "<end>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_END, modifier);
+            } else if is_key(key, "<prior>".as_ptr() as *const c_char, len) {
+                vterm_keyboard_key((*vterm).vt, VTermKey::VTERM_KEY_PAGEUP, modifier);
+            } else if is_key(key, "SPC".as_ptr() as *const c_char, len) {
+                vterm_keyboard_unichar((*vterm).vt, ' ' as u32, modifier);
+            } else if len <= 4 {
+                let mut codepoint: libc::uint32_t = std::mem::zeroed();
+                if utf8_to_codepoint(key as *const c_uchar, len, &mut codepoint) {
+                    vterm_keyboard_unichar((*vterm).vt, codepoint, modifier);
+                }
+            }
         }
 
         vterminal_flush_output(vterm);
