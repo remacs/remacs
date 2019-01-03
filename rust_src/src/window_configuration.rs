@@ -195,7 +195,10 @@ pub fn compare_window_configurations_rust(
 /// Compare two window configurations as regards the structure of windows.
 /// This function ignores details such as the values of point
 /// and scrolling positions.
-#[lisp_fn(name = "compare-window-configurations")]
+#[lisp_fn(
+    name = "compare-window-configurations",
+    c_name = "compare_window_configurations"
+)]
 pub fn compare_window_configurations_lisp(x: SaveWindowDataRef, y: SaveWindowDataRef) -> bool {
     compare_window_configurations_rust(x, y, true)
 }

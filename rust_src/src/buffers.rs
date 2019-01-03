@@ -1038,7 +1038,11 @@ pub fn delete_overlay(overlay: LispOverlayRef) {
 
 /// Delete all overlays of BUFFER.
 /// BUFFER omitted or nil means delete all overlays of the current buffer.
-#[lisp_fn(min = "0", name = "delete-all-overlays")]
+#[lisp_fn(
+    min = "0",
+    name = "delete-all-overlays",
+    c_name = "delete_all_overlays"
+)]
 pub fn delete_all_overlays_lisp(buffer: LispBufferOrCurrent) {
     let mut buf: LispBufferRef = buffer.into();
     unsafe { delete_all_overlays(buf.as_mut()) };
