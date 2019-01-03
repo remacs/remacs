@@ -1,3 +1,12 @@
+2019-01-03  Andrey Kotlarski  <m00naticus@gmail.com>
+
+	Fix EBROWSE parsing of classes declared final
+
+	* lib-src/ebrowse.c (enum token, token_string, init_scanner):
+	Handle final keyword.
+	(member, class_definition, globals): Correctly determine class
+	name in presence of final declaration.
+
 2018-11-18  Martin Rudalics  <rudalics@gmx.at>
 
 	Fix description of some window hooks
