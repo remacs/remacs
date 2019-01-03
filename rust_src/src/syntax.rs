@@ -56,8 +56,8 @@ def_lisp_sym!(Qsyntax_table_p, "syntax-table-p");
 
 // We don't name it scan_lists because there is an internal function
 // with the same name
-#[lisp_fn(name = "scan-lists")]
-pub fn scan_lists_defun(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
+#[lisp_fn(name = "scan-lists", c_name = "scan_lists")]
+pub fn scan_lists_lisp(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
     unsafe { scan_lists(from, count, depth, false) }
 }
 

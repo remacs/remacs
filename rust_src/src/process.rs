@@ -532,8 +532,8 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
 /// If this functionality is unsupported, return nil.
 ///
 /// See `process-attributes' for getting attributes of a process given its ID.
-#[lisp_fn(name = "list-system-processes")]
-pub fn list_system_processes_rust() -> LispObject {
+#[lisp_fn(name = "list-system-processes", c_name = "list_system_processes")]
+pub fn list_system_processes_lisp() -> LispObject {
     unsafe { list_system_processes() }
 }
 
