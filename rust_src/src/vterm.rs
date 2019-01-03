@@ -21,9 +21,9 @@ use crate::{
     },
 
     remacs_sys::{
-        code_convert_string_norecord, del_range, make_string, send_process, vterminal, EmacsInt,
-        Fput_text_property, Lisp_Misc_Type, Qbold, Qface, Qitalic, Qnil, Qnormal, Qt, Qutf_8,
-        Qvtermp, STRING_BYTES,
+        buf_charpos_to_bytepos, code_convert_string_norecord, del_range, make_string, send_process,
+        vterminal, EmacsInt, Fput_text_property, Lisp_Misc_Type, Qbold, Qface, Qitalic, Qnil,
+        Qnormal, Qt, Qutf_8, Qvtermp, STRING_BYTES,
     },
 
     // vterm
@@ -35,7 +35,6 @@ use crate::{
         VTermColor, VTermDamageSize, VTermModifier, VTermPos, VTermRect, VTermScreenCell,
         VTermState,
     },
-    search::looking_at,
     threads::ThreadState,
     vectors::length,
 };
@@ -520,10 +519,12 @@ pub extern "C" fn vterminal_delete_lines(linenum: c_int, count: c_int) {
         );
     }
 
-    // use fetch_char
-    unsafe {
-        if looking_at(make_string("\n".as_ptr() as *mut c_char, 1 as isize)).is_not_nil() {
-            del_range(cur_buf.pt, cur_buf.pt + 1);
+    let pos = cur_buf.pt;
+    let pos_byte = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+
+    if cur_buf.fetch_char(pos_byte) == '\n' as i32 {
+        unsafe {
+            del_range(pos, pos + 1);
         }
     }
 }
