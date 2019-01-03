@@ -259,7 +259,7 @@ pub fn base64_encode_region(
     no_line_break: bool,
 ) -> EmacsInt {
     unsafe { validate_region(&mut beg, &mut end) };
-    let mut current_buffer = ThreadState::current_buffer();
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
     let old_pos = current_buffer.pt;
 
     let ibeg = beg.as_natnum_or_error() as isize;
@@ -303,7 +303,7 @@ pub fn base64_encode_region(
 pub fn base64_decode_region(mut beg: LispObject, mut end: LispObject) -> EmacsInt {
     unsafe { validate_region(&mut beg, &mut end) };
 
-    let mut current_buffer = ThreadState::current_buffer();
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
     let mut old_pos = current_buffer.pt;
 
     let ibeg = beg.as_natnum_or_error() as isize;

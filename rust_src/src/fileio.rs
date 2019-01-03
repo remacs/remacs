@@ -41,7 +41,7 @@ pub fn directory_name_p(name: LispStringRef) -> bool {
 /// Clear any record of a recent auto-save failure in the current buffer.
 #[lisp_fn]
 pub fn clear_buffer_auto_save_failure() {
-    ThreadState::current_buffer().auto_save_failure_time = 0;
+    ThreadState::current_buffer_unchecked().auto_save_failure_time = 0;
 }
 
 /// Return t if current buffer has been auto-saved recently.
@@ -50,7 +50,7 @@ pub fn clear_buffer_auto_save_failure() {
 /// then any auto-save counts as "recent".
 #[lisp_fn]
 pub fn recent_auto_save_p() -> bool {
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
 
     // FIXME: maybe we should return nil for indirect buffers since
     //  they're never autosaved.

@@ -421,7 +421,7 @@ pub fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispOb
 /// Normally the local keymap is set by the major mode with `use-local-map'.
 #[lisp_fn]
 pub fn current_local_map() -> LispObject {
-    ThreadState::current_buffer().keymap_
+    ThreadState::current_buffer_unchecked().keymap_
 }
 
 /// Select KEYMAP as the local keymap.
@@ -433,7 +433,7 @@ pub fn use_local_map(mut keymap: LispObject) {
         keymap = map;
     }
 
-    ThreadState::current_buffer().keymap_ = keymap;
+    ThreadState::current_buffer_unchecked().keymap_ = keymap;
 }
 
 /// Return the binding for command KEYS in current global keymap only.

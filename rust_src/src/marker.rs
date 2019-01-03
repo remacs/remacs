@@ -219,7 +219,7 @@ pub unsafe extern "C" fn build_marker(
 /// Return value of point, as a marker object.
 #[lisp_fn]
 pub fn point_marker() -> LispObject {
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     unsafe { build_marker(cur_buf.as_mut(), cur_buf.pt, cur_buf.pt_byte) }
 }
 
@@ -227,7 +227,7 @@ pub fn point_marker() -> LispObject {
 /// This is the beginning, unless narrowing (a buffer restriction) is in effect.
 #[lisp_fn]
 pub fn point_min_marker() -> LispObject {
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     unsafe { build_marker(cur_buf.as_mut(), cur_buf.begv, cur_buf.begv_byte) }
 }
 
@@ -236,7 +236,7 @@ pub fn point_min_marker() -> LispObject {
 /// is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max_marker() -> LispObject {
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     unsafe { build_marker(cur_buf.as_mut(), cur_buf.zv, cur_buf.zv_byte) }
 }
 
@@ -244,7 +244,7 @@ pub fn point_max_marker() -> LispObject {
 #[no_mangle]
 pub extern "C" fn set_point_from_marker(marker: LispObject) {
     let marker = marker.as_marker_or_error();
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     let charpos = clip_to_bounds(
         cur_buf.begv,
         marker.charpos_or_error() as EmacsInt,
@@ -319,7 +319,7 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
 /// Return t if there are markers pointing at POSITION in the current buffer.
 #[lisp_fn]
 pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let position = clip_to_bounds(cur_buf.begv, position, cur_buf.zv);
 
     if let Some(marker) = cur_buf.markers() {
@@ -463,7 +463,7 @@ pub extern "C" fn set_marker_restricted_both(
         .as_live_buffer()
         .or_else(|| current_buffer().as_live_buffer())
     {
-        let cur_buf = ThreadState::current_buffer();
+        let cur_buf = ThreadState::current_buffer_unchecked();
         let clipped_charpos = clip_to_bounds(cur_buf.begv, charpos as EmacsInt, cur_buf.zv);
         let clipped_bytepos =
             clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
@@ -898,7 +898,7 @@ fn count_markers(buf: LispBufferRef) -> u8 {
 fn verify_bytepos(charpos: isize) -> isize {
     let mut below: isize = 1;
     let mut below_byte: isize = 1;
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
 
     while below != charpos {
         below += 1;

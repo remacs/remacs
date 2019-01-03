@@ -53,7 +53,7 @@ use crate::{
 /// Beginning of buffer is position (point-min).
 #[lisp_fn]
 pub fn point() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt as EmacsInt
 }
 
@@ -76,7 +76,7 @@ pub fn buffer_size(buffer: LispBufferOrCurrent) -> EmacsInt {
 /// If the buffer is narrowed, this means the end of the narrowed part.
 #[lisp_fn]
 pub fn eobp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.zv == buffer_ref.pt
 }
 
@@ -84,14 +84,14 @@ pub fn eobp() -> bool {
 /// buffer is narrowed, this means the beginning of the narrowed part.
 #[lisp_fn]
 pub fn bobp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.begv
 }
 
 /// Return t if point is at the beginning of a line.
 #[lisp_fn]
 pub fn bolp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.begv || buffer_ref.fetch_byte(buffer_ref.pt_byte - 1) == b'\n'
 }
 
@@ -99,7 +99,7 @@ pub fn bolp() -> bool {
 /// `End of a line' includes point being at the end of the buffer.
 #[lisp_fn]
 pub fn eolp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.zv || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n'
 }
 
@@ -107,7 +107,7 @@ pub fn eolp() -> bool {
 /// See also `gap-size'.
 #[lisp_fn]
 pub fn gap_position() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.gap_position() as EmacsInt
 }
 
@@ -115,7 +115,7 @@ pub fn gap_position() -> EmacsInt {
 /// See also `gap-position'.
 #[lisp_fn]
 pub fn gap_size() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.gap_size() as EmacsInt
 }
 
@@ -123,7 +123,7 @@ pub fn gap_size() -> EmacsInt {
 /// BEGINNINGP means return the start.
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> EmacsInt {
-    let current_buf = ThreadState::current_buffer();
+    let current_buf = ThreadState::current_buffer_unchecked();
     if unsafe { globals.Vtransient_mark_mode }.is_not_nil()
         && unsafe { globals.Vmark_even_if_inactive }.is_nil()
         && current_buf.mark_active().is_nil()
@@ -159,7 +159,7 @@ pub fn region_end() -> EmacsInt {
 /// If you set the marker not to point anywhere, the buffer will have no mark.
 #[lisp_fn]
 pub fn mark_marker() -> LispObject {
-    ThreadState::current_buffer().mark()
+    ThreadState::current_buffer_unchecked().mark()
 }
 
 /// Return the minimum permissible value of point in the current
@@ -167,7 +167,7 @@ pub fn mark_marker() -> LispObject {
 /// effect.
 #[lisp_fn]
 pub fn point_min() -> EmacsInt {
-    ThreadState::current_buffer().begv as EmacsInt
+    ThreadState::current_buffer_unchecked().begv as EmacsInt
 }
 
 /// Return the maximum permissible value of point in the current
@@ -175,7 +175,7 @@ pub fn point_min() -> EmacsInt {
 /// restriction) is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max() -> EmacsInt {
-    ThreadState::current_buffer().zv as EmacsInt
+    ThreadState::current_buffer_unchecked().zv as EmacsInt
 }
 
 /// Set point to POSITION, a number or marker.
@@ -187,7 +187,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
     if position.is_marker() {
         set_point_from_marker(position);
     } else if let Some(num) = position.as_fixnum() {
-        let mut cur_buf = ThreadState::current_buffer();
+        let mut cur_buf = ThreadState::current_buffer_unchecked();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
         let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         unsafe { set_point_both(pos, bytepos) };
@@ -202,7 +202,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
     let pos = position.to_fixnum() as ptrdiff_t;
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
         let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
@@ -228,7 +228,7 @@ pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     if byte < 0 || byte > 255 {
         args_out_of_range!(byte, 0, 255)
     }
-    let buf = ThreadState::current_buffer();
+    let buf = ThreadState::current_buffer_unchecked();
     let toinsert = if byte >= 128 && buf.multibyte_characters_enabled() {
         EmacsInt::from(raw_byte_codepoint(byte as c_uchar))
     } else {
@@ -310,7 +310,7 @@ pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool)
 /// the buffer or accessible region, return 0.
 #[lisp_fn]
 pub fn following_char() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     if buffer_ref.pt >= buffer_ref.zv {
         0
@@ -323,7 +323,7 @@ pub fn following_char() -> EmacsInt {
 /// beginning of the buffer or accessible region, return 0.
 #[lisp_fn(c_name = "previous_char")]
 pub fn preceding_char() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     if buffer_ref.pt <= buffer_ref.begv {
         return EmacsInt::from(0);
@@ -342,7 +342,7 @@ pub fn preceding_char() -> EmacsInt {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
-    let mut buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
     let pos_byte: isize;
 
     if pos.is_nil() {
@@ -379,7 +379,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
-    let mut buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
     if pos.is_nil() {
         pos = LispObject::from(point());
     }
@@ -638,7 +638,7 @@ pub fn constrain_to_field(
 
     let prev_old = old_pos - 1;
     let prev_new = new_pos - 1;
-    let begv = ThreadState::current_buffer().begv as EmacsInt;
+    let begv = ThreadState::current_buffer_unchecked().begv as EmacsInt;
 
     if unsafe { globals.Vinhibit_field_text_motion == Qnil }
         && new_pos != old_pos
@@ -743,7 +743,7 @@ pub fn constrain_to_field(
 /// If BYTEPOS is out of range, the value is nil.
 #[lisp_fn]
 pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     let mut pos_byte = bytepos as isize;
     if pos_byte < cur_buf.beg_byte() || pos_byte > cur_buf.z_byte() {
         return None;
@@ -775,7 +775,7 @@ pub fn char_equal(c1: LispObject, c2: LispObject) -> bool {
         return true;
     }
 
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     if cur_buf.case_fold_search().is_nil() {
         return false;
     }
@@ -870,7 +870,7 @@ pub fn insert_buffer_substring(
         args_out_of_range!(beg, end);
     }
 
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     unsafe {
         set_buffer_internal_1(buf_ref.as_mut());
         update_buffer_properties(b, e);
@@ -1077,7 +1077,7 @@ pub fn format_message(args: &mut [LispObject]) -> LispObject {
 /// of the buffer.
 #[lisp_fn]
 pub fn buffer_string() -> LispObject {
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
 
     let begv = cur_buf.begv;
     let begv_byte = cur_buf.begv_byte;
@@ -1218,7 +1218,7 @@ pub fn find_field(
     beg_limit: Option<EmacsInt>,
     end_limit: Option<EmacsInt>,
 ) -> (ptrdiff_t, ptrdiff_t) {
-    let current_buffer = ThreadState::current_buffer();
+    let current_buffer = ThreadState::current_buffer_unchecked();
     let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as ptrdiff_t);
 
     // Fields right before and after the point.
@@ -1442,7 +1442,7 @@ pub fn time_less_p(t1: LispObject, t2: LispObject) -> bool {
 /// This allows the buffer's full text to be seen and edited.
 #[lisp_fn(intspec = "")]
 pub fn widen() {
-    let mut buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
 
     if buffer_ref.beg() != buffer_ref.begv || buffer_ref.z() != buffer_ref.zv {
         buffer_ref.set_clip_changed(true);
