@@ -189,7 +189,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
     } else if let Some(num) = position.as_fixnum() {
         let mut cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -205,7 +205,7 @@ pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
     let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -363,7 +363,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
-        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -397,7 +397,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
