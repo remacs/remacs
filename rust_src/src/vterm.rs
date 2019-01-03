@@ -17,7 +17,7 @@ use crate::{
     remacs_sys::{
         allocate_vterm, color_to_rgb_string, get_col_offset, mysave_value, refresh_lines,
         rgb_string_to_color, row_to_linenr, term_process_key, vterm_output_read,
-        vterm_sb_buffer_size, vterm_screen_callbacks, vterm_screen_set_callbacks,
+        vterm_screen_callbacks, vterm_screen_set_callbacks,VtermScrollbackLine
     },
 
     remacs_sys::{
@@ -129,7 +129,8 @@ pub fn vterm_new_lisp(rows: EmacsInt, cols: EmacsInt, process: LispObject) -> Li
         (*term).sb_current = 0;
         (*term).sb_pending = 0;
 
-        vterm_sb_buffer_size(term.as_mut() as *mut vterminal);
+        let s = mem::size_of::<VtermScrollbackLine>() * MaximumScrollback;
+        (*term).sb_buffer = libc::malloc(s as libc::size_t) as *mut *mut VtermScrollbackLine;
 
         (*term).invalid_start = 0;
         (*term).invalid_end = rows as c_int;
@@ -138,6 +139,8 @@ pub fn vterm_new_lisp(rows: EmacsInt, cols: EmacsInt, process: LispObject) -> Li
 
         val
     }
+
+
 }
 
 #[no_mangle]

@@ -363,12 +363,6 @@ VTermScreenCallbacks vterm_screen_callbacks = {
     
 };
 
-void
-vterm_sb_buffer_size (vterminal *term) {
-  int sb_size = 1000;
-  term->sb_buffer = malloc(sizeof(VtermScrollbackLine *) * term->sb_size);
-}
-
 bool
 vterm_module_copy_string_contents (Lisp_Object lisp_str, char *buffer, ptrdiff_t *length)
 {
