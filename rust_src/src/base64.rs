@@ -263,9 +263,9 @@ pub fn base64_encode_region(
     let old_pos = current_buffer.pt;
 
     let ibeg = beg.as_natnum_or_error() as isize;
-    let begpos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), ibeg) };
+    let begpos = buf_charpos_to_bytepos(current_buffer.as_mut(), ibeg);
     let iend = end.as_natnum_or_error() as isize;
-    let endpos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), iend) };
+    let endpos = buf_charpos_to_bytepos(current_buffer.as_mut(), iend);
 
     unsafe { move_gap_both(ibeg, begpos) };
 
@@ -307,9 +307,9 @@ pub fn base64_decode_region(mut beg: LispObject, mut end: LispObject) -> EmacsIn
     let mut old_pos = current_buffer.pt;
 
     let ibeg = beg.as_natnum_or_error() as isize;
-    let begpos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), ibeg) };
+    let begpos = buf_charpos_to_bytepos(current_buffer.as_mut(), ibeg);
     let iend = end.as_natnum_or_error() as isize;
-    let endpos = unsafe { buf_charpos_to_bytepos(current_buffer.as_mut(), iend) };
+    let endpos = buf_charpos_to_bytepos(current_buffer.as_mut(), iend);
 
     let multibyte = current_buffer.multibyte_characters_enabled();
     let length = (endpos - begpos) as usize;

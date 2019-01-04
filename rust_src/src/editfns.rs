@@ -15,6 +15,7 @@ use crate::{
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::{progn, unbind_to},
+    indent::invalidate_current_column,
     lisp::{defsubr, LispObject},
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
@@ -30,12 +31,12 @@ use crate::{
     remacs_sys::{
         buffer_overflow, build_string, current_message, del_range, del_range_1, downcase,
         find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
-        insert_and_inherit, insert_from_buffer, invalidate_current_column, make_buffer_string,
-        make_buffer_string_both, make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit,
-        message1, message3, record_unwind_current_buffer, record_unwind_protect,
-        save_excursion_restore, save_restriction_restore, save_restriction_save,
-        scan_newline_from_point, set_buffer_internal_1, set_point, set_point_both, styled_format,
-        update_buffer_properties, STRING_BYTES,
+        insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
+        make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
+        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
+        save_restriction_restore, save_restriction_save, scan_newline_from_point,
+        set_buffer_internal_1, set_point, set_point_both, styled_format, update_buffer_properties,
+        STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,
@@ -189,7 +190,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
     } else if let Some(num) = position.as_fixnum() {
         let mut cur_buf = ThreadState::current_buffer_unchecked();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -205,7 +206,7 @@ pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
     let mut cur_buf = ThreadState::current_buffer_unchecked();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -363,7 +364,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
-        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -397,7 +398,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -1452,9 +1453,7 @@ pub fn widen() {
     buffer_ref.set_zv_both(buffer_ref.z(), buffer_ref.z_byte());
 
     // Changing the buffer bounds invalidates any recorded current column.
-    unsafe {
-        invalidate_current_column();
-    }
+    invalidate_current_column();
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

@@ -617,7 +617,7 @@ pub fn minibuffer_window(frame: LispFrameOrSelected) -> LispObject {
 
 /// Return WINDOW's value for PARAMETER.
 /// WINDOW can be any window and defaults to the selected one.
-#[lisp_fn(name = "window-parameter")]
+#[lisp_fn(name = "window-parameter", c_name = "window_parameter")]
 pub fn window_parameter_lisp(window: LispWindowOrSelected, parameter: LispObject) -> LispObject {
     let win: LispWindowRef = window.into();
     win.get_parameter(parameter)
@@ -782,8 +782,8 @@ pub fn window_list(
 ///
 /// If WINDOW is not on the list of windows returned, some other window will
 /// be listed first but no error is signaled.
-#[lisp_fn(min = "0", name = "window-list-1")]
-pub fn window_list_one(
+#[lisp_fn(min = "0", name = "window-list-1", c_name = "window_list_1")]
+pub fn window_list_1_lisp(
     window: LispObject,
     minibuf: LispObject,
     all_frames: LispObject,
