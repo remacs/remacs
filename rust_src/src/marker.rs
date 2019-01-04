@@ -113,11 +113,7 @@ impl From<LispMarkerRef> for LispObject {
     }
 }
 
-impl From<LispObject> for Option<LispMarkerRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_marker()
-    }
-}
+from_lispobject_for_option!(LispMarkerRef);
 
 impl LispObject {
     pub fn is_marker(self) -> bool {

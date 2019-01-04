@@ -70,11 +70,7 @@ impl From<LispProcessRef> for LispObject {
     }
 }
 
-impl From<LispObject> for Option<LispProcessRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_process()
-    }
-}
+from_lispobject_for_option!(LispProcessRef);
 
 macro_rules! for_each_process {
     ($name:ident => $action:block) => {

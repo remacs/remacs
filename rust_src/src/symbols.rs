@@ -163,11 +163,7 @@ impl From<LispSymbolRef> for LispObject {
     }
 }
 
-impl From<LispObject> for Option<LispSymbolRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_symbol()
-    }
-}
+from_lispobject_for_option!(LispSymbolRef);
 
 // Symbol support (LispType == Lisp_Symbol == 0)
 impl LispObject {

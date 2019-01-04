@@ -45,11 +45,7 @@ impl From<LispObject> for LispCharTableRef {
     }
 }
 
-impl From<LispObject> for Option<LispCharTableRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_char_table()
-    }
-}
+from_lispobject_for_option!(LispCharTableRef);
 
 impl From<LispCharTableRef> for LispObject {
     fn from(ct: LispCharTableRef) -> Self {

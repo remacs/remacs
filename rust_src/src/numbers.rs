@@ -174,11 +174,7 @@ impl From<LispObject> for LispNumber {
     }
 }
 
-impl From<LispObject> for Option<LispNumber> {
-    fn from(o: LispObject) -> Self {
-        o.as_number_coerce_marker()
-    }
-}
+from_lispobject_for_option!(LispNumber);
 
 impl From<LispNumber> for LispObject {
     fn from(n: LispNumber) -> LispObject {

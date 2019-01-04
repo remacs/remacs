@@ -293,14 +293,7 @@ impl From<LispObject> for u32 {
     }
 }
 
-impl From<LispObject> for Option<u32> {
-    fn from(o: LispObject) -> Self {
-        match o.as_fixnum() {
-            None => None,
-            Some(n) => Some(n as u32),
-        }
-    }
-}
+from_lispobject_for_option!(u32);
 
 impl From<!> for LispObject {
     fn from(_v: !) -> Self {
@@ -354,15 +347,7 @@ impl From<LispObject> for EmacsInt {
     }
 }
 
-impl From<LispObject> for Option<EmacsInt> {
-    fn from(o: LispObject) -> Self {
-        if o.is_nil() {
-            None
-        } else {
-            Some(o.as_fixnum_or_error())
-        }
-    }
-}
+from_lispobject_for_option!(EmacsInt);
 
 impl From<LispObject> for EmacsUint {
     fn from(o: LispObject) -> Self {
@@ -370,15 +355,7 @@ impl From<LispObject> for EmacsUint {
     }
 }
 
-impl From<LispObject> for Option<EmacsUint> {
-    fn from(o: LispObject) -> Self {
-        if o.is_nil() {
-            None
-        } else {
-            Some(o.as_natnum_or_error())
-        }
-    }
-}
+from_lispobject_for_option!(EmacsUint);
 
 impl From<EmacsInt> for LispObject {
     fn from(v: EmacsInt) -> Self {

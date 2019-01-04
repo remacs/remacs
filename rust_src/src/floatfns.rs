@@ -79,15 +79,7 @@ impl From<LispObject> for EmacsDouble {
     }
 }
 
-impl From<LispObject> for Option<EmacsDouble> {
-    fn from(o: LispObject) -> Self {
-        if o.is_nil() {
-            None
-        } else {
-            Some(o.any_to_float_or_error())
-        }
-    }
-}
+from_lispobject_for_option!(EmacsDouble);
 
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
 /// TODO this is used from C in a few places; remove afterwards.

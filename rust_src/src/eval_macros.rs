@@ -7,6 +7,36 @@
  * the unsafe is not used.
  */
 
+/// Ideally, we would be able to write this:
+///
+///   impl<T: From<LispObject>> From<LispObject> for Option<T> {
+///       fn from(o: LispObject) -> Option<T> {
+///           if o.is_nil() {
+///               None
+///           } else {
+///               Some(T::from(o))
+///           }
+///       }
+///   }
+///
+/// Due to the so-called "orphan rule", this is not possible; external
+/// traits (like `From`) can't be implemented for external types (like
+/// `Option`). This may change in the future, but for now a bunch of
+/// boilerplate is required. To get around this, we can use a macro.
+macro_rules! from_lispobject_for_option {
+    ($type:ident) => {
+        impl From<LispObject> for Option<$type> {
+            fn from(o: LispObject) -> Option<$type> {
+                if o.is_nil() {
+                    None
+                } else {
+                    Some($type::from(o))
+                }
+            }
+        }
+    };
+}
+
 /// Macro to generate an error with a list from any number of arguments.
 /// Replaces xsignal0, etc. in the C layer.
 ///

@@ -240,15 +240,7 @@ impl From<LispObject> for LispCons {
     }
 }
 
-impl From<LispObject> for Option<LispCons> {
-    fn from(o: LispObject) -> Self {
-        if o.is_list() {
-            Some(o.as_cons_or_error())
-        } else {
-            None
-        }
-    }
-}
+from_lispobject_for_option!(LispCons);
 
 impl From<LispCons> for LispObject {
     fn from(c: LispCons) -> Self {

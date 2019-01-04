@@ -90,15 +90,7 @@ impl From<LispObject> for LispObarrayRef {
     }
 }
 
-impl From<LispObject> for Option<LispObarrayRef> {
-    fn from(o: LispObject) -> Self {
-        if o.is_nil() {
-            None
-        } else {
-            Some(o.as_obarray_or_error())
-        }
-    }
-}
+from_lispobject_for_option!(LispObarrayRef);
 
 /// Intern (e.g. create a symbol from) a string.
 pub fn intern<T: AsRef<str>>(string: T) -> LispSymbolRef {

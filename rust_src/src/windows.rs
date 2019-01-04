@@ -235,11 +235,7 @@ impl From<LispWindowRef> for LispObject {
     }
 }
 
-impl From<LispObject> for Option<LispWindowRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_window()
-    }
-}
+from_lispobject_for_option!(LispWindowRef);
 
 impl LispObject {
     pub fn is_window(self) -> bool {

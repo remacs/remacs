@@ -417,11 +417,7 @@ impl From<LispBufferRef> for LispObject {
     }
 }
 
-impl From<LispObject> for Option<LispBufferRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_buffer()
-    }
-}
+from_lispobject_for_option!(LispBufferRef);
 
 impl LispObject {
     pub fn is_overlay(self) -> bool {
@@ -451,11 +447,7 @@ impl From<LispOverlayRef> for LispObject {
     }
 }
 
-impl From<LispObject> for Option<LispOverlayRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_overlay()
-    }
-}
+from_lispobject_for_option!(LispOverlayRef);
 
 impl LispMiscRef {
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
@@ -553,19 +545,7 @@ impl From<LispObject> for LispBufferOrName {
     }
 }
 
-impl From<LispObject> for Option<LispBufferOrName> {
-    fn from(v: LispObject) -> Option<LispBufferOrName> {
-        if v.is_nil() {
-            None
-        } else if v.is_string() {
-            Some(LispBufferOrName::Name(v))
-        } else if v.is_buffer() {
-            Some(LispBufferOrName::Buffer(v))
-        } else {
-            None
-        }
-    }
-}
+from_lispobject_for_option!(LispBufferOrName);
 
 impl From<LispBufferOrName> for Option<LispBufferRef> {
     fn from(v: LispBufferOrName) -> Option<LispBufferRef> {

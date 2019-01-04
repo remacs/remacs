@@ -46,11 +46,7 @@ impl From<LispFrameRef> for LispObject {
     }
 }
 
-impl From<LispObject> for Option<LispFrameRef> {
-    fn from(o: LispObject) -> Self {
-        o.as_frame()
-    }
-}
+from_lispobject_for_option!(LispFrameRef);
 
 impl LispObject {
     pub fn is_frame(self) -> bool {
