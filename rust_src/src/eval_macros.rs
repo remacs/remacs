@@ -95,6 +95,36 @@ macro_rules! args_out_of_range {
     ($($tt:tt)+) => { xsignal!(crate::remacs_sys::Qargs_out_of_range, $($tt)+); };
 }
 
+macro_rules! arith_error {
+    () => {
+        xsignal!(crate::remacs_sys::Qarith_error);
+    };
+}
+
+macro_rules! void_variable {
+    ($var:expr) => {
+        xsignal!(crate::remacs_sys::Qvoid_variable, $var);
+    };
+}
+
+macro_rules! wrong_number_of_arguments {
+    ($sym:expr, $num:expr) => {
+        xsignal!(crate::remacs_sys::Qwrong_number_of_arguments, $sym, $num);
+    };
+}
+
+macro_rules! setting_constant {
+    ($sym:expr) => {
+        xsignal!(crate::remacs_sys::Qsetting_constant, $sym);
+    };
+}
+
+macro_rules! user_error {
+    ($msg:expr) => {
+        xsignal!(crate::remacs_sys::Quser_error, $msg);
+    };
+}
+
 macro_rules! list {
     ($arg:expr, $($tt:tt)+) => { $crate::lisp::LispObject::cons($arg, list!($($tt)+)) };
     ($arg:expr) => { $crate::lisp::LispObject::cons($arg, list!()) };
@@ -303,8 +333,9 @@ macro_rules! local_unibyte_string {
                 },
             },
         };
-        let $name = crate::lisp::ExternalPtr::new(&mut obj as *mut crate::remacs_sys::Lisp_String)
-            .as_lisp_obj();
+        let $name = crate::lisp::LispObject::from(crate::lisp::ExternalPtr::new(
+            &mut obj as *mut crate::remacs_sys::Lisp_String,
+        ));
     };
 }
 

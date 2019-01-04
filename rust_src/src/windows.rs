@@ -34,10 +34,6 @@ use crate::{
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
     pub fn is_live(self) -> bool {
@@ -235,7 +231,7 @@ impl From<LispObject> for LispWindowRef {
 
 impl From<LispWindowRef> for LispObject {
     fn from(w: LispWindowRef) -> Self {
-        w.as_lisp_obj()
+        LispObject::tag_ptr(w, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -621,7 +617,7 @@ pub fn minibuffer_window(frame: LispFrameOrSelected) -> LispObject {
 
 /// Return WINDOW's value for PARAMETER.
 /// WINDOW can be any window and defaults to the selected one.
-#[lisp_fn(name = "window-parameter")]
+#[lisp_fn(name = "window-parameter", c_name = "window_parameter")]
 pub fn window_parameter_lisp(window: LispWindowOrSelected, parameter: LispObject) -> LispObject {
     let win: LispWindowRef = window.into();
     win.get_parameter(parameter)
@@ -739,7 +735,7 @@ pub fn window_list(
     window: Option<LispWindowRef>,
 ) -> LispObject {
     let w_obj = match window {
-        Some(w) => w.as_lisp_obj(),
+        Some(w) => w.into(),
         None => LispFrameRef::from(frame).selected_window,
     };
 
@@ -786,8 +782,8 @@ pub fn window_list(
 ///
 /// If WINDOW is not on the list of windows returned, some other window will
 /// be listed first but no error is signaled.
-#[lisp_fn(min = "0", name = "window-list-1")]
-pub fn window_list_one(
+#[lisp_fn(min = "0", name = "window-list-1", c_name = "window_list_1")]
+pub fn window_list_1_lisp(
     window: LispObject,
     minibuf: LispObject,
     all_frames: LispObject,
@@ -1075,6 +1071,35 @@ pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
     win.new_total
 }
 
+/// Set new total size of WINDOW to SIZE.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return SIZE.
+///
+/// Optional argument ADD non-nil means add SIZE to the new total size of
+/// WINDOW and return the sum.
+///
+/// The new total size of WINDOW, if valid, will be shortly installed as
+/// WINDOW's total height (see `window-total-height') or total width (see
+/// `window-total-width').
+///
+/// Note: This function does not operate on any child windows of WINDOW.
+#[lisp_fn(min = "2")]
+pub fn set_window_new_total(
+    window: LispWindowValidOrSelected,
+    size: EmacsInt,
+    add: bool,
+) -> LispObject {
+    let mut win: LispWindowRef = window.into();
+
+    let new_total = if !add {
+        size
+    } else {
+        EmacsInt::from(win.new_total) + size
+    };
+    win.new_total = new_total.into();
+    win.new_total
+}
+
 #[no_mangle]
 pub extern "C" fn wset_update_mode_line(mut w: LispWindowRef) {
     // If this window is the selected window on its frame, set the
@@ -1152,6 +1177,32 @@ pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
 pub fn window_parameters(window: LispWindowValidOrSelected) -> LispObject {
     let win: LispWindowRef = window.into();
     unsafe { Fcopy_alist(win.window_parameters) }
+}
+
+/// Return WINDOW's redisplay end trigger value.
+/// WINDOW must be a live window and defaults to the selected one.
+/// See `set-window-redisplay-end-trigger' for more information.
+#[lisp_fn(min = "0")]
+pub fn window_redisplay_end_trigger(window: LispWindowLiveOrSelected) -> LispObject {
+    let win: LispWindowRef = window.into();
+    win.redisplay_end_trigger
+}
+
+/// Set WINDOW's redisplay end trigger value to VALUE.
+/// WINDOW must be a live window and defaults to the selected one.  VALUE
+/// should be a buffer position (typically a marker) or nil.  If it is a
+/// buffer position, then if redisplay in WINDOW reaches a position beyond
+/// VALUE, the functions in `redisplay-end-trigger-functions' are called
+/// with two arguments: WINDOW, and the end trigger value.  Afterwards the
+/// end-trigger value is reset to nil.
+#[lisp_fn]
+pub fn set_window_redisplay_end_trigger(
+    window: LispWindowLiveOrSelected,
+    value: LispObject,
+) -> LispObject {
+    let mut win: LispWindowRef = window.into();
+    win.redisplay_end_trigger = value;
+    value
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

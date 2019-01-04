@@ -5047,10 +5047,14 @@ CARGO_BUILD="$CARGO build"
 CARGO_CLEAN="$CARGO clean"
 CARGO_TEST="$CARGO test"
 CARGO_CLIPPY="$CARGO clippy"
+CARGO_RUN="$CARGO run"
+CARGO_DOC="$CARGO doc --all --open --document-private-items"
 
 AC_SUBST(CARGO_BUILD)
 AC_SUBST(CARGO_CLEAN)
 AC_SUBST(CARGO_CLIPPY)
+AC_SUBST(CARGO_RUN)
+AC_SUBST(CARGO_DOC)
 
 AC_ARG_ENABLE(rust-debug,
 [AS_HELP_STRING([--enable-rust-debug],
@@ -5431,9 +5435,17 @@ CARGO_DEFAULT_FEATURES=""
 if test "$HAVE_LIBXML2" = "yes"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
 fi
+if test "$CANNOT_DUMP" != "yes"; then
+    if test "$opsys" = "darwin"; then
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"unexecmacosx\", "
+    else
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"unexec\", "
+    fi
+fi
 if test "$window_system" != "none"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system\", "
 fi
+
 AC_SUBST(CARGO_DEFAULT_FEATURES)
 AC_CONFIG_FILES([rust_src/Cargo.toml])
 

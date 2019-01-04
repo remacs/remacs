@@ -127,7 +127,7 @@ static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 
 static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
-static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
+extern struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -473,40 +473,6 @@ even if it is dead.  The return value is never nil.  */)
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 
   return buffer;
-}
-
-
-/* Return a list of overlays which is a copy of the overlay list
-   LIST, but for buffer B.  */
-
-static struct Lisp_Overlay *
-copy_overlays (struct buffer *b, struct Lisp_Overlay *list)
-{
-  struct Lisp_Overlay *result = NULL, *tail = NULL;
-
-  for (; list; list = list->next)
-    {
-      Lisp_Object overlay, start, end;
-      struct Lisp_Marker *m;
-
-      eassert (MARKERP (list->start));
-      m = XMARKER (list->start);
-      start = build_marker (b, m->charpos, m->bytepos);
-      XMARKER (start)->insertion_type = m->insertion_type;
-
-      eassert (MARKERP (list->end));
-      m = XMARKER (list->end);
-      end = build_marker (b, m->charpos, m->bytepos);
-      XMARKER (end)->insertion_type = m->insertion_type;
-
-      overlay = build_overlay (start, end, Fcopy_sequence (list->plist));
-      if (tail)
-	tail = tail->next = XOVERLAY (overlay);
-      else
-	result = tail = XOVERLAY (overlay);
-    }
-
-  return result;
 }
 
 /* Set an appropriate overlay of B.  */

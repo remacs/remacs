@@ -66,10 +66,6 @@ pub const MAX_MULTIBYTE_LENGTH: usize = 5;
 // String support (LispType == 4)
 
 impl LispStringRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_String)
-    }
-
     /// Return the string's len in bytes.
     pub fn len_bytes(self) -> ptrdiff_t {
         let s = unsafe { self.u.s };
@@ -94,7 +90,7 @@ impl LispStringRef {
     /// STRING are always taken to occupy `tab-width' columns.
     pub fn width(self) -> usize {
         unsafe {
-            lisp_string_width(self.as_lisp_obj(), -1, ptr::null_mut(), ptr::null_mut()) as usize
+            lisp_string_width(LispObject::from(self), -1, ptr::null_mut(), ptr::null_mut()) as usize
         }
     }
 
@@ -269,7 +265,7 @@ impl From<LispObject> for LispStringRef {
 
 impl From<LispStringRef> for LispObject {
     fn from(s: LispStringRef) -> Self {
-        s.as_lisp_obj()
+        LispObject::tag_ptr(s, Lisp_Type::Lisp_String)
     }
 }
 

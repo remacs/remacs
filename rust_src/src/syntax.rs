@@ -56,8 +56,8 @@ def_lisp_sym!(Qsyntax_table_p, "syntax-table-p");
 
 // We don't name it scan_lists because there is an internal function
 // with the same name
-#[lisp_fn(name = "scan-lists")]
-pub fn scan_lists_defun(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
+#[lisp_fn(name = "scan-lists", c_name = "scan_lists")]
+pub fn scan_lists_lisp(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
     unsafe { scan_lists(from, count, depth, false) }
 }
 
@@ -75,7 +75,7 @@ pub fn set_syntax_table(table: LispCharTableRef) -> LispCharTableRef {
 
 fn check_syntax_table_p(table: LispCharTableRef) {
     if table.purpose != Qsyntax_table {
-        wrong_type!(Qsyntax_table_p, LispObject::from(table))
+        wrong_type!(Qsyntax_table_p, table)
     }
 }
 
@@ -91,7 +91,7 @@ pub extern "C" fn check_syntax_table(obj: LispObject) {
         .as_char_table()
         .map_or(true, |c| !c.purpose.eq(Qsyntax_table))
     {
-        xsignal!(Qsyntax_table_p, obj);
+        wrong_type!(Qsyntax_table_p, obj);
     }
 }
 

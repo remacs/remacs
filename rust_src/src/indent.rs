@@ -8,7 +8,9 @@ use crate::{
     buffers::{point_byte, point_min_byte},
     editfns::{point, point_min},
     lisp::defsubr,
-    remacs_sys::{self, find_newline, position_indentation, EmacsInt},
+    remacs_sys::last_known_column_point,
+    remacs_sys::EmacsInt,
+    remacs_sys::{self, find_newline, position_indentation},
 };
 
 /// Return the indentation of the current line.  This is the
@@ -50,6 +52,12 @@ pub fn current_indentation() -> EmacsInt {
 pub fn current_column() -> EmacsInt {
     let column = unsafe { remacs_sys::current_column() };
     column as EmacsInt
+}
+
+// Cancel any recorded value of the horizontal position.
+#[no_mangle]
+pub extern "C" fn invalidate_current_column() {
+    unsafe { last_known_column_point = 0 };
 }
 
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

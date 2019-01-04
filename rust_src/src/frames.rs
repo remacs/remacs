@@ -16,10 +16,6 @@ use crate::{
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     pub fn is_live(self) -> bool {
         !self.terminal.is_null()
     }
@@ -46,7 +42,7 @@ impl From<LispObject> for LispFrameRef {
 
 impl From<LispFrameRef> for LispObject {
     fn from(f: LispFrameRef) -> Self {
-        f.as_lisp_obj()
+        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -128,7 +124,7 @@ impl LispFrameOrSelected {
         if frame.is_live() {
             frame
         } else {
-            wrong_type!(Qframe_live_p, self.into());
+            wrong_type!(Qframe_live_p, self);
         }
     }
 }
@@ -275,7 +271,7 @@ pub fn window_system(frame: LispFrameOrSelected) -> LispObject {
     let window_system = framep_1(frame);
 
     match window_system {
-        Qnil => wrong_type!(Qframep, frame.into()),
+        Qnil => wrong_type!(Qframep, frame),
         Qt => Qnil,
         _ => window_system,
     }
@@ -309,10 +305,7 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_position(frame: LispFrameOrSelected) -> LispObject {
     let frame_ref = frame.live_or_error();
-    LispObject::cons(
-        LispObject::from(frame_ref.left_pos),
-        LispObject::from(frame_ref.top_pos),
-    )
+    LispObject::cons(frame_ref.left_pos, frame_ref.top_pos)
 }
 
 /// Returns t if the mouse pointer displayed on FRAME is visible.
@@ -525,6 +518,24 @@ pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> Lisp
         // acceptable frame in the list, return it.
         prev.as_frame_or_error()
     }
+}
+
+/// Mark FRAME as made.
+/// FRAME nil means use the selected frame.  Second argument MADE non-nil
+/// means functions on `window-configuration-change-hook' are called
+/// whenever the window configuration of FRAME changes.  MADE nil means
+/// these functions are not called.
+///
+/// This function is currently called by `make-frame' only and should be
+/// otherwise used with utter care to avoid that running functions on
+/// `window-configuration-change-hook' is impeded forever.
+#[lisp_fn]
+pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> LispObject {
+    let mut frame_ref = frame.live_or_error();
+    frame_ref.set_after_make_frame(made.is_not_nil());
+    frame_ref.set_inhibit_horizontal_resize(false);
+    frame_ref.set_inhibit_vertical_resize(false);
+    made
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

@@ -313,7 +313,7 @@ pub unsafe extern "C" fn map_keymap(
 /// This works recursively: if the parent has itself a parent, then the
 /// grandparent's bindings are also included and so on.
 /// usage: (map-keymap FUNCTION KEYMAP)
-#[lisp_fn(name = "map-keymap", min = "2")]
+#[lisp_fn(name = "map-keymap", c_name = "map_keymap", min = "2")]
 pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
     if sort_first {
         return call!(
@@ -396,7 +396,7 @@ pub unsafe extern "C" fn map_keymap_internal(
 /// FUNCTION is called with two arguments: the event that is bound, and
 /// the definition it is bound to.  The event may be a character range.
 /// If KEYMAP has a parent, this function returns it without processing it.
-#[lisp_fn(name = "map-keymap-internal")]
+#[lisp_fn(name = "map-keymap-internal", c_name = "map_keymap_internal")]
 pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
     keymap = get_keymap(keymap, true, true);
     unsafe { map_keymap_internal(keymap, Some(map_keymap_call), function, ptr::null_mut()) }
@@ -592,7 +592,7 @@ pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
 /// Insert a description of contents of VECTOR.
 /// This is text showing the elements of vector matched against indices.
 /// DESCRIBER is the output function used; nil means use `princ'.
-#[lisp_fn(min = "1", name = "describe-vector")]
+#[lisp_fn(min = "1", name = "describe-vector", c_name = "describe_vector")]
 pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
     if describer.is_nil() {
         describer = LispObject::from(intern("princ"));

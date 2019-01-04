@@ -17,10 +17,7 @@ use crate::{
     remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
     remacs_sys::{equal_kind, Lisp_Type},
     remacs_sys::{Fload, Fmapc},
-    remacs_sys::{
-        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
-        Qwrong_number_of_arguments,
-    },
+    remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
 };
@@ -34,7 +31,7 @@ use crate::{
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> bool {
-    let mut tem = memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures });
+    let mut tem = memq(feature.into(), unsafe { globals.Vfeatures });
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(subfeature, get(feature, Qsubfeatures));
     }
@@ -51,15 +48,13 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         if Vautoload_queue.is_not_nil() {
-            Vautoload_queue = LispObject::cons(
-                LispObject::cons(LispObject::from(0), globals.Vfeatures),
-                Vautoload_queue,
-            );
+            Vautoload_queue =
+                LispObject::cons(LispObject::cons(0, globals.Vfeatures), Vautoload_queue);
         }
     }
-    if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_nil() {
+    if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = LispObject::cons(feature.as_lisp_obj(), globals.Vfeatures);
+            globals.Vfeatures = LispObject::cons(feature, globals.Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
@@ -67,17 +62,17 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         globals.Vcurrent_load_list = LispObject::cons(
-            LispObject::cons(Qprovide, feature.as_lisp_obj()),
+            LispObject::cons(Qprovide, feature),
             globals.Vcurrent_load_list,
         );
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.as_lisp_obj(), globals.Vafter_load_alist).as_cons() {
+        if let Some(c) = assq(feature.into(), globals.Vafter_load_alist).as_cons() {
             Fmapc(Qfuncall, c.cdr());
         }
     }
-    feature.as_lisp_obj()
+    feature.into()
 }
 
 /// Return the argument, without evaluating it.  `(quote x)' yields `x'.
@@ -93,7 +88,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
 #[lisp_fn(unevalled = "true")]
 pub fn quote(args: LispCons) -> LispObject {
     if args.cdr().is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qquote, args.length().into());
+        wrong_number_of_arguments!(Qquote, args.length());
     }
 
     args.car()
@@ -304,6 +299,20 @@ pub extern "C" fn internal_equal_misc(
 ) -> bool {
     match (o1.as_misc(), o2.as_misc()) {
         (Some(m1), Some(m2)) => m1.equal(m2, kind, depth, ht),
+        _ => false,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn internal_equal_vectorlike(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
+) -> bool {
+    match (o1.as_vectorlike(), o2.as_vectorlike()) {
+        (Some(v1), Some(v2)) => v1.equal(v2, kind, depth, ht),
         _ => false,
     }
 }

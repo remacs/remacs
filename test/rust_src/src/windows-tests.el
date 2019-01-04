@@ -42,6 +42,14 @@
   (should (eq (window-new-total) (window-total-height)))
   (should (eq (window-new-total (selected-window)) (window-total-height))))
 
+(ert-deftest set-window-new-total()
+  (set-window-new-total nil 1)
+  (should (eq (window-new-total) 1))
+  (set-window-new-total nil 1 nil)
+  (should (eq (window-new-total) 1))
+  (set-window-new-total nil 1 t)
+  (should (eq (window-new-total) 2)))
+
 (ert-deftest window-new-normal ()
   "Effectively tests both `window-new-normal' (the getter) and
 `set-window-new-normal' (the setter)."
