@@ -367,7 +367,7 @@ pub fn read_command_or_variable(
     if name.is_nil() {
         name
     } else {
-        lisp_intern(name, Qnil)
+        lisp_intern(name.into(), None)
     }
 }
 
