@@ -58,13 +58,13 @@ SOURCE."
   (cl-loop
    while
    (search-forward-regexp
-    "^\\(In file included from \\)?<stdin>:\\([0-9]+\\):\\([0-9]+\\):\n?\\(.*\\): \\(.*\\)$"
+    "^\\(In file included from \\)?<stdin>:\\([0-9]+\\)\\(?::\\([0-9]+\\)\\)?:\n?\\(.*\\): \\(.*\\)$"
     nil t)
    for msg = (match-string 5)
    for (beg . end) = (flymake-diag-region
                       source
                       (string-to-number (match-string 2))
-                      (string-to-number (match-string 3)))
+                      (and (match-string 3) (string-to-number (match-string 3))))
    for type = (if (match-string 1)
                   :error
                 (assoc-default
