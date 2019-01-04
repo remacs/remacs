@@ -7646,7 +7646,7 @@ on their symbols to be controlled by this variable.  */);
   DEFVAR_LISP ("window-point-insertion-type", Vwindow_point_insertion_type,
 	       doc: /* Type of marker to use for `window-point'.  */);
   Vwindow_point_insertion_type = Qnil;
-  DEFSYM (Qwindow_point_insertion_type, "window_point_insertion_type");
+  DEFSYM (Qwindow_point_insertion_type, "window-point-insertion-type");
 
   DEFVAR_LISP ("window-configuration-change-hook",
 	       Vwindow_configuration_change_hook,
