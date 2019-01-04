@@ -1332,9 +1332,9 @@ POS can be a buffer position or a button"
          (target (or (get-buffer name)
                      (with-current-buffer (get-buffer-create name)
                        (flymake-diagnostics-buffer-mode)
-                       (setq flymake--diagnostics-buffer-source source)
                        (current-buffer)))))
     (with-current-buffer target
+      (setq flymake--diagnostics-buffer-source source)
       (revert-buffer)
       (display-buffer (current-buffer)))))
 
