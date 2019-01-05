@@ -2919,6 +2919,8 @@ read_char (int commandflag, Lisp_Object map,
   if (! NILP (also_record))
     record_char (also_record);
 
+  Frun_hook_with_args (2, ((Lisp_Object []) {Qinput_event_functions, c}));
+
   /* Wipe the echo area.
      But first, if we are about to use an input method,
      save the echo area contents for it to refer to.  */
@@ -11021,6 +11023,8 @@ syms_of_keyboard (void)
   DEFSYM (Qdisabled, "disabled");
 
   DEFSYM (Qundefined, "undefined");
+
+  DEFSYM (Qinput_event_functions, "input-event-functions");
 
   /* Hooks to run before and after each command.  */
   DEFSYM (Qpre_command_hook, "pre-command-hook");
