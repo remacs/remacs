@@ -48,23 +48,19 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         if Vautoload_queue.is_not_nil() {
-            Vautoload_queue =
-                LispObject::cons(LispObject::cons(0, globals.Vfeatures), Vautoload_queue);
+            Vautoload_queue = ((0, globals.Vfeatures), Vautoload_queue).into();
         }
     }
     if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = LispObject::cons(feature, globals.Vfeatures);
+            globals.Vfeatures = (feature, globals.Vfeatures).into();
         }
     }
     if subfeature.is_not_nil() {
         put(feature, Qsubfeatures, subfeature);
     }
     unsafe {
-        globals.Vcurrent_load_list = LispObject::cons(
-            LispObject::cons(Qprovide, feature),
-            globals.Vcurrent_load_list,
-        );
+        globals.Vcurrent_load_list = ((Qprovide, feature), globals.Vcurrent_load_list).into();
     }
     // Run any load-hooks for this file.
     unsafe {
@@ -136,7 +132,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
             .any(|elt| elt.cdr().is_nil() && elt.car().is_string());
 
     if from_file {
-        let tem = LispObject::cons(Qrequire, feature);
+        let tem = (Qrequire, feature).into();
         if member(tem, current_load_list).is_nil() {
             loadhist_attach(tem);
         }
@@ -175,7 +171,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     unsafe {
         // Update the list for any nested `require's that occur.
         record_unwind_protect(Some(require_unwind), require_nesting_list);
-        require_nesting_list = LispObject::cons(feature, require_nesting_list);
+        require_nesting_list = (feature, require_nesting_list).into();
 
         // Value saved here is to be restored into Vautoload_queue
         record_unwind_protect(Some(un_autoload), Vautoload_queue);

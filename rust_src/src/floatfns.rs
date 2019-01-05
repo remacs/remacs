@@ -270,9 +270,9 @@ pub fn copysign(x1: EmacsDouble, x2: EmacsDouble) -> EmacsDouble {
 /// The function returns the cons cell (SGNFCAND . EXP).
 /// If X is zero, both parts (SGNFCAND and EXP) are zero.
 #[lisp_fn]
-pub fn frexp(x: EmacsDouble) -> LispObject {
+pub fn frexp(x: EmacsDouble) -> (LispObject, libc::c_int) {
     let (significand, exponent) = libm::frexp(x);
-    LispObject::cons(LispObject::from_float(significand), exponent)
+    (LispObject::from_float(significand), exponent)
 }
 
 /// Return SGNFCAND * 2**EXPONENT, as a floating point number.

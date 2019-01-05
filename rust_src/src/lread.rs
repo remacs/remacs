@@ -224,7 +224,7 @@ pub fn eval_region(
         specbind(Qstandard_output, tem);
         specbind(
             Qeval_buffer_list,
-            LispObject::cons(cur_buf_obj, globals.Veval_buffer_list),
+            (cur_buf_obj, globals.Veval_buffer_list).into(),
         );
 
         // `readevalloop' calls functions which check the type of start and end.

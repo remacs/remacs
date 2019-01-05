@@ -1,5 +1,7 @@
 //! Generic frame functions.
 
+use libc::c_int;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -288,9 +290,9 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 /// FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
 /// display.
 #[lisp_fn(min = "0")]
-pub fn frame_position(frame: LispFrameOrSelected) -> LispObject {
+pub fn frame_position(frame: LispFrameOrSelected) -> (c_int, c_int) {
     let frame_ref = frame.live_or_error();
-    LispObject::cons(frame_ref.left_pos, frame_ref.top_pos)
+    (frame_ref.left_pos, frame_ref.top_pos)
 }
 
 /// Returns t if the mouse pointer displayed on FRAME is visible.

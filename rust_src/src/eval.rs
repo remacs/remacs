@@ -236,18 +236,12 @@ pub fn function(args: LispObject) -> LispObject {
                         let docstring = unsafe { eval_sub(car(tail)) };
                         docstring.as_string_or_error();
                         let (a, b) = cdr.as_cons().unwrap().as_tuple();
-                        cdr = LispObject::cons(
-                            a,
-                            LispObject::cons(docstring, b.as_cons().unwrap().cdr()),
-                        );
+                        cdr = (a, (docstring, b.as_cons().unwrap().cdr())).into();
                     }
                 }
 
                 return unsafe {
-                    LispObject::cons(
-                        Qclosure,
-                        LispObject::cons(globals.Vinternal_interpreter_environment, cdr),
-                    )
+                    (Qclosure, (globals.Vinternal_interpreter_environment, cdr)).into()
                 };
             }
         }
@@ -379,10 +373,8 @@ pub fn letX(args: LispCons) -> LispObject {
                         // Lexically bind VAR by adding it to the interpreter's binding alist.
 
                         unsafe {
-                            let newenv = LispObject::cons(
-                                LispObject::cons(var, val),
-                                globals.Vinternal_interpreter_environment,
-                            );
+                            let newenv =
+                                ((var, val), globals.Vinternal_interpreter_environment).into();
 
                             if globals.Vinternal_interpreter_environment == lexenv {
                                 // Save the old lexical environment on the specpdl stack,
@@ -440,7 +432,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
                     if !bound {
                         // Lexically bind VAR by adding it to the lexenv alist.
-                        lexenv = LispObject::cons(LispObject::cons(var, val), lexenv);
+                        lexenv = ((var, val), lexenv).into();
                         dyn_bind = false;
                     }
                 }
@@ -592,10 +584,7 @@ fn signal_error(msg: &str, arg: LispObject) -> ! {
         Some(_) => arg,
     };
 
-    xsignal!(
-        Qerror,
-        LispObject::cons(build_string(msg.as_ptr() as *const i8), arg)
-    );
+    xsignal!(Qerror, (build_string(msg.as_ptr() as *const i8), arg));
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.
