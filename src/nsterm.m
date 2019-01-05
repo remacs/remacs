@@ -8230,7 +8230,9 @@ not_in_argv (NSString *arg)
   NSEvent *theEvent = [[self window] currentEvent];
   NSPoint position;
   NSDragOperation op = [sender draggingSourceOperationMask];
-  int modifiers = 0;
+  Lisp_Object operations = Qnil;
+  Lisp_Object strings = Qnil;
+  Lisp_Object type_sym;
 
   NSTRACE ("[EmacsView performDragOperation:]");
 
@@ -8243,19 +8245,17 @@ not_in_argv (NSString *arg)
   pb = [sender draggingPasteboard];
   type = [pb availableTypeFromArray: ns_drag_types];
 
-  if (! (op & (NSDragOperationMove|NSDragOperationDelete)) &&
-      // URL drags contain all operations (0xf), don't allow all to be set.
-      (op & 0xf) != 0xf)
-    {
-      if (op & NSDragOperationLink)
-        modifiers |= NSEventModifierFlagControl;
-      if (op & NSDragOperationCopy)
-        modifiers |= NSEventModifierFlagOption;
-      if (op & NSDragOperationGeneric)
-        modifiers |= NSEventModifierFlagCommand;
-    }
+  /* We used to convert these drag operations to keyboard modifiers,
+     but because they can be set by the sending program as well as the
+     keyboard modifiers it was difficult to work out a sensible key
+     mapping for drag and drop.  */
+  if (op & NSDragOperationLink)
+    operations = Fcons (Qns_drag_operation_link, operations);
+  if (op & NSDragOperationCopy)
+    operations = Fcons (Qns_drag_operation_copy, operations);
+  if (op & NSDragOperationGeneric || NILP (operations))
+    operations = Fcons (Qns_drag_operation_generic, operations);
 
-  modifiers = EV_MODIFIERS2 (modifiers);
   if (type == 0)
     {
       return NO;
@@ -8269,39 +8269,20 @@ not_in_argv (NSString *arg)
       if (!(files = [pb propertyListForType: type]))
         return NO;
 
+      type_sym = Qfile;
+
       fenum = [files objectEnumerator];
       while ( (file = [fenum nextObject]) )
-        {
-          emacs_event->kind = DRAG_N_DROP_EVENT;
-          XSETINT (emacs_event->x, x);
-          XSETINT (emacs_event->y, y);
-          emacs_event->modifiers = modifiers;
-          emacs_event->arg =  list2 (Qfile, build_string ([file UTF8String]));
-          EV_TRAILER (theEvent);
-        }
-      return YES;
+        strings = Fcons (build_string ([file UTF8String]), strings);
     }
   else if ([type isEqualToString: NSURLPboardType])
     {
       NSURL *url = [NSURL URLFromPasteboard: pb];
       if (url == nil) return NO;
 
-      emacs_event->kind = DRAG_N_DROP_EVENT;
-      XSETINT (emacs_event->x, x);
-      XSETINT (emacs_event->y, y);
-      emacs_event->modifiers = modifiers;
-      emacs_event->arg =  list2 (Qurl,
-                                 build_string ([[url absoluteString]
-                                                 UTF8String]));
-      EV_TRAILER (theEvent);
+      type_sym = Qurl;
 
-      if ([url isFileURL] != NO)
-        {
-          NSString *file = [url path];
-          ns_input_file = append2 (ns_input_file,
-                                   build_string ([file UTF8String]));
-        }
-      return YES;
+      strings = Fcons (build_string ([[url absoluteString] UTF8String]), Qnil);
     }
   else if ([type isEqualToString: NSStringPboardType]
            || [type isEqualToString: NSTabularTextPboardType])
@@ -8311,19 +8292,27 @@ not_in_argv (NSString *arg)
       if (! (data = [pb stringForType: type]))
         return NO;
 
-      emacs_event->kind = DRAG_N_DROP_EVENT;
-      XSETINT (emacs_event->x, x);
-      XSETINT (emacs_event->y, y);
-      emacs_event->modifiers = modifiers;
-      emacs_event->arg =  list2 (Qnil, build_string ([data UTF8String]));
-      EV_TRAILER (theEvent);
-      return YES;
+      type_sym = Qnil;
+
+      strings = Fcons (build_string ([data UTF8String]), Qnil);
     }
   else
     {
       fprintf (stderr, "Invalid data type in dragging pasteboard");
       return NO;
     }
+
+  emacs_event->kind = DRAG_N_DROP_EVENT;
+  XSETINT (emacs_event->x, x);
+  XSETINT (emacs_event->y, y);
+  emacs_event->modifiers = 0;
+
+  emacs_event->arg = Fcons (type_sym,
+                            Fcons (operations,
+                                   strings));
+  EV_TRAILER (theEvent);
+
+  return YES;
 }
 
 
@@ -9357,6 +9346,10 @@ syms_of_nsterm (void)
 
   DEFSYM (Qfile, "file");
   DEFSYM (Qurl, "url");
+
+  DEFSYM (Qns_drag_operation_copy, "ns-drag-operation-copy");
+  DEFSYM (Qns_drag_operation_link, "ns-drag-operation-link");
+  DEFSYM (Qns_drag_operation_generic, "ns-drag-operation-generic");
 
   Fput (Qalt, Qmodifier_value, make_fixnum (alt_modifier));
   Fput (Qhyper, Qmodifier_value, make_fixnum (hyper_modifier));

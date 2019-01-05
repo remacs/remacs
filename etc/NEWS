@@ -1494,6 +1494,12 @@ versions of MS-Windows.  Set this variable to 50 if for some reason
 you need the old behavior (and please report such situations to Emacs
 developers).
 
++++
+** On NS the behaviour of drag and drop can now be modified by use of
+modifier keys in line with Apples guidelines.  This makes the drag and
+drop behaviour more consistent, as previously the sending application
+was able to 'set' modifiers without the knowledge of the user.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
