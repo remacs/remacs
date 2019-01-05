@@ -4046,7 +4046,8 @@ AC_CACHE_CHECK([for library containing tputs], [emacs_cv_tputs_lib],
   emacs_cv_tputs_lib='none required'
 else
   # curses precedes termcap because of AIX (Bug#9736#35) and OpenIndiana.
-  for tputs_library in '' tinfo ncurses terminfo curses termcap; do
+  tputs_libraries='tinfo ncurses terminfo curses termcap tinfow ncursesw'
+  for tputs_library in '' $tputs_libraries; do
     OLIBS=$LIBS
     if test -z "$tputs_library"; then
       emacs_cv_tputs_lib='none required'
