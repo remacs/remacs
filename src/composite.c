@@ -1167,8 +1167,8 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
    characters to be composed.  FACE, if non-NULL, is a base face of
    the character.  If STRING is not nil, it is a string containing the
    character to check, and CHARPOS and BYTEPOS are indices in the
-   string.  In that case, FACE must not be NULL.  PDIR is the base
-   direction of the current paragraph, and is used to calculate the
+   string.  In that case, FACE must not be NULL.  BIDI_LEVEL is the bidi
+   embedding level of the current paragraph, and is used to calculate the
    direction argument to pass to the font shaper.
 
    If the character is composed, setup members of CMP_IT (id, nglyphs,
@@ -1178,7 +1178,7 @@ composition_compute_stop_pos (struct composition_it *cmp_it, ptrdiff_t charpos, 
 bool
 composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 		       ptrdiff_t bytepos, ptrdiff_t endpos, struct window *w,
-		       bidi_dir_t pdir, struct face *face, Lisp_Object string)
+		       signed char bidi_level, struct face *face, Lisp_Object string)
 {
   if (cmp_it->ch == -2)
     {
@@ -1215,9 +1215,9 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	continue;
       if (charpos < endpos)
 	{
-	  if (pdir == L2R)
+	  if ((bidi_level & 1) == 0)
 	    direction = QL2R;
-	  else if (pdir == R2L)
+	  else
 	    direction = QR2L;
 	  for (; CONSP (val); val = XCDR (val))
 	    {
@@ -1252,10 +1252,10 @@ composition_reseat_it (struct composition_it *cmp_it, ptrdiff_t charpos,
 	      else
 		bpos = CHAR_TO_BYTE (cpos);
 	    }
-	  if (pdir == L2R)
-	    direction = QR2L;
-	  else if (pdir == R2L)
+	  if ((bidi_level & 1) == 0)
 	    direction = QL2R;
+	  else
+	    direction = QR2L;
 	  lgstring = autocmp_chars (elt, cpos, bpos, charpos + 1, w, face,
 				    string, direction);
 	  if (! composition_gstring_p (lgstring)
