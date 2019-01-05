@@ -256,6 +256,12 @@ impl From<LispCons> for LispObject {
     }
 }
 
+impl<S: Into<LispObject>, T: Into<LispObject>> From<(S, T)> for LispObject {
+    fn from(t: (S, T)) -> Self {
+        Self::cons(t.0, t.1)
+    }
+}
+
 impl LispCons {
     fn _extract(self) -> *mut Lisp_Cons {
         self.0.get_untaggedptr() as *mut Lisp_Cons
@@ -692,11 +698,10 @@ where
         }
     }
     match last_cons {
-        None => LispObject::cons(prop, LispObject::cons(val, Qnil)),
+        None => (prop, (val, Qnil)).into(),
         Some(last_cons) => {
             let last_cons_cdr = last_cons.cdr().as_cons_or_error();
-            let newcell = LispObject::cons(prop, LispObject::cons(val, last_cons_cdr.cdr()));
-            last_cons_cdr.set_cdr(newcell);
+            last_cons_cdr.set_cdr((prop, (val, last_cons_cdr.cdr())).into());
             plist
         }
     }
@@ -755,13 +760,13 @@ pub fn put(mut symbol: LispSymbolRef, propname: LispObject, value: LispObject) -
 pub fn list(args: &[LispObject]) -> LispObject {
     args.iter()
         .rev()
-        .fold(Qnil, |list, &arg| LispObject::cons(arg, list))
+        .fold(Qnil, |list, &arg| (arg, list).into())
 }
 
 /// Return a newly created list of length LENGTH, with each element being INIT.
 #[lisp_fn]
 pub fn make_list(length: EmacsUint, init: LispObject) -> LispObject {
-    (0..length).fold(Qnil, |list, _| LispObject::cons(init, list))
+    (0..length).fold(Qnil, |list, _| (init, list).into())
 }
 
 /// Return the length of a list, but avoid error or infinite loop.

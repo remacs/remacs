@@ -151,7 +151,7 @@ pub extern "C" fn get_keymap(
 /// The optional arg STRING supplies a menu name for the keymap
 /// in case you use it as a menu with `x-popup-menu'.
 #[lisp_fn(min = "0")]
-pub fn make_keymap(string: LispObject) -> LispObject {
+pub fn make_keymap(string: LispObject) -> (LispObject, (LispObject, LispObject)) {
     let tail: LispObject = if string.is_not_nil() {
         list!(string)
     } else {
@@ -159,7 +159,7 @@ pub fn make_keymap(string: LispObject) -> LispObject {
     };
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
-    LispObject::cons(Qkeymap, LispObject::cons(char_table, tail))
+    (Qkeymap, (char_table, tail))
 }
 
 /// Return t if OBJECT is a keymap.
@@ -670,7 +670,7 @@ pub fn copy_keymap(keymap: LispObject) -> LispObject {
                 // This is a sub keymap
                 elt = copy_keymap(elt);
             } else {
-                elt = LispObject::cons(front, unsafe { copy_keymap_item(cons_1.cdr()) });
+                elt = (front, unsafe { copy_keymap_item(cons_1.cdr()) }).into();
             }
         }
 

@@ -827,14 +827,13 @@ pub extern "C" fn nsberror(spec: LispObject) -> ! {
 /// However, the overlays you get are the real objects that the buffer uses.
 #[lisp_fn]
 pub fn overlay_lists() -> LispObject {
-    let list_overlays = |ol: LispOverlayRef| -> LispObject {
-        ol.iter().fold(Qnil, |accum, n| LispObject::cons(n, accum))
-    };
+    let list_overlays =
+        |ol: LispOverlayRef| -> LispObject { ol.iter().fold(Qnil, |accum, n| (n, accum).into()) };
 
     let cur_buf = ThreadState::current_buffer();
     let before = cur_buf.overlays_before().map_or(Qnil, &list_overlays);
     let after = cur_buf.overlays_after().map_or(Qnil, &list_overlays);
-    unsafe { LispObject::cons(Fnreverse(before), Fnreverse(after)) }
+    unsafe { (Fnreverse(before), Fnreverse(after)).into() }
 }
 
 fn get_truename_buffer_1(filename: LispObject) -> LispObject {

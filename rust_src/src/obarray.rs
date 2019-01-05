@@ -115,7 +115,7 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispSymbolRef {
 pub extern "C" fn loadhist_attach(x: LispObject) {
     unsafe {
         if initialized {
-            globals.Vcurrent_load_list = LispObject::cons(x, globals.Vcurrent_load_list);
+            globals.Vcurrent_load_list = (x, globals.Vcurrent_load_list).into();
         }
     }
 }

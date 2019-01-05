@@ -291,12 +291,9 @@ pub fn defalias(
 
         if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
-            loadhist_attach(LispObject::cons(true, sym));
+            loadhist_attach((true, sym).into());
         }
-        loadhist_attach(LispObject::cons(
-            if autoload { Qautoload } else { Qdefun },
-            sym,
-        ));
+        loadhist_attach((if autoload { Qautoload } else { Qdefun }, sym).into());
     }
 
     // Handle automatic advice activation.
@@ -323,7 +320,7 @@ pub fn defalias(
 /// of args.  MAX is the maximum number or the symbol `many', for a
 /// function with `&rest' args, or `unevalled' for a special form.
 #[lisp_fn]
-pub fn subr_arity(subr: LispSubrRef) -> LispObject {
+pub fn subr_arity(subr: LispSubrRef) -> (EmacsInt, LispObject) {
     let minargs = subr.min_args();
     let maxargs = if subr.is_many() {
         Qmany
@@ -333,7 +330,7 @@ pub fn subr_arity(subr: LispSubrRef) -> LispObject {
         LispObject::from(EmacsInt::from(subr.max_args()))
     };
 
-    LispObject::cons(EmacsInt::from(minargs), maxargs)
+    (EmacsInt::from(minargs), maxargs)
 }
 
 /// Return name of subroutine SUBR.
@@ -737,11 +734,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let mem = member(watch_function, watchers);
 
     if mem.is_nil() {
-        put(
-            symbol,
-            Qwatchers,
-            LispObject::cons(watch_function, watchers),
-        );
+        put(symbol, Qwatchers, (watch_function, watchers).into());
     }
 }
 
@@ -802,8 +795,7 @@ pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
 
     unsafe {
         if Vautoload_queue.is_not_nil() && function.is_not_nil() {
-            Vautoload_queue =
-                LispObject::cons(LispObject::cons(sym_obj, function), Vautoload_queue);
+            Vautoload_queue = ((sym_obj, function), Vautoload_queue).into();
         }
     }
 

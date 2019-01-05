@@ -428,7 +428,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     while let Some(a) = it.next() {
         let b = it.next().unwrap(); // safe due to the odd check at the beginning
-        properties = LispObject::cons(*a, LispObject::cons(*b, properties));
+        properties = (*a, (*b, properties)).into();
     }
 
     unsafe {
@@ -933,12 +933,8 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
             Qnil
         } else {
             let val = format_message(args);
-            let pane = list!(LispObject::cons(
-                build_string("OK".as_ptr() as *const ::libc::c_char),
-                true
-            ));
-            let menu = LispObject::cons(val, pane);
-            Fx_popup_dialog(Qt, menu, Qt);
+            let pane = list!((build_string("OK".as_ptr() as *const ::libc::c_char), true));
+            Fx_popup_dialog(Qt, (val, pane).into(), Qt);
             val
         }
     }
