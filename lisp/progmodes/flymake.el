@@ -220,6 +220,15 @@ Specifically, start it when the saved buffer is actually displayed."
   :version "26.1"
   :type 'boolean)
 
+(defcustom flymake-suppress-zero-counters :warning
+  "Control appearance of zero-valued diagnostic counters in mode line.
+
+If set to t, supress all zero counters.  If set to a severity
+symbol like `:warning' (the default) suppress zero counters less
+severe than that severity, according to `warning-numeric-level'.
+If set to nil, don't supress any zero counters."
+  :type 'symbol)
+
 (when (fboundp 'define-fringe-bitmap)
   (define-fringe-bitmap 'flymake-double-exclamation-mark
     (vector #b00000000
@@ -1136,6 +1145,7 @@ default) no filter is applied."
 
 (put 'flymake--mode-line-format 'risky-local-variable t)
 
+
 (defun flymake--mode-line-format ()
   "Produce a pretty minor mode indicator."
   (let* ((known (hash-table-keys flymake--backend-state))
@@ -1203,8 +1213,14 @@ default) no filter is applied."
            for face = (flymake--lookup-type-property type
                                                      'mode-line-face
                                                      'compilation-error)
-           when (or diags (>= (flymake--severity type)
-                              (warning-numeric-level :warning)))
+           when (or diags
+                    (cond ((eq flymake-suppress-zero-counters t)
+                           nil)
+                          (flymake-suppress-zero-counters
+                           (>= (flymake--severity type)
+                               (warning-numeric-level
+                                flymake-suppress-zero-counters)))
+                          (t t)))
            collect `(:propertize
                      ,(format "%d" (length diags))
                      face ,face
