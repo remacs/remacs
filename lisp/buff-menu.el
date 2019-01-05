@@ -475,10 +475,10 @@ Buffers marked with \\<Buffer-menu-mode-map>`\\[Buffer-menu-delete]' are deleted
 			   (save-buffer))
 			 (tabulated-list-set-col 2 " " t))
 		     (error (warn "Error saving %s" buffer))))
-		 (if delete
-		     (unless (eq buffer (current-buffer))
-		       (kill-buffer buffer)
-		       (tabulated-list-delete-entry))
+		 (if (and delete
+			  (not (eq buffer (current-buffer)))
+                          (kill-buffer buffer))
+                     (tabulated-list-delete-entry)
 		   (forward-line 1)))))))))
 
 (defun Buffer-menu-select ()
