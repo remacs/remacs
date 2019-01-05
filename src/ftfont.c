@@ -2836,23 +2836,20 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
   hb_buffer_set_content_type (hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
   hb_buffer_set_cluster_level (hb_buffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
 
-  /* Set the default properties for when they cannot be determined
-     below.  */
-  hb_buffer_guess_segment_properties (hb_buffer);
-  hb_direction_t dir = HB_DIRECTION_INVALID;
+  /* If the caller didn't provide a meaningful DIRECTION, default to L2R. */
+  hb_direction_t dir = HB_DIRECTION_LTR;
   if (EQ (direction, QL2R))
     dir = HB_DIRECTION_LTR;
   else if (EQ (direction, QR2L))
     dir = HB_DIRECTION_RTL;
-  /* If the caller didn't provide a meaningful DIRECTION, let HarfBuzz
-     guess it.  */
-  if (dir != HB_DIRECTION_INVALID)
-    hb_buffer_set_direction (hb_buffer, dir);
+  hb_buffer_set_direction (hb_buffer, dir);
+
   /* Leave the script determination to HarfBuzz, until Emacs has a
      better idea of the script of LGSTRING.  FIXME. */
 #if 0
   hb_buffer_set_script (hb_buffer, XXX);
 #endif
+
   /* FIXME: This can only handle the single global language, which
      normally comes from the locale.  In addition, if
      current-iso639-language is a list, we arbitrarily use the first
@@ -2868,6 +2865,10 @@ ftfont_shape_by_hb (Lisp_Object lgstring, FT_Face ft_face, hb_font_t *hb_font,
 			      hb_language_from_string (SSDATA (lang_str),
 						       SBYTES (lang_str)));
     }
+
+  /* Guess the default properties for when they cannot be determined
+     above. FIXME: drop once script handling is fixed above. */
+  hb_buffer_guess_segment_properties (hb_buffer);
 
   if (!hb_shape_full (hb_font, hb_buffer, NULL, 0, NULL))
     return Qnil;
