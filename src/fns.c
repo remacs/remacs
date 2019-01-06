@@ -1543,22 +1543,6 @@ SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
   return ret;
 }
 
-DEFUN ("mapc", Fmapc, Smapc, 2, 2, 0,
-       doc: /* Apply FUNCTION to each element of SEQUENCE for side effects only.
-Unlike `mapcar', don't accumulate the results.  Return SEQUENCE.
-SEQUENCE may be a list, a vector, a bool-vector, or a string.  */)
-  (Lisp_Object function, Lisp_Object sequence)
-{
-  register EMACS_INT leni;
-
-  leni = XFASTINT (Flength (sequence));
-  if (CHAR_TABLE_P (sequence))
-    wrong_type_argument (Qlistp, sequence);
-  mapcar1 (leni, 0, function, sequence);
-
-  return sequence;
-}
-
 DEFUN ("mapcan", Fmapcan, Smapcan, 2, 2, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concatenate
 the results by altering them (using `nconc').
@@ -3174,7 +3158,6 @@ this variable.  */);
   defsubr (&Sfillarray);
   defsubr (&Snconc);
   defsubr (&Smapcar);
-  defsubr (&Smapc);
   defsubr (&Smapcan);
   defsubr (&Smapconcat);
   defsubr (&Syes_or_no_p);

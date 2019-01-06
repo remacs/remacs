@@ -247,6 +247,7 @@ fn run_bindgen(path: &str) {
                 .blacklist_item("USE_LSB_TAG")
                 .blacklist_item("VALMASK")
                 .blacklist_item("PSEUDOVECTOR_FLAG")
+                .blacklist_item("Fmapc")
                 // these two are found by bindgen on mac, but not linux
                 .blacklist_item("EMACS_INT_MAX")
                 .blacklist_item("VAL_MAX")
