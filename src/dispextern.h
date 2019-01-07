@@ -1812,6 +1812,8 @@ GLYPH_CODE_P (Lisp_Object gc)
 
 extern bool face_change;
 
+void set_face_change(bool value);
+
 /* For reordering of bidirectional text.  */
 
 /* UAX#9's max_depth value.  */
