@@ -597,7 +597,7 @@ impl LispObject {
     // If DEPTH is the current depth of recursion; signal an error if it
     // gets too deep.  HT is a hash table used to detect cycles; if nil,
     // it has not been allocated yet.  But ignore the last two arguments
-    // if EQUAL_KIND == EQUAL_NO_QUIT.  */
+    // if EQUAL_KIND == EQUAL_NO_QUIT.
     //
     pub fn equal_internal(
         self,
