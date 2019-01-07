@@ -1,5 +1,7 @@
 //* Random utility Lisp functions.
 
+use std::ptr;
+
 use libc;
 
 use remacs_macros::lisp_fn;
@@ -8,18 +10,19 @@ use crate::{
     eval::{un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
-    lists::{assq, car, get, member, memq, put},
+    lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
+    remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
     remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
-    remacs_sys::{equal_kind, Lisp_Type},
-    remacs_sys::{Fload, Fmapc},
+    remacs_sys::{equal_kind, EmacsInt, Lisp_Type},
     remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
+    vectors::length,
 };
 
 /// Return t if FEATURE is present in this Emacs.
@@ -88,6 +91,19 @@ pub fn quote(args: LispCons) -> LispObject {
     }
 
     args.car()
+}
+
+/// Apply FUNCTION to each element of SEQUENCE, and make a list of the
+/// results.  The result is a list just as long as SEQUENCE.  SEQUENCE
+/// may be a list, a vector, a bool-vector, or a string.
+#[lisp_fn]
+pub fn mapc(function: LispObject, sequence: LispObject) -> LispObject {
+    let leni = length(sequence) as EmacsInt;
+    if sequence.is_char_table() {
+        wrong_type!(Qlistp, sequence);
+    }
+    mapcar1(leni, ptr::null_mut(), function, sequence);
+    sequence
 }
 
 /* List of features currently being require'd, innermost first.  */
