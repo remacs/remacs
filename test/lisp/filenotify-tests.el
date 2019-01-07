@@ -450,36 +450,36 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
       ;; harm.  This fails on Cygwin because of timing issues unless a
       ;; long `sit-for' is added before the call to
       ;; `file-notify--test-read-event'.
-    (if (not (eq system-type 'cygwin))
-      (let (results)
-        (cl-flet ((first-callback (event)
-                   (when (eq (nth 1 event) 'deleted) (push 1 results)))
-                  (second-callback (event)
-                   (when (eq (nth 1 event) 'deleted) (push 2 results))))
-          (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
-          (write-region
-           "any text" nil file-notify--test-tmpfile nil 'no-message)
-          (should
-           (setq file-notify--test-desc
-                 (file-notify-add-watch
-                  file-notify--test-tmpfile
-                  '(change) #'first-callback)))
-          (should
-           (setq file-notify--test-desc1
-                 (file-notify-add-watch
-                  file-notify--test-tmpfile
-                  '(change) #'second-callback)))
-          ;; Remove first watch.
-          (file-notify-rm-watch file-notify--test-desc)
-          ;; Only the second callback shall run.
-	  (file-notify--test-read-event)
-          (delete-file file-notify--test-tmpfile)
-          (file-notify--wait-for-events
-           (file-notify--test-timeout) results)
-          (should (equal results (list 2)))
+      (unless (eq system-type 'cygwin)
+        (let (results)
+          (cl-flet ((first-callback (event)
+                     (when (eq (nth 1 event) 'deleted) (push 1 results)))
+                    (second-callback (event)
+                     (when (eq (nth 1 event) 'deleted) (push 2 results))))
+            (setq file-notify--test-tmpfile (file-notify--test-make-temp-name))
+            (write-region
+             "any text" nil file-notify--test-tmpfile nil 'no-message)
+            (should
+             (setq file-notify--test-desc
+                   (file-notify-add-watch
+                    file-notify--test-tmpfile
+                    '(change) #'first-callback)))
+            (should
+             (setq file-notify--test-desc1
+                   (file-notify-add-watch
+                    file-notify--test-tmpfile
+                    '(change) #'second-callback)))
+            ;; Remove first watch.
+            (file-notify-rm-watch file-notify--test-desc)
+            ;; Only the second callback shall run.
+	    (file-notify--test-read-event)
+            (delete-file file-notify--test-tmpfile)
+            (file-notify--wait-for-events
+             (file-notify--test-timeout) results)
+            (should (equal results (list 2)))
 
-          ;; The environment shall be cleaned up.
-          (file-notify--test-cleanup-p))))
+            ;; The environment shall be cleaned up.
+            (file-notify--test-cleanup-p))))
 
     ;; Cleanup.
     (file-notify--test-cleanup)))
@@ -1014,9 +1014,10 @@ delivered."
     ;; Cleanup.
     (file-notify--test-cleanup))
 
-  ;; On emba, `deleted' and `stopped' events of the directory are not detected.
-  (unless (getenv "EMACS_EMBA_CI")
-    (unwind-protect
+  (unwind-protect
+      ;; On emba, `deleted' and `stopped' events of the directory are
+      ;; not detected.
+      (unless (getenv "EMACS_EMBA_CI")
         (let ((file-notify--test-tmpdir
 	       (make-temp-file "file-notify-test-parent" t)))
 	  (should
@@ -1062,10 +1063,10 @@ delivered."
               (file-notify--rm-descriptor file-notify--test-desc))
 
           ;; The environment shall be cleaned up.
-          (file-notify--test-cleanup-p))
+          (file-notify--test-cleanup-p)))
 
-      ;; Cleanup.
-      (file-notify--test-cleanup))))
+    ;; Cleanup.
+    (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test05-file-validity
   "Check `file-notify-valid-p' via file notification for remote files.")
@@ -1099,33 +1100,33 @@ delivered."
     ;; Cleanup.
     (file-notify--test-cleanup))
 
-  ;; On emba, `deleted' and `stopped' events of the directory are not detected.
-  (unless (getenv "EMACS_EMBA_CI")
-    (unwind-protect
-        (progn
-	  (should
-	   (setq file-notify--test-tmpfile
-	         (make-temp-file "file-notify-test-parent" t)))
-	  (should
-	   (setq file-notify--test-desc
-	         (file-notify-add-watch
-		  file-notify--test-tmpfile '(change) #'ignore)))
-          (should (file-notify-valid-p file-notify--test-desc))
-          ;; After deleting the directory, the descriptor must not be
-          ;; valid anymore.
-          (delete-directory file-notify--test-tmpfile 'recursive)
-          (file-notify--wait-for-events
-	   (file-notify--test-timeout)
-	   (not (file-notify-valid-p file-notify--test-desc)))
-          (should-not (file-notify-valid-p file-notify--test-desc))
-          (if (string-equal (file-notify--test-library) "w32notify")
-              (file-notify--rm-descriptor file-notify--test-desc))
+  (unwind-protect
+      ;; On emba, `deleted' and `stopped' events of the directory are
+      ;; not detected.
+      (unless (getenv "EMACS_EMBA_CI")
+	(should
+	 (setq file-notify--test-tmpfile
+	       (make-temp-file "file-notify-test-parent" t)))
+	(should
+	 (setq file-notify--test-desc
+	       (file-notify-add-watch
+		file-notify--test-tmpfile '(change) #'ignore)))
+        (should (file-notify-valid-p file-notify--test-desc))
+        ;; After deleting the directory, the descriptor must not be
+        ;; valid anymore.
+        (delete-directory file-notify--test-tmpfile 'recursive)
+        (file-notify--wait-for-events
+	 (file-notify--test-timeout)
+	 (not (file-notify-valid-p file-notify--test-desc)))
+        (should-not (file-notify-valid-p file-notify--test-desc))
+        (if (string-equal (file-notify--test-library) "w32notify")
+            (file-notify--rm-descriptor file-notify--test-desc))
 
-          ;; The environment shall be cleaned up.
-          (file-notify--test-cleanup-p))
+        ;; The environment shall be cleaned up.
+        (file-notify--test-cleanup-p))
 
-      ;; Cleanup.
-      (file-notify--test-cleanup))))
+    ;; Cleanup.
+    (file-notify--test-cleanup)))
 
 (file-notify--deftest-remote file-notify-test06-dir-validity
   "Check `file-notify-valid-p' via file notification for remote directories.")
