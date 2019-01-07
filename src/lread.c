@@ -46,10 +46,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifdef MSDOS
 #include "msdos.h"
-#if __DJGPP__ == 2 && __DJGPP_MINOR__ < 5
-# define INFINITY  __builtin_inf()
-# define NAN       __builtin_nan("")
-#endif
 #endif
 
 #ifdef HAVE_NS
@@ -74,6 +70,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #if IEEE_FLOATING_POINT
 # include <ieee754.h>
+# ifndef INFINITY
+#  define INFINITY ((union ieee754_double) {.ieee = {.exponent = -1}}.d)
+# endif
 #endif
 
 /* The objects or placeholders read with the #n=object form.
