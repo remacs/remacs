@@ -32,7 +32,6 @@
 
 ;;; Code:
 
-(require 'eww)
 (require 'cl-lib)
 (require 'color)
 (require 'seq)
