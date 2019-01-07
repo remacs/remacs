@@ -6,9 +6,9 @@ use libc::{c_int, c_void};
 
 use remacs_macros::lisp_fn;
 
-use crate {
+use crate::{
     dispnew::LispGlyphRef,
-    frames::selected_frame,
+    frames::Fselected_frame,
     frames::LispFrameRef,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
@@ -26,7 +26,11 @@ impl LispTerminalRef {
     }
 
     pub fn name(self) -> LispObject {
-        unsafe { build_string(self.name) }
+        if self.name.is_null() {
+            Qnil
+        } else {
+            unsafe { build_string(self.name) }
+        }
     }
 }
 
@@ -48,6 +52,38 @@ impl LispObject {
 
     pub fn as_terminal(self) -> Option<LispTerminalRef> {
         self.as_vectorlike().and_then(|v| v.as_terminal())
+    }
+}
+
+#[repr(transparent)]
+pub struct LispLiveTerminal(LispTerminalRef);
+
+impl From<LispObject> for Option<LispLiveTerminal> {
+    fn from(obj: LispObject) -> Self {
+        let obj = if obj.is_nil() { Fselected_frame() } else { obj };
+
+        let term = if let Some(frame) = obj.as_frame() {
+            frame.terminal
+        } else if let Some(mut terminal) = obj.as_terminal() {
+            terminal.as_mut()
+        } else {
+            ptr::null_mut()
+        };
+
+        if let Some(term_ref) = LispTerminalRef::from_ptr(term as *mut c_void) {
+            if term_ref.is_live() {
+                return Some(LispLiveTerminal(term_ref));
+            }
+        }
+
+        None
+    }
+}
+
+impl From<LispObject> for LispLiveTerminal {
+    fn from(obj: LispObject) -> Self {
+        let value: Option<LispLiveTerminal> = obj.into();
+        value.unwrap_or_else(|| wrong_type!(Qterminal_live_p, obj))
     }
 }
 
@@ -137,35 +173,16 @@ pub unsafe extern "C" fn ins_del_lines(mut f: LispFrameRef, vpos: c_int, n: c_in
 /// the current frame.  If TERMINAL is neither from the above or the
 /// resulting terminal object is deleted, return NULL.
 #[no_mangle]
-pub extern "C" fn decode_terminal(mut terminal: LispObject) -> *mut Lisp_Terminal {
-    if terminal.is_nil() {
-        terminal = selected_frame();
-    }
-
-    let t = if let Some(mut term) = terminal.as_terminal() {
-        term.as_mut()
-    } else if let Some(frame) = terminal.as_frame() {
-        frame.terminal
-    } else {
-        ptr::null_mut()
-    };
-
-    if let Some(term_ref) = LispTerminalRef::from_ptr(t as *mut c_void) {
-        if term_ref.is_live() {
-            return t;
-        }
-    }
-    ptr::null_mut()
+pub extern "C" fn decode_terminal(terminal: LispObject) -> *mut Lisp_Terminal {
+    let term: Option<LispLiveTerminal> = terminal.into();
+    term.map_or_else(ptr::null_mut, |mut term| term.0.as_mut())
 }
 
 /// Like decode_terminal, but throw an error if TERMINAL is not valid or deleted.
 #[no_mangle]
 pub extern "C" fn decode_live_terminal(terminal: LispObject) -> *mut Lisp_Terminal {
-    let t = decode_terminal(terminal);
-    if t.is_null() {
-        wrong_type!(Qterminal_live_p, terminal)
-    }
-    t
+    let mut term: LispLiveTerminal = terminal.into();
+    term.0.as_mut()
 }
 
 /// Return the name of the terminal device TERMINAL.
@@ -174,13 +191,8 @@ pub extern "C" fn decode_live_terminal(terminal: LispObject) -> *mut Lisp_Termin
 /// TERMINAL may be a terminal object, a frame, or nil (meaning the
 /// selected frame's terminal).
 #[lisp_fn(min = "0")]
-pub fn terminal_name(terminal: LispObject) -> LispObject {
-    if let Some(term_ref) = LispTerminalRef::from_ptr(decode_live_terminal(terminal) as *mut c_void)
-    {
-        term_ref.name()
-    } else {
-        Qnil
-    }
+pub fn terminal_name(terminal: LispLiveTerminal) -> LispObject {
+    terminal.0.name()
 }
 
 include!(concat!(env!("OUT_DIR"), "/terminal_exports.rs"));
