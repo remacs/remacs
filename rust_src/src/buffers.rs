@@ -27,12 +27,12 @@ use crate::{
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
         buffer_window_count, concat2, del_range, delete_all_overlays, globals, internal_equal,
-        last_per_buffer_idx, lookup_char_property, marker_position, modify_overlay,
+        last_per_buffer_idx, lookup_char_property, make_timespec, marker_position, modify_overlay,
         set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
     },
     remacs_sys::{
-        equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
-        Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+        buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
+        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
         windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
@@ -40,7 +40,7 @@ use crate::{
     },
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
-        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
+        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
@@ -382,6 +382,47 @@ impl LispBufferRef {
         let buffer_bytes = self.as_mut() as *mut c_char;
         let pos = buffer_bytes.add(offset) as *mut LispObject;
         *pos = value;
+    }
+
+    // Reinitialize everything about a buffer except its name and contents
+    // and local variables.
+    // If called on an already-initialized buffer, the list of overlays
+    // should be deleted before calling this function, otherwise we end up
+    // with overlays that claim to belong to the buffer but the buffer
+    // claims it doesn't belong to it.
+    pub fn reset(&mut self) {
+        self.filename_ = Qnil;
+        self.file_truename_ = Qnil;
+        self.directory_ = match ThreadState::current_buffer() {
+            Some(current_buff) => current_buff.directory_,
+            None => Qnil,
+        };
+        self.modtime = unsafe { make_timespec(0, UNKNOWN_MODTIME_NSECS.into()) };
+        self.modtime_size = -1;
+        self.save_length_ = 0.into();
+        self.last_window_start = 1;
+        // It is more conservative to start out "changed" than "unchanged".
+        self.set_clip_changed(false);
+        self.set_prevent_redisplay_optimizations_p(true);
+        self.backed_up_ = Qnil;
+        self.auto_save_modified = 0;
+        self.auto_save_failure_time = 0;
+        self.auto_save_file_name_ = Qnil;
+        self.read_only_ = Qnil;
+        self.overlays_before = ptr::null_mut();
+        self.overlays_after = ptr::null_mut();
+        self.overlay_center = BEG;
+        self.mark_active_ = Qnil;
+        self.point_before_scroll_ = Qnil;
+        self.file_format_ = Qnil;
+        self.auto_save_file_format_ = Qt;
+        self.last_selected_window_ = Qnil;
+        self.display_count_ = 0.into();
+        self.display_time_ = Qnil;
+        self.enable_multibyte_characters_ = unsafe { buffer_defaults.enable_multibyte_characters_ };
+        self.cursor_type_ = unsafe { buffer_defaults.cursor_type_ };
+        self.extra_line_spacing_ = unsafe { buffer_defaults.extra_line_spacing_ };
+        self.display_error_modiff = 0;
     }
 }
 
@@ -1171,6 +1212,11 @@ pub unsafe extern "C" fn copy_overlays(
     });
 
     result
+}
+
+#[no_mangle]
+pub extern "C" fn reset_buffer(mut buffer: LispBufferRef) {
+    buffer.reset();
 }
 
 #[no_mangle]

@@ -695,49 +695,6 @@ delete_all_overlays (struct buffer *b)
   set_buffer_overlays_after (b, NULL);
 }
 
-/* Reinitialize everything about a buffer except its name and contents
-   and local variables.
-   If called on an already-initialized buffer, the list of overlays
-   should be deleted before calling this function, otherwise we end up
-   with overlays that claim to belong to the buffer but the buffer
-   claims it doesn't belong to it.  */
-
-void
-reset_buffer (register struct buffer *b)
-{
-  bset_filename (b, Qnil);
-  bset_file_truename (b, Qnil);
-  bset_directory (b, current_buffer ? BVAR (current_buffer, directory) : Qnil);
-  b->modtime = make_timespec (0, UNKNOWN_MODTIME_NSECS);
-  b->modtime_size = -1;
-  XSETFASTINT (BVAR (b, save_length), 0);
-  b->last_window_start = 1;
-  /* It is more conservative to start out "changed" than "unchanged".  */
-  b->clip_changed = 0;
-  b->prevent_redisplay_optimizations_p = 1;
-  bset_backed_up (b, Qnil);
-  BUF_AUTOSAVE_MODIFF (b) = 0;
-  b->auto_save_failure_time = 0;
-  bset_auto_save_file_name (b, Qnil);
-  bset_read_only (b, Qnil);
-  set_buffer_overlays_before (b, NULL);
-  set_buffer_overlays_after (b, NULL);
-  b->overlay_center = BEG;
-  bset_mark_active (b, Qnil);
-  bset_point_before_scroll (b, Qnil);
-  bset_file_format (b, Qnil);
-  bset_auto_save_file_format (b, Qt);
-  bset_last_selected_window (b, Qnil);
-  bset_display_count (b, make_number (0));
-  bset_display_time (b, Qnil);
-  bset_enable_multibyte_characters
-    (b, BVAR (&buffer_defaults, enable_multibyte_characters));
-  bset_cursor_type (b, BVAR (&buffer_defaults, cursor_type));
-  bset_extra_line_spacing (b, BVAR (&buffer_defaults, extra_line_spacing));
-
-  b->display_error_modiff = 0;
-}
-
 /* Reset buffer B's local variables info.
    Don't use this on a buffer that has already been in use;
    it does not treat permanent locals consistently.
