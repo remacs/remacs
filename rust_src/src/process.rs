@@ -279,8 +279,8 @@ pub fn process_status(process: LispObject) -> LispObject {
         unsafe { update_status(process.as_mut()) };
     }
     let mut status = process.status;
-    if let Some(c) = status.as_cons() {
-        status = c.car();
+    if let Some((a, _)) = status.into() {
+        status = a;
     };
     let process_type = process.ptype();
     if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
@@ -488,9 +488,10 @@ pub fn process_exit_status(mut process: LispProcessRef) -> LispObject {
         unsafe { update_status(process.as_mut()) };
     }
     let status = process.status;
-    status
-        .as_cons()
-        .map_or_else(|| LispObject::from(0), |cons| car(cons.cdr()))
+    match status.into() {
+        None => 0.into(),
+        Some((_, d)) => car(d),
+    }
 }
 
 /// Return non-nil if PROCESS has given the terminal to a

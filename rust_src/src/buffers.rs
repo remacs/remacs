@@ -516,7 +516,8 @@ impl LispBufferLocalValueRef {
     }
 
     pub fn get_value(self) -> LispObject {
-        self.valcell.as_cons_or_error().cdr()
+        let (_, d) = self.valcell.into();
+        d
     }
 }
 

@@ -67,8 +67,8 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.into(), globals.Vafter_load_alist).as_cons() {
-            Fmapc(Qfuncall, c.cdr());
+        if let Some((_, d)) = assq(feature.into(), globals.Vafter_load_alist).into() {
+            Fmapc(Qfuncall, d);
         }
     }
     feature.into()

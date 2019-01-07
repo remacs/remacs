@@ -507,9 +507,10 @@ impl_alistval_iter! {LiveBufferIter, LispBufferRef, unsafe { Vbuffer_alist }}
 impl_alistval_iter! {ProcessIter, LispProcessRef, unsafe { Vprocess_alist }}
 
 pub fn is_autoload(function: LispObject) -> bool {
-    function
-        .as_cons()
-        .map_or(false, |cell| cell.car().eq(Qautoload))
+    match function.into() {
+        None => false,
+        Some((car, _)) => car.eq(Qautoload),
+    }
 }
 
 impl LispObject {
@@ -619,9 +620,9 @@ impl Debug for LispObject {
             Lisp_Type::Lisp_Cons => {
                 let mut cdr = *self;
                 write!(f, "'(")?;
-                while let Some(cons) = cdr.as_cons() {
-                    write!(f, "{:?} ", cons.car())?;
-                    cdr = cons.cdr();
+                while let Some((a, d)) = cdr.into() {
+                    write!(f, "{:?} ", a)?;
+                    cdr = d;
                 }
                 if cdr.is_nil() {
                     write!(f, ")")?;

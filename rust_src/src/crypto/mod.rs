@@ -123,8 +123,10 @@ fn get_coding_system_for_buffer(
         // Check file-coding-system-alist.
         let mut args = [Qwrite_region, start, end, file_name];
         let val = unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) };
-        if val.is_cons() && val.as_cons_or_error().cdr().is_not_nil() {
-            return val.as_cons_or_error().cdr();
+        if let Some((_, d)) = val.into() {
+            if d.is_not_nil() {
+                return d;
+            }
         }
     }
     if buffer.buffer_file_coding_system_.is_not_nil() {

@@ -176,18 +176,16 @@ pub unsafe extern "C" fn disassemble_lisp_time(
     let mut psec = LispObject::from(0);
     let mut len = 4;
 
-    if let Some(cons) = specified_time.as_cons() {
-        high = cons.car();
-        low = cons.cdr();
+    if let Some((car, cdr)) = specified_time.into() {
+        high = car;
+        low = cdr;
 
-        if let Some(cons) = cons.cdr().as_cons() {
-            let low_tail = cons.cdr();
-            low = cons.car();
-            if let Some(cons) = low_tail.as_cons() {
-                usec = cons.car();
-                let low_tail = cons.cdr();
-                if let Some(cons) = low_tail.as_cons() {
-                    psec = cons.car();
+        if let Some((a, low_tail)) = cdr.into() {
+            low = a;
+            if let Some((a, low_tail)) = low_tail.into() {
+                usec = a;
+                if let Some((a, _)) = low_tail.into() {
+                    psec = a;
                 } else {
                     len = 3;
                 }
