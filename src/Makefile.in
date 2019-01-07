@@ -617,7 +617,9 @@ GLOBALS_FILE=$(rust_srcdir)/generated/globals.rs
 # built. That creates a circular dependency which we can break by not
 # depending on it as this is not a file that changes under normal
 # operation.
-$(DEFINITIONS_FILE) $(BINDINGS_FILE) $(GLOBALS_FILE): $(filter-out ./macuvs.h,$(HEADERS)) $(rust_srcdir)/wrapper.h
+$(DEFINITIONS_FILE) $(BINDINGS_FILE) $(GLOBALS_FILE): $(filter-out ./macuvs.h,$(HEADERS)) $(rust_srcdir)/wrapper.h \
+							$(rust_srcdir)/remacs-bindings/Cargo.toml \
+							$(rust_srcdir)/remacs-bindings/src/main.rs
 	$(MKDIR_P) $(dir $@)
 	RUSTFLAGS="$(RUSTFLAGS)" \
 	EMACS_CFLAGS="$(EMACS_CFLAGS)" \
