@@ -1112,6 +1112,10 @@ old-style backquotes as new-style, bind the new variable
 integer, Emacs now signals an error if the number is too large for the
 implementation to format.
 
+** logb now returns infinity when given an infinite or zero argument,
+and returns a NaN when given a NaN.  Formerly, it returned an extreme
+fixnum for such arguments.
+
 ---
 ** Some functions and variables obsolete since Emacs 22 have been removed:
 archive-mouse-extract, assoc-ignore-case, assoc-ignore-representation,
