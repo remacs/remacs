@@ -134,13 +134,23 @@ impl LispHashTableRef {
 
 impl From<LispObject> for LispHashTableRef {
     fn from(o: LispObject) -> Self {
-        o.as_hash_table_or_error()
+        if o.is_hash_table() {
+            LispHashTableRef::new(o.get_untaggedptr() as *mut Lisp_Hash_Table)
+        } else {
+            wrong_type!(Qhash_table_p, o);
+        }
     }
 }
 
 impl From<LispHashTableRef> for LispObject {
     fn from(h: LispHashTableRef) -> Self {
-        LispObject::from_hash_table(h)
+        let object = LispObject::tag_ptr(h, Lisp_Type::Lisp_Vectorlike);
+        debug_assert!(
+            object.is_vectorlike() && object.get_untaggedptr() == h.as_ptr() as *mut c_void
+        );
+
+        debug_assert!(object.is_hash_table());
+        object
     }
 }
 
@@ -148,24 +158,6 @@ impl LispObject {
     pub fn is_hash_table(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_HASH_TABLE))
-    }
-
-    pub fn as_hash_table_or_error(self) -> LispHashTableRef {
-        if self.is_hash_table() {
-            LispHashTableRef::new(self.get_untaggedptr() as *mut Lisp_Hash_Table)
-        } else {
-            wrong_type!(Qhash_table_p, self);
-        }
-    }
-
-    pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
-        let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
-        debug_assert!(
-            object.is_vectorlike() && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void
-        );
-
-        debug_assert!(object.is_hash_table());
-        object
     }
 }
 

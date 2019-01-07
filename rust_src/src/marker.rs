@@ -103,7 +103,7 @@ impl LispMarkerRef {
 
 impl From<LispObject> for LispMarkerRef {
     fn from(o: LispObject) -> Self {
-        o.as_marker_or_error()
+        o.as_marker().unwrap_or_else(|| wrong_type!(Qmarkerp, o))
     }
 }
 
@@ -115,7 +115,7 @@ impl From<LispMarkerRef> for LispObject {
 
 impl From<LispObject> for Option<LispMarkerRef> {
     fn from(o: LispObject) -> Self {
-        o.as_marker()
+        o.as_misc().and_then(|m| m.as_marker())
     }
 }
 
@@ -126,12 +126,11 @@ impl LispObject {
     }
 
     pub fn as_marker(self) -> Option<LispMarkerRef> {
-        self.as_misc().and_then(|m| m.as_marker())
+        self.into()
     }
 
     pub fn as_marker_or_error(self) -> LispMarkerRef {
-        self.as_marker()
-            .unwrap_or_else(|| wrong_type!(Qmarkerp, self))
+        self.into()
     }
 }
 

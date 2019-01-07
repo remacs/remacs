@@ -230,17 +230,23 @@ impl LispObject {
     }
 
     pub fn as_subr(self) -> Option<LispSubrRef> {
-        self.as_vectorlike().and_then(|v| v.as_subr())
+        self.into()
     }
 
     pub fn as_subr_or_error(self) -> LispSubrRef {
-        self.as_subr().unwrap_or_else(|| wrong_type!(Qsubrp, self))
+        self.into()
     }
 }
 
 impl From<LispObject> for LispSubrRef {
     fn from(o: LispObject) -> Self {
-        o.as_subr_or_error()
+        o.as_subr().unwrap_or_else(|| wrong_type!(Qsubrp, o))
+    }
+}
+
+impl From<LispObject> for Option<LispSubrRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_vectorlike().and_then(|v| v.as_subr())
     }
 }
 

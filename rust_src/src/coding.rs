@@ -7,6 +7,7 @@ use crate::{
     hashtable::{
         gethash,
         HashLookupResult::{Found, Missing},
+        LispHashTableRef,
     },
     lisp::defsubr,
     lisp::LispObject,
@@ -30,7 +31,7 @@ fn coding_system_spec(coding_system: LispObject) -> LispObject {
 /// Return the ID of OBJECT.
 /// Same as the CODING_SYSTEM_ID C macro.
 pub fn coding_system_id(object: LispObject) -> isize {
-    let h_ref = unsafe { Vcoding_system_hash_table }.as_hash_table_or_error();
+    let h_ref: LispHashTableRef = unsafe { Vcoding_system_hash_table }.into();
     match h_ref.lookup(object) {
         Found(idx) => idx as isize,
         Missing(_) => -1,

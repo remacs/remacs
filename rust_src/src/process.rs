@@ -49,18 +49,17 @@ impl LispObject {
     }
 
     pub fn as_process(self) -> Option<LispProcessRef> {
-        self.as_vectorlike().and_then(|v| v.as_process())
+        self.into()
     }
 
     pub fn as_process_or_error(self) -> LispProcessRef {
-        self.as_process()
-            .unwrap_or_else(|| wrong_type!(Qprocessp, self))
+        self.into()
     }
 }
 
 impl From<LispObject> for LispProcessRef {
     fn from(o: LispObject) -> Self {
-        o.as_process_or_error()
+        o.as_process().unwrap_or_else(|| wrong_type!(Qprocessp, o))
     }
 }
 
@@ -72,7 +71,7 @@ impl From<LispProcessRef> for LispObject {
 
 impl From<LispObject> for Option<LispProcessRef> {
     fn from(o: LispObject) -> Self {
-        o.as_process()
+        o.as_vectorlike().and_then(|v| v.as_process())
     }
 }
 

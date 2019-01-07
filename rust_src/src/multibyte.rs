@@ -259,7 +259,17 @@ impl From<EmacsDouble> for LispObject {
 
 impl From<LispObject> for LispStringRef {
     fn from(o: LispObject) -> Self {
-        o.as_string_or_error()
+        o.as_string().unwrap_or_else(|| wrong_type!(Qstringp, o))
+    }
+}
+
+impl From<LispObject> for Option<LispStringRef> {
+    fn from(o: LispObject) -> Self {
+        if o.is_string() {
+            Some(unsafe { o.as_string_unchecked() })
+        } else {
+            None
+        }
     }
 }
 
@@ -275,16 +285,11 @@ impl LispObject {
     }
 
     pub fn as_string(self) -> Option<LispStringRef> {
-        if self.is_string() {
-            Some(unsafe { self.as_string_unchecked() })
-        } else {
-            None
-        }
+        self.into()
     }
 
     pub fn as_string_or_error(self) -> LispStringRef {
-        self.as_string()
-            .unwrap_or_else(|| wrong_type!(Qstringp, self))
+        self.into()
     }
 
     pub unsafe fn as_string_unchecked(self) -> LispStringRef {

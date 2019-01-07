@@ -433,7 +433,7 @@ impl LispObject {
     }
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
-        self.as_vectorlike().and_then(|v| v.as_buffer())
+        self.into()
     }
 
     pub fn as_live_buffer(self) -> Option<LispBufferRef> {
@@ -441,14 +441,13 @@ impl LispObject {
     }
 
     pub fn as_buffer_or_error(self) -> LispBufferRef {
-        self.as_buffer()
-            .unwrap_or_else(|| wrong_type!(Qbufferp, self))
+        self.into()
     }
 }
 
 impl From<LispObject> for LispBufferRef {
     fn from(o: LispObject) -> Self {
-        o.as_buffer_or_error()
+        o.as_buffer().unwrap_or_else(|| wrong_type!(Qbufferp, o))
     }
 }
 
@@ -460,7 +459,7 @@ impl From<LispBufferRef> for LispObject {
 
 impl From<LispObject> for Option<LispBufferRef> {
     fn from(o: LispObject) -> Self {
-        o.as_buffer()
+        o.as_vectorlike().and_then(|v| v.as_buffer())
     }
 }
 
@@ -471,18 +470,17 @@ impl LispObject {
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
-        self.as_misc().and_then(|m| m.as_overlay())
+        self.into()
     }
 
     pub fn as_overlay_or_error(self) -> LispOverlayRef {
-        self.as_overlay()
-            .unwrap_or_else(|| wrong_type!(Qoverlayp, self))
+        self.into()
     }
 }
 
 impl From<LispObject> for LispOverlayRef {
     fn from(o: LispObject) -> Self {
-        o.as_overlay_or_error()
+        o.as_overlay().unwrap_or_else(|| wrong_type!(Qoverlayp, o))
     }
 }
 
@@ -494,7 +492,7 @@ impl From<LispOverlayRef> for LispObject {
 
 impl From<LispObject> for Option<LispOverlayRef> {
     fn from(o: LispObject) -> Self {
-        o.as_overlay()
+        o.as_misc().and_then(|m| m.as_overlay())
     }
 }
 

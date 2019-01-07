@@ -170,13 +170,22 @@ impl From<EmacsInt> for LispNumber {
 
 impl From<LispObject> for LispNumber {
     fn from(o: LispObject) -> Self {
-        o.as_number_coerce_marker_or_error()
+        o.as_number_coerce_marker()
+            .unwrap_or_else(|| wrong_type!(Qnumber_or_marker_p, o))
     }
 }
 
 impl From<LispObject> for Option<LispNumber> {
     fn from(o: LispObject) -> Self {
-        o.as_number_coerce_marker()
+        if let Some(n) = o.as_fixnum() {
+            Some(LispNumber::Fixnum(n))
+        } else if let Some(f) = o.as_float() {
+            Some(LispNumber::Float(f))
+        } else if let Some(m) = o.as_marker() {
+            Some(LispNumber::Fixnum(m.charpos_or_error() as EmacsInt))
+        } else {
+            None
+        }
     }
 }
 
@@ -207,20 +216,11 @@ impl LispObject {
     */
 
     pub fn as_number_coerce_marker(self) -> Option<LispNumber> {
-        if let Some(n) = self.as_fixnum() {
-            Some(LispNumber::Fixnum(n))
-        } else if let Some(f) = self.as_float() {
-            Some(LispNumber::Float(f))
-        } else if let Some(m) = self.as_marker() {
-            Some(LispNumber::Fixnum(m.charpos_or_error() as EmacsInt))
-        } else {
-            None
-        }
+        self.into()
     }
 
     pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
-        self.as_number_coerce_marker()
-            .unwrap_or_else(|| wrong_type!(Qnumber_or_marker_p, self))
+        self.into()
     }
 }
 
