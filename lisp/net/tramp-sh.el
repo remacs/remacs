@@ -962,15 +962,16 @@ busybox awk '{}' </dev/null"
 (defconst tramp-vc-registered-read-file-names
   "echo \"(\"
 while read file; do
+    quoted=`echo \"$file\" | sed -e \"s/\\\"/\\\\\\\\\\\\\\\\\\\"/\"`
     if %s \"$file\"; then
-	echo \"(\\\"$file\\\" \\\"file-exists-p\\\" t)\"
+	echo \"(\\\"$quoted\\\" \\\"file-exists-p\\\" t)\"
     else
-	echo \"(\\\"$file\\\" \\\"file-exists-p\\\" nil)\"
+	echo \"(\\\"$quoted\\\" \\\"file-exists-p\\\" nil)\"
     fi
     if %s \"$file\"; then
-	echo \"(\\\"$file\\\" \\\"file-readable-p\\\" t)\"
+	echo \"(\\\"$quoted\\\" \\\"file-readable-p\\\" t)\"
     else
-	echo \"(\\\"$file\\\" \\\"file-readable-p\\\" nil)\"
+	echo \"(\\\"$quoted\\\" \\\"file-readable-p\\\" nil)\"
     fi
 done
 echo \")\""
@@ -2054,6 +2055,7 @@ file names."
 	  (t2 (tramp-tramp-file-p newname))
 	  (length (tramp-compat-file-attribute-size
 		   (file-attributes (file-truename filename))))
+	  ;; `file-extended-attributes' exists since Emacs 24.4.
 	  (attributes (and preserve-extended-attributes
 			   (apply 'file-extended-attributes (list filename)))))
 
@@ -4173,7 +4175,7 @@ process to set up.  VEC specifies the connection."
 	      cs-encode
 	      (coding-system-change-eol-conversion
 	       cs-encode (if (string-match "^Darwin" uname) 'mac 'unix)))
-	(tramp-send-command vec "echo foo ; echo bar" t)
+	(tramp-send-command vec "(echo foo ; echo bar)" t)
 	(goto-char (point-min))
 	(when (search-forward "\r" nil t)
 	  (setq cs-decode (coding-system-change-eol-conversion cs-decode 'dos)))

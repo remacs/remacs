@@ -116,8 +116,13 @@
   :type  'function
   :group 'quickurl)
 
-(defcustom quickurl-assoc-function #'assoc-ignore-case
+(defun quickurl--assoc-function (key alist)
+  "Default function for `quickurl-assoc-function'."
+  (assoc-string key alist t))
+
+(defcustom quickurl-assoc-function #'quickurl--assoc-function
   "Function to use for alist lookup into `quickurl-urls'."
+  :version "26.1"                 ; was the obsolete assoc-ignore-case
   :type  'function
   :group 'quickurl)
 
@@ -150,7 +155,7 @@ could be used here."
 (defconst quickurl-reread-hook-postfix
     "
 ;; Local Variables:
-;; eval: (progn (require 'quickurl) (add-hook 'local-write-file-hooks (lambda () (quickurl-read) nil)))
+;; eval: (progn (require 'quickurl) (add-hook 'write-file-functions (lambda () (quickurl-read) nil) nil t))
 ;; End:
 "
   "Example `quickurl-postfix' text that adds a local variable to the
