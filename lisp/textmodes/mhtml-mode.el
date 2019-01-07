@@ -23,12 +23,10 @@
 
 (eval-and-compile
   (require 'cl-lib)
-  (require 'flyspell)
   (require 'sgml-mode))
 (require 'js)
 (require 'css-mode)
 (require 'prog-mode)
-(require 'font-lock)
 
 (defcustom mhtml-tag-relative-indent t
   "How <script> and <style> bodies are indented relative to the tag.
@@ -349,6 +347,8 @@ This is used by `mhtml--pre-command'.")
                 (funcall indent-line-function)))))
       ;; HTML.
       (sgml-indent-line))))
+
+(declare-function flyspell-generic-progmode-verify "flyspell")
 
 (defun mhtml--flyspell-check-word ()
   (let ((submode (get-text-property (point) 'mhtml-submode)))
