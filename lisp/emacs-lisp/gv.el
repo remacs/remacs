@@ -310,6 +310,7 @@ The return value is the last VAL in the list.
 ;;; The common generalized variables.
 
 (gv-define-simple-setter aref aset)
+(gv-define-simple-setter char-table-range set-char-table-range)
 (gv-define-simple-setter car setcar)
 (gv-define-simple-setter cdr setcdr)
 ;; FIXME: add compiler-macros for `cXXr' instead!

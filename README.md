@@ -138,8 +138,11 @@ more Emacs-y.
    This happens automatically, so don't override the toolchain manually.
 
 2. You will need a C compiler and toolchain. On Linux, you can do
-   something like `apt install build-essential automake clang`. On
-   macOS, you'll need Xcode.
+   something like:
+
+        apt install build-essential automake clang libclang-dev
+
+   On macOS, you'll need Xcode.
 
 3. Linux:
 
@@ -147,14 +150,14 @@ more Emacs-y.
           libgif-dev libxpm-dev libgtk-3-dev libgnutls28-dev \
           libncurses5-dev libxml2-dev libxt-dev
 
-   MacOS:
+   macOS:
    
-        brew install libxml2 gnutls texinfo
+        brew install gnutls texinfo autoconf
         
     To use the installed version of `makeinfo` instead of the built-in 
     (`/usr/bin/makeinfo`) one, you'll need to make sure `/usr/local/opt/texinfo/bin` 
     is before `/usr/bin` in `PATH`.
-    Mojave: `export PKG_CONFIG_PATH="/usr/local/opt/libxml2/lib/pkgconfig"`
+    Mojave install libxml2 headers with: `open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg`
 
 ## Dockerized development environment
 
@@ -232,9 +235,11 @@ different.
 # Progress
 
 At this point we focus on porting lisp functions from C to Rust.
-Currently there are 467 functions in Rust and 996 in C (November 2018).
+Currently there are 555 functions in Rust and 911 in C (January 2019).
 
-We also have a [progress section](https://github.com/Wilfred/remacs/wiki/Progress) in our wiki.
+We have a [progress section](https://github.com/Wilfred/remacs/wiki/Progress) in our wiki
+and there's also a list of [long-term goals](https://github.com/Wilfred/remacs/projects/1) 
+in the project section.
 
 # Porting Elisp Primitive Functions
 
@@ -289,7 +294,7 @@ This code is so much better that it's hard to believe just how simple the implem
 # Contributing
 
 Pull requests welcome, no copyright assignment required. This project is under the
-[Rust code of conduct](https://www.rust-lang.org/en-US/conduct.html).
+[Rust code of conduct](https://www.rust-lang.org/policies/code-of-conduct).
 
 There's lots to do! We keep a list of [low hanging fruit](https://github.com/Wilfred/remacs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) here so you can easily choose
 one. You can find information in the [Porting cookbook](https://github.com/Wilfred/remacs/wiki/Porting-cookbook) or ask for help in our gitter channel.

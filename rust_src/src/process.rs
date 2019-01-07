@@ -6,13 +6,13 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{current_buffer, get_buffer, LispBufferOrName, LispBufferRef},
     lisp::defsubr,
-    lisp::{ExternalPtr, LispObject},
+    lisp::{ExternalPtr, LispObject, ProcessIter},
     lists::{assoc, car, cdr, plist_put},
     multibyte::LispStringRef,
     remacs_sys::{
         add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-        get_process as cget_process, send_process, setup_process_coding_systems, update_status,
-        Fmapcar, STRING_BYTES,
+        get_process as cget_process, list_system_processes, send_process,
+        setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
@@ -25,10 +25,6 @@ use crate::{
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
 impl LispProcessRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     fn ptype(self) -> LispObject {
         self.type_
     }
@@ -70,7 +66,7 @@ impl From<LispObject> for LispProcessRef {
 
 impl From<LispProcessRef> for LispObject {
     fn from(p: LispProcessRef) -> Self {
-        p.as_lisp_obj()
+        LispObject::tag_ptr(p, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -78,6 +74,13 @@ impl From<LispObject> for Option<LispProcessRef> {
     fn from(o: LispObject) -> Self {
         o.as_process()
     }
+}
+
+macro_rules! for_each_process {
+    ($name:ident => $action:block) => {
+        for $name in ProcessIter::new()
+            $action
+    };
 }
 
 /// This is how commands for the user decode process arguments.  It
@@ -92,7 +95,7 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
         if obj.is_nil() {
             obj = get_buffer(LispBufferOrName::from(name)).map_or_else(
                 || error!("Process {} does not exist", name.as_string_or_error()),
-                |b| b.as_lisp_obj(),
+                LispObject::from,
             );
         }
         obj
@@ -109,16 +112,14 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
                 .name()
                 .as_string()
                 .unwrap_or_else(|| error!("Attempt to get process for a dead buffer"));
-            let proc = get_buffer_process_internal(Some(b));
-            if proc.is_nil() {
-                error!("Buffer {:?} has no process.", unsafe {
+            match get_buffer_process_internal(Some(b)) {
+                None => error!("Buffer {:?} has no process.", unsafe {
                     name.u.s.data as *mut libc::c_char
-                })
-            } else {
-                proc
+                }),
+                Some(proc) => proc.into(),
             }
         }
-        None => proc_or_buf.as_process_or_error().as_lisp_obj(),
+        None => proc_or_buf.as_process_or_error().into(),
     }
 }
 
@@ -171,24 +172,20 @@ pub fn process_id(process: LispProcessRef) -> Option<EmacsInt> {
 /// Return nil if all processes associated with BUFFER have been
 /// deleted or killed.
 #[lisp_fn]
-pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
-    get_buffer_process_internal(buffer_or_name.and_then(|b| b.as_buffer()))
+pub fn get_buffer_process(buffer_or_name: Option<LispBufferOrName>) -> Option<LispProcessRef> {
+    get_buffer_process_internal(buffer_or_name.and_then(|b| b.into()))
 }
 
-pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> LispObject {
-    match buffer {
-        None => Qnil,
-        Some(buf) => {
-            let obj = LispObject::from(buf);
-            unsafe { Vprocess_alist }
-                .iter_cars()
-                .find(|item| {
-                    let p = item.as_cons_or_error().cdr();
-                    obj.eq(p.as_process_or_error().buffer)
-                })
-                .map_or(Qnil, |item| item.as_cons_or_error().cdr())
-        }
+pub fn get_buffer_process_internal(buffer: Option<LispBufferRef>) -> Option<LispProcessRef> {
+    if let Some(buf) = buffer {
+        let obj = LispObject::from(buf);
+        for_each_process!(p => {
+            if obj.eq(p.buffer) {
+                return Some(p);
+            }
+        });
     }
+    None
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.
@@ -301,8 +298,8 @@ pub fn process_status(process: LispObject) -> LispObject {
 
 /// Return a cons of coding systems for decoding and encoding of PROCESS.
 #[lisp_fn]
-pub fn process_coding_system(process: LispProcessRef) -> LispObject {
-    LispObject::cons(process.decode_coding_system, process.encode_coding_system)
+pub fn process_coding_system(process: LispProcessRef) -> (LispObject, LispObject) {
+    (process.decode_coding_system, process.encode_coding_system)
 }
 
 /// Return the locking thread of PROCESS.
@@ -349,15 +346,12 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
 ///
 /// When a process has a non-default filter, its buffer is not used for output.
 /// Instead, each time it does output, the entire string of output is
-/// qpassed to the filter.
+/// passed to the filter.
 ///
 /// The filter gets two arguments: the process and the string of output.
 /// The string argument is normally a multibyte string, except:
 /// - if the process's input coding system is no-conversion or raw-text,
-///   it is a unibyte string (the non-converted input), or else
-/// - if `default-enable-multibyte-characters' is nil, it is a unibyte
-///   string (the result of converting the decoded input multibyte
-///   string to unibyte with `string-make-unibyte').
+///   it is a unibyte string (the non-converted input).
 #[lisp_fn]
 pub fn set_process_filter(process: LispObject, mut filter: LispObject) -> LispObject {
     let mut p_ref = process.as_process_or_error();
@@ -450,7 +444,7 @@ pub fn process_send_string(process: LispObject, mut string: LispStringRef) {
             cget_process(process),
             string.u.s.data as *mut libc::c_char,
             STRING_BYTES(string.as_mut()),
-            string.as_lisp_obj(),
+            string.into(),
         )
     };
 }
@@ -532,6 +526,15 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
     } else {
         LispObject::from_fixnum(gid.into())
     }
+}
+
+/// Return a list of numerical process IDs of all running processes.
+/// If this functionality is unsupported, return nil.
+///
+/// See `process-attributes' for getting attributes of a process given its ID.
+#[lisp_fn(name = "list-system-processes", c_name = "list_system_processes")]
+pub fn list_system_processes_lisp() -> LispObject {
+    unsafe { list_system_processes() }
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

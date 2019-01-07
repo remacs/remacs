@@ -15,6 +15,7 @@ use crate::{
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
     remacs_sys::globals,
+    remacs_sys::Fcopy_alist,
     remacs_sys::{
         estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, scroll_command, select_window,
@@ -33,10 +34,6 @@ use crate::{
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
     pub fn is_live(self) -> bool {
@@ -234,7 +231,7 @@ impl From<LispObject> for LispWindowRef {
 
 impl From<LispWindowRef> for LispObject {
     fn from(w: LispWindowRef) -> Self {
-        w.as_lisp_obj()
+        LispObject::tag_ptr(w, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -288,15 +285,6 @@ impl LispObject {
         self.as_valid_window()
             .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
-
-    /*
-    pub fn is_window_configuration(self) -> bool {
-        self.as_vectorlike().map_or(
-            false,
-            |v| v.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION),
-        )
-    }
-     */
 }
 
 pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
@@ -485,7 +473,7 @@ pub fn window_pixel_height(window: LispWindowValidOrSelected) -> i32 {
 /// If a marginal area does not exist, its width will be returned
 /// as nil.
 #[lisp_fn(min = "0")]
-pub fn window_margins(window: LispWindowLiveOrSelected) -> LispObject {
+pub fn window_margins(window: LispWindowLiveOrSelected) -> (LispObject, LispObject) {
     fn margin_as_object(margin: c_int) -> LispObject {
         if margin == 0 {
             Qnil
@@ -495,7 +483,7 @@ pub fn window_margins(window: LispWindowLiveOrSelected) -> LispObject {
     }
     let win: LispWindowRef = window.into();
 
-    LispObject::cons(
+    (
         margin_as_object(win.left_margin_cols),
         margin_as_object(win.right_margin_cols),
     )
@@ -629,7 +617,7 @@ pub fn minibuffer_window(frame: LispFrameOrSelected) -> LispObject {
 
 /// Return WINDOW's value for PARAMETER.
 /// WINDOW can be any window and defaults to the selected one.
-#[lisp_fn(name = "window-parameter")]
+#[lisp_fn(name = "window-parameter", c_name = "window_parameter")]
 pub fn window_parameter_lisp(window: LispWindowOrSelected, parameter: LispObject) -> LispObject {
     let win: LispWindowRef = window.into();
     win.get_parameter(parameter)
@@ -672,8 +660,7 @@ pub fn set_window_parameter(
     let mut win: LispWindowRef = window.into();
     let old_alist_elt = assq(parameter, win.window_parameters);
     if old_alist_elt.is_nil() {
-        win.window_parameters =
-            LispObject::cons(LispObject::cons(parameter, value), win.window_parameters);
+        win.window_parameters = ((parameter, value), win.window_parameters).into();
     } else {
         setcdr(old_alist_elt.as_cons_or_error(), value);
     }
@@ -747,7 +734,7 @@ pub fn window_list(
     window: Option<LispWindowRef>,
 ) -> LispObject {
     let w_obj = match window {
-        Some(w) => w.as_lisp_obj(),
+        Some(w) => w.into(),
         None => LispFrameRef::from(frame).selected_window,
     };
 
@@ -794,8 +781,8 @@ pub fn window_list(
 ///
 /// If WINDOW is not on the list of windows returned, some other window will
 /// be listed first but no error is signaled.
-#[lisp_fn(min = "0", name = "window-list-1")]
-pub fn window_list_one(
+#[lisp_fn(min = "0", name = "window-list-1", c_name = "window_list_1")]
+pub fn window_list_1_lisp(
     window: LispObject,
     minibuf: LispObject,
     all_frames: LispObject,
@@ -1058,6 +1045,18 @@ pub fn scroll_down(arg: LispObject) {
     unsafe { scroll_command(arg, -1) };
 }
 
+/// Return new normal size of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The new normal size of WINDOW is the value set by the last call of
+/// `set-window-new-normal' for WINDOW.  If valid, it will be shortly
+/// installed as WINDOW's normal size (see `window-normal-size').
+#[lisp_fn(min = "0")]
+pub fn window_new_normal(window: LispWindowValidOrSelected) -> LispObject {
+    let win: LispWindowRef = window.into();
+    win.new_normal
+}
+
 /// Return the new total size of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 ///
@@ -1068,6 +1067,35 @@ pub fn scroll_down(arg: LispObject) {
 #[lisp_fn(min = "0")]
 pub fn window_new_total(window: LispWindowValidOrSelected) -> LispObject {
     let win: LispWindowRef = window.into();
+    win.new_total
+}
+
+/// Set new total size of WINDOW to SIZE.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return SIZE.
+///
+/// Optional argument ADD non-nil means add SIZE to the new total size of
+/// WINDOW and return the sum.
+///
+/// The new total size of WINDOW, if valid, will be shortly installed as
+/// WINDOW's total height (see `window-total-height') or total width (see
+/// `window-total-width').
+///
+/// Note: This function does not operate on any child windows of WINDOW.
+#[lisp_fn(min = "2")]
+pub fn set_window_new_total(
+    window: LispWindowValidOrSelected,
+    size: EmacsInt,
+    add: bool,
+) -> LispObject {
+    let mut win: LispWindowRef = window.into();
+
+    let new_total = if !add {
+        size
+    } else {
+        EmacsInt::from(win.new_total) + size
+    };
+    win.new_total = new_total.into();
     win.new_total
 }
 
@@ -1139,6 +1167,41 @@ pub fn select_window_lisp(window: LispObject, norecord: LispObject) -> LispObjec
 pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
     let win: LispWindowRef = window.into();
     EmacsInt::from(win.top_line)
+}
+
+/// Return the parameters of WINDOW and their values.
+/// WINDOW must be a valid window and defaults to the selected one.  The
+/// return value is a list of elements of the form (PARAMETER . VALUE).
+#[lisp_fn(min = "0")]
+pub fn window_parameters(window: LispWindowValidOrSelected) -> LispObject {
+    let win: LispWindowRef = window.into();
+    unsafe { Fcopy_alist(win.window_parameters) }
+}
+
+/// Return WINDOW's redisplay end trigger value.
+/// WINDOW must be a live window and defaults to the selected one.
+/// See `set-window-redisplay-end-trigger' for more information.
+#[lisp_fn(min = "0")]
+pub fn window_redisplay_end_trigger(window: LispWindowLiveOrSelected) -> LispObject {
+    let win: LispWindowRef = window.into();
+    win.redisplay_end_trigger
+}
+
+/// Set WINDOW's redisplay end trigger value to VALUE.
+/// WINDOW must be a live window and defaults to the selected one.  VALUE
+/// should be a buffer position (typically a marker) or nil.  If it is a
+/// buffer position, then if redisplay in WINDOW reaches a position beyond
+/// VALUE, the functions in `redisplay-end-trigger-functions' are called
+/// with two arguments: WINDOW, and the end trigger value.  Afterwards the
+/// end-trigger value is reset to nil.
+#[lisp_fn]
+pub fn set_window_redisplay_end_trigger(
+    window: LispWindowLiveOrSelected,
+    value: LispObject,
+) -> LispObject {
+    let mut win: LispWindowRef = window.into();
+    win.redisplay_end_trigger = value;
+    value
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

@@ -57,10 +57,10 @@ Every function in this hook will be called with two arguments:
 the name of the original file and the name of the file
 produced.")
 
-(defgroup org-publish nil
+(defgroup org-export-publish nil
   "Options for publishing a set of files."
   :tag "Org Publishing"
-  :group 'org)
+  :group 'org-export)
 
 (defcustom org-publish-project-alist nil
   "Association list to control publishing behavior.

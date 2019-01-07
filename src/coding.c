@@ -252,7 +252,7 @@ decode_coding_XXXX (struct coding_system *coding)
   CODING_RESULT_XXX indicating how the encoding finished.
 
   DST_BYTES zero means that source area and destination area are
-  overlapped, which means that we can produce a encoded text until it
+  overlapped, which means that we can produce an encoded text until it
   reaches at the head of not-yet-encoded source text.
 
   Below is a template of these functions.  */
@@ -3973,7 +3973,7 @@ decode_coding_iso_2022 (struct coding_system *coding)
       /* Reset the invocation and designation status to the safest
 	 one; i.e. designate ASCII to the graphic register 0, and
 	 invoke that register to the graphic plane 0.  This typically
-	 helps the case that an designation sequence for ASCII "ESC (
+	 helps the case that a designation sequence for ASCII "ESC (
 	 B" is somehow broken (e.g. broken by a newline).  */
       CODING_ISO_INVOCATION (coding, 0) = 0;
       CODING_ISO_DESIGNATION (coding, 0) = charset_ascii;
@@ -7437,10 +7437,23 @@ decode_coding (struct coding_system *coding)
 
 	  while (nbytes-- > 0)
 	    {
-	      int c = *src++;
+	      int c;
 
-	      if (c & 0x80)
-		c = BYTE8_TO_CHAR (c);
+	      /* Copy raw bytes in their 2-byte forms from multibyte
+		 text as single characters.  */
+	      if (coding->src_multibyte
+		  && CHAR_BYTE8_HEAD_P (*src) && nbytes > 0)
+		{
+		  c = STRING_CHAR_ADVANCE (src);
+		  nbytes--;
+		}
+	      else
+		{
+		  c = *src++;
+
+		  if (c & 0x80)
+		    c = BYTE8_TO_CHAR (c);
+		}
 	      coding->charbuf[coding->charbuf_used++] = c;
 	    }
 	  produce_chars (coding, Qnil, 1);
@@ -8483,21 +8496,6 @@ to_unicode (Lisp_Object str, Lisp_Object *buf)
 #ifdef emacs
 /*** 8. Emacs Lisp library functions ***/
 
-DEFUN ("coding-system-p", Fcoding_system_p, Scoding_system_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is nil or a coding-system.
-See the documentation of `define-coding-system' for information
-about coding-system objects.  */)
-  (Lisp_Object object)
-{
-  if (NILP (object)
-      || CODING_SYSTEM_ID (object) >= 0)
-    return Qt;
-  if (! SYMBOLP (object)
-      || NILP (Fget (object, Qcoding_system_define_form)))
-    return Qnil;
-  return Qt;
-}
-
 DEFUN ("read-non-nil-coding-system", Fread_non_nil_coding_system,
        Sread_non_nil_coding_system, 1, 1, 0,
        doc: /* Read a coding system from the minibuffer, prompting with string PROMPT.  */)
@@ -8531,27 +8529,6 @@ are lower-case).  */)
 			  default_coding_system, Qnil);
   unbind_to (count, Qnil);
   return (SCHARS (val) == 0 ? Qnil : Fintern (val, Qnil));
-}
-
-DEFUN ("check-coding-system", Fcheck_coding_system, Scheck_coding_system,
-       1, 1, 0,
-       doc: /* Check validity of CODING-SYSTEM.
-If valid, return CODING-SYSTEM, else signal a `coding-system-error' error.
-It is valid if it is nil or a symbol defined as a coding system by the
-function `define-coding-system'.  */)
-  (Lisp_Object coding_system)
-{
-  Lisp_Object define_form;
-
-  define_form = Fget (coding_system, Qcoding_system_define_form);
-  if (! NILP (define_form))
-    {
-      Fput (coding_system, Qcoding_system_define_form, Qnil);
-      safe_eval (define_form);
-    }
-  if (!NILP (Fcoding_system_p (coding_system)))
-    return coding_system;
-  xsignal1 (Qcoding_system_error, coding_system);
 }
 
 
@@ -10713,20 +10690,6 @@ DEFUN ("coding-system-plist", Fcoding_system_plist, Scoding_system_plist,
   return CODING_ATTR_PLIST (attrs);
 }
 
-
-DEFUN ("coding-system-aliases", Fcoding_system_aliases, Scoding_system_aliases,
-       1, 1, 0,
-       doc: /* Return the list of aliases of CODING-SYSTEM.  */)
-  (Lisp_Object coding_system)
-{
-  Lisp_Object spec;
-
-  if (NILP (coding_system))
-    coding_system = Qno_conversion;
-  CHECK_CODING_SYSTEM_GET_SPEC (coding_system, spec);
-  return AREF (spec, 1);
-}
-
 DEFUN ("coding-system-eol-type", Fcoding_system_eol_type,
        Scoding_system_eol_type, 1, 1, 0,
        doc: /* Return eol-type of CODING-SYSTEM.
@@ -10957,10 +10920,8 @@ syms_of_coding (void)
      symbol as a coding system.  */
   DEFSYM (Qcoding_system_define_form, "coding-system-define-form");
 
-  defsubr (&Scoding_system_p);
   defsubr (&Sread_coding_system);
   defsubr (&Sread_non_nil_coding_system);
-  defsubr (&Scheck_coding_system);
   defsubr (&Sdetect_coding_region);
   defsubr (&Sdetect_coding_string);
   defsubr (&Sfind_coding_systems_region_internal);
@@ -10986,7 +10947,6 @@ syms_of_coding (void)
   defsubr (&Scoding_system_put);
   defsubr (&Scoding_system_base);
   defsubr (&Scoding_system_plist);
-  defsubr (&Scoding_system_aliases);
   defsubr (&Scoding_system_eol_type);
   defsubr (&Scoding_system_priority_list);
 

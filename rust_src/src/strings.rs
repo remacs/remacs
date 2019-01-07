@@ -18,8 +18,6 @@ use crate::{
     },
 };
 
-pub static MIME_LINE_LENGTH: isize = 76;
-
 /// Return t if OBJECT is a string.
 #[lisp_fn]
 pub fn stringp(object: LispObject) -> bool {
@@ -62,7 +60,7 @@ pub fn string_equal(s1: LispObject, s2: LispObject) -> bool {
 #[lisp_fn]
 pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
     if string.is_multibyte() {
-        return string.as_lisp_obj();
+        return string.into();
     }
 
     let mut nchars = 0;
@@ -111,7 +109,7 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
 /// correct sequence.
 #[lisp_fn]
 pub fn string_to_multibyte(string: LispStringRef) -> LispObject {
-    unsafe { c_string_to_multibyte(string.as_lisp_obj()) }
+    unsafe { c_string_to_multibyte(string.into()) }
 }
 
 /// Return a unibyte string with the same individual chars as STRING.
@@ -135,7 +133,7 @@ pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
 
         unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) }
     } else {
-        string.as_lisp_obj()
+        string.into()
     }
 }
 
@@ -165,6 +163,16 @@ pub fn clear_string(mut string: LispStringRef) {
         string.set_num_chars(string.len_bytes());
     }
     string.mark_as_unibyte();
+}
+
+/// Return width of STRING when displayed in the current buffer. Width is
+/// measured by how many columns it occupies on the screen. When calculating
+/// width of a multibyte character in STRING, only the base leading-code is
+/// considered; the validity of the following bytes is not checked.  Tabs in
+/// STRING are always taken to occupy `tab-width' columns.
+#[lisp_fn]
+pub fn string_width(string: LispStringRef) -> usize {
+    string.width()
 }
 
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));

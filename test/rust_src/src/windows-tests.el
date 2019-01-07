@@ -42,6 +42,37 @@
   (should (eq (window-new-total) (window-total-height)))
   (should (eq (window-new-total (selected-window)) (window-total-height))))
 
+(ert-deftest set-window-new-total()
+  (set-window-new-total nil 1)
+  (should (eq (window-new-total) 1))
+  (set-window-new-total nil 1 nil)
+  (should (eq (window-new-total) 1))
+  (set-window-new-total nil 1 t)
+  (should (eq (window-new-total) 2)))
+
+(ert-deftest window-new-normal ()
+  "Effectively tests both `window-new-normal' (the getter) and
+`set-window-new-normal' (the setter)."
+  ;; Can we change normal on this window?
+  (set-window-new-normal nil 1.0)
+  (should (= (window-new-normal) 1.0))
+  (set-window-new-normal nil 0.23)
+  (should (= (window-new-normal) 0.23))
+
+  ;; Can we correctly get the value of a different window?
+  (let ((current-window-expected-normal 1.0)
+        (other-window-expected-normal 0.5)
+        (current-window (selected-window))
+        (other-window (split-window)))
+    (set-window-new-normal current-window current-window-expected-normal)
+    (set-window-new-normal other-window other-window-expected-normal)
+    ;; Normal for current-window should be the same
+    (should (= (window-new-normal) current-window-expected-normal))
+    (select-window other-window)
+    (should (= (window-new-normal) other-window-expected-normal))
+    (delete-window other-window)
+    ))
+
 (ert-deftest window-use-time ()
   (let ((use-time (window-use-time)))
     (should (eq 'integer (type-of use-time)))
@@ -57,3 +88,10 @@
     (delete-window w2)
     (select-window w1)
     (should (eq (get-mru-window) w1))))
+
+(ert-deftest window-parameters ()
+  (should (eq nil (window-parameters)))
+  (should (eq nil (window-parameters (selected-window))))
+  (set-window-parameter (selected-window) 'test 'test)
+  (should (consp (window-parameters)))
+  (should (consp (window-parameters (selected-window)))))

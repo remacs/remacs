@@ -236,23 +236,6 @@ lisp_string_width (Lisp_Object string, ptrdiff_t precision,
   return width;
 }
 
-DEFUN ("string-width", Fstring_width, Sstring_width, 1, 1, 0,
-       doc: /* Return width of STRING when displayed in the current buffer.
-Width is measured by how many columns it occupies on the screen.
-When calculating width of a multibyte character in STRING,
-only the base leading-code is considered; the validity of
-the following bytes is not checked.  Tabs in STRING are always
-taken to occupy `tab-width' columns.
-usage: (string-width STRING)  */)
-  (Lisp_Object str)
-{
-  Lisp_Object val;
-
-  CHECK_STRING (str);
-  XSETFASTINT (val, lisp_string_width (str, -1, NULL, NULL));
-  return val;
-}
-
 /* Return the number of characters in the NBYTES bytes at PTR.
    This works by looking at the contents and checking for multibyte
    sequences while assuming that there's no invalid sequence.
@@ -517,7 +500,7 @@ alphabeticp (int c)
 	  || gen_cat == UNICODE_CATEGORY_Nl);
 }
 
-/* Return true if C is a alphabetic or decimal-number character.  */
+/* Return true if C is an alphabetic or decimal-number character.  */
 bool
 alphanumericp (int c)
 {
@@ -584,6 +567,32 @@ blankp (int c)
   return XINT (category) == UNICODE_CATEGORY_Zs; /* separator, space */
 }
 
+
+/* Return true for characters that would read as symbol characters,
+   but graphically may be confused with some kind of punctuation.  We
+   require an escaping backslash, when such characters begin a
+   symbol.  */
+bool
+confusable_symbol_character_p (int ch)
+{
+  switch (ch)
+    {
+    case 0x2018: /* LEFT SINGLE QUOTATION MARK */
+    case 0x2019: /* RIGHT SINGLE QUOTATION MARK */
+    case 0x201B: /* SINGLE HIGH-REVERSED-9 QUOTATION MARK */
+    case 0x201C: /* LEFT DOUBLE QUOTATION MARK */
+    case 0x201D: /* RIGHT DOUBLE QUOTATION MARK */
+    case 0x201F: /* DOUBLE HIGH-REVERSED-9 QUOTATION MARK */
+    case 0x301E: /* DOUBLE PRIME QUOTATION MARK */
+    case 0xFF02: /* FULLWIDTH QUOTATION MARK */
+    case 0xFF07: /* FULLWIDTH APOSTROPHE */
+      return true;
+
+    default:
+      return false;
+    }
+}
+
 signed char HEXDIGIT_CONST hexdigit[UCHAR_MAX + 1] =
   {
 #if HEXDIGIT_IS_CONST
@@ -611,7 +620,6 @@ syms_of_character (void)
   Vchar_unify_table = Qnil;
 
   defsubr (&Schar_width);
-  defsubr (&Sstring_width);
   defsubr (&Sstring);
   defsubr (&Sunibyte_string);
   defsubr (&Schar_resolve_modifiers);

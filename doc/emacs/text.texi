@@ -101,7 +101,7 @@ Kill up to the end of a word (@code{kill-word}).
 @item M-@key{DEL}
 Kill back to the beginning of a word (@code{backward-kill-word}).
 @item M-@@
-Mark the end of the next word (@code{mark-word}).
+Set mark at the end of the next word (@code{mark-word}).
 @item M-t
 Transpose two words or drag a word across others
 (@code{transpose-words}).
@@ -274,8 +274,9 @@ Put point and mark around this or next paragraph (@code{mark-paragraph}).
 @findex backward-paragraph
 @findex forward-paragraph
   @kbd{M-@{} (@code{backward-paragraph}) moves to the beginning of the
-current or previous paragraph (see below for the definition of a
-paragraph).  @kbd{M-@}} (@code{forward-paragraph}) moves to the end of
+current or previous paragraph, depending on where point is when the
+command is invoked (see below for the definition of a paragraph).
+@kbd{M-@}} (@code{forward-paragraph}) similarly moves to the end of
 the current or next paragraph.  If there is a blank line before the
 paragraph, @kbd{M-@{} moves to the blank line.
 
@@ -381,12 +382,13 @@ at the end).
   @kbd{C-x C-p C-w} is a handy way to kill a page to move it
 elsewhere.  If you move to another page delimiter with @kbd{C-x [} and
 @kbd{C-x ]}, then yank the killed page, all the pages will be properly
-delimited once again.  The reason @kbd{C-x C-p} includes only the
-following page delimiter in the region is to ensure that.
+delimited once again.  Making sure this works as expected is the
+reason @kbd{C-x C-p} includes only the following page delimiter in the
+region.
 
   A numeric argument to @kbd{C-x C-p} specifies which page to go to,
-relative to the current one.  Zero means the current page, one
-the next page, and @minus{}1 the previous one.
+relative to the current one.  Zero means the current page, one means
+the next page, and @minus{}1 means the previous one.
 
 @kindex C-x l
 @findex count-lines-page
@@ -636,8 +638,11 @@ line.  If a function returns a non-@code{nil} value, Emacs will not
 break the line there.  Functions you can use there include:
 @code{fill-single-word-nobreak-p} (don't break after the first word of
 a sentence or before the last); @code{fill-single-char-nobreak-p}
-(don't break after a one-letter word); and @code{fill-french-nobreak-p}
-(don't break after @samp{(} or before @samp{)}, @samp{:} or @samp{?}).
+(don't break after a one-letter word preceded by a whitespace
+character); @code{fill-french-nobreak-p} (don't break after @samp{(}
+or before @samp{)}, @samp{:} or @samp{?}); and
+@code{fill-polish-nobreak-p} (don't break after a one letter word,
+even if preceded by a non-whitespace character).
 
 @node Fill Prefix
 @subsection The Fill Prefix
@@ -1503,29 +1508,27 @@ This is an example.
 @findex doctex-mode
 @findex bibtex-mode
 
-  Emacs provides special major modes for editing files written in
-@TeX{} and its related formats.  @TeX{} is a powerful text formatter
-written by Donald Knuth; like GNU Emacs, it is free software.
-@LaTeX{} is a simplified input format for @TeX{}, implemented using
-@TeX{} macros.  Doc@TeX{} is a special file format in which the
-@LaTeX{} sources are written, combining sources with documentation.
-Sli@TeX{} is an obsolete special form of @LaTeX{}.@footnote{It has
-been replaced by the @samp{slides} document class, which comes with
-@LaTeX{}.}
+  @TeX{} is a powerful text formatter written by Donald Knuth; like
+GNU Emacs, it is free software.  The @TeX{} format has several
+variants, including @LaTeX{}, a simplified input format for @TeX{};
+Doc@TeX{}, a special file format in which the @LaTeX{} sources are
+written, combining sources with documentation; and Sli@TeX{}, an
+obsolete special form of @LaTeX{}@footnote{
+It has been replaced by the @samp{slides} document class, which comes
+with @LaTeX{}.}.
 
 @vindex tex-default-mode
-  @TeX{} mode has four variants: Plain @TeX{} mode, @LaTeX{} mode,
-Doc@TeX{} mode, and Sli@TeX{} mode.  These distinct major modes differ
-only slightly, and are designed for editing the four different
-formats.  Emacs selects the appropriate mode by looking at the
-contents of the buffer.  (This is done by the @code{tex-mode} command,
-which is normally called automatically when you visit a @TeX{}-like
-file.  @xref{Choosing Modes}.)  If the contents are insufficient to
-determine this, Emacs chooses the mode specified by the variable
-@code{tex-default-mode}; its default value is @code{latex-mode}.  If
-Emacs does not guess right, you can select the correct variant of
-@TeX{} mode using the command @kbd{M-x plain-tex-mode}, @kbd{M-x
-latex-mode}, @kbd{M-x slitex-mode}, or @kbd{doctex-mode}.
+  Emacs provides a @TeX{} major mode for each of these variants: Plain
+@TeX{} mode, @LaTeX{} mode, Doc@TeX{} mode, and Sli@TeX{} mode.  Emacs
+selects the appropriate mode by looking at the contents of the buffer.
+(This is done by the @code{tex-mode} command, which is normally called
+automatically when you visit a @TeX{}-like file.  @xref{Choosing
+Modes}.)  If the contents are insufficient to determine this, Emacs
+chooses the mode specified by the variable @code{tex-default-mode};
+its default value is @code{latex-mode}.  If Emacs does not guess
+right, you can select the correct variant of @TeX{} mode using the
+command @kbd{M-x plain-tex-mode}, @kbd{M-x latex-mode}, @kbd{M-x
+slitex-mode}, or @kbd{doctex-mode}.
 
   The following sections document the features of @TeX{} mode and its
 variants.  There are several other @TeX{}-related Emacs packages,
@@ -1623,7 +1626,9 @@ to keep braces balanced at all times, rather than inserting them
 singly.  Use @kbd{C-c @{} (@code{tex-insert-braces}) to insert a pair of
 braces.  It leaves point between the two braces so you can insert the
 text that belongs inside.  Afterward, use the command @kbd{C-c @}}
-(@code{up-list}) to move forward past the close brace.
+(@code{up-list}) to move forward past the close brace.  You can also
+invoke @kbd{C-c @{} after marking some text: then the command encloses
+the marked text in braces.
 
 @findex tex-validate-region
 @findex tex-terminate-paragraph
@@ -1689,7 +1694,7 @@ when you type the corresponding one.
 @node TeX Print
 @subsection @TeX{} Printing Commands
 
-  You can invoke @TeX{} as an subprocess of Emacs, supplying either
+  You can invoke @TeX{} as a subprocess of Emacs, supplying either
 the entire contents of the buffer or just part of it (e.g., one
 chapter of a larger document).
 
@@ -1741,7 +1746,7 @@ C-p} (@code{tex-print}) to print a hardcopy of the output file.
 output of @TeX{} also goes in this directory.  To run @TeX{} in a
 different directory, change the variable @code{tex-directory} to
 the desired directory.  If your environment variable @env{TEXINPUTS}
-contains relative names, or if your files contains
+contains relative names, or if your files contain
 @samp{\input} commands with relative file names, then
 @code{tex-directory} @emph{must} be @code{"."} or you will get the
 wrong results.  Otherwise, it is safe to specify some other directory,
@@ -2012,7 +2017,7 @@ used as a cheap preview (@code{sgml-tags-invisible}).
 @findex nxml-mode
 @cindex XML schema
   The major mode for editing XML documents is called nXML mode.  This
-is a powerful major mode that can recognize many existing XML schema
+is a powerful major mode that can recognize many existing XML schemas
 and use them to provide completion of XML elements via
 @kbd{M-@key{TAB}}, as well as on-the-fly XML
 validation with error highlighting.  To enable nXML mode in an
@@ -2285,7 +2290,7 @@ Prompt for a color, and apply it as a background color.
 @end table
 
 @noindent
-These command are also available via the Text Properties menu.
+These commands are also available via the Text Properties menu.
 
   A self-inserting character normally inherits the face properties
 (and most other text properties) from the preceding character in the

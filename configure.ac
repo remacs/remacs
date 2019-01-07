@@ -1255,10 +1255,10 @@ AC_SUBST([PAXCTL_notdumped])
 
 # Makeinfo on macOS is ancient, check whether there is a more recent
 # version installed by Homebrew.
-AC_CHECK_PROG(HAVE_BREW, [brew], [yes])
-if test -n "$HAVE_BREW"; then
+AC_CHECK_PROGS(BREW, [brew])
+if test -n "$BREW"; then
   AC_PATH_PROG([MAKEINFO], [makeinfo], [],
-    [`brew --prefix texinfo 2>/dev/null`/bin$PATH_SEPARATOR$PATH])
+    [`$BREW --prefix texinfo 2>/dev/null`/bin$PATH_SEPARATOR$PATH])
 fi
 
 ## Require makeinfo >= 4.13 (last of the 4.x series) to build the manuals.
@@ -2061,7 +2061,7 @@ if test "${HAVE_W32}" = "yes"; then
   AC_CHECK_TOOL(WINDRES, [windres],
                 [AC_MSG_ERROR([No resource compiler found.])])
   W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
-  W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o"
+  W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o w32cygwinx.o"
   EMACSRES="emacs.res"
   case "$canonical" in
     x86_64-*-*) EMACS_MANIFEST="emacs-x64.manifest" ;;
@@ -2096,6 +2096,12 @@ if test "${HAVE_W32}" = "yes"; then
     XARGS_LIMIT="-s 10000"
   fi
 fi
+
+if test "${HAVE_W32}" = "no" && test "${opsys}" = "cygwin"; then
+  W32_LIBS="-lkernel32"
+  W32_OBJ="w32cygwinx.o"
+fi
+
 AC_SUBST(W32_OBJ)
 AC_SUBST(W32_LIBS)
 AC_SUBST(EMACSRES)
@@ -2503,6 +2509,12 @@ fi
 HAVE_IMAGEMAGICK=no
 if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_imagemagick}" != "no"; then
+    if test -n "$BREW"; then
+      # Homebrew doesn't link ImageMagick 6 by default, so make sure
+      # pkgconfig can find it.
+      export PKG_CONFIG_PATH="$PKG_CONFIG_PATH$PATH_SEPARATOR`$BREW --prefix imagemagick@6 2>/dev/null`/lib/pkgconfig"
+    fi
+
     ## 6.3.5 is the earliest version known to work; see Bug#17339.
     ## 6.8.2 makes Emacs crash; see Bug#13867.
     ## 7 and later have not been ported to; See Bug#25967.
@@ -3149,6 +3161,10 @@ if test "${HAVE_X11}" = "yes"; then
 	    AC_DEFINE(HAVE_OTF_GET_VARIATION_GLYPHS, 1,
 		      [Define to 1 if libotf has OTF_get_variation_glyphs.])
 	  fi
+          if ! $PKG_CONFIG --atleast-version=0.9.16 libotf; then
+	    AC_DEFINE(HAVE_OTF_KANNADA_BUG, 1,
+[Define to 1 if libotf is affected by https://debbugs.gnu.org/28110.])
+	  fi
 	fi
       fi
     dnl FIXME should there be an error if HAVE_FREETYPE != yes?
@@ -3350,23 +3366,20 @@ fi
 AC_SUBST(LIBJPEG)
 
 HAVE_LCMS2=no
-LIBLCMS2=
+LCMS2_CFLAGS=
+LCMS2_LIBS=
 if test "${with_lcms2}" != "no"; then
-  OLIBS=$LIBS
-  AC_SEARCH_LIBS([cmsCreateTransform], [lcms2], [HAVE_LCMS2=yes])
-  LIBS=$OLIBS
-  case $ac_cv_search_cmsCreateTransform in
-    -*) LIBLCMS2=$ac_cv_search_cmsCreateTransform ;;
-  esac
+  EMACS_CHECK_MODULES([LCMS2], [lcms2])
 fi
 if test "${HAVE_LCMS2}" = "yes"; then
   AC_DEFINE([HAVE_LCMS2], 1, [Define to 1 if you have the lcms2 library (-llcms2).])
   ### mingw32 doesn't use -llcms2, since it loads the library dynamically.
   if test "${opsys}" = "mingw32"; then
-     LIBLCMS2=
+     LCMS2_LIBS=
   fi
 fi
-AC_SUBST(LIBLCMS2)
+AC_SUBST(LCMS2_CFLAGS)
+AC_SUBST(LCMS2_LIBS)
 
 ### Dynamic modules support
 LIBMODULES=
@@ -3429,39 +3442,48 @@ elif test "${with_png}" != no; then
   if test "$opsys" = mingw32; then
     AC_CHECK_HEADER([png.h], [HAVE_PNG=yes])
   elif test "${HAVE_X11}" = "yes" || test "${HAVE_W32}" = "yes"; then
-    AC_MSG_CHECKING([for png])
-    png_cflags=`(libpng-config --cflags) 2>&AS_MESSAGE_LOG_FD` &&
-    png_ldflags=`(libpng-config --ldflags) 2>&AS_MESSAGE_LOG_FD` || {
-      # libpng-config does not work; configure by hand.
-      # Debian unstable as of July 2003 has multiple libpngs, and puts png.h
-      # in /usr/include/libpng.
-      if test -r /usr/include/libpng/png.h &&
-	 test ! -r /usr/include/png.h; then
-	png_cflags=-I/usr/include/libpng
-      else
-	png_cflags=
-      fi
-      png_ldflags='-lpng'
-    }
-    SAVE_CFLAGS=$CFLAGS
-    SAVE_LIBS=$LIBS
-    CFLAGS="$CFLAGS $png_cflags"
-    LIBS="$png_ldflags -lz -lm $LIBS"
-    AC_LINK_IFELSE(
-      [AC_LANG_PROGRAM([[#include <png.h>]],
-	 [[return !png_get_channels (0, 0);]])],
-      [HAVE_PNG=yes
-       PNG_CFLAGS=`AS_ECHO(["$png_cflags"]) | sed -e "$edit_cflags"`
-       LIBPNG=$png_ldflags
-       # $LIBPNG requires explicit -lz in some cases.
-       # We don't know what those cases are, exactly, so play it safe and
-       # append -lz to any nonempty $LIBPNG, unless we're already using LIBZ.
-       if test -n "$LIBPNG" && test -z "$LIBZ"; then
-	 LIBPNG="$LIBPNG -lz"
-       fi])
-    CFLAGS=$SAVE_CFLAGS
-    LIBS=$SAVE_LIBS
-    AC_MSG_RESULT([$HAVE_PNG])
+    EMACS_CHECK_MODULES([PNG], [libpng >= 1.0.0])
+    if test $HAVE_PNG = yes; then
+      LIBPNG=$PNG_LIBS
+    else
+      # Test old way in case pkg-config doesn't have it (older machines).
+      AC_MSG_CHECKING([for libpng not configured by pkg-config])
+
+      png_cflags=`(libpng-config --cflags) 2>&AS_MESSAGE_LOG_FD` &&
+      png_ldflags=`(libpng-config --ldflags) 2>&AS_MESSAGE_LOG_FD` || {
+	# libpng-config does not work; configure by hand.
+	# Debian unstable as of July 2003 has multiple libpngs, and puts png.h
+	# in /usr/include/libpng.
+	if test -r /usr/include/libpng/png.h &&
+	   test ! -r /usr/include/png.h; then
+	  png_cflags=-I/usr/include/libpng
+	else
+	  png_cflags=
+	fi
+	png_ldflags='-lpng'
+      }
+      SAVE_CFLAGS=$CFLAGS
+      SAVE_LIBS=$LIBS
+      CFLAGS="$CFLAGS $png_cflags"
+      LIBS="$png_ldflags -lz -lm $LIBS"
+      AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM([[#include <png.h>]],
+	   [[return !png_get_channels (0, 0);]])],
+	[HAVE_PNG=yes
+	 PNG_CFLAGS=`AS_ECHO(["$png_cflags"]) | sed -e "$edit_cflags"`
+	 LIBPNG=$png_ldflags])
+      CFLAGS=$SAVE_CFLAGS
+      LIBS=$SAVE_LIBS
+      AC_MSG_RESULT([$HAVE_PNG])
+    fi
+
+    # $LIBPNG requires explicit -lz in some cases.
+    # We don't know what those cases are, exactly, so play it safe and
+    # append -lz to any nonempty $LIBPNG, unless we're already using LIBZ.
+    case " $LIBPNG ",$LIBZ in
+      *' -lz '*, | *' ',?*) ;;
+      *) LIBPNG="$LIBPNG -lz" ;;
+    esac
   fi
 fi
 if test $HAVE_PNG = yes; then
@@ -5025,10 +5047,14 @@ CARGO_BUILD="$CARGO build"
 CARGO_CLEAN="$CARGO clean"
 CARGO_TEST="$CARGO test"
 CARGO_CLIPPY="$CARGO clippy"
+CARGO_RUN="$CARGO run"
+CARGO_DOC="$CARGO doc --all --open --document-private-items"
 
 AC_SUBST(CARGO_BUILD)
 AC_SUBST(CARGO_CLEAN)
 AC_SUBST(CARGO_CLIPPY)
+AC_SUBST(CARGO_RUN)
+AC_SUBST(CARGO_DOC)
 
 AC_ARG_ENABLE(rust-debug,
 [AS_HELP_STRING([--enable-rust-debug],
@@ -5095,7 +5121,7 @@ case "$opsys" in
    if test "$HAVE_NS" = "yes"; then
      libs_nsgui="-framework AppKit"
      if test "$NS_IMPL_COCOA" = "yes"; then
-        libs_nsgui="$libs_nsgui -framework IOKit"
+        libs_nsgui="$libs_nsgui -framework IOKit -framework Carbon"
      fi
    else
      libs_nsgui=
@@ -5246,12 +5272,13 @@ emacs_config_features=
 for opt in XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB X_TOOLKIT X11 NS MODULES \
-  XWIDGETS LIBSYSTEMD JSON CANNOT_DUMP LCMS2; do
+  THREADS XWIDGETS LIBSYSTEMD JSON CANNOT_DUMP LCMS2; do
 
     case $opt in
       CANNOT_DUMP) eval val=\${$opt} ;;
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
       X_TOOLKIT) eval val=\${USE_$opt} ;;
+      THREADS) val=${threads_enabled} ;;
       *) eval val=\${HAVE_$opt} ;;
     esac
     case x$val in
@@ -5402,6 +5429,22 @@ else
   ${MAKE-make} MAKEFILE_NAME=do-not-make-Makefile epaths-force
 fi || AC_MSG_ERROR(['src/epaths.h' could not be made.])
 ], [GCC="$GCC" CPPFLAGS="$CPPFLAGS" opsys="$opsys"])
+
+
+CARGO_DEFAULT_FEATURES=""
+if test "$HAVE_LIBXML2" = "yes"; then
+    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
+fi
+if test "$CANNOT_DUMP" != "yes"; then
+    if test "$opsys" = "darwin"; then
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"unexecmacosx\", "
+    else
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"unexec\", "
+    fi
+fi
+
+AC_SUBST(CARGO_DEFAULT_FEATURES)
+AC_CONFIG_FILES([rust_src/Cargo.toml])
 
 dnl NB we have to cheat and use the ac_... version because abs_top_srcdir
 dnl is not yet set, sigh.  Or we could use ../$srcdir/src/.gdbinit,

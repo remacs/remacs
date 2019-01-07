@@ -1394,7 +1394,7 @@ the default behavior."
 ;;;###autoload
 (defun org-clock-in-last (&optional arg)
   "Clock in the last closed clocked item.
-When already clocking in, send an warning.
+When already clocking in, send a warning.
 With a universal prefix argument, select the task you want to
 clock in from the last clocked in tasks.
 With two universal prefix arguments, start clocking using the
@@ -1456,8 +1456,7 @@ The time is always returned as UTC."
 	     (day (nth 3 dt)))
 	(if (< hour org-extend-today-until) (setf (nth 3 dt) (1- day)))
 	(setf (nth 2 dt) org-extend-today-until)
-	(setq dt (append (list 0 0) (nthcdr 2 dt) '(t)))
-	(apply #'encode-time dt)))
+	(apply #'encode-time (append (list 0 0) (nthcdr 2 dt)))))
      ((or (equal cmt "all")
 	  (and (or (not cmt) (equal cmt "auto"))
 	       (not lr)))

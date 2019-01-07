@@ -17,14 +17,16 @@ use crate::{
     lisp::{ExternalPtr, LispObject, LispSubrRef},
     lists::{inorder, nth, sort_list},
     multibyte::MAX_CHAR,
-    numbers::MOST_POSITIVE_FIXNUM,
     process::LispProcessRef,
+    remacs_sys::internal_equal,
     remacs_sys::{
-        pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
-        Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, PSEUDOVECTOR_FLAG,
+        equal_kind, pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Char_Table, Lisp_Type, Lisp_Vector,
+        Lisp_Vectorlike, Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD,
+        BOOL_VECTOR_BITS_PER_CHAR, PSEUDOVECTOR_FLAG,
     },
     remacs_sys::{Qarrayp, Qsequencep, Qvectorp},
     threads::ThreadStateRef,
+    window_configuration::SaveWindowDataRef,
     windows::LispWindowRef,
 };
 
@@ -95,6 +97,44 @@ impl LispObject {
 }
 
 impl LispVectorlikeRef {
+    pub fn equal(self, other: Self, kind: equal_kind::Type, depth: i32, ht: LispObject) -> bool {
+        // Pseudovectors have the type encoded in the size field, so this test
+        // actually checks that the objects have the same type as well as the
+        // same size.
+        if unsafe { self.header.size != other.header.size } {
+            false
+        } else if let (Some(bv1), Some(bv2)) = (self.as_bool_vector(), other.as_bool_vector()) {
+            bv1.equal(bv2, kind, depth, ht)
+        } else if let (Some(cf1), Some(cf2)) = (
+            self.as_window_configuration(),
+            other.as_window_configuration(),
+        ) {
+            assert!(kind != equal_kind::EQUAL_NO_QUIT);
+            cf1.equal(cf2, false)
+        } else if let (Some(vec1), Some(vec2)) = (self.as_vector(), other.as_vector()) {
+            vec1.equal(vec2, kind, depth, ht)
+        } else if let (Some(fn1), Some(fn2)) = (self.as_compiled(), other.as_compiled()) {
+            fn1.equal(fn2, kind, depth, ht)
+        } else if let (Some(rec1), Some(rec2)) = (self.as_record(), other.as_record()) {
+            rec1.equal(rec2, kind, depth, ht)
+        } else if let (Some(font1), Some(font2)) = (self.as_font(), other.as_font()) {
+            font1.equal(font2, kind, depth, ht)
+        } else if let (Some(ct1), Some(ct2)) = (self.as_char_table(), other.as_char_table()) {
+            ct1.equal(ct2, kind, depth, ht)
+        } else if let (Some(ct1), Some(ct2)) = (self.as_sub_char_table(), other.as_sub_char_table())
+        {
+            ct1.equal(ct2, kind, depth, ht)
+        } else if let (Some(ct1), Some(ct2)) = (
+            self.as_sub_char_table_ascii(),
+            other.as_sub_char_table_ascii(),
+        ) {
+            ct1.equal(ct2, kind, depth, ht)
+        } else {
+            // All of the other vector likes are not readily comparable.
+            false
+        }
+    }
+
     pub fn is_vector(self) -> bool {
         unsafe { self.header.size & (PSEUDOVECTOR_FLAG as isize) == 0 }
     }
@@ -166,6 +206,14 @@ impl LispVectorlikeRef {
         }
     }
 
+    pub fn as_window_configuration(self) -> Option<SaveWindowDataRef> {
+        if self.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION) {
+            Some(unsafe { mem::transmute(self) })
+        } else {
+            None
+        }
+    }
+
     pub fn as_frame(self) -> Option<LispFrameRef> {
         if self.is_pseudovector(pvec_type::PVEC_FRAME) {
             Some(unsafe { mem::transmute(self) })
@@ -190,9 +238,9 @@ impl LispVectorlikeRef {
         }
     }
 
-    pub fn as_char_table(self) -> Option<LispCharTableRef> {
+    pub fn as_char_table(mut self) -> Option<LispCharTableRef> {
         if self.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
-            Some(unsafe { mem::transmute(self) })
+            Some(LispCharTableRef::new(self.as_mut() as *mut Lisp_Char_Table))
         } else {
             None
         }
@@ -229,17 +277,27 @@ impl LispVectorlikeRef {
             None
         }
     }
+
+    pub fn as_font(self) -> Option<LispVectorlikeSlotsRef> {
+        if self.is_pseudovector(pvec_type::PVEC_FONT) {
+            Some(unsafe { mem::transmute(self) })
+        } else {
+            None
+        }
+    }
 }
 
 macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
+        impl From<$type> for LispObject {
+            fn from(v: $type) -> Self {
+                LispObject::tag_ptr(v, Lisp_Type::Lisp_Vectorlike)
+            }
+        }
+
         impl $type {
             pub fn len(self) -> usize {
                 (unsafe { self.header.size } & ($size_mask as isize)) as usize
-            }
-
-            pub fn as_lisp_obj(self) -> LispObject {
-                LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
             }
 
             pub fn as_slice(&self) -> &[LispObject] {
@@ -268,7 +326,7 @@ macro_rules! impl_vectorlike_ref {
 
             pub fn set_checked(&mut self, idx: usize, item: LispObject) {
                 if idx >= self.len() {
-                    args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
+                    args_out_of_range!(*self, idx);
                 }
 
                 unsafe { self.set_unchecked(idx, item) };
@@ -280,6 +338,24 @@ macro_rules! impl_vectorlike_ref {
 
             pub fn iter(&self) -> $itertype {
                 $itertype::new(self)
+            }
+
+            pub fn equal(
+                self,
+                other: Self,
+                kind: equal_kind::Type,
+                depth: i32,
+                ht: LispObject,
+            ) -> bool {
+                for i in 0..self.len() {
+                    let v1 = self.get(i as usize);
+                    let v2 = other.get(i as usize);
+                    if !unsafe { internal_equal(v1, v2, kind, depth + 1, ht) } {
+                        return false;
+                    }
+                }
+
+                true
             }
         }
 
@@ -333,13 +409,15 @@ impl_vectorlike_ref! { LispVectorRef, LispVecIterator, ptrdiff_t::max_value() }
 impl_vectorlike_ref! { LispVectorlikeSlotsRef, LispVecSlotsIterator,
 More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize }
 
+impl From<LispBoolVecRef> for LispObject {
+    fn from(b: LispBoolVecRef) -> Self {
+        LispObject::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
+    }
+}
+
 impl LispBoolVecRef {
     pub fn len(self) -> usize {
         self.size as usize
-    }
-
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
     pub fn as_slice(&self) -> &[usize] {
@@ -368,7 +446,7 @@ impl LispBoolVecRef {
 
     pub fn set_checked(&mut self, idx: usize, b: bool) {
         if idx >= self.len() {
-            args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
+            args_out_of_range!(*self, idx);
         }
 
         unsafe { self.set_unchecked(idx, b) }
@@ -392,6 +470,19 @@ impl LispBoolVecRef {
             limb: 0,
             cur: 0,
         }
+    }
+
+    pub fn equal(self, other: Self, _kind: equal_kind::Type, _depth: i32, _ht: LispObject) -> bool {
+        let bits_per = BOOL_VECTOR_BITS_PER_CHAR as usize;
+        // Bool vectors are compared much like strings.
+        self.len() == other.len()
+            && unsafe {
+                libc::memcmp(
+                    self.data.as_ptr() as *const libc::c_void,
+                    other.data.as_ptr() as *const libc::c_void,
+                    (self.len() + bits_per - 1) / bits_per,
+                ) == 0
+            }
     }
 }
 
@@ -446,31 +537,27 @@ impl<'a> ExactSizeIterator for LispBoolVecIterator<'a> {}
 /// the number of bytes in the string; it is the number of characters.
 /// To get the number of bytes, use `string-bytes'.
 #[lisp_fn]
-pub fn length(sequence: LispObject) -> LispObject {
-    if let Some(s) = sequence.as_string() {
-        LispObject::from(s.len_chars())
+pub fn length(sequence: LispObject) -> usize {
+    if sequence.is_nil() {
+        0
+    } else if let Some(s) = sequence.as_string() {
+        s.len_chars() as usize
     } else if let Some(vl) = sequence.as_vectorlike() {
         if let Some(v) = vl.as_vector() {
-            LispObject::from(v.len())
+            v.len()
         } else if let Some(bv) = vl.as_bool_vector() {
-            LispObject::from(bv.len())
+            bv.len()
         } else if vl.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
-            LispObject::from(EmacsInt::from(MAX_CHAR))
+            MAX_CHAR as usize
         } else if vl.is_pseudovector(pvec_type::PVEC_COMPILED)
             || vl.is_pseudovector(pvec_type::PVEC_RECORD)
         {
-            LispObject::from(vl.pseudovector_size())
+            vl.pseudovector_size() as usize
         } else {
             wrong_type!(Qsequencep, sequence);
         }
-    } else if sequence.is_cons() {
-        let len = sequence.iter_tails().count();
-        if len > MOST_POSITIVE_FIXNUM as usize {
-            error!("List too long");
-        }
-        LispObject::from(len)
-    } else if sequence.is_nil() {
-        LispObject::from(0)
+    } else if let Some(cons) = sequence.as_cons() {
+        cons.length()
     } else {
         wrong_type!(Qsequencep, sequence);
     }

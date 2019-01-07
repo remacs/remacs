@@ -56,6 +56,7 @@
 ;;; Code:
 
 (require 'tramp-compat)
+(require 'trampver)
 
 ;; Pacify byte-compiler.
 (require 'cl-lib)
@@ -349,7 +350,7 @@ This variable is regarded as obsolete, and will be removed soon."
   "Default user to use for specific method/host pairs.
 This is an alist of items (METHOD HOST USER).  The first matching item
 specifies the user to use for a file name which does not specify a
-user.  METHOD and USER are regular expressions or nil, which is
+user.  METHOD and HOST are regular expressions or nil, which is
 interpreted as a regular expression which always matches.  If no entry
 matches, the variable `tramp-default-user' takes effect.
 
@@ -373,7 +374,7 @@ Useful for su and sudo methods mostly."
   "Default host to use for specific method/user pairs.
 This is an alist of items (METHOD USER HOST).  The first matching item
 specifies the host to use for a file name which does not specify a
-host.  METHOD and HOST are regular expressions or nil, which is
+host.  METHOD and USER are regular expressions or nil, which is
 interpreted as a regular expression which always matches.  If no entry
 matches, the variable `tramp-default-host' takes effect.
 
@@ -1558,7 +1559,9 @@ The outline level is equal to the verbosity of the Tramp message."
 	    (outline-regexp tramp-debug-outline-regexp))
 	(outline-mode))
       (set (make-local-variable 'outline-regexp) tramp-debug-outline-regexp)
-      (set (make-local-variable 'outline-level) 'tramp-debug-outline-level))
+      (set (make-local-variable 'outline-level) 'tramp-debug-outline-level)
+      ;; Do not edit the debug buffer.
+      (set-keymap-parent (current-local-map) special-mode-map))
     (current-buffer)))
 
 (defsubst tramp-debug-message (vec fmt-string &rest arguments)
@@ -1663,17 +1666,18 @@ applicable)."
 		 arguments))
 	;; Log only when there is a minimum level.
 	(when (>= tramp-verbose 4)
-	  ;; Translate proc to vec.
-	  (when (processp vec-or-proc)
-	    (let ((tramp-verbose 0))
-	      (setq vec-or-proc
-		    (tramp-get-connection-property vec-or-proc "vector" nil))))
-	  ;; Append connection buffer for error messages.
-	  (when (= level 1)
-	    (let ((tramp-verbose 0))
-	      (with-current-buffer (tramp-get-connection-buffer vec-or-proc)
+	  (let ((tramp-verbose 0))
+	    ;; Append connection buffer for error messages.
+	    (when (= level 1)
+	      (with-current-buffer
+		  (if (processp vec-or-proc)
+		      (process-buffer vec-or-proc)
+		    (tramp-get-connection-buffer vec-or-proc))
 		(setq fmt-string (concat fmt-string "\n%s")
-		      arguments (append arguments (list (buffer-string)))))))
+		      arguments (append arguments (list (buffer-string))))))
+	    ;; Translate proc to vec.
+	    (when (processp vec-or-proc)
+	      (setq vec-or-proc (process-get vec-or-proc 'vector))))
 	  ;; Do it.
 	  (when (tramp-file-name-p vec-or-proc)
 	    (apply 'tramp-debug-message
@@ -2397,10 +2401,11 @@ remote file names."
   (put 'tramp-completion-file-name-handler 'operations
        (mapcar 'car tramp-completion-file-name-handler-alist))
 
-  (add-to-list 'file-name-handler-alist
-	       (cons tramp-archive-file-name-regexp
-		     'tramp-archive-file-name-handler))
-  (put 'tramp-archive-file-name-handler 'safe-magic t)
+  (when (bound-and-true-p tramp-archive-enabled)
+    (add-to-list 'file-name-handler-alist
+	         (cons tramp-archive-file-name-regexp
+		       'tramp-archive-file-name-handler))
+    (put 'tramp-archive-file-name-handler 'safe-magic t))
 
   ;; If jka-compr or epa-file are already loaded, move them to the
   ;; front of `file-name-handler-alist'.
@@ -3549,17 +3554,19 @@ support symbolic links."
     ;; First, we must replace environment variables.
     (setq filename (tramp-replace-environment-variables filename))
     (with-parsed-tramp-file-name filename nil
-      ;; Ignore in LOCALNAME everything before "//" or "/~".
-      (when (and (stringp localname) (string-match ".+?/\\(/\\|~\\)" localname))
-	(setq filename
-	      (concat (file-remote-p filename)
-		      (replace-match "\\1" nil nil localname)))
-	;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
-	(when (string-match "~$" filename)
-	  (setq filename (concat filename "/"))))
       ;; We do not want to replace environment variables, again.
       (let (process-environment)
-	(tramp-run-real-handler 'substitute-in-file-name (list filename))))))
+	;; Ignore in LOCALNAME everything before "//" or "/~".
+	(when (stringp localname)
+	  (if (string-match "//\\(/\\|~\\)" localname)
+	      (setq filename (substitute-in-file-name localname))
+	    (setq filename
+		  (concat (file-remote-p filename)
+			  (substitute-in-file-name localname))))))
+      ;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
+      (if (string-match "^~$" localname)
+	  (concat filename "/")
+	filename))))
 
 (defun tramp-handle-set-visited-file-modtime (&optional time-list)
   "Like `set-visited-file-modtime' for Tramp files."
@@ -3616,10 +3623,16 @@ of."
 	   ;; only if that agrees with the buffer's record.
 	   (t (equal mt '(-1 65535)))))))))
 
+;; This is used in tramp-gvfs.el and tramp-sh.el.
+(defconst tramp-gio-events
+  '("attribute-changed" "changed" "changes-done-hint"
+    "created" "deleted" "moved" "pre-unmount" "unmounted")
+  "List of events \"gio monitor\" could send.")
+
+;; This is the default handler.  tramp-gvfs.el and tramp-sh.el have
+;; their own one.
 (defun tramp-handle-file-notify-add-watch (filename _flags _callback)
   "Like `file-notify-add-watch' for Tramp files."
-  ;; This is the default handler.  tramp-gvfs.el and tramp-sh.el have
-  ;; their own one.
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
     (tramp-error
@@ -3787,8 +3800,7 @@ connection buffer."
   ;; use the "password-vector" property in case we have several hops.
   (tramp-set-connection-property
    (tramp-get-connection-property
-    proc "password-vector"
-    (tramp-get-connection-property proc "vector" nil))
+    proc "password-vector" (process-get proc 'vector))
    "first-password-request" tramp-cache-read-persistent-data)
   (save-restriction
     (with-tramp-progress-reporter
@@ -4405,9 +4417,7 @@ Invokes `password-read' if available, `read-passwd' else."
 	       ;; In tramp-sh.el, we must use "password-vector" due to
 	       ;; multi-hop.
 	       (tramp-get-connection-property
-		proc "password-vector"
-		;; All other backends simply use "vector".
-		(tramp-get-connection-property proc "vector" nil))
+		proc "password-vector" (process-get proc 'vector))
 	       'noloc 'nohop))
 	 (pw-prompt
 	  (or prompt
@@ -4553,7 +4563,7 @@ Only works for Bourne-like shells."
 	;; This is for tramp-sh.el.  Other backends do not support this (yet).
 	(tramp-compat-funcall
 	 'tramp-send-command
-	 (tramp-get-connection-property proc "vector" nil)
+	 (process-get proc 'vector)
 	 (format "kill -2 %d" pid))
 	;; Wait, until the process has disappeared.  If it doesn't,
 	;; fall back to the default implementation.

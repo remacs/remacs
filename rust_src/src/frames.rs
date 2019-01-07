@@ -1,11 +1,15 @@
 //! Generic frame functions.
 
+use libc::c_int;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject},
-    remacs_sys::{delete_frame as c_delete_frame, frame_dimension, output_method},
+    lists::{LispConsCircularChecks, LispConsEndChecks},
+    remacs_sys::Vframe_list,
+    remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
     remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
     windows::{select_window_lisp, selected_window, LispWindowRef},
@@ -14,10 +18,6 @@ use crate::{
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     pub fn is_live(self) -> bool {
         !self.terminal.is_null()
     }
@@ -44,7 +44,7 @@ impl From<LispObject> for LispFrameRef {
 
 impl From<LispFrameRef> for LispObject {
     fn from(f: LispFrameRef) -> Self {
-        f.as_lisp_obj()
+        LispObject::tag_ptr(f, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -82,6 +82,15 @@ impl LispObject {
     }
 }
 
+macro_rules! for_each_frame {
+    ($name:ident => $action:block) => {
+        let frame_it = unsafe { Vframe_list.iter_cars(LispConsEndChecks::off,
+                                                      LispConsCircularChecks::off) };
+        for $name in frame_it.map(|f| f.as_frame_or_error())
+            $action
+    };
+}
+
 #[derive(Clone, Copy)]
 pub enum LispFrameOrSelected {
     Frame(LispFrameRef),
@@ -89,7 +98,7 @@ pub enum LispFrameOrSelected {
 }
 
 impl From<LispObject> for LispFrameOrSelected {
-    fn from(obj: LispObject) -> LispFrameOrSelected {
+    fn from(obj: LispObject) -> Self {
         obj.map_or(LispFrameOrSelected::Selected, |o| {
             LispFrameOrSelected::Frame(o.as_frame_or_error())
         })
@@ -97,13 +106,13 @@ impl From<LispObject> for LispFrameOrSelected {
 }
 
 impl From<LispFrameOrSelected> for LispObject {
-    fn from(frame: LispFrameOrSelected) -> LispObject {
+    fn from(frame: LispFrameOrSelected) -> Self {
         LispFrameRef::from(frame).into()
     }
 }
 
 impl From<LispFrameOrSelected> for LispFrameRef {
-    fn from(frame: LispFrameOrSelected) -> LispFrameRef {
+    fn from(frame: LispFrameOrSelected) -> Self {
         match frame {
             LispFrameOrSelected::Frame(f) => f,
             LispFrameOrSelected::Selected => unsafe { current_frame }.as_frame_or_error(),
@@ -117,7 +126,7 @@ impl LispFrameOrSelected {
         if frame.is_live() {
             frame
         } else {
-            wrong_type!(Qframe_live_p, self.into());
+            wrong_type!(Qframe_live_p, self);
         }
     }
 }
@@ -249,7 +258,7 @@ pub fn window_system(frame: LispFrameOrSelected) -> LispObject {
     let window_system = framep_1(frame);
 
     match window_system {
-        Qnil => wrong_type!(Qframep, frame.into()),
+        Qnil => wrong_type!(Qframep, frame),
         Qt => Qnil,
         _ => window_system,
     }
@@ -281,12 +290,9 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 /// FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
 /// display.
 #[lisp_fn(min = "0")]
-pub fn frame_position(frame: LispFrameOrSelected) -> LispObject {
+pub fn frame_position(frame: LispFrameOrSelected) -> (c_int, c_int) {
     let frame_ref = frame.live_or_error();
-    LispObject::cons(
-        LispObject::from(frame_ref.left_pos),
-        LispObject::from(frame_ref.top_pos),
-    )
+    (frame_ref.left_pos, frame_ref.top_pos)
 }
 
 /// Returns t if the mouse pointer displayed on FRAME is visible.
@@ -407,11 +413,116 @@ pub fn frame_bottom_divider_width(frame: LispFrameOrSelected) -> i32 {
 /// This function runs `delete-frame-functions' before actually
 /// deleting the frame, unless the frame is a tooltip.
 /// The functions are run with one argument, the frame to be deleted.
-#[lisp_fn(min = "0", name = "delete-frame", c_name = "delete_frame")]
+#[lisp_fn(
+    intspec = "",
+    min = "0",
+    name = "delete-frame",
+    c_name = "delete_frame"
+)]
 pub fn delete_frame_lisp(frame: LispObject, force: bool) {
     unsafe {
         c_delete_frame(frame, force.into());
     }
+}
+
+/// Return the next frame in the frame list after FRAME.
+/// It considers only frames on the same terminal as FRAME.
+/// By default, skip minibuffer-only frames.
+/// If omitted, FRAME defaults to the selected frame.
+/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+/// If MINIFRAME is a window, include only its own frame
+/// and any frame now using that window as the minibuffer.
+/// If MINIFRAME is `visible', include all visible frames.
+/// If MINIFRAME is 0, include all visible and iconified frames.
+/// Otherwise, include all frames.
+#[lisp_fn(min = "0")]
+pub fn next_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
+    let frame_ref = frame.live_or_error();
+    let frame_obj = frame_ref.into();
+
+    // Track how many times have we passed FRAME in the list.
+    let mut passed = 0;
+
+    // Go through the list at most twice. This treats the frame list
+    // as a circular list allowing for 'next' to occur before FRAME.
+    // Once the desired frame is found in the list, the next frame that is
+    // a valid candidate will be returned regardless of its position.
+    while passed < 2 {
+        for_each_frame!(f => {
+	    if passed > 0 {
+	        let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
+	        if !tmp.is_nil() {
+                    // Found a valid candidate, stop looking.
+	            return f;
+                }
+	    }
+            if frame_ref == f {
+                // Count the number of times FRAME has been found in the list.
+                passed += 1;
+            }
+        });
+    }
+
+    frame_ref
+}
+
+/// Return the previous frame in the frame list before FRAME.
+/// It considers only frames on the same terminal as FRAME.
+/// By default, skip minibuffer-only frames.
+/// If omitted, FRAME defaults to the selected frame.
+/// If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
+/// If MINIFRAME is a window, include only its own frame
+/// and any frame now using that window as the minibuffer.
+/// If MINIFRAME is `visible', include all visible frames.
+/// If MINIFRAME is 0, include all visible and iconified frames.
+/// Otherwise, include all frames.
+#[lisp_fn(min = "0")]
+pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> LispFrameRef {
+    let frame_ref = frame.live_or_error();
+    let frame_obj: LispObject = frame_ref.into();
+    let mut prev = Qnil;
+
+    for_each_frame!(f => {
+        if frame_ref == f && !prev.is_nil() {
+            // frames match and there is a previous frame, return it.
+            return prev.as_frame_or_error();
+        }
+        let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
+        if !tmp.is_nil() {
+            // found a candidate, remember it.
+            prev = tmp;
+        }
+    });
+
+    // We've scanned the entire list.
+    if prev.is_nil() {
+        // We went through the whole frame list without finding a single
+        // acceptable frame.  Return the original frame.
+        frame_ref
+    } else {
+        // There were no acceptable frames in the list before FRAME; otherwise,
+        // we would have returned directly from the loop.  Since PREV is the last
+        // acceptable frame in the list, return it.
+        prev.as_frame_or_error()
+    }
+}
+
+/// Mark FRAME as made.
+/// FRAME nil means use the selected frame.  Second argument MADE non-nil
+/// means functions on `window-configuration-change-hook' are called
+/// whenever the window configuration of FRAME changes.  MADE nil means
+/// these functions are not called.
+///
+/// This function is currently called by `make-frame' only and should be
+/// otherwise used with utter care to avoid that running functions on
+/// `window-configuration-change-hook' is impeded forever.
+#[lisp_fn]
+pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> LispObject {
+    let mut frame_ref = frame.live_or_error();
+    frame_ref.set_after_make_frame(made.is_not_nil());
+    frame_ref.set_inhibit_horizontal_resize(false);
+    frame_ref.set_inhibit_vertical_resize(false);
+    made
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

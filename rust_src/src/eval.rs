@@ -5,26 +5,26 @@ use std::ptr;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    data::{defalias, indirect_function, indirect_function_lisp, set, set_default},
+    data::{defalias, fset, indirect_function, indirect_function_lisp, set, set_default},
     lisp::{defsubr, is_autoload},
     lisp::{LispObject, LispSubrRef},
-    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr, LispCons},
+    lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr},
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::{
         backtrace_debug_on_exit, build_string, call_debugger, check_cons_list, do_debug_on_call,
-        do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals, list2,
-        maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
+        do_one_unbind, eval_sub, find_symbol_value, funcall_lambda, funcall_subr, globals,
+        internal_catch, list2, maybe_gc, maybe_quit, record_in_backtrace, record_unwind_protect,
         record_unwind_save_match_data, specbind, COMPILEDP, MODULE_FUNCTIONP,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Compiled, Set_Internal_Bind},
-    remacs_sys::{Fapply, Fdefault_value, Ffset, Fload, Fpurecopy},
+    remacs_sys::{Fapply, Fdefault_value, Fload, Fpurecopy},
     remacs_sys::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
         Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation, Qvoid_function,
-        Qwrong_number_of_arguments,
     },
     remacs_sys::{Vautoload_queue, Vrun_hooks},
     symbols::{fboundp, symbol_function, LispSymbolRef},
@@ -43,16 +43,7 @@ use crate::{
 /// usage: (or CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn or(args: LispObject) -> LispObject {
-    let mut val = Qnil;
-
-    for elt in args.iter_cars_safe() {
-        val = unsafe { eval_sub(elt) };
-        if val != Qnil {
-            break;
-        }
-    }
-
-    val
+    eval_and_compare_all(args, Qnil, |a, b| a != b)
 }
 
 /// Eval args until one of them yields nil, then return nil.
@@ -61,11 +52,20 @@ pub fn or(args: LispObject) -> LispObject {
 /// usage: (and CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn and(args: LispObject) -> LispObject {
-    let mut val = Qt;
+    eval_and_compare_all(args, Qt, |a, b| a == b)
+}
 
-    for elt in args.iter_cars_safe() {
+/// Eval each item in ARGS and then compare it using CMP.
+/// INITIAL is returned if the list has no cons cells.
+fn eval_and_compare_all<CmpFunc>(args: LispObject, initial: LispObject, cmp: CmpFunc) -> LispObject
+where
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
+{
+    let mut val = initial;
+
+    for elt in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         val = unsafe { eval_sub(elt) };
-        if val == Qnil {
+        if cmp(val, Qnil) {
             break;
         }
     }
@@ -104,11 +104,10 @@ pub fn lisp_if(args: LispObject) -> LispObject {
 pub fn cond(args: LispObject) -> LispObject {
     let mut val = Qnil;
 
-    for clause in args.iter_cars_safe() {
-        let cell = clause.as_cons_or_error();
-        val = unsafe { eval_sub(cell.car()) };
+    for clause in args.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        let (head, tail) = clause.as_cons_or_error().as_tuple();
+        val = unsafe { eval_sub(head) };
         if val != Qnil {
-            let tail = cell.cdr();
             if tail.is_not_nil() {
                 val = progn(tail);
             }
@@ -123,7 +122,7 @@ pub fn cond(args: LispObject) -> LispObject {
 /// usage: (progn BODY...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn progn(body: LispObject) -> LispObject {
-    body.iter_cars_safe()
+    body.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
         .map(|form| unsafe { eval_sub(form) })
         .last()
         .into()
@@ -140,8 +139,8 @@ pub extern "C" fn prog_ignore(body: LispObject) {
 /// whose values are discarded.
 /// usage: (prog1 FIRST BODY...)
 #[lisp_fn(min = "1", unevalled = "true")]
-pub fn prog1(args: LispObject) -> LispObject {
-    let (first, body) = args.as_cons_or_error().as_tuple();
+pub fn prog1(args: LispCons) -> LispObject {
+    let (first, body) = args.as_tuple();
 
     let val = unsafe { eval_sub(first) };
     progn(body);
@@ -153,11 +152,11 @@ pub fn prog1(args: LispObject) -> LispObject {
 /// remaining args, whose values are discarded.
 /// usage: (prog2 FORM1 FORM2 BODY...)
 #[lisp_fn(min = "2", unevalled = "true")]
-pub fn prog2(args: LispObject) -> LispObject {
-    let (form1, tail) = args.as_cons_or_error().as_tuple();
+pub fn prog2(args: LispCons) -> LispObject {
+    let (form1, tail) = args.as_tuple();
 
     unsafe { eval_sub(form1) };
-    prog1(tail)
+    prog1(tail.as_cons_or_error())
 }
 
 /// Set each SYM to the value of its VAL.
@@ -172,14 +171,12 @@ pub fn prog2(args: LispObject) -> LispObject {
 pub fn setq(args: LispObject) -> LispObject {
     let mut val = args;
 
-    let mut it = args.iter_cars().enumerate();
+    let mut it = args
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
+        .enumerate();
     while let Some((nargs, sym)) = it.next() {
         let (_, arg) = it.next().unwrap_or_else(|| {
-            xsignal!(
-                Qwrong_number_of_arguments,
-                Qsetq,
-                LispObject::from(nargs + 1)
-            );
+            wrong_number_of_arguments!(Qsetq, nargs + 1);
         });
 
         val = unsafe { eval_sub(arg) };
@@ -216,7 +213,7 @@ pub fn function(args: LispObject) -> LispObject {
     let (quoted, tail) = cell.as_tuple();
 
     if tail.is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args));
+        wrong_number_of_arguments!(Qfunction, length(args));
     }
 
     if unsafe { globals.Vinternal_interpreter_environment != Qnil } {
@@ -239,18 +236,12 @@ pub fn function(args: LispObject) -> LispObject {
                         let docstring = unsafe { eval_sub(car(tail)) };
                         docstring.as_string_or_error();
                         let (a, b) = cdr.as_cons().unwrap().as_tuple();
-                        cdr = LispObject::cons(
-                            a,
-                            LispObject::cons(docstring, b.as_cons().unwrap().cdr()),
-                        );
+                        cdr = (a, (docstring, b.as_cons().unwrap().cdr())).into();
                     }
                 }
 
                 return unsafe {
-                    LispObject::cons(
-                        Qclosure,
-                        LispObject::cons(globals.Vinternal_interpreter_environment, cdr),
-                    )
+                    (Qclosure, (globals.Vinternal_interpreter_environment, cdr)).into()
                 };
             }
         }
@@ -293,8 +284,8 @@ pub fn special_variable_p(symbol: LispSymbolRef) -> bool {
 /// The optional DOCSTRING specifies the variable's documentation string.
 /// usage: (defconst SYMBOL INITVALUE [DOCSTRING])
 #[lisp_fn(min = "2", unevalled = "true")]
-pub fn defconst(args: LispObject) -> LispSymbolRef {
-    let (sym, tail) = args.as_cons_or_error().as_tuple();
+pub fn defconst(args: LispCons) -> LispSymbolRef {
+    let (sym, tail) = args.as_tuple();
 
     let mut docstring = if cdr(tail).is_not_nil() {
         if cdr(cdr(tail)).is_not_nil() {
@@ -306,7 +297,7 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
         Qnil
     };
 
-    let mut tem = unsafe { eval_sub(car(cdr(args))) };
+    let mut tem = unsafe { eval_sub(car(tail)) };
     if unsafe { globals.Vpurify_flag } != Qnil {
         tem = unsafe { Fpurecopy(tem) };
     }
@@ -365,7 +356,7 @@ pub fn letX(args: LispCons) -> LispObject {
 
     let lexenv = unsafe { globals.Vinternal_interpreter_environment };
 
-    for var in varlist.iter_cars() {
+    for var in varlist.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::off) {
         unsafe { maybe_quit() };
 
         let (var, val) = let_binding_value(var);
@@ -382,10 +373,8 @@ pub fn letX(args: LispCons) -> LispObject {
                         // Lexically bind VAR by adding it to the interpreter's binding alist.
 
                         unsafe {
-                            let newenv = LispObject::cons(
-                                LispObject::cons(var, val),
-                                globals.Vinternal_interpreter_environment,
-                            );
+                            let newenv =
+                                ((var, val), globals.Vinternal_interpreter_environment).into();
 
                             if globals.Vinternal_interpreter_environment == lexenv {
                                 // Save the old lexical environment on the specpdl stack,
@@ -426,9 +415,11 @@ pub fn lisp_let(args: LispCons) -> LispObject {
     let count = c_specpdl_index();
     let (varlist, body) = args.as_tuple();
 
+    varlist.check_list();
+
     let mut lexenv = unsafe { globals.Vinternal_interpreter_environment };
 
-    for var in varlist.iter_cars() {
+    for var in varlist.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (var, val) = let_binding_value(var);
 
         let mut dyn_bind = true;
@@ -441,7 +432,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
                     if !bound {
                         // Lexically bind VAR by adding it to the lexenv alist.
-                        lexenv = LispObject::cons(LispObject::cons(var, val), lexenv);
+                        lexenv = ((var, val), lexenv).into();
                         dyn_bind = false;
                     }
                 }
@@ -479,7 +470,7 @@ pub fn lisp_while(args: LispCons) {
     while unsafe { eval_sub(test) } != Qnil {
         unsafe { maybe_quit() };
 
-        progn(body);
+        prog_ignore(body);
     }
 }
 
@@ -522,15 +513,18 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             // SYM is not mentioned in ENVIRONMENT.
             // Look at its function definition.
             def = autoload_do_load(def, sym, Qmacro);
-            if let Some(cell) = def.as_cons() {
-                let func = cell.car();
-                if !func.eq(Qmacro) {
+            match def.as_cons() {
+                Some(cell) => {
+                    let func = cell.car();
+                    if !func.eq(Qmacro) {
+                        break;
+                    }
+                    cell.cdr()
+                }
+                None => {
+                    // Not defined or definition not suitable.
                     break;
                 }
-                cell.cdr()
-            } else {
-                // Not defined or definition not suitable.
-                break;
             }
         } else {
             let next = tem.as_cons_or_error().cdr();
@@ -584,16 +578,13 @@ pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
 /// Signal `error' with message MSG, and additional arg ARG.
 /// If ARG is not a genuine list, make it a one-element list.
 fn signal_error(msg: &str, arg: LispObject) -> ! {
-    let it = arg.iter_tails_safe();
+    let it = arg.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::safe);
     let arg = match it.last() {
         None => list!(arg),
         Some(_) => arg,
     };
 
-    xsignal!(
-        Qerror,
-        LispObject::cons(build_string(msg.as_ptr() as *const i8), arg)
-    );
+    xsignal!(Qerror, (build_string(msg.as_ptr() as *const i8), arg));
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.
@@ -690,17 +681,17 @@ pub fn autoload(
         return Qnil;
     }
 
-    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(LispObject::from(0)) {
+    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(0) {
         // `read1' in lread.c has found the docstring starting with "\
         // and assumed the docstring will be provided by Snarf-documentation, so it
         // passed us 0 instead.  But that leads to accidental sharing in purecopy's
         // hash-consing, so we use a (hopefully) unique integer instead.
-        docstring = LispObject::from(unsafe { function.as_lisp_obj().to_fixnum_unchecked() });
+        docstring = LispObject::from(unsafe { LispObject::from(function).to_fixnum_unchecked() });
     }
 
     defalias(
         function,
-        list!(Qautoload, file.as_lisp_obj(), docstring, interactive, ty),
+        list!(Qautoload, file, docstring, interactive, ty),
         Qnil,
     )
 }
@@ -725,7 +716,8 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
                 if cons.car().eq(Qautoload) {
                     // Autoloaded symbols are functions, except if they load
                     // macros or keymaps.
-                    let mut it = obj.iter_tails_safe();
+                    let mut it =
+                        cons.iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off);
                     for _ in 0..4 {
                         if it.next().is_none() {
                             break;
@@ -759,13 +751,13 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     let queue = Vautoload_queue;
     Vautoload_queue = oldqueue;
 
-    for first in queue.iter_cars_safe() {
+    for first in queue.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
-        if first.eq(LispObject::from(0)) {
+        if first.eq(0) {
             globals.Vfeatures = second;
         } else {
-            Ffset(first, second);
+            fset(first.as_symbol_or_error(), second);
         }
     }
 }
@@ -899,6 +891,65 @@ fn funcall_nil(args: &mut [LispObject]) -> LispObject {
     Qnil
 }
 
+// NB this one still documents a specific non-nil return value.  (As
+// did run-hook-with-args and run-hook-with-args-until-failure until
+// they were changed in 24.1.)
+
+/// Run HOOK with the specified arguments ARGS.
+/// HOOK should be a symbol, a hook variable.  The value of HOOK
+/// may be nil, a function, or a list of functions.  Call each
+/// function in order with arguments ARGS, stopping at the first
+/// one that returns non-nil, and return that value.  Otherwise (if
+/// all functions return nil, or if there are no functions to call),
+/// return nil.
+///
+/// Do not use `make-local-variable' to make a hook variable buffer-local.
+/// Instead, use `add-hook' and specify t for the LOCAL argument.
+/// usage: (run-hook-with-args-until-success HOOK &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn run_hook_with_args_until_success(args: &mut [LispObject]) -> LispObject {
+    run_hook_with_args_internal(args, funcall)
+}
+
+fn funcall_not(args: &mut [LispObject]) -> LispObject {
+    funcall(args).is_nil().into()
+}
+
+/// Run HOOK with the specified arguments ARGS.
+/// HOOK should be a symbol, a hook variable.  The value of HOOK may
+/// be nil, a function, or a list of functions.  Call each function in
+/// order with arguments ARGS, stopping at the first one that returns
+/// nil, and return nil.  Otherwise (if all functions return non-nil,
+/// or if there are no functions to call), return non-nil (do not rely
+/// on the precise return value in this case).
+///
+/// Do not use `make-local-variable' to make a hook variable buffer-local.
+/// Instead, use `add-hook' and specify t for the LOCAL argument.
+/// usage: (run-hook-with-args-until-failure HOOK &rest ARGS)
+#[lisp_fn(min = "1")]
+pub fn run_hook_with_args_until_failure(args: &mut [LispObject]) -> bool {
+    run_hook_with_args_internal(args, funcall_not).is_nil()
+}
+
+fn run_hook_wrapped_funcall(args: &mut [LispObject]) -> LispObject {
+    args.swap(0, 1);
+    let ret = funcall(args);
+    args.swap(0, 1);
+    ret
+}
+
+/// Run HOOK, passing each function through WRAP-FUNCTION.
+/// I.e. instead of calling each function FUN directly with arguments
+/// ARGS, it calls WRAP-FUNCTION with arguments FUN and ARGS.
+///
+/// As soon as a call to WRAP-FUNCTION returns non-nil,
+/// `run-hook-wrapped' aborts and returns that value.
+/// usage: (run-hook-wrapped HOOK WRAP-FUNCTION &rest ARGS)
+#[lisp_fn(min = "2")]
+pub fn run_hook_wrapped(args: &mut [LispObject]) -> LispObject {
+    run_hook_with_args_internal(args, run_hook_wrapped_funcall)
+}
+
 /// Run the hook HOOK, giving each function no args.
 #[no_mangle]
 pub extern "C" fn run_hook(hook: LispObject) {
@@ -929,7 +980,7 @@ fn run_hook_with_args_internal(
         args[0] = val;
         func(args)
     } else {
-        for item in val.iter_cars_safe() {
+        for item in val.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
             if ret.is_not_nil() {
                 break;
             }
@@ -946,7 +997,9 @@ fn run_hook_with_args_internal(
                     args[0] = global_vals;
                     ret = func(args);
                 } else {
-                    for gval in global_vals.iter_cars_safe() {
+                    for gval in
+                        global_vals.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
+                    {
                         if ret.is_not_nil() {
                             break;
                         }
@@ -1139,6 +1192,37 @@ pub extern "C" fn unbind_to(count: libc::ptrdiff_t, value: LispObject) -> LispOb
     }
 
     value
+}
+
+/// Do BODYFORM, protecting with UNWINDFORMS.
+/// If BODYFORM completes normally, its value is returned
+/// after executing the UNWINDFORMS.
+/// If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
+/// usage: (unwind-protect BODYFORM UNWINDFORMS...)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn unwind_protect(args: LispCons) -> LispObject {
+    let (bodyform, unwindforms) = args.as_tuple();
+    let count = c_specpdl_index();
+
+    unsafe { record_unwind_protect(Some(prog_ignore), unwindforms) };
+
+    unbind_to(count, unsafe { eval_sub(bodyform) })
+}
+
+/// Eval BODY allowing nonlocal exits using `throw'.
+/// TAG is evalled to get the tag to use; it must not be nil.
+/// Then the BODY is executed.
+/// Within BODY, a call to `throw' with the same TAG exits BODY and this `catch'.
+/// If no throw happens, `catch' returns the value of the last BODY form.
+/// If a throw happens, it specifies the value to return from `catch'.
+/// usage: (catch TAG BODY...)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn catch(args: LispCons) -> LispObject {
+    let (tag, body) = args.as_tuple();
+
+    let val = unsafe { eval_sub(tag) };
+
+    unsafe { internal_catch(val, Some(Fprogn), body) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

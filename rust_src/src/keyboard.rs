@@ -3,18 +3,25 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    frames::window_frame_live_or_selected_with_action,
+    buffers::current_buffer,
+    eval::unbind_to,
+    frames::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::defsubr,
     lisp::LispObject,
-    lists::LispCons,
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     numbers::IsLispNatnum,
-    remacs_sys::{command_loop_level, glyph_row_area, minibuf_level},
-    remacs_sys::{make_lispy_position, window_box_left_offset},
-    remacs_sys::{Fpos_visible_in_window_p, Fthrow},
     remacs_sys::{
-        Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Quser_error, Qvertical_line,
+        command_loop_level, glyph_row_area, interrupt_input_blocked, minibuf_level,
+        recursive_edit_1, recursive_edit_unwind, update_mode_lines,
     },
-    windows::LispWindowOrSelected,
+    remacs_sys::{
+        make_lispy_position, record_unwind_protect, temporarily_switch_to_single_kboard,
+        window_box_left_offset,
+    },
+    remacs_sys::{Fpos_visible_in_window_p, Fthrow},
+    remacs_sys::{Qexit, Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line},
+    threads::c_specpdl_index,
+    windows::{selected_window, LispWindowOrSelected},
 };
 
 /// Return position information for buffer position POS in WINDOW.
@@ -36,34 +43,23 @@ pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObjec
         return Qnil;
     }
 
-    let mut it = tem.iter_cars();
-    let x = it.next().unwrap_or_else(|| LispObject::from(0));
-    let y = it.next().unwrap_or_else(|| LispObject::from(0));
-
-    let mut y_coord = y.as_fixnum_or_error();
-    let x_coord = x.as_fixnum_or_error();
+    let mut it = tem.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
+    let x = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
+    let mut y = it.next().map_or(0, |coord| coord.as_fixnum_or_error());
 
     // Point invisible due to hscrolling?  X can be -1 when a
     // newline in a R2L line overflows into the left fringe.
-    if x_coord < -1 {
+    if x < -1 {
         return Qnil;
     }
     let aux_info = it.rest();
-    if aux_info.is_not_nil() && y_coord < 0 {
-        let rtop = it
-            .next()
-            .unwrap_or_else(|| LispObject::from(0))
-            .as_fixnum_or_error();
+    if aux_info.is_not_nil() && y < 0 {
+        let rtop = it.next().map_or(0, |v| v.as_fixnum_or_error());
 
-        y_coord += rtop;
+        y += rtop;
     }
 
-    posn_at_x_y(
-        LispObject::from(x_coord),
-        LispObject::from(y_coord),
-        window,
-        Qnil,
-    )
+    posn_at_x_y(x.into(), y.into(), window, Qnil)
 }
 
 /// Return position information for pixel coordinates X and Y.
@@ -117,7 +113,7 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
             return false;
         }
 
-        let mut it = event.as_obj().iter_cars_safe();
+        let mut it = event.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
 
         if !it.all(|elt| elt.is_fixnum() || elt.is_symbol()) {
             return false;
@@ -133,14 +129,7 @@ pub fn quit_recursive_edit(val: bool) -> ! {
             Fthrow(Qexit, LispObject::from_bool(val));
         }
 
-        let msg = "No recursive edit is in progress";
-        xsignal!(
-            Quser_error,
-            crate::remacs_sys::make_string(
-                msg.as_ptr() as *const ::libc::c_char,
-                msg.len() as ::libc::ptrdiff_t,
-            )
-        );
+        user_error!("No recursive edit is in progress");
     }
 }
 
@@ -154,6 +143,52 @@ pub fn exit_recursive_edit() -> ! {
 #[lisp_fn(intspec = "")]
 pub fn abort_recursive_edit() -> ! {
     quit_recursive_edit(true);
+}
+
+/// Invoke the editor command loop recursively.
+/// To get out of the recursive edit, a command can throw to `exit' -- for
+/// instance (throw \\='exit nil).
+/// If you throw a value other than t, `recursive-edit' returns normally
+/// to the function that called it.  Throwing a t value causes
+/// `recursive-edit' to quit, so that control returns to the command loop
+/// one level up.
+///
+/// This function is called by the editor initialization to begin editing.
+#[lisp_fn(intspec = "")]
+pub fn recursive_edit() {
+    let count = c_specpdl_index();
+
+    // If we enter while input is blocked, don't lock up here.
+    // This may happen through the debugger during redisplay.
+    if unsafe { interrupt_input_blocked } > 0 {
+        return;
+    }
+
+    let buf = if unsafe { command_loop_level >= 0 }
+        && selected_window()
+            .as_window()
+            .map_or(true, |w| !w.contents.eq(current_buffer()))
+    {
+        current_buffer()
+    } else {
+        Qnil
+    };
+
+    // Don't do anything interesting between the increment and the
+    // record_unwind_protect!  Otherwise, we could get distracted and
+    // never decrement the counter again.
+    unsafe {
+        command_loop_level += 1;
+        update_mode_lines = 17;
+        record_unwind_protect(Some(recursive_edit_unwind), buf);
+
+        if command_loop_level > 0 {
+            temporarily_switch_to_single_kboard(selected_frame().as_mut());
+        }
+
+        recursive_edit_1();
+        unbind_to(count, Qnil);
+    }
 }
 
 #[no_mangle]

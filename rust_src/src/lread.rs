@@ -144,12 +144,13 @@ pub unsafe fn defvar_per_buffer_offset(
     sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(bo_fwd as *mut Lisp_Fwd);
     let local = offset.apply_mut(&mut remacs_sys::buffer_local_symbols);
-    *local = sym.as_lisp_obj();
+    *local = LispObject::from(sym);
     let flags = offset.apply(&remacs_sys::buffer_local_flags);
     if flags.is_nil() {
-        // Did a DEFVAR_PER_BUFFER without initializing the corresponding
-        // slot of buffer_local_flags.
-        remacs_sys::emacs_abort();
+        panic!(
+            "Did a DEFVAR_PER_BUFFER without initializing
+             the corresponding slot of buffer_local_flags."
+        );
     }
 }
 
@@ -223,7 +224,7 @@ pub fn eval_region(
         specbind(Qstandard_output, tem);
         specbind(
             Qeval_buffer_list,
-            LispObject::cons(cur_buf_obj, globals.Veval_buffer_list),
+            (cur_buf_obj, globals.Veval_buffer_list).into(),
         );
 
         // `readevalloop' calls functions which check the type of start and end.

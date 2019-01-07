@@ -6,6 +6,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::LispObject,
+    multibyte::LispStringRef,
     remacs_sys::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
@@ -19,11 +20,19 @@ use crate::{
 #[repr(transparent)]
 pub struct LispObarrayRef(LispObject);
 
-impl LispObarrayRef {
-    pub fn as_lisp_obj(&self) -> LispObject {
-        self.0
+impl From<LispObarrayRef> for LispObject {
+    fn from(o: LispObarrayRef) -> LispObject {
+        o.0
     }
+}
 
+impl From<&LispObarrayRef> for LispObject {
+    fn from(o: &LispObarrayRef) -> LispObject {
+        o.0
+    }
+}
+
+impl LispObarrayRef {
     pub fn new(obj: LispObject) -> LispObarrayRef {
         LispObarrayRef(obj)
     }
@@ -38,7 +47,7 @@ impl LispObarrayRef {
     /// symbol would be if it were present.
     pub fn lookup(&self, name: LispObject) -> LispObject {
         let string = name.symbol_or_string_as_string();
-        let obj = self.as_lisp_obj();
+        let obj = LispObject::from(self);
         unsafe {
             oblookup(
                 obj,
@@ -53,9 +62,10 @@ impl LispObarrayRef {
     /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
     /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol
     /// name will be transferred to pure storage.
-    pub fn intern(&self, string: LispObject) -> LispObject {
+    pub fn intern(&self, string: LispStringRef) -> LispObject {
+        let string = string.into();
         let tem = self.lookup(string);
-        let obj = self.as_lisp_obj();
+        let obj = LispObject::from(self);
         if tem.is_symbol() {
             tem
         } else if unsafe { globals.Vpurify_flag }.is_not_nil() {
@@ -105,7 +115,7 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispSymbolRef {
 pub extern "C" fn loadhist_attach(x: LispObject) {
     unsafe {
         if initialized {
-            globals.Vcurrent_load_list = LispObject::cons(x, globals.Vcurrent_load_list);
+            globals.Vcurrent_load_list = (x, globals.Vcurrent_load_list).into();
         }
     }
 }
@@ -144,7 +154,7 @@ pub extern "C" fn map_obarray(
     for item in v.iter().rev() {
         if let Some(sym) = item.as_symbol() {
             for s in sym.iter() {
-                func(s.as_lisp_obj(), arg);
+                func(s.into(), arg);
             }
         }
     }
@@ -154,7 +164,7 @@ pub extern "C" fn map_obarray(
 /// current obarray.
 #[no_mangle]
 pub unsafe extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
-    let obarray = LispObarrayRef::global().as_lisp_obj();
+    let obarray = LispObject::from(LispObarrayRef::global());
     let tem = oblookup(obarray, s, len, len);
 
     if tem.is_symbol() {
@@ -173,7 +183,7 @@ pub unsafe extern "C" fn intern_c_string_1(
     s: *const libc::c_char,
     len: libc::ptrdiff_t,
 ) -> LispObject {
-    let obarray = LispObarrayRef::global().as_lisp_obj();
+    let obarray = LispObject::from(LispObarrayRef::global());
     let tem = oblookup(obarray, s, len, len);
 
     if tem.is_symbol() {
@@ -218,12 +228,8 @@ pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObj
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(name = "intern", c_name = "intern", min = "1")]
-pub fn lisp_intern(string: LispObject, obarray: LispObject) -> LispObject {
-    let obarray_ref = if obarray.is_nil() {
-        LispObarrayRef::global()
-    } else {
-        obarray.as_obarray_or_error()
-    };
+pub fn lisp_intern(string: LispStringRef, obarray: Option<LispObarrayRef>) -> LispObject {
+    let obarray_ref = obarray.unwrap_or_else(LispObarrayRef::global);
 
     obarray_ref.intern(string)
 }
@@ -238,7 +244,7 @@ extern "C" fn mapatoms_1(sym: LispObject, function: LispObject) {
 pub fn mapatoms(function: LispObject, obarray: Option<LispObarrayRef>) {
     let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
 
-    map_obarray(obarray.as_lisp_obj(), mapatoms_1, function);
+    map_obarray(obarray.into(), mapatoms_1, function);
 }
 
 include!(concat!(env!("OUT_DIR"), "/obarray_exports.rs"));

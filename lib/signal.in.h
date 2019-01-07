@@ -137,7 +137,7 @@ _GL_FUNCDECL_RPL (pthread_sigmask, int,
 _GL_CXXALIAS_RPL (pthread_sigmask, int,
                   (int how, const sigset_t *new_mask, sigset_t *old_mask));
 # else
-#  if !@HAVE_PTHREAD_SIGMASK@
+#  if !(@HAVE_PTHREAD_SIGMASK@ || defined pthread_sigmask)
 _GL_FUNCDECL_SYS (pthread_sigmask, int,
                   (int how, const sigset_t *new_mask, sigset_t *old_mask));
 #  endif

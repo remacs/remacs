@@ -5081,6 +5081,11 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
 #ifdef HAVE_WINDOW_SYSTEM
   if (it.what == IT_IMAGE)
     {
+      /* Note that this ignores images that are fringe bitmaps,
+	 because their image ID is zero, and so IMAGE_OPT_FROM_ID will
+	 return NULL.  This is okay, since fringe bitmaps are not
+	 displayed in the text area, and so are never the object we
+	 are interested in.  */
       img = IMAGE_OPT_FROM_ID (it.f, it.image_id);
       if (img && !NILP (img->spec))
 	*object = img->spec;
@@ -5514,43 +5519,6 @@ when TERMINAL is nil.  */)
   unblock_input ();
   return Qnil;
 }
-
-
-DEFUN ("ding", Fding, Sding, 0, 1, 0,
-       doc: /* Beep, or flash the screen.
-Also, unless an argument is given,
-terminate any keyboard macro currently executing.  */)
-  (Lisp_Object arg)
-{
-  if (!NILP (arg))
-    {
-      if (noninteractive)
-	putchar_unlocked (07);
-      else
-	ring_bell (XFRAME (selected_frame));
-    }
-  else
-    bitch_at_user ();
-
-  return Qnil;
-}
-
-void
-bitch_at_user (void)
-{
-  if (noninteractive)
-    putchar_unlocked (07);
-  else if (!INTERACTIVE)  /* Stop executing a keyboard macro.  */
-    {
-      const char *msg
-	= "Keyboard macro terminated by a command ringing the bell";
-      Fsignal (Quser_error, list1 (build_string (msg)));
-    }
-  else
-    ring_bell (XFRAME (selected_frame));
-}
-
-
 
 /***********************************************************************
 			  Sleeping, Waiting
@@ -5619,35 +5587,6 @@ sit_for (Lisp_Object timeout, bool reading, int display_option)
 
   return detect_input_pending () ? Qnil : Qt;
 }
-
-
-DEFUN ("redisplay", Fredisplay, Sredisplay, 0, 1, 0,
-       doc: /* Perform redisplay.
-Optional arg FORCE, if non-nil, prevents redisplay from being
-preempted by arriving input, even if `redisplay-dont-pause' is nil.
-If `redisplay-dont-pause' is non-nil (the default), redisplay is never
-preempted by arriving input, so FORCE does nothing.
-
-Return t if redisplay was performed, nil if redisplay was preempted
-immediately by pending input.  */)
-  (Lisp_Object force)
-{
-  ptrdiff_t count;
-
-  swallow_events (true);
-  if ((detect_input_pending_run_timers (1)
-       && NILP (force) && !redisplay_dont_pause)
-      || !NILP (Vexecuting_kbd_macro))
-    return Qnil;
-
-  count = SPECPDL_INDEX ();
-  if (!NILP (force) && !redisplay_dont_pause)
-    specbind (Qredisplay_dont_pause, Qt);
-  redisplay_preserve_echo_area (2);
-  unbind_to (count, Qnil);
-  return Qt;
-}
-
 
 
 /***********************************************************************
@@ -5994,8 +5933,6 @@ syms_of_display (void)
 {
   defsubr (&Sframe_or_buffer_changed_p);
   defsubr (&Sopen_termscript);
-  defsubr (&Sding);
-  defsubr (&Sredisplay);
   defsubr (&Ssend_string_to_terminal);
 
 #ifdef GLYPH_DEBUG

@@ -13,14 +13,14 @@ use std::slice;
 use crate::{
     buffers::LispBufferRef,
     eval::FUNCTIONP,
-    lists::{list, CarIter},
-    remacs_sys,
+    lists::{list, CarIter, LispConsCircularChecks, LispConsEndChecks},
+    process::LispProcessRef,
     remacs_sys::{build_string, internal_equal, make_float},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
     remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
-    remacs_sys::{Qautoload, Qlistp, Qnil, Qsubrp, Qt, Vbuffer_alist},
+    remacs_sys::{Qautoload, Qnil, Qsubrp, Qt, Vbuffer_alist, Vprocess_alist},
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -47,11 +47,11 @@ use crate::{
 pub struct LispObject(pub EmacsInt);
 
 impl LispObject {
-    pub fn from_C(n: EmacsInt) -> LispObject {
+    pub fn from_C(n: EmacsInt) -> Self {
         LispObject(n)
     }
 
-    pub fn from_C_unsigned(n: EmacsUint) -> LispObject {
+    pub fn from_C_unsigned(n: EmacsUint) -> Self {
         Self::from_C(n as EmacsInt)
     }
 
@@ -63,7 +63,7 @@ impl LispObject {
         self.0 as EmacsUint
     }
 
-    pub fn from_bool(v: bool) -> LispObject {
+    pub fn from_bool(v: bool) -> Self {
         if v {
             Qt
         } else {
@@ -71,7 +71,7 @@ impl LispObject {
         }
     }
 
-    pub fn from_float(v: EmacsDouble) -> LispObject {
+    pub fn from_float(v: EmacsDouble) -> Self {
         unsafe { make_float(v) }
     }
 }
@@ -104,7 +104,7 @@ impl<T> Clone for ExternalPtr<T> {
 }
 
 impl<T> ExternalPtr<T> {
-    pub fn new(p: *mut T) -> ExternalPtr<T> {
+    pub fn new(p: *mut T) -> Self {
         ExternalPtr(p)
     }
 
@@ -139,7 +139,7 @@ impl<T> DerefMut for ExternalPtr<T> {
 }
 
 impl<T> PartialEq for ExternalPtr<T> {
-    fn eq(&self, other: &ExternalPtr<T>) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.as_ptr() == other.as_ptr()
     }
 }
@@ -158,6 +158,24 @@ impl LispMiscRef {
     pub fn get_type(self) -> Lisp_Misc_Type {
         self.type_()
     }
+
+    pub fn equal(
+        self,
+        other: LispMiscRef,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: LispObject,
+    ) -> bool {
+        if self.get_type() != other.get_type() {
+            false
+        } else if let (Some(ov1), Some(ov2)) = (self.as_overlay(), other.as_overlay()) {
+            ov1.equal(ov2, kind, depth, ht)
+        } else if let (Some(marker1), Some(marker2)) = (self.as_marker(), other.as_marker()) {
+            marker1.equal(marker2, kind, depth, ht)
+        } else {
+            false
+        }
+    }
 }
 
 impl LispObject {
@@ -174,7 +192,7 @@ impl LispObject {
     }
 
     unsafe fn to_misc_unchecked(self) -> LispMiscRef {
-        LispMiscRef::new(self.get_untaggedptr() as *mut remacs_sys::Lisp_Misc_Any)
+        LispMiscRef::new(self.get_untaggedptr() as *mut Lisp_Misc_Any)
     }
 }
 
@@ -237,6 +255,19 @@ impl From<()> for LispObject {
 impl From<Vec<LispObject>> for LispObject {
     fn from(v: Vec<LispObject>) -> Self {
         list(&v)
+    }
+}
+
+impl<T> From<Vec<T>> for LispObject
+where
+    LispObject: From<T>,
+{
+    default fn from(v: Vec<T>) -> LispObject {
+        list(
+            &v.into_iter()
+                .map(LispObject::from)
+                .collect::<Vec<LispObject>>(),
+        )
     }
 }
 
@@ -450,15 +481,11 @@ impl LispObject {
 /// `$data` should be an `alist` and `$iter_item` type should implement `From<LispObject>`
 macro_rules! impl_alistval_iter {
     ($iter_name:ident, $iter_item:ty, $data: expr) => {
-        pub struct $iter_name {
-            tails: CarIter,
-        }
+        pub struct $iter_name(CarIter);
 
         impl $iter_name {
             pub fn new() -> Self {
-                Self {
-                    tails: CarIter::new($data, Some(Qlistp)),
-                }
+                $iter_name($data.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on))
             }
         }
 
@@ -466,7 +493,7 @@ macro_rules! impl_alistval_iter {
             type Item = $iter_item;
 
             fn next(&mut self) -> Option<Self::Item> {
-                self.tails
+                self.0
                     .next()
                     .and_then(|o| o.as_cons())
                     .map(|p| p.cdr())
@@ -477,6 +504,7 @@ macro_rules! impl_alistval_iter {
 }
 
 impl_alistval_iter! {LiveBufferIter, LispBufferRef, unsafe { Vbuffer_alist }}
+impl_alistval_iter! {ProcessIter, LispProcessRef, unsafe { Vprocess_alist }}
 
 pub fn is_autoload(function: LispObject) -> bool {
     function
@@ -499,11 +527,17 @@ impl LispObject {
 
     // The three Emacs Lisp comparison functions.
 
-    pub fn eq(self, other: LispObject) -> bool {
-        self == other
+    pub fn eq<T>(self, other: T) -> bool
+    where
+        LispObject: From<T>,
+    {
+        self == LispObject::from(other)
     }
 
-    pub fn eql(self, other: LispObject) -> bool {
+    pub fn eql<T>(self, other: T) -> bool
+    where
+        LispObject: From<T>,
+    {
         if self.is_float() {
             self.equal_no_quit(other)
         } else {
@@ -511,12 +545,18 @@ impl LispObject {
         }
     }
 
-    pub fn equal(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, equal_kind::EQUAL_PLAIN, 0, Qnil) }
+    pub fn equal<T>(self, other: T) -> bool
+    where
+        LispObject: From<T>,
+    {
+        unsafe { internal_equal(self, other.into(), equal_kind::EQUAL_PLAIN, 0, Qnil) }
     }
 
-    pub fn equal_no_quit(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
+    pub fn equal_no_quit<T>(self, other: T) -> bool
+    where
+        LispObject: From<T>,
+    {
+        unsafe { internal_equal(self, other.into(), equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
     }
 
     pub fn is_function(self) -> bool {

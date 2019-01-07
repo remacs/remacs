@@ -127,7 +127,7 @@ static Lisp_Object QSFundamental;	/* A string "Fundamental".  */
 
 static void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
-static struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
+extern struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -473,40 +473,6 @@ even if it is dead.  The return value is never nil.  */)
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 
   return buffer;
-}
-
-
-/* Return a list of overlays which is a copy of the overlay list
-   LIST, but for buffer B.  */
-
-static struct Lisp_Overlay *
-copy_overlays (struct buffer *b, struct Lisp_Overlay *list)
-{
-  struct Lisp_Overlay *result = NULL, *tail = NULL;
-
-  for (; list; list = list->next)
-    {
-      Lisp_Object overlay, start, end;
-      struct Lisp_Marker *m;
-
-      eassert (MARKERP (list->start));
-      m = XMARKER (list->start);
-      start = build_marker (b, m->charpos, m->bytepos);
-      XMARKER (start)->insertion_type = m->insertion_type;
-
-      eassert (MARKERP (list->end));
-      m = XMARKER (list->end);
-      end = build_marker (b, m->charpos, m->bytepos);
-      XMARKER (end)->insertion_type = m->insertion_type;
-
-      overlay = build_overlay (start, end, Fcopy_sequence (list->plist));
-      if (tail)
-	tail = tail->next = XOVERLAY (overlay);
-      else
-	result = tail = XOVERLAY (overlay);
-    }
-
-  return result;
 }
 
 /* Set an appropriate overlay of B.  */
@@ -875,60 +841,6 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
 	   && (permanent_too
 	       || buffer_permanent_local_flags[idx] == 0)))
 	set_per_buffer_value (b, offset, per_buffer_default (offset));
-    }
-}
-
-/* We split this away from generate-new-buffer, because rename-buffer
-   and set-visited-file-name ought to be able to use this to really
-   rename the buffer properly.  */
-
-DEFUN ("generate-new-buffer-name", Fgenerate_new_buffer_name,
-       Sgenerate_new_buffer_name, 1, 2, 0,
-       doc: /* Return a string that is the name of no existing buffer based on NAME.
-If there is no live buffer named NAME, then return NAME.
-Otherwise modify name by appending `<NUMBER>', incrementing NUMBER
-\(starting at 2) until an unused name is found, and then return that name.
-Optional second argument IGNORE specifies a name that is okay to use (if
-it is in the sequence to be tried) even if a buffer with that name exists.
-
-If NAME begins with a space (i.e., a buffer that is not normally
-visible to users), then if buffer NAME already exists a random number
-is first appended to NAME, to speed up finding a non-existent buffer.  */)
-  (Lisp_Object name, Lisp_Object ignore)
-{
-  Lisp_Object genbase;
-
-  CHECK_STRING (name);
-
-  if ((!NILP (ignore) && !NILP (Fstring_equal (name, ignore)))
-      || NILP (Fget_buffer (name)))
-    return name;
-
-  if (SREF (name, 0) != ' ') /* See bug#1229.  */
-    genbase = name;
-  else
-    {
-      char number[sizeof "-999999"];
-
-      /* Use XINT instead of XFASTINT to work around GCC bug 80776.  */
-      int i = XINT (Frandom (make_number (1000000)));
-      eassume (0 <= i && i < 1000000);
-
-      AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
-      genbase = concat2 (name, lnumber);
-      if (NILP (Fget_buffer (genbase)))
-	return genbase;
-    }
-
-  for (ptrdiff_t count = 2; ; count++)
-    {
-      char number[INT_BUFSIZE_BOUND (ptrdiff_t) + sizeof "<>"];
-      AUTO_STRING_WITH_LEN (lnumber, number,
-			    sprintf (number, "<%"pD"d>", count));
-      Lisp_Object gentemp = concat2 (genbase, lnumber);
-      if (!NILP (Fstring_equal (gentemp, ignore))
-	  || NILP (Fget_buffer (gentemp)))
-	return gentemp;
     }
 }
 
@@ -5790,7 +5702,6 @@ Functions running this hook are, `get-buffer-create',
 
   defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);
-  defsubr (&Sgenerate_new_buffer_name);
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sset_buffer_modified_p);
   defsubr (&Srename_buffer);

@@ -41,8 +41,8 @@ use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::Qstringp,
-    remacs_sys::{char_bits, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
-    remacs_sys::{emacs_abort, empty_unibyte_string},
+    remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
+    remacs_sys::{compare_string_intervals, empty_unibyte_string, lisp_string_width},
 };
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
@@ -66,10 +66,6 @@ pub const MAX_MULTIBYTE_LENGTH: usize = 5;
 // String support (LispType == 4)
 
 impl LispStringRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_String)
-    }
-
     /// Return the string's len in bytes.
     pub fn len_bytes(self) -> ptrdiff_t {
         let s = unsafe { self.u.s };
@@ -85,6 +81,17 @@ impl LispStringRef {
     pub fn len_chars(self) -> ptrdiff_t {
         let s = unsafe { self.u.s };
         s.size
+    }
+
+    /// Return width of STRING when displayed in the current buffer. Width is
+    /// measured by how many columns it occupies on the screen. When calculating
+    /// width of a multibyte character in STRING, only the base leading-code is
+    /// considered; the validity of the following bytes is not checked.  Tabs in
+    /// STRING are always taken to occupy `tab-width' columns.
+    pub fn width(self) -> usize {
+        unsafe {
+            lisp_string_width(LispObject::from(self), -1, ptr::null_mut(), ptr::null_mut()) as usize
+        }
     }
 
     pub fn is_multibyte(self) -> bool {
@@ -166,6 +173,20 @@ impl LispStringRef {
     pub fn set_byte(&mut self, idx: ptrdiff_t, elt: c_uchar) {
         unsafe { ptr::write(self.data_ptr().offset(idx), elt) };
     }
+
+    pub fn equal(
+        self,
+        other: LispStringRef,
+        kind: equal_kind::Type,
+        _depth: i32,
+        _ht: LispObject,
+    ) -> bool {
+        self.len_chars() == other.len_chars()
+            && self.len_bytes() == other.len_bytes()
+            && self.as_slice() == other.as_slice()
+            && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
+                || unsafe { compare_string_intervals(self.into(), other.into()) })
+    }
 }
 
 impl fmt::Display for LispStringRef {
@@ -244,7 +265,7 @@ impl From<LispObject> for LispStringRef {
 
 impl From<LispStringRef> for LispObject {
     fn from(s: LispStringRef) -> Self {
-        s.as_lisp_obj()
+        LispObject::tag_ptr(s, Lisp_Type::Lisp_String)
     }
 }
 
@@ -576,7 +597,7 @@ pub unsafe extern "C" fn multibyte_chars_in_text(
     let mut chars = 0;
     // TODO: make this an iterator?
     while idx < len {
-        idx += multibyte_length(&slice[idx..], true).unwrap_or_else(|| emacs_abort());
+        idx += multibyte_length(&slice[idx..], true).unwrap_or_else(|| panic!());
         chars += 1;
     }
     chars as ptrdiff_t

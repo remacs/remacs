@@ -1492,7 +1492,7 @@ If you set this on a terminal which can't distinguish Meta keys from
 8-bit characters, you will have to use ESC to type Meta characters.
 See Info node `Terminal Coding' and Info node `Unibyte Mode'.
 
-On non-windowing terminals, this is set from the locale by default.
+This is set at startup based on the locale.
 
 Setting this variable directly does not take effect;
 use either \\[customize] or \\[set-keyboard-coding-system]."
@@ -1514,6 +1514,7 @@ DECODING is the coding system to be used to decode input from the process,
 ENCODING is the coding system to be used to encode output to the process.
 
 For a list of possible coding systems, use \\[list-coding-systems]."
+  (declare (interactive-only set-process-coding-system))
   (interactive
    "zCoding-system for output from the process: \nzCoding-system for input to the process: ")
   (let ((proc (get-buffer-process (current-buffer))))

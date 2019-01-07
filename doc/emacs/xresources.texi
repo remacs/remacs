@@ -216,6 +216,14 @@ Width of the internal frame border, in pixels.
 @cindex line spacing
 Additional space between lines, in pixels.
 
+@ifnottex
+@item @code{menuBackground} (class @code{Background})
+@cindex background for menus
+The background color of the menus in non-toolkit versions of Emacs.
+(For toolkit versions, see @ref{Lucid Resources}, also see @ref{Motif
+Resources}, and see @ref{GTK resources}.)
+@end ifnottex
+
 @item @code{menuBar} (class @code{MenuBar})
 @cindex menu bar (X resource)
 If the value of this resource is @samp{off} or @samp{false} or
@@ -229,6 +237,14 @@ will use a separate minibuffer frame instead.
 @item @code{paneFont} (class @code{Font})
 @cindex font for menus
 Font name for menu pane titles, in non-toolkit versions of Emacs.
+(For toolkit versions, see @ref{Lucid Resources}, also see @ref{Motif
+Resources}, and see @ref{GTK resources}.)
+
+@item @code{paneForeground} (class @code{Foreground})
+@cindex foreground for menus
+Foreground color for menu pane titles, in non-toolkit versions of
+Emacs.  (For toolkit versions, see @ref{Lucid Resources}, also see
+@ref{Motif Resources}, and see @ref{GTK resources}.)
 @end ifnottex
 
 @item @code{pointerColor} (class @code{Foreground})
@@ -266,7 +282,12 @@ compiled with GTK+ support.
 @item @code{selectionFont} (class @code{SelectionFont})
 Font name for pop-up menu items, in non-toolkit versions of Emacs.  (For
 toolkit versions, see @ref{Lucid Resources}, also see @ref{Motif
-Resources}.)
+Resources}, and see @ref{GTK resources}.)
+
+@item @code{selectionForeground} (class @code{SelectionForeground})
+Foreground color for pop-up menu items, in non-toolkit versions of
+Emacs.  (For toolkit versions, see @ref{Lucid Resources}, also see
+@ref{Motif Resources}, and see @ref{GTK resources}.)
 
 @item @code{selectionTimeout} (class @code{SelectionTimeout})
 Number of milliseconds to wait for a selection reply.
@@ -512,7 +533,7 @@ those are governed by normal X resources (@pxref{Resources}).
 
   The following sections describe how to customize GTK+ resources for
 Emacs.  For details about GTK+ resources, see the GTK+ API document at
-@uref{http://developer.gnome.org/gtk2/stable/gtk2-Resource-Files.html}.
+@uref{https://developer.gnome.org/gtk2/stable/gtk2-Resource-Files.html}.
 
   In GTK+ version 3, GTK+ resources have been replaced by a completely
 different system.  The appearance of GTK+ widgets is now determined by
@@ -522,7 +543,7 @@ style settings (where @var{theme} is the name of the current GTK+
 theme).  Therefore, the description of GTK+ resources in this section
 does not apply to GTK+ 3.  For details about the GTK+ 3 styling
 system, see
-@uref{http://developer.gnome.org/gtk3/3.0/GtkCssProvider.html}.
+@uref{https://developer.gnome.org/gtk3/3.0/GtkCssProvider.html}.
 
 @menu
 * GTK Resource Basics::   Basic usage of GTK+ resources.
@@ -764,7 +785,7 @@ This is the state for data that has been selected by the user.  It can
 be selected text or items selected in a list.  This state is not used
 in Emacs.
 @item INSENSITIVE
-This is the state for widgets that are visible, but they can not be
+This is the state for widgets that are visible, but they cannot be
 manipulated in the usual way---for example, buttons that can't be
 pressed, and disabled menu items.  To display disabled menu items in
 yellow, use @code{fg[INSENSITIVE] = "yellow"}.

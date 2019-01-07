@@ -28,12 +28,12 @@ use crate::{
     lisp::LispObject,
 };
 
-include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
+include!("../generated/definitions.rs");
 
 type Lisp_Object = LispObject;
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-include!(concat!(env!("OUT_DIR"), "/globals.rs"));
+include!("../generated/bindings.rs");
+include!("../generated/globals.rs");
 
 pub const VAL_MAX: EmacsInt = (EMACS_INT_MAX >> (GCTYPEBITS - 1));
 pub const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
@@ -48,10 +48,8 @@ extern "C" {
     // number of arguments.
     // TODO: define a Rust version of this that uses Rust strings.
     pub fn error(m: *const u8, ...) -> !;
-    pub fn emacs_abort() -> !;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn memory_full(nbytes: libc::size_t) -> !;
-    pub fn bitch_at_user() -> !;
     pub fn wrong_choice(choice: LispObject, wrong: LispObject) -> !;
     pub fn wrong_range(min: LispObject, max: LispObject, wrong: LispObject) -> !;
 }
@@ -107,6 +105,7 @@ extern "C" {
     pub fn allocate_misc(t: Lisp_Misc_Type) -> LispObject;
     #[cfg(windows)]
     pub fn file_attributes_c(filename: LispObject, id_format: LispObject) -> LispObject;
+    pub fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int;
     #[cfg(unix)]
     pub fn file_attributes_c_internal(
         name: *const c_char,

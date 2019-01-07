@@ -252,7 +252,7 @@ Lisp_Object Vframe_list;
 /* Placeholder used by temacs -nw before window.el is loaded.  */
 DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
        Sframe_windows_min_size, 4, 4, 0,
-       doc: /* */
+       doc: /* SKIP: real doc in window.el.  */
        attributes: const)
      (Lisp_Object frame, Lisp_Object horizontal,
       Lisp_Object ignore, Lisp_Object pixelwise)
@@ -277,7 +277,9 @@ DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
  * of `window-min-height' (`window-min-width' if HORIZONTAL is non-nil).
  * With IGNORE non-nil the values of these variables are ignored.
  *
- * In either case, never return a value less than 1.
+ * In either case, never return a value less than 1.  For TTY frames,
+ * additionally limit the minimum frame height to a value large enough
+ * to support the menu bar, the mode line, and the echo area.
  */
 static int
 frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
@@ -285,6 +287,7 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
 {
   struct frame *f = XFRAME (frame);
   Lisp_Object par_size;
+  int retval;
 
   if ((!NILP (horizontal)
        && NUMBERP (par_size = get_frame_param (f, Qmin_width)))
@@ -297,15 +300,27 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
       if (min_size < 1)
 	min_size = 1;
 
-      return (NILP (pixelwise)
-	      ? min_size
-	      : min_size * (NILP (horizontal)
-			    ? FRAME_LINE_HEIGHT (f)
-			    : FRAME_COLUMN_WIDTH (f)));
+      retval = (NILP (pixelwise)
+		? min_size
+		: min_size * (NILP (horizontal)
+			      ? FRAME_LINE_HEIGHT (f)
+			      : FRAME_COLUMN_WIDTH (f)));
     }
   else
-    return XINT (call4 (Qframe_windows_min_size, frame, horizontal,
-		      ignore, pixelwise));
+    retval = XINT (call4 (Qframe_windows_min_size, frame, horizontal,
+			  ignore, pixelwise));
+  /* Don't allow too small height of text-mode frames, or else cm.c
+     might abort in cmcheckmagic.  */
+  if (FRAME_TERMCAP_P (f) && NILP (horizontal))
+    {
+      int min_height = (FRAME_MENU_BAR_LINES (f)
+			+ FRAME_WANTS_MODELINE_P (f)
+			+ 2);	/* one text line and one echo-area line */
+      if (retval < min_height)
+	retval = min_height;
+    }
+
+  return retval;
 }
 
 
@@ -753,6 +768,7 @@ make_frame (bool mini_p)
   f->no_focus_on_map = false;
   f->no_accept_focus = false;
   f->z_group = z_group_none;
+  f->tooltip = false;
 #if ! defined (USE_GTK) && ! defined (HAVE_NS)
   f->last_tool_bar_item = -1;
 #endif
@@ -1357,20 +1373,21 @@ to that frame.  */)
 
 DEFUN ("frame-list", Fframe_list, Sframe_list,
        0, 0, 0,
-       doc: /* Return a list of all live frames.  */)
+       doc: /* Return a list of all live frames.
+The return value does not include any tooltip frame.  */)
   (void)
 {
-  Lisp_Object frames;
-  frames = Fcopy_sequence (Vframe_list);
 #ifdef HAVE_WINDOW_SYSTEM
-  if (FRAMEP (tip_frame)
-#ifdef USE_GTK
-      && !NILP (Fframe_parameter (tip_frame, Qtooltip))
-#endif
-      )
-    frames = Fdelq (tip_frame, frames);
-#endif
-  return frames;
+  Lisp_Object list = Qnil, tail, frame;
+
+  FOR_EACH_FRAME (tail, frame)
+    if (!FRAME_TOOLTIP_P (XFRAME (frame)))
+      list = Fcons (frame, list);
+  /* Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.  */
+  return Fnreverse (list);
+#else /* !HAVE_WINDOW_SYSTEM */
+  return Fcopy_sequence (Vframe_list);
+#endif /* HAVE_WINDOW_SYSTEM */
 }
 
 DEFUN ("frame-parent", Fframe_parent, Sframe_parent,
@@ -1449,7 +1466,7 @@ frame.  */)
    Otherwise consider any candidate and return nil if CANDIDATE is not
    acceptable.  */
 
-static Lisp_Object
+Lisp_Object
 candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
 {
   struct frame *c = XFRAME (candidate), *f = XFRAME (frame);
@@ -1490,100 +1507,6 @@ candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
   return Qnil;
 }
 
-/* Return the next frame in the frame list after FRAME.  */
-
-static Lisp_Object
-next_frame (Lisp_Object frame, Lisp_Object minibuf)
-{
-  Lisp_Object f, tail;
-  int passed = 0;
-
-  eassume (CONSP (Vframe_list));
-
-  while (passed < 2)
-    FOR_EACH_FRAME (tail, f)
-      {
-	if (passed)
-	  {
-	    f = candidate_frame (f, frame, minibuf);
-	    if (!NILP (f))
-	      return f;
-	  }
-	if (EQ (frame, f))
-	  passed++;
-      }
-  return frame;
-}
-
-/* Return the previous frame in the frame list before FRAME.  */
-
-static Lisp_Object
-prev_frame (Lisp_Object frame, Lisp_Object minibuf)
-{
-  Lisp_Object f, tail, prev = Qnil;
-
-  eassume (CONSP (Vframe_list));
-
-  FOR_EACH_FRAME (tail, f)
-    {
-      if (EQ (frame, f) && !NILP (prev))
-	return prev;
-      f = candidate_frame (f, frame, minibuf);
-      if (!NILP (f))
-	prev = f;
-    }
-
-  /* We've scanned the entire list.  */
-  if (NILP (prev))
-    /* We went through the whole frame list without finding a single
-       acceptable frame.  Return the original frame.  */
-    return frame;
-  else
-    /* There were no acceptable frames in the list before FRAME; otherwise,
-       we would have returned directly from the loop.  Since PREV is the last
-       acceptable frame in the list, return it.  */
-    return prev;
-}
-
-
-DEFUN ("next-frame", Fnext_frame, Snext_frame, 0, 2, 0,
-       doc: /* Return the next frame in the frame list after FRAME.
-It considers only frames on the same terminal as FRAME.
-By default, skip minibuffer-only frames.
-If omitted, FRAME defaults to the selected frame.
-If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
-If MINIFRAME is a window, include only its own frame
-and any frame now using that window as the minibuffer.
-If MINIFRAME is `visible', include all visible frames.
-If MINIFRAME is 0, include all visible and iconified frames.
-Otherwise, include all frames.  */)
-  (Lisp_Object frame, Lisp_Object miniframe)
-{
-  if (NILP (frame))
-    frame = selected_frame;
-  CHECK_LIVE_FRAME (frame);
-  return next_frame (frame, miniframe);
-}
-
-DEFUN ("previous-frame", Fprevious_frame, Sprevious_frame, 0, 2, 0,
-       doc: /* Return the previous frame in the frame list before FRAME.
-It considers only frames on the same terminal as FRAME.
-By default, skip minibuffer-only frames.
-If omitted, FRAME defaults to the selected frame.
-If optional argument MINIFRAME is nil, exclude minibuffer-only frames.
-If MINIFRAME is a window, include only its own frame
-and any frame now using that window as the minibuffer.
-If MINIFRAME is `visible', include all visible frames.
-If MINIFRAME is 0, include all visible and iconified frames.
-Otherwise, include all frames.  */)
-  (Lisp_Object frame, Lisp_Object miniframe)
-{
-  if (NILP (frame))
-    frame = selected_frame;
-  CHECK_LIVE_FRAME (frame);
-  return prev_frame (frame, miniframe);
-}
-
 DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
        Slast_nonminibuf_frame, 0, 0, 0,
        doc: /* Return last non-minibuffer frame selected. */)
@@ -1601,7 +1524,8 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
  * other_frames:
  *
  * Return true if there exists at least one visible or iconified frame
- * but F.  Return false otherwise.
+ * but F.  Tooltip frames do not qualify as candidates.  Return false
+ * if no such frame exists.
  *
  * INVISIBLE true means we are called from make_frame_invisible where
  * such a frame must be visible or iconified.  INVISIBLE nil means we
@@ -1615,7 +1539,6 @@ static bool
 other_frames (struct frame *f, bool invisible, bool force)
 {
   Lisp_Object frames, frame, frame1;
-  struct frame *f1;
   Lisp_Object minibuffer_window = FRAME_MINIBUF_WINDOW (f);
 
   XSETFRAME (frame, f);
@@ -1625,7 +1548,8 @@ other_frames (struct frame *f, bool invisible, bool force)
 
   FOR_EACH_FRAME (frames, frame1)
     {
-      f1 = XFRAME (frame1);
+      struct frame *f1 = XFRAME (frame1);
+
       if (f != f1)
 	{
 	  /* Verify that we can still talk to the frame's X window, and
@@ -1634,7 +1558,7 @@ other_frames (struct frame *f, bool invisible, bool force)
 	  if (FRAME_WINDOW_P (f1))
 	    x_sync (f1);
 #endif
-	  if (NILP (Fframe_parameter (frame1, Qtooltip))
+	  if (!FRAME_TOOLTIP_P (f1)
 	      /* Tooltips and child frames count neither for
 		 invisibility nor for deletions.  */
 	      && !FRAME_PARENT_FRAME (f1)
@@ -1767,7 +1691,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	}
     }
 
-  is_tooltip_frame = !NILP (Fframe_parameter (frame, Qtooltip));
+  is_tooltip_frame = FRAME_TOOLTIP_P (f);
 
   /* Run `delete-frame-functions' unless FORCE is `noelisp' or
      frame is a tooltip.  FORCE is set to `noelisp' when handling
@@ -1815,27 +1739,31 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	 Do not call next_frame here because it may loop forever.
 	 See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15025.  */
       FOR_EACH_FRAME (tail, frame1)
-	if (!EQ (frame, frame1)
-	    && NILP (Fframe_parameter (frame1, Qtooltip))
-	    && (FRAME_TERMINAL (XFRAME (frame))
-		== FRAME_TERMINAL (XFRAME (frame1)))
-	    && FRAME_VISIBLE_P (XFRAME (frame1)))
-         break;
+	{
+	  struct frame *f1 = XFRAME (frame1);
+
+	  if (!EQ (frame, frame1)
+	      && !FRAME_TOOLTIP_P (f1)
+	      && FRAME_TERMINAL (f) == FRAME_TERMINAL (f1)
+	      && FRAME_VISIBLE_P (f1))
+	    break;
+	}
 
       /* If there is none, find *some* other frame.  */
       if (NILP (frame1) || EQ (frame1, frame))
 	{
 	  FOR_EACH_FRAME (tail, frame1)
 	    {
+	      struct frame *f1 = XFRAME (frame1);
+
 	      if (!EQ (frame, frame1)
-		  && FRAME_LIVE_P (XFRAME (frame1))
-		  && NILP (Fframe_parameter (frame1, Qtooltip)))
+		  && FRAME_LIVE_P (f1)
+		  && !FRAME_TOOLTIP_P (f1))
 		{
-		  /* Do not change a text terminal's top-frame.  */
-		  struct frame *f1 = XFRAME (frame1);
 		  if (FRAME_TERMCAP_P (f1))
 		    {
 		      Lisp_Object top_frame = FRAME_TTY (f1)->top_frame;
+
 		      if (!EQ (top_frame, frame))
 			frame1 = top_frame;
 		    }
@@ -2572,27 +2500,6 @@ If there is no window system support, this function does nothing.  */)
   x_focus_frame (decode_window_system_frame (frame), !NILP (noactivate));
 #endif
   return Qnil;
-}
-
-DEFUN ("frame-after-make-frame",
-       Fframe_after_make_frame,
-       Sframe_after_make_frame, 2, 2, 0,
-       doc: /* Mark FRAME as made.
-FRAME nil means use the selected frame.  Second argument MADE non-nil
-means functions on `window-configuration-change-hook' are called
-whenever the window configuration of FRAME changes.  MADE nil means
-these functions are not called.
-
-This function is currently called by `make-frame' only and should be
-otherwise used with utter care to avoid that running functions on
-`window-configuration-change-hook' is impeded forever.  */)
-  (Lisp_Object frame, Lisp_Object made)
-{
-  struct frame *f = decode_live_frame (frame);
-  f->after_make_frame = !NILP (made);
-  f->inhibit_horizontal_resize = false;
-  f->inhibit_vertical_resize = false;
-  return made;
 }
 
 
@@ -5774,8 +5681,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_list);
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
-  defsubr (&Snext_frame);
-  defsubr (&Sprevious_frame);
   defsubr (&Slast_nonminibuf_frame);
   defsubr (&Smouse_position);
   defsubr (&Smouse_pixel_position);
@@ -5792,7 +5697,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
   defsubr (&Sx_focus_frame);
-  defsubr (&Sframe_after_make_frame);
   defsubr (&Sredirect_frame_focus);
   defsubr (&Sframe_focus);
   defsubr (&Sframe_parameters);

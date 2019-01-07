@@ -713,8 +713,7 @@ Use variable `browse-url-filename-alist' to map filenames to URLs."
   (let ((coding (if (equal system-type 'windows-nt)
 		    ;; W32 pretends that file names are UTF-8 encoded.
 		    'utf-8
-		  (and (default-value 'enable-multibyte-characters)
-		       (or file-name-coding-system
+		  (and (or file-name-coding-system
 			   default-file-name-coding-system)))))
     (if coding (setq file (encode-coding-string file coding))))
   (setq file (browse-url-url-encode-chars file "[*\"()',=;?% ]"))

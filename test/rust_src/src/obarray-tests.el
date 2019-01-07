@@ -9,6 +9,10 @@
   ;; If the second argument is not an obarray, we should error.
   (should-error
    (intern "foo" 123)
+   :type 'wrong-type-argument)
+  ;; `intern' should only accept strings.
+  (should-error
+   (intern 'symbol)
    :type 'wrong-type-argument))
 
 (ert-deftest obarray-tests-mapatoms ()

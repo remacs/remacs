@@ -1160,45 +1160,19 @@ These match if the argument is `eql' to VAL."
 
 ;;; Dispatch on "system types".
 
-(defconst cl--generic-typeof-types
-  ;; Hand made from the source code of `type-of'.
-  '((integer number number-or-marker atom)
-    (symbol atom) (string array sequence atom)
-    (cons list sequence)
-    ;; Markers aren't `numberp', yet they are accepted wherever integers are
-    ;; accepted, pretty much.
-    (marker number-or-marker atom)
-    (overlay atom) (float number atom) (window-configuration atom)
-    (process atom) (window atom) (subr atom) (compiled-function function atom)
-    (buffer atom) (char-table array sequence atom)
-    (bool-vector array sequence atom)
-    (frame atom) (hash-table atom) (terminal atom)
-    (thread atom) (mutex atom) (condvar atom)
-    (font-spec atom) (font-entity atom) (font-object atom)
-    (vector array sequence atom)
-    ;; Plus, really hand made:
-    (null symbol list sequence atom))
-  "Alist of supertypes.
-Each element has the form (TYPE . SUPERTYPES) where TYPE is one of
-the symbols returned by `type-of', and SUPERTYPES is the list of its
-supertypes from the most specific to least specific.")
-
-(defconst cl--generic-all-builtin-types
-  (delete-dups (copy-sequence (apply #'append cl--generic-typeof-types))))
-
 (cl-generic-define-generalizer cl--generic-typeof-generalizer
   ;; FIXME: We could also change `type-of' to return `null' for nil.
   10 (lambda (name &rest _) `(if ,name (type-of ,name) 'null))
   (lambda (tag &rest _)
-    (and (symbolp tag) (assq tag cl--generic-typeof-types))))
+    (and (symbolp tag) (assq tag cl--typeof-types))))
 
 (cl-defmethod cl-generic-generalizers :extra "typeof" (type)
   "Support for dispatch on builtin types.
-See the full list and their hierarchy in `cl--generic-typeof-types'."
+See the full list and their hierarchy in `cl--typeof-types'."
   ;; FIXME: Add support for other types accepted by `cl-typep' such
   ;; as `character', `face', `function', ...
   (or
-   (and (memq type cl--generic-all-builtin-types)
+   (and (memq type cl--all-builtin-types)
         (progn
           ;; FIXME: While this wrinkle in the semantics can be occasionally
           ;; problematic, this warning is more often annoying than helpful.

@@ -178,6 +178,9 @@ struct window
     /* An alist with parameters.  */
     Lisp_Object window_parameters;
 
+    /* The help echo text for this window.  Qnil if there's none.  */
+    Lisp_Object mode_line_help_echo;
+
     /* No Lisp data may follow below this point without changing
        mark_object in alloc.c.  The member current_matrix must be the
        first non-Lisp member.  */
@@ -445,6 +448,12 @@ INLINE void
 wset_redisplay_end_trigger (struct window *w, Lisp_Object val)
 {
   w->redisplay_end_trigger = val;
+}
+
+INLINE void
+wset_mode_line_help_echo (struct window *w, Lisp_Object val)
+{
+  w->mode_line_help_echo = val;
 }
 
 INLINE void
@@ -1132,6 +1141,58 @@ output_cursor_to (struct window *w, int vpos, int hpos, int y, int x)
   w->output_cursor.x = x;
   w->output_cursor.y = y;
 }
+
+/***********************************************************************
+			 Window Configuration
+ ***********************************************************************/
+
+struct save_window_data
+  {
+    union vectorlike_header header;
+    Lisp_Object selected_frame;
+    Lisp_Object current_window;
+    Lisp_Object f_current_buffer;
+    Lisp_Object minibuf_scroll_window;
+    Lisp_Object minibuf_selected_window;
+    Lisp_Object root_window;
+    Lisp_Object focus_frame;
+    /* A vector, each of whose elements is a struct saved_window
+       for one window.  */
+    Lisp_Object saved_windows;
+
+    /* All fields above are traced by the GC.
+       From `frame-cols' down, the fields are ignored by the GC.  */
+    /* We should be able to do without the following two.  */
+    int frame_cols, frame_lines;
+    /* These two should get eventually replaced by their pixel
+       counterparts.  */
+    int frame_menu_bar_lines, frame_tool_bar_lines;
+    int frame_text_width, frame_text_height;
+    /* These are currently unused.  We need them as soon as we convert
+       to pixels.  */
+    int frame_menu_bar_height, frame_tool_bar_height;
+  };
+
+/* This is saved as a Lisp_Vector.  */
+struct saved_window
+{
+  union vectorlike_header header;
+
+  Lisp_Object window, buffer, start, pointm, old_pointm;
+  Lisp_Object pixel_left, pixel_top, pixel_height, pixel_width;
+  Lisp_Object pixel_height_before_size_change, pixel_width_before_size_change;
+  Lisp_Object left_col, top_line, total_cols, total_lines;
+  Lisp_Object normal_cols, normal_lines;
+  Lisp_Object hscroll, min_hscroll, hscroll_whole, suspend_auto_hscroll;
+  Lisp_Object parent, prev;
+  Lisp_Object start_at_line_beg;
+  Lisp_Object display_table;
+  Lisp_Object left_margin_cols, right_margin_cols;
+  Lisp_Object left_fringe_width, right_fringe_width, fringes_outside_margins;
+  Lisp_Object scroll_bar_width, vertical_scroll_bar_type, dedicated;
+  Lisp_Object scroll_bar_height, horizontal_scroll_bar_type;
+  Lisp_Object combination_limit, window_parameters;
+};
 
 INLINE_HEADER_END
 

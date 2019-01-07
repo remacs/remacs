@@ -6,15 +6,24 @@ use remacs_lib::current_timespec;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    eval::unbind_to,
+    frames::selected_frame,
     frames::{LispFrameOrSelected, LispFrameRef},
-    lisp::{defsubr, ExternalPtr},
+    lisp::defsubr,
+    lisp::{ExternalPtr, LispObject},
+    lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::{
-        clear_current_matrices, dtotimespec, fset_redisplay, mark_window_display_accurate,
-        timespec_add, timespec_sub, wait_reading_process_output,
+        clear_current_matrices, detect_input_pending_run_timers, dtotimespec, fset_redisplay,
+        mark_window_display_accurate, putchar_unlocked, redisplay_preserve_echo_area, ring_bell,
+        specbind, swallow_events, timespec_add, timespec_sub, wait_reading_process_output,
     },
-    remacs_sys::{redisplaying_p, Qnil, Vframe_list, WAIT_READING_MAX},
+    remacs_sys::{
+        globals, noninteractive, redisplaying_p, Qnil, Qredisplay_dont_pause, Qt, Vframe_list,
+        WAIT_READING_MAX,
+    },
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph},
     terminal::{clear_frame, update_begin, update_end},
+    threads::c_specpdl_index,
     windows::{LispWindowOrSelected, LispWindowRef},
 };
 
@@ -81,11 +90,11 @@ pub fn redraw_frame_lisp(frame: LispFrameOrSelected) {
 /// Clear and redisplay all visible frames.
 #[lisp_fn]
 pub fn redraw_display() {
-    unsafe { Vframe_list }
-        .iter_cars()
-        .map(|f| f.as_frame_or_error())
-        .filter(|f| f.visible() != 0)
-        .for_each(|f| redraw_frame(f))
+    for_each_frame!(frame => {
+        if frame.visible() != 0 {
+            redraw_frame(frame);
+        }
+    });
 }
 
 /// Set WINDOW->must_be_updated_p to ON_P for all windows in
@@ -134,6 +143,69 @@ pub fn internal_show_cursor(window: LispWindowOrSelected, show: bool) {
 pub fn internal_show_cursor_p(window: LispWindowOrSelected) -> bool {
     let win: LispWindowRef = window.into();
     !win.cursor_off_p()
+}
+
+/// Return whether input is coming from the keyboard.
+// Corresponds to the INTERACTIVE macro in commands.h.
+pub fn is_interactive() -> bool {
+    unsafe { globals.Vexecuting_kbd_macro.is_nil() && !noninteractive }
+}
+
+#[no_mangle]
+pub extern "C" fn ding_internal(terminate_macro: bool) {
+    unsafe {
+        if noninteractive {
+            putchar_unlocked(0o7);
+        } else if terminate_macro && !is_interactive() {
+            // Stop executing a keyboard macro.
+            user_error!("Keyboard macro terminated by a command ringing the bell");
+        } else {
+            ring_bell(selected_frame().as_mut())
+        }
+    }
+}
+
+/// Beep, or flash the screen.
+/// Also, unless an argument is given,
+/// terminate any keyboard macro currently executing.
+#[lisp_fn(min = "0")]
+pub fn ding(arg: LispObject) {
+    ding_internal(arg.is_nil())
+}
+
+/// Perform redisplay.
+/// Optional arg FORCE, if non-nil, prevents redisplay from being
+/// preempted by arriving input, even if `redisplay-dont-pause' is nil.
+/// If `redisplay-dont-pause' is non-nil (the default), redisplay is never
+/// preempted by arriving input, so FORCE does nothing.
+///
+/// Return t if redisplay was performed, nil if redisplay was preempted
+/// immediately by pending input.
+#[lisp_fn(min = "0")]
+pub fn redisplay(force: LispObject) -> bool {
+    let force: bool = force.is_not_nil();
+
+    unsafe {
+        swallow_events(true);
+
+        let ret =
+            (detect_input_pending_run_timers(true) && !force && !globals.redisplay_dont_pause)
+                || globals.Vexecuting_kbd_macro.is_not_nil();
+
+        if ret {
+            let count = c_specpdl_index();
+
+            if force && !globals.redisplay_dont_pause {
+                specbind(Qredisplay_dont_pause, Qt);
+            }
+
+            redisplay_preserve_echo_area(2);
+
+            unbind_to(count, Qnil);
+        }
+
+        ret
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/dispnew_exports.rs"));

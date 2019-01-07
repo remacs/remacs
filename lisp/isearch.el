@@ -480,7 +480,8 @@ This is like `describe-bindings', but displays only Isearch keys."
     (define-key map [?\S-\ ] 'isearch-printing-char)
 
     (define-key map    "\C-w" 'isearch-yank-word-or-char)
-    (define-key map "\M-\C-w" 'isearch-del-char)
+    (define-key map "\M-\C-w" 'isearch-yank-symbol-or-char)
+    (define-key map "\M-\C-d" 'isearch-del-char)
     (define-key map "\M-\C-y" 'isearch-yank-char)
     (define-key map    "\C-y" 'isearch-yank-kill)
     (define-key map "\M-s\C-e" 'isearch-yank-line)
@@ -589,8 +590,8 @@ variable by the command `isearch-toggle-lax-whitespace'.")
 (defvar isearch-cmds nil
   "Stack of search status elements.
 Each element is an `isearch--state' struct where the slots are
- [STRING MESSAGE POINT SUCCESS FORWARD OTHER-END WORD
-  ERROR WRAPPED BARRIER CASE-FOLD-SEARCH]")
+ [STRING MESSAGE POINT SUCCESS FORWARD OTHER-END WORD/REGEXP-FUNCTION
+  ERROR WRAPPED BARRIER CASE-FOLD-SEARCH POP-FUN]")
 
 (defvar isearch-string "")  ; The current search string.
 (defvar isearch-message "") ; text-char-description version of isearch-string
@@ -1233,6 +1234,8 @@ If this is set inside code wrapped by the macro
 (define-obsolete-variable-alias 'isearch-new-word
   'isearch-new-regexp-function "25.1")
 
+(defvar isearch-suspended nil)
+
 (defmacro with-isearch-suspended (&rest body)
   "Exit Isearch mode, run BODY, and reinvoke the pending search.
 You can update the global isearch variables by setting new values to
@@ -1299,6 +1302,8 @@ You can update the global isearch variables by setting new values to
 	       isearch-original-minibuffer-message-timeout)
 	      old-point old-other-end)
 
+          (setq isearch-suspended t)
+
 	  ;; Actually terminate isearching until editing is done.
 	  ;; This is so that the user can do anything without failure,
 	  ;; like switch buffers and start another isearch, and return.
@@ -1312,6 +1317,8 @@ You can update the global isearch variables by setting new values to
 
 	  (unwind-protect
 	      (progn ,@body)
+
+            (setq isearch-suspended nil)
 
 	    ;; Always resume isearching by restarting it.
 	    (isearch-mode isearch-forward
@@ -1374,6 +1381,7 @@ You can update the global isearch variables by setting new values to
 		  (message "")))))
 
     (quit  ; handle abort-recursive-edit
+     (setq isearch-suspended nil)
      (isearch-abort)  ;; outside of let to restore outside global values
      )))
 
@@ -1846,11 +1854,11 @@ replacements from Isearch is `M-s w ... M-%'."
       (concat "Query replace"
               (isearch--describe-regexp-mode (or delimited isearch-regexp-function) t)
 	      (if backward " backward" "")
-	      (if (and transient-mark-mode mark-active) " in region" ""))
+	      (if (use-region-p) " in region" ""))
       isearch-regexp)
      t isearch-regexp (or delimited isearch-regexp-function) nil nil
-     (if (and transient-mark-mode mark-active) (region-beginning))
-     (if (and transient-mark-mode mark-active) (region-end))
+     (if (use-region-p) (region-beginning))
+     (if (use-region-p) (region-end))
      backward))
   (and isearch-recursive-edit (exit-recursive-edit)))
 
@@ -1913,7 +1921,8 @@ characters in that string."
 			   'isearch-regexp-function-descr
                            (isearch--describe-regexp-mode isearch-regexp-function))
 	     regexp)
-	   nlines)))
+	   nlines
+	   (if (use-region-p) (region-bounds)))))
 
 (declare-function hi-lock-read-face-name "hi-lock" ())
 
@@ -2081,21 +2090,25 @@ If optional ARG is non-nil, pull in the next ARG characters."
   (interactive "p")
   (isearch-yank-internal (lambda () (forward-char arg) (point))))
 
-(declare-function subword-forward "subword" (&optional arg))
-(defun isearch-yank-word-or-char ()
-  "Pull next character, subword or word from buffer into search string.
-Subword is used when `subword-mode' is activated. "
-  (interactive)
+(defun isearch--yank-char-or-syntax (syntax-list fn)
   (isearch-yank-internal
    (lambda ()
-     (if (or (= (char-syntax (or (char-after) 0)) ?w)
-             (= (char-syntax (or (char-after (1+ (point))) 0)) ?w))
-	 (if (or (and (boundp 'subword-mode) subword-mode)
-		 (and (boundp 'superword-mode) superword-mode))
-	     (subword-forward 1)
-	   (forward-word 1))
+     (if (or (memq (char-syntax (or (char-after) 0)) syntax-list)
+             (memq (char-syntax (or (char-after (1+ (point))) 0))
+                   syntax-list))
+	 (funcall fn 1)
        (forward-char 1))
      (point))))
+
+(defun isearch-yank-word-or-char ()
+  "Pull next character or word from buffer into search string."
+  (interactive)
+  (isearch--yank-char-or-syntax '(?w) 'forward-word))
+
+(defun isearch-yank-symbol-or-char ()
+  "Pull next character or symbol from buffer into search string."
+  (interactive)
+  (isearch--yank-char-or-syntax '(?w ?_) 'forward-symbol))
 
 (defun isearch-yank-word (&optional arg)
   "Pull next word from buffer into search string.
@@ -2851,7 +2864,7 @@ Optional third argument, if t, means if fail just return nil (no error).
      (setq isearch-error (car (cdr lossage)))
      (cond
       ((string-match
-	"\\`Premature \\|\\`Unmatched \\|\\`Invalid "
+	"\\`Premature \\|\\`Unmatched "
 	isearch-error)
        (setq isearch-error "incomplete input"))
       ((and (not isearch-regexp)

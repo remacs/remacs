@@ -466,13 +466,3 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
 
   return orig_end + added;
 }
-
-/* casify_region returns a pointer, which complicates interaction
-   with Rust. This wraps that and returns nil. It can be deleted once
-   casify_region is ported. */
-Lisp_Object
-casify_region_nil (enum case_action flag, Lisp_Object b, Lisp_Object e)
-{
-  casify_region(flag, b, e);
-  return Qnil;
-}

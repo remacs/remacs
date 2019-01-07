@@ -1,25 +1,25 @@
 //* Random utility Lisp functions.
 
+use libc;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
     eval::{un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
-    lists::{assq, car, get, member, memq, put, LispCons},
+    lists::{assq, car, get, member, memq, put},
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{compare_string_intervals, concat as lisp_concat, globals, record_unwind_protect},
+    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
     remacs_sys::{equal_kind, Lisp_Type},
     remacs_sys::{Fload, Fmapc},
-    remacs_sys::{
-        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt,
-        Qwrong_number_of_arguments,
-    },
+    remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
-    vectors::length,
 };
 
 /// Return t if FEATURE is present in this Emacs.
@@ -31,7 +31,7 @@ use crate::{
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> bool {
-    let mut tem = memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures });
+    let mut tem = memq(feature.into(), unsafe { globals.Vfeatures });
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(subfeature, get(feature, Qsubfeatures));
     }
@@ -48,33 +48,27 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         if Vautoload_queue.is_not_nil() {
-            Vautoload_queue = LispObject::cons(
-                LispObject::cons(LispObject::from(0), globals.Vfeatures),
-                Vautoload_queue,
-            );
+            Vautoload_queue = ((0, globals.Vfeatures), Vautoload_queue).into();
         }
     }
-    if memq(feature.as_lisp_obj(), unsafe { globals.Vfeatures }).is_nil() {
+    if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = LispObject::cons(feature.as_lisp_obj(), globals.Vfeatures);
+            globals.Vfeatures = (feature, globals.Vfeatures).into();
         }
     }
     if subfeature.is_not_nil() {
         put(feature, Qsubfeatures, subfeature);
     }
     unsafe {
-        globals.Vcurrent_load_list = LispObject::cons(
-            LispObject::cons(Qprovide, feature.as_lisp_obj()),
-            globals.Vcurrent_load_list,
-        );
+        globals.Vcurrent_load_list = ((Qprovide, feature), globals.Vcurrent_load_list).into();
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.as_lisp_obj(), globals.Vafter_load_alist).as_cons() {
+        if let Some(c) = assq(feature.into(), globals.Vafter_load_alist).as_cons() {
             Fmapc(Qfuncall, c.cdr());
         }
     }
-    feature.as_lisp_obj()
+    feature.into()
 }
 
 /// Return the argument, without evaluating it.  `(quote x)' yields `x'.
@@ -90,7 +84,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
 #[lisp_fn(unevalled = "true")]
 pub fn quote(args: LispCons) -> LispObject {
     if args.cdr().is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qquote, length(args.as_obj()));
+        wrong_number_of_arguments!(Qquote, args.length());
     }
 
     args.car()
@@ -134,12 +128,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // and not when we aren't loading or reading from a file.
     let from_file = unsafe { globals.load_in_progress }
         || current_load_list
-            .iter_cars_safe()
-            .last()
-            .map_or(false, |elt| elt.is_string());
+            .iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off)
+            .any(|elt| elt.cdr().is_nil() && elt.car().is_string());
 
     if from_file {
-        let tem = LispObject::cons(Qrequire, feature);
+        let tem = (Qrequire, feature).into();
         if member(tem, current_load_list).is_nil() {
             loadhist_attach(tem);
         }
@@ -164,7 +157,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     // but if we require the same feature recursively 3 times,
     // signal an error.
     let nesting = unsafe { require_nesting_list }
-        .iter_cars()
+        .iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off)
         .filter(|elt| equal(feature, *elt))
         .count();
 
@@ -178,7 +171,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     unsafe {
         // Update the list for any nested `require's that occur.
         record_unwind_protect(Some(require_unwind), require_nesting_list);
-        require_nesting_list = LispObject::cons(feature, require_nesting_list);
+        require_nesting_list = (feature, require_nesting_list).into();
 
         // Value saved here is to be restored into Vautoload_queue
         record_unwind_protect(Some(un_autoload), Vautoload_queue);
@@ -265,19 +258,104 @@ pub fn concat(args: &mut [LispObject]) -> LispObject {
 }
 
 #[no_mangle]
+pub extern "C" fn internal_equal_cons(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
+) -> bool {
+    match (o1.as_cons(), o2.as_cons()) {
+        (Some(cons1), Some(cons2)) => cons1.equal(cons2, kind, depth, ht),
+        _ => false,
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn internal_equal_string(
     o1: LispObject,
     o2: LispObject,
     kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
 ) -> bool {
     let s1 = o1.as_string_or_error();
     let s2 = o2.as_string_or_error();
 
-    s1.len_chars() == s2.len_chars()
-        && s1.len_bytes() == s2.len_bytes()
-        && s1.as_slice() == s2.as_slice()
-        && (kind != equal_kind::EQUAL_INCLUDING_PROPERTIES
-            || unsafe { compare_string_intervals(o1, o2) })
+    s1.equal(s2, kind, depth, ht)
+}
+
+#[no_mangle]
+pub extern "C" fn internal_equal_misc(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
+) -> bool {
+    match (o1.as_misc(), o2.as_misc()) {
+        (Some(m1), Some(m2)) => m1.equal(m2, kind, depth, ht),
+        _ => false,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn internal_equal_vectorlike(
+    o1: LispObject,
+    o2: LispObject,
+    kind: equal_kind::Type,
+    depth: i32,
+    ht: LispObject,
+) -> bool {
+    match (o1.as_vectorlike(), o2.as_vectorlike()) {
+        (Some(v1), Some(v2)) => v1.equal(v2, kind, depth, ht),
+        _ => false,
+    }
+}
+
+#[cfg(windows)]
+unsafe fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int {
+    crate::remacs_sys::getloadavg(loadavg, nelem)
+}
+
+#[cfg(not(windows))]
+unsafe fn getloadaverage(loadavg: *mut libc::c_double, nelem: libc::c_int) -> libc::c_int {
+    libc::getloadavg(loadavg, nelem)
+}
+
+/// Return list of 1 minute, 5 minute and 15 minute load averages.
+///
+/// Each of the three load averages is multiplied by 100, then converted
+/// to integer.
+///
+/// When USE-FLOATS is non-nil, floats will be used instead of integers.
+/// These floats are not multiplied by 100.
+///
+/// If the 5-minute or 15-minute load averages are not available, return a
+/// shortened list, containing only those averages which are available.
+///
+/// An error is thrown if the load average can't be obtained.  In some
+/// cases making it work would require Emacs being installed setuid or
+/// setgid so that it can read kernel information, and that usually isn't
+/// advisable.
+#[lisp_fn(min = "0")]
+pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
+    let mut load_avg: [libc::c_double; 3] = [0.0, 0.0, 0.0];
+    let loads = unsafe { getloadaverage(load_avg.as_mut_ptr(), 3) };
+
+    if loads < 0 {
+        error!("load-average not implemented for this operating system");
+    }
+
+    (0..loads as usize)
+        .map(|i| {
+            if use_floats {
+                LispNumber::Float(load_avg[i])
+            } else {
+                LispNumber::Fixnum((100.0 * load_avg[i]) as i64)
+            }
+        })
+        .collect()
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

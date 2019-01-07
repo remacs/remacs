@@ -17,7 +17,10 @@
 #![feature(never_type)]
 #![feature(const_fn_union)]
 #![feature(ptr_offset_from)]
+#![feature(self_struct_ctor)]
+#![feature(specialization)]
 
+extern crate errno;
 #[macro_use]
 extern crate if_chain;
 #[macro_use]
@@ -36,7 +39,7 @@ extern crate flate2;
 extern crate core;
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 extern crate alloc_unexecmacosx;
 
 // Needed for linking.
@@ -52,6 +55,8 @@ mod eval_macros;
 #[macro_use]
 mod lisp;
 #[macro_use]
+mod frames;
+#[macro_use]
 mod vector_macros;
 mod str2sig;
 
@@ -60,6 +65,7 @@ mod base64;
 mod buffers;
 mod bytecode;
 mod callint;
+mod callproc;
 mod casefiddle;
 mod casetab;
 mod category;
@@ -67,6 +73,7 @@ mod character;
 mod charset;
 mod chartable;
 mod cmds;
+mod coding;
 mod crypto;
 mod data;
 mod decompress;
@@ -84,7 +91,6 @@ mod fileio;
 mod floatfns;
 mod fns;
 mod fonts;
-mod frames;
 mod hashtable;
 mod indent;
 mod interactive;
@@ -114,13 +120,14 @@ mod threads;
 mod time;
 mod util;
 mod vectors;
+mod window_configuration;
 mod windows;
 mod xml;
 
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
 
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 

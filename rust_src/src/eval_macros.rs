@@ -95,6 +95,36 @@ macro_rules! args_out_of_range {
     ($($tt:tt)+) => { xsignal!(crate::remacs_sys::Qargs_out_of_range, $($tt)+); };
 }
 
+macro_rules! arith_error {
+    () => {
+        xsignal!(crate::remacs_sys::Qarith_error);
+    };
+}
+
+macro_rules! void_variable {
+    ($var:expr) => {
+        xsignal!(crate::remacs_sys::Qvoid_variable, $var);
+    };
+}
+
+macro_rules! wrong_number_of_arguments {
+    ($sym:expr, $num:expr) => {
+        xsignal!(crate::remacs_sys::Qwrong_number_of_arguments, $sym, $num);
+    };
+}
+
+macro_rules! setting_constant {
+    ($sym:expr) => {
+        xsignal!(crate::remacs_sys::Qsetting_constant, $sym);
+    };
+}
+
+macro_rules! user_error {
+    ($msg:expr) => {
+        xsignal!(crate::remacs_sys::Quser_error, $msg);
+    };
+}
+
 macro_rules! list {
     ($arg:expr, $($tt:tt)+) => { $crate::lisp::LispObject::cons($arg, list!($($tt)+)) };
     ($arg:expr) => { $crate::lisp::LispObject::cons($arg, list!()) };
@@ -282,4 +312,41 @@ macro_rules! per_buffer_var_idx {
         #[allow(unused_unsafe)]
         (unsafe { crate::remacs_sys::buffer_local_flags.$field }).as_natnum_or_error() as usize
     };
+}
+
+// Creates a Lisp_String from $string on the stack and a LispObject
+// pointing the Lisp_String. Assigns the LispObject to $name. See
+// `generate-new-buffer-name` for sample usage.
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! local_unibyte_string {
+    ($name: ident, $string: expr) => {
+        let bytes = unsafe { ($string).as_mut_str().as_bytes_mut() };
+        let len = bytes.len() as ::libc::ptrdiff_t;
+        let mut obj = crate::remacs_sys::Lisp_String {
+            u: crate::remacs_sys::Lisp_String__bindgen_ty_1 {
+                s: crate::remacs_sys::Lisp_String__bindgen_ty_1__bindgen_ty_1 {
+                    size: len,
+                    size_byte: -1,
+                    intervals: ::std::ptr::null_mut(),
+                    data: bytes.as_mut_ptr() as *mut u8,
+                },
+            },
+        };
+        let $name = crate::lisp::LispObject::from(crate::lisp::ExternalPtr::new(
+            &mut obj as *mut crate::remacs_sys::Lisp_String,
+        ));
+    };
+}
+
+#[test]
+pub fn test_local_unibyte_string() {
+    let mut s = String::from("abc");
+    local_unibyte_string!(a, s);
+    assert_eq!(a.as_string_or_error().byte_at(0), b'a');
+    assert_eq!(a.as_string_or_error().len_chars(), 3);
+    s = String::from("defg");
+    local_unibyte_string!(a, s);
+    assert_eq!(a.as_string_or_error().byte_at(0), b'd');
+    assert_eq!(a.as_string_or_error().len_chars(), 4);
 }

@@ -9,6 +9,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     character::{self, characterp},
     data::set,
+    dispnew::ding_internal,
     editfns::{line_beginning_position, line_end_position, preceding_char},
     frames::selected_frame,
     keymap::{current_global_map, Ctl},
@@ -22,7 +23,7 @@ use crate::{
     obarray::intern,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        bitch_at_user, concat2, current_column, del_range, frame_make_pointer_invisible, globals,
+        concat2, current_column, del_range, frame_make_pointer_invisible, globals,
         initial_define_key, insert_and_inherit, memory_full, replace_range, run_hook,
         scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
         translate_char,
@@ -262,7 +263,7 @@ pub fn self_insert_command(n: EmacsInt) {
 
     // Barf if the key that invoked this was not a character.
     if !characterp(unsafe { globals.last_command_event }, Qnil) {
-        unsafe { bitch_at_user() };
+        ding_internal(true);
     } else {
         let character = unsafe {
             translate_char(

@@ -2388,34 +2388,6 @@ make_uninit_bool_vector (EMACS_INT nbits)
   return val;
 }
 
-DEFUN ("make-bool-vector", Fmake_bool_vector, Smake_bool_vector, 2, 2, 0,
-       doc: /* Return a new bool-vector of length LENGTH, using INIT for each element.
-LENGTH must be a number.  INIT matters only in whether it is t or nil.  */)
-  (Lisp_Object length, Lisp_Object init)
-{
-  Lisp_Object val;
-
-  CHECK_NATNUM (length);
-  val = make_uninit_bool_vector (XFASTINT (length));
-  return bool_vector_fill (val, init);
-}
-
-DEFUN ("bool-vector", Fbool_vector, Sbool_vector, 0, MANY, 0,
-       doc: /* Return a new bool-vector with specified arguments as elements.
-Any number of arguments, even zero arguments, are allowed.
-usage: (bool-vector &rest OBJECTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  ptrdiff_t i;
-  Lisp_Object vector;
-
-  vector = make_uninit_bool_vector (nargs);
-  for (i = 0; i < nargs; i++)
-    bool_vector_set (vector, i, !NILP (args[i]));
-
-  return vector;
-}
-
 /* Make a string from NBYTES bytes at CONTENTS, and compute the number
    of characters from the contents.  This string may be unibyte or
    multibyte, depending on the contents.  */
@@ -5045,7 +5017,7 @@ typedef union
 #endif
 
 /* Set *P to the address of the top of the stack.  This must be a
-   macro, not a function, so that it is executed in the caller’s
+   macro, not a function, so that it is executed in the caller's
    environment.  It is not inside a do-while so that its storage
    survives the macro.  Callers should be declared NO_INLINE.  */
 #ifdef HAVE___BUILTIN_UNWIND_INIT
@@ -7480,12 +7452,10 @@ The time is in seconds as a floating point value.  */);
   defsubr (&Scons);
   defsubr (&Svector);
   defsubr (&Srecord);
-  defsubr (&Sbool_vector);
   defsubr (&Smake_byte_code);
   defsubr (&Smake_vector);
   defsubr (&Smake_record);
   defsubr (&Smake_string);
-  defsubr (&Smake_bool_vector);
   defsubr (&Smake_symbol);
   defsubr (&Smake_marker);
   defsubr (&Smake_finalizer);
