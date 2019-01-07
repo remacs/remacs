@@ -518,7 +518,7 @@ pub unsafe extern "C" fn do_symval_forwarding(valcontents: *const Lisp_Fwd) -> L
         Lisp_Fwd_Buffer_Obj => *(*valcontents)
             .u_buffer_objfwd
             .offset
-            .apply_ptr(ThreadState::current_buffer().as_mut()),
+            .apply_ptr(ThreadState::current_buffer_unchecked().as_mut()),
         Lisp_Fwd_Kboard_Obj => {
             // We used to simply use current_kboard here, but from Lisp
             // code, its value is often unexpected.  It seems nicer to
@@ -586,7 +586,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
             }
 
             if buf.is_null() {
-                buf = ThreadState::current_buffer().as_mut();
+                buf = ThreadState::current_buffer_unchecked().as_mut();
             }
             *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
         }

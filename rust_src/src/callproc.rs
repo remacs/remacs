@@ -48,7 +48,7 @@ pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
     let count = c_specpdl_index();
 
     let infile = if args.len() >= 2 && args[1].is_not_nil() {
-        unsafe { Fexpand_file_name(args[1], ThreadState::current_buffer().directory_) }
+        unsafe { Fexpand_file_name(args[1], ThreadState::current_buffer_unchecked().directory_) }
     } else {
         unsafe { build_string(NULL_DEVICE.as_ptr() as *const i8) }
     };

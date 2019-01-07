@@ -43,7 +43,7 @@ pub fn char_head_p(byte: c_uchar) -> bool {
 ///
 /// Can be used instead of the `DEC_POS` macro.
 pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     let mut new_pos = pos_byte - 1;
     let mut offset = new_pos - buffer_ref.beg_byte();

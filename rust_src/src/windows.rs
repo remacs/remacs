@@ -908,7 +908,7 @@ pub fn set_window_point(window: LispWindowLiveOrSelected, pos: LispObject) -> Li
 
     // Type of POS is checked by Fgoto_char or set_marker_restricted ...
     if win == selected_window().as_window_or_error() {
-        let mut current_buffer = ThreadState::current_buffer();
+        let mut current_buffer = ThreadState::current_buffer_unchecked();
 
         if win
             .contents

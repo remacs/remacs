@@ -77,7 +77,7 @@ pub fn minibuffer_prompt() -> LispObject {
 /// Return (point-min) if current buffer is not a minibuffer.
 #[lisp_fn]
 pub fn minibuffer_prompt_end() -> EmacsInt {
-    let buffer = ThreadState::current_buffer();
+    let buffer = ThreadState::current_buffer_unchecked();
     let beg = buffer.beg() as EmacsInt;
     if memq(buffer.into(), unsafe { Vminibuffer_list }).is_nil() {
         return beg;
@@ -97,7 +97,7 @@ pub fn minibuffer_prompt_end() -> EmacsInt {
 #[lisp_fn]
 pub fn minibuffer_contents() -> LispObject {
     let prompt_end = minibuffer_prompt_end() as isize;
-    unsafe { make_buffer_string(prompt_end, ThreadState::current_buffer().zv, true) }
+    unsafe { make_buffer_string(prompt_end, ThreadState::current_buffer_unchecked().zv, true) }
 }
 
 /// Return the user input in a minibuffer as a string, without text-properties.
@@ -105,7 +105,13 @@ pub fn minibuffer_contents() -> LispObject {
 #[lisp_fn]
 pub fn minibuffer_contents_no_properties() -> LispObject {
     let prompt_end = minibuffer_prompt_end() as isize;
-    unsafe { make_buffer_string(prompt_end, ThreadState::current_buffer().zv, false) }
+    unsafe {
+        make_buffer_string(
+            prompt_end,
+            ThreadState::current_buffer_unchecked().zv,
+            false,
+        )
+    }
 }
 
 /// Read a string from the minibuffer, prompting with string PROMPT.

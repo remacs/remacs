@@ -212,7 +212,7 @@ pub fn eval_region(
 ) {
     // FIXME: Do the eval-sexp-add-defvars dance!
     let count = c_specpdl_index();
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let cur_buf_obj = cur_buf.into();
 
     let tem = if printflag.is_nil() {

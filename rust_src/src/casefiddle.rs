@@ -19,7 +19,7 @@ use crate::{
 };
 
 fn casify_word(flag: case_action, words: EmacsInt) {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     let far_end = match unsafe { scan_words(buffer_ref.pt, words) } {
         0 => {

@@ -56,7 +56,7 @@ fn move_point(n: LispObject, forward: bool) {
         n = -n;
     }
 
-    let buffer = ThreadState::current_buffer();
+    let buffer = ThreadState::current_buffer_unchecked();
     let mut signal = Qnil;
     let mut new_point = buffer.pt + n;
 
@@ -103,7 +103,7 @@ pub fn backward_char(n: LispObject) {
 /// Return buffer position N characters after (before if N negative) point.
 #[lisp_fn]
 pub fn forward_point(n: EmacsInt) -> EmacsInt {
-    let pt = ThreadState::current_buffer().pt;
+    let pt = ThreadState::current_buffer_unchecked().pt;
     n + pt as EmacsInt
 }
 
@@ -141,7 +141,7 @@ pub fn end_of_line(n: Option<EmacsInt>) {
     let mut num = n.unwrap_or(1);
     let mut newpos: isize;
     let mut pt: isize;
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     loop {
         newpos = line_end_position(Some(num)) as isize;
         unsafe { set_point(newpos) };
@@ -183,7 +183,7 @@ pub fn end_of_line(n: Option<EmacsInt>) {
 pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
     let count: isize = n.unwrap_or(1) as isize;
 
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let opoint = cur_buf.pt;
 
     let (mut pos, mut pos_byte) = (0, 0);
@@ -222,7 +222,7 @@ pub fn delete_char(n: EmacsInt, killflag: bool) {
         call!(Qundo_auto_amalgamate);
     }
 
-    let buffer = ThreadState::current_buffer();
+    let buffer = ThreadState::current_buffer_unchecked();
     let pos = buffer.pt + n as isize;
     if killflag {
         call!(Qkill_forward_chars, LispObject::from(n));
@@ -303,7 +303,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     let mut chars_to_delete: usize = 0;
     let mut spaces_to_insert: usize = 0;
 
-    let mut current_buffer = ThreadState::current_buffer();
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
     let overwrite = current_buffer.overwrite_mode_;
     if unsafe { globals.Vbefore_change_functions }.is_not_nil()
         || unsafe { globals.Vafter_change_functions }.is_not_nil()

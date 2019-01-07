@@ -52,7 +52,7 @@ pub const BEG_BYTE: ptrdiff_t = 1;
 /// Return value of point, in bytes, as an integer.
 /// Beginning of buffer is position (point-min).
 pub fn point_byte() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt_byte as EmacsInt
 }
 
@@ -60,7 +60,7 @@ pub fn point_byte() -> EmacsInt {
 /// buffer.  This is 1, unless narrowing (a buffer restriction) is in
 /// effect.
 pub fn point_min_byte() -> EmacsInt {
-    ThreadState::current_buffer().begv_byte as EmacsInt
+    ThreadState::current_buffer_unchecked().begv_byte as EmacsInt
 }
 
 /// Maximum number of bytes in a buffer.
@@ -529,7 +529,10 @@ pub enum LispBufferOrName {
 impl LispBufferOrName {
     pub fn as_buffer_or_current_buffer(self) -> Option<LispBufferRef> {
         let obj = LispObject::from(self);
-        obj.map_or_else(|| Some(ThreadState::current_buffer()), |o| o.as_buffer())
+        obj.map_or_else(
+            || Some(ThreadState::current_buffer_unchecked()),
+            |o| o.as_buffer(),
+        )
     }
 }
 
@@ -616,7 +619,7 @@ impl From<LispBufferOrCurrent> for LispBufferRef {
     fn from(buffer: LispBufferOrCurrent) -> LispBufferRef {
         match buffer {
             LispBufferOrCurrent::Buffer(buf) => buf,
-            LispBufferOrCurrent::Current => ThreadState::current_buffer(),
+            LispBufferOrCurrent::Current => ThreadState::current_buffer_unchecked(),
         }
     }
 }
@@ -767,7 +770,7 @@ pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject)
     *b = LispObject::from(beg);
     *e = LispObject::from(end);
 
-    let buf = ThreadState::current_buffer();
+    let buf = ThreadState::current_buffer_unchecked();
     let begv = buf.begv as EmacsInt;
     let zv = buf.zv as EmacsInt;
 
@@ -803,7 +806,8 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
     let prop = unsafe { Fget_text_property(LispObject::from(pos), Qinhibit_read_only, Qnil) };
 
-    if ThreadState::current_buffer().is_read_only() && !inhibit_read_only && prop.is_nil() {
+    if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && prop.is_nil()
+    {
         xsignal!(Qbuffer_read_only, current_buffer())
     }
 }
@@ -830,7 +834,7 @@ pub fn overlay_lists() -> LispObject {
     let list_overlays =
         |ol: LispOverlayRef| -> LispObject { ol.iter().fold(Qnil, |accum, n| (n, accum).into()) };
 
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let before = cur_buf.overlays_before().map_or(Qnil, &list_overlays);
     let after = cur_buf.overlays_after().map_or(Qnil, &list_overlays);
     unsafe { (Fnreverse(before), Fnreverse(after)).into() }
@@ -949,7 +953,7 @@ pub fn buffer_base_buffer(buffer: LispBufferOrCurrent) -> Option<LispBufferRef> 
 /// menu bar menus and the frame title.
 #[lisp_fn(min = "0")]
 pub fn force_mode_line_update(all: bool) -> bool {
-    let mut current_buffer = ThreadState::current_buffer();
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
     if all {
         unsafe {
             update_mode_lines = 10;
@@ -1055,7 +1059,7 @@ pub fn erase_buffer() {
     unsafe {
         Fwiden();
 
-        let mut cur_buf = ThreadState::current_buffer();
+        let mut cur_buf = ThreadState::current_buffer_unchecked();
         del_range(cur_buf.beg(), cur_buf.z());
 
         cur_buf.last_window_start = 1;
