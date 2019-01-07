@@ -898,7 +898,7 @@ non-nil, otherwise in local time."
              (insert (if use-hard-newlines hard-newline "\n")
                      (if use-hard-newlines hard-newline "\n"))
              (forward-line -2)
-             (indent-relative-first-indent-point))
+             (indent-relative-maybe))
             (t
              ;; Make a new item.
              (while (looking-at "\\sW")

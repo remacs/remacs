@@ -313,25 +313,6 @@ printchar (unsigned int ch, Lisp_Object fun)
     }
 }
 
-/* Output an octal escape for C.  If C is less than '\100' consult the
-   following character (if any) to see whether to use three octal
-   digits to avoid misinterpretation of the next character.  The next
-   character after C will be taken from DATA, starting at byte
-   location I, if I is less than SIZE.  Use PRINTCHARFUN to output
-   each character.  */
-
-static void
-octalout (unsigned char c, unsigned char *data, ptrdiff_t i, ptrdiff_t size,
-	  Lisp_Object printcharfun)
-{
-  int digits = (c > '\77' || (i < size && '0' <= data[i] && data[i] <= '7')
-		? 3
-		: c > '\7' ? 2 : 1);
-  printchar ('\\', printcharfun);
-  do
-    printchar ('0' + ((c >> (3 * --digits)) & 7), printcharfun);
-  while (digits != 0);
-}
 
 /* Output SIZE characters, SIZE_BYTE bytes from string PTR using
    method PRINTCHARFUN.  PRINTCHARFUN nil means output to
@@ -1386,33 +1367,32 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
     case PVEC_BOOL_VECTOR:
       {
 	EMACS_INT size = bool_vector_size (obj);
-	ptrdiff_t size_in_bytes = bool_vector_bytes (size);
-	ptrdiff_t real_size_in_bytes = size_in_bytes;
-	unsigned char *data = bool_vector_uchar_data (obj);
+	ptrdiff_t size_in_chars = bool_vector_bytes (size);
+	ptrdiff_t real_size_in_chars = size_in_chars;
 
 	int len = sprintf (buf, "#&%"pI"d\"", size);
 	strout (buf, len, len, printcharfun);
 
-	/* Don't print more bytes than the specified maximum.
+	/* Don't print more characters than the specified maximum.
 	   Negative values of print-length are invalid.  Treat them
 	   like a print-length of nil.  */
 	if (NATNUMP (Vprint_length)
-	    && XFASTINT (Vprint_length) < size_in_bytes)
-	  size_in_bytes = XFASTINT (Vprint_length);
+	    && XFASTINT (Vprint_length) < size_in_chars)
+	  size_in_chars = XFASTINT (Vprint_length);
 
-	for (ptrdiff_t i = 0; i < size_in_bytes; i++)
+	for (ptrdiff_t i = 0; i < size_in_chars; i++)
 	  {
 	    maybe_quit ();
-	    unsigned char c = data[i];
+	    unsigned char c = bool_vector_uchar_data (obj)[i];
 	    if (c == '\n' && print_escape_newlines)
 	      print_c_string ("\\n", printcharfun);
 	    else if (c == '\f' && print_escape_newlines)
 	      print_c_string ("\\f", printcharfun);
-	    else if (c > '\177'
-		     || (print_escape_control_characters && c_iscntrl (c)))
+	    else if (c > '\177')
 	      {
 		/* Use octal escapes to avoid encoding issues.  */
-		octalout (c, data, i + 1, size_in_bytes, printcharfun);
+		int len = sprintf (buf, "\\%o", c);
+		strout (buf, len, len, printcharfun);
 	      }
 	    else
 	      {
@@ -1422,7 +1402,7 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 	      }
 	  }
 
-	if (size_in_bytes < real_size_in_bytes)
+	if (size_in_chars < real_size_in_chars)
 	  print_c_string (" ...", printcharfun);
 	printchar ('\"', printcharfun);
       }
@@ -1874,7 +1854,9 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		     (when requested) a non-ASCII character in a unibyte buffer,
 		     print single-byte non-ASCII string chars
 		     using octal escapes.  */
-		  octalout (c, SDATA (obj), i_byte, size_byte, printcharfun);
+		  char outbuf[5];
+		  int len = sprintf (outbuf, "\\%03o", c + 0u);
+		  strout (outbuf, len, len, printcharfun);
 		  need_nonhex = false;
 		}
 	      else if (multibyte
@@ -1888,6 +1870,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		}
 	      else
 		{
+                  bool still_need_nonhex = false;
 		  /* If we just had a hex escape, and this character
 		     could be taken as part of it,
 		     output `\ ' to prevent that.  */
@@ -1901,16 +1884,22 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
                            ? (c = 'n', true)
                            : c == '\f' && print_escape_newlines
                            ? (c = 'f', true)
+                           : c == '\0' && print_escape_control_characters
+                           ? (c = '0', still_need_nonhex = true)
                            : c == '\"' || c == '\\')
                     {
                       printchar ('\\', printcharfun);
                       printchar (c, printcharfun);
                     }
                   else if (print_escape_control_characters && c_iscntrl (c))
-		    octalout (c, SDATA (obj), i_byte, size_byte, printcharfun);
+                    {
+                      char outbuf[1 + 3 + 1];
+                      int len = sprintf (outbuf, "\\%03o", c + 0u);
+                      strout (outbuf, len, len, printcharfun);
+                    }
                   else
                     printchar (c, printcharfun);
-		  need_nonhex = false;
+		  need_nonhex = still_need_nonhex;
 		}
 	    }
 	  printchar ('\"', printcharfun);

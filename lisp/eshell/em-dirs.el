@@ -207,7 +207,7 @@ Thus, this does not include the current directory.")
   (when eshell-cd-on-directory
     (make-local-variable 'eshell-interpreter-alist)
     (setq eshell-interpreter-alist
-	  (cons (cons #'(lambda (file _args)
+	  (cons (cons #'(lambda (file args)
                           (eshell-lone-directory-p file))
 		      'eshell-dirs-substitute-cd)
 		eshell-interpreter-alist)))
@@ -282,7 +282,7 @@ Thus, this does not include the current directory.")
 (defvar pcomplete-stub)
 (defvar pcomplete-last-completion-raw)
 (declare-function pcomplete-actual-arg "pcomplete")
-(declare-function pcomplete-uniquify-list "pcomplete")
+(declare-function pcomplete-uniqify-list "pcomplete")
 
 (defun eshell-complete-user-reference ()
   "If there is a user reference, complete it."
@@ -293,14 +293,14 @@ Thus, this does not include the current directory.")
       (throw 'pcomplete-completions
 	     (progn
 	       (eshell-read-user-names)
-	       (pcomplete-uniquify-list
+	       (pcomplete-uniqify-list
 		(mapcar
 		 (function
 		  (lambda (user)
 		    (file-name-as-directory (cdr user))))
 		 eshell-user-names)))))))
 
-(defun eshell/pwd (&rest _args)
+(defun eshell/pwd (&rest args)
   "Change output from `pwd' to be cleaner."
   (let* ((path default-directory)
 	 (len (length path)))

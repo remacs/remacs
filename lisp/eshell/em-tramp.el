@@ -26,7 +26,6 @@
 ;;; Code:
 
 (require 'esh-util)
-(require 'esh-cmd)
 
 (eval-when-compile
   (require 'esh-mode)

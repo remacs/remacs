@@ -2,7 +2,7 @@
 # Attempt to guess a canonical system name.
 #   Copyright 1992-2018 Free Software Foundation, Inc.
 
-timestamp='2018-03-08'
+timestamp='2018-02-24'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -1473,7 +1473,7 @@ EOF
 exit 1
 
 # Local variables:
-# eval: (add-hook 'before-save-hook 'time-stamp)
+# eval: (add-hook 'write-file-functions 'time-stamp)
 # time-stamp-start: "timestamp='"
 # time-stamp-format: "%:y-%02m-%02d"
 # time-stamp-end: "'"

@@ -26,7 +26,6 @@
 ;;; Code:
 (require 'ert)
 (require 'ls-lisp)
-(require 'dired)
 
 (ert-deftest ls-lisp-unload ()
   "Test for https://debbugs.gnu.org/xxxxx ."

@@ -167,9 +167,6 @@ to writing a completion function."
   (eshell-cmpl--custom-variable-docstring 'pcomplete-suffix-list)
   :type (get 'pcomplete-suffix-list 'custom-type)
   :group 'pcomplete)
-;; Only labelled obsolete in 26.1, but all it does it set
-;; pcomplete-suffix-list, which is itself obsolete since 24.1.
-(make-obsolete-variable 'eshell-cmpl-suffix-list nil "24.1")
 
 (defcustom eshell-cmpl-recexact nil
   (eshell-cmpl--custom-variable-docstring 'pcomplete-recexact)
@@ -262,9 +259,8 @@ to writing a completion function."
        eshell-cmpl-ignore-case)
   (set (make-local-variable 'pcomplete-autolist)
        eshell-cmpl-autolist)
-  (if (boundp 'pcomplete-suffix-list)
-      (set (make-local-variable 'pcomplete-suffix-list)
-           eshell-cmpl-suffix-list))
+  (set (make-local-variable 'pcomplete-suffix-list)
+       eshell-cmpl-suffix-list)
   (set (make-local-variable 'pcomplete-recexact)
        eshell-cmpl-recexact)
   (set (make-local-variable 'pcomplete-man-function)
@@ -438,7 +434,7 @@ to writing a completion function."
 	    (setq comps-in-path (cdr comps-in-path)))
 	  (setq paths (cdr paths)))
 	;; Add aliases which are currently visible, and Lisp functions.
-	(pcomplete-uniquify-list
+	(pcomplete-uniqify-list
 	 (if glob-name
 	     completions
 	   (setq completions

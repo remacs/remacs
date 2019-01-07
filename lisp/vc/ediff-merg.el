@@ -194,7 +194,7 @@ Buffer B."
 
 (defun ediff-set-merge-mode ()
   (normal-mode t)
-  (remove-hook 'write-file-functions 'ediff-set-merge-mode t))
+  (remove-hook 'local-write-file-hooks 'ediff-set-merge-mode))
 
 
 ;; Go over all diffs starting with DIFF-NUM and copy regions into buffer C

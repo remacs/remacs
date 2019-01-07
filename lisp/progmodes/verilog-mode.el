@@ -3966,9 +3966,7 @@ Key bindings specific to `verilog-mode-map' are:
             #'verilog-completion-at-point nil 'local)
 
   ;; Stuff for autos
-  (add-hook (if (boundp 'write-contents-hooks) 'write-contents-hooks
-	      'write-contents-functions) ; Emacs >= 22.1
-	    'verilog-auto-save-check nil 'local)
+  (add-hook 'write-contents-hooks 'verilog-auto-save-check nil 'local)
   ;; verilog-mode-hook call added by define-derived-mode
   )
 

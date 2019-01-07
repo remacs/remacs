@@ -43,7 +43,7 @@
   "Completion for GNU/Linux `kill', using /proc filesystem."
   (if (pcomplete-match "^-\\(.*\\)" 0)
       (pcomplete-here
-       (pcomplete-uniquify-list
+       (pcomplete-uniqify-list
 	(split-string
 	 (pcomplete-process-result "kill" "-l")))
        (pcomplete-match-string 1 0)))
@@ -82,7 +82,7 @@
 		 (args (split-string line " ")))
 	    (setq points (cons (nth 1 args) points)))
 	  (forward-line)))
-      (pcomplete-uniquify-list points))))
+      (pcomplete-uniqify-list points))))
 
 (defun pcomplete-pare-list (l r)
   "Destructively remove from list L all elements matching any in list R.
@@ -109,7 +109,7 @@ Test is done using `equal'."
 	    (setq points (cons (nth 1 args) points)))
 	  (forward-line)))
       (pcomplete-pare-list
-       (pcomplete-uniquify-list points)
+       (pcomplete-uniqify-list points)
        (cons "swap" (pcmpl-linux-mounted-directories))))))
 
 ;;; pcmpl-linux.el ends here

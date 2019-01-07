@@ -84,8 +84,6 @@
          . 'bat-label-face)
         ("\\_<\\(defined\\|set\\)\\_>[ \t]*\\(\\(\\sw\\|\\s_\\)+\\)"
          (2 font-lock-variable-name-face))
-        ("%~\\([0-9]\\)"
-         (1 font-lock-variable-name-face))
         ("%\\([^%~ \n]+\\)%?"
          (1 font-lock-variable-name-face))
         ("!\\([^!%~ \n]+\\)!?"  ; delayed-expansion !variable!
