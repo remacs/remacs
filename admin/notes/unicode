@@ -230,37 +230,21 @@ nontrivial changes to the build process.
 
 	admin/charsets/mapfiles/cns2ucsdkw.txt
 
- * iso-2022-7bit
+ * iso-2022-jp
 
-     Each of these files contains just one CJK charset, but Emacs
-     currently has no easy way to specify set-charset-priority on a
-     per-file basis, so converting any of these files to UTF-8 might
-     change the file's appearance when viewed by an Emacs that is
-     operating in some other language environment.
+     This contains just one CJK charset, but Emacs currently has no
+     easy way to specify set-charset-priority on a per-file basis, so
+     converting this file to UTF-8 might change the file's appearance
+     when viewed by an Emacs that is operating in some other language
+     environment.
 
 	etc/tutorials/TUTORIAL.ja
-	lisp/international/ja-dic-cnv.el
-	lisp/international/ja-dic-utl.el
-	lisp/international/kinsoku.el
-	lisp/international/kkc.el
-	lisp/international/titdic-cnv.el
-	lisp/language/japan-util.el
-	lisp/language/japanese.el
-	lisp/leim/quail/cyril-jis.el
-	lisp/leim/quail/hanja-jis.el
-	lisp/leim/quail/japanese.el
-	lisp/leim/quail/py-punct.el
-	lisp/leim/quail/pypunct-b5.el
-
-     This file contains just Chinese characters, and has same problem.
-     Also, it contains characters that cannot be encoded in UTF-8.
-
-	lisp/international/titdic-cnv.el
 
  * utf-8-emacs
 
      These files contain characters that cannot be encoded in UTF-8.
 
+	lisp/international/titdic-cnv.el
 	lisp/language/ethio-util.el
 	lisp/language/ethiopic.el
 	lisp/language/ind-util.el
