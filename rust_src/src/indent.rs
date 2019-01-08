@@ -7,7 +7,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     buffers::{point_byte, point_min_byte},
     editfns::{point, point_min},
-    lisp::defsubr,
+    lisp::{defsubr, LispObject},
     numbers::IsLispNatnum,
     remacs_sys::{self, find_newline, position_indentation, scan_for_column, set_point, EmacsInt},
     remacs_sys::{del_range, last_known_column, Findent_to, Finsert_char, Qnil, Qt},
@@ -74,9 +74,9 @@ pub fn current_column() -> EmacsInt {
 ///
 /// The return value is the current column.
 #[lisp_fn(min = "1", intspec = "NMove to column")]
-pub fn move_to_column(column: EmacsInt, force: bool) -> EmacsInt {
+pub fn move_to_column(column: EmacsInt, force: LispObject) -> EmacsInt {
     column.check_natnum();
-    let buffer = &mut ThreadState::current_buffer();
+    let buffer = &mut ThreadState::current_buffer().unwrap();
     let goal = column;
 
     let mut col = goal;
@@ -91,7 +91,7 @@ pub fn move_to_column(column: EmacsInt, force: bool) -> EmacsInt {
     let prev_col = prev_col as i64;
 
     // If a tab char made us overshoot, change it to spaces and scan through it again
-    if !force && col > goal {
+    if !force.is_nil() && col > goal {
         let pos_byte = buffer.dec_pos(buffer.pt_byte);
         let c = buffer.fetch_char(pos_byte);
 
@@ -103,8 +103,10 @@ pub fn move_to_column(column: EmacsInt, force: bool) -> EmacsInt {
 
                 // Delete the tab and indent to COL
                 del_range(buffer.pt, buffer.pt + 1);
+                let goal_pt = buffer.pt;
+                let goal_pt_byte = buffer.pt_byte;
                 Findent_to(col.into(), Qnil);
-                set_point_both(buffer.pt, buffer.pt_byte);
+                set_point_both(goal_pt, goal_pt_byte);
             }
 
             // Set the last_known... vars consistently.
@@ -113,7 +115,7 @@ pub fn move_to_column(column: EmacsInt, force: bool) -> EmacsInt {
     }
 
     // If line ends prematurely, add space to the end.
-    if col < goal && force {
+    if col < goal && force == Qt {
         col = goal;
         unsafe { Findent_to(col.into(), Qnil) };
     }
