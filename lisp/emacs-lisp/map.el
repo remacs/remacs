@@ -5,6 +5,7 @@
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 ;; Keywords: convenience, map, hash-table, alist, array
 ;; Version: 1.2
+;; Package-Requires: ((emacs "25"))
 ;; Package: map
 
 ;; Maintainer: emacs-devel@gnu.org
