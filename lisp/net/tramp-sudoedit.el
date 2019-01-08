@@ -44,8 +44,8 @@
 (tramp--with-startup
  (add-to-list 'tramp-methods
               `(,tramp-sudoedit-method
-                (tramp-sudo-login      (("sudo") ("-u" "%u") ("-S") ("-H")
-			                ("-p" "Password:") ("--")))))
+                (tramp-sudo-login (("sudo") ("-u" "%u") ("-S") ("-H")
+			           ("-p" "Password:") ("--")))))
 
  (add-to-list 'tramp-default-user-alist '("\\`sudoedit\\'" nil "root"))
 
@@ -299,8 +299,7 @@ absolute file names."
 	  (with-parsed-tramp-file-name newname v2
 	    (tramp-flush-file-properties
 	     v2 (file-name-directory v2-localname))
-	    (tramp-flush-file-properties v2 v2-localname)
-	    (when (tramp-rclone-file-name-p newname))))))))
+	    (tramp-flush-file-properties v2 v2-localname)))))))
 
 (defun tramp-sudoedit-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
@@ -453,7 +452,7 @@ the result will be a local, non-Tramp, file name."
 	  (delq
 	   nil
 	   (mapcar
-	    (lambda (l) (and (not (string-match-p  "^[[:space:]]*$" l)) l))
+	    (lambda (l) (and (not (string-match-p "^[[:space:]]*$" l)) l))
 	    (split-string (buffer-string) "\n" 'omit)))))))))
 
 (defun tramp-sudoedit-handle-file-readable-p (filename)
@@ -675,7 +674,7 @@ component is used as the target of the symlink."
 	    (type (and (stringp (nth 2 context)) (nth 2 context)))
 	    (range (and (stringp (nth 3 context)) (nth 3 context))))
 	(when (tramp-sudoedit-send-command
-	       v  "chcon"
+	       v "chcon"
 	       (when user (format "--user=%s" user))
 	       (when role (format "--role=%s" role))
 	       (when type (format "--type=%s" type))
