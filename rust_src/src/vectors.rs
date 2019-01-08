@@ -102,25 +102,26 @@ impl LispObject {
 
 impl Debug for LispVectorlikeRef {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        if let Some(v) = self.as_vector() {
-            let mut first = true;
-            write!(f, "[")?;
-            for el in v.as_slice() {
-                if first {
-                    first = false;
-                } else {
-                    write!(f, " ")?;
+        match self.as_vector() {
+            Some(v) => {
+                write!(f, "[")?;
+                match v.as_slice() {
+                    [] => {}
+                    [first, rest..] => {
+                        write!(f, "{:?}", first)?;
+                        for elt in rest {
+                            write!(f, " {:?}", elt)?;
+                        }
+                    }
                 }
-                write!(f, "{:?}", el)?;
+                write!(f, "]")
             }
-            write!(f, "]")
-        } else {
-            write!(
+            None => write!(
                 f,
                 "#<VECTOR-LIKE @ {:p}: VAL({:#X})>",
                 self.as_ptr(),
                 LispObject::tag_ptr(*self, Lisp_Type::Lisp_Vectorlike).to_C()
-            )
+            ),
         }
     }
 }
