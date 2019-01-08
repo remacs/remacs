@@ -500,8 +500,7 @@ the generated Quail package is saved."
 	    (goto-char (point-min))
 	    (decode-coding-region (point-min) (point-max) coding-system)
 	    ;; Explicitly set eol format to `unix'.
-	    (setq coding-system-for-write
-		  (coding-system-change-eol-conversion coding-system 'unix))
+	    (setq coding-system-for-write 'utf-8-unix)
 	    (remove-text-properties (point-min) (point-max) '(charset nil)))
 
 	  (set-buffer-multibyte t)
@@ -522,7 +521,6 @@ the generated Quail package is saved."
 	  (princ ";; Local Variables:\n")
 	  (princ ";; version-control: never\n")
 	  (princ ";; no-update-autoloads: t\n")
-	  (princ (format ";; coding: %s\n" coding-system-for-write))
 	  (princ ";; End:\n"))))))
 
 ;;;###autoload
@@ -1148,8 +1146,7 @@ the generated Quail package is saved."
 	      copyright (nth 6 slot))
 	(message "Converting %s to %s..." dicfile quailfile)
 	;; Explicitly set eol format to `unix'.
-	(setq coding-system-for-write
-	      (coding-system-change-eol-conversion coding 'unix))
+	(setq coding-system-for-write 'utf-8-unix)
 	(with-temp-file (expand-file-name quailfile dirname)
 	  (insert (format-message ";; Quail package `%s'\n" name))
 	  (insert (format-message
@@ -1178,7 +1175,6 @@ the generated Quail package is saved."
 	  (insert ";; Local Variables:\n"
 		  ";; version-control: never\n"
 		  ";; no-update-autoloads: t\n"
-		  (format ";; coding: %s\n" coding)
 		  ";; End:\n\n"
 		  ";;; " quailfile " ends here\n"))
 	(message "Converting %s to %s...done" dicfile quailfile))
