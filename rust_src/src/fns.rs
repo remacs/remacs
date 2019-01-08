@@ -1,5 +1,7 @@
 //* Random utility Lisp functions.
 
+use std::ptr;
+
 use libc;
 
 use remacs_macros::lisp_fn;
@@ -8,18 +10,19 @@ use crate::{
     eval::{un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
-    lists::{assq, car, get, member, memq, put},
+    lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
+    remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
     remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
-    remacs_sys::{equal_kind, Lisp_Type},
-    remacs_sys::{Fload, Fmapc},
+    remacs_sys::{equal_kind, EmacsInt, Lisp_Type},
     remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
+    vectors::length,
 };
 
 /// Return t if FEATURE is present in this Emacs.
@@ -48,28 +51,24 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     unsafe {
         if Vautoload_queue.is_not_nil() {
-            Vautoload_queue =
-                LispObject::cons(LispObject::cons(0, globals.Vfeatures), Vautoload_queue);
+            Vautoload_queue = ((0, globals.Vfeatures), Vautoload_queue).into();
         }
     }
     if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
         unsafe {
-            globals.Vfeatures = LispObject::cons(feature, globals.Vfeatures);
+            globals.Vfeatures = (feature, globals.Vfeatures).into();
         }
     }
     if subfeature.is_not_nil() {
         put(feature, Qsubfeatures, subfeature);
     }
     unsafe {
-        globals.Vcurrent_load_list = LispObject::cons(
-            LispObject::cons(Qprovide, feature),
-            globals.Vcurrent_load_list,
-        );
+        globals.Vcurrent_load_list = ((Qprovide, feature), globals.Vcurrent_load_list).into();
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.into(), globals.Vafter_load_alist).as_cons() {
-            Fmapc(Qfuncall, c.cdr());
+        if let Some((_, d)) = assq(feature.into(), globals.Vafter_load_alist).into() {
+            Fmapc(Qfuncall, d);
         }
     }
     feature.into()
@@ -92,6 +91,19 @@ pub fn quote(args: LispCons) -> LispObject {
     }
 
     args.car()
+}
+
+/// Apply FUNCTION to each element of SEQUENCE, and make a list of the
+/// results.  The result is a list just as long as SEQUENCE.  SEQUENCE
+/// may be a list, a vector, a bool-vector, or a string.
+#[lisp_fn]
+pub fn mapc(function: LispObject, sequence: LispObject) -> LispObject {
+    let leni = length(sequence) as EmacsInt;
+    if sequence.is_char_table() {
+        wrong_type!(Qlistp, sequence);
+    }
+    mapcar1(leni, ptr::null_mut(), function, sequence);
+    sequence
 }
 
 /* List of features currently being require'd, innermost first.  */
@@ -136,7 +148,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
             .any(|elt| elt.cdr().is_nil() && elt.car().is_string());
 
     if from_file {
-        let tem = LispObject::cons(Qrequire, feature);
+        let tem = (Qrequire, feature).into();
         if member(tem, current_load_list).is_nil() {
             loadhist_attach(tem);
         }
@@ -175,7 +187,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     unsafe {
         // Update the list for any nested `require's that occur.
         record_unwind_protect(Some(require_unwind), require_nesting_list);
-        require_nesting_list = LispObject::cons(feature, require_nesting_list);
+        require_nesting_list = (feature, require_nesting_list).into();
 
         // Value saved here is to be restored into Vautoload_queue
         record_unwind_protect(Some(un_autoload), Vautoload_queue);

@@ -647,14 +647,14 @@ The type returned can be `comment', `string' or `paren'."
    ((python-rx string-delimiter)
     (0 (ignore (python-syntax-stringify))))))
 
+(define-obsolete-variable-alias 'python--prettify-symbols-alist
+  'python-prettify-symbols-alist "26.1")
+
 (defvar python-prettify-symbols-alist
   '(("lambda"  . ?λ)
     ("and" . ?∧)
     ("or" . ?∨))
   "Value for `prettify-symbols-alist' in `python-mode'.")
-
-(define-obsolete-variable-alias 'python--prettify-symbols-alist
-  'python-prettify-symbols-alist "26.1")
 
 (defsubst python-syntax-count-quotes (quote-char &optional point limit)
   "Count number of quotes around point (max is 3).
@@ -1520,7 +1520,7 @@ of the statement."
                        ;; narrowing.
                        (cl-assert (> string-start last-string-end)
                                   :show-args
-                                  "
+                                  "\
 Overlapping strings detected (start=%d, last-end=%d)")
                        (goto-char string-start)
                        (if (python-syntax-context 'paren)
@@ -3196,10 +3196,10 @@ t when called interactively."
                      (insert-file-contents
                       (or temp-file-name file-name))
                      (python-info-encoding)))
-         (file-name (expand-file-name (file-local-name file-name)))
+         (file-name (file-local-name (expand-file-name file-name)))
          (temp-file-name (when temp-file-name
-                           (expand-file-name
-                            (file-local-name temp-file-name)))))
+                           (file-local-name (expand-file-name
+                                             temp-file-name)))))
     (python-shell-send-string
      (format
       (concat
@@ -5299,6 +5299,7 @@ REPORT-FN is Flymake's callback function."
     (save-excursion (insert (make-string 2 last-command-event)))))
 
 (defvar electric-indent-inhibit)
+(defvar prettify-symbols-alist)
 
 ;;;###autoload
 (define-derived-mode python-mode prog-mode "Python"
@@ -5393,10 +5394,8 @@ REPORT-FN is Flymake's callback function."
            "`outline-level' function for Python mode."
            (1+ (/ (current-indentation) python-indent-offset))))
 
-  (when (and (boundp 'prettify-symbols-alist)
-             (boundp 'python--prettify-symbols-alist))
-    (set (make-local-variable 'prettify-symbols-alist)
-         python--prettify-symbols-alist))
+  (set (make-local-variable 'prettify-symbols-alist)
+       python-prettify-symbols-alist)
 
   (python-skeleton-add-menu-items)
 

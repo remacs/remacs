@@ -473,7 +473,7 @@ location of point in the current buffer."
   :group 'find-file)
 
 ;;;It is not useful to make this a local variable.
-;;;(put 'find-file-not-found-hooks 'permanent-local t)
+;;;(put 'find-file-not-found-functions 'permanent-local t)
 (define-obsolete-variable-alias 'find-file-not-found-hooks
     'find-file-not-found-functions "22.1")
 (defvar find-file-not-found-functions nil
@@ -483,7 +483,8 @@ Variable `buffer-file-name' is already set up.
 The functions are called in the order given until one of them returns non-nil.")
 
 ;;;It is not useful to make this a local variable.
-;;;(put 'find-file-hooks 'permanent-local t)
+;;;(put 'find-file-hook 'permanent-local t)
+;; I found some external files still using the obsolete form in 2018.
 (define-obsolete-variable-alias 'find-file-hooks 'find-file-hook "22.1")
 (defcustom find-file-hook nil
   "List of functions to be called after a buffer is loaded from a file.
@@ -494,6 +495,7 @@ functions are called."
   :options '(auto-insert)
   :version "22.1")
 
+;; I found some external files still using the obsolete form in 2018.
 (define-obsolete-variable-alias 'write-file-hooks 'write-file-functions "22.1")
 (defvar write-file-functions nil
   "List of functions to be called before saving a buffer to a file.
@@ -513,11 +515,13 @@ node `(elisp)Saving Buffers'.)  To perform various checks or
 updates before the buffer is saved, use `before-save-hook'.")
 (put 'write-file-functions 'permanent-local t)
 
+;; I found some files still using the obsolete form in 2018.
 (defvar local-write-file-hooks nil)
 (make-variable-buffer-local 'local-write-file-hooks)
 (put 'local-write-file-hooks 'permanent-local t)
 (make-obsolete-variable 'local-write-file-hooks 'write-file-functions "22.1")
 
+;; I found some files still using the obsolete form in 2018.
 (define-obsolete-variable-alias 'write-contents-hooks
     'write-contents-functions "22.1")
 (defvar write-contents-functions nil
@@ -5206,9 +5210,14 @@ about certain files that you'd usually rather not save."
 
 (defun save-some-buffers (&optional arg pred)
   "Save some modified file-visiting buffers.  Asks user about each one.
-You can answer `y' to save, `n' not to save, `C-r' to look at the
-buffer in question with `view-buffer' before deciding or `d' to
-view the differences using `diff-buffer-with-file'.
+You can answer `y' or SPC to save, `n' or DEL not to save, `C-r'
+to look at the buffer in question with `view-buffer' before
+deciding, `d' to view the differences using
+`diff-buffer-with-file', `!' to save the buffer and all remaining
+buffers without any further querying, `.' to save only the
+current buffer and skip the remaining ones and `q' or RET to exit
+the function without saving any more buffers.  `C-h' displays a
+help message describing these options.
 
 This command first saves any buffers where `buffer-save-without-query' is
 non-nil, without asking.

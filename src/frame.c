@@ -1318,7 +1318,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
   /* We want to make sure that the next event generates a frame-switch
      event to the appropriate frame.  This seems kludgy to me, but
      before you take it out, make sure that evaluating something like
-     (select-window (frame-root-window (new-frame))) doesn't end up
+     (select-window (frame-root-window (make-frame))) doesn't end up
      with your typing being interpreted in the new frame instead of
      the one you're actually typing in.  */
 #ifdef HAVE_WINDOW_SYSTEM
@@ -2500,27 +2500,6 @@ If there is no window system support, this function does nothing.  */)
   x_focus_frame (decode_window_system_frame (frame), !NILP (noactivate));
 #endif
   return Qnil;
-}
-
-DEFUN ("frame-after-make-frame",
-       Fframe_after_make_frame,
-       Sframe_after_make_frame, 2, 2, 0,
-       doc: /* Mark FRAME as made.
-FRAME nil means use the selected frame.  Second argument MADE non-nil
-means functions on `window-configuration-change-hook' are called
-whenever the window configuration of FRAME changes.  MADE nil means
-these functions are not called.
-
-This function is currently called by `make-frame' only and should be
-otherwise used with utter care to avoid that running functions on
-`window-configuration-change-hook' is impeded forever.  */)
-  (Lisp_Object frame, Lisp_Object made)
-{
-  struct frame *f = decode_live_frame (frame);
-  f->after_make_frame = !NILP (made);
-  f->inhibit_horizontal_resize = false;
-  f->inhibit_vertical_resize = false;
-  return made;
 }
 
 
@@ -5718,7 +5697,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
   defsubr (&Sx_focus_frame);
-  defsubr (&Sframe_after_make_frame);
   defsubr (&Sredirect_frame_focus);
   defsubr (&Sframe_focus);
   defsubr (&Sframe_parameters);

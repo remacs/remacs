@@ -18,8 +18,6 @@ use crate::{
     },
 };
 
-pub static MIME_LINE_LENGTH: isize = 76;
-
 /// Return t if OBJECT is a string.
 #[lisp_fn]
 pub fn stringp(object: LispObject) -> bool {

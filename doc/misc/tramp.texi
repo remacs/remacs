@@ -3059,6 +3059,22 @@ BSD mtree format
 @cindex @file{mtree} file archive suffix
 @cindex file archive suffix @file{mtree}
 
+@item @samp{.odb}, @samp{.odf}, @samp{.odg}, @samp{.odp}, @samp{.ods},
+@samp{.odt} ---
+OpenDocument formats
+@cindex @file{odb} file archive suffix
+@cindex @file{odf} file archive suffix
+@cindex @file{odg} file archive suffix
+@cindex @file{odp} file archive suffix
+@cindex @file{ods} file archive suffix
+@cindex @file{odt} file archive suffix
+@cindex file archive suffix @file{odb}
+@cindex file archive suffix @file{odf}
+@cindex file archive suffix @file{odg}
+@cindex file archive suffix @file{odp}
+@cindex file archive suffix @file{ods}
+@cindex file archive suffix @file{odt}
+
 @item @samp{.pax} ---
 Posix archives
 @cindex @file{pax} file archive suffix
@@ -3563,7 +3579,7 @@ Why is @file{~/.sh_history} file on the remote host growing?
 @vindex tramp-histfile-override
 Due to the remote shell saving tilde expansions triggered by
 @value{tramp}, the history file is probably growing rapidly.
-@value{tramp} can suppress this behaviour with the user option
+@value{tramp} can suppress this behavior with the user option
 @option{tramp-histfile-override}.  When set to @code{t}, environment
 variable @env{HISTFILE} is unset, and environment variables
 @env{HISTFILESIZE} @env{HISTSIZE} are set to 0.

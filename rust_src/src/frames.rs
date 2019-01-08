@@ -1,5 +1,7 @@
 //! Generic frame functions.
 
+use libc::c_int;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -288,9 +290,9 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
 /// FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
 /// display.
 #[lisp_fn(min = "0")]
-pub fn frame_position(frame: LispFrameOrSelected) -> LispObject {
+pub fn frame_position(frame: LispFrameOrSelected) -> (c_int, c_int) {
     let frame_ref = frame.live_or_error();
-    LispObject::cons(frame_ref.left_pos, frame_ref.top_pos)
+    (frame_ref.left_pos, frame_ref.top_pos)
 }
 
 /// Returns t if the mouse pointer displayed on FRAME is visible.
@@ -503,6 +505,24 @@ pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> Lisp
         // acceptable frame in the list, return it.
         prev.as_frame_or_error()
     }
+}
+
+/// Mark FRAME as made.
+/// FRAME nil means use the selected frame.  Second argument MADE non-nil
+/// means functions on `window-configuration-change-hook' are called
+/// whenever the window configuration of FRAME changes.  MADE nil means
+/// these functions are not called.
+///
+/// This function is currently called by `make-frame' only and should be
+/// otherwise used with utter care to avoid that running functions on
+/// `window-configuration-change-hook' is impeded forever.
+#[lisp_fn]
+pub fn frame_after_make_frame(frame: LispFrameOrSelected, made: LispObject) -> LispObject {
+    let mut frame_ref = frame.live_or_error();
+    frame_ref.set_after_make_frame(made.is_not_nil());
+    frame_ref.set_inhibit_horizontal_resize(false);
+    frame_ref.set_inhibit_vertical_resize(false);
+    made
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

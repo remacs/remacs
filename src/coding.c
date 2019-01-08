@@ -8531,27 +8531,6 @@ are lower-case).  */)
   return (SCHARS (val) == 0 ? Qnil : Fintern (val, Qnil));
 }
 
-DEFUN ("check-coding-system", Fcheck_coding_system, Scheck_coding_system,
-       1, 1, 0,
-       doc: /* Check validity of CODING-SYSTEM.
-If valid, return CODING-SYSTEM, else signal a `coding-system-error' error.
-It is valid if it is nil or a symbol defined as a coding system by the
-function `define-coding-system'.  */)
-  (Lisp_Object coding_system)
-{
-  Lisp_Object define_form;
-
-  define_form = Fget (coding_system, Qcoding_system_define_form);
-  if (! NILP (define_form))
-    {
-      Fput (coding_system, Qcoding_system_define_form, Qnil);
-      safe_eval (define_form);
-    }
-  if (!NILP (Fcoding_system_p (coding_system)))
-    return coding_system;
-  xsignal1 (Qcoding_system_error, coding_system);
-}
-
 
 /* Detect how the bytes at SRC of length SRC_BYTES are encoded.  If
    HIGHEST, return the coding system of the highest
@@ -10711,20 +10690,6 @@ DEFUN ("coding-system-plist", Fcoding_system_plist, Scoding_system_plist,
   return CODING_ATTR_PLIST (attrs);
 }
 
-
-DEFUN ("coding-system-aliases", Fcoding_system_aliases, Scoding_system_aliases,
-       1, 1, 0,
-       doc: /* Return the list of aliases of CODING-SYSTEM.  */)
-  (Lisp_Object coding_system)
-{
-  Lisp_Object spec;
-
-  if (NILP (coding_system))
-    coding_system = Qno_conversion;
-  CHECK_CODING_SYSTEM_GET_SPEC (coding_system, spec);
-  return AREF (spec, 1);
-}
-
 DEFUN ("coding-system-eol-type", Fcoding_system_eol_type,
        Scoding_system_eol_type, 1, 1, 0,
        doc: /* Return eol-type of CODING-SYSTEM.
@@ -10957,7 +10922,6 @@ syms_of_coding (void)
 
   defsubr (&Sread_coding_system);
   defsubr (&Sread_non_nil_coding_system);
-  defsubr (&Scheck_coding_system);
   defsubr (&Sdetect_coding_region);
   defsubr (&Sdetect_coding_string);
   defsubr (&Sfind_coding_systems_region_internal);
@@ -10983,7 +10947,6 @@ syms_of_coding (void)
   defsubr (&Scoding_system_put);
   defsubr (&Scoding_system_base);
   defsubr (&Scoding_system_plist);
-  defsubr (&Scoding_system_aliases);
   defsubr (&Scoding_system_eol_type);
   defsubr (&Scoding_system_priority_list);
 

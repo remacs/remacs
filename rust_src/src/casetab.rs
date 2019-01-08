@@ -37,7 +37,7 @@ pub fn case_table_p(object: LispObject) -> bool {
 /// Return the case table of the current buffer.
 #[lisp_fn]
 pub fn current_case_table() -> LispObject {
-    ThreadState::current_buffer().downcase_table_
+    ThreadState::current_buffer_unchecked().downcase_table_
 }
 
 /// Return the standard case table.

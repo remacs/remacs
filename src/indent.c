@@ -299,14 +299,6 @@ skip_invisible (ptrdiff_t pos, ptrdiff_t *next_boundary_p, ptrdiff_t to, Lisp_Ob
       }									\
   } while (0)
 
-/* Cancel any recorded value of the horizontal position.  */
-
-void
-invalidate_current_column (void)
-{
-  last_known_column_point = 0;
-}
-
 ptrdiff_t
 current_column (void)
 {

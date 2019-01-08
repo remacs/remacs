@@ -126,4 +126,10 @@ pub fn move_to_column(column: EmacsInt, force: bool) -> EmacsInt {
     col.into()
 }
 
+// Cancel any recorded value of the horizontal position.
+#[no_mangle]
+pub extern "C" fn invalidate_current_column() {
+    unsafe { last_known_column_point = 0 };
+}
+
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

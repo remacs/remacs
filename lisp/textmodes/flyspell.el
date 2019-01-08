@@ -1944,6 +1944,10 @@ spell-check."
       (call-interactively flyspell--prev-meta-tab-binding)
     (let ((pos     (point))
           (old-max (point-max)))
+      ;; Flush a possibly stale cache from previous invocations of
+      ;; flyspell-auto-correct-word.
+      (if (not (eq last-command 'flyspell-auto-correct-word))
+          (setq flyspell-auto-correct-region nil))
       ;; Use the correct dictionary.
       (flyspell-accept-buffer-local-defs)
       (if (and (eq flyspell-auto-correct-pos pos)

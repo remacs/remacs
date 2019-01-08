@@ -291,12 +291,9 @@ pub fn defalias(
 
         if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
-            loadhist_attach(LispObject::cons(true, sym));
+            loadhist_attach((true, sym).into());
         }
-        loadhist_attach(LispObject::cons(
-            if autoload { Qautoload } else { Qdefun },
-            sym,
-        ));
+        loadhist_attach((if autoload { Qautoload } else { Qdefun }, sym).into());
     }
 
     // Handle automatic advice activation.
@@ -323,7 +320,7 @@ pub fn defalias(
 /// of args.  MAX is the maximum number or the symbol `many', for a
 /// function with `&rest' args, or `unevalled' for a special form.
 #[lisp_fn]
-pub fn subr_arity(subr: LispSubrRef) -> LispObject {
+pub fn subr_arity(subr: LispSubrRef) -> (EmacsInt, LispObject) {
     let minargs = subr.min_args();
     let maxargs = if subr.is_many() {
         Qmany
@@ -333,7 +330,7 @@ pub fn subr_arity(subr: LispSubrRef) -> LispObject {
         LispObject::from(EmacsInt::from(subr.max_args()))
     };
 
-    LispObject::cons(EmacsInt::from(minargs), maxargs)
+    (EmacsInt::from(minargs), maxargs)
 }
 
 /// Return name of subroutine SUBR.
@@ -374,7 +371,8 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
             if !fwd.is_null() && blv.valcell.eq(blv.defcell) {
                 unsafe { do_symval_forwarding(fwd) }
             } else {
-                blv.defcell.as_cons_or_error().cdr()
+                let (_, d) = blv.defcell.into();
+                d
             }
         }
         symbol_redirect::SYMBOL_FORWARDED => {
@@ -521,7 +519,7 @@ pub unsafe extern "C" fn do_symval_forwarding(valcontents: *const Lisp_Fwd) -> L
         Lisp_Fwd_Buffer_Obj => *(*valcontents)
             .u_buffer_objfwd
             .offset
-            .apply_ptr(ThreadState::current_buffer().as_mut()),
+            .apply_ptr(ThreadState::current_buffer_unchecked().as_mut()),
         Lisp_Fwd_Kboard_Obj => {
             // We used to simply use current_kboard here, but from Lisp
             // code, its value is often unexpected.  It seems nicer to
@@ -576,8 +574,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
                     }
                 } else {
                     prop = Fget(predicate, Qrange);
-                    if prop.is_cons() {
-                        let (min, max) = prop.as_cons_or_error().as_tuple();
+                    if let Some((min, max)) = prop.into() {
                         let args = [min, newval, max];
                         if !newval.is_number() || leq(&args) {
                             wrong_range(min, max, newval);
@@ -589,7 +586,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
             }
 
             if buf.is_null() {
-                buf = ThreadState::current_buffer().as_mut();
+                buf = ThreadState::current_buffer_unchecked().as_mut();
             }
             *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
         }
@@ -737,11 +734,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let mem = member(watch_function, watchers);
 
     if mem.is_nil() {
-        put(
-            symbol,
-            Qwatchers,
-            LispObject::cons(watch_function, watchers),
-        );
+        put(symbol, Qwatchers, (watch_function, watchers).into());
     }
 }
 
@@ -802,13 +795,13 @@ pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
 
     unsafe {
         if Vautoload_queue.is_not_nil() && function.is_not_nil() {
-            Vautoload_queue =
-                LispObject::cons(LispObject::cons(sym_obj, function), Vautoload_queue);
+            Vautoload_queue = ((sym_obj, function), Vautoload_queue).into();
         }
     }
 
     if is_autoload(function) {
-        put(symbol, Qautoload, function.as_cons_or_error().cdr());
+        let (_, d) = function.into();
+        put(symbol, Qautoload, d);
     }
 
     // Convert to eassert or remove after GC bug is found.  In the

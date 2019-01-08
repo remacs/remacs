@@ -19,7 +19,7 @@ use crate::{
 };
 
 fn casify_word(flag: case_action, words: EmacsInt) {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     let far_end = match unsafe { scan_words(buffer_ref.pt, words) } {
         0 => {
@@ -189,7 +189,7 @@ fn casefiddle_region(
         );
 
         for elt in bounds.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
-            let (car, cdr) = elt.as_cons_or_error().as_tuple();
+            let (car, cdr) = elt.into();
             unsafe { casify_region(action, car, cdr) };
         }
     }

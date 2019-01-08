@@ -987,7 +987,8 @@ Moves point to the end of the new text."
 (defcustom completion-cycle-threshold nil
   "Number of completion candidates below which cycling is used.
 Depending on this setting `completion-in-region' may use cycling,
-like `minibuffer-force-complete'.
+whereby invoking a completion command several times in a row
+completes to each of the candidates in turn, in a cyclic manner.
 If nil, cycling is never used.
 If t, cycling is always used.
 If an integer, cycling is used so long as there are not more
@@ -2951,6 +2952,8 @@ or a symbol, see `completion-pcm--merge-completions'."
         (`(,(and s1 (pred stringp)) ,(and s2 (pred stringp)) . ,rest)
          (setq p (cons (concat s1 s2) rest)))
         (`(,(and p1 (pred symbolp)) ,(and p2 (guard (eq p1 p2))) . ,_)
+         ;; Unused lexical variable warning due to body not using p1, p2.
+         ;; https://debbugs.gnu.org/16771
          (setq p (cdr p)))
         (`(star ,(pred symbolp) . ,rest) (setq p `(star . ,rest)))
         (`(,(pred symbolp) star . ,rest) (setq p `(star . ,rest)))

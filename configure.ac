@@ -365,7 +365,12 @@ OPTION_DEFAULT_OFF([w32], [use native MS Windows GUI in a Cygwin build])
 OPTION_DEFAULT_ON([gpm],[don't use -lgpm for mouse support on a GNU/Linux console])
 OPTION_DEFAULT_ON([dbus],[don't compile with D-Bus support])
 AC_ARG_WITH([gconf],[AS_HELP_STRING([--with-gconf],
-[compile with Gconf support (Gsettings replaces this)])],[],[with_gconf=maybe])
+[compile with Gconf support (Gsettings replaces this)])],[],
+[if test $with_features = yes; then
+with_gconf=maybe
+else
+with_gconf=no
+fi])
 OPTION_DEFAULT_ON([gsettings],[don't compile with GSettings support])
 OPTION_DEFAULT_ON([selinux],[don't compile with SELinux support])
 OPTION_DEFAULT_ON([gnutls],[don't use -lgnutls for SSL/TLS support])
@@ -3381,6 +3386,26 @@ fi
 AC_SUBST(LCMS2_CFLAGS)
 AC_SUBST(LCMS2_LIBS)
 
+HAVE_ZLIB=no
+LIBZ=
+if test "${with_zlib}" != "no"; then
+  OLIBS=$LIBS
+  AC_SEARCH_LIBS([inflateEnd], [z], [HAVE_ZLIB=yes])
+  LIBS=$OLIBS
+  case $ac_cv_search_inflateEnd in
+    -*) LIBZ=$ac_cv_search_inflateEnd ;;
+  esac
+fi
+if test "${HAVE_ZLIB}" = "yes"; then
+  AC_DEFINE([HAVE_ZLIB], 1, [Define to 1 if you have the zlib library (-lz).])
+  ### mingw32 doesn't use -lz, since it loads the library dynamically.
+  if test "${opsys}" = "mingw32"; then
+     LIBZ=
+  fi
+fi
+AC_SUBST(ZLIB_CFLAGS)
+AC_SUBST(ZLIB_LIBS)
+
 ### Dynamic modules support
 LIBMODULES=
 HAVE_MODULES=no
@@ -5047,10 +5072,14 @@ CARGO_BUILD="$CARGO build"
 CARGO_CLEAN="$CARGO clean"
 CARGO_TEST="$CARGO test"
 CARGO_CLIPPY="$CARGO clippy"
+CARGO_RUN="$CARGO run"
+CARGO_DOC="$CARGO doc --all --open --document-private-items"
 
 AC_SUBST(CARGO_BUILD)
 AC_SUBST(CARGO_CLEAN)
 AC_SUBST(CARGO_CLIPPY)
+AC_SUBST(CARGO_RUN)
+AC_SUBST(CARGO_DOC)
 
 AC_ARG_ENABLE(rust-debug,
 [AS_HELP_STRING([--enable-rust-debug],
@@ -5431,6 +5460,14 @@ CARGO_DEFAULT_FEATURES=""
 if test "$HAVE_LIBXML2" = "yes"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
 fi
+if test "$CANNOT_DUMP" != "yes"; then
+    if test "$opsys" = "darwin"; then
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"unexecmacosx\", "
+    else
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"unexec\", "
+    fi
+fi
+
 AC_SUBST(CARGO_DEFAULT_FEATURES)
 AC_CONFIG_FILES([rust_src/Cargo.toml])
 

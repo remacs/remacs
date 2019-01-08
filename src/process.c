@@ -1734,9 +1734,9 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
     {
       /* Make the pty be the controlling terminal of the process.  */
 #ifdef HAVE_PTYS
-      /* First, disconnect its current controlling terminal.  */
-      if (pty_flag)
-	setsid ();
+      /* First, disconnect its current controlling terminal.
+	 Do this even if !PTY_FLAG; see Bug#30762.  */
+      setsid ();
       /* Make the pty's terminal the controlling terminal.  */
       if (pty_flag && forkin >= 0)
 	{
@@ -6434,7 +6434,7 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.  */)
       if (NILP (tem))
 	{
 	  Lisp_Object process_number
-	    = string_to_number (SSDATA (process), 10, 1);
+	    = string_to_number (SSDATA (process), 10, true);
 	  if (NUMBERP (process_number))
 	    tem = process_number;
 	}
@@ -7177,17 +7177,6 @@ kbd_on_hold_p (void)
 
 /* Enumeration of and access to system processes a-la ps(1).  */
 
-DEFUN ("list-system-processes", Flist_system_processes, Slist_system_processes,
-       0, 0, 0,
-       doc: /* Return a list of numerical process IDs of all running processes.
-If this functionality is unsupported, return nil.
-
-See `process-attributes' for getting attributes of a process given its ID.  */)
-  (void)
-{
-  return list_system_processes ();
-}
-
 DEFUN ("process-attributes", Fprocess_attributes,
        Sprocess_attributes, 1, 1, 0,
        doc: /* Return attributes of the process given by its PID, a number.
@@ -7588,6 +7577,5 @@ returns non-`nil'.  */);
    Fprovide (intern_c_string ("make-network-process"), subfeatures);
  }
 
-  defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
 }

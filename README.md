@@ -235,7 +235,7 @@ different.
 # Progress
 
 At this point we focus on porting lisp functions from C to Rust.
-Currently there are 528 functions in Rust and 941 in C (December 2018).
+Currently there are 555 functions in Rust and 911 in C (January 2019).
 
 We have a [progress section](https://github.com/Wilfred/remacs/wiki/Progress) in our wiki
 and there's also a list of [long-term goals](https://github.com/Wilfred/remacs/projects/1) 

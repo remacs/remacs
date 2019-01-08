@@ -190,15 +190,15 @@ pub fn marker_buffer(marker: LispMarkerRef) -> Option<LispBufferRef> {
 /// Return a newly allocated marker which points into BUF
 /// at character position CHARPOS and byte position BYTEPOS.
 #[no_mangle]
-pub unsafe extern "C" fn build_marker(
+pub extern "C" fn build_marker(
     buf: *mut Lisp_Buffer,
     charpos: ptrdiff_t,
     bytepos: ptrdiff_t,
 ) -> LispObject {
-    debug_assert!((*buf).name_.is_not_nil());
+    debug_assert!(unsafe { (*buf).name_.is_not_nil() });
     debug_assert!(charpos <= bytepos);
 
-    let obj = allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker);
+    let obj = unsafe { allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker) };
     let mut m = obj.as_marker_or_error();
 
     m.set_buffer(buf);
@@ -210,8 +210,10 @@ pub unsafe extern "C" fn build_marker(
     let mut buffer_ref = LispBufferRef::from_ptr(buf as *mut c_void)
         .unwrap_or_else(|| panic!("Invalid buffer reference."));
 
-    m.set_next((*buffer_ref.text).markers);
-    (*buffer_ref.text).markers = m.as_mut();
+    unsafe {
+        m.set_next((*buffer_ref.text).markers);
+        (*buffer_ref.text).markers = m.as_mut();
+    }
 
     obj
 }
@@ -219,16 +221,16 @@ pub unsafe extern "C" fn build_marker(
 /// Return value of point, as a marker object.
 #[lisp_fn]
 pub fn point_marker() -> LispObject {
-    let mut cur_buf = ThreadState::current_buffer();
-    unsafe { build_marker(cur_buf.as_mut(), cur_buf.pt, cur_buf.pt_byte) }
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
+    build_marker(cur_buf.as_mut(), cur_buf.pt, cur_buf.pt_byte)
 }
 
 /// Return a marker to the minimum permissible value of point in this buffer.
 /// This is the beginning, unless narrowing (a buffer restriction) is in effect.
 #[lisp_fn]
 pub fn point_min_marker() -> LispObject {
-    let mut cur_buf = ThreadState::current_buffer();
-    unsafe { build_marker(cur_buf.as_mut(), cur_buf.begv, cur_buf.begv_byte) }
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
+    build_marker(cur_buf.as_mut(), cur_buf.begv, cur_buf.begv_byte)
 }
 
 /// Return a marker to the maximum permissible value of point in this buffer.
@@ -236,15 +238,15 @@ pub fn point_min_marker() -> LispObject {
 /// is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max_marker() -> LispObject {
-    let mut cur_buf = ThreadState::current_buffer();
-    unsafe { build_marker(cur_buf.as_mut(), cur_buf.zv, cur_buf.zv_byte) }
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
+    build_marker(cur_buf.as_mut(), cur_buf.zv, cur_buf.zv_byte)
 }
 
 /// Set PT from MARKER's clipped position.
 #[no_mangle]
 pub extern "C" fn set_point_from_marker(marker: LispObject) {
     let marker = marker.as_marker_or_error();
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     let charpos = clip_to_bounds(
         cur_buf.begv,
         marker.charpos_or_error() as EmacsInt,
@@ -254,7 +256,7 @@ pub extern "C" fn set_point_from_marker(marker: LispObject) {
     // Don't trust the byte position if the marker belongs to a
     // different buffer.
     if marker.buffer().map_or(false, |b| b != cur_buf) {
-        bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), charpos) };
+        bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), charpos);
     } else {
         bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
     };
@@ -319,7 +321,7 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
 /// Return t if there are markers pointing at POSITION in the current buffer.
 #[lisp_fn]
 pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let position = clip_to_bounds(cur_buf.begv, position, cur_buf.zv);
 
     if let Some(marker) = cur_buf.markers() {
@@ -463,7 +465,7 @@ pub extern "C" fn set_marker_restricted_both(
         .as_live_buffer()
         .or_else(|| current_buffer().as_live_buffer())
     {
-        let cur_buf = ThreadState::current_buffer();
+        let cur_buf = ThreadState::current_buffer_unchecked();
         let clipped_charpos = clip_to_bounds(cur_buf.begv, charpos as EmacsInt, cur_buf.zv);
         let clipped_bytepos =
             clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
@@ -558,7 +560,7 @@ fn set_marker_internal_else(
             .as_marker()
             .map_or(false, |m| m.buffer() == Some(buf))
     {
-        bytepos = unsafe { buf_charpos_to_bytepos(buf.as_mut(), charpos) };
+        bytepos = buf_charpos_to_bytepos(buf.as_mut(), charpos);
     } else {
         let beg = buf.buffer_beg_byte(restricted);
         let end = buf.buffer_end_byte(restricted);
@@ -610,7 +612,7 @@ impl LispBufferRef {
 
 /// Return the byte position corresponding to CHARPOS in B.
 #[no_mangle]
-pub unsafe extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) -> isize {
+pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) -> isize {
     let mut buffer_ref = LispBufferRef::from_ptr(b as *mut c_void).unwrap();
 
     assert!(buffer_ref.beg() <= charpos && charpos <= buffer_ref.z());
@@ -898,7 +900,7 @@ fn count_markers(buf: LispBufferRef) -> u8 {
 fn verify_bytepos(charpos: isize) -> isize {
     let mut below: isize = 1;
     let mut below_byte: isize = 1;
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
 
     while below != charpos {
         below += 1;

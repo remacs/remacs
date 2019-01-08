@@ -39,7 +39,7 @@ extern crate flate2;
 extern crate core;
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 extern crate alloc_unexecmacosx;
 
 // Needed for linking.
@@ -122,12 +122,13 @@ mod util;
 mod vectors;
 mod window_configuration;
 mod windows;
+mod xfaces;
 mod xml;
 
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
 
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 

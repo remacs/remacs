@@ -6,6 +6,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::LispObject,
+    multibyte::LispStringRef,
     remacs_sys::{
         fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
         make_pure_c_string, make_unibyte_string, oblookup,
@@ -61,7 +62,8 @@ impl LispObarrayRef {
     /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
     /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol
     /// name will be transferred to pure storage.
-    pub fn intern(&self, string: LispObject) -> LispObject {
+    pub fn intern(&self, string: LispStringRef) -> LispObject {
+        let string = string.into();
         let tem = self.lookup(string);
         let obj = LispObject::from(self);
         if tem.is_symbol() {
@@ -113,7 +115,7 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispSymbolRef {
 pub extern "C" fn loadhist_attach(x: LispObject) {
     unsafe {
         if initialized {
-            globals.Vcurrent_load_list = LispObject::cons(x, globals.Vcurrent_load_list);
+            globals.Vcurrent_load_list = (x, globals.Vcurrent_load_list).into();
         }
     }
 }
@@ -226,12 +228,8 @@ pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObj
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(name = "intern", c_name = "intern", min = "1")]
-pub fn lisp_intern(string: LispObject, obarray: LispObject) -> LispObject {
-    let obarray_ref = if obarray.is_nil() {
-        LispObarrayRef::global()
-    } else {
-        obarray.as_obarray_or_error()
-    };
+pub fn lisp_intern(string: LispStringRef, obarray: Option<LispObarrayRef>) -> LispObject {
+    let obarray_ref = obarray.unwrap_or_else(LispObarrayRef::global);
 
     obarray_ref.intern(string)
 }

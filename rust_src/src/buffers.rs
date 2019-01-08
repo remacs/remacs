@@ -27,12 +27,12 @@ use crate::{
     remacs_sys::{
         allocate_misc, bset_update_mode_line, buffer_local_flags, buffer_local_value,
         buffer_window_count, concat2, del_range, delete_all_overlays, globals, internal_equal,
-        last_per_buffer_idx, lookup_char_property, marker_position, modify_overlay,
+        last_per_buffer_idx, lookup_char_property, make_timespec, marker_position, modify_overlay,
         set_buffer_internal_1, specbind, unchain_both, unchain_marker, update_mode_lines,
     },
     remacs_sys::{
-        equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Misc_Type,
-        Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+        buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
+        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
         windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
@@ -40,7 +40,7 @@ use crate::{
     },
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
-        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound,
+        Qinhibit_quit, Qinhibit_read_only, Qnil, Qoverlayp, Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
     strings::string_equal,
     threads::{c_specpdl_index, ThreadState},
@@ -52,7 +52,7 @@ pub const BEG_BYTE: ptrdiff_t = 1;
 /// Return value of point, in bytes, as an integer.
 /// Beginning of buffer is position (point-min).
 pub fn point_byte() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt_byte as EmacsInt
 }
 
@@ -60,7 +60,7 @@ pub fn point_byte() -> EmacsInt {
 /// buffer.  This is 1, unless narrowing (a buffer restriction) is in
 /// effect.
 pub fn point_min_byte() -> EmacsInt {
-    ThreadState::current_buffer().begv_byte as EmacsInt
+    ThreadState::current_buffer_unchecked().begv_byte as EmacsInt
 }
 
 /// Maximum number of bytes in a buffer.
@@ -227,7 +227,13 @@ impl LispBufferRef {
 
     /// Return the address of byte position N in current buffer.
     pub fn byte_pos_addr(self, n: ptrdiff_t) -> *mut c_uchar {
-        unsafe { (*self.text).beg.offset(n - BEG_BYTE) }
+        let offset = if n >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        };
+
+        unsafe { self.beg_addr().offset(offset + n - self.beg_byte()) }
     }
 
     /// Return the address of character at byte position BYTE_POS.
@@ -238,13 +244,7 @@ impl LispBufferRef {
 
     /// Return the byte at byte position N.
     pub fn fetch_byte(self, n: ptrdiff_t) -> u8 {
-        let offset = if n >= self.gpt_byte() {
-            self.gap_size()
-        } else {
-            0
-        };
-
-        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
+        unsafe { *self.byte_pos_addr(n) }
     }
 
     /// Return character at byte position POS.  See the caveat WARNING for
@@ -383,6 +383,47 @@ impl LispBufferRef {
         let pos = buffer_bytes.add(offset) as *mut LispObject;
         *pos = value;
     }
+
+    // Reinitialize everything about a buffer except its name and contents
+    // and local variables.
+    // If called on an already-initialized buffer, the list of overlays
+    // should be deleted before calling this function, otherwise we end up
+    // with overlays that claim to belong to the buffer but the buffer
+    // claims it doesn't belong to it.
+    pub fn reset(&mut self) {
+        self.filename_ = Qnil;
+        self.file_truename_ = Qnil;
+        self.directory_ = match ThreadState::current_buffer() {
+            Some(current_buff) => current_buff.directory_,
+            None => Qnil,
+        };
+        self.modtime = unsafe { make_timespec(0, UNKNOWN_MODTIME_NSECS.into()) };
+        self.modtime_size = -1;
+        self.save_length_ = 0.into();
+        self.last_window_start = 1;
+        // It is more conservative to start out "changed" than "unchanged".
+        self.set_clip_changed(false);
+        self.set_prevent_redisplay_optimizations_p(true);
+        self.backed_up_ = Qnil;
+        self.auto_save_modified = 0;
+        self.auto_save_failure_time = 0;
+        self.auto_save_file_name_ = Qnil;
+        self.read_only_ = Qnil;
+        self.overlays_before = ptr::null_mut();
+        self.overlays_after = ptr::null_mut();
+        self.overlay_center = BEG;
+        self.mark_active_ = Qnil;
+        self.point_before_scroll_ = Qnil;
+        self.file_format_ = Qnil;
+        self.auto_save_file_format_ = Qt;
+        self.last_selected_window_ = Qnil;
+        self.display_count_ = 0.into();
+        self.display_time_ = Qnil;
+        self.enable_multibyte_characters_ = unsafe { buffer_defaults.enable_multibyte_characters_ };
+        self.cursor_type_ = unsafe { buffer_defaults.cursor_type_ };
+        self.extra_line_spacing_ = unsafe { buffer_defaults.extra_line_spacing_ };
+        self.display_error_modiff = 0;
+    }
 }
 
 impl LispObject {
@@ -516,7 +557,8 @@ impl LispBufferLocalValueRef {
     }
 
     pub fn get_value(self) -> LispObject {
-        self.valcell.as_cons_or_error().cdr()
+        let (_, d) = self.valcell.into();
+        d
     }
 }
 
@@ -529,7 +571,10 @@ pub enum LispBufferOrName {
 impl LispBufferOrName {
     pub fn as_buffer_or_current_buffer(self) -> Option<LispBufferRef> {
         let obj = LispObject::from(self);
-        obj.map_or_else(|| Some(ThreadState::current_buffer()), |o| o.as_buffer())
+        obj.map_or_else(
+            || Some(ThreadState::current_buffer_unchecked()),
+            |o| o.as_buffer(),
+        )
     }
 }
 
@@ -616,7 +661,7 @@ impl From<LispBufferOrCurrent> for LispBufferRef {
     fn from(buffer: LispBufferOrCurrent) -> LispBufferRef {
         match buffer {
             LispBufferOrCurrent::Buffer(buf) => buf,
-            LispBufferOrCurrent::Current => ThreadState::current_buffer(),
+            LispBufferOrCurrent::Current => ThreadState::current_buffer_unchecked(),
         }
     }
 }
@@ -767,7 +812,7 @@ pub unsafe extern "C" fn validate_region(b: *mut LispObject, e: *mut LispObject)
     *b = LispObject::from(beg);
     *e = LispObject::from(end);
 
-    let buf = ThreadState::current_buffer();
+    let buf = ThreadState::current_buffer_unchecked();
     let begv = buf.begv as EmacsInt;
     let zv = buf.zv as EmacsInt;
 
@@ -803,7 +848,8 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
     let prop = unsafe { Fget_text_property(LispObject::from(pos), Qinhibit_read_only, Qnil) };
 
-    if ThreadState::current_buffer().is_read_only() && !inhibit_read_only && prop.is_nil() {
+    if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && prop.is_nil()
+    {
         xsignal!(Qbuffer_read_only, current_buffer())
     }
 }
@@ -827,14 +873,13 @@ pub extern "C" fn nsberror(spec: LispObject) -> ! {
 /// However, the overlays you get are the real objects that the buffer uses.
 #[lisp_fn]
 pub fn overlay_lists() -> LispObject {
-    let list_overlays = |ol: LispOverlayRef| -> LispObject {
-        ol.iter().fold(Qnil, |accum, n| LispObject::cons(n, accum))
-    };
+    let list_overlays =
+        |ol: LispOverlayRef| -> LispObject { ol.iter().fold(Qnil, |accum, n| (n, accum).into()) };
 
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let before = cur_buf.overlays_before().map_or(Qnil, &list_overlays);
     let after = cur_buf.overlays_after().map_or(Qnil, &list_overlays);
-    unsafe { LispObject::cons(Fnreverse(before), Fnreverse(after)) }
+    unsafe { (Fnreverse(before), Fnreverse(after)).into() }
 }
 
 fn get_truename_buffer_1(filename: LispObject) -> LispObject {
@@ -950,7 +995,7 @@ pub fn buffer_base_buffer(buffer: LispBufferOrCurrent) -> Option<LispBufferRef> 
 /// menu bar menus and the frame title.
 #[lisp_fn(min = "0")]
 pub fn force_mode_line_update(all: bool) -> bool {
-    let mut current_buffer = ThreadState::current_buffer();
+    let mut current_buffer = ThreadState::current_buffer_unchecked();
     if all {
         unsafe {
             update_mode_lines = 10;
@@ -1038,7 +1083,11 @@ pub fn delete_overlay(overlay: LispOverlayRef) {
 
 /// Delete all overlays of BUFFER.
 /// BUFFER omitted or nil means delete all overlays of the current buffer.
-#[lisp_fn(min = "0", name = "delete-all-overlays")]
+#[lisp_fn(
+    min = "0",
+    name = "delete-all-overlays",
+    c_name = "delete_all_overlays"
+)]
 pub fn delete_all_overlays_lisp(buffer: LispBufferOrCurrent) {
     let mut buf: LispBufferRef = buffer.into();
     unsafe { delete_all_overlays(buf.as_mut()) };
@@ -1052,7 +1101,7 @@ pub fn erase_buffer() {
     unsafe {
         Fwiden();
 
-        let mut cur_buf = ThreadState::current_buffer();
+        let mut cur_buf = ThreadState::current_buffer_unchecked();
         del_range(cur_buf.beg(), cur_buf.z());
 
         cur_buf.last_window_start = 1;
@@ -1164,6 +1213,11 @@ pub unsafe extern "C" fn copy_overlays(
     });
 
     result
+}
+
+#[no_mangle]
+pub extern "C" fn reset_buffer(mut buffer: LispBufferRef) {
+    buffer.reset();
 }
 
 #[no_mangle]

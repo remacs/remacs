@@ -628,7 +628,7 @@ they use the concept of checking out individual files.
 @node Log Buffer
 @subsection Features of the Log Entry Buffer
 
-@cindex C-c C-c @r{(Log Edit mode)}
+@kindex C-c C-c @r{(Log Edit mode)}
 @findex log-edit-done
   When you tell VC to commit a change, it pops up a buffer named
 @file{*vc-log*}.  In this buffer, you should write a @dfn{log entry}
@@ -1078,7 +1078,7 @@ Revert the work file(s) in the current VC fileset to the last revision
 @findex vc-revert
 @vindex vc-revert-show-diff
   If you want to discard all the changes you have made to the current
-VC fileset, type @kbd{C-x v u} (@code{vc-revert-buffer}).  This shows
+VC fileset, type @kbd{C-x v u} (@code{vc-revert}).  This shows
 you a diff between the work file(s) and the revision from which you
 started editing, and asks for confirmation for discarding the changes.
 If you agree, the fileset is reverted.  If you don't want @kbd{C-x v
@@ -1812,6 +1812,8 @@ Find definition of identifier, and display it in a new frame
 @item M-,
 Go back to where you previously invoked @kbd{M-.} and friends
 (@code{xref-pop-marker-stack}).
+@item M-x xref-etags-mode
+Switch @code{xref} to use the @code{etags} backend.
 @end table
 
 @kindex M-.
@@ -1870,6 +1872,20 @@ examine the definition of something with @kbd{M-.} and then return to
 where you were with @kbd{M-,}.  @kbd{M-,} allows you to retrace your
 steps to a depth determined by the variable
 @code{xref-marker-ring-length}, which defaults to 16.
+
+@findex xref-etags-mode
+  Some major modes install @code{xref} support facilities that might
+sometimes fail to find certain identifiers.  For example, in Emacs
+Lisp mode (@pxref{Lisp Eval}) @kbd{M-.} will by default find only
+functions and variables from Lisp packages which are loaded into the
+current Emacs session or are auto-loaded (@pxref{Autoload,,, elisp,
+The Emacs Lisp Reference Manual}).  If @kbd{M-.} fails to find some
+identifiers, you can try forcing @code{xref} to use the @code{etags}
+backend (@pxref{Xref}).  To this end, turn on the Xref Etags minor
+mode with @w{@kbd{M-x xref-etags-mode}}, then invoke @kbd{M-.} again.
+(For this to work, be sure to run @command{etags} to create the tags
+table in the directory tree of the source files, see @ref{Create Tags
+Table}.)
 
 @node Xref Commands
 @subsubsection Commands Available in the @file{*xref*} Buffer

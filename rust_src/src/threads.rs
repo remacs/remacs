@@ -21,8 +21,14 @@ pub type ThreadStateRef = ExternalPtr<thread_state>;
 pub struct ThreadState {}
 
 impl ThreadState {
-    pub fn current_buffer() -> LispBufferRef {
+    pub fn current_buffer_unchecked() -> LispBufferRef {
         unsafe { mem::transmute((*current_thread_pointer).m_current_buffer) }
+    }
+
+    pub fn current_buffer() -> Option<LispBufferRef> {
+        unsafe {
+            LispBufferRef::from_ptr((*current_thread_pointer).m_current_buffer as *mut libc::c_void)
+        }
     }
 
     pub fn current_thread() -> ThreadStateRef {
