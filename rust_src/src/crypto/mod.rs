@@ -123,8 +123,10 @@ fn get_coding_system_for_buffer(
         // Check file-coding-system-alist.
         let mut args = [Qwrite_region, start, end, file_name];
         let val = unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) };
-        if val.is_cons() && val.as_cons_or_error().cdr().is_not_nil() {
-            return val.as_cons_or_error().cdr();
+        if let Some((_, d)) = val.into() {
+            if d.is_not_nil() {
+                return d;
+            }
         }
     }
     if buffer.buffer_file_coding_system_.is_not_nil() {
@@ -193,7 +195,7 @@ fn get_input_from_buffer(
     start_byte: &mut ptrdiff_t,
     end_byte: &mut ptrdiff_t,
 ) -> LispObject {
-    let prev_buffer = ThreadState::current_buffer().as_mut();
+    let prev_buffer = ThreadState::current_buffer_unchecked().as_mut();
     unsafe { record_unwind_current_buffer() };
     unsafe { set_buffer_internal(buffer.as_mut()) };
 
@@ -450,7 +452,7 @@ fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 /// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
 pub fn buffer_hash(buffer_or_name: Option<LispBufferOrName>) -> LispObject {
-    let b = buffer_or_name.map_or_else(ThreadState::current_buffer, |b| b.into());
+    let b = buffer_or_name.map_or_else(ThreadState::current_buffer_unchecked, |b| b.into());
     let mut ctx = sha1::Sha1::new();
 
     ctx.update(unsafe {

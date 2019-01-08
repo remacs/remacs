@@ -84,6 +84,15 @@ behavior where the tooltip text is also shown when the corresponding
 action does not apply.
 
 +++
+** New hook 'server-after-make-frame-hook'.
+This hook is a convenient place to perform initializations in daemon
+mode which require GUI features to be available.  One example is
+restoration of the previous session using the desktop.el package: put
+the call to 'desktop-read' in this hook, if you want the GUI settings
+to be restored, or if desktop.el needs to interact with you during
+restoration of the session.
+
++++
 ** New function 'logcount' calculates an integer's Hamming weight.
 
 +++
@@ -142,6 +151,16 @@ This can be controlled by the new `ecomplete-sort-predicate' variable.
 *** The 'ecompleterc' file is now placed in ~/.emacs.d/ecompleterc by default
 Of course it will still find it if you have it in ~/.ecompleterc
 
+** Gnus
+*** The function 'gnus-score-find-favorite-words' has been renamed
+from 'gnus-score-find-favourite-words'.
+
+** Htmlfontify
+*** The functions 'hfy-color', 'hfy-color-vals' and
+'hfy-fallback-color-values' and the variables 'hfy-fallback-color-map'
+and 'hfy-rgb-txt-color-map' have been renamed from names that used
+'colour' instead of 'color'.
+
 ** Smtpmail
 Authentication mechanisms can be added via external packages, by
 defining new cl-defmethod of smtpmail-try-auth-method.
@@ -180,6 +199,14 @@ created by 'edit-last-kbd-macro', and to save the macro by 'C-c C-c'.
 ---
 *** New filter ibuffer-filter-by-process; bound to '/E'.
 
+** Search and Replace
+
+*** 'search-exit-option' provides new options 'move' and 'shift-move'
+to extend the search string by yanking text that ends at the new
+position after moving point in the current buffer.  'shift-move'
+extends the search string by motion commands while holding down
+the shift key.
+
 ** Edebug
 
 +++
@@ -201,8 +228,10 @@ by default.
 
 *** rgrep, lgrep and zrgrep now hide part of the command line
 that contains a list of ignored directories and files.
-Clicking on the button with ellipsis unhides the truncated part.
-This truncation can be disabled by the new option 'grep-find-hide'.
+Clicking on the button with ellipsis unhides it.
+The abbreviation can be disabled by the new option
+'grep-find-abbreviate'.  The new command
+'grep-find-toggle-abbreviation' toggles it interactively.
 
 ** ERT
 
@@ -241,11 +270,22 @@ To restore the old behavior, use
     (add-hook 'eshell-expand-input-functions
               #'eshell-expand-history-references)
 
+*** The function 'shell-uniquify-list' has been renamed from
+'eshell-uniqify-list'.
+
+** Pcomplete
+*** The function 'pcomplete-uniquify-list' has been renamed from
+'pcomplete-uniqify-list'.
+
 ** Tramp
 
 +++
 *** New connection method "owncloud", which allows to access OwnCloud
 or NextCloud hosted files and directories.
+
+---
+** The options.el library has been removed.
+It was obsolete since Emacs 22.1, replaced by customize.
 
 
 * New Modes and Packages in Emacs 27.1
@@ -276,6 +316,46 @@ as new-style, bind the new variable 'force-new-style-backquotes' to t.
 ** Defining a Common Lisp structure using 'cl-defstruct' or
 'cl-struct-define' whose name clashes with a builtin type (e.g.,
 'integer' or 'hash-table') now signals an error.
+
+** When formatting a floating-point number as an octal or hexadecimal
+integer, Emacs now signals an error if the number is too large for the
+implementation to format (Bug#30408).
+
+---
+** Some functions and variables obsolete since Emacs 22 have been removed:
+archive-mouse-extract, assoc-ignore-case, assoc-ignore-representation,
+backward-text-line, blink-cursor, bookmark-exit-hooks,
+comint-use-prompt-regexp-instead-of-fields, compilation-finish-function,
+count-text-lines, cperl-vc-header-alist, custom-face-save-command,
+cvs-display-full-path, cvs-fileinfo->full-path, delete-frame-hook,
+derived-mode-class, describe-char-after, describe-project,
+desktop-basefilename, desktop-buffer-handlers,
+desktop-buffer-misc-functions, desktop-buffer-modes-to-save,
+desktop-enable, desktop-load-default, dired-omit-files-p,
+disabled-command-hook, dungeon-mode-map, electric-nroff-mode,
+electric-nroff-newline, electric-perl-terminator, focus-frame,
+forward-text-line, generic-define-mswindows-modes, generic-define-unix-modes,
+generic-font-lock-defaults, goto-address-at-mouse,
+highlight-changes-colours, ibuffer-elide-long-columns, ibuffer-hooks,
+ibuffer-mode-hooks, icalendar-convert-diary-to-ical,
+icalendar-extract-ical-from-buffer, imenu-always-use-completion-buffer-p,
+ipconfig-program, ipconfig-program-options, isearch-lazy-highlight-cleanup,
+isearch-lazy-highlight-cleanup, isearch-lazy-highlight-initial-delay,
+isearch-lazy-highlight-interval, isearch-lazy-highlight-max-at-a-time,
+iswitchb-use-fonts, latin1-char-displayable-p, mouse-wheel-click-button,
+mouse-wheel-down-button, mouse-wheel-up-button, new-frame, pascal-outline,
+process-kill-without-query, recentf-menu-append-commands-p,
+rmail-pop-password, rmail-pop-password-required, savehist-load,
+set-default-font, spam-list-of-processors,
+speedbar-add-ignored-path-regexp, speedbar-buffers-line-path,
+speedbar-buffers-line-path, speedbar-ignored-path-expressions,
+speedbar-ignored-path-regexp, speedbar-line-path, speedbar-path-line,
+timer-set-time-with-usecs, tooltip-gud-display, tooltip-gud-modes,
+tooltip-gud-toggle-dereference, unfocus-frame, unload-hook-features-list,
+update-autoloads-from-directories, vc-comment-ring, vc-comment-ring-index,
+vc-comment-search-forward, vc-comment-search-reverse, vc-comment-to-change-log,
+vc-diff-switches-list, vc-next-comment, vc-previous-comment, view-todo,
+x-lost-selection-hooks, x-sent-selection-hooks
 
 
 * Lisp Changes in Emacs 27.1
@@ -317,6 +397,9 @@ remote systems, which support this check.
 ** The function 'make-string' accepts an additional optional argument.
 If the optional third argument is non-nil, 'make-string' will produce
 a multibyte string even if its second argument is an ASCII character.
+
+** (format "%d" X) no longer mishandles a floating-point number X that
+does not fit in a machine integer (Bug#30408).
 
 ** New JSON parsing and serialization functions 'json-serialize',
 'json-insert', 'json-parse-string', and 'json-parse-buffer'.  These

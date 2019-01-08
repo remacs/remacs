@@ -520,9 +520,10 @@ impl_alistval_iter! {LiveBufferIter, LispBufferRef, unsafe { Vbuffer_alist }}
 impl_alistval_iter! {ProcessIter, LispProcessRef, unsafe { Vprocess_alist }}
 
 pub fn is_autoload(function: LispObject) -> bool {
-    function
-        .as_cons()
-        .map_or(false, |cell| cell.car().eq(Qautoload))
+    match function.into() {
+        None => false,
+        Some((car, _)) => car.eq(Qautoload),
+    }
 }
 
 impl LispObject {
@@ -540,11 +541,17 @@ impl LispObject {
 
     // The three Emacs Lisp comparison functions.
 
-    pub fn eq(self, other: LispObject) -> bool {
-        self == other
+    pub fn eq<T>(self, other: T) -> bool
+    where
+        LispObject: From<T>,
+    {
+        self == LispObject::from(other)
     }
 
-    pub fn eql(self, other: LispObject) -> bool {
+    pub fn eql<T>(self, other: T) -> bool
+    where
+        LispObject: From<T>,
+    {
         if self.is_float() {
             self.equal_no_quit(other)
         } else {
@@ -552,12 +559,18 @@ impl LispObject {
         }
     }
 
-    pub fn equal(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, equal_kind::EQUAL_PLAIN, 0, Qnil) }
+    pub fn equal<T>(self, other: T) -> bool
+    where
+        LispObject: From<T>,
+    {
+        unsafe { internal_equal(self, other.into(), equal_kind::EQUAL_PLAIN, 0, Qnil) }
     }
 
-    pub fn equal_no_quit(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self, other, equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
+    pub fn equal_no_quit<T>(self, other: T) -> bool
+    where
+        LispObject: From<T>,
+    {
+        unsafe { internal_equal(self, other.into(), equal_kind::EQUAL_NO_QUIT, 0, Qnil) }
     }
 
     pub fn is_function(self) -> bool {

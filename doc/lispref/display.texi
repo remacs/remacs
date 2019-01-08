@@ -3292,7 +3292,7 @@ nominal heights and widths would suggest.
 @defun x-list-fonts name &optional reference-face frame maximum width
 This function returns a list of available font names that match
 @var{name}.  @var{name} should be a string containing a font name in
-either the Fontconfig, GTK, or XLFD format (@pxref{Fonts,,, emacs, The
+either the Fontconfig, GTK+, or XLFD format (@pxref{Fonts,,, emacs, The
 GNU Emacs Manual}).  Within an XLFD string, wildcard characters may be
 used: the @samp{*} character matches any substring, and the @samp{?}
 character matches any single character.  Case is ignored when matching
@@ -3550,7 +3550,7 @@ specifications are as follows:
 
 @table @code
 @item :name
-The font name (a string), in either XLFD, Fontconfig, or GTK format.
+The font name (a string), in either XLFD, Fontconfig, or GTK+ format.
 @xref{Fonts,,, emacs, The GNU Emacs Manual}.
 
 @item :family
@@ -5387,7 +5387,6 @@ hint to ImageMagick to help it detect the image type.
 Specifies a rotation angle in degrees.
 
 @item :index @var{frame}
-@c Doesn't work: https://debbugs.gnu.org/7978
 @xref{Multi-Frame Images}.
 @end table
 
@@ -5396,8 +5395,8 @@ Specifies a rotation angle in degrees.
 @cindex SVG images
 
 SVG (Scalable Vector Graphics) is an XML format for specifying images.
-If your Emacs build has with SVG support, you can create and manipulate
-these images with the following commands.
+If your Emacs build has SVG support, you can create and manipulate
+these images with the following functions.
 
 @defun svg-create width height &rest args
 Create a new, empty SVG image with the specified dimensions.
@@ -5411,7 +5410,7 @@ The default width (in pixels) of any lines created.
 The default stroke color on any lines created.
 @end table
 
-This function returns an SVG structure, and all the following commands
+This function returns an SVG structure, and all the following functions
 work on that structure.
 @end defun
 
@@ -5993,7 +5992,7 @@ debugging.
 @cindex embedded widgets
 @cindex webkit browser widget
 
-  Emacs is able to display native widgets, such as GTK WebKit widgets,
+  Emacs is able to display native widgets, such as GTK+ WebKit widgets,
 in Emacs buffers when it was built with the necessary support
 libraries and is running on a graphical terminal.  To test whether
 Emacs supports display of embedded widgets, check that the

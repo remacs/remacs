@@ -28,7 +28,7 @@ pub extern "C" fn arithcompare(
 
 #[no_mangle]
 pub extern "C" fn lucid_event_type_list_p(event: LispObject) -> bool {
-    keyboard::lucid_event_type_list_p(event.as_cons())
+    keyboard::lucid_event_type_list_p(event.into())
 }
 
 #[no_mangle]

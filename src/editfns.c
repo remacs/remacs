@@ -118,14 +118,10 @@ emacs_mktime_z (timezone_t tz, struct tm *tm)
   return t;
 }
 
-/* Allocate a timezone, signaling on failure.  */
-static timezone_t
-xtzalloc (char const *name)
+static _Noreturn void
+invalid_time_zone_specification (Lisp_Object zone)
 {
-  timezone_t tz = tzalloc (name);
-  if (!tz)
-    memory_full (SIZE_MAX);
-  return tz;
+  xsignal2 (Qerror, build_string ("Invalid time zone specification"), zone);
 }
 
 /* Free a timezone, except do not free the time zone for local time.
@@ -206,9 +202,27 @@ tzlookup (Lisp_Object zone, bool settz)
 	    }
 	}
       else
-	xsignal2 (Qerror, build_string ("Invalid time zone specification"),
-		  zone);
-      new_tz = xtzalloc (zone_string);
+	invalid_time_zone_specification (zone);
+
+      new_tz = tzalloc (zone_string);
+
+#if defined __NetBSD_Version__ && __NetBSD_Version__ < 700000000
+      /* NetBSD 6 tzalloc mishandles POSIX TZ strings (Bug#30738).
+	 If possible, fall back on tzdb.  */
+      if (!new_tz && errno != ENOMEM && plain_integer
+	  && XINT (zone) % (60 * 60) == 0)
+	{
+	  sprintf (tzbuf, "Etc/GMT%+"pI"d", - (XINT (zone) / (60 * 60)));
+	  new_tz = tzalloc (zone_string);
+	}
+#endif
+
+      if (!new_tz)
+	{
+	  if (errno == ENOMEM)
+	    memory_full (SIZE_MAX);
+	  invalid_time_zone_specification (zone);
+	}
     }
 
   if (settz)
@@ -654,103 +668,6 @@ extern EMACS_INT
 hi_time (time_t t);
 extern EMACS_INT
 lo_time (time_t t);
-
-static struct lisp_time
-time_add (struct lisp_time ta, struct lisp_time tb)
-{
-  EMACS_INT hi = ta.hi + tb.hi;
-  int lo = ta.lo + tb.lo;
-  int us = ta.us + tb.us;
-  int ps = ta.ps + tb.ps;
-  us += (1000000 <= ps);
-  ps -= (1000000 <= ps) * 1000000;
-  lo += (1000000 <= us);
-  us -= (1000000 <= us) * 1000000;
-  hi += (1 << LO_TIME_BITS <= lo);
-  lo -= (1 << LO_TIME_BITS <= lo) << LO_TIME_BITS;
-  return (struct lisp_time) { hi, lo, us, ps };
-}
-
-static struct lisp_time
-time_subtract (struct lisp_time ta, struct lisp_time tb)
-{
-  EMACS_INT hi = ta.hi - tb.hi;
-  int lo = ta.lo - tb.lo;
-  int us = ta.us - tb.us;
-  int ps = ta.ps - tb.ps;
-  us -= (ps < 0);
-  ps += (ps < 0) * 1000000;
-  lo -= (us < 0);
-  us += (us < 0) * 1000000;
-  hi -= (lo < 0);
-  lo += (lo < 0) << LO_TIME_BITS;
-  return (struct lisp_time) { hi, lo, us, ps };
-}
-
-static Lisp_Object
-time_arith (Lisp_Object a, Lisp_Object b,
-	    struct lisp_time (*op) (struct lisp_time, struct lisp_time))
-{
-  int alen, blen;
-  struct lisp_time ta = lisp_time_struct (a, &alen);
-  struct lisp_time tb = lisp_time_struct (b, &blen);
-  struct lisp_time t = op (ta, tb);
-  if (FIXNUM_OVERFLOW_P (t.hi))
-    time_overflow ();
-  Lisp_Object val = Qnil;
-
-  switch (max (alen, blen))
-    {
-    default:
-      val = Fcons (make_number (t.ps), val);
-      FALLTHROUGH;
-    case 3:
-      val = Fcons (make_number (t.us), val);
-      FALLTHROUGH;
-    case 2:
-      val = Fcons (make_number (t.lo), val);
-      val = Fcons (make_number (t.hi), val);
-      break;
-    }
-
-  return val;
-}
-
-DEFUN ("time-add", Ftime_add, Stime_add, 2, 2, 0,
-       doc: /* Return the sum of two time values A and B, as a time value.
-A nil value for either argument stands for the current time.
-See `current-time-string' for the various forms of a time value.  */)
-  (Lisp_Object a, Lisp_Object b)
-{
-  return time_arith (a, b, time_add);
-}
-
-DEFUN ("time-subtract", Ftime_subtract, Stime_subtract, 2, 2, 0,
-       doc: /* Return the difference between two time values A and B, as a time value.
-Use `float-time' to convert the difference into elapsed seconds.
-A nil value for either argument stands for the current time.
-See `current-time-string' for the various forms of a time value.  */)
-  (Lisp_Object a, Lisp_Object b)
-{
-  return time_arith (a, b, time_subtract);
-}
-
-DEFUN ("time-less-p", Ftime_less_p, Stime_less_p, 2, 2, 0,
-       doc: /* Return non-nil if time value T1 is earlier than time value T2.
-A nil value for either argument stands for the current time.
-See `current-time-string' for the various forms of a time value.  */)
-  (Lisp_Object t1, Lisp_Object t2)
-{
-  int t1len, t2len;
-  struct lisp_time a = lisp_time_struct (t1, &t1len);
-  struct lisp_time b = lisp_time_struct (t2, &t2len);
-  return ((a.hi != b.hi ? a.hi < b.hi
-	   : a.lo != b.lo ? a.lo < b.lo
-	   : a.us != b.us ? a.us < b.us
-	   : a.ps < b.ps)
-	  ? Qt : Qnil);
-}
-
 
 DEFUN ("get-internal-run-time", Fget_internal_run_time, Sget_internal_run_time,
        0, 0, 0,
@@ -2415,21 +2332,6 @@ It returns the number of characters changed.  */)
 }
 
 
-DEFUN ("widen", Fwiden, Swiden, 0, 0, "",
-       doc: /* Remove restrictions (narrowing) from current buffer.
-This allows the buffer's full text to be seen and edited.  */)
-  (void)
-{
-  if (BEG != BEGV || Z != ZV)
-    current_buffer->clip_changed = 1;
-  BEGV = BEG;
-  BEGV_BYTE = BEG_BYTE;
-  SET_BUF_ZV_BOTH (current_buffer, Z, Z_BYTE);
-  /* Changing the buffer bounds invalidates any recorded current column.  */
-  invalidate_current_column ();
-  return Qnil;
-}
-
 DEFUN ("narrow-to-region", Fnarrow_to_region, Snarrow_to_region, 2, 2, "r",
        doc: /* Restrict editing in this buffer to the current region.
 The rest of the text becomes temporarily invisible and untouchable
@@ -2979,32 +2881,30 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		 and with pM inserted for integer formats.
 		 At most two flags F can be specified at once.  */
 	      char convspec[sizeof "%FF.*d" + max (INT_AS_LDBL, pMlen)];
-	      {
-		char *f = convspec;
-		*f++ = '%';
-		/* MINUS_FLAG and ZERO_FLAG are dealt with later.  */
-		*f = '+'; f +=  plus_flag;
-		*f = ' '; f += space_flag;
-		*f = '#'; f += sharp_flag;
-                *f++ = '.';
-                *f++ = '*';
-		if (float_conversion)
-		  {
-		    if (INT_AS_LDBL)
-		      {
-			*f = 'L';
-			f += INTEGERP (arg);
-		      }
-		  }
-		else if (conversion != 'c')
-		  {
-		    memcpy (f, pMd, pMlen);
-		    f += pMlen;
-		    zero_flag &= ! precision_given;
-		  }
-		*f++ = conversion;
-		*f = '\0';
-	      }
+	      char *f = convspec;
+	      *f++ = '%';
+	      /* MINUS_FLAG and ZERO_FLAG are dealt with later.  */
+	      *f = '+'; f +=  plus_flag;
+	      *f = ' '; f += space_flag;
+	      *f = '#'; f += sharp_flag;
+	      *f++ = '.';
+	      *f++ = '*';
+	      if (float_conversion)
+		{
+		  if (INT_AS_LDBL)
+		    {
+		      *f = 'L';
+		      f += INTEGERP (arg);
+		    }
+		}
+	      else if (conversion != 'c')
+		{
+		  memcpy (f, pMd, pMlen);
+		  f += pMlen;
+		  zero_flag &= ! precision_given;
+		}
+	      *f++ = conversion;
+	      *f = '\0';
 
 	      int prec = -1;
 	      if (precision_given)
@@ -3046,29 +2946,20 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 	      else if (conversion == 'd' || conversion == 'i')
 		{
-		  /* For float, maybe we should use "%1.0f"
-		     instead so it also works for values outside
-		     the integer range.  */
-		  printmax_t x;
 		  if (INTEGERP (arg))
-		    x = XINT (arg);
+		    {
+		      printmax_t x = XINT (arg);
+		      sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
+		    }
 		  else
 		    {
-		      double d = XFLOAT_DATA (arg);
-		      if (d < 0)
-			{
-			  x = TYPE_MINIMUM (printmax_t);
-			  if (x < d)
-			    x = d;
-			}
-		      else
-			{
-			  x = TYPE_MAXIMUM (printmax_t);
-			  if (d < x)
-			    x = d;
-			}
+		      strcpy (f - pMlen - 1, "f");
+		      double x = XFLOAT_DATA (arg);
+		      sprintf_bytes = sprintf (sprintf_buf, convspec, 0, x);
+		      char c0 = sprintf_buf[0];
+		      bool signedp = ! ('0' <= c0 && c0 <= '9');
+		      prec = min (precision, sprintf_bytes - signedp);
 		    }
-		  sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
 		}
 	      else
 		{
@@ -3079,22 +2970,19 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else
 		    {
 		      double d = XFLOAT_DATA (arg);
-		      if (d < 0)
-			x = 0;
-		      else
-			{
-			  x = TYPE_MAXIMUM (uprintmax_t);
-			  if (d < x)
-			    x = d;
-			}
+		      double uprintmax = TYPE_MAXIMUM (uprintmax_t);
+		      if (! (0 <= d && d < uprintmax + 1))
+			xsignal1 (Qoverflow_error, arg);
+		      x = d;
 		    }
 		  sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
 		}
 
 	      /* Now the length of the formatted item is known, except it omits
 		 padding and excess precision.  Deal with excess precision
-		 first.  This happens only when the format specifies
-		 ridiculously large precision.  */
+		 first.  This happens when the format specifies ridiculously
+		 large precision, or when %d or %i formats a float that would
+		 ordinarily need fewer digits than a specified precision.  */
 	      ptrdiff_t excess_precision
 		= precision_given ? precision - prec : 0;
 	      ptrdiff_t leading_zeros = 0, trailing_zeros = 0;
@@ -3491,7 +3379,16 @@ transpose_markers (ptrdiff_t start1, ptrdiff_t end1,
     }
 }
 
-DEFUN ("transpose-regions", Ftranspose_regions, Stranspose_regions, 4, 5, 0,
+DEFUN ("transpose-regions", Ftranspose_regions, Stranspose_regions, 4, 5,
+       "(if (< (length mark-ring) 2)\
+	    (error \"Other region must be marked before transposing two regions\")\
+	  (let* ((num (if current-prefix-arg\
+			 (prefix-numeric-value current-prefix-arg)\
+			0))\
+		 (ring-length (length mark-ring))\
+		 (eltnum (mod num ring-length))\
+		 (eltnum2 (mod (1+ num) ring-length)))\
+	    (list (point) (mark) (elt mark-ring eltnum) (elt mark-ring eltnum2))))",
        doc: /* Transpose region STARTR1 to ENDR1 with STARTR2 to ENDR2.
 The regions should not be overlapping, because the size of the buffer is
 never changed in a transposition.
@@ -3499,7 +3396,14 @@ never changed in a transposition.
 Optional fifth arg LEAVE-MARKERS, if non-nil, means don't update
 any markers that happen to be located in the regions.
 
-Transposing beyond buffer boundaries is an error.  */)
+Transposing beyond buffer boundaries is an error.
+
+Interactively, STARTR1 and ENDR1 are point and mark; STARTR2 and ENDR2
+are the last two marks pushed to the mark ring; LEAVE-MARKERS is nil.
+If a prefix argument N is given, STARTR2 and ENDR2 are the two
+successive marks N entries back in the mark ring.  A negative prefix
+argument instead counts forward from the oldest mark in the mark
+ring.  */)
   (Lisp_Object startr1, Lisp_Object endr1, Lisp_Object startr2, Lisp_Object endr2, Lisp_Object leave_markers)
 {
   register ptrdiff_t start1, end1, start2, end2;
@@ -3861,9 +3765,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);
   defsubr (&Suser_full_name);
-  defsubr (&Stime_add);
-  defsubr (&Stime_subtract);
-  defsubr (&Stime_less_p);
   defsubr (&Sget_internal_run_time);
   defsubr (&Sformat_time_string);
   defsubr (&Sdecode_time);
@@ -3877,7 +3778,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sreplace_buffer_contents);
   defsubr (&Ssubst_char_in_region);
   defsubr (&Stranslate_region_internal);
-  defsubr (&Swiden);
   defsubr (&Snarrow_to_region);
   defsubr (&Stranspose_regions);
 }

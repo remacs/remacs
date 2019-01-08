@@ -27,13 +27,12 @@ use crate::{
     remacs_sys::{Fdelete, Fget, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
-        Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice,
-        Qcompiled_function, Qcondition_variable, Qcons, Qcyclic_function_indirection,
-        Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object,
-        Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker,
-        Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qsetting_constant,
-        Qstring, Qsubr, Qsymbol, Qt, Qterminal, Qthread, Qunbound, Qunevalled, Quser_ptr, Qvector,
-        Qvoid_variable, Qwatchers, Qwindow, Qwindow_configuration,
+        Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice, Qcompiled_function,
+        Qcondition_variable, Qcons, Qcyclic_function_indirection, Qdefalias_fset_function, Qdefun,
+        Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qframe,
+        Qfunction_documentation, Qhash_table, Qinteger, Qmany, Qmarker, Qmodule_function, Qmutex,
+        Qnil, Qnone, Qoverlay, Qprocess, Qrange, Qstring, Qsubr, Qsymbol, Qterminal, Qthread,
+        Qunbound, Qunevalled, Quser_ptr, Qvector, Qwatchers, Qwindow, Qwindow_configuration,
     },
     symbols::LispSymbolRef,
     threads::ThreadState,
@@ -176,7 +175,7 @@ pub fn subr_lang(subr: LispSubrRef) -> LispObject {
 #[lisp_fn]
 pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     if idx < 0 {
-        xsignal!(Qargs_out_of_range, array, idx.into());
+        args_out_of_range!(array, idx);
     }
 
     let idx_u = idx as usize;
@@ -184,13 +183,13 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     if let Some(s) = array.as_string() {
         match s.char_indices().nth(idx_u) {
             None => {
-                xsignal!(Qargs_out_of_range, array, idx.into());
+                args_out_of_range!(array, idx);
             }
             Some((_, cp)) => EmacsInt::from(cp).into(),
         }
     } else if let Some(bv) = array.as_bool_vector() {
         if idx_u >= bv.len() {
-            xsignal!(Qargs_out_of_range, array, idx.into());
+            args_out_of_range!(array, idx);
         }
 
         unsafe { bv.get_unchecked(idx_u) }
@@ -198,13 +197,13 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
         ct.get(idx as isize)
     } else if let Some(v) = array.as_vector() {
         if idx_u >= v.len() {
-            xsignal!(Qargs_out_of_range, array, idx.into());
+            args_out_of_range!(array, idx);
         }
         unsafe { v.get_unchecked(idx_u) }
     } else if array.is_byte_code_function() || array.is_record() {
         let vl = array.as_vectorlike().unwrap();
         if idx >= vl.pseudovector_size() {
-            xsignal!(Qargs_out_of_range, array, idx.into());
+            args_out_of_range!(array, idx);
         }
         let v = unsafe { vl.as_vector_unchecked() };
         unsafe { v.get_unchecked(idx_u) }
@@ -235,7 +234,7 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
     } else if let Some(mut s) = array.as_string() {
         unsafe { CHECK_IMPURE(array, array.get_untaggedptr()) };
         if idx < 0 || idx >= s.len_chars() as EmacsInt {
-            args_out_of_range!(array, LispObject::from(idx));
+            args_out_of_range!(array, idx);
         }
 
         let c = newelt.as_character_or_error();
@@ -292,12 +291,9 @@ pub fn defalias(
 
         if is_autoload(symbol.get_function()) {
             // Remember that the function was already an autoload.
-            loadhist_attach(LispObject::cons(Qt, sym));
+            loadhist_attach((true, sym).into());
         }
-        loadhist_attach(LispObject::cons(
-            if autoload { Qautoload } else { Qdefun },
-            sym,
-        ));
+        loadhist_attach((if autoload { Qautoload } else { Qdefun }, sym).into());
     }
 
     // Handle automatic advice activation.
@@ -324,7 +320,7 @@ pub fn defalias(
 /// of args.  MAX is the maximum number or the symbol `many', for a
 /// function with `&rest' args, or `unevalled' for a special form.
 #[lisp_fn]
-pub fn subr_arity(subr: LispSubrRef) -> LispObject {
+pub fn subr_arity(subr: LispSubrRef) -> (EmacsInt, LispObject) {
     let minargs = subr.min_args();
     let maxargs = if subr.is_many() {
         Qmany
@@ -334,7 +330,7 @@ pub fn subr_arity(subr: LispSubrRef) -> LispObject {
         LispObject::from(EmacsInt::from(subr.max_args()))
     };
 
-    LispObject::cons(LispObject::from(EmacsInt::from(minargs)), maxargs)
+    (EmacsInt::from(minargs), maxargs)
 }
 
 /// Return name of subroutine SUBR.
@@ -375,7 +371,8 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
             if !fwd.is_null() && blv.valcell.eq(blv.defcell) {
                 unsafe { do_symval_forwarding(fwd) }
             } else {
-                blv.defcell.as_cons_or_error().cdr()
+                let (_, d) = blv.defcell.into();
+                d
             }
         }
         symbol_redirect::SYMBOL_FORWARDED => {
@@ -421,7 +418,7 @@ pub fn default_value_lisp(symbol: LispSymbolRef) -> LispObject {
     let value = default_value(symbol);
 
     if value.eq(Qunbound) {
-        xsignal!(Qvoid_variable, symbol.into());
+        void_variable!(symbol);
     }
 
     value
@@ -522,7 +519,7 @@ pub unsafe extern "C" fn do_symval_forwarding(valcontents: *const Lisp_Fwd) -> L
         Lisp_Fwd_Buffer_Obj => *(*valcontents)
             .u_buffer_objfwd
             .offset
-            .apply_ptr(ThreadState::current_buffer().as_mut()),
+            .apply_ptr(ThreadState::current_buffer_unchecked().as_mut()),
         Lisp_Fwd_Kboard_Obj => {
             // We used to simply use current_kboard here, but from Lisp
             // code, its value is often unexpected.  It seems nicer to
@@ -577,8 +574,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
                     }
                 } else {
                     prop = Fget(predicate, Qrange);
-                    if prop.is_cons() {
-                        let (min, max) = prop.as_cons_or_error().as_tuple();
+                    if let Some((min, max)) = prop.into() {
                         let args = [min, newval, max];
                         if !newval.is_number() || leq(&args) {
                             wrong_range(min, max, newval);
@@ -590,7 +586,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
             }
 
             if buf.is_null() {
-                buf = ThreadState::current_buffer().as_mut();
+                buf = ThreadState::current_buffer_unchecked().as_mut();
             }
             *(*valcontents).u_buffer_objfwd.offset.apply_ptr_mut(buf) = newval;
         }
@@ -703,7 +699,7 @@ pub fn set_default(symbol: LispSymbolRef, value: LispObject) -> LispObject {
 
 extern "C" fn harmonize_variable_watchers(alias: LispObject, base_variable: LispObject) {
     if !base_variable.eq(alias)
-        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable().into())
+        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable())
     {
         alias
             .as_symbol_or_error()
@@ -738,11 +734,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let mem = member(watch_function, watchers);
 
     if mem.is_nil() {
-        put(
-            symbol,
-            Qwatchers,
-            LispObject::cons(watch_function, watchers),
-        );
+        put(symbol, Qwatchers, (watch_function, watchers).into());
     }
 }
 
@@ -793,23 +785,23 @@ pub fn logcount(value: EmacsInt) -> i32 {
 /// Set SYMBOL's function definition to DEFINITION, and return DEFINITION.
 #[lisp_fn]
 pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
-    let sym_obj = symbol.as_lisp_obj();
+    let sym_obj = LispObject::from(symbol);
     if sym_obj.is_nil() {
         // Perhaps not quite the right error signal, but seems good enough.
-        xsignal!(Qsetting_constant, sym_obj);
+        setting_constant!(sym_obj);
     }
 
     let function = symbol.get_function();
 
     unsafe {
         if Vautoload_queue.is_not_nil() && function.is_not_nil() {
-            Vautoload_queue =
-                LispObject::cons(LispObject::cons(sym_obj, function), Vautoload_queue);
+            Vautoload_queue = ((sym_obj, function), Vautoload_queue).into();
         }
     }
 
     if is_autoload(function) {
-        put(symbol, Qautoload, function.as_cons_or_error().cdr());
+        let (_, d) = function.into();
+        put(symbol, Qautoload, d);
     }
 
     // Convert to eassert or remove after GC bug is found.  In the

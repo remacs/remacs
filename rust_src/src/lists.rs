@@ -46,10 +46,6 @@ impl LispObject {
             None
         }
     }
-
-    pub fn as_cons_or_error(self) -> LispCons {
-        self.as_cons().unwrap_or_else(|| wrong_type!(Qconsp, self))
-    }
 }
 
 impl Debug for LispCons {
@@ -74,8 +70,8 @@ impl Debug for LispCons {
 }
 
 impl LispObject {
-    pub fn cons(car: LispObject, cdr: LispObject) -> Self {
-        unsafe { Fcons(car, cdr) }
+    pub fn cons<A: Into<LispObject>, D: Into<LispObject>>(car: A, cdr: D) -> Self {
+        unsafe { Fcons(car.into(), cdr.into()) }
     }
 
     pub fn is_list(self) -> bool {
@@ -264,14 +260,14 @@ impl Iterator for CarIter {
 
 impl From<LispObject> for LispCons {
     fn from(o: LispObject) -> Self {
-        o.as_cons_or_error()
+        o.as_cons().unwrap_or_else(|| wrong_type!(Qconsp, o))
     }
 }
 
 impl From<LispObject> for Option<LispCons> {
     fn from(o: LispObject) -> Self {
         if o.is_list() {
-            Some(o.as_cons_or_error())
+            Some(LispCons::from(o))
         } else {
             None
         }
@@ -280,15 +276,39 @@ impl From<LispObject> for Option<LispCons> {
 
 impl From<LispCons> for LispObject {
     fn from(c: LispCons) -> Self {
-        c.as_obj()
+        c.0
+    }
+}
+
+impl<S: Into<LispObject>, T: Into<LispObject>> From<(S, T)> for LispObject {
+    fn from(t: (S, T)) -> Self {
+        Self::cons(t.0, t.1)
+    }
+}
+
+impl From<LispCons> for (LispObject, LispObject) {
+    fn from(c: LispCons) -> Self {
+        (c.car(), c.cdr())
+    }
+}
+
+impl From<LispObject> for (LispObject, LispObject) {
+    fn from(o: LispObject) -> Self {
+        LispCons::from(o).into()
+    }
+}
+
+impl From<LispObject> for Option<(LispObject, LispObject)> {
+    fn from(o: LispObject) -> Self {
+        if o.is_cons() {
+            Some(o.into())
+        } else {
+            None
+        }
     }
 }
 
 impl LispCons {
-    pub fn as_obj(self) -> LispObject {
-        self.0
-    }
-
     fn _extract(self) -> *mut Lisp_Cons {
         self.0.get_untaggedptr() as *mut Lisp_Cons
     }
@@ -301,10 +321,6 @@ impl LispCons {
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
         unsafe { (*self._extract()).u.s.as_ref().u.cdr }
-    }
-
-    pub fn as_tuple(self) -> (LispObject, LispObject) {
-        (self.car(), self.cdr())
     }
 
     /// Set the car of the cons cell.
@@ -346,8 +362,8 @@ impl LispCons {
         loop {
             match (it1.next(), it2.next()) {
                 (Some(cons1), Some(cons2)) => {
-                    let (item1, tail1) = cons1.as_tuple();
-                    let (item2, tail2) = cons2.as_tuple();
+                    let (item1, tail1) = cons1.into();
+                    let (item2, tail2) = cons2.into();
                     if !unsafe { internal_equal(item1, item2, kind, item_depth, item_ht) } {
                         return false;
                     } else if tail1.eq(tail2) {
@@ -441,7 +457,8 @@ pub fn car(list: LispObject) -> LispObject {
     if list.is_nil() {
         list
     } else {
-        list.as_cons_or_error().car()
+        let (a, _) = list.into();
+        a
     }
 }
 
@@ -455,20 +472,27 @@ pub fn cdr(list: LispObject) -> LispObject {
     if list.is_nil() {
         list
     } else {
-        list.as_cons_or_error().cdr()
+        let (_, d) = list.into();
+        d
     }
 }
 
 /// Return the car of OBJECT if it is a cons cell, or else nil.
 #[lisp_fn]
 pub fn car_safe(object: LispObject) -> LispObject {
-    object.as_cons().map_or(Qnil, |cons| cons.car())
+    match object.into() {
+        Some((car, _)) => car,
+        None => Qnil,
+    }
 }
 
 /// Return the cdr of OBJECT if it is a cons cell, or else nil.
 #[lisp_fn]
 pub fn cdr_safe(object: LispObject) -> LispObject {
-    object.as_cons().map_or(Qnil, |cons| cons.cdr())
+    match object.into() {
+        Some((_, cdr)) => cdr,
+        None => Qnil,
+    }
 }
 
 /// Take cdr N times on LIST, return the result.
@@ -598,7 +622,7 @@ pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
     let mut prev = None;
     list.iter_tails(LispConsEndChecks::on, LispConsCircularChecks::on)
         .fold(list, |remaining, tail| {
-            let (item, rest) = tail.as_tuple();
+            let (item, rest) = tail.into();
             if elt.eq(item) {
                 match prev {
                     Some(cons) => setcdr(cons, rest),
@@ -658,18 +682,18 @@ where
         .iter_tails_plist(end_checks, circular_checks)
         .step_by(2)
     {
-        match tail.cdr().as_cons() {
+        match tail.cdr().into() {
             None => {
                 // need an extra check here to catch odd-length lists
-                if end_checks == LispConsEndChecks::on && tail.as_obj().is_not_nil() {
+                if end_checks == LispConsEndChecks::on && LispObject::from(tail).is_not_nil() {
                     wrong_type!(Qplistp, plist)
                 }
 
                 break;
             }
-            Some(tail_cdr_cons) => {
+            Some((tail_cdr_cons_car, _)) => {
                 if cmp(tail.car(), prop) {
-                    return tail_cdr_cons.car();
+                    return tail_cdr_cons_car;
                 }
             }
         }
@@ -709,7 +733,7 @@ where
         match tail.cdr().as_cons() {
             None => {
                 // need an extra check here to catch odd-length lists
-                if tail.as_obj().is_not_nil() {
+                if LispObject::from(tail).is_not_nil() {
                     wrong_type!(Qplistp, plist)
                 }
                 break;
@@ -724,11 +748,12 @@ where
         }
     }
     match last_cons {
-        None => LispObject::cons(prop, LispObject::cons(val, Qnil)),
+        None => (prop, (val, Qnil)).into(),
         Some(last_cons) => {
-            let last_cons_cdr = last_cons.cdr().as_cons_or_error();
-            let newcell = LispObject::cons(prop, LispObject::cons(val, last_cons_cdr.cdr()));
-            last_cons_cdr.set_cdr(newcell);
+            let (_, last_cons_cdr) = last_cons.into();
+            let last_cons_cdr = LispCons::from(last_cons_cdr);
+            let (_, lcc_cdr) = last_cons_cdr.into();
+            last_cons_cdr.set_cdr((prop, (val, lcc_cdr)).into());
             plist
         }
     }
@@ -763,7 +788,7 @@ pub fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> Li
 #[lisp_fn]
 pub fn get(symbol: LispSymbolRef, propname: LispObject) -> LispObject {
     let plist_env = unsafe { globals.Voverriding_plist_environment };
-    let propval = plist_get(cdr(assq(symbol.as_lisp_obj(), plist_env)), propname);
+    let propval = plist_get(cdr(assq(symbol.into(), plist_env)), propname);
     if propval.is_not_nil() {
         propval
     } else {
@@ -787,13 +812,13 @@ pub fn put(mut symbol: LispSymbolRef, propname: LispObject, value: LispObject) -
 pub fn list(args: &[LispObject]) -> LispObject {
     args.iter()
         .rev()
-        .fold(Qnil, |list, &arg| LispObject::cons(arg, list))
+        .fold(Qnil, |list, &arg| (arg, list).into())
 }
 
 /// Return a newly created list of length LENGTH, with each element being INIT.
 #[lisp_fn]
 pub fn make_list(length: EmacsUint, init: LispObject) -> LispObject {
-    (0..length).fold(Qnil, |list, _| LispObject::cons(init, list))
+    (0..length).fold(Qnil, |list, _| (init, list).into())
 }
 
 /// Return the length of a list, but avoid error or infinite loop.
@@ -816,7 +841,7 @@ pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
 
     let item = nthcdr(length / 2 - 1, list);
     let back = cdr(item);
-    setcdr(item.as_cons_or_error(), Qnil);
+    setcdr(item.into(), Qnil);
 
     let front = sort_list(list, pred);
     let back = sort_list(back, pred);
@@ -869,7 +894,7 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
                 value = item;
             }
         };
-        tail = item.as_cons();
+        tail = item.into();
     }
 }
 

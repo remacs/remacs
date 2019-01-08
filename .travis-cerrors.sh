@@ -12,7 +12,8 @@ export PATH=$PATH:~/.cargo/bin
 RUSTFMT_CONFIG_DIR=$DIR/rust_src
 
 echo "Checking compile errors"
+SKIP_BINDINGS=yes make -C "$DIR/src" generated-bindings
 cd "$DIR/rust_src"
-SKIP_BINDINGS=yes cargo build --features compile-errors 2> err.out || true
+cargo build --features compile-errors 2> err.out || true
 cat err.out
 grep -q 'compile_error!("error 001");' err.out

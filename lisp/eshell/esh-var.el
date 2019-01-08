@@ -343,6 +343,8 @@ This function is explicit for adding to `eshell-parse-argument-hook'."
 					       obarray 'boundp))
 	      (pcomplete-here))))
 
+;; FIXME the real "env" command does more than this, it runs a program
+;; in a modified environment.
 (defun eshell/env (&rest args)
   "Implementation of `env' in Lisp."
   (eshell-init-print-buffer)

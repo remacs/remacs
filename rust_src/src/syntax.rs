@@ -21,7 +21,7 @@ use crate::{
 /// current buffer.
 #[lisp_fn]
 pub fn syntax_table() -> LispObject {
-    ThreadState::current_buffer().syntax_table_
+    ThreadState::current_buffer_unchecked().syntax_table_
 }
 
 /// Return t if OBJECT is a syntax table.
@@ -56,8 +56,8 @@ def_lisp_sym!(Qsyntax_table_p, "syntax-table-p");
 
 // We don't name it scan_lists because there is an internal function
 // with the same name
-#[lisp_fn(name = "scan-lists")]
-pub fn scan_lists_defun(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
+#[lisp_fn(name = "scan-lists", c_name = "scan_lists")]
+pub fn scan_lists_lisp(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> LispObject {
     unsafe { scan_lists(from, count, depth, false) }
 }
 
@@ -66,7 +66,7 @@ pub fn scan_lists_defun(from: EmacsInt, count: EmacsInt, depth: EmacsInt) -> Lis
 #[lisp_fn]
 pub fn set_syntax_table(table: LispCharTableRef) -> LispCharTableRef {
     check_syntax_table_p(table);
-    let mut buf = ThreadState::current_buffer();
+    let mut buf = ThreadState::current_buffer_unchecked();
     buf.set_syntax_table(table);
     let idx = per_buffer_var_idx!(syntax_table_);
     buf.set_per_buffer_value_p(idx, 1);
@@ -75,7 +75,7 @@ pub fn set_syntax_table(table: LispCharTableRef) -> LispCharTableRef {
 
 fn check_syntax_table_p(table: LispCharTableRef) {
     if table.purpose != Qsyntax_table {
-        wrong_type!(Qsyntax_table_p, LispObject::from(table))
+        wrong_type!(Qsyntax_table_p, table)
     }
 }
 
@@ -91,7 +91,7 @@ pub extern "C" fn check_syntax_table(obj: LispObject) {
         .as_char_table()
         .map_or(true, |c| !c.purpose.eq(Qsyntax_table))
     {
-        xsignal!(Qsyntax_table_p, obj);
+        wrong_type!(Qsyntax_table_p, obj);
     }
 }
 
@@ -135,7 +135,7 @@ pub fn copy_syntax_table(mut table: LispObject) -> LispObject {
 #[lisp_fn(min = "0", intspec = "^p")]
 pub fn forward_word(arg: Option<EmacsInt>) -> bool {
     let arg = arg.unwrap_or(1);
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     let point = cur_buf.pt;
 
     let (mut val, orig_val) = match unsafe { scan_words(point, arg) } {

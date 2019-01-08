@@ -11,8 +11,8 @@ use crate::{
     multibyte::LispStringRef,
     remacs_sys::{
         add_process_read_fd, current_thread, delete_read_fd, emacs_get_tty_pgrp,
-        get_process as cget_process, send_process, setup_process_coding_systems, update_status,
-        Fmapcar, STRING_BYTES,
+        get_process as cget_process, list_system_processes, send_process,
+        setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES,
     },
     remacs_sys::{pvec_type, EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist},
     remacs_sys::{
@@ -25,10 +25,6 @@ use crate::{
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
 impl LispProcessRef {
-    pub fn as_lisp_obj(self) -> LispObject {
-        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
-    }
-
     fn ptype(self) -> LispObject {
         self.type_
     }
@@ -70,7 +66,7 @@ impl From<LispObject> for LispProcessRef {
 
 impl From<LispProcessRef> for LispObject {
     fn from(p: LispProcessRef) -> Self {
-        p.as_lisp_obj()
+        LispObject::tag_ptr(p, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -99,7 +95,7 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
         if obj.is_nil() {
             obj = get_buffer(LispBufferOrName::from(name)).map_or_else(
                 || error!("Process {} does not exist", name.as_string_or_error()),
-                |b| b.as_lisp_obj(),
+                LispObject::from,
             );
         }
         obj
@@ -123,7 +119,7 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
                 Some(proc) => proc.into(),
             }
         }
-        None => proc_or_buf.as_process_or_error().as_lisp_obj(),
+        None => proc_or_buf.as_process_or_error().into(),
     }
 }
 
@@ -283,8 +279,8 @@ pub fn process_status(process: LispObject) -> LispObject {
         unsafe { update_status(process.as_mut()) };
     }
     let mut status = process.status;
-    if let Some(c) = status.as_cons() {
-        status = c.car();
+    if let Some((a, _)) = status.into() {
+        status = a;
     };
     let process_type = process.ptype();
     if process_type.eq(Qnetwork) || process_type.eq(Qserial) || process_type.eq(Qpipe) {
@@ -302,8 +298,8 @@ pub fn process_status(process: LispObject) -> LispObject {
 
 /// Return a cons of coding systems for decoding and encoding of PROCESS.
 #[lisp_fn]
-pub fn process_coding_system(process: LispProcessRef) -> LispObject {
-    LispObject::cons(process.decode_coding_system, process.encode_coding_system)
+pub fn process_coding_system(process: LispProcessRef) -> (LispObject, LispObject) {
+    (process.decode_coding_system, process.encode_coding_system)
 }
 
 /// Return the locking thread of PROCESS.
@@ -448,7 +444,7 @@ pub fn process_send_string(process: LispObject, mut string: LispStringRef) {
             cget_process(process),
             string.u.s.data as *mut libc::c_char,
             STRING_BYTES(string.as_mut()),
-            string.as_lisp_obj(),
+            string.into(),
         )
     };
 }
@@ -492,9 +488,10 @@ pub fn process_exit_status(mut process: LispProcessRef) -> LispObject {
         unsafe { update_status(process.as_mut()) };
     }
     let status = process.status;
-    status
-        .as_cons()
-        .map_or_else(|| LispObject::from(0), |cons| car(cons.cdr()))
+    match status.into() {
+        None => 0.into(),
+        Some((_, d)) => car(d),
+    }
 }
 
 /// Return non-nil if PROCESS has given the terminal to a
@@ -530,6 +527,15 @@ pub fn process_running_child_p(mut process: LispObject) -> LispObject {
     } else {
         LispObject::from_fixnum(gid.into())
     }
+}
+
+/// Return a list of numerical process IDs of all running processes.
+/// If this functionality is unsupported, return nil.
+///
+/// See `process-attributes' for getting attributes of a process given its ID.
+#[lisp_fn(name = "list-system-processes", c_name = "list_system_processes")]
+pub fn list_system_processes_lisp() -> LispObject {
+    unsafe { list_system_processes() }
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

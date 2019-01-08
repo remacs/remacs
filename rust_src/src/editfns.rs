@@ -1,6 +1,8 @@
 //! Lisp functions pertaining to editing.
 
 use std;
+use std::cmp::max;
+use std::ops::{Add, Sub};
 use std::ptr;
 
 use libc;
@@ -13,6 +15,7 @@ use crate::{
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
     eval::{progn, unbind_to},
+    indent::invalidate_current_column,
     lisp::{defsubr, LispObject},
     marker::{
         buf_bytepos_to_charpos, buf_charpos_to_bytepos, marker_position_lisp, point_marker,
@@ -42,6 +45,7 @@ use crate::{
     remacs_sys::{Qboundary, Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt},
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
+    time::{lisp_time_struct, time_overflow, LispTime},
     util::clip_to_bounds,
     windows::selected_window,
 };
@@ -50,7 +54,7 @@ use crate::{
 /// Beginning of buffer is position (point-min).
 #[lisp_fn]
 pub fn point() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt as EmacsInt
 }
 
@@ -73,7 +77,7 @@ pub fn buffer_size(buffer: LispBufferOrCurrent) -> EmacsInt {
 /// If the buffer is narrowed, this means the end of the narrowed part.
 #[lisp_fn]
 pub fn eobp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.zv == buffer_ref.pt
 }
 
@@ -81,14 +85,14 @@ pub fn eobp() -> bool {
 /// buffer is narrowed, this means the beginning of the narrowed part.
 #[lisp_fn]
 pub fn bobp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.begv
 }
 
 /// Return t if point is at the beginning of a line.
 #[lisp_fn]
 pub fn bolp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.begv || buffer_ref.fetch_byte(buffer_ref.pt_byte - 1) == b'\n'
 }
 
@@ -96,7 +100,7 @@ pub fn bolp() -> bool {
 /// `End of a line' includes point being at the end of the buffer.
 #[lisp_fn]
 pub fn eolp() -> bool {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.pt == buffer_ref.zv || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n'
 }
 
@@ -104,7 +108,7 @@ pub fn eolp() -> bool {
 /// See also `gap-size'.
 #[lisp_fn]
 pub fn gap_position() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.gap_position() as EmacsInt
 }
 
@@ -112,7 +116,7 @@ pub fn gap_position() -> EmacsInt {
 /// See also `gap-position'.
 #[lisp_fn]
 pub fn gap_size() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
     buffer_ref.gap_size() as EmacsInt
 }
 
@@ -120,7 +124,7 @@ pub fn gap_size() -> EmacsInt {
 /// BEGINNINGP means return the start.
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> EmacsInt {
-    let current_buf = ThreadState::current_buffer();
+    let current_buf = ThreadState::current_buffer_unchecked();
     if unsafe { globals.Vtransient_mark_mode }.is_not_nil()
         && unsafe { globals.Vmark_even_if_inactive }.is_nil()
         && current_buf.mark_active().is_nil()
@@ -156,7 +160,7 @@ pub fn region_end() -> EmacsInt {
 /// If you set the marker not to point anywhere, the buffer will have no mark.
 #[lisp_fn]
 pub fn mark_marker() -> LispObject {
-    ThreadState::current_buffer().mark()
+    ThreadState::current_buffer_unchecked().mark()
 }
 
 /// Return the minimum permissible value of point in the current
@@ -164,7 +168,7 @@ pub fn mark_marker() -> LispObject {
 /// effect.
 #[lisp_fn]
 pub fn point_min() -> EmacsInt {
-    ThreadState::current_buffer().begv as EmacsInt
+    ThreadState::current_buffer_unchecked().begv as EmacsInt
 }
 
 /// Return the maximum permissible value of point in the current
@@ -172,7 +176,7 @@ pub fn point_min() -> EmacsInt {
 /// restriction) is in effect, in which case it is less.
 #[lisp_fn]
 pub fn point_max() -> EmacsInt {
-    ThreadState::current_buffer().zv as EmacsInt
+    ThreadState::current_buffer_unchecked().zv as EmacsInt
 }
 
 /// Set point to POSITION, a number or marker.
@@ -184,9 +188,9 @@ pub fn goto_char(position: LispObject) -> LispObject {
     if position.is_marker() {
         set_point_from_marker(position);
     } else if let Some(num) = position.as_fixnum() {
-        let mut cur_buf = ThreadState::current_buffer();
+        let mut cur_buf = ThreadState::current_buffer_unchecked();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -199,10 +203,10 @@ pub fn goto_char(position: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
     let pos = position.to_fixnum() as ptrdiff_t;
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
+        let bytepos = buf_charpos_to_bytepos(cur_buf.as_mut(), pos);
         Some(bytepos as EmacsInt)
     } else {
         None
@@ -223,13 +227,9 @@ pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
 #[lisp_fn(min = "2")]
 pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     if byte < 0 || byte > 255 {
-        args_out_of_range!(
-            LispObject::from(byte),
-            LispObject::from(0),
-            LispObject::from(255)
-        )
+        args_out_of_range!(byte, 0, 255)
     }
-    let buf = ThreadState::current_buffer();
+    let buf = ThreadState::current_buffer_unchecked();
     let toinsert = if byte >= 128 && buf.multibyte_characters_enabled() {
         EmacsInt::from(raw_byte_codepoint(byte as c_uchar))
     } else {
@@ -311,7 +311,7 @@ pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool)
 /// the buffer or accessible region, return 0.
 #[lisp_fn]
 pub fn following_char() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     if buffer_ref.pt >= buffer_ref.zv {
         0
@@ -324,7 +324,7 @@ pub fn following_char() -> EmacsInt {
 /// beginning of the buffer or accessible region, return 0.
 #[lisp_fn(c_name = "previous_char")]
 pub fn preceding_char() -> EmacsInt {
-    let buffer_ref = ThreadState::current_buffer();
+    let buffer_ref = ThreadState::current_buffer_unchecked();
 
     if buffer_ref.pt <= buffer_ref.begv {
         return EmacsInt::from(0);
@@ -343,7 +343,7 @@ pub fn preceding_char() -> EmacsInt {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
-    let mut buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
     let pos_byte: isize;
 
     if pos.is_nil() {
@@ -364,7 +364,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
         if p <= buffer_ref.begv || p > buffer_ref.zv {
             return None;
         }
-        pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+        pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
     }
 
     let pos_before = if buffer_ref.multibyte_characters_enabled() {
@@ -380,7 +380,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
-    let mut buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
     if pos.is_nil() {
         pos = LispObject::from(point());
     }
@@ -398,7 +398,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if p < buffer_ref.begv || p >= buffer_ref.zv {
             None
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
+            let pos_byte = buf_charpos_to_bytepos(buffer_ref.as_mut(), p);
             Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
@@ -428,7 +428,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
 
     while let Some(a) = it.next() {
         let b = it.next().unwrap(); // safe due to the odd check at the beginning
-        properties = LispObject::cons(*a, LispObject::cons(*b, properties));
+        properties = (*a, (*b, properties)).into();
     }
 
     unsafe {
@@ -639,7 +639,7 @@ pub fn constrain_to_field(
 
     let prev_old = old_pos - 1;
     let prev_new = new_pos - 1;
-    let begv = ThreadState::current_buffer().begv as EmacsInt;
+    let begv = ThreadState::current_buffer_unchecked().begv as EmacsInt;
 
     if unsafe { globals.Vinhibit_field_text_motion == Qnil }
         && new_pos != old_pos
@@ -744,7 +744,7 @@ pub fn constrain_to_field(
 /// If BYTEPOS is out of range, the value is nil.
 #[lisp_fn]
 pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     let mut pos_byte = bytepos as isize;
     if pos_byte < cur_buf.beg_byte() || pos_byte > cur_buf.z_byte() {
         return None;
@@ -776,7 +776,7 @@ pub fn char_equal(c1: LispObject, c2: LispObject) -> bool {
         return true;
     }
 
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
     if cur_buf.case_fold_search().is_nil() {
         return false;
     }
@@ -868,10 +868,10 @@ pub fn insert_buffer_substring(
     }
 
     if !(buf_ref.begv <= b && e <= buf_ref.zv) {
-        args_out_of_range!(beg.into(), end.into());
+        args_out_of_range!(beg, end);
     }
 
-    let mut cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer_unchecked();
     unsafe {
         set_buffer_internal_1(buf_ref.as_mut());
         update_buffer_properties(b, e);
@@ -933,12 +933,8 @@ pub fn message_box(args: &mut [LispObject]) -> LispObject {
             Qnil
         } else {
             let val = format_message(args);
-            let pane = list!(LispObject::cons(
-                build_string("OK".as_ptr() as *const ::libc::c_char),
-                Qt
-            ));
-            let menu = LispObject::cons(val, pane);
-            Fx_popup_dialog(Qt, menu, Qt);
+            let pane = list!((build_string("OK".as_ptr() as *const ::libc::c_char), true));
+            Fx_popup_dialog(Qt, (val, pane).into(), Qt);
             val
         }
     }
@@ -1078,7 +1074,7 @@ pub fn format_message(args: &mut [LispObject]) -> LispObject {
 /// of the buffer.
 #[lisp_fn]
 pub fn buffer_string() -> LispObject {
-    let cur_buf = ThreadState::current_buffer();
+    let cur_buf = ThreadState::current_buffer_unchecked();
 
     let begv = cur_buf.begv;
     let begv_byte = cur_buf.begv_byte;
@@ -1219,7 +1215,7 @@ pub fn find_field(
     beg_limit: Option<EmacsInt>,
     end_limit: Option<EmacsInt>,
 ) -> (ptrdiff_t, ptrdiff_t) {
-    let current_buffer = ThreadState::current_buffer();
+    let current_buffer = ThreadState::current_buffer_unchecked();
     let pos = pos.map_or(current_buffer.pt, |p| p.to_fixnum() as ptrdiff_t);
 
     // Fields right before and after the point.
@@ -1391,6 +1387,69 @@ pub fn delete_and_extract_region(
         }
         .as_string()
     }
+}
+
+fn time_arith<F>(a: LispObject, b: LispObject, op: F) -> Vec<EmacsInt>
+where
+    F: FnOnce(LispTime, LispTime) -> LispTime,
+{
+    let mut alen: c_int = 0;
+    let mut blen: c_int = 0;
+    let ta = unsafe { lisp_time_struct(a, &mut alen) };
+    let tb = unsafe { lisp_time_struct(b, &mut blen) };
+    let t = op(ta, tb);
+    if LispObject::fixnum_overflow(t.hi) {
+        time_overflow();
+    }
+
+    let maxlen = max(alen, blen) as usize;
+
+    t.into_vec(maxlen)
+}
+
+/// Return the sum of two time values A and B, as a time value. A nil value for either argument
+/// stands for the current time. See `current-time-string' for the various forms of a time value.
+#[lisp_fn(name = "time-add", c_name = "time_add")]
+pub fn time_add_lisp(a: LispObject, b: LispObject) -> Vec<EmacsInt> {
+    time_arith(a, b, LispTime::add)
+}
+
+/// Return the difference between two time values A and B, as a time value. Use `float-time' to
+/// convert the difference into elapsed seconds.  A nil value for either argument stands for the
+/// current time.  See `current-time-string' for the various forms of a time value.
+#[lisp_fn(name = "time-subtract", c_name = "time_subtract")]
+pub fn time_subtract_lisp(a: LispObject, b: LispObject) -> Vec<EmacsInt> {
+    time_arith(a, b, LispTime::sub)
+}
+
+/// Return non-nil if time value T1 is earlier than time value T2.  A nil value for either
+/// argument stands for the current time.  See `current-time-string' for the various forms of a
+/// time value.
+#[lisp_fn]
+pub fn time_less_p(t1: LispObject, t2: LispObject) -> bool {
+    let mut t1len: c_int = 0;
+    let mut t2len: c_int = 0;
+    let a = unsafe { lisp_time_struct(t1, &mut t1len) };
+    let b = unsafe { lisp_time_struct(t2, &mut t2len) };
+
+    a < b
+}
+
+/// Remove restrictions (narrowing) from current buffer.
+/// This allows the buffer's full text to be seen and edited.
+#[lisp_fn(intspec = "")]
+pub fn widen() {
+    let mut buffer_ref = ThreadState::current_buffer_unchecked();
+
+    if buffer_ref.beg() != buffer_ref.begv || buffer_ref.z() != buffer_ref.zv {
+        buffer_ref.set_clip_changed(true);
+    }
+
+    buffer_ref.set_begv_both(buffer_ref.beg(), buffer_ref.beg_byte());
+    buffer_ref.set_zv_both(buffer_ref.z(), buffer_ref.z_byte());
+
+    // Changing the buffer bounds invalidates any recorded current column.
+    invalidate_current_column();
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
