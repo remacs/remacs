@@ -14,7 +14,7 @@ use crate::{
     keyboard::lucid_event_type_list_p,
     lisp::{defsubr, LispObject},
     lists::{nth, setcdr},
-    lists::{LispConsCircularChecks, LispConsEndChecks},
+    lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
     remacs_sys::{
         access_keymap, copy_keymap_item, describe_vector, make_save_funcptr_ptr_obj,
@@ -106,22 +106,21 @@ pub extern "C" fn get_keymap(
             break;
         }
 
-        if let Some(cons) = object.as_cons() {
-            if cons.car().eq(Qkeymap) {
+        if let Some((car, _)) = object.into() {
+            if car.eq(Qkeymap) {
                 return object;
             }
         }
 
         let tem = indirect_function(object);
-        if let Some(cons) = tem.as_cons() {
-            if cons.car().eq(Qkeymap) {
+        if let Some((car, _)) = tem.into() {
+            if car.eq(Qkeymap) {
                 return tem;
             }
 
             // Should we do an autoload?  Autoload forms for keymaps have
             // Qkeymap as their fifth element.
-            if (autoload || !error_if_not_keymap) && cons.car().eq(Qautoload) && object.is_symbol()
-            {
+            if (autoload || !error_if_not_keymap) && car.eq(Qautoload) && object.is_symbol() {
                 let tail = nth(4, tem);
                 if tail.eq(Qkeymap) {
                     if autoload {
@@ -233,7 +232,7 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
     }
 
     // Skip past the initial element 'keymap'.
-    let mut prev = keymap.as_cons_or_error();
+    let mut prev = LispCons::from(keymap);
     let mut list;
 
     loop {
@@ -289,8 +288,7 @@ pub unsafe extern "C" fn map_keymap(
 ) {
     let mut map = get_keymap(map, true, autoload);
     while map.is_cons() {
-        if let Some(cons) = map.as_cons() {
-            let (car, cdr) = cons.as_tuple();
+        if let Some((car, cdr)) = map.into() {
             if keymapp(car) {
                 map_keymap(car, fun, args, data, autoload);
                 map = cdr;
@@ -344,10 +342,9 @@ pub unsafe extern "C" fn map_keymap_internal(
     data: *mut c_void,
 ) -> LispObject {
     let map = map;
-    let tail = match map.as_cons() {
+    let tail = match map.into() {
         None => Qnil,
-        Some(cons) => {
-            let (car, cdr) = cons.as_tuple();
+        Some((car, cdr)) => {
             if car.eq(Qkeymap) {
                 cdr
             } else {
@@ -367,8 +364,7 @@ pub unsafe extern "C" fn map_keymap_internal(
                 break;
             }
 
-            if let Some(binding_cons) = binding.as_cons() {
-                let (car, cdr) = binding_cons.as_tuple();
+            if let Some((car, cdr)) = binding.into() {
                 map_keymap_item(fun, args, car, cdr, data);
             } else if binding.is_vector() {
                 if let Some(binding_vec) = binding.as_vectorlike() {
@@ -498,7 +494,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
         let mut c = aref(key, idx);
         idx += 1;
 
-        if c.is_cons() && lucid_event_type_list_p(c.as_cons()) {
+        if c.is_cons() && lucid_event_type_list_p(c.into()) {
             c = unsafe { Fevent_convert_list(c) };
         }
 
@@ -643,14 +639,13 @@ pub extern "C" fn copy_keymap_1(chartable: LispObject, idx: LispObject, elt: Lis
 /// is not copied.
 #[lisp_fn]
 pub fn copy_keymap(keymap: LispObject) -> LispObject {
-    let mut keymap = get_keymap(keymap, true, false);
+    let keymap = get_keymap(keymap, true, false);
     let mut tail = list!(Qkeymap);
     let copy = tail;
 
-    keymap = keymap.as_cons_or_error().cdr(); // Skip the `keymap' symbol.
+    let (_, mut keymap) = keymap.into(); // Skip the `keymap' symbol.
 
-    while let Some(cons) = keymap.as_cons() {
-        let mut elt = cons.car();
+    while let Some((mut elt, kmd)) = keymap.into() {
         if elt.eq(Qkeymap) {
             break;
         }
@@ -664,22 +659,21 @@ pub fn copy_keymap(keymap: LispObject) -> LispObject {
             for (i, obj) in v.iter().enumerate() {
                 v2.set(i, unsafe { copy_keymap_item(obj) });
             }
-        } else if let Some(cons_1) = elt.as_cons() {
-            let front = cons_1.car();
+        } else if let Some((front, back)) = elt.into() {
             if front.eq(Qkeymap) {
                 // This is a sub keymap
                 elt = copy_keymap(elt);
             } else {
-                elt = (front, unsafe { copy_keymap_item(cons_1.cdr()) }).into();
+                elt = (front, unsafe { copy_keymap_item(back) }).into();
             }
         }
 
-        setcdr(tail.as_cons().unwrap(), list!(elt));
-        tail = tail.as_cons().unwrap().cdr();
-        keymap = cons.cdr();
+        setcdr(tail.into(), list!(elt));
+        tail = LispCons::from(tail).cdr();
+        keymap = kmd;
     }
 
-    setcdr(tail.as_cons().unwrap(), keymap);
+    setcdr(tail.into(), keymap);
     copy
 }
 

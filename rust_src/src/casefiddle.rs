@@ -189,7 +189,7 @@ fn casefiddle_region(
         );
 
         for elt in bounds.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
-            let (car, cdr) = elt.as_cons_or_error().as_tuple();
+            let (car, cdr) = elt.into();
             unsafe { casify_region(action, car, cdr) };
         }
     }

@@ -371,7 +371,8 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
             if !fwd.is_null() && blv.valcell.eq(blv.defcell) {
                 unsafe { do_symval_forwarding(fwd) }
             } else {
-                blv.defcell.as_cons_or_error().cdr()
+                let (_, d) = blv.defcell.into();
+                d
             }
         }
         symbol_redirect::SYMBOL_FORWARDED => {
@@ -573,8 +574,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
                     }
                 } else {
                     prop = Fget(predicate, Qrange);
-                    if prop.is_cons() {
-                        let (min, max) = prop.as_cons_or_error().as_tuple();
+                    if let Some((min, max)) = prop.into() {
                         let args = [min, newval, max];
                         if !newval.is_number() || leq(&args) {
                             wrong_range(min, max, newval);
@@ -800,7 +800,8 @@ pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
     }
 
     if is_autoload(function) {
-        put(symbol, Qautoload, function.as_cons_or_error().cdr());
+        let (_, d) = function.into();
+        put(symbol, Qautoload, d);
     }
 
     // Convert to eassert or remove after GC bug is found.  In the

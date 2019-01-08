@@ -336,9 +336,9 @@ pub fn read_string(
 
     if let Some(s) = val.as_string() {
         if s.len_chars() == 0 && default_value.is_not_nil() {
-            val = match default_value.as_cons() {
+            val = match default_value.into() {
                 None => default_value,
-                Some(c) => c.car(),
+                Some((a, _)) => a,
             }
         }
     }

@@ -137,8 +137,8 @@ pub fn font_match_p(spec: LispObject, font: LispObject) -> bool {
 #[lisp_fn(min = "1")]
 pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
     let val = unsafe { Flist_fonts(spec, frame, LispObject::from(1), Qnil) };
-    match val.as_cons() {
-        Some(cons) => cons.car(),
+    match val.into() {
+        Some((a, _)) => a,
         None => val,
     }
 }
