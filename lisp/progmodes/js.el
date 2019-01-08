@@ -45,13 +45,11 @@
 
 ;;; Code:
 
-
 (require 'cc-mode)
 (require 'newcomment)
-(require 'thingatpt)                    ; forward-symbol etc
 (require 'imenu)
 (require 'moz nil t)
-(require 'json nil t)
+(require 'json)
 (require 'sgml-mode)
 (require 'prog-mode)
 
