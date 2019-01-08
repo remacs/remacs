@@ -6965,11 +6965,9 @@ save_window_save (Lisp_Object window, struct Lisp_Vector *vector, ptrdiff_t i)
 
       if (BUFFERP (w->contents))
 	{
-	  Lisp_Object buffer_local_window_point_insertion_type
-	    = (buffer_local_value (Qwindow_point_insertion_type, w->contents));
 	  bool window_point_insertion_type
-	    = (!NILP (buffer_local_window_point_insertion_type)
-	       && !EQ (buffer_local_window_point_insertion_type, Qunbound));
+	    = !NILP (buffer_local_value
+                      (Qwindow_point_insertion_type, w->contents));
 
 	  /* Save w's value of point in the window configuration.  If w
 	     is the selected window, then get the value of point from
