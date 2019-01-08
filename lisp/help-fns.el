@@ -68,6 +68,9 @@ The functions will receive the function name as argument.")
 
 (defun help--loaded-p (file)
   "Try and figure out if FILE has already been loaded."
+  ;; FIXME: this regexp business is not good enough: for file
+  ;; `toto', it will say `toto' is loaded when in reality it was
+  ;; just cedet/semantic/toto that has been loaded.
   (or (let ((feature (intern-soft file)))
         (and feature (featurep feature)))
       (let* ((re (load-history-regexp file))
@@ -83,11 +86,9 @@ The functions will receive the function name as argument.")
     (dolist (file files)
       ;; FIXME: Should we scan help-definition-prefixes to remove
       ;; other prefixes of the same file?
-      ;; FIXME: this regexp business is not good enough: for file
-      ;; `toto', it will say `toto' is loaded when in reality it was
-      ;; just cedet/semantic/toto that has been loaded.
       (unless (help--loaded-p file)
-        (load file 'noerror 'nomessage)))))
+        (with-demoted-errors "while loading: %S"
+          (load file 'noerror 'nomessage))))))
 
 (defun help--symbol-completion-table (string pred action)
   (let ((prefixes (radix-tree-prefixes (help-definition-prefixes) string)))
