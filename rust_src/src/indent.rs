@@ -99,7 +99,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
             unsafe {
                 // Insert spaces in front of the tab
                 set_point_both(buffer.pt - 1, buffer.pt_byte - 1);
-                Finsert_char((' ' as u8).into(), (goal - prev_col).into(), Qt);
+                Finsert_char(b' '.into(), (goal - prev_col).into(), Qt);
 
                 // Delete the tab and indent to COL
                 del_range(buffer.pt, buffer.pt + 1);
