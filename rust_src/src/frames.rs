@@ -38,7 +38,7 @@ impl LispFrameRef {
 
 impl From<LispObject> for LispFrameRef {
     fn from(o: LispObject) -> Self {
-        o.as_frame_or_error()
+        o.as_frame().unwrap_or_else(|| wrong_type!(Qframep, o))
     }
 }
 
@@ -50,7 +50,7 @@ impl From<LispFrameRef> for LispObject {
 
 impl From<LispObject> for Option<LispFrameRef> {
     fn from(o: LispObject) -> Self {
-        o.as_frame()
+        o.as_vectorlike().and_then(|v| v.as_frame())
     }
 }
 
@@ -61,13 +61,12 @@ impl LispObject {
     }
 
     pub fn as_frame(self) -> Option<LispFrameRef> {
-        self.as_vectorlike().and_then(|v| v.as_frame())
+        self.into()
     }
 
     // Same as CHECK_FRAME
     pub fn as_frame_or_error(self) -> LispFrameRef {
-        self.as_frame()
-            .unwrap_or_else(|| wrong_type!(Qframep, self))
+        self.into()
     }
 
     pub fn as_live_frame(self) -> Option<LispFrameRef> {

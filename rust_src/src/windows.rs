@@ -227,7 +227,7 @@ impl LispWindowRef {
 
 impl From<LispObject> for LispWindowRef {
     fn from(o: LispObject) -> Self {
-        o.as_window_or_error()
+        o.as_window().unwrap_or_else(|| wrong_type!(Qwindowp, o))
     }
 }
 
@@ -239,7 +239,7 @@ impl From<LispWindowRef> for LispObject {
 
 impl From<LispObject> for Option<LispWindowRef> {
     fn from(o: LispObject) -> Self {
-        o.as_window()
+        o.as_vectorlike().and_then(|v| v.as_window())
     }
 }
 
@@ -250,12 +250,11 @@ impl LispObject {
     }
 
     pub fn as_window(self) -> Option<LispWindowRef> {
-        self.as_vectorlike().and_then(|v| v.as_window())
+        self.into()
     }
 
     pub fn as_window_or_error(self) -> LispWindowRef {
-        self.as_window()
-            .unwrap_or_else(|| wrong_type!(Qwindowp, self))
+        self.into()
     }
 
     pub fn as_minibuffer_or_error(self) -> LispWindowRef {

@@ -48,7 +48,7 @@ impl ThreadStateRef {
 
 impl From<LispObject> for ThreadStateRef {
     fn from(o: LispObject) -> Self {
-        o.as_thread_or_error()
+        o.as_thread().unwrap_or_else(|| wrong_type!(Qthreadp, o))
     }
 }
 
@@ -69,8 +69,7 @@ impl LispObject {
     }
 
     pub fn as_thread_or_error(self) -> ThreadStateRef {
-        self.as_thread()
-            .unwrap_or_else(|| wrong_type!(Qthreadp, self))
+        self.into()
     }
 }
 
