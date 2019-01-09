@@ -1,5 +1,8 @@
 //! Operations on lists.
 
+use std::fmt;
+use std::fmt::{Debug, Formatter};
+
 use libc::c_void;
 
 use remacs_macros::lisp_fn;
@@ -18,7 +21,7 @@ use crate::{
 
 /// A newtype for objects we know are conses.
 #[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub struct LispCons(LispObject);
 
 impl LispObject {
@@ -32,12 +35,37 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_Cons
     }
 
+    pub fn force_cons(self) -> LispCons {
+        LispCons(self)
+    }
+
     pub fn as_cons(self) -> Option<LispCons> {
         if self.is_cons() {
             Some(LispCons(self))
         } else {
             None
         }
+    }
+}
+
+impl Debug for LispCons {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(f, "'(")?;
+        let mut first = true;
+        let mut it = self.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::on);
+        while let Some(car) = it.next() {
+            if first {
+                first = false;
+            } else {
+                write!(f, " ")?;
+            }
+            write!(f, "{:?}", car)?;
+        }
+        let last = it.rest();
+        if !last.is_nil() {
+            write!(f, ". {:?}", last)?;
+        }
+        write!(f, ")")
     }
 }
 

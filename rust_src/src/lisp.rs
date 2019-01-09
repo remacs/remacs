@@ -1,14 +1,13 @@
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 
-use libc::{c_char, c_void, intptr_t, uintptr_t};
-use std::ffi::CString;
-
 use std::convert::From;
+use std::ffi::CString;
 use std::fmt::{Debug, Error, Formatter};
 use std::mem;
 use std::ops::{Deref, DerefMut};
-use std::slice;
+
+use libc::{c_char, c_void, intptr_t, uintptr_t};
 
 use crate::{
     buffers::LispBufferRef,
@@ -91,7 +90,6 @@ where
 // ExternalPtr
 
 #[repr(transparent)]
-#[derive(Debug)]
 pub struct ExternalPtr<T>(*mut T);
 
 impl<T> Copy for ExternalPtr<T> {}
@@ -183,6 +181,10 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_Misc
     }
 
+    pub fn force_misc(self) -> LispMiscRef {
+        unsafe { self.to_misc_unchecked() }
+    }
+
     pub fn as_misc(self) -> Option<LispMiscRef> {
         if self.is_misc() {
             unsafe { Some(self.to_misc_unchecked()) }
@@ -193,6 +195,17 @@ impl LispObject {
 
     unsafe fn to_misc_unchecked(self) -> LispMiscRef {
         LispMiscRef::new(self.get_untaggedptr() as *mut Lisp_Misc_Any)
+    }
+}
+
+impl Debug for LispMiscRef {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        write!(
+            f,
+            "#<MISC @ {:p}: VAL({:#X})>",
+            self.as_ptr(),
+            LispObject::tag_ptr(*self, Lisp_Type::Lisp_Misc).to_C()
+        )
     }
 }
 
@@ -595,78 +608,30 @@ impl LispObject {
 /// of arguments.
 pub const MANY: i16 = -2;
 
-/// Internal function to get a displayable string out of a Lisp string.
-fn display_string(obj: LispObject) -> String {
-    let s = obj.as_string().unwrap();
-    let slice = unsafe { slice::from_raw_parts(s.const_data_ptr(), s.len_bytes() as usize) };
-    String::from_utf8_lossy(slice).into_owned()
-}
-
 impl Debug for LispObject {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         let ty = self.get_type();
-        let self_ptr = &self as *const _ as usize;
+        let self_ptr = &self as *const _;
         if ty as u8 >= 8 {
-            write!(
+            return write!(
                 f,
-                "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
+                "#<INVALID-OBJECT @ {:p}: VAL({:#X})>",
                 self_ptr,
                 self.to_C()
-            )?;
-            return Ok(());
+            );
         }
         if self.is_nil() {
             return write!(f, "nil");
         }
         match ty {
-            Lisp_Type::Lisp_Symbol => {
-                let name = self.as_symbol_or_error().symbol_name();
-                write!(f, "'{}", display_string(name))?;
-            }
-            Lisp_Type::Lisp_Cons => {
-                let mut cdr = *self;
-                write!(f, "'(")?;
-                while let Some((a, d)) = cdr.into() {
-                    write!(f, "{:?} ", a)?;
-                    cdr = d;
-                }
-                if cdr.is_nil() {
-                    write!(f, ")")?;
-                } else {
-                    write!(f, ". {:?}", cdr)?;
-                }
-            }
-            Lisp_Type::Lisp_Float => {
-                write!(f, "{}", self.as_float().unwrap())?;
-            }
-            Lisp_Type::Lisp_Vectorlike => {
-                let vl = self.as_vectorlike().unwrap();
-                if vl.is_vector() {
-                    write!(f, "[")?;
-                    for el in vl.as_vector().unwrap().as_slice() {
-                        write!(f, "{:?} ", el)?;
-                    }
-                    write!(f, "]")?;
-                } else {
-                    write!(
-                        f,
-                        "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
-                        self_ptr,
-                        self.to_C()
-                    )?;
-                }
-            }
-            Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => {
-                write!(f, "{}", self.as_fixnum().unwrap())?;
-            }
-            Lisp_Type::Lisp_Misc => {
-                write!(f, "#<MISC @ {:#X}: VAL({:#X})>", self_ptr, self.to_C())?;
-            }
-            Lisp_Type::Lisp_String => {
-                write!(f, "{:?}", display_string(*self))?;
-            }
+            Lisp_Type::Lisp_Symbol => write!(f, "{:?}", self.force_symbol()),
+            Lisp_Type::Lisp_Cons => write!(f, "{:?}", self.force_cons()),
+            Lisp_Type::Lisp_Float => write!(f, "{}", self.force_float()),
+            Lisp_Type::Lisp_Vectorlike => write!(f, "{:?}", self.force_vectorlike()),
+            Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => write!(f, "{}", self.force_fixnum()),
+            Lisp_Type::Lisp_Misc => write!(f, "{:?}", self.force_misc()),
+            Lisp_Type::Lisp_String => write!(f, "{:?}", self.force_string()),
         }
-        Ok(())
     }
 }
 
