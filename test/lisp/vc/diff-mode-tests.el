@@ -182,7 +182,7 @@ youthfulness
             (with-temp-buffer
               (cd temp-dir)
               (insert patch)
-              (goto-char (point-min))
+              (beginning-of-buffer)
               (diff-apply-hunk)
               (diff-apply-hunk)
               (diff-apply-hunk))

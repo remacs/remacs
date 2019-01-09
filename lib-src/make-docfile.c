@@ -43,7 +43,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <string.h>
 
 #include <binary-io.h>
-#include <c-ctype.h>
 #include <intprops.h>
 #include <min-max.h>
 #include <unlocked-io.h>
@@ -348,7 +347,7 @@ scan_keyword_or_put_char (char ch, struct rcsoc_state *state)
 	  state->pending_newlines = 2;
 	  state->pending_spaces = 0;
 
-	  /* Skip any spaces and newlines between the keyword and the
+	  /* Skip any whitespace between the keyword and the
 	     usage string.  */
 	  int c;
 	  do
@@ -368,7 +367,6 @@ scan_keyword_or_put_char (char ch, struct rcsoc_state *state)
 		fatal ("Unexpected EOF after keyword");
 	    }
 	  while (c != ' ' && c != ')');
-
 	  put_char ('f', state);
 	  put_char ('n', state);
 
@@ -423,7 +421,7 @@ read_c_string_or_comment (FILE *infile, int printflag, bool comment,
 
   c = getc (infile);
   if (comment)
-    while (c_isspace (c))
+    while (c == '\n' || c == '\r' || c == '\t' || c == ' ')
       c = getc (infile);
 
   while (c != EOF)
@@ -433,14 +431,15 @@ read_c_string_or_comment (FILE *infile, int printflag, bool comment,
 	  if (c == '\\')
 	    {
 	      c = getc (infile);
-	      switch (c)
+	      if (c == '\n' || c == '\r')
 		{
-		case '\n': case '\r':
 		  c = getc (infile);
 		  continue;
-		case 'n': c = '\n'; break;
-		case 't': c = '\t'; break;
 		}
+	      if (c == 'n')
+		c = '\n';
+	      if (c == 't')
+		c = '\t';
 	    }
 
 	  if (c == ' ')
@@ -511,7 +510,10 @@ write_c_args (char *func, char *buf, int minargs, int maxargs)
       char c = *p;
 
       /* Notice when a new identifier starts.  */
-      if ((c_isalnum (c) || c == '_')
+      if ((('A' <= c && c <= 'Z')
+	   || ('a' <= c && c <= 'z')
+	   || ('0' <= c && c <= '9')
+	   || c == '_')
 	  != in_ident)
 	{
 	  if (!in_ident)
@@ -554,8 +556,11 @@ write_c_args (char *func, char *buf, int minargs, int maxargs)
 	  else
 	    while (ident_length-- > 0)
 	      {
-		c = c_toupper (*ident_start++);
-		if (c == '_')
+		c = *ident_start++;
+		if (c >= 'a' && c <= 'z')
+		  /* Upcase the letter.  */
+		  c += 'A' - 'a';
+		else if (c == '_')
 		  /* Print underscore as hyphen.  */
 		  c = '-';
 		putchar (c);
@@ -960,7 +965,7 @@ scan_c_stream (FILE *infile)
 	    {
 	      c = getc (infile);
 	    }
-	  while (c == ',' || c_isspace (c));
+	  while (c == ',' || c == ' ' || c == '\t' || c == '\n' || c == '\r');
 
 	  /* Read in the identifier.  */
 	  do
@@ -972,8 +977,8 @@ scan_c_stream (FILE *infile)
 		fatal ("identifier too long");
 	      c = getc (infile);
 	    }
-	  while (! (c == ',' || c_isspace (c)));
-
+	  while (! (c == ',' || c == ' ' || c == '\t'
+		    || c == '\n' || c == '\r'));
 	  input_buffer[i] = '\0';
 	  memcpy (name, input_buffer, i + 1);
 
@@ -981,8 +986,7 @@ scan_c_stream (FILE *infile)
 	    {
 	      do
 		c = getc (infile);
-	      while (c_isspace (c));
-
+	      while (c == ' ' || c == '\t' || c == '\n' || c == '\r');
 	      if (c != '"')
 		continue;
 	      c = read_c_string_or_comment (infile, -1, false, 0);
@@ -1023,8 +1027,7 @@ scan_c_stream (FILE *infile)
 		  int scanned = 0;
 		  do
 		    c = getc (infile);
-		  while (c_isspace (c));
-
+		  while (c == ' ' || c == '\n' || c == '\r' || c == '\t');
 		  if (c < 0)
 		    goto eof;
 		  ungetc (c, infile);
@@ -1074,7 +1077,7 @@ scan_c_stream (FILE *infile)
 	  int d = getc (infile);
 	  if (d == EOF)
 	    goto eof;
-	  while (true)
+	  while (1)
 	    {
 	      if (c == '*' && d == '/')
 		break;
@@ -1089,14 +1092,13 @@ scan_c_stream (FILE *infile)
 	      if (c == EOF)
 		goto eof;
 	    }
-	  while (c_isspace (c));
-
+	  while (c == ' ' || c == '\n' || c == '\r' || c == '\t');
 	  /* Check for 'attributes:' token.  */
 	  if (c == 'a' && stream_match (infile, "ttributes:"))
 	    {
 	      char *p = input_buffer;
 	      /* Collect attributes up to ')'.  */
-	      while (true)
+	      while (1)
 		{
 		  c = getc (infile);
 		  if (c == EOF)
@@ -1118,7 +1120,7 @@ scan_c_stream (FILE *infile)
 	  continue;
 	}
 
-      while (c_isspace (c))
+      while (c == ' ' || c == '\n' || c == '\r' || c == '\t')
 	c = getc (infile);
 
       if (c == '"')
@@ -1128,18 +1130,17 @@ scan_c_stream (FILE *infile)
 	c = getc (infile);
       if (c == ',')
 	{
-	  do
+	  c = getc (infile);
+	  while (c == ' ' || c == '\n' || c == '\r' || c == '\t')
 	    c = getc (infile);
-	  while (c_isspace (c));
-
-	  while (c_isalpha (c))
+	  while ((c >= 'a' && c <= 'z') || (c >= 'Z' && c <= 'Z'))
 	    c = getc (infile);
 	  if (c == ':')
 	    {
 	      doc_keyword = true;
-	      do
+	      c = getc (infile);
+	      while (c == ' ' || c == '\n' || c == '\r' || c == '\t')
 		c = getc (infile);
-	      while (c_isspace (c));
 	    }
 	}
 
@@ -1190,14 +1191,8 @@ scan_c_stream (FILE *infile)
 	      /* Copy arguments into ARGBUF.  */
 	      *p++ = c;
 	      do
-		{
-		  c = getc (infile);
-		  if (c < 0)
-		    goto eof;
-		  *p++ = c;
-		}
+		*p++ = c = getc (infile);
 	      while (c != ')');
-
 	      *p = '\0';
 	      /* Output them.  */
 	      fputs ("\n\n", stdout);
@@ -1253,32 +1248,25 @@ scan_c_stream (FILE *infile)
 static void
 skip_white (FILE *infile)
 {
-  int c;
-  do
+  char c = ' ';
+  while (c == ' ' || c == '\t' || c == '\n' || c == '\r')
     c = getc (infile);
-  while (c_isspace (c));
-
   ungetc (c, infile);
 }
 
 static void
 read_lisp_symbol (FILE *infile, char *buffer)
 {
-  int c;
+  char c;
   char *fillp = buffer;
 
   skip_white (infile);
-  while (true)
+  while (1)
     {
       c = getc (infile);
       if (c == '\\')
-	{
-	  c = getc (infile);
-	  if (c < 0)
-	    return;
-	  *fillp++ = c;
-	}
-      else if (c_isspace (c) || c == '(' || c == ')' || c < 0)
+	*(++fillp) = getc (infile);
+      else if (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '(' || c == ')')
 	{
 	  ungetc (c, infile);
 	  *fillp = 0;
@@ -1398,7 +1386,7 @@ scan_lisp_file (const char *filename, const char *mode)
 
 	      /* Read the length.  */
 	      while ((c = getc (infile),
-		      c_isdigit (c)))
+		      c >= '0' && c <= '9'))
 		{
 		  if (INT_MULTIPLY_WRAPV (length, 10, &length)
 		      || INT_ADD_WRAPV (length, c - '0', &length)
@@ -1430,7 +1418,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	      while (c == '\n' || c == '\r')
 		c = getc (infile);
 	      /* Skip the following line.  */
-	      while (! (c == '\n' || c == '\r' || c < 0))
+	      while (c != '\n' && c != '\r')
 		c = getc (infile);
 	    }
 	  continue;
@@ -1468,7 +1456,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	      continue;
 	    }
 	  else
-	    while (! (c == ')' || c < 0))
+	    while (c != ')')
 	      c = getc (infile);
 	  skip_white (infile);
 
@@ -1612,8 +1600,7 @@ scan_lisp_file (const char *filename, const char *mode)
 		}
 	    }
 	  skip_white (infile);
-	  c = getc (infile);
-	  if (c != '\"')
+	  if ((c = getc (infile)) != '\"')
 	    {
 	      fprintf (stderr, "## autoload of %s unparsable (%s)\n",
 		       buffer, filename);

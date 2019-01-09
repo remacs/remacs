@@ -705,15 +705,13 @@ VALUES-PLIST is a list with alternating index and value elements."
 
 (ert-deftest ruby-forward-sexp-skips-method-calls-with-keyword-names ()
   (ruby-with-temp-buffer ruby-sexp-test-example
-    (goto-char (point-min))
-    (forward-line 1)
+    (goto-line 2)
     (ruby-forward-sexp)
     (should (= 8 (line-number-at-pos)))))
 
 (ert-deftest ruby-backward-sexp-skips-method-calls-with-keyword-names ()
   (ruby-with-temp-buffer ruby-sexp-test-example
-    (goto-char (point-min))
-    (forward-line 7)
+    (goto-line 8)
     (end-of-line)
     (ruby-backward-sexp)
     (should (= 2 (line-number-at-pos)))))

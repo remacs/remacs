@@ -1165,8 +1165,6 @@ q: Don't fix\n" func file))
   "Face used to highlight function comment block.")
 
 (eval-when-compile (require 'texinfo))
-;; Undo the effects of texinfo loading tex-mode loading compile.
-(declare-function compilation-forget-errors "compile" ())
 
 (defun octave-font-lock-texinfo-comment ()
   (let ((kws

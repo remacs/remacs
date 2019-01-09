@@ -111,7 +111,7 @@ If no one is selected, default secret key is used.  "
 
 (defun epa-mail-default-recipients ()
   "Return the default list of encryption recipients for a mail buffer."
-  (let ((config (epg-find-configuration 'OpenPGP))
+  (let ((config (epg-configuration))
 	recipients-string real-recipients)
     (save-excursion
       (goto-char (point-min))

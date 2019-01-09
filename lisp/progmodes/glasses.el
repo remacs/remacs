@@ -326,10 +326,10 @@ add virtual separators (like underscores) at places they belong to."
       (if glasses-mode
 	  (progn
 	    (jit-lock-register 'glasses-change)
-	    (add-hook 'write-file-functions
+	    (add-hook 'local-write-file-hooks
 		      'glasses-convert-to-unreadable nil t))
 	(jit-lock-unregister 'glasses-change)
-	(remove-hook 'write-file-functions
+	(remove-hook 'local-write-file-hooks
 		     'glasses-convert-to-unreadable t)))))
 
 

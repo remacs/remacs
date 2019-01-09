@@ -26,7 +26,6 @@
 
 (require 'ert)
 (require 'em-ls)
-(require 'dired)
 
 (ert-deftest em-ls-test-bug27631 ()
   "Test for https://debbugs.gnu.org/27631 ."

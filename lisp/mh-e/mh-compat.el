@@ -65,8 +65,7 @@ Simulate NOERROR argument in XEmacs which lacks it."
 Case is ignored if CASE-FOLD is non-nil.
 This function is used by Emacs versions that lack `assoc-string',
 introduced in Emacs 22."
-  ;; Test for fboundp is solely to silence compiler for Emacs >= 22.1.
-  (if (and case-fold (fboundp 'assoc-ignore-case))
+  (if case-fold
       (assoc-ignore-case key list)
     (assoc key list)))
 
@@ -308,8 +307,7 @@ This function is used by XEmacs that lacks `replace-regexp-in-string'.
 The function `replace-in-string' is used instead.
 The arguments FIXEDCASE, SUBEXP, and START, used by
 `replace-in-string' are ignored."
-  (if (featurep 'xemacs)                ; silence Emacs compiler
-      (replace-in-string string regexp rep literal)))
+  (replace-in-string string regexp rep literal))
 
 (defun-mh mh-test-completion
   test-completion (string collection &optional predicate)

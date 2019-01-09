@@ -52,25 +52,38 @@
   ;; Sync the bindings.
   (when (bound-and-true-p mouse-wheel-mode) (mouse-wheel-mode 1)))
 
+(defvar mouse-wheel-down-button 4)
+(make-obsolete-variable 'mouse-wheel-down-button
+                        'mouse-wheel-down-event
+			"22.1")
 (defcustom mouse-wheel-down-event
   (if (or (featurep 'w32-win) (featurep 'ns-win))
       'wheel-up
-    'mouse-4)
+    (intern (format "mouse-%s" mouse-wheel-down-button)))
   "Event used for scrolling down."
   :group 'mouse
   :type 'symbol
   :set 'mouse-wheel-change-button)
 
+(defvar mouse-wheel-up-button 5)
+(make-obsolete-variable 'mouse-wheel-up-button
+                        'mouse-wheel-up-event
+			"22.1")
 (defcustom mouse-wheel-up-event
   (if (or (featurep 'w32-win) (featurep 'ns-win))
       'wheel-down
-    'mouse-5)
+    (intern (format "mouse-%s" mouse-wheel-up-button)))
   "Event used for scrolling up."
   :group 'mouse
   :type 'symbol
   :set 'mouse-wheel-change-button)
 
-(defcustom mouse-wheel-click-event 'mouse-2
+(defvar mouse-wheel-click-button 2)
+(make-obsolete-variable 'mouse-wheel-click-button
+                        'mouse-wheel-click-event
+			"22.1")
+(defcustom mouse-wheel-click-event
+  (intern (format "mouse-%s" mouse-wheel-click-button))
   "Event that should be temporarily inhibited after mouse scrolling.
 The mouse wheel is typically on the mouse-2 button, so it may easily
 happen that text is accidentally yanked into the buffer when
@@ -137,16 +150,28 @@ This can be slightly disconcerting, but some people prefer it."
 
 ;;; For tilt-scroll
 ;;;
-(defcustom mouse-wheel-tilt-scroll nil
+(defcustom mwheel-tilt-scroll-p nil
   "Enable scroll using tilting mouse wheel."
   :group 'mouse
   :type 'boolean
   :version "26.1")
 
-(defcustom mouse-wheel-flip-direction nil
+(defcustom mwheel-flip-direction nil
   "Swap direction of 'wheel-right and 'wheel-left."
   :group 'mouse
   :type 'boolean
+  :version "26.1")
+
+(defcustom mwheel-scroll-left-function 'scroll-left
+  "Function that does the job of scrolling left."
+  :group 'mouse
+  :type 'function
+  :version "26.1")
+
+(defcustom mwheel-scroll-right-function 'scroll-right
+  "Function that does the job of scrolling right."
+  :group 'mouse
+  :type 'function
   :version "26.1")
 
 (eval-and-compile
@@ -185,12 +210,6 @@ This can be slightly disconcerting, but some people prefer it."
 
 (defvar mwheel-scroll-down-function 'scroll-down
   "Function that does the job of scrolling downward.")
-
-(defvar mwheel-scroll-left-function 'scroll-left
-  "Function that does the job of scrolling left.")
-
-(defvar mwheel-scroll-right-function 'scroll-right
-  "Function that does the job of scrolling right.")
 
 (defvar mouse-wheel-left-event
   (if (or (featurep 'w32-win) (featurep 'ns-win))
@@ -274,13 +293,13 @@ non-Windows systems."
                    ;; Make sure we do indeed scroll to the end of the buffer.
                    (end-of-buffer (while t (funcall mwheel-scroll-up-function)))))
                 ((eq button mouse-wheel-left-event) ; for tilt scroll
-                 (when mouse-wheel-tilt-scroll
-                   (funcall (if mouse-wheel-flip-direction
+                 (when mwheel-tilt-scroll-p
+                   (funcall (if mwheel-flip-direction
                                 mwheel-scroll-right-function
                               mwheel-scroll-left-function) amt)))
                 ((eq button mouse-wheel-right-event) ; for tilt scroll
-                 (when mouse-wheel-tilt-scroll
-                   (funcall (if mouse-wheel-flip-direction
+                 (when mwheel-tilt-scroll-p
+                   (funcall (if mwheel-flip-direction
                                 mwheel-scroll-left-function
                               mwheel-scroll-right-function) amt)))
 		(t (error "Bad binding in mwheel-scroll"))))

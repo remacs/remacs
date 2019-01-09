@@ -54,9 +54,7 @@
 ;;; Code:
 
 (require 'erc)
-;; Strictly speaking, should only be needed at compile time.
-;; Require at run-time too to silence compiler.
-(require 'pcomplete)
+(eval-when-compile (require 'pcomplete))
 
 ;;;###autoload(autoload 'erc-dcc-mode "erc-dcc")
 (define-erc-module dcc nil

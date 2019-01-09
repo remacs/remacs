@@ -63,11 +63,10 @@
   "Test fontification of iteration variables."
   (should
    (equal
-    (bat-test-fontify "echo %%a\necho %%~dp1\necho %%~$PATH:I\necho %%~1")
+    (bat-test-fontify "echo %%a\necho %%~dp1\necho %%~$PATH:I")
     "<span class=\"builtin\">echo</span> %%<span class=\"variable-name\">a</span>
 <span class=\"builtin\">echo</span> %%~dp<span class=\"variable-name\">1</span>
-<span class=\"builtin\">echo</span> %%~$<span class=\"variable-name\">PATH</span>:<span class=\"variable-name\">I</span>
-<span class=\"builtin\">echo</span> %%~<span class=\"variable-name\">1</span>")))
+<span class=\"builtin\">echo</span> %%~$<span class=\"variable-name\">PATH</span>:<span class=\"variable-name\">I</span>")))
 
 (defun bat-test-fill-paragraph (str)
   "Return the result of invoking `fill-paragraph' on STR in a `bat-mode' buffer."

@@ -442,7 +442,7 @@ either @code{customize-option} or @code{add-hook}.
 @cindex point
 @cindex region
 @kindex C-@@
-@kindex C-SPC
+@kindex C-@key{SPC}
 
 There are several other terms that are used in Emacs that you should
 know. The @dfn{point} is where the cursor currently is. You can save
@@ -692,6 +692,7 @@ get the big picture, and then you can read the manual as you wish.
 @cindex modes, MH-Letter
 @cindex sending mail
 @findex mh-smail
+@kindex M-x mh-smail
 
 Let's start our tour by sending ourselves a message which we can later
 read and process. Enter @kbd{M-x mh-smail} to invoke the MH-E program
@@ -761,6 +762,7 @@ message. Type @kbd{C-c C-c} now. That's all there is to it!
 @cindex modes, MH-Folder
 @cindex reading mail
 @findex mh-rmail
+@kindex M-x mh-rmail
 
 To read the mail you've just sent yourself, enter @kbd{M-x mh-rmail}.
 This incorporates the new mail and puts the output from
@@ -775,6 +777,7 @@ major mode is MH-Folder.
 
 @findex mh-rmail
 @kindex F r
+@kindex M-x mh-rmail
 
 @sp 1
 @center @strong{NOTE}
@@ -787,7 +790,7 @@ use @kbd{F r} to pull all your messages into MH-E.
 @end quotation
 @sp 1
 
-@kindex RET
+@kindex @key{RET}
 @kindex n
 @kindex p
 
@@ -817,8 +820,8 @@ This is a test message to get the wheels churning...
 @end cartouche
 @i{After incorporating new messages}
 
-@kindex DEL
-@kindex SPC
+@kindex @key{DEL}
+@kindex @key{SPC}
 
 If you typed a long message, you can view subsequent pages with
 @key{SPC} and previous pages with @key{DEL}.
@@ -827,7 +830,7 @@ If you typed a long message, you can view subsequent pages with
 @section Processing Mail
 
 @cindex processing mail
-@kindex RET
+@kindex @key{RET}
 @kindex r
 
 The first thing we want to do is reply to the message that we sent
@@ -880,7 +883,7 @@ Type C-c C-c to send message, C-c ? for help
 @kindex C-f
 @kindex C-n
 @kindex C-p
-@kindex BS
+@kindex @key{BS}
 
 By default, MH will not add you to the address list of your replies,
 so if you find that the @samp{To:} header field is missing, don't
@@ -895,7 +898,7 @@ editing your message, send it with @kbd{C-c C-c} as before.
 @cindex @command{refile}
 @cindex MH commands, @command{refile}
 @cindex folders
-@kindex SPC
+@kindex @key{SPC}
 @kindex o
 
 You'll often want to save messages that were sent to you in an
@@ -915,7 +918,7 @@ in a moment.
 @cindex modes, MH-Folder
 @kindex d
 @kindex i
-@kindex RET
+@kindex @key{RET}
 @kindex n
 @kindex p
 @kindex x
@@ -932,6 +935,7 @@ command.
 
 @findex mh-smail
 @kindex m
+@kindex M-x mh-smail
 
 If you want to send another message you can use @kbd{m} instead of
 @kbd{M-x mh-smail}. So go ahead, send some mail to your friends!
@@ -966,6 +970,7 @@ perform any refiles and deletes that you did there.
 @findex mh-rmail
 @kindex C-x b
 @kindex C-x k
+@kindex M-x mh-rmail
 @kindex q
 
 If you don't want to leave Emacs, you can type @kbd{q} to bury (hide)
@@ -1223,7 +1228,7 @@ Many commands that operate on individual messages, such as
 @code{mh-forward} or @code{mh-refile-msg} take a @code{RANGE}
 argument. This argument can be used in several ways.
 
-@kindex C-u@r{, with ranges}
+@kindex C-u, with ranges
 
 If you provide the prefix argument @kbd{C-u} to these commands, then
 you will be prompted for the message range. This can be any valid MH
@@ -1547,6 +1552,7 @@ the message numbers from outside of MH-E.
 @findex mh-rmail
 @kindex F r
 @kindex F v
+@kindex M-x mh-rmail
 
 The MH-E entry point for reading mail is @kbd{M-x mh-rmail}. This
 command incorporates your mail and creates a buffer called
@@ -1586,38 +1592,38 @@ Display cheat sheet for the MH-E commands (@code{mh-help}).
 @c -------------------------
 @cindex @samp{Message > Show Message} menu item
 @cindex menu item, @samp{Message > Show Message}
-@kindex RET
+@kindex @key{RET}
 @findex mh-show
 @item @key{RET}
 Display message (@code{mh-show}).
 @c -------------------------
 @cindex @samp{Message > Show Message with Header} menu item
 @cindex menu item, @samp{Message > Show Message with Header}
-@kindex , @r{(comma)}
+@kindex , (comma)
 @findex mh-header-display
 @item , (comma)
 Display message with all header fields (@code{mh-header-display}).
 @c -------------------------
 @cindex @samp{Message > Show Message with Preferred Alternative} menu item
 @cindex menu item, @samp{Message > Show Message with Preferred Alternative}
-@kindex : @r{(colon)}
+@kindex : (colon)
 @findex mh-show-preferred-alternative
 @item : (colon)
 Display message with the default preferred alternative
 (@code{mh-show-preferred-alternative}).
 @c -------------------------
-@kindex ; @r{(semicolon)}
+@kindex ; (semicolon)
 @findex mh-toggle-mh-decode-mime-flag
 @item ; (semicolon)
 Toggle the value of @code{mh-decode-mime-flag}
 (@code{mh-toggle-mh-decode-mime-flag}).
 @c -------------------------
-@kindex SPC
+@kindex @key{SPC}
 @findex mh-page-msg
 @item @key{SPC}
 Display next page in message (@code{mh-page-msg}).
 @c -------------------------
-@kindex BS
+@kindex @key{BS}
 @findex mh-previous-page
 @item @key{BS}
 Display previous page in message (@code{mh-previous-page}).
@@ -1655,12 +1661,12 @@ Delete range (@code{mh-delete-msg}).
 Display cheat sheet for the commands of the current prefix in
 minibuffer (@code{mh-prefix-help}).
 @c -------------------------
-@kindex D SPC
+@kindex D @key{SPC}
 @findex mh-page-digest
 @item D @key{SPC}
 Display next message in digest (@code{mh-page-digest}).
 @c -------------------------
-@kindex D BS
+@kindex D @key{BS}
 @findex mh-page-digest-backwards
 @item D @key{BS}
 Display previous message in digest (@code{mh-page-digest-backwards}).
@@ -1691,12 +1697,12 @@ Delete messages with same subject or thread
 Display cheat sheet for the commands of the current prefix in
 minibuffer (@code{mh-prefix-help}).
 @c -------------------------
-@kindex K TAB
+@kindex K @key{TAB}
 @findex mh-next-button
 @item K @key{TAB}
 Go to the next button (@code{mh-next-button}).
 @c -------------------------
-@kindex K S-TAB
+@kindex K S-@key{TAB}
 @findex mh-prev-button
 @item K S-@key{TAB}
 Go to the previous button (@code{mh-prev-button}).
@@ -1838,7 +1844,7 @@ Move point to mouse event and show message (@code{mh-show-mouse}).
 Within the MH-Show buffer, the following command is defined.
 
 @table @kbd
-@kindex RET
+@kindex @key{RET}
 @kindex mouse-1
 @kindex mouse-2
 @findex mh-press-button
@@ -2011,11 +2017,11 @@ detail in the following sections.
 @findex mh-previous-page
 @findex mh-show
 @findex mh-show-mouse
-@kindex , @r{(comma)}
-@kindex . @r{(period)}
-@kindex BS
-@kindex RET
-@kindex SPC
+@kindex , (comma)
+@kindex . (period)
+@kindex @key{BS}
+@kindex @key{RET}
+@kindex @key{SPC}
 @kindex mouse-2
 
 The command @key{RET} (@code{mh-show}) displays the message that the
@@ -2095,9 +2101,9 @@ Emacs 21 and XEmacs. For more information, see
 @uref{http://quimby.gnus.org/circus/face/}.}.
 
 @cindex @command{uncompface}
-@cindex Emacs, packages, @samp{x-face}
+@cindex Emacs, packages, x-face
 @cindex Unix commands, @command{uncompface}
-@cindex @samp{x-face} package
+@cindex x-face package
 @vindex mh-show-xface
 
 Next is the traditional @samp{X-Face:} header field@footnote{The
@@ -2194,7 +2200,7 @@ highlighting of citations entirely, choose @samp{None}.
 @cindex highlighting email addresses
 @cindex links, following
 @findex goto-address-at-point
-@kindex C-c RET
+@kindex C-c @key{RET}
 @kindex mouse-2
 @vindex goto-address-highlight-p
 
@@ -2300,10 +2306,10 @@ System: type @kbd{M-! xterm -e mhshow @var{message-number}}. You can
 leave out the @samp{xterm -e} if you use @command{mhlist} or
 @command{mhstore}.}.
 
-@cindex Emacs, packages, @samp{mm-decode}
-@cindex @samp{mm-decode} package
+@cindex Emacs, packages, mm-decode
+@cindex mm-decode package
 @findex mh-toggle-mh-decode-mime-flag
-@kindex ; @r{(semicolon)}
+@kindex ; (semicolon)
 @vindex mh-decode-mime-flag
 
 MH-E can handle attachments as well if the Gnus @samp{mm-decode}
@@ -2328,9 +2334,9 @@ Attachments in MH-E are indicated by @dfn{buttons} like this:
 @findex mh-next-button
 @findex mh-press-button
 @findex mh-prev-button
-@kindex RET
-@kindex K TAB
-@kindex K S-TAB
+@kindex @key{RET}
+@kindex K @key{TAB}
+@kindex K S-@key{TAB}
 @kindex mouse-1
 @kindex mouse-2
 
@@ -2484,7 +2490,7 @@ the option @code{mm-discouraged-alternatives}, and add
 @samp{text/html}. The next best alternative, if any, will be shown.
 
 @findex mh-show-preferred-alternative
-@kindex : @r{(colon)}
+@kindex : (colon)
 
 Occasionally, though, you might want to see the preferred alternative.
 The command @kbd{:} (@code{mh-show-preferred-alternative}) displays
@@ -2682,10 +2688,10 @@ buffer, including HTML buffers.
 @cindex digests
 @findex mh-page-digest
 @findex mh-page-digest-backwards
-@kindex D BS
-@kindex D SPC
-@kindex BS
-@kindex SPC
+@kindex D @key{BS}
+@kindex D @key{SPC}
+@kindex @key{BS}
+@kindex @key{SPC}
 
 A digest is a message that contains other messages. Special MH-E
 commands let you read digests conveniently. You can use @key{SPC} and
@@ -2898,8 +2904,8 @@ Another related function is the command @kbd{P F}
 faces and not. When faces are enabled, the printed message will look
 very similar to the message in the MH-Show buffer.
 
-@cindex @samp{ps-print} package
-@cindex Emacs, packages, @samp{ps-print}
+@cindex ps-print package
+@cindex Emacs, packages, ps-print
 
 MH-E uses the @samp{ps-print} package to do the printing, so you can
 customize the printing further by going to the @samp{ps-print}
@@ -2989,7 +2995,7 @@ like to change the initial default directory, customize the option
 directory for storing the content of these messages.
 
 @findex mh-store-buffer
-@kindex RET
+@kindex @key{RET}
 @kindex X s
 
 By the way, @kbd{X s} calls the Emacs Lisp function
@@ -3039,7 +3045,7 @@ message with @kbd{M-<} (@code{mh-first-msg}) and @kbd{M->}
 @findex previous-line
 @kindex C-n
 @kindex C-p
-@kindex RET
+@kindex @key{RET}
 
 You can also use the Emacs commands @kbd{C-p} (@code{previous-line})
 and @kbd{C-n} (@code{next-line}) to move up and down the scan lines in
@@ -3740,7 +3746,7 @@ The command @kbd{F p} runs @code{mh-pack-folder-hook} after
 renumbering the messages. A variable that is useful with this hook
 is @code{mh-current-folder}.
 
-@kindex TAB
+@kindex @key{TAB}
 @vindex mh-recursive-folders-flag
 
 By default, operations on folders work only one level at a time. Set
@@ -3844,15 +3850,16 @@ buffers that you would rather remove, you can use both
 
 You can use dired to manipulate the folders themselves. For example, I
 renamed my @samp{+out} folder to the more common @samp{+outbox} by
-running dired on my mail directory (@kbd{M-x dired @key{RET} ~/Mail
-@key{RET}}), moving my cursor to @samp{out} and using the command
-@kbd{R} (@code{dired-do-rename}).
+running dired on my mail directory (@kbd{M-x dired RET ~/Mail RET}),
+moving my cursor to @samp{out} and using the command @kbd{R}
+(@code{dired-do-rename}).
 
 @node Sending Mail, Editing Drafts, Folders, Top
 @chapter Sending Mail
 
 @cindex sending mail
 @findex mh-smail
+@kindex M-x mh-smail
 
 You can send a mail message in several ways. You can call @kbd{M-x
 mh-smail} directly, or from the command line like this:
@@ -4020,6 +4027,8 @@ more detail in the following sections.
 @cindex sending mail
 @findex mh-smail
 @findex mh-smail-other-window
+@kindex M-x mh-smail
+@kindex M-x mh-smail-other-window
 
 Outside of an MH-Folder buffer, you must call either @kbd{M-x
 mh-smail} or @kbd{M-x mh-smail-other-window} to compose a new message.
@@ -4381,28 +4390,28 @@ commands in addition to the normal Emacs editing commands to help you
 edit your draft. These can also be found in the @samp{Letter} menu.
 
 @table @kbd
-@kindex SPC
+@kindex @key{SPC}
 @findex mh-letter-complete-or-space
 @item @key{SPC}
 Perform completion or insert space (@code{mh-letter-complete-or-space}).
 @c -------------------------
-@kindex M-TAB
+@kindex M-@key{TAB}
 @findex mh-letter-complete
 @item M-@key{TAB}
 Perform completion on header field or word preceding point
 (@code{mh-letter-complete}).
 @c -------------------------
-@kindex , @r{(comma)}
+@kindex , (comma)
 @findex mh-letter-confirm-address
 @item , (comma)
 Flash alias expansion (@code{mh-letter-confirm-address}).
 @c -------------------------
-@kindex TAB
+@kindex @key{TAB}
 @findex mh-letter-next-header-field-or-indent
 @item @key{TAB}
 Cycle to next field (@code{mh-letter-next-header-field-or-indent}).
 @c -------------------------
-@kindex S-TAB
+@kindex S-@key{TAB}
 @findex mh-letter-previous-header-field
 @item S-@key{TAB}
 Cycle to the previous header field
@@ -4807,8 +4816,8 @@ draft. @xref{Folder Selection}.
 @findex indent-relative
 @findex mh-letter-next-header-field-or-indent
 @findex mh-letter-previous-header-field
-@kindex TAB
-@kindex S-TAB
+@kindex @key{TAB}
+@kindex S-@key{TAB}
 @vindex mh-compose-skipped-header-fields
 @vindex mh-letter-header-field
 
@@ -4833,9 +4842,9 @@ take point to the last field from anywhere in the body.
 @findex mh-letter-complete
 @findex mh-letter-complete-or-space
 @findex mh-letter-confirm-address
-@kindex , @r{(comma)}
-@kindex SPC
-@kindex M-TAB
+@kindex , (comma)
+@kindex @key{SPC}
+@kindex M-@key{TAB}
 @vindex mh-alias-flash-on-comma
 @vindex mh-compose-space-does-completion-flag
 @vindex mh-letter-complete-function
@@ -4988,8 +4997,8 @@ You can also turn on the @code{mh-delete-yanked-msg-window-flag}
 option to delete the window containing the original message after
 yanking it to make more room on your screen for your reply.
 
-@cindex Emacs, packages, @samp{supercite}
-@cindex @samp{supercite} package
+@cindex Emacs, packages, supercite
+@cindex supercite package
 @kindex r
 @vindex mail-citation-hook
 @vindex mh-yank-behavior
@@ -5052,8 +5061,8 @@ and it should leave point and mark around the modified citation text
 for the next hook function. The standard prefix
 @code{mh-ins-buf-prefix} is not added if this hook is set.
 
-@cindex Emacs, packages, @samp{trivial-cite}
-@cindex @samp{trivial-cite} package
+@cindex Emacs, packages, trivial-cite
+@cindex trivial-cite package
 @vindex mh-yank-behavior
 
 For example, if you use the hook function
@@ -5490,7 +5499,7 @@ LyogWFBNICovCnN0YXRpYyBjaGFyICogc2V0aWF0aG9tZV94cG1bXSA9IHsKIjQ1IDQ1IDc2N
 @end cartouche
 @i{MH-E @sc{mime} draft ready to send}
 
-@cindex undo effects of @code{mh-mml-to-mime}
+@cindex undo effects of mh-mml-to-mime
 
 This action can be undone by running @kbd{C-_} (@code{undo}).
 
@@ -5498,7 +5507,7 @@ This action can be undone by running @kbd{C-_} (@code{undo}).
 @cindex @command{mhn}
 @cindex MH commands, @command{mhbuild}
 @cindex MH commands, @command{mhn}
-@cindex undo effects of @code{mh-mh-to-mime}
+@cindex undo effects of mh-mh-to-mime
 @findex mh-mh-to-mime
 @findex mh-mh-to-mime-undo
 @kindex C-c C-e
@@ -5714,12 +5723,12 @@ The following commands are available in MH-Letter mode with the
 exception of @code{mh-alias-reload} which can be called from anywhere.
 
 @table @kbd
-@kindex SPC
+@kindex @key{SPC}
 @findex mh-letter-complete-or-space
 @item @key{SPC}
 Perform completion or insert space (@code{mh-letter-complete-or-space}).
 @c -------------------------
-@kindex M-TAB
+@kindex M-@key{TAB}
 @findex mh-letter-complete
 @item M-@key{TAB}
 Perform completion on header field or word preceding point
@@ -5791,7 +5800,7 @@ Hook run by @code{mh-alias-reload} after loading aliases (default:
 You can use aliases when you are adding recipients to a message.
 
 @findex minibuffer-complete
-@kindex TAB
+@kindex @key{TAB}
 @vindex mh-alias-expand-aliases-flag
 @vindex mh-compose-prompt-flag
 
@@ -5805,8 +5814,8 @@ aliases to be expanded to their respective addresses in the draft.
 
 @findex mh-letter-complete
 @findex mh-letter-complete-or-space
-@kindex SPC
-@kindex M-TAB
+@kindex @key{SPC}
+@kindex M-@key{TAB}
 
 Otherwise, you can complete aliases in the header of the draft with
 @kbd{M-@key{TAB}} (@code{mh-letter-complete}) or @key{SPC}
@@ -5925,6 +5934,7 @@ executed to generate the password file. For example, use @samp{ypcat
 passwd} to obtain the NIS password file.
 
 @findex mh-alias-reload
+@kindex M-x mh-alias-reload
 @vindex mh-alias-reloaded-hook
 
 Since aliases are updated frequently, MH-E reloads aliases
@@ -5940,6 +5950,7 @@ listed in your @samp{Aliasfile:} profile component. MH-E provides
 other methods for maintaining your alias file(s).
 
 @findex mh-alias-add-alias
+@kindex M-x mh-alias-add-alias
 
 You can use the @kbd{M-x mh-alias-add-alias} command which will prompt
 you for the alias and address that you would like to add. If the alias
@@ -5974,8 +5985,8 @@ Using prefixes instead of postfixes helps you explore aliases during
 completion. If you forget the name of an old dive buddy, you can enter
 @samp{div} and then @key{SPC} to get a listing of all your dive buddies.
 
-@findex mh-alias-add-address-under-point
-@findex mh-alias-grab-from-field
+@kindex M-x mh-alias-add-address-under-point
+@kindex M-x mh-alias-grab-from-field
 
 An alias for the sender of the current message is added automatically
 by clicking on the @samp{Grab From alias} tool bar button or by running
@@ -6010,6 +6021,7 @@ more appropriate.
 
 @cindex regular expressions, @code{mh-alias-apropos}
 @findex mh-alias-apropos
+@kindex M-x mh-alias-apropos
 
 If you can't quite remember an alias, you can use @kbd{M-x
 mh-alias-apropos} to show all aliases or addresses that match a
@@ -6268,8 +6280,8 @@ containing the value for the field is given.
 @cindex folder navigation
 @cindex speedbar
 @findex mh-visit-folder
-@findex speedbar
 @kindex F v
+@kindex M-x speedbar
 @kindex mouse-2
 
 You can also use the speedbar
@@ -6611,12 +6623,12 @@ Another few commands are available in the MH-Folder buffer resulting
 from a search.
 
 @table @kbd
-@kindex TAB
+@kindex @key{TAB}
 @findex mh-index-next-folder
 @item @key{TAB}
 Jump to the next folder marker (@code{mh-index-next-folder}).
 @c -------------------------
-@kindex S-TAB
+@kindex S-@key{TAB}
 @findex mh-index-previous-folder
 @item S-@key{TAB}
 Jump to the previous folder marker (@code{mh-index-previous-folder}).
@@ -6761,8 +6773,8 @@ method with the pick method by running the command @kbd{C-c C-p}
 @cindex @samp{+mhe-index}
 @findex mh-index-next-folder
 @findex mh-index-previous-folder
-@kindex TAB
-@kindex S-TAB
+@kindex @key{TAB}
+@kindex S-@key{TAB}
 @vindex mh-search-folder
 
 The messages that are found are put in a temporary sub-folder of
@@ -7502,6 +7514,7 @@ Mail}).
 @cindex sequence, @samp{cur}
 @cindex sequence, @samp{tick}
 @findex mh-update-sequences
+@kindex M-x mh-update-sequences
 @kindex q
 @kindex x
 @vindex mh-tick-seq
@@ -7988,7 +8001,7 @@ system.
 @cindex MH-E version
 @cindex @file{*MH-E Info*}
 @cindex version
-@findex mh-version
+@kindex M-x mh-version
 
 One command worth noting is @kbd{M-x mh-version}. You can compare the
 version this command prints to the latest release (@pxref{Getting
@@ -8703,7 +8716,7 @@ I also point out some additional sources of information.
 
 @cindex bugs
 @cindex SourceForge
-@findex mh-version
+@kindex M-x mh-version
 
 Bug reports should be filed at
 @uref{https://sourceforge.net/p/mh-e/bugs/, SourceForge}. You need to
@@ -8779,7 +8792,7 @@ instead.
 @cindex news
 @cindex @samp{MH-E-NEWS}
 @cindex @samp{README}
-@findex mh-version
+@kindex M-x mh-version
 
 After you download and extract the MH-E tarball, read the
 @file{README} file and @file{MH-E-NEWS}. These correspond to the

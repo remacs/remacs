@@ -500,7 +500,7 @@ Return the node (or nil if we just passed the last node)."
 
 (defun ewoc-goto-node (ewoc node)
   "Move point to NODE in EWOC."
-  (with-current-buffer (ewoc--buffer ewoc)
+  (ewoc--set-buffer-bind-dll ewoc
     (goto-char (ewoc--node-start-marker node))
     (if goal-column (move-to-column goal-column))
     (setf (ewoc--last-node ewoc) node)))

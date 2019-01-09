@@ -1532,8 +1532,7 @@ Differences in #targets are ignored."
                   eww-download-directory)))
       (goto-char (point-min))
       (re-search-forward "\r?\n\r?\n")
-      (let ((coding-system-for-write 'no-conversion))
-        (write-region (point) (point-max) file))
+      (write-region (point) (point-max) file)
       (message "Saved %s" file))))
 
 (defun eww-decode-url-file-name (string)

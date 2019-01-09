@@ -39,6 +39,9 @@
 ;;;; config variables
 ;;;;
 
+(define-obsolete-variable-alias 'cvs-display-full-path
+    'cvs-display-full-name "22.1")
+
 (defcustom cvs-display-full-name t
   "Specifies how the filenames should be displayed in the listing.
 If non-nil, their full filename name will be displayed, else only the
@@ -208,6 +211,8 @@ to confuse some users sometimes."
       ;; Here, I use `concat' rather than `expand-file-name' because I want
       ;; the resulting path to stay relative if `dir' is relative.
       (concat dir (cvs-fileinfo->file fileinfo)))))
+(define-obsolete-function-alias 'cvs-fileinfo->full-path
+    'cvs-fileinfo->full-name "22.1")
 
 (defun cvs-fileinfo->pp-name (fi)
   "Return the filename of FI as it should be displayed."
