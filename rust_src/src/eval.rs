@@ -195,7 +195,7 @@ pub fn setq(args: LispObject) -> LispObject {
         }
 
         if !lexical {
-            set(sym.as_symbol_or_error(), val); /* SYM is dynamically bound. */
+            set(sym.into(), val); /* SYM is dynamically bound. */
         }
     }
 
@@ -300,7 +300,7 @@ pub fn defconst(args: LispCons) -> LispSymbolRef {
     if unsafe { globals.Vpurify_flag } != Qnil {
         tem = unsafe { Fpurecopy(tem) };
     }
-    let sym_ref = sym.as_symbol_or_error();
+    let sym_ref: LispSymbolRef = sym.into();
     set_default(sym_ref, tem);
     sym_ref.set_declared_special(true);
     if docstring.is_not_nil() {
@@ -682,7 +682,7 @@ pub fn autoload(
         // and assumed the docstring will be provided by Snarf-documentation, so it
         // passed us 0 instead.  But that leads to accidental sharing in purecopy's
         // hash-consing, so we use a (hopefully) unique integer instead.
-        docstring = LispObject::from(unsafe { LispObject::from(function).to_fixnum_unchecked() });
+        docstring = unsafe { LispObject::from(function).to_fixnum_unchecked() }.into();
     }
 
     defalias(
@@ -752,7 +752,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
         if first.eq(0) {
             globals.Vfeatures = second;
         } else {
-            fset(first.as_symbol_or_error(), second);
+            fset(first.into(), second);
         }
     }
 }
@@ -783,7 +783,7 @@ pub fn autoload_do_load(
         return fundef;
     }
 
-    let sym = funname.as_symbol_or_error();
+    let sym: LispSymbolRef = funname.into();
 
     unsafe {
         // This is to make sure that loadup.el gives a clear picture

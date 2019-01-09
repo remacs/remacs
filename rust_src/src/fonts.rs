@@ -136,7 +136,7 @@ pub fn font_match_p(spec: LispObject, font: LispObject) -> bool {
 /// Optional 2nd argument FRAME, if non-nil, specifies the target frame.
 #[lisp_fn(min = "1")]
 pub fn find_font(spec: LispObject, frame: LispObject) -> LispObject {
-    let val = unsafe { Flist_fonts(spec, frame, LispObject::from(1), Qnil) };
+    let val = unsafe { Flist_fonts(spec, frame, 1.into(), Qnil) };
     match val.into() {
         Some((a, _)) => a,
         None => val,

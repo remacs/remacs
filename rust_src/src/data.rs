@@ -65,12 +65,12 @@ pub fn indirect_function(object: LispObject) -> LispObject {
         if !hare.is_symbol() || hare.is_nil() {
             return hare;
         }
-        hare = hare.as_symbol_or_error().get_function();
+        hare = LispSymbolRef::from(hare).get_function();
         if !hare.is_symbol() || hare.is_nil() {
             return hare;
         }
-        hare = hare.as_symbol_or_error().get_function();
-        tortoise = tortoise.as_symbol_or_error().get_function();
+        hare = LispSymbolRef::from(hare).get_function();
+        tortoise = LispSymbolRef::from(tortoise).get_function();
         if hare == tortoise {
             xsignal!(Qcyclic_function_indirection, object);
         }
@@ -161,9 +161,9 @@ pub fn type_of(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn subr_lang(subr: LispSubrRef) -> LispObject {
     if subr.lang == Lisp_Subr_Lang::Lisp_Subr_Lang_C {
-        LispObject::from("C")
+        "C".into()
     } else if subr.lang == Lisp_Subr_Lang::Lisp_Subr_Lang_Rust {
-        LispObject::from("Rust")
+        "Rust".into()
     } else {
         unreachable!()
     }
@@ -327,7 +327,7 @@ pub fn subr_arity(subr: LispSubrRef) -> (EmacsInt, LispObject) {
     } else if subr.is_unevalled() {
         Qunevalled
     } else {
-        LispObject::from(EmacsInt::from(subr.max_args()))
+        EmacsInt::from(subr.max_args()).into()
     };
 
     (EmacsInt::from(minargs), maxargs)
@@ -673,7 +673,7 @@ pub fn bool_vector_subsetp(a: LispObject, b: LispObject) -> LispObject {
 pub fn set(symbol: LispSymbolRef, newval: LispObject) -> LispObject {
     unsafe {
         set_internal(
-            LispObject::from(symbol),
+            symbol.into(),
             newval,
             Qnil,
             Set_Internal_Bind::SET_INTERNAL_SET,
@@ -687,23 +687,16 @@ pub fn set(symbol: LispSymbolRef, newval: LispObject) -> LispObject {
 /// values for this variable.
 #[lisp_fn]
 pub fn set_default(symbol: LispSymbolRef, value: LispObject) -> LispObject {
-    unsafe {
-        set_default_internal(
-            LispObject::from(symbol),
-            value,
-            Set_Internal_Bind::SET_INTERNAL_SET,
-        )
-    };
+    unsafe { set_default_internal(symbol.into(), value, Set_Internal_Bind::SET_INTERNAL_SET) };
     value
 }
 
 extern "C" fn harmonize_variable_watchers(alias: LispObject, base_variable: LispObject) {
-    if !base_variable.eq(alias)
-        && base_variable.eq(alias.as_symbol_or_error().get_indirect_variable())
-    {
-        alias
-            .as_symbol_or_error()
-            .set_trapped_write(base_variable.as_symbol_or_error().get_trapped_write());
+    let alias_sym: LispSymbolRef = alias.into();
+    let base_variable_sym: LispSymbolRef = base_variable.into();
+
+    if !base_variable.eq(alias) && base_variable.eq(alias_sym.get_indirect_variable()) {
+        alias_sym.set_trapped_write(base_variable_sym.get_trapped_write());
     }
 }
 

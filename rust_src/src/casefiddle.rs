@@ -32,13 +32,7 @@ fn casify_word(flag: case_action, words: EmacsInt) {
         n => n,
     };
 
-    let new_pos = unsafe {
-        casify_region(
-            flag,
-            LispObject::from(buffer_ref.pt),
-            LispObject::from(far_end),
-        )
-    };
+    let new_pos = unsafe { casify_region(flag, buffer_ref.pt.into(), far_end.into()) };
 
     unsafe { set_point(new_pos) };
 }
@@ -185,7 +179,7 @@ fn casefiddle_region(
     } else {
         let bounds = call!(
             symbol_value(intern("region-extract-function")),
-            LispObject::from(intern("bounds"))
+            intern("bounds").into()
         );
 
         for elt in bounds.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {

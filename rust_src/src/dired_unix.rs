@@ -208,10 +208,7 @@ fn fattrs_from_os(
     id_format: LispObject,
 ) {
     for f in fnames {
-        let fa = file_attributes_core(
-            LispObject::from(f.to_full(dname.to_owned()).as_str()),
-            id_format,
-        );
+        let fa = file_attributes_core(f.to_full(dname.to_owned()).as_str().into(), id_format);
         fattrs.push(fa);
     }
 }
@@ -610,9 +607,9 @@ impl FileAttrs {
             return unsafe {
                 file_attributes_c_internal(
                     name.as_ptr(),
-                    LispObject::from(dir.as_str()),
-                    LispObject::from(f.as_str()),
-                    LispObject::from(self.id_format.as_str()),
+                    dir.as_str().into(),
+                    f.as_str().into(),
+                    self.id_format.as_str().into(),
                 )
             };
         }
@@ -671,9 +668,8 @@ impl FileAttrs {
         attrs.push(LispObject::from_natnum(self.size));
 
         //  8. File modes, as a string of ten letters or dashes as in ls -l.
-        let fpath_lo = LispObject::from(self.fpath.as_str());
         //  Punt back to C until the filemode_string code is ported to Rust.
-        attrs.push(unsafe { filemode_string(fpath_lo) });
+        attrs.push(unsafe { filemode_string(self.fpath.as_str().into()) });
 
         //  9. An unspecified value, present only for backward compatibility.
         attrs.push(Qt);
@@ -715,9 +711,7 @@ pub extern "C" fn file_attributes_rust_internal(
     id_format: LispObject,
 ) -> LispObject {
     let fpath_s = dirname.to_stdstring() + "/" + &filename.to_stdstring();
-    let fpath = LispObject::from(fpath_s.as_str());
-
-    file_attributes_core(fpath, id_format)
+    file_attributes_core(fpath_s.as_str().into(), id_format)
 }
 
 fn file_attributes_core(fpath: LispObject, id_format: LispObject) -> LispObject {

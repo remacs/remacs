@@ -22,6 +22,7 @@ use crate::{
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
+    symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
 };
 
@@ -36,8 +37,8 @@ pub unsafe extern "C" fn defvar_int(
 ) {
     (*i_fwd).ty = Lisp_Fwd_Int;
     (*i_fwd).intvar = address;
-    let sym = intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t)
-        .as_symbol_or_error();
+    let sym: LispSymbolRef =
+        intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t).into();
     sym.set_declared_special(true);
     sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(i_fwd as *mut Lisp_Fwd);
@@ -53,8 +54,8 @@ pub unsafe extern "C" fn defvar_bool(
 ) {
     (*b_fwd).ty = Lisp_Fwd_Bool;
     (*b_fwd).boolvar = address;
-    let sym = intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t)
-        .as_symbol_or_error();
+    let sym: LispSymbolRef =
+        intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t).into();
     sym.set_declared_special(true);
     sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(b_fwd as *mut Lisp_Fwd);
@@ -73,8 +74,8 @@ pub unsafe extern "C" fn defvar_lisp_nopro(
 ) {
     (*o_fwd).ty = Lisp_Fwd_Obj;
     (*o_fwd).objvar = address;
-    let sym = intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t)
-        .as_symbol_or_error();
+    let sym: LispSymbolRef =
+        intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t).into();
     sym.set_declared_special(true);
     sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(o_fwd as *mut Lisp_Fwd);
@@ -112,8 +113,8 @@ pub unsafe fn defvar_kboard_offset(
 ) {
     (*ko_fwd).ty = Lisp_Fwd_Kboard_Obj;
     (*ko_fwd).offset = offset;
-    let sym = intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t)
-        .as_symbol_or_error();
+    let sym: LispSymbolRef =
+        intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t).into();
     sym.set_declared_special(true);
     sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(ko_fwd as *mut Lisp_Fwd);
@@ -138,13 +139,13 @@ pub unsafe fn defvar_per_buffer_offset(
     (*bo_fwd).ty = Lisp_Fwd_Buffer_Obj;
     (*bo_fwd).offset = offset;
     (*bo_fwd).predicate = predicate;
-    let sym = intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t)
-        .as_symbol_or_error();
+    let sym: LispSymbolRef =
+        intern_c_string_1(namestring, libc::strlen(namestring) as libc::ptrdiff_t).into();
     sym.set_declared_special(true);
     sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(bo_fwd as *mut Lisp_Fwd);
     let local = offset.apply_mut(&mut remacs_sys::buffer_local_symbols);
-    *local = LispObject::from(sym);
+    *local = sym.into();
     let flags = offset.apply(&remacs_sys::buffer_local_flags);
     if flags.is_nil() {
         panic!(
@@ -183,7 +184,7 @@ pub fn read(stream: LispObject) -> LispObject {
 
     if input.is_t() || input.eq(Qread_char) {
         let cs = CString::new("Lisp expression: ").unwrap();
-        call!(LispObject::from(intern("read-minibuffer")), unsafe {
+        call!(intern("read-minibuffer").into(), unsafe {
             build_string(cs.as_ptr())
         })
     } else {

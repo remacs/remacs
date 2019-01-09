@@ -63,7 +63,7 @@ pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
 /// Return the character of the maximum code.
 #[lisp_fn]
 pub fn max_char() -> LispObject {
-    LispObject::from(MAX_CHAR)
+    MAX_CHAR.into()
 }
 
 /// Return non-nil if OBJECT is a character.
@@ -89,7 +89,7 @@ pub fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
     if c >= 0x100 {
         error!("Not a unibyte character: {}", c);
     }
-    LispObject::from(make_char_multibyte(c))
+    make_char_multibyte(c).into()
 }
 
 /// Convert the multibyte character CH to a byte.
@@ -102,7 +102,7 @@ pub fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
         // a latin1 char, so let's let it slide.
         ch
     } else {
-        LispObject::from(raw_byte_from_codepoint_safe(c))
+        raw_byte_from_codepoint_safe(c).into()
     }
 }
 

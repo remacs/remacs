@@ -198,7 +198,7 @@ impl LispBufferRef {
     }
 
     pub fn set_syntax_table(&mut self, table: LispCharTableRef) {
-        self.syntax_table_ = LispObject::from(table);
+        self.syntax_table_ = table.into();
     }
 
     pub fn value_p(self, idx: isize) -> bool {
@@ -844,7 +844,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let pos = position.unwrap_or_else(point);
 
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
-    let prop = unsafe { Fget_text_property(LispObject::from(pos), Qinhibit_read_only, Qnil) };
+    let prop = unsafe { Fget_text_property(pos.into(), Qinhibit_read_only, Qnil) };
 
     if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && prop.is_nil()
     {
@@ -927,9 +927,9 @@ pub extern "C" fn fetch_buffer_markers(buffer: *mut Lisp_Buffer) {
         assert!(buffer_ref.begv_marker().is_not_nil());
         assert!(buffer_ref.zv_marker().is_not_nil());
 
-        let pt_marker = buffer_ref.pt_marker().as_marker_or_error();
-        let begv_marker = buffer_ref.begv_marker().as_marker_or_error();
-        let zv_marker = buffer_ref.zv_marker().as_marker_or_error();
+        let pt_marker: LispMarkerRef = buffer_ref.pt_marker().into();
+        let begv_marker: LispMarkerRef = buffer_ref.begv_marker().into();
+        let zv_marker: LispMarkerRef = buffer_ref.zv_marker().into();
 
         buffer_ref.set_pt_both(pt_marker.charpos_or_error(), pt_marker.bytepos_or_error());
         buffer_ref.set_begv_both(
@@ -1037,8 +1037,8 @@ pub fn overlay_get(overlay: LispOverlayRef, prop: LispObject) -> LispObject {
 // Mark OV as no longer associated with BUF.
 #[no_mangle]
 pub extern "C" fn drop_overlay(mut buf: LispBufferRef, ov: LispOverlayRef) {
-    let mut start = ov.start.as_marker_or_error();
-    let mut end = ov.end.as_marker_or_error();
+    let mut start: LispMarkerRef = ov.start.into();
+    let mut end: LispMarkerRef = ov.end.into();
     assert!(buf == marker_buffer(start).unwrap());
     unsafe {
         modify_overlay(
@@ -1054,7 +1054,7 @@ pub extern "C" fn drop_overlay(mut buf: LispBufferRef, ov: LispOverlayRef) {
 /// Delete the overlay OVERLAY from its buffer.
 #[lisp_fn]
 pub fn delete_overlay(overlay: LispOverlayRef) {
-    let mut buf_ref = match marker_buffer(overlay.start.as_marker_or_error()) {
+    let mut buf_ref = match marker_buffer(LispMarkerRef::from(overlay.start)) {
         Some(b) => b,
         None => return,
     };
@@ -1107,7 +1107,7 @@ pub fn erase_buffer() {
         // Prevent warnings, or suspension of auto saving, that would happen
         // if future size is less than past size.  Use of erase-buffer
         // implies that the future text is not really related to the past text.
-        cur_buf.save_length_ = LispObject::from(0);
+        cur_buf.save_length_ = 0.into();
     }
 }
 
@@ -1187,11 +1187,9 @@ pub unsafe extern "C" fn copy_overlays(
         .iter();
 
     let duplicate_marker = |marker_obj: LispObject| -> LispObject {
-        let mkr = marker_obj.as_marker_or_error();
+        let mkr: LispMarkerRef = marker_obj.into();
         let new_mkr = build_marker(buffer, mkr.charpos_or_error(), mkr.bytepos_or_error());
-        new_mkr
-            .as_marker_or_error()
-            .set_insertion_type(mkr.insertion_type());
+        LispMarkerRef::from(new_mkr).set_insertion_type(mkr.insertion_type());
         new_mkr
     };
 

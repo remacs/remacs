@@ -33,8 +33,8 @@ impl LispProcessRef {
         self.plist = plist;
     }
 
-    fn set_buffer(&mut self, buffer: LispObject) {
-        self.buffer = buffer;
+    fn set_buffer(&mut self, buffer: Option<LispBufferRef>) {
+        self.buffer = buffer.into();
     }
 
     fn set_childp(&mut self, childp: LispObject) {
@@ -239,10 +239,9 @@ pub fn process_plist(process: LispProcessRef) -> LispObject {
 
 /// Replace the plist of PROCESS with PLIST.  Return PLIST.
 #[lisp_fn]
-pub fn set_process_plist(process: LispObject, plist: LispObject) -> LispObject {
+pub fn set_process_plist(mut process: LispProcessRef, plist: LispObject) -> LispObject {
     if plist.is_list() {
-        let mut p = process.as_process_or_error();
-        p.set_plist(plist);
+        process.set_plist(plist);
         plist
     } else {
         wrong_type!(Qlistp, plist)
@@ -321,23 +320,22 @@ pub fn process_type(process: LispObject) -> LispObject {
 /// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
 /// Return BUFFER.
 #[lisp_fn]
-pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject {
-    let mut p_ref = process.as_process_or_error();
-    if buffer.is_not_nil() {
-        buffer.as_buffer_or_error();
-    }
-    p_ref.set_buffer(buffer);
-    let process_type = p_ref.ptype();
+pub fn set_process_buffer(
+    mut process: LispProcessRef,
+    buffer: Option<LispBufferRef>,
+) -> LispObject {
+    process.set_buffer(buffer);
+    let process_type = process.ptype();
     let netconn1_p = process_type.eq(Qnetwork);
     let serialconn1_p = process_type.eq(Qserial);
     let pipeconn1_p = process_type.eq(Qpipe);
 
     if netconn1_p || serialconn1_p || pipeconn1_p {
-        let childp = p_ref.childp;
-        p_ref.set_childp(plist_put(childp, QCbuffer, buffer));
+        let childp = process.childp;
+        process.set_childp(plist_put(childp, QCbuffer, buffer.into()));
     }
-    unsafe { setup_process_coding_systems(process) };
-    buffer
+    unsafe { setup_process_coding_systems(process.into()) };
+    buffer.into()
 }
 
 /// Give PROCESS the filter function FILTER; nil means default.
@@ -352,9 +350,7 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
 /// - if the process's input coding system is no-conversion or raw-text,
 ///   it is a unibyte string (the non-converted input).
 #[lisp_fn]
-pub fn set_process_filter(process: LispObject, mut filter: LispObject) -> LispObject {
-    let mut p_ref = process.as_process_or_error();
-
+pub fn set_process_filter(mut process: LispProcessRef, mut filter: LispObject) -> LispObject {
     // Don't signal an error if the process's input file descriptor
     // is closed.  This could make debugging Lisp more difficult,
     // for example when doing something like
@@ -362,19 +358,19 @@ pub fn set_process_filter(process: LispObject, mut filter: LispObject) -> LispOb
     // (setq process (start-process ...))
     // (debug)
     // (set-process-filter process ...)
-    filter = pset_filter(p_ref, filter);
-    set_process_filter_masks(p_ref);
+    filter = pset_filter(process, filter);
+    set_process_filter_masks(process);
 
-    let process_type = p_ref.ptype();
+    let process_type = process.ptype();
     let netconn1_p = process_type.eq(Qnetwork);
     let serialconn1_p = process_type.eq(Qserial);
     let pipeconn1_p = process_type.eq(Qpipe);
 
     if netconn1_p || serialconn1_p || pipeconn1_p {
-        let childp = p_ref.childp;
-        p_ref.set_childp(plist_put(childp, QCfilter, filter));
+        let childp = process.childp;
+        process.set_childp(plist_put(childp, QCfilter, filter));
     }
-    unsafe { setup_process_coding_systems(process) };
+    unsafe { setup_process_coding_systems(process.into()) };
     filter
 }
 

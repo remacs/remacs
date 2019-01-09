@@ -225,7 +225,7 @@ pub fn delete_char(n: EmacsInt, killflag: bool) {
     let buffer = ThreadState::current_buffer_unchecked();
     let pos = buffer.pt + n as isize;
     if killflag {
-        call!(Qkill_forward_chars, LispObject::from(n));
+        call!(Qkill_forward_chars, n.into());
     } else if n < 0 {
         if pos < buffer.begv {
             xsignal!(Qbeginning_of_buffer);
@@ -273,10 +273,7 @@ pub fn self_insert_command(n: EmacsInt) {
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
         if val == 2 {
-            set(
-                Qundo_auto__this_command_amalgamating.as_symbol_or_error(),
-                Qnil,
-            );
+            set(Qundo_auto__this_command_amalgamating.into(), Qnil);
         }
         unsafe { frame_make_pointer_invisible(selected_frame().as_mut()) };
     }
@@ -346,7 +343,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         if overwrite == Qoverwrite_mode_binary {
             chars_to_delete = n as usize;
         } else if c != '\n' as Codepoint && c2 != '\n' as Codepoint {
-            let cwidth = unsafe { Fchar_width(LispObject::from(c)) }.as_fixnum_or_error() as usize;
+            let cwidth = unsafe { Fchar_width(c.into()) }.as_fixnum_or_error() as usize;
             if cwidth > 0 {
                 let pos = current_buffer.pt;
                 let pos_byte = current_buffer.pt_byte;
@@ -362,7 +359,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                     // if the TARGET_CLM is middle of multi-column
                     // character.  In that case, the new point is set after
                     // that character.
-                    let actual_clm = unsafe { Fmove_to_column(LispObject::from(target_clm), Qnil) }
+                    let actual_clm = unsafe { Fmove_to_column(target_clm.into(), Qnil) }
                         .as_fixnum_or_error() as usize;
                     chars_to_delete = (current_buffer.pt - pos) as usize;
                     if actual_clm > target_clm {
@@ -404,12 +401,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // return right away--don't really self-insert.  */
         if let Some(s) = sym.as_symbol() {
             if let Some(f) = s.get_function().as_symbol() {
-                let prop = unsafe {
-                    Fget(
-                        LispObject::from(f),
-                        LispObject::from(intern("no-self-insert")),
-                    )
-                };
+                let prop = unsafe { Fget(f.into(), intern("no-self-insert").into()) };
                 if prop.is_not_nil() {
                     return 1;
                 }
@@ -427,15 +419,10 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         } else {
             c
         };
-        let mut string = unsafe { Fmake_string(LispObject::from(n), LispObject::from(mc), Qnil) };
+        let mut string = unsafe { Fmake_string(n.into(), mc.into(), Qnil) };
         if spaces_to_insert > 0 {
-            let tem = unsafe {
-                Fmake_string(
-                    LispObject::from(spaces_to_insert),
-                    LispObject::from(' ' as Codepoint),
-                    Qnil,
-                )
-            };
+            let tem =
+                unsafe { Fmake_string(spaces_to_insert.into(), (' ' as Codepoint).into(), Qnil) };
             string = unsafe { concat2(string, tem) };
         }
 
@@ -450,7 +437,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                 false,
             )
         };
-        forward_char(LispObject::from(n));
+        forward_char(n.into());
     } else if n > 1 {
         let mut strn: Vec<libc::c_uchar> = match n.checked_mul(len) {
             Some(size_bytes) => Vec::with_capacity(size_bytes),

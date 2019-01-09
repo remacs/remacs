@@ -27,7 +27,7 @@ use crate::{
         Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qnil, Qraw_text, Qsha1, Qsha224,
         Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region,
     },
-    symbols::{fboundp, symbol_name},
+    symbols::{fboundp, symbol_name, LispSymbolRef},
     threads::ThreadState,
 };
 
@@ -48,23 +48,18 @@ static SHA256_DIGEST_LEN: usize = 256 / 8;
 static SHA384_DIGEST_LEN: usize = 384 / 8;
 static SHA512_DIGEST_LEN: usize = 512 / 8;
 
-fn hash_alg(algorithm: LispObject) -> HashAlg {
-    algorithm.as_symbol_or_error();
-    if algorithm == Qmd5 {
-        HashAlg::MD5
-    } else if algorithm == Qsha1 {
-        HashAlg::SHA1
-    } else if algorithm == Qsha224 {
-        HashAlg::SHA224
-    } else if algorithm == Qsha256 {
-        HashAlg::SHA256
-    } else if algorithm == Qsha384 {
-        HashAlg::SHA384
-    } else if algorithm == Qsha512 {
-        HashAlg::SHA512
-    } else {
-        let name = symbol_name(algorithm.as_symbol_or_error()).as_string_or_error();
-        error!("Invalid algorithm arg: {:?}\0", &name.as_slice());
+fn hash_alg(algorithm: LispSymbolRef) -> HashAlg {
+    match LispObject::from(algorithm) {
+        Qmd5 => HashAlg::MD5,
+        Qsha1 => HashAlg::SHA1,
+        Qsha224 => HashAlg::SHA224,
+        Qsha256 => HashAlg::SHA256,
+        Qsha384 => HashAlg::SHA384,
+        Qsha512 => HashAlg::SHA512,
+        _ => {
+            let name = symbol_name(algorithm).as_string_or_error();
+            error!("Invalid algorithm arg: {:?}\0", &name.as_slice());
+        }
     }
 }
 
@@ -135,12 +130,12 @@ fn get_coding_system_for_buffer(
         return buffer.buffer_file_coding_system_;
     }
     let sscsf = unsafe { globals.Vselect_safe_coding_system_function };
-    if fboundp(sscsf.as_symbol_or_error()) {
+    if fboundp(sscsf.into()) {
         /* Confirm that VAL can surely encode the current region. */
         return call!(
             sscsf,
-            LispObject::from(start_byte),
-            LispObject::from(end_byte),
+            start_byte.into(),
+            end_byte.into(),
             coding_system,
             Qnil
         );
@@ -236,15 +231,15 @@ fn get_input(
             );
             *string = Some(
                 unsafe { code_convert_string(object, coding_system, Qnil, true, false, true) }
-                    .as_string_or_error(),
+                    .into(),
             )
         }
-        get_input_from_string(object, string.unwrap(), start, end).as_string_or_error()
+        get_input_from_string(object, string.unwrap(), start, end).into()
     } else if object.is_buffer() {
         let mut start_byte: ptrdiff_t = 0;
         let mut end_byte: ptrdiff_t = 0;
         let s = get_input_from_buffer(buffer.unwrap(), start, end, &mut start_byte, &mut end_byte);
-        let ss = s.as_string_or_error();
+        let ss: LispStringRef = s.into();
         if ss.is_multibyte() {
             let coding_system = check_coding_system_or_error(
                 get_coding_system_for_buffer(
@@ -258,8 +253,7 @@ fn get_input(
                 ),
                 noerror,
             );
-            unsafe { code_convert_string(s, coding_system, Qnil, true, false, false) }
-                .as_string_or_error()
+            unsafe { code_convert_string(s, coding_system, Qnil, true, false, false) }.into()
         } else {
             ss
         }
@@ -326,7 +320,7 @@ pub fn md5(
 /// If BINARY is non-nil, returns a string in binary form.
 #[lisp_fn(min = "2")]
 pub fn secure_hash(
-    algorithm: LispObject,
+    algorithm: LispSymbolRef,
     object: LispObject,
     start: LispObject,
     end: LispObject,
@@ -377,7 +371,7 @@ fn _secure_hash(
         digest_size as EmacsInt
     };
     let digest = unsafe { make_uninit_string(buffer_size as EmacsInt) };
-    let mut digest_str = digest.as_string_or_error();
+    let mut digest_str: LispStringRef = digest.into();
     hash_func(input_slice, digest_str.as_mut_slice());
     if binary.is_nil() {
         hexify_digest_string(digest_str.as_mut_slice(), digest_size);

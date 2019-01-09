@@ -20,9 +20,7 @@ use crate::{
 /// overlays are considered only if they are associated with OBJECT.
 #[lisp_fn(min = "2")]
 pub fn get_char_property(position: EmacsInt, prop: LispObject, object: LispObject) -> LispObject {
-    unsafe {
-        get_char_property_and_overlay(LispObject::from(position), prop, object, ptr::null_mut())
-    }
+    unsafe { get_char_property_and_overlay(position.into(), prop, object, ptr::null_mut()) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/textprop_exports.rs"));

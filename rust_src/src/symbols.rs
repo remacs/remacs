@@ -194,17 +194,13 @@ impl LispObject {
         self.into()
     }
 
-    pub fn as_symbol_or_error(self) -> LispSymbolRef {
-        self.into()
-    }
-
     pub fn symbol_or_string_as_string(self) -> LispStringRef {
         match self.as_symbol() {
             Some(sym) => sym
                 .symbol_name()
                 .as_string()
                 .expect("Expected a symbol name?"),
-            None => self.as_string_or_error(),
+            None => self.into(),
         }
     }
 
@@ -333,7 +329,7 @@ pub fn setplist(mut symbol: LispSymbolRef, newplist: LispObject) -> LispObject {
 /// Return SYMBOL.
 #[lisp_fn]
 pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
-    let mut sym = symbol.as_symbol_or_error();
+    let mut sym: LispSymbolRef = symbol.into();
     if symbol.is_nil() || symbol.is_t() {
         setting_constant!(symbol);
     }
@@ -350,7 +346,7 @@ pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
 #[lisp_fn]
 pub fn keywordp(object: LispObject) -> bool {
     if let Some(sym) = object.as_symbol() {
-        let name = sym.symbol_name().as_string_or_error();
+        let name: LispStringRef = sym.symbol_name().into();
         name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray()
     } else {
         false

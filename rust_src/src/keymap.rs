@@ -314,11 +314,7 @@ pub unsafe extern "C" fn map_keymap(
 #[lisp_fn(name = "map-keymap", c_name = "map_keymap", min = "2")]
 pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
     if sort_first {
-        return call!(
-            LispObject::from(intern("map-keymap-sorted")),
-            function,
-            keymap
-        );
+        return call!(intern("map-keymap-sorted").into(), function, keymap);
     }
     unsafe {
         map_keymap(
@@ -369,8 +365,7 @@ pub unsafe extern "C" fn map_keymap_internal(
             } else if binding.is_vector() {
                 if let Some(binding_vec) = binding.as_vectorlike() {
                     for c in 0..binding_vec.pseudovector_size() {
-                        let character = LispObject::from(c);
-                        map_keymap_item(fun, args, character, aref(binding, c), data);
+                        map_keymap_item(fun, args, c.into(), aref(binding, c), data);
                     }
                 }
             } else if binding.is_char_table() {
@@ -503,7 +498,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
             if let Some(x) = c.as_fixnum() {
                 let x = x as u32;
                 if x & 0x80 != 0 && !k.is_multibyte() {
-                    c = LispObject::from((x | char_bits::CHAR_META) & !0x80);
+                    c = ((x | char_bits::CHAR_META) & !0x80).into();
                 }
             }
         }
@@ -521,7 +516,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
 
         keymap = get_keymap(cmd, false, true);
         if !keymap.is_cons() {
-            return LispObject::from(idx);
+            return idx.into();
         }
 
         unsafe {
@@ -549,7 +544,7 @@ pub fn define_prefix_command(
     let map = make_sparse_keymap(name);
     fset(command, map);
     if mapvar.is_not_nil() {
-        set(mapvar.as_symbol_or_error(), map);
+        set(mapvar.into(), map);
     } else {
         set(command, map);
     }
@@ -591,7 +586,7 @@ pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
 #[lisp_fn(min = "1", name = "describe-vector", c_name = "describe_vector")]
 pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
     if describer.is_nil() {
-        describer = LispObject::from(intern("princ"));
+        describer = intern("princ").into();
     }
     unsafe { specbind(Qstandard_output, current_buffer()) };
     if !(vector.is_vector() || vector.is_char_table()) {

@@ -64,11 +64,6 @@ impl LispObject {
         self.into()
     }
 
-    // Same as CHECK_FRAME
-    pub fn as_frame_or_error(self) -> LispFrameRef {
-        self.into()
-    }
-
     pub fn as_live_frame(self) -> Option<LispFrameRef> {
         self.as_frame()
             .and_then(|f| if f.is_live() { Some(f) } else { None })
@@ -85,7 +80,7 @@ macro_rules! for_each_frame {
     ($name:ident => $action:block) => {
         let frame_it = unsafe { Vframe_list.iter_cars(LispConsEndChecks::off,
                                                       LispConsCircularChecks::off) };
-        for $name in frame_it.map(|f| f.as_frame_or_error())
+        for $name in frame_it.map(LispFrameRef::from)
             $action
     };
 }
@@ -99,7 +94,7 @@ pub enum LispFrameOrSelected {
 impl From<LispObject> for LispFrameOrSelected {
     fn from(obj: LispObject) -> Self {
         obj.map_or(LispFrameOrSelected::Selected, |o| {
-            LispFrameOrSelected::Frame(o.as_frame_or_error())
+            LispFrameOrSelected::Frame(o.into())
         })
     }
 }
@@ -114,7 +109,7 @@ impl From<LispFrameOrSelected> for LispFrameRef {
     fn from(frame: LispFrameOrSelected) -> Self {
         match frame {
             LispFrameOrSelected::Frame(f) => f,
-            LispFrameOrSelected::Selected => unsafe { current_frame }.as_frame_or_error(),
+            LispFrameOrSelected::Selected => unsafe { current_frame }.into(),
         }
     }
 }
@@ -137,7 +132,7 @@ pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
         selected_frame()
     } else if let Some(win) = object.as_valid_window() {
         // the window's frame does not need a live check
-        win.frame.as_frame_or_error()
+        win.frame.into()
     } else {
         object.as_live_frame_or_error()
     }
@@ -166,7 +161,7 @@ pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
 /// Return the frame that is now selected.
 #[lisp_fn]
 pub fn selected_frame() -> LispFrameRef {
-    unsafe { current_frame }.as_frame_or_error()
+    unsafe { current_frame }.into()
 }
 
 /// Return non-nil if OBJECT is a frame.
@@ -209,7 +204,7 @@ fn framep_1(frame: LispFrameRef) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_selected_window(frame_or_window: LispObject) -> LispWindowRef {
     let frame = window_frame_live_or_selected(frame_or_window);
-    frame.selected_window.as_window_or_error()
+    frame.selected_window.into()
 }
 
 /// Set selected window of FRAME to WINDOW.
@@ -231,10 +226,10 @@ pub fn set_frame_selected_window(
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if frame_ref == selected_frame() {
-        select_window_lisp(window, norecord).as_window_or_error()
+        select_window_lisp(window, norecord).into()
     } else {
         frame_ref.selected_window = window;
-        window.as_window_or_error()
+        window.into()
     }
 }
 
@@ -484,7 +479,7 @@ pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> Lisp
     for_each_frame!(f => {
         if frame_ref == f && !prev.is_nil() {
             // frames match and there is a previous frame, return it.
-            return prev.as_frame_or_error();
+            return prev.into();
         }
         let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
         if !tmp.is_nil() {
@@ -502,7 +497,7 @@ pub fn previous_frame(frame: LispFrameOrSelected, miniframe: LispObject) -> Lisp
         // There were no acceptable frames in the list before FRAME; otherwise,
         // we would have returned directly from the loop.  Since PREV is the last
         // acceptable frame in the list, return it.
-        prev.as_frame_or_error()
+        prev.into()
     }
 }
 

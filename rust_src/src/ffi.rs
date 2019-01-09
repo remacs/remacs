@@ -22,8 +22,7 @@ pub extern "C" fn arithcompare(
     obj2: LispObject,
     comparison: math::ArithComparison,
 ) -> LispObject {
-    let result = math::arithcompare(obj1, obj2, comparison);
-    LispObject::from(result)
+    math::arithcompare(obj1, obj2, comparison).into()
 }
 
 #[no_mangle]

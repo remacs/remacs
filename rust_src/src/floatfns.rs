@@ -291,7 +291,7 @@ pub fn ldexp(significand: EmacsDouble, exponent: EmacsInt) -> EmacsDouble {
 pub fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
     if let (Some(x), Some(y)) = (arg1.as_fixnum(), arg2.as_fixnum()) {
         if y >= 0 && y <= EmacsInt::from(u32::max_value()) {
-            return LispObject::from(x.pow(y as u32));
+            return x.pow(y as u32).into();
         }
     }
     let b = arg1.any_to_float_or_error();

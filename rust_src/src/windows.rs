@@ -50,6 +50,10 @@ impl LispWindowRef {
         self.contents.is_not_nil()
     }
 
+    pub fn get_frame(self) -> LispFrameRef {
+        self.frame.into()
+    }
+
     /// Return the current height of the mode line of window W. If not known
     /// from W->mode_line_height, look at W's current glyph matrix, or return
     /// a default based on the height of the font of the face `mode-line'.
@@ -64,7 +68,7 @@ impl LispWindowRef {
             self.mode_line_height = matrix_mode_line_height;
             matrix_mode_line_height
         } else {
-            let mut frame = self.frame.as_frame_or_error();
+            let mut frame = self.get_frame();
             let window = selected_window().as_window_or_error();
             let mode_line_height = unsafe {
                 estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
@@ -101,7 +105,7 @@ impl LispWindowRef {
         if !(round == qfloor || round == qceiling) {
             self.total_cols
         } else {
-            let frame = self.frame.as_frame_or_error();
+            let frame = self.get_frame();
             let unit = frame.column_width;
 
             if round == qceiling {
@@ -119,7 +123,7 @@ impl LispWindowRef {
         if !(round == qfloor || round == qceiling) {
             self.total_lines
         } else {
-            let frame = self.frame.as_frame_or_error();
+            let frame = self.get_frame();
             let unit = frame.line_height;
 
             if round == qceiling {
@@ -134,14 +138,14 @@ impl LispWindowRef {
     /// window starts. This does not include a left-hand scroll bar
     /// if any.
     pub fn left_edge_x(self) -> i32 {
-        self.frame.as_frame_or_error().internal_border_width() + self.left_pixel_edge()
+        self.get_frame().internal_border_width() + self.left_pixel_edge()
     }
 
     /// The frame y-position at which the window starts.
     pub fn top_edge_y(self) -> i32 {
         let mut y = self.top_pixel_edge();
         if !(self.is_menu_bar() || self.is_tool_bar()) {
-            y += self.frame.as_frame_or_error().internal_border_width();
+            y += self.get_frame().internal_border_width();
         }
         y
     }
@@ -183,7 +187,7 @@ impl LispWindowRef {
                     .as_buffer_or_error()
                     .mode_line_format_
                     .is_not_nil())
-            && self.pixel_height > self.frame.as_frame_or_error().line_height
+            && self.pixel_height > self.get_frame().line_height
     }
 
     /// True if window wants a header line and is high enough to
@@ -198,7 +202,7 @@ impl LispWindowRef {
     pub fn wants_header_line(self) -> bool {
         let window_header_line_format = self.get_parameter(Qheader_line_format);
 
-        let mut height = self.frame.as_frame_or_error().line_height;
+        let mut height = self.get_frame().line_height;
         if self.wants_mode_line() {
             height *= 2;
         }
@@ -479,7 +483,7 @@ pub fn window_margins(window: LispWindowLiveOrSelected) -> (LispObject, LispObje
         if margin == 0 {
             Qnil
         } else {
-            LispObject::from(margin)
+            margin.into()
         }
     }
     let win: LispWindowRef = window.into();
@@ -1105,7 +1109,7 @@ pub extern "C" fn wset_update_mode_line(mut w: LispWindowRef) {
     // If this window is the selected window on its frame, set the
     // global variable update_mode_lines, so that x_consider_frame_title
     // will consider this frame's title for redisplay.
-    let fselected_window = w.frame.as_frame_or_error().selected_window;
+    let fselected_window = w.get_frame().selected_window;
 
     if let Some(win) = fselected_window.as_window() {
         if win == w {
