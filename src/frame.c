@@ -3190,7 +3190,7 @@ list, but are otherwise ignored.  */)
 #endif
 
     {
-      EMACS_INT length = XFIXNAT (Flength (alist));
+      EMACS_INT length = list_length (alist);
       ptrdiff_t i;
       Lisp_Object *parms;
       Lisp_Object *values;

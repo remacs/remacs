@@ -524,19 +524,15 @@ bool
 parse_single_submenu (Lisp_Object item_key, Lisp_Object item_name,
 		      Lisp_Object maps)
 {
-  Lisp_Object length;
-  EMACS_INT len;
   Lisp_Object *mapvec;
-  ptrdiff_t i;
   bool top_level_items = 0;
   USE_SAFE_ALLOCA;
 
-  length = Flength (maps);
-  len = XFIXNUM (length);
+  ptrdiff_t len = list_length (maps);
 
   /* Convert the list MAPS into a vector MAPVEC.  */
   SAFE_ALLOCA_LISP (mapvec, len);
-  for (i = 0; i < len; i++)
+  for (ptrdiff_t i = 0; i < len; i++)
     {
       mapvec[i] = Fcar (maps);
       maps = Fcdr (maps);
@@ -544,7 +540,7 @@ parse_single_submenu (Lisp_Object item_key, Lisp_Object item_name,
 
   /* Loop over the given keymaps, making a pane for each map.
      But don't make a pane that is empty--ignore that map instead.  */
-  for (i = 0; i < len; i++)
+  for (ptrdiff_t i = 0; i < len; i++)
     {
       if (!KEYMAPP (mapvec[i]))
 	{
@@ -1309,7 +1305,7 @@ x_popup_menu_1 (Lisp_Object position, Lisp_Object menu)
   else if (CONSP (menu) && KEYMAPP (XCAR (menu)))
     {
       /* We were given a list of keymaps.  */
-      EMACS_INT nmaps = XFIXNAT (Flength (menu));
+      ptrdiff_t nmaps = list_length (menu);
       Lisp_Object *maps;
       ptrdiff_t i;
       USE_SAFE_ALLOCA;

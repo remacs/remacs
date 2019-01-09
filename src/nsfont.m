@@ -576,7 +576,7 @@ ns_findfonts (Lisp_Object font_spec, BOOL isMatch)
 
     /* Add synthItal member if needed.  */
     family = [fdesc objectForKey: NSFontFamilyAttribute];
-    if (family != nil && !foundItal && XFIXNUM (Flength (list)) > 0)
+    if (family != nil && !foundItal && !NILP (list))
       {
         NSFontDescriptor *s1 = [NSFontDescriptor new];
         NSFontDescriptor *sDesc
@@ -595,8 +595,8 @@ ns_findfonts (Lisp_Object font_spec, BOOL isMatch)
       return ns_fallback_entity ();
 
     if (NSFONT_TRACE)
-	fprintf (stderr, "    Returning %"pI"d entities.\n",
-                 XFIXNUM (Flength (list)));
+	fprintf (stderr, "    Returning %"pD"d entities.\n",
+		 list_length (list));
 
     return list;
 }
@@ -667,8 +667,8 @@ nsfont_list_family (struct frame *f)
   /* FIXME: escape the name?  */
 
   if (NSFONT_TRACE)
-    fprintf (stderr, "nsfont: list families returning %"pI"d entries\n",
-	     XFIXNUM (Flength (list)));
+    fprintf (stderr, "nsfont: list families returning %"pD"d entries\n",
+	     list_length (list));
 
   unblock_input ();
   return list;

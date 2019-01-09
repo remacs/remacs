@@ -2042,7 +2042,7 @@ For an approximate inverse of this, see `kbd'.  */)
   else if (VECTORP (list))
     size = ASIZE (list);
   else if (CONSP (list))
-    size = XFIXNUM (Flength (list));
+    size = list_length (list);
   else
     wrong_type_argument (Qarrayp, list);
 

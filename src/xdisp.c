@@ -24137,7 +24137,7 @@ store_mode_line_string (const char *string, Lisp_Object lisp_string,
     }
   else
     {
-      len = XFIXNAT (Flength (lisp_string));
+      len = SCHARS (lisp_string);
       if (precision > 0 && len > precision)
 	{
 	  len = precision;

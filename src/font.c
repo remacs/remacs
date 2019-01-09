@@ -2174,13 +2174,12 @@ font_score (Lisp_Object entity, Lisp_Object *spec_prop)
 static Lisp_Object
 font_vconcat_entity_vectors (Lisp_Object list)
 {
-  EMACS_INT nargs = XFIXNAT (Flength (list));
+  ptrdiff_t nargs = list_length (list);
   Lisp_Object *args;
   USE_SAFE_ALLOCA;
   SAFE_ALLOCA_LISP (args, nargs);
-  ptrdiff_t i;
 
-  for (i = 0; i < nargs; i++, list = XCDR (list))
+  for (ptrdiff_t i = 0; i < nargs; i++, list = XCDR (list))
     args[i] = XCAR (list);
   Lisp_Object result = Fvconcat (nargs, args);
   SAFE_FREE ();
@@ -3241,7 +3240,7 @@ font_find_for_lface (struct frame *f, Lisp_Object *attrs, Lisp_Object spec, int 
 
       if (! NILP (alters))
 	{
-	  EMACS_INT alterslen = XFIXNAT (Flength (alters));
+	  EMACS_INT alterslen = list_length (alters);
 	  SAFE_ALLOCA_LISP (family, alterslen + 2);
 	  for (i = 0; CONSP (alters); i++, alters = XCDR (alters))
 	    family[i] = XCAR (alters);

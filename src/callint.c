@@ -572,7 +572,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	    /* If the key sequence ends with a down-event,
 	       discard the following up-event.  */
 	    Lisp_Object teml
-	      = Faref (args[i], make_fixnum (XFIXNUM (Flength (args[i])) - 1));
+	      = Faref (args[i], make_fixnum (ASIZE (args[i]) - 1));
 	    if (CONSP (teml))
 	      teml = XCAR (teml);
 	    if (SYMBOLP (teml))

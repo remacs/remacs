@@ -2242,8 +2242,7 @@ Return the sorted list.  CHARSETS is modified by side effects.
 See also `charset-priority-list' and `set-charset-priority'.  */)
      (Lisp_Object charsets)
 {
-  Lisp_Object len = Flength (charsets);
-  ptrdiff_t n = XFIXNAT (len), i, j;
+  ptrdiff_t n = list_length (charsets), i, j;
   int done;
   Lisp_Object tail, elt, attrs;
   struct charset_sort_data *sort_data;

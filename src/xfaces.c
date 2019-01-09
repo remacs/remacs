@@ -1424,7 +1424,6 @@ the face font sort order.  */)
   Lisp_Object font_spec, list, *drivers, vec;
   struct frame *f = decode_live_frame (frame);
   ptrdiff_t i, nfonts;
-  EMACS_INT ndrivers;
   Lisp_Object result;
   USE_SAFE_ALLOCA;
 
@@ -1457,7 +1456,7 @@ the face font sort order.  */)
   font_props_for_sorting[i++] = FONT_ADSTYLE_INDEX;
   font_props_for_sorting[i++] = FONT_REGISTRY_INDEX;
 
-  ndrivers = XFIXNUM (Flength (list));
+  ptrdiff_t ndrivers = list_length (list);
   SAFE_ALLOCA_LISP (drivers, ndrivers);
   for (i = 0; i < ndrivers; i++, list = XCDR (list))
     drivers[i] = XCAR (list);

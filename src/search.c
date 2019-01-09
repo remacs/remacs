@@ -2992,13 +2992,11 @@ If optional arg RESEAT is non-nil, make markers on LIST point nowhere.  */)
 
   /* Allocate registers if they don't already exist.  */
   {
-    EMACS_INT length = XFIXNAT (Flength (list)) / 2;
+    ptrdiff_t length = list_length (list) / 2;
 
     if (length > search_regs.num_regs)
       {
 	ptrdiff_t num_regs = search_regs.num_regs;
-	if (PTRDIFF_MAX < length)
-	  memory_full (SIZE_MAX);
 	search_regs.start =
 	  xpalloc (search_regs.start, &num_regs, length - num_regs,
 		   min (PTRDIFF_MAX, UINT_MAX), sizeof *search_regs.start);

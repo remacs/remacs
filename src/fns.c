@@ -91,42 +91,50 @@ See Info node `(elisp)Random Numbers' for more details.  */)
 
 /* Random data-structure functions.  */
 
+/* Return the length of LIST.  Signal an error if LIST is not a proper
+   list or if the length does not fit into a fixnum or into ptrdiff_t.  */
+
+ptrdiff_t
+list_length (Lisp_Object list)
+{
+  intptr_t i = 0;
+  FOR_EACH_TAIL (list)
+    i++;
+  CHECK_LIST_END (list, list);
+  if (i <= min (PTRDIFF_MAX, MOST_POSITIVE_FIXNUM))
+    return i;
+  overflow_error ();
+}
+
+
 DEFUN ("length", Flength, Slength, 1, 1, 0,
        doc: /* Return the length of vector, list or string SEQUENCE.
 A byte-code function object is also allowed.
 If the string contains multibyte characters, this is not necessarily
 the number of bytes in the string; it is the number of characters.
 To get the number of bytes, use `string-bytes'.  */)
-  (register Lisp_Object sequence)
+  (Lisp_Object sequence)
 {
-  register Lisp_Object val;
+  EMACS_INT val;
 
   if (STRINGP (sequence))
-    XSETFASTINT (val, SCHARS (sequence));
+    val = SCHARS (sequence);
   else if (VECTORP (sequence))
-    XSETFASTINT (val, ASIZE (sequence));
+    val = ASIZE (sequence);
   else if (CHAR_TABLE_P (sequence))
-    XSETFASTINT (val, MAX_CHAR);
+    val = MAX_CHAR;
   else if (BOOL_VECTOR_P (sequence))
-    XSETFASTINT (val, bool_vector_size (sequence));
+    val = bool_vector_size (sequence);
   else if (COMPILEDP (sequence) || RECORDP (sequence))
-    XSETFASTINT (val, PVSIZE (sequence));
+    val = PVSIZE (sequence);
   else if (CONSP (sequence))
-    {
-      intptr_t i = 0;
-      FOR_EACH_TAIL (sequence)
-	i++;
-      CHECK_LIST_END (sequence, sequence);
-      if (MOST_POSITIVE_FIXNUM < i)
-	overflow_error ();
-      val = make_fixnum (i);
-    }
+    val = list_length (sequence);
   else if (NILP (sequence))
-    XSETFASTINT (val, 0);
+    val = 0;
   else
     wrong_type_argument (Qsequencep, sequence);
 
-  return val;
+  return make_fixnum (val);
 }
 
 DEFUN ("safe-length", Fsafe_length, Ssafe_length, 1, 1, 0,
@@ -1957,24 +1965,15 @@ See also the function `nreverse', which is used more often.  */)
 static Lisp_Object
 sort_list (Lisp_Object list, Lisp_Object predicate)
 {
-  Lisp_Object front, back;
-  Lisp_Object len, tem;
-  EMACS_INT length;
-
-  front = list;
-  len = Flength (list);
-  length = XFIXNUM (len);
+  ptrdiff_t length = list_length (list);
   if (length < 2)
     return list;
 
-  XSETINT (len, (length / 2) - 1);
-  tem = Fnthcdr (len, list);
-  back = Fcdr (tem);
+  Lisp_Object tem = Fnthcdr (make_fixnum (length / 2 - 1), list);
+  Lisp_Object back = Fcdr (tem);
   Fsetcdr (tem, Qnil);
 
-  front = Fsort (front, predicate);
-  back = Fsort (back, predicate);
-  return merge (front, back, predicate);
+  return merge (Fsort (list, predicate), Fsort (back, predicate), predicate);
 }
 
 /* Using PRED to compare, return whether A and B are in order.

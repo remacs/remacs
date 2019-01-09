@@ -4591,8 +4591,7 @@ detect_coding_sjis (struct coding_system *coding,
   int max_first_byte_of_2_byte_code;
 
   CODING_GET_INFO (coding, attrs, charset_list);
-  max_first_byte_of_2_byte_code
-    = (XFIXNUM (Flength (charset_list)) > 3 ? 0xFC : 0xEF);
+  max_first_byte_of_2_byte_code = list_length (charset_list) <= 3 ? 0xEF : 0xFC;
 
   detect_info->checked |= CATEGORY_MASK_SJIS;
   /* A coding system of this category is always ASCII compatible.  */
@@ -10387,14 +10386,11 @@ usage: (define-coding-system-internal ...)  */)
     }
   else if (EQ (coding_type, Qshift_jis))
     {
-
-      struct charset *charset;
-
-      if (XFIXNUM (Flength (charset_list)) != 3
-	  && XFIXNUM (Flength (charset_list)) != 4)
+      ptrdiff_t charset_list_len = list_length (charset_list);
+      if (charset_list_len != 3 && charset_list_len != 4)
 	error ("There should be three or four charsets");
 
-      charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
+      struct charset *charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));
       if (CHARSET_DIMENSION (charset) != 1)
 	error ("Dimension of charset %s is not one",
 	       SDATA (SYMBOL_NAME (CHARSET_NAME (charset))));
@@ -10429,7 +10425,7 @@ usage: (define-coding-system-internal ...)  */)
     {
       struct charset *charset;
 
-      if (XFIXNUM (Flength (charset_list)) != 2)
+      if (list_length (charset_list) != 2)
 	error ("There should be just two charsets");
 
       charset = CHARSET_FROM_ID (XFIXNUM (XCAR (charset_list)));

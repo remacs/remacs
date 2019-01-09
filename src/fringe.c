@@ -719,7 +719,7 @@ static int
 get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, int partial_p)
 {
   Lisp_Object cmap, bm1 = Qnil, bm2 = Qnil, bm;
-  EMACS_INT ln1 = 0, ln2 = 0;
+  ptrdiff_t ln1 = 0, ln2 = 0;
   int ix1 = right_p;
   int ix2 = ix1 + (partial_p ? 2 : 0);
 
@@ -743,7 +743,7 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 	    return NO_FRINGE_BITMAP;
 	  if (CONSP (bm1))
 	    {
-	      ln1 = XFIXNUM (Flength (bm1));
+	      ln1 = list_length (bm1);
 	      if (partial_p)
 		{
 		  if (ln1 > ix2)
@@ -778,7 +778,7 @@ get_logical_fringe_bitmap (struct window *w, Lisp_Object bitmap, int right_p, in
 	    {
 	      if (CONSP (bm2))
 		{
-		  ln2 = XFIXNUM (Flength (bm2));
+		  ln2 = list_length (bm2);
 		  if (partial_p)
 		    {
 		      if (ln2 > ix2)

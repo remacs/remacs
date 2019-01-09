@@ -980,14 +980,12 @@ chain of aliases, signal a `cyclic-variable-indirection' error.  */)
    swap_in_symval_forwarding for that.  */
 
 Lisp_Object
-do_symval_forwarding (register union Lisp_Fwd *valcontents)
+do_symval_forwarding (union Lisp_Fwd *valcontents)
 {
-  register Lisp_Object val;
   switch (XFWDTYPE (valcontents))
     {
     case Lisp_Fwd_Int:
-      XSETINT (val, *XFIXNUMFWD (valcontents)->intvar);
-      return val;
+      return make_fixnum (*XFIXNUMFWD (valcontents)->intvar);
 
     case Lisp_Fwd_Bool:
       return (*XBOOLFWD (valcontents)->boolvar ? Qt : Qnil);
@@ -1023,7 +1021,7 @@ do_symval_forwarding (register union Lisp_Fwd *valcontents)
 void
 wrong_choice (Lisp_Object choice, Lisp_Object wrong)
 {
-  ptrdiff_t i = 0, len = XFIXNUM (Flength (choice));
+  ptrdiff_t i = 0, len = list_length (choice);
   Lisp_Object obj, *args;
   AUTO_STRING (one_of, "One of ");
   AUTO_STRING (comma, ", ");
