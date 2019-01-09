@@ -76,7 +76,7 @@ pub fn current_column() -> EmacsInt {
 #[lisp_fn(min = "1", intspec = "NMove to column")]
 pub fn move_to_column(column: EmacsInt, force: LispObject) -> EmacsInt {
     column.check_natnum();
-    let buffer = &mut ThreadState::current_buffer().unwrap();
+    let buffer = &mut ThreadState::current_buffer_unchecked();
     let goal = column;
 
     let mut col = goal;
