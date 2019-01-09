@@ -549,7 +549,7 @@ pub fn define_prefix_command(
     let map = make_sparse_keymap(name);
     fset(command, map);
     if mapvar.is_not_nil() {
-        set(mapvar.as_symbol_or_error(), map);
+        set(mapvar.into(), map);
     } else {
         set(command, map);
     }

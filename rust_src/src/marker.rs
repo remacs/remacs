@@ -128,10 +128,6 @@ impl LispObject {
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.into()
     }
-
-    pub fn as_marker_or_error(self) -> LispMarkerRef {
-        self.into()
-    }
 }
 
 impl LispMiscRef {
@@ -198,7 +194,7 @@ pub extern "C" fn build_marker(
     debug_assert!(charpos <= bytepos);
 
     let obj = unsafe { allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker) };
-    let mut m = obj.as_marker_or_error();
+    let mut m: LispMarkerRef = obj.into();
 
     m.set_buffer(buf);
     m.set_charpos(charpos);
@@ -244,7 +240,7 @@ pub fn point_max_marker() -> LispObject {
 /// Set PT from MARKER's clipped position.
 #[no_mangle]
 pub extern "C" fn set_point_from_marker(marker: LispObject) {
-    let marker = marker.as_marker_or_error();
+    let marker: LispMarkerRef = marker.into();
     let mut cur_buf = ThreadState::current_buffer_unchecked();
     let charpos = clip_to_bounds(
         cur_buf.begv,
@@ -438,7 +434,7 @@ pub extern "C" fn set_marker_both(
     charpos: ptrdiff_t,
     bytepos: ptrdiff_t,
 ) -> LispObject {
-    let mut m = marker.as_marker_or_error();
+    let mut m: LispMarkerRef = marker.into();
     if let Some(mut b) = buffer
         .as_live_buffer()
         .or_else(|| current_buffer().as_live_buffer())
@@ -458,7 +454,7 @@ pub extern "C" fn set_marker_restricted_both(
     charpos: ptrdiff_t,
     bytepos: ptrdiff_t,
 ) -> LispObject {
-    let mut m = marker.as_marker_or_error();
+    let mut m: LispMarkerRef = marker.into();
 
     if let Some(mut b) = buffer
         .as_live_buffer()
@@ -480,14 +476,14 @@ pub extern "C" fn set_marker_restricted_both(
 /// Return the char position of marker MARKER, as a C integer.
 #[no_mangle]
 pub extern "C" fn marker_position(marker: LispObject) -> ptrdiff_t {
-    let m = marker.as_marker_or_error();
+    let m: LispMarkerRef = marker.into();
     m.charpos_or_error()
 }
 
 /// Return the byte position of marker MARKER, as a C integer.
 #[no_mangle]
 pub extern "C" fn marker_byte_position(marker: LispObject) -> ptrdiff_t {
-    let m = marker.as_marker_or_error();
+    let m: LispMarkerRef = marker.into();
     m.bytepos_or_error()
 }
 
@@ -516,7 +512,7 @@ fn set_marker_internal(
     // Optimize the special case where we are copying the position of
     // an existing marker, and MARKER is already in the same buffer.
     } else if position.as_marker().map_or(false, |p| p.buffer() == buf) && marker.buffer() == buf {
-        let pos = position.as_marker_or_error();
+        let pos: LispMarkerRef = position.into();
         marker.charpos = pos.charpos_or_error();
         marker.bytepos = pos.bytepos_or_error();
     } else {

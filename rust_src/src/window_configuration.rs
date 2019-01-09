@@ -127,7 +127,7 @@ pub fn window_configuration_frame(config: SaveWindowDataRef) -> LispFrameRef {
     let saved_windows = config.saved_windows.as_vector().unwrap();
     let obj = saved_windows.get(0);
     let saved = SavedWindowRef::new(obj.as_vector().unwrap().as_mut() as *mut saved_window);
-    saved.window.as_window_or_error().frame.as_frame_or_error()
+    saved.window.as_window_or_error().frame.into()
 }
 
 // Return true if window configurations CONFIGURATION1 and CONFIGURATION2

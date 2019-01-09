@@ -10,6 +10,7 @@ use crate::{
     lisp::defsubr,
     lisp::LispObject,
     lists::{car_safe, cdr_safe, memq},
+    multibyte::LispStringRef,
     obarray::{intern, lisp_intern},
     remacs_sys::{
         globals, Qcommandp, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
@@ -165,7 +166,7 @@ pub fn minibuffer_contents_no_properties() -> LispObject {
 /// and some related functions, which use zero-indexing for POSITION.
 #[lisp_fn(min = "1")]
 pub fn read_from_minibuffer(
-    prompt: LispObject,
+    prompt: LispStringRef,
     initial_contents: LispObject,
     mut keymap: LispObject,
     read: LispObject,
@@ -173,7 +174,6 @@ pub fn read_from_minibuffer(
     default_value: LispObject,
     inherit_input_method: LispObject,
 ) -> LispObject {
-    prompt.as_string_or_error();
     keymap = if keymap.is_nil() {
         unsafe { globals.Vminibuffer_local_map }
     } else {
@@ -197,7 +197,7 @@ pub fn read_from_minibuffer(
         read_minibuf(
             keymap,
             initial_contents,
-            prompt,
+            prompt.into(),
             read.is_not_nil(),
             histvar,
             histpos,
@@ -309,7 +309,7 @@ pub fn completing_read(
 ///  the current input method and the setting of `enable-multibyte-characters'.
 #[lisp_fn(min = "1")]
 pub fn read_string(
-    prompt: LispObject,
+    prompt: LispStringRef,
     initial_input: LispObject,
     history: LispObject,
     default_value: LispObject,
@@ -406,16 +406,15 @@ pub fn read_variable(prompt: LispObject, default_value: LispObject) -> LispObjec
 /// the current input method and the setting of`enable-multibyte-characters'.
 #[lisp_fn(min = "1")]
 pub fn read_no_blanks_input(
-    prompt: LispObject,
+    prompt: LispStringRef,
     initial: LispObject,
     inherit_input_method: LispObject,
 ) -> LispObject {
-    prompt.as_string_or_error();
     unsafe {
         read_minibuf(
             globals.Vminibuffer_local_ns_map,
             initial,
-            prompt,
+            prompt.into(),
             false,
             Qminibuffer_history,
             LispObject::from_fixnum(0),

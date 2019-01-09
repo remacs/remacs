@@ -273,10 +273,7 @@ pub fn self_insert_command(n: EmacsInt) {
         };
         let val = internal_self_insert(character as Codepoint, n as usize);
         if val == 2 {
-            set(
-                Qundo_auto__this_command_amalgamating.as_symbol_or_error(),
-                Qnil,
-            );
+            set(Qundo_auto__this_command_amalgamating.into(), Qnil);
         }
         unsafe { frame_make_pointer_invisible(selected_frame().as_mut()) };
     }

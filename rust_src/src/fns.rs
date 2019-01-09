@@ -12,6 +12,7 @@ use crate::{
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    multibyte::LispStringRef,
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
@@ -135,7 +136,7 @@ unsafe extern "C" fn require_unwind(old_value: LispObject) {
 /// suppressed.
 #[lisp_fn(min = "1")]
 pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -> LispObject {
-    let feature_sym = feature.as_symbol_or_error();
+    let feature_sym: LispSymbolRef = feature.into();
     let current_load_list = unsafe { globals.Vcurrent_load_list };
 
     // Record the presence of `require' in this file
@@ -295,8 +296,8 @@ pub extern "C" fn internal_equal_string(
     depth: i32,
     ht: LispObject,
 ) -> bool {
-    let s1 = o1.as_string_or_error();
-    let s2 = o2.as_string_or_error();
+    let s1: LispStringRef = o1.into();
+    let s2: LispStringRef = o2.into();
 
     s1.equal(s2, kind, depth, ht)
 }

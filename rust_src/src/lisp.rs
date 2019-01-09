@@ -21,6 +21,7 @@ use crate::{
     },
     remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
     remacs_sys::{Qautoload, Qnil, Qsubrp, Qt, Vbuffer_alist, Vprocess_alist},
+    symbols::LispSymbolRef,
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -620,7 +621,7 @@ impl Debug for LispObject {
         }
         match ty {
             Lisp_Type::Lisp_Symbol => {
-                let name = self.as_symbol_or_error().symbol_name();
+                let name = LispSymbolRef::from(*self).symbol_name();
                 write!(f, "'{}", display_string(name))?;
             }
             Lisp_Type::Lisp_Cons => {

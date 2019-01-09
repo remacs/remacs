@@ -75,7 +75,7 @@ pub extern "C" fn redraw_frame(mut frame: LispFrameRef) {
         // Mark all windows as inaccurate, so that every window will have
         // its redisplay done.
         mark_window_display_accurate(frame.root_window, false);
-        set_window_update_flags(frame.root_window.as_window_or_error(), true);
+        set_window_update_flags(frame.root_window.into(), true);
         frame.set_garbaged(false);
     }
 }
@@ -114,7 +114,7 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
         w = if next.is_nil() {
             None
         } else {
-            Some(next.as_window_or_error())
+            Some(next.into())
         };
     }
 }
