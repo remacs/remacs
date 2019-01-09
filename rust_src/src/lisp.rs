@@ -20,7 +20,6 @@ use crate::{
     },
     remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
     remacs_sys::{Qautoload, Qnil, Qsubrp, Qt, Vbuffer_alist, Vprocess_alist},
-    symbols::LispSymbolRef,
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
