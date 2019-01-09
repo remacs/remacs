@@ -96,7 +96,7 @@ pub fn posn_at_x_y(
         y = w.frame_pixel_y(y);
     });
 
-    unsafe { make_lispy_position(frame.as_mut(), LispObject::from(x), LispObject::from(y), 0) }
+    unsafe { make_lispy_position(frame.as_mut(), x.into(), y.into(), 0) }
 }
 
 /// Return true if EVENT is a list whose elements are all integers or symbols.

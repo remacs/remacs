@@ -134,8 +134,8 @@ fn get_coding_system_for_buffer(
         /* Confirm that VAL can surely encode the current region. */
         return call!(
             sscsf,
-            LispObject::from(start_byte),
-            LispObject::from(end_byte),
+            start_byte.into(),
+            end_byte.into(),
             coding_system,
             Qnil
         );

@@ -89,9 +89,7 @@ impl LispStringRef {
     /// considered; the validity of the following bytes is not checked.  Tabs in
     /// STRING are always taken to occupy `tab-width' columns.
     pub fn width(self) -> usize {
-        unsafe {
-            lisp_string_width(LispObject::from(self), -1, ptr::null_mut(), ptr::null_mut()) as usize
-        }
+        unsafe { lisp_string_width(self.into(), -1, ptr::null_mut(), ptr::null_mut()) as usize }
     }
 
     pub fn is_multibyte(self) -> bool {

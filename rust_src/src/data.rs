@@ -161,9 +161,9 @@ pub fn type_of(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn subr_lang(subr: LispSubrRef) -> LispObject {
     if subr.lang == Lisp_Subr_Lang::Lisp_Subr_Lang_C {
-        LispObject::from("C")
+        "C".into()
     } else if subr.lang == Lisp_Subr_Lang::Lisp_Subr_Lang_Rust {
-        LispObject::from("Rust")
+        "Rust".into()
     } else {
         unreachable!()
     }
@@ -327,7 +327,7 @@ pub fn subr_arity(subr: LispSubrRef) -> (EmacsInt, LispObject) {
     } else if subr.is_unevalled() {
         Qunevalled
     } else {
-        LispObject::from(EmacsInt::from(subr.max_args()))
+        EmacsInt::from(subr.max_args()).into()
     };
 
     (EmacsInt::from(minargs), maxargs)

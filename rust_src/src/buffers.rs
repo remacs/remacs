@@ -198,7 +198,7 @@ impl LispBufferRef {
     }
 
     pub fn set_syntax_table(&mut self, table: LispCharTableRef) {
-        self.syntax_table_ = LispObject::from(table);
+        self.syntax_table_ = table.into();
     }
 
     pub fn value_p(self, idx: isize) -> bool {
@@ -844,7 +844,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let pos = position.unwrap_or_else(point);
 
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
-    let prop = unsafe { Fget_text_property(LispObject::from(pos), Qinhibit_read_only, Qnil) };
+    let prop = unsafe { Fget_text_property(pos.into(), Qinhibit_read_only, Qnil) };
 
     if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && prop.is_nil()
     {
@@ -1107,7 +1107,7 @@ pub fn erase_buffer() {
         // Prevent warnings, or suspension of auto saving, that would happen
         // if future size is less than past size.  Use of erase-buffer
         // implies that the future text is not really related to the past text.
-        cur_buf.save_length_ = LispObject::from(0);
+        cur_buf.save_length_ = 0.into();
     }
 }
 

@@ -84,7 +84,7 @@ where
     fn from(v: Option<T>) -> Self {
         match v {
             None => Qnil,
-            Some(v) => LispObject::from(v),
+            Some(v) => v.into(),
         }
     }
 }
@@ -539,7 +539,7 @@ impl LispObject {
     where
         LispObject: From<T>,
     {
-        self == LispObject::from(other)
+        self == other.into()
     }
 
     pub fn eql<T>(self, other: T) -> bool

@@ -483,7 +483,7 @@ pub fn window_margins(window: LispWindowLiveOrSelected) -> (LispObject, LispObje
         if margin == 0 {
             Qnil
         } else {
-            LispObject::from(margin)
+            margin.into()
         }
     }
     let win: LispWindowRef = window.into();

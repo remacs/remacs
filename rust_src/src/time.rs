@@ -13,7 +13,6 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::defsubr,
     lisp::LispObject,
-    lists::list,
     numbers::MOST_NEGATIVE_FIXNUM,
     remacs_sys::{lisp_time, EmacsDouble, EmacsInt},
 };
@@ -148,12 +147,7 @@ pub extern "C" fn make_lisp_time(t: c_timespec) -> LispObject {
 fn make_lisp_time_1(t: c_timespec) -> LispObject {
     let s = t.tv_sec;
     let ns = t.tv_nsec;
-    list(&[
-        LispObject::from(hi_time(s)),
-        LispObject::from(lo_time(s)),
-        LispObject::from(ns / 1_000),
-        LispObject::from(ns % 1_000 * 1_000),
-    ])
+    list!(hi_time(s), lo_time(s), ns / 1_000, ns % 1_000 * 1_000)
 }
 
 /// Decode a Lisp list `SPECIFIED_TIME` that represents a time.

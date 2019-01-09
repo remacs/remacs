@@ -382,7 +382,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
 pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
     let mut buffer_ref = ThreadState::current_buffer_unchecked();
     if pos.is_nil() {
-        pos = LispObject::from(point());
+        pos = point().into();
     }
     if let Some(m) = pos.as_marker() {
         let pos_byte = m.bytepos_or_error();
@@ -432,12 +432,7 @@ pub fn propertize(args: &[LispObject]) -> LispObject {
     }
 
     unsafe {
-        Fadd_text_properties(
-            LispObject::from(0),
-            LispObject::from(orig_string.len_chars()),
-            properties,
-            copy,
-        );
+        Fadd_text_properties(0.into(), orig_string.len_chars().into(), properties, copy);
     };
 
     copy

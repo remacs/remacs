@@ -145,7 +145,7 @@ pub unsafe fn defvar_per_buffer_offset(
     sym.set_redirect(symbol_redirect::SYMBOL_FORWARDED);
     sym.set_fwd(bo_fwd as *mut Lisp_Fwd);
     let local = offset.apply_mut(&mut remacs_sys::buffer_local_symbols);
-    *local = LispObject::from(sym);
+    *local = sym.into();
     let flags = offset.apply(&remacs_sys::buffer_local_flags);
     if flags.is_nil() {
         panic!(
@@ -184,7 +184,7 @@ pub fn read(stream: LispObject) -> LispObject {
 
     if input.is_t() || input.eq(Qread_char) {
         let cs = CString::new("Lisp expression: ").unwrap();
-        call!(LispObject::from(intern("read-minibuffer")), unsafe {
+        call!(intern("read-minibuffer").into(), unsafe {
             build_string(cs.as_ptr())
         })
     } else {
