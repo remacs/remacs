@@ -41,6 +41,10 @@ impl LispObject {
         *self.to_float_unchecked().as_data()
     }
 
+    pub fn force_float(self) -> EmacsDouble {
+        unsafe { self.get_float_data_unchecked() }
+    }
+
     pub fn as_float(self) -> Option<EmacsDouble> {
         if self.is_float() {
             Some(unsafe { self.get_float_data_unchecked() })

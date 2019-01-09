@@ -195,6 +195,12 @@ impl fmt::Display for LispStringRef {
     }
 }
 
+impl fmt::Debug for LispStringRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
 pub struct LispStringRefIterator<'a> {
     string_ref: &'a LispStringRef,
     cur: usize,
@@ -264,7 +270,7 @@ impl From<LispObject> for LispStringRef {
 impl From<LispObject> for Option<LispStringRef> {
     fn from(o: LispObject) -> Self {
         if o.is_string() {
-            Some(unsafe { o.as_string_unchecked() })
+            Some(o.force_string())
         } else {
             None
         }
@@ -282,6 +288,10 @@ impl LispObject {
         self.get_type() == Lisp_Type::Lisp_String
     }
 
+    pub fn force_string(self) -> LispStringRef {
+        unsafe { self.to_string_unchecked() }
+    }
+
     pub fn as_string(self) -> Option<LispStringRef> {
         self.into()
     }
@@ -290,7 +300,7 @@ impl LispObject {
         self.into()
     }
 
-    pub unsafe fn as_string_unchecked(self) -> LispStringRef {
+    pub unsafe fn to_string_unchecked(self) -> LispStringRef {
         LispStringRef::new(self.get_untaggedptr() as *mut Lisp_String)
     }
 

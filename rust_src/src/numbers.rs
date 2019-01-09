@@ -54,6 +54,10 @@ impl LispObject {
             == Lisp_Type::Lisp_Int0 as u8
     }
 
+    pub fn force_fixnum(self) -> EmacsInt {
+        unsafe { self.to_fixnum_unchecked() }
+    }
+
     pub fn as_fixnum(self) -> Option<EmacsInt> {
         if self.is_fixnum() {
             Some(unsafe { self.to_fixnum_unchecked() })
