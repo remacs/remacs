@@ -8,7 +8,7 @@ use crate::{
     buffers::{point_byte, point_min_byte},
     editfns::{point, point_min},
     lisp::{defsubr, LispObject},
-    numbers::IsLispNatnum,
+    remacs_sys::EmacsUint,
     remacs_sys::{self, find_newline, position_indentation, scan_for_column, set_point, EmacsInt},
     remacs_sys::{del_range, last_known_column, Findent_to, Finsert_char, Qnil, Qt},
     remacs_sys::{last_known_column_modified, last_known_column_point, set_point_both},
@@ -74,12 +74,11 @@ pub fn current_column() -> EmacsInt {
 ///
 /// The return value is the current column.
 #[lisp_fn(min = "1", intspec = "NMove to column")]
-pub fn move_to_column(column: EmacsInt, force: LispObject) -> EmacsInt {
-    column.check_natnum();
+pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
     let buffer = &mut ThreadState::current_buffer_unchecked();
     let goal = column;
 
-    let mut col = goal;
+    let mut col = goal as i64;
     let mut pos = buffer.zv as isize;
     let mut prev_col = 0;
 
@@ -88,7 +87,8 @@ pub fn move_to_column(column: EmacsInt, force: LispObject) -> EmacsInt {
         set_point(pos);
     }
 
-    let prev_col = prev_col as i64;
+    let mut col = col as u64;
+    let prev_col = prev_col as u64;
 
     // If a tab char made us overshoot, change it to spaces and scan through it again
     if !force.is_nil() && col > goal {
