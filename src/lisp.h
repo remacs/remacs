@@ -4507,6 +4507,10 @@ extern _Noreturn void fatal (const char *msgid, ...)
   ATTRIBUTE_FORMAT_PRINTF (1, 2);
 
 /* Defined in terminal.c.  */
+extern struct terminal *
+decode_terminal (Lisp_Object terminal);
+extern struct terminal *
+decode_live_terminal (Lisp_Object terminal);
 extern void syms_of_terminal (void);
 
 /* Defined in font.c.  */

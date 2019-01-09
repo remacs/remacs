@@ -110,36 +110,6 @@ raw_cursor_to (struct frame *f, int row, int col)
     (*FRAME_TERMINAL (f)->raw_cursor_to_hook) (f, row, col);
 }
 
-/* Return the terminal object specified by TERMINAL.  TERMINAL may
-   be a terminal object, a frame, or nil for the terminal device of
-   the current frame.  If TERMINAL is neither from the above or the
-   resulting terminal object is deleted, return NULL.  */
-
-static struct terminal *
-decode_terminal (Lisp_Object terminal)
-{
-  struct terminal *t;
-
-  if (NILP (terminal))
-    terminal = selected_frame;
-  t = (TERMINALP (terminal)
-       ? XTERMINAL (terminal)
-       : FRAMEP (terminal) ? FRAME_TERMINAL (XFRAME (terminal)) : NULL);
-  return t && t->name ? t : NULL;
-}
-
-/* Like above, but throw an error if TERMINAL is not valid or deleted.  */
-
-struct terminal *
-decode_live_terminal (Lisp_Object terminal)
-{
-  struct terminal *t = decode_terminal (terminal);
-
-  if (!t)
-    wrong_type_argument (Qterminal_live_p, terminal);
-  return t;
-}
-
 /* Like decode_terminal, but ensure that the resulting terminal object refers
    to a text-based terminal device.  */
 
@@ -373,21 +343,6 @@ DEFUN ("terminal-list", Fterminal_list, Sterminal_list, 0, 0, 0,
 
   return terminals;
 }
-
-DEFUN ("terminal-name", Fterminal_name, Sterminal_name, 0, 1, 0,
-       doc: /* Return the name of the terminal device TERMINAL.
-It is not guaranteed that the returned value is unique among opened devices.
-
-TERMINAL may be a terminal object, a frame, or nil (meaning the
-selected frame's terminal). */)
-  (Lisp_Object terminal)
-{
-  struct terminal *t = decode_live_terminal (terminal);
-
-  return t->name ? build_string (t->name) : Qnil;
-}
-
-
 
 /* Set the value of terminal parameter PARAMETER in terminal D to VALUE.
    Return the previous value.  */
@@ -408,7 +363,6 @@ store_terminal_param (struct terminal *t, Lisp_Object parameter, Lisp_Object val
       return result;
     }
 }
-
 
 DEFUN ("terminal-parameters", Fterminal_parameters, Sterminal_parameters, 0, 1, 0,
        doc: /* Return the parameter-alist of terminal TERMINAL.
@@ -572,7 +526,6 @@ or some time later.  */);
   defsubr (&Sframe_terminal);
   defsubr (&Sterminal_live_p);
   defsubr (&Sterminal_list);
-  defsubr (&Sterminal_name);
   defsubr (&Sterminal_parameters);
   defsubr (&Sterminal_parameter);
   defsubr (&Sset_terminal_parameter);
