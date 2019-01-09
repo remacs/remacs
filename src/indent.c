@@ -41,7 +41,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    Some things in set last_known_column_point to -1
    to mark the memorized value as invalid.  */
 
-static ptrdiff_t last_known_column;
+ptrdiff_t last_known_column;
 
 /* Value of point when current_column was called.  */
 
@@ -49,7 +49,7 @@ ptrdiff_t last_known_column_point;
 
 /* Value of MODIFF when current_column was called.  */
 
-static EMACS_INT last_known_column_modified;
+EMACS_INT last_known_column_modified;
 
 static ptrdiff_t current_column_1 (void);
 
@@ -499,7 +499,7 @@ check_display_width (ptrdiff_t pos, ptrdiff_t col, ptrdiff_t *endpos)
    Return the resulting buffer position and column in ENDPOS and GOALCOL.
    PREVCOL gets set to the column of the previous position (it's always
    strictly smaller than the goal column).  */
-static void
+void
 scan_for_column (ptrdiff_t *endpos, EMACS_INT *goalcol, ptrdiff_t *prevcol)
 {
   int tab_width = SANE_TAB_WIDTH (current_buffer);
@@ -925,82 +925,6 @@ indented_beyond_p (ptrdiff_t pos, ptrdiff_t pos_byte, EMACS_INT column)
 			  -1, NULL, &pos_byte, 0);
     }
   return position_indentation (pos_byte) >= column;
-}
-
-DEFUN ("move-to-column", Fmove_to_column, Smove_to_column, 1, 2,
-       "NMove to column: ",
-       doc: /* Move point to column COLUMN in the current line.
-Interactively, COLUMN is the value of prefix numeric argument.
-The column of a character is calculated by adding together the widths
-as displayed of the previous characters in the line.
-This function ignores line-continuation;
-there is no upper limit on the column number a character can have
-and horizontal scrolling has no effect.
-
-If specified column is within a character, point goes after that character.
-If it's past end of line, point goes to end of line.
-
-Optional second argument FORCE non-nil means if COLUMN is in the
-middle of a tab character, change it to spaces.
-In addition, if FORCE is t, and the line is too short to reach
-COLUMN, add spaces/tabs to get there.
-
-The return value is the current column.  */)
-  (Lisp_Object column, Lisp_Object force)
-{
-  ptrdiff_t pos, prev_col;
-  EMACS_INT col;
-  EMACS_INT goal;
-
-  CHECK_NATNUM (column);
-  goal = XINT (column);
-
-  col = goal;
-  pos = ZV;
-  scan_for_column (&pos, &col, &prev_col);
-
-  SET_PT (pos);
-
-  /* If a tab char made us overshoot, change it to spaces
-     and scan through it again.  */
-  if (!NILP (force) && col > goal)
-    {
-      int c;
-      ptrdiff_t pos_byte = PT_BYTE;
-
-      DEC_POS (pos_byte);
-      c = FETCH_CHAR (pos_byte);
-      if (c == '\t' && prev_col < goal)
-	{
-	  ptrdiff_t goal_pt, goal_pt_byte;
-
-	  /* Insert spaces in front of the tab to reach GOAL.  Do this
-	     first so that a marker at the end of the tab gets
-	     adjusted.  */
-	  SET_PT_BOTH (PT - 1, PT_BYTE - 1);
-	  Finsert_char (make_number (' '), make_number (goal - prev_col), Qt);
-
-	  /* Now delete the tab, and indent to COL.  */
-	  del_range (PT, PT + 1);
-	  goal_pt = PT;
-	  goal_pt_byte = PT_BYTE;
-	  Findent_to (make_number (col), Qnil);
-	  SET_PT_BOTH (goal_pt, goal_pt_byte);
-
-	  /* Set the last_known... vars consistently.  */
-	  col = goal;
-	}
-    }
-
-  /* If line ends prematurely, add space to the end.  */
-  if (col < goal && EQ (force, Qt))
-    Findent_to (make_number (col = goal), Qnil);
-
-  last_known_column = col;
-  last_known_column_point = PT;
-  last_known_column_modified = MODIFF;
-
-  return make_number (col);
 }
 
 /* compute_motion: compute buffer posn given screen posn and vice versa */
@@ -2338,7 +2262,6 @@ syms_of_indent (void)
   DEFSYM (Qcolumns, "columns");
 
   defsubr (&Sindent_to);
-  defsubr (&Smove_to_column);
   defsubr (&Sline_number_display_width);
   defsubr (&Svertical_motion);
   defsubr (&Scompute_motion);
