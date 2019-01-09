@@ -1403,7 +1403,6 @@ The default is a name found in the buffer around point."
     map)
   "Keymap used in Pascal Outline mode.")
 
-(define-obsolete-function-alias 'pascal-outline 'pascal-outline-mode "22.1")
 (define-minor-mode pascal-outline-mode
   "Outline-line minor mode for Pascal mode.
 With a prefix argument ARG, enable the mode if ARG is positive,
@@ -1425,7 +1424,7 @@ Pascal Outline mode provides some additional commands.
 \\[pascal-show-all]\t- Show the whole buffer.
 \\[pascal-hide-other-defuns]\
 \t- Hide everything but the current function (function under the cursor).
-\\[pascal-outline]\t- Leave Pascal Outline mode."
+\\[pascal-outline-mode]\t- Leave Pascal Outline mode."
   :init-value nil :lighter " Outl" :keymap pascal-outline-map
   (add-to-invisibility-spec '(pascal . t))
   (unless pascal-outline-mode
