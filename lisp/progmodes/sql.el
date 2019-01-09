@@ -4406,8 +4406,7 @@ The default comes from `process-coding-system-alist' and
                            (or coding 'utf-8))
                     (when (string-match (format "\\.%s\\'" (car cs)) nlslang)
                       (setq coding (cdr cs)))))
-    (set-process-coding-system (get-buffer-process (current-buffer))
-                               coding coding)))
+    (set-buffer-process-coding-system coding coding)))
 
 (defun sql-oracle-save-settings (sqlbuf)
   "Save most SQL*Plus settings so they may be reset by \\[sql-redirect]."

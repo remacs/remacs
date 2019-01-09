@@ -4,6 +4,7 @@
 @c See file emacs.texi for copying conditions.
 @node Help
 @chapter Help
+@kindex Help
 @cindex help
 @cindex self-documentation
 @findex help-command

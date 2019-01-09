@@ -156,7 +156,11 @@ impl LispSymbolRef {
 
 impl From<LispObject> for LispSymbolRef {
     fn from(o: LispObject) -> Self {
-        o.as_symbol_or_error()
+        if let Some(sym) = o.as_symbol() {
+            sym
+        } else {
+            wrong_type!(Qsymbolp, o)
+        }
     }
 }
 
@@ -168,7 +172,11 @@ impl From<LispSymbolRef> for LispObject {
 
 impl From<LispObject> for Option<LispSymbolRef> {
     fn from(o: LispObject) -> Self {
-        o.as_symbol()
+        if o.is_symbol() {
+            Some(LispSymbolRef::new(o.symbol_ptr_value() as *mut Lisp_Symbol))
+        } else {
+            None
+        }
     }
 }
 
@@ -183,21 +191,11 @@ impl LispObject {
     }
 
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
-        if self.is_symbol() {
-            Some(LispSymbolRef::new(
-                self.symbol_ptr_value() as *mut Lisp_Symbol
-            ))
-        } else {
-            None
-        }
+        self.into()
     }
 
     pub fn as_symbol_or_error(self) -> LispSymbolRef {
-        if let Some(sym) = self.as_symbol() {
-            sym
-        } else {
-            wrong_type!(Qsymbolp, self)
-        }
+        self.into()
     }
 
     pub fn symbol_or_string_as_string(self) -> LispStringRef {

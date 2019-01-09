@@ -98,24 +98,24 @@ pub extern "C" fn check_syntax_table(obj: LispObject) {
 /// Construct a new syntax table and return it.
 /// It is a copy of the TABLE, which defaults to the standard syntax table.
 #[lisp_fn(min = "0")]
-pub fn copy_syntax_table(mut table: LispObject) -> LispObject {
+pub fn copy_syntax_table(mut table: LispObject) -> LispCharTableRef {
     let buffer_table = unsafe { buffer_defaults.syntax_table_ };
     if table.is_not_nil() {
         check_syntax_table(table);
     } else {
         table = buffer_table;
     }
-    let copy = unsafe { Fcopy_sequence(table) };
+    let copy: LispCharTableRef = unsafe { Fcopy_sequence(table) }.into();
 
     // Only the standard syntax table should have a default element.
     // Other syntax tables should inherit from parents instead.
-    unsafe { set_char_table_defalt(copy, Qnil) };
+    unsafe { set_char_table_defalt(copy.into(), Qnil) };
 
     // Copied syntax tables should all have parents.
     // If we copied one with no parent, such as the standard syntax table,
     // use the standard syntax table as the copy's parent.
-    if copy.as_char_table_or_error().parent.is_nil() {
-        unsafe { Fset_char_table_parent(copy, buffer_table) };
+    if copy.parent.is_nil() {
+        unsafe { Fset_char_table_parent(copy.into(), buffer_table) };
     }
     copy
 }

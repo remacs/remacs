@@ -390,6 +390,13 @@ Affects: `cperl-font-lock', `cperl-electric-lbrace-space',
   :type '(repeat string)
      :group 'cperl)
 
+;; This became obsolete...
+(defvar cperl-vc-header-alist nil)
+(make-obsolete-variable
+ 'cperl-vc-header-alist
+ "use cperl-vc-rcs-header or cperl-vc-sccs-header instead."
+ "22.1")
+
 ;; (defcustom cperl-clobber-mode-lists
 ;;   (not
 ;;    (and
@@ -1720,8 +1727,9 @@ or as help on variables `cperl-tips', `cperl-problems',
   (when (featurep 'xemacs)
     ;; This one is obsolete...
     (set (make-local-variable 'vc-header-alist)
-	 `((SCCS ,(car cperl-vc-sccs-header))
-	   (RCS ,(car cperl-vc-rcs-header)))))
+         (or cperl-vc-header-alist      ; Avoid warning
+	     `((SCCS ,(car cperl-vc-sccs-header))
+	       (RCS ,(car cperl-vc-rcs-header))))))
   (cond ((boundp 'compilation-error-regexp-alist-alist);; xemacs 20.x
 	 (set (make-local-variable 'compilation-error-regexp-alist-alist)
 	      (cons (cons 'cperl (car cperl-compilation-error-regexp-alist))

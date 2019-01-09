@@ -475,7 +475,6 @@ Menu items are appended to the common grammar menu.")
 	 ;; This is with-demoted-errors.
 	 (condition-case err
 	     (with-current-buffer (find-file-noselect infile)
-	       (setq infile buffer-file-name)
 	       (if outdir (setq default-directory outdir))
 	       (semantic-grammar-create-package nil t))
 	   (error (message "%s" (error-message-string err)) nil)))
@@ -510,12 +509,8 @@ Menu items are appended to the common grammar menu.")
 
 ;;; Commentary:
 ;;
-;; This file was generated from "
-		(if (string-match "\\(admin/grammars/.*\\.by\\)\\'" infile)
-		    (match-string 1 infile)
-		  (concat "admin/grammars/"
-			  (if (string-equal lang "scm") "scheme" lang) ".by"))
-".
+;; This file was generated from admin/grammars/"
+		lang ".by.
 
 ;;; Code:
 ")

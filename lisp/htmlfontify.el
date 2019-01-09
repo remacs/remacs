@@ -584,23 +584,22 @@ therefore no longer care about) will be invalid at any time.\n
       (if (memq elt set-b) (setq interq (cons elt interq))))
     interq))
 
-(defun hfy-color-vals (color)
-  "Where COLOR is a color name or #XXXXXX style triplet, return a
+(defun hfy-colour-vals (colour)
+  "Where COLOUR is a color name or #XXXXXX style triplet, return a
 list of three (16 bit) rgb values for said color.\n
-If a window system is unavailable, calls `hfy-fallback-color-values'."
-  (if (string-match hfy-triplet-regex color)
+If a window system is unavailable, calls `hfy-fallback-colour-values'."
+  (if (string-match hfy-triplet-regex colour)
       (mapcar
-       (lambda (x) (* (string-to-number (match-string x color) 16) 257))
+       (lambda (x) (* (string-to-number (match-string x colour) 16) 257))
        '(1 2 3))
-    ;;(message ">> %s" color)
+    ;;(message ">> %s" colour)
     (if window-system
         (if (fboundp 'color-values)
-            (color-values color)
+            (color-values colour)
           ;;(message "[%S]" window-system)
-          (x-color-values color))
+          (x-color-values colour))
       ;; blarg - tty colors are no good - go fetch some X colors:
-      (hfy-fallback-color-values color))))
-(define-obsolete-function-alias 'hfy-colour-vals 'hfy-color-vals "27.1")
+      (hfy-fallback-colour-values colour))))
 
 (defvar hfy-cperl-mode-kludged-p nil)
 
@@ -739,7 +738,7 @@ FILE is the name of the file being rendered, in case it is needed."
   "Replace the end of a CSS style declaration STYLE-STRING with the contents
 of the variable `hfy-src-doc-link-style', removing text matching the regex
 `hfy-src-doc-link-unstyle' first, if necessary."
-  ;;(message "hfy-color-vals");;DBUG
+  ;;(message "hfy-colour-vals");;DBUG
   (if (string-match hfy-src-doc-link-unstyle style-string)
       (setq style-string (replace-match "" 'fixed-case 'literal style-string)))
   (if (and (not (string-match hfy-src-doc-link-style style-string))
@@ -752,19 +751,19 @@ of the variable `hfy-src-doc-link-style', removing text matching the regex
 
 ;; utility functions - cast emacs style specification values into their
 ;; css2 equivalents:
-(defun hfy-triplet (color)
-  "Takes a COLOR name (string) and return a CSS rgb(R, G, B) triplet string.
+(defun hfy-triplet (colour)
+  "Takes a COLOUR name (string) and return a CSS rgb(R, G, B) triplet string.
 Uses the definition of \"white\" to map the numbers to the 0-255 range, so
 if you've redefined white, (esp. if you've redefined it to have a triplet
 member lower than that of the color you are processing) strange things
 may happen."
-  ;;(message "hfy-color-vals");;DBUG
+  ;;(message "hfy-colour-vals");;DBUG
   ;; TODO?  Can we do somehow do better than this?
   (cond
-   ((equal color "unspecified-fg") (setq color "black"))
-   ((equal color "unspecified-bg") (setq color "white")))
-  (let ((white (mapcar (lambda (I) (float (1+ I))) (hfy-color-vals "white")))
-        (rgb16 (mapcar (lambda (I) (float (1+ I))) (hfy-color-vals  color))))
+   ((equal colour "unspecified-fg") (setq colour "black"))
+   ((equal colour "unspecified-bg") (setq colour "white")))
+  (let ((white (mapcar (lambda (I) (float (1+ I))) (hfy-colour-vals "white")))
+        (rgb16 (mapcar (lambda (I) (float (1+ I))) (hfy-colour-vals  colour))))
     (if rgb16
         ;;(apply 'format "rgb(%d, %d, %d)"
         ;; Use #rrggbb instead, it is smaller
@@ -775,9 +774,8 @@ may happen."
                        '(0 1 2))))))
 
 (defun hfy-family (family) (list (cons "font-family"  family)))
-(defun hfy-bgcol  (color) (list (cons "background"   (hfy-triplet color))))
-(defun hfy-color (color) (list (cons "color"        (hfy-triplet color))))
-(define-obsolete-function-alias 'hfy-colour 'hfy-color "27.1")
+(defun hfy-bgcol  (colour) (list (cons "background"   (hfy-triplet colour))))
+(defun hfy-colour (colour) (list (cons "color"        (hfy-triplet colour))))
 (defun hfy-width  (width)  (list (cons "font-stretch" (symbol-name  width))))
 
 (defcustom hfy-font-zoom 1.05
@@ -827,17 +825,17 @@ regular specifiers."
       (let ((tag (car  spec))
             (val (cadr spec)))
         (cons (cl-case tag
-                (:color (cons "color" val))
+                (:color (cons "colour" val))
                 (:width (cons "width"  val))
                 (:style (cons "style"  val)))
               (hfy-box-to-border-assoc (cddr spec))))))
 
 (defun hfy-box-to-style (spec)
   (let* ((css (hfy-box-to-border-assoc  spec))
-         (col (cdr      (assoc "color" css)))
+         (col (cdr      (assoc "colour" css)))
          (s   (cdr      (assoc "style"  css))))
     (list
-     (if col (cons "border-color" (cdr (assoc "color" css))))
+     (if col (cons "border-color" (cdr (assoc "colour" css))))
      (cons "border-width" (format "%dpx" (or (cdr (assoc "width" css)) 1)))
      (cons "border-style" (cl-case s
                             (released-button "outset")
@@ -1016,7 +1014,7 @@ merged by the user - `hfy-flatten-style' should do this."
                        (:width          (hfy-width     val))
                        (:weight         (hfy-weight    val))
                        (:slant          (hfy-slant     val))
-                       (:foreground     (hfy-color     val))
+                       (:foreground     (hfy-colour    val))
                        (:background     (hfy-bgcol     val))
                        (:box            (hfy-box       val))
                        (:height         (hfy-size      val))
@@ -1830,11 +1828,10 @@ fontified.  This is a simple convenience wrapper around
    (noninteractive
     (message "hfy batch mode (%s:%S)"
              (or (buffer-file-name) (buffer-name)) major-mode)
-    (if (fboundp 'font-lock-ensure)     ; Emacs >= 25.1
+    (if (fboundp 'font-lock-ensure)
         (font-lock-ensure)
       (when font-lock-defaults
-        ; Silence "interactive use only" warning on Emacs >= 25.1.
-        (with-no-warnings (font-lock-fontify-buffer)))))
+        (font-lock-fontify-buffer))))
    ((fboundp #'jit-lock-fontify-now)
     (message "hfy jit-lock mode (%S %S)" window-system major-mode)
     (jit-lock-fontify-now))

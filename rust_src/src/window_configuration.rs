@@ -103,7 +103,8 @@ impl SavedWindowRef {
 
 impl From<LispObject> for SaveWindowDataRef {
     fn from(o: LispObject) -> Self {
-        o.as_window_configuration_or_error()
+        o.as_window_configuration()
+            .unwrap_or_else(|| wrong_type!(Qwindow_configuration_p, o))
     }
 }
 
@@ -111,11 +112,6 @@ impl LispObject {
     pub fn as_window_configuration(self) -> Option<SaveWindowDataRef> {
         self.as_vectorlike()
             .and_then(|v| v.as_window_configuration())
-    }
-
-    pub fn as_window_configuration_or_error(self) -> SaveWindowDataRef {
-        self.as_window_configuration()
-            .unwrap_or_else(|| wrong_type!(Qwindow_configuration_p, self))
     }
 }
 
@@ -150,8 +146,8 @@ pub extern "C" fn compare_window_configurations(
     ignore_positions: bool,
 ) -> bool {
     compare_window_configurations_rust(
-        configuration1.as_window_configuration_or_error(),
-        configuration2.as_window_configuration_or_error(),
+        configuration1.into(),
+        configuration2.into(),
         ignore_positions,
     )
 }

@@ -194,7 +194,7 @@ When completing for #+STARTUP, for example, this function returns
   "Complete arguments for the #+LANGUAGE file option."
   (require 'ox)
   (pcomplete-here
-   (pcomplete-uniquify-list
+   (pcomplete-uniqify-list
     (list org-export-default-language "en"))))
 
 (defvar org-default-priority)
@@ -219,7 +219,7 @@ When completing for #+STARTUP, for example, this function returns
 (defun pcomplete/org-mode/file-option/startup ()
   "Complete arguments for the #+STARTUP file option."
   (while (pcomplete-here
-	  (let ((opts (pcomplete-uniquify-list
+	  (let ((opts (pcomplete-uniqify-list
 		       (mapcar 'car org-startup-options))))
 	    ;; Some options are mutually exclusive, and shouldn't be completed
 	    ;; against if certain other options have already been seen.
@@ -248,7 +248,7 @@ When completing for #+STARTUP, for example, this function returns
 (defun pcomplete/org-mode/file-option/options ()
   "Complete arguments for the #+OPTIONS file option."
   (while (pcomplete-here
-	  (pcomplete-uniquify-list
+	  (pcomplete-uniqify-list
 	   (append
 	    ;; Hard-coded OPTION items always available.
 	    '("H:" "\\n:" "num:" "timestamp:" "arch:" "author:" "c:"
@@ -267,7 +267,7 @@ When completing for #+STARTUP, for example, this function returns
 (defun pcomplete/org-mode/file-option/infojs_opt ()
   "Complete arguments for the #+INFOJS_OPT file option."
   (while (pcomplete-here
-	  (pcomplete-uniquify-list
+	  (pcomplete-uniqify-list
 	   (mapcar (lambda (item) (format "%s:" (car item)))
 		   (bound-and-true-p org-html-infojs-opts-table))))))
 
@@ -283,7 +283,7 @@ When completing for #+STARTUP, for example, this function returns
 (defun pcomplete/org-mode/link ()
   "Complete against defined #+LINK patterns."
   (pcomplete-here
-   (pcomplete-uniquify-list
+   (pcomplete-uniqify-list
     (copy-sequence
      (append (mapcar 'car org-link-abbrev-alist-local)
 	     (mapcar 'car org-link-abbrev-alist))))))
@@ -293,13 +293,13 @@ When completing for #+STARTUP, for example, this function returns
   "Complete against TeX-style HTML entity names."
   (require 'org-entities)
   (while (pcomplete-here
-	  (pcomplete-uniquify-list (remove nil (mapcar 'car-safe org-entities)))
+	  (pcomplete-uniqify-list (remove nil (mapcar 'car-safe org-entities)))
 	  (substring pcomplete-stub 1))))
 
 (defvar org-todo-keywords-1)
 (defun pcomplete/org-mode/todo ()
   "Complete against known TODO keywords."
-  (pcomplete-here (pcomplete-uniquify-list (copy-sequence org-todo-keywords-1))))
+  (pcomplete-here (pcomplete-uniqify-list (copy-sequence org-todo-keywords-1))))
 
 (defvar org-todo-line-regexp)
 (defun pcomplete/org-mode/searchhead ()
@@ -315,14 +315,14 @@ This needs more work, to handle headings with lots of spaces in them."
 	       (push (org-make-org-heading-search-string
 		      (match-string-no-properties 3))
 		     tbl)))
-	   (pcomplete-uniquify-list tbl)))
+	   (pcomplete-uniqify-list tbl)))
        (substring pcomplete-stub 1))))
 
 (defun pcomplete/org-mode/tag ()
   "Complete a tag name.  Omit tags already set."
   (while (pcomplete-here
 	  (mapcar (lambda (x) (concat x ":"))
-		  (let ((lst (pcomplete-uniquify-list
+		  (let ((lst (pcomplete-uniqify-list
 			      (or (remq
 				   nil
 				   (mapcar (lambda (x) (org-string-nw-p (car x)))
@@ -339,7 +339,7 @@ This needs more work, to handle headings with lots of spaces in them."
   (pcomplete-here
    (mapcar (lambda (x)
 	     (concat x ": "))
-	   (let ((lst (pcomplete-uniquify-list
+	   (let ((lst (pcomplete-uniqify-list
 		       (copy-sequence
 			(org-buffer-property-keys nil t t t)))))
 	     (dolist (prop (org-entry-properties))

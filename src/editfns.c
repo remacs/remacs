@@ -118,10 +118,14 @@ emacs_mktime_z (timezone_t tz, struct tm *tm)
   return t;
 }
 
-static _Noreturn void
-invalid_time_zone_specification (Lisp_Object zone)
+/* Allocate a timezone, signaling on failure.  */
+static timezone_t
+xtzalloc (char const *name)
 {
-  xsignal2 (Qerror, build_string ("Invalid time zone specification"), zone);
+  timezone_t tz = tzalloc (name);
+  if (!tz)
+    memory_full (SIZE_MAX);
+  return tz;
 }
 
 /* Free a timezone, except do not free the time zone for local time.
@@ -202,27 +206,9 @@ tzlookup (Lisp_Object zone, bool settz)
 	    }
 	}
       else
-	invalid_time_zone_specification (zone);
-
-      new_tz = tzalloc (zone_string);
-
-#if defined __NetBSD_Version__ && __NetBSD_Version__ < 700000000
-      /* NetBSD 6 tzalloc mishandles POSIX TZ strings (Bug#30738).
-	 If possible, fall back on tzdb.  */
-      if (!new_tz && errno != ENOMEM && plain_integer
-	  && XINT (zone) % (60 * 60) == 0)
-	{
-	  sprintf (tzbuf, "Etc/GMT%+"pI"d", - (XINT (zone) / (60 * 60)));
-	  new_tz = tzalloc (zone_string);
-	}
-#endif
-
-      if (!new_tz)
-	{
-	  if (errno == ENOMEM)
-	    memory_full (SIZE_MAX);
-	  invalid_time_zone_specification (zone);
-	}
+	xsignal2 (Qerror, build_string ("Invalid time zone specification"),
+		  zone);
+      new_tz = xtzalloc (zone_string);
     }
 
   if (settz)
@@ -2881,30 +2867,32 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		 and with pM inserted for integer formats.
 		 At most two flags F can be specified at once.  */
 	      char convspec[sizeof "%FF.*d" + max (INT_AS_LDBL, pMlen)];
-	      char *f = convspec;
-	      *f++ = '%';
-	      /* MINUS_FLAG and ZERO_FLAG are dealt with later.  */
-	      *f = '+'; f +=  plus_flag;
-	      *f = ' '; f += space_flag;
-	      *f = '#'; f += sharp_flag;
-	      *f++ = '.';
-	      *f++ = '*';
-	      if (float_conversion)
-		{
-		  if (INT_AS_LDBL)
-		    {
-		      *f = 'L';
-		      f += INTEGERP (arg);
-		    }
-		}
-	      else if (conversion != 'c')
-		{
-		  memcpy (f, pMd, pMlen);
-		  f += pMlen;
-		  zero_flag &= ! precision_given;
-		}
-	      *f++ = conversion;
-	      *f = '\0';
+	      {
+		char *f = convspec;
+		*f++ = '%';
+		/* MINUS_FLAG and ZERO_FLAG are dealt with later.  */
+		*f = '+'; f +=  plus_flag;
+		*f = ' '; f += space_flag;
+		*f = '#'; f += sharp_flag;
+                *f++ = '.';
+                *f++ = '*';
+		if (float_conversion)
+		  {
+		    if (INT_AS_LDBL)
+		      {
+			*f = 'L';
+			f += INTEGERP (arg);
+		      }
+		  }
+		else if (conversion != 'c')
+		  {
+		    memcpy (f, pMd, pMlen);
+		    f += pMlen;
+		    zero_flag &= ! precision_given;
+		  }
+		*f++ = conversion;
+		*f = '\0';
+	      }
 
 	      int prec = -1;
 	      if (precision_given)
@@ -2946,20 +2934,29 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 	      else if (conversion == 'd' || conversion == 'i')
 		{
+		  /* For float, maybe we should use "%1.0f"
+		     instead so it also works for values outside
+		     the integer range.  */
+		  printmax_t x;
 		  if (INTEGERP (arg))
-		    {
-		      printmax_t x = XINT (arg);
-		      sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
-		    }
+		    x = XINT (arg);
 		  else
 		    {
-		      strcpy (f - pMlen - 1, "f");
-		      double x = XFLOAT_DATA (arg);
-		      sprintf_bytes = sprintf (sprintf_buf, convspec, 0, x);
-		      char c0 = sprintf_buf[0];
-		      bool signedp = ! ('0' <= c0 && c0 <= '9');
-		      prec = min (precision, sprintf_bytes - signedp);
+		      double d = XFLOAT_DATA (arg);
+		      if (d < 0)
+			{
+			  x = TYPE_MINIMUM (printmax_t);
+			  if (x < d)
+			    x = d;
+			}
+		      else
+			{
+			  x = TYPE_MAXIMUM (printmax_t);
+			  if (d < x)
+			    x = d;
+			}
 		    }
+		  sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
 		}
 	      else
 		{
@@ -2970,19 +2967,22 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  else
 		    {
 		      double d = XFLOAT_DATA (arg);
-		      double uprintmax = TYPE_MAXIMUM (uprintmax_t);
-		      if (! (0 <= d && d < uprintmax + 1))
-			xsignal1 (Qoverflow_error, arg);
-		      x = d;
+		      if (d < 0)
+			x = 0;
+		      else
+			{
+			  x = TYPE_MAXIMUM (uprintmax_t);
+			  if (d < x)
+			    x = d;
+			}
 		    }
 		  sprintf_bytes = sprintf (sprintf_buf, convspec, prec, x);
 		}
 
 	      /* Now the length of the formatted item is known, except it omits
 		 padding and excess precision.  Deal with excess precision
-		 first.  This happens when the format specifies ridiculously
-		 large precision, or when %d or %i formats a float that would
-		 ordinarily need fewer digits than a specified precision.  */
+		 first.  This happens only when the format specifies
+		 ridiculously large precision.  */
 	      ptrdiff_t excess_precision
 		= precision_given ? precision - prec : 0;
 	      ptrdiff_t leading_zeros = 0, trailing_zeros = 0;
@@ -3379,16 +3379,7 @@ transpose_markers (ptrdiff_t start1, ptrdiff_t end1,
     }
 }
 
-DEFUN ("transpose-regions", Ftranspose_regions, Stranspose_regions, 4, 5,
-       "(if (< (length mark-ring) 2)\
-	    (error \"Other region must be marked before transposing two regions\")\
-	  (let* ((num (if current-prefix-arg\
-			 (prefix-numeric-value current-prefix-arg)\
-			0))\
-		 (ring-length (length mark-ring))\
-		 (eltnum (mod num ring-length))\
-		 (eltnum2 (mod (1+ num) ring-length)))\
-	    (list (point) (mark) (elt mark-ring eltnum) (elt mark-ring eltnum2))))",
+DEFUN ("transpose-regions", Ftranspose_regions, Stranspose_regions, 4, 5, 0,
        doc: /* Transpose region STARTR1 to ENDR1 with STARTR2 to ENDR2.
 The regions should not be overlapping, because the size of the buffer is
 never changed in a transposition.
@@ -3396,14 +3387,7 @@ never changed in a transposition.
 Optional fifth arg LEAVE-MARKERS, if non-nil, means don't update
 any markers that happen to be located in the regions.
 
-Transposing beyond buffer boundaries is an error.
-
-Interactively, STARTR1 and ENDR1 are point and mark; STARTR2 and ENDR2
-are the last two marks pushed to the mark ring; LEAVE-MARKERS is nil.
-If a prefix argument N is given, STARTR2 and ENDR2 are the two
-successive marks N entries back in the mark ring.  A negative prefix
-argument instead counts forward from the oldest mark in the mark
-ring.  */)
+Transposing beyond buffer boundaries is an error.  */)
   (Lisp_Object startr1, Lisp_Object endr1, Lisp_Object startr2, Lisp_Object endr2, Lisp_Object leave_markers)
 {
   register ptrdiff_t start1, end1, start2, end2;

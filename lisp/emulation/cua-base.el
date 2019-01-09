@@ -852,6 +852,8 @@ With numeric prefix arg, copy to register 0-9 instead."
   (if (fboundp 'cua--cancel-rectangle)
       (cua--cancel-rectangle)))
 
+(declare-function x-clipboard-yank "../term/x-win" ())
+
 (put 'cua-paste 'delete-selection 'yank)
 (defun cua-paste (arg)
   "Paste last cut or copied region or rectangle.
@@ -882,8 +884,10 @@ If global mark is active, copy from register or one character."
 	 ((consp regtxt) (cua--insert-rectangle regtxt))
 	 ((stringp regtxt) (insert-for-yank regtxt))
 	 (t (message "Unknown data in register %c" cua--register))))
-       ((memq this-original-command '(clipboard-yank x-clipboard-yank))
-        (funcall this-original-command))
+       ((eq this-original-command 'clipboard-yank)
+	(clipboard-yank))
+       ((eq this-original-command 'x-clipboard-yank)
+	(x-clipboard-yank))
        (t (yank arg)))))))
 
 

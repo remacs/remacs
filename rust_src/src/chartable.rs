@@ -27,27 +27,23 @@ impl LispObject {
     }
 
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
-        self.as_vectorlike().and_then(|v| v.as_char_table())
-    }
-
-    pub fn as_char_table_or_error(self) -> LispCharTableRef {
-        if let Some(chartable) = self.as_char_table() {
-            chartable
-        } else {
-            wrong_type!(Qchar_table_p, self)
-        }
+        self.into()
     }
 }
 
 impl From<LispObject> for LispCharTableRef {
     fn from(o: LispObject) -> Self {
-        o.as_char_table_or_error()
+        if let Some(chartable) = o.as_char_table() {
+            chartable
+        } else {
+            wrong_type!(Qchar_table_p, o)
+        }
     }
 }
 
 impl From<LispObject> for Option<LispCharTableRef> {
     fn from(o: LispObject) -> Self {
-        o.as_char_table()
+        o.as_vectorlike().and_then(|v| v.as_char_table())
     }
 }
 

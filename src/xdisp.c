@@ -8716,12 +8716,8 @@ move_it_in_display_line_to (struct it *it,
 
   if (it->hpos == 0)
     {
-      /* If line numbers are being displayed, produce a line number.
-	 But don't do that if we are to reach first_visible_x, because
-	 line numbers are not relevant to stuff that is not visible on
-	 display.  */
-      if (!((op && MOVE_TO_X) && to_x == it->first_visible_x)
-	  && should_produce_line_number (it))
+      /* If line numbers are being displayed, produce a line number.  */
+      if (should_produce_line_number (it))
 	{
 	  if (it->current_x == it->first_visible_x)
 	    maybe_produce_line_number (it);
@@ -9598,7 +9594,6 @@ move_it_to (struct it *it, ptrdiff_t to_charpos, int to_x, int to_y, int to_vpos
       it->current_x = line_start_x;
       line_start_x = 0;
       it->hpos = 0;
-      it->line_number_produced_p = false;
       it->current_y += it->max_ascent + it->max_descent;
       ++it->vpos;
       last_height = it->max_ascent + it->max_descent;
@@ -10137,48 +10132,17 @@ include the height of both, if present, in the return value.  */)
   itdata = bidi_shelve_cache ();
   SET_TEXT_POS (startp, start, CHAR_TO_BYTE (start));
   start_display (&it, w, startp);
-  /* It makes no sense to measure dimensions of region of text that
-     crosses the point where bidi reordering changes scan direction.
-     By using unidirectional movement here we at least support the use
-     case of measuring regions of text that have a uniformly R2L
-     directionality, and regions that begin and end in text of the
-     same directionality.  */
-  it.bidi_p = false;
 
-  int move_op = MOVE_TO_POS | MOVE_TO_Y;
-  int to_x = -1;
-  if (!NILP (x_limit))
+  if (NILP (x_limit))
+    x = move_it_to (&it, end, -1, max_y, -1, MOVE_TO_POS | MOVE_TO_Y);
+  else
     {
       it.last_visible_x = max_x;
       /* Actually, we never want move_it_to stop at to_x.  But to make
 	 sure that move_it_in_display_line_to always moves far enough,
-	 we set to_x to INT_MAX and specify MOVE_TO_X.  */
-      move_op |= MOVE_TO_X;
-      to_x = INT_MAX;
-    }
-
-  void *it2data = NULL;
-  struct it it2;
-  SAVE_IT (it2, it, it2data);
-
-  x = move_it_to (&it, end, to_x, max_y, -1, move_op);
-
-  /* We could have a display property at END, in which case asking
-     move_it_to to stop at END will overshoot and stop at position
-     after END.  So we try again, stopping before END, and account for
-     the width of the last buffer position manually.  */
-  if (IT_CHARPOS (it) > end)
-    {
-      end--;
-      RESTORE_IT (&it, &it2, it2data);
-      x = move_it_to (&it, end, to_x, max_y, -1, move_op);
-      /* Add the width of the thing at TO, but only if we didn't
-	 overshoot it; if we did, it is already accounted for.  */
-      if (IT_CHARPOS (it) == end)
-	x += it.pixel_width;
-    }
-  if (!NILP (x_limit))
-    {
+	 we set it to INT_MAX and specify MOVE_TO_X.  */
+      x = move_it_to (&it, end, INT_MAX, max_y, -1,
+		      MOVE_TO_POS | MOVE_TO_X | MOVE_TO_Y);
       /* Don't return more than X-LIMIT.  */
       if (x > max_x)
         x = max_x;
@@ -21209,8 +21173,6 @@ maybe_produce_line_number (struct it *it)
       it->max_phys_descent = max (it->max_phys_descent, tem_it.max_phys_descent);
     }
 
-  it->line_number_produced_p = true;
-
   bidi_unshelve_cache (itdata, false);
 }
 
@@ -21328,8 +21290,6 @@ display_line (struct it *it, int cursor_vpos)
   row->displays_text_p = true;
   row->starts_in_middle_of_char_p = it->starts_in_middle_of_char_p;
   it->starts_in_middle_of_char_p = false;
-  it->tab_offset = 0;
-  it->line_number_produced_p = false;
 
   /* Arrange the overlays nicely for our purposes.  Usually, we call
      display_line on only one line at a time, in which case this
@@ -21373,10 +21333,6 @@ display_line (struct it *it, int cursor_vpos)
 	  && (move_result == MOVE_NEWLINE_OR_CR
 	      || move_result == MOVE_POS_MATCH_OR_ZV))
 	it->current_x = it->first_visible_x;
-
-      /* In case move_it_in_display_line_to above "produced" the line
-	 number.  */
-      it->line_number_produced_p = false;
 
       /* Record the smallest positions seen while we moved over
 	 display elements that are not visible.  This is needed by
@@ -21597,10 +21553,6 @@ display_line (struct it *it, int cursor_vpos)
 	  row->extra_line_spacing = max (row->extra_line_spacing,
 					 it->max_extra_line_spacing);
 	  if (it->current_x - it->pixel_width < it->first_visible_x
-	      /* When line numbers are displayed, row->x should not be
-		 offset, as the first glyph after the line number can
-		 never be partially visible.  */
-	      && !line_number_needed
 	      /* In R2L rows, we arrange in extend_face_to_end_of_line
 		 to add a right offset to the line, by a suitable
 		 change to the stretch glyph that is the leftmost
@@ -21842,8 +21794,7 @@ display_line (struct it *it, int cursor_vpos)
 		  if (it->bidi_p)
 		    RECORD_MAX_MIN_POS (it);
 
-		  if (x < it->first_visible_x && !row->reversed_p
-		      && !line_number_needed)
+		  if (x < it->first_visible_x && !row->reversed_p)
 		    /* Glyph is partially visible, i.e. row starts at
 		       negative X position.  Don't do that in R2L
 		       rows, where we arrange to add a right offset to
@@ -21859,7 +21810,6 @@ display_line (struct it *it, int cursor_vpos)
 		     be taken care of in produce_special_glyphs.  */
 		  if (row->reversed_p
 		      && new_x > it->last_visible_x
-		      && !line_number_needed
 		      && !(it->line_wrap == TRUNCATE
 			   && WINDOW_LEFT_FRINGE_WIDTH (it->w) == 0))
 		    {
@@ -22489,11 +22439,6 @@ Value is the new character position of point.  */)
 		    new_pos += (row->reversed_p ? -dir : dir);
 		  else
 		    new_pos -= (row->reversed_p ? -dir : dir);
-		  new_pos = clip_to_bounds (BEGV, new_pos, ZV);
-		  /* If we didn't move, we've hit BEGV or ZV, so we
-		     need to signal a suitable error.  */
-		  if (new_pos == PT)
-		    break;
 		}
 	      else if (BUFFERP (g->object))
 		new_pos = g->charpos;
@@ -28325,14 +28270,8 @@ x_produce_glyphs (struct it *it)
 	      int x = it->current_x + it->continuation_lines_width;
 	      int x0 = x;
 	      /* Adjust for line numbers, if needed.   */
-	      if (!NILP (Vdisplay_line_numbers) && it->line_number_produced_p)
-		{
-		  x -= it->lnum_pixel_width;
-		  /* Restore the original TAB width, if required.  */
-		  if (x + it->tab_offset >= it->first_visible_x)
-		    x += it->tab_offset;
-		}
-
+	      if (!NILP (Vdisplay_line_numbers) && x0 >= it->lnum_pixel_width)
+		x -= it->lnum_pixel_width;
 	      int next_tab_x = ((1 + x + tab_width - 1) / tab_width) * tab_width;
 
 	      /* If the distance from the current position to the next tab
@@ -28340,19 +28279,10 @@ x_produce_glyphs (struct it *it)
 		 tab stop after that.  */
 	      if (next_tab_x - x < font->space_width)
 		next_tab_x += tab_width;
-	      if (!NILP (Vdisplay_line_numbers) && it->line_number_produced_p)
-		{
-		  next_tab_x += it->lnum_pixel_width;
-		  /* If the line is hscrolled, and the TAB starts before
-		     the first visible pixel, simulate negative row->x.  */
-		  if (x < it->first_visible_x)
-		    {
-		      next_tab_x -= it->first_visible_x - x;
-		      it->tab_offset = it->first_visible_x - x;
-		    }
-		  else
-		    next_tab_x -= it->tab_offset;
-		}
+	      if (!NILP (Vdisplay_line_numbers) && x0 >= it->lnum_pixel_width)
+		next_tab_x += (it->lnum_pixel_width
+			       - ((it->w->hscroll * font->space_width)
+				  % tab_width));
 
 	      it->pixel_width = next_tab_x - x0;
 	      it->nglyphs = 1;
@@ -33041,7 +32971,6 @@ particularly when using variable `x-use-underline-position-properties'
 with fonts that specify an UNDERLINE_POSITION relatively close to the
 baseline.  The default value is 1.  */);
   underline_minimum_offset = 1;
-  DEFSYM (Qunderline_minimum_offset, "underline-minimum-offset");
 
   DEFVAR_BOOL ("display-hourglass", display_hourglass_p,
 	       doc: /* Non-nil means show an hourglass pointer, when Emacs is busy.
