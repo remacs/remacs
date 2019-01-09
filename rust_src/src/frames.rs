@@ -64,11 +64,6 @@ impl LispObject {
         self.into()
     }
 
-    // Same as CHECK_FRAME
-    pub fn as_frame_or_error(self) -> LispFrameRef {
-        self.into()
-    }
-
     pub fn as_live_frame(self) -> Option<LispFrameRef> {
         self.as_frame()
             .and_then(|f| if f.is_live() { Some(f) } else { None })
@@ -85,7 +80,7 @@ macro_rules! for_each_frame {
     ($name:ident => $action:block) => {
         let frame_it = unsafe { Vframe_list.iter_cars(LispConsEndChecks::off,
                                                       LispConsCircularChecks::off) };
-        for $name in frame_it.map(|f| f.as_frame_or_error())
+        for $name in frame_it.map(LispFrameRef::from)
             $action
     };
 }
@@ -99,7 +94,7 @@ pub enum LispFrameOrSelected {
 impl From<LispObject> for LispFrameOrSelected {
     fn from(obj: LispObject) -> Self {
         obj.map_or(LispFrameOrSelected::Selected, |o| {
-            LispFrameOrSelected::Frame(o.as_frame_or_error())
+            LispFrameOrSelected::Frame(o.into())
         })
     }
 }
