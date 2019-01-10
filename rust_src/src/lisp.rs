@@ -126,6 +126,10 @@ impl<T> ExternalPtr<T> {
     pub fn from_ptr(ptr: *mut c_void) -> Option<Self> {
         unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
+
+    pub fn replace_ptr(&mut self, ptr: *mut T) {
+        self.0 = ptr;
+    }
 }
 
 impl<T> Deref for ExternalPtr<T> {
@@ -614,8 +618,8 @@ impl LispObject {
                 error!("Stack overflow in equal");
             }
             if ht.is_null() {
-                let new_ht = callN_raw!(Fmake_hash_table, QCtest, Qeq);
-                *ht = new_ht.into();
+                let mut new_ht: LispHashTableRef = callN_raw!(Fmake_hash_table, QCtest, Qeq).into();
+                ht.replace_ptr(new_ht.as_mut());
             }
             match self.get_type() {
                 Lisp_Type::Lisp_Cons | Lisp_Type::Lisp_Misc | Lisp_Type::Lisp_Vectorlike => {
