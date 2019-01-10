@@ -39,6 +39,7 @@ use std::slice;
 use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
 use crate::{
+    hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     remacs_sys::Qstringp,
     remacs_sys::{char_bits, equal_kind, EmacsDouble, EmacsInt, Lisp_String, Lisp_Type},
@@ -179,7 +180,7 @@ impl LispStructuralEqual for LispStringRef {
         other: LispStringRef,
         kind: equal_kind::Type,
         _depth: i32,
-        _ht: &mut LispObject,
+        _ht: &mut LispHashTableRef,
     ) -> bool {
         self.len_chars() == other.len_chars()
             && self.len_bytes() == other.len_bytes()

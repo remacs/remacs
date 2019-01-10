@@ -6,6 +6,7 @@ use std::sync::Mutex;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    hashtable::LispHashTableRef,
     lisp::defsubr,
     lisp::{LispObject, LispStructuralEqual},
     remacs_sys::{
@@ -173,7 +174,7 @@ impl LispStructuralEqual for EmacsInt {
         other: Self,
         _equal_kind: equal_kind::Type,
         _depth: i32,
-        _ht: &mut LispObject,
+        _ht: &mut LispHashTableRef,
     ) -> bool {
         *self == other
     }

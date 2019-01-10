@@ -15,6 +15,7 @@ use crate::{
     chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
     data::aref,
     frames::LispFrameRef,
+    hashtable::LispHashTableRef,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual, LispSubrRef},
     lists::{inorder, nth, sort_list},
@@ -279,7 +280,13 @@ impl LispVectorlikeRef {
 }
 
 impl LispStructuralEqual for LispVectorlikeRef {
-    fn equal(&self, other: Self, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool {
+    fn equal(
+        &self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool {
         // Pseudovectors have the type encoded in the size field, so this test
         // actually checks that the objects have the same type as well as the
         // same size.
@@ -378,7 +385,7 @@ macro_rules! impl_vectorlike_ref {
                 other: Self,
                 kind: equal_kind::Type,
                 depth: i32,
-                ht: &mut LispObject,
+                ht: &mut LispHashTableRef,
             ) -> bool {
                 (0..self.len()).all(|i| {
                     let v1 = self.get(i as usize);
@@ -508,7 +515,7 @@ impl LispStructuralEqual for LispBoolVecRef {
         other: Self,
         _kind: equal_kind::Type,
         _depth: i32,
-        _ht: &mut LispObject,
+        _ht: &mut LispHashTableRef,
     ) -> bool {
         let bits_per = BOOL_VECTOR_BITS_PER_CHAR as usize;
         // Bool vectors are compared much like strings.

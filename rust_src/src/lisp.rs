@@ -161,13 +161,15 @@ impl LispMiscRef {
     pub fn get_type(self) -> Lisp_Misc_Type {
         self.type_()
     }
+}
 
-    pub fn equal(
-        self,
+impl LispStructuralEqual for LispMiscRef {
+    fn equal(
+        &self,
         other: Self,
         kind: equal_kind::Type,
         depth: i32,
-        ht: &mut LispObject,
+        ht: &mut LispHashTableRef,
     ) -> bool {
         if self.get_type() != other.get_type() {
             false
@@ -543,7 +545,7 @@ pub trait LispStructuralEqual {
         other: Self,
         equal_kind: equal_kind::Type,
         depth: i32,
-        ht: &mut LispObject,
+        ht: &mut LispHashTableRef,
     ) -> bool;
 }
 
@@ -584,7 +586,7 @@ impl LispObject {
     where
         LispObject: From<T>,
     {
-        let mut ht = Qnil;
+        let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_PLAIN, 0, &mut ht)
     }
 
@@ -604,31 +606,31 @@ impl LispObject {
         other: Self,
         equal_kind: equal_kind::Type,
         depth: i32,
-        ht: &mut LispObject,
+        ht: &mut LispHashTableRef,
     ) -> bool {
         if depth > 10 {
             assert!(equal_kind != equal_kind::EQUAL_NO_QUIT);
             if depth > 200 {
                 error!("Stack overflow in equal");
             }
-            if ht.is_nil() {
-                *ht = callN_raw!(Fmake_hash_table, QCtest, Qeq);
+            if ht.is_null() {
+                let new_ht = callN_raw!(Fmake_hash_table, QCtest, Qeq);
+                *ht = new_ht.into();
             }
             match self.get_type() {
                 Lisp_Type::Lisp_Cons | Lisp_Type::Lisp_Misc | Lisp_Type::Lisp_Vectorlike => {
-                    let table: LispHashTableRef = (*ht).into();
-                    match table.lookup(self) {
+                    match ht.lookup(self) {
                         Found(idx) => {
                             // `self' was seen already.
-                            let o2s = table.get_hash_value(idx);
+                            let o2s = ht.get_hash_value(idx);
                             if memq(other, o2s).is_nil() {
-                                table.set_hash_value(idx, LispObject::cons(other, o2s));
+                                ht.set_hash_value(idx, LispObject::cons(other, o2s));
                             } else {
                                 return true;
                             }
                         }
                         Missing(hash) => {
-                            table.put(self, LispObject::cons(other, Qnil), hash);
+                            ht.put(self, LispObject::cons(other, Qnil), hash);
                         }
                     }
                 }
@@ -645,32 +647,32 @@ impl LispObject {
 
         match self.get_type() {
             Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => {
-                let v = self.as_fixnum().unwrap();
-                v.equal(other.into(), equal_kind, depth, ht)
+                self.force_fixnum()
+                    .equal(other.force_fixnum(), equal_kind, depth, ht)
             }
             Lisp_Type::Lisp_Symbol => {
-                let sym1 = self.as_symbol().unwrap();
-                sym1.equal(other.into(), equal_kind, depth, ht)
+                self.force_symbol()
+                    .equal(other.force_symbol(), equal_kind, depth, ht)
             }
             Lisp_Type::Lisp_Cons => {
-                let cons1 = self.as_cons().unwrap();
-                cons1.equal(other.into(), equal_kind, depth, ht)
+                self.force_cons()
+                    .equal(other.force_cons(), equal_kind, depth, ht)
             }
             Lisp_Type::Lisp_Float => {
-                let d1 = self.as_floatref().unwrap();
-                d1.equal(other.as_floatref().unwrap(), equal_kind, depth, ht)
+                self.force_floatref()
+                    .equal(other.force_floatref(), equal_kind, depth, ht)
             }
             Lisp_Type::Lisp_Misc => {
-                let m1 = self.as_misc().unwrap();
-                m1.equal(other.as_misc().unwrap(), equal_kind, depth, ht)
+                self.force_misc()
+                    .equal(other.force_misc(), equal_kind, depth, ht)
             }
             Lisp_Type::Lisp_String => {
-                let s1 = self.as_string().unwrap();
-                s1.equal(other.into(), equal_kind, depth, ht)
+                self.force_string()
+                    .equal(other.force_string(), equal_kind, depth, ht)
             }
             Lisp_Type::Lisp_Vectorlike => {
-                let v1 = self.as_vectorlike().unwrap();
-                v1.equal(other.as_vectorlike().unwrap(), equal_kind, depth, ht)
+                self.force_vectorlike()
+                    .equal(other.force_vectorlike(), equal_kind, depth, ht)
             }
         }
     }
@@ -679,7 +681,7 @@ impl LispObject {
     where
         LispObject: From<T>,
     {
-        let mut ht = Qnil;
+        let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
     }
 

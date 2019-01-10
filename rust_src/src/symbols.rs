@@ -9,6 +9,7 @@ use crate::{
     buffers::LispBufferLocalValueRef,
     data::Lisp_Fwd,
     data::{indirect_function, set},
+    hashtable::LispHashTableRef,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     multibyte::LispStringRef,
@@ -160,7 +161,7 @@ impl LispStructuralEqual for LispSymbolRef {
         _other: Self,
         _equal_kind: equal_kind::Type,
         _depth: i32,
-        _ht: &mut LispObject,
+        _ht: &mut LispHashTableRef,
     ) -> bool {
         false
     }

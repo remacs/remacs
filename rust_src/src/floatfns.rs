@@ -8,6 +8,7 @@ use std::mem;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    hashtable::LispHashTableRef,
     libm,
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
@@ -37,7 +38,7 @@ impl LispStructuralEqual for LispFloatRef {
         other: Self,
         _kind: equal_kind::Type,
         _depth: i32,
-        _ht: &mut LispObject,
+        _ht: &mut LispHashTableRef,
     ) -> bool {
         let d1 = self.to_float();
         let d2 = other.to_float();
@@ -71,6 +72,10 @@ impl LispObject {
         } else {
             None
         }
+    }
+
+    pub fn force_floatref(self) -> LispFloatRef {
+        unsafe { self.to_float_unchecked() }
     }
 
     pub fn as_float(self) -> Option<EmacsDouble> {

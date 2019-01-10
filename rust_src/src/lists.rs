@@ -8,6 +8,7 @@ use libc::c_void;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    hashtable::LispHashTableRef,
     lisp::defsubr,
     lisp::{LispObject, LispStructuralEqual},
     numbers::MOST_POSITIVE_FIXNUM,
@@ -373,7 +374,13 @@ impl LispCons {
 }
 
 impl LispStructuralEqual for LispCons {
-    fn equal(&self, other: Self, kind: equal_kind::Type, depth: i32, ht: &mut LispObject) -> bool {
+    fn equal(
+        &self,
+        other: Self,
+        kind: equal_kind::Type,
+        depth: i32,
+        ht: &mut LispHashTableRef,
+    ) -> bool {
         let (circular_checks, item_depth) = if kind == equal_kind::EQUAL_NO_QUIT {
             (LispConsCircularChecks::off, 0)
         } else {
