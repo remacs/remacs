@@ -218,6 +218,11 @@ regular expression was previously invalid, but is now accepted:
 ** New input methods 'hawaiian-postfix' and 'hawaiian-prefix'.
 
 +++
+** In Japanese environments that do not specify encodings and are not
+based on MS-Windows, the default encoding is now utf-8 instead of
+japanese-iso-8bit.
+
++++
 ** New function 'exec-path'.
 This function by default returns the value of the corresponding
 variable, but can optionally return the equivalent of 'exec-path'

@@ -29,11 +29,9 @@
 
 ;;;###autoload
 (defun setup-japanese-environment-internal ()
-  ;; By default, we use 'iso-2022-jp for default coding system.  But, the
-  ;; following prefer-coding-system will override it.
-  (if (memq system-type '(windows-nt ms-dos cygwin))
-      (prefer-coding-system 'japanese-shift-jis)
-    (prefer-coding-system 'utf-8))
+  (prefer-coding-system (if (memq system-type '(windows-nt ms-dos cygwin))
+			    'japanese-shift-jis
+			  'utf-8))
   (use-cjk-char-width-table 'ja_JP))
 
 (defconst japanese-kana-table
