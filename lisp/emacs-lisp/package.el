@@ -1625,7 +1625,7 @@ downloads in the background."
     (make-directory package-user-dir t))
   (let ((default-keyring (expand-file-name "package-keyring.gpg"
                                            data-directory))
-        (inhibit-message async))
+        (inhibit-message (or inhibit-message async)))
     (when (and package-check-signature (file-exists-p default-keyring))
       (condition-case-unless-debug error
           (package-import-keyring default-keyring)
@@ -3261,7 +3261,7 @@ objects removed."
     (redisplay 'force)
     (dolist (elt (package--sort-by-dependence delete-list))
       (condition-case-unless-debug err
-          (let ((inhibit-message package-menu-async))
+          (let ((inhibit-message (or inhibit-message package-menu-async)))
             (package-delete elt nil 'nosave))
         (error (message "Error trying to delete `%s': %S"
                  (package-desc-full-name elt)
