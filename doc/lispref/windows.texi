@@ -2881,6 +2881,13 @@ Frames}) to avoid changing the width of other, unrelated windows.
 Also, this entry should be processed under only certain conditions
 which are specified right below this list.
 
+@vindex dedicated@r{, a buffer display action alist entry}
+@item dedicated
+If non-@code{nil}, such an entry tells @code{display-buffer} to mark
+any window it creates as dedicated to its buffer (@pxref{Dedicated
+Windows}).  It does that by calling @code{set-window-dedicated-p} with
+the chosen window as first argument and the entry's value as second.
+
 @vindex preserve-size@r{, a buffer display action alist entry}
 @item preserve-size
 If non-@code{nil} such an entry tells Emacs to preserve the size of
@@ -3900,6 +3907,9 @@ display.  Other functions do not treat @code{t} differently from any
 non-@code{nil} value.
 @end defun
 
+You can also tell @code{display-buffer} to mark a window it creates as
+dedicated to its buffer by providing a suitable @code{dedicated}
+action alist entry (@pxref{Buffer Display Action Alists}).
 
 @node Quitting Windows
 @section Quitting Windows
