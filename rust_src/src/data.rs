@@ -24,7 +24,7 @@ use crate::{
     },
     remacs_sys::{buffer_local_flags, per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
-    remacs_sys::{Fdelete, Fget, Fpurecopy},
+    remacs_sys::{Fdelete, Fpurecopy},
     remacs_sys::{Lisp_Buffer, Lisp_Subr_Lang},
     remacs_sys::{
         Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table, Qchoice, Qcompiled_function,
@@ -567,13 +567,14 @@ pub unsafe extern "C" fn store_symval_forwarding(
             let predicate = (*valcontents).u_buffer_objfwd.predicate;
 
             if newval.is_not_nil() && predicate.is_symbol() {
-                let mut prop = Fget(predicate, Qchoice);
+                let pred_sym: LispSymbolRef = predicate.into();
+                let mut prop = get(pred_sym, Qchoice);
                 if prop.is_not_nil() {
                     if memq(newval, prop).is_nil() {
                         wrong_choice(prop, newval);
                     }
                 } else {
-                    prop = Fget(predicate, Qrange);
+                    prop = get(pred_sym, Qrange);
                     if let Some((min, max)) = prop.into() {
                         let args = [min, newval, max];
                         if !newval.is_number() || leq(&args) {
@@ -723,7 +724,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
         symbol.into(),
     );
 
-    let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
+    let watchers = get(symbol, Qwatchers);
     let mem = member(watch_function, watchers);
 
     if mem.is_nil() {
@@ -738,7 +739,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
 pub fn remove_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let symbol = symbol.get_indirect_variable();
 
-    let watchers = unsafe { Fget(symbol.into(), Qwatchers) };
+    let watchers = get(symbol, Qwatchers);
     let watchers = unsafe { Fdelete(watch_function, watchers) };
 
     if watchers.is_nil() {
@@ -758,9 +759,9 @@ pub fn remove_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject
 #[lisp_fn]
 pub fn get_variable_watchers(symbol: LispSymbolRef) -> LispObject {
     match symbol.get_trapped_write() {
-        symbol_trapped_write::SYMBOL_TRAPPED_WRITE => unsafe {
-            Fget(symbol.get_indirect_variable().into(), Qwatchers)
-        },
+        symbol_trapped_write::SYMBOL_TRAPPED_WRITE => {
+            get(symbol.get_indirect_variable(), Qwatchers)
+        }
         _ => Qnil,
     }
 }

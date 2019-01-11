@@ -15,6 +15,7 @@ use crate::{
     keymap::{current_global_map, Ctl},
     lisp::defsubr,
     lisp::LispObject,
+    lists::get,
     multibyte::{
         char_to_byte8, single_byte_charp, unibyte_to_char, write_codepoint, Codepoint,
         MAX_MULTIBYTE_LENGTH,
@@ -28,7 +29,7 @@ use crate::{
         scan_newline_from_point, set_point, set_point_both, syntax_property, syntaxcode,
         translate_char,
     },
-    remacs_sys::{Fchar_width, Fget, Fmake_string, Fmove_to_column},
+    remacs_sys::{Fchar_width, Fmake_string, Fmove_to_column},
     remacs_sys::{
         Qbeginning_of_buffer, Qend_of_buffer, Qexpand_abbrev, Qinternal_auto_fill,
         Qkill_forward_chars, Qnil, Qoverwrite_mode_binary, Qpost_self_insert_hook,
@@ -401,7 +402,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         // return right away--don't really self-insert.  */
         if let Some(s) = sym.as_symbol() {
             if let Some(f) = s.get_function().as_symbol() {
-                let prop = unsafe { Fget(f.into(), intern("no-self-insert").into()) };
+                let prop = get(f, intern("no-self-insert").into());
                 if prop.is_not_nil() {
                     return 1;
                 }

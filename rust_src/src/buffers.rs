@@ -13,7 +13,7 @@ use crate::{
     character::char_head_p,
     chartable::LispCharTableRef,
     data::Lisp_Fwd,
-    editfns::point,
+    editfns::{point, widen},
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
     frames::LispFrameRef,
@@ -36,7 +36,7 @@ use crate::{
         Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
-        windows_or_buffers_changed, Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse, Fwiden,
+        windows_or_buffers_changed, Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse,
     },
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
@@ -1095,9 +1095,8 @@ pub fn delete_all_overlays_lisp(buffer: LispBufferOrCurrent) {
 /// so the buffer is truly empty after this.
 #[lisp_fn(intspec = "*")]
 pub fn erase_buffer() {
+    widen();
     unsafe {
-        Fwiden();
-
         let mut cur_buf = ThreadState::current_buffer_unchecked();
         del_range(cur_buf.beg(), cur_buf.z());
 
