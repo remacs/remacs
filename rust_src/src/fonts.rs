@@ -118,7 +118,7 @@ impl LispFontObjectRef {
     }
 
     pub fn close(mut self, mut _frame: LispFrameRef) {
-        if data::aref(self.into(), FONT_TYPE_INDEX.into()).is_nil() {
+        if !data::aref(self.into(), FONT_TYPE_INDEX.into()) {
             // Already closed
             return;
         }
@@ -221,7 +221,7 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> bool {
     // For compatibility with the C version, checking that object is a font
     // takes priority over checking that extra_type is well-formed.
     object.as_font().map_or(false, |f| {
-        if extra_type.is_nil() {
+        if !extra_type {
             true
         } else {
             match FontExtraType::from_symbol_or_error(extra_type) {
@@ -333,7 +333,7 @@ pub fn list_fonts(
     let list = unsafe { font_list_entities(frame.as_mut(), font_spec.into()) };
 
     match list.into() {
-        Some((car, cdr)) if cdr.is_nil() => match car.as_vector() {
+        Some((car, cdr)) if !cdr => match car.as_vector() {
             Some(vec) if vec.len() == 1 => return list!(vec.get(0)),
             _ => (),
         },

@@ -6,7 +6,7 @@ use std::ffi::CString;
 use std::fmt;
 use std::fmt::{Debug, Display, Error, Formatter};
 use std::mem;
-use std::ops::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut, Not};
 
 use libc::{c_char, c_void, intptr_t, uintptr_t};
 
@@ -73,6 +73,14 @@ impl LispObject {
 
     pub fn from_float(v: EmacsDouble) -> Self {
         unsafe { make_float(v) }
+    }
+}
+
+impl Not for LispObject {
+    type Output = bool;
+
+    fn not(self) -> Self::Output {
+        self == Qnil
     }
 }
 
@@ -333,7 +341,7 @@ where
 
 impl From<LispObject> for bool {
     fn from(o: LispObject) -> Self {
-        o.is_not_nil()
+        !!o
     }
 }
 
@@ -416,7 +424,7 @@ impl From<LispObject> for EmacsInt {
 
 impl From<LispObject> for Option<EmacsInt> {
     fn from(o: LispObject) -> Self {
-        if o.is_nil() {
+        if !o {
             None
         } else {
             Some(o.as_fixnum_or_error())
@@ -432,7 +440,7 @@ impl From<LispObject> for EmacsUint {
 
 impl From<LispObject> for Option<EmacsUint> {
     fn from(o: LispObject) -> Self {
-        if o.is_nil() {
+        if !o {
             None
         } else {
             Some(o.as_natnum_or_error())
@@ -584,14 +592,6 @@ pub trait LispStructuralEqual {
 }
 
 impl LispObject {
-    pub fn is_nil(self) -> bool {
-        self == Qnil
-    }
-
-    pub fn is_not_nil(self) -> bool {
-        self != Qnil
-    }
-
     pub fn is_t(self) -> bool {
         self == Qt
     }
@@ -648,7 +648,7 @@ impl LispObject {
                         Found(idx) => {
                             // `self' was seen already.
                             let o2s = ht.get_hash_value(idx);
-                            if memq(other, o2s).is_nil() {
+                            if !memq(other, o2s) {
                                 ht.set_hash_value(idx, Self::cons(other, o2s));
                             } else {
                                 return true;
@@ -712,7 +712,7 @@ impl LispObject {
     }
 
     pub fn map_or<T>(self, default: T, action: impl FnOnce(Self) -> T) -> T {
-        if self.is_nil() {
+        if !self {
             default
         } else {
             action(self)
@@ -720,7 +720,7 @@ impl LispObject {
     }
 
     pub fn map_or_else<T>(self, default: impl FnOnce() -> T, action: impl FnOnce(Self) -> T) -> T {
-        if self.is_nil() {
+        if !self {
             default()
         } else {
             action(self)
@@ -750,7 +750,7 @@ impl Debug for LispObject {
                 self.to_C()
             );
         }
-        if self.is_nil() {
+        if !*self {
             return write!(f, "nil");
         }
         match ty {

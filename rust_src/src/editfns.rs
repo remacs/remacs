@@ -122,9 +122,9 @@ pub fn gap_size() -> EmacsInt {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> EmacsInt {
     let current_buf = ThreadState::current_buffer_unchecked();
-    if unsafe { globals.Vtransient_mark_mode }.is_not_nil()
-        && unsafe { globals.Vmark_even_if_inactive }.is_nil()
-        && current_buf.mark_active().is_nil()
+    if unsafe { !!globals.Vtransient_mark_mode }
+        && unsafe { !globals.Vmark_even_if_inactive }
+        && !current_buf.mark_active()
     {
         xsignal!(Qmark_inactive);
     }
@@ -342,7 +342,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
     let buffer_ref = ThreadState::current_buffer_unchecked();
     let pos_byte: isize;
 
-    if pos.is_nil() {
+    if !pos {
         pos_byte = buffer_ref.pt_byte;
         // In case point is point_min
         if pos_byte == 1 {
@@ -377,7 +377,7 @@ pub fn char_before(pos: LispObject) -> Option<EmacsInt> {
 #[lisp_fn(min = "0")]
 pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
     let buffer_ref = ThreadState::current_buffer_unchecked();
-    if pos.is_nil() {
+    if !pos {
         pos = point().into();
     }
     if let Some(m) = pos.as_marker() {
@@ -629,46 +629,46 @@ pub fn constrain_to_field(
     let prev_new = new_pos - 1;
     let begv = ThreadState::current_buffer_unchecked().begv as EmacsInt;
 
-    if unsafe { globals.Vinhibit_field_text_motion.is_nil() }
+    if unsafe { !globals.Vinhibit_field_text_motion }
         && new_pos != old_pos
-        && (get_char_property(
+        && (!!get_char_property(
             new_pos.into (),
             Qfield,
-            Qnil).is_not_nil()
-            || get_char_property(
+            Qnil)
+            || !!get_char_property(
                 old_pos.into (),
                 Qfield,
-                Qnil).is_not_nil()
+                Qnil)
             // To recognize field boundaries, we must also look at the
             // previous positions; we could use `Fget_pos_property'
             // instead, but in itself that would fail inside non-sticky
             // fields (like comint prompts).
             || (new_pos > begv
-                && get_char_property(
+                && !!get_char_property(
                     prev_new.into (),
                     Qfield,
-                    Qnil).is_not_nil())
+                    Qnil))
             || (old_pos > begv
-                && get_char_property(prev_old.into (), Qfield, Qnil).is_not_nil()))
-        && (inhibit_capture_property.is_nil()
+                && !get_char_property(prev_old.into (), Qfield, Qnil)))
+        && (!inhibit_capture_property
             // Field boundaries are again a problem; but now we must
             // decide the case exactly, so we need to call
             // `get_pos_property' as well.
             || (unsafe {
-                Fget_pos_property(
+                !Fget_pos_property(
                     LispObject::from(old_pos),
                     inhibit_capture_property,
-                    Qnil).is_nil()
+                    Qnil)
             }
                 && (old_pos <= begv
-                    || get_char_property(
+                    || !get_char_property(
                         old_pos.into (),
                         inhibit_capture_property,
-                        Qnil).is_nil()
-                    || get_char_property(
+                        Qnil)
+                    || !get_char_property(
                         prev_old.into (),
                         inhibit_capture_property,
-                        Qnil).is_nil())))
+                        Qnil))))
     // It is possible that NEW_POS is not within the same field as
     // OLD_POS; try to move NEW_POS so that it is.
     {
@@ -760,7 +760,7 @@ pub fn char_equal(mut c1: Codepoint, mut c2: Codepoint) -> bool {
     }
 
     let cur_buf = ThreadState::current_buffer_unchecked();
-    if cur_buf.case_fold_search().is_nil() {
+    if !cur_buf.case_fold_search() {
         return false;
     }
 
@@ -886,7 +886,7 @@ pub fn insert_buffer_substring(
 pub fn message(args: &mut [LispObject]) -> LispObject {
     let format_string = args[0];
 
-    if format_string.is_nil()
+    if !format_string
         || format_string
             .as_string()
             .map_or(false, |mut s| unsafe { STRING_BYTES(s.as_mut()) } == 0)
@@ -913,7 +913,7 @@ pub fn message(args: &mut [LispObject]) -> LispObject {
 #[lisp_fn(min = "1")]
 pub fn message_box(args: &mut [LispObject]) -> LispObject {
     unsafe {
-        if args[0].is_nil() {
+        if !args[0] {
             message1("".as_ptr() as *const ::libc::c_char);
             Qnil
         } else {
@@ -1226,7 +1226,7 @@ pub fn find_field(
         if !field.eq(before_field) {
             at_field_start = true;
         }
-        if field.is_nil() && at_field_start && at_field_end {
+        if !field && at_field_start && at_field_end {
             // If an inserted char would have a nil field while the surrounding
             // text is non-nil, we're probably not looking at a
             // zero-length field, but instead at a non-nil field that's

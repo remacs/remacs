@@ -99,7 +99,7 @@ impl LispObarrayRef {
         if tem.is_symbol() {
             tem
         } else {
-            let string_copy: LispObject = if unsafe { globals.Vpurify_flag }.is_not_nil() {
+            let string_copy: LispObject = if unsafe { !!globals.Vpurify_flag } {
                 // When Emacs is running lisp code to dump to an executable, make
                 // use of pure storage.
                 purecopy(string.into())
@@ -119,7 +119,7 @@ impl From<LispObject> for LispObarrayRef {
 
 impl From<LispObject> for Option<LispObarrayRef> {
     fn from(o: LispObject) -> Self {
-        if o.is_nil() {
+        if !o {
             None
         } else {
             Some(o.into())
@@ -202,7 +202,7 @@ pub unsafe extern "C" fn intern_c_string_1(
     } else {
         // Creating a non-pure string from a string literal not implemented yet.
         // We could just use make_string here and live with the extra copy.
-        assert!(globals.Vpurify_flag.is_not_nil());
+        assert!(!!globals.Vpurify_flag);
         intern_driver(make_pure_c_string(s, len), obarray, tem)
     }
 }

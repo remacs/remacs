@@ -57,7 +57,7 @@ pub fn bool_vector(args: &mut [LispObject]) -> LispObject {
     let vector = unsafe { make_uninit_bool_vector(args.len() as EmacsInt) };
 
     for (i, arg) in args.iter().enumerate() {
-        unsafe { bool_vector_set(vector, i as EmacsInt, arg.is_not_nil()) }
+        unsafe { bool_vector_set(vector, i as EmacsInt, !!*arg) }
     }
 
     vector
@@ -104,7 +104,7 @@ pub fn record(args: &mut [LispObject]) -> LispObject {
 #[lisp_fn]
 pub fn purecopy(obj: LispObject) -> LispObject {
     #![allow(clippy::if_same_then_else)]
-    if unsafe { globals.Vpurify_flag.is_nil() } {
+    if unsafe { !globals.Vpurify_flag } {
         obj
     } else if obj.is_marker() || obj.is_overlay() || obj.is_symbol() {
         // Can't purify those.

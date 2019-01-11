@@ -82,7 +82,7 @@ pub fn file_name_case_insensitive_p_lisp(filename: LispStringRef) -> bool {
     // If the file name has special constructs in it,
     // call the corresponding file handler.
     let handler = find_file_name_handler(absname, Qfile_name_case_insensitive_p);
-    if handler.is_not_nil() {
+    if !!handler {
         call!(handler, Qfile_name_case_insensitive_p, absname.into()).into()
     } else {
         unsafe {
@@ -112,7 +112,7 @@ pub fn file_exists_p(filename: LispStringRef) -> bool {
     // call the corresponding file handler.
     let handler = find_file_name_handler(absname, Qfile_exists_p);
 
-    if handler.is_not_nil() {
+    if !!handler {
         let result = call!(handler, Qfile_exists_p, absname.into());
         set_errno(Errno(0));
         result.into()
@@ -129,7 +129,7 @@ pub fn file_directory_p_lisp(filename: LispStringRef) -> bool {
     let absname = unsafe { expand_and_dir_to_file(filename.into()) };
     let handler = find_file_name_handler(absname.into(), Qfile_directory_p);
 
-    if handler.is_not_nil() {
+    if !!handler {
         call!(handler, Qfile_directory_p, absname).into()
     } else {
         unsafe { file_directory_p(encode_file_name(absname.into()).into()) }
@@ -149,7 +149,7 @@ pub fn file_executable_p(filename: LispStringRef) -> bool {
     // call the corresponding file handler.
     let handler = find_file_name_handler(absname, Qfile_executable_p);
 
-    if handler.is_not_nil() {
+    if !!handler {
         call!(handler, Qfile_executable_p, absname.into()).into()
     } else {
         unsafe { check_executable(encode_file_name(absname).data_ptr() as *mut libc::c_char) }

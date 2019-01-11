@@ -63,7 +63,7 @@ fn check_coding_system_get_spec(x: LispObject) -> LispObject {
 /// about coding-system objects.
 #[lisp_fn]
 pub fn coding_system_p(object: LispObject) -> bool {
-    object.is_nil()
+    !object
         || coding_system_id(object) >= 0
         || object.is_symbol() && get(object.into(), Qcoding_system_define_form).into()
 }
@@ -75,7 +75,7 @@ pub fn coding_system_p(object: LispObject) -> bool {
 #[lisp_fn(name = "check-coding-system", c_name = "check_coding_system")]
 pub fn check_coding_system_lisp(coding_system: LispObject) -> LispObject {
     let define_form = get(coding_system.into(), Qcoding_system_define_form);
-    if define_form.is_not_nil() {
+    if !!define_form {
         put(coding_system.into(), Qcoding_system_define_form, Qnil);
         unsafe { safe_eval(define_form) };
     }
@@ -106,7 +106,7 @@ pub fn encode_file_name(fname: LispStringRef) -> LispStringRef {
 /// for system functions, if any.
 pub fn decode_system(input_string: LispStringRef) -> LispStringRef {
     let local_coding_system: LispObject = unsafe { globals.Vlocale_coding_system };
-    if local_coding_system.is_nil() {
+    if !local_coding_system {
         input_string
     } else {
         unsafe { code_convert_string_norecord(input_string.into(), Qutf_8, true).into() }
@@ -126,14 +126,7 @@ pub fn decode_coding_string(
     nocopy: LispObject,
     buffer: LispObject,
 ) -> LispObject {
-    code_convert_string(
-        string,
-        coding_system,
-        buffer,
-        false,
-        nocopy.is_not_nil(),
-        false,
-    )
+    code_convert_string(string, coding_system, buffer, false, !!nocopy, false)
 }
 
 /// Encode STRING to CODING-SYSTEM, and return the result.
@@ -149,14 +142,7 @@ pub fn encode_coding_string(
     nocopy: LispObject,
     buffer: LispObject,
 ) -> LispObject {
-    code_convert_string(
-        string,
-        coding_system,
-        buffer,
-        true,
-        nocopy.is_not_nil(),
-        false,
-    )
+    code_convert_string(string, coding_system, buffer, true, !!nocopy, false)
 }
 
 // Wrapper for code_convert_string (NOT PORTED)

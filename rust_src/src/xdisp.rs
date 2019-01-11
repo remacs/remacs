@@ -51,7 +51,7 @@ pub fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
             if tem.is_cons() {
                 let (car, cdr) = tem.into();
                 if propelt.eq(car) {
-                    return Some(if cdr.is_nil() { 1 } else { 2 });
+                    return Some(if !cdr { 1 } else { 2 });
                 }
             }
         }

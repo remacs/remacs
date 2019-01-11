@@ -31,7 +31,7 @@ use crate::{
 #[lisp_fn(min = "0")]
 pub fn minibufferp(buffer_or_name: Option<LispBufferOrName>) -> bool {
     let buffer = buffer_or_name.map_or_else(current_buffer, LispObject::from);
-    memq(buffer, unsafe { Vminibuffer_list }).is_not_nil()
+    !!memq(buffer, unsafe { Vminibuffer_list })
 }
 
 /// Return the currently active minibuffer window, or nil if none.
@@ -80,13 +80,13 @@ pub fn minibuffer_prompt() -> LispObject {
 pub fn minibuffer_prompt_end() -> EmacsInt {
     let buffer = ThreadState::current_buffer_unchecked();
     let beg = buffer.beg() as EmacsInt;
-    if memq(buffer.into(), unsafe { Vminibuffer_list }).is_nil() {
+    if !memq(buffer.into(), unsafe { Vminibuffer_list }) {
         return beg;
     }
 
     let end = field_end(Some(beg.into()), false, None);
     let buffer_end = buffer.zv as EmacsInt;
-    if end == buffer_end && get_char_property(beg.into(), Qfield, Qnil).is_nil() {
+    if end == buffer_end && !get_char_property(beg.into(), Qfield, Qnil) {
         beg
     } else {
         end
@@ -174,7 +174,7 @@ pub fn read_from_minibuffer(
     default_value: LispObject,
     inherit_input_method: bool,
 ) -> LispObject {
-    keymap = if keymap.is_nil() {
+    keymap = if !keymap {
         unsafe { globals.Vminibuffer_local_map }
     } else {
         get_keymap(keymap, true, false)
@@ -186,10 +186,10 @@ pub fn read_from_minibuffer(
         (car_safe(hist), cdr_safe(hist))
     };
 
-    if histvar.is_nil() {
+    if !histvar {
         histvar = Qminibuffer_history
     };
-    if histpos.is_nil() {
+    if !histpos {
         histpos = LispObject::from_natnum(0)
     };
 
@@ -335,7 +335,7 @@ pub fn read_string(
     );
 
     if let Some(s) = val.as_string() {
-        if s.is_empty() && default_value.is_not_nil() {
+        if s.is_empty() && !!default_value {
             val = match default_value.into() {
                 None => default_value,
                 Some((a, _)) => a,
@@ -351,7 +351,7 @@ pub fn read_command_or_variable(
     default_value: LispObject,
     symbol: LispObject,
 ) -> LispObject {
-    let default_string = if default_value.is_nil() {
+    let default_string = if !default_value {
         Qnil
     } else if let Some(s) = default_value.as_symbol() {
         s.symbol_name()
@@ -370,7 +370,7 @@ pub fn read_command_or_variable(
         Qnil,
     );
 
-    if name.is_nil() {
+    if !name {
         name
     } else {
         lisp_intern(name.into(), None)
@@ -420,7 +420,7 @@ pub fn read_no_blanks_input(
             LispObject::from_fixnum(0),
             Qnil,
             false,
-            inherit_input_method.is_not_nil(),
+            !!inherit_input_method,
         )
     }
 }
@@ -462,8 +462,8 @@ pub fn read_buffer(
         )
     }
 
-    let result = if unsafe { globals.Vread_buffer_function }.is_nil() {
-        if !def.is_nil() {
+    let result = if unsafe { !globals.Vread_buffer_function } {
+        if !!def {
             // A default was provided: PROMPT must be changed, editing in the
             // default value before the colon. To achieve this, PROMPT is replaced
             // with a substring that doesn't contain the terminal space and colon
@@ -514,7 +514,7 @@ pub fn read_buffer(
             def,
             require_match,
         ];
-        if predicate.is_not_nil() {
+        if !!predicate {
             args.push(predicate)
         }
         eval::funcall(&mut args)

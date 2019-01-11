@@ -53,7 +53,7 @@ use crate::{
 pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
     let count = c_specpdl_index();
 
-    let infile = if args.len() >= 2 && args[1].is_not_nil() {
+    let infile = if args.len() >= 2 && !!args[1] {
         expand_file_name(
             args[1].into(),
             ThreadState::current_buffer_unchecked().directory_.into(),
@@ -132,7 +132,7 @@ pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
 
     let empty_input = if let Some(string) = start.as_string() {
         string.is_empty()
-    } else if start.is_nil() {
+    } else if !start {
         let buffer = ThreadState::current_buffer_unchecked();
         buffer.beg() == buffer.z()
     } else {
@@ -158,7 +158,7 @@ pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
         }
     };
 
-    if args.len() > 3 && args[3].is_not_nil() {
+    if args.len() > 3 && !!args[3] {
         unsafe { Fdelete_region(start, end) };
     }
 

@@ -99,7 +99,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
     let prev_col = prev_col as u64;
 
     // If a tab char made us overshoot, change it to spaces and scan through it again
-    if !force.is_nil() && col > goal {
+    if !!force && col > goal {
         let pos_byte = buffer.dec_pos(buffer.pt_byte);
         let c = buffer.fetch_char(pos_byte);
 
@@ -247,14 +247,14 @@ pub fn compute_motion(
             1
         };
 
-    let (to_hpos, to_vpos) = if topos.is_nil() {
+    let (to_hpos, to_vpos) = if !topos {
         (window_width, EmacsInt::from(win.internal_height()))
     } else {
         let (hpos, vpos) = topos.into();
         (hpos.into(), vpos.into())
     };
     let arg_width = width.unwrap_or(-1);
-    let (hscroll, tab_offset) = if offsets.is_nil() {
+    let (hscroll, tab_offset) = if !offsets {
         (0, 0)
     } else {
         let (hpos, vpos) = offsets.into();

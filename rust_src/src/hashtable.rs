@@ -200,7 +200,7 @@ impl<'a> Iterator for KeyAndValueIter<'a> {
 
     fn next(&mut self) -> Option<(LispObject, LispObject)> {
         while let Some(idx) = self.0.next() {
-            let is_not_nil = self.0.table.get_hash_hash(idx).is_not_nil();
+            let is_not_nil = !!self.0.table.get_hash_hash(idx);
             if is_not_nil {
                 let key = self.0.table.get_hash_key(idx);
                 let value = self.0.table.get_hash_value(idx);
@@ -244,7 +244,7 @@ pub fn copy_hash_table(mut table: LispHashTableRef) -> LispHashTableRef {
     new_table.set_next(next);
     new_table.set_index(index);
 
-    if new_table.get_weak().is_not_nil() {
+    if !!new_table.get_weak() {
         new_table.set_next_weak(table.get_next_weak());
         table.set_next_weak(new_table);
     }

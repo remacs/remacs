@@ -7,7 +7,7 @@ use crate::{hashtable::LispHashTableRef, lisp::LispObject, remacs_sys::equal_kin
 /// Return t if OBJECT is nil, and return nil otherwise.
 #[lisp_fn]
 pub fn null(object: LispObject) -> bool {
-    object.is_nil()
+    !object
 }
 
 /// Return t if the two args are the same Lisp object.

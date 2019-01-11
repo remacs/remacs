@@ -144,9 +144,9 @@ impl LispCharTableRef {
             }
         };
 
-        if val.is_nil() {
+        if !val {
             val = self.defalt; // sic
-            if val.is_nil() {
+            if !val {
                 if let Some(parent) = self.parent.as_char_table() {
                     val = parent.get(c);
                 }

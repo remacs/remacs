@@ -294,7 +294,7 @@ fn make_lock_name(path: LispStringRef) -> PathBuf {
 #[lisp_fn(min = "0")]
 pub fn lock_buffer(file: LispObject) {
     let cur_buf = ThreadState::current_buffer_unchecked();
-    let file = if file.is_nil() {
+    let file = if !file {
         cur_buf.truename()
     } else if file.is_string() {
         file
@@ -302,7 +302,7 @@ pub fn lock_buffer(file: LispObject) {
         wrong_type!(Qstringp, file)
     };
 
-    if cur_buf.modified_since_save() && !file.is_nil() {
+    if cur_buf.modified_since_save() && !!file {
         unsafe { lock_file(file) }
     }
 }

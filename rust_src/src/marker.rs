@@ -206,7 +206,7 @@ pub fn build_marker_rust(
     charpos: isize,
     bytepos: isize,
 ) -> LispMarkerRef {
-    debug_assert!(buffer.name_.is_not_nil());
+    debug_assert!(!!buffer.name_);
     debug_assert!(charpos <= bytepos);
 
     let mut marker: LispMarkerRef =
@@ -287,7 +287,7 @@ pub fn marker_insertion_type(marker: LispMarkerRef) -> bool {
 /// If ITYPE is nil, it means the marker stays behind when you insert text at it.
 #[lisp_fn]
 pub fn set_marker_insertion_type(mut marker: LispMarkerRef, itype: LispObject) -> LispObject {
-    marker.set_insertion_type(itype.is_not_nil());
+    marker.set_insertion_type(!!itype);
     itype
 }
 
@@ -312,7 +312,7 @@ pub fn set_marker(
 /// see `marker-insertion-type'.
 #[lisp_fn(min = "0")]
 pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
-    if marker.is_not_nil() {
+    if !!marker {
         marker.as_fixnum_coerce_marker_or_error();
     }
     let new = unsafe { Fmake_marker() };
@@ -321,7 +321,7 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
     set_marker(new.into(), marker, buffer_or_nil.into());
 
     if let Some(mut m) = new.as_marker() {
-        m.set_insertion_type(itype.is_not_nil())
+        m.set_insertion_type(!!itype)
     }
 
     new
@@ -517,7 +517,7 @@ fn set_marker_internal(
         .or_else(|| current_buffer().as_live_buffer());
     // Set MARKER to point nowhere if BUFFER is dead, or
     // POSITION is nil or a marker points to nowhere.
-    if position.is_nil() || (position.is_marker() && !position.has_buffer()) || buf.is_none() {
+    if !position || (position.is_marker() && !position.has_buffer()) || buf.is_none() {
         unchain_marker(marker.as_mut());
 
     // Optimize the special case where we are copying the position of

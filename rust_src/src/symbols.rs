@@ -415,7 +415,7 @@ expect `t' in particular, rather than any true value.  */
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]
 pub fn fboundp(symbol: LispSymbolRef) -> bool {
-    symbol.get_function().is_not_nil()
+    !!symbol.get_function()
 }
 
 /// Return SYMBOL's function definition, or nil if that is void.
@@ -442,7 +442,7 @@ pub fn setplist(mut symbol: LispSymbolRef, newplist: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
     let mut sym: LispSymbolRef = symbol.into();
-    if symbol.is_nil() || symbol.is_t() {
+    if !symbol || symbol.is_t() {
         setting_constant!(symbol);
     }
     sym.set_function(Qnil);

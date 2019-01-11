@@ -46,10 +46,10 @@ use crate::{
 #[lisp_fn(min = "1")]
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> bool {
     let mut tem = memq(feature.into(), unsafe { globals.Vfeatures });
-    if tem.is_not_nil() && subfeature.is_not_nil() {
+    if !!tem && !!subfeature {
         tem = member(subfeature, get(feature, Qsubfeatures));
     }
-    tem.is_not_nil()
+    !!tem
 }
 
 /// Announce that FEATURE is a feature of the current Emacs.
@@ -61,16 +61,16 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
         wrong_type!(Qlistp, subfeature)
     }
     unsafe {
-        if Vautoload_queue.is_not_nil() {
+        if !!Vautoload_queue {
             Vautoload_queue = ((0, globals.Vfeatures), Vautoload_queue).into();
         }
     }
-    if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
+    if !memq(feature.into(), unsafe { globals.Vfeatures }) {
         unsafe {
             globals.Vfeatures = (feature, globals.Vfeatures).into();
         }
     }
-    if subfeature.is_not_nil() {
+    if !!subfeature {
         put(feature, Qsubfeatures, subfeature);
     }
     unsafe {
@@ -97,7 +97,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
 /// usage: (quote ARG)
 #[lisp_fn(unevalled = "true")]
 pub fn quote(args: LispCons) -> LispObject {
-    if args.cdr().is_not_nil() {
+    if !!args.cdr() {
         wrong_number_of_arguments!(Qquote, args.length());
     }
 
@@ -156,16 +156,16 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     let from_file = unsafe { globals.load_in_progress }
         || current_load_list
             .iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off)
-            .any(|elt| elt.cdr().is_nil() && elt.car().is_string());
+            .any(|elt| !elt.cdr() && elt.car().is_string());
 
     if from_file {
         let tem = (Qrequire, feature).into();
-        if member(tem, current_load_list).is_nil() {
+        if !member(tem, current_load_list) {
             loadhist_attach(tem);
         }
     }
 
-    if memq(feature, unsafe { globals.Vfeatures }).is_not_nil() {
+    if !!memq(feature, unsafe { globals.Vfeatures }) {
         return feature;
     }
 
@@ -173,7 +173,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
     // This is to make sure that loadup.el gives a clear picture
     // of what files are preloaded and when.
-    if unsafe { globals.Vpurify_flag.is_not_nil() } {
+    if unsafe { !!globals.Vpurify_flag } {
         error!(
             "(require {}) while preparing to dump",
             feature_sym.symbol_name()
@@ -206,7 +206,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
         // Load the file.
         let tem = Fload(
-            if filename.is_nil() {
+            if !filename {
                 feature_sym.symbol_name()
             } else {
                 filename
@@ -214,20 +214,20 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
             noerror,
             Qt,
             Qnil,
-            filename.is_nil().into(),
+            (!filename).into(),
         );
 
         // If load failed entirely, return nil.
-        if tem.is_nil() {
+        if !tem {
             return unbind_to(count, Qnil);
         }
     }
 
     let tem = memq(feature, unsafe { globals.Vfeatures });
-    if tem.is_nil() {
+    if !tem {
         let tem3 = car(car(unsafe { globals.Vload_history }));
 
-        if tem3.is_nil() {
+        if !tem3 {
             error!("Required feature `{}' was not provided", feature);
         } else {
             // Cf autoload-do-load.
@@ -300,7 +300,7 @@ pub fn vconcat(args: &mut [LispObject]) -> LispObject {
 /// See also the function `nreverse', which is used more often.
 #[lisp_fn]
 pub fn reverse(seq: LispObject) -> LispObject {
-    if seq.is_nil() {
+    if !seq {
         Qnil
     } else if let Some(cons) = seq.as_cons() {
         cons.iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on)
@@ -358,7 +358,7 @@ pub fn reverse(seq: LispObject) -> LispObject {
 /// This function may destructively modify SEQ to produce the value.
 #[lisp_fn]
 pub fn nreverse(mut seq: LispObject) -> LispObject {
-    if seq.is_nil() {
+    if !seq {
         return seq;
     } else if seq.is_string() {
         return reverse(seq);
@@ -456,7 +456,7 @@ pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
 /// Elements of ALIST that are not conses are also shared.
 #[lisp_fn]
 pub fn copy_alist(mut alist: LispObject) -> LispObject {
-    if alist.is_nil() {
+    if !alist {
         return alist;
     }
 
@@ -487,9 +487,7 @@ pub fn copy_alist(mut alist: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
     let use_popup = unsafe {
-        globals.last_nonmenu_event.is_list()
-            && globals.use_dialog_box
-            && globals.last_input_event.is_not_nil()
+        globals.last_nonmenu_event.is_list() && globals.use_dialog_box && !!globals.last_input_event
     };
 
     if use_popup {
@@ -544,11 +542,11 @@ pub fn nconc(args: &mut [LispObject]) -> LispObject {
     for i in 0..len {
         let elt = args[i];
 
-        if elt.is_nil() {
+        if !elt {
             continue;
         }
 
-        if val.is_nil() {
+        if !val {
             val = elt;
         }
 
@@ -565,7 +563,7 @@ pub fn nconc(args: &mut [LispObject]) -> LispObject {
 
         let next = args[i + 1];
         tail.set_cdr(next);
-        if next.is_nil() {
+        if !next {
             args[i + 1] = tail.into();
         }
     }
@@ -580,7 +578,7 @@ pub fn nconc(args: &mut [LispObject]) -> LispObject {
 /// the same empty object instead of its copy.
 #[lisp_fn]
 pub fn copy_sequence(mut arg: LispObject) -> LispObject {
-    if arg.is_nil() {
+    if !arg {
         arg
     } else if arg.is_record() {
         record(arg.force_vectorlike_slots().as_mut_slice())

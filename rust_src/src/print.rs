@@ -26,7 +26,7 @@ pub fn error_message_string(obj: LispCons) -> LispObject {
     match obj.into() {
         (error, data) if error.eq(Qerror) => {
             if let Some((string, nil)) = data.into() {
-                if string.is_string() && nil.is_nil() {
+                if string.is_string() && !nil {
                     return string;
                 }
             }

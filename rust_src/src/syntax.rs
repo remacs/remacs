@@ -100,7 +100,7 @@ pub extern "C" fn check_syntax_table(obj: LispObject) {
 #[lisp_fn(min = "0")]
 pub fn copy_syntax_table(mut table: LispObject) -> LispCharTableRef {
     let buffer_table = unsafe { buffer_defaults.syntax_table_ };
-    if table.is_not_nil() {
+    if !!table {
         check_syntax_table(table);
     } else {
         table = buffer_table;
@@ -114,7 +114,7 @@ pub fn copy_syntax_table(mut table: LispObject) -> LispCharTableRef {
     // Copied syntax tables should all have parents.
     // If we copied one with no parent, such as the standard syntax table,
     // use the standard syntax table as the copy's parent.
-    if copy.parent.is_nil() {
+    if !copy.parent {
         unsafe { Fset_char_table_parent(copy.into(), buffer_table) };
     }
     copy
