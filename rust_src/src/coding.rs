@@ -12,6 +12,8 @@ use crate::{
     lisp::defsubr,
     lisp::LispObject,
     lists::{get, put},
+    multibyte::LispStringRef,
+    remacs_sys::encode_file_name as c_encode_file_name,
     remacs_sys::{
         safe_eval, Fget, Qcoding_system_define_form, Qcoding_system_error, Qcoding_system_p, Qnil,
         Qno_conversion, Vcoding_system_hash_table,
@@ -90,6 +92,11 @@ pub fn coding_system_aliases(coding_system: LispObject) -> LispObject {
     };
     let spec = check_coding_system_get_spec(coding_system);
     aref(spec, 1)
+}
+
+/// Wrapper for encode_file_name (NOT PORTED)
+pub fn encode_file_name(fname: LispStringRef) -> LispStringRef {
+    unsafe { c_encode_file_name(fname.into()) }.into()
 }
 
 include!(concat!(env!("OUT_DIR"), "/coding_exports.rs"));
