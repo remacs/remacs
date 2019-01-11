@@ -320,7 +320,7 @@ Key translation rules are:
 
     effect   | prefix | examples
  ------------+--------+------------------
-    tilde    |   ~    | ~a -> ă
+    breve    |   ~    | ~a -> ă
   circumflex |   ^    | ^a -> â, ^i -> î
    cedilla   |   ,    | ,s -> ş, ,t -> ţ
    ~         |   ~    | ~~ -> ~
@@ -342,11 +342,11 @@ Key translation rules are:
 
     effect   | prefix | examples
  ------------+--------+------------------
-    tilde    |   \"    | \"a -> â
-  circumflex |   \\='    | \\='a -> â, \\='i -> î
-   cedilla   |   \\='    | \\='s -> ş, \\='t -> ţ
-   \\='         |   \\='    | \\='\\=' -> \\='
-   \"         |   \"    | \"\" -> \"
+    breve    |   \\='    | \\='a -> ă
+ circumflex  |  \" \\='   | \"a -> â  \\='i -> î
+   cedilla   |   \\='    | \\='s -> ş  \\='t -> ţ
+      \\='      |   \\='    | \\='\\=' -> \\='
+      \"      |   \"    | \"\" -> \"
 " nil t nil nil nil nil nil nil nil nil t)
 
 (quail-define-rules
@@ -606,7 +606,7 @@ Key translation rules are:
   circumflex |   ^    | ^a -> â
   diaeresis  |   \"    | \"a -> ä   \"\" -> ¨
    cedilla   |   ~    | ~c -> ç   ~s -> ş   ~~ -> ¸
-  dot above  |   / .  | /g -> ġ   .o -> ġ
+  dot above  |   / .  | /g -> ġ   .g -> ġ
     misc     | \" ~ /  | \"s -> ß   ~g -> ğ   ~u -> ŭ   /h -> ħ   /i -> ı
    symbol    |   ~    | ~\\=` -> ˘   /# -> £   /$ -> ¤   // -> °
 " nil t nil nil nil nil nil nil nil nil t)
