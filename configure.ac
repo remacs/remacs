@@ -5434,6 +5434,17 @@ fi
 if test "$window_system" != "none"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system\", "
 fi
+case "$window_system" in
+    x11)
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"x11\", "
+    ;;
+    nextstep)
+	CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"nextstep\", "
+    ;;
+    w32)
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"w32\", "
+    ;;
+esac
 AC_SUBST(CARGO_DEFAULT_FEATURES)
 AC_CONFIG_FILES([rust_src/Cargo.toml])
 

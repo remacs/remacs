@@ -123,7 +123,12 @@ impl LispFontObjectRef {
             }
             #[cfg(feature = "window-system")]
             {
+                #[cfg(feature = "x11")]
                 let mut display_info = &mut *(*_frame.output_data.x).display_info;
+                #[cfg(feature = "nextstep")]
+                let mut display_info = &mut *(*_frame.output_data.ns).display_info;
+                #[cfg(feature = "w32")]
+                let mut display_info = &mut *(*_frame.output_data.w32).display_info;
                 debug_assert!(display_info.n_fonts > 0);
                 display_info.n_fonts -= 1;
             }
