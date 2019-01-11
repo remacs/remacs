@@ -316,14 +316,11 @@ pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
     let cur_buf = ThreadState::current_buffer_unchecked();
     let position = clip_to_bounds(cur_buf.begv, position, cur_buf.zv);
 
-    if let Some(marker) = cur_buf.markers() {
-        for m in marker.iter() {
-            if m.charpos().map_or(false, |p| p == position) {
-                return true;
-            }
-        }
-    }
-    false
+    cur_buf.markers().map_or(false, |marker| {
+        marker
+            .iter()
+            .any(|m| m.charpos().map_or(false, |p| p == position))
+    })
 }
 
 /// Change M so it points to B at CHARPOS and BYTEPOS.

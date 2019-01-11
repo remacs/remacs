@@ -896,13 +896,15 @@ pub fn insert_buffer_substring(
 /// usage: (message FORMAT-STRING &rest ARGS)
 #[lisp_fn(min = "1")]
 pub fn message(args: &mut [LispObject]) -> LispObject {
-    if args[0].is_nil()
-        || args[0]
+    let format_string = args[0];
+
+    if format_string.is_nil()
+        || format_string
             .as_string()
-            .map_or(false, |mut s| unsafe { STRING_BYTES(s.as_mut()) == 0 })
+            .map_or(false, |mut s| unsafe { STRING_BYTES(s.as_mut()) } == 0)
     {
         unsafe { message1(ptr::null_mut()) };
-        args[0]
+        format_string
     } else {
         let val = format_message(args);
         unsafe { message3(val) };

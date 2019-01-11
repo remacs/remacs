@@ -955,7 +955,7 @@ pub extern "C" fn mapcar1(
             output,
             fun,
             s.char_indices()
-                .map(|(_, c)| LispObject::from_fixnum(c as EmacsInt)),
+                .map(|(_, c)| LispObject::from_fixnum(EmacsInt::from(c))),
         );
     }
 
