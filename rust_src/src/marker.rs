@@ -12,7 +12,7 @@ use crate::{
     multibyte::multibyte_chars_in_text,
     remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
     remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},
-    remacs_sys::{Qinteger_or_marker_p, Qmarkerp, Qnil},
+    remacs_sys::{Qinteger_or_marker_p, Qmarkerp},
     threads::ThreadState,
     util::clip_to_bounds,
 };
@@ -299,12 +299,9 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
         marker.as_fixnum_coerce_marker_or_error();
     }
     let new = unsafe { Fmake_marker() };
-    let buffer_or_nil = marker
-        .as_marker()
-        .and_then(|m| m.buffer())
-        .map_or(Qnil, LispObject::from);
+    let buffer_or_nil = marker.as_marker().and_then(|m| m.buffer());
 
-    set_marker(new.into(), marker, buffer_or_nil);
+    set_marker(new.into(), marker, buffer_or_nil.into());
 
     if let Some(mut m) = new.as_marker() {
         m.set_insertion_type(itype.is_not_nil())

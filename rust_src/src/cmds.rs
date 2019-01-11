@@ -70,7 +70,7 @@ fn move_point(n: LispObject, forward: bool) {
     }
 
     unsafe { set_point(new_point) };
-    if signal != Qnil {
+    if signal.is_not_nil() {
         xsignal!(signal);
     }
 }

@@ -683,7 +683,7 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
             let prevlist = unsafe { Fnreverse(Fcopy_sequence(frame.buried_buffer_list)) };
 
             // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
-            buffers.retain(|e| member(*e, framelist) == Qnil && member(*e, prevlist) == Qnil);
+            buffers.retain(|e| member(*e, framelist).is_nil() && member(*e, prevlist).is_nil());
 
             callN_raw!(Fnconc, framelist, list(&buffers), prevlist)
         }
@@ -1125,7 +1125,7 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if (ignore != Qnil && string_equal(name.into(), ignore))
+    if (ignore.is_not_nil() && string_equal(name.into(), ignore))
         || get_buffer(LispBufferOrName::Name(name.into())).is_none()
     {
         return name;

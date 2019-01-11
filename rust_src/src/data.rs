@@ -276,16 +276,16 @@ pub fn defalias(
     let sym = LispObject::from(symbol);
 
     unsafe {
-        if globals.Vpurify_flag != Qnil
+        if globals.Vpurify_flag.is_not_nil()
             // If `definition' is a keymap, immutable (and copying) is wrong.
-            && get_keymap(definition, false, false) == Qnil
+            && get_keymap(definition, false, false).is_nil()
         {
             definition = Fpurecopy(definition);
         }
     }
 
     let autoload = is_autoload(definition);
-    if unsafe { globals.Vpurify_flag == Qnil } || !autoload {
+    if unsafe { globals.Vpurify_flag.is_nil() } || !autoload {
         // Only add autoload entries after dumping, because the ones before are
         // not useful and else we get loads of them from the loaddefs.el.
 
