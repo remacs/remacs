@@ -1393,52 +1393,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
       return internal_equal_misc(o1, o2,  equal_kind, depth, ht);
 
     case Lisp_Vectorlike:
-      {
-	register int i;
-	ptrdiff_t size = ASIZE (o1);
-	/* Pseudovectors have the type encoded in the size field, so this test
-	   actually checks that the objects have the same type as well as the
-	   same size.  */
-	if (ASIZE (o2) != size)
-	  return false;
-	/* Boolvectors are compared much like strings.  */
-	if (BOOL_VECTOR_P (o1))
-	  {
-	    EMACS_INT size = bool_vector_size (o1);
-	    if (size != bool_vector_size (o2))
-	      return false;
-	    if (memcmp (bool_vector_data (o1), bool_vector_data (o2),
-			bool_vector_bytes (size)))
-	      return false;
-	    return true;
-	  }
-	if (WINDOW_CONFIGURATIONP (o1))
-	  {
-	    eassert (equal_kind != EQUAL_NO_QUIT);
-	    return compare_window_configurations (o1, o2, false);
-	  }
-
-	/* Aside from them, only true vectors, char-tables, compiled
-	   functions, and fonts (font-spec, font-entity, font-object)
-	   are sensible to compare, so eliminate the others now.  */
-	if (size & PSEUDOVECTOR_FLAG)
-	  {
-	    if (((size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS)
-		< PVEC_COMPILED)
-	      return false;
-	    size &= PSEUDOVECTOR_SIZE_MASK;
-	  }
-	for (i = 0; i < size; i++)
-	  {
-	    Lisp_Object v1, v2;
-	    v1 = AREF (o1, i);
-	    v2 = AREF (o2, i);
-	    if (!internal_equal (v1, v2, equal_kind, depth + 1, ht))
-	      return false;
-	  }
-	return true;
-      }
-      break;
+      return internal_equal_vectorlike(o1, o2, equal_kind, depth, ht);
 
     case Lisp_String:
       return internal_equal_string(o1, o2, equal_kind, depth, ht);
@@ -1815,136 +1770,6 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 #endif	/* HAVE_LANGINFO_CODESET*/
   return Qnil;
 }
-
-/* base64 encode/decode functions (RFC 2045).
-   Based on code from GNU recode. */
-
-ptrdiff_t base64_encode_1 (const char *, ptrdiff_t, char *, ptrdiff_t, bool, bool);
-ptrdiff_t base64_decode_1 (const char *, ptrdiff_t, char *, ptrdiff_t, bool,
-                           ptrdiff_t *);
-ptrdiff_t pad_base64_size(ptrdiff_t len);
-ptrdiff_t compute_decode_size(ptrdiff_t len);
-ptrdiff_t compute_encode_size(ptrdiff_t len);
-
-DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
-       2, 3, "r",
-       doc: /* Base64-encode the region between BEG and END.
-Return the length of the encoded text.
-Optional third argument NO-LINE-BREAK means do not break long lines
-into shorter lines.  */)
-  (Lisp_Object beg, Lisp_Object end, Lisp_Object no_line_break)
-{
-  char *encoded;
-  ptrdiff_t allength, length;
-  ptrdiff_t ibeg, iend, encoded_length;
-  ptrdiff_t old_pos = PT;
-  USE_SAFE_ALLOCA;
-
-  validate_region (&beg, &end);
-
-  ibeg = CHAR_TO_BYTE (XFASTINT (beg));
-  iend = CHAR_TO_BYTE (XFASTINT (end));
-  move_gap_both (XFASTINT (beg), ibeg);
-
-  /* We need to allocate enough room for encoding the text.
-     We need 33 1/3% more space, plus a newline every 76
-     characters, and then we round up. */
-  length = iend - ibeg;
-  allength = pad_base64_size(compute_encode_size(length));
-
-  encoded = SAFE_ALLOCA (allength);
-  encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg), length,
-                                    encoded, allength,
-                                    NILP (no_line_break),
-				    !NILP (BVAR (current_buffer, enable_multibyte_characters)));
-
-  if (encoded_length < 0)
-    {
-      /* The encoding wasn't possible. */
-      SAFE_FREE ();
-      error ("Multibyte character in data for base64 encoding");
-    }
-
-  /* Now we have encoded the region, so we insert the new contents
-     and delete the old.  (Insert first in order to preserve markers.)  */
-  SET_PT_BOTH (XFASTINT (beg), ibeg);
-  insert (encoded, encoded_length);
-  SAFE_FREE ();
-  del_range_byte (ibeg + encoded_length, iend + encoded_length);
-
-  /* If point was outside of the region, restore it exactly; else just
-     move to the beginning of the region.  */
-  if (old_pos >= XFASTINT (end))
-    old_pos += encoded_length - (XFASTINT (end) - XFASTINT (beg));
-  else if (old_pos > XFASTINT (beg))
-    old_pos = XFASTINT (beg);
-  SET_PT (old_pos);
-
-  /* We return the length of the encoded text. */
-  return make_number (encoded_length);
-}
-
-DEFUN ("base64-decode-region", Fbase64_decode_region, Sbase64_decode_region,
-       2, 2, "r",
-       doc: /* Base64-decode the region between BEG and END.
-Return the length of the decoded text.
-If the region can't be decoded, signal an error and don't modify the buffer.  */)
-  (Lisp_Object beg, Lisp_Object end)
-{
-  ptrdiff_t ibeg, iend, length, allength;
-  char *decoded;
-  ptrdiff_t old_pos = PT;
-  ptrdiff_t decoded_length;
-  ptrdiff_t inserted_chars;
-  bool multibyte = !NILP (BVAR (current_buffer, enable_multibyte_characters));
-  USE_SAFE_ALLOCA;
-
-  validate_region (&beg, &end);
-
-  ibeg = CHAR_TO_BYTE (XFASTINT (beg));
-  iend = CHAR_TO_BYTE (XFASTINT (end));
-
-  length = iend - ibeg;
-
-  /* We need to allocate enough room for decoding the text.  If we are
-     working on a multibyte buffer, each decoded code may occupy at
-     most two bytes.  */
-  allength = compute_decode_size(multibyte ? length * 2 : length);
-  decoded = SAFE_ALLOCA (allength);
-
-  move_gap_both (XFASTINT (beg), ibeg);
-  decoded_length = base64_decode_1 ((char *) BYTE_POS_ADDR (ibeg), length,
-				    decoded, allength,
-				    multibyte, &inserted_chars);
-
-  if (decoded_length < 0)
-    {
-      /* The decoding wasn't possible. */
-      error ("Invalid base64 data");
-    }
-
-  /* Now we have decoded the region, so we insert the new contents
-     and delete the old.  (Insert first in order to preserve markers.)  */
-  TEMP_SET_PT_BOTH (XFASTINT (beg), ibeg);
-  insert_1_both (decoded, inserted_chars, decoded_length, 0, 1, 0);
-  signal_after_change (XFASTINT (beg), 0, inserted_chars);
-  SAFE_FREE ();
-
-  /* Delete the original text.  */
-  del_range_both (PT, PT_BYTE, XFASTINT (end) + inserted_chars,
-		  iend + decoded_length, 1);
-
-  /* If point was outside of the region, restore it exactly; else just
-     move to the beginning of the region.  */
-  if (old_pos >= XFASTINT (end))
-    old_pos += inserted_chars - (XFASTINT (end) - XFASTINT (beg));
-  else if (old_pos > XFASTINT (beg))
-    old_pos = XFASTINT (beg);
-  SET_PT (old_pos > ZV ? ZV : old_pos);
-
-  return make_number (inserted_chars);
-}
-
 
 
 /***********************************************************************
@@ -3356,8 +3181,6 @@ this variable.  */);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);
-  defsubr (&Sbase64_encode_region);
-  defsubr (&Sbase64_decode_region);
   defsubr (&Ssecure_hash_algorithms);
   defsubr (&Slocale_info);
 }

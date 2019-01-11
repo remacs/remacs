@@ -961,6 +961,9 @@ check check-maybe check-expensive check-all: have-tests all
 clippy:
 	$(MAKE) -C src $@
 
+rustdoc:
+	$(MAKE) -C src $@
+
 .PHONY: clippy
 
 dist:

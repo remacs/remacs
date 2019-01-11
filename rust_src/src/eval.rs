@@ -25,7 +25,6 @@ use crate::{
         QCdocumentation, Qautoload, Qclosure, Qerror, Qexit, Qfunction, Qinteractive,
         Qinteractive_form, Qinternal_interpreter_environment, Qinvalid_function, Qlambda, Qmacro,
         Qnil, Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation, Qvoid_function,
-        Qwrong_number_of_arguments,
     },
     remacs_sys::{Vautoload_queue, Vrun_hooks},
     symbols::{fboundp, symbol_function, LispSymbolRef},
@@ -177,11 +176,7 @@ pub fn setq(args: LispObject) -> LispObject {
         .enumerate();
     while let Some((nargs, sym)) = it.next() {
         let (_, arg) = it.next().unwrap_or_else(|| {
-            xsignal!(
-                Qwrong_number_of_arguments,
-                Qsetq,
-                LispObject::from(nargs + 1)
-            );
+            wrong_number_of_arguments!(Qsetq, nargs + 1);
         });
 
         val = unsafe { eval_sub(arg) };
@@ -218,7 +213,7 @@ pub fn function(args: LispObject) -> LispObject {
     let (quoted, tail) = cell.as_tuple();
 
     if tail.is_not_nil() {
-        xsignal!(Qwrong_number_of_arguments, Qfunction, length(args).into());
+        wrong_number_of_arguments!(Qfunction, length(args));
     }
 
     if unsafe { globals.Vinternal_interpreter_environment != Qnil } {
@@ -697,17 +692,17 @@ pub fn autoload(
         return Qnil;
     }
 
-    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(LispObject::from(0)) {
+    if unsafe { globals.Vpurify_flag != Qnil } && docstring.eq(0) {
         // `read1' in lread.c has found the docstring starting with "\
         // and assumed the docstring will be provided by Snarf-documentation, so it
         // passed us 0 instead.  But that leads to accidental sharing in purecopy's
         // hash-consing, so we use a (hopefully) unique integer instead.
-        docstring = LispObject::from(unsafe { function.as_lisp_obj().to_fixnum_unchecked() });
+        docstring = LispObject::from(unsafe { LispObject::from(function).to_fixnum_unchecked() });
     }
 
     defalias(
         function,
-        list!(Qautoload, file.as_lisp_obj(), docstring, interactive, ty),
+        list!(Qautoload, file, docstring, interactive, ty),
         Qnil,
     )
 }
@@ -770,7 +765,7 @@ pub unsafe extern "C" fn un_autoload(oldqueue: LispObject) {
     for first in queue.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
         let (first, second) = first.as_cons_or_error().as_tuple();
 
-        if first.eq(LispObject::from(0)) {
+        if first.eq(0) {
             globals.Vfeatures = second;
         } else {
             fset(first.as_symbol_or_error(), second);

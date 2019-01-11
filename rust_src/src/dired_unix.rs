@@ -222,7 +222,7 @@ fn fnames_from_os(fnames: &mut Vec<String>, dname: &str, match_re: Option<LispOb
         xsignal!(
             Qfile_missing,
             format!("Opening directory: {}", res.unwrap_err()).to_bstring(),
-            LispObject::from(dname)
+            dname
         );
     }
 }

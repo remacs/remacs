@@ -731,31 +731,6 @@ window so that the location of point moves off-window.  */)
   return set_window_hscroll (decode_live_window (window), XINT (ncol));
 }
 
-DEFUN ("window-redisplay-end-trigger", Fwindow_redisplay_end_trigger,
-       Swindow_redisplay_end_trigger, 0, 1, 0,
-       doc: /* Return WINDOW's redisplay end trigger value.
-WINDOW must be a live window and defaults to the selected one.
-See `set-window-redisplay-end-trigger' for more information.  */)
-  (Lisp_Object window)
-{
-  return decode_live_window (window)->redisplay_end_trigger;
-}
-
-DEFUN ("set-window-redisplay-end-trigger", Fset_window_redisplay_end_trigger,
-       Sset_window_redisplay_end_trigger, 2, 2, 0,
-       doc: /* Set WINDOW's redisplay end trigger value to VALUE.
-WINDOW must be a live window and defaults to the selected one.  VALUE
-should be a buffer position (typically a marker) or nil.  If it is a
-buffer position, then if redisplay in WINDOW reaches a position beyond
-VALUE, the functions in `redisplay-end-trigger-functions' are called
-with two arguments: WINDOW, and the end trigger value.  Afterwards the
-end-trigger value is reset to nil.  */)
-  (register Lisp_Object window, Lisp_Object value)
-{
-  wset_redisplay_end_trigger (decode_live_window (window), value);
-  return value;
-}
-
 /* Test if the character at column X, row Y is within window W.
    If it is not, return ON_NOTHING;
    if it is on the window's vertical divider, return
@@ -3120,31 +3095,6 @@ Note: This function does not operate on any child windows of WINDOW.  */)
   return w->new_pixel;
 }
 
-DEFUN ("set-window-new-total", Fset_window_new_total, Sset_window_new_total, 2, 3, 0,
-       doc: /* Set new total size of WINDOW to SIZE.
-WINDOW must be a valid window and defaults to the selected one.
-Return SIZE.
-
-Optional argument ADD non-nil means add SIZE to the new total size of
-WINDOW and return the sum.
-
-The new total size of WINDOW, if valid, will be shortly installed as
-WINDOW's total height (see `window-total-height') or total width (see
-`window-total-width').
-
-Note: This function does not operate on any child windows of WINDOW.  */)
-     (Lisp_Object window, Lisp_Object size, Lisp_Object add)
-{
-  struct window *w = decode_valid_window (window);
-
-  CHECK_NUMBER (size);
-  if (NILP (add))
-    wset_new_total (w, size);
-  else
-    wset_new_total (w, make_number (XINT (w->new_total) + XINT (size)));
-
-  return w->new_total;
-}
 
 DEFUN ("set-window-new-normal", Fset_window_new_normal, Sset_window_new_normal, 1, 2, 0,
        doc: /* Set new normal size of WINDOW to SIZE.
@@ -6706,15 +6656,12 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_top);
   defsubr (&Swindow_left_column);
   defsubr (&Sset_window_new_pixel);
-  defsubr (&Sset_window_new_total);
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
   defsubr (&Swindow_resize_apply_total);
   defsubr (&Swindow_body_height);
   defsubr (&Swindow_body_width);
   defsubr (&Sset_window_hscroll);
-  defsubr (&Swindow_redisplay_end_trigger);
-  defsubr (&Sset_window_redisplay_end_trigger);
   defsubr (&Swindow_mode_line_height);
   defsubr (&Swindow_header_line_height);
   defsubr (&Swindow_right_divider_width);
