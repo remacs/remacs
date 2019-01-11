@@ -8077,6 +8077,14 @@ not_in_argv (NSString *arg)
 }
 
 
+- (void)viewWillDraw
+{
+  /* If the frame has been garbaged there's no point in redrawing
+     anything.  */
+  if (FRAME_GARBAGED_P (emacsframe))
+    [self setNeedsDisplay:NO];
+}
+
 - (void)drawRect: (NSRect)rect
 {
   const NSRect *rectList;
