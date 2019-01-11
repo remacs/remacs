@@ -330,7 +330,7 @@ pub fn setplist(mut symbol: LispSymbolRef, newplist: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
     let mut sym: LispSymbolRef = symbol.into();
-    if symbol.is_nil() || symbol.is_t() {
+    if !symbol || symbol.is_t() {
         setting_constant!(symbol);
     }
     sym.set_function(Qnil);

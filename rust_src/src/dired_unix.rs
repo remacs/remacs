@@ -105,7 +105,7 @@ trait LispObjectExt {
 
 impl LispObjectExt for LispObject {
     fn to_idfstring(&self) -> String {
-        if self.is_nil() {
+        if !*self {
             "NOTstring".to_string()
         } else {
             let idf_sym_s = self.symbol_or_string_as_string();
@@ -338,17 +338,9 @@ pub fn directory_files_intro(
 
     let dr = DirReq::new(
         LispObject::from(dnexp).to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
+        if !full { FullPath::No } else { FullPath::Yes },
+        if !match_re { None } else { Some(match_re) },
+        if !nosort {
             SortFNames::Yes
         } else {
             SortFNames::No
@@ -384,17 +376,9 @@ pub fn directory_files_and_attributes_intro(
 
     let dr = DirReq::new(
         LispObject::from(dnexp).to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
+        if !full { FullPath::No } else { FullPath::Yes },
+        if !match_re { None } else { Some(match_re) },
+        if !nosort {
             SortFNames::Yes
         } else {
             SortFNames::No
@@ -421,17 +405,9 @@ pub extern "C" fn directory_files_internal(
 ) -> LispObject {
     let dr = DirReq::new(
         directory.to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
+        if !full { FullPath::No } else { FullPath::Yes },
+        if !match_re { None } else { Some(match_re) },
+        if !nosort {
             SortFNames::Yes
         } else {
             SortFNames::No

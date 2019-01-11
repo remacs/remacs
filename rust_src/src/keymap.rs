@@ -102,7 +102,7 @@ pub extern "C" fn get_keymap(
     while autoload_retry {
         autoload_retry = false;
 
-        if object.is_nil() {
+        if !object {
             break;
         }
 
@@ -201,7 +201,7 @@ pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
 pub extern "C" fn keymap_memberp(map: LispObject, maps: LispObject) -> bool {
     let map = map;
     let mut maps = maps;
-    if map.is_nil() {
+    if !map {
         return false;
     }
     while keymapp(maps) && !map.eq(maps) {
@@ -401,7 +401,7 @@ pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) ->
 #[lisp_fn(min = "1")]
 pub fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject {
     let map = current_local_map();
-    if map.is_nil() {
+    if !map {
         Qnil
     } else {
         lookup_key(map, keys, accept_default)
@@ -419,7 +419,7 @@ pub fn current_local_map() -> LispObject {
 /// If KEYMAP is nil, that means no local keymap.
 #[lisp_fn]
 pub fn use_local_map(mut keymap: LispObject) {
-    if !keymap.is_nil() {
+    if keymap.is_not_nil() {
         let map = get_keymap(keymap, true, true);
         keymap = map;
     }
@@ -438,7 +438,7 @@ pub fn use_local_map(mut keymap: LispObject) {
 #[lisp_fn(min = "1")]
 pub fn global_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject {
     let map = current_global_map();
-    if map.is_nil() {
+    if !map {
         Qnil
     } else {
         lookup_key(map, keys, accept_default)
@@ -585,7 +585,7 @@ pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
 /// DESCRIBER is the output function used; nil means use `princ'.
 #[lisp_fn(min = "1", name = "describe-vector", c_name = "describe_vector")]
 pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
-    if describer.is_nil() {
+    if !describer {
         describer = intern("princ").into();
     }
     unsafe { specbind(Qstandard_output, current_buffer()) };

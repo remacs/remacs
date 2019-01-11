@@ -55,7 +55,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
             Vautoload_queue = ((0, globals.Vfeatures), Vautoload_queue).into();
         }
     }
-    if memq(feature.into(), unsafe { globals.Vfeatures }).is_nil() {
+    if !memq(feature.into(), unsafe { globals.Vfeatures }) {
         unsafe {
             globals.Vfeatures = (feature, globals.Vfeatures).into();
         }
@@ -146,11 +146,11 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
     let from_file = unsafe { globals.load_in_progress }
         || current_load_list
             .iter_tails(LispConsEndChecks::off, LispConsCircularChecks::off)
-            .any(|elt| elt.cdr().is_nil() && elt.car().is_string());
+            .any(|elt| !elt.cdr() && elt.car().is_string());
 
     if from_file {
         let tem = (Qrequire, feature).into();
-        if member(tem, current_load_list).is_nil() {
+        if !member(tem, current_load_list) {
             loadhist_attach(tem);
         }
     }
@@ -196,7 +196,7 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
 
         // Load the file.
         let tem = Fload(
-            if filename.is_nil() {
+            if !filename {
                 feature_sym.symbol_name()
             } else {
                 filename
@@ -204,20 +204,20 @@ pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -
             noerror,
             Qt,
             Qnil,
-            filename.is_nil().into(),
+            (!filename).into(),
         );
 
         // If load failed entirely, return nil.
-        if tem.is_nil() {
+        if !tem {
             return unbind_to(count, Qnil);
         }
     }
 
     let tem = memq(feature, unsafe { globals.Vfeatures });
-    if tem.is_nil() {
+    if !tem {
         let tem3 = car(car(unsafe { globals.Vload_history }));
 
-        if tem3.is_nil() {
+        if !tem3 {
             error!("Required feature `{}' was not provided", feature);
         } else {
             // Cf autoload-do-load.

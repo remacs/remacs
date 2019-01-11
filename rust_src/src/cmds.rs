@@ -47,7 +47,7 @@ fn move_point(n: LispObject, forward: bool) {
     // hooks, et cetera), that's not a good approach. So we validate the
     // proposed position, then set point.
 
-    let mut n = if n.is_nil() {
+    let mut n = if !n {
         1
     } else {
         n.as_fixnum_or_error() as isize
@@ -389,7 +389,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     };
     if current_buffer.abbrev_mode_.is_not_nil()
         && synt != syntaxcode::Sword
-        && current_buffer.read_only_.is_nil()
+        && !current_buffer.read_only_
         && current_buffer.pt > current_buffer.begv
         && unsafe { syntax_property(previous_char as libc::c_int, true) } == syntaxcode::Sword
     {

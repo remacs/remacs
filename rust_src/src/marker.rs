@@ -500,7 +500,7 @@ fn set_marker_internal(
         .or_else(|| current_buffer().as_live_buffer());
     // Set MARKER to point nowhere if BUFFER is dead, or
     // POSITION is nil or a marker points to nowhere.
-    if position.is_nil() || (position.is_marker() && !position.has_buffer()) || buf.is_none() {
+    if !position || (position.is_marker() && !position.has_buffer()) || buf.is_none() {
         unchain_marker(marker.as_mut());
 
     // Optimize the special case where we are copying the position of

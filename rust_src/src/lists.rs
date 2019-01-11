@@ -26,7 +26,7 @@ pub struct LispCons(LispObject);
 
 impl LispObject {
     pub fn check_list(self) {
-        if !(self.is_cons() || self.is_nil()) {
+        if !(self.is_cons() || !self) {
             wrong_type!(Qlistp, self);
         }
     }
@@ -62,7 +62,7 @@ impl Debug for LispCons {
             write!(f, "{:?}", car)?;
         }
         let last = it.rest();
-        if !last.is_nil() {
+        if last.is_not_nil() {
             write!(f, ". {:?}", last)?;
         }
         write!(f, ")")
@@ -75,7 +75,7 @@ impl LispObject {
     }
 
     pub fn is_list(self) -> bool {
-        self.is_cons() || self.is_nil()
+        self.is_cons() || !self
     }
 
     pub fn iter_tails_v2(
@@ -422,7 +422,7 @@ pub fn consp(object: LispObject) -> bool {
 /// Otherwise, return nil.
 #[lisp_fn]
 pub fn listp(object: LispObject) -> bool {
-    object.is_nil() || consp(object)
+    !object || consp(object)
 }
 
 /// Return t if OBJECT is not a list.  Lists include nil.
@@ -454,7 +454,7 @@ pub fn setcdr(cell: LispCons, newcdr: LispObject) -> LispObject {
 /// Lisp concepts such as car, cdr, cons cell and list.
 #[lisp_fn]
 pub fn car(list: LispObject) -> LispObject {
-    if list.is_nil() {
+    if !list {
         list
     } else {
         let (a, _) = list.into();
@@ -469,7 +469,7 @@ pub fn car(list: LispObject) -> LispObject {
 /// Lisp concepts such as cdr, car, cons cell and list.
 #[lisp_fn]
 pub fn cdr(list: LispObject) -> LispObject {
-    if list.is_nil() {
+    if !list {
         list
     } else {
         let (_, d) = list.into();
@@ -577,7 +577,7 @@ pub fn assq(key: LispObject, list: LispObject) -> LispObject {
 /// Equality is defined by TESTFN is non-nil or by `equal' if nil.
 #[lisp_fn(min = "2")]
 pub fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
-    if testfn.is_nil() {
+    if !testfn {
         assoc_impl(key, list, |k, item| k.eq(item) || k.equal(item))
     } else {
         assoc_impl(key, list, |k, item| call!(testfn, k, item).is_not_nil())
@@ -850,7 +850,7 @@ pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
 
 // also needed by vectors.rs
 pub fn inorder(pred: LispObject, a: LispObject, b: LispObject) -> bool {
-    call!(pred, b, a).is_nil()
+    !call!(pred, b, a)
 }
 
 /// Merge step of linked-list sorting.
@@ -859,7 +859,7 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
     let mut value = Qnil;
 
     loop {
-        if l1.is_nil() {
+        if !l1 {
             match tail {
                 Some(cons) => {
                     setcdr(cons, l2);
@@ -868,7 +868,7 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
                 None => return l2,
             };
         }
-        if l2.is_nil() {
+        if !l2 {
             match tail {
                 Some(cons) => {
                     setcdr(cons, l1);

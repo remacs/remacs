@@ -27,7 +27,7 @@ pub fn profiler_memory_start() -> bool {
             error(error_str.as_ptr() as *const u8);
         }
 
-        if memory_log.is_nil() {
+        if !memory_log {
             memory_log = make_log(globals.profiler_log_size, globals.profiler_max_stack_depth)
         }
 

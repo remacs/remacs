@@ -39,7 +39,7 @@ pub fn posn_at_point(pos: LispObject, window: LispWindowOrSelected) -> LispObjec
     let window: LispObject = window.into();
 
     let tem = unsafe { Fpos_visible_in_window_p(pos, window, Qt) };
-    if tem.is_nil() {
+    if !tem {
         return Qnil;
     }
 
@@ -89,7 +89,7 @@ pub fn posn_at_x_y(
     let mut frame = window_frame_live_or_selected_with_action(frame_or_window, |mut w| {
         x += w.left_edge_x();
 
-        if whole.is_nil() {
+        if !whole {
             x += unsafe { window_box_left_offset(w.as_mut(), glyph_row_area::TEXT_AREA) };
         }
 
@@ -119,7 +119,7 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
             return false;
         }
 
-        it.rest().is_nil()
+        !it.rest()
     })
 }
 

@@ -91,7 +91,7 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
     let prev_col = prev_col as u64;
 
     // If a tab char made us overshoot, change it to spaces and scan through it again
-    if !force.is_nil() && col > goal {
+    if !!force && col > goal {
         let pos_byte = buffer.dec_pos(buffer.pt_byte);
         let c = buffer.fetch_char(pos_byte);
 

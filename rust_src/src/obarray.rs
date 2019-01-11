@@ -84,7 +84,7 @@ impl From<LispObject> for LispObarrayRef {
 
 impl From<LispObject> for Option<LispObarrayRef> {
     fn from(o: LispObject) -> Self {
-        if o.is_nil() {
+        if !o {
             None
         } else {
             Some(o.into())

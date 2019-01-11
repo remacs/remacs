@@ -64,7 +64,7 @@ fn hash_alg(algorithm: LispSymbolRef) -> HashAlg {
 }
 
 fn check_coding_system_or_error(coding_system: LispObject, noerror: LispObject) -> LispObject {
-    if unsafe { Fcoding_system_p(coding_system) }.is_nil() {
+    if unsafe { !Fcoding_system_p(coding_system) } {
         /* Invalid coding system. */
         if noerror.is_not_nil() {
             Qraw_text
@@ -77,7 +77,7 @@ fn check_coding_system_or_error(coding_system: LispObject, noerror: LispObject) 
 }
 
 fn get_coding_system_for_string(string: LispStringRef, coding_system: LispObject) -> LispObject {
-    if coding_system.is_nil() {
+    if !coding_system {
         /* Decide the coding-system to encode the data with. */
         if string.is_multibyte() {
             /* use default, we can't guess correct value */
@@ -107,8 +107,8 @@ fn get_coding_system_for_buffer(
     if unsafe { globals.Vcoding_system_for_write }.is_not_nil() {
         return unsafe { globals.Vcoding_system_for_write };
     }
-    if (buffer.buffer_file_coding_system_.is_nil()
-        || unsafe { Flocal_variable_p(Qbuffer_file_coding_system, Qnil) }.is_nil())
+    if (!buffer.buffer_file_coding_system_
+        || unsafe { !Flocal_variable_p(Qbuffer_file_coding_system, Qnil) })
         && !buffer.multibyte_characters_enabled()
     {
         return Qraw_text;
@@ -365,7 +365,7 @@ fn _secure_hash(
         HashAlg::SHA512 => (SHA512_DIGEST_LEN, sha512_buffer as HashFn),
     };
 
-    let buffer_size = if binary.is_nil() {
+    let buffer_size = if !binary {
         (digest_size * 2) as EmacsInt
     } else {
         digest_size as EmacsInt
@@ -373,7 +373,7 @@ fn _secure_hash(
     let digest = unsafe { make_uninit_string(buffer_size as EmacsInt) };
     let mut digest_str: LispStringRef = digest.into();
     hash_func(input_slice, digest_str.as_mut_slice());
-    if binary.is_nil() {
+    if !binary {
         hexify_digest_string(digest_str.as_mut_slice(), digest_size);
     }
     digest

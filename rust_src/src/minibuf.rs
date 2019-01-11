@@ -80,13 +80,13 @@ pub fn minibuffer_prompt() -> LispObject {
 pub fn minibuffer_prompt_end() -> EmacsInt {
     let buffer = ThreadState::current_buffer_unchecked();
     let beg = buffer.beg() as EmacsInt;
-    if memq(buffer.into(), unsafe { Vminibuffer_list }).is_nil() {
+    if !memq(buffer.into(), unsafe { Vminibuffer_list }) {
         return beg;
     }
 
     let end = field_end(Some(beg.into()), false, None);
     let buffer_end = buffer.zv as EmacsInt;
-    if end == buffer_end && get_char_property(beg, Qfield, Qnil).is_nil() {
+    if end == buffer_end && !get_char_property(beg, Qfield, Qnil) {
         beg
     } else {
         end
@@ -174,7 +174,7 @@ pub fn read_from_minibuffer(
     default_value: LispObject,
     inherit_input_method: LispObject,
 ) -> LispObject {
-    keymap = if keymap.is_nil() {
+    keymap = if !keymap {
         unsafe { globals.Vminibuffer_local_map }
     } else {
         get_keymap(keymap, true, false)
@@ -186,10 +186,10 @@ pub fn read_from_minibuffer(
         (car_safe(hist), cdr_safe(hist))
     };
 
-    if histvar.is_nil() {
+    if !histvar {
         histvar = Qminibuffer_history
     };
-    if histpos.is_nil() {
+    if !histpos {
         histpos = LispObject::from_natnum(0)
     };
 
@@ -351,7 +351,7 @@ pub fn read_command_or_variable(
     default_value: LispObject,
     symbol: LispObject,
 ) -> LispObject {
-    let default_string = if default_value.is_nil() {
+    let default_string = if !default_value {
         Qnil
     } else if let Some(s) = default_value.as_symbol() {
         s.symbol_name()
@@ -370,7 +370,7 @@ pub fn read_command_or_variable(
         Qnil,
     );
 
-    if name.is_nil() {
+    if !name {
         name
     } else {
         lisp_intern(name.into(), None)

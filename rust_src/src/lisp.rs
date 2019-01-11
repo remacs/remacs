@@ -6,7 +6,7 @@ use std::ffi::CString;
 use std::fmt;
 use std::fmt::{Debug, Display, Error, Formatter};
 use std::mem;
-use std::ops::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut, Not};
 
 use libc::{c_char, c_void, intptr_t, uintptr_t};
 
@@ -74,6 +74,14 @@ impl LispObject {
 
     pub fn from_float(v: EmacsDouble) -> Self {
         unsafe { make_float(v) }
+    }
+}
+
+impl Not for LispObject {
+    type Output = bool;
+
+    fn not(self) -> Self::Output {
+        self == Qnil
     }
 }
 
@@ -377,7 +385,7 @@ impl From<LispObject> for EmacsInt {
 
 impl From<LispObject> for Option<EmacsInt> {
     fn from(o: LispObject) -> Self {
-        if o.is_nil() {
+        if !o {
             None
         } else {
             Some(o.as_fixnum_or_error())
@@ -393,7 +401,7 @@ impl From<LispObject> for EmacsUint {
 
 impl From<LispObject> for Option<EmacsUint> {
     fn from(o: LispObject) -> Self {
-        if o.is_nil() {
+        if !o {
             None
         } else {
             Some(o.as_natnum_or_error())
@@ -488,7 +496,7 @@ impl LispObject {
     }
 
     pub fn is_sequence(self) -> bool {
-        self.is_cons() || self.is_nil() || self.is_array()
+        self.is_cons() || !self || self.is_array()
     }
 
     pub fn is_record(self) -> bool {
@@ -535,10 +543,6 @@ pub fn is_autoload(function: LispObject) -> bool {
 }
 
 impl LispObject {
-    pub fn is_nil(self) -> bool {
-        self == Qnil
-    }
-
     pub fn is_not_nil(self) -> bool {
         self != Qnil
     }
@@ -586,7 +590,7 @@ impl LispObject {
     }
 
     pub fn map_or<T, F: FnOnce(LispObject) -> T>(self, default: T, action: F) -> T {
-        if self.is_nil() {
+        if !self {
             default
         } else {
             action(self)
@@ -598,7 +602,7 @@ impl LispObject {
         default: F,
         action: F1,
     ) -> T {
-        if self.is_nil() {
+        if !self {
             default()
         } else {
             action(self)
@@ -628,7 +632,7 @@ impl Debug for LispObject {
                 self.to_C()
             );
         }
-        if self.is_nil() {
+        if !*self {
             return write!(f, "nil");
         }
         match ty {

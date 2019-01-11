@@ -85,7 +85,7 @@ impl From<LispObject> for EmacsDouble {
 
 impl From<LispObject> for Option<EmacsDouble> {
     fn from(o: LispObject) -> Self {
-        if o.is_nil() {
+        if !o {
             None
         } else {
             Some(o.any_to_float_or_error())
@@ -378,7 +378,7 @@ where
     F: Fn(f64) -> f64,
 {
     let d;
-    if divisor.is_nil() {
+    if !divisor {
         if arg.is_fixnum() {
             return arg.as_fixnum().unwrap();
         } else if let Some(f) = arg.as_float() {

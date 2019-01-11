@@ -61,7 +61,7 @@ fn check_coding_system_get_spec(x: LispObject) -> LispObject {
 /// about coding-system objects.
 #[lisp_fn]
 pub fn coding_system_p(object: LispObject) -> bool {
-    object.is_nil()
+    !object
         || coding_system_id(object) >= 0
         || object.is_symbol() && get(object.into(), Qcoding_system_define_form).into()
 }

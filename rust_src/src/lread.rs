@@ -147,7 +147,7 @@ pub unsafe fn defvar_per_buffer_offset(
     let local = offset.apply_mut(&mut remacs_sys::buffer_local_symbols);
     *local = sym.into();
     let flags = offset.apply(&remacs_sys::buffer_local_flags);
-    if flags.is_nil() {
+    if !*flags {
         panic!(
             "Did a DEFVAR_PER_BUFFER without initializing
              the corresponding slot of buffer_local_flags."
@@ -216,11 +216,7 @@ pub fn eval_region(
     let cur_buf = ThreadState::current_buffer_unchecked();
     let cur_buf_obj = cur_buf.into();
 
-    let tem = if printflag.is_nil() {
-        Qsymbolp
-    } else {
-        printflag
-    };
+    let tem = if !printflag { Qsymbolp } else { printflag };
     unsafe {
         specbind(Qstandard_output, tem);
         specbind(

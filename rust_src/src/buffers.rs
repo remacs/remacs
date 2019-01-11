@@ -598,7 +598,7 @@ impl From<LispObject> for LispBufferOrName {
 
 impl From<LispObject> for Option<LispBufferOrName> {
     fn from(v: LispObject) -> Self {
-        if v.is_nil() {
+        if !v {
             None
         } else if v.is_string() {
             Some(LispBufferOrName::Name(v))
@@ -683,7 +683,7 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
             let prevlist = unsafe { Fnreverse(Fcopy_sequence(frame.buried_buffer_list)) };
 
             // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
-            buffers.retain(|e| member(*e, framelist).is_nil() && member(*e, prevlist).is_nil());
+            buffers.retain(|e| !member(*e, framelist) && !member(*e, prevlist));
 
             callN_raw!(Fnconc, framelist, list(&buffers), prevlist)
         }
@@ -846,8 +846,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
     let prop = unsafe { Fget_text_property(pos.into(), Qinhibit_read_only, Qnil) };
 
-    if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && prop.is_nil()
-    {
+    if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && !prop {
         xsignal!(Qbuffer_read_only, current_buffer())
     }
 }

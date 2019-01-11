@@ -29,9 +29,8 @@ pub fn case_table_p(object: LispObject) -> bool {
     let canon = extras[1];
     let eqv = extras[2];
 
-    (up.is_nil() || up.is_char_table())
-        && ((canon.is_nil() && eqv.is_nil())
-            || (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
+    (!up || up.is_char_table())
+        && ((!canon && !eqv) || (canon.is_char_table() && (!eqv || eqv.is_char_table())))
 }
 
 /// Return the case table of the current buffer.

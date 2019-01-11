@@ -13,7 +13,7 @@ use crate::{
 /// Its numeric meaning is what you would get from `(interactive "p")'.
 #[lisp_fn]
 pub fn prefix_numeric_value(raw: LispObject) -> EmacsInt {
-    if raw.is_nil() {
+    if !raw {
         1
     } else if raw.eq(Qminus) {
         -1

@@ -384,13 +384,9 @@ fn let_binding_value(obj: LispObject) -> (LispObject, LispObject) {
         (obj, Qnil)
     } else {
         let (front, tail) = obj.into();
-        let (to_eval, tail) = if tail.is_nil() {
-            (Qnil, tail)
-        } else {
-            tail.into()
-        };
+        let (to_eval, tail) = if !tail { (Qnil, tail) } else { tail.into() };
 
-        if tail.is_nil() {
+        if !tail {
             (front, unsafe { eval_sub(to_eval) })
         } else {
             signal_error("`let' bindings can have only one value-form", obj);
@@ -552,7 +548,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             unsafe { maybe_quit() };
             sym = def;
             tem = assq(sym, environment);
-            if tem.is_nil() {
+            if !tem {
                 def = sym_ref.get_function();
                 if def.is_not_nil() {
                     continue;
@@ -563,7 +559,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
 
         // Right now TEM is the result from SYM in ENVIRONMENT,
         // and if TEM is nil then DEF is SYM's function definition.
-        let expander = if tem.is_nil() {
+        let expander = if !tem {
             // SYM is not mentioned in ENVIRONMENT.
             // Look at its function definition.
             def = autoload_do_load(def, sym, Qmacro);
@@ -581,7 +577,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
             }
         } else {
             let (_, next) = tem.into();
-            if next.is_nil() {
+            if !next {
                 break;
             }
             next
@@ -605,7 +601,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
 #[lisp_fn(min = "1")]
 pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
     let count = c_specpdl_index();
-    let value = if lexical.is_cons() || lexical.is_nil() {
+    let value = if lexical.is_cons() || !lexical {
         lexical
     } else {
         list!(Qt)
@@ -621,7 +617,7 @@ pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
 /// Apply fn to arg.
 #[no_mangle]
 pub extern "C" fn apply1(func: LispObject, arg: LispObject) -> LispObject {
-    if arg.is_nil() {
+    if !arg {
         call!(func)
     } else {
         callN_raw!(Fapply, func, arg)
@@ -659,7 +655,7 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
     let mut has_interactive_prop = false;
 
     let mut fun = indirect_function(function); // Check cycles.
-    if fun.is_nil() {
+    if !fun {
         return false;
     }
 
@@ -778,7 +774,7 @@ pub extern "C" fn FUNCTIONP(object: LispObject) -> bool {
 
                     return match it.rest().into() {
                         None => true,
-                        Some((a, _)) => a.is_nil(),
+                        Some((a, _)) => !a,
                     };
                 }
             }
@@ -885,7 +881,7 @@ pub fn autoload_do_load(
 
     unbind_to(count, Qnil);
 
-    if funname.is_nil() || ignore_errors.is_not_nil() {
+    if !funname || ignore_errors.is_not_nil() {
         Qnil
     } else {
         let fun = indirect_function_lisp(funname, Qnil);
@@ -963,7 +959,7 @@ pub fn run_hook_with_args_until_success(args: &mut [LispObject]) -> LispObject {
 }
 
 fn funcall_not(args: &mut [LispObject]) -> LispObject {
-    funcall(args).is_nil().into()
+    (!funcall(args)).into()
 }
 
 /// Run HOOK with the specified arguments ARGS.
@@ -979,7 +975,7 @@ fn funcall_not(args: &mut [LispObject]) -> LispObject {
 /// usage: (run-hook-with-args-until-failure HOOK &rest ARGS)
 #[lisp_fn(min = "1")]
 pub fn run_hook_with_args_until_failure(args: &mut [LispObject]) -> bool {
-    run_hook_with_args_internal(args, funcall_not).is_nil()
+    !run_hook_with_args_internal(args, funcall_not)
 }
 
 fn run_hook_wrapped_funcall(args: &mut [LispObject]) -> LispObject {
@@ -1017,7 +1013,7 @@ fn run_hook_with_args_internal(
 ) -> LispObject {
     // If we are dying or still initializing,
     // don't do anything -- it would probably crash if we tried.
-    if unsafe { Vrun_hooks.is_nil() } {
+    if unsafe { !Vrun_hooks } {
         return Qnil;
     }
 
@@ -1025,7 +1021,7 @@ fn run_hook_with_args_internal(
     let sym = args[0];
     let val = unsafe { find_symbol_value(sym) };
 
-    if val.eq(Qunbound) || val.is_nil() {
+    if val.eq(Qunbound) || !val {
         Qnil
     } else if !val.is_cons() || FUNCTIONP(val) {
         args[0] = val;
@@ -1040,7 +1036,7 @@ fn run_hook_with_args_internal(
                 // t indicates this hook has a local binding;
                 // it means to run the global binding too.
                 let global_vals = unsafe { Fdefault_value(sym) };
-                if global_vals.is_nil() {
+                if !global_vals {
                     continue;
                 }
 
@@ -1087,7 +1083,7 @@ fn resolve_fun(fun: LispObject) -> Result<LispFun, LispFunError> {
     let original_fun = fun;
 
     loop {
-        if original_fun.is_nil() {
+        if !original_fun {
             return Err(LispFunError::VoidFun);
         }
 
@@ -1096,7 +1092,7 @@ fn resolve_fun(fun: LispObject) -> Result<LispFun, LispFunError> {
             .as_symbol()
             .map_or_else(|| original_fun, |f| f.get_indirect_function());
 
-        if fun.is_nil() {
+        if !fun {
             return Err(LispFunError::VoidFun);
         }
 
@@ -1235,7 +1231,7 @@ pub extern "C" fn unbind_to(count: libc::ptrdiff_t, value: LispObject) -> LispOb
             do_one_unbind(this_binding, true, Set_Internal_Bind::SET_INTERNAL_UNBIND);
         }
 
-        if globals.Vquit_flag.is_nil() && quitf.is_not_nil() {
+        if !globals.Vquit_flag && !quitf {
             globals.Vquit_flag = quitf;
         }
     }

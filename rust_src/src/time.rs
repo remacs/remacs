@@ -248,7 +248,7 @@ pub unsafe extern "C" fn decode_time_components(
                 *dresult = t;
             }
             return 1;
-        } else if low.is_nil() {
+        } else if !low {
             let now = current_timespec();
             if !result.is_null() {
                 (*result).hi = hi_time(now.tv_sec);

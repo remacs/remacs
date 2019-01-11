@@ -664,7 +664,7 @@ pub fn set_window_parameter(
 ) -> LispObject {
     let mut win: LispWindowRef = window.into();
     let old_alist_elt = assq(parameter, win.window_parameters);
-    if old_alist_elt.is_nil() {
+    if !old_alist_elt {
         win.window_parameters = ((parameter, value), win.window_parameters).into();
     } else {
         setcdr(old_alist_elt.into(), value);
@@ -984,7 +984,7 @@ pub fn window_top_child(window: LispWindowValidOrSelected) -> Option<LispWindowR
 
 pub fn scroll_horizontally(arg: LispObject, set_minimum: LispObject, left: bool) -> LispObject {
     let mut w = selected_window().as_window_or_error();
-    let requested_arg = if arg.is_nil() {
+    let requested_arg = if !arg {
         unsafe { EmacsInt::from(window_body_width(w.as_mut(), false)) - 2 }
     } else if left {
         prefix_numeric_value(arg)
