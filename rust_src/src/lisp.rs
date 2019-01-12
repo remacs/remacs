@@ -570,14 +570,14 @@ impl LispObject {
 
     pub fn eq<T>(self, other: T) -> bool
     where
-        LispObject: From<T>,
+        T: Into<LispObject>,
     {
         self == other.into()
     }
 
     pub fn eql<T>(self, other: T) -> bool
     where
-        LispObject: From<T>,
+        T: Debug + Into<LispObject>,
     {
         if self.is_float() {
             self.equal_no_quit(other)
@@ -588,8 +588,9 @@ impl LispObject {
 
     pub fn equal<T>(self, other: T) -> bool
     where
-        LispObject: From<T>,
+        T: Debug + Into<LispObject>,
     {
+        println!("a: {:?}, b: {:?}", self, other);
         let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_PLAIN, 0, &mut ht)
     }
@@ -683,8 +684,9 @@ impl LispObject {
 
     pub fn equal_no_quit<T>(self, other: T) -> bool
     where
-        LispObject: From<T>,
+        T: Debug + Into<LispObject>, //LispObject: From<T>
     {
+        println!("nq a: {:?}, b: {:?}", self, other);
         let mut ht = LispHashTableRef::empty();
         self.equal_internal(other.into(), equal_kind::EQUAL_NO_QUIT, 0, &mut ht)
     }

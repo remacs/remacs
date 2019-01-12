@@ -258,6 +258,9 @@ fn get_input(
             ss
         }
     } else {
+        if object.is_nil() {
+            error!("Nil in crypto");
+        }
         wrong_type!(Qstringp, object);
     }
 }

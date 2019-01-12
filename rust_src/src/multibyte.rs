@@ -266,6 +266,9 @@ impl From<EmacsDouble> for LispObject {
 
 impl From<LispObject> for LispStringRef {
     fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            error!("Why is this NIL!!");
+        }
         o.as_string().unwrap_or_else(|| wrong_type!(Qstringp, o))
     }
 }
