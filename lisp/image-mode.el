@@ -53,7 +53,7 @@ See `image-mode-winprops'.")
 It is called with one argument, the initial WINPROPS.")
 
 ;; FIXME this doesn't seem mature yet. Document in manual when it is.
-(defvar image-transform-resize nil
+(defvar-local image-transform-resize nil
   "The image resize operation.
 Its value should be one of the following:
  - nil, meaning no resizing.
@@ -61,10 +61,10 @@ Its value should be one of the following:
  - `fit-width', meaning to fit the image to the window width.
  - A number, which is a scale factor (the default size is 1).")
 
-(defvar image-transform-scale 1.0
+(defvar-local image-transform-scale 1.0
   "The scale factor of the image being displayed.")
 
-(defvar image-transform-rotation 0.0
+(defvar-local image-transform-rotation 0.0
   "Rotation angle for the image in the current Image mode buffer.")
 
 (defvar image-transform-right-angle-fudge 0.0001
