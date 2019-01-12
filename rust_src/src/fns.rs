@@ -7,20 +7,28 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    casefiddle::downcase,
+    dispnew::{ding, sleep_for},
     eval::{un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    minibuf::read_from_minibuffer,
     multibyte::LispStringRef,
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
-    remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
+    remacs_sys::{
+        concat as lisp_concat, globals, message1, record_unwind_protect,
+        redisplay_preserve_echo_area,
+    },
     remacs_sys::{equal_kind, EmacsInt, Lisp_Type},
-    remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
+    remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
+    remacs_sys::{
+        Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt, Qyes_or_no_p_history,
+    },
     symbols::LispSymbolRef,
     threads::c_specpdl_index,
     vectors::length,
@@ -373,6 +381,63 @@ pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
             }
         })
         .collect()
+}
+
+/// Ask user a yes-or-no question.
+///
+/// Return t if answer is yes, and nil if the answer is no.  PROMPT is
+/// the string to display to ask the question.  It should end in a
+/// space; `yes-or-no-p' adds \"(yes or no) \" to it.
+///
+/// The user must confirm the answer with RET, and can edit it until
+/// it has been confirmed.
+///
+/// If dialog boxes are supported, a dialog box will be used if
+/// `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.
+#[lisp_fn]
+pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
+    let use_popup = unsafe {
+        (globals.last_nonmenu_event.is_nil() || globals.last_nonmenu_event.is_cons())
+            && globals.use_dialog_box
+            && globals.last_input_event.is_not_nil()
+    };
+
+    if use_popup {
+        unsafe { redisplay_preserve_echo_area(4) };
+        let pane: LispObject = vec![("Yes", Qt).into(), ("No", Qnil).into()].into();
+        let menu: LispObject = (prompt, pane).into();
+        return unsafe { Fx_popup_dialog(Qt, menu, Qnil) }.into();
+    }
+
+    let yes_or_no: LispObject = "(yes or no) ".into();
+    let prompt = concat(&mut vec![prompt.into(), yes_or_no]).into();
+
+    loop {
+        let ans: LispStringRef = downcase(read_from_minibuffer(
+            prompt,
+            Qnil,
+            Qnil,
+            false,
+            Qyes_or_no_p_history,
+            Qnil,
+            false,
+        ))
+        .into();
+
+        if ans.as_slice() == "yes".as_bytes() {
+            return true;
+        }
+        if ans.as_slice() == "no".as_bytes() {
+            return false;
+        }
+
+        ding(Qnil);
+        unsafe {
+            Fdiscard_input();
+            message1("Please answer yes or no.\0".as_ptr() as *const i8);
+        }
+        sleep_for(2.0, None);
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

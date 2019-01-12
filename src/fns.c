@@ -1569,55 +1569,6 @@ do_yes_or_no_p (Lisp_Object prompt)
 {
   return call1 (intern ("yes-or-no-p"), prompt);
 }
-
-DEFUN ("yes-or-no-p", Fyes_or_no_p, Syes_or_no_p, 1, 1, 0,
-       doc: /* Ask user a yes-or-no question.
-Return t if answer is yes, and nil if the answer is no.
-PROMPT is the string to display to ask the question.  It should end in
-a space; `yes-or-no-p' adds \"(yes or no) \" to it.
-
-The user must confirm the answer with RET, and can edit it until it
-has been confirmed.
-
-If dialog boxes are supported, a dialog box will be used
-if `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.  */)
-  (Lisp_Object prompt)
-{
-  Lisp_Object ans;
-
-  CHECK_STRING (prompt);
-
-  if ((NILP (last_nonmenu_event) || CONSP (last_nonmenu_event))
-      && use_dialog_box && ! NILP (last_input_event))
-    {
-      Lisp_Object pane, menu, obj;
-      redisplay_preserve_echo_area (4);
-      pane = list2 (Fcons (build_string ("Yes"), Qt),
-		    Fcons (build_string ("No"), Qnil));
-      menu = Fcons (prompt, pane);
-      obj = Fx_popup_dialog (Qt, menu, Qnil);
-      return obj;
-    }
-
-  AUTO_STRING (yes_or_no, "(yes or no) ");
-  prompt = CALLN (Fconcat, prompt, yes_or_no);
-
-  while (1)
-    {
-      ans = Fdowncase (Fread_from_minibuffer (prompt, Qnil, Qnil, Qnil,
-					      Qyes_or_no_p_history, Qnil,
-					      Qnil));
-      if (SCHARS (ans) == 3 && !strcmp (SSDATA (ans), "yes"))
-	return Qt;
-      if (SCHARS (ans) == 2 && !strcmp (SSDATA (ans), "no"))
-	return Qnil;
-
-      Fding (Qnil);
-      Fdiscard_input ();
-      message1 ("Please answer yes or no.");
-      Fsleep_for (make_number (2), Qnil);
-    }
-}
 
 /* Primitives for work of the "widget" library.
    In an ideal world, this section would not have been necessary.
@@ -3161,7 +3112,6 @@ this variable.  */);
   defsubr (&Smapcar);
   defsubr (&Smapcan);
   defsubr (&Smapconcat);
-  defsubr (&Syes_or_no_p);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);
