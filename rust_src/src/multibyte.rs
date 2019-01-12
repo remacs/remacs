@@ -296,10 +296,6 @@ impl LispObject {
         self.into()
     }
 
-    pub fn as_string_or_error(self) -> LispStringRef {
-        self.into()
-    }
-
     pub unsafe fn to_string_unchecked(self) -> LispStringRef {
         LispStringRef::new(self.get_untaggedptr() as *mut Lisp_String)
     }

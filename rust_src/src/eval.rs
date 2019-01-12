@@ -232,7 +232,7 @@ pub fn function(args: LispCons) -> LispObject {
                         // dynamically.
 
                         let docstring = unsafe { eval_sub(car(tail)) };
-                        docstring.as_string_or_error();
+                        LispStringRef::from(docstring);
                         let (a, b) = cdr.into();
                         let (_, bd) = b.into();
                         cdr = (a, (docstring, bd)).into();
@@ -791,7 +791,7 @@ pub fn autoload_do_load(
         if globals.Vpurify_flag.is_not_nil() {
             error!(
                 "Attempt to autoload {} while preparing to dump",
-                sym.symbol_name().as_string_or_error()
+                sym.symbol_name()
             );
         }
 
@@ -837,8 +837,8 @@ pub fn autoload_do_load(
         if equal(fun, fundef) {
             error!(
                 "Autoloading file {} failed to define function {}",
-                car(car(unsafe { globals.Vload_history })).as_string_or_error(),
-                sym.symbol_name().as_string_or_error()
+                car(car(unsafe { globals.Vload_history })),
+                sym.symbol_name()
             );
         } else {
             fun
