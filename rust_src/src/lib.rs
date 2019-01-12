@@ -107,6 +107,7 @@ mod multibyte;
 mod numbers;
 mod obarray;
 mod objects;
+mod print;
 mod process;
 mod profiler;
 #[allow(clippy::all)]
