@@ -395,10 +395,17 @@ This is not required to be present for user-written mode annotations."
                                   (string :tag "Closing annotation delimiter"))))
 
 (defcustom calc-gnuplot-name
-  (if (eq system-type 'windows-nt) "pgnuplot" "gnuplot")
+  (if (and (eq system-type 'windows-nt)
+           ;; Gnuplot v4.x on MS-Windows came with a special
+           ;; pipe-enabled gnuplot executable for batch-mode
+           ;; execution; newer versions allow using gnuplot.exe.
+           (executable-find "pgnuplot"))
+      "pgnuplot"
+    "gnuplot")
   "Name of GNUPLOT program, for calc-graph features."
   :group 'calc
-  :type '(string))
+  :type '(string)
+  :version "26.2")
 
 (defcustom calc-gnuplot-plot-command
   nil
