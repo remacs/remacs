@@ -13,8 +13,9 @@ use crate::{
     character::char_head_p,
     chartable::LispCharTableRef,
     data::Lisp_Fwd,
-    editfns::point,
+    editfns::{point, widen},
     eval::unbind_to,
+    fileio::{expand_file_name, find_file_name_handler},
     frames::LispFrameRef,
     lisp::defsubr,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LiveBufferIter},
@@ -35,8 +36,7 @@ use crate::{
         Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
     },
     remacs_sys::{
-        windows_or_buffers_changed, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
-        Fget_text_property, Fnconc, Fnreverse, Fwiden,
+        windows_or_buffers_changed, Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse,
     },
     remacs_sys::{
         Qafter_string, Qbefore_string, Qbuffer_read_only, Qbufferp, Qget_file_buffer,
@@ -683,7 +683,7 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
             let prevlist = unsafe { Fnreverse(Fcopy_sequence(frame.buried_buffer_list)) };
 
             // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
-            buffers.retain(|e| member(*e, framelist) == Qnil && member(*e, prevlist) == Qnil);
+            buffers.retain(|e| member(*e, framelist).is_nil() && member(*e, prevlist).is_nil());
 
             callN_raw!(Fnconc, framelist, list(&buffers), prevlist)
         }
@@ -945,21 +945,20 @@ pub extern "C" fn fetch_buffer_markers(buffer: *mut Lisp_Buffer) {
 /// If there is no such live buffer, return nil.
 /// See also `find-buffer-visiting'.
 #[lisp_fn]
-pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
-    verify_lisp_type!(filename, Qstringp);
-    let filename = unsafe { Fexpand_file_name(filename, Qnil) };
+pub fn get_file_buffer(filename: LispStringRef) -> Option<LispBufferRef> {
+    let filename = expand_file_name(filename, None);
 
     // If the file name has special constructs in it,
     // call the corresponding file handler.
-    let handler = unsafe { Ffind_file_name_handler(filename, Qget_file_buffer) };
+    let handler = find_file_name_handler(filename, Qget_file_buffer);
 
     if handler.is_not_nil() {
-        let handled_buf = call!(handler, Qget_file_buffer, filename);
+        let handled_buf = call!(handler, Qget_file_buffer, filename.into());
         handled_buf.as_buffer()
     } else {
         LiveBufferIter::new().find(|buf| {
             let buf_filename = buf.filename();
-            buf_filename.is_string() && string_equal(buf_filename, filename)
+            buf_filename.is_string() && string_equal(buf_filename, filename.into())
         })
     }
 }
@@ -1096,9 +1095,8 @@ pub fn delete_all_overlays_lisp(buffer: LispBufferOrCurrent) {
 /// so the buffer is truly empty after this.
 #[lisp_fn(intspec = "*")]
 pub fn erase_buffer() {
+    widen();
     unsafe {
-        Fwiden();
-
         let mut cur_buf = ThreadState::current_buffer_unchecked();
         del_range(cur_buf.beg(), cur_buf.z());
 
@@ -1127,7 +1125,7 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if (ignore != Qnil && string_equal(name.into(), ignore))
+    if (ignore.is_not_nil() && string_equal(name.into(), ignore))
         || get_buffer(LispBufferOrName::Name(name.into())).is_none()
     {
         return name;

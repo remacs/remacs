@@ -6,16 +6,17 @@ use std::path;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    coding::encode_file_name,
     lisp::defsubr,
+    lisp::LispObject,
     lists::LispCons,
     math::{arithcompare, ArithComparison},
     multibyte::LispStringRef,
     remacs_sys::{
-        check_executable, check_existing, encode_file_name, file_name_absolute_p,
-        file_name_case_insensitive_p,
+        check_executable, check_existing, file_name_absolute_p, file_name_case_insensitive_p,
     },
     remacs_sys::{Fexpand_file_name, Ffind_file_name_handler},
-    remacs_sys::{Qfile_executable_p, Qfile_exists_p, Qfile_name_case_insensitive_p, Qnil},
+    remacs_sys::{Qfile_executable_p, Qfile_exists_p, Qfile_name_case_insensitive_p},
     threads::ThreadState,
 };
 
@@ -64,20 +65,16 @@ pub fn recent_auto_save_p() -> bool {
     c_name = "file_name_case_insensitive_p"
 )]
 pub fn file_name_case_insensitive_p_lisp(filename: LispStringRef) -> bool {
-    let absname = unsafe { Fexpand_file_name(filename.into(), Qnil) };
+    let absname = expand_file_name(filename, None);
 
     // If the file name has special constructs in it,
     // call the corresponding file handler.
-    let handler = unsafe { Ffind_file_name_handler(absname, Qfile_name_case_insensitive_p) };
+    let handler = find_file_name_handler(absname, Qfile_name_case_insensitive_p);
     if handler.is_not_nil() {
-        call!(handler, Qfile_name_case_insensitive_p, absname).into()
+        call!(handler, Qfile_name_case_insensitive_p, absname.into()).into()
     } else {
         unsafe {
-            file_name_case_insensitive_p(
-                encode_file_name(absname)
-                    .as_string_or_error()
-                    .const_data_ptr() as *const i8,
-            )
+            file_name_case_insensitive_p(encode_file_name(absname).const_data_ptr() as *const i8)
         }
     }
 }
@@ -95,24 +92,18 @@ pub fn file_name_absolute_p_lisp(filename: LispStringRef) -> bool {
 /// Use `file-symlink-p' to test for such links.
 #[lisp_fn]
 pub fn file_exists_p(filename: LispStringRef) -> bool {
-    let absname = unsafe { Fexpand_file_name(filename.into(), Qnil) };
+    let absname = expand_file_name(filename, None);
 
     // If the file name has special constructs in it,
     // call the corresponding file handler.
-    let handler = unsafe { Ffind_file_name_handler(absname, Qfile_exists_p) };
+    let handler = find_file_name_handler(absname, Qfile_exists_p);
 
     if handler.is_not_nil() {
-        let result = call!(handler, Qfile_exists_p, absname);
+        let result = call!(handler, Qfile_exists_p, absname.into());
         set_errno(Errno(0));
         result.into()
     } else {
-        unsafe {
-            check_existing(
-                encode_file_name(absname)
-                    .as_string_or_error()
-                    .const_data_ptr() as *const i8,
-            )
-        }
+        unsafe { check_existing(encode_file_name(absname).const_data_ptr() as *const i8) }
     }
 }
 
@@ -121,19 +112,30 @@ pub fn file_exists_p(filename: LispStringRef) -> bool {
 /// (It is generally better to use `file-accessible-directory-p' for that purpose, though.)
 #[lisp_fn]
 pub fn file_executable_p(filename: LispStringRef) -> bool {
-    let absname = unsafe { Fexpand_file_name(filename.into(), Qnil) };
+    let absname = expand_file_name(filename, None);
 
     // If the file name has special constructs in it,
     // call the corresponding file handler.
-    let handler = unsafe { Ffind_file_name_handler(absname, Qfile_executable_p) };
+    let handler = find_file_name_handler(absname, Qfile_executable_p);
 
     if handler.is_not_nil() {
-        call!(handler, Qfile_executable_p, absname).into()
+        call!(handler, Qfile_executable_p, absname.into()).into()
     } else {
-        unsafe {
-            check_executable(encode_file_name(absname).as_string_or_error().data_ptr() as *mut i8)
-        }
+        unsafe { check_executable(encode_file_name(absname).data_ptr() as *mut i8) }
     }
+}
+
+/// Wrapper for Fexpand_file_name (NOT PORTED)
+pub fn expand_file_name(
+    name: LispStringRef,
+    default_directory: Option<LispStringRef>,
+) -> LispStringRef {
+    unsafe { Fexpand_file_name(name.into(), default_directory.into()) }.into()
+}
+
+/// Wrapper for Ffind_file_name_handler (NOT PORTED)
+pub fn find_file_name_handler(filename: LispStringRef, operation: LispObject) -> LispObject {
+    unsafe { Ffind_file_name_handler(filename.into(), operation) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/fileio_exports.rs"));
