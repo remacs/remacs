@@ -1,15 +1,19 @@
 //! Synchronous subprocess invocation for GNU Emacs.
 
 use crate::{
-    eval::unbind_to,
+    buffers,
+    eval::{record_unwind_protect_int, unbind_to},
+    libc::O_RDONLY,
     lisp::{defsubr, LispObject},
+    multibyte::LispStringRef,
     remacs_macros::lisp_fn,
-    remacs_sys::Fexpand_file_name,
     remacs_sys::NULL_DEVICE,
     remacs_sys::{
-        build_string, call_process, close_file_unwind, emacs_open, encode_file_name,
-        record_unwind_protect_int, report_file_error,
+        build_string, call_process, close_file_unwind, create_temp_file, emacs_open,
+        encode_file_name, report_file_error,
     },
+    remacs_sys::{EmacsInt, Qnil},
+    remacs_sys::{Fdelete_region, Fexpand_file_name},
     threads::{c_specpdl_index, ThreadState},
 };
 
@@ -77,6 +81,55 @@ pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
             -1,
         )
     })
+}
+
+#[lisp_fn(min = "3")]
+pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
+    let mut start = args[0];
+    let mut end = args[1];
+    let mut infile = Qnil;
+    let spec = c_specpdl_index();
+
+    let empty_input = if start.is_string() {
+        LispStringRef::from(start).len_chars() == 0
+    } else if start.is_nil() {
+        let buffer = &ThreadState::current_buffer_unchecked();
+        buffer.beg() == buffer.z()
+    } else {
+        unsafe { buffers::validate_region(&mut args[0], &mut args[1]) };
+        start = args[0];
+        end = args[1];
+        EmacsInt::from(start) == EmacsInt::from(end)
+    };
+
+    let fd = unsafe {
+        if !empty_input {
+            create_temp_file(args.len() as isize, args.as_mut_ptr(), &mut infile)
+        } else {
+            let fd = emacs_open(NULL_DEVICE.as_ptr() as *const i8, O_RDONLY, 0);
+            if fd < 0 {
+                report_file_error("opening null device".as_ptr() as *const i8, Qnil);
+            }
+            record_unwind_protect_int(Some(close_file_unwind), fd);
+            fd
+        }
+    };
+
+    if args.len() > 3 && args[3].is_not_nil() {
+        unsafe { Fdelete_region(start, end) };
+    }
+
+    let args = if args.len() > 3 {
+        &mut args[2..]
+    } else {
+        args[0] = args[2];
+        &mut args[..2]
+    };
+    args[1] = infile;
+
+    let count = if empty_input { -1 } else { spec };
+    let exit = unsafe { call_process(args.len() as isize, args.as_mut_ptr(), fd, count) };
+    unbind_to(spec, exit)
 }
 
 include!(concat!(env!("OUT_DIR"), "/callproc_exports.rs"));

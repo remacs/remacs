@@ -4046,6 +4046,7 @@ extern void syms_of_eval (void);
 extern void prog_ignore (Lisp_Object);
 extern ptrdiff_t record_in_backtrace (Lisp_Object, Lisp_Object *, ptrdiff_t);
 extern void mark_specpdl (union specbinding *first, union specbinding *ptr);
+extern void grow_specpdl (void);
 extern void get_backtrace (Lisp_Object array);
 Lisp_Object backtrace_top_function (void);
 extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);

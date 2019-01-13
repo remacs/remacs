@@ -7,7 +7,7 @@ use libc;
 use remacs_macros::lisp_fn;
 
 use crate::{
-    eval::{un_autoload, unbind_to},
+    eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::defsubr,
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
@@ -18,7 +18,7 @@ use crate::{
     objects::equal,
     remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
-    remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
+    remacs_sys::{concat as lisp_concat, globals},
     remacs_sys::{equal_kind, EmacsInt, Lisp_Type},
     remacs_sys::{Qfuncall, Qlistp, Qnil, Qprovide, Qquote, Qrequire, Qsubfeatures, Qt},
     symbols::LispSymbolRef,

@@ -14,7 +14,7 @@ use crate::{
     buffers::{current_buffer, validate_region},
     buffers::{LispBufferOrCurrent, LispBufferOrName, LispBufferRef, BUF_BYTES_MAX},
     character::{char_head_p, dec_pos},
-    eval::{progn, unbind_to},
+    eval::{progn, record_unwind_protect, unbind_to},
     indent::invalidate_current_column,
     lisp::{defsubr, LispObject},
     marker::{
@@ -33,10 +33,9 @@ use crate::{
         find_before_next_newline, find_newline, get_char_property_and_overlay, globals, insert,
         insert_and_inherit, insert_from_buffer, make_buffer_string, make_buffer_string_both,
         make_save_obj_obj_obj_obj, make_string_from_bytes, maybe_quit, message1, message3,
-        record_unwind_current_buffer, record_unwind_protect, save_excursion_restore,
-        save_restriction_restore, save_restriction_save, scan_newline_from_point,
-        set_buffer_internal_1, set_point, set_point_both, styled_format, update_buffer_properties,
-        STRING_BYTES,
+        record_unwind_current_buffer, save_excursion_restore, save_restriction_restore,
+        save_restriction_save, scan_newline_from_point, set_buffer_internal_1, set_point,
+        set_point_both, styled_format, update_buffer_properties, STRING_BYTES,
     },
     remacs_sys::{
         Fadd_text_properties, Fcopy_sequence, Fget_pos_property, Fnext_single_char_property_change,

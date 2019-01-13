@@ -198,16 +198,6 @@ report_file_errno (char const *string, Lisp_Object name, int errorno)
 	     Fcons (build_string (string), errdata));
 }
 
-/* Signal a file-access failure that set errno.  STRING describes the
-   failure, NAME the file involved.  When invoking this function, take
-   care to not use arguments such as build_string ("foo") that involve
-   side effects that may set errno.  */
-
-void
-report_file_error (char const *string, Lisp_Object name)
-{
-  report_file_errno (string, name, errno);
-}
 
 /* Like report_file_error, but reports a file-notify-error instead.  */
 
