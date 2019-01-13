@@ -83,6 +83,36 @@ pub fn call_process_lisp(args: &mut [LispObject]) -> LispObject {
     })
 }
 
+/// Send text from START to END to a synchronous process running PROGRAM.
+///
+/// START and END are normally buffer positions specifying the part of the
+/// buffer to send to the process.
+/// If START is nil, that means to use the entire buffer contents; END is
+/// ignored.
+/// If START is a string, then send that string to the process
+/// instead of any buffer contents; END is ignored.
+/// The remaining arguments are optional.
+/// Delete the text if fourth arg DELETE is non-nil.
+///
+/// Insert output in BUFFER before point; t means current buffer; nil for
+/// BUFFER means discard it; 0 means discard and don't wait; and `(:file
+/// FILE)', where FILE is a file name string, means that it should be
+/// written to that file (if the file already exists it is overwritten).
+/// BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
+/// REAL-BUFFER says what to do with standard output, as above,
+/// while STDERR-FILE says what to do with standard error in the child.
+/// STDERR-FILE may be nil (discard standard error output),
+/// t (mix it with ordinary output), or a file name string.
+///
+/// Sixth arg DISPLAY non-nil means redisplay buffer as output is inserted.
+/// Remaining args are passed to PROGRAM at startup as command args.
+///
+/// If BUFFER is 0, `call-process-region' returns immediately with value nil.
+/// Otherwise it waits for PROGRAM to terminate
+/// and returns a numeric exit status or a signal description string.
+/// If you quit, the process is killed with SIGINT, or SIGKILL if you quit again.
+///
+/// usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &rest ARGS)
 #[lisp_fn(min = "3")]
 pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
     let mut start = args[0];
@@ -93,7 +123,7 @@ pub fn call_process_region(args: &mut [LispObject]) -> LispObject {
     let empty_input = if start.is_string() {
         LispStringRef::from(start).len_chars() == 0
     } else if start.is_nil() {
-        let buffer = &ThreadState::current_buffer_unchecked();
+        let buffer = ThreadState::current_buffer_unchecked();
         buffer.beg() == buffer.z()
     } else {
         unsafe { buffers::validate_region(&mut args[0], &mut args[1]) };
