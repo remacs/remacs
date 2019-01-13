@@ -35,7 +35,7 @@
 ;; Infrastructure:
 ;;
 ;; Function `project-current', to determine the current project
-;; instance, and 3 (at the moment) generic functions that act on it.
+;; instance, and 5 (at the moment) generic functions that act on it.
 ;; This list is to be extended in future versions.
 ;;
 ;; Utils:
