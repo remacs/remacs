@@ -162,29 +162,14 @@ end it with `/'.  DIR must be one of `project-roots' or
 DIRS is a list of absolute directories; it should be some
 subset of the project roots and external roots.
 
-The default implementation uses `find-program'.  PROJECT is used
-to find the list of ignores for each directory."
-  ;; FIXME: Uniquely abbreviate the roots?
-  (require 'xref)
-  (let ((all-files
-	 (cl-mapcan
-	  (lambda (dir)
-	    (let ((command
-		   (format "%s %s %s -type f -print0"
-			   find-program
-                           (shell-quote-argument
-                            (expand-file-name dir))
-			   (xref--find-ignores-arguments
-			    (project-ignores project dir)
-			    (expand-file-name dir)))))
-	      (split-string (shell-command-to-string command) "\0" t)))
-	  dirs)))
+The default implementation delegates to `project-files'."
+  (let ((all-files (project-files project dirs)))
     (lambda (string pred action)
       (cond
        ((eq action 'metadata)
-	'(metadata . ((category . project-file))))
+        '(metadata . ((category . project-file))))
        (t
-	(complete-with-action action all-files string pred))))))
+        (complete-with-action action all-files string pred))))))
 
 (cl-defmethod project-roots ((project (head transient)))
   (list (cdr project)))
@@ -192,14 +177,23 @@ to find the list of ignores for each directory."
 (cl-defgeneric project-files (project &optional dirs)
   "Return a list of files in directories DIRS in PROJECT.
 DIRS is a list of absolute directories; it should be some
-subset of the project roots and external roots."
-  ;; This default implementation only works if project-file-completion-table
-  ;; returns a "flat" completion table.
-  ;; FIXME: Maybe we should do the reverse: implement the default
-  ;; `project-file-completion-table' on top of `project-files'.
-  (all-completions
-   "" (project-file-completion-table
-       project (or dirs (project-roots project)))))
+subset of the project roots and external roots.
+
+The default implementation uses `find-program'.  PROJECT is used
+to find the list of ignores for each directory."
+  (require 'xref)
+  (cl-mapcan
+   (lambda (dir)
+     (let ((command
+            (format "%s %s %s -type f -print0"
+                    find-program
+                    (shell-quote-argument
+                     (expand-file-name dir))
+                    (xref--find-ignores-arguments
+                     (project-ignores project dir)
+                     (expand-file-name dir)))))
+       (split-string (shell-command-to-string command) "\0" t)))
+   (or dirs (project-roots project))))
 
 (defgroup project-vc nil
   "Project implementation using the VC package."
