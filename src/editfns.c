@@ -2437,7 +2437,7 @@ It returns the number of characters changed.  */)
 {
   register unsigned char *tt;	/* Trans table. */
   register int nc;		/* New character. */
-  int cnt;			/* Number of changes made. */
+  ptrdiff_t cnt;		/* Number of changes made. */
   ptrdiff_t size;		/* Size of translate table. */
   ptrdiff_t pos, pos_byte, end_pos;
   bool multibyte = !NILP (BVAR (current_buffer, enable_multibyte_characters));
