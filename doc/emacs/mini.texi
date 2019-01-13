@@ -209,9 +209,9 @@ window automatically.  The default value is 0.25.
 
   The @kbd{C-M-v} command in the minibuffer scrolls the help text from
 commands that display help text of any sort in another window.  You
-can also scroll the help text with @kbd{M-@key{prior}} and
-@kbd{M-@key{next}} (or, equivalently, @kbd{M-@key{PageUp}} and
-@kbd{M-@key{PageDown}}).  This is especially useful with long lists of
+can also scroll the help text with @kbd{M-@key{PageUp}} and
+@kbd{M-@key{PageDown}} (or, equivalently, @kbd{M-@key{prior}} and
+@kbd{M-@key{next}}).  This is especially useful with long lists of
 possible completions.  @xref{Other Window}.
 
 @vindex enable-recursive-minibuffers
@@ -817,7 +817,7 @@ File ‘foo.el’ exists; overwrite? (y or n)
 Because this query does not actually use the minibuffer, the usual
 minibuffer editing commands cannot be used.  However, you can perform
 some window scrolling operations while the query is active: @kbd{C-l}
-recenters the selected window; @kbd{C-v} (or @key{PageDown} or
+recenters the selected window; @kbd{C-v} (or @key{PageDown}, or
 @key{next}) scrolls forward; @kbd{M-v} (or @key{PageUp}, or
 @key{prior}) scrolls backward; @kbd{C-M-v} scrolls forward in the next
 window; and @kbd{C-M-S-v} scrolls backward in the next window.  Typing

@@ -26,7 +26,7 @@
 
 (require 'format-spec)
 (eval-when-compile
-  (require 'cl)
+  (require 'cl-lib)
   (require 'imap))
 (autoload 'auth-source-search "auth-source")
 (autoload 'pop3-movemail "pop3")
@@ -439,7 +439,7 @@ the `mail-source-keyword-map' variable."
     ;; the msname is the mail-source parameter
     (dolist (msname '(:server :user :port))
       ;; the asname is the auth-source parameter
-      (let* ((asname (case msname
+      (let* ((asname (cl-case msname
                        (:server :host)  ; auth-source uses :host
                        (t msname)))
              ;; this is the mail-source default
@@ -786,7 +786,7 @@ Deleting old (> %s day(s)) incoming mail file `%s'." diff bfile)
 	(when (and (file-regular-p file)
 		   (funcall predicate file)
 		   (mail-source-movemail file mail-source-crash-box))
-	  (incf found (mail-source-callback callback file))
+	  (cl-incf found (mail-source-callback callback file))
 	  (mail-source-run-script postscript (format-spec-make ?t path))
 	  (mail-source-delete-crash-box)))
       found)))
@@ -1041,7 +1041,7 @@ This only works when `display-time' is enabled."
 				  (insert "\001\001\001\001\n"))
 				(delete-file file)
 				nil))))
-	      (incf found (mail-source-callback callback file))
+	      (cl-incf found (mail-source-callback callback file))
 	      (mail-source-delete-crash-box)))))
       found)))
 
@@ -1116,7 +1116,7 @@ This only works when `display-time' is enabled."
 		    (replace-match ">From "))
 		  (goto-char (point-max))))
 	      (nnheader-ms-strip-cr))
-	    (incf found (mail-source-callback callback server))
+	    (cl-incf found (mail-source-callback callback server))
 	    (mail-source-delete-crash-box)
 	    (when (and remove fetchflag)
 	      (setq remove (nreverse remove))

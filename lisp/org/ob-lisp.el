@@ -6,7 +6,7 @@
 ;;	 Eric Schulte
 ;;	 David T. O'Toole <dto@gnu.org>
 ;; Keywords: literate programming, reproducible research
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 
@@ -54,7 +54,7 @@ Valid values include `slime-eval' and `sly-eval'."
   :group 'org-babel
   :version "26.1"
   :package-version '(Org . "9.0")
-  :type 'function)
+  :type 'symbol)
 
 (defcustom org-babel-lisp-dir-fmt
   "(let ((*default-pathname-defaults* #P%S\n)) %%s\n)"

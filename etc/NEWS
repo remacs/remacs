@@ -59,14 +59,20 @@ package system is initialized given that initialization now happens
 before loading the regular init file (see below).
 
 +++
-** Emacs now calls 'package-initialize' before loading the init file.
+** Installed packages are now activated *before* loading the init file.
 This is part of a change intended to eliminate the behavior of
 package.el inserting a call to 'package-initialize' into the init
 file, which was previously done when Emacs was started.  As a result
 of this change, it is no longer necessary to call 'package-initialize'
-in your init file.  However, if your init file changes the values of
-'package-load-list' or 'package-user-dir', then that code needs to be
-moved to the early init file (see above).
+in your init file.
+
+However, if your init file changes the values of 'package-load-list' or
+'package-user-dir', or sets 'package-enable-at-startup' to nil then it won't
+work right without some adjustment:
+- you can move that code to the early init file (see above), so those settings
+  apply before Emacs tries to activate the packages.
+- you can use the new 'package-quickstart` so activation of packages does not
+  need to pay attention to 'package-load-list' or 'package-user-dir' any more.
 
 
 * Changes in Emacs 27.1
@@ -115,6 +121,9 @@ regular expression was previously invalid, but is now accepted:
 
    x\{32768\}
 
+---
+** The German prefix and postfix input methods now support Capital sharp S.
+
 
 * Editing Changes in Emacs 27.1
 
@@ -143,6 +152,22 @@ for abbrevs that have them.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
+
+** Browse-url
+*** The function 'browse-url-emacs' can now visit a URL in selected window.
+It now treats the optional 2nd argument to mean that the URL should be
+shown in the currently selected window.
+
+** Package
+*** New 'package-quickstart' feature
+When 'package-quickstart' is non-nil, package.el precomputes a big autoloads
+file so that activation of packages can be done much faster, which can speed up
+your startup significantly.
+It also causes variables like package-user-dir and package-load-list to be
+consulted when 'package-quickstart-refresh' is run rather than at startup so
+you don't need to set them in your early init file.
+
+*** New function 'package-activate-all'.
 
 ** Ecomplete
 *** The ecomplete sorting has changed to a decay-based algorithm.
@@ -261,6 +286,14 @@ defines the logic of finding a next-error capable buffer.
 It has an option to use a single such buffer on selected frame, or
 by default use the last buffer that navigated to the current buffer.
 
+** nxml-mode
+
+---
+*** The default value of 'nxml-sexp-element-flag' is now t.
+This means that pressing C-M-SPACE now selects the entire tree by
+default, and not just the opening element.
+
+
 ** Eshell
 
 ---
@@ -272,6 +305,11 @@ To restore the old behavior, use
 
 *** The function 'shell-uniquify-list' has been renamed from
 'eshell-uniqify-list'.
+
+*** The function eshell/kill is now able to handle signal switches.
+Previously eshell/kill would fail if provided a kill signal to send to the
+process.  It now accepts signals specified either by name or by its number.
+
 
 ** Pcomplete
 *** The function 'pcomplete-uniquify-list' has been renamed from
@@ -299,6 +337,7 @@ names" in the Tramp manual for full documentation of these facilities.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
+** The 'repetitions' argument of 'benchmark-run' can now also be a variable.
 ** The FILENAME argument to 'file-name-base' is now mandatory and no
 longer defaults to 'buffer-file-name'.
 
@@ -320,6 +359,15 @@ as new-style, bind the new variable 'force-new-style-backquotes' to t.
 ** When formatting a floating-point number as an octal or hexadecimal
 integer, Emacs now signals an error if the number is too large for the
 implementation to format (Bug#30408).
+
++++
+** The Lisp reader now signals an overflow for plain decimal integers
+that do not end in '.' and are outside Emacs range.  Formerly the Lisp
+reader silently converted them to floating-point numbers, and signaled
+overflow only for integers with a radix that are outside machine range.
+To get the old behavior, set the new, experimental variable
+read-integer-overflow-as-float to t and please email
+30408@debbugs.gnu.org if you need that.  (Bug#30408).
 
 ---
 ** Some functions and variables obsolete since Emacs 22 have been removed:
@@ -374,6 +422,13 @@ backslash.  For example:
 
     (read "‘smart") => (invalid-read-syntax "strange quote" "‘")
     (read "\\‘smart") == (intern "‘smart")
+
++++
+** Omitting variables after '&optional' and '&rest' is now allowed.
+For example (defun foo (&optional)) is no longer an error.  This is
+sometimes convenient when writing macros.  See the ChangeLog entry
+titled "Allow `&rest' or `&optional' without following variable" for a
+full listing of which arglists are accepted across versions.
 
 ** Internal parsing commands now use syntax-ppss and disregard
 open-paren-in-column-0-is-defun-start.  This affects mostly things like

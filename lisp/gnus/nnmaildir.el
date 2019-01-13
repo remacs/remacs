@@ -68,8 +68,7 @@
 (require 'message)
 (require 'nnmail)
 
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (defconst nnmaildir-version "Gnus")
 
@@ -165,14 +164,14 @@ This variable is set by `nnmaildir-request-article'.")
 (defmacro nnmaildir--nov-set-mtime (nov value) `(aset ,nov 3 ,value))
 (defmacro nnmaildir--nov-set-extra (nov value) `(aset ,nov 4 ,value))
 
-(defstruct nnmaildir--art
+(cl-defstruct nnmaildir--art
   (prefix nil :type string)  ;; "time.pid.host"
   (suffix nil :type string)  ;; ":2,flags"
   (num    nil :type natnum)  ;; article number
   (msgid  nil :type string)  ;; "<mess.age@id>"
   (nov    nil :type vector)) ;; cached nov structure, or nil
 
-(defstruct nnmaildir--grp
+(cl-defstruct nnmaildir--grp
   (name  nil :type string)  ;; "group.name"
   (new   nil :type list)    ;; new/ modtime
   (cur   nil :type list)    ;; cur/ modtime
@@ -186,7 +185,7 @@ This variable is set by `nnmaildir-request-article'.")
   (mmth  nil :type vector)) ;; obarray mapping mark name->dir modtime
 					; ("Mark Mod Time Hash")
 
-(defstruct nnmaildir--srv
+(cl-defstruct nnmaildir--srv
   (address    	 nil :type string)         ;; server address string
   (method     	 nil :type list)           ;; (nnmaildir "address" ...)
   (prefix     	 nil :type string)         ;; "nnmaildir+address:"
@@ -856,7 +855,7 @@ This variable is set by `nnmaildir-request-article'.")
 		     ;; then look in marks directories
 		     (not (file-exists-p (concat cdir prefix)))
 		     (file-exists-p (concat ndir prefix)))
-		(incf num)))))
+		(cl-incf num)))))
 	(setf (nnmaildir--grp-cache group) (make-vector num nil))
         (let ((inhibit-quit t))
           (set (intern gname groups) group))
@@ -1732,7 +1731,7 @@ This variable is set by `nnmaildir-request-article'.")
 	(setq ranges (car action)
 	      todo-marks (caddr action))
 	(dolist (mark todo-marks)
-	  (pushnew mark all-marks :test #'equal))
+	  (cl-pushnew mark all-marks :test #'equal))
 	(if (numberp (cdr ranges)) (setq ranges (list ranges)))
 	(nnmaildir--nlist-iterate nlist ranges
 				  (cond ((eq 'del (cadr action)) del-action)

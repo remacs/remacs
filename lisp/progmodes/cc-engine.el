@@ -870,7 +870,7 @@ comment at the start of cc-engine.el for more info."
 	stack
 	;; Regexp which matches "for", "if", etc.
 	(cond-key (or c-opt-block-stmt-key
-		      "\\<\\>"))	; Matches nothing.
+		      "a\\`"))	; Matches nothing.
 	;; Return value.
 	(ret 'same)
 	;; Positions of the last three sexps or bounds we've stopped at.
@@ -7147,7 +7147,7 @@ comment at the start of cc-engine.el for more info."
 		(progn
 		  (c-forward-syntactic-ws)
 		  (when (or (and c-record-type-identifiers all-types)
-			    (not (equal c-inside-<>-type-key "\\(\\<\\>\\)")))
+			    (not (equal c-inside-<>-type-key "\\(a\\`\\)")))
 		    (c-forward-syntactic-ws)
 		    (cond
 		     ((eq (char-after) ??)
@@ -8557,7 +8557,7 @@ comment at the start of cc-engine.el for more info."
       ;; Skip over type decl prefix operators.  (Note similar code in
       ;; `c-forward-declarator'.)
       (if (and c-recognize-typeless-decls
-	       (equal c-type-decl-prefix-key "\\<\\>"))
+	       (equal c-type-decl-prefix-key "a\\`"))
 	  (when (eq (char-after) ?\()
 	    (progn
 	      (setq paren-depth (1+ paren-depth))
@@ -9847,9 +9847,15 @@ comment at the start of cc-engine.el for more info."
   ;; This function might do hidden buffer changes.
   (save-excursion
     (and (zerop (c-backward-token-2 1 t lim))
+	 (if (looking-at c-block-stmt-hangon-key)
+	     (zerop (c-backward-token-2 1 t lim))
+	   t)
 	 (or (looking-at c-block-stmt-1-key)
 	     (and (eq (char-after) ?\()
 		  (zerop (c-backward-token-2 1 t lim))
+		  (if (looking-at c-block-stmt-hangon-key)
+		      (zerop (c-backward-token-2 1 t lim))
+		    t)
 		  (or (looking-at c-block-stmt-2-key)
 		      (looking-at c-block-stmt-1-2-key))))
 	 (point))))
@@ -10183,7 +10189,7 @@ comment at the start of cc-engine.el for more info."
 	      ;; legal because it's part of a "compound keyword" like
 	      ;; "enum class".	Of course, if c-after-brace-list-key
 	      ;; is nil, we can skip the test.
-	      (or (equal c-after-brace-list-key "\\<\\>")
+	      (or (equal c-after-brace-list-key "a\\`")
 		  (save-match-data
 		    (save-excursion
 		      (not
@@ -10538,13 +10544,6 @@ comment at the start of cc-engine.el for more info."
 		      (looking-at c-return-key))
 		 (setq braceassignp t)
 		 nil)
-		((and c-has-compound-literals
-		      (eq (char-after) ?,))
-		 (save-excursion
-		   (when (and (c-go-up-list-backward nil lim)
-			      (eq (char-after) ?\())
-		     (setq braceassignp t)
-		     nil)))
 		((eq (char-after) ?=)
 		 ;; We've seen a =, but must check earlier tokens so
 		 ;; that it isn't something that should be ignored.

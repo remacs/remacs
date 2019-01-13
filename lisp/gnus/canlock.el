@@ -41,9 +41,6 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
-
 (require 'sha1)
 
 (defvar mail-header-separator)

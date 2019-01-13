@@ -32,7 +32,6 @@
 (require 'message)
 (require 'nnmail)
 (require 'nnoo)
-(eval-when-compile (require 'cl))
 (require 'gnus)
 (require 'gnus-util)
 (require 'gnus-range)

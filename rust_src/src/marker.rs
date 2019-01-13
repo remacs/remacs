@@ -600,6 +600,26 @@ impl LispBufferRef {
 
 // Converting between character positions and byte positions.
 
+// When converting bytes from/to chars, we look through the list of
+// markers to try and find a good starting point (since markers keep
+// track of both bytepos and charpos at the same time).
+// But if there are many markers, it can take too much time to find a "good"
+// marker from which to start.  Worse yet: if it takes a long time and we end
+// up finding a nearby markers, we won't add a new marker to cache this
+// result, so next time around we'll have to go through this same long list
+// to (re)find this best marker.  So the further down the list of
+// markers we go, the less demanding we are w.r.t what is a good marker.
+// The previous code used INITIAL=50 and INCREMENT=0 and this lead to
+// really poor performance when there are many markers.
+// I haven't tried to tweak INITIAL, but experiments on my trusty Thinkpad
+// T61 using various artificial test cases seem to suggest that INCREMENT=50
+// might be "the best compromise": it significantly improved the
+// worst case and it was rarely slower and never by much.
+// The asymptotic behavior is still poor, tho, so in largish buffers with many
+// overlays (e.g. 300KB and 30K overlays), it can still be a bottleneck.
+static BYTECHAR_DISTANCE_INITIAL: i32 = 50;
+static BYTECHAR_DISTANCE_INCREMENT: i32 = 50;
+
 // There are several places in the buffer where we know
 // the correspondence: BEG, BEGV, PT, GPT, ZV and Z,
 // and everywhere there is a marker.  So we find the one of these places
@@ -614,6 +634,7 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
 
     let mut best_above = buffer_ref.z();
     let mut best_above_byte = buffer_ref.z_byte();
+    let mut distance = BYTECHAR_DISTANCE_INITIAL;
 
     // If this buffer has as many characters as bytes,
     // each character must be one byte.
@@ -672,11 +693,13 @@ pub extern "C" fn buf_charpos_to_bytepos(b: *mut Lisp_Buffer, charpos: isize) ->
 
     for m in buffer_ref.markers().iter() {
         consider_known!(m.charpos_or_error(), m.bytepos_or_error());
-        // If we are down to a range of 50 chars,
+        // If we are down to a range of `distance` chars,
         // don't bother checking any other markers;
         // scan the intervening chars directly now.
-        if best_above - best_below < 50 {
+        if best_above - charpos < distance || charpos - best_below < distance {
             break;
+        } else {
+            distance += BYTECHAR_DISTANCE_INCREMENT;
         }
     }
 
@@ -734,6 +757,7 @@ pub unsafe extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: is
 
     let mut best_above = buffer_ref.z();
     let mut best_above_byte = buffer_ref.z_byte();
+    let mut distance = BYTECHAR_DISTANCE_INITIAL;
 
     // If this buffer has as many characters as bytes,
     // each character must be one byte.
@@ -783,11 +807,13 @@ pub unsafe extern "C" fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: is
 
     for m in buffer_ref.markers().iter() {
         consider_known!(m.bytepos_or_error(), m.charpos_or_error());
-        // If we are down to a range of 50 chars,
+        // If we are down to a range of `distance` chars,
         // don't bother checking any other markers;
         // scan the intervening chars directly now.
-        if best_above - best_below < 50 {
+        if best_above - bytepos < distance || bytepos - best_below < distance {
             break;
+        } else {
+            distance += BYTECHAR_DISTANCE_INCREMENT;
         }
     }
 
@@ -878,6 +904,14 @@ fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
     if charpos - 1 != nchars {
         panic!("byte_char_debug_check failed.")
     }
+}
+
+// Detach a marker so that it no longer points anywhere and no longer
+// slows down editing.  Do not free the marker, though, as a change
+// function could have inserted it into an undo list (Bug#30931).
+#[no_mangle]
+pub extern "C" fn detach_marker(marker: LispObject) {
+    set_marker(marker.into(), Qnil, Qnil);
 }
 
 /// Count the markers in buffer BUF.

@@ -33,7 +33,6 @@
 (require 'nnmail)
 (require 'nnoo)
 (require 'gnus-range)
-(eval-when-compile (require 'cl))
 
 (nnoo-declare nnmbox)
 

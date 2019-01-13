@@ -4,7 +4,7 @@
 
 ;; Author: Jarmo Hurri (adapted from ob-asymptote.el written by Eric Schulte)
 ;; Keywords: literate programming, reproducible research
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 

@@ -1115,6 +1115,15 @@ please check its value")
     (and command-line-args
          (setcdr command-line-args args)))
 
+  ;; Re-evaluate predefined variables whose initial value depends on
+  ;; the runtime context.
+  (let (current-load-list) ; c-r-s may call defvar, and hence LOADHIST_ATTACH
+    (mapc 'custom-reevaluate-setting
+          ;; Initialize them in the same order they were loaded, in case there
+          ;; are dependencies between them.
+          (prog1 (nreverse custom-delayed-init-variables)
+            (setq custom-delayed-init-variables nil))))
+
   ;; Warn for invalid user name.
   (when init-file-user
     (if (string-match "[~/:\n]" init-file-user)
@@ -1176,7 +1185,7 @@ please check its value")
                                 (package--description-file subdir)
                                 subdir))))
 		   (throw 'package-dir-found t)))))))
-       (package-initialize))
+       (package-activate-all))
 
   ;; Make sure window system's init file was loaded in loadup.el if
   ;; using a window system.
@@ -1244,15 +1253,6 @@ please check its value")
   (unless noninteractive
     (startup--setup-quote-display)
     (setq internal--text-quoting-flag t))
-
-  ;; Re-evaluate predefined variables whose initial value depends on
-  ;; the runtime context.
-  (let (current-load-list) ; c-r-s may call defvar, and hence LOADHIST_ATTACH
-    (mapc 'custom-reevaluate-setting
-          ;; Initialize them in the same order they were loaded, in case there
-          ;; are dependencies between them.
-          (prog1 (nreverse custom-delayed-init-variables)
-            (setq custom-delayed-init-variables nil))))
 
   (normal-erase-is-backspace-setup-frame)
 

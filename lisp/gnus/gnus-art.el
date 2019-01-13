@@ -24,8 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (defvar tool-bar-map)
 (defvar w3m-minor-mode-map)
 
@@ -1798,7 +1797,7 @@ Initialized from `text-mode-syntax-table'.")
       (if (looking-at (car list))
 	  (setq list nil)
 	(setq list (cdr list))
-	(incf i)))
+	(cl-incf i)))
       i))
 
 (defun article-hide-headers (&optional _arg _delete)
@@ -2221,7 +2220,7 @@ This only works if the article in question is HTML."
 	  (w3m-toggle-inline-images)
 	(dolist (region (gnus-find-text-property-region (point-min) (point-max)
 							'image-displayer))
-	  (destructuring-bind (start end function) region
+	  (cl-destructuring-bind (start end function) region
 	    (funcall function (get-text-property start 'image-url)
 		     start end)))))))
 
@@ -8211,7 +8210,7 @@ url is put as the `gnus-button-url' overlay property on the button."
 
 (defun gnus-button-handle-news (url)
   "Fetch a news URL."
-  (destructuring-bind (_scheme server port group message-id _articles)
+  (cl-destructuring-bind (_scheme server port group message-id _articles)
       (gnus-parse-news-url url)
     (cond
      (message-id

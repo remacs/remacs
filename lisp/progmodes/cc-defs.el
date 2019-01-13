@@ -81,7 +81,7 @@
   (progn
     (require 'font-lock)
     (let (font-lock-keywords)
-      (font-lock-compile-keywords '("\\<\\>"))
+      (font-lock-compile-keywords '("a\\`"))
       font-lock-keywords))))
 
 
@@ -1247,7 +1247,7 @@ remains unchanged."
 				     -char-))
 			    (delete-extent ext)))
 		      nil ,from ,to ,value nil -property-))
-    ;; Gnu Emacs
+    ;; GNU Emacs
     `(c-clear-char-property-with-value-on-char-function ,from ,to ,property
 							,value ,char)))
 
@@ -1777,8 +1777,8 @@ when it's needed.  The default is the current language taken from
 
     ;; Produce a regexp that matches nothing.
     (if adorn
-	"\\(\\<\\>\\)"
-      "\\<\\>")))
+	"\\(a\\`\\)"
+      "a\\`")))
 
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 

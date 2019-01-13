@@ -36,8 +36,7 @@
 (autoload 'gnus-agent-save-local "gnus-agent")
 (autoload 'gnus-agent-possibly-alter-active "gnus-agent")
 
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (defvar gnus-agent-covered-methods)
 (defvar gnus-agent-file-loading-local)
@@ -1231,14 +1230,14 @@ for new groups, and subscribe the new groups as zombies."
 	     (let ((do-sub (gnus-matches-options-n group)))
 	       (cond
 		((eq do-sub 'subscribe)
-		 (incf groups)
+		 (cl-incf groups)
 		 (gnus-sethash group group gnus-killed-hashtb)
 		 (gnus-call-subscribe-functions
 		  gnus-subscribe-options-newsgroup-method group))
 		((eq do-sub 'ignore)
 		 nil)
 		(t
-		 (incf groups)
+		 (cl-incf groups)
 		 (gnus-sethash group group gnus-killed-hashtb)
 		 (if gnus-subscribe-hierarchical-interactive
 		     (push group new-newsgroups)
@@ -1700,7 +1699,7 @@ backend check whether the group actually exists."
     ;; aren't equal (and that need extension; i.e., they are async).
     (let ((methods nil))
       (dolist (elem type-cache)
-	(destructuring-bind (method method-type infos dummy) elem
+	(cl-destructuring-bind (method method-type infos dummy) elem
 	  (let ((gnus-opened-servers methods))
 	    (when (and (gnus-similar-server-opened method)
 		       (gnus-check-backend-function
@@ -1723,7 +1722,7 @@ backend check whether the group actually exists."
 
     ;; Clear out all the early methods.
     (dolist (elem type-cache)
-      (destructuring-bind (method method-type infos dummy) elem
+      (cl-destructuring-bind (method method-type infos dummy) elem
 	(when (and method
 		   infos
 		   (gnus-check-backend-function
@@ -1740,7 +1739,7 @@ backend check whether the group actually exists."
     (let ((done-methods nil)
 	  sanity-spec)
       (dolist (elem type-cache)
-	(destructuring-bind (method method-type infos dummy) elem
+	(cl-destructuring-bind (method method-type infos dummy) elem
 	  (setq sanity-spec (list (car method) (cadr method)))
 	  (when (and method infos
 		     (not (gnus-method-denied-p method)))
@@ -1771,7 +1770,7 @@ backend check whether the group actually exists."
 
     ;; Do the rest of the retrieval.
     (dolist (elem type-cache)
-      (destructuring-bind (method method-type infos early-data) elem
+      (cl-destructuring-bind (method method-type infos early-data) elem
 	(when (and method infos
 		   (not (gnus-method-denied-p method)))
 	  (let ((updatep (gnus-check-backend-function
@@ -1795,11 +1794,11 @@ backend check whether the group actually exists."
    ;; are in the secondary select list.
    ((eq type 'secondary)
     (let ((i 2))
-      (block nil
-	(dolist (smethod gnus-secondary-select-methods)
+      (cl-block nil
+	(cl-dolist (smethod gnus-secondary-select-methods)
 	  (when (equal method smethod)
-	    (return i))
-	  (incf i))
+	    (cl-return i))
+	  (cl-incf i))
 	i)))
    ;; Just say that all foreign groups have the same rank.
    (t

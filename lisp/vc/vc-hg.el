@@ -101,11 +101,11 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (eval-when-compile
   (require 'vc)
   (require 'vc-dir))
-
-(require 'cl-lib)
 
 (declare-function vc-compilation-mode "vc-dispatcher" (backend))
 
@@ -1016,8 +1016,8 @@ hg binary."
          (not (vc-hg--requirements-understood-p repo))
          ;; Dirstate too small to be valid
          (< (nth 7 dirstate-attr) 40)
-         ;; We want to store 32-bit unsigned values in fixnums
-         (< most-positive-fixnum 4294967295)
+         ;; We want to store 32-bit unsigned values in fixnums.
+         (zerop (lsh -1 32))
          (progn
            (setf repo-relative-filename
                  (file-relative-name truename repo))

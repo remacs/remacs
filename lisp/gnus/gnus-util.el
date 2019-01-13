@@ -32,8 +32,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'time-date)
 
@@ -1408,7 +1407,7 @@ SPEC is a predicate specifier that contains stuff like `or', `and',
                                  (symbol-value history) collection))
                        filtered-choices)
                    (dolist (x choices)
-                     (setq filtered-choices (adjoin x filtered-choices)))
+                     (setq filtered-choices (cl-adjoin x filtered-choices)))
                    (nreverse filtered-choices))))))
     (unwind-protect
         (progn
