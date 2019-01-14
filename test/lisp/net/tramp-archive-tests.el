@@ -819,27 +819,18 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 	    (message \"tramp-archive loaded: %%s %%s\" \
               (featurep 'tramp) (featurep 'tramp-archive)))"))
     (dolist (file `("/mock::foo" ,(concat tramp-archive-test-archive "foo")))
-      (print file)
-      (print
-      	 (format
-	  "%s -batch -Q -L %s --eval %s"
-	  (shell-quote-argument
-	   (expand-file-name invocation-name invocation-directory))
-	  (mapconcat 'shell-quote-argument load-path " -L ")
-	  (shell-quote-argument (format code file))))
       (should
        (string-match
-	(shell-command-to-string
-	 (format
-	  "%s -batch -Q -L %s --eval %s"
-	  (shell-quote-argument
-	   (expand-file-name invocation-name invocation-directory))
-	  (mapconcat 'shell-quote-argument load-path " -L ")
-	  (shell-quote-argument (format code file))))
         (format
 	 "tramp-archive loaded: nil nil[[:ascii:]]+tramp-archive loaded: t %s"
 	 (tramp-archive-file-name-p file))
-)))))
+        (shell-command-to-string
+         (format
+	   "%s -batch -Q -L %s --eval %s"
+           (shell-quote-argument
+            (expand-file-name invocation-name invocation-directory))
+           (mapconcat 'shell-quote-argument load-path " -L ")
+           (shell-quote-argument (format code file)))))))))
 
 (ert-deftest tramp-archive-test42-delay-load ()
   "Check that `tramp-archive' is loaded lazily, only when needed."

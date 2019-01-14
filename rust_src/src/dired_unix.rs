@@ -726,12 +726,9 @@ fn file_attributes_core(fpath: LispObject, id_format: LispObject) -> LispObject 
     let mut attrs = FileAttrs::new(fpath.to_stdstring(), id_format.to_idfstring());
     let res = attrs.get();
     if res.is_err() {
-        println!("Error: {:?}", res);
         Qnil
     } else {
-        let result = attrs.to_list();
-        println!("To list: {:?}", result);
-        result
+        attrs.to_list()
     }
 }
 
