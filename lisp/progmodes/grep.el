@@ -366,6 +366,9 @@ A grep buffer becomes most recent when you select Grep mode in it.
 Notice that using \\[next-error] or \\[compile-goto-error] modifies
 `compilation-last-buffer' rather than `grep-last-buffer'.")
 
+(defvar grep-match-face	'match
+  "Face name to use for grep matches.")
+
 ;;;###autoload
 (defconst grep-regexp-alist
   `((,(concat "^\\(?:"
@@ -389,7 +392,7 @@ Notice that using \\[next-error] or \\[compile-goto-error] modifies
          (when grep-highlight-matches
            (let* ((beg (match-end 0))
                   (end (save-excursion (goto-char beg) (line-end-position)))
-                  (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)))
+                  (mbeg (text-property-any beg end 'font-lock-face grep-match-face)))
              (when mbeg
                (- mbeg beg)))))
       .
@@ -397,7 +400,7 @@ Notice that using \\[next-error] or \\[compile-goto-error] modifies
          (when grep-highlight-matches
            (let* ((beg (match-end 0))
                   (end (save-excursion (goto-char beg) (line-end-position)))
-                  (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))
+                  (mbeg (text-property-any beg end 'font-lock-face grep-match-face))
                   (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end))))
              (when mend
                (- mend beg))))))
@@ -420,9 +423,6 @@ See `compilation-error-regexp-alist' for format details.")
 
 (defvar grep-error-face	'compilation-error
   "Face name to use for grep error messages.")
-
-(defvar grep-match-face	'match
-  "Face name to use for grep matches.")
 
 (defvar grep-context-face 'shadow
   "Face name to use for grep context lines.")
