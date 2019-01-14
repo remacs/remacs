@@ -1492,7 +1492,9 @@ The variable `package-load-list' controls which packages to load."
       ;; any decoding).
       (let ((load-source-file-function nil))
         (load package-quickstart-file nil 'nomessage))
-    (dolist (elt (package--alist))
+    (unless package--initialized
+      (package-initialize t))
+    (dolist (elt package-alist)
       (condition-case err
           (package-activate (car elt))
         ;; Don't let failure of activation of a package arbitrarily stop
