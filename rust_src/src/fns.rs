@@ -1,6 +1,7 @@
 //* Random utility Lisp functions.
 
-use std::ptr;
+use std::convert::TryFrom;
+use std::{cmp, ptr};
 
 use libc;
 
@@ -16,6 +17,7 @@ use crate::{
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
+    remacs_sys::args_out_of_range_3,
     remacs_sys::Fload,
     remacs_sys::Vautoload_queue,
     remacs_sys::{concat as lisp_concat, globals, record_unwind_protect},
@@ -25,6 +27,44 @@ use crate::{
     threads::c_specpdl_index,
     vectors::length,
 };
+
+#[no_mangle]
+pub unsafe extern "C" fn validate_subarray(
+    array: LispObject,
+    from: LispObject,
+    to: LispObject,
+    size: isize,
+    ifrom: *mut isize,
+    ito: *mut isize,
+) {
+    let (f, t) = validate_subarray_rust(array, from.into(), to.into(), size);
+
+    *ifrom = f;
+    *ito = t;
+}
+
+pub fn validate_subarray_rust(
+    array: LispObject,
+    from: Option<EmacsInt>,
+    to: Option<EmacsInt>,
+    size: isize,
+) -> (isize, isize) {
+    let f = match from {
+        None => 0,
+        Some(f) if f < 0 => f as isize + size,
+        Some(f) => f as isize,
+    };
+    let t = match to {
+        None => 0,
+        Some(t) if t < 0 => t as isize + size,
+        Some(t) => t as isize,
+    };
+
+    if !(0 <= f && f <= t && t <= size) {
+        unsafe { args_out_of_range_3(array, from.into(), to.into()) };
+    }
+    (f, t)
+}
 
 /// Return t if FEATURE is present in this Emacs.
 ///
@@ -373,6 +413,70 @@ pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
             }
         })
         .collect()
+}
+
+#[lisp_fn(min = "6")]
+pub fn compare_strings(
+    str1: LispStringRef,
+    start1: Option<EmacsInt>,
+    end1: Option<EmacsInt>,
+    str2: LispStringRef,
+    start2: Option<EmacsInt>,
+    end2: Option<EmacsInt>,
+    ignore_case: bool,
+) -> LispObject {
+    let len1 = str1.len_chars();
+    let len2 = str2.len_chars();
+    let end1 = match end1 {
+        None => end1,
+        Some(end) => Some(cmp::min(end, len1 as EmacsInt)),
+    };
+    let end2 = match end2 {
+        None => end1,
+        Some(end) => Some(cmp::min(end, len2 as EmacsInt)),
+    };
+
+    let (from1, to1) = validate_subarray_rust(str1.into(), start1.into(), end1.into(), len1);
+    let (from2, to2) = validate_subarray_rust(str2.into(), start2.into(), end2.into(), len2);
+
+    let iter1 = str1
+        .chars()
+        .enumerate()
+        .skip_while(|(i, _)| *i < from1 as usize);
+    let iter2 = str2
+        .chars()
+        .enumerate()
+        .skip_while(|(i, _)| *i < from2 as usize);
+    let (mut index1, mut index2) = (0, 0);
+    for ((i1, c1), (i2, c2)) in iter1.zip(iter2) {
+        let i1 = i1 as isize;
+        let i2 = i2 as isize;
+        index1 = i1;
+        index2 = i2;
+        if c1 == c2 {
+            continue;
+        }
+        if ignore_case
+            && char::try_from(c1).unwrap().to_lowercase().to_string()
+                == char::try_from(c2).unwrap().to_lowercase().to_string()
+        {
+            continue;
+        }
+        if c1 < c2 {
+            return (from1 - i1).into();
+        } else {
+            return (i1 - from1).into();
+        }
+    }
+
+    if index1 < to1 {
+        return (index1 - from1 + 1).into();
+    }
+    if index2 < to2 {
+        return (from1 - index1 - 1).into();
+    }
+
+    Qt
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));
